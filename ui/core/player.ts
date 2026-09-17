@@ -240,6 +240,7 @@ export class Player<SpecType extends Spec> {
 	private enableItemSwap: boolean = false;
 	private itemSwapGear: ItemSwapGear = new ItemSwapGear({});
 	private race: Race;
+	private racialTraits: Race = Race.RaceUnknown;
 	private profession1: Profession = 0;
 	private profession2: Profession = 0;
 	aplRotation: APLRotation = APLRotation.create();
@@ -280,6 +281,7 @@ export class Player<SpecType extends Spec> {
 	readonly itemSwapChangeEmitter = new TypedEvent<void>('PlayerItemSwap');
 	readonly professionChangeEmitter = new TypedEvent<void>('PlayerProfession');
 	readonly raceChangeEmitter = new TypedEvent<void>('PlayerRace');
+	readonly racialTraitsChangeEmitter = new TypedEvent<void>('PlayerRacialTraits');
 	readonly rotationChangeEmitter = new TypedEvent<void>('PlayerRotation');
 	readonly talentsChangeEmitter = new TypedEvent<void>('PlayerTalents');
 	readonly glyphsChangeEmitter = new TypedEvent<void>('PlayerGlyphs');
@@ -331,6 +333,7 @@ export class Player<SpecType extends Spec> {
 			this.itemSwapChangeEmitter,
 			this.professionChangeEmitter,
 			this.raceChangeEmitter,
+			this.racialTraitsChangeEmitter,
 			this.rotationChangeEmitter,
 			this.talentsChangeEmitter,
 			this.glyphsChangeEmitter,
@@ -520,6 +523,21 @@ export class Player<SpecType extends Spec> {
 			this.race = newRace;
 			this.raceChangeEmitter.emit(eventID);
 		}
+	}
+
+	// mod-racial-trait-swap: racials come from this race, base stats and faction from getRace().
+	// RaceUnknown means the player's own race.
+	getRacialTraits(): Race {
+		return this.racialTraits;
+	}
+	setRacialTraits(eventID: EventID, newRacialTraits: Race) {
+		if (newRacialTraits != this.racialTraits) {
+			this.racialTraits = newRacialTraits;
+			this.racialTraitsChangeEmitter.emit(eventID);
+		}
+	}
+	getEffectiveRacialTraits(): Race {
+		return this.racialTraits || this.race;
 	}
 
 	getProfession1(): Profession {
@@ -1350,6 +1368,7 @@ export class Player<SpecType extends Spec> {
 			PlayerProto.mergePartial(player, {
 				name: this.getName(),
 				race: this.getRace(),
+				racialTraits: this.getRacialTraits(),
 				profession1: this.getProfession1(),
 				profession2: this.getProfession2(),
 				reactionTimeMs: this.getReactionTime(),
@@ -1409,6 +1428,7 @@ export class Player<SpecType extends Spec> {
 				this.setSpecOptions(eventID, this.specTypeFunctions.optionsFromPlayer(proto));
 				this.setName(eventID, proto.name);
 				this.setRace(eventID, proto.race);
+				this.setRacialTraits(eventID, proto.racialTraits);
 				this.setProfession1(eventID, proto.profession1);
 				this.setProfession2(eventID, proto.profession2);
 				this.setReactionTime(eventID, proto.reactionTimeMs);

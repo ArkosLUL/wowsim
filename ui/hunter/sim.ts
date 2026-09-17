@@ -142,10 +142,10 @@ const SPEC_CONFIG = registerSpecConfig(Spec.SpecHunter, {
 		if (rangedWeapon?.enchant?.effectId == 3608) {
 			stats = stats.addStat(Stat.StatMeleeCrit, 40);
 		}
-		if (player.getRace() == Race.RaceDwarf && rangedWeapon?.item.rangedWeaponType == RangedWeaponType.RangedWeaponTypeGun) {
+		if (player.getEffectiveRacialTraits() == Race.RaceDwarf && rangedWeapon?.item.rangedWeaponType == RangedWeaponType.RangedWeaponTypeGun) {
 			stats = stats.addStat(Stat.StatMeleeCrit, 1 * Mechanics.MELEE_CRIT_RATING_PER_CRIT_CHANCE);
 		}
-		if (player.getRace() == Race.RaceTroll && rangedWeapon?.item.rangedWeaponType == RangedWeaponType.RangedWeaponTypeBow) {
+		if (player.getEffectiveRacialTraits() == Race.RaceTroll && rangedWeapon?.item.rangedWeaponType == RangedWeaponType.RangedWeaponTypeBow) {
 			stats = stats.addStat(Stat.StatMeleeCrit, 1 * Mechanics.MELEE_CRIT_RATING_PER_CRIT_CHANCE);
 		}
 

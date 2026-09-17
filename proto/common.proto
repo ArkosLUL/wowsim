@@ -700,10 +700,18 @@ message PresetEncounter {
 	repeated PresetTarget targets = 2;
 }
 
+// mod-reforging: stat types are raw server ItemModType ids (6 spirit, 13 dodge, 14 parry, 31 hit,
+// 32 crit, 36 haste, 37 expertise).
+message ItemReforge {
+	int32 from_stat_type = 1;
+	int32 to_stat_type = 2;
+}
+
 message ItemSpec {
 	int32 id = 2;
 	int32 enchant = 3;
 	repeated int32 gems = 4;
+	ItemReforge reforge = 5;
 }
 
 message EquipmentSpec {

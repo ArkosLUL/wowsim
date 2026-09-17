@@ -22,6 +22,8 @@ message Player {
 
 	Race race = 1;
 	Class class = 2;
+	// mod-racial-trait-swap: race whose racials apply, Unknown = own race. Base stats always use race.
+	Race racial_traits = 47;
 
 	EquipmentSpec equipment = 3;
 	Consumes consumes = 4;

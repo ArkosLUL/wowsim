@@ -104,7 +104,7 @@ func (warlock *Warlock) NewInfernal() *InfernalPet {
 	infernal.AddStatDependency(stats.Agility, stats.MeleeCrit, core.CritRatingPerCritChance*1/62.5)
 
 	// command doesn't apply to infernal
-	if warlock.Race == proto.Race_RaceOrc {
+	if warlock.RacialTraits == proto.Race_RaceOrc {
 		infernal.PseudoStats.DamageDealtMultiplier /= 1.05
 	}
 

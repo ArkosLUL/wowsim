@@ -5,17 +5,18 @@ import { element, fragment, ref } from 'tsx-vanilla';
 import { setItemQualityCssClass } from '../css_utils';
 import { IndividualSimUI } from '../individual_sim_ui.js';
 import { Player } from '../player';
-import { Class, GemColor, ItemQuality, ItemSlot, ItemSpec, ItemType } from '../proto/common';
+import { Class, GemColor, ItemQuality, ItemReforge, ItemSlot, ItemSpec, ItemType } from '../proto/common';
 import { DatabaseFilters, RepFaction, UIEnchant as Enchant, UIGem as Gem, UIItem as Item, UIItem_FactionRestriction } from '../proto/ui.js';
 import { ActionId } from '../proto_utils/action_id';
 import { getEnchantDescription, getUniqueEnchantString } from '../proto_utils/enchants';
 import { EquippedItem } from '../proto_utils/equipped_item';
 import { gemMatchesSocket, getEmptyGemSocketIconUrl } from '../proto_utils/gems';
 import { difficultyNames, professionNames, REP_FACTION_NAMES, REP_LEVEL_NAMES, slotNames } from '../proto_utils/names.js';
+import { reforgeAmount, reforgeLabel, reforgeStatTypeName, validReforges } from '../proto_utils/reforging';
 import { Stats } from '../proto_utils/stats';
 import { Sim } from '../sim.js';
 import { SimUI } from '../sim_ui';
-import { EventID, TypedEvent } from '../typed_event';
+import { Disposable, EventID, TypedEvent } from '../typed_event';
 import { formatDeltaTextElem } from '../utils';
 import { BaseModal } from './base_modal';
 import { Component } from './component';
@@ -107,6 +108,7 @@ export class ItemRenderer extends Component {
 	readonly nameElem: HTMLAnchorElement;
 	readonly ilvlElem: HTMLSpanElement;
 	readonly enchantElem: HTMLAnchorElement;
+	readonly reforgeElem: HTMLAnchorElement;
 	readonly socketsContainerElem: HTMLElement;
 
 	constructor(parent: HTMLElement, root: HTMLElement, player: Player<any>) {
@@ -117,6 +119,7 @@ export class ItemRenderer extends Component {
 		const nameElem = ref<HTMLAnchorElement>();
 		const ilvlElem = ref<HTMLSpanElement>();
 		const enchantElem = ref<HTMLAnchorElement>();
+		const reforgeElem = ref<HTMLAnchorElement>();
 		const sce = ref<HTMLDivElement>();
 		this.rootElem.appendChild(
 			<>
@@ -129,6 +132,7 @@ export class ItemRenderer extends Component {
 				<div className="item-picker-labels-container">
 					<a ref={nameElem} className="item-picker-name" href="javascript:void(0)" attributes={{ role: 'button' }}></a>
 					<a ref={enchantElem} className="item-picker-enchant" href="javascript:void(0)" attributes={{ role: 'button' }}></a>
+					<a ref={reforgeElem} className="item-picker-reforge" href="javascript:void(0)" attributes={{ role: 'button' }}></a>
 				</div>
 			</>,
 		);
@@ -137,6 +141,7 @@ export class ItemRenderer extends Component {
 		this.nameElem = nameElem.value!;
 		this.ilvlElem = ilvlElem.value!;
 		this.enchantElem = enchantElem.value!;
+		this.reforgeElem = reforgeElem.value!;
 		this.socketsContainerElem = sce.value!;
 	}
 
@@ -151,6 +156,7 @@ export class ItemRenderer extends Component {
 
 		this.iconElem.style.backgroundImage = '';
 		this.enchantElem.innerText = '';
+		this.reforgeElem.innerText = '';
 		this.socketsContainerElem.innerText = '';
 		this.nameElem.textContent = '';
 		this.ilvlElem.replaceChildren();
@@ -191,6 +197,9 @@ export class ItemRenderer extends Component {
 			}
 			this.enchantElem.dataset.whtticon = 'false';
 		}
+
+		const reforge = newItem.reforge;
+		this.reforgeElem.textContent = reforge ? `Reforged: ${reforgeLabel(newItem.item, reforge)}` : '';
 
 		newItem.allSocketColors().forEach((socketColor, gemIdx) => {
 			const gemContainer = createGemContainer(socketColor, newItem.gems[gemIdx]);
@@ -252,10 +261,15 @@ export class ItemPicker extends Component {
 				event.preventDefault();
 				this.openSelectorModal(SelectorModalTabs.Enchants, gearData);
 			};
+			const openReforgeSelector = (event: Event) => {
+				event.preventDefault();
+				this.openSelectorModal(SelectorModalTabs.Reforging, gearData);
+			};
 
 			this.itemElem.iconElem.addEventListener('click', openGearSelector);
 			this.itemElem.nameElem.addEventListener('click', openGearSelector);
 			this.itemElem.enchantElem.addEventListener('click', openEnchantSelector);
+			this.itemElem.reforgeElem.addEventListener('click', openReforgeSelector);
 		});
 
 		player.gearChangeEmitter.on(() => {
@@ -379,6 +393,7 @@ export interface GearData {
 export enum SelectorModalTabs {
 	Items = 'Items',
 	Enchants = 'Enchants',
+	Reforging = 'Reforging',
 	Gem1 = 'Gem1',
 	Gem2 = 'Gem2',
 	Gem3 = 'Gem3',
@@ -398,6 +413,7 @@ export class SelectorModal extends BaseModal {
 	private player: Player<any>;
 	private config: SelectorModalConfig;
 	private ilists: ItemList<any>[];
+	private reforgeTabListener: Disposable | null = null;
 
 	private readonly tabsElem: HTMLElement;
 	private readonly contentElem: HTMLElement;
@@ -409,6 +425,7 @@ export class SelectorModal extends BaseModal {
 		this.player = player;
 		this.config = config;
 		this.ilists = [];
+		this.addOnDisposeCallback(() => this.reforgeTabListener?.dispose());
 
 		window.scrollTo({ top: 0 });
 
@@ -483,6 +500,7 @@ export class SelectorModal extends BaseModal {
 			GemColor.GemColorUnknown,
 			eventID => {
 				gearData.equipItem(eventID, null);
+				this.removeReforgeTab();
 				this.removeTabs('Gem');
 			},
 		);
@@ -515,6 +533,7 @@ export class SelectorModal extends BaseModal {
 			},
 		);
 
+		this.addReforgeTab(equippedItem, gearData, this.config.selectedTab == SelectorModalTabs.Reforging);
 		this.addGemTabs(slot, equippedItem, gearData);
 	}
 
@@ -527,6 +546,97 @@ export class SelectorModal extends BaseModal {
 		} else if (tab.includes('Enchant')) {
 			this.ilists[1].sizeRefresh();
 		}
+	}
+
+	// plain list, not an ItemList: reforges have no ids, phases or icons
+	private addReforgeTab(equippedItem: EquippedItem | null, gearData: GearData, selected: boolean) {
+		if (equippedItem == null) {
+			return;
+		}
+		const item = equippedItem.item;
+		const reforges = validReforges(item);
+		if (reforges.length == 0) {
+			return;
+		}
+
+		const label = SelectorModalTabs.Reforging;
+		const tabContentId = label + '-tab';
+
+		this.tabsElem.appendChild(
+			<li className="nav-item">
+				<a
+					className={`nav-link selector-modal-item-tab ${selected ? 'active' : ''}`}
+					dataset={{
+						label: label,
+						contentId: tabContentId,
+						bsToggle: 'tab',
+						bsTarget: `#${tabContentId}`,
+					}}
+					attributes={{
+						role: 'tab',
+						'aria-selected': selected,
+					}}
+					type="button">
+					Reforging
+				</a>
+			</li>,
+		);
+
+		const equipReforge = (reforge: ItemReforge | null) => {
+			const current = gearData.getEquippedItem();
+			if (current && current.id == item.id) {
+				gearData.equipItem(TypedEvent.nextEventID(), current.withReforge(reforge));
+			}
+		};
+
+		const listElem = ref<HTMLUListElement>();
+		const removeButton = ref<HTMLButtonElement>();
+		this.contentElem.appendChild(
+			<div id={tabContentId} className={`selector-modal-tab-pane tab-pane fade ${selected ? 'active show' : ''}`}>
+				<div className="selector-modal-filters">
+					<button ref={removeButton} className="selector-modal-remove-button btn btn-danger">
+						Remove Reforge
+					</button>
+				</div>
+				<ul ref={listElem} className="selector-modal-list selector-modal-reforge-list"></ul>
+			</div>,
+		);
+		removeButton.value!.addEventListener('click', () => equipReforge(null));
+
+		const rows = reforges.map(reforge => {
+			const amount = reforgeAmount(item, reforge.fromStatType);
+			const anchor = ref<HTMLAnchorElement>();
+			const row = (
+				<li className="selector-modal-list-item">
+					<div className="selector-modal-list-label-cell">
+						<a ref={anchor} className="selector-modal-list-item-link" href="javascript:void(0)" attributes={{ role: 'button' }}>
+							<label className="selector-modal-list-item-name">
+								{`-${amount} ${reforgeStatTypeName(reforge.fromStatType)} → +${amount} ${reforgeStatTypeName(reforge.toStatType)}`}
+							</label>
+						</a>
+					</div>
+				</li>
+			);
+			anchor.value!.addEventListener('click', event => {
+				event.preventDefault();
+				equipReforge(reforge);
+			});
+			listElem.value!.appendChild(row);
+			return { reforge, row };
+		});
+
+		const updateSelected = () => {
+			const current = gearData.getEquippedItem()?.reforge;
+			rows.forEach(({ reforge, row }) => row.classList.toggle('active', !!current && ItemReforge.equals(current, reforge)));
+		};
+		this.reforgeTabListener = gearData.changeEvent.on(updateSelected);
+		updateSelected();
+	}
+
+	private removeReforgeTab() {
+		this.reforgeTabListener?.dispose();
+		this.reforgeTabListener = null;
+		this.removeTabs('Reforging');
 	}
 
 	private addGemTabs(slot: ItemSlot, equippedItem: EquippedItem | null, gearData: GearData) {
@@ -670,9 +780,11 @@ export class SelectorModal extends BaseModal {
 				const item = itemData.item;
 				itemData.onEquip(TypedEvent.nextEventID(), item);
 
-				// If the item changes, the gem slots might change, so remove and recreate the gem tabs
+				// If the item changes, the gem slots and possible reforges might change, so remove and recreate those tabs
 				if (Item.is(item)) {
+					this.removeReforgeTab();
 					this.removeTabs('Gem');
+					this.addReforgeTab(gearData.getEquippedItem(), gearData, false);
 					this.addGemTabs(slot, gearData.getEquippedItem(), gearData);
 				}
 			},

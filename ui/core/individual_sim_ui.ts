@@ -492,6 +492,7 @@ export abstract class IndividualSimUI<SpecType extends Spec> extends SimUI {
 
 			this.player.applySharedDefaults(eventID);
 			this.player.setRace(eventID, specToEligibleRaces[this.player.spec][0]);
+			this.player.setRacialTraits(eventID, Race.RaceUnknown);
 			this.player.setGear(
 				eventID,
 				this.sim.db.lookupEquipmentSpec(this.individualConfig.defaults.gear),

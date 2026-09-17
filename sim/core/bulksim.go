@@ -15,6 +15,7 @@ import (
 	goproto "google.golang.org/protobuf/proto"
 
 	"github.com/wowsims/wotlk/sim/core/proto"
+	"github.com/wowsims/wotlk/sim/core/stats"
 )
 
 const (
@@ -650,7 +651,8 @@ type raidSimRequestChangeLog struct {
 }
 
 // createNewRequestWithSubstitution creates a copy of the input RaidSimRequest and applis the given
-// equipment susbstitution to the player's equipment. Copies enchant if specified and possible.
+// equipment susbstitution to the player's equipment. Copies enchant if specified and possible, and
+// the replaced item's reforge if it's valid on the new item.
 func createNewRequestWithSubstitution(readonlyInputRequest *proto.RaidSimRequest, substitution *equipmentSubstitution, autoEnchant bool) (*proto.RaidSimRequest, *raidSimRequestChangeLog) {
 	request := goproto.Clone(readonlyInputRequest).(*proto.RaidSimRequest)
 	changeLog := &raidSimRequestChangeLog{}
@@ -658,27 +660,38 @@ func createNewRequestWithSubstitution(readonlyInputRequest *proto.RaidSimRequest
 	equipment := player.Equipment
 	for _, is := range substitution.Items {
 		oldItem := equipment.Items[is.Slot]
-		if autoEnchant && oldItem.Enchant > 0 && is.Item.Enchant == 0 {
-			equipment.Items[is.Slot] = goproto.Clone(is.Item).(*proto.ItemSpec)
-			equipment.Items[is.Slot].Enchant = oldItem.Enchant
+		newItem := is.Item
+		carryEnchant := autoEnchant && oldItem.Enchant > 0 && newItem.Enchant == 0
+		carryReforge := canCarryReforge(oldItem, newItem)
+		if carryEnchant || carryReforge {
+			newItem = goproto.Clone(newItem).(*proto.ItemSpec)
+		}
+		if carryEnchant {
+			newItem.Enchant = oldItem.Enchant
 			// TODO: logic to decide if the enchant can be applied to the new item...
 			// Specifically, offhand shouldn't get shield enchant
 			// Main/One hand shouldn't get staff enchant
 			// Later: replace normal enchant if replacement is staff.
-
-			changeLog.AddedItems = append(changeLog.AddedItems, &proto.ItemSpecWithSlot{
-				Item: equipment.Items[is.Slot],
-				Slot: is.Slot,
-			})
-		} else {
-			equipment.Items[is.Slot] = is.Item
-			changeLog.AddedItems = append(changeLog.AddedItems, &proto.ItemSpecWithSlot{
-				Item: is.Item,
-				Slot: is.Slot,
-			})
 		}
+		if carryReforge {
+			newItem.Reforge = goproto.Clone(oldItem.Reforge).(*proto.ItemReforge)
+		}
+
+		equipment.Items[is.Slot] = newItem
+		changeLog.AddedItems = append(changeLog.AddedItems, &proto.ItemSpecWithSlot{
+			Item: newItem,
+			Slot: is.Slot,
+		})
 	}
 	return request, changeLog
+}
+
+func canCarryReforge(oldItem *proto.ItemSpec, newItem *proto.ItemSpec) bool {
+	if oldItem.GetReforge() == nil || newItem.GetReforge() != nil {
+		return false
+	}
+	dbItem, ok := ItemsByID[newItem.GetId()]
+	return ok && ReforgeStats(dbItem.Stats, oldItem.Reforge) != stats.Stats{}
 }
 
 type ItemComboChecker map[int64]struct{}

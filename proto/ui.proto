@@ -310,6 +310,7 @@ message SavedSettings {
 	IndividualBuffs player_buffs = 3;
 	Consumes consumes = 4;
 	Race race = 5;
+	Race racial_traits = 19;
 	repeated Profession professions = 9;
 	bool enable_item_swap = 18;
 	ItemSwap item_swap = 17;

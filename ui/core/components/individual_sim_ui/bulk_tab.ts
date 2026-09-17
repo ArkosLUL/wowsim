@@ -150,11 +150,11 @@ export class BulkItemPicker extends Component {
 			this.setItem(item);
 			const slot = getEligibleItemSlots(this.item.item)[0];
 			const eligibleEnchants = this.simUI.sim.db.getEnchants(slot);
-			const openEnchantGemSelector = (event: Event) => {
+			const openSelector = (event: Event, selectedTab: SelectorModalTabs) => {
 				event.preventDefault();
 				const changeEvent = new TypedEvent<void>();
 				const modal = new SelectorModal(this.bulkUI.rootElem, this.simUI, this.simUI.player, {
-					selectedTab: SelectorModalTabs.Enchants,
+					selectedTab: selectedTab,
 					slot: slot,
 					equippedItem: this.item,
 					eligibleItems: new Array<UIItem>(),
@@ -174,10 +174,14 @@ export class BulkItemPicker extends Component {
 					},
 				});
 
-				if (eligibleEnchants.length > 0) {
+				if (selectedTab == SelectorModalTabs.Reforging) {
+					modal.openTabName('Reforging');
+				} else if (eligibleEnchants.length > 0) {
 					modal.openTabName('Enchants');
 				} else if (this.item._gems.length > 0) {
 					modal.openTabName('Gem1');
+				} else {
+					modal.openTabName('Reforging');
 				}
 
 				const destroyItemButton = document.createElement('button');
@@ -197,9 +201,11 @@ export class BulkItemPicker extends Component {
 				}
 			};
 
+			const openEnchantGemSelector = (event: Event) => openSelector(event, SelectorModalTabs.Enchants);
 			this.itemElem.iconElem.addEventListener('click', openEnchantGemSelector);
 			this.itemElem.nameElem.addEventListener('click', openEnchantGemSelector);
 			this.itemElem.enchantElem.addEventListener('click', openEnchantGemSelector);
+			this.itemElem.reforgeElem.addEventListener('click', event => openSelector(event, SelectorModalTabs.Reforging));
 		});
 	}
 

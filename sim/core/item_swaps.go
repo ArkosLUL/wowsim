@@ -50,6 +50,7 @@ func (character *Character) enableItemSwap(itemSwap *proto.ItemSwap, mhCritMulti
 	}
 
 	// Handle MH and OH together, because present MH + empty OH --> swap MH and unequip OH
+	// note: a slot with the same item id never swaps, even if enchant, gems or reforge differ
 	if hasMhSwap || hasOhSwap {
 		if swapItems[0].ID != mainItems[0].ID {
 			slots = append(slots, proto.ItemSlot_ItemSlotMainHand)
@@ -152,8 +153,8 @@ func (swap *ItemSwap) GetItem(slot proto.ItemSlot) *Item {
 func (swap *ItemSwap) CalcStatChanges(slots []proto.ItemSlot) stats.Stats {
 	newStats := stats.Stats{}
 	for _, slot := range slots {
-		oldItemStats := swap.getItemStats(swap.character.Equipment[slot])
-		newItemStats := swap.getItemStats(*swap.GetItem(slot))
+		oldItemStats := swap.character.Equipment[slot].TotalStats()
+		newItemStats := swap.GetItem(slot).TotalStats()
 		newStats = newStats.Add(newItemStats.Subtract(oldItemStats))
 	}
 
@@ -215,8 +216,8 @@ func (swap *ItemSwap) swapItem(slot proto.ItemSlot, has2H bool) (bool, stats.Sta
 	}
 
 	swap.character.Equipment[slot] = *newItem
-	oldItemStats := swap.getItemStats(oldItem)
-	newItemStats := swap.getItemStats(*newItem)
+	oldItemStats := oldItem.TotalStats()
+	newItemStats := newItem.TotalStats()
 	newStats := newItemStats.Subtract(oldItemStats)
 
 	//2H will swap out the offhand also.
@@ -229,17 +230,6 @@ func (swap *ItemSwap) swapItem(slot proto.ItemSlot, has2H bool) (bool, stats.Sta
 	swap.swapWeapon(slot)
 
 	return true, newStats
-}
-
-func (swap *ItemSwap) getItemStats(item Item) stats.Stats {
-	itemStats := item.Stats
-	itemStats = itemStats.Add(item.Enchant.Stats)
-
-	for _, gem := range item.Gems {
-		itemStats = itemStats.Add(gem.Stats)
-	}
-
-	return itemStats
 }
 
 func (swap *ItemSwap) swapWeapon(slot proto.ItemSlot) {
@@ -282,5 +272,6 @@ func toItem(itemSpec *proto.ItemSpec) Item {
 		ID:      itemSpec.Id,
 		Gems:    itemSpec.Gems,
 		Enchant: itemSpec.Enchant,
+		Reforge: itemSpec.Reforge,
 	})
 }

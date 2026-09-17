@@ -10,7 +10,7 @@ import (
 func applyRaceEffects(agent Agent) {
 	character := agent.GetCharacter()
 
-	switch character.Race {
+	switch character.RacialTraits {
 	case proto.Race_RaceBloodElf:
 		character.PseudoStats.ReducedArcaneHitTakenChance += 0.02
 		character.PseudoStats.ReducedFireHitTakenChance += 0.02

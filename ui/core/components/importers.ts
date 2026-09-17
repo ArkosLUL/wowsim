@@ -110,6 +110,7 @@ ${error?.message}`);
 		const eventID = TypedEvent.nextEventID();
 		TypedEvent.freezeAllAndDo(() => {
 			simUI.player.setRace(eventID, race);
+			simUI.player.setRacialTraits(eventID, Race.RaceUnknown);
 			simUI.player.setGear(eventID, gear);
 			if (talentsStr && talentsStr != '--') {
 				simUI.player.setTalentsString(eventID, talentsStr);
