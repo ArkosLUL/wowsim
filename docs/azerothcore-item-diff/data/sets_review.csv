@@ -1,0 +1,78 @@
+set_id,set_name,pieces,verdict,go_location,aspect,go_value,server_value,classic_value,notes
+674,Absolution Regalia,2 pieces,false_positive,,Shadow Word: Pain duration,,+3 sec (3000 ms),+3 sec,ms vs sec formatting
+784,Blessed Battlegear of Undead Slaying,2 pieces,false_positive,,Damage vs undead,,1%,1%,bp 0 = 1%
+783,Blessed Garb of the Undead Slayer,2 pieces,false_positive,,Damage vs undead,,1%,1%,bp 0 = 1%
+781,Blessed Regalia of Undead Cleansing,2 pieces,false_positive,,Damage vs undead,,1%,1%,bp 0 = 1%
+883,Bloodmage's Regalia,2 pieces,false_positive,,Pushing the Limit haste,,12% for 5 sec (70753),12% for 5 sec,70752 effect1=15 is a dummy aura amount
+886,Crimson Acolyte's Regalia,4 pieces,false_positive,sim/priest/mind_flay.go:70,Mind Flay channel/period reduction,170 ms period,-510 ms channel / -170 ms period,0.5 sec / 0.17 sec,Tooltip rounds 0.51 to 0.5
+794,Cryptstalker Battlegear,2 pieces,false_positive,,Pet damage,,5%,5%,Same text
+835,Darkruned Plate,4 pieces,false_positive,,AMS physical damage reduction,,10% for 5 sec,10%,5 sec = AMS duration
+788,Dreadnaught Battlegear,4 pieces,false_positive,,Bleed proc rage cost reduction,,5 rage (50/10) 30 sec buff 10% chance,5 rage 10% chance,Buff duration only bookkeeping
+787,Dreadnaught Plate,4 pieces,false_positive,,Shield Wall duration,,+3 sec,+3 sec,ms vs sec formatting
+798,Dreamwalker Battlegear,2 pieces,false_positive,,Rip duration / Lacerate damage,,+4 sec / 5%,+4 sec / 5%,ms vs sec formatting
+798,Dreamwalker Battlegear,4 pieces,false_positive,,Barkskin duration / Tiger's Fury CD,,+3 sec / -3 sec,+3 sec / -3 sec,ms vs sec formatting
+893,Frost Witch's Regalia,4 pieces,false_positive,,Lava Burst extends Flame Shock,,6 (dummy = 2 ticks),two extra ticks,Same text
+893,Frost Witch's Regalia,2 pieces,false_positive,,Elemental Mastery CD reduction,,2 sec,2 sec,ms vs sec formatting
+765,Gladiator's Battlegear,4 pieces,false_positive,,Intercept CD,,-5 sec,-5 sec,ms vs sec formatting
+770,Gladiator's Earthshaker,4 pieces,false_positive,,Stormstrike CD,,-2 sec,-2 sec,ms vs sec formatting
+780,Gladiator's Felshroud,4 pieces,false_positive,,Fear cast time,,-0.2 sec,-0.2 sec,ms vs sec formatting
+777,Gladiator's Investiture,4 pieces,false_positive,,Weakened Soul duration,,-2 sec,-2 sec,ms vs sec formatting
+772,Gladiator's Pursuit,4 pieces,false_positive,,Trap CD,,-2 sec,-2 sec,ms vs sec formatting
+778,Gladiator's Raiment,4 pieces,false_positive,,Weakened Soul duration,,-2 sec,-2 sec,ms vs sec formatting
+779,Gladiator's Regalia,4 pieces,false_positive,,Polymorph cast time,,-0.15 sec,-0.15 sec,ms vs sec formatting
+766,Gladiator's Vindication,4 pieces,false_positive,,Judgement CD,,-1 sec,-1 sec,ms vs sec formatting
+771,Gladiator's Wartide,4 pieces,false_positive,,Grounding Totem CD,,-1.5 sec,-1.5 sec,ms vs sec formatting
+774,Gladiator's Wildhide,4 pieces,false_positive,,Wrath proc Starfire cast time,,-1.5 sec 15% 15s ICD,-1.5 sec 15% 15s ICD,ms vs sec formatting
+868,Hellscream's Battlegear,2 pieces,false_positive,,Stance crit / ArP,,2% crit / 6% ArP,2% crit / 6% ArP,effect3=25 is an EFFECT3 mod on Intimidating Shout (fear speed); irrelevant to sim
+870,Hellscream's Plate,2 pieces,false_positive,,Taunt CD / Devastate damage,,-2 sec / 5%,-2 sec / 5%,ms vs sec formatting
+870,Hellscream's Plate,4 pieces,false_positive,,Shield Block CD,,-10 sec,-10 sec,ms vs sec formatting
+836,Kirin Tor Garb,4 pieces,real,sim/mage/items.go:77,Chance to not consume Missile Barrage/Hot Streak/Brain Freeze,0.2 (20%),10% (64869 effect1; roll_chance_i in Player.cpp),not stated in tooltip,Const T84PcProcChance used in arcane_missiles.go:60 pyroblast.go:39 talents.go:729
+836,Kirin Tor Garb,4 pieces,real,sim/mage/items.go:77,Chance to not consume Missile Barrage/Hot Streak/Brain Freeze,0.2 (20%),10% (64869 effect1; roll_chance_i in Player.cpp),not stated in tooltip,Duplicate row (Kirin'dor Garb alt name at items.go:42)
+874,Koltira's Plate,2 pieces,false_positive,,Dark Command CD / Blood+Heart Strike damage,,-2 sec / 5%,-2 sec / 5%,ms vs sec formatting
+874,Koltira's Plate,4 pieces,false_positive,,UA/VB/Bone Shield CD,,-10 sec,-10 sec,ms vs sec formatting
+888,Lasherweave Regalia,2 pieces,false_positive,,Omen of Doom Nature/Arcane damage,,15% for 6 sec (70721),15% for 6 sec,Same values
+878,Liadrin's Battlegear,2 pieces,real,sim/paladin/talents.go:589,Righteous Vengeance tick crit damage,MeleeCritMultiplier (~2x),+100% crit bonus spellmod on RV 61840 (melee dmg class) => ~3x,not stated in tooltip,67188 effect2 = ADD_PCT_MODIFIER CRIT_DAMAGE_BONUS 100; crit roll itself at talents.go:601
+880,Liadrin's Plate,4 pieces,false_positive,,Divine Protection CD / Forbearance,,-30 sec,-30 sec,ms vs sec formatting
+880,Liadrin's Plate,2 pieces,false_positive,,Hand of Reckoning CD / HotR damage,,-2 sec / 5%,-2 sec / 5%,ms vs sec formatting
+855,Malfurion's Battlegear,2 pieces,false_positive,,Growl CD / Lacerate / Rake duration,,-2 sec / 5% / +3 sec,-2 sec / 5% / +3 sec,ms vs sec formatting
+855,Malfurion's Battlegear,4 pieces,false_positive,,Barkskin CD / Rip+FB crit,,-12 sec / 5%,-12 sec / 5%,ms vs sec formatting
+853,Malfurion's Regalia,2 pieces,false_positive,,Moonfire periodic crit,,can crit,can crit,Same text
+827,Nightsong Battlegear,4 pieces,false_positive,,Savage Roar / Survival Instincts duration,,+8 sec,+8 sec,ms vs sec formatting
+864,Nobundo's Regalia,2 pieces,false_positive,,Flame Shock duration,,+9 sec,+9 sec,ms vs sec formatting
+672,Onslaught Battlegear,2 pieces,false_positive,,Execute rage cost,,-3 rage (30/10),-3 rage,Rage in tenths
+881,Purified Shard of the Gods,2 pieces,false_positive,sim/common/wotlk/item_sets.go:74,proc chance / ICD,25% / 50s,25% / 50s (spell_proc 69755),not stated in tooltip,Healing proc uses the same values (:113-114)
+789,Redemption Battlegear,4 pieces,false_positive,,Judgement CD,,-1 sec,-1 sec,ms vs sec formatting
+791,Redemption Plate,4 pieces,false_positive,,Divine Shield / Divine Protection duration,,+3 sec,+3 sec,ms vs sec formatting
+804,Regalia of Faith,2 pieces,false_positive,,Prayer of Mending extra jump,,+1 jump,+1 jump,Same text
+856,Runetotem's Battlegear,2 pieces,false_positive,,Growl CD / Lacerate / Rake duration,,-2 sec / 5% / +3 sec,-2 sec / 5% / +3 sec,ms vs sec formatting
+856,Runetotem's Battlegear,4 pieces,false_positive,,Barkskin CD / Rip+FB crit,,-12 sec / 5%,-12 sec / 5%,ms vs sec formatting
+854,Runetotem's Regalia,2 pieces,false_positive,,Moonfire periodic crit,,can crit,can crit,Same text
+792,Scourgeborne Battlegear,4 pieces,false_positive,,Oblit/SS/DS extra runic power,,5 RP (50/10),5 RP,RP in tenths
+793,Scourgeborne Plate,4 pieces,false_positive,,Icebound Fortitude duration,,+3 sec,+3 sec,ms vs sec formatting
+897,Scourgelord's Battlegear,4 pieces,false_positive,,Advantage damage buff,,3% for 15 sec,3% for 15 sec,effect2=6 is a dummy effect
+890,Shadowblade's Battlegear,2 pieces,false_positive,,Tricks of the Trade energy,,-100% cost + 15 energy,15 energy,effect1=100 is the cost removal
+882,Shiny Shard of the Gods,2 pieces,false_positive,sim/common/wotlk/item_sets.go:74,proc chance / ICD,25% / 50s,25% / 50s (spell_proc 69739),not stated in tooltip,Healing proc uses the same values (:113-114)
+831,Siegebreaker Plate,4 pieces,false_positive,sim/warrior/items.go:82,Shield Block magic damage reduction,,20% for 5 sec,20%,Duration not in tooltip; sim NYI (comment says 10%)
+682,Skyshatter Harness,4 pieces,false_positive,,Stormstrike AP buff,,70 AP for 12 sec,70 AP for 12 sec,effect1=100 is class-script override amount
+684,Skyshatter Regalia,2 pieces,false_positive,,Totemic Mastery stats,,19 mp5 / 35 crit rating / 45 SP,19 mp5 / 35 crit rating / 45 SP,Same values (38437)
+671,Tempest Regalia,2 pieces,false_positive,,Evocation duration,,+2 sec,+2 sec,ms vs sec formatting
+826,Terrorblade Battlegear,2 pieces,false_positive,,Deadly Poison energy,,1 energy,1 energy,bp 0 = 1
+873,Thassarian's Plate,4 pieces,false_positive,,UA/VB/Bone Shield CD,,-10 sec,-10 sec,ms vs sec formatting
+873,Thassarian's Plate,2 pieces,false_positive,,Dark Command CD / Blood+Heart Strike damage,,-2 sec / 5%,-2 sec / 5%,ms vs sec formatting
+719,The Fists of Fury,2 pieces,real,sim/common/tbc/melee_sets.go:33,Fire proc PPM,2.0 PPM,1.5 PPM (spell_proc 41989),not stated in tooltip,Damage 100-150 matches
+699,The Twin Blades of Azzinoth,2 pieces,real,sim/common/tbc/melee_sets.go:138,Haste proc PPM,1.0 PPM,2 PPM (spell_proc 41434),not stated in tooltip,450 haste / 10 sec / 45s ICD match
+863,Thrall's Regalia,2 pieces,false_positive,,Flame Shock duration,,+9 sec,+9 sec,ms vs sec formatting
+677,Thunderheart Regalia,2 pieces,false_positive,,Moonfire duration,,+3 sec,+3 sec,ms vs sec formatting
+630,Tidefury Raiment,2 pieces,false_positive,sim/shaman/chain_lightning.go:34,Chain Lightning jump damage loss,0.83 multiplier,0.7 x 1.19 = 0.833 (loses 16.7%),loses 17%,Rounding
+877,Turalyon's Battlegear,2 pieces,real,sim/paladin/talents.go:589,Righteous Vengeance tick crit damage,MeleeCritMultiplier (~2x),+100% crit bonus spellmod on RV 61840 (melee dmg class) => ~3x,not stated in tooltip,67188 effect2 = ADD_PCT_MODIFIER CRIT_DAMAGE_BONUS 100; crit roll itself at talents.go:601
+879,Turalyon's Plate,2 pieces,false_positive,,Hand of Reckoning CD / HotR damage,,-2 sec / 5%,-2 sec / 5%,ms vs sec formatting
+879,Turalyon's Plate,4 pieces,false_positive,,Divine Protection CD / Forbearance,,-30 sec,-30 sec,ms vs sec formatting
+782,Undead Slayer's Blessed Armor,2 pieces,false_positive,,Damage vs undead,,1%,1%,bp 0 = 1%
+849,Velen's Regalia,2 pieces,false_positive,,Vampiric Touch duration,,+6 sec,+6 sec,ms vs sec formatting
+859,Windrunner's Battlegear,4 pieces,false_positive,sim/hunter/wotlk_items.go:102,proc chance / ICD,35% / 45s,35% / 45s (spell_proc 67151),not stated in tooltip,Pet 600 AP for 15s (68130) matches :101
+860,Windrunner's Pursuit,4 pieces,false_positive,sim/hunter/wotlk_items.go:102,proc chance / ICD,35% / 45s,35% / 45s (spell_proc 67151),not stated in tooltip,Pet 600 AP for 15s (68130) matches :101
+867,Wrynn's Battlegear,2 pieces,false_positive,,Stance crit / ArP,,2% crit / 6% ArP,2% crit / 6% ArP,effect3=25 is an EFFECT3 mod on Intimidating Shout (fear speed); irrelevant to sim
+869,Wrynn's Plate,2 pieces,false_positive,,Taunt CD / Devastate damage,,-2 sec / 5%,-2 sec / 5%,ms vs sec formatting
+869,Wrynn's Plate,4 pieces,false_positive,,Shield Block CD,,-10 sec,-10 sec,ms vs sec formatting
+896,Ymirjar Lord's Plate,4 pieces,false_positive,sim/warrior/items.go:114,Bloodrage health cost / absorb,,no health cost; absorb 20% max HP (effect2),no health cost; absorb 20%,effect1=100 is cost removal; sim NYI
+850,Zabra's Regalia,2 pieces,false_positive,,Vampiric Touch duration,,+6 sec,+6 sec,ms vs sec formatting

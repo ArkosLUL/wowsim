@@ -705,17 +705,24 @@ func (item WowheadItemResponse) GetGemStats() Stats {
 var itemSetNameRegex = regexp.MustCompile(`<a href="/wotlk/item-set=-?([0-9]+)/(.*)" class="q">([^<]+)<`)
 
 func (item WowheadItemResponse) GetItemSetName() string {
-	original := item.GetTooltipRegexString(itemSetNameRegex, 3)
+	return NormalizeSetName(item.GetTooltipRegexString(itemSetNameRegex, 3))
+}
 
-	// Strip out the 10/25 man prefixes from set names
-	withoutTier := strings.TrimPrefix(strings.TrimPrefix(strings.TrimPrefix(strings.TrimPrefix(strings.TrimPrefix(original, "Heroes' "), "Valorous "), "Conqueror's "), "Triumphant "), "Sanctified ")
-	if original != withoutTier { // if we found a tier prefix, return now.
+// NormalizeSetName strips the 10/25 man prefixes and PvP season names from item set names, so the
+// sim tracks each set once.
+func NormalizeSetName(name string) string {
+	withoutTier := name
+	for _, prefix := range []string{"Heroes' ", "Valorous ", "Conqueror's ", "Triumphant ", "Sanctified "} {
+		withoutTier = strings.TrimPrefix(withoutTier, prefix)
+	}
+	if withoutTier != name {
 		return withoutTier
 	}
 
-	// Now strip out the season prefix from any pvp set names
-	withoutPvp := strings.Replace(strings.Replace(strings.Replace(strings.Replace(strings.Replace(strings.Replace(original, "Savage Glad", "Glad", 1), "Hateful Glad", "Glad", 1), "Deadly Glad", "Glad", 1), "Furious Glad", "Glad", 1), "Relentless Glad", "Glad", 1), "Wrathful Glad", "Glad", 1)
-	return withoutPvp
+	for _, season := range []string{"Savage", "Hateful", "Deadly", "Furious", "Relentless", "Wrathful"} {
+		name = strings.Replace(name, season+" Glad", "Glad", 1)
+	}
+	return name
 }
 
 func (item WowheadItemResponse) IsHeroic() bool {

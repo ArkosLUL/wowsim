@@ -1,0 +1,40 @@
+id,name,reason,diffs (server -> sim)
+38691,Ancestral Claymore,scaling stats,stat Strength: 0 -> 63; stat Stamina: 0 -> 95; stat SpellCrit: 0 -> 53; stat SpellHaste: 0 -> 41; stat MeleeCrit: 0 -> 53; stat MeleeHaste: 0 -> 41; weapon damage min: 0 -> 436; weapon damage max: 0 -> 655; weapon speed: 0 -> 3.5
+42943,Bloodied Arcanite Reaper,scaling stats,stat Strength: 0 -> 68; stat Stamina: 13 -> 103; stat SpellCrit: 0 -> 68; stat MeleeCrit: 0 -> 68; weapon damage min: 1 -> 444; weapon damage max: 0 -> 741
+42944,Balanced Heartseeker,scaling stats,stat Agility: 0 -> 22; stat SpellHit: 0 -> 17; stat AttackPower: 0 -> 81; stat MeleeHit: 0 -> 17; stat RangedAttackPower: 0 -> 81; weapon damage min: 1 -> 142; weapon damage max: 0 -> 265
+42945,Venerable Dal'Rend's Sacred Charge,scaling stats,stat Strength: 4 -> 0; stat Stamina: 0 -> 103; stat SpellCrit: 0 -> 68; stat AttackPower: 0 -> 137; stat MeleeCrit: 0 -> 68; stat RangedAttackPower: 0 -> 137; weapon damage min: 1 -> 235; weapon damage max: 0 -> 437
+42946,Charmed Ancient Bone Bow,scaling stats,stat SpellHit: 0 -> 15; stat SpellCrit: 0 -> 19; stat AttackPower: 0 -> 54; stat MeleeHit: 0 -> 15; stat MeleeCrit: 0 -> 19; stat RangedAttackPower: 0 -> 54; weapon damage min: 1 -> 211; weapon damage max: 0 -> 393
+42947,Dignified Headmaster's Charge,scaling stats,stat Stamina: 0 -> 93; stat Intellect: 0 -> 76; stat SpellPower: 0 -> 343; stat SpellCrit: 0 -> 62; stat MeleeCrit: 0 -> 62; weapon damage min: 1 -> 259; weapon damage max: 0 -> 390
+42948,Devout Aurastone Hammer,scaling stats,stat Stamina: 0 -> 66; stat Intellect: 0 -> 99; stat SpellPower: 0 -> 343; stat MP5: 0 -> 17; weapon damage min: 1 -> 162; weapon damage max: 0 -> 302
+42949,Polished Spaulders of Valor,scaling stats,stat Strength: 0 -> 64; stat Stamina: 0 -> 64; stat SpellCrit: 0 -> 43; stat MeleeCrit: 0 -> 43; stat Armor: 31 -> 1570
+42950,Champion Herod's Shoulder,scaling stats,stat Agility: 0 -> 51; stat Stamina: 0 -> 54; stat Intellect: 0 -> 29; stat AttackPower: 0 -> 102; stat Armor: 28 -> 878; stat RangedAttackPower: 0 -> 102
+42951,Mystical Pauldrons of Elements,scaling stats,stat Stamina: 0 -> 64; stat Intellect: 0 -> 43; stat SpellPower: 0 -> 50; stat MP5: 0 -> 17; stat Armor: 28 -> 878
+42952,Stained Shadowcraft Spaulders,scaling stats,stat Stamina: 0 -> 46; stat SpellHit: 0 -> 39; stat AttackPower: 0 -> 140; stat MeleeHit: 0 -> 39; stat Armor: 12 -> 395; stat RangedAttackPower: 0 -> 140
+42984,Preened Ironfeather Shoulders,scaling stats,stat Stamina: 0 -> 38; stat Intellect: 0 -> 38; stat Spirit: 0 -> 51; stat SpellPower: 0 -> 59; stat Armor: 12 -> 395
+42985,Tattered Dreadmist Mantle,scaling stats,stat Stamina: 0 -> 38; stat Intellect: 0 -> 38; stat Spirit: 0 -> 51; stat SpellPower: 0 -> 59; stat Armor: 2 -> 210
+42991,Swift Hand of Justice,scaling stats,stat SpellHaste: 0 -> 64; stat MeleeHaste: 0 -> 64
+42992,Discerning Eye of the Beast,scaling stats,stat SpellPower: 0 -> 75
+44091,Sharpened Scarlet Kris,scaling stats,stat Stamina: 0 -> 44; stat AttackPower: 0 -> 58; stat RangedAttackPower: 0 -> 58; stat Resilience: 0 -> 29; weapon damage min: 1 -> 125; weapon damage max: 0 -> 234
+44092,Reforged Truesilver Champion,scaling stats,stat Strength: 0 -> 95; stat Stamina: 0 -> 62; stat Resilience: 0 -> 53; weapon damage min: 1 -> 449; weapon damage max: 0 -> 674
+44093,Upgraded Dwarven Hand Cannon,scaling stats,stat SpellCrit: 0 -> 30; stat AttackPower: 0 -> 34; stat MeleeCrit: 0 -> 30; stat Resilience: 0 -> 13; weapon damage min: 1 -> 219; weapon damage max: 0 -> 407
+44094,The Blessed Hammer of Grace,scaling stats,stat Stamina: 0 -> 87; stat SpellPower: 0 -> 343; stat MP5: 0 -> 23; stat Resilience: 0 -> 87; weapon damage min: 1 -> 162; weapon damage max: 0 -> 302
+44095,Grand Staff of Jordan,scaling stats,stat Stamina: 0 -> 103; stat SpellPower: 0 -> 343; stat SpellHit: 0 -> 68; stat MeleeHit: 0 -> 68; stat Resilience: 0 -> 68; weapon damage min: 1 -> 331; weapon damage max: 0 -> 497
+44096,Battleworn Thrash Blade,scaling stats,stat Resilience: 0 -> 29; weapon damage min: 1 -> 201; weapon damage max: 0 -> 374
+44097,Inherited Insignia of the Horde,scaling stats,stat Resilience: 0 -> 64
+44098,Inherited Insignia of the Alliance,scaling stats,stat Resilience: 0 -> 64
+44099,Strengthened Stockade Pauldrons,scaling stats,stat Strength: 0 -> 51; stat Stamina: 0 -> 76; stat Armor: 45 -> 1570; stat Resilience: 0 -> 51
+44100,Pristine Lightforge Spaulders,scaling stats,stat Stamina: 0 -> 64; stat SpellPower: 0 -> 50; stat MP5: 0 -> 17; stat Armor: 31 -> 1570; stat Resilience: 0 -> 43
+44101,Prized Beastmaster's Mantle,scaling stats,stat Agility: 0 -> 43; stat Stamina: 0 -> 64; stat AttackPower: 0 -> 86; stat Armor: 32 -> 878; stat RangedAttackPower: 0 -> 86; stat Resilience: 0 -> 43
+44102,Aged Pauldrons of The Five Thunders,scaling stats,stat Stamina: 0 -> 51; stat Intellect: 0 -> 34; stat SpellPower: 0 -> 59; stat Armor: 32 -> 878; stat Resilience: 0 -> 51
+44103,Exceptional Stormshroud Shoulders,scaling stats,stat Agility: 0 -> 37; stat Stamina: 0 -> 64; stat AttackPower: 0 -> 86; stat Armor: 13 -> 395; stat RangedAttackPower: 0 -> 86; stat Resilience: 0 -> 46
+44105,Lasting Feralheart Spaulders,scaling stats,stat Stamina: 0 -> 51; stat Spirit: 0 -> 34; stat SpellPower: 0 -> 59; stat Armor: 14 -> 395; stat Resilience: 0 -> 51
+44107,Exquisite Sunderseer Mantle,scaling stats,stat Stamina: 0 -> 51; stat SpellPower: 0 -> 59; stat SpellCrit: 0 -> 34; stat MeleeCrit: 0 -> 34; stat Armor: 2 -> 210; stat Resilience: 0 -> 51
+48677,Champion's Deathdealer Breastplate,scaling stats,stat Agility: 0 -> 68; stat Stamina: 0 -> 68; stat Intellect: 0 -> 45; stat AttackPower: 0 -> 137; stat Armor: 35 -> 1171; stat RangedAttackPower: 0 -> 137
+48683,Mystical Vest of Elements,scaling stats,stat Stamina: 0 -> 52; stat Intellect: 0 -> 52; stat SpellPower: 0 -> 80; stat MP5: 0 -> 34; stat Armor: 35 -> 1171
+48685,Polished Breastplate of Valor,scaling stats,stat Strength: 0 -> 78; stat Stamina: 0 -> 78; stat SpellCrit: 0 -> 68; stat MeleeCrit: 0 -> 68; stat Armor: 60 -> 2093
+48687,Preened Ironfeather Breastplate,scaling stats,stat Stamina: 0 -> 52; stat Intellect: 0 -> 52; stat Spirit: 0 -> 68; stat SpellPower: 0 -> 80; stat Armor: 16 -> 527
+48689,Stained Shadowcraft Tunic,scaling stats,stat Stamina: 0 -> 103; stat SpellHit: 0 -> 68; stat AttackPower: 0 -> 137; stat MeleeHit: 0 -> 68; stat Armor: 19 -> 527; stat RangedAttackPower: 0 -> 137
+48691,Tattered Dreadmist Robe,scaling stats,stat Stamina: 0 -> 52; stat Intellect: 0 -> 52; stat Spirit: 0 -> 68; stat SpellPower: 0 -> 80; stat Armor: 3 -> 280
+48716,Venerable Mass of McGowan,scaling stats,stat Agility: 0 -> 29; stat Stamina: 0 -> 44; stat SpellCrit: 0 -> 19; stat AttackPower: 0 -> 39; stat MeleeCrit: 0 -> 19; stat RangedAttackPower: 0 -> 39; weapon damage min: 1 -> 168; weapon damage max: 0 -> 313
+48718,Repurposed Lava Dredger,scaling stats,stat Agility: 0 -> 68; stat Stamina: 0 -> 103; stat AttackPower: 0 -> 91; stat ArmorPenetration: 0 -> 45; stat RangedAttackPower: 0 -> 91; weapon damage min: 1 -> 361; weapon damage max: 0 -> 543
+50255,Dread Pirate Ring,scaling stats,stat Stamina: 0 -> 34; stat SpellHit: 0 -> 29; stat SpellCrit: 0 -> 53; stat MeleeHit: 0 -> 29; stat MeleeCrit: 0 -> 53

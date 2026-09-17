@@ -1,0 +1,156 @@
+package azerothcore
+
+import (
+	"github.com/wowsims/wotlk/sim/core/proto"
+	"github.com/wowsims/wotlk/tools/database"
+)
+
+// ConvertedItem is an item_template row expressed in the sim's UIItem terms.
+type ConvertedItem struct {
+	Item *proto.UIItem
+
+	// Spells the item casts or applies that aren't flat stats (procs, on-use, special equip effects).
+	EffectSpells []ItemSpell
+	// Stat types the sim has no stat for, e.g. hit taken rating.
+	UnmappedStatTypes []int32
+	// Random enchant and heirloom-scaling items have stats that item_template doesn't hold.
+	NotComparable string
+}
+
+type ItemSpell struct {
+	SpellID          int32
+	Trigger          int32
+	PPMRate          float64
+	Cooldown         int32 // ms, -1 when unset
+	CategoryCooldown int32 // ms, -1 when unset
+}
+
+// CooldownMs returns the item's cooldown for the spell, or -1 when the item leaves it to the spell
+// (Player::AddSpellAndCategoryCooldowns only falls back when both item cooldowns are unset).
+func (s ItemSpell) CooldownMs() int32 {
+	if s.Cooldown < 0 && s.CategoryCooldown < 0 {
+		return -1
+	}
+	return max(s.Cooldown, s.CategoryCooldown, 0)
+}
+
+func ConvertItem(row *ItemRow, dbc *DBC) *ConvertedItem {
+	var stats database.Stats
+	converted := &ConvertedItem{}
+
+	for i := 0; i < 10; i++ {
+		if row.StatValues[i] == 0 {
+			continue
+		}
+		if !AddItemMod(&stats, row.StatTypes[i], row.StatValues[i]) {
+			converted.UnmappedStatTypes = append(converted.UnmappedStatTypes, row.StatTypes[i])
+		}
+	}
+
+	for i := 0; i < 5; i++ {
+		spellID := row.SpellIDs[i]
+		if spellID <= 0 {
+			continue
+		}
+		if row.SpellTriggers[i] == ItemSpellTriggerOnEquip {
+			if spell := dbc.Spells[spellID]; spell != nil && AddEquipSpellStats(&stats, spell) {
+				continue
+			}
+		}
+		converted.EffectSpells = append(converted.EffectSpells, ItemSpell{
+			SpellID:          spellID,
+			Trigger:          row.SpellTriggers[i],
+			PPMRate:          row.SpellPPMRates[i],
+			Cooldown:         row.SpellCooldowns[i],
+			CategoryCooldown: row.SpellCategoryCooldowns[i],
+		})
+	}
+
+	armor, bonusArmor := splitArmor(row)
+	stats[proto.Stat_StatArmor] += armor
+	stats[proto.Stat_StatBonusArmor] += bonusArmor
+	stats[proto.Stat_StatFireResistance] += float64(row.FireRes)
+	stats[proto.Stat_StatNatureResistance] += float64(row.NatureRes)
+	stats[proto.Stat_StatFrostResistance] += float64(row.FrostRes)
+	stats[proto.Stat_StatShadowResistance] += float64(row.ShadowRes)
+	stats[proto.Stat_StatArcaneResistance] += float64(row.ArcaneRes)
+	stats[proto.Stat_StatBlockValue] += float64(row.Block)
+
+	item := &proto.UIItem{
+		Id:             row.Entry,
+		Name:           row.Name,
+		Stats:          stats[:],
+		Ilvl:           row.ItemLevel,
+		Quality:        proto.ItemQuality(row.Quality),
+		Heroic:         row.Flags&ItemFlagHeroicTooltip != 0,
+		ClassAllowlist: AllowedClasses(row.AllowableClass),
+	}
+
+	for _, color := range row.SocketColors {
+		if color != 0 {
+			item.GemSockets = append(item.GemSockets, SocketGemColor(color))
+		}
+	}
+	var socketBonus database.Stats
+	if enchant := dbc.Enchantments[row.SocketBonus]; enchant != nil {
+		socketBonus, _, _ = EnchantmentStats(enchant, dbc)
+	}
+	item.SocketBonus = socketBonus[:]
+
+	if row.Delay > 0 && (row.DmgMin > 0 || row.DmgMax > 0) {
+		item.WeaponDamageMin = row.DmgMin
+		item.WeaponDamageMax = row.DmgMax
+		item.WeaponSpeed = float64(row.Delay) / 1000
+	}
+
+	if set := dbc.ItemSets[row.ItemSet]; set != nil {
+		item.SetName = database.NormalizeSetName(set.Name)
+	}
+
+	switch {
+	case row.RandomProperty != 0 || row.RandomSuffix != 0:
+		converted.NotComparable = "random enchant"
+	case row.ScalingStatDistribution != 0:
+		converted.NotComparable = "scaling stats"
+	}
+
+	converted.Item = item
+	return converted
+}
+
+// splitArmor follows the tooltip parser: armor slots and shields keep base armor separate from bonus
+// armor, while armor on jewelry, trinkets and weapons counts entirely as bonus armor.
+func splitArmor(row *ItemRow) (armor, bonusArmor float64) {
+	total := float64(row.Armor)
+	bonus := row.ArmorDamageModifier
+	if total == 0 {
+		// Ranged weapons and a few odd rows set ArmorDamageModifier without any armor; tooltips show no armor for them.
+		return 0, 0
+	}
+	switch row.InventoryType {
+	case 2, 11, 12, 13, 17, 21, 22, 23: // neck, finger, trinket, weapons and held off-hands
+		return 0, total
+	}
+	return total - bonus, bonus
+}
+
+// ConvertGem returns nil when the item isn't a gem.
+func ConvertGem(row *ItemRow, dbc *DBC) (*proto.UIGem, []EnchantSpell) {
+	props := dbc.GemProperties[row.GemProperties]
+	if props == nil {
+		return nil, nil
+	}
+	gem := &proto.UIGem{
+		Id:      row.Entry,
+		Name:    row.Name,
+		Color:   GemPropertiesColor(props.Color),
+		Quality: proto.ItemQuality(row.Quality),
+	}
+	var stats database.Stats
+	var spells []EnchantSpell
+	if enchant := dbc.Enchantments[props.EnchantID]; enchant != nil {
+		stats, spells, _ = EnchantmentStats(enchant, dbc)
+	}
+	gem.Stats = stats[:]
+	return gem, spells
+}

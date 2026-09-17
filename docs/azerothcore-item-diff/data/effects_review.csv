@@ -1,0 +1,124 @@
+kind,id,name,verdict,go_location,aspect,go_value,server_value,classic_value,notes
+item,9449,Manual Crowd Pummeler,not_modeled,sim/common/tbc/melee_items.go:19,buff duration,permanent +500 haste,30s,30s,Sim assumes pummeler swapping for full uptime; 500 haste matches
+item,11815,Hand of Justice,real,sim/common/tbc/melee_trinkets.go:37,proc rate,1.3333% flat per melee hit,1 PPM with REDUCE_PROC_60 (x1/3 at lvl 80) = ~1.44% @2.6s speed,,spell_proc 15600: PPM=1 overrides Chance=2; weapon-speed dependent; 2s ICD matches
+item,19019,"Thunderfury, Blessed Blade of the Windseeker",not_modeled,sim/common/tbc/melee_items.go:44,target attack speed slow,none,20% slow 12s (27648),20%,Sim models 300 dmg and -25 nature res (both match) but not the attack speed slow
+item,19019,"Thunderfury, Blessed Blade of the Windseeker",real,sim/common/tbc/melee_items.go:26,PPM,6,8,,item_template spellppmRate_1=8 set by mod-individual-progression vanilla_item_changes.sql
+item,20966,Jade Pendant of Blasting,not_modeled,sim/core/constants.go:33,party spell power buff,none,15 SP for 30 min,15,Only an item ID constant; not referenced anywhere in sim
+item,24114,Braided Eternium Chain,false_positive,sim/core/buffs.go:295,party crit rating,28 melee+spell crit rating,28,28,Matches; server's +5 weapon dmg equip (33488) matches melee_items.go:105; 1h use cooldown doesn't apply since the sim models the buff as always on
+item,28830,Dragonspine Trophy,real,sim/common/tbc/melee_trinkets.go:78,PPM,1.0,1.5,,"325 haste, 10s, 20s ICD match"
+item,29996,Rod of the Sun King,false_positive,sim/common/tbc/melee_items.go:205,rage gain,5 rage,50 (rage x10 units = 5 rage),5,Energy 10 also matches
+item,29996,Rod of the Sun King,real,sim/common/tbc/melee_items.go:178,PPM,1.0,6,,item_template spellppmRate_1=6
+item,30720,Serpent-Coil Braid,false_positive,sim/mage/mana_gems.go:28,mana gem bonus,0.25,25% (effect2=100 is class-script marker),25%,effect2 is OVERRIDE_CLASS_SCRIPTS misc 5497; 225 SP 15s (37445) matches
+item,30892,Beast-tamer's Shoulders,false_positive,sim/common/tbc/other_items.go:14,pet damage,1.03,3%,3%,duration=4 is passive-aura bookkeeping
+item,30892,Beast-tamer's Shoulders,false_positive,sim/common/tbc/other_items.go:15,pet crit,2%,2%,2%,duration=4 is passive-aura bookkeeping
+item,32330,Totem of Ancestral Guidance,false_positive,sim/shaman/electric_spell.go:84,LB/CL spell power,85,85,85,Matches
+item,32336,Black Bow of the Betrayer,false_positive,sim/hunter/items.go:25,mana on ranged hit,8,8 (29471),8,Target mana drain (27526) not modeled; irrelevant for sim
+item,32375,Bulwark of Azzinoth,real,sim/common/tbc/melee_items.go:301,proc rate,2% flat per physical hit taken,"6 PPM (spell_proc; uses wearer's weapon speed, ~26% @2.6s)",2%,2000 armor 10s matches
+item,32387,Idol of the Raven Goddess,not_modeled,sim/druid/items.go:394,Tree of Life healing SP,none,44,44,40 crit rating for LotP/Moonkin matches
+item,32486,Ashtongue Talisman of Equilibrium,false_positive,sim/druid/items.go:314,proc chances/amounts,Starfire 25% 150 SP 8s; Mangle 40% 140 Str 8s,same (AC script + 40445/40452),same,Rejuvenation 112 SP part not modeled
+item,32489,Ashtongue Talisman of Zeal,false_positive,sim/paladin/items.go:510,judgement DoT,50% chance 480 over 8s,50% 480 over 8s (40472),480,FoL/HL HoT part not modeled
+item,32505,Madness of the Betrayer,real,sim/common/tbc/melee_trinkets.go:143,PPM,1.0,3,,42 ArP 10s matches
+item,33506,Skycall Totem,real,sim/shaman/items.go:70,haste proc amount,101,100,100,"Tiny; 15% chance, 30s ICD, 10s match"
+item,34334,"Thori'dal, the Stars' Fury",false_positive,sim/hunter/hunter.go:165,ranged speed,1.15,15%,15%,Applied as passive for all hunters
+item,34334,"Thori'dal, the Stars' Fury",false_positive,sim/hunter/hunter.go:167,no ammo,ammo DPS skipped,no ammo,,No numeric value
+item,34429,Shifting Naaru Sliver,false_positive,sim/common/tbc/caster_trinkets.go:15,Power Circle,320 SP / 15s / 90s CD,320 SP / 15s / 90s CD,320 SP / 15s,"flagged 45043 effect1=100 is the ground effect's dummy aura (effect 27, aura 4); the circle applies 45044 Limitless Power (320 SP, 15s), which isn't in the trigger chain"
+item,37220,Essence of Gossamer,not_modeled,sim/common/wotlk/other_effects.go:25,absorb cap,uncapped for 10s,4000 total,4000,"140 per hit, 5%, 50s ICD match; cap also in Classic"
+item,38287,Empty Mug of Direbrew,false_positive,sim/common/tbc/melee_trinkets.go:17,effect3,n/a,30 (aura type 0),,effect3 applies no aura; 278 AP/RAP 20s matches
+item,38361,Venture Co. Lightning Rod,false_positive,sim/shaman/lavaburst.go:12,Lava Burst damage,121,121,121,Matches
+item,38367,Venture Co. Flame Slicer,false_positive,sim/shaman/lavalash.go:25,Lava Lash damage,25,25,25,Matches
+item,40191,Libram of Radiance,false_positive,sim/paladin/crusader_strike.go:12,Crusader Strike damage,79,105 x 75% weapon dmg = 79,79,Matches after CS weapon % scaling
+item,40258,Forethought Talisman,real,sim/common/wotlk/other_effects.go:225,HoT total,3752 (938/tick),3572 (893 x 4),3572,Go typo (digits swapped); 12s duration matches
+item,40258,Forethought Talisman,real,sim/common/wotlk/other_effects.go:237,proc trigger,crit heals only,any direct heal (HitMask default normal+crit),direct heals,20% and 45s ICD match
+item,40267,Totem of Hex,false_positive,sim/shaman/electric_spell.go:85,LB/CL spell power,165,165,165,Matches
+item,40322,Totem of Dueling,real,sim/shaman/stormstrike.go:86,AP on proc,none (60 haste only),+120 AP 6s (60766 effect2 MOD_ATTACK_POWER),not in tooltip,60 haste 6s matches
+item,40710,Totem of Splintering,false_positive,sim/shaman/weapon_imbues.go:38,Windfury AP,212,212,212,Matches
+item,40712,Idol of Steadfast Renewal,false_positive,sim/druid/wrath.go:15,Wrath damage,70,70,70,Matches
+item,40713,Idol of the Ravenous Beast,false_positive,sim/druid/shred.go:13,Shred damage,203 (post 225%),90 pre-225% = 203,203,Server mods Shred effect1 before weapon % scaling
+item,42598,Furious Gladiator's Totem of the Third Wind,real,sim/shaman/heals.go:34,LHW bonus,338 flat heal,320 spell power (scaled by LHW coeff),338,"Also Go adds this bonus to Healing Wave (heals.go:185), a sim bug"
+item,42987,Darkmoon Card: Greatness,false_positive,sim/common/wotlk/highest_stat_effects.go:82,proc chance/ICD,35% / 45s,35% / 45s,35% / 45s,Matches (300 stat 15s too)
+item,44253,Darkmoon Card: Greatness,false_positive,sim/common/wotlk/highest_stat_effects.go:82,proc chance/ICD,35% / 45s,35% / 45s,35% / 45s,Matches
+item,44254,Darkmoon Card: Greatness,false_positive,sim/common/wotlk/highest_stat_effects.go:82,proc chance/ICD,35% / 45s,35% / 45s,35% / 45s,Matches
+item,44255,Darkmoon Card: Greatness,false_positive,sim/common/wotlk/highest_stat_effects.go:82,proc chance/ICD,35% / 45s,35% / 45s,35% / 45s,Matches
+item,44322,Mercurial Alchemist Stone,false_positive,sim/core/consumes.go:566,potion bonus,1.4,40% (AC script),40%,Healing potion 1.40 at consumes.go:544
+item,44323,Indestructible Alchemist's Stone,false_positive,sim/core/consumes.go:566,potion bonus,1.4,40% (AC script),40%,Healing potion 1.40 at consumes.go:544
+item,44324,Mighty Alchemist's Stone,false_positive,sim/core/consumes.go:566,potion bonus,1.4,40% (AC script),40%,Healing potion 1.40 at consumes.go:544
+item,45114,Steamcaller's Totem,real,sim/shaman/heals.go:320,Chain Heal bonus,257,243,257,
+item,45144,Sigil of Deflection,real,sim/deathknight/items.go:621,dodge proc amount,144,136,144,5s matches
+item,45148,Living Flame,real,sim/common/wotlk/stat_bonus_cds.go:86,spell power,534,505,505,
+item,45158,Heart of Iron,real,sim/common/wotlk/stat_bonus_cds.go:142,dodge rating,457,432,432,
+item,45169,Totem of the Dancing Flame,false_positive,sim/shaman/stormstrike.go:46,Stormstrike weapon damage,155,155,164,Go already uses server value
+item,45254,Sigil of the Vengeful Heart,real,sim/deathknight/items.go:300,Death Coil damage,403,380,437,Server adds effect2 base amount via spell_dk.cpp script
+item,45254,Sigil of the Vengeful Heart,real,sim/deathknight/items.go:304,Frost Strike damage,218 pre-55% (=120),205 pre-55% (=113),136,Server flat-mods FS effect1 before 55% weapon scaling
+item,45255,Thunderfall Totem,false_positive,sim/shaman/lavaburst.go:13,Lava Burst base damage,215,215,227,Go already uses server value
+item,45263,Wrathstone,real,sim/common/wotlk/stat_bonus_cds.go:60,attack power,905,856,856,
+item,45270,Idol of the Crying Wind,real,sim/druid/insect_swarm.go:15,Insect Swarm bonus,396 SP (x0.2 = ~79/tick),374 flat total split over ticks (~62/tick),396,AC spell_dru_insect_swarm adds amount/totalTicks as base damage
+item,45286,Pyrite Infuser,real,sim/common/wotlk/stat_bonus_procs.go:314,attack power proc,1305,1234,1305,"10% on crit, 50s ICD, 10s match"
+item,45292,Energy Siphon,real,sim/common/wotlk/stat_bonus_cds.go:87,spell power,431,408,431,
+item,45308,Eye of the Broodmother,real,sim/common/wotlk/stat_bonus_stacking.go:223,spell power per stack,26,25,26,"5 stacks, 10s match"
+item,45313,Furnace Stone,real,sim/common/wotlk/stat_bonus_cds.go:122,armor,5448,5152,5448,
+item,45466,Scale of Fates,real,sim/common/wotlk/stat_bonus_cds.go:43,haste rating,457,432,457,
+item,45490,Pandora's Plea,real,sim/common/wotlk/stat_bonus_procs.go:326,spell power proc,794,751,794,"10%, 45s ICD, 10s match"
+item,45507,The General's Heart,not_modeled,sim/common/wotlk/other_effects.go:55,absorb cap,uncapped for 10s,5200 total,5200,"205 per hit, 5%, 50s ICD match; cap also in Classic"
+item,45509,Idol of the Corruptor,real,sim/druid/items.go:419,agility proc amount,162,153,162,12s duration matches
+item,45509,Idol of the Corruptor,real,sim/druid/items.go:422,Mangle (Bear) proc chance,0.50,100%,,spell_proc 64952 Chance=0 falls back to DBC 100% for both Mangles; cat 1.0 matches
+item,45518,Flare of the Heavens,real,sim/common/wotlk/stat_bonus_procs.go:349,spell power proc amount,959,850,959,10% / 45s ICD / 10s match
+item,45522,Blood of the Old God,real,sim/common/wotlk/stat_bonus_procs.go:337,attack power proc amount,1358,1284,1358,10% on crit / 50s ICD / 10s match
+item,45535,Show of Faith,real,sim/common/wotlk/stat_bonus_procs.go:360,MP5 proc amount,272,241,272,10% / 50s ICD / 15s match
+item,45609,Comet's Trail,real,sim/common/wotlk/stat_bonus_procs.go:370,haste rating proc amount,819,726,768,15% / 45s ICD / 10s match; Go also differs from Classic
+item,45703,Spark of Hope,real,sim/core/mana.go:301,base mana cost reduction,44,42,44,
+item,45866,Elemental Focus Stone,real,sim/common/wotlk/stat_bonus_procs.go:382,haste rating proc amount,552,522,552,10% / 45s ICD / 10s match
+item,45929,Sif's Remembrance,real,sim/common/wotlk/stat_bonus_procs.go:395,MP5 proc amount,220,195,220,10% / 50s ICD / 15s match
+item,45931,Mjolnir Runestone,real,sim/common/wotlk/stat_bonus_procs.go:405,armor pen rating proc amount,751,665,751,15% / 45s ICD / 10s match
+item,46017,"Val'anyr, Hammer of Ancient Kings",real,sim/common/wotlk/other_effects.go:318,absorb shield duration (64413),30s,8s,8s,flagged 68496 is a spell_dbc dummy placeholder; 10% / 45s ICD / 15s buff / 15% of heal match
+item,46017,"Val'anyr, Hammer of Ancient Kings",real,sim/common/wotlk/other_effects.go:330,absorb shield stacking,each heal re-applies the shield (TODO in code),"heals add into one shield, cap 20000",,AC spell_item_blessing_of_ancient_kings; its cap check jumps to 200000 once past 20000
+item,46021,Royal Seal of King Llane,real,sim/common/wotlk/stat_bonus_cds.go:150,parry rating amount,402,380,402,20s / 2min CD match
+item,46038,Dark Matter,real,sim/common/wotlk/stat_bonus_procs.go:417,crit rating proc amount,692,612,647,15% / 45s ICD / 10s match; Go also differs from Classic
+item,46051,Meteorite Crystal,real,sim/common/wotlk/stat_bonus_stacking.go:331,MP5 per stack,85,75,79,20s / 20 stacks / 2min CD match
+item,47115,Death's Verdict,false_positive,sim/common/wotlk/highest_stat_effects.go:121,,,,,35% / 45s ICD / 450 / 15s match
+item,47131,Death's Verdict,false_positive,sim/common/wotlk/highest_stat_effects.go:121,,,,,35% / 45s ICD / 510 / 15s match
+item,47303,Death's Choice,false_positive,sim/common/wotlk/highest_stat_effects.go:121,,,,,35% / 45s ICD / 450 / 15s match
+item,47464,Death's Choice,false_positive,sim/common/wotlk/highest_stat_effects.go:121,,,,,35% / 45s ICD / 510 / 15s match
+item,47661,Libram of Valiance,real,sim/paladin/items.go:411,Strength proc duration,15s,16s,16s,70% / 8s ICD / 200 Str match
+item,49623,Shadowmourne,false_positive,sim/common/wotlk/shadowmourne.go:25,,,,,"effect1=20 is 71903's dummy aura value (script-driven); PPM 12, 30 Str/stack, 10 stacks, 270 Str 10s, 1900-2100 dmg match"
+item,49992,Nibelung,false_positive,sim/common/wotlk/nibelung.go:107,,,,,2% and 30s match; Go adds a 250ms ICD the server lacks (negligible)
+item,50348,Dislodged Foreign Object,false_positive,sim/common/wotlk/other_effects.go:498,,,,,10% / 45s ICD / 20s / +121 SP every 2s up to 10 stacks match
+item,50349,Corpse Tongue Coin,false_positive,sim/common/wotlk/other_effects.go:437,,,,,below 35% HP / 30s ICD / 6426 armor / 10s match
+item,50351,Tiny Abomination in a Jar,false_positive,sim/common/wotlk/capacitors.go:240,,,,,"50% chance, 8 motes, 50% weapon damage match"
+item,50363,Deathbringer's Will,false_positive,sim/common/wotlk/other_effects.go:185,,,,,35% / 105s ICD / 700 (1400 AP) / 30s match; per-class stat pools match AC script
+item,50366,Althor's Abacus,false_positive,sim/common/wotlk/other_effects.go:771,,,,,30% / 45s ICD / 6280-7298 heal match
+item,50397,Ashen Band of Unmatched Destruction,false_positive,sim/common/wotlk/stat_bonus_procs.go:566,,,,,flagged 71581 is the ring-upgrade spell; real equip proc 72417: 10% / 60s ICD / 285 SP / 10s match
+item,50398,Ashen Band of Endless Destruction,false_positive,sim/common/wotlk/stat_bonus_procs.go:579,,,,,flagged 71581 is the ring-upgrade spell; real equip proc 72417: 10% / 60s ICD / 285 SP / 10s match
+item,50401,Ashen Band of Unmatched Vengeance,real,sim/common/wotlk/stat_bonus_procs.go:599,proc rate,PPM 1,10% flat chance,chance on hit (no %),equip proc 72413 (spell_proc Chance=10); flagged 71650 is the ring-upgrade spell; 480 AP / 10s / 60s ICD match
+item,50402,Ashen Band of Endless Vengeance,real,sim/common/wotlk/stat_bonus_procs.go:612,proc rate,PPM 1,10% flat chance,chance on hit (no %),equip proc 72413 (spell_proc Chance=10); flagged 71650 is the ring-upgrade spell; 480 AP / 10s / 60s ICD match
+item,50403,Ashen Band of Unmatched Courage,real,sim/common/wotlk/stat_bonus_procs.go:626,ICD,60s,none,60s,"equip proc 72415 has no spell_proc row, so 3% from DBC with no cooldown; flagged 71653 is the ring-upgrade spell; 3% / 2400 armor / 10s match"
+item,50404,Ashen Band of Endless Courage,real,sim/common/wotlk/stat_bonus_procs.go:639,ICD,60s,none,60s,"equip proc 72415 has no spell_proc row, so 3% from DBC with no cooldown; flagged 71653 is the ring-upgrade spell; 3% / 2400 armor / 10s match"
+item,50638,Zod's Repeating Longbow,false_positive,sim/hunter/wotlk_items.go:216,,,,,5% and 50% weapon damage (DamageMultiplier 0.5) match
+item,50641,Heartpierce,false_positive,sim/common/wotlk/other_effects.go:624,,,,,"PPM 1 matches; 71870 values are a stale DBC trigger (Last Word buff), script casts Invigoration: 4 energy / 2 rage / 120 mana per 2s for 12s, matches Go"
+item,50648,Nibelung,false_positive,sim/common/wotlk/nibelung.go:107,,,,,2% and 30s match; Go adds a 250ms ICD the server lacks (negligible)
+item,50692,Black Bruise,false_positive,sim/common/wotlk/other_effects.go:995,,,,,3% / 10% shadow damage / 10s match
+item,50706,Tiny Abomination in a Jar,false_positive,sim/common/wotlk/capacitors.go:170,,,,,"50% chance, 7 motes, 50% weapon damage match"
+item,50708,Last Word,false_positive,sim/common/wotlk/other_effects.go:1137,,,,,37% / 115 Str / 340 healing received / 10s match
+item,50726,Bauble of True Blood,false_positive,sim/common/wotlk/other_effects.go:722,,,,,7400-8600 heal and 2min CD match
+item,52571,Ashen Band of Unmatched Might,real,sim/common/wotlk/stat_bonus_procs.go:651,proc rate,PPM 1,10% flat chance,chance on hit (no %),equip proc 72413 (spell_proc Chance=10); flagged 73961 is the ring-upgrade spell; 480 AP / 10s / 60s ICD match
+item,52572,Ashen Band of Endless Might,real,sim/common/wotlk/stat_bonus_procs.go:664,proc rate,PPM 1,10% flat chance,chance on hit (no %),equip proc 72413 (spell_proc Chance=10); flagged 73961 is the ring-upgrade spell; 480 AP / 10s / 60s ICD match
+item,54589,Glowing Twilight Scale,false_positive,sim/common/wotlk/other_effects.go:790,,,,,"15s window / 402 per sec for 6s / 2min CD match; server HoT also heals friends near the target, Go heals the target only"
+item,54591,Petrified Twilight Scale,false_positive,sim/common/wotlk/other_effects.go:864,,,,,below 35% HP / 45s ICD / 828 dodge / 10s match
+gem,25899,Brutal Earthstorm Diamond,not_modeled,sim/common/tbc/metagems.go:39,stun proc,,1% 1s stun,1%,stun not simulated; +3 weapon damage (26598) matches
+gem,25901,Insightful Earthstorm Diamond,real,sim/common/tbc/metagems.go:58,proc chance,4%,5%,5%,15s ICD and 300 mana match
+gem,32410,Thundering Skyfire Diamond,real,sim/common/tbc/metagems.go:75,PPM,1.5,0.7,,40s ICD / 240 haste rating / 6s match; Classic tooltip shows no PPM
+enchant,1891,Bracer - Stats,false_positive,tools/database/enchant_overrides.go:240,,,,,"+4 all stats matches; stats live in the enchant DB, not effect code"
+enchant,1900,Crusader,not_modeled,sim/common/tbc/enchant_effects.go:68,self-heal,,75-125,75-125,"heal not simulated; PPM 1, 15s and 100 Str minus 4/level over 60 (20 at 80, same as AC spell_gen_reduced_above_60) match"
+enchant,3239,Icebreaker,real,sim/common/wotlk/enchant_effects.go:66,PPM,4,3,,"spell_enchant_proc_data PPMChance=3; item swap registration (:99) also passes 4.0; 185-215 Fire damage matches"
+enchant,3241,Lifeward,real,sim/common/wotlk/enchant_effects.go:223,heal amount,300,310-356,310-356,PPM 3 matches; code marks values as stand-ins
+enchant,3251,Giant Slayer,real,sim/common/wotlk/enchant_effects.go:34,damage,237,237-323,,giant-only restriction matches
+enchant,3251,Giant Slayer,real,sim/common/wotlk/enchant_effects.go:22,PPM,4,3,,spell_enchant_proc_data PPMChance=3; 75% slow for 15s not simulated
+enchant,3273,Deathfrost,real,sim/common/tbc/enchant_effects.go:192,melee PPM,2.15,3,,"spell_enchant_proc_data PPMChance=3 for weapon hits (46579); item swap registration (:218) also passes 2.15"
+enchant,3273,Deathfrost,false_positive,sim/common/tbc/enchant_effects.go:210,spell proc chance / ICD,50% / 25s,50% / 25s,50% / 25s,"46662: DBC chance 50, spell_proc Cooldown 25000; Go values sit in the applyDeathfrostForWeapon helper (:180), outside the block the tool reads"
+enchant,3273,Deathfrost,not_modeled,sim/common/tbc/enchant_effects.go:242,casting speed slow,attack speed only,"15% melee, ranged and casting speed (46629)",15%,150 Frost damage and 15% attack speed slow for 8s match; slowing a boss's casts doesn't matter to the sim
+enchant,3365,Rune of Swordshattering,not_modeled,sim/deathknight/items.go:470,disarm duration reduction,,50%,50%,4% parry (53387) matches
+enchant,3367,Rune of Spellshattering,not_modeled,sim/deathknight/items.go:483,silence duration reduction,,50%,50%,4% spell damage taken reduction (53362) also not simulated (TODO)
+enchant,3368,Rune of the Fallen Crusader,false_positive,sim/deathknight/items.go:403,,,,,15% Str / 15s / PPM 2 match; 3% self-heal not simulated
+enchant,3370,Rune of Razorice,real,sim/deathknight/items.go:331,Razor Frost damage basis,2% of avg base weapon damage,2% of weapon damage incl. AP bonus,,"2% matches; AC Spell::EffectWeaponDmg uses Player::CalculateMinMaxDamage, which adds AP/14*speed"
+enchant,3370,Rune of Razorice,not_modeled,sim/core/debuffs.go:868,Frost Vulnerability duration,never expires,20s,20s,"2%/stack and 5 stacks match; every swing refreshes it, so no practical impact"
+enchant,3594,Rune of Swordbreaking,not_modeled,sim/deathknight/items.go:463,disarm duration reduction,,50%,50%,2% parry (54448) matches
+enchant,3595,Rune of Spellbreaking,not_modeled,sim/deathknight/items.go:477,silence duration reduction,,50%,50%,2% spell damage taken reduction (54449) also not simulated (TODO)

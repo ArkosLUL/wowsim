@@ -1,0 +1,12 @@
+kind,id,name,issue,diffs (server -> sim),extra
+enchant,2523,Biznicks 247x128 Accurascope,differs,stat SpellHit: 30 -> 0; stat MeleeHit: 30 -> 0,
+enchant,2583,Presence of Might,differs,stat BlockValue: 30 -> 15,
+enchant,2656,Enchant Boots - Vitality,differs,stat MP5: 5 -> 4,
+enchant,2658,Enchant Boots - Surefooted,differs,stat SpellCrit: 10 -> 0; stat MeleeCrit: 10 -> 0,
+enchant,2724,Stabilized Eternium Scope,differs,stat SpellCrit: 28 -> 0; stat MeleeCrit: 28 -> 0,
+enchant,3150,Chest - Restore Mana Prime,differs,stat MP5: 7 -> 6,
+enchant,3607,Sun Scope,differs,stat SpellHaste: 40 -> 0; stat MeleeHaste: 40 -> 0,
+enchant,3608,Heartseeker Scope,differs,stat SpellCrit: 40 -> 0; stat MeleeCrit: 40 -> 0,
+enchant,3722,Lightweave Embroidery,differs,stat Spirit: 1 -> 0,
+enchant,3728,Darkglow Embroidery,differs,stat Spirit: 1 -> 0,
+enchant,3730,Swordguard Embroidery,differs,stat Spirit: 1 -> 0,
