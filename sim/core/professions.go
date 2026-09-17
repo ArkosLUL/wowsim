@@ -1,11 +1,29 @@
 package core
 
 import (
+	"slices"
 	"time"
 
 	"github.com/wowsims/wotlk/sim/core/proto"
 	"github.com/wowsims/wotlk/sim/core/stats"
 )
+
+// ProtoToProfessions reads the player's professions, falling back to the two slots for links and
+// presets saved before the list existed. A character can know more than two on an AzerothCore server.
+func ProtoToProfessions(player *proto.Player) []proto.Profession {
+	known := player.Professions
+	if len(known) == 0 {
+		known = []proto.Profession{player.Profession1, player.Profession2}
+	}
+
+	professions := make([]proto.Profession, 0, len(known))
+	for _, profession := range known {
+		if profession != proto.Profession_ProfessionUnknown && !slices.Contains(professions, profession) {
+			professions = append(professions, profession)
+		}
+	}
+	return professions
+}
 
 // This is just the static bonuses. Most professions are handled elsewhere.
 func (character *Character) applyProfessionEffects() {

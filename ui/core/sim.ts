@@ -22,6 +22,7 @@ import {
 } from './proto/ui.js';
 import { Database } from './proto_utils/database.js';
 import { SimResult } from './proto_utils/sim_result.js';
+import { playerProtoProfessions } from './proto_utils/utils.js';
 import { getBrowserLanguageCode, setLanguageCode } from './constants/lang.js';
 import { Encounter } from './encounter.js';
 import { Player, UnitMetadata } from './player.js';
@@ -167,7 +168,7 @@ export class Sim {
 				let gear = this.db.lookupEquipmentSpec(player.equipment);
 				let gearChanged = false;
 
-				const isBlacksmith = [player.profession1, player.profession2].includes(Profession.Blacksmithing);
+				const isBlacksmith = playerProtoProfessions(player).includes(Profession.Blacksmithing);
 
 				// Disable meta gem if inactive.
 				if (gear.hasInactiveMetaGem(isBlacksmith)) {

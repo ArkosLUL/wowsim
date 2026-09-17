@@ -513,14 +513,10 @@ export abstract class IndividualSimUI<SpecType extends Spec> extends SimUI {
 			this.player.setEpWeights(eventID, this.individualConfig.defaults.epWeights);
 			const defaultRatios = this.player.getDefaultEpRatios(tankSpec, healingSpec);
 			this.player.setEpRatios(eventID, defaultRatios);
-			this.player.setProfession1(
-				eventID,
+			this.player.setProfessions(eventID, [
 				this.individualConfig.defaults.other?.profession1 || Profession.Engineering,
-			);
-			this.player.setProfession2(
-				eventID,
 				this.individualConfig.defaults.other?.profession2 || Profession.Jewelcrafting,
-			);
+			]);
 			this.player.setDistanceFromTarget(
 				eventID,
 				this.individualConfig.defaults.other?.distanceFromTarget || 0,

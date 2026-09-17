@@ -131,33 +131,21 @@ export class SettingsTab extends SimTab {
 		}
 
 		const professionGroup = Input.newGroupContainer();
+		professionGroup.classList.add('professions-picker');
 		contentBlock.bodyElement.appendChild(professionGroup);
 
-		const professions = getEnumValues(Profession) as Array<Profession>;
-		const _profession1Picker = new EnumPicker(professionGroup, this.simUI.player, {
-			label: 'Profession 1',
-			values: professions.map(p => {
-				return {
-					name: professionNames.get(p)!,
-					value: p,
-				};
-			}),
-			changedEvent: sim => sim.professionChangeEmitter,
-			getValue: sim => sim.getProfession1(),
-			setValue: (eventID, sim, newValue) => sim.setProfession1(eventID, newValue),
-		});
-
-		const _profession2Picker = new EnumPicker(professionGroup, this.simUI.player, {
-			label: 'Profession 2',
-			values: professions.map(p => {
-				return {
-					name: professionNames.get(p)!,
-					value: p,
-				};
-			}),
-			changedEvent: sim => sim.professionChangeEmitter,
-			getValue: sim => sim.getProfession2(),
-			setValue: (eventID, sim, newValue) => sim.setProfession2(eventID, newValue),
+		// One checkbox each instead of two slots: an AzerothCore character can know more than two.
+		const professions = (getEnumValues(Profession) as Array<Profession>).filter(p => p != Profession.ProfessionUnknown);
+		professions.forEach(profession => {
+			const _professionPicker = new BooleanPicker(professionGroup, this.simUI.player, {
+				label: professionNames.get(profession)!,
+				changedEvent: player => player.professionChangeEmitter,
+				getValue: player => player.hasProfession(profession),
+				setValue: (eventID, player, known) => {
+					const others = player.getProfessions().filter(p => p != profession);
+					player.setProfessions(eventID, known ? others.concat([profession]) : others);
+				},
+			});
 		});
 	}
 

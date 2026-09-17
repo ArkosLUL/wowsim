@@ -61,6 +61,9 @@ message Player {
 	// Talents in wowhead format, e.g. '01102123133-12312312-'
 	string talents_string = 17;
 	Glyphs glyphs = 28;
+	// Every profession the player knows, since an AzerothCore character can hold more than the two
+	// the game allows. profession1 and profession2 are the first two, kept for older links and presets.
+	repeated Profession professions = 48;
 	Profession profession1 = 29;
 	Profession profession2 = 30;
 	Cooldowns cooldowns = 19;

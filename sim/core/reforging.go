@@ -29,8 +29,7 @@ var reforgeStatTypeToStats = map[int32][]stats.Stat{
 // stats when the server wouldn't allow it.
 func ReforgeStats(base stats.Stats, reforge *proto.ItemReforge) stats.Stats {
 	var delta stats.Stats
-	if reforge == nil || reforge.FromStatType == reforge.ToStatType ||
-		!slices.Contains(ReforgeableStatTypes, reforge.FromStatType) || !slices.Contains(ReforgeableStatTypes, reforge.ToStatType) {
+	if reforge == nil || !ReforgeableStatPair(reforge.FromStatType, reforge.ToStatType) {
 		return delta
 	}
 	fromStats := reforgeStatTypeToStats[reforge.FromStatType]
@@ -52,6 +51,20 @@ func ReforgeStats(base stats.Stats, reforge *proto.ItemReforge) stats.Stats {
 		delta[stat] += amount
 	}
 	return delta
+}
+
+// ReforgeableStatPair says whether the server's reforgeable stat list allows this pair of
+// ItemModTypes at all. It's the half of the rule that doesn't need the item; ReforgeStats applies the
+// rest.
+func ReforgeableStatPair(fromStatType, toStatType int32) bool {
+	return fromStatType != toStatType &&
+		slices.Contains(ReforgeableStatTypes, fromStatType) && slices.Contains(ReforgeableStatTypes, toStatType)
+}
+
+// CanReforge says whether the server would let this reforge sit on an item with these base stats.
+// It's the same rule ReforgeStats applies, so callers that only need the yes/no can't drift from it.
+func CanReforge(base stats.Stats, reforge *proto.ItemReforge) bool {
+	return ReforgeStats(base, reforge) != stats.Stats{}
 }
 
 func maxStatValue(s stats.Stats, statList []stats.Stat) float64 {

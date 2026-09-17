@@ -15,7 +15,6 @@ import (
 	goproto "google.golang.org/protobuf/proto"
 
 	"github.com/wowsims/wotlk/sim/core/proto"
-	"github.com/wowsims/wotlk/sim/core/stats"
 )
 
 const (
@@ -691,7 +690,7 @@ func canCarryReforge(oldItem *proto.ItemSpec, newItem *proto.ItemSpec) bool {
 		return false
 	}
 	dbItem, ok := ItemsByID[newItem.GetId()]
-	return ok && ReforgeStats(dbItem.Stats, oldItem.Reforge) != stats.Stats{}
+	return ok && CanReforge(dbItem.Stats, oldItem.Reforge)
 }
 
 type ItemComboChecker map[int64]struct{}

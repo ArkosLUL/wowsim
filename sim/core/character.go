@@ -68,7 +68,7 @@ type Character struct {
 	bonusOHDps     float64
 	bonusRangedDps float64
 
-	professions [2]proto.Profession
+	professions []proto.Profession
 
 	glyphs            [6]int32
 	PrimaryTalentTree uint8
@@ -119,10 +119,7 @@ func NewCharacter(party *Party, partyIndex int, player *proto.Player) Character 
 
 		Equipment: ProtoToEquipment(player.Equipment),
 
-		professions: [2]proto.Profession{
-			player.Profession1,
-			player.Profession2,
-		},
+		professions: ProtoToProfessions(player),
 
 		Party:      party,
 		PartyIndex: partyIndex,
@@ -514,7 +511,7 @@ func (character *Character) reset(sim *Simulation, agent Agent) {
 }
 
 func (character *Character) HasProfession(prof proto.Profession) bool {
-	return prof == character.professions[0] || prof == character.professions[1]
+	return slices.Contains(character.professions, prof)
 }
 
 func (character *Character) HasGlyph(glyphID int32) bool {

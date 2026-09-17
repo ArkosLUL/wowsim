@@ -11,7 +11,7 @@ import (
 // DefaultDSN matches the stock AzerothCore docker-compose setup.
 const DefaultDSN = "root:password@tcp(127.0.0.1:3306)/acore_world"
 
-func OpenWorldDB(dsn string) (*sql.DB, error) {
+func OpenDB(dsn string) (*sql.DB, error) {
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
 		return nil, err

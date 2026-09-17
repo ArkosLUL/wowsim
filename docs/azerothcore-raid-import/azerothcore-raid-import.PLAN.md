@@ -93,8 +93,8 @@ Outcome:
 3. Save this plan as `docs/azerothcore-raid-import/azerothcore-raid-import.PLAN.md`.
 4. Run Phase 1, then Phase 2, then Phase 3. **After each phase, run its verification, then stop and ask the
    user to review before continuing.**
-   - **Status:** Phase 1 reviewed, committed and merged into `master` at the user's request. Phases 2–3 not
-     started.
+   - **Status:** Phase 1 reviewed, committed and merged into `master` at the user's request. Phase 2 is
+     implemented and verified on branch `azerothcore-roster-export`, waiting for review. Phase 3 not started.
 5. Leave work **uncommitted** unless the user asks. Don't commit, merge, push or create other branches on your own.
 
 ## Established facts
@@ -106,8 +106,10 @@ Outcome:
   at `A:\WOW\dbc\Changed`.
 - **Freshness:** gear, talents and glyphs are saved only on character save, so run `saveall` in the
   worldserver console first.
-- **Live raid:** one raid group (`groupType & 2`), 25 level-80 members, leader **Deathsong**, subgroups 0–4.
-  `Bulwark` has `memberFlags = 3` (bits: 1 assistant, 2 main tank, 4 main assist).
+- **Live raid:** one raid group (`groupType & 2`), leader **Deathsong**, subgroups 0–4, all members level 80.
+  Every member but Deathsong is a playerbot. The group is disbanded and remade often, so its size (24–25),
+  `memberFlags` (bits: 1 assistant, 2 main tank, 4 main assist) and reforge count drift; `groups` is empty
+  while no group exists. The bots hold every primary profession at 450.
 - **Group lookup:** `group_member(guid, memberGuid PK, memberFlags, subgroup)`. Find the row for the leader's
   guid, then load all members of that group `guid`. Warn if the named character isn't `groups.leaderGuid`.
 - **`characters`:** `guid, name, race, class, level, activeTalentGroup`.
@@ -139,7 +141,15 @@ Outcome:
   - SpellID equals `assets/db_inputs/glyph_id_map.json` `spellId` (170 → 54733 → item 40909). The UI
     converts it with `db.glyphSpellToItemId` (`ui/core/proto_utils/database.ts:238`).
   - Ids not in the file (custom glyph 912) → warning.
-- **Professions:** `character_skills(guid, skill, value)`, keeping the top 2 primary professions by value.
+- **Professions:** `character_skills(guid, skill, value)`. Every primary profession at `-minSkill` (default 1)
+  or above is exported, since the server's characters hold more than the usual two: the raid's playerbots have
+  the 7 crafting ones at 450 and the 3 gathering ones at 1–4. `MaxPrimaryTradeSkill = 2` in worldserver.conf
+  doesn't apply to them, and mod-shared-professions shares both skills and profession spells account-wide.
+  - Why the default is 1, not 450: the skill value doesn't say whether the character has the profession's
+    bonus. All 25 raiders hold Toughness and Master of Anatomy however low their Mining and Skinning skill is,
+    so `-minSkill 450` would drop the bonus from 21 of them. See the profession-bonus note below.
+  - A gem in a wrist or hands extra socket needs Blacksmithing, which `sim.ts:180` drops it without. A belt
+    buckle needs no profession.
   164 Blacksmithing, 165 Leatherworking, 171 Alchemy, 182 Herbalism, 186 Mining, 197 Tailoring,
   202 Engineering, 333 Enchanting, 393 Skinning, 755 Jewelcrafting, 773 Inscription.
 - **Reforges:** `character_reforging(guid, item_guid, stat_decrease, stat_increase, stat_value)`.
@@ -323,6 +333,20 @@ Outcome:
 
 ## Phase 2: Go exporter
 
+**Shared sim model: any number of professions** (decided with the user during Phase 2, done)
+- The sim held 2 professions per player, the server holds more. They drive Mining's +60 stamina, Skinning's
+  +40 crit, Herbalism's Lifeblood, Alchemy's mixology, Engineering's injectors and the Blacksmithing socket.
+- `proto/api.proto`: `repeated Profession professions = 48` on `Player`. `profession1`/`profession2` stay as
+  the first two, so older links and presets still load.
+- `sim/core/professions.go` `ProtoToProfessions(player)` reads the list, falling back to the two fields when
+  it's empty, dropping Unknown and duplicates. `Character.professions` is a slice, `HasProfession` scans it.
+- `ui/core/player.ts` holds `professions` as the one source of truth, sorted so the same set always makes the
+  same proto. `setProfessions` is the only setter; `getProfession1/2` read the first two slots for the compat
+  fields. `playerProtoProfessions` in `proto_utils/utils.ts` mirrors the Go fallback and is what `sim.ts` uses
+  for its Blacksmithing check.
+- The settings tab shows one checkbox per profession instead of the two dropdowns.
+- Tests: `sim/professions_test.go`.
+
 **Files** (package `tools/database/azerothcore/` unless noted):
 - `characters.go` exposes `BuildRoster(db *sql.DB, dbc *RosterDBC, trees TalentTrees, sel Selector) (*Roster, error)`.
   - Kept separate from main so a future endpoint can call it.
@@ -337,26 +361,32 @@ Outcome:
   - Add a copy-from-container variant that takes file names.
 - `roster.go`, pure conversions:
   - `ParseEnchantments(s) (perm int32, sockets [3]int32, prismatic int32, err)` requires 36 tokens.
-  - `BuildGems(...)` returns native gem item ids plus `extraGem`.
+  - `BuildGems(...)` returns native gem item ids plus `extraGem`, and the gems it had to drop. Without an
+    `item_template` row the socket count comes off the filled sockets, the last holding the added gem.
   - `BuildTalentString(...)` returns the string plus unmatched spells. Warn when points ≠ `level − 9`.
   - `SplitGlyphs`; `TopProfessions` returns English names.
   - Reforges pass through as raw ids (`stat_decrease` → `fromStatType`, `stat_increase` → `toStatType`).
-    A type outside the reforgeable list → no reforge + warning.
+    `NewRosterReforge` drops one the sim would ignore, with a warning saying which rule it broke: the stat
+    types go through `core.ReforgeableStatPair`, and the rest through `core.CanReforge` against the item's
+    stats in `-simDb`, since `item_template` and the sim's database can disagree.
   - Warnings: level ≠ 80, random property/suffix, unknown glyph, unmapped gem, off-hand with an empty main
     hand.
 - `roster_test.go`: table tests for each function above (hand-built Talent/TalentTab WDBC bytes). Include an
   extra-gem case (2 native sockets + buckle), trailing-zero trimming and an out-of-list reforge type.
 - `tools/database/acraid/main.go`, a thin main:
   - `go run ./tools/database/acraid -leader Deathsong -out raid.json`
-  - Flags: `-dsn` (default `root:password@tcp(127.0.0.1:3306)/`), `-leader` or `-names`, `-dbcDir` (empty →
-    copy from `-acContainer ac-worldserver` to a temp dir), `-trees` (default `ui/core/talents/trees`),
-    `-out`.
+  - Flags: `-dsn` (default `root:password@tcp(127.0.0.1:3306)/`), `-leader` and/or `-names`, `-dbcDir`
+    (empty → copy from `-acContainer ac-worldserver` to a temp dir), `-trees` (default
+    `ui/core/talents/trees`), `-simDb` (default `assets/database/db.json`), `-minSkill` (default 1), `-out`.
   - Prints one summary line per character.
+- `tools/database/acraid/crosscheck_test.py` runs crosscheck.py against a stubbed server, so its queries and
+  the subgroups it expects can be checked without one: `python tools/database/acraid/crosscheck_test.py`.
 
 **Roster JSON (version 1)**, values illustrative:
 ```json
 { "version": 1, "exportedAt": "2026-09-17T18:00:00Z",
   "group": { "selector": "leader", "leader": "Deathsong", "leaderIsGroupLeader": true },
+  "warnings": [],
   "characters": [{
     "name": "Bulwark", "classId": 2, "raceId": 1, "swapRaceId": 0, "level": 80,
     "subgroup": 4, "memberFlags": 3,
@@ -368,16 +398,69 @@ Outcome:
     "warnings": [] }] }
 ```
 `reforge` uses the proto JSON field names, so the UI can parse it with `ItemReforge.fromJson`.
+Top-level `warnings` covers the whole export, e.g. a module table the server doesn't have.
+`leaderIsGroupLeader` is only present for the `leader` selector.
 
-**Verification (Phase 2)**
-1. `go vet ./tools/database/...` and `go test ./tools/database/...` pass.
-2. Run `saveall`, then `go run ./tools/database/acraid -leader Deathsong -out <scratchpad>/raid.json`:
-   - 25 characters; subgroups 0–4 with 5 each; Bulwark `memberFlags` 3.
-   - Every talent string has 71 points with no unmatched spells; Mighty's string matches the one above.
-   - No unmapped gems; `extraGem` is set on items with a socket-adding enchant and a filled extra socket.
-   - 168 reforges across 21 characters; 12 characters have `swapRaceId`.
-3. `-names Deathsong,Bulwark` yields 2 characters, both in subgroup 0.
-4. **Stop for user review.**
+**Profession bonuses vs skill values on this server (checked 2026-09-17)**
+
+All 25 raiders hold Toughness rank 6 (53040, +60 stamina) and Master of Anatomy rank 6 (53666, +40 crit
+rating), whatever their Mining and Skinning skill says. Skill is therefore not the signal, and `-minSkill`
+must stay at 1: raising it to 450 would drop the bonus from the 21 characters sitting at Mining 300-303 and
+Skinning 1-4 who genuinely have it.
+
+The bonuses reach a character two different ways, which is the trap:
+
+| characters | Mining / Skinning skill | where the spells live |
+|---|---|---|
+| 21 playerbots | 300-303 / 1-4 | `character_spell`, granted by GM command |
+| 4 human-played (Agony, Deathsong, Felesta, Nightwarrior) | 450 / 450 | `shared_professions_account_spells`, keyed by `characters.account` |
+
+mod-shared-professions keeps its own account-level tables, `shared_professions_account_skills` and
+`shared_professions_account_spells(account_id, spell_id)`, and applies the spells at login without writing
+them to `character_spell`. Querying `character_spell` alone makes those four look like they have no profession
+bonuses, which is wrong; in game `.learn 53040` on them answers "already knows that spell". Any future check
+has to read both tables, or trust `character_skills` and `-minSkill 1` as the export already does.
+
+The one real mismatch is Herbalism: 9 of the 25 know Lifeblood (55503), while all 25 export Herbalism, so the
+other 16 would get a Lifeblood cooldown in the sim that they don't have in game. Alchemy is clean, since all
+25 know Mixology (53042).
+
+**Verification (Phase 2), re-run 2026-09-17 after the code review**
+
+The review made acraid check reforges against `-simDb`, and taught crosscheck.py to batch its queries and to
+expect the subgroups acraid really assigns, so everything below is the state after those changes. It also
+moved `-minSkill`'s default to 450, which the profession-bonus note above shows was wrong for this server;
+that part is reverted and the default is 1 again. Run against the live `ac-database` / `ac-worldserver` containers, with the DBCs
+copied out to a scratch dir and `-dsn root:password@tcp(ac-database:3306)/`.
+
+1. `go vet ./tools/... ./sim/...` and `go test --tags=with_db ./sim/... ./tools/...` pass (27 packages), every
+   changed Go file is gofmt clean, `npx tsc --noEmit` passes, `make wowsimwotlk` builds, no `.results` file
+   changed, and eslint reports nothing new per changed file.
+2. `-leader Deathsong` exported the live raid: 25 characters, subgroups 0-4, 414 items, 161 reforges, 249 gems
+   and 73 extra gems, every talent string at 71 points with no unmatched spells, and no warnings at all.
+3. `crosscheck.py` rebuilt that export straight from SQL, the DBC files and `db.json`: no differences, in 0.8s
+   over 7 queries. The same for `-leader Deathsong -names Belaria,Saeteath` (27 characters, 448 items, both
+   top-ups in subgroup 5, the first with room) and for `-names` alone over 7 characters (119 items; its only
+   report is the 9 random properties nothing exports, which acraid warns about too).
+   `crosscheck_test.py` covers the same ground against a stubbed server, and fails if the subgroup rule or the
+   batching regresses.
+4. Every exported item, gem and glyph spell resolves in `assets/database/db.json`. The only ids it doesn't know
+   are enchants 3851 (Bulwark's main hand) and 3776 (Belaria's and Saeteath's shoulders), which Phase 3 reports.
+5. `-names` alone fills subgroups of 5 in order (5 in subgroup 0, 2 in subgroup 1 for 7 names). An unknown
+   name, a repeated name, a character without a group, no selector at all and a missing `-simDb` each fail
+   with their own message.
+6. Every one of the 25 characters holds all 11 primary professions, and the default `-minSkill 1` exports all
+   11 for each, which is what the sim needs: all 25 hold the Mining and Skinning bonuses whatever their skill,
+   per the note above.
+7. Not exercised on this server, so they rest on the Go tests alone: an equipped item with no `item_template`
+   row (0 here), a reforge outside the server's stat list (0 of 161), and gems past the sockets a template
+   declares. All 161 reforges survived the new `db.json` check, which says the item-stat lookup agrees with
+   the server on real data.
+8. **Stop for user review.**
+
+**Notes for later**
+- SOAP is disabled on the server (`SOAP.Enabled = 0`), so `saveall` can't be run from outside the worldserver
+  console. The export is only as fresh as the server's last character save.
 
 ## Phase 3: importers and reload fix
 
