@@ -67,8 +67,8 @@ Its findings, verified against code, and the list of AzerothCore deviations from
 
 ## Environment and coordination
 
-- Go isn't on the host PATH. Build and test via the Dockerfile `toolchain` target (golang 1.23 + node + protoc).
-  Python 3.14 is on the host.
+- Go isn't on the host PATH. Build and test through `tools/acore/dock.sh` (P0), which runs the Dockerfile's `toolchain`
+  target (golang 1.23 + node + protoc). Python 3.14 is on the host.
 - DBCs:
   - stock 3.3.5a: `A:\WOW\dbc\Clean`
   - user-edited client: `A:\WOW\dbc\Changed`
@@ -103,9 +103,9 @@ Its findings, verified against code, and the list of AzerothCore deviations from
 
 **Status:** built, deployed and verified on the live server by the module's own e2e suite
 (`[ac]/modules/mod-sim-validation/e2e/run.sh`, results in the INVESTIGATION's "Verified on the live server"). Module repo
-commit aa99da4 holds the first version. Uncommitted and not yet deployed: the armor default fix (Sunder debuff 58567
-instead of the ability 47467) and `e2e/`. The module's `README.md` documents every command, the output format and the
-e2e tests.
+commits aa99da4 (module), 69e75fb (armor default fix, `e2e/`) and 5b57288 (review fixes). Everything after aa99da4
+ships with the next server rebuild; until then pass the armor debuff explicitly (`58567:5`). The module's `README.md`
+documents every command, the output format and the e2e tests.
 
 **As built**
 - `src/SimValidation.{h,cpp}`: config (`SimValidation.Enable` = 0, `MaxIterations` = 1000000, `OutputDir` = `simval`,
@@ -141,7 +141,7 @@ e2e tests.
 - `yellow <spellId> <n> [pet]`: `SpellHitResult` histogram, `isSpellBlocked` rate, crit chance and rolled crits.
 - `spell <spellId> <n> [pet]`: `yellow` plus `CalcAbsorbResist` buckets on 10000 damage and both `GetEffectiveResistChance` variants.
 - `armor [spell:<id>] [pet] [<auraId>[:<stacks>] ...]`: `CalcArmorReducedDamage` on 100000 damage, alone and with each
-  debuff and all together (default `47467:5 770`). Temporarily applied auras are removed afterwards.
+  debuff and all together (default `58567:5 770`). Temporarily applied auras are removed afterwards.
 - `procs [<spellId>]`: item chance-on-hit spells and weapon enchants per attack type (mirrors `CastItemCombatSpell`),
   and `Aura::CalcProcChance` for every applied aura with a `spell_proc` entry (MH/OH/ranged white hit, given spell).
 - `face`, `hp <percent>`: turn the dummy toward the player; set its health (execute ranges).
@@ -154,15 +154,42 @@ four dummies inside Naxxramas, asserts the records, and deletes the characters a
 to the module or to the combat code it mirrors. The e2e tests also produce the JSONL fixtures P2's `tools/simval` needs.
 
 **Risks**
-- Loops block the map thread (1M melee swings take seconds); `MaxIterations` caps it.
+- GM commands run on the world thread, so the whole server stands still for the length of a loop (1M melee swings take
+  seconds); `MaxIterations` caps it.
 - The derived tables duplicate server arithmetic; a core change that isn't mirrored shows up as a rolled-vs-derived mismatch.
 
 ### P0 — Docker harness (in the parity worktree)
-- `tools/acore/dock.sh` (Git Bash):
-  - `docker build --target toolchain -t wowsim-toolchain .`
-  - Run with mounts: worktree → `/wotlk`, a go-mod cache volume, `A:/WOW/dbc` → `/dbc:ro`, [ac] → `/ac:ro`, plus `--add-host=host.docker.internal:host-gateway`.
-  - Subcommands: `proto`, `test [pkgs]`, `promote <dir>`, `tsc`, `run <tool>`.
-- Verify: today's tests pass unchanged. Record per-suite DPS as the reference.
+
+**Status:** built and verified. All 37 suites pass with every golden unchanged, so the committed `.results` are the
+reference every later phase measures against.
+
+**As built.** `tools/acore/dock.sh` (Git Bash), run from anywhere in the worktree. It builds the Dockerfile's
+`toolchain` target as `wowsim-toolchain` on first use and runs everything in it, mounting the worktree at `/wotlk`,
+`A:/WOW/dbc` at `/dbc` and [ac] at `/ac` (both read-only, skipped when missing, overridable with `DBC_DIR`/`AC_DIR`),
+named volumes for the Go module and build caches, and `host.docker.internal` for the live MySQL. The P1 fixtures land
+in the container at `/ac/env/dist/logs/simval/`.
+
+| Command | Does |
+|---|---|
+| `build` | rebuild the image (otherwise built on demand) |
+| `proto` | `make proto`: Go and TypeScript protobuf code |
+| `test [args]` | `go test --tags=with_db`, default `./sim/...`; args go to `go test`, e.g. `test -run TestBlood ./sim/deathknight/dps` |
+| `tsc` | generate the UI's protobuf and index, then `npx tsc --noEmit` |
+| `run <pkg> [args]` | `go run` a tool package |
+| `exec <cmd>` | anything else in the container |
+| `dps [dir]` | DPS per test from the `.results` goldens |
+| `delta [dir]` | DPS of the last run against the goldens, per suite |
+| `promote <dir>` | copy that dir's `.results.tmp` over its `.results` |
+
+- `test` generates the Go protobuf code and `binary_dist/dist.go` when missing; without the latter `sim/web` doesn't compile.
+- `promote` only touches the given directory, unlike `make update-tests`, which deletes every golden in the repo and so
+  silently promotes suites the run never touched. It also keeps the goldens' CRLF line endings, which the container's
+  Go writes as LF.
+- `delta` only covers DPS. Character stats, casts and stat weights need a plain diff of `.results` against `.results.tmp`.
+
+**Verified:** `dock.sh test` green, `dock.sh delta` reports 37 of 37 suites unchanged, `dock.sh tsc` clean, `proto`,
+`run` and the `/dbc`, `/ac` and `host.docker.internal` mounts all work, and a `promote` leaves the goldens
+byte-identical.
 
 ### P2 — Core combat tables (`sim/core`)
 **Proto:** `Target.world_boss` (`proto/common.proto`). When unset, a target at level ≥ 83 counts as a boss.
