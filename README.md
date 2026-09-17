@@ -52,18 +52,26 @@ npm install
 ```
 
 ## Docker
-Alternatively, install Docker and your workflow will look something like this:
+Alternatively, install Docker. To just host the sim, build the default image, which bundles the UI and the sim server:
 ```sh
 git clone https://github.com/wowsims/wotlk.git
 cd wotlk
 
-# Build the docker image and install npm dependencies (only need to run these once).
 docker build --tag wowsims-wotlk .
-docker run --rm -v $(pwd):/wotlk wowsims-wotlk npm install
+docker run -d --name wowsims-wotlk --restart unless-stopped -p 3333:3333 wowsims-wotlk
 
-# Now you can run the commands as shown in the Commands sections, preceding everything with, "docker run --rm -it -p 8080:8080 -v $(pwd):/wotlk wowsims-wotlk".
+# The sim is now available at http://localhost:3333/wotlk/
+```
+
+For development, build only the `toolchain` stage and your workflow will look something like this:
+```sh
+# Build the docker image and install npm dependencies (only need to run these once).
+docker build --target toolchain --tag wowsims-wotlk-dev .
+docker run --rm -v $(pwd):/wotlk wowsims-wotlk-dev npm install
+
+# Now you can run the commands as shown in the Commands sections, preceding everything with, "docker run --rm -it -p 8080:8080 -v $(pwd):/wotlk wowsims-wotlk-dev".
 # For convenience, set this as an environment variable:
-WOTLK_CMD="docker run --rm -it -p 8080:8080 -v $(pwd):/wotlk wowsims-wotlk"
+WOTLK_CMD="docker run --rm -it -p 8080:8080 -v $(pwd):/wotlk wowsims-wotlk-dev"
 
 # ... do some coding on the sim ...
 

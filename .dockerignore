@@ -1,0 +1,7 @@
+.git
+node_modules
+dist
+binary_dist
+wowsimwotlk*
+wowsimcli*
+*.results.tmp

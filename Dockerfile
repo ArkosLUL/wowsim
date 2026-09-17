@@ -1,23 +1,42 @@
 # syntax=docker/dockerfile:1
 
-FROM golang:1.21
+FROM node:19.8.1-bullseye-slim AS node
 
-WORKDIR /wotlk
-COPY . .
+# Dev toolbox, usable alone with `docker build --target toolchain`
+FROM golang:1.23-bookworm AS toolchain
+
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends protobuf-compiler \
+ && rm -rf /var/lib/apt/lists/*
+
+COPY --from=node /usr/local/bin/node /usr/local/bin/node
+COPY --from=node /usr/local/lib/node_modules /usr/local/lib/node_modules
+RUN ln -s ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
+ && ln -s ../lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx
+
 COPY gitconfig /etc/gitconfig
+WORKDIR /wotlk
 
-RUN apt-get update
-RUN apt-get install -y protobuf-compiler
-RUN go get -u google.golang.org/protobuf
-RUN go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
-
-RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash
-
-ENV NODE_VERSION=19.8.0
-ENV NVM_DIR="/root/.nvm"
-RUN . "$NVM_DIR/nvm.sh" && nvm install ${NODE_VERSION}
-RUN . "$NVM_DIR/nvm.sh" && nvm use v${NODE_VERSION}
-RUN . "$NVM_DIR/nvm.sh" && nvm alias default v${NODE_VERSION}
-ENV PATH="/root/.nvm/versions/node/v${NODE_VERSION}/bin/:${PATH}"
+# no version here on purpose: resolves from go.mod so the generated code matches the protobuf runtime
+COPY go.mod go.sum ./
+RUN go mod download \
+ && go install google.golang.org/protobuf/cmd/protoc-gen-go
 
 EXPOSE 8080/tcp
+
+FROM toolchain AS build
+
+COPY package.json package-lock.json ./
+RUN npm ci
+
+COPY . .
+RUN CGO_ENABLED=0 make wowsimwotlk
+
+FROM gcr.io/distroless/static-debian12:nonroot
+
+COPY --from=build /wotlk/wowsimwotlk /wowsimwotlk
+
+EXPOSE 3333/tcp
+# the server only exits on SIGINT, and as PID 1 it'd ignore the default SIGTERM
+STOPSIGNAL SIGINT
+ENTRYPOINT ["/wowsimwotlk", "--launch=false", "--host=:3333"]
