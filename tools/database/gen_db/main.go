@@ -26,11 +26,12 @@ import (
 // go run ./tools/database/gen_db -outDir=assets -gen=wotlk-items
 // go run ./tools/database/gen_db -outDir=assets -gen=wago-db2-items
 // go run ./tools/database/gen_db -outDir=assets -gen=db
+// go run ./tools/database/gen_db -outDir=assets -gen=azerothcore -dbcDir=<server DBCs>
 
 var minId = flag.Int("minid", 1, "Minimum ID to scan for")
 var maxId = flag.Int("maxid", 57000, "Maximum ID to scan for")
 var outDir = flag.String("outDir", "assets", "Path to output directory for writing generated .go files.")
-var genAsset = flag.String("gen", "", "Asset to generate. Valid values are 'db', 'atlasloot', 'wowhead-items', 'wowhead-spells', 'wowhead-itemdb', 'wotlk-items', and 'wago-db2-items'")
+var genAsset = flag.String("gen", "", "Asset to generate. Valid values are 'db', 'azerothcore', 'atlasloot', 'wowhead-items', 'wowhead-spells', 'wowhead-itemdb', 'wotlk-items', and 'wago-db2-items'")
 
 func main() {
 	flag.Parse()
@@ -60,8 +61,16 @@ func main() {
 	} else if *genAsset == "wago-db2-items" {
 		tools.WriteFile(fmt.Sprintf("%s/wago_db2_items.csv", inputsDir), tools.ReadWebRequired("https://wago.tools/db2/ItemSparse/csv?build=3.4.2.49311"))
 		return
-	} else if *genAsset != "db" {
+	} else if *genAsset != "db" && *genAsset != "azerothcore" {
 		panic("Invalid gen value")
+	}
+
+	var server *serverData
+	if *genAsset == "azerothcore" {
+		var err error
+		if server, err = loadServerData(); err != nil {
+			log.Fatalf("reading the AzerothCore server: %v", err)
+		}
 	}
 
 	itemTooltips := database.NewWowheadItemTooltipManager(fmt.Sprintf("%s/wowhead_item_tooltips.csv", inputsDir)).Read()
@@ -101,6 +110,11 @@ func main() {
 	db.MergeItems(database.ItemOverrides)
 	db.MergeGems(database.GemOverrides)
 	db.MergeEnchants(database.EnchantOverrides)
+	if server != nil {
+		// after ItemOverrides: the live DB owns every field ApplyTo writes (ADR 0002), so overrides of
+		// those only count in -gen=db. Before the filters, so they judge server ilvls and qualities.
+		applyServerData(db, server)
+	}
 	ApplyGlobalFilters(db)
 	AttachFactionInformation(db, factionRestrictions)
 

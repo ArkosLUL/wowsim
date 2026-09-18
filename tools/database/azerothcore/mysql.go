@@ -3,6 +3,7 @@ package azerothcore
 import (
 	"database/sql"
 	"fmt"
+	"os"
 	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -11,6 +12,16 @@ import (
 // DefaultDSN matches the stock AzerothCore docker-compose setup.
 const DefaultDSN = "root:password@tcp(127.0.0.1:3306)/acore_world"
 
+// ContainerDSN is the world DB as seen from tools/acore/dock.sh's container: $AC_DSN when set, else
+// DefaultDSN on host.docker.internal.
+func ContainerDSN() string {
+	if dsn := os.Getenv("AC_DSN"); dsn != "" {
+		return dsn
+	}
+	return strings.Replace(DefaultDSN, "127.0.0.1", "host.docker.internal", 1)
+}
+
+// OpenDB also pings the server, so a bad DSN fails here and not at the first query.
 func OpenDB(dsn string) (*sql.DB, error) {
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
@@ -67,6 +78,8 @@ type ItemRow struct {
 	RandomSuffix   int32
 }
 
+// LoadItems reads every item_template row, keyed by entry. NULLs read as zero values, except spell
+// cooldowns, which read as -1 (unset).
 func LoadItems(db *sql.DB) (map[int32]*ItemRow, error) {
 	columns := []string{"entry", "name", "class", "subclass", "Quality", "Flags", "InventoryType", "AllowableClass", "ItemLevel"}
 	for i := 1; i <= 10; i++ {
@@ -161,7 +174,7 @@ func LoadSpellProcs(db *sql.DB) (map[int32]SpellProc, error) {
 // ApplySpellDBCOverrides merges acore_world.spell_dbc into the DBC spells. The worldserver lets
 // those rows replace client DBC entries with the same ID and adds server-side spells.
 func ApplySpellDBCOverrides(db *sql.DB, dbc *DBC) (int, error) {
-	columns := []string{"ID", "RecoveryTime", "CategoryRecoveryTime", "ProcChance", "DurationIndex"}
+	columns := []string{"ID", "ShapeshiftMask", "RecoveryTime", "CategoryRecoveryTime", "ProcChance", "DurationIndex"}
 	for _, prefix := range []string{"Effect", "EffectDieSides", "EffectBasePoints", "EffectAura", "EffectItemType", "EffectMiscValue", "EffectTriggerSpell"} {
 		for i := 1; i <= 3; i++ {
 			columns = append(columns, fmt.Sprintf("%s_%d", prefix, i))
@@ -178,7 +191,7 @@ func ApplySpellDBCOverrides(db *sql.DB, dbc *DBC) (int, error) {
 	count := 0
 	for rows.Next() {
 		spell := &SpellEntry{}
-		dest := []any{&spell.ID, &spell.RecoveryTime, &spell.CategoryRecoveryTime, &spell.ProcChance, &spell.DurationIndex}
+		dest := []any{&spell.ID, &spell.Stances, &spell.RecoveryTime, &spell.CategoryRecoveryTime, &spell.ProcChance, &spell.DurationIndex}
 		for _, arr := range []*[3]int32{&spell.Effect, &spell.EffectDieSides, &spell.EffectBasePoints, &spell.EffectApplyAuraName,
 			&spell.EffectItemType, &spell.EffectMiscValue, &spell.EffectTriggerSpell} {
 			dest = append(dest, &arr[0], &arr[1], &arr[2])
