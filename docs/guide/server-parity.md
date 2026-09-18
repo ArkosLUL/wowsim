@@ -4,25 +4,27 @@ Where the server differs from the Classic behaviour upstream modelled.
 - Why the sim follows the server: [ADRs](../adr/).
 - How each module is handled: [azerothcore-server.md](azerothcore-server.md#modules-that-affect-the-sim).
 - Full evidence and phase status:
-  - `docs/azerothcore-parity/azerothcore-parity.{PLAN,INVESTIGATION}.md` (azerothcore-parity only).
+  - `docs/azerothcore-parity/azerothcore-parity.{PLAN,INVESTIGATION}.md`.
     The INVESTIGATION also lists every retail deviation and every mod-spell-tweaks change.
   - `docs/azerothcore-item-diff/`.
 
 ## Combat tables
 
-Verified on the server by simval. Modelled on azerothcore-parity only.
+Verified on the server by simval.
 
 | Mechanic | Classic sim | Server |
 |---|---|---|
 | Melee crit suppression vs +3 boss | 4.8% | 0.6% |
 | Spell crit suppression | 2.1% | none |
 | Glancing | 24%, ×0.75 | 25%, ×0.70 |
+| Who glances | players and every pet | players and `SUMMON_PET` pets (hunter, warlock, Master of Ghouls ghoul), never guardians |
 | Boss dodge / parry | 6.5% / 14% | 6.45% / 14% |
 | Level-83 non-boss dodge = parry | – | 5.6% |
 | White dodge/parry vs expertise | linear | cliffs at 23.4 / 53.6 |
 | White table order | glance before block | block before glance |
 | Yellow block | in the table | separate roll, 4.4%, front only, can crit |
 | Average magic resist | 6% | 3.6145% (K = 400, +15 level resist) |
+| Multi-school resist | 0 | lowest of its schools; holy counts 0 |
 | Spell miss vs +3 | 17% | 16.99% ((threshold − 1) / 10000) |
 | Creature vs player | – | miss 469 bp, crit 560 bp, no crushing |
 | ArP cap vs level 83 | 15232.5 | 16635 (uses the victim's level) |
@@ -31,6 +33,11 @@ Verified on the server by simval. Modelled on azerothcore-parity only.
 Other differences:
 - Holy gets the level-based resist vs creatures. The Classic sim read Strength as its resistance stat.
 - The pets' flat +1.8% crit (hunter pet, fire elemental, spirit wolves) is Classic-only.
+- The partial block is rolled in `CalculateSpellDamageTaken`: never on a hit check without damage (Sunder
+  Armor), and against a player only with a shield, at their sheet block chance.
+- `SPELL_ATTR3_COMPLETELY_BLOCKED` without direct damage blocks inside the yellow table, as
+  `SPELL_MISS_BLOCK`, which stops the spell.
+- Chill of the Throne (aura 49) is -20% dodge on the player, not the boss.
 
 ## Other measured server behaviour
 

@@ -32,9 +32,9 @@ Its findings, verified against code, and the list of AzerothCore deviations from
 
 **Server modules**
 - mod-spell-tweaks: every toggle is exposed in the UI, defaulting to the live config, so tweaks can be evaluated before deploying.
-- mod-reforging: a manual per-item reforge selector, no optimizer. **One shared model**, `ItemSpec.reforge {from, to}`.
-  The raid-import effort currently puts reforges into Bonus Stats; it switches to `ItemSpec.reforge` once P6 lands.
-- mod-racial-trait-swap: a new `Player.racial_traits` field, separate from `race` (race keeps base stats).
+- mod-reforging: a manual per-item reforge selector, no optimizer. **One shared model**, master's `ItemSpec.reforge`
+  (`sim/core/reforging.go`), which acraid already exports.
+- mod-racial-trait-swap: master's `Player.racial_traits` field, separate from `race` (race keeps base stats).
   The raid importer sets race = real race and traits = swapped race. Invalid-for-class combinations like Draenei traits on a druid are allowed.
 - mod-dungeon-scale: the full-raid stat multipliers are **server settings, not constants**. They are
   `DungeonScale.StatModifierRaid[Heroic][.Boss].{Global,Health,Armor,Damage}`. Defaults come from the live config and can be changed in the UI.
@@ -376,18 +376,17 @@ removes it.
 - Verify: for a naked lvl-80 character of each class, `.simval info` matches sim stats; repeat with 1400 ArP.
 
 ### P5 — Server settings (proto + UI)
+Racial traits already landed on master (23d0796b5, tests in `sim/racial_traits_test.go`).
 - `proto/common.proto`:
   - `ServerSettings` on `Encounter`:
     - map update ms
     - every mod-spell-tweaks toggle, plus exotic pet %
     - dungeon-scale full-raid multipliers (Global, Health, Armor, Damage) for raid and raid heroic, general and boss-specific
-    - reforge % and stat list
+    - reforge % and stat list, now constants in `sim/core/reforging.go`
   - Before implementing, read `DungeonScale.cpp` to learn how Global, per-stat and Boss values combine (multiply or override). The sim has to use the same combination rule.
-  - `Player.racial_traits` (0 = own race).
 - `tools/acore/gen_server_defaults` parses `[ac]/configurationOverrides/*.env`, module `conf.dist` files and `worldserver.conf.dist` into `sim/core/server_defaults_auto_gen.go` and `ui/core/constants/server_defaults_auto_gen.ts`. A missing message means live defaults.
 - Sim:
   - `server_settings.go`, threaded through `environment.go` → `raid.go` (`Raid.Server`) → `Character.Server()`.
-  - `racials.go` applies racials from `racial_traits`; base stats still come from `race`.
   - Dungeon-scale multipliers are applied in `target.go`:
     - Health → health-based fight length.
     - Armor → target armor.
@@ -395,13 +394,11 @@ removes it.
     - The raid vs raid-heroic set and the boss vs non-boss values are picked from the encounter's difficulty and `world_boss`.
 - UI:
   - "Server (AzerothCore)" section in `components/individual_sim_ui/settings_tab.ts`, with every spell-tweak switch.
-  - Racial-traits picker in `other_inputs.ts` (any race).
 - Tests:
   - Missing settings message → live defaults.
-  - Orc warrior with Human traits: Human weapon expertise, Orc base stats.
   - Dungeon-scale multipliers: changing Health, Armor or Damage in the settings changes only target HP, armor or boss damage, using the server's combination rule.
 
-### P6 — Items from the live DB + reforging (after the item-diff/loot effort lands)
+### P6 — Items from the live DB (after the item-diff/loot effort lands)
 **Item data**
 - Read `docs/azerothcore-item-diff/azerothcore-item-diff.INVESTIGATION.md` and that effort's final `gen_db` output first. Consume its item DB; don't duplicate its conversion.
 - Remaining work here:
@@ -409,16 +406,12 @@ removes it.
   - Replace hardcoded enchant PPM/ICD values with P3 generated data.
   - Re-point gear presets (`ui/<spec>/presets.ts`, `sim/<class>/**/*_test.go` gear sets) to server items and item levels.
 
-**Reforging (shared model)**
-- Proto: `UIItem.server_stats` and `SimItem.server_stats` (raw `item_template` stat types), `ItemSpec.reforge {from_stat_type, to_stat_type}`.
-- `sim/core/database.go` `NewItem`:
-  - Validates the mod-reforging rules and moves floor(0.4·value).
-  - Hit, crit and haste update both sim stat slots.
-- UI: reforge selector in `ui/core/components/gear_picker.tsx`; `ui/core/proto_utils/equipped_item.ts`.
-- Hand-off to the raid-import effort: switch `acraid`/`acore_roster.ts` from Bonus Stats to `ItemSpec.reforge`, and set `racial_traits` (from P5).
+**Reforging** is on master (23d0796b5): `ItemSpec.reforge`, `sim/core/reforging.go`, the gear editor's Reforging
+tab and acraid's export. Only its percentage and stat list move into P5's server settings. It reads the
+item's sim stats, so the planned `UIItem`/`SimItem.server_stats` (raw `item_template` stat types) are
+needed only if P6's item data calls for them.
 
 **Tests and verification**
-- Reforge cases in `sim/core/database_test.go`: 83 crit → 33 haste; the rejection rules; gems untouched.
 - `tsc` passes.
 - Same gear on a server character: `.simval info` ratings match the sim, with and without a reforge.
 

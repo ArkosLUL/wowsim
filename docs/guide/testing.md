@@ -29,6 +29,9 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
 - A `.results` that shows as modified with an empty `git diff` is CRLF noise: leave it out of commits.
 - Two sessions testing in one worktree mix each other's changes and overwrite each other's `.tmp` files.
   Promote only when both are done.
+- To commit one phase out of a worktree that holds two, rebuild its tree in scratch from `git archive HEAD`,
+  re-promote its goldens there, then stage that exact tree: `git add -A` into a scratch `GIT_INDEX_FILE`,
+  `git diff-index --cached HEAD`, and feed the result to `git update-index --index-info`.
 
 ## UI
 
@@ -41,7 +44,7 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
 
 ## Against the server
 
-- `tools/simval` (azerothcore-parity only) replays simval records captured on the server:
+- `tools/simval` replays simval records captured on the server:
   `dock.sh run ./tools/simval -records /wotlk/sim/core/testdata/simval/simval.jsonl`.
 - Live e2e, which needs the user's OK: `cd [ac]/modules/mod-sim-validation && ./e2e/run.sh [TestName]`,
   about 30 s. The module's `README.md` covers its commands, env vars and orphan cleanup.

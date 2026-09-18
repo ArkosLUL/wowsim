@@ -34,6 +34,8 @@ How the user runs efforts, beyond the hard rules in [CLAUDE.md](../../CLAUDE.md)
    mode.
 4. Re-verify the reviewer's edits, commit on the effort branch, then
    `git switch master && git merge --ff-only <branch>`.
+   - If master has moved, first merge `master` into the effort branch and test the merged tree. Set
+     another phase's uncommitted work aside with a named stash and re-apply it after.
 5. Don't push or delete branches unless asked. Pushes go to `origin`.
 
 ## Server-side work

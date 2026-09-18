@@ -28,7 +28,7 @@ MSYS_NO_PATHCONV=1 docker run --rm -v G:/DevStuff/GitHub/wowsimwotlk:/wotlk \
 - To reach the live DB as `ac-database:3306`, add `--network azerothcore-wotlk-pb_ac-network`.
 - The image has no docker CLI. Copy DBCs out on the host first, or mount the client-data volume
   ([azerothcore-server.md](azerothcore-server.md#dbcs)).
-- `tools/acore/dock.sh` (azerothcore-parity only) wraps all of this. It uses image `wowsim-toolchain`,
+- `tools/acore/dock.sh` wraps all of this. It uses image `wowsim-toolchain`,
   volumes `wowsim-gomod`/`wowsim-gocache`, and mounts DBCs at `/dbc` and [ac] at `/ac`. Subcommands:
   `build`, `proto`, `test [args]`, `tsc`, `run <pkg> [args]`, `exec <cmd>`, `dps`, `delta`,
   `promote <dir>`. `exec` quotes its arguments, so compound commands need `exec bash -c '…'`.
@@ -95,9 +95,10 @@ npx protoc --ts_out ui/core/proto --proto_path proto proto/ui.proto
 - Bash heredocs fail intermittently, so write scripts to files.
 - Run container commands that contain `$` from Git Bash: PowerShell quoting mangles them.
 - `> $null` in Git Bash creates a file named `$null`.
-- MSYS `grep` strips CR, so CR counts read 0. Use `grep -U` or `od -c`.
+- MSYS `grep` miscounts CR, with or without `-U`. Count with `od -c` or Python.
+- `sed -i` turns a CRLF file into LF; `core.autocrlf` hides that from `git diff`.
+- `tar` reads a `C:/...` path as a remote host: add `--force-local`.
 - Python exact-string edits miss on CRLF files.
 - Host Python can't see Git Bash's `/tmp`: use Windows paths.
 - Under `pipefail`, `tr </dev/urandom | head` exits 141.
-- `*.sh` must be LF, because CRLF breaks Git Bash. `tools/acore/.gitattributes` (azerothcore-parity only)
-  enforces it there.
+- `*.sh` must be LF, because CRLF breaks Git Bash. `tools/acore/.gitattributes` enforces it there.
