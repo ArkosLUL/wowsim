@@ -1,7 +1,7 @@
 import * as Tooltips from '../../constants/tooltips.js';
 import { Encounter } from '../../encounter';
 import { IndividualSimUI, InputSection } from '../../individual_sim_ui';
-import { Consumes, Debuffs, HealingModel, IndividualBuffs, ItemSwap, PartyBuffs, Profession, RaidBuffs, Spec } from '../../proto/common';
+import { Consumes, Debuffs, HealingModel, IndividualBuffs, ItemSwap, PartyBuffs, Profession, Race, RaidBuffs, Spec } from '../../proto/common';
 import { SavedEncounter, SavedSettings } from '../../proto/ui';
 import { professionNames, raceNames } from '../../proto_utils/names';
 import { specToEligibleRaces } from '../../proto_utils/utils';
@@ -117,38 +117,35 @@ export class SettingsTab extends SimTab {
 			setValue: (eventID, sim, newValue) => sim.setRace(eventID, newValue),
 		});
 
+		const _racialTraitsPicker = new EnumPicker(contentBlock.bodyElement, this.simUI.player, {
+			label: 'Racial Traits',
+			labelTooltip: 'For servers with racial trait swaps. Racial abilities come from this race, base stats still come from Race.',
+			values: Array.from(raceNames, ([value, name]) => ({ name: value == Race.RaceUnknown ? 'Same as race' : name, value })),
+			changedEvent: player => player.racialTraitsChangeEmitter,
+			getValue: player => player.getRacialTraits(),
+			setValue: (eventID, player, newValue) => player.setRacialTraits(eventID, newValue),
+		});
+
 		if (this.simUI.individualConfig.playerInputs?.inputs.length) {
 			this.configureInputSection(contentBlock.bodyElement, this.simUI.individualConfig.playerInputs);
 		}
 
 		const professionGroup = Input.newGroupContainer();
+		professionGroup.classList.add('professions-picker');
 		contentBlock.bodyElement.appendChild(professionGroup);
 
-		const professions = getEnumValues(Profession) as Array<Profession>;
-		const _profession1Picker = new EnumPicker(professionGroup, this.simUI.player, {
-			label: 'Profession 1',
-			values: professions.map(p => {
-				return {
-					name: professionNames.get(p)!,
-					value: p,
-				};
-			}),
-			changedEvent: sim => sim.professionChangeEmitter,
-			getValue: sim => sim.getProfession1(),
-			setValue: (eventID, sim, newValue) => sim.setProfession1(eventID, newValue),
-		});
-
-		const _profession2Picker = new EnumPicker(professionGroup, this.simUI.player, {
-			label: 'Profession 2',
-			values: professions.map(p => {
-				return {
-					name: professionNames.get(p)!,
-					value: p,
-				};
-			}),
-			changedEvent: sim => sim.professionChangeEmitter,
-			getValue: sim => sim.getProfession2(),
-			setValue: (eventID, sim, newValue) => sim.setProfession2(eventID, newValue),
+		// One checkbox each instead of two slots: an AzerothCore character can know more than two.
+		const professions = (getEnumValues(Profession) as Array<Profession>).filter(p => p != Profession.ProfessionUnknown);
+		professions.forEach(profession => {
+			const _professionPicker = new BooleanPicker(professionGroup, this.simUI.player, {
+				label: professionNames.get(profession)!,
+				changedEvent: player => player.professionChangeEmitter,
+				getValue: player => player.hasProfession(profession),
+				setValue: (eventID, player, known) => {
+					const others = player.getProfessions().filter(p => p != profession);
+					player.setProfessions(eventID, known ? others.concat([profession]) : others);
+				},
+			});
 		});
 	}
 
@@ -268,6 +265,7 @@ export class SettingsTab extends SimTab {
 					debuffs: simUI.sim.raid.getDebuffs(),
 					consumes: player.getConsumes(),
 					race: player.getRace(),
+					racialTraits: player.getRacialTraits(),
 					professions: player.getProfessions(),
 					enableItemSwap: player.getEnableItemSwap(),
 					itemSwap: player.getItemSwapGear().toProto(),
@@ -290,6 +288,7 @@ export class SettingsTab extends SimTab {
 					simUI.player.setBuffs(eventID, newSettings.playerBuffs || IndividualBuffs.create());
 					simUI.player.setConsumes(eventID, newSettings.consumes || Consumes.create());
 					simUI.player.setRace(eventID, newSettings.race);
+					simUI.player.setRacialTraits(eventID, newSettings.racialTraits);
 					simUI.player.setProfessions(eventID, newSettings.professions);
 					simUI.player.setEnableItemSwap(eventID, newSettings.enableItemSwap);
 					simUI.player.setItemSwapGear(eventID, simUI.sim.db.lookupItemSwap(newSettings.itemSwap || ItemSwap.create()));
@@ -308,6 +307,7 @@ export class SettingsTab extends SimTab {
 				this.simUI.player.buffsChangeEmitter,
 				this.simUI.player.consumesChangeEmitter,
 				this.simUI.player.raceChangeEmitter,
+				this.simUI.player.racialTraitsChangeEmitter,
 				this.simUI.player.professionChangeEmitter,
 				this.simUI.player.itemSwapChangeEmitter,
 				this.simUI.player.miscOptionsChangeEmitter,

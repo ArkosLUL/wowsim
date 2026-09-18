@@ -71,6 +71,7 @@ import {
 	getMetaGemEffectEP,
 	isTankSpec,
 	newUnitReference,
+	playerProtoProfessions,
 	raceToFaction,
 	specToClass,
 	specToEligibleRaces,
@@ -84,7 +85,7 @@ import { EventID, TypedEvent } from './typed_event.js';
 import { Party, MAX_PARTY_SIZE } from './party.js';
 import { Raid } from './raid.js';
 import { Sim, SimSettingCategories } from './sim.js';
-import { stringComparator, sum } from './utils.js';
+import { distinct, stringComparator, sum } from './utils.js';
 import { Database } from './proto_utils/database.js';
 
 export interface AuraStats {
@@ -240,8 +241,8 @@ export class Player<SpecType extends Spec> {
 	private enableItemSwap: boolean = false;
 	private itemSwapGear: ItemSwapGear = new ItemSwapGear({});
 	private race: Race;
-	private profession1: Profession = 0;
-	private profession2: Profession = 0;
+	private racialTraits: Race = Race.RaceUnknown;
+	private professions: Array<Profession> = [];
 	aplRotation: APLRotation = APLRotation.create();
 	private talentsString: string = '';
 	private glyphs: Glyphs = Glyphs.create();
@@ -280,6 +281,7 @@ export class Player<SpecType extends Spec> {
 	readonly itemSwapChangeEmitter = new TypedEvent<void>('PlayerItemSwap');
 	readonly professionChangeEmitter = new TypedEvent<void>('PlayerProfession');
 	readonly raceChangeEmitter = new TypedEvent<void>('PlayerRace');
+	readonly racialTraitsChangeEmitter = new TypedEvent<void>('PlayerRacialTraits');
 	readonly rotationChangeEmitter = new TypedEvent<void>('PlayerRotation');
 	readonly talentsChangeEmitter = new TypedEvent<void>('PlayerTalents');
 	readonly glyphsChangeEmitter = new TypedEvent<void>('PlayerGlyphs');
@@ -331,6 +333,7 @@ export class Player<SpecType extends Spec> {
 			this.itemSwapChangeEmitter,
 			this.professionChangeEmitter,
 			this.raceChangeEmitter,
+			this.racialTraitsChangeEmitter,
 			this.rotationChangeEmitter,
 			this.talentsChangeEmitter,
 			this.glyphsChangeEmitter,
@@ -522,35 +525,43 @@ export class Player<SpecType extends Spec> {
 		}
 	}
 
-	getProfession1(): Profession {
-		return this.profession1;
+	// mod-racial-trait-swap: racials come from this race, base stats and faction from getRace().
+	// RaceUnknown means the player's own race.
+	getRacialTraits(): Race {
+		return this.racialTraits;
 	}
-	setProfession1(eventID: EventID, newProfession: Profession) {
-		if (newProfession != this.profession1) {
-			this.profession1 = newProfession;
-			this.professionChangeEmitter.emit(eventID);
+	setRacialTraits(eventID: EventID, newRacialTraits: Race) {
+		if (newRacialTraits != this.racialTraits) {
+			this.racialTraits = newRacialTraits;
+			this.racialTraitsChangeEmitter.emit(eventID);
 		}
+	}
+	getEffectiveRacialTraits(): Race {
+		return this.racialTraits || this.race;
+	}
+
+	getProfession1(): Profession {
+		return this.professions[0] || Profession.ProfessionUnknown;
 	}
 	getProfession2(): Profession {
-		return this.profession2;
-	}
-	setProfession2(eventID: EventID, newProfession: Profession) {
-		if (newProfession != this.profession2) {
-			this.profession2 = newProfession;
-			this.professionChangeEmitter.emit(eventID);
-		}
+		return this.professions[1] || Profession.ProfessionUnknown;
 	}
 	getProfessions(): Array<Profession> {
-		return [this.profession1, this.profession2].filter(p => p != Profession.ProfessionUnknown);
+		return this.professions.slice();
 	}
+	// An AzerothCore character can know more than the two the game allows, so this takes any number.
+	// Sorted, so the same set always makes the same proto: share links and the profession1/2 compat
+	// fields would otherwise depend on the order the user ticked the checkboxes.
 	setProfessions(eventID: EventID, newProfessions: Array<Profession>) {
-		TypedEvent.freezeAllAndDo(() => {
-			this.setProfession1(eventID, newProfessions[0] || Profession.ProfessionUnknown);
-			this.setProfession2(eventID, newProfessions[1] || Profession.ProfessionUnknown);
-		});
+		const professions = distinct(newProfessions.filter(p => p != Profession.ProfessionUnknown)).sort((a, b) => a - b);
+		if (professions.length == this.professions.length && professions.every((p, i) => p == this.professions[i])) {
+			return;
+		}
+		this.professions = professions;
+		this.professionChangeEmitter.emit(eventID);
 	}
 	hasProfession(prof: Profession): boolean {
-		return this.getProfessions().includes(prof);
+		return this.professions.includes(prof);
 	}
 	isBlacksmithing(): boolean {
 		return this.hasProfession(Profession.Blacksmithing);
@@ -1357,6 +1368,8 @@ export class Player<SpecType extends Spec> {
 			PlayerProto.mergePartial(player, {
 				name: this.getName(),
 				race: this.getRace(),
+				racialTraits: this.getRacialTraits(),
+				professions: this.getProfessions(),
 				profession1: this.getProfession1(),
 				profession2: this.getProfession2(),
 				reactionTimeMs: this.getReactionTime(),
@@ -1416,8 +1429,8 @@ export class Player<SpecType extends Spec> {
 				this.setSpecOptions(eventID, this.specTypeFunctions.optionsFromPlayer(proto));
 				this.setName(eventID, proto.name);
 				this.setRace(eventID, proto.race);
-				this.setProfession1(eventID, proto.profession1);
-				this.setProfession2(eventID, proto.profession2);
+				this.setRacialTraits(eventID, proto.racialTraits);
+				this.setProfessions(eventID, playerProtoProfessions(proto));
 				this.setReactionTime(eventID, proto.reactionTimeMs);
 				this.setChannelClipDelay(eventID, proto.channelClipDelayMs);
 				this.setInFrontOfTarget(eventID, proto.inFrontOfTarget);

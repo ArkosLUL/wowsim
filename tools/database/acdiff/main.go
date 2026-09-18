@@ -53,7 +53,7 @@ func main() {
 		log.Fatal("-acRepo is required: the AzerothCore repo the server was built from")
 	}
 
-	world, err := azerothcore.OpenWorldDB(*dsn)
+	world, err := azerothcore.OpenDB(*dsn)
 	check(err)
 	defer world.Close()
 

@@ -1,5 +1,5 @@
 import { GemColor } from '../proto/common.js';
-import { ItemSpec } from '../proto/common.js';
+import { ItemReforge, ItemSpec } from '../proto/common.js';
 import { ItemType } from '../proto/common.js';
 import { Profession } from '../proto/common.js';
 import {
@@ -19,7 +19,7 @@ export function getWeaponDPS(item: Item): number {
 }
 
 /**
- * Represents an equipped item along with enchants/gems attached to it.
+ * Represents an equipped item along with enchants/gems/reforge attached to it.
  *
  * This is an immutable type.
  */
@@ -27,13 +27,15 @@ export class EquippedItem {
 	readonly _item: Item;
 	readonly _enchant: Enchant | null;
 	readonly _gems: Array<Gem | null>;
+	readonly _reforge: ItemReforge | null;
 
 	readonly numPossibleSockets: number;
 
-	constructor(item: Item, enchant?: Enchant | null, gems?: Array<Gem | null>) {
+	constructor(item: Item, enchant?: Enchant | null, gems?: Array<Gem | null>, reforge?: ItemReforge | null) {
 		this._item = item;
 		this._enchant = enchant || null;
 		this._gems = gems || [];
+		this._reforge = reforge ? ItemReforge.clone(reforge) : null;
 
 		this.numPossibleSockets = this.numSockets(true);
 
@@ -62,6 +64,11 @@ export class EquippedItem {
 		return this._gems.map(gem => gem == null ? null : Gem.clone(gem));
 	}
 
+	get reforge(): ItemReforge | null {
+		// Make a defensive copy
+		return this._reforge ? ItemReforge.clone(this._reforge) : null;
+	}
+
 	equals(other: EquippedItem) {
 		if (!Item.equals(this._item, other.item))
 			return false;
@@ -70,6 +77,12 @@ export class EquippedItem {
 			return false;
 
 		if (this._enchant && other.enchant && !Enchant.equals(this._enchant, other.enchant))
+			return false;
+
+		if ((this._reforge == null) != (other.reforge == null))
+			return false;
+
+		if (this._reforge && other.reforge && !ItemReforge.equals(this._reforge, other.reforge))
 			return false;
 
 		if (this._gems.length != other.gems.length)
@@ -87,7 +100,7 @@ export class EquippedItem {
 	}
 
 	/**
-	 * Replaces the item and tries to keep the existing enchants/gems if possible.
+	 * Replaces the item and tries to keep the existing enchants/gems if possible. Drops the reforge unless it's the same item.
 	 */
 	withItem(item: Item): EquippedItem {
 		let newEnchant = null;
@@ -111,14 +124,21 @@ export class EquippedItem {
 			newGems.push(this._gems[this._gems.length - 1]);
 		}
 
-		return new EquippedItem(item, newEnchant, newGems);
+		return new EquippedItem(item, newEnchant, newGems, item.id == this._item.id ? this._reforge : null);
 	}
 
 	/**
 	 * Returns a new EquippedItem with the given enchant applied.
 	 */
 	withEnchant(enchant: Enchant | null): EquippedItem {
-		return new EquippedItem(this._item, enchant, this._gems);
+		return new EquippedItem(this._item, enchant, this._gems, this._reforge);
+	}
+
+	/**
+	 * Returns a new EquippedItem with the given reforge applied.
+	 */
+	withReforge(reforge: ItemReforge | null): EquippedItem {
+		return new EquippedItem(this._item, this._enchant, this._gems, reforge);
 	}
 
 	/**
@@ -132,7 +152,7 @@ export class EquippedItem {
 		const newGems = this._gems.slice();
 		newGems[socketIdx] = gem;
 
-		return new EquippedItem(this._item, this._enchant, newGems);
+		return new EquippedItem(this._item, this._enchant, newGems, this._reforge);
 	}
 
 	/**
@@ -180,6 +200,7 @@ export class EquippedItem {
 			id: this._item.id,
 			enchant: this._enchant?.effectId,
 			gems: this._gems.map(gem => gem?.id || 0),
+			reforge: this._reforge ? ItemReforge.clone(this._reforge) : undefined,
 		});
 	}
 

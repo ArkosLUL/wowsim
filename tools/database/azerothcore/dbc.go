@@ -1,5 +1,5 @@
-// Package azerothcore reads item and spell data from an AzerothCore (3.3.5a) server: the world
-// database and the client DBC files the worldserver loads.
+// Package azerothcore reads items, spells and characters from an AzerothCore (3.3.5a) server: its
+// world and character databases, and the client DBC files the worldserver loads.
 package azerothcore
 
 import (
@@ -172,10 +172,14 @@ var DBCFileNames = []string{"Spell.dbc", "SpellDuration.dbc", "SpellItemEnchantm
 // CopyDBCFromContainer copies the needed DBCs out of a running worldserver container, since the
 // client data lives in a Docker volume the host can't read directly.
 func CopyDBCFromContainer(container, destDir string) error {
+	return CopyDBCFilesFromContainer(container, destDir, DBCFileNames)
+}
+
+func CopyDBCFilesFromContainer(container, destDir string, names []string) error {
 	if err := os.MkdirAll(destDir, 0o755); err != nil {
 		return err
 	}
-	for _, name := range DBCFileNames {
+	for _, name := range names {
 		src := fmt.Sprintf("%s:/azerothcore/env/dist/data/dbc/%s", container, name)
 		if out, err := exec.Command("docker", "cp", src, filepath.Join(destDir, name)).CombinedOutput(); err != nil {
 			return fmt.Errorf("docker cp %s: %v: %s", src, err, out)
@@ -184,9 +188,9 @@ func CopyDBCFromContainer(container, destDir string) error {
 	return nil
 }
 
-func LoadDBC(dir string) (*DBC, error) {
-	files := make(map[string]*DBCFile, len(DBCFileNames))
-	for _, name := range DBCFileNames {
+func readDBCFiles(dir string, names []string) (map[string]*DBCFile, error) {
+	files := make(map[string]*DBCFile, len(names))
+	for _, name := range names {
 		data, err := os.ReadFile(filepath.Join(dir, name))
 		if err != nil {
 			return nil, err
@@ -196,6 +200,14 @@ func LoadDBC(dir string) (*DBC, error) {
 			return nil, fmt.Errorf("%s: %w", name, err)
 		}
 		files[name] = file
+	}
+	return files, nil
+}
+
+func LoadDBC(dir string) (*DBC, error) {
+	files, err := readDBCFiles(dir, DBCFileNames)
+	if err != nil {
+		return nil, err
 	}
 
 	return &DBC{

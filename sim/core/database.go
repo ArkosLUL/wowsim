@@ -56,6 +56,8 @@ type Item struct {
 	// Modified for each instance of the item.
 	Gems    []Gem
 	Enchant Enchant
+	// only set when valid, its stat change is already added to Stats
+	Reforge *proto.ItemReforge
 
 	//Internal use
 	TempEnchant int32
@@ -85,6 +87,7 @@ func (item *Item) ToItemSpecProto() *proto.ItemSpec {
 		Id:      item.ID,
 		Enchant: item.Enchant.EffectID,
 		Gems:    MapSlice(item.Gems, func(gem Gem) int32 { return gem.ID }),
+		Reforge: item.Reforge,
 	}
 }
 
@@ -120,6 +123,7 @@ type ItemSpec struct {
 	ID      int32
 	Enchant int32
 	Gems    []int32
+	Reforge *proto.ItemReforge
 }
 
 type Equipment [proto.ItemSlot_ItemSlotRanged + 1]Item
@@ -214,6 +218,7 @@ func ProtoToEquipmentSpec(es *proto.EquipmentSpec) EquipmentSpec {
 			ID:      item.Id,
 			Enchant: item.Enchant,
 			Gems:    item.Gems,
+			Reforge: item.Reforge,
 		}
 	}
 	return coreEquip
@@ -254,6 +259,11 @@ func NewItem(itemSpec ItemSpec) Item {
 			}
 		}
 	}
+
+	if reforgeStats := ReforgeStats(item.Stats, itemSpec.Reforge); reforgeStats != (stats.Stats{}) {
+		item.Reforge = itemSpec.Reforge
+		item.Stats = item.Stats.Add(reforgeStats)
+	}
 	return item
 }
 
@@ -290,30 +300,35 @@ func EquipmentSpecFromJsonString(jsonString string) *proto.EquipmentSpec {
 
 func (equipment *Equipment) Stats() stats.Stats {
 	equipStats := stats.Stats{}
-	for _, item := range equipment {
-		equipStats = equipStats.Add(item.Stats)
-		equipStats = equipStats.Add(item.Enchant.Stats)
-
-		for _, gem := range item.Gems {
-			equipStats = equipStats.Add(gem.Stats)
-		}
-
-		// Check socket bonus
-		if len(item.GemSockets) > 0 && len(item.Gems) >= len(item.GemSockets) {
-			allMatch := true
-			for gemIndex, socketColor := range item.GemSockets {
-				if !ColorIntersects(socketColor, item.Gems[gemIndex].Color) {
-					allMatch = false
-					break
-				}
-			}
-
-			if allMatch {
-				equipStats = equipStats.Add(item.SocketBonus)
-			}
-		}
+	for i := range equipment {
+		equipStats = equipStats.Add(equipment[i].TotalStats())
 	}
 	return equipStats
+}
+
+// TotalStats returns the stats the item gives when worn: its own, enchant, gems and socket bonus.
+func (item *Item) TotalStats() stats.Stats {
+	itemStats := item.Stats.Add(item.Enchant.Stats)
+
+	for _, gem := range item.Gems {
+		itemStats = itemStats.Add(gem.Stats)
+	}
+
+	// Check socket bonus
+	if len(item.GemSockets) > 0 && len(item.Gems) >= len(item.GemSockets) {
+		allMatch := true
+		for gemIndex, socketColor := range item.GemSockets {
+			if !ColorIntersects(socketColor, item.Gems[gemIndex].Color) {
+				allMatch = false
+				break
+			}
+		}
+
+		if allMatch {
+			itemStats = itemStats.Add(item.SocketBonus)
+		}
+	}
+	return itemStats
 }
 
 func ItemTypeToSlot(it proto.ItemType) proto.ItemSlot {

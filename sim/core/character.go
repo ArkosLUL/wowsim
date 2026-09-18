@@ -37,9 +37,12 @@ type Character struct {
 	Unit
 
 	Name  string // Different from Label, needed for returned results.
-	Race  proto.Race
 	Class proto.Class
 	Spec  proto.Spec
+
+	// base stats come from BaseStatsRace, racials from RacialTraits. they differ with mod-racial-trait-swap
+	BaseStatsRace proto.Race
+	RacialTraits  proto.Race
 
 	// Current gear.
 	Equipment
@@ -65,7 +68,7 @@ type Character struct {
 	bonusOHDps     float64
 	bonusRangedDps float64
 
-	professions [2]proto.Profession
+	professions []proto.Profession
 
 	glyphs            [6]int32
 	PrimaryTalentTree uint8
@@ -108,22 +111,24 @@ func NewCharacter(party *Party, partyIndex int, player *proto.Player) Character 
 			NibelungAverageCasts: player.NibelungAverageCasts,
 		},
 
-		Name:  player.Name,
-		Race:  player.Race,
-		Class: player.Class,
-		Spec:  PlayerProtoToSpec(player),
+		Name:          player.Name,
+		BaseStatsRace: player.Race,
+		RacialTraits:  player.Race,
+		Class:         player.Class,
+		Spec:          PlayerProtoToSpec(player),
 
 		Equipment: ProtoToEquipment(player.Equipment),
 
-		professions: [2]proto.Profession{
-			player.Profession1,
-			player.Profession2,
-		},
+		professions: ProtoToProfessions(player),
 
 		Party:      party,
 		PartyIndex: partyIndex,
 
 		majorCooldownManager: newMajorCooldownManager(player.Cooldowns),
+	}
+
+	if player.RacialTraits != proto.Race_RaceUnknown {
+		character.RacialTraits = player.RacialTraits
 	}
 
 	character.GCD = character.NewTimer()
@@ -147,7 +152,7 @@ func NewCharacter(party *Party, partyIndex int, player *proto.Player) Character 
 		character.Consumes = player.Consumes
 	}
 
-	character.baseStats = BaseStats[BaseStatsKey{Race: character.Race, Class: character.Class}]
+	character.baseStats = BaseStats[BaseStatsKey{Race: character.BaseStatsRace, Class: character.Class}]
 
 	character.AddStats(character.baseStats)
 	character.addUniversalStatDependencies()
@@ -393,7 +398,7 @@ func (character *Character) DefaultHealingCritMultiplier() float64 {
 func (character *Character) AddRaidBuffs(_ *proto.RaidBuffs) {
 }
 func (character *Character) AddPartyBuffs(partyBuffs *proto.PartyBuffs) {
-	if character.Race == proto.Race_RaceDraenei {
+	if character.RacialTraits == proto.Race_RaceDraenei {
 		partyBuffs.HeroicPresence = true
 	}
 
@@ -506,7 +511,7 @@ func (character *Character) reset(sim *Simulation, agent Agent) {
 }
 
 func (character *Character) HasProfession(prof proto.Profession) bool {
-	return prof == character.professions[0] || prof == character.professions[1]
+	return slices.Contains(character.professions, prof)
 }
 
 func (character *Character) HasGlyph(glyphID int32) bool {

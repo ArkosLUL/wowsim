@@ -1,7 +1,7 @@
 import { REPO_NAME } from '../constants/other.js'
 import { camelToSnakeCase } from '../utils.js';
 import { getEnumValues } from '../utils.js';
-import { intersection } from '../utils.js';
+import { distinct, intersection } from '../utils.js';
 import { maxIndex } from '../utils.js';
 import { sum } from '../utils.js';
 
@@ -10,7 +10,7 @@ import { ResourceType } from '../proto/api.js';
 import { ArmorType, UnitReference_Type } from '../proto/common.js';
 import { Class } from '../proto/common.js';
 import { EnchantType } from '../proto/common.js';
-import { HandType } from '../proto/common.js';
+import { HandType, Profession } from '../proto/common.js';
 import { ItemSlot } from '../proto/common.js';
 import { ItemType } from '../proto/common.js';
 import { Race } from '../proto/common.js';
@@ -295,6 +295,13 @@ export const titleIcons: Record<Class | Spec, string> = {
 
 export const raidSimIcon: string = '/wotlk/assets/img/raid_icon.png';
 export const raidSimLabel: string = 'Full Raid Sim';
+
+// Every profession the player knows. The two slots are all that older links and presets carry, but
+// an AzerothCore character can know more than two.
+export function playerProtoProfessions(player: Player): Array<Profession> {
+	const professions = player.professions.length ? player.professions : [player.profession1, player.profession2];
+	return distinct(professions.filter(p => p != Profession.ProfessionUnknown));
+}
 
 // Converts '1231321-12313123-0' to [40, 21, 0].
 export function getTalentTreePoints(talentsString: string): Array<number> {

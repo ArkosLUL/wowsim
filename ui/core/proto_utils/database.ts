@@ -26,6 +26,7 @@ import {
 import { gemEligibleForSocket, gemMatchesSocket } from './gems.js';
 import { EquippedItem } from './equipped_item.js';
 import { Gear, ItemSwapGear } from './gear.js';
+import { isValidReforge } from './reforging.js';
 import { CHARACTER_LEVEL } from '../constants/mechanics.js';
 import { distinct } from '../utils.js';
 
@@ -193,8 +194,9 @@ export class Database {
 		}
 
 		const gems = itemSpec.gems.map(gemId => this.lookupGem(gemId));
+		const reforge = isValidReforge(item, itemSpec.reforge) ? itemSpec.reforge : null;
 
-		return new EquippedItem(item, enchant, gems);
+		return new EquippedItem(item, enchant, gems, reforge);
 	}
 
 	lookupEquipmentSpec(equipSpec: EquipmentSpec): Gear {

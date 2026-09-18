@@ -6,7 +6,9 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/wowsims/wotlk/sim/core/proto"
+	"github.com/wowsims/wotlk/sim/core/stats"
 	"google.golang.org/protobuf/encoding/protojson"
+	goproto "google.golang.org/protobuf/proto"
 )
 
 const (
@@ -378,5 +380,74 @@ func TestGenerateAllEquipmentSubstitutions(t *testing.T) {
 				t.Errorf("generateAllEquipmentSubstitutions has incorrect number of items, expected: %d, got: %d", len(tt.want), idx)
 			}
 		})
+	}
+}
+
+func TestCreateNewRequestWithSubstitutionCarriesReforge(t *testing.T) {
+	const (
+		oldHead        = 9100011
+		critHead       = 9100012
+		critHasteHead  = 9100013
+		enchantForHead = 9100014
+	)
+	addToDatabase(&proto.SimDatabase{
+		Items: []*proto.SimItem{
+			{Id: oldHead, Type: proto.ItemType_ItemTypeHead, Stats: stats.Stats{stats.MeleeCrit: 83, stats.SpellCrit: 83}.ToFloatArray()},
+			{Id: critHead, Type: proto.ItemType_ItemTypeHead, Stats: stats.Stats{stats.MeleeCrit: 60, stats.SpellCrit: 60}.ToFloatArray()},
+			{Id: critHasteHead, Type: proto.ItemType_ItemTypeHead, Stats: stats.Stats{stats.MeleeCrit: 60, stats.SpellCrit: 60, stats.MeleeHaste: 30, stats.SpellHaste: 30}.ToFloatArray()},
+		},
+	})
+	critToHaste := &proto.ItemReforge{FromStatType: 32, ToStatType: 36}
+	critToHit := &proto.ItemReforge{FromStatType: 32, ToStatType: 31}
+
+	for _, tc := range []struct {
+		comment     string
+		candidate   *proto.ItemSpec
+		autoEnchant bool
+		want        *proto.ItemSpec
+	}{
+		{
+			comment:   "valid on the candidate",
+			candidate: &proto.ItemSpec{Id: critHead},
+			want:      &proto.ItemSpec{Id: critHead, Reforge: critToHaste},
+		},
+		{
+			comment:   "candidate already has the to stat",
+			candidate: &proto.ItemSpec{Id: critHasteHead},
+			want:      &proto.ItemSpec{Id: critHasteHead},
+		},
+		{
+			comment:   "candidate keeps its own reforge",
+			candidate: &proto.ItemSpec{Id: critHead, Reforge: critToHit},
+			want:      &proto.ItemSpec{Id: critHead, Reforge: critToHit},
+		},
+		{
+			comment:     "carried together with the enchant",
+			candidate:   &proto.ItemSpec{Id: critHead},
+			autoEnchant: true,
+			want:        &proto.ItemSpec{Id: critHead, Enchant: enchantForHead, Reforge: critToHaste},
+		},
+	} {
+		baseEquipment := createEquipmentFromItems(&itemWithSlot{
+			Item: &proto.ItemSpec{Id: oldHead, Enchant: enchantForHead, Reforge: critToHaste},
+			Slot: proto.ItemSlot_ItemSlotHead,
+		})
+		request := &proto.RaidSimRequest{
+			Raid: &proto.Raid{Parties: []*proto.Party{{Players: []*proto.Player{{Equipment: baseEquipment}}}}},
+		}
+		candidate := goproto.Clone(tc.candidate).(*proto.ItemSpec)
+		substitution := &equipmentSubstitution{Items: []*itemWithSlot{{Item: candidate, Slot: proto.ItemSlot_ItemSlotHead}}}
+
+		newRequest, changeLog := createNewRequestWithSubstitution(request, substitution, tc.autoEnchant)
+
+		if got := newRequest.Raid.Parties[0].Players[0].Equipment.Items[proto.ItemSlot_ItemSlotHead]; !goproto.Equal(got, tc.want) {
+			t.Errorf("%s: equipped %v, want %v", tc.comment, got, tc.want)
+		}
+		if got := changeLog.AddedItems[0].Item; !goproto.Equal(got, tc.want) {
+			t.Errorf("%s: items added %v, want %v", tc.comment, got, tc.want)
+		}
+		if !goproto.Equal(candidate, tc.candidate) {
+			t.Errorf("%s: bulk item changed to %v", tc.comment, candidate)
+		}
 	}
 }
