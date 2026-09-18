@@ -65,10 +65,9 @@ G = changes goldens. FS = runs all 37 suites.
 
 ## Current wave
 
-- Wave: A, all four WIs merged and their worktrees removed; next is step 5, the cross-review.
-- Base SHA: `e704d104c`.
-- Workflow runId: `wf_a636aa2a-e61`. Script passed inline; the persisted copy for `resumeFromRunId` is
-  `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\workflows\scripts\wave-loop-wf_a636aa2a-e61.js`.
+- Wave: B, not started. Wave A (base `e704d104c`) landed on `master`, and [par] is retired.
+- Base SHA: set at wave start.
+- Workflow runId: none.
 
 ## Status
 
@@ -83,5 +82,8 @@ Later WIs are added as their wave starts.
 
 ## User actions
 
-None pending. The pre-wave-A commits (mod-sim-validation's P4 e2e work, the raid-import PLAN status edit) are
-done. The user's only action is "continue" after each wave report.
+- Approve wave A's doc drafts, or ask for changes. The drafts are in
+  `C:\Users\boss2\AppData\Local\Temp\claude\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\scratchpad\docdraft\`,
+  mirroring repo paths; `..\docdraft.diff` is the diff. On approval they're copied into [int] and committed
+  before wave B starts.
+- Then "continue" for wave B.
