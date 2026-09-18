@@ -2,6 +2,8 @@ package core
 
 import (
 	"fmt"
+	"sync"
+
 	"github.com/wowsims/wotlk/sim/core/proto"
 	"github.com/wowsims/wotlk/sim/core/stats"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -9,28 +11,59 @@ import (
 
 var WITH_DB = false
 
+// Every request can add to these (NewCharacter does), so once init is done, go through
+// AddToDatabase and the Lookup functions rather than touching the maps.
 var ItemsByID = map[int32]Item{}
 var GemsByID = map[int32]Gem{}
 var EnchantsByEffectID = map[int32]Enchant{}
 
-func addToDatabase(newDB *proto.SimDatabase) {
-	for _, v := range newDB.Items {
+// dbMu guards the three maps above.
+var dbMu sync.RWMutex
+
+// AddToDatabase adds the items, enchants and gems the database doesn't have yet. Existing entries
+// never change, so a looked-up value stays valid.
+func AddToDatabase(newDB *proto.SimDatabase) {
+	dbMu.Lock()
+	defer dbMu.Unlock()
+
+	for _, v := range newDB.GetItems() {
 		if _, ok := ItemsByID[v.Id]; !ok {
 			ItemsByID[v.Id] = ItemFromProto(v)
 		}
 	}
 
-	for _, v := range newDB.Enchants {
+	for _, v := range newDB.GetEnchants() {
 		if _, ok := EnchantsByEffectID[v.EffectId]; !ok {
 			EnchantsByEffectID[v.EffectId] = EnchantFromProto(v)
 		}
 	}
 
-	for _, v := range newDB.Gems {
+	for _, v := range newDB.GetGems() {
 		if _, ok := GemsByID[v.Id]; !ok {
 			GemsByID[v.Id] = GemFromProto(v)
 		}
 	}
+}
+
+func LookupItem(id int32) (Item, bool) {
+	dbMu.RLock()
+	defer dbMu.RUnlock()
+	item, ok := ItemsByID[id]
+	return item, ok
+}
+
+func LookupGem(id int32) (Gem, bool) {
+	dbMu.RLock()
+	defer dbMu.RUnlock()
+	gem, ok := GemsByID[id]
+	return gem, ok
+}
+
+func LookupEnchant(effectID int32) (Enchant, bool) {
+	dbMu.RLock()
+	defer dbMu.RUnlock()
+	enchant, ok := EnchantsByEffectID[effectID]
+	return enchant, ok
 }
 
 type Item struct {
@@ -225,6 +258,20 @@ func ProtoToEquipmentSpec(es *proto.EquipmentSpec) EquipmentSpec {
 }
 
 func NewItem(itemSpec ItemSpec) Item {
+	item := lookupItemSpec(itemSpec)
+	if reforgeStats := ReforgeStats(item.Stats, itemSpec.Reforge); reforgeStats != (stats.Stats{}) {
+		item.Reforge = itemSpec.Reforge
+		item.Stats = item.Stats.Add(reforgeStats)
+	}
+	return item
+}
+
+// Unlocks via defer so its panics don't leave the read lock held: sim runners recover from them,
+// and a stuck lock would block every later AddToDatabase.
+func lookupItemSpec(itemSpec ItemSpec) Item {
+	dbMu.RLock()
+	defer dbMu.RUnlock()
+
 	item := Item{}
 	if foundItem, ok := ItemsByID[itemSpec.ID]; ok {
 		item = foundItem
@@ -258,11 +305,6 @@ func NewItem(itemSpec ItemSpec) Item {
 				}
 			}
 		}
-	}
-
-	if reforgeStats := ReforgeStats(item.Stats, itemSpec.Reforge); reforgeStats != (stats.Stats{}) {
-		item.Reforge = itemSpec.Reforge
-		item.Stats = item.Stats.Add(reforgeStats)
 	}
 	return item
 }
@@ -384,7 +426,9 @@ var itemTypeToSlotsMap = map[proto.ItemType][]proto.ItemSlot{
 	// ItemType_ItemTypeWeapon is excluded intentionally - the slot cannot be decided based on type alone for weapons.
 }
 
-func eligibleSlotsForItem(item Item) []proto.ItemSlot {
+// EligibleSlotsForItem lists the slots an item can go in by its type and hand type alone. The slice
+// can be shared, so don't modify it.
+func EligibleSlotsForItem(item Item) []proto.ItemSlot {
 	if slots, ok := itemTypeToSlotsMap[item.Type]; ok {
 		return slots
 	}

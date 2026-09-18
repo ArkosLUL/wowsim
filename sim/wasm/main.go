@@ -12,6 +12,7 @@ import (
 	"github.com/wowsims/wotlk/sim"
 	"github.com/wowsims/wotlk/sim/core"
 	proto "github.com/wowsims/wotlk/sim/core/proto"
+	"github.com/wowsims/wotlk/sim/optimizer"
 	protojson "google.golang.org/protobuf/encoding/protojson"
 	googleProto "google.golang.org/protobuf/proto"
 )
@@ -31,6 +32,7 @@ func main() {
 	js.Global().Set("statWeights", js.FuncOf(statWeights))
 	js.Global().Set("statWeightsAsync", js.FuncOf(statWeightsAsync))
 	js.Global().Set("bulkSimAsync", js.FuncOf(bulkSimAsync))
+	js.Global().Set("optimizeGearAsync", js.FuncOf(optimizeGearAsync))
 	js.Global().Call("wasmready")
 	<-c
 }
@@ -217,6 +219,19 @@ func bulkSimAsync(this js.Value, args []js.Value) interface{} {
 	return result
 }
 
+// Single-threaded and can't be cancelled here: the call blocks the worker until the run ends.
+func optimizeGearAsync(this js.Value, args []js.Value) interface{} {
+	req := &proto.OptimizeGearRequest{}
+	if err := googleProto.Unmarshal(getArgsBinary(args[0]), req); err != nil {
+		log.Printf("Failed to parse request: %s", err)
+		return nil
+	}
+	reporter := make(chan *proto.ProgressMetrics, 100)
+	optimizer.RunAsync(context.Background(), req, reporter)
+
+	return processAsyncProgress(args[1], reporter)
+}
+
 // Assumes args[0] is a Uint8Array
 func getArgsBinary(value js.Value) []byte {
 	data := make([]byte, value.Get("length").Int())
@@ -248,7 +263,7 @@ reader:
 			js.CopyBytesToJS(outArray, outbytes)
 			progFunc.Invoke(outArray)
 
-			if progMetric.FinalWeightResult != nil || progMetric.FinalRaidResult != nil || progMetric.FinalBulkResult != nil {
+			if progMetric.FinalWeightResult != nil || progMetric.FinalRaidResult != nil || progMetric.FinalBulkResult != nil || progMetric.FinalOptimizeResult != nil {
 				return outArray
 			}
 		}

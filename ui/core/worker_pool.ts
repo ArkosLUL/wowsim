@@ -9,7 +9,8 @@ import { Stat } from './proto/common.js';
 import { ComputeStatsRequest, ComputeStatsResult } from './proto/api.js';
 import { RaidSimRequest, RaidSimResult, ProgressMetrics } from './proto/api.js';
 import { StatWeightsRequest, StatWeightsResult } from './proto/api.js';
-import { BulkSimRequest, BulkSimResult } from './proto/api.js';
+import { BulkSimRequest, BulkSimResult, OptimizeGearRequest } from './proto/api.js';
+import { OptimizerResult } from './proto/optimizer.js';
 
 import { wait } from './utils.js';
 
@@ -87,12 +88,41 @@ export class WorkerPool {
 		return result.finalRaidResult!;
 	}
 
+	// The server runs one optimization at a time; a second one comes back with an errorResult.
+	// Aborting signal cancels the run on the web server (not under wasm), and the promise still
+	// resolves, with the result marked cancelled.
+	async optimizeGearAsync(request: OptimizeGearRequest, onProgress: (progress: ProgressMetrics) => void, signal?: AbortSignal): Promise<OptimizerResult> {
+		console.log('Optimize gear request: ' + OptimizeGearRequest.toJsonString(request, { enumAsInteger: true }));
+		const worker = this.getLeastBusyWorker();
+		const id = worker.makeTaskId();
+		worker.addPromiseFunc(id + 'progress', this.newProgressHandler(id, worker, onProgress), console.error);
+
+		// start the call before hooking up cancel, so the worker sees the task before any cancel for it
+		const resultPromise = worker.doApiCall('optimizeGearAsync', OptimizeGearRequest.toBinary(request), id);
+		const cancel = () => worker.cancelTask(id);
+		if (signal?.aborted) {
+			cancel();
+		} else {
+			signal?.addEventListener('abort', cancel, { once: true });
+		}
+		try {
+			const result = ProgressMetrics.fromBinary(await resultPromise).finalOptimizeResult;
+			if (!result) {
+				throw new Error('The optimizer returned no result. The server may have rejected the request.');
+			}
+			console.log('Optimize gear result: ' + OptimizerResult.toJsonString(result, { enumAsInteger: true }));
+			return result;
+		} finally {
+			signal?.removeEventListener('abort', cancel);
+		}
+	}
+
 	newProgressHandler(id: string, worker: SimWorker, onProgress: Function): (progressData: any) => void {
 		return (progressData: any) => {
 			var progress = ProgressMetrics.fromBinary(progressData);
 			onProgress(progress);
 			// If we are done, stop adding the handler.
-			if (progress.finalRaidResult != null || progress.finalWeightResult != null) {
+			if (progress.finalRaidResult != null || progress.finalWeightResult != null || progress.finalBulkResult != null || progress.finalOptimizeResult != null) {
 				return;
 			}
 
@@ -141,6 +171,13 @@ class SimWorker {
 
 	addPromiseFunc(id: string, callback: (result: any) => void, onError: (error: any) => void) {
 		this.taskIdsToPromiseFuncs[id] = [callback, onError];
+	}
+
+	// Asks the worker to cancel an async task. No reply: the task ends with its own final result.
+	// Waits on onReady like doApiCall does, so it can't overtake a start message still waiting there.
+	async cancelTask(id: string) {
+		await this.onReady;
+		this.worker.postMessage({ msg: 'cancelAsync', id: id });
 	}
 
 	makeTaskId(): string {

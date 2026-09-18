@@ -9,11 +9,12 @@ import {
 	UnitReference,
 	UnitReference_Type as UnitType,
 } from './proto/common.js';
-import { BulkSimRequest, BulkSimResult, BulkSettings, Raid as RaidProto } from './proto/api.js';
+import { BulkSimRequest, BulkSimResult, BulkSettings, OptimizeGearRequest, ProgressMetrics, Raid as RaidProto } from './proto/api.js';
 import { ComputeStatsRequest } from './proto/api.js';
 import { RaidSimRequest, RaidSimResult } from './proto/api.js';
 import { SimOptions } from './proto/api.js';
 import { StatWeightsRequest, StatWeightsResult } from './proto/api.js';
+import { OptimizerResult } from './proto/optimizer.js';
 import {
 	DatabaseFilters,
 	SimSettings as SimSettingsProto,
@@ -244,6 +245,18 @@ export class Sim {
 		}
 
 		this.bulkSimResultEmitter.emit(TypedEvent.nextEventID(), result);
+		return result;
+	}
+
+	// Runs the BiS optimizer on a request from the pool builder. Throws when the run fails, including
+	// when another optimization is already running. A cancelled run resolves, marked cancelled.
+	async runGearOptimizer(request: OptimizeGearRequest, onProgress: (progress: ProgressMetrics) => void, signal?: AbortSignal): Promise<OptimizerResult> {
+		await this.waitForInit();
+
+		const result = await this.workerPool.optimizeGearAsync(request, onProgress, signal);
+		if (result.errorResult != '') {
+			throw new SimError(result.errorResult);
+		}
 		return result;
 	}
 

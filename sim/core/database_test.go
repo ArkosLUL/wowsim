@@ -14,7 +14,7 @@ const (
 )
 
 func init() {
-	addToDatabase(&proto.SimDatabase{
+	AddToDatabase(&proto.SimDatabase{
 		Items: []*proto.SimItem{{
 			Id:          itemTestReforgeCrit,
 			Type:        proto.ItemType_ItemTypeHead,

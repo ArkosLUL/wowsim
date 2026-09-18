@@ -91,7 +91,7 @@ type Character struct {
 
 func NewCharacter(party *Party, partyIndex int, player *proto.Player) Character {
 	if player.Database != nil {
-		addToDatabase(player.Database)
+		AddToDatabase(player.Database)
 	}
 
 	character := Character{

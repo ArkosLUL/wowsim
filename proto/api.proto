@@ -5,6 +5,7 @@ option go_package = "./proto";
 
 import "common.proto";
 import "apl.proto";
+import "optimizer.proto";
 import "deathknight.proto";
 import "druid.proto";
 import "hunter.proto";
@@ -431,6 +432,10 @@ message ProgressMetrics {
 	RaidSimResult final_raid_result = 6; // only set when completed
 	StatWeightsResult final_weight_result = 7;
 	BulkSimResult final_bulk_result = 10;
+	OptimizerResult final_optimize_result = 11;
+
+	// Optimizer runs only.
+	OptimizerProgress optimizer_progress = 12;
 }
 
 // RPC: BulkSim
@@ -485,4 +490,15 @@ message BulkComboResult {
 message ItemSpecWithSlot {
     ItemSpec item = 1;
     ItemSlot slot = 2;
+}
+
+// RPC: OptimizeGear
+message OptimizeGearRequest {
+	// The raid, encounter and sim options to optimize in. The target's current gear and racial traits
+	// are the seed.
+	RaidSimRequest base = 1;
+	// Whose gear to optimize: party index * 5 + position in the party.
+	int32 target_raid_index = 2;
+	OptimizerSettings settings = 3;
+	CandidatePool pool = 4;
 }

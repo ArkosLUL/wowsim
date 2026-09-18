@@ -89,7 +89,7 @@ func (b *bulkSimRunner) Run(pctx context.Context, progress chan *proto.ProgressM
 		return nil, fmt.Errorf("bulksim: expected exactly 1 player, found %d", playerCount)
 	}
 	if player.GetDatabase() != nil {
-		addToDatabase(player.GetDatabase())
+		AddToDatabase(player.GetDatabase())
 	}
 	// reduce to just base party.
 	b.Request.BaseSettings.Raid.Parties = []*proto.Party{b.Request.BaseSettings.Raid.Parties[0]}
@@ -101,7 +101,7 @@ func (b *bulkSimRunner) Run(pctx context.Context, progress chan *proto.ProgressM
 
 	if b.Request.BulkSettings.AutoGem {
 		for _, replaceItem := range b.Request.BulkSettings.Items {
-			itemData := ItemsByID[replaceItem.Id]
+			itemData, _ := LookupItem(replaceItem.Id)
 			if len(itemData.GemSockets) == 0 && itemData.Type != proto.ItemType_ItemTypeWaist {
 				continue
 			}
@@ -160,11 +160,11 @@ func (b *bulkSimRunner) Run(pctx context.Context, progress chan *proto.ProgressM
 	// We verify later that we are not emitting any invalid equipment set.
 	var distinctItemSlotCombos []*itemWithSlot
 	for index, is := range items {
-		item, ok := ItemsByID[is.Id]
+		item, ok := LookupItem(is.Id)
 		if !ok {
 			return nil, fmt.Errorf("unknown item with id %d in bulk settings", is.Id)
 		}
-		for _, slot := range eligibleSlotsForItem(item) {
+		for _, slot := range EligibleSlotsForItem(item) {
 			distinctItemSlotCombos = append(distinctItemSlotCombos, &itemWithSlot{
 				Item:  is,
 				Slot:  slot,
@@ -485,10 +485,10 @@ func isValidEquipment(equipment *proto.EquipmentSpec) bool {
 	var usesTwoHander, usesOffhand bool
 
 	// Validate weapons
-	if knownItem, ok := ItemsByID[equipment.Items[proto.ItemSlot_ItemSlotMainHand].Id]; ok {
+	if knownItem, ok := LookupItem(equipment.Items[proto.ItemSlot_ItemSlotMainHand].Id); ok {
 		usesTwoHander = knownItem.HandType == proto.HandType_HandTypeTwoHand
 	}
-	if knownItem, ok := ItemsByID[equipment.Items[proto.ItemSlot_ItemSlotOffHand].Id]; ok {
+	if knownItem, ok := LookupItem(equipment.Items[proto.ItemSlot_ItemSlotOffHand].Id); ok {
 		usesOffhand = knownItem.HandType == proto.HandType_HandTypeOffHand
 	}
 	if usesTwoHander && usesOffhand {
@@ -503,14 +503,14 @@ func isValidEquipment(equipment *proto.EquipmentSpec) bool {
 	}
 
 	// Validate rings/trinkets for heroic/non-heroic (matching name)
-	f1, ok1 := ItemsByID[equipment.Items[proto.ItemSlot_ItemSlotFinger1].Id]
-	f2, ok2 := ItemsByID[equipment.Items[proto.ItemSlot_ItemSlotFinger2].Id]
+	f1, ok1 := LookupItem(equipment.Items[proto.ItemSlot_ItemSlotFinger1].Id)
+	f2, ok2 := LookupItem(equipment.Items[proto.ItemSlot_ItemSlotFinger2].Id)
 	if ok1 && ok2 && f1.Name == f2.Name {
 		return false
 	}
 
-	t1, ok1 := ItemsByID[equipment.Items[proto.ItemSlot_ItemSlotTrinket1].Id]
-	t2, ok2 := ItemsByID[equipment.Items[proto.ItemSlot_ItemSlotTrinket2].Id]
+	t1, ok1 := LookupItem(equipment.Items[proto.ItemSlot_ItemSlotTrinket1].Id)
+	t2, ok2 := LookupItem(equipment.Items[proto.ItemSlot_ItemSlotTrinket2].Id)
 	if ok1 && ok2 && t1.Name == t2.Name {
 		return false
 	}
@@ -689,7 +689,7 @@ func canCarryReforge(oldItem *proto.ItemSpec, newItem *proto.ItemSpec) bool {
 	if oldItem.GetReforge() == nil || newItem.GetReforge() != nil {
 		return false
 	}
-	dbItem, ok := ItemsByID[newItem.GetId()]
+	dbItem, ok := LookupItem(newItem.GetId())
 	return ok && CanReforge(dbItem.Stats, oldItem.Reforge)
 }
 
