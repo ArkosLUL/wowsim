@@ -189,7 +189,7 @@ func init() {
 					ThreatMultiplier: character.AutoAttacks.MHConfig().ThreatMultiplier,
 					ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 						baseDamage := character.MHWeaponDamage(sim, spell.MeleeAttackPower())
-						spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeWeaponSpecialHitAndCrit)
+						spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 					},
 				})
 
@@ -204,7 +204,7 @@ func init() {
 						ThreatMultiplier: character.AutoAttacks.OHConfig().ThreatMultiplier,
 						ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 							baseDamage := character.OHWeaponDamage(sim, spell.MeleeAttackPower())
-							spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeWeaponSpecialHitAndCrit)
+							spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 						},
 					})
 				}

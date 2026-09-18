@@ -192,52 +192,121 @@ in the container at `/ac/env/dist/logs/simval/`.
 byte-identical.
 
 ### P2 — Core combat tables (`sim/core`)
-**Proto:** `Target.world_boss` (`proto/common.proto`). When unset, a target at level ≥ 83 counts as a boss.
 
-**New `sim/core/combat_table.go`**
-- Pure functions on `AttackerSnapshot`/`DefenderSnapshot`, working in basis points:
-  - `LevelForTarget`, `MaxSkill`
-  - `WhiteMeleeTableBP`: server roll order, plus the skill-bonus quirk.
-  - `YellowMeleeTableBP`: returns `PartialBlockBP` separately; block is in the table only for `COMPLETELY_BLOCKED` spells.
-  - `RangedYellowTableBP`, `SpellHitBP`, `EffectiveResistChance`, `ResistBuckets`, `GlancingMultiplier`, `ArmorMultiplier`, `CreatureBlockValue`
-- Creature-vs-player variants: crit 5% + (415 − def)·0.04 − resilience; crushing blows only at +4 levels.
-- `rollBP = int32(RandomFloat·10001)`.
+**Status:** built and verified against the live server. All 37 suites pass and their goldens are promoted; every spec
+gained DPS, mean +4.07% (median +3.99%, range -0.20% to +10.90%). `tools/simval` replays a 22-record capture from
+mod-sim-validation and all 135 checks pass. The code-review fixes (below, "Review fixes") landed after that promotion
+and move DPS again: specs with guardians gain 0.1% to 0.7% on average now that guardians don't glance, and attacks
+from the front shift by 0.001% from the block fixes. Their goldens are promoted too.
 
-**Rewrite**
-- `target.go` `NewTarget`/`NewAttackTable`: formula-derived fields replace the `UnitLevelFloat64` tables. No spell crit suppression. Add `IsWorldBoss` on `Unit`.
-- `spell_outcome.go`:
-  - Rewrite `applyAttackTable*` and `OutcomeMeleeWhite` (server order).
-  - All `OutcomeMeleeSpecial*`/`OutcomeMeleeWeaponSpecial*`/`OutcomeRanged*` become table roll + separate crit roll + separate partial-block roll.
-  - Enemy-table skill math.
-- `spell_result.go`: expertise truncated to bp, physical crit −0.6, spell miss, binary resist folded into the hit roll.
-- `spell_resistances.go`:
-  - Server resist model.
-  - No partials for binary, physical or ignore-resist spells.
-  - Holy gets the level resist only.
-  - Multi-school spells use the lowest resist.
-- `flags.go`: holy fix, `SpellFlagNoActiveDefense`, `SpellFlagCompletelyBlocked`.
-- `constants.go:24` and `spell.go:546-551`: replace the 0.94 average-resist constant.
-- Remove the pet +1.8% crit hacks. Fix the direct table use in `druid/feral/feral.go:88-89`.
+**As built.**
 
-**UI and encounters**
-- `ui/core/encounter.ts` defaults: world boss on; block value from P1 `info`.
-- World-boss checkbox in `components/encounter_picker.ts`.
-- Crit-cap numbers in `ui/core/player.ts:675-720`.
-- Set `WorldBoss` in `sim/encounters/**`.
+`sim/core/combat_table.go` holds the pure functions, in integer basis points built from 32-bit floats because that is
+what the server does — a float64 version of the same arithmetic lands a point off on values like the 4.7% a boss
+misses a player for. The plan's `AttackerSnapshot`/`DefenderSnapshot` became a single `MeleeTableInput`, since the
+server's tables read the pair, not one side at a time.
+
+- `LevelForTarget`, `MaxSkill`
+- `WhiteMeleeTableBP` → `MeleeTableBP{Miss, Dodge, Parry, Block, Glance, Crush, Crit}`, each field that outcome's own
+  width in the server's roll order. Widths can be negative, which the server also allows.
+- `YellowMeleeTableBP(in, YellowOptions{Ranged, NoActiveDefense, BlockedInTable, NoDodge, NoParry})`
+- `MeleeMissBP`, `GlanceBP`, `GlancingMultiplier`, `CrushBP`, `PartialBlockBP`, `MeleeCritSuppressionPct`
+- `SpellMissBP`, `ResistanceConstant`, `EffectiveResistChance`, `ResistBuckets`
+- `ArmorMultiplier`, `ArmorPenetrationCap`, `CreatureBlockValue`
+
+`AttackTable` caches the pair's fixed half — levels, skills, the creature base percentages, glancing, crushing,
+partial block and crit suppression — and `Spell.WhiteTableInput`/`YellowTableInput` add the hit, expertise, crit and
+facing that move during a fight. `Unit.IsWorldBoss` comes from `Target.world_boss`, a proto3 `optional`: unset
+means on at level ≥ 83, an explicit value always wins.
+
+`spell_outcome.go` rolls `urand(0, 10000)` once and walks the table. Every `OutcomeMeleeSpecial*`/`OutcomeRanged*` is
+the yellow table plus an independent crit roll plus an independent partial block roll, weapon abilities included (the
+old `OutcomeMeleeWeaponSpecial*`, `OutcomeRangedHitAndCritNoBlock` and `OutcomeRangedCritOnly` aliases are gone).
+The creature-vs-player path uses the same tables with the player's sheet avoidance; only crit and crushing read
+defense skill.
+
+**Review fixes** (code review of the P2 diff, all in the working tree):
+- Partial block (`rollPartialBlock`): physical damage from the front only, and only when the result carries damage,
+  since a `CalcOutcome` hit check never reaches `isSpellBlocked`. `OutcomeMeleeSpecialCritOnly` rolls it too. Against
+  a player it uses their live block chance and needs `PseudoStats.CanBlock`.
+- Metrics: every landed yellow hit increments exactly one counter (crit, else block, else hit), because the UI sums
+  them into attempts. Crushes are aggregated (`TargetedActionMetrics.crushes`) and shown as Crush % in the damage
+  taken table.
+- A block inside the yellow table (`SpellFlagCompletelyBlocked`) is `SPELL_MISS_BLOCK`: bare `OutcomeBlock`, no
+  damage, not landed. `OutcomeLanded` no longer contains `OutcomeBlock`; a partial block always carries Hit or Crit.
+- `DodgeReduction` applies to the attacker's own swings only: Weapon Mastery, and Chill of the Throne on an ICC boss
+  (really `SPELL_AURA_MOD_DODGE_PERCENT` -20 on the player, so it cuts the tank's dodge).
+- Creature crits, white or yellow, come from `enemyCritChance` (defense, resilience, crit-taken reductions);
+  `PhysicalCritChance` branches to it for enemy units. Hateful Strike crits ×2.
+- Glancing needs `Unit::IsPlayer() || IsPet()`. Only `SPELL_EFFECT_SUMMON_PET` summons are pets, marked
+  `Unit.SummonedAsPet`: hunter and warlock pets and the Master of Ghouls ghoul. Guardians (wolves, treants,
+  shadowfiend, water elemental, gargoyle, AotD, fire elemental, ...) don't glance. Crushing still excludes anything a
+  player controls.
+- Multi-school spells meet the lowest of their schools' resistances (`Unit.schoolResistance`, `Unit::GetResistance(mask)`);
+  holy counts as 0.
+- `SpellFlagCannotBeParried`, `SpellFlagNoActiveDefense` and `SpellFlagCompletelyBlocked` are still set by no spell;
+  P3's generated server data sets them.
+
+Also changed:
+- `spell_result.go`: spell miss from `SpellMissBP`, binary resist folded into the hit roll, spell crit with no
+  suppression, expertise left continuous (the attack table truncates it to basis points).
+- `spell_resistances.go`: the server's resist model. No partials for binary spells; holy only vs creatures, and
+  through the level difference alone since it has no resistance stat. `AverageMagicPartialResistMultiplier` is now
+  `1 - 15/415`.
+- `flags.go`: `ResistanceStat()` returns `(stat, ok)` for a single school so holy stops reading the target's
+  Strength, plus `SpellFlagNoActiveDefense`, `SpellFlagCompletelyBlocked` and `SpellFlagCannotBeParried`.
+- Removed the pet "+1.8% crit" hacks (hunter pet, fire elemental, spirit wolves).
+- `druid/feral/feral.go` reads the yellow table instead of the attack table's fields.
+- UI: world boss checkbox in `encounter_picker.ts`, showing the derived value while `world_boss` is unset (presets
+  and the default target leave it unset); crit cap in `player.ts` uses 0.6% suppression, 25% glancing, and remaining
+  white avoidance `cap + 0.6 − expertise` below the 5.85/13.4 cliffs, 0 above them.
+
+**Two sim bugs the rewrite exposed**, both verified against the server and neither a retail deviation:
+- The armor penetration cap read the *attacker's* level where `CalcArmorReducedDamage` reads the *victim's*, so it
+  capped at 15232.5 instead of 16635 against a level 83 target. Both are the same formula, `467.5·L - 22167.5`, at
+  different levels. Full armor penetration now reaches through noticeably more armor.
+- Boss block value was a hardcoded 76. `Creature::GetShieldBlockValue` is `level/2 + STR/20`, and
+  `creature_classlevelstats` gives level 83 creatures 0 strength, so it is 41. The presets no longer carry the value
+  at all; `NewTarget` derives it.
 
 **Tests**
-- `combat_table_test.go`, checking every number in the INVESTIGATION attack-table findings:
-  - 800/645/1400/560/2500 bp; DW miss 2700; non-boss dodge/parry 560/560/0
-  - glancing per level; the 23.4-expertise quirk; yellow expertise caps
-  - spell miss 400/500/600/1700 bp; avg resist 0.036144; binary resist 0
-- Monte Carlo `spell_outcome_test.go`: P(crit ∧ block) = P(crit)·P(block).
-- `combat_table_server_test.go` on P1 fixtures.
-- Update `spell_resistances_test.go`.
+- `combat_table_test.go`: every number the e2e suite read off the server — 800/645/1400/560/2500 bp, DW miss 2700,
+  non-boss 560/560/0, level 80's 500 and no glancing, glancing per level, the 23.4/53.6 white expertise cliffs against
+  the 25.8/56 yellow caps, partial block 440, creature-vs-player 469/440/560 with no crushing, spell miss
+  400/500/600/1700, average resist 0.036145, binary resist 0.
+- `spell_outcome_test.go`: Monte Carlo over 400k rolls. White rates against the server's, P(crit ∧ block) =
+  P(crit)·P(block), and the magic miss rate at 16.99% rather than 17%. For the review fixes: dodge reduction only on
+  the attacker, one metric per swing, no block on hit checks, crit-only hits blocked at 4.4%, full blocks not landing,
+  creature yellow hits against a player's sheet (dodge, shield-gated block, defense vs crit), only pets glance, and the
+  world boss flag's default and overrides.
+- `spell_resistances_test.go`: also the lowest-school rule for Frostfire and fire+holy.
+- `spell_resistances_test.go`: rewritten for the server's model, plus the boss dummy's 72.89/18.07/9.04 buckets.
+- `armor_test.go`: the armor penetration cap expectations follow the victim-level cap.
 
-**Verify**
-- `tools/simval` reads the P1 JSONL, rebuilds snapshots and calls the pure functions, printing PASS/FAIL per the Decisions tolerances. `-fixture` saves records into `sim/core/testdata/simval/`.
-- It must PASS on boss, non-boss and lvl-80 dummies; MH, OH and DW; 2 yellow abilities; 2 spells.
-- Promote goldens.
+**`tools/simval`** replays the module's JSONL through the pure functions and reports PASS/FAIL per record.
+`dock.sh run ./tools/simval` reads `/ac/env/dist/logs/simval/simval.jsonl`; `-fixture` copies it to
+`sim/core/testdata/simval/` and `tools/simval/check_test.go` re-runs the same comparison from there, skipping when
+there is no fixture. It compares basis point for basis point against the table the server derived in the same record,
+so a mismatch points at a formula rather than at noise; rolled counts get a |z| ≤ 5 check on top. The plan called this
+`combat_table_server_test.go` in `sim/core`; it lives beside the tool instead so the record types and the comparison
+have one home.
+
+**The fixture.** `sim/core/testdata/simval/simval.jsonl` is 22 records from a live run of
+`[ac]/modules/mod-sim-validation/e2e`: `info`, `melee` (boss, level 83 humanoid, beast, level 80, and off hand),
+`taken` (the boss swinging at the player), `yellow` for Heroic Strike, Auto Shot and Steady Shot, `spell` for
+Frostbolt and Mind Flay, `armor` and `procs`. All 135 checks pass.
+
+Capturing one is awkward: the e2e suite drops its own records on cleanup, so the file is back to empty by the time the
+run finishes. Stream them out of the worldserver while it runs and deduplicate afterwards:
+
+```
+docker exec ac-worldserver tail -F -n +1 /azerothcore/env/dist/logs/simval/simval.jsonl > stream.jsonl &
+modules/mod-sim-validation/e2e/run.sh
+```
+
+Reading the host side of the bind mount instead loses most of the records. A failed run can leave a character behind
+whose account is already gone; `SIMVAL_ORPHANS=<guid>:<race>:<class>:<accountId> e2e/run.sh TestCleanupOrphans`
+removes it.
 
 ### P3 — Server spell data, timing, resources, procs, DoTs
 
@@ -429,8 +498,7 @@ Done when every "Classic" or `wotlk-classic-bugs` reference in `sim/` has been r
 - Warlock and hunter pet hit from Classic tests (`sim/warlock/pet.go:313-340`, `sim/hunter/pet.go:152-168`).
 - Warlock issues #328 and #329 (`sim/warlock/pet.go:34`, `inferno.go:160`).
 - Serpent Sting tick crit (`sim/hunter/serpent_sting.go:38`).
-- Expertise comment (`sim/core/spell_result.go:85`).
-- Boss block value 76 (`ui/core/encounter.ts:184`).
+- Expertise comment and the hardcoded boss block value of 76: both done in P2.
 
 ## Verification (end to end)
 - **Every phase:** `tools/acore/dock.sh test` is green; goldens promoted per suite with DPS deltas reviewed.

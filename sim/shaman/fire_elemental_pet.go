@@ -148,7 +148,7 @@ var fireElementalPetBaseStats = stats.Stats{
 	stats.AttackPower: 1303, //Estimated
 
 	// TODO : Log digging and my own samples this seems to be around the 5% mark.
-	stats.MeleeCrit: (5 + 1.8) * core.CritRatingPerCritChance,
+	stats.MeleeCrit: 5 * core.CritRatingPerCritChance,
 	stats.SpellCrit: 2.61 * core.CritRatingPerCritChance,
 }
 

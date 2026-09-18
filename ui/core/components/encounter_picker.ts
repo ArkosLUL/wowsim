@@ -230,6 +230,7 @@ class TargetPicker extends Input<Encounter, TargetProto> {
 	private readonly parryHastePicker: Input<null, boolean>;
 	private readonly spellSchoolPicker: Input<null, number>;
 	private readonly suppressDodgePicker: Input<null, boolean>;
+	private readonly worldBossPicker: Input<null, boolean>;
 	private readonly damageSpreadPicker: Input<null, number>;
 	private readonly targetInputPickers: ListPicker<Encounter, TargetInput>;
 
@@ -468,6 +469,19 @@ class TargetPicker extends Input<Encounter, TargetProto> {
 			},
 			enableWhen: () => this.getTarget().level == Mechanics.BOSS_LEVEL,
 		});
+		this.worldBossPicker = new BooleanPicker(section3, null, {
+			label: 'World Boss',
+			labelTooltip:
+				'Boss-flagged creatures fight as though they were 3 levels above you whatever their level says, and dodge and parry far more than an ordinary creature.',
+			inline: true,
+			reverse: true,
+			changedEvent: () => encounter.targetsChangeEmitter,
+			getValue: () => isWorldBoss(this.getTarget()),
+			setValue: (eventID: EventID, _: null, newValue: boolean) => {
+				this.getTarget().worldBoss = newValue;
+				encounter.targetsChangeEmitter.emit(eventID);
+			},
+		});
 
 		this.init();
 	}
@@ -484,6 +498,8 @@ class TargetPicker extends Input<Encounter, TargetProto> {
 			swingSpeed: this.swingSpeedPicker.getInputValue(),
 			minBaseDamage: this.minBaseDamagePicker.getInputValue(),
 			suppressDodge: this.suppressDodgePicker.getInputValue(),
+			// Passed through as is, so a preset that leaves it unset still matches.
+			worldBoss: this.getTarget().worldBoss,
 			dualWield: this.dualWieldPicker.getInputValue(),
 			dualWieldPenalty: this.dwMissPenaltyPicker.getInputValue(),
 			parryHaste: this.parryHastePicker.getInputValue(),
@@ -508,6 +524,7 @@ class TargetPicker extends Input<Encounter, TargetProto> {
 		this.swingSpeedPicker.setInputValue(newValue.swingSpeed);
 		this.minBaseDamagePicker.setInputValue(newValue.minBaseDamage);
 		this.suppressDodgePicker.setInputValue(newValue.suppressDodge);
+		this.worldBossPicker.setInputValue(isWorldBoss(newValue));
 		this.dualWieldPicker.setInputValue(newValue.dualWield);
 		this.dwMissPenaltyPicker.setInputValue(newValue.dualWieldPenalty);
 		this.parryHastePicker.setInputValue(newValue.parryHaste);
@@ -690,6 +707,11 @@ function makeTargetInputsPicker(parent: HTMLElement, encounter: Encounter, targe
 		) => new TargetInputPicker(parent, encounter, targetIndex, index, config),
 		hideUi: true,
 	});
+}
+
+// Unset means a boss at raid boss level and above, the same default the sim uses.
+function isWorldBoss(target: TargetProto): boolean {
+	return target.worldBoss ?? (target.level || Mechanics.BOSS_LEVEL) >= Mechanics.BOSS_LEVEL;
 }
 
 function equalTargetsIgnoreInputs(target1: TargetProto | undefined, target2: TargetProto | undefined): boolean {

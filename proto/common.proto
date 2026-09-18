@@ -649,6 +649,11 @@ message Target {
 	MobType mob_type = 3;
 	repeated double stats = 5;
 
+	// CREATURE_TYPE_FLAG_BOSS_MOB. A boss reads three levels above whoever attacks
+	// it and dodges and parries far more than an ordinary creature its level.
+	// Unset means a boss at raid boss level and above.
+	optional bool world_boss = 20;
+
 	// Auto attack parameters.
 	double min_base_damage = 7;
 	double damage_spread = 19; // replaces tight_enemy_damage

@@ -21,7 +21,9 @@ const ResilienceRatingPerCritDamageReductionPercent = ResilienceRatingPerCritRed
 // Updated based on formulas supplied by InDebt on WoWSims Discord
 const EnemyAutoAttackAPCoefficient = 1.0 / (14.0 * 177.0)
 
-const AverageMagicPartialResistMultiplier = 0.94
+// A level 83 target's 15 free resistance over 415, which is all the partial
+// resists a boss with no resistance stats gets.
+const AverageMagicPartialResistMultiplier = 1 - 15.0/415.0
 
 // IDs for items used in core
 const (

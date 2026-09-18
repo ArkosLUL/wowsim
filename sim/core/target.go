@@ -136,9 +136,20 @@ func NewTarget(options *proto.Target, targetIndex int32) *Target {
 	if target.Level == 0 {
 		target.Level = defaultRaidBossLevel
 	}
+	// The boss flag is what gives a creature its 5.85/13.4 avoidance and puts it
+	// three levels above whoever it fights. Left unset, anything raid level is one.
+	if options.WorldBoss != nil {
+		target.IsWorldBoss = *options.WorldBoss
+	} else {
+		target.IsWorldBoss = target.Level >= defaultRaidBossLevel
+	}
 	if target.stats[stats.MeleeCrit] == 0 {
-		// Treat any % crit buff an enemy would gain as though it was scaled with level 80 ratings
-		target.stats[stats.MeleeCrit] = UnitLevelFloat64(target.Level, 5.0, 5.2, 5.4, 5.6) * CritRatingPerCritChance
+		// Creatures crit at a flat 5%; the level difference is handled by the
+		// skill term in the attack table.
+		target.stats[stats.MeleeCrit] = 5.0 * CritRatingPerCritChance
+	}
+	if target.stats[stats.BlockValue] == 0 {
+		target.stats[stats.BlockValue] = CreatureBlockValue(target.Level, target.stats[stats.Strength])
 	}
 
 	if target.Level == defaultRaidBossLevel && options.SuppressDodge {
@@ -190,16 +201,35 @@ type AttackTable struct {
 	Attacker *Unit
 	Defender *Unit
 
-	BaseMissChance      float64
-	BaseSpellMissChance float64
-	BaseBlockChance     float64
-	BaseDodgeChance     float64
-	BaseParryChance     float64
-	BaseGlanceChance    float64
+	// Max skill for each side's level as the other sees it, so 415 for a world
+	// boss. Nothing raises weapon skill past it, so it's also the attacker's skill;
+	// a player defender's defense rating goes on top at roll time.
+	AttackerSkill    int32
+	DefenderMaxSkill int32
 
-	GlanceMultiplier     float64
+	// Base chances as percentages, before the attacker's hit, expertise and crit.
+	BaseMissPct  float32
+	BaseDodgePct float32
+	BaseParryPct float32
+	BaseBlockPct float32
+
+	// The block yellow hits roll separately from the table, against a creature.
+	// A player's comes from their live block chance instead.
+	PartialBlockBP int32
+
+	GlanceMultiplier float64
+
+	// (defender skill - attacker skill) * 0.04, so 0.6% against a level 83 boss.
+	// Magic damage class spells get nothing, so there is no spell counterpart.
 	MeleeCritSuppression float64
-	SpellCritSuppression float64
+
+	// getLevelForTarget in each direction, which the boss flag moves and the
+	// template level doesn't.
+	AttackerLevel int32
+	DefenderLevel int32
+
+	// A non-boss creature only parries if it's humanoid.
+	DefenderCanParry bool
 
 	DamageDealtMultiplier        float64 // attacker buff, applied in applyAttackerModifiers()
 	DamageTakenMultiplier        float64 // defender debuff, applied in applyTargetModifiers()
@@ -220,26 +250,72 @@ func NewAttackTable(attacker *Unit, defender *Unit) *AttackTable {
 		HealingDealtMultiplier:       1,
 	}
 
-	if defender.Type == EnemyUnit {
-		// Assumes attacker (the Player) is level 80.
-		table.BaseSpellMissChance = UnitLevelFloat64(defender.Level, 0.04, 0.05, 0.06, 0.17)
-		table.BaseMissChance = UnitLevelFloat64(defender.Level, 0.05, 0.055, 0.06, 0.08)
-		table.BaseBlockChance = 0.05
-		table.BaseDodgeChance = UnitLevelFloat64(defender.Level, 0.05, 0.055, 0.06, 0.065)
-		table.BaseParryChance = UnitLevelFloat64(defender.Level, 0.05, 0.055, 0.06, 0.14)
-		table.BaseGlanceChance = UnitLevelFloat64(defender.Level, 0.06, 0.12, 0.18, 0.24)
+	table.AttackerLevel = LevelForTarget(attacker.Level, attacker.IsWorldBoss, defender.Level)
+	table.DefenderLevel = LevelForTarget(defender.Level, defender.IsWorldBoss, attacker.Level)
 
-		table.GlanceMultiplier = UnitLevelFloat64(defender.Level, 0.95, 0.95, 0.85, 0.75)
-		table.MeleeCritSuppression = UnitLevelFloat64(defender.Level, 0, 0.01, 0.02, 0.048)
-		table.SpellCritSuppression = UnitLevelFloat64(defender.Level, 0, 0, 0.003, 0.021)
-	} else {
-		// Assumes defender (the Player) is level 80.
-		table.BaseSpellMissChance = 0.05
-		table.BaseMissChance = UnitLevelFloat64(attacker.Level, 0.05, 0.048, 0.046, 0.044)
-		table.BaseBlockChance = UnitLevelFloat64(attacker.Level, 0.05, 0.048, 0.046, 0.044)
-		table.BaseDodgeChance = UnitLevelFloat64(attacker.Level, 0, -0.002, -0.004, -0.006)
-		table.BaseParryChance = UnitLevelFloat64(attacker.Level, 0, -0.002, -0.004, -0.006)
+	table.AttackerSkill = MaxSkill(table.AttackerLevel)
+	table.DefenderMaxSkill = MaxSkill(table.DefenderLevel)
+
+	table.BaseMissPct = 5
+	table.DefenderCanParry = true
+
+	if defender.Type == EnemyUnit {
+		if defender.IsWorldBoss {
+			table.BaseDodgePct = 5.85
+			table.BaseParryPct = 13.4
+		} else {
+			table.BaseDodgePct = 5
+			table.BaseParryPct = 5
+			table.DefenderCanParry = defender.MobType == proto.MobType_MobTypeHumanoid
+		}
+		table.BaseBlockPct = 5
+		table.PartialBlockBP = PartialBlockBP(table.BaseBlockPct, MaxSkill(attacker.Level), MaxSkill(defender.Level))
 	}
+	// A player defender's avoidance is all rating and talent driven, so those
+	// percentages are read at roll time instead of cached here.
+
+	table.MeleeCritSuppression = MeleeCritSuppressionPct(table.AttackerSkill, table.DefenderMaxSkill) / 100
+
+	table.GlanceMultiplier = GlancingMultiplier(attacker.Level, defender.Level)
 
 	return table
+}
+
+// isPlayerOrPet is Unit::IsPlayer() || IsPet(), the two that glance.
+func (unit *Unit) isPlayerOrPet() bool {
+	return unit.Type == PlayerUnit || unit.SummonedAsPet
+}
+
+// meleeTableInput fills in the pair's fixed half: levels, skills and the
+// creature base chances. Callers add whatever moves during a fight.
+func (at *AttackTable) meleeTableInput() MeleeTableInput {
+	return MeleeTableInput{
+		AttackerLevel:    at.AttackerLevel,
+		AttackerSkill:    at.AttackerSkill,
+		AttackerMaxSkill: at.AttackerSkill,
+		DefenderLevel:    at.DefenderLevel,
+		DefenderSkill:    at.DefenderMaxSkill,
+		DefenderMaxSkill: at.DefenderMaxSkill,
+
+		AttackerIsPlayerOrPet:      at.Attacker.isPlayerOrPet(),
+		DefenderIsPlayerOrPet:      at.Defender.isPlayerOrPet(),
+		AttackerControlledByPlayer: at.Attacker.Type != EnemyUnit,
+		DefenderIsPlayer:           at.Defender.Type == PlayerUnit,
+
+		MissPct:  at.BaseMissPct,
+		DodgePct: at.BaseDodgePct,
+		ParryPct: at.BaseParryPct,
+		BlockPct: at.BaseBlockPct,
+
+		CanDodge: true,
+		CanParry: at.DefenderCanParry,
+		CanBlock: true,
+
+		// The attacker's "chance to be dodged" reduction: Weapon Mastery on a
+		// player. On an ICC boss it stands in for Chill of the Throne, which is
+		// really 20% off the tank's own dodge.
+		DodgeReductionPct: float32(at.Attacker.PseudoStats.DodgeReduction * 100),
+
+		EnemyDodgeMultiplier: 1,
+	}
 }

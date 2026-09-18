@@ -821,6 +821,14 @@ export class ActionMetrics {
 		return this.combinedMetrics.glancePercent;
 	}
 
+	get crushes() {
+		return this.combinedMetrics.crushes;
+	}
+
+	get crushPercent() {
+		return this.combinedMetrics.crushPercent;
+	}
+
 	forTarget(filter?: SimResultFilter): ActionMetrics {
 		const unitIndex = this.unit!.getTargetIndex(filter);
 		if (unitIndex == null) {
@@ -894,13 +902,14 @@ export class TargetedActionMetrics {
 		this.duration = duration;
 		this.data = data;
 
-		this.landedHitsRaw = this.data.hits + this.data.crits + this.data.blocks + this.data.glances;
+		this.landedHitsRaw = this.data.hits + this.data.crits + this.data.blocks + this.data.glances + this.data.crushes;
 
 		this.hitAttempts = this.data.misses
 			+ this.data.dodges
 			+ this.data.parries
 			+ this.data.blocks
 			+ this.data.glances
+			+ this.data.crushes
 			+ this.data.crits
 			+ this.data.hits;
 	}
@@ -1015,6 +1024,14 @@ export class TargetedActionMetrics {
 		return (this.data.glances / (this.hitAttempts || 1)) * 100;
 	}
 
+	get crushes() {
+		return this.data.crushes / this.iterations;
+	}
+
+	get crushPercent() {
+		return (this.data.crushes / (this.hitAttempts || 1)) * 100;
+	}
+
 	// Merges an array of metrics into a single metric.
 	static merge(actions: Array<TargetedActionMetrics>): TargetedActionMetrics {
 		return new TargetedActionMetrics(
@@ -1029,6 +1046,7 @@ export class TargetedActionMetrics {
 				parries: sum(actions.map(a => a.data.parries)),
 				blocks: sum(actions.map(a => a.data.blocks)),
 				glances: sum(actions.map(a => a.data.glances)),
+				crushes: sum(actions.map(a => a.data.crushes)),
 				damage: sum(actions.map(a => a.data.damage)),
 				threat: sum(actions.map(a => a.data.threat)),
 				healing: sum(actions.map(a => a.data.healing)),

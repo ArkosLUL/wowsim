@@ -95,6 +95,8 @@ func (dk *Deathknight) NewGhoulPet(permanent bool) *GhoulPet {
 		Pet:     core.NewPet("Ghoul", &dk.Character, ghoulPetBaseStats, dk.ghoulStatInheritance(), permanent, !permanent),
 		dkOwner: dk,
 	}
+	// Master of Ghouls summons a real pet; plain Raise Dead only a guardian.
+	ghoulPet.SummonedAsPet = permanent
 
 	// NightOfTheDead
 	ghoulPet.PseudoStats.DamageTakenMultiplier *= 1.0 - float64(dk.Talents.NightOfTheDead)*0.45

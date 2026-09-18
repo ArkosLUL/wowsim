@@ -124,7 +124,9 @@ const (
 
 const (
 	OutcomePartial = OutcomePartial1 | OutcomePartial2 | OutcomePartial4 | OutcomePartial8
-	OutcomeLanded  = OutcomeHit | OutcomeCrit | OutcomeCrush | OutcomeGlance | OutcomeBlock
+	// A block alone is a full block, which stops the spell like a miss. A partial
+	// block still carries Hit or Crit.
+	OutcomeLanded = OutcomeHit | OutcomeCrit | OutcomeCrush | OutcomeGlance
 )
 
 var (
@@ -178,7 +180,10 @@ const (
 	SpellFlagIgnoreTargetModifiers                          // skip target damage modifiers
 	SpellFlagIgnoreAttackerModifiers                        // skip attacker damage modifiers
 	SpellFlagApplyArmorReduction                            // Forces damage reduction from armor to apply, even if it otherwise wouldn't.
-	SpellFlagCannotBeDodged                                 // Ignores dodge in physical hit rolls
+	SpellFlagCannotBeDodged                                 // SPELL_ATTR7_NO_ATTACK_DODGE
+	SpellFlagCannotBeParried                                // SPELL_ATTR7_NO_ATTACK_PARRY
+	SpellFlagNoActiveDefense                                // SPELL_ATTR0_NO_ACTIVE_DEFENSE: can miss, nothing else
+	SpellFlagCompletelyBlocked                              // SPELL_ATTR3_COMPLETELY_BLOCKED on a spell with no direct damage: a block in the table stops it outright
 	SpellFlagIncludeTargetBonusDamage                       // Spell benefits from Gift of Arthas and Hemorrhage.
 	SpellFlagBinary                                         // Does not do partial resists and could need a different hit roll.
 	SpellFlagChanneled                                      // Spell is channeled
@@ -227,22 +232,22 @@ func (ss SpellSchool) Matches(other SpellSchool) bool {
 	return (ss & other) != 0
 }
 
-func (ss SpellSchool) ResistanceStat() stats.Stat {
+// ResistanceStat is the stat a single school is resisted with. Holy has none, and
+// a mix of schools has to go through Unit.schoolResistance instead.
+func (ss SpellSchool) ResistanceStat() (stats.Stat, bool) {
 	switch ss {
 	case SpellSchoolArcane:
-		return stats.ArcaneResistance
+		return stats.ArcaneResistance, true
 	case SpellSchoolFire:
-		return stats.FireResistance
+		return stats.FireResistance, true
 	case SpellSchoolFrost:
-		return stats.FrostResistance
-	case SpellSchoolHoly:
-		return 0 // Holy resistance doesn't exist.
+		return stats.FrostResistance, true
 	case SpellSchoolNature:
-		return stats.NatureResistance
+		return stats.NatureResistance, true
 	case SpellSchoolShadow:
-		return stats.ShadowResistance
+		return stats.ShadowResistance, true
 	default:
-		return 0 // This applies to spell school combinations, which supposedly use the "path of the least resistance", so 0 is a good fit.
+		return 0, false
 	}
 }
 

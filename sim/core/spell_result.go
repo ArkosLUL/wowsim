@@ -81,11 +81,9 @@ func (spell *Spell) BonusWeaponDamage() float64 {
 	return spell.Unit.PseudoStats.BonusDamage
 }
 
+// ExpertisePercentage is continuous: only the character sheet's copy is rounded
+// to whole points on the server. The attack table truncates it to basis points.
 func (spell *Spell) ExpertisePercentage() float64 {
-	// As of 06/20, Blizzard has changed Expertise to no longer truncate at quarter
-	// percent intervals. Note that in-game character sheet tooltips will still
-	// display the truncated values, but it has been tested to behave continuously in
-	// reality since the patch.
 	expertiseRating := spell.Unit.stats[stats.Expertise] + spell.BonusExpertiseRating
 	return expertiseRating / ExpertisePerQuarterPercentReduction / 400
 }
@@ -98,6 +96,9 @@ func (spell *Spell) PhysicalHitChance(attackTable *AttackTable) float64 {
 }
 
 func (spell *Spell) PhysicalCritChance(attackTable *AttackTable) float64 {
+	if spell.Unit.Type == EnemyUnit {
+		return spell.enemyCritChance(attackTable)
+	}
 	critRating := spell.Unit.stats[stats.MeleeCrit] +
 		spell.BonusCritRating +
 		attackTable.Defender.PseudoStats.BonusCritRatingTaken
@@ -120,11 +121,39 @@ func (spell *Spell) SpellHitChance(target *Unit) float64 {
 
 	return hitRating / (SpellHitRatingPerHitChance * 100)
 }
-func (spell *Spell) SpellChanceToMiss(attackTable *AttackTable) float64 {
-	return math.Max(0, attackTable.BaseSpellMissChance-spell.SpellHitChance(attackTable.Defender))
+
+// spellMissThresholdBP is what MagicSpellHitResult compares its roll against. A
+// binary spell folds its whole resist chance in here instead of resisting part of
+// the damage later.
+func (spell *Spell) spellMissThresholdBP(attackTable *AttackTable) int32 {
+	threshold := SpellMissBP(
+		attackTable.DefenderLevel-attackTable.AttackerLevel,
+		float32(spell.SpellHitChance(attackTable.Defender)*100),
+		attackTable.Defender.Type == PlayerUnit)
+
+	if spell.Flags.Matches(SpellFlagBinary) && !spell.SpellSchool.Matches(SpellSchoolPhysical|SpellSchoolHoly) {
+		binaryResist := EffectiveResistChance(
+			attackTable.Defender.schoolResistance(spell.SpellSchool),
+			attackTable.Attacker.stats[stats.SpellPenetration],
+			attackTable.Attacker.Level,
+			attackTable.Defender.Level,
+			true)
+		threshold += int32(binaryResist * MaxRollBP)
+	}
+
+	return threshold
 }
+
+// SpellChanceToMiss is the share of casts that neither hit nor resist. The roll is
+// irand(1, 10000), so the true rate sits a hundredth of a point under the
+// threshold: 16.99% against a boss, not 17%.
+func (spell *Spell) SpellChanceToMiss(attackTable *AttackTable) float64 {
+	return math.Max(0, float64(spell.spellMissThresholdBP(attackTable)-1)/MaxRollBP)
+}
+
 func (spell *Spell) MagicHitCheck(sim *Simulation, attackTable *AttackTable) bool {
-	return sim.Proc(1.0-spell.SpellChanceToMiss(attackTable), "Magical Hit Roll")
+	roll := int32(sim.RandomFloat("Magical Hit Roll")*MaxRollBP) + 1
+	return roll >= spell.spellMissThresholdBP(attackTable)
 }
 
 func (spell *Spell) spellCritRating(target *Unit) float64 {
@@ -133,8 +162,12 @@ func (spell *Spell) spellCritRating(target *Unit) float64 {
 		target.PseudoStats.BonusCritRatingTaken +
 		target.PseudoStats.BonusSpellCritRatingTaken
 }
+
+// SpellCritChance has no level-based suppression: SpellDoneCritChance only
+// applies the skill term to melee and ranged damage class spells, which go
+// through PhysicalCritChance instead.
 func (spell *Spell) SpellCritChance(target *Unit) float64 {
-	return spell.spellCritRating(target)/(CritRatingPerCritChance*100) - spell.Unit.AttackTables[target.UnitIndex].SpellCritSuppression
+	return spell.spellCritRating(target) / (CritRatingPerCritChance * 100)
 }
 func (spell *Spell) MagicCritCheck(sim *Simulation, target *Unit) bool {
 	critChance := spell.SpellCritChance(target)

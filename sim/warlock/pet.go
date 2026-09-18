@@ -118,6 +118,7 @@ func (warlock *Warlock) NewWarlockPet() *WarlockPet {
 		Pet:   core.NewPet(cfg.Name, &warlock.Character, cfg.Stats, warlock.makeStatInheritance(), true, false),
 		owner: warlock,
 	}
+	wp.SummonedAsPet = true
 
 	wp.EnableManaBarWithModifier(cfg.PowerModifier)
 

@@ -55,7 +55,11 @@ Roll details the tables above don't show:
 - Holy gets the level resist vs creatures. Sim bug: `ResistanceStat()` returns index 0 (= Strength) for holy (`flags.go:238`).
 
 **Armor, ratings, base stats**
-- Armor formula and ArP cap match (`Unit.cpp:2218-2302`); damage after armor is `ceil`-rounded.
+- Armor mitigation and the ArP cap use the same expression, `467.5·L - 22167.5`, but at different levels: mitigation
+  takes the attacker's, the cap the victim's (`Unit.cpp:2218-2302`). The sim used the attacker's for both, capping at
+  15232.5 instead of 16635 against a level 83 target; fixed in P2. Damage after armor is `ceil`-rounded.
+- Boss block value is `Creature::GetShieldBlockValue` = level/2 + STR/20, and `creature_classlevelstats` gives level 83
+  creatures 0 strength, so 41. The sim hardcoded 76.
 - ArP rating = 15.3953 / class scalar 1.1 = 13.9957; the sim hardcodes 13.99.
 - Clean gt DBCs match the sim's rating constants: hit 32.79, spell hit 26.232, crit 45.906, hybrid melee haste 25.223, expertise 8.1975, spirit regen 0.003345.
 - Level-80 `player_class_stats`: Shaman HP 6939 (sim 6960), Warlock 7136 (sim 7164).

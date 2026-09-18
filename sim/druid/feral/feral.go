@@ -83,11 +83,12 @@ func (cat *FeralDruid) GetDruid() *druid.Druid {
 	return cat.Druid
 }
 
+// MissChance is what a Shred is avoided by, which the rotation weighs against
+// the energy it would waste.
 func (cat *FeralDruid) MissChance() float64 {
 	at := cat.AttackTables[cat.CurrentTarget.UnitIndex]
-	miss := at.BaseMissChance - cat.Shred.PhysicalHitChance(at)
-	dodge := at.BaseDodgeChance - cat.Shred.ExpertisePercentage() - cat.CurrentTarget.PseudoStats.DodgeReduction
-	return miss + dodge
+	table := core.YellowMeleeTableBP(cat.Shred.YellowTableInput(at), core.YellowOptions{})
+	return float64(table.Miss+table.Dodge) / core.MaxRollBP
 }
 
 func (cat *FeralDruid) Initialize() {

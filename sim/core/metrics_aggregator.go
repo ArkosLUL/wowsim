@@ -170,6 +170,7 @@ type TargetedActionMetrics struct {
 	Parries int32
 	Blocks  int32
 	Glances int32
+	Crushes int32
 
 	Damage    float64
 	Threat    float64
@@ -190,6 +191,7 @@ func (tam *TargetedActionMetrics) ToProto() *proto.TargetedActionMetrics {
 		Parries:    tam.Parries,
 		Blocks:     tam.Blocks,
 		Glances:    tam.Glances,
+		Crushes:    tam.Crushes,
 		Damage:     tam.Damage,
 		Threat:     tam.Threat,
 		Healing:    tam.Healing,
@@ -322,6 +324,7 @@ func (unitMetrics *UnitMetrics) addSpellMetrics(spell *Spell, actionID ActionID,
 		tam.Parries += spellTargetMetrics.Parries
 		tam.Blocks += spellTargetMetrics.Blocks
 		tam.Glances += spellTargetMetrics.Glances
+		tam.Crushes += spellTargetMetrics.Crushes
 		tam.Damage += spellTargetMetrics.TotalDamage
 		tam.Threat += spellTargetMetrics.TotalThreat
 		tam.Healing += spellTargetMetrics.TotalHealing

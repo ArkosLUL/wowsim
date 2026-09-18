@@ -677,19 +677,26 @@ export class Player<SpecType extends Spec> {
 		const meleeHit = (this.currentStats.finalStats?.stats[Stat.StatMeleeHit] || 0.0) / Mechanics.MELEE_HIT_RATING_PER_HIT_CHANCE;
 		const expertise = (this.currentStats.finalStats?.stats[Stat.StatExpertise] || 0.0) / Mechanics.EXPERTISE_PER_QUARTER_PERCENT_REDUCTION / 4;
 		//const agility = (this.currentStats.finalStats?.stats[Stat.StatAgility] || 0.0) / this.getClass();
-		const suppression = 4.8;
-		const glancing = 24.0;
+		// The white table against a level 83 boss: the skill difference takes 0.6%
+		// off crit and 25% of swings glance.
+		const suppression = 0.6;
+		const glancing = 25.0;
 
 		const hasOffhandWeapon = this.getGear().getEquippedItem(ItemSlot.ItemSlotOffHand)?.item.weaponSpeed !== undefined;
 		// Due to warrior HS bug, hit cap for crit cap calculation should be 8% instead of 27%
 		const meleeHitCap = hasOffhandWeapon && this.spec != Spec.SpecWarrior ? 27.0 : 8.0;
-		const dodgeCap = 6.5
-		const parryCap = this.getInFrontOfTarget() ? 14.0 : 0
+		// White dodge and parry carry a 0.6% skill bonus on top of what expertise
+		// leaves, but drop it along with the rest as soon as expertise covers the
+		// base chance, so they run out at 5.85 and 13.4 rather than 6.45 and 14.
+		const skillBonus = 0.6;
+		const dodgeCap = 5.85
+		const parryCap = this.getInFrontOfTarget() ? 13.4 : 0
 		const expertiseCap = dodgeCap + parryCap
+		const remainingAvoidance = (cap: number) => expertise < cap ? cap + skillBonus - expertise : 0.0;
 
 		const remainingMeleeHitCap = Math.max(meleeHitCap - meleeHit, 0.0);
-		const remainingDodgeCap = Math.max(dodgeCap - expertise, 0.0)
-		const remainingParryCap = Math.max(parryCap - expertise, 0.0)
+		const remainingDodgeCap = remainingAvoidance(dodgeCap)
+		const remainingParryCap = remainingAvoidance(parryCap)
 		const remainingExpertiseCap = remainingDodgeCap + remainingParryCap
 
 		let specSpecificOffset = 0.0;

@@ -47,6 +47,15 @@ type Unit struct {
 
 	Level int32 // Level of Unit, e.g. Bosses are 83.
 
+	// CREATURE_TYPE_FLAG_BOSS_MOB. Drives the attack table's skill math; resists
+	// and the armor penetration cap use Level regardless.
+	IsWorldBoss bool
+
+	// Unit::IsPet: summoned with SPELL_EFFECT_SUMMON_PET, i.e. hunter and warlock
+	// pets and the Master of Ghouls ghoul. Every other summon is a guardian and
+	// doesn't glance.
+	SummonedAsPet bool
+
 	MobType proto.MobType
 
 	// Amount of time it takes for the human agent to react to in-game events.

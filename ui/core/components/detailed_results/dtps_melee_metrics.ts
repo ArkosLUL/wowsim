@@ -28,7 +28,7 @@ export class DtpsMeleeMetricsTable extends MetricsTable<ActionMetrics> {
 			},
 			{
 				name: 'Avg Hit',
-				tooltip: 'Damage / (Hits + Crits + Glances + Blocks)',
+				tooltip: 'Damage / (Hits + Crits + Crushes + Blocks)',
 				getValue: (metric: ActionMetrics) => metric.avgHit,
 				getDisplayString: (metric: ActionMetrics) => metric.avgHit.toFixed(1),
 			},
@@ -40,7 +40,7 @@ export class DtpsMeleeMetricsTable extends MetricsTable<ActionMetrics> {
 			},
 			{
 				name: 'Hits',
-				tooltip: 'Hits + Crits + Glances + Blocks',
+				tooltip: 'Hits + Crits + Crushes + Blocks',
 				getValue: (metric: ActionMetrics) => metric.landedHits,
 				getDisplayString: (metric: ActionMetrics) => metric.landedHits.toFixed(1),
 			},
@@ -67,6 +67,12 @@ export class DtpsMeleeMetricsTable extends MetricsTable<ActionMetrics> {
 				tooltip: 'Blocks / Swings',
 				getValue: (metric: ActionMetrics) => metric.blockPercent,
 				getDisplayString: (metric: ActionMetrics) => metric.blockPercent.toFixed(2) + '%',
+			},
+			{
+				name: 'Crush %',
+				tooltip: 'Crushing Blows / Swings',
+				getValue: (metric: ActionMetrics) => metric.crushPercent,
+				getDisplayString: (metric: ActionMetrics) => metric.crushPercent.toFixed(2) + '%',
 			},
 			{
 				name: 'Crit %',

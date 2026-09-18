@@ -178,10 +178,11 @@ export class Encounter {
 			suppressDodge: false,
 			parryHaste: true,
 			spellSchool: SpellSchool.SpellSchoolPhysical,
+			// Block value is left out on purpose: the sim derives a creature's from
+			// its level and strength, which is 41 for a level 83 boss.
 			stats: Stats.fromMap({
 				[Stat.StatArmor]: 10643,
 				[Stat.StatAttackPower]: 805,
-				[Stat.StatBlockValue]: 76,
 			}).asArray(),
 			targetInputs: new Array<TargetInput>(0),
 		});

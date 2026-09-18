@@ -245,23 +245,24 @@ func TestDamageReductionFromArmor(t *testing.T) {
 		t.Fatalf("Expected major & minor armor modifier to result in %f damage reduction got %f", expectedDamageReduction, 1-attackTable.GetArmorDamageModifier(spell))
 	}
 
-	// Cap armor pen
+	// Cap armor pen. The cap is (armor + 16635)/3 from the level 83 target, which
+	// is more than 8088 armor is worth, so full armor pen leaves nothing.
 	attacker.stats[stats.ArmorPenetration] = 1400
-	expectedDamageReduction = 0.02026
+	expectedDamageReduction = 0.0
 	if !WithinToleranceFloat64(1-expectedDamageReduction, attackTable.GetArmorDamageModifier(spell), tolerance) {
 		t.Fatalf("Expected major & minor armor modifier to result in %f damage reduction got %f", expectedDamageReduction, 1-attackTable.GetArmorDamageModifier(spell))
 	}
 
 	// Verify going past Cap doesn't help
 	attacker.stats[stats.ArmorPenetration] = 1600
-	expectedDamageReduction = 0.02026
+	expectedDamageReduction = 0.0
 	if !WithinToleranceFloat64(1-expectedDamageReduction, attackTable.GetArmorDamageModifier(spell), tolerance) {
 		t.Fatalf("Expected major & minor armor modifier to result in %f damage reduction got %f", expectedDamageReduction, 1-attackTable.GetArmorDamageModifier(spell))
 	}
 
 	// Add spore back
 	sporeCloudAura.Activate(&sim)
-	expectedDamageReduction = 0.02026
+	expectedDamageReduction = 0.0
 	if !WithinToleranceFloat64(1-expectedDamageReduction, attackTable.GetArmorDamageModifier(spell), tolerance) {
 		t.Fatalf("Expected major & minor armor modifier to result in %f damage reduction got %f", expectedDamageReduction, 1-attackTable.GetArmorDamageModifier(spell))
 	}

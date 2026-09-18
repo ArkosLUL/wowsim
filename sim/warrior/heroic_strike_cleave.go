@@ -34,7 +34,7 @@ func (warrior *Warrior) registerHeroicStrikeSpell() {
 				spell.Unit.MHWeaponDamage(sim, spell.MeleeAttackPower()) +
 				spell.BonusWeaponDamage()
 
-			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMeleeWeaponSpecialHitAndCrit)
+			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 
 			if result.DidCrit() && hasGlyph {
 				warrior.AddRage(sim, 10, rageMetrics)
@@ -80,7 +80,7 @@ func (warrior *Warrior) registerCleaveSpell() {
 				baseDamage := flatDamageBonus +
 					spell.Unit.MHWeaponDamage(sim, spell.MeleeAttackPower()) +
 					spell.BonusWeaponDamage()
-				results[hitIndex] = spell.CalcDamage(sim, curTarget, baseDamage, spell.OutcomeMeleeWeaponSpecialHitAndCrit)
+				results[hitIndex] = spell.CalcDamage(sim, curTarget, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 
 				curTarget = sim.Environment.NextTargetUnit(curTarget)
 			}

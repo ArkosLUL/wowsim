@@ -22,7 +22,6 @@ func addPatchwerk25(bossPrefix string) {
 				stats.Health:      16_950_147,
 				stats.Armor:       10643,
 				stats.AttackPower: 805,
-				stats.BlockValue:  76,
 			}.ToFloatArray(),
 
 			SpellSchool:      proto.SpellSchool_SpellSchoolPhysical,
@@ -82,7 +81,7 @@ func (ai *Patchwerk25AI) registerHatefulStrikeSpell(target *core.Target) {
 		},
 
 		DamageMultiplier: 1,
-		CritMultiplier:   1,
+		CritMultiplier:   2,
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			baseDamage := sim.Roll(79000, 81000)

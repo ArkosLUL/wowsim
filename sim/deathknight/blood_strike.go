@@ -112,7 +112,7 @@ func (dk *Deathknight) registerDrwBloodStrikeSpell() {
 			baseDamage *= dk.RoRTSBonus(target) *
 				(1.0 + dk.drwCountActiveDiseases(target)*diseaseMulti)
 
-			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeWeaponSpecialHitAndCrit)
+			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 		},
 	})
 }

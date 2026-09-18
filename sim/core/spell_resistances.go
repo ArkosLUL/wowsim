@@ -2,7 +2,6 @@ package core
 
 import (
 	"fmt"
-	"math"
 	"strings"
 
 	"github.com/wowsims/wotlk/sim/core/stats"
@@ -33,20 +32,16 @@ func (spell *Spell) ResistanceMultiplier(sim *Simulation, isPeriodic bool, attac
 		return attackTable.GetArmorDamageModifier(spell)
 	}
 
-	// Magical resistance.
-	averageResist := attackTable.Defender.averageResist(spell.SpellSchool, attackTable.Attacker)
-	if averageResist == 0 { // for equal or lower level mobs
+	if !spell.canBeResisted(attackTable.Defender) {
 		return 1
 	}
 
-	if spell.Flags.Matches(SpellFlagBinary) {
-		if resistanceRoll := sim.RandomFloat("Binary Resist"); resistanceRoll < averageResist {
-			return 0
-		}
+	averageResist := attackTable.AverageResist(spell)
+	if averageResist <= 0 {
 		return 1
 	}
 
-	thresholds := attackTable.Defender.partialResistRollThresholds(averageResist)
+	thresholds := partialResistRollThresholds(averageResist)
 
 	switch resistanceRoll := sim.RandomFloat("Partial Resist"); {
 	case resistanceRoll < thresholds[0].cumulativeChance:
@@ -60,49 +55,65 @@ func (spell *Spell) ResistanceMultiplier(sim *Simulation, isPeriodic bool, attac
 	}
 }
 
+// canBeResisted is CalcAbsorbResist's guard. A binary spell rolled its resist as
+// part of the hit check and never partially resists, and holy is only resisted by
+// creatures.
+func (spell *Spell) canBeResisted(defender *Unit) bool {
+	if spell.Flags.Matches(SpellFlagBinary) {
+		return false
+	}
+	if spell.SpellSchool.Matches(SpellSchoolHoly) && defender.Type != EnemyUnit {
+		return false
+	}
+	return true
+}
+
+// AverageResist is the share of damage the target resists on average. With no
+// resistance to meet, all a spell gets is the flat 5 per level of difference,
+// which works out to 3.6145% against a level 83 target.
+func (at *AttackTable) AverageResist(spell *Spell) float64 {
+	return EffectiveResistChance(
+		at.Defender.schoolResistance(spell.SpellSchool),
+		at.Attacker.stats[stats.SpellPenetration],
+		at.Attacker.Level,
+		at.Defender.Level,
+		false)
+}
+
+var magicSchools = [...]SpellSchool{SpellSchoolArcane, SpellSchoolFire, SpellSchoolFrost, SpellSchoolHoly, SpellSchoolNature, SpellSchoolShadow}
+
+// schoolResistance is Unit::GetResistance(mask): a spell of several schools meets
+// the lowest of their resistances, so Frostfire Bolt goes through whichever of
+// fire and frost is weaker. Holy has no resistance stat and counts as none.
+// Physical never gets here, since it's armor instead.
+func (unit *Unit) schoolResistance(school SpellSchool) float64 {
+	var resistance float64
+	found := false
+	for _, single := range magicSchools {
+		if !school.Matches(single) {
+			continue
+		}
+		value := 0.0
+		if stat, ok := single.ResistanceStat(); ok {
+			value = unit.GetStat(stat)
+		}
+		if !found || value < resistance {
+			resistance = value
+			found = true
+		}
+	}
+	return resistance
+}
+
+// GetArmorDamageModifier is CalcArmorReducedDamage. Note the two levels: how much
+// a given amount of armor mitigates comes from the attacker's level, but how far
+// armor penetration can reach through it comes from the target's.
 func (at *AttackTable) GetArmorDamageModifier(spell *Spell) float64 {
-	armorConstant := float64(at.Attacker.Level)*467.5 - 22167.5
 	defenderArmor := at.Defender.Armor()
-	reducibleArmor := min((defenderArmor+armorConstant)/3, defenderArmor)
 	armorPenRating := at.Attacker.stats[stats.ArmorPenetration] + spell.BonusArmorPenRating
+	reducibleArmor := ArmorPenetrationCap(defenderArmor, at.Defender.Level)
 	effectiveArmor := defenderArmor - reducibleArmor*at.Attacker.ArmorPenetrationPercentage(armorPenRating)
-	return 1 - effectiveArmor/(effectiveArmor+armorConstant)
-}
-
-/*
- The following calculations are based on
- https://web.archive.org/web/20110207221537/http://elitistjerks.com/f15/t44675-resistance_mechanics_wotlk/
- This handles the mob vs. player case
-  - average resist is calculated as AR = R / (R + C), C is 400 for level 80 mobs, assumed 510 for level 83 mobs
-  - actual resist values come in multiples of 10%, with 3-4 values around the average resist
-  - probability for a given resist value is P(x) = 0.5 - 2.5*|x - AR| (transformed for AR < 0.1 or AR > 0.9)
-  - the resist cap is likely gone, since resists work like armor now
- https://web.archive.org/web/20110209210726/http://elitistjerks.com/f75/t38540-general_mage_discussion_information/p11/#post1171056
- This handles the player vs. mob partial resists case
-  - average resist is still 2% percent per level vs. higher level mobs
-  - otherwise it's modelled identical to the mob vs. player case
-  - the resulting numbers have been verified in game (55% for 0%, 30% for 10%, 15% for 20% resists)
-*/
-
-func (unit *Unit) averageResist(school SpellSchool, attacker *Unit) float64 {
-	resistance := unit.GetStat(school.ResistanceStat()) - attacker.stats[stats.SpellPenetration]
-	if resistance <= 0 {
-		return unit.levelBasedResist(attacker)
-	}
-
-	c := 5 * float64(attacker.Level)
-	if attacker.Type == EnemyUnit && attacker.Level-unit.Level >= 3 {
-		c = 150 + (float64(attacker.Level)-60)*(float64(attacker.Level)-67.5)
-	}
-
-	return resistance/(c+resistance) + unit.levelBasedResist(attacker) // these may stack differently, but that's irrelevant in practice
-}
-
-func (unit *Unit) levelBasedResist(attacker *Unit) float64 {
-	if unit.Type == EnemyUnit && unit.Level > attacker.Level {
-		return 0.02 * float64(unit.Level-attacker.Level)
-	}
-	return 0
+	return ArmorMultiplier(effectiveArmor, at.Attacker.Level)
 }
 
 type Threshold struct {
@@ -129,37 +140,26 @@ func (x Thresholds) String() string {
 	return sb.String()
 }
 
-func (unit *Unit) partialResistRollThresholds(ar float64) Thresholds {
-	if ar <= 0.1 { // always 0%, 10%, or 20%; this covers all player vs. mob cases, in practice
-		return Thresholds{
-			{cumulativeChance: 1 - 7.5*ar, bracket: 0},
-			{cumulativeChance: 1 - 2.5*ar, bracket: 1},
-			{cumulativeChance: 1, bracket: 2},
-		}
-	}
-
-	if ar >= 0.9 { // always 80%, 90%, or 100%; only relevant for tests ;)
-		return Thresholds{
-			{cumulativeChance: 1 - 7.5*(1-ar), bracket: 10},
-			{cumulativeChance: 1 - 2.5*(1-ar), bracket: 9},
-			{cumulativeChance: 1, bracket: 8},
-		}
-	}
-
-	p := func(x float64) float64 {
-		return math.Max(0.5-2.5*math.Abs(x-ar), 0)
-	}
+// partialResistRollThresholds turns CalcAbsorbResist's discrete table into the
+// cumulative form the roll walks. Only four brackets ever carry weight at once,
+// and for a boss's 3.6% it is the first three.
+func partialResistRollThresholds(averageResist float64) Thresholds {
+	buckets := ResistBuckets(averageResist)
 
 	const eps = 1e-9 // imprecision guard (25-50-25 might become almost0-25-50-25-almost0)
 
 	var thresholds Thresholds
 	var cumulativeChance float64
 	var index int
-	for bracket := 0; bracket <= 10; bracket++ {
-		if chance := p(float64(bracket) * 0.1); chance > eps {
-			cumulativeChance += chance
-			thresholds[index] = Threshold{cumulativeChance: cumulativeChance, bracket: bracket}
-			index++
+	for bracket, chance := range buckets {
+		if chance <= eps {
+			continue
+		}
+		cumulativeChance += chance
+		thresholds[index] = Threshold{cumulativeChance: cumulativeChance, bracket: bracket}
+		index++
+		if index == len(thresholds) {
+			break
 		}
 	}
 

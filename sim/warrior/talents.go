@@ -841,7 +841,7 @@ func (warrior *Warrior) RegisterBladestormCD() {
 					baseDamage := 0 +
 						spell.Unit.MHNormalizedWeaponDamage(sim, spell.MeleeAttackPower()) +
 						spell.BonusWeaponDamage()
-					results[hitIndex] = spell.CalcDamage(sim, curTarget, baseDamage, spell.OutcomeMeleeWeaponSpecialHitAndCrit)
+					results[hitIndex] = spell.CalcDamage(sim, curTarget, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 
 					curTarget = sim.Environment.NextTargetUnit(curTarget)
 				}
@@ -858,7 +858,7 @@ func (warrior *Warrior) RegisterBladestormCD() {
 						baseDamage := 0 +
 							spell.Unit.OHNormalizedWeaponDamage(sim, spell.MeleeAttackPower()) +
 							spell.BonusWeaponDamage()
-						results[hitIndex] = warrior.BladestormOH.CalcDamage(sim, curTarget, baseDamage, warrior.BladestormOH.OutcomeMeleeWeaponSpecialHitAndCrit)
+						results[hitIndex] = warrior.BladestormOH.CalcDamage(sim, curTarget, baseDamage, warrior.BladestormOH.OutcomeMeleeSpecialHitAndCrit)
 
 						curTarget = sim.Environment.NextTargetUnit(curTarget)
 					}

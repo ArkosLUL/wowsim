@@ -39,6 +39,7 @@ func (hunter *Hunter) NewHunterPet() *HunterPet {
 
 		hasOwnerCooldown: petConfig.SpecialAbility == FuriousHowl || petConfig.SpecialAbility == SavageRend,
 	}
+	hp.SummonedAsPet = true
 
 	hp.EnableFocusBar(1.0+0.5*float64(hunter.Talents.BestialDiscipline), func(sim *core.Simulation) {
 		if hp.GCD.IsReady(sim) {
@@ -136,8 +137,7 @@ var hunterPetBaseStats = stats.Stats{
 	stats.Strength:    331,
 	stats.AttackPower: -20, // Apparently pets and warriors have a AP penalty.
 
-	// Add 1.8% because pets aren't affected by that component of crit suppression.
-	stats.MeleeCrit: (3.2 + 1.8) * core.CritRatingPerCritChance,
+	stats.MeleeCrit: 3.2 * core.CritRatingPerCritChance,
 }
 
 const PetExpertiseScale = 3.25
