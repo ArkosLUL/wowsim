@@ -93,8 +93,8 @@ Outcome:
 3. Save this plan as `docs/azerothcore-raid-import/azerothcore-raid-import.PLAN.md`.
 4. Run Phase 1, then Phase 2, then Phase 3. **After each phase, run its verification, then stop and ask the
    user to review before continuing.**
-   - **Status:** Phase 1 reviewed, committed and merged into `master` at the user's request. Phase 2 is
-     implemented and verified on branch `azerothcore-roster-export`, waiting for review. Phase 3 not started.
+   - **Status:** Phases 1 and 2 are reviewed, committed and merged into `master` at the user's request, as
+     `23d0796b5` and `7155b74c2`. Phase 3 not started.
 5. Leave work **uncommitted** unless the user asks. Don't commit, merge, push or create other branches on your own.
 
 ## Established facts
