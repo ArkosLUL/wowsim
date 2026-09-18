@@ -77,6 +77,20 @@ func TestReadItemSets(t *testing.T) {
 	}
 }
 
+func TestReadSpellsStances(t *testing.T) {
+	record := make([]uint32, 234)
+	record[spellFieldID] = 44916
+	record[spellFieldStances] = 0x40000091
+	record[spellFieldEffect] = SpellEffectApplyAura
+	record[spellFieldEffectApplyAuraName] = AuraModAttackPower
+	record[spellFieldEffectBasePoints] = 1058
+
+	spell := readSpells(mustParse(t, buildDBC(234, [][]uint32{record}, "\x00")))[44916]
+	if spell == nil || spell.Stances != 0x40000091 || spell.EffectValue(0) != 1058 {
+		t.Errorf("spell = %+v", spell)
+	}
+}
+
 func TestSpellEffectValue(t *testing.T) {
 	spell := &SpellEntry{EffectBasePoints: [3]int32{664, 9, -11}, EffectDieSides: [3]int32{1, 0, 1}}
 	for i, want := range []int32{665, 9, -10} {

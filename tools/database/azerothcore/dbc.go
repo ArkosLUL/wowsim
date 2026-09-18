@@ -1,5 +1,6 @@
 // Package azerothcore reads items, spells and characters from an AzerothCore (3.3.5a) server: its
-// world and character databases, and the client DBC files the worldserver loads.
+// world and character databases, and the client DBC files the worldserver loads. It only ever
+// SELECTs from the databases.
 package azerothcore
 
 import (
@@ -18,6 +19,8 @@ type DBCFile struct {
 	strings     []byte
 }
 
+// ParseDBC splits a WDBC file into its records and string block. Files with fields other than 4
+// bytes wide are rejected.
 func ParseDBC(data []byte) (*DBCFile, error) {
 	if len(data) < 20 || string(data[:4]) != "WDBC" {
 		return nil, fmt.Errorf("not a WDBC file")
@@ -43,6 +46,7 @@ func ParseDBC(data []byte) (*DBCFile, error) {
 	}, nil
 }
 
+// Uint32 reads a field by its DBCStructure.h index. field isn't checked against FieldCount.
 func (f *DBCFile) Uint32(row, field int) uint32 {
 	offset := (row*f.FieldCount + field) * 4
 	return binary.LittleEndian.Uint32(f.records[offset:])
@@ -52,6 +56,7 @@ func (f *DBCFile) Int32(row, field int) int32 {
 	return int32(f.Uint32(row, field))
 }
 
+// String reads a field holding a string block offset. An offset past the block reads as "".
 func (f *DBCFile) String(row, field int) string {
 	offset := int(f.Uint32(row, field))
 	if offset >= len(f.strings) {
@@ -67,6 +72,7 @@ func (f *DBCFile) String(row, field int) string {
 // Field indices follow AzerothCore's DBCStructure.h. Localized strings start with enUS.
 const (
 	spellFieldID                   = 0
+	spellFieldStances              = 12
 	spellFieldRecoveryTime         = 29
 	spellFieldCategoryRecoveryTime = 30
 	spellFieldProcChance           = 35
@@ -104,10 +110,13 @@ const (
 	durationFieldDuration = 1
 )
 
+// SpellEntry holds the Spell.dbc columns this package reads. ApplySpellDBCOverrides can swap in a
+// spell_dbc row.
 type SpellEntry struct {
 	ID                   int32
-	RecoveryTime         int32 // ms
-	CategoryRecoveryTime int32 // ms
+	Stances              uint32 // shapeshift forms it needs, bit n-1 for form n; 0 for any
+	RecoveryTime         int32  // ms
+	CategoryRecoveryTime int32  // ms
 	ProcChance           int32
 	DurationIndex        int32
 
@@ -144,6 +153,7 @@ type SpellItemEnchantmentEntry struct {
 	Name   string
 }
 
+// ItemSetEntry lists the set's bonuses in order: Spells[i] needs Thresholds[i] pieces.
 type ItemSetEntry struct {
 	ID         int32
 	Name       string
@@ -167,6 +177,7 @@ type DBC struct {
 	GemProperties  map[int32]*GemPropertiesEntry
 }
 
+// DBCFileNames are the files LoadDBC reads.
 var DBCFileNames = []string{"Spell.dbc", "SpellDuration.dbc", "SpellItemEnchantment.dbc", "ItemSet.dbc", "GemProperties.dbc"}
 
 // CopyDBCFromContainer copies the needed DBCs out of a running worldserver container, since the
@@ -175,6 +186,8 @@ func CopyDBCFromContainer(container, destDir string) error {
 	return CopyDBCFilesFromContainer(container, destDir, DBCFileNames)
 }
 
+// CopyDBCFilesFromContainer shells out to docker cp, so it works from the host but not inside
+// tools/acore/dock.sh's container, which has no docker CLI.
 func CopyDBCFilesFromContainer(container, destDir string, names []string) error {
 	if err := os.MkdirAll(destDir, 0o755); err != nil {
 		return err
@@ -204,6 +217,8 @@ func readDBCFiles(dir string, names []string) (map[string]*DBCFile, error) {
 	return files, nil
 }
 
+// LoadDBC reads DBCFileNames from dir. The worldserver loads acore_world.spell_dbc on top of
+// Spell.dbc, so follow up with ApplySpellDBCOverrides to see the spells it sees.
 func LoadDBC(dir string) (*DBC, error) {
 	files, err := readDBCFiles(dir, DBCFileNames)
 	if err != nil {
@@ -224,6 +239,7 @@ func readSpells(f *DBCFile) map[int32]*SpellEntry {
 	for row := 0; row < f.RecordCount; row++ {
 		spell := &SpellEntry{
 			ID:                   f.Int32(row, spellFieldID),
+			Stances:              f.Uint32(row, spellFieldStances),
 			RecoveryTime:         f.Int32(row, spellFieldRecoveryTime),
 			CategoryRecoveryTime: f.Int32(row, spellFieldCategoryRecoveryTime),
 			ProcChance:           f.Int32(row, spellFieldProcChance),

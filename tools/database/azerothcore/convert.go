@@ -1,6 +1,9 @@
 package azerothcore
 
 import (
+	"slices"
+	"strings"
+
 	"github.com/wowsims/wotlk/sim/core/proto"
 	"github.com/wowsims/wotlk/tools/database"
 )
@@ -34,6 +37,8 @@ func (s ItemSpell) CooldownMs() int32 {
 	return max(s.Cooldown, s.CategoryCooldown, 0)
 }
 
+// ConvertItem reads an item_template row the way the sim's item DB stores it. Equip spells that
+// only grant flat stats, in any form, become stats; every other spell is listed in EffectSpells.
 func ConvertItem(row *ItemRow, dbc *DBC) *ConvertedItem {
 	var stats database.Stats
 	converted := &ConvertedItem{}
@@ -53,7 +58,9 @@ func ConvertItem(row *ItemRow, dbc *DBC) *ConvertedItem {
 			continue
 		}
 		if row.SpellTriggers[i] == ItemSpellTriggerOnEquip {
-			if spell := dbc.Spells[spellID]; spell != nil && AddEquipSpellStats(&stats, spell) {
+			// form-only auras stay effects: sim stats apply in every form, so pre-3.0 feral AP ("in Cat,
+			// Bear, Dire Bear, and Moonkin forms only") would count as plain AP for every class
+			if spell := dbc.Spells[spellID]; spell != nil && spell.Stances == 0 && AddEquipSpellStats(&stats, spell) {
 				continue
 			}
 		}
@@ -85,6 +92,9 @@ func ConvertItem(row *ItemRow, dbc *DBC) *ConvertedItem {
 		Heroic:         row.Flags&ItemFlagHeroicTooltip != 0,
 		ClassAllowlist: AllowedClasses(row.AllowableClass),
 	}
+	if class, ok := relicClasses[row.Subclass]; ok && row.InventoryType == inventoryTypeRelic && item.ClassAllowlist == nil {
+		item.ClassAllowlist = []proto.Class{class}
+	}
 
 	for _, color := range row.SocketColors {
 		if color != 0 {
@@ -104,7 +114,7 @@ func ConvertItem(row *ItemRow, dbc *DBC) *ConvertedItem {
 	}
 
 	if set := dbc.ItemSets[row.ItemSet]; set != nil {
-		item.SetName = database.NormalizeSetName(set.Name)
+		item.SetName = simSetName(set.Name, row.Name)
 	}
 
 	switch {
@@ -116,6 +126,54 @@ func ConvertItem(row *ItemRow, dbc *DBC) *ConvertedItem {
 
 	converted.Item = item
 	return converted
+}
+
+// ApplyTo overwrites every field of item that ConvertItem fills from the server, everything but Id
+// and Name, zero values and empty lists included. Skip items with NotComparable set: item_template
+// doesn't hold their stats.
+func (c *ConvertedItem) ApplyTo(item *proto.UIItem) {
+	// field by field, since googleProto.Merge (MergeItem) appends lists and skips zero values
+	src := c.Item
+	item.Ilvl = src.Ilvl
+	item.Quality = src.Quality
+	item.Stats = slices.Clone(src.Stats)
+	item.GemSockets = slices.Clone(src.GemSockets)
+	item.SocketBonus = slices.Clone(src.SocketBonus)
+	item.WeaponDamageMin = src.WeaponDamageMin
+	item.WeaponDamageMax = src.WeaponDamageMax
+	item.WeaponSpeed = src.WeaponSpeed
+	item.Heroic = src.Heroic
+	item.ClassAllowlist = slices.Clone(src.ClassAllowlist)
+	item.SetName = src.SetName
+}
+
+const inventoryTypeRelic = 28
+
+// Relics leave AllowableClass open; the relic proficiency decides who can equip one.
+var relicClasses = map[int32]proto.Class{
+	7:  proto.Class_ClassPaladin,     // libram
+	8:  proto.Class_ClassDruid,       // idol
+	9:  proto.Class_ClassShaman,      // totem
+	10: proto.Class_ClassDeathknight, // sigil
+}
+
+// simSetName is the name the sim's Go set bonuses know a set by, which isn't always the
+// ItemSet.dbc name.
+func simSetName(dbcName, itemName string) string {
+	name := database.NormalizeSetName(dbcName)
+	// every TBC arena season shares one set per class, named like the WotLK season sets Go registers
+	// ("Gladiator's Pursuit"); keeping the season stops S2-S4 pieces from getting the WotLK bonuses
+	for _, season := range []string{"Merciless", "Vengeful", "Brutal"} {
+		if strings.HasPrefix(itemName, season+" Gladiator's ") && strings.HasPrefix(name, "Gladiator's ") {
+			return season + " " + name
+		}
+	}
+	// sim/mage's ItemSetKirinTorGarb has Wowhead's 10-man spelling as its AlternativeName, and
+	// with_db builds panic if no item carries it
+	if name == "Kirin Tor Garb" && strings.HasPrefix(itemName, "Valorous ") {
+		return "Kirin'dor Garb"
+	}
+	return name
 }
 
 // splitArmor follows the tooltip parser: armor slots and shields keep base armor separate from bonus

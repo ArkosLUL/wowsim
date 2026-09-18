@@ -213,11 +213,13 @@ nixlib: sim/core/proto/api.pb.go
 winlib: sim/core/proto/api.pb.go
 	GOOS=windows GOARCH=amd64 GOAMD64=v2 CGO_ENABLED=1 CC=x86_64-w64-mingw32-gcc go build -buildmode=c-shared -o wowsimwotlk-windows.dll --tags=with_db ./sim/lib/library.go
 
+# Item stats come from the live AzerothCore server: its world DB ($AC_DSN, else the live DB on
+# host.docker.internal) and its DBCs. The toolchain image has no docker CLI, so set AC_DBC_DIR to a
+# copy of the live DBCs there; left empty, gen_db docker cps them from ac-worldserver.
+AC_DBC_DIR ?=
 .PHONY: items
-items: sim/core/items/all_items.go sim/core/proto/api.pb.go
-
-sim/core/items/all_items.go: $(call rwildcard,tools/database,*.go) $(call rwildcard,sim/core/proto,*.go)
-	go run tools/database/gen_db/*.go -outDir=./assets -gen=db
+items: sim/core/proto/api.pb.go
+	go run ./tools/database/gen_db -outDir=./assets -gen=azerothcore -dbcDir="$(AC_DBC_DIR)"
 
 .PHONY: test
 test: $(OUT_DIR)/lib.wasm binary_dist/dist.go
