@@ -35,6 +35,15 @@ addEventListener('message', async (e) => {
 				});
 			});
 		}],
+		['optimizeGearAsync', data => {
+			return optimizeGearAsync(data, result => {
+				postMessage({
+					msg: "progress",
+					outputData: result,
+					id: id + "progress",
+				});
+			});
+		}],
 		['computeStats', computeStats],
 		['computeStatsJson', computeStatsJson],
 		['raidSim', raidSim],

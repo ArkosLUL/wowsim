@@ -1,0 +1,334 @@
+syntax = "proto3";
+package proto;
+
+option go_package = "./proto";
+
+import "common.proto";
+
+// The BiS optimizer's settings, candidate pool, results and server catalog. OptimizeGearRequest
+// lives in api.proto, since it wraps a RaidSimRequest.
+
+// How hard the search tries. More effort runs more sims.
+enum OptimizerEffort {
+	OptimizerEffortQuick = 0;
+	OptimizerEffortNormal = 1;
+	OptimizerEffortThorough = 2;
+}
+
+// What the optimizer maximizes.
+enum OptimizerObjective {
+	// The target's own metrics, weighted by OptimizerSettings.metric_weights.
+	OptimizerObjectiveOwnMetrics = 0;
+	// Raid contribution: the whole raid's DPS.
+	OptimizerObjectiveRaidDps = 1;
+}
+
+enum OptimizerRacialMode {
+	// Screen every race's traits, then fully optimize the best few.
+	OptimizerRacialSearch = 0;
+	// Keep the target's current racial traits.
+	OptimizerRacialKeepCurrent = 1;
+}
+
+// One number per unit metric: weights in settings, sim values in results.
+message OptimizerMetrics {
+	double dps = 1;
+	double hps = 2;
+	double tps = 3;
+	double dtps = 4;
+	double tmi = 5;
+	double p_death = 6;
+}
+
+// A floor on one of the target's final stats, as the character sheet shows them.
+message StatMinimum {
+	Stat stat = 1;
+	double min_value = 2;
+}
+
+message OptimizerSettings {
+	// 1 to 5. The pool builder caps candidates at progression tier 12 + content_phase.
+	int32 content_phase = 1;
+	OptimizerEffort effort = 2;
+	OptimizerObjective objective = 3;
+
+	// r_m in J = sum of r_m * M_m / w_m(ref). 0 leaves a metric out. These are importance, not signs:
+	// lower DTPS, TMI and death chance count as better.
+	OptimizerMetrics metric_weights = 4;
+	// Tank slider, 0 (all threat) to 1 (all survival). The UI turns it into metric_weights; it's kept
+	// so results and exports show where it sat.
+	double tank_survival = 5;
+	// Tanks: only accept loadouts the boss can't crit.
+	bool require_crit_immunity = 6;
+	// Empty by default.
+	repeated StatMinimum stat_minimums = 7;
+
+	OptimizerRacialMode racial_mode = 8;
+
+	// Sources the pool builder kept. Only for display and exports: the pool is already filtered.
+	repeated CatalogSourceKind sources = 9;
+	// Slots that keep the seed's item, gems, enchant and reforge.
+	repeated ItemSlot locked_slots = 10;
+	// Items and gems never picked, even when they're in the pool.
+	repeated int32 excluded_item_ids = 11;
+	// Extra starting points for the search, e.g. the previous content phase's BiS.
+	repeated EquipmentSpec warm_starts = 12;
+
+	// Sim goroutines. 0 means GOMAXPROCS. The web server caps it at GOMAXPROCS - 1.
+	int32 workers = 13;
+}
+
+// Candidates for one equipment slot. Rings, trinkets and one-handers show up under both their slots.
+message SlotPool {
+	ItemSlot slot = 1;
+	repeated int32 item_ids = 2;
+	// Enchants each item can take, already filtered by enchantAppliesToItem and canEquipEnchant.
+	// An item missing here stays unenchanted.
+	repeated ItemEnchantOptions enchant_options = 3;
+}
+
+message ItemEnchantOptions {
+	int32 item_id = 1;
+	// SimEnchant effect ids.
+	repeated int32 enchant_ids = 2;
+}
+
+// An equip limit several items or gems share, i.e. an ItemLimitCategory such as the 3 jewelcrafter
+// gems. Members point at it through CatalogItem.limit_category.
+message LimitGroup {
+	int32 id = 1;
+	string name = 2;
+	int32 max_equipped = 3;
+}
+
+// When a meta gem activates, as linear constraints on the equipped gems' colors. Colors count the
+// UI's way: an orange gem counts as red and yellow, a prismatic gem as all three.
+message MetaGemCondition {
+	int32 gem_id = 1;
+	// All of them must hold.
+	repeated MetaColorConstraint constraints = 2;
+}
+
+// red * n_red + yellow * n_yellow + blue * n_blue >= min_total.
+// "At least 2 blue" is {blue: 1, min_total: 2}; "more red than blue" is {red: 1, blue: -1, min_total: 1}.
+message MetaColorConstraint {
+	int32 red = 1;
+	int32 yellow = 2;
+	int32 blue = 3;
+	int32 min_total = 4;
+}
+
+// Everything one optimization can pick from. The UI's pool builder makes it; Go applies the equip rules.
+message CandidatePool {
+	repeated SlotPool slots = 1;
+	// Gems the search can socket wherever they fit.
+	repeated int32 gem_ids = 2;
+	repeated MetaGemCondition meta_conditions = 3;
+	repeated LimitGroup limit_groups = 4;
+	// Catalog rows for the pool's items and gems.
+	repeated CatalogItem catalog_items = 5;
+	// Sim data for every candidate item, gem and enchant.
+	SimDatabase database = 6;
+	// ServerCatalog.date of the catalog the pool came from.
+	string catalog_date = 7;
+}
+
+// A stat and the point where more of it stops helping, e.g. the hit cap.
+message OptimizerStatCap {
+	Stat stat = 1;
+	double value = 2;
+	double cap = 3;
+}
+
+// A gear set plus racial traits, and how it scored.
+message OptimizerLoadoutResult {
+	EquipmentSpec equipment = 1;
+	Race racial_traits = 2;
+
+	// Objective J, and its paired difference from the seed with standard error.
+	double score = 3;
+	double score_delta = 4;
+	double score_delta_se = 5;
+	// Raid-DPS difference from the seed, from paired raid sims. Raid contribution only.
+	double raid_dps_delta = 6;
+	double raid_dps_delta_se = 7;
+
+	OptimizerMetrics metrics = 8;
+	// The character sheet, and the caps that matter for it.
+	UnitStats final_stats = 9;
+	repeated OptimizerStatCap caps = 10;
+	// Chance the boss's melee crits the target; 0 means crit immune.
+	double melee_crit_taken_chance = 11;
+
+	// Equipped items with an effect the sim doesn't model.
+	repeated int32 unmodeled_effect_item_ids = 12;
+	repeated string warnings = 13;
+}
+
+// A runner-up for one slot, with the rest of the best loadout unchanged.
+message OptimizerSlotAlternative {
+	ItemSlot slot = 1;
+	ItemSpec item = 2;
+	// Paired difference from the best loadout; negative when worse.
+	double score_delta = 3;
+	double score_delta_se = 4;
+	double raid_dps_delta = 5;
+	double raid_dps_delta_se = 6;
+}
+
+// One race's traits in the racial screen.
+message OptimizerRacialScreen {
+	Race racial_traits = 1;
+	double score = 2;
+	double score_se = 3;
+	// Made the cut for full optimization.
+	bool finalist = 4;
+}
+
+// Where a running optimization is. Optimize never changes one after reporting it.
+message OptimizerProgress {
+	// What it's doing, for display, e.g. "Racial screen" or "Search".
+	string stage = 1;
+	// Steps across all stages, for a progress bar.
+	int32 completed_steps = 2;
+	int32 total_steps = 3;
+	int32 completed_sims = 4;
+	// An estimate; it can move while the search runs.
+	int32 total_sims = 5;
+	// The racial traits being optimized right now.
+	Race racial_traits = 6;
+	// Best so far.
+	double best_score = 7;
+	double best_score_delta = 8;
+	double elapsed_seconds = 9;
+}
+
+message OptimizerResult {
+	// The pick. It's the seed when nothing beat the seed by the acceptance test.
+	OptimizerLoadoutResult best = 1;
+	// The starting gear, scored the same way.
+	OptimizerLoadoutResult seed = 2;
+	// Verified top sets, best first, all distinct.
+	repeated OptimizerLoadoutResult top = 3;
+	// Up to 3 runners-up per slot, best first.
+	repeated OptimizerSlotAlternative alternatives = 4;
+	repeated OptimizerRacialScreen racial_screen = 5;
+	// best beat the seed: mean delta over 2 standard errors and over 0.05% of J.
+	bool improved = 6;
+
+	// The settings as run, after defaults.
+	OptimizerSettings settings = 7;
+	int32 target_raid_index = 8;
+	// Commit of the sim that made this result, and the date of its pool's catalog.
+	string sim_commit = 9;
+	string catalog_date = 10;
+
+	int32 total_sims = 11;
+	double elapsed_seconds = 12;
+	// Full raid vs the derived individual context, as a fraction. The UI warns past 0.03.
+	double calibration_gap = 13;
+	repeated string warnings = 14;
+
+	// Stopped by a cancel; best is the best verified by then.
+	bool cancelled = 15;
+	string error_result = 16;
+}
+
+// One raider and content phase in a raid batch.
+message OptimizerBatchEntry {
+	string raider = 1;
+	int32 raid_index = 2;
+	int32 content_phase = 3;
+	// 1: own-metrics BiS. 2: re-optimized against the other raiders' stage 1 BiS.
+	int32 stage = 4;
+	OptimizerResult result = 5;
+}
+
+// The raid batch's JSON export.
+message OptimizerBatchExport {
+	string sim_commit = 1;
+	string catalog_date = 2;
+	// RFC 3339.
+	string exported_at = 3;
+	// Identifies the roster the batch ran on, so a reload can resume it.
+	string roster_fingerprint = 4;
+	repeated OptimizerBatchEntry entries = 5;
+}
+
+// Where a catalog item comes from. PvP and random dungeon-master rewards aren't sources.
+enum CatalogSourceKind {
+	CatalogSourceUnknown = 0;
+	CatalogSourceDungeon = 1;
+	CatalogSourceDungeonHeroic = 2;
+	CatalogSourceRaid10 = 3;
+	CatalogSourceRaid10Heroic = 4;
+	CatalogSourceRaid25 = 5;
+	CatalogSourceRaid25Heroic = 6;
+	// Emblem and other vendors, including ExtendedCost ones.
+	CatalogSourceVendor = 7;
+	CatalogSourceCrafted = 8;
+	CatalogSourceQuest = 9;
+	CatalogSourceReputation = 10;
+	CatalogSourceAchievement = 11;
+	CatalogSourceProspecting = 12;
+	CatalogSourceWorldDrop = 13;
+}
+
+// One way to get a catalog item. Ids that don't apply to the source stay 0.
+message CatalogSource {
+	CatalogSourceKind kind = 1;
+	// The progression tier this source opens at.
+	int32 progression_tier = 2;
+	// Readable label, e.g. "Naxxramas 25: Patchwerk".
+	string name = 3;
+	int32 map_id = 4;
+	int32 npc_id = 5;
+	int32 gameobject_id = 6;
+	int32 quest_id = 7;
+	// The item-creating spell, for crafted items.
+	int32 spell_id = 8;
+	Profession profession = 9;
+	int32 extended_cost_id = 10;
+	int32 achievement_id = 11;
+	// Faction.dbc id and the standing it needs, for reputation items.
+	int32 reputation_faction_id = 12;
+	int32 reputation_rank = 13;
+	// The item this one comes out of, e.g. a tier token or a container.
+	int32 via_item_id = 14;
+}
+
+// An obtainable equippable item or gem on the server.
+message CatalogItem {
+	int32 id = 1;
+	string name = 2;
+	bool is_gem = 3;
+	// Earliest progression tier over its sources. 12 or lower is before the WotLK raids.
+	int32 progression_tier = 4;
+	repeated CatalogSource sources = 5;
+	// progression_tier came from a Classic phase because no server source resolved.
+	bool fallback_tier = 6;
+	// Unknown when both factions can use it.
+	Faction faction = 7;
+	bool pvp = 8;
+
+	// item_template.StatsCount, for the reforge rules.
+	int32 stats_count = 9;
+	// item_template.maxcount; 0 means no limit.
+	int32 max_count = 10;
+	// item_template.Flags & 0x80000.
+	bool unique_equipped = 11;
+	// LimitGroup id (ItemLimitCategory); 0 means none.
+	int32 limit_category = 12;
+	Profession required_profession = 13;
+	int32 required_skill_rank = 14;
+	// Has an on-use, proc or other spell effect beyond plain stats.
+	bool has_effect = 15;
+}
+
+// The server's item catalog. assets/database/server_catalog.json holds it as protojson.
+message ServerCatalog {
+	// When it was generated, YYYY-MM-DD.
+	string date = 1;
+	repeated CatalogItem items = 2;
+	repeated LimitGroup limit_groups = 3;
+}

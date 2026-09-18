@@ -51,7 +51,7 @@ var (
 func TestIsValidEquipment(t *testing.T) {
 	// This is a bit awkward because code everywhere accesses the global database maps. Hopefully
 	// this won't mess with any other unit tests that need existing item/gem/enchant databases?
-	addToDatabase(tinyItemDatabase)
+	AddToDatabase(tinyItemDatabase)
 
 	for _, tc := range []struct {
 		comment string
@@ -390,7 +390,7 @@ func TestCreateNewRequestWithSubstitutionCarriesReforge(t *testing.T) {
 		critHasteHead  = 9100013
 		enchantForHead = 9100014
 	)
-	addToDatabase(&proto.SimDatabase{
+	AddToDatabase(&proto.SimDatabase{
 		Items: []*proto.SimItem{
 			{Id: oldHead, Type: proto.ItemType_ItemTypeHead, Stats: stats.Stats{stats.MeleeCrit: 83, stats.SpellCrit: 83}.ToFloatArray()},
 			{Id: critHead, Type: proto.ItemType_ItemTypeHead, Stats: stats.Stats{stats.MeleeCrit: 60, stats.SpellCrit: 60}.ToFloatArray()},

@@ -54,5 +54,5 @@ func init() {
 		}
 	}
 
-	addToDatabase(simDB)
+	AddToDatabase(simDB)
 }

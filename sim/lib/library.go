@@ -103,7 +103,7 @@ func getDatabase(itemIds *int32, numItems int32, enchantIds *int32, numEnchants 
 		Gems:     make([]*proto.SimGem, numGems),
 	}
 	for i, itemId := range ids {
-		item := core.ItemsByID[itemId]
+		item, _ := core.LookupItem(itemId)
 		simDB.Items[i] = &proto.SimItem{
 			Id:               item.ID,
 			Name:             item.Name,
@@ -122,14 +122,14 @@ func getDatabase(itemIds *int32, numItems int32, enchantIds *int32, numEnchants 
 		}
 	}
 	for i, enchantId := range eids {
-		enchant := core.EnchantsByEffectID[enchantId]
+		enchant, _ := core.LookupEnchant(enchantId)
 		simDB.Enchants[i] = &proto.SimEnchant{
 			EffectId: enchant.EffectID,
 			Stats:    enchant.Stats[:],
 		}
 	}
 	for i, gemId := range gids {
-		gem := core.GemsByID[gemId]
+		gem, _ := core.LookupGem(gemId)
 		simDB.Gems[i] = &proto.SimGem{
 			Id:    gem.ID,
 			Name:  gem.Name,

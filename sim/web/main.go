@@ -12,6 +12,7 @@ import (
 	_ "net/http/pprof"
 	"os"
 	"os/signal"
+	"runtime"
 	"runtime/pprof"
 	"strings"
 	"sync"
@@ -25,6 +26,7 @@ import (
 	"github.com/wowsims/wotlk/sim"
 	"github.com/wowsims/wotlk/sim/core"
 	proto "github.com/wowsims/wotlk/sim/core/proto"
+	"github.com/wowsims/wotlk/sim/optimizer"
 
 	googleProto "google.golang.org/protobuf/proto"
 )
@@ -119,7 +121,22 @@ var asyncAPIHandlers = map[string]asyncAPIHandler{
 type server struct {
 	progMut         sync.RWMutex
 	asyncProgresses map[string]*asyncProgress
+
+	// Progress id of the running optimization, "" when there's none. Only one runs at a time, since
+	// one already keeps all cores but one busy.
+	optimizerMut   sync.Mutex
+	optimizerRunID string
+
+	// Starts an optimization and must close the channel after the final result. Nil means
+	// optimizer.RunAsync; tests swap in a fake.
+	runOptimizer func(context.Context, *proto.OptimizeGearRequest, chan *proto.ProgressMetrics)
+	// Cancels an optimization nobody has polled for this long, so a closed or reloaded tab doesn't
+	// hold the slot until the run ends. 0 means defaultOptimizerAbandonAfter.
+	optimizerAbandonAfter time.Duration
 }
+
+// net_worker.js polls every 500 ms; the rest is slack for throttled background tabs.
+const defaultOptimizerAbandonAfter = 2 * time.Minute
 
 type apiHandler struct {
 	msg    func() googleProto.Message
@@ -133,20 +150,50 @@ type asyncAPIHandler struct {
 type asyncProgress struct {
 	id             string
 	latestProgress atomic.Value
+	// Stops the run, for the ones /cancelAsync can stop. Nil otherwise.
+	cancel context.CancelFunc
+	// UnixNano of the last /asyncProgress poll, or of the start before the first one.
+	lastPolled atomic.Int64
 }
 
-func (s *server) addNewSim() *asyncProgress {
+// addNewSim registers a run under a new progress id. first is what /asyncProgress returns until the
+// run reports; nil means empty progress.
+func (s *server) addNewSim(cancel context.CancelFunc, first *proto.ProgressMetrics) *asyncProgress {
+	if first == nil {
+		first = &proto.ProgressMetrics{}
+	}
 	newID := uuid.NewString()
 	simProgress := &asyncProgress{
-		id: newID,
+		id:     newID,
+		cancel: cancel,
 	}
-	simProgress.latestProgress.Store(&proto.ProgressMetrics{})
+	simProgress.latestProgress.Store(first)
+	simProgress.lastPolled.Store(time.Now().UnixNano())
 
 	s.progMut.Lock()
 	s.asyncProgresses[newID] = simProgress
 	s.progMut.Unlock()
 
 	return simProgress
+}
+
+func isFinalProgress(p *proto.ProgressMetrics) bool {
+	return p.FinalRaidResult != nil || p.FinalWeightResult != nil || p.FinalBulkResult != nil || p.FinalOptimizeResult != nil
+}
+
+func writeAsyncAPIResult(w http.ResponseWriter, progressID string, status int) {
+	outbytes, err := googleProto.Marshal(&proto.AsyncAPIResult{
+		ProgressId: progressID,
+	})
+	if err != nil {
+		log.Printf("[ERROR] Failed to marshal result: %s", err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Add("Content-Type", "application/x-protobuf")
+	w.WriteHeader(status)
+	w.Write(outbytes)
 }
 
 func (s *server) handleAsyncAPI(w http.ResponseWriter, r *http.Request) {
@@ -176,7 +223,7 @@ func (s *server) handleAsyncAPI(w http.ResponseWriter, r *http.Request) {
 	handler.handle(msg, reporter)
 
 	// Generate a new async simulation
-	simProgress := s.addNewSim()
+	simProgress := s.addNewSim(nil, nil)
 
 	// Now launch a background process that pulls progress reports off the reporter channel
 	// and pushes it into the async progress cache.
@@ -194,38 +241,146 @@ func (s *server) handleAsyncAPI(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 				simProgress.latestProgress.Store(progMetric)
-				if progMetric.FinalRaidResult != nil || progMetric.FinalWeightResult != nil || progMetric.FinalBulkResult != nil {
+				if isFinalProgress(progMetric) {
 					return
 				}
 			}
 		}
 	}()
 
-	protoResult := &proto.AsyncAPIResult{
-		ProgressId: simProgress.id,
+	writeAsyncAPIResult(w, simProgress.id, http.StatusOK)
+}
+
+// handleOptimizeGearAsync starts an optimization. While another one runs it answers 409 instead,
+// still with a progress id: that id's final result carries the error, so async clients show it like
+// any other failure.
+func (s *server) handleOptimizeGearAsync(w http.ResponseWriter, r *http.Request) {
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		return
+	}
+	req := &proto.OptimizeGearRequest{}
+	if err := googleProto.Unmarshal(body, req); err != nil {
+		log.Printf("Failed to parse request: %s", err.Error())
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	if req.Settings == nil {
+		req.Settings = &proto.OptimizerSettings{}
+	}
+	// leave a core for the server and the other async routes
+	maxWorkers := int32(max(1, runtime.GOMAXPROCS(0)-1))
+	if req.Settings.Workers <= 0 || req.Settings.Workers > maxWorkers {
+		req.Settings.Workers = maxWorkers
 	}
 
-	outbytes, err := googleProto.Marshal(protoResult)
-	if err != nil {
-		log.Printf("[ERROR] Failed to marshal result: %s", err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
+	var ctx context.Context
+	var cancel context.CancelFunc
+	var simProgress *asyncProgress
+	s.optimizerMut.Lock()
+	runningID := s.optimizerRunID
+	if runningID == "" {
+		ctx, cancel = context.WithCancel(context.Background())
+		simProgress = s.addNewSim(cancel, nil)
+		s.optimizerRunID = simProgress.id
+	}
+	s.optimizerMut.Unlock()
+
+	if simProgress == nil {
+		refused := s.addNewSim(nil, &proto.ProgressMetrics{FinalOptimizeResult: &proto.OptimizerResult{
+			ErrorResult: fmt.Sprintf("Another optimization is already running (progress id %s). Wait for it to finish, or cancel it.", runningID),
+		}})
+		writeAsyncAPIResult(w, refused.id, http.StatusConflict)
 		return
 	}
 
-	w.Header().Add("Content-Type", "application/x-protobuf")
-	w.Write(outbytes)
+	run := s.runOptimizer
+	if run == nil {
+		run = optimizer.RunAsync
+	}
+	reporter := make(chan *proto.ProgressMetrics, 100)
+	run(ctx, req, reporter)
+
+	abandonAfter := s.optimizerAbandonAfter
+	if abandonAfter <= 0 {
+		abandonAfter = defaultOptimizerAbandonAfter
+	}
+	// No 10-minute timeout like the other routes: the run always sends a final result and closes
+	// the channel, and the slot has to stay taken until it does. An abandoned run gets cancelled
+	// instead, and its cancelled result is kept for a client that comes back.
+	go func() {
+		defer cancel()
+		defer s.finishOptimizer(simProgress.id)
+		check := time.NewTicker(abandonAfter / 4)
+		defer check.Stop()
+		for {
+			select {
+			case progMetric, ok := <-reporter:
+				if !ok {
+					return
+				}
+				if isFinalProgress(progMetric) {
+					// free the slot before the result is visible, so whoever sees it can start the next run
+					s.finishOptimizer(simProgress.id)
+				}
+				simProgress.latestProgress.Store(progMetric)
+			case <-check.C:
+				if ctx.Err() == nil && time.Since(time.Unix(0, simProgress.lastPolled.Load())) > abandonAfter {
+					log.Printf("Cancelling optimization %s: nobody polled it for %s", simProgress.id, abandonAfter)
+					cancel()
+				}
+			}
+		}
+	}()
+
+	writeAsyncAPIResult(w, simProgress.id, http.StatusOK)
 }
 
-func (s *server) setupAsyncServer() {
+func (s *server) finishOptimizer(progressID string) {
+	s.optimizerMut.Lock()
+	defer s.optimizerMut.Unlock()
+	if s.optimizerRunID == progressID {
+		s.optimizerRunID = ""
+	}
+}
+
+// handleCancelAsync stops the run with the AsyncAPIResult's progress id. The run still finishes
+// through /asyncProgress, with its final result marked cancelled.
+func (s *server) handleCancelAsync(w http.ResponseWriter, r *http.Request) {
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		return
+	}
+	msg := &proto.AsyncAPIResult{}
+	if err := googleProto.Unmarshal(body, msg); err != nil {
+		log.Printf("Failed to parse request: %s", err.Error())
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	s.progMut.RLock()
+	progress, ok := s.asyncProgresses[msg.ProgressId]
+	s.progMut.RUnlock()
+	if !ok || progress.cancel == nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+	progress.cancel()
+	w.WriteHeader(http.StatusOK)
+}
+
+func (s *server) setupAsyncServer(mux *http.ServeMux) {
 	// All async handlers here will call the addNewSim, generating a new UUID and cached progress state.
 	for route := range asyncAPIHandlers {
-		http.HandleFunc(route, func(w http.ResponseWriter, r *http.Request) {
+		mux.HandleFunc(route, func(w http.ResponseWriter, r *http.Request) {
 			s.handleAsyncAPI(w, r)
 		})
 	}
+	mux.HandleFunc("/optimizeGearAsync", s.handleOptimizeGearAsync)
+	mux.HandleFunc("/cancelAsync", s.handleCancelAsync)
 
 	// asyncProgress will fetch the current progress of a simulation by its UUID.
-	http.HandleFunc("/asyncProgress", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/asyncProgress", func(w http.ResponseWriter, r *http.Request) {
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
 			return
@@ -245,6 +400,7 @@ func (s *server) setupAsyncServer() {
 			w.WriteHeader(http.StatusNoContent)
 			return
 		}
+		progress.lastPolled.Store(time.Now().UnixNano())
 		latest := progress.latestProgress.Load().(*proto.ProgressMetrics)
 		outbytes, err := googleProto.Marshal(latest)
 		if err != nil {
@@ -254,7 +410,7 @@ func (s *server) setupAsyncServer() {
 		}
 
 		// If this was the last result, delete the cache for this simulation.
-		if latest.FinalRaidResult != nil || latest.FinalWeightResult != nil || latest.FinalBulkResult != nil {
+		if isFinalProgress(latest) {
 			s.progMut.Lock()
 			delete(s.asyncProgresses, msg.ProgressId)
 			s.progMut.Unlock()
@@ -265,7 +421,7 @@ func (s *server) setupAsyncServer() {
 }
 
 func (s *server) runServer(useFS bool, host string, launchBrowser bool, simName string, wasm bool, inputReader *bufio.Reader) {
-	s.setupAsyncServer()
+	s.setupAsyncServer(http.DefaultServeMux)
 
 	var fs http.Handler
 	if useFS {
