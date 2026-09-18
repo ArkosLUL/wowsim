@@ -4,15 +4,17 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
 
 ## Go
 
-- Tests: `go test --tags=with_db $(go list ./sim/... | grep -v /sim/web$) ./tools/...`
+- Tests: `go test --tags=with_db $(go list ./sim/... | grep -v /sim/web$) ./tools/... ./cmd/...`
   - `sim/web` needs `binary_dist/dist.go`.
   - Add `-count=1` when results come back `(cached)`.
   - Ready to paste from Git Bash:
-    `MSYS_NO_PATHCONV=1 docker run --rm -v G:/DevStuff/GitHub/wowsimwotlk:/wotlk -v wotlk-gomod:/go/pkg/mod -v wotlk-gocache:/root/.cache/go-build -w /wotlk wowsims-wotlk-dev sh -c 'go test --tags=with_db $(go list ./sim/... | grep -v /sim/web$) ./tools/...'`
+    `MSYS_NO_PATHCONV=1 docker run --rm -v G:/DevStuff/GitHub/wowsimwotlk:/wotlk -v wotlk-gomod:/go/pkg/mod -v wotlk-gocache:/root/.cache/go-build -w /wotlk wowsims-wotlk-dev sh -c 'go test --tags=with_db $(go list ./sim/... | grep -v /sim/web$) ./tools/... ./cmd/...'`
   - `dock.sh test [args]` runs `./sim/...` by default and generates `binary_dist` itself.
-- Vet: `go vet ./sim/... ./tools/...`
-- gofmt reads CRLF as a diff, so use `tr -d '\r' < f | gofmt -l`. `sim/warrior/rend.go` already fails
-  on master.
+- Vet: `go vet ./sim/... ./tools/... ./cmd/...`
+- Race: `go test --tags=with_db -race ./sim/optimizer/... ./sim/web/...`, plus
+  `-run TestDatabaseConcurrentAddAndRead ./sim/core/` for the item DB lock.
+- gofmt reads CRLF as a diff, so use `tr -d '\r' < f | gofmt -l`, with the whole pipe in the container:
+  `dock.sh exec` doesn't forward stdin. `sim/warrior/rend.go` already fails on master.
 - Float asserts need a tolerance, e.g. `math.Abs(got-want) > 0.001`.
 - Reviewers build and test too. A review that skipped the build ("Go not installed") once missed a
   compile error.
@@ -39,13 +41,15 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
 - `npm run lint:js` already fails on master (`bulk_tab.ts`, `equipped_item.ts`, `importers.ts`). Compare
   each touched file against HEAD instead:
   `git -c safe.directory=/wotlk show HEAD:$f | npx eslint --stdin --stdin-filename $f` vs `npx eslint $f`.
+  In a worktree, git fails in the container (`.git` points outside the mount): `git show` the HEAD copy
+  into the gitignored `tmp/` on the host, then lint `< tmp/$f` in the container.
 - Add a new import to the existing import line for that module (`import/no-duplicates`).
 - `npm run build` and `npm test` call bazel and don't work.
 
 ## Against the server
 
 - `tools/simval` replays simval records captured on the server, and rebuilds naked `info` characters in
-  the sim (azerothcore-parity only):
+  the sim:
   `dock.sh run ./tools/simval -records /wotlk/sim/core/testdata/simval/simval.jsonl`.
 - Live e2e, which needs the user's OK: `cd [ac]/modules/mod-sim-validation && ./e2e/run.sh [TestName]`,
   about 2 min. The module's `README.md` covers its commands, env vars and orphan cleanup.

@@ -42,7 +42,7 @@ Other differences:
 ## Base stats and ratings
 
 Generated from the server ([gen_basestats](../../tools/acore/gen_basestats/README.md)) and verified per
-class by simval. Modelled on azerothcore-parity only.
+class by simval.
 
 | Mechanic | Classic sim | Server |
 |---|---|---|
@@ -54,6 +54,7 @@ class by simval. Modelled on azerothcore-parity only.
 | Defense rating | continuous | truncated to whole skill points first |
 
 - Percent-ArP auras (Battle Stance, Mace Specialization) add to the rating's percentage, under one cap.
+  Blood Gorged's class mask limits it to white swings and Plague, Blood, Heart, Death and Rune Strike.
 - The server truncates primary stats to integers and the sim doesn't, so anything derived can be off by
   one point's worth.
 

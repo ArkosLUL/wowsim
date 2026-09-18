@@ -38,12 +38,20 @@ The live server: where it runs, how to reach it, what's installed. For table and
   the volume.
 - Copy files out with `MSYS_NO_PATHCONV=1 docker cp ac-worldserver:/azerothcore/env/dist/data/dbc/<file> <dir>`.
 - `A:\WOW\dbc\Clean` holds stock 3.3.5a; `A:\WOW\dbc\Changed` holds the user's edited client. The gt*.dbc
-  files match across all three copies.
+  files match across all three copies. `A:\WOW\dbc\Server` isn't the live copy (its Spell.dbc differs), so
+  copy DBCs out of the container when they must match the server.
 
 ## Config
 
 - `[ac]/configurationOverrides/*.env` sets `AC_*` vars, which override keys in
   `[ac]/env/dist/etc/**/*.conf` (e.g. `modules/mod_reforging.conf`).
+  - The container copies each conf.dist there once and never updates it. The installed
+    `spell_tweaks.conf` lacks FeralSpiritHaste, RuptureWeaponExpertise and RendTrauma, so those run on
+    their code defaults (on).
+  - Env names follow `IniKeyToEnvVarKey`, with quirks: `StatModifierRaid25M` → `RAID_25_M`,
+    `Raid10MHeroic` → `RAID_10_MHEROIC`, `DKGhoul` → `DKGHOUL`.
+  - `MapUpdateInterval` is 100 ms live (`ServerPerformance.env`; conf.dist says 10).
+  - `tools/acore/gen_server_defaults` turns the live config into the sim's defaults.
 - Live config changes need the user's OK.
 
 ## Modules that affect the sim
@@ -58,7 +66,7 @@ The live server: where it runs, how to reach it, what's installed. For table and
 | mod-spell-tweaks | spell and talent changes, listed in the parity INVESTIGATION; swaps two hunter talent tiers | toggles become server settings; talents keep stock tree positions |
 | mod-playerbots | bots fill the raid; strategies in `acore_playerbots.playerbots_db_store` | none |
 | mod-chronicle | combat logs, inside instances only. The server deletes its copy after upload, so download from the app API | recorded runs |
-| mod-sim-validation | ours, and its own git repo. `.simval` GM commands, test dummies 999000–999003, output in `[ac]/env/dist/logs/simval/`. `Enable = 0` by default; `configurationOverrides/SimValidation.env` turns it on live. Every `.simval` command refuses while it's off | validation ([testing.md](testing.md#against-the-server)) |
+| mod-sim-validation | ours, and its own git repo. `.simval` GM commands, test dummies 999000–999003 (mod-dungeon-scale's `DisabledID`, so never scaled), output in `[ac]/env/dist/logs/simval/`. `Enable = 0` by default; `configurationOverrides/SimValidation.env` turns it on live. Every `.simval` command refuses while it's off | validation ([testing.md](testing.md#against-the-server)) |
 | mod-npc-enchanter | NPC 601015 applies nearly every WotLK enchant free, at any tier. Profession enchants check skill == 450; Hyperspeed Accelerators checks Engineering == 400, so a 450 engineer can't buy it there | enchants count as available in every phase |
 
 The other installed modules (transmog, token-turnin, mount-scaling, …) only touch a few items.

@@ -145,7 +145,7 @@ The UI owns candidate pools and settings. Go owns every equip rule and the searc
 
 Every BiS WI runs fast tests only and changes no goldens. UI WIs also run `dock.sh tsc` and eslint per file.
 
-### BIS-contract (wave A)
+### BIS-contract (wave A, done)
 
 **Owns:**
 - the protos
@@ -195,6 +195,9 @@ Every BiS WI runs fast tests only and changes no goldens. UI WIs also run `dock.
 - The cloned request is unchanged after a run (`GetRaidBuffs` writes in place).
 - Recover and cancel work.
 
+ArP breakpoints differ per spell (Blood Gorged adds per-spell ArP), so take the ArP curve from sims, not
+the sheet's cap.
+
 ### BIS-rules (wave C)
 
 **Owns:** `pool.go`, `rules.go`, the gem DP.
@@ -209,8 +212,9 @@ Every BiS WI runs fast tests only and changes no goldens. UI WIs also run `dock.
 **Owns:** `raidctx/derive.go`, `providers.go`.
 
 `Derive`:
-- empties the target's slot in a copy of the raid, calls `core.NewRaid`, then `GetRaidBuffs(clone)` and the
-  party's `GetPartyBuffs(clone)`
+- empties the target's slot in a copy of the raid, calls `core.NewRaid` with
+  `core.NewServerSettings(base.Encounter.GetServerSettings())`, then `GetRaidBuffs(clone)` and the party's
+  `GetPartyBuffs(clone)`
 - builds a debuff and replenishment table keyed by class, spec and talents, mirroring `RAID_STATS_OPTIONS`
   (`ui/raid/raid_stats.ts`)
 - adds targeted buffs from spec-option `UnitReference`s
@@ -237,6 +241,7 @@ raidctx.
   `Player.filterItemData`
 - `ui/core/optimizer/catalog.ts`
 - `ui/core/components/individual_sim_ui/optimizer_tab.ts`, registered in `individual_sim_ui.ts`
+- the DPS encounter, copying `raid_difficulty` and `server_settings` from the current one
 - wasm detection
 
 **The tab:**
@@ -246,12 +251,16 @@ raidctx.
 
 Exported requests become fixtures for `TestReplayFixtures`. Checked by hand on its dev port.
 
+The web server answers 409 while another run is busy (naming its id for `/cancelAsync`) and cancels a
+run nobody has polled for 2 minutes, keeping its result: show both, and let the user retry.
+
 ### BIS-tanks-racials (wave F)
 
 **Owns:**
 - `sim/core/sheet.go`, `racial.go`, `critimmunity.go`
 - the tank slider
-- the per-phase encounter table, with the healing model re-derived per boss
+- the per-phase encounter table, with the healing model re-derived per boss and each boss's
+  `raid_difficulty` set (Anub'arak and the Lich King are 25 heroic; unset reads as 25 normal)
 - the tab controls
 
 It leaves `sim/core/racials.go` alone.
@@ -268,7 +277,8 @@ It leaves `sim/core/racials.go` alone.
 **Owns:** `ui/raid/optimizer_batch.ts`, registered in `raid_sim_ui.ts`.
 
 Jobs are non-healers × phases, with warm starts and a localStorage resume keyed by a roster fingerprint. The
-grid, actions and export are as decided above.
+grid, actions and export are as decided above. A job retries after a 409 and after a cancel it didn't
+ask for (see BIS-ui-tab).
 
 ### BIS-picker-switch (wave G)
 
@@ -291,6 +301,8 @@ screen, the two-stage batch, the raid-DPS column.
 - Calibration: full raid vs the derived context, with a warning past ±3%.
 - Effort budgets from the benchmarks.
 - An end-to-end batch over the roster.
+- Stamp `optimizer.SimCommit` with `-ldflags` in the makefile and Dockerfile builds; Docker builds report
+  `unknown` otherwise.
 
 ### BIS-presets (wave K)
 

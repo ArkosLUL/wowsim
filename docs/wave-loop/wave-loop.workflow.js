@@ -88,7 +88,7 @@ function implement(item) {
 function review(item, prior, round) {
   return agent(
     `${brief(item)}\n\nYou are a fresh reviewer (round ${round}). The implementer reported:\n${JSON.stringify(prior)}\n\n` +
-      `1. Review every change in the worktree against ${args.baseSha} (git -C ${item.worktree} diff ${args.baseSha}, plus untracked files) with the code-review skill at high effort${item.kind === 'review-only' ? '. For this review-only item, review the spec\'s commit range instead' : ''}.\n` +
+      `1. Review every change in the worktree against ${args.baseSha} (git -C ${item.worktree} diff ${args.baseSha}, plus untracked files) by hand at high effort (the code-review skill reviews the session's main checkout, not your worktree)${item.kind === 'review-only' ? '. For this review-only item, review the spec\'s commit range instead' : ''}.\n` +
       '2. Fix every finding in the worktree.\n' +
       '3. Re-run the verification. Check each golden delta against the spec\'s expected effect.\n' +
       'Return the report with your findings grouped as bugs, minor and cleanup, and status "green" only if the verification passes.',

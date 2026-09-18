@@ -56,8 +56,9 @@ npx protoc --ts_out ui/core/proto --proto_path proto proto/ui.proto
   `go mod tidy`.
 - Plain `go build` of a tool drops a binary in the repo root. Use `-o /dev/null`, e.g.
   `go build -o /dev/null ./tools/database/gen_db`.
-- Item DB: `make items` runs `gen_db -gen=db`, which builds `assets/database/` from the Classic sources in
-  `assets/db_inputs/`. There's no AzerothCore mode yet ([ADR 0002](../adr/0002-item-data-from-live-db.md)).
+- Item DB: `make items` runs `gen_db -gen=azerothcore`, the Classic build from `assets/db_inputs/` with
+  item data from the live server ([ADR 0002](../adr/0002-item-data-from-live-db.md)). It needs the live DB
+  and a copy of the live DBCs ([README](../../tools/database/gen_db/README.md)).
 
 ## Run
 
@@ -87,6 +88,9 @@ npx protoc --ts_out ui/core/proto --proto_path proto proto/ui.proto
     it panics.
   - The server binary is built without `with_db`, so requests must carry item data in `player.database`,
     as the UI does.
+  - `/optimizeGearAsync` runs one optimization at a time (409 while busy, naming the running id) and
+    cancels a run nobody has polled for 2 minutes. `/cancelAsync` cancels by progress id. The CLI
+    equivalent: `wowsimcli optimize --infile <OptimizeGearRequest JSON>`.
 
 ## Shell gotchas
 

@@ -168,8 +168,8 @@ the [wave loop](../wave-loop/wave-loop.PLAN.md#wave-registry), under the
 
 | Item (wave) | Scope | Owns | Goldens | Needs |
 |---|---|---|---|---|
-| AC-1 (A) | A `gen_db -gen=azerothcore` pass (see below). Freezes the package's exported API for BIS-catalog | `tools/database/gen_db/*`, `tools/database/azerothcore/{convert,mysql,dbc}.go`, `tools/database/{database,overrides}.go`, the makefile `items` target | none; 37/37 unchanged, no DB regeneration | – |
-| AC-2 (B) | Regenerate `assets/database/{db,leftover_db}.{json,bin}`; re-run acdiff, which should leave only unobtainable rows in `items_diff.csv`; re-check `bulksim_test.go`'s reforge test (45271, 45620, 46350) | `assets/database/*`, `docs/azerothcore-item-diff/data/*` | 12: DK dps ×4, balance ×2, FeralApl, mage ×4, Subtlety | AC-1 |
+| AC-1 (A, done) | A `gen_db -gen=azerothcore` pass (see below). Freezes the package's exported API for BIS-catalog | `tools/database/gen_db/*`, `tools/database/azerothcore/{convert,mysql,dbc}.go`, `tools/database/{database,overrides}.go`, the makefile `items` target | none; 37/37 unchanged, no DB regeneration | – |
+| AC-2 (B) | Regenerate `assets/database/{db,leftover_db}.{json,bin}` from the live DBCs (`/dbc` isn't the live copy; recipe in the gen_db README). Re-run acdiff: `items_diff.csv` should hold 97 rows, all unobtainable, `gems_diff` none and `effects_diff` 861 (+6 form-only feral AP spells). Re-check `bulksim_test.go`'s reforge test (45271, 45620, 46350). Delete `.github/workflows/update_items.yml` (a GitHub runner can't reach the live DB) and fix the README's `make items` line. acdiff cleanups: the `-dsn` default (127.0.0.1 doesn't reach the DB from dock.sh), the README's image name, dead `isUnrestrictedRelic` | `assets/database/*`, `docs/azerothcore-item-diff/data/*`, `tools/database/acdiff/*`, `.github/workflows/update_items.yml`, `README.md` (that line) | 32 of 37 (AC-1's preview): all but the 5 healer suites | AC-1 |
 | AC-3 (J) | Heirlooms from `ScalingStatDistribution`/`ScalingStatValues`; the 4 server items the sim lacks | `tools/database/azerothcore/{dbc,convert}.go`, `overrides.go` | none | AC-1 |
 
 **AC-1 in detail:**

@@ -43,7 +43,7 @@ G = changes goldens. FS = runs all 37 suites.
 | Wave | WIs | BiS re-baseline |
 |---|---|---|
 | A | PAR-P4R (review-only; G, FS) · BIS-contract · PAR-P5-1 · AC-1 | |
-| B | AC-2 (G, FS, 12 suites) · PAR-P3-1 · BIS-catalog · BIS-eval | |
+| B | AC-2 (G, FS, 32 suites) · PAR-P3-1 · BIS-catalog · BIS-eval | |
 | C | PAR-P6-2 (G, FS, 14 suites) · PAR-P5-23 · BIS-rules · BIS-raidctx | |
 | D | PAR-P3-2 (G, FS) · PAR-P3-3 (G, FS) · BIS-search · BIS-ui-tab | ✔ |
 | E | PAR-P3-4 (G, FS) · PAR-P3-5 (G, FS) · PAR-P6-1 · RI-3 | ✔ |
@@ -82,8 +82,4 @@ Later WIs are added as their wave starts.
 
 ## User actions
 
-- Approve wave A's doc drafts, or ask for changes. The drafts are in
-  `C:\Users\boss2\AppData\Local\Temp\claude\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\scratchpad\docdraft\`,
-  mirroring repo paths; `..\docdraft.diff` is the diff. On approval they're copied into [int] and committed
-  before wave B starts.
-- Then "continue" for wave B.
+"continue" for wave B.

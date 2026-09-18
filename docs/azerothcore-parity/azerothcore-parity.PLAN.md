@@ -353,7 +353,7 @@ removes it.
 
 ### P4 — Generated constants
 
-**Status:** built and verified against the live server, then committed as `0400022b5` without a code review. Wave A's PAR-P4R reviews it. All 37 suites pass with their goldens promoted.
+**Status:** built and verified against the live server, then reviewed in wave A (PAR-P4R). All 37 suites pass with their goldens promoted.
 Against P2's committed goldens 25 suites move, with suite means from −0.063% to +0.060% (ArP 13.99 → 13.9957 per 1%,
 tank avoidance) and single short tests from −0.65% to +0.91% as their RNG paths diverge. `tools/simval` passes 508
 checks over the 82-record fixture.
@@ -388,8 +388,9 @@ Sim:
 - `PseudoStats.MeleeHasteRatingPerHastePercent` and the new `ArmorPenRatingPerPercent` are set per class in
   `NewCharacter`. `newPseudoStats` gives class-less units the unscaled values, and pets copy their owner's ArP
   conversion. The new `BonusArmorPenPct` (percent) holds Battle Stance (+6 with Wrynn's 2pc), Mace Specialization
-  (warrior, rogue), Serrated Blades and Blood Gorged. `ArmorPenetrationPercentage` = rating / per-1% + bonus, capped
-  at 100, as `Unit::CalcArmorReducedDamage` adds them.
+  (warrior, rogue) and Serrated Blades. Blood Gorged's is class-masked, so it's `BonusArmorPenRating` worth the same
+  percent on white swings and Plague, Blood, Heart, Death and Rune Strike only. `ArmorPenetrationPercentage` =
+  rating / per-1% + bonus, capped at 100, as `Unit::CalcArmorReducedDamage` adds them.
 - `avoid_dr.go`: `DodgeChance`, `ParryChance`, `DefenseMissChance`, `DefenseSkillFromRating` (float32, truncated to
   whole points). Only players diminish (`Unit.playerAvoidance`); creatures, pets included, add up plainly.
   Non-diminishing: class dodge base, base agility's dodge, `BaseDodge`/`BaseParry` auras, parry's 5%. Diminishing:
@@ -438,6 +439,7 @@ fixture.
 - A `maxPower` field in mod-sim-validation's snapshot (next server rebuild) would let the mana check run with buffs.
 
 ### P5 — Server settings (proto + UI)
+**Status:** proto, generator and threading done in wave A (PAR-P5-1); applying them is PAR-P5-23.
 Racial traits already landed on master (23d0796b5, tests in `sim/racial_traits_test.go`).
 - `proto/common.proto`:
   - `ServerSettings` on `Encounter`:
@@ -576,18 +578,18 @@ Specs for the `PAR-` items in the [wave registry](../wave-loop/wave-loop.PLAN.md
 
 | Item (wave) | Scope | Owns | Goldens | Needs |
 |---|---|---|---|---|
-| PAR-P4R (A) | Review-only: `git diff 7778c94d3 0400022b5`, fixing every finding | P4's files | may move all | – |
-| PAR-P5-1 (A) | `ServerSettings` on `Encounter`, plus a raid size/difficulty field; `gen_server_defaults`; defaults resolution; threading | `proto/common.proto` (Encounter), `tools/acore/gen_server_defaults/`, `sim/core/{server_settings,server_defaults_auto_gen,environment,raid,character}.go`, `ui/core/constants/server_defaults_auto_gen.ts` | none | – |
+| PAR-P4R (A, done) | Review-only: `git diff 7778c94d3 0400022b5`, fixing every finding | P4's files | may move all | – |
+| PAR-P5-1 (A, done) | `ServerSettings` on `Encounter`, plus a raid size/difficulty field; `gen_server_defaults`; defaults resolution; threading | `proto/common.proto` (Encounter), `tools/acore/gen_server_defaults/`, `sim/core/{server_settings,server_defaults_auto_gen,environment,raid,character}.go`, `ui/core/constants/server_defaults_auto_gen.ts` | none | – |
 | PAR-P3-1 (B) | `spellids` + `gen_serverdata`. One live `.simval spelldump` of all 10 class families plus item and enchant spells, so P7 needs no second capture | `tools/acore/{spellids,gen_serverdata}/`, `assets/db_inputs/acore/spelldump.jsonl`, `sim/core/serverdata/*_auto_gen.go` | none | – |
 | PAR-P6-2 (C) | Apply the "real" rows of `effects_review.csv`/`sets_review.csv` in shared code; take enchant PPM/ICD from P3-1 data | `sim/common/{wotlk,tbc}/*`, `sim/core/mana.go` (45703) | 14: DK dps ×4, balance ×2, mage ×4, FeralApl, Subtlety, FeralTank, Disc | P3-1; AC-2 (soft) |
-| PAR-P5-23 (C) | Dungeon scale as `DungeonScale.cpp` combines it: default × global × stat. Size-specific keys fall back to generic Raid/RaidHeroic; no per-instance or per-creature overrides. Plus the "Server (AzerothCore)" settings UI with the 11 spell-tweak toggles | `sim/core/target.go` + tests, `settings_tab.ts`, `ui/core/encounter.ts`, optionally `ui/raid/settings_tab.ts` | none | P5-1 |
+| PAR-P5-23 (C) | Apply dungeon scale in `target.go`. `Raid.Server.DungeonScale.Multipliers` (P5-1) already picks the set and combines default × global × stat, so round health and armor in float32 as the server does, and scale boss swing and ability damage. `NewEncounter` needs the settings too, for health-based fight length. No per-instance or per-creature overrides, and simval dummies are never scaled. Plus the "Server (AzerothCore)" settings UI with the 11 spell-tweak toggles | `sim/core/target.go` + tests, `environment.go` (`construct`), `settings_tab.ts`, `ui/core/encounter.ts`, optionally `ui/raid/settings_tab.ts` | none | P5-1 |
 | PAR-P3-2 (D) | `RegisterSpell` applies server flags and timing by SpellID; a conflict allowlist per class; missile minimum distance 5 | `sim/core/{spell,flags}.go`, `serverdata_test.go`, the allowlist files | broad | P3-1 |
-| PAR-P3-3 (D) | 100 ms server tick; other hand pushed to ≥ 200 ms; ranged timer reset; `ResetsAutoAttack`; GCD via `HasteGCD`, clamped to [1000,1500]; +500 ms for ranged-slot spells | `sim/core/{sim,attack,cast,unit,aura,constants}.go` + tests | all 37 | P3-1, P5-1 |
+| PAR-P3-3 (D) | Server tick from `Character.Server().MapUpdateInterval` (live 100 ms; 0 = exact, for unit tests); other hand pushed to ≥ 200 ms; ranged timer reset; `ResetsAutoAttack`; GCD via `HasteGCD`, clamped to [1000,1500]; +500 ms for ranged-slot spells | `sim/core/{sim,attack,cast,unit,aura,constants}.go` + tests | all 37 | P3-1, P5-1 |
 | PAR-P3-4 (E) | Truncated rage factor; spell-proc PPM uses max(cast, 1500 ms); `ReduceProc60`; `spell_proc` chance and ICD; the JoW hack | `sim/core/{rage,aura_helpers,ppm}.go`, `debuffs.go` (JoW) + tests | ~29 | P3-1 |
 | PAR-P3-5 (E) | DoT refresh rule; integer-ms ticks; `TickHaste` modes; `TicksCanCrit` | `sim/core/{dot,periodic_action,spell_outcome}.go` + tests | nearly all | P3-1; P3-3 (soft) |
-| PAR-P6-1 (E) | `UIItem`/`SimItem.server_stats`; reforge % and stat list from P5 settings; the "fewer than 10 stats" rule; an in-game reforge e2e test | `proto/ui.proto`, `proto/common.proto` (SimItem), `sim/core/{database,database_load,reforging,bulksim}.go`, `reforging.ts`, `gear_picker.tsx`, `tools/database/azerothcore/roster.go` | none | AC-1, P5-1, BIS-contract |
+| PAR-P6-1 (E) | `UIItem`/`SimItem.server_stats`; reforge % and stat list from `Character.Server().Reforging` (the server floors `float32(value) × pct/100`; disabled drops reforges); generate the reforge limits `server_settings.go` hand-copies today; the "fewer than 10 stats" rule; item maps only through `AddToDatabase`/`Lookup*`; keep `core.CanReforge`'s signature (BIS-rules' `pool.go` calls it) or request the change; an in-game reforge e2e test | `tools/acore/gen_server_defaults/`, `proto/ui.proto`, `proto/common.proto` (SimItem), `sim/core/{database,database_load,reforging,bulksim}.go`, `reforging.ts`, `gear_picker.tsx`, `tools/database/azerothcore/roster.go` | none | AC-1, P5-1, BIS-contract |
 | PAR-P7-0a (F) | Audit buffs, debuffs, consumes and racials against the spelldump; the AoE cap | `sim/core/{buffs,debuffs,consumes,racials}.go`, `target.go` (`updateAOECapMultiplier`) | all 37 | P3-4, P5-23 |
-| PAR-P7-0b (F) | Pet core: owner hit and expertise floored and refreshed every 3 s; haste and ArP inheritance; pet avoidance | `sim/core/{pet,avoid_dr,unit}.go` | ~17 pet suites | P3-3, P5-1 |
+| PAR-P7-0b (F) | Pet core: owner hit and expertise floored and refreshed every 3 s; haste and ArP inheritance (with spell tweaks' hunter pet and ghoul ArP, pets take the owner's ArP rating and percent-ArP auras, filtered by the pet spell's class mask; Blood Gorged lives on the DK's spells, so the ghoul's white swings need it explicitly); pet avoidance | `sim/core/{pet,avoid_dr,unit}.go` | ~17 pet suites | P3-3, P5-1 |
 | PAR-TOOLS-RR (F) | `tools/simval chronicle` and a `procs` check; `spellaudit` and `talentdiff`; a playerbot recorded-run harness. It captures Hunter, Ret, Affliction and Prot Paladin runs against a dummy inside an instance, downloading raw logs from the Chronicle app API (:4000) | `tools/simval/*`, `tools/acore/{spellaudit,talentdiff}/`, `docs/azerothcore-parity/audit/*.csv`, `sim/core/testdata/chronicle/`, its e2e file | none | P3-1 |
 | PAR-P7-\<class\> (G–J) | The class's P7 checklist, spell-tweak wiring, APL fixes, its P8 rows, its `TicksCanCrit` declarations, and a recorded-run comparison where one exists. Plus its P6-3 item rows: DK 45144/45254/Razorice; druid 45509/45270; paladin 47661/T9 2pc; shaman 40322/42598/45114/33506; mage T8 4pc | `sim/<class>/**`, `ui/<spec>/apls/*`, `ui/<spec>/{presets,inputs,sim}.ts`, `proto/<class>.proto`, its allowlist and e2e files | its class's suites | P3-2..5, P5-1, P7-0a/b; P7-T (soft) |
 | PAR-P7-TANK (J) | Generic AC boss from `creature_classlevelstats`; Holy Shield and Shield Block data; percent-aura talents (Lightning Reflexes, …); Classic references in encounter AIs | `sim/encounters/**`, tank dirs, tank `ui/*/presets.ts` | 4 tank suites | DK, WAR, RET, DRU items; P7-0b |

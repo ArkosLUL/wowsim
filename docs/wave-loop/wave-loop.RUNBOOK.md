@@ -13,8 +13,6 @@ PLAN under a heading with the WI id.
 | WI worktree | `G:\DevStuff\GitHub\wowsimwotlk-wi-<id>` | `<effort>-<id>`, e.g. `bis-optimizer-catalog` |
 | [ac] | `G:\DevStuff\GitHub\azerothcore-wotlk-pb` | the server; `modules/mod-sim-validation` is its own repo |
 
-`[par]` is removed once wave A lands P4 on `master`; branch `azerothcore-parity` stays.
-
 ## Standing authorizations
 
 Given by the user in the 2026-09-18 planning session. After a `/compact`, the user's "continue the wave
@@ -41,6 +39,9 @@ loop" re-affirms them.
   Otherwise the WI returns `waiting-server`.
 - Server config changes still need the user's OK. None is expected: simval is enabled live.
 
+**Docs:** changes are drafted with `/compact-docs-writer` and applied without the user's approval (waived
+2026-09-19). The wave report lists them.
+
 ## Wave procedure
 
 1. **Start.** Read the PLAN's "Current wave". If `master` moved, merge it and run step 4.3. Record the wave
@@ -52,13 +53,15 @@ loop" re-affirms them.
    - `make node_modules` for UI WIs
 
    Give it dev port 3335+i and container name `wotlk-dev-<id>`.
-3. **Run.** `Workflow({scriptPath: "[int]/docs/wave-loop/wave-loop.workflow.js", args})`, with `args` per
-   the contract below. Record the runId in the PLAN, then wait for the notification.
+3. **Run.** `Workflow({script, args})`: `script` is `[int]/docs/wave-loop/wave-loop.workflow.js` inline,
+   since the tool reads a `scriptPath` only in the session's working directories; `args` follow the
+   contract below. Record the runId and the returned script path in the PLAN, then wait for the
+   notification.
 4. **Integrate** green WIs one at a time, in registry order:
    1. Check `git -C <wi> branch --show-current`. Stage only owned paths; skip CRLF-only `.results`. Commit.
    2. `git -C [int] merge --no-ff <branch>`. Resolve conflicts with `/resolving-merge-conflicts`.
-   3. In [int], through dock.sh:
-      - `test`, `test ./tools/...`
+   3. In [int], through dock.sh (`proto` first if the merge touched `proto/`):
+      - `test ./sim/... ./tools/... ./cmd/...`
       - `go vet ./sim/... ./tools/... ./cmd/...`
       - `tsc`, and eslint per changed file vs HEAD
       - the simval replay
@@ -73,8 +76,9 @@ loop" re-affirms them.
    7. Remove the worktree and branch. Update the WI's status in the PLAN and its effort PLAN. Commit.
 
    A red, blocked or `waiting-server` WI stays unmerged and carries forward.
-5. **Cross-review.** One Agent reviews `git diff <wave base>..integration` with `/code-review` at high
-   effort, fixes the findings, and re-runs step 4.3. Commit.
+5. **Cross-review.** One Agent reviews `git diff <wave base>..integration` by hand at high effort, fixes the
+   findings, and re-runs step 4.3. Commit. (`/code-review` reviews the session's main checkout, never [int] or
+   a WI worktree.)
 6. **BiS re-baseline** (wave D onward): the `optimizer_slow` suite, with its deltas in the report.
 7. **Land.** Merge `master` again if it moved, re-verify, then `git -C [sim] merge --ff-only integration`.
    If [sim]'s local changes block it, report and stop.
@@ -84,6 +88,7 @@ loop" re-affirms them.
    - golden deltas per suite
    - BiS deltas
    - server actions
+   - doc changes
    - the next wave
 
    Update "Current wave". Wait for "continue".
@@ -114,7 +119,8 @@ loop" re-affirms them.
 
 **Code and docs**
 - Comments: invoke `use-conversational-language` before writing any.
-- Docs: edit only your WI's section. The orchestrator owns status lines and guide promotion.
+- Docs: edit only your WI's section, with `/compact-docs-writer` and no approval step (waived). The orchestrator
+  owns status lines and guide promotion.
 
 ## Workflow contract
 
@@ -122,13 +128,13 @@ loop" re-affirms them.
 
 ```
 {wave, baseSha, items: [{id, effort, kind: 'implement'|'review-only', worktree, branch,
-specPath, specSection, ownedPaths, goldenChanging, fullSuite, verify: [cmd], server, devPort}]}
+specPath, specSection, ownedPaths, goldenChanging, fullSuite, verify: [cmd], server, devPort, notes?}]}
 ```
 
 Each item is a pipeline:
 1. **Implement** (skipped for review-only).
-2. **Review** by a fresh agent: `/code-review` at high effort over `git diff <baseSha>` plus untracked
-   files. It fixes every finding, re-verifies, and checks golden deltas against the spec.
+2. **Review** by a fresh agent, by hand at high effort, over `git diff <baseSha>` plus untracked files. It
+   fixes every finding, re-verifies, and checks golden deltas against the spec.
 3. If red: one repair agent, then a second review.
 4. Returns `{id, status: green|red|blocked|waiting-server, report}`.
 
@@ -147,5 +153,6 @@ Golden-neutral items leave the full run to integration.
 
 After a `/compact` or restart:
 1. Read this file and the PLAN's "Current wave": the wave, base SHA, runId and WI statuses.
-2. A running Workflow: wait for its notification. A killed one: re-run with `resumeFromRunId`.
+2. A running Workflow: wait for its notification. A killed one: re-run its recorded script path with
+   `resumeFromRunId`.
 3. Continue at the first unfinished step.
