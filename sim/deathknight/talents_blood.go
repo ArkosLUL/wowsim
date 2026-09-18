@@ -6,6 +6,7 @@ import (
 	//"time"
 
 	"math"
+	"slices"
 	"time"
 
 	"github.com/wowsims/wotlk/sim/core"
@@ -364,7 +365,22 @@ func (dk *Deathknight) applyBloodGorged() {
 	}
 
 	bonusDamage := 1.0 + 0.02*float64(dk.Talents.BloodGorged)
-	dk.PseudoStats.BonusArmorPenPct += 2 * float64(dk.Talents.BloodGorged)
+
+	// ArP aura's class mask (SpellInfoCorrections) only covers white swings and these strikes, so no
+	// Obliterate, Scourge Strike or Blood-Caked Strike. Per spell, as rating worth the same percent.
+	armorPenRating := 2 * float64(dk.Talents.BloodGorged) * dk.PseudoStats.ArmorPenRatingPerPercent
+	armorPenSpells := []int32{
+		PlagueStrikeActionID.SpellID,
+		BloodStrikeActionID.SpellID,
+		HeartStrikeActionID.SpellID,
+		DeathStrikeActionID.SpellID,
+		RuneStrikeActionID.SpellID,
+	}
+	dk.OnSpellRegistered(func(spell *core.Spell) {
+		if spell.ProcMask.Matches(core.ProcMaskMeleeWhiteHit) || slices.Contains(armorPenSpells, spell.SpellID) {
+			spell.BonusArmorPenRating += armorPenRating
+		}
+	})
 
 	procAura := core.MakePermanent(dk.RegisterAura(core.Aura{
 		Label:    "Blood Gorged Proc",

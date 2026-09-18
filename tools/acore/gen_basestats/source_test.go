@@ -143,6 +143,7 @@ func checkAttackPower(t *testing.T, src string) {
 		{"ROGUE", linearFormula{2, 1, 1, -20}, linearFormula{1, 0, 1, -10}},
 		{"SHAMAN", linearFormula{2, 1, 1, -20}, linearFormula{0, 0, 1, -10}},
 		{"DRUID", linearFormula{0, 2, 0, -20}, linearFormula{0, 0, 1, -10}},
+		{"PRIEST", linearFormula{0, 1, 0, -10}, linearFormula{0, 0, 1, -10}},
 		{"MAGE", linearFormula{0, 1, 0, -10}, linearFormula{0, 0, 1, -10}},
 		{"WARLOCK", linearFormula{0, 1, 0, -10}, linearFormula{0, 0, 1, -10}},
 	} {
