@@ -116,6 +116,10 @@ func (party *Party) GetMetrics() *proto.PartyMetrics {
 type Raid struct {
 	Parties []*Party
 
+	// Server is the server config the raid plays under. Set before any agent is built, so class
+	// constructors can read it through Character.Server().
+	Server *ServerSettings
+
 	dpsMetrics DistributionMetrics
 	hpsMetrics DistributionMetrics
 
@@ -139,14 +143,18 @@ func (raid *Raid) GetActiveUnits() []*Unit {
 	return activeUnits
 }
 
-// Makes a new raid.
-func NewRaid(raidConfig *proto.Raid) *Raid {
+// Makes a new raid. A nil server means the live server's config.
+func NewRaid(raidConfig *proto.Raid, server *ServerSettings) *Raid {
 	numParties := int(raidConfig.NumActiveParties)
 	if numParties == 0 {
 		numParties = len(raidConfig.Parties)
 	}
+	if server == nil {
+		server = NewServerSettings(nil)
+	}
 
 	raid := &Raid{
+		Server:       server,
 		dpsMetrics:   NewDistributionMetrics(),
 		hpsMetrics:   NewDistributionMetrics(),
 		nextPetIndex: int32(numParties) * 5,
