@@ -65,18 +65,19 @@ G = changes goldens. FS = runs all 37 suites.
 
 ## Current wave
 
-- Wave: A, not started.
-- Base SHA: set at wave start.
-- Workflow runId: none.
+- Wave: A, Workflow running.
+- Base SHA: `e704d104c`.
+- Workflow runId: `wf_a636aa2a-e61`. Script passed inline; the persisted copy for `resumeFromRunId` is
+  `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\workflows\scripts\wave-loop-wf_a636aa2a-e61.js`.
 
 ## Status
 
 | WI | Status | Merge commit | Notes |
 |---|---|---|---|
-| PAR-P4R | pending | | |
-| BIS-contract | pending | | |
-| PAR-P5-1 | pending | | |
-| AC-1 | pending | | |
+| PAR-P4R | running | | worktree `wowsimwotlk-wi-par-p4r`, branch `azerothcore-parity-p4r` |
+| BIS-contract | running | | worktree `wowsimwotlk-wi-bis-contract`, branch `bis-optimizer-contract` |
+| PAR-P5-1 | running | | worktree `wowsimwotlk-wi-par-p5-1`, branch `azerothcore-parity-p5-1` |
+| AC-1 | running | | worktree `wowsimwotlk-wi-ac-1`, branch `azerothcore-item-diff-ac-1` |
 
 Later WIs are added as their wave starts.
 

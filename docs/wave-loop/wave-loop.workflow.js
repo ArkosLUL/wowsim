@@ -10,7 +10,7 @@ export const meta = {
 }
 
 // args: {wave, baseSha, items: [{id, effort, kind, worktree, branch, specPath, specSection,
-// ownedPaths, goldenChanging, fullSuite, verify, server, devPort}]}
+// ownedPaths, goldenChanging, fullSuite, verify, server, devPort, notes?}]}
 
 const STRINGS = { type: 'array', items: { type: 'string' } }
 
@@ -60,7 +60,9 @@ function brief(item) {
   return [
     `Work item ${item.id} (effort ${item.effort}), wave ${args.wave}.`,
     `Worktree: ${item.worktree} (branch ${item.branch}, based on ${args.baseSha}). Work only there.`,
+    `Your shell starts in another checkout and resets there after every command, so use absolute worktree paths for every file tool, and run dock.sh as bash ${item.worktree}/tools/acore/dock.sh (it mounts the checkout it lives in).`,
     `Spec: ${item.worktree}/${item.specPath}, section "${item.specSection}".`,
+    item.notes ? `Notes: ${item.notes}` : '',
     `Rules: the "Rules for WI agents" section of ${item.worktree}/docs/wave-loop/wave-loop.RUNBOOK.md. Follow it exactly.`,
     `Owned paths: ${item.ownedPaths.join(', ')}.`,
     item.goldenChanging
@@ -114,7 +116,7 @@ const results = await pipeline(
   async (prev, item) => {
     if (prev.done) return prev.done
     const first = prev.review
-    if (first && first.status !== 'red') return settle(item, first)
+    if (!first || first.status !== 'red') return settle(item, first)
     const fixed = await repair(item, first)
     if (!fixed || fixed.status !== 'green') return settle(item, fixed)
     return settle(item, await review(item, fixed, 2))
