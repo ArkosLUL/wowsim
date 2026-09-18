@@ -65,7 +65,7 @@ G = changes goldens. FS = runs all 37 suites.
 
 ## Current wave
 
-- Wave: A, Workflow running.
+- Wave: A, all four WIs merged and their worktrees removed; next is step 5, the cross-review.
 - Base SHA: `e704d104c`.
 - Workflow runId: `wf_a636aa2a-e61`. Script passed inline; the persisted copy for `resumeFromRunId` is
   `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\workflows\scripts\wave-loop-wf_a636aa2a-e61.js`.
@@ -74,10 +74,10 @@ G = changes goldens. FS = runs all 37 suites.
 
 | WI | Status | Merge commit | Notes |
 |---|---|---|---|
-| PAR-P4R | running | | worktree `wowsimwotlk-wi-par-p4r`, branch `azerothcore-parity-p4r` |
-| BIS-contract | running | | worktree `wowsimwotlk-wi-bis-contract`, branch `bis-optimizer-contract` |
-| PAR-P5-1 | running | | worktree `wowsimwotlk-wi-par-p5-1`, branch `azerothcore-parity-p5-1` |
-| AC-1 | running | | worktree `wowsimwotlk-wi-ac-1`, branch `azerothcore-item-diff-ac-1` |
+| PAR-P4R | merged | `21f3881b3` | TestBlood golden promoted in `e43b0540f` |
+| BIS-contract | merged | `11012001c` | |
+| PAR-P5-1 | merged | `35f5544be` | |
+| AC-1 | merged | `63553f9ef` | |
 
 Later WIs are added as their wave starts.
 
