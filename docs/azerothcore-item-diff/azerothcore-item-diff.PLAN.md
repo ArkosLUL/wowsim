@@ -153,3 +153,31 @@ DBC, `spell_proc`, and the Go code; spot-check a few rows per item category. Con
 - No stat-mapping false positives on 20 same-ilvl, non-module items (fix mapping until clean); a Naxx 25 item
   shows no diff.
 - Tool issues only SELECTs and never writes into the AC repo.
+
+## Loop work items
+
+The `gen_db` AzerothCore mode ([ADR 0002](../adr/0002-item-data-from-live-db.md)) runs as `AC-` items in
+the [wave loop](../wave-loop/wave-loop.PLAN.md#wave-registry), under the
+[RUNBOOK](../wave-loop/wave-loop.RUNBOOK.md) agent rules.
+
+**Decisions (settled with the user):**
+- The 202 unobtainable items stay in `db.json`. The BiS server catalog excludes them.
+- AC-1 adds no `UIItem` fields: limits and faction live in the catalog, and parity P6-1 adds `server_stats`.
+- Heirlooms keep their Wowhead values; AC-3 is optional.
+- DBCs come from the live container.
+
+| Item (wave) | Scope | Owns | Goldens | Needs |
+|---|---|---|---|---|
+| AC-1 (A) | A `gen_db -gen=azerothcore` pass (see below). Freezes the package's exported API for BIS-catalog | `tools/database/gen_db/*`, `tools/database/azerothcore/{convert,mysql,dbc}.go`, `tools/database/{database,overrides}.go`, the makefile `items` target | none; 37/37 unchanged, no DB regeneration | – |
+| AC-2 (B) | Regenerate `assets/database/{db,leftover_db}.{json,bin}`; re-run acdiff, which should leave only unobtainable rows in `items_diff.csv`; re-check `bulksim_test.go`'s reforge test (45271, 45620, 46350) | `assets/database/*`, `docs/azerothcore-item-diff/data/*` | 12: DK dps ×4, balance ×2, FeralApl, mage ×4, Subtlety | AC-1 |
+| AC-3 (J) | Heirlooms from `ScalingStatDistribution`/`ScalingStatValues`; the 4 server items the sim lacks | `tools/database/azerothcore/{dbc,convert}.go`, `overrides.go` | none | AC-1 |
+
+**AC-1 in detail:**
+- **What it overwrites,** from `azerothcore.ConvertItem`: ilvl, quality, stats, sockets, socket bonus,
+  weapon damage and speed, heroic, class allowlist, set name.
+- **It needs an explicit overwrite.** `MergeItem`'s `googleProto.Merge` appends repeated fields and skips
+  zero scalars. Choose where the overwrite sits relative to `ItemOverrides`.
+- **Also:**
+  - set-name aliases (35 TBC arena sets, Kirin Tor Garb)
+  - feral AP on the 438 pre-3.0 items
+  - 33633 isn't a gem on the server

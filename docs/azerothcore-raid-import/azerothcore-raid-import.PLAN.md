@@ -94,8 +94,10 @@ Outcome:
 4. Run Phase 1, then Phase 2, then Phase 3. **After each phase, run its verification, then stop and ask the
    user to review before continuing.**
    - **Status:** Phases 1 and 2 are reviewed, committed and merged into `master` at the user's request, as
-     `23d0796b5` and `7155b74c2`. Phase 3 not started.
-5. Leave work **uncommitted** unless the user asks. Don't commit, merge, push or create other branches on your own.
+     `23d0796b5` and `7155b74c2`. Phase 3 runs as work item RI-3 in wave E of the
+     [wave loop](../wave-loop/wave-loop.PLAN.md#wave-registry).
+5. Phases 1–2: leave work **uncommitted** unless the user asks. Phase 3 follows the wave loop's
+   [RUNBOOK](../wave-loop/wave-loop.RUNBOOK.md).
 
 ## Established facts
 
@@ -463,6 +465,10 @@ copied out to a scratch dir and `-dsn root:password@tcp(ac-database:3306)/`.
   console. The export is only as fresh as the server's last character save.
 
 ## Phase 3: importers and reload fix
+
+Work item RI-3. It owns `ui/raid/acore_*.ts`, the importer registrations in `raid_sim_ui.ts` and
+`individual_sim_ui.ts`, the `importers.ts` addition and the reload fix. It changes no goldens; check it by
+hand on its dev port.
 
 **Shared logic** in `ui/raid/acore_roster.ts` (pure, no DOM):
 - Roster types and version check. AC class/race ids → `Class`/`Race`.

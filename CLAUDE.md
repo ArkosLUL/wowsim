@@ -6,7 +6,7 @@ This fork of wowsims/wotlk models the user's AzerothCore 3.3.5a server exactly, 
 
 Paths used across the docs:
 - **[sim]** `G:\DevStuff\GitHub\wowsimwotlk`: main checkout.
-- **[par]** `G:\DevStuff\GitHub\wowsimwotlk-parity`: worktree on `azerothcore-parity`.
+- **[int]** `G:\DevStuff\GitHub\wowsimwotlk-int`: the wave loop's worktree, on `integration`.
 - **[ac]** `G:\DevStuff\GitHub\azerothcore-wotlk-pb`: the live server's source. Its own `AGENTS.md`
   governs work there.
 
@@ -16,13 +16,15 @@ Paths used across the docs:
   ([dev-environment](docs/guide/dev-environment.md)).
 - Never `make update-tests`: it deletes every `.results` golden. Promote suite by suite
   ([testing](docs/guide/testing.md)).
-- The live DB is SELECT-only. Every server rebuild, restart or config change needs the user's OK.
-- One worktree per effort. Don't touch another effort's worktree or owned paths
-  ([workstreams](docs/guide/workstreams.md)). Sessions run concurrently: check
+- The live DB is SELECT-only. Every server rebuild, restart or config change needs the user's OK, beyond
+  the wave loop's [standing authorizations](docs/wave-loop/wave-loop.RUNBOOK.md#standing-authorizations).
+- One worktree per effort, or per work item in the wave loop. Don't touch another effort's worktree or
+  owned paths ([workstreams](docs/guide/workstreams.md)). Sessions run concurrently: check
   `git branch --show-current` right before committing.
 - Phase loop: implement, verify, leave uncommitted, stop. A separate session reviews and fixes. Only on
   the user's "commit and merge": commit on the effort branch, then `git merge --ff-only` into `master`.
-  Push only when asked ([workflow](docs/guide/workflow.md)).
+  Push only when asked ([workflow](docs/guide/workflow.md)). Loop-driven efforts follow the
+  [wave-loop RUNBOOK](docs/wave-loop/wave-loop.RUNBOOK.md) instead.
 - Verification tooling that proves useful (harnesses, e2e, cross-checks) moves out of scratch, next to the
   code it tests, with a run command in its README.
 - Never read `github-recovery-codes.txt` or `Important data.txt`; never copy credential values out of
@@ -43,6 +45,7 @@ Before starting, read every doc whose trigger matches the task.
 | [azerothcore-data](docs/guide/azerothcore-data.md) | querying server tables or parsing DBCs |
 | [workflow](docs/guide/workflow.md) | planning, branching, reviewing, committing |
 | [workstreams](docs/guide/workstreams.md) | starting or resuming an effort; checking who owns a path |
+| [wave-loop RUNBOOK](docs/wave-loop/wave-loop.RUNBOOK.md) | running or resuming the wave loop, or working one of its items |
 | [docs/adr/](docs/adr/) | before reversing a settled design choice |
 | [acdiff README](tools/database/acdiff/README.md) | diffing sim item data against the server |
 | [acraid README](tools/database/acraid/README.md) | exporting the raid roster |

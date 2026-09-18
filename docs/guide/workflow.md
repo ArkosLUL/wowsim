@@ -42,3 +42,14 @@ How the user runs efforts, beyond the hard rules in [CLAUDE.md](../../CLAUDE.md)
 
 - Server changes go in [ac] modules, each its own git repo under `[ac]/modules/`, following [ac]'s
   `AGENTS.md`.
+
+## Orchestrated waves
+
+- Loop efforts ([workstreams](workstreams.md)) run in waves, per the
+  [RUNBOOK](../wave-loop/wave-loop.RUNBOOK.md):
+  - Parallel work items, each implemented and then reviewed by separate agents.
+  - The orchestrator merges them into `integration`, which fast-forwards `master` after each wave.
+- For those efforts this replaces "Branches and worktrees" and "Review and landing". The user checks in
+  once per wave.
+- The orchestrator is the user's current session, compacted as needed, not a separate interactive
+  session: the user doesn't want to tend extra sessions.

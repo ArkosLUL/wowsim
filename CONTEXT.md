@@ -40,6 +40,20 @@ _Avoid_: workstream, project, session
 **Phase**:
 A separately reviewed step of an effort, named by ID (P2, Phase 3). IDs aren't execution order.
 
+**Wave**:
+One round of up to four work items, run in parallel and merged together. The orchestrator stops after each.
+_Avoid_: batch, sprint
+
+**Work item** (WI):
+One reviewable piece of an effort, run in a wave on its own branch and worktree.
+_Avoid_: task, ticket
+
+**Integration branch**:
+`integration`, which collects each wave's work items before they reach `master`.
+
+**Orchestrator**:
+The session that runs the waves and does all their git.
+
 ### Verification
 
 **Golden**:
@@ -90,3 +104,32 @@ mod-shared-professions: profession skills and spells shared by all characters on
 
 **Dungeon scale**:
 mod-dungeon-scale's multipliers on raid creature stats.
+
+### BiS optimizer
+
+**BiS**:
+The best items, gems, enchants, reforges and racial traits for a character in a content phase, as the
+optimizer finds them.
+_Avoid_: best gear, optimal set
+
+**Content phase**:
+One of the five cumulative raid releases: 1 Naxx/EoE/OS, 2 Ulduar, 3 ToC, 4 ICC, 5 Ruby Sanctum.
+Content phase N is progression tier 12+N.
+_Avoid_: bare "phase", which is an effort step; patch
+
+**Progression tier**:
+mod-individual-progression's per-character unlock level. Tiers 13–17 cover the WotLK raids.
+_Avoid_: bare "tier", which can mean tier gear
+
+**Catalog**:
+The server-derived record of which items and gems are obtainable, from which progression tier and source,
+with their equip limits.
+_Avoid_: item phases, loot list
+
+**Candidate pool**:
+The items, gems and enchants one optimization may choose from.
+_Avoid_: item list
+
+**Raid contribution**:
+A raider's effect on the raid's total DPS: their own damage plus what they give others.
+_Avoid_: utility, raid value

@@ -45,7 +45,7 @@ Its findings, verified against code, and the list of AzerothCore deviations from
 
 **Rotations, presets, tanks**
 - P7 fixes each class's default APL where a server change shifts priorities.
-- Gear presets are re-pointed to server items after the loot effort lands.
+- Gear presets are rebuilt on server items by the BiS optimizer (BIS-presets).
 - Rotations of the recorded-run specs are matched to what the user actually presses.
 - Tanks use a generic boss built from AC creature stats (level 83 boss, `creature_classlevelstats` damage/armor).
   Specific encounter AIs are left for later.
@@ -61,9 +61,9 @@ Its findings, verified against code, and the list of AzerothCore deviations from
 - Recorded-run specs: **Retribution Paladin, Hunter, Affliction Warlock, Protection Paladin**.
 
 **Process**
-- Stop after every phase for user review: test output, simval comparisons, per-suite DPS deltas.
-- Git: read-only unless the user explicitly instructs a specific action. Rebuilding or restarting the live worldserver
-  and any live config change need the user's OK each time.
+- Loop-driven: the wave loop stops after every wave for user review (test output, simval comparisons,
+  per-suite DPS deltas). Git and server actions follow the [RUNBOOK](../wave-loop/wave-loop.RUNBOOK.md)'s
+  standing authorizations.
 
 ## Environment and coordination
 
@@ -77,22 +77,13 @@ Its findings, verified against code, and the list of AzerothCore deviations from
   `docs/azerothcore-item-diff/azerothcore-item-diff.PLAN.md`.
 - Live config: `[ac]/configurationOverrides/*.env` (`AC_*` vars override conf keys) and `[ac]/env/dist/etc/**/*.conf`.
 - **Where the work happens:**
-  - [sim] parity work: worktree `G:\DevStuff\GitHub\wowsimwotlk-parity`, branch `azerothcore-parity`, created from
-    `azerothcore-item-diff` at 176e93f3b. All P0 and P2-P8 changes go here.
-  - `G:\DevStuff\GitHub\wowsimwotlk` is the raid-import session's checkout. Don't touch it.
-  - P1 lives in [ac] as its own git repo: `[ac]/modules/mod-sim-validation` (`modules/*` is ignored by the [ac] repo).
-- **Concurrent efforts in [sim]:**
-  - *item-diff / loot disparities*
-    - Committed as 176e93f3b (branches `master` and `azerothcore-item-diff`).
-    - Code: `tools/database/azerothcore/` (MySQL + DBC readers, item conversion, `AddItemMod`) and `tools/database/acdiff/`.
-    - Docs: `docs/azerothcore-item-diff/`.
-    - That effort still owns these paths: reuse its code, and coordinate before changing it.
-  - *raid import*
-    - Plan `C:\Users\boss2\.claude\plans\i-want-to-simulate-functional-pie.md`.
-    - Branch `azerothcore-raid-import`, created from item-diff.
-    - Code: `tools/database/acraid`, `ui/raid/acore_*.ts`.
-    - Shares the reforge and racial-traits models (see Decisions).
-- **Sequencing:** P1 (done, pending verification), then P0, P2, P3, and so on.
+  - From P4's review on, parity runs as `PAR-` work items ([below](#loop-work-items)) in the
+    [wave loop](../wave-loop/wave-loop.RUNBOOK.md). Each item gets its own worktree off `integration`.
+  - P1 lives in [ac] as its own git repo: `[ac]/modules/mod-sim-validation` (`modules/*` is ignored by the
+    [ac] repo).
+  - Item-diff and raid-import run in the loop too ([workstreams](../guide/workstreams.md)).
+- **Sequencing:** P1, P0, P2 and P4 are built. P4's review and everything after it follow the
+  [wave registry](../wave-loop/wave-loop.PLAN.md#wave-registry).
 - Golden baselines: 37 `sim/**/*.results`. `make update-tests` deletes **all** `.results` before copying the `.tmp`
   files, so never use it for partial runs. Promote only the suites that ran (P0 `promote`) after checking each DPS
   delta's sign and size.
@@ -362,7 +353,7 @@ removes it.
 
 ### P4 — Generated constants
 
-**Status:** built and verified against the live server, uncommitted. All 37 suites pass with their goldens promoted.
+**Status:** built and verified against the live server, then committed as `0400022b5` without a code review. Wave A's PAR-P4R reviews it. All 37 suites pass with their goldens promoted.
 Against P2's committed goldens 25 suites move, with suite means from −0.063% to +0.060% (ArP 13.99 → 13.9957 per 1%,
 tank avoidance) and single short tests from −0.65% to +0.91% as their RNG paths diverge. `tools/simval` passes 508
 checks over the 82-record fixture.
@@ -564,9 +555,52 @@ Done when every "Classic" or `wotlk-classic-bugs` reference in `sim/` has been r
 - Serpent Sting tick crit (`sim/hunter/serpent_sting.go:38`).
 - Expertise comment and the hardcoded boss block value of 76: both done in P2.
 
+## Loop work items
+
+Specs for the `PAR-` items in the [wave registry](../wave-loop/wave-loop.PLAN.md#wave-registry). The
+[RUNBOOK](../wave-loop/wave-loop.RUNBOOK.md) agent rules apply to every item, plus these:
+
+- **Replay and deviations:**
+  - The simval replay stays all-PASS. Thresholds: ±1 bp, |z| ≤ 5, ±0.1% on multipliers, ±2% DPS on
+    recorded runs.
+  - Log each retail deviation in the INVESTIGATION.
+- **Core files:**
+  - Class items never edit `sim/core/*`. A core fix a class item needs becomes a follow-up P7-0c item.
+  - `SpellFlag` is a `uint32` with one bit left: P3-2 either widens it or keeps server data in a separate
+    struct.
+- **Spell-data split:** to keep items file-disjoint,
+  - P3-4 stays out of `attack.go`: spell-proc PPM goes in `aura_helpers.go`/`ppm.go`.
+  - P3-3 puts ranged-class cast scaling in `unit.go`, not in `RegisterSpell`.
+- **`TicksCanCrit`:** P3-5 adds it with default false. Each class item declares which of its DoTs may crit,
+  and P8 flips the default.
+
+| Item (wave) | Scope | Owns | Goldens | Needs |
+|---|---|---|---|---|
+| PAR-P4R (A) | Review-only: `git diff 7778c94d3 0400022b5`, fixing every finding | P4's files | may move all | – |
+| PAR-P5-1 (A) | `ServerSettings` on `Encounter`, plus a raid size/difficulty field; `gen_server_defaults`; defaults resolution; threading | `proto/common.proto` (Encounter), `tools/acore/gen_server_defaults/`, `sim/core/{server_settings,server_defaults_auto_gen,environment,raid,character}.go`, `ui/core/constants/server_defaults_auto_gen.ts` | none | – |
+| PAR-P3-1 (B) | `spellids` + `gen_serverdata`. One live `.simval spelldump` of all 10 class families plus item and enchant spells, so P7 needs no second capture | `tools/acore/{spellids,gen_serverdata}/`, `assets/db_inputs/acore/spelldump.jsonl`, `sim/core/serverdata/*_auto_gen.go` | none | – |
+| PAR-P6-2 (C) | Apply the "real" rows of `effects_review.csv`/`sets_review.csv` in shared code; take enchant PPM/ICD from P3-1 data | `sim/common/{wotlk,tbc}/*`, `sim/core/mana.go` (45703) | 14: DK dps ×4, balance ×2, mage ×4, FeralApl, Subtlety, FeralTank, Disc | P3-1; AC-2 (soft) |
+| PAR-P5-23 (C) | Dungeon scale as `DungeonScale.cpp` combines it: default × global × stat. Size-specific keys fall back to generic Raid/RaidHeroic; no per-instance or per-creature overrides. Plus the "Server (AzerothCore)" settings UI with the 11 spell-tweak toggles | `sim/core/target.go` + tests, `settings_tab.ts`, `ui/core/encounter.ts`, optionally `ui/raid/settings_tab.ts` | none | P5-1 |
+| PAR-P3-2 (D) | `RegisterSpell` applies server flags and timing by SpellID; a conflict allowlist per class; missile minimum distance 5 | `sim/core/{spell,flags}.go`, `serverdata_test.go`, the allowlist files | broad | P3-1 |
+| PAR-P3-3 (D) | 100 ms server tick; other hand pushed to ≥ 200 ms; ranged timer reset; `ResetsAutoAttack`; GCD via `HasteGCD`, clamped to [1000,1500]; +500 ms for ranged-slot spells | `sim/core/{sim,attack,cast,unit,aura,constants}.go` + tests | all 37 | P3-1, P5-1 |
+| PAR-P3-4 (E) | Truncated rage factor; spell-proc PPM uses max(cast, 1500 ms); `ReduceProc60`; `spell_proc` chance and ICD; the JoW hack | `sim/core/{rage,aura_helpers,ppm}.go`, `debuffs.go` (JoW) + tests | ~29 | P3-1 |
+| PAR-P3-5 (E) | DoT refresh rule; integer-ms ticks; `TickHaste` modes; `TicksCanCrit` | `sim/core/{dot,periodic_action,spell_outcome}.go` + tests | nearly all | P3-1; P3-3 (soft) |
+| PAR-P6-1 (E) | `UIItem`/`SimItem.server_stats`; reforge % and stat list from P5 settings; the "fewer than 10 stats" rule; an in-game reforge e2e test | `proto/ui.proto`, `proto/common.proto` (SimItem), `sim/core/{database,database_load,reforging,bulksim}.go`, `reforging.ts`, `gear_picker.tsx`, `tools/database/azerothcore/roster.go` | none | AC-1, P5-1, BIS-contract |
+| PAR-P7-0a (F) | Audit buffs, debuffs, consumes and racials against the spelldump; the AoE cap | `sim/core/{buffs,debuffs,consumes,racials}.go`, `target.go` (`updateAOECapMultiplier`) | all 37 | P3-4, P5-23 |
+| PAR-P7-0b (F) | Pet core: owner hit and expertise floored and refreshed every 3 s; haste and ArP inheritance; pet avoidance | `sim/core/{pet,avoid_dr,unit}.go` | ~17 pet suites | P3-3, P5-1 |
+| PAR-TOOLS-RR (F) | `tools/simval chronicle` and a `procs` check; `spellaudit` and `talentdiff`; a playerbot recorded-run harness. It captures Hunter, Ret, Affliction and Prot Paladin runs against a dummy inside an instance, downloading raw logs from the Chronicle app API (:4000) | `tools/simval/*`, `tools/acore/{spellaudit,talentdiff}/`, `docs/azerothcore-parity/audit/*.csv`, `sim/core/testdata/chronicle/`, its e2e file | none | P3-1 |
+| PAR-P7-\<class\> (G–J) | The class's P7 checklist, spell-tweak wiring, APL fixes, its P8 rows, its `TicksCanCrit` declarations, and a recorded-run comparison where one exists. Plus its P6-3 item rows: DK 45144/45254/Razorice; druid 45509/45270; paladin 47661/T9 2pc; shaman 40322/42598/45114/33506; mage T8 4pc | `sim/<class>/**`, `ui/<spec>/apls/*`, `ui/<spec>/{presets,inputs,sim}.ts`, `proto/<class>.proto`, its allowlist and e2e files | its class's suites | P3-2..5, P5-1, P7-0a/b; P7-T (soft) |
+| PAR-P7-TANK (J) | Generic AC boss from `creature_classlevelstats`; Holy Shield and Shield Block data; percent-aura talents (Lightning Reflexes, …); Classic references in encounter AIs | `sim/encounters/**`, tank dirs, tank `ui/*/presets.ts` | 4 tank suites | DK, WAR, RET, DRU items; P7-0b |
+| PAR-P8 (K) | Sweep `classic`/`wotlk-classic-bugs` in `sim/`; flip `TicksCanCrit`; close this plan | `sim/**` references | all | every P7 item |
+
+- **Class order:** DK and HUN (G); ROG, WAR and RET (H); SHA, DRU, MAG and WLK (I); PRI (J).
+- **P8's listed items** go to P3-4 (JoW), DRU (Omen), SHA (Feral Spirit), WLK and HUN (pet hit, Serpent
+  Sting) and TANK (encounter AIs).
+- **Presets:** P6's re-pointing of presets moves to BIS-presets.
+
 ## Verification (end to end)
 - **Every phase:** `tools/acore/dock.sh test` is green; goldens promoted per suite with DPS deltas reviewed.
 - **Mechanics:** `tools/simval` shows every attack-table, spell hit/resist, armor and proc check PASS on the boss, non-boss and lvl-80 dummies.
-- **Final:** for Ret Paladin, Hunter, Affliction Warlock and Prot Paladin, record a 5-minute run on the boss dummy inside an instance in real server gear.
+- **Final:** for Ret Paladin, Hunter, Affliction Warlock and Prot Paladin, a playerbot records a 5-minute run on the boss dummy inside an instance, in real server gear (PAR-TOOLS-RR). A mismatch is a finding for that class's work item, not a blocker.
   - Chronicle's raw-log DPS is within ±2% of the sim's result with the same gear, talents and rotation.
   - Tick counts and proc uptimes match within noise.

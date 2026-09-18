@@ -50,7 +50,7 @@ The live server: where it runs, how to reach it, what's installed. For table and
 
 | Module | On the server | In the sim |
 |---|---|---|
-| mod-individual-progression | Its `data/sql/world/base/{tbc,vanilla}_item_changes.sql` is applied (438 TBC-era items at pre-3.0 stats). Its `optional/` SQL isn't. It has a damage penalty below tier 13 | items come from the server DB ([ADR 0002](../adr/0002-item-data-from-live-db.md)); the penalty is ignored |
+| mod-individual-progression | Gates content by [progression tier](#progression-tiers). Its `data/sql/world/base/{tbc,vanilla}_item_changes.sql` is applied (438 TBC-era items at pre-3.0 stats). Its `optional/` SQL isn't. It has a damage penalty below tier 13 | items come from the server DB ([ADR 0002](../adr/0002-item-data-from-live-db.md)); item availability per tier from the server catalog ([ADR 0005](../adr/0005-server-item-catalog.md)); the penalty is ignored |
 | mod-reforging | moves 40% of one stat into another; stats 6, 13, 14, 31, 32, 36, 37; never into a stat the item already has | `ItemSpec.reforge` |
 | mod-racial-trait-swap | swaps racial abilities, not base stats or faction | `Player.racial_traits` |
 | mod-shared-professions | shares profession skills and spells per account, applied at login | any number of professions |
@@ -58,10 +58,35 @@ The live server: where it runs, how to reach it, what's installed. For table and
 | mod-spell-tweaks | spell and talent changes, listed in the parity INVESTIGATION; swaps two hunter talent tiers | toggles become server settings; talents keep stock tree positions |
 | mod-playerbots | bots fill the raid; strategies in `acore_playerbots.playerbots_db_store` | none |
 | mod-chronicle | combat logs, inside instances only. The server deletes its copy after upload, so download from the app API | recorded runs |
-| mod-sim-validation | ours, and its own git repo. `.simval` GM commands, test dummies 999000–999003, output in `[ac]/env/dist/logs/simval/`, `Enable = 0` by default | validation ([testing.md](testing.md#against-the-server)) |
+| mod-sim-validation | ours, and its own git repo. `.simval` GM commands, test dummies 999000–999003, output in `[ac]/env/dist/logs/simval/`. `Enable = 0` by default; `configurationOverrides/SimValidation.env` turns it on live. Every `.simval` command refuses while it's off | validation ([testing.md](testing.md#against-the-server)) |
+| mod-npc-enchanter | NPC 601015 applies nearly every WotLK enchant free, at any tier. Profession enchants check skill == 450; Hyperspeed Accelerators checks Engineering == 400, so a 450 engineer can't buy it there | enchants count as available in every phase |
 
-The other installed modules (transmog, npc-enchanter, token-turnin, mount-scaling, …) only touch a few
-items.
+The other installed modules (transmog, token-turnin, mount-scaling, …) only touch a few items.
+
+## Progression tiers
+
+mod-individual-progression stores a character's tier as rewarded quest `66000 + tier`.
+
+| Tier | Opens | Reached by killing |
+|---|---|---|
+| 13 | Northrend, its 5-mans, Naxx 533, OS 615, EoE 616 | – |
+| 14 | Ulduar 603 | Kel'Thuzad |
+| 15 | ToC 649, ToC5 650 | Yogg-Saron |
+| 16 | ICC 631 and FoS 632, which gates PoS 658 and HoR 668 | Anub'arak |
+| 17 | RS 724 | the Lich King |
+
+- Map gates: `IndividualProgressionPlayer.cpp`. VoA phases its bosses in (`IndividualProgression.cpp`):
+  Archavon 13, Emalon 14, Koralon 15, Toravon 16.
+- Bug: level-80 Onyxia (249) has no tier gate, so any level-80 character enters. The user counts her as
+  tier 15, which is what the BiS catalog does.
+- Vendors:
+  - `IndividualProgressionAwareness.cpp` hides emblem vendors below their tier: 33963/33964 below 14,
+    35494/35495/35573/35574 below 15, 37941/37942/38858 below 16.
+  - `conditions` type 23 rows needing quest `66000 + N` gate single vendor items at tier N. Harold Winston
+    (32172) sells the epic gems at 15.
+- Emblems (`data/sql/world/base/wotlk_emblems.sql`): Heroism and Valor 13, Conquest 14, Triumph 15, Frost 16.
+- Epic gems also drop from Titanium Ore prospecting (reference 13005) with no tier condition, so they're
+  obtainable at 13.
 
 ## Raid characters
 

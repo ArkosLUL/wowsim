@@ -33,6 +33,12 @@ layouts come from [ac] `src/server/shared/DataStores/DBCStructure.h` and `DBCfmt
   - `npc_vendor` or `game_event_npc_vendor`
   - `achievement_reward`
   - `quest_template` `RewardItem*` or `RewardChoiceItemID*`
+- Difficulty: loot on `creature_template.difficulty_entry_1..3` is the harder mode.
+  - Legacy raids (Naxx, OS, EoE, Ulduar): entry 1 is 25-man.
+  - ToC, ICC and RS: entries 1–3 are 25N, 10H and 25H.
+  - Dungeons: entry 1 is heroic.
+- Vendor cost: `npc_vendor.ExtendedCost` → `itemextendedcost_dbc`, plus ItemExtendedCost.dbc, which lists
+  the currency or token items a purchase needs.
 - 10- and 25-man tier pieces share one ItemSet.
 
 ## Spells
