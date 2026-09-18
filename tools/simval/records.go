@@ -11,6 +11,10 @@ type attackSnapshot struct {
 	ExpertiseReduction float64 `json:"expertiseReduction"`
 	WeaponSkillVsOther int32   `json:"weaponSkillVsOther"`
 	CritVsOther        float64 `json:"critVsOther"`
+	AttackPower        float64 `json:"attackPower"`
+	Weapon             *struct {
+		ItemID int32 `json:"itemId"`
+	} `json:"weapon"`
 }
 
 type unitSnapshot struct {
@@ -26,6 +30,40 @@ type unitSnapshot struct {
 	OtherInFront     bool    `json:"otherInFront"`
 	ArmorPenAuraPct  float64 `json:"armorPenetrationAuraPct"`
 
+	// The server's class and race ids.
+	Class     uint8   `json:"class"`
+	Race      uint8   `json:"race"`
+	MaxHealth float64 `json:"maxHealth"`
+	PowerType uint32  `json:"powerType"`
+	Power     float64 `json:"power"`
+
+	Stats struct {
+		Strength  float64 `json:"strength"`
+		Agility   float64 `json:"agility"`
+		Stamina   float64 `json:"stamina"`
+		Intellect float64 `json:"intellect"`
+		Spirit    float64 `json:"spirit"`
+	} `json:"stats"`
+	// Armor first, then the magic schools.
+	Resistances []float64 `json:"resistances"`
+
+	// The character sheet; players only.
+	Sheet *struct {
+		// Ranged crit is left out: without a ranged weapon the server's is 0.
+		CritMainhand float64   `json:"critMainhand"`
+		SpellCrit    []float64 `json:"spellCrit"`
+		Dodge        float64   `json:"dodge"`
+		Parry        float64   `json:"parry"`
+		Block        float64   `json:"block"`
+		RealDodge    float64   `json:"realDodge"`
+	} `json:"sheet"`
+	Ratings []struct {
+		Name   string  `json:"name"`
+		Rating float64 `json:"rating"`
+		Bonus  float64 `json:"bonus"`
+	} `json:"ratings"`
+	Auras []aura `json:"auras"`
+
 	Defense struct {
 		Dodge      float64 `json:"dodge"`
 		Parry      float64 `json:"parry"`
@@ -40,6 +78,30 @@ type unitSnapshot struct {
 	} `json:"hitMods"`
 
 	Attacks []attackSnapshot `json:"attacks"`
+}
+
+type aura struct {
+	ID         int32 `json:"id"`
+	DurationMs int32 `json:"durationMs"` // -1 for passives
+}
+
+func (u unitSnapshot) rating(name string) (rating, bonus float64) {
+	for _, r := range u.Ratings {
+		if r.Name == name {
+			return r.Rating, r.Bonus
+		}
+	}
+	return 0, 0
+}
+
+// naked is a player with no weapon in any hand, which the base stats checks need.
+func (u unitSnapshot) naked() bool {
+	for _, a := range u.Attacks {
+		if a.Weapon != nil {
+			return false
+		}
+	}
+	return u.IsPlayer && u.Sheet != nil
 }
 
 func (u unitSnapshot) attack(kind string) attackSnapshot {

@@ -45,8 +45,7 @@ func (character *Character) EnableManaBarWithModifier(modifier float64) {
 	character.AddStat(stats.Mana, 20-15*20*modifier)
 	character.AddStatDependency(stats.Intellect, stats.Mana, 15*modifier)
 
-	// This conversion is now universal for
-	character.AddStatDependency(stats.Intellect, stats.SpellCrit, CritRatingPerCritChance/166.66667)
+	character.AddStatDependency(stats.Intellect, stats.SpellCrit, 100*SpellCritPerIntellect*CritRatingPerCritChance)
 
 	// Not a real spell, just holds metrics from mana gain threat.
 	character.RegisterSpell(SpellConfig{
@@ -146,7 +145,7 @@ func (unit *Unit) MP5ManaRegenPerSecond() float64 {
 
 // Returns the rate of mana regen per second from spirit.
 func (unit *Unit) SpiritManaRegenPerSecond() float64 {
-	return 0.001 + unit.stats[stats.Spirit]*math.Sqrt(unit.stats[stats.Intellect])*0.003345
+	return 0.001 + unit.stats[stats.Spirit]*math.Sqrt(unit.stats[stats.Intellect])*ManaRegenPerSpirit
 }
 
 // Returns the rate of mana regen per second, assuming this unit is

@@ -5,7 +5,6 @@ import (
 
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
-	"github.com/wowsims/wotlk/sim/core/stats"
 )
 
 func RegisterRogue() {
@@ -235,10 +234,6 @@ func NewRogue(character *core.Character, options *proto.Player) *Rogue {
 		AutoSwingMelee: true,
 	})
 	rogue.applyPoisons()
-
-	rogue.AddStatDependency(stats.Strength, stats.AttackPower, 1)
-	rogue.AddStatDependency(stats.Agility, stats.AttackPower, 1)
-	rogue.AddStatDependency(stats.Agility, stats.MeleeCrit, core.CritPerAgiMaxLevel[character.Class]*core.CritRatingPerCritChance)
 
 	return rogue
 }

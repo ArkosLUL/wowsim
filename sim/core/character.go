@@ -100,7 +100,7 @@ func NewCharacter(party *Party, partyIndex int, player *proto.Player) Character 
 			Index:       int32(party.Index*5 + partyIndex),
 			Level:       CharacterLevel,
 			auraTracker: newAuraTracker(),
-			PseudoStats: stats.NewPseudoStats(),
+			PseudoStats: newPseudoStats(),
 			Metrics:     NewUnitMetrics(),
 
 			StatDependencyManager: stats.NewStatDependencyManager(),
@@ -152,10 +152,14 @@ func NewCharacter(party *Party, partyIndex int, player *proto.Player) Character 
 		character.Consumes = player.Consumes
 	}
 
-	character.baseStats = BaseStats[BaseStatsKey{Race: character.BaseStatsRace, Class: character.Class}]
+	character.baseStats = BaseStats(character.BaseStatsRace, character.Class)
 
 	character.AddStats(character.baseStats)
 	character.addUniversalStatDependencies()
+	character.addClassStatDependencies()
+	character.PseudoStats.MeleeHasteRatingPerHastePercent = RatingPerPercent(character.Class, CRHasteMelee)
+	character.PseudoStats.ArmorPenRatingPerPercent = RatingPerPercent(character.Class, CRArmorPenetration)
+	character.playerAvoidance = newPlayerAvoidance(ClassStatScaling[character.Class], character.baseStats)
 	for i := range character.itemStatMultipliers {
 		character.itemStatMultipliers[i] = 1
 	}
@@ -631,8 +635,8 @@ func (character *Character) GetPseudoStatsProto() []float64 {
 		proto.PseudoStat_PseudoStatRangedDps:            character.AutoAttacks.Ranged().DPS(),
 		proto.PseudoStat_PseudoStatBlockValueMultiplier: character.PseudoStats.BlockValueMultiplier,
 		// Base values are modified by Enemy attackTables, but we display for LVL 80 enemy as paperdoll default
-		proto.PseudoStat_PseudoStatDodge: character.PseudoStats.BaseDodge + character.GetDiminishedDodgeChance(),
-		proto.PseudoStat_PseudoStatParry: character.PseudoStats.BaseParry + character.GetDiminishedParryChance(),
+		proto.PseudoStat_PseudoStatDodge: character.DodgeChance(),
+		proto.PseudoStat_PseudoStatParry: character.ParryChance(),
 	}
 }
 

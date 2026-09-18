@@ -10,6 +10,16 @@ layouts come from [ac] `src/server/shared/DataStores/DBCStructure.h` and `DBCfmt
 - Don't use the `SpellDB`/`SpellDBServer` databases: they're a spell-editor import.
 - Missing module tables raise MySQL error 1146. Warn, don't fail.
 
+## Base stats
+
+- `acore_world.player_class_stats` (per class and level: BaseHP, BaseMana, the five stats) plus
+  `player_race_stats` (offsets).
+- gt*.dbc: the Clean, Changed and live copies are byte-identical.
+  - Most hold one float per row, indexed by row: `cr·100 + level − 1` in gtCombatRatings,
+    `(class − 1)·100 + level − 1` in gtChanceTo{Melee,Spell}Crit and gtRegenMPPerSpt, `class − 1` in the
+    `*Base` tables.
+  - gtOCTClassCombatRatingScalar is keyed by its id column: `(class − 1)·32 + cr + 1`.
+
 ## Items (`acore_world`)
 
 - `item_template`:

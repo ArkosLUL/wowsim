@@ -5,7 +5,6 @@ import (
 
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
-	"github.com/wowsims/wotlk/sim/core/stats"
 )
 
 var TalentTreeSizes = [3]int{26, 27, 28}
@@ -202,11 +201,6 @@ func NewHunter(character *core.Character, options *proto.Player) *Hunter {
 	}
 
 	hunter.pet = hunter.NewHunterPet()
-
-	hunter.AddStatDependency(stats.Strength, stats.AttackPower, 1)
-	hunter.AddStatDependency(stats.Agility, stats.AttackPower, 1)
-	hunter.AddStatDependency(stats.Agility, stats.RangedAttackPower, 1)
-	hunter.AddStatDependency(stats.Agility, stats.MeleeCrit, core.CritPerAgiMaxLevel[character.Class]*core.CritRatingPerCritChance)
 
 	return hunter
 }

@@ -379,19 +379,10 @@ func NewDeathknight(character *core.Character, inputs DeathknightInputs, talents
 		nil,
 	)
 
-	dk.AddStatDependency(stats.Agility, stats.MeleeCrit, core.CritPerAgiMaxLevel[character.Class]*core.CritRatingPerCritChance)
-	dk.AddStatDependency(stats.Agility, stats.Dodge, core.DodgeRatingPerDodgeChance/84.74576271)
-	dk.AddStatDependency(stats.Strength, stats.AttackPower, 2)
 	dk.AddStatDependency(stats.Strength, stats.Parry, 0.25)
 	dk.AddStatDependency(stats.BonusArmor, stats.Armor, 1)
 
 	dk.PseudoStats.CanParry = true
-
-	// Base dodge unaffected by Diminishing Returns
-	dk.PseudoStats.BaseDodge += 0.03664
-	dk.PseudoStats.BaseParry += 0.05
-
-	dk.PseudoStats.MeleeHasteRatingPerHastePercent /= 1.3
 
 	if dk.Talents.SummonGargoyle {
 		dk.Gargoyle = dk.NewGargoyle()

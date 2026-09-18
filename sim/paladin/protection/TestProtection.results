@@ -22,11 +22,11 @@ character_stats_results: {
   final_stats: 0
   final_stats: 0
   final_stats: 28804.3
-  final_stats: 755.7
+  final_stats: 1199.66
   final_stats: 682
   final_stats: 171
   final_stats: 1702.0025
-  final_stats: 441.54972
+  final_stats: 129
   final_stats: 180
   final_stats: 15
   final_stats: 38776.2344
@@ -224,15 +224,15 @@ dps_results: {
 dps_results: {
  key: "TestProtection-AllItems-Deathbringer'sWill-50362"
  value: {
-  dps: 3473.50598
-  tps: 8312.63119
+  dps: 3473.49569
+  tps: 8312.61648
  }
 }
 dps_results: {
  key: "TestProtection-AllItems-Deathbringer'sWill-50363"
  value: {
-  dps: 3472.7739
-  tps: 8306.05373
+  dps: 3472.76271
+  tps: 8306.03773
  }
 }
 dps_results: {
@@ -434,8 +434,8 @@ dps_results: {
 dps_results: {
  key: "TestProtection-AllItems-IncisorFragment-37723"
  value: {
-  dps: 3371.10068
-  tps: 8090.10155
+  dps: 3371.09667
+  tps: 8090.09581
  }
 }
 dps_results: {
@@ -862,8 +862,8 @@ dps_results: {
 dps_results: {
  key: "TestProtection-AllItems-Turalyon'sBattlegear"
  value: {
-  dps: 3611.9908
-  tps: 8624.60691
+  dps: 3611.98584
+  tps: 8624.59981
  }
 }
 dps_results: {
@@ -904,9 +904,9 @@ dps_results: {
 dps_results: {
  key: "TestProtection-Average-Default"
  value: {
-  dps: 3810.5392
-  tps: 9145.01892
-  dtps: 5.14555
+  dps: 3807.50001
+  tps: 9138.42211
+  dtps: 5.04719
  }
 }
 dps_results: {
@@ -1164,8 +1164,8 @@ dps_results: {
 dps_results: {
  key: "TestProtection-SwitchInFrontOfTarget-Default"
  value: {
-  dps: 3936.8538
-  tps: 9448.58321
-  dtps: 6.83554
+  dps: 3923.69439
+  tps: 9411.77021
+  dtps: 6.83207
  }
 }

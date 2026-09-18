@@ -39,6 +39,24 @@ Other differences:
   `SPELL_MISS_BLOCK`, which stops the spell.
 - Chill of the Throne (aura 49) is -20% dodge on the player, not the boss.
 
+## Base stats and ratings
+
+Generated from the server ([gen_basestats](../../tools/acore/gen_basestats/README.md)) and verified per
+class by simval. Modelled on azerothcore-parity only.
+
+| Mechanic | Classic sim | Server |
+|---|---|---|
+| Shaman / Warlock base HP | 6960 / 7164 | 6939 / 7136 |
+| DK base mana | 1000 | 0 |
+| ArP rating per 1% | 13.99 | 15.3953 / 1.1 = 13.9957, every class |
+| Avoidance diminishing returns | druid and non-druid constants | per-class k and dodge, parry and miss caps |
+| Dodge from base agility | diminishes | doesn't |
+| Defense rating | continuous | truncated to whole skill points first |
+
+- Percent-ArP auras (Battle Stance, Mace Specialization) add to the rating's percentage, under one cap.
+- The server truncates primary stats to integers and the sim doesn't, so anything derived can be off by
+  one point's worth.
+
 ## Other measured server behaviour
 
 - **Hunter haste:** mod-individual-progression's aura 89507 never changes the speed, so ranged haste is

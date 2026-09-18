@@ -22,11 +22,11 @@ character_stats_results: {
   final_stats: 0
   final_stats: 0
   final_stats: 30174.9
-  final_stats: 755.7
+  final_stats: 1327.59
   final_stats: 672
   final_stats: 170.97498
   final_stats: 1433.406
-  final_stats: 379.22443
+  final_stats: 139
   final_stats: 299
   final_stats: 15
   final_stats: 39901.225
@@ -46,7 +46,7 @@ character_stats_results: {
 stat_weights_results: {
  key: "TestProtectionWarrior-StatWeights-Default"
  value: {
-  weights: 0.90837
+  weights: 0.97207
   weights: 0
   weights: 0
   weights: 0
@@ -57,7 +57,7 @@ stat_weights_results: {
   weights: 0
   weights: 0
   weights: 0
-  weights: 0.17273
+  weights: 0.18569
   weights: 0
   weights: 0
   weights: 0
@@ -66,12 +66,12 @@ stat_weights_results: {
   weights: 0
   weights: 0
   weights: 0
-  weights: 0.0101
+  weights: 0.00032
   weights: 0
   weights: 0
   weights: 0
-  weights: 0.44833
-  weights: 0.07986
+  weights: 0.44682
+  weights: 0.06171
   weights: 0
   weights: 0
   weights: 0
@@ -269,15 +269,15 @@ dps_results: {
 dps_results: {
  key: "TestProtectionWarrior-AllItems-Deathbringer'sWill-50362"
  value: {
-  dps: 1630.91512
-  tps: 4183.77806
+  dps: 1630.92456
+  tps: 4183.79056
  }
 }
 dps_results: {
  key: "TestProtectionWarrior-AllItems-Deathbringer'sWill-50363"
  value: {
-  dps: 1657.11096
-  tps: 4249.6949
+  dps: 1657.36103
+  tps: 4250.29507
  }
 }
 dps_results: {
@@ -304,8 +304,8 @@ dps_results: {
 dps_results: {
  key: "TestProtectionWarrior-AllItems-DreadnaughtBattlegear"
  value: {
-  dps: 1556.22959
-  tps: 3976.74428
+  dps: 1556.22548
+  tps: 3976.73245
  }
 }
 dps_results: {
@@ -493,8 +493,8 @@ dps_results: {
 dps_results: {
  key: "TestProtectionWarrior-AllItems-IncisorFragment-37723"
  value: {
-  dps: 1548.82041
-  tps: 3989.45486
+  dps: 1548.80938
+  tps: 3989.42867
  }
 }
 dps_results: {
@@ -571,8 +571,8 @@ dps_results: {
 dps_results: {
  key: "TestProtectionWarrior-AllItems-OnslaughtBattlegear"
  value: {
-  dps: 1280.33419
-  tps: 3286.46962
+  dps: 1280.32318
+  tps: 3286.44402
  }
 }
 dps_results: {
@@ -690,8 +690,8 @@ dps_results: {
 dps_results: {
  key: "TestProtectionWarrior-AllItems-SiegebreakerBattlegear"
  value: {
-  dps: 1602.87475
-  tps: 4085.08577
+  dps: 1602.85202
+  tps: 4085.03245
  }
 }
 dps_results: {
@@ -893,8 +893,8 @@ dps_results: {
 dps_results: {
  key: "TestProtectionWarrior-AllItems-Wrynn'sBattlegear"
  value: {
-  dps: 1823.33172
-  tps: 4588.67214
+  dps: 1823.46234
+  tps: 4589.21642
  }
 }
 dps_results: {
@@ -907,8 +907,8 @@ dps_results: {
 dps_results: {
  key: "TestProtectionWarrior-AllItems-YmirjarLord'sBattlegear"
  value: {
-  dps: 2018.90344
-  tps: 5039.883
+  dps: 2013.62311
+  tps: 5027.94186
  }
 }
 dps_results: {
@@ -921,9 +921,9 @@ dps_results: {
 dps_results: {
  key: "TestProtectionWarrior-Average-Default"
  value: {
-  dps: 2910.13948
-  tps: 7042.0673
-  dtps: 126.28869
+  dps: 2911.84986
+  tps: 7045.07662
+  dtps: 124.94224
  }
 }
 dps_results: {
@@ -1013,8 +1013,8 @@ dps_results: {
 dps_results: {
  key: "TestProtectionWarrior-SwitchInFrontOfTarget-Default"
  value: {
-  dps: 3041.9557
-  tps: 7364.69751
-  dtps: 119.11764
+  dps: 3044.86016
+  tps: 7374.2874
+  dtps: 117.27597
  }
 }

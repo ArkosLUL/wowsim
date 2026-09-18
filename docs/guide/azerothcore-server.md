@@ -77,6 +77,10 @@ items.
 
 - `PSendSysMessage` prints nothing to a console session. Use `SendSysMessage` + `SetSentErrorMessage`.
 - Relog after `.maxskill`, or crit isn't recomputed.
+- Characters leveled by GM command never learn trainer spells, Parry (3127) included: `.learn` them.
+- mod-individual-progression refuses death knights (`CHAR_CREATE_DISABLED`) until a character on the
+  account reaches progression tier 12: `.ip set <name> 12` one and log it out first.
+- `.additem <id> -1` destroys the item even when it's equipped.
 - Character deletes commit asynchronously, so poll for them. `CharacterCache` refuses a delete from
   another account.
 - AzerothGhost, the e2e client, needs the Warden OS FourCC patch, plus `E2E_WORLD_ADDR` because the

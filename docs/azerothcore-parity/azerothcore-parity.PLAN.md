@@ -361,19 +361,90 @@ removes it.
 - The comparison tool is `tools/simval chronicle` (a parser for the raw lines, `<unix_ms>  EVENT,...`).
 
 ### P4 — Generated constants
-- `tools/acore/gen_basestats` reuses the item-diff `tools/database/azerothcore/dbc.go` reader.
-  - Inputs:
-    - Clean gt tables: gtCombatRatings, gtOCTClassCombatRatingScalar (id = (class−1)·32 + cr + 1), gtChanceToMelee/SpellCrit(+Base), gtRegenMPPerSpt.
-    - Live `player_class_stats`/`player_race_stats`.
-    - DR constants and base AP formulas parsed from `[ac]/.../StatSystem.cpp`.
-  - Outputs: `sim/core/base_stats_auto_gen.go` and `ui/core/constants/ratings_auto_gen.ts`.
-  - Replaces `tools/base_stats_parser.py` and `assets/db_inputs/basestats/`.
-- Per-class rating scalars:
-  - Remove the `/1.3` hacks: `deathknight.go:394`, `druid.go:282`, `paladin.go:188`, `shaman.go:46`.
-  - ArP conversion becomes per class.
-  - Percent-ArP talents move to `PseudoStats.BonusArmorPenPct`: `warrior/stances.go:68`, `warrior/talents.go:418`, `rogue/talents.go:28,363`, `deathknight/talents_blood.go:367`.
-- `avoid_dr.go`: per class, with defense rating converted to whole skill points.
-- Verify: for a naked lvl-80 character of each class, `.simval info` matches sim stats; repeat with 1400 ArP.
+
+**Status:** built and verified against the live server, uncommitted. All 37 suites pass with their goldens promoted.
+Against P2's committed goldens 25 suites move, with suite means from −0.063% to +0.060% (ArP 13.99 → 13.9957 per 1%,
+tank avoidance) and single short tests from −0.65% to +0.91% as their RNG paths diverge. `tools/simval` passes 508
+checks over the 82-record fixture.
+
+**As built.**
+
+`tools/acore/gen_basestats` (`dock.sh run ./tools/acore/gen_basestats`) writes `sim/core/base_stats_auto_gen.go` and
+`ui/core/constants/ratings_auto_gen.ts`. Flags: `-dbc` (default `/dbc/Clean`), `-ac` (`/ac`), `-dsn` (`AC_DSN`, else
+the item-diff DSN on `host.docker.internal`), `-level` (80). Inputs:
+- gt tables through the item-diff `azerothcore.ParseDBC`: gtCombatRatings (row cr·100 + level − 1),
+  gtOCTClassCombatRatingScalar (keyed by its id column, (class−1)·32 + cr + 1), gtChanceToMeleeCrit(+Base),
+  gtChanceToSpellCrit(+Base), gtRegenMPPerSpt. Clean, Changed and the live server's copies are byte-identical.
+- Live `player_class_stats` (level 80) and `player_race_stats`.
+- `Unit.h` `enum CombatRating`; `StatSystem.cpp` `UpdateAttackPowerAndDamage` (per-class `val2`, druids' `default:`
+  form) and the `m_diminishing_k`, `miss_cap`, `parry_cap`, `dodge_cap` arrays; `Player.cpp` `dodge_base` and
+  `crit_to_dodge` (`GetDodgeFromAgility`).
+
+It fails when a rating the sim converts with one constant differs between classes or aliases (e.g. crit melee/spell),
+and when the mana classes disagree on spell crit per intellect or mana regen per spirit (both stay single constants
+because pets use them too). It imports `tools/database`, which pulls in `sim/core`, so `sim/core` must compile before
+it runs: to change the generated file's shape, hand-edit it first, then regenerate.
+
+Generated: the `CombatRating` enum, the named rating constants (`CritRatingPerCritChance`, …, exact float32 values
+such as 32.78999), `SpellCritPerIntellect`, `ManaRegenPerSpirit`, `CombatRatingBase`, `CombatRatingClassScalars`
+(melee haste 1.3 for Paladin, DK, Shaman, Druid; ArP 1.1 for every class; everything else 1), `ClassBaseStats`,
+`RaceStatOffsets`, `ClassStatScaling`.
+
+Sim:
+- `base_stats.go`: `BaseStats(race, class)` works for any combination (P5's racial traits need that);
+  `addClassStatDependencies` adds Str/Agi → AP/RAP and Agi → crit in `NewCharacter` (pets set up their own);
+  `RatingPerPercent(class, cr)`.
+- `PseudoStats.MeleeHasteRatingPerHastePercent` and the new `ArmorPenRatingPerPercent` are set per class in
+  `NewCharacter`. `newPseudoStats` gives class-less units the unscaled values, and pets copy their owner's ArP
+  conversion. The new `BonusArmorPenPct` (percent) holds Battle Stance (+6 with Wrynn's 2pc), Mace Specialization
+  (warrior, rogue), Serrated Blades and Blood Gorged. `ArmorPenetrationPercentage` = rating / per-1% + bonus, capped
+  at 100, as `Unit::CalcArmorReducedDamage` adds them.
+- `avoid_dr.go`: `DodgeChance`, `ParryChance`, `DefenseMissChance`, `DefenseSkillFromRating` (float32, truncated to
+  whole points). Only players diminish (`Unit.playerAvoidance`); creatures, pets included, add up plainly.
+  Non-diminishing: class dodge base, base agility's dodge, `BaseDodge`/`BaseParry` auras, parry's 5%. Diminishing:
+  agility above base, dodge/parry rating, defense skill · 0.04. No parry without `CanParry` or a parry cap (Priest,
+  Mage, Warlock, Druid).
+- Removed: the `/1.3` hacks, every class's Str/Agi → AP, Agi → crit and Agi → dodge dependencies and dodge/parry base
+  constants, `ArmorPenPerPercentArmor`, `DefenseRatingToChanceReduction`, `MissDodgeParryBlockCritChancePerDefense`,
+  `tools/base_stats_parser.py`, `assets/db_inputs/basestats/`.
+- Value changes: Shaman base HP 6939 (was 6960), Warlock 7136 (7164), DK base mana 0 (1000). Mage and Priest get
+  Str − 10 AP, non-hunters the server's ranged AP (unused), Hunter/Rogue/Shaman agility dodge, Hunter/Rogue the 5%
+  base parry.
+- UI: `mechanics.ts` re-exports the generated constants; the character sheet converts melee haste and ArP with
+  `MELEE_HASTE_RATING_PER_HASTE_PERCENT_BY_CLASS` and `ARMOR_PEN_RATING_PER_PERCENT_BY_CLASS`.
+
+**Tests**
+- `sim/core/base_stats_test.go`: rating per 1% (25.223 hybrid melee haste, 13.9957 ArP); Orc Warrior base stats and
+  AP; Shaman and Warlock HP; defense truncation (400 rating → 81); warrior avoidance naked and with 100 agility, 512
+  dodge and 400 defense rating; no parry for priests; ArP with Battle Stance and the shared cap.
+- `tools/acore/gen_basestats/source_test.go`: the parsers on a snippet with the druid switch traps, and on the real
+  `[ac]` sources (skipped without `/ac`).
+
+**Verification.** `[ac]/modules/mod-sim-validation/e2e` `TestSimvalBaseStats` (in the module's working tree,
+uncommitted), about 90 s. One level-80 character per class, covering all ten races:
+- The starting outfit is destroyed (`.additem <id> -1` for each equipped item from `character_inventory`).
+- Warrior, Paladin, Hunter, Rogue and DK `.learn 3127` (Parry, a trainer spell GM-leveled characters never get).
+- Each gets the raid buffs the sim adds for its class: Priest Fortitude 48161, Divine Spirit 48073, Shadow Protection
+  48169; Mage Arcane Intellect 42995; Druid Mark of the Wild 48469; DK Horn of Winter 57623.
+- The DK's account first gets a warrior at progression tier 18: mod-individual-progression only allows death knights on
+  accounts that reached tier 12 (`CHAR_CREATE_DISABLED` otherwise).
+- Records: `.simval info` naked; `info` with 400 defense rating (24774, 24775, 15804) and 512 dodge rating (67694);
+  `info` + `armor` at 1378 ArP (71557, 71403) and at 1498 (+ 42976).
+
+`tools/simval` gained an `info` check: it builds the sim character through `core.NewEnvironment` with the snapshot's
+defense and dodge rating as bonus stats and compares primary stats, max health, armor, AP and RAP (as whole numbers),
+melee and spell crit, real dodge, miss chance taken, parry (the sheet's, so only without defense or parry rating), mana
+(the snapshot has current mana, so only without timed auras) and the ArP rating's percentage. The `armor` check now
+runs the rating through `ArmorPenetrationPercentage`. All 373 checks over the 60 records pass; the records are in the
+fixture.
+
+**Left open**
+- The server truncates primary stats to integers and the sim doesn't (a Gnome's 256.2 intellect is 256), worth up to
+  one point of anything derived; `tools/simval` allows for exactly that.
+- Talents that are percent auras on the server but rating in the sim (Lightning Reflexes, Catlike Reflexes, Shaman
+  Anticipation, Deflection for rogues) still diminish in the sim: P7.
+- Pet avoidance (server creatures: flat 5% dodge, no agility): P7.
+- A `maxPower` field in mod-sim-validation's snapshot (next server rebuild) would let the mana check run with buffs.
 
 ### P5 — Server settings (proto + UI)
 Racial traits already landed on master (23d0796b5, tests in `sim/racial_traits_test.go`).

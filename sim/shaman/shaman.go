@@ -37,13 +37,7 @@ func NewShaman(character *core.Character, talents string, totems *proto.ShamanTo
 		shaman.Totems.Fire = proto.FireTotem_FlametongueTotem
 	}
 
-	// Add Shaman stat dependencies
-	shaman.AddStatDependency(stats.Strength, stats.AttackPower, 1)
-	shaman.AddStatDependency(stats.Agility, stats.AttackPower, 1)
-	shaman.AddStatDependency(stats.Agility, stats.MeleeCrit, core.CritPerAgiMaxLevel[character.Class]*core.CritRatingPerCritChance)
 	shaman.AddStatDependency(stats.BonusArmor, stats.Armor, 1)
-	// Set proper Melee Haste scaling
-	shaman.PseudoStats.MeleeHasteRatingPerHastePercent /= 1.3
 
 	if selfBuffs.Shield == proto.ShamanShield_WaterShield {
 		shaman.AddStat(stats.MP5, 100)

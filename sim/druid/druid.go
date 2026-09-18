@@ -272,17 +272,7 @@ func New(char *core.Character, form DruidForm, selfBuffs SelfBuffs, talents stri
 	core.FillTalentsProto(druid.Talents.ProtoReflect(), talents, TalentTreeSizes)
 	druid.EnableManaBar()
 
-	druid.AddStatDependency(stats.Strength, stats.AttackPower, 2)
 	druid.AddStatDependency(stats.BonusArmor, stats.Armor, 1)
-	druid.AddStatDependency(stats.Agility, stats.MeleeCrit, core.CritPerAgiMaxLevel[char.Class]*core.CritRatingPerCritChance)
-	// Druid get 0.0209 dodge per agi (before dr), roughly 1 per 47.846
-	druid.AddStatDependency(stats.Agility, stats.Dodge, (0.0209)*core.DodgeRatingPerDodgeChance)
-
-	// Druids get extra melee haste
-	druid.PseudoStats.MeleeHasteRatingPerHastePercent /= 1.3
-
-	// Base dodge is unaffected by Diminishing Returns
-	druid.PseudoStats.BaseDodge += 0.056097
 
 	if druid.Talents.ForceOfNature {
 		druid.Treant1 = druid.NewTreant()

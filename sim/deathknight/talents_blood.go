@@ -97,7 +97,7 @@ func (dk *Deathknight) applySpellDeflection() {
 
 	dk.AddDynamicDamageTakenModifier(func(sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
 		if spell.ProcMask.Matches(core.ProcMaskSpellDamage) {
-			procChance := dk.PseudoStats.BaseParry + dk.Unit.GetDiminishedParryChance()
+			procChance := dk.ParryChance()
 			dmgMult := 1.0 - 0.15*float64(dk.Talents.SpellDeflection)
 			if sim.RandomFloat("Spell Deflection Roll") < procChance {
 				result.Damage *= dmgMult
@@ -364,8 +364,7 @@ func (dk *Deathknight) applyBloodGorged() {
 	}
 
 	bonusDamage := 1.0 + 0.02*float64(dk.Talents.BloodGorged)
-	armorPenRating := float64(dk.Talents.BloodGorged) * 2.0 * core.ArmorPenPerPercentArmor
-	dk.AddStat(stats.ArmorPenetration, armorPenRating)
+	dk.PseudoStats.BonusArmorPenPct += 2 * float64(dk.Talents.BloodGorged)
 
 	procAura := core.MakePermanent(dk.RegisterAura(core.Aura{
 		Label:    "Blood Gorged Proc",

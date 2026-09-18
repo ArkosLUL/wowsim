@@ -60,10 +60,20 @@ Roll details the tables above don't show:
   15232.5 instead of 16635 against a level 83 target; fixed in P2. Damage after armor is `ceil`-rounded.
 - Boss block value is `Creature::GetShieldBlockValue` = level/2 + STR/20, and `creature_classlevelstats` gives level 83
   creatures 0 strength, so 41. The sim hardcoded 76.
-- ArP rating = 15.3953 / class scalar 1.1 = 13.9957; the sim hardcodes 13.99.
+- ArP rating = 15.3953 / class scalar 1.1 = 13.9957; the sim hardcoded 13.99. Percent-ArP auras (Battle Stance, Mace
+  Specialization) add to the rating's percentage before the cap, so the sim can't fold them into rating per class.
 - Clean gt DBCs match the sim's rating constants: hit 32.79, spell hit 26.232, crit 45.906, hybrid melee haste 25.223, expertise 8.1975, spirit regen 0.003345.
-- Level-80 `player_class_stats`: Shaman HP 6939 (sim 6960), Warlock 7136 (sim 7164).
+  Class scalars: melee haste 1.3 for Paladin, DK, Shaman and Druid, ArP 1.1 for everyone, every other rating 1.
+- Level-80 `player_class_stats`: Shaman HP 6939 (sim 6960), Warlock 7136 (sim 7164); DK base mana 0 (sim 1000).
 - Expertise and hit are floats on the server; the sim is already continuous.
+- Primary stats are truncated to integers (`Player::UpdateStats`), and everything derived reads the integer. The sim
+  keeps them continuous.
+- Avoidance diminishes per class (`StatSystem.cpp:711-838`): k 0.956 (Warrior, Paladin, DK), 0.988 (Hunter, Rogue,
+  Shaman), 0.983 (Priest, Mage, Warlock), 0.972 (Druid); dodge caps 88.13/145.56/150.38/116.89, parry caps
+  47.00/145.56 and none for casters and druids, miss cap 16. The sim had one druid and one non-druid set.
+- Dodge per agility is crit per agility × `crit_to_dodge` (`Player.cpp:5285-5336`), and the base agility's share
+  doesn't diminish; the sim diminished all of it. Defense rating's bonus is truncated to whole skill points before it
+  reaches dodge, parry, miss or block.
 
 **Swing and cast timing**
 - Each 100 ms map update throws away swing-timer overshoot, about 50 ms lost per swing.
@@ -198,6 +208,11 @@ values. Human warrior, level 80, maxed skills, Worn Shortsword (Sword Specializa
   (debuff 58567; the ability 47467 triggers it) and Expose Armor (8647) don't stack, Faerie Fire (770) multiplies:
   10643 → 8514 → 8088.
 - Boss dummy health inside the instance is the template's 24,009,944, so `DungeonScale.DisabledID` keeps it unscaled.
+- Base stats (`TestSimvalBaseStats`, one naked level-80 character per class over all ten races): primary stats, max
+  health, armor, AP, ranged AP, melee and spell crit, real dodge and miss taken match the sim's generated base stats
+  exactly, allowing only for the server truncating stats. With 400 defense rating (81 skill) and 512 dodge rating the
+  diminished dodge and miss match too; ArP rating converts at 13.9957 per 1% for every class, and 1498 caps.
+  Characters leveled by GM command never learn Parry (3127), so their sheet shows none until taught it.
 
 ## Retail deviations
 

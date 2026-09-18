@@ -25,7 +25,7 @@ func (rogue *Rogue) ApplyTalents() {
 	rogue.AddStat(stats.MeleeHit, core.MeleeHitRatingPerHitChance*1*float64(rogue.Talents.Precision))
 	rogue.AddStat(stats.SpellHit, core.SpellHitRatingPerHitChance*1*float64(rogue.Talents.Precision))
 	rogue.AddStat(stats.Expertise, core.ExpertisePerQuarterPercentReduction*5*float64(rogue.Talents.WeaponExpertise))
-	rogue.AddStat(stats.ArmorPenetration, core.ArmorPenPerPercentArmor*3*float64(rogue.Talents.SerratedBlades))
+	rogue.PseudoStats.BonusArmorPenPct += 3 * float64(rogue.Talents.SerratedBlades)
 	rogue.AutoAttacks.OHConfig().DamageMultiplier *= rogue.dwsMultiplier()
 
 	if rogue.Talents.Deadliness > 0 {
@@ -360,7 +360,7 @@ func (rogue *Rogue) applyWeaponSpecializations() {
 
 	if ms := rogue.Talents.MaceSpecialization; ms > 0 {
 		if mask := rogue.GetProcMaskForTypes(proto.WeaponType_WeaponTypeMace); mask != core.ProcMaskUnknown {
-			rogue.AddStat(stats.ArmorPenetration, core.ArmorPenPerPercentArmor*3*float64(ms))
+			rogue.PseudoStats.BonusArmorPenPct += 3 * float64(ms)
 		}
 	}
 }

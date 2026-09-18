@@ -44,10 +44,11 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
 
 ## Against the server
 
-- `tools/simval` replays simval records captured on the server:
+- `tools/simval` replays simval records captured on the server, and rebuilds naked `info` characters in
+  the sim (azerothcore-parity only):
   `dock.sh run ./tools/simval -records /wotlk/sim/core/testdata/simval/simval.jsonl`.
 - Live e2e, which needs the user's OK: `cd [ac]/modules/mod-sim-validation && ./e2e/run.sh [TestName]`,
-  about 30 s. The module's `README.md` covers its commands, env vars and orphan cleanup.
+  about 2 min. The module's `README.md` covers its commands, env vars and orphan cleanup.
   - The suite deletes its own records, and the host side of the log mount is stale. To keep a fixture,
     stream it from inside the container while the suite runs, then dedupe:
     `docker exec ac-worldserver tail -F -n +1 /azerothcore/env/dist/logs/simval/simval.jsonl > stream.jsonl &`

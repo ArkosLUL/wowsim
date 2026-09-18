@@ -23,7 +23,7 @@ func newOutcomePair(critPct float64) (*Spell, *Unit, *AttackTable) {
 		Type:        PlayerUnit,
 		Level:       80,
 		stats:       stats.Stats{stats.MeleeCrit: critPct * CritRatingPerCritChance},
-		PseudoStats: stats.NewPseudoStats(),
+		PseudoStats: newPseudoStats(),
 	}
 	attacker.PseudoStats.InFrontOfTarget = true
 
@@ -31,7 +31,7 @@ func newOutcomePair(critPct float64) (*Spell, *Unit, *AttackTable) {
 		Type:        EnemyUnit,
 		Level:       83,
 		IsWorldBoss: true,
-		PseudoStats: stats.NewPseudoStats(),
+		PseudoStats: newPseudoStats(),
 	}
 	defender.PseudoStats.CanBlock = true
 
@@ -162,14 +162,14 @@ func newEnemyPair() (*Spell, *Unit, *AttackTable) {
 		Level:       83,
 		IsWorldBoss: true,
 		stats:       stats.Stats{stats.MeleeCrit: 5 * CritRatingPerCritChance},
-		PseudoStats: stats.NewPseudoStats(),
+		PseudoStats: newPseudoStats(),
 	}
 	boss.PseudoStats.InFrontOfTarget = true
 
 	player := &Unit{
 		Type:        PlayerUnit,
 		Level:       80,
-		PseudoStats: stats.NewPseudoStats(),
+		PseudoStats: newPseudoStats(),
 	}
 
 	spell := &Spell{
@@ -318,7 +318,7 @@ func TestEnemyYellowHitsAgainstPlayer(t *testing.T) {
 		t.Errorf("crit chance = %.4f, want 0.056", got)
 	}
 	player.stats[stats.Defense] = 100 * DefenseRatingPerDefense
-	want := 0.056 - float64(int32(player.stats[stats.Defense]/DefenseRatingPerDefense))*PercentPerSkillPoint/100
+	want := 0.056 - float64(DefenseSkillFromRating(player.stats[stats.Defense]))*PercentPerSkillPoint/100
 	if got := spell.PhysicalCritChance(attackTable); math.Abs(got-want) > 1e-9 {
 		t.Errorf("crit chance with defense = %.4f, want %.4f", got, want)
 	}
@@ -327,9 +327,9 @@ func TestEnemyYellowHitsAgainstPlayer(t *testing.T) {
 // Only real pets glance. Spirit wolves, treants and the like are guardians to
 // the server.
 func TestOnlyPlayersAndPetsGlance(t *testing.T) {
-	boss := &Unit{Type: EnemyUnit, Level: 83, IsWorldBoss: true, PseudoStats: stats.NewPseudoStats()}
-	guardian := &Unit{Type: PetUnit, Level: 80, PseudoStats: stats.NewPseudoStats()}
-	pet := &Unit{Type: PetUnit, Level: 80, SummonedAsPet: true, PseudoStats: stats.NewPseudoStats()}
+	boss := &Unit{Type: EnemyUnit, Level: 83, IsWorldBoss: true, PseudoStats: newPseudoStats()}
+	guardian := &Unit{Type: PetUnit, Level: 80, PseudoStats: newPseudoStats()}
+	pet := &Unit{Type: PetUnit, Level: 80, SummonedAsPet: true, PseudoStats: newPseudoStats()}
 
 	if got := GlanceBP(NewAttackTable(guardian, boss).meleeTableInput()); got != 0 {
 		t.Errorf("guardian glance chance = %d, want 0", got)

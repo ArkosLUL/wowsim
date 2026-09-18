@@ -3,6 +3,7 @@ package core
 import (
 	"testing"
 
+	"github.com/wowsims/wotlk/sim/core/proto"
 	"github.com/wowsims/wotlk/sim/core/stats"
 )
 
@@ -15,7 +16,7 @@ func TestSunderArmorStacks(t *testing.T) {
 		Level:        83,
 		auraTracker:  newAuraTracker(),
 		initialStats: stats.Stats{stats.Armor: baseArmor},
-		PseudoStats:  stats.NewPseudoStats(),
+		PseudoStats:  newPseudoStats(),
 		Metrics:      NewUnitMetrics(),
 	}
 	target.stats = target.initialStats
@@ -47,7 +48,7 @@ func TestAcidSpitStacks(t *testing.T) {
 		Level:        83,
 		auraTracker:  newAuraTracker(),
 		initialStats: stats.Stats{stats.Armor: baseArmor},
-		PseudoStats:  stats.NewPseudoStats(),
+		PseudoStats:  newPseudoStats(),
 		Metrics:      NewUnitMetrics(),
 	}
 	target.stats = target.initialStats
@@ -79,7 +80,7 @@ func TestExposeArmor(t *testing.T) {
 		Level:        83,
 		auraTracker:  newAuraTracker(),
 		initialStats: stats.Stats{stats.Armor: baseArmor},
-		PseudoStats:  stats.NewPseudoStats(),
+		PseudoStats:  newPseudoStats(),
 		Metrics:      NewUnitMetrics(),
 	}
 	target.stats = target.initialStats
@@ -105,7 +106,7 @@ func TestMajorArmorReductionAurasDoNotStack(t *testing.T) {
 		Level:        83,
 		auraTracker:  newAuraTracker(),
 		initialStats: stats.Stats{stats.Armor: baseArmor},
-		PseudoStats:  stats.NewPseudoStats(),
+		PseudoStats:  newPseudoStats(),
 		Metrics:      NewUnitMetrics(),
 	}
 	target.stats = target.initialStats
@@ -139,7 +140,7 @@ func TestMajorAndMinorArmorReductionsApplyMultiplicatively(t *testing.T) {
 		Level:        83,
 		auraTracker:  newAuraTracker(),
 		initialStats: stats.Stats{stats.Armor: baseArmor},
-		PseudoStats:  stats.NewPseudoStats(),
+		PseudoStats:  newPseudoStats(),
 		Metrics:      NewUnitMetrics(),
 	}
 	target.stats = target.initialStats
@@ -188,13 +189,15 @@ func TestDamageReductionFromArmor(t *testing.T) {
 		Level:        83,
 		auraTracker:  newAuraTracker(),
 		initialStats: stats.Stats{stats.Armor: baseArmor},
-		PseudoStats:  stats.NewPseudoStats(),
+		PseudoStats:  newPseudoStats(),
 		Metrics:      NewUnitMetrics(),
 	}
 	attacker := Unit{
-		Type:  PlayerUnit,
-		Level: 80,
+		Type:        PlayerUnit,
+		Level:       80,
+		PseudoStats: newPseudoStats(),
 	}
+	attacker.PseudoStats.ArmorPenRatingPerPercent = RatingPerPercent(proto.Class_ClassWarrior, CRArmorPenetration)
 	spell := &Spell{}
 	target.stats = target.initialStats
 	expectedDamageReduction := 0.41132

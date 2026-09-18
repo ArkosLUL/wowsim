@@ -9,12 +9,12 @@ character_stats_results: {
   final_stats: 3679
   final_stats: 109
   final_stats: 244
-  final_stats: 2355.34914
+  final_stats: 2355.34915
   final_stats: 702
   final_stats: 0
-  final_stats: 755.7
+  final_stats: 1078.66
   final_stats: 244
-  final_stats: 1216.08921
+  final_stats: 1497.17341
   final_stats: 702
   final_stats: 0
   final_stats: 0
@@ -22,7 +22,7 @@ character_stats_results: {
   final_stats: 0
   final_stats: 0
   final_stats: 5658.3
-  final_stats: 755.7
+  final_stats: 1088.34
   final_stats: 0
   final_stats: 0
   final_stats: 0
@@ -763,8 +763,8 @@ dps_results: {
 dps_results: {
  key: "TestFrostFire-Average-Default"
  value: {
-  dps: 10335.94921
-  tps: 8307.0348
+  dps: 10335.9578
+  tps: 8307.04168
  }
 }
 dps_results: {

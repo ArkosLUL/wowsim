@@ -18,15 +18,15 @@ character_stats_results: {
   final_stats: 0
   final_stats: 0
   final_stats: 282.18498
-  final_stats: 1000
+  final_stats: 0
   final_stats: 0
   final_stats: 0
   final_stats: 20430.874
-  final_stats: 755.7
+  final_stats: 1304.93
   final_stats: 669.96245
   final_stats: 0
   final_stats: 0
-  final_stats: 564.94186
+  final_stats: 293
   final_stats: 679.68094
   final_stats: 15
   final_stats: 38623.6555
@@ -196,8 +196,8 @@ dps_results: {
 dps_results: {
  key: "TestBloodTank-AllItems-DarkrunedBattlegear"
  value: {
-  dps: 2493.80908
-  tps: 7650.61967
+  dps: 2493.80172
+  tps: 7650.60441
  }
 }
 dps_results: {
@@ -224,15 +224,15 @@ dps_results: {
 dps_results: {
  key: "TestBloodTank-AllItems-Deathbringer'sWill-50362"
  value: {
-  dps: 2312.02535
-  tps: 7039.75591
+  dps: 2312.0043
+  tps: 7039.71228
  }
 }
 dps_results: {
  key: "TestBloodTank-AllItems-Deathbringer'sWill-50363"
  value: {
-  dps: 2320.45634
-  tps: 7117.66511
+  dps: 2320.43362
+  tps: 7117.618
  }
 }
 dps_results: {
@@ -420,8 +420,8 @@ dps_results: {
 dps_results: {
  key: "TestBloodTank-AllItems-IncisorFragment-37723"
  value: {
-  dps: 2226.89089
-  tps: 6884.48266
+  dps: 2226.88205
+  tps: 6884.46433
  }
 }
 dps_results: {
@@ -596,8 +596,8 @@ dps_results: {
 dps_results: {
  key: "TestBloodTank-AllItems-Scourgelord'sBattlegear"
  value: {
-  dps: 2897.38992
-  tps: 9088.76495
+  dps: 2897.33647
+  tps: 9088.65413
  }
 }
 dps_results: {
@@ -617,8 +617,8 @@ dps_results: {
 dps_results: {
  key: "TestBloodTank-AllItems-Shadowmourne-49623"
  value: {
-  dps: 2956.30296
-  tps: 8722.71286
+  dps: 2956.28254
+  tps: 8722.67051
  }
 }
 dps_results: {
@@ -722,8 +722,8 @@ dps_results: {
 dps_results: {
  key: "TestBloodTank-AllItems-Thassarian'sBattlegear"
  value: {
-  dps: 2554.05001
-  tps: 7801.9696
+  dps: 2554.03962
+  tps: 7801.94805
  }
 }
 dps_results: {
@@ -827,9 +827,9 @@ dps_results: {
 dps_results: {
  key: "TestBloodTank-Average-Default"
  value: {
-  dps: 2574.16767
-  tps: 8649.90013
-  dtps: 291.41059
+  dps: 2576.95797
+  tps: 8666.17973
+  dtps: 288.99638
  }
 }
 dps_results: {
@@ -1003,8 +1003,8 @@ dps_results: {
 dps_results: {
  key: "TestBloodTank-SwitchInFrontOfTarget-Default"
  value: {
-  dps: 2580.78767
-  tps: 8498.83953
-  dtps: 269.46164
+  dps: 2581.96548
+  tps: 8473.24634
+  dtps: 267.33395
  }
 }

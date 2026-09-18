@@ -110,6 +110,9 @@ type Unit struct {
 
 	PseudoStats stats.PseudoStats
 
+	// Only players have one; see avoid_dr.go.
+	playerAvoidance *playerAvoidance
+
 	currentPowerBar PowerBarType
 	healthBar
 	manaBar
@@ -347,8 +350,20 @@ func (unit *Unit) BlockValue() float64 {
 	return unit.PseudoStats.BlockValueMultiplier * unit.stats[stats.BlockValue]
 }
 
+// ArmorPenetrationPercentage is how much of the armor penetration cap this unit ignores. The rating
+// and the percentage auras add up, and together can't exceed all of it (Unit::CalcArmorReducedDamage).
 func (unit *Unit) ArmorPenetrationPercentage(armorPenRating float64) float64 {
-	return max(min(armorPenRating/ArmorPenPerPercentArmor, 100.0)*0.01, 0.0)
+	pct := armorPenRating/unit.PseudoStats.ArmorPenRatingPerPercent + unit.PseudoStats.BonusArmorPenPct
+	return max(min(pct, 100.0)*0.01, 0.0)
+}
+
+// newPseudoStats starts every unit on the unscaled rating conversions; characters then switch to their
+// class's.
+func newPseudoStats() stats.PseudoStats {
+	ps := stats.NewPseudoStats()
+	ps.MeleeHasteRatingPerHastePercent = HasteRatingPerHastePercent
+	ps.ArmorPenRatingPerPercent = CombatRatingBase[CRArmorPenetration]
+	return ps
 }
 
 func (unit *Unit) RangedSwingSpeed() float64 {

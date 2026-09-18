@@ -348,7 +348,7 @@ func (at *AttackTable) partialBlockBP() int32 {
 // blockChancePct is a player's sheet block chance. Unlike dodge and parry, it
 // takes every point of defense skill and none of it diminishes.
 func (unit *Unit) blockChancePct() float32 {
-	defenseSkill := int32(unit.stats[stats.Defense] / DefenseRatingPerDefense)
+	defenseSkill := DefenseSkillFromRating(unit.stats[stats.Defense])
 	return 5 + float32(unit.stats[stats.Block]/BlockRatingPerBlockChance) + float32(defenseSkill)*PercentPerSkillPoint
 }
 
@@ -407,7 +407,7 @@ func (spell *Spell) YellowTableInput(attackTable *AttackTable) MeleeTableInput {
 func (spell *Spell) enemyTableInput(attackTable *AttackTable, defender *Unit) MeleeTableInput {
 	in := attackTable.meleeTableInput()
 	in.InFront = true
-	in.DefenderSkill = attackTable.DefenderMaxSkill + int32(defender.stats[stats.Defense]/DefenseRatingPerDefense)
+	in.DefenderSkill = attackTable.DefenderMaxSkill + DefenseSkillFromRating(defender.stats[stats.Defense])
 
 	stunned := defender.PseudoStats.Stunned
 	in.CanDodge = !stunned
@@ -415,10 +415,10 @@ func (spell *Spell) enemyTableInput(attackTable *AttackTable, defender *Unit) Me
 	in.CanBlock = defender.PseudoStats.CanBlock && !stunned
 
 	in.MissPct = attackTable.BaseMissPct + float32((spell.Unit.PseudoStats.IncreasedMissChance+
-		defender.GetDiminishedMissChance()+
+		defender.DefenseMissChance()+
 		defender.PseudoStats.ReducedPhysicalHitTakenChance)*100)
-	in.DodgePct = float32((defender.PseudoStats.BaseDodge + defender.GetDiminishedDodgeChance()) * 100)
-	in.ParryPct = float32((defender.PseudoStats.BaseParry + defender.GetDiminishedParryChance()) * 100)
+	in.DodgePct = float32(defender.DodgeChance() * 100)
+	in.ParryPct = float32(defender.ParryChance() * 100)
 	in.BlockPct = defender.blockChancePct()
 
 	return in
@@ -429,7 +429,7 @@ func (spell *Spell) enemyTableInput(attackTable *AttackTable, defender *Unit) Me
 // term with the player's full defense skill.
 func (spell *Spell) enemyCritChance(attackTable *AttackTable) float64 {
 	defender := attackTable.Defender
-	defenseSkill := attackTable.DefenderMaxSkill + int32(defender.stats[stats.Defense]/DefenseRatingPerDefense)
+	defenseSkill := attackTable.DefenderMaxSkill + DefenseSkillFromRating(defender.stats[stats.Defense])
 	critChance := (spell.Unit.stats[stats.MeleeCrit]+spell.BonusCritRating)/(CritRatingPerCritChance*100) -
 		defender.stats[stats.Resilience]/ResilienceRatingPerCritReductionChance/100 -
 		defender.PseudoStats.ReducedCritTakenChance -

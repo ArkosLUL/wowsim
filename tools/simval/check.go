@@ -114,6 +114,8 @@ func CheckRecord(rec record) []Check {
 		return checkSpell(rec)
 	case "armor":
 		return checkArmor(rec)
+	case "info":
+		return checkInfo(rec)
 	default:
 		return nil
 	}
@@ -258,12 +260,20 @@ func checkResists(rec record, server spellDerived) []Check {
 }
 
 func checkArmor(rec record) []Check {
+	// Battle Stance and the like add to what the rating gives, all of it capped by
+	// the victim's level rather than the attacker's.
+	var attacker core.Unit
+	attacker.PseudoStats.BonusArmorPenPct = rec.Attacker.ArmorPenAuraPct
+	attacker.PseudoStats.ArmorPenRatingPerPercent = core.CombatRatingBase[core.CRArmorPenetration]
+	if class, ok := classes[rec.Attacker.Class]; ok && rec.Attacker.IsPlayer {
+		attacker.PseudoStats.ArmorPenRatingPerPercent = core.RatingPerPercent(class.class, core.CRArmorPenetration)
+	}
+	armorPen, _ := rec.Attacker.rating("armorPenetration")
+
 	var checks []Check
 	for i, scenario := range rec.Scenarios {
-		// Battle Stance and the like reach through the cap, which comes off the
-		// victim's level rather than the attacker's.
 		reducible := core.ArmorPenetrationCap(scenario.Armor, rec.Target.Level)
-		effective := scenario.Armor - reducible*rec.Attacker.ArmorPenAuraPct/100
+		effective := scenario.Armor - reducible*attacker.ArmorPenetrationPercentage(armorPen)
 		got := core.ArmorMultiplier(effective, rec.Attacker.Level)
 		checks = append(checks, checkMultiplier(
 			fmt.Sprintf("armor scenario %d (%.0f armor)", i+1, scenario.Armor), got, scenario.Multiplier))

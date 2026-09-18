@@ -59,7 +59,7 @@ func NewPet(name string, owner *Character, baseStats stats.Stats, statInheritanc
 				Index:       owner.Party.Raid.getNextPetIndex(),
 				Label:       fmt.Sprintf("%s - %s", owner.Label, name),
 				Level:       CharacterLevel,
-				PseudoStats: stats.NewPseudoStats(),
+				PseudoStats: newPseudoStats(),
 				auraTracker: newAuraTracker(),
 				Metrics:     NewUnitMetrics(),
 
@@ -80,6 +80,8 @@ func NewPet(name string, owner *Character, baseStats stats.Stats, statInheritanc
 	pet.AddStats(baseStats)
 	pet.addUniversalStatDependencies()
 	pet.PseudoStats.InFrontOfTarget = owner.PseudoStats.InFrontOfTarget
+	// Pets that get armor penetration get their owner's, which converts it at the owner's rate.
+	pet.PseudoStats.ArmorPenRatingPerPercent = owner.PseudoStats.ArmorPenRatingPerPercent
 
 	return pet
 }

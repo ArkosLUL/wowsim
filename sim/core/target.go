@@ -125,7 +125,7 @@ func NewTarget(options *proto.Target, targetIndex int32) *Target {
 			MobType:     options.MobType,
 			auraTracker: newAuraTracker(),
 			stats:       unitStats,
-			PseudoStats: stats.NewPseudoStats(),
+			PseudoStats: newPseudoStats(),
 			Metrics:     NewUnitMetrics(),
 
 			StatDependencyManager: stats.NewStatDependencyManager(),
