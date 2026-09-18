@@ -176,7 +176,8 @@ func printCombo(combo *proto.BulkComboResult) string {
 		if j != 0 {
 			itemtext += ";"
 		}
-		itemtext += fmt.Sprintf("%s@%s", core.ItemsByID[item.Item.Id].Name, item.Slot.String())
+		dbItem, _ := core.LookupItem(item.Item.Id)
+		itemtext += fmt.Sprintf("%s@%s", dbItem.Name, item.Slot.String())
 	}
 	itemtext += "]"
 	return fmt.Sprintf("%s,%0.1f\n", itemtext, combo.UnitMetrics.Dps.Avg)

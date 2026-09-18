@@ -89,11 +89,31 @@ func TestCodeDefaultsMatchServerSource(t *testing.T) {
 	}
 }
 
-func TestLiveConfigBuilds(t *testing.T) {
+// catches a config change nobody regenerated for, and hand edits to either file
+func TestGeneratedFilesMatchLiveConfig(t *testing.T) {
 	if _, err := os.Stat(acDir); err != nil {
 		t.Skip("no AzerothCore checkout at " + acDir)
 	}
-	if _, _, err := liveSettings(acDir); err != nil {
+	settings, f, err := liveSettings(acDir)
+	if err != nil {
 		t.Fatal(err)
+	}
+
+	for rel, render := range map[string]func() ([]byte, error){
+		"sim/core/server_defaults_auto_gen.go":          func() ([]byte, error) { return renderGo(settings, f) },
+		"ui/core/constants/server_defaults_auto_gen.ts": func() ([]byte, error) { return renderTS(settings) },
+	} {
+		want, err := render()
+		if err != nil {
+			t.Fatal(err)
+		}
+		got, err := os.ReadFile(filepath.Join("..", "..", "..", rel))
+		if err != nil {
+			t.Fatal(err)
+		}
+		// Windows checkouts get CRLF
+		if strings.ReplaceAll(string(got), "\r", "") != string(want) {
+			t.Errorf("%s doesn't match the live config, rerun gen_server_defaults", rel)
+		}
 	}
 }
