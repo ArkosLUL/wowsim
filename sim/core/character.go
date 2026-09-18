@@ -664,6 +664,15 @@ func (character *Character) GetConjuredCD() *Timer {
 	return character.GetOrInitTimer(&character.conjuredCD)
 }
 
+// Server returns the server config this character's raid runs under, or the live server's for a
+// character outside a raid, like the hand-built ones in tests.
+func (character *Character) Server() *ServerSettings {
+	if character.Party == nil || character.Party.Raid == nil || character.Party.Raid.Server == nil {
+		return NewServerSettings(nil)
+	}
+	return character.Party.Raid.Server
+}
+
 // Returns the talent tree (0, 1, or 2) of the tree with the most points.
 //
 // talentStr is expected to be a wowhead-formatted talent string, e.g.
