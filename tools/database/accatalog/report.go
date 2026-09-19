@@ -50,16 +50,23 @@ func printDiff(w io.Writer, previous, catalog *proto.ServerCatalog) {
 		return
 	}
 	old, cur := byID(previous), byID(catalog)
-	var added, removed, retiered, resourced []string
+	var added, removed, retiered, pvp, resourced []string
 	for _, id := range slices.Sorted(maps.Keys(cur)) {
 		item := cur[id]
 		before, ok := old[id]
-		switch {
-		case !ok:
+		if !ok {
 			added = append(added, describe(item))
+			continue
+		}
+		// listed even when the tier moved too, since the tier line doesn't show the old flag
+		pvpFlipped := before.Pvp != item.Pvp
+		if pvpFlipped {
+			pvp = append(pvp, describe(item))
+		}
+		switch {
 		case before.ProgressionTier != item.ProgressionTier || before.FallbackTier != item.FallbackTier:
 			retiered = append(retiered, fmt.Sprintf("%s, was %d", describe(item), before.ProgressionTier))
-		case len(before.Sources) != len(item.Sources):
+		case !pvpFlipped && len(before.Sources) != len(item.Sources):
 			resourced = append(resourced, describe(item))
 		}
 	}
@@ -72,6 +79,7 @@ func printDiff(w io.Writer, previous, catalog *proto.ServerCatalog) {
 	printList(w, "added", added)
 	printList(w, "removed", removed)
 	printList(w, "tier changed", retiered)
+	printList(w, "pvp flag changed", pvp)
 	printList(w, "source count changed", resourced)
 	fmt.Fprintln(w)
 }

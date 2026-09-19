@@ -481,6 +481,66 @@ func TestResolveCatalogCrafted(t *testing.T) {
 	}
 }
 
+// A craft only recipes teach also waits for its cheapest recipe; one a trainer teaches doesn't.
+func TestResolveCatalogRecipes(t *testing.T) {
+	const (
+		rawGem, cutGem, craft                    = 36919, 40111, 66447
+		tocRecipe, ulduarRecipe, lostRecipe      = 46917, 46918, 46919
+		timothyJones, tocGate, ulduarGate, other = 28721, 15, 14, 0
+	)
+	tests := []struct {
+		name     string
+		recipes  []int32
+		trained  bool
+		wantTier int32 // 0: nothing resolves
+		wantVia  int32
+	}{
+		{"no recipe", nil, false, 13, rawGem},
+		{"ToC recipe", []int32{tocRecipe}, false, 15, tocRecipe},
+		{"a trainer teaches it too", []int32{tocRecipe}, true, 13, rawGem},
+		{"cheapest of two recipes", []int32{tocRecipe, ulduarRecipe}, false, 14, ulduarRecipe},
+		{"recipe nothing awards", []int32{lostRecipe}, false, 0, 0},
+		{"one recipe nothing awards", []int32{lostRecipe, ulduarRecipe}, false, 14, ulduarRecipe},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f := newCatalogFixture()
+			f.material(rawGem)
+			f.rows.Items = append(f.rows.Items, CatalogItemRow{Entry: cutGem, Name: "Bold Cardinal Ruby", Class: itemClassGem, Quality: 4, GemProperties: 1})
+			for _, recipe := range tt.recipes {
+				f.rows.Items = append(f.rows.Items, CatalogItemRow{Entry: recipe, Name: "Design", Class: 9, Teaches: []int32{craft}})
+			}
+			f.drop(1, mapNorthrend, 1, rawGem)
+			for recipe, gate := range map[int32]int32{tocRecipe: tocGate, ulduarRecipe: ulduarGate} {
+				f.vendor(timothyJones, mapNorthrend, recipe, 0)
+				f.rows.Conditions = append(f.rows.Conditions, ConditionRow{SourceType: conditionSourceVendor, SourceGroup: timothyJones,
+					SourceEntry: recipe, Type: conditionQuestRewarded, Value1: progressionQuestBase + gate})
+			}
+			f.rows.Spells = []CreateSpellRow{{ID: craft, Name: "Bold Cardinal Ruby", Creates: []int32{cutGem}, Reagents: []int32{rawGem},
+				Profession: proto.Profession_Jewelcrafting}}
+			if tt.trained {
+				f.rows.TrainerSpells = []int32{craft}
+			}
+
+			items, _, stats := f.resolve(t)
+			gem := items[cutGem]
+			if tt.wantTier == 0 {
+				if gem != nil || !slices.Contains(stats.Unresolved, cutGem) {
+					t.Errorf("cut gem = %v, want it unresolved", gem)
+				}
+				return
+			}
+			if gem == nil || gem.ProgressionTier != tt.wantTier || len(gem.Sources) != 1 {
+				t.Fatalf("cut gem = %v, want tier %d", gem, tt.wantTier)
+			}
+			if s := gem.Sources[0]; s.Kind != proto.CatalogSourceKind_CatalogSourceCrafted || s.SpellId != craft || s.ViaItemId != tt.wantVia ||
+				s.ProgressionTier != tt.wantTier {
+				t.Errorf("source = %v, want it via %d", s, tt.wantVia)
+			}
+		})
+	}
+}
+
 // Transmutes and the like loop back on themselves; the loop can't pull a tier below its sources.
 func TestResolveCatalogCycles(t *testing.T) {
 	f := newCatalogFixture()
@@ -615,6 +675,34 @@ func TestResolveCatalogPvP(t *testing.T) {
 	}
 }
 
+func TestResolveCatalogPvPCurrencies(t *testing.T) {
+	tests := []struct {
+		name     string
+		currency int32
+		wantPvP  bool
+	}{
+		{"Wintergrasp Mark of Honor", 43589, true},
+		{"Stone Keeper's Shard", 43228, true},
+		{"Venture Coin", 37836, true},
+		{"Emblem of Heroism", 40752, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f := newCatalogFixture()
+			f.gear(100)
+			f.material(tt.currency)
+			f.drop(1, mapNorthrend, 1, tt.currency)
+			f.rows.ExtendedCosts = []ExtendedCostRow{{ID: 1, Items: []int32{tt.currency}}}
+			f.vendor(10, mapNorthrend, 100, 1)
+
+			items, _, _ := f.resolve(t)
+			if it := items[100]; it == nil || it.Pvp != tt.wantPvP || it.ProgressionTier != 13 {
+				t.Errorf("item = %v, want pvp %v", it, tt.wantPvP)
+			}
+		})
+	}
+}
+
 func TestResolveCatalogBattlegroundLootIsPvP(t *testing.T) {
 	f := newCatalogFixture()
 	f.gear(100)
@@ -700,6 +788,47 @@ func TestResolveCatalogCollapsesSources(t *testing.T) {
 	}
 	if s := items[200].Sources; len(s) != 1 || s[0].Name != "Northrend: 9 sources" || s[0].MapId != mapNorthrend {
 		t.Errorf("vendor sources = %v", s)
+	}
+}
+
+// A creature that drops an item twice, e.g. from its loot and its pickpocket table, counts once in
+// "N creatures", listed or not.
+func TestResolveCatalogHolderCounts(t *testing.T) {
+	tests := []struct {
+		name      string
+		creatures int32
+		twice     int32
+		wantNames []string
+	}{
+		{"three are listed", 3, 0, []string{"Northrend: Boss", "Northrend: Boss", "Northrend: Boss"}},
+		{"repeat among the listed ones", 3, 2, []string{"Northrend: Boss", "Northrend: Boss", "Northrend: Boss"}},
+		{"past three they're counted", 5, 0, []string{"Northrend: 5 creatures"}},
+		{"repeat among the first four", 5, 1, []string{"Northrend: 5 creatures"}},
+		{"repeat past the first four", 6, 6, []string{"Northrend: 6 creatures"}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f := newCatalogFixture()
+			f.gear(100)
+			for npc := int32(1); npc <= tt.creatures; npc++ {
+				f.creature(npc, 1)
+				f.spawn(npc, mapNorthrend, 1)
+				if npc == tt.twice {
+					f.rows.Creatures[len(f.rows.Creatures)-1].PickpocketLootID = 2
+				}
+			}
+			f.loot(LootCreature, 1, 100)
+			f.loot(LootPickpocketing, 2, 100)
+
+			items, _, _ := f.resolve(t)
+			var names []string
+			for _, s := range items[100].Sources {
+				names = append(names, s.Name)
+			}
+			if !slices.Equal(names, tt.wantNames) {
+				t.Errorf("sources = %v, want %v", names, tt.wantNames)
+			}
+		})
 	}
 }
 

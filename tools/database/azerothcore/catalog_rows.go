@@ -31,9 +31,12 @@ type CatalogRows struct {
 	Quests        []QuestRow
 	QuestStarters []QuestStarterRow
 
-	Spells       []CreateSpellRow
-	Achievements []AchievementRewardRow
-	Areas        []AreaRow
+	Spells []CreateSpellRow
+	// Spells trainers teach (trainer_spell). A create-item spell a trainer teaches doesn't wait for
+	// its recipe.
+	TrainerSpells []int32
+	Achievements  []AchievementRewardRow
+	Areas         []AreaRow
 
 	LimitCategories []LimitCategoryRow
 }
@@ -69,6 +72,9 @@ type CatalogItemRow struct {
 	// On-use spells (spelltrigger 0): a create-item or spell-loot spell here makes the item a
 	// source of what that spell creates.
 	UseSpells []int32
+	// Spells the item teaches when used, i.e. what a recipe teaches: its learn-spell slots
+	// (spelltrigger 6) and what its on-use spells' learn effects name.
+	Teaches []int32
 }
 
 type CatalogMapRow struct {
