@@ -312,6 +312,11 @@ raidctx.
 Build the evaluator with `NewSimEvaluator(r, WeightedMetrics(r.Settings)...)`: only the metrics it's given
 get paired samples. The fake `Evaluator` fails a whole call on one bad point, like the real one.
 
+Call `raidctx.Derive` only for the raid batch, after `PrepareRequest`, and sim its result at
+`raidctx.TargetIndex`. The gem DP keeps one flag per distinct unique gem (2^u states, 81 unique gems in the
+catalog). If whole-loadout regems are slow, count per kind (same colors, category and uniqueness) instead:
+the top m of a kind always dominate, so it stays exact.
+
 **Tests:**
 - A known-answer brute force with a fake `Evaluator`.
 - A real Fury P1 trinket × ring brute force: the pick must be within 2 se.
@@ -389,7 +394,9 @@ screen, the two-stage batch, the raid-DPS column.
 
 ### BIS-e2e-perf (wave J)
 
-- Calibration: full raid vs the derived context, with a warning past ±3%.
+- Calibration: full raid vs the derived context, with a warning past ±3%. Expected gaps: derived contexts
+  get Battle Shout that DPS warrior APLs never cast and Divine Guardian the raid sim's paladins never cast,
+  and miss Judgement of Wisdom and Light and Hunter's Mark, which `RAID_STATS_OPTIONS` doesn't list.
 - Time whole runs. `EffortBudget` assumes every thread busy, but sequential steps (bisection, search moves)
   leave threads idle. The INVESTIGATION's tank, raid-contribution and batch times are still estimates.
 - An end-to-end batch over the roster.

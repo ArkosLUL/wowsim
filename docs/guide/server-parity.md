@@ -74,7 +74,13 @@ class by simval.
   - A DoT refresh resets the tick timer only when StackAmount < 2.
   - Periodic ticks crit only with aura 286.
 - **Pets:** pet hit is floored to a whole percent. Pet scaling comes from the server's scripts.
-- **Enchant PPMs:** Mongoose 1, Icebreaker 3, Deathfrost 3.
+- **Enchant PPMs:** Mongoose 1, Icebreaker 3, Deathfrost 3. An enchant procs only from the weapon that
+  hit.
+- **Dungeon scale** (`NewEncounter`): health and armor become `round(float32(value) × multiplier)`, half
+  away from zero. Damage multiplies the target's damage dealt, so swings, spells and DoTs all get it,
+  except spells with `SpellFlagIgnoreAttackerModifiers`. The server truncates each scaled hit; the sim
+  doesn't. Targets with `world_boss` (else level ≥ 83) take the boss set. The placeholder target of an
+  encounter without targets is never scaled.
 
 ## Items
 
@@ -85,9 +91,8 @@ checks it and the Go effects.
 - **Kept from Wowhead:** items nothing on the server awards (the only rows left in `items_diff.csv`),
   heirlooms and random-enchant items.
 - **Hardcoded Go effects:**
-  - About 26 Ulduar-tier trinkets and relics carry Classic's rescaled values.
-  - 19 proc-rate or mechanic rows differ, and so do 4 set bonuses.
+  - Shared ones (`sim/common`) match the server. Thunderfury's and Rod of the Sun King's PPMs are
+    literals: `serverdata` doesn't carry `item_template`'s `spellppmRate`.
+  - Class relics, sigils, totems, idols and a few class set bonuses still carry Classic values until
+    their class's P7 item. Totem of the Third Wind also buffs Healing Wave.
   - Verdicts per row are in `docs/azerothcore-item-diff/data/{effects,sets}_review.csv`.
-- **Sim bugs on any server:**
-  - Forethought Talisman uses spell 3752 instead of 3572, and procs on crits only.
-  - Totem of the Third Wind also buffs Healing Wave.

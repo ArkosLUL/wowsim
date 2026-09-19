@@ -62,7 +62,7 @@ The live server: where it runs, how to reach it, what's installed. For table and
 | mod-reforging | moves 40% of one stat into another; stats 6, 13, 14, 31, 32, 36, 37; never into a stat the item already has | `ItemSpec.reforge` |
 | mod-racial-trait-swap | swaps racial abilities, not base stats or faction | `Player.racial_traits` |
 | mod-shared-professions | shares profession skills and spells per account, applied at login | any number of professions |
-| mod-dungeon-scale | raid creature stat multipliers; live boss health ×1.2 | server setting ([ADR 0004](../adr/0004-server-config-as-settings.md)) |
+| mod-dungeon-scale | raid creature stat multipliers; live boss health ×1.2 | server setting ([ADR 0004](../adr/0004-server-config-as-settings.md)), applied to targets ([server-parity](server-parity.md#other-measured-server-behaviour)) |
 | mod-spell-tweaks | spell and talent changes, listed in the parity INVESTIGATION; swaps two hunter talent tiers | toggles become server settings; talents keep stock tree positions |
 | mod-playerbots | bots fill the raid; strategies in `acore_playerbots.playerbots_db_store` | none |
 | mod-chronicle | combat logs, inside instances only. The server deletes its copy after upload, so download from the app API | recorded runs |
@@ -97,8 +97,8 @@ mod-individual-progression stores a character's tier as rewarded quest `66000 + 
 - Emblems (`data/sql/world/base/wotlk_emblems.sql`): Heroism and Valor 13, Conquest 14, Triumph 15, Frost 16.
   A few trickle in earlier (Sartharion's Satchel of Spoils holds a Triumph at 13, and Usuri Brightcoin trades
   Triumph down); the catalog keeps these tiers as floors.
-- Epic gems also drop from Titanium Ore prospecting (reference 13005) with no tier condition, so they're
-  obtainable at 13.
+- Uncut epic gems also drop from Titanium Ore prospecting (reference 13005) with no tier condition, so
+  they're obtainable at 13. The cuts wait for Timothy Jones' designs at 15.
 
 ## Raid characters
 

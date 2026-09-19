@@ -65,12 +65,9 @@ G = changes goldens. FS = runs all 37 suites.
 
 ## Current wave
 
-- Wave: C, running. Wave B (base `893b42993`) landed on `master`.
-- Base SHA: `eaa6715af`.
-- Workflow runId: `wf_4e3f52d3-4ba`, continuing `wf_245371a2-8ad` (a session limit killed 3 agents)
-  with PAR-P6-2 and BIS-raidctx going straight to review and BIS-rules from its implementer. Transcript
-  dirs: `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\<runId>`.
-- Live DBCs for this wave: `G:\DevStuff\GitHub\.wave-loop\dbc-live` (refreshed from `ac-worldserver`).
+- Wave: D, not started. Wave C (base `eaa6715af`) landed on `master`.
+- Base SHA: set at wave start.
+- Workflow runId: none.
 
 ## Status
 
@@ -93,4 +90,4 @@ Later WIs are added as their wave starts.
 
 ## User actions
 
-None until wave C's report.
+"continue" for wave D.

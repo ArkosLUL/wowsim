@@ -34,6 +34,8 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
   - `delta` compares dps, hps, tps and dtps per test, and lists tests that appear or disappear. Diff the
     two files for stats, casts and stat weights.
 - A `.results` that shows as modified with an empty `git diff` is CRLF noise: leave it out of commits.
+- `sim/optimizer/raidctx/testdata/raid25.derived.json` is a golden too. Rewrite it with
+  `go test --tags=with_db ./sim/optimizer/raidctx -run TestDeriveFixtureGolden -update`.
 - Two sessions testing in one worktree mix each other's changes and overwrite each other's `.tmp` files.
   Promote only when both are done.
 - To commit one phase out of a worktree that holds two, rebuild its tree in scratch from `git archive HEAD`,

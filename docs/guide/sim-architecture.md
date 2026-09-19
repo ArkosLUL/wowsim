@@ -6,7 +6,8 @@ Where the code this fork touches lives. Everything else follows the upstream lay
 
 | File | Holds |
 |---|---|
-| `target.go` | targets, `AttackTable`, the default level-83 boss, the AoE target cap |
+| `target.go` | targets, `AttackTable`, the default level-83 boss, dungeon scale (`NewEncounter`), the AoE target cap |
+| `raid.go`, `environment.go` | raid and environment setup. `party.Players` skips empty slots, so a player's proto is `raidProto.Parties[party.Index].Players[char.PartyIndex]` |
 | `spell_outcome.go` | every `Outcome*` roll, including enemy vs player |
 | `spell_result.go` | hit, crit, expertise |
 | `spell_resistances.go` | armor and magic resistance |
@@ -37,13 +38,16 @@ Quirk: `UnitLevelFloat64` in `utils.go` treats every level outside 80–82 as +3
   `deathknight/ghoul_pet.go`.
 - Item effects: `sim/common/{wotlk,tbc}`. Class set bonuses: `sim/<class>/items.go`. An effect's closure
   runs once per character, concurrently across sims (optimizer, stat weights, web requests), so copy a
-  captured config before changing it.
+  captured config before changing it. Proc chance, PPM and ICD come from `sim/core/serverdata` through
+  `sim/common/wotlk/proc_helpers.go`; name each spell id as a constant so `spellids` counts it.
 - Boss AIs, still with Classic numbers: `sim/encounters/{naxxramas,ulduar,toc,icc}`.
 - `sim/web/main.go` is the server, with flags `--usefs`, `--wasm`, `--host` and `--launch`.
 - `sim/optimizer/`: the BiS gear optimizer ([PLAN](../bis-optimizer/bis-optimizer.PLAN.md)), with its
   contract in `types.go` and `proto/optimizer.proto`. `wowsimcli optimize`, `/optimizeGearAsync` and the
   wasm export run it. `evaluator.go` runs loadouts as paired, sharded sims behind the `Evaluator` seam;
-  `objective.go`, `response.go` and `residuals.go` turn the results into the search's score.
+  `objective.go`, `response.go` and `residuals.go` turn the results into the search's score. `pool.go`,
+  `rules.go` and `gems.go` compile the candidate pool, check a loadout's equip rules and regem it.
+  `raidctx/` derives what the rest of a roster gives one raider.
 
 ## Protos
 
@@ -61,9 +65,10 @@ Quirk: `UnitLevelFloat64` in `utils.go` treats every level outside 80–82 as +3
 
 - `ui/core/player.ts`: player state. `setProfessions` is the only professions setter, and it sorts, so
   share links are deterministic.
-- `ui/core/components/individual_sim_ui/settings_tab.ts`: the Racial Traits and professions pickers.
+- `ui/core/components/individual_sim_ui/settings_tab.ts`: the Racial Traits and professions pickers, and
+  the "Server (AzerothCore)" section (`server_settings_picker.ts`, also on the raid settings tab).
 - `ui/core/components/gear_picker.tsx`: gear, gems, enchants, and the Reforging tab.
-- `ui/core/encounter.ts` sets the default target. `ui/core/constants/mechanics.ts` holds the UI copies
+- `ui/core/encounter.ts` sets the default target and holds the raid difficulty and server settings. `ui/core/constants/mechanics.ts` holds the UI copies
   of the mechanic constants and re-exports the generated `ratings_auto_gen.ts`.
   `server_defaults_auto_gen.ts` holds the live server settings.
 - `ui/<spec>/presets.ts` and `ui/<spec>/gear_sets/*.gear.json`: presets.
