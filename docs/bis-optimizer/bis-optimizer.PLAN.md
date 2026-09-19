@@ -268,7 +268,7 @@ the sheet's cap.
 
 ### BIS-raidctx (wave C)
 
-**Owns:** `raidctx/derive.go`, `providers.go`.
+**Owns:** `raidctx/derive.go`, `providers.go`, `testdata/` (the 25-player fixture and its golden).
 
 `Derive`:
 - empties the target's slot in a copy of the raid, calls `core.NewRaid` with
@@ -280,7 +280,29 @@ the sheet's cap.
 - maps Demonic Pact to `demonic_pact_sp`
 - remaps the tank index to the target
 
-**Tests:** synthetic rosters, and a golden of derived flags from a committed 25-player fixture.
+**Tests:** synthetic rosters, and a golden of derived flags from a committed 25-player fixture. Rewrite the
+golden with `go test --tags=with_db ./sim/optimizer/raidctx -run TestDeriveFixtureGolden -update`.
+
+**Interface for BIS-search and BIS-raid-contrib:**
+- `Derive(base, targetIndex) (*proto.RaidSimRequest, error)` returns the target alone at `TargetIndex` (0),
+  so sim it there. It never changes `base`; a core panic comes back as an error. `raidctx` takes core and
+  proto types and never imports `sim/optimizer`.
+- Only active parties give, and never the target. Its `IndividualBuffs` (the raid UI's blessings) carry over,
+  and derived buffs add to them.
+- References to the target, in its settings (APL included) and `Raid.tanks`, move to index 0; references to
+  other players are cleared. Tank entries keep their positions, so `tank_index` still lines up. Target
+  dummies are dropped: a lone mage uses its Focus Magic uptime option.
+- Table rows follow the UI's conditions even where the sim's differ: every warlock gives both curses, every
+  warrior Sunder Armor, Thunder Clap and Demoralizing Shout.
+  - Bloodlust and the shouts are rows: the sim only casts them.
+  - Renewed Hope and Divine Guardian count raid-wide.
+  - Vigilance and Pain Suppression aren't derived: no spec option names their target.
+  - `TestProvidersMirrorRaidStats` fails on a `raid_stats.ts` provider nobody sorted.
+- `DemonicPactSP(spellPower, points)` is the aura's formula, round(2% × points × spell power). `Derive`
+  feeds it the sheet spell power of each warlock with a pet, from `core.NewEnvironment` on the full raid.
+  That runs low: it misses combat-only spell power (Demonic Knowledge, the Life Tap glyph, procs) and the
+  aura's ratchet. The fixture's demo warlock gets 288, against 415 averaged over a 50-iteration raid sim.
+  BIS-e2e-perf's calibration should show it.
 
 ### BIS-search (wave D)
 
