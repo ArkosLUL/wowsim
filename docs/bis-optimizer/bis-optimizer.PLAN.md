@@ -163,7 +163,7 @@ Every BiS WI runs fast tests only and changes no goldens. UI WIs also run `dock.
 - `-race` on concurrent `AddToDatabase` and `NewItem`.
 - The stub round-trips through the CLI and the web route.
 
-### BIS-catalog (wave B)
+### BIS-catalog (wave B, done)
 
 **Owns:** `tools/database/azerothcore/catalog*.go`, `tools/database/accatalog/` (with its README),
 `assets/database/server_catalog.json`.
