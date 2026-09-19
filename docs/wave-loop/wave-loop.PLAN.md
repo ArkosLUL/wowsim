@@ -44,7 +44,7 @@ G = changes goldens. FS = runs all 37 suites.
 |---|---|---|
 | A | PAR-P4R (review-only; G, FS) · BIS-contract · PAR-P5-1 · AC-1 | |
 | B | AC-2 (G, FS, 34 suites) · PAR-P3-1 · BIS-catalog · BIS-eval | |
-| C | PAR-P6-2 (G, FS, 14 suites) · PAR-P5-23 · BIS-rules · BIS-raidctx | |
+| C | PAR-P6-2 (G, FS, 14 suites) · PAR-P5-23 · BIS-rules (with catalog changes) · BIS-raidctx | |
 | D | PAR-P3-2 (G, FS) · PAR-P3-3 (G, FS) · BIS-search · BIS-ui-tab | ✔ |
 | E | PAR-P3-4 (G, FS) · PAR-P3-5 (G, FS) · PAR-P6-1 · RI-3 | ✔ |
 | F | PAR-P7-0a (G, FS) · PAR-P7-0b (G, FS) · BIS-tanks-racials · PAR-TOOLS-RR | ✔ |
@@ -86,6 +86,4 @@ Later WIs are added as their wave starts.
 
 ## User actions
 
-- "continue" for wave C.
-- Not blocking: the two open catalog questions in the BiS PLAN's "Sources and the catalog" (the cut epic
-  gems' tier, Venture Coin items).
+"continue" for wave C.
