@@ -224,7 +224,7 @@ the sheet's cap.
 - `EffortBudget` ([measured](bis-optimizer.INVESTIGATION.md#performance)), evaluations × iterations:
   Quick 250 × 500, Normal 500 × 4000, Thorough 1000 × 10000.
 
-### BIS-rules (wave C)
+### BIS-rules (wave C, done)
 
 **Owns:** `pool.go`, `rules.go`, the gem DP.
 
