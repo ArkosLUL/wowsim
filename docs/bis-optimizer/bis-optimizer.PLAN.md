@@ -304,7 +304,7 @@ golden with `go test --tags=with_db ./sim/optimizer/raidctx -run TestDeriveFixtu
   aura's ratchet. The fixture's demo warlock gets 288, against 415 averaged over a 50-iteration raid sim.
   BIS-e2e-perf's calibration should show it.
 
-### BIS-search (wave D)
+### BIS-search (wave D, done)
 
 **Owns:** `surrogate.go`, `search.go`, `verify.go`, `neighborhood.go`, and the real `Optimize`, including
 raidctx.
