@@ -104,7 +104,7 @@ var slowCases = []slowCase{
 			Glyphs: &proto.Glyphs{
 				Major1: int32(proto.PaladinMajorGlyph_GlyphOfSealOfVengeance),
 				Major2: int32(proto.PaladinMajorGlyph_GlyphOfJudgement),
-				Major3: int32(proto.PaladinMajorGlyph_GlyphOfReckoning),
+				Major3: int32(proto.PaladinMajorGlyph_GlyphOfConsecration),
 				Minor1: int32(proto.PaladinMinorGlyph_GlyphOfSenseUndead),
 				Minor2: int32(proto.PaladinMinorGlyph_GlyphOfLayOnHands),
 				Minor3: int32(proto.PaladinMinorGlyph_GlyphOfBlessingOfKings),

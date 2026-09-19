@@ -47,7 +47,7 @@ export const AuraMasteryTalents = {
 		glyphs: Glyphs.create({
 			major1: PaladinMajorGlyph.GlyphOfSealOfVengeance,
 			major2: PaladinMajorGlyph.GlyphOfJudgement,
-			major3: PaladinMajorGlyph.GlyphOfReckoning,
+			major3: PaladinMajorGlyph.GlyphOfConsecration,
 			minor1: PaladinMinorGlyph.GlyphOfSenseUndead,
 			minor2: PaladinMinorGlyph.GlyphOfLayOnHands,
 			minor3: PaladinMinorGlyph.GlyphOfBlessingOfKings
@@ -63,7 +63,7 @@ export const DivineSacTalents = {
 		glyphs: Glyphs.create({
 			major1: PaladinMajorGlyph.GlyphOfSealOfVengeance,
 			major2: PaladinMajorGlyph.GlyphOfJudgement,
-			major3: PaladinMajorGlyph.GlyphOfReckoning,
+			major3: PaladinMajorGlyph.GlyphOfConsecration,
 			minor1: PaladinMinorGlyph.GlyphOfSenseUndead,
 			minor2: PaladinMinorGlyph.GlyphOfLayOnHands,
 			minor3: PaladinMinorGlyph.GlyphOfBlessingOfKings

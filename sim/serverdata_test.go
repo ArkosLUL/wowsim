@@ -11,6 +11,7 @@ import (
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
 	googleProto "google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
 // serverDataPreset is one golden suite's character: enough of its class test's config to register the
@@ -35,6 +36,50 @@ func glyphs(major1, major2, major3 int32, minors ...int32) *proto.Glyphs {
 		*slots[i] = m
 	}
 	return g
+}
+
+// classGlyphs is every glyph each class can take. A preset takes three majors and three minors, so
+// without this the rest, and the spells some of them gate, never register.
+var classGlyphs = map[proto.Class]struct{ major, minor []int32 }{
+	proto.Class_ClassDeathknight: {glyphIDs(proto.DeathknightMajorGlyph_value), glyphIDs(proto.DeathknightMinorGlyph_value)},
+	proto.Class_ClassDruid:       {glyphIDs(proto.DruidMajorGlyph_value), glyphIDs(proto.DruidMinorGlyph_value)},
+	proto.Class_ClassHunter:      {glyphIDs(proto.HunterMajorGlyph_value), glyphIDs(proto.HunterMinorGlyph_value)},
+	proto.Class_ClassMage:        {glyphIDs(proto.MageMajorGlyph_value), glyphIDs(proto.MageMinorGlyph_value)},
+	proto.Class_ClassPaladin:     {glyphIDs(proto.PaladinMajorGlyph_value), glyphIDs(proto.PaladinMinorGlyph_value)},
+	proto.Class_ClassPriest:      {glyphIDs(proto.PriestMajorGlyph_value), glyphIDs(proto.PriestMinorGlyph_value)},
+	proto.Class_ClassRogue:       {glyphIDs(proto.RogueMajorGlyph_value), glyphIDs(proto.RogueMinorGlyph_value)},
+	proto.Class_ClassShaman:      {glyphIDs(proto.ShamanMajorGlyph_value), glyphIDs(proto.ShamanMinorGlyph_value)},
+	proto.Class_ClassWarlock:     {glyphIDs(proto.WarlockMajorGlyph_value), glyphIDs(proto.WarlockMinorGlyph_value)},
+	proto.Class_ClassWarrior:     {glyphIDs(proto.WarriorMajorGlyph_value), glyphIDs(proto.WarriorMinorGlyph_value)},
+}
+
+func glyphIDs(values map[string]int32) []int32 {
+	ids := slices.Sorted(maps.Values(values))
+	return ids[1:] // the None value is 0, so it sorts first
+}
+
+// glyphVariants walks the preset's class through every glyph it can take, three majors and three minors
+// at a time. It drops the preset's own glyphs, which the preset itself already covers.
+func glyphVariants(p serverDataPreset) []serverDataPreset {
+	g := classGlyphs[p.class]
+	variants := make([]serverDataPreset, 0, (max(len(g.major), len(g.minor))+2)/3)
+	for i := 0; i < len(g.major) || i < len(g.minor); i += 3 {
+		v := p
+		v.name = fmt.Sprintf("%s, glyphs %d", p.name, i/3+1)
+		v.glyphs = &proto.Glyphs{}
+		slots := []*int32{&v.glyphs.Major1, &v.glyphs.Major2, &v.glyphs.Major3,
+			&v.glyphs.Minor1, &v.glyphs.Minor2, &v.glyphs.Minor3}
+		for j := range 3 {
+			if i+j < len(g.major) {
+				*slots[j] = g.major[i+j]
+			}
+			if i+j < len(g.minor) {
+				*slots[3+j] = g.minor[i+j]
+			}
+		}
+		variants = append(variants, v)
+	}
+	return variants
 }
 
 var (
@@ -249,6 +294,22 @@ var hunterOptions = &proto.Player_Hunter{Hunter: &proto.Hunter{Options: &proto.H
 	UseHuntersMark:       true,
 }}}
 
+// everyPetTalent is one point in every hunter pet talent, for the few that gate an ability. One point is
+// enough: a gate only checks that the talent is taken.
+var everyPetTalent = func() *proto.HunterPetTalents {
+	talents := (&proto.HunterPetTalents{}).ProtoReflect()
+	fields := talents.Descriptor().Fields()
+	for i := range fields.Len() {
+		switch field := fields.Get(i); field.Kind() {
+		case protoreflect.BoolKind:
+			talents.Set(field, protoreflect.ValueOfBool(true))
+		case protoreflect.Int32Kind:
+			talents.Set(field, protoreflect.ValueOfInt32(1))
+		}
+	}
+	return talents.Interface().(*proto.HunterPetTalents)
+}()
+
 // Everything that registers a consumable, whichever class it suits.
 var serverDataConsumes = &proto.Consumes{
 	Flask:           proto.Flask_FlaskOfEndlessRage,
@@ -353,6 +414,34 @@ func TestServerDataConflicts(t *testing.T) {
 			p.name, p.spec = "Affliction with a "+name, warlockOptions(proto.Warlock_Options_Summon(summon), proto.Warlock_Options_GrandSpellstone)
 			presets = append(presets, p)
 		}
+	}
+	// every race on every class: the presets between them pick six of the ten, and a racial can register
+	// a different spell per class (Arcane Torrent, Blood Fury)
+	swept := map[proto.Class]bool{}
+	for _, p := range serverDataPresets {
+		if swept[p.class] {
+			continue
+		}
+		swept[p.class] = true
+		for name, race := range proto.Race_value {
+			if race != 0 {
+				v := p
+				v.name, v.race = fmt.Sprintf("%s as a %s", p.name, name), proto.Race(race)
+				presets = append(presets, v)
+			}
+		}
+	}
+	// the hunter pet talents that gate an ability
+	{
+		p := presetNamed("BM")
+		options := googleProto.Clone(hunterOptions.Hunter).(*proto.Hunter)
+		options.Options.PetTalents = everyPetTalent
+		p.name, p.spec = "BM with every pet talent", &proto.Player_Hunter{Hunter: options}
+		presets = append(presets, p)
+	}
+	// every glyph each class can take
+	for _, p := range serverDataPresets {
+		presets = append(presets, glyphVariants(p)...)
 	}
 	for _, p := range presets {
 		env, _, _ := core.NewEnvironment(p.raid(), core.MakeSingleTargetEncounter(0), false)

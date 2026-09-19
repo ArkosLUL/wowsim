@@ -31,7 +31,6 @@ type Paladin struct {
 	Exorcism              *core.Spell
 	HolyShield            *core.Spell
 	HammerOfTheRighteous  *core.Spell
-	HandOfReckoning       *core.Spell
 	ShieldOfRighteousness *core.Spell
 	AvengersShield        *core.Spell
 	JudgementOfWisdom     *core.Spell
