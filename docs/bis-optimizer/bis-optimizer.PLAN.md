@@ -345,7 +345,7 @@ always dominate, so it stays exact.
 - CLI smoke: `wowsimcli optimize` on `sim/optimizer/testdata/search/fury_p1.json` (1.1k candidates),
   which `TestSearchTestdata -update` rewrites.
 
-### BIS-ui-tab (wave D)
+### BIS-ui-tab (wave D, done)
 
 **Owns:**
 - `ui/core/optimizer/`: `pool_builder.ts`, `catalog.ts`, `item_filters.ts` (the pure `filterItemsByFilters`,
