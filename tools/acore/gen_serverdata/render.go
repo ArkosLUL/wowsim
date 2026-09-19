@@ -81,6 +81,18 @@ func (f *fields) masks(name string, vs []uint32) {
 	f.add(name, fmt.Sprintf("[%d]uint32{%s}", len(vs), strings.Join(parts, ", ")))
 }
 
+func (f *fields) bounds(name string, b serverdata.ModBounds) {
+	if b == (serverdata.ModBounds{}) {
+		return
+	}
+	var inner fields
+	inner.int("FlatMin", b.FlatMin)
+	inner.int("FlatMax", b.FlatMax)
+	inner.int("PctMin", b.PctMin)
+	inner.int("PctMax", b.PctMax)
+	f.add(name, "ModBounds{"+inner.String()+"}")
+}
+
 func (f fields) String() string { return strings.Join(f, ", ") }
 
 func hex(v uint32) string {
@@ -160,7 +172,12 @@ func renderSpells(spells []namedSpell) ([]byte, error) {
 		other.float("Speed", s.Speed)
 		other.int("MaxTargets", s.MaxTargets)
 
-		for _, line := range []fields{id, attrs, timing, other} {
+		var mods fields
+		mods.bounds("CastMods", s.CastMods)
+		mods.bounds("GCDMods", s.GCDMods)
+		mods.bounds("CooldownMods", s.CooldownMods)
+
+		for _, line := range []fields{id, attrs, timing, other, mods} {
 			if len(line) > 0 {
 				fmt.Fprintf(&b, "\t\t%s,\n", line)
 			}

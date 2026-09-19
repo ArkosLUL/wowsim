@@ -134,6 +134,124 @@ func flags(d *spellset.DumpSpell, s *serverdata.Spell) serverdata.Flags {
 	return f
 }
 
+// Spell modifiers (SpellAuraDefines.h, SpellDefines.h SpellModOp).
+const (
+	auraAddFlatModifier        = 107
+	auraAddPctModifier         = 108
+	spellModCastingTime        = 10
+	spellModCooldown           = 11
+	spellModGlobalCooldown     = 21
+	attr3IgnoreCasterModifiers = 0x20000000
+)
+
+// spellMod is one modifier effect of a passive spell: a talent rank, glyph, set bonus or item effect.
+type spellMod struct {
+	family int32
+	mask   [3]uint32
+	group  int32 // first rank, since a character only ever has one rank of a talent
+	id     int32
+	pct    bool
+	lo, hi int32 // DieSides > 1 rolls
+}
+
+type spellMods map[int32][]spellMod // by SpellModOp
+
+func indexSpellMods(dump spellset.Dump) spellMods {
+	mods := spellMods{}
+	for _, id := range dump.IDs() {
+		d := dump[id]
+		if !d.Passive {
+			continue
+		}
+		for _, e := range d.Effects {
+			if e.Aura != auraAddFlatModifier && e.Aura != auraAddPctModifier {
+				continue
+			}
+			group := int32(d.FirstRankID)
+			if group == 0 {
+				group = id
+			}
+			m := spellMod{family: int32(d.Family), group: group, id: id, pct: e.Aura == auraAddPctModifier,
+				lo: int32(e.BasePoints), hi: int32(e.BasePoints)}
+			if e.DieSides > 0 {
+				m.lo, m.hi = int32(e.BasePoints+1), int32(e.BasePoints+e.DieSides)
+			}
+			for i := range m.mask {
+				m.mask[i] = uint32(e.ClassMask[i])
+			}
+			op := int32(e.MiscValue)
+			mods[op] = append(mods[op], m)
+		}
+	}
+	return mods
+}
+
+// affects is SpellInfo::IsAffected: a family-less modifier reaches every spell, a mask-less one its
+// whole family.
+func (m spellMod) affects(d *spellset.DumpSpell) bool {
+	if m.family == 0 {
+		return true
+	}
+	if int64(m.family) != d.Family {
+		return false
+	}
+	if m.mask == [3]uint32{} {
+		return true
+	}
+	for i := range m.mask {
+		if m.mask[i]&uint32(d.FamilyFlags[i]) != 0 {
+			return true
+		}
+	}
+	return false
+}
+
+// bounds adds up, per talent, the rank that moves the value furthest each way, or no rank at all.
+func (mods spellMods) bounds(d *spellset.DumpSpell, op int32) serverdata.ModBounds {
+	if d.Attributes[3]&attr3IgnoreCasterModifiers != 0 {
+		return serverdata.ModBounds{}
+	}
+	type sums struct{ flat, pct [2]int32 } // lowest and highest
+	ranks := map[int32]*sums{}             // one modifier spell's effects together
+	groupOf := map[int32]int32{}
+	for _, m := range mods[op] {
+		if !m.affects(d) {
+			continue
+		}
+		r := ranks[m.id]
+		if r == nil {
+			r = &sums{}
+			ranks[m.id] = r
+			groupOf[m.id] = m.group
+		}
+		v := &r.flat
+		if m.pct {
+			v = &r.pct
+		}
+		v[0] += m.lo
+		v[1] += m.hi
+	}
+
+	groups := map[int32]*sums{}
+	for id, r := range ranks {
+		g := groups[groupOf[id]]
+		if g == nil {
+			g = &sums{}
+			groups[groupOf[id]] = g
+		}
+		g.flat = [2]int32{min(g.flat[0], r.flat[0]), max(g.flat[1], r.flat[1])}
+		g.pct = [2]int32{min(g.pct[0], r.pct[0]), max(g.pct[1], r.pct[1])}
+	}
+	var b serverdata.ModBounds
+	for _, g := range groups {
+		b.FlatMin += g.flat[0]
+		b.FlatMax += g.flat[1]
+		b.PctMin += g.pct[0]
+		b.PctMax += g.pct[1]
+	}
+	return b
+}
+
 type procRow struct {
 	serverdata.Proc
 	id int32
@@ -303,10 +421,15 @@ func buildModel(dump spellset.Dump, ids []int32, db *sql.DB) (*model, []error, e
 		return nil, nil, fmt.Errorf("spell_enchant_proc_data: %w", err)
 	}
 
+	mods := indexSpellMods(dump)
 	var mismatches []error
 	for _, id := range slices.Sorted(slices.Values(ids)) {
 		d := dump[id]
-		m.spells = append(m.spells, buildSpell(d))
+		s := buildSpell(d)
+		s.CastMods = mods.bounds(d, spellModCastingTime)
+		s.GCDMods = mods.bounds(d, spellModGlobalCooldown)
+		s.CooldownMods = mods.bounds(d, spellModCooldown)
+		m.spells = append(m.spells, s)
 		if p, err := resolveProc(d, procRows); err != nil {
 			mismatches = append(mismatches, err)
 		} else if p != nil {

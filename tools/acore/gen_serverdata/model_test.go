@@ -142,3 +142,48 @@ func TestRenderSpells(t *testing.T) {
 		t.Error("a flag missing from flagNames must fail, not vanish from the table")
 	}
 }
+
+func TestModBounds(t *testing.T) {
+	modifier := func(id, firstRank, family int64, mask int64, aura, op, basePoints int64) *spellset.DumpSpell {
+		return &spellset.DumpSpell{ID: id, FirstRankID: firstRank, Family: family, Passive: true,
+			Effects: []spellset.DumpEffect{{Effect: 6, Aura: aura, MiscValue: op, BasePoints: basePoints, DieSides: 1,
+				ClassMask: [3]int64{mask}}}}
+	}
+	frostbolt := magicSpell()
+	frostbolt.Family, frostbolt.FamilyFlags = 3, [3]int64{0x20}
+	dump := spellset.Dump{42842: frostbolt}
+	for _, d := range []*spellset.DumpSpell{
+		// Improved Frostbolt ranks 1 and 5: only one of them at a time
+		modifier(11070, 11070, 3, 0x20, auraAddFlatModifier, spellModCastingTime, -101),
+		modifier(16766, 11070, 3, 0x20, auraAddFlatModifier, spellModCastingTime, -501),
+		// a glyph that slows it down, stacking with the talent
+		modifier(90001, 90001, 3, 0x20, auraAddFlatModifier, spellModCastingTime, 199),
+		modifier(90002, 90002, 3, 0x20, auraAddPctModifier, spellModCastingTime, -11),
+		// wrong mask, wrong family, wrong op
+		modifier(90003, 90003, 3, 0x40, auraAddFlatModifier, spellModCastingTime, -1001),
+		modifier(90004, 90004, 4, 0x20, auraAddFlatModifier, spellModCastingTime, -1001),
+		modifier(90005, 90005, 3, 0x20, auraAddFlatModifier, spellModCooldown, -1001),
+	} {
+		dump[int32(d.ID)] = d
+	}
+	notPassive := modifier(90006, 90006, 3, 0x20, auraAddFlatModifier, spellModCastingTime, -1001)
+	notPassive.Passive = false
+	dump[90006] = notPassive
+
+	mods := indexSpellMods(dump)
+	want := serverdata.ModBounds{FlatMin: -500, FlatMax: 200, PctMin: -10}
+	if got := mods.bounds(frostbolt, spellModCastingTime); got != want {
+		t.Errorf("cast mods %+v, want %+v", got, want)
+	}
+	s := serverdata.Spell{CastMs: 3000, CastMods: want}
+	if lo, hi := s.CastRange(); lo != 2250 || hi != 3200 {
+		t.Errorf("cast range %d..%d, want 2250..3200", lo, hi)
+	}
+	if got := mods.bounds(frostbolt, spellModGlobalCooldown); got != (serverdata.ModBounds{}) {
+		t.Errorf("GCD mods %+v, want none", got)
+	}
+	frostbolt.Attributes[3] = attr3IgnoreCasterModifiers
+	if got := mods.bounds(frostbolt, spellModCastingTime); got != (serverdata.ModBounds{}) {
+		t.Errorf("IGNORE_CASTER_MODIFIERS: %+v, want none", got)
+	}
+}

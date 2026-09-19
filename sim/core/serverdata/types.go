@@ -89,6 +89,72 @@ type Spell struct {
 	MaxTargets int32
 
 	Effects [3]Effect // unused slots are zero
+
+	// what talents, glyphs, set bonuses and items can do to CastMs, GCDMs and both cooldowns
+	CastMods     ModBounds
+	GCDMods      ModBounds
+	CooldownMods ModBounds
+}
+
+// ModBounds is how far the passive spell modifiers that match a spell (SPELL_AURA_ADD_FLAT_MODIFIER and
+// ADD_PCT_MODIFIER on its SpellFamilyFlags) can move one of its values, at both extremes, one rank per
+// talent. Zero when none reaches it.
+type ModBounds struct {
+	FlatMin, FlatMax int32 // ms
+	PctMin, PctMax   int32 // percent of the base value
+}
+
+// CastRange is the span of cast times the modifiers can give, the way Player::ApplySpellMod does
+// SPELLMOD_CASTING_TIME: (base + flat) * (100 + pct)%. An instant stays instant.
+func (s *Spell) CastRange() (lo, hi int32) {
+	if s.CastMs <= 0 {
+		return s.CastMs, s.CastMs
+	}
+	at := func(flat, pct int32) int32 {
+		return max(0, int32(float64(s.CastMs+flat)*float64(100+pct)/100))
+	}
+	return at(s.CastMods.FlatMin, s.CastMods.PctMin), at(s.CastMods.FlatMax, s.CastMods.PctMax)
+}
+
+// GCDRange is Spell::TriggerGlobalCooldown without haste: SPELLMOD_GLOBAL_COOLDOWN only reaches a 1 to
+// 1.5 s GCD, and the result stays in that span.
+func (s *Spell) GCDRange() (lo, hi int32) {
+	if s.GCDMs < 1000 || s.GCDMs > 1500 {
+		return s.GCDMs, s.GCDMs
+	}
+	lo, hi = modRange(s.GCDMs, s.GCDMods)
+	return min(max(lo, 1000), 1500), min(max(hi, 1000), 1500)
+}
+
+// CooldownRange is Player::AddSpellAndCategoryCooldowns for one of the two cooldowns: base * pct + flat,
+// no lower than 0. SPELL_ATTR6_NO_CATEGORY_COOLDOWN_MODS keeps the category cooldown unmodified.
+func (s *Spell) CooldownRange(baseMs int32, category bool) (lo, hi int32) {
+	if category && s.Attributes[6]&attr6NoCategoryCooldownMods != 0 {
+		return baseMs, baseMs
+	}
+	lo, hi = modRange(baseMs, s.CooldownMods)
+	return max(lo, 0), max(hi, 0)
+}
+
+// OwnCooldownMs is the cooldown the spell puts itself on: RecoveryTime, else its category's.
+func (s *Spell) OwnCooldownMs() int32 {
+	if s.CooldownMs > 0 {
+		return s.CooldownMs
+	}
+	return s.CategoryCooldownMs
+}
+
+const attr6NoCategoryCooldownMods = 0x80000000
+
+// modRange is base * (100 + pct)% + flat. Percent modifiers skip a zero base.
+func modRange(base int32, b ModBounds) (lo, hi int32) {
+	at := func(flat, pct int32) int32 {
+		if base == 0 {
+			pct = 0
+		}
+		return int32(float64(base)*float64(100+pct)/100) + flat
+	}
+	return at(b.FlatMin, b.PctMin), at(b.FlatMax, b.PctMax)
 }
 
 // Effect is a SpellEffectInfo. A roll is BasePoints + 1..DieSides.
