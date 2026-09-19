@@ -84,7 +84,7 @@ G = changes goldens. FS = runs all 37 suites.
 | PAR-P3-1 | merged | `d9597704b` | capture driver in mod-sim-validation `a77f6f3` |
 | BIS-catalog | merged | `aeded1153` | re-run on AC-2's `db.json`: unchanged |
 | BIS-eval | merged | `42291df9a` | |
-| PAR-P6-2 | running | | |
+| PAR-P6-2 | merged | `d17c2838c` | 30 goldens promoted in `7e1567b9f` |
 | PAR-P5-23 | merged | `ac367aa97` | |
 | BIS-rules | running | | |
 | BIS-raidctx | running | | |
