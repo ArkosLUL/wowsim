@@ -338,6 +338,12 @@ func (unit *Unit) ApplyCastSpeedForSpell(dur time.Duration, spell *Spell) time.D
 	return time.Duration(float64(dur) * unit.CastSpeed * spell.CastTimeMultiplier)
 }
 
+// ApplyRangedCastSpeed is the cast time of a ranged class spell (Steady Shot, Multi-Shot): ranged
+// attack speed instead of spell haste, like Unit::ModSpellCastTime.
+func (unit *Unit) ApplyRangedCastSpeed(dur time.Duration, spell *Spell) time.Duration {
+	return time.Duration(float64(dur) / unit.RangedSwingSpeed() * spell.CastTimeMultiplier)
+}
+
 func (unit *Unit) SwingSpeed() float64 {
 	return unit.PseudoStats.MeleeSpeedMultiplier * (1 + (unit.stats[stats.MeleeHaste] / (unit.PseudoStats.MeleeHasteRatingPerHastePercent * 100)))
 }

@@ -324,21 +324,38 @@ removes it.
 
 **Rage, procs, swing timers**
 - `rage.go`: truncated hit factor, doubled on crit after truncation.
-- `attack.go` / `aura_helpers.go`:
+- `aura_helpers.go`:
   - Spell-proc PPM = max(base cast, 1500)·PPM/600.
   - `ReduceProc60`.
-  - Other-hand 200 ms push; a melee swing resets the ranged timer.
-  - Swing reset driven by `ResetsAutoAttack`, replacing the `StopMeleeUntil` use in `cast.go`.
+- `attack.go`: each swing pushes the other hand's timer to at least 200 ms (`attackDisplayDelay`); on a shared
+  tick the main hand swings first. A melee swing restarts the ranged timer.
+- Swing reset (`cast.go` `castTiming.resetsSwing`): a `makeCastFunc` cast of a `ResetsAutoAttack` spell restarts
+  every hand in full (`AutoAttacks.resetSwingTimers`), except when a server cast time was made instant or an active
+  `SPELL_AURA_IGNORE_MELEE_RESET` aura covers the spell (Maelstrom Weapon). A resetting hardcast also allows no
+  swings while casting. `makeCastFuncSimple`/`makeCastFuncAutosOrProcs` casts never reset: procs and autos are
+  triggered, and off-GCD cooldowns the server resets with (Barkskin, Blood Tap) need class code.
 
 **Server tick** (`sim.go`)
-- Random phase per iteration, plus `NextServerTick`.
-- Applied to swing scheduling (overshoot dropped), hardcast completion and aura expiry. Periodic ticks carry over the leftover time.
-- Interval from `ServerSettings.map_update_interval_ms`.
+- `Simulation.NextServerTick(t)`: the first tick at or after t. Ticks sit at phase + k·interval: the interval is
+  `Raid.Server.MapUpdateInterval` (0 returns t), the phase is rolled per iteration from the "Server Tick Phase" label.
+- On the tick:
+  - Swings. `WeaponAttack.timerAt` is the timer that haste and delays change, `swingAt` its tick; a swing
+    restarts the timer from its tick, dropping the overshoot. `SetOffhandSwingAt` has no sim, so `swing()` rounds it.
+  - Hardcast completion, and the CD starting then: `makeCastFunc` rounds `CurCast.CastTime` up.
+  - Aura expiry (`Aura.Refresh`).
+- Periodic ticks carry the leftover (`AuraEffect::Update`); P3-5 moves dot ticks to `NextServerTick` of their
+  nominal time. Until then a channel's dot aura keeps its exact expiry (`Aura.exactExpiry`, set in `makeCastFunc`):
+  outlasting its last tick would stall the rotation.
 
-**Casting** (`cast.go`, `unit.go` `SpellGCD`)
-- GCD is hasted only with `HasteGCD`; clamp to [1000,1500].
-- +500 ms for ranged-slot spells.
-- Ranged-class cast time scales with ranged speed.
+**Casting** (`cast.go` `castTiming`, read once per spell at registration through `serverSpell`)
+- GCD, as `Spell::TriggerGlobalCooldown`: with a server GCD of 1000-1500 ms, hasted only with `HasteGCD` (whatever
+  `IgnoreHaste` says), then at least 1000 and, unless the sim's GCD is above 1500 (hunter pets' 1.6 s, Shadowcrawl's
+  6 s stand-ins), at most 1500. A server GCD of 0 leaves the sim's alone. Without server data: hasted unless
+  `IgnoreHaste`, at least 1000. `Cast.EffectiveTime` no longer floors.
+- Cast time, unless `IgnoreHaste`, as `Unit::ModSpellCastTime` by damage class: magic by cast speed, ranged by
+  ranged attack speed (`unit.go` `ApplyRangedCastSpeed`), melee not at all, none only with `HasteAffectsPeriodic`.
+  Without server data: cast speed. Hunter shots keep their own `CastTime` funcs under `IgnoreHaste`.
+- +500 ms for ranged-slot spells: P3-2, through `CastMs`.
 - Missile minimum distance 5.
 
 **DoTs** (`dot.go`)
@@ -351,9 +368,12 @@ removes it.
 
 **Tests**
 - `rage_test.go`: 2.6 s → 9, 3.3 s → 11, crit → 18.
-- `attack_test.go`: other-hand push, quantized mean swing interval, swing reset.
+- `server_tick_test.go`: `NextServerTick`, the per-iteration phase, swings on the tick (2.55 s → 2.6 s), haste
+  rescaling the timer, the other-hand push in either list order, a swing restarting the ranged timer, aura expiry
+  and hardcast completion on the tick, channels exact.
 - `dot_test.go`: reset vs keep; 3000 ms × 0.8 over 15 s = 6 ticks.
-- `cast_test.go`.
+- `cast_test.go`: the GCD rule, cast haste by damage class, swing resets (instant, hardcast, no flag, made instant,
+  no server data, no cast, Maelstrom Weapon), every hand restarting, a prepull reset delaying the first swing.
 - `ppm_test.go`: instant spell at 15 PPM → 37.5%.
 - `serverdata_test.go`: fails on conflicts that aren't allowlisted.
 

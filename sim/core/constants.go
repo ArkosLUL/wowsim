@@ -9,6 +9,12 @@ const CharacterLevel = 80
 const GCDMin = time.Second * 1
 const GCDDefault = time.Millisecond * 1500
 
+// ATTACK_DISPLAY_DELAY: each swing pushes the other hand's timer to at least this.
+const attackDisplayDelay = 200 * time.Millisecond
+
+// SPELL_AURA_IGNORE_MELEE_RESET
+const auraTypeIgnoreMeleeReset = 272
+
 const DefaultAttackPowerPerDPS = 14.0
 
 const ResilienceRatingPerCritDamageReductionPercent = ResilienceRatingPerCritReductionChance / 2.2

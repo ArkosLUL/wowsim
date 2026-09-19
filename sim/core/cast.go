@@ -2,7 +2,11 @@ package core
 
 import (
 	"fmt"
+	"slices"
+	"sync"
 	"time"
+
+	"github.com/wowsims/wotlk/sim/core/serverdata"
 )
 
 // A cast corresponds to any action which causes the in-game castbar to be
@@ -49,13 +53,161 @@ type Cast struct {
 	CastTime time.Duration
 }
 
+// EffectiveTime reads the GCD as is: makeCastFunc has already applied its floor, if it has one.
 func (cast *Cast) EffectiveTime() time.Duration {
-	gcd := cast.GCD
-	if cast.GCD != 0 {
-		// TODO: isn't this wrong for spells like shadowfury, that have a reduced GCD?
-		gcd = max(GCDMin, gcd)
+	return max(cast.GCD, cast.CastTime)
+}
+
+func serverSpell(spell *Spell) *serverdata.Spell {
+	return serverdata.SpellByID(spell.SpellID)
+}
+
+// castTiming is what makeCastFunc needs from the spell's server data, read once at registration.
+type castTiming struct {
+	serverData bool
+
+	// Spell::TriggerGlobalCooldown only hastes and clamps a GCD of 1000-1500 ms
+	clampGCD bool
+	hasteGCD bool
+
+	castHaste castHaste
+
+	resetsAutoAttack bool
+	// SpellInfo::CalcCastTime without a caster: when there is one, a cast made instant doesn't reset autos
+	hasCastTime bool
+	// SPELL_AURA_IGNORE_MELEE_RESET auras whose class mask covers the spell
+	ignoreResetAuras []ActionID
+}
+
+func newCastTiming(spell *Spell) castTiming {
+	sd := serverSpell(spell)
+	if sd == nil {
+		return castTiming{}
 	}
-	return max(gcd, cast.CastTime)
+	return castTiming{
+		serverData:       true,
+		clampGCD:         time.Duration(sd.GCDMs)*time.Millisecond >= GCDMin && time.Duration(sd.GCDMs)*time.Millisecond <= GCDDefault,
+		hasteGCD:         sd.Flags&serverdata.FlagHasteGCD != 0,
+		castHaste:        castHasteFor(sd),
+		resetsAutoAttack: sd.Flags&serverdata.FlagResetsAutoAttack != 0,
+		hasCastTime:      sd.CastMs > 0,
+		ignoreResetAuras: ignoreMeleeResetAuras(sd),
+	}
+}
+
+// gcd is Spell::TriggerGlobalCooldown for spells with server data. The rest keep the sim's own rule:
+// hasted unless IgnoreHaste, never below GCDMin.
+func (ct *castTiming) gcd(unit *Unit, gcd time.Duration, ignoreHaste bool) time.Duration {
+	switch {
+	case gcd == 0:
+		return 0
+	case !ct.serverData:
+		if !ignoreHaste {
+			gcd = unit.ApplyCastSpeed(gcd)
+		}
+		return max(GCDMin, gcd)
+	case ct.clampGCD:
+		// A sim GCD over 1500 ms can't come from the server's data: it stands in for something else, like
+		// hunter pets' AI delay or Shadowcrawl's 6 s cooldown, so the upper clamp leaves it alone.
+		capped := gcd <= GCDDefault
+		if ct.hasteGCD {
+			gcd = unit.ApplyCastSpeed(gcd)
+		}
+		gcd = max(gcd, GCDMin)
+		if capped {
+			gcd = min(gcd, GCDDefault)
+		}
+		return gcd
+	}
+	return gcd
+}
+
+type castHaste uint8
+
+const (
+	castHasteSpell castHaste = iota
+	castHasteRanged
+	castHasteNone
+)
+
+// castHasteFor is Unit::ModSpellCastTime's switch on the damage class.
+func castHasteFor(sd *serverdata.Spell) castHaste {
+	switch sd.DmgClass {
+	case serverdata.DmgClassMagic:
+		return castHasteSpell
+	case serverdata.DmgClassRanged:
+		return castHasteRanged
+	case serverdata.DmgClassNone:
+		if sd.Flags&serverdata.FlagHasteAffectsPeriodic != 0 {
+			return castHasteSpell
+		}
+	}
+	return castHasteNone
+}
+
+func (ct *castTiming) castTime(unit *Unit, castTime time.Duration, spell *Spell) time.Duration {
+	switch ct.castHaste {
+	case castHasteRanged:
+		return unit.ApplyRangedCastSpeed(castTime, spell)
+	case castHasteNone:
+		return time.Duration(float64(castTime) * spell.CastTimeMultiplier)
+	}
+	return unit.ApplyCastSpeedForSpell(castTime, spell)
+}
+
+// resetsSwing is the rest of Spell::IsAutoActionResetSpell and its caller, for an untriggered cast.
+func (ct *castTiming) resetsSwing(spell *Spell) bool {
+	if !ct.resetsAutoAttack || (ct.hasCastTime && spell.CurCast.CastTime == 0) {
+		return false
+	}
+	for _, id := range ct.ignoreResetAuras {
+		if spell.Unit.GetAuraByID(id).IsActive() {
+			return false
+		}
+	}
+	return true
+}
+
+type ignoreMeleeResetEffect struct {
+	auraID    int32
+	family    int32
+	classMask [3]uint32
+}
+
+var ignoreMeleeResetEffects = sync.OnceValue(func() []ignoreMeleeResetEffect {
+	var effects []ignoreMeleeResetEffect
+	for _, s := range serverdata.Spells() {
+		for _, e := range s.Effects {
+			if e.Aura == auraTypeIgnoreMeleeReset {
+				effects = append(effects, ignoreMeleeResetEffect{auraID: s.ID, family: s.Family, classMask: e.ClassMask})
+			}
+		}
+	}
+	return effects
+})
+
+// affects is SpellInfo::IsAffected: family 0 covers every spell, an empty class mask the whole family.
+func (e ignoreMeleeResetEffect) affects(sd *serverdata.Spell) bool {
+	switch {
+	case e.family == 0:
+		return true
+	case e.family != sd.Family:
+		return false
+	case e.classMask == [3]uint32{}:
+		return true
+	}
+	return e.classMask[0]&sd.FamilyFlags[0] != 0 || e.classMask[1]&sd.FamilyFlags[1] != 0 || e.classMask[2]&sd.FamilyFlags[2] != 0
+}
+
+// ignoreMeleeResetAuras is AuraEffect::IsAffectedOnSpell over every SPELL_AURA_IGNORE_MELEE_RESET effect.
+func ignoreMeleeResetAuras(sd *serverdata.Spell) []ActionID {
+	var ids []ActionID
+	for _, e := range ignoreMeleeResetEffects() {
+		if id := (ActionID{SpellID: e.auraID}); e.affects(sd) && !slices.Contains(ids, id) {
+			ids = append(ids, id)
+		}
+	}
+	return ids
 }
 
 type CastFunc func(*Simulation, *Unit)
@@ -73,6 +225,9 @@ func (spell *Spell) castFailureHelper(sim *Simulation, message string, vals ...a
 }
 
 func (spell *Spell) makeCastFunc(config CastConfig) CastSuccessFunc {
+	timing := newCastTiming(spell)
+	spell.keepChannelExpiryExact()
+
 	return func(sim *Simulation, target *Unit) bool {
 		spell.CurCast = spell.DefaultCast
 
@@ -98,9 +253,13 @@ func (spell *Spell) makeCastFunc(config CastConfig) CastSuccessFunc {
 			}
 		}
 
+		spell.CurCast.GCD = timing.gcd(spell.Unit, spell.CurCast.GCD, config.IgnoreHaste)
 		if !config.IgnoreHaste {
-			spell.CurCast.GCD = spell.Unit.ApplyCastSpeed(spell.CurCast.GCD)
-			spell.CurCast.CastTime = spell.Unit.ApplyCastSpeedForSpell(spell.CurCast.CastTime, spell)
+			spell.CurCast.CastTime = timing.castTime(spell.Unit, spell.CurCast.CastTime, spell)
+		}
+		if spell.CurCast.CastTime > 0 {
+			// the cast lands on a server tick, and its CD starts then too
+			spell.CurCast.CastTime = sim.NextServerTick(sim.CurrentTime+spell.CurCast.CastTime) - sim.CurrentTime
 		}
 
 		if config.CD.Timer != nil {
@@ -128,6 +287,8 @@ func (spell *Spell) makeCastFunc(config CastConfig) CastSuccessFunc {
 			return spell.castFailureHelper(sim, "casting/channeling %v for %s, curTime = %s", hc.ActionID, hc.Expires-sim.CurrentTime, sim.CurrentTime)
 		}
 
+		resetsSwing := timing.resetsSwing(spell)
+
 		if effectiveTime := spell.CurCast.EffectiveTime(); effectiveTime != 0 {
 			spell.SpellMetrics[target.UnitIndex].TotalCastTime += effectiveTime
 			spell.Unit.SetGCDTimer(sim, sim.CurrentTime+effectiveTime)
@@ -135,6 +296,11 @@ func (spell *Spell) makeCastFunc(config CastConfig) CastSuccessFunc {
 
 		// Hardcasts
 		if spell.CurCast.CastTime > 0 {
+			if resetsSwing {
+				// no swings while casting
+				spell.Unit.AutoAttacks.resetSwingTimers(sim, sim.CurrentTime+spell.CurCast.CastTime)
+			}
+
 			if sim.Log != nil && !spell.Flags.Matches(SpellFlagNoLogs) {
 				spell.Unit.Log(sim, "Casting %s (Cost = %0.03f, Cast Time = %s, Effective Time = %s)",
 					spell.ActionID, max(0, spell.CurCast.Cost), spell.CurCast.CastTime, spell.CurCast.EffectiveTime())
@@ -153,6 +319,9 @@ func (spell *Spell) makeCastFunc(config CastConfig) CastSuccessFunc {
 					}
 
 					spell.applyEffects(sim, target)
+					if resetsSwing {
+						spell.Unit.AutoAttacks.resetSwingTimers(sim, sim.CurrentTime)
+					}
 
 					if !spell.Flags.Matches(SpellFlagNoOnCastComplete) {
 						spell.Unit.OnCastComplete(sim, spell)
@@ -179,6 +348,9 @@ func (spell *Spell) makeCastFunc(config CastConfig) CastSuccessFunc {
 		}
 
 		spell.applyEffects(sim, target)
+		if resetsSwing {
+			spell.Unit.AutoAttacks.resetSwingTimers(sim, sim.CurrentTime)
+		}
 
 		if !spell.Flags.Matches(SpellFlagNoOnCastComplete) {
 			spell.Unit.OnCastComplete(sim, spell)
@@ -188,6 +360,19 @@ func (spell *Spell) makeCastFunc(config CastConfig) CastSuccessFunc {
 	}
 }
 
+// keepChannelExpiryExact: a channel ends with its dot aura, and dot ticks aren't on the server tick
+// yet. A later expiry would outlast the last tick, and nothing restarts the rotation after that.
+func (spell *Spell) keepChannelExpiryExact() {
+	for _, dot := range append([]*Dot{spell.aoeDot}, spell.dots...) {
+		if dot != nil && dot.isChanneled {
+			dot.Aura.exactExpiry = true
+		}
+	}
+}
+
+// makeCastFuncSimple and makeCastFuncAutosOrProcs never reset the swing timer: they cast procs and
+// autos, which the server casts triggered. Off-GCD cooldowns with ResetsAutoAttack (Barkskin, Blood
+// Tap) come through here too, so they need class code for the reset.
 func (spell *Spell) makeCastFuncSimple() CastSuccessFunc {
 	return func(sim *Simulation, target *Unit) bool {
 		if spell.ExtraCastCondition != nil {
