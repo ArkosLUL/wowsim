@@ -65,9 +65,11 @@ G = changes goldens. FS = runs all 37 suites.
 
 ## Current wave
 
-- Wave: C, not started. Wave B (base `893b42993`) landed on `master`.
-- Base SHA: set at wave start.
-- Workflow runId: none.
+- Wave: C, running. Wave B (base `893b42993`) landed on `master`.
+- Base SHA: `eaa6715af`.
+- Workflow runId: `wf_245371a2-8ad`; script
+  `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\workflows\scripts\wave-loop-wf_245371a2-8ad.js`.
+- Live DBCs for this wave: `G:\DevStuff\GitHub\.wave-loop\dbc-live` (refreshed from `ac-worldserver`).
 
 ## Status
 
@@ -81,9 +83,13 @@ G = changes goldens. FS = runs all 37 suites.
 | PAR-P3-1 | merged | `d9597704b` | capture driver in mod-sim-validation `a77f6f3` |
 | BIS-catalog | merged | `aeded1153` | re-run on AC-2's `db.json`: unchanged |
 | BIS-eval | merged | `42291df9a` | |
+| PAR-P6-2 | running | | |
+| PAR-P5-23 | running | | |
+| BIS-rules | running | | |
+| BIS-raidctx | running | | |
 
 Later WIs are added as their wave starts.
 
 ## User actions
 
-"continue" for wave C.
+None until wave C's report.
