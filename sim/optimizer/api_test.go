@@ -2,10 +2,13 @@ package optimizer
 
 import (
 	"context"
+	"slices"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/wowsims/wotlk/sim/core/proto"
+	"github.com/wowsims/wotlk/sim/optimizer/raidctx"
 	goproto "google.golang.org/protobuf/proto"
 )
 
@@ -19,8 +22,20 @@ func seedOf(t *testing.T, req *proto.OptimizeGearRequest) Loadout {
 	return l
 }
 
-func TestOptimizeReturnsSeed(t *testing.T) {
+// loneRequest is testRequest with the target alone in the raid and nothing in its pool to change.
+func loneRequest() *proto.OptimizeGearRequest {
 	req := testRequest()
+	req.Base.Raid.Parties[0].Players = nil
+	req.Pool.Slots, req.Pool.GemIds = nil, nil
+	return req
+}
+
+func hasWarning(result *proto.OptimizerResult, part string) bool {
+	return slices.ContainsFunc(result.Warnings, func(w string) bool { return strings.Contains(w, part) })
+}
+
+func TestOptimizeWithNothingToChange(t *testing.T) {
+	req := loneRequest()
 	var progress []*proto.OptimizerProgress
 	result := Optimize(context.Background(), req, func(p *proto.OptimizerProgress) {
 		progress = append(progress, p)
@@ -39,8 +54,8 @@ func TestOptimizeReturnsSeed(t *testing.T) {
 			t.Errorf("%s = %+v, want the seed %+v", name, got, want)
 		}
 	}
-	if result.Improved || result.Cancelled {
-		t.Errorf("improved = %v, cancelled = %v; the stub should do neither", result.Improved, result.Cancelled)
+	if result.Improved || result.Cancelled || result.TotalSims != 0 {
+		t.Errorf("improved = %v, cancelled = %v, %d sims; want none of them", result.Improved, result.Cancelled, result.TotalSims)
 	}
 	if result.TargetRaidIndex != 6 || result.CatalogDate != "2026-09-18" || result.SimCommit == "" {
 		t.Errorf("target %d, catalog date %q, sim commit %q", result.TargetRaidIndex, result.CatalogDate, result.SimCommit)
@@ -48,17 +63,45 @@ func TestOptimizeReturnsSeed(t *testing.T) {
 	if result.Settings.GetContentPhase() != 1 || result.Settings.GetWorkers() <= 0 {
 		t.Errorf("settings = %v, want the request's with defaults", result.Settings)
 	}
-	if len(progress) == 0 {
-		t.Error("no progress reported")
+	if !hasWarning(result, "nothing to change") || !hasWarning(result, "racial traits aren't searched") {
+		t.Errorf("warnings = %q, want nothing to change and no racial search", result.Warnings)
+	}
+	if len(progress) == 0 || progress[0].Stage != stages[0] {
+		t.Errorf("progress = %v, want it to start at %q", progress, stages[0])
 	}
 }
 
 func TestOptimizeCancelled(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	result := Optimize(ctx, testRequest(), nil)
+	req := testRequest()
+	result := Optimize(ctx, req, nil)
 	if result.ErrorResult != "" || !result.Cancelled || result.Best == nil {
-		t.Errorf("cancelled run = %v, want the seed with cancelled set", result)
+		t.Fatalf("cancelled run = %v, want the seed with cancelled set", result)
+	}
+	if got, err := LoadoutFromProto(result.Best.Equipment, result.Best.RacialTraits); err != nil || got != seedOf(t, req) {
+		t.Errorf("best = %+v (%v), want the seed", got, err)
+	}
+}
+
+// A cancel in the middle of a run still returns a result: the seed, until a pick passes verification.
+func TestOptimizeCancelledWhileSimming(t *testing.T) {
+	r, err := PrepareRequest(kaRequest(proto.OptimizerEffort_OptimizerEffortQuick))
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	result := optimize(ctx, r, r, newKnownEvaluator(kaMetrics), func(p *proto.OptimizerProgress) {
+		if p.Stage == "Effects" {
+			cancel()
+		}
+	}, time.Now())
+	if result.ErrorResult != "" || !result.Cancelled || result.Best == nil || result.Seed == nil {
+		t.Fatalf("result = %v, want a cancelled one with best and seed", result)
+	}
+	if result.Improved {
+		t.Error("a run cancelled before verification can't have improved")
 	}
 }
 
@@ -69,10 +112,56 @@ func TestOptimizeBadRequest(t *testing.T) {
 	if result.ErrorResult == "" || result.Best != nil || result.SimCommit == "" {
 		t.Errorf("bad request = %v, want an error result", result)
 	}
+
+	// testRequest's other raider has no spec, so deriving what it gives fails
+	result = Optimize(context.Background(), testRequest(), nil)
+	if !strings.Contains(result.ErrorResult, "deriving raid index 6") {
+		t.Errorf("error_result = %q, want the failed derive", result.ErrorResult)
+	}
+}
+
+func TestOptimizeRaidDpsIsAnError(t *testing.T) {
+	req := loneRequest()
+	req.Settings.Objective = proto.OptimizerObjective_OptimizerObjectiveRaidDps
+	if result := Optimize(context.Background(), req, nil); !strings.Contains(result.ErrorResult, "raid DPS") {
+		t.Errorf("error_result = %q, want raid DPS unimplemented", result.ErrorResult)
+	}
+}
+
+// A raid batch sims the target alone in its derived context; a lone target keeps its own buffs.
+func TestSimmedRequest(t *testing.T) {
+	lone := presetRequest(t, "fury_p1")
+	if simmed, err := simmedRequest(lone); err != nil || simmed != lone {
+		t.Errorf("lone target: simmed %p (%v), want the request itself %p", simmed, err, lone)
+	}
+
+	req := presetOptimizeRequest(t, "fury_p1")
+	mage := presetOptimizeRequest(t, "arcane_p3").Base.Raid.Parties[0].Players[0]
+	req.Base.Raid.Parties[0].Players = []*proto.Player{mage, req.Base.Raid.Parties[0].Players[0]}
+	req.Base.Raid.Buffs = &proto.RaidBuffs{}
+	req.TargetRaidIndex = 1
+	r, err := PrepareRequest(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	simmed, err := simmedRequest(r)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if simmed.TargetIndex != raidctx.TargetIndex || simmed.Target().Name != "Fury" || simmed.Seed != r.Seed {
+		t.Errorf("simmed target %d %q, want the fury warrior at %d with the same seed", simmed.TargetIndex, simmed.Target().Name, raidctx.TargetIndex)
+	}
+	if len(simmed.Base.Raid.Parties[0].Players) != 1 || !simmed.Base.Raid.Buffs.GetArcaneBrilliance() {
+		t.Errorf("derived first party %v, raid buffs %v; want the target alone with the mage's Arcane Brilliance",
+			simmed.Base.Raid.Parties[0].Players, simmed.Base.Raid.Buffs)
+	}
+	if r.Base.Raid.Parties[0].Players[0].Name != "Arcane" {
+		t.Error("deriving changed the prepared request")
+	}
 }
 
 func TestRunAsync(t *testing.T) {
-	req := testRequest()
+	req := loneRequest()
 	reporter := make(chan *proto.ProgressMetrics, 10)
 	RunAsync(context.Background(), req, reporter)
 

@@ -314,14 +314,36 @@ get paired samples. The fake `Evaluator` fails a whole call on one bad point, li
 
 Call `raidctx.Derive` only for the raid batch, after `PrepareRequest`, and sim its result at
 `raidctx.TargetIndex`. The gem DP keeps one flag per distinct unique gem (2^u states, 81 unique gems in the
-catalog). If whole-loadout regems are slow, count per kind (same colors, category and uniqueness) instead:
-the top m of a kind always dominate, so it stays exact.
+catalog). Whole-loadout regems aren't slow (`Pool.Gem` is under 10% of the search's CPU at 4.6k
+candidates); if they get slow, count per kind (same colors, category and uniqueness): the top m of a kind
+always dominate, so it stays exact.
+
+**As built** (`run.execute`; stages Setup, Objective, Stat curves, Effects, Search, Verify, Alternatives):
+- Curves: the surrogate joins each response curve's knots with straight lines, not its two-line fit,
+  which misprices Ret P4's ArP and agility up to 2×. `addKnots` adds knots 1/4 and 1/16 of the way to each
+  end of a stat's range (Quick: 1/8; cap-prone: 1/16, none at Quick). Residuals price against these curves
+  (`run.measureResiduals`), not `MeasureResiduals`.
+- Effects: set bonuses sim against a stat-matched twin (the base plus the pieces' stats as bonus stats),
+  so they carry no curve error. The top 4/6/8 ring and trinket effects (by effort) get pair sims:
+  Darkmoon Card: Greatness variants share one proc.
+- Budget: effect screening takes up to 35% of the run and refinement 10%, capped to leave 35% for
+  verification (20%), its race (10%) and the neighborhood.
+- Search: each start (seed, greedy, warm starts, priced sets) gets 3/5/8 annealing runs of 10k/20k/40k
+  moves on parallel forks, each polished, then the best with each slot's top 3 runners-up forced in. It
+  keeps the top 20 by `setKey`: swapped rings or trinkets are one set.
+- Pick: a seed that breaks a rule (a floor, the pool) loses to the best legal verified loadout, whatever
+  it scores. `result` reruns the acceptance test on the final sims and lists the pick first in `top`.
+- Racial search and crit immunity only warn until BIS-tanks-racials. BIS-raid-contrib plugs its evaluator
+  into `optimize(ctx, asked, simmed, eval, …)`.
 
 **Tests:**
-- A known-answer brute force with a fake `Evaluator`.
-- A real Fury P1 trinket × ring brute force: the pick must be within 2 se.
+- A known-answer brute force with a fake `Evaluator`, and a floor the seed misses.
+- A real Fury P1 trinket × ring brute force: the pick must be within 2 se. Skipped under `-race`.
 - A slow suite (tag `optimizer_slow`: Fury P1, Combat Rogue P3, Fire Mage P3, Ret P4). Paired,
-  J_opt ≥ J_preset − 2 se.
+  J_opt ≥ J_preset − 2 se. It logs one `slow: spec=… phase=… effort=…` line per case; `-decisions` logs
+  each stage's choices.
+- CLI smoke: `wowsimcli optimize` on `sim/optimizer/testdata/search/fury_p1.json` (1.1k candidates),
+  which `TestSearchTestdata -update` rewrites.
 
 ### BIS-ui-tab (wave D)
 

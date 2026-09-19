@@ -99,12 +99,24 @@ The budgets `EffortBudget` pins, every thread busy:
 | Normal | 500 × 4000 | 91 s | 36 s | 1–2 min |
 | Thorough | 1000 × 10000 | 7.5 min | 2.9 min | 5–10 min |
 
-Whole runs take longer, since sequential steps like bisection leave threads idle; BIS-e2e-perf measures
-them. Still estimates, for 16 threads:
+Whole runs take longer: the curves' extra knots and the pair sims go up to 10% past the budget, and
+sequential steps like bisection and the search leave threads idle. The slow suite's DPS runs, with the
+worldserver busy on about 1.5 of the 16 threads, and J gained over the preset (paired, 10000 iterations):
+
+| Run | Candidates | Quick | Normal |
+|---|---|---|---|
+| Fury P1 | 3062 | 9 s, +219 J | 105 s, +226 J |
+| Combat Rogue P3 | 2749 | 21 s, +550 J | 247 s, +553 J |
+| Fire Mage P3 | 1935 | 5 s, +33 J | 39 s, +39 J |
+| Ret P4 | 4569 | 11 s, +54 J | 125 s, +73 J |
+
+The search stage itself takes at most 3 s at Quick and 8 s at Normal with 4.6k candidates, the top of the
+UI's pools (its Ret replay fixtures hold 2.6k–4.6k). BIS-e2e-perf times the rest; still estimates, for 16
+threads:
 
 | Run | Time |
 |---|---|
-| Tanks | 1.5× the above |
+| Tanks | 1.5× a DPS run |
 | Raid contribution, one raider and phase | 4–6 min |
 | Batch, Quick | 30–45 min |
 | Batch, Normal | 6–8 h |
