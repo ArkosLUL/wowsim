@@ -82,7 +82,7 @@ G = changes goldens. FS = runs all 37 suites.
 | AC-2 | merged | `80e9cd8c7` | 34 goldens promoted in `9db9bd34b` |
 | PAR-P3-1 | merged | `d9597704b` | capture driver in mod-sim-validation `a77f6f3` |
 | BIS-catalog | merged | `aeded1153` | re-run on AC-2's `db.json`: unchanged |
-| BIS-eval | running | | |
+| BIS-eval | merged | `42291df9a` | |
 
 Later WIs are added as their wave starts.
 
