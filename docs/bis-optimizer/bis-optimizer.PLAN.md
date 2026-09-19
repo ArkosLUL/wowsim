@@ -168,13 +168,17 @@ Every BiS WI runs fast tests only and changes no goldens. UI WIs also run `dock.
 **Owns:** `tools/database/azerothcore/catalog*.go`, `tools/database/accatalog/` (with its README),
 `assets/database/server_catalog.json`.
 
-**A pure `ResolveCatalog(rows)`** applies the tier rules. It reads:
-- loot tables: recursive references, `item_loot_template`, prospecting
-- creature difficulty entries and spawns; gameobject chests
-- vendors and their ExtendedCost; conditions; quests; achievements
-- `item_template` columns: `maxcount`, `ItemLimitCategory`, `Flags & 0x80000`, `AllowableRace`,
-  `StatsCount`
-- ItemLimitCategory.dbc
+**A pure `ResolveCatalog(rows)`** applies the tier rules
+([how](../../tools/database/accatalog/README.md#how-tiers-resolve)). It reads:
+- loot tables: recursive references, containers, prospecting, milling, disenchanting, skinning,
+  pickpocketing, fishing, mail, spell loot
+- creature difficulty entries and spawns (spawnMask, phaseMask, ScriptName); gameobject chests; encounter
+  credits; summons; transports
+- vendors and their ExtendedCost; mod-token-turnin; conditions; quests; achievements
+- `item_template` columns: `maxcount`, `ItemLimitCategory`, `Flags & 0x80000`, `FlagsExtra`,
+  `AllowableRace`. There's no `StatsCount` column: like the worldserver, it counts non-zero stat slots.
+- ItemLimitCategory, ItemExtendedCost, DungeonEncounter, Map, MapDifficulty, Achievement, AreaTable and
+  TaxiPathNode .dbc, with their `*_dbc` overrides
 - item-creating spells with SkillLineAbility.dbc
 
 **Tests:** table-driven, over hand-built rows and WDBC bytes.
@@ -184,6 +188,21 @@ Every BiS WI runs fast tests only and changes no goldens. UI WIs also run `dock.
 - Spot checks: T10 through its tokens, Deathbringer's Will N/H limits, ToC faction items, the Dragon's Eye
   limit of 3.
 - Report the fallback count.
+
+**Findings for the guide:**
+- Argent Tournament spawns carry `phaseMask` 65536 and phase in at tier 15 (`checkIPPhasing`). VoA phases
+  Emalon, Koralon and Toravon in with phases I–III.
+- Emblems trickle in below the guide's tiers: Sartharion's Satchel of Spoils holds a Triumph at 13, and
+  Usuri Brightcoin trades Triumph down. The catalog keeps the guide's tiers as floors.
+- `wotlk_vendors.sql` gates Timothy Jones' Jewelcrafting designs (epic cuts, Nightmare Tear) behind quest
+  66015. The reagent rule ignores recipes, so cut epic gems read 13; gating on the recipe would make them
+  15. Open, for the user.
+- `mapdifficulty_dbc` adds difficulty 2 (40-man) to Naxxramas and Onyxia's Lair: the module's vanilla
+  modes.
+- C++ summons many bosses and chests with no spawn row (ToC, Ulduar and EoE chests, Fjola).
+- DungeonEncounter.dbc lists ICC and RS encounters under difficulties 0 and 1 only; their heroics reuse
+  them. Sindragosa has no spawn row, so only her credit places her heroic loot.
+- Transport gameobjects (type 15): Data0 is the TaxiPath, Data6 the transport's own map.
 
 ### BIS-eval (wave B)
 
