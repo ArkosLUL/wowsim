@@ -1,0 +1,3 @@
+{"id":100,"name":"Seed","family":3,"effects":[{"index":0,"effect":6,"aura":42,"triggerSpell":200},{"index":1,"effect":0,"triggerSpell":0}]}
+{"id":200,"name":"Triggered","family":0,"effects":[{"index":0,"effect":64,"triggerSpell":300},{"index":1,"effect":64,"triggerSpell":100}]}
+{"id":400,"name":"Dummy aura","family":7,"powerType":4294967294,"effects":[{"index":0,"effect":6,"aura":4,"triggerSpell":4294967295}]}
