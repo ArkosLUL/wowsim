@@ -65,16 +65,22 @@ G = changes goldens. FS = runs all 37 suites.
 
 ## Current wave
 
-- Wave: D, running. Wave C (base `eaa6715af`) landed on `master`.
-- Base SHA: `30137e6d1`.
-- Workflow runId: `wf_86c44e1b-fe3`, resuming `wf_724d4586-625` after a session limit. Transcript dirs
-  (`journal.jsonl`) are
-  `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\<runId>`.
-  PAR-P3-3's and BIS-ui-tab's finished implementer reports are in their worktrees' `tmp/impl-report.json`.
-- Split between the two timing items: PAR-P3-2 applies cast times from serverdata's `CastMs`, which
-  already has the ranged slot's +500 ms, and exposes a `Spell` method for the server entry. PAR-P3-3
-  reads serverdata through one helper in `cast.go`; at integration, point that helper at PAR-P3-2's
-  method.
+- Wave: E, not started. Wave D (base `30137e6d1`) landed on `master`.
+- Base SHA: set at wave start.
+- Workflow runId: none.
+
+## BiS baseline
+
+The `optimizer_slow` suite after each wave ([how to run](../guide/testing.md#go)), as J over the spec's
+preset gear. A `J_preset` drop the goldens don't explain means a parity change hit that spec's gear or
+rotation harder than the golden suites cover, which is how wave D caught Glyph of Reckoning.
+
+| Wave | Fury P1 | Combat Rogue P3 | Fire Mage P3 | Ret P4 |
+|---|---|---|---|---|
+| D | 8607.6, +273 / +244 | 10547.1, +823 / +838 | 5044.3, +14 / +20 | 13140.6, +102 |
+
+Quick / Normal. Ret P4 ran at Quick only, after the glyph fix; its wave C numbers (12821.9, +54 / +73)
+came from a seed that wore the glyph.
 
 ## Status
 
@@ -101,4 +107,8 @@ Later WIs are added as their wave starts.
 
 ## User actions
 
-None until wave D's report.
+- "continue" for wave E.
+- Where PAR-P7-0c goes. Wave D turned up core swing and cast fixes the class items want (its row in the
+  [parity PLAN](../azerothcore-parity/azerothcore-parity.PLAN.md#loop-work-items)), but every wave from E
+  to K already holds its 4 items. It fits best before the class items in G, so either wave F takes a
+  fifth item or something light (BIS-picker-switch) moves later.

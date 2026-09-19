@@ -62,15 +62,15 @@ class by simval.
 
 - **Hunter haste:** mod-individual-progression's aura 89507 never changes the speed, so ranged haste is
   just the quiver's. The sim's ×1.15 is right only with a +15% quiver.
+- **Glyph of Reckoning** is unimplemented, so Hand of Reckoning never deals damage (67485) and the sim
+  registers nothing for it.
 - **Binary spells** follow the spelldump. Mind Flay isn't binary; Steady Shot and Expose Armor are.
 - **Armor debuffs:** Sunder ×5 (debuff 58567, not ability 47467) and Expose Armor don't stack. Faerie
   Fire multiplies.
-- **Timing and procs:**
+- **Timing and procs** (the rest is under [Spell data and timing](#spell-data-and-timing)):
   - The rage hit factor is truncated to `uint32`.
   - Spell-proc PPM uses max(cast time, 1500 ms).
   - `REDUCE_PROC_60` applies.
-  - Ranged-slot spells get +500 ms.
-  - GCD is clamped to [1000, 1500] ms.
   - A DoT refresh resets the tick timer only when StackAmount < 2.
   - Periodic ticks crit only with aura 286.
 - **Pets:** pet hit is floored to a whole percent. Pet scaling comes from the server's scripts.
@@ -81,6 +81,38 @@ class by simval.
   except spells with `SpellFlagIgnoreAttackerModifiers`. The server truncates each scaled hit; the sim
   doesn't. Targets with `world_boss` (else level ≥ 83) take the boss set. The placeholder target of an
   encounter without targets is never scaled.
+
+## Spell data and timing
+
+`RegisterSpell` applies the server's own data for the spell it's given (`Spell.ServerSpell()`), so a
+spell is only as right as its id.
+
+- **Flags** take the server's value for Binary, NoActiveDefense, CompletelyBlocked and Channeled, and
+  only gain AlwaysHit, the ATTR7 no-dodge and no-parry bits, and IgnoreResists (ATTR4_NO_CAST_LOG, on
+  non-physical spells).
+- **Timing** applies to what the spell declares: cast time against `CastMs` (which already carries the
+  ranged slot's +500 ms), GCD against `GCDMs` in category 133, and the cooldowns. A declared value
+  inside what passive talents and glyphs can reach agrees; anything else is a conflict, and an
+  allowlist entry either lets the server win or keeps the sim's value with a reason.
+- **Wrapper ids** are the trap. The sim often deals damage under the id of a spell that, on the server,
+  only triggers the real one (Death Coil, totems, Faerie Fire (Feral), Wild Quiver). The wrapper's
+  flags are not the damage's, so those entries keep the sim's values until the class's P7 item moves
+  the damage to the real id. When a suite moves for a spell you didn't touch, look here first.
+- Missiles travel at least 5 yards (`Spell::AddUnitTarget`), in whole ms.
+
+The server only acts on its map update, 100 ms live (`ServerSettings.MapUpdateInterval`; 0 means exact,
+which is what unit tests want).
+
+- Swings, hardcast completions and aura expiry land on the next tick, with a phase rolled per iteration.
+  A swing restarts its timer from the tick it landed on, so the overshoot is lost, which costs a fast
+  dual wielder several percent.
+- A landed swing pushes the other hand to at least 200 ms, and a melee swing restarts the ranged timer.
+- A cast resets every swing timer when the server's `ResetsAutoAttack` says so, and a resetting hardcast
+  also stops swings while it casts. A triggered cast never resets, nor does one made instant or one an
+  `SPELL_AURA_IGNORE_MELEE_RESET` aura covers (Maelstrom Weapon).
+- The GCD follows `Spell::TriggerGlobalCooldown`: hasted only with `HasteGCD`, then kept within
+  [1000, 1500] ms. Cast time scales by damage class: spell haste for magic, ranged attack speed for
+  ranged, nothing for melee.
 
 ## Items
 

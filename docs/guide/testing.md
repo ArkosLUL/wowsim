@@ -17,6 +17,12 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
   `-race -run '^$' -bench BenchmarkOptimizerEval -benchtime=1x ./sim/optimizer/`.
 - Benchmark: `go test --tags=with_db -run '^$' -bench BenchmarkOptimizerEval ./sim/optimizer/`, with its
   numbers in the [BiS INVESTIGATION](../bis-optimizer/bis-optimizer.INVESTIGATION.md#performance).
+- The optimizer's slow suite, which every wave re-runs as the BiS baseline (about 8 min):
+  `go test --tags=with_db,optimizer_slow -count=1 -timeout 90m -run TestOptimizerSlow -v ./sim/optimizer/`.
+  It prints one `slow: spec=… phase=… effort=… J_preset=… J_opt=… delta=…±…` line per case, and
+  `-decisions` logs what each stage picked. The CLI does the same run end to end:
+  `go run --tags=with_db ./cmd/wowsimcli optimize --infile sim/optimizer/testdata/search/fury_p1.json --verbose`,
+  whose request comes from `go test --tags=with_db ./sim/optimizer -run TestSearchTestdata -update`.
 - gofmt reads CRLF as a diff, so use `tr -d '\r' < f | gofmt -l`, with the whole pipe in the container:
   `dock.sh exec` doesn't forward stdin. `sim/warrior/rend.go` already fails on master.
 - Float asserts need a tolerance, e.g. `math.Abs(got-want) > 0.001`.
@@ -36,6 +42,9 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
 - A `.results` that shows as modified with an empty `git diff` is CRLF noise: leave it out of commits.
 - `sim/optimizer/raidctx/testdata/raid25.derived.json` is a golden too. Rewrite it with
   `go test --tags=with_db ./sim/optimizer/raidctx -run TestDeriveFixtureGolden -update`.
+- `TestReplayFixtures` replays requests the UI's pool builder really produced
+  (`sim/optimizer/testdata/replay/*.json.gz`, written by the driver in
+  [ui/core/optimizer](../../ui/core/optimizer/README.md)). An exported request drops in as is.
 - Two sessions testing in one worktree mix each other's changes and overwrite each other's `.tmp` files.
   Promote only when both are done.
 - To commit one phase out of a worktree that holds two, rebuild its tree in scratch from `git archive HEAD`,
@@ -49,7 +58,8 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
   each touched file against HEAD instead:
   `git -c safe.directory=/wotlk show HEAD:$f | npx eslint --stdin --stdin-filename $f` vs `npx eslint $f`.
   In a worktree, git fails in the container (`.git` points outside the mount): `git show` the HEAD copy
-  into the gitignored `tmp/` on the host, then lint `< tmp/$f` in the container.
+  into the gitignored `tmp/` on the host, then lint `< tmp/$f` in the container. Name that copy `.txt`:
+  `tsconfig.json` includes `.`, so a stray `.ts` file under `tmp/` fails the type-check.
 - Add a new import to the existing import line for that module (`import/no-duplicates`).
 - `npm run build` and `npm test` call bazel and don't work.
 

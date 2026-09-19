@@ -26,7 +26,8 @@ the cross-effort ties:
 - **Parity P6** (server items) needs item-diff's AC-1 ([ADR 0002](../adr/0002-item-data-from-live-db.md)).
 - **Raid-import Phase 3** (RI-3) reads acraid's roster JSON v1. The BiS raid batch uses its importer.
 - **Shared files:** bis-optimizer edits `proto/api.proto`, `sim/core/database.go`, `sim/web/main.go`,
-  `sim/wasm/main.go`, `ui/worker/*`, `ui/core/worker_pool.ts`, `ui/core/sim.ts` and `gear_picker.tsx`.
+  `sim/wasm/main.go`, `ui/worker/*`, `ui/core/worker_pool.ts`, `ui/core/sim.ts`, `gear_picker.tsx`,
+  `player.ts`, `individual_sim_ui.ts`, `gear_tab.ts` and `saved_data_manager.ts`.
   Parity P6-1 also edits `database.go` and `gear_picker.tsx`.
 - **Presets:** BiS presets take over parity P6's re-pointing of presets.
 - **Re-baseline:** BiS results follow the sim, so they're re-baselined after every parity wave from D on.

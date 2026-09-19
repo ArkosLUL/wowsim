@@ -158,7 +158,7 @@ Roll details the tables above don't show:
     - Rend (Trauma, crit snapshotted)
   - **Ability changes:**
     - Crusader Strike and Divine Storm apply a seal stack.
-    - Glyph of Reckoning: Hand of Reckoning always deals damage (67485) and doesn't taunt.
+    - Glyph of Reckoning is unimplemented, so Hand of Reckoning never deals damage (67485).
     - Titan's Grip has no damage penalty.
     - Faerie Fire (Feral) on NPCs always grants Clearcasting with Omen.
     - Explosive Trap works via Trap Launcher.
@@ -244,5 +244,5 @@ The fork copies the server. Patching any of these in [ac] means updating the mat
 | 19 | Heroic Throw and Shattering Throw swing reset | every hand restarts in full, then the 200 ms push; glyphed (instant) Shattering Throw doesn't reset | off hand half a swing later when both weapons have the same speed; glyphed Shattering Throw resets too | `Spell.cpp:3955-3966`, `4039-4056`, `8188-8202` |
 
 Not yet settled against retail, check before patching: the 200 ms other-hand push (`PlayerUpdates.cpp`), the DoT
-refresh tick-timer rule, the max(cast, 1500 ms) PPM basis for spell-triggered aura procs, and the rule-based binary
-spell list (`SpellMgr.cpp:3405-3466`).
+refresh tick-timer rule, the max(cast, 1500 ms) PPM basis for spell-triggered aura procs, the rule-based binary
+spell list (`SpellMgr.cpp:3405-3466`), and the 5 yard missile floor, which `Spell::AddUnitTarget` calls a hack.

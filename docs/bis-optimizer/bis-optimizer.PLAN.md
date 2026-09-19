@@ -422,6 +422,10 @@ Jobs are non-healers × phases, with warm starts and a localStorage resume keyed
 grid, actions and export are as decided above. A job retries after a 409 and after a cancel it didn't
 ask for (see BIS-ui-tab).
 
+Reuse BIS-ui-tab's `buildOptimizeRequest` per raider, including its seed trimming. Also fix
+`OptimizerProgress.completed_steps`, which reports the current stage's index, so a run reads "step 0 of
+7" while it sets up.
+
 ### BIS-picker-switch (wave G)
 
 `gear_picker.tsx` (its phase filter) and the gem EP filters (the `isUnrestrictedGem` callers in `player.ts`)
@@ -446,6 +450,12 @@ screen, the two-stage batch, the raid-DPS column.
 - Time whole runs. `EffortBudget` assumes every thread busy, but sequential steps (bisection, search moves)
   leave threads idle. The INVESTIGATION's tank, raid-contribution and batch times are still estimates.
 - An end-to-end batch over the roster.
+- Quick runs took 4 to 21 s per spec in wave D against the 3 to 6 s target, Combat Rogue slowest. Trim
+  Quick or move the target.
+- The pool builder prunes nothing, so a Retribution request carries 2.6k to 4.6k candidates and 1.6 to
+  2.9 MB of JSON, which `worker_pool.optimizeGearAsync` also logs in full on every run. Drop that log,
+  and prune in the pool builder if size or search time hurts (items every other candidate beats, or TBC
+  items by default).
 - Stamp `optimizer.SimCommit` with `-ldflags` in the makefile and Dockerfile builds; Docker builds report
   `unknown` otherwise.
 

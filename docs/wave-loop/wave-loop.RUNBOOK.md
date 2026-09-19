@@ -164,7 +164,12 @@ Golden-neutral items leave the full run to integration.
 After a `/compact` or restart:
 1. Read this file and the PLAN's "Current wave": the wave, base SHA, runId and WI statuses.
 2. A running Workflow: wait for its notification. One that was killed, or whose agents died (a session
-   limit): re-run the script inline for the unfinished items only, each finished implementer's report
-   (its `result` line in the run's `journal.jsonl`) as `priorReport`. Not `resumeFromRunId`: its cache keys
+   limit): re-run the script inline for the unfinished items only. Not `resumeFromRunId`: its cache keys
    chain through earlier calls, so one changed or failed call re-runs every later one.
+   - A finished implementer (its `result` line in the run's `journal.jsonl`) goes in as `priorReport`.
+     Write the report to the worktree's gitignored `tmp/` and let `priorReport` point the reviewer at
+     that file: a full report inline makes the args too big to pass.
+   - An agent cut off mid-work keeps its uncommitted work. Its replacement gets a note saying what was
+     already done and where its transcript is (`agent-<id>.jsonl`, next to the journal), so it continues
+     instead of starting over.
 3. Continue at the first unfinished step.
