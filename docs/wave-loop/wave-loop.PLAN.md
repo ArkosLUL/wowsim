@@ -65,9 +65,11 @@ G = changes goldens. FS = runs all 37 suites.
 
 ## Current wave
 
-- Wave: B, not started. Wave A (base `e704d104c`) landed on `master`, and [par] is retired.
-- Base SHA: set at wave start.
-- Workflow runId: none.
+- Wave: B, running. Wave A (base `e704d104c`) landed on `master`, and [par] is retired.
+- Base SHA: `893b42993`.
+- Workflow runId: `wf_3fb195c8-ba4`; script
+  `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\workflows\scripts\wave-loop-wf_3fb195c8-ba4.js`.
+- Live DBCs for this wave: `G:\DevStuff\GitHub\.wave-loop\dbc-live` (copied from `ac-worldserver`).
 
 ## Status
 
@@ -77,9 +79,13 @@ G = changes goldens. FS = runs all 37 suites.
 | BIS-contract | merged | `11012001c` | |
 | PAR-P5-1 | merged | `35f5544be` | |
 | AC-1 | merged | `63553f9ef` | |
+| AC-2 | running | | |
+| PAR-P3-1 | running | | |
+| BIS-catalog | running | | |
+| BIS-eval | running | | |
 
 Later WIs are added as their wave starts.
 
 ## User actions
 
-"continue" for wave B.
+None until wave B's report.
