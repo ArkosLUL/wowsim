@@ -74,15 +74,36 @@ These durable facts live in [azerothcore-server](../guide/azerothcore-server.md#
 - epic gems from prospecting
 - difficulty entries and ExtendedCost
 
-## Performance estimates
+## Performance
 
-Estimates for 16 threads. BIS-eval replaces them with measurements.
+Measured by `BenchmarkOptimizerEval` (`sim/optimizer/bench_test.go`) on a Ryzen 7 7800X3D, 8 cores and 16
+threads, GOMAXPROCS 16. Each sim is 180 s ± 5 s against one target, with full buffs and `IsTest`:
+
+`tools/acore/dock.sh exec go test --tags=with_db -run '^$' -bench BenchmarkOptimizerEval ./sim/optimizer/`
+
+| Cost | Fury P1 | Arcane P3 |
+|---|---|---|
+| Iteration, one thread | 0.35 ms | 0.12 ms |
+| Iteration, all 16 threads busy (wall) | 45 µs | 18 µs |
+| Building a sim | 0.3 ms | 0.33 ms |
+
+- 16 threads do about 8× one: SMT adds little.
+- Pairing cuts a delta's standard error 2.4× (+100 AP, Fury, 400 iterations), worth about 6× the
+  iterations.
+
+The budgets `EffortBudget` pins, every thread busy:
+
+| Run | Evaluations × iterations | Fury P1 | Arcane P3 | Target |
+|---|---|---|---|---|
+| Quick | 250 × 500 | 5.7 s | 2.3 s | 3–6 s |
+| Normal | 500 × 4000 | 91 s | 36 s | 1–2 min |
+| Thorough | 1000 × 10000 | 7.5 min | 2.9 min | 5–10 min |
+
+Whole runs take longer, since sequential steps like bisection leave threads idle; BIS-e2e-perf measures
+them. Still estimates, for 16 threads:
 
 | Run | Time |
 |---|---|
-| Normal (about 500 sims) | 1–2 min |
-| Quick | 3–6 s |
-| Thorough | 5–10 min |
 | Tanks | 1.5× the above |
 | Raid contribution, one raider and phase | 4–6 min |
 | Batch, Quick | 30–45 min |
