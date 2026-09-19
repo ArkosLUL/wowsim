@@ -57,7 +57,7 @@ func ResolveCatalog(rows *CatalogRows) (*proto.ServerCatalog, *CatalogStats) {
 	return r.buildCatalog(pve, all)
 }
 
-type context struct{ Map, Difficulty int32 }
+type mapContext struct{ Map, Difficulty int32 }
 
 type creatureParent struct {
 	base  int32
@@ -143,7 +143,7 @@ type resolver struct {
 
 	items       map[int32]*CatalogItemRow
 	maps        map[int32]CatalogMapRow
-	maxPlayers  map[context]int32
+	maxPlayers  map[mapContext]int32
 	difficulty  map[int32][]int32
 	creatures   map[int32]*CatalogCreatureRow
 	parents     map[int32]creatureParent
@@ -158,8 +158,8 @@ type resolver struct {
 	dropMemo map[LootStore]map[int32][]lootDrop
 	refBusy  map[int32]bool
 
-	creatureCtx map[int32]map[context]int32 // base creature -> context -> gate
-	goCtx       map[int32]map[context]int32
+	creatureCtx map[int32]map[mapContext]int32 // base creature -> context -> gate
+	goCtx       map[int32]map[mapContext]int32
 
 	nodes   map[nodeID]*node
 	holders map[holderKey]*alt
@@ -176,7 +176,7 @@ func newResolver(rows *CatalogRows) *resolver {
 		rows:        rows,
 		items:       map[int32]*CatalogItemRow{},
 		maps:        map[int32]CatalogMapRow{},
-		maxPlayers:  map[context]int32{},
+		maxPlayers:  map[mapContext]int32{},
 		difficulty:  map[int32][]int32{},
 		creatures:   map[int32]*CatalogCreatureRow{},
 		parents:     map[int32]creatureParent{},
@@ -188,8 +188,8 @@ func newResolver(rows *CatalogRows) *resolver {
 		spells:      map[int32]*CreateSpellRow{},
 		dropMemo:    map[LootStore]map[int32][]lootDrop{},
 		refBusy:     map[int32]bool{},
-		creatureCtx: map[int32]map[context]int32{},
-		goCtx:       map[int32]map[context]int32{},
+		creatureCtx: map[int32]map[mapContext]int32{},
+		goCtx:       map[int32]map[mapContext]int32{},
 		nodes:       map[nodeID]*node{},
 		holders:     map[holderKey]*alt{},
 		unplaced:    map[[2]int32][]int32{},
@@ -201,7 +201,7 @@ func newResolver(rows *CatalogRows) *resolver {
 		r.maps[m.ID] = m
 	}
 	for _, d := range rows.MapDifficulties {
-		r.maxPlayers[context{d.Map, d.Difficulty}] = d.MaxPlayers
+		r.maxPlayers[mapContext{d.Map, d.Difficulty}] = d.MaxPlayers
 		r.difficulty[d.Map] = append(r.difficulty[d.Map], d.Difficulty)
 	}
 	for i := range rows.Creatures {
@@ -441,10 +441,10 @@ func (r *resolver) baseCreature(entry int32) (int32, int32) {
 	return entry, 0
 }
 
-func addContext(ctxs map[int32]map[context]int32, entry int32, c context, g int32) bool {
+func addContext(ctxs map[int32]map[mapContext]int32, entry int32, c mapContext, g int32) bool {
 	m := ctxs[entry]
 	if m == nil {
-		m = map[context]int32{}
+		m = map[mapContext]int32{}
 		ctxs[entry] = m
 	}
 	if old, ok := m[c]; ok && old <= g {
@@ -469,7 +469,7 @@ func (r *resolver) spawnDifficulties(mapID, spawnMask int32) []int32 {
 			continue
 		}
 		// legacy raids spawn with masks wider than their difficulties
-		if _, listed := r.maxPlayers[context{mapID, d}]; d <= 1 || listed {
+		if _, listed := r.maxPlayers[mapContext{mapID, d}]; d <= 1 || listed {
 			out = append(out, d)
 		}
 	}
@@ -505,34 +505,34 @@ func (r *resolver) placeHolders() {
 		g := max(r.creatureGate(s.Entry, s.ScriptName), phaseGate(mapID, s.PhaseMask))
 		if index > 0 {
 			if s.SpawnMask != 0 {
-				addContext(r.creatureCtx, base, context{mapID, index}, g)
+				addContext(r.creatureCtx, base, mapContext{mapID, index}, g)
 			}
 			continue
 		}
 		for _, d := range r.spawnDifficulties(mapID, s.SpawnMask) {
-			addContext(r.creatureCtx, base, context{mapID, d}, g)
+			addContext(r.creatureCtx, base, mapContext{mapID, d}, g)
 		}
 	}
 	for _, s := range r.rows.GameObjectSpawns {
 		mapID := r.routeMap(s.Map)
 		g := max(r.goGate(s.Entry, s.ScriptName), phaseGate(mapID, s.PhaseMask))
 		for _, d := range r.spawnDifficulties(mapID, s.SpawnMask) {
-			addContext(r.goCtx, s.Entry, context{mapID, d}, g)
+			addContext(r.goCtx, s.Entry, mapContext{mapID, d}, g)
 		}
 	}
 	for _, e := range r.rows.Encounters {
 		base, _ := r.baseCreature(e.CreditEntry)
 		for _, d := range r.encounterDifficulties(e) {
-			addContext(r.creatureCtx, base, context{e.Map, d}, r.creatureGate(base, ""))
+			addContext(r.creatureCtx, base, mapContext{e.Map, d}, r.creatureGate(base, ""))
 		}
 	}
 	for _, s := range knownScriptSummons {
 		for _, d := range s.Difficulties {
 			if s.GameObject {
-				addContext(r.goCtx, s.Entry, context{s.Map, d}, r.goGate(s.Entry, ""))
+				addContext(r.goCtx, s.Entry, mapContext{s.Map, d}, r.goGate(s.Entry, ""))
 			} else {
 				base, _ := r.baseCreature(s.Entry)
-				addContext(r.creatureCtx, base, context{s.Map, d}, r.creatureGate(base, ""))
+				addContext(r.creatureCtx, base, mapContext{s.Map, d}, r.creatureGate(base, ""))
 			}
 		}
 	}
@@ -540,7 +540,7 @@ func (r *resolver) placeHolders() {
 	for changed := true; changed; {
 		changed = false
 		for _, s := range r.rows.Summons {
-			var from map[context]int32
+			var from map[mapContext]int32
 			switch s.SummonerKind {
 			case SummonerCreature:
 				base, _ := r.baseCreature(s.SummonerID)
@@ -548,9 +548,9 @@ func (r *resolver) placeHolders() {
 			case SummonerGameObject:
 				from = r.goCtx[s.SummonerID]
 			case SummonerMap:
-				from = map[context]int32{}
+				from = map[mapContext]int32{}
 				for _, d := range r.mapDifficulties(s.SummonerID) {
-					from[context{s.SummonerID, d}] = 0
+					from[mapContext{s.SummonerID, d}] = 0
 				}
 			}
 			for c, g := range from {
@@ -571,7 +571,7 @@ func (r *resolver) placeHolders() {
 func (r *resolver) encounterDifficulties(e EncounterRow) []int32 {
 	ds := []int32{e.Difficulty}
 	if r.maps[e.Map].Type == mapTypeRaid && e.Difficulty < 2 {
-		if players, ok := r.maxPlayers[context{e.Map, e.Difficulty + 2}]; ok && players <= 25 {
+		if players, ok := r.maxPlayers[mapContext{e.Map, e.Difficulty + 2}]; ok && players <= 25 {
 			ds = append(ds, e.Difficulty+2)
 		}
 	}
@@ -594,13 +594,13 @@ func (r *resolver) mapDifficulties(mapID int32) []int32 {
 }
 
 // contextTier is where a holder in context c opens: its map's tier and its script gate.
-func (r *resolver) contextTier(c context, g, boss int32) int32 {
+func (r *resolver) contextTier(c mapContext, g, boss int32) int32 {
 	return max(mapTier(r.maps, c.Map, c.Difficulty, boss), g)
 }
 
 // holderTier is the lowest tier over a holder's contexts, and that context, or tierUnknown.
-func holderTier(r *resolver, ctxs map[context]int32, boss int32) (int32, context) {
-	best, bestCtx := tierUnknown, context{}
+func holderTier(r *resolver, ctxs map[mapContext]int32, boss int32) (int32, mapContext) {
+	best, bestCtx := tierUnknown, mapContext{}
 	for c, g := range ctxs {
 		t := r.contextTier(c, g, boss)
 		if t < best || t == best && (c.Map < bestCtx.Map || c.Map == bestCtx.Map && c.Difficulty < bestCtx.Difficulty) {
@@ -647,7 +647,7 @@ func (r *resolver) addHolderDrop(itemID int32, key holderKey, holder int32) {
 		a = &alt{static: key.static, pvp: key.pvp, team: key.team, kind: key.kind, mapID: key.mapID,
 			holderGO: key.gameObject, extCost: key.extCost, repFaction: key.repFaction, repRank: key.repRank}
 		if key.static != tierUnknown {
-			a.label = r.contextLabel(context{key.mapID, key.difficulty})
+			a.label = r.contextLabel(mapContext{key.mapID, key.difficulty})
 		}
 		r.holders[key] = a
 		r.addAlt(item(itemID), a)
@@ -1488,7 +1488,7 @@ func compareSources(a, b *proto.CatalogSource) int {
 }
 
 // contextLabel names a map and difficulty the way raiders say it, e.g. "Naxxramas 25".
-func (r *resolver) contextLabel(c context) string {
+func (r *resolver) contextLabel(c mapContext) string {
 	m := r.maps[c.Map]
 	name := m.Name
 	if name == "" {

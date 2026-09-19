@@ -18,13 +18,7 @@ func LoadCatalogRows(db *sql.DB, dbcDir string) (*CatalogRows, error) {
 	if err != nil {
 		return nil, err
 	}
-	dbc := &DBC{
-		Spells:         readSpells(files["Spell.dbc"]),
-		SpellDurations: readSpellDurations(files["SpellDuration.dbc"]),
-		Enchantments:   readEnchantments(files["SpellItemEnchantment.dbc"]),
-		ItemSets:       readItemSets(files["ItemSet.dbc"]),
-		GemProperties:  readGemProperties(files["GemProperties.dbc"]),
-	}
+	dbc := dbcFromFiles(files)
 	if _, err := ApplySpellDBCOverrides(db, dbc); err != nil {
 		return nil, fmt.Errorf("spell_dbc: %w", err)
 	}

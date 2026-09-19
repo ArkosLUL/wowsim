@@ -68,12 +68,14 @@ func newCapacitorDamageEffect(config CapacitorDamageEffect) {
 			},
 		})
 
-		config.Trigger.Name = config.Name + " Trigger"
-		config.Trigger.Handler = func(sim *core.Simulation, _ *core.Spell, _ *core.SpellResult) {
+		// copy: config is shared by every character wearing the item
+		trigger := config.Trigger
+		trigger.Name = config.Name + " Trigger"
+		trigger.Handler = func(sim *core.Simulation, _ *core.Spell, _ *core.SpellResult) {
 			capacitorAura.Activate(sim)
 			capacitorAura.AddStack(sim)
 		}
-		core.MakeProcTriggerAura(&character.Unit, config.Trigger)
+		core.MakeProcTriggerAura(&character.Unit, trigger)
 	})
 }
 

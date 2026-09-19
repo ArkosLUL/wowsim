@@ -23,8 +23,9 @@ usage: tools/acore/dock.sh <command> [args]
   run <pkg> [args]  go run a tool package, e.g. run ./tools/database/acdiff
   exec <cmd> [args] anything else inside the container
   dps [dir]         print DPS per test from the .results goldens under dir
-  delta [dir]       DPS of the last run against the goldens; stats, casts and
-                    stat weights only show up in a plain diff of the two files
+  delta [dir]       DPS, HPS, TPS and DTPS of the last run against the goldens,
+                    per test that moved; stats, casts and stat weights only show
+                    up in a plain diff of the two files
   promote <dir>     copy that dir's .results.tmp over its .results
 
 Mounts: the checkout at /wotlk, DBCs at /dbc, the AzerothCore checkout at /ac.
@@ -88,13 +89,15 @@ ensure_go_deps() {
 	dock 'set -e; test -f sim/core/proto/api.pb.go || make sim/core/proto/api.pb.go; make -s binary_dist/dist.go'
 }
 
-# Pulls "<test name><tab><dps>" out of a .results prototext file.
-dps_pairs() {
+# Pulls "<test name><tab><metric><tab><value>" out of a .results prototext file, for each of dps,
+# hps, tps and dtps the test has. Prototext leaves out zeros, so a missing metric is 0.
+result_metrics() {
 	awk '
-		/^dps_results: \{/ { inrec = 1; key = ""; dps = ""; next }
+		{ sub(/\r$/, "") }
+		/^dps_results: \{/ { inrec = 1; key = ""; next }
 		inrec && /^ key: / { key = $0; sub(/^ key: "/, "", key); sub(/"$/, "", key); next }
-		inrec && /^  dps: / { dps = $2; next }
-		inrec && /^\}/ { if (key != "" && dps != "") print key "\t" dps; inrec = 0 }
+		inrec && /^  (dps|hps|tps|dtps): / { if (key != "") print key "\t" substr($1, 1, length($1) - 1) "\t" $2; next }
+		inrec && /^\}/ { inrec = 0 }
 	' "$1"
 }
 
@@ -102,8 +105,47 @@ cmd_dps() {
 	local dir=${1:-sim}
 	local file
 	while IFS= read -r file; do
-		dps_pairs "$file"
+		result_metrics "$file" | awk -F'\t' '$2 == "dps" { print $1 "\t" $3 }'
 	done < <(find "$root/$dir" -name '*.results' | sort)
+}
+
+# One line per test whose metrics moved, each moved metric as "name old -> new (change)". Tests
+# only in the run show as new, tests only in the golden as gone.
+metric_changes() {
+	awk -F'\t' '
+		BEGIN { nm = split("dps hps tps dtps", metrics, " ") }
+		FILENAME == ARGV[1] {
+			if (!($1 in oldkey)) { oldkey[$1] = 1; oldorder[++no] = $1 }
+			old[$1, $2] = $3
+			next
+		}
+		{
+			if (!($1 in newkey)) { newkey[$1] = 1; neworder[++nn] = $1 }
+			cur[$1, $2] = $3
+		}
+		END {
+			for (i = 1; i <= nn; i++) {
+				k = neworder[i]
+				line = ""
+				for (j = 1; j <= nm; j++) {
+					m = metrics[j]
+					if (!(k in oldkey)) {
+						if ((k, m) in cur) line = line sprintf("\t%s %.5f", m, cur[k, m])
+						continue
+					}
+					o = old[k, m] + 0; v = cur[k, m] + 0
+					if (o == v) continue
+					if (o != 0) line = line sprintf("\t%s %.5f -> %.5f (%+.3f%%)", m, o, v, (v - o) / o * 100)
+					else line = line sprintf("\t%s %.5f -> %.5f", m, o, v)
+				}
+				if (!(k in oldkey)) print "  " k "\tnew" line
+				else if (line != "") print "  " k line
+			}
+			for (i = 1; i <= no; i++) {
+				if (!(oldorder[i] in newkey)) print "  " oldorder[i] "\tgone"
+			}
+		}
+	' "$1" "$2"
 }
 
 cmd_delta() {
@@ -115,18 +157,10 @@ cmd_delta() {
 		suites=$((suites + 1))
 		if [ ! -f "$golden" ]; then
 			echo "${golden#"$root/"} (no golden yet)"
-			dps_pairs "$tmp" | awk -F'\t' '{ printf "  %s\tnew\t%.5f\n", $1, $2 }'
+			metric_changes /dev/null <(result_metrics "$tmp")
 			continue
 		fi
-		changes=$(awk -F'\t' '
-			NR == FNR { old[$1] = $2; next }
-			{
-				if (!($1 in old)) { printf "  %s\tnew\t%.5f\n", $1, $2; next }
-				o = old[$1] + 0; n = $2 + 0
-				if (o == n) next
-				printf "  %s\t%.5f -> %.5f\t%+.3f%%\n", $1, o, n, (o != 0 ? (n - o) / o * 100 : 0)
-			}
-		' <(dps_pairs "$golden") <(dps_pairs "$tmp"))
+		changes=$(metric_changes <(result_metrics "$golden") <(result_metrics "$tmp"))
 		if [ -n "$changes" ]; then
 			printf '%s\n%s\n' "${golden#"$root/"}" "$changes"
 		else

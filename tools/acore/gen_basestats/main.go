@@ -12,7 +12,6 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
-	"strings"
 
 	"github.com/wowsims/wotlk/tools/database/azerothcore"
 )
@@ -63,7 +62,7 @@ type model struct {
 func main() {
 	dbcDir := flag.String("dbc", "/dbc/Clean", "directory with the server's gt*.dbc files")
 	acDir := flag.String("ac", "/ac", "AzerothCore checkout the server was built from")
-	dsn := flag.String("dsn", defaultDSN(), "AzerothCore world database DSN")
+	dsn := flag.String("dsn", azerothcore.ContainerDSN(), "AzerothCore world database DSN")
 	level := flag.Int("level", 80, "character level")
 	goOut := flag.String("goOut", "sim/core/base_stats_auto_gen.go", "generated Go file")
 	tsOut := flag.String("tsOut", "ui/core/constants/ratings_auto_gen.ts", "generated TypeScript file")
@@ -84,14 +83,6 @@ func main() {
 		}
 		fmt.Println("wrote", path)
 	}
-}
-
-// defaultDSN reaches the live MySQL from inside dock.sh's container.
-func defaultDSN() string {
-	if dsn := os.Getenv("AC_DSN"); dsn != "" {
-		return dsn
-	}
-	return strings.Replace(azerothcore.DefaultDSN, "127.0.0.1", "host.docker.internal", 1)
 }
 
 func load(dbcDir, acDir, dsn string, level int) (*model, error) {

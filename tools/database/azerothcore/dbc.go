@@ -224,14 +224,18 @@ func LoadDBC(dir string) (*DBC, error) {
 	if err != nil {
 		return nil, err
 	}
+	return dbcFromFiles(files), nil
+}
 
+// dbcFromFiles reads DBCFileNames out of files, which can hold more.
+func dbcFromFiles(files map[string]*DBCFile) *DBC {
 	return &DBC{
 		Spells:         readSpells(files["Spell.dbc"]),
 		SpellDurations: readSpellDurations(files["SpellDuration.dbc"]),
 		Enchantments:   readEnchantments(files["SpellItemEnchantment.dbc"]),
 		ItemSets:       readItemSets(files["ItemSet.dbc"]),
 		GemProperties:  readGemProperties(files["GemProperties.dbc"]),
-	}, nil
+	}
 }
 
 func readSpells(f *DBCFile) map[int32]*SpellEntry {
