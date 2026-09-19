@@ -47,9 +47,9 @@ func TestGCDFollowsTriggerGlobalCooldown(t *testing.T) {
 		{"no server data, floored", testSpellNoServerData, GCDDefault, 0.5, false, GCDMin},
 		{"off the GCD", testSpellMoonfire, 0, 0.8, false, 0},
 	} {
-		timing := newCastTiming(registeredSpell(tc.spellID))
+		timing := newCastTiming(registeredSpell(tc.spellID), tc.ignoreHaste)
 		unit := &Unit{CastSpeed: tc.castSpeed}
-		if got := timing.gcd(unit, tc.gcd, tc.ignoreHaste); got != tc.want {
+		if got := timing.gcd(unit, tc.gcd); got != tc.want {
 			t.Errorf("%s: GCD %v, want %v", tc.name, got, tc.want)
 		}
 	}
@@ -73,7 +73,7 @@ func TestCastTimeHasteByDamageClass(t *testing.T) {
 		if tc.spellID == testSpellSteadyShot {
 			unit.CastSpeed = 0.5 // must not matter
 		}
-		timing := newCastTiming(spell)
+		timing := newCastTiming(spell, false)
 		if got := timing.castTime(unit, 2*time.Second, spell); got != tc.want {
 			t.Errorf("%s: cast time %v, want %v", tc.name, got, tc.want)
 		}
@@ -208,10 +208,10 @@ func TestPrepullCastDelaysFirstSwing(t *testing.T) {
 }
 
 func TestSpellRegistrationFindsIgnoreMeleeResetAuras(t *testing.T) {
-	if got := newCastTiming(registeredSpell(testSpellLightningBolt)).ignoreResetAuras; !slices.Equal(got, []ActionID{{SpellID: testSpellMaelstromWeapon}}) {
+	if got := newCastTiming(registeredSpell(testSpellLightningBolt), false).ignoreResetAuras; !slices.Equal(got, []ActionID{{SpellID: testSpellMaelstromWeapon}}) {
 		t.Errorf("Lightning Bolt's IGNORE_MELEE_RESET auras = %v, want Maelstrom Weapon", got)
 	}
-	if got := newCastTiming(registeredSpell(testSpellExorcism)).ignoreResetAuras; len(got) != 0 {
+	if got := newCastTiming(registeredSpell(testSpellExorcism), false).ignoreResetAuras; len(got) != 0 {
 		t.Errorf("Exorcism's IGNORE_MELEE_RESET auras = %v, want none", got)
 	}
 }
@@ -232,5 +232,50 @@ func TestIgnoreMeleeResetEffectFollowsIsAffected(t *testing.T) {
 		if got := tc.effect.affects(shamanSpell); got != tc.want {
 			t.Errorf("%s: affects = %v, want %v", tc.name, got, tc.want)
 		}
+	}
+}
+
+// CastTime and EffectiveCastTime are what the APL predicts a cast will cost, so they follow the same
+// castTiming the cast itself does.
+func TestCastTimePredictionsFollowTheCast(t *testing.T) {
+	var steady, exorcism, slam, fixed, moonfire, crusaderStrike *Spell
+	_, a := newTimingTestSim(t, 0, func(a *timingTestAgent) {
+		// a spell with server data takes its cast time: Steady Shot 2 s, Exorcism and Slam 1.5 s
+		steady = a.RegisterSpell(castConfig(testSpellSteadyShot, 2*time.Second))
+		exorcism = a.RegisterSpell(castConfig(testSpellExorcism, ms(1500)))
+		slam = a.RegisterSpell(castConfig(testSpellSlam, ms(1500)))
+		noHaste := castConfig(testSpellNoServerData, 2*time.Second)
+		noHaste.Cast.IgnoreHaste = true
+		fixed = a.RegisterSpell(noHaste)
+		moonfire = a.RegisterSpell(castConfig(testSpellMoonfire, 0))
+		crusaderStrike = a.RegisterSpell(castConfig(testSpellCrusaderStrike, 0))
+	})
+	a.CastSpeed = 0.8
+	a.PseudoStats.RangedSpeedMultiplier = 2
+
+	for _, tc := range []struct {
+		name  string
+		spell *Spell
+		want  time.Duration
+	}{
+		{"ranged: ranged attack speed", steady, time.Second},
+		{"magic: cast speed", exorcism, ms(1200)},
+		{"melee: no haste", slam, ms(1500)},
+		{"IgnoreHaste", fixed, 2 * time.Second},
+	} {
+		if got := tc.spell.CastTime(); got != tc.want {
+			t.Errorf("%s: CastTime %v, want %v", tc.name, got, tc.want)
+		}
+	}
+
+	// the GCD rule, not a hasted 1.5 s for everyone
+	if got := moonfire.EffectiveCastTime(); got != ms(1200) {
+		t.Errorf("Moonfire EffectiveCastTime %v, want 1.2s: its GCD is hasted", got)
+	}
+	if got := crusaderStrike.EffectiveCastTime(); got != GCDDefault {
+		t.Errorf("Crusader Strike EffectiveCastTime %v, want 1.5s: a melee GCD isn't hasted", got)
+	}
+	if got := steady.EffectiveCastTime(); got != GCDDefault {
+		t.Errorf("Steady Shot EffectiveCastTime %v, want 1.5s: its GCD outlasts the 1 s cast", got)
 	}
 }

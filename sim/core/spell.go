@@ -150,6 +150,7 @@ type Spell struct {
 
 	serverSpell     *serverdata.Spell
 	serverConflicts []ServerConflict
+	timing          castTiming
 }
 
 func (unit *Unit) OnSpellRegistered(handler SpellRegisteredHandler) {
@@ -190,7 +191,7 @@ func (unit *Unit) RegisterSpell(config SpellConfig) *Spell {
 
 	if config.Cast.CastTime == nil {
 		config.Cast.CastTime = func(spell *Spell) time.Duration {
-			return spell.Unit.ApplyCastSpeedForSpell(spell.DefaultCast.CastTime, spell)
+			return spell.timing.castTime(spell.Unit, spell.DefaultCast.CastTime, spell)
 		}
 	}
 
@@ -279,6 +280,7 @@ func (unit *Unit) RegisterSpell(config SpellConfig) *Spell {
 	if spell.DefaultCast.GCD == 0 && spell.DefaultCast.CastTime == 0 {
 		config.Cast.IgnoreHaste = true
 	}
+	spell.timing = newCastTiming(spell, config.Cast.IgnoreHaste)
 
 	if spell.DefaultCast == emptyCast {
 		if config.ExtraCastCondition == nil && config.Cast.CD.Timer == nil && config.Cast.SharedCD.Timer == nil {
@@ -577,14 +579,15 @@ func (spell *Spell) ExpectedTickDamageFromCurrentSnapshot(sim *Simulation, targe
 	return result.Damage
 }
 
-// Time until either the cast is finished or GCD is ready again, whichever is longer
+// EffectiveCastTime is how long the spell ties the unit up: its cast or its GCD, whichever is longer.
+// Neither is rounded to the server tick, which only the cast itself knows how to do (it needs the
+// time the cast starts).
 func (spell *Spell) EffectiveCastTime() time.Duration {
-	// TODO: this is wrong for spells like shadowfury, that have a GCD of less than 1s
-	return max(spell.Unit.SpellGCD(),
-		spell.Unit.ApplyCastSpeedForSpell(spell.DefaultCast.EffectiveTime(), spell))
+	return max(spell.timing.gcd(spell.Unit, spell.DefaultCast.GCD), spell.CastTime())
 }
 
-// Time until the cast is finished (ignoring GCD)
+// Time until the cast is finished (ignoring GCD). It leaves out the rounding up to the server tick
+// that makeCastFunc does, which needs the time the cast starts.
 func (spell *Spell) CastTime() time.Duration {
 	return spell.castTimeFn(spell)
 }

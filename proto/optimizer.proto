@@ -204,7 +204,8 @@ message OptimizerProgress {
 }
 
 message OptimizerResult {
-	// The pick. It's the seed when nothing beat the seed by the acceptance test.
+	// The pick. It's the seed when nothing beat the seed by the acceptance test. When the seed itself
+	// breaks a rule, it's the best verified loadout that keeps every rule, whatever it scores.
 	OptimizerLoadoutResult best = 1;
 	// The starting gear, scored the same way.
 	OptimizerLoadoutResult seed = 2;
@@ -213,7 +214,8 @@ message OptimizerResult {
 	// Up to 3 runners-up per slot, best first.
 	repeated OptimizerSlotAlternative alternatives = 4;
 	repeated OptimizerRacialScreen racial_screen = 5;
-	// best beat the seed: mean delta over 2 standard errors and over 0.05% of J.
+	// best beat the seed: mean delta over 2 standard errors and over 0.05% of J. Set as well when the
+	// seed broke a rule and a legal loadout replaced it, whatever the delta is.
 	bool improved = 6;
 
 	// The settings as run, after defaults.

@@ -58,9 +58,14 @@ func (cast *Cast) EffectiveTime() time.Duration {
 	return max(cast.GCD, cast.CastTime)
 }
 
-// castTiming is what makeCastFunc needs from the spell's server data, read once at registration.
+// castTiming is how a spell's cast time and GCD are worked out, read once at registration from its
+// server data. Spell.CastTime and Spell.EffectiveCastTime go through it too, so what the APL predicts
+// is what the cast costs.
 type castTiming struct {
 	serverData bool
+
+	// the spell's CastConfig.IgnoreHaste: nothing scales its cast time or GCD
+	ignoreHaste bool
 
 	// Spell::TriggerGlobalCooldown only hastes and clamps a GCD of 1000-1500 ms
 	clampGCD bool
@@ -75,30 +80,30 @@ type castTiming struct {
 	ignoreResetAuras []ActionID
 }
 
-func newCastTiming(spell *Spell) castTiming {
+func newCastTiming(spell *Spell, ignoreHaste bool) castTiming {
+	ct := castTiming{ignoreHaste: ignoreHaste}
 	sd := spell.ServerSpell()
 	if sd == nil {
-		return castTiming{}
+		return ct
 	}
-	return castTiming{
-		serverData:       true,
-		clampGCD:         time.Duration(sd.GCDMs)*time.Millisecond >= GCDMin && time.Duration(sd.GCDMs)*time.Millisecond <= GCDDefault,
-		hasteGCD:         sd.Flags&serverdata.FlagHasteGCD != 0,
-		castHaste:        castHasteFor(sd),
-		resetsAutoAttack: sd.Flags&serverdata.FlagResetsAutoAttack != 0,
-		hasCastTime:      sd.CastMs > 0,
-		ignoreResetAuras: ignoreMeleeResetAuras(sd),
-	}
+	ct.serverData = true
+	ct.clampGCD = time.Duration(sd.GCDMs)*time.Millisecond >= GCDMin && time.Duration(sd.GCDMs)*time.Millisecond <= GCDDefault
+	ct.hasteGCD = sd.Flags&serverdata.FlagHasteGCD != 0
+	ct.castHaste = castHasteFor(sd)
+	ct.resetsAutoAttack = sd.Flags&serverdata.FlagResetsAutoAttack != 0
+	ct.hasCastTime = sd.CastMs > 0
+	ct.ignoreResetAuras = ignoreMeleeResetAuras(sd)
+	return ct
 }
 
 // gcd is Spell::TriggerGlobalCooldown for spells with server data. The rest keep the sim's own rule:
 // hasted unless IgnoreHaste, never below GCDMin.
-func (ct *castTiming) gcd(unit *Unit, gcd time.Duration, ignoreHaste bool) time.Duration {
+func (ct *castTiming) gcd(unit *Unit, gcd time.Duration) time.Duration {
 	switch {
 	case gcd == 0:
 		return 0
 	case !ct.serverData:
-		if !ignoreHaste {
+		if !ct.ignoreHaste {
 			gcd = unit.ApplyCastSpeed(gcd)
 		}
 		return max(GCDMin, gcd)
@@ -142,6 +147,9 @@ func castHasteFor(sd *serverdata.Spell) castHaste {
 }
 
 func (ct *castTiming) castTime(unit *Unit, castTime time.Duration, spell *Spell) time.Duration {
+	if ct.ignoreHaste {
+		return castTime
+	}
 	switch ct.castHaste {
 	case castHasteRanged:
 		return unit.ApplyRangedCastSpeed(castTime, spell)
@@ -221,7 +229,6 @@ func (spell *Spell) castFailureHelper(sim *Simulation, message string, vals ...a
 }
 
 func (spell *Spell) makeCastFunc(config CastConfig) CastSuccessFunc {
-	timing := newCastTiming(spell)
 	spell.keepChannelExpiryExact()
 
 	return func(sim *Simulation, target *Unit) bool {
@@ -249,10 +256,8 @@ func (spell *Spell) makeCastFunc(config CastConfig) CastSuccessFunc {
 			}
 		}
 
-		spell.CurCast.GCD = timing.gcd(spell.Unit, spell.CurCast.GCD, config.IgnoreHaste)
-		if !config.IgnoreHaste {
-			spell.CurCast.CastTime = timing.castTime(spell.Unit, spell.CurCast.CastTime, spell)
-		}
+		spell.CurCast.GCD = spell.timing.gcd(spell.Unit, spell.CurCast.GCD)
+		spell.CurCast.CastTime = spell.timing.castTime(spell.Unit, spell.CurCast.CastTime, spell)
 		if spell.CurCast.CastTime > 0 {
 			// the cast lands on a server tick, and its CD starts then too
 			spell.CurCast.CastTime = sim.NextServerTick(sim.CurrentTime+spell.CurCast.CastTime) - sim.CurrentTime
@@ -283,7 +288,7 @@ func (spell *Spell) makeCastFunc(config CastConfig) CastSuccessFunc {
 			return spell.castFailureHelper(sim, "casting/channeling %v for %s, curTime = %s", hc.ActionID, hc.Expires-sim.CurrentTime, sim.CurrentTime)
 		}
 
-		resetsSwing := timing.resetsSwing(spell)
+		resetsSwing := spell.timing.resetsSwing(spell)
 
 		if effectiveTime := spell.CurCast.EffectiveTime(); effectiveTime != 0 {
 			spell.SpellMetrics[target.UnitIndex].TotalCastTime += effectiveTime

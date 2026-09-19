@@ -506,7 +506,15 @@ export class OptimizerTab extends SimTab {
 		}
 		warnings.forEach(w => this.resultsBody.appendChild(newElement('div', 'optimizer-warning', w)));
 		if (result.improved) {
-			this.resultsBody.appendChild(newElement('div', 'optimizer-improved', 'Beats your starting gear by more than the noise.'));
+			// improved is also set when the starting gear broke a rule, where the pick can score lower
+			const beatsSeed = (result.best?.scoreDelta || 0) > 0;
+			this.resultsBody.appendChild(
+				newElement(
+					'div',
+					'optimizer-improved',
+					beatsSeed ? 'Beats your starting gear by more than the noise.' : 'Replaces your starting gear, which breaks a rule (see above).',
+				),
+			);
 		}
 
 		if (result.best) {
