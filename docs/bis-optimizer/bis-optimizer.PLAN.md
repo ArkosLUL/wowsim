@@ -198,6 +198,25 @@ Every BiS WI runs fast tests only and changes no goldens. UI WIs also run `dock.
 ArP breakpoints differ per spell (Blood Gorged adds per-spell ArP), so take the ArP curve from sims, not
 the sheet's cap.
 
+**Interface for BIS-search:**
+- `Evaluator.Evaluate(ctx, []Point, iterations)`. A `Point` is a `Loadout` plus bonus-stat `Offset`s,
+  which only curves and normalizers set. `Delta(a, b, metric)` pairs over the iterations both ran.
+- `SimEvaluator` runs 250-iteration shards, shard k at `RandomSeed + 250k`, and extends a cached point
+  by its missing shards. It keeps per-iteration samples, which pairing needs, only for the metrics it's
+  given (`WeightedMetrics`). One failed sim fails the whole call with a `*SimError`, never cached; a
+  cancel keeps finished shards.
+- `NewObjective` measures each wₘ at ±100 of the spec's EP reference stat (±1000 Armor). A metric whose
+  wₘ doesn't clear 2 se is left out with a warning. All-zero weights mean DPS; raid mode is an error.
+- `MeasureResponse` fits, per stat, two lines through the seed meeting at a breakpoint, over the
+  `ResponseRange` the pool reaches. A family is one sim stat: hit rating feeds the MeleeHit and SpellHit
+  curves.
+- `NeedsSim(ItemChoice)`: an effect on the item, a gem or the enchant, or weapon damage. Set bonuses need
+  macros. `hardCodedItemIDs` holds 74 ids the sim checks directly, 62 without a registered effect; a
+  source-scan test catches new checks.
+- `MeasureResiduals`: paired sim Δ minus the curves' Δ over gear stats, counted from the seed.
+- `EffortBudget` ([measured](bis-optimizer.INVESTIGATION.md#performance)), evaluations × iterations:
+  Quick 250 × 500, Normal 500 × 4000, Thorough 1000 × 10000.
+
 ### BIS-rules (wave C)
 
 **Owns:** `pool.go`, `rules.go`, the gem DP.
