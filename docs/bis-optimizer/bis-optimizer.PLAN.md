@@ -266,7 +266,7 @@ the sheet's cap.
     - 14 WotLK crafts whose designs nothing awards fall back, at the same tier
     - 64 items below tier 13 moved or dropped
 
-### BIS-raidctx (wave C)
+### BIS-raidctx (wave C, done)
 
 **Owns:** `raidctx/derive.go`, `providers.go`, `testdata/` (the 25-player fixture and its golden).
 

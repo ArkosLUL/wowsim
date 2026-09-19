@@ -87,7 +87,7 @@ G = changes goldens. FS = runs all 37 suites.
 | PAR-P6-2 | merged | `d17c2838c` | 30 goldens promoted in `7e1567b9f` |
 | PAR-P5-23 | merged | `ac367aa97` | |
 | BIS-rules | merged | `92027abb1` | catalog regenerated: 186 items moved |
-| BIS-raidctx | running | | |
+| BIS-raidctx | merged | `61b8c303c` | |
 
 Later WIs are added as their wave starts.
 
