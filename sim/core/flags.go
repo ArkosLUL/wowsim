@@ -167,7 +167,7 @@ func (ho HitOutcome) PartialResistString() string {
 }
 
 // Other flags
-type SpellFlag uint32
+type SpellFlag uint64
 
 // Returns whether there is any overlap between the given masks.
 func (se SpellFlag) Matches(other SpellFlag) bool {
@@ -184,6 +184,7 @@ const (
 	SpellFlagCannotBeParried                                // SPELL_ATTR7_NO_ATTACK_PARRY
 	SpellFlagNoActiveDefense                                // SPELL_ATTR0_NO_ACTIVE_DEFENSE: can miss, nothing else
 	SpellFlagCompletelyBlocked                              // SPELL_ATTR3_COMPLETELY_BLOCKED on a spell with no direct damage: a block in the table stops it outright
+	SpellFlagAlwaysHit                                      // SPELL_ATTR3_ALWAYS_HIT: no miss, dodge, parry or block of any kind
 	SpellFlagIncludeTargetBonusDamage                       // Spell benefits from Gift of Arthas and Hemorrhage.
 	SpellFlagBinary                                         // Does not do partial resists and could need a different hit roll.
 	SpellFlagChanneled                                      // Spell is channeled
@@ -202,6 +203,7 @@ const (
 	SpellFlagPotion                                         // Indicates this spell is a potion spell.
 	SpellFlagPrepullPotion                                  // Indicates this spell is the prepull potion.
 	SpellFlagCombatPotion                                   // Indicates this spell is the combat potion.
+	SpellFlagNoServerData                                   // RegisterSpell leaves the spell as declared, for a spell id that isn't the server's spell
 
 	// Used to let agents categorize their spells.
 	SpellFlagAgentReserved1

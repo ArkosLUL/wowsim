@@ -311,16 +311,29 @@ removes it.
   adds a spell reruns spellids and gen_serverdata.
 - `tools/acore/gen_serverdata` ([README](../../tools/acore/gen_serverdata/README.md)) →
   `sim/core/serverdata/{spells,procs,enchant_procs,bonus}_auto_gen.go`, for the sim's ids and their triggers
-  (938 spells), not the whole capture:
+  (972 spells), not the whole capture:
   - From the capture, per spell: damage class, school, cast ms (with the ranged slot's +500), GCD and category,
-    CD, durations, StackAmount, costs, raw attributes, effects, and `Flags`: UsesRangedSlot, Binary,
+    CD, durations, StackAmount, costs, raw attributes, effects, the bounds passive spell modifiers put on cast
+    time, GCD and cooldown (`CastMods`, `GCDMods`, `CooldownMods`), and `Flags`: UsesRangedSlot, Binary,
     NoActiveDefense, AlwaysHit, CompletelyBlocked, ResetsAutoAttack, HasteAffectsPeriodic, HasteGCD, Channeled,
     AutoRepeat, Passive, Positive.
   - From live MySQL: `spell_proc` (185 entries, counting the ones the server builds, which come from the
     capture), `spell_bonus_data` (149), `spell_enchant_proc_data` (all 42 rows). Rows resolved from the DB must
     match the capture, or nothing is written.
   - `serverdata` doesn't import `sim/core`, and its `Flags` type is independent of `core.SpellFlag`.
-- `spell.go` `RegisterSpell`: applies server flags by SpellID (opt out with `SpellFlagNoServerData`) and records conflicts.
+- `spell.go` `RegisterSpell` looks the spell up by SpellID. `Spell.ServerSpell()` returns the entry: nil without
+  one, with `SpellFlagNoServerData` (`SpellFlag` is now `uint64`) or under a `ServerSpellID` entry.
+  - Flags: Binary, NoActiveDefense, CompletelyBlocked (without CU_DIRECT_DAMAGE) and Channeled take the server's
+    value. AlwaysHit (nothing reads it yet), ATTR7 no-dodge/no-parry and, on non-physical spells, IgnoreResists
+    (ATTR4_NO_CAST_LOG) are only added.
+  - Timing, for a spell with a cast, GCD or cooldown that isn't an enemy's: cast time vs `CastMs`, GCD vs
+    `GCDMs` (0 outside `GCDCategory` 133, the only one the sim's GCD models), `CD` vs the own cooldown (else the
+    category's; a missing timer is added), `SharedCD` vs the category cooldown. A value within the modifier bounds
+    (±1 ms) agrees.
+  - A declared value the server rules out is a conflict: the server's value applies unless the allowlist entry
+    has `KeepSim`. A `KeepSim` entry can also turn down a flag the spell left out (a dummy cast whose damage a
+    triggered spell deals). A `ServerSpellID` entry skips the data of a wrong id.
+  - Entries live in `sim/<class>/serverdata_allowlist.go`, shared ones in `sim/core/serverdata_allowlist.go`.
 
 **Rage, procs, swing timers**
 - `rage.go`: truncated hit factor, doubled on crit after truncation.
@@ -337,9 +350,9 @@ removes it.
 
 **Casting** (`cast.go`, `unit.go` `SpellGCD`)
 - GCD is hasted only with `HasteGCD`; clamp to [1000,1500].
-- +500 ms for ranged-slot spells.
+- +500 ms for ranged-slot spells: in `CastMs`, applied by `RegisterSpell`.
 - Ranged-class cast time scales with ranged speed.
-- Missile minimum distance 5.
+- Missile minimum distance 5: `Spell.TravelTime`, in whole ms.
 
 **DoTs** (`dot.go`)
 - A single refresh rule: reset the tick timer iff StackAmount < 2 and the cast isn't triggered.
@@ -355,7 +368,9 @@ removes it.
 - `dot_test.go`: reset vs keep; 3000 ms × 0.8 over 15 s = 6 ticks.
 - `cast_test.go`.
 - `ppm_test.go`: instant spell at 15 PPM → 37.5%.
-- `serverdata_test.go`: fails on conflicts that aren't allowlisted.
+- `sim/serverdata_test.go` builds every golden suite's character, every hunter and warlock pet, and every preset
+  encounter. It fails on a conflict no entry covers, a stale entry (other values, or a registered spell without
+  the conflict) and an entry without a reason.
 
 **Verify**
 - `.simval procs` matches the generated proc chances.

@@ -2,8 +2,12 @@ package core
 
 import (
 	"fmt"
+	"math"
+	"sort"
+	"sync"
 	"time"
 
+	"github.com/wowsims/wotlk/sim/core/serverdata"
 	"github.com/wowsims/wotlk/sim/core/stats"
 )
 
@@ -143,6 +147,9 @@ type Spell struct {
 
 	// Per-target auras that are related to this spell, usually buffs or debuffs applied by the spell.
 	RelatedAuras []AuraArray
+
+	serverSpell     *serverdata.Spell
+	serverConflicts []ServerConflict
 }
 
 func (unit *Unit) OnSpellRegistered(handler SpellRegisteredHandler) {
@@ -255,6 +262,9 @@ func (unit *Unit) RegisterSpell(config SpellConfig) *Spell {
 	} else if config.FocusCost.Cost != 0 {
 		spell.Cost = newFocusCost(spell, config.FocusCost)
 	}
+
+	// before the dots, which read Channeled, and before the cast function is picked
+	spell.applyServerData(&config.Cast)
 
 	spell.createDots(config.Dot, false)
 	spell.createDots(config.Hot, true)
@@ -544,7 +554,7 @@ func (spell *Spell) ApplyAOEThreat(threatAmount float64) {
 }
 
 func (spell *Spell) finalizeExpectedDamage(result *SpellResult) {
-	if !spell.SpellSchool.Matches(SpellSchoolPhysical) {
+	if !spell.SpellSchool.Matches(SpellSchoolPhysical) && !spell.Flags.Matches(SpellFlagIgnoreResists) && spell.canBeResisted(result.Target) {
 		result.Damage /= result.ResistanceMultiplier
 		result.Damage *= AverageMagicPartialResistMultiplier
 		result.ResistanceMultiplier = AverageMagicPartialResistMultiplier
@@ -579,12 +589,13 @@ func (spell *Spell) CastTime() time.Duration {
 	return spell.castTimeFn(spell)
 }
 
+// TravelTime is Spell::AddUnitTarget's missile delay: at least 5 yards, in whole ms.
 func (spell *Spell) TravelTime() time.Duration {
 	if spell.MissileSpeed == 0 {
 		return 0
-	} else {
-		return time.Duration(float64(time.Second) * spell.Unit.DistanceFromTarget / spell.MissileSpeed)
 	}
+	distance := max(spell.Unit.DistanceFromTarget, 5)
+	return time.Duration(math.Floor(distance/spell.MissileSpeed*1000)) * time.Millisecond
 }
 
 // Handles computing the cost of spells and checking whether the Unit
@@ -606,4 +617,274 @@ type SpellCost interface {
 
 func (spell *Spell) IssueRefund(sim *Simulation) {
 	spell.Cost.IssueRefund(sim, spell)
+}
+
+// ServerSpell is the spell's server data, looked up by SpellID when it was registered. Nil for a spell
+// with no entry, one that opts out with SpellFlagNoServerData, or one a ServerSpellID entry covers.
+func (spell *Spell) ServerSpell() *serverdata.Spell {
+	if spell.Flags.Matches(SpellFlagNoServerData) {
+		return nil
+	}
+	return spell.serverSpell
+}
+
+// ServerConflicts lists what the spell declared that its server data rules out, and the server flags an
+// entry turned down.
+func (spell *Spell) ServerConflicts() []ServerConflict {
+	return spell.serverConflicts
+}
+
+// ServerField is a value RegisterSpell checks against the spell's server data.
+type ServerField uint8
+
+const (
+	ServerCastTime          ServerField = iota + 1 // DefaultCast.CastTime against CastMs
+	ServerGCD                                      // DefaultCast.GCD against GCDMs, 0 outside category 133
+	ServerCD                                       // CD.Duration against the spell's own cooldown
+	ServerSharedCD                                 // SharedCD.Duration against its category's cooldown
+	ServerBinary                                   // SpellFlagBinary
+	ServerNoActiveDefense                          // SpellFlagNoActiveDefense
+	ServerCompletelyBlocked                        // SpellFlagCompletelyBlocked
+	ServerChanneled                                // SpellFlagChanneled
+	// The SpellID is another spell on the server (Sim is the id, Server the right one), so none of its
+	// data applies. Only an entry sets it, with KeepSim.
+	ServerSpellID
+)
+
+var serverFieldNames = [...]string{
+	ServerCastTime:          "CastTime",
+	ServerGCD:               "GCD",
+	ServerCD:                "CD",
+	ServerSharedCD:          "SharedCD",
+	ServerBinary:            "Binary",
+	ServerNoActiveDefense:   "NoActiveDefense",
+	ServerCompletelyBlocked: "CompletelyBlocked",
+	ServerChanneled:         "Channeled",
+	ServerSpellID:           "SpellID",
+}
+
+func (f ServerField) String() string {
+	if int(f) < len(serverFieldNames) && serverFieldNames[f] != "" {
+		return serverFieldNames[f]
+	}
+	return fmt.Sprintf("ServerField(%d)", f)
+}
+
+// ServerConflict is a value a spell declares that its server data rules out, or a server flag an entry
+// turns down. Timings are in ms, flags 0 or 1. A timing talents, glyphs, set bonuses or items can reach
+// isn't one.
+type ServerConflict struct {
+	Spell  ActionID
+	Field  ServerField
+	Sim    int64
+	Server int64
+
+	// the entry that covers it; without one, the server's value replaced the sim's
+	Allowed *ServerConflictAllowance
+}
+
+func (c ServerConflict) String() string {
+	return fmt.Sprintf("%s %s: sim %d, server %d", c.Spell, c.Field, c.Sim, c.Server)
+}
+
+// ServerConflictAllowance acknowledges one conflict. With KeepSim the spell keeps its own value, since it
+// models what the spell's server data can't show: a pet's AI, how often a raid member casts an external
+// buff, an item's cooldown, the triggered spell behind a dummy cast. Without it the server's value
+// applies, and the entry stands for a declaration its class still has to fix.
+type ServerConflictAllowance struct {
+	Spell   ActionID
+	Field   ServerField
+	Sim     int64
+	Server  int64
+	KeepSim bool
+	Why     string
+}
+
+type serverConflictKey struct {
+	spell ActionID
+	field ServerField
+}
+
+var serverAllowances = struct {
+	sync.RWMutex
+	byKey map[serverConflictKey]*ServerConflictAllowance
+}{byKey: map[serverConflictKey]*ServerConflictAllowance{}}
+
+// AllowServerConflicts registers entries from an init function. An entry covers its spell and field
+// whatever the values are, so a build the presets don't show still keeps what the entry decides.
+func AllowServerConflicts(entries ...ServerConflictAllowance) {
+	serverAllowances.Lock()
+	defer serverAllowances.Unlock()
+	for i := range entries {
+		e := &entries[i]
+		key := serverConflictKey{e.Spell, e.Field}
+		if _, ok := serverAllowances.byKey[key]; ok {
+			panic(fmt.Sprintf("two server conflict entries for %s %s", e.Spell, e.Field))
+		}
+		serverAllowances.byKey[key] = e
+	}
+}
+
+// ServerConflictAllowances lists every registered entry, sorted by spell and field.
+func ServerConflictAllowances() []*ServerConflictAllowance {
+	serverAllowances.RLock()
+	defer serverAllowances.RUnlock()
+	all := make([]*ServerConflictAllowance, 0, len(serverAllowances.byKey))
+	for _, e := range serverAllowances.byKey {
+		all = append(all, e)
+	}
+	sort.Slice(all, func(i, j int) bool {
+		a, b := all[i], all[j]
+		if a.Spell != b.Spell {
+			return a.Spell.String() < b.Spell.String()
+		}
+		return a.Field < b.Field
+	})
+	return all
+}
+
+// findServerAllowance falls back to the untagged spell's entry, since tags often count raid slots.
+func findServerAllowance(spell ActionID, field ServerField) *ServerConflictAllowance {
+	serverAllowances.RLock()
+	defer serverAllowances.RUnlock()
+	if e, ok := serverAllowances.byKey[serverConflictKey{spell, field}]; ok {
+		return e
+	}
+	spell.Tag = 0
+	return serverAllowances.byKey[serverConflictKey{spell, field}]
+}
+
+// SPELL_ATTR0_CU_DIRECT_DAMAGE, SPELL_ATTR4_NO_CAST_LOG and SPELL_ATTR7_NO_ATTACK_DODGE/PARRY (SpellInfo.h,
+// SharedDefines.h)
+const (
+	attrCuDirectDamage = 0x00000100
+	attr4NoCastLog     = 0x00000001
+	attr7NoAttackDodge = 0x00800000
+	attr7NoAttackParry = 0x01000000
+)
+
+// the StartRecoveryCategory nearly every spell with a GCD shares
+const gcdCategoryShared = 133
+
+// applyServerData swaps what the spell declares for its server data: the flags its hit and resist rolls
+// read, and for a spell the sim casts itself, its cast time, GCD and cooldowns.
+func (spell *Spell) applyServerData(cast *CastConfig) {
+	if spell.ActionID.SpellID == 0 || spell.Flags.Matches(SpellFlagNoServerData) {
+		return
+	}
+	s := serverdata.SpellByID(spell.ActionID.SpellID)
+	if s == nil {
+		return
+	}
+	if e := findServerAllowance(spell.ActionID, ServerSpellID); e != nil && e.KeepSim {
+		spell.serverConflicts = append(spell.serverConflicts, ServerConflict{
+			Spell: spell.ActionID, Field: ServerSpellID, Sim: int64(spell.ActionID.SpellID), Server: e.Server, Allowed: e,
+		})
+		return
+	}
+	spell.serverSpell = s
+
+	spell.syncServerFlag(ServerBinary, SpellFlagBinary, s.Flags&serverdata.FlagBinary != 0)
+	spell.syncServerFlag(ServerNoActiveDefense, SpellFlagNoActiveDefense, s.Flags&serverdata.FlagNoActiveDefense != 0)
+	// MeleeSpellHitResult only puts the block in the table without CU_DIRECT_DAMAGE
+	spell.syncServerFlag(ServerCompletelyBlocked, SpellFlagCompletelyBlocked,
+		s.Flags&serverdata.FlagCompletelyBlocked != 0 && s.AttributesCu&attrCuDirectDamage == 0)
+	spell.syncServerFlag(ServerChanneled, SpellFlagChanneled, s.Flags&serverdata.FlagChanneled != 0)
+
+	// Auras grant these too (Surprise Attacks), so the attributes only ever add them.
+	if s.Flags&serverdata.FlagAlwaysHit != 0 {
+		spell.Flags |= SpellFlagAlwaysHit
+	}
+	if s.Attributes[7]&attr7NoAttackDodge != 0 {
+		spell.Flags |= SpellFlagCannotBeDodged
+	}
+	if s.Attributes[7]&attr7NoAttackParry != 0 {
+		spell.Flags |= SpellFlagCannotBeParried
+	}
+	// CalcAbsorbResist never partially resists these. Not on physical spells: IgnoreResists would skip armor too.
+	if s.Attributes[4]&attr4NoCastLog != 0 && !spell.SpellSchool.Matches(SpellSchoolPhysical) {
+		spell.Flags |= SpellFlagIgnoreResists
+	}
+
+	// No cast, no GCD and no cooldown: the sim triggers it, and a triggered cast skips all three.
+	var emptyCast Cast
+	if spell.DefaultCast == emptyCast && cast.CD.Timer == nil && cast.SharedCD.Timer == nil {
+		return
+	}
+	// Creatures get no GCD (Spell::TriggerGlobalCooldown), and their scripts time every cast, which the
+	// encounter AIs model.
+	if spell.Unit.Type == EnemyUnit {
+		return
+	}
+
+	lo, hi := s.CastRange()
+	spell.syncServerTiming(ServerCastTime, &spell.DefaultCast.CastTime, s.CastMs, lo, hi)
+	// GlobalCooldownMgr keys the GCD by StartRecoveryCategory and the unit's one GCD is 133's. Any other
+	// category only holds back its own spells (Spirit Strike's GCD has none), so counts as no GCD.
+	gcdMs := int32(0)
+	lo, hi = 0, 0
+	if s.GCDCategory == gcdCategoryShared {
+		gcdMs = s.GCDMs
+		lo, hi = s.GCDRange()
+	}
+	spell.syncServerTiming(ServerGCD, &spell.DefaultCast.GCD, gcdMs, lo, hi)
+
+	if own := s.OwnCooldownMs(); cast.CD.Timer != nil || own > 0 {
+		lo, hi = s.CooldownRange(own, s.CooldownMs <= 0)
+		if spell.syncServerTiming(ServerCD, &spell.CD.Duration, own, lo, hi) && spell.CD.Timer == nil {
+			spell.CD.Timer = spell.Unit.NewTimer()
+			cast.CD = spell.CD
+		}
+	}
+	if cast.SharedCD.Timer != nil {
+		lo, hi = s.CooldownRange(s.CategoryCooldownMs, true)
+		spell.syncServerTiming(ServerSharedCD, &spell.SharedCD.Duration, s.CategoryCooldownMs, lo, hi)
+	}
+}
+
+// syncServerFlag takes the server's flag. A flag the spell doesn't set is nothing it declared, so only
+// one it sets and the server lacks is a conflict, unless a KeepSim entry turns the server's flag down:
+// a dummy cast whose hit the server rolls on the triggered spell that does the damage.
+func (spell *Spell) syncServerFlag(field ServerField, flag SpellFlag, server bool) {
+	declared := spell.Flags.Matches(flag)
+	if declared == server {
+		return
+	}
+	if !declared {
+		if e := findServerAllowance(spell.ActionID, field); e != nil && e.KeepSim {
+			spell.serverConflicts = append(spell.serverConflicts, ServerConflict{
+				Spell: spell.ActionID, Field: field, Sim: 0, Server: 1, Allowed: e,
+			})
+			return
+		}
+		spell.Flags |= flag
+		return
+	}
+	if spell.recordServerConflict(field, 1, 0) {
+		spell.Flags &^= flag
+	}
+}
+
+// syncServerTiming takes the server's value when the declared one is outside what the modifiers can
+// reach, and reports whether it did.
+func (spell *Spell) syncServerTiming(field ServerField, value *time.Duration, serverMs, lo, hi int32) bool {
+	ms := float64(*value) / float64(time.Millisecond)
+	// 1 ms for the server's float math
+	if ms >= float64(lo)-1 && ms <= float64(hi)+1 {
+		return false
+	}
+	if !spell.recordServerConflict(field, int64(math.Round(ms)), int64(serverMs)) {
+		return false
+	}
+	*value = time.Duration(serverMs) * time.Millisecond
+	return true
+}
+
+// recordServerConflict reports whether the server's value applies.
+func (spell *Spell) recordServerConflict(field ServerField, sim, server int64) bool {
+	allowed := findServerAllowance(spell.ActionID, field)
+	spell.serverConflicts = append(spell.serverConflicts, ServerConflict{
+		Spell: spell.ActionID, Field: field, Sim: sim, Server: server, Allowed: allowed,
+	})
+	return allowed == nil || !allowed.KeepSim
 }

@@ -9,6 +9,7 @@ var spells = []Spell{
 		ID: 11, Family: 3, FamilyFlags: [3]uint32{0x20}, SchoolMask: 16, DmgClass: DmgClassMagic,
 		AttributesCu: 0x1100,
 		ProcChance:   101, Speed: 35,
+		CastMods: ModBounds{FlatMin: -700}, CooldownMods: ModBounds{FlatMin: -2000},
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 999, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1},
 		},
@@ -38,6 +39,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x50000, 0, 0x200000, 0, 0, 0x4}, AttributesCu: 0x100000,
 		CooldownMs: 180000, DurationMs: 12000, MaxDurationMs: 12000,
 		ProcChance: 101, ManaCostPct: 3,
+		CooldownMods: ModBounds{FlatMin: -90000},
 		Effects: [3]Effect{
 			{},
 			{Effect: 6, Aura: 87, BasePoints: -51, DieSides: 1, DamageMultiplier: 1, MiscValue: 127},
@@ -73,6 +75,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x50010, 0, 0, 0, 0, 0, 0x80000000}, AttributesCu: 0x100000,
 		CooldownMs: 300000, CategoryCooldownMs: 12000, Category: 132, DurationMs: 12000, MaxDurationMs: 12000,
 		ProcChance: 101, PowerType: 1,
+		CooldownMods: ModBounds{FlatMin: -180000},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 87, BasePoints: -61, DieSides: 1, DamageMultiplier: 1, MiscValue: 127},
 		},
@@ -113,6 +116,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x50010, 0x10, 0, 0x400, 0, 0x8000}, AttributesCu: 0x3100,
 		GCDMs: 1500, GCDCategory: 133, CategoryCooldownMs: 10000, Category: 891,
 		PowerType: 1, ManaCost: 250, MaxTargets: 4,
+		CooldownMods: ModBounds{FlatMin: -2000},
 		Effects: [3]Effect{
 			{Effect: 121, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1},
 			{Effect: 64, DamageMultiplier: 1, TriggerSpell: 44949},
@@ -124,6 +128,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x50010, 0, 0, 0x4000000, 0, 0, 0x80000000}, AttributesCu: 0x100000,
 		GCDMs: 1500, GCDCategory: 133, CooldownMs: 300000, CategoryCooldownMs: 12000, Category: 132, DurationMs: 12000, MaxDurationMs: 12000,
 		ProcFlags: 0x1110, ProcChance: 100, ProcCharges: 3, PowerType: 1,
+		CooldownMods: ModBounds{FlatMin: -60000, PctMin: -33},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 107, BasePoints: 99, DieSides: 1, DamageMultiplier: 1, MiscValue: 7, ClassMask: [3]uint32{0x2e600444, 0x404745}},
 			{Effect: 6, Aura: 87, BasePoints: 19, DieSides: 1, DamageMultiplier: 1, MiscValue: 127},
@@ -136,6 +141,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x1a150010, 0x10, 0x200000, 0x4000000}, AttributesCu: 0x100000,
 		GCDCategory: 1178, CategoryCooldownMs: 10000, Category: 38, DurationMs: -1, MaxDurationMs: -1,
 		ProcFlags: 0xa22a8, ProcChance: 100, ProcCharges: 1,
+		CooldownMods: ModBounds{FlatMin: -6000},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 36, DamageMultiplier: 1, MiscValue: 30},
 			{Effect: 6, Aura: 16, BasePoints: 299, DieSides: 1, PointsPerLevel: 5, DamageMultiplier: 1},
@@ -169,6 +175,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x50010, 0, 0, 0x2}, AttributesCu: 0x100000,
 		CooldownMs: 60000, DurationMs: 10000, MaxDurationMs: 10000,
 		ProcChance: 101, PowerType: 1,
+		CooldownMods: ModBounds{FlatMin: -30000},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 51, BasePoints: 99, DieSides: 1, DamageMultiplier: 1},
 			{Effect: 6, Aura: 150, BasePoints: 99, DieSides: 1, DamageMultiplier: 1},
@@ -180,6 +187,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x50010}, AttributesCu: 0x100010,
 		CooldownMs: 60000,
 		ProcChance: 101, PowerType: -2, ManaCostPct: 16,
+		CooldownMods: ModBounds{PctMin: -33},
 		Effects: [3]Effect{
 			{Effect: 30, BasePoints: 199, DieSides: 1, DamageMultiplier: 1, MiscValue: 1},
 			{Effect: 64, BasePoints: 2, DieSides: 1, DamageMultiplier: 1, TriggerSpell: 29131},
@@ -203,6 +211,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x50000, 0, 0, 0, 0x10000, 0, 0x80000000, 0x20}, AttributesCu: 0x100000,
 		GCDMs: 1000, GCDCategory: 133, CooldownMs: 600000, CategoryCooldownMs: 120000, Category: 23, DurationMs: 120000, MaxDurationMs: 120000,
 		ProcChance: 101, ManaCostPct: 23,
+		CooldownMods: ModBounds{FlatMin: -300000},
 		Effects: [3]Effect{
 			{Effect: 28, BasePoints: 3887, DieSides: 1, DamageMultiplier: 1, MiscValue: 15439, MiscValueB: 63},
 		},
@@ -223,6 +232,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x40010}, AttributesCu: 0x100010,
 		CategoryCooldownMs: 300000, Category: 55, DurationMs: 15000, MaxDurationMs: 15000,
 		ProcChance: 101, ManaCostPct: 3,
+		CooldownMods: ModBounds{FlatMin: -240000},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 140, BasePoints: 39, DieSides: 1, DamageMultiplier: 1},
 		},
@@ -306,6 +316,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x250010, 0x58100200, 0, 0x400, 0x200, 0, 0x400}, AttributesCu: 0x3100,
 		GCDMs: 1500, GCDCategory: 133, CategoryCooldownMs: 5000, Category: 65, DurationMs: 1, MaxDurationMs: 1,
 		ProcChance: 101, PowerType: 1, ManaCost: 50,
+		GCDMods: ModBounds{FlatMin: -500}, CooldownMods: ModBounds{FlatMin: -4000},
 		Effects: [3]Effect{
 			{Effect: 121, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1},
 			{Effect: 6, Aura: 4, DamageMultiplier: 1},
@@ -359,6 +370,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x50000}, AttributesCu: 0x100000,
 		CooldownMs: 120000, DurationMs: 15000, MaxDurationMs: 15000,
 		ProcChance: 101, ManaCostPct: 16,
+		CooldownMods: ModBounds{PctMin: -20},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 65, BasePoints: 19, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, MiscValue: 126},
 			{Effect: 6, Aura: 72, BasePoints: -21, DieSides: 1, DamageMultiplier: 1, MiscValue: 126, MiscValueB: 1},
@@ -410,6 +422,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10000, 0, 0, 0, 0x20000800, 0, 0x800000}, AttributesCu: 0x103000,
 		GCDMs: 1500, GCDCategory: 133, DurationMs: 30000, MaxDurationMs: 30000,
 		ProcChance: 101, ManaCostPct: 4,
+		GCDMods: ModBounds{FlatMin: -500},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 216, BasePoints: -31, DieSides: 1, DamageMultiplier: 1},
 			{Effect: 6, Aura: 75, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, MiscValue: 8},
@@ -418,9 +431,10 @@ var spells = []Spell{
 	// Cold Snap
 	{
 		ID: 11958, Family: 3, FamilyFlags: [3]uint32{0, 0x4}, SchoolMask: 16, DmgClass: DmgClassMagic, Flags: FlagResetsAutoAttack | FlagPositive,
-		Attributes: [8]uint32{0x50000},
-		CooldownMs: 480000,
-		ProcChance: 101,
+		Attributes:   [8]uint32{0x50000},
+		CooldownMs:   480000,
+		ProcChance:   101,
+		CooldownMods: ModBounds{PctMin: -20},
 		Effects: [3]Effect{
 			{Effect: 3, DamageMultiplier: 1},
 		},
@@ -440,7 +454,8 @@ var spells = []Spell{
 		ID: 12042, Family: 3, FamilyFlags: [3]uint32{0, 0x80000, 0x8}, SchoolMask: 64, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagPositive,
 		Attributes: [8]uint32{0x50000}, AttributesCu: 0x100000,
 		CooldownMs: 120000, CategoryCooldownMs: 15000, Category: 1151, DurationMs: 15000, MaxDurationMs: 15000,
-		ProcChance: 101,
+		ProcChance:   101,
+		CooldownMods: ModBounds{PctMin: -30},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 108, BasePoints: 19, DieSides: 1, DamageMultiplier: 1, ClassMask: [3]uint32{0x28e212f7, 0x19048}},
 			{Effect: 6, Aura: 108, BasePoints: 19, DieSides: 1, DamageMultiplier: 1, MiscValue: 14, ClassMask: [3]uint32{0x20c21af7, 0x29040}},
@@ -453,6 +468,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x2050000, 0, 0, 0, 0, 0, 0x80000000}, AttributesCu: 0x100000,
 		CooldownMs: 120000, CategoryCooldownMs: 1500, Category: 1151, DurationMs: -1, MaxDurationMs: -1,
 		ProcFlags: 0x15550, ProcChance: 100, ProcCharges: 1,
+		CooldownMods: ModBounds{FlatMin: -24000, PctMin: -30},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 108, BasePoints: -101, DieSides: 1, DamageMultiplier: 1, MiscValue: 10, ClassMask: [3]uint32{0x61400035, 0x1000}},
 		},
@@ -462,7 +478,8 @@ var spells = []Spell{
 		ID: 12051, Family: 3, FamilyFlags: [3]uint32{0x4000000, 0, 0x8}, SchoolMask: 64, Flags: FlagBinary | FlagResetsAutoAttack | FlagHasteAffectsPeriodic | FlagHasteGCD | FlagChanneled | FlagPositive,
 		Attributes: [8]uint32{0x10000, 0x40, 0, 0, 0, 0x2000}, AttributesCu: 0x100000,
 		GCDMs: 1500, GCDCategory: 133, CooldownMs: 240000, DurationMs: 8000, MaxDurationMs: 8000,
-		ProcChance: 101,
+		ProcChance:   101,
+		CooldownMods: ModBounds{FlatMin: -180000},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 21, AmplitudeMs: 2000, BasePoints: 14, DieSides: 1, DamageMultiplier: 1},
 			{Effect: 6, Aura: 20, AmplitudeMs: 2000, BasePoints: -1, DieSides: 1, DamageMultiplier: 1},
@@ -483,6 +500,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x8040010, 0x18000}, AttributesCu: 0x100000,
 		GCDMs: 1500, GCDCategory: 133, CooldownMs: 180000, DurationMs: 30000, MaxDurationMs: 30000,
 		ProcChance: 101, PowerType: 1, ManaCost: 100,
+		CooldownMods: ModBounds{FlatMin: -120000, PctMin: -33},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 79, BasePoints: 19, DieSides: 1, DamageMultiplier: 1, MiscValue: 1},
 			{},
@@ -514,6 +532,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x50000}, AttributesCu: 0x100000,
 		CooldownMs: 180000, DurationMs: 20000, MaxDurationMs: 20000,
 		ProcChance: 101, ManaCostPct: 3,
+		CooldownMods: ModBounds{PctMin: -20},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 65, BasePoints: 19, DieSides: 1, DamageMultiplier: 1, MiscValue: 127},
 			{Effect: 6, Aura: 108, BasePoints: 99, DieSides: 1, DamageMultiplier: 1, MiscValue: 9, ClassMask: [3]uint32{0x654008b5, 0x81100}},
@@ -652,7 +671,8 @@ var spells = []Spell{
 		ID: 12975, Family: 4, FamilyFlags: [3]uint32{0, 0x80000}, SchoolMask: 1, Flags: FlagBinary | FlagPositive,
 		Attributes: [8]uint32{0x40010, 0x20000}, AttributesCu: 0x100000,
 		CategoryCooldownMs: 180000, Category: 1251,
-		ProcChance: 101,
+		ProcChance:   101,
+		CooldownMods: ModBounds{FlatMin: -60000},
 		Effects: [3]Effect{
 			{Effect: 3, BasePoints: 29, DieSides: 1, DamageMultiplier: 1},
 		},
@@ -673,6 +693,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x90000}, AttributesCu: 0x1100,
 		CooldownMs: 5000, CategoryCooldownMs: 5000, Category: 19,
 		ProcChance: 101, ManaCost: 120,
+		CooldownMods: ModBounds{FlatMin: -2000},
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 109, DieSides: 21, DamageMultiplier: 1},
 		},
@@ -807,7 +828,8 @@ var spells = []Spell{
 		ID: 14185, Family: 8, FamilyFlags: [3]uint32{0, 0x1000}, SchoolMask: 1, Flags: FlagPositive,
 		Attributes: [8]uint32{0x40010, 0x20},
 		GCDMs:      1000, GCDCategory: 133, CooldownMs: 480000,
-		ProcChance: 101,
+		ProcChance:   101,
+		CooldownMods: ModBounds{FlatMin: -180000},
 		Effects: [3]Effect{
 			{Effect: 3, DamageMultiplier: 1, BonusMultiplier: 1},
 		},
@@ -837,6 +859,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x50010, 0x8000200, 0, 0x400}, AttributesCu: 0x105100,
 		GCDMs: 1000, GCDCategory: 133, CooldownMs: 20000, DurationMs: 7000, MaxDurationMs: 7000,
 		ProcChance: 101, PowerType: 3, ManaCost: 40,
+		CooldownMods: ModBounds{FlatMax: 10000},
 		Effects: [3]Effect{
 			{Effect: 31, BasePoints: 124, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1},
 			{Effect: 6, Aura: 49, BasePoints: 14, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1},
@@ -849,6 +872,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x2050000, 0, 0x80000, 0x4000000, 0x80040}, AttributesCu: 0x100000,
 		CooldownMs: 180000, DurationMs: -1, MaxDurationMs: -1,
 		ProcFlags: 0x15550, ProcChance: 100, ProcCharges: 1,
+		CooldownMods: ModBounds{PctMin: -20},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 108, BasePoints: -101, DieSides: 1, DamageMultiplier: 1, MiscValue: 14, ClassMask: [3]uint32{0xd757ffff, 0xd595f7, 0x2040}},
 			{Effect: 6, Aura: 107, BasePoints: 24, DieSides: 1, DamageMultiplier: 1, MiscValue: 7, ClassMask: [3]uint32{0xc9d43e90, 0xc98036, 0x40}},
@@ -917,6 +941,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x2050000, 0, 0, 0, 0x40}, AttributesCu: 0x100000,
 		CategoryCooldownMs: 180000, Category: 1202, DurationMs: 30000, MaxDurationMs: 30000,
 		ProcFlags: 0x11000, ProcChance: 100, ProcCharges: 1,
+		CooldownMods: ModBounds{FlatMin: -30000},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 108, BasePoints: -101, DieSides: 1, DamageMultiplier: 1, MiscValue: 10, ClassMask: [3]uint32{0x3, 0x1000}},
 			{Effect: 64, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, TriggerSpell: 64701, ClassMask: [3]uint32{0x3, 0x1000}},
@@ -928,6 +953,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x2050000, 0x20000, 0, 0, 0x40}, AttributesCu: 0x100000,
 		CategoryCooldownMs: 120000, Category: 1202, DurationMs: -1, MaxDurationMs: -1,
 		ProcFlags: 0x15550, ProcChance: 100, ProcCharges: 1,
+		CooldownMods: ModBounds{FlatMin: -96000},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 108, BasePoints: -101, DieSides: 1, DamageMultiplier: 1, MiscValue: 10, ClassMask: [3]uint32{0x9c3, 0x8000}},
 		},
@@ -948,6 +974,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x50000}, AttributesCu: 0x100000,
 		DurationMs: 15000, MaxDurationMs: 15000,
 		ProcFlags: 0x15550, ProcChance: 100, ProcCharges: 2,
+		CooldownMods: ModBounds{FlatMin: -30000},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 108, BasePoints: -41, DieSides: 1, DamageMultiplier: 1, MiscValue: 14, ClassMask: [3]uint32{0x981001c3, 0x1400, 0x10}},
 			{Effect: 6, Aura: 79, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, MiscValue: 28, ClassMask: [3]uint32{0x90100003, 0x1810}},
@@ -1058,6 +1085,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x2050000, 0x20000, 0, 0x30000, 0x40}, AttributesCu: 0x100000,
 		CooldownMs: 180000, DurationMs: -1, MaxDurationMs: -1,
 		ProcFlags: 0x15550, ProcChance: 100, ProcCharges: 1,
+		CooldownMods: ModBounds{FlatMin: -24000},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 108, BasePoints: -101, DieSides: 1, DamageMultiplier: 1, MiscValue: 10, ClassMask: [3]uint32{0x10000261, 0x2000020, 0x8000}},
 		},
@@ -1068,6 +1096,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x50000, 0x200, 0, 0x4000082}, AttributesCu: 0x107000,
 		GCDMs: 1500, GCDCategory: 133, CooldownMs: 8000, DurationMs: 12000, MaxDurationMs: 12000,
 		ProcFlags: 0x22220, ProcChance: 100, ProcCharges: 4, ManaCostPct: 8,
+		CooldownMods: ModBounds{FlatMin: -2000},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 271, BasePoints: 19, DieSides: 1, DamageMultiplier: 1, MiscValue: 8, ClassMask: [3]uint32{0x100403, 0x2000}},
 			{Effect: 64, DamageMultiplier: 1, TriggerSpell: 32175},
@@ -1131,6 +1160,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x50010, 0x8000},
 		GCDMs:      1500, GCDCategory: 133, CooldownMs: 30000, DurationMs: 10000, MaxDurationMs: 10000,
 		ProcFlags: 0x222a8, ProcChance: 100, PowerType: 1,
+		CooldownMods: ModBounds{PctMin: -33},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 77, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, MiscValue: 5},
 			{Effect: 6, Aura: 77, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, MiscValue: 14},
@@ -1181,6 +1211,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x20010000, 0x8400, 0x4000004, 0, 0x4, 0x60008}, AttributesCu: 0x100000,
 		CooldownMs: 120000, DurationMs: 10000, MaxDurationMs: 10000,
 		ProcChance: 101, ManaCostPct: 10,
+		CooldownMods: ModBounds{FlatMin: -20000, PctMin: -30},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 61, BasePoints: 49, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1},
 			{Effect: 6, Aura: 79, BasePoints: 49, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, MiscValue: 127},
@@ -1281,6 +1312,7 @@ var spells = []Spell{
 	{
 		ID: 20187, Family: 10, FamilyFlags: [3]uint32{0x800400}, SchoolMask: 2, DmgClass: DmgClassMelee, Flags: FlagNoActiveDefense | FlagAlwaysHit,
 		Attributes: [8]uint32{0x250000, 0, 0x4, 0x40040200}, AttributesCu: 0x1100,
+		CooldownMods: ModBounds{FlatMin: -4000},
 		Effects: [3]Effect{
 			{Effect: 2, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 0.32},
 			{},
@@ -1292,7 +1324,8 @@ var spells = []Spell{
 		ID: 20271, Family: 10, FamilyFlags: [3]uint32{0x800000}, SchoolMask: 2, DmgClass: DmgClassRanged, Flags: FlagBinary,
 		Attributes: [8]uint32{0x50000, 0, 0x100000, 0x10000}, AttributesCu: 0x101000,
 		GCDMs: 1500, GCDCategory: 133, CooldownMs: 10000, CategoryCooldownMs: 10000, Category: 1210,
-		ManaCostPct: 5,
+		ManaCostPct:  5,
+		CooldownMods: ModBounds{FlatMin: -4000},
 		Effects: [3]Effect{
 			{Effect: 77, BasePoints: 1, DieSides: 1, DamageMultiplier: 1},
 		},
@@ -1330,7 +1363,8 @@ var spells = []Spell{
 	{
 		ID: 20467, Family: 10, FamilyFlags: [3]uint32{0x800000, 0x208}, SchoolMask: 2, DmgClass: DmgClassMelee, Flags: FlagNoActiveDefense | FlagAlwaysHit,
 		Attributes: [8]uint32{0x250000, 0, 0x4, 0x40200}, AttributesCu: 0x3100,
-		ProcChance: 101,
+		ProcChance:   101,
+		CooldownMods: ModBounds{FlatMin: -4000},
 		Effects: [3]Effect{
 			{Effect: 58, DamageMultiplier: 1},
 			{Effect: 31, BasePoints: 23, DieSides: 1, DamageMultiplier: 1},
@@ -1406,7 +1440,8 @@ var spells = []Spell{
 		ID: 22812, Family: 7, FamilyFlags: [3]uint32{0, 0x40000}, SchoolMask: 8, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagResetsAutoAttack | FlagPositive,
 		Attributes: [8]uint32{0, 0, 0, 0, 0, 0x20008}, AttributesCu: 0x100000,
 		CooldownMs: 60000, DurationMs: 12000, MaxDurationMs: 12000,
-		ProcFlags: 0x28,
+		ProcFlags:    0x28,
+		CooldownMods: ModBounds{FlatMin: -12000},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 149, BasePoints: 99, DieSides: 1, DamageMultiplier: 1, MiscValue: 127},
 			{Effect: 6, Aura: 87, BasePoints: -21, DieSides: 1, DamageMultiplier: 1, MiscValue: 127},
@@ -1534,6 +1569,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10000, 0x200}, AttributesCu: 0x1100,
 		GCDMs: 1500, GCDCategory: 133, CooldownMs: 10000, Category: 2,
 		ProcChance: 101, PowerType: 2, ManaCost: 20,
+		CooldownMods: ModBounds{PctMin: -30},
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 79, DieSides: 41, DamageMultiplier: 1},
 		},
@@ -1655,6 +1691,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0xa150110, 0x20, 0x2}, AttributesCu: 0x100000,
 		DurationMs: 10000, MaxDurationMs: 10000,
 		ProcChance: 101, ProcCharges: 1, PowerType: 3,
+		CooldownMods: ModBounds{FlatMin: -150000},
 		Effects: [3]Effect{
 			{},
 			{Effect: 6, Aura: 16, BasePoints: 369, DieSides: 1, PointsPerLevel: 5, DamageMultiplier: 1},
@@ -1667,6 +1704,7 @@ var spells = []Spell{
 		Attributes:         [8]uint32{0x8150010, 0x420, 0x2},
 		CategoryCooldownMs: 180000, Category: 39,
 		ProcFlags: 0x222a8, ProcChance: 100, ProcCharges: 1, PowerType: 3,
+		CooldownMods: ModBounds{FlatMin: -150000},
 		Effects: [3]Effect{
 			{Effect: 64, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, TriggerSpell: 26888},
 			{Effect: 64, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, TriggerSpell: 18461},
@@ -1783,6 +1821,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x50000}, AttributesCu: 0x100000,
 		DurationMs: 10000, MaxDurationMs: 10000,
 		ProcChance: 101, PowerType: -2,
+		CooldownMods: ModBounds{PctMin: -33},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 24, AmplitudeMs: 1000, BasePoints: 9, DieSides: 1, DamageMultiplier: 1, MiscValue: 1},
 			{Effect: 6, Aura: 94, DamageMultiplier: 1},
@@ -1793,7 +1832,8 @@ var spells = []Spell{
 		ID: 29166, Family: 7, FamilyFlags: [3]uint32{0, 0x1000}, SchoolMask: 8, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagHasteGCD | FlagPositive,
 		Attributes: [8]uint32{0x10000, 0, 0x80000, 0, 0, 0, 0, 0x10000}, AttributesCu: 0x100000,
 		GCDMs: 1500, GCDCategory: 133, CooldownMs: 180000, DurationMs: 10000, MaxDurationMs: 10000,
-		ProcChance: 101,
+		ProcChance:   101,
+		CooldownMods: ModBounds{FlatMin: -48000},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 24, AmplitudeMs: 1000, BasePoints: 224, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1},
 		},
@@ -1940,6 +1980,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10000, 0x1}, AttributesCu: 0x100000,
 		GCDMs: 1500, GCDCategory: 133, CooldownMs: 180000,
 		ProcChance: 101, ManaCostPct: 16,
+		CooldownMods: ModBounds{FlatMin: -30000, PctMin: -20},
 		Effects: [3]Effect{
 			{Effect: 3, DieSides: 1, DamageMultiplier: 1},
 		},
@@ -1950,6 +1991,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10000}, AttributesCu: 0x1100,
 		CastMs: 2500, BaseCastMs: 2500, GCDMs: 1500, GCDCategory: 133,
 		ProcChance: 101, ManaCostPct: 1, Speed: 16,
+		CastMods: ModBounds{FlatMin: -500},
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 255, DieSides: 73, PointsPerLevel: 11.5, DamageMultiplier: 1, BonusMultiplier: 0.833},
 		},
@@ -1979,7 +2021,8 @@ var spells = []Spell{
 	{
 		ID: 31804, Family: 10, FamilyFlags: [3]uint32{0x800000, 0x400008}, SchoolMask: 2, DmgClass: DmgClassMelee, Flags: FlagNoActiveDefense | FlagAlwaysHit,
 		Attributes: [8]uint32{0x250800, 0, 0x4, 0x40200}, AttributesCu: 0x1100,
-		ProcChance: 101,
+		ProcChance:   101,
+		CooldownMods: ModBounds{FlatMin: -4000},
 		Effects: [3]Effect{
 			{Effect: 2, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 0.22},
 		},
@@ -1999,6 +2042,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x50000}, AttributesCu: 0x100000,
 		CooldownMs: 180000, DurationMs: 20000, MaxDurationMs: 20000,
 		ProcChance: 101, ManaCostPct: 8,
+		CooldownMods: ModBounds{FlatMin: -60000},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 79, BasePoints: 19, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, MiscValue: 127},
 			{Effect: 6, Aura: 136, BasePoints: 19, DieSides: 1, DamageMultiplier: 1, MiscValue: 127},
@@ -2010,6 +2054,7 @@ var spells = []Spell{
 		ID: 32175, Family: 11, FamilyFlags: [3]uint32{0, 0x10, 0x1400}, SchoolMask: 1, DmgClass: DmgClassMelee, Flags: FlagNoActiveDefense | FlagAlwaysHit,
 		Attributes: [8]uint32{0x250000, 0x200, 0, 0x40600, 0x1}, AttributesCu: 0x1100,
 		ProcFlags: 0x222a8, ProcChance: 100, ProcCharges: 2,
+		CooldownMods: ModBounds{FlatMin: -2000},
 		Effects: [3]Effect{
 			{Effect: 58, DamageMultiplier: 1, BonusMultiplier: 1},
 		},
@@ -2019,6 +2064,7 @@ var spells = []Spell{
 		ID: 32176, Family: 11, FamilyFlags: [3]uint32{0, 0x10, 0x1400}, SchoolMask: 1, DmgClass: DmgClassMelee, Flags: FlagNoActiveDefense | FlagAlwaysHit,
 		Attributes: [8]uint32{0x250010, 0, 0, 0x1040200, 0x1}, AttributesCu: 0x1100,
 		ProcChance: 101, PowerType: 3,
+		CooldownMods: ModBounds{FlatMin: -2000},
 		Effects: [3]Effect{
 			{Effect: 58, DamageMultiplier: 1, BonusMultiplier: 1},
 		},
@@ -2098,6 +2144,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x50000, 0, 0, 0, 0, 0x8, 0x4000000}, AttributesCu: 0x100000,
 		GCDMs: 1500, GCDCategory: 133, CooldownMs: 180000, DurationMs: 8000, MaxDurationMs: 8000,
 		ProcChance: 101, ManaCostPct: 8,
+		CooldownMods: ModBounds{PctMin: -20},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 87, BasePoints: -41, DieSides: 1, DamageMultiplier: 1, MiscValue: 127, ClassMask: [3]uint32{0x1}},
 			{Effect: 6, Aura: 235, BasePoints: 64, DieSides: 1, DamageMultiplier: 1, ClassMask: [3]uint32{0x2bbc16f, 0x1649}},
@@ -2129,6 +2176,7 @@ var spells = []Spell{
 		Attributes:         [8]uint32{0x50000, 0x10000400, 0x4},
 		CategoryCooldownMs: 60000, Category: 1171, DurationMs: 30000, MaxDurationMs: 30000,
 		ProcChance: 101, ManaCostPct: 3,
+		CooldownMods: ModBounds{FlatMin: -30000},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 4, DamageMultiplier: 1},
 		},
@@ -2160,7 +2208,8 @@ var spells = []Spell{
 		ID: 34433, Family: 6, FamilyFlags: [3]uint32{0x40000000, 0x100}, SchoolMask: 32, Flags: FlagHasteGCD,
 		Attributes: [8]uint32{0x50000, 0x10000001, 0x80000, 0, 0x80000}, AttributesCu: 0x1000,
 		GCDMs: 1500, GCDCategory: 133, CooldownMs: 300000, DurationMs: 15000, MaxDurationMs: 15000,
-		ProcChance: 101,
+		ProcChance:   101,
+		CooldownMods: ModBounds{FlatMin: -120000},
 		Effects: [3]Effect{
 			{Effect: 28, DamageMultiplier: 1, MiscValue: 19668, MiscValueB: 1561},
 			{Effect: 64, DamageMultiplier: 1, TriggerSpell: 41967},
@@ -2280,6 +2329,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x50010, 0x200}, AttributesCu: 0x1100,
 		GCDMs: 1500, GCDCategory: 133, CooldownMs: 10000,
 		ProcChance: 101, PowerType: 2, ManaCost: 20,
+		CooldownMods: ModBounds{PctMin: -30},
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 121, DieSides: 43, DamageMultiplier: 1},
 		},
@@ -2351,6 +2401,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x20000010, 0x420, 0x10000000, 0x30000, 0, 0, 0x4}, AttributesCu: 0x101000,
 		CooldownMs: 30000, Category: 1206, DurationMs: 3000, MaxDurationMs: 3000,
 		ProcChance: 101, PowerType: 3, ManaCost: 10,
+		CooldownMods: ModBounds{FlatMin: -10000},
 		Effects: [3]Effect{
 			{Effect: 64, DamageMultiplier: 1, TriggerSpell: 36563},
 			{Effect: 64, DamageMultiplier: 1, TriggerSpell: 44373},
@@ -2613,6 +2664,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0, 0x20440, 0, 0, 0x10000}, AttributesCu: 0x40,
 		GCDMs: 1500, GCDCategory: 133, CooldownMs: 600000, DurationMs: 4000, MaxDurationMs: 4000,
 		ProcChance: 101, PowerType: 5, RuneCostID: 81,
+		CooldownMods: ModBounds{FlatMin: -240000},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 23, AmplitudeMs: 500, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, TriggerSpell: 42651},
 			{Effect: 6, Aura: 87, BasePoints: -51, DieSides: 1, DamageMultiplier: 1, MiscValue: 127},
@@ -2636,6 +2688,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10000}, AttributesCu: 0x3100,
 		CastMs: 3500, BaseCastMs: 3500, GCDMs: 1500, GCDCategory: 133, DurationMs: 8000, MaxDurationMs: 8000,
 		ProcChance: 101, ManaCostPct: 19, Speed: 24,
+		CastMods: ModBounds{FlatMin: -650},
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 887, DieSides: 245, PointsPerLevel: 5.2, DamageMultiplier: 1, BonusMultiplier: 1},
 			{Effect: 6, Aura: 3, AmplitudeMs: 2000, BasePoints: 28, DieSides: 1, DamageMultiplier: 1},
@@ -2647,6 +2700,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10000, 0, 0, 0, 0, 0, 0x200000}, AttributesCu: 0x7100,
 		CastMs: 3000, BaseCastMs: 3000, GCDMs: 1500, GCDCategory: 133, DurationMs: 9000, MaxDurationMs: 9000,
 		ProcChance: 101, ManaCostPct: 11, Speed: 28,
+		CastMods: ModBounds{FlatMin: -700}, CooldownMods: ModBounds{FlatMin: -2000},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 33, BasePoints: -41, DieSides: 1, DamageMultiplier: 1},
 			{Effect: 2, BasePoints: 798, DieSides: 63, PointsPerLevel: 4.8, DamageMultiplier: 1, BonusMultiplier: 0.857},
@@ -2689,6 +2743,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10000}, AttributesCu: 0x1100,
 		GCDMs: 1500, GCDCategory: 133, CategoryCooldownMs: 8000, Category: 19,
 		ProcChance: 101, ManaCostPct: 21,
+		CooldownMods: ModBounds{FlatMin: -2000},
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 924, DieSides: 171, PointsPerLevel: 4.9, DamageMultiplier: 1, BonusMultiplier: 0.429},
 		},
@@ -2699,6 +2754,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10000}, AttributesCu: 0x3100,
 		CastMs: 5000, BaseCastMs: 5000, GCDMs: 1500, GCDCategory: 133, Category: 290, DurationMs: 12000, MaxDurationMs: 12000,
 		ProcChance: 101, ManaCostPct: 22, Speed: 24,
+		CastMods: ModBounds{FlatMin: -3500}, CooldownMods: ModBounds{FlatMax: 5000},
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 1189, DieSides: 321, PointsPerLevel: 6.8, DamageMultiplier: 1, BonusMultiplier: 1.15},
 			{Effect: 6, Aura: 3, AmplitudeMs: 3000, BasePoints: 112, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 0.05},
@@ -2741,6 +2797,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10000, 0x10000088}, AttributesCu: 0x3100,
 		CastMs: 2000, BaseCastMs: 2000, GCDMs: 1500, GCDCategory: 133, DurationMs: 8000, MaxDurationMs: 8000,
 		ProcChance: 101, ManaCostPct: 30,
+		CastMods: ModBounds{FlatMin: -750},
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 687, DieSides: 155, PointsPerLevel: 2.8, DamageMultiplier: 1, BonusMultiplier: 0.243},
 			{Effect: 27, Aura: 3, AmplitudeMs: 2000, BasePoints: 154, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 0.122},
@@ -2752,6 +2809,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10000, 0x10000088}, AttributesCu: 0x3100,
 		CastMs: 2000, BaseCastMs: 2000, GCDMs: 1500, GCDCategory: 133, DurationMs: 8000, MaxDurationMs: 8000,
 		ProcChance: 101, ManaCostPct: 30,
+		CastMods: ModBounds{FlatMin: -750},
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 872, DieSides: 195, PointsPerLevel: 3.5, DamageMultiplier: 1, BonusMultiplier: 0.243},
 			{Effect: 27, Aura: 3, AmplitudeMs: 2000, BasePoints: 194, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 0.122},
@@ -2784,6 +2842,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10000, 0x80}, AttributesCu: 0x107100,
 		GCDMs: 1500, GCDCategory: 133, CategoryCooldownMs: 30000, Category: 250, DurationMs: 6000, MaxDurationMs: 6000,
 		ProcChance: 101, ManaCostPct: 7,
+		CooldownMods: ModBounds{FlatMin: -4000},
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 1046, DieSides: 187, PointsPerLevel: 3.9, DamageMultiplier: 1, BonusMultiplier: 0.193},
 			{Effect: 6, Aura: 33, BasePoints: -51, DieSides: 1, DamageMultiplier: 1},
@@ -2958,6 +3017,7 @@ var spells = []Spell{
 		ID: 44949, Family: 4, FamilyFlags: [3]uint32{0, 0x4}, SchoolMask: 1, DmgClass: DmgClassMelee,
 		Attributes: [8]uint32{0x50010, 0x10, 0, 0x1000000, 0x80, 0x8000}, AttributesCu: 0x1100,
 		PowerType: 1, MaxTargets: 4,
+		CooldownMods: ModBounds{FlatMin: -2000},
 		Effects: [3]Effect{
 			{Effect: 121, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1},
 		},
@@ -3000,6 +3060,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x82000000, 0x20400, 0x1, 0x40000, 0, 0x200000, 0x20},
 		GCDMs:      1500, GCDCategory: 133, CategoryCooldownMs: 180000, Category: 1245,
 		ProcChance: 101, PowerType: 5, RuneCostID: 341,
+		CooldownMods: ModBounds{FlatMin: -150000},
 		Effects: [3]Effect{
 			{},
 			{Effect: 77, BasePoints: 46584, DieSides: 1, DamageMultiplier: 1},
@@ -3082,6 +3143,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x50010, 0x8010, 0, 0x400, 0, 0x200},
 		GCDMs:      1500, GCDCategory: 133, CooldownMs: 90000, DurationMs: 6000, MaxDurationMs: 6000,
 		ProcChance: 101, PowerType: 1, ManaCost: 250,
+		CooldownMods: ModBounds{FlatMin: -15000},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 23, AmplitudeMs: 1000, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, TriggerSpell: 50622},
 			{Effect: 6, Aura: 147, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, MiscValue: 1733},
@@ -3113,6 +3175,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x50010}, AttributesCu: 0x103120,
 		GCDMs: 1500, GCDCategory: 133, CategoryCooldownMs: 20000, Category: 1201, DurationMs: 4000, MaxDurationMs: 4000,
 		ProcChance: 101, PowerType: 1, ManaCost: 150,
+		CooldownMods: ModBounds{FlatMin: -3000},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 12, BasePoints: -1, DieSides: 1, DamageMultiplier: 1},
 			{Effect: 2, BasePoints: -1, DieSides: 1, DamageMultiplier: 1},
@@ -3122,9 +3185,10 @@ var spells = []Spell{
 	// Demonic Empowerment
 	{
 		ID: 47193, Family: 5, FamilyFlags: [3]uint32{0, 0, 0x1040}, SchoolMask: 32, DmgClass: DmgClassMagic, Flags: FlagPositive,
-		Attributes:  [8]uint32{0x20050800, 0, 0x4, 0x40000000},
-		CooldownMs:  60000,
-		ManaCostPct: 6,
+		Attributes:   [8]uint32{0x20050800, 0, 0x4, 0x40000000},
+		CooldownMs:   60000,
+		ManaCostPct:  6,
+		CooldownMods: ModBounds{PctMin: -30},
 		Effects: [3]Effect{
 			{Effect: 77, BasePoints: -1, DieSides: 1, DamageMultiplier: 1},
 		},
@@ -3145,7 +3209,8 @@ var spells = []Spell{
 		ID: 47241, Family: 5, FamilyFlags: [3]uint32{0, 0, 0x2000}, SchoolMask: 1, Flags: FlagBinary | FlagPositive,
 		Attributes: [8]uint32{0x10, 0x20000}, AttributesCu: 0x100000,
 		CooldownMs: 180000, DurationMs: 30000, MaxDurationMs: 30000,
-		ProcChance: 101,
+		ProcChance:   101,
+		CooldownMods: ModBounds{PctMin: -30},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 36, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, MiscValue: 22, ClassMask: [3]uint32{0x4000000}},
 			{Effect: 6, Aura: 142, BasePoints: 599, DieSides: 1, DamageMultiplier: 1, MiscValue: 1, ClassMask: [3]uint32{0, 0x4000}},
@@ -3258,6 +3323,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x250110, 0x8000200, 0x20000, 0x30400, 0, 0, 0x20}, AttributesCu: 0x101000,
 		CastMs: 1500, BaseCastMs: 1500, GCDMs: 1500, GCDCategory: 133,
 		ProcChance: 101, PowerType: 1, ManaCost: 150,
+		CastMods: ModBounds{FlatMin: -1000},
 		Effects: [3]Effect{
 			{Effect: 3, BasePoints: 249, DieSides: 1, DamageMultiplier: 1},
 		},
@@ -3268,6 +3334,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x50010, 0x8000200, 0, 0x400}, AttributesCu: 0x103100,
 		GCDMs: 1500, GCDCategory: 133, CategoryCooldownMs: 6000, Category: 971, DurationMs: 10000, MaxDurationMs: 10000,
 		PowerType: 1, ManaCost: 300,
+		CooldownMods: ModBounds{FlatMin: -1000},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 118, BasePoints: -51, DieSides: 1, DamageMultiplier: 1, MiscValue: 127},
 			{Effect: 121, BasePoints: 379, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1},
@@ -3372,7 +3439,8 @@ var spells = []Spell{
 		ID: 47585, Family: 6, FamilyFlags: [3]uint32{0, 0x40000, 0x400}, SchoolMask: 1, Flags: FlagBinary | FlagPositive,
 		Attributes: [8]uint32{0x1040010, 0x20020, 0, 0, 0, 0x20008}, AttributesCu: 0xa104000,
 		GCDMs: 1500, GCDCategory: 133, CooldownMs: 120000, DurationMs: 6000, MaxDurationMs: 6000,
-		ProcChance: 101,
+		ProcChance:   101,
+		CooldownMods: ModBounds{FlatMin: -45000},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 87, BasePoints: -91, DieSides: 1, DamageMultiplier: 1, MiscValue: 127},
 			{},
@@ -3408,6 +3476,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10000}, AttributesCu: 0x1100,
 		CastMs: 3000, BaseCastMs: 3000, GCDMs: 1500, GCDCategory: 133,
 		ProcChance: 101, ManaCostPct: 17, Speed: 20,
+		CastMods: ModBounds{FlatMin: -500},
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 689, DieSides: 81, PointsPerLevel: 4.4, ValueMultiplier: 1, DamageMultiplier: 1, BonusMultiplier: 0.857},
 		},
@@ -3418,6 +3487,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10000, 0, 0, 0x80, 0x100000}, AttributesCu: 0x7100,
 		CastMs: 2000, BaseCastMs: 2000, GCDMs: 1500, GCDCategory: 133, DurationMs: 15000, MaxDurationMs: 15000,
 		ProcChance: 101, ManaCostPct: 17,
+		CastMods: ModBounds{FlatMin: -500},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 3, AmplitudeMs: 3000, BasePoints: 156, DieSides: 1, DamageMultiplier: 1},
 			{Effect: 2, BasePoints: 459, DieSides: 1, PointsPerLevel: 6, DamageMultiplier: 1, BonusMultiplier: 0.2},
@@ -3450,6 +3520,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10000}, AttributesCu: 0x1100,
 		CastMs: 6000, BaseCastMs: 6000, GCDMs: 1500, GCDCategory: 133, Category: 631,
 		ProcChance: 101, ManaCostPct: 9, Speed: 24,
+		CastMods: ModBounds{FlatMin: -2000},
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 1322, DieSides: 335, PointsPerLevel: 5, DamageMultiplier: 1, BonusMultiplier: 1.15},
 		},
@@ -3482,6 +3553,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x50000}, AttributesCu: 0x1100,
 		CastMs: 2500, BaseCastMs: 2500, GCDMs: 1500, GCDCategory: 133, StackAmount: 5,
 		ProcChance: 100, ProcCharges: 1, ManaCostPct: 14, Speed: 24,
+		CastMods: ModBounds{FlatMin: -250},
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 581, DieSides: 95, PointsPerLevel: 4, DamageMultiplier: 1, BonusMultiplier: 0.714},
 		},
@@ -3492,6 +3564,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10000, 0, 0, 0x80, 0x100000, 0, 0x800000}, AttributesCu: 0x3000,
 		CastMs: 1500, BaseCastMs: 1500, GCDMs: 1500, GCDCategory: 133, DurationMs: 15000, MaxDurationMs: 15000,
 		ProcChance: 101, ManaCostPct: 15,
+		CastMods: ModBounds{FlatMin: -200},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 3, AmplitudeMs: 3000, BasePoints: 229, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 0.2},
 			{Effect: 77, DamageMultiplier: 1},
@@ -3515,6 +3588,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10000, 0, 0, 0x80, 0x100000, 0, 0x800000}, AttributesCu: 0x1000,
 		GCDMs: 1500, GCDCategory: 133, DurationMs: 24000, MaxDurationMs: 24000,
 		ProcChance: 101, ManaCostPct: 10,
+		GCDMods: ModBounds{FlatMin: -500},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 3, AmplitudeMs: 2000, BasePoints: 144, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 0.1},
 		},
@@ -3525,6 +3599,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10000, 0, 0, 0, 0, 0x4, 0x800000}, AttributesCu: 0x103000,
 		GCDMs: 1500, GCDCategory: 133, DurationMs: 300000, MaxDurationMs: 300000,
 		ProcChance: 101, ManaCostPct: 10,
+		GCDMods: ModBounds{FlatMin: -500},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 22, BasePoints: -166, DieSides: 1, DamageMultiplier: 1, MiscValue: 126},
 			{Effect: 6, Aura: 87, BasePoints: 12, DieSides: 1, DamageMultiplier: 1, MiscValue: 126},
@@ -3536,6 +3611,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10000, 0, 0, 0, 0, 0, 0x800000}, AttributesCu: 0x1000,
 		GCDMs: 1500, GCDCategory: 133, CategoryCooldownMs: 60000, Category: 1179, DurationMs: 60000, MaxDurationMs: 60000,
 		ProcChance: 101, ManaCostPct: 15,
+		GCDMods: ModBounds{FlatMin: -500},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 3, AmplitudeMs: 60000, BasePoints: 7299, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 2},
 		},
@@ -3566,6 +3642,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10000}, AttributesCu: 0x1100,
 		CastMs: 2500, BaseCastMs: 2500, GCDMs: 1000, GCDCategory: 133,
 		ProcChance: 101, ManaCost: 180, Speed: 16,
+		CastMods: ModBounds{FlatMin: -500},
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 198, DieSides: 25, PointsPerLevel: 2, DamageMultiplier: 1, BonusMultiplier: 0.714},
 		},
@@ -3586,6 +3663,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x40010}, AttributesCu: 0x1100,
 		GCDMs: 1500, GCDCategory: 133, CategoryCooldownMs: 12000, Category: 40,
 		ProcChance: 101, ManaCost: 250,
+		CooldownMods: ModBounds{FlatMin: -6000},
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 236, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 0.429},
 		},
@@ -3606,6 +3684,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10000, 0, 0x80000}, AttributesCu: 0x100100,
 		CastMs: 3000, BaseCastMs: 3000, GCDMs: 1500, GCDCategory: 133,
 		ProcChance: 101, ManaCostPct: 32,
+		CastMods: ModBounds{FlatMin: -1000},
 		Effects: [3]Effect{
 			{Effect: 10, BasePoints: 3949, DieSides: 641, PointsPerLevel: 15.4, ValueMultiplier: 1, DamageMultiplier: 1, BonusMultiplier: 1.611},
 		},
@@ -3616,6 +3695,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x50000, 0, 0x280000}, AttributesCu: 0x100000,
 		GCDMs: 1500, GCDCategory: 133, CategoryCooldownMs: 4000, Category: 56, DurationMs: 30000, MaxDurationMs: 30000,
 		ProcChance: 101, ManaCostPct: 23,
+		CooldownMods: ModBounds{FlatMin: -4000},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 69, BasePoints: 2229, DieSides: 1, PointsPerLevel: 9, DamageMultiplier: 1, MiscValue: 127},
 		},
@@ -3636,6 +3716,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10000, 0, 0x80000}, AttributesCu: 0x100100,
 		CastMs: 1500, BaseCastMs: 1500, GCDMs: 1500, GCDCategory: 133,
 		ProcChance: 101, ManaCostPct: 18,
+		CastMods: ModBounds{FlatMin: -100}, GCDMods: ModBounds{FlatMin: -100},
 		Effects: [3]Effect{
 			{Effect: 10, BasePoints: 1886, DieSides: 307, PointsPerLevel: 9.7, ValueMultiplier: 1, DamageMultiplier: 1, BonusMultiplier: 0.807},
 		},
@@ -3666,6 +3747,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10000, 0x400, 0x80004, 0x44000000, 0x80000, 0x20, 0x4000000, 0x40000000},
 		GCDMs:      1500, GCDCategory: 133, DurationMs: 30000, MaxDurationMs: 30000,
 		ProcFlags: 0xaa2a8, ProcChance: 100, ProcCharges: 5,
+		CooldownMods: ModBounds{PctMin: -30},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 225, BasePoints: -1, DieSides: 1, DamageMultiplier: 1},
 		},
@@ -3676,6 +3758,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10000, 0, 0x80000, 0x4000000, 0, 0, 0, 0x40000000},
 		GCDMs:      1500, GCDCategory: 133, CategoryCooldownMs: 10000, Category: 1181,
 		ProcFlags: 0xaaaa8, ProcChance: 100, ProcCharges: 5, ManaCostPct: 15,
+		CooldownMods: ModBounds{PctMin: -30},
 		Effects: [3]Effect{
 			{Effect: 142, BasePoints: 1042, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 0.807, TriggerSpell: 48111},
 			{Effect: 64, DamageMultiplier: 1, TriggerSpell: 41637},
@@ -3698,6 +3781,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10000}, AttributesCu: 0x1100,
 		CastMs: 2500, BaseCastMs: 2500, GCDMs: 1500, GCDCategory: 133,
 		ProcChance: 101, ManaCostPct: 15,
+		CastMods: ModBounds{FlatMin: -500},
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 706, DieSides: 87, PointsPerLevel: 6, DamageMultiplier: 1, BonusMultiplier: 0.714},
 		},
@@ -3718,6 +3802,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10000, 0, 0x80000}, AttributesCu: 0x1100,
 		CastMs: 1500, BaseCastMs: 1500, GCDMs: 1500, GCDCategory: 133, CategoryCooldownMs: 8000, Category: 19,
 		ProcChance: 101, ManaCostPct: 17,
+		CooldownMods: ModBounds{FlatMin: -2500},
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 991, DieSides: 57, PointsPerLevel: 5, DamageMultiplier: 1, BonusMultiplier: 0.429},
 		},
@@ -3728,6 +3813,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10000}, AttributesCu: 0x3100,
 		CastMs: 2000, BaseCastMs: 2000, GCDMs: 1500, GCDCategory: 133, CategoryCooldownMs: 10000, Category: 451, DurationMs: 7000, MaxDurationMs: 7000,
 		ProcChance: 101, ManaCostPct: 11,
+		CastMods: ModBounds{FlatMin: -500},
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 889, DieSides: 241, PointsPerLevel: 5, DamageMultiplier: 1, BonusMultiplier: 0.571},
 			{Effect: 6, Aura: 3, AmplitudeMs: 1000, BasePoints: 49, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 0.024},
@@ -3848,6 +3934,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10000, 0, 0x80000}, AttributesCu: 0x1100,
 		CastMs: 2000, BaseCastMs: 2000, GCDMs: 1500, GCDCategory: 133,
 		ProcChance: 101, ManaCostPct: 11, Speed: 20,
+		CastMods: ModBounds{FlatMin: -500},
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 552, DieSides: 71, PointsPerLevel: 4, DamageMultiplier: 1, BonusMultiplier: 0.571},
 		},
@@ -3869,6 +3956,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10000, 0, 0x80000}, AttributesCu: 0x1100,
 		CastMs: 3500, BaseCastMs: 3500, GCDMs: 1500, GCDCategory: 133,
 		ProcChance: 101, ManaCostPct: 16,
+		CastMods: ModBounds{FlatMin: -500},
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 1027, DieSides: 185, PointsPerLevel: 5, DamageMultiplier: 1, BonusMultiplier: 1},
 		},
@@ -3923,7 +4011,8 @@ var spells = []Spell{
 		ID: 48477, Family: 7, FamilyFlags: [3]uint32{0x11000000}, SchoolMask: 8, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagResetsAutoAttack | FlagHasteGCD | FlagPositive,
 		Attributes: [8]uint32{0x10000, 0x20000, 0, 0x10, 0x10000}, AttributesCu: 0x100000,
 		CastMs: 2000, BaseCastMs: 2000, GCDMs: 1500, GCDCategory: 133, CategoryCooldownMs: 600000, Category: 26,
-		ManaCostPct: 68,
+		ManaCostPct:  68,
+		CooldownMods: ModBounds{FlatMin: -300000},
 		Effects: [3]Effect{
 			{Effect: 113, BasePoints: 6399, DieSides: 1, DamageMultiplier: 1, MiscValue: 4700},
 		},
@@ -4012,6 +4101,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x40010, 0x8000200}, AttributesCu: 0x107100,
 		GCDMs: 1500, GCDCategory: 133, CategoryCooldownMs: 6000, Category: 971, DurationMs: 60000, MaxDurationMs: 60000,
 		ProcChance: 101, PowerType: 1, ManaCost: 200,
+		CooldownMods: ModBounds{FlatMin: -1500},
 		Effects: [3]Effect{
 			{Effect: 58, BasePoints: 259, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1},
 			{Effect: 6, Aura: 255, BasePoints: 29, DieSides: 1, DamageMultiplier: 1, MiscValue: 15},
@@ -4238,6 +4328,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x50000, 0x200, 0, 0, 0, 0, 0x2000000, 0x8000}, AttributesCu: 0x1100,
 		CastMs: 1500, BaseCastMs: 1500, GCDMs: 1500, GCDCategory: 133, CategoryCooldownMs: 15000, Category: 19,
 		ProcChance: 101, ManaCostPct: 8,
+		CooldownMods: ModBounds{PctMin: -33},
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 1027, DieSides: 119, PointsPerLevel: 5, DamageMultiplier: 1, BonusMultiplier: 0.15},
 		},
@@ -4258,6 +4349,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10000, 0x80}, AttributesCu: 0x3120,
 		GCDMs: 1500, GCDCategory: 133, CategoryCooldownMs: 30000, Category: 35, DurationMs: 3000, MaxDurationMs: 3000,
 		ProcChance: 101, ManaCostPct: 20, Speed: 20,
+		CooldownMods: ModBounds{FlatMin: -15000, PctMin: -33},
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 1049, DieSides: 185, PointsPerLevel: 4, DamageMultiplier: 1, BonusMultiplier: 0.07},
 			{Effect: 6, Aura: 12, BasePoints: -1, DieSides: 1, DamageMultiplier: 1},
@@ -4269,6 +4361,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10000, 0x10000080}, AttributesCu: 0x1000,
 		GCDMs: 1500, GCDCategory: 133, CategoryCooldownMs: 8000, Category: 932, DurationMs: 8000, MaxDurationMs: 8000,
 		ProcChance: 101, ManaCostPct: 22,
+		CooldownMods: ModBounds{FlatMax: 2000},
 		Effects: [3]Effect{
 			{Effect: 27, Aura: 3, AmplitudeMs: 1000, BasePoints: 112, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 0.04},
 		},
@@ -4332,6 +4425,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10000, 0, 0x22000000}, AttributesCu: 0x100010,
 		CooldownMs: 60000,
 		ProcChance: 101, PowerType: 5, RuneCostID: 581,
+		CooldownMods: ModBounds{FlatMin: -30000},
 		Effects: [3]Effect{
 			{Effect: 136, BasePoints: 9, DieSides: 1, DamageMultiplier: 1},
 		},
@@ -4405,6 +4499,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10002, 0, 0x20000, 0, 0, 0x8000}, AttributesCu: 0x1100,
 		CastMs: 500, GCDMs: 1500, GCDCategory: 133, CategoryCooldownMs: 10000, Category: 85,
 		ProcChance: 101, ManaCostPct: 9, Speed: 30,
+		CastMods: ModBounds{FlatMin: -150}, CooldownMods: ModBounds{FlatMin: -2000},
 		Effects: [3]Effect{
 			{Effect: 121, BasePoints: 407, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, ChainTargets: 3},
 		},
@@ -4415,6 +4510,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10012, 0, 0x20000, 0, 0x10000000, 0, 0x80000000}, AttributesCu: 0x10103100,
 		BaseCastMs: -1000000, GCDMs: 1500, GCDCategory: 133, CooldownMs: 10000, CategoryCooldownMs: 10000, Category: 85, DurationMs: 10000, MaxDurationMs: 10000,
 		ProcChance: 101, ManaCostPct: 8, Speed: 40,
+		CooldownMods: ModBounds{FlatMin: -2000},
 		Effects: [3]Effect{
 			{Effect: 121, BasePoints: 407, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1},
 			{Effect: 6, Aura: 118, BasePoints: -51, DieSides: 1, DamageMultiplier: 1, MiscValue: 127},
@@ -4437,6 +4533,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10000},
 		GCDMs:      1500, GCDCategory: 133, CategoryCooldownMs: 30000, Category: 1250, DurationMs: 30000, MaxDurationMs: 30000,
 		ProcChance: 101, ManaCostPct: 19,
+		CooldownMods: ModBounds{FlatMin: -12000},
 		Effects: [3]Effect{
 			{Effect: 105, DamageMultiplier: 1, MiscValue: 189322},
 		},
@@ -4459,6 +4556,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x40000, 0x400, 0, 0, 0x80040}, AttributesCu: 0x100000,
 		GCDMs: 1500, GCDCategory: 133, CooldownMs: 60000, DurationMs: 300000, MaxDurationMs: 300000,
 		ProcFlags: 0x2a2a8, ProcChance: 100, ProcCharges: 3, PowerType: 5, RuneCostID: 654,
+		CooldownMods: ModBounds{FlatMin: -10000},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 87, BasePoints: -21, DieSides: 1, DamageMultiplier: 1, MiscValue: 127},
 			{Effect: 6, Aura: 79, BasePoints: 1, DieSides: 1, DamageMultiplier: 1, MiscValue: 127},
@@ -4470,6 +4568,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x50000}, AttributesCu: 0x103100,
 		GCDMs: 1500, GCDCategory: 133, CategoryCooldownMs: 6000, Category: 19, DurationMs: 8000, MaxDurationMs: 8000,
 		ProcChance: 101, ManaCostPct: 18,
+		GCDMods: ModBounds{FlatMin: -500}, CooldownMods: ModBounds{FlatMin: -1000},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 138, BasePoints: -11, DieSides: 1, DamageMultiplier: 1},
 			{Effect: 2, BasePoints: 848, DieSides: 47, PointsPerLevel: 5, DamageMultiplier: 1, BonusMultiplier: 0.386},
@@ -4481,6 +4580,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x50000, 0, 0, 0, 0, 0x2000}, AttributesCu: 0x3100,
 		GCDMs: 1500, GCDCategory: 133, CategoryCooldownMs: 6000, Category: 19, DurationMs: 18000, MaxDurationMs: 18000,
 		ProcChance: 101, ManaCostPct: 17,
+		GCDMods: ModBounds{FlatMin: -500}, CooldownMods: ModBounds{FlatMin: -3000},
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 499, DieSides: 1, PointsPerLevel: 5, DamageMultiplier: 1, BonusMultiplier: 0.214},
 			{Effect: 6, Aura: 3, AmplitudeMs: 3000, BasePoints: 138, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 0.1},
@@ -4492,6 +4592,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x50000}, AttributesCu: 0x103100,
 		GCDMs: 1500, GCDCategory: 133, CategoryCooldownMs: 6000, Category: 19, DurationMs: 8000, MaxDurationMs: 8000,
 		ProcChance: 101, ManaCostPct: 18,
+		GCDMods: ModBounds{FlatMin: -500}, CooldownMods: ModBounds{FlatMin: -3000},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 33, BasePoints: -51, DieSides: 1, DamageMultiplier: 1},
 			{Effect: 2, BasePoints: 801, DieSides: 47, PointsPerLevel: 5, DamageMultiplier: 1, BonusMultiplier: 0.386},
@@ -4503,6 +4604,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10000}, AttributesCu: 0x1100,
 		CastMs: 2500, BaseCastMs: 2500, GCDMs: 1500, GCDCategory: 133,
 		ProcChance: 101, ManaCostPct: 10, Speed: 20,
+		CastMods: ModBounds{FlatMin: -500},
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 714, DieSides: 101, PointsPerLevel: 4, DamageMultiplier: 1, BonusMultiplier: 0.714},
 		},
@@ -4513,6 +4615,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10000}, AttributesCu: 0x1100,
 		CastMs: 2000, BaseCastMs: 2000, GCDMs: 1500, GCDCategory: 133, CategoryCooldownMs: 6000, Category: 85,
 		ProcChance: 101, ManaCostPct: 26,
+		CastMods: ModBounds{FlatMin: -500}, CooldownMods: ModBounds{FlatMin: -2500},
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 972, DieSides: 139, PointsPerLevel: 5, DamageMultiplier: 0.7, BonusMultiplier: 0.571, ChainTargets: 3},
 		},
@@ -4523,6 +4626,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10000}, AttributesCu: 0x100100,
 		CastMs: 3000, BaseCastMs: 3000, GCDMs: 1500, GCDCategory: 133,
 		ProcChance: 101, ManaCostPct: 25,
+		CastMods: ModBounds{FlatMin: -500},
 		Effects: [3]Effect{
 			{Effect: 10, BasePoints: 3033, DieSides: 433, PointsPerLevel: 9, DamageMultiplier: 0.2, BonusMultiplier: 1.611},
 		},
@@ -4533,6 +4637,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10000}, AttributesCu: 0x100100,
 		CastMs: 1500, BaseCastMs: 1500, GCDMs: 1500, GCDCategory: 133,
 		ProcChance: 101, ManaCostPct: 15,
+		CastMods: ModBounds{FlatMin: -1000}, GCDMods: ModBounds{FlatMin: -1000},
 		Effects: [3]Effect{
 			{Effect: 10, BasePoints: 1605, DieSides: 229, PointsPerLevel: 6, DamageMultiplier: 1, BonusMultiplier: 0.807},
 		},
@@ -4696,6 +4801,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x4000000, 0x88, 0, 0, 0, 0x200}, AttributesCu: 0x7000,
 		GCDMs: 1500, GCDCategory: 133, CategoryCooldownMs: 30000, Category: 18, DurationMs: 10000, MaxDurationMs: 10000,
 		ProcChance: 101, PowerType: 5, RuneCostID: 793,
+		CooldownMods: ModBounds{FlatMin: -15000},
 		Effects: [3]Effect{
 			{Effect: 27, Aura: 226, AmplitudeMs: 1000, BasePoints: 61, DieSides: 1, DamageMultiplier: 1},
 		},
@@ -4735,6 +4841,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x40010, 0x20}, AttributesCu: 0x100000,
 		CooldownMs: 30000, CategoryCooldownMs: 30000, DurationMs: 6000, MaxDurationMs: 6000,
 		ProcChance: 101, PowerType: 3,
+		CooldownMods: ModBounds{FlatMin: -3000},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 13, BasePoints: 79, DieSides: 1, DamageMultiplier: 1, MiscValue: 1},
 		},
@@ -4826,6 +4933,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10000, 0, 0, 0, 0, 0, 0x800000}, AttributesCu: 0x103000,
 		GCDMs: 1500, GCDCategory: 133, DurationMs: 120000, MaxDurationMs: 120000,
 		ProcChance: 101, ManaCostPct: 10,
+		GCDMods: ModBounds{FlatMin: -500},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 99, BasePoints: -479, DieSides: 1, DamageMultiplier: 1},
 			{Effect: 6, Aura: 101, BasePoints: -6, DieSides: 1, DamageMultiplier: 1, MiscValue: 1},
@@ -4906,6 +5014,7 @@ var spells = []Spell{
 		ID: 50622, Family: 4, FamilyFlags: [3]uint32{0, 0x4}, SchoolMask: 1, DmgClass: DmgClassMelee,
 		Attributes: [8]uint32{0x50010, 0x10, 0, 0x600, 0x80, 0x8000}, AttributesCu: 0x3100,
 		PowerType: 1, MaxTargets: 4,
+		CooldownMods: ModBounds{FlatMin: -2000},
 		Effects: [3]Effect{
 			{Effect: 121, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1},
 			{Effect: 64, DamageMultiplier: 1, TriggerSpell: 44949},
@@ -4980,6 +5089,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x40010}, AttributesCu: 0x100000,
 		CooldownMs: 60000, DurationMs: 20000, MaxDurationMs: 20000,
 		ProcChance: 101, PowerType: 5, RuneCostID: 1202,
+		CooldownMods: ModBounds{FlatMin: -10000},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 101, BasePoints: 24, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, MiscValue: 1},
 			{Effect: 6, Aura: 137, BasePoints: 19, DieSides: 1, DamageMultiplier: 1},
@@ -5061,6 +5171,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10010, 0x420, 0x10000000, 0x30401, 0, 0x200}, AttributesCu: 0x2000,
 		GCDMs: 1000, GCDCategory: 133, CooldownMs: 120000, DurationMs: 2000, MaxDurationMs: 2000,
 		ProcChance: 101, PowerType: 3,
+		CooldownMods: ModBounds{FlatMin: -45000},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 226, AmplitudeMs: 500, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, MiscValue: 3},
 			{Effect: 3, DamageMultiplier: 1},
@@ -5123,7 +5234,8 @@ var spells = []Spell{
 		ID: 52000, Family: 11, FamilyFlags: [3]uint32{0, 0x80000}, SchoolMask: 8, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagPositive,
 		Attributes: [8]uint32{0, 0, 0, 0x80, 0, 0, 0x4000000}, AttributesCu: 0x100000,
 		GCDCategory: 133, DurationMs: 12000, MaxDurationMs: 12000,
-		ProcChance: 101,
+		ProcChance:   101,
+		CooldownMods: ModBounds{FlatMin: -24000},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 8, AmplitudeMs: 3000, BasePoints: 162, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 0.171},
 		},
@@ -5162,6 +5274,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0, 0x200}, AttributesCu: 0x1100,
 		GCDMs: 1500, GCDCategory: 133,
 		ProcChance: 101, PowerType: 2, ManaCost: 25,
+		CooldownMods: ModBounds{PctMin: -30},
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 117, DieSides: 51, DamageMultiplier: 1, BonusMultiplier: 1},
 		},
@@ -5172,6 +5285,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0, 0x200}, AttributesCu: 0x1100,
 		GCDMs: 1500, GCDCategory: 133, Category: 19,
 		ProcChance: 101, PowerType: 2, ManaCost: 25,
+		CooldownMods: ModBounds{PctMin: -30},
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 117, DieSides: 51, DamageMultiplier: 1, BonusMultiplier: 1},
 		},
@@ -5182,6 +5296,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0, 0x200}, AttributesCu: 0x1100,
 		GCDMs: 1500, GCDCategory: 133,
 		ProcChance: 101, PowerType: 2, ManaCost: 25,
+		CooldownMods: ModBounds{PctMin: -30},
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 117, DieSides: 51, DamageMultiplier: 1},
 		},
@@ -5251,6 +5366,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x20010100, 0x10004484, 0, 0, 0x8000000, 0x2200},
 		GCDMs:      1500, GCDCategory: 133, CategoryCooldownMs: 12000, Category: 1230,
 		ProcChance: 101, ManaCostPct: 16,
+		CooldownMods: ModBounds{FlatMin: -2000, PctMin: -20},
 		Effects: [3]Effect{
 			{Effect: 3, BasePoints: -1, DieSides: 1, DamageMultiplier: 1},
 		},
@@ -5278,8 +5394,9 @@ var spells = []Spell{
 	{
 		ID: 53190, Family: 7, FamilyFlags: [3]uint32{0, 0x800000}, SchoolMask: 64, DmgClass: DmgClassMagic, Flags: FlagResetsAutoAttack,
 		Attributes: [8]uint32{0x50000, 0x88}, AttributesCu: 0x1100,
-		GCDCategory: 133,
-		ProcChance:  101,
+		GCDCategory:  133,
+		ProcChance:   101,
+		CooldownMods: ModBounds{FlatMin: -30000},
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 100, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 0.13},
 		},
@@ -5288,7 +5405,8 @@ var spells = []Spell{
 	{
 		ID: 53195, Family: 7, FamilyFlags: [3]uint32{0, 0x800000}, SchoolMask: 64, DmgClass: DmgClassMagic,
 		Attributes: [8]uint32{0, 0x80, 0x40000004, 0x201, 0x80, 0x4000000}, AttributesCu: 0x3100,
-		ProcChance: 101,
+		ProcChance:   101,
+		CooldownMods: ModBounds{FlatMin: -30000},
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 562, DieSides: 91, DamageMultiplier: 1, BonusMultiplier: 0.3},
 			{Effect: 64, DamageMultiplier: 1, TriggerSpell: 53190},
@@ -5310,6 +5428,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10000, 0, 0x40080000, 0, 0x40},
 		GCDMs:      1500, GCDCategory: 133, CategoryCooldownMs: 90000, Category: 1218, DurationMs: 10000, MaxDurationMs: 10000,
 		ProcChance: 101, ManaCostPct: 35,
+		CooldownMods: ModBounds{FlatMin: -30000},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 23, AmplitudeMs: 1000, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 0.127, TriggerSpell: 53198},
 		},
@@ -5320,6 +5439,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10002, 0, 0x20000}, AttributesCu: 0x7100,
 		BaseCastMs: -1000000, GCDMs: 1500, GCDCategory: 133, CooldownMs: 10000, CategoryCooldownMs: 6000,
 		ProcChance: 101, ManaCostPct: 12, Speed: 40,
+		CooldownMods: ModBounds{FlatMin: -1000},
 		Effects: [3]Effect{
 			{Effect: 77, DamageMultiplier: 1},
 			{Effect: 121, BasePoints: -1, DieSides: 1, DamageMultiplier: 1},
@@ -5353,6 +5473,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10000, 0x80, 0x80000, 0x200}, AttributesCu: 0x107100,
 		DurationMs: 6000, MaxDurationMs: 6000,
 		ProcChance: 101, Speed: 30,
+		CooldownMods: ModBounds{FlatMin: -3000},
 		Effects: [3]Effect{
 			{Effect: 98, BasePoints: 69, DieSides: 1, DamageMultiplier: 1, MiscValue: 150},
 			{Effect: 2, BasePoints: 1189, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 0.193},
@@ -5528,6 +5649,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x50010, 0, 0, 0x4000000},
 		CooldownMs: 45000, DurationMs: 20000, MaxDurationMs: 20000,
 		ProcFlags: 0x4, ProcChance: 50, PowerType: 2,
+		CooldownMods: ModBounds{PctMin: -30},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 42, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, TriggerSpell: 53403},
 		},
@@ -5547,7 +5669,8 @@ var spells = []Spell{
 		ID: 53408, Family: 10, FamilyFlags: [3]uint32{0x800000}, SchoolMask: 2, DmgClass: DmgClassRanged,
 		Attributes: [8]uint32{0x50000, 0, 0x100000, 0x10000}, AttributesCu: 0x1000,
 		GCDMs: 1500, GCDCategory: 133, CooldownMs: 10000, CategoryCooldownMs: 10000, Category: 1210,
-		ManaCostPct: 5,
+		ManaCostPct:  5,
+		CooldownMods: ModBounds{FlatMin: -4000},
 		Effects: [3]Effect{
 			{Effect: 77, BasePoints: -1, DieSides: 1, DamageMultiplier: 1},
 		},
@@ -5558,6 +5681,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x50010, 0, 0x4}, AttributesCu: 0x100000,
 		CooldownMs: 300000, DurationMs: 20000, MaxDurationMs: 20000,
 		ProcChance: 101, PowerType: 2,
+		CooldownMods: ModBounds{PctMin: -30},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 166, BasePoints: 9, DieSides: 1, DamageMultiplier: 1},
 			{Effect: 6, Aura: 167, BasePoints: 9, DieSides: 1, DamageMultiplier: 1},
@@ -5578,7 +5702,8 @@ var spells = []Spell{
 		ID: 53508, Family: 9, FamilyFlags: [3]uint32{0, 0x10000000}, SchoolMask: 1, DmgClass: DmgClassMelee, Flags: FlagNoActiveDefense,
 		Attributes: [8]uint32{0x200010, 0x8100200, 0, 0, 0x200}, AttributesCu: 0x1100,
 		GCDMs: 1500, GCDCategory: 133, CooldownMs: 10000, CategoryCooldownMs: 5000, Category: 65,
-		PowerType: 2,
+		PowerType:    2,
+		CooldownMods: ModBounds{PctMin: -30},
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 4, DieSides: 1, PointsPerLevel: 5, DamageMultiplier: 1},
 		},
@@ -5600,6 +5725,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10000, 0, 0x80004}, AttributesCu: 0x100000,
 		CooldownMs: 180000, DurationMs: 9000, MaxDurationMs: 9000,
 		ProcChance: 101, PowerType: 2,
+		CooldownMods: ModBounds{FlatMin: -6000, PctMin: -30},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 21, AmplitudeMs: 3000, BasePoints: 9, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1},
 		},
@@ -5621,6 +5747,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x40010, 0x200, 0x1000, 0, 0, 0x8000}, AttributesCu: 0x1100,
 		GCDMs: 1500, GCDCategory: 133, CooldownMs: 5000, Category: 85,
 		ProcChance: 101, PowerType: 2, ManaCost: 20,
+		CooldownMods: ModBounds{PctMin: -30},
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 89, DieSides: 37, DamageMultiplier: 1, ChainTargets: 1000},
 		},
@@ -5631,6 +5758,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10, 0x8000200}, AttributesCu: 0x3100,
 		CategoryCooldownMs: 60000, Category: 109, DurationMs: 6000, MaxDurationMs: 6000,
 		ProcChance: 101, PowerType: 2, ManaCost: 20,
+		CooldownMods: ModBounds{PctMin: -30},
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 88, DieSides: 37, DamageMultiplier: 1},
 			{Effect: 6, Aura: 67, BasePoints: -1, DieSides: 1, DamageMultiplier: 1},
@@ -5642,6 +5770,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x40000010, 0x204, 0, 0, 0, 0x20}, AttributesCu: 0x3000,
 		CooldownMs: 40000, DurationMs: 4000, MaxDurationMs: 4000,
 		ProcChance: 100, PowerType: 2,
+		CooldownMods: ModBounds{PctMin: -30},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 26, BasePoints: -1, DieSides: 1, DamageMultiplier: 1},
 			{Effect: 6, Aura: 3, AmplitudeMs: 1000, BasePoints: 27, DieSides: 9, DamageMultiplier: 1},
@@ -5653,6 +5782,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10, 0x200}, AttributesCu: 0x3120,
 		CooldownMs: 40000, Category: 65, DurationMs: 2000, MaxDurationMs: 2000,
 		ProcChance: 101, PowerType: 2,
+		CooldownMods: ModBounds{PctMin: -30},
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 105, DieSides: 45, DamageMultiplier: 1},
 			{Effect: 6, Aura: 12, DamageMultiplier: 1},
@@ -5664,6 +5794,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10, 0x200}, AttributesCu: 0x3120,
 		CooldownMs: 60000, DurationMs: 2000, MaxDurationMs: 2000,
 		ProcChance: 101, PowerType: 2, ManaCost: 80,
+		CooldownMods: ModBounds{PctMin: -30},
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 61, DieSides: 27, DamageMultiplier: 1},
 			{Effect: 6, Aura: 12, DamageMultiplier: 1},
@@ -5675,6 +5806,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x40410, 0x200}, AttributesCu: 0x103100,
 		CategoryCooldownMs: 20000, Category: 36, DurationMs: 6000, MaxDurationMs: 6000,
 		ProcChance: 101, PowerType: 2, ManaCost: 20,
+		CooldownMods: ModBounds{PctMin: -30},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 33, BasePoints: -51, DieSides: 1, DamageMultiplier: 1},
 			{Effect: 2, BasePoints: 48, DieSides: 21, DamageMultiplier: 1},
@@ -5686,6 +5818,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10, 0x200}, AttributesCu: 0x3100,
 		CooldownMs: 60000, DurationMs: 15000, MaxDurationMs: 15000,
 		ProcFlags: 0x10, ProcChance: 100, PowerType: 2, ManaCost: 20,
+		CooldownMods: ModBounds{PctMin: -30},
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 58, DieSides: 25, DamageMultiplier: 1},
 			{Effect: 6, Aura: 3, AmplitudeMs: 5000, BasePoints: 20, DieSides: 7, DamageMultiplier: 1},
@@ -5697,6 +5830,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0, 0x200}, AttributesCu: 0x3100,
 		CooldownMs: 40000, Category: 19,
 		ProcChance: 101, PowerType: 2,
+		CooldownMods: ModBounds{PctMin: -30},
 		Effects: [3]Effect{
 			{Effect: 64, DamageMultiplier: 1, TriggerSpell: 62347},
 			{Effect: 2, BasePoints: 63, DieSides: 23, DamageMultiplier: 1},
@@ -5718,6 +5852,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10, 0x200, 0, 0x40000}, AttributesCu: 0x3000,
 		GCDMs: 1500, GCDCategory: 133, CooldownMs: 10000, DurationMs: 9000, MaxDurationMs: 9000,
 		ProcChance: 101, PowerType: 2, ManaCost: 20,
+		CooldownMods: ModBounds{PctMin: -30},
 		Effects: [3]Effect{
 			{Effect: 27, Aura: 3, AmplitudeMs: 3000, BasePoints: 21, DieSides: 7, DamageMultiplier: 1},
 			{Effect: 27, Aura: 101, BasePoints: -4, DieSides: 1, DamageMultiplier: 1, MiscValue: 1},
@@ -5763,6 +5898,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x40010, 0x200}, AttributesCu: 0x1100,
 		GCDMs: 1500, GCDCategory: 133, CooldownMs: 6000,
 		ProcChance: 101, ManaCostPct: 3,
+		CooldownMods: ModBounds{FlatMin: -4000},
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 97, DieSides: 41, DamageMultiplier: 1, BonusMultiplier: 0.429},
 		},
@@ -5846,6 +5982,7 @@ var spells = []Spell{
 		ID: 54689, Family: 9, FamilyFlags: [3]uint32{0, 0x10000000}, SchoolMask: 16,
 		Attributes: [8]uint32{0, 0x400}, AttributesCu: 0x1000,
 		ProcChance: 101, PowerType: 2,
+		CooldownMods: ModBounds{PctMin: -30},
 		Effects: [3]Effect{
 			{Effect: 3, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, ChainTargets: 2},
 		},
@@ -5960,6 +6097,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x50010}, AttributesCu: 0x100000,
 		CooldownMs: 60000, DurationMs: 10000, MaxDurationMs: 10000,
 		ProcChance: 101, PowerType: 5, RuneCostID: 1203,
+		CooldownMods: ModBounds{FlatMin: -10000},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 118, BasePoints: 34, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, MiscValue: 127},
 			{Effect: 6, Aura: 34, BasePoints: 14, DieSides: 1, DamageMultiplier: 1},
@@ -6065,6 +6203,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10000}, AttributesCu: 0x100100,
 		CastMs: 2500, BaseCastMs: 2500, GCDMs: 1500, GCDCategory: 133,
 		ProcChance: 101, ManaCostPct: 19,
+		CastMods: ModBounds{FlatMin: -600},
 		Effects: [3]Effect{
 			{Effect: 10, BasePoints: 1054, DieSides: 151, PointsPerLevel: 3.8, DamageMultiplier: 0.6, BonusMultiplier: 1.343, ChainTargets: 3},
 		},
@@ -6075,6 +6214,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10000, 0x200, 0x20000000}, AttributesCu: 0x3100,
 		GCDMs: 1500, GCDCategory: 133, CooldownMs: 10000, Category: 2, DurationMs: 2000, MaxDurationMs: 2000,
 		ProcFlags: 0x28, ProcChance: 101, PowerType: 2, ManaCost: 20,
+		CooldownMods: ModBounds{PctMin: -30},
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 42, DieSides: 15, DamageMultiplier: 1},
 			{Effect: 6, Aura: 3, AmplitudeMs: 1000, BasePoints: 21, DieSides: 7, DamageMultiplier: 1},
@@ -6086,6 +6226,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x4050010, 0x200}, AttributesCu: 0x107100,
 		GCDMs: 1500, GCDCategory: 133, CategoryCooldownMs: 10000, Category: 36, DurationMs: 10000, MaxDurationMs: 10000,
 		ProcChance: 101, PowerType: 2, ManaCost: 20,
+		CooldownMods: ModBounds{PctMin: -30},
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 84, DieSides: 45, DamageMultiplier: 1},
 			{Effect: 6, Aura: 99, BasePoints: -575, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1},
@@ -6097,6 +6238,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0, 0x200}, AttributesCu: 0x107100,
 		CategoryCooldownMs: 10000, Category: 1247, DurationMs: 5000, MaxDurationMs: 5000,
 		ProcChance: 101, PowerType: 2, ManaCost: 20,
+		CooldownMods: ModBounds{PctMin: -30},
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 127, DieSides: 45, DamageMultiplier: 1, ChainTargets: 1},
 			{Effect: 64, DamageMultiplier: 1, TriggerSpell: 54689},
@@ -6109,6 +6251,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x50010, 0x200}, AttributesCu: 0x1100,
 		GCDMs: 1500, GCDCategory: 133, CooldownMs: 10000,
 		ProcChance: 101, PowerType: 2, ManaCost: 20,
+		CooldownMods: ModBounds{PctMin: -30},
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 90, DieSides: 33, DamageMultiplier: 1},
 			{Effect: 64, DamageMultiplier: 1, TriggerSpell: 54681},
@@ -6130,6 +6273,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x40010000, 0x200}, AttributesCu: 0x3000,
 		CooldownMs: 40000, DurationMs: 4000, MaxDurationMs: 4000,
 		ProcChance: 101, PowerType: 2,
+		CooldownMods: ModBounds{PctMin: -30},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 26, DamageMultiplier: 1},
 			{Effect: 6, Aura: 3, AmplitudeMs: 1000, BasePoints: 45, DieSides: 23, DamageMultiplier: 1},
@@ -6141,6 +6285,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10000, 0x200, 0, 0, 0, 0x200}, AttributesCu: 0x103000,
 		GCDMs: 1500, GCDCategory: 133, CategoryCooldownMs: 10000, Category: 18, DurationMs: 8000, MaxDurationMs: 8000,
 		ProcChance: 101, PowerType: 2, ManaCost: 20, Speed: 40,
+		CooldownMods: ModBounds{PctMin: -30},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 3, AmplitudeMs: 2000, BasePoints: 25, DieSides: 9, DamageMultiplier: 1},
 			{Effect: 6, Aura: 216, BasePoints: -26, DieSides: 1, DamageMultiplier: 1},
@@ -6172,6 +6317,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x4050010, 0x200200}, AttributesCu: 0x7000,
 		GCDMs: 1500, GCDCategory: 133, CooldownMs: 10000, Category: 19, DurationMs: 10000, MaxDurationMs: 10000,
 		ProcChance: 101, PowerType: 2, ManaCost: 20,
+		CooldownMods: ModBounds{PctMin: -30},
 		Effects: [3]Effect{
 			{Effect: 3, DamageMultiplier: 1, BonusMultiplier: 1},
 			{Effect: 6, Aura: 3, AmplitudeMs: 2000, BasePoints: 19, DieSides: 7, DamageMultiplier: 1},
@@ -6183,6 +6329,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10000, 0x200}, AttributesCu: 0x103100,
 		GCDMs: 1500, GCDCategory: 133, CooldownMs: 10000, DurationMs: 30000, MaxDurationMs: 30000, StackAmount: 2,
 		ProcChance: 101, PowerType: 2, ManaCost: 20, Speed: 24,
+		CooldownMods: ModBounds{PctMin: -30},
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 123, DieSides: 53, DamageMultiplier: 1},
 			{Effect: 6, Aura: 101, BasePoints: -11, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, MiscValue: 1},
@@ -6285,6 +6432,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10, 0x18200}, AttributesCu: 0x107100,
 		GCDMs: 1500, GCDCategory: 133, CategoryCooldownMs: 6000, Category: 1133, DurationMs: 20000, MaxDurationMs: 20000,
 		ProcChance: 101, PowerType: 2, ManaCost: 20,
+		CooldownMods: ModBounds{PctMin: -30},
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 63, DieSides: 23, DamageMultiplier: 1},
 			{Effect: 6, Aura: 101, BasePoints: -6, DieSides: 1, DamageMultiplier: 1, MiscValue: 1},
@@ -6306,7 +6454,8 @@ var spells = []Spell{
 		ID: 57393, Family: 9, FamilyFlags: [3]uint32{0, 0x10000000}, SchoolMask: 1, DmgClass: DmgClassMelee, Flags: FlagBinary | FlagResetsAutoAttack,
 		Attributes: [8]uint32{0x10000, 0x200}, AttributesCu: 0x107100,
 		CooldownMs: 60000, DurationMs: 12000, MaxDurationMs: 12000,
-		ProcChance: 101,
+		ProcChance:   101,
+		CooldownMods: ModBounds{PctMin: -30},
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 181, DieSides: 65, DamageMultiplier: 1},
 			{},
@@ -6401,6 +6550,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x50010, 0x8000200, 0, 0x400, 0x200}, AttributesCu: 0x1100,
 		GCDMs: 1500, GCDCategory: 133, CategoryCooldownMs: 5000, Category: 65,
 		ProcChance: 101, PowerType: 1, ManaCost: 50,
+		GCDMods: ModBounds{FlatMin: -500}, CooldownMods: ModBounds{FlatMin: -4000},
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 1635, DieSides: 363, DamageMultiplier: 1, BonusMultiplier: 1},
 		},
@@ -6421,6 +6571,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x2050010, 0x4080420, 0, 0x100}, AttributesCu: 0x100000,
 		GCDMs: 1000, GCDCategory: 133, CooldownMs: 30000, DurationMs: 30000, MaxDurationMs: 30000,
 		ProcFlags: 0x154, ProcChance: 100, PowerType: 3, ManaCost: 15,
+		CooldownMods: ModBounds{FlatMin: -10000},
 		Effects: [3]Effect{
 			{Effect: 130, BasePoints: 99, DieSides: 1, DamageMultiplier: 1},
 			{Effect: 6, Aura: 4, BasePoints: -1, DieSides: 1, DamageMultiplier: 1},
@@ -6605,6 +6756,7 @@ var spells = []Spell{
 		ID: 58605, Family: 9, FamilyFlags: [3]uint32{0, 0x10000000}, SchoolMask: 4,
 		Attributes: [8]uint32{0, 0x400}, AttributesCu: 0x1000,
 		ProcChance: 101, PowerType: 2,
+		CooldownMods: ModBounds{PctMin: -30},
 		Effects: [3]Effect{
 			{Effect: 3, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, ChainTargets: 2},
 		},
@@ -6615,6 +6767,7 @@ var spells = []Spell{
 		AttributesCu: 0x107100,
 		GCDMs:        1500, GCDCategory: 133, CooldownMs: 10000, DurationMs: 10000, MaxDurationMs: 10000,
 		ProcChance: 101, PowerType: 2, ManaCost: 20,
+		CooldownMods: ModBounds{PctMin: -30},
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 127, DieSides: 45, DamageMultiplier: 1, ChainTargets: 1},
 			{Effect: 64, DamageMultiplier: 1, TriggerSpell: 58605},
@@ -6880,7 +7033,8 @@ var spells = []Spell{
 		ID: 59159, Family: 11, FamilyFlags: [3]uint32{0, 0x2000}, SchoolMask: 8, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagResetsAutoAttack | FlagHasteGCD,
 		Attributes: [8]uint32{0x10000, 0, 0, 0, 0, 0x8}, AttributesCu: 0x105110,
 		GCDMs: 1500, GCDCategory: 133, CategoryCooldownMs: 45000, Category: 1223,
-		ProcChance: 101,
+		ProcChance:   101,
+		CooldownMods: ModBounds{FlatMin: -10000},
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 1449, DieSides: 207, PointsPerLevel: 3, DamageMultiplier: 1, BonusMultiplier: 0.172},
 			{Effect: 137, BasePoints: 7, DieSides: 1, DamageMultiplier: 1},
@@ -6905,6 +7059,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10000, 0, 0, 0x40000, 0x800}, AttributesCu: 0x1100,
 		CastMs: 2500, BaseCastMs: 2500, GCDMs: 1500, GCDCategory: 133, CategoryCooldownMs: 12000, Category: 1225,
 		ProcChance: 101, ManaCostPct: 7, Speed: 20,
+		CastMods: ModBounds{FlatMin: -500}, CooldownMods: ModBounds{FlatMin: -2000},
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 1428, DieSides: 385, PointsPerLevel: 5.5, ValueMultiplier: 1, DamageMultiplier: 1, BonusMultiplier: 0.714},
 		},
@@ -6975,6 +7130,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10000}, AttributesCu: 0x1100,
 		CooldownMs: 6000, Category: 19,
 		ProcChance: 101, ManaCost: 120,
+		CooldownMods: ModBounds{FlatMin: -2000},
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 87, DieSides: 11, DamageMultiplier: 1, BonusMultiplier: 0.15},
 		},
@@ -6985,6 +7141,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10000}, AttributesCu: 0x3100,
 		CastMs: 3000, BaseCastMs: 3000, DurationMs: 4000, MaxDurationMs: 4000,
 		ProcChance: 101, ManaCost: 90, Speed: 24,
+		CastMods: ModBounds{FlatMin: -700}, CooldownMods: ModBounds{FlatMin: -2000},
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 162, DieSides: 7, DamageMultiplier: 1, BonusMultiplier: 0.3},
 			{Effect: 6, Aura: 33, BasePoints: -51, DieSides: 1, DamageMultiplier: 1},
@@ -6996,6 +7153,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x40010, 0x8000200, 0, 0x8, 0x100000}, AttributesCu: 0x7100,
 		GCDMs: 1500, GCDCategory: 133, CooldownMs: 10000, DurationMs: 9000, MaxDurationMs: 9000,
 		ProcChance: 101, PowerType: 2, ManaCost: 20,
+		CooldownMods: ModBounds{PctMin: -30},
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 46, DieSides: 21, DamageMultiplier: 1},
 			{Effect: 6, Aura: 3, AmplitudeMs: 3000, BasePoints: 18, DieSides: 7, DamageMultiplier: 1},
@@ -7017,6 +7175,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10000, 0, 0, 0x100000}, AttributesCu: 0x1100,
 		CastMs: 2000, BaseCastMs: 2000, GCDMs: 1500, GCDCategory: 133, CategoryCooldownMs: 8000, Category: 1224,
 		ProcChance: 101, ManaCostPct: 10, Speed: 24,
+		CastMods: ModBounds{FlatMin: -500},
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 1191, DieSides: 327, PointsPerLevel: 6.5, DamageMultiplier: 1, BonusMultiplier: 0.571},
 		},
@@ -7593,6 +7752,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x410012, 0, 0x20000, 0, 0x200}, AttributesCu: 0x3100,
 		BaseCastMs: -1000000, GCDMs: 1500, GCDCategory: 133, CategoryCooldownMs: 15000, Category: 1226,
 		ProcChance: 101, ManaCostPct: 7, Speed: 40,
+		CooldownMods: ModBounds{FlatMin: -6000},
 		Effects: [3]Effect{
 			{Effect: 17, BasePoints: 324, DieSides: 1, DamageMultiplier: 1},
 			{Effect: 31, BasePoints: 199, DieSides: 1, DamageMultiplier: 1},
@@ -7624,6 +7784,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10000, 0x200}, AttributesCu: 0x7100,
 		GCDMs: 1500, CooldownMs: 10000, DurationMs: 6000, MaxDurationMs: 6000,
 		ProcChance: 101, PowerType: 2, ManaCost: 20,
+		CooldownMods: ModBounds{PctMin: -30},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 3, AmplitudeMs: 6000, BasePoints: 48, DieSides: 17, DamageMultiplier: 1},
 			{Effect: 2, BasePoints: 48, DieSides: 17, DamageMultiplier: 1},
@@ -7635,6 +7796,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10000, 0, 0, 0x80, 0, 0, 0x4000000}, AttributesCu: 0x100100,
 		GCDMs: 1500, GCDCategory: 133, CategoryCooldownMs: 6000, Category: 1228, DurationMs: 15000, MaxDurationMs: 15000,
 		ProcChance: 101, ManaCostPct: 18,
+		CooldownMods: ModBounds{FlatMin: -1000},
 		Effects: [3]Effect{
 			{Effect: 10, BasePoints: 1603, DieSides: 133, DamageMultiplier: 1, BonusMultiplier: 0.402},
 			{Effect: 6, Aura: 8, AmplitudeMs: 3000, BasePoints: 333, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 0.188},
@@ -7656,6 +7818,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10000, 0x10000080, 0x80000, 0, 0x1}, AttributesCu: 0x2000,
 		GCDMs: 1500, GCDCategory: 133, CategoryCooldownMs: 20000, Category: 1217,
 		ProcChance: 101, ManaCostPct: 25, Speed: 27,
+		CooldownMods: ModBounds{FlatMin: -3000},
 		Effects: [3]Effect{
 			{Effect: 3, DamageMultiplier: 1},
 			{Effect: 64, BasePoints: 1189, DieSides: 1, DamageMultiplier: 1, TriggerSpell: 53227},
@@ -7707,6 +7870,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10000}, AttributesCu: 0x100000,
 		GCDMs: 1500, GCDCategory: 133, CategoryCooldownMs: 10000, Category: 35,
 		ProcChance: 101, ManaCostPct: 22,
+		CooldownMods: ModBounds{FlatMin: -7000},
 		Effects: [3]Effect{
 			{Effect: 3, BasePoints: 4, DieSides: 1, DamageMultiplier: 1},
 		},
@@ -7802,6 +7966,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0, 0x200, 0, 0x40000}, AttributesCu: 0x1000,
 		CooldownMs: 40000, Category: 19, DurationMs: 2000, MaxDurationMs: 2000,
 		ProcChance: 101, PowerType: 2,
+		CooldownMods: ModBounds{PctMin: -30},
 		Effects: [3]Effect{
 			{Effect: 68, DamageMultiplier: 1},
 		},
@@ -7967,6 +8132,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10002, 0, 0x20000, 0, 0x800}, AttributesCu: 0x103000,
 		BaseCastMs: -1000000, GCDMs: 1500, GCDCategory: 133, CategoryCooldownMs: 30000, Category: 1250, DurationMs: 15000, MaxDurationMs: 15000,
 		ProcChance: 101, ManaCostPct: 6, Speed: 40,
+		CooldownMods: ModBounds{FlatMin: -12000},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 3, AmplitudeMs: 3000, BasePoints: 552, DieSides: 1, DamageMultiplier: 1},
 			{Effect: 6, Aura: 271, BasePoints: 5, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 0.1, ClassMask: [3]uint32{0x37801, 0x80800101, 0x3c1}},
@@ -8098,6 +8264,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x50010, 0x200}, AttributesCu: 0x100000,
 		CooldownMs: 40000, DurationMs: 20000, MaxDurationMs: 20000,
 		ProcChance: 101, PowerType: 2, ManaCost: 20,
+		CooldownMods: ModBounds{PctMin: -30},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 99, BasePoints: 319, DieSides: 1, DamageMultiplier: 1, MiscValue: 1},
 			{Effect: 6, Aura: 124, BasePoints: 319, DieSides: 1, DamageMultiplier: 1},
@@ -8282,6 +8449,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x2050000, 0x20000, 0, 0x30000, 0x40}, AttributesCu: 0x100000,
 		DurationMs: 10000, MaxDurationMs: 10000,
 		ProcChance: 101, ProcCharges: 1,
+		CooldownMods: ModBounds{FlatMin: -24000},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 108, BasePoints: -101, DieSides: 1, DamageMultiplier: 1, MiscValue: 10, ClassMask: [3]uint32{0x4}},
 		},
