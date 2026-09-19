@@ -292,14 +292,14 @@ dps_results: {
  key: "TestHoly-AllItems-EyeoftheBroodmother-45308"
  value: {
   tps: 33.51171
-  hps: 4805.88349
+  hps: 4800.63507
  }
 }
 dps_results: {
  key: "TestHoly-AllItems-ForethoughtTalisman-40258"
  value: {
   tps: 33.51171
-  hps: 4840.71194
+  hps: 4891.60627
  }
 }
 dps_results: {
@@ -768,7 +768,7 @@ dps_results: {
  key: "TestHoly-AllItems-Val'anyr,HammerofAncientKings-46017"
  value: {
   tps: 38.19659
-  hps: 5064.11939
+  hps: 5063.97523
  }
 }
 dps_results: {

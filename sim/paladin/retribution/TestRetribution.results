@@ -369,8 +369,8 @@ dps_results: {
 dps_results: {
  key: "TestRetribution-AllItems-EyeoftheBroodmother-45308"
  value: {
-  dps: 6798.09361
-  tps: 6883.33348
+  dps: 6796.74841
+  tps: 6881.98828
   dtps: 9.92959
  }
 }
@@ -922,8 +922,8 @@ dps_results: {
 dps_results: {
  key: "TestRetribution-AllItems-TheTwinBladesofAzzinoth"
  value: {
-  dps: 5612.97317
-  tps: 5698.61153
+  dps: 5620.37603
+  tps: 5705.8941
   dtps: 9.23882
  }
 }

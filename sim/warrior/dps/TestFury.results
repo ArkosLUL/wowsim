@@ -757,8 +757,8 @@ dps_results: {
 dps_results: {
  key: "TestFury-AllItems-TheFistsofFury"
  value: {
-  dps: 5228.10381
-  tps: 3896.00513
+  dps: 5222.68228
+  tps: 3892.15966
  }
 }
 dps_results: {
@@ -771,8 +771,8 @@ dps_results: {
 dps_results: {
  key: "TestFury-AllItems-TheTwinBladesofAzzinoth"
  value: {
-  dps: 5398.30207
-  tps: 4018.04427
+  dps: 5445.2443
+  tps: 4055.36724
  }
 }
 dps_results: {
