@@ -140,7 +140,7 @@ make wowsimwotlk
 # make dist/wotlk && ./wowsimwotlk --usefs would rebuild the whole client and host it. (you would have had to run `make devserver` to build the wowsimwotlk binary first.)
 ./wowsimwotlk --usefs
 
-# Generate code for items. Only necessary if you changed the items generator.
+# Rebuilds the item DB in assets/database, with item stats from the live AzerothCore server (see tools/database/gen_db/README.md).
 make items
 ```
 

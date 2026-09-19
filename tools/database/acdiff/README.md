@@ -9,16 +9,12 @@ The readers it uses live in `tools/database/azerothcore/`.
 
 ## Running
 
-Go isn't installed on the host, so run the tool in the toolchain image on the server's Docker network.
-Generate the protos first if `sim/core/proto/*.pb.go` is missing (see `docs/guide/dev-environment.md`),
-and mount the checkout you're working in. From Git Bash:
+Go isn't installed on the host, so run it through `tools/acore/dock.sh`, which mounts the checkout it
+lives in and the AzerothCore checkout at `/ac`. Point `DBC_DIR` at a copy of the live DBCs (the
+[gen_db README](../gen_db/README.md) has the copy loop): dock.sh's default isn't the live copy.
 
 ```sh
-MSYS_NO_PATHCONV=1 docker run --rm --network azerothcore-wotlk-pb_ac-network \
-  -v G:/DevStuff/GitHub/wowsimwotlk:/wotlk -v G:/DevStuff/GitHub/azerothcore-wotlk-pb:/acrepo:ro \
-  -v azerothcore-wotlk-pb_ac-client-data:/acdata:ro -w /wotlk wowsims-wotlk-dev \
-  go run ./tools/database/acdiff -dsn "root:password@tcp(ac-database:3306)/acore_world" \
-  -dbcDir /acdata/dbc -acRepo /acrepo
+DBC_DIR=<copy of the live DBCs> tools/acore/dock.sh run ./tools/database/acdiff -dbcDir /dbc -acRepo /ac
 ```
 
 ## Flags
@@ -26,8 +22,8 @@ MSYS_NO_PATHCONV=1 docker run --rm --network azerothcore-wotlk-pb_ac-network \
 | Flag | Default | Meaning |
 |---|---|---|
 | `-acRepo` | required | AzerothCore checkout, scanned for module and custom SQL that touches items or spells |
-| `-dsn` | `root:password@tcp(127.0.0.1:3306)/acore_world` | world database |
-| `-dbcDir` | empty: copy from `-acContainer` | the server's DBC files |
+| `-dsn` | `$AC_DSN`, else the live world DB on `host.docker.internal` | world database |
+| `-dbcDir` | empty: copy from `-acContainer`, host runs only | the server's DBC files |
 | `-acContainer` | `ac-worldserver` | where DBCs are copied from, with `docker cp` |
 | `-simDb`, `-leftoverDb` | `assets/database/db.json`, `assets/database/leftover_db.json` | sim item databases |
 | `-spellTooltips` | `assets/db_inputs/wowhead_spell_tooltips.csv` | Classic spell tooltips |
