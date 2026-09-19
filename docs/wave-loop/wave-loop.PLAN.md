@@ -67,8 +67,9 @@ G = changes goldens. FS = runs all 37 suites.
 
 - Wave: C, running. Wave B (base `893b42993`) landed on `master`.
 - Base SHA: `eaa6715af`.
-- Workflow runId: `wf_245371a2-8ad`; script
-  `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\workflows\scripts\wave-loop-wf_245371a2-8ad.js`.
+- Workflow runId: `wf_4e3f52d3-4ba`, continuing `wf_245371a2-8ad` (a session limit killed 3 agents)
+  with PAR-P6-2 and BIS-raidctx going straight to review and BIS-rules from its implementer. Transcript
+  dirs: `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\<runId>`.
 - Live DBCs for this wave: `G:\DevStuff\GitHub\.wave-loop\dbc-live` (refreshed from `ac-worldserver`).
 
 ## Status
@@ -84,7 +85,7 @@ G = changes goldens. FS = runs all 37 suites.
 | BIS-catalog | merged | `aeded1153` | re-run on AC-2's `db.json`: unchanged |
 | BIS-eval | merged | `42291df9a` | |
 | PAR-P6-2 | running | | |
-| PAR-P5-23 | running | | |
+| PAR-P5-23 | merged | `ac367aa97` | |
 | BIS-rules | running | | |
 | BIS-raidctx | running | | |
 

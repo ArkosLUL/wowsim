@@ -10,7 +10,8 @@ export const meta = {
 }
 
 // args: {wave, baseSha, items: [{id, effort, kind, worktree, branch, specPath, specSection,
-// ownedPaths, goldenChanging, fullSuite, verify, server, devPort, notes?}]}
+// ownedPaths, goldenChanging, fullSuite, verify, server, devPort, notes?, priorReport?}]}
+// priorReport: a finished implementer's report from an earlier run; the item goes straight to review.
 
 const STRINGS = { type: 'array', items: { type: 'string' } }
 
@@ -78,6 +79,7 @@ function brief(item) {
 }
 
 function implement(item) {
+  if (item.priorReport) return item.priorReport
   if (item.kind === 'review-only') return { status: 'green', summary: 'review-only item', filesChanged: [], verification: { commands: [], passed: true }, goldens: { changed: false } }
   return agent(
     `${brief(item)}\n\nImplement the spec, then run its verification. Return the report. Use status "blocked" for a problem the spec can't resolve, and "waiting-server" when the offline check or server lock stops you.`,

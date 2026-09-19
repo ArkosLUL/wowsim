@@ -59,8 +59,8 @@ loop" re-affirms them.
    the live copy.
 3. **Run.** `Workflow({script, args})`: `script` is `[int]/docs/wave-loop/wave-loop.workflow.js` inline,
    since the tool reads a `scriptPath` only in the session's working directories; `args` follow the
-   contract below. Record the runId and the returned script path in the PLAN, then wait for the
-   notification.
+   contract below. Record the runId and the run's transcript dir (it holds `journal.jsonl`) in the PLAN,
+   then wait for the notification.
 4. **Integrate** green WIs one at a time, in registry order:
    1. Check `git -C <wi> branch --show-current`. Stage only owned paths; skip CRLF-only `.results`. Commit.
    2. `git -C [int] merge --no-ff <branch>`. Resolve conflicts with `/resolving-merge-conflicts`.
@@ -135,8 +135,11 @@ loop" re-affirms them.
 
 ```
 {wave, baseSha, items: [{id, effort, kind: 'implement'|'review-only', worktree, branch,
-specPath, specSection, ownedPaths, goldenChanging, fullSuite, verify: [cmd], server, devPort, notes?}]}
+specPath, specSection, ownedPaths, goldenChanging, fullSuite, verify: [cmd], server, devPort, notes?,
+priorReport?}]}
 ```
+
+`priorReport`, a finished implementer's report from an earlier run, sends the item straight to review.
 
 Each item is a pipeline:
 1. **Implement** (skipped for review-only).
@@ -160,6 +163,8 @@ Golden-neutral items leave the full run to integration.
 
 After a `/compact` or restart:
 1. Read this file and the PLAN's "Current wave": the wave, base SHA, runId and WI statuses.
-2. A running Workflow: wait for its notification. A killed one: re-run its recorded script path with
-   `resumeFromRunId`.
+2. A running Workflow: wait for its notification. One that was killed, or whose agents died (a session
+   limit): re-run the script inline for the unfinished items only, each finished implementer's report
+   (its `result` line in the run's `journal.jsonl`) as `priorReport`. Not `resumeFromRunId`: its cache keys
+   chain through earlier calls, so one changed or failed call re-runs every later one.
 3. Continue at the first unfinished step.
