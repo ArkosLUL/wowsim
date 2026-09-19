@@ -176,6 +176,12 @@ export class SavedDataManager<ModObject, T> extends Component {
 		};
 	}
 
+	// Adds or replaces a user entry and stores it, like the Save button.
+	saveUserEntry(name: string, data: T) {
+		this.addSavedData({ name, data });
+		this.saveUserData();
+	}
+
 	// Save data to window.localStorage.
 	private saveUserData() {
 		const userData: Record<string, Object> = {};

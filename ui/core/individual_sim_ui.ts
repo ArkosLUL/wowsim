@@ -7,6 +7,7 @@ import * as IconInputs from './components/icon_inputs';
 import * as Importers from './components/importers';
 import { BulkTab } from './components/individual_sim_ui/bulk_tab';
 import { GearTab } from './components/individual_sim_ui/gear_tab';
+import { OptimizerTab } from './components/individual_sim_ui/optimizer_tab';
 import { RotationTab } from './components/individual_sim_ui/rotation_tab';
 import { SettingsTab } from './components/individual_sim_ui/settings_tab';
 import { TalentsTab } from './components/individual_sim_ui/talents_tab';
@@ -308,8 +309,9 @@ export abstract class IndividualSimUI<SpecType extends Spec> extends SimUI {
 		}
 
 		this.addSidebarComponents();
-		this.addGearTab();
+		const gearTab = this.addGearTab();
 		this.bt = this.addBulkTab();
+		this.addOptimizerTab(gearTab);
 		this.addSettingsTab();
 		this.addTalentsTab();
 		this.addRotationTab();
@@ -381,9 +383,10 @@ export abstract class IndividualSimUI<SpecType extends Spec> extends SimUI {
 		);
 	}
 
-	private addGearTab() {
+	private addGearTab(): GearTab {
 		const gearTab = new GearTab(this.simTabContentsContainer, this);
 		gearTab.rootElem.classList.add('active', 'show');
+		return gearTab;
 	}
 
 	private addBulkTab(): BulkTab {
@@ -393,6 +396,14 @@ export abstract class IndividualSimUI<SpecType extends Spec> extends SimUI {
 			bulkTab.navLink.hidden = !this.sim.getShowExperimental();
 		});
 		return bulkTab;
+	}
+
+	// DPS specs only: tanks need the survival and threat controls, and healers aren't in the optimizer's scope.
+	private addOptimizerTab(gearTab: GearTab) {
+		if (this.isWithinRaidSim || isTankSpec(this.player.spec) || isHealingSpec(this.player.spec)) {
+			return;
+		}
+		new OptimizerTab(this.simTabContentsContainer, this, gearTab);
 	}
 
 	private addSettingsTab() {
