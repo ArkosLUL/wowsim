@@ -2,6 +2,7 @@ import { ContentBlock } from "../core/components/content_block";
 import { EncounterPicker } from "../core/components/encounter_picker";
 import { IconPicker } from "../core/components/icon_picker";
 import { SavedDataManager } from "../core/components/saved_data_manager";
+import { SERVER_SETTINGS_TOOLTIP, ServerSettingsPicker } from "../core/components/server_settings_picker";
 import { SimTab } from "../core/components/sim_tab";
 
 import { Encounter } from "../core/encounter";
@@ -56,6 +57,7 @@ export class SettingsTab extends SimTab {
 		this.buildTankSettings();
 		this.buildAssignmentSettings();
 		this.buildOtherSettings();
+		this.buildServerSettings();
 
 		this.buildBlessingsPicker();
 		this.buildSavedDataPickers();
@@ -105,6 +107,14 @@ export class SettingsTab extends SimTab {
 		// 		raid.setStaggerStormstrikes(eventID, newValue);
 		// 	},
 		// });
+	}
+
+	private buildServerSettings() {
+		const contentBlock = new ContentBlock(this.column2, 'server-settings', {
+			header: { title: 'Server (AzerothCore)', tooltip: SERVER_SETTINGS_TOOLTIP }
+		});
+
+		new ServerSettingsPicker(contentBlock.bodyElement, this.simUI.sim.encounter);
 	}
 
 	private buildTankSettings() {

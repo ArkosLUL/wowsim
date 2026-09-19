@@ -1,6 +1,8 @@
 import {
 	Encounter as EncounterProto,
 	MobType,
+	RaidDifficulty,
+	ServerSettings,
 	SpellSchool,
 	Stat,
 	Target as TargetProto,
@@ -25,12 +27,17 @@ export class Encounter {
 	private executeProportion25: number = 0.25;
 	private executeProportion35: number = 0.35;
 	private useHealth: boolean = false;
+	private raidDifficulty: RaidDifficulty = RaidDifficulty.RaidDifficultyUnknown;
+	// Only what the user changed: an unset field is the live server's value.
+	private serverSettings: ServerSettings = ServerSettings.create();
 	targets: Array<TargetProto>;
 	targetsMetadata: UnitMetadataList;
 
 	readonly targetsChangeEmitter = new TypedEvent<void>();
 	readonly durationChangeEmitter = new TypedEvent<void>();
 	readonly executeProportionChangeEmitter = new TypedEvent<void>();
+	// Raid difficulty or server settings.
+	readonly serverSettingsChangeEmitter = new TypedEvent<void>();
 
 	// Emits when any of the above emitters emit.
 	readonly changeEmitter = new TypedEvent<void>();
@@ -44,6 +51,7 @@ export class Encounter {
 			this.targetsChangeEmitter,
 			this.durationChangeEmitter,
 			this.executeProportionChangeEmitter,
+			this.serverSettingsChangeEmitter,
 		].forEach(emitter => emitter.on(eventID => this.changeEmitter.emit(eventID)));
 	}
 
@@ -116,6 +124,28 @@ export class Encounter {
 		this.executeProportionChangeEmitter.emit(eventID);
 	}
 
+	getRaidDifficulty(): RaidDifficulty {
+		return this.raidDifficulty;
+	}
+	setRaidDifficulty(eventID: EventID, newRaidDifficulty: RaidDifficulty) {
+		if (newRaidDifficulty == this.raidDifficulty)
+			return;
+
+		this.raidDifficulty = newRaidDifficulty;
+		this.serverSettingsChangeEmitter.emit(eventID);
+	}
+
+	getServerSettings(): ServerSettings {
+		return ServerSettings.clone(this.serverSettings);
+	}
+	setServerSettings(eventID: EventID, newServerSettings: ServerSettings) {
+		if (ServerSettings.equals(newServerSettings, this.serverSettings))
+			return;
+
+		this.serverSettings = ServerSettings.clone(newServerSettings);
+		this.serverSettingsChangeEmitter.emit(eventID);
+	}
+
 	matchesPreset(preset: PresetEncounter): boolean {
 		return preset.targets.length == this.targets.length && this.targets.every((t, i) => TargetProto.equals(t, preset.targets[i].target));
 	}
@@ -139,6 +169,9 @@ export class Encounter {
 			executeProportion35: this.executeProportion35,
 			useHealth: this.useHealth,
 			targets: this.targets,
+			raidDifficulty: this.raidDifficulty,
+			// unset when empty, so it still equals encounters saved without it
+			serverSettings: ServerSettings.equals(this.serverSettings, ServerSettings.create()) ? undefined : this.getServerSettings(),
 		});
 	}
 
@@ -150,6 +183,8 @@ export class Encounter {
 			this.setExecuteProportion25(eventID, proto.executeProportion25);
 			this.setExecuteProportion35(eventID, proto.executeProportion35);
 			this.setUseHealth(eventID, proto.useHealth);
+			this.setRaidDifficulty(eventID, proto.raidDifficulty);
+			this.setServerSettings(eventID, proto.serverSettings || ServerSettings.create());
 			this.targets = proto.targets;
 			this.targetsChangeEmitter.emit(eventID);
 		});
