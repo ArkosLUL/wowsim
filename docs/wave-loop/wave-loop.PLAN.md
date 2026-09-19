@@ -65,9 +65,14 @@ G = changes goldens. FS = runs all 37 suites.
 
 ## Current wave
 
-- Wave: D, not started. Wave C (base `eaa6715af`) landed on `master`.
-- Base SHA: set at wave start.
-- Workflow runId: none.
+- Wave: D, running. Wave C (base `eaa6715af`) landed on `master`.
+- Base SHA: `30137e6d1`.
+- Workflow runId: `wf_724d4586-625`; transcript dir (its `journal.jsonl`)
+  `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\wf_724d4586-625`.
+- Split between the two timing items: PAR-P3-2 applies cast times from serverdata's `CastMs`, which
+  already has the ranged slot's +500 ms, and exposes a `Spell` method for the server entry. PAR-P3-3
+  reads serverdata through one helper in `cast.go`; at integration, point that helper at PAR-P3-2's
+  method.
 
 ## Status
 
@@ -85,9 +90,13 @@ G = changes goldens. FS = runs all 37 suites.
 | PAR-P5-23 | merged | `ac367aa97` | |
 | BIS-rules | merged | `92027abb1` | catalog regenerated: 186 items moved |
 | BIS-raidctx | merged | `61b8c303c` | |
+| PAR-P3-2 | running | | |
+| PAR-P3-3 | running | | |
+| BIS-search | running | | |
+| BIS-ui-tab | running | | |
 
 Later WIs are added as their wave starts.
 
 ## User actions
 
-"continue" for wave D.
+None until wave D's report.
