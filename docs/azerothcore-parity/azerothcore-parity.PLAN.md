@@ -302,10 +302,24 @@ removes it.
 ### P3 — Server spell data, timing, resources, procs, DoTs
 
 **Generated server data**
-- `tools/acore/spellids`: collects `SpellID` literals in `sim/**` plus triggered spells, then runs them through `.simval spelldump ids`. The capture is saved as `assets/db_inputs/acore/spelldump.jsonl`.
-- `tools/acore/gen_serverdata` → `sim/core/serverdata/{spells,procs,enchant_procs,bonus}_auto_gen.go`:
-  - From the spelldump, per spell: damage class, school, cast ms, UsesRangedSlot, GCD and category, CD, durations, StackAmount, Binary, NoActiveDefense, AlwaysHit, CompletelyBlocked, ResetsAutoAttack, HasteAffectsPeriodic, effects.
-  - From live MySQL: `spell_proc`, `spell_enchant_proc_data`, `spell_bonus_data`.
+- `tools/acore/spellids` ([README](../../tools/acore/spellids/README.md)) collects spell ids: constants in `sim/**`
+  named like spell or aura ids (810), the spells of db.json's items, sets, enchants and gems, every talent and
+  glyph, and what all of these trigger.
+- The capture, `assets/db_inputs/acore/spelldump.jsonl` (10,835 spells, 22 MB), holds SpellFamilyNames 3–11, 15
+  and 17 plus those ids, merged by the module's `e2e/spelldump_capture_test.go`. Only 26545 and 53258, triggered
+  by Lightning Shield and Empower Rune Weapon, are unknown to the server. P7 needs no recapture; an item that
+  adds a spell reruns spellids and gen_serverdata.
+- `tools/acore/gen_serverdata` ([README](../../tools/acore/gen_serverdata/README.md)) →
+  `sim/core/serverdata/{spells,procs,enchant_procs,bonus}_auto_gen.go`, for the sim's ids and their triggers
+  (938 spells), not the whole capture:
+  - From the capture, per spell: damage class, school, cast ms (with the ranged slot's +500), GCD and category,
+    CD, durations, StackAmount, costs, raw attributes, effects, and `Flags`: UsesRangedSlot, Binary,
+    NoActiveDefense, AlwaysHit, CompletelyBlocked, ResetsAutoAttack, HasteAffectsPeriodic, HasteGCD, Channeled,
+    AutoRepeat, Passive, Positive.
+  - From live MySQL: `spell_proc` (185 entries, counting the ones the server builds, which come from the
+    capture), `spell_bonus_data` (149), `spell_enchant_proc_data` (all 42 rows). Rows resolved from the DB must
+    match the capture, or nothing is written.
+  - `serverdata` doesn't import `sim/core`, and its `Flags` type is independent of `core.SpellFlag`.
 - `spell.go` `RegisterSpell`: applies server flags by SpellID (opt out with `SpellFlagNoServerData`) and records conflicts.
 
 **Rage, procs, swing timers**
