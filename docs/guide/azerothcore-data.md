@@ -28,6 +28,7 @@ layouts come from [ac] `src/server/shared/DataStores/DBCStructure.h` and `DBCfmt
   - `block` only applies to shields.
   - `VerifiedBuild = 15595` marks placeholder rows.
   - Per-item procs are in `spellppmRate_N` and `spellcooldown_N`.
+  - There's no `StatsCount` column: count the non-zero stat slots, as the worldserver does.
 - An item is obtainable when any of these reference it:
   - `*_loot_template` with `Reference = 0`
   - `npc_vendor` or `game_event_npc_vendor`
@@ -37,6 +38,13 @@ layouts come from [ac] `src/server/shared/DataStores/DBCStructure.h` and `DBCfmt
   - Legacy raids (Naxx, OS, EoE, Ulduar): entry 1 is 25-man.
   - ToC, ICC and RS: entries 1–3 are 25N, 10H and 25H.
   - Dungeons: entry 1 is heroic.
+  - `mapdifficulty_dbc` adds difficulty 2 (40-man) to Naxxramas and Onyxia's Lair: mod-individual-progression's
+    vanilla modes.
+- Placing loot holders:
+  - C++ scripts summon many bosses and chests that have no spawn row (ToC, Ulduar and EoE chests, Fjola).
+  - DungeonEncounter.dbc lists ICC and RS encounters under difficulties 0 and 1 only; their heroics reuse
+    them. Sindragosa has no spawn row, so only her encounter credit places her.
+  - Transport gameobjects (type 15): `Data0` is the TaxiPath, `Data6` the transport's own map.
 - Vendor cost: `npc_vendor.ExtendedCost` → `itemextendedcost_dbc`, plus ItemExtendedCost.dbc, which lists
   the currency or token items a purchase needs.
 - 10- and 25-man tier pieces share one ItemSet.

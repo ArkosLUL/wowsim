@@ -58,7 +58,9 @@ npx protoc --ts_out ui/core/proto --proto_path proto proto/ui.proto
   `go build -o /dev/null ./tools/database/gen_db`.
 - Item DB: `make items` runs `gen_db -gen=azerothcore`, the Classic build from `assets/db_inputs/` with
   item data from the live server ([ADR 0002](../adr/0002-item-data-from-live-db.md)). It needs the live DB
-  and a copy of the live DBCs ([README](../../tools/database/gen_db/README.md)).
+  and a copy of the live DBCs ([README](../../tools/database/gen_db/README.md)). Rerun `accatalog`
+  ([README](../../tools/database/accatalog/README.md)) after it: the server catalog's Classic fallbacks
+  read `db.json`.
 
 ## Run
 

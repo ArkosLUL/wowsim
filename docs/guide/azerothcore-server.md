@@ -84,15 +84,19 @@ mod-individual-progression stores a character's tier as rewarded quest `66000 + 
 | 17 | RS 724 | the Lich King |
 
 - Map gates: `IndividualProgressionPlayer.cpp`. VoA phases its bosses in (`IndividualProgression.cpp`):
-  Archavon 13, Emalon 14, Koralon 15, Toravon 16.
+  Archavon 13, Emalon 14, Koralon 15, Toravon 16. Argent Tournament spawns carry `phaseMask` 65536 and
+  phase in at 15 (`checkIPPhasing`).
 - Bug: level-80 Onyxia (249) has no tier gate, so any level-80 character enters. The user counts her as
   tier 15, which is what the BiS catalog does.
 - Vendors:
   - `IndividualProgressionAwareness.cpp` hides emblem vendors below their tier: 33963/33964 below 14,
     35494/35495/35573/35574 below 15, 37941/37942/38858 below 16.
   - `conditions` type 23 rows needing quest `66000 + N` gate single vendor items at tier N. Harold Winston
-    (32172) sells the epic gems at 15.
+    (32172) sells the epic gems at 15. `wotlk_vendors.sql` gates Timothy Jones' Jewelcrafting designs (the
+    epic cuts, Nightmare Tear) the same way, at 15.
 - Emblems (`data/sql/world/base/wotlk_emblems.sql`): Heroism and Valor 13, Conquest 14, Triumph 15, Frost 16.
+  A few trickle in earlier (Sartharion's Satchel of Spoils holds a Triumph at 13, and Usuri Brightcoin trades
+  Triumph down); the catalog keeps these tiers as floors.
 - Epic gems also drop from Titanium Ore prospecting (reference 13005) with no tier condition, so they're
   obtainable at 13.
 

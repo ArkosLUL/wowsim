@@ -78,17 +78,12 @@ class by simval.
 
 ## Items
 
-These come from acdiff ([README](../../tools/database/acdiff/README.md)).
+`db.json` takes item stats, ilvls, sockets and set names from the server (`make items`,
+[ADR 0002](../adr/0002-item-data-from-live-db.md)). acdiff ([README](../../tools/database/acdiff/README.md))
+checks it and the Go effects.
 
-- **Item levels:** only Ulduar-era items differ. Classic raised normal mode by +6 (226→232, 232→238) and
-  hard mode by +13 (226→239, 232→245, 239→252), with stats rescaled.
-  - The same bump hits Dalaran emblem vendors, Ulduar crafted patterns, Furious Gladiator gear,
-    Algalon/Val'anyr rewards and Ulduar-10 loot. Classic moved Ulduar-10 loot to Titan Rune dungeons,
-    which the server doesn't have.
-  - That's 857 obtainable items, or 880 counting unobtainable ones. mod-individual-progression's 438
-    rewritten TBC-era items are a separate category. Naxx, EoE, OS, Onyxia, ToC, ICC and RS all match.
-- **Tooltip-parser gaps:** taking stats from the server also fixes what the sim's Classic parser misses:
-  block value, spell penetration, socket-bonus MP5, old-style crit text.
+- **Kept from Wowhead:** items nothing on the server awards (the only rows left in `items_diff.csv`),
+  heirlooms and random-enchant items.
 - **Hardcoded Go effects:**
   - About 26 Ulduar-tier trinkets and relics carry Classic's rescaled values.
   - 19 proc-rate or mechanic rows differ, and so do 4 set bonuses.

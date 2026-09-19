@@ -52,7 +52,11 @@ loop" re-affirms them.
    - `make binary_dist/dist.go` if it touches Go web code
    - `make node_modules` for UI WIs
 
-   Give it dev port 3335+i and container name `wotlk-dev-<id>`.
+   `bash [int]/docs/wave-loop/setup-wave.sh <worktree>...` does the first two for all of them at once. Give
+   each WI dev port 3335+i and container name `wotlk-dev-<id>`. For WIs that read DBCs, copy the live ones
+   (`MSYS_NO_PATHCONV=1 docker cp ac-worldserver:/azerothcore/env/dist/data/dbc/. <dir>`) to
+   `G:\DevStuff\GitHub\.wave-loop\dbc-live` and tell them to pass it as `DBC_DIR`: dock.sh's default isn't
+   the live copy.
 3. **Run.** `Workflow({script, args})`: `script` is `[int]/docs/wave-loop/wave-loop.workflow.js` inline,
    since the tool reads a `scriptPath` only in the session's working directories; `args` follow the
    contract below. Record the runId and the returned script path in the PLAN, then wait for the
@@ -66,6 +70,9 @@ loop" re-affirms them.
       - `tsc`, and eslint per changed file vs HEAD
       - the simval replay
       - gofmt through `tr -d '\r'`
+
+      `bash [int]/docs/wave-loop/int-check.sh <pre-merge sha> <name>` runs them all, plus `delta`, with logs
+      in `G:\DevStuff\GitHub\.wave-loop\logs\checks\<name>`.
    4. Golden-changing WI:
       - `dock.sh delta`. The WI was built on the wave base, so judge its delta on top of the earlier merges
         and against its report.

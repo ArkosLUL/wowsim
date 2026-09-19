@@ -49,6 +49,7 @@ Before starting, read every doc whose trigger matches the task.
 | [docs/adr/](docs/adr/) | before reversing a settled design choice |
 | [acdiff README](tools/database/acdiff/README.md) | diffing sim item data against the server |
 | [acraid README](tools/database/acraid/README.md) | exporting the raid roster |
+| [accatalog README](tools/database/accatalog/README.md) | regenerating the server item catalog, or changing its tier rules |
 
 ## Keeping the docs live
 

@@ -1,0 +1,2 @@
+# CRLF breaks these under Git Bash, and core.autocrlf would hand them out that way
+*.sh text eol=lf

@@ -43,7 +43,7 @@ G = changes goldens. FS = runs all 37 suites.
 | Wave | WIs | BiS re-baseline |
 |---|---|---|
 | A | PAR-P4R (review-only; G, FS) · BIS-contract · PAR-P5-1 · AC-1 | |
-| B | AC-2 (G, FS, 32 suites) · PAR-P3-1 · BIS-catalog · BIS-eval | |
+| B | AC-2 (G, FS, 34 suites) · PAR-P3-1 · BIS-catalog · BIS-eval | |
 | C | PAR-P6-2 (G, FS, 14 suites) · PAR-P5-23 · BIS-rules · BIS-raidctx | |
 | D | PAR-P3-2 (G, FS) · PAR-P3-3 (G, FS) · BIS-search · BIS-ui-tab | ✔ |
 | E | PAR-P3-4 (G, FS) · PAR-P3-5 (G, FS) · PAR-P6-1 · RI-3 | ✔ |
@@ -65,11 +65,9 @@ G = changes goldens. FS = runs all 37 suites.
 
 ## Current wave
 
-- Wave: B, running. Wave A (base `e704d104c`) landed on `master`, and [par] is retired.
-- Base SHA: `893b42993`.
-- Workflow runId: `wf_3fb195c8-ba4`; script
-  `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\workflows\scripts\wave-loop-wf_3fb195c8-ba4.js`.
-- Live DBCs for this wave: `G:\DevStuff\GitHub\.wave-loop\dbc-live` (copied from `ac-worldserver`).
+- Wave: C, not started. Wave B (base `893b42993`) landed on `master`.
+- Base SHA: set at wave start.
+- Workflow runId: none.
 
 ## Status
 
@@ -88,4 +86,6 @@ Later WIs are added as their wave starts.
 
 ## User actions
 
-None until wave B's report.
+- "continue" for wave C.
+- Not blocking: the two open catalog questions in the BiS PLAN's "Sources and the catalog" (the cut epic
+  gems' tier, Venture Coin items).

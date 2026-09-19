@@ -12,7 +12,11 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
   - `dock.sh test [args]` runs `./sim/...` by default and generates `binary_dist` itself.
 - Vet: `go vet ./sim/... ./tools/... ./cmd/...`
 - Race: `go test --tags=with_db -race ./sim/optimizer/... ./sim/web/...`, plus
-  `-run TestDatabaseConcurrentAddAndRead ./sim/core/` for the item DB lock.
+  `-run TestDatabaseConcurrentAddAndRead ./sim/core/` for the item DB lock. Item-effect races need sims
+  running in parallel on gear that has the effect, which the unit tests' presets lack:
+  `-race -run '^$' -bench BenchmarkOptimizerEval -benchtime=1x ./sim/optimizer/`.
+- Benchmark: `go test --tags=with_db -run '^$' -bench BenchmarkOptimizerEval ./sim/optimizer/`, with its
+  numbers in the [BiS INVESTIGATION](../bis-optimizer/bis-optimizer.INVESTIGATION.md#performance).
 - gofmt reads CRLF as a diff, so use `tr -d '\r' < f | gofmt -l`, with the whole pipe in the container:
   `dock.sh exec` doesn't forward stdin. `sim/warrior/rend.go` already fails on master.
 - Float asserts need a tolerance, e.g. `math.Abs(got-want) > 0.001`.
@@ -27,7 +31,8 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
     (`dock.sh delta`, then `dock.sh promote <dir>`).
   - Without `dock.sh`, promote by hand:
     `for f in <dir>/*.results.tmp; do cp "$f" "${f%.tmp}"; done`.
-  - `delta` compares DPS only. Diff the two files for stats, casts and stat weights.
+  - `delta` compares dps, hps, tps and dtps per test, and lists tests that appear or disappear. Diff the
+    two files for stats, casts and stat weights.
 - A `.results` that shows as modified with an empty `git diff` is CRLF noise: leave it out of commits.
 - Two sessions testing in one worktree mix each other's changes and overwrite each other's `.tmp` files.
   Promote only when both are done.
@@ -56,6 +61,9 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
   - The suite deletes its own records, and the host side of the log mount is stale. To keep a fixture,
     stream it from inside the container while the suite runs, then dedupe:
     `docker exec ac-worldserver tail -F -n +1 /azerothcore/env/dist/logs/simval/simval.jsonl > stream.jsonl &`
+- Spell data: `tools/acore/spellids` lists the spell ids the sim needs and checks them against the committed
+  capture. Its README's [Capturing](../../tools/acore/spellids/README.md#capturing) section recaptures
+  missing ones live.
 - Roster export: `tools/database/acraid/crosscheck.py`
   ([acraid README](../../tools/database/acraid/README.md#cross-check)).
 - Parity is done when:
