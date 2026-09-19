@@ -337,8 +337,8 @@ dps_results: {
 dps_results: {
  key: "TestFeralTank-AllItems-EyeoftheBroodmother-45308"
  value: {
-  dps: 2709.81665
-  tps: 5721.77418
+  dps: 2712.94166
+  tps: 5728.87402
   dtps: 7.24371
  }
 }
@@ -682,16 +682,16 @@ dps_results: {
 dps_results: {
  key: "TestFeralTank-AllItems-NightsongBattlegear"
  value: {
-  dps: 2710.6379
-  tps: 5718.70128
+  dps: 2677.32869
+  tps: 5644.41309
   dtps: 7.24371
  }
 }
 dps_results: {
  key: "TestFeralTank-AllItems-NightsongGarb"
  value: {
-  dps: 2169.64658
-  tps: 4652.16794
+  dps: 2185.2316
+  tps: 4673.23126
   dtps: 7.24371
  }
 }
@@ -898,8 +898,8 @@ dps_results: {
 dps_results: {
  key: "TestFeralTank-AllItems-StormshroudArmor"
  value: {
-  dps: 2137.99357
-  tps: 4532.64765
+  dps: 2184.20561
+  tps: 4635.78982
   dtps: 6.91733
  }
 }
@@ -954,16 +954,16 @@ dps_results: {
 dps_results: {
  key: "TestFeralTank-AllItems-ThunderheartHarness"
  value: {
-  dps: 2161.76643
-  tps: 4717.21251
+  dps: 2163.62151
+  tps: 4733.08928
   dtps: 6.91733
  }
 }
 dps_results: {
  key: "TestFeralTank-AllItems-ThunderheartRegalia"
  value: {
-  dps: 1915.87684
-  tps: 4110.55979
+  dps: 1775.37036
+  tps: 3825.53021
   dtps: 7.24371
  }
 }
@@ -1042,8 +1042,8 @@ dps_results: {
 dps_results: {
  key: "TestFeralTank-AllItems-Val'anyr,HammerofAncientKings-46017"
  value: {
-  dps: 2135.56233
-  tps: 4585.60236
+  dps: 2057.89688
+  tps: 4436.11857
   dtps: 7.24371
  }
 }

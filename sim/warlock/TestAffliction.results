@@ -200,8 +200,8 @@ dps_results: {
 dps_results: {
  key: "TestAffliction-AllItems-DeathbringerGarb"
  value: {
-  dps: 12101.66024
-  tps: 10950.79394
+  dps: 11917.78615
+  tps: 10772.64962
  }
 }
 dps_results: {
@@ -284,8 +284,8 @@ dps_results: {
 dps_results: {
  key: "TestAffliction-AllItems-EyeoftheBroodmother-45308"
  value: {
-  dps: 15058.49794
-  tps: 13808.58882
+  dps: 15052.95101
+  tps: 13803.04188
  }
 }
 dps_results: {

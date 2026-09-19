@@ -336,8 +336,8 @@ dps_results: {
 dps_results: {
  key: "TestFury-AllItems-EyeoftheBroodmother-45308"
  value: {
-  dps: 7013.97974
-  tps: 5202.80793
+  dps: 7006.62005
+  tps: 5198.2071
  }
 }
 dps_results: {
@@ -526,8 +526,8 @@ dps_results: {
 dps_results: {
  key: "TestFury-AllItems-OnslaughtArmor"
  value: {
-  dps: 4371.62907
-  tps: 3268.68647
+  dps: 4043.74301
+  tps: 3027.78717
  }
 }
 dps_results: {
@@ -652,15 +652,15 @@ dps_results: {
 dps_results: {
  key: "TestFury-AllItems-SiegebreakerBattlegear"
  value: {
-  dps: 6764.76841
-  tps: 5020.08419
+  dps: 6671.4442
+  tps: 4954.19406
  }
 }
 dps_results: {
  key: "TestFury-AllItems-SiegebreakerPlate"
  value: {
-  dps: 5790.73181
-  tps: 4310.44985
+  dps: 5738.48571
+  tps: 4269.70915
  }
 }
 dps_results: {
@@ -715,8 +715,8 @@ dps_results: {
 dps_results: {
  key: "TestFury-AllItems-StormshroudArmor"
  value: {
-  dps: 5259.73008
-  tps: 3923.08906
+  dps: 5379.35469
+  tps: 4009.68862
  }
 }
 dps_results: {
@@ -841,8 +841,8 @@ dps_results: {
 dps_results: {
  key: "TestFury-AllItems-Val'anyr,HammerofAncientKings-46017"
  value: {
-  dps: 5465.57971
-  tps: 4127.01161
+  dps: 5404.40161
+  tps: 4083.02263
  }
 }
 dps_results: {

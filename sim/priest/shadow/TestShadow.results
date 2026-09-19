@@ -294,8 +294,8 @@ dps_results: {
 dps_results: {
  key: "TestShadow-AllItems-EyeoftheBroodmother-45308"
  value: {
-  dps: 7594.39411
-  tps: 7367.59511
+  dps: 7584.08921
+  tps: 7357.30754
  }
 }
 dps_results: {
@@ -602,15 +602,15 @@ dps_results: {
 dps_results: {
  key: "TestShadow-AllItems-SanctificationGarb"
  value: {
-  dps: 7222.69267
-  tps: 7000.08148
+  dps: 7096.49483
+  tps: 6877.89947
  }
 }
 dps_results: {
  key: "TestShadow-AllItems-SanctificationRegalia"
  value: {
-  dps: 6908.72857
-  tps: 6680.92201
+  dps: 6790.18945
+  tps: 6565.20518
  }
 }
 dps_results: {
@@ -777,8 +777,8 @@ dps_results: {
 dps_results: {
  key: "TestShadow-AllItems-Val'anyr,HammerofAncientKings-46017"
  value: {
-  dps: 7895.27304
-  tps: 7662.23486
+  dps: 7748.06133
+  tps: 7519.38634
  }
 }
 dps_results: {

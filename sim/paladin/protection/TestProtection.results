@@ -46,15 +46,15 @@ character_stats_results: {
 dps_results: {
  key: "TestProtection-AllItems-AegisBattlegear"
  value: {
-  dps: 3597.62938
-  tps: 8592.64291
+  dps: 3567.1309
+  tps: 8523.19898
  }
 }
 dps_results: {
  key: "TestProtection-AllItems-AegisPlate"
  value: {
-  dps: 3399.11739
-  tps: 8186.02978
+  dps: 3360.77914
+  tps: 8094.92166
  }
 }
 dps_results: {
@@ -315,8 +315,8 @@ dps_results: {
 dps_results: {
  key: "TestProtection-AllItems-EyeoftheBroodmother-45308"
  value: {
-  dps: 3369.27232
-  tps: 8094.41711
+  dps: 3365.18787
+  tps: 8084.71416
  }
 }
 dps_results: {
@@ -743,8 +743,8 @@ dps_results: {
 dps_results: {
  key: "TestProtection-AllItems-StormshroudArmor"
  value: {
-  dps: 2767.7897
-  tps: 6667.1878
+  dps: 2790.18561
+  tps: 6718.67993
  }
 }
 dps_results: {
@@ -883,8 +883,8 @@ dps_results: {
 dps_results: {
  key: "TestProtection-AllItems-Val'anyr,HammerofAncientKings-46017"
  value: {
-  dps: 3262.25858
-  tps: 7894.99162
+  dps: 3208.94606
+  tps: 7771.24305
  }
 }
 dps_results: {

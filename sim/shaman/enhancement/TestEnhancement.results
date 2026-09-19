@@ -343,8 +343,8 @@ dps_results: {
 dps_results: {
  key: "TestEnhancement-AllItems-EyeoftheBroodmother-45308"
  value: {
-  dps: 7854.91217
-  tps: 4702.49025
+  dps: 7846.65583
+  tps: 4697.44967
  }
 }
 dps_results: {
@@ -715,15 +715,15 @@ dps_results: {
 dps_results: {
  key: "TestEnhancement-AllItems-SkyshatterHarness"
  value: {
-  dps: 5666.08238
-  tps: 3304.54489
+  dps: 5444.55371
+  tps: 3166.38276
  }
 }
 dps_results: {
  key: "TestEnhancement-AllItems-SkyshatterRegalia"
  value: {
-  dps: 5548.9126
-  tps: 3217.17862
+  dps: 5410.44417
+  tps: 3116.70608
  }
 }
 dps_results: {
@@ -778,8 +778,8 @@ dps_results: {
 dps_results: {
  key: "TestEnhancement-AllItems-StormshroudArmor"
  value: {
-  dps: 5923.65152
-  tps: 3480.3708
+  dps: 5976.95147
+  tps: 3520.28495
  }
 }
 dps_results: {
@@ -855,8 +855,8 @@ dps_results: {
 dps_results: {
  key: "TestEnhancement-AllItems-TidefuryRaiment"
  value: {
-  dps: 5595.04458
-  tps: 3259.31951
+  dps: 5581.23329
+  tps: 3251.92062
  }
 }
 dps_results: {
@@ -946,8 +946,8 @@ dps_results: {
 dps_results: {
  key: "TestEnhancement-AllItems-Val'anyr,HammerofAncientKings-46017"
  value: {
-  dps: 8101.55413
-  tps: 4863.62618
+  dps: 7972.47724
+  tps: 4784.30547
  }
 }
 dps_results: {
@@ -960,15 +960,15 @@ dps_results: {
 dps_results: {
  key: "TestEnhancement-AllItems-WorldbreakerBattlegear"
  value: {
-  dps: 7603.97555
-  tps: 4555.94264
+  dps: 7439.47452
+  tps: 4450.85487
  }
 }
 dps_results: {
  key: "TestEnhancement-AllItems-WorldbreakerGarb"
  value: {
-  dps: 7274.31005
-  tps: 4317.96654
+  dps: 7171.32899
+  tps: 4248.83052
  }
 }
 dps_results: {

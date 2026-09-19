@@ -385,8 +385,8 @@ dps_results: {
 dps_results: {
  key: "TestElemental-AllItems-EyeoftheBroodmother-45308"
  value: {
-  dps: 7121.58765
-  tps: 4184.16802
+  dps: 7118.79631
+  tps: 4184.26508
  }
 }
 dps_results: {
@@ -819,8 +819,8 @@ dps_results: {
 dps_results: {
  key: "TestElemental-AllItems-StormshroudArmor"
  value: {
-  dps: 4662.06882
-  tps: 2741.91784
+  dps: 4755.82536
+  tps: 2799.76006
  }
 }
 dps_results: {
@@ -987,8 +987,8 @@ dps_results: {
 dps_results: {
  key: "TestElemental-AllItems-Val'anyr,HammerofAncientKings-46017"
  value: {
-  dps: 7494.3592
-  tps: 4392.07614
+  dps: 7294.28435
+  tps: 4276.35037
  }
 }
 dps_results: {
@@ -1001,15 +1001,15 @@ dps_results: {
 dps_results: {
  key: "TestElemental-AllItems-WorldbreakerBattlegear"
  value: {
-  dps: 5346.7611
-  tps: 3126.65815
+  dps: 5233.04507
+  tps: 3050.97613
  }
 }
 dps_results: {
  key: "TestElemental-AllItems-WorldbreakerGarb"
  value: {
-  dps: 6963.87369
-  tps: 4142.51028
+  dps: 6774.21021
+  tps: 4026.86435
  }
 }
 dps_results: {

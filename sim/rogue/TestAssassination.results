@@ -301,8 +301,8 @@ dps_results: {
 dps_results: {
  key: "TestAssassination-AllItems-EyeoftheBroodmother-45308"
  value: {
-  dps: 6948.38048
-  tps: 4933.35014
+  dps: 6955.35899
+  tps: 4938.30488
  }
 }
 dps_results: {
@@ -645,8 +645,8 @@ dps_results: {
 dps_results: {
  key: "TestAssassination-AllItems-StormshroudArmor"
  value: {
-  dps: 5652.9699
-  tps: 4013.60863
+  dps: 5745.03725
+  tps: 4078.97645
  }
 }
 dps_results: {
@@ -687,8 +687,8 @@ dps_results: {
 dps_results: {
  key: "TestAssassination-AllItems-TerrorbladeBattlegear"
  value: {
-  dps: 6855.282
-  tps: 4867.25022
+  dps: 6749.35515
+  tps: 4792.04215
  }
 }
 dps_results: {

@@ -294,8 +294,8 @@ dps_results: {
 dps_results: {
  key: "TestSmite-AllItems-EyeoftheBroodmother-45308"
  value: {
-  dps: 2994.32031
-  tps: 2511.43935
+  dps: 2992.9372
+  tps: 2510.33286
  }
 }
 dps_results: {
@@ -602,15 +602,15 @@ dps_results: {
 dps_results: {
  key: "TestSmite-AllItems-SanctificationGarb"
  value: {
-  dps: 2838.36098
-  tps: 2391.76262
+  dps: 2751.99448
+  tps: 2320.01886
  }
 }
 dps_results: {
  key: "TestSmite-AllItems-SanctificationRegalia"
  value: {
-  dps: 2881.68938
-  tps: 2430.91934
+  dps: 2797.74705
+  tps: 2360.47198
  }
 }
 dps_results: {
@@ -777,8 +777,8 @@ dps_results: {
 dps_results: {
  key: "TestSmite-AllItems-Val'anyr,HammerofAncientKings-46017"
  value: {
-  dps: 3088.0588
-  tps: 2585.13349
+  dps: 3023.34103
+  tps: 2536.73615
  }
 }
 dps_results: {
