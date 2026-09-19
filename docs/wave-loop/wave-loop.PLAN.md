@@ -67,8 +67,10 @@ G = changes goldens. FS = runs all 37 suites.
 
 - Wave: D, running. Wave C (base `eaa6715af`) landed on `master`.
 - Base SHA: `30137e6d1`.
-- Workflow runId: `wf_724d4586-625`; transcript dir (its `journal.jsonl`)
-  `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\wf_724d4586-625`.
+- Workflow runId: `wf_86c44e1b-fe3`, resuming `wf_724d4586-625` after a session limit. Transcript dirs
+  (`journal.jsonl`) are
+  `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\<runId>`.
+  PAR-P3-3's and BIS-ui-tab's finished implementer reports are in their worktrees' `tmp/impl-report.json`.
 - Split between the two timing items: PAR-P3-2 applies cast times from serverdata's `CastMs`, which
   already has the ranged slot's +500 ms, and exposes a `Spell` method for the server entry. PAR-P3-3
   reads serverdata through one helper in `cast.go`; at integration, point that helper at PAR-P3-2's
