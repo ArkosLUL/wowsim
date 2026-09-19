@@ -1,0 +1,98 @@
+@use "sass:map";
+
+.optimizer-tab {
+  .optimizer-field {
+    margin-bottom: map-get($spacers, 3);
+  }
+
+  .optimizer-hint {
+    font-size: 0.85rem;
+    opacity: 0.75;
+  }
+
+  .optimizer-checkbox-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: map-get($spacers, 3);
+  }
+
+  .optimizer-inline {
+    display: flex;
+    align-items: center;
+    gap: map-get($spacers, 2);
+    margin-bottom: map-get($spacers, 2);
+  }
+
+  .optimizer-actions,
+  .optimizer-status-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: map-get($spacers, 2);
+    margin-bottom: map-get($spacers, 3);
+  }
+
+  .optimizer-availability,
+  .optimizer-warning {
+    color: $warning;
+    margin-bottom: map-get($spacers, 2);
+  }
+
+  .optimizer-status {
+    margin-bottom: map-get($spacers, 2);
+  }
+
+  .optimizer-status-warning {
+    color: $warning;
+  }
+
+  .optimizer-status-error {
+    color: $danger;
+  }
+
+  .optimizer-exclude {
+    margin: 0 map-get($spacers, 1) map-get($spacers, 1) 0;
+  }
+
+  .optimizer-provenance {
+    font-size: 0.85rem;
+    opacity: 0.75;
+    margin-bottom: map-get($spacers, 2);
+  }
+
+  .optimizer-improved,
+  .optimizer-summary {
+    font-weight: bold;
+    margin-bottom: map-get($spacers, 2);
+  }
+
+  .optimizer-section {
+    margin-bottom: map-get($spacers, 4);
+  }
+
+  .optimizer-gear-row {
+    display: flex;
+    align-items: center;
+    gap: map-get($spacers, 2);
+    padding: map-get($spacers, 1) 0;
+
+    &.optimizer-changed {
+      border-left: 3px solid $success;
+      padding-left: map-get($spacers, 2);
+    }
+
+    .optimizer-slot {
+      width: 6rem;
+      flex-shrink: 0;
+      opacity: 0.75;
+    }
+
+    .item-picker-root {
+      flex: 1;
+    }
+  }
+
+  .optimizer-table {
+    color: inherit;
+  }
+}

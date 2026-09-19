@@ -348,10 +348,11 @@ always dominate, so it stays exact.
 ### BIS-ui-tab (wave D)
 
 **Owns:**
-- `ui/core/optimizer/pool_builder.ts`, with a pure `filterItemsByFilters` extracted from
-  `Player.filterItemData`
-- `ui/core/optimizer/catalog.ts`
-- `ui/core/components/individual_sim_ui/optimizer_tab.ts`, registered in `individual_sim_ui.ts`
+- `ui/core/optimizer/`: `pool_builder.ts`, `catalog.ts`, `item_filters.ts` (the pure `filterItemsByFilters`,
+  which `Player.filterItemData` calls) and the fixture driver ([README](../../ui/core/optimizer/README.md))
+- `ui/core/components/individual_sim_ui/optimizer_tab.ts`, registered in `individual_sim_ui.ts` for DPS specs
+  outside the raid sim, and its `_optimizer_tab.scss`
+- `sim/optimizer/replay_test.go` and `testdata/replay/`
 - the DPS encounter, copying `raid_difficulty` and `server_settings` from the current one
 - wasm detection
 
@@ -359,13 +360,36 @@ always dominate, so it stays exact.
 - Settings: phase, effort, sources, floors, locks, excludes. Source checkboxes keep fallback sources that
   have no kind (33, all on fallback items). Holiday bosses resolve to their instance's tier; event windows
   aren't modelled.
-- Results: Δ ± se, alternatives, the sheet with caps.
-- Actions: Equip (gear and racial traits), Save, export JSON.
+- Results: Δ ± se, alternatives, the sheet with caps; only the result fields that are set.
+- Actions: Equip (gear and racial traits), Save (via `GearTab.savedGearManager`, so it shows at once),
+  export JSON. "Export request" downloads a request that `TestReplayFixtures` takes as a fixture.
 
-Exported requests become fixtures for `TestReplayFixtures`. Checked by hand on its dev port.
+Checked by hand on its dev port.
 
 The web server answers 409 while another run is busy (naming its id for `/cancelAsync`) and cancels a
 run nobody has polled for 2 minutes, keeping its result: show both, and let the user retry.
+
+**Interface for BIS-batch-ui:** `buildOptimizeRequest` takes the raid request, target index, tab settings,
+`CatalogIndex`, the gear picker's filters, the Player's `getItems`/`getEnchants` and the `Database`. It returns
+the request and `seedChanges`, one line per trim.
+- Items per slot: `getItems`, `filterItemsByFilters`, then the catalog: a source counts when its tier is
+  ≤ 12 + phase and its kind is checked or empty; faction; no PvP; no row means unobtainable. Then the item's
+  and the row's professions, and excludes. Locked slots get no `SlotPool`.
+- Gems follow the catalog's tier, faction and PvP rules, not source kinds. Enchants follow
+  `enchantAppliesToItem` and their profession, in every phase (mod-npc-enchanter).
+- The seed is trimmed until it passes `CheckGear`, in order: what the pool doesn't offer (items, enchants,
+  gems, reforges); limits, counting locked slots first; a lone second ring, trinket or off-hand weapon moving
+  up, taking any lock along; inactive metas. Locked slots are never trimmed. So a phase's result never keeps
+  later gear.
+- `plainBossTarget` copies `Encounter.defaultTargetProto()`, since `encounter.ts` won't load under Node.
+
+**Findings:**
+- wasm detection fetches `/wotlk/sim_worker.js`: only the server's net worker calls `/asyncProgress`.
+- `SimHeader.activateTab` does nothing: it clicks the `<li>`, not the tab link Bootstrap listens on.
+- Retribution pools run 2.6k (P1) to 4.6k (P5) slot candidates, 1.6 to 2.9 MB of request JSON: nothing
+  prunes gear no DPS spec wants (TBC, other roles).
+- Fixtures: Retribution's P1 to P5 presets (P4 with locked trinkets, its worn head excluded and a hit
+  floor), plus P2 gear at P1. The driver gzips them (0.17 to 0.29 MB); the test reads `.json` and `.json.gz`.
 
 ### BIS-tanks-racials (wave F)
 
