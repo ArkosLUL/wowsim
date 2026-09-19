@@ -141,6 +141,21 @@ function withSpellTweak<K extends keyof SpellTweaksSettings>(settings: ServerSet
 	return next;
 }
 
+function mapUpdateIntervalMs(settings: ServerSettings): number {
+	return settings.mapUpdateIntervalMs ?? LIVE_SERVER_DEFAULTS.mapUpdateIntervalMs ?? 0;
+}
+
+// The live value clears the field, like withSpellTweak.
+function withMapUpdateIntervalMs(settings: ServerSettings, value: number): ServerSettings {
+	const next = ServerSettings.clone(settings);
+	if (value === LIVE_SERVER_DEFAULTS.mapUpdateIntervalMs) {
+		delete next.mapUpdateIntervalMs;
+	} else {
+		next.mapUpdateIntervalMs = value;
+	}
+	return next;
+}
+
 function scaleField(settings: ServerSettings | undefined, set: ScaleSet, stat: ScaleStat): number | undefined {
 	return settings?.dungeonScale?.[set]?.[stat];
 }
@@ -195,6 +210,19 @@ export const SERVER_SETTINGS_TOOLTIP =
 export class ServerSettingsPicker extends Component {
 	constructor(parent: HTMLElement, encounter: Encounter) {
 		super(parent, 'server-settings-picker-root');
+
+		new NumberPicker<Encounter>(this.rootElem, encounter, {
+			label: 'Map update interval (ms)',
+			labelTooltip:
+				'MapUpdateInterval, the server tick. Swings, finished casts and expiring buffs wait for the next tick. ' +
+				'0 is exact timing, which no real server has.',
+			inline: true,
+			positive: true,
+			changedEvent: encounter => encounter.serverSettingsChangeEmitter,
+			getValue: encounter => mapUpdateIntervalMs(encounter.getServerSettings()),
+			setValue: (eventID: EventID, encounter: Encounter, newValue: number) =>
+				encounter.setServerSettings(eventID, withMapUpdateIntervalMs(encounter.getServerSettings(), newValue)),
+		});
 
 		new EnumPicker<Encounter>(this.rootElem, encounter, {
 			label: 'Raid difficulty',

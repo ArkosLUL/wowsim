@@ -204,7 +204,9 @@ func (aa *AutoAttacks) OffhandSwingAt() time.Duration {
 	return aa.oh.swingAt
 }
 
+// SetOffhandSwingAt has no sim to round to a server tick with, so swing() does that.
 func (aa *AutoAttacks) SetOffhandSwingAt(offhandSwingAt time.Duration) {
+	aa.oh.timerAt = offhandSwingAt
 	aa.oh.swingAt = offhandSwingAt
 }
 
@@ -235,6 +237,9 @@ type WeaponAttack struct {
 
 	replaceSwing ReplaceMHSwing
 
+	// timerAt is when the swing timer (m_attackTimer) runs out, swingAt the server tick the swing
+	// lands on. Haste and the other timer changes work on timerAt.
+	timerAt time.Duration
 	swingAt time.Duration
 
 	curSwingSpeed    float64
@@ -243,6 +248,17 @@ type WeaponAttack struct {
 
 func (wa *WeaponAttack) getWeapon() *Weapon {
 	return &wa.Weapon
+}
+
+// setTimer doesn't reschedule: callers that move a running swing earlier call rescheduleWeaponAttack.
+func (wa *WeaponAttack) setTimer(sim *Simulation, timerAt time.Duration) {
+	wa.timerAt = timerAt
+	wa.swingAt = sim.NextServerTick(timerAt)
+}
+
+func (wa *WeaponAttack) stopTimer() {
+	wa.timerAt = NeverExpires
+	wa.swingAt = NeverExpires
 }
 
 func (wa *WeaponAttack) setWeapon(weapon Weapon) {
@@ -260,6 +276,29 @@ func (wa *WeaponAttack) trySwing(sim *Simulation) time.Duration {
 }
 
 func (wa *WeaponAttack) swing(sim *Simulation) time.Duration {
+	// SetOffhandSwingAt can leave a swing between server ticks
+	if at := sim.NextServerTick(wa.swingAt); at > sim.CurrentTime {
+		wa.swingAt = at
+		return at
+	}
+
+	aa := &wa.unit.AutoAttacks
+	var otherHand *WeaponAttack
+	switch wa {
+	case &aa.mh:
+		otherHand = &aa.oh
+	case &aa.oh:
+		// the server checks the main hand first, so on a shared tick it swings and pushes this one back
+		if aa.mh.swingAt <= sim.CurrentTime {
+			return sim.CurrentTime
+		}
+		otherHand = &aa.mh
+	}
+
+	if otherHand != nil && aa.IsDualWielding && otherHand.timerAt-sim.CurrentTime < attackDisplayDelay {
+		otherHand.setTimer(sim, sim.CurrentTime+attackDisplayDelay)
+	}
+
 	attackSpell := wa.spell
 
 	if wa.replaceSwing != nil {
@@ -275,7 +314,12 @@ func (wa *WeaponAttack) swing(sim *Simulation) time.Duration {
 
 	// Update swing timer BEFORE the cast, so that APL checks for TimeToNextAuto behave correctly
 	// if the attack causes APL evaluations (e.g. from rage gain).
-	wa.swingAt = sim.CurrentTime + wa.curSwingDuration
+	// Restarts from this tick, so whatever the timer overshot is lost.
+	wa.setTimer(sim, sim.CurrentTime+wa.curSwingDuration)
+	// a melee swing restarts the ranged timer too
+	if otherHand != nil && aa.AutoSwingRanged {
+		aa.ranged.setTimer(sim, sim.CurrentTime+aa.ranged.curSwingDuration)
+	}
 	attackSpell.Cast(sim, wa.unit.CurrentTarget)
 
 	if !sim.Options.Interactive && wa.unit.Rotation != nil {
@@ -439,36 +483,36 @@ func (aa *AutoAttacks) reset(sim *Simulation) {
 
 	aa.enabled = false
 
-	aa.mh.swingAt = NeverExpires
-	aa.oh.swingAt = NeverExpires
+	aa.mh.stopTimer()
+	aa.oh.stopTimer()
 
 	if aa.AutoSwingMelee {
 		aa.mh.updateSwingDuration(aa.mh.unit.SwingSpeed())
-		aa.mh.swingAt = 0
+		aa.mh.setTimer(sim, 0)
 
 		if aa.IsDualWielding {
 			aa.oh.updateSwingDuration(aa.mh.curSwingSpeed)
-			aa.oh.swingAt = 0
+			aa.oh.setTimer(sim, 0)
 
 			// Apply random delay of 0 - 50% swing time, to one of the weapons if dual wielding
 			if aa.oh.unit.Type == EnemyUnit {
-				aa.oh.swingAt = DurationFromSeconds(aa.mh.SwingSpeed / 2)
+				aa.oh.setTimer(sim, DurationFromSeconds(aa.mh.SwingSpeed/2))
 			} else {
 				if sim.RandomFloat("SwingResetWeapon") < 0.5 {
-					aa.mh.swingAt = DurationFromSeconds(sim.RandomFloat("SwingResetDelay") * aa.mh.SwingSpeed / 2)
+					aa.mh.setTimer(sim, DurationFromSeconds(sim.RandomFloat("SwingResetDelay")*aa.mh.SwingSpeed/2))
 				} else {
-					aa.oh.swingAt = DurationFromSeconds(sim.RandomFloat("SwingResetDelay") * aa.mh.SwingSpeed / 2)
+					aa.oh.setTimer(sim, DurationFromSeconds(sim.RandomFloat("SwingResetDelay")*aa.mh.SwingSpeed/2))
 				}
 			}
 		}
 
 	}
 
-	aa.ranged.swingAt = NeverExpires
+	aa.ranged.stopTimer()
 
 	if aa.AutoSwingRanged {
 		aa.ranged.updateSwingDuration(aa.ranged.unit.RangedSwingSpeed())
-		aa.ranged.swingAt = 0
+		aa.ranged.setTimer(sim, 0)
 	}
 }
 
@@ -533,16 +577,16 @@ func (aa *AutoAttacks) EnableAutoSwing(sim *Simulation) {
 	aa.enabled = true
 
 	if aa.AutoSwingMelee {
-		aa.mh.swingAt = max(aa.mh.swingAt, sim.CurrentTime, 0)
+		aa.mh.setTimer(sim, max(aa.mh.timerAt, sim.CurrentTime, 0))
 		aa.mh.addWeaponAttack(sim, aa.mh.unit.SwingSpeed())
 		if aa.IsDualWielding {
-			aa.oh.swingAt = max(aa.oh.swingAt, sim.CurrentTime, 0)
+			aa.oh.setTimer(sim, max(aa.oh.timerAt, sim.CurrentTime, 0))
 			aa.oh.addWeaponAttack(sim, aa.mh.unit.SwingSpeed())
 		}
 	}
 
 	if aa.AutoSwingRanged {
-		aa.ranged.swingAt = max(aa.ranged.swingAt, sim.CurrentTime, 0)
+		aa.ranged.setTimer(sim, max(aa.ranged.timerAt, sim.CurrentTime, 0))
 		aa.ranged.addWeaponAttack(sim, aa.ranged.unit.RangedSwingSpeed())
 	}
 }
@@ -583,8 +627,8 @@ func (aa *AutoAttacks) UpdateSwingTimers(sim *Simulation) {
 		aa.mh.updateSwingDuration(aa.mh.unit.SwingSpeed())
 		f := oldSwingSpeed / aa.mh.curSwingSpeed
 
-		if remainingSwingTime := aa.mh.swingAt - sim.CurrentTime; remainingSwingTime > 0 {
-			aa.mh.swingAt = sim.CurrentTime + time.Duration(float64(remainingSwingTime)*f)
+		if remainingSwingTime := aa.mh.timerAt - sim.CurrentTime; remainingSwingTime > 0 {
+			aa.mh.setTimer(sim, sim.CurrentTime+time.Duration(float64(remainingSwingTime)*f))
 		}
 
 		sim.rescheduleWeaponAttack(aa.mh.swingAt)
@@ -592,8 +636,8 @@ func (aa *AutoAttacks) UpdateSwingTimers(sim *Simulation) {
 		if aa.IsDualWielding {
 			aa.oh.updateSwingDuration(aa.mh.curSwingSpeed)
 
-			if remainingSwingTime := aa.oh.swingAt - sim.CurrentTime; remainingSwingTime > 0 {
-				aa.oh.swingAt = sim.CurrentTime + time.Duration(float64(remainingSwingTime)*f)
+			if remainingSwingTime := aa.oh.timerAt - sim.CurrentTime; remainingSwingTime > 0 {
+				aa.oh.setTimer(sim, sim.CurrentTime+time.Duration(float64(remainingSwingTime)*f))
 			}
 
 			sim.rescheduleWeaponAttack(aa.oh.swingAt)
@@ -608,16 +652,34 @@ func (aa *AutoAttacks) StopMeleeUntil(sim *Simulation, readyAt time.Duration, de
 		return
 	}
 
-	aa.mh.swingAt = readyAt + aa.mh.curSwingDuration
+	aa.mh.setTimer(sim, readyAt+aa.mh.curSwingDuration)
 	sim.rescheduleWeaponAttack(aa.mh.swingAt)
 
 	if aa.IsDualWielding {
-		aa.oh.swingAt = readyAt + aa.oh.curSwingDuration
+		ohTimerAt := readyAt + aa.oh.curSwingDuration
 		if desyncOH {
 			// Used by warrior to desync offhand after unglyphed Shattering Throw.
-			aa.oh.swingAt += aa.oh.curSwingDuration / 2
+			ohTimerAt += aa.oh.curSwingDuration / 2
 		}
+		aa.oh.setTimer(sim, ohTimerAt)
 		sim.rescheduleWeaponAttack(aa.oh.swingAt)
+	}
+}
+
+// resetSwingTimers is Unit::resetAttackTimer on every hand, ranged included, as a cast that resets
+// autos does: each timer restarts in full at readyAt.
+func (aa *AutoAttacks) resetSwingTimers(sim *Simulation, readyAt time.Duration) {
+	if aa.AutoSwingMelee {
+		aa.mh.setTimer(sim, readyAt+aa.mh.curSwingDuration)
+		sim.rescheduleWeaponAttack(aa.mh.swingAt)
+		if aa.IsDualWielding {
+			aa.oh.setTimer(sim, readyAt+aa.oh.curSwingDuration)
+			sim.rescheduleWeaponAttack(aa.oh.swingAt)
+		}
+	}
+	if aa.AutoSwingRanged {
+		aa.ranged.setTimer(sim, readyAt+aa.ranged.curSwingDuration)
+		sim.rescheduleWeaponAttack(aa.ranged.swingAt)
 	}
 }
 
@@ -627,21 +689,21 @@ func (aa *AutoAttacks) DelayMeleeBy(sim *Simulation, delay time.Duration) {
 		return
 	}
 
-	aa.mh.swingAt += delay
+	aa.mh.setTimer(sim, aa.mh.timerAt+delay)
 	sim.rescheduleWeaponAttack(aa.mh.swingAt)
 
 	if aa.IsDualWielding {
-		aa.oh.swingAt += delay
+		aa.oh.setTimer(sim, aa.oh.timerAt+delay)
 		sim.rescheduleWeaponAttack(aa.oh.swingAt)
 	}
 }
 
 func (aa *AutoAttacks) DelayRangedUntil(sim *Simulation, readyAt time.Duration) {
-	if readyAt <= aa.ranged.swingAt {
+	if readyAt <= aa.ranged.timerAt {
 		return
 	}
 
-	aa.ranged.swingAt = readyAt
+	aa.ranged.setTimer(sim, readyAt)
 	sim.rescheduleWeaponAttack(aa.ranged.swingAt)
 }
 
@@ -741,8 +803,9 @@ func (unit *Unit) applyParryHaste() {
 				return
 			}
 
-			remainingTime := aura.Unit.AutoAttacks.mh.swingAt - sim.CurrentTime
-			swingSpeed := aura.Unit.AutoAttacks.mh.curSwingDuration
+			mh := &aura.Unit.AutoAttacks.mh
+			remainingTime := mh.timerAt - sim.CurrentTime
+			swingSpeed := mh.curSwingDuration
 			minRemainingTime := time.Duration(float64(swingSpeed) * 0.2) // 20% of Swing Speed
 			defaultReduction := minRemainingTime * 2                     // 40% of Swing Speed
 
@@ -751,13 +814,12 @@ func (unit *Unit) applyParryHaste() {
 			}
 
 			parryHasteReduction := min(defaultReduction, remainingTime-minRemainingTime)
-			newReadyAt := aura.Unit.AutoAttacks.mh.swingAt - parryHasteReduction
+			mh.setTimer(sim, mh.timerAt-parryHasteReduction)
 			if sim.Log != nil {
-				aura.Unit.Log(sim, "MH Swing reduced by %s due to parry haste, will now occur at %s", parryHasteReduction, newReadyAt)
+				aura.Unit.Log(sim, "MH Swing reduced by %s due to parry haste, will now occur at %s", parryHasteReduction, mh.swingAt)
 			}
 
-			aura.Unit.AutoAttacks.mh.swingAt = newReadyAt
-			sim.rescheduleWeaponAttack(newReadyAt)
+			sim.rescheduleWeaponAttack(mh.swingAt)
 		},
 	})
 }

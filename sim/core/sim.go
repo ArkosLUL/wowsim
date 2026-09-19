@@ -59,6 +59,11 @@ type Simulation struct {
 
 	minTaskTime time.Duration
 	tasks       []Task
+
+	// Map::Update ticks at phase + k*interval. Swings, cast completion and aura expiry wait for
+	// the first tick at or after their timer runs out. Interval 0 means exact timing.
+	serverTickInterval time.Duration
+	serverTickPhase    time.Duration
 }
 
 func (sim *Simulation) rescheduleTracker(trackerTime time.Duration) {
@@ -200,7 +205,35 @@ func newSimWithEnv(env *Environment, simOptions *proto.SimOptions) *Simulation {
 
 		isTest:    simOptions.IsTest,
 		testRands: make(map[string]Rand),
+
+		serverTickInterval: env.serverSettings().MapUpdateInterval,
 	}
+}
+
+// The raid's server settings, or the live ones without a raid, same as Character.Server().
+func (env *Environment) serverSettings() *ServerSettings {
+	if env.Raid == nil || env.Raid.Server == nil {
+		return NewServerSettings(nil)
+	}
+	return env.Raid.Server
+}
+
+// NextServerTick is the first server tick at or after t: when a timer that runs out at t fires on
+// the server. Returns t unchanged with exact timing.
+func (sim *Simulation) NextServerTick(t time.Duration) time.Duration {
+	interval := sim.serverTickInterval
+	if interval <= 0 || t > NeverExpires-interval {
+		return t
+	}
+	// Go's % keeps the dividend's sign, so a time before the phase needs its own branch
+	offset := (t - sim.serverTickPhase) % interval
+	switch {
+	case offset > 0:
+		return t + interval - offset
+	case offset < 0:
+		return t - offset
+	}
+	return t
 }
 
 // Returns a random float64 between 0.0 (inclusive) and 1.0 (exclusive).
@@ -372,6 +405,12 @@ func (sim *Simulation) reset() {
 	if sim.DurationVariation != 0 {
 		variation := sim.DurationVariation * 2
 		sim.Duration += time.Duration(sim.RandomFloat("sim duration")*float64(variation)) - sim.DurationVariation
+	}
+
+	// the pull lands anywhere between two server ticks
+	sim.serverTickPhase = 0
+	if sim.serverTickInterval > 0 {
+		sim.serverTickPhase = time.Duration(sim.RandomFloat("Server Tick Phase") * float64(sim.serverTickInterval))
 	}
 
 	sim.pendingActions = sim.pendingActions[:0]
