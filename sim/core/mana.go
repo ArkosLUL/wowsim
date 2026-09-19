@@ -296,8 +296,9 @@ type ManaCost struct {
 func newManaCost(spell *Spell, options ManaCostOptions) *ManaCost {
 	baseCost := TernaryFloat64(options.FlatCost > 0, options.FlatCost, options.BaseCost*spell.Unit.BaseMana)
 	if player := spell.Unit.Env.Raid.GetPlayerFromUnit(spell.Unit); player != nil {
-		if player.GetCharacter().HasTrinketEquipped(45703) { // Spark of Hope
-			baseCost = max(0, baseCost-44)
+		// Spark of Hope (65010): school mask 126, so nothing whose first school is physical
+		if !spell.SpellSchool.Matches(SpellSchoolPhysical) && player.GetCharacter().HasTrinketEquipped(45703) {
+			baseCost = max(0, baseCost-42)
 		}
 	}
 

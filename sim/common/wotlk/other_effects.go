@@ -9,6 +9,14 @@ import (
 	"github.com/wowsims/wotlk/sim/core/stats"
 )
 
+// Equip auras and buffs of the items below, looked up in the server's tables.
+const (
+	forethoughtTalismanSpellID      = 60529
+	valanyrSpellID                  = 64415
+	blessingOfAncientKingsSpellID   = 64411
+	protectionOfAncientKingsSpellID = 64413
+)
+
 func init() {
 	core.NewItemEffect(37220, func(agent core.Agent) {
 		character := agent.GetCharacter()
@@ -203,6 +211,7 @@ func init() {
 		})
 	})
 
+	forethought := ServerProcFor(forethoughtTalismanSpellID)
 	core.NewItemEffect(40258, func(agent core.Agent) {
 		character := agent.GetCharacter()
 
@@ -222,7 +231,7 @@ func init() {
 				NumberOfTicks: 4,
 				TickLength:    time.Second * 3,
 				OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
-					dot.SnapshotBaseDamage = 3752.0 / 4
+					dot.SnapshotBaseDamage = 3572.0 / 4
 					dot.SnapshotAttackerMultiplier = dot.Spell.CasterHealingMultiplier()
 				},
 				OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
@@ -234,9 +243,9 @@ func init() {
 		core.MakeProcTriggerAura(&character.Unit, core.ProcTrigger{
 			Name:       "Forethought Talisman",
 			Callback:   core.CallbackOnHealDealt,
-			Outcome:    core.OutcomeCrit,
-			ProcChance: 0.2,
-			ICD:        time.Second * 45,
+			Outcome:    core.OutcomeLanded,
+			ProcChance: forethought.Chance,
+			ICD:        forethought.ICD,
 			ActionID:   core.ActionID{ItemID: 40258},
 			Handler: func(sim *core.Simulation, _ *core.Spell, result *core.SpellResult) {
 				healSpell.Hot(result.Target).Apply(sim)
@@ -300,11 +309,14 @@ func init() {
 		})
 	})
 
+	valanyr := ServerProcFor(valanyrSpellID)
+	blessingDuration := ServerDuration(blessingOfAncientKingsSpellID)
+	shieldDuration := ServerDuration(protectionOfAncientKingsSpellID)
 	core.NewItemEffect(46017, func(agent core.Agent) { // Val'anyr
 		character := agent.GetCharacter()
 
 		shieldSpell := character.GetOrRegisterSpell(core.SpellConfig{
-			ActionID:    core.ActionID{SpellID: 64413},
+			ActionID:    core.ActionID{SpellID: protectionOfAncientKingsSpellID},
 			SpellSchool: core.SpellSchoolNature,
 			ProcMask:    core.ProcMaskSpellHealing,
 			Flags:       core.SpellFlagNoOnCastComplete | core.SpellFlagHelpful,
@@ -315,19 +327,32 @@ func init() {
 			Shield: core.ShieldConfig{
 				Aura: core.Aura{
 					Label:    "Val'anyr Shield",
-					Duration: time.Second * 30,
+					Duration: shieldDuration,
 				},
 			},
 		})
 
+		// spell_item_blessing_of_ancient_kings: heals add into the target's one bubble, and a bubble
+		// past 20000 jumps to 200000 (the script copies Blizzard's bug)
+		absorbs := make([]float64, len(character.Env.AllUnits))
 		activeAura := core.MakeProcTriggerAura(&character.Unit, core.ProcTrigger{
 			Name:     "Blessing of Ancient Kings",
-			ActionID: core.ActionID{SpellID: 64411},
+			ActionID: core.ActionID{SpellID: blessingOfAncientKingsSpellID},
 			Callback: core.CallbackOnHealDealt | core.CallbackOnPeriodicHealDealt,
-			Duration: time.Second * 15,
+			Duration: blessingDuration,
 			Handler: func(sim *core.Simulation, _ *core.Spell, result *core.SpellResult) {
-				// TODO: Shield needs to stack with itself up to 20k.
-				shieldSpell.Shield(result.Target).Apply(sim, result.Damage*0.15)
+				shield := shieldSpell.Shield(result.Target)
+				absorb := math.Floor(result.Damage * 0.15)
+				current := 0.0
+				if shield.IsActive() {
+					current = absorbs[result.Target.UnitIndex]
+					absorb += current
+					if absorb > 20000 {
+						absorb = 200000
+					}
+				}
+				absorbs[result.Target.UnitIndex] = absorb
+				shield.Apply(sim, absorb-current)
 			},
 		})
 
@@ -335,9 +360,9 @@ func init() {
 			Name:       "Val'anyr, Hammer of Ancient Kings Trigger",
 			Callback:   core.CallbackOnHealDealt | core.CallbackOnPeriodicHealDealt,
 			Harmful:    true, // Better name for this would be, 'nonzero'
-			ProcChance: 0.1,
+			ProcChance: valanyr.Chance,
 			ActionID:   core.ActionID{ItemID: 46017},
-			ICD:        time.Second * 45,
+			ICD:        valanyr.ICD,
 			Handler: func(sim *core.Simulation, _ *core.Spell, _ *core.SpellResult) {
 				activeAura.Activate(sim)
 			},

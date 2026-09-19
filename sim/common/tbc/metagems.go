@@ -3,8 +3,15 @@ package tbc
 import (
 	"time"
 
+	"github.com/wowsims/wotlk/sim/common/wotlk"
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/stats"
+)
+
+// Equip auras of the meta gems below, whose proc entries hold their chance, PPM and ICD.
+const (
+	insightfulEarthstormSpellID = 27521
+	thunderingSkyfireSpellID    = 39958
 )
 
 func init() {
@@ -40,11 +47,12 @@ func init() {
 		agent.GetCharacter().PseudoStats.BonusDamage += 3
 	})
 
+	insightful := wotlk.ServerProcFor(insightfulEarthstormSpellID)
 	core.NewItemEffect(25901, func(agent core.Agent) {
 		character := agent.GetCharacter()
 		icd := core.Cooldown{
 			Timer:    character.NewTimer(),
-			Duration: time.Second * 15,
+			Duration: insightful.ICD,
 		}
 		manaMetrics := character.NewManaMetrics(core.ActionID{ItemID: 25901})
 
@@ -55,7 +63,7 @@ func init() {
 				aura.Activate(sim)
 			},
 			OnCastComplete: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell) {
-				if !icd.IsReady(sim) || sim.RandomFloat("Insightful Earthstorm Diamond") > 0.04 {
+				if !icd.IsReady(sim) || sim.RandomFloat("Insightful Earthstorm Diamond") > insightful.Chance {
 					return
 				}
 				icd.Use(sim)
@@ -64,15 +72,16 @@ func init() {
 		})
 	})
 
+	thundering := wotlk.ServerProcFor(thunderingSkyfireSpellID)
 	core.NewItemEffect(32410, func(agent core.Agent) {
 		character := agent.GetCharacter()
 		procAura := character.NewTemporaryStatsAura("Thundering Skyfire Diamond Proc", core.ActionID{ItemID: 32410}, stats.Stats{stats.MeleeHaste: 240}, time.Second*6)
 
 		icd := core.Cooldown{
 			Timer:    character.NewTimer(),
-			Duration: time.Second * 40,
+			Duration: thundering.ICD,
 		}
-		ppmm := character.AutoAttacks.NewPPMManager(1.5, core.ProcMaskWhiteHit) // Mask 68, melee or ranged auto attacks.
+		ppmm := character.AutoAttacks.NewPPMManager(thundering.PPM, core.ProcMaskWhiteHit) // Mask 68, melee or ranged auto attacks.
 
 		character.RegisterAura(core.Aura{
 			Label:    "Thundering Skyfire Diamond",

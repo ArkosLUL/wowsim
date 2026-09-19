@@ -3,10 +3,14 @@ package tbc
 import (
 	"time"
 
+	"github.com/wowsims/wotlk/sim/common/wotlk"
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
 	"github.com/wowsims/wotlk/sim/core/stats"
 )
+
+// Deathfrost's equip aura, which procs it from spells; its weapon hits use the enchant's PPM.
+const deathfrostSpellID = 46662
 
 func init() {
 	core.AddEffectsToTest = false
@@ -58,11 +62,12 @@ func init() {
 	// ApplyCrusaderEffect will be applied twice if there is two weapons with this enchant.
 	//   However, it will automatically overwrite one of them, so it should be ok.
 	//   A single application of the aura will handle both mh and oh procs.
+	crusaderPPM := wotlk.ServerEnchantPPM(1900)
 	core.NewEnchantEffect(1900, func(agent core.Agent) {
 		character := agent.GetCharacter()
 
 		procMask := character.GetProcMaskForEnchant(1900)
-		ppmm := character.AutoAttacks.NewPPMManager(1.0, procMask)
+		ppmm := character.AutoAttacks.NewPPMManager(crusaderPPM, procMask)
 
 		// -4 str per level over 60
 		const strBonus = 100.0 - 4.0*float64(core.CharacterLevel-60)
@@ -90,7 +95,7 @@ func init() {
 			},
 		})
 
-		character.ItemSwap.RegisterOnSwapItemForEffectWithPPMManager(1900, 1.0, &ppmm, aura)
+		character.ItemSwap.RegisterOnSwapItemForEffectWithPPMManager(1900, crusaderPPM, &ppmm, aura)
 	})
 
 	core.NewEnchantEffect(2929, func(agent core.Agent) {
@@ -100,11 +105,12 @@ func init() {
 	// ApplyMongooseEffect will be applied twice if there is two weapons with this enchant.
 	//   However, it will automatically overwrite one of them, so it should be ok.
 	//   A single application of the aura will handle both mh and oh procs.
+	mongoosePPM := wotlk.ServerEnchantPPM(2673)
 	core.NewEnchantEffect(2673, func(agent core.Agent) {
 		character := agent.GetCharacter()
 
 		procMask := character.GetProcMaskForEnchant(2673)
-		ppmm := character.AutoAttacks.NewPPMManager(0.73, procMask)
+		ppmm := character.AutoAttacks.NewPPMManager(mongoosePPM, procMask)
 
 		mhAura := character.NewTemporaryStatsAura("Lightning Speed MH", core.ActionID{SpellID: 28093, Tag: 1}, stats.Stats{stats.MeleeHaste: 30.0, stats.Agility: 120}, time.Second*15)
 		ohAura := character.NewTemporaryStatsAura("Lightning Speed OH", core.ActionID{SpellID: 28093, Tag: 2}, stats.Stats{stats.MeleeHaste: 30.0, stats.Agility: 120}, time.Second*15)
@@ -130,7 +136,7 @@ func init() {
 			},
 		})
 
-		character.ItemSwap.RegisterOnSwapItemForEffectWithPPMManager(2673, 0.73, &ppmm, aura)
+		character.ItemSwap.RegisterOnSwapItemForEffectWithPPMManager(2673, mongoosePPM, &ppmm, aura)
 	})
 
 	core.AddWeaponEffect(2723, func(agent core.Agent, _ proto.ItemSlot) {
@@ -148,11 +154,12 @@ func init() {
 		character.PseudoStats.ThreatMultiplier *= 1.02
 	})
 
+	executionerPPM := wotlk.ServerEnchantPPM(3225)
 	core.NewEnchantEffect(3225, func(agent core.Agent) {
 		character := agent.GetCharacter()
 
 		procMask := character.GetProcMaskForEnchant(3225)
-		ppmm := character.AutoAttacks.NewPPMManager(1.0, procMask)
+		ppmm := character.AutoAttacks.NewPPMManager(executionerPPM, procMask)
 
 		procAura := character.NewTemporaryStatsAura("Executioner Proc", core.ActionID{SpellID: 42976}, stats.Stats{stats.ArmorPenetration: 120}, time.Second*15)
 
@@ -173,23 +180,28 @@ func init() {
 			},
 		})
 
-		character.ItemSwap.RegisterOnSwapItemForEffectWithPPMManager(3225, 1.0, &ppmm, aura)
+		character.ItemSwap.RegisterOnSwapItemForEffectWithPPMManager(3225, executionerPPM, &ppmm, aura)
 	})
 
 	// https://web.archive.org/web/20100702102132/http://elitistjerks.com/f15/t27347-deathfrost_its_mechanics/p2/#post789470
+	deathfrostPPM := wotlk.ServerEnchantPPM(3273)
+	deathfrostSpellProc := wotlk.ServerProcFor(deathfrostSpellID)
 	applyDeathfrostForWeapon := func(character *core.Character, procSpell *core.Spell, isMH bool) {
 		icd := core.Cooldown{
 			Timer:    character.NewTimer(),
-			Duration: time.Second * 25,
+			Duration: deathfrostSpellProc.ICD,
 		}
 
 		label := "Deathfrost-"
+		hand := core.ProcMaskMeleeMH
 		if isMH {
 			label += "MH"
 		} else {
 			label += "OH"
+			hand = core.ProcMaskMeleeOH
 		}
-		ppmm := character.AutoAttacks.NewPPMManager(2.15, core.ProcMaskMelee)
+		// only the hitting weapon's enchant procs (Player::CastItemCombatSpell checks the slot)
+		ppmm := character.AutoAttacks.NewPPMManager(deathfrostPPM, hand)
 
 		aura := character.GetOrRegisterAura(core.Aura{
 			Label:    label,
@@ -207,7 +219,7 @@ func init() {
 						procSpell.Cast(sim, result.Target)
 					}
 				} else if spell.ProcMask.Matches(core.ProcMaskSpellDamage) {
-					if icd.IsReady(sim) && sim.RandomFloat("Deathfrost") < 0.5 {
+					if icd.IsReady(sim) && sim.RandomFloat("Deathfrost") < deathfrostSpellProc.Chance {
 						icd.Use(sim)
 						procSpell.Cast(sim, result.Target)
 					}
@@ -215,7 +227,15 @@ func init() {
 			},
 		})
 
-		character.ItemSwap.RegisterOnSwapItemForEffectWithPPMManager(3273, 2.15, &ppmm, aura)
+		character.RegisterOnItemSwap(func(sim *core.Simulation) {
+			procMask := character.GetProcMaskForEnchant(3273) & hand
+			ppmm = character.AutoAttacks.NewPPMManager(deathfrostPPM, procMask)
+			if procMask == core.ProcMaskUnknown {
+				aura.Deactivate(sim)
+			} else {
+				aura.Activate(sim)
+			}
+		})
 	}
 	core.NewEnchantEffect(3273, func(agent core.Agent) {
 		character := agent.GetCharacter()

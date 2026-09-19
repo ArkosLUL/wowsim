@@ -3,9 +3,12 @@ package tbc
 import (
 	"time"
 
+	"github.com/wowsims/wotlk/sim/common/wotlk"
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/stats"
 )
+
+const bulwarkOfAzzinothSpellID = 40407
 
 func init() {
 	core.AddEffectsToTest = false
@@ -23,7 +26,8 @@ func init() {
 		character := agent.GetCharacter()
 
 		procMask := character.GetProcMaskForItem(19019)
-		ppmm := character.AutoAttacks.NewPPMManager(6.0, procMask)
+		// item_template.spellppmRate_1, as mod-individual-progression sets it
+		ppmm := character.AutoAttacks.NewPPMManager(8.0, procMask)
 
 		procActionID := core.ActionID{SpellID: 21992}
 
@@ -175,7 +179,7 @@ func init() {
 		character := agent.GetCharacter()
 
 		procMask := character.GetProcMaskForItem(29996)
-		pppm := character.AutoAttacks.NewPPMManager(1.0, procMask)
+		pppm := character.AutoAttacks.NewPPMManager(6.0, procMask) // item_template.spellppmRate_1
 
 		actionID := core.ActionID{ItemID: 29996}
 
@@ -295,11 +299,13 @@ func init() {
 		})
 	})
 
+	bulwark := wotlk.ServerProcFor(bulwarkOfAzzinothSpellID)
 	core.NewItemEffect(32375, func(agent core.Agent) {
 		character := agent.GetCharacter()
 
-		const procChance = 0.02
 		procAura := character.NewTemporaryStatsAura("Bulwark Of Azzinoth Proc", core.ActionID{ItemID: 32375}, stats.Stats{stats.Armor: 2000}, time.Second*10)
+		// PPM on hits taken, at the wearer's own weapon speed for the attack's hand
+		ppmm := character.AutoAttacks.NewPPMManager(bulwark.PPM, core.ProcMaskMeleeOrRanged)
 
 		character.GetOrRegisterAura(core.Aura{
 			Label:    "Bulwark Of Azzinoth",
@@ -308,7 +314,7 @@ func init() {
 				aura.Activate(sim)
 			},
 			OnSpellHitTaken: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
-				if result.Landed() && spell.SpellSchool == core.SpellSchoolPhysical && sim.RandomFloat("Bulwark of Azzinoth") < procChance {
+				if result.Landed() && spell.ProcMask.Matches(core.ProcMaskMeleeOrRanged) && ppmm.Proc(sim, spell.ProcMask, "Bulwark of Azzinoth") {
 					procAura.Activate(sim)
 				}
 			},
