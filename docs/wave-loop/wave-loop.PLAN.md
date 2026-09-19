@@ -79,7 +79,7 @@ G = changes goldens. FS = runs all 37 suites.
 | BIS-contract | merged | `11012001c` | |
 | PAR-P5-1 | merged | `35f5544be` | |
 | AC-1 | merged | `63553f9ef` | |
-| AC-2 | running | | |
+| AC-2 | merged | `80e9cd8c7` | 34 goldens promoted in `9db9bd34b` |
 | PAR-P3-1 | running | | |
 | BIS-catalog | running | | |
 | BIS-eval | running | | |
