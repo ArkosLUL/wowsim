@@ -80,9 +80,7 @@ func classesString(classes []proto.Class) string {
 	return strings.Join(parts, "+")
 }
 
-const inventoryTypeRelic = 28
-
-func compareItems(server, sim *proto.UIItem, inventoryType int32) []fieldDiff {
+func compareItems(server, sim *proto.UIItem) []fieldDiff {
 	var diffs []fieldDiff
 	if server.Ilvl != sim.Ilvl {
 		diffs = append(diffs, fieldDiff{"ilvl", fmt.Sprint(server.Ilvl), fmt.Sprint(sim.Ilvl)})
@@ -112,9 +110,7 @@ func compareItems(server, sim *proto.UIItem, inventoryType int32) []fieldDiff {
 	if server.Heroic != sim.Heroic {
 		diffs = append(diffs, fieldDiff{"heroic", fmt.Sprint(server.Heroic), fmt.Sprint(sim.Heroic)})
 	}
-	// Relics are class-locked by subtype, so the server leaves AllowableClass open while the sim lists the class.
-	isUnrestrictedRelic := inventoryType == inventoryTypeRelic && len(server.ClassAllowlist) == 0
-	if s, m := classesString(server.ClassAllowlist), classesString(sim.ClassAllowlist); s != m && !isUnrestrictedRelic {
+	if s, m := classesString(server.ClassAllowlist), classesString(sim.ClassAllowlist); s != m {
 		diffs = append(diffs, fieldDiff{"class allowlist", s, m})
 	}
 	if server.SetName != sim.SetName {
@@ -135,7 +131,7 @@ func (c *context) diffItems() (diffs []itemDiff, missing []*proto.UIItem, notCom
 		d := itemDiff{
 			sim:           simItem,
 			server:        converted,
-			diffs:         compareItems(converted.Item, simItem, row.InventoryType),
+			diffs:         compareItems(converted.Item, simItem),
 			obtainable:    len(c.obtainable[id]) > 0,
 			moduleFiles:   c.modules.items[id],
 			unmappedStats: converted.UnmappedStatTypes,

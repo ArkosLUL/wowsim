@@ -3,7 +3,9 @@
 The sim's item data (`assets/database/db.json`) comes from WotLK **Classic** Wowhead scrapes; its item
 effects and set bonuses are hardcoded in Go with Classic values. This report compares all of that with
 the user's AzerothCore 3.3.5a server (`G:\DevStuff\GitHub\azerothcore-wotlk-pb`, live DB + DBCs) and
-lists what a rework to server-sourced data must change. All numbers are from the run on 2026-09-17.
+lists what a rework to server-sourced data must change. All numbers are from the run on 2026-09-17,
+against the Classic-sourced `db.json`; `data/` now holds the
+[re-run after `make items`](#re-run-after-make-items).
 
 ## Key findings
 
@@ -43,23 +45,7 @@ conversion with unit tests). Read-only: SELECTs only, never writes to the AC rep
 - Sim: `assets/database/db.json`, `leftover_db.json`, Classic spell tooltips in
   `assets/db_inputs/wowhead_spell_tooltips.csv`, Go sources under `sim/`.
 
-Run on a host with Go 1.23 and Docker (`-dsn` and `-acContainer` defaults point at the stock AC docker
-setup; DBCs are copied out of `ac-worldserver` with `docker cp`; `-acRepo` is required):
-
-```
-go run ./tools/database/acdiff -acRepo G:/DevStuff/GitHub/azerothcore-wotlk-pb
-```
-
-Go isn't installed on this machine; the run used the repo's toolchain image instead (generate protos
-first with `make proto` inside it if `sim/core/proto/*.pb.go` is missing; from Git Bash, prefix with
-`MSYS_NO_PATHCONV=1`):
-
-```
-docker run --rm --network azerothcore-wotlk-pb_ac-network \
-  -v G:/DevStuff/GitHub/wowsimwotlk:/wotlk -v G:/DevStuff/GitHub/azerothcore-wotlk-pb:/acrepo:ro \
-  -v azerothcore-wotlk-pb_ac-client-data:/acdata:ro -w /wotlk wowsims-wotlk-dev \
-  go run ./tools/database/acdiff -dsn "root:password@tcp(ac-database:3306)/acore_world" -dbcDir /acdata/dbc -acRepo /acrepo
-```
+Run it as the [acdiff README](../../tools/database/acdiff/README.md#running) shows.
 
 Outputs in `data/` (diffs read server → sim):
 
@@ -88,6 +74,20 @@ Heuristic limits: effect verdicts compare numbers, not meaning.
   values from `spell_proc`, `item_template` or `spell_enchant_proc_data` are never compared.
 
 Both need the manual review summarized below.
+
+## Re-run after `make items`
+
+Since `make items` (`gen_db -gen=azerothcore`), `db.json` takes item data from the server. The re-run
+against it on 2026-09-19:
+
+- `items_diff.csv`: 97 rows, all unobtainable (nothing awards them, so they keep Wowhead data): the
+  first run's 81, plus 18 Savage/Hateful Gladiator relics (server class from the relic subclass, Wowhead's
+  allowlist empty), minus 40441/40444 Brutal Gladiator's Dreadplate (set name now aliased).
+- 8,042 sim items: 34837 The 2 Ring (server ilvl 135) moved to `leftover_db.json`.
+- `gems_diff.csv` is empty: 33633 is no longer a sim gem.
+- `effects_diff.csv`: 861 spells. The 6 new rows are the form-only feral attack power spells on
+  mod-individual-progression's TBC staves (e.g. 44916 on 30883), which stay effects instead of stats.
+- Everything else is unchanged apart from Go line numbers.
 
 ## Items
 
@@ -185,7 +185,7 @@ reviewed beyond those 40.
 | 46021 Royal Seal of King Llane | parry on use | 402 | 380 | `stat_bonus_cds.go:150` |
 | 45308 Eye of the Broodmother | SP per stack | 26 | 25 | `sim/common/wotlk/stat_bonus_stacking.go:223` |
 | 46051 Meteorite Crystal | MP5 per stack | 85 (Classic 79) | 75 | `stat_bonus_stacking.go:331` |
-| 45703 Spark of Hope | base mana cost reduction | 44 | 42 | `sim/core/mana.go:301` |
+| 45703 Spark of Hope | base mana cost reduction | 44 | 42 | `sim/core/mana.go:300` |
 | 45509 Idol of the Corruptor | agility proc; Bear Mangle proc chance | 162; 50% | 153; 100% | `sim/druid/items.go:419`, `:422` |
 | 45270 Idol of the Crying Wind | Insect Swarm bonus | 396 SP (~79/tick) | 374 flat damage over the DoT (~62/tick, AC `spell_dru_insect_swarm`) | `sim/druid/insect_swarm.go:15` |
 | 45114 Steamcaller's Totem | Chain Heal bonus | 257 | 243 | `sim/shaman/heals.go:320` |

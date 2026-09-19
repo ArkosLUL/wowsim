@@ -3,7 +3,7 @@ item,9449,Manual Crowd Pummeler,not_modeled,sim/common/tbc/melee_items.go:19,buf
 item,11815,Hand of Justice,real,sim/common/tbc/melee_trinkets.go:37,proc rate,1.3333% flat per melee hit,1 PPM with REDUCE_PROC_60 (x1/3 at lvl 80) = ~1.44% @2.6s speed,,spell_proc 15600: PPM=1 overrides Chance=2; weapon-speed dependent; 2s ICD matches
 item,19019,"Thunderfury, Blessed Blade of the Windseeker",not_modeled,sim/common/tbc/melee_items.go:44,target attack speed slow,none,20% slow 12s (27648),20%,Sim models 300 dmg and -25 nature res (both match) but not the attack speed slow
 item,19019,"Thunderfury, Blessed Blade of the Windseeker",real,sim/common/tbc/melee_items.go:26,PPM,6,8,,item_template spellppmRate_1=8 set by mod-individual-progression vanilla_item_changes.sql
-item,20966,Jade Pendant of Blasting,not_modeled,sim/core/constants.go:33,party spell power buff,none,15 SP for 30 min,15,Only an item ID constant; not referenced anywhere in sim
+item,20966,Jade Pendant of Blasting,not_modeled,sim/core/constants.go:30,party spell power buff,none,15 SP for 30 min,15,Only an item ID constant; not referenced anywhere in sim
 item,24114,Braided Eternium Chain,false_positive,sim/core/buffs.go:295,party crit rating,28 melee+spell crit rating,28,28,Matches; server's +5 weapon dmg equip (33488) matches melee_items.go:105; 1h use cooldown doesn't apply since the sim models the buff as always on
 item,28830,Dragonspine Trophy,real,sim/common/tbc/melee_trinkets.go:78,PPM,1.0,1.5,,"325 haste, 10s, 20s ICD match"
 item,29996,Rod of the Sun King,false_positive,sim/common/tbc/melee_items.go:205,rage gain,5 rage,50 (rage x10 units = 5 rage),5,Energy 10 also matches
@@ -19,8 +19,8 @@ item,32486,Ashtongue Talisman of Equilibrium,false_positive,sim/druid/items.go:3
 item,32489,Ashtongue Talisman of Zeal,false_positive,sim/paladin/items.go:510,judgement DoT,50% chance 480 over 8s,50% 480 over 8s (40472),480,FoL/HL HoT part not modeled
 item,32505,Madness of the Betrayer,real,sim/common/tbc/melee_trinkets.go:143,PPM,1.0,3,,42 ArP 10s matches
 item,33506,Skycall Totem,real,sim/shaman/items.go:70,haste proc amount,101,100,100,"Tiny; 15% chance, 30s ICD, 10s match"
-item,34334,"Thori'dal, the Stars' Fury",false_positive,sim/hunter/hunter.go:165,ranged speed,1.15,15%,15%,Applied as passive for all hunters
-item,34334,"Thori'dal, the Stars' Fury",false_positive,sim/hunter/hunter.go:167,no ammo,ammo DPS skipped,no ammo,,No numeric value
+item,34334,"Thori'dal, the Stars' Fury",false_positive,sim/hunter/hunter.go:164,ranged speed,1.15,15%,15%,Applied as passive for all hunters
+item,34334,"Thori'dal, the Stars' Fury",false_positive,sim/hunter/hunter.go:166,no ammo,ammo DPS skipped,no ammo,,No numeric value
 item,34429,Shifting Naaru Sliver,false_positive,sim/common/tbc/caster_trinkets.go:15,Power Circle,320 SP / 15s / 90s CD,320 SP / 15s / 90s CD,320 SP / 15s,"flagged 45043 effect1=100 is the ground effect's dummy aura (effect 27, aura 4); the circle applies 45044 Limitless Power (320 SP, 15s), which isn't in the trigger chain"
 item,37220,Essence of Gossamer,not_modeled,sim/common/wotlk/other_effects.go:25,absorb cap,uncapped for 10s,4000 total,4000,"140 per hit, 5%, 50s ICD match; cap also in Classic"
 item,38287,Empty Mug of Direbrew,false_positive,sim/common/tbc/melee_trinkets.go:17,effect3,n/a,30 (aura type 0),,effect3 applies no aura; 278 AP/RAP 20s matches
@@ -65,7 +65,7 @@ item,45518,Flare of the Heavens,real,sim/common/wotlk/stat_bonus_procs.go:349,sp
 item,45522,Blood of the Old God,real,sim/common/wotlk/stat_bonus_procs.go:337,attack power proc amount,1358,1284,1358,10% on crit / 50s ICD / 10s match
 item,45535,Show of Faith,real,sim/common/wotlk/stat_bonus_procs.go:360,MP5 proc amount,272,241,272,10% / 50s ICD / 15s match
 item,45609,Comet's Trail,real,sim/common/wotlk/stat_bonus_procs.go:370,haste rating proc amount,819,726,768,15% / 45s ICD / 10s match; Go also differs from Classic
-item,45703,Spark of Hope,real,sim/core/mana.go:301,base mana cost reduction,44,42,44,
+item,45703,Spark of Hope,real,sim/core/mana.go:300,base mana cost reduction,44,42,44,
 item,45866,Elemental Focus Stone,real,sim/common/wotlk/stat_bonus_procs.go:382,haste rating proc amount,552,522,552,10% / 45s ICD / 10s match
 item,45929,Sif's Remembrance,real,sim/common/wotlk/stat_bonus_procs.go:395,MP5 proc amount,220,195,220,10% / 50s ICD / 15s match
 item,45931,Mjolnir Runestone,real,sim/common/wotlk/stat_bonus_procs.go:405,armor pen rating proc amount,751,665,751,15% / 45s ICD / 10s match

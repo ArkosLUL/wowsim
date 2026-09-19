@@ -1,6 +1,5 @@
-// acdiff compares the sim's item database (built from WotLK Classic Wowhead data) with an
-// AzerothCore server's items, item effects, set bonuses, gems and enchants. It only reads from
-// the server.
+// acdiff compares the sim's item database and hardcoded Go effects with an AzerothCore server's
+// items, item effects, set bonuses, gems and enchants. It only reads from the server.
 //
 // go run ./tools/database/acdiff
 package main
@@ -21,7 +20,7 @@ import (
 )
 
 var (
-	dsn           = flag.String("dsn", azerothcore.DefaultDSN, "AzerothCore world database DSN")
+	dsn           = flag.String("dsn", azerothcore.ContainerDSN(), "AzerothCore world database DSN; $AC_DSN overrides the default")
 	acContainer   = flag.String("acContainer", "ac-worldserver", "worldserver container to copy DBC files from when -dbcDir is empty")
 	dbcDir        = flag.String("dbcDir", "", "directory holding the server's DBC files; copied from -acContainer when empty")
 	acRepo        = flag.String("acRepo", "", "AzerothCore repo, scanned for module and custom SQL touching items or spells (required)")
