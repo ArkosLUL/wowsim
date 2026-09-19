@@ -59,8 +59,8 @@ set_id,set_name,pieces,verdict,go_location,aspect,go_value,server_value,classic_
 826,Terrorblade Battlegear,2 pieces,false_positive,,Deadly Poison energy,,1 energy,1 energy,bp 0 = 1
 873,Thassarian's Plate,4 pieces,false_positive,,UA/VB/Bone Shield CD,,-10 sec,-10 sec,ms vs sec formatting
 873,Thassarian's Plate,2 pieces,false_positive,,Dark Command CD / Blood+Heart Strike damage,,-2 sec / 5%,-2 sec / 5%,ms vs sec formatting
-719,The Fists of Fury,2 pieces,real,sim/common/tbc/melee_sets.go:33,Fire proc PPM,2.0 PPM,1.5 PPM (spell_proc 41989),not stated in tooltip,Damage 100-150 matches
-699,The Twin Blades of Azzinoth,2 pieces,real,sim/common/tbc/melee_sets.go:138,Haste proc PPM,1.0 PPM,2 PPM (spell_proc 41434),not stated in tooltip,450 haste / 10 sec / 45s ICD match
+719,The Fists of Fury,2 pieces,real,sim/common/tbc/melee_sets.go:33,Fire proc PPM,2.0 PPM,1.5 PPM (spell_proc 41989),not stated in tooltip,Damage 100-150 matches; applied in sim/common/tbc/melee_sets.go: PPM from spell_proc 41989
+699,The Twin Blades of Azzinoth,2 pieces,real,sim/common/tbc/melee_sets.go:138,Haste proc PPM,1.0 PPM,2 PPM (spell_proc 41434),not stated in tooltip,450 haste / 10 sec / 45s ICD match; applied in sim/common/tbc/melee_sets.go: PPM and ICD from spell_proc 41434
 863,Thrall's Regalia,2 pieces,false_positive,,Flame Shock duration,,+9 sec,+9 sec,ms vs sec formatting
 677,Thunderheart Regalia,2 pieces,false_positive,,Moonfire duration,,+3 sec,+3 sec,ms vs sec formatting
 630,Tidefury Raiment,2 pieces,false_positive,sim/shaman/chain_lightning.go:34,Chain Lightning jump damage loss,0.83 multiplier,0.7 x 1.19 = 0.833 (loses 16.7%),loses 17%,Rounding

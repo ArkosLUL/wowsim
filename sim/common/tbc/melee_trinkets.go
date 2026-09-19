@@ -3,8 +3,16 @@ package tbc
 import (
 	"time"
 
+	"github.com/wowsims/wotlk/sim/common/wotlk"
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/stats"
+)
+
+// Equip auras of the trinkets below, whose proc entries hold their PPM and ICD.
+const (
+	handOfJusticeSpellID        = 15600
+	dragonspineTrophySpellID    = 34774
+	madnessOfTheBetrayerSpellID = 40475
 )
 
 func init() {
@@ -23,6 +31,7 @@ func init() {
 
 	// Proc effects. Keep these in order by item ID.
 
+	handOfJustice := wotlk.ServerProcFor(handOfJusticeSpellID)
 	core.NewItemEffect(11815, func(agent core.Agent) {
 		character := agent.GetCharacter()
 		if !character.AutoAttacks.AutoSwingMelee {
@@ -32,9 +41,9 @@ func init() {
 		var handOfJusticeSpell *core.Spell
 		icd := core.Cooldown{
 			Timer:    character.NewTimer(),
-			Duration: time.Second * 2,
+			Duration: handOfJustice.ICD,
 		}
-		procChance := 0.013333
+		ppmm := character.AutoAttacks.NewPPMManager(handOfJustice.PPM, core.ProcMaskMelee)
 
 		character.RegisterAura(core.Aura{
 			Label:    "Hand of Justice",
@@ -57,7 +66,7 @@ func init() {
 					return
 				}
 
-				if sim.RandomFloat("HandOfJustice") > procChance {
+				if !ppmm.Proc(sim, spell.ProcMask, "HandOfJustice") {
 					return
 				}
 				icd.Use(sim)
@@ -67,15 +76,16 @@ func init() {
 		})
 	})
 
+	dragonspine := wotlk.ServerProcFor(dragonspineTrophySpellID)
 	core.NewItemEffect(28830, func(agent core.Agent) {
 		character := agent.GetCharacter()
 		procAura := character.NewTemporaryStatsAura("Dragonspine Trophy Proc", core.ActionID{ItemID: 28830}, stats.Stats{stats.MeleeHaste: 325}, time.Second*10)
 
 		icd := core.Cooldown{
 			Timer:    character.NewTimer(),
-			Duration: time.Second * 20,
+			Duration: dragonspine.ICD,
 		}
-		ppmm := character.AutoAttacks.NewPPMManager(1.0, core.ProcMaskMeleeOrRanged)
+		ppmm := character.AutoAttacks.NewPPMManager(dragonspine.PPM, core.ProcMaskMeleeOrRanged)
 
 		character.RegisterAura(core.Aura{
 			Label:    "Dragonspine Trophy",
@@ -136,11 +146,12 @@ func init() {
 		})
 	})
 
+	madness := wotlk.ServerProcFor(madnessOfTheBetrayerSpellID)
 	core.NewItemEffect(32505, func(agent core.Agent) {
 		character := agent.GetCharacter()
 		procAura := character.NewTemporaryStatsAura("Madness of the Betrayer Proc", core.ActionID{ItemID: 32505}, stats.Stats{stats.ArmorPenetration: 42}, time.Second*10)
 
-		ppmm := character.AutoAttacks.NewPPMManager(1.0, core.ProcMaskMeleeOrRanged)
+		ppmm := character.AutoAttacks.NewPPMManager(madness.PPM, core.ProcMaskMeleeOrRanged)
 
 		character.RegisterAura(core.Aura{
 			Label:    "Madness of the Betrayer",

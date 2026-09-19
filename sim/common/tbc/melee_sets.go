@@ -3,9 +3,21 @@ package tbc
 import (
 	"time"
 
+	"github.com/wowsims/wotlk/sim/common/wotlk"
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
 	"github.com/wowsims/wotlk/sim/core/stats"
+)
+
+// Equip auras of the 2pc bonuses below, whose proc entries hold their PPM and ICD.
+const (
+	fistsOfFurySpellID          = 41989
+	twinBladesOfAzzinothSpellID = 41434
+)
+
+var (
+	fistsOfFury          = wotlk.ServerProcFor(fistsOfFurySpellID)
+	twinBladesOfAzzinoth = wotlk.ServerProcFor(twinBladesOfAzzinothSpellID)
 )
 
 // Keep these in alphabetical order.
@@ -17,7 +29,7 @@ var ItemSetFistsOfFury = core.NewItemSet(core.ItemSet{
 			character := agent.GetCharacter()
 
 			procSpell := character.RegisterSpell(core.SpellConfig{
-				ActionID:    core.ActionID{SpellID: 41989},
+				ActionID:    core.ActionID{SpellID: fistsOfFurySpellID},
 				SpellSchool: core.SpellSchoolFire,
 				ProcMask:    core.ProcMaskEmpty,
 
@@ -30,7 +42,7 @@ var ItemSetFistsOfFury = core.NewItemSet(core.ItemSet{
 				},
 			})
 
-			ppmm := character.AutoAttacks.NewPPMManager(2.0, core.ProcMaskMelee)
+			ppmm := character.AutoAttacks.NewPPMManager(fistsOfFury.PPM, core.ProcMaskMelee)
 
 			character.RegisterAura(core.Aura{
 				Label:    "Fists of Fury",
@@ -135,10 +147,10 @@ var ItemSetTwinBladesOfAzzinoth = core.NewItemSet(core.ItemSet{
 			}
 			procAura := character.NewTemporaryStatsAura("Twin Blade of Azzinoth Proc", core.ActionID{SpellID: 41435}, stats.Stats{stats.MeleeHaste: 450}, time.Second*10)
 
-			ppmm := character.AutoAttacks.NewPPMManager(1.0, core.ProcMaskMelee)
+			ppmm := character.AutoAttacks.NewPPMManager(twinBladesOfAzzinoth.PPM, core.ProcMaskMelee)
 			icd := core.Cooldown{
 				Timer:    character.NewTimer(),
-				Duration: time.Second * 45,
+				Duration: twinBladesOfAzzinoth.ICD,
 			}
 
 			character.RegisterAura(core.Aura{

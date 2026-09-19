@@ -12,14 +12,24 @@ func CreateBlackMagicProcAura(character *core.Character) *core.Aura {
 	return character.NewTemporaryStatsAura("Black Magic Proc", core.ActionID{SpellID: 59626}, stats.Stats{stats.MeleeHaste: 250, stats.SpellHaste: 250}, time.Second*10)
 }
 
+// Equip auras of the enchants below, whose proc entries hold their chance and ICD.
+const (
+	blackMagicSpellID    = 59630
+	lightweaveSpellID    = 55640
+	darkglowSpellID      = 55768
+	swordguardSpellID    = 55776
+	bloodDrainingSpellID = 64571
+)
+
 func init() {
 	// Keep these in order by item ID.
 
+	giantSlayerPPM := ServerEnchantPPM(3251)
 	core.NewEnchantEffect(3251, func(agent core.Agent) {
 		character := agent.GetCharacter()
 
 		procMask := character.GetProcMaskForEnchant(3251)
-		ppmm := character.AutoAttacks.NewPPMManager(4.0, procMask)
+		ppmm := character.AutoAttacks.NewPPMManager(giantSlayerPPM, procMask)
 
 		procSpell := character.RegisterSpell(core.SpellConfig{
 			ActionID:    core.ActionID{SpellID: 44622},
@@ -31,7 +41,7 @@ func init() {
 			ThreatMultiplier: 1,
 
 			ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-				spell.CalcAndDealDamage(sim, target, 237, spell.OutcomeMagicHitAndCrit)
+				spell.CalcAndDealDamage(sim, target, sim.Roll(237, 323), spell.OutcomeMagicHitAndCrit)
 			},
 		})
 
@@ -56,14 +66,15 @@ func init() {
 			},
 		})
 
-		character.ItemSwap.RegisterOnSwapItemForEffectWithPPMManager(3251, 4.0, &ppmm, aura)
+		character.ItemSwap.RegisterOnSwapItemForEffectWithPPMManager(3251, giantSlayerPPM, &ppmm, aura)
 	})
 
+	icebreakerPPM := ServerEnchantPPM(3239)
 	core.NewEnchantEffect(3239, func(agent core.Agent) {
 		character := agent.GetCharacter()
 
 		procMask := character.GetProcMaskForEnchant(3239)
-		ppmm := character.AutoAttacks.NewPPMManager(4.0, procMask)
+		ppmm := character.AutoAttacks.NewPPMManager(icebreakerPPM, procMask)
 
 		procSpell := character.RegisterSpell(core.SpellConfig{
 			ActionID:    core.ActionID{SpellID: 44525},
@@ -96,7 +107,7 @@ func init() {
 			},
 		})
 
-		character.ItemSwap.RegisterOnSwapItemForEffectWithPPMManager(3239, 4.0, &ppmm, aura)
+		character.ItemSwap.RegisterOnSwapItemForEffectWithPPMManager(3239, icebreakerPPM, &ppmm, aura)
 	})
 
 	core.NewEnchantEffect(3607, func(agent core.Agent) {
@@ -164,11 +175,12 @@ func init() {
 		character.PseudoStats.ThreatMultiplier *= 0.98
 	})
 
+	berserkingPPM := ServerEnchantPPM(3789)
 	core.NewEnchantEffect(3789, func(agent core.Agent) {
 		character := agent.GetCharacter()
 
 		procMask := character.GetProcMaskForEnchant(3789)
-		ppmm := character.AutoAttacks.NewPPMManager(1.0, procMask)
+		ppmm := character.AutoAttacks.NewPPMManager(berserkingPPM, procMask)
 
 		// Modify only gear armor, including from agility
 		fivePercentOfArmor := (character.EquipStats()[stats.Armor] + 2.0*character.EquipStats()[stats.Agility]) * 0.05
@@ -196,15 +208,15 @@ func init() {
 			},
 		})
 
-		character.ItemSwap.RegisterOnSwapItemForEffectWithPPMManager(3789, 1.0, &ppmm, aura)
+		character.ItemSwap.RegisterOnSwapItemForEffectWithPPMManager(3789, berserkingPPM, &ppmm, aura)
 	})
 
-	// TODO: These are stand-in values without any real reference.
+	lifewardPPM := ServerEnchantPPM(3241)
 	core.NewEnchantEffect(3241, func(agent core.Agent) {
 		character := agent.GetCharacter()
 
 		procMask := character.GetProcMaskForEnchant(3241)
-		ppmm := character.AutoAttacks.NewPPMManager(3.0, procMask)
+		ppmm := character.AutoAttacks.NewPPMManager(lifewardPPM, procMask)
 
 		healthMetrics := character.NewHealthMetrics(core.ActionID{ItemID: 44494})
 
@@ -220,21 +232,22 @@ func init() {
 				}
 
 				if ppmm.Proc(sim, spell.ProcMask, "Lifeward") {
-					character.GainHealth(sim, 300*character.PseudoStats.HealingTakenMultiplier, healthMetrics)
+					character.GainHealth(sim, sim.Roll(310, 356)*character.PseudoStats.HealingTakenMultiplier, healthMetrics)
 				}
 			},
 		})
 
-		character.ItemSwap.RegisterOnSwapItemForEffectWithPPMManager(3241, 3.0, &ppmm, aura)
+		character.ItemSwap.RegisterOnSwapItemForEffectWithPPMManager(3241, lifewardPPM, &ppmm, aura)
 	})
 
+	blackMagic := ServerProcFor(blackMagicSpellID)
 	core.NewEnchantEffect(3790, func(agent core.Agent) {
 		character := agent.GetCharacter()
 
 		procAura := CreateBlackMagicProcAura(character)
 		icd := core.Cooldown{
 			Timer:    character.NewTimer(),
-			Duration: time.Second * 35,
+			Duration: blackMagic.ICD,
 		}
 		procAura.Icd = &icd
 
@@ -252,7 +265,7 @@ func init() {
 					return
 				}
 
-				if icd.IsReady(sim) && sim.RandomFloat("Black Magic") < 0.35 {
+				if icd.IsReady(sim) && sim.RandomFloat("Black Magic") < blackMagic.Chance {
 					icd.Use(sim)
 					procAura.Activate(sim)
 				}
@@ -343,13 +356,14 @@ func init() {
 		})
 	})
 
+	lightweave := ServerProcFor(lightweaveSpellID)
 	core.NewEnchantEffect(3722, func(agent core.Agent) {
 		character := agent.GetCharacter()
 
 		procAura := character.NewTemporaryStatsAura("Lightweave Embroidery Proc", core.ActionID{SpellID: 55637}, stats.Stats{stats.SpellPower: 295}, time.Second*15)
 		icd := core.Cooldown{
 			Timer:    character.NewTimer(),
-			Duration: time.Second * 60,
+			Duration: lightweave.ICD,
 		}
 		procAura.Icd = &icd
 
@@ -358,7 +372,7 @@ func init() {
 				return
 			}
 
-			if icd.IsReady(sim) && sim.RandomFloat("Lightweave") < 0.35 {
+			if icd.IsReady(sim) && sim.RandomFloat("Lightweave") < lightweave.Chance {
 				icd.Use(sim)
 				procAura.Activate(sim)
 			}
@@ -376,6 +390,7 @@ func init() {
 		})
 	})
 
+	darkglow := ServerProcFor(darkglowSpellID)
 	core.NewEnchantEffect(3728, func(agent core.Agent) {
 		character := agent.GetCharacter()
 		if !character.HasManaBar() {
@@ -385,7 +400,7 @@ func init() {
 		manaMetrics := character.NewManaMetrics(core.ActionID{SpellID: 55767})
 		icd := core.Cooldown{
 			Timer:    character.NewTimer(),
-			Duration: time.Second * 45,
+			Duration: darkglow.ICD,
 		}
 
 		character.GetOrRegisterAura(core.Aura{
@@ -396,7 +411,7 @@ func init() {
 				aura.Activate(sim)
 			},
 			OnCastComplete: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell) {
-				if icd.IsReady(sim) && sim.RandomFloat("Darkglow") < 0.35 {
+				if icd.IsReady(sim) && sim.RandomFloat("Darkglow") < darkglow.Chance {
 					icd.Use(sim)
 					character.AddMana(sim, 400, manaMetrics)
 				}
@@ -404,13 +419,14 @@ func init() {
 		})
 	})
 
+	swordguard := ServerProcFor(swordguardSpellID)
 	core.NewEnchantEffect(3730, func(agent core.Agent) {
 		character := agent.GetCharacter()
 
 		procAura := character.NewTemporaryStatsAura("Swordguard Embroidery Proc", core.ActionID{SpellID: 55775}, stats.Stats{stats.AttackPower: 400, stats.RangedAttackPower: 400}, time.Second*15)
 		icd := core.Cooldown{
 			Timer:    character.NewTimer(),
-			Duration: time.Second * 55,
+			Duration: swordguard.ICD,
 		}
 		procAura.Icd = &icd
 
@@ -425,7 +441,7 @@ func init() {
 					return
 				}
 
-				if icd.IsReady(sim) && sim.RandomFloat("Swordguard") < 0.2 {
+				if icd.IsReady(sim) && sim.RandomFloat("Swordguard") < swordguard.Chance {
 					icd.Use(sim)
 					procAura.Activate(sim)
 				}
@@ -433,6 +449,7 @@ func init() {
 		})
 	})
 
+	bloodDraining := ServerProcFor(bloodDrainingSpellID)
 	core.NewEnchantEffect(3870, func(agent core.Agent) {
 		character := agent.GetCharacter()
 		healthMetrics := character.NewHealthMetrics(core.ActionID{SpellID: 64569})
@@ -456,8 +473,8 @@ func init() {
 			Callback:   core.CallbackOnSpellHitDealt | core.CallbackOnPeriodicDamageDealt,
 			ProcMask:   core.ProcMaskMelee,
 			Harmful:    true,
-			ProcChance: 0.5,
-			ICD:        time.Second * 10,
+			ProcChance: bloodDraining.Chance,
+			ICD:        bloodDraining.ICD,
 			Handler: func(sim *core.Simulation, _ *core.Spell, _ *core.SpellResult) {
 				if bloodReserveAura.IsActive() {
 					bloodReserveAura.Refresh(sim)
