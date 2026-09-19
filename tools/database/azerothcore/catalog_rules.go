@@ -272,6 +272,7 @@ var pvpCurrencies = map[int32]bool{
 	26045: true, // Halaa Battle Token
 	26044: true, // Halaa Research Token
 	28558: true, // Spirit Shard
+	37836: true, // Venture Coin, from Venture Bay in Grizzly Hills
 }
 
 // Map.dbc map_type.
@@ -337,6 +338,12 @@ var catalogInventoryTypes = map[int32]bool{
 }
 
 const (
+	// item_template.spelltrigger_N: the slot holds the spell a recipe teaches
+	itemSpellTriggerLearnSpell = 6
+	// Spell.dbc SPELL_EFFECT_LEARN_SPELL: teaches EffectTriggerSpell, or with 0 there (spell 483,
+	// "Learning"), the spell in the casting item's learn slot
+	spellEffectLearnSpell = 36
+
 	itemClassGem           = 3
 	itemFlagUniqueEquipped = 0x80000
 	itemFlag2HordeOnly     = 0x1

@@ -45,6 +45,7 @@ func LoadCatalogRows(db *sql.DB, dbcDir string) (*CatalogRows, error) {
 		{"vendors", func() error { return loadVendors(db, rows) }},
 		{"token turn-ins", func() error { return loadTokenTurnIns(db, rows) }},
 		{"quests", func() error { return loadQuests(db, rows) }},
+		{"trainer spells", func() error { return loadTrainerSpells(db, dbc, rows) }},
 		{"achievements", func() error { return loadAchievements(db, cdbc, rows) }},
 	}
 	for _, step := range steps {
@@ -296,8 +297,11 @@ func loadCatalogItems(db *sql.DB, dbc *DBC, rows *CatalogRows) error {
 		for i, spell := range item.SpellIDs {
 			switch {
 			case spell <= 0:
+			case item.SpellTriggers[i] == itemSpellTriggerLearnSpell:
+				row.Teaches = append(row.Teaches, spell)
 			case item.SpellTriggers[i] == ItemSpellTriggerOnUse:
 				row.UseSpells = append(row.UseSpells, spell)
+				row.Teaches = append(row.Teaches, learnedSpells(dbc, spell)...)
 			}
 		}
 		if isGem(&row) {
@@ -311,6 +315,51 @@ func loadCatalogItems(db *sql.DB, dbc *DBC, rows *CatalogRows) error {
 			rows.QuestStarters = append(rows.QuestStarters, QuestStarterRow{Quest: row.StartQuest, Kind: QuestStarterItem, Entry: id})
 		}
 	}
+	return nil
+}
+
+// learnedSpells is what a spell's learn effects teach. 483 ("Learning") names none: the item that
+// casts it carries the spell in a learn slot.
+func learnedSpells(dbc *DBC, spellID int32) []int32 {
+	spell := dbc.Spells[spellID]
+	if spell == nil {
+		return nil
+	}
+	var out []int32
+	for i, effect := range spell.Effect {
+		if effect == spellEffectLearnSpell && spell.EffectTriggerSpell[i] > 0 {
+			out = append(out, spell.EffectTriggerSpell[i])
+		}
+	}
+	return out
+}
+
+// loadTrainerSpells follows Trainer::TeachSpell: a trainer spell with a learn effect is cast, which
+// teaches what the effect names; any other is learned as is.
+func loadTrainerSpells(db *sql.DB, dbc *DBC, rows *CatalogRows) error {
+	taught := map[int32]bool{}
+	err := scanRows(db, selectFrom("trainer_spell", "SpellId"), func(r *sql.Rows) error {
+		var spell int32
+		if err := r.Scan(&spell); err != nil {
+			return err
+		}
+		learned := learnedSpells(dbc, spell)
+		if len(learned) == 0 {
+			learned = []int32{spell}
+		}
+		for _, id := range learned {
+			taught[id] = true
+		}
+		return nil
+	})
+	if missingTable(err) {
+		log.Printf("warning: trainer_spell is missing, so every recipe gates its spell")
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	rows.TrainerSpells = sortedKeys(taught)
 	return nil
 }
 

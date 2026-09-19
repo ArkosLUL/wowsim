@@ -35,7 +35,7 @@ A rerun with nothing changed leaves the file byte-identical, date included.
 - Past 8 sources (3 below tier 13), sources merge by kind, tier and map, then by kind and tier.
 
 The report on stdout:
-- changes since the previous catalog
+- changes since the previous catalog, PvP flags included
 - Classic phase × catalog phase over `db.json`
 - the BIS-catalog spec checks: Ulduar 10 and Onyxia source tiers, epic gems, dropped `db.json` items, T10
   through its Marks, Deathbringer's Will, ToC factions, Dragon's Eyes
@@ -49,8 +49,9 @@ Tier rules: [progression tiers](../../../docs/guide/azerothcore-server.md#progre
   - its map and difficulty
   - ScriptName `CanBeSeen` gates and IPP phase masks (in Northrend only the Argent Tournament, from 15)
   - conditions on quest `66000 + N`: loot rows (references included), vendor items, quest availability
-  - the items it's bought with, opened from, prospected from, crafted from (reagents only, not recipes) or
-    handed in for (mod-token-turnin)
+  - the items it's bought with, opened from, prospected from, crafted from or handed in for
+    (mod-token-turnin)
+  - for a craft only recipes teach (no `trainer_spell` row), its cheapest recipe
   - for quest rewards: the starter, the previous quest, required items and kill targets
 - Emblem tiers are floors: Sartharion's Satchel of Spoils gives a Triumph at 13, and Usuri Brightcoin
   trades Triumph down to Conquest.
@@ -59,14 +60,15 @@ Tier rules: [progression tiers](../../../docs/guide/azerothcore-server.md#progre
   `knownScriptSummons`, for what only C++ summons. Loot on a creature or difficulty entry nothing places
   counts as unresolved, not unobtainable, and lists under unplaced holders.
 - A quest's required items that resolve nowhere (handed out by its scripts) don't count.
-- PvP sources (honor, arena, PvP marks, battleground maps) count only when an item has no other. Those
-  items, and any with resilience, are flagged `pvp`.
+- PvP sources (honor, arena, PvP marks, Venture Coins, battleground maps) count only when an item has no
+  other. Those items, and any with resilience, are flagged `pvp`.
 - Nothing resolves: 12 + the Classic phase, flagged `fallback_tier`; without a Classic phase the item is
   left out (unresolved). Items nothing awards are left out (unobtainable).
 - mod-dungeon-master's random rewards come from `item_template` in C++, so no table read here holds them.
 
 ## Limits
 
+- Recipes only scripts or quest spells give aren't seen, so their crafts fall back or drop.
 - `knownScriptSummons` is kept by hand: extend it when `-holders` lists a holder that matters.
 - Holiday bosses take their instance's tier (Coren Direbrew 0, Ahune 8); event windows aren't modeled.
   Their LFG reward boxes fall back.

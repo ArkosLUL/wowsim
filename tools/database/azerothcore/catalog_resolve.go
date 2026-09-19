@@ -85,6 +85,8 @@ const (
 	nodeSpell
 	nodeDisenchant
 	nodeMail
+	// a craft only recipes teach: one alt per recipe item
+	nodeRecipe
 )
 
 type nodeID struct {
@@ -115,8 +117,12 @@ type alt struct {
 	profession proto.Profession
 	// Items in needs that can explain the tier; via_item_id is the one with the highest.
 	viaItems []int32
+	// Recipes that teach the craft; the cheapest one competes for via_item_id too.
+	recipes []int32
 	// The source takes its kind from via_item_id's own best source (containers, item use).
 	kindFromVia bool
+	// Distinct holders past the listed ones, so a repeat among them doesn't count twice.
+	moreHolders map[int32]bool
 }
 
 type node struct {
@@ -153,7 +159,9 @@ type resolver struct {
 	extCosts    map[int32]*ExtendedCostRow
 	quests      map[int32]*QuestRow
 	spells      map[int32]*CreateSpellRow
-	transports  map[int32]int32 // transport map -> route map
+	transports  map[int32]int32   // transport map -> route map
+	recipes     map[int32][]int32 // spell -> the items that teach it, sorted
+	trained     map[int32]bool    // spells a trainer teaches
 
 	dropMemo map[LootStore]map[int32][]lootDrop
 	refBusy  map[int32]bool
@@ -240,6 +248,21 @@ func newResolver(rows *CatalogRows) *resolver {
 	r.transports = map[int32]int32{}
 	for _, t := range rows.Transports {
 		r.transports[t.Map] = t.RouteMap
+	}
+	r.recipes = map[int32][]int32{}
+	for _, it := range rows.Items {
+		for _, spell := range it.Teaches {
+			if !slices.Contains(r.recipes[spell], it.Entry) {
+				r.recipes[spell] = append(r.recipes[spell], it.Entry)
+			}
+		}
+	}
+	for _, items := range r.recipes {
+		slices.Sort(items)
+	}
+	r.trained = map[int32]bool{}
+	for _, spell := range rows.TrainerSpells {
+		r.trained[spell] = true
 	}
 	return r
 }
@@ -652,12 +675,18 @@ func (r *resolver) addHolderDrop(itemID int32, key holderKey, holder int32) {
 		r.holders[key] = a
 		r.addAlt(item(itemID), a)
 	}
-	if !slices.Contains(a.holders, holder) {
-		if len(a.holders) <= maxListedHolders {
-			a.holders = append(a.holders, holder)
-		}
-		a.holderN++
+	if slices.Contains(a.holders, holder) || a.moreHolders[holder] {
+		return
 	}
+	a.holderN++
+	if len(a.holders) <= maxListedHolders {
+		a.holders = append(a.holders, holder)
+		return
+	}
+	if a.moreHolders == nil {
+		a.moreHolders = map[int32]bool{}
+	}
+	a.moreHolders[holder] = true
 }
 
 func (r *resolver) addLootSources() {
@@ -1034,8 +1063,9 @@ func (r *resolver) pruneQuestNeeds() (pve, all map[nodeID]int32) {
 	}
 }
 
-// addSpellSources: a crafted item has the tier of its latest reagent. On-use spells also need the
-// item that casts them.
+// addSpellSources: a crafted item has the tier of its latest reagent, and of its recipe when only
+// recipes teach the craft: the cheapest recipe, since any one of them does. On-use spells also need
+// the item that casts them.
 func (r *resolver) addSpellSources() {
 	usedBy := map[int32][]int32{}
 	for _, it := range r.rows.Items {
@@ -1050,8 +1080,19 @@ func (r *resolver) addSpellSources() {
 		}
 		ways := []*alt{}
 		if s.Profession != proto.Profession_ProfessionUnknown {
-			ways = append(ways, &alt{needs: reagents, viaItems: s.Reagents, kind: proto.CatalogSourceKind_CatalogSourceCrafted,
-				profession: s.Profession, label: s.Name})
+			craft := &alt{needs: reagents, viaItems: s.Reagents, kind: proto.CatalogSourceKind_CatalogSourceCrafted,
+				profession: s.Profession, label: s.Name}
+			if recipes := r.recipes[s.ID]; len(recipes) > 0 && !r.trained[s.ID] {
+				learn := nodeID{nodeRecipe, s.ID}
+				if r.nodes[learn] == nil {
+					for _, recipe := range recipes {
+						r.addAlt(learn, &alt{needs: []nodeID{item(recipe)}})
+					}
+				}
+				craft.needs = append(slices.Clone(reagents), learn)
+				craft.recipes = recipes
+			}
+			ways = append(ways, craft)
 		}
 		for _, user := range usedBy[s.ID] {
 			ways = append(ways, &alt{needs: append([]nodeID{item(user)}, reagents...), viaItems: []int32{user},
@@ -1368,8 +1409,12 @@ func (r *resolver) sourceName(a *alt, s *proto.CatalogSource) string {
 // catalog item (the token, not the piece it upgrades). Unresolved items only win when nothing
 // else resolves, e.g. one of several items casting the same spell.
 func (r *resolver) viaItem(a *alt, tiers map[nodeID]int32) int32 {
+	candidates := a.viaItems
+	if len(a.recipes) > 0 {
+		candidates = append(slices.Clone(a.viaItems), cheapestItem(a.recipes, tiers))
+	}
 	best, bestTier, bestCatalog := int32(0), int32(-2), true
-	for _, id := range a.viaItems {
+	for _, id := range candidates {
 		t, ok := tiers[item(id)]
 		if !ok || t == tierUnknown {
 			t = -1
@@ -1377,6 +1422,17 @@ func (r *resolver) viaItem(a *alt, tiers map[nodeID]int32) int32 {
 		catalogItem := r.items[id] != nil && isCatalogItem(r.items[id])
 		if t > bestTier || t == bestTier && bestCatalog && !catalogItem {
 			best, bestTier, bestCatalog = id, t, catalogItem
+		}
+	}
+	return best
+}
+
+// cheapestItem is the item with the lowest tier, the first on ties.
+func cheapestItem(ids []int32, tiers map[nodeID]int32) int32 {
+	best, bestTier := ids[0], tierUnknown
+	for _, id := range ids {
+		if t, ok := tiers[item(id)]; ok && t < bestTier {
+			best, bestTier = id, t
 		}
 	}
 	return best

@@ -231,11 +231,29 @@ the sheet's cap.
 **Tests:**
 - A table covering: weapon combos, catalog limits, 4 JC gems, inactive metas (prismatic and orange), BS and
   buckle sockets, enchant eligibility, floors.
-- Reforge enumeration equals the `core.CanReforge` truth table plus `StatsCount`.
+- Reforge enumeration equals the `core.CanReforge` truth table plus `StatsCount`, minus melee- or spell-only
+  ratings.
+
+**Interface for BIS-search:**
+- `CompilePool(r)` returns a read-only `Pool` with `Gems`, `Locked` and `Slots[slot]`, a list of `Candidate`s:
+  - core's `Item`, `Sockets` (a prismatic one last on belts, and on bracers and gloves for blacksmiths, when
+    the item has under 3), `Enchants` and `Reforges` with their stats, `NeedsSim`, `Catalog`
+  - no excluded items, items needing a profession the target lacks, or off-hands it can't wield; a locked
+    slot lists only the seed's choice
+- `Check(l)` returns a `*RuleError` naming the first broken `Rule` and its slot. `CheckGear` skips the
+  floors, which cost a character build. `NewEquipmentSet` equips whatever passes `CheckGear` exactly as given.
+  Fishing poles (no `WeaponType`) count as polearms.
+- `Gem(l, slots, value)` regems those slots' non-meta sockets with an exact DP for a linear `value`, within
+  the limits, unique gems and the socketed meta's colors; it errors when the meta can't activate. One slot
+  is the per-item DP.
+- Reforges skip melee- or spell-only ratings (pre-3.0 stat types). Equip-spell ratings still pass: core folds
+  them into item stats.
+- Without a catalog row, reforges skip the `StatsCount` check and the item has no limits. A meta with no
+  condition counts as active.
 
 **Catalog changes**, decided after wave B (also owns `tools/database/azerothcore/catalog*.go`,
 `tools/database/accatalog/` and `assets/database/server_catalog.json`):
-- Recipe gating, per Decisions: a create-item spell taught by a recipe item also takes that recipe's tier.
+- Recipe gating, per Decisions: a create-item spell taught by recipe items also takes the cheapest one's tier.
   Trainer-taught spells stay ungated. Fix the accatalog README's "reagents only, not recipes".
 - Venture Coin (37836) joins `pvpCurrencies` (`catalog_rules.go`).
 - `addHolderDrop` dedupes holders only among the first 4 it stores, so "N creatures" source labels
@@ -243,6 +261,10 @@ the sheet's cap.
 - Regenerate `server_catalog.json` live (SELECTs; live DBCs through `DBC_DIR`) and list every item whose
   tier or PvP flag moved. Expected: the 73 epic cuts and Nightmare Tear 13 → 15, about 19 Venture Bay items
   PvE → PvP. Explain anything else.
+  - Outcome: 72 cuts (73 gems with Nightmare Tear) and 19 Venture Bay items, plus recipe moves:
+    - 16 gems whose designs only sell for PvP currency, PvE → PvP
+    - 14 WotLK crafts whose designs nothing awards fall back, at the same tier
+    - 64 items below tier 13 moved or dropped
 
 ### BIS-raidctx (wave C)
 
