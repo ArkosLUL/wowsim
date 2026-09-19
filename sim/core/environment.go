@@ -165,15 +165,16 @@ func (env *Environment) finalize(raidProto *proto.Raid, _ *proto.Encounter, raid
 		}
 	}
 
-	for partyIdx, party := range env.Raid.Parties {
-		partyProto := raidProto.Parties[partyIdx]
-		for playerIdx, player := range party.Players {
-			if playerIdx >= len(partyProto.Players) {
+	for _, party := range env.Raid.Parties {
+		partyProto := raidProto.Parties[party.Index]
+		for _, player := range party.Players {
+			char := player.GetCharacter()
+			// by slot: party.Players skips the party's empty slots
+			if char.PartyIndex >= len(partyProto.Players) {
 				// This happens for target dummies.
 				continue
 			}
-			playerProto := partyProto.Players[playerIdx]
-			char := player.GetCharacter()
+			playerProto := partyProto.Players[char.PartyIndex]
 			char.Rotation = char.newAPLRotation(playerProto.Rotation)
 		}
 	}

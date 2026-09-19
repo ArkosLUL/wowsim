@@ -31,8 +31,11 @@ type Encounter struct {
 }
 
 // NewEncounter builds the encounter's targets, each scaled by the server's dungeon scale for the
-// encounter's raid difficulty.
+// encounter's raid difficulty. A nil server means the live server's config, as in NewRaid.
 func NewEncounter(options *proto.Encounter, server *ServerSettings) Encounter {
+	if server == nil {
+		server = NewServerSettings(nil)
+	}
 	options.ExecuteProportion_25 = max(options.ExecuteProportion_25, options.ExecuteProportion_20)
 	options.ExecuteProportion_35 = max(options.ExecuteProportion_35, options.ExecuteProportion_25)
 

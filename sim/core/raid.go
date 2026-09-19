@@ -278,26 +278,27 @@ func (raid *Raid) applyCharacterEffects(raidConfig *proto.Raid) *proto.RaidStats
 	raidBuffs := raid.GetRaidBuffs(raidConfig.Buffs)
 	raidStats := &proto.RaidStats{}
 
-	for partyIdx, party := range raid.Parties {
-		partyConfig := raidConfig.Parties[partyIdx]
+	for _, party := range raid.Parties {
+		partyConfig := raidConfig.Parties[party.Index]
 		partyBuffs := party.GetPartyBuffs(partyConfig.Buffs)
 		partyStats := &proto.PartyStats{
 			Players: make([]*proto.PlayerStats, 5),
 		}
 
 		// Apply all buffs to the players in this party.
-		for playerIdx, player := range party.Players {
-			if playerIdx >= len(partyConfig.Players) {
+		for _, player := range party.Players {
+			char := player.GetCharacter()
+			// by slot: party.Players skips the party's empty slots
+			if char.PartyIndex >= len(partyConfig.Players) {
 				// This happens for target dummies.
 				continue
 			}
-			playerConfig := partyConfig.Players[playerIdx]
+			playerConfig := partyConfig.Players[char.PartyIndex]
 			individualBuffs := &proto.IndividualBuffs{}
 			if playerConfig.Buffs != nil {
 				individualBuffs = playerConfig.Buffs
 			}
 
-			char := player.GetCharacter()
 			char.EnableHealthBar()
 			char.trackChanceOfDeath(playerConfig.HealingModel)
 			partyStats.Players[char.PartyIndex] = char.applyAllEffects(player, raidBuffs, partyBuffs, individualBuffs)

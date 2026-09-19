@@ -70,6 +70,45 @@ func TestSparseRaid(t *testing.T) {
 	// Don't need to check results, as long as it doesn't crash we're fine.
 }
 
+// A player after an empty slot still gets its own slot's buffs and APL.
+func TestSparseRaidKeepsPlayerSettings(t *testing.T) {
+	druid := &proto.Player{
+		Name:      "Druid",
+		Race:      proto.Race_RaceNightElf,
+		Class:     proto.Class_ClassDruid,
+		Equipment: &proto.EquipmentSpec{},
+		Spec:      &proto.Player_BalanceDruid{BalanceDruid: &proto.BalanceDruid{Options: &proto.BalanceDruid_Options{}}},
+		Buffs:     &proto.IndividualBuffs{BlessingOfKings: true},
+		Rotation: &proto.APLRotation{Type: proto.APLRotation_TypeAPL, PriorityList: []*proto.APLListItem{{
+			Action: &proto.APLAction{Action: &proto.APLAction_CastSpell{CastSpell: &proto.APLActionCastSpell{
+				SpellId: &proto.ActionID{RawId: &proto.ActionID_SpellId{SpellId: 48461}}, // Wrath
+			}}},
+		}}},
+	}
+	raid := func(players ...*proto.Player) *proto.Raid {
+		return &proto.Raid{Parties: []*proto.Party{{Players: players}}}
+	}
+	intellect := func(raid *proto.Raid, slot int) float64 {
+		result := core.ComputeStats(&proto.ComputeStatsRequest{Raid: raid, Encounter: STEncounter})
+		if result.ErrorResult != "" {
+			t.Fatal(result.ErrorResult)
+		}
+		return result.RaidStats.Parties[0].Players[slot].FinalStats.Stats[stats.Intellect]
+	}
+
+	if alone, afterGap := intellect(raid(druid), 0), intellect(raid(&proto.Player{}, druid), 1); afterGap != alone {
+		t.Errorf("intellect after an empty slot = %v, want %v with Blessing of Kings", afterGap, alone)
+	}
+
+	result := core.RunRaidSim(&proto.RaidSimRequest{Raid: raid(&proto.Player{}, druid), Encounter: STEncounter, SimOptions: SimOptions})
+	if result.ErrorResult != "" {
+		t.Fatal(result.ErrorResult)
+	}
+	if dps := result.RaidMetrics.Parties[0].Players[1].Dps.Avg; dps <= 0 {
+		t.Errorf("the druid after an empty slot did %v dps, want its Wrath APL to run", dps)
+	}
+}
+
 func TestBasicRaid(t *testing.T) {
 	t.Skip()
 	rsr := &proto.RaidSimRequest{

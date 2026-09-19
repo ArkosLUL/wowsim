@@ -70,12 +70,13 @@ func TestDungeonScaleChangesOnlyItsStat(t *testing.T) {
 	}
 }
 
+// nil settings mean the live config, as in NewRaid
 func TestDungeonScaleLiveDefaults(t *testing.T) {
 	const health, armor = 1_234_567, 10643
 	encounter := NewEncounter(&proto.Encounter{Targets: []*proto.Target{
 		scaleTestTarget(true, health, armor),
 		scaleTestTarget(false, health, armor),
-	}}, NewServerSettings(nil))
+	}}, nil)
 
 	live := NewServerSettings(LiveServerDefaults()).DungeonScale
 	for i, boss := range []bool{true, false} {
