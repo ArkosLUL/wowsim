@@ -19,6 +19,7 @@ import { ItemSwapPicker } from '../item_swap_picker';
 import { MultiIconPicker } from '../multi_icon_picker';
 import { NumberPicker } from '../number_picker';
 import { SavedDataManager } from '../saved_data_manager';
+import { SERVER_SETTINGS_TOOLTIP, ServerSettingsPicker } from '../server_settings_picker';
 import { SimTab } from '../sim_tab';
 import { ConsumesPicker } from './consumes_picker';
 
@@ -65,6 +66,9 @@ export class SettingsTab extends SimTab {
 		}
 
 		this.buildPlayerSettings();
+		if (!this.simUI.isWithinRaidSim) {
+			this.buildServerSettings();
+		}
 		this.buildCustomSettingsSections();
 		this.buildConsumesSection();
 		this.buildOtherSettings();
@@ -85,6 +89,14 @@ export class SettingsTab extends SimTab {
 		});
 
 		new EncounterPicker(contentBlock.bodyElement, this.simUI.sim.encounter, this.simUI.individualConfig.encounterPicker, this.simUI);
+	}
+
+	private buildServerSettings() {
+		const contentBlock = new ContentBlock(this.column1, 'server-settings', {
+			header: { title: 'Server (AzerothCore)', tooltip: SERVER_SETTINGS_TOOLTIP },
+		});
+
+		new ServerSettingsPicker(contentBlock.bodyElement, this.simUI.sim.encounter);
 	}
 
 	private buildPlayerSettings() {

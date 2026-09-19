@@ -465,14 +465,23 @@ Racial traits already landed on master (23d0796b5, tests in `sim/racial_traits_t
 - `tools/acore/gen_server_defaults` parses `[ac]/configurationOverrides/*.env`, module `conf.dist` files and `worldserver.conf.dist` into `sim/core/server_defaults_auto_gen.go` and `ui/core/constants/server_defaults_auto_gen.ts`. A missing message means live defaults.
 - Sim:
   - `server_settings.go`, threaded through `environment.go` → `raid.go` (`Raid.Server`) → `Character.Server()`.
-  - Dungeon-scale multipliers are applied in `target.go`:
-    - Health → health-based fight length.
-    - Armor → target armor.
-    - Damage → boss swing and ability damage (tanks).
-    - The raid vs raid-heroic set and the boss vs non-boss values are picked from the encounter's difficulty and `world_boss`.
-- UI:
-  - "Server (AzerothCore)" section in `components/individual_sim_ui/settings_tab.ts`, with every spell-tweak switch.
-- Tests:
+  - `NewEncounter` (`target.go`) applies dungeon scale from the raid's `ServerSettings`:
+    - The set comes from the encounter's `raid_difficulty` and `Target.IsWorldBoss` (`world_boss`, else level ≥ 83).
+    - Health and armor: `round(float32(value) * multiplier)`, half away from zero, as the server's `round(uint32 * float)`.
+      Health-based fight length sums the scaled health.
+    - Damage multiplies the target's `PseudoStats.DamageDealtMultiplier`, reaching swings, spells and DoTs like the server's melee,
+      spell and periodic hooks. The server truncates each scaled hit; the sim keeps damage fractional. Spells with
+      `SpellFlagIgnoreAttackerModifiers` miss it.
+    - Never scaled: the placeholder target of an encounter without targets, the only target simval builds (`info`; the other checks read record values).
+- UI: `components/server_settings_picker.ts`, the "Server (AzerothCore)" section of the individual settings tab (not inside the raid
+  sim) and of the raid settings tab.
+  - `ui/core/encounter.ts` holds `raidDifficulty` and `serverSettings`, saved with the encounter; `serverSettingsChangeEmitter` fires for both.
+  - Each input shows the live value (`server_defaults_auto_gen.ts`). A change writes its field; a value equal to live clears it.
+  - Inputs: raid difficulty; a Global/Health/Armor/Damage × Boss/Other grid that edits the selected difficulty's size set (a live size key
+    would hide a generic edit); the Spell tweaks switch (`enable`), which greys out and unchecks the 9 switches it gates; the 11 switches;
+    exotic pet damage %.
+  - Map update interval and reforging have no inputs (P3-3, P6-1).
+- Tests (`server_settings_test.go`, `dungeon_scale_test.go`):
   - Missing settings message → live defaults.
   - Dungeon-scale multipliers: changing Health, Armor or Damage in the settings changes only target HP, armor or boss damage, using the server's combination rule.
 

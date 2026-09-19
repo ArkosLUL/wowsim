@@ -1,6 +1,7 @@
 package core
 
 import (
+	"math"
 	"strconv"
 	"time"
 
@@ -29,7 +30,9 @@ type Encounter struct {
 	aoeCapMultiplier float64
 }
 
-func NewEncounter(options *proto.Encounter) Encounter {
+// NewEncounter builds the encounter's targets, each scaled by the server's dungeon scale for the
+// encounter's raid difficulty.
+func NewEncounter(options *proto.Encounter, server *ServerSettings) Encounter {
 	options.ExecuteProportion_25 = max(options.ExecuteProportion_25, options.ExecuteProportion_20)
 	options.ExecuteProportion_35 = max(options.ExecuteProportion_35, options.ExecuteProportion_25)
 
@@ -41,21 +44,24 @@ func NewEncounter(options *proto.Encounter) Encounter {
 		ExecuteProportion_35: max(options.ExecuteProportion_35, 0),
 		Targets:              []*Target{},
 	}
+
+	for targetIndex, targetOptions := range options.Targets {
+		target := NewTarget(targetOptions, int32(targetIndex))
+		target.applyDungeonScale(server.DungeonScale.Multipliers(options.RaidDifficulty, target.IsWorldBoss))
+		encounter.Targets = append(encounter.Targets, target)
+		encounter.TargetUnits = append(encounter.TargetUnits, &target.Unit)
+	}
+
 	// If UseHealth is set, we use the sum of targets health.
 	if options.UseHealth {
-		for _, t := range options.Targets {
-			encounter.EndFightAtHealth += t.Stats[stats.Health]
+		for _, target := range encounter.Targets {
+			encounter.EndFightAtHealth += target.stats[stats.Health]
 		}
 		if encounter.EndFightAtHealth == 0 {
 			encounter.EndFightAtHealth = 1 // default to something so we don't instantly end without anything.
 		}
 	}
 
-	for targetIndex, targetOptions := range options.Targets {
-		target := NewTarget(targetOptions, int32(targetIndex))
-		encounter.Targets = append(encounter.Targets, target)
-		encounter.TargetUnits = append(encounter.TargetUnits, &target.Unit)
-	}
 	if len(encounter.Targets) == 0 {
 		// Add a dummy target. The only case where targets aren't specified is when
 		// computing character stats, and targets won't matter there.
@@ -169,6 +175,22 @@ func NewTarget(options *proto.Target, targetIndex int32) *Target {
 	}
 
 	return target
+}
+
+// applyDungeonScale does what DungeonScale.cpp ModifyCreatureAttributes does to a creature in a full
+// raid. Health and armor become round(uint32 * float), like the server's. Damage isn't rounded: the
+// server truncates each hit after the multiplier, and the sim keeps damage fractional everywhere.
+func (target *Target) applyDungeonScale(multipliers DungeonScaleMultipliers) {
+	target.stats[stats.Health] = scaleCreatureStat(target.stats[stats.Health], multipliers.Health)
+	target.stats[stats.Armor] = scaleCreatureStat(target.stats[stats.Armor], multipliers.Armor)
+	// the server scales every hit the creature lands, melee, spell and periodic alike
+	target.PseudoStats.DamageDealtMultiplier *= multipliers.Damage
+}
+
+// scaleCreatureStat rounds half away from zero, like C++ round.
+func scaleCreatureStat(value, multiplier float64) float64 {
+	scaled := float32(value) * float32(multiplier)
+	return math.Round(float64(scaled))
 }
 
 func (target *Target) Reset(sim *Simulation) {
