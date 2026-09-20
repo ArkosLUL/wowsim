@@ -105,9 +105,6 @@ type Aura struct {
 	metrics AuraMetrics
 
 	initialized bool
-
-	// expires at exactly Duration instead of on the server tick after it
-	exactExpiry bool
 }
 
 func (aura *Aura) init(sim *Simulation) {
@@ -164,11 +161,8 @@ func (aura *Aura) Refresh(sim *Simulation) {
 	if aura.Duration == NeverExpires {
 		aura.expires = NeverExpires
 	} else {
-		aura.expires = sim.CurrentTime + aura.Duration
-		if !aura.exactExpiry {
-			// Aura::Update counts the duration down once per server tick
-			aura.expires = sim.NextServerTick(aura.expires)
-		}
+		// Aura::Update counts the duration down once per server tick
+		aura.expires = sim.NextServerTick(sim.CurrentTime + aura.Duration)
 		if aura.expires < aura.Unit.minExpires {
 			aura.Unit.minExpires = aura.expires
 			sim.rescheduleTracker(aura.expires)

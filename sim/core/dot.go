@@ -8,6 +8,28 @@ import (
 type OnSnapshot func(sim *Simulation, target *Unit, dot *Dot, isRollover bool)
 type OnTick func(sim *Simulation, target *Unit, dot *Dot)
 
+// TickHaste is which haste shortens a dot's ticks, and whether the duration comes along, for a dot
+// that AffectedByCastSpeed marks as hasted at all.
+type TickHaste uint8
+
+const (
+	// SpellHasteScalesBoth is a channel: Spell::handle_immediate hastes the channel's duration and
+	// AuraEffect::CalculatePeriodic its tick interval, so the tick count stays put.
+	SpellHasteScalesBoth TickHaste = iota
+	// SpellHasteAddsTicks is SPELL_ATTR5_SPELL_HASTE_AFFECTS_PERIODIC on a dot that isn't channeled:
+	// only the tick interval shrinks, so more ticks fit the same duration.
+	SpellHasteAddsTicks
+	// MeleeHasteAddsTicks is SpellHasteAddsTicks off melee haste instead of spell haste.
+	MeleeHasteAddsTicks
+)
+
+// SPELL_AURA_PERIODIC_DAMAGE and SPELL_AURA_PERIODIC_DAMAGE_PERCENT: the only aura types whose tick
+// timer can survive a refresh. Anything else (a hot, a drain) restarts it however the spell stacks.
+const (
+	auraTypePeriodicDamage        = 3
+	auraTypePeriodicDamagePercent = 89
+)
+
 type DotConfig struct {
 	IsAOE    bool // Set to true for AOE dots (Blizzard, Hurricane, Consecrate, etc)
 	SelfOnly bool // Set to true to only create the self-hot.
@@ -22,6 +44,13 @@ type DotConfig struct {
 
 	// If true, tick length will be shortened based on casting speed.
 	AffectedByCastSpeed bool
+
+	// How that haste lands, once AffectedByCastSpeed says the dot is hasted.
+	TickHaste TickHaste
+
+	// Whether these ticks may crit (AuraEffect::CanPeriodicTickCrit, which the server only allows with
+	// an SPELL_AURA_ABILITY_PERIODIC_CRIT aura covering the spell, or for Rupture).
+	TicksCanCrit bool
 
 	OnSnapshot OnSnapshot
 	OnTick     OnTick
@@ -39,6 +68,12 @@ type Dot struct {
 	// If true, tick length will be shortened based on casting speed.
 	AffectedByCastSpeed bool
 
+	// How that haste lands, once AffectedByCastSpeed says the dot is hasted.
+	TickHaste TickHaste
+
+	// Whether these ticks may crit (AuraEffect::CanPeriodicTickCrit).
+	TicksCanCrit bool
+
 	OnSnapshot OnSnapshot
 	OnTick     OnTick
 
@@ -53,7 +88,10 @@ type Dot struct {
 	TickCount int32
 
 	lastTickTime time.Duration
-	isChanneled  bool
+	// when the next tick is due on its own lattice, and the server tick it lands on
+	nextTickNominal time.Duration
+	nextTickAt      time.Duration
+	isChanneled     bool
 }
 
 // TickPeriod is how fast the snapshot dot ticks.
@@ -61,22 +99,32 @@ func (dot *Dot) TickPeriod() time.Duration {
 	return dot.tickPeriod
 }
 
+// NextTickAt is when the next tick goes off: the server tick at or after its nominal time.
 func (dot *Dot) NextTickAt() time.Duration {
-	return dot.lastTickTime + dot.tickPeriod
+	return dot.nextTickAt
 }
 
 func (dot *Dot) TimeUntilNextTick(sim *Simulation) time.Duration {
 	return dot.NextTickAt() - sim.CurrentTime
 }
 
-func (dot *Dot) MaxTicksRemaining() int32 {
-	return dot.NumberOfTicks - dot.TickCount
+// TotalTicks is AuraEffect::GetTotalTicks: how many whole tick intervals fit the duration, in ms.
+// Haste that only shortens the interval therefore buys extra ticks.
+func (dot *Dot) TotalTicks() int32 {
+	if dot.TickHaste == SpellHasteScalesBoth || dot.tickPeriod <= 0 {
+		return dot.NumberOfTicks
+	}
+	return int32(dot.TickLength * time.Duration(dot.NumberOfTicks) / dot.tickPeriod)
 }
 
-func (dot *Dot) NumTicksRemaining(sim *Simulation) int {
-	maxTicksRemaining := dot.MaxTicksRemaining()
-	finalTickAt := dot.lastTickTime + dot.tickPeriod*time.Duration(maxTicksRemaining)
-	return max(0, int((finalTickAt-sim.CurrentTime)/dot.tickPeriod)+1)
+func (dot *Dot) MaxTicksRemaining() int32 {
+	return dot.TotalTicks() - dot.TickCount
+}
+
+// NumTicksRemaining is the ticks still to come. All of them land: the aura outlives its last tick.
+// Don't count them off the clock, that's off by one between a tick's nominal time and its update.
+func (dot *Dot) NumTicksRemaining(_ *Simulation) int {
+	return int(max(0, dot.MaxTicksRemaining()))
 }
 
 // Roll over = gets carried over with everlasting refresh and doesn't get applied if triggered when the spell is already up.
@@ -94,37 +142,30 @@ func (dot *Dot) NumTicksRemaining(sim *Simulation) int {
 // Rollover is used to reset the duration of a dot from an external spell (not casting the dot itself)
 // This keeps the snapshot crit and %dmg modifiers.
 // However, sp and haste are recalculated.
+// Like Aura::RefreshTimersWithMods, it leaves the tick timer alone: the tick already scheduled keeps
+// its time, and the new period applies from the one after it.
 func (dot *Dot) Rollover(sim *Simulation) {
 	dot.TakeSnapshot(sim, true)
 
 	dot.RecomputeAuraDuration() // recalculate haste
 	dot.Aura.Refresh(sim)       // update aura's duration
-
-	oldNextTick := dot.tickAction.NextActionAt
-	dot.tickAction.Cancel(sim) // remove old PA ticker
-
-	// recreate with new period, resetting the next tick.
-	periodicOptions := dot.basePeriodicOptions()
-	periodicOptions.Period = dot.tickPeriod
-	dot.tickAction = NewPeriodicAction(sim, periodicOptions)
-	dot.tickAction.NextActionAt = oldNextTick
-	sim.AddPendingAction(dot.tickAction)
 }
 
+// RescheduleNextTick recomputes the period and moves the pending tick to one period past the last.
 func (dot *Dot) RescheduleNextTick(sim *Simulation) {
 	dot.RecomputeAuraDuration()
 
 	dot.tickAction.Cancel(sim) // remove old PA ticker
-
-	// recreate with new period, resetting the next tick.
-	periodicOptions := dot.basePeriodicOptions()
-	periodicOptions.Period = dot.tickPeriod
-	dot.tickAction = NewPeriodicAction(sim, periodicOptions)
-	dot.tickAction.NextActionAt = dot.lastTickTime + dot.tickPeriod
-	sim.AddPendingAction(dot.tickAction)
+	dot.startTickAction(sim, dot.lastTickTime+dot.tickPeriod)
 }
 
+// Apply starts the dot, or reapplies a running one under the server's refresh rule.
 func (dot *Dot) Apply(sim *Simulation) {
+	if dot.IsActive() && !dot.refreshResetsTicks() {
+		dot.refreshKeepingTicks(sim, false)
+		return
+	}
+
 	dot.TakeSnapshot(sim, false)
 
 	dot.Cancel(sim)
@@ -133,12 +174,16 @@ func (dot *Dot) Apply(sim *Simulation) {
 	dot.Aura.Activate(sim)
 }
 
-// ApplyOrReset is used for rolling dots that reset the tick timer on reapplication.
-// This is more efficient than Apply(), and works around tickAction.CleanUp() wrongly generating
-// an extra ticks if (re-)application and tick happen at the same time.
+// ApplyOrReset is Apply() for a rolling dot that is usually already up: it refreshes in place instead
+// of deactivating and reactivating the aura, which works around tickAction.CleanUp() wrongly adding
+// an extra tick when (re-)application and tick happen at the same time.
 func (dot *Dot) ApplyOrReset(sim *Simulation) {
 	if !dot.IsActive() {
 		dot.Apply(sim)
+		return
+	}
+	if !dot.refreshResetsTicks() {
+		dot.refreshKeepingTicks(sim, true)
 		return
 	}
 
@@ -153,20 +198,34 @@ func (dot *Dot) ApplyOrReset(sim *Simulation) {
 	dot.tickAction = nil      // prevent tickAction.CleanUp() from adding an extra tick
 	oldTickAction.Cancel(sim) // remove old PA ticker
 
-	// recreate with new period, resetting the next tick.
-	periodicOptions := dot.basePeriodicOptions()
-	periodicOptions.Period = dot.tickPeriod
-	dot.tickAction = NewPeriodicAction(sim, periodicOptions)
-	sim.AddPendingAction(dot.tickAction)
+	dot.startTickAction(sim, sim.CurrentTime+dot.tickPeriod)
 }
 
-// Like Apply(), but does not reset the tick timer.
-func (dot *Dot) ApplyOrRefresh(sim *Simulation) {
-	dot.TakeSnapshot(sim, false)
+// refreshResetsTicks is Spell::DoSpellHitOnUnit's refreshPeriodic: reapplying a dot restarts its
+// tick timer unless the spell stacks to 2 or more. The rule's other half, TRIGGERED_NO_PERIODIC_RESET,
+// sits outside TRIGGERED_FULL_MASK, so on this server only a GM's `.cast triggered` ever sets it.
+func (dot *Dot) refreshResetsTicks() bool {
+	sd := dot.Spell.ServerSpell()
+	if sd == nil || sd.StackAmount < 2 {
+		return true
+	}
+	for _, e := range sd.Effects {
+		if e.Aura == auraTypePeriodicDamage || e.Aura == auraTypePeriodicDamagePercent {
+			return false
+		}
+	}
+	return true
+}
+
+// refreshKeepingTicks refreshes a stacking dot the way Aura::RefreshTimers does with periodicReset
+// off: the duration and the tick count start over, the running tick timer doesn't.
+func (dot *Dot) refreshKeepingTicks(sim *Simulation, doRollover bool) {
+	dot.TakeSnapshot(sim, doRollover)
+
+	dot.RecomputeAuraDuration()
+	dot.Aura.Refresh(sim)
 
 	dot.TickCount = 0
-	dot.RecomputeAuraDuration()
-	dot.Aura.Activate(sim)
 }
 
 func (dot *Dot) Cancel(sim *Simulation) {
@@ -177,12 +236,27 @@ func (dot *Dot) Cancel(sim *Simulation) {
 
 // Call this after manually changing NumberOfTicks or TickLength.
 func (dot *Dot) RecomputeAuraDuration() {
+	dot.tickPeriod = dot.TickLength
 	if dot.AffectedByCastSpeed {
-		dot.tickPeriod = dot.Spell.Unit.ApplyCastSpeedForSpell(dot.TickLength, dot.Spell)
+		// every live "haste adds ticks" dot gets it from a mod-spell-tweaks script, and those clamp
+		// the multiplier at 1 so a slow can't stretch the ticks. The core's own ATTR5 path would.
+		switch dot.TickHaste {
+		case SpellHasteAddsTicks:
+			dot.tickPeriod = min(dot.Spell.Unit.ApplyCastSpeedForSpell(dot.TickLength, dot.Spell), dot.TickLength)
+		case MeleeHasteAddsTicks:
+			dot.tickPeriod = min(time.Duration(float64(dot.TickLength)/dot.Spell.Unit.SwingSpeed()), dot.TickLength)
+		default:
+			dot.tickPeriod = dot.Spell.Unit.ApplyCastSpeedForSpell(dot.TickLength, dot.Spell)
+		}
+		// the server keeps the amplitude in whole ms
+		dot.tickPeriod = dot.tickPeriod.Truncate(time.Millisecond)
+	}
+
+	if dot.TickHaste == SpellHasteScalesBoth {
 		dot.Aura.Duration = dot.tickPeriod * time.Duration(dot.NumberOfTicks)
 	} else {
-		dot.tickPeriod = dot.TickLength
-		dot.Aura.Duration = dot.tickPeriod * time.Duration(dot.NumberOfTicks)
+		// haste buys ticks instead of shortening the dot
+		dot.Aura.Duration = dot.TickLength * time.Duration(dot.NumberOfTicks)
 	}
 }
 
@@ -208,7 +282,10 @@ func (dot *Dot) TickOnce(sim *Simulation) {
 		// Note: even if the clip delay is 0ms, need a WaitUntil so that APL is called after the channel aura fully fades.
 		if dot.MaxTicksRemaining() == 0 {
 			if dot.Spell.Unit.GCD.IsReady(sim) {
-				dot.Spell.Unit.WaitUntil(sim, sim.CurrentTime+dot.Spell.Unit.ChannelClipDelay)
+				// the aura is what holds the rotation, so wait for it, not for the tick. Its expiry
+				// and the last tick share a server tick, and ExpiresAt is 0 once it already faded.
+				channelEnd := max(sim.CurrentTime, dot.Aura.ExpiresAt())
+				dot.Spell.Unit.WaitUntil(sim, channelEnd+dot.Spell.Unit.ChannelClipDelay)
 			}
 		} else if dot.Spell.Unit.Rotation.shouldInterruptChannel(sim) {
 			dot.Cancel(sim)
@@ -232,15 +309,17 @@ func (dot *Dot) ManualTick(sim *Simulation) {
 	}
 }
 
-func (dot *Dot) basePeriodicOptions() PeriodicActionOptions {
-	return PeriodicActionOptions{
+// startTickAction schedules the next tick for the nominal time given, and every tick after it one
+// period further along that same lattice. Each one goes off on the first server tick at or after
+// its nominal time, so the rounding never piles up: that is AuraEffect::Update carrying what is
+// left of m_periodicTimer into the next tick.
+func (dot *Dot) startTickAction(sim *Simulation, nominal time.Duration) {
+	dot.nextTickNominal = nominal
+	dot.nextTickAt = sim.NextServerTick(nominal)
+
+	pa := &PendingAction{
+		NextActionAt: dot.nextTickAt,
 		//Priority: ActionPriorityDOT,
-		OnAction: func(sim *Simulation) {
-			if dot.lastTickTime != sim.CurrentTime {
-				dot.TickCount++
-				dot.TickOnce(sim)
-			}
-		},
 		CleanUp: func(sim *Simulation) {
 			// In certain cases, the last tick and the dot aura expiration can happen in
 			// different orders, so we might need to apply the last tick.
@@ -252,6 +331,24 @@ func (dot *Dot) basePeriodicOptions() PeriodicActionOptions {
 			}
 		},
 	}
+	pa.OnAction = func(sim *Simulation) {
+		if dot.lastTickTime != sim.CurrentTime {
+			dot.TickCount++
+			dot.TickOnce(sim)
+		}
+
+		// a tick can refresh or end the dot, and that schedules its own ticks
+		if dot.tickAction != pa || pa.cancelled {
+			return
+		}
+		dot.nextTickNominal += dot.tickPeriod
+		dot.nextTickAt = sim.NextServerTick(dot.nextTickNominal)
+		pa.NextActionAt = dot.nextTickAt
+		sim.AddPendingAction(pa)
+	}
+
+	dot.tickAction = pa
+	sim.AddPendingAction(pa)
 }
 
 func newDot(config Dot) *Dot {
@@ -263,10 +360,7 @@ func newDot(config Dot) *Dot {
 
 	dot.Aura.ApplyOnGain(func(aura *Aura, sim *Simulation) {
 		dot.lastTickTime = sim.CurrentTime
-		periodicOptions := dot.basePeriodicOptions()
-		periodicOptions.Period = dot.tickPeriod
-		dot.tickAction = NewPeriodicAction(sim, periodicOptions)
-		sim.AddPendingAction(dot.tickAction)
+		dot.startTickAction(sim, sim.CurrentTime+dot.tickPeriod)
 		if dot.isChanneled {
 			dot.Spell.Unit.ChanneledDot = dot
 		}
@@ -306,6 +400,8 @@ func (spell *Spell) createDots(config DotConfig, isHot bool) {
 		NumberOfTicks:       config.NumberOfTicks,
 		TickLength:          config.TickLength,
 		AffectedByCastSpeed: config.AffectedByCastSpeed,
+		TickHaste:           config.TickHaste,
+		TicksCanCrit:        config.TicksCanCrit,
 
 		OnSnapshot: config.OnSnapshot,
 		OnTick:     config.OnTick,
