@@ -3,7 +3,6 @@ package tbc
 import (
 	"time"
 
-	"github.com/wowsims/wotlk/sim/common/wotlk"
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/stats"
 )
@@ -299,7 +298,7 @@ func init() {
 		})
 	})
 
-	bulwark := wotlk.ServerProcFor(bulwarkOfAzzinothSpellID)
+	bulwark := core.ServerProcFor(bulwarkOfAzzinothSpellID)
 	core.NewItemEffect(32375, func(agent core.Agent) {
 		character := agent.GetCharacter()
 

@@ -24,7 +24,7 @@ const (
 func init() {
 	// Keep these in order by item ID.
 
-	giantSlayerPPM := ServerEnchantPPM(3251)
+	giantSlayerPPM := core.ServerEnchantPPM(3251)
 	core.NewEnchantEffect(3251, func(agent core.Agent) {
 		character := agent.GetCharacter()
 
@@ -69,7 +69,7 @@ func init() {
 		character.ItemSwap.RegisterOnSwapItemForEffectWithPPMManager(3251, giantSlayerPPM, &ppmm, aura)
 	})
 
-	icebreakerPPM := ServerEnchantPPM(3239)
+	icebreakerPPM := core.ServerEnchantPPM(3239)
 	core.NewEnchantEffect(3239, func(agent core.Agent) {
 		character := agent.GetCharacter()
 
@@ -175,7 +175,7 @@ func init() {
 		character.PseudoStats.ThreatMultiplier *= 0.98
 	})
 
-	berserkingPPM := ServerEnchantPPM(3789)
+	berserkingPPM := core.ServerEnchantPPM(3789)
 	core.NewEnchantEffect(3789, func(agent core.Agent) {
 		character := agent.GetCharacter()
 
@@ -211,7 +211,7 @@ func init() {
 		character.ItemSwap.RegisterOnSwapItemForEffectWithPPMManager(3789, berserkingPPM, &ppmm, aura)
 	})
 
-	lifewardPPM := ServerEnchantPPM(3241)
+	lifewardPPM := core.ServerEnchantPPM(3241)
 	core.NewEnchantEffect(3241, func(agent core.Agent) {
 		character := agent.GetCharacter()
 
@@ -240,7 +240,7 @@ func init() {
 		character.ItemSwap.RegisterOnSwapItemForEffectWithPPMManager(3241, lifewardPPM, &ppmm, aura)
 	})
 
-	blackMagic := ServerProcFor(blackMagicSpellID)
+	blackMagic := core.ServerProcFor(blackMagicSpellID)
 	core.NewEnchantEffect(3790, func(agent core.Agent) {
 		character := agent.GetCharacter()
 
@@ -257,11 +257,9 @@ func init() {
 			OnReset: func(aura *core.Aura, sim *core.Simulation) {
 				aura.Activate(sim)
 			},
-			OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
-				// Special case for spells that aren't spells that can proc black magic.
-				specialCaseSpell := spell.ActionID.SpellID == 47465 || spell.ActionID.SpellID == 12867
-
-				if !result.Landed() || !spell.ProcMask.Matches(core.ProcMaskSpellDamage|core.ProcMaskWeaponProc) && !specialCaseSpell {
+			// Its spell_proc entry procs on the cast, so a miss counts.
+			OnCastComplete: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell) {
+				if !spell.ProcMask.Matches(core.ProcMaskSpellDamage | core.ProcMaskWeaponProc) {
 					return
 				}
 
@@ -356,7 +354,7 @@ func init() {
 		})
 	})
 
-	lightweave := ServerProcFor(lightweaveSpellID)
+	lightweave := core.ServerProcFor(lightweaveSpellID)
 	core.NewEnchantEffect(3722, func(agent core.Agent) {
 		character := agent.GetCharacter()
 
@@ -390,7 +388,7 @@ func init() {
 		})
 	})
 
-	darkglow := ServerProcFor(darkglowSpellID)
+	darkglow := core.ServerProcFor(darkglowSpellID)
 	core.NewEnchantEffect(3728, func(agent core.Agent) {
 		character := agent.GetCharacter()
 		if !character.HasManaBar() {
@@ -403,6 +401,17 @@ func init() {
 			Duration: darkglow.ICD,
 		}
 
+		callback := func(_ *core.Aura, sim *core.Simulation, _ *core.Spell, result *core.SpellResult) {
+			if !result.Landed() {
+				return
+			}
+
+			if icd.IsReady(sim) && sim.RandomFloat("Darkglow") < darkglow.Chance {
+				icd.Use(sim)
+				character.AddMana(sim, 400, manaMetrics)
+			}
+		}
+
 		character.GetOrRegisterAura(core.Aura{
 			Icd:      &icd,
 			Label:    "Darkglow Embroidery",
@@ -410,16 +419,13 @@ func init() {
 			OnReset: func(aura *core.Aura, sim *core.Simulation) {
 				aura.Activate(sim)
 			},
-			OnCastComplete: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell) {
-				if icd.IsReady(sim) && sim.RandomFloat("Darkglow") < darkglow.Chance {
-					icd.Use(sim)
-					character.AddMana(sim, 400, manaMetrics)
-				}
-			},
+			OnHealDealt:           callback,
+			OnPeriodicDamageDealt: callback,
+			OnSpellHitDealt:       callback,
 		})
 	})
 
-	swordguard := ServerProcFor(swordguardSpellID)
+	swordguard := core.ServerProcFor(swordguardSpellID)
 	core.NewEnchantEffect(3730, func(agent core.Agent) {
 		character := agent.GetCharacter()
 
@@ -449,7 +455,7 @@ func init() {
 		})
 	})
 
-	bloodDraining := ServerProcFor(bloodDrainingSpellID)
+	bloodDraining := core.ServerProcFor(bloodDrainingSpellID)
 	core.NewEnchantEffect(3870, func(agent core.Agent) {
 		character := agent.GetCharacter()
 		healthMetrics := character.NewHealthMetrics(core.ActionID{SpellID: 64569})

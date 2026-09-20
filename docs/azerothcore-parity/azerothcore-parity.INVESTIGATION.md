@@ -88,10 +88,22 @@ Roll details the tables above don't show:
 - Missile delay = max(dist, 5)/speed.
 
 **Rage and procs**
-- Rage hit factor = `uint32(unhastedSpeed·3.5 | 1.75)` (`Unit.h:921-924`); the sim uses a float.
+- `Unit::RewardRage` (`Unit.cpp:16128-16158`): hit factor = `uint32(unhastedSpeed·3.5 | 1.75)` (`Unit.h:921-924`),
+  which a crit doubles after the truncation; conversion at level 80 is 453.32217 (Classic hardcodes 453.3); each
+  gain is floored to a tenth of rage (`uint32(addRage·10)`), which the sim doesn't model.
 - PPM chance = unhasted weapon ms·PPM/600. For spell-triggered aura procs (`Aura::CalcProcChance`,
   `SpellAuras.cpp:2272-2305`) the server uses max(base cast, 1500 ms) unless the spell is melee-class or a ranged
-  weapon spell. Item and enchant procs always use the weapon's attack time (`Player.cpp:7460-7575`).
+  weapon spell. The weapon it reads belongs to the **aura's caster**, so a raid's Judgement of Wisdom measures
+  against the judging paladin; the sim uses the attacker's. Item and enchant procs always use the weapon's attack
+  time (`Player.cpp:7460-7575`).
+- Judgement of Wisdom procs off its target debuff 20186 (15 PPM, no flat chance), and a taken proc's default hit
+  mask is normal + critical, so a miss, dodge, parry or full block never reaches the roll (`SpellMgr.cpp:923-942`).
+  Its `SpellTypeMask` is damage, and a hit that dealt none counts as `PROC_SPELL_TYPE_NO_DMG_HEAL`
+  (`Unit.cpp:6856-6864`), so applying a dot doesn't proc it either. Its mana only goes to an attacker whose
+  **current** power type is mana (`spell_paladin.cpp:1372-1375`), so a shapeshifted druid gets none.
+- `spell_proc`'s `SpellPhaseMask` decides when an equip aura fires. On the cast (`Spell.cpp:3975-4004`) there is no
+  damage info, so misses count and PPM never applies: Elemental Focus Stone (65005), Black Magic (59630). On the hit:
+  Flare of the Heavens (64714), Show of Faith (64738), Sif's Remembrance (65002), Lightweave (55640), Darkglow (55768).
 - `PROC_ATTR_REDUCE_PROC_60` multiplies proc chance by 1/3 at level 80.
 - Enchant PPMs (`spell_enchant_proc_data`):
 
@@ -210,6 +222,10 @@ values. Human warrior, level 80, maxed skills, Worn Shortsword (Sword Specializa
   (debuff 58567; the ability 47467 triggers it) and Expose Armor (8647) don't stack, Faerie Fire (770) multiplies:
   10643 → 8514 → 8088.
 - Boss dummy health inside the instance is the template's 24,009,944, so `DungeonScale.DisabledID` keeps it unscaled.
+- Proc chances (`TestSimvalProcPPM`, `.simval procs` with the auras applied by GM command, 1.9 s main hand):
+  Judgement of Wisdom (20186, 15 PPM) reads 47.500% for a white swing and for Heroic Strike, 75.000% for Frostbolt's
+  3 s base cast and 50.000% for Steady Shot's 2 s ranged slot. Hand of Justice (15600, 1 PPM with
+  `REDUCE_PROC_60`) reads a third of the same basis: 1.056% and 1.667%.
 - Base stats (`TestSimvalBaseStats`, one naked level-80 character per class over all ten races): primary stats, max
   health, armor, AP, ranged AP, melee and spell crit, real dodge and miss taken match the sim's generated base stats
   exactly, allowing only for the server truncating stats. With 400 defense rating (81 skill) and 512 dodge rating the
@@ -242,6 +258,10 @@ The fork copies the server. Patching any of these in [ac] means updating the mat
 | 17 | Aura expiry | on the first map update after the duration | exact | `SpellAuras.cpp:747-753` |
 | 18 | GCD haste | only for 1.5 s category-133 spells that aren't melee, ranged, ranged-slot or `ATTR0_IS_ABILITY`: Feral Spirit hasted; Dispersion, Volley, Fire Elemental Totem and the imp's Firebolt not | per spell, the other way round for those five | `Spell.cpp:8991-9008` |
 | 19 | Heroic Throw and Shattering Throw swing reset | every hand restarts in full, then the 200 ms push; glyphed (instant) Shattering Throw doesn't reset | off hand half a swing later when both weapons have the same speed; glyphed Shattering Throw resets too | `Spell.cpp:3955-3966`, `4039-4056`, `8188-8202` |
+| 20 | Judgement of Wisdom PPM basis | max(base cast, 1500 ms) for a spell, the weapon's attack time for a melee-class or ranged weapon spell, read on the judging paladin | the attacker's hasted cast time, 0.75 s when instant, and its own weapon | `SpellAuras.cpp:2272-2305` |
+| 21 | Judgement of Wisdom on a miss | no proc | white and ranged hits proc on a miss | `SpellMgr.cpp:923-942` |
+| 22 | Rage per hit | conversion 453.32217 at level 80, and each gain floored to a tenth of rage | 453.3, unrounded | `Unit.cpp:16128-16158` |
+| 23 | Equip proc phase | `spell_proc`: Elemental Focus Stone (65005) and Black Magic (59630) fire on the cast, misses counted; Flare of the Heavens (64714), Show of Faith (64738), Sif's Remembrance (65002), Lightweave (55640) and Darkglow (55768) on a landed hit | the other way round, except Lightweave, which is on the hit there too | `spell_proc` |
 
 Not yet settled against retail, check before patching: the 200 ms other-hand push (`PlayerUpdates.cpp`), the DoT
 refresh tick-timer rule, the max(cast, 1500 ms) PPM basis for spell-triggered aura procs, the rule-based binary

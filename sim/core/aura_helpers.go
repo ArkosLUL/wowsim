@@ -41,9 +41,22 @@ type ProcTrigger struct {
 	PPM             float64
 	ICD             time.Duration
 	Handler         ProcHandler
+
+	// ProcSpellID is the item, enchant or talent aura that procs. When set, its generated spell_proc
+	// entry gives ProcChance, PPM and ICD instead of the three fields above.
+	ProcSpellID int32
 }
 
 func ApplyProcTriggerCallback(unit *Unit, aura *Aura, config ProcTrigger) {
+	if config.ProcSpellID != 0 {
+		sp := ServerProcFor(config.ProcSpellID)
+		config.ProcChance, config.PPM, config.ICD = sp.Chance, sp.PPM, sp.ICD
+		if sp.PPM > 0 {
+			// Aura::CalcProcChance takes PPM over the entry's own chance on a damage or heal event.
+			config.ProcChance = 0
+		}
+	}
+
 	var icd Cooldown
 	if config.ICD != 0 {
 		icd = Cooldown{
