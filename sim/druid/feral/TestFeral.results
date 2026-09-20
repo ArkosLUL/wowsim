@@ -534,7 +534,7 @@ dps_results: {
  key: "TestFeral-AllItems-LasherweaveRegalia"
  value: {
   dps: 6363.27312
-  tps: 4629.23037
+  tps: 4629.00985
  }
 }
 dps_results: {
@@ -576,7 +576,7 @@ dps_results: {
  key: "TestFeral-AllItems-Malfurion'sRegalia"
  value: {
   dps: 6048.80447
-  tps: 4398.09106
+  tps: 4400.18133
  }
 }
 dps_results: {
