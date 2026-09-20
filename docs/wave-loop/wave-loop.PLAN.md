@@ -72,16 +72,9 @@ eleven class items on top and a profile can no longer say what cost what.
 
 ## Current wave
 
-- Wave: E, running. Wave D (base `30137e6d1`) landed on `master`.
-- Base SHA: `328553aa9`.
-- Workflow runId: `wf_f577e7e6-b9d`; transcript dir (its `journal.jsonl`)
-  `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\wf_f577e7e6-b9d`.
-- `sim/core` splits between the two timing items: PAR-P3-4 takes `rage.go`, `aura_helpers.go`, a new
-  `ppm.go`, `debuffs.go`, the generated `serverdata/` files and `sim/common/**`; PAR-P3-5 takes
-  `dot.go`, `periodic_action.go`, `spell_outcome.go`, and `cast.go` and `aura.go` only to drop P3-3's
-  channel exemption.
-- RI-3 reads the roster export at `G:\DevStuff\GitHub\.wave-loop\raid.json`, taken live at wave start,
-  so it needs no server. Its click-through checks are the user's: nothing here drives a browser.
+- Wave: F, not started. Wave E (base `328553aa9`) landed on `master`.
+- Base SHA: set at wave start.
+- Workflow runId: none.
 
 ## BiS baseline
 
@@ -144,4 +137,7 @@ Later WIs are added as their wave starts.
 
 ## User actions
 
-- None until wave E's report.
+- RI-3's click-through, which no agent here can do: the steps are Phase 3 step 6 of the
+  [raid-import PLAN](../azerothcore-raid-import/azerothcore-raid-import.PLAN.md), and the rosters they
+  name are in `ui/raid/acore_harness/testdata/`.
+- "continue" for wave F.
