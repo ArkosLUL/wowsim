@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"math"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -40,21 +41,72 @@ var spellTweakToggles = []struct {
 }
 
 const (
-	mapUpdateIntervalKey    = "MapUpdateInterval"
-	mapUpdateIntervalDef    = 10
-	exoticPetDamagePctKey   = "SpellTweaks.ExoticPetDamage.Pct"
-	exoticPetDamagePctDef   = 10
-	minHPModifierKey        = "DungeonScale.MinHPModifier"
-	minHPModifierDef        = 0.1
-	minDamageModifierKey    = "DungeonScale.MinDamageModifier"
-	minDamageModifierDef    = 0.01
-	reforgeEnableKey        = "Reforging.Enable"
-	reforgePercentageKey    = "Reforging.Percentage"
-	reforgeStatsKey         = "Reforging.ReforgeableStats"
-	reforgePercentageDef    = 40 // item_reforge.h PERCENTAGE_DEFAULT, used outside [10, 90] too
-	reforgeStatsDef         = "6,13,14,31,32,36,37"
-	maxReforgeableStatTypes = 15
+	mapUpdateIntervalKey  = "MapUpdateInterval"
+	mapUpdateIntervalDef  = 10
+	exoticPetDamagePctKey = "SpellTweaks.ExoticPetDamage.Pct"
+	exoticPetDamagePctDef = 10
+	minHPModifierKey      = "DungeonScale.MinHPModifier"
+	minHPModifierDef      = 0.1
+	minDamageModifierKey  = "DungeonScale.MinDamageModifier"
+	minDamageModifierDef  = 0.01
+	reforgeEnableKey      = "Reforging.Enable"
+	reforgePercentageKey  = "Reforging.Percentage"
+	reforgeStatsKey       = "Reforging.ReforgeableStats"
 )
+
+// reforgeHeaderSrc holds the constants mod-reforging enforces on its config; parseReforgeLimits
+// reads them from it rather than the sim hand-copying them.
+const reforgeHeaderSrc = "modules/mod-reforging/src/item_reforge.h"
+
+// reforgeLimits is what item_reforge.h allows a config to ask for.
+type reforgeLimits struct {
+	// SetPercentage falls back to Default outside [Min, Max].
+	MinPercentage, MaxPercentage, DefaultPercentage float32
+	// SetReforgeableStats leaves the list empty when it's longer than this.
+	MaxStatTypes int
+	// The stat list the module uses when the config sets none.
+	DefaultStatTypes string
+}
+
+// parseReforgeLimits reads item_reforge.h's constants. A missing or renamed one is an error rather
+// than a silent fallback: the sim's rules are only right while they match the module's.
+func parseReforgeLimits(src string) (reforgeLimits, error) {
+	var limits reforgeLimits
+	number := func(name string) (float32, error) {
+		m := regexp.MustCompile(name + `\s*=\s*([0-9.]+)f?\s*;`).FindStringSubmatch(src)
+		if m == nil {
+			return 0, fmt.Errorf("%s no longer defines %s", reforgeHeaderSrc, name)
+		}
+		v, err := strconv.ParseFloat(m[1], 32)
+		if err != nil {
+			return 0, fmt.Errorf("%s: %s = %q: %w", reforgeHeaderSrc, name, m[1], err)
+		}
+		return float32(v), nil
+	}
+
+	var err error
+	if limits.MinPercentage, err = number("PERCENTAGE_MIN"); err != nil {
+		return limits, err
+	}
+	if limits.MaxPercentage, err = number("PERCENTAGE_MAX"); err != nil {
+		return limits, err
+	}
+	if limits.DefaultPercentage, err = number("PERCENTAGE_DEFAULT"); err != nil {
+		return limits, err
+	}
+	maxStats, err := number("MAX_REFORGEABLE_STATS")
+	if err != nil {
+		return limits, err
+	}
+	limits.MaxStatTypes = int(maxStats)
+
+	m := regexp.MustCompile(`DefaultReforgeableStats\s*=\s*"([0-9, ]*)"`).FindStringSubmatch(src)
+	if m == nil {
+		return limits, fmt.Errorf("%s no longer defines DefaultReforgeableStats", reforgeHeaderSrc)
+	}
+	limits.DefaultStatTypes = m[1]
+	return limits, nil
+}
 
 // DungeonScaleModifiers fields: the stat key, and the pre-rename key its generic value falls back on.
 var dungeonScaleStats = []struct {
@@ -101,7 +153,7 @@ type floors struct {
 }
 
 // build reads every ServerSettings field from the config, as the server reads it.
-func build(c *config) (*proto.ServerSettings, floors, error) {
+func build(c *config, limits reforgeLimits) (*proto.ServerSettings, floors, error) {
 	interval := c.uint32(mapUpdateIntervalKey, mapUpdateIntervalDef)
 	if interval < 1 { // WorldConfig's MIN_MAP_UPDATE_DELAY check
 		interval = mapUpdateIntervalDef
@@ -140,7 +192,7 @@ func build(c *config) (*proto.ServerSettings, floors, error) {
 			strings.Join(problems, "\n  "))
 	}
 
-	reforge, err := buildReforge(c)
+	reforge, err := buildReforge(c, limits)
 	if err != nil {
 		return nil, floors{}, err
 	}
@@ -157,21 +209,21 @@ func build(c *config) (*proto.ServerSettings, floors, error) {
 	}, nil
 }
 
-func buildReforge(c *config) (*proto.ReforgeSettings, error) {
-	pct := c.float(reforgePercentageKey, reforgePercentageDef)
-	if pct < 10 || pct > 90 { // ItemReforge::SetPercentage
-		pct = reforgePercentageDef
+func buildReforge(c *config, limits reforgeLimits) (*proto.ReforgeSettings, error) {
+	pct := c.float(reforgePercentageKey, limits.DefaultPercentage)
+	if pct < limits.MinPercentage || pct > limits.MaxPercentage { // ItemReforge::SetPercentage
+		pct = limits.DefaultPercentage
 	}
 
 	var statTypes []int32
 	var tokens []string
-	for _, token := range strings.Split(c.string(reforgeStatsKey, reforgeStatsDef), ",") {
+	for _, token := range strings.Split(c.string(reforgeStatsKey, limits.DefaultStatTypes), ",") {
 		if token != "" {
 			tokens = append(tokens, token)
 		}
 	}
 	// over the limit, SetReforgeableStats leaves the list empty
-	if len(tokens) <= maxReforgeableStatTypes {
+	if len(tokens) <= limits.MaxStatTypes {
 		for _, token := range tokens {
 			v, err := strconv.ParseUint(strings.TrimSpace(token), 10, 31)
 			if err != nil {

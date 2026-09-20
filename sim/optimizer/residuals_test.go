@@ -37,6 +37,7 @@ func addResidualTestItems() {
 				Stats:       stats.Stats{stats.Strength: 40, stats.MeleeCrit: 30, stats.SpellCrit: 30}.ToFloatArray(),
 				GemSockets:  []proto.GemColor{proto.GemColor_GemColorRed},
 				SocketBonus: stats.Stats{stats.Stamina: 6}.ToFloatArray(),
+				ServerStats: []*proto.ItemStat{{StatType: 4, Value: 40}, {StatType: 32, Value: 30}},
 			},
 		},
 		Gems: []*proto.SimGem{{Id: testStrGemID, Color: proto.GemColor_GemColorRed, Stats: stats.Stats{stats.Strength: 20}.ToFloatArray()}},

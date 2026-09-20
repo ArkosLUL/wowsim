@@ -1,8 +1,9 @@
 # gen_server_defaults
 
-Generates the live server's value for every `proto.ServerSettings` field:
-`sim/core/server_defaults_auto_gen.go` (`LiveServerDefaults()` and the dungeon scale floors) and
-`ui/core/constants/server_defaults_auto_gen.ts` (`LIVE_SERVER_DEFAULTS`).
+Generates the live server's value for every `proto.ServerSettings` field, plus the limits the server
+enforces on them: `sim/core/server_defaults_auto_gen.go` (`LiveServerDefaults()`, the dungeon scale
+floors and the mod-reforging limits) and `ui/core/constants/server_defaults_auto_gen.ts`
+(`LIVE_SERVER_DEFAULTS` and the same limits).
 
 ```bash
 tools/acore/dock.sh run ./tools/acore/gen_server_defaults
@@ -16,7 +17,9 @@ Inputs, under `-ac` (default `/ac`, dock.sh's mount of the AzerothCore checkout)
   mod-reforging;
 - `configurationOverrides/{ServerPerformance,SpellTweaks,DungeonScale}.env`. The other override files
   hold credentials and unrelated settings and are never opened, so a key it needs set in one of them is
-  missed.
+  missed;
+- `modules/mod-reforging/src/item_reforge.h`, for the percentage range, the default percentage and stat
+  list, and the stat-list length cap. A renamed constant there fails the run rather than falling back.
 
 Each key resolves as worldserver's `GetOption` does: the `AC_` variable, then the conf file, then the
 code default; a value that doesn't parse takes the default. Dungeon scale 10M/25M keys left blank stay

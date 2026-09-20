@@ -35,6 +35,7 @@ func init() {
 			WeaponDamageMax:  item.WeaponDamageMax,
 			WeaponSpeed:      item.WeaponSpeed,
 			SetName:          item.SetName,
+			ServerStats:      item.ServerStats,
 		}
 	}
 

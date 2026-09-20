@@ -23,6 +23,7 @@ func init() {
 				Stats:       stats.Stats{stats.Stamina: 30, stats.MeleeCrit: 50, stats.SpellCrit: 50}.ToFloatArray(),
 				GemSockets:  []proto.GemColor{proto.GemColor_GemColorRed},
 				SocketBonus: stats.Stats{stats.Stamina: 6}.ToFloatArray(),
+				ServerStats: []*proto.ItemStat{{StatType: 7, Value: 30}, {StatType: 32, Value: 50}},
 			},
 			{
 				Id:       itemTestSwapPlain,
@@ -41,9 +42,9 @@ func TestItemSwapStatChangesIncludeSocketBonusAndReforge(t *testing.T) {
 		ID:      itemTestSwapSocketed,
 		Gems:    []int32{gemTestSwap},
 		Reforge: &proto.ItemReforge{FromStatType: 32, ToStatType: 36},
-	})
+	}, nil)
 	swap := ItemSwap{character: character}
-	*swap.GetItem(proto.ItemSlot_ItemSlotMainHand) = NewItem(ItemSpec{ID: itemTestSwapPlain})
+	*swap.GetItem(proto.ItemSlot_ItemSlotMainHand) = NewItem(ItemSpec{ID: itemTestSwapPlain}, nil)
 
 	got := swap.CalcStatChanges([]proto.ItemSlot{proto.ItemSlot_ItemSlotMainHand})
 
@@ -59,7 +60,7 @@ func TestItemSwapSkipsSameItemWithDifferentReforge(t *testing.T) {
 	character.Equipment[proto.ItemSlot_ItemSlotMainHand] = NewItem(ItemSpec{
 		ID:      itemTestSwapSocketed,
 		Reforge: &proto.ItemReforge{FromStatType: 32, ToStatType: 36},
-	})
+	}, nil)
 
 	character.enableItemSwap(&proto.ItemSwap{MhItem: &proto.ItemSpec{Id: itemTestSwapSocketed}}, 1, 1, 1)
 

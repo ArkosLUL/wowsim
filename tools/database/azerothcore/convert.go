@@ -43,10 +43,14 @@ func ConvertItem(row *ItemRow, dbc *DBC) *ConvertedItem {
 	var stats database.Stats
 	converted := &ConvertedItem{}
 
+	// ItemTemplate::ItemStat, compacted the way ObjectMgr::LoadItemTemplates fills it: zero values
+	// dropped, so the length is StatsCount. mod-reforging reads these.
+	var serverStats []*proto.ItemStat
 	for i := 0; i < 10; i++ {
 		if row.StatValues[i] == 0 {
 			continue
 		}
+		serverStats = append(serverStats, &proto.ItemStat{StatType: row.StatTypes[i], Value: row.StatValues[i]})
 		if !AddItemMod(&stats, row.StatTypes[i], row.StatValues[i]) {
 			converted.UnmappedStatTypes = append(converted.UnmappedStatTypes, row.StatTypes[i])
 		}
@@ -91,6 +95,7 @@ func ConvertItem(row *ItemRow, dbc *DBC) *ConvertedItem {
 		Quality:        proto.ItemQuality(row.Quality),
 		Heroic:         row.Flags&ItemFlagHeroicTooltip != 0,
 		ClassAllowlist: AllowedClasses(row.AllowableClass),
+		ServerStats:    serverStats,
 	}
 	if class, ok := relicClasses[row.Subclass]; ok && row.InventoryType == inventoryTypeRelic && item.ClassAllowlist == nil {
 		item.ClassAllowlist = []proto.Class{class}
@@ -130,7 +135,8 @@ func ConvertItem(row *ItemRow, dbc *DBC) *ConvertedItem {
 
 // ApplyTo overwrites every field of item that ConvertItem fills from the server, everything but Id
 // and Name, zero values and empty lists included. Skip items with NotComparable set: item_template
-// doesn't hold their stats.
+// doesn't hold their stats, so they end up with no ServerStats and the sim won't reforge them,
+// which is stricter than the server but keeps a reforge off stats the sim didn't get from there.
 func (c *ConvertedItem) ApplyTo(item *proto.UIItem) {
 	// field by field, since googleProto.Merge (MergeItem) appends lists and skips zero values
 	src := c.Item
@@ -145,6 +151,7 @@ func (c *ConvertedItem) ApplyTo(item *proto.UIItem) {
 	item.Heroic = src.Heroic
 	item.ClassAllowlist = slices.Clone(src.ClassAllowlist)
 	item.SetName = src.SetName
+	item.ServerStats = slices.Clone(src.ServerStats)
 }
 
 const inventoryTypeRelic = 28

@@ -21,10 +21,11 @@ func TestDatabaseConcurrentAddAndRead(t *testing.T) {
 	)
 	AddToDatabase(&proto.SimDatabase{
 		Items: []*proto.SimItem{{
-			Id:         readItemID,
-			Type:       proto.ItemType_ItemTypeHead,
-			Stats:      stats.Stats{stats.MeleeCrit: 40, stats.SpellCrit: 40}.ToFloatArray(),
-			GemSockets: []proto.GemColor{proto.GemColor_GemColorRed},
+			Id:          readItemID,
+			Type:        proto.ItemType_ItemTypeHead,
+			Stats:       stats.Stats{stats.MeleeCrit: 40, stats.SpellCrit: 40}.ToFloatArray(),
+			GemSockets:  []proto.GemColor{proto.GemColor_GemColorRed},
+			ServerStats: []*proto.ItemStat{{StatType: 32, Value: 40}},
 		}},
 		Gems:     []*proto.SimGem{{Id: readGemID, Color: proto.GemColor_GemColorRed}},
 		Enchants: []*proto.SimEnchant{{EffectId: readEnchantID}},
@@ -33,9 +34,9 @@ func TestDatabaseConcurrentAddAndRead(t *testing.T) {
 		dbMu.Lock()
 		defer dbMu.Unlock()
 		for id := int32(readItemID); id >= firstAddedID-numAdds; id-- {
-			delete(ItemsByID, id)
-			delete(GemsByID, id)
-			delete(EnchantsByEffectID, id)
+			delete(itemsByID, id)
+			delete(gemsByID, id)
+			delete(enchantsByEffectID, id)
 		}
 	})
 
@@ -60,7 +61,7 @@ func TestDatabaseConcurrentAddAndRead(t *testing.T) {
 					return
 				default:
 				}
-				if item := NewItem(spec); item.ID != readItemID || item.Enchant.EffectID != readEnchantID || item.Gems[0].ID != readGemID {
+				if item := NewItem(spec, nil); item.ID != readItemID || item.Enchant.EffectID != readEnchantID || item.Gems[0].ID != readGemID {
 					t.Errorf("NewItem(%v) = %+v", spec, item)
 					return
 				}

@@ -69,6 +69,26 @@ func TestSimSetName(t *testing.T) {
 	}
 }
 
+// The stats mod-reforging reads: item_template's rows in order, zero values dropped, so the count
+// is the StatsCount the worldserver builds. A negative value still counts.
+func TestConvertItemServerStats(t *testing.T) {
+	row := &ItemRow{Entry: 1}
+	row.StatTypes = [10]int32{7, 3, 32, 31, 6}
+	row.StatValues = [10]int32{50, 0, 83, 40, -5}
+
+	got := ConvertItem(row, &DBC{}).Item.ServerStats
+	want := []*proto.ItemStat{{StatType: 7, Value: 50}, {StatType: 32, Value: 83}, {StatType: 31, Value: 40}, {StatType: 6, Value: -5}}
+	if len(got) != len(want) {
+		t.Fatalf("server stats = %v, want %v", got, want)
+	}
+	for i, stat := range want {
+		if got[i].StatType != stat.StatType || got[i].Value != stat.Value {
+			t.Errorf("server stat %d = type %d value %d, want type %d value %d",
+				i, got[i].StatType, got[i].Value, stat.StatType, stat.Value)
+		}
+	}
+}
+
 func TestApplyToOverwritesZeroValuesAndLists(t *testing.T) {
 	var wowheadStats database.Stats
 	wowheadStats[proto.Stat_StatAttackPower] = 94
@@ -87,6 +107,7 @@ func TestApplyToOverwritesZeroValuesAndLists(t *testing.T) {
 		Heroic:          true,
 		ClassAllowlist:  []proto.Class{proto.Class_ClassDruid},
 		SetName:         "Wowhead Set",
+		ServerStats:     []*proto.ItemStat{{StatType: 7, Value: 1}},
 	}
 
 	var serverStats database.Stats
@@ -108,8 +129,8 @@ func TestApplyToOverwritesZeroValuesAndLists(t *testing.T) {
 	if item.Stats[proto.Stat_StatStrength] != 47 || item.Stats[proto.Stat_StatAttackPower] != 0 {
 		t.Errorf("stats not replaced: %v", item.Stats)
 	}
-	if item.GemSockets != nil || item.ClassAllowlist != nil {
-		t.Errorf("lists not cleared: sockets %v, classes %v", item.GemSockets, item.ClassAllowlist)
+	if item.GemSockets != nil || item.ClassAllowlist != nil || item.ServerStats != nil {
+		t.Errorf("lists not cleared: sockets %v, classes %v, server stats %v", item.GemSockets, item.ClassAllowlist, item.ServerStats)
 	}
 	if slices.ContainsFunc(item.SocketBonus, func(v float64) bool { return v != 0 }) {
 		t.Errorf("socket bonus not cleared: %v", item.SocketBonus)

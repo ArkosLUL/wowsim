@@ -46,3 +46,13 @@ const (
 	DungeonScaleMinHealthModifier = 0.01
 	DungeonScaleMinDamageModifier = 0.01
 )
+
+// What mod-reforging's item_reforge.h lets Reforging.Percentage and Reforging.ReforgeableStats ask
+// for: a percentage outside the range falls back to the default, and a stat list longer than
+// MaxReforgeableStatTypes ends up empty, which turns reforging off.
+const (
+	ReforgeMinPercentage     = 10
+	ReforgeMaxPercentage     = 90
+	ReforgeDefaultPercentage = 40
+	MaxReforgeableStatTypes  = 15
+)

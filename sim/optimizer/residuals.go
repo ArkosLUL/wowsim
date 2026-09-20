@@ -76,7 +76,7 @@ func gearStats(l Loadout) stats.Stats {
 		if c.ItemID == 0 {
 			continue
 		}
-		item := core.NewItem(c.CoreSpec())
+		item := core.NewItem(c.CoreSpec(), nil)
 		total = total.Add(item.TotalStats())
 	}
 	return total

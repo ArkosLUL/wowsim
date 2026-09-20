@@ -13,7 +13,6 @@ import (
 
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
-	"github.com/wowsims/wotlk/sim/core/stats"
 	"github.com/wowsims/wotlk/tools/database"
 )
 
@@ -507,22 +506,22 @@ func LearnedProfessions(skills map[int32]int32, minSkill int32) []string {
 	return names
 }
 
-// ItemStats gives an item's base stats as the sim's item database holds them, and false for an item
-// the sim has no row for. Those stats, not the server's item_template, decide whether a reforge does
-// anything, and the two can disagree.
-type ItemStats func(itemID int32) (stats.Stats, bool)
+// ItemStats gives an item as the sim's item database holds it, and false for an item the sim has no
+// row for. Its copy of the item_template stats, not the server's own, decides whether the sim would
+// keep a reforge, and the two can disagree.
+type ItemStats func(itemID int32) (core.Item, bool)
 
 // lookup is nil safe: no item database and an item the sim doesn't know both come back nil, which
 // leaves a reforge judged on its stat types alone.
-func (itemStats ItemStats) lookup(itemID int32) *stats.Stats {
+func (itemStats ItemStats) lookup(itemID int32) *core.Item {
 	if itemStats == nil {
 		return nil
 	}
-	base, ok := itemStats(itemID)
+	item, ok := itemStats(itemID)
 	if !ok {
 		return nil
 	}
-	return &base
+	return &item
 }
 
 // SimItemStats reads the sim's item database, e.g. assets/database/db.json.
@@ -532,23 +531,24 @@ func SimItemStats(path string) (ItemStats, error) {
 		return nil, err
 	}
 	db := database.ReadDatabaseFromJson(string(data))
-	return func(itemID int32) (stats.Stats, bool) {
+	return func(itemID int32) (core.Item, bool) {
 		item, ok := db.Items[itemID]
 		if !ok {
-			return stats.Stats{}, false
+			return core.Item{}, false
 		}
-		return stats.FromFloatArray(item.Stats), true
+		return core.ItemFromProto(&proto.SimItem{Stats: item.Stats, ServerStats: item.ServerStats}), true
 	}, nil
 }
 
-// NewRosterReforge returns the reforge to export, or nil and the reason the sim would ignore it. base
-// is the item's stats in the sim's item database, nil when it doesn't have the item, which leaves
-// only the stat types to go on.
-func NewRosterReforge(statDecrease, statIncrease int32, base *stats.Stats) (*RosterReforge, string) {
-	if !core.ReforgeableStatPair(statDecrease, statIncrease) {
+// NewRosterReforge returns the reforge to export, or nil and the reason the sim would ignore it.
+// base is the item in the sim's item database, nil when it doesn't have the item, which leaves only
+// the stat types to go on.
+func NewRosterReforge(statDecrease, statIncrease int32, base *core.Item) (*RosterReforge, string) {
+	reforging := core.LiveReforging()
+	if !reforging.ReforgeableStatPair(statDecrease, statIncrease) {
 		return nil, fmt.Sprintf("reforge of stat type %d to %d isn't reforgeable, dropped", statDecrease, statIncrease)
 	}
-	if base != nil && !core.CanReforge(*base, &proto.ItemReforge{FromStatType: statDecrease, ToStatType: statIncrease}) {
+	if base != nil && !core.CanReforge(base, &proto.ItemReforge{FromStatType: statDecrease, ToStatType: statIncrease}, reforging) {
 		return nil, fmt.Sprintf("reforge of stat type %d to %d does nothing on the sim's copy of the item,"+
 			" which either already has the stat or has too little to reforge away, dropped", statDecrease, statIncrease)
 	}

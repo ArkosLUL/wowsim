@@ -51,15 +51,15 @@ func main() {
 	tsOut := flag.String("tsOut", "ui/core/constants/server_defaults_auto_gen.ts", "generated TypeScript file")
 	flag.Parse()
 
-	settings, f, err := liveSettings(*acDir)
+	settings, f, limits, err := liveSettings(*acDir)
 	if err != nil {
 		log.Fatal(err)
 	}
-	goSrc, err := renderGo(settings, f)
+	goSrc, err := renderGo(settings, f, limits)
 	if err != nil {
 		log.Fatal(err)
 	}
-	tsSrc, err := renderTS(settings)
+	tsSrc, err := renderTS(settings, limits)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -73,34 +73,43 @@ func main() {
 
 // liveSettings builds the settings from the conf.dist files, then checks that the installed module
 // confs give the same ones.
-func liveSettings(acDir string) (*proto.ServerSettings, floors, error) {
+func liveSettings(acDir string) (*proto.ServerSettings, floors, reforgeLimits, error) {
+	header, err := os.ReadFile(filepath.Join(acDir, reforgeHeaderSrc))
+	if err != nil {
+		return nil, floors{}, reforgeLimits{}, err
+	}
+	limits, err := parseReforgeLimits(string(header))
+	if err != nil {
+		return nil, floors{}, reforgeLimits{}, err
+	}
+
 	c, err := loadConfig(acDir, confFiles, false)
 	if err != nil {
-		return nil, floors{}, err
+		return nil, floors{}, limits, err
 	}
-	settings, f, err := build(c)
+	settings, f, err := build(c, limits)
 	if err != nil {
-		return nil, floors{}, err
+		return nil, floors{}, limits, err
 	}
 
 	if _, err := os.Stat(filepath.Join(acDir, installedModulesDir)); errors.Is(err, fs.ErrNotExist) {
 		log.Printf("no %s, so the installed confs weren't checked", installedModulesDir)
-		return settings, f, nil
+		return settings, f, limits, nil
 	}
 	installed, err := loadConfig(acDir, installedConfFiles, true)
 	if err != nil {
-		return nil, floors{}, err
+		return nil, floors{}, limits, err
 	}
-	installedSettings, installedFloors, err := build(installed)
+	installedSettings, installedFloors, err := build(installed, limits)
 	if err != nil {
-		return nil, floors{}, fmt.Errorf("with the confs in %s: %w", installedModulesDir, err)
+		return nil, floors{}, limits, fmt.Errorf("with the confs in %s: %w", installedModulesDir, err)
 	}
 	if !googleProto.Equal(settings, installedSettings) || f != installedFloors {
-		return nil, floors{}, fmt.Errorf("the server loads the module confs in %s, and they don't match their conf.dist files:\n"+
+		return nil, floors{}, limits, fmt.Errorf("the server loads the module confs in %s, and they don't match their conf.dist files:\n"+
 			"  conf.dist: %v, floors %+v\n  installed: %v, floors %+v",
 			installedModulesDir, settings, f, installedSettings, installedFloors)
 	}
-	return settings, f, nil
+	return settings, f, limits, nil
 }
 
 // loadConfig reads confs, then envFiles. With missingOK a missing conf is skipped, as worldserver

@@ -239,6 +239,7 @@ function toSimItem(item: Item): SimItem {
 		weaponDamageMax: item.weaponDamageMax,
 		weaponSpeed: item.weaponSpeed,
 		setName: item.setName,
+		serverStats: item.serverStats,
 	});
 }
 

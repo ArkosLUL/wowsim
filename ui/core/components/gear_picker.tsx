@@ -13,7 +13,7 @@ import { EquippedItem } from '../proto_utils/equipped_item';
 import { Gear } from '../proto_utils/gear.js';
 import { gemMatchesSocket, getEmptyGemSocketIconUrl } from '../proto_utils/gems';
 import { difficultyNames, professionNames, REP_FACTION_NAMES, REP_LEVEL_NAMES, slotNames } from '../proto_utils/names.js';
-import { reforgeAmount, reforgeLabel, reforgeStatTypeName, validReforges } from '../proto_utils/reforging';
+import { reforgeAmount, reforgeLabel, reforgeStatTypeName, reforgingFor, validReforges } from '../proto_utils/reforging';
 import { Stats } from '../proto_utils/stats';
 import { Sim } from '../sim.js';
 import { SimUI } from '../sim_ui';
@@ -100,6 +100,12 @@ export class GearPicker extends Component {
 
 		this.itemPickers = leftItemPickers.concat(rightItemPickers).sort((a, b) => a.slot - b.slot);
 	}
+}
+
+// The mod-reforging config the player's encounter runs under, which the reforge tab and the
+// "Reforged:" line follow.
+function playerReforging(player: Player<any>) {
+	return reforgingFor(player.sim.encounter.getServerSettings());
 }
 
 export class ItemRenderer extends Component {
@@ -201,7 +207,7 @@ export class ItemRenderer extends Component {
 		}
 
 		const reforge = newItem.reforge;
-		this.reforgeElem.textContent = reforge ? `Reforged: ${reforgeLabel(newItem.item, reforge)}` : '';
+		this.reforgeElem.textContent = reforge ? `Reforged: ${reforgeLabel(newItem.item, reforge, playerReforging(this.player))}` : '';
 
 		newItem.allSocketColors().forEach((socketColor, gemIdx) => {
 			const gemContainer = createGemContainer(socketColor, newItem.gems[gemIdx]);
@@ -281,6 +287,10 @@ export class ItemPicker extends Component {
 			if (this._equippedItem != null) {
 				this.player.setWowheadData(this._equippedItem, this.itemElem.iconElem);
 			}
+		});
+		// a changed reforge percentage or stat list moves every amount the picker shows
+		player.sim.encounter.serverSettingsChangeEmitter.on(() => {
+			this.item = this._equippedItem;
 		});
 	}
 
@@ -556,8 +566,10 @@ export class SelectorModal extends BaseModal {
 			return;
 		}
 		const item = equippedItem.item;
-		const reforges = validReforges(item);
-		if (reforges.length == 0) {
+		const config = playerReforging(this.player);
+		const reforges = validReforges(item, config);
+		// reforging off leaves no options, but an equipped reforge still needs its way out
+		if (reforges.length == 0 && !equippedItem.reforge) {
 			return;
 		}
 
@@ -606,7 +618,7 @@ export class SelectorModal extends BaseModal {
 		removeButton.value!.addEventListener('click', () => equipReforge(null));
 
 		const rows = reforges.map(reforge => {
-			const amount = reforgeAmount(item, reforge.fromStatType);
+			const amount = reforgeAmount(item, reforge.fromStatType, config);
 			const anchor = ref<HTMLAnchorElement>();
 			const row = (
 				<li className="selector-modal-list-item">

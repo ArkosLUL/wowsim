@@ -262,7 +262,7 @@ func TestCheckedLoadoutsStayPut(t *testing.T) {
 							continue
 						}
 						passed++
-						equipment := core.ProtoToEquipment(l.Equipment())
+						equipment := core.ProtoToEquipment(l.Equipment(), nil)
 						for slot, c := range l.Items {
 							if got := equipment[slot].ID; got != c.ItemID {
 								t.Errorf("%s: %s holds %d, want %d (loadout %v)", name, proto.ItemSlot(slot), got, c.ItemID, l.Items)

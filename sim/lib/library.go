@@ -119,6 +119,9 @@ func getDatabase(itemIds *int32, numItems int32, enchantIds *int32, numEnchants 
 			WeaponDamageMax:  item.WeaponDamageMax,
 			WeaponSpeed:      item.SwingSpeed,
 			SetName:          item.SetName,
+			ServerStats: core.MapSlice(item.ServerStats, func(stat core.ItemStat) *proto.ItemStat {
+				return &proto.ItemStat{StatType: stat.Type, Value: stat.Value}
+			}),
 		}
 	}
 	for i, enchantId := range eids {
