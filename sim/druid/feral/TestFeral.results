@@ -3,11 +3,11 @@ character_stats_results: {
  value: {
   final_stats: 648.1794
   final_stats: 1403.3976
-  final_stats: 1669.21062
+  final_stats: 1668.61596
   final_stats: 385.33968
   final_stats: 394.85424
   final_stats: 500
-  final_stats: 125
+  final_stats: 126
   final_stats: 255
   final_stats: 990.66126
   final_stats: 318
@@ -21,7 +21,7 @@ character_stats_results: {
   final_stats: 8996.0952
   final_stats: 0
   final_stats: 0
-  final_stats: 9178.2952
+  final_stats: 9177.7952
   final_stats: 4617.13736
   final_stats: 0
   final_stats: 0
@@ -29,7 +29,7 @@ character_stats_results: {
   final_stats: 0
   final_stats: 0
   final_stats: 0
-  final_stats: 24299.9562
+  final_stats: 24294.0096
   final_stats: 75
   final_stats: 75
   final_stats: 75
@@ -520,7 +520,7 @@ dps_results: {
  value: {
   dps: 7540.57805
   tps: 5418.87481
-  hps: 12.43348
+  hps: 12.43043
  }
 }
 dps_results: {
@@ -534,7 +534,7 @@ dps_results: {
  key: "TestFeral-AllItems-LasherweaveRegalia"
  value: {
   dps: 6362.57797
-  tps: 4629.0006
+  tps: 4628.98957
  }
 }
 dps_results: {
@@ -576,7 +576,7 @@ dps_results: {
  key: "TestFeral-AllItems-Malfurion'sRegalia"
  value: {
   dps: 6048.80447
-  tps: 4399.74871
+  tps: 4399.73337
  }
 }
 dps_results: {
