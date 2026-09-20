@@ -13,12 +13,18 @@ import (
 	"github.com/wowsims/wotlk/sim/core/stats"
 )
 
+// addPct scales an aura amount by a talent's percentage the way the server does. Its CalcValue
+// returns int32, so Improved Power Word: Fortitude is 214, not 214.5.
+func addPct(base float64, pct float64) float64 {
+	return base + math.Trunc(base*pct/100)
+}
+
 // Applies buffs that affect individual players.
 func applyBuffEffects(agent Agent, raidBuffs *proto.RaidBuffs, partyBuffs *proto.PartyBuffs, individualBuffs *proto.IndividualBuffs) {
 	character := agent.GetCharacter()
 
 	if raidBuffs.ArcaneBrilliance || raidBuffs.FelIntelligence > 0 {
-		val := GetTristateValueFloat(raidBuffs.FelIntelligence, 48.0, 48.0*1.1)
+		val := GetTristateValueFloat(raidBuffs.FelIntelligence, 48, addPct(48, 10))
 		if raidBuffs.ArcaneBrilliance {
 			val = 60.0
 		}
@@ -117,7 +123,7 @@ func applyBuffEffects(agent Agent, raidBuffs *proto.RaidBuffs, partyBuffs *proto
 
 	if raidBuffs.PowerWordFortitude != proto.TristateEffect_TristateEffectMissing {
 		character.AddStats(stats.Stats{
-			stats.Stamina: GetTristateValueFloat(raidBuffs.PowerWordFortitude, 165, 165*1.3),
+			stats.Stamina: GetTristateValueFloat(raidBuffs.PowerWordFortitude, 165, addPct(165, 30)),
 		})
 	} else if raidBuffs.ScrollOfStamina {
 		character.AddStats(stats.Stats{
@@ -130,7 +136,7 @@ func applyBuffEffects(agent Agent, raidBuffs *proto.RaidBuffs, partyBuffs *proto
 		})
 	}
 	if raidBuffs.DivineSpirit || raidBuffs.FelIntelligence > 0 {
-		v := GetTristateValueFloat(raidBuffs.FelIntelligence, 64.0, 64.0*1.1)
+		v := GetTristateValueFloat(raidBuffs.FelIntelligence, 64, addPct(64, 10))
 		if raidBuffs.DivineSpirit {
 			v = 80.0
 		}
@@ -197,7 +203,7 @@ func applyBuffEffects(agent Agent, raidBuffs *proto.RaidBuffs, partyBuffs *proto
 
 	if raidBuffs.DevotionAura != proto.TristateEffect_TristateEffectMissing {
 		character.AddStats(stats.Stats{
-			stats.Armor: GetTristateValueFloat(raidBuffs.DevotionAura, 1205, 1807.5),
+			stats.Armor: GetTristateValueFloat(raidBuffs.DevotionAura, 1205, addPct(1205, 50)),
 		})
 	}
 
@@ -254,9 +260,13 @@ func applyBuffEffects(agent Agent, raidBuffs *proto.RaidBuffs, partyBuffs *proto
 		}
 	}
 
-	if individualBuffs.BlessingOfWisdom > 0 || raidBuffs.ManaSpringTotem > 0 {
+	// Blessing of Wisdom rank 9 is worth one more mp5 than Mana Spring rank 8. They don't stack, so
+	// the better one wins.
+	blessingOfWisdomMP5 := GetTristateValueFloat(individualBuffs.BlessingOfWisdom, 92, addPct(92, 20))
+	manaSpringMP5 := GetTristateValueFloat(raidBuffs.ManaSpringTotem, 91, addPct(91, 20))
+	if mp5 := max(blessingOfWisdomMP5, manaSpringMP5); mp5 > 0 {
 		character.AddStats(stats.Stats{
-			stats.MP5: GetTristateValueFloat(max(individualBuffs.BlessingOfWisdom, raidBuffs.ManaSpringTotem), 91, 109),
+			stats.MP5: mp5,
 		})
 	}
 
@@ -430,7 +440,6 @@ func ThornsAura(character *Character, points int32) *Aura {
 		ActionID:    actionID,
 		SpellSchool: SpellSchoolNature,
 		ProcMask:    ProcMaskEmpty,
-		Flags:       SpellFlagBinary,
 
 		DamageMultiplier: 1,
 		ThreatMultiplier: 1,
@@ -1383,7 +1392,8 @@ func BattleShoutAura(unit *Unit, commandingPresencePts int32, boomingVoicePts in
 		Duration:   time.Duration(float64(time.Minute*2)*(1+0.25*float64(boomingVoicePts))) + TernaryDuration(minorGlyph, 2*time.Minute, 0),
 		BuildPhase: CharacterBuildPhaseBuffs,
 	})
-	attackPowerBonusEffect(aura, math.Floor(550*(1+0.05*float64(commandingPresencePts))))
+	// 550 at level 80: 47436's 547 base points gain realPointsPerLevel 1 per level past its 78.
+	attackPowerBonusEffect(aura, addPct(550, 5*float64(commandingPresencePts)))
 	return aura
 }
 
@@ -1397,7 +1407,7 @@ func BlessingOfMightAura(unit *Unit, impBomPts int32) *Aura {
 			aura.Activate(sim)
 		},
 	})
-	attackPowerBonusEffect(aura, math.Floor(550*(1+GetTristateValueFloat(proto.TristateEffect(impBomPts), 0.12, 0.25))))
+	attackPowerBonusEffect(aura, addPct(550, GetTristateValueFloat(proto.TristateEffect(impBomPts), 12, 25)))
 	return aura
 }
 
@@ -1426,7 +1436,7 @@ func CommandingShoutAura(unit *Unit, commandingPresencePts int32, boomingVoicePt
 		Duration:   time.Duration(float64(time.Minute*2)*(1+0.25*float64(boomingVoicePts))) + TernaryDuration(minorGlyph, 2*time.Minute, 0),
 		BuildPhase: CharacterBuildPhaseBuffs,
 	})
-	healthBonusEffect(aura, 2255*(1+0.05*float64(commandingPresencePts)))
+	healthBonusEffect(aura, addPct(2255, 5*float64(commandingPresencePts)))
 	return aura
 }
 
@@ -1440,7 +1450,7 @@ func BloodPactAura(unit *Unit, impImpPts int32) *Aura {
 			aura.Activate(sim)
 		},
 	})
-	healthBonusEffect(aura, 1330*(1+0.1*float64(impImpPts)))
+	healthBonusEffect(aura, addPct(1330, 10*float64(impImpPts)))
 	return aura
 }
 
