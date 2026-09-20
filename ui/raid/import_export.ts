@@ -18,6 +18,7 @@ import {
 	UnitReference_Type,
 } from '../core/proto/common';
 import { RaidSimSettings } from '../core/proto/ui';
+import { Database } from '../core/proto_utils/database';
 import { professionNames, raceNames } from '../core/proto_utils/names';
 import {
 	DeathknightSpecs,
@@ -35,7 +36,7 @@ import { MAX_NUM_PARTIES } from '../core/raid';
 import { EventID, TypedEvent } from '../core/typed_event';
 import { bucket, distinct } from '../core/utils';
 import { playerPresets } from './presets';
-import { RaidSimUI } from './raid_sim_ui';
+import { allRaidEquipment, RaidSimUI } from './raid_sim_ui';
 
 export class RaidJsonImporter extends Importer {
 	private readonly simUI: RaidSimUI;
@@ -55,6 +56,7 @@ export class RaidJsonImporter extends Importer {
 
 	async onImport(data: string) {
 		const settings = RaidSimSettings.fromJsonString(data, { ignoreUnknownFields: true });
+		await Database.loadLeftoversIfNecessary(allRaidEquipment(settings.raid));
 		this.simUI.fromProto(TypedEvent.nextEventID(), settings);
 		this.close();
 	}

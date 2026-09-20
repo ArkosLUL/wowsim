@@ -4,9 +4,10 @@ import { addRaidSimAction, RaidSimResultsManager, ReferenceData } from "../core/
 
 import { Player } from "../core/player.js";
 import { Raid as RaidProto } from "../core/proto/api.js";
-import { Class, Encounter as EncounterProto, RaidBuffs, TristateEffect } from "../core/proto/common.js";
+import { Class, Encounter as EncounterProto, EquipmentSpec, ItemSpec, RaidBuffs, TristateEffect } from "../core/proto/common.js";
 import { Blessings } from "../core/proto/paladin.js";
 import { BlessingsAssignments, RaidSimSettings, SavedEncounter } from "../core/proto/ui.js";
+import { Database } from "../core/proto_utils/database.js";
 import { playerToSpec } from "../core/proto_utils/utils.js";
 import { Sim } from "../core/sim.js";
 import { SimUI } from "../core/sim_ui.js";
@@ -20,6 +21,7 @@ import { BlessingsPicker } from "./blessings_picker.js";
 import { implementedSpecs } from "./presets.js";
 import { RaidPicker } from "./raid_picker.js";
 
+import { RaidAcoreImporter } from "./acore_importer.js";
 import * as ImportExport from "./import_export.js";
 
 declare var pako: any;
@@ -31,6 +33,20 @@ export interface RaidSimConfig {
 const extraKnownIssues: Array<string> = [
 	//'We\'re still missing implementations for many specs. If you\'d like to help us out, check out our <a href="https://github.com/wowsims/wotlk">Github project</a> or <a href="https://discord.gg/jJMPr9JWwx">join our discord</a>!',
 ];
+
+// Every item the saved raid mentions, worn or swapped, so Database.loadLeftoversIfNecessary can
+// decide in one call.
+export function allRaidEquipment(raid: RaidProto | undefined): EquipmentSpec {
+	const items: Array<ItemSpec> = [];
+	(raid?.parties || []).forEach(party =>
+		party.players.forEach(player => {
+			(player.equipment?.items || []).forEach(item => items.push(item));
+			const swap = player.itemSwap;
+			[swap?.mhItem, swap?.ohItem, swap?.rangedItem].forEach(item => item && items.push(item));
+		}),
+	);
+	return EquipmentSpec.create({ items: items });
+}
 
 export class RaidSimUI extends SimUI {
 	private readonly config: RaidSimConfig;
@@ -72,23 +88,34 @@ export class RaidSimUI extends SimUI {
 		this.addDetailedResultsTab();
 	}
 
-	private loadSettings() {
+	private async loadSettings() {
 		const initEventID = TypedEvent.nextEventID();
-		TypedEvent.freezeAllAndDo(() => {
-			let loadedSettings = false;
 
-			const savedSettings = window.localStorage.getItem(this.getSettingsStorageKey());
-			if (savedSettings != null) {
-				try {
-					const settings = RaidSimSettings.fromJsonString(savedSettings);
-					this.fromProto(initEventID, settings);
-					loadedSettings = true;
-				} catch (e) {
-					console.warn('Failed to parse saved settings: ' + e);
-				}
+		let savedProto: RaidSimSettings | null = null;
+		const savedSettings = window.localStorage.getItem(this.getSettingsStorageKey());
+		if (savedSettings != null) {
+			try {
+				savedProto = RaidSimSettings.fromJsonString(savedSettings);
+			} catch (e) {
+				console.warn('Failed to parse saved settings: ' + e);
 			}
+		}
 
-			if (!loadedSettings) {
+		// Items that have left db.json still sit in the saved raid, so pull the leftovers DB in
+		// before the players are rebuilt from it. Has to happen outside the freeze below, and a
+		// failed fetch must not cost us the whole raid.
+		if (savedProto) {
+			try {
+				await Database.loadLeftoversIfNecessary(allRaidEquipment(savedProto.raid));
+			} catch (e) {
+				console.warn('Failed to load the leftovers database: ' + e);
+			}
+		}
+
+		TypedEvent.freezeAllAndDo(() => {
+			if (savedProto) {
+				this.fromProto(initEventID, savedProto);
+			} else {
 				this.applyDefaults(initEventID);
 			}
 
@@ -108,6 +135,7 @@ export class RaidSimUI extends SimUI {
 	private addTopbarComponents() {
 		this.simHeader.addImportLink('JSON', (parent) => new ImportExport.RaidJsonImporter(this.rootElem, this));
 		this.simHeader.addImportLink('WCL', (parent) => new ImportExport.RaidWCLImporter(this.rootElem, this));
+		this.simHeader.addImportLink('AzerothCore', () => new RaidAcoreImporter(this.rootElem, this));
 
 		this.simHeader.addExportLink('JSON', (parent) => new ImportExport.RaidJsonExporter(this.rootElem, this));
 	}

@@ -1,6 +1,7 @@
 import { JsonObject } from '@protobuf-ts/runtime';
 import pako from 'pako';
 
+import { buildCharacterImport, parseRoster, rosterClass, rosterEquipmentSpec } from '../../raid/acore_roster';
 import { IndividualSimUI } from '../individual_sim_ui';
 import {
 	Class,
@@ -15,6 +16,7 @@ import {
 import { IndividualSimSettings } from '../proto/ui';
 import { Database } from '../proto_utils/database';
 import { classNames, nameToClass, nameToProfession,nameToRace } from '../proto_utils/names';
+import { specNames } from '../proto_utils/utils';
 import { SimSettingCategories } from '../sim';
 import { SimUI } from '../sim_ui';
 import { classGlyphsConfig, talentSpellIdsToTalentString } from '../talents/factory';
@@ -63,9 +65,11 @@ export abstract class Importer extends BaseModal {
 			const uploadInput = this.rootElem.getElementsByClassName('importer-upload-input')[0] as HTMLButtonElement;
 			uploadInput.addEventListener('change', async event => {
 				const data: string = await (event as any).target.files[0].text();
-				this.textElem.textContent = data;
+				this.textElem.value = data;
+				this.onTextChanged(data);
 			});
 		}
+		this.textElem.addEventListener('input', () => this.onTextChanged(this.textElem.value));
 
 		this.importButton = this.rootElem.getElementsByClassName('import-button')[0] as HTMLButtonElement;
 		this.importButton.addEventListener('click', async () => {
@@ -79,6 +83,11 @@ ${error?.message}`);
 	}
 
 	abstract onImport(data: string): Promise<void>;
+
+	// Fires when the pasted or uploaded text changes, for importers whose controls depend on it.
+	protected onTextChanged(_data: string) {
+		// most importers only read the text when Import is clicked
+	}
 
 	protected async finishIndividualImport<SpecType extends Spec>(
 		simUI: IndividualSimUI<SpecType>,
@@ -552,6 +561,101 @@ export class IndividualAddonImporter<SpecType extends Spec> extends Importer {
 		const equipmentSpec = EquipmentSpec.fromJson(gearJson);
 
 		this.finishIndividualImport(this.simUI, charClass, race, equipmentSpec, talentsStr, glyphs, professions);
+	}
+}
+
+export class IndividualAcoreImporter<SpecType extends Spec> extends Importer {
+	private readonly simUI: IndividualSimUI<SpecType>;
+	private readonly characterPicker: HTMLSelectElement;
+
+	constructor(parent: HTMLElement, simUI: IndividualSimUI<SpecType>) {
+		super(parent, simUI, 'AzerothCore Import', true);
+		this.simUI = simUI;
+
+		this.descriptionElem.innerHTML = `
+			<p>
+				Import one character from an AzerothCore roster file, written by
+				<code>go run ./tools/database/acraid -leader &lt;name&gt; -out raid.json</code>.
+			</p>
+			<p>
+				This brings over gear (with gems, enchants and reforges), race, racial traits, talents, glyphs and
+				professions. It does NOT import buffs, debuffs, consumes, rotation, or custom stats.
+			</p>
+			<p>
+				To import, upload the roster file or paste it below, pick the character, then click 'Import'.
+			</p>
+		`;
+
+		const pickerElem = document.createElement('div');
+		pickerElem.classList.add('acore-character-picker', 'mb-3');
+		pickerElem.innerHTML = `
+			<label class="form-label">Character</label>
+			<select class="form-select acore-character-select"></select>
+		`;
+		this.body.prepend(pickerElem);
+		this.characterPicker = pickerElem.getElementsByClassName('acore-character-select')[0] as HTMLSelectElement;
+		this.refreshCharacters('');
+	}
+
+	protected onTextChanged(data: string) {
+		this.refreshCharacters(data);
+	}
+
+	private refreshCharacters(data: string) {
+		const previous = this.characterPicker.value;
+		const playerClass = this.simUI.player.getClass();
+		let names: Array<string> = [];
+		try {
+			names = parseRoster(data)
+				.characters.filter(char => rosterClass(char.classId) == playerClass)
+				.map(char => char.name);
+		} catch {
+			// Nothing usable pasted yet; the Import button says why.
+		}
+
+		// Names come out of an uploaded file, so build the options instead of templating HTML.
+		this.characterPicker.innerHTML = '';
+		if (names.length == 0) {
+			this.characterPicker.appendChild(new Option(`No ${classNames.get(playerClass)} in this roster`, ''));
+			return;
+		}
+		names.forEach(name => this.characterPicker.appendChild(new Option(name, name)));
+		if (names.includes(previous)) {
+			this.characterPicker.value = previous;
+		}
+	}
+
+	async onImport(data: string) {
+		const roster = parseRoster(data);
+		await this.simUI.sim.waitForInit();
+		const db = await Database.loadLeftoversIfNecessary(rosterEquipmentSpec(roster));
+
+		const playerClass = this.simUI.player.getClass();
+		const candidates = roster.characters.filter(char => rosterClass(char.classId) == playerClass);
+		if (candidates.length == 0) {
+			throw new Error(`This roster has no ${classNames.get(playerClass)} in it.`);
+		}
+		const picked = candidates.find(char => char.name == this.characterPicker.value) || candidates[0];
+
+		const imported = buildCharacterImport(db, picked);
+		await this.finishIndividualImport(
+			this.simUI,
+			imported.playerClass,
+			imported.race,
+			imported.equipment,
+			imported.talentsString,
+			imported.glyphs,
+			imported.professions,
+		);
+		this.simUI.player.setRacialTraits(TypedEvent.nextEventID(), imported.racialTraits);
+
+		const notes = (roster.warnings || []).concat(picked.warnings || []).concat(imported.warnings);
+		if (imported.spec != this.simUI.player.spec) {
+			notes.unshift(`${picked.name}'s talents look like ${specNames[imported.spec]}, but this is the ${specNames[this.simUI.player.spec]} page.`);
+		}
+		if (notes.length) {
+			alert(`${picked.name}:\n\n${notes.join('\n')}`);
+		}
 	}
 }
 

@@ -456,6 +456,11 @@ export abstract class IndividualSimUI<SpecType extends Spec> extends SimUI {
 			_parent => new Importers.IndividualAddonImporter(this.rootElem, this),
 			true,
 		);
+		this.simHeader.addImportLink(
+			'AzerothCore',
+			_parent => new Importers.IndividualAcoreImporter(this.rootElem, this),
+			true,
+		);
 
 		this.simHeader.addExportLink(
 			'Link',
