@@ -635,7 +635,7 @@ Specs for the `PAR-` items in the [wave registry](../wave-loop/wave-loop.PLAN.md
 - **`sim/core/serverdata`:** regenerate it with `gen_serverdata`, never by hand. It covers the sim's spell-id
   constants and what they trigger, so name any spell id the sim computes (Relentless Strikes'
   `58420 + talentPoints`) as a constant. One item per wave owns the generated files: P6-2 (C), P3-2 (D),
-  P3-4 (E).
+  P3-4 (E), P7-0a (F).
 - **`TicksCanCrit`:** P3-5 adds it with default false. Each class item declares which of its DoTs may crit,
   and P8 flips the default.
 

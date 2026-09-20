@@ -72,9 +72,10 @@ eleven class items on top and a profile can no longer say what cost what.
 
 ## Current wave
 
-- Wave: F, not started. Wave E (base `328553aa9`) landed on `master`.
-- Base SHA: set at wave start.
-- Workflow runId: none.
+- Wave: F, running. Wave E (base `328553aa9`) landed on `master`.
+- Base SHA: `362b22465`.
+- Workflow runId: `wf_eada7eed-df2`, transcripts (with `journal.jsonl`) under
+  `~/.claude/projects/g--DevStuff-GitHub-wowsimwotlk/2b733101-1b9b-4106-be24-1e2f5864000d/subagents/workflows/`.
 
 ## BiS baseline
 
@@ -132,6 +133,10 @@ whatever these say.
 | PAR-P3-5 | merged | `edae7e9c6` | 34 goldens promoted in `0f1ad932b` |
 | PAR-P6-1 | merged | `9e4030986` | `db.json` regenerated in `70711a632`, replay fixtures in `33a7a63d7`; e2e `d8d7310` |
 | RI-3 | merged | `ec483fa1a` | offline checks in `ui/raid/acore_harness` (`5b0e5703c`); the user's click-through found a truncated import alert and squashed checkboxes, both fixed in `059eb8004` |
+| PAR-P7-0a | running | | owns `sim/core/serverdata/*_auto_gen.go` this wave |
+| PAR-P7-0b | running | | |
+| BIS-tanks-racials | running | | Titanguard lands here, so `db.json` regenerates at integration |
+| PAR-TOOLS-RR | running | | holds the server lock for the recorded runs |
 
 Later WIs are added as their wave starts.
 
