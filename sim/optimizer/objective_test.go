@@ -147,3 +147,66 @@ func TestNewObjectiveFury(t *testing.T) {
 	}
 	t.Logf("%.3f ± %.3f DPS per AP; J = %.1f ± %.1f AP", w.Mean, w.SE, score.Mean, score.SE)
 }
+
+// The survival/threat slider puts both sides into J: taking less damage raises it, and so does
+// landing more threat.
+func TestTankSliderObjective(t *testing.T) {
+	slider, err := objectiveWeights(&proto.OptimizerSettings{TankSurvival: 0.7})
+	want := Metrics{MetricTPS: 0.3, MetricDTPS: 0.35, MetricTMI: 0.35}
+	if err != nil {
+		t.Fatal(err)
+	}
+	for m := range slider {
+		if !near(slider[m], want[m], 1e-9) {
+			t.Fatalf("slider weights = %v, want %v", slider, want)
+		}
+	}
+	// the UI sends both, and its own weights win
+	both := &proto.OptimizerSettings{TankSurvival: 0.7, MetricWeights: &proto.OptimizerMetrics{Dps: 1}}
+	if got, err := objectiveWeights(both); err != nil || got != (Metrics{MetricDPS: 1}) {
+		t.Errorf("weights alongside the slider = %v, %v", got, err)
+	}
+	if _, err := objectiveWeights(&proto.OptimizerSettings{TankSurvival: 1.5}); err == nil {
+		t.Error("a slider past 1 didn't fail")
+	}
+
+	const (
+		quieterID = 90001
+		angrierID = 90002
+	)
+	r := tankRequest(t, nil)
+	r.Settings.TankSurvival = 0.7
+	fake := newFakeEvaluator(func(p Point) Metrics {
+		m := Metrics{
+			MetricTPS:  3000 + p.Offset[stats.AttackPower],
+			MetricDTPS: 1000 - 0.05*p.Offset[stats.Armor],
+			MetricTMI:  50 - 0.001*p.Offset[stats.Armor],
+		}
+		switch p.Loadout.Items[proto.ItemSlot_ItemSlotHead].ItemID {
+		case quieterID:
+			m[MetricDTPS] -= 50
+		case angrierID:
+			m[MetricTPS] += 50
+		}
+		return m
+	})
+	fake.shared, fake.own = 0.01, 0.0001
+
+	o, err := NewObjective(context.Background(), fake, r, 1000)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	wearing := func(id int32) Point {
+		l := r.Seed
+		l.Items[proto.ItemSlot_ItemSlotHead].ItemID = id
+		return Point{Loadout: l}
+	}
+	evals := evaluate(t, fake, 1000, Point{Loadout: r.Seed}, wearing(quieterID), wearing(angrierID))
+	if d := o.Delta(evals[0], evals[1]); d.Mean <= 2*d.SE {
+		t.Errorf("50 less DTPS moved J by %+v; it should raise it", d)
+	}
+	if d := o.Delta(evals[0], evals[2]); d.Mean <= 2*d.SE {
+		t.Errorf("50 more TPS moved J by %+v; it should raise it", d)
+	}
+}

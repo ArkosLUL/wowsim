@@ -395,31 +395,59 @@ the request and `seedChanges`, one line per trim.
 
 ### BIS-tanks-racials (wave F)
 
-**Owns:**
-- `sim/core/sheet.go`, `racial.go`, `critimmunity.go`
-- the tank slider
-- the per-phase encounter table, with the healing model re-derived per boss and each boss's
-  `raid_difficulty` set (Anub'arak and the Lich King are 25 heroic; unset reads as 25 normal)
-- the tab controls
-
-It leaves `sim/core/racials.go` alone.
+**Owns:** `sim/core/sheet.go`, `sim/optimizer/{racial,critimmunity}.go`, the tank slider, the per-phase
+tank encounter, the tab controls.
 
 It also adds the weapon enchant 3851 Titanguard to `tools/database/enchant_overrides.go`, which the sim's
-hand-written list never had, so a tank imports 50 Stamina light:
-`{EffectId: 3851, ItemId: 44946, SpellId: 62257, Name: "Titanguard", Stats: stats.Stats{stats.Stamina: 50}}`,
-a weapon enchant. That's item data, so `db.json` regenerates at integration, and no golden wears it.
+hand-written list never had, so a tank imports 50 Stamina light. That's item data, so `db.json`
+regenerates at integration, and no golden wears it.
 
-A healing model with Hps 0 and a cadence, or an encounter that ends at a health threshold, makes the
-evaluator rerun core's presim in every shard (`GetPresimOptions`). That costs about 40% more, and each
-point's HPS then comes from its own DTPS, which skews DTPS, TMI and death-chance deltas. Pin the healing
-Hps from the seed in `Base` first. BIS-tank-boss keeps it pinned.
+**As built:**
+- `core.ComputePlayerSheet(raid, encounter, raidIndex)` returns `PlayerSheet{FinalStats,
+  MeleeCritTakenChance, MeleeAttacker}`, the crit chance from the boss's own auto attack
+  (`enemyCritChance`). `MeleeAttacker` is false when nothing swings, so an unknown chance never reads as
+  immune. `optimizer.playerSheet` wraps it and replaces `Pool.finalStats` wherever a result is built,
+  which is what fills `melee_crit_taken_chance`.
+- Crit immunity is a Defense floor. `requiredDefense` bisects bonus Defense from -(seed Defense) to
+  +2000 rating for D*, the sheet Defense where the boss's crit reaches 0; `execute` appends it to
+  `StatMinimums` before `CompilePool`, so the pool, the surrogate's penalty and every rule check enforce
+  it. It bisects downwards too, or a seed already past D* would have to keep every point it has. D*
+  holds resilience and talent crit reductions at the seed, so each result's own sheet is rechecked and
+  warns when it is still critable.
+- The slider is `TankWeights(survival)`: DTPS and TMI take half the survival share each, TPS the rest.
+  `objectiveWeights` reads it only when `metric_weights` is all zero, so the UI's weights win.
+- Stage "Racial screen", after Objective: `screenRacials` scores the seed under all 10 races at
+  screening iterations and keeps the top 3 plus anything within 2 se of the 3rd, capped at 6: several
+  races are worth nothing to a spec and would otherwise tie exactly. The search runs once, since
+  the surrogate prices gear only; `withRacialTraits` then pairs every gear set with every finalist, and
+  verification sims them paired and picks the race. `Top` keys on gear *and* traits.
+- `run.pinHealingModel` reruns `Character.GetPresimOptions` once at Setup, 100 iterations at seed 1
+  with healing off and then 1.5x DTPS, and writes the Hps into `Base`. Without it, a healing model with
+  Hps 0 and a cadence (or an encounter ending at a health threshold) makes every shard rerun core's
+  presim: about 40% more sims, and each point's healing then follows its own damage taken, which skews
+  the DTPS, TMI and death-chance deltas. BIS-tank-boss keeps it pinned.
+- Tab: the survival/threat slider, a crit-immunity checkbox, the 6-metric editor under Advanced, and a
+  racial-traits select. Searching is now the default for every spec. `individual_sim_ui.ts` registers
+  the tab for tanks too.
+- `pool_builder.ts` `TANK_BOSSES` maps each phase to a preset path and `raid_difficulty`: Patchwerk 25,
+  Algalon 25, Anub'arak 25H, Lich King 25H for P4 and P5 (unset reads as 25 normal). It forces the
+  target into `raid.tanks[0]`, since the preset's `tankIndex` points there and nothing swings otherwise,
+  and `healingModelForBoss` re-derives the healing from that boss with `Player.setDefaultHealingParams`'
+  formulas, which also keeps Hps non-zero.
 
-**Tests:**
-- DTPS↓ and TPS↑ both raise J.
-- The Prot Paladin D* matches the bisection.
-- A feral with Survival of the Fittest needs less defense.
-- An Orc warrior with Human traits gets sword expertise.
-- Slow: Prot Paladin P3 and Feral P2 end up crit-immune with J ≥ the preset's.
+**Tests:** the slider raises J on both a DTPS drop and a TPS gain; D* is immune at its value and critable
+one rating under; a feral without Survival of the Fittest needs 689 more Defense rating; an Orc warrior
+with Human traits gains sword expertise; a fake-evaluator run picks the best race and reports the screen.
+Slow: Prot Paladin P3 and Feral P2, both crit immune, with J ≥ the preset's.
+
+**Findings:**
+- The slow suite trims its seed to the pool, as the UI does: the Prot Paladin P3 preset wears an
+  Alliance-only trinket and the Feral P2 preset a PvP helm, and an illegal seed makes every pick an
+  improvement whatever it scores.
+- `realpool_test.go` had no Druid rows in its class weapon and ranged tables, so bears got no weapon or
+  idol candidates.
+- The Feral P2 preset stores 5 of its enchants by spell id (38373, 44957, 55016, 63770, 67839) instead
+  of effect id, so the sim applies none of them.
 
 ### BIS-batch-ui (wave G)
 

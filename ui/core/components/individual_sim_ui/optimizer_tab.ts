@@ -2,7 +2,15 @@ import { REPO_NAME } from '../../constants/other';
 import { setItemQualityCssClass } from '../../css_utils';
 import { IndividualSimUI } from '../../individual_sim_ui';
 import { ALL_SOURCE_KINDS, loadCatalog, MAX_CONTENT_PHASE, MIN_CONTENT_PHASE, SOURCE_KINDS } from '../../optimizer/catalog';
-import { ALL_SLOTS, buildOptimizeRequest, BuiltRequest, defaultTabSettings, OptimizerTabSettings } from '../../optimizer/pool_builder';
+import {
+	ALL_SLOTS,
+	buildOptimizeRequest,
+	BuiltRequest,
+	defaultTabSettings,
+	OptimizerTabSettings,
+	tankEncounter,
+	tankMetricWeights,
+} from '../../optimizer/pool_builder';
 import { AsyncAPIResult, OptimizeGearRequest, ProgressMetrics } from '../../proto/api';
 import { EquipmentSpec, ItemSpec, Race, Spec, Stat } from '../../proto/common';
 import {
@@ -10,6 +18,7 @@ import {
 	OptimizerLoadoutResult,
 	OptimizerMetrics,
 	OptimizerProgress,
+	OptimizerRacialMode,
 	OptimizerResult,
 	OptimizerSlotAlternative,
 	StatMinimum,
@@ -19,6 +28,7 @@ import { EquippedItem } from '../../proto_utils/equipped_item';
 import { Gear } from '../../proto_utils/gear';
 import { getClassStatName, raceNames, slotNames } from '../../proto_utils/names';
 import { Stats } from '../../proto_utils/stats';
+import { isTankSpec } from '../../proto_utils/utils';
 import { SimError } from '../../sim';
 import { TypedEvent } from '../../typed_event';
 import { downloadString } from '../../utils';
@@ -48,6 +58,11 @@ const METRIC_LABELS: Array<[keyof OptimizerMetrics, string]> = [
 	['dtps', 'DTPS'],
 	['tmi', 'TMI'],
 	['pDeath', 'Death chance'],
+];
+
+const RACIAL_MODES: Array<{ mode: OptimizerRacialMode; label: string }> = [
+	{ mode: OptimizerRacialMode.OptimizerRacialSearch, label: 'Search every race' },
+	{ mode: OptimizerRacialMode.OptimizerRacialKeepCurrent, label: 'Keep my traits' },
 ];
 
 // The web server's refusal while another run holds the optimizer (sim/web/main.go).
@@ -129,8 +144,8 @@ export class OptimizerTab extends SimTab {
 			newElement(
 				'p',
 				'optimizer-hint',
-				'Finds the best items, gems, enchants and reforges for the chosen content phase, from what the server hands out by then. ' +
-					'It optimizes your own DPS against the buffs on the Settings tab, on one level 83 boss for your encounter length. ' +
+				'Finds the best items, gems, enchants, reforges and racial traits for the chosen content phase, from what the server hands ' +
+					'out by then. It optimizes your own metrics against the buffs on the Settings tab, over your encounter length. ' +
 					'Results follow the sim, so they are only as good as its model of the server.',
 			),
 		);
@@ -171,6 +186,10 @@ export class OptimizerTab extends SimTab {
 				statMinimums: Array.isArray(saved.statMinimums) ? saved.statMinimums.map((floor: any) => StatMinimum.fromJson(floor)) : [],
 				lockedSlots: numbers(saved.lockedSlots, []).filter(slot => ALL_SLOTS.includes(slot)),
 				excludedItemIds: numbers(saved.excludedItemIds, []),
+				tankSurvival: typeof saved.tankSurvival == 'number' ? Math.min(1, Math.max(0, saved.tankSurvival)) : defaults.tankSurvival,
+				requireCritImmunity: typeof saved.requireCritImmunity == 'boolean' ? saved.requireCritImmunity : defaults.requireCritImmunity,
+				racialMode: RACIAL_MODES.some(m => m.mode == saved.racialMode) ? saved.racialMode : defaults.racialMode,
+				metricWeights: saved.metricWeights ? OptimizerMetrics.fromJson(saved.metricWeights) : undefined,
 			};
 		} catch (e) {
 			console.warn('Ignoring saved optimizer settings: ' + e);
@@ -179,7 +198,11 @@ export class OptimizerTab extends SimTab {
 	}
 
 	private storeSettings() {
-		const settings = { ...this.settings, statMinimums: this.settings.statMinimums.map(floor => StatMinimum.toJson(floor)) };
+		const settings = {
+			...this.settings,
+			statMinimums: this.settings.statMinimums.map(floor => StatMinimum.toJson(floor)),
+			metricWeights: this.settings.metricWeights ? OptimizerMetrics.toJson(this.settings.metricWeights) : undefined,
+		};
 		window.localStorage.setItem(this.getSettingsKey(), JSON.stringify(settings));
 	}
 
@@ -224,6 +247,10 @@ export class OptimizerTab extends SimTab {
 		phaseSelect.addEventListener('change', () => this.changeSettings(s => (s.contentPhase = parseInt(phaseSelect.value))));
 		this.setupBody.appendChild(this.labeled('Content phase', phaseSelect));
 
+		this.setupBody.appendChild(
+			this.labeled('Fight', newElement('div', undefined, this.bossName()), 'Your encounter length and server settings carry over.'),
+		);
+
 		const effortSelect = newElement('select', 'form-select');
 		for (const { effort, label } of EFFORTS) {
 			const option = newElement('option', undefined, label);
@@ -233,6 +260,20 @@ export class OptimizerTab extends SimTab {
 		}
 		effortSelect.addEventListener('change', () => this.changeSettings(s => (s.effort = parseInt(effortSelect.value))));
 		this.setupBody.appendChild(this.labeled('Effort', effortSelect));
+
+		this.buildObjective();
+
+		const racialSelect = newElement('select', 'form-select');
+		for (const { mode, label } of RACIAL_MODES) {
+			const option = newElement('option', undefined, label);
+			option.value = String(mode);
+			option.selected = mode == this.settings.racialMode;
+			racialSelect.appendChild(option);
+		}
+		racialSelect.addEventListener('change', () => this.changeSettings(s => (s.racialMode = parseInt(racialSelect.value))));
+		this.setupBody.appendChild(
+			this.labeled('Racial traits', racialSelect, 'A search scores all ten races on your gear, then runs the best few in full.'),
+		);
 
 		const sources = newElement('div', 'optimizer-checkbox-grid');
 		for (const { kind, label } of SOURCE_KINDS) {
@@ -253,6 +294,100 @@ export class OptimizerTab extends SimTab {
 			button('Export request', 'btn-secondary', () => this.exportRequest()),
 		);
 		this.setupBody.append(actions, this.statusElem);
+	}
+
+	private isTank(): boolean {
+		return isTankSpec(this.simUI.player.spec);
+	}
+
+	// The database only has the preset bosses once the sim has loaded it, and the tab builds itself
+	// before that.
+	private bossName(): string {
+		const plain = 'a plain level 83 boss';
+		if (!this.isTank()) {
+			return plain;
+		}
+		try {
+			return tankEncounter(undefined, this.settings.contentPhase, this.simUI.sim.db)?.targets[0]?.name || plain;
+		} catch (e) {
+			return plain;
+		}
+	}
+
+	// Tanks trade survival against threat on one slider, with the six metric weights under Advanced
+	// for anyone who wants them. Everyone else optimizes their own DPS.
+	private buildObjective() {
+		if (!this.isTank()) {
+			return;
+		}
+		const survival = Math.round(this.settings.tankSurvival * 100);
+		const slider = newElement('input', 'form-range');
+		slider.type = 'range';
+		slider.min = '0';
+		slider.max = '100';
+		slider.step = '5';
+		slider.value = String(survival);
+		slider.addEventListener('change', () =>
+			this.changeSettings(s => {
+				s.tankSurvival = parseInt(slider.value) / 100;
+				s.metricWeights = undefined;
+			}),
+		);
+		this.setupBody.appendChild(
+			this.labeled(
+				`Survival ${survival}% / threat ${100 - survival}%`,
+				slider,
+				this.settings.metricWeights
+					? 'The weights under Advanced are in charge. Move the slider to hand it back.'
+					: 'Survival is the damage you take and how spiky it is. Threat is TPS.',
+			),
+		);
+		this.setupBody.appendChild(
+			this.labeled(
+				'Crit immunity',
+				this.checkbox('Never let the boss crit me', this.settings.requireCritImmunity, checked =>
+					this.changeSettings(s => (s.requireCritImmunity = checked)),
+				),
+				"From the sim's own crit formula for this boss, not a flat 540 defense.",
+			),
+		);
+		this.setupBody.appendChild(this.advancedWeights());
+	}
+
+	private advancedWeights(): HTMLElement {
+		const details = newElement('details', 'optimizer-advanced');
+		details.open = this.settings.metricWeights != undefined;
+		details.appendChild(newElement('summary', 'form-label', 'Advanced: metric weights'));
+		const weights = this.settings.metricWeights ?? tankMetricWeights(this.settings.tankSurvival);
+		const grid = newElement('div', 'optimizer-floors');
+		for (const [key, label] of METRIC_LABELS) {
+			const row = newElement('div', 'optimizer-inline');
+			row.appendChild(newElement('span', 'optimizer-slot', label));
+			const input = newElement('input', 'form-control form-control-sm');
+			input.type = 'number';
+			input.min = '0';
+			input.step = '0.05';
+			input.value = String(weights[key]);
+			input.addEventListener('change', () =>
+				this.changeSettings(s => {
+					const next = OptimizerMetrics.clone(s.metricWeights ?? tankMetricWeights(s.tankSurvival));
+					next[key] = Math.max(0, parseFloat(input.value) || 0);
+					s.metricWeights = next;
+				}),
+			);
+			row.append(input);
+			grid.appendChild(row);
+		}
+		grid.appendChild(button('Back to the slider', 'btn-secondary btn-sm', () => this.changeSettings(s => (s.metricWeights = undefined))));
+		details.appendChild(grid);
+		details.appendChild(
+			newElement(
+				'div',
+				'optimizer-hint',
+				"Importance, not signs: less DTPS, TMI and death chance always count as better. A metric its reference stat doesn't move measurably is dropped with a warning.",
+			),
+		);
+		return details;
 	}
 
 	private buildConstraints() {
@@ -494,6 +629,7 @@ export class OptimizerTab extends SimTab {
 		if (result.catalogDate) {
 			provenance.push(`catalog ${result.catalogDate}`);
 		}
+		provenance.push(built.bossName);
 		if (result.totalSims) {
 			provenance.push(`${result.totalSims} sims`);
 		}
@@ -665,7 +801,9 @@ export class OptimizerTab extends SimTab {
 
 	private renderSheet(loadout: OptimizerLoadoutResult): HTMLElement | null {
 		const finalStats = loadout.finalStats ? Stats.fromProto(loadout.finalStats) : null;
-		if (!finalStats && loadout.caps.length == 0 && !loadout.meleeCritTakenChance) {
+		// a tank's 0% is the crit-immunity answer, so it gets the row too
+		const showCrit = loadout.meleeCritTakenChance > 0 || this.isTank();
+		if (!finalStats && loadout.caps.length == 0 && !showCrit) {
 			return null;
 		}
 		const playerClass = this.simUI.player.getClass();
@@ -681,7 +819,7 @@ export class OptimizerTab extends SimTab {
 				this.row('td', [getClassStatName(cap.stat, playerClass), formatNumber(cap.value, 0), `cap ${formatNumber(cap.cap, 0)}`]),
 			);
 		}
-		if (loadout.meleeCritTakenChance) {
+		if (showCrit) {
 			table.appendChild(this.row('td', ['Boss melee crit chance on you', `${formatNumber(loadout.meleeCritTakenChance * 100, 2)}%`, '']));
 		}
 		return this.section('Character sheet', table);

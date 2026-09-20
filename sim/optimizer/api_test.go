@@ -63,8 +63,12 @@ func TestOptimizeWithNothingToChange(t *testing.T) {
 	if result.Settings.GetContentPhase() != 1 || result.Settings.GetWorkers() <= 0 {
 		t.Errorf("settings = %v, want the request's with defaults", result.Settings)
 	}
-	if !hasWarning(result, "nothing to change") || !hasWarning(result, "racial traits aren't searched") {
-		t.Errorf("warnings = %q, want nothing to change and no racial search", result.Warnings)
+	if !hasWarning(result, "nothing to change") {
+		t.Errorf("warnings = %q, want one saying there's nothing to change", result.Warnings)
+	}
+	// it returns before the objective, so there's nothing to score a racial screen against
+	if len(result.RacialScreen) != 0 {
+		t.Errorf("racial screen = %v, want none", result.RacialScreen)
 	}
 	if len(progress) == 0 || progress[0].Stage != stages[0] {
 		t.Errorf("progress = %v, want it to start at %q", progress, stages[0])

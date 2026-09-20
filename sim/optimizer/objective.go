@@ -47,10 +47,34 @@ func objectiveWeights(settings *proto.OptimizerSettings) (Metrics, error) {
 			return weights, fmt.Errorf("metric weight %d is negative (%g); weights are importance, not signs", m, r)
 		}
 	}
+	survival := settings.GetTankSurvival()
+	if survival < 0 || survival > 1 {
+		return weights, fmt.Errorf("tank_survival is %g; it runs from 0 (all threat) to 1 (all survival)", survival)
+	}
 	if weights == (Metrics{}) {
-		weights[MetricDPS] = 1
+		// a slider at 0 reads as unset, so an all-threat run has to send metric_weights
+		if survival > 0 {
+			weights = TankWeights(survival)
+		} else {
+			weights[MetricDPS] = 1
+		}
 	}
 	return weights, nil
+}
+
+// TankWeights turns the survival/threat slider into metric weights. Survival splits evenly between
+// the damage the tank takes and how spiky it is, threat goes to TPS; the normalizers then put both
+// sides in the same units, so the slider trades one against the other.
+//
+// The UI sends metric_weights as well, and those win: this is what a request that only carries the
+// slider - the CLI, an export replayed by hand - runs.
+func TankWeights(survival float64) Metrics {
+	survival = min(1, max(0, survival))
+	var weights Metrics
+	weights[MetricDTPS] = survival / 2
+	weights[MetricTMI] = survival / 2
+	weights[MetricTPS] = 1 - survival
+	return weights
 }
 
 // WeightedMetrics lists the metrics J will use, for NewSimEvaluator to keep samples of.
