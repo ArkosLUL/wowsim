@@ -539,6 +539,26 @@ registered in `individual_sim_ui.ts:427-447`.
 (`import_export.ts:56-60`), `await Database.loadLeftoversIfNecessary` on every player's merged
 `equipment.items` before `fromProto`.
 
+**Built as**
+- `acore_roster.ts` stays clear of `presets.ts`, so an individual sim's bundle doesn't pull the raid UI
+  in: `matchPreset(presets, spec, talents)` takes the preset list as an argument.
+- `buildCharacterImport` resolves gear to a `Gear` up front, so `lookupEquipmentSpec`'s "No slots left"
+  throw lands in per-character validation instead of the import freeze.
+- `IndividualAcoreImporter` lives in `ui/core/components/importers.ts`. Both importers register as
+  'AzerothCore'; the individual one passes `hideInRaidSim`.
+- `Importer` gained `protected onTextChanged(data)`, which the character dropdown rebuilds on. Its file
+  upload now assigns `textElem.value`, not `textContent`, which a textarea the user typed in ignores.
+- Reload fix: `allRaidEquipment(raid)`, exported from `raid_sim_ui.ts`, feeds both call sites, and
+  `RaidSimUI.loadSettings` is async so the leftovers load sits outside the freeze.
+- `updateRaid` is a module-level export, not a method, so the offline check drives the shipped code.
+  It builds the tank list from the spec each player ends up with, not the inferred one, counts a
+  replaced raider as replaced rather than removed, and moves a spec-option target onto that raider's
+  replacement by name — only leaving the raid clears one.
+- Offline check: esbuild-bundle an entry importing these modules and run it in node with `window`,
+  `document` and `fetch` stubbed, `fetch` reading `assets/database/` off disk. esbuild honours
+  `tsconfig.json`'s `jsx: preserve`, so it needs its own tsconfig with `jsx: react` and
+  `jsxFactory: element` to get through the `.tsx` files.
+
 **Verification (Phase 3)**
 1. `npm run type-check` and `npm run lint:js` pass.
 2. `make rundevserver`, then Raid Sim → Import → AzerothCore with `raid.json`, **Replace**:
