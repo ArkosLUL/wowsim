@@ -92,6 +92,20 @@
 		}
 	}
 
+	.optimizer-advanced {
+		margin-bottom: map-get($spacers, 3);
+
+		summary {
+			cursor: pointer;
+		}
+
+		.optimizer-slot {
+			width: 7rem;
+			flex-shrink: 0;
+			opacity: 0.75;
+		}
+	}
+
 	.optimizer-item {
 		display: flex;
 		align-items: center;

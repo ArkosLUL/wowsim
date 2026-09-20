@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
 	"github.com/wowsims/wotlk/sim/core/stats"
 	"github.com/wowsims/wotlk/sim/optimizer/raidctx"
@@ -152,7 +153,7 @@ func RunAsync(ctx context.Context, req *proto.OptimizeGearRequest, reporter chan
 }
 
 // The stages a run reports, in order.
-var stages = []string{"Setup", "Objective", "Stat curves", "Effects", "Search", "Verify", "Alternatives"}
+var stages = []string{"Setup", "Objective", "Racial screen", "Stat curves", "Effects", "Search", "Verify", "Alternatives"}
 
 // run is one optimization: the request as asked (for the result) and as simmed, and what the stages
 // have found so far.
@@ -183,6 +184,12 @@ type run struct {
 	seedEval   *Evaluation
 	seedJ      Estimate
 
+	// Every race the screen scored, best first, and the ones the search pairs its gear with.
+	racialScreen []*proto.OptimizerRacialScreen
+	finalists    []proto.Race
+	// Sheet Defense the boss can't crit through, once crit immunity is enforced; 0 when it isn't.
+	critImmunity float64
+
 	// The best loadout verified so far, and its evaluation; the seed until verification picks another.
 	best     Loadout
 	bestEval *Evaluation
@@ -190,7 +197,7 @@ type run struct {
 	verified []*verifiedLoadout
 
 	// The seed's character sheet, for caps.
-	seedSheet func() (stats.Stats, error)
+	seedSheet func() (core.PlayerSheet, error)
 }
 
 // traceHook, when set, gets a line for each decision a run makes. Tests set it to t.Logf.
@@ -221,19 +228,30 @@ func optimize(ctx context.Context, asked, simmed *Request, eval Evaluator, progr
 		best:     simmed.Seed,
 	}
 	r.eval = &countingEvaluator{inner: eval, have: map[Point]int{}, after: r.report}
-	r.seedSheet = sync.OnceValues(func() (stats.Stats, error) { return r.pool.finalStats(r.r.Seed) })
+	r.seedSheet = sync.OnceValues(func() (core.PlayerSheet, error) {
+		return playerSheet(r.r.Base, r.r.TargetIndex, r.r.Seed, stats.Stats{})
+	})
 	return r.execute()
 }
 
 func (r *run) execute() *proto.OptimizerResult {
 	settings := r.asked.Settings
-	if settings.GetRacialMode() == proto.OptimizerRacialMode_OptimizerRacialSearch {
-		r.warn("racial traits aren't searched yet: kept the seed's %s traits", r.r.Seed.RacialTraits)
-	}
-	if settings.GetRequireCritImmunity() {
-		r.warn("crit immunity isn't enforced yet: the result may be critable")
-	}
 	r.report()
+
+	if err := r.pinHealingModel(); err != nil {
+		r.warn("couldn't pin the healing model's HPS, so every sim runs core's presim again and each loadout's healing follows its own damage taken: %v", err)
+	}
+	// before CompilePool: the floors it reads are the ones every later rule check and the
+	// surrogate's penalty use
+	if settings.GetRequireCritImmunity() {
+		defense, err := r.critImmunityFloor()
+		if err != nil {
+			r.warn("crit immunity isn't enforced: %v", err)
+		} else {
+			r.critImmunity = defense
+			r.trace("crit immunity needs %.0f Defense on the sheet", defense)
+		}
+	}
 
 	pool, err := CompilePool(r.r)
 	if err != nil {
@@ -264,6 +282,15 @@ func (r *run) execute() *proto.OptimizerResult {
 	}
 	r.seedEval, r.bestEval = evals[0], evals[0]
 	r.seedJ = obj.Score(r.seedEval)
+
+	r.setStage("Racial screen")
+	if settings.GetRacialMode() == proto.OptimizerRacialMode_OptimizerRacialSearch {
+		finalists, err := r.screenRacials()
+		if err != nil {
+			return r.stop(fmt.Errorf("racial screen: %w", err))
+		}
+		r.finalists = finalists
+	}
 
 	r.setStage("Stat curves")
 	resp, rangeStats, err := r.measureCurves()
@@ -301,6 +328,7 @@ func (r *run) execute() *proto.OptimizerResult {
 	for i, l := range candidates {
 		r.trace("candidate %d: surrogate %+.1f", i, s.value(l)-s.value(r.r.Seed))
 	}
+	candidates = withRacialTraits(candidates, r.finalists)
 
 	r.setStage("Verify")
 	verified, err := r.verify(s, candidates)
@@ -315,6 +343,49 @@ func (r *run) execute() *proto.OptimizerResult {
 		return r.stop(err)
 	}
 	return r.result(verified, alternatives)
+}
+
+// healingPresimIterations is core's numPresimIterations, so a pinned HPS is the number the presim
+// would have handed out.
+const healingPresimIterations = 100
+
+// pinHealingModel writes the HPS core's presim would work out into the base request, once, before
+// anything is simmed. A tank's healing model carries a cadence and no HPS, and core then runs a
+// presim inside every sim to fill it in: that costs about 40% more, and it ties each point's
+// healing to that point's own damage taken, which skews the DTPS, TMI and death-chance deltas the
+// objective pairs. One number from the seed keeps the healing the same for every point.
+//
+// It mirrors Character.GetPresimOptions: 100 iterations at seed 1 with healing off, then 1.5x the
+// damage taken per second.
+func (r *run) pinHealingModel() (err error) {
+	defer func() {
+		// IsTest turns off core's own recover
+		if e := recover(); e != nil {
+			err = fmt.Errorf("the presim panicked: %v", e)
+		}
+	}()
+	healing := r.r.Target().GetHealingModel()
+	if healing.GetCadenceSeconds() == 0 || healing.GetHps() != 0 {
+		return nil
+	}
+	rsr := goproto.Clone(r.r.Base).(*proto.RaidSimRequest)
+	rsr.SimOptions = &proto.SimOptions{Iterations: healingPresimIterations, RandomSeed: 1, IsTest: true}
+	rsr.Raid.Parties[r.r.TargetIndex/5].Players[r.r.TargetIndex%5].HealingModel = nil
+	result := core.RunRaidSim(rsr)
+	if result.ErrorResult != "" {
+		return errors.New(firstLine(result.ErrorResult))
+	}
+	parties := result.GetRaidMetrics().GetParties()
+	if r.r.TargetIndex/5 >= len(parties) || r.r.TargetIndex%5 >= len(parties[r.r.TargetIndex/5].GetPlayers()) {
+		return fmt.Errorf("the presim reported no metrics for raid index %d", r.r.TargetIndex)
+	}
+	hps := parties[r.r.TargetIndex/5].GetPlayers()[r.r.TargetIndex%5].GetDtps().GetAvg() * 1.5
+	// in place: the evaluator already holds this request
+	pinned := goproto.Clone(healing).(*proto.HealingModel)
+	pinned.Hps = hps
+	r.r.Target().HealingModel = pinned
+	r.trace("pinned the healing model at %.0f HPS", hps)
+	return nil
 }
 
 // anythingToChange: an unlocked slot with a candidate. Gems alone can't change anything: Gem leaves
@@ -387,7 +458,7 @@ func (r *run) report() {
 		TotalSteps:     int32(len(stages)),
 		CompletedSims:  int32(r.eval.simmed()),
 		TotalSims:      int32(max(r.total, r.eval.simmed())),
-		RacialTraits:   r.r.Seed.RacialTraits,
+		RacialTraits:   r.best.RacialTraits,
 		ElapsedSeconds: time.Since(r.start).Seconds(),
 	}
 	if r.obj != nil && r.bestEval != nil && r.seedEval != nil {
@@ -526,6 +597,7 @@ func (r *run) result(verified []*verifiedLoadout, alternatives []*proto.Optimize
 		SimCommit:       SimCommit,
 		CatalogDate:     r.asked.Pool.GetCatalogDate(),
 		Alternatives:    alternatives,
+		RacialScreen:    r.racialScreen,
 	}
 	result.Seed = r.loadoutResult(r.r.Seed, r.seedEval)
 	// the neighborhood resims the pick and the seed at more iterations, where its gain can shrink
@@ -545,10 +617,15 @@ func (r *run) result(verified []*verifiedLoadout, alternatives []*proto.Optimize
 		result.Best = r.loadoutResult(r.best, r.bestEval)
 		result.Improved = true
 	}
-	// the pick first, then the rest by score; a ring or trinket swap isn't another set
-	seen := map[[NumSlots]int32]bool{}
+	// the pick first, then the rest by score; a ring or trinket swap isn't another set, but the
+	// same gear under other racial traits is
+	type topKey struct {
+		items [NumSlots]int32
+		race  proto.Race
+	}
+	seen := map[topKey]bool{}
 	addTop := func(l Loadout, eval *Evaluation) {
-		if key := setKey(l); len(result.Top) < maxTop && !seen[key] {
+		if key := (topKey{setKey(l), l.RacialTraits}); len(result.Top) < maxTop && !seen[key] {
 			seen[key] = true
 			result.Top = append(result.Top, r.loadoutResult(l, eval))
 		}
@@ -602,13 +679,17 @@ func (r *run) loadoutResult(l Loadout, eval *Evaluation) *proto.OptimizerLoadout
 			}
 		}
 	}
-	sheet, err := r.pool.finalStats(l)
+	sheet, err := playerSheet(r.r.Base, r.r.TargetIndex, l, stats.Stats{})
 	if err != nil {
 		out.Warnings = append(out.Warnings, err.Error())
 		return out
 	}
-	out.FinalStats = &proto.UnitStats{Stats: sheet.ToFloatArray()}
-	out.Caps = r.caps(sheet)
+	out.FinalStats = &proto.UnitStats{Stats: sheet.FinalStats.ToFloatArray()}
+	out.Caps = r.caps(sheet.FinalStats)
+	out.MeleeCritTakenChance = sheet.MeleeCritTakenChance
+	if r.asked.Settings.GetRequireCritImmunity() && sheet.MeleeAttacker && sheet.MeleeCritTakenChance > 0 {
+		out.Warnings = append(out.Warnings, fmt.Sprintf("the boss still crits this loadout %.2f%% of the time", sheet.MeleeCritTakenChance*100))
+	}
 	return out
 }
 
@@ -620,7 +701,7 @@ func (r *run) caps(sheet stats.Stats) []*proto.OptimizerStatCap {
 	if r.resp == nil {
 		return nil
 	}
-	seedSheet, err := r.seedSheet()
+	seed, err := r.seedSheet()
 	if err != nil {
 		return nil
 	}
@@ -630,7 +711,11 @@ func (r *run) caps(sheet stats.Stats) []*proto.OptimizerStatCap {
 		if !capProneStats[st] || c.SlopeAbove >= c.SlopeBelow {
 			continue
 		}
-		out = append(out, &proto.OptimizerStatCap{Stat: proto.Stat(st), Value: sheet[st], Cap: seedSheet[st] + c.Breakpoint})
+		out = append(out, &proto.OptimizerStatCap{Stat: proto.Stat(st), Value: sheet[st], Cap: seed.FinalStats[st] + c.Breakpoint})
+	}
+	// past D* more defense buys no crit reduction, so it caps the same way a hit cap does
+	if r.critImmunity > 0 && !slices.ContainsFunc(out, func(c *proto.OptimizerStatCap) bool { return c.Stat == proto.Stat_StatDefense }) {
+		out = append(out, &proto.OptimizerStatCap{Stat: proto.Stat_StatDefense, Value: sheet[stats.Defense], Cap: r.critImmunity})
 	}
 	return out
 }

@@ -398,9 +398,9 @@ export abstract class IndividualSimUI<SpecType extends Spec> extends SimUI {
 		return bulkTab;
 	}
 
-	// DPS specs only: tanks need the survival and threat controls, and healers aren't in the optimizer's scope.
+	// Healers aren't in the optimizer's scope.
 	private addOptimizerTab(gearTab: GearTab) {
-		if (this.isWithinRaidSim || isTankSpec(this.player.spec) || isHealingSpec(this.player.spec)) {
+		if (this.isWithinRaidSim || isHealingSpec(this.player.spec)) {
 			return;
 		}
 		new OptimizerTab(this.simTabContentsContainer, this, gearTab);

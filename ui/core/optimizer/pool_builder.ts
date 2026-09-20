@@ -5,11 +5,13 @@ import {
 	EquipmentSpec,
 	GemColor,
 	HandType,
+	HealingModel,
 	ItemSlot,
 	ItemSpec,
 	ItemType,
 	MobType,
 	Profession,
+	RaidDifficulty,
 	SimDatabase,
 	SimEnchant,
 	SimGem,
@@ -17,6 +19,8 @@ import {
 	SpellSchool,
 	Stat,
 	Target,
+	UnitReference,
+	UnitReference_Type,
 	WeaponType,
 } from '../proto/common.js';
 import {
@@ -41,7 +45,7 @@ import { gemColorMatchesSocket, getMetaGemCondition } from '../proto_utils/gems.
 import { slotNames } from '../proto_utils/names.js';
 import { isValidReforge, Reforging, reforgingFor } from '../proto_utils/reforging.js';
 import { Stats } from '../proto_utils/stats.js';
-import { enchantAppliesToItem, playerProtoProfessions, raceToFaction } from '../proto_utils/utils.js';
+import { enchantAppliesToItem, isTankSpec, playerProtoProfessions, playerToSpec, raceToFaction } from '../proto_utils/utils.js';
 import { distinct, getEnumValues } from '../utils.js';
 import { ALL_SOURCE_KINDS, Availability, CatalogIndex, isAvailable, MAX_CONTENT_PHASE, MIN_CONTENT_PHASE } from './catalog.js';
 import { filterItemsByFilters } from './item_filters.js';
@@ -54,7 +58,16 @@ export interface OptimizerTabSettings {
 	statMinimums: Array<StatMinimum>;
 	lockedSlots: Array<ItemSlot>;
 	excludedItemIds: Array<number>;
+	// Tanks only: 0 is all threat, 1 all survival.
+	tankSurvival: number;
+	requireCritImmunity: boolean;
+	racialMode: OptimizerRacialMode;
+	// The Advanced editor's own metric weights. Unset leaves the objective to the slider (tanks) or
+	// to DPS alone.
+	metricWeights?: OptimizerMetrics;
 }
+
+export const DEFAULT_TANK_SURVIVAL = 0.7;
 
 export function defaultTabSettings(contentPhase: number): OptimizerTabSettings {
 	return {
@@ -64,7 +77,18 @@ export function defaultTabSettings(contentPhase: number): OptimizerTabSettings {
 		statMinimums: [],
 		lockedSlots: [],
 		excludedItemIds: [],
+		tankSurvival: DEFAULT_TANK_SURVIVAL,
+		requireCritImmunity: true,
+		racialMode: OptimizerRacialMode.OptimizerRacialSearch,
 	};
+}
+
+// The survival/threat slider as metric weights, mirroring optimizer.TankWeights: survival splits
+// evenly between the damage taken and how spiky it is, threat goes to TPS. The normalizers put both
+// sides in the same units, so the slider trades one against the other.
+export function tankMetricWeights(survival: number): OptimizerMetrics {
+	const s = Math.min(1, Math.max(0, survival));
+	return OptimizerMetrics.create({ dtps: s / 2, tmi: s / 2, tps: 1 - s });
 }
 
 export interface PoolBuilderInput {
@@ -87,6 +111,8 @@ export interface BuiltRequest {
 	request: OptimizeGearRequest;
 	// What the seed lost to fit the pool, one line each.
 	seedChanges: Array<string>;
+	// The boss the run fights, for the tab to show.
+	bossName: string;
 }
 
 export const ALL_SLOTS = (getEnumValues(ItemSlot) as Array<ItemSlot>).sort((a, b) => a - b);
@@ -135,6 +161,50 @@ export function optimizerEncounter(current: Encounter | undefined): Encounter {
 		raidDifficulty: current?.raidDifficulty,
 		serverSettings: current?.serverSettings,
 	});
+}
+
+// The boss a tank optimizes against, per content phase: the fight of that phase its gear is for.
+// Anub'arak and the Lich King are the heroic 25-player versions; the other two run 25 normal, which
+// is what an unset raid_difficulty means to the sim.
+export const TANK_BOSSES: Record<number, { path: string; difficulty: RaidDifficulty }> = {
+	1: { path: 'Naxxrammas 25/Patchwerk', difficulty: RaidDifficulty.RaidDifficulty25Normal },
+	2: { path: 'Ulduar 25/Algalon', difficulty: RaidDifficulty.RaidDifficulty25Normal },
+	3: { path: "ToGC 25/Anub'arak", difficulty: RaidDifficulty.RaidDifficulty25Heroic },
+	4: { path: 'ICC 25/Lich King (Heroic)', difficulty: RaidDifficulty.RaidDifficulty25Heroic },
+	5: { path: 'ICC 25/Lich King (Heroic)', difficulty: RaidDifficulty.RaidDifficulty25Heroic },
+};
+
+// The phase's tank encounter, or undefined when the database has no preset for it. Length and
+// server settings carry over from the sim's own encounter, like the DPS one.
+export function tankEncounter(current: Encounter | undefined, contentPhase: number, db: Database): Encounter | undefined {
+	const boss = TANK_BOSSES[contentPhase];
+	const preset = boss ? db.getPresetTarget(boss.path)?.target : undefined;
+	if (!preset) {
+		return undefined;
+	}
+	return Encounter.create({
+		duration: current?.duration ?? 180,
+		durationVariation: current?.durationVariation ?? 5,
+		executeProportion20: 0.2,
+		executeProportion25: 0.25,
+		executeProportion35: 0.35,
+		targets: [Target.clone(preset)],
+		raidDifficulty: boss.difficulty,
+		serverSettings: current?.serverSettings,
+	});
+}
+
+// The healing a tank takes, re-derived for the boss it now fights, the way
+// Player.setDefaultHealingParams derives it. Whatever the sim's own encounter produced came from a
+// different boss, so both numbers are replaced rather than filled in.
+export function healingModelForBoss(current: HealingModel | undefined, boss: Target): HealingModel {
+	const model = current ? HealingModel.clone(current) : HealingModel.create();
+	if (boss.swingSpeed <= 0) {
+		return model;
+	}
+	model.cadenceSeconds = boss.dualWield ? (1.5 * boss.swingSpeed) / 2 : 1.5 * boss.swingSpeed;
+	model.hps = ((0.175 * boss.minBaseDamage) / boss.swingSpeed) * (boss.dualWield ? 1.5 : 1);
+	return model;
 }
 
 // A meta gem's activation rule as linear constraints; undefined when the UI doesn't know the meta,
@@ -324,7 +394,18 @@ export function buildOptimizeRequest(input: PoolBuilderInput): BuiltRequest {
 		.map(id => catalog.limitGroup(id))
 		.filter((group): group is LimitGroup => !!group);
 
-	base.encounter = optimizerEncounter(base.encounter);
+	// tanks fight their phase's boss, and the healing they take follows it; everyone else gets the
+	// plain level 83 boss
+	const tank = isTank(target);
+	const tankFight = tank ? tankEncounter(base.encounter, settings.contentPhase, input.db) : undefined;
+	base.encounter = tankFight ?? optimizerEncounter(base.encounter);
+	const boss = base.encounter.targets[0];
+	if (tankFight) {
+		// the boss's tankIndex points at raid.tanks[0], so the target has to be there for it to swing
+		// at them at all
+		base.raid!.tanks = [UnitReference.create({ type: UnitReference_Type.Player, index: input.targetRaidIndex })];
+		target.healingModel = healingModelForBoss(target.healingModel, boss);
+	}
 	if (base.simOptions) {
 		base.simOptions.debugFirstIteration = false;
 	}
@@ -336,9 +417,15 @@ export function buildOptimizeRequest(input: PoolBuilderInput): BuiltRequest {
 			contentPhase: settings.contentPhase,
 			effort: settings.effort,
 			objective: OptimizerObjective.OptimizerObjectiveOwnMetrics,
-			metricWeights: OptimizerMetrics.create({ dps: 1 }),
+			metricWeights: settings.metricWeights
+				? OptimizerMetrics.clone(settings.metricWeights)
+				: tank
+					? tankMetricWeights(settings.tankSurvival)
+					: OptimizerMetrics.create({ dps: 1 }),
+			tankSurvival: tank ? settings.tankSurvival : 0,
+			requireCritImmunity: tank && settings.requireCritImmunity,
 			statMinimums: settings.statMinimums.map(floor => StatMinimum.clone(floor)),
-			racialMode: OptimizerRacialMode.OptimizerRacialKeepCurrent,
+			racialMode: settings.racialMode,
 			sources: settings.sources.slice(),
 			lockedSlots: ALL_SLOTS.filter(slot => locked.has(slot)),
 			excludedItemIds: settings.excludedItemIds.slice(),
@@ -357,7 +444,17 @@ export function buildOptimizeRequest(input: PoolBuilderInput): BuiltRequest {
 			catalogDate: catalog.date,
 		}),
 	});
-	return { request, seedChanges: seed.changes };
+	return { request, seedChanges: seed.changes, bossName: boss?.name || 'a level 83 boss' };
+}
+
+// A player proto's spec can be unset in a half-built raid, which playerToSpec throws on; nothing
+// there is a tank.
+function isTank(player: PlayerProto): boolean {
+	try {
+		return isTankSpec(playerToSpec(player));
+	} catch (e) {
+		return false;
+	}
 }
 
 // Trims the target's gear until the optimizer's equip rules (sim/optimizer/rules.go) accept it: each

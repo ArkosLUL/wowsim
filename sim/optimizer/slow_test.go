@@ -6,12 +6,14 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"slices"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
+	"github.com/wowsims/wotlk/sim/core/stats"
 	goproto "google.golang.org/protobuf/proto"
 )
 
@@ -35,15 +37,17 @@ type slowCase struct {
 	phase int32
 	// The player, gear set to the phase's preset.
 	player func(tb testing.TB) *proto.Player
+	// Tanks hold the phase's boss on the survival/threat slider, and have to come out crit immune.
+	tank bool
 }
 
 var slowCases = []slowCase{
-	{"fury", 1, func(tb testing.TB) *proto.Player {
+	{spec: "fury", phase: 1, player: func(tb testing.TB) *proto.Player {
 		player := presetOptimizeRequest(tb, "fury_p1").Base.Raid.Parties[0].Players[0]
 		player.Professions = []proto.Profession{proto.Profession_Jewelcrafting, proto.Profession_Engineering}
 		return player
 	}},
-	{"combat_rogue", 3, func(tb testing.TB) *proto.Player {
+	{spec: "combat_rogue", phase: 3, player: func(tb testing.TB) *proto.Player {
 		return &proto.Player{
 			Name:          "Combat",
 			Race:          proto.Race_RaceHuman,
@@ -70,7 +74,7 @@ var slowCases = []slowCase{
 			Professions: []proto.Profession{proto.Profession_Engineering, proto.Profession_Jewelcrafting},
 		}
 	}},
-	{"fire_mage", 3, func(tb testing.TB) *proto.Player {
+	{spec: "fire_mage", phase: 3, player: func(tb testing.TB) *proto.Player {
 		return &proto.Player{
 			Name:          "Fire",
 			Race:          proto.Race_RaceTroll,
@@ -93,7 +97,7 @@ var slowCases = []slowCase{
 			Professions: []proto.Profession{proto.Profession_Tailoring, proto.Profession_Engineering},
 		}
 	}},
-	{"retribution", 4, func(tb testing.TB) *proto.Player {
+	{spec: "retribution", phase: 4, player: func(tb testing.TB) *proto.Player {
 		return &proto.Player{
 			Name:          "Ret",
 			Race:          proto.Race_RaceHuman,
@@ -124,6 +128,20 @@ var slowCases = []slowCase{
 			Professions: []proto.Profession{proto.Profession_Jewelcrafting, proto.Profession_Engineering},
 		}
 	}},
+	{spec: "prot_paladin", phase: 3, player: func(tb testing.TB) *proto.Player { return protPaladin(tb, "p3") }, tank: true},
+	{spec: "feral_tank", phase: 2, player: func(tb testing.TB) *proto.Player { return feralTank(tb, feralTankTalents) }, tank: true},
+}
+
+// tankHealing is the healing a tank takes from the boss it fights, the way the UI's pool builder
+// re-derives it per phase (ui/core/optimizer/pool_builder.ts healingModelForBoss). A concrete Hps
+// also keeps core's presim out of every sim shard.
+func tankHealing(boss *proto.Target) *proto.HealingModel {
+	cadence, hps := 1.5*boss.SwingSpeed, 0.175*boss.MinBaseDamage/boss.SwingSpeed
+	if boss.DualWield {
+		cadence /= 2
+		hps *= 1.5
+	}
+	return &proto.HealingModel{Hps: hps, CadenceSeconds: cadence, BurstWindow: 6}
 }
 
 // slowRequest is the case's player alone in a raid with full buffs, against the default encounter,
@@ -137,8 +155,76 @@ func slowRequest(tb testing.TB, c slowCase, effort proto.OptimizerEffort) *proto
 		Effort:       effort,
 		RacialMode:   proto.OptimizerRacialMode_OptimizerRacialKeepCurrent,
 	}
+	if c.tank {
+		req.Base.Raid.Tanks = []*proto.UnitReference{{Type: proto.UnitReference_Player, Index: 0}}
+		req.Base.Encounter = tankEncounter(tb, c.phase)
+		player.HealingModel = tankHealing(req.Base.Encounter.Targets[0])
+		req.Settings.TankSurvival = 0.7
+		req.Settings.RequireCritImmunity = true
+	}
 	req.Pool = realisticPool(tb, player, c.phase, nil)
+	trimSeedToPool(tb, player, req.Pool)
 	return req
+}
+
+// trimSeedToPool drops whatever the pool doesn't offer, the way the UI's pool builder trims the
+// seed before it sends a request (ui/core/optimizer/pool_builder.ts SeedTrimmer). Presets mix
+// factions and the odd PvP piece, and a seed the equip rules reject makes every pick count as an
+// improvement whatever it scores, which is exactly what this suite is trying to measure.
+func trimSeedToPool(tb testing.TB, player *proto.Player, pool *proto.CandidatePool) {
+	slots := map[proto.ItemSlot]*proto.SlotPool{}
+	for _, sp := range pool.Slots {
+		slots[sp.Slot] = sp
+	}
+	gems := map[int32]bool{}
+	for _, id := range pool.GemIds {
+		gems[id] = true
+	}
+	offers := func(slot proto.ItemSlot, id int32) bool {
+		return slices.Contains(slots[slot].GetItemIds(), id)
+	}
+	items := player.Equipment.GetItems()
+	for slot := range items {
+		spec := items[slot]
+		if spec.GetId() == 0 {
+			continue
+		}
+		if !offers(proto.ItemSlot(slot), spec.Id) {
+			tb.Logf("seed: the pool doesn't offer item %d in %s", spec.Id, proto.ItemSlot(slot))
+			items[slot] = &proto.ItemSpec{}
+			continue
+		}
+		enchanted := false
+		for _, option := range slots[proto.ItemSlot(slot)].GetEnchantOptions() {
+			enchanted = enchanted || option.ItemId == spec.Id && slices.Contains(option.EnchantIds, spec.Enchant)
+		}
+		if spec.Enchant != 0 && !enchanted {
+			tb.Logf("seed: the pool doesn't offer enchant %d on item %d", spec.Enchant, spec.Id)
+			spec.Enchant = 0
+		}
+		for i, gem := range spec.Gems {
+			if gem != 0 && !gems[gem] {
+				tb.Logf("seed: the pool doesn't offer gem %d", gem)
+				spec.Gems[i] = 0
+			}
+		}
+	}
+	// core moves a lone second ring or trinket up, and the optimizer won't take a seed it would
+	// rearrange
+	for _, pair := range [][2]proto.ItemSlot{
+		{proto.ItemSlot_ItemSlotFinger1, proto.ItemSlot_ItemSlotFinger2},
+		{proto.ItemSlot_ItemSlotTrinket1, proto.ItemSlot_ItemSlotTrinket2},
+	} {
+		first, second := pair[0], pair[1]
+		if items[first].GetId() != 0 || items[second].GetId() == 0 {
+			continue
+		}
+		if offers(first, items[second].Id) {
+			items[first], items[second] = items[second], &proto.ItemSpec{}
+		} else {
+			items[second] = &proto.ItemSpec{}
+		}
+	}
 }
 
 func TestOptimizerSlow(t *testing.T) {
@@ -206,6 +292,20 @@ func TestOptimizerSlow(t *testing.T) {
 					c.spec, c.phase, name, poolSize, jPreset.Mean, jOpt.Mean, d.Mean, d.SE, dps.Mean, dps.SE, result.Improved, result.TotalSims, wall.Seconds())
 				if d.Mean < -2*d.SE {
 					t.Errorf("the pick scores %.1f ± %.1f under the preset", -d.Mean, d.SE)
+				}
+				if c.tank {
+					sheet, err := playerSheet(r.Base, r.TargetIndex, best, stats.Stats{})
+					if err != nil {
+						t.Fatal(err)
+					}
+					t.Logf("tank: %.0f Defense on the sheet, boss crit %.3f%%", sheet.FinalStats[stats.Defense], sheet.MeleeCritTakenChance*100)
+					// without this a boss that swings at nobody would pass the crit check on a flat 0
+					if !sheet.MeleeAttacker {
+						t.Error("nothing in the encounter swings at the tank")
+					}
+					if sheet.MeleeCritTakenChance != 0 {
+						t.Errorf("crit immunity was required, but the boss crits the pick %.3f%% of the time", sheet.MeleeCritTakenChance*100)
+					}
 				}
 			})
 		}
