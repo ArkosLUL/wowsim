@@ -104,8 +104,8 @@ dps_results: {
 dps_results: {
  key: "TestDestruction-AllItems-BlessedRegaliaofUndeadCleansing"
  value: {
-  dps: 10164.22863
-  tps: 8265.83871
+  dps: 10164.28963
+  tps: 8265.89091
  }
 }
 dps_results: {
@@ -203,8 +203,8 @@ dps_results: {
 dps_results: {
  key: "TestDestruction-AllItems-DeathbringerGarb"
  value: {
-  dps: 10972.33114
-  tps: 8931.65747
+  dps: 10973.15481
+  tps: 8932.39878
  }
 }
 dps_results: {
@@ -343,8 +343,8 @@ dps_results: {
 dps_results: {
  key: "TestDestruction-AllItems-Gladiator'sFelshroud"
  value: {
-  dps: 10834.03982
-  tps: 8827.50719
+  dps: 10833.69696
+  tps: 8827.21756
  }
 }
 dps_results: {
@@ -371,8 +371,8 @@ dps_results: {
 dps_results: {
  key: "TestDestruction-AllItems-Gul'dan'sRegalia"
  value: {
-  dps: 11438.14808
-  tps: 9281.25401
+  dps: 11438.9899
+  tps: 9282.01164
  }
 }
 dps_results: {
@@ -434,8 +434,8 @@ dps_results: {
 dps_results: {
  key: "TestDestruction-AllItems-MaleficRaiment"
  value: {
-  dps: 8530.93176
-  tps: 6807.94336
+  dps: 8530.85305
+  tps: 6807.87455
  }
 }
 dps_results: {
@@ -497,8 +497,8 @@ dps_results: {
 dps_results: {
  key: "TestDestruction-AllItems-PlagueheartGarb"
  value: {
-  dps: 10411.96347
-  tps: 8435.51593
+  dps: 10411.93031
+  tps: 8435.48854
  }
 }
 dps_results: {
@@ -525,15 +525,15 @@ dps_results: {
 dps_results: {
  key: "TestDestruction-AllItems-ReignoftheDead-47316"
  value: {
-  dps: 13750.16779
-  tps: 11397.51206
+  dps: 13750.1841
+  tps: 11397.52309
  }
 }
 dps_results: {
  key: "TestDestruction-AllItems-ReignoftheDead-47477"
  value: {
-  dps: 13822.56759
-  tps: 11464.35974
+  dps: 13822.57949
+  tps: 11464.36635
  }
 }
 dps_results: {
@@ -609,8 +609,8 @@ dps_results: {
 dps_results: {
  key: "TestDestruction-AllItems-SparkofLife-37657"
  value: {
-  dps: 13400.62313
-  tps: 11054.53068
+  dps: 13400.64395
+  tps: 11054.54791
  }
 }
 dps_results: {
@@ -763,8 +763,8 @@ dps_results: {
 dps_results: {
  key: "TestDestruction-Settings-Orc-p4_destro-Destruction Warlock-destro-NoBuffs-LongSingleTarget"
  value: {
-  dps: 8183.01223
-  tps: 6954.52326
+  dps: 8182.99344
+  tps: 6954.50713
  }
 }
 dps_results: {

@@ -54,14 +54,14 @@ dps_results: {
  key: "TestHoly-AllItems-Althor'sAbacus-50359"
  value: {
   tps: 34.03432
-  hps: 5020.89055
+  hps: 5021.63168
  }
 }
 dps_results: {
  key: "TestHoly-AllItems-Althor'sAbacus-50366"
  value: {
   tps: 34.03432
-  hps: 5063.95697
+  hps: 5064.83041
  }
 }
 dps_results: {
@@ -172,8 +172,8 @@ dps_results: {
 dps_results: {
  key: "TestHoly-AllItems-DarkmoonCard:Greatness-44255"
  value: {
-  tps: 35.80606
-  hps: 5048.54415
+  tps: 35.78865
+  hps: 5047.57892
  }
 }
 dps_results: {
@@ -263,8 +263,8 @@ dps_results: {
 dps_results: {
  key: "TestHoly-AllItems-EphemeralSnowflake-50260"
  value: {
-  tps: 38.20578
-  hps: 4760.26718
+  tps: 38.18594
+  hps: 4765.69357
  }
 }
 dps_results: {
@@ -362,14 +362,14 @@ dps_results: {
  key: "TestHoly-AllItems-GlowingTwilightScale-54573"
  value: {
   tps: 33.72043
-  hps: 5335.85814
+  hps: 5333.12881
  }
 }
 dps_results: {
  key: "TestHoly-AllItems-GlowingTwilightScale-54589"
  value: {
   tps: 33.72043
-  hps: 5422.14863
+  hps: 5419.06663
  }
 }
 dps_results: {
@@ -768,7 +768,7 @@ dps_results: {
  key: "TestHoly-AllItems-Val'anyr,HammerofAncientKings-46017"
  value: {
   tps: 38.45447
-  hps: 5092.04792
+  hps: 5091.61276
  }
 }
 dps_results: {
@@ -803,7 +803,7 @@ dps_results: {
  key: "TestHoly-Average-Default"
  value: {
   tps: 38.89818
-  hps: 4877.48218
+  hps: 4877.22926
  }
 }
 dps_results: {
