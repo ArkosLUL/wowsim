@@ -102,32 +102,32 @@ dps_results: {
 dps_results: {
  key: "TestUnholy-AllItems-Beast-tamer'sShoulders-30892"
  value: {
-  dps: 9430.69281
-  tps: 5388.55726
+  dps: 9423.4516
+  tps: 5390.02487
   hps: 39.7397
  }
 }
 dps_results: {
  key: "TestUnholy-AllItems-BlessedBattlegearofUndeadSlaying"
  value: {
-  dps: 7344.89513
-  tps: 4146.9732
+  dps: 7320.98834
+  tps: 4134.02872
   hps: 33.68874
  }
 }
 dps_results: {
  key: "TestUnholy-AllItems-BlessedGarboftheUndeadSlayer"
  value: {
-  dps: 7207.56617
-  tps: 4097.57487
+  dps: 7206.06116
+  tps: 4107.03257
   hps: 32.27255
  }
 }
 dps_results: {
  key: "TestUnholy-AllItems-BlessedRegaliaofUndeadCleansing"
  value: {
-  dps: 7018.02773
-  tps: 3961.07274
+  dps: 6985.72666
+  tps: 3939.49414
   hps: 32.03346
  }
 }
@@ -214,16 +214,16 @@ dps_results: {
 dps_results: {
  key: "TestUnholy-AllItems-DarkrunedBattlegear"
  value: {
-  dps: 8015.90459
-  tps: 4511.4676
+  dps: 8050.01567
+  tps: 4536.11557
   hps: 37.55106
  }
 }
 dps_results: {
  key: "TestUnholy-AllItems-DarkrunedPlate"
  value: {
-  dps: 7263.00867
-  tps: 4078.18622
+  dps: 7279.02164
+  tps: 4100.12641
   hps: 39.50061
  }
 }
@@ -246,7 +246,7 @@ dps_results: {
 dps_results: {
  key: "TestUnholy-AllItems-Deathbringer'sWill-50362"
  value: {
-  dps: 10221.60085
+  dps: 10282.30777
   tps: 6010.06601
   hps: 41.43177
  }
@@ -254,7 +254,7 @@ dps_results: {
 dps_results: {
  key: "TestUnholy-AllItems-Deathbringer'sWill-50363"
  value: {
-  dps: 10282.22623
+  dps: 10347.70772
   tps: 6075.99615
   hps: 41.43177
  }
@@ -486,7 +486,7 @@ dps_results: {
 dps_results: {
  key: "TestUnholy-AllItems-IncisorFragment-37723"
  value: {
-  dps: 9855.59075
+  dps: 9885.51768
   tps: 5747.84936
   hps: 41.43177
  }
@@ -686,32 +686,32 @@ dps_results: {
 dps_results: {
  key: "TestUnholy-AllItems-ScourgeborneBattlegear"
  value: {
-  dps: 7785.07773
-  tps: 4363.837
+  dps: 7747.7555
+  tps: 4355.75383
   hps: 35.78542
  }
 }
 dps_results: {
  key: "TestUnholy-AllItems-ScourgebornePlate"
  value: {
-  dps: 7254.83843
-  tps: 4040.44009
+  dps: 7277.39478
+  tps: 4063.03807
   hps: 37.34874
  }
 }
 dps_results: {
  key: "TestUnholy-AllItems-Scourgelord'sBattlegear"
  value: {
-  dps: 9213.3662
-  tps: 5399.34853
+  dps: 9298.32247
+  tps: 5386.73838
   hps: 43.91469
  }
 }
 dps_results: {
  key: "TestUnholy-AllItems-Scourgelord'sPlate"
  value: {
-  dps: 8083.16845
-  tps: 4521.31699
+  dps: 8085.61555
+  tps: 4532.00407
   hps: 47.37238
  }
 }
@@ -846,8 +846,8 @@ dps_results: {
 dps_results: {
  key: "TestUnholy-AllItems-StormshroudArmor"
  value: {
-  dps: 7046.60371
-  tps: 4031.2537
+  dps: 7024.86512
+  tps: 4034.62904
   hps: 30.1023
  }
 }
@@ -894,16 +894,16 @@ dps_results: {
 dps_results: {
  key: "TestUnholy-AllItems-Thassarian'sBattlegear"
  value: {
-  dps: 8486.39133
-  tps: 4822.46407
+  dps: 8461.73377
+  tps: 4794.91332
   hps: 37.99246
  }
 }
 dps_results: {
  key: "TestUnholy-AllItems-Thassarian'sPlate"
  value: {
-  dps: 7378.73184
-  tps: 4102.72505
+  dps: 7402.96791
+  tps: 4136.04841
   hps: 39.61096
  }
 }
@@ -990,8 +990,8 @@ dps_results: {
 dps_results: {
  key: "TestUnholy-AllItems-UndeadSlayer'sBlessedArmor"
  value: {
-  dps: 7253.96833
-  tps: 4150.27629
+  dps: 7208.36907
+  tps: 4119.8685
   hps: 32.98984
  }
 }
@@ -1318,8 +1318,8 @@ dps_results: {
 dps_results: {
  key: "TestUnholy-SwitchInFrontOfTarget-Default"
  value: {
-  dps: 9719.17883
-  tps: 5660.1321
+  dps: 9740.68973
+  tps: 5674.37081
   hps: 41.43177
  }
 }

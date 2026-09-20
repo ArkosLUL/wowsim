@@ -97,15 +97,15 @@ dps_results: {
 dps_results: {
  key: "TestFrostFire-AllItems-BlessedRegaliaofUndeadCleansing"
  value: {
-  dps: 7439.37251
-  tps: 5981.5068
+  dps: 7447.10042
+  tps: 5988.90858
  }
 }
 dps_results: {
  key: "TestFrostFire-AllItems-Bloodmage'sRegalia"
  value: {
-  dps: 10684.54887
-  tps: 8598.11774
+  dps: 10670.13563
+  tps: 8586.74199
  }
 }
 dps_results: {
@@ -322,8 +322,8 @@ dps_results: {
 dps_results: {
  key: "TestFrostFire-AllItems-FrostfireGarb"
  value: {
-  dps: 7687.01172
-  tps: 6182.23029
+  dps: 7684.44544
+  tps: 6181.33197
  }
 }
 dps_results: {
@@ -343,8 +343,8 @@ dps_results: {
 dps_results: {
  key: "TestFrostFire-AllItems-Gladiator'sRegalia"
  value: {
-  dps: 8019.10209
-  tps: 6433.02931
+  dps: 8052.22239
+  tps: 6459.73051
  }
 }
 dps_results: {
@@ -427,15 +427,15 @@ dps_results: {
 dps_results: {
  key: "TestFrostFire-AllItems-Khadgar'sRegalia"
  value: {
-  dps: 8443.21661
-  tps: 6792.07044
+  dps: 8434.07198
+  tps: 6785.20191
  }
 }
 dps_results: {
  key: "TestFrostFire-AllItems-KirinTorGarb"
  value: {
-  dps: 8320.22337
-  tps: 6682.7562
+  dps: 8360.14094
+  tps: 6717.26753
  }
 }
 dps_results: {
@@ -546,15 +546,15 @@ dps_results: {
 dps_results: {
  key: "TestFrostFire-AllItems-ReignoftheDead-47316"
  value: {
-  dps: 10264.63803
-  tps: 8299.0722
+  dps: 10266.0442
+  tps: 8300.87658
  }
 }
 dps_results: {
  key: "TestFrostFire-AllItems-ReignoftheDead-47477"
  value: {
-  dps: 10333.77981
-  tps: 8360.70414
+  dps: 10335.29265
+  tps: 8362.61655
  }
 }
 dps_results: {
@@ -637,8 +637,8 @@ dps_results: {
 dps_results: {
  key: "TestFrostFire-AllItems-SphereofRedDragon'sBlood-37166"
  value: {
-  dps: 9991.9512
-  tps: 8031.98195
+  dps: 9996.51702
+  tps: 8036.23051
  }
 }
 dps_results: {
@@ -679,8 +679,8 @@ dps_results: {
 dps_results: {
  key: "TestFrostFire-AllItems-TempestRegalia"
  value: {
-  dps: 5808.12731
-  tps: 4675.62209
+  dps: 5807.14674
+  tps: 4675.16366
  }
 }
 dps_results: {
@@ -693,8 +693,8 @@ dps_results: {
 dps_results: {
  key: "TestFrostFire-AllItems-TheTwinBladesofAzzinoth"
  value: {
-  dps: 7936.27356
-  tps: 6395.90152
+  dps: 7925.56928
+  tps: 6388.383
  }
 }
 dps_results: {
@@ -707,15 +707,15 @@ dps_results: {
 dps_results: {
  key: "TestFrostFire-AllItems-TinyAbominationinaJar-50351"
  value: {
-  dps: 10114.09618
-  tps: 8132.4972
+  dps: 10107.92874
+  tps: 8127.8851
  }
 }
 dps_results: {
  key: "TestFrostFire-AllItems-TinyAbominationinaJar-50706"
  value: {
-  dps: 10114.09618
-  tps: 8132.4972
+  dps: 10107.92874
+  tps: 8127.8851
  }
 }
 dps_results: {
@@ -763,8 +763,8 @@ dps_results: {
 dps_results: {
  key: "TestFrostFire-Average-Default"
  value: {
-  dps: 10279.03186
-  tps: 8263.84674
+  dps: 10278.44743
+  tps: 8263.48862
  }
 }
 dps_results: {

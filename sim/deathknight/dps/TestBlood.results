@@ -46,35 +46,35 @@ character_stats_results: {
 dps_results: {
  key: "TestBlood-AllItems-Althor'sAbacus-50359"
  value: {
-  dps: 10454.66537
+  dps: 10483.55787
   tps: 5263.4636
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-Althor'sAbacus-50366"
  value: {
-  dps: 10454.66537
+  dps: 10483.55787
   tps: 5263.4636
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-AustereEarthsiegeDiamond"
  value: {
-  dps: 10927.40818
+  dps: 10958.61975
   tps: 5458.5472
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-Bandit'sInsignia-40371"
  value: {
-  dps: 10663.34497
+  dps: 10692.7118
   tps: 5376.28737
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-BaubleofTrueBlood-50354"
  value: {
-  dps: 10454.64903
+  dps: 10483.54153
   tps: 5263.45369
   hps: 94.48565
  }
@@ -82,7 +82,7 @@ dps_results: {
 dps_results: {
  key: "TestBlood-AllItems-BaubleofTrueBlood-50726"
  value: {
-  dps: 10454.64903
+  dps: 10483.54153
   tps: 5263.45369
   hps: 94.48565
  }
@@ -90,84 +90,84 @@ dps_results: {
 dps_results: {
  key: "TestBlood-AllItems-BeamingEarthsiegeDiamond"
  value: {
-  dps: 10953.21935
+  dps: 10984.41011
   tps: 5471.79948
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-Beast-tamer'sShoulders-30892"
  value: {
-  dps: 10336.31331
-  tps: 5151.29972
+  dps: 10366.38198
+  tps: 5157.7339
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-BlessedBattlegearofUndeadSlaying"
  value: {
-  dps: 8186.42651
-  tps: 4100.89161
+  dps: 8156.22565
+  tps: 4085.082
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-BlessedGarboftheUndeadSlayer"
  value: {
-  dps: 8130.28574
-  tps: 4076.51856
+  dps: 8111.48751
+  tps: 4069.89571
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-BlessedRegaliaofUndeadCleansing"
  value: {
-  dps: 7841.13567
-  tps: 3929.99402
+  dps: 7820.10487
+  tps: 3914.70158
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-BracingEarthsiegeDiamond"
  value: {
-  dps: 10921.01879
+  dps: 10952.20956
   tps: 5346.12275
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-Bryntroll,theBoneArbiter-50415"
  value: {
-  dps: 12552.65887
+  dps: 12588.58309
   tps: 6354.5645
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-Bryntroll,theBoneArbiter-50709"
  value: {
-  dps: 12661.5553
+  dps: 12697.50326
   tps: 6416.96807
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-ChaoticSkyflareDiamond"
  value: {
-  dps: 11161.73959
+  dps: 11192.93035
   tps: 5585.25003
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-CorpseTongueCoin-50349"
  value: {
-  dps: 10454.66537
+  dps: 10483.55787
   tps: 5263.4636
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-CorpseTongueCoin-50352"
  value: {
-  dps: 10454.66537
+  dps: 10483.55787
   tps: 5263.4636
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-CorrodedSkeletonKey-50356"
  value: {
-  dps: 10454.66537
+  dps: 10483.55787
   tps: 5263.4636
   hps: 64
  }
@@ -175,259 +175,259 @@ dps_results: {
 dps_results: {
  key: "TestBlood-AllItems-DarkmoonCard:Berserker!-42989"
  value: {
-  dps: 10609.91293
+  dps: 10638.80543
   tps: 5344.62937
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-DarkmoonCard:Death-42990"
  value: {
-  dps: 10643.92164
+  dps: 10672.6158
   tps: 5368.55448
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-DarkmoonCard:Greatness-44255"
  value: {
-  dps: 10739.43176
+  dps: 10769.19431
   tps: 5382.89264
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-DarkrunedBattlegear"
  value: {
-  dps: 9035.49329
-  tps: 4526.70821
+  dps: 9040.09114
+  tps: 4530.25491
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-DarkrunedPlate"
  value: {
-  dps: 8079.49569
-  tps: 4033.21705
+  dps: 8076.40399
+  tps: 4027.36401
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-DeathKnight'sAnguish-38212"
  value: {
-  dps: 10555.06458
+  dps: 10583.95708
   tps: 5315.92716
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-Deathbringer'sWill-50362"
  value: {
-  dps: 11179.37663
+  dps: 11207.88183
   tps: 5662.44444
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-Deathbringer'sWill-50363"
  value: {
-  dps: 11214.10639
+  dps: 11244.38699
   tps: 5686.63421
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-Defender'sCode-40257"
  value: {
-  dps: 10473.29643
+  dps: 10502.2483
   tps: 5273.15383
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-DestructiveSkyflareDiamond"
  value: {
-  dps: 10957.54054
+  dps: 10988.7313
   tps: 5473.24849
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-DislodgedForeignObject-50348"
  value: {
-  dps: 10724.14839
+  dps: 10752.99472
   tps: 5406.07046
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-DislodgedForeignObject-50353"
  value: {
-  dps: 10739.3508
+  dps: 10768.07152
   tps: 5417.61649
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-EffulgentSkyflareDiamond"
  value: {
-  dps: 10921.01879
+  dps: 10952.20956
   tps: 5455.2273
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-EmberSkyflareDiamond"
  value: {
-  dps: 10921.01879
+  dps: 10952.20956
   tps: 5455.2273
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-EnigmaticSkyflareDiamond"
  value: {
-  dps: 10953.21935
+  dps: 10984.41011
   tps: 5471.79948
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-EnigmaticStarflareDiamond"
  value: {
-  dps: 10945.87869
+  dps: 10977.06945
   tps: 5468.06015
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-EphemeralSnowflake-50260"
  value: {
-  dps: 10649.89999
+  dps: 10678.08349
   tps: 5348.07514
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-EssenceofGossamer-37220"
  value: {
-  dps: 10454.66537
+  dps: 10483.55787
   tps: 5263.4636
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-EternalEarthsiegeDiamond"
  value: {
-  dps: 10921.01879
+  dps: 10952.20956
   tps: 5455.2273
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-ExtractofNecromanticPower-40373"
  value: {
-  dps: 10649.49234
+  dps: 10678.20856
   tps: 5368.27024
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-EyeoftheBroodmother-45308"
  value: {
-  dps: 10592.63451
+  dps: 10621.527
   tps: 5336.04574
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-Figurine-SapphireOwl-42413"
  value: {
-  dps: 10454.66537
+  dps: 10483.55787
   tps: 5263.4636
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-ForethoughtTalisman-40258"
  value: {
-  dps: 10454.66537
+  dps: 10483.55787
   tps: 5263.4636
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-ForgeEmber-37660"
  value: {
-  dps: 10572.91573
+  dps: 10601.80823
   tps: 5324.95941
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-ForlornSkyflareDiamond"
  value: {
-  dps: 10921.01879
+  dps: 10952.20956
   tps: 5455.2273
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-ForlornStarflareDiamond"
  value: {
-  dps: 10921.01879
+  dps: 10952.20956
   tps: 5455.2273
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-FuryoftheFiveFlights-40431"
  value: {
-  dps: 10691.13499
+  dps: 10720.76383
   tps: 5389.26332
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-FuturesightRune-38763"
  value: {
-  dps: 10454.66537
+  dps: 10483.55787
   tps: 5263.4636
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-GlowingTwilightScale-54573"
  value: {
-  dps: 10454.66537
+  dps: 10483.55787
   tps: 5263.4636
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-GlowingTwilightScale-54589"
  value: {
-  dps: 10454.66537
+  dps: 10483.55787
   tps: 5263.4636
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-GnomishLightningGenerator-41121"
  value: {
-  dps: 10625.30728
+  dps: 10654.19636
   tps: 5356.73914
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-IllustrationoftheDragonSoul-40432"
  value: {
-  dps: 10454.66537
+  dps: 10483.55787
   tps: 5263.4636
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-ImpassiveSkyflareDiamond"
  value: {
-  dps: 10953.21935
+  dps: 10984.41011
   tps: 5471.79948
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-ImpassiveStarflareDiamond"
  value: {
-  dps: 10945.87869
+  dps: 10977.06945
   tps: 5468.06015
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-IncisorFragment-37723"
  value: {
-  dps: 10718.70574
+  dps: 10747.97037
   tps: 5412.55817
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-InsightfulEarthsiegeDiamond"
  value: {
-  dps: 10921.01879
+  dps: 10952.20956
   tps: 5455.2273
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-InvigoratingEarthsiegeDiamond"
  value: {
-  dps: 10953.4505
+  dps: 10984.74687
   tps: 5472.07867
   hps: 16.72957
  }
@@ -435,483 +435,483 @@ dps_results: {
 dps_results: {
  key: "TestBlood-AllItems-LastWord-50179"
  value: {
-  dps: 12351.08574
+  dps: 12386.86531
   tps: 6236.0598
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-LastWord-50708"
  value: {
-  dps: 12419.36227
+  dps: 12455.2643
   tps: 6274.15342
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-Lavanthor'sTalisman-37872"
  value: {
-  dps: 10454.66537
+  dps: 10483.55787
   tps: 5263.4636
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-MajesticDragonFigurine-40430"
  value: {
-  dps: 10454.66537
+  dps: 10483.55787
   tps: 5263.4636
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-MeteoriteWhetstone-37390"
  value: {
-  dps: 10739.71999
+  dps: 10766.48724
   tps: 5405.8246
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-NevermeltingIceCrystal-50259"
  value: {
-  dps: 10741.42106
+  dps: 10770.31356
   tps: 5391.2466
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-OfferingofSacrifice-37638"
  value: {
-  dps: 10466.72076
+  dps: 10495.65167
   tps: 5269.73375
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-PersistentEarthshatterDiamond"
  value: {
-  dps: 10947.27303
+  dps: 10978.54928
   tps: 5468.86888
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-PersistentEarthsiegeDiamond"
  value: {
-  dps: 10953.4505
+  dps: 10984.74687
   tps: 5472.07867
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-PetrifiedScarab-21685"
  value: {
-  dps: 10454.66537
+  dps: 10483.55787
   tps: 5263.4636
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-PetrifiedTwilightScale-54571"
  value: {
-  dps: 10504.68428
+  dps: 10533.73617
   tps: 5289.47903
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-PetrifiedTwilightScale-54591"
  value: {
-  dps: 10511.12844
+  dps: 10540.20085
   tps: 5292.83071
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-PowerfulEarthshatterDiamond"
  value: {
-  dps: 10921.01879
+  dps: 10952.20956
   tps: 5455.2273
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-PowerfulEarthsiegeDiamond"
  value: {
-  dps: 10921.01879
+  dps: 10952.20956
   tps: 5455.2273
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-PurifiedShardoftheGods"
  value: {
-  dps: 10454.66537
+  dps: 10483.55787
   tps: 5263.4636
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-ReignoftheDead-47316"
  value: {
-  dps: 10522.53844
+  dps: 10550.94218
   tps: 5304.40378
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-ReignoftheDead-47477"
  value: {
-  dps: 10531.99019
+  dps: 10560.39393
   tps: 5310.07483
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-RelentlessEarthsiegeDiamond"
  value: {
-  dps: 11153.9878
+  dps: 11185.18179
   tps: 5581.20352
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-RevitalizingSkyflareDiamond"
  value: {
-  dps: 10921.01879
+  dps: 10952.20956
   tps: 5455.2273
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-RuneofRepulsion-40372"
  value: {
-  dps: 10454.66537
+  dps: 10483.55787
   tps: 5263.4636
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-ScourgeborneBattlegear"
  value: {
-  dps: 8829.56145
-  tps: 4414.34293
+  dps: 8853.65616
+  tps: 4417.83557
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-ScourgebornePlate"
  value: {
-  dps: 8127.09341
-  tps: 4050.87866
+  dps: 8102.24297
+  tps: 4037.64856
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-Scourgelord'sBattlegear"
  value: {
-  dps: 10872.90397
-  tps: 5520.84399
+  dps: 10948.99055
+  tps: 5563.48405
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-Scourgelord'sPlate"
  value: {
-  dps: 8827.89641
-  tps: 4398.98668
+  dps: 8803.72599
+  tps: 4389.28623
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-SealofthePantheon-36993"
  value: {
-  dps: 10472.34373
+  dps: 10501.30279
   tps: 5272.37243
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-Shadowmourne-49623"
  value: {
-  dps: 13931.11617
+  dps: 13967.14491
   tps: 7111.96668
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-ShinyShardoftheGods"
  value: {
-  dps: 10454.66537
+  dps: 10483.55787
   tps: 5263.4636
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-Sindragosa'sFlawlessFang-50361"
  value: {
-  dps: 10454.66537
+  dps: 10483.55787
   tps: 5263.4636
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-SliverofPureIce-50339"
  value: {
-  dps: 10454.66537
+  dps: 10483.55787
   tps: 5263.4636
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-SliverofPureIce-50346"
  value: {
-  dps: 10454.66537
+  dps: 10483.55787
   tps: 5263.4636
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-SoulPreserver-37111"
  value: {
-  dps: 10454.66537
+  dps: 10483.55787
   tps: 5263.4636
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-SouloftheDead-40382"
  value: {
-  dps: 10602.96624
+  dps: 10631.85874
   tps: 5341.48105
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-SparkofLife-37657"
  value: {
-  dps: 10575.51419
+  dps: 10603.68523
   tps: 5325.34941
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-SphereofRedDragon'sBlood-37166"
  value: {
-  dps: 10569.30882
+  dps: 10598.45268
   tps: 5320.42357
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-StormshroudArmor"
  value: {
-  dps: 7886.19305
-  tps: 3952.93821
+  dps: 7905.129
+  tps: 3961.17055
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-SwiftSkyflareDiamond"
  value: {
-  dps: 10953.4505
+  dps: 10984.74687
   tps: 5472.07867
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-SwiftStarflareDiamond"
  value: {
-  dps: 10947.27303
+  dps: 10978.54928
   tps: 5468.86888
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-SwiftWindfireDiamond"
  value: {
-  dps: 10936.46246
+  dps: 10967.70351
   tps: 5463.25176
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-TalismanofTrollDivinity-37734"
  value: {
-  dps: 10454.66537
+  dps: 10483.55787
   tps: 5263.4636
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-TearsoftheVanquished-47215"
  value: {
-  dps: 10454.66537
+  dps: 10483.55787
   tps: 5263.4636
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-Thassarian'sBattlegear"
  value: {
-  dps: 9367.63367
-  tps: 4703.18921
+  dps: 9388.41828
+  tps: 4718.66691
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-Thassarian'sPlate"
  value: {
-  dps: 8328.21172
-  tps: 4152.65166
+  dps: 8327.00845
+  tps: 4154.84163
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-TheGeneral'sHeart-45507"
  value: {
-  dps: 10454.66537
+  dps: 10483.55787
   tps: 5263.4636
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-TheTwinBladesofAzzinoth"
  value: {
-  dps: 8856.08313
+  dps: 8891.77735
   tps: 4328.92698
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-ThunderingSkyflareDiamond"
  value: {
-  dps: 11006.62755
+  dps: 11037.69763
   tps: 5488.42534
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-TinyAbominationinaJar-50351"
  value: {
-  dps: 10676.49619
+  dps: 10706.39056
   tps: 5382.92885
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-TinyAbominationinaJar-50706"
  value: {
-  dps: 10709.00748
+  dps: 10739.18255
   tps: 5395.52558
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-TirelessSkyflareDiamond"
  value: {
-  dps: 10921.01879
+  dps: 10952.20956
   tps: 5455.2273
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-TirelessStarflareDiamond"
  value: {
-  dps: 10921.01879
+  dps: 10952.20956
   tps: 5455.2273
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-TomeofArcanePhenomena-36972"
  value: {
-  dps: 10560.93026
+  dps: 10591.50476
   tps: 5309.65476
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-TrenchantEarthshatterDiamond"
  value: {
-  dps: 10921.01879
+  dps: 10952.20956
   tps: 5455.2273
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-TrenchantEarthsiegeDiamond"
  value: {
-  dps: 10921.01879
+  dps: 10952.20956
   tps: 5455.2273
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-UndeadSlayer'sBlessedArmor"
  value: {
-  dps: 8101.24279
-  tps: 4059.65405
+  dps: 8119.00157
+  tps: 4069.89917
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-Val'anyr,HammerofAncientKings-46017"
  value: {
-  dps: 7874.42242
+  dps: 7905.0591
   tps: 3766.98173
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-WingedTalisman-37844"
  value: {
-  dps: 10454.66537
+  dps: 10483.55787
   tps: 5263.4636
  }
 }
 dps_results: {
  key: "TestBlood-Average-Default"
  value: {
-  dps: 11217.39215
+  dps: 11247.95422
   tps: 5613.38332
  }
 }
 dps_results: {
  key: "TestBlood-Settings-Human-p3_blood-Basic-blood_dps-FullBuffs-LongMultiTarget"
  value: {
-  dps: 26664.40272
+  dps: 26699.64778
   tps: 14745.13318
  }
 }
 dps_results: {
  key: "TestBlood-Settings-Human-p3_blood-Basic-blood_dps-FullBuffs-LongSingleTarget"
  value: {
-  dps: 11035.90369
+  dps: 11065.49359
   tps: 5565.84025
  }
 }
 dps_results: {
  key: "TestBlood-Settings-Human-p3_blood-Basic-blood_dps-FullBuffs-ShortSingleTarget"
  value: {
-  dps: 14265.85451
+  dps: 14303.78786
   tps: 6424.47228
  }
 }
 dps_results: {
  key: "TestBlood-Settings-Human-p3_blood-Basic-blood_dps-NoBuffs-LongMultiTarget"
  value: {
-  dps: 14538.32289
+  dps: 14554.58627
   tps: 8047.04381
  }
 }
 dps_results: {
  key: "TestBlood-Settings-Human-p3_blood-Basic-blood_dps-NoBuffs-LongSingleTarget"
  value: {
-  dps: 6356.92362
+  dps: 6370.88572
   tps: 3225.99544
  }
 }
 dps_results: {
  key: "TestBlood-Settings-Human-p3_blood-Basic-blood_dps-NoBuffs-ShortSingleTarget"
  value: {
-  dps: 7667.22302
+  dps: 7680.9396
   tps: 3443.82304
  }
 }
 dps_results: {
  key: "TestBlood-Settings-Orc-p3_blood-Basic-blood_dps-FullBuffs-LongMultiTarget"
  value: {
-  dps: 26828.95253
+  dps: 26866.04686
   tps: 14775.70237
  }
 }
 dps_results: {
  key: "TestBlood-Settings-Orc-p3_blood-Basic-blood_dps-FullBuffs-LongSingleTarget"
  value: {
-  dps: 11161.73959
+  dps: 11192.93035
   tps: 5585.25003
  }
 }
 dps_results: {
  key: "TestBlood-Settings-Orc-p3_blood-Basic-blood_dps-FullBuffs-ShortSingleTarget"
  value: {
-  dps: 14527.52182
+  dps: 14567.85085
   tps: 6476.36186
  }
 }
 dps_results: {
  key: "TestBlood-Settings-Orc-p3_blood-Basic-blood_dps-NoBuffs-LongMultiTarget"
  value: {
-  dps: 14626.15216
+  dps: 14643.33538
   tps: 8063.05421
  }
 }
 dps_results: {
  key: "TestBlood-Settings-Orc-p3_blood-Basic-blood_dps-NoBuffs-LongSingleTarget"
  value: {
-  dps: 6427.20623
+  dps: 6441.95192
   tps: 3236.72344
  }
 }
 dps_results: {
  key: "TestBlood-Settings-Orc-p3_blood-Basic-blood_dps-NoBuffs-ShortSingleTarget"
  value: {
-  dps: 7800.76356
+  dps: 7815.3836
   tps: 3471.31716
  }
 }
 dps_results: {
  key: "TestBlood-SwitchInFrontOfTarget-Default"
  value: {
-  dps: 10727.69707
-  tps: 5387.25627
+  dps: 10770.63706
+  tps: 5380.97213
  }
 }
