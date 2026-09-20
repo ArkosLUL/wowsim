@@ -20,6 +20,16 @@ func (spell *Spell) OutcomeAlwaysMiss(_ *Simulation, result *SpellResult, _ *Att
 	spell.SpellMetrics[result.Target.UnitIndex].Misses++
 }
 
+// periodicCritsNeedDeclaration turns on AuraEffect::CanPeriodicTickCrit, where a tick only crits if
+// an SPELL_AURA_ABILITY_PERIODIC_CRIT aura covers the spell. It stays off until every class has
+// declared which of its dots may crit. Until then an undeclared dot crits the way it always has.
+var periodicCritsNeedDeclaration = false
+
+// CanTickCrit is AuraEffect::CanPeriodicTickCrit.
+func (dot *Dot) CanTickCrit() bool {
+	return dot.TicksCanCrit || !periodicCritsNeedDeclaration
+}
+
 // A tick always hits, but we don't count them as hits in the metrics.
 func (dot *Dot) OutcomeTick(_ *Simulation, result *SpellResult, _ *AttackTable) {
 	result.Outcome = OutcomeHit
@@ -31,7 +41,7 @@ func (dot *Dot) OutcomeTickCounted(_ *Simulation, result *SpellResult, _ *Attack
 }
 
 func (dot *Dot) OutcomeTickPhysicalCrit(sim *Simulation, result *SpellResult, attackTable *AttackTable) {
-	if dot.Spell.PhysicalCritCheck(sim, attackTable) {
+	if dot.CanTickCrit() && dot.Spell.PhysicalCritCheck(sim, attackTable) {
 		result.Outcome = OutcomeCrit
 		result.Damage *= dot.Spell.CritMultiplier
 	} else {
@@ -43,7 +53,7 @@ func (dot *Dot) OutcomeSnapshotCrit(sim *Simulation, result *SpellResult, _ *Att
 	if dot.Spell.CritMultiplier == 0 {
 		panic("Spell " + dot.Spell.ActionID.String() + " missing CritMultiplier")
 	}
-	if sim.RandomFloat("Snapshot Crit Roll") < dot.SnapshotCritChance {
+	if dot.CanTickCrit() && sim.RandomFloat("Snapshot Crit Roll") < dot.SnapshotCritChance {
 		result.Outcome = OutcomeCrit
 		result.Damage *= dot.Spell.CritMultiplier
 		dot.Spell.SpellMetrics[result.Target.UnitIndex].Crits++
@@ -58,7 +68,7 @@ func (dot *Dot) OutcomeMagicHitAndSnapshotCrit(sim *Simulation, result *SpellRes
 		panic("Spell " + dot.Spell.ActionID.String() + " missing CritMultiplier")
 	}
 	if dot.Spell.MagicHitCheck(sim, attackTable) {
-		if sim.RandomFloat("Snapshot Crit Roll") < dot.SnapshotCritChance {
+		if dot.CanTickCrit() && sim.RandomFloat("Snapshot Crit Roll") < dot.SnapshotCritChance {
 			result.Outcome = OutcomeCrit
 			result.Damage *= dot.Spell.CritMultiplier
 			dot.Spell.SpellMetrics[result.Target.UnitIndex].Crits++
@@ -198,7 +208,7 @@ func (dot *Dot) OutcomeRangedHitAndCritSnapshot(sim *Simulation, result *SpellRe
 		panic("Spell " + spell.ActionID.String() + " missing CritMultiplier")
 	}
 	result.Outcome = OutcomeHit
-	if sim.RandomFloat("Physical Crit Roll") < dot.SnapshotCritChance {
+	if dot.CanTickCrit() && sim.RandomFloat("Physical Crit Roll") < dot.SnapshotCritChance {
 		result.Outcome = OutcomeCrit
 		result.Damage *= spell.CritMultiplier
 	}
@@ -479,7 +489,9 @@ func (dot *Dot) OutcomeExpectedMagicSnapshotCrit(_ *Simulation, result *SpellRes
 	}
 
 	averageMultiplier := 1.0
-	averageMultiplier += dot.SnapshotCritChance * (dot.Spell.CritMultiplier - 1)
+	if dot.CanTickCrit() {
+		averageMultiplier += dot.SnapshotCritChance * (dot.Spell.CritMultiplier - 1)
+	}
 
 	result.Damage *= averageMultiplier
 }

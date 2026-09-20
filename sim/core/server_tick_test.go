@@ -310,22 +310,79 @@ func TestHardcastLandsOnServerTick(t *testing.T) {
 	}
 }
 
-func TestChannelExpiryStaysExact(t *testing.T) {
-	var channel *Spell
-	newTimingTestSim(t, 100, func(a *timingTestAgent) {
-		channel = a.RegisterSpell(SpellConfig{
-			ActionID: ActionID{SpellID: 48156},
-			Flags:    SpellFlagChanneled,
-			Cast:     CastConfig{DefaultCast: Cast{GCD: GCDDefault}},
-			Dot: DotConfig{
-				Aura:          Aura{Label: "channel"},
-				NumberOfTicks: 3,
-				TickLength:    time.Second,
-				OnTick:        func(*Simulation, *Unit, *Dot) {},
-			},
+// dotSpell registers a spell that puts its dot on the target, and returns the times it ticked.
+func dotSpell(a *timingTestAgent, flags SpellFlag, config DotConfig) (*Spell, *[]time.Duration) {
+	var ticks []time.Duration
+	onTick := config.OnTick
+	config.OnTick = func(sim *Simulation, target *Unit, dot *Dot) {
+		ticks = append(ticks, sim.CurrentTime)
+		if onTick != nil {
+			onTick(sim, target, dot)
+		}
+	}
+	spell := a.RegisterSpell(SpellConfig{
+		ActionID: ActionID{SpellID: testSpellNoServerData},
+		Flags:    flags,
+		Cast:     CastConfig{DefaultCast: Cast{GCD: GCDDefault}},
+		Dot:      config,
+	})
+	return spell, &ticks
+}
+
+func TestDotTicksLandOnServerTicks(t *testing.T) {
+	// 1.45 s doesn't divide the tick interval, so a dot that restarted its timer at every tick would
+	// drift: the nominal times stay on their own lattice and only the tick they land on moves.
+	for _, mapUpdateMs := range []int32{100, 0} {
+		var spell *Spell
+		var ticks *[]time.Duration
+		sim, _ := newTimingTestSim(t, mapUpdateMs, func(a *timingTestAgent) {
+			spell, ticks = dotSpell(a, SpellFlagNone, DotConfig{
+				Aura:          Aura{Label: "dot"},
+				NumberOfTicks: 4,
+				TickLength:    ms(1450),
+			})
+		})
+		sim.PrePull()
+		start := ms(420)
+		at(sim, start, func(sim *Simulation) { spell.Dot(sim.Encounter.TargetUnits[0]).Apply(sim) })
+		runUntil(sim, 10*time.Second)
+
+		want := make([]time.Duration, 0, 4)
+		for i := 1; i <= 4; i++ {
+			want = append(want, sim.NextServerTick(start+time.Duration(i)*ms(1450)))
+		}
+		if !slices.Equal(*ticks, want) {
+			t.Errorf("%d ms: ticks at %v, want %v", mapUpdateMs, *ticks, want)
+		}
+	}
+}
+
+func TestChannelEndsWithItsLastTick(t *testing.T) {
+	// the dot aura is what holds the rotation during a channel, so an expiry past the last tick
+	// would idle the player for a whole server tick
+	var spell *Spell
+	var ticks *[]time.Duration
+	var expiresAt time.Duration
+	sim, a := newTimingTestSim(t, 100, func(a *timingTestAgent) {
+		spell, ticks = dotSpell(a, SpellFlagChanneled, DotConfig{
+			Aura:          Aura{Label: "channel"},
+			NumberOfTicks: 3,
+			TickLength:    time.Second,
 		})
 	})
-	if dot := channel.CurDot(); !dot.Aura.exactExpiry {
-		t.Error("channel's dot aura would expire on the server tick after its last tick")
+	a.Rotation = &APLRotation{unit: &a.Unit} // a channel asks it whether to keep going
+	sim.PrePull()
+	at(sim, ms(370), func(sim *Simulation) {
+		dot := spell.Dot(sim.Encounter.TargetUnits[0])
+		dot.Apply(sim)
+		expiresAt = dot.ExpiresAt()
+	})
+	runUntil(sim, 5*time.Second)
+
+	if len(*ticks) != 3 {
+		t.Fatalf("ticks at %v, want 3 of them", *ticks)
+	}
+	if last := (*ticks)[2]; last != expiresAt {
+		t.Errorf("last tick at %v, channel aura expires at %v: they have to be the same server tick", last, expiresAt)
 	}
 }

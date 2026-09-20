@@ -229,8 +229,6 @@ func (spell *Spell) castFailureHelper(sim *Simulation, message string, vals ...a
 }
 
 func (spell *Spell) makeCastFunc(config CastConfig) CastSuccessFunc {
-	spell.keepChannelExpiryExact()
-
 	return func(sim *Simulation, target *Unit) bool {
 		spell.CurCast = spell.DefaultCast
 
@@ -358,16 +356,6 @@ func (spell *Spell) makeCastFunc(config CastConfig) CastSuccessFunc {
 		}
 
 		return true
-	}
-}
-
-// keepChannelExpiryExact: a channel ends with its dot aura, and dot ticks aren't on the server tick
-// yet. A later expiry would outlast the last tick, and nothing restarts the rotation after that.
-func (spell *Spell) keepChannelExpiryExact() {
-	for _, dot := range append([]*Dot{spell.aoeDot}, spell.dots...) {
-		if dot != nil && dot.isChanneled {
-			dot.Aura.exactExpiry = true
-		}
 	}
 }
 

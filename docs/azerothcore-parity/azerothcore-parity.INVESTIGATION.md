@@ -116,10 +116,29 @@ Roll details the tables above don't show:
 
 - Item proc chance and ICDs come from live `spell_proc`.
 
-**DoTs**
-- Core haste scales interval and duration equally, so the tick count doesn't change. Ticks = floor(maxDuration/amplitude).
-- A refresh resets the tick timer only when StackAmount < 2 and the cast isn't triggered.
-- Ticks crit only with aura 286 or on Rupture.
+**DoTs and periodic ticks**
+- Ticks keep the lattice they started on: `AuraEffect::Update` (`SpellAuraEffects.cpp:926-954`) counts the periodic
+  timer down by each map update and carries the leftover, so tick k lands on the first server tick at or after
+  start + k·amplitude. The aura's expiry rounds the same way, so a channel ends with its last tick.
+- Amplitude and duration are whole ms, and the tick count is maxDuration/amplitude truncated (`GetTotalTicks:7074`).
+  `AuraEffect::Update` stops there, and an extension raises maxDuration, so it buys ticks (Glyph of Starfire).
+- Haste on a channel scales the amplitude (`Unit::ModSpellCastTime`) and the channel's duration
+  (`Spell::handle_immediate`) alike, so its tick count holds. On any other dot,
+  `ATTR5_SPELL_HASTE_AFFECTS_PERIODIC` or a `SPELL_AURA_PERIODIC_HASTE` aura shortens the amplitude alone
+  (`CalculatePeriodic:650`), and the unchanged duration then fits more ticks; only the rolling refresh
+  `Aura::RefreshTimersWithMods` (`SpellAuras.cpp:880`) hastes the duration too.
+- Live, `DoEffectCalcPeriodic` scripts in mod-spell-tweaks (list below) carry that haste, not the DBC flag, and
+  they clamp the multiplier at 1: a slow never stretches the ticks, as the core's own path would.
+  `Dot.TickHaste` stays `SpellHasteScalesBoth` until a class item says otherwise.
+- A refresh resets the tick timer only when StackAmount < 2 and the cast isn't triggered
+  (`Spell::DoSpellHitOnUnit`, `Spell.cpp:3146`); a periodic aura that isn't `PERIODIC_DAMAGE`/`_PERCENT` resets
+  either way. `TRIGGERED_NO_PERIODIC_RESET` sits outside `TRIGGERED_FULL_MASK` (`SpellDefines.h:150-152`), so
+  nothing but a GM's `.cast triggered` sets it and StackAmount decides alone. Every stacking dot the sim registers
+  (Holy Vengeance 31803, Lacerate 48568, Deadly Poison 57970, Impale 66331, Chilled to the Bone 70106) already
+  refreshed in place, so the rule moved no results.
+- Ticks crit only with aura 286 or on Rupture. `Dot.TicksCanCrit` records that per dot, and
+  `periodicCritsNeedDeclaration` (`spell_outcome.go`) enforces it once every class has declared its crit-capable
+  dots (P8).
 - Ignite munching: `MunchingBlizzlike = 1`.
 
 **Pets**
@@ -262,6 +281,10 @@ The fork copies the server. Patching any of these in [ac] means updating the mat
 | 21 | Judgement of Wisdom on a miss | no proc | white and ranged hits proc on a miss | `SpellMgr.cpp:923-942` |
 | 22 | Rage per hit | conversion 453.32217 at level 80, and each gain floored to a tenth of rage | 453.3, unrounded | `Unit.cpp:16128-16158` |
 | 23 | Equip proc phase | `spell_proc`: Elemental Focus Stone (65005) and Black Magic (59630) fire on the cast, misses counted; Flare of the Heavens (64714), Show of Faith (64738), Sif's Remembrance (65002), Lightweave (55640) and Darkglow (55768) on a landed hit | the other way round, except Lightweave, which is on the hit there too | `spell_proc` |
+| 24 | DoT tick times | on the first map update at or after the nominal time, with the leftover carried into the next tick | exact | `SpellAuraEffects.cpp:926-954` |
+| 25 | Tick interval and count | whole ms, count = maxDuration/amplitude | fractional interval, the declared tick count | `SpellAuraEffects.cpp:650`, `:7074` |
+| 26 | Haste on a dot that isn't channeled | shortens the interval only, so the fixed duration gains ticks | interval and duration scale together | `SpellAuraEffects.cpp:650`, `SpellAuras.cpp:880` |
+| 27 | DoT tick crits | only with `SPELL_AURA_ABILITY_PERIODIC_CRIT` (286) or on Rupture | any dot can crit | `AuraEffect::CanPeriodicTickCrit` |
 
 Not yet settled against retail, check before patching: the 200 ms other-hand push (`PlayerUpdates.cpp`), the DoT
 refresh tick-timer rule, the max(cast, 1500 ms) PPM basis for spell-triggered aura procs, the rule-based binary
