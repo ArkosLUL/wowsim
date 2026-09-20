@@ -116,7 +116,7 @@ came from a seed that wore the glyph.
 | BIS-search | merged | `67b8ea2d3` | |
 | BIS-ui-tab | merged | `5683f6892` | icons and tooltips fixed after the user's check, `302a6e29a` |
 | PAR-P3-4 | merged | `d9de023d3` | 23 goldens promoted in `e9a444be8`; e2e `7368cac` |
-| PAR-P3-5 | running | | |
+| PAR-P3-5 | merged | `edae7e9c6` | 34 goldens promoted in `0f1ad932b` |
 | PAR-P6-1 | running | | |
 | RI-3 | running | | |
 
