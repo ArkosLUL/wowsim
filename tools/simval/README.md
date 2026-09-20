@@ -1,0 +1,64 @@
+# simval
+
+Compares this sim with the live AzerothCore server: the `.simval` recordings
+[mod-sim-validation](../../docs/guide/azerothcore-server.md) writes, and the raw combat logs
+mod-chronicle writes for a real fight.
+
+```bash
+tools/acore/dock.sh run ./tools/simval                             # replay the live recording
+tools/acore/dock.sh run ./tools/simval -records /wotlk/sim/core/testdata/simval/simval.jsonl
+tools/acore/dock.sh run ./tools/simval chronicle -v -sim 8123 <log>
+```
+
+## Replay (no subcommand)
+
+Rebuilds each record's combat table from the two unit snapshots and compares it with the one the
+server derived, so a mismatch points at the sim's formula rather than at noise. Tolerances: ±1 bp on a
+computed chance, |z| ≤ 5 on a rolled rate, ±0.1% on a multiplier. It exits non-zero on any failure.
+
+| Flag | Default |
+|---|---|
+| `-records` | `/ac/env/dist/logs/simval/simval.jsonl`, the live worldserver's |
+| `-fixture` | also copy the records to `sim/core/testdata/simval/` |
+| `-v` | print passing checks too |
+
+Commands covered: `melee`, `taken`, `yellow`, `spell`, `armor`, `info`, `procs`.
+
+`procs` checks the generated `spell_proc` rows field for field against the live entry, then checks
+`core.ServerProcFor` and the PPM basis against the chance the server computed per attack type. Auras
+outside `sim/core/serverdata` are skipped — the tables only cover the spells the sim names, so the
+committed replay fixture exercises none of them. `testdata/procs.jsonl` is a separate capture that
+does: Judgement of Wisdom (15 PPM), Hand of Justice (1 PPM with `REDUCE_PROC_60`), probed for
+Frostbolt, Heroic Strike and Steady Shot, which pick a different PPM basis each. Recapture it with
+`e2e/run.sh TestSimvalProcPPM` while streaming `simval.jsonl` out of the worldserver.
+
+## chronicle
+
+Reads a mod-chronicle raw log (`<unix_ms>  EVENT,field,…`, gzipped or not) and reports one player's
+run: DPS, ability breakdown, swing and tick intervals, and aura uptimes. Damage adds up across
+targets; tick timelines and aura windows are per target, since a DoT on two mobs ticks on two of
+them. Damage by the pets and guardians the player owns counts for the player. With `-sim` it checks
+the DPS gap against the plan's ±2% and exits non-zero outside it.
+
+| Flag | Default |
+|---|---|
+| `-source` | the log's only damaging player; needed when there are several |
+| `-target` | count only damage to this unit |
+| `-sim` | the sim's DPS for the same gear, talents and rotation; 0 skips the check |
+| `-gap` | 5 s; a longer pause is left out of the active duration |
+| `-top` | 20 ability rows |
+| `-v` | also print swing intervals, tick intervals and aura uptimes |
+
+Interval histograms bucket at 100 ms, the server's map update. They show the lattice only roughly:
+Chronicle timestamps the packet send, which adds a few ms of jitter.
+
+Chronicle gaps to keep in mind: `SWING_DAMAGE` carries no main/off hand flag, so a dual wielder's two
+hands interleave in one swing timeline; an aura refresh re-emits `SPELL_AURA_APPLIED`, so applications
+count refreshes; and there are no stack counts.
+
+## Captures
+
+`sim/core/testdata/chronicle/` holds recorded runs as `<spec>_<player>_<unix>.log.gz`, each with a
+`.setup.txt` naming the gear, talents and rotation it was fought with — the sim needs all three to be
+comparable. `TestChronicleCaptures` parses every one of them, so a capture whose format drifted fails
+there. Record new ones with mod-sim-validation's `TestRecordedRun` (its README has the run line).

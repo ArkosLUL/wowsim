@@ -250,6 +250,26 @@ values. Human warrior, level 80, maxed skills, Worn Shortsword (Sword Specializa
   exactly, allowing only for the server truncating stats. With 400 defense rating (81 skill) and 512 dodge rating the
   diminished dodge and miss match too; ArP rating converts at 13.9957 per 1% for every class, and 1498 caps.
   Characters leveled by GM command never learn Parry (3127), so their sheet shows none until taught it.
+- Proc data (`tools/simval` over a `.simval procs` capture, 102 checks): every generated `spell_proc` row matches the
+  live entry field for field, `core.ServerProcFor` reproduces the chance the server computed, and the PPM basis picks
+  the main hand for a melee-class spell, the ranged slot for Steady Shot and max(base cast, 1.5 s) for Frostbolt.
+- Client vs server talent data (`tools/acore/talentdiff`): the live server's `Talent.dbc`, `TalentTab.dbc` and
+  `GlyphProperties.dbc` are byte-identical to stock, and every talent and glyph row of its `Spell.dbc` matches stock
+  too, so the sim's stock tree positions are the server's. The user's **client** differs: talents 1341 and 1818 swap
+  rows in tab 363 (the hunter Marksmanship tier swap), glyph 912 is new, and 26 talent-spell fields move — Runic Power
+  Mastery (49455, 50147) and Vicious Strikes (51745, 51746) gain aura 286 `ABILITY_PERIODIC_CRIT`, Rage of Rivendare
+  and Virulence change base points, Call of the Wild (53434) drops from a 300 s cooldown to 120 s. None of it reaches
+  the server, so the tooltips the user reads are not what the sim should model.
+- Recorded runs (`TestRecordedRun`, 5 minutes on the boss dummy inside Naxxramas, in playerbot-factory epic gear;
+  captures in `sim/core/testdata/chronicle/`): a Protection paladin did 144.7 DPS over 295.7 s with swing intervals of
+  1.5-1.6 s — 143.7 of it on the dummy, the rest Consecration splashing a nearby Maggot, so a sim comparison wants
+  `-target` — an Affliction warlock 236.0 DPS over 297.1 s with Corruption ticking at a median 2.36 s and Curse of Agony
+  at 2.03 s under haste. Glancing landed on 39 of 185 and 30 of 128 swings, both within a standard error and a half of
+  the white table's 2500 bp. Chronicle timestamps the packet send, so the 100 ms map-update lattice only shows through
+  a few ms of jitter — a tick or swing interval reads within about ±50 ms of the server's own.
+- A hunter recorded run dealt no damage at 20 yards: Auto Shot (75) comes back `INTERRUPTED` and the shot abilities
+  produce neither a cast nor a failure, so the factory's hunter has no usable ranged weapon or ammo. The ranged capture
+  is a finding for the hunter work item, not for the harness.
 
 ## Retail deviations
 
