@@ -21,6 +21,8 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
   - `BenchmarkSimulate ./sim/rogue/ ./sim/paladin/retribution/ ./sim/hunter/ ./sim/shaman/elemental/`
     for sim throughput, covering melee, mana melee, ranged with a pet, and caster. Every wave records
     it ([wave loop](../wave-loop/wave-loop.PLAN.md#sim-throughput)), because no golden measures time.
+    Run it on an idle machine, with no sim, container build or golden run alongside: what else is
+    running moves all four by a fifth or more at once, which is enough to hide or invent a regression.
     The other six `BenchmarkSimulate` cases, the 25-man raid one included, nil-deref in
     `APLRotation.DoNextAction`: their requests carry no rotation, and upstream's swing path has called
     it since 2024 for queued swings like Heroic Strike. PAR-PERF repairs the raid one.

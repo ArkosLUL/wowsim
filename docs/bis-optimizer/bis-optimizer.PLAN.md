@@ -332,7 +332,7 @@ always dominate, so it stays exact.
   keeps the top 20 by `setKey`: swapped rings or trinkets are one set.
 - Pick: a seed that breaks a rule (a floor, the pool) loses to the best legal verified loadout, whatever
   it scores. `result` reruns the acceptance test on the final sims and lists the pick first in `top`.
-- Racial search and crit immunity only warn until BIS-tanks-racials. BIS-raid-contrib plugs its evaluator
+- Racial search and crit immunity are real from BIS-tanks-racials (F) on. BIS-raid-contrib plugs its evaluator
   into `optimize(ctx, asked, simmed, eval, …)`.
 
 **Tests:**
@@ -393,7 +393,7 @@ the request and `seedChanges`, one line per trim.
   `ItemRenderer`'s layout and icon size were scoped to `.gear-picker-root`; a text-only runners-up table;
   and tooltips counting set pieces against the gear the player wears, not the set on screen.
 
-### BIS-tanks-racials (wave F)
+### BIS-tanks-racials (wave F, done)
 
 **Owns:** `sim/core/sheet.go`, `sim/optimizer/{racial,critimmunity}.go`, the tank slider, the per-phase
 tank encounter, the tab controls.
@@ -450,6 +450,12 @@ Slow: Prot Paladin P3 and Feral P2, both crit immune, with J ≥ the preset's.
   of effect id, so the sim applies none of them.
 
 ### BIS-batch-ui (wave G)
+
+A tank run is the slow one, and BIS-tanks-racials made it slower: crit immunity always adds a Defense
+floor, so `checkFloors` builds a whole environment per candidate through `Pool.finalStats`, times up to
+3 finalist races. Memoize `finalStats` per `Loadout`, and collapse the three "build an environment, read
+the sheet" helpers (`Pool.finalStats`, `surrogate.sheet`, `optimizer.playerSheet`) onto
+`core.ComputePlayerSheet`.
 
 **Owns:** `ui/raid/optimizer_batch.ts`, registered in `raid_sim_ui.ts`.
 

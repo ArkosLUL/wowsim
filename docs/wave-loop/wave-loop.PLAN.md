@@ -72,10 +72,9 @@ eleven class items on top and a profile can no longer say what cost what.
 
 ## Current wave
 
-- Wave: F, running. Wave E (base `328553aa9`) landed on `master`.
-- Base SHA: `362b22465`.
-- Workflow runId: `wf_eada7eed-df2`, transcripts (with `journal.jsonl`) under
-  `~/.claude/projects/g--DevStuff-GitHub-wowsimwotlk/2b733101-1b9b-4106-be24-1e2f5864000d/subagents/workflows/`.
+- Wave: F2, not started. Wave F (base `362b22465`) landed on `master`.
+- Base SHA: set at wave start.
+- Workflow runId: none. Wave F ran as `wf_eada7eed-df2`.
 
 ## BiS baseline
 
@@ -83,13 +82,16 @@ The `optimizer_slow` suite after each wave ([how to run](../guide/testing.md#go)
 preset gear. A `J_preset` drop the goldens don't explain means a parity change hit that spec's gear or
 rotation harder than the golden suites cover, which is how wave D caught Glyph of Reckoning.
 
-| Wave | Fury P1 | Combat Rogue P3 | Fire Mage P3 | Ret P4 |
-|---|---|---|---|---|
-| D | 8607.6, +273 / +244 | 10547.1, +823 / +838 | 5044.3, +14 / +20 | 13140.6, +102 |
-| E | 8963.3, +267 / +261 | 10546.7, +838 / +839 | 5042.8, +14 / +16 | 13141.4, +140 / +109 |
+| Wave | Fury P1 | Combat Rogue P3 | Fire Mage P3 | Ret P4 | Prot Pal P3 | Feral Tank P2 |
+|---|---|---|---|---|---|---|
+| D | 8607.6, +273 / +244 | 10547.1, +823 / +838 | 5044.3, +14 / +20 | 13140.6, +102 | | |
+| E | 8963.3, +267 / +261 | 10546.7, +838 / +839 | 5042.8, +14 / +16 | 13141.4, +140 / +109 | | |
+| F | 8961.6, +253 / +276 | 10546.7, +840 / +870 | 5042.7, +15 / +9 | 13141.4, +117 / +143 | -91924.9, +5493 / +5984 | -1336.3, +1421 / +1469 |
 
 Quick / Normal. Ret P4 ran at Quick only in wave D, after the glyph fix; its wave C numbers
-(12821.9, +54 / +73) came from a seed that wore the glyph.
+(12821.9, +54 / +73) came from a seed that wore the glyph. The two tanks arrive with
+BIS-tanks-racials in F; their J is negative because DTPS and TMI carry negative normalizers, so
+only the deltas say anything.
 
 **Open from wave E:** Fury's `J_preset` rose 4.1% while its golden presets moved about 0.1%, and Ret's
 sat still while its goldens gained 8.9%. Neither direction follows the goldens, so something differs
@@ -98,6 +100,11 @@ for itself, which is the path P3-4 fixed, while the optimizer takes Judgement of
 debuffs, where the sim reads the attacker's weapon instead of the judging paladin's (deviation 20).
 Fury has none yet. Until one spec's gap is traced, read the deltas rather than `J_preset`: all four
 improved, and every delta matches wave D.
+
+Wave F left every `J_preset` where it was (Fury -0.02%, Fire Mage -0.00%, the other two to the
+decimal), so its buff and pet work missed these four presets entirely. That's the expected shape
+and it makes wave E's movement look more like something specific to that wave than a standing
+difference between the two contexts.
 
 ## Sim throughput
 
@@ -108,6 +115,11 @@ whatever these say.
 | Wave | Combat Rogue | Ret Paladin | Hunter | Elemental |
 |---|---|---|---|---|
 | E | 1.388 | 0.387 | 0.474 | 0.470 |
+| F | 1.005 | 0.290 | 0.380 | 0.369 |
+
+Wave F came in 18-26% under wave E on all four at once, including the two specs with no pet, which
+nothing in the wave explains. F's row was taken on an idle machine and reproduces within 3%, so the
+gap is what else was running during E, not the sim. Compare F onward; treat E as a loose ceiling.
 
 ## Status
 
@@ -133,13 +145,17 @@ whatever these say.
 | PAR-P3-5 | merged | `edae7e9c6` | 34 goldens promoted in `0f1ad932b` |
 | PAR-P6-1 | merged | `9e4030986` | `db.json` regenerated in `70711a632`, replay fixtures in `33a7a63d7`; e2e `d8d7310` |
 | RI-3 | merged | `ec483fa1a` | offline checks in `ui/raid/acore_harness` (`5b0e5703c`); the user's click-through found a truncated import alert and squashed checkboxes, both fixed in `059eb8004` |
-| PAR-P7-0a | running | | owns `sim/core/serverdata/*_auto_gen.go` this wave |
-| PAR-P7-0b | running | | |
-| BIS-tanks-racials | running | | Titanguard lands here, so `db.json` regenerates at integration |
-| PAR-TOOLS-RR | running | | holds the server lock for the recorded runs |
+| PAR-P7-0a | merged | `593158291` | 37 goldens promoted in `8c56ed770`; needed no serverdata regeneration |
+| PAR-P7-0b | merged | `eea3298fc` | 20 pet goldens in `82f9e3a22`, re-promoted in `f3b2d9467` after the cross-review |
+| BIS-tanks-racials | merged | `f688a9246` | `db.json` regenerated for Titanguard in `4c69521ed` |
+| PAR-TOOLS-RR | merged | `e20ac0f21` | e2e `0339692`; 2 of the 4 recorded runs captured |
+| wave F cross-review | | `3e0c922c8` | 3 bugs, each inside one item; the only cross-item finding was a tank run's cost, sent to BIS-batch-ui |
 
 Later WIs are added as their wave starts.
 
 ## User actions
 
-- "continue" for wave F.
+- "continue" for wave F2.
+- Worth a click-through when convenient: the optimizer tab's tank controls on a tank spec (the
+  survival/threat slider, the crit-immunity box, the racial select). No agent can judge those, and
+  BIS-ui-tab's own click-through found three real bugs.
