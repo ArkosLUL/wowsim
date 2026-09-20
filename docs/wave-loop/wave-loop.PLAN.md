@@ -48,7 +48,7 @@ G = changes goldens. FS = runs all 37 suites.
 | D | PAR-P3-2 (G, FS) · PAR-P3-3 (G, FS) · BIS-search · BIS-ui-tab | ✔ |
 | E | PAR-P3-4 (G, FS) · PAR-P3-5 (G, FS) · PAR-P6-1 · RI-3 | ✔ |
 | F | PAR-P7-0a (G, FS) · PAR-P7-0b (G, FS) · BIS-tanks-racials · PAR-TOOLS-RR | ✔ |
-| F2 | PAR-P7-0c (G, FS) · BIS-picker-switch | ✔ |
+| F2 | PAR-P7-0c (G, FS) · PAR-PERF · BIS-picker-switch | ✔ |
 | G | PAR-P7-DK (G) · PAR-P7-HUN (G) · BIS-batch-ui | ✔ |
 | H | PAR-P7-ROG · PAR-P7-WAR · PAR-P7-RET (G) · BIS-raid-contrib | ✔ |
 | I | PAR-P7-SHA · PAR-P7-DRU · PAR-P7-MAG · PAR-P7-WLK (G) | ✔ |
@@ -58,7 +58,8 @@ G = changes goldens. FS = runs all 37 suites.
 F2 is an inserted wave, not a fifth item in F: the core swing and cast fixes of PAR-P7-0c have to land
 before the class items in G, a class item can't build on a core fix merging in its own wave, and F already
 carries the 2 full-suite golden changers a wave is allowed. BIS-picker-switch moved in from G to give it a
-second, light item.
+second, light item. PAR-PERF sits there because F2 ends the core combat work: after it, G through J pile
+eleven class items on top and a profile can no longer say what cost what.
 
 **Where the specs are:**
 
@@ -94,6 +95,15 @@ rotation harder than the golden suites cover, which is how wave D caught Glyph o
 
 Quick / Normal. Ret P4 ran at Quick only, after the glyph fix; its wave C numbers (12821.9, +54 / +73)
 came from a seed that wore the glyph.
+
+## Sim throughput
+
+`BenchmarkSimulate` after each wave ([how to run](../guide/testing.md#go)), ns per sim. No golden
+measures time, so parity work that costs the hot paths shows up only here. PAR-PERF (F2) profiles
+whatever these say.
+
+| Wave | Raid 25 | Fury | Elemental |
+|---|---|---|---|
 
 ## Status
 

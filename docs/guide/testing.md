@@ -15,8 +15,12 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
   `-run TestDatabaseConcurrentAddAndRead ./sim/core/` for the item DB lock. Item-effect races need sims
   running in parallel on gear that has the effect, which the unit tests' presets lack:
   `-race -run '^$' -bench BenchmarkOptimizerEval -benchtime=1x ./sim/optimizer/`.
-- Benchmark: `go test --tags=with_db -run '^$' -bench BenchmarkOptimizerEval ./sim/optimizer/`, with its
-  numbers in the [BiS INVESTIGATION](../bis-optimizer/bis-optimizer.INVESTIGATION.md#performance).
+- Benchmarks, both under `go test --tags=with_db -run '^$' -bench`:
+  - `BenchmarkOptimizerEval ./sim/optimizer/`, with its numbers in the
+    [BiS INVESTIGATION](../bis-optimizer/bis-optimizer.INVESTIGATION.md#performance).
+  - `BenchmarkSimulate -benchtime=10x ./sim/ ./sim/warrior/dps/ ./sim/shaman/elemental/` for sim
+    throughput: a 25-man raid, then Fury and Elemental single-target. Every wave records it
+    ([wave loop](../wave-loop/wave-loop.PLAN.md#sim-throughput)), because no golden measures time.
 - The optimizer's slow suite, which every wave re-runs as the BiS baseline (about 8 min):
   `go test --tags=with_db,optimizer_slow -count=1 -timeout 90m -run TestOptimizerSlow -v ./sim/optimizer/`.
   It prints one `slow: spec=… phase=… effort=… J_preset=… J_opt=… delta=…±…` line per case, and

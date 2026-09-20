@@ -86,7 +86,8 @@ loop" re-affirms them.
 5. **Cross-review.** One Agent reviews `git diff <wave base>..integration` by hand at high effort, fixes the
    findings, and re-runs step 4.3. Commit. (`/code-review` reviews the session's main checkout, never [int] or
    a WI worktree.)
-6. **BiS re-baseline** (wave D onward): the `optimizer_slow` suite, with its deltas in the report.
+6. **Re-baseline** (wave D onward): the `optimizer_slow` suite for BiS, and `BenchmarkSimulate` for
+   sim throughput. Both tables are in the PLAN, both deltas in the report.
 7. **Land.** Merge `master` again if it moved, re-verify, then `git -C [sim] merge --ff-only integration`.
    If [sim]'s local changes block it, report and stop.
 8. **Report and stop.** Cover:
