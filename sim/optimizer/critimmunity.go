@@ -92,8 +92,11 @@ func (r *run) critImmunityFloor() (float64, error) {
 		return 0, err
 	}
 	settings := r.r.Settings
+	// The run keeps one Defense floor, raised rather than joined by a second: the surrogate's
+	// penalty adds a term per floor, so two of them price Defense twice.
 	for _, floor := range settings.StatMinimums {
-		if floor.Stat == proto.Stat_StatDefense && floor.MinValue >= defense {
+		if floor.Stat == proto.Stat_StatDefense {
+			floor.MinValue = max(floor.MinValue, defense)
 			return floor.MinValue, nil
 		}
 	}

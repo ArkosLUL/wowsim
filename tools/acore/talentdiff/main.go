@@ -5,8 +5,10 @@
 // so any talent the user's client moved, and any talent or glyph spell it changed,
 // has to be a deliberate decision rather than a surprise.
 //
+// dock.sh mounts one DBC directory, so both sides have to sit under it (README).
+//
 //	tools/acore/dock.sh run ./tools/acore/talentdiff
-//	DBC_DIR=<live DBCs> tools/acore/dock.sh run ./tools/acore/talentdiff -b /dbc -blabel live
+//	DBC_DIR=<dir holding both sets> tools/acore/dock.sh run ./tools/acore/talentdiff -b /dbc/live -blabel live
 package main
 
 import (

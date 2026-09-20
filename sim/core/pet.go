@@ -209,8 +209,15 @@ func ownerWhiteSwingArmorPen(auto *AutoAttacks) float64 {
 // aura mod-spell-tweaks gives them (SpellTweaks.HunterPetHaste). It stacks with the pet's own melee
 // haste, Frenzy included; what it blocks is melee-and-ranged haste like Bloodlust, which the owner's
 // speed already carries.
+// inheritsOwnerAttackSpeed reports whether mod-spell-tweaks gives this pet the carrier aura. It
+// also decides which haste buffs the pet has to be kept away from, since the carrier makes it
+// immune to them (applyPetBuffEffects).
+func (pet *Pet) inheritsOwnerAttackSpeed() bool {
+	return pet.SummonedAsPet && pet.Owner.Class == proto.Class_ClassHunter && pet.Owner.Server().SpellTweaks.HunterPetHaste
+}
+
 func (pet *Pet) inheritOwnerAttackSpeed() {
-	if !pet.SummonedAsPet || pet.Owner.Class != proto.Class_ClassHunter || !pet.Owner.Server().SpellTweaks.HunterPetHaste {
+	if !pet.inheritsOwnerAttackSpeed() {
 		return
 	}
 

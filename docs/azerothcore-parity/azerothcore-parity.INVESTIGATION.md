@@ -185,6 +185,13 @@ Roll details the tables above don't show:
     but no preset can reach both halves.
   - The hunter pet's inherited haste is continuous, not resnapshotted every 2 s, and the sim blocks Bloodlust
     on an inheriting pet by ignoring `MultiplyAttackSpeed`, its closest match for `MOD_MELEE_RANGED_HASTE`.
+    The carrier blocks positive `MELEE_SLOW` too, and the sim's two buffs of that type are build-phase
+    multipliers rather than `MultiplyAttackSpeed` calls, so that guard missed them: Improved Moonkin Form
+    (50170-50172) and Swift Retribution (Retribution Aura 54043's third effect) reached an inheriting pet
+    both directly and through the owner's ranged speed, +3% twice. `applyPetBuffEffects` now strips them
+    the way it strips Bloodlust, keeping plain Moonkin Aura for the spell crit, which isn't blocked.
+    Both places now ask `Pet.inheritsOwnerAttackSpeed`, since it was two copies of that test drifting
+    apart that let it through.
 - The sim's pet "+1.8% crit" hacks (`hunter/pet.go:140`, `shaman/fire_elemental_pet.go:151`, `shaman/spirit_wolves.go:45`) are Classic-only.
 
 **Hunter haste** (measured, `TestSimvalHunter`)
