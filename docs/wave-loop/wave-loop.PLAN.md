@@ -71,9 +71,16 @@ second, light item.
 
 ## Current wave
 
-- Wave: E, not started. Wave D (base `30137e6d1`) landed on `master`.
-- Base SHA: set at wave start.
-- Workflow runId: none.
+- Wave: E, running. Wave D (base `30137e6d1`) landed on `master`.
+- Base SHA: `328553aa9`.
+- Workflow runId: `wf_f577e7e6-b9d`; transcript dir (its `journal.jsonl`)
+  `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\wf_f577e7e6-b9d`.
+- `sim/core` splits between the two timing items: PAR-P3-4 takes `rage.go`, `aura_helpers.go`, a new
+  `ppm.go`, `debuffs.go`, the generated `serverdata/` files and `sim/common/**`; PAR-P3-5 takes
+  `dot.go`, `periodic_action.go`, `spell_outcome.go`, and `cast.go` and `aura.go` only to drop P3-3's
+  channel exemption.
+- RI-3 reads the roster export at `G:\DevStuff\GitHub\.wave-loop\raid.json`, taken live at wave start,
+  so it needs no server. Its click-through checks are the user's: nothing here drives a browser.
 
 ## BiS baseline
 
@@ -108,9 +115,13 @@ came from a seed that wore the glyph.
 | PAR-P3-3 | merged | `ef34b0059` | 34 goldens promoted in `936c96e19` |
 | BIS-search | merged | `67b8ea2d3` | |
 | BIS-ui-tab | merged | `5683f6892` | icons and tooltips fixed after the user's check, `302a6e29a` |
+| PAR-P3-4 | running | | |
+| PAR-P3-5 | running | | |
+| PAR-P6-1 | running | | |
+| RI-3 | running | | |
 
 Later WIs are added as their wave starts.
 
 ## User actions
 
-- "continue" for wave E.
+- None until wave E's report.
