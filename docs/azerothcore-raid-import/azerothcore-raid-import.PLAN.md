@@ -554,10 +554,9 @@ registered in `individual_sim_ui.ts:427-447`.
   It builds the tank list from the spec each player ends up with, not the inferred one, counts a
   replaced raider as replaced rather than removed, and moves a spec-option target onto that raider's
   replacement by name — only leaving the raid clears one.
-- Offline check: esbuild-bundle an entry importing these modules and run it in node with `window`,
-  `document` and `fetch` stubbed, `fetch` reading `assets/database/` off disk. esbuild honours
-  `tsconfig.json`'s `jsx: preserve`, so it needs its own tsconfig with `jsx: react` and
-  `jsxFactory: element` to get through the `.tsx` files.
+- Offline checks, with the committed roster fixtures they run on:
+  [`ui/raid/acore_harness`](../../ui/raid/acore_harness/README.md). They cover everything about the
+  importer that isn't the DOM; the dialog, the grid and the alerts still need a person.
 
 **Verification (Phase 3)**
 1. `npm run type-check` and `npm run lint:js` pass.
@@ -578,7 +577,8 @@ registered in `individual_sim_ui.ts:427-447`.
 4. Individual sim (e.g. Retribution Paladin page): import Justice. Gear, reforges, talents and glyphs load.
    Importing Holylight warns about the spec mismatch.
 5. Reload the page and confirm the imported raid is unchanged.
-6. **Stop for user review.**
+6. **Stop for user review.** Wave E merged RI-3 without this pass, so it's outstanding: the
+   fixtures the steps above name are in `ui/raid/acore_harness/testdata/`.
 
 ## Out of scope
 - Sim-server endpoint for one-click import.
