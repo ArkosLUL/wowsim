@@ -131,13 +131,10 @@ whatever these say.
 | PAR-P3-4 | merged | `d9de023d3` | 23 goldens promoted in `e9a444be8`; e2e `7368cac` |
 | PAR-P3-5 | merged | `edae7e9c6` | 34 goldens promoted in `0f1ad932b` |
 | PAR-P6-1 | merged | `9e4030986` | `db.json` regenerated in `70711a632`, replay fixtures in `33a7a63d7`; e2e `d8d7310` |
-| RI-3 | merged | `ec483fa1a` | offline checks promoted to `ui/raid/acore_harness` in `5b0e5703c`; the click-through is still the user's |
+| RI-3 | merged | `ec483fa1a` | offline checks in `ui/raid/acore_harness` (`5b0e5703c`); the user's click-through found a truncated import alert and squashed checkboxes, both fixed in `059eb8004` |
 
 Later WIs are added as their wave starts.
 
 ## User actions
 
-- RI-3's click-through, which no agent here can do: the steps are Phase 3 step 6 of the
-  [raid-import PLAN](../azerothcore-raid-import/azerothcore-raid-import.PLAN.md), and the rosters they
-  name are in `ui/raid/acore_harness/testdata/`.
 - "continue" for wave F.

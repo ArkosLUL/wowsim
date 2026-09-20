@@ -577,8 +577,9 @@ registered in `individual_sim_ui.ts:427-447`.
 4. Individual sim (e.g. Retribution Paladin page): import Justice. Gear, reforges, talents and glyphs load.
    Importing Holylight warns about the spec mismatch.
 5. Reload the page and confirm the imported raid is unchanged.
-6. **Stop for user review.** Wave E merged RI-3 without this pass, so it's outstanding: the
-   fixtures the steps above name are in `ui/raid/acore_harness/testdata/`.
+6. **Stop for user review.** Done after wave E, off the rosters in `ui/raid/acore_harness/testdata/`. It
+   found two UI defects, both fixed in `059eb8004`: chrome cut the import alert off before its warnings,
+   and a long label squeezed the profession checkboxes to a sliver.
 
 ## Out of scope
 - Sim-server endpoint for one-click import.

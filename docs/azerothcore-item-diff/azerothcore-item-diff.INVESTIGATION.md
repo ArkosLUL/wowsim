@@ -151,6 +151,10 @@ Ferocity AP 1059), different primary stats. Server-sourced data will carry these
     gives +10 crit on the server; 3722/3728/3730 tailoring embroideries carry a hidden +1 Spirit.
   - Not a difference: scopes 2523, 2724, 3607, 3608 grant ranged-only ratings; the sim models them in Go
     rather than as enchant stats.
+  - The comparison runs sim → server only, so an enchant the sim lacks can't show up in it. The list is
+    hand-written in `tools/database/enchant_overrides.go`, and at least one real 3.3.5 enchant is missing:
+    3851 Titanguard, +50 Stamina on a weapon, which the roster's Protection Paladin wears. Nothing audits
+    the other direction.
 
 ## Item effects
 

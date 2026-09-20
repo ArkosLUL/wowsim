@@ -404,6 +404,11 @@ the request and `seedChanges`, one line per trim.
 
 It leaves `sim/core/racials.go` alone.
 
+It also adds the weapon enchant 3851 Titanguard to `tools/database/enchant_overrides.go`, which the sim's
+hand-written list never had, so a tank imports 50 Stamina light:
+`{EffectId: 3851, ItemId: 44946, SpellId: 62257, Name: "Titanguard", Stats: stats.Stats{stats.Stamina: 50}}`,
+a weapon enchant. That's item data, so `db.json` regenerates at integration, and no golden wears it.
+
 A healing model with Hps 0 and a cadence, or an encounter that ends at a health threshold, makes the
 evaluator rerun core's presim in every shard (`GetPresimOptions`). That costs about 40% more, and each
 point's HPS then comes from its own DTPS, which skews DTPS, TMI and death-chance deltas. Pin the healing
