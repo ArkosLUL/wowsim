@@ -30,7 +30,7 @@ func gemValue(l Loadout, slots []proto.ItemSlot, value func(stats.Stats) float64
 		if c.ItemID == 0 {
 			continue
 		}
-		item := core.NewItem(c.CoreSpec())
+		item := core.NewItem(c.CoreSpec(), nil)
 		base := item.Stats.Add(item.Enchant.Stats)
 		for _, gem := range item.Gems {
 			if gem.Color == proto.GemColor_GemColorMeta {

@@ -838,6 +838,15 @@ message ItemReforge {
 	int32 to_stat_type = 2;
 }
 
+// One item_template stat_type/stat_value pair, in the order the worldserver compacts them into
+// ItemTemplate::ItemStat (zero values dropped), so the count is its StatsCount. mod-reforging reads
+// these, not the sim's stats: the sim folds flat equip spells in and splits ratings into a melee and
+// a spell stat.
+message ItemStat {
+	int32 stat_type = 1;
+	int32 value = 2;
+}
+
 message ItemSpec {
 	int32 id = 2;
 	int32 enchant = 3;
@@ -875,6 +884,8 @@ message SimItem {
 	double weapon_speed = 13;
 
 	string set_name = 14;
+
+	repeated ItemStat server_stats = 15;
 }
 
 // Extra enum for describing which items are eligible for an enchant, when

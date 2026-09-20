@@ -657,11 +657,12 @@ func createNewRequestWithSubstitution(readonlyInputRequest *proto.RaidSimRequest
 	changeLog := &raidSimRequestChangeLog{}
 	player := request.Raid.Parties[0].Players[0]
 	equipment := player.Equipment
+	reforging := &NewServerSettings(request.GetEncounter().GetServerSettings()).Reforging
 	for _, is := range substitution.Items {
 		oldItem := equipment.Items[is.Slot]
 		newItem := is.Item
 		carryEnchant := autoEnchant && oldItem.Enchant > 0 && newItem.Enchant == 0
-		carryReforge := canCarryReforge(oldItem, newItem)
+		carryReforge := canCarryReforge(oldItem, newItem, reforging)
 		if carryEnchant || carryReforge {
 			newItem = goproto.Clone(newItem).(*proto.ItemSpec)
 		}
@@ -685,12 +686,12 @@ func createNewRequestWithSubstitution(readonlyInputRequest *proto.RaidSimRequest
 	return request, changeLog
 }
 
-func canCarryReforge(oldItem *proto.ItemSpec, newItem *proto.ItemSpec) bool {
+func canCarryReforge(oldItem *proto.ItemSpec, newItem *proto.ItemSpec, reforging *Reforging) bool {
 	if oldItem.GetReforge() == nil || newItem.GetReforge() != nil {
 		return false
 	}
 	dbItem, ok := LookupItem(newItem.GetId())
-	return ok && CanReforge(dbItem.Stats, oldItem.Reforge)
+	return ok && CanReforge(&dbItem, oldItem.Reforge, reforging)
 }
 
 type ItemComboChecker map[int64]struct{}

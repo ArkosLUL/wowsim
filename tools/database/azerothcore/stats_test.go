@@ -4,6 +4,7 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
 	"github.com/wowsims/wotlk/tools/database"
 )
@@ -213,5 +214,39 @@ func TestAllowedClasses(t *testing.T) {
 	got := AllowedClasses(1<<(11-1) | 1<<(6-1)) // druid, death knight
 	if !slices.Equal(got, []proto.Class{proto.Class_ClassDeathknight, proto.Class_ClassDruid}) {
 		t.Errorf("druid+DK mask = %v", got)
+	}
+}
+
+// A reforge moves an item_template value, and the sim moves it between the stats AddItemMod made of
+// that value, so core's reforge map has to name the same stats for the same ItemModType. Nothing
+// else ties the two together.
+func TestReforgeMovesWhatAddItemModMakes(t *testing.T) {
+	// block value and mana regen: nothing else here maps onto them, so the target never cancels
+	// part of the source
+	const blockValue, manaRegen = 48, 43
+
+	for modType := int32(0); modType <= 50; modType++ {
+		target := int32(blockValue)
+		if modType == blockValue {
+			target = manaRegen
+		}
+		var taken, given database.Stats
+		supported := AddItemMod(&taken, modType, 100)
+		AddItemMod(&given, target, 100)
+
+		item := core.Item{ServerStats: []core.ItemStat{{Type: modType, Value: 100}}}
+		reforging := &core.Reforging{Enabled: true, Percentage: 100, StatTypes: []int32{modType, target}}
+		got := core.ReforgeStats(&item, &proto.ItemReforge{FromStatType: modType, ToStatType: target}, reforging)
+
+		// core has more stats than the item database, and nothing should land on those
+		for stat := range got {
+			var want float64
+			if supported && stat < len(taken) {
+				want = given[stat] - taken[stat]
+			}
+			if got[stat] != want {
+				t.Errorf("stat type %d -> %d: %s moved %v, want %v", modType, target, proto.Stat(stat), got[stat], want)
+			}
+		}
 	}
 }

@@ -2,6 +2,7 @@ package core
 
 import (
 	"slices"
+	"sync"
 	"time"
 
 	"github.com/wowsims/wotlk/sim/core/proto"
@@ -75,6 +76,21 @@ type Reforging struct {
 func NewServerSettings(settings *proto.ServerSettings) *ServerSettings {
 	return resolveServerSettings(settings, LiveServerDefaults())
 }
+
+// partyServer is the settings the party's raid runs under, or the live server's for a character
+// built outside a raid, like the hand-made ones in tests.
+func partyServer(party *Party) *ServerSettings {
+	if party == nil || party.Raid == nil || party.Raid.Server == nil {
+		return NewServerSettings(nil)
+	}
+	return party.Raid.Server
+}
+
+// LiveReforging is the live server's mod-reforging config, for callers with no raid to take
+// settings from, like the item tools and the gear a test builds by hand.
+var LiveReforging = sync.OnceValue(func() *Reforging {
+	return &NewServerSettings(nil).Reforging
+})
 
 func resolveServerSettings(settings, live *proto.ServerSettings) *ServerSettings {
 	settings, live = orEmpty(settings), orEmpty(live)
@@ -199,19 +215,11 @@ func (ds *DungeonScale) Multipliers(difficulty proto.RaidDifficulty, boss bool) 
 	}
 }
 
-// Limits from mod-reforging's item_reforge.h.
-const (
-	reforgePercentageMin     = 10
-	reforgePercentageMax     = 90
-	reforgePercentageDefault = 40
-	maxReforgeableStatTypes  = 15
-)
-
 func newReforging(settings, live *proto.ReforgeSettings) Reforging {
 	// SetPercentage falls back to the default outside the range, compared in float32
-	percentage := firstSet(reforgePercentageDefault, settings.Percentage, live.Percentage)
-	if p := float32(percentage); p < reforgePercentageMin || p > reforgePercentageMax {
-		percentage = reforgePercentageDefault
+	percentage := firstSet(float64(ReforgeDefaultPercentage), settings.Percentage, live.Percentage)
+	if p := float32(percentage); p < ReforgeMinPercentage || p > ReforgeMaxPercentage {
+		percentage = ReforgeDefaultPercentage
 	}
 
 	statTypes := settings.StatTypes
@@ -219,7 +227,7 @@ func newReforging(settings, live *proto.ReforgeSettings) Reforging {
 		statTypes = live.StatTypes
 	}
 	// SetReforgeableStats leaves the list empty when it's too long
-	if len(statTypes) > maxReforgeableStatTypes {
+	if len(statTypes) > MaxReforgeableStatTypes {
 		statTypes = nil
 	}
 

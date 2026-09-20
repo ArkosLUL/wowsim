@@ -11,11 +11,11 @@ import (
 
 var WITH_DB = false
 
-// Every request can add to these (NewCharacter does), so once init is done, go through
-// AddToDatabase and the Lookup functions rather than touching the maps.
-var ItemsByID = map[int32]Item{}
-var GemsByID = map[int32]Gem{}
-var EnchantsByEffectID = map[int32]Enchant{}
+// Every request can add to these (NewCharacter does), so they're only ever reached through
+// AddToDatabase and the lookup functions below, which hold dbMu.
+var itemsByID = map[int32]Item{}
+var gemsByID = map[int32]Gem{}
+var enchantsByEffectID = map[int32]Enchant{}
 
 // dbMu guards the three maps above.
 var dbMu sync.RWMutex
@@ -27,20 +27,20 @@ func AddToDatabase(newDB *proto.SimDatabase) {
 	defer dbMu.Unlock()
 
 	for _, v := range newDB.GetItems() {
-		if _, ok := ItemsByID[v.Id]; !ok {
-			ItemsByID[v.Id] = ItemFromProto(v)
+		if _, ok := itemsByID[v.Id]; !ok {
+			itemsByID[v.Id] = ItemFromProto(v)
 		}
 	}
 
 	for _, v := range newDB.GetEnchants() {
-		if _, ok := EnchantsByEffectID[v.EffectId]; !ok {
-			EnchantsByEffectID[v.EffectId] = EnchantFromProto(v)
+		if _, ok := enchantsByEffectID[v.EffectId]; !ok {
+			enchantsByEffectID[v.EffectId] = EnchantFromProto(v)
 		}
 	}
 
 	for _, v := range newDB.GetGems() {
-		if _, ok := GemsByID[v.Id]; !ok {
-			GemsByID[v.Id] = GemFromProto(v)
+		if _, ok := gemsByID[v.Id]; !ok {
+			gemsByID[v.Id] = GemFromProto(v)
 		}
 	}
 }
@@ -48,22 +48,41 @@ func AddToDatabase(newDB *proto.SimDatabase) {
 func LookupItem(id int32) (Item, bool) {
 	dbMu.RLock()
 	defer dbMu.RUnlock()
-	item, ok := ItemsByID[id]
+	item, ok := itemsByID[id]
 	return item, ok
 }
 
 func LookupGem(id int32) (Gem, bool) {
 	dbMu.RLock()
 	defer dbMu.RUnlock()
-	gem, ok := GemsByID[id]
+	gem, ok := gemsByID[id]
 	return gem, ok
 }
 
 func LookupEnchant(effectID int32) (Enchant, bool) {
 	dbMu.RLock()
 	defer dbMu.RUnlock()
-	enchant, ok := EnchantsByEffectID[effectID]
+	enchant, ok := enchantsByEffectID[effectID]
 	return enchant, ok
+}
+
+// ForEachItem calls f with every item in the database, in no particular order. f mustn't call
+// AddToDatabase: the read lock is held throughout, so that would deadlock.
+func ForEachItem(f func(Item)) {
+	dbMu.RLock()
+	defer dbMu.RUnlock()
+	for _, item := range itemsByID {
+		f(item)
+	}
+}
+
+// ForEachGem is ForEachItem for gems.
+func ForEachGem(f func(Gem)) {
+	dbMu.RLock()
+	defer dbMu.RUnlock()
+	for _, gem := range gemsByID {
+		f(gem)
+	}
 }
 
 type Item struct {
@@ -83,6 +102,10 @@ type Item struct {
 	Quality proto.ItemQuality
 	SetName string // Empty string if not part of a set.
 
+	// The item_template stat rows the server reforges from, empty for an item the item database
+	// has no server row for.
+	ServerStats []ItemStat
+
 	GemSockets  []proto.GemColor
 	SocketBonus stats.Stats
 
@@ -94,6 +117,12 @@ type Item struct {
 
 	//Internal use
 	TempEnchant int32
+}
+
+// ItemStat is one item_template stat_type/stat_value pair; see proto.ItemStat.
+type ItemStat struct {
+	Type  int32
+	Value int32
 }
 
 func ItemFromProto(pData *proto.SimItem) Item {
@@ -112,6 +141,9 @@ func ItemFromProto(pData *proto.SimItem) Item {
 		GemSockets:       pData.GemSockets,
 		SocketBonus:      stats.FromFloatArray(pData.SocketBonus),
 		SetName:          pData.SetName,
+		ServerStats: MapSlice(pData.ServerStats, func(stat *proto.ItemStat) ItemStat {
+			return ItemStat{Type: stat.StatType, Value: stat.Value}
+		}),
 	}
 }
 
@@ -257,9 +289,12 @@ func ProtoToEquipmentSpec(es *proto.EquipmentSpec) EquipmentSpec {
 	return coreEquip
 }
 
-func NewItem(itemSpec ItemSpec) Item {
+// NewItem builds the item the spec names, with its enchant, gems and reforge. reforging is the
+// raid's mod-reforging config, from Character.Server(); nil means the live server's, which is what
+// callers outside a sim run want.
+func NewItem(itemSpec ItemSpec, reforging *Reforging) Item {
 	item := lookupItemSpec(itemSpec)
-	if reforgeStats := ReforgeStats(item.Stats, itemSpec.Reforge); reforgeStats != (stats.Stats{}) {
+	if reforgeStats := ReforgeStats(&item, itemSpec.Reforge, reforging); reforgeStats != (stats.Stats{}) {
 		item.Reforge = itemSpec.Reforge
 		item.Stats = item.Stats.Add(reforgeStats)
 	}
@@ -273,14 +308,14 @@ func lookupItemSpec(itemSpec ItemSpec) Item {
 	defer dbMu.RUnlock()
 
 	item := Item{}
-	if foundItem, ok := ItemsByID[itemSpec.ID]; ok {
+	if foundItem, ok := itemsByID[itemSpec.ID]; ok {
 		item = foundItem
 	} else {
 		panic(fmt.Sprintf("No item with id: %d", itemSpec.ID))
 	}
 
 	if itemSpec.Enchant != 0 {
-		if enchant, ok := EnchantsByEffectID[itemSpec.Enchant]; ok {
+		if enchant, ok := enchantsByEffectID[itemSpec.Enchant]; ok {
 			item.Enchant = enchant
 		}
 		// else {
@@ -297,7 +332,7 @@ func lookupItemSpec(itemSpec ItemSpec) Item {
 
 		item.Gems = make([]Gem, numGems)
 		for gemIdx, gemID := range itemSpec.Gems {
-			if gem, ok := GemsByID[gemID]; ok {
+			if gem, ok := gemsByID[gemID]; ok {
 				item.Gems[gemIdx] = gem
 			} else {
 				if gemID != 0 {
@@ -309,18 +344,18 @@ func lookupItemSpec(itemSpec ItemSpec) Item {
 	return item
 }
 
-func NewEquipmentSet(equipSpec EquipmentSpec) Equipment {
+func NewEquipmentSet(equipSpec EquipmentSpec, reforging *Reforging) Equipment {
 	equipment := Equipment{}
 	for _, itemSpec := range equipSpec {
 		if itemSpec.ID != 0 {
-			equipment.EquipItem(NewItem(itemSpec))
+			equipment.EquipItem(NewItem(itemSpec, reforging))
 		}
 	}
 	return equipment
 }
 
-func ProtoToEquipment(es *proto.EquipmentSpec) Equipment {
-	return NewEquipmentSet(ProtoToEquipmentSpec(es))
+func ProtoToEquipment(es *proto.EquipmentSpec, reforging *Reforging) Equipment {
+	return NewEquipmentSet(ProtoToEquipmentSpec(es), reforging)
 }
 
 // Like ItemSpec, but uses names for reference instead of ID.

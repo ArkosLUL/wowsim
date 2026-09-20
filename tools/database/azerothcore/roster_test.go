@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/wowsims/wotlk/sim/core/stats"
+	"github.com/wowsims/wotlk/sim/core"
 )
 
 // enchantments builds an item_instance.enchantments string with the given tokens set.
@@ -240,7 +240,7 @@ func TestBuildCharacterWarnsAboutUnmaxedProfessions(t *testing.T) {
 }
 
 func TestNewRosterReforge(t *testing.T) {
-	crit := stats.Stats{stats.MeleeCrit: 100, stats.SpellCrit: 100}
+	crit := core.Item{ServerStats: []core.ItemStat{{Type: 32, Value: 100}}}
 	if got, reason := NewRosterReforge(32, 36, &crit); reason != "" ||
 		got == nil || *got != (RosterReforge{FromStatType: 32, ToStatType: 36}) {
 		t.Errorf("crit to haste = %v, %q", got, reason)
@@ -256,9 +256,10 @@ func TestNewRosterReforge(t *testing.T) {
 	}
 
 	// the rest of the server's rule, which only the sim's copy of the item can answer
-	for comment, base := range map[string]stats.Stats{
-		"item already has the target stat": {stats.MeleeCrit: 100, stats.MeleeHaste: 50},
-		"too little to reforge away":       {stats.MeleeCrit: 2},
+	for comment, base := range map[string]core.Item{
+		"item already has the target stat": {ServerStats: []core.ItemStat{{Type: 32, Value: 100}, {Type: 36, Value: 50}}},
+		"too little to reforge away":       {ServerStats: []core.ItemStat{{Type: 32, Value: 2}}},
+		"no item_template stats at all":    {},
 	} {
 		if got, reason := NewRosterReforge(32, 36, &base); got != nil || reason == "" {
 			t.Errorf("%s: %v, %q", comment, got, reason)

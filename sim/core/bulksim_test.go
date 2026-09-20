@@ -392,9 +392,12 @@ func TestCreateNewRequestWithSubstitutionCarriesReforge(t *testing.T) {
 	)
 	AddToDatabase(&proto.SimDatabase{
 		Items: []*proto.SimItem{
-			{Id: oldHead, Type: proto.ItemType_ItemTypeHead, Stats: stats.Stats{stats.MeleeCrit: 83, stats.SpellCrit: 83}.ToFloatArray()},
-			{Id: critHead, Type: proto.ItemType_ItemTypeHead, Stats: stats.Stats{stats.MeleeCrit: 60, stats.SpellCrit: 60}.ToFloatArray()},
-			{Id: critHasteHead, Type: proto.ItemType_ItemTypeHead, Stats: stats.Stats{stats.MeleeCrit: 60, stats.SpellCrit: 60, stats.MeleeHaste: 30, stats.SpellHaste: 30}.ToFloatArray()},
+			{Id: oldHead, Type: proto.ItemType_ItemTypeHead, Stats: stats.Stats{stats.MeleeCrit: 83, stats.SpellCrit: 83}.ToFloatArray(),
+				ServerStats: []*proto.ItemStat{{StatType: 32, Value: 83}}},
+			{Id: critHead, Type: proto.ItemType_ItemTypeHead, Stats: stats.Stats{stats.MeleeCrit: 60, stats.SpellCrit: 60}.ToFloatArray(),
+				ServerStats: []*proto.ItemStat{{StatType: 32, Value: 60}}},
+			{Id: critHasteHead, Type: proto.ItemType_ItemTypeHead, Stats: stats.Stats{stats.MeleeCrit: 60, stats.SpellCrit: 60, stats.MeleeHaste: 30, stats.SpellHaste: 30}.ToFloatArray(),
+				ServerStats: []*proto.ItemStat{{StatType: 32, Value: 60}, {StatType: 36, Value: 30}}},
 		},
 	})
 	critToHaste := &proto.ItemReforge{FromStatType: 32, ToStatType: 36}

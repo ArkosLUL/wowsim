@@ -30,3 +30,11 @@ export const LIVE_SERVER_DEFAULTS = ServerSettings.create({
 	},
 	reforge: { enable: true, percentage: 40, statTypes: [6, 13, 14, 31, 32, 36, 37] },
 });
+
+// What mod-reforging's item_reforge.h lets Reforging.Percentage and Reforging.ReforgeableStats ask
+// for: a percentage outside the range falls back to the default, and a stat list longer than
+// MAX_REFORGEABLE_STAT_TYPES ends up empty, which turns reforging off.
+export const REFORGE_MIN_PERCENTAGE = 10;
+export const REFORGE_MAX_PERCENTAGE = 90;
+export const REFORGE_DEFAULT_PERCENTAGE = 40;
+export const MAX_REFORGEABLE_STAT_TYPES = 15;

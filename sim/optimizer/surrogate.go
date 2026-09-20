@@ -225,7 +225,7 @@ func (s *surrogate) choiceStats(slot proto.ItemSlot, c ItemChoice) stats.Stats {
 	}
 	cand := s.pool.candidate(slot, c.ItemID)
 	if cand == nil {
-		item := core.NewItem(c.CoreSpec())
+		item := core.NewItem(c.CoreSpec(), nil)
 		return item.TotalStats()
 	}
 	total := cand.Item.Stats
@@ -272,7 +272,7 @@ func (c *Candidate) reforgeStats(from, to int32) stats.Stats {
 			return r.Stats
 		}
 	}
-	return core.ReforgeStats(c.Item.Stats, &proto.ItemReforge{FromStatType: from, ToStatType: to})
+	return core.ReforgeStats(&c.Item, &proto.ItemReforge{FromStatType: from, ToStatType: to}, c.reforging)
 }
 
 // gem is the pool's copy of a gem, else core's.

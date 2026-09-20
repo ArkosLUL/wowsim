@@ -38,6 +38,7 @@ type Pool struct {
 	floors      []*proto.StatMinimum
 	base        *proto.RaidSimRequest
 	targetIndex int
+	reforging   *core.Reforging
 }
 
 // Candidate is one item one slot can hold.
@@ -58,6 +59,9 @@ type Candidate struct {
 	NeedsSim bool
 	// nil when the pool has no catalog row for it.
 	Catalog *proto.CatalogItem
+
+	// The run's mod-reforging config, for pricing a reforge Reforges doesn't list.
+	reforging *core.Reforging
 }
 
 type EnchantOption struct {
@@ -92,10 +96,6 @@ type playerRules struct {
 	professions   []proto.Profession
 }
 
-// maxItemProtoStats is the worldserver's MAX_ITEM_PROTO_STATS: mod-reforging refuses items with
-// StatsCount 0 or at least this.
-const maxItemProtoStats = 10
-
 // maxServerSockets is the worldserver's MAX_GEM_SOCKETS: gems go in 3 enchant slots, so an item
 // with 3 sockets of its own has no room for a buckle or blacksmith socket.
 const maxServerSockets = 3
@@ -119,6 +119,7 @@ func CompilePool(r *Request) (*Pool, error) {
 		floors:      r.Settings.GetStatMinimums(),
 		base:        r.Base,
 		targetIndex: r.TargetIndex,
+		reforging:   &core.NewServerSettings(r.Base.GetEncounter().GetServerSettings()).Reforging,
 	}
 	for _, id := range r.Settings.GetExcludedItemIds() {
 		p.excluded[id] = true
@@ -233,11 +234,12 @@ func newPlayerRules(target *proto.Player) (pr playerRules, err error) {
 
 func (p *Pool) newCandidate(item core.Item) *Candidate {
 	return &Candidate{
-		Item:     item,
-		Sockets:  p.sockets(&item),
-		Reforges: reforgeOptions(item, p.catalog[item.ID]),
-		NeedsSim: ItemHasEffect(item.ID) || item.WeaponDamageMax > 0,
-		Catalog:  p.catalog[item.ID],
+		Item:      item,
+		Sockets:   p.sockets(&item),
+		Reforges:  reforgeOptions(item, p.reforging),
+		NeedsSim:  ItemHasEffect(item.ID) || item.WeaponDamageMax > 0,
+		Catalog:   p.catalog[item.ID],
+		reforging: p.reforging,
 	}
 }
 
@@ -272,50 +274,22 @@ func (p *Pool) missingProfession(id int32) bool {
 	return needs != proto.Profession_ProfessionUnknown && !slices.Contains(p.player.professions, needs)
 }
 
-// reforgeOptions lists what mod-reforging allows: one stat pair from core's reforgeable list,
-// taken off the item's own stats (no gems or enchant), into a stat the item doesn't have, on an
-// item whose StatsCount is 1 to 9. Without a catalog row StatsCount is unknown, so only core's
-// rule applies.
-//
-// The server only reforges template stats of the combined rating types. Core can't tell those
-// apart: it folds flat equip spells into the item's stats, and keeps hit, crit and haste as a
-// melee and a spell stat each. So a melee- or spell-only rating (the pre-3.0 stat types) doesn't
-// count as the rating; a rating from an equip spell still slips through.
-func reforgeOptions(item core.Item, row *proto.CatalogItem) []ReforgeOption {
-	if row != nil && (row.StatsCount < 1 || row.StatsCount >= maxItemProtoStats) {
-		return nil
-	}
+// reforgeOptions lists every reforge mod-reforging allows on the item under the run's config: one
+// pair from its reforgeable stat list, taken off one of the item's own item_template stats into one
+// it doesn't have. core.ReforgeStats has the rule; an item the item database has no server stats
+// for gets no reforges, as it would on the server.
+func reforgeOptions(item core.Item, reforging *core.Reforging) []ReforgeOption {
 	var out []ReforgeOption
-	for _, from := range core.ReforgeableStatTypes {
-		for _, to := range core.ReforgeableStatTypes {
-			reforge := &proto.ItemReforge{FromStatType: from, ToStatType: to}
-			if !core.CanReforge(item.Stats, reforge) {
-				continue
-			}
-			delta := core.ReforgeStats(item.Stats, reforge)
-			if splitRating(item.Stats, delta) {
+	for _, from := range reforging.StatTypes {
+		for _, to := range reforging.StatTypes {
+			delta := core.ReforgeStats(&item, &proto.ItemReforge{FromStatType: from, ToStatType: to}, reforging)
+			if delta == (stats.Stats{}) {
 				continue
 			}
 			out = append(out, ReforgeOption{From: from, To: to, Stats: delta})
 		}
 	}
 	return out
-}
-
-// splitRating is whether the stats a reforge takes from differ on the item, e.g. spell hit
-// without melee hit: core takes the larger, but the server has no combined rating to take from.
-func splitRating(base, delta stats.Stats) bool {
-	from := -1.0
-	for s, d := range delta {
-		if d >= 0 {
-			continue
-		}
-		if from >= 0 && base[s] != from {
-			return true
-		}
-		from = base[s]
-	}
-	return false
 }
 
 // candidate is the pool's entry for an item in a slot, or nil.

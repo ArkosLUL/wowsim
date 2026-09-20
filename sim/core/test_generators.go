@@ -247,11 +247,11 @@ func (filter *ItemFilter) Matches(item Item, equipChecksOnly bool) bool {
 func (filter *ItemFilter) FindAllItems() []Item {
 	var filteredItems []Item
 
-	for _, item := range ItemsByID {
+	ForEachItem(func(item Item) {
 		if filter.Matches(item, false) {
 			filteredItems = append(filteredItems, item)
 		}
-	}
+	})
 
 	return filteredItems
 }
@@ -273,7 +273,7 @@ func (filter *ItemFilter) FindAllSets() []*ItemSet {
 func (filter *ItemFilter) FindAllMetaGems() []Gem {
 	var filteredGems []Gem
 
-	for _, gem := range GemsByID {
+	ForEachGem(func(gem Gem) {
 		if gem.Color == proto.GemColor_GemColorMeta {
 			if !strings.Contains(gem.Name, "Skyfire") &&
 				!strings.Contains(gem.Name, "Earthstorm") &&
@@ -282,7 +282,7 @@ func (filter *ItemFilter) FindAllMetaGems() []Gem {
 				filteredGems = append(filteredGems, gem)
 			}
 		}
-	}
+	})
 
 	return filteredGems
 }
@@ -327,7 +327,7 @@ func (generator *ItemsTestGenerator) init() {
 	generator.items = generator.ItemFilter.FindAllItems()
 	generator.sets = generator.ItemFilter.FindAllSets()
 
-	baseEquipment := ProtoToEquipment(generator.Player.Equipment)
+	baseEquipment := ProtoToEquipment(generator.Player.Equipment, nil)
 	generator.metaSocketIdx = -1
 	for i, socketColor := range baseEquipment[proto.ItemSlot_ItemSlotHead].GemSockets {
 		if socketColor == proto.GemColor_GemColorMeta {
@@ -351,7 +351,7 @@ func (generator *ItemsTestGenerator) GetTest(testIdx int) (string, *proto.Comput
 	label := ""
 
 	playerCopy := googleProto.Clone(generator.Player).(*proto.Player)
-	equipment := ProtoToEquipment(playerCopy.Equipment)
+	equipment := ProtoToEquipment(playerCopy.Equipment, nil)
 	if testIdx < len(generator.items) {
 		testItem := generator.items[testIdx]
 		equipment.EquipItem(generator.items[testIdx])

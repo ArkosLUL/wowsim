@@ -75,17 +75,13 @@ func TestCodeDefaultsMatchServerSource(t *testing.T) {
 	for _, key := range []string{reforgeEnableKey, reforgeStatsKey, reforgePercentageKey} {
 		sourceDefault(t, reforging, key)
 	}
-	header := readAC(t, "modules/mod-reforging/src/item_reforge.h")
-	for _, want := range []string{
-		`DefaultReforgeableStats = "` + reforgeStatsDef + `"`,
-		"PERCENTAGE_DEFAULT = " + strconv.Itoa(reforgePercentageDef) + ".0f",
-		"PERCENTAGE_MIN = 10.0f",
-		"PERCENTAGE_MAX = 90.0f",
-		"MAX_REFORGEABLE_STATS = " + strconv.Itoa(maxReforgeableStatTypes),
-	} {
-		if !strings.Contains(header, want) {
-			t.Errorf("item_reforge.h no longer has %s", want)
-		}
+	limits, err := parseReforgeLimits(readAC(t, reforgeHeaderSrc))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := (reforgeLimits{MinPercentage: 10, MaxPercentage: 90, DefaultPercentage: 40, MaxStatTypes: 15,
+		DefaultStatTypes: "6,13,14,31,32,36,37"}); limits != want {
+		t.Errorf("item_reforge.h now gives %+v, the sim was built against %+v", limits, want)
 	}
 }
 
@@ -94,14 +90,14 @@ func TestGeneratedFilesMatchLiveConfig(t *testing.T) {
 	if _, err := os.Stat(acDir); err != nil {
 		t.Skip("no AzerothCore checkout at " + acDir)
 	}
-	settings, f, err := liveSettings(acDir)
+	settings, f, limits, err := liveSettings(acDir)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	for rel, render := range map[string]func() ([]byte, error){
-		"sim/core/server_defaults_auto_gen.go":          func() ([]byte, error) { return renderGo(settings, f) },
-		"ui/core/constants/server_defaults_auto_gen.ts": func() ([]byte, error) { return renderTS(settings) },
+		"sim/core/server_defaults_auto_gen.go":          func() ([]byte, error) { return renderGo(settings, f, limits) },
+		"ui/core/constants/server_defaults_auto_gen.ts": func() ([]byte, error) { return renderTS(settings, limits) },
 	} {
 		want, err := render()
 		if err != nil {

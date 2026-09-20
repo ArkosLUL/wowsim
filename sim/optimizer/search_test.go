@@ -358,7 +358,7 @@ func kaPartOf(slot proto.ItemSlot, c ItemChoice) kaPart {
 	if c.ItemID == 0 {
 		return kaPart{}
 	}
-	item := core.NewItem(c.CoreSpec())
+	item := core.NewItem(c.CoreSpec(), nil)
 	s := item.TotalStats()
 	part := kaPart{str: s[stats.Strength], ap: s[stats.AttackPower], crit: s[stats.MeleeCrit], haste: s[stats.MeleeHaste],
 		exp: s[stats.Expertise], hit: s[stats.MeleeHit]}
@@ -628,7 +628,7 @@ func TestChoiceStatsMatchCore(t *testing.T) {
 	checked := 0
 	for slot := range p.Slots {
 		for _, c := range kaChoicesSample(p, proto.ItemSlot(slot), rng, 40) {
-			item := core.NewItem(c.CoreSpec())
+			item := core.NewItem(c.CoreSpec(), nil)
 			if got, want := s.choiceStats(proto.ItemSlot(slot), c), item.TotalStats(); got != want {
 				t.Errorf("%s %+v: surrogate %v, core %v", proto.ItemSlot(slot), c, got, want)
 			}

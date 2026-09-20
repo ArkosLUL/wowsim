@@ -34,8 +34,8 @@ const (
 	rtDagger    = 9600038 // off hand only
 	rtEngiHelm  = 9600039 // needs engineering
 	rtRanged    = 9600040
-	rtReforge   = 9600041 // crit and hit, StatsCount 2
-	rtNoReforge = 9600042 // crit, StatsCount 10
+	rtReforge   = 9600041 // crit and hit, 2 item_template stats
+	rtNoReforge = 9600042 // crit, 10 item_template stats
 	rtPole      = 9600043 // fishing pole: two-handed, no weapon type
 	rtOddShield = 9600044 // shield without a hand type
 	rtWaist3    = 9600045 // three sockets of its own
@@ -77,6 +77,14 @@ func rtWeapon(id int32, hand proto.HandType, wt proto.WeaponType) *proto.SimItem
 		WeaponSpeed: 2.6, Stats: stats.Stats{stats.Strength: 20}.ToFloatArray()}
 }
 
+// rtServerStats gives an item the item_template stat rows mod-reforging reads, as type, value pairs.
+func rtServerStats(item *proto.SimItem, typeValue ...int32) *proto.SimItem {
+	for i := 0; i < len(typeValue); i += 2 {
+		item.ServerStats = append(item.ServerStats, &proto.ItemStat{StatType: typeValue[i], Value: typeValue[i+1]})
+	}
+	return item
+}
+
 func rtGem(id int32, color proto.GemColor, s stats.Stats) *proto.SimGem {
 	return &proto.SimGem{Id: id, Color: color, Stats: s.ToFloatArray()}
 }
@@ -107,8 +115,10 @@ var rtDatabase = &proto.SimDatabase{
 		rtWeapon(rtDagger, proto.HandType_HandTypeOffHand, proto.WeaponType_WeaponTypeDagger),
 		rtItem(rtEngiHelm, proto.ItemType_ItemTypeHead, stats.Stats{stats.Strength: 70}, proto.GemColor_GemColorMeta),
 		{Id: rtRanged, Type: proto.ItemType_ItemTypeRanged, RangedWeaponType: proto.RangedWeaponType_RangedWeaponTypeThrown},
-		rtItem(rtReforge, proto.ItemType_ItemTypeNeck, stats.Stats{stats.MeleeCrit: 40, stats.SpellCrit: 40, stats.MeleeHit: 30, stats.SpellHit: 30}),
-		rtItem(rtNoReforge, proto.ItemType_ItemTypeBack, stats.Stats{stats.MeleeCrit: 40, stats.SpellCrit: 40}),
+		rtServerStats(rtItem(rtReforge, proto.ItemType_ItemTypeNeck, stats.Stats{stats.MeleeCrit: 40, stats.SpellCrit: 40, stats.MeleeHit: 30, stats.SpellHit: 30}),
+			32, 40, 31, 30),
+		rtServerStats(rtItem(rtNoReforge, proto.ItemType_ItemTypeBack, stats.Stats{stats.MeleeCrit: 40, stats.SpellCrit: 40}),
+			32, 40, 4, 1, 4, 1, 4, 1, 4, 1, 4, 1, 4, 1, 4, 1, 4, 1, 4, 1),
 		rtWeapon(rtPole, proto.HandType_HandTypeTwoHand, proto.WeaponType_WeaponTypeUnknown),
 		{Id: rtOddShield, Type: proto.ItemType_ItemTypeWeapon, WeaponType: proto.WeaponType_WeaponTypeShield},
 		rtItem(rtWaist3, proto.ItemType_ItemTypeWaist, stats.Stats{stats.Strength: 40},
@@ -208,8 +218,6 @@ func rtOptimizeRequest() *proto.OptimizeGearRequest {
 				{Id: rtRingCatB, LimitCategory: 60},
 				{Id: rtAxeUnique, UniqueEquipped: true},
 				{Id: rtEngiHelm, RequiredProfession: proto.Profession_Engineering},
-				{Id: rtReforge, StatsCount: 2},
-				{Id: rtNoReforge, StatsCount: 10},
 				{Id: rtJCRed, IsGem: true, LimitCategory: 2, RequiredProfession: proto.Profession_Jewelcrafting},
 				{Id: rtJCYellow, IsGem: true, LimitCategory: 2, RequiredProfession: proto.Profession_Jewelcrafting},
 				{Id: rtUniqueGem, IsGem: true, UniqueEquipped: true},
@@ -353,57 +361,78 @@ func TestCompilePoolLockedSlots(t *testing.T) {
 	}
 }
 
-// Reforges are exactly the pairs core.CanReforge allows, on items with StatsCount 1 to 9, except
-// from a rating the item has for melee or spells only.
+// Reforges are exactly the pairs core.ReforgeStats allows, so the pool follows the request's
+// mod-reforging config and reads the item's item_template stats rather than the sim's.
 func TestReforgeOptions(t *testing.T) {
 	const spirit, dodge, parry, hit, crit, haste, expertise = 6, 13, 14, 31, 32, 36, 37
-	ratings := stats.Stats{stats.MeleeCrit: 40, stats.SpellCrit: 40, stats.MeleeHit: 30, stats.SpellHit: 30, stats.Strength: 50}
-	spellHitOnly := stats.Stats{stats.MeleeCrit: 40, stats.SpellCrit: 40, stats.SpellHit: 30, stats.Strength: 50}
-	meleeCritOnly := stats.Stats{stats.MeleeCrit: 40, stats.Spirit: 20}
+	live := core.LiveReforging()
+	ratings := []core.ItemStat{{Type: crit, Value: 40}, {Type: hit, Value: 30}, {Type: 4, Value: 50}}
+	var tenStats []core.ItemStat
+	for i := 0; i < core.MaxItemProtoStats; i++ {
+		tenStats = append(tenStats, core.ItemStat{Type: 4, Value: 10})
+	}
+	tenStats[0] = core.ItemStat{Type: crit, Value: 40}
+
 	tests := []struct {
-		name  string
-		stats stats.Stats
-		row   *proto.CatalogItem
-		allow bool
-		// pairs core.CanReforge allows that the server doesn't
-		refused [][2]int32
-		want    int
+		name        string
+		serverStats []core.ItemStat
+		reforging   *core.Reforging
+		want        map[[2]int32]float64 // the amount each allowed pair moves
 	}{
-		// crit or hit into spirit, dodge, parry, haste or expertise
-		{"no catalog row", ratings, nil, true, nil, 10},
-		{"StatsCount 1", ratings, &proto.CatalogItem{StatsCount: 1}, true, nil, 10},
-		{"StatsCount 9", ratings, &proto.CatalogItem{StatsCount: 9}, true, nil, 10},
-		{"StatsCount 0", ratings, &proto.CatalogItem{}, false, nil, 0},
-		{"StatsCount 10", ratings, &proto.CatalogItem{StatsCount: 10}, false, nil, 0},
-		// only the crit moves
-		{"spell hit only", spellHitOnly, &proto.CatalogItem{StatsCount: 3}, true,
-			[][2]int32{{hit, spirit}, {hit, dodge}, {hit, parry}, {hit, haste}, {hit, expertise}}, 5},
-		// only the spirit moves
-		{"melee crit only", meleeCritOnly, &proto.CatalogItem{StatsCount: 2}, true,
-			[][2]int32{{crit, dodge}, {crit, parry}, {crit, hit}, {crit, haste}, {crit, expertise}}, 5},
+		{
+			name:        "crit or hit into spirit, dodge, parry, haste or expertise",
+			serverStats: ratings,
+			want: map[[2]int32]float64{
+				{crit, spirit}: 16, {crit, dodge}: 16, {crit, parry}: 16, {crit, haste}: 16, {crit, expertise}: 16,
+				{hit, spirit}: 12, {hit, dodge}: 12, {hit, parry}: 12, {hit, haste}: 12, {hit, expertise}: 12,
+			},
+		},
+		{name: "no item_template stats", want: map[[2]int32]float64{}},
+		{name: "ten item_template stats", serverStats: tenStats, want: map[[2]int32]float64{}},
+		{
+			name:        "a config with a shorter list and a higher percentage",
+			serverStats: ratings,
+			reforging:   &core.Reforging{Enabled: true, Percentage: 50, StatTypes: []int32{crit, haste}},
+			want:        map[[2]int32]float64{{crit, haste}: 20},
+		},
+		{
+			name:        "reforging off",
+			serverStats: ratings,
+			reforging:   &core.Reforging{Percentage: 40, StatTypes: live.StatTypes},
+			want:        map[[2]int32]float64{},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			item := core.Item{ID: 1, Stats: tt.stats}
+			reforging := tt.reforging
+			if reforging == nil {
+				reforging = live
+			}
+			item := core.Item{ID: 1, Stats: stats.Stats{stats.MeleeCrit: 40, stats.SpellCrit: 40,
+				stats.MeleeHit: 30, stats.SpellHit: 30, stats.Strength: 50}, ServerStats: tt.serverStats}
+
 			got := map[[2]int32]stats.Stats{}
-			for _, o := range reforgeOptions(item, tt.row) {
+			for _, o := range reforgeOptions(item, reforging) {
 				got[[2]int32{o.From, o.To}] = o.Stats
 			}
-			for _, from := range core.ReforgeableStatTypes {
-				for _, to := range core.ReforgeableStatTypes {
-					reforge := &proto.ItemReforge{FromStatType: from, ToStatType: to}
-					allowed := tt.allow && core.CanReforge(item.Stats, reforge) && !slices.Contains(tt.refused, [2]int32{from, to})
-					delta, listed := got[[2]int32{from, to}]
-					if listed != allowed {
-						t.Errorf("%d -> %d listed %v, want %v", from, to, listed, allowed)
-					}
-					if listed && delta != core.ReforgeStats(item.Stats, reforge) {
-						t.Errorf("%d -> %d stats = %v", from, to, delta)
+			if len(got) != len(tt.want) {
+				t.Errorf("%d reforges listed, want %d: %v", len(got), len(tt.want), got)
+			}
+			for pair, amount := range tt.want {
+				delta, listed := got[pair]
+				if !listed {
+					t.Errorf("%d -> %d isn't listed", pair[0], pair[1])
+					continue
+				}
+				want := core.ReforgeStats(&item, &proto.ItemReforge{FromStatType: pair[0], ToStatType: pair[1]}, reforging)
+				if delta != want {
+					t.Errorf("%d -> %d stats = %v, want %v", pair[0], pair[1], delta, want)
+				}
+				if got := -delta[stats.MeleeCrit] - delta[stats.MeleeHit]; pair[0] == crit || pair[0] == hit {
+					if got != amount {
+						t.Errorf("%d -> %d moves %v, want %v", pair[0], pair[1], got, amount)
 					}
 				}
-			}
-			if len(got) != tt.want {
-				t.Errorf("%d reforges listed, want %d", len(got), tt.want)
 			}
 		})
 	}

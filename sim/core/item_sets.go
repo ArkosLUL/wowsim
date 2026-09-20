@@ -18,14 +18,14 @@ type ItemSet struct {
 
 func (set ItemSet) Items() []Item {
 	var items []Item
-	for _, item := range ItemsByID {
+	ForEachItem(func(item Item) {
 		if item.SetName == "" {
-			continue
+			return
 		}
 		if item.SetName == set.Name || item.SetName == set.AlternativeName {
 			items = append(items, item)
 		}
-	}
+	})
 	// Sort so the order of IDs is always consistent, for tests.
 	slices.SortFunc(items, func(a, b Item) int {
 		return int(a.ID - b.ID)
@@ -39,16 +39,13 @@ var sets []*ItemSet
 func NewItemSet(set ItemSet) *ItemSet {
 	foundName := false
 	foundAlternativeName := set.AlternativeName == ""
-	for _, item := range ItemsByID {
+	ForEachItem(func(item Item) {
 		if item.SetName == "" {
-			continue
+			return
 		}
 		foundName = foundName || item.SetName == set.Name
 		foundAlternativeName = foundAlternativeName || item.SetName == set.AlternativeName
-		if foundName && foundAlternativeName {
-			break
-		}
-	}
+	})
 
 	if WITH_DB {
 		if !foundName {

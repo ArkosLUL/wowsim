@@ -233,7 +233,7 @@ func TestDungeonScaleMultipliers(t *testing.T) {
 
 func TestReforgingResolution(t *testing.T) {
 	live := LiveServerDefaults().Reforge
-	tooMany := make([]int32, maxReforgeableStatTypes+1)
+	tooMany := make([]int32, MaxReforgeableStatTypes+1)
 	for i := range tooMany {
 		tooMany[i] = int32(i + 1)
 	}

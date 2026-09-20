@@ -44,9 +44,9 @@ func (character *Character) enableItemSwap(itemSwap *proto.ItemSwap, mhCritMulti
 		character.Equipment[proto.ItemSlot_ItemSlotRanged],
 	}
 	swapItems := [3]Item{
-		toItem(itemSwap.MhItem),
-		toItem(itemSwap.OhItem),
-		toItem(itemSwap.RangedItem),
+		toItem(itemSwap.MhItem, &character.Server().Reforging),
+		toItem(itemSwap.OhItem, &character.Server().Reforging),
+		toItem(itemSwap.RangedItem, &character.Server().Reforging),
 	}
 
 	// Handle MH and OH together, because present MH + empty OH --> swap MH and unequip OH
@@ -263,7 +263,7 @@ func (swap *ItemSwap) reset(sim *Simulation) {
 	swap.SwapItems(sim, swap.slots)
 }
 
-func toItem(itemSpec *proto.ItemSpec) Item {
+func toItem(itemSpec *proto.ItemSpec, reforging *Reforging) Item {
 	if itemSpec == nil {
 		return Item{}
 	}
@@ -273,5 +273,5 @@ func toItem(itemSpec *proto.ItemSpec) Item {
 		Gems:    itemSpec.Gems,
 		Enchant: itemSpec.Enchant,
 		Reforge: itemSpec.Reforge,
-	})
+	}, reforging)
 }

@@ -113,6 +113,16 @@ func buildFrom(t *testing.T, conf, env string) *config {
 	return c
 }
 
+// liveReforgeLimits is what item_reforge.h declares today, parsed as the generator parses it.
+func liveReforgeLimits(t *testing.T) reforgeLimits {
+	t.Helper()
+	limits, err := parseReforgeLimits(liveLikeReforgeHeader)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return limits
+}
+
 func TestBuild(t *testing.T) {
 	c := buildFrom(t, liveLikeConf+"DungeonScale.rate.armor = 0.8\n", `
       AC_MAP_UPDATE_INTERVAL: "100"
@@ -122,7 +132,7 @@ func TestBuild(t *testing.T) {
       AC_DUNGEON_SCALE_STAT_MODIFIER_RAID_25_M_BOSS_DAMAGE: "1.1"
       AC_REFORGING_PERCENTAGE: "95"
 `)
-	settings, f, err := build(c)
+	settings, f, err := build(c, liveReforgeLimits(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -161,7 +171,7 @@ func TestBuild(t *testing.T) {
 func TestBuildReforgeStatList(t *testing.T) {
 	sixteen := strings.Repeat("6,", 15) + "6"
 	c := buildFrom(t, liveLikeConf, "AC_REFORGING_REFORGEABLE_STATS: \""+sixteen+"\"")
-	settings, _, err := build(c)
+	settings, _, err := build(c, liveReforgeLimits(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -170,7 +180,7 @@ func TestBuildReforgeStatList(t *testing.T) {
 	}
 
 	c = buildFrom(t, liveLikeConf, "AC_REFORGING_REFORGEABLE_STATS: \"6,x\"")
-	if _, _, err := build(c); err == nil {
+	if _, _, err := build(c, liveReforgeLimits(t)); err == nil {
 		t.Error("a bad stat type should fail")
 	}
 }

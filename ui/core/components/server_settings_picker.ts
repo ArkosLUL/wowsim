@@ -1,12 +1,15 @@
 import { Tooltip } from 'bootstrap';
 
-import { LIVE_SERVER_DEFAULTS } from '../constants/server_defaults_auto_gen.js';
+import { LIVE_SERVER_DEFAULTS, REFORGE_MAX_PERCENTAGE, REFORGE_MIN_PERCENTAGE } from '../constants/server_defaults_auto_gen.js';
 import { Encounter } from '../encounter.js';
-import { DungeonScaleModifiers, DungeonScaleSettings, RaidDifficulty, ServerSettings, SpellTweaksSettings } from '../proto/common.js';
+import { DungeonScaleModifiers, DungeonScaleSettings, RaidDifficulty, ReforgeSettings, ServerSettings, SpellTweaksSettings } from '../proto/common.js';
+import { KNOWN_REFORGE_STAT_TYPES, reforgeStatTypeName, reforgingFor } from '../proto_utils/reforging.js';
 import { EventID } from '../typed_event.js';
+import { arrayEquals } from '../utils.js';
 import { BooleanPicker } from './boolean_picker.js';
 import { Component } from './component.js';
 import { EnumPicker } from './enum_picker.js';
+import { NumberListPicker } from './number_list_picker.js';
 import { NumberPicker } from './number_picker.js';
 
 type SpellTweakSwitch = Exclude<keyof SpellTweaksSettings, 'enable' | 'exoticPetDamagePct'>;
@@ -202,6 +205,38 @@ function withScaleModifier(settings: ServerSettings, difficulty: RaidDifficulty,
 	return next;
 }
 
+// A field equal to the live config is cleared, like withSpellTweak; an empty stat list is how the
+// proto says "unset", so it clears too.
+function withReforge(settings: ServerSettings, change: (reforge: ReforgeSettings) => void): ServerSettings {
+	const next = ServerSettings.clone(settings);
+	const reforge = next.reforge ?? ReforgeSettings.create();
+	change(reforge);
+
+	const live = LIVE_SERVER_DEFAULTS.reforge ?? ReforgeSettings.create();
+	if (reforge.enable === live.enable) {
+		delete reforge.enable;
+	}
+	if (reforge.percentage === live.percentage) {
+		delete reforge.percentage;
+	}
+	if (arrayEquals(reforge.statTypes, live.statTypes)) {
+		reforge.statTypes = [];
+	}
+
+	if (ReforgeSettings.equals(reforge, ReforgeSettings.create())) {
+		delete next.reforge;
+	} else {
+		next.reforge = reforge;
+	}
+	return next;
+}
+
+const REFORGEABLE_STATS_TOOLTIP =
+	'Reforging.ReforgeableStats: the item_template stat types a reforge can take from or give to, comma separated. ' +
+	'Known types: ' +
+	KNOWN_REFORGE_STAT_TYPES.map(statType => `${statType} ${reforgeStatTypeName(statType)}`).join(', ') +
+	". A list the sim has no stat for, or one over the server's limit, leaves nothing to reforge.";
+
 export const SERVER_SETTINGS_TOOLTIP =
 	"The AzerothCore config the sim follows. Everything starts at the live server's value and saves with the encounter.";
 
@@ -236,6 +271,63 @@ export class ServerSettingsPicker extends Component {
 
 		this.buildDungeonScale(encounter);
 		this.buildSpellTweaks(encounter);
+		this.buildReforging(encounter);
+	}
+
+	// Every input shows what the sim makes of the settings, so a percentage the server would refuse
+	// reads back as the default it falls to.
+	private buildReforging(encounter: Encounter) {
+		const config = (encounter: Encounter) => reforgingFor(encounter.getServerSettings());
+		const enabled = (encounter: Encounter) => config(encounter).enabled;
+
+		new BooleanPicker<Encounter>(this.rootElem, encounter, {
+			label: 'Reforging',
+			labelTooltip: 'Reforging.Enable, mod-reforging. Off drops every reforge on the gear.',
+			inline: true,
+			reverse: true,
+			changedEvent: encounter => encounter.serverSettingsChangeEmitter,
+			getValue: enabled,
+			setValue: (eventID: EventID, encounter: Encounter, newValue: boolean) =>
+				encounter.setServerSettings(
+					eventID,
+					withReforge(encounter.getServerSettings(), reforge => {
+						reforge.enable = newValue;
+					}),
+				),
+		});
+
+		new NumberPicker<Encounter>(this.rootElem, encounter, {
+			label: 'Reforge %',
+			labelTooltip: `Reforging.Percentage: how much of a stat a reforge moves. Outside ${REFORGE_MIN_PERCENTAGE} to ${REFORGE_MAX_PERCENTAGE} the server uses its default.`,
+			inline: true,
+			float: true,
+			changedEvent: encounter => encounter.serverSettingsChangeEmitter,
+			getValue: encounter => config(encounter).percentage,
+			setValue: (eventID: EventID, encounter: Encounter, newValue: number) =>
+				encounter.setServerSettings(
+					eventID,
+					withReforge(encounter.getServerSettings(), reforge => {
+						reforge.percentage = newValue;
+					}),
+				),
+			enableWhen: enabled,
+		});
+
+		new NumberListPicker<Encounter>(this.rootElem, encounter, {
+			label: 'Reforgeable stats',
+			labelTooltip: REFORGEABLE_STATS_TOOLTIP,
+			inline: true,
+			changedEvent: encounter => encounter.serverSettingsChangeEmitter,
+			getValue: encounter => config(encounter).statTypes,
+			setValue: (eventID: EventID, encounter: Encounter, newValue: Array<number>) =>
+				encounter.setServerSettings(
+					eventID,
+					withReforge(encounter.getServerSettings(), reforge => {
+						reforge.statTypes = newValue;
+					}),
+				),
+			enableWhen: enabled,
+		});
 	}
 
 	private buildDungeonScale(encounter: Encounter) {
