@@ -92,9 +92,18 @@ rotation harder than the golden suites cover, which is how wave D caught Glyph o
 | Wave | Fury P1 | Combat Rogue P3 | Fire Mage P3 | Ret P4 |
 |---|---|---|---|---|
 | D | 8607.6, +273 / +244 | 10547.1, +823 / +838 | 5044.3, +14 / +20 | 13140.6, +102 |
+| E | 8963.3, +267 / +261 | 10546.7, +838 / +839 | 5042.8, +14 / +16 | 13141.4, +140 / +109 |
 
-Quick / Normal. Ret P4 ran at Quick only, after the glyph fix; its wave C numbers (12821.9, +54 / +73)
-came from a seed that wore the glyph.
+Quick / Normal. Ret P4 ran at Quick only in wave D, after the glyph fix; its wave C numbers
+(12821.9, +54 / +73) came from a seed that wore the glyph.
+
+**Open from wave E:** Fury's `J_preset` rose 4.1% while its golden presets moved about 0.1%, and Ret's
+sat still while its goldens gained 8.9%. Neither direction follows the goldens, so something differs
+between the two contexts rather than in the spec. Ret has a candidate: the golden suite's paladin judges
+for itself, which is the path P3-4 fixed, while the optimizer takes Judgement of Wisdom from full
+debuffs, where the sim reads the attacker's weapon instead of the judging paladin's (deviation 20).
+Fury has none yet. Until one spec's gap is traced, read the deltas rather than `J_preset`: all four
+improved, and every delta matches wave D.
 
 ## Sim throughput
 
