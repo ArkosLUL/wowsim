@@ -1,0 +1,4922 @@
+{
+  "version": 1,
+  "exportedAt": "2026-09-20T11:40:46Z",
+  "group": {
+    "selector": "leader",
+    "leader": "Deathsong",
+    "leaderIsGroupLeader": true
+  },
+  "warnings": [],
+  "characters": [
+    {
+      "name": "Angry",
+      "classId": 1,
+      "raceId": 1,
+      "swapRaceId": 2,
+      "level": 80,
+      "subgroup": 0,
+      "memberFlags": 0,
+      "talents": "32002300233-305053000500310153120511351",
+      "glyphs": {
+        "major": [
+          58357,
+          58366,
+          58370
+        ],
+        "minor": [
+          58095,
+          58096,
+          68164
+        ]
+      },
+      "professions": [
+        "Alchemy",
+        "Blacksmithing",
+        "Enchanting",
+        "Engineering",
+        "Inscription",
+        "Jewelcrafting",
+        "Leatherworking",
+        "Tailoring",
+        "Mining",
+        "Skinning",
+        "Herbalism"
+      ],
+      "gear": [
+        {
+          "acSlot": 0,
+          "id": 46151,
+          "enchant": 3817,
+          "gems": [
+            41285,
+            42142
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 1,
+          "id": 44664,
+          "enchant": 0,
+          "gems": [
+            42142
+          ],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 32,
+            "toStatType": 37
+          }
+        },
+        {
+          "acSlot": 2,
+          "id": 40530,
+          "enchant": 3835,
+          "gems": [
+            42149
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 4,
+          "id": 45225,
+          "enchant": 3832,
+          "gems": [
+            40111
+          ],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 37,
+            "toStatType": 31
+          }
+        },
+        {
+          "acSlot": 5,
+          "id": 45824,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 40111
+        },
+        {
+          "acSlot": 6,
+          "id": 46150,
+          "enchant": 3328,
+          "gems": [
+            40142,
+            40129
+          ],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 37,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 7,
+          "id": 45559,
+          "enchant": 3606,
+          "gems": [
+            40111,
+            40129
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 8,
+          "id": 45264,
+          "enchant": 3756,
+          "gems": [],
+          "extraGem": 40111
+        },
+        {
+          "acSlot": 9,
+          "id": 46148,
+          "enchant": 3604,
+          "gems": [
+            40142
+          ],
+          "extraGem": 40111
+        },
+        {
+          "acSlot": 10,
+          "id": 45540,
+          "enchant": 3839,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 11,
+          "id": 45106,
+          "enchant": 3839,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 12,
+          "id": 45263,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 13,
+          "id": 40256,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 14,
+          "id": 45138,
+          "enchant": 3730,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 15,
+          "id": 45521,
+          "enchant": 3789,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 16,
+          "id": 45233,
+          "enchant": 3789,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 17,
+          "id": 40190,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        }
+      ],
+      "warnings": [
+        "Mining, Skinning, Herbalism aren't at skill 450, where the sim hands out their full bonus anyway"
+      ]
+    },
+    {
+      "name": "Deathsong",
+      "classId": 6,
+      "raceId": 4,
+      "swapRaceId": 2,
+      "level": 80,
+      "subgroup": 0,
+      "memberFlags": 0,
+      "talents": "-320033500002-2302303050032151000150013133051",
+      "glyphs": {
+        "major": [
+          58629,
+          58686,
+          63333
+        ],
+        "minor": [
+          60200,
+          58640,
+          59309
+        ]
+      },
+      "professions": [
+        "Alchemy",
+        "Blacksmithing",
+        "Enchanting",
+        "Engineering",
+        "Herbalism",
+        "Inscription",
+        "Jewelcrafting",
+        "Leatherworking",
+        "Mining",
+        "Skinning",
+        "Tailoring"
+      ],
+      "gear": [
+        {
+          "acSlot": 0,
+          "id": 45472,
+          "enchant": 3817,
+          "gems": [
+            41398,
+            40146
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 1,
+          "id": 45193,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 32,
+            "toStatType": 37
+          }
+        },
+        {
+          "acSlot": 2,
+          "id": 46117,
+          "enchant": 3808,
+          "gems": [
+            40111
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 4,
+          "id": 46111,
+          "enchant": 3832,
+          "gems": [
+            40111,
+            40111
+          ],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 37,
+            "toStatType": 31
+          }
+        },
+        {
+          "acSlot": 5,
+          "id": 40278,
+          "enchant": 0,
+          "gems": [
+            42142
+          ],
+          "extraGem": 42142
+        },
+        {
+          "acSlot": 6,
+          "id": 45841,
+          "enchant": 3823,
+          "gems": [
+            40111,
+            40111
+          ],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 32,
+            "toStatType": 31
+          }
+        },
+        {
+          "acSlot": 7,
+          "id": 45559,
+          "enchant": 3606,
+          "gems": [
+            40111,
+            49110
+          ],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 32,
+            "toStatType": 31
+          }
+        },
+        {
+          "acSlot": 8,
+          "id": 45264,
+          "enchant": 3756,
+          "gems": [],
+          "extraGem": 40111
+        },
+        {
+          "acSlot": 9,
+          "id": 45481,
+          "enchant": 3604,
+          "gems": [],
+          "extraGem": 40111
+        },
+        {
+          "acSlot": 10,
+          "id": 45250,
+          "enchant": 3839,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 11,
+          "id": 45540,
+          "enchant": 3839,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 37,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 12,
+          "id": 42987,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 13,
+          "id": 40531,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 37,
+            "toStatType": 31
+          }
+        },
+        {
+          "acSlot": 14,
+          "id": 40403,
+          "enchant": 3730,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 15,
+          "id": 45266,
+          "enchant": 3368,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 16,
+          "id": 45142,
+          "enchant": 3368,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 37,
+            "toStatType": 31
+          }
+        },
+        {
+          "acSlot": 17,
+          "id": 45254,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "name": "Ecoterrorist",
+      "classId": 11,
+      "raceId": 4,
+      "swapRaceId": 0,
+      "level": 80,
+      "subgroup": 0,
+      "memberFlags": 0,
+      "talents": "-553202032322010053120030310511-203503012",
+      "glyphs": {
+        "major": [
+          54818,
+          54815,
+          63055
+        ],
+        "minor": [
+          57857,
+          59219,
+          57855
+        ]
+      },
+      "professions": [
+        "Alchemy",
+        "Blacksmithing",
+        "Enchanting",
+        "Engineering",
+        "Inscription",
+        "Jewelcrafting",
+        "Leatherworking",
+        "Tailoring",
+        "Mining",
+        "Skinning",
+        "Herbalism"
+      ],
+      "gear": [
+        {
+          "acSlot": 0,
+          "id": 46161,
+          "enchant": 3817,
+          "gems": [
+            41398,
+            42142
+          ],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 32,
+            "toStatType": 37
+          }
+        },
+        {
+          "acSlot": 1,
+          "id": 44664,
+          "enchant": 0,
+          "gems": [
+            42142
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 2,
+          "id": 45265,
+          "enchant": 3835,
+          "gems": [
+            42150
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 4,
+          "id": 45473,
+          "enchant": 3832,
+          "gems": [
+            40146,
+            40111,
+            40111
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 5,
+          "id": 45547,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 40111,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 6,
+          "id": 45846,
+          "enchant": 3328,
+          "gems": [
+            40111,
+            40111
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 7,
+          "id": 45564,
+          "enchant": 3606,
+          "gems": [
+            40111,
+            40111
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 8,
+          "id": 45108,
+          "enchant": 3756,
+          "gems": [],
+          "extraGem": 40111
+        },
+        {
+          "acSlot": 9,
+          "id": 46158,
+          "enchant": 3604,
+          "gems": [
+            40146
+          ],
+          "extraGem": 40111
+        },
+        {
+          "acSlot": 10,
+          "id": 45157,
+          "enchant": 3839,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 37
+          }
+        },
+        {
+          "acSlot": 11,
+          "id": 45540,
+          "enchant": 3839,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 12,
+          "id": 42987,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 13,
+          "id": 45263,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 14,
+          "id": 40250,
+          "enchant": 3730,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 15,
+          "id": 45613,
+          "enchant": 3789,
+          "gems": [
+            40146,
+            40129
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 17,
+          "id": 45509,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        }
+      ],
+      "warnings": [
+        "Mining, Skinning, Herbalism aren't at skill 450, where the sim hands out their full bonus anyway"
+      ]
+    },
+    {
+      "name": "Mighty",
+      "classId": 1,
+      "raceId": 3,
+      "swapRaceId": 2,
+      "level": 80,
+      "subgroup": 0,
+      "memberFlags": 0,
+      "talents": "3022032023335100102012213231251-305-2033",
+      "glyphs": {
+        "major": [
+          58357,
+          58385,
+          58368
+        ],
+        "minor": [
+          58095,
+          58098,
+          58097
+        ]
+      },
+      "professions": [
+        "Alchemy",
+        "Blacksmithing",
+        "Enchanting",
+        "Engineering",
+        "Inscription",
+        "Jewelcrafting",
+        "Leatherworking",
+        "Tailoring",
+        "Mining",
+        "Skinning",
+        "Herbalism"
+      ],
+      "gear": [
+        {
+          "acSlot": 0,
+          "id": 46151,
+          "enchant": 3817,
+          "gems": [
+            41285,
+            42142
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 1,
+          "id": 44664,
+          "enchant": 0,
+          "gems": [
+            42142
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 2,
+          "id": 45320,
+          "enchant": 3835,
+          "gems": [
+            42142
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 4,
+          "id": 45225,
+          "enchant": 3832,
+          "gems": [
+            40129
+          ],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 37,
+            "toStatType": 36
+          }
+        },
+        {
+          "acSlot": 5,
+          "id": 45161,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 40111
+        },
+        {
+          "acSlot": 6,
+          "id": 46150,
+          "enchant": 3328,
+          "gems": [
+            40142,
+            40129
+          ],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 7,
+          "id": 40591,
+          "enchant": 3606,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 8,
+          "id": 45264,
+          "enchant": 3756,
+          "gems": [],
+          "extraGem": 40111,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 9,
+          "id": 46148,
+          "enchant": 3604,
+          "gems": [
+            40142
+          ],
+          "extraGem": 40111,
+          "reforge": {
+            "fromStatType": 37,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 10,
+          "id": 45106,
+          "enchant": 3839,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 11,
+          "id": 45540,
+          "enchant": 3839,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 12,
+          "id": 45263,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 13,
+          "id": 40256,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 14,
+          "id": 45138,
+          "enchant": 3730,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 15,
+          "id": 45165,
+          "enchant": 3789,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 37,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 17,
+          "id": 40190,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 36
+          }
+        }
+      ],
+      "warnings": [
+        "Mining, Skinning, Herbalism aren't at skill 450, where the sim hands out their full bonus anyway"
+      ]
+    },
+    {
+      "name": "Obliteration",
+      "classId": 6,
+      "raceId": 11,
+      "swapRaceId": 0,
+      "level": 80,
+      "subgroup": 0,
+      "memberFlags": 0,
+      "talents": "-32003350352203012300033101351-230200305002",
+      "glyphs": {
+        "major": [
+          63334,
+          58613,
+          58676
+        ],
+        "minor": [
+          60200,
+          58680,
+          59309
+        ]
+      },
+      "professions": [
+        "Jewelcrafting",
+        "Alchemy",
+        "Blacksmithing",
+        "Enchanting",
+        "Engineering",
+        "Inscription",
+        "Leatherworking",
+        "Herbalism",
+        "Mining",
+        "Skinning",
+        "Tailoring"
+      ],
+      "gear": [
+        {
+          "acSlot": 0,
+          "id": 46115,
+          "enchant": 3817,
+          "gems": [
+            41285,
+            40140
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 1,
+          "id": 44664,
+          "enchant": 0,
+          "gems": [
+            42153
+          ],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 32,
+            "toStatType": 31
+          }
+        },
+        {
+          "acSlot": 2,
+          "id": 46117,
+          "enchant": 3835,
+          "gems": [
+            42153
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 4,
+          "id": 46111,
+          "enchant": 3832,
+          "gems": [
+            40142,
+            42153
+          ],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 37,
+            "toStatType": 31
+          }
+        },
+        {
+          "acSlot": 5,
+          "id": 45161,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 40117
+        },
+        {
+          "acSlot": 6,
+          "id": 45841,
+          "enchant": 3328,
+          "gems": [
+            40117,
+            40140
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 7,
+          "id": 40591,
+          "enchant": 3606,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 8,
+          "id": 45264,
+          "enchant": 3756,
+          "gems": [],
+          "extraGem": 40117
+        },
+        {
+          "acSlot": 9,
+          "id": 46113,
+          "enchant": 3604,
+          "gems": [
+            40117
+          ],
+          "extraGem": 40117
+        },
+        {
+          "acSlot": 10,
+          "id": 45250,
+          "enchant": 3839,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 11,
+          "id": 45540,
+          "enchant": 3839,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 12,
+          "id": 45263,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 13,
+          "id": 40531,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 14,
+          "id": 45138,
+          "enchant": 3831,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 15,
+          "id": 45463,
+          "enchant": 3370,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 16,
+          "id": 45142,
+          "enchant": 3368,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 17,
+          "id": 45254,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        }
+      ],
+      "warnings": [
+        "Herbalism, Mining, Skinning, Tailoring aren't at skill 450, where the sim hands out their full bonus anyway"
+      ]
+    },
+    {
+      "name": "Assasin",
+      "classId": 4,
+      "raceId": 4,
+      "swapRaceId": 2,
+      "level": 80,
+      "subgroup": 1,
+      "memberFlags": 0,
+      "talents": "00532000523-0252051000035015223100501251",
+      "glyphs": {
+        "major": [
+          56803,
+          63252,
+          56801
+        ],
+        "minor": [
+          58039,
+          58038,
+          58033
+        ]
+      },
+      "professions": [
+        "Alchemy",
+        "Blacksmithing",
+        "Enchanting",
+        "Engineering",
+        "Inscription",
+        "Jewelcrafting",
+        "Leatherworking",
+        "Tailoring",
+        "Mining",
+        "Herbalism",
+        "Skinning"
+      ],
+      "gear": [
+        {
+          "acSlot": 0,
+          "id": 45523,
+          "enchant": 3817,
+          "gems": [
+            41398,
+            40136
+          ],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 37,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 1,
+          "id": 45480,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 2,
+          "id": 45265,
+          "enchant": 3835,
+          "gems": [
+            42150
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 4,
+          "id": 46123,
+          "enchant": 3832,
+          "gems": [
+            36766,
+            40159
+          ],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 37,
+            "toStatType": 31
+          }
+        },
+        {
+          "acSlot": 5,
+          "id": 45829,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 40114,
+          "reforge": {
+            "fromStatType": 37,
+            "toStatType": 36
+          }
+        },
+        {
+          "acSlot": 6,
+          "id": 45846,
+          "enchant": 3328,
+          "gems": [
+            36766,
+            40114
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 7,
+          "id": 45232,
+          "enchant": 3606,
+          "gems": [
+            40114
+          ],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 37,
+            "toStatType": 31
+          }
+        },
+        {
+          "acSlot": 8,
+          "id": 45108,
+          "enchant": 3756,
+          "gems": [],
+          "extraGem": 40114
+        },
+        {
+          "acSlot": 9,
+          "id": 46124,
+          "enchant": 3604,
+          "gems": [
+            40114
+          ],
+          "extraGem": 40114
+        },
+        {
+          "acSlot": 10,
+          "id": 40074,
+          "enchant": 3839,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 11,
+          "id": 45157,
+          "enchant": 3839,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 12,
+          "id": 40684,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 32,
+            "toStatType": 31
+          }
+        },
+        {
+          "acSlot": 13,
+          "id": 45522,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 14,
+          "id": 45224,
+          "enchant": 3730,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 15,
+          "id": 45142,
+          "enchant": 3789,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 37,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 16,
+          "id": 45484,
+          "enchant": 3789,
+          "gems": [
+            40114
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 17,
+          "id": 45261,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        }
+      ],
+      "warnings": [
+        "Mining, Herbalism, Skinning aren't at skill 450, where the sim hands out their full bonus anyway"
+      ]
+    },
+    {
+      "name": "Justice",
+      "classId": 2,
+      "raceId": 11,
+      "swapRaceId": 0,
+      "level": 80,
+      "subgroup": 1,
+      "memberFlags": 0,
+      "talents": "050501-05-05232051203331302133231331",
+      "glyphs": {
+        "major": [
+          54922,
+          54928,
+          56416
+        ],
+        "minor": [
+          57955,
+          57947,
+          57958
+        ]
+      },
+      "professions": [
+        "Alchemy",
+        "Blacksmithing",
+        "Enchanting",
+        "Engineering",
+        "Inscription",
+        "Jewelcrafting",
+        "Leatherworking",
+        "Tailoring",
+        "Mining",
+        "Skinning",
+        "Herbalism"
+      ],
+      "gear": [
+        {
+          "acSlot": 0,
+          "id": 45107,
+          "enchant": 3817,
+          "gems": [
+            41285,
+            42142
+          ],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 37
+          }
+        },
+        {
+          "acSlot": 1,
+          "id": 45193,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 2,
+          "id": 45320,
+          "enchant": 3835,
+          "gems": [
+            42142
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 4,
+          "id": 46154,
+          "enchant": 3832,
+          "gems": [
+            42142,
+            40142
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 5,
+          "id": 45241,
+          "enchant": 0,
+          "gems": [
+            40129,
+            40142
+          ],
+          "extraGem": 40111
+        },
+        {
+          "acSlot": 6,
+          "id": 46153,
+          "enchant": 3328,
+          "gems": [
+            40111,
+            40129
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 7,
+          "id": 40591,
+          "enchant": 3606,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 32,
+            "toStatType": 31
+          }
+        },
+        {
+          "acSlot": 8,
+          "id": 39729,
+          "enchant": 3756,
+          "gems": [],
+          "extraGem": 40111,
+          "reforge": {
+            "fromStatType": 37,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 9,
+          "id": 46155,
+          "enchant": 3604,
+          "gems": [
+            40111
+          ],
+          "extraGem": 40111
+        },
+        {
+          "acSlot": 10,
+          "id": 45106,
+          "enchant": 3839,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 11,
+          "id": 45540,
+          "enchant": 3839,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 37,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 12,
+          "id": 40531,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 37,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 13,
+          "id": 42987,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 14,
+          "id": 45138,
+          "enchant": 3730,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 15,
+          "id": 45165,
+          "enchant": 3790,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 37,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 17,
+          "id": 45510,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        }
+      ],
+      "warnings": [
+        "Mining, Skinning, Herbalism aren't at skill 450, where the sim hands out their full bonus anyway"
+      ]
+    },
+    {
+      "name": "Shadow",
+      "classId": 4,
+      "raceId": 4,
+      "swapRaceId": 8,
+      "level": 80,
+      "subgroup": 1,
+      "memberFlags": 0,
+      "talents": "005303105352100520103331051-005005003-501",
+      "glyphs": {
+        "major": [
+          63268,
+          63249,
+          63254
+        ],
+        "minor": [
+          58039,
+          58038,
+          58033
+        ]
+      },
+      "professions": [
+        "Alchemy",
+        "Blacksmithing",
+        "Enchanting",
+        "Engineering",
+        "Inscription",
+        "Jewelcrafting",
+        "Leatherworking",
+        "Tailoring",
+        "Mining",
+        "Skinning",
+        "Herbalism"
+      ],
+      "gear": [
+        {
+          "acSlot": 0,
+          "id": 46125,
+          "enchant": 3817,
+          "gems": [
+            41398,
+            36766
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 1,
+          "id": 45480,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 2,
+          "id": 45265,
+          "enchant": 3835,
+          "gems": [
+            42150
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 4,
+          "id": 40539,
+          "enchant": 3832,
+          "gems": [
+            36766
+          ],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 37,
+            "toStatType": 31
+          }
+        },
+        {
+          "acSlot": 5,
+          "id": 45547,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 40114
+        },
+        {
+          "acSlot": 6,
+          "id": 45846,
+          "enchant": 3328,
+          "gems": [
+            40136,
+            40114
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 7,
+          "id": 45232,
+          "enchant": 1597,
+          "gems": [
+            40114
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 8,
+          "id": 40186,
+          "enchant": 3756,
+          "gems": [],
+          "extraGem": 40114
+        },
+        {
+          "acSlot": 9,
+          "id": 46124,
+          "enchant": 3604,
+          "gems": [
+            40114
+          ],
+          "extraGem": 40114,
+          "reforge": {
+            "fromStatType": 32,
+            "toStatType": 37
+          }
+        },
+        {
+          "acSlot": 10,
+          "id": 40717,
+          "enchant": 3839,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 32,
+            "toStatType": 31
+          }
+        },
+        {
+          "acSlot": 11,
+          "id": 45540,
+          "enchant": 3839,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 12,
+          "id": 45263,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 32,
+            "toStatType": 31
+          }
+        },
+        {
+          "acSlot": 13,
+          "id": 40684,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 32,
+            "toStatType": 31
+          }
+        },
+        {
+          "acSlot": 14,
+          "id": 40250,
+          "enchant": 3730,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 32,
+            "toStatType": 37
+          }
+        },
+        {
+          "acSlot": 15,
+          "id": 45607,
+          "enchant": 3789,
+          "gems": [
+            40159
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 16,
+          "id": 45484,
+          "enchant": 3789,
+          "gems": [
+            40114
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 17,
+          "id": 45086,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        }
+      ],
+      "warnings": [
+        "Mining, Skinning, Herbalism aren't at skill 450, where the sim hands out their full bonus anyway"
+      ]
+    },
+    {
+      "name": "Totemist",
+      "classId": 7,
+      "raceId": 11,
+      "swapRaceId": 2,
+      "level": 80,
+      "subgroup": 1,
+      "memberFlags": 0,
+      "talents": "053030152-30405013105001333031131131051",
+      "glyphs": {
+        "major": [
+          55445,
+          55446,
+          63271
+        ],
+        "minor": [
+          58059,
+          58063,
+          59289
+        ]
+      },
+      "professions": [
+        "Alchemy",
+        "Blacksmithing",
+        "Enchanting",
+        "Engineering",
+        "Inscription",
+        "Jewelcrafting",
+        "Leatherworking",
+        "Tailoring",
+        "Mining",
+        "Skinning",
+        "Herbalism"
+      ],
+      "gear": [
+        {
+          "acSlot": 0,
+          "id": 46212,
+          "enchant": 3817,
+          "gems": [
+            41398,
+            42150
+          ],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 32,
+            "toStatType": 37
+          }
+        },
+        {
+          "acSlot": 1,
+          "id": 45480,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 2,
+          "id": 45543,
+          "enchant": 3835,
+          "gems": [
+            40159
+          ],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 32,
+            "toStatType": 37
+          }
+        },
+        {
+          "acSlot": 4,
+          "id": 46205,
+          "enchant": 3832,
+          "gems": [
+            42150,
+            40128
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 5,
+          "id": 45827,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 40128,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 37
+          }
+        },
+        {
+          "acSlot": 6,
+          "id": 46208,
+          "enchant": 3328,
+          "gems": [
+            40159,
+            40169
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 7,
+          "id": 45564,
+          "enchant": 3606,
+          "gems": [
+            40128,
+            42150
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 8,
+          "id": 45454,
+          "enchant": 3756,
+          "gems": [],
+          "extraGem": 40128
+        },
+        {
+          "acSlot": 9,
+          "id": 45444,
+          "enchant": 3604,
+          "gems": [
+            40159,
+            40128
+          ],
+          "extraGem": 40128
+        },
+        {
+          "acSlot": 10,
+          "id": 45157,
+          "enchant": 3839,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 11,
+          "id": 45503,
+          "enchant": 3839,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 12,
+          "id": 40684,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 13,
+          "id": 45263,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 14,
+          "id": 40403,
+          "enchant": 3730,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 32,
+            "toStatType": 31
+          }
+        },
+        {
+          "acSlot": 15,
+          "id": 45463,
+          "enchant": 3790,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 16,
+          "id": 45315,
+          "enchant": 3790,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 32,
+            "toStatType": 37
+          }
+        },
+        {
+          "acSlot": 17,
+          "id": 40322,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        }
+      ],
+      "warnings": [
+        "Mining, Skinning, Herbalism aren't at skill 450, where the sim hands out their full bonus anyway"
+      ]
+    },
+    {
+      "name": "Trueshot",
+      "classId": 3,
+      "raceId": 11,
+      "swapRaceId": 2,
+      "level": 80,
+      "subgroup": 1,
+      "memberFlags": 0,
+      "talents": "2-0153051-5000032500033330531135301311",
+      "glyphs": {
+        "major": [
+          63068,
+          63066,
+          63067
+        ],
+        "minor": [
+          57870,
+          57903,
+          57866
+        ]
+      },
+      "professions": [
+        "Alchemy",
+        "Blacksmithing",
+        "Enchanting",
+        "Engineering",
+        "Inscription",
+        "Jewelcrafting",
+        "Leatherworking",
+        "Herbalism",
+        "Mining",
+        "Skinning",
+        "Tailoring"
+      ],
+      "gear": [
+        {
+          "acSlot": 0,
+          "id": 46143,
+          "enchant": 3817,
+          "gems": [
+            41398,
+            42143
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 1,
+          "id": 45480,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 2,
+          "id": 45227,
+          "enchant": 3835,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 4,
+          "id": 46141,
+          "enchant": 3832,
+          "gems": [
+            42143,
+            42143
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 5,
+          "id": 45491,
+          "enchant": 0,
+          "gems": [
+            40112
+          ],
+          "extraGem": 40112
+        },
+        {
+          "acSlot": 6,
+          "id": 45143,
+          "enchant": 3328,
+          "gems": [
+            40112,
+            40112
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 7,
+          "id": 45249,
+          "enchant": 983,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 8,
+          "id": 45454,
+          "enchant": 3756,
+          "gems": [],
+          "extraGem": 40112,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 36
+          }
+        },
+        {
+          "acSlot": 9,
+          "id": 45444,
+          "enchant": 3604,
+          "gems": [
+            40112,
+            40112
+          ],
+          "extraGem": 40112,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 36
+          }
+        },
+        {
+          "acSlot": 10,
+          "id": 45157,
+          "enchant": 3839,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 11,
+          "id": 40074,
+          "enchant": 3839,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 12,
+          "id": 44253,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 13,
+          "id": 40431,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 14,
+          "id": 40721,
+          "enchant": 1099,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 15,
+          "id": 45613,
+          "enchant": 3827,
+          "gems": [
+            40150,
+            40130
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 17,
+          "id": 45327,
+          "enchant": 3607,
+          "gems": [],
+          "extraGem": 0
+        }
+      ],
+      "warnings": [
+        "Herbalism, Mining, Skinning, Tailoring aren't at skill 450, where the sim hands out their full bonus anyway"
+      ]
+    },
+    {
+      "name": "Hellflame",
+      "classId": 9,
+      "raceId": 1,
+      "swapRaceId": 0,
+      "level": 80,
+      "subgroup": 2,
+      "memberFlags": 0,
+      "talents": "23-0302-05203215220331051335231351",
+      "glyphs": {
+        "major": [
+          63320,
+          56235,
+          56242
+        ],
+        "minor": [
+          58070,
+          58094,
+          58107
+        ]
+      },
+      "professions": [
+        "Alchemy",
+        "Blacksmithing",
+        "Enchanting",
+        "Engineering",
+        "Inscription",
+        "Jewelcrafting",
+        "Leatherworking",
+        "Herbalism",
+        "Mining",
+        "Skinning",
+        "Tailoring"
+      ],
+      "gear": [
+        {
+          "acSlot": 0,
+          "id": 45150,
+          "enchant": 3820,
+          "gems": [
+            41285,
+            40133
+          ],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 1,
+          "id": 44661,
+          "enchant": 0,
+          "gems": [
+            42144
+          ],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 2,
+          "id": 45186,
+          "enchant": 3838,
+          "gems": [
+            42144
+          ],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 36
+          }
+        },
+        {
+          "acSlot": 4,
+          "id": 46137,
+          "enchant": 3832,
+          "gems": [
+            40113,
+            40155
+          ],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 36
+          }
+        },
+        {
+          "acSlot": 5,
+          "id": 45508,
+          "enchant": 0,
+          "gems": [
+            42144
+          ],
+          "extraGem": 40113,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 6,
+          "id": 46139,
+          "enchant": 3719,
+          "gems": [
+            40133,
+            40155
+          ],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 6,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 7,
+          "id": 45258,
+          "enchant": 3606,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 36
+          }
+        },
+        {
+          "acSlot": 8,
+          "id": 45549,
+          "enchant": 3758,
+          "gems": [],
+          "extraGem": 40113,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 9,
+          "id": 46135,
+          "enchant": 3604,
+          "gems": [
+            40113
+          ],
+          "extraGem": 40113,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 36
+          }
+        },
+        {
+          "acSlot": 10,
+          "id": 45113,
+          "enchant": 3840,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 11,
+          "id": 40719,
+          "enchant": 3840,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 6,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 12,
+          "id": 40682,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 13,
+          "id": 45466,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 14,
+          "id": 40405,
+          "enchant": 3831,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 6,
+            "toStatType": 36
+          }
+        },
+        {
+          "acSlot": 15,
+          "id": 45171,
+          "enchant": 3854,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 36
+          }
+        },
+        {
+          "acSlot": 17,
+          "id": 45257,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 6,
+            "toStatType": 36
+          }
+        }
+      ],
+      "warnings": [
+        "Herbalism, Mining, Skinning, Tailoring aren't at skill 450, where the sim hands out their full bonus anyway"
+      ]
+    },
+    {
+      "name": "Nightwarrior",
+      "classId": 3,
+      "raceId": 4,
+      "swapRaceId": 2,
+      "level": 80,
+      "subgroup": 2,
+      "memberFlags": 0,
+      "talents": "51200201515112253132531351-0323012",
+      "glyphs": {
+        "major": [
+          63068,
+          56830,
+          56826
+        ],
+        "minor": [
+          57870,
+          57903,
+          57866
+        ]
+      },
+      "professions": [
+        "Alchemy",
+        "Blacksmithing",
+        "Enchanting",
+        "Engineering",
+        "Herbalism",
+        "Inscription",
+        "Jewelcrafting",
+        "Leatherworking",
+        "Mining",
+        "Skinning",
+        "Tailoring"
+      ],
+      "gear": [
+        {
+          "acSlot": 0,
+          "id": 46143,
+          "enchant": 3817,
+          "gems": [
+            41398,
+            42143
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 1,
+          "id": 44664,
+          "enchant": 0,
+          "gems": [
+            42143
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 2,
+          "id": 45227,
+          "enchant": 3835,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 36
+          }
+        },
+        {
+          "acSlot": 4,
+          "id": 46141,
+          "enchant": 3832,
+          "gems": [
+            42143,
+            40112
+          ],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 36
+          }
+        },
+        {
+          "acSlot": 5,
+          "id": 45827,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 40112,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 6,
+          "id": 45504,
+          "enchant": 3328,
+          "gems": [
+            40112,
+            40150
+          ],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 7,
+          "id": 45244,
+          "enchant": 983,
+          "gems": [
+            40112,
+            40130
+          ],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 36
+          }
+        },
+        {
+          "acSlot": 8,
+          "id": 45454,
+          "enchant": 3756,
+          "gems": [],
+          "extraGem": 40112,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 36
+          }
+        },
+        {
+          "acSlot": 9,
+          "id": 45444,
+          "enchant": 3604,
+          "gems": [
+            40112,
+            40112
+          ],
+          "extraGem": 40112,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 36
+          }
+        },
+        {
+          "acSlot": 10,
+          "id": 40717,
+          "enchant": 3839,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 11,
+          "id": 45157,
+          "enchant": 3839,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 36
+          }
+        },
+        {
+          "acSlot": 12,
+          "id": 44253,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 13,
+          "id": 40256,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 36
+          }
+        },
+        {
+          "acSlot": 14,
+          "id": 40721,
+          "enchant": 1099,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 15,
+          "id": 45233,
+          "enchant": 3827,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 17,
+          "id": 45570,
+          "enchant": 3607,
+          "gems": [],
+          "extraGem": 0
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "name": "Power",
+      "classId": 8,
+      "raceId": 7,
+      "swapRaceId": 0,
+      "level": 80,
+      "subgroup": 2,
+      "memberFlags": 0,
+      "talents": "230005231100330150323102505321-03-203303001",
+      "glyphs": {
+        "major": [
+          56363,
+          62210,
+          56382
+        ],
+        "minor": [
+          57924,
+          57925,
+          52648
+        ]
+      },
+      "professions": [
+        "Alchemy",
+        "Blacksmithing",
+        "Enchanting",
+        "Engineering",
+        "Inscription",
+        "Jewelcrafting",
+        "Leatherworking",
+        "Tailoring",
+        "Mining",
+        "Skinning",
+        "Herbalism"
+      ],
+      "gear": [
+        {
+          "acSlot": 0,
+          "id": 46129,
+          "enchant": 3820,
+          "gems": [
+            41285,
+            42144
+          ],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 36
+          }
+        },
+        {
+          "acSlot": 1,
+          "id": 44661,
+          "enchant": 0,
+          "gems": [
+            40133
+          ],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 2,
+          "id": 45186,
+          "enchant": 3838,
+          "gems": [
+            40133
+          ],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 36
+          }
+        },
+        {
+          "acSlot": 4,
+          "id": 46130,
+          "enchant": 3832,
+          "gems": [
+            42144,
+            40155
+          ],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 6,
+            "toStatType": 36
+          }
+        },
+        {
+          "acSlot": 5,
+          "id": 45119,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 40113,
+          "reforge": {
+            "fromStatType": 6,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 6,
+          "id": 46133,
+          "enchant": 3719,
+          "gems": [
+            40113,
+            42144
+          ],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 36
+          }
+        },
+        {
+          "acSlot": 7,
+          "id": 45258,
+          "enchant": 3606,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 36
+          }
+        },
+        {
+          "acSlot": 8,
+          "id": 45275,
+          "enchant": 3758,
+          "gems": [],
+          "extraGem": 40113,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 9,
+          "id": 46132,
+          "enchant": 3604,
+          "gems": [
+            40155
+          ],
+          "extraGem": 40113,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 10,
+          "id": 45451,
+          "enchant": 3840,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 11,
+          "id": 45113,
+          "enchant": 3840,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 6,
+            "toStatType": 36
+          }
+        },
+        {
+          "acSlot": 12,
+          "id": 40255,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 13,
+          "id": 40258,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 14,
+          "id": 40253,
+          "enchant": 3722,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 6,
+            "toStatType": 36
+          }
+        },
+        {
+          "acSlot": 15,
+          "id": 45437,
+          "enchant": 3834,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 6,
+            "toStatType": 36
+          }
+        },
+        {
+          "acSlot": 16,
+          "id": 45115,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 36
+          }
+        },
+        {
+          "acSlot": 17,
+          "id": 45170,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        }
+      ],
+      "warnings": [
+        "Mining, Skinning, Herbalism aren't at skill 450, where the sim hands out their full bonus anyway"
+      ]
+    },
+    {
+      "name": "Smartface",
+      "classId": 8,
+      "raceId": 7,
+      "swapRaceId": 0,
+      "level": 80,
+      "subgroup": 2,
+      "memberFlags": 0,
+      "talents": "230005031-0055032012303331053120321351",
+      "glyphs": {
+        "major": [
+          56368,
+          63091,
+          56382
+        ],
+        "minor": [
+          57924,
+          57925,
+          62126
+        ]
+      },
+      "professions": [
+        "Alchemy",
+        "Blacksmithing",
+        "Enchanting",
+        "Engineering",
+        "Inscription",
+        "Jewelcrafting",
+        "Leatherworking",
+        "Tailoring",
+        "Mining",
+        "Herbalism",
+        "Skinning"
+      ],
+      "gear": [
+        {
+          "acSlot": 0,
+          "id": 46129,
+          "enchant": 3820,
+          "gems": [
+            41285,
+            42144
+          ],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 1,
+          "id": 44661,
+          "enchant": 0,
+          "gems": [
+            42144
+          ],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 2,
+          "id": 46134,
+          "enchant": 3838,
+          "gems": [
+            42149
+          ],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 6,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 4,
+          "id": 46130,
+          "enchant": 3832,
+          "gems": [
+            40113,
+            40152
+          ],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 6,
+            "toStatType": 36
+          }
+        },
+        {
+          "acSlot": 5,
+          "id": 45557,
+          "enchant": 0,
+          "gems": [
+            40133,
+            40113
+          ],
+          "extraGem": 40113,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 6,
+          "id": 45488,
+          "enchant": 3719,
+          "gems": [
+            40113,
+            40152,
+            40133
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 7,
+          "id": 45258,
+          "enchant": 3606,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 36
+          }
+        },
+        {
+          "acSlot": 8,
+          "id": 45549,
+          "enchant": 3758,
+          "gems": [],
+          "extraGem": 40113,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 9,
+          "id": 46132,
+          "enchant": 3604,
+          "gems": [
+            40152
+          ],
+          "extraGem": 40113,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 10,
+          "id": 40719,
+          "enchant": 3840,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 6,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 11,
+          "id": 45168,
+          "enchant": 3840,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 12,
+          "id": 45148,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 13,
+          "id": 40258,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 14,
+          "id": 45493,
+          "enchant": 3722,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 6,
+            "toStatType": 36
+          }
+        },
+        {
+          "acSlot": 15,
+          "id": 45527,
+          "enchant": 3834,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 16,
+          "id": 45115,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 17,
+          "id": 45257,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        }
+      ],
+      "warnings": [
+        "Mining, Herbalism, Skinning aren't at skill 450, where the sim hands out their full bonus anyway"
+      ]
+    },
+    {
+      "name": "Stormweaver",
+      "classId": 7,
+      "raceId": 11,
+      "swapRaceId": 0,
+      "level": 80,
+      "subgroup": 2,
+      "memberFlags": 0,
+      "talents": "4530001523213351302301351-00525003",
+      "glyphs": {
+        "major": [
+          55453,
+          55451,
+          63280
+        ],
+        "minor": [
+          58059,
+          58063,
+          62132
+        ]
+      },
+      "professions": [
+        "Alchemy",
+        "Blacksmithing",
+        "Enchanting",
+        "Engineering",
+        "Inscription",
+        "Jewelcrafting",
+        "Leatherworking",
+        "Tailoring",
+        "Mining",
+        "Herbalism",
+        "Skinning"
+      ],
+      "gear": [
+        {
+          "acSlot": 0,
+          "id": 46209,
+          "enchant": 3820,
+          "gems": [
+            41285,
+            40155
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 1,
+          "id": 44661,
+          "enchant": 0,
+          "gems": [
+            40134
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 2,
+          "id": 45474,
+          "enchant": 3838,
+          "gems": [
+            42144,
+            42144
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 4,
+          "id": 45531,
+          "enchant": 3233,
+          "gems": [
+            42144
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 5,
+          "id": 45151,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 40113
+        },
+        {
+          "acSlot": 6,
+          "id": 46210,
+          "enchant": 3721,
+          "gems": [
+            40113,
+            40134
+          ],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 32,
+            "toStatType": 36
+          }
+        },
+        {
+          "acSlot": 7,
+          "id": 45258,
+          "enchant": 3606,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 8,
+          "id": 40324,
+          "enchant": 3758,
+          "gems": [
+            40113
+          ],
+          "extraGem": 40113
+        },
+        {
+          "acSlot": 9,
+          "id": 46207,
+          "enchant": 3604,
+          "gems": [
+            40113
+          ],
+          "extraGem": 40113
+        },
+        {
+          "acSlot": 10,
+          "id": 45438,
+          "enchant": 3840,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 11,
+          "id": 45451,
+          "enchant": 3840,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 12,
+          "id": 40531,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 37,
+            "toStatType": 31
+          }
+        },
+        {
+          "acSlot": 13,
+          "id": 42990,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 14,
+          "id": 40251,
+          "enchant": 3722,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 15,
+          "id": 45147,
+          "enchant": 3834,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 16,
+          "id": 45470,
+          "enchant": 1128,
+          "gems": [
+            40113
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 17,
+          "id": 40267,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        }
+      ],
+      "warnings": [
+        "Mining, Herbalism, Skinning aren't at skill 450, where the sim hands out their full bonus anyway"
+      ]
+    },
+    {
+      "name": "Agony",
+      "classId": 9,
+      "raceId": 1,
+      "swapRaceId": 2,
+      "level": 80,
+      "subgroup": 3,
+      "memberFlags": 0,
+      "talents": "2350022031123510253500331151--55000002",
+      "glyphs": {
+        "major": [
+          63320,
+          70947,
+          63302
+        ],
+        "minor": [
+          58070,
+          58094,
+          58107
+        ]
+      },
+      "professions": [
+        "Alchemy",
+        "Blacksmithing",
+        "Enchanting",
+        "Engineering",
+        "Herbalism",
+        "Inscription",
+        "Jewelcrafting",
+        "Leatherworking",
+        "Mining",
+        "Skinning",
+        "Tailoring"
+      ],
+      "gear": [
+        {
+          "acSlot": 0,
+          "id": 45150,
+          "enchant": 3820,
+          "gems": [
+            41285,
+            40133
+          ],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 1,
+          "id": 44661,
+          "enchant": 0,
+          "gems": [
+            42144
+          ],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 2,
+          "id": 46136,
+          "enchant": 3838,
+          "gems": [
+            42150
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 4,
+          "id": 46137,
+          "enchant": 3832,
+          "gems": [
+            40113,
+            40155
+          ],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 36
+          }
+        },
+        {
+          "acSlot": 5,
+          "id": 40561,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 40113,
+          "reforge": {
+            "fromStatType": 6,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 6,
+          "id": 46139,
+          "enchant": 3719,
+          "gems": [
+            40133,
+            40155
+          ],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 6,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 7,
+          "id": 45258,
+          "enchant": 3606,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 36
+          }
+        },
+        {
+          "acSlot": 8,
+          "id": 45275,
+          "enchant": 3758,
+          "gems": [],
+          "extraGem": 40113,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 9,
+          "id": 46135,
+          "enchant": 3604,
+          "gems": [
+            42144
+          ],
+          "extraGem": 40113,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 36
+          }
+        },
+        {
+          "acSlot": 10,
+          "id": 45113,
+          "enchant": 3840,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 6,
+            "toStatType": 36
+          }
+        },
+        {
+          "acSlot": 11,
+          "id": 45515,
+          "enchant": 3840,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 36
+          }
+        },
+        {
+          "acSlot": 12,
+          "id": 45148,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 36
+          }
+        },
+        {
+          "acSlot": 13,
+          "id": 45466,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 14,
+          "id": 45493,
+          "enchant": 3722,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 15,
+          "id": 45171,
+          "enchant": 3854,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 36
+          }
+        },
+        {
+          "acSlot": 17,
+          "id": 45257,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 36
+          }
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "name": "Druidica",
+      "classId": 11,
+      "raceId": 4,
+      "swapRaceId": 11,
+      "level": 80,
+      "subgroup": 3,
+      "memberFlags": 0,
+      "talents": "5032203125331303213305301231--20500301",
+      "glyphs": {
+        "major": [
+          54845,
+          54828,
+          54830
+        ],
+        "minor": [
+          57857,
+          57855,
+          62135
+        ]
+      },
+      "professions": [
+        "Alchemy",
+        "Blacksmithing",
+        "Enchanting",
+        "Engineering",
+        "Inscription",
+        "Jewelcrafting",
+        "Leatherworking",
+        "Tailoring",
+        "Mining",
+        "Skinning",
+        "Herbalism"
+      ],
+      "gear": [
+        {
+          "acSlot": 0,
+          "id": 46191,
+          "enchant": 3820,
+          "gems": [
+            41285,
+            42144
+          ],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 36
+          }
+        },
+        {
+          "acSlot": 1,
+          "id": 44661,
+          "enchant": 0,
+          "gems": [
+            42144
+          ],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 2,
+          "id": 45136,
+          "enchant": 3838,
+          "gems": [
+            40133,
+            40113
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 4,
+          "id": 46194,
+          "enchant": 3832,
+          "gems": [
+            40113,
+            40155
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 5,
+          "id": 45548,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 40113,
+          "reforge": {
+            "fromStatType": 6,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 6,
+          "id": 46192,
+          "enchant": 3719,
+          "gems": [
+            40155,
+            40133
+          ],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 36
+          }
+        },
+        {
+          "acSlot": 7,
+          "id": 45260,
+          "enchant": 3606,
+          "gems": [
+            42144
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 8,
+          "id": 45149,
+          "enchant": 3758,
+          "gems": [],
+          "extraGem": 40113
+        },
+        {
+          "acSlot": 9,
+          "id": 46189,
+          "enchant": 3604,
+          "gems": [
+            40113
+          ],
+          "extraGem": 40113,
+          "reforge": {
+            "fromStatType": 6,
+            "toStatType": 36
+          }
+        },
+        {
+          "acSlot": 10,
+          "id": 40719,
+          "enchant": 3840,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 6,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 11,
+          "id": 45235,
+          "enchant": 3840,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 12,
+          "id": 40258,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 13,
+          "id": 45490,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 14,
+          "id": 45493,
+          "enchant": 3722,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 15,
+          "id": 45171,
+          "enchant": 3854,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 17,
+          "id": 40712,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        }
+      ],
+      "warnings": [
+        "Mining, Skinning, Herbalism aren't at skill 450, where the sim hands out their full bonus anyway"
+      ]
+    },
+    {
+      "name": "Elemena",
+      "classId": 7,
+      "raceId": 11,
+      "swapRaceId": 0,
+      "level": 80,
+      "subgroup": 3,
+      "memberFlags": 0,
+      "talents": "-00502033-50005331335310501122331251",
+      "glyphs": {
+        "major": [
+          55439,
+          55437,
+          63279
+        ],
+        "minor": [
+          58059,
+          58063,
+          59289
+        ]
+      },
+      "professions": [
+        "Alchemy",
+        "Blacksmithing",
+        "Enchanting",
+        "Engineering",
+        "Inscription",
+        "Jewelcrafting",
+        "Leatherworking",
+        "Tailoring",
+        "Mining",
+        "Herbalism",
+        "Skinning"
+      ],
+      "gear": [
+        {
+          "acSlot": 0,
+          "id": 46201,
+          "enchant": 3820,
+          "gems": [
+            41401,
+            40134
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 1,
+          "id": 44662,
+          "enchant": 0,
+          "gems": [
+            40151
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 2,
+          "id": 45440,
+          "enchant": 3838,
+          "gems": [
+            42144
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 4,
+          "id": 46198,
+          "enchant": 3233,
+          "gems": [
+            42144,
+            42144
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 5,
+          "id": 45151,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 40113
+        },
+        {
+          "acSlot": 6,
+          "id": 46202,
+          "enchant": 3719,
+          "gems": [
+            40113,
+            40113
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 7,
+          "id": 40237,
+          "enchant": 3606,
+          "gems": [
+            40113
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 8,
+          "id": 45187,
+          "enchant": 3758,
+          "gems": [],
+          "extraGem": 40113
+        },
+        {
+          "acSlot": 9,
+          "id": 46199,
+          "enchant": 3604,
+          "gems": [
+            40151
+          ],
+          "extraGem": 40113
+        },
+        {
+          "acSlot": 10,
+          "id": 45438,
+          "enchant": 3840,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 11,
+          "id": 45168,
+          "enchant": 3840,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 12,
+          "id": 40432,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 13,
+          "id": 40258,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 14,
+          "id": 45541,
+          "enchant": 3831,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 15,
+          "id": 45147,
+          "enchant": 3834,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 16,
+          "id": 40401,
+          "enchant": 1128,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 17,
+          "id": 45114,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        }
+      ],
+      "warnings": [
+        "Mining, Herbalism, Skinning aren't at skill 450, where the sim hands out their full bonus anyway"
+      ]
+    },
+    {
+      "name": "Fel",
+      "classId": 9,
+      "raceId": 1,
+      "swapRaceId": 0,
+      "level": 80,
+      "subgroup": 3,
+      "memberFlags": 0,
+      "talents": "-003203301135112530135221351-55000005",
+      "glyphs": {
+        "major": [
+          63320,
+          70947,
+          56246
+        ],
+        "minor": [
+          58070,
+          58094,
+          58107
+        ]
+      },
+      "professions": [
+        "Alchemy",
+        "Blacksmithing",
+        "Enchanting",
+        "Engineering",
+        "Inscription",
+        "Jewelcrafting",
+        "Leatherworking",
+        "Tailoring",
+        "Mining",
+        "Herbalism",
+        "Skinning"
+      ],
+      "gear": [
+        {
+          "acSlot": 0,
+          "id": 45150,
+          "enchant": 3820,
+          "gems": [
+            41285,
+            40133
+          ],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 1,
+          "id": 44661,
+          "enchant": 0,
+          "gems": [
+            42144
+          ],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 2,
+          "id": 45186,
+          "enchant": 3838,
+          "gems": [
+            42144
+          ],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 6,
+            "toStatType": 36
+          }
+        },
+        {
+          "acSlot": 4,
+          "id": 46137,
+          "enchant": 3832,
+          "gems": [
+            40113,
+            40155
+          ],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 36
+          }
+        },
+        {
+          "acSlot": 5,
+          "id": 40561,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 40113,
+          "reforge": {
+            "fromStatType": 6,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 6,
+          "id": 46139,
+          "enchant": 3719,
+          "gems": [
+            40133,
+            40155
+          ],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 6,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 7,
+          "id": 45483,
+          "enchant": 3606,
+          "gems": [
+            42144
+          ],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 6,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 8,
+          "id": 45446,
+          "enchant": 3758,
+          "gems": [
+            40113
+          ],
+          "extraGem": 40113,
+          "reforge": {
+            "fromStatType": 6,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 9,
+          "id": 46135,
+          "enchant": 3604,
+          "gems": [
+            40113
+          ],
+          "extraGem": 40113,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 10,
+          "id": 40399,
+          "enchant": 3840,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 11,
+          "id": 40719,
+          "enchant": 3840,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 6,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 12,
+          "id": 40682,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 13,
+          "id": 45148,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 14,
+          "id": 45541,
+          "enchant": 3722,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 15,
+          "id": 45171,
+          "enchant": 3854,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 36
+          }
+        },
+        {
+          "acSlot": 17,
+          "id": 45257,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 6,
+            "toStatType": 36
+          }
+        }
+      ],
+      "warnings": [
+        "Mining, Herbalism, Skinning aren't at skill 450, where the sim hands out their full bonus anyway"
+      ]
+    },
+    {
+      "name": "Malediction",
+      "classId": 5,
+      "raceId": 1,
+      "swapRaceId": 0,
+      "level": 80,
+      "subgroup": 3,
+      "memberFlags": 0,
+      "talents": "0503203--325023051223010323152301351",
+      "glyphs": {
+        "major": [
+          63229,
+          55689,
+          55687
+        ],
+        "minor": [
+          58009,
+          58228,
+          57987
+        ]
+      },
+      "professions": [
+        "Alchemy",
+        "Blacksmithing",
+        "Enchanting",
+        "Engineering",
+        "Inscription",
+        "Jewelcrafting",
+        "Leatherworking",
+        "Tailoring",
+        "Mining",
+        "Herbalism",
+        "Skinning"
+      ],
+      "gear": [
+        {
+          "acSlot": 0,
+          "id": 46172,
+          "enchant": 3820,
+          "gems": [
+            41285,
+            42144
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 1,
+          "id": 45133,
+          "enchant": 0,
+          "gems": [
+            42150
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 2,
+          "id": 40459,
+          "enchant": 3838,
+          "gems": [
+            42144
+          ],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 4,
+          "id": 46168,
+          "enchant": 3832,
+          "gems": [
+            40133,
+            40153
+          ],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 5,
+          "id": 45119,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 40133,
+          "reforge": {
+            "fromStatType": 6,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 6,
+          "id": 46170,
+          "enchant": 3719,
+          "gems": [
+            40113,
+            40153
+          ],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 6,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 7,
+          "id": 45258,
+          "enchant": 3826,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 36
+          }
+        },
+        {
+          "acSlot": 8,
+          "id": 45275,
+          "enchant": 3758,
+          "gems": [],
+          "extraGem": 40113,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 9,
+          "id": 46163,
+          "enchant": 3604,
+          "gems": [
+            40153
+          ],
+          "extraGem": 40113
+        },
+        {
+          "acSlot": 10,
+          "id": 45451,
+          "enchant": 3840,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 11,
+          "id": 45168,
+          "enchant": 3840,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 12,
+          "id": 45490,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 13,
+          "id": 45466,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 14,
+          "id": 40253,
+          "enchant": 3722,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 6,
+            "toStatType": 36
+          }
+        },
+        {
+          "acSlot": 15,
+          "id": 45147,
+          "enchant": 3834,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 16,
+          "id": 45115,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 36
+          }
+        },
+        {
+          "acSlot": 17,
+          "id": 45257,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 36
+          }
+        }
+      ],
+      "warnings": [
+        "Mining, Herbalism, Skinning aren't at skill 450, where the sim hands out their full bonus anyway"
+      ]
+    },
+    {
+      "name": "Bulwark",
+      "classId": 2,
+      "raceId": 1,
+      "swapRaceId": 0,
+      "level": 80,
+      "subgroup": 4,
+      "memberFlags": 3,
+      "talents": "-05005135203102311333312321-502302012003",
+      "glyphs": {
+        "major": [
+          54929,
+          56416,
+          63223
+        ],
+        "minor": [
+          57955,
+          57947,
+          57954
+        ]
+      },
+      "professions": [
+        "Alchemy",
+        "Blacksmithing",
+        "Enchanting",
+        "Engineering",
+        "Inscription",
+        "Jewelcrafting",
+        "Leatherworking",
+        "Herbalism",
+        "Mining",
+        "Skinning",
+        "Tailoring"
+      ],
+      "gear": [
+        {
+          "acSlot": 0,
+          "id": 46175,
+          "enchant": 3878,
+          "gems": [
+            41377,
+            36767
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 1,
+          "id": 45485,
+          "enchant": 0,
+          "gems": [
+            36767
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 2,
+          "id": 46177,
+          "enchant": 3837,
+          "gems": [
+            36767
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 4,
+          "id": 46173,
+          "enchant": 3297,
+          "gems": [
+            40119,
+            40138
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 5,
+          "id": 45139,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 40119
+        },
+        {
+          "acSlot": 6,
+          "id": 40589,
+          "enchant": 3327,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 7,
+          "id": 45542,
+          "enchant": 1075,
+          "gems": [
+            40119
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 8,
+          "id": 45111,
+          "enchant": 3757,
+          "gems": [],
+          "extraGem": 40119
+        },
+        {
+          "acSlot": 9,
+          "id": 45487,
+          "enchant": 3330,
+          "gems": [
+            40119,
+            40119
+          ],
+          "extraGem": 40119
+        },
+        {
+          "acSlot": 10,
+          "id": 45326,
+          "enchant": 3791,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 11,
+          "id": 45112,
+          "enchant": 3791,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 12,
+          "id": 45158,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 13,
+          "id": 44063,
+          "enchant": 0,
+          "gems": [
+            40119,
+            40119
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 14,
+          "id": 45319,
+          "enchant": 1951,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 15,
+          "id": 45442,
+          "enchant": 3851,
+          "gems": [
+            40119
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 16,
+          "id": 45450,
+          "enchant": 3849,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 17,
+          "id": 40707,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        }
+      ],
+      "warnings": [
+        "Herbalism, Mining, Skinning, Tailoring aren't at skill 450, where the sim hands out their full bonus anyway"
+      ]
+    },
+    {
+      "name": "Felesta",
+      "classId": 6,
+      "raceId": 11,
+      "swapRaceId": 2,
+      "level": 80,
+      "subgroup": 4,
+      "memberFlags": 0,
+      "talents": "005512153330030320102013-3050505000023-005",
+      "glyphs": {
+        "major": [
+          58629,
+          63334,
+          58676
+        ],
+        "minor": [
+          58640,
+          60200,
+          59309
+        ]
+      },
+      "professions": [
+        "Alchemy",
+        "Blacksmithing",
+        "Enchanting",
+        "Engineering",
+        "Herbalism",
+        "Inscription",
+        "Jewelcrafting",
+        "Leatherworking",
+        "Mining",
+        "Skinning",
+        "Tailoring"
+      ],
+      "gear": [
+        {
+          "acSlot": 0,
+          "id": 46120,
+          "enchant": 3818,
+          "gems": [
+            41380,
+            40119
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 1,
+          "id": 45485,
+          "enchant": 0,
+          "gems": [
+            0
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 2,
+          "id": 45251,
+          "enchant": 3811,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 14
+          }
+        },
+        {
+          "acSlot": 4,
+          "id": 40559,
+          "enchant": 3832,
+          "gems": [
+            40119,
+            42142
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 5,
+          "id": 45551,
+          "enchant": 0,
+          "gems": [
+            36767,
+            40111
+          ],
+          "extraGem": 40119
+        },
+        {
+          "acSlot": 6,
+          "id": 46121,
+          "enchant": 3327,
+          "gems": [
+            40119,
+            40129
+          ],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 37,
+            "toStatType": 31
+          }
+        },
+        {
+          "acSlot": 7,
+          "id": 45166,
+          "enchant": 1075,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 31,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 8,
+          "id": 45111,
+          "enchant": 3757,
+          "gems": [],
+          "extraGem": 40119
+        },
+        {
+          "acSlot": 9,
+          "id": 46119,
+          "enchant": 3253,
+          "gems": [
+            42152
+          ],
+          "extraGem": 40119
+        },
+        {
+          "acSlot": 10,
+          "id": 45326,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 37,
+            "toStatType": 31
+          }
+        },
+        {
+          "acSlot": 11,
+          "id": 40107,
+          "enchant": 3791,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 12,
+          "id": 45158,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 13,
+          "id": 44063,
+          "enchant": 0,
+          "gems": [
+            40119,
+            40125
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 14,
+          "id": 45319,
+          "enchant": 1951,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 15,
+          "id": 45165,
+          "enchant": 3847,
+          "gems": [],
+          "extraGem": 0,
+          "reforge": {
+            "fromStatType": 36,
+            "toStatType": 32
+          }
+        },
+        {
+          "acSlot": 17,
+          "id": 45144,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "name": "Holylight",
+      "classId": 2,
+      "raceId": 11,
+      "swapRaceId": 0,
+      "level": 80,
+      "subgroup": 4,
+      "memberFlags": 0,
+      "talents": "50350152120013053100515221-50320104201",
+      "glyphs": {
+        "major": [
+          54937,
+          63218,
+          54940
+        ],
+        "minor": [
+          57955,
+          57947,
+          57937
+        ]
+      },
+      "professions": [
+        "Alchemy",
+        "Blacksmithing",
+        "Enchanting",
+        "Engineering",
+        "Inscription",
+        "Jewelcrafting",
+        "Leatherworking",
+        "Tailoring",
+        "Mining",
+        "Herbalism",
+        "Skinning"
+      ],
+      "gear": [
+        {
+          "acSlot": 0,
+          "id": 46180,
+          "enchant": 3820,
+          "gems": [
+            41401,
+            40175
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 1,
+          "id": 45443,
+          "enchant": 0,
+          "gems": [
+            42148
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 2,
+          "id": 45140,
+          "enchant": 3838,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 4,
+          "id": 45445,
+          "enchant": 3233,
+          "gems": [
+            42148,
+            40151,
+            40123
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 5,
+          "id": 45828,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 40123
+        },
+        {
+          "acSlot": 6,
+          "id": 46181,
+          "enchant": 3719,
+          "gems": [
+            40151,
+            42148
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 7,
+          "id": 40187,
+          "enchant": 3606,
+          "gems": [
+            40151
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 8,
+          "id": 45269,
+          "enchant": 3758,
+          "gems": [
+            40123
+          ],
+          "extraGem": 40123
+        },
+        {
+          "acSlot": 9,
+          "id": 46179,
+          "enchant": 3604,
+          "gems": [
+            40151
+          ],
+          "extraGem": 40123
+        },
+        {
+          "acSlot": 10,
+          "id": 45438,
+          "enchant": 3840,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 11,
+          "id": 45530,
+          "enchant": 3840,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 12,
+          "id": 44255,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 13,
+          "id": 40258,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 14,
+          "id": 45541,
+          "enchant": 3831,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 15,
+          "id": 45437,
+          "enchant": 3834,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 16,
+          "id": 39716,
+          "enchant": 1128,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 17,
+          "id": 40705,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        }
+      ],
+      "warnings": [
+        "Mining, Herbalism, Skinning aren't at skill 450, where the sim hands out their full bonus anyway"
+      ]
+    },
+    {
+      "name": "Prayer",
+      "classId": 5,
+      "raceId": 1,
+      "swapRaceId": 0,
+      "level": 80,
+      "subgroup": 4,
+      "memberFlags": 0,
+      "talents": "0503203130300512331323231251-03520103",
+      "glyphs": {
+        "major": [
+          55672,
+          55679,
+          63235
+        ],
+        "minor": [
+          58009,
+          58228,
+          57985
+        ]
+      },
+      "professions": [
+        "Alchemy",
+        "Blacksmithing",
+        "Enchanting",
+        "Engineering",
+        "Inscription",
+        "Jewelcrafting",
+        "Leatherworking",
+        "Herbalism",
+        "Mining",
+        "Skinning",
+        "Tailoring"
+      ],
+      "gear": [
+        {
+          "acSlot": 0,
+          "id": 46197,
+          "enchant": 3820,
+          "gems": [
+            41401,
+            42144
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 1,
+          "id": 45443,
+          "enchant": 0,
+          "gems": [
+            40133
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 2,
+          "id": 45253,
+          "enchant": 3838,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 4,
+          "id": 45240,
+          "enchant": 3233,
+          "gems": [
+            42144,
+            40113
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 5,
+          "id": 45119,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 40113
+        },
+        {
+          "acSlot": 6,
+          "id": 46195,
+          "enchant": 3719,
+          "gems": [
+            42144,
+            40151
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 7,
+          "id": 45483,
+          "enchant": 3606,
+          "gems": [
+            40113
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 8,
+          "id": 45446,
+          "enchant": 3758,
+          "gems": [
+            40113
+          ],
+          "extraGem": 40113
+        },
+        {
+          "acSlot": 9,
+          "id": 46188,
+          "enchant": 3604,
+          "gems": [
+            40113
+          ],
+          "extraGem": 40113
+        },
+        {
+          "acSlot": 10,
+          "id": 45113,
+          "enchant": 3840,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 11,
+          "id": 40719,
+          "enchant": 3840,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 12,
+          "id": 40532,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 13,
+          "id": 40432,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 14,
+          "id": 45541,
+          "enchant": 3831,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 15,
+          "id": 40395,
+          "enchant": 3834,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 16,
+          "id": 45271,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 17,
+          "id": 45170,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        }
+      ],
+      "warnings": [
+        "Herbalism, Mining, Skinning, Tailoring aren't at skill 450, where the sim hands out their full bonus anyway"
+      ]
+    },
+    {
+      "name": "Tree",
+      "classId": 11,
+      "raceId": 4,
+      "swapRaceId": 0,
+      "level": 80,
+      "subgroup": 4,
+      "memberFlags": 0,
+      "talents": "0532003--230033312031502531053313051",
+      "glyphs": {
+        "major": [
+          54824,
+          62970,
+          62971
+        ],
+        "minor": [
+          57857,
+          57855,
+          59219
+        ]
+      },
+      "professions": [
+        "Alchemy",
+        "Blacksmithing",
+        "Enchanting",
+        "Engineering",
+        "Inscription",
+        "Jewelcrafting",
+        "Leatherworking",
+        "Tailoring",
+        "Mining",
+        "Herbalism",
+        "Skinning"
+      ],
+      "gear": [
+        {
+          "acSlot": 0,
+          "id": 46184,
+          "enchant": 3820,
+          "gems": [
+            41401,
+            42144
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 1,
+          "id": 45443,
+          "enchant": 0,
+          "gems": [
+            42144
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 2,
+          "id": 45136,
+          "enchant": 3838,
+          "gems": [
+            42144,
+            40113
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 4,
+          "id": 46186,
+          "enchant": 3233,
+          "gems": [
+            40113,
+            40151
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 5,
+          "id": 45556,
+          "enchant": 0,
+          "gems": [
+            40113,
+            40151
+          ],
+          "extraGem": 40113
+        },
+        {
+          "acSlot": 6,
+          "id": 46185,
+          "enchant": 3719,
+          "gems": [
+            40133,
+            40113
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 7,
+          "id": 45135,
+          "enchant": 3606,
+          "gems": [
+            40113,
+            40151
+          ],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 8,
+          "id": 45149,
+          "enchant": 3758,
+          "gems": [],
+          "extraGem": 40113
+        },
+        {
+          "acSlot": 9,
+          "id": 46183,
+          "enchant": 3604,
+          "gems": [
+            40113
+          ],
+          "extraGem": 40113
+        },
+        {
+          "acSlot": 10,
+          "id": 40719,
+          "enchant": 3840,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 11,
+          "id": 45235,
+          "enchant": 3840,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 12,
+          "id": 45490,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 13,
+          "id": 40532,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 14,
+          "id": 45541,
+          "enchant": 3831,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 15,
+          "id": 45234,
+          "enchant": 3854,
+          "gems": [],
+          "extraGem": 0
+        },
+        {
+          "acSlot": 17,
+          "id": 40342,
+          "enchant": 0,
+          "gems": [],
+          "extraGem": 0
+        }
+      ],
+      "warnings": [
+        "Mining, Herbalism, Skinning aren't at skill 450, where the sim hands out their full bonus anyway"
+      ]
+    }
+  ]
+}
