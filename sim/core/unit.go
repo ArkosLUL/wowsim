@@ -113,6 +113,13 @@ type Unit struct {
 	// Only players have one; see avoid_dr.go.
 	playerAvoidance *playerAvoidance
 
+	// Whose armor penetration this unit's attacks use: its owner, for a pet that inherits it,
+	// nil for everyone else.
+	armorPenSource *Unit
+
+	// The attack speed a pet inherits from its owner, on top of its own.
+	ownerSwingSpeed func() float64
+
 	currentPowerBar PowerBarType
 	healthBar
 	manaBar
@@ -130,6 +137,9 @@ type Unit struct {
 
 	DynamicStatsPets      []*Pet
 	DynamicMeleeSpeedPets []*Pet
+
+	// Pets that swing at this unit's attack speed, so they have to be rescheduled with it.
+	hasteInheritingPets []*Pet
 
 	// AutoAttacks is the manager for auto attack swings.
 	// Must be enabled to use, with "EnableAutoAttacks()".
@@ -262,6 +272,7 @@ func (unit *Unit) processDynamicBonus(sim *Simulation, bonus stats.Stats) {
 	}
 	if bonus[stats.MeleeHaste] != 0 {
 		unit.AutoAttacks.UpdateSwingTimers(sim)
+		unit.updateInheritedSwingSpeeds(sim)
 	}
 	if bonus[stats.SpellHaste] != 0 {
 		unit.updateCastSpeed()
@@ -345,7 +356,20 @@ func (unit *Unit) ApplyRangedCastSpeed(dur time.Duration, spell *Spell) time.Dur
 }
 
 func (unit *Unit) SwingSpeed() float64 {
-	return unit.PseudoStats.MeleeSpeedMultiplier * (1 + (unit.stats[stats.MeleeHaste] / (unit.PseudoStats.MeleeHasteRatingPerHastePercent * 100)))
+	speed := unit.PseudoStats.MeleeSpeedMultiplier * (1 + (unit.stats[stats.MeleeHaste] / (unit.PseudoStats.MeleeHasteRatingPerHastePercent * 100)))
+	if unit.ownerSwingSpeed != nil {
+		// The inherited haste is one more attack time modifier on top of the pet's own.
+		speed *= unit.ownerSwingSpeed()
+	}
+	return speed
+}
+
+// updateInheritedSwingSpeeds reschedules the pets that swing at this unit's speed, for whenever it
+// changes.
+func (unit *Unit) updateInheritedSwingSpeeds(sim *Simulation) {
+	for _, pet := range unit.hasteInheritingPets {
+		pet.AutoAttacks.UpdateSwingTimers(sim)
+	}
 }
 
 func (unit *Unit) Armor() float64 {
@@ -358,8 +382,14 @@ func (unit *Unit) BlockValue() float64 {
 
 // ArmorPenetrationPercentage is how much of the armor penetration cap this unit ignores. The rating
 // and the percentage auras add up, and together can't exceed all of it (Unit::CalcArmorReducedDamage).
+// A pet that inherits its owner's reads both off the owner instead.
 func (unit *Unit) ArmorPenetrationPercentage(armorPenRating float64) float64 {
-	pct := armorPenRating/unit.PseudoStats.ArmorPenRatingPerPercent + unit.PseudoStats.BonusArmorPenPct
+	source := unit
+	if unit.armorPenSource != nil {
+		source = unit.armorPenSource
+		armorPenRating += source.stats[stats.ArmorPenetration]
+	}
+	pct := armorPenRating/source.PseudoStats.ArmorPenRatingPerPercent + source.PseudoStats.BonusArmorPenPct
 	return max(min(pct, 100.0)*0.01, 0.0)
 }
 
@@ -384,15 +414,22 @@ func (unit *Unit) MultiplyMeleeSpeed(sim *Simulation, amount float64) {
 		pet.dynamicMeleeSpeedInheritance(amount)
 	}
 	unit.AutoAttacks.UpdateSwingTimers(sim)
+	unit.updateInheritedSwingSpeeds(sim)
 }
 
 func (unit *Unit) MultiplyRangedSpeed(sim *Simulation, amount float64) {
 	unit.PseudoStats.RangedSpeedMultiplier *= amount
 	unit.AutoAttacks.UpdateSwingTimers(sim)
+	unit.updateInheritedSwingSpeeds(sim)
 }
 
 // Helper for when both MultiplyMeleeSpeed and MultiplyRangedSpeed are needed.
 func (unit *Unit) MultiplyAttackSpeed(sim *Simulation, amount float64) {
+	if unit.ownerSwingSpeed != nil {
+		// A pet that inherits its owner's attack speed is immune to the auras that carry both melee
+		// and ranged haste, Bloodlust above all. It gets them through the owner instead.
+		return
+	}
 	unit.PseudoStats.MeleeSpeedMultiplier *= amount
 	unit.PseudoStats.RangedSpeedMultiplier *= amount
 
@@ -400,6 +437,7 @@ func (unit *Unit) MultiplyAttackSpeed(sim *Simulation, amount float64) {
 		pet.dynamicMeleeSpeedInheritance(amount)
 	}
 	unit.AutoAttacks.UpdateSwingTimers(sim)
+	unit.updateInheritedSwingSpeeds(sim)
 }
 
 func (unit *Unit) AddBonusRangedHitRating(amount float64) {

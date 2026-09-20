@@ -151,7 +151,40 @@ Roll details the tables above don't show:
   - Shadowfiend: `spell_priest.cpp:102-137`
   - Treants: `spell_druid.cpp:380-419`
   - Water Elemental: `spell_mage.cpp:266-296`
-- Pet hit, spell hit and expertise from the owner are **floored to whole %** and refreshed every 3 s (`spell_generic.cpp` `spell_pet_hit_expertise_scalling` ~520-595, `spell_pet_spellhit_expertise_spellpen_scaling` ~5540-5587).
+- Owner hit, spell hit and expertise come from a scaling aura `Guardian::InitStatsForLevel` hands out
+  (`spell_generic.cpp` `spell_pet_hit_expertise_scalling` ~520-595,
+  `spell_pet_spellhit_expertise_spellpen_scaling` ~5540-5587). Each amount is the owner's hit chance over its
+  cap times its own scale, truncated to a whole point, and nothing caps the result, so 10% ranged hit is 21%
+  spell hit and 32 expertise. Which aura a pet carries decides the rest:
+  - 61017/61013, everything but the DK's summons — hunter and warlock pets, both water elementals, the fire
+    and earth elementals, treants, the shadowfiend, Feral Spirits, mirror images, bloodworms, the infernal
+    and the doomguard: hit 8, spell hit 17, expertise 26, off ranged hit over a cap of 8 for a hunter owner,
+    spell hit over 17 for one whose power type is mana (shamans and paladins included), else melee hit.
+  - 67561, every risen ghoul plus the gargoyle and the army: spell hit 17 and expertise 26 off the owner's
+    melee hit over a cap of 8, and **no melee hit at all**. The dancing rune weapon carries neither aura, so
+    it inherits none of the three.
+
+  Only `IsPet()` recalculates, every 3 s; a guardian keeps what it got at summon.
+- Armor penetration (`Unit::CalcArmorReducedDamage`): a hunter pet and any risen ghoul use the owner's rating
+  and percent-ArP auras, each aura tested against the pet's own spell. A class mask no pet ability matches
+  still reaches the pet's white swings, which carry no spell for it to fail against, so Blood Gorged applies
+  to them.
+- The haste carrier auras (`spell_dk_pet_scaling`, mod-spell-tweaks' 425790 and 425792) hold the owner's
+  attack speed as whole percent, recalculated every 2 s: ranged for a hunter pet, melee for the ghoul and
+  Feral Spirits. They make the pet immune to positive `MOD_CASTING_SPEED_NOT_STACK`, `MOD_MELEE_RANGED_HASTE`
+  and `MELEE_SLOW`, so Bloodlust is blocked and reaches the pet through the owner instead. 425790 and
+  `spell_dk_pet_scaling` leave `MOD_MELEE_HASTE` alone, so Frenzy and Ghoul Frenzy stack on top; 425792 blocks
+  it too, since Windfury Totem and Improved Icy Talons reach the wolves as party auras and are already in the
+  shaman's melee haste.
+- Left open in P7-0b, all of it needing a class-side marker core doesn't have:
+  - Core hands every pet the 61017 amounts, so the DK's ghouls, gargoyle, army and rune weapon carry melee
+    hit the server denies them.
+  - Only the permanent ghoul inherits ArP, since core can't tell the temporary Raise Dead ghoul from an army
+    ghoul. That also keeps Blood Gorged off every pet swing, because the talent needs a Blood build while
+    only an Unholy DK's ghoul is permanent: core hands the owner's white-swing bonus to the pet's swings,
+    but no preset can reach both halves.
+  - The hunter pet's inherited haste is continuous, not resnapshotted every 2 s, and the sim blocks Bloodlust
+    on an inheriting pet by ignoring `MultiplyAttackSpeed`, its closest match for `MOD_MELEE_RANGED_HASTE`.
 - The sim's pet "+1.8% crit" hacks (`hunter/pet.go:140`, `shaman/fire_elemental_pet.go:151`, `shaman/spirit_wolves.go:45`) are Classic-only.
 
 **Hunter haste** (measured, `TestSimvalHunter`)

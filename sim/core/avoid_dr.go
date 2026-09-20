@@ -12,6 +12,10 @@ import (
 // with per-class caps and k, and a part that doesn't. Creatures, pets included, have no diminishing
 // returns and just add their avoidance up. The server works in percent, so the helpers here do too.
 
+// CreatureDodgeChance is what a non-boss creature dodges with, pets included
+// (Unit::GetUnitDodgeChance). A world boss has its own, and the attack table holds both for enemies.
+const CreatureDodgeChance = 0.05
+
 type playerAvoidance struct {
 	StatScaling
 	baseAgility float64
