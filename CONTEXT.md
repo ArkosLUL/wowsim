@@ -93,7 +93,8 @@ _Avoid_: bot account
 ### Server modules
 
 **Reforge**:
-A mod-reforging change that moves 40% of one item stat into another, per item instance.
+A mod-reforging change that moves a share of one item stat into another, per item instance. The share
+and the stats it may touch are server settings, 40% live.
 
 **Racial traits**:
 The race whose racial abilities a character uses (mod-racial-trait-swap). Distinct from **race**, which

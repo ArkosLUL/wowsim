@@ -110,7 +110,7 @@ The UI owns candidate pools and settings. Go owns every equip rule and the searc
 |---|---|
 | `types.go` | the contract, frozen after wave A |
 | `request.go` | calls `core.AddToDatabase` once, then strips every `Player.database` |
-| `pool.go` | stat vectors, sockets, reforge options (`core.CanReforge` + `StatsCount`), effect flags |
+| `pool.go` | stat vectors, sockets, reforge options (`core.CanReforge` over the item's `server_stats` and the run's `Reforging`), effect flags |
 | `rules.go` | weapon combos, Titan's Grip, dual wield; limits (catalog `maxcount`/`ItemLimitCategory`/unique-equipped, JC ≤ 3); metas (`core.ColorIntersects`); BS and buckle sockets; floors. It never emits states `EquipItem` re-slots |
 | `evaluator.go` | the `Evaluator` interface (the test seam): paired `IsTest` RNG with a fixed seed; shards `RandomSeed + k·m`; recover, cancel, cache |
 | `objective.go` | J = Σ rₘ·Mₘ/wₘ(ref) over dps, hps, tps, dtps, tmi, pdeath. Normalizers are frozen at the seed; Armor is the reference for dtps, tmi and pdeath. Raid mode: J = raid DPS |
@@ -180,6 +180,7 @@ Every BiS WI runs fast tests only and changes no goldens. UI WIs also run `dock.
 - vendors and their ExtendedCost; mod-token-turnin; conditions; quests; achievements
 - `item_template` columns: `maxcount`, `ItemLimitCategory`, `Flags & 0x80000`, `FlagsExtra`,
   `AllowableRace`. There's no `StatsCount` column: like the worldserver, it counts non-zero stat slots.
+  Nothing has read `CatalogItem.stats_count` since P6-1 moved that count onto `server_stats`; it's a removal candidate.
 - ItemLimitCategory, ItemExtendedCost, DungeonEncounter, Map, MapDifficulty, Achievement, AreaTable and
   TaxiPathNode .dbc, with their `*_dbc` overrides
 - item-creating spells with SkillLineAbility.dbc
@@ -231,8 +232,7 @@ the sheet's cap.
 **Tests:**
 - A table covering: weapon combos, catalog limits, 4 JC gems, inactive metas (prismatic and orange), BS and
   buckle sockets, enchant eligibility, floors.
-- Reforge enumeration equals the `core.CanReforge` truth table plus `StatsCount`, minus melee- or spell-only
-  ratings.
+- Reforge enumeration equals the `core.CanReforge` truth table over the item's `server_stats`.
 
 **Interface for BIS-search:**
 - `CompilePool(r)` returns a read-only `Pool` with `Gems`, `Locked` and `Slots[slot]`, a list of `Candidate`s:
@@ -246,10 +246,9 @@ the sheet's cap.
 - `Gem(l, slots, value)` regems those slots' non-meta sockets with an exact DP for a linear `value`, within
   the limits, unique gems and the socketed meta's colors; it errors when the meta can't activate. One slot
   is the per-item DP.
-- Reforges skip melee- or spell-only ratings (pre-3.0 stat types). Equip-spell ratings still pass: core folds
-  them into item stats.
-- Without a catalog row, reforges skip the `StatsCount` check and the item has no limits. A meta with no
-  condition counts as active.
+- A reforge source has to be a row of the item's `server_stats` (P6-1), so a rating only an equip spell
+  grants is no longer one, and the melee/spell split comes from the template's own stat types.
+- Without a catalog row an item has no limits. A meta with no condition counts as active.
 
 **Catalog changes**, decided after wave B (also owns `tools/database/azerothcore/catalog*.go`,
 `tools/database/accatalog/` and `assets/database/server_catalog.json`):
@@ -433,6 +432,14 @@ Reuse BIS-ui-tab's `buildOptimizeRequest` per raider, including its seed trimmin
 
 `gear_picker.tsx` (its phase filter) and the gem EP filters (the `isUnrestrictedGem` callers in `player.ts`)
 switch to catalog tiers.
+
+Two spots still judge a reforge by the live config rather than the run's, left from P6-1, and they belong
+here because this item is already about making the UI and the sim agree:
+- `residuals.go` `gearStats` and `surrogate.go` `choiceStats`' fallback pass a nil `Reforging` to
+  `core.NewItem` while `CompilePool` uses the request's, so the surrogate prices reforges the pool
+  wouldn't offer. Threading it in means `MeasureResiduals` taking a pool.
+- `ui/core/proto_utils/database.ts` `lookupItemSpec` has no encounter to read, so gear loaded under a
+  custom config can lose a reforge the sim would keep.
 
 ### BIS-raid-contrib (wave H)
 

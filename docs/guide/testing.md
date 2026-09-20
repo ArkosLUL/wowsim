@@ -18,9 +18,12 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
 - Benchmarks, both under `go test --tags=with_db -run '^$' -bench`:
   - `BenchmarkOptimizerEval ./sim/optimizer/`, with its numbers in the
     [BiS INVESTIGATION](../bis-optimizer/bis-optimizer.INVESTIGATION.md#performance).
-  - `BenchmarkSimulate -benchtime=10x ./sim/ ./sim/warrior/dps/ ./sim/shaman/elemental/` for sim
-    throughput: a 25-man raid, then Fury and Elemental single-target. Every wave records it
-    ([wave loop](../wave-loop/wave-loop.PLAN.md#sim-throughput)), because no golden measures time.
+  - `BenchmarkSimulate ./sim/rogue/ ./sim/paladin/retribution/ ./sim/hunter/ ./sim/shaman/elemental/`
+    for sim throughput, covering melee, mana melee, ranged with a pet, and caster. Every wave records
+    it ([wave loop](../wave-loop/wave-loop.PLAN.md#sim-throughput)), because no golden measures time.
+    The other six `BenchmarkSimulate` cases, the 25-man raid one included, nil-deref in
+    `APLRotation.DoNextAction`: their requests carry no rotation, and upstream's swing path has called
+    it since 2024 for queued swings like Heroic Strike. PAR-PERF repairs the raid one.
 - The optimizer's slow suite, which every wave re-runs as the BiS baseline (about 8 min):
   `go test --tags=with_db,optimizer_slow -count=1 -timeout 90m -run TestOptimizerSlow -v ./sim/optimizer/`.
   It prints one `slow: spec=… phase=… effort=… J_preset=… J_opt=… delta=…±…` line per case, and

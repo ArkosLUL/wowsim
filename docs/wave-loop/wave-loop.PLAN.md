@@ -98,12 +98,13 @@ came from a seed that wore the glyph.
 
 ## Sim throughput
 
-`BenchmarkSimulate` after each wave ([how to run](../guide/testing.md#go)), ns per sim. No golden
+`BenchmarkSimulate` after each wave ([how to run](../guide/testing.md#go)), ms per sim. No golden
 measures time, so parity work that costs the hot paths shows up only here. PAR-PERF (F2) profiles
 whatever these say.
 
-| Wave | Raid 25 | Fury | Elemental |
-|---|---|---|---|
+| Wave | Combat Rogue | Ret Paladin | Hunter | Elemental |
+|---|---|---|---|---|
+| E | 1.388 | 0.387 | 0.474 | 0.470 |
 
 ## Status
 
