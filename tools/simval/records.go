@@ -7,6 +7,7 @@ import "encoding/json"
 
 type attackSnapshot struct {
 	Type               string  `json:"type"` // mainhand, offhand, ranged
+	UnhastedMs         int32   `json:"unhastedMs"`
 	MissChanceTaken    float64 `json:"missChanceTaken"`
 	ExpertiseReduction float64 `json:"expertiseReduction"`
 	WeaponSkillVsOther int32   `json:"weaponSkillVsOther"`
@@ -201,6 +202,58 @@ type record struct {
 		Armor      float64 `json:"armor"`
 		Multiplier float64 `json:"multiplier"`
 	} `json:"scenarios"`
+
+	// `.simval procs` only. Its spell id is top level, since the record has no
+	// single spell the way the table commands do.
+	ProcSpellID int32      `json:"spellId"`
+	ItemProcs   []itemProc `json:"itemProcs"`
+	AuraProcs   []auraProc `json:"auraProcs"`
+}
+
+// itemProc is one chance-on-hit item spell or weapon enchant, with the chance the
+// server computed per attack type (percent).
+type itemProc struct {
+	Source        string  `json:"source"` // item or enchant
+	Slot          int32   `json:"slot"`
+	ItemID        int32   `json:"itemId"`
+	EnchantID     int32   `json:"enchantId"`
+	SpellID       int32   `json:"spellId"`
+	Name          string  `json:"name"`
+	PPM           float64 `json:"ppm"`           // item_template's SpellPPMRate
+	DBCProcChance int32   `json:"dbcProcChance"` // Spell.dbc ProcChance
+	EnchantAmount int32   `json:"enchantAmount"`
+	EnchantProc   *struct {
+		CustomChance  int32   `json:"customChance"`
+		PPM           float64 `json:"ppm"`
+		ProcEx        uint32  `json:"procEx"`
+		AttributeMask uint32  `json:"attributeMask"`
+	} `json:"enchantProcEntry"`
+	Chance map[string]float64 `json:"chance"`
+}
+
+// auraProc is an applied aura's spell_proc entry and the chance Aura::CalcProcChance
+// gives it per attack type (percent). The "spell" key is the chance for the record's
+// own spell id.
+type auraProc struct {
+	ID        int32  `json:"id"`
+	Name      string `json:"name"`
+	FromSelf  bool   `json:"fromSelf"`
+	ProcEntry struct {
+		SchoolMask         uint8     `json:"schoolMask"`
+		SpellFamilyName    int32     `json:"spellFamilyName"`
+		SpellFamilyMask    [3]uint32 `json:"spellFamilyMask"`
+		ProcFlags          uint32    `json:"procFlags"`
+		SpellTypeMask      uint32    `json:"spellTypeMask"`
+		SpellPhaseMask     uint32    `json:"spellPhaseMask"`
+		HitMask            uint32    `json:"hitMask"`
+		AttributesMask     uint32    `json:"attributesMask"`
+		DisableEffectsMask uint32    `json:"disableEffectsMask"`
+		ProcsPerMinute     float64   `json:"procsPerMinute"`
+		Chance             float64   `json:"chance"`
+		CooldownMs         int64     `json:"cooldownMs"`
+		Charges            int32     `json:"charges"`
+	} `json:"procEntry"`
+	Chance map[string]float64 `json:"chance"`
 }
 
 // SPELL_SCHOOL_MASK_NORMAL. Physical spells never partially resist, and they're
@@ -220,8 +273,11 @@ func (r record) attackType() string {
 
 func (r record) label() string {
 	name := r.Command
-	if r.Spell.ID != 0 {
+	switch {
+	case r.Spell.ID != 0:
 		name += " " + itoa(r.Spell.ID) + " (" + r.Spell.Name + ")"
+	case r.ProcSpellID != 0:
+		name += " " + itoa(r.ProcSpellID)
 	}
 	if t := r.attackType(); t != "" {
 		name += " " + t

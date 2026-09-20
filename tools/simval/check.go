@@ -114,6 +114,8 @@ func CheckRecord(rec record) []Check {
 		return checkSpell(rec)
 	case "armor":
 		return checkArmor(rec)
+	case "procs":
+		return checkProcs(rec)
 	case "info":
 		return checkInfo(rec)
 	default:
