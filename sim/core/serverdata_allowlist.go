@@ -30,9 +30,6 @@ func init() {
 		external(64382, ServerGCD, 0, 1500),      // Shattering Throw
 		external(64382, ServerCD, 10000, 300000), // Shattering Throw
 
-		ServerConflictAllowance{Spell: ActionID{SpellID: 53307}, Field: ServerBinary, Sim: 1, Server: 0,
-			Why: "Thorns isn't binary on the server (no SPELL_ATTR0_CU_BINARY_SPELL), so it resists partially"},
-
 		ServerConflictAllowance{Spell: ActionID{SpellID: 56186}, Field: ServerCD, Sim: 300000, Server: 0, KeepSim: true, Why: itemCooldown},    // Sapphire Owl
 		ServerConflictAllowance{Spell: ActionID{SpellID: 71586}, Field: ServerCD, Sim: 120000, Server: 1000, KeepSim: true, Why: itemCooldown}, // Hardened Skin
 	)

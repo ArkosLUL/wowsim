@@ -171,6 +171,49 @@ Roll details the tables above don't show:
 - The 89507 aura is always present but never changes the speed. Ranged haste is therefore just the quiver or pouch:
   the sim's ×1.15 is right only with a +15% quiver (level 75+), and a hunter without one has none.
 
+**Raid buffs, debuffs and racials** (`sim/core/{buffs,debuffs,consumes,racials}.go` against the capture)
+- Reading an amount off the capture (`SpellEffectInfo::CalcValue`): `basePoints`, plus
+  `int32(realPointsPerLevel * (80 - max(baseLevel, spellLevel)))` when `realPointsPerLevel` isn't 0, plus 1
+  at `dieSides` 1. Skipping the level term reads Battle Shout as 548, Demoralizing Shout as 410 and
+  Demoralizing Roar as 408; all three are really 550, 411 and 411 at level 80, which is what the sim had.
+  Blood Fury's 322 AP / 163 SP and Vindication's 574 come from the same term.
+- Values the sim carried over from Classic data: Blessing of Wisdom 92 while Mana Spring stays 91 (48936,
+  58777); Demoralizing Screech 574, not 576, and 10 s, not 4 s (55487; the panel makes it permanent, so
+  only the amount moved a golden).
+- A talent's percentage on an aura amount is truncated, since `CalcValue` returns int32: Improved Power
+  Word: Fortitude is 214, not 214.5, Improved Devotion Aura 1807, Improved Demoralizing Shout 575.
+  `addPct` in `buffs.go` does the same.
+- Curse of Weakness at tristate "regular" was paying Improved Curse of Weakness rank 1's +10%. The plain
+  curse is 478 (50511); only "improved" takes the +20% (18180).
+- Booming Voice is +25% duration a rank on all three shouts: 12835's class mask covers Demoralizing
+  Shout (0x20000) as well as Battle and Commanding Shout. The sim gave Demoralizing Shout +10%.
+- Master Poisoner's crit debuff (45176) is `MOD_CRIT_CHANCE_FOR_CASTER`, so it helps only the rogue who
+  applied it (`Unit.cpp:3940`, `9455`), while the sim hands it to the whole raid. Fixing it needs the
+  caster on `core.MasterPoisonerDebuff`, which `sim/rogue/poisons.go` also calls. Heart of the Crusader
+  (54499) and the Totem of Wrath debuff (30708) are `MOD_ATTACKER_SPELL_AND_WEAPON_CRIT_CHANCE`: raid-wide.
+- Thorns (53307) isn't binary, so it resists partially. Its `spell_bonus_data` Direct 0.033 comes off the
+  druid who cast it, not off the buffed player, so the sim leaves the shield unscaled.
+- The 10-target AoE cap stays: `Spell::DoAllEffectOnLaunchTarget` (`Spell.cpp:8442-8454`) does
+  `damage * 10 / count` past 10 targets, but only for a player caster and only on the launch damage. A
+  pet's, totem's or guardian's area hit and a periodic tick aren't capped, which class items still owe.
+  `Unit::CalculateAOEDamageReduction` is aura avoidance, no cap.
+- Confirmed against the capture, so a class item needn't re-check: Gift of the Wild 37/750/54 and the
+  improved 51/1050/75, Fel Intelligence 48/64, Strength of Earth 155 (178 with Enhancing Totems),
+  Flametongue Totem 144, Totem of Wrath 280 and its 3%, Windfury Totem 16/20%, Icy Talons 20%,
+  Retribution Aura 112 (+50% with Sanctified Retribution), Blood Fury 322 AP / 163 SP, Berserking 20%
+  (`HandleModCombatSpeedPct` covers cast, melee and ranged), Arcane Torrent 15 energy / 15 runic power /
+  6% mana, racial resistances 2% spell miss, Curse of the Elements 13% and −165, Earth and Moon 13%,
+  Blood Frenzy and Savage Combat 4%, Mangle and Trauma 30%, Stampede 25%, Shadow Mastery and Improved
+  Scorch 5%, Winter's Chill 1% a stack, Misery 3%, Hunter's Mark 500, Thunder Clap 10/20%, Infected
+  Wounds 20%, Judgements of the Just 20%, Frost Fever 14%, Insect Swarm and Scorpid Sting 3%,
+  Vindication 574 (26017 scales −8.8 a level from 20), and the explosives' 1150-1500, 750-1000 and
+  2188-2812 rolls.
+- Still open: Stoneform's +10% armor, since 20594 lasts 100 ms and only grants immunities, and the real
+  buff 65116 is outside the capture; Enhancing Totems raising Flametongue Totem to 165, which the sim's
+  plain bool can't express; and Thorns' Brambles bonus, which isn't a spell modifier at all but a dummy
+  (16836) the server folds into `SpellDamageBonusDone` as a float and truncates only after spell power,
+  so `addPct` on the sim's 73 base would be the wrong shape of fix.
+
 **Server customizations (live values)**
 - mod-spell-tweaks (`[ac]/modules/mod-spell-tweaks`, the user's repo; every toggle on, exotic pet damage 0):
   - **Haste adds ticks** (interval scaled, duration fixed):

@@ -120,7 +120,7 @@ func applyDebuffEffects(target *Unit, targetIdx int, debuffs *proto.Debuffs, rai
 	}
 
 	if debuffs.CurseOfWeakness != proto.TristateEffect_TristateEffectMissing {
-		MakePermanent(CurseOfWeaknessAura(target, GetTristateValueInt32(debuffs.CurseOfWeakness, 1, 2)))
+		MakePermanent(CurseOfWeaknessAura(target, GetTristateValueInt32(debuffs.CurseOfWeakness, 0, 2)))
 	}
 	if debuffs.Sting && targetIdx == 0 {
 		MakePermanent(StingAura(target))
@@ -631,7 +631,7 @@ func CurseOfWeaknessAura(target *Unit, points int32) *Aura {
 		Duration: time.Minute * 2,
 	})
 	minorArmorReductionEffect(aura, 0.05)
-	apReductionEffect(aura, 478*(1+0.1*float64(points)))
+	apReductionEffect(aura, addPct(478, 10*float64(points)))
 	return aura
 }
 
@@ -720,7 +720,8 @@ func DemoralizingRoarAura(target *Unit, points int32) *Aura {
 		ActionID: ActionID{SpellID: 48560},
 		Duration: time.Second * 30,
 	})
-	apReductionEffect(aura, 411*(1+0.08*float64(points)))
+	// 411 at level 80: 48560's -409 base points lose realPointsPerLevel 1 per level past its 77.
+	apReductionEffect(aura, addPct(411, 8*float64(points)))
 	return aura
 }
 
@@ -728,9 +729,11 @@ func DemoralizingShoutAura(target *Unit, boomingVoicePts int32, impDemoShoutPts 
 	aura := target.GetOrRegisterAura(Aura{
 		Label:    "DemoralizingShout-" + strconv.Itoa(int(impDemoShoutPts)),
 		ActionID: ActionID{SpellID: 47437},
-		Duration: time.Duration(float64(time.Second*30) * (1 + 0.1*float64(boomingVoicePts))),
+		// Booming Voice is +25% a rank, same as on the buff shouts in buffs.go.
+		Duration: time.Duration(float64(time.Second*30) * (1 + 0.25*float64(boomingVoicePts))),
 	})
-	apReductionEffect(aura, 411*(1+0.08*float64(impDemoShoutPts)))
+	// 411 at level 80: 47437's -411 base points lose one more for the level past its 79.
+	apReductionEffect(aura, addPct(411, 8*float64(impDemoShoutPts)))
 	return aura
 }
 
@@ -748,9 +751,9 @@ func DemoralizingScreechAura(target *Unit) *Aura {
 	aura := target.GetOrRegisterAura(Aura{
 		Label:    "DemoralizingScreech",
 		ActionID: ActionID{SpellID: 55487},
-		Duration: time.Second * 4,
+		Duration: time.Second * 10,
 	})
-	apReductionEffect(aura, 576)
+	apReductionEffect(aura, 574)
 	return aura
 }
 

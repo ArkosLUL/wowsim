@@ -87,6 +87,10 @@ func NewEncounter(options *proto.Encounter, server *ServerSettings) Encounter {
 func (encounter *Encounter) AOECapMultiplier() float64 {
 	return encounter.aoeCapMultiplier
 }
+
+// The server caps a player's area damage at ten targets' worth: `Spell::DoAllEffectOnLaunchTarget`
+// does damage*10/count past 10 targets. Only for a player caster, and only on the launch damage, so
+// a pet's or totem's area hit and a periodic tick aren't capped.
 func (encounter *Encounter) updateAOECapMultiplier() {
 	encounter.aoeCapMultiplier = min(10/float64(len(encounter.Targets)), 1)
 }
