@@ -2,13 +2,37 @@ package core
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/wowsims/wotlk/sim/core/proto"
 )
 
 const MaxRage = 100.0
-const RageFactor = 453.3
 const ThreatPerRageGained = 5
+
+// RageFactor is Unit::RewardRage's rageconversion at CharacterLevel, computed in float32 like the
+// server. Classic hardcodes 453.3.
+var RageFactor = rageConversion(CharacterLevel)
+
+func rageConversion(level int32) float64 {
+	l := float32(level)
+	conversion := float32(0.0091107836)*l*l + float32(3.225598133)*l + float32(4.2652911)
+	// the server calls its slope above level 70 a guess
+	if level > 70 {
+		conversion += float32(13.27) * float32(level-70)
+	}
+	return float64(conversion)
+}
+
+// rageHitFactor is Unit::GetRageWeaponSpeedHitFactor: the unhasted weapon speed in seconds times 3.5
+// main hand or 1.75 off hand, truncated to a whole number.
+func rageHitFactor(swingSpeed float64, offHand bool) float64 {
+	ragePerSecond := 3.5
+	if offHand {
+		ragePerSecond = 1.75
+	}
+	return math.Trunc(swingSpeed * ragePerSecond)
+}
 
 type rageBar struct {
 	unit *Unit
@@ -45,17 +69,15 @@ func (unit *Unit) EnableRageBar(options RageBarOptions) {
 			}
 
 			var hitFactor float64
-			var speed float64
 			if spell.ProcMask == ProcMaskMeleeMHAuto {
-				hitFactor = 3.5
-				speed = options.MHSwingSpeed
+				hitFactor = rageHitFactor(options.MHSwingSpeed, false)
 			} else if spell.ProcMask == ProcMaskMeleeOHAuto {
-				hitFactor = 1.75
-				speed = options.OHSwingSpeed
+				hitFactor = rageHitFactor(options.OHSwingSpeed, true)
 			} else {
 				return
 			}
 
+			// the server doubles the already truncated factor
 			if result.Outcome.Matches(OutcomeCrit) {
 				hitFactor *= 2
 			}
@@ -67,7 +89,7 @@ func (unit *Unit) EnableRageBar(options RageBarOptions) {
 			}
 
 			// generatedRage is capped for very low damage swings
-			generatedRage := min((damage*7.5/RageFactor+hitFactor*speed)/2, damage*15/RageFactor)
+			generatedRage := min((damage*7.5/RageFactor+hitFactor)/2, damage*15/RageFactor)
 
 			generatedRage *= options.RageMultiplier
 

@@ -3,7 +3,6 @@ package tbc
 import (
 	"time"
 
-	"github.com/wowsims/wotlk/sim/common/wotlk"
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
 	"github.com/wowsims/wotlk/sim/core/stats"
@@ -16,8 +15,8 @@ const (
 )
 
 var (
-	fistsOfFury          = wotlk.ServerProcFor(fistsOfFurySpellID)
-	twinBladesOfAzzinoth = wotlk.ServerProcFor(twinBladesOfAzzinothSpellID)
+	fistsOfFury          = core.ServerProcFor(fistsOfFurySpellID)
+	twinBladesOfAzzinoth = core.ServerProcFor(twinBladesOfAzzinothSpellID)
 )
 
 // Keep these in alphabetical order.

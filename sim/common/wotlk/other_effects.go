@@ -9,6 +9,11 @@ import (
 	"github.com/wowsims/wotlk/sim/core/stats"
 )
 
+func NewItemEffectWithHeroic(f func(isHeroic bool)) {
+	f(true)
+	f(false)
+}
+
 // Equip auras and buffs of the items below, looked up in the server's tables.
 const (
 	forethoughtTalismanSpellID      = 60529
@@ -211,7 +216,7 @@ func init() {
 		})
 	})
 
-	forethought := ServerProcFor(forethoughtTalismanSpellID)
+	forethought := core.ServerProcFor(forethoughtTalismanSpellID)
 	core.NewItemEffect(40258, func(agent core.Agent) {
 		character := agent.GetCharacter()
 
@@ -309,9 +314,9 @@ func init() {
 		})
 	})
 
-	valanyr := ServerProcFor(valanyrSpellID)
-	blessingDuration := ServerDuration(blessingOfAncientKingsSpellID)
-	shieldDuration := ServerDuration(protectionOfAncientKingsSpellID)
+	valanyr := core.ServerProcFor(valanyrSpellID)
+	blessingDuration := core.ServerDuration(blessingOfAncientKingsSpellID)
+	shieldDuration := core.ServerDuration(protectionOfAncientKingsSpellID)
 	core.NewItemEffect(46017, func(agent core.Agent) { // Val'anyr
 		character := agent.GetCharacter()
 

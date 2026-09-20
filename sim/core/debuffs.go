@@ -199,8 +199,12 @@ func ScheduledMajorArmorAura(aura *Aura, options PeriodicActionOptions, raid *pr
 
 var JudgementOfWisdomAuraLabel = "Judgement of Wisdom"
 
+// Casting Judgement of Wisdom puts aura 20186 on the target, and that aura's proc entry is what fires.
+const judgementOfWisdomAuraID = 20186
+
 func JudgementOfWisdomAura(target *Unit) *Aura {
 	actionID := ActionID{SpellID: 53408}
+	ppm := ServerProcFor(judgementOfWisdomAuraID).PPM
 
 	return target.GetOrRegisterAura(Aura{
 		Label:    JudgementOfWisdomAuraLabel,
@@ -208,40 +212,37 @@ func JudgementOfWisdomAura(target *Unit) *Aura {
 		Duration: time.Second * 20,
 		OnSpellHitTaken: func(aura *Aura, sim *Simulation, spell *Spell, result *SpellResult) {
 			unit := spell.Unit
-			if !unit.HasManaBar() {
+			// spell_pal_judgement_of_wisdom_mana::CheckProc reads the current power type, so a
+			// shapeshifted druid gets nothing.
+			if !unit.HasManaBar() || unit.GetCurrentPowerBar() != ManaBar {
 				return
 			}
 
 			if spell.ProcMask.Matches(ProcMaskEmpty | ProcMaskProc | ProcMaskWeaponProc) {
-				return // Phantom spells (Romulo's, Lightning Capacitor, etc.) don't proc JoW.
+				// A triggered cast can't proc an aura without PROC_ATTR_TRIGGERED_CAN_PROC, and this
+				// entry doesn't have it.
+				return
 			}
 
-			if spell.ProcMask.Matches(ProcMaskWhiteHit | ProcMaskRanged) {
-				// Apparently ranged/melee can still proc on miss
-				if !unit.AutoAttacks.PPMProc(sim, 15, ProcMaskWhiteHit|ProcMaskRanged, "jow", spell) {
-					return
-				}
-			} else { // spell casting
-				if !result.Landed() {
-					return
-				}
+			// The default hit mask of a taken proc is PROC_HIT_NORMAL | PROC_HIT_CRITICAL, so a miss,
+			// dodge, parry or full block doesn't reach the roll.
+			if !result.Landed() {
+				return
+			}
 
-				ct := spell.CurCast.CastTime.Seconds()
-				if ct == 0 {
-					// Current theory is that insta-cast is treated as min GCD from retail.
-					// Perhaps this is a bug introduced in classic when converting JoW to wotlk.
-					ct = 0.75
-				}
-				procChance := ct * 0.25 // ct / 60.0 * 15.0PPM (algebra) = ct*0.25
-				if sim.RandomFloat("jow") > procChance {
-					return
-				}
+			// The entry's SpellTypeMask is damage only, and ProcSkillsAndAuras (`Unit.cpp:6856-6864`)
+			// calls a hit that dealt none PROC_SPELL_TYPE_NO_DMG_HEAL. So applying a dot doesn't proc.
+			if result.Damage == 0 {
+				return
+			}
+
+			if sim.RandomFloat("jow") > unit.AuraPPMProcChance(ppm, spell) {
+				return
 			}
 
 			if unit.JowManaMetrics == nil {
 				unit.JowManaMetrics = unit.NewManaMetrics(actionID)
 			}
-			// JoW returns 2% of base mana 50% of the time.
 			unit.AddMana(sim, unit.BaseMana*0.02, unit.JowManaMetrics)
 		},
 	})

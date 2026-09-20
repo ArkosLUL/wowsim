@@ -3,7 +3,6 @@ package tbc
 import (
 	"time"
 
-	"github.com/wowsims/wotlk/sim/common/wotlk"
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
 	"github.com/wowsims/wotlk/sim/core/stats"
@@ -62,7 +61,7 @@ func init() {
 	// ApplyCrusaderEffect will be applied twice if there is two weapons with this enchant.
 	//   However, it will automatically overwrite one of them, so it should be ok.
 	//   A single application of the aura will handle both mh and oh procs.
-	crusaderPPM := wotlk.ServerEnchantPPM(1900)
+	crusaderPPM := core.ServerEnchantPPM(1900)
 	core.NewEnchantEffect(1900, func(agent core.Agent) {
 		character := agent.GetCharacter()
 
@@ -105,7 +104,7 @@ func init() {
 	// ApplyMongooseEffect will be applied twice if there is two weapons with this enchant.
 	//   However, it will automatically overwrite one of them, so it should be ok.
 	//   A single application of the aura will handle both mh and oh procs.
-	mongoosePPM := wotlk.ServerEnchantPPM(2673)
+	mongoosePPM := core.ServerEnchantPPM(2673)
 	core.NewEnchantEffect(2673, func(agent core.Agent) {
 		character := agent.GetCharacter()
 
@@ -154,7 +153,7 @@ func init() {
 		character.PseudoStats.ThreatMultiplier *= 1.02
 	})
 
-	executionerPPM := wotlk.ServerEnchantPPM(3225)
+	executionerPPM := core.ServerEnchantPPM(3225)
 	core.NewEnchantEffect(3225, func(agent core.Agent) {
 		character := agent.GetCharacter()
 
@@ -184,8 +183,8 @@ func init() {
 	})
 
 	// https://web.archive.org/web/20100702102132/http://elitistjerks.com/f15/t27347-deathfrost_its_mechanics/p2/#post789470
-	deathfrostPPM := wotlk.ServerEnchantPPM(3273)
-	deathfrostSpellProc := wotlk.ServerProcFor(deathfrostSpellID)
+	deathfrostPPM := core.ServerEnchantPPM(3273)
+	deathfrostSpellProc := core.ServerProcFor(deathfrostSpellID)
 	applyDeathfrostForWeapon := func(character *core.Character, procSpell *core.Spell, isMH bool) {
 		icd := core.Cooldown{
 			Timer:    character.NewTimer(),

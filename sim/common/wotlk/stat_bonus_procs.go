@@ -30,11 +30,9 @@ type ProcStatBonusEffect struct {
 
 func newProcStatBonusEffect(config ProcStatBonusEffect) {
 	if config.ProcSpellID != 0 {
-		sp := ServerProcFor(config.ProcSpellID)
-		config.ProcChance, config.PPM, config.ICD = sp.Chance, sp.PPM, sp.ICD
-		if sp.PPM > 0 {
-			config.ProcChance = 0
-		}
+		// core resolves it again per character, so check it here too: a wrong id on an item no test
+		// equips would otherwise only blow up in the UI.
+		core.ServerProcFor(config.ProcSpellID)
 	}
 
 	core.NewItemEffect(config.ID, func(agent core.Agent) {
@@ -59,16 +57,17 @@ func newProcStatBonusEffect(config ProcStatBonusEffect) {
 		}
 
 		triggerAura := core.MakeProcTriggerAura(&character.Unit, core.ProcTrigger{
-			ActionID:   core.ActionID{ItemID: config.ID},
-			Name:       config.Name,
-			Callback:   config.Callback,
-			ProcMask:   config.ProcMask,
-			Outcome:    config.Outcome,
-			Harmful:    config.Harmful,
-			ProcChance: config.ProcChance,
-			PPM:        config.PPM,
-			ICD:        config.ICD,
-			Handler:    handler,
+			ActionID:    core.ActionID{ItemID: config.ID},
+			Name:        config.Name,
+			Callback:    config.Callback,
+			ProcMask:    config.ProcMask,
+			Outcome:     config.Outcome,
+			Harmful:     config.Harmful,
+			ProcChance:  config.ProcChance,
+			PPM:         config.PPM,
+			ICD:         config.ICD,
+			ProcSpellID: config.ProcSpellID,
+			Handler:     handler,
 		})
 		procAura.Icd = triggerAura.Icd
 	})
@@ -356,8 +355,9 @@ func init() {
 		AuraID:      64713,
 		Bonus:       stats.Stats{stats.SpellPower: 850},
 		Duration:    time.Second * 10,
-		Callback:    core.CallbackOnCastComplete,
+		Callback:    core.CallbackOnSpellHitDealt,
 		ProcMask:    core.ProcMaskSpellDamage,
+		Outcome:     core.OutcomeLanded,
 		ProcSpellID: 64714,
 	})
 	newProcStatBonusEffect(ProcStatBonusEffect{
@@ -366,7 +366,8 @@ func init() {
 		AuraID:      64739,
 		Bonus:       stats.Stats{stats.MP5: 241},
 		Duration:    time.Second * 15,
-		Callback:    core.CallbackOnCastComplete,
+		Callback:    core.CallbackOnSpellHitDealt | core.CallbackOnHealDealt | core.CallbackOnPeriodicDamageDealt | core.CallbackOnPeriodicHealDealt,
+		Outcome:     core.OutcomeLanded,
 		ProcSpellID: 64738,
 	})
 	newProcStatBonusEffect(ProcStatBonusEffect{
@@ -386,10 +387,8 @@ func init() {
 		AuraID:      65004,
 		Bonus:       stats.Stats{stats.MeleeHaste: 522, stats.SpellHaste: 522},
 		Duration:    time.Second * 10,
-		Callback:    core.CallbackOnSpellHitDealt,
+		Callback:    core.CallbackOnCastComplete,
 		ProcMask:    core.ProcMaskSpellDamage,
-		Outcome:     core.OutcomeLanded,
-		Harmful:     true,
 		ProcSpellID: 65005,
 	})
 	newProcStatBonusEffect(ProcStatBonusEffect{
@@ -398,7 +397,8 @@ func init() {
 		AuraID:      65003,
 		Bonus:       stats.Stats{stats.MP5: 195},
 		Duration:    time.Second * 15,
-		Callback:    core.CallbackOnCastComplete,
+		Callback:    core.CallbackOnSpellHitDealt | core.CallbackOnHealDealt | core.CallbackOnPeriodicDamageDealt | core.CallbackOnPeriodicHealDealt,
+		Outcome:     core.OutcomeLanded,
 		ProcSpellID: 65002,
 	})
 	newProcStatBonusEffect(ProcStatBonusEffect{

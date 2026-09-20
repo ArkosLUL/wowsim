@@ -3,7 +3,6 @@ package tbc
 import (
 	"time"
 
-	"github.com/wowsims/wotlk/sim/common/wotlk"
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/stats"
 )
@@ -47,7 +46,7 @@ func init() {
 		agent.GetCharacter().PseudoStats.BonusDamage += 3
 	})
 
-	insightful := wotlk.ServerProcFor(insightfulEarthstormSpellID)
+	insightful := core.ServerProcFor(insightfulEarthstormSpellID)
 	core.NewItemEffect(25901, func(agent core.Agent) {
 		character := agent.GetCharacter()
 		icd := core.Cooldown{
@@ -72,7 +71,7 @@ func init() {
 		})
 	})
 
-	thundering := wotlk.ServerProcFor(thunderingSkyfireSpellID)
+	thundering := core.ServerProcFor(thunderingSkyfireSpellID)
 	core.NewItemEffect(32410, func(agent core.Agent) {
 		character := agent.GetCharacter()
 		procAura := character.NewTemporaryStatsAura("Thundering Skyfire Diamond Proc", core.ActionID{ItemID: 32410}, stats.Stats{stats.MeleeHaste: 240}, time.Second*6)

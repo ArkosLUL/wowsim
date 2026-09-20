@@ -3,7 +3,6 @@ package tbc
 import (
 	"time"
 
-	"github.com/wowsims/wotlk/sim/common/wotlk"
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/stats"
 )
@@ -31,7 +30,7 @@ func init() {
 
 	// Proc effects. Keep these in order by item ID.
 
-	handOfJustice := wotlk.ServerProcFor(handOfJusticeSpellID)
+	handOfJustice := core.ServerProcFor(handOfJusticeSpellID)
 	core.NewItemEffect(11815, func(agent core.Agent) {
 		character := agent.GetCharacter()
 		if !character.AutoAttacks.AutoSwingMelee {
@@ -76,7 +75,7 @@ func init() {
 		})
 	})
 
-	dragonspine := wotlk.ServerProcFor(dragonspineTrophySpellID)
+	dragonspine := core.ServerProcFor(dragonspineTrophySpellID)
 	core.NewItemEffect(28830, func(agent core.Agent) {
 		character := agent.GetCharacter()
 		procAura := character.NewTemporaryStatsAura("Dragonspine Trophy Proc", core.ActionID{ItemID: 28830}, stats.Stats{stats.MeleeHaste: 325}, time.Second*10)
@@ -146,7 +145,7 @@ func init() {
 		})
 	})
 
-	madness := wotlk.ServerProcFor(madnessOfTheBetrayerSpellID)
+	madness := core.ServerProcFor(madnessOfTheBetrayerSpellID)
 	core.NewItemEffect(32505, func(agent core.Agent) {
 		character := agent.GetCharacter()
 		procAura := character.NewTemporaryStatsAura("Madness of the Betrayer Proc", core.ActionID{ItemID: 32505}, stats.Stats{stats.ArmorPenetration: 42}, time.Second*10)

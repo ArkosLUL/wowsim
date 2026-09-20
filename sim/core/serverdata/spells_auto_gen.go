@@ -1308,6 +1308,16 @@ var spells = []Spell{
 			{Effect: 6, Aura: 42, DamageMultiplier: 1, BonusMultiplier: 1, TriggerSpell: 20178},
 		},
 	},
+	// Judgement of Wisdom (Rank 1)
+	{
+		ID: 20186, Family: 10, FamilyFlags: [3]uint32{0x80000}, SchoolMask: 2, DmgClass: DmgClassMelee, Flags: FlagNoActiveDefense | FlagAlwaysHit,
+		Attributes: [8]uint32{0x250800, 0, 0x10000004, 0x40050200, 0x800000}, AttributesCu: 0x1000,
+		DurationMs: 20000, MaxDurationMs: 20000,
+		ProcFlags: 0x222a8, ProcChance: 100,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 4, DieSides: 1, DamageMultiplier: 1},
+		},
+	},
 	// Judgement of Righteousness (Rank 1)
 	{
 		ID: 20187, Family: 10, FamilyFlags: [3]uint32{0x800400}, SchoolMask: 2, DmgClass: DmgClassMelee, Flags: FlagNoActiveDefense | FlagAlwaysHit,
@@ -8974,15 +8984,6 @@ var spells = []Spell{
 		ProcChance: 101,
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 99, BasePoints: 399, DieSides: 1, DamageMultiplier: 1, MiscValue: 917630},
-		},
-	},
-	// Hand of Reckoning
-	{
-		ID: 67485, SchoolMask: 2, DmgClass: DmgClassMagic, Flags: FlagAlwaysHit,
-		Attributes: [8]uint32{0x10, 0, 0, 0x40000}, AttributesCu: 0x1100,
-		ProcChance: 101, PowerType: 3,
-		Effects: [3]Effect{
-			{Effect: 2, DieSides: 1, DamageMultiplier: 1},
 		},
 	},
 	// Empowered Fire

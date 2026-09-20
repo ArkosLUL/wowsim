@@ -152,5 +152,4 @@ var bonuses = []Bonus{
 	{SpellID: 61301, Row: 61301, Direct: 0.402, Dot: 0.188},                              // Riptide (Rank 4)
 	{SpellID: 63672, Row: 63672, APDot: 0.02},                                            // Black Arrow (Rank 6)
 	{SpellID: 64382, Row: 64382, AP: 0.5},                                                // Shattering Throw
-	{SpellID: 67485, Row: 67485, AP: 0.5},                                                // Hand of Reckoning
 }
