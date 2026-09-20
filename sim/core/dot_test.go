@@ -298,3 +298,22 @@ func TestTicksCanCritGatesTheCritRoll(t *testing.T) {
 		}
 	}
 }
+
+// Earth Shield spends a charge per ManualTick, so all of them have to land before the dot goes.
+func TestManualTickSpendsEveryTick(t *testing.T) {
+	sim := SetupFakeSim()
+	dot := sim.Raid.Parties[0].Players[0].(*FakeAgent).Dot
+
+	dot.Apply(sim)
+	for i := 1; i <= int(dot.NumberOfTicks)+1; i++ {
+		sim.CurrentTime = time.Duration(i) * time.Millisecond
+		dot.ManualTick(sim)
+	}
+
+	if dot.TickCount != dot.NumberOfTicks {
+		t.Errorf("%d manual ticks landed, want %d", dot.TickCount, dot.NumberOfTicks)
+	}
+	if dot.IsActive() {
+		t.Error("the dot should be gone once it ran out of ticks")
+	}
+}

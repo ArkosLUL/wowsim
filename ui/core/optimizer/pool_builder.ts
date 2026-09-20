@@ -5,7 +5,6 @@ import {
 	EquipmentSpec,
 	GemColor,
 	HandType,
-	ItemReforge,
 	ItemSlot,
 	ItemSpec,
 	ItemType,
@@ -40,7 +39,7 @@ import { DatabaseFilters, UIEnchant as Enchant, UIGem as Gem, UIItem as Item } f
 import { Database } from '../proto_utils/database.js';
 import { gemColorMatchesSocket, getMetaGemCondition } from '../proto_utils/gems.js';
 import { slotNames } from '../proto_utils/names.js';
-import { isValidReforge } from '../proto_utils/reforging.js';
+import { isValidReforge, Reforging, reforgingFor } from '../proto_utils/reforging.js';
 import { Stats } from '../proto_utils/stats.js';
 import { enchantAppliesToItem, playerProtoProfessions, raceToFaction } from '../proto_utils/utils.js';
 import { distinct, getEnumValues } from '../utils.js';
@@ -101,18 +100,9 @@ interface ItemOffer {
 // slot -> item id -> the item and the enchants it can take there
 type SlotOffers = Map<ItemSlot, Map<number, ItemOffer>>;
 
-// worldserver MAX_GEM_SOCKETS and MAX_ITEM_PROTO_STATS, and ItemChoice.Gems' size in sim/optimizer
+// worldserver MAX_GEM_SOCKETS, and ItemChoice.Gems' size in sim/optimizer
 const MAX_SERVER_SOCKETS = 3;
 const MAX_GEMS = 4;
-const MAX_ITEM_PROTO_STATS = 10;
-
-// Reforges off a hit, crit or haste rating need the item's melee and spell values to match: the
-// server has one combined rating, core keeps two stats.
-const SPLIT_RATINGS: Record<number, [Stat, Stat]> = {
-	31: [Stat.StatMeleeHit, Stat.StatSpellHit],
-	32: [Stat.StatMeleeCrit, Stat.StatSpellCrit],
-	36: [Stat.StatMeleeHaste, Stat.StatSpellHaste],
-};
 
 // Same boss as Encounter.defaultTargetProto(). encounter.ts can't be imported here: it drags in
 // Player and the rest of the page, and this module has to run under Node for the replay fixtures.
@@ -204,17 +194,6 @@ function serverSockets(item: Item, blacksmith: boolean): Array<GemColor> {
 	return sockets.slice(0, MAX_GEMS);
 }
 
-function reforgeAllowed(item: Item, reforge: ItemReforge, row: CatalogItem | undefined): boolean {
-	if (row && (row.statsCount < 1 || row.statsCount >= MAX_ITEM_PROTO_STATS)) {
-		return false;
-	}
-	if (!isValidReforge(item, reforge)) {
-		return false;
-	}
-	const split = SPLIT_RATINGS[reforge.fromStatType];
-	return !split || (item.stats[split[0]] || 0) == (item.stats[split[1]] || 0);
-}
-
 function raidPlayer(base: RaidSimRequest, index: number): PlayerProto {
 	const player = base.raid?.parties[Math.floor(index / 5)]?.players[index % 5];
 	if (!player || !player.class) {
@@ -303,7 +282,18 @@ export function buildOptimizeRequest(input: PoolBuilderInput): BuiltRequest {
 		}
 	}
 
-	const seed = new SeedTrimmer(input.db, catalog, target.equipment, locked, excluded, blacksmith, offers, poolGems, metaConditions);
+	const seed = new SeedTrimmer(
+		input.db,
+		catalog,
+		target.equipment,
+		locked,
+		excluded,
+		blacksmith,
+		offers,
+		poolGems,
+		metaConditions,
+		reforgingFor(base.encounter?.serverSettings),
+	);
 	target.equipment = seed.trim(settings.contentPhase);
 
 	const slotPools: Array<SlotPool> = [];
@@ -386,6 +376,7 @@ class SeedTrimmer {
 		private readonly offers: SlotOffers,
 		private readonly poolGems: Map<number, Gem>,
 		private readonly metaConditions: Map<number, MetaGemCondition>,
+		private readonly reforging: Reforging,
 	) {
 		this.specs = ALL_SLOTS.map(slot => ItemSpec.clone(equipment?.items[slot] || ItemSpec.create()));
 	}
@@ -453,7 +444,7 @@ class SeedTrimmer {
 			this.note(slot, `dropped the enchant on ${item.name}, which the pool doesn't offer.`);
 			spec.enchant = 0;
 		}
-		if (spec.reforge && (spec.reforge.fromStatType != 0 || spec.reforge.toStatType != 0) && !reforgeAllowed(item, spec.reforge, this.catalog.item(item.id))) {
+		if (spec.reforge && (spec.reforge.fromStatType != 0 || spec.reforge.toStatType != 0) && !isValidReforge(item, spec.reforge, this.reforging)) {
 			this.note(slot, `dropped the reforge on ${item.name}, which the server wouldn't allow.`);
 			spec.reforge = undefined;
 		}

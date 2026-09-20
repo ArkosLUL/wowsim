@@ -299,14 +299,16 @@ func (dot *Dot) TickOnce(sim *Simulation) {
 // ManualTick forces the dot forward one tick
 // Will cancel the dot if it is out of ticks.
 func (dot *Dot) ManualTick(sim *Simulation) {
-	if dot.lastTickTime != sim.CurrentTime {
-		dot.TickCount++
-		if dot.NumTicksRemaining(sim) <= 0 {
-			dot.Cancel(sim)
-		} else {
-			dot.TickOnce(sim)
-		}
+	if dot.lastTickTime == sim.CurrentTime {
+		return
 	}
+	// count before the increment, or the last charge never lands (Earth Shield)
+	if dot.MaxTicksRemaining() <= 0 {
+		dot.Cancel(sim)
+		return
+	}
+	dot.TickCount++
+	dot.TickOnce(sim)
 }
 
 // startTickAction schedules the next tick for the nominal time given, and every tick after it one

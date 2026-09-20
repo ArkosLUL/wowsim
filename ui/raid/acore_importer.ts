@@ -398,7 +398,7 @@ export class ImportNotes {
 		lines.push(
 			'',
 			'Keep in mind:',
-			"  Item stats are the sim's Classic values, not the server's.",
+			"  Item stats come from the server, but a few item and set effects are still Classic's.",
 			"  mod-spell-tweaks and mod-individual-progression aren't modelled.",
 			"  Rotations, consumes, spec options and raid buffs are the sim's, not what you run in game.",
 		);

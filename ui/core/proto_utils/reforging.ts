@@ -103,7 +103,8 @@ export function reforgeAmount(item: Item, fromStatType: number, config: Reforgin
 }
 
 // isValidReforge follows ItemReforge::IsReforgeable and ::Reforge, which read the item_template
-// stats rather than what the sim made of them.
+// stats rather than what the sim made of them. A stat type the sim has no stat for is out: core's
+// ReforgeStats drops the pair, so offering it here would show a reforge the sim then ignores.
 export function isValidReforge(item: Item, reforge: ItemReforge | null | undefined, config: Reforging = LIVE_REFORGING): boolean {
 	return (
 		!!reforge &&
@@ -114,6 +115,8 @@ export function isValidReforge(item: Item, reforge: ItemReforge | null | undefin
 		reforge.fromStatType != reforge.toStatType &&
 		config.statTypes.includes(reforge.fromStatType) &&
 		config.statTypes.includes(reforge.toStatType) &&
+		KNOWN_REFORGE_STAT_TYPES.includes(reforge.fromStatType) &&
+		KNOWN_REFORGE_STAT_TYPES.includes(reforge.toStatType) &&
 		serverStatValue(item, reforge.toStatType) == 0 &&
 		reforgeAmount(item, reforge.fromStatType, config) >= 1
 	);

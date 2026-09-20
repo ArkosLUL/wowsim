@@ -43,7 +43,7 @@ Quirk: `UnitLevelFloat64` in `utils.go` treats every level outside 80–82 as +3
 - Item effects: `sim/common/{wotlk,tbc}`. Class set bonuses: `sim/<class>/items.go`. An effect's closure
   runs once per character, concurrently across sims (optimizer, stat weights, web requests), so copy a
   captured config before changing it. Proc chance, PPM and ICD come from `sim/core/serverdata` through
-  `sim/common/wotlk/proc_helpers.go`; name each spell id as a constant so `spellids` counts it.
+  `core.ServerProcFor` (`sim/core/ppm.go`); name each spell id as a constant so `spellids` counts it.
 - Boss AIs, still with Classic numbers: `sim/encounters/{naxxramas,ulduar,toc,icc}`.
 - `sim/web/main.go` is the server, with flags `--usefs`, `--wasm`, `--host` and `--launch`.
 - `sim/optimizer/`: the BiS gear optimizer ([PLAN](../bis-optimizer/bis-optimizer.PLAN.md)), with its
