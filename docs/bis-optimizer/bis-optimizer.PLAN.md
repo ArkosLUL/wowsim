@@ -390,6 +390,9 @@ the request and `seedChanges`, one line per trim.
   prunes gear no DPS spec wants (TBC, other roles).
 - Fixtures: Retribution's P1 to P5 presets (P4 with locked trinkets, its worn head excluded and a hit
   floor), plus P2 gear at P1. The driver gzips them (0.17 to 0.29 MB); the test reads `.json` and `.json.gz`.
+- What the user's own look at the merged tab turned up, fixed in `302a6e29a`: no item icons, because
+  `ItemRenderer`'s layout and icon size were scoped to `.gear-picker-root`; a text-only runners-up table;
+  and tooltips counting set pieces against the gear the player wears, not the set on screen.
 
 ### BIS-tanks-racials (wave F)
 
@@ -426,7 +429,7 @@ Reuse BIS-ui-tab's `buildOptimizeRequest` per raider, including its seed trimmin
 `OptimizerProgress.completed_steps`, which reports the current stage's index, so a run reads "step 0 of
 7" while it sets up.
 
-### BIS-picker-switch (wave G)
+### BIS-picker-switch (wave F2)
 
 `gear_picker.tsx` (its phase filter) and the gem EP filters (the `isUnrestrictedGem` callers in `player.ts`)
 switch to catalog tiers.

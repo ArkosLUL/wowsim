@@ -48,11 +48,17 @@ G = changes goldens. FS = runs all 37 suites.
 | D | PAR-P3-2 (G, FS) · PAR-P3-3 (G, FS) · BIS-search · BIS-ui-tab | ✔ |
 | E | PAR-P3-4 (G, FS) · PAR-P3-5 (G, FS) · PAR-P6-1 · RI-3 | ✔ |
 | F | PAR-P7-0a (G, FS) · PAR-P7-0b (G, FS) · BIS-tanks-racials · PAR-TOOLS-RR | ✔ |
-| G | PAR-P7-DK (G) · PAR-P7-HUN (G) · BIS-batch-ui · BIS-picker-switch | ✔ |
+| F2 | PAR-P7-0c (G, FS) · BIS-picker-switch | ✔ |
+| G | PAR-P7-DK (G) · PAR-P7-HUN (G) · BIS-batch-ui | ✔ |
 | H | PAR-P7-ROG · PAR-P7-WAR · PAR-P7-RET (G) · BIS-raid-contrib | ✔ |
 | I | PAR-P7-SHA · PAR-P7-DRU · PAR-P7-MAG · PAR-P7-WLK (G) | ✔ |
 | J | PAR-P7-PRI (G) · PAR-P7-TANK (G) · BIS-e2e-perf · AC-3 | ✔ |
 | K | BIS-presets · PAR-P8 (G, FS) · BIS-tank-boss | ✔ |
+
+F2 is an inserted wave, not a fifth item in F: the core swing and cast fixes of PAR-P7-0c have to land
+before the class items in G, a class item can't build on a core fix merging in its own wave, and F already
+carries the 2 full-suite golden changers a wave is allowed. BIS-picker-switch moved in from G to give it a
+second, light item.
 
 **Where the specs are:**
 
@@ -101,14 +107,10 @@ came from a seed that wore the glyph.
 | PAR-P3-2 | merged | `763d0056e` | 21 goldens promoted in `2df9b319b` |
 | PAR-P3-3 | merged | `ef34b0059` | 34 goldens promoted in `936c96e19` |
 | BIS-search | merged | `67b8ea2d3` | |
-| BIS-ui-tab | merged | `5683f6892` | |
+| BIS-ui-tab | merged | `5683f6892` | icons and tooltips fixed after the user's check, `302a6e29a` |
 
 Later WIs are added as their wave starts.
 
 ## User actions
 
 - "continue" for wave E.
-- Where PAR-P7-0c goes. Wave D turned up core swing and cast fixes the class items want (its row in the
-  [parity PLAN](../azerothcore-parity/azerothcore-parity.PLAN.md#loop-work-items)), but every wave from E
-  to K already holds its 4 items. It fits best before the class items in G, so either wave F takes a
-  fifth item or something light (BIS-picker-switch) moves later.

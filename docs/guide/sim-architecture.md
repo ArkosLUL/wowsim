@@ -73,7 +73,10 @@ Quirk: `UnitLevelFloat64` in `utils.go` treats every level outside 80–82 as +3
   share links are deterministic.
 - `ui/core/components/individual_sim_ui/settings_tab.ts`: the Racial Traits and professions pickers, and
   the "Server (AzerothCore)" section (`server_settings_picker.ts`, also on the raid settings tab).
-- `ui/core/components/gear_picker.tsx`: gear, gems, enchants, and the Reforging tab.
+- `ui/core/components/gear_picker.tsx`: gear, gems, enchants, and the Reforging tab. Its `ItemRenderer`
+  draws an item anywhere (bulk and optimizer tabs too), so its styles are global in `_gear_picker.scss`:
+  anything scoped to `.gear-picker-root` leaves those tabs with an unsized icon. Tooltips come from
+  wowhead through `Player.setWowheadData`, which takes the set to count pieces against.
 - `ui/core/optimizer/` and `ui/core/components/individual_sim_ui/optimizer_tab.ts`: the BiS Optimizer
   tab, shown for DPS specs. `pool_builder.ts` builds the request (its `filterItemsByFilters` is the gear
   picker's own filter, and it trims the seed to what the pool offers, since Go rejects anything else),
