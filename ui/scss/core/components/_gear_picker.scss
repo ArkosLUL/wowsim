@@ -17,17 +17,8 @@ $favorite-cell-width: 2rem;
 	}
 
 	.item-picker-root {
-		display: flex;
-
 		&:not(:last-child) {
 			margin-bottom: $block-spacer;
-		}
-
-		.item-picker-icon {
-			@include wowhead-background-icon;
-			width: 4rem;
-			height: 4rem;
-			border: $border-default;
 		}
 	}
 
@@ -59,6 +50,19 @@ $favorite-cell-width: 2rem;
 			}
 		}
 	}
+}
+
+// ItemRenderer also shows up in the bulk and optimizer tabs, so its layout can't sit under
+// .gear-picker-root: without these the icon has no size and the labels fall under it.
+.item-picker-root {
+	display: flex;
+}
+
+.item-picker-icon {
+	@include wowhead-background-icon;
+	width: 4rem;
+	height: 4rem;
+	border: $border-default;
 }
 
 .item-picker-icon-wrapper {

@@ -10,6 +10,7 @@ import { DatabaseFilters, RepFaction, UIEnchant as Enchant, UIGem as Gem, UIItem
 import { ActionId } from '../proto_utils/action_id';
 import { getEnchantDescription, getUniqueEnchantString } from '../proto_utils/enchants';
 import { EquippedItem } from '../proto_utils/equipped_item';
+import { Gear } from '../proto_utils/gear.js';
 import { gemMatchesSocket, getEmptyGemSocketIconUrl } from '../proto_utils/gems';
 import { difficultyNames, professionNames, REP_FACTION_NAMES, REP_LEVEL_NAMES, slotNames } from '../proto_utils/names.js';
 import { reforgeAmount, reforgeLabel, reforgeStatTypeName, validReforges } from '../proto_utils/reforging';
@@ -162,7 +163,8 @@ export class ItemRenderer extends Component {
 		this.ilvlElem.replaceChildren();
 	}
 
-	update(newItem: EquippedItem) {
+	// gear, when given, is the set the tooltip counts pieces against instead of what the player wears.
+	update(newItem: EquippedItem, gear?: Gear) {
 		this.nameElem.textContent = newItem.item.name;
 		if (newItem.item.heroic) {
 			this.nameElem.insertAdjacentElement('beforeend', createHeroicLabel());
@@ -173,8 +175,8 @@ export class ItemRenderer extends Component {
 
 		setItemQualityCssClass(this.nameElem, newItem.item.quality);
 
-		this.player.setWowheadData(newItem, this.iconElem);
-		this.player.setWowheadData(newItem, this.nameElem);
+		this.player.setWowheadData(newItem, this.iconElem, gear);
+		this.player.setWowheadData(newItem, this.nameElem, gear);
 		newItem
 			.asActionId()
 			.fill()

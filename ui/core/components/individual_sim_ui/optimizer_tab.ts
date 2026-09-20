@@ -1,4 +1,5 @@
 import { REPO_NAME } from '../../constants/other';
+import { setItemQualityCssClass } from '../../css_utils';
 import { IndividualSimUI } from '../../individual_sim_ui';
 import { ALL_SOURCE_KINDS, loadCatalog, MAX_CONTENT_PHASE, MIN_CONTENT_PHASE, SOURCE_KINDS } from '../../optimizer/catalog';
 import { ALL_SLOTS, buildOptimizeRequest, BuiltRequest, defaultTabSettings, OptimizerTabSettings } from '../../optimizer/pool_builder';
@@ -14,6 +15,8 @@ import {
 	StatMinimum,
 } from '../../proto/optimizer';
 import { SavedGearSet } from '../../proto/ui';
+import { EquippedItem } from '../../proto_utils/equipped_item';
+import { Gear } from '../../proto_utils/gear';
 import { getClassStatName, raceNames, slotNames } from '../../proto_utils/names';
 import { Stats } from '../../proto_utils/stats';
 import { SimError } from '../../sim';
@@ -522,7 +525,7 @@ export class OptimizerTab extends SimTab {
 			this.resultsBody.appendChild(this.renderLoadout('Best', result.best, result.seed));
 		}
 		if (result.alternatives.length > 0) {
-			this.resultsBody.appendChild(this.renderAlternatives(result.alternatives));
+			this.resultsBody.appendChild(this.renderAlternatives(result.alternatives, result.best));
 		}
 		if (result.top.length > 0) {
 			this.resultsBody.appendChild(this.renderTop(result.top, result.best));
@@ -626,6 +629,7 @@ export class OptimizerTab extends SimTab {
 
 		const gear = newElement('div', 'optimizer-gear');
 		const seedItems = seed?.equipment?.items || [];
+		const loadoutGear = this.simUI.sim.db.lookupEquipmentSpec(loadout.equipment || EquipmentSpec.create());
 		(loadout.equipment?.items || []).forEach((spec, slot) => {
 			const equipped = spec.id ? this.simUI.sim.db.lookupItemSpec(spec) : null;
 			if (!equipped) {
@@ -634,7 +638,7 @@ export class OptimizerTab extends SimTab {
 			const changed = seed != undefined && !ItemSpec.equals(spec, seedItems[slot] || ItemSpec.create());
 			const row = newElement('div', `optimizer-gear-row${changed ? ' optimizer-changed' : ''}`);
 			row.appendChild(newElement('span', 'optimizer-slot', slotNames.get(slot) || ''));
-			new ItemRenderer(row, newElement('div'), this.simUI.player).update(equipped);
+			new ItemRenderer(row, newElement('div'), this.simUI.player).update(equipped, loadoutGear);
 			row.appendChild(this.excludeButton(spec.id));
 			gear.appendChild(row);
 		});
@@ -683,17 +687,30 @@ export class OptimizerTab extends SimTab {
 		return this.section('Character sheet', table);
 	}
 
-	private renderAlternatives(alternatives: Array<OptimizerSlotAlternative>): HTMLElement {
+	private renderAlternatives(alternatives: Array<OptimizerSlotAlternative>, best: OptimizerLoadoutResult | undefined): HTMLElement {
 		const table = newElement('table', 'table table-sm optimizer-table');
 		const raid = alternatives.some(a => a.raidDpsDelta || a.raidDpsDeltaSe);
 		table.appendChild(this.row('th', ['Slot', 'Instead', 'Score vs best', ...(raid ? ['Raid DPS'] : []), '']));
+		const bestGear = best?.equipment ? this.simUI.sim.db.lookupEquipmentSpec(best.equipment) : null;
 		for (const alt of alternatives) {
-			const tr = this.row('td', [
-				slotNames.get(alt.slot) || '',
-				alt.item ? this.itemName(alt.item.id) : '',
-				formatDelta(alt.scoreDelta, alt.scoreDeltaSe, 2),
-				...(raid ? [formatDelta(alt.raidDpsDelta, alt.raidDpsDeltaSe)] : []),
-			]);
+			const tr = newElement('tr');
+			tr.appendChild(newElement('td', undefined, slotNames.get(alt.slot) || ''));
+
+			const itemCell = newElement('td');
+			const equipped = alt.item ? this.simUI.sim.db.lookupItemSpec(alt.item) : null;
+			if (equipped) {
+				// the set this runner-up would make, so its tooltip counts the right set pieces
+				const gear = bestGear?.withEquippedItem(alt.slot, equipped, this.simUI.player.canDualWield2H());
+				itemCell.appendChild(this.itemLink(equipped, gear));
+			} else if (alt.item) {
+				itemCell.textContent = this.itemName(alt.item.id);
+			}
+			tr.appendChild(itemCell);
+
+			tr.appendChild(newElement('td', undefined, formatDelta(alt.scoreDelta, alt.scoreDeltaSe, 2)));
+			if (raid) {
+				tr.appendChild(newElement('td', undefined, formatDelta(alt.raidDpsDelta, alt.raidDpsDeltaSe)));
+			}
 			const cell = newElement('td');
 			if (alt.item?.id) {
 				cell.appendChild(this.excludeButton(alt.item.id));
@@ -702,6 +719,28 @@ export class OptimizerTab extends SimTab {
 			table.appendChild(tr);
 		}
 		return this.section('Runners-up per slot', table, 'Each swaps one slot of the best set.');
+	}
+
+	// The icon and hover tooltip the gear tab gives an item, sized for a table row.
+	private itemLink(equipped: EquippedItem, gear: Gear | undefined): HTMLElement {
+		const wrapper = newElement('span', 'optimizer-item');
+		const icon = newElement('a', 'optimizer-item-icon');
+		const name = newElement('a', 'optimizer-item-name', equipped.item.name);
+		setItemQualityCssClass(name, equipped.item.quality);
+		if (equipped.item.heroic) {
+			name.appendChild(newElement('span', 'heroic-label', '[H]'));
+		}
+		this.simUI.player.setWowheadData(equipped, icon, gear);
+		this.simUI.player.setWowheadData(equipped, name, gear);
+		equipped
+			.asActionId()
+			.fill()
+			.then(filled => {
+				filled.setBackgroundAndHref(icon);
+				filled.setWowheadHref(name);
+			});
+		wrapper.append(icon, name);
+		return wrapper;
 	}
 
 	private renderTop(top: Array<OptimizerLoadoutResult>, best: OptimizerLoadoutResult | undefined): HTMLElement {

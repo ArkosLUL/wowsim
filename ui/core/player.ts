@@ -1102,7 +1102,9 @@ export class Player<SpecType extends Spec> {
 		return ep;
 	}
 
-	setWowheadData(equippedItem: EquippedItem, elem: HTMLElement) {
+	// gear is what the tooltip counts set pieces against, so a tab showing gear the player isn't
+	// wearing (the optimizer's picks) passes that set instead.
+	setWowheadData(equippedItem: EquippedItem, elem: HTMLElement, gear: Gear = this.gear) {
 		const parts = [];
 
 		const lang = getLanguageCode();
@@ -1116,7 +1118,7 @@ export class Player<SpecType extends Spec> {
 		if (equippedItem.enchant != null) {
 			parts.push('ench=' + equippedItem.enchant.effectId);
 		}
-		parts.push('pcs=' + this.gear.asArray().filter(ei => ei != null).map(ei => ei!.item.id).join(':'));
+		parts.push('pcs=' + gear.asArray().filter(ei => ei != null).map(ei => ei!.item.id).join(':'));
 
 		if (equippedItem.hasExtraSocket(isBlacksmithing)) {
 			parts.push('sock');
