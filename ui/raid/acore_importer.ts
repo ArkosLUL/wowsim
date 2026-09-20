@@ -162,7 +162,8 @@ export class RaidAcoreImporter extends Importer {
 		if (warnings.length > MAX_SUMMARY_WARNINGS) {
 			console.log(`All ${warnings.length} roster notes:\n${warnings.map(warning => `  ${warning}`).join('\n')}`);
 		}
-		alert(summary);
+		// chrome cuts a long alert off mid-text, so the full spec list stays in the console
+		alert(notes.summarize(this.mode, roster, imports, skipped, true));
 	}
 
 	private replaceRaid(imports: Array<RaidCharacter>, notes: ImportNotes) {
@@ -344,14 +345,13 @@ export class ImportNotes {
 	readonly replaced: Array<{ name: string; from: Spec; to: Spec }> = [];
 	readonly kept: Array<{ name: string; spec: Spec; inferred: Spec }> = [];
 
-	summarize(mode: ImportMode, roster: Roster, imports: Array<RaidCharacter>, skipped: Array<string>): string {
+	summarize(mode: ImportMode, roster: Roster, imports: Array<RaidCharacter>, skipped: Array<string>, brief = false): string {
 		const lines: Array<string> = [];
 		const group = roster.group?.leader ? `${roster.group.leader}'s raid` : 'roster';
 		lines.push(`AzerothCore import (${mode == 'replace' ? 'Replace' : 'Update'}): ${group}, exported ${roster.exportedAt || 'at an unknown time'}.`);
 		lines.push(`${imports.length} of ${roster.characters.length} characters in ${activeParties(imports.map(imported => imported.char))} parties.`);
 
-		lines.push('', 'Specs:');
-		imports.forEach(imported => {
+		const specLine = (imported: RaidCharacter) => {
 			const kept = this.kept.find(entry => entry.name == imported.char.name);
 			const tags: Array<string> = [];
 			if (imported.isMainTank) {
@@ -360,8 +360,20 @@ export class ImportNotes {
 			if (kept && kept.spec != kept.inferred) {
 				tags.push(`kept, the roster's talents look like ${specNames[kept.inferred]}`);
 			}
-			lines.push(`  ${imported.char.name}: ${specNames[kept ? kept.spec : imported.spec]}${tags.length ? ` (${tags.join('; ')})` : ''}`);
-		});
+			return `  ${imported.char.name}: ${specNames[kept ? kept.spec : imported.spec]}${tags.length ? ` (${tags.join('; ')})` : ''}`;
+		};
+		if (brief) {
+			// just the ones worth a second look, since the console has every spec
+			const odd = imports.filter(imported => {
+				const kept = this.kept.find(entry => entry.name == imported.char.name);
+				return imported.isMainTank || (kept && kept.spec != kept.inferred);
+			});
+			lines.push('', `Specs: ${imports.length} read off the roster, all of them in the browser console.`);
+			odd.forEach(imported => lines.push(specLine(imported)));
+		} else {
+			lines.push('', 'Specs:');
+			imports.forEach(imported => lines.push(specLine(imported)));
+		}
 
 		if (this.added.length) {
 			lines.push('', `Added: ${this.added.join(', ')}`);
