@@ -12664,6 +12664,7 @@
 {"effectId":3847,"spellId":62158,"name":"Rune of the Stoneskin Gargoyle","type":13,"stats":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"quality":2,"phase":1,"classAllowlist":[10]},
 {"effectId":3849,"itemId":44936,"spellId":62201,"name":"Titanium Plating","type":13,"enchantType":2,"stats":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,81,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"quality":3},
 {"effectId":3850,"itemId":44944,"spellId":62256,"name":"Major Stamina","type":6,"stats":[0,0,40,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"quality":2},
+{"effectId":3851,"itemId":44946,"spellId":62257,"name":"Titanguard","type":13,"stats":[0,0,50,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"quality":3},
 {"effectId":3852,"itemId":44957,"spellId":62384,"name":"Greater Inscription of the Gladiator","type":3,"stats":[0,0,30,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,15,0,0,0,0,0,0,0,0,0,0,0,0],"quality":4},
 {"effectId":3853,"itemId":44963,"spellId":62447,"name":"Earthen Leg Armor","type":9,"stats":[0,0,28,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,40,0,0,0,0,0,0,0,0,0,0,0,0],"quality":4},
 {"effectId":3854,"itemId":45059,"spellId":62948,"name":"Staff - Greater Spellpower","type":13,"enchantType":4,"stats":[0,0,0,0,0,81,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"quality":3},
