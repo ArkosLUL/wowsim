@@ -75,6 +75,9 @@ eleven class items on top and a profile can no longer say what cost what.
 - Wave: G, not started. Wave F2 (base `0782b5be8`) landed on `master`.
 - Base SHA: set at wave start.
 - Workflow runId: none. Wave F2 ran as `wf_5bebfbfc-677`.
+- At G's start, add `tools/uicheck`'s README to CLAUDE.md's doc map ("checking a UI change in a real
+  browser"). F2 held it back: another session had CLAUDE.md uncommitted in [sim], which would have
+  blocked the land.
 
 ## BiS baseline
 
