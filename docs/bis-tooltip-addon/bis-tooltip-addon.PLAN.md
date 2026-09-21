@@ -248,8 +248,7 @@ about sequencing; sessions 4 and 5 both touch the addon and must not overlap.
 
 ### Phase 1 — Exporter (`wowsim`, branch `bis-tooltip-addon`)
 
-**Status:** done. Committed on `bis-tooltip-addon` and merged into `master`; the user skipped the
-separate review session.
+**Status:** done. Committed on `bis-tooltip-addon` and merged into `master`, then reviewed there.
 
 A **thin wowsim effort** owning only `tools/database/acbis/` and `tools/database/azerothcore/bisdata*.go`,
 off `master`, **not** in the wave loop — the module and addon are their own repos, and a client-facing
@@ -267,8 +266,8 @@ artifact shouldn't be coupled to an in-flight sim. How to run it:
 - `bisdata_lua.go`: `-luaOut`, the dataset in the addon's decoded shape, the contract the Lua decoder is
   checked against. Spec subjects go to `Bistooltip_server_bislists` in `Bistooltip_wotlk_bislists`'s
   shape; raiders to `Bistooltip_server_roster[guid]` with `name`, `class`, `spec`, `raid_index`,
-  `phases`. A slot's delta and reforge sit in an `extra` table, since the addon's reverse lookup
-  compares every numeric field with the hovered item id.
+  `phases`. A slot's delta and reforge sit in an `extra` table, so the slot keeps only the shipped
+  lists' keys.
 
 `acbis` **consumes only** — it never runs the optimizer. A thin separate driver script orchestrates
 the ~245 runs, keeping `acbis` pure and testable, and letting wave G's batch export feed it directly.
@@ -285,7 +284,7 @@ Tables in `acore_world` (DDL: `BisTablesSQL`):
 | `bistooltip_block` | `subject_id`, `content_phase`, `payload` TEXT, `checksum` |
 
 **Verified:** `go test ./tools/database/azerothcore/` passes: round-trip over every slot, malformed
-payloads, the frame cap and reassembly up to 131 frames, the checksum's known value, dataset ordering,
+payloads, the frame cap and reassembly up to 134 frames, the checksum's known value, dataset ordering,
 skips and errors, batch stages, and the SQL and Lua output. End to end, one real `wowsimcli optimize`
 result fanned out to the live roster's 25 raiders and 30 specs × 5 phases gave 55 subjects, 275 blocks
 and 1,100 frames; the `.sql` imported twice cleanly into a throwaway MySQL 8.4, and the `-luaOut`

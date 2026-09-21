@@ -2,6 +2,7 @@ package azerothcore
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -41,6 +42,10 @@ const BisTablesSQL = "CREATE TABLE IF NOT EXISTS `bistooltip_dataset` (\n" +
 // WriteBisSQL writes the dataset as an import for acore_world. It replaces whatever dataset is there,
 // in one transaction, and creates the tables if the module hasn't yet.
 func WriteBisSQL(w io.Writer, dataset *BisDataset) error {
+	// an INSERT with no rows isn't valid SQL
+	if len(dataset.Subjects) == 0 || len(dataset.Blocks) == 0 {
+		return errors.New("the dataset has no blocks")
+	}
 	var sb strings.Builder
 	fmt.Fprintf(&sb, "-- BiS tooltip dataset %s: sim %s, catalog %s, objective %s, %d subjects, %d blocks\n\n",
 		dataset.Version, dataset.SimCommit, dataset.CatalogDate, dataset.Objective, len(dataset.Subjects), len(dataset.Blocks))

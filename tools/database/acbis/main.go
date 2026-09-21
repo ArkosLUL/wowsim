@@ -95,7 +95,8 @@ func lookUpGUIDs(raid *azerothcore.Roster) (map[string]uint32, error) {
 	return azerothcore.CharacterGUIDs(db, names)
 }
 
-// printSummary includes what a first sync costs, since that's what a 255-byte wire makes slow.
+// printSummary includes how long sending every block takes, since that's what a 255-byte wire makes
+// slow.
 func printSummary(dataset *azerothcore.BisDataset) {
 	for _, warning := range dataset.Warnings {
 		fmt.Printf("! %s\n", warning)

@@ -80,6 +80,9 @@ func TestEncodeBlockRejects(t *testing.T) {
 		"zero item":          head(BisSlot{Items: []int32{0}}),
 		"zero gem":           head(BisSlot{Items: []int32{1}, Gems: []int32{0}}),
 		"half a reforge":     head(BisSlot{Items: []int32{1}, ReforgeFrom: 13}),
+		"item twice":         head(BisSlot{Items: []int32{1, 1}}),
+		"delta, no rank 2":   head(BisSlot{Items: []int32{1}, HasDelta: true}),
+		"delta, no HasDelta": head(BisSlot{Items: []int32{1, 2}, Delta: 5}),
 		"slot past ranged":   {Slots: []BisSlot{{Slot: proto.ItemSlot_ItemSlotRanged + 1, Items: []int32{1}}}},
 		"slots out of order": {Slots: []BisSlot{{Slot: 2, Items: []int32{1}}, {Slot: 1, Items: []int32{1}}}},
 		"slot twice":         {Slots: []BisSlot{{Slot: 1, Items: []int32{1}}, {Slot: 1, Items: []int32{2}}}},
@@ -94,7 +97,8 @@ func TestDecodeBlockRejects(t *testing.T) {
 	for _, payload := range []string{
 		"", "0", "0:", ":1", "x:1", "17:1", "-1:1", "0:1,", "0:1,,2", "0:01", "0:+1", "0:1 ", "0:1,2,3,4,5",
 		"0:1(", "0:1()", "0:1(e)", "0:1(e0)", "0:1(e1,e2)", "0:1(x1)", "0:1(r13)", "0:1(r13-31,r6-13)", "0:1(g-5)",
-		"0:1+", "0:1+x", "0:1+-0", "0:1+1+2", "0:1;", "1:1;0:1", "0:1;0:2",
+		"0:1(g2,e3)", "0:1(r13-31,g2)", "0:1(r13-31,e3)", "0:1,1",
+		"0:1+", "0:1+x", "0:1+-0", "0:1+1+2", "0:1+5", "0:1;", "1:1;0:1", "0:1;0:2",
 	} {
 		if block, err := DecodeBlock(payload); err == nil {
 			t.Errorf("%q: decoded to %+v", payload, block)
@@ -103,12 +107,18 @@ func TestDecodeBlockRejects(t *testing.T) {
 }
 
 func TestBlockFrames(t *testing.T) {
-	for _, size := range []int{1, 100, 229, 230, 231, 900, 2000, 3000, 30000} {
+	// block 11's frames hold 230 payload bytes while the count takes 1 digit, 228 at 2 and 226 at 3.
+	// The module has to frame the same way, so the counts are pinned.
+	wantFrames := map[int]int{1: 1, 230: 1, 231: 2, 2070: 9, 2071: 10, 3000: 14, 30000: 133}
+	for _, size := range []int{1, 100, 229, 230, 231, 900, 2000, 2070, 2071, 3000, 30000} {
 		payload := strings.Repeat("0123456789;", size/11+1)[:size]
 		for _, blockID := range []int{11, 505} {
 			frames, err := BlockFrames("1a2b3c4d", blockID, payload)
 			if err != nil {
 				t.Fatalf("%d bytes: %v", size, err)
+			}
+			if want, ok := wantFrames[size]; ok && blockID == 11 && len(frames) != want {
+				t.Errorf("%d bytes: %d frames, want %d", size, len(frames), want)
 			}
 			var joined strings.Builder
 			for i, frame := range frames {
@@ -121,6 +131,9 @@ func TestBlockFrames(t *testing.T) {
 				}
 				if want := fmt.Sprintf("%d/%d", i+1, len(frames)); fields[3] != want {
 					t.Errorf("%d bytes, frame %d: numbered %s, want %s", size, i+1, fields[3], want)
+				}
+				if i > 0 && i < len(frames)-1 && joined.Len() != i*len(fields[4]) {
+					t.Errorf("%d bytes, frame %d: chunks aren't all the same size", size, i+1)
 				}
 				joined.WriteString(fields[4])
 			}

@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
 	"github.com/wowsims/wotlk/tools/database"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -41,7 +42,6 @@ type BisSubject struct {
 type BisDatasetBlock struct {
 	SubjectID    int
 	ContentPhase int32
-	Objective    proto.OptimizerObjective
 	Block        BisBlock
 	Payload      string
 	Checksum     string
@@ -78,6 +78,8 @@ type BisResult struct {
 	Class  string
 	Spec   string
 	Result *proto.OptimizerResult
+	// go into the dataset's warnings
+	Warnings []string
 }
 
 // BisResultIndex is the file -results points at. File paths are relative to the index.
@@ -113,7 +115,7 @@ func LoadBisResults(indexPath string) ([]BisResult, error) {
 	return results, nil
 }
 
-// LoadBisBatch reads a raid batch export. Each raider and phase keeps its latest stage.
+// LoadBisBatch reads a raid batch export; see BisResultsFromBatch.
 func LoadBisBatch(path string) ([]BisResult, error) {
 	batch := &proto.OptimizerBatchExport{}
 	if err := readProtoJSON(path, batch); err != nil {
@@ -122,32 +124,59 @@ func LoadBisBatch(path string) ([]BisResult, error) {
 	return BisResultsFromBatch(batch), nil
 }
 
+// BisResultsFromBatch keeps each raider and phase's latest stage. When that one can't make a block,
+// e.g. the run failed, the latest stage that can takes its place, with a warning.
 func BisResultsFromBatch(batch *proto.OptimizerBatchExport) []BisResult {
 	type key struct {
 		raider string
 		phase  int32
 	}
-	latest := map[key]*proto.OptimizerBatchEntry{}
+	stages := map[key][]*proto.OptimizerBatchEntry{}
 	var order []key
 	for _, entry := range batch.GetEntries() {
 		k := key{entry.GetRaider(), entry.GetContentPhase()}
-		if kept, ok := latest[k]; !ok {
+		if _, ok := stages[k]; !ok {
 			order = append(order, k)
-		} else if kept.GetStage() >= entry.GetStage() {
-			continue
 		}
-		latest[k] = entry
+		stages[k] = append(stages[k], entry)
 	}
 	results := make([]BisResult, len(order))
 	for i, k := range order {
-		entry := latest[k]
+		entries := stages[k]
+		slices.SortStableFunc(entries, func(a, b *proto.OptimizerBatchEntry) int { return cmp.Compare(b.GetStage(), a.GetStage()) })
+		// with no usable stage, the latest stays and BuildBisDataset reports why it's skipped
+		pick, skipped := entries[0], []string(nil)
+		for _, entry := range entries {
+			problem := bisResultProblem(entry.GetResult())
+			if problem == "" {
+				pick = entry
+				break
+			}
+			skipped = append(skipped, fmt.Sprintf("stage %d skipped: %s", entry.GetStage(), problem))
+		}
 		results[i] = BisResult{
-			Source: fmt.Sprintf("batch %s phase %d stage %d", entry.GetRaider(), entry.GetContentPhase(), entry.GetStage()),
-			Raider: entry.GetRaider(),
-			Result: entry.GetResult(),
+			Source: fmt.Sprintf("batch %s phase %d stage %d", pick.GetRaider(), pick.GetContentPhase(), pick.GetStage()),
+			Raider: pick.GetRaider(),
+			Result: pick.GetResult(),
+		}
+		if pick != entries[0] {
+			results[i].Warnings = skipped
 		}
 	}
 	return results
+}
+
+// bisResultProblem is why a result can't make a block, or "" when it can.
+func bisResultProblem(r *proto.OptimizerResult) string {
+	switch {
+	case r == nil:
+		return "no result"
+	case r.GetErrorResult() != "":
+		return fmt.Sprintf("the run failed (%s)", r.GetErrorResult())
+	case len(r.GetBest().GetEquipment().GetItems()) == 0:
+		return "no best loadout"
+	}
+	return ""
 }
 
 func readProtoJSON(path string, message googleProto.Message) error {
@@ -177,12 +206,12 @@ func LoadRoster(path string) (*Roster, error) {
 	return &roster, nil
 }
 
-// EnchantSpells gives the spell of an enchant effect on an item; ok is false for an effect the sim
-// doesn't know.
-type EnchantSpells func(effectID, itemID int32) (spellID int32, ok bool)
+// EnchantSpells gives the spell of an enchant effect in an equipment slot; ok is false for an effect
+// the sim doesn't know.
+type EnchantSpells func(effectID int32, slot proto.ItemSlot) (spellID int32, ok bool)
 
 // SimEnchantSpells reads the sim's item database, e.g. assets/database/db.json. A few effects belong
-// to more than one enchant, e.g. the same stats on two slots, so the item's type picks between them.
+// to more than one enchant, e.g. the same stats on bracers and boots, so the slot picks between them.
 func SimEnchantSpells(path string) (EnchantSpells, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -196,20 +225,32 @@ func SimEnchantSpells(path string) (EnchantSpells, error) {
 	for _, enchants := range byEffect {
 		slices.SortFunc(enchants, func(a, b *proto.UIEnchant) int { return cmp.Compare(a.SpellId, b.SpellId) })
 	}
-	return func(effectID, itemID int32) (int32, bool) {
+	return func(effectID int32, slot proto.ItemSlot) (int32, bool) {
 		enchants := byEffect[effectID]
 		if len(enchants) == 0 {
 			return 0, false
 		}
-		if item := db.Items[itemID]; item != nil {
-			for _, enchant := range enchants {
-				if enchant.Type == item.Type || slices.Contains(enchant.ExtraTypes, item.Type) {
-					return enchant.SpellId, true
-				}
+		for _, enchant := range enchants {
+			if enchantFitsSlot(enchant, slot) {
+				return enchant.SpellId, true
 			}
 		}
 		return enchants[0].SpellId, true
 	}, nil
+}
+
+func enchantFitsSlot(enchant *proto.UIEnchant, slot proto.ItemSlot) bool {
+	// ItemTypeToSlot gives the first slot of each ring, trinket and hand pair
+	switch slot {
+	case proto.ItemSlot_ItemSlotFinger2:
+		slot = proto.ItemSlot_ItemSlotFinger1
+	case proto.ItemSlot_ItemSlotTrinket2:
+		slot = proto.ItemSlot_ItemSlotTrinket1
+	case proto.ItemSlot_ItemSlotOffHand:
+		slot = proto.ItemSlot_ItemSlotMainHand
+	}
+	return core.ItemTypeToSlot(enchant.Type) == slot ||
+		slices.ContainsFunc(enchant.ExtraTypes, func(t proto.ItemType) bool { return core.ItemTypeToSlot(t) == slot })
 }
 
 // BuildBisBlock takes each filled slot's best item and its runners-up, best first, with the best
@@ -247,7 +288,7 @@ func BuildBisBlock(result *proto.OptimizerResult, enchants EnchantSpells) (BisBl
 		}
 
 		if effect := item.GetEnchant(); effect != 0 {
-			if spell, ok := enchants(effect, item.GetId()); ok && spell != 0 {
+			if spell, ok := enchants(effect, slot.Slot); ok && spell != 0 {
 				slot.Enchant = spell
 			} else {
 				warnings = append(warnings, fmt.Sprintf("slot %d: enchant effect %d has no spell in the sim's database, left out", i, effect))
@@ -303,16 +344,12 @@ func BuildBisDataset(results []BisResult, roster *Roster, guids map[string]uint3
 	var used []pending
 	seen := map[subjectKey]string{}
 	for _, result := range results {
+		for _, warning := range result.Warnings {
+			warn("%s: %s", result.Source, warning)
+		}
 		r := result.Result
-		switch {
-		case r == nil:
-			warn("%s: no result, skipped", result.Source)
-			continue
-		case r.GetErrorResult() != "":
-			warn("%s: the run failed (%s), skipped", result.Source, r.GetErrorResult())
-			continue
-		case len(r.GetBest().GetEquipment().GetItems()) == 0:
-			warn("%s: no best loadout, skipped", result.Source)
+		if problem := bisResultProblem(r); problem != "" {
+			warn("%s: %s, skipped", result.Source, problem)
 			continue
 		}
 		phase := r.GetSettings().GetContentPhase()
@@ -343,6 +380,10 @@ func BuildBisDataset(results []BisResult, roster *Roster, guids map[string]uint3
 			if raider.GUID == 0 {
 				return nil, fmt.Errorf("%s: no character guid for %s", result.Source, result.Raider)
 			}
+			if raider.SpecName == "" {
+				warn("%s: %s's class or talents don't name one of the addon's specs, skipped", result.Source, result.Raider)
+				continue
+			}
 			subject, key = raider, subjectKey{BisSubjectRoster, result.Raider, phase}
 		default:
 			classID, ok := bisClassID(result.Class)
@@ -367,13 +408,15 @@ func BuildBisDataset(results []BisResult, roster *Roster, guids map[string]uint3
 		return nil, errors.New("no usable results")
 	}
 
-	// roster raiders first, in raid order like the raid frame, then specs by class and name
+	// roster raiders first, in raid order like the raid frame, then specs by class and name. The key
+	// holds every field sameBisSubject compares, so each subject's phases stay adjacent.
 	slices.SortStableFunc(used, func(a, b pending) int {
 		return cmp.Or(
 			cmp.Compare(a.subject.Kind, b.subject.Kind),
 			cmp.Compare(a.subject.RaidIndex, b.subject.RaidIndex),
 			cmp.Compare(BisClassNames[a.subject.ClassID], BisClassNames[b.subject.ClassID]),
 			cmp.Compare(a.subject.SpecName, b.subject.SpecName),
+			cmp.Compare(a.subject.Name, b.subject.Name),
 			cmp.Compare(a.phase, b.phase),
 		)
 	})
@@ -395,13 +438,12 @@ func BuildBisDataset(results []BisResult, roster *Roster, guids map[string]uint3
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", p.result.Source, err)
 		}
-		objective := p.result.Result.GetSettings().GetObjective()
 		dataset.Blocks = append(dataset.Blocks, BisDatasetBlock{SubjectID: subject.ID, ContentPhase: p.phase,
-			Objective: objective, Block: block, Payload: payload, Checksum: BisChecksum(payload)})
+			Block: block, Payload: payload, Checksum: BisChecksum(payload)})
 
 		commits[shortSimCommit(p.result.Result.GetSimCommit())]++
 		catalogDates[p.result.Result.GetCatalogDate()]++
-		objectives[objective] = true
+		objectives[p.result.Result.GetSettings().GetObjective()] = true
 	}
 
 	dataset.SimCommit = mostCommon(commits)

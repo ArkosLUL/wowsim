@@ -41,9 +41,53 @@ func headResult(phase int32, head int32) *proto.OptimizerResult {
 	return bisResult(phase, map[proto.ItemSlot]*proto.ItemSpec{proto.ItemSlot_ItemSlotHead: {Id: head}})
 }
 
-var testEnchants EnchantSpells = func(effectID, itemID int32) (int32, bool) {
+var testEnchants EnchantSpells = func(effectID int32, slot proto.ItemSlot) (int32, bool) {
 	spell, ok := map[int32]int32{3817: 59954, 3789: 59621}[effectID]
 	return spell, ok
+}
+
+func TestSimEnchantSpells(t *testing.T) {
+	db := &proto.UIDatabase{Enchants: []*proto.UIEnchant{
+		{EffectId: 2649, SpellId: 27950, Type: proto.ItemType_ItemTypeFeet},
+		{EffectId: 2649, SpellId: 27914, Type: proto.ItemType_ItemTypeWrist},
+		{EffectId: 3222, SpellId: 44529, Type: proto.ItemType_ItemTypeHands},
+		{EffectId: 3222, SpellId: 42620, Type: proto.ItemType_ItemTypeWeapon},
+		{EffectId: 3329, SpellId: 50906, Type: proto.ItemType_ItemTypeHead,
+			ExtraTypes: []proto.ItemType{proto.ItemType_ItemTypeChest, proto.ItemType_ItemTypeLegs}},
+	}}
+	data, err := protojson.Marshal(db)
+	if err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(t.TempDir(), "db.json")
+	if err := os.WriteFile(path, data, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	enchants, err := SimEnchantSpells(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, tc := range []struct {
+		effect int32
+		slot   proto.ItemSlot
+		want   int32
+	}{
+		{2649, proto.ItemSlot_ItemSlotWrist, 27914},
+		{2649, proto.ItemSlot_ItemSlotFeet, 27950},
+		{3222, proto.ItemSlot_ItemSlotHands, 44529},
+		{3222, proto.ItemSlot_ItemSlotOffHand, 42620},
+		{3329, proto.ItemSlot_ItemSlotLegs, 50906},
+		// no enchant fits, so the lowest spell
+		{2649, proto.ItemSlot_ItemSlotHead, 27914},
+	} {
+		if got, ok := enchants(tc.effect, tc.slot); !ok || got != tc.want {
+			t.Errorf("effect %d in slot %d: got %d, %t, want %d", tc.effect, tc.slot, got, ok, tc.want)
+		}
+	}
+	if spell, ok := enchants(1, proto.ItemSlot_ItemSlotHead); ok {
+		t.Errorf("unknown effect gave spell %d", spell)
+	}
 }
 
 func TestBuildBisBlock(t *testing.T) {
@@ -105,6 +149,7 @@ func TestBuildBisDataset(t *testing.T) {
 		{Source: "unknown raider", Raider: "Nobody", Result: headResult(1, 1)},
 		{Source: "failed", Raider: "Deathsong", Result: failed},
 		{Source: "no phase", Raider: "Deathsong", Result: headResult(0, 1)},
+		{Source: "noted", Class: "Mage", Spec: "Frost", Result: headResult(1, 40003), Warnings: []string{"a note"}},
 	}
 	exportedAt := time.Date(2026, 9, 21, 12, 0, 0, 0, time.UTC)
 	dataset, err := BuildBisDataset(results, testRoster(), testGUIDs, testEnchants, exportedAt)
@@ -117,6 +162,7 @@ func TestBuildBisDataset(t *testing.T) {
 		{ID: 2, Kind: BisSubjectRoster, ClassID: 11, SpecName: "Feral tank", GUID: 1004, Name: "Bear", RaidIndex: 6},
 		{ID: 3, Kind: BisSubjectSpec, ClassID: 6, SpecName: "Unholy", RaidIndex: -1},
 		{ID: 4, Kind: BisSubjectSpec, ClassID: 8, SpecName: "Fire FFB", RaidIndex: -1},
+		{ID: 5, Kind: BisSubjectSpec, ClassID: 8, SpecName: "Frost", RaidIndex: -1},
 	}
 	if !reflect.DeepEqual(dataset.Subjects, wantSubjects) {
 		t.Errorf("subjects:\ngot  %+v\nwant %+v", dataset.Subjects, wantSubjects)
@@ -131,10 +177,10 @@ func TestBuildBisDataset(t *testing.T) {
 			t.Errorf("block %d: checksum %s", block.ID(), block.Checksum)
 		}
 	}
-	if want := []int{11, 12, 21, 33, 41}; !reflect.DeepEqual(ids, want) {
+	if want := []int{11, 12, 21, 33, 41, 51}; !reflect.DeepEqual(ids, want) {
 		t.Errorf("block ids %v, want %v", ids, want)
 	}
-	if want := []string{"0:40000", "0:45000", "0:40002", "0:50000", "0:40001"}; !reflect.DeepEqual(payloads, want) {
+	if want := []string{"0:40000", "0:45000", "0:40002", "0:50000", "0:40001", "0:40003"}; !reflect.DeepEqual(payloads, want) {
 		t.Errorf("payloads %v, want %v", payloads, want)
 	}
 
@@ -148,7 +194,7 @@ func TestBuildBisDataset(t *testing.T) {
 	if !regexp.MustCompile(`^[0-9a-f]{8}$`).MatchString(dataset.Version) {
 		t.Errorf("version %q", dataset.Version)
 	}
-	if len(dataset.Warnings) != 5 {
+	if len(dataset.Warnings) != 6 || !slices.Contains(dataset.Warnings, "noted: a note") {
 		t.Errorf("warnings = %q", dataset.Warnings)
 	}
 
@@ -195,24 +241,57 @@ func TestBuildBisDatasetRejects(t *testing.T) {
 	}
 }
 
+func TestBuildBisDatasetUnnamedSpec(t *testing.T) {
+	roster := testRoster()
+	roster.Characters = append(roster.Characters, &RosterCharacter{Name: "Odd", ClassID: 10, Subgroup: 1, Talents: "5"})
+	guids := map[string]uint32{"Deathsong": 1001, "Odd": 1005}
+	results := []BisResult{
+		{Source: "odd", Raider: "Odd", Result: headResult(1, 1)},
+		{Source: "ds", Raider: "Deathsong", Result: headResult(1, 40000)},
+	}
+	dataset, err := BuildBisDataset(results, roster, guids, testEnchants, time.Now())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(dataset.Subjects) != 1 || dataset.Subjects[0].Name != "Deathsong" {
+		t.Errorf("subjects = %+v", dataset.Subjects)
+	}
+	if len(dataset.Warnings) != 1 || !strings.HasPrefix(dataset.Warnings[0], "odd: ") {
+		t.Errorf("warnings = %q", dataset.Warnings)
+	}
+}
+
 func TestBisResultsFromBatch(t *testing.T) {
 	entry := func(raider string, phase, stage int32) *proto.OptimizerBatchEntry {
 		return &proto.OptimizerBatchEntry{Raider: raider, ContentPhase: phase, Stage: stage, Result: headResult(phase, 40000+stage)}
 	}
+	failed := func(entry *proto.OptimizerBatchEntry) *proto.OptimizerBatchEntry {
+		entry.Result.ErrorResult = "boom"
+		return entry
+	}
 	batch := &proto.OptimizerBatchExport{Entries: []*proto.OptimizerBatchEntry{
 		entry("Deathsong", 1, 1), entry("Deathsong", 1, 2), entry("Deathsong", 2, 1),
 		entry("Bear", 1, 2), entry("Bear", 1, 1),
+		entry("Bear", 2, 1), failed(entry("Bear", 2, 2)),
+		failed(entry("Tankbot", 1, 1)), failed(entry("Tankbot", 1, 2)),
 	}}
 	var got []string
 	for _, result := range BisResultsFromBatch(batch) {
-		got = append(got, result.Source)
+		got = append(got, strings.Join(append([]string{result.Source}, result.Warnings...), " | "))
 		if result.Raider == "" || result.Result == nil {
 			t.Errorf("%s: raider %q, result %v", result.Source, result.Raider, result.Result)
 		}
 	}
-	want := []string{"batch Deathsong phase 1 stage 2", "batch Deathsong phase 2 stage 1", "batch Bear phase 1 stage 2"}
+	want := []string{
+		"batch Deathsong phase 1 stage 2",
+		"batch Deathsong phase 2 stage 1",
+		"batch Bear phase 1 stage 2",
+		"batch Bear phase 2 stage 1 | stage 2 skipped: the run failed (boom)",
+		// nothing usable: the latest stays, for BuildBisDataset to report
+		"batch Tankbot phase 1 stage 2",
+	}
 	if !reflect.DeepEqual(got, want) {
-		t.Errorf("got %q, want %q", got, want)
+		t.Errorf("got  %q\nwant %q", got, want)
 	}
 }
 
@@ -371,6 +450,18 @@ Bistooltip_server_roster = {
 	if got := sb.String(); got != want {
 		t.Errorf("got:\n%s\nwant:\n%s", got, want)
 	}
+
+	// a class split up by another's specs still opens once
+	interleaved := testDataset()
+	interleaved.Subjects = append(interleaved.Subjects[:2:2],
+		BisSubject{ID: 4, Kind: BisSubjectSpec, ClassID: 6, SpecName: "Unholy", RaidIndex: -1}, interleaved.Subjects[2])
+	sb.Reset()
+	if err := WriteBisLua(&sb, interleaved); err != nil {
+		t.Fatal(err)
+	}
+	if n := strings.Count(sb.String(), `["Mage"] = {`); n != 1 {
+		t.Errorf("Mage opens %d times:\n%s", n, sb.String())
+	}
 }
 
 func TestWriteBisSQL(t *testing.T) {
@@ -393,10 +484,14 @@ func TestWriteBisSQL(t *testing.T) {
 	if !strings.HasSuffix(got, "COMMIT;\n") {
 		t.Error("doesn't end in COMMIT")
 	}
+
+	if err := WriteBisSQL(&sb, &BisDataset{Version: "abcd1234"}); err == nil {
+		t.Error("wrote a dataset with no blocks")
+	}
 }
 
 func TestSQLString(t *testing.T) {
-	if got, want := sqlString(`O'Brien \ x`), `'O''Brien \\ x'`; got != want {
+	if got, want := sqlString("O'Brien \\ x\n\r\x00"), `'O''Brien \\ x\n\r\0'`; got != want {
 		t.Errorf("got %s, want %s", got, want)
 	}
 }

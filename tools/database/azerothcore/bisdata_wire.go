@@ -40,8 +40,8 @@ type BisSlot struct {
 	Gems []int32
 	// server ItemModType ids, both 0 for none
 	ReforgeFrom, ReforgeTo int32
-	// rank 1's score over rank 2's, rounded, in the objective's reference-stat points (AP, SP or
-	// armor). Only set when there's a rank 2.
+	// rank 1's score over rank 2's, rounded, in J's units: reference-stat points (AP, SP or armor)
+	// for own metrics, raid DPS for the raid objective. Needs a rank 2.
 	Delta    int32
 	HasDelta bool
 }
@@ -94,10 +94,19 @@ func checkBisSlot(slot BisSlot) error {
 	if len(slot.Items) == 0 || len(slot.Items) > BisMaxRanks {
 		return fmt.Errorf("slot %d has %d items, want 1 to %d", slot.Slot, len(slot.Items), BisMaxRanks)
 	}
-	for _, id := range slot.Items {
+	for i, id := range slot.Items {
 		if id <= 0 {
 			return fmt.Errorf("slot %d has item id %d", slot.Slot, id)
 		}
+		if slices.Contains(slot.Items[:i], id) {
+			return fmt.Errorf("slot %d ranks item %d twice", slot.Slot, id)
+		}
+	}
+	if slot.HasDelta && len(slot.Items) < 2 {
+		return fmt.Errorf("slot %d has a delta but no rank 2", slot.Slot)
+	}
+	if !slot.HasDelta && slot.Delta != 0 {
+		return fmt.Errorf("slot %d has delta %d without HasDelta", slot.Slot, slot.Delta)
 	}
 	if slot.Enchant < 0 {
 		return fmt.Errorf("slot %d has enchant %d", slot.Slot, slot.Enchant)
@@ -172,10 +181,15 @@ func decodeBisSlot(text string) (BisSlot, error) {
 		if !strings.HasSuffix(rest, ")") {
 			return slot, errors.New("unclosed '('")
 		}
-		for _, enh := range strings.Split(rest[open+1:len(rest)-1], ",") {
+		enhs := rest[open+1 : len(rest)-1]
+		for _, enh := range strings.Split(enhs, ",") {
 			if err := slot.decodeEnhancement(enh); err != nil {
 				return slot, err
 			}
+		}
+		// the values are canonical already, so a mismatch can only be the order
+		if strings.Join(slot.enhancements(), ",") != enhs {
+			return slot, errors.New("enhancements out of order, want enchant, gems, reforge")
 		}
 		rest = rest[:open]
 	}

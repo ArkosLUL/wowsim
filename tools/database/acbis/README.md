@@ -13,7 +13,8 @@ This is the CLI. The logic lives in `tools/database/azerothcore/`:
 
 ## Inputs
 
-- `-batch`: the raid batch's `OptimizerBatchExport`. Each raider and phase keeps its latest stage.
+- `-batch`: the raid batch's `OptimizerBatchExport`. Each raider and phase keeps its latest stage
+  that didn't fail, warning about any later one that did.
 - `-results`: an index of `OptimizerResult` files, paths relative to the index. Each names a raider from
   the roster, or an addon class and spec (`Bistooltip_spec_icons` keys, e.g. `Fire FFB`):
 
@@ -44,7 +45,7 @@ MSYS_NO_PATHCONV=1 docker run --rm --network azerothcore-wotlk-pb_ac-network \
 ```
 
 It prints the dataset's version and provenance, one line per subject with its payload bytes and BLK
-frames, the first-sync time those frames cost at 10 frames per 100 ms tick, and a `!` line per warning.
+frames, how long sending them all takes at 10 frames per 100 ms tick, and a `!` line per warning.
 Skipped results (failed runs, unknown specs, raiders missing from the roster) are warnings; two results
 for one subject and phase, or a raider without a roster or guid, are errors.
 

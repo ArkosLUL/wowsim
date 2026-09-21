@@ -1,6 +1,7 @@
 package azerothcore
 
 import (
+	"cmp"
 	"fmt"
 	"io"
 	"slices"
@@ -19,9 +20,8 @@ import (
 //   - Bistooltip_server_roster: roster subjects by character guid, each with name, class, spec,
 //     raid_index and phases, where phases[phase key] is a list of slots like the above.
 //
-// Slots also get extra = {delta, reforge = {from, to}} when they have either. It's a table so the
-// addon's reverse lookup, which compares every non-string key's value with an item id, can't mistake
-// a delta for an item.
+// Slots also get extra = {delta, reforge = {from, to}} when they have either, which leaves the slot
+// itself with only the shipped lists' keys: slot_name, enhs and the ranked item ids.
 func WriteBisLua(w io.Writer, dataset *BisDataset) error {
 	subjects := map[int]BisSubject{}
 	for _, subject := range dataset.Subjects {
@@ -42,13 +42,14 @@ func WriteBisLua(w io.Writer, dataset *BisDataset) error {
 	}
 	sb.WriteString("}\n")
 
-	// spec subjects come sorted by class and spec, so each class and spec opens once
+	// sorted so each class opens once: a Lua table constructor keeps only the last of two equal keys
+	specs := slices.DeleteFunc(slices.Clone(dataset.Subjects), func(s BisSubject) bool { return s.Kind != BisSubjectSpec })
+	slices.SortStableFunc(specs, func(a, b BisSubject) int {
+		return cmp.Or(cmp.Compare(BisClassNames[a.ClassID], BisClassNames[b.ClassID]), cmp.Compare(a.SpecName, b.SpecName))
+	})
 	sb.WriteString("Bistooltip_server_bislists = {\n")
 	class, spec := "", ""
-	for _, subject := range dataset.Subjects {
-		if subject.Kind != BisSubjectSpec {
-			continue
-		}
+	for _, subject := range specs {
 		className := BisClassNames[subject.ClassID]
 		if className != class {
 			if class != "" {
