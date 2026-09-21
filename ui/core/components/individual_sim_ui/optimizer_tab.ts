@@ -11,6 +11,7 @@ import {
 	tankEncounter,
 	tankMetricWeights,
 } from '../../optimizer/pool_builder';
+import { Player } from '../../player';
 import { AsyncAPIResult, OptimizeGearRequest, ProgressMetrics } from '../../proto/api';
 import { EquipmentSpec, ItemSpec, Race, Spec, Stat } from '../../proto/common';
 import {
@@ -24,6 +25,7 @@ import {
 	StatMinimum,
 } from '../../proto/optimizer';
 import { SavedGearSet } from '../../proto/ui';
+import { Database } from '../../proto_utils/database';
 import { EquippedItem } from '../../proto_utils/equipped_item';
 import { Gear } from '../../proto_utils/gear';
 import { getClassStatName, raceNames, slotNames } from '../../proto_utils/names';
@@ -37,7 +39,7 @@ import { ItemRenderer } from '../gear_picker';
 import { SimTab } from '../sim_tab';
 import { GearTab } from './gear_tab';
 
-const PHASE_LABELS: Record<number, string> = {
+export const PHASE_LABELS: Record<number, string> = {
 	1: 'P1: Naxxramas, Eye of Eternity, Obsidian Sanctum',
 	2: 'P2: Ulduar',
 	3: 'P3: Trial of the Crusader',
@@ -45,14 +47,14 @@ const PHASE_LABELS: Record<number, string> = {
 	5: 'P5: Ruby Sanctum',
 };
 
-const EFFORTS: Array<{ effort: OptimizerEffort; label: string }> = [
+export const EFFORTS: Array<{ effort: OptimizerEffort; label: string }> = [
 	{ effort: OptimizerEffort.OptimizerEffortQuick, label: 'Quick (seconds)' },
 	{ effort: OptimizerEffort.OptimizerEffortNormal, label: 'Normal (1 to 2 minutes)' },
 	{ effort: OptimizerEffort.OptimizerEffortThorough, label: 'Thorough (5 to 10 minutes)' },
 ];
 
 // "Quick", "Normal" or "Thorough"
-function effortName(effort: OptimizerEffort): string {
+export function effortName(effort: OptimizerEffort): string {
 	return EFFORTS.find(e => e.effort == effort)?.label.split(' ')[0] || '';
 }
 
@@ -79,17 +81,17 @@ const METRIC_LABELS: Array<[keyof OptimizerMetrics, string]> = [
 	['pDeath', 'Death chance'],
 ];
 
-const RACIAL_MODES: Array<{ mode: OptimizerRacialMode; label: string }> = [
+export const RACIAL_MODES: Array<{ mode: OptimizerRacialMode; label: string }> = [
 	{ mode: OptimizerRacialMode.OptimizerRacialSearch, label: 'Search every race' },
 	{ mode: OptimizerRacialMode.OptimizerRacialKeepCurrent, label: 'Keep my traits' },
 ];
 
 // The web server's refusal while another run holds the optimizer (sim/web/main.go).
-const BUSY_PATTERN = /Another optimization is already running \(progress id ([^)]+)\)/;
+export const BUSY_PATTERN = /Another optimization is already running \(progress id ([^)]+)\)/;
 
 // Under wasm (static hosting, or the server's --wasm), sim_worker.js runs the sim in the browser.
 // Otherwise the server swaps in net_worker.js, which calls its async routes.
-async function simServerAvailable(): Promise<boolean> {
+export async function simServerAvailable(): Promise<boolean> {
 	try {
 		const response = await fetch(`/${REPO_NAME}/sim_worker.js`, { cache: 'no-cache' });
 		return response.ok && (await response.text()).includes('/asyncProgress');
@@ -98,15 +100,15 @@ async function simServerAvailable(): Promise<boolean> {
 	}
 }
 
-function formatNumber(value: number, digits = 1): string {
+export function formatNumber(value: number, digits = 1): string {
 	return value.toLocaleString(undefined, { minimumFractionDigits: digits, maximumFractionDigits: digits });
 }
 
-function formatDelta(delta: number, se: number, digits = 1): string {
+export function formatDelta(delta: number, se: number, digits = 1): string {
 	return `${delta >= 0 ? '+' : ''}${formatNumber(delta, digits)} ± ${formatNumber(se, digits)}`;
 }
 
-function newElement<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, text?: string): HTMLElementTagNameMap[K] {
+export function newElement<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, text?: string): HTMLElementTagNameMap[K] {
 	const elem = document.createElement(tag);
 	if (className) {
 		elem.className = className;
@@ -117,10 +119,238 @@ function newElement<K extends keyof HTMLElementTagNameMap>(tag: K, className?: s
 	return elem;
 }
 
-function button(label: string, className: string, onClick: () => void): HTMLButtonElement {
+export function button(label: string, className: string, onClick: () => void): HTMLButtonElement {
 	const elem = newElement('button', `btn ${className}`, label);
 	elem.addEventListener('click', onClick);
 	return elem;
+}
+
+// Cancels the run with that progress id on the web server, like the one a 409 names. False when it
+// had already finished; throws when the server can't be reached.
+export async function cancelOptimizerRun(progressId: string): Promise<boolean> {
+	const response = await fetch('/cancelAsync', {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/x-protobuf' },
+		body: AsyncAPIResult.toBinary(AsyncAPIResult.create({ progressId })),
+	});
+	return response.ok;
+}
+
+export function section(title: string, content: HTMLElement, hint?: string): HTMLElement {
+	const elem = newElement('div', 'optimizer-section');
+	elem.appendChild(newElement('h6', 'optimizer-section-title', title));
+	if (hint) {
+		elem.appendChild(newElement('div', 'optimizer-hint', hint));
+	}
+	elem.appendChild(content);
+	return elem;
+}
+
+export function tableRow(cell: 'td' | 'th', values: Array<string>): HTMLTableRowElement {
+	const tr = newElement('tr');
+	values.forEach(value => tr.appendChild(newElement(cell, undefined, value)));
+	return tr;
+}
+
+export interface LoadoutViewConfig {
+	// whose loadouts they are
+	player: Player<any>;
+	displayStats: Array<Stat>;
+	// a tank's 0% boss crit chance is the crit immunity answer, so its sheet shows that row even then
+	tank: boolean;
+	// how the text names the player: 'your' and 'you', or a raider's name
+	possessive: string;
+	object: string;
+	// goes after each item and runner-up, e.g. the tab's Exclude button
+	itemAction?: (id: number) => HTMLElement;
+}
+
+// Draws a result's loadouts for one player: gear with tooltips, the sheet with its caps, runners-up
+// per slot. The tab and the raid batch share it.
+export class LoadoutView {
+	constructor(private readonly config: LoadoutViewConfig) {}
+
+	private get player(): Player<any> {
+		return this.config.player;
+	}
+
+	private get db(): Database {
+		return this.config.player.sim.db;
+	}
+
+	itemName(id: number): string {
+		const item = this.db.lookupItemSpec(ItemSpec.create({ id }));
+		return item?.item.name || this.db.lookupGem(id)?.name || `Item ${id}`;
+	}
+
+	renderLoadout(title: string, loadout: OptimizerLoadoutResult, seed: OptimizerLoadoutResult | undefined): HTMLElement {
+		const body = newElement('div', 'optimizer-loadout');
+
+		const summary: Array<string> = [];
+		if (loadout.score) {
+			summary.push(`Score ${formatNumber(loadout.score, 2)}`);
+		}
+		if (loadout.scoreDelta || loadout.scoreDeltaSe) {
+			summary.push(`Δ ${formatDelta(loadout.scoreDelta, loadout.scoreDeltaSe, 2)} over ${this.config.possessive} gear`);
+		}
+		if (loadout.raidDpsDelta || loadout.raidDpsDeltaSe) {
+			summary.push(`raid DPS ${formatDelta(loadout.raidDpsDelta, loadout.raidDpsDeltaSe)}`);
+		}
+		if (loadout.racialTraits) {
+			const changed = seed && seed.racialTraits != loadout.racialTraits ? ', changed' : '';
+			summary.push(`${raceNames.get(loadout.racialTraits)} racial traits${changed}`);
+		}
+		if (summary.length > 0) {
+			body.appendChild(newElement('div', 'optimizer-summary', summary.join(', ')));
+		}
+		const metrics = this.metricsText(loadout.metrics, seed?.metrics);
+		if (metrics) {
+			body.appendChild(newElement('div', 'optimizer-metrics', metrics));
+		}
+		loadout.warnings.forEach(w => body.appendChild(newElement('div', 'optimizer-warning', w)));
+		if (loadout.unmodeledEffectItemIds.length > 0) {
+			body.appendChild(
+				newElement(
+					'div',
+					'optimizer-warning',
+					`The sim doesn't model the effects of: ${loadout.unmodeledEffectItemIds.map(id => this.itemName(id)).join(', ')}.`,
+				),
+			);
+		}
+
+		const gear = newElement('div', 'optimizer-gear');
+		const seedItems = seed?.equipment?.items || [];
+		const loadoutGear = this.db.lookupEquipmentSpec(loadout.equipment || EquipmentSpec.create());
+		(loadout.equipment?.items || []).forEach((spec, slot) => {
+			const equipped = spec.id ? this.db.lookupItemSpec(spec) : null;
+			if (!equipped) {
+				return;
+			}
+			const changed = seed != undefined && !ItemSpec.equals(spec, seedItems[slot] || ItemSpec.create());
+			const row = newElement('div', `optimizer-gear-row${changed ? ' optimizer-changed' : ''}`);
+			row.appendChild(newElement('span', 'optimizer-slot', slotNames.get(slot) || ''));
+			new ItemRenderer(row, newElement('div'), this.player).update(equipped, loadoutGear);
+			if (this.config.itemAction) {
+				row.appendChild(this.config.itemAction(spec.id));
+			}
+			gear.appendChild(row);
+		});
+		body.appendChild(gear);
+
+		const sheet = this.renderSheet(loadout);
+		if (sheet) {
+			body.appendChild(sheet);
+		}
+		return section(title, body);
+	}
+
+	private metricsText(metrics: OptimizerMetrics | undefined, seed: OptimizerMetrics | undefined): string {
+		if (!metrics) {
+			return '';
+		}
+		return METRIC_LABELS.filter(([key]) => metrics[key])
+			.map(([key, label]) => {
+				const value = key == 'pDeath' ? `${formatNumber(metrics[key] * 100)}%` : formatNumber(metrics[key]);
+				return seed?.[key] ? `${label} ${value} (was ${key == 'pDeath' ? `${formatNumber(seed[key] * 100)}%` : formatNumber(seed[key])})` : `${label} ${value}`;
+			})
+			.join(', ');
+	}
+
+	private renderSheet(loadout: OptimizerLoadoutResult): HTMLElement | null {
+		const finalStats = loadout.finalStats ? Stats.fromProto(loadout.finalStats) : null;
+		const showCrit = loadout.meleeCritTakenChance > 0 || this.config.tank;
+		if (!finalStats && loadout.caps.length == 0 && !showCrit) {
+			return null;
+		}
+		const playerClass = this.player.getClass();
+		const table = newElement('table', 'table table-sm optimizer-table');
+		const capped = new Set(loadout.caps.map(cap => cap.stat));
+		if (finalStats) {
+			for (const stat of this.config.displayStats.filter(s => !capped.has(s))) {
+				table.appendChild(tableRow('td', [getClassStatName(stat, playerClass), formatNumber(finalStats.getStat(stat), 0), '']));
+			}
+		}
+		for (const cap of loadout.caps) {
+			table.appendChild(tableRow('td', [getClassStatName(cap.stat, playerClass), formatNumber(cap.value, 0), `cap ${formatNumber(cap.cap, 0)}`]));
+		}
+		if (showCrit) {
+			table.appendChild(
+				tableRow('td', [`Boss melee crit chance on ${this.config.object}`, `${formatNumber(loadout.meleeCritTakenChance * 100, 2)}%`, '']),
+			);
+		}
+		return section('Character sheet', table);
+	}
+
+	renderAlternatives(alternatives: Array<OptimizerSlotAlternative>, best: OptimizerLoadoutResult | undefined, improved: boolean): HTMLElement {
+		const table = newElement('table', 'table table-sm optimizer-table');
+		const raid = alternatives.some(a => a.raidDpsDelta || a.raidDpsDeltaSe);
+		const action = this.config.itemAction;
+		table.appendChild(
+			tableRow('th', [
+				'Slot',
+				'Instead',
+				improved ? 'Score vs best' : `Score vs ${this.config.possessive} gear`,
+				...(raid ? ['Raid DPS'] : []),
+				...(action ? [''] : []),
+			]),
+		);
+		const bestGear = best?.equipment ? this.db.lookupEquipmentSpec(best.equipment) : null;
+		for (const alt of alternatives) {
+			const tr = newElement('tr');
+			tr.appendChild(newElement('td', undefined, slotNames.get(alt.slot) || ''));
+
+			const itemCell = newElement('td');
+			const equipped = alt.item ? this.db.lookupItemSpec(alt.item) : null;
+			if (equipped) {
+				// the set this runner-up would make, so its tooltip counts the right set pieces
+				const gear = bestGear?.withEquippedItem(alt.slot, equipped, this.player.canDualWield2H());
+				itemCell.appendChild(this.itemLink(equipped, gear));
+			} else if (alt.item) {
+				itemCell.textContent = this.itemName(alt.item.id);
+			}
+			tr.appendChild(itemCell);
+
+			tr.appendChild(newElement('td', undefined, formatDelta(alt.scoreDelta, alt.scoreDeltaSe, 2)));
+			if (raid) {
+				tr.appendChild(newElement('td', undefined, formatDelta(alt.raidDpsDelta, alt.raidDpsDeltaSe)));
+			}
+			if (action) {
+				const cell = newElement('td');
+				if (alt.item?.id) {
+					cell.appendChild(action(alt.item.id));
+				}
+				tr.appendChild(cell);
+			}
+			table.appendChild(tr);
+		}
+		return section(
+			'Runners-up per slot',
+			table,
+			improved ? 'Each swaps one slot of the best set.' : `Each swaps one slot of ${this.config.possessive} starting gear.`,
+		);
+	}
+
+	// The icon and hover tooltip the gear tab gives an item, sized for a table row.
+	private itemLink(equipped: EquippedItem, gear: Gear | undefined): HTMLElement {
+		const wrapper = newElement('span', 'optimizer-item');
+		const icon = newElement('a', 'optimizer-item-icon');
+		const name = newElement('a', 'optimizer-item-name', equipped.item.name);
+		setItemQualityCssClass(name, equipped.item.quality);
+		if (equipped.item.heroic) {
+			name.appendChild(newElement('span', 'heroic-label', '[H]'));
+		}
+		this.player.setWowheadData(equipped, icon, gear);
+		this.player.setWowheadData(equipped, name, gear);
+		equipped
+			.asActionId()
+			.fill()
+			.then(filled => {
+				filled.setBackgroundAndHref(icon);
+				filled.setWowheadHref(name);
+			});
+		wrapper.append(icon, name);
+		return wrapper;
+	}
 }
 
 // The BiS optimizer for the individual sim's player. It builds the candidate pool here, runs the
@@ -148,12 +378,21 @@ export class OptimizerTab extends SimTab {
 	// Equip and Save for each loadout on screen, hidden while it's what the player has on. An improved
 	// pick keeps Save, so it can still be saved as the phase's BiS after Equip.
 	private loadoutActions: Array<{ loadout: OptimizerLoadoutResult; offers: Array<HTMLElement>; worn: HTMLElement }> = [];
+	private readonly view: LoadoutView;
 
 	constructor(parentElem: HTMLElement, simUI: IndividualSimUI<Spec>, gearTab: GearTab) {
 		super(parentElem, simUI, { identifier: 'optimizer-tab', title: 'BiS Optimizer' });
 		this.simUI = simUI;
 		this.gearTab = gearTab;
 		this.settings = defaultTabSettings(MAX_CONTENT_PHASE);
+		this.view = new LoadoutView({
+			player: simUI.player,
+			displayStats: simUI.individualConfig.displayStats,
+			tank: this.isTank(),
+			possessive: 'your',
+			object: 'you',
+			itemAction: id => this.excludeButton(id),
+		});
 
 		this.leftPanel = newElement('div', 'optimizer-tab-left tab-panel-left');
 		this.rightPanel = newElement('div', 'optimizer-tab-right tab-panel-right');
@@ -510,8 +749,7 @@ export class OptimizerTab extends SimTab {
 	}
 
 	private itemName(id: number): string {
-		const item = this.simUI.sim.db.lookupItemSpec(ItemSpec.create({ id }));
-		return item?.item.name || this.simUI.sim.db.lookupGem(id)?.name || `Item ${id}`;
+		return this.view.itemName(id);
 	}
 
 	private async buildRequest(): Promise<BuiltRequest> {
@@ -589,12 +827,7 @@ export class OptimizerTab extends SimTab {
 		const cancelOther = button('Cancel that run', 'btn-secondary btn-sm', async () => {
 			cancelOther.disabled = true;
 			try {
-				const response = await fetch('/cancelAsync', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/x-protobuf' },
-					body: AsyncAPIResult.toBinary(AsyncAPIResult.create({ progressId })),
-				});
-				cancelOther.textContent = response.ok ? 'Cancel sent' : 'It already finished';
+				cancelOther.textContent = (await cancelOptimizerRun(progressId)) ? 'Cancel sent' : 'It already finished';
 			} catch (err) {
 				cancelOther.textContent = `Cancel failed: ${err}`;
 			}
@@ -690,11 +923,11 @@ export class OptimizerTab extends SimTab {
 
 		if (result.best) {
 			this.resultsBody.appendChild(this.renderActions(result, phase));
-			this.resultsBody.appendChild(this.renderLoadout(result.improved ? 'Best' : 'Your starting gear', result.best, result.seed));
+			this.resultsBody.appendChild(this.view.renderLoadout(result.improved ? 'Best' : 'Your starting gear', result.best, result.seed));
 		}
 		// kept when nothing won: each then swaps one slot of the starting gear
 		if (result.alternatives.length > 0) {
-			this.resultsBody.appendChild(this.renderAlternatives(result.alternatives, result.best, result.improved));
+			this.resultsBody.appendChild(this.view.renderAlternatives(result.alternatives, result.best, result.improved));
 		}
 		if (result.top.length > 0) {
 			this.resultsBody.appendChild(this.renderTop(result.top, result.best, result.improved));
@@ -702,19 +935,19 @@ export class OptimizerTab extends SimTab {
 		this.updateLoadoutActions();
 		if (result.racialScreen.length > 0) {
 			const table = newElement('table', 'table table-sm optimizer-table');
-			table.appendChild(this.row('th', ['Racial traits', 'Score', 'Finalist']));
+			table.appendChild(tableRow('th', ['Racial traits', 'Score', 'Finalist']));
 			for (const screen of result.racialScreen) {
 				table.appendChild(
-					this.row('td', [raceNames.get(screen.racialTraits) || '', `${formatNumber(screen.score)} ± ${formatNumber(screen.scoreSe)}`, screen.finalist ? 'yes' : '']),
+					tableRow('td', [raceNames.get(screen.racialTraits) || '', `${formatNumber(screen.score)} ± ${formatNumber(screen.scoreSe)}`, screen.finalist ? 'yes' : '']),
 				);
 			}
-			this.resultsBody.appendChild(this.section('Racial screen', table));
+			this.resultsBody.appendChild(section('Racial screen', table));
 		}
 		if (built.seedChanges.length > 0) {
 			const list = newElement('ul', 'optimizer-list');
 			built.seedChanges.forEach(change => list.appendChild(newElement('li', undefined, change)));
 			this.resultsBody.appendChild(
-				this.section('Starting gear, trimmed to the pool', list, 'The search started from your gear without these: the phase or your settings rule them out.'),
+				section('Starting gear, trimmed to the pool', list, 'The search started from your gear without these: the phase or your settings rule them out.'),
 			);
 		}
 	}
@@ -789,159 +1022,6 @@ export class OptimizerTab extends SimTab {
 		);
 	}
 
-	private renderLoadout(title: string, loadout: OptimizerLoadoutResult, seed: OptimizerLoadoutResult | undefined): HTMLElement {
-		const body = newElement('div', 'optimizer-loadout');
-
-		const summary: Array<string> = [];
-		if (loadout.score) {
-			summary.push(`Score ${formatNumber(loadout.score, 2)}`);
-		}
-		if (loadout.scoreDelta || loadout.scoreDeltaSe) {
-			summary.push(`Δ ${formatDelta(loadout.scoreDelta, loadout.scoreDeltaSe, 2)} over your gear`);
-		}
-		if (loadout.raidDpsDelta || loadout.raidDpsDeltaSe) {
-			summary.push(`raid DPS ${formatDelta(loadout.raidDpsDelta, loadout.raidDpsDeltaSe)}`);
-		}
-		if (loadout.racialTraits) {
-			const changed = seed && seed.racialTraits != loadout.racialTraits ? ', changed' : '';
-			summary.push(`${raceNames.get(loadout.racialTraits)} racial traits${changed}`);
-		}
-		if (summary.length > 0) {
-			body.appendChild(newElement('div', 'optimizer-summary', summary.join(', ')));
-		}
-		const metrics = this.metricsText(loadout.metrics, seed?.metrics);
-		if (metrics) {
-			body.appendChild(newElement('div', 'optimizer-metrics', metrics));
-		}
-		loadout.warnings.forEach(w => body.appendChild(newElement('div', 'optimizer-warning', w)));
-		if (loadout.unmodeledEffectItemIds.length > 0) {
-			body.appendChild(
-				newElement(
-					'div',
-					'optimizer-warning',
-					`The sim doesn't model the effects of: ${loadout.unmodeledEffectItemIds.map(id => this.itemName(id)).join(', ')}.`,
-				),
-			);
-		}
-
-		const gear = newElement('div', 'optimizer-gear');
-		const seedItems = seed?.equipment?.items || [];
-		const loadoutGear = this.simUI.sim.db.lookupEquipmentSpec(loadout.equipment || EquipmentSpec.create());
-		(loadout.equipment?.items || []).forEach((spec, slot) => {
-			const equipped = spec.id ? this.simUI.sim.db.lookupItemSpec(spec) : null;
-			if (!equipped) {
-				return;
-			}
-			const changed = seed != undefined && !ItemSpec.equals(spec, seedItems[slot] || ItemSpec.create());
-			const row = newElement('div', `optimizer-gear-row${changed ? ' optimizer-changed' : ''}`);
-			row.appendChild(newElement('span', 'optimizer-slot', slotNames.get(slot) || ''));
-			new ItemRenderer(row, newElement('div'), this.simUI.player).update(equipped, loadoutGear);
-			row.appendChild(this.excludeButton(spec.id));
-			gear.appendChild(row);
-		});
-		body.appendChild(gear);
-
-		const sheet = this.renderSheet(loadout);
-		if (sheet) {
-			body.appendChild(sheet);
-		}
-		return this.section(title, body);
-	}
-
-	private metricsText(metrics: OptimizerMetrics | undefined, seed: OptimizerMetrics | undefined): string {
-		if (!metrics) {
-			return '';
-		}
-		return METRIC_LABELS.filter(([key]) => metrics[key])
-			.map(([key, label]) => {
-				const value = key == 'pDeath' ? `${formatNumber(metrics[key] * 100)}%` : formatNumber(metrics[key]);
-				return seed?.[key] ? `${label} ${value} (was ${key == 'pDeath' ? `${formatNumber(seed[key] * 100)}%` : formatNumber(seed[key])})` : `${label} ${value}`;
-			})
-			.join(', ');
-	}
-
-	private renderSheet(loadout: OptimizerLoadoutResult): HTMLElement | null {
-		const finalStats = loadout.finalStats ? Stats.fromProto(loadout.finalStats) : null;
-		// a tank's 0% is the crit-immunity answer, so it gets the row too
-		const showCrit = loadout.meleeCritTakenChance > 0 || this.isTank();
-		if (!finalStats && loadout.caps.length == 0 && !showCrit) {
-			return null;
-		}
-		const playerClass = this.simUI.player.getClass();
-		const table = newElement('table', 'table table-sm optimizer-table');
-		const capped = new Set(loadout.caps.map(cap => cap.stat));
-		if (finalStats) {
-			for (const stat of this.simUI.individualConfig.displayStats.filter(s => !capped.has(s))) {
-				table.appendChild(this.row('td', [getClassStatName(stat, playerClass), formatNumber(finalStats.getStat(stat), 0), '']));
-			}
-		}
-		for (const cap of loadout.caps) {
-			table.appendChild(
-				this.row('td', [getClassStatName(cap.stat, playerClass), formatNumber(cap.value, 0), `cap ${formatNumber(cap.cap, 0)}`]),
-			);
-		}
-		if (showCrit) {
-			table.appendChild(this.row('td', ['Boss melee crit chance on you', `${formatNumber(loadout.meleeCritTakenChance * 100, 2)}%`, '']));
-		}
-		return this.section('Character sheet', table);
-	}
-
-	private renderAlternatives(alternatives: Array<OptimizerSlotAlternative>, best: OptimizerLoadoutResult | undefined, improved: boolean): HTMLElement {
-		const table = newElement('table', 'table table-sm optimizer-table');
-		const raid = alternatives.some(a => a.raidDpsDelta || a.raidDpsDeltaSe);
-		table.appendChild(this.row('th', ['Slot', 'Instead', improved ? 'Score vs best' : 'Score vs your gear', ...(raid ? ['Raid DPS'] : []), '']));
-		const bestGear = best?.equipment ? this.simUI.sim.db.lookupEquipmentSpec(best.equipment) : null;
-		for (const alt of alternatives) {
-			const tr = newElement('tr');
-			tr.appendChild(newElement('td', undefined, slotNames.get(alt.slot) || ''));
-
-			const itemCell = newElement('td');
-			const equipped = alt.item ? this.simUI.sim.db.lookupItemSpec(alt.item) : null;
-			if (equipped) {
-				// the set this runner-up would make, so its tooltip counts the right set pieces
-				const gear = bestGear?.withEquippedItem(alt.slot, equipped, this.simUI.player.canDualWield2H());
-				itemCell.appendChild(this.itemLink(equipped, gear));
-			} else if (alt.item) {
-				itemCell.textContent = this.itemName(alt.item.id);
-			}
-			tr.appendChild(itemCell);
-
-			tr.appendChild(newElement('td', undefined, formatDelta(alt.scoreDelta, alt.scoreDeltaSe, 2)));
-			if (raid) {
-				tr.appendChild(newElement('td', undefined, formatDelta(alt.raidDpsDelta, alt.raidDpsDeltaSe)));
-			}
-			const cell = newElement('td');
-			if (alt.item?.id) {
-				cell.appendChild(this.excludeButton(alt.item.id));
-			}
-			tr.appendChild(cell);
-			table.appendChild(tr);
-		}
-		return this.section('Runners-up per slot', table, improved ? 'Each swaps one slot of the best set.' : 'Each swaps one slot of your starting gear.');
-	}
-
-	// The icon and hover tooltip the gear tab gives an item, sized for a table row.
-	private itemLink(equipped: EquippedItem, gear: Gear | undefined): HTMLElement {
-		const wrapper = newElement('span', 'optimizer-item');
-		const icon = newElement('a', 'optimizer-item-icon');
-		const name = newElement('a', 'optimizer-item-name', equipped.item.name);
-		setItemQualityCssClass(name, equipped.item.quality);
-		if (equipped.item.heroic) {
-			name.appendChild(newElement('span', 'heroic-label', '[H]'));
-		}
-		this.simUI.player.setWowheadData(equipped, icon, gear);
-		this.simUI.player.setWowheadData(equipped, name, gear);
-		equipped
-			.asActionId()
-			.fill()
-			.then(filled => {
-				filled.setBackgroundAndHref(icon);
-				filled.setWowheadHref(name);
-			});
-		wrapper.append(icon, name);
-		return wrapper;
-	}
-
 	private renderTop(top: Array<OptimizerLoadoutResult>, best: OptimizerLoadoutResult | undefined, improved: boolean): HTMLElement {
 		const list = newElement('ol', 'optimizer-list');
 		const bestItems = best?.equipment?.items || [];
@@ -961,7 +1041,7 @@ export class OptimizerTab extends SimTab {
 			li.append(equip, worn);
 			list.appendChild(li);
 		}
-		return this.section('Top sets', list, improved ? undefined : 'None of these beat your starting gear by more than the noise.');
+		return section('Top sets', list, improved ? undefined : 'None of these beat your starting gear by more than the noise.');
 	}
 
 	private excludeButton(id: number): HTMLButtonElement {
@@ -973,21 +1053,5 @@ export class OptimizerTab extends SimTab {
 		});
 		excludeButton.title = 'Never pick this item in later runs';
 		return excludeButton;
-	}
-
-	private section(title: string, content: HTMLElement, hint?: string): HTMLElement {
-		const section = newElement('div', 'optimizer-section');
-		section.appendChild(newElement('h6', 'optimizer-section-title', title));
-		if (hint) {
-			section.appendChild(newElement('div', 'optimizer-hint', hint));
-		}
-		section.appendChild(content);
-		return section;
-	}
-
-	private row(cell: 'td' | 'th', values: Array<string>): HTMLTableRowElement {
-		const tr = newElement('tr');
-		values.forEach(value => tr.appendChild(newElement(cell, undefined, value)));
-		return tr;
 	}
 }

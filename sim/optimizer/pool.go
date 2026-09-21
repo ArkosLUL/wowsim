@@ -13,8 +13,8 @@ import (
 
 // Pool is a request's candidate pool compiled for the search: what each slot can hold, with its
 // stats, sockets, enchants and reforges, the gems, and the equip rules that tie slots together
-// (Check in rules.go, Gem in gems.go). CompilePool builds it; it's read-only after that, so
-// goroutines can share one.
+// (Check in rules.go, Gem in gems.go). CompilePool builds it; it's read-only after that, apart from
+// its locked sheet memo, so goroutines can share one.
 //
 // A loadout the search builds from Slots and Gems still has to pass Check: the per-slot lists
 // don't know about the other slots (weapon combos, unique items, limit groups, meta colors).
@@ -39,6 +39,7 @@ type Pool struct {
 	base        *proto.RaidSimRequest
 	targetIndex int
 	reforging   *core.Reforging
+	sheets      sheetMemo
 }
 
 // Candidate is one item one slot can hold.

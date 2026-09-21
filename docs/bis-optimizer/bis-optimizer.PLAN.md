@@ -473,6 +473,33 @@ The slow suite's line prints J's ± from the DPS mean only, while J's normalizer
 run, carries about 1.2% noise for Fury. Print the preset's DPS and the normalizer with its SE, so a
 normalizer wobble doesn't read as a regression (wave F2's Fury `J_preset` -1.7%).
 
+**Findings:**
+- The memo buys next to nothing. A derived-context sheet builds in about 0.25 ms, so a Quick tank run spends
+  0.02 to 0.03 s on its 74 to 176 builds, racial search included; the wall time is sims. On the tank slow
+  cases, four back-to-back HEAD vs memo rounds landed up to 15% apart either way (Normal: Prot Paladin P3
+  80 to 96 s, Feral P2 87 to 102 s), with identical results.
+- `completed_steps` counts the stage underway: "step 1 of 8" at Setup, 8 of 8 during Alternatives.
+- The slow line adds `dps_preset=` and, per weighted metric, `norm_<metric>=mean±se/<reference stat>`.
+- A raider in later-phase gear gets a heavily trimmed seed, so a cell's Δ is over that seed: Angry's P1
+  +35k starts from 624 DPS. The grid's hint says so.
+- Results drop `top`, most of a result's size, so a roster's batch fits in localStorage. Exports carry
+  best, seed, alternatives and the racial screen.
+- The fingerprint hashes raid index, name, spec, race, talents, glyphs and professions. Gear and racial
+  traits stay out, so Apply keeps the batch.
+- Save writes the spec's `__savedGear__` entry directly. An individual sim of that spec open in another
+  tab keeps its own list and overwrites the entry on its next save.
+- Validate sims the raid's own encounter, so tanks don't fight their phase boss there, on a second
+  `WorkerPool` (`Sim`'s is private), both runs on one seed.
+- A reload mid-run resumes. The orphaned server run answers 409 until it ends, then the retry goes through.
+- The tab adds the `optimizer-tab` class to reuse the tab's styles; no new scss.
+- For BIS-raid-contrib: cells and the detail show `raid_dps_delta` once a result sets it. Jobs export as
+  stage 1; stage 2 needs jobs of its own.
+- Every warrior run drops item 32336 (Black Bow of the Betrayer) with a warning: its sim panics
+  (`*dps.DpsWarrior is not hunter.HunterAgent`).
+- Quick tank runs can list runners-up well above the pick: Bulwark P1's Trinket 1 has Darkmoon Card:
+  Greatness at +663 ± 16. The neighborhood only adopts one after a full-iteration round that isn't its
+  last (`neighborhood.go`); worth a look in BIS-e2e-perf.
+
 ### BIS-picker-switch (wave F2, done)
 
 `gear_picker.tsx` (its phase filter) and the gem EP filters (the `isUnrestrictedGem` callers in `player.ts`)

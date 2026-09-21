@@ -23,9 +23,11 @@ import (
 //	tools/acore/dock.sh exec go test --tags=with_db,optimizer_slow -count=1 -timeout 90m -run TestOptimizerSlow -v ./sim/optimizer/
 //
 // -decisions also logs what each stage decides. Each case logs one line to compare from run to run,
-// J in reference-stat points and the deltas paired over slowCheckIterations:
+// J in reference-stat points and the deltas paired over slowCheckIterations. J's normalizers are
+// measured fresh each run, so the line prints the preset's DPS and each normalizer with its SE too:
+// a J_preset that moves with its normalizer while dps_preset holds is noise, not a regression.
 //
-//	slow: spec=… phase=… effort=… candidates=… J_preset=… J_opt=… delta=…±… dps_delta=…±… improved=… sims=… wall=…s
+//	slow: spec=… phase=… effort=… candidates=… J_preset=… J_opt=… delta=…±… dps_preset=… dps_delta=…±… norm_dps=…±…/AP improved=… sims=… wall=…s
 
 // slowCheckIterations is how long the independent check sims each loadout.
 const slowCheckIterations = 10000
@@ -288,8 +290,9 @@ func TestOptimizerSlow(t *testing.T) {
 				jPreset, jOpt := obj.Score(evals[0]), obj.Score(evals[1])
 				d := obj.Delta(evals[0], evals[1])
 				dps := Delta(evals[0], evals[1], MetricDPS)
-				t.Logf("slow: spec=%s phase=%d effort=%s candidates=%d J_preset=%.1f J_opt=%.1f delta=%+.1f±%.1f dps_delta=%+.1f±%.1f improved=%v sims=%d wall=%.1fs",
-					c.spec, c.phase, name, poolSize, jPreset.Mean, jOpt.Mean, d.Mean, d.SE, dps.Mean, dps.SE, result.Improved, result.TotalSims, wall.Seconds())
+				t.Logf("slow: spec=%s phase=%d effort=%s candidates=%d J_preset=%.1f J_opt=%.1f delta=%+.1f±%.1f dps_preset=%.1f dps_delta=%+.1f±%.1f %s improved=%v sims=%d wall=%.1fs",
+					c.spec, c.phase, name, poolSize, jPreset.Mean, jOpt.Mean, d.Mean, d.SE, evals[0].Metrics[MetricDPS].Mean, dps.Mean, dps.SE,
+					normalizerFields(obj), result.Improved, result.TotalSims, wall.Seconds())
 				if d.Mean < -2*d.SE {
 					t.Errorf("the pick scores %.1f ± %.1f under the preset", -d.Mean, d.SE)
 				}
@@ -310,4 +313,31 @@ func TestOptimizerSlow(t *testing.T) {
 			})
 		}
 	}
+}
+
+// normalizerFields is each weighted metric's normalizer, per point of its reference stat, e.g.
+// "norm_dps=…±…/AP".
+func normalizerFields(obj *Objective) string {
+	var fields []string
+	for m, w := range obj.Weights {
+		if w == 0 {
+			continue
+		}
+		n := obj.Normalizers[m]
+		name := strings.ReplaceAll(strings.ToLower(metricName(Metric(m))), " ", "_")
+		fields = append(fields, fmt.Sprintf("norm_%s=%.4g±%.2g/%s", name, n.Mean, n.SE, statAbbrev(obj.ReferenceStats[m])))
+	}
+	return strings.Join(fields, " ")
+}
+
+func statAbbrev(s stats.Stat) string {
+	switch s {
+	case stats.AttackPower:
+		return "AP"
+	case stats.RangedAttackPower:
+		return "RAP"
+	case stats.SpellPower:
+		return "SP"
+	}
+	return s.StatName()
 }

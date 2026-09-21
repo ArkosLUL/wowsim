@@ -11,7 +11,6 @@ import (
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
 	"github.com/wowsims/wotlk/sim/core/stats"
-	goproto "google.golang.org/protobuf/proto"
 )
 
 // surrogate predicts J(l) - J(seed) without a sim: the response curves over l's gear stats, plus the
@@ -861,7 +860,7 @@ func (s *surrogate) setFloors(floors []*proto.StatMinimum, gearStats []stats.Sta
 	if len(floors) == 0 {
 		return nil
 	}
-	seedSheet, err := s.sheet(s.seed, stats.Stats{})
+	seedSheet, err := s.pool.finalStats(s.seed)
 	if err != nil {
 		return err
 	}
@@ -870,12 +869,12 @@ func (s *surrogate) setFloors(floors []*proto.StatMinimum, gearStats []stats.Sta
 	for _, st := range gearStats {
 		var off stats.Stats
 		off[st] = step
-		sheet, err := s.sheet(s.seed, off)
+		sheet, err := playerSheet(s.pool.base, s.pool.targetIndex, s.seed, off)
 		if err != nil {
 			return err
 		}
 		for i, f := range floors {
-			gradients[i][st] = (sheet[f.Stat] - seedSheet[f.Stat]) / step
+			gradients[i][st] = (sheet.FinalStats[f.Stat] - seedSheet[f.Stat]) / step
 		}
 	}
 	maxSlope := 0.0
@@ -887,36 +886,6 @@ func (s *surrogate) setFloors(floors []*proto.StatMinimum, gearStats []stats.Sta
 		s.floors = append(s.floors, floorTerm{stat: stats.Stat(f.Stat), min: f.MinValue, seed: seedSheet[f.Stat], gradient: gradients[i]})
 	}
 	return nil
-}
-
-// sheet is the target's character sheet in l with offset added to its bonus stats, like Pool's
-// finalStats.
-func (s *surrogate) sheet(l Loadout, offset stats.Stats) (sheet stats.Stats, err error) {
-	p := s.pool
-	defer func() {
-		if e := recover(); e != nil {
-			err = fmt.Errorf("computing the target's stats: %v", e)
-		}
-	}()
-	rsr := goproto.Clone(p.base).(*proto.RaidSimRequest)
-	player := rsr.Raid.Parties[p.targetIndex/5].Players[p.targetIndex%5]
-	player.Equipment = l.Equipment()
-	player.RacialTraits = l.RacialTraits
-	if offset != (stats.Stats{}) {
-		if player.BonusStats == nil {
-			player.BonusStats = &proto.UnitStats{}
-		}
-		player.BonusStats.Stats = stats.FromFloatArray(player.BonusStats.Stats).Add(offset).ToFloatArray()
-	}
-	result := core.ComputeStats(&proto.ComputeStatsRequest{Raid: rsr.Raid, Encounter: rsr.Encounter})
-	if result.ErrorResult != "" {
-		return sheet, fmt.Errorf("computing the target's stats: %s", result.ErrorResult)
-	}
-	parties := result.GetRaidStats().GetParties()
-	if p.targetIndex/5 >= len(parties) || p.targetIndex%5 >= len(parties[p.targetIndex/5].GetPlayers()) {
-		return sheet, fmt.Errorf("computing the target's stats: no stats for raid index %d", p.targetIndex)
-	}
-	return stats.FromFloatArray(parties[p.targetIndex/5].GetPlayers()[p.targetIndex%5].GetFinalStats().GetStats()), nil
 }
 
 // weaponDPS is a weapon's average damage per second; 0 for anything else.

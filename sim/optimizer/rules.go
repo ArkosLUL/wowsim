@@ -8,7 +8,6 @@ import (
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
 	"github.com/wowsims/wotlk/sim/core/stats"
-	goproto "google.golang.org/protobuf/proto"
 )
 
 // Rule is an equip rule Check enforces. They follow the worldserver (Player::CanEquipItem,
@@ -403,28 +402,4 @@ func (p *Pool) checkFloors(l Loadout) error {
 		}
 	}
 	return nil
-}
-
-// finalStats is the target's character sheet in l: final stats with buffs, as core.ComputeStats
-// reports them to the UI.
-func (p *Pool) finalStats(l Loadout) (sheet stats.Stats, err error) {
-	defer func() {
-		if e := recover(); e != nil {
-			err = fmt.Errorf("computing the target's stats: %v", e)
-		}
-	}()
-	rsr := goproto.Clone(p.base).(*proto.RaidSimRequest)
-	player := rsr.Raid.Parties[p.targetIndex/5].Players[p.targetIndex%5]
-	player.Equipment = l.Equipment()
-	player.RacialTraits = l.RacialTraits
-	result := core.ComputeStats(&proto.ComputeStatsRequest{Raid: rsr.Raid, Encounter: rsr.Encounter})
-	if result.ErrorResult != "" {
-		return sheet, fmt.Errorf("computing the target's stats: %s", result.ErrorResult)
-	}
-	parties := result.GetRaidStats().GetParties()
-	if p.targetIndex/5 >= len(parties) {
-		return sheet, fmt.Errorf("computing the target's stats: no stats for party %d", p.targetIndex/5)
-	}
-	target := parties[p.targetIndex/5].GetPlayers()[p.targetIndex%5]
-	return stats.FromFloatArray(target.GetFinalStats().GetStats()), nil
 }
