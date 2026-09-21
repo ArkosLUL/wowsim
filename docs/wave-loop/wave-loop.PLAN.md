@@ -175,7 +175,7 @@ crashed before F2, so its column starts there.
 | BIS-batch-ui | merged | `4887ef580` | |
 | PAR-PERF-2 | merged | `956ba4988` | goldens unchanged |
 | wave G cross-review | | `a2b24100d`, `3ac9069fc` | split in two (parity; optimizer and UI); one batch bug (Apply and Save on a roster changed mid-run); the old DK ids now alias in the APL lookup; tooling moved out of scratch in `73e159351` |
-| PAR-P7-0d | running | | in four stages: cast and crit, pets, swings, then the leftovers and the full run |
+| PAR-P7-0d | merged | `18b64143b` | 26 goldens promoted in `85c870717`; four stages and a review, 1.86M tokens across the five agents |
 
 Later WIs are added as their wave starts.
 
