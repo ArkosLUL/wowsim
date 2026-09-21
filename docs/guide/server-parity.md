@@ -77,8 +77,8 @@ class by simval.
   - A DoT refresh resets the tick timer only when StackAmount < 2.
   - Periodic ticks crit only with aura 286.
 - **Pets:** pet hit is floored to a whole percent. Pet scaling comes from the server's scripts.
-  - A pet crits 5% plus crit auras, none from agility; the sim does this for the DK's summons and the hunter
-    pet so far.
+  - A pet crits 5% plus crit auras, none from agility; the sim does this for the DK's summons but the
+    rune weapon, and the hunter pet, so far.
   - The DK's summons carry scaling aura 67561, not 61017: no melee hit. Risen ghouls, not the army, take the
     owner's ArP (`Pet.HitScaling`, `Pet.RisenGhoul`).
 - **Enchant PPMs:** Mongoose 1, Icebreaker 3, Deathfrost 3. An enchant procs only from the weapon that
