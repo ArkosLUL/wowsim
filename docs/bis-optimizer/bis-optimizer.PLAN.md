@@ -480,6 +480,14 @@ here because this item is already about making the UI and the sim agree:
 - `ui/core/proto_utils/database.ts` `lookupItemSpec` has no encounter to read, so gear loaded under a
   custom config can lose a reforge the sim would keep.
 
+Two optimizer-tab fixes from the user's first runs:
+- When nothing beats the seed (`result.improved` false), `showResult` says nothing, so "Best" reads as a
+  recommendation when it's the user's own gear. Say so plainly, suggest a higher effort below Thorough,
+  and don't offer Equip for an unchanged loadout.
+- The prod container reports `SimCommit` "unknown": `.dockerignore` drops `.git`, so the VCS stamp has
+  nothing to read. Stamp `optimizer.SimCommit` with `-ldflags -X` from a build arg (`Dockerfile`, the
+  makefile's `devserver`).
+
 ### BIS-raid-contrib (wave H)
 
 **Owns:** the full-raid `Evaluator`, `raidctx/contribution.go`, raid-sim re-ranking, the raid-mode racial

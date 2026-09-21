@@ -72,9 +72,9 @@ eleven class items on top and a profile can no longer say what cost what.
 
 ## Current wave
 
-- Wave: F2, not started. Wave F (base `362b22465`) landed on `master`.
-- Base SHA: set at wave start.
-- Workflow runId: none. Wave F ran as `wf_eada7eed-df2`.
+- Wave: F2, running.
+- Base SHA: `5a445effc`.
+- Workflow runId: set at launch. Wave F ran as `wf_eada7eed-df2`.
 
 ## BiS baseline
 
@@ -150,12 +150,14 @@ gap is what else was running during E, not the sim. Compare F onward; treat E as
 | BIS-tanks-racials | merged | `f688a9246` | `db.json` regenerated for Titanguard in `4c69521ed` |
 | PAR-TOOLS-RR | merged | `e20ac0f21` | e2e `0339692`; 2 of the 4 recorded runs captured |
 | wave F cross-review | | `3e0c922c8` | 3 bugs, each inside one item; the only cross-item finding was a tank run's cost, sent to BIS-batch-ui |
+| PAR-P7-0c | running | | |
+| PAR-PERF | running | | merges after PAR-P7-0c |
+| BIS-picker-switch | running | | |
 
 Later WIs are added as their wave starts.
 
 ## User actions
 
-- "continue" for wave F2.
 - Worth a click-through when convenient: the optimizer tab's tank controls on a tank spec (the
   survival/threat slider, the crit-immunity box, the racial select). No agent can judge those, and
   BIS-ui-tab's own click-through found three real bugs.
