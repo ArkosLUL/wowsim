@@ -191,9 +191,6 @@ Later WIs are added as their wave starts.
 - "continue" for wave H.
 - Rebuild the prod container for H2's reforge fix and reload open sim tabs. Until then a restart clears
   items cached without server stats.
-- Decide: should the gear picker show PvP gear at its catalog tier instead of hiding it at every
-  phase? 16 gems whose designs sell only for PvP currency hide with it
-  ([BIS-picker-switch](../bis-optimizer/bis-optimizer.PLAN.md#bis-picker-switch-wave-f2-done)).
 - Decide: the rebuild check still lists Agony, Deathsong, Felesta and Nightwarrior, but only Deathsong
   is played by hand now. Narrow it to Deathsong?
 - Worth a click-through when convenient: the optimizer tab's tank controls on a tank spec (the

@@ -526,7 +526,7 @@ Two optimizer-tab fixes from the user's first runs:
 - The picker now hides PvP gear at every phase, like the optimizer: the catalog puts PvP vendor gear at
   the vendor's tier, which would put Wrathful Gladiator's gear on top of every P1 list. The 16 gems whose
   designs sell only for PvP currency (40011 Stormy Sky Sapphire, for one) are flagged PvP and drop out
-  of the gem lists and gem EP too. Pending the user's call.
+  of the gem lists and gem EP too. The user keeps it that way: they raid PvE only (2026-09-21).
 - A seed the pool trimmed can win: the notice then says Equip changes only what the pool left out.
 
 ### BIS-raid-contrib (wave H)
