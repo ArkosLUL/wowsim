@@ -124,6 +124,9 @@ mod-individual-progression stores a character's tier as rewarded quest `66000 + 
 - mod-individual-progression refuses death knights (`CHAR_CREATE_DISABLED`) until a character on the
   account reaches progression tier 12: `.ip set <name> 12` one and log it out first.
 - `.additem <id> -1` destroys the item even when it's equipped.
+- The playerbot factory resets a bot's progression, and below `PROGRESSION_PRE_TBC` the live
+  `VanillaPowerAdjustment` scales a level 80's damage by 0.3. A recorded run sets `.ip set <name> 18` after
+  gearing.
 - Character deletes commit asynchronously, so poll for them. `CharacterCache` refuses a delete from
   another account.
 - AzerothGhost, the e2e client, needs the Warden OS FourCC patch, plus `E2E_WORLD_ADDR` because the

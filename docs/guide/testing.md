@@ -23,13 +23,18 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
     it ([wave loop](../wave-loop/wave-loop.PLAN.md#sim-throughput)), because no golden measures time.
     Run it on an idle machine, with no sim, container build or golden run alongside: what else is
     running moves them all by a fifth or more at once, which is enough to hide or invent a regression.
-    Each case sims one iteration, so the environment build is 16-55% of the first four, and the Ret,
-    Hunter and Elemental requests carry no rotation: they measure autos and setup more than a
-    rotation's per-event cost. `./sim/` is an 8-player raid without talents, on its specs' golden APLs,
-    as are the Feral, Feral Tank, Enhancement, Fury and Protection Warrior cases.
+    Each spec case copies its golden suite's default player; `./sim/` is an 8-player raid on its specs'
+    golden APLs and `StandardTalents`. All five run `iterations=1` and `iterations=100`, and the raid's
+    100 takes about 0.3 s an op, so give it a `-benchtime` of several. The Feral, Feral Tank,
+    Enhancement, Fury and Protection Warrior cases still sim one iteration.
+  - A/B against a base without touching the tree: `go test -c -overlay overlay.json`, whose `Replace`
+    maps each changed file to a `git show <base>:<path>` copy under `tmp/`. Interleave base and new runs
+    and compare medians, which holds up on a busy machine.
 - The optimizer's slow suite, which every wave re-runs as the BiS baseline (about 8 min):
   `go test --tags=with_db,optimizer_slow -count=1 -timeout 90m -run TestOptimizerSlow -v ./sim/optimizer/`.
-  It prints one `slow: spec=… phase=… effort=… J_preset=… J_opt=… delta=…±…` line per case, and
+  It prints one `slow: spec=… phase=… effort=… J_preset=… J_opt=… delta=…±… dps_preset=… dps_delta=…±…
+  norm_<metric>=mean±se/<reference stat>` line per case (J's normalizer is measured fresh, so judge a
+  `J_preset` move against `dps_preset`), and
   `-decisions` logs what each stage picked. The CLI does the same run end to end:
   `go run --tags=with_db ./cmd/wowsimcli optimize --infile sim/optimizer/testdata/search/fury_p1.json --verbose`,
   whose request comes from `go test --tags=with_db ./sim/optimizer -run TestSearchTestdata -update`.

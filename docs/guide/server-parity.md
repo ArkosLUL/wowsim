@@ -61,7 +61,10 @@ class by simval.
 ## Other measured server behaviour
 
 - **Hunter haste:** mod-individual-progression's aura 89507 never changes the speed, so ranged haste is
-  just the quiver's. The sim's ×1.15 is right only with a +15% quiver.
+  just the quiver's or ammo pouch's, which `Hunter.Options.quiver` picks (×1.15 by default).
+- **Talent values** are the spelldump's, not the DBC files': mod-spell-tweaks' `spell_dbc` rows change some
+  while the live DBC files stay stock. Rage of Rivendare is 2 expertise a point, Virulence and Nerves of Cold
+  Steel 2% hit a point.
 - **Glyph of Reckoning** is unimplemented, so Hand of Reckoning never deals damage (67485) and the sim
   registers nothing for it.
 - **Binary spells** follow the spelldump. Mind Flay isn't binary; Steady Shot and Expose Armor are.
@@ -74,6 +77,10 @@ class by simval.
   - A DoT refresh resets the tick timer only when StackAmount < 2.
   - Periodic ticks crit only with aura 286.
 - **Pets:** pet hit is floored to a whole percent. Pet scaling comes from the server's scripts.
+  - A pet crits 5% plus crit auras, none from agility; the sim does this for the DK's summons and the hunter
+    pet so far.
+  - The DK's summons carry scaling aura 67561, not 61017: no melee hit. Risen ghouls, not the army, take the
+    owner's ArP (`Pet.HitScaling`, `Pet.RisenGhoul`).
 - **Enchant PPMs:** Mongoose 1, Icebreaker 3, Deathfrost 3. An enchant procs only from the weapon that
   hit.
 - **Dungeon scale** (`NewEncounter`): health and armor become `round(float32(value) × multiplier)`, half
@@ -95,7 +102,7 @@ spell is only as right as its id.
   inside what passive talents and glyphs can reach agrees; anything else is a conflict, and an
   allowlist entry either lets the server win or keeps the sim's value with a reason.
 - **Wrapper ids** are the trap. The sim often deals damage under the id of a spell that, on the server,
-  only triggers the real one (Death Coil, totems, Faerie Fire (Feral), Wild Quiver). The wrapper's
+  only triggers the real one (totems, Faerie Fire (Feral), Typhoon, Slam). The wrapper's
   flags are not the damage's, so those entries keep the sim's values until the class's P7 item moves
   the damage to the real id. When a suite moves for a spell you didn't touch, look here first.
 - Missiles travel at least 5 yards (`Spell::AddUnitTarget`), in whole ms.
@@ -117,8 +124,8 @@ which is what unit tests want).
   waits out any hardcast, Auto Shot only one without `SPELL_ATTR2_DO_NOT_RESET_COMBAT_TIMERS`. With that
   attribute a player's melee timers stand still through the cast instead (Slam). A cast started by the
   main hand's last APL check comes before that swing: the server handles the session before
-  `Player::Update`. Channels don't hold swings in the sim; the two cast with autos running (Army of the
-  Dead, Volley) cancel autos in class code.
+  `Player::Update`. Channels don't hold swings in core: Army of the Dead holds the DK's melee in class
+  code, and Volley stands the ranged timer still through its channel (`suspendRangedAttackTimer`).
 - The GCD follows `Spell::TriggerGlobalCooldown`: hasted only with `HasteGCD`, then kept within
   [1000, 1500] ms. Cast time scales by damage class: spell haste for magic, ranged attack speed for
   ranged, nothing for melee.
