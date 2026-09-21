@@ -161,6 +161,16 @@ func TestEffectFlags(t *testing.T) {
 	}
 }
 
+// gearStats prices reforges under the live server's config, which hand-built test loadouts assume.
+func gearStats(l Loadout) stats.Stats {
+	return (&Pool{}).gearStats(l)
+}
+
+// reforgingOff is a pool for a run on the live config with mod-reforging turned off.
+func reforgingOff() *Pool {
+	return &Pool{reforging: &core.Reforging{Percentage: 40, StatTypes: core.LiveReforging().StatTypes}}
+}
+
 func TestGearStats(t *testing.T) {
 	addResidualTestItems()
 	var l Loadout
@@ -177,6 +187,13 @@ func TestGearStats(t *testing.T) {
 	}
 	if got := gearStats(l); got != want {
 		t.Errorf("gear stats = %v, want %v", got, want)
+	}
+
+	// a run with reforging off keeps the crit, as its pool and the sim do
+	want[stats.MeleeCrit], want[stats.SpellCrit] = 30, 30
+	want[stats.MeleeHaste], want[stats.SpellHaste] = 0, 0
+	if got := reforgingOff().gearStats(l); got != want {
+		t.Errorf("gear stats with reforging off = %v, want %v", got, want)
 	}
 }
 
@@ -200,7 +217,8 @@ func TestMeasureResiduals(t *testing.T) {
 	added.Items[proto.ItemSlot_ItemSlotFinger2] = ItemChoice{ItemID: testEffectRingID}
 	removed.Items[proto.ItemSlot_ItemSlotFinger1] = ItemChoice{}
 
-	got, err := MeasureResiduals(context.Background(), fake, dpsObjective(), resp, seed, seed, []Loadout{swapped, added, removed}, 1000)
+	live := &Pool{}
+	got, err := MeasureResiduals(context.Background(), fake, dpsObjective(), resp, live, seed, seed, []Loadout{swapped, added, removed}, 1000)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -211,8 +229,52 @@ func TestMeasureResiduals(t *testing.T) {
 	}
 
 	// from a base other than the seed, the curves still count offsets from the seed
-	got, err = MeasureResiduals(context.Background(), fake, dpsObjective(), resp, seed, removed, []Loadout{swapped}, 1000)
+	got, err = MeasureResiduals(context.Background(), fake, dpsObjective(), resp, live, seed, removed, []Loadout{swapped}, 1000)
 	if err != nil || !near(got[0].Mean, 30, 0.1) {
 		t.Errorf("residual from another base = %+v, %v; want 30", got, err)
+	}
+}
+
+// Under a config the reforge doesn't pass, the sim ignores it, so the curves must too: pricing it
+// anyway leaves a residual that's only curve error.
+func TestMeasureResidualsFollowTheRunsReforging(t *testing.T) {
+	addResidualTestItems()
+	pool := reforgingOff()
+	fake := newFakeEvaluator(func(p Point) Metrics {
+		gear := pool.gearStats(p.Loadout).Add(p.Offset)
+		return Metrics{MetricDPS: 5000 + gear[stats.MeleeCrit] + 3*gear[stats.MeleeHaste]}
+	})
+	resp := Response{
+		stats.MeleeCrit:  {Stat: stats.MeleeCrit, SlopeBelow: 1, SlopeAbove: 1},
+		stats.MeleeHaste: {Stat: stats.MeleeHaste, SlopeBelow: 3, SlopeAbove: 3},
+	}
+	var seed Loadout
+	seed.Items[proto.ItemSlot_ItemSlotHands] = ItemChoice{ItemID: testSocketedID}
+	reforged := seed
+	reforged.Items[proto.ItemSlot_ItemSlotHands].ReforgeFrom, reforged.Items[proto.ItemSlot_ItemSlotHands].ReforgeTo = 32, 36
+
+	got, err := MeasureResiduals(context.Background(), fake, dpsObjective(), resp, pool, seed, seed, []Loadout{reforged}, 1000)
+	if err != nil || !near(got[0].Mean, 0, 0.1) {
+		t.Errorf("residual of an inert reforge = %+v, %v; want 0", got, err)
+	}
+}
+
+// The surrogate prices a choice the pool doesn't list, like a trimmed seed item, under the run's
+// config too.
+func TestChoiceStatsOffPoolFollowTheRunsReforging(t *testing.T) {
+	addResidualTestItems()
+	c := ItemChoice{ItemID: testSocketedID, ReforgeFrom: 32, ReforgeTo: 36}
+	for _, tc := range []struct {
+		name  string
+		pool  *Pool
+		haste float64
+	}{
+		{"live", &Pool{reforging: core.LiveReforging()}, 12},
+		{"reforging off", reforgingOff(), 0},
+	} {
+		got := newSurrogate(tc.pool, Loadout{}, nil).choiceStats(proto.ItemSlot_ItemSlotHands, c)
+		if got[stats.MeleeHaste] != tc.haste || got != tc.pool.gearStats(Loadout{Items: [NumSlots]ItemChoice{proto.ItemSlot_ItemSlotHands: c}}) {
+			t.Errorf("%s: choice stats %v, want %g haste and the pool's gear stats", tc.name, got, tc.haste)
+		}
 	}
 }

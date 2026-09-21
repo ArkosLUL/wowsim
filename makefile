@@ -148,10 +148,14 @@ proto: sim/core/proto/api.pb.go ui/core/proto/api.ts
 .PHONY: wowsimwotlk
 wowsimwotlk: binary_dist devserver
 
+# The commit optimizer results carry. Docker builds pass it as a build arg, since .dockerignore drops
+# .git; otherwise it's HEAD, when git can read the checkout.
+SIM_COMMIT := $(or $(SIM_COMMIT),$(shell git rev-parse HEAD 2>/dev/null))
+
 .PHONY: devserver
 devserver: sim/core/proto/api.pb.go sim/web/main.go binary_dist/dist.go
 	@echo "Starting server compile now..."
-	@if go build -o wowsimwotlk ./sim/web/main.go; then \
+	@if go build -o wowsimwotlk -ldflags "-X 'github.com/wowsims/wotlk/sim/optimizer.SimCommit=$(SIM_COMMIT)'" ./sim/web/main.go; then \
 		printf "\033[1;32mBuild Completed Successfully\033[0m\n"; \
 	else \
 		printf "\033[1;31mBUILD FAILED\033[0m\n"; \

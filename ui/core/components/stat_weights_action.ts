@@ -16,6 +16,7 @@ import { combinationsWithDups, permutations, sum } from '../utils.js';
 import { UIGem as Gem } from '../proto/ui.js';
 
 import * as Gems from '../proto_utils/gems.js';
+import { Availability, isObtainable, loadCatalog } from '../optimizer/catalog.js';
 
 import { BaseModal } from './base_modal.js';
 import { Tooltip } from 'bootstrap';
@@ -649,18 +650,21 @@ class EpWeightsMenu extends BaseModal {
 		let epWeights = this.simUI.player.getEpWeights();
 		epWeights = new Stats(epWeights.asArray().map(w => w == 0 ? 1e-8 : w));
 
+		// the Classic phases stand in if it can't load
+		await loadCatalog().catch(e => console.warn(`Gem optimizer: ${e}`));
+
 		const gear = this.simUI.player.getGear();
 		const allGems = this.simUI.sim.db.getGems();
-		const phase = this.simUI.sim.getPhase();
+		const availability = this.simUI.player.gemAvailability();
 		const isBlacksmithing = this.simUI.player.isBlacksmithing();
 		const isJewelcrafting = this.simUI.player.hasProfession(Profession.Jewelcrafting);
 
-		const optimizedGear = EpWeightsMenu.optimizeGemsForWeights(epWeights, gear, allGems, phase, isBlacksmithing, isJewelcrafting);
+		const optimizedGear = EpWeightsMenu.optimizeGemsForWeights(epWeights, gear, allGems, availability, isBlacksmithing, isJewelcrafting);
 		this.simUI.player.setGear(eventID, optimizedGear);
 	}
 
-	private static optimizeGemsForWeights(epWeights: Stats, gear: Gear, allGems: Array<Gem>, phase: number, isBlacksmithing: boolean, isJewelcrafting: boolean): Gear {
-		const unrestrictedGems = allGems.filter(gem => Gems.isUnrestrictedGem(gem, phase));
+	private static optimizeGemsForWeights(epWeights: Stats, gear: Gear, allGems: Array<Gem>, availability: Availability, isBlacksmithing: boolean, isJewelcrafting: boolean): Gear {
+		const unrestrictedGems = allGems.filter(gem => Gems.isUnrestrictedGem(gem, availability));
 
 		const {
 			bestGemForColor: bestGemForColor,
@@ -782,7 +786,7 @@ class EpWeightsMenu extends BaseModal {
 				return gear;
 			}
 
-			const jcGems = allGems.filter(gem => gem.requiredProfession == Profession.Jewelcrafting);
+			const jcGems = allGems.filter(gem => gem.requiredProfession == Profession.Jewelcrafting && isObtainable(gem.id, gem.phase, availability));
 
 			const {
 				bestGemForColor: bestJcGemForColor,

@@ -81,6 +81,7 @@ import { Sim, SimSettingCategories } from './sim.js';
 import { distinct, stringComparator, sum } from './utils.js';
 import { Database } from './proto_utils/database.js';
 import { ARMOR_SLOTS, filterItemsByFilters, WEAPON_SLOTS } from './optimizer/item_filters.js';
+import { Availability, CatalogIndex, loadedCatalog } from './optimizer/catalog.js';
 
 export interface AuraStats {
 	data: AuraStatsProto,
@@ -254,6 +255,8 @@ export class Player<SpecType extends Spec> {
 	private readonly simpleRotationGenerator: SimpleRotationGenerator<SpecType> | null = null;
 
 	private itemEPCache = new Array<Map<number, number>>();
+	// item EP includes the best obtainable gems, so the cache only holds for these
+	private itemEPCacheScope: { phase: number; faction?: Faction; catalog: CatalogIndex | null } | null = null;
 	private gemEPCache = new Map<number, number>();
 	private enchantEPCache = new Map<number, number>();
 	private talents: SpecTalents<SpecType> | null = null;
@@ -1050,9 +1053,25 @@ export class Player<SpecType extends Spec> {
 		return ep
 	}
 
+	// The gems EP counts as obtainable: the sim's phase and this player's faction, no PvP, like the
+	// optimizer's gem pool.
+	gemAvailability(): Availability {
+		return { contentPhase: this.sim.getPhase(), faction: this.getFaction() };
+	}
+
 	computeItemEP(item: Item, slot: ItemSlot): number {
 		if (item == null)
 			return 0;
+
+		const availability = this.gemAvailability();
+		const catalog = loadedCatalog();
+		const scope = this.itemEPCacheScope;
+		if (!scope || scope.phase != availability.contentPhase || scope.faction != availability.faction || scope.catalog != catalog) {
+			for (let i = 0; i < ItemSlot.ItemSlotRanged + 1; ++i) {
+				this.itemEPCache[i] = new Map();
+			}
+			this.itemEPCacheScope = { phase: availability.contentPhase, faction: availability.faction, catalog };
+		}
 
 		let cached = this.itemEPCache[slot].get(item.id);
 		if (cached !== undefined)
@@ -1079,7 +1098,7 @@ export class Player<SpecType extends Spec> {
 
 		// Compare whether its better to match sockets + get socket bonus, or just use best gems.
 		const bestGemEPNotMatchingSockets = sum(item.gemSockets.map(socketColor => {
-			const gems = this.sim.db.getGems(socketColor).filter(gem => isUnrestrictedGem(gem, this.sim.getPhase()));
+			const gems = this.sim.db.getGems(socketColor).filter(gem => isUnrestrictedGem(gem, availability));
 			if (gems.length > 0) {
 				return Math.max(...gems.map(gem => this.computeGemEP(gem)));
 			} else {
@@ -1088,7 +1107,7 @@ export class Player<SpecType extends Spec> {
 		}));
 
 		const bestGemEPMatchingSockets = sum(item.gemSockets.map(socketColor => {
-			const gems = this.sim.db.getGems(socketColor).filter(gem => isUnrestrictedGem(gem, this.sim.getPhase()) && gemMatchesSocket(gem, socketColor));
+			const gems = this.sim.db.getGems(socketColor).filter(gem => isUnrestrictedGem(gem, availability) && gemMatchesSocket(gem, socketColor));
 			if (gems.length > 0) {
 				return Math.max(...gems.map(gem => this.computeGemEP(gem)));
 			} else {
