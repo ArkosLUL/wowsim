@@ -3469,6 +3469,15 @@ var spells = []Spell{
 			{Effect: 6, Aura: 3, AmplitudeMs: 3000, BasePoints: 29, DieSides: 1, DamageMultiplier: 1},
 		},
 	},
+	// Death Coil
+	{
+		ID: 47632, Family: 15, FamilyFlags: [3]uint32{0x2000, 0, 0x1}, SchoolMask: 32, DmgClass: DmgClassMagic, Flags: FlagAlwaysHit,
+		Attributes: [8]uint32{0x40000, 0x200, 0x40000000, 0x40200, 0, 0, 0x20}, AttributesCu: 0x1100,
+		ProcChance: 101, RuneCostID: 441, Speed: 24,
+		Effects: [3]Effect{
+			{Effect: 2, BasePoints: 599, DieSides: 1, DamageMultiplier: 1},
+		},
+	},
 	// Guardian Spirit
 	{
 		ID: 47788, Family: 6, FamilyFlags: [3]uint32{0xc0000000, 0, 0xc00}, SchoolMask: 2, Flags: FlagBinary | FlagPositive,
@@ -3885,6 +3894,18 @@ var spells = []Spell{
 			{Effect: 6, Aura: 138, BasePoints: 14, DieSides: 1, DamageMultiplier: 1},
 			{Effect: 6, Aura: 107, BasePoints: -501, DieSides: 1, DamageMultiplier: 1, MiscValue: 21, ClassMask: [3]uint32{0xffdffe7f, 0x480b11f7, 0x20}},
 			{Effect: 6, Aura: 10, BasePoints: -21, DieSides: 1, DamageMultiplier: 1, MiscValue: 127, ClassMask: [3]uint32{0xfbffffff, 0x1ff}},
+		},
+	},
+	// Blood Presence
+	{
+		ID: 48266, Family: 15, FamilyFlags: [3]uint32{0x800000}, SchoolMask: 1, Flags: FlagBinary | FlagPositive,
+		Attributes: [8]uint32{0xa9050010, 0x80000400, 0x11, 0x110000, 0x200000, 0, 0x1000}, AttributesCu: 0x100000,
+		CategoryCooldownMs: 1000, Category: 47, DurationMs: -1, MaxDurationMs: -1,
+		ProcChance: 101, PowerType: 5, RuneCostID: 484,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 79, BasePoints: 14, DieSides: 1, DamageMultiplier: 1, MiscValue: 127},
+			{Effect: 6, Aura: 118, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, MiscValue: 127},
+			{Effect: 6, Aura: 10, BasePoints: -21, DieSides: 1, DamageMultiplier: 1, MiscValue: 127},
 		},
 	},
 	// Devouring Plague (Rank 9)
@@ -4770,6 +4791,17 @@ var spells = []Spell{
 			{Effect: 3, BasePoints: 442, DieSides: 1, DamageMultiplier: 1},
 		},
 	},
+	// Icy Touch (Rank 5)
+	{
+		ID: 49909, Family: 15, FamilyFlags: [3]uint32{0x42}, SchoolMask: 16, DmgClass: DmgClassMagic, Flags: FlagHasteGCD,
+		Attributes: [8]uint32{0x40000, 0x8000200, 0, 0, 0, 0x20}, AttributesCu: 0x7100,
+		GCDMs: 1500, GCDCategory: 133,
+		ProcChance: 101, PowerType: 5, RuneCostID: 768,
+		Effects: [3]Effect{
+			{Effect: 2, BasePoints: 226, DieSides: 19, DamageMultiplier: 1, ClassMask: [3]uint32{0xe012f7}},
+			{Effect: 64, BasePoints: 109, DieSides: 1, DamageMultiplier: 1, TriggerSpell: 55095, ClassMask: [3]uint32{0xc01af7}},
+		},
+	},
 	// Plague Strike (Rank 6)
 	{
 		ID: 49921, Family: 15, FamilyFlags: [3]uint32{0x1}, SchoolMask: 1, DmgClass: DmgClassMelee,
@@ -4937,6 +4969,15 @@ var spells = []Spell{
 			{Effect: 58, BasePoints: -1, DieSides: 1, DamageMultiplier: 1},
 		},
 	},
+	// Blood Presence
+	{
+		ID: 50475, Family: 15, SchoolMask: 1, Flags: FlagBinary | FlagPositive,
+		Attributes: [8]uint32{0x40010, 0x80000000, 0x20000000, 0x2000000}, AttributesCu: 0x100100,
+		ProcChance: 101, PowerType: 1,
+		Effects: [3]Effect{
+			{Effect: 10, BasePoints: 29, DieSides: 1, DamageMultiplier: 1},
+		},
+	},
 	// Curse of Weakness (Rank 9)
 	{
 		ID: 50511, Family: 5, FamilyFlags: [3]uint32{0x8000}, SchoolMask: 32, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagResetsAutoAttack | FlagHasteGCD,
@@ -5028,17 +5069,6 @@ var spells = []Spell{
 		Effects: [3]Effect{
 			{Effect: 121, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1},
 			{Effect: 64, DamageMultiplier: 1, TriggerSpell: 44949},
-		},
-	},
-	// Blood Presence (Rank 1)
-	{
-		ID: 50689, SchoolMask: 32, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagHasteGCD | FlagPositive,
-		Attributes: [8]uint32{0x1000000, 0, 0, 0x10000}, AttributesCu: 0x100000,
-		GCDMs: 1500, GCDCategory: 133, DurationMs: 1800000, MaxDurationMs: 1800000,
-		ProcFlags: 0x55554, ProcChance: 100, RuneCostID: 831,
-		Effects: [3]Effect{
-			{Effect: 6, Aura: 79, BasePoints: 14, DieSides: 1, DamageMultiplier: 1, MiscValue: 127},
-			{Effect: 6, Aura: 42, BasePoints: 3, DieSides: 1, DamageMultiplier: 1, TriggerSpell: 1206},
 		},
 	},
 	// Pestilence
@@ -5207,6 +5237,17 @@ var spells = []Spell{
 			{Effect: 6, Aura: 275, DamageMultiplier: 1, ClassMask: [3]uint32{0x80000780, 0x2020}},
 			{},
 			{Effect: 6, Aura: 36, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, MiscValue: 13, ClassMask: [3]uint32{0x400}},
+		},
+	},
+	// Frost Vulnerability
+	{
+		ID: 51714, Family: 15, FamilyFlags: [3]uint32{0x200000}, SchoolMask: 16, DmgClass: DmgClassMagic, Flags: FlagBinary,
+		Attributes: [8]uint32{0x40000, 0x88, 0, 0x80}, AttributesCu: 0x101000,
+		DurationMs: 20000, MaxDurationMs: 20000, StackAmount: 5,
+		ProcChance:   101,
+		CooldownMods: ModBounds{FlatMin: -10000},
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 271, BasePoints: 1, DieSides: 1, DamageMultiplier: 1, MiscValue: 16, ClassMask: [3]uint32{0x402, 0x4048007}},
 		},
 	},
 	// Fan of Knives
@@ -7025,17 +7066,6 @@ var spells = []Spell{
 		ProcChance: 101,
 		Effects: [3]Effect{
 			{Effect: 8, BasePoints: 1199, DieSides: 1, ValueMultiplier: 1, DamageMultiplier: 1},
-		},
-	},
-	// Icy Touch (Rank 1)
-	{
-		ID: 59131, Family: 15, FamilyFlags: [3]uint32{0x80000042}, SchoolMask: 16, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagHasteGCD,
-		Attributes: [8]uint32{0, 0x8000000, 0, 0, 0, 0x20, 0x1000}, AttributesCu: 0x107100,
-		GCDMs: 1500, GCDCategory: 133, CategoryCooldownMs: 6000, Category: 19, DurationMs: 20000, MaxDurationMs: 20000,
-		ProcChance: 101, PowerType: 5, RuneCostID: 1425,
-		Effects: [3]Effect{
-			{Effect: 2, BasePoints: 216, DieSides: 19, DamageMultiplier: 1, ClassMask: [3]uint32{0xe012f7}},
-			{Effect: 6, Aura: 252, BasePoints: -16, DieSides: 1, DamageMultiplier: 1, ClassMask: [3]uint32{0xc01af7}},
 		},
 	},
 	// Thunderstorm (Rank 4)

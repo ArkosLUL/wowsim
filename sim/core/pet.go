@@ -47,6 +47,12 @@ type Pet struct {
 	ownerHit        stats.Stats
 	ownerHitRefresh *PendingAction
 
+	// Which scaling aura hands this pet its owner's hit. The class sets it before the pet is enabled.
+	HitScaling PetHitScaling
+	// NPC_RISEN_GHOUL: Unit::CalcArmorReducedDamage hands any risen ghoul its owner's armor pen,
+	// the permanent pet and Raise Dead's guardian alike.
+	RisenGhoul bool
+
 	// DK pets also inherit their owner's MeleeSpeed. This replace OwnerAttackSpeedChanged.
 	dynamicMeleeSpeedInheritance PetMeleeSpeedInheritance
 
@@ -107,11 +113,19 @@ func (pet *Pet) Finalize() {
 	pet.inheritOwnerArmorPen()
 }
 
-// Every pet here takes spell_pet_hit_expertise_scalling (61013 and 61017): the owner's hit chance
-// rescaled to each stat's own cap and truncated to a whole point, so a pet needs 8% owner hit for
-// the full 8% hit, 17% spell hit and 26 expertise. The death knight's summons really carry Pet
-// Scaling - Master Spell 06 (67561), which hands out no melee hit, but core can't tell them from
-// the bloodworms without a marker the class has to set (PAR-P7-DK).
+// PetHitScaling is the serverside aura that hands a pet its owner's hit (Guardian::InitStatsForLevel,
+// or the pet's AI): the owner's hit chance rescaled to each stat's own cap and truncated to a whole
+// point, so a pet needs 8% owner hit for the full 8% hit, 17% spell hit and 26 expertise.
+type PetHitScaling uint8
+
+const (
+	// spell_pet_hit_expertise_scalling (61013, 61017): hit, spell hit and expertise
+	PetHitScalingDefault PetHitScaling = iota
+	// Pet Scaling - Master Spell 06 (67561), on the DK's risen ghouls, gargoyle and army: spell hit
+	// and expertise off the owner's melee hit, no melee hit at all
+	PetHitScalingMasterSpell06
+)
+
 const (
 	petOwnerHitCap      = 8.0
 	petOwnerSpellHitCap = 17.0
@@ -124,11 +138,18 @@ const (
 	petOwnerHitRefreshInterval = 3 * time.Second
 )
 
-// ownerHitScaling is what the scaling aura is worth right now. Which of the owner's hit chances it
+// ownerHitScaling is what the scaling aura is worth right now. Which of the owner's hit chances 61017
 // reads depends on the owner: ranged for a hunter, spell for anyone casting off mana, else melee.
+// 67561 always reads melee.
 func (pet *Pet) ownerHitScaling() stats.Stats {
 	owner := pet.Owner
 	hitPct, hitCap := owner.stats[stats.MeleeHit]/MeleeHitRatingPerHitChance, petOwnerHitCap
+	if pet.HitScaling == PetHitScalingMasterSpell06 {
+		return stats.Stats{
+			stats.SpellHit:  math.Trunc(hitPct/hitCap*petSpellHitAmount) * SpellHitRatingPerHitChance,
+			stats.Expertise: math.Trunc(hitPct/hitCap*petExpertiseAmount) * ExpertisePerQuarterPercentReduction,
+		}
+	}
 	if owner.Class != proto.Class_ClassHunter && owner.GetCurrentPowerBar() == ManaBar {
 		hitPct, hitCap = owner.stats[stats.SpellHit]/SpellHitRatingPerHitChance, petOwnerSpellHitCap
 	}
@@ -153,20 +174,17 @@ func (pet *Pet) refreshOwnerHitScaling(sim *Simulation) {
 	pet.AddStatsDynamic(sim, change)
 }
 
-// inheritOwnerArmorPen points the pet's attacks at the owner's armor penetration, for the two pets
-// mod-spell-tweaks does it for (Unit::CalcArmorReducedDamage).
+// inheritOwnerArmorPen points the pet's attacks at the owner's armor penetration, for the pets
+// mod-spell-tweaks does it for (Unit::CalcArmorReducedDamage): hunter pets and risen ghouls.
 func (pet *Pet) inheritOwnerArmorPen() {
-	if !pet.SummonedAsPet {
-		return
-	}
 	tweaks := pet.Owner.Server().SpellTweaks
 	switch pet.Owner.Class {
 	case proto.Class_ClassHunter:
-		if !tweaks.HunterPetArmorPen {
+		if !pet.SummonedAsPet || !tweaks.HunterPetArmorPen {
 			return
 		}
 	case proto.Class_ClassDeathknight:
-		if !tweaks.DKGhoulArmorPen {
+		if !pet.RisenGhoul || !tweaks.DKGhoulArmorPen {
 			return
 		}
 	default:

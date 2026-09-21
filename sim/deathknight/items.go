@@ -1,9 +1,11 @@
 package deathknight
 
 import (
+	"sync"
 	"time"
 
 	"github.com/wowsims/wotlk/sim/core"
+	"github.com/wowsims/wotlk/sim/core/serverdata"
 	"github.com/wowsims/wotlk/sim/core/stats"
 )
 
@@ -297,11 +299,13 @@ func (dk *Deathknight) sigilOfArthriticBindingBonus() float64 {
 }
 
 func (dk *Deathknight) sigilOfTheVengefulHeartDeathCoil() float64 {
-	return core.TernaryFloat64(dk.Ranged().ID == 45254, 403, 0)
+	// 64962's second effect, which spell_dk_death_coil adds to the damage
+	return core.TernaryFloat64(dk.Ranged().ID == 45254, 380, 0)
 }
 
 func (dk *Deathknight) sigilOfTheVengefulHeartFrostStrike() float64 {
-	return core.TernaryFloat64(dk.Ranged().ID == 45254, 218, 0) // (1 / 0.55) * 120
+	// 64962's flat modifier on Frost Strike's first effect, before the 55% weapon scaling
+	return core.TernaryFloat64(dk.Ranged().ID == 45254, 205, 0)
 }
 
 func addEnchantEffect(id int32, effect func(core.Agent)) {
@@ -318,37 +322,43 @@ func addItemEffect(id int32, effect func(core.Agent)) {
 	core.NewItemEffect(id, effect)
 }
 
+// frostVulnerabilityID is the Rune of Razorice debuff, 51714.
+const frostVulnerabilityID = 51714
+
+// applyFrostVulnerability hands the debuff's 2% a stack to the DK who stacked it. Its
+// SPELL_AURA_MOD_DAMAGE_FROM_CASTER only counts that caster's spells, and only those its class mask
+// covers (AuraEffect::IsAffectedOnSpell): his frost spells, not Razor Frost itself.
+func applyFrostVulnerability(character *core.Character, vulnAuras core.AuraArray) {
+	for _, target := range character.Env.Encounter.TargetUnits {
+		vulnAura := vulnAuras.Get(target)
+		target.AddDynamicDamageTakenModifier(func(_ *core.Simulation, spell *core.Spell, result *core.SpellResult) {
+			if spell.Unit != &character.Unit || !vulnAura.IsActive() || !frostVulnerabilityCovers(spell.ServerSpell()) {
+				return
+			}
+			result.Damage *= 1 + 0.02*float64(vulnAura.GetStacks())
+		})
+	}
+}
+
+var frostVulnerability = sync.OnceValue(func() *serverdata.Spell {
+	return serverdata.SpellByID(frostVulnerabilityID)
+})
+
+func frostVulnerabilityCovers(sd *serverdata.Spell) bool {
+	vuln := frostVulnerability()
+	if sd == nil || sd.Family != vuln.Family {
+		return false
+	}
+	classMask := vuln.Effects[0].ClassMask
+	return sd.FamilyFlags[0]&classMask[0] != 0 || sd.FamilyFlags[1]&classMask[1] != 0 || sd.FamilyFlags[2]&classMask[2] != 0
+}
+
 func CreateVirulenceProcAura(character *core.Character) *core.Aura {
 	return character.NewTemporaryStatsAura("Sigil of Virulence Proc", core.ActionID{SpellID: 67383}, stats.Stats{stats.Strength: 200.0}, time.Second*20)
 }
 
 func (dk *Deathknight) registerItems() {
 	// Rune of Razorice
-	newRazoriceHitSpell := func(character *core.Character, isMH bool) *core.Spell {
-		dmg := 0.0
-
-		if weapon := character.GetMHWeapon(); isMH && weapon != nil {
-			dmg = 0.5 * (weapon.WeaponDamageMin + weapon.WeaponDamageMax) * 0.02
-		} else if weapon := character.GetOHWeapon(); !isMH && weapon != nil {
-			dmg = 0.5 * (weapon.WeaponDamageMin + weapon.WeaponDamageMax) * 0.02
-		} else {
-			return nil
-		}
-
-		return character.RegisterSpell(core.SpellConfig{
-			ActionID:    core.ActionID{SpellID: 50401},
-			SpellSchool: core.SpellSchoolFrost,
-			ProcMask:    core.ProcMaskSpellDamage,
-
-			DamageMultiplier: 1,
-			ThreatMultiplier: 1,
-
-			ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-				spell.CalcAndDealDamage(sim, target, dmg, spell.OutcomeAlwaysHit)
-			},
-		})
-	}
-
 	addEnchantEffect(3370, func(agent core.Agent) {
 		character := agent.GetCharacter()
 
@@ -362,11 +372,27 @@ func (dk *Deathknight) registerItems() {
 		procMask := character.GetProcMaskForEnchant(3370)
 
 		vulnAuras := character.NewEnemyAuraArray(core.RuneOfRazoriceVulnerabilityAura)
-		mhRazoriceSpell := newRazoriceHitSpell(character, true)
-		ohRazoriceSpell := newRazoriceHitSpell(character, false)
+		applyFrostVulnerability(character, vulnAuras)
+
+		// Razor Frost is damage class none, so Spell::EffectWeaponDmg rolls the main hand whichever
+		// weapon procced it: 2% of a swing, attack power included. SPELL_ATTR3_SUPPRESS_CASTER_PROCS.
+		razorFrost := character.RegisterSpell(core.SpellConfig{
+			ActionID:    actionID,
+			SpellSchool: core.SpellSchoolFrost,
+			ProcMask:    core.ProcMaskEmpty,
+
+			DamageMultiplier: 1,
+			ThreatMultiplier: 1,
+
+			ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+				baseDamage := 0.02 * spell.Unit.MHWeaponDamage(sim, spell.MeleeAttackPower())
+				spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeAlwaysHit)
+			},
+		})
+
 		aura := character.GetOrRegisterAura(core.Aura{
 			Label:    "Razor Frost",
-			ActionID: core.ActionID{SpellID: 50401},
+			ActionID: actionID,
 			Duration: core.NeverExpires,
 			OnReset: func(aura *core.Aura, sim *core.Simulation) {
 				aura.Activate(sim)
@@ -376,15 +402,10 @@ func (dk *Deathknight) registerItems() {
 					return
 				}
 
+				razorFrost.Cast(sim, result.Target)
 				vulnAura := vulnAuras.Get(result.Target)
 				vulnAura.Activate(sim)
-				if spell.IsMH() {
-					mhRazoriceSpell.Cast(sim, result.Target)
-					vulnAura.AddStack(sim)
-				} else {
-					ohRazoriceSpell.Cast(sim, result.Target)
-					vulnAura.AddStack(sim)
-				}
+				vulnAura.AddStack(sim)
 			},
 		})
 
@@ -489,7 +510,7 @@ func (dk *Deathknight) registerItems() {
 
 	consumeSpells := [5]core.ActionID{
 		BloodBoilActionID,
-		DeathCoilActionID,
+		DeathCoilDamageActionID,
 		FrostStrikeMHActionID,
 		HowlingBlastActionID,
 		IcyTouchActionID,
@@ -618,7 +639,7 @@ func (dk *Deathknight) registerItems() {
 
 	addItemEffect(45144, func(agent core.Agent) {
 		dk := agent.(DeathKnightAgent).GetDeathKnight()
-		procAura := dk.NewTemporaryStatsAura("Sigil of Deflection Proc", core.ActionID{SpellID: 64963}, stats.Stats{stats.Dodge: 144.0}, time.Second*5)
+		procAura := dk.NewTemporaryStatsAura("Sigil of Deflection Proc", core.ActionID{SpellID: 64963}, stats.Stats{stats.Dodge: 136.0}, time.Second*5)
 
 		core.MakePermanent(dk.GetOrRegisterAura(core.Aura{
 			Label: "Sigil of Deflection",

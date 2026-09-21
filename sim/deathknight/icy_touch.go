@@ -4,7 +4,7 @@ import (
 	"github.com/wowsims/wotlk/sim/core"
 )
 
-var IcyTouchActionID = core.ActionID{SpellID: 59131}
+var IcyTouchActionID = core.ActionID{SpellID: 49909}
 
 func (dk *Deathknight) registerIcyTouchSpell() {
 	sigilBonus := dk.sigilOfTheFrozenConscienceBonus()

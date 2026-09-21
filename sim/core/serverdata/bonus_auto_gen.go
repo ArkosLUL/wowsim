@@ -34,6 +34,7 @@ var bonuses = []Bonus{
 	{SpellID: 44781, Row: 44781, Direct: 0.714},                                          // Arcane Barrage (Rank 3)
 	{SpellID: 47502, Row: 47502, AP: 0.12},                                               // Thunder Clap (Rank 9)
 	{SpellID: 47610, Row: 47610, Direct: 0.857},                                          // Frostfire Bolt (Rank 2)
+	{SpellID: 47632, Row: 47632, AP: 0.15},                                               // Death Coil
 	{SpellID: 47809, Row: 47809, Direct: 0.857},                                          // Shadow Bolt (Rank 13)
 	{SpellID: 47811, Row: 47811, Direct: 0.2, Dot: 0.2},                                  // Immolate (Rank 11)
 	{SpellID: 47813, Row: 47813, Dot: 0.2},                                               // Corruption (Rank 10)
@@ -90,6 +91,7 @@ var bonuses = []Bonus{
 	{SpellID: 49276, Row: 49276, Direct: 0.8057},                                         // Lesser Healing Wave (Rank 9)
 	{SpellID: 49279, Row: 49279, Direct: 0.267},                                          // Lightning Shield (Rank 11)
 	{SpellID: 49284, Row: 49284, Direct: 0.5371},                                         // Earth Shield (Rank 5)
+	{SpellID: 49909, Row: 49909, AP: 0.1},                                                // Icy Touch (Rank 5)
 	{SpellID: 49941, Row: 49941, AP: 0.06},                                               // Blood Boil (Rank 4)
 	{SpellID: 50590, Row: 50590, Direct: 0.143},                                          // Immolation (Rank 1)
 	{SpellID: 50842, Row: 50842, AP: 0.04},                                               // Pestilence

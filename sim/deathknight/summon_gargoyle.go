@@ -36,22 +36,14 @@ func (dk *Deathknight) registerSummonGargoyleCD() {
 		},
 
 		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, _ *core.Spell) {
-			dk.Gargoyle.EnableWithTimeout(sim, dk.Gargoyle, time.Second*30)
+			// npc_pet_dk_ebon_gargoyle flies off, interrupting its cast, once 32 of its 36 s are up
+			dk.Gargoyle.EnableWithTimeout(sim, dk.Gargoyle, gargoyleCastWindow)
 			dk.Gargoyle.CancelGCDTimer(sim)
 
 			// Add a dummy aura to show in metrics
 			dk.SummonGargoyleAura.Activate(sim)
 
-			// Start casting after a 2.5s delay to simulate the summon animation
-			pa := core.PendingAction{
-				NextActionAt: sim.CurrentTime + dk.GargoyleSummonDelay,
-				Priority:     core.ActionPriorityAuto,
-				OnAction: func(s *core.Simulation) {
-					dk.OnGargoyleStartFirstCast()
-					dk.Gargoyle.GargoyleStrike.Cast(sim, dk.CurrentTarget)
-				},
-			}
-			sim.AddPendingAction(&pa)
+			dk.Gargoyle.startAI(sim)
 		},
 	})
 
@@ -66,55 +58,52 @@ func (dk *Deathknight) registerSummonGargoyleCD() {
 	}
 }
 
+// npc_pet_dk_ebon_gargoyle's timers, from its first UpdateAI
+const (
+	gargoyleDecisionInterval = 400 * time.Millisecond
+	gargoyleFirstCast        = 2000 * time.Millisecond
+	gargoyleCastWindow       = 32 * time.Second
+)
+
 type GargoylePet struct {
 	core.Pet
 
 	dkOwner *Deathknight
 
 	GargoyleStrike *core.Spell
+
+	summonedAt     time.Duration
+	firstCast      bool
+	decisionAction *core.PendingAction
 }
 
 func (dk *Deathknight) NewGargoyle() *GargoylePet {
-	// Remove any hit that would be given by NocS as it does not translate to pets
-	var nocsHit float64
-	if dk.nervesOfColdSteelActive() {
-		nocsHit = float64(dk.Talents.NervesOfColdSteel) * core.MeleeHitRatingPerHitChance
-	}
-	if dk.HasDraeneiHitAura {
-		nocsHit += 1 * core.MeleeHitRatingPerHitChance
-	}
+	// Impurity raises the 75% spell_dk_pet_scaling hands over, in whole percent
+	spellPowerPct := int64(75 + 75*4*dk.Talents.Impurity/100)
 
 	gargoyle := &GargoylePet{
 		Pet: core.NewPet("Gargoyle", &dk.Character, stats.Stats{
-			stats.Stamina:  1000,
-			stats.SpellHit: -nocsHit * PetSpellHitScale,
+			stats.Stamina: 1000,
+			// m_baseSpellCritChance, the only spell crit a creature has
+			stats.SpellCrit: 5 * core.CritRatingPerCritChance,
 		}, func(ownerStats stats.Stats) stats.Stats {
+			// CalculateSPAmount: the owner's attack power as spell damage
 			return stats.Stats{
-				stats.AttackPower: ownerStats[stats.AttackPower],
-				stats.SpellHit:    ownerStats[stats.MeleeHit] * PetSpellHitScale,
-				stats.SpellHaste:  ownerStats[stats.MeleeHaste] * PetSpellHasteScale,
+				stats.SpellPower: calculatePct(ownerStats[stats.AttackPower], spellPowerPct),
 			}
 		}, false, true),
 		dkOwner: dk,
 	}
+	gargoyle.HitScaling = core.PetHitScalingMasterSpell06
 
 	// NightOfTheDead
 	gargoyle.PseudoStats.DamageTakenMultiplier *= 1.0 - float64(dk.Talents.NightOfTheDead)*0.45
 
+	// A guardian's scaling auras never tick, so the owner's haste is what it was at the summon. Its
+	// immunities keep Bloodlust off it.
 	gargoyle.OnPetEnable = func(sim *core.Simulation) {
-		gargoyle.PseudoStats.CastSpeedMultiplier = 1 // guardians are not affected by raid buffs
-		gargoyle.MultiplyCastSpeed(dk.PseudoStats.MeleeSpeedMultiplier)
-
-		// "Nerfed Gargoyle" dynamically updates with owner's haste and melee speed
-		gargoyle.EnableDynamicMeleeSpeed(func(amount float64) {
-			gargoyle.MultiplyCastSpeed(amount)
-		})
-
-		gargoyle.EnableDynamicStats(func(ownerStats stats.Stats) stats.Stats {
-			return stats.Stats{
-				stats.SpellHaste: ownerStats[stats.MeleeHaste] * PetSpellHasteScale,
-			}
-		})
+		gargoyle.PseudoStats.CastSpeedMultiplier = 1
+		gargoyle.MultiplyCastSpeed(dkPetHaste(dk.SwingSpeed()))
 	}
 
 	dk.AddPet(gargoyle)
@@ -131,14 +120,59 @@ func (garg *GargoylePet) Initialize() {
 }
 
 func (garg *GargoylePet) Reset(_ *core.Simulation) {
+	garg.decisionAction = nil
 }
 
 func (garg *GargoylePet) ExecuteCustomRotation(_ *core.Simulation) {
 }
 
-func (garg *GargoylePet) registerGargoyleStrikeSpell() {
-	attackPowerModifier := (1.0 + 0.04*float64(garg.dkOwner.Talents.Impurity)) / 3.0
+// startAI runs npc_pet_dk_ebon_gargoyle's UpdateAI: every 400 ms, from 2 s on and once it has landed,
+// an 80% chance to start Gargoyle Strike if it isn't already casting one.
+func (garg *GargoylePet) startAI(sim *core.Simulation) {
+	garg.summonedAt = sim.CurrentTime
+	garg.firstCast = true
+	if garg.decisionAction != nil {
+		garg.decisionAction.Cancel(sim)
+	}
 
+	landedAt := sim.CurrentTime + max(gargoyleFirstCast, garg.dkOwner.GargoyleSummonDelay)
+	nominal := sim.CurrentTime
+	var decide func(sim *core.Simulation)
+	decide = func(sim *core.Simulation) {
+		if !garg.IsEnabled() {
+			return
+		}
+		if sim.CurrentTime >= landedAt && garg.Hardcast.Expires <= sim.CurrentTime && sim.RandomFloat("Gargoyle Decision") < 0.8 {
+			if garg.firstCast {
+				garg.firstCast = false
+				garg.dkOwner.OnGargoyleStartFirstCast()
+			}
+			garg.GargoyleStrike.Cast(sim, garg.dkOwner.CurrentTarget)
+		}
+
+		nominal += gargoyleDecisionInterval
+		if nominal >= garg.summonedAt+gargoyleCastWindow {
+			return
+		}
+		garg.decisionAction = &core.PendingAction{
+			NextActionAt: sim.NextServerTick(nominal),
+			// the cast landing this update goes first, as Unit::Update runs before UpdateAI
+			Priority: core.ActionPriorityLow,
+			OnAction: decide,
+		}
+		sim.AddPendingAction(garg.decisionAction)
+	}
+
+	nominal += gargoyleDecisionInterval
+	garg.decisionAction = &core.PendingAction{
+		NextActionAt: sim.NextServerTick(nominal),
+		Priority:     core.ActionPriorityLow,
+		OnAction:     decide,
+	}
+	sim.AddPendingAction(garg.decisionAction)
+}
+
+func (garg *GargoylePet) registerGargoyleStrikeSpell() {
 	garg.GargoyleStrike = garg.RegisterSpell(core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: 51963},
 		SpellSchool: core.SpellSchoolNature,
@@ -155,11 +189,9 @@ func (garg *GargoylePet) registerGargoyleStrikeSpell() {
 		ThreatMultiplier: 1,
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := 2.05*sim.Roll(51, 69) + attackPowerModifier*spell.MeleeAttackPower()
-			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
-			spell.DealDamage(sim, result)
-
-			garg.GargoyleStrike.Cast(sim, garg.CurrentTarget)
+			// spell_pet_dk_gargoyle_strike adds 3 a level past 60 to the 51-69 roll
+			baseDamage := sim.Roll(51, 69) + 3*float64(core.CharacterLevel-60) + 0.453*spell.SpellPower()
+			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 		},
 	})
 }

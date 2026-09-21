@@ -543,11 +543,17 @@ func TestServerDataApplied(t *testing.T) {
 		t.Errorf("Spirit Strike: GCD %v, %v", spiritStrike.DefaultCast.GCD, spiritStrike.ServerConflicts())
 	}
 
-	// Death Coil: the DK entry turns the binary flag of the dummy cast down, and it still counts as a conflict
-	deathCoil := register(core.SpellConfig{ActionID: core.ActionID{SpellID: 49895}, Cast: onGCD})
-	if got := deathCoil.ServerConflicts(); deathCoil.Flags.Matches(core.SpellFlagBinary) || len(got) != 1 ||
+	// Searing Totem: the shaman entry turns the binary flag of the summon down, and it still counts as a conflict
+	searingTotem := register(core.SpellConfig{ActionID: core.ActionID{SpellID: 58704}})
+	if got := searingTotem.ServerConflicts(); searingTotem.Flags.Matches(core.SpellFlagBinary) || len(got) != 1 ||
 		got[0].Field != core.ServerBinary || got[0].Sim != 0 || got[0].Server != 1 || got[0].Allowed == nil {
-		t.Errorf("Death Coil: %b, %v", deathCoil.Flags, got)
+		t.Errorf("Searing Totem: %b, %v", searingTotem.Flags, got)
+	}
+
+	// Death Coil: the dummy cast takes the server's binary flag, since the sim deals its damage as 47632
+	deathCoil := register(core.SpellConfig{ActionID: core.ActionID{SpellID: 49895}, Cast: onGCD})
+	if !deathCoil.Flags.Matches(core.SpellFlagBinary) || len(deathCoil.ServerConflicts()) != 0 {
+		t.Errorf("Death Coil: %b, %v", deathCoil.Flags, deathCoil.ServerConflicts())
 	}
 
 	optOut := unit.RegisterSpell(core.SpellConfig{ActionID: core.ActionID{SpellID: 42842, Tag: 99},

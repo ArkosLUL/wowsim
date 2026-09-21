@@ -18,6 +18,7 @@ func (dk *Deathknight) registerRaiseDeadCD() {
 		Duration: time.Minute * 1,
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
 			dk.Ghoul.Pet.Enable(sim, dk.Ghoul)
+			dk.Ghoul.rise(sim)
 		},
 		OnExpire: func(aura *core.Aura, sim *core.Simulation) {
 			dk.Ghoul.Pet.Disable(sim)

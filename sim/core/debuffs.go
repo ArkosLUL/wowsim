@@ -864,20 +864,15 @@ func MarkOfBloodAura(target *Unit) *Aura {
 	return aura
 }
 
+// RuneOfRazoriceVulnerabilityAura is Frost Vulnerability (51714): up to 5 stacks for 20 s. Its 2% a
+// stack only reaches the frost spells of the DK who put it up, so that DK's class code applies it.
 func RuneOfRazoriceVulnerabilityAura(target *Unit) *Aura {
-	frostVulnPerStack := 0.02
-	aura := target.GetOrRegisterAura(Aura{
+	return target.GetOrRegisterAura(Aura{
 		Label:     "RuneOfRazoriceVulnerability",
-		ActionID:  ActionID{SpellID: 50401},
-		Duration:  NeverExpires,
+		ActionID:  ActionID{SpellID: 51714},
+		Duration:  time.Second * 20,
 		MaxStacks: 5,
-		OnStacksChange: func(aura *Aura, sim *Simulation, oldStacks int32, newStacks int32) {
-			oldMultiplier := 1.0 + float64(oldStacks)*frostVulnPerStack
-			newMultiplier := 1.0 + float64(newStacks)*frostVulnPerStack
-			aura.Unit.PseudoStats.SchoolDamageTakenMultiplier[stats.SchoolIndexFrost] *= newMultiplier / oldMultiplier
-		},
 	})
-	return aura
 }
 
 func InsectSwarmAura(target *Unit) *Aura {
