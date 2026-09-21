@@ -137,12 +137,12 @@ and the addon must match it.
 | Op | Dir | Fields |
 |---|---|---|
 | `HELLO` | C→S | protocol version (1), addon build (integer), cached dataset version (empty for none) |
-| `META` | S→C | dataset version, sim commit, catalog date, objective, fingerprint, viewer tier, subject count, block count |
+| `META` | S→C | dataset version, sim commit, catalog date, objective, fingerprint, viewer tier (mod-individual-progression's, 0 for none), subject count, block count |
 | `SUBJ` | S→C | dataset version, then subject entries joined with `;` |
 | `WANT` | C→S | dataset version, block ids joined with `,`, chunked to fit |
 | `BLK` | S→C | dataset version, block id, `<seq>/<total>` (seq from 1), payload chunk |
-| `DONE` | S→C | dataset version, block id, checksum (`-` for no such block); `*` for the block id closes a WANT |
-| `ERR` | S→C | code (`protocol`, `disabled`, `denied`), message |
+| `DONE` | S→C | dataset version, block id, checksum (`-` for no such block). `DONE~<version>~*`, with no checksum, closes a WANT |
+| `ERR` | S→C | code (`protocol`, `disabled` also for no dataset, `denied`), message |
 | `NOTE` | S→C | message, e.g. the update nudge |
 
 - **Subject entry:** `<id>,<kind>,<classId>,<specName>,<phases>[,<raidIndex>,<guid>,<name>]`. Kind 0 is
@@ -151,7 +151,8 @@ and the addon must match it.
 - **Block id** = subject id × 10 + content phase.
 - **Checksum:** Adler-32 of the payload as 8 lowercase hex digits (`a=1, b=0`; per byte
   `a=(a+byte)%65521, b=(b+a)%65521`; `b*65536+a`). `"Wikipedia"` → `11e60398`.
-- **Fingerprint:** the checksum of `<classId>:<tree>` per raider, sorted as strings, joined with `,`;
+- **Fingerprint:** the checksum of `<classId>:<tree>` per raider, sorted byte-wise (Lua 5.1's `<` follows the
+  locale, so the addon compares bytes), joined with `,`;
   tree is the inspected talent tab with the most points (first on a tie), minus 1.
 - **Dataset version:** 8 hex digits of a SHA-256 over everything the addon caches, excluding the export
   time, so re-exporting unchanged results doesn't trigger a sync.
@@ -188,10 +189,10 @@ way for the codecs to disagree).
 ### Protocol behaviour
 
 **Pull-only, with one deliberate exception.** The module sends nothing until an addon says `HELLO`,
-so a login storm costs zero for the ~53k bot accounts. The exception: when `.bistooltip reload` runs,
-it sends a single unsolicited `META` to sessions that already handshook *this session*, so an
-eight-hour login doesn't sit stale after a re-import. That preserves the property pull-only was
-protecting.
+so a login storm costs zero for the ~53k bot accounts. The exception: a reload (`.bistooltip reload`,
+`.reload config`) sends one message to each addon that said HELLO *this login* and whose state changed:
+`META` when it's newly served or served a new dataset version, the `ERR` when it no longer is. So an
+eight-hour login doesn't sit stale after a re-import, and the property pull-only was protecting holds.
 
 **Sync triggers:** `HELLO` on every login and `/reload` (2 frames when the version matches, the
 common case), plus a manual "Sync now" button.
@@ -200,7 +201,8 @@ common case), plus a manual "Sync now" button.
 *that block* once, then marks it failed and keeps everything else; never fail a whole sync over one
 block. Completed blocks persist to cache as they land, so a disconnect resumes by requesting only
 what's missing. Every `SUBJ`, `BLK` and `DONE` carries the dataset version; the addon discards frames
-tagged with anything other than what `META` announced, then re-handshakes.
+tagged with anything other than what `META` announced, then re-handshakes. A WANT naming a stale version
+gets only `DONE~<current version>~*`, which triggers exactly that.
 
 **Three version numbers, kept distinct** because they change for unrelated reasons: the **protocol
 version** (mismatch refuses with `ERR~protocol`), the **addon build** (drives the `NOTE` update nudge
@@ -214,11 +216,9 @@ switch can restrict to a guild id or account list later if it ever matters.
 
 ## Execution: sessions and gates
 
-**One phase per session**, following the project's phase loop: implement, verify, leave uncommitted,
-stop — a separate session reviews and fixes. Commit on the effort branch and `git merge --ff-only`
-into `master` only on the user's explicit "commit and merge". This is **not** a wave-loop effort: the
-phases are a dependency chain, not parallel work items, so the orchestrator machinery would cost more
-than it buys.
+**One phase at a time**, via the phase loop ([workflow](../guide/workflow.md)). This is **not** a
+wave-loop effort: the phases are a dependency chain, not parallel work items, so the wave loop's
+machinery would cost more than it buys.
 
 | Session | Phase | Repo | Ends on |
 |---|---|---|---|
@@ -234,10 +234,10 @@ version.
 
 **Gates that need the user**, none of which a session may do on its own:
 
-- rebuilding the worldserver (`docker compose build ac-worldserver`) — a hard rule in `CLAUDE.md`
+- rebuilding the worldserver ([azerothcore-server](../guide/azerothcore-server.md)) — a hard rule in `CLAUDE.md`
 - importing the dataset `.sql` — the live DB is otherwise SELECT-only
 - any in-client verification, and the ~245 optimizer runs that produce real data
-- `git init` on the addon folder, creating the effort branch, and every commit or merge
+- `git init` on the module and addon folders, creating the effort branch, and every commit or merge
 
 **Picking this up cold.** A fresh session should read this PLAN, then `git branch --show-current` and
 `git status` in whichever repo the session's phase names (sessions run concurrently in this project).
@@ -290,31 +290,37 @@ result fanned out to the live roster's 25 raiders and 30 specs × 5 phases gave 
 and 1,100 frames; the `.sql` imported twice cleanly into a throwaway MySQL 8.4, and the `-luaOut`
 parsed into the expected tables.
 
-### Phase 2 — Server module (`[ac]`, its own branch)
+### Phase 2 — Server module (`[ac]/modules/mod-bis-tooltip`)
 
-`modules/mod-bis-tooltip/`, mirroring mod-multibot-bridge's layout:
+**Status:** done. Its own git repo like mod-sim-validation, on `master`, not pushed. Setup, config, commands and the
+server's side of the protocol: `[ac]/modules/mod-bis-tooltip/README.md`.
 
-- `src/mod_bis_tooltip.cpp` — the `AddSC_bis_tooltip()` shim.
-- `src/BisTooltipBridge.cpp` — load the three tables into memory on
-  `WorldScript::OnAfterConfigLoad`; a `.bistooltip reload` GM command so a re-import needs no restart
-  (and fires the unsolicited `META` nudge). A `PlayerScript` handles addon whispers; a per-session
-  frame queue drains in `WorldScript::OnUpdate`. **Never send a dataset synchronously** — the server
-  guide warns that world-thread loops freeze the world.
-- Frame blocks exactly as `BlockFrames` does, and pack `SUBJ` entries whole into frames under the cap.
-- `conf/BisTooltip.conf.dist` — `Enable`, `FramesPerTick` (10), `GlobalFramesPerTick`,
-  `HelloCooldownMs` (10000), `MaxBlocksInFlight`, `MinAddonVersion`, `UpdateMessage`, and an optional
-  `Access` / `AllowedGuildId` / `AllowedAccounts` left open by default.
-- Treat all addon input as untrusted: validate the protocol version, cap `WANT` length, answer unknown
-  block ids with `DONE` checksum `-`, drop requests that fail rate limits without replying.
-- Schema DDL in the module's own `data/sql/db-world/base/`, identical to `BisTablesSQL`. Dataset rows
-  are **not** committed.
+- `src/BisTooltipWire.*`: the Go codec's C++ twin (checksum, `BlockFrames`' chunking, `SUBJ` packing, field checks).
+- `src/BisTooltipDataset.*`: builds every served message from the table rows. Any bad row rejects the whole dataset.
+- Both are standard library only, so `test/` builds them without the server.
+- `src/BisTooltipBridge.cpp`: loads the dataset at startup (`OnLoadCustomDatabaseTable`) and on `.bistooltip reload`;
+  chat hooks; per-player queues.
+- `data/sql/db-world/base/`: `BisTablesSQL` verbatim, and the command rows.
 
-Follow `[ac]/AGENTS.md`: read `.agents/docs/cpp-guidelines.md` before writing C++, plans go in
-`.agents/plans/`, don't add live e2e tests, never touch SQL outside the module's own dirs.
+Changed from the plan:
 
-**Verify:** compiles. The rebuild (`cd [ac] && docker compose build ac-worldserver && docker compose
-up -d`) **needs the user's explicit OK** — a hard rule in `CLAUDE.md`. Then check `docker logs
-ac-worldserver` for the module's load line and "World Initialized".
+- `MinAddonVersion` is `MinAddonBuild`, as HELLO calls it. The conf is `mod_bis_tooltip.conf.dist`, like
+  mod-sim-validation's. `.bistooltip status` is new.
+- `SendIntervalMs` (100) paces the queues: `WorldScript::OnUpdate` runs every world loop (`MinWorldUpdateTime`, 10 ms
+  live), not per 100 ms map tick.
+- No logout hook: bots fire it from map threads. Logged-out characters are pruned every world tick instead.
+- BIST messages that aren't a self-whisper are swallowed, so no client can fake replies to another.
+- A HELLO in another protocol gets `ERR~protocol` whatever its other fields.
+- A reload only disturbs addons whose state changed (see Protocol behaviour); re-importing the same version restarts
+  no sync.
+
+**Verified:** `test/run-tests.sh` passes under g++ 13 and clang 18. Checksums and frame splits match the Go codec's on
+the same inputs, and 18 malformed datasets are rejected. Phase 1's export, loaded into a throwaway MySQL over the module
+SQL (applied twice), loads whole: 55 subjects, 275 blocks, 1,100 BLK frames as acbis counted, each within 255 bytes and
+reassembling to its payload; 1,384 messages send it all. `test/syntax-check.sh` compiles `src/` against current [ac]
+headers with the last build's flags plus `-Werror`. `codestyle-cpp.py` passes. A separate reviewer checked the
+threading, hook, load-order and packet claims against the core source. Live, `ac-db-import` applied both SQL files and
+the worldserver logs `mod-bis-tooltip: no dataset loaded`, then "World Initialized".
 
 ### Phase 3 — Addon fork: transport and cache
 
@@ -334,6 +340,8 @@ authority, and put you back to hand-distributing data.
   - Comm: event frame on `CHAT_MSG_ADDON` filtering `prefix == "BIST"`; drive
     `HELLO → META → SUBJ → WANT → BLK/DONE`; reassemble by `blockId~seq/total`; verify checksums;
     implement the retry and version-discard rules above.
+  - The module drops some messages unanswered (its README lists them): retry HELLO after
+    `HelloCooldownMs` (10 s) of silence, and send each WANT after the last one's `DONE~<version>~*`.
   - Cache: decoded blocks and the dataset version in AceDB's **`global`** scope, not `char`, so one
     install syncs once for every character on it. `SavedVariables: BisTooltipDB` is already declared.
   - Decode into exactly what `acbis -luaOut` writes: `Bistooltip_server_bislists`, which
@@ -382,7 +390,7 @@ slip without blocking phase 4.
 - Docs, in the same change as the work, per `CLAUDE.md`:
   - `docs/guide/azerothcore-server.md`: `mod-bis-tooltip` in the modules table.
   - `CONTEXT.md`: *dataset*, *block*, *subject*, *composition fingerprint*.
-  - The module's `README.md`: the protocol table (promoted from this PLAN) and config keys.
+  - The module's `README.md`: the wire table, promoted from this PLAN.
 
 ## Verification summary
 

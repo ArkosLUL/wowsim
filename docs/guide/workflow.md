@@ -27,9 +27,9 @@ How the user runs efforts, beyond the hard rules in [CLAUDE.md](../../CLAUDE.md)
 
 ## Review and landing
 
-1. Implement a phase and verify it (build and tests in the container). Leave it uncommitted and stop.
-2. The user opens a separate session for `/code-review <scope>`, then says "fix all findings". Reviewers
-   run Go and TS in the container too.
+1. A subagent implements the phase and verifies it (build and tests in the container), uncommitted.
+2. A fresh subagent reviews it by hand at high effort, fixes every finding and re-verifies; reviewers run Go
+   and TS in the container too. The orchestrator reports the findings and stops.
 3. Wait for the user to say "commit and merge". A bare "can be merged" gets the commit blocked by auto
    mode.
 4. Re-verify the reviewer's edits, commit on the effort branch, then
