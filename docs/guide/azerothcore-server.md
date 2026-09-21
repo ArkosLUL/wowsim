@@ -103,8 +103,8 @@ mod-individual-progression stores a character's tier as rewarded quest `66000 + 
 ## Raid characters
 
 - The raid group is led by Deathsong: 25 raiders in subgroups 0–4. It's disbanded and remade often.
-- The user plays Agony, Deathsong, Felesta and Nightwarrior (accounts 515 = Felesta, 516 = the other
-  three). Every other raider is a playerbot.
+- The user plays only Deathsong. Every other raider is a playerbot, including Agony, Felesta and
+  Nightwarrior, which the user used to play (accounts 515 = Felesta, 516 = Deathsong and the other two).
 - Every raider holds all 11 primary professions and has Toughness r6 and Master of Anatomy r6. Skill
   values don't show who has a bonus ([azerothcore-data.md](azerothcore-data.md#professions)).
 - Herbalism in an export doesn't mean the raider knows Lifeblood (55503): only some do. The sim still

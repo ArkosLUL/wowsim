@@ -92,7 +92,9 @@ npx protoc --ts_out ui/core/proto --proto_path proto proto/ui.proto
     as the UI does.
   - `/optimizeGearAsync` runs one optimization at a time (409 while busy, naming the running id) and
     cancels a run nobody has polled for 2 minutes. `/cancelAsync` cancels by progress id. The CLI
-    equivalent: `wowsimcli optimize --infile <OptimizeGearRequest JSON>`.
+    equivalent: `wowsimcli optimize --infile <OptimizeGearRequest JSON>`. A request without item data,
+    like `sim/optimizer/testdata/search/*.json`, fails with "isn't in the database" unless the CLI is
+    built with `--tags=with_db` (`go run --tags=with_db ./cmd/wowsimcli optimize …`).
 
 ## Shell gotchas
 
