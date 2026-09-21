@@ -21,6 +21,9 @@ type Hardcast struct {
 	ActionID   ActionID
 	OnComplete func(*Simulation, *Unit)
 	Target     *Unit
+
+	// SPELL_ATTR2_DO_NOT_RESET_COMBAT_TIMERS: Auto Shot keeps firing through it
+	keepsCombatTimers bool
 }
 
 // Input for constructing the CastSpell function for a spell.
@@ -78,7 +81,12 @@ type castTiming struct {
 	hasCastTime bool
 	// SPELL_AURA_IGNORE_MELEE_RESET auras whose class mask covers the spell
 	ignoreResetAuras []ActionID
+	// SPELL_ATTR2_DO_NOT_RESET_COMBAT_TIMERS: a player's melee timers stand still while it's cast
+	// (Unit::Update), and Auto Shot isn't held
+	keepsCombatTimers bool
 }
+
+const attr2DoNotResetCombatTimers = 0x00020000
 
 func newCastTiming(spell *Spell, ignoreHaste bool) castTiming {
 	ct := castTiming{ignoreHaste: ignoreHaste}
@@ -93,6 +101,7 @@ func newCastTiming(spell *Spell, ignoreHaste bool) castTiming {
 	ct.resetsAutoAttack = sd.Flags&serverdata.FlagResetsAutoAttack != 0
 	ct.hasCastTime = sd.CastMs > 0
 	ct.ignoreResetAuras = ignoreMeleeResetAuras(sd)
+	ct.keepsCombatTimers = sd.Attributes[2]&attr2DoNotResetCombatTimers != 0
 	return ct
 }
 
@@ -293,11 +302,16 @@ func (spell *Spell) makeCastFunc(config CastConfig) CastSuccessFunc {
 			spell.Unit.SetGCDTimer(sim, sim.CurrentTime+effectiveTime)
 		}
 
-		// Hardcasts
+		// Hardcasts. Whatever comes due mid-cast is held for the cast to land (WeaponAttack.castHold).
 		if spell.CurCast.CastTime > 0 {
-			if resetsSwing {
-				// no swings while casting
-				spell.Unit.AutoAttacks.resetSwingTimers(sim, sim.CurrentTime+spell.CurCast.CastTime)
+			castEnd := sim.CurrentTime + spell.CurCast.CastTime
+			switch {
+			case resetsSwing:
+				spell.Unit.AutoAttacks.resetSwingTimers(sim, castEnd)
+			case spell.timing.keepsCombatTimers && spell.Unit.Type == PlayerUnit:
+				// the server takes the cast on its next update, and the timers skip every update from
+				// that one until the one it lands on
+				spell.Unit.AutoAttacks.pauseMelee(sim, castEnd-sim.NextServerTick(sim.CurrentTime))
 			}
 
 			if sim.Log != nil && !spell.Flags.Matches(SpellFlagNoLogs) {
@@ -306,7 +320,7 @@ func (spell *Spell) makeCastFunc(config CastConfig) CastSuccessFunc {
 			}
 
 			spell.Unit.Hardcast = Hardcast{
-				Expires:  sim.CurrentTime + spell.CurCast.CastTime,
+				Expires:  castEnd,
 				ActionID: spell.ActionID,
 				OnComplete: func(sim *Simulation, target *Unit) {
 					if sim.Log != nil && !spell.Flags.Matches(SpellFlagNoLogs) {
@@ -325,8 +339,11 @@ func (spell *Spell) makeCastFunc(config CastConfig) CastSuccessFunc {
 					if !spell.Flags.Matches(SpellFlagNoOnCastComplete) {
 						spell.Unit.OnCastComplete(sim, spell)
 					}
+
+					spell.Unit.AutoAttacks.releaseCastHold(sim)
 				},
-				Target: target,
+				Target:            target,
+				keepsCombatTimers: spell.timing.keepsCombatTimers,
 			}
 
 			if spell.Unit.Hardcast.Expires != spell.Unit.NextGCDAt() {

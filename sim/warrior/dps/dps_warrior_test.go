@@ -77,6 +77,7 @@ func BenchmarkSimulate(b *testing.B) {
 				Spec:          PlayerOptionsFury,
 				TalentsString: FuryTalents,
 				Buffs:         core.FullIndividualBuffs,
+				Rotation:      core.GetAplRotation("../../../ui/warrior/apls", "fury").Rotation,
 			},
 			core.FullPartyBuffs,
 			core.FullRaidBuffs,

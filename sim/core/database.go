@@ -375,20 +375,24 @@ func EquipmentSpecFromJsonString(jsonString string) *proto.EquipmentSpec {
 	return es
 }
 
+// Adds in place, here and in TotalStats: every EquipStats call runs these, and a by-value Stats is a
+// few hundred bytes. Don't reorder the additions, the float sums depend on the order.
 func (equipment *Equipment) Stats() stats.Stats {
 	equipStats := stats.Stats{}
 	for i := range equipment {
-		equipStats = equipStats.Add(equipment[i].TotalStats())
+		itemStats := equipment[i].TotalStats()
+		equipStats.AddInplace(&itemStats)
 	}
 	return equipStats
 }
 
 // TotalStats returns the stats the item gives when worn: its own, enchant, gems and socket bonus.
 func (item *Item) TotalStats() stats.Stats {
-	itemStats := item.Stats.Add(item.Enchant.Stats)
+	itemStats := item.Stats
+	itemStats.AddInplace(&item.Enchant.Stats)
 
-	for _, gem := range item.Gems {
-		itemStats = itemStats.Add(gem.Stats)
+	for i := range item.Gems {
+		itemStats.AddInplace(&item.Gems[i].Stats)
 	}
 
 	// Check socket bonus
@@ -402,7 +406,7 @@ func (item *Item) TotalStats() stats.Stats {
 		}
 
 		if allMatch {
-			itemStats = itemStats.Add(item.SocketBonus)
+			itemStats.AddInplace(&item.SocketBonus)
 		}
 	}
 	return itemStats

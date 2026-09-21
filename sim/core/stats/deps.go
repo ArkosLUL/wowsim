@@ -1,7 +1,9 @@
 package stats
 
 import (
+	"cmp"
 	"fmt"
+	"slices"
 )
 
 // This stat list is arranged such that evaluating dependencies in this order
@@ -165,47 +167,59 @@ func (sdm *StatDependencyManager) NewDynamicMultiplyStat(s Stat, amount float64)
 	return dep
 }
 
+// Each stat's position in safeDepsOrder. Only those stats reach sdm.deps, since every constructor
+// runs validateDep.
+var depRank = func() (rank [Len]int) {
+	for i, s := range safeDepsOrder {
+		rank[s] = i
+	}
+	return rank
+}()
+
 func (sdm *StatDependencyManager) sortDeps() {
-	deps := make([]*StatDependency, 0, len(sdm.deps))
+	// Ordering by (src, dst) position in safeDepsOrder guarantees proper sorting of dependencies.
+	// Stable, so each pair's deps keep the order they were added in: static amounts combine in that order.
+	sorted := slices.Clone(sdm.deps)
+	slices.SortStableFunc(sorted, func(a, b *StatDependency) int {
+		return cmp.Or(cmp.Compare(depRank[a.src], depRank[b.src]), cmp.Compare(depRank[a.dst], depRank[b.dst]))
+	})
 
-	// By looping through the stats in order of safeDeps, we guarantee proper
-	// sorting of dependencies.
-	for i, srcStat := range safeDepsOrder {
-		for _, dstStat := range safeDepsOrder[i:] {
-			// Combine all static deps into 1 for performance.
-			startAmount := 0.0
-			if srcStat == dstStat {
-				startAmount = 1
-			}
+	deps := make([]*StatDependency, 0, len(sorted))
+	for start := 0; start < len(sorted); {
+		srcStat, dstStat := sorted[start].src, sorted[start].dst
 
-			amount := startAmount
-			for _, dep := range sdm.deps {
-				if dep.src != srcStat || dep.dst != dstStat {
-					continue
-				}
+		// Combine all static deps into 1 for performance.
+		startAmount := 0.0
+		if srcStat == dstStat {
+			startAmount = 1
+		}
 
-				if dep.dynamic {
-					// Dynamic deps need to remain separate, so
-					// they can be turned on/off.
-					deps = append(deps, dep)
+		amount := startAmount
+		end := start
+		for ; end < len(sorted) && sorted[end].src == srcStat && sorted[end].dst == dstStat; end++ {
+			dep := sorted[end]
+			if dep.dynamic {
+				// Dynamic deps need to remain separate, so
+				// they can be turned on/off.
+				deps = append(deps, dep)
+			} else {
+				if srcStat == dstStat {
+					amount *= dep.amount
 				} else {
-					if srcStat == dstStat {
-						amount *= dep.amount
-					} else {
-						amount += dep.amount
-					}
+					amount += dep.amount
 				}
-			}
-
-			if amount != startAmount {
-				deps = append(deps, &StatDependency{
-					enabled: true,
-					src:     srcStat,
-					dst:     dstStat,
-					amount:  amount,
-				})
 			}
 		}
+
+		if amount != startAmount {
+			deps = append(deps, &StatDependency{
+				enabled: true,
+				src:     srcStat,
+				dst:     dstStat,
+				amount:  amount,
+			})
+		}
+		start = end
 	}
 
 	sdm.deps = deps

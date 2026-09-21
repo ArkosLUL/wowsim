@@ -1,5 +1,6 @@
 import { GemColor } from '../proto/common.js';
 import { Profession } from '../proto/common.js';
+import { Availability, isObtainable } from '../optimizer/catalog.js';
 import { getEnumValues } from '../utils.js';
 import {
 	UIGem as Gem,
@@ -39,10 +40,12 @@ export function gemEligibleForSocket(gem: Gem, socketColor: GemColor) {
 	return (gem.color == GemColor.GemColorMeta) == (socketColor == GemColor.GemColorMeta);
 }
 
-export function isUnrestrictedGem(gem: Gem, phase?: number): boolean {
+// Gems the EP helpers pick from: no unique or profession gems, and with availability, only what the
+// server catalog hands out by then.
+export function isUnrestrictedGem(gem: Gem, availability?: Availability): boolean {
 	return !gem.unique &&
 		gem.requiredProfession == Profession.ProfessionUnknown &&
-		(phase == null || gem.phase <= phase);
+		(!availability || isObtainable(gem.id, gem.phase, availability));
 }
 
 

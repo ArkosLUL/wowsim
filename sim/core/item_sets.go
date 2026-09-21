@@ -70,7 +70,9 @@ func (character *Character) HasSetBonus(set *ItemSet, numItems int32) bool {
 	}
 
 	var count int32
-	for _, item := range character.Equipment {
+	// by index: ranging by value copies each Item, stats arrays and all, and some specs call this dozens of times
+	for i := range character.Equipment {
+		item := &character.Equipment[i]
 		if item.SetName == "" {
 			continue
 		}

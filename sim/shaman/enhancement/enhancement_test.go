@@ -62,6 +62,7 @@ func BenchmarkSimulate(b *testing.B) {
 				Consumes:      FullConsumes,
 				Spec:          PlayerOptionsFTFT,
 				Buffs:         core.FullIndividualBuffs,
+				Rotation:      core.GetAplRotation("../../../ui/enhancement_shaman/apls", "default_ft").Rotation,
 			},
 			core.FullPartyBuffs,
 			core.FullRaidBuffs,

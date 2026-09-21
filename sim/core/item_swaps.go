@@ -168,7 +168,6 @@ func (swap *ItemSwap) SwapItems(sim *Simulation, slots []proto.ItemSlot) {
 
 	character := swap.character
 
-	meleeWeaponSwapped := false
 	newStats := stats.Stats{}
 	has2H := swap.GetItem(proto.ItemSlot_ItemSlotMainHand).HandType == proto.HandType_HandTypeTwoHand
 	for _, slot := range slots {
@@ -180,7 +179,6 @@ func (swap *ItemSwap) SwapItems(sim *Simulation, slots []proto.ItemSlot) {
 
 		if ok, swapStats := swap.swapItem(slot, has2H); ok {
 			newStats = newStats.Add(swapStats)
-			meleeWeaponSwapped = slot == proto.ItemSlot_ItemSlotMainHand || slot == proto.ItemSlot_ItemSlotOffHand || meleeWeaponSwapped
 		}
 	}
 
@@ -194,9 +192,8 @@ func (swap *ItemSwap) SwapItems(sim *Simulation, slots []proto.ItemSlot) {
 		onSwap(sim)
 	}
 
-	if character.AutoAttacks.AutoSwingMelee && meleeWeaponSwapped && sim.CurrentTime > 0 {
-		character.AutoAttacks.StopMeleeUntil(sim, sim.CurrentTime, false)
-	}
+	// No swing reset: equipping a weapon only changes its attack time (Player::_ApplyWeaponDamage),
+	// and the running timer keeps what it had left.
 
 	// If GCD is ready then use the GCD, otherwise we assume it's being used along side a spell.
 	if character.GCD.IsReady(sim) {

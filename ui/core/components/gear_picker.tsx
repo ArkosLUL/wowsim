@@ -4,6 +4,7 @@ import { element, fragment, ref } from 'tsx-vanilla';
 
 import { setItemQualityCssClass } from '../css_utils';
 import { IndividualSimUI } from '../individual_sim_ui.js';
+import { isObtainable, loadCatalog, loadedCatalog } from '../optimizer/catalog';
 import { Player } from '../player';
 import { Class, GemColor, ItemQuality, ItemReforge, ItemSlot, ItemSpec, ItemType } from '../proto/common';
 import { DatabaseFilters, RepFaction, UIEnchant as Enchant, UIGem as Gem, UIItem as Item, UIItem_FactionRestriction } from '../proto/ui.js';
@@ -13,7 +14,7 @@ import { EquippedItem } from '../proto_utils/equipped_item';
 import { Gear } from '../proto_utils/gear.js';
 import { gemMatchesSocket, getEmptyGemSocketIconUrl } from '../proto_utils/gems';
 import { difficultyNames, professionNames, REP_FACTION_NAMES, REP_LEVEL_NAMES, slotNames } from '../proto_utils/names.js';
-import { reforgeAmount, reforgeLabel, reforgeStatTypeName, reforgingFor, validReforges } from '../proto_utils/reforging';
+import { isValidReforge, reforgeAmount, reforgeLabel, reforgeStatTypeName, reforgingFor, validReforges } from '../proto_utils/reforging';
 import { Stats } from '../proto_utils/stats';
 import { Sim } from '../sim.js';
 import { SimUI } from '../sim_ui';
@@ -99,6 +100,10 @@ export class GearPicker extends Component {
 		].map(slot => new ItemPicker(rightSide, simUI, player, slot));
 
 		this.itemPickers = leftItemPickers.concat(rightItemPickers).sort((a, b) => a.slot - b.slot);
+
+		// fetched ahead so the phase filter and item EP use it from the first open; until then they
+		// go by the Classic phases
+		player.sim.waitForInit().then(() => loadCatalog().catch(e => console.warn(`Gear picker: ${e}`)));
 	}
 }
 
@@ -207,7 +212,13 @@ export class ItemRenderer extends Component {
 		}
 
 		const reforge = newItem.reforge;
-		this.reforgeElem.textContent = reforge ? `Reforged: ${reforgeLabel(newItem.item, reforge, playerReforging(this.player))}` : '';
+		this.reforgeElem.textContent = '';
+		if (reforge) {
+			// loaded gear keeps a reforge its encounter's config refuses, which the sim then skips
+			const config = playerReforging(this.player);
+			const inactive = isValidReforge(newItem.item, reforge, config) ? '' : " (your server settings don't allow it)";
+			this.reforgeElem.textContent = `Reforged: ${reforgeLabel(newItem.item, reforge, config)}${inactive}`;
+		}
 
 		newItem.allSocketColors().forEach((socketColor, gemIdx) => {
 			const gemContainer = createGemContainer(socketColor, newItem.gems[gemIdx]);
@@ -454,7 +465,8 @@ export class SelectorModal extends BaseModal {
 			<div className="d-flex align-items-center form-text mt-3">
 				<i className="fas fa-circle-exclamation fa-xl me-2"></i>
 				<span>
-					If gear is missing, check the selected phase and your gear filters.
+					If gear is missing, check the selected phase and your gear filters. Items and gems only show up once the server hands them out,
+					and PvP gear never does.
 					<br />
 					If the problem persists, save any un-saved data, click the
 					<i className="fas fa-cog mx-1"></i>
@@ -853,6 +865,7 @@ export interface ItemData<T> {
 	id: number;
 	actionId: ActionId;
 	quality: ItemQuality;
+	// Classic phase, which the phase filter only falls back on until the server catalog loads
 	phase: number;
 	baseEP: number;
 	ignoreEPFilter: boolean;
@@ -904,6 +917,9 @@ export class ItemList<T> {
 	private tabContent: Element;
 	private onItemClick: (itemData: ItemData<T>) => void;
 	private scroller: Clusterize;
+	private disposed = false;
+	// the equipped id the phase filter let through only because it's equipped, else 0
+	private keptAsEquipped = 0;
 
 	constructor(
 		parent: HTMLElement,
@@ -1087,6 +1103,19 @@ export class ItemList<T> {
 			// always hide non-items from being added to batch.
 			simAllButton.hidden = true;
 		}
+
+		if (!loadedCatalog()) {
+			loadCatalog().then(
+				() => {
+					if (!this.disposed) {
+						this.applyFilters();
+					}
+				},
+				() => {
+					// the Classic phases stay in charge
+				},
+			);
+		}
 	}
 
 	public sizeRefresh() {
@@ -1095,14 +1124,36 @@ export class ItemList<T> {
 	}
 
 	public dispose() {
+		this.disposed = true;
 		this.scroller.dispose();
 	}
 
+	// What this list's spot holds: an item or gem id, or an enchant's effect id. 0 when empty.
+	private equippedId(): number {
+		const equipped = this.equippedToItemFn(this.gearData.getEquippedItem());
+		if (!equipped) {
+			return 0;
+		}
+		return this.label == 'Enchants' ? (equipped as unknown as Enchant).effectId : (equipped as unknown as Item | Gem).id;
+	}
+
+	// The phase filter: what the server catalog says drops, sells or gets crafted by the selected
+	// phase, PvP gear left out like in the optimizer. Faction is the filters menu's call. Enchants
+	// always pass, since mod-npc-enchanter sells every one of them from the start.
+	private obtainable(data: ItemData<T>): boolean {
+		return this.label == 'Enchants' || isObtainable(data.id, data.phase, { contentPhase: this.player.sim.getPhase() });
+	}
+
 	public updateSelected() {
+		// swapping off an item that was only listed because it was equipped drops it from the list
+		if (this.keptAsEquipped && this.keptAsEquipped != this.equippedId()) {
+			this.applyFilters();
+		}
+
 		const newEquippedItem = this.gearData.getEquippedItem();
 		const newItem = this.equippedToItemFn(newEquippedItem);
 
-		const newItemId = newItem ? (this.label == 'Enchants' ? (newItem as unknown as Enchant).effectId : (newItem as unknown as Item | Gem).id) : 0;
+		const newItemId = this.equippedId();
 		const newEP = newItem ? this.computeEP(newItem) : 0;
 
 		this.scroller.elementUpdate(item => {
@@ -1141,11 +1192,17 @@ export class ItemList<T> {
 			itemIdxs = this.player.filterGemData(itemIdxs, i => this.itemData[i].item as unknown as Gem, this.slot, this.socketColor);
 		}
 
+		// what's equipped stays listed even when the phase rules it out, or the catalog has no row for it
+		const equippedId = this.equippedId();
+		this.keptAsEquipped = 0;
 		itemIdxs = itemIdxs.filter(i => {
 			const listItemData = this.itemData[i];
 
-			if (listItemData.phase > this.player.sim.getPhase()) {
-				return false;
+			if (!this.obtainable(listItemData)) {
+				if (listItemData.id != equippedId) {
+					return false;
+				}
+				this.keptAsEquipped = equippedId;
 			}
 
 			if (this.searchInput.value.length > 0) {
@@ -1216,11 +1273,7 @@ export class ItemList<T> {
 		const itemEP = this.computeEP(itemData.item);
 
 		const equippedItem = this.equippedToItemFn(this.gearData.getEquippedItem());
-		const equippedItemID = equippedItem
-			? this.label == 'Enchants'
-				? (equippedItem as unknown as Enchant).effectId
-				: (equippedItem as unknown as Item).id
-			: 0;
+		const equippedItemID = this.equippedId();
 		const equippedItemEP = equippedItem ? this.computeEP(equippedItem) : 0;
 
 		const nameElem = ref<HTMLLabelElement>();

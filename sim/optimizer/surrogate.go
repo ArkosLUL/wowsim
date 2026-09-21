@@ -225,7 +225,7 @@ func (s *surrogate) choiceStats(slot proto.ItemSlot, c ItemChoice) stats.Stats {
 	}
 	cand := s.pool.candidate(slot, c.ItemID)
 	if cand == nil {
-		item := core.NewItem(c.CoreSpec(), nil)
+		item := core.NewItem(c.CoreSpec(), s.pool.reforging)
 		return item.TotalStats()
 	}
 	total := cand.Item.Stats
@@ -1307,7 +1307,7 @@ const (
 func (r *run) trimToBudget(families []*effectFamily, fx *effects, iterations int, budget float64) []*effectFamily {
 	cost := 0.0
 	for _, f := range families {
-		cost += float64(r.eval.cost(familyPoints(f.base, f.variants, f.matched), iterations))
+		cost += float64(r.eval.cost(r.pool.familyPoints(f.base, f.variants, f.matched), iterations))
 	}
 	budget = max(0, min(budget, float64(r.remaining())-reserveShare*float64(r.total)))
 	if cost <= budget || cost == 0 {
@@ -1352,14 +1352,14 @@ func (r *run) trimToBudget(families []*effectFamily, fx *effects, iterations int
 
 // familyPoints are the sims a family's residuals take: base then each variant, or for a matched
 // family each variant's twin (base with the variant's stat change as bonus stats) then the variant.
-func familyPoints(base Loadout, variants []Loadout, matched bool) []Point {
+func (p *Pool) familyPoints(base Loadout, variants []Loadout, matched bool) []Point {
 	if !matched {
 		return append([]Point{{Loadout: base}}, pointsOf(variants)...)
 	}
-	baseStats := gearStats(base)
+	baseStats := p.gearStats(base)
 	points := make([]Point, 0, 2*len(variants))
 	for _, v := range variants {
-		points = append(points, Point{Loadout: base, Offset: gearStats(v).Subtract(baseStats)}, Point{Loadout: v})
+		points = append(points, Point{Loadout: base, Offset: p.gearStats(v).Subtract(baseStats)}, Point{Loadout: v})
 	}
 	return points
 }
@@ -1367,15 +1367,15 @@ func familyPoints(base Loadout, variants []Loadout, matched bool) []Point {
 // measureResiduals is MeasureResiduals with the surrogate's curves, so a residual holds what they
 // miss and nothing the response curve's own fit would add.
 func (r *run) measureResiduals(s *surrogate, base Loadout, variants []Loadout, iterations int) ([]Estimate, error) {
-	evals, err := r.eval.Evaluate(r.ctx, familyPoints(base, variants, false), iterations)
+	evals, err := r.eval.Evaluate(r.ctx, s.pool.familyPoints(base, variants, false), iterations)
 	if err != nil {
 		return nil, fmt.Errorf("residual sims: %w", err)
 	}
-	baseValue := s.curveValue(gearStats(base).Subtract(s.seedStats))
+	baseValue := s.curveValue(s.pool.gearStats(base).Subtract(s.seedStats))
 	out := make([]Estimate, len(variants))
 	for i, v := range variants {
 		simmed := r.obj.Delta(evals[0], evals[i+1])
-		predicted := s.curveValue(gearStats(v).Subtract(s.seedStats)) - baseValue
+		predicted := s.curveValue(s.pool.gearStats(v).Subtract(s.seedStats)) - baseValue
 		out[i] = Estimate{Mean: simmed.Mean - predicted, SE: simmed.SE}
 	}
 	return out, nil
@@ -1384,7 +1384,7 @@ func (r *run) measureResiduals(s *surrogate, base Loadout, variants []Loadout, i
 // measureMatched prices each variant against its twin from familyPoints. What's left is only what
 // the stats don't show, with no curve error in it, and the two share nearly every random number.
 func (r *run) measureMatched(base Loadout, variants []Loadout, iterations int) ([]Estimate, error) {
-	evals, err := r.eval.Evaluate(r.ctx, familyPoints(base, variants, true), iterations)
+	evals, err := r.eval.Evaluate(r.ctx, r.pool.familyPoints(base, variants, true), iterations)
 	if err != nil {
 		return nil, fmt.Errorf("residual sims: %w", err)
 	}
@@ -1428,7 +1428,7 @@ func (r *run) measureFamilies(s *surrogate, fx *effects, families []*effectFamil
 				i := slices.IndexFunc(variants, func(l Loadout) bool { return simErr.Point == Point{Loadout: l} })
 				if i < 0 && f.matched {
 					// a failed twin loses its variant only
-					if j := slices.Index(familyPoints(f.base, variants, true), simErr.Point); j >= 0 {
+					if j := slices.Index(r.pool.familyPoints(f.base, variants, true), simErr.Point); j >= 0 {
 						i = j / 2
 					}
 				}

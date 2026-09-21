@@ -570,21 +570,39 @@ the sources the server refuses.
    - Blood Plague/Frost Fever tick crits; Frost Fever as magic damage class.
    - Ghoul: 70/30 scaling, owner haste and ArP, avoidance.
    - Gargoyle: 75% AP→SP.
+   - Army of the Dead: the server holds melee through the channel (`UNIT_STATE_CASTING`), and the sim's
+     class code cancels autos instead. Check the restart matches.
 2. **Hunter (recorded):**
    - Measured haste: remove ×1.15, model 89507 plus the quiver.
    - +500 ms on shots.
    - Pet: 22%/12.87% scaling, floored hit/expertise, owner haste and ArP.
    - Beast Mastery 22 pet points (`ui/core/talents/hunter_pet.ts:213`, `ui/hunter/sim.ts:90`).
    - Hunter's Mark off GCD; Explosive Trap via Trap Launcher.
+   - Volley (58434) is a channel with `ATTR2_DO_NOT_RESET_COMBAT_TIMERS`: the server suspends the ranged
+     timer through it and doesn't block Auto Shot, where `volley.go` cancels autos and adds 500 ms.
+   - Auto Shot fires one map update after its timer runs out: `Unit::_UpdateAutoRepeatSpell` reads the
+     timer before `Unit::Update` decrements it. This item may edit `attack.go`'s ranged timing for it.
 3. **Rogue:**
    - Deadly Poison add-ticks and crit (tick timer kept while stacking).
    - Rupture add-ticks and core tick crit.
    - Poison proc data.
+   - Vanish, then breaking stealth, restarts autos with both hands ready (`EnableAutoSwing` in
+     `rogue.go`); the server's `Unit::Attack` starts a ready off hand half a main-hand swing behind.
 4. **Warrior:**
    - Rend add-ticks and snapshotted crit.
    - Titan's Grip without penalty.
    - Heroic Strike/Cleave without the DW miss penalty.
    - Deep Wounds munching.
+   - When Bloodsurge or the Ymirjar 4pc runs out, Slam's cast time goes back to 1500 ms whatever Improved
+     Slam says (`talents.go`).
+   - Shattering Throw: delete ModifyCast's `StopMeleeUntil` (the core's reset already overwrites it) and
+     `hasGlyph`, which no longer changes the cast time (server data sets 1.5 s) but still lets Fury throw
+     from Berserker Stance. Drop glyph 206953 from `ui/warrior/presets.ts`, `FuryGlyphs`, the optimizer's
+     `presetOptimizeRequest` and `testdata/search/fury_p1.json`.
+   - A held main hand swings through `swing()` when the cast lands, and its pre-swing APL check can start
+     another hardcast first, so back-to-back 1.5 s Slams keep holding it; the server swings first. No suite
+     hits it yet. The fix has to keep Heroic Strike's last-moment queue and Slam's pause. This item may
+     edit `attack.go`'s swing path for it.
 5. **Retribution Paladin (recorded):**
    - CS/DS apply seal stacks; seal DoT crit.
    - Glyph of Reckoning (`proto/paladin.proto:122`, spell 67485) is unimplemented on the server, so the sim
@@ -592,6 +610,8 @@ the sources the server refuses.
    - Judgement proc rules and damage classes.
 6. **Shaman:** Feral Spirit 30% AP, haste inheritance and swing reset from data. Elemental: core rules only.
 7. **Druid:** FF(Feral) → Clearcasting, Omen PPM rule, Moonfire/IS add-ticks and tick crit, Treants.
+   `CurrentMangleCatCost` derefs a nil Mangle (Cat) without the talent, and the default cat APL calls it.
+   Snek weave doesn't model Albino Snake's own GCD.
 8. **Mage:** Frostbolt is non-binary; Ignite munching; Water Elemental.
 9. **Warlock (Affliction recorded):** pet scaling with floored hit; Haunt and Drain Soul non-binary; curses and UA per the spelldump.
 10. **Shadow Priest:** Mind Flay binary; Shadowfiend.
@@ -599,6 +619,9 @@ the sources the server refuses.
     - Creature-vs-player tables; per-class DR; no crushing at +3.
     - Pet avoidance; Holy Shield and Shield Block data.
     - A **generic AC boss** preset from `creature_classlevelstats` (lvl 83, class 1, damage/armor/attack speed) replaces Classic encounter AIs as the tank default.
+    - Hodir's Starlight (62807) is only `MELEE_SLOW` on the server; the sim also gives it x1.5 cast speed.
+    - A Target's `gcdAction` never completes a hardcast ending on its `NextGCDAt` (Hodir's Flash Freeze),
+      so the cast's effects are lost. PAR-P7-TANK may edit `sim/core/target_ai.go` for it.
 
 **Per class**
 - Unit tests for new mechanics.
@@ -615,6 +638,11 @@ Done when every "Classic" or `wotlk-classic-bugs` reference in `sim/` has been r
 - Warlock issues #328 and #329 (`sim/warlock/pet.go:34`, `inferno.go:160`).
 - Serpent Sting tick crit (`sim/hunter/serpent_sting.go:38`).
 - Expertise comment and the hardcoded boss block value of 76: both done in P2.
+- `NewPet` returns the Character-sized `Pet` by value (4% of Elemental). Returning a pointer touches every
+  pet constructor, so it waits for the class items.
+- Swing leftovers from P7-0c: a haste change during Slam rescales its pause, where the server rescales the
+  frozen timer; a `CancelAutoSwing` from the main hand's last APL check still lets that swing go; channels
+  don't hold swings.
 
 ## Loop work items
 
@@ -656,8 +684,9 @@ Specs for the `PAR-` items in the [wave registry](../wave-loop/wave-loop.PLAN.md
 | PAR-TOOLS-RR (F, done) | `tools/simval chronicle` and a `procs` check; `spellaudit` and `talentdiff`; a playerbot recorded-run harness. It captures runs against a dummy inside an instance. **As built:** Prot Paladin and Affliction are captured; Hunter and Ret are not. The playerbot's hunter has no usable ranged weapon, so it dealt no damage (a finding for PAR-P7-HUN), and the factory picks the talent tree itself, so a spec-exact Ret needs a hand-built character or a talent-learning step in the harness. The Chronicle app API needs a login token an unattended run can't get, so the harness copies the worldserver's own log while the instance is still open. No sim-side DPS comparison ran: that needs a sim built from each capture's `.setup.txt`, which belongs to the class items | `tools/simval/*`, `tools/acore/{spellaudit,talentdiff}/`, `docs/azerothcore-parity/audit/*.csv`, `sim/core/testdata/chronicle/`, its e2e file | none | P3-1 |
 | PAR-P7-\<class\> (G–J) | The class's P7 checklist, spell-tweak wiring, APL fixes, its P8 rows, its `TicksCanCrit` declarations, and a recorded-run comparison where one exists. Plus its P3-2 allowlist entries, which list what to fix: deal each wrapper spell's damage under the id the server uses and drop the entry (DK Death Coil 47632, Icy Touch 49909, Blood Presence 48266; druid Faerie Fire (Feral) 60089, Typhoon 53227; hunter Wild Quiver 53254; shaman Searing Totem 58702, Magma Totem 58735, Flametongue 10444, Fire Nova 61654; warrior Slam 47475 triggering 50783), declare the timing the sim got wrong (warrior Recklessness, Death Wish and Shattering Throw, whose Glyph 206953 is a Cataclysm item the presets shouldn't equip; shaman Nature's Swiftness 2 min, Fire Elemental Totem's 1 s GCD, the placeholder heal cast times; warlock imp Firebolt's 1 s GCD; hunter Nether Shock 40 s with Longevity, Improved Arcane Shot at +15% damage), and drop the swing resets the core now does (warrior Heroic and Shattering Throw, paladin Exorcism, shaman Feral Spirit and the fire elemental), adding one where it doesn't (DK Blood Tap 45529, off the GCD, like Barkskin's). Hunter pets' 1.6 s `PetGCD` and Shadowfiend's 6 s Shadowcrawl GCD are stand-ins the GCD rule leaves alone: replace them with the server's GCD plus an AI delay or Shadowcrawl's real cooldown, and Steady Shot and Multi-Shot can drop their `CastTime` funcs for the core's ranged rule. Tick-rounding the APL's `spell.cast_time` prediction belongs here too: it shifts rotations (measured: Elemental -2.2..+1.3%, Enhancement -1.0..+1.4%, Shadow, Fire and FrostFire smaller). Plus its P6-3 item rows: DK 45144/45254/Razorice; druid 45509/45270; paladin 47661/T9 2pc; shaman 40322/42598/45114/33506; mage T8 4pc | `sim/<class>/**`, `ui/<spec>/apls/*`, `ui/<spec>/{presets,inputs,sim}.ts`, `proto/<class>.proto`, its allowlist and e2e files | its class's suites | P3-2..5, P5-1, P7-0a/b; P7-T (soft) |
 | PAR-P7-TANK (J) | The Lich King's Soul Reaper and Sindragosa's Frost Breath `StopMeleeUntil` calls overlap the core reset for these `ResetsAutoAttack` spells (69409, 69649/73061): drop them or check they agree. Generic AC boss from `creature_classlevelstats`; Holy Shield and Shield Block data; percent-aura talents (Lightning Reflexes, …); Classic references in encounter AIs. Boss spells with `SpellFlagIgnoreAttackerModifiers` (so `SpellFlagIgnoreModifiers` too) miss the dungeon-scale Damage multiplier the server applies (Leeching Swarm, 66240). Preset encounters set no `raid_difficulty` (a preset field is a proto change). Bulwark of Azzinoth's hits-taken PPM needs the attacker's hand: the server uses the wearer's attack time for it, so a dual-wielding boss's off-hand swings proc it and the sim's don't | `sim/encounters/**`, tank dirs, tank `ui/*/presets.ts` | 4 tank suites | DK, WAR, RET, DRU items; P7-0b |
-| PAR-P7-0c (F2) | Core fixes the class items need, found in wave D. Swings aren't held during a hardcast that doesn't reset them (`UNIT_STATE_CASTING` gates `Player::UpdateMeleeAttackingState` for any cast; only Slam is affected today, and its `DelayMeleeBy` approximates it). Every Auto Shot also restarts the melee timers (`Unit.cpp:4129-4133`). `AutoAttacks.reset` desyncs a player's off hand by a random 0-50% of the main-hand swing, while `Unit::Attack` uses a deterministic 50%. `item_swaps.go` and the feral cat shift reset melee, which no server code seems to do Plus two the wave F cross-review left: an inheriting pet still takes Bloodlust's cast-speed half, which the carrier blocks, and `MultiplyAttackSpeed`'s guard swallows slows as well as buffs where the server blocks only the positive ones. Both are latent while hunter pets are the only inheritors; making the guard positive-only needs a Demonic Empowerment check first | `sim/core/{attack,cast,item_swaps}.go` | several | P3-3 |
-| PAR-PERF (F2) | Profile the sim's hot paths and fix what's cheap. Parity added per-event cost no golden measures: the serverdata lookup in `RegisterSpell` (P3-2), the 100 ms tick lattice (P3-3), PPM on the proc path (P3-4), every dot tick routed through `NextServerTick` (P3-5). Take a pprof CPU profile of a representative single-target sim and of the 25-man raid bench, say where the time goes against the [throughput table](../wave-loop/wave-loop.PLAN.md#sim-throughput), and fix what doesn't change results. Anything that would move a golden becomes its own item instead. Also repair the 25-man `BenchmarkSimulate`, the best aggregate signal: it and five others nil-deref because their requests carry no APL rotation | `sim/core/**` hot paths, `docs/azerothcore-parity/azerothcore-parity.INVESTIGATION.md` | none | P7-0c |
+| PAR-P7-0c (F2, done) | Core fixes the class items need, found in wave D. Swings aren't held during a hardcast that doesn't reset them (`UNIT_STATE_CASTING` gates `Player::UpdateMeleeAttackingState` for any cast; only Slam is affected today, and its `DelayMeleeBy` approximates it). Every Auto Shot also restarts the melee timers (`Unit.cpp:4129-4133`). `AutoAttacks.reset` desyncs a player's off hand by a random 0-50% of the main-hand swing, while `Unit::Attack` uses a deterministic 50%. `item_swaps.go` and the feral cat shift reset melee, which no server code seems to do. Plus two the wave F cross-review left: an inheriting pet still takes Bloodlust's cast-speed half, which the carrier blocks, and `MultiplyAttackSpeed`'s guard swallows slows as well as buffs where the server blocks only the positive ones. Both are latent while hunter pets are the only inheritors; making the guard positive-only needs a Demonic Empowerment check first. A core hold during casts makes Slam's `DelayMeleeBy` a second hold, so drop it here, and the snek-weave reset if swaps don't reset swings. **As built:** 14 suites moved: dual wielders from the off-hand start, hunters from an Auto Shot now waiting for a cast that lands on its tick (MM +0.28%), Arms from Slam. Three premises were wrong. Slam gets a timer pause (`ATTR2_DO_NOT_RESET_COMBAT_TIMERS`), not a hold. The snek-weave reset is real, through Albino Snake's own cast; only the weapon-swap reset went. The carrier blocks slows too, so the attack-speed guard stays | `sim/core/{attack,cast,item_swaps,unit,pet,buffs}.go`, `sim/warrior/slam.go` (`DelayMeleeBy`), `sim/druid/feral/rotation.go` (the snek-weave reset) | several | P3-3 |
+| PAR-PERF (F2, done) | Profile the sim's hot paths and fix what's cheap. Parity added per-event cost no golden measures: the serverdata lookup in `RegisterSpell` (P3-2), the 100 ms tick lattice (P3-3), PPM on the proc path (P3-4), every dot tick routed through `NextServerTick` (P3-5). Take a pprof CPU profile of a representative single-target sim and of the 25-man raid bench, say where the time goes against the [throughput table](../wave-loop/wave-loop.PLAN.md#sim-throughput), and fix what doesn't change results. Anything that would move a golden becomes its own item instead. Also repair the 25-man `BenchmarkSimulate`, the best aggregate signal: it and five others nil-deref because their requests carry no APL rotation. It merges after P7-0c, whose files it leaves alone. **As built:** results unchanged; the serverdata lookup (P3-2's real cost, 5-7% of three benches) searches by index, set bonuses and equipment stats go by pointer, the presim skips its clone when there's nothing to presim, stat deps sort by rank, and the metrics export uses one slice. 8-26% faster per bench under load. All six broken benches run on their suites' APLs. What's left is in the INVESTIGATION's Performance section and PAR-PERF-2 | `sim/core/**` hot paths except P7-0c's, `docs/azerothcore-parity/azerothcore-parity.INVESTIGATION.md` | none | P7-0c |
+| PAR-PERF-2 (G) | Speed-ups that change results, from PAR-PERF's profile. Build Nibelung's 10 Val'kyr pets only for a player wearing it: every Balance, Shadow, Elemental, Mage and Warlock builds them today (9.4% of Elemental's CPU, 35% of its bytes), and dropping them changes the pet list and unit indices. Make `AddPendingAction` a binary search once the pending queue's sort order is checked or enforced (2% of the raid). Read `findServerAllowance` without its lock, since allowances only register at init. Then make the throughput benchmarks measure rotations: Ret, Hunter and Elemental on their golden APLs, the raid bench with its specs' `StandardTalents`, plus multi-iteration cases so the environment build stops dominating. That starts a new throughput table | `sim/common/wotlk/nibelung.go`, `sim/core/{sim,spell}.go` (`AddPendingAction`, `findServerAllowance`), the `BenchmarkSimulate` test files | the caster suites | PAR-PERF |
 | PAR-P8 (K) | Sweep `classic`/`wotlk-classic-bugs` in `sim/`; flip `TicksCanCrit`; close this plan | `sim/**` references | all | every P7 item |
 
 - **Class order:** DK and HUN (G); ROG, WAR and RET (H); SHA, DRU, MAG and WLK (I); PRI (J).

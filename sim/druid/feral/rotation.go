@@ -212,7 +212,8 @@ func (cat *FeralDruid) preRotationCleanup(sim *core.Simulation) bool {
 	// the input delay is over.
 	if cat.readyToShift {
 		cat.shiftBearCat(sim, false)
-		// Reset swing timer from snek (or idol/weapon swap) when going into cat
+		// Snek weave: Albino Snake (10713) is an instant cast with SPELL_INTERRUPT_FLAG_INTERRUPT, so
+		// Spell::_cast resets the swing timer. The shift itself doesn't, and neither would an idol swap.
 		if cat.InForm(druid.Cat) && cat.Rotation.SnekWeave {
 			cat.AutoAttacks.StopMeleeUntil(sim, sim.CurrentTime, false)
 		}

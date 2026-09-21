@@ -77,6 +77,12 @@ Quirk: `UnitLevelFloat64` in `utils.go` treats every level outside 80–82 as +3
   draws an item anywhere (bulk and optimizer tabs too), so its styles are global in `_gear_picker.scss`:
   anything scoped to `.gear-picker-root` leaves those tabs with an unsized icon. Tooltips come from
   wowhead through `Player.setWowheadData`, which takes the set to count pieces against.
+  - Its phase filter, and the gem lists and gem EP in `player.ts`, follow the server catalog's tiers
+    ([ADR 0005](../adr/0005-server-item-catalog.md)), and Classic phases only until `catalog.ts` has
+    loaded it. PvP gear is hidden at every phase, enchants aren't phase-filtered, and an equipped item
+    stays listed until swapped off.
+  - `Database.lookupItemSpec` keeps any reforge some mod-reforging config allows; the encounter's config
+    decides.
 - `ui/core/optimizer/` and `ui/core/components/individual_sim_ui/optimizer_tab.ts`: the BiS Optimizer
   tab, shown for DPS specs. `pool_builder.ts` builds the request (its `filterItemsByFilters` is the gear
   picker's own filter, and it trims the seed to what the pool offers, since Go rejects anything else),

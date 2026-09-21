@@ -15,7 +15,11 @@ func init() {
 		proto.Player_EnhancementShaman{},
 		proto.Spec_SpecEnhancementShaman,
 		func(char *Character, _ *proto.Player) Agent {
-			return &timingTestAgent{Character: *char, setup: timingTestSetup}
+			a := &timingTestAgent{Character: *char, setup: timingTestSetup}
+			if timingTestConstruct != nil {
+				timingTestConstruct(a)
+			}
+			return a
 		},
 		func(player *proto.Player, spec interface{}) {
 			player.Spec = spec.(*proto.Player_EnhancementShaman)
@@ -25,6 +29,9 @@ func init() {
 
 // timingTestSetup builds the next timing test agent's autos and spells.
 var timingTestSetup func(*timingTestAgent)
+
+// timingTestConstruct runs as the next timing test agent is constructed, where pets have to be added.
+var timingTestConstruct func(*timingTestAgent)
 
 type timingTestAgent struct {
 	Character
@@ -251,6 +258,96 @@ func TestMeleeSwingResetsRangedTimer(t *testing.T) {
 	// the swing at 3 s restarted it last
 	if want := ms(6000); aa.ranged.swingAt != want {
 		t.Errorf("next ranged shot at %v, want %v", aa.ranged.swingAt, want)
+	}
+}
+
+func TestAutoShotRestartsMeleeTimers(t *testing.T) {
+	sim, a := newTimingTestSim(t, 0, func(a *timingTestAgent) {
+		a.EnableAutoAttacks(a, AutoAttackOptions{
+			MainHand:        testWeapon(2),
+			OffHand:         testWeapon(1.5),
+			Ranged:          testWeapon(3),
+			AutoSwingMelee:  true,
+			AutoSwingRanged: true,
+		})
+	})
+	aa := &a.AutoAttacks
+	shots, mhSwings, ohSwings := recordCasts(aa.RangedAuto()), recordCasts(aa.MHAuto()), recordCasts(aa.OHAuto())
+	aa.mh.setTimer(sim, ms(1000))
+	aa.oh.setTimer(sim, ms(1200))
+	aa.ranged.setTimer(sim, ms(500))
+	sim.PrePull()
+	runUntil(sim, ms(2100))
+
+	// the shot at 0.5 s restarts both hands in full
+	if want := []time.Duration{ms(500)}; !slices.Equal(*shots, want) {
+		t.Errorf("shots at %v, want %v", *shots, want)
+	}
+	if len(*mhSwings) != 0 || !slices.Equal(*ohSwings, []time.Duration{ms(2000)}) {
+		t.Errorf("main hand %v, off hand %v; want none, [2s]", *mhSwings, *ohSwings)
+	}
+	if want := ms(2500); aa.mh.swingAt != want {
+		t.Errorf("next main hand swing at %v, want %v", aa.mh.swingAt, want)
+	}
+}
+
+// The restart can bring a pushed-back swing forward, so it has to be rescheduled.
+func TestAutoShotRestartBringsAMeleeSwingForward(t *testing.T) {
+	sim, a := newTimingTestSim(t, 0, func(a *timingTestAgent) {
+		a.EnableAutoAttacks(a, AutoAttackOptions{
+			MainHand:        testWeapon(2),
+			Ranged:          testWeapon(3),
+			AutoSwingMelee:  true,
+			AutoSwingRanged: true,
+		})
+	})
+	aa := &a.AutoAttacks
+	mhSwings := recordCasts(aa.MHAuto())
+	recordCasts(aa.RangedAuto())
+	aa.mh.setTimer(sim, 5*time.Second)
+	aa.ranged.setTimer(sim, ms(500))
+	sim.PrePull()
+	runUntil(sim, ms(2600))
+
+	if want := []time.Duration{ms(2500)}; !slices.Equal(*mhSwings, want) {
+		t.Errorf("main hand swings %v, want %v", *mhSwings, want)
+	}
+}
+
+// Unit::Attack: an off hand that's ready at the pull waits half the main hand's hasted attack time,
+// with no random draw.
+func TestOffHandStartsHalfAMainHandSwingBehind(t *testing.T) {
+	for _, tc := range []struct {
+		name           string
+		prepull        func(*timingTestAgent, *Spell) func(*Simulation)
+		wantMH, wantOH time.Duration
+	}{
+		{"unhasted", nil, 0, ms(1250)},
+		{"hasted before the pull", func(a *timingTestAgent, _ *Spell) func(*Simulation) {
+			return func(sim *Simulation) { a.MultiplyMeleeSpeed(sim, 1.25) }
+		}, 0, ms(1000)},
+		// a swing reset before the pull leaves the off hand with a timer of its own
+		{"off hand not ready", func(a *timingTestAgent, reset *Spell) func(*Simulation) {
+			return func(sim *Simulation) { reset.Cast(sim, a.CurrentTarget) }
+		}, ms(1500), ms(500)},
+	} {
+		var reset *Spell
+		sim, a := newTimingTestSim(t, 0, func(a *timingTestAgent) {
+			a.EnableAutoAttacks(a, AutoAttackOptions{MainHand: testWeapon(2.5), OffHand: testWeapon(1.5), AutoSwingMelee: true})
+			reset = a.RegisterSpell(castConfig(testSpellHeroicThrow, 0))
+		})
+		aa := &a.AutoAttacks
+		mhSwings, ohSwings := recordCasts(aa.MHAuto()), recordCasts(aa.OHAuto())
+		recordCasts(reset)
+		if tc.prepull != nil {
+			sim.prepullActions = []PrepullAction{{DoAt: -time.Second, Action: tc.prepull(a, reset)}}
+		}
+		sim.PrePull()
+		runUntil(sim, ms(1700))
+
+		if len(*mhSwings) == 0 || len(*ohSwings) == 0 || (*mhSwings)[0] != tc.wantMH || (*ohSwings)[0] != tc.wantOH {
+			t.Errorf("%s: main hand %v, off hand %v; want the first at %v and %v", tc.name, *mhSwings, *ohSwings, tc.wantMH, tc.wantOH)
+		}
 	}
 }
 

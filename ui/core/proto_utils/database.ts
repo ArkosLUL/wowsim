@@ -26,9 +26,14 @@ import {
 import { gemEligibleForSocket, gemMatchesSocket } from './gems.js';
 import { EquippedItem } from './equipped_item.js';
 import { Gear, ItemSwapGear } from './gear.js';
-import { isValidReforge } from './reforging.js';
+import { isValidReforge, KNOWN_REFORGE_STAT_TYPES, Reforging } from './reforging.js';
 import { CHARACTER_LEVEL } from '../constants/mechanics.js';
+import { REFORGE_MAX_PERCENTAGE } from '../constants/server_defaults_auto_gen.js';
 import { distinct } from '../utils.js';
+
+// Loading gear has no encounter to read, so it keeps any reforge some mod-reforging config allows.
+// The sim applies it only when the encounter's config does, and the gear picker says when it doesn't.
+const ANY_REFORGING: Reforging = { enabled: true, percentage: REFORGE_MAX_PERCENTAGE, statTypes: KNOWN_REFORGE_STAT_TYPES };
 
 const dbUrlJson = '/wotlk/assets/database/db.json';
 const dbUrlBin = '/wotlk/assets/database/db.bin';
@@ -194,7 +199,7 @@ export class Database {
 		}
 
 		const gems = itemSpec.gems.map(gemId => this.lookupGem(gemId));
-		const reforge = isValidReforge(item, itemSpec.reforge) ? itemSpec.reforge : null;
+		const reforge = isValidReforge(item, itemSpec.reforge, ANY_REFORGING) ? itemSpec.reforge : null;
 
 		return new EquippedItem(item, enchant, gems, reforge);
 	}

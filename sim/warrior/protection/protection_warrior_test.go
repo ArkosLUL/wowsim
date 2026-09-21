@@ -62,6 +62,7 @@ func BenchmarkSimulate(b *testing.B) {
 				Consumes:      FullConsumes,
 				Spec:          PlayerOptionsBasic,
 				Buffs:         core.FullIndividualBuffs,
+				Rotation:      core.GetAplRotation("../../../ui/protection_warrior/apls", "default").Rotation,
 				TalentsString: DefaultTalents,
 				Glyphs:        DefaultGlyphs,
 

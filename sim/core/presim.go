@@ -61,6 +61,12 @@ func (sim *Simulation) runPresims(request *proto.RaidSimRequest) *proto.RaidSimR
 		}
 	}
 
+	doOne := sim.Encounter.EndFightAtHealth > 0
+	// nothing to presim, so skip cloning the request: that clone is a few % of a short sim
+	if !doOne && remainingAgents == 0 {
+		return nil
+	}
+
 	// Base presim request.
 	// Define this outside the loop so that, as Agents iteratively update their
 	// settings, we keep the most recent settings even after that Agent is
@@ -74,7 +80,6 @@ func (sim *Simulation) runPresims(request *proto.RaidSimRequest) *proto.RaidSimR
 
 	var lastResult *proto.RaidSimResult
 
-	doOne := sim.Encounter.EndFightAtHealth > 0
 	for doOne || remainingAgents > 0 {
 		// ** Run a presim round. **
 

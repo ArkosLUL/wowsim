@@ -30,6 +30,9 @@ COPY package.json package-lock.json ./
 RUN npm ci
 
 COPY . .
+# .dockerignore drops .git, so the makefile can't read the commit itself:
+# docker build --build-arg SIM_COMMIT=$(git rev-parse HEAD) .
+ARG SIM_COMMIT
 RUN CGO_ENABLED=0 make wowsimwotlk
 
 FROM gcr.io/distroless/static-debian12:nonroot

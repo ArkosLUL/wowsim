@@ -208,6 +208,7 @@ func (aa *AutoAttacks) OffhandSwingAt() time.Duration {
 func (aa *AutoAttacks) SetOffhandSwingAt(offhandSwingAt time.Duration) {
 	aa.oh.timerAt = offhandSwingAt
 	aa.oh.swingAt = offhandSwingAt
+	aa.oh.held = false
 }
 
 func (aa *AutoAttacks) SetReplaceMHSwing(replaceSwing ReplaceMHSwing) {
@@ -242,6 +243,9 @@ type WeaponAttack struct {
 	timerAt time.Duration
 	swingAt time.Duration
 
+	// ran out mid-cast and waits for the cast to land, see castHold
+	held bool
+
 	curSwingSpeed    float64
 	curSwingDuration time.Duration
 }
@@ -254,11 +258,13 @@ func (wa *WeaponAttack) getWeapon() *Weapon {
 func (wa *WeaponAttack) setTimer(sim *Simulation, timerAt time.Duration) {
 	wa.timerAt = timerAt
 	wa.swingAt = sim.NextServerTick(timerAt)
+	wa.held = false
 }
 
 func (wa *WeaponAttack) stopTimer() {
 	wa.timerAt = NeverExpires
 	wa.swingAt = NeverExpires
+	wa.held = false
 }
 
 func (wa *WeaponAttack) setWeapon(weapon Weapon) {
@@ -283,6 +289,10 @@ func (wa *WeaponAttack) swing(sim *Simulation) time.Duration {
 	}
 
 	aa := &wa.unit.AutoAttacks
+	if until, held := wa.castHold(sim); held {
+		return wa.hold(until)
+	}
+
 	var otherHand *WeaponAttack
 	switch wa {
 	case &aa.mh:
@@ -295,30 +305,48 @@ func (wa *WeaponAttack) swing(sim *Simulation) time.Duration {
 		otherHand = &aa.mh
 	}
 
+	if wa.replaceSwing != nil {
+		// Need to check APL here to allow last-moment HS queue casts.
+		wa.unit.Rotation.DoNextAction(sim)
+
+		// the server takes casts before it gets to melee, so one started just now can restart, pause
+		// or hold this swing
+		if wa.swingAt > sim.CurrentTime {
+			return wa.swingAt
+		}
+		if until, held := wa.castHold(sim); held {
+			return wa.hold(until)
+		}
+	}
+
 	if otherHand != nil && aa.IsDualWielding && otherHand.timerAt-sim.CurrentTime < attackDisplayDelay {
 		otherHand.setTimer(sim, sim.CurrentTime+attackDisplayDelay)
 	}
 
 	attackSpell := wa.spell
-
+	// Need to check this again in case the DoNextAction call swapped items.
 	if wa.replaceSwing != nil {
-		// Need to check APL here to allow last-moment HS queue casts.
-		wa.unit.Rotation.DoNextAction(sim)
-
-		// Need to check this again in case the DoNextAction call swapped items.
-		if wa.replaceSwing != nil {
-			// Allow MH swing to be overridden for abilities like Heroic Strike.
-			attackSpell = wa.replaceSwing(sim, attackSpell)
-		}
+		// Allow MH swing to be overridden for abilities like Heroic Strike.
+		attackSpell = wa.replaceSwing(sim, attackSpell)
 	}
 
 	// Update swing timer BEFORE the cast, so that APL checks for TimeToNextAuto behave correctly
 	// if the attack causes APL evaluations (e.g. from rage gain).
 	// Restarts from this tick, so whatever the timer overshot is lost.
 	wa.setTimer(sim, sim.CurrentTime+wa.curSwingDuration)
-	// a melee swing restarts the ranged timer too
+	// a melee swing restarts the ranged timer too; a restart can land earlier than a pushed-back timer
 	if otherHand != nil && aa.AutoSwingRanged {
 		aa.ranged.setTimer(sim, sim.CurrentTime+aa.ranged.curSwingDuration)
+		sim.rescheduleWeaponAttack(aa.ranged.swingAt)
+	}
+	// and every Auto Shot restarts both melee timers (Unit::_UpdateAutoRepeatSpell)
+	if wa == &aa.ranged && aa.AutoSwingMelee {
+		aa.mh.setTimer(sim, sim.CurrentTime+aa.mh.curSwingDuration)
+		sim.rescheduleWeaponAttack(aa.mh.swingAt)
+		if aa.IsDualWielding {
+			aa.oh.setTimer(sim, sim.CurrentTime+aa.oh.curSwingDuration)
+			sim.rescheduleWeaponAttack(aa.oh.swingAt)
+		}
 	}
 	attackSpell.Cast(sim, wa.unit.CurrentTarget)
 
@@ -327,6 +355,32 @@ func (wa *WeaponAttack) swing(sim *Simulation) time.Duration {
 	}
 
 	return wa.swingAt
+}
+
+// castHold is whether a cast in progress holds this swing, and until when. Player::Update skips melee
+// while UNIT_STATE_CASTING is set (UnitAI::DoMeleeAttackIfReady for creatures), and Auto Shot waits out
+// every cast but a SPELL_ATTR2_DO_NOT_RESET_COMBAT_TIMERS one (Unit::IsNonMeleeSpellCast). The timer
+// keeps running meanwhile, so the swing goes on the update the cast lands.
+func (wa *WeaponAttack) castHold(sim *Simulation) (time.Duration, bool) {
+	hc := &wa.unit.Hardcast
+	// still casting at Expires itself: weapon attacks run before the pending action that lands it
+	if hc.OnComplete == nil || hc.Expires == startingCDTime || hc.Expires < sim.CurrentTime {
+		return 0, false
+	}
+	// Even Auto Shot waits on the update the cast lands, since spell events run before
+	// Unit::_UpdateSpells. Otherwise the shot's APL call could start a new cast over this one.
+	if wa == &wa.unit.AutoAttacks.ranged && hc.keepsCombatTimers && hc.Expires > sim.CurrentTime {
+		return 0, false
+	}
+	return hc.Expires, true
+}
+
+// hold parks the swing until the cast lands, where releaseCastHold swings it. The +1 ns wake only
+// matters if nothing completes the cast, and keeps the tie at until from looping.
+func (wa *WeaponAttack) hold(until time.Duration) time.Duration {
+	wa.held = true
+	wa.swingAt = until
+	return until + 1
 }
 
 func (wa *WeaponAttack) updateSwingDuration(curSwingSpeed float64) {
@@ -492,20 +546,9 @@ func (aa *AutoAttacks) reset(sim *Simulation) {
 
 		if aa.IsDualWielding {
 			aa.oh.updateSwingDuration(aa.mh.curSwingSpeed)
+			// startPull staggers it behind the main hand
 			aa.oh.setTimer(sim, 0)
-
-			// Apply random delay of 0 - 50% swing time, to one of the weapons if dual wielding
-			if aa.oh.unit.Type == EnemyUnit {
-				aa.oh.setTimer(sim, DurationFromSeconds(aa.mh.SwingSpeed/2))
-			} else {
-				if sim.RandomFloat("SwingResetWeapon") < 0.5 {
-					aa.mh.setTimer(sim, DurationFromSeconds(sim.RandomFloat("SwingResetDelay")*aa.mh.SwingSpeed/2))
-				} else {
-					aa.oh.setTimer(sim, DurationFromSeconds(sim.RandomFloat("SwingResetDelay")*aa.mh.SwingSpeed/2))
-				}
-			}
 		}
-
 	}
 
 	aa.ranged.stopTimer()
@@ -530,6 +573,10 @@ func (aa *AutoAttacks) startPull(sim *Simulation) {
 	if aa.AutoSwingMelee {
 		aa.mh.addWeaponAttack(sim, aa.mh.unit.SwingSpeed())
 		if aa.IsDualWielding {
+			// Unit::Attack: a ready off hand waits half the main hand's hasted attack time behind it
+			if aa.oh.timerAt <= sim.CurrentTime {
+				aa.oh.setTimer(sim, max(aa.oh.timerAt, aa.mh.timerAt+aa.mh.curSwingDuration/2))
+			}
 			aa.oh.addWeaponAttack(sim, aa.mh.curSwingSpeed)
 		}
 	}
@@ -683,18 +730,32 @@ func (aa *AutoAttacks) resetSwingTimers(sim *Simulation, readyAt time.Duration) 
 	}
 }
 
-// Delays all swing timers for the specified amount. Only used by Slam.
-func (aa *AutoAttacks) DelayMeleeBy(sim *Simulation, delay time.Duration) {
-	if delay <= 0 {
+// pauseMelee pushes both melee timers back by pause, which only ever moves a swing later, so there's
+// nothing to reschedule.
+func (aa *AutoAttacks) pauseMelee(sim *Simulation, pause time.Duration) {
+	if !aa.AutoSwingMelee || pause <= 0 {
 		return
 	}
+	for _, wa := range []*WeaponAttack{&aa.mh, &aa.oh} {
+		if (wa == &aa.oh && !aa.IsDualWielding) || wa.timerAt == NeverExpires {
+			continue
+		}
+		wa.setTimer(sim, wa.timerAt+pause)
+	}
+}
 
-	aa.mh.setTimer(sim, aa.mh.timerAt+delay)
-	sim.rescheduleWeaponAttack(aa.mh.swingAt)
-
-	if aa.IsDualWielding {
-		aa.oh.setTimer(sim, aa.oh.timerAt+delay)
-		sim.rescheduleWeaponAttack(aa.oh.swingAt)
+// releaseCastHold swings what a cast held, right as it lands and before anything cast after it. Ranged
+// goes first, as Unit::_UpdateSpells runs Auto Shot before Player::Update gets to melee.
+func (aa *AutoAttacks) releaseCastHold(sim *Simulation) {
+	for _, wa := range []*WeaponAttack{&aa.ranged, &aa.mh, &aa.oh} {
+		if !wa.held {
+			continue
+		}
+		// an earlier hand's swing can restart this one, which clears held
+		wa.held = false
+		if aa.enabled {
+			sim.rescheduleWeaponAttack(wa.trySwing(sim))
+		}
 	}
 }
 

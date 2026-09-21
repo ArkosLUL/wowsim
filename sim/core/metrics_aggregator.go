@@ -126,9 +126,12 @@ type tmiListItem struct {
 }
 
 func (actionMetrics *ActionMetrics) ToProto(actionID ActionID) *proto.ActionMetrics {
-	targetMetrics := make([]*proto.TargetedActionMetrics, 0, len(actionMetrics.Targets))
-	for _, tam := range actionMetrics.Targets {
-		targetMetrics = append(targetMetrics, tam.ToProto())
+	// one allocation for every target's message: there's one per unit, pets included, for every spell
+	msgs := make([]proto.TargetedActionMetrics, len(actionMetrics.Targets))
+	targetMetrics := make([]*proto.TargetedActionMetrics, len(actionMetrics.Targets))
+	for i := range actionMetrics.Targets {
+		actionMetrics.Targets[i].fillProto(&msgs[i])
+		targetMetrics[i] = &msgs[i]
 	}
 
 	return &proto.ActionMetrics{
@@ -179,8 +182,8 @@ type TargetedActionMetrics struct {
 	CastTime  time.Duration
 }
 
-func (tam *TargetedActionMetrics) ToProto() *proto.TargetedActionMetrics {
-	return &proto.TargetedActionMetrics{
+func (tam *TargetedActionMetrics) fillProto(msg *proto.TargetedActionMetrics) {
+	*msg = proto.TargetedActionMetrics{
 		UnitIndex: tam.UnitIndex,
 
 		Casts:      tam.Casts,

@@ -132,15 +132,15 @@ dps_results: {
 dps_results: {
  key: "TestBlood-AllItems-Bryntroll,theBoneArbiter-50415"
  value: {
-  dps: 12588.58309
-  tps: 6354.5645
+  dps: 12692.80666
+  tps: 6413.54237
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-Bryntroll,theBoneArbiter-50709"
  value: {
-  dps: 12697.50326
-  tps: 6416.96807
+  dps: 12790.29472
+  tps: 6470.06277
  }
 }
 dps_results: {
@@ -435,15 +435,15 @@ dps_results: {
 dps_results: {
  key: "TestBlood-AllItems-LastWord-50179"
  value: {
-  dps: 12386.86531
-  tps: 6236.0598
+  dps: 12384.43287
+  tps: 6229.89119
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-LastWord-50708"
  value: {
-  dps: 12455.2643
-  tps: 6274.15342
+  dps: 12453.16341
+  tps: 6268.1883
  }
 }
 dps_results: {
@@ -610,8 +610,8 @@ dps_results: {
 dps_results: {
  key: "TestBlood-AllItems-Shadowmourne-49623"
  value: {
-  dps: 13967.14491
-  tps: 7111.96668
+  dps: 13957.01324
+  tps: 7101.10298
  }
 }
 dps_results: {
@@ -736,8 +736,8 @@ dps_results: {
 dps_results: {
  key: "TestBlood-AllItems-TheTwinBladesofAzzinoth"
  value: {
-  dps: 8891.77735
-  tps: 4328.92698
+  dps: 8943.21834
+  tps: 4354.84345
  }
 }
 dps_results: {

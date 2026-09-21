@@ -67,15 +67,18 @@ npx protoc --ts_out ui/core/proto --proto_path proto proto/ui.proto
 - **Prod container** `wowsims-wotlk`, at http://localhost:3333/wotlk/:
 
   ```sh
-  docker build --tag wowsims-wotlk .
+  docker build --build-arg SIM_COMMIT=$(git rev-parse HEAD) --tag wowsims-wotlk .
   docker run -d --name wowsims-wotlk --restart unless-stopped -p 3333:3333 wowsims-wotlk
   ```
 
   - It's distroless: no shell, no mounts. It serves whatever was built into the image, so rebuild it to
     see changes.
   - Keep the `/wotlk/` path behind a reverse proxy.
+  - Without `SIM_COMMIT`, optimizer results say sim "unknown": `.dockerignore` drops `.git`.
 - **Dev server** on :3334, since prod holds :3333. `--usefs` serves `./dist` from the mounted checkout.
-  There's no hot reload: `docker rm -f wotlk-dev` and start it again after changes.
+  There's no hot reload: `docker rm -f wotlk-dev` and start it again after changes. With a worktree
+  mounted, add `-e SIM_COMMIT=$(git -C <worktree> rev-parse HEAD)`: its `.git` points outside the mount,
+  so the container can't read the commit.
 
   ```sh
   MSYS_NO_PATHCONV=1 docker run -d --name wotlk-dev -p 3334:3333 -v <worktree>:/wotlk \
