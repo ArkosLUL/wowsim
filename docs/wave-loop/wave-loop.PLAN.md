@@ -73,8 +73,9 @@ eleven class items on top and a profile can no longer say what cost what.
 ## Current wave
 
 - Wave: G, running.
-- Base SHA: the wave's setup commit on top of `683e63a89`.
-- Workflow runId: set at launch.
+- Base SHA: `f126dd8ab`, the wave's setup commit on top of `683e63a89`.
+- Workflow runId: `wf_1e1dc889-8c8`, transcript dir
+  `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\wf_1e1dc889-8c8`.
 
 ## BiS baseline
 
