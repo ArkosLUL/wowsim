@@ -135,7 +135,10 @@ func (dk *Deathknight) NewGhoulPet(permanent bool) *GhoulPet {
 }
 
 func (dk *Deathknight) SetupGhoul(ghoulPet *GhoulPet) {
-	ghoulPet.Pet.OnPetEnable = ghoulPet.enable
+	// 51996 (Death Knight Pet Scaling 02): immune to direct haste and slows, Bloodlust included: its
+	// own melee swing speed tracks the owner's instead.
+	ghoulPet.HasteCarrier = true
+	ghoulPet.OwnerHasteSource = func() float64 { return ghoulPet.dkOwner.SwingSpeed() }
 
 	ghoulPet.Unit.EnableFocusBar(2, func(sim *core.Simulation) {
 		if ghoulPet.GCD.IsReady(sim) {
@@ -229,25 +232,6 @@ func dkPetHaste(ownerSwingSpeed float64) float64 {
 	return 1 + float64(int32((1/modSpeed-1)*100))/100
 }
 
-func (ghoulPet *GhoulPet) enable(sim *core.Simulation) {
-	if ghoulPet.IsGuardian() {
-		// a guardian's scaling auras never tick, so it keeps the owner's haste from the summon
-		ghoulPet.PseudoStats.MeleeSpeedMultiplier = 1
-		ghoulPet.MultiplyMeleeSpeed(sim, dkPetHaste(ghoulPet.dkOwner.SwingSpeed()))
-		return
-	}
-
-	ghoulPet.MultiplyMeleeSpeed(sim, ghoulPet.dkOwner.PseudoStats.MeleeSpeedMultiplier)
-
-	ghoulPet.EnableDynamicMeleeSpeed(func(amount float64) {
-		ghoulPet.MultiplyMeleeSpeed(sim, amount)
-
-		if sim.Log != nil {
-			sim.Log("Ghoul MeleeSpeedMultiplier: %f, ownerMeleeMultiplier: %f\n", ghoulPet.Character.PseudoStats.MeleeSpeedMultiplier, ghoulPet.dkOwner.PseudoStats.MeleeSpeedMultiplier)
-		}
-	})
-}
-
 // ghoulStatInheritance is spell_dk_pet_scaling's CalculateStatAmount: 70% of the owner's strength and
 // 30% of his stamina, Ravenous Dead adding 20% a rank to each and Glyph of the Ghoul a flat 40, all
 // whole percent.
@@ -272,11 +256,11 @@ func (dk *Deathknight) ghoulStatInheritance() core.PetStatInheritance {
 	}
 
 	return func(ownerStats stats.Stats) stats.Stats {
+		// The owner's melee haste rating isn't inherited here: it reaches the ghoul through the 51996
+		// carrier's 2 s resnapshot instead (SetupGhoul's OwnerHasteSource), same as the guardian.
 		return stats.Stats{
 			stats.Stamina:  ownerStats[stats.Stamina] * float64(staminaPct) / 100,
 			stats.Strength: ownerStats[stats.Strength] * float64(strengthPct) / 100,
-
-			stats.MeleeHaste: ownerStats[stats.MeleeHaste],
 		}
 	}
 }

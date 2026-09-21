@@ -121,7 +121,8 @@ func (ct *castTiming) gcd(unit *Unit, gcd time.Duration) time.Duration {
 		// hunter pets' AI delay or Shadowcrawl's 6 s cooldown, so the upper clamp leaves it alone.
 		capped := gcd <= GCDDefault
 		if ct.hasteGCD {
-			gcd = unit.ApplyCastSpeed(gcd)
+			// Spell::TriggerGlobalCooldown: int32(float(gcd) * pct), truncated before the clamp.
+			gcd = unit.ApplyCastSpeed(gcd).Truncate(time.Millisecond)
 		}
 		gcd = max(gcd, GCDMin)
 		if capped {
@@ -155,17 +156,20 @@ func castHasteFor(sd *serverdata.Spell) castHaste {
 	return castHasteNone
 }
 
+// castTime is Unit::ModSpellCastTime: int32(float(castTime) * pct) for the ranged and magic
+// cases, truncated before it's compared to the GCD or rounded to a server tick. Melee doesn't
+// scale with haste on the server at all ("no known cases"), so castHasteNone stays continuous.
 func (ct *castTiming) castTime(unit *Unit, castTime time.Duration, spell *Spell) time.Duration {
 	if ct.ignoreHaste {
 		return castTime
 	}
 	switch ct.castHaste {
 	case castHasteRanged:
-		return unit.ApplyRangedCastSpeed(castTime, spell)
+		return unit.ApplyRangedCastSpeed(castTime, spell).Truncate(time.Millisecond)
 	case castHasteNone:
 		return time.Duration(float64(castTime) * spell.CastTimeMultiplier)
 	}
-	return unit.ApplyCastSpeedForSpell(castTime, spell)
+	return unit.ApplyCastSpeedForSpell(castTime, spell).Truncate(time.Millisecond)
 }
 
 // resetsSwing is the rest of Spell::IsAutoActionResetSpell and its caller, for an untriggered cast.
@@ -309,9 +313,7 @@ func (spell *Spell) makeCastFunc(config CastConfig) CastSuccessFunc {
 			case resetsSwing:
 				spell.Unit.AutoAttacks.resetSwingTimers(sim, castEnd)
 			case spell.timing.keepsCombatTimers && spell.Unit.Type == PlayerUnit:
-				// the server takes the cast on its next update, and the timers skip every update from
-				// that one until the one it lands on
-				spell.Unit.AutoAttacks.pauseMelee(sim, castEnd-sim.NextServerTick(sim.CurrentTime))
+				spell.Unit.AutoAttacks.suspendMelee(sim)
 			}
 
 			if sim.Log != nil && !spell.Flags.Matches(SpellFlagNoLogs) {
@@ -340,6 +342,7 @@ func (spell *Spell) makeCastFunc(config CastConfig) CastSuccessFunc {
 						spell.Unit.OnCastComplete(sim, spell)
 					}
 
+					spell.Unit.AutoAttacks.resumeMelee(sim)
 					spell.Unit.AutoAttacks.releaseCastHold(sim)
 				},
 				Target:            target,
@@ -374,6 +377,37 @@ func (spell *Spell) makeCastFunc(config CastConfig) CastSuccessFunc {
 
 		return true
 	}
+}
+
+// HoldMeleeUntil is UNIT_STATE_CASTING's melee gate (WeaponAttack.castHold) for a channel that isn't
+// cast through Spell.Cast's own CastTime because it's modeled as a periodic aura instead of a
+// Spell.Dot (Army of the Dead). Release it with ReleaseMeleeHold once the channel ends.
+// spell.timing.keepsCombatTimers, from the spell's own server data, also freezes the melee timers for
+// as long as the hold lasts, the way ATTR2_DO_NOT_RESET_COMBAT_TIMERS does for a hardcast (Slam).
+func (spell *Spell) HoldMeleeUntil(sim *Simulation, until time.Duration) {
+	unit := spell.Unit
+	if unit.Type != PlayerUnit || !unit.AutoAttacks.AutoSwingMelee {
+		return
+	}
+	if spell.timing.keepsCombatTimers {
+		unit.AutoAttacks.suspendMelee(sim)
+	}
+	unit.Hardcast = Hardcast{
+		Expires:           until,
+		ActionID:          spell.ActionID,
+		OnComplete:        func(*Simulation, *Unit) {},
+		Target:            unit.CurrentTarget,
+		keepsCombatTimers: spell.timing.keepsCombatTimers,
+	}
+}
+
+// ReleaseMeleeHold ends a HoldMeleeUntil hold, resuming any melee timer it froze and swinging whatever
+// it held.
+func (spell *Spell) ReleaseMeleeHold(sim *Simulation) {
+	unit := spell.Unit
+	unit.Hardcast.Expires = startingCDTime
+	unit.AutoAttacks.resumeMelee(sim)
+	unit.AutoAttacks.releaseCastHold(sim)
 }
 
 // makeCastFuncSimple and makeCastFuncAutosOrProcs never reset the swing timer: they cast procs and

@@ -371,7 +371,9 @@ func (dk *Deathknight) registerItems() {
 
 		procMask := character.GetProcMaskForEnchant(3370)
 
-		vulnAuras := character.NewEnemyAuraArray(core.RuneOfRazoriceVulnerabilityAura)
+		vulnAuras := character.NewEnemyAuraArray(func(target *core.Unit) *core.Aura {
+			return core.RuneOfRazoriceVulnerabilityAura(target, &character.Unit)
+		})
 		applyFrostVulnerability(character, vulnAuras)
 
 		// Razor Frost is damage class none, so Spell::EffectWeaponDmg rolls the main hand whichever

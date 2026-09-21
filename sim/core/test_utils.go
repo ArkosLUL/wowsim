@@ -1,6 +1,7 @@
 package core
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"testing"
@@ -233,6 +234,25 @@ func RaidBenchmark(b *testing.B, rsr *proto.RaidSimRequest) {
 		if result.ErrorResult != "" {
 			b.Fatalf("RaidBenchmark() at iteration %d failed: %v", i, result.ErrorResult)
 		}
+	}
+}
+
+// RaidBenchmarkIterations runs rsr once per iteration count, each its own b.Run subtest (1 iteration
+// pays a whole environment build per op, like an optimizer eval; 100 is mostly the rotation). Unlike
+// RaidBenchmark, it builds its own SimOptions per subtest instead of mutating rsr.SimOptions in place,
+// so callers can safely pass in a shared instance like AverageDefaultSimTestOptions.
+func RaidBenchmarkIterations(b *testing.B, rsr *proto.RaidSimRequest, iterationCounts ...int32) {
+	rsr.Encounter.Duration = LongDuration
+
+	for _, iterations := range iterationCounts {
+		b.Run(fmt.Sprintf("iterations=%d", iterations), func(b *testing.B) {
+			rsr.SimOptions = &proto.SimOptions{Iterations: iterations, RandomSeed: 101}
+			for i := 0; i < b.N; i++ {
+				if result := RunRaidSim(rsr); result.ErrorResult != "" {
+					b.Fatal(result.ErrorResult)
+				}
+			}
+		})
 	}
 }
 

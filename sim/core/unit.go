@@ -56,6 +56,12 @@ type Unit struct {
 	// doesn't glance.
 	SummonedAsPet bool
 
+	// A pet carrying the server's haste-carrier aura (spell_dk_pet_scaling; mod-spell-tweaks' hunter
+	// and Feral Spirit mirrors): Unit::ApplySpellImmune blocks direct haste and slows of either sign on
+	// it, Bloodlust included, so MultiplyAttackSpeed no longer touches it and the owner's speed reaches
+	// it only through Pet.OwnerHasteSource. The class sets it before the pet is enabled.
+	HasteCarrier bool
+
 	MobType proto.MobType
 
 	// Amount of time it takes for the human agent to react to in-game events.
@@ -117,9 +123,6 @@ type Unit struct {
 	// nil for everyone else.
 	armorPenSource *Unit
 
-	// The attack speed a pet inherits from its owner, on top of its own.
-	ownerSwingSpeed func() float64
-
 	currentPowerBar PowerBarType
 	healthBar
 	manaBar
@@ -135,11 +138,7 @@ type Unit struct {
 	// Pets owned by this Unit.
 	PetAgents []PetAgent
 
-	DynamicStatsPets      []*Pet
-	DynamicMeleeSpeedPets []*Pet
-
-	// Pets that swing at this unit's attack speed, so they have to be rescheduled with it.
-	hasteInheritingPets []*Pet
+	DynamicStatsPets []*Pet
 
 	// AutoAttacks is the manager for auto attack swings.
 	// Must be enabled to use, with "EnableAutoAttacks()".
@@ -272,7 +271,6 @@ func (unit *Unit) processDynamicBonus(sim *Simulation, bonus stats.Stats) {
 	}
 	if bonus[stats.MeleeHaste] != 0 {
 		unit.AutoAttacks.UpdateSwingTimers(sim)
-		unit.updateInheritedSwingSpeeds(sim)
 	}
 	if bonus[stats.SpellHaste] != 0 {
 		unit.updateCastSpeed()
@@ -356,20 +354,7 @@ func (unit *Unit) ApplyRangedCastSpeed(dur time.Duration, spell *Spell) time.Dur
 }
 
 func (unit *Unit) SwingSpeed() float64 {
-	speed := unit.PseudoStats.MeleeSpeedMultiplier * (1 + (unit.stats[stats.MeleeHaste] / (unit.PseudoStats.MeleeHasteRatingPerHastePercent * 100)))
-	if unit.ownerSwingSpeed != nil {
-		// The inherited haste is one more attack time modifier on top of the pet's own.
-		speed *= unit.ownerSwingSpeed()
-	}
-	return speed
-}
-
-// updateInheritedSwingSpeeds reschedules the pets that swing at this unit's speed, for whenever it
-// changes.
-func (unit *Unit) updateInheritedSwingSpeeds(sim *Simulation) {
-	for _, pet := range unit.hasteInheritingPets {
-		pet.AutoAttacks.UpdateSwingTimers(sim)
-	}
+	return unit.PseudoStats.MeleeSpeedMultiplier * (1 + (unit.stats[stats.MeleeHaste] / (unit.PseudoStats.MeleeHasteRatingPerHastePercent * 100)))
 }
 
 func (unit *Unit) Armor() float64 {
@@ -409,36 +394,25 @@ func (unit *Unit) RangedSwingSpeed() float64 {
 // MultiplyMeleeSpeed will alter the attack speed multiplier and change swing speed of all autoattack swings in progress.
 func (unit *Unit) MultiplyMeleeSpeed(sim *Simulation, amount float64) {
 	unit.PseudoStats.MeleeSpeedMultiplier *= amount
-
-	for _, pet := range unit.DynamicMeleeSpeedPets {
-		pet.dynamicMeleeSpeedInheritance(amount)
-	}
 	unit.AutoAttacks.UpdateSwingTimers(sim)
-	unit.updateInheritedSwingSpeeds(sim)
 }
 
 func (unit *Unit) MultiplyRangedSpeed(sim *Simulation, amount float64) {
 	unit.PseudoStats.RangedSpeedMultiplier *= amount
 	unit.AutoAttacks.UpdateSwingTimers(sim)
-	unit.updateInheritedSwingSpeeds(sim)
 }
 
 // Helper for when both MultiplyMeleeSpeed and MultiplyRangedSpeed are needed.
 func (unit *Unit) MultiplyAttackSpeed(sim *Simulation, amount float64) {
-	if unit.ownerSwingSpeed != nil {
-		// A pet that inherits its owner's attack speed is immune to the auras that carry both melee
-		// and ranged haste, slows as much as Bloodlust: Unit::ApplySpellImmune ignores the carrier's
-		// SPELL_BLOCK_TYPE_POSITIVE. The buffs reach it through the owner's speed instead.
+	if unit.HasteCarrier {
+		// The carrier makes the pet immune to the auras that carry both melee and ranged haste, slows
+		// as much as Bloodlust: Unit::ApplySpellImmune ignores the carrier's SPELL_BLOCK_TYPE_POSITIVE.
+		// The buffs reach it through the owner's speed instead (Pet.OwnerHasteSource).
 		return
 	}
 	unit.PseudoStats.MeleeSpeedMultiplier *= amount
 	unit.PseudoStats.RangedSpeedMultiplier *= amount
-
-	for _, pet := range unit.DynamicMeleeSpeedPets {
-		pet.dynamicMeleeSpeedInheritance(amount)
-	}
 	unit.AutoAttacks.UpdateSwingTimers(sim)
-	unit.updateInheritedSwingSpeeds(sim)
 }
 
 func (unit *Unit) AddBonusRangedHitRating(amount float64) {
@@ -529,7 +503,6 @@ func (unit *Unit) reset(sim *Simulation, _ Agent) {
 	}
 
 	unit.DynamicStatsPets = unit.DynamicStatsPets[:0]
-	unit.DynamicMeleeSpeedPets = unit.DynamicMeleeSpeedPets[:0]
 
 	if unit.Type != PetUnit {
 		sim.addTracker(&unit.auraTracker)

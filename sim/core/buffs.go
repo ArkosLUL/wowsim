@@ -315,13 +315,10 @@ func applyBuffEffects(agent Agent, raidBuffs *proto.RaidBuffs, partyBuffs *proto
 	}
 }
 
-// Applies buffs to pets.
+// Applies buffs to pets. A guardian is as valid an area-aura target as any other pet
+// (AnyGroupedUnitInObjectRangeCheck doesn't tell them apart), so it gets these too. A haste carrier's
+// own immunities (inheritsOwnerAttackSpeed) keep Bloodlust off a guardian the same as a real pet.
 func applyPetBuffEffects(petAgent PetAgent, raidBuffs *proto.RaidBuffs, partyBuffs *proto.PartyBuffs, individualBuffs *proto.IndividualBuffs) {
-	// Summoned pets, like Mage Water Elemental, aren't around to receive raid buffs.
-	if petAgent.GetPet().IsGuardian() {
-		return
-	}
-
 	raidBuffs = googleProto.Clone(raidBuffs).(*proto.RaidBuffs)
 	partyBuffs = googleProto.Clone(partyBuffs).(*proto.PartyBuffs)
 	individualBuffs = googleProto.Clone(individualBuffs).(*proto.IndividualBuffs)
@@ -632,8 +629,9 @@ func BloodlustAura(character *Character, actionTag int32) *Aura {
 		OnGain: func(aura *Aura, sim *Simulation) {
 			character.MultiplyAttackSpeed(sim, 1.3)
 			for _, pet := range character.Pets {
-				// the haste carrier makes an inheriting pet immune to both halves, cast speed included
-				if pet.IsEnabled() && !pet.IsGuardian() && !pet.inheritsOwnerAttackSpeed() {
+				// the haste carrier makes an inheriting pet immune to both halves, cast speed included,
+				// guardian or real pet alike (the army is immune by carrying it too, not by id)
+				if pet.IsEnabled() && !pet.inheritsOwnerAttackSpeed() {
 					BloodlustAura(&pet.Character, actionTag).Activate(sim)
 				}
 			}

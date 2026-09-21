@@ -88,10 +88,9 @@ func BenchmarkSimulate(b *testing.B) {
 				core.NewDefaultTarget(),
 			},
 		},
-		SimOptions: core.AverageDefaultSimTestOptions,
 	}
 
-	core.RaidBenchmark(b, rsr)
+	core.RaidBenchmarkIterations(b, rsr, 1, 100)
 }
 
 var FuryTalents = "302023102331-305053000520310053120500351"

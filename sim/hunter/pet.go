@@ -41,6 +41,13 @@ func (hunter *Hunter) NewHunterPet() *HunterPet {
 	}
 	hp.SummonedAsPet = true
 
+	// mod-spell-tweaks' 425790: immune to direct haste and slows, Bloodlust included; its own melee
+	// swing speed tracks the owner's ranged speed instead (hunters carry their haste there).
+	if hunter.Server().SpellTweaks.HunterPetHaste {
+		hp.HasteCarrier = true
+		hp.OwnerHasteSource = func() float64 { return hunter.RangedSwingSpeed() }
+	}
+
 	// Creature::Regenerate gives a hunter pet 24 focus every 4 s, where core's focus bar has 5 a second
 	hp.EnableFocusBar(1.2*(1.0+0.5*float64(hunter.Talents.BestialDiscipline)), func(sim *core.Simulation) {
 		if hp.GCD.IsReady(sim) {
