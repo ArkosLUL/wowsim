@@ -467,6 +467,10 @@ Reuse BIS-ui-tab's `buildOptimizeRequest` per raider, including its seed trimmin
 `OptimizerProgress.completed_steps`, which reports the current stage's index, so a run reads "step 0 of
 7" while it sets up.
 
+The slow suite's line prints J's ± from the DPS mean only, while J's normalizer, measured fresh each
+run, carries about 1.2% noise for Fury. Print the preset's DPS and the normalizer with its SE, so a
+normalizer wobble doesn't read as a regression (wave F2's Fury `J_preset` -1.7%).
+
 ### BIS-picker-switch (wave F2, done)
 
 `gear_picker.tsx` (its phase filter) and the gem EP filters (the `isUnrestrictedGem` callers in `player.ts`)

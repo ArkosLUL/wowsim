@@ -595,6 +595,10 @@ the sources the server refuses.
    - Deep Wounds munching.
    - When Bloodsurge or the Ymirjar 4pc runs out, Slam's cast time goes back to 1500 ms whatever Improved
      Slam says (`talents.go`).
+   - Shattering Throw: delete ModifyCast's `StopMeleeUntil` (the core's reset already overwrites it) and
+     `hasGlyph`, which no longer changes the cast time (server data sets 1.5 s) but still lets Fury throw
+     from Berserker Stance. Drop glyph 206953 from `ui/warrior/presets.ts`, `FuryGlyphs`, the optimizer's
+     `presetOptimizeRequest` and `testdata/search/fury_p1.json`.
    - A held main hand swings through `swing()` when the cast lands, and its pre-swing APL check can start
      another hardcast first, so back-to-back 1.5 s Slams keep holding it; the server swings first. No suite
      hits it yet. The fix has to keep Heroic Strike's last-moment queue and Slam's pause. This item may
