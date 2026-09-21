@@ -18,14 +18,15 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
 - Benchmarks, both under `go test --tags=with_db -run '^$' -bench`:
   - `BenchmarkOptimizerEval ./sim/optimizer/`, with its numbers in the
     [BiS INVESTIGATION](../bis-optimizer/bis-optimizer.INVESTIGATION.md#performance).
-  - `BenchmarkSimulate ./sim/rogue/ ./sim/paladin/retribution/ ./sim/hunter/ ./sim/shaman/elemental/`
-    for sim throughput, covering melee, mana melee, ranged with a pet, and caster. Every wave records
+  - `BenchmarkSimulate ./sim/rogue/ ./sim/paladin/retribution/ ./sim/hunter/ ./sim/shaman/elemental/ ./sim/`
+    for sim throughput, covering melee, mana melee, ranged with a pet, caster and a raid. Every wave records
     it ([wave loop](../wave-loop/wave-loop.PLAN.md#sim-throughput)), because no golden measures time.
     Run it on an idle machine, with no sim, container build or golden run alongside: what else is
     running moves all four by a fifth or more at once, which is enough to hide or invent a regression.
-    The other six `BenchmarkSimulate` cases, the 25-man raid one included, nil-deref in
-    `APLRotation.DoNextAction`: their requests carry no rotation, and upstream's swing path has called
-    it since 2024 for queued swings like Heroic Strike. PAR-PERF repairs the raid one.
+    Each case sims one iteration, so the environment build is 16-55% of the first four, and the Ret,
+    Hunter and Elemental requests carry no rotation: they measure autos and setup more than a
+    rotation's per-event cost. `./sim/` is an 8-player raid without talents, on its specs' golden APLs,
+    as are the Feral, Feral Tank, Enhancement, Fury and Protection Warrior cases.
 - The optimizer's slow suite, which every wave re-runs as the BiS baseline (about 8 min):
   `go test --tags=with_db,optimizer_slow -count=1 -timeout 90m -run TestOptimizerSlow -v ./sim/optimizer/`.
   It prints one `slow: spec=… phase=… effort=… J_preset=… J_opt=… delta=…±…` line per case, and

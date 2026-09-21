@@ -49,7 +49,7 @@ G = changes goldens. FS = runs all 37 suites.
 | E | PAR-P3-4 (G, FS) · PAR-P3-5 (G, FS) · PAR-P6-1 · RI-3 | ✔ |
 | F | PAR-P7-0a (G, FS) · PAR-P7-0b (G, FS) · BIS-tanks-racials · PAR-TOOLS-RR | ✔ |
 | F2 | PAR-P7-0c (G, FS) · PAR-PERF · BIS-picker-switch | ✔ |
-| G | PAR-P7-DK (G) · PAR-P7-HUN (G) · BIS-batch-ui | ✔ |
+| G | PAR-P7-DK (G) · PAR-P7-HUN (G) · BIS-batch-ui · PAR-PERF-2 (G) | ✔ |
 | H | PAR-P7-ROG · PAR-P7-WAR · PAR-P7-RET (G) · BIS-raid-contrib | ✔ |
 | I | PAR-P7-SHA · PAR-P7-DRU · PAR-P7-MAG · PAR-P7-WLK (G) | ✔ |
 | J | PAR-P7-PRI (G) · PAR-P7-TANK (G) · BIS-e2e-perf · AC-3 | ✔ |
@@ -151,9 +151,9 @@ gap is what else was running during E, not the sim. Compare F onward; treat E as
 | BIS-tanks-racials | merged | `f688a9246` | `db.json` regenerated for Titanguard in `4c69521ed` |
 | PAR-TOOLS-RR | merged | `e20ac0f21` | e2e `0339692`; 2 of the 4 recorded runs captured |
 | wave F cross-review | | `3e0c922c8` | 3 bugs, each inside one item; the only cross-item finding was a tank run's cost, sent to BIS-batch-ui |
-| PAR-P7-0c | running | | |
-| PAR-PERF | running | | merges after PAR-P7-0c |
-| BIS-picker-switch | running | | |
+| PAR-P7-0c | merged | `922ffc7ab` | 14 goldens promoted in `e52af57b0` |
+| PAR-PERF | merged | `8a963ff77` | goldens unchanged on top of PAR-P7-0c's; what changes results went to PAR-PERF-2 |
+| BIS-picker-switch | merged | `f1c9d4f4d` | the orchestrator kept Save for an equipped improved pick |
 
 Later WIs are added as their wave starts.
 

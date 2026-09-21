@@ -467,7 +467,7 @@ Reuse BIS-ui-tab's `buildOptimizeRequest` per raider, including its seed trimmin
 `OptimizerProgress.completed_steps`, which reports the current stage's index, so a run reads "step 0 of
 7" while it sets up.
 
-### BIS-picker-switch (wave F2)
+### BIS-picker-switch (wave F2, done)
 
 `gear_picker.tsx` (its phase filter) and the gem EP filters (the `isUnrestrictedGem` callers in `player.ts`)
 switch to catalog tiers.
@@ -487,6 +487,13 @@ Two optimizer-tab fixes from the user's first runs:
 - The prod container reports `SimCommit` "unknown": `.dockerignore` drops `.git`, so the VCS stamp has
   nothing to read. Stamp `optimizer.SimCommit` with `-ldflags -X` from a build arg (`Dockerfile`, the
   makefile's `devserver`).
+
+**Findings:**
+- The picker now hides PvP gear at every phase, like the optimizer: the catalog puts PvP vendor gear at
+  the vendor's tier, which would put Wrathful Gladiator's gear on top of every P1 list. The 16 gems whose
+  designs sell only for PvP currency (40011 Stormy Sky Sapphire, for one) are flagged PvP and drop out
+  of the gem lists and gem EP too. Pending the user's call.
+- A seed the pool trimmed can win: the notice then says Equip changes only what the pool left out.
 
 ### BIS-raid-contrib (wave H)
 
@@ -513,8 +520,6 @@ screen, the two-stage batch, the raid-DPS column.
   2.9 MB of JSON, which `worker_pool.optimizeGearAsync` also logs in full on every run. Drop that log,
   and prune in the pool builder if size or search time hurts (items every other candidate beats, or TBC
   items by default).
-- Stamp `optimizer.SimCommit` with `-ldflags` in the makefile and Dockerfile builds; Docker builds report
-  `unknown` otherwise.
 
 ### BIS-presets (wave K)
 

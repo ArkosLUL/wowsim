@@ -171,8 +171,10 @@ Roll details the tables above don't show:
   to them.
 - The haste carrier auras (`spell_dk_pet_scaling`, mod-spell-tweaks' 425790 and 425792) hold the owner's
   attack speed as whole percent, recalculated every 2 s: ranged for a hunter pet, melee for the ghoul and
-  Feral Spirits. They make the pet immune to positive `MOD_CASTING_SPEED_NOT_STACK`, `MOD_MELEE_RANGED_HASTE`
-  and `MELEE_SLOW`, so Bloodlust is blocked and reaches the pet through the owner instead. 425790 and
+  Feral Spirits. They make the pet immune to `MOD_CASTING_SPEED_NOT_STACK`, `MOD_MELEE_RANGED_HASTE`
+  and `MELEE_SLOW` of either sign (`Unit::ApplySpellImmune` drops the positive-only block type), except from
+  spells with `ATTR0_NO_IMMUNITIES`, `ATTR3_ALWAYS_HIT` or `ATTR4_OWNER_POWER_SCALING`. So Bloodlust, both
+  halves, is blocked and reaches the pet through the owner instead. 425790 and
   `spell_dk_pet_scaling` leave `MOD_MELEE_HASTE` alone, so Frenzy and Ghoul Frenzy stack on top; 425792 blocks
   it too, since Windfury Totem and Improved Icy Talons reach the wolves as party auras and are already in the
   shaman's melee haste.

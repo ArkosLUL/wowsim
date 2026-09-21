@@ -8,7 +8,7 @@ gets its own `<effort>-<id>` branch and worktree off `integration` ([int]).
 
 | Effort | Scope | Branch, worktree | Docs | Owns |
 |---|---|---|---|---|
-| wave-loop | Orchestrates the loop efforts in waves | `integration`; [int] | [docs/wave-loop/](../wave-loop/) | `docs/wave-loop/`; git and integration for the loop efforts |
+| wave-loop | Orchestrates the loop efforts in waves | `integration`; [int] | [docs/wave-loop/](../wave-loop/) | `docs/wave-loop/`, `tools/uicheck/`; git and integration for the loop efforts |
 | docker-build | Build and serve the sim from Docker | `master` | README "Docker" section | `Dockerfile`, `.dockerignore` |
 | azerothcore-item-diff (loop) | Diff the sim's item data and Go effects against the server; `gen_db` AzerothCore mode | loop | [docs/azerothcore-item-diff/](../azerothcore-item-diff/) | `tools/database/azerothcore/` (shared readers), `tools/database/acdiff/`, `tools/database/gen_db/` AzerothCore mode |
 | azerothcore-raid-import (loop) | Export the raid group from the server and import it into the sim: reforges, racial traits, all professions | loop | [docs/azerothcore-raid-import/](../azerothcore-raid-import/) | `tools/database/acraid/`, the roster files in `tools/database/azerothcore/`, `ui/raid/acore_*.ts` |

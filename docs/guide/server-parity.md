@@ -106,10 +106,19 @@ which is what unit tests want).
 - Swings, hardcast completions and aura expiry land on the next tick, with a phase rolled per iteration.
   A swing restarts its timer from the tick it landed on, so the overshoot is lost, which costs a fast
   dual wielder several percent.
-- A landed swing pushes the other hand to at least 200 ms, and a melee swing restarts the ranged timer.
-- A cast resets every swing timer when the server's `ResetsAutoAttack` says so, and a resetting hardcast
-  also stops swings while it casts. A triggered cast never resets, nor does one made instant or one an
-  `SPELL_AURA_IGNORE_MELEE_RESET` aura covers (Maelstrom Weapon).
+- A landed swing pushes the other hand to at least 200 ms. A melee swing restarts the ranged timer, and
+  every Auto Shot restarts both melee timers (`Unit::_UpdateAutoRepeatSpell`).
+- At the pull a ready off hand starts half the main hand's hasted attack time behind it (`Unit::Attack`).
+  A weapon swap doesn't reset swings.
+- A cast resets every swing timer when the server's `ResetsAutoAttack` says so. A triggered cast never
+  resets, nor does one made instant or one an `SPELL_AURA_IGNORE_MELEE_RESET` aura covers (Maelstrom
+  Weapon).
+- A swing due during a hardcast waits for the update the cast lands on and goes after its effects. Melee
+  waits out any hardcast, Auto Shot only one without `SPELL_ATTR2_DO_NOT_RESET_COMBAT_TIMERS`. With that
+  attribute a player's melee timers stand still through the cast instead (Slam). A cast started by the
+  main hand's last APL check comes before that swing: the server handles the session before
+  `Player::Update`. Channels don't hold swings in the sim; the two cast with autos running (Army of the
+  Dead, Volley) cancel autos in class code.
 - The GCD follows `Spell::TriggerGlobalCooldown`: hasted only with `HasteGCD`, then kept within
   [1000, 1500] ms. Cast time scales by damage class: spell haste for magic, ranged attack speed for
   ranged, nothing for melee.
