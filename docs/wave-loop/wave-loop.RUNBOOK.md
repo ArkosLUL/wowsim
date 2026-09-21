@@ -82,7 +82,9 @@ loop" re-affirms them.
    6. Commit its mod-sim-validation changes, if any.
    7. Remove the worktree and branch. Update the WI's status in the PLAN and its effort PLAN. Commit.
 
-   A red, blocked or `waiting-server` WI stays unmerged and carries forward.
+   A red, blocked or `waiting-server` WI stays unmerged and carries forward. A server stage left
+   `pending` re-runs alone before the merge (the other stages as `priorReport`), or carries forward as a
+   follow-up if the server stays busy.
 5. **Cross-review.** One Agent reviews `git diff <wave base>..integration` by hand at high effort, fixes the
    findings, and re-runs step 4.3. Commit. (`/code-review` reviews the session's main checkout, never [int] or
    a WI worktree.)
@@ -117,6 +119,8 @@ loop" re-affirms them.
   casts and weights.
 - Golden-neutral WIs report the suites they ran as unchanged.
 - Generators: get `sim/core` compiling first (hand-edit the generated file), then regenerate.
+- Send long output (test runs, `delta`, logs) to a file in `tmp/` and read it with grep or tail: whatever
+  you read stays in your context.
 - Only the one WI a wave assigns touches `db.json`.
 
 **Live server**
@@ -137,17 +141,25 @@ loop" re-affirms them.
 ```
 {wave, baseSha, items: [{id, effort, kind: 'implement'|'review-only', worktree, branch,
 specPath, specSection, ownedPaths, goldenChanging, fullSuite, verify: [cmd], server, devPort, notes?,
-priorReport?}]}
+priorReport?, stages?: [{label, notes, server, priorReport?}]}]}
 ```
 
-`priorReport`, a finished implementer's report from an earlier run, sends the item straight to review.
+`priorReport`, a finished implementer's report from an earlier run, sends the item straight to review;
+on a stage, it skips that stage.
+
+`stages` replaces the single implementer with fresh agents run in order in the same worktree, each
+handed the earlier stages' reports. Split any item one agent can't hold (wave G's DK and hunter
+implementers each reached ~900k tokens):
+- A class item gets a live stage last (`.simval` checks, recorded run), after one or two code stages.
+- A server stage that returns `waiting-server` doesn't stop the item: it goes to review, and the result
+  lists the stage in `pending`.
 
 Each item is a pipeline:
-1. **Implement** (skipped for review-only).
+1. **Implement** (skipped for review-only), per stage if staged.
 2. **Review** by a fresh agent, by hand at high effort, over `git diff <baseSha>` plus untracked files. It
    fixes every finding, re-verifies, and checks golden deltas against the spec.
 3. If red: one repair agent, then a second review.
-4. Returns `{id, status: green|red|blocked|waiting-server, report}`.
+4. Returns `{id, status: green|red|blocked|waiting-server, report, pending}`.
 
 `report`:
 
@@ -167,7 +179,8 @@ After a `/compact` or restart:
 2. A running Workflow: wait for its notification. One that was killed, or whose agents died (a session
    limit): re-run the script inline for the unfinished items only. Not `resumeFromRunId`: its cache keys
    chain through earlier calls, so one changed or failed call re-runs every later one.
-   - A finished implementer (its `result` line in the run's `journal.jsonl`) goes in as `priorReport`.
+   - A finished implementer or stage (its `result` line in the run's `journal.jsonl`) goes in as
+     `priorReport`, on the item or its stage.
      Write the report to the worktree's gitignored `tmp/` and let `priorReport` point the reviewer at
      that file: a full report inline makes the args too big to pass.
    - An agent cut off mid-work keeps its uncommitted work. Its replacement gets a note saying what was
