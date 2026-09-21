@@ -84,7 +84,7 @@ Quirk: `UnitLevelFloat64` in `utils.go` treats every level outside 80–82 as +3
   - `Database.lookupItemSpec` keeps any reforge some mod-reforging config allows; the encounter's config
     decides.
 - `ui/core/optimizer/` and `ui/core/components/individual_sim_ui/optimizer_tab.ts`: the BiS Optimizer
-  tab, shown for DPS specs. `pool_builder.ts` builds the request (its `filterItemsByFilters` is the gear
+  tab, shown for DPS and tank specs. `pool_builder.ts` builds the request (its `filterItemsByFilters` is the gear
   picker's own filter, and it trims the seed to what the pool offers, since Go rejects anything else),
   `catalog.ts` reads `server_catalog.json`, and `fixture_driver.ts` writes the replay fixtures under
   Node ([README](../../ui/core/optimizer/README.md)).
@@ -92,7 +92,8 @@ Quirk: `UnitLevelFloat64` in `utils.go` treats every level outside 80–82 as +3
   of the mechanic constants and re-exports the generated `ratings_auto_gen.ts`.
   `server_defaults_auto_gen.ts` holds the live server settings.
 - `ui/<spec>/presets.ts` and `ui/<spec>/gear_sets/*.gear.json`: presets.
-- `ui/raid/raid_sim_ui.ts`: the raid sim, where importers are registered.
+- `ui/raid/raid_sim_ui.ts`: the raid sim, where importers and the BiS batch (`optimizer_batch.ts`) are
+  registered.
 
 ## Tools
 
