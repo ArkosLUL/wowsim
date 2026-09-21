@@ -10,9 +10,6 @@ import (
 
 type PetAbilityType int
 
-// Pet AI doesn't use abilities immediately, so model this with a 1.6s GCD.
-const PetGCD = time.Millisecond * 1600
-
 const (
 	Unknown PetAbilityType = iota
 	AcidSpit
@@ -127,7 +124,7 @@ func (hp *HunterPet) newFocusDump(pat PetAbilityType, spellID int32) *core.Spell
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
-				GCD: PetGCD,
+				GCD: core.GCDDefault,
 			},
 			IgnoreHaste: true,
 		},
@@ -159,11 +156,18 @@ type PetSpecialAbilityConfig struct {
 	Cost    float64
 	SpellID int32
 	School  core.SpellSchool
-	GCD     time.Duration
-	CD      time.Duration
-	MinDmg  float64
-	MaxDmg  float64
+	// magic damage class: the magic hit table, and a crit adds 50% (Unit::SpellCriticalDamageBonus)
+	Magic bool
+	// SPELL_ATTR2_CANT_CRIT, or magic class with a physical school, which Unit::SpellDoneCritChance
+	// gives no crit chance
+	CantCrit bool
+	GCD      time.Duration
+	CD       time.Duration
+	MinDmg   float64
+	MaxDmg   float64
+	// spell_bonus_data's ap_bonus and direct_damage. The pet's spell damage only reaches magic schools.
 	APRatio float64
+	SPRatio float64
 
 	Dot core.DotConfig
 
@@ -172,29 +176,35 @@ type PetSpecialAbilityConfig struct {
 
 func (hp *HunterPet) newSpecialAbility(config PetSpecialAbilityConfig) *core.Spell {
 	var flags core.SpellFlag
-	var applyEffects core.ApplySpellResults
 	var procMask core.ProcMask
-	onSpellHitDealt := config.OnSpellHitDealt
 	if config.School == core.SpellSchoolPhysical {
 		flags = core.SpellFlagMeleeMetrics | core.SpellFlagIncludeTargetBonusDamage
 		procMask = core.ProcMaskSpellDamage
-		applyEffects = func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := sim.Roll(config.MinDmg, config.MaxDmg) + config.APRatio*spell.MeleeAttackPower()
-			baseDamage *= hp.killCommandMult()
-			result := spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
-			if onSpellHitDealt != nil {
-				onSpellHitDealt(sim, spell, result)
-			}
-		}
 	} else {
 		procMask = core.ProcMaskMeleeMHSpecial
-		applyEffects = func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := sim.Roll(config.MinDmg, config.MaxDmg) + config.APRatio*spell.MeleeAttackPower()
-			baseDamage *= 1 + 0.2*float64(hp.KillCommandAura.GetStacks())
-			result := spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
-			if onSpellHitDealt != nil {
-				onSpellHitDealt(sim, spell, result)
-			}
+	}
+
+	critMultiplier := 2.0
+	if config.Magic {
+		critMultiplier = hp.DefaultSpellCritMultiplier()
+	}
+
+	onSpellHitDealt := config.OnSpellHitDealt
+	applyEffects := func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+		baseDamage := sim.Roll(config.MinDmg, config.MaxDmg) + config.APRatio*spell.MeleeAttackPower() + config.SPRatio*spell.SpellPower()
+		baseDamage *= hp.killCommandMult()
+		outcome := spell.OutcomeMeleeSpecialHitAndCrit
+		switch {
+		case config.Magic && config.CantCrit:
+			outcome = spell.OutcomeMagicHit
+		case config.Magic:
+			outcome = spell.OutcomeMagicHitAndCrit
+		case config.CantCrit:
+			outcome = spell.OutcomeMeleeSpecialHit
+		}
+		result := spell.CalcAndDealDamage(sim, target, baseDamage, outcome)
+		if onSpellHitDealt != nil {
+			onSpellHitDealt(sim, spell, result)
 		}
 	}
 
@@ -205,7 +215,7 @@ func (hp *HunterPet) newSpecialAbility(config PetSpecialAbilityConfig) *core.Spe
 		Flags:       flags,
 
 		DamageMultiplier: 1 * hp.hunterOwner.markedForDeathMultiplier(),
-		CritMultiplier:   2,
+		CritMultiplier:   critMultiplier,
 		ThreatMultiplier: 1,
 
 		FocusCost: core.FocusCostOptions{
@@ -231,13 +241,14 @@ func (hp *HunterPet) newAcidSpit() *core.Spell {
 	return hp.newSpecialAbility(PetSpecialAbilityConfig{
 		Type:    AcidSpit,
 		Cost:    20,
-		GCD:     PetGCD,
+		GCD:     core.GCDDefault,
 		CD:      time.Second * 10,
 		SpellID: 55754,
 		School:  core.SpellSchoolNature,
+		Magic:   true,
 		MinDmg:  124,
 		MaxDmg:  176,
-		APRatio: 0.049,
+		SPRatio: 0.333,
 		OnSpellHitDealt: func(sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
 			if result.Landed() {
 				aura := acidSpitAuras.Get(result.Target)
@@ -254,15 +265,17 @@ func (hp *HunterPet) newDemoralizingScreech() *core.Spell {
 	debuffs := hp.NewEnemyAuraArray(core.DemoralizingScreechAura)
 
 	return hp.newSpecialAbility(PetSpecialAbilityConfig{
-		Type:    DemoralizingScreech,
-		Cost:    20,
-		GCD:     PetGCD,
-		CD:      time.Second * 10,
-		SpellID: 55487,
-		School:  core.SpellSchoolPhysical,
-		MinDmg:  85,
-		MaxDmg:  129,
-		APRatio: 0.07,
+		Type:     DemoralizingScreech,
+		Cost:     20,
+		GCD:      core.GCDDefault,
+		CD:       time.Second * 10,
+		SpellID:  55487,
+		School:   core.SpellSchoolPhysical,
+		Magic:    true,
+		CantCrit: true,
+		MinDmg:   85,
+		MaxDmg:   129,
+		APRatio:  0.07,
 		OnSpellHitDealt: func(sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
 			if result.Landed() {
 				for _, aoeTarget := range sim.Encounter.TargetUnits {
@@ -275,15 +288,17 @@ func (hp *HunterPet) newDemoralizingScreech() *core.Spell {
 
 func (hp *HunterPet) newFireBreath() *core.Spell {
 	return hp.newSpecialAbility(PetSpecialAbilityConfig{
-		Type:    FireBreath,
-		Cost:    20,
-		GCD:     PetGCD,
-		CD:      time.Second * 10,
-		SpellID: 55485,
-		School:  core.SpellSchoolFire,
-		MinDmg:  43,
-		MaxDmg:  57,
-		APRatio: 0.049,
+		Type:     FireBreath,
+		Cost:     20,
+		GCD:      core.GCDDefault,
+		CD:       time.Second * 10,
+		SpellID:  55485,
+		School:   core.SpellSchoolFire,
+		Magic:    true,
+		CantCrit: true,
+		MinDmg:   43,
+		MaxDmg:   57,
+		SPRatio:  0.333,
 
 		Dot: core.DotConfig{
 			Aura: core.Aura{
@@ -292,7 +307,7 @@ func (hp *HunterPet) newFireBreath() *core.Spell {
 			NumberOfTicks: 2,
 			TickLength:    time.Second * 1,
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-				dot.SnapshotBaseDamage = sim.Roll(44/2, 56/2) * hp.killCommandMult()
+				dot.SnapshotBaseDamage = (sim.Roll(22, 28) + 0.167*dot.Spell.SpellPower()) * hp.killCommandMult()
 				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(dot.Spell.Unit.AttackTables[target.UnitIndex])
 			},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
@@ -315,9 +330,10 @@ func (hp *HunterPet) newFroststormBreath() *core.Spell {
 		CD:      time.Second * 10,
 		SpellID: 55492,
 		School:  core.SpellSchoolFrost,
+		Magic:   true,
 		MinDmg:  128,
 		MaxDmg:  172,
-		APRatio: 0.049,
+		SPRatio: 0.333,
 	})
 }
 
@@ -371,7 +387,7 @@ func (hp *HunterPet) newGore() *core.Spell {
 	return hp.newSpecialAbility(PetSpecialAbilityConfig{
 		Type:    Gore,
 		Cost:    20,
-		GCD:     PetGCD,
+		GCD:     core.GCDDefault,
 		CD:      time.Second * 10,
 		SpellID: 35295,
 		School:  core.SpellSchoolPhysical,
@@ -385,13 +401,14 @@ func (hp *HunterPet) newLavaBreath() *core.Spell {
 	return hp.newSpecialAbility(PetSpecialAbilityConfig{
 		Type:    LavaBreath,
 		Cost:    20,
-		GCD:     PetGCD,
+		GCD:     core.GCDDefault,
 		CD:      time.Second * 10,
 		SpellID: 58611,
 		School:  core.SpellSchoolFire,
+		Magic:   true,
 		MinDmg:  128,
 		MaxDmg:  172,
-		APRatio: 0.049,
+		SPRatio: 0.333,
 	})
 }
 
@@ -399,13 +416,14 @@ func (hp *HunterPet) newLightningBreath() *core.Spell {
 	return hp.newSpecialAbility(PetSpecialAbilityConfig{
 		Type:    LightningBreath,
 		Cost:    20,
-		GCD:     PetGCD,
+		GCD:     core.GCDDefault,
 		CD:      time.Second * 10,
 		SpellID: 25012,
 		School:  core.SpellSchoolNature,
+		Magic:   true,
 		MinDmg:  80,
 		MaxDmg:  120,
-		APRatio: 0.049,
+		SPRatio: 0.333,
 	})
 }
 
@@ -424,7 +442,7 @@ func (hp *HunterPet) newMonstrousBite() *core.Spell {
 	return hp.newSpecialAbility(PetSpecialAbilityConfig{
 		Type:    MonstrousBite,
 		Cost:    20,
-		GCD:     PetGCD,
+		GCD:     core.GCDDefault,
 		CD:      time.Second * 10,
 		SpellID: 55499,
 		School:  core.SpellSchoolPhysical,
@@ -444,13 +462,13 @@ func (hp *HunterPet) newNetherShock() *core.Spell {
 	return hp.newSpecialAbility(PetSpecialAbilityConfig{
 		Type:    NetherShock,
 		Cost:    20,
-		GCD:     PetGCD,
-		CD:      time.Second * 10,
+		CD:      time.Second * 40,
 		SpellID: 53589,
 		School:  core.SpellSchoolShadow,
+		Magic:   true,
 		MinDmg:  64,
 		MaxDmg:  86,
-		APRatio: 0.049,
+		SPRatio: 0.333,
 	})
 }
 
@@ -461,10 +479,6 @@ func (hp *HunterPet) newPin() *core.Spell {
 		ProcMask:    core.ProcMaskEmpty,
 
 		Cast: core.CastConfig{
-			DefaultCast: core.Cast{
-				GCD: PetGCD,
-			},
-			IgnoreHaste: true,
 			CD: core.Cooldown{
 				Timer:    hp.NewTimer(),
 				Duration: hp.hunterOwner.applyLongevity(time.Second * 40),
@@ -481,7 +495,7 @@ func (hp *HunterPet) newPin() *core.Spell {
 			NumberOfTicks: 4,
 			TickLength:    time.Second * 1,
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-				dot.SnapshotBaseDamage = sim.Roll(112/4, 144/4) + 0.07*dot.Spell.MeleeAttackPower()
+				dot.SnapshotBaseDamage = sim.Roll(28, 36)
 				dot.SnapshotBaseDamage *= hp.killCommandMult()
 				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(dot.Spell.Unit.AttackTables[target.UnitIndex])
 			},
@@ -510,7 +524,7 @@ func (hp *HunterPet) newPoisonSpit() *core.Spell {
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
-				GCD: PetGCD,
+				GCD: core.GCDDefault,
 			},
 			IgnoreHaste: true,
 			CD: core.Cooldown{
@@ -529,7 +543,7 @@ func (hp *HunterPet) newPoisonSpit() *core.Spell {
 			NumberOfTicks: 4,
 			TickLength:    time.Second * 2,
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-				dot.SnapshotBaseDamage = sim.Roll(104/4, 136/4) + (0.049/4)*dot.Spell.MeleeAttackPower()
+				dot.SnapshotBaseDamage = sim.Roll(26, 34) + 0.067*dot.Spell.SpellPower()
 				dot.SnapshotBaseDamage *= hp.killCommandMult()
 				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(dot.Spell.Unit.AttackTables[target.UnitIndex])
 			},
@@ -539,7 +553,7 @@ func (hp *HunterPet) newPoisonSpit() *core.Spell {
 		},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			result := spell.CalcAndDealOutcome(sim, target, spell.OutcomeMeleeSpecialHit)
+			result := spell.CalcAndDealOutcome(sim, target, spell.OutcomeMagicHit)
 			if result.Landed() {
 				spell.Dot(result.Target).Apply(sim)
 			}
@@ -551,7 +565,7 @@ func (hp *HunterPet) newRake() *core.Spell {
 	return hp.newSpecialAbility(PetSpecialAbilityConfig{
 		Type:    Rake,
 		Cost:    20,
-		GCD:     PetGCD,
+		GCD:     core.GCDDefault,
 		CD:      time.Second * 10,
 		SpellID: 59886,
 		School:  core.SpellSchoolPhysical,
@@ -639,7 +653,7 @@ func (hp *HunterPet) newSavageRend() *core.Spell {
 			NumberOfTicks: 3,
 			TickLength:    time.Second * 5,
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-				dot.SnapshotBaseDamage = sim.Roll(21, 27) + 0.07*dot.Spell.MeleeAttackPower()
+				dot.SnapshotBaseDamage = sim.Roll(21, 27)
 				dot.SnapshotBaseDamage *= hp.killCommandMult()
 				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(dot.Spell.Unit.AttackTables[target.UnitIndex])
 			},
@@ -681,7 +695,7 @@ func (hp *HunterPet) newScorpidPoison() *core.Spell {
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
-				GCD: PetGCD,
+				GCD: core.GCDDefault,
 			},
 			IgnoreHaste: true,
 			CD: core.Cooldown{
@@ -700,7 +714,7 @@ func (hp *HunterPet) newScorpidPoison() *core.Spell {
 			NumberOfTicks: 5,
 			TickLength:    time.Second * 2,
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-				dot.SnapshotBaseDamage = sim.Roll(100/5, 130/5) + (0.07/5)*dot.Spell.MeleeAttackPower()
+				dot.SnapshotBaseDamage = sim.Roll(20, 26) + 0.067*dot.Spell.SpellPower()
 				dot.SnapshotBaseDamage *= hp.killCommandMult()
 				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(dot.Spell.Unit.AttackTables[target.UnitIndex])
 			},
@@ -738,9 +752,10 @@ func (hp *HunterPet) newSonicBlast() *core.Spell {
 		CD:      time.Second * 60,
 		SpellID: 53568,
 		School:  core.SpellSchoolNature,
+		Magic:   true,
 		MinDmg:  62,
 		MaxDmg:  88,
-		APRatio: 0.049,
+		SPRatio: 0.333,
 	})
 }
 
@@ -752,9 +767,10 @@ func (hp *HunterPet) newSpiritStrike() *core.Spell {
 		CD:      time.Second * 10,
 		SpellID: 61198,
 		School:  core.SpellSchoolArcane,
+		Magic:   true,
 		MinDmg:  49,
 		MaxDmg:  65,
-		APRatio: 0.04,
+		SPRatio: 0.333,
 
 		Dot: core.DotConfig{
 			Aura: core.Aura{
@@ -763,7 +779,7 @@ func (hp *HunterPet) newSpiritStrike() *core.Spell {
 			NumberOfTicks: 1,
 			TickLength:    time.Second * 6,
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-				dot.SnapshotBaseDamage = sim.Roll(49, 65) + 0.04*dot.Spell.MeleeAttackPower()
+				dot.SnapshotBaseDamage = sim.Roll(49, 65) + 0.333*dot.Spell.SpellPower()
 				dot.SnapshotBaseDamage *= hp.killCommandMult()
 				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(dot.Spell.Unit.AttackTables[target.UnitIndex])
 			},
@@ -791,7 +807,7 @@ func (hp *HunterPet) newSporeCloud() *core.Spell {
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
-				GCD: PetGCD,
+				GCD: core.GCDDefault,
 			},
 			IgnoreHaste: true,
 			CD: core.Cooldown{
@@ -810,13 +826,13 @@ func (hp *HunterPet) newSporeCloud() *core.Spell {
 			},
 			NumberOfTicks: 3,
 			TickLength:    time.Second * 3,
-			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-				dot.SnapshotBaseDamage = sim.Roll(22, 28) + (0.049/3)*dot.Spell.MeleeAttackPower()
+			// an AOE dot sits on the pet, so snapshot against its target
+			OnSnapshot: func(sim *core.Simulation, _ *core.Unit, dot *core.Dot, isRollover bool) {
+				dot.SnapshotBaseDamage = sim.Roll(22, 28) + 0.333*dot.Spell.SpellPower()
 				dot.SnapshotBaseDamage *= hp.killCommandMult()
-				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(dot.Spell.Unit.AttackTables[target.UnitIndex])
+				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(dot.Spell.Unit.AttackTables[hp.CurrentTarget.UnitIndex])
 			},
-			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
-				dot.CalcAndDealPeriodicSnapshotDamage(sim, target, dot.OutcomeTick)
+			OnTick: func(sim *core.Simulation, _ *core.Unit, dot *core.Dot) {
 				for _, aoeTarget := range sim.Encounter.TargetUnits {
 					dot.CalcAndDealPeriodicSnapshotDamage(sim, aoeTarget, dot.OutcomeTick)
 				}
@@ -841,8 +857,7 @@ func (hp *HunterPet) newStampede() *core.Spell {
 		SpellID: 57393,
 		School:  core.SpellSchoolPhysical,
 		MinDmg:  182,
-		MaxDmg:  264,
-		APRatio: 0.07,
+		MaxDmg:  246,
 		OnSpellHitDealt: func(sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
 			if result.Landed() {
 				debuffs.Get(result.Target).Activate(sim)
@@ -856,13 +871,13 @@ func (hp *HunterPet) newSting() *core.Spell {
 	return hp.newSpecialAbility(PetSpecialAbilityConfig{
 		Type:    Sting,
 		Cost:    20,
-		GCD:     PetGCD,
+		GCD:     core.GCDDefault,
 		CD:      time.Second * 6,
 		SpellID: 56631,
 		School:  core.SpellSchoolNature,
 		MinDmg:  64,
 		MaxDmg:  86,
-		APRatio: 0.049,
+		SPRatio: 0.333,
 		OnSpellHitDealt: func(sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
 			if result.Landed() {
 				debuffs.Get(result.Target).Activate(sim)
@@ -877,7 +892,7 @@ func (hp *HunterPet) newSwipe() *core.Spell {
 	return hp.newSpecialAbility(PetSpecialAbilityConfig{
 		Type:    Swipe,
 		Cost:    20,
-		GCD:     PetGCD,
+		GCD:     core.GCDDefault,
 		CD:      time.Second * 5,
 		SpellID: 53533,
 		School:  core.SpellSchoolPhysical,
@@ -923,7 +938,7 @@ func (hp *HunterPet) newVenomWebSpray() *core.Spell {
 			NumberOfTicks: 4,
 			TickLength:    time.Second * 1,
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-				dot.SnapshotBaseDamage = 46 + 0.07*dot.Spell.MeleeAttackPower()
+				dot.SnapshotBaseDamage = sim.Roll(46, 68) + 0.333*dot.Spell.SpellPower()
 				dot.SnapshotBaseDamage *= hp.killCommandMult()
 				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(dot.Spell.Unit.AttackTables[target.UnitIndex])
 			},
@@ -933,7 +948,7 @@ func (hp *HunterPet) newVenomWebSpray() *core.Spell {
 		},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			result := spell.CalcAndDealOutcome(sim, target, spell.OutcomeMeleeSpecialHit)
+			result := spell.CalcAndDealOutcome(sim, target, spell.OutcomeMagicHit)
 			if result.Landed() {
 				spell.Dot(target).Apply(sim)
 			}

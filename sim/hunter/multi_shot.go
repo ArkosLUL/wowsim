@@ -21,20 +21,14 @@ func (hunter *Hunter) registerMultiShotSpell(timer *core.Timer) {
 			Multiplier: 1 - 0.03*float64(hunter.Talents.Efficiency),
 		},
 		Cast: core.CastConfig{
+			// the ranged slot's 500 ms, scaled by ranged attack speed (Unit::ModSpellCastTime)
 			DefaultCast: core.Cast{
 				GCD:      core.GCDDefault,
 				CastTime: time.Millisecond * 500,
 			},
-			ModifyCast: func(_ *core.Simulation, spell *core.Spell, cast *core.Cast) {
-				cast.CastTime = spell.CastTime()
-			},
-			IgnoreHaste: true, // Hunter GCD is locked at 1.5s
 			CD: core.Cooldown{
 				Timer:    timer,
 				Duration: time.Second*10 - core.TernaryDuration(hunter.HasMajorGlyph(proto.HunterMajorGlyph_GlyphOfMultiShot), time.Second*1, 0),
-			},
-			CastTime: func(spell *core.Spell) time.Duration {
-				return time.Duration(float64(spell.DefaultCast.CastTime) / hunter.RangedSwingSpeed())
 			},
 		},
 
@@ -44,12 +38,12 @@ func (hunter *Hunter) registerMultiShotSpell(timer *core.Timer) {
 			.04*float64(hunter.Talents.Barrage),
 		DamageMultiplier: 1 *
 			hunter.markedForDeathMultiplier(),
-		CritMultiplier:   hunter.critMultiplier(true, false, false),
+		CritMultiplier:   hunter.critMultiplier(true, false),
 		ThreatMultiplier: 1,
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			sharedDmg := hunter.AutoAttacks.Ranged().BaseDamage(sim) +
-				hunter.AmmoDamageBonus +
+				hunter.NormalizedAmmoDamageBonus +
 				spell.BonusWeaponDamage() +
 				408
 

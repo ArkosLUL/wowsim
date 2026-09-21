@@ -33,7 +33,9 @@ func (hunter *Hunter) registerExplosiveTrapSpell(timer *core.Timer) {
 
 		DamageMultiplierAdditive: 1 +
 			.02*float64(hunter.Talents.TNT),
-		CritMultiplier:   hunter.critMultiplier(false, false, false),
+		// the damage is 49065's: magic class with SPELL_ATTR3_ALWAYS_HIT, so it never misses and
+		// crits off the hunter's spell crit for +50%
+		CritMultiplier:   hunter.DefaultSpellCritMultiplier(),
 		ThreatMultiplier: 1,
 
 		Dot: core.DotConfig{
@@ -43,15 +45,17 @@ func (hunter *Hunter) registerExplosiveTrapSpell(timer *core.Timer) {
 			},
 			NumberOfTicks: 10,
 			TickLength:    time.Second * 2,
+			// Glyph of Explosive Trap is an SPELL_AURA_ABILITY_PERIODIC_CRIT on the trap's periodic
+			TicksCanCrit: hasGlyph,
 
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 				baseDamage := 90 + 0.1*dot.Spell.RangedAttackPower(target)
 				dot.Spell.DamageMultiplierAdditive += bonusPeriodicDamageMultiplier
 				for _, aoeTarget := range sim.Encounter.TargetUnits {
 					if hasGlyph {
-						dot.Spell.CalcAndDealPeriodicDamage(sim, aoeTarget, baseDamage, dot.Spell.OutcomeRangedHitAndCrit)
+						dot.Spell.CalcAndDealPeriodicDamage(sim, aoeTarget, baseDamage, dot.Spell.OutcomeMagicCrit)
 					} else {
-						dot.Spell.CalcAndDealPeriodicDamage(sim, aoeTarget, baseDamage, dot.Spell.OutcomeRangedHit)
+						dot.Spell.CalcAndDealPeriodicDamage(sim, aoeTarget, baseDamage, dot.OutcomeTickCounted)
 					}
 				}
 				dot.Spell.DamageMultiplierAdditive -= bonusPeriodicDamageMultiplier
@@ -59,37 +63,33 @@ func (hunter *Hunter) registerExplosiveTrapSpell(timer *core.Timer) {
 		},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			if sim.CurrentTime < 0 {
-				// Traps only last 30s.
-				if sim.CurrentTime < -time.Second*30 {
-					return
-				}
-
-				// If using this on prepull, the trap effect will go off when the fight starts
-				// instead of immediately.
-				core.StartDelayedAction(sim, core.DelayedActionOptions{
-					DoAt: 0,
-					OnAction: func(sim *core.Simulation) {
-						for _, aoeTarget := range sim.Encounter.TargetUnits {
-							baseDamage := sim.Roll(523, 671) + 0.1*spell.RangedAttackPower(aoeTarget)
-							baseDamage *= sim.Encounter.AOECapMultiplier()
-							spell.CalcAndDealDamage(sim, aoeTarget, baseDamage, spell.OutcomeRangedHitAndCrit)
-						}
-						hunter.ExplosiveTrap.AOEDot().Apply(sim)
-					},
-				})
-			} else {
-				for _, aoeTarget := range sim.Encounter.TargetUnits {
-					baseDamage := sim.Roll(523, 671) + 0.1*spell.RangedAttackPower(aoeTarget)
-					baseDamage *= sim.Encounter.AOECapMultiplier()
-					spell.CalcAndDealDamage(sim, aoeTarget, baseDamage, spell.OutcomeRangedHitAndCrit)
-				}
-				hunter.ExplosiveTrap.AOEDot().Apply(sim)
+			// Traps only last 30s.
+			if sim.CurrentTime < -time.Second*30 {
+				return
 			}
+
+			// The trap's gameobject (189322) arms its startDelay, 1 s, after it's laid, and goes off on
+			// the next update after that (GameObject::Update). One laid before the pull waits for it.
+			core.StartDelayedAction(sim, core.DelayedActionOptions{
+				DoAt: max(0, sim.NextServerTick(sim.CurrentTime+time.Second)),
+				OnAction: func(sim *core.Simulation) {
+					// no 10 target cap: the trap's trigger creature casts it, not a player
+					// (GameObject::CastSpell)
+					for _, aoeTarget := range sim.Encounter.TargetUnits {
+						baseDamage := sim.Roll(523, 671) + 0.1*spell.RangedAttackPower(aoeTarget)
+						spell.CalcAndDealDamage(sim, aoeTarget, baseDamage, spell.OutcomeMagicCrit)
+					}
+					hunter.ExplosiveTrap.AOEDot().Apply(sim)
+				},
+			})
 		},
 	})
 
 	timeToTrapWeave := time.Millisecond * time.Duration(hunter.Options.TimeToTrapWeaveMs)
+	// mod-spell-tweaks' Trap Launcher (425777-425782) lays the trap from range, so there's no walk
+	if hunter.Server().SpellTweaks.Enabled {
+		timeToTrapWeave = 0
+	}
 	halfWeaveTime := timeToTrapWeave / 2
 	hunter.TrapWeaveSpell = hunter.RegisterSpell(core.SpellConfig{
 		ActionID: hunter.ExplosiveTrap.ActionID.WithTag(1),
@@ -110,7 +110,9 @@ func (hunter *Hunter) registerExplosiveTrapSpell(timer *core.Timer) {
 			layTrapAt := max(reachLocationAt, sim.CurrentTime)
 			doneAt := layTrapAt + halfWeaveTime
 
-			hunter.AutoAttacks.DelayRangedUntil(sim, doneAt+time.Millisecond*500)
+			// Auto Shot fails with SPELL_FAILED_MOVING until we stop, then goes on the next update: it's
+			// the one auto-repeat spell _UpdateAutoRepeatSpell spares the 500 ms restart delay.
+			hunter.AutoAttacks.DelayRangedUntil(sim, doneAt)
 
 			if layTrapAt == sim.CurrentTime {
 				hunter.ExplosiveTrap.Cast(sim, target)

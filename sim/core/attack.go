@@ -246,6 +246,11 @@ type WeaponAttack struct {
 	// ran out mid-cast and waits for the cast to land, see castHold
 	held bool
 
+	// ranged only: the timer stands still for a channel (SuspendRangedTimer), with suspendedLeft to go
+	// once it runs again. Parked while timerAt is NeverExpires.
+	suspended     bool
+	suspendedLeft time.Duration
+
 	curSwingSpeed    float64
 	curSwingDuration time.Duration
 }
@@ -262,6 +267,15 @@ func (wa *WeaponAttack) setTimer(sim *Simulation, timerAt time.Duration) {
 }
 
 func (wa *WeaponAttack) stopTimer() {
+	wa.timerAt = NeverExpires
+	wa.swingAt = NeverExpires
+	wa.held = false
+	wa.suspended = false
+}
+
+// park stops a suspended timer from running out, keeping what's left of it as of the update at from.
+func (wa *WeaponAttack) park(from time.Duration) {
+	wa.suspendedLeft = wa.timerAt - from
 	wa.timerAt = NeverExpires
 	wa.swingAt = NeverExpires
 	wa.held = false
@@ -333,7 +347,12 @@ func (wa *WeaponAttack) swing(sim *Simulation) time.Duration {
 	// Update swing timer BEFORE the cast, so that APL checks for TimeToNextAuto behave correctly
 	// if the attack causes APL evaluations (e.g. from rage gain).
 	// Restarts from this tick, so whatever the timer overshot is lost.
+	// Auto Shot fires in _UpdateSpells, one update after its timer runs out, but it also restarts the
+	// timer before that update's decrement, so it still lands on NextServerTick(timerAt) like melee.
 	wa.setTimer(sim, sim.CurrentTime+wa.curSwingDuration)
+	if wa.suspended {
+		wa.park(sim.CurrentTime)
+	}
 	// a melee swing restarts the ranged timer too; a restart can land earlier than a pushed-back timer
 	if otherHand != nil && aa.AutoSwingRanged {
 		aa.ranged.setTimer(sim, sim.CurrentTime+aa.ranged.curSwingDuration)
@@ -665,8 +684,19 @@ func (aa *AutoAttacks) UpdateSwingTimers(sim *Simulation) {
 	}
 
 	if aa.AutoSwingRanged {
+		oldSwingSpeed := aa.ranged.curSwingSpeed
 		aa.ranged.updateSwingDuration(aa.ranged.unit.RangedSwingSpeed())
-		// ranged attack speed changes aren't applied mid-"swing"
+		// Unit::ApplyAttackTimePercentMod keeps the remaining fraction of the ranged timer too
+		f := oldSwingSpeed / aa.ranged.curSwingSpeed
+		switch remainingSwingTime := aa.ranged.timerAt - sim.CurrentTime; {
+		case aa.ranged.timerAt == NeverExpires:
+			if aa.ranged.suspended {
+				aa.ranged.suspendedLeft = time.Duration(float64(aa.ranged.suspendedLeft) * f)
+			}
+		case remainingSwingTime > 0:
+			aa.ranged.setTimer(sim, sim.CurrentTime+time.Duration(float64(remainingSwingTime)*f))
+			sim.rescheduleWeaponAttack(aa.ranged.swingAt)
+		}
 	}
 
 	if aa.AutoSwingMelee {
@@ -756,6 +786,38 @@ func (aa *AutoAttacks) releaseCastHold(sim *Simulation) {
 		if aa.enabled {
 			sim.rescheduleWeaponAttack(wa.trySwing(sim))
 		}
+	}
+}
+
+// SuspendRangedTimer is Unit::Update's suspendRangedAttackTimer, for a player channeling a spell with
+// SPELL_ATTR2_DO_NOT_RESET_COMBAT_TIMERS (Volley): the ranged timer skips its decrement every update
+// the channel is active, starting with the one that takes the cast. Auto Shot isn't held, so a shot
+// already due still goes, and its restarted timer stands still too.
+func (aa *AutoAttacks) SuspendRangedTimer(sim *Simulation) {
+	wa := &aa.ranged
+	if !aa.AutoSwingRanged || wa.suspended {
+		return
+	}
+	wa.suspended = true
+	if from := sim.NextServerTick(sim.CurrentTime); wa.swingAt > from && wa.timerAt != NeverExpires {
+		wa.park(from)
+	}
+}
+
+// ResumeRangedTimer lets the ranged timer run again as the channel ends. The update the channel ends
+// on already decrements it, the way a timer restarted before Unit::Update's decrement counts.
+func (aa *AutoAttacks) ResumeRangedTimer(sim *Simulation) {
+	wa := &aa.ranged
+	if !wa.suspended {
+		return
+	}
+	wa.suspended = false
+	if wa.timerAt != NeverExpires {
+		return
+	}
+	wa.setTimer(sim, sim.CurrentTime+wa.suspendedLeft)
+	if aa.enabled {
+		sim.rescheduleWeaponAttack(wa.swingAt)
 	}
 }
 

@@ -31,7 +31,7 @@ func (hunter *Hunter) registerArcaneShotSpell(timer *core.Timer) {
 			IgnoreHaste: true,
 			CD: core.Cooldown{
 				Timer:    timer,
-				Duration: time.Second*6 - time.Millisecond*200*time.Duration(hunter.Talents.ImprovedArcaneShot),
+				Duration: time.Second * 6,
 			},
 		},
 
@@ -39,10 +39,11 @@ func (hunter *Hunter) registerArcaneShotSpell(timer *core.Timer) {
 			2*core.CritRatingPerCritChance*float64(hunter.Talents.SurvivalInstincts),
 		DamageMultiplierAdditive: 1 +
 			.03*float64(hunter.Talents.FerociousInspiration) +
+			// Improved Arcane Shot (19454-19456): damage only, no cooldown cut in 3.3.5
 			.05*float64(hunter.Talents.ImprovedArcaneShot),
 		DamageMultiplier: 1 *
 			hunter.markedForDeathMultiplier(),
-		CritMultiplier:   hunter.critMultiplier(true, true, false),
+		CritMultiplier:   hunter.critMultiplier(true, true),
 		ThreatMultiplier: 1,
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
