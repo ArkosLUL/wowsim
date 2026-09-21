@@ -76,11 +76,12 @@ wave I, and H is full. The user ran it before H, so H's melee items build on its
 
 ## Current wave
 
-- Wave: H, running.
+- Wave: H. The workflow finished with all four items green and no pending server stages; integration
+  (RUNBOOK step 4) hasn't started.
 - Base SHA: `695c55b78`, the wave's setup commit on top of `e08b132f4`.
 - Workflow runId: `wf_cc41a703-bd9`, transcript dir
   `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\wf_cc41a703-bd9`.
-- Args: `G:\DevStuff\GitHub\.wave-loop\waveH-args.json`.
+- Args and results: `waveH-args.json` and `waveH-results.json` in `G:\DevStuff\GitHub\.wave-loop`.
 
 ## BiS baseline
 
@@ -184,10 +185,10 @@ crashed before F2, so its column starts there.
 | wave G cross-review | | `a2b24100d`, `3ac9069fc` | split in two (parity; optimizer and UI); one batch bug (Apply and Save on a roster changed mid-run); the old DK ids now alias in the APL lookup; tooling moved out of scratch in `73e159351` |
 | PAR-P7-0d | merged | `18b64143b` | 26 goldens promoted in `85c870717`; four stages and a review, 1.86M tokens across the five agents |
 | wave H2 cross-review | | `3b9a3c6e6`, `ec0164745` | fixed the user's DK reforge report: the item cache kept items a stale page sent without server stats, and the DK registered its runeforges and sigils late (mispriced first optimize, a possible crash); its claim that the permanent ghoul lacks 51996 was wrong (a Ghoul family passive) and was reverted |
-| PAR-P7-ROG | running | | stages: code, live |
-| PAR-P7-WAR | running | | stages: abilities, swing, live |
-| PAR-P7-RET | running | | stages: code, recorded run |
-| BIS-raid-contrib | running | | stages: engine, batch UI |
+| PAR-P7-ROG | green, not merged | | stages: code, live |
+| PAR-P7-WAR | green, not merged | | stages: abilities, swing, live |
+| PAR-P7-RET | green, not merged | | stages: code, recorded run |
+| BIS-raid-contrib | green, not merged | | stages: engine, batch UI |
 
 Later WIs are added as their wave starts.
 
