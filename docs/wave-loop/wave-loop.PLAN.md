@@ -78,8 +78,9 @@ wave I, and H is full. The user ran it before H, so H's melee items build on its
 
 - Wave: H2, running. Then H, whose class items run in stages (RUNBOOK, Workflow contract): code, then
   live.
-- Base SHA: the wave's setup commit on top of `da045696e`.
-- Workflow runId: not yet started.
+- Base SHA: `820a2e0a6`, the wave's setup commit on top of `da045696e`.
+- Workflow runId: `wf_a3617aeb-503`, transcript dir
+  `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\wf_a3617aeb-503`.
 
 ## BiS baseline
 
