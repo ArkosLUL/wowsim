@@ -52,6 +52,7 @@ func BenchmarkSimulate(b *testing.B) {
 				Consumes:  FullConsumes,
 				Spec:      PlayerOptionsDefault,
 				Buffs:     core.FullIndividualBuffs,
+				Rotation:  core.GetAplRotation("../../../ui/feral_tank_druid/apls", "default").Rotation,
 
 				InFrontOfTarget: true,
 			},

@@ -70,8 +70,10 @@ func BenchmarkSimulate(b *testing.B) {
 				Consumes:  FullConsumes,
 				Spec:      PlayerOptionsMonoCat,
 				Buffs:     core.FullIndividualBuffs,
+				Rotation:  core.GetAplRotation("../../../ui/feral_druid/apls", "default").Rotation,
 				Glyphs:    StandardGlyphs,
 
+				TalentsString:   StandardTalents,
 				InFrontOfTarget: true,
 			},
 			core.FullPartyBuffs,
