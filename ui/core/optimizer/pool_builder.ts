@@ -105,8 +105,9 @@ export interface PoolBuilderInput {
 	getEnchants: (slot: ItemSlot) => Array<Enchant>;
 	// Gems, and the seed's items.
 	db: Database;
-	// Extra starting points for the search, e.g. the raider's BiS from the phase before. They can hold
-	// anything: the search drops what the pool doesn't offer.
+	// Extra starting points for the search, e.g. the raider's BiS from the phase before. The search
+	// drops what the pool doesn't offer, but Go rejects the whole request over an item or gem it has no
+	// data for, and the web server only knows what the pool and the players' gear carry.
 	warmStarts?: Array<EquipmentSpec>;
 }
 

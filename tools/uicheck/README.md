@@ -9,7 +9,8 @@ picker's phase filter and the optimizer tab's results.
 Needs Python with `websockets` (`pip install websockets`) and a dev server on the checkout
 ([dev-environment](../../docs/guide/dev-environment.md#run)).
 
-1. Start Chrome headless on port 9333, which `cdp.py` expects, with a throwaway profile:
+1. Start Chrome headless on port 9333, which `cdp.py` expects (another port needs `UICHECK_PORT`), with a
+   throwaway profile:
 
    ```sh
    "/c/Program Files/Google/Chrome/Application/chrome.exe" --headless=new --remote-debugging-port=9333 \

@@ -103,11 +103,26 @@ func NewIcdAuraReference(sourceUnit UnitReference, auraId *proto.ActionID) AuraR
 	return newAuraReferenceHelper(sourceUnit, auraId, func(unit *Unit, actionID ActionID) *Aura { return unit.GetIcdAuraByID(actionID) })
 }
 
+// Spell ids a rotation saved before the DK moved to the server's ids still names: Icy Touch and Blood
+// Presence now register as the spells the server deals and applies.
+var legacyAPLSpellIDs = map[int32]int32{
+	59131: 49909, // Icy Touch
+	50689: 48266, // Blood Presence
+}
+
+func currentAPLActionID(id *proto.ActionID) *proto.ActionID {
+	if current, ok := legacyAPLSpellIDs[id.GetSpellId()]; ok {
+		return &proto.ActionID{RawId: &proto.ActionID_SpellId{SpellId: current}, Tag: id.GetTag()}
+	}
+	return id
+}
+
 func (rot *APLRotation) GetAPLAura(sourceUnit UnitReference, auraId *proto.ActionID) AuraReference {
 	if sourceUnit.Get() == nil {
 		return AuraReference{}
 	}
 
+	auraId = currentAPLActionID(auraId)
 	aura := NewAuraReference(sourceUnit, auraId)
 	if aura.Get() == nil {
 		rot.ValidationWarning("No aura found on %s for: %s", sourceUnit.Get().Label, ProtoToActionID(auraId))
@@ -120,6 +135,7 @@ func (rot *APLRotation) GetAPLICDAura(sourceUnit UnitReference, auraId *proto.Ac
 		return AuraReference{}
 	}
 
+	auraId = currentAPLActionID(auraId)
 	aura := NewIcdAuraReference(sourceUnit, auraId)
 	if aura.Get() == nil {
 		rot.ValidationWarning("No aura found on %s for: %s", sourceUnit.Get().Label, ProtoToActionID(auraId))
@@ -128,7 +144,7 @@ func (rot *APLRotation) GetAPLICDAura(sourceUnit UnitReference, auraId *proto.Ac
 }
 
 func (rot *APLRotation) GetAPLSpell(spellId *proto.ActionID) *Spell {
-	actionID := ProtoToActionID(spellId)
+	actionID := ProtoToActionID(currentAPLActionID(spellId))
 	var spell *Spell
 
 	if actionID.IsOtherAction(proto.OtherAction_OtherActionPotion) {

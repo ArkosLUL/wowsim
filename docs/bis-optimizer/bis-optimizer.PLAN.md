@@ -119,6 +119,7 @@ The UI owns candidate pools and settings. Go owns every equip rule and the searc
 | `surrogate.go`, `search.go` | separable surrogate plus residuals; dominance pruning; annealing with restarts (greedy, seed, previous phase) plus coordinate polish; exact per-item gem DP; keeps the top 20 distinct sets |
 | `verify.go`, `neighborhood.go` | accepts when Δ̄ > 2·se and Δ̄ > 0.05% J; top 3 per slot, which are also the alternatives |
 | `racial.go`, `critimmunity.go` | the racial screen; D* by bisecting bonus defense with `core.ComputePlayerSheet` |
+| `sheet.go` | the target's `core.ComputePlayerSheet` in a loadout, memoized per `Loadout` on the `Pool`, which assumes the base never changes after `CompilePool` |
 | `raidctx/` | `derive.go`, `providers.go`, `contribution.go` |
 | `api.go` | `Optimize(ctx, req, progress) *proto.OptimizerResult`, `RunAsync` |
 
@@ -491,6 +492,8 @@ normalizer wobble doesn't read as a regression (wave F2's Fury `J_preset` -1.7%)
 - Validate sims the raid's own encounter, so tanks don't fight their phase boss there, on a second
   `WorkerPool` (`Sim`'s is private), both runs on one seed.
 - A reload mid-run resumes. The orphaned server run answers 409 until it ends, then the retry goes through.
+- A roster change mid-run keeps the old batch until the run ends; meanwhile Apply, Save and Validate
+  refuse with a warning, so one raider's BiS can't land on another.
 - The tab adds the `optimizer-tab` class to reuse the tab's styles; no new scss.
 - For BIS-raid-contrib: cells and the detail show `raid_dps_delta` once a result sets it. Jobs export as
   stage 1; stage 2 needs jobs of its own.
@@ -536,6 +539,11 @@ raid index and phase and export as stage 1, so stage 2 needs jobs of its own (`J
 `ui/raid/optimizer_batch.ts`). `acraid` should export the quiver or ammo pouch, so an imported hunter sets
 `Hunter.Options.quiver`.
 
+The sheet memo (`sheet.go`) assumes the pool's base never changes after `CompilePool`: a full-raid evaluator,
+or a stage 2 that swaps the others' gear into the base, needs a fresh `Pool` or a memo reset. Stage 2's warm
+starts may only hold items and gems the request's database carries, since `PrepareRequest` checks each one
+and the web server has no `with_db`.
+
 **Tests:**
 - An identical loadout gives Δ = 0.
 - se ≪ a single raider's effect.
@@ -553,6 +561,11 @@ raid index and phase and export as stage 1, so stage 2 needs jobs of its own (`J
 - Quick tank runs can list runners-up well above the pick: Bulwark P1's Trinket 1 has Darkmoon Card:
   Greatness at +663 ± 16. The neighborhood adopts one only after a full-iteration round that isn't its last
   (`neighborhood.go`).
+- A run whose server goes away never settles: `net_worker.js`'s fetch rejects without posting a final
+  message, so `runGearOptimizer` hangs and Stop can't free the tab or an overnight batch until a reload. The
+  worker should post an error and the pool reject.
+- Measure a full roster's stored batch (`__r.storedBatches()` in `tools/uicheck/raid.js`): the cross-review
+  measured 5 to 6 KB a job on the fixture roster.
 - Quick runs took 4 to 21 s per spec in wave D against the 3 to 6 s target, Combat Rogue slowest. Trim
   Quick or move the target.
 - The pool builder prunes nothing, so a Retribution request carries 2.6k to 4.6k candidates and 1.6 to

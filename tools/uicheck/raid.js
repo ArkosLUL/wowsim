@@ -55,13 +55,14 @@ window.__r = {
 	},
 	// ticks exactly these raiders and phases, unticks the rest, and returns the setup panel's text
 	async pick(names, phases) {
-		for (const [i, box] of this.phaseBoxes().entries()) {
+		// the grid re-renders on every click, so look each box and row up again
+		for (let i = 0; i < this.phaseBoxes().length; i++) {
+			const box = this.phaseBoxes()[i];
 			if (box.checked != phases.includes(i + 1)) {
 				box.click();
 				await this.sleep(100);
 			}
 		}
-		// the grid re-renders on every click, so look each row up again
 		for (let i = 0; i < this.rows().length; i++) {
 			const tr = this.rows()[i];
 			const box = tr.children[0].querySelector('input');

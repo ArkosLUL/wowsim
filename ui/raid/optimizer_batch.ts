@@ -902,7 +902,23 @@ export class OptimizerBatchTab extends SimTab {
 		return wrapper;
 	}
 
+	// a running batch keeps its old roster until the current run ends, so after a swap its raid
+	// indexes can point at someone else. Warns and returns true then
+	private rosterChanged(): boolean {
+		if (this.fingerprint() == this.batch.fingerprint) {
+			return false;
+		}
+		this.showStatus(
+			"The roster changed since this batch ran, so its results could land on the wrong raider. The grid switches to the new roster once the current run ends.",
+			'warning',
+		);
+		return true;
+	}
+
 	private applyPhase(phase: number) {
+		if (this.rosterChanged()) {
+			return;
+		}
 		const jobs = this.phaseJobs(phase);
 		const eventID = TypedEvent.nextEventID();
 		TypedEvent.freezeAllAndDo(() => jobs.forEach(job => this.apply(eventID, job)));
@@ -910,6 +926,9 @@ export class OptimizerBatchTab extends SimTab {
 	}
 
 	private savePhase(phase: number) {
+		if (this.rosterChanged()) {
+			return;
+		}
 		const jobs = this.phaseJobs(phase);
 		const saved = jobs.filter(job => this.save(job)).length;
 		this.showStatus(
@@ -959,7 +978,7 @@ export class OptimizerBatchTab extends SimTab {
 
 	private async validate(phase: number) {
 		const jobs = this.phaseJobs(phase);
-		if (jobs.length == 0 || !this.serverAvailable) {
+		if (jobs.length == 0 || !this.serverAvailable || this.rosterChanged()) {
 			return;
 		}
 		const validation: Validation = { phase, raiders: jobs.length };
@@ -1118,11 +1137,17 @@ export class OptimizerBatchTab extends SimTab {
 		const setName = `${name} P${job.phase} BiS`;
 		actions.append(
 			button(`Apply to ${name}`, 'btn-primary', () => {
+				if (this.rosterChanged()) {
+					return;
+				}
 				const eventID = TypedEvent.nextEventID();
 				TypedEvent.freezeAllAndDo(() => this.apply(eventID, job));
 				note.textContent = `${name} has it on in the raid sim now.`;
 			}),
 			button(`Save as "${setName}"`, 'btn-secondary', () => {
+				if (this.rosterChanged()) {
+					return;
+				}
 				note.textContent = this.save(job) ? `Saved under ${name}'s Gear Sets.` : "This browser wouldn't store it.";
 			}),
 			again,

@@ -2,12 +2,14 @@
 import asyncio
 import base64
 import json
+import os
 import sys
 import urllib.request
 
 import websockets
 
-PORT = 9333
+# UICHECK_PORT for a second Chrome, when another session holds 9333
+PORT = int(os.environ.get('UICHECK_PORT', '9333'))
 
 
 def page_ws():
@@ -30,6 +32,8 @@ async def call(ws, method, params=None, _id=[0]):
 
 
 async def main():
+    # page text has Δ and ±, which a Windows console's default code page can't print
+    sys.stdout.reconfigure(encoding='utf-8')
     cmd = sys.argv[1]
     async with websockets.connect(page_ws(), max_size=None) as ws:
         if cmd == 'nav':
