@@ -841,7 +841,7 @@ dps_results: {
  key: "TestDisc-AllItems-Zabra'sRaiment"
  value: {
   tps: 14.76471
-  hps: 3744.96727
+  hps: 3744.86011
  }
 }
 dps_results: {
@@ -854,8 +854,8 @@ dps_results: {
 dps_results: {
  key: "TestDisc-Average-Default"
  value: {
-  tps: 16.23856
-  hps: 3858.27244
+  tps: 16.23956
+  hps: 3858.27107
  }
 }
 dps_results: {

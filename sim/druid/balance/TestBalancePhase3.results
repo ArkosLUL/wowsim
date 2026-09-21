@@ -104,8 +104,8 @@ dps_results: {
 dps_results: {
  key: "TestBalancePhase3-AllItems-BlessedRegaliaofUndeadCleansing"
  value: {
-  dps: 8761.05947
-  tps: 8445.42429
+  dps: 8765.60244
+  tps: 8450.98379
  }
 }
 dps_results: {
@@ -224,15 +224,15 @@ dps_results: {
 dps_results: {
  key: "TestBalancePhase3-AllItems-DislodgedForeignObject-50348"
  value: {
-  dps: 11871.53922
-  tps: 11553.28547
+  dps: 11890.37954
+  tps: 11572.26658
  }
 }
 dps_results: {
  key: "TestBalancePhase3-AllItems-DislodgedForeignObject-50353"
  value: {
-  dps: 11806.96478
-  tps: 11489.28131
+  dps: 11802.19589
+  tps: 11484.70966
  }
 }
 dps_results: {
@@ -280,8 +280,8 @@ dps_results: {
 dps_results: {
  key: "TestBalancePhase3-AllItems-EphemeralSnowflake-50260"
  value: {
-  dps: 11264.76039
-  tps: 10952.17219
+  dps: 11268.98068
+  tps: 10957.65784
  }
 }
 dps_results: {
@@ -371,15 +371,15 @@ dps_results: {
 dps_results: {
  key: "TestBalancePhase3-AllItems-Gladiator'sSanctuary"
  value: {
-  dps: 6532.63966
-  tps: 6218.67073
+  dps: 6524.22349
+  tps: 6210.03172
  }
 }
 dps_results: {
  key: "TestBalancePhase3-AllItems-Gladiator'sWildhide"
  value: {
-  dps: 9391.7651
-  tps: 9060.43337
+  dps: 9392.16763
+  tps: 9060.81729
  }
 }
 dps_results: {
@@ -567,8 +567,8 @@ dps_results: {
 dps_results: {
  key: "TestBalancePhase3-AllItems-Malfurion'sRegalia"
  value: {
-  dps: 9909.40771
-  tps: 9599.34701
+  dps: 9905.98948
+  tps: 9596.09632
  }
 }
 dps_results: {
@@ -602,15 +602,15 @@ dps_results: {
 dps_results: {
  key: "TestBalancePhase3-AllItems-NightsongBattlegear"
  value: {
-  dps: 6352.53424
-  tps: 6031.23376
+  dps: 6352.40862
+  tps: 6031.10815
  }
 }
 dps_results: {
  key: "TestBalancePhase3-AllItems-NightsongGarb"
  value: {
-  dps: 9416.97588
-  tps: 9110.35409
+  dps: 9417.26272
+  tps: 9110.64092
  }
 }
 dps_results: {
@@ -791,8 +791,8 @@ dps_results: {
 dps_results: {
  key: "TestBalancePhase3-AllItems-StormshroudArmor"
  value: {
-  dps: 8025.36098
-  tps: 7710.83778
+  dps: 8033.12458
+  tps: 7718.79094
  }
 }
 dps_results: {
@@ -945,8 +945,8 @@ dps_results: {
 dps_results: {
  key: "TestBalancePhase3-Average-Default"
  value: {
-  dps: 11919.32407
-  tps: 11593.26518
+  dps: 11919.18632
+  tps: 11593.09857
  }
 }
 dps_results: {
