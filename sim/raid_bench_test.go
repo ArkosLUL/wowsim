@@ -8,15 +8,54 @@ import (
 	"github.com/wowsims/wotlk/sim/core/stats"
 )
 
-// 1 moonkin, 1 ele shaman, 1 spriest, 2x arcane
+// each spec's talents and glyphs from its golden suite, copied since test packages can't import each other
+var balanceTalents = "5012203115331303213315311231--205003012"
+var balanceGlyphs = &proto.Glyphs{
+	Major1: int32(proto.DruidMajorGlyph_GlyphOfStarfire),
+	Major2: int32(proto.DruidMajorGlyph_GlyphOfInsectSwarm),
+	Major3: int32(proto.DruidMajorGlyph_GlyphOfStarfall),
+	Minor1: int32(proto.DruidMinorGlyph_GlyphOfTyphoon),
+}
+
+var shadowTalents = "05032031--325023051223010323151301351"
+var shadowGlyphs = &proto.Glyphs{
+	Major1: int32(proto.PriestMajorGlyph_GlyphOfShadow),
+	Major2: int32(proto.PriestMajorGlyph_GlyphOfMindFlay),
+	Major3: int32(proto.PriestMajorGlyph_GlyphOfDispersion),
+}
+
+var elementalTalents = "0532001523212351322301351-005052031"
+var elementalGlyphs = &proto.Glyphs{
+	Major1: int32(proto.ShamanMajorGlyph_GlyphOfLava),
+	Major2: int32(proto.ShamanMajorGlyph_GlyphOfTotemOfWrath),
+	Major3: int32(proto.ShamanMajorGlyph_GlyphOfLightningBolt),
+}
+
+var arcaneTalents = "23000513310033015032310250532-03-023303001"
+var arcaneGlyphs = &proto.Glyphs{
+	Major1: int32(proto.MageMajorGlyph_GlyphOfArcaneBlast),
+	Major2: int32(proto.MageMajorGlyph_GlyphOfArcaneMissiles),
+	Major3: int32(proto.MageMajorGlyph_GlyphOfMoltenArmor),
+}
+
+var enhancementTalents = "053030152-30405003105021333031131031051"
+var enhancementGlyphs = &proto.Glyphs{
+	Major1: int32(proto.ShamanMajorGlyph_GlyphOfFireNova),
+	Major2: int32(proto.ShamanMajorGlyph_GlyphOfFlametongueWeapon),
+	Major3: int32(proto.ShamanMajorGlyph_GlyphOfFeralSpirit),
+}
+
+// 1 moonkin, 1 ele shaman, 1 spriest, 1 arcane
 var castersWithElemental = &proto.Party{
 	Players: []*proto.Player{
 		{
-			Name:      "Balance Druid 1",
-			Race:      proto.Race_RaceTauren,
-			Class:     proto.Class_ClassDruid,
-			Equipment: MoonkinEquipment,
-			Rotation:  core.GetAplRotation("../ui/balance_druid/apls", "basic_p3").Rotation,
+			Name:          "Balance Druid 1",
+			Race:          proto.Race_RaceTauren,
+			Class:         proto.Class_ClassDruid,
+			Equipment:     MoonkinEquipment,
+			TalentsString: balanceTalents,
+			Glyphs:        balanceGlyphs,
+			Rotation:      core.GetAplRotation("../ui/balance_druid/apls", "basic_p3").Rotation,
 			Spec: &proto.Player_BalanceDruid{
 				BalanceDruid: &proto.BalanceDruid{
 					Options: &proto.BalanceDruid_Options{
@@ -33,11 +72,13 @@ var castersWithElemental = &proto.Party{
 			},
 		},
 		{
-			Name:      "Shadow Priest 1",
-			Race:      proto.Race_RaceUndead,
-			Class:     proto.Class_ClassPriest,
-			Equipment: ShadowEquipment,
-			Rotation:  core.GetAplRotation("../ui/shadow_priest/apls", "default").Rotation,
+			Name:          "Shadow Priest 1",
+			Race:          proto.Race_RaceUndead,
+			Class:         proto.Class_ClassPriest,
+			Equipment:     ShadowEquipment,
+			TalentsString: shadowTalents,
+			Glyphs:        shadowGlyphs,
+			Rotation:      core.GetAplRotation("../ui/shadow_priest/apls", "default").Rotation,
 			Spec: &proto.Player_ShadowPriest{
 				ShadowPriest: &proto.ShadowPriest{
 					Options: &proto.ShadowPriest_Options{},
@@ -52,11 +93,13 @@ var castersWithElemental = &proto.Party{
 			},
 		},
 		{
-			Name:      "Elemental Shaman 1",
-			Race:      proto.Race_RaceTroll,
-			Class:     proto.Class_ClassShaman,
-			Equipment: ElementalEquipment,
-			Rotation:  core.GetAplRotation("../ui/elemental_shaman/apls", "default").Rotation,
+			Name:          "Elemental Shaman 1",
+			Race:          proto.Race_RaceTroll,
+			Class:         proto.Class_ClassShaman,
+			Equipment:     ElementalEquipment,
+			TalentsString: elementalTalents,
+			Glyphs:        elementalGlyphs,
+			Rotation:      core.GetAplRotation("../ui/elemental_shaman/apls", "default").Rotation,
 			Spec: &proto.Player_ElementalShaman{
 				ElementalShaman: &proto.ElementalShaman{
 					Options: &proto.ElementalShaman_Options{
@@ -79,11 +122,13 @@ var castersWithElemental = &proto.Party{
 			},
 		},
 		{
-			Name:      "Arcane Mage 1",
-			Race:      proto.Race_RaceTroll,
-			Class:     proto.Class_ClassMage,
-			Equipment: ArcaneEquipment,
-			Rotation:  core.GetAplRotation("../ui/mage/apls", "arcane").Rotation,
+			Name:          "Arcane Mage 1",
+			Race:          proto.Race_RaceTroll,
+			Class:         proto.Class_ClassMage,
+			Equipment:     ArcaneEquipment,
+			TalentsString: arcaneTalents,
+			Glyphs:        arcaneGlyphs,
+			Rotation:      core.GetAplRotation("../ui/mage/apls", "arcane").Rotation,
 			Spec: &proto.Player_Mage{
 				Mage: &proto.Mage{
 					Options: &proto.Mage_Options{
@@ -105,13 +150,15 @@ var castersWithElemental = &proto.Party{
 
 var castersWithResto = &proto.Party{
 	Players: []*proto.Player{
-		// 1 moonkin, 1 spriest, 2x arcane, 1 resto shaman
+		// 1 moonkin, 1 spriest, 1 arcane
 		{
-			Name:      "Balance Druid 2",
-			Race:      proto.Race_RaceTauren,
-			Class:     proto.Class_ClassDruid,
-			Equipment: MoonkinEquipment,
-			Rotation:  core.GetAplRotation("../ui/balance_druid/apls", "basic_p3").Rotation,
+			Name:          "Balance Druid 2",
+			Race:          proto.Race_RaceTauren,
+			Class:         proto.Class_ClassDruid,
+			Equipment:     MoonkinEquipment,
+			TalentsString: balanceTalents,
+			Glyphs:        balanceGlyphs,
+			Rotation:      core.GetAplRotation("../ui/balance_druid/apls", "basic_p3").Rotation,
 			Spec: &proto.Player_BalanceDruid{
 				BalanceDruid: &proto.BalanceDruid{
 					Options: &proto.BalanceDruid_Options{
@@ -131,11 +178,13 @@ var castersWithResto = &proto.Party{
 			},
 		},
 		{
-			Name:      "Shadow Priest 2",
-			Race:      proto.Race_RaceUndead,
-			Class:     proto.Class_ClassPriest,
-			Equipment: ShadowEquipment,
-			Rotation:  core.GetAplRotation("../ui/shadow_priest/apls", "default").Rotation,
+			Name:          "Shadow Priest 2",
+			Race:          proto.Race_RaceUndead,
+			Class:         proto.Class_ClassPriest,
+			Equipment:     ShadowEquipment,
+			TalentsString: shadowTalents,
+			Glyphs:        shadowGlyphs,
+			Rotation:      core.GetAplRotation("../ui/shadow_priest/apls", "default").Rotation,
 			Spec: &proto.Player_ShadowPriest{
 				ShadowPriest: &proto.ShadowPriest{
 					Options: &proto.ShadowPriest_Options{},
@@ -150,11 +199,13 @@ var castersWithResto = &proto.Party{
 			},
 		},
 		{
-			Name:      "Arcane Mage 3",
-			Race:      proto.Race_RaceTroll,
-			Class:     proto.Class_ClassMage,
-			Equipment: ArcaneEquipment,
-			Rotation:  core.GetAplRotation("../ui/mage/apls", "arcane").Rotation,
+			Name:          "Arcane Mage 3",
+			Race:          proto.Race_RaceTroll,
+			Class:         proto.Class_ClassMage,
+			Equipment:     ArcaneEquipment,
+			TalentsString: arcaneTalents,
+			Glyphs:        arcaneGlyphs,
+			Rotation:      core.GetAplRotation("../ui/mage/apls", "arcane").Rotation,
 			Spec: &proto.Player_Mage{
 				Mage: &proto.Mage{
 					Options: &proto.Mage_Options{
@@ -185,11 +236,13 @@ func BenchmarkSimulate(b *testing.B) {
 				{
 					Players: []*proto.Player{
 						{
-							Name:      "Enhancement Shaman 1",
-							Race:      proto.Race_RaceTroll,
-							Class:     proto.Class_ClassShaman,
-							Equipment: EnhancementEquipment,
-							Rotation:  core.GetAplRotation("../ui/enhancement_shaman/apls", "default_ft").Rotation,
+							Name:          "Enhancement Shaman 1",
+							Race:          proto.Race_RaceTroll,
+							Class:         proto.Class_ClassShaman,
+							Equipment:     EnhancementEquipment,
+							TalentsString: enhancementTalents,
+							Glyphs:        enhancementGlyphs,
+							Rotation:      core.GetAplRotation("../ui/enhancement_shaman/apls", "default_ft").Rotation,
 							Spec: &proto.Player_EnhancementShaman{
 								EnhancementShaman: &proto.EnhancementShaman{
 									Options: &proto.EnhancementShaman_Options{
@@ -226,7 +279,7 @@ func BenchmarkSimulate(b *testing.B) {
 			},
 		},
 		Encounter: &proto.Encounter{
-			Duration:             180,
+			Duration:             core.LongDuration,
 			ExecuteProportion_20: 0.1,
 			Targets: []*proto.Target{
 				{
@@ -235,10 +288,26 @@ func BenchmarkSimulate(b *testing.B) {
 				},
 			},
 		},
-		SimOptions: core.AverageDefaultSimTestOptions,
 	}
 
-	core.RaidBenchmark(b, rsr)
+	benchmarkIterations(b, rsr)
+}
+
+// 1 iteration pays a whole environment build per op, like an optimizer eval; 100 is mostly the rotation
+func benchmarkIterations(b *testing.B, rsr *proto.RaidSimRequest) {
+	for _, bc := range []struct {
+		name       string
+		iterations int32
+	}{{"iterations=1", 1}, {"iterations=100", 100}} {
+		b.Run(bc.name, func(b *testing.B) {
+			rsr.SimOptions = &proto.SimOptions{Iterations: bc.iterations, RandomSeed: 101}
+			for i := 0; i < b.N; i++ {
+				if result := core.RunRaidSim(rsr); result.ErrorResult != "" {
+					b.Fatal(result.ErrorResult)
+				}
+			}
+		})
+	}
 }
 
 // P3 gear for each class

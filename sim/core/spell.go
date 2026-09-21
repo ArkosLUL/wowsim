@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math"
 	"sort"
-	"sync"
 	"time"
 
 	"github.com/wowsims/wotlk/sim/core/serverdata"
@@ -708,32 +707,26 @@ type serverConflictKey struct {
 	field ServerField
 }
 
-var serverAllowances = struct {
-	sync.RWMutex
-	byKey map[serverConflictKey]*ServerConflictAllowance
-}{byKey: map[serverConflictKey]*ServerConflictAllowance{}}
+var serverAllowances = map[serverConflictKey]*ServerConflictAllowance{}
 
 // AllowServerConflicts registers entries from an init function. An entry covers its spell and field
 // whatever the values are, so a build the presets don't show still keeps what the entry decides.
+// Only from init: sims read the entries without a lock.
 func AllowServerConflicts(entries ...ServerConflictAllowance) {
-	serverAllowances.Lock()
-	defer serverAllowances.Unlock()
 	for i := range entries {
 		e := &entries[i]
 		key := serverConflictKey{e.Spell, e.Field}
-		if _, ok := serverAllowances.byKey[key]; ok {
+		if _, ok := serverAllowances[key]; ok {
 			panic(fmt.Sprintf("two server conflict entries for %s %s", e.Spell, e.Field))
 		}
-		serverAllowances.byKey[key] = e
+		serverAllowances[key] = e
 	}
 }
 
 // ServerConflictAllowances lists every registered entry, sorted by spell and field.
 func ServerConflictAllowances() []*ServerConflictAllowance {
-	serverAllowances.RLock()
-	defer serverAllowances.RUnlock()
-	all := make([]*ServerConflictAllowance, 0, len(serverAllowances.byKey))
-	for _, e := range serverAllowances.byKey {
+	all := make([]*ServerConflictAllowance, 0, len(serverAllowances))
+	for _, e := range serverAllowances {
 		all = append(all, e)
 	}
 	sort.Slice(all, func(i, j int) bool {
@@ -748,13 +741,11 @@ func ServerConflictAllowances() []*ServerConflictAllowance {
 
 // findServerAllowance falls back to the untagged spell's entry, since tags often count raid slots.
 func findServerAllowance(spell ActionID, field ServerField) *ServerConflictAllowance {
-	serverAllowances.RLock()
-	defer serverAllowances.RUnlock()
-	if e, ok := serverAllowances.byKey[serverConflictKey{spell, field}]; ok {
+	if e, ok := serverAllowances[serverConflictKey{spell, field}]; ok {
 		return e
 	}
 	spell.Tag = 0
-	return serverAllowances.byKey[serverConflictKey{spell, field}]
+	return serverAllowances[serverConflictKey{spell, field}]
 }
 
 // SPELL_ATTR0_CU_DIRECT_DAMAGE, SPELL_ATTR4_NO_CAST_LOG and SPELL_ATTR7_NO_ATTACK_DODGE/PARRY (SpellInfo.h,

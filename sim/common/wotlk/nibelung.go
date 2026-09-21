@@ -4,7 +4,13 @@ import (
 	"time"
 
 	"github.com/wowsims/wotlk/sim/core"
+	"github.com/wowsims/wotlk/sim/core/proto"
 	"github.com/wowsims/wotlk/sim/core/stats"
+)
+
+const (
+	nibelungID       = 49992
+	nibelungHeroicID = 50648
 )
 
 var valkyrStats = stats.Stats{
@@ -128,9 +134,22 @@ func MakeNibelungTriggerAura(agent core.Agent, isHeroic bool) {
 	})
 }
 
+// Only for a character with Nibelung equipped or in its item swap: every pet is a unit, and each
+// spell's metrics and attack tables grow with the unit count.
 func ConstructValkyrPets(character *core.Character) {
+	if !hasNibelung(character) {
+		return
+	}
 	for i := 0; i < 10; i++ {
 		valkyr := newValkyr(character)
 		character.AddPet(valkyr)
 	}
+}
+
+// a staff, so only the main hand can hold it
+func hasNibelung(character *core.Character) bool {
+	isNibelung := func(item *core.Item) bool {
+		return item.ID == nibelungID || item.ID == nibelungHeroicID
+	}
+	return isNibelung(character.MainHand()) || isNibelung(character.ItemSwap.GetItem(proto.ItemSlot_ItemSlotMainHand))
 }

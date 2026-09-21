@@ -89,32 +89,49 @@ var ItemFilter = core.ItemFilter{
 	},
 }
 
+// TestMM's default player, as its FullBuffs LongSingleTarget test runs it
 func BenchmarkSimulate(b *testing.B) {
 	rsr := &proto.RaidSimRequest{
 		Raid: core.SinglePlayerRaidProto(
 			&proto.Player{
-				Race:          proto.Race_RaceOrc,
-				Class:         proto.Class_ClassHunter,
-				Equipment:     core.GetGearSet("../../ui/hunter/gear_sets", "p1_sv").GearSet,
-				Consumes:      FullConsumes,
-				Spec:          PlayerOptionsBasic,
-				Glyphs:        MMGlyphs,
-				TalentsString: MMTalents,
-				Buffs:         core.FullIndividualBuffs,
+				Race:               proto.Race_RaceOrc,
+				Class:              proto.Class_ClassHunter,
+				Equipment:          core.GetGearSet("../../ui/hunter/gear_sets", "p1_mm").GearSet,
+				Consumes:           FullConsumes,
+				Spec:               PlayerOptionsBasic,
+				Glyphs:             MMGlyphs,
+				TalentsString:      MMTalents,
+				Buffs:              core.FullIndividualBuffs,
+				Rotation:           core.GetAplRotation("../../ui/hunter/apls", "mm").Rotation,
+				Profession1:        proto.Profession_Engineering,
+				DistanceFromTarget: 30,
+				ReactionTimeMs:     150,
+				ChannelClipDelayMs: 50,
 			},
 			core.FullPartyBuffs,
 			core.FullRaidBuffs,
 			core.FullDebuffs),
-		Encounter: &proto.Encounter{
-			Duration: 300,
-			Targets: []*proto.Target{
-				core.NewDefaultTarget(),
-			},
-		},
-		SimOptions: core.AverageDefaultSimTestOptions,
+		Encounter: core.MakeSingleTargetEncounter(0),
 	}
 
-	core.RaidBenchmark(b, rsr)
+	benchmarkIterations(b, rsr)
+}
+
+// 1 iteration pays a whole environment build per op, like an optimizer eval; 100 is mostly the rotation
+func benchmarkIterations(b *testing.B, rsr *proto.RaidSimRequest) {
+	for _, bc := range []struct {
+		name       string
+		iterations int32
+	}{{"iterations=1", 1}, {"iterations=100", 100}} {
+		b.Run(bc.name, func(b *testing.B) {
+			rsr.SimOptions = &proto.SimOptions{Iterations: bc.iterations, RandomSeed: 101}
+			for i := 0; i < b.N; i++ {
+				if result := core.RunRaidSim(rsr); result.ErrorResult != "" {
+					b.Fatal(result.ErrorResult)
+				}
+			}
+		})
+	}
 }
 
 var FullConsumes = &proto.Consumes{

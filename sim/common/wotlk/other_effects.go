@@ -1113,9 +1113,9 @@ func init() {
 	})
 
 	NewItemEffectWithHeroic(func(isHeroic bool) {
-		itemId := int32(49992)
+		itemId := int32(nibelungID)
 		if isHeroic {
-			itemId = 50648
+			itemId = nibelungHeroicID
 		}
 
 		core.NewItemEffect(itemId, func(agent core.Agent) {

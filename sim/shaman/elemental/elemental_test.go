@@ -57,32 +57,49 @@ func TestElemental(t *testing.T) {
 	}))
 }
 
+// TestElemental's default player, as its FullBuffs LongSingleTarget test runs it
 func BenchmarkSimulate(b *testing.B) {
 	rsr := &proto.RaidSimRequest{
 		Raid: core.SinglePlayerRaidProto(
 			&proto.Player{
-				Race:          proto.Race_RaceOrc,
-				Class:         proto.Class_ClassShaman,
-				Equipment:     core.GetGearSet("../../../ui/elemental_shaman/gear_sets", "p1").GearSet,
-				TalentsString: StandardTalents,
-				Glyphs:        StandardGlyphs,
-				Consumes:      FullConsumes,
-				Spec:          PlayerOptionsAdaptive,
-				Buffs:         core.FullIndividualBuffs,
+				Race:               proto.Race_RaceTroll,
+				Class:              proto.Class_ClassShaman,
+				Equipment:          core.GetGearSet("../../../ui/elemental_shaman/gear_sets", "p1").GearSet,
+				TalentsString:      StandardTalents,
+				Glyphs:             StandardGlyphs,
+				Consumes:           FullConsumes,
+				Spec:               PlayerOptionsAdaptive,
+				Buffs:              core.FullIndividualBuffs,
+				Rotation:           core.GetAplRotation("../../../ui/elemental_shaman/apls", "default").Rotation,
+				Profession1:        proto.Profession_Engineering,
+				DistanceFromTarget: 30,
+				ReactionTimeMs:     150,
+				ChannelClipDelayMs: 50,
 			},
 			core.FullPartyBuffs,
 			core.FullRaidBuffs,
 			core.FullDebuffs),
-		Encounter: &proto.Encounter{
-			Duration: 300,
-			Targets: []*proto.Target{
-				core.NewDefaultTarget(),
-			},
-		},
-		SimOptions: core.AverageDefaultSimTestOptions,
+		Encounter: core.MakeSingleTargetEncounter(0),
 	}
 
-	core.RaidBenchmark(b, rsr)
+	benchmarkIterations(b, rsr)
+}
+
+// 1 iteration pays a whole environment build per op, like an optimizer eval; 100 is mostly the rotation
+func benchmarkIterations(b *testing.B, rsr *proto.RaidSimRequest) {
+	for _, bc := range []struct {
+		name       string
+		iterations int32
+	}{{"iterations=1", 1}, {"iterations=100", 100}} {
+		b.Run(bc.name, func(b *testing.B) {
+			rsr.SimOptions = &proto.SimOptions{Iterations: bc.iterations, RandomSeed: 101}
+			for i := 0; i < b.N; i++ {
+				if result := core.RunRaidSim(rsr); result.ErrorResult != "" {
+					b.Fatal(result.ErrorResult)
+				}
+			}
+		})
+	}
 }
 
 var StandardTalents = "0532001523212351322301351-005052031"
