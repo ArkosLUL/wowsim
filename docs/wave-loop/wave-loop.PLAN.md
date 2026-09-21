@@ -50,8 +50,8 @@ G = changes goldens. FS = runs all 37 suites.
 | F | PAR-P7-0a (G, FS) · PAR-P7-0b (G, FS) · BIS-tanks-racials · PAR-TOOLS-RR | ✔ |
 | F2 | PAR-P7-0c (G, FS) · PAR-PERF · BIS-picker-switch | ✔ |
 | G | PAR-P7-DK (G) · PAR-P7-HUN (G) · BIS-batch-ui · PAR-PERF-2 (G) | ✔ |
+| H2 | PAR-P7-0d (G, FS) | ✔ |
 | H | PAR-P7-ROG · PAR-P7-WAR · PAR-P7-RET (G) · BIS-raid-contrib | ✔ |
-| H2 (proposed) | PAR-P7-0d (G, FS) | ✔ |
 | I | PAR-P7-SHA · PAR-P7-DRU · PAR-P7-MAG · PAR-P7-WLK (G) | ✔ |
 | J | PAR-P7-PRI (G) · PAR-P7-TANK (G) · BIS-e2e-perf · AC-3 | ✔ |
 | K | BIS-presets · PAR-P8 (G, FS) · BIS-tank-boss | ✔ |
@@ -62,8 +62,8 @@ carries the 2 full-suite golden changers a wave is allowed. BIS-picker-switch mo
 second, light item. PAR-PERF sits there because F2 ends the core combat work: after it, G through J pile
 eleven class items on top and a profile can no longer say what cost what.
 
-H2 is proposed the same way: PAR-P7-0d's core cast, crit and pet fixes have to land before the caster
-wave I, and H is full.
+H2 is inserted the same way: PAR-P7-0d's core cast, crit and pet fixes have to land before the caster
+wave I, and H is full. The user ran it before H, so H's melee items build on its swing fixes.
 
 **Where the specs are:**
 
@@ -76,10 +76,10 @@ wave I, and H is full.
 
 ## Current wave
 
-- Wave: H, not started. Wave G (base `f126dd8ab`) landed on `master`.
-- Base SHA: set at wave start.
-- Workflow runId: none. Wave G ran as `wf_1e1dc889-8c8`.
-- H's class items run in stages (RUNBOOK, Workflow contract): code, then live.
+- Wave: H2, running. Then H, whose class items run in stages (RUNBOOK, Workflow contract): code, then
+  live.
+- Base SHA: the wave's setup commit on top of `da045696e`.
+- Workflow runId: not yet started.
 
 ## BiS baseline
 
@@ -174,13 +174,12 @@ crashed before F2, so its column starts there.
 | BIS-batch-ui | merged | `4887ef580` | |
 | PAR-PERF-2 | merged | `956ba4988` | goldens unchanged |
 | wave G cross-review | | `a2b24100d`, `3ac9069fc` | split in two (parity; optimizer and UI); one batch bug (Apply and Save on a roster changed mid-run); the old DK ids now alias in the APL lookup; tooling moved out of scratch in `73e159351` |
+| PAR-P7-0d | running | | in four stages: cast and crit, pets, swings, then the leftovers and the full run |
 
 Later WIs are added as their wave starts.
 
 ## User actions
 
-- "continue" for wave H.
-- Decide: run PAR-P7-0d as its own wave H2 between H and I (recommended), or fold it elsewhere.
 - Decide: should the gear picker show PvP gear at its catalog tier instead of hiding it at every
   phase? 16 gems whose designs sell only for PvP currency hide with it
   ([BIS-picker-switch](../bis-optimizer/bis-optimizer.PLAN.md#bis-picker-switch-wave-f2-done)).
