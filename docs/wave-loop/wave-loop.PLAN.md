@@ -73,8 +73,9 @@ eleven class items on top and a profile can no longer say what cost what.
 ## Current wave
 
 - Wave: F2, running.
-- Base SHA: `5a445effc`.
-- Workflow runId: set at launch. Wave F ran as `wf_eada7eed-df2`.
+- Base SHA: `0782b5be8`, the wave's setup commit on top of `5a445effc`.
+- Workflow runId: `wf_5bebfbfc-677`, transcript dir
+  `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\wf_5bebfbfc-677`.
 
 ## BiS baseline
 
