@@ -205,17 +205,17 @@ func ownerWhiteSwingArmorPen(auto *AutoAttacks) float64 {
 	return 0
 }
 
-// inheritOwnerAttackSpeed hands hunter pets their owner's ranged attack speed, through the carrier
-// aura mod-spell-tweaks gives them (SpellTweaks.HunterPetHaste). It stacks with the pet's own melee
-// haste, Frenzy included; what it blocks is melee-and-ranged haste like Bloodlust, which the owner's
-// speed already carries.
 // inheritsOwnerAttackSpeed reports whether mod-spell-tweaks gives this pet the carrier aura. It
 // also decides which haste buffs the pet has to be kept away from, since the carrier makes it
-// immune to them (applyPetBuffEffects).
+// immune to them (applyPetBuffEffects, BloodlustAura).
 func (pet *Pet) inheritsOwnerAttackSpeed() bool {
 	return pet.SummonedAsPet && pet.Owner.Class == proto.Class_ClassHunter && pet.Owner.Server().SpellTweaks.HunterPetHaste
 }
 
+// inheritOwnerAttackSpeed hands hunter pets their owner's ranged attack speed, through the carrier
+// aura mod-spell-tweaks gives them (SpellTweaks.HunterPetHaste). It stacks with the pet's own melee
+// haste, Frenzy included; what it blocks is melee-and-ranged haste like Bloodlust, which the owner's
+// speed already carries, and cast speed.
 func (pet *Pet) inheritOwnerAttackSpeed() {
 	if !pet.inheritsOwnerAttackSpeed() {
 		return

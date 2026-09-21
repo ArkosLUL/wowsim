@@ -632,7 +632,8 @@ func BloodlustAura(character *Character, actionTag int32) *Aura {
 		OnGain: func(aura *Aura, sim *Simulation) {
 			character.MultiplyAttackSpeed(sim, 1.3)
 			for _, pet := range character.Pets {
-				if pet.IsEnabled() && !pet.IsGuardian() {
+				// the haste carrier makes an inheriting pet immune to both halves, cast speed included
+				if pet.IsEnabled() && !pet.IsGuardian() && !pet.inheritsOwnerAttackSpeed() {
 					BloodlustAura(&pet.Character, actionTag).Activate(sim)
 				}
 			}
