@@ -38,7 +38,7 @@ Installs `window.__t` for the individual sim's gear tab:
 |---|---|
 | `sleep(ms)`, `until(fn, ms)` | wait, or poll until `fn` returns something truthy |
 | `tab(id)` | switch to a sim tab, e.g. `optimizer-tab` |
-| `openSlot(i)` | open the item picker for the i-th gear slot |
+| `openSlot(i)` | open the i-th item picker in page order: left column 0-8 (head to ranged), then right 9-16 (hands to trinket 2) |
 | `showTab(contentId)`, `pane(contentId)` | switch to and read a picker tab (items, gems, enchants) |
 | `setPhase(contentId, phase)`, `search(contentId, text)` | set the picker's phase filter, search its list |
 | `listSize(contentId)` | the picker list's row count |

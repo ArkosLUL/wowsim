@@ -18,7 +18,7 @@ window.__t = {
 	tab(id) {
 		document.querySelector(`a[data-bs-target="#${id}"]`).click();
 	},
-	// opens the selector modal for the picker whose slot label or item is at index i (sorted by slot)
+	// opens the i-th picker's selector modal, in page order, not slot order: left column 0-8, right 9-16
 	async openSlot(i) {
 		document.querySelectorAll('.modal.show').forEach(m => m.querySelector('.close-button')?.click());
 		await this.until(() => !document.querySelector('.modal.show')); await this.sleep(300);

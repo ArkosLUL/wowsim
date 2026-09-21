@@ -22,7 +22,7 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
     for sim throughput, covering melee, mana melee, ranged with a pet, caster and a raid. Every wave records
     it ([wave loop](../wave-loop/wave-loop.PLAN.md#sim-throughput)), because no golden measures time.
     Run it on an idle machine, with no sim, container build or golden run alongside: what else is
-    running moves all four by a fifth or more at once, which is enough to hide or invent a regression.
+    running moves them all by a fifth or more at once, which is enough to hide or invent a regression.
     Each case sims one iteration, so the environment build is 16-55% of the first four, and the Ret,
     Hunter and Elemental requests carry no rotation: they measure autos and setup more than a
     rotation's per-event cost. `./sim/` is an 8-player raid without talents, on its specs' golden APLs,
