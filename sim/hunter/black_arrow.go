@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/wowsims/wotlk/sim/core"
-	"github.com/wowsims/wotlk/sim/core/stats"
 )
 
 func (hunter *Hunter) registerBlackArrowSpell(timer *core.Timer) {
@@ -57,8 +56,8 @@ func (hunter *Hunter) registerBlackArrowSpell(timer *core.Timer) {
 			NumberOfTicks: 5,
 			TickLength:    time.Second * 3,
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-				// scales slightly better (11.5%) than the tooltip implies (10%), but isn't affected by Hunter's Mark
-				dot.SnapshotBaseDamage = 553 + 0.023*(dot.Spell.Unit.GetStat(stats.RangedAttackPower)+dot.Spell.Unit.PseudoStats.MobTypeAttackPower)
+				// spell_bonus_data's ap_dot_bonus: 0.02 a tick, on ranged AP with the target's Hunter's Mark
+				dot.SnapshotBaseDamage = 553 + 0.02*dot.Spell.RangedAttackPower(target)
 				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(dot.Spell.Unit.AttackTables[target.UnitIndex])
 			},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {

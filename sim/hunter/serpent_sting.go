@@ -35,9 +35,7 @@ func (hunter *Hunter) registerSerpentStingSpell() {
 		DamageMultiplierAdditive: 1 +
 			0.1*float64(hunter.Talents.ImprovedStings) +
 			core.TernaryFloat64(hunter.HasSetBonus(ItemSetScourgestalkerBattlegear, 2), .1, 0),
-		// according to in-game testing (which happens to match the wowhead 60% mortal shots flag on wowhead)
-		// serpent-sting gets 60% crit modifier instead of 30% crit modifier from mortal shots
-		CritMultiplier:   hunter.critMultiplier(true, false, true),
+		CritMultiplier:   hunter.critMultiplier(true, false),
 		ThreatMultiplier: 1,
 
 		Dot: core.DotConfig{
@@ -64,6 +62,8 @@ func (hunter *Hunter) registerSerpentStingSpell() {
 			},
 			NumberOfTicks: 5 + core.TernaryInt32(hunter.HasMajorGlyph(proto.HunterMajorGlyph_GlyphOfSerpentSting), 2, 0),
 			TickLength:    time.Second * 3,
+			// the T9 2pc (67150) is an SPELL_AURA_ABILITY_PERIODIC_CRIT on Serpent Sting
+			TicksCanCrit: canCrit,
 
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
 				dot.SnapshotBaseDamage = 242 + 0.04*dot.Spell.RangedAttackPower(target)

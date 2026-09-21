@@ -180,7 +180,7 @@ Roll details the tables above don't show:
   it too, since Windfury Totem and Improved Icy Talons reach the wolves as party auras and are already in the
   shaman's melee haste.
 - A pet's melee crit is a flat 5% plus crit auras (`Unit::GetUnitCriticalChance`), nothing from agility,
-  and a creature's spell crit `m_baseSpellCritChance`, 5%. The DK's summons follow it; the hunter pet,
+  and a creature's spell crit `m_baseSpellCritChance`, 5%. The DK's summons and the hunter pet follow it;
   warlock pets, treants, spirit wolves and the infernal still take agility crit.
 - DK summons (`Guardian::InitStatsForLevel`, `pet_dk.cpp`, `spell_dk.cpp`); core tells 67561 and risen
   ghouls apart by `Pet.HitScaling` and `Pet.RisenGhoul`, which the DK sets:
@@ -211,12 +211,12 @@ Roll details the tables above don't show:
   the way it strips Bloodlust, keeping plain Moonkin Aura for the spell crit, which isn't blocked.
   Both places now ask `Pet.inheritsOwnerAttackSpeed`, since it was two copies of that test drifting
   apart that let it through.
-- The sim's pet "+1.8% crit" hacks (`hunter/pet.go:140`, `shaman/fire_elemental_pet.go:151`, `shaman/spirit_wolves.go:45`) are Classic-only.
+- The sim's pet "+1.8% crit" hacks (`shaman/fire_elemental_pet.go:151`, `shaman/spirit_wolves.go:45`) are Classic-only.
+  The hunter pet's crit is the server's now (Hunter, Pets).
 
-**Hunter haste** (measured, `TestSimvalHunter`)
-- The sim gives hunters ×1.15 ranged speed (`sim/hunter/hunter.go:165`). The server core has no such bonus.
-- mod-individual-progression recasts spell 89507 on login (aura 141 `MOD_RANGED_AMMO_HASTE`, −15%, bows and crossbows)
-  and gives quivers and ammo pouches their equip spells back
+**Hunter** (`TestSimvalHunter`, the hunter recorded runs, code)
+- Ranged haste: the server core has no base bonus. mod-individual-progression recasts spell 89507 on login (aura 141
+  `MOD_RANGED_AMMO_HASTE`, −15%, bows and crossbows) and gives quivers and ammo pouches their equip spells back
   (`mod-individual-progression/data/sql/world/base/vanilla_item_changes.sql`).
 - Measured ranged speed multipliers of a night elf hunter after relogging with each gear set:
 
@@ -227,8 +227,55 @@ Roll details the tables above don't show:
   | Zod's Repeating Longbow + Nerubian Reinforced Quiver (44448, spell 29414 +15%) | 1/1.15 |
   | Dwarf, Old Blunderbuss + starting ammo pouch (spell 14824 +10%, guns) | 1/1.10 |
 
-- The 89507 aura is always present but never changes the speed. Ranged haste is therefore just the quiver or pouch:
-  the sim's ×1.15 is right only with a +15% quiver (level 75+), and a hunter without one has none.
+- The 89507 aura is always present but never changes the speed, so ranged haste is just the quiver or pouch.
+  `Hunter.Options.quiver` picks it: ×1.15 for a bow, crossbow or gun with a 15% quiver or pouch (equip spell
+  29414/14829, the default), else ×1.
+- Auto Shot: `_UpdateAutoRepeatSpell` fires it one update after its timer runs out, but restarts the timer before that
+  update's decrement, so shots land on `NextServerTick(timerAt)` like melee; the PLAN's "one update late" premise nets
+  to nothing, and the recorded runs' shot intervals agree. A haste change rescales the running timer
+  (`Unit::ApplyAttackTimePercentMod`, rating included through `Player::ApplyRatingMod`).
+- Volley (58434) channels with `ATTR2_DO_NOT_RESET_COMBAT_TIMERS`: `Unit::Update` stands the ranged timer still
+  (`suspendRangedAttackTimer`) and resumes it where it stopped; a shot already due still goes. The sim cancelled Auto
+  Shot and restarted it 500 ms after the channel.
+- Moving fails Auto Shot (`SPELL_FAILED_MOVING`, `Spell::CheckCast`) without the 500 ms restart delay. Explosive
+  Trap's object (189322) arms on the first update after its 1 s `startDelay`. With mod-spell-tweaks on, Trap Launcher
+  (425777-425782) lays it from range, so there's no walk-in. Its damage is 49065's: magic class with
+  `ATTR3_ALWAYS_HIT`, so it never misses and crits (glyphed ticks too) off the hunter's spell crit for +50%
+  (`Spell::AddUnitTarget` rolls for `m_originalCaster`). The trap's trigger creature casts it
+  (`GameObject::CastSpell`), so there's no ten-target cap.
+- Steady Shot (`Spell::EffectSchoolDMG`): 252 + a plain weapon roll + ammo DPS × weapon speed, neither normalized, +
+  0.1 RAP (`spell_bonus_data`). It and Multi-Shot take the ranged-slot cast rule, with no cast-time code of their own.
+- Weapon damage (`Player::CalculateMinMaxDamage`) includes ammo DPS × the weapon's speed, × 2.8 when normalized
+  (Aimed Shot, Multi-Shot, Chimera Shot).
+- Crit damage (`Unit::SpellCriticalDamageBonus`): ranged +100%, then Mortal Shots and Marked for Death once each,
+  Serpent Sting included (the sim doubled Mortal Shots there). Serpent Sting ticks crit only with the T9 2pc (67150,
+  aura 286), Explosive Trap's only with its glyph (63068); Volley's and Explosive Shot's ticks are triggered hits
+  (58433, 53352) and crit, and 53352 never misses (`ATTR3_ALWAYS_HIT`).
+- Black Arrow: `ap_dot_bonus` 0.02 a tick on ranged AP, the target's Hunter's Mark included (the sim had 0.023
+  without it).
+- Improved Arcane Shot (19454-19456) is +5% damage a rank, no cooldown cut. Nether Shock (53589) has a 40 s cooldown,
+  less Longevity. Wild Quiver deals its damage as 53254, the shot the talent triggers: 80% weapon damage, ammo
+  included, and Marked for Death covers it like Auto Shot.
+- Pets:
+  - `spell_hun_generic_scaling` (34902-34904), recalculated every 2 s: 45% of the owner's stamina; 22% of the owner's
+    RAP plus Hunter vs. Wild's stamina share as AP; 12.87% of RAP as spell damage for the magic schools (misc 126);
+    35% of armor. Wild Hunt's `AddPct` truncates the int32 stamina and AP percents (54/63, 25/28), not the float
+    spell one.
+  - Strength 192 and agility 158 at 80 (`pet_levelstats`), AP 2·Str − 20, weapon 60-100 at 2 s
+    (`Pet::InitStatsForLevel`). Crit is 5% plus auras for melee and magic alike, with none from agility
+    (`Unit::GetUnitCriticalChance`, `SpellDoneCritChance`): the captured BM pet reads 14.4% = 5 + Ferocity 10 − 0.6.
+    Magic crit takes only spell crit auras (`m_baseSpellCritChance`), not Spider's Bite's weapon crit, and is 0 for a
+    physical-school magic ability (Demoralizing Screech) or an `ATTR2_CANT_CRIT` one (Fire Breath).
+  - `Guardian::UpdateDamagePhysical` reads the unhasted 2 s (`Unit::GetAttackTime`), so Cobra Reflexes (61682/61683,
+    aura 9 alone) is pure haste at full damage per hit. Happiness's +25% goes on weapon damage only.
+  - Focus: `Creature::Regenerate` gives 24 every 4 s, +50% a Bestial Discipline rank.
+  - `PetAI::UpdateAI` runs on the pet's update and picks at random among the autocast spells it can cast then. The
+    GCD is the spell's own 1.5 s; Pin and Nether Shock are off it.
+  - Magic-class abilities roll the magic hit table, crit for +50% and scale with pet spell damage (`spell_bonus_data`
+    0.333 direct; ticks 0.067, 0.167, 0.333). Physical ones take 0.07 AP only where the data gives it; Pin's and
+    Savage Rend's ticks take none. Spore Cloud ticks once on each target (the sim hit its main target twice).
+  - Exotic families (`CREATURE_TYPE_FLAG_TAMEABLE_EXOTIC`, Rhino included) take mod-spell-tweaks' exotic multiplier
+    on everything they deal (`Unit::DealDamage`).
 
 **Raid buffs, debuffs and racials** (`sim/core/{buffs,debuffs,consumes,racials}.go` against the capture)
 - Reading an amount off the capture (`SpellEffectInfo::CalcValue`): `basePoints`, plus
@@ -371,9 +418,31 @@ values. Human warrior, level 80, maxed skills, Worn Shortsword (Sword Specializa
   at 2.03 s under haste. Glancing landed on 39 of 185 and 30 of 128 swings, both within a standard error and a half of
   the white table's 2500 bp. Chronicle timestamps the packet send, so the 100 ms map-update lattice only shows through
   a few ms of jitter — a tick or swing interval reads within about ±50 ms of the server's own.
-- A hunter recorded run dealt no damage at 20 yards: Auto Shot (75) comes back `INTERRUPTED` and the shot abilities
-  produce neither a cast nor a failure, so the factory's hunter has no usable ranged weapon or ammo. The ranged capture
-  is a finding for the hunter work item, not for the harness.
+  Correction: both ran at ×0.3 damage. The factory's init resets mod-individual-progression, and below
+  `PROGRESSION_PRE_TBC` the live `VanillaPowerAdjustment` of 0.5 scales a level 80's damage by 1 − 0.5·70/50
+  (`ComputeVanillaAdjustment`). `TestRecordedRun` doesn't undo it yet; `TestRecordedRunHunter` runs `.ip set <name> 18`
+  after gearing.
+- Hunter recorded runs (`TestRecordedRunHunter`, `SIMVAL_RECORD_HUNTER`, 300 s at 20 yards; the factory hunter gets a
+  ranged weapon, quiver and ammo, and its pet autocasts only its damage spells). It keeps Serpent Sting up and fires
+  Arcane Shot on cooldown, else Steady Shot, with Rapid Fire, Kill Command and Bestial Wrath on cooldown. Each capture
+  is compared with `tools/simval chronicle -sim` against a sim built from its `.setup.txt` by a scratch converter
+  (PAR-P7-HUN's `tmp/rrsim`, not in `tools/` yet). The SV runs came before the harness cast Track Giants, so their
+  sims drop Improved Tracking.
+
+  | Run | Server DPS | Sim DPS | Gap |
+  |---|---|---|---|
+  | BM + serpent (`hunter_Svrleadtbrfb_1789993143`, in testdata) | 5925.4 | 5830.4 | +1.63% |
+  | SV + bat | 4784.8 | 4775.3 | +0.20% |
+  | SV + wasp | 5008.1 | 4872.8 | **+2.78%**, over the 2% |
+
+  - Auto Shot intervals sit on the 100 ms lattice at `NextServerTick` of the hasted speed.
+  - Wasp run: the server chained queued Steady Shots every 1.5 s where the sim took 1.6 s: the hasted cast is under
+    the GCD, and a cast queued behind the GCD lands a tick earlier on the server than in the sim (a core timing gap).
+  - BM run: the server pet idled through 2 of its 3 Bestial Wraths (10.6 s and 11.1 s): it kept its target and
+    ignored attack commands, with no swings or autocasts until the aura dropped. The one at the pull didn't do it.
+    Cause unknown. It's why the server pet did 5% less than the sim's.
+  - The server's Auto Shot and Steady Shot crit rates ran about 3 points over the sim's across the three runs (about
+    2σ pooled); Arcane Shot matched. The BM snapshot's melee sheet crit is 53.79%, the sim's 53.43%.
 - Death knight probes (`TestSimvalDeathKnight`, a human DK behind the boss dummy): Scourge Strike and Obliterate
   roll the yellow table, Icy Touch the magic one with partial resists, and `tools/simval` passes all 26 checks on
   those records. Both diseases are melee damage class and can't miss. Rage of Rivendare 5/5 adds 10 expertise and
@@ -422,12 +491,23 @@ The fork copies the server. Patching any of these in [ac] means updating the mat
 | 30 | Off hand at the pull | a ready off hand waits max(own timer, main hand timer + half the main hand's hasted attack time) | a random hand waits a random 0-50% of the main hand's weapon speed | `Unit::Attack` |
 | 31 | Weapon swap | swing timers keep running; the new weapon only changes the attack time | both melee timers restart | `Player::_ApplyWeaponDamage` |
 | 32 | Death Coil with Sigil of the Wild Buck | +80 twice: the flat modifier covers the dummy (49895), whose value becomes the damage spell's custom base points, and the damage spell (47632) | +80 once | `Unit::ApplyEffectModifiers`, `spell_dk_death_coil` |
-| 33 | Pet melee crit | 5% plus crit auras, nothing from agility | agility crit | `Unit::GetUnitCriticalChance` |
+| 33 | Pet crit | 5% plus crit auras, melee and magic (spell crit auras only), none from agility | agility crit (the hunter pet 3.2% plus agility, melee only) | `Unit::GetUnitCriticalChance`, `Unit::SpellDoneCritChance` |
 | 34 | Gargoyle casting | a cast starts on a 400 ms decision, 80% of the time | back to back | `npc_pet_dk_ebon_gargoyle` |
 | 35 | Ghoul Claw and the army | the guardian ghoul Claws every 5-10 s, the pet ghoul from 75 energy; army ghouls never Claw and have 24 AP plus 6.5% of the owner's | Claw on energy; the army's AP includes agility | `CombatAI`, `PetAI::UpdateAI`, `AggressorAI`, `Guardian::UpdateAttackPowerAndDamage` |
 | 36 | Razor Frost | 2% of a main-hand swing, attack power included, whichever weapon procced it; Frost Vulnerability only helps its caster's frost spells | 2% of the procing weapon's base damage; the vulnerability helps all frost damage | `Spell::EffectWeaponDmg`, 51714's `MOD_DAMAGE_FROM_CASTER` class mask |
 | 37 | Pestilence with Glyph of Disease | `Aura::RefreshDuration`: the target's diseases keep their amount, crit and tick interval, and restart at their max duration, Glyph of Scourge Strike's extensions included | the refresh takes the current attack power and haste | `spell_dk_pestilence` |
 | 38 | Wandering Plague | 1 s cooldown after a proc | 0.5 s | `spell_dk_wandering_plague_aura` |
+| 39 | Volley and Auto Shot | the ranged timer stands still through the channel; a shot already due still goes | Auto Shot cancelled, restarted 500 ms after | `Unit::Update` (`suspendRangedAttackTimer`) |
+| 40 | Steady Shot damage | weapon roll and ammo at the weapon's own speed | normalized to 2.8 s | `Spell::EffectSchoolDMG` |
+| 41 | Mortal Shots on Serpent Sting | once | twice | `Unit::SpellCriticalDamageBonus` |
+| 42 | Black Arrow scaling | 0.02 RAP a tick, Hunter's Mark included | 0.023, without Hunter's Mark | `spell_bonus_data` |
+| 43 | Hunter pet scaling | 45% stamina; Hunter vs. Wild's stamina share joins the owner's RAP before the 22% | 30% stamina; the share added to pet AP in full | `spell_hunter.cpp` (`spell_hun_generic_scaling`) |
+| 44 | Hunter pet base stats at 80 | Strength 192, agility 158, weapon 60-100 | 331, 113, 50-78 | `pet_levelstats`, `Pet::InitStatsForLevel` |
+| 45 | Cobra Reflexes | haste only: each hit's AP bonus reads the unhasted 2 s | faster, weaker hits | `Guardian::UpdateDamagePhysical`, `Unit::GetAttackTime` |
+| 46 | Pet happiness | +25% on weapon damage | +25% on all damage | `Guardian::UpdateDamagePhysical` |
+| 47 | Hunter pet focus | 24 every 4 s | 5 a second | `Creature::Regenerate` |
+| 48 | Hunter pet magic-class abilities | +50% crits, 0.333 of pet spell damage (dots less); Poison Spit and Demoralizing Screech roll the magic table too | +100% crits, 0.049 of pet AP; those two on the melee table | `spell_bonus_data`, `Unit::SpellCriticalDamageBonus` |
+| 49 | Explosive Trap damage (49065) | magic class: never misses, crits off spell crit for +50%, no ten-target cap (the trap's trigger creature casts it) | ranged hit and crit, +100%, capped | `GameObject::CastSpell`, `Spell::AddUnitTarget` |
 
 Not yet settled against retail, check before patching: the 200 ms other-hand push (`PlayerUpdates.cpp`), the DoT
 refresh tick-timer rule, the max(cast, 1500 ms) PPM basis for spell-triggered aura procs, the rule-based binary

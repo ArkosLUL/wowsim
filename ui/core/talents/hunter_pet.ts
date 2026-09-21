@@ -16,6 +16,11 @@ import HunterPetCunningJson from './trees/hunter_cunning.json'
 import HunterPetFerocityJson from './trees/hunter_ferocity.json'
 import HunterPetTenacityJson from './trees/hunter_tenacity.json'
 
+// A level 80 pet has 16 talent points. Beast Mastery adds 6 on this server, not 4: mod-spell-tweaks
+// overrides 53270 in spell_dbc.
+export const PET_TALENT_POINTS = 16;
+export const BEAST_MASTERY_PET_TALENT_POINTS = 22;
+
 export function makePetTypeInputConfig(): InputHelpers.TypedIconEnumPickerConfig<Player<Spec.SpecHunter>, PetType> {
 	return InputHelpers.makeSpecOptionsEnumIconInput<Spec.SpecHunter, PetType>({
 		fieldName: 'petType',
@@ -40,7 +45,7 @@ export function makePetTypeInputConfig(): InputHelpers.TypedIconEnumPickerConfig
 			{ actionId: ActionId.fromPetName('Nether Ray'), tooltip: 'Nether Ray', value: PetType.NetherRay },
 			{ actionId: ActionId.fromPetName('Raptor'), tooltip: 'Raptor', value: PetType.Raptor },
 			{ actionId: ActionId.fromPetName('Ravager'), tooltip: 'Ravager', value: PetType.Ravager },
-			{ actionId: ActionId.fromPetName('Rhino'), tooltip: 'Rhino', value: PetType.Rhino },
+			{ actionId: ActionId.fromPetName('Rhino'), tooltip: 'Rhino (Exotic)', value: PetType.Rhino },
 			{ actionId: ActionId.fromPetName('Scorpid'), tooltip: 'Scorpid', value: PetType.Scorpid },
 			{ actionId: ActionId.fromPetName('Serpent'), tooltip: 'Serpent', value: PetType.Serpent },
 			{ actionId: ActionId.fromPetName('Silithid'), tooltip: 'Silithid (Exotic)', value: PetType.Silithid },
@@ -150,7 +155,7 @@ export class HunterPetTalentsPicker extends Component {
 					this.curTalents = options.petTalents;
 				},
 				pointsPerRow: 3,
-				maxPoints: 16,
+				maxPoints: PET_TALENT_POINTS,
 			});
 
 			const savedTalentsManager = new SavedDataManager<Player<Spec.SpecHunter>, string>(pickerContainer, this.player, {
@@ -210,7 +215,7 @@ export class HunterPetTalentsPicker extends Component {
 		});
 
 		const updateIsBM = () => {
-			const maxPoints = this.player.getTalents().beastMastery ? 20 : 16;
+			const maxPoints = this.player.getTalents().beastMastery ? BEAST_MASTERY_PET_TALENT_POINTS : PET_TALENT_POINTS;
 			pickers.forEach(picker => picker.setMaxPoints(maxPoints));
 		};
 		player.talentsChangeEmitter.on(updateIsBM);
@@ -283,11 +288,13 @@ export const cunningBMDefault: HunterPetTalents = HunterPetTalents.create({
 	graceOfTheMantis: 2,
 	wildHunt: 2,
 	roarOfSacrifice: true,
+	owlsFocus: 2,
 });
 export const ferocityBMDefault: HunterPetTalents = HunterPetTalents.create({
 	cobraReflexes: 2,
 	dive: true,
-	bloodthirsty: 1,
+	bloodthirsty: 2,
+	heartOfThePheonix: true,
 	spikedCollar: 3,
 	boarsSpeed: true,
 	cullingTheHerd: 3,
@@ -301,6 +308,7 @@ export const tenacityBMDefault: HunterPetTalents = HunterPetTalents.create({
 	cobraReflexes: 2,
 	charge: true,
 	greatStamina: 3,
+	naturalArmor: 2,
 	spikedCollar: 3,
 	bloodOfTheRhino: 2,
 	guardDog: 2,

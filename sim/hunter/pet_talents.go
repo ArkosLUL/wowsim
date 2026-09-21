@@ -12,8 +12,9 @@ func (hp *HunterPet) ApplyTalents() {
 	// TODO:
 	// Thunderstomp
 
+	// SPELL_AURA_MOD_WEAPON_CRIT_PERCENT, which a creature's magic crit doesn't read
+	// (Unit::SpellDoneCritChance)
 	hp.AddStat(stats.MeleeCrit, 3*core.CritRatingPerCritChance*float64(talents.SpidersBite))
-	hp.AddStat(stats.SpellCrit, 3*core.CritRatingPerCritChance*float64(talents.SpidersBite))
 	hp.PseudoStats.DamageDealtMultiplier *= 1 + 0.03*float64(talents.SpikedCollar)
 	hp.PseudoStats.DamageDealtMultiplier *= 1 + 0.03*float64(talents.SharkAttack)
 

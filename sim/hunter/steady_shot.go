@@ -58,17 +58,10 @@ func (hunter *Hunter) registerSteadyShotSpell() {
 				0.05*float64(hunter.Talents.MasterMarksman),
 		},
 		Cast: core.CastConfig{
+			// 1.5 s plus the ranged slot's 500 ms, scaled by ranged attack speed (Unit::ModSpellCastTime)
 			DefaultCast: core.Cast{
 				GCD:      core.GCDDefault,
 				CastTime: time.Second * 2,
-			},
-			IgnoreHaste: true, // Hunter GCD is locked at 1.5s
-			ModifyCast: func(_ *core.Simulation, spell *core.Spell, cast *core.Cast) {
-				cast.CastTime = spell.CastTime()
-			},
-
-			CastTime: func(spell *core.Spell) time.Duration {
-				return time.Duration(float64(spell.DefaultCast.CastTime) / hunter.RangedSwingSpeed())
 			},
 		},
 
@@ -79,13 +72,15 @@ func (hunter *Hunter) registerSteadyShotSpell() {
 			core.TernaryFloat64(hunter.HasSetBonus(ItemSetGronnstalker, 4), .1, 0),
 		DamageMultiplier: 1 *
 			hunter.markedForDeathMultiplier(),
-		CritMultiplier:   hunter.critMultiplier(true, true, false),
+		CritMultiplier:   hunter.critMultiplier(true, true),
 		ThreatMultiplier: 1,
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+			// Spell::EffectSchoolDMG: a plain roll of the weapon's damage and ammo at the weapon's own
+			// speed, neither normalized, plus spell_bonus_data's 0.1 ranged AP
 			baseDamage := 0.1*spell.RangedAttackPower(target) +
-				hunter.AutoAttacks.Ranged().BaseDamage(sim)*2.8/hunter.AutoAttacks.Ranged().SwingSpeed +
-				hunter.NormalizedAmmoDamageBonus +
+				hunter.AutoAttacks.Ranged().BaseDamage(sim) +
+				hunter.AmmoDamageBonus +
 				252
 
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeRangedHitAndCrit)

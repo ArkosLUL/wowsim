@@ -264,6 +264,15 @@ message Hunter {
 		double time_to_trap_weave_ms = 8;
 
 		bool use_hunters_mark = 5;
+
+		// The quiver or ammo pouch in a bag slot. On this server it's the only ranged haste a hunter
+		// gets for free, and only with a matching weapon: quivers for bows and crossbows, pouches for guns.
+		enum Quiver {
+			// a 15% quiver or pouch: equip spell 29414 or 14829, like the Nerubian Reinforced Quiver's
+			Quiver15Percent = 0;
+			QuiverNone = 1;
+		}
+		Quiver quiver = 9;
 	}
 	Options options = 3;
 }

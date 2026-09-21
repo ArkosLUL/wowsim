@@ -41,31 +41,34 @@ func (hunter *Hunter) NewHunterPet() *HunterPet {
 	}
 	hp.SummonedAsPet = true
 
-	hp.EnableFocusBar(1.0+0.5*float64(hunter.Talents.BestialDiscipline), func(sim *core.Simulation) {
+	// Creature::Regenerate gives a hunter pet 24 focus every 4 s, where core's focus bar has 5 a second
+	hp.EnableFocusBar(1.2*(1.0+0.5*float64(hunter.Talents.BestialDiscipline)), func(sim *core.Simulation) {
 		if hp.GCD.IsReady(sim) {
 			hp.OnGCDReady(sim)
 		}
 	})
 
-	atkSpd := 2 / (1 + 0.15*float64(hp.Talents().CobraReflexes))
+	// Pet::InitStatsForLevel: level -/+ a quarter of it
 	hp.EnableAutoAttacks(hp, core.AutoAttackOptions{
 		MainHand: core.Weapon{
-			BaseDamageMin:  50,
-			BaseDamageMax:  78,
-			SwingSpeed:     atkSpd,
+			BaseDamageMin:  60,
+			BaseDamageMax:  100,
+			SwingSpeed:     2,
 			CritMultiplier: 2,
 		},
 		AutoSwingMelee: true,
 	})
+	// Cobra Reflexes is SPELL_AURA_MOD_ATTACKSPEED, plain haste: a hit's weapon damage still reads the
+	// 2 s base attack time (Guardian::UpdateDamagePhysical), so hits don't get smaller.
+	hp.PseudoStats.MeleeSpeedMultiplier *= 1 + 0.15*float64(hp.Talents().CobraReflexes)
 
-	// Happiness
-	hp.PseudoStats.DamageDealtMultiplier *= 1.25
+	// a happy pet's +25% only goes on its weapon damage (Guardian::UpdateDamagePhysical), not abilities
+	hp.AutoAttacks.MHConfig().DamageMultiplier *= 1.25
 
 	// Pet family bonus is now the same for all pets.
 	hp.PseudoStats.SchoolDamageDealtMultiplier[stats.SchoolIndexPhysical] *= 1.05
 
 	hp.AddStatDependency(stats.Strength, stats.AttackPower, 2)
-	hp.AddStatDependency(stats.Agility, stats.MeleeCrit, core.CritRatingPerCritChance/62.77)
 	core.ApplyPetConsumeEffects(&hp.Character, hunter.Consumes)
 
 	hunter.AddPet(hp)
@@ -87,6 +90,23 @@ func (hp *HunterPet) Talents() *proto.HunterPetTalents {
 func (hp *HunterPet) Initialize() {
 	hp.specialAbility = hp.NewPetAbility(hp.config.SpecialAbility, true)
 	hp.focusDump = hp.NewPetAbility(hp.config.FocusDump, false)
+
+	// mod-spell-tweaks' exotic pet bonus rides Unit::DealDamage, so it scales all the pet deals
+	if exoticPetTypes[hp.hunterOwner.Options.PetType] {
+		hp.PseudoStats.DamageDealtMultiplier *= hp.Server().SpellTweaks.ExoticPetDamageMultiplier
+	}
+}
+
+// exoticPetTypes are the families only Beast Mastery tames (CREATURE_TYPE_FLAG_TAMEABLE_EXOTIC on
+// every tameable template of theirs).
+var exoticPetTypes = map[proto.Hunter_Options_PetType]bool{
+	proto.Hunter_Options_Chimaera:    true,
+	proto.Hunter_Options_CoreHound:   true,
+	proto.Hunter_Options_Devilsaur:   true,
+	proto.Hunter_Options_Rhino:       true,
+	proto.Hunter_Options_Silithid:    true,
+	proto.Hunter_Options_SpiritBeast: true,
+	proto.Hunter_Options_Worm:        true,
 }
 
 func (hp *HunterPet) Reset(_ *core.Simulation) {
@@ -97,6 +117,12 @@ func (hp *HunterPet) ExecuteCustomRotation(sim *core.Simulation) {
 	percentRemaining := sim.GetRemainingDurationPercent()
 	if percentRemaining < 1.0-hp.uptimePercent { // once fight is % completed, disable pet.
 		hp.Disable(sim)
+		return
+	}
+
+	// PetAI::UpdateAI only runs on the pet's own update, so that's when it can cast
+	if next := sim.NextServerTick(sim.CurrentTime); next > sim.CurrentTime {
+		hp.WaitUntil(sim, next)
 		return
 	}
 
@@ -117,14 +143,20 @@ func (hp *HunterPet) ExecuteCustomRotation(sim *core.Simulation) {
 		return
 	}
 
-	if hp.config.RandomSelection {
+	// the AI casts one of the autocast spells it could cast right now, picked at random
+	special := hp.specialAbility.CanCast(sim, target)
+	dump := hp.focusDump.CanCast(sim, target)
+	if special && dump {
 		if sim.RandomFloat("Hunter Pet Ability") < 0.5 {
-			_ = hp.specialAbility.Cast(sim, target) || hp.focusDump.Cast(sim, target)
+			dump = false
 		} else {
-			_ = hp.focusDump.Cast(sim, target) || hp.specialAbility.Cast(sim, target)
+			special = false
 		}
-	} else {
-		_ = hp.specialAbility.Cast(sim, target) || hp.focusDump.Cast(sim, target)
+	}
+	if special {
+		hp.specialAbility.Cast(sim, target)
+	} else if dump {
+		hp.focusDump.Cast(sim, target)
 	}
 }
 
@@ -133,15 +165,22 @@ func (hp *HunterPet) killCommandMult() float64 {
 }
 
 var hunterPetBaseStats = stats.Stats{
-	stats.Agility:     113,
-	stats.Strength:    331,
+	// pet_levelstats, creature_entry 1 at level 80
+	stats.Agility:     158,
+	stats.Strength:    192,
 	stats.AttackPower: -20, // Apparently pets and warriors have a AP penalty.
 
-	stats.MeleeCrit: 3.2 * core.CritRatingPerCritChance,
+	// a creature crits 5% plus auras, melee and magic alike, and agility adds nothing
+	// (Unit::GetUnitCriticalChance, Unit::SpellDoneCritChance)
+	stats.MeleeCrit: 5 * core.CritRatingPerCritChance,
+	stats.SpellCrit: 5 * core.CritRatingPerCritChance,
 }
 
-const PetExpertiseScale = 3.25
-
+// makeStatInheritance is spell_hun_generic_scaling on 34902: 45% of the owner's stamina, 22% of their
+// ranged AP as AP and 12.87% as spell damage for the magic schools (126), plus 35% of their armor. Wild
+// Hunt's dummy raises each by AddPct, which truncates the int32 stamina and AP percents (54/63, 25/28)
+// but not the float spell one. Hunter vs. Wild's share of stamina goes on top of the owner's ranged AP,
+// which already counts it once. Hit and expertise come from core's scaling aura, not from here.
 func (hunter *Hunter) makeStatInheritance() core.PetStatInheritance {
 	hvw := hunter.Talents.HunterVsWild
 
@@ -150,22 +189,19 @@ func (hunter *Hunter) makeStatInheritance() core.PetStatInheritance {
 	if petTalents != nil {
 		wildHunt = petTalents.WildHunt
 	}
+	// Wild Hunt (62758, 62762): +20% stamina and +15% AP and spell damage a rank
+	staminaPct := float64(45 + 45*20*wildHunt/100)
+	apPct := float64(22 + 22*15*wildHunt/100)
+	spellPct := 12.87 * (1 + 0.15*float64(wildHunt))
 
 	return func(ownerStats stats.Stats) stats.Stats {
-		// EJ posts claim this value is passed through math.Floor, but in-game testing
-		// shows pets benefit from each point of owner hit rating in WotLK Classic.
-		// https://web.archive.org/web/20120112003252/http://elitistjerks.com/f80/t100099-demonology_releasing_demon_you
-		ownerHitChance := ownerStats[stats.MeleeHit] / core.MeleeHitRatingPerHitChance
-		hitRatingFromOwner := ownerHitChance * core.MeleeHitRatingPerHitChance
+		ownerAP := ownerStats[stats.RangedAttackPower] + ownerStats[stats.Stamina]*0.1*float64(hvw)
 
 		return stats.Stats{
-			stats.Stamina:     ownerStats[stats.Stamina] * 0.3 * (1 + 0.2*float64(wildHunt)),
+			stats.Stamina:     ownerStats[stats.Stamina] * staminaPct / 100,
 			stats.Armor:       ownerStats[stats.Armor] * 0.35,
-			stats.AttackPower: ownerStats[stats.RangedAttackPower]*0.22*(1+0.15*float64(wildHunt)) + ownerStats[stats.Stamina]*0.1*float64(hvw),
-
-			stats.MeleeHit:  hitRatingFromOwner,
-			stats.SpellHit:  hitRatingFromOwner * 2,
-			stats.Expertise: ownerHitChance * PetExpertiseScale * core.ExpertisePerQuarterPercentReduction,
+			stats.AttackPower: ownerAP * apPct / 100,
+			stats.SpellPower:  ownerStats[stats.RangedAttackPower] * spellPct / 100,
 		}
 	}
 }
@@ -175,9 +211,6 @@ type PetConfig struct {
 
 	SpecialAbility PetAbilityType
 	FocusDump      PetAbilityType
-
-	// Randomly select between abilities instead of using a prio.
-	RandomSelection bool
 }
 
 // Abilities reference: https://wotlk.wowhead.com/hunter-pets

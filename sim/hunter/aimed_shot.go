@@ -42,13 +42,13 @@ func (hunter *Hunter) registerAimedShotSpell(timer *core.Timer) {
 			.04*float64(hunter.Talents.Barrage),
 		DamageMultiplier: 1 *
 			hunter.markedForDeathMultiplier(),
-		CritMultiplier:   hunter.critMultiplier(true, true, false),
+		CritMultiplier:   hunter.critMultiplier(true, true),
 		ThreatMultiplier: 1,
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			baseDamage := 0.2*spell.RangedAttackPower(target) +
 				hunter.AutoAttacks.Ranged().BaseDamage(sim) +
-				hunter.AmmoDamageBonus +
+				hunter.NormalizedAmmoDamageBonus +
 				spell.BonusWeaponDamage() +
 				408
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeRangedHitAndCrit)

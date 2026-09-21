@@ -10,6 +10,7 @@ import {
 	Hunter_Rotation_RotationType as RotationType,
 	Hunter_Rotation_StingType as StingType,
 	Hunter_Options_Ammo as Ammo,
+	Hunter_Options_Quiver as Quiver,
 } from '../core/proto/hunter.js';
 
 // Configuration for spec-specific UI elements on the settings tab.
@@ -27,6 +28,18 @@ export const WeaponAmmo = InputHelpers.makeSpecOptionsEnumIconInput<Spec.SpecHun
 		{ actionId: ActionId.fromItemId(34581), value: Ammo.MysteriousArrow },
 		{ actionId: ActionId.fromItemId(33803), value: Ammo.AdamantiteStinger },
 		{ actionId: ActionId.fromItemId(28056), value: Ammo.BlackflightArrow },
+	],
+});
+
+export const QuiverInput = InputHelpers.makeSpecOptionsEnumIconInput<Spec.SpecHunter, Quiver>({
+	fieldName: 'quiver',
+	values: [
+		{ value: Quiver.QuiverNone, tooltip: 'No quiver or ammo pouch' },
+		{
+			actionId: ActionId.fromItemId(44448),
+			tooltip: 'Quiver or ammo pouch: 15% faster ranged attacks. Hunters get no other built-in ranged haste on this server.',
+			value: Quiver.Quiver15Percent,
+		},
 	],
 });
 
@@ -56,7 +69,7 @@ export const SniperTrainingUptime = InputHelpers.makeSpecOptionsNumberInput<Spec
 export const TimeToTrapWeaveMs = InputHelpers.makeSpecOptionsNumberInput<Spec.SpecHunter>({
 	fieldName: 'timeToTrapWeaveMs',
 	label: 'Weave Time',
-	labelTooltip: 'Amount of time for Explosive Trap, in milliseconds, between when you start moving towards the boss and when you re-engage your ranged autos.',
+	labelTooltip: 'Amount of time for Explosive Trap, in milliseconds, between when you start moving towards the boss and when you re-engage your ranged autos. Not used while the server has spell tweaks on, since the Trap Launcher lays the trap from range.',
 });
 
 export const HunterRotationConfig = {

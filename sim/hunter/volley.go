@@ -26,20 +26,26 @@ func (hunter *Hunter) registerVolleySpell() {
 
 		DamageMultiplier: 1 *
 			(1 + 0.04*float64(hunter.Talents.Barrage)),
-		CritMultiplier:   hunter.critMultiplier(true, false, false),
+		CritMultiplier:   hunter.critMultiplier(true, false),
 		ThreatMultiplier: 1,
 
 		Dot: core.DotConfig{
 			IsAOE: true,
 			Aura: core.Aura{
 				Label: "Volley",
+				// a channel with SPELL_ATTR2_DO_NOT_RESET_COMBAT_TIMERS: Auto Shot keeps going, its timer doesn't
+				OnGain: func(aura *core.Aura, sim *core.Simulation) {
+					hunter.AutoAttacks.SuspendRangedTimer(sim)
+				},
 				OnExpire: func(aura *core.Aura, sim *core.Simulation) {
-					hunter.AutoAttacks.DelayRangedUntil(sim, sim.CurrentTime+time.Millisecond*500)
+					hunter.AutoAttacks.ResumeRangedTimer(sim)
 				},
 			},
 			NumberOfTicks:       6,
 			TickLength:          time.Second * 1,
 			AffectedByCastSpeed: true,
+			// each tick is 58433's own hit, which crits like any other
+			TicksCanCrit: true,
 
 			OnSnapshot: func(sim *core.Simulation, _ *core.Unit, dot *core.Dot, _ bool) {
 				target := hunter.CurrentTarget
@@ -59,7 +65,6 @@ func (hunter *Hunter) registerVolleySpell() {
 
 		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, spell *core.Spell) {
 			spell.AOEDot().Apply(sim)
-			hunter.AutoAttacks.CancelAutoSwing(sim)
 		},
 	})
 }

@@ -117,17 +117,14 @@ func (hunter *Hunter) ApplyTalents() {
 	hunter.registerReadinessCD()
 }
 
-func (hunter *Hunter) critMultiplier(isRanged bool, isMFDSpell bool, doubleDipMS bool) float64 {
+// critMultiplier follows Unit::SpellCriticalDamageBonus: +100% for melee and ranged damage class, then
+// Mortal Shots and Marked for Death as SPELLMOD_CRIT_DAMAGE_BONUS on the spells their class masks cover.
+func (hunter *Hunter) critMultiplier(isRanged bool, isMFDSpell bool) float64 {
 	primaryModifier := 1.0
 	secondaryModifier := 0.0
-	mortalShotsFactor := 0.06
-
-	if doubleDipMS {
-		mortalShotsFactor = 0.12
-	}
 
 	if isRanged {
-		secondaryModifier += mortalShotsFactor * float64(hunter.Talents.MortalShots)
+		secondaryModifier += 0.06 * float64(hunter.Talents.MortalShots)
 		if isMFDSpell {
 			secondaryModifier += 0.02 * float64(hunter.Talents.MarkedForDeath)
 		}
@@ -316,7 +313,8 @@ func (hunter *Hunter) applyWildQuiver() {
 		return
 	}
 
-	actionID := core.ActionID{SpellID: 53217}
+	// the talent (53215-53217) only triggers Wild Quiver Auto Shot, which deals the damage
+	actionID := core.ActionID{SpellID: 53254}
 	procChance := 0.04 * float64(hunter.Talents.WildQuiver)
 
 	wqSpell := hunter.RegisterSpell(core.SpellConfig{
@@ -325,12 +323,16 @@ func (hunter *Hunter) applyWildQuiver() {
 		ProcMask:    core.ProcMaskRangedAuto,
 		Flags:       core.SpellFlagNoOnCastComplete,
 
-		DamageMultiplier: 0.8,
-		CritMultiplier:   hunter.critMultiplier(false, false, false),
+		// Marked for Death's class mask covers it like Auto Shot's
+		DamageMultiplier: 0.8 * hunter.markedForDeathMultiplier(),
+		CritMultiplier:   hunter.critMultiplier(false, false),
 		ThreatMultiplier: 1,
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+			// 80% weapon damage, and the ranged weapon's damage includes the ammo
+			// (Player::CalculateMinMaxDamage)
 			baseDamage := spell.Unit.RangedWeaponDamage(sim, spell.RangedAttackPower(target)) +
+				hunter.AmmoDamageBonus +
 				spell.BonusWeaponDamage()
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeRangedHitAndCrit)
 		},

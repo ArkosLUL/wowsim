@@ -23,7 +23,7 @@ import { Stats } from '../core/proto_utils/stats.js';
 import { getTalentPoints, getSpecIcon } from '../core/proto_utils/utils.js';
 import { IndividualSimUI, registerSpecConfig } from '../core/individual_sim_ui.js';
 import { TypedEvent } from '../core/typed_event.js';
-import { getPetTalentsConfig } from '../core/talents/hunter_pet.js';
+import { BEAST_MASTERY_PET_TALENT_POINTS, PET_TALENT_POINTS, getPetTalentsConfig } from '../core/talents/hunter_pet.js';
 import { protoToTalentString } from '../core/talents/factory.js';
 import { Gear } from '../core/proto_utils/gear.js';
 import { PhysicalDPSGemOptimizer } from '../core/components/suggest_gems_action.js';
@@ -61,6 +61,7 @@ const SPEC_CONFIG = registerSpecConfig(Spec.SpecHunter, {
 						PetType.Chimaera,
 						PetType.CoreHound,
 						PetType.Devilsaur,
+						PetType.Rhino,
 						PetType.Silithid,
 						PetType.SpiritBeast,
 						PetType.Worm,
@@ -87,15 +88,17 @@ const SPEC_CONFIG = registerSpecConfig(Spec.SpecHunter, {
 					const talentPoints = getTalentPoints(petTalentString);
 
 					const isBM = simUI.player.getTalents().beastMastery;
-					const maxPoints = isBM ? 20 : 16;
+					const maxPoints = isBM ? BEAST_MASTERY_PET_TALENT_POINTS : PET_TALENT_POINTS;
 
 					if (talentPoints == 0) {
 						// Just return here, so we don't show a warning during page load.
 						return '';
 					} else if (talentPoints < maxPoints) {
 						return 'Unspent pet talent points.';
+					} else if (talentPoints > maxPoints && isBM) {
+						return `More than ${maxPoints} points spent in pet talents.`;
 					} else if (talentPoints > maxPoints) {
-						return 'More than 16 points spent in pet talents, but Beast Mastery is not talented.';
+						return `More than ${maxPoints} points spent in pet talents, but Beast Mastery isn't talented.`;
 					} else {
 						return '';
 					}
@@ -212,6 +215,7 @@ const SPEC_CONFIG = registerSpecConfig(Spec.SpecHunter, {
 	playerIconInputs: [
 		HunterInputs.PetTypeInput,
 		HunterInputs.WeaponAmmo,
+		HunterInputs.QuiverInput,
 		HunterInputs.UseHuntersMark,
 	],
 	// Inputs to include in the 'Rotation' section on the settings tab.

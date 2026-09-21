@@ -36,6 +36,8 @@ type Hunter struct {
 
 	pet *HunterPet
 
+	// Ammo adds its DPS times the weapon's own speed to a plain weapon hit, and times 2.8 to a
+	// normalized one (Player::CalculateMinMaxDamage, Unit::GetAPMultiplier).
 	AmmoDPS                   float64
 	AmmoDamageBonus           float64
 	NormalizedAmmoDamageBonus float64
@@ -104,9 +106,9 @@ func (hunter *Hunter) AddPartyBuffs(_ *proto.PartyBuffs) {
 
 func (hunter *Hunter) Initialize() {
 	// Update auto crit multipliers now that we have the targets.
-	hunter.AutoAttacks.MHConfig().CritMultiplier = hunter.critMultiplier(false, false, false)
-	hunter.AutoAttacks.OHConfig().CritMultiplier = hunter.critMultiplier(false, false, false)
-	hunter.AutoAttacks.RangedConfig().CritMultiplier = hunter.critMultiplier(false, false, false)
+	hunter.AutoAttacks.MHConfig().CritMultiplier = hunter.critMultiplier(false, false)
+	hunter.AutoAttacks.OHConfig().CritMultiplier = hunter.critMultiplier(false, false)
+	hunter.AutoAttacks.RangedConfig().CritMultiplier = hunter.critMultiplier(false, false)
 
 	hunter.registerAspectOfTheDragonhawkSpell()
 	hunter.registerAspectOfTheViperSpell()
@@ -160,8 +162,7 @@ func NewHunter(character *core.Character, options *proto.Player) *Hunter {
 
 	rangedWeapon := hunter.WeaponFromRanged(0)
 
-	// Passive bonus (used to be from quiver).
-	hunter.PseudoStats.RangedSpeedMultiplier *= 1.15
+	hunter.PseudoStats.RangedSpeedMultiplier *= quiverHaste(hunter.Options.Quiver, hunter.GetRangedWeapon())
 
 	if hunter.HasRangedWeapon() && hunter.GetRangedWeapon().ID != ThoridalTheStarsFuryItemID {
 		switch hunter.Options.Ammo {
@@ -203,6 +204,21 @@ func NewHunter(character *core.Character, options *proto.Player) *Hunter {
 	hunter.pet = hunter.NewHunterPet()
 
 	return hunter
+}
+
+// quiverHaste is the ranged attack speed the quiver or ammo pouch gives. The core has no hunter haste
+// of its own, and mod-individual-progression's 89507 never changes the speed (TestSimvalHunter
+// measured it), so this is all of it: the bag's SPELL_AURA_MOD_RANGED_AMMO_HASTE
+// (AuraEffect::HandleRangedAmmoHaste), which needs a weapon the bag fits.
+func quiverHaste(quiver proto.Hunter_Options_Quiver, weapon *core.Item) float64 {
+	if quiver != proto.Hunter_Options_Quiver15Percent || weapon == nil {
+		return 1
+	}
+	switch weapon.RangedWeaponType {
+	case proto.RangedWeaponType_RangedWeaponTypeBow, proto.RangedWeaponType_RangedWeaponTypeCrossbow, proto.RangedWeaponType_RangedWeaponTypeGun:
+		return 1.15
+	}
+	return 1
 }
 
 // Agent is a generic way to access underlying hunter on any of the agents.
