@@ -81,6 +81,67 @@ func TestCastTimeHasteByDamageClass(t *testing.T) {
 	}
 }
 
+// Unit::ModSpellCastTime truncates a ranged or magic cast time to a whole ms (int32(float(x)*pct))
+// before anything else sees it, same as Spell::TriggerGlobalCooldown does for a hasted GCD. A cast
+// time that floats a hair over a round ms in the sim's continuous math would otherwise cross a
+// server-tick boundary the truncated server value doesn't.
+func TestCastTimeAndGCDTruncateToWholeMs(t *testing.T) {
+	unit := &Unit{}
+	unit.PseudoStats.RangedSpeedMultiplier = 1.33322 // 2s / 1.33322 = 1500.127...ms untruncated
+
+	steady := registeredSpell(testSpellSteadyShot)
+	steady.CastTimeMultiplier = 1
+	steadyTiming := newCastTiming(steady, false)
+	if got := steadyTiming.castTime(unit, 2*time.Second, steady); got != ms(1500) {
+		t.Errorf("Steady Shot cast time = %v, want 1.5s (truncated down from 1500.127 ms)", got)
+	}
+
+	unit.CastSpeed = 1234.567 / 1500.0 // 1500 * CastSpeed = 1234.567...ms untruncated
+	moonfireTiming := newCastTiming(registeredSpell(testSpellMoonfire), false)
+	if got := moonfireTiming.gcd(unit, GCDDefault); got != ms(1234) {
+		t.Errorf("Moonfire GCD = %v, want 1.234s (truncated down from 1234.567 ms)", got)
+	}
+}
+
+// A hardcast held behind a flat GCD stays on that GCD's own cadence: the server truncates the cast
+// time to a whole ms before comparing it to the GCD, so a value that floats a fraction of a ms over
+// the GCD in continuous math doesn't cost the chain a whole server tick (PAR-P7-0d: the wasp
+// recorded run's server chained hasted Steady Shots every 1.5 s, the sim every 1.6 s).
+func TestQueuedHardcastKeepsTheGCDCadence(t *testing.T) {
+	var steady *Spell
+	sim, a := newTimingTestSim(t, 100, func(a *timingTestAgent) {
+		steady = a.RegisterSpell(SpellConfig{
+			ActionID: ActionID{SpellID: testSpellSteadyShot},
+			Cast:     CastConfig{DefaultCast: Cast{GCD: GCDDefault, CastTime: 2 * time.Second}},
+		})
+	})
+	a.PseudoStats.RangedSpeedMultiplier = 1.33322 // cast time 1500.127...ms untruncated, over the flat 1.5s GCD
+
+	landings := recordCasts(steady)
+
+	var recast func(sim *Simulation)
+	recast = func(sim *Simulation) {
+		if !steady.Cast(sim, a.CurrentTarget) {
+			t.Fatalf("Steady Shot cast failed at %v", sim.CurrentTime)
+		}
+		at(sim, a.NextGCDAt(), recast)
+	}
+	sim.PrePull()
+	at(sim, 0, recast)
+	runUntil(sim, 8*time.Second)
+
+	// the pull itself isn't tick-aligned, so only the first landing pays for that; every one after
+	// chains off an already-aligned tick, at the flat GCD's own cadence
+	if got := len(*landings); got < 5 {
+		t.Fatalf("only %d Steady Shot landings", got)
+	}
+	for i := 2; i < len(*landings); i++ {
+		if interval := (*landings)[i] - (*landings)[i-1]; interval != ms(1500) {
+			t.Errorf("interval %d = %v, want 1.5s (the flat GCD, not a tick longer)", i, interval)
+		}
+	}
+}
+
 // swingsAroundCast casts the spell at 0.5 s against a 2 s main hand that swung at 0, and returns the
 // main hand's swings up to 7 s.
 func swingsAroundCast(t *testing.T, config SpellConfig, setup func(*timingTestAgent, *Spell)) []time.Duration {
@@ -473,5 +534,102 @@ func TestSlamStartedAsTheSwingComesDueGoesFirst(t *testing.T) {
 	want := []string{"slam 2.5s", "mh 2.5s", "mh 4.5s"}
 	if !slices.Equal(*events, want) {
 		t.Errorf("got %v, want %v", *events, want)
+	}
+}
+
+// A haste change while Slam's pause has the melee timer frozen rescales what's left of that frozen
+// timer (UpdateSwingTimers), not the time still left on the freeze itself.
+func TestHasteDuringSlamsPauseRescalesTheFrozenTimer(t *testing.T) {
+	var slam *Spell
+	sim, a := newTimingTestSim(t, 0, func(a *timingTestAgent) {
+		a.EnableAutoAttacks(a, AutoAttackOptions{MainHand: testWeapon(2), AutoSwingMelee: true})
+		slam = a.RegisterSpell(castConfig(testSpellSlam, ms(500)))
+	})
+	aa := &a.AutoAttacks
+	swings := recordCasts(aa.MHAuto())
+	aa.mh.setTimer(sim, ms(1500))
+	at(sim, ms(1000), func(sim *Simulation) { slam.Cast(sim, a.CurrentTarget) })
+	at(sim, ms(1200), func(sim *Simulation) { a.MultiplyMeleeSpeed(sim, 2) })
+	sim.PrePull()
+	runUntil(sim, ms(2000))
+
+	// 500 ms left on the mh timer when Slam freezes it at 1000, doubled speed at 1200 halves what's
+	// left to 250 ms, and Slam lands at 1500: 1500 + 250 = 1750
+	if want := []time.Duration{ms(1750)}; !slices.Equal(*swings, want) {
+		t.Errorf("swings %v, want %v", *swings, want)
+	}
+}
+
+// A CancelAutoSwing an APL action makes from the main hand's last-moment check (the same check a
+// Heroic Strike queue uses) must stop that very swing too, not just future ones.
+func TestCancelAutoSwingFromTheLastMomentAPLCheckStopsThatSwing(t *testing.T) {
+	sim, a := newTimingTestSim(t, 0, func(a *timingTestAgent) {
+		a.EnableAutoAttacks(a, AutoAttackOptions{
+			MainHand:       testWeapon(2),
+			AutoSwingMelee: true,
+			ReplaceMHSwing: func(_ *Simulation, mhSwingSpell *Spell) *Spell { return mhSwingSpell },
+		})
+	})
+	aa := &a.AutoAttacks
+	swings := recordCasts(aa.MHAuto())
+	acted := false
+	a.Rotation = &APLRotation{unit: &a.Unit, priorityList: []*APLAction{{impl: &testAPLAction{
+		ready: func(sim *Simulation) bool { return !acted && sim.CurrentTime == ms(2000) },
+		execute: func(sim *Simulation) {
+			acted = true
+			aa.CancelAutoSwing(sim)
+		},
+	}}}}
+	aa.mh.setTimer(sim, ms(2000))
+	sim.PrePull()
+	runUntil(sim, ms(2500))
+
+	if len(*swings) != 0 {
+		t.Errorf("swings %v, want none: cancelling auto attacks from this swing's own last-moment check must stop it too", *swings)
+	}
+}
+
+// HoldMeleeUntil and ReleaseMeleeHold give a channel that isn't cast through Spell.Cast's own CastTime,
+// because it's modeled as a periodic aura instead of a Spell.Dot (Army of the Dead), the same
+// UNIT_STATE_CASTING melee hold a hardcast gets: a swing due while it's up waits for it to end, then
+// goes right away.
+func TestHoldMeleeUntilWaitsOutTheChannelLikeAnyCast(t *testing.T) {
+	var channel *Spell
+	sim, a := newTimingTestSim(t, 0, func(a *timingTestAgent) {
+		a.EnableAutoAttacks(a, AutoAttackOptions{MainHand: testWeapon(2), AutoSwingMelee: true})
+		channel = a.RegisterSpell(SpellConfig{ActionID: ActionID{SpellID: testSpellCrusaderStrike}})
+	})
+	aa := &a.AutoAttacks
+	swings := recordCasts(aa.MHAuto())
+	aa.mh.setTimer(sim, ms(1000))
+	at(sim, ms(500), func(sim *Simulation) { channel.HoldMeleeUntil(sim, ms(1500)) })
+	at(sim, ms(1500), func(sim *Simulation) { channel.ReleaseMeleeHold(sim) })
+	sim.PrePull()
+	runUntil(sim, ms(2000))
+
+	if want := []time.Duration{ms(1500)}; !slices.Equal(*swings, want) {
+		t.Errorf("swings %v, want %v", *swings, want)
+	}
+}
+
+// A channel whose own spell keeps combat timers (Volley's ATTR2_DO_NOT_RESET_COMBAT_TIMERS) freezes
+// the melee timer for the hold's whole span instead of just waiting it out.
+func TestHoldMeleeUntilFreezesTheTimerWhenTheSpellKeepsCombatTimers(t *testing.T) {
+	var channel *Spell
+	sim, a := newTimingTestSim(t, 0, func(a *timingTestAgent) {
+		a.EnableAutoAttacks(a, AutoAttackOptions{MainHand: testWeapon(2), AutoSwingMelee: true})
+		channel = a.RegisterSpell(SpellConfig{ActionID: ActionID{SpellID: testSpellSlam}})
+	})
+	aa := &a.AutoAttacks
+	swings := recordCasts(aa.MHAuto())
+	aa.mh.setTimer(sim, ms(1000))
+	at(sim, ms(500), func(sim *Simulation) { channel.HoldMeleeUntil(sim, ms(1500)) })
+	at(sim, ms(1500), func(sim *Simulation) { channel.ReleaseMeleeHold(sim) })
+	sim.PrePull()
+	runUntil(sim, ms(2500))
+
+	// 500 ms left on the timer when the freeze starts at 500, still 500 ms left when it thaws at 1500
+	if want := []time.Duration{ms(2000)}; !slices.Equal(*swings, want) {
+		t.Errorf("swings %v, want %v", *swings, want)
 	}
 }

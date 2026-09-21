@@ -95,12 +95,14 @@ func (dk *Deathknight) NewGargoyle() *GargoylePet {
 		dkOwner: dk,
 	}
 	gargoyle.HitScaling = core.PetHitScalingMasterSpell06
+	// 51996 (Death Knight Pet Scaling 02): immune to direct haste and slows, Bloodlust included.
+	gargoyle.HasteCarrier = true
 
 	// NightOfTheDead
 	gargoyle.PseudoStats.DamageTakenMultiplier *= 1.0 - float64(dk.Talents.NightOfTheDead)*0.45
 
-	// A guardian's scaling auras never tick, so the owner's haste is what it was at the summon. Its
-	// immunities keep Bloodlust off it.
+	// A guardian's scaling aura never ticks, so the owner's haste is what it was at the summon. Cast
+	// speed, not melee, since Gargoyle Strike is the only thing it does.
 	gargoyle.OnPetEnable = func(sim *core.Simulation) {
 		gargoyle.PseudoStats.CastSpeedMultiplier = 1
 		gargoyle.MultiplyCastSpeed(dkPetHaste(dk.SwingSpeed()))

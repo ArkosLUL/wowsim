@@ -20,12 +20,14 @@ var ItemSetGronnstalker = core.NewItemSet(core.ItemSet{
 })
 
 func init() {
+	// spell_gen_black_bow_of_the_betrayer (spell_generic.cpp) has no class check, so this fires for
+	// any wielder; energizing a unit with no mana bar is just a no-op, same as the server.
 	core.NewItemEffect(32336, func(agent core.Agent) {
-		hunter := agent.(HunterAgent).GetHunter()
+		character := agent.GetCharacter()
 		const manaGain = 8.0
-		manaMetrics := hunter.NewManaMetrics(core.ActionID{SpellID: 46939})
+		manaMetrics := character.NewManaMetrics(core.ActionID{SpellID: 46939})
 
-		hunter.RegisterAura(core.Aura{
+		character.RegisterAura(core.Aura{
 			Label:    "Black Bow of the Betrayer",
 			Duration: core.NeverExpires,
 			OnReset: func(aura *core.Aura, sim *core.Simulation) {
@@ -35,7 +37,7 @@ func init() {
 				if !result.Landed() || !spell.ProcMask.Matches(core.ProcMaskRanged) {
 					return
 				}
-				hunter.AddMana(sim, manaGain, manaMetrics)
+				character.AddMana(sim, manaGain, manaMetrics)
 			},
 		})
 	})

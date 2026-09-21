@@ -866,9 +866,11 @@ func MarkOfBloodAura(target *Unit) *Aura {
 
 // RuneOfRazoriceVulnerabilityAura is Frost Vulnerability (51714): up to 5 stacks for 20 s. Its 2% a
 // stack only reaches the frost spells of the DK who put it up, so that DK's class code applies it.
-func RuneOfRazoriceVulnerabilityAura(target *Unit) *Aura {
+// The label folds in the caster: GetOrRegisterAura keys by Label alone, and the server tracks this
+// aura's stacks per caster GUID (Unit::_TryStackingOrRefreshingExistingAura, Unit.cpp:4661).
+func RuneOfRazoriceVulnerabilityAura(target *Unit, caster *Unit) *Aura {
 	return target.GetOrRegisterAura(Aura{
-		Label:     "RuneOfRazoriceVulnerability",
+		Label:     "RuneOfRazoriceVulnerability-" + caster.Label,
 		ActionID:  ActionID{SpellID: 51714},
 		Duration:  time.Second * 20,
 		MaxStacks: 5,

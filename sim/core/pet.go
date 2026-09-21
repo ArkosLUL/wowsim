@@ -22,7 +22,6 @@ type OnPetEnable func(sim *Simulation)
 type OnPetDisable func(sim *Simulation)
 
 type PetStatInheritance func(ownerStats stats.Stats) stats.Stats
-type PetMeleeSpeedInheritance func(amount float64)
 
 // Pet is an extension of Character, for any entity created by a player that can
 // take actions on its own.
@@ -53,8 +52,14 @@ type Pet struct {
 	// the permanent pet and Raise Dead's guardian alike.
 	RisenGhoul bool
 
-	// DK pets also inherit their owner's MeleeSpeed. This replace OwnerAttackSpeedChanged.
-	dynamicMeleeSpeedInheritance PetMeleeSpeedInheritance
+	// Which of the owner's swing speeds a haste-carrier pet (Unit.HasteCarrier) tracks: ranged for a
+	// hunter pet, melee for the DK's ghoul family. The class sets it before the pet is enabled; nil for
+	// a haste-carrier pet with no melee swings of its own to rescale, like the gargoyle.
+	OwnerHasteSource func() float64
+	// The carrier's last snapshot, as a swing-speed multiplier. A real pet retakes it every 2 s
+	// (ownerHasteRefresh); a guardian keeps what it got at the summon.
+	ownerHasteAmount  float64
+	ownerHasteRefresh *PendingAction
 
 	isReset bool
 
@@ -106,7 +111,6 @@ func (pet *Pet) Finalize() {
 	if pet.Env.IsFinalized() {
 		return
 	}
-	pet.inheritOwnerAttackSpeed()
 	pet.Character.Finalize()
 	// After Character.Finalize: that's where the pet's swings get their spells, and the inherited
 	// armor pen lands on them.
@@ -136,6 +140,10 @@ const (
 
 	// Only a real pet recalculates them, and only this often.
 	petOwnerHitRefreshInterval = 3 * time.Second
+
+	// The haste carrier's own recalculation cadence (spell_dk_pet_scaling's and mod-spell-tweaks'
+	// CalcPeriodic), also real-pet only.
+	petOwnerHasteRefreshInterval = 2 * time.Second
 )
 
 // ownerHitScaling is what the scaling aura is worth right now. Which of the owner's hit chances 61017
@@ -223,35 +231,38 @@ func ownerWhiteSwingArmorPen(auto *AutoAttacks) float64 {
 	return 0
 }
 
-// inheritsOwnerAttackSpeed reports whether mod-spell-tweaks gives this pet the carrier aura. It
-// also decides which haste buffs the pet has to be kept away from, since the carrier makes it
-// immune to them (applyPetBuffEffects, BloodlustAura).
+// inheritsOwnerAttackSpeed reports whether this pet carries a haste-carrier aura. It also decides
+// which haste buffs the pet has to be kept away from, since the carrier makes it immune to them
+// (applyPetBuffEffects, BloodlustAura, Unit.MultiplyAttackSpeed).
 func (pet *Pet) inheritsOwnerAttackSpeed() bool {
-	return pet.SummonedAsPet && pet.Owner.Class == proto.Class_ClassHunter && pet.Owner.Server().SpellTweaks.HunterPetHaste
+	return pet.HasteCarrier
 }
 
-// inheritOwnerAttackSpeed hands hunter pets their owner's ranged attack speed, through the carrier
-// aura mod-spell-tweaks gives them (SpellTweaks.HunterPetHaste). It stacks with the pet's own melee
-// haste, Frenzy included; what it blocks is melee-and-ranged haste like Bloodlust, which the owner's
-// speed already carries, and cast speed.
-func (pet *Pet) inheritOwnerAttackSpeed() {
-	if !pet.inheritsOwnerAttackSpeed() {
-		return
-	}
-
-	pet.ownerSwingSpeed = func() float64 { return inheritedSwingSpeed(pet.Owner.RangedSwingSpeed()) }
-	pet.Owner.hasteInheritingPets = append(pet.Owner.hasteInheritingPets, pet)
+// ownerHasteMultiplier is OwnerHasteSource's swing speed, the way CalculateHasteAmount reads it: the
+// owner's attack time modifier as a truncated whole percent, worked in float32. A slowed owner hands
+// over nothing, since the server clamps the modifier at 1.
+func (pet *Pet) ownerHasteMultiplier() float64 {
+	return inheritedSwingSpeed(pet.OwnerHasteSource())
 }
 
-// inheritedSwingSpeed is the carrier aura's amount, the owner's haste as whole percent. The server
-// clamps the owner's attack time modifier at 1, so a slowed owner hands over nothing, and works in
-// float32 throughout.
 func inheritedSwingSpeed(ownerSwingSpeed float64) float64 {
 	modSpeed := float32(1 / ownerSwingSpeed)
 	if modSpeed > 1 {
 		modSpeed = 1
 	}
 	return 1 + math.Trunc(float64((1/modSpeed-1)*100))/100
+}
+
+// refreshOwnerHaste is the haste carrier's periodic tick, real pets only (a guardian's carrier never
+// ticks, so it keeps what it got at the summon): recalculate the owner's current swing speed and move
+// the pet's own melee swing speed by the difference.
+func (pet *Pet) refreshOwnerHaste(sim *Simulation) {
+	amount := pet.ownerHasteMultiplier()
+	if amount == pet.ownerHasteAmount {
+		return
+	}
+	pet.MultiplyMeleeSpeed(sim, amount/pet.ownerHasteAmount)
+	pet.ownerHasteAmount = amount
 }
 
 // Updates the stats for this pet in response to a stat change on the owner.
@@ -324,6 +335,20 @@ func (pet *Pet) Enable(sim *Simulation, petAgent PetAgent) {
 		})
 	}
 
+	// The haste carrier's own snapshot: a real pet retakes it every 2 s, a guardian only now, at the
+	// summon (same IsPet gate as the hit scaling above).
+	if pet.OwnerHasteSource != nil {
+		pet.ownerHasteAmount = pet.ownerHasteMultiplier()
+		pet.MultiplyMeleeSpeed(sim, pet.ownerHasteAmount)
+
+		if pet.SummonedAsPet {
+			pet.ownerHasteRefresh = StartPeriodicAction(sim, PeriodicActionOptions{
+				Period:   petOwnerHasteRefreshInterval,
+				OnAction: pet.refreshOwnerHaste,
+			})
+		}
+	}
+
 	if !pet.isGuardian {
 		pet.Owner.DynamicStatsPets = append(pet.Owner.DynamicStatsPets, pet)
 		pet.dynamicStatInheritance = pet.statInheritance
@@ -384,14 +409,6 @@ func (pet *Pet) EnableDynamicStats(inheritance PetStatInheritance) {
 	pet.dynamicStatInheritance = inheritance
 }
 
-// Enables and possibly updates how the pet inherits its owner's melee speed. DK use only.
-func (pet *Pet) EnableDynamicMeleeSpeed(inheritance PetMeleeSpeedInheritance) {
-	if !slices.Contains(pet.Owner.DynamicMeleeSpeedPets, pet) {
-		pet.Owner.DynamicMeleeSpeedPets = append(pet.Owner.DynamicMeleeSpeedPets, pet)
-	}
-	pet.dynamicMeleeSpeedInheritance = inheritance
-}
-
 func (pet *Pet) Disable(sim *Simulation) {
 	if !pet.enabled {
 		if sim.Log != nil {
@@ -403,6 +420,15 @@ func (pet *Pet) Disable(sim *Simulation) {
 	if pet.ownerHitRefresh != nil {
 		pet.ownerHitRefresh.Cancel(sim)
 		pet.ownerHitRefresh = nil
+	}
+
+	if pet.ownerHasteRefresh != nil {
+		pet.ownerHasteRefresh.Cancel(sim)
+		pet.ownerHasteRefresh = nil
+	}
+	if pet.ownerHasteAmount != 0 {
+		pet.MultiplyMeleeSpeed(sim, 1/pet.ownerHasteAmount)
+		pet.ownerHasteAmount = 0
 	}
 
 	// Remove inherited stats on dismiss if not permanent
@@ -417,13 +443,6 @@ func (pet *Pet) Disable(sim *Simulation) {
 			pet.Owner.DynamicStatsPets = removeBySwappingToBack(pet.Owner.DynamicStatsPets, idx)
 		}
 		pet.dynamicStatInheritance = nil
-	}
-
-	if pet.dynamicMeleeSpeedInheritance != nil {
-		if idx := slices.Index(pet.Owner.DynamicMeleeSpeedPets, pet); idx != -1 {
-			pet.Owner.DynamicMeleeSpeedPets = removeBySwappingToBack(pet.Owner.DynamicMeleeSpeedPets, idx)
-		}
-		pet.dynamicMeleeSpeedInheritance = nil
 	}
 
 	pet.CancelGCDTimer(sim)

@@ -193,38 +193,43 @@ func (p *timingTestPet) Reset(_ *Simulation)                 {}
 func (p *timingTestPet) ExecuteCustomRotation(_ *Simulation) {}
 
 // The haste carrier makes an inheriting pet immune to Bloodlust's cast speed as well as its attack
-// speed, so the pet gets none of it. Any other pet takes both.
+// speed, so the pet gets none of it. Any other pet takes both, guardian or real pet alike.
 func TestBloodlustSkipsAPetThatInheritsHaste(t *testing.T) {
 	for _, tc := range []struct {
-		owner       proto.Class
-		wantPetAura bool
+		name         string
+		hasteCarrier bool
+		isGuardian   bool
+		wantPetAura  bool
 	}{
-		{proto.Class_ClassHunter, false},
-		{proto.Class_ClassShaman, true},
+		{name: "haste carrier", hasteCarrier: true, wantPetAura: false},
+		{name: "plain pet", wantPetAura: true},
+		{name: "plain guardian", isGuardian: true, wantPetAura: true},
 	} {
-		var pet *timingTestPet
-		var bloodlust *Aura
-		timingTestConstruct = func(a *timingTestAgent) {
-			a.Class = tc.owner
-			pet = &timingTestPet{Pet: NewPet("Pet", &a.Character, stats.Stats{}, func(stats.Stats) stats.Stats { return stats.Stats{} }, true, false)}
-			pet.SummonedAsPet = true
-			a.AddPet(pet)
-		}
-		sim, _ := newTimingTestSim(t, 0, func(a *timingTestAgent) {
-			bloodlust = BloodlustAura(&a.Character, -1)
-		})
-		timingTestConstruct = nil
-		sim.PrePull()
-		runUntil(sim, ms(100))
-		castSpeed := pet.CastSpeed
-		bloodlust.Activate(sim)
+		t.Run(tc.name, func(t *testing.T) {
+			var pet *timingTestPet
+			var bloodlust *Aura
+			timingTestConstruct = func(a *timingTestAgent) {
+				pet = &timingTestPet{Pet: NewPet("Pet", &a.Character, stats.Stats{}, func(stats.Stats) stats.Stats { return stats.Stats{} }, true, tc.isGuardian)}
+				pet.SummonedAsPet = true
+				pet.HasteCarrier = tc.hasteCarrier
+				a.AddPet(pet)
+			}
+			sim, _ := newTimingTestSim(t, 0, func(a *timingTestAgent) {
+				bloodlust = BloodlustAura(&a.Character, -1)
+			})
+			timingTestConstruct = nil
+			sim.PrePull()
+			runUntil(sim, ms(100))
+			castSpeed := pet.CastSpeed
+			bloodlust.Activate(sim)
 
-		petAura := pet.GetAura(bloodlust.Label)
-		if got := petAura != nil && petAura.IsActive(); got != tc.wantPetAura {
-			t.Errorf("%v owner: pet has Bloodlust = %v, want %v", tc.owner, got, tc.wantPetAura)
-		}
-		if hasted := pet.CastSpeed != castSpeed; hasted != tc.wantPetAura {
-			t.Errorf("%v owner: pet cast speed %.4f -> %.4f, want it hasted = %v", tc.owner, castSpeed, pet.CastSpeed, tc.wantPetAura)
-		}
+			petAura := pet.GetAura(bloodlust.Label)
+			if got := petAura != nil && petAura.IsActive(); got != tc.wantPetAura {
+				t.Errorf("pet has Bloodlust = %v, want %v", got, tc.wantPetAura)
+			}
+			if hasted := pet.CastSpeed != castSpeed; hasted != tc.wantPetAura {
+				t.Errorf("pet cast speed %.4f -> %.4f, want it hasted = %v", castSpeed, pet.CastSpeed, tc.wantPetAura)
+			}
+		})
 	}
 }

@@ -290,24 +290,7 @@ func BenchmarkSimulate(b *testing.B) {
 		},
 	}
 
-	benchmarkIterations(b, rsr)
-}
-
-// 1 iteration pays a whole environment build per op, like an optimizer eval; 100 is mostly the rotation
-func benchmarkIterations(b *testing.B, rsr *proto.RaidSimRequest) {
-	for _, bc := range []struct {
-		name       string
-		iterations int32
-	}{{"iterations=1", 1}, {"iterations=100", 100}} {
-		b.Run(bc.name, func(b *testing.B) {
-			rsr.SimOptions = &proto.SimOptions{Iterations: bc.iterations, RandomSeed: 101}
-			for i := 0; i < b.N; i++ {
-				if result := core.RunRaidSim(rsr); result.ErrorResult != "" {
-					b.Fatal(result.ErrorResult)
-				}
-			}
-		})
-	}
+	core.RaidBenchmarkIterations(b, rsr, 1, 100)
 }
 
 // P3 gear for each class

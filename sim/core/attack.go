@@ -246,7 +246,7 @@ type WeaponAttack struct {
 	// ran out mid-cast and waits for the cast to land, see castHold
 	held bool
 
-	// ranged only: the timer stands still for a channel (SuspendRangedTimer), with suspendedLeft to go
+	// the timer stands still for a channel (SuspendRangedTimer, suspendMelee), with suspendedLeft to go
 	// once it runs again. Parked while timerAt is NeverExpires.
 	suspended     bool
 	suspendedLeft time.Duration
@@ -322,6 +322,11 @@ func (wa *WeaponAttack) swing(sim *Simulation) time.Duration {
 	if wa.replaceSwing != nil {
 		// Need to check APL here to allow last-moment HS queue casts.
 		wa.unit.Rotation.DoNextAction(sim)
+
+		// that action can cancel auto attacks outright (a shapeshift, Vanish): nothing left to swing
+		if !aa.enabled {
+			return NeverExpires
+		}
 
 		// the server takes casts before it gets to melee, so one started just now can restart, pause
 		// or hold this swing
@@ -678,6 +683,21 @@ func (aa *AutoAttacks) MaybeReplaceMHSwing(sim *Simulation, mhSwingSpell *Spell)
 	return aa.mh.replaceSwing(sim, mhSwingSpell)
 }
 
+// rescaleTimer is Unit::ApplyAttackTimePercentMod: a haste change keeps the remaining fraction of a
+// running timer, and does the same to what a channel or an ATTR2_DO_NOT_RESET_COMBAT_TIMERS cast has
+// frozen (suspendedLeft), since that's still the same stored timer value, just not counting down.
+func (wa *WeaponAttack) rescaleTimer(sim *Simulation, f float64) {
+	switch remainingSwingTime := wa.timerAt - sim.CurrentTime; {
+	case wa.timerAt == NeverExpires:
+		if wa.suspended {
+			wa.suspendedLeft = time.Duration(float64(wa.suspendedLeft) * f)
+		}
+	case remainingSwingTime > 0:
+		wa.setTimer(sim, sim.CurrentTime+time.Duration(float64(remainingSwingTime)*f))
+		sim.rescheduleWeaponAttack(wa.swingAt)
+	}
+}
+
 func (aa *AutoAttacks) UpdateSwingTimers(sim *Simulation) {
 	if !aa.enabled {
 		return
@@ -686,38 +706,18 @@ func (aa *AutoAttacks) UpdateSwingTimers(sim *Simulation) {
 	if aa.AutoSwingRanged {
 		oldSwingSpeed := aa.ranged.curSwingSpeed
 		aa.ranged.updateSwingDuration(aa.ranged.unit.RangedSwingSpeed())
-		// Unit::ApplyAttackTimePercentMod keeps the remaining fraction of the ranged timer too
-		f := oldSwingSpeed / aa.ranged.curSwingSpeed
-		switch remainingSwingTime := aa.ranged.timerAt - sim.CurrentTime; {
-		case aa.ranged.timerAt == NeverExpires:
-			if aa.ranged.suspended {
-				aa.ranged.suspendedLeft = time.Duration(float64(aa.ranged.suspendedLeft) * f)
-			}
-		case remainingSwingTime > 0:
-			aa.ranged.setTimer(sim, sim.CurrentTime+time.Duration(float64(remainingSwingTime)*f))
-			sim.rescheduleWeaponAttack(aa.ranged.swingAt)
-		}
+		aa.ranged.rescaleTimer(sim, oldSwingSpeed/aa.ranged.curSwingSpeed)
 	}
 
 	if aa.AutoSwingMelee {
 		oldSwingSpeed := aa.mh.curSwingSpeed
 		aa.mh.updateSwingDuration(aa.mh.unit.SwingSpeed())
 		f := oldSwingSpeed / aa.mh.curSwingSpeed
-
-		if remainingSwingTime := aa.mh.timerAt - sim.CurrentTime; remainingSwingTime > 0 {
-			aa.mh.setTimer(sim, sim.CurrentTime+time.Duration(float64(remainingSwingTime)*f))
-		}
-
-		sim.rescheduleWeaponAttack(aa.mh.swingAt)
+		aa.mh.rescaleTimer(sim, f)
 
 		if aa.IsDualWielding {
 			aa.oh.updateSwingDuration(aa.mh.curSwingSpeed)
-
-			if remainingSwingTime := aa.oh.timerAt - sim.CurrentTime; remainingSwingTime > 0 {
-				aa.oh.setTimer(sim, sim.CurrentTime+time.Duration(float64(remainingSwingTime)*f))
-			}
-
-			sim.rescheduleWeaponAttack(aa.oh.swingAt)
+			aa.oh.rescaleTimer(sim, f)
 		}
 	}
 }
@@ -760,17 +760,47 @@ func (aa *AutoAttacks) resetSwingTimers(sim *Simulation, readyAt time.Duration) 
 	}
 }
 
-// pauseMelee pushes both melee timers back by pause, which only ever moves a swing later, so there's
-// nothing to reschedule.
-func (aa *AutoAttacks) pauseMelee(sim *Simulation, pause time.Duration) {
-	if !aa.AutoSwingMelee || pause <= 0 {
+// suspendMelee is SuspendRangedTimer's melee twin, for a cast or channel that keeps combat timers
+// (Slam, Army of the Dead): both melee timers stand still where they are once the server takes it, and
+// a haste change meanwhile rescales what's left of the frozen timer (UpdateSwingTimers), not just the
+// time until the freeze ends.
+func (aa *AutoAttacks) suspendMelee(sim *Simulation) {
+	if !aa.AutoSwingMelee {
+		return
+	}
+	from := sim.NextServerTick(sim.CurrentTime)
+	for _, wa := range []*WeaponAttack{&aa.mh, &aa.oh} {
+		if wa == &aa.oh && !aa.IsDualWielding {
+			continue
+		}
+		wa.suspended = true
+		if wa.swingAt > from && wa.timerAt != NeverExpires {
+			wa.park(from)
+		}
+	}
+}
+
+// resumeMelee is ResumeRangedTimer's melee twin: it swings anything the freeze left overdue right away,
+// main hand before off hand, the way releaseCastHold does for a swing that only waited out the cast.
+func (aa *AutoAttacks) resumeMelee(sim *Simulation) {
+	if !aa.AutoSwingMelee {
 		return
 	}
 	for _, wa := range []*WeaponAttack{&aa.mh, &aa.oh} {
-		if (wa == &aa.oh && !aa.IsDualWielding) || wa.timerAt == NeverExpires {
+		if wa == &aa.oh && !aa.IsDualWielding {
 			continue
 		}
-		wa.setTimer(sim, wa.timerAt+pause)
+		if !wa.suspended {
+			continue
+		}
+		wa.suspended = false
+		if wa.timerAt != NeverExpires {
+			continue
+		}
+		wa.setTimer(sim, sim.CurrentTime+wa.suspendedLeft)
+		if aa.enabled {
+			sim.rescheduleWeaponAttack(wa.trySwing(sim))
+		}
 	}
 }
 

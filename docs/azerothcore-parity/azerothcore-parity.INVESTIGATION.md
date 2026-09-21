@@ -86,6 +86,26 @@ Roll details the tables above don't show:
 - Ranged-class cast time scales with ranged attack speed.
 - GCD is clamped to [1000,1500] ms and hasted only for category-133 magic spells (`Spell.cpp:8955-9015`).
 - Missile delay = max(dist, 5)/speed.
+- **Fixed (PAR-P7-0d):** `pauseMelee` shifted a Slam-frozen mh/oh timer forward by a fixed offset, so a
+  haste change mid-freeze rescaled that offset along with the real time left on the timer.
+  `suspendMelee`/`resumeMelee` freeze it the way `SuspendRangedTimer` already does for Volley
+  (`suspendedLeft`, rescaled by `UpdateSwingTimers`), and `cast.go` calls them for any
+  `ATTR2_DO_NOT_RESET_COMBAT_TIMERS` hardcast instead.
+- **Fixed (PAR-P7-0d):** the main hand's last-moment APL check (`swing()`'s `replaceSwing` branch, for
+  Heroic Strike's queue) can cast something that cancels auto attacks outright (a shapeshift, Vanish,
+  Army of the Dead), and the in-flight swing still landed. `swing()` now bails out once
+  `AutoAttacks.enabled` goes false there.
+- **Fixed (PAR-P7-0d):** a channel not driven by `Spell.Cast`'s own `CastTime` — a periodic aura, like
+  Army of the Dead — held no melee at all; only its own class workaround did.
+  `Spell.HoldMeleeUntil`/`ReleaseMeleeHold` give it the same `Hardcast`-driven hold a hardcast gets
+  (frozen if the spell's own ATTR2 says so, held otherwise), and Army of the Dead's
+  `CancelAutoSwing`/`EnableAutoSwing` pair is gone. The signal is the server's own `FlagChanneled` bit
+  (`spell.timing`), not the sim's `SpellFlagChanneled`: Bladestorm keeps that flag only to gate the
+  GCD (`serverdata_allowlist.go`'s allowance says so, "modeled as a channel so nothing else is cast
+  during it"), since the server runs it as a plain periodic aura with no `UNIT_STATE_CASTING`, so it
+  stays outside this hold. Volley needed no change: the sim gives hunters no melee auto-attack
+  (`AutoSwingMelee` unset), so its existing `SuspendRangedTimer`/`ResumeRangedTimer` pair is all it
+  ever exercised.
 
 **Rage and procs**
 - `Unit::RewardRage` (`Unit.cpp:16128-16158`): hit factor = `uint32(unhastedSpeed·3.5 | 1.75)` (`Unit.h:921-924`),
@@ -202,15 +222,43 @@ Roll details the tables above don't show:
   - A guardian's `spell_dk_pet_scaling` haste is fixed at the summon, and `MELEE_SLOW` hastes the gargoyle's
     cast time too. The army is immune to Bloodlust by id. Of the DK's summons only risen ghouls and the
     gargoyle get the orc's Command (65221).
-- The hunter pet's inherited haste is continuous, not resnapshotted every 2 s, and the sim blocks Bloodlust
-  on an inheriting pet by ignoring `MultiplyAttackSpeed`, its closest match for `MOD_MELEE_RANGED_HASTE`.
-  The carrier blocks positive `MELEE_SLOW` too, and the sim's two buffs of that type are build-phase
-  multipliers rather than `MultiplyAttackSpeed` calls, so that guard missed them: Improved Moonkin Form
-  (50170-50172) and Swift Retribution (Retribution Aura 54043's third effect) reached an inheriting pet
-  both directly and through the owner's ranged speed, +3% twice. `applyPetBuffEffects` now strips them
-  the way it strips Bloodlust, keeping plain Moonkin Aura for the spell crit, which isn't blocked.
-  Both places now ask `Pet.inheritsOwnerAttackSpeed`, since it was two copies of that test drifting
-  apart that let it through.
+- **Correction (PAR-P7-0d):** the line above said the hunter pet's inherited haste is continuous.
+  It's the carrier aura itself that ticks every 2 s (`CalcPeriodic`'s amplitude on 425790/425792/51996
+  alike), so `Pet.OwnerHasteSource` now resnapshots on that cadence too, real pet only, same as the
+  owner-hit scaling's 3 s (`petOwnerHasteRefreshInterval`, `pet.go`). A guardian still only takes the
+  one snapshot at the summon, since `CalcPeriodic` gates the reschedule on `IsPet()`.
+  The sim blocks Bloodlust on an inheriting pet by ignoring `MultiplyAttackSpeed`, its closest match for
+  `MOD_MELEE_RANGED_HASTE`. The carrier blocks positive `MELEE_SLOW` too, and the sim's two buffs of that
+  type are build-phase multipliers rather than `MultiplyAttackSpeed` calls, so that guard missed them:
+  Improved Moonkin Form (50170-50172) and Swift Retribution (Retribution Aura 54043's third effect)
+  reached an inheriting pet both directly and through the owner's ranged speed, +3% twice.
+  `applyPetBuffEffects` now strips them the way it strips Bloodlust, keeping plain Moonkin Aura for the
+  spell crit, which isn't blocked. Both places now ask `Pet.inheritsOwnerAttackSpeed`, since it was two
+  copies of that test drifting apart that let it through.
+- **Guardians and raid auras (PAR-P7-0d):** the sim gave every guardian none of them, on the premise
+  they aren't around to receive raid buffs. `Spell::SelectImplicitAreaTargets`'s
+  `AnyGroupedUnitInObjectRangeCheck` (`GridNotifiers.h`) has no pet/guardian branch at all: it checks
+  vehicle, same raid or party, hostility and range, so a guardian is as valid a target as a real pet.
+  `applyPetBuffEffects` no longer skips guardians. A haste-carrier guardian (the DK's temp ghoul,
+  gargoyle, army) is still immune to Bloodlust and its like, the same way a haste-carrier real pet is
+  (`inheritsOwnerAttackSpeed`); a bloodworm carries no DK pet scaling at all, so it now takes Bloodlust,
+  Windfury Totem, Improved Icy Talons and the flat AP auras (Blessing of Might, Trueshot Aura,
+  Abomination's Might, Unleashed Rage, ...) like any other party member. The army's immunity is the same
+  carrier mechanism as the ghoul and gargoyle, not a separate id check in Bloodlust's own script: `Pet.cpp`'s
+  `NPC_ARMY_OF_THE_DEAD` case in `Guardian::InitStatsForLevel` adds `SPELL_DK_PET_SCALING_02` (51996)
+  unconditionally, the same aura that carries the MELEE_SLOW immunities. This moves every suite with a
+  guardian pet, DK's bloodworms most of all: a full raid-buff kit against a creature with barely any AP of
+  its own is a large relative jump (see the delta report).
+- `BloodlustAura` used to haste the permanent DK ghoul directly on top of the owner's own melee speed
+  reaching it through `DynamicMeleeSpeedPets` (`character.MultiplyAttackSpeed(sim, 1.3)` on the owner
+  mirrored the 1.3 to the ghoul, and the Bloodlust cascade activated a second `BloodlustAura` on the
+  ghoul itself, since `inheritsOwnerAttackSpeed` was hunter-only): 1.3 × 1.3 instead of 1.3. 51996's
+  MELEE_SLOW immunity blocks that on the server, so the ghoul only gets Bloodlust through the owner,
+  like the hunter pet. `Unit.HasteCarrier` and `Pet.OwnerHasteSource` now cover the whole DK ghoul
+  family (temp ghoul, permanent ghoul, gargoyle, army), replacing the ghoul-only
+  `EnableDynamicMeleeSpeed`/`DynamicMeleeSpeedPets` mirroring and the separate `MeleeHaste` rating
+  pass-through in `ghoulStatInheritance`'s Master of Ghouls branch, both made redundant by the one 2 s
+  carrier snapshot.
 - The sim's pet "+1.8% crit" hacks (`shaman/fire_elemental_pet.go:151`, `shaman/spirit_wolves.go:45`) are Classic-only.
   The hunter pet's crit is the server's now (Hunter, Pets).
 
@@ -371,6 +419,15 @@ Roll details the tables above don't show:
 - 1509 of 8043 sim items differ.
 - Classic raised Ulduar/emblem item levels, e.g. 226→232 on 329 items and 239→252 on 92.
 - Trinket values differ: Mjolnir Runestone 45931 is 665 ArP on the server vs 751 in the sim; Flare of the Heavens 45518 is 850 vs 959.
+- **Fixed (PAR-P7-0d):** Black Bow of the Betrayer's (32336) proc, `spell_gen_black_bow_of_the_betrayer`
+  (`spell_generic.cpp`), has no class check, so a warrior in the ranged slot triggers it same as a
+  hunter; the sim's hunter-only cast panicked the optimizer whenever it tried the bow on any other
+  class. Now keyed off the wearer's `Character`.
+- **Fixed (PAR-P7-0d):** Rune of Razorice's Frost Vulnerability (51714) aura was one `GetOrRegisterAura`
+  call keyed by label alone, so two Razorice DKs on the same target shared one stack count. The server
+  looks an existing aura up by `(spellId, casterGUID)` (`Unit::_TryStackingOrRefreshingExistingAura`,
+  `Unit.cpp:4661`) unless the spell carries `SPELL_ATTR0_CU_SINGLE_AURA_STACK`, which 51714 doesn't, so
+  each caster keeps its own count there. The label now folds in the caster.
 
 ## Verified on the live server
 
@@ -432,18 +489,34 @@ values. Human warrior, level 80, maxed skills, Worn Shortsword (Sword Specializa
 
   | Run | Server DPS | Sim DPS | Gap |
   |---|---|---|---|
-  | BM + serpent (`hunter_Svrleadtbrfb_1789993143`) | 5925.4 | 5816.5 | +1.87% |
-  | SV + bat (`hunter_Svrleadtntyo_1789992248`) | 4784.8 | 4765.4 | +0.41% |
-  | SV + wasp (`hunter_Svrleadhbjyz_1789991622`) | 5008.1 | 4862.4 | **+3.00%**, over the 2% |
+  | BM + serpent (`hunter_Svrleadtbrfb_1789993143`) | 5925.4 | 5813.4 | +1.93% |
+  | SV + bat (`hunter_Svrleadtntyo_1789992248`) | 4784.8 | 4763.8 | +0.44% |
+  | SV + wasp (`hunter_Svrleadhbjyz_1789991622`) | 5008.1 | 4863.7 | **+2.97%**, over the 2% |
+
+  Correction (PAR-P7-0d): sim DPS was 5816.5/4765.4/4862.4 (+1.87%/+0.41%/+3.00%) before the queued-cast fix below;
+  the ~0.1 pt moves are re-sim noise (3000 iterations, no fixed seed), not the fix's effect on these totals.
+
+  Correction (PAR-P7-0d pets): sim DPS is 5813.4/4763.8/4863.7 (+1.93%/+0.44%/+2.97%) after the pets stage's 2 s
+  haste resnapshot (below), moving the hunter pet's share of each total by a point or two; still noise-sized, and
+  the wasp run's gap is still the open crit question, not this stage's pet work.
 
   - Auto Shot intervals sit on the 100 ms lattice at `NextServerTick` of the hasted speed.
-  - Wasp run: the server chained queued Steady Shots every 1.5 s where the sim took 1.6 s: the hasted cast is under
-    the GCD, and a cast queued behind the GCD lands a tick earlier on the server than in the sim (a core timing gap).
+  - **Fixed (PAR-P7-0d):** `cast.go` rounded `CastTime` to the server tick but not `GCD`, so a hasted GCD or cast
+    time floating a hair over a round ms (the server truncates both to whole `int32` ms first,
+    `Spell::TriggerGlobalCooldown`/`Unit::ModSpellCastTime`) crossed a tick boundary the truncated server value
+    didn't, costing the chain a spare 100 ms — the wasp run's queued Steady Shots at 1.6 s where the server's ran
+    1.5 s. `castTiming.gcd`/`.castTime` now truncate too. AzerothCore's SpellQueue never enters into it: playerbot
+    casts go straight through `Spell::prepare`, not `Player::CanRequestSpellCast`.
   - BM run: the server pet idled through 2 of its 3 Bestial Wraths (10.6 s and 11.1 s): it kept its target and
     ignored attack commands, with no swings or autocasts until the aura dropped. The one at the pull didn't do it.
     Cause unknown. It's why the server pet did 5% less than the sim's.
-  - The server's Auto Shot and Steady Shot crit rates ran about 3 points over the sim's across the three runs (about
-    2σ pooled); Arcane Shot matched. The BM snapshot's melee sheet crit is 53.79%, the sim's 53.47%.
+  - **Checked, no term found (PAR-P7-0d):** `UpdateCritPercentage`/`GetUnitCriticalChance` match the sim's
+    `PhysicalCritChance`/`MeleeCritSuppressionPct` term for term. Lethal Shots (ranged-only, weapon-gated) already
+    accounts for the whole ranged-vs-melee sheet split in both available live captures (+2%/+5% exactly, at rank 2
+    and rank 5). Careful Aim, Survival Instincts (classMask excludes Auto Shot on the server too) and Kill Command
+    carry no crit term; Glyph of Steady Shot has no server script. All three shots share one outcome function.
+    Pooling hits across the captures against the current code reproduces the claim: Auto+Steady +2.91 points
+    (1.88σ), Arcane -0.65 (0.17σ, matched). Left alone; a live `.simval` probe would settle whether it's real.
 - Death knight probes (`TestSimvalDeathKnight`, a human DK behind the boss dummy): Scourge Strike and Obliterate
   roll the yellow table, Icy Touch the magic one with partial resists, and `tools/simval` passes all 26 checks on
   those records. Both diseases are melee damage class and can't miss. Rage of Rivendare 5/5 adds 10 expertise and
@@ -614,3 +687,9 @@ of Elemental's. `NewEnvironment` there: Rogue 13%, Hunter 19%, raid 19%, Ret 25%
   after each swing (6.5% of Rogue).
 - `NewPet` (`pet.go`) returns the Character-sized `Pet` by value, so each pet is built and copied whole: ≤1.3% now that
   only real pets are built (4% of Elemental with the Val'kyrs).
+- **Fixed (PAR-P7-0d):** Feral, Feral Tank, Enhancement, Fury and Protection Warrior's benches had their suites' APLs
+  from PAR-PERF but were still one `core.RaidBenchmark` case each, sharing `SimOptions` with the package-level
+  `AverageDefaultSimTestOptions`; `RaidBenchmark` sets `Iterations` on whatever it's handed, so this wrote 1 into that
+  shared 2000 permanently. They're now on `RaidBenchmarkIterations`, the same `iterations=1`/`iterations=100` pair as
+  the rest, which builds its own `SimOptions` per case instead of touching the caller's. The five duplicate
+  `benchmarkIterations` copies (hunter, retribution paladin, raid, rogue, elemental) now call it too.

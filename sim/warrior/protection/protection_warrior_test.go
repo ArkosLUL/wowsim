@@ -77,10 +77,9 @@ func BenchmarkSimulate(b *testing.B) {
 				core.NewDefaultTarget(),
 			},
 		},
-		SimOptions: core.AverageDefaultSimTestOptions,
 	}
 
-	core.RaidBenchmark(b, rsr)
+	core.RaidBenchmarkIterations(b, rsr, 1, 100)
 }
 
 var DefaultTalents = "2500030023-302-053351225000012521030113321"
