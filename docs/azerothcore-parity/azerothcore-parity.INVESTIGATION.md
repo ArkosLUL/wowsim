@@ -401,28 +401,31 @@ spell list (`SpellMgr.cpp:3405-3466`), and the 5 yard missile floor, which `Spel
 
 ## Performance
 
-PAR-PERF profiled `BenchmarkSimulate` at `0782b5be8` with pprof while other items' test runs loaded the machine, so
-each fix was judged by interleaved A/B runs (base and patched test binaries alternating; median of per-pair ratios,
-pairs won) and by profile shares, never against the [throughput table](../wave-loop/wave-loop.PLAN.md#sim-throughput).
-Shares are of CPU samples, GC workers included.
+PAR-PERF (at `0782b5be8`) and PAR-PERF-2 (at `f126dd8ab`) profiled `BenchmarkSimulate` with pprof while other items'
+test runs loaded the machine, so each fix was judged by interleaved A/B runs (base and patched test binaries
+alternating; median of per-pair ratios, pairs won) and by profile shares, never against the
+[throughput table](../wave-loop/wave-loop.PLAN.md#sim-throughput). Shares are of CPU samples, GC workers included.
 
-**What the benchmarks measure.**
-- `core.RaidBenchmark` runs one iteration per sim, so every number includes an environment build and a metrics export:
-  `NewEnvironment` was 15% of Combat Rogue, 36% of Hunter, 46% of Ret and 49% of Elemental. A UI sim spreads that over
-  thousands of iterations; anything that builds an environment per short run, such as optimizer evaluations, pays it
-  in full.
-- The Ret, Hunter and Elemental requests carry no rotation: those players only auto-attack (the hunter's pet runs its
-  own), and Elemental casts nothing. Only Rogue runs an APL, and evaluating it is 47% of that bench.
-- The raid bench is 8 players (2 Balance, 2 Shadow, 2 Arcane, Elemental, Enhancement) without talents or glyphs, not
-  25. It and the Feral, Feral Tank, Enhancement, Fury and Protection Warrior benches crashed on their nil `Rotation`
-  (`attack.go`'s queued-swing path, `energy.go`); each now takes the APL its spec's golden suite uses. Feral also needs
-  its `StandardTalents`: the cat rotation reads Mangle (Cat)'s cost without checking the talent.
+**What the benchmarks measure.** Since PAR-PERF-2, each spec bench sims its golden suite's default player the way the
+suite's FullBuffs LongSingleTarget test does, APL, talents and glyphs included: TestCombat's (`combat_expose`),
+TestRetribution's, TestMM's and TestElemental's. `./sim/` is 8 players (2 Balance, 2 Shadow, 2 Arcane, Elemental,
+Enhancement), not 25, each on its suite's APL, talents and glyphs, for 300 s. Each bench has two cases:
+- `BenchmarkSimulate/iterations=1`: environment build, one iteration and metrics export, what an optimizer evaluation
+  pays per short run.
+- `BenchmarkSimulate/iterations=100`: mostly the rotation, as in a UI sim.
+
+Before, each bench ran one iteration through `core.RaidBenchmark`, so `NewEnvironment` was 15-55% of it. Ret, Hunter and
+Elemental carried no rotation (Elemental cast nothing), Rogue ran `combat_cleave_snd` as a Troll without talents or
+glyphs, and the raid had neither. PAR-PERF gave the raid, Feral, Feral Tank, Enhancement, Fury and Protection Warrior
+benches their suites' APLs: they crashed on their nil `Rotation` (`attack.go`'s queued-swing path, `energy.go`). Feral
+also needs its `StandardTalents`: the cat rotation reads Mangle (Cat)'s cost without checking the talent.
 
 **Parity's per-event cost is small:** `NextServerTick` (P3-3) ≤0.4%, PPM on the proc path (P3-4) ≤0.7%, `Dot.TickOnce`
 including the tick's damage (P3-5) ≤1.9%. The real cost was P3-2's serverdata lookup in `RegisterSpell`: 5-7% of Ret,
 Hunter and Elemental, 2% of the raid, and 20% of Rogue's allocated bytes.
 
-**Fixes.** None changes a result: all 37 `.results` byte-identical, simval 508/508.
+**PAR-PERF's fixes**, on the old one-iteration benches. None changes a result: all 37 `.results` byte-identical, simval
+508/508.
 
 | Fix | Base share | new/base (pairs won) |
 |---|---|---|
@@ -432,8 +435,7 @@ Hunter and Elemental, 2% of the raid, and 20% of Rogue's allocated bytes.
 | `sortDeps` scanned every dependency for each of 210 stat pairs; now one stable sort by pair, which keeps each pair's combining order | Elemental 5%, Ret 4.5% | raid 0.934 (5/7), Elemental 0.951 (5/7), Ret 0.985 (4/7) |
 | `ActionMetrics.ToProto` allocated each target's message on its own; now one slice per action | raid 6.8%, Elemental 5.1% | raid 0.960 (6/7), Elemental 0.982 (5/7) |
 
-All fixes together, 9 interleaved rounds under load (the other five repaired benches: 5 rounds). Medians in ms per
-sim; the orchestrator takes the idle-machine row.
+All fixes together, 9 interleaved rounds under load (the other five repaired benches: 5 rounds), medians in ms per sim:
 
 | Bench | Base | New | new/base (pairs won) |
 |---|---|---|---|
@@ -444,23 +446,56 @@ sim; the orchestrator takes the idle-machine row.
 | Raid (8 players) | 9.65 | 8.47 | 0.874 (9/9) |
 | Feral, Feral Tank, Enhancement, Fury, Protection Warrior | | | 0.919, 0.841, 0.892, 0.877, 0.919 |
 
-After the fixes the environment build is still 16% of Rogue, 32% of Hunter, 45% of Ret and 55% of Elemental (15% is
-the Val'kyr pets below). The fixed functions are each ≤2.2%, except `ActionMetrics.ToProto`: still 5.9% of the raid
-and 3.8% of Elemental, mostly allocating its message slice: one message per unit, pets included, per action.
+After them each fixed function was ≤2.2%, except `ActionMetrics.ToProto`: 5.9% of the raid, 3.8% of Elemental.
 
-**Left for other items** (base shares):
-- Every Balance, Shadow, Elemental, Mage and Warlock builds 10 Val'kyr pets for Nibelung, equipped or not
-  (`sim/common/wotlk/nibelung.go`): 9.4% of Elemental's CPU and 35% of its bytes, 4.8% of the raid's CPU and 21% of
-  its bytes. Each pet is a unit, and per-spell metrics and attack tables scale with the unit count: in the raid,
-  `Spell.finalize`'s metric slices are 16% of bytes, the target metric messages 17%, `NewAttackTable` 6%. Building them
-  only for the item changes the result's pet list and unit indices.
-- `NewPet` (`pet.go`) returns the Character-sized `Pet` by value, so each pet is built and copied whole: 4% flat of
-  Elemental.
-- PAR-P7-0c's other files hold little flat time: `cast.go` 2.9% of Rogue and 3.8% of the raid, nearly all
-  `ApplyCostModifiers` under the APL's cost checks; `attack.go`, `unit.go` and `buffs.go` ≤1.3% each. The swing loop's
-  15-18% cumulative on Rogue, Ret and Hunter is mostly the white hit's damage and procs, plus the APL pass after each
-  swing (6.5% of Rogue).
-- `AddPendingAction` inserts by linear scan: 2% flat of the raid. A binary search picks the same slot only while the
-  queue stays sorted, which nothing enforces.
-- APL evaluation (`APLAction.IsReady`, `APLValueCompare`/`And`, `Spell.CanCast`) is 40-47% of Rogue: upstream's
-  interpreter, not parity.
+**PAR-PERF-2's fixes**, on the new benches, 7 interleaved rounds each. None moves a golden: all 37 `.results`
+byte-identical, simval 508/508.
+
+| Fix | Base share | new/base (pairs won) |
+|---|---|---|
+| Nibelung's 10 Val'kyr pets are built only for a player with it equipped or in the item swap, not for every Balance, Shadow, Elemental, Mage and Warlock. Each pet is a unit, and per-spell metrics and attack tables grow with the unit count | `ConstructValkyrPets` 10.8% of Elemental, 4.8% of the raid at 1 iteration; bytes per op 975 KB → 339 KB (Elemental), 15.4 MB → 4.7 MB (raid) | 1 iteration: Elemental 0.720 (7/7), raid 0.637 (7/7). 100: 0.934 (7/7), 0.917 (7/7) |
+| `AddPendingAction` binary-searches its slot instead of scanning from the queue's far end | 15.3% of the raid at 100 iterations, 12.2% flat (inlined); now 7.1% | raid 0.884 (7/7) at 100 iterations, 0.932 (6/7) at 1; single-player benches 0.97-1.01, noise |
+| `findServerAllowance` reads without the `RWMutex` | ≤1.2% of any bench, the lock itself too small to show | 0.998-1.007 (2-4/7) at 1 iteration, where the lookups run: noise. Its gain is contention between parallel sims, and 6 rounds of the optimizer's all-threads quick evaluation were too noisy under load to show it |
+
+- **Val'kyrs.** Each is the last pet its owner adds, and every golden sims one player, so no other unit's index moves.
+  Without Nibelung a Val'kyr is never enabled, draws no random number and deals no damage: results only lose 10 empty
+  pet entries per caster. In the raid bench, where later players' pets do renumber, every player's DPS matches base to
+  6 decimals over 100 non-test iterations (one shared RNG). Elemental with Nibelung equipped, swapped in or swapped
+  out keeps its 10 pets and base's DPS. The goldens never summon one (`NibelungAverageCasts` 0) and can't tell whether
+  they're built, so `sim/common/wotlk/nibelung_test.go` checks the count: 0 without Nibelung, 10 equipped or swapped in.
+- **Pending queue order:** earliest `NextActionAt` first, then higher `Priority`, then the one added first. The slice
+  holds it reversed (next action last, sentinel at 0), and the old scan took the first slot from the far end whose
+  action runs before or ties the new one: on a sorted slice, the binary search's slot. It stays sorted because nothing
+  writes a queued action's `NextActionAt` or `Priority`: every write comes before the action is added or in its own
+  `OnAction` after the pop, and `SetGCDTimer` and `newHardcastAction` reuse an action only once consumed. An assertion
+  build (binary against linear slot, plus sortedness, on every insert) passed all 37 suites, simval and every bench.
+- **Allowances** all register from package `init` functions (10 files; none from tests, tools or cmd), and init
+  finishes before any test or `main` runs, so `serverAllowances` is a plain map read without a lock.
+
+All three together, medians in ms per op under load; the orchestrator takes the idle-machine row:
+
+| Bench | iterations=1: base → new | new/base (won) | iterations=100: base → new | new/base (won) |
+|---|---|---|---|---|
+| Combat Rogue | 1.486 → 1.485 | 1.000 (4/7) | 129.8 → 129.3 | 0.993 (5/7) |
+| Ret Paladin | 0.497 → 0.498 | 1.000 (4/7) | 34.25 → 32.88 | 0.982 (6/7) |
+| Hunter | 0.584 → 0.587 | 0.997 (5/7) | 40.76 → 40.53 | 0.993 (5/7) |
+| Elemental | 0.469 → 0.329 | 0.696 (7/7) | 15.82 → 14.67 | 0.918 (7/7) |
+| Raid (8 players) | 7.785 → 4.620 | 0.609 (7/7) | 367.8 → 309.8 | 0.843 (7/7) |
+
+An iteration now costs ((100-case − 1-case) / 99) 1.29 ms on Rogue, 0.33 Ret, 0.40 Hunter, 0.15 Elemental and 3.08 the
+raid, so setup and export are 13% of Rogue's 1-iteration case, about a third of Ret's, Hunter's and the raid's, and 56%
+of Elemental's. `NewEnvironment` there: Rogue 13%, Hunter 19%, raid 19%, Ret 25%, Elemental 37%.
+
+**Left for other items** (shares after PAR-PERF-2):
+- APL evaluation is upstream's interpreter, not parity: `getNextAction` is 71% of Rogue at 100 iterations
+  (`APLValueCompare` and `APLValueAnd` 35% each), 24% of the raid.
+- `AddPendingAction` is still 4.5-6.4% of the raid, Ret and Hunter at 100 iterations: each probe dereferences a
+  scattered `*PendingAction`, and cancelled actions stay queued until popped.
+- `ActionMetrics.ToProto` and `UnitMetrics.ToProto`, 3-5% of the raid and Elemental at 1 iteration: one message per
+  unit per action.
+- On the old benches, PAR-P7-0c's other files held little flat time: `cast.go` 2.9% of Rogue and 3.8% of the raid,
+  nearly all `ApplyCostModifiers` under the APL's cost checks; `attack.go`, `unit.go` and `buffs.go` ≤1.3% each. The
+  swing loop's 15-18% cumulative on Rogue, Ret and Hunter is mostly the white hit's damage and procs, plus the APL pass
+  after each swing (6.5% of Rogue).
+- `NewPet` (`pet.go`) returns the Character-sized `Pet` by value, so each pet is built and copied whole: ≤1.3% now that
+  only real pets are built (4% of Elemental with the Val'kyrs).

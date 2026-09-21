@@ -187,31 +187,49 @@ func TestCritDamageMultipliers(t *testing.T) {
 	GenerateCriticalDamageMultiplierTestCase(t, "FinisherREDLethalityPotW", GearWithRED, CombatTalents, PlayerOptionsCombatDI, Finisher, 2.472)
 }
 
+// TestCombat's default player, as its FullBuffs LongSingleTarget test runs it
 func BenchmarkSimulate(b *testing.B) {
 	rsr := &proto.RaidSimRequest{
 		Raid: core.SinglePlayerRaidProto(
 			&proto.Player{
-				Race:      proto.Race_RaceTroll,
-				Class:     proto.Class_ClassRogue,
-				Equipment: core.GetGearSet("../../ui/rogue/gear_sets", "p1_combat").GearSet,
-				Consumes:  FullConsumes,
-				Spec:      PlayerOptionsCombatDI,
-				Buffs:     core.FullIndividualBuffs,
-				Rotation:  core.GetAplRotation("../../ui/rogue/apls", "combat_cleave_snd").Rotation,
+				Race:               proto.Race_RaceHuman,
+				Class:              proto.Class_ClassRogue,
+				Equipment:          core.GetGearSet("../../ui/rogue/gear_sets", "p1_combat").GearSet,
+				TalentsString:      CombatTalents,
+				Glyphs:             CombatGlyphs,
+				Consumes:           FullConsumes,
+				Spec:               PlayerOptionsCombatDI,
+				Buffs:              core.FullIndividualBuffs,
+				Rotation:           core.GetAplRotation("../../ui/rogue/apls", "combat_expose").Rotation,
+				Profession1:        proto.Profession_Engineering,
+				DistanceFromTarget: 30,
+				ReactionTimeMs:     150,
+				ChannelClipDelayMs: 50,
 			},
 			core.FullPartyBuffs,
 			core.FullRaidBuffs,
 			core.FullDebuffs),
-		Encounter: &proto.Encounter{
-			Duration: 300,
-			Targets: []*proto.Target{
-				core.NewDefaultTarget(),
-			},
-		},
-		SimOptions: core.AverageDefaultSimTestOptions,
+		Encounter: core.MakeSingleTargetEncounter(0),
 	}
 
-	core.RaidBenchmark(b, rsr)
+	benchmarkIterations(b, rsr)
+}
+
+// 1 iteration pays a whole environment build per op, like an optimizer eval; 100 is mostly the rotation
+func benchmarkIterations(b *testing.B, rsr *proto.RaidSimRequest) {
+	for _, bc := range []struct {
+		name       string
+		iterations int32
+	}{{"iterations=1", 1}, {"iterations=100", 100}} {
+		b.Run(bc.name, func(b *testing.B) {
+			rsr.SimOptions = &proto.SimOptions{Iterations: bc.iterations, RandomSeed: 101}
+			for i := 0; i < b.N; i++ {
+				if result := core.RunRaidSim(rsr); result.ErrorResult != "" {
+					b.Fatal(result.ErrorResult)
+				}
+			}
+		})
+	}
 }
 
 var CombatTalents = "00532000523-0252051050035010223100501251"

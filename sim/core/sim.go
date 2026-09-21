@@ -614,29 +614,24 @@ func (sim *Simulation) nextExecutePhase() {
 	}
 }
 
+// Sorted so the next action is last: NextActionAt descending, then Priority ascending, sentinel at 0.
+// A new action goes below every queued one with the same time and priority, so those run in the order
+// they were added. The binary search needs a queued action's NextActionAt and Priority left alone: set
+// them only while it's out of the queue.
 func (sim *Simulation) AddPendingAction(pa *PendingAction) {
-	//if pa.NextActionAt < sim.CurrentTime {
-	//	panic(fmt.Sprintf("Cant add action in the past: %s", pa.NextActionAt))
-	//}
 	pa.consumed = false
-	for index, v := range sim.pendingActions[1:] {
-		if v.NextActionAt < pa.NextActionAt || (v.NextActionAt == pa.NextActionAt && v.Priority >= pa.Priority) {
-			//if sim.Log != nil {
-			//	sim.Log("Adding action at index %d for time %s", index - len(sim.pendingActions), pa.NextActionAt)
-			//	for i := index; i < len(sim.pendingActions); i++ {
-			//		sim.Log("Upcoming action at %s", sim.pendingActions[i].NextActionAt)
-			//	}
-			//}
-			sim.pendingActions = append(sim.pendingActions, pa)
-			copy(sim.pendingActions[index+2:], sim.pendingActions[index+1:])
-			sim.pendingActions[index+1] = pa
-			return
+	lo, hi := 1, len(sim.pendingActions)
+	for lo < hi {
+		mid := int(uint(lo+hi) >> 1)
+		if v := sim.pendingActions[mid]; v.NextActionAt < pa.NextActionAt || (v.NextActionAt == pa.NextActionAt && v.Priority >= pa.Priority) {
+			hi = mid
+		} else {
+			lo = mid + 1
 		}
 	}
-	//if sim.Log != nil {
-	//	sim.Log("Adding action at end for time %s", pa.NextActionAt)
-	//}
-	sim.pendingActions = append(sim.pendingActions, pa)
+	sim.pendingActions = append(sim.pendingActions, nil)
+	copy(sim.pendingActions[lo+1:], sim.pendingActions[lo:])
+	sim.pendingActions[lo] = pa
 }
 
 func (sim *Simulation) RegisterExecutePhaseCallback(callback func(sim *Simulation, isExecute int32)) {
