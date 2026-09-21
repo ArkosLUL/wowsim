@@ -449,7 +449,7 @@ Slow: Prot Paladin P3 and Feral P2, both crit immune, with J ≥ the preset's.
 - The Feral P2 preset stores 5 of its enchants by spell id (38373, 44957, 55016, 63770, 67839) instead
   of effect id, so the sim applies none of them.
 
-### BIS-batch-ui (wave G)
+### BIS-batch-ui (wave G, done)
 
 A tank run is the slow one, and BIS-tanks-racials made it slower: crit immunity always adds a Defense
 floor, so `checkFloors` builds a whole environment per candidate through `Pool.finalStats`, times up to
@@ -495,10 +495,8 @@ normalizer wobble doesn't read as a regression (wave F2's Fury `J_preset` -1.7%)
 - For BIS-raid-contrib: cells and the detail show `raid_dps_delta` once a result sets it. Jobs export as
   stage 1; stage 2 needs jobs of its own.
 - Every warrior run drops item 32336 (Black Bow of the Betrayer) with a warning: its sim panics
-  (`*dps.DpsWarrior is not hunter.HunterAgent`).
-- Quick tank runs can list runners-up well above the pick: Bulwark P1's Trinket 1 has Darkmoon Card:
-  Greatness at +663 ± 16. The neighborhood only adopts one after a full-iteration round that isn't its
-  last (`neighborhood.go`); worth a look in BIS-e2e-perf.
+  (`*dps.DpsWarrior is not hunter.HunterAgent`). PAR-P7-0d fixes it.
+- Quick tank runs can list runners-up well above the pick (BIS-e2e-perf).
 
 ### BIS-picker-switch (wave F2, done)
 
@@ -533,6 +531,11 @@ Two optimizer-tab fixes from the user's first runs:
 **Owns:** the full-raid `Evaluator`, `raidctx/contribution.go`, raid-sim re-ranking, the raid-mode racial
 screen, the two-stage batch, the raid-DPS column.
 
+The batch's cells and detail already show `raid_dps_delta` once a result sets it. Its jobs are keyed by
+raid index and phase and export as stage 1, so stage 2 needs jobs of its own (`Job`/`Batch` in
+`ui/raid/optimizer_batch.ts`). `acraid` should export the quiver or ammo pouch, so an imported hunter sets
+`Hunter.Options.quiver`.
+
 **Tests:**
 - An identical loadout gives Δ = 0.
 - se ≪ a single raider's effect.
@@ -547,6 +550,9 @@ screen, the two-stage batch, the raid-DPS column.
 - Time whole runs. `EffortBudget` assumes every thread busy, but sequential steps (bisection, search moves)
   leave threads idle. The INVESTIGATION's tank, raid-contribution and batch times are still estimates.
 - An end-to-end batch over the roster.
+- Quick tank runs can list runners-up well above the pick: Bulwark P1's Trinket 1 has Darkmoon Card:
+  Greatness at +663 ± 16. The neighborhood adopts one only after a full-iteration round that isn't its last
+  (`neighborhood.go`).
 - Quick runs took 4 to 21 s per spec in wave D against the 3 to 6 s target, Combat Rogue slowest. Trim
   Quick or move the target.
 - The pool builder prunes nothing, so a Retribution request carries 2.6k to 4.6k candidates and 1.6 to

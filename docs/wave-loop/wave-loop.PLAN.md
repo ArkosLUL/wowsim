@@ -51,6 +51,7 @@ G = changes goldens. FS = runs all 37 suites.
 | F2 | PAR-P7-0c (G, FS) · PAR-PERF · BIS-picker-switch | ✔ |
 | G | PAR-P7-DK (G) · PAR-P7-HUN (G) · BIS-batch-ui · PAR-PERF-2 (G) | ✔ |
 | H | PAR-P7-ROG · PAR-P7-WAR · PAR-P7-RET (G) · BIS-raid-contrib | ✔ |
+| H2 (proposed) | PAR-P7-0d (G, FS) | ✔ |
 | I | PAR-P7-SHA · PAR-P7-DRU · PAR-P7-MAG · PAR-P7-WLK (G) | ✔ |
 | J | PAR-P7-PRI (G) · PAR-P7-TANK (G) · BIS-e2e-perf · AC-3 | ✔ |
 | K | BIS-presets · PAR-P8 (G, FS) · BIS-tank-boss | ✔ |
@@ -60,6 +61,9 @@ before the class items in G, a class item can't build on a core fix merging in i
 carries the 2 full-suite golden changers a wave is allowed. BIS-picker-switch moved in from G to give it a
 second, light item. PAR-PERF sits there because F2 ends the core combat work: after it, G through J pile
 eleven class items on top and a profile can no longer say what cost what.
+
+H2 is proposed the same way: PAR-P7-0d's core cast, crit and pet fixes have to land before the caster
+wave I, and H is full.
 
 **Where the specs are:**
 
@@ -156,10 +160,10 @@ multi-iteration cases, which starts a new table.
 | PAR-PERF | merged | `8a963ff77` | goldens unchanged on top of PAR-P7-0c's; what changes results went to PAR-PERF-2 |
 | BIS-picker-switch | merged | `f1c9d4f4d` | the orchestrator kept Save for an equipped improved pick |
 | wave F2 cross-review | | `0fe9b481a` | no code bugs; a held-swing edge case to PAR-P7-WAR; Fury's `J_preset` drop traced to normalizer noise |
-| PAR-P7-DK | running | | |
-| PAR-P7-HUN | running | | |
-| BIS-batch-ui | running | | |
-| PAR-PERF-2 | running | | |
+| PAR-P7-DK | merged | `cc1f42afa` | 5 DK goldens promoted in `8b87ec76a`; e2e `1c56fe2`; `db.json` regenerated for its spell ids in `d4fa9b3f7` |
+| PAR-P7-HUN | merged | `694a92eb1` | 3 hunter goldens promoted in `68a2a4bfb`; e2e `e5aa956`; the INVESTIGATION's deviation rows renumbered at merge |
+| BIS-batch-ui | merged | `4887ef580` | |
+| PAR-PERF-2 | merged | `956ba4988` | goldens unchanged |
 
 Later WIs are added as their wave starts.
 
