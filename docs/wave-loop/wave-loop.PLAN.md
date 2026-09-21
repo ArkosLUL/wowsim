@@ -76,11 +76,10 @@ wave I, and H is full. The user ran it before H, so H's melee items build on its
 
 ## Current wave
 
-- Wave: H2, running. Then H, whose class items run in stages (RUNBOOK, Workflow contract): code, then
-  live.
-- Base SHA: `820a2e0a6`, the wave's setup commit on top of `da045696e`.
-- Workflow runId: `wf_a3617aeb-503`, transcript dir
-  `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\wf_a3617aeb-503`.
+- Wave: H, not started. Wave H2 (base `820a2e0a6`) landed on `master`.
+- Base SHA: set at wave start.
+- Workflow runId: none. Wave H2 ran as `wf_a3617aeb-503`.
+- H's class items run in stages (RUNBOOK, Workflow contract): code, then live.
 
 ## BiS baseline
 
@@ -95,6 +94,7 @@ Reckoning that way), but J isn't DPS: see below.
 | F | 8961.6, +253 / +276 | 10546.7, +840 / +870 | 5042.7, +15 / +9 | 13141.4, +117 / +143 | -91924.9, +5493 / +5984 | -1336.3, +1421 / +1469 |
 | F2 | 8808.8, +258 / +258 | 10546.6, +833 / +865 | 5042.7, +15 / +9 | 13141.4, +117 / +143 | -91924.9, +5493 / +5984 | -1326.7, +1408 / +1460 |
 | G | 8808.8, +258 / +258 | 10546.6, +833 / +865 | 5042.7, +15 / +9 | 13141.4, +117 / +143 | -91924.9, +5493 / +5984 | -1326.7, +1408 / +1460 |
+| H2 | 8808.8, +258 / +258 | 10546.6, +833 / +865 | 5059.8, +31 / +29 | 13141.4, +117 / +97 | -92086.3, +5511 / +5999 | -1326.7, +1408 / +1460 |
 
 Quick / Normal. Ret P4 ran at Quick only in wave D, after the glyph fix; its wave C numbers
 (12821.9, +54 / +73) came from a seed that wore the glyph. The two tanks arrive with
@@ -108,8 +108,9 @@ decorrelates the paired sims, against 0.04% for Combat Rogue. F2's Fury drop (-1
 the preset's DPS rose on all 7 seeds tried, and at 100k iterations the two builds agree. Feral Tank's
 +0.7% is real, from P7-0c's off-hand start on Algalon. Wave E's open gaps, Fury +4.1% and Ret flat
 against goldens +0.1% and +8.9%, fit the same reading but weren't traced. Judge the deltas, and a
-`J_preset` move against the slow line's `dps_preset`. From G: Fury 7425.9, Combat Rogue 9113.7, Fire
-Mage 11676.8, Ret 15358.2, Prot Pal 333.1, Feral Tank 4159.7.
+`J_preset` move against the slow line's `dps_preset`. From H2: Fury 7425.9, Combat Rogue 9113.7, Fire
+Mage 11746.7, Ret 15358.3, Prot Pal 333.1, Feral Tank 4159.7. Normal's pick is path-dependent: H2 moved
+Ret's golden by 0.007% and its Normal gain fell from +143 to +97.
 
 ## Sim throughput
 
@@ -121,6 +122,11 @@ From G the benches run their suites' default players with rotations, at 1 and 10
 | Wave | Combat Rogue | Ret Paladin | Hunter | Elemental | Raid |
 |---|---|---|---|---|---|
 | G | 1.538 / 130.8 | 0.491 / 33.6 | 0.610 / 41.7 | 0.327 / 15.1 | 4.604 / 311.4 |
+| H2 | 1.561 / 129.4 | 0.515 / 35.0 | 0.613 / 43.2 | 0.343 / 16.1 | 4.755 / 313.9 |
+
+H2 ran with the live worldserver using half a core, which moved whole runs by up to 2×
+and cost a few percent here (Ret, which H2 barely touched, +4%). An interleaved A/B against the base
+puts H2's own cost at 5-7% for Hunter and Elemental at 100 iterations, the raid flat.
 
 E to F2 ran the old requests: one iteration, and no rotation for Ret, Hunter and Elemental.
 
@@ -176,11 +182,15 @@ crashed before F2, so its column starts there.
 | PAR-PERF-2 | merged | `956ba4988` | goldens unchanged |
 | wave G cross-review | | `a2b24100d`, `3ac9069fc` | split in two (parity; optimizer and UI); one batch bug (Apply and Save on a roster changed mid-run); the old DK ids now alias in the APL lookup; tooling moved out of scratch in `73e159351` |
 | PAR-P7-0d | merged | `18b64143b` | 26 goldens promoted in `85c870717`; four stages and a review, 1.86M tokens across the five agents |
+| wave H2 cross-review | | `3b9a3c6e6`, `ec0164745` | fixed the user's DK reforge report: the item cache kept items a stale page sent without server stats, and the DK registered its runeforges and sigils late (mispriced first optimize, a possible crash); its claim that the permanent ghoul lacks 51996 was wrong (a Ghoul family passive) and was reverted |
 
 Later WIs are added as their wave starts.
 
 ## User actions
 
+- "continue" for wave H.
+- Rebuild the prod container for H2's reforge fix and reload open sim tabs. Until then a restart clears
+  items cached without server stats.
 - Decide: should the gear picker show PvP gear at its catalog tier instead of hiding it at every
   phase? 16 gems whose designs sell only for PvP currency hide with it
   ([BIS-picker-switch](../bis-optimizer/bis-optimizer.PLAN.md#bis-picker-switch-wave-f2-done)).
