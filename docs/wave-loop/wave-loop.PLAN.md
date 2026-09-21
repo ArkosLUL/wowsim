@@ -76,10 +76,10 @@ wave I, and H is full.
 
 ## Current wave
 
-- Wave: G, running.
-- Base SHA: `f126dd8ab`, the wave's setup commit on top of `683e63a89`.
-- Workflow runId: `wf_1e1dc889-8c8`, transcript dir
-  `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\wf_1e1dc889-8c8`.
+- Wave: H, not started. Wave G (base `f126dd8ab`) landed on `master`.
+- Base SHA: set at wave start.
+- Workflow runId: none. Wave G ran as `wf_1e1dc889-8c8`.
+- H's class items run in stages (RUNBOOK, Workflow contract): code, then live.
 
 ## BiS baseline
 
@@ -93,6 +93,7 @@ Reckoning that way), but J isn't DPS: see below.
 | E | 8963.3, +267 / +261 | 10546.7, +838 / +839 | 5042.8, +14 / +16 | 13141.4, +140 / +109 | | |
 | F | 8961.6, +253 / +276 | 10546.7, +840 / +870 | 5042.7, +15 / +9 | 13141.4, +117 / +143 | -91924.9, +5493 / +5984 | -1336.3, +1421 / +1469 |
 | F2 | 8808.8, +258 / +258 | 10546.6, +833 / +865 | 5042.7, +15 / +9 | 13141.4, +117 / +143 | -91924.9, +5493 / +5984 | -1326.7, +1408 / +1460 |
+| G | 8808.8, +258 / +258 | 10546.6, +833 / +865 | 5042.7, +15 / +9 | 13141.4, +117 / +143 | -91924.9, +5493 / +5984 | -1326.7, +1408 / +1460 |
 
 Quick / Normal. Ret P4 ran at Quick only in wave D, after the glyph fix; its wave C numbers
 (12821.9, +54 / +73) came from a seed that wore the glyph. The two tanks arrive with
@@ -106,12 +107,21 @@ decorrelates the paired sims, against 0.04% for Combat Rogue. F2's Fury drop (-1
 the preset's DPS rose on all 7 seeds tried, and at 100k iterations the two builds agree. Feral Tank's
 +0.7% is real, from P7-0c's off-hand start on Algalon. Wave E's open gaps, Fury +4.1% and Ret flat
 against goldens +0.1% and +8.9%, fit the same reading but weren't traced. Judge the deltas, and a
-`J_preset` move against the preset's DPS, which BIS-batch-ui adds to the slow line.
+`J_preset` move against the slow line's `dps_preset`. From G: Fury 7425.9, Combat Rogue 9113.7, Fire
+Mage 11676.8, Ret 15358.2, Prot Pal 333.1, Feral Tank 4159.7.
 
 ## Sim throughput
 
-`BenchmarkSimulate` after each wave ([how to run](../guide/testing.md#go)), ms per sim. No golden
-measures time, so parity work that costs the hot paths shows up only here.
+`BenchmarkSimulate` after each wave ([how to run](../guide/testing.md#go)), ms per op, median of three runs
+on an idle machine. No golden measures time, so parity work that costs the hot paths shows up only here.
+
+From G the benches run their suites' default players with rotations, at 1 and 100 iterations:
+
+| Wave | Combat Rogue | Ret Paladin | Hunter | Elemental | Raid |
+|---|---|---|---|---|---|
+| G | 1.538 / 130.8 | 0.491 / 33.6 | 0.610 / 41.7 | 0.327 / 15.1 | 4.604 / 311.4 |
+
+E to F2 ran the old requests: one iteration, and no rotation for Ret, Hunter and Elemental.
 
 | Wave | Combat Rogue | Ret Paladin | Hunter | Elemental | Raid |
 |---|---|---|---|---|---|
@@ -124,8 +134,7 @@ nothing in the wave explains. F's row was taken on an idle machine and reproduce
 gap is what else was running during E, not the sim. Compare F onward; treat E as a loose ceiling.
 
 F2 is PAR-PERF's fixes: 12-27% under F on the same requests, median of three runs. The raid bench
-crashed before F2, so its column starts there. PAR-PERF-2 (G) gives the benches rotations and
-multi-iteration cases, which starts a new table.
+crashed before F2, so its column starts there.
 
 ## Status
 
@@ -164,11 +173,14 @@ multi-iteration cases, which starts a new table.
 | PAR-P7-HUN | merged | `694a92eb1` | 3 hunter goldens promoted in `68a2a4bfb`; e2e `e5aa956`; the INVESTIGATION's deviation rows renumbered at merge |
 | BIS-batch-ui | merged | `4887ef580` | |
 | PAR-PERF-2 | merged | `956ba4988` | goldens unchanged |
+| wave G cross-review | | `a2b24100d`, `3ac9069fc` | split in two (parity; optimizer and UI); one batch bug (Apply and Save on a roster changed mid-run); the old DK ids now alias in the APL lookup; tooling moved out of scratch in `73e159351` |
 
 Later WIs are added as their wave starts.
 
 ## User actions
 
+- "continue" for wave H.
+- Decide: run PAR-P7-0d as its own wave H2 between H and I (recommended), or fold it elsewhere.
 - Decide: should the gear picker show PvP gear at its catalog tier instead of hiding it at every
   phase? 16 gems whose designs sell only for PvP currency hide with it
   ([BIS-picker-switch](../bis-optimizer/bis-optimizer.PLAN.md#bis-picker-switch-wave-f2-done)).
