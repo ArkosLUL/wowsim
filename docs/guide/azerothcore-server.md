@@ -28,6 +28,10 @@ The live server: where it runs, how to reach it, what's installed. For table and
   in each query.
 - Rebuild, only with the user's OK: `cd [ac] && docker compose build ac-db-import ac-worldserver &&
   docker compose up -d`. It's ready when "World Initialized" appears in `docker logs ac-worldserver`.
+  Build both: only `ac-db-import` applies module SQL, and a worldserver missing a module's table crash-loops.
+- To compile-check C++ without a rebuild, use image `acore/ac-wotlk-build:master`: mount [ac]'s `src/` over its
+  `/azerothcore/src` and run a module file's command from its `/azerothcore/build/compile_commands.json` with
+  `-fsyntax-only`. mod-bis-tooltip's `test/syntax-check.sh` does this.
 - Character data reaches the DB only when a character saves. Before reading it, ask the user to run
   `saveall` in the worldserver console. There's no SOAP, and don't `docker attach`.
 
@@ -45,7 +49,9 @@ The live server: where it runs, how to reach it, what's installed. For table and
 
 - `[ac]/configurationOverrides/*.env` sets `AC_*` vars, which override keys in
   `[ac]/env/dist/etc/**/*.conf` (e.g. `modules/mod_reforging.conf`).
-  - The container copies each conf.dist there once and never updates it. The installed
+  - Only a module's `.conf` is read, never its `.conf.dist`. The container copies each conf.dist there
+    once, never updates it, and creates no module `.conf`: a module without one (mod-sim-validation,
+    mod-bis-tooltip) runs on its code defaults plus `AC_*` vars. The installed
     `spell_tweaks.conf` lacks FeralSpiritHaste, RuptureWeaponExpertise and RendTrauma, so those run on
     their code defaults (on).
   - Env names follow `IniKeyToEnvVarKey`, with quirks: `StatModifierRaid25M` → `RAID_25_M`,

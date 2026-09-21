@@ -21,9 +21,10 @@ Paths used across the docs:
 - One worktree per effort, or per work item in the wave loop. Don't touch another effort's worktree or
   owned paths ([workstreams](docs/guide/workstreams.md)). Sessions run concurrently: check
   `git branch --show-current` right before committing.
-- Phase loop: implement, verify, leave uncommitted, stop. A separate session reviews and fixes. Only on
-  the user's "commit and merge": commit on the effort branch, then `git merge --ff-only` into `master`.
-  Push only when asked ([workflow](docs/guide/workflow.md)). Loop-driven efforts follow the
+- Phase loop, run from this session as orchestrator: a subagent implements and verifies, a fresh one
+  reviews, fixes and re-verifies, all uncommitted; then stop. Only on the user's "commit and merge", which
+  never skips the review: commit on the effort branch, then `git merge --ff-only` into `master`. Push only
+  when asked ([workflow](docs/guide/workflow.md)). Loop-driven efforts follow the
   [wave-loop RUNBOOK](docs/wave-loop/wave-loop.RUNBOOK.md) instead.
 - Verification tooling that proves useful (harnesses, e2e, cross-checks) moves out of scratch, next to the
   code it tests, with a run command in its README.
