@@ -8,24 +8,7 @@ import (
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
 	"github.com/wowsims/wotlk/sim/core/stats"
-	goproto "google.golang.org/protobuf/proto"
 )
-
-// playerSheet is the target's character sheet in l, with offset added to its bonus stats, plus the
-// chance the encounter's boss crits it.
-func playerSheet(base *proto.RaidSimRequest, targetIndex int, l Loadout, offset stats.Stats) (core.PlayerSheet, error) {
-	rsr := goproto.Clone(base).(*proto.RaidSimRequest)
-	player := rsr.Raid.Parties[targetIndex/5].Players[targetIndex%5]
-	player.Equipment = l.Equipment()
-	player.RacialTraits = l.RacialTraits
-	if offset != (stats.Stats{}) {
-		if player.BonusStats == nil {
-			player.BonusStats = &proto.UnitStats{}
-		}
-		player.BonusStats.Stats = stats.FromFloatArray(player.BonusStats.Stats).Add(offset).ToFloatArray()
-	}
-	return core.ComputePlayerSheet(rsr.Raid, rsr.Encounter, targetIndex)
-}
 
 // maxDefenseBonus caps the bisection. 2000 rating is 406 defense skill, and 140 over the level cap's
 // 400 is all the crit-taken formula asks of a tank with no defense at all.

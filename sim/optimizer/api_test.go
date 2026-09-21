@@ -71,7 +71,33 @@ func TestOptimizeWithNothingToChange(t *testing.T) {
 		t.Errorf("racial screen = %v, want none", result.RacialScreen)
 	}
 	if len(progress) == 0 || progress[0].Stage != stages[0] {
-		t.Errorf("progress = %v, want it to start at %q", progress, stages[0])
+		t.Fatalf("progress = %v, want it to start at %q", progress, stages[0])
+	}
+	if p := progress[0]; p.CompletedSteps != 1 || p.TotalSteps != int32(len(stages)) {
+		t.Errorf("setup reads step %d of %d, want 1 of %d", p.CompletedSteps, p.TotalSteps, len(stages))
+	}
+}
+
+// Steps count the stage underway, from 1 at Setup to all of them at the last stage.
+func TestProgressSteps(t *testing.T) {
+	r, err := PrepareRequest(kaRequest(proto.OptimizerEffort_OptimizerEffortQuick))
+	if err != nil {
+		t.Fatal(err)
+	}
+	steps := map[string]int32{}
+	result := optimize(context.Background(), r, r, newKnownEvaluator(kaMetrics), func(p *proto.OptimizerProgress) {
+		if p.TotalSteps != int32(len(stages)) {
+			t.Errorf("%s: %d total steps, want %d", p.Stage, p.TotalSteps, len(stages))
+		}
+		steps[p.Stage] = p.CompletedSteps
+	}, time.Now())
+	if result.ErrorResult != "" {
+		t.Fatal(result.ErrorResult)
+	}
+	for i, stage := range stages {
+		if got, ok := steps[stage]; !ok || got != int32(i+1) {
+			t.Errorf("%s reads step %d (reported: %v), want %d", stage, got, ok, i+1)
+		}
 	}
 }
 

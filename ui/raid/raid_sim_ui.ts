@@ -14,6 +14,7 @@ import { SimUI } from "../core/sim_ui.js";
 import { raidSimStatus } from '../core/launched_sims.js';
 import { EventID, TypedEvent } from "../core/typed_event.js";
 
+import { OptimizerBatchTab } from "./optimizer_batch.js";
 import { RaidTab } from "./raid_tab.js";
 import { SettingsTab } from "./settings_tab.js";
 
@@ -86,6 +87,7 @@ export class RaidSimUI extends SimUI {
 		this.addRaidTab();
 		this.addSettingsTab();
 		this.addDetailedResultsTab();
+		this.addBisBatchTab();
 	}
 
 	private async loadSettings() {
@@ -155,6 +157,10 @@ export class RaidSimUI extends SimUI {
 		`);
 
 		const detailedResults = new EmbeddedDetailedResults(this.rootElem.getElementsByClassName('detailed-results')[0] as HTMLElement, this, this.raidSimResultsManager!);
+	}
+
+	private addBisBatchTab() {
+		new OptimizerBatchTab(this.simTabContentsContainer, this);
 	}
 
 	private recomputeSettingsLayout() {

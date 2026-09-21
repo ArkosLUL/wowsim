@@ -105,6 +105,9 @@ export interface PoolBuilderInput {
 	getEnchants: (slot: ItemSlot) => Array<Enchant>;
 	// Gems, and the seed's items.
 	db: Database;
+	// Extra starting points for the search, e.g. the raider's BiS from the phase before. They can hold
+	// anything: the search drops what the pool doesn't offer.
+	warmStarts?: Array<EquipmentSpec>;
 }
 
 export interface BuiltRequest {
@@ -292,8 +295,9 @@ function toSimItem(item: Item): SimItem {
 	});
 }
 
-// Builds the OptimizeGearRequest for the individual sim's target. Pure: no DOM and no Player, so the
-// replay fixture driver runs it under Node.
+// Builds the OptimizeGearRequest for one target in a raid request: the individual sim's player, or
+// one raider of the raid batch. Pure: no DOM and no Player, so the replay fixture driver runs it
+// under Node.
 //
 // Per slot, the pool is the target's usable items, through the gear picker's filters, then the server
 // catalog (tier, faction, sources, no PvP) and professions. Enchants follow enchantAppliesToItem.
@@ -429,6 +433,7 @@ export function buildOptimizeRequest(input: PoolBuilderInput): BuiltRequest {
 			sources: settings.sources.slice(),
 			lockedSlots: ALL_SLOTS.filter(slot => locked.has(slot)),
 			excludedItemIds: settings.excludedItemIds.slice(),
+			warmStarts: (input.warmStarts || []).map(es => EquipmentSpec.clone(es)),
 		}),
 		pool: CandidatePool.create({
 			slots: slotPools,

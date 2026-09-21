@@ -195,9 +195,6 @@ type run struct {
 	bestEval *Evaluation
 	// What verification simmed, for a result cut short by a cancel.
 	verified []*verifiedLoadout
-
-	// The seed's character sheet, for caps.
-	seedSheet func() (core.PlayerSheet, error)
 }
 
 // traceHook, when set, gets a line for each decision a run makes. Tests set it to t.Logf.
@@ -228,9 +225,6 @@ func optimize(ctx context.Context, asked, simmed *Request, eval Evaluator, progr
 		best:     simmed.Seed,
 	}
 	r.eval = &countingEvaluator{inner: eval, have: map[Point]int{}, after: r.report}
-	r.seedSheet = sync.OnceValues(func() (core.PlayerSheet, error) {
-		return playerSheet(r.r.Base, r.r.TargetIndex, r.r.Seed, stats.Stats{})
-	})
 	return r.execute()
 }
 
@@ -453,8 +447,9 @@ func (r *run) report() {
 	r.progMu.Lock()
 	defer r.progMu.Unlock()
 	p := &proto.OptimizerProgress{
-		Stage:          stages[r.stage],
-		CompletedSteps: int32(r.stage),
+		Stage: stages[r.stage],
+		// the stage underway counts: Setup is step 1, the last stage step len(stages)
+		CompletedSteps: int32(r.stage + 1),
 		TotalSteps:     int32(len(stages)),
 		CompletedSims:  int32(r.eval.simmed()),
 		TotalSims:      int32(max(r.total, r.eval.simmed())),
@@ -679,7 +674,7 @@ func (r *run) loadoutResult(l Loadout, eval *Evaluation) *proto.OptimizerLoadout
 			}
 		}
 	}
-	sheet, err := playerSheet(r.r.Base, r.r.TargetIndex, l, stats.Stats{})
+	sheet, err := r.pool.sheet(l)
 	if err != nil {
 		out.Warnings = append(out.Warnings, err.Error())
 		return out
@@ -701,7 +696,7 @@ func (r *run) caps(sheet stats.Stats) []*proto.OptimizerStatCap {
 	if r.resp == nil {
 		return nil
 	}
-	seed, err := r.seedSheet()
+	seed, err := r.pool.sheet(r.r.Seed)
 	if err != nil {
 		return nil
 	}
