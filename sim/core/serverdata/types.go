@@ -6,8 +6,6 @@
 // It must not import sim/core, so that sim/core can import it.
 package serverdata
 
-import "slices"
-
 type DmgClass uint8
 
 // SpellDmgClass: picks the hit table and which haste scales the cast.
@@ -270,19 +268,20 @@ func EnchantProcByID(id int32) *EnchantProc {
 	return find(enchantProcs, id, func(e *EnchantProc) int32 { return e.EnchantID })
 }
 
+// Binary search by index: a comparator taking the row by value copies it on every probe, and since
+// key's pointer escapes, heap-allocates it too (a Spell is ~400 bytes, looked up per RegisterSpell).
 func find[T any](table []T, id int32, key func(*T) int32) *T {
-	i, ok := slices.BinarySearchFunc(table, id, func(row T, id int32) int {
-		k := key(&row)
-		switch {
-		case k < id:
-			return -1
-		case k > id:
-			return 1
+	lo, hi := 0, len(table)
+	for lo < hi {
+		mid := int(uint(lo+hi) >> 1)
+		if key(&table[mid]) < id {
+			lo = mid + 1
+		} else {
+			hi = mid
 		}
-		return 0
-	})
-	if !ok {
+	}
+	if lo == len(table) || key(&table[lo]) != id {
 		return nil
 	}
-	return &table[i]
+	return &table[lo]
 }

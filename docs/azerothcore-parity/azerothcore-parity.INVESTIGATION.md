@@ -396,3 +396,69 @@ The fork copies the server. Patching any of these in [ac] means updating the mat
 Not yet settled against retail, check before patching: the 200 ms other-hand push (`PlayerUpdates.cpp`), the DoT
 refresh tick-timer rule, the max(cast, 1500 ms) PPM basis for spell-triggered aura procs, the rule-based binary
 spell list (`SpellMgr.cpp:3405-3466`), and the 5 yard missile floor, which `Spell::AddUnitTarget` calls a hack.
+
+## Performance
+
+PAR-PERF profiled `BenchmarkSimulate` at `0782b5be8` with pprof while other items' test runs loaded the machine, so
+each fix was judged by interleaved A/B runs (base and patched test binaries alternating; median of per-pair ratios,
+pairs won) and by profile shares, never against the [throughput table](../wave-loop/wave-loop.PLAN.md#sim-throughput).
+Shares are of CPU samples, GC workers included.
+
+**What the benchmarks measure.**
+- `core.RaidBenchmark` runs one iteration per sim, so every number includes an environment build and a metrics export:
+  `NewEnvironment` was 15% of Combat Rogue, 36% of Hunter, 46% of Ret and 49% of Elemental. A UI sim spreads that over
+  thousands of iterations; anything that builds an environment per short run, such as optimizer evaluations, pays it
+  in full.
+- The Ret, Hunter and Elemental requests carry no rotation: those players only auto-attack (the hunter's pet runs its
+  own), and Elemental casts nothing. Only Rogue runs an APL, and evaluating it is 47% of that bench.
+- The raid bench is 8 players (2 Balance, 2 Shadow, 2 Arcane, Elemental, Enhancement) without talents or glyphs, not
+  25. It and the Feral, Feral Tank, Enhancement, Fury and Protection Warrior benches crashed on their nil `Rotation`
+  (`attack.go`'s queued-swing path, `energy.go`); each now takes the APL its spec's golden suite uses. Feral also needs
+  its `StandardTalents`: the cat rotation reads Mangle (Cat)'s cost without checking the talent.
+
+**Parity's per-event cost is small:** `NextServerTick` (P3-3) ≤0.4%, PPM on the proc path (P3-4) ≤0.7%, `Dot.TickOnce`
+including the tick's damage (P3-5) ≤1.9%. The real cost was P3-2's serverdata lookup in `RegisterSpell`: 5-7% of Ret,
+Hunter and Elemental, 2% of the raid, and 20% of Rogue's allocated bytes.
+
+**Fixes.** None changes a result: all 37 `.results` byte-identical, simval 508/508.
+
+| Fix | Base share | new/base (pairs won) |
+|---|---|---|
+| `serverdata.find`'s comparator took the ~400-byte row by value, so every probe copied it and heap-allocated it (the pointer escapes into `key`); it now searches by index | 5-7% of Ret, Hunter, Elemental | Ret 0.822 (7/7), Hunter 0.871 (6/7), Elemental 0.920 (7/7), raid 0.946 (5/7) |
+| `HasSetBonus` ranged over `Equipment` by value; `Equipment.Stats` and `Item.TotalStats` added `Stats` by value. Now by index and in place, same addition order | `HasSetBonus` 5% of Ret, 2% of Elemental; `Equipment.Stats` 2.6% of Ret | Ret 0.926 (7/7), Elemental 0.964 (7/7) |
+| `runPresims` cloned the whole request even with nothing to presim | Rogue 5%, raid 2.9% | Rogue 0.984 (7/7); raid 1.002 (3/7) and Ret 0.992 (5/7), within noise |
+| `sortDeps` scanned every dependency for each of 210 stat pairs; now one stable sort by pair, which keeps each pair's combining order | Elemental 5%, Ret 4.5% | raid 0.934 (5/7), Elemental 0.951 (5/7), Ret 0.985 (4/7) |
+| `ActionMetrics.ToProto` allocated each target's message on its own; now one slice per action | raid 6.8%, Elemental 5.1% | raid 0.960 (6/7), Elemental 0.982 (5/7) |
+
+All fixes together, 9 interleaved rounds under load (the other five repaired benches: 5 rounds). Medians in ms per
+sim; the orchestrator takes the idle-machine row.
+
+| Bench | Base | New | new/base (pairs won) |
+|---|---|---|---|
+| Combat Rogue | 1.113 | 1.016 | 0.915 (9/9) |
+| Ret Paladin | 0.328 | 0.240 | 0.737 (9/9) |
+| Hunter | 0.437 | 0.357 | 0.846 (8/9) |
+| Elemental | 0.435 | 0.350 | 0.784 (9/9) |
+| Raid (8 players) | 9.65 | 8.47 | 0.874 (9/9) |
+| Feral, Feral Tank, Enhancement, Fury, Protection Warrior | | | 0.919, 0.841, 0.892, 0.877, 0.919 |
+
+After the fixes the environment build is still 16% of Rogue, 32% of Hunter, 45% of Ret and 55% of Elemental (15% is
+the Val'kyr pets below). The fixed functions are each ≤2.2%, except `ActionMetrics.ToProto`: still 5.9% of the raid
+and 3.8% of Elemental, mostly allocating its message slice: one message per unit, pets included, per action.
+
+**Left for other items** (base shares):
+- Every Balance, Shadow, Elemental, Mage and Warlock builds 10 Val'kyr pets for Nibelung, equipped or not
+  (`sim/common/wotlk/nibelung.go`): 9.4% of Elemental's CPU and 35% of its bytes, 4.8% of the raid's CPU and 21% of
+  its bytes. Each pet is a unit, and per-spell metrics and attack tables scale with the unit count: in the raid,
+  `Spell.finalize`'s metric slices are 16% of bytes, the target metric messages 17%, `NewAttackTable` 6%. Building them
+  only for the item changes the result's pet list and unit indices.
+- `NewPet` (`pet.go`) returns the Character-sized `Pet` by value, so each pet is built and copied whole: 4% flat of
+  Elemental.
+- PAR-P7-0c's other files hold little flat time: `cast.go` 2.9% of Rogue and 3.8% of the raid, nearly all
+  `ApplyCostModifiers` under the APL's cost checks; `attack.go`, `unit.go` and `buffs.go` ≤1.3% each. The swing loop's
+  15-18% cumulative on Rogue, Ret and Hunter is mostly the white hit's damage and procs, plus the APL pass after each
+  swing (6.5% of Rogue).
+- `AddPendingAction` inserts by linear scan: 2% flat of the raid. A binary search picks the same slot only while the
+  queue stays sorted, which nothing enforces.
+- APL evaluation (`APLAction.IsReady`, `APLValueCompare`/`And`, `Spell.CanCast`) is 40-47% of Rogue: upstream's
+  interpreter, not parity.
