@@ -77,8 +77,10 @@ wave I, and H is full. The user ran it before H, so H's melee items build on its
 ## Current wave
 
 - Wave: H, running.
-- Base SHA: the wave's setup commit on top of `e08b132f4`.
-- Workflow runId: not yet started.
+- Base SHA: `695c55b78`, the wave's setup commit on top of `e08b132f4`.
+- Workflow runId: `wf_cc41a703-bd9`, transcript dir
+  `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\wf_cc41a703-bd9`.
+- Args: `G:\DevStuff\GitHub\.wave-loop\waveH-args.json`.
 
 ## BiS baseline
 
