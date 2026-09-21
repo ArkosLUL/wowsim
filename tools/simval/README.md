@@ -8,6 +8,7 @@ mod-chronicle writes for a real fight.
 tools/acore/dock.sh run ./tools/simval                             # replay the live recording
 tools/acore/dock.sh run ./tools/simval -records /wotlk/sim/core/testdata/simval/simval.jsonl
 tools/acore/dock.sh run ./tools/simval chronicle -v -sim 8123 <log>
+DBC_DIR=<live DBC copy> tools/acore/dock.sh run --tags=with_db ./tools/simval rrsim -seconds 300.8 <setup.txt>
 ```
 
 ## Replay (no subcommand)
@@ -23,6 +24,10 @@ computed chance, |z| ≤ 5 on a rolled rate, ±0.1% on a multiplier. It exits no
 | `-v` | print passing checks too |
 
 Commands covered: `melee`, `taken`, `yellow`, `spell`, `armor`, `info`, `procs`.
+
+`spell` doesn't model `SPELL_ATTR3_ALWAYS_HIT`, a positive spell cast at the dummies (their faction 7
+isn't hostile, and `Unit::SpellHitResult` lets a positive spell miss only a hostile target), or a binary
+spell's lack of partial resists, so records of those fail it.
 
 `procs` checks the generated `spell_proc` rows field for field against the live entry, then checks
 `core.ServerProcFor` and the PPM basis against the chance the server computed per attack type. Auras
@@ -56,9 +61,25 @@ Chronicle gaps to keep in mind: `SWING_DAMAGE` carries no main/off hand flag, so
 hands interleave in one swing timeline; an aura refresh re-emits `SPELL_AURA_APPLIED`, so applications
 count refreshes; and there are no stack counts.
 
+## rrsim
+
+Sims a recorded hunter run from its `.setup.txt`: gear, talents, glyphs, ammo, quiver and pet as
+recorded, on `TestRecordedRunHunter`'s rotation. It prints the DPS, pet included, to pass to
+`chronicle -sim`. Needs `--tags=with_db` and the live DBCs. Other classes have no rotation here.
+
+| Flag | Default |
+|---|---|
+| `-seconds` | the setup's; pass the active duration `chronicle` reports |
+| `-notracking` | off; drops Improved Tracking for a run that tracked nothing, like the two SV captures |
+| `-iterations` | 3000 |
+| `-dbc` | `/dbc`, the live DBC copy |
+| `-out` | also write the sim request here as JSON |
+| `-v` | also print final stats, pet talents, glyphs and an ability breakdown |
+
 ## Captures
 
 `sim/core/testdata/chronicle/` holds recorded runs as `<spec>_<player>_<unix>.log.gz`, each with a
 `.setup.txt` naming the gear, talents and rotation it was fought with — the sim needs all three to be
 comparable. `TestChronicleCaptures` parses every one of them, so a capture whose format drifted fails
-there. Record new ones with mod-sim-validation's `TestRecordedRun` (its README has the run line).
+there. Record new ones with mod-sim-validation's `TestRecordedRun`, or for a hunter `TestRecordedRunHunter`
+(`SIMVAL_RECORD_HUNTER=<label>`); its README has the run line.

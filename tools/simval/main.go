@@ -11,9 +11,13 @@
 // player's DPS, ability breakdown, swing and tick intervals and aura uptimes,
 // checking the DPS against the sim's result for the same setup.
 //
+// `rrsim` builds that sim for a recorded hunter run out of the .setup.txt next to its log, and
+// prints the DPS to hand to `chronicle -sim`.
+//
 //	tools/acore/dock.sh run ./tools/simval
 //	tools/acore/dock.sh run ./tools/simval -fixture
 //	tools/acore/dock.sh run ./tools/simval chronicle -sim 8123 <log>
+//	tools/acore/dock.sh run --tags=with_db ./tools/simval rrsim -seconds 300.8 <setup>
 package main
 
 import (
@@ -32,8 +36,13 @@ const (
 )
 
 func main() {
-	if len(os.Args) > 1 && os.Args[1] == "chronicle" {
-		os.Exit(runChronicle(os.Args[2:]))
+	if len(os.Args) > 1 {
+		switch os.Args[1] {
+		case "chronicle":
+			os.Exit(runChronicle(os.Args[2:]))
+		case "rrsim":
+			os.Exit(runRecordedSim(os.Args[2:]))
+		}
 	}
 	os.Exit(runReplay(os.Args[1:]))
 }

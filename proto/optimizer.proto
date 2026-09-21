@@ -189,7 +189,7 @@ message OptimizerRacialScreen {
 message OptimizerProgress {
 	// What it's doing, for display, e.g. "Racial screen" or "Search".
 	string stage = 1;
-	// Steps across all stages, for a progress bar.
+	// The stage underway, counted from 1, so it runs 1 to total_steps.
 	int32 completed_steps = 2;
 	int32 total_steps = 3;
 	int32 completed_sims = 4;

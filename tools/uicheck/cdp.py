@@ -1,4 +1,4 @@
-"""Tiny Chrome DevTools driver for the manual check: nav, eval (expr or .js file), shot, size."""
+"""Tiny Chrome DevTools driver for the manual check: nav, eval (expr or .js file), load, shot, size."""
 import asyncio
 import base64
 import json
@@ -43,6 +43,10 @@ async def main():
             else:
                 v = r.get('result', {}).get('value')
                 print(v if isinstance(v, str) else json.dumps(v, indent=1))
+        elif cmd == 'load':
+            # window[name] = the file's text, for data too big for a command line, like a raid roster
+            text = open(sys.argv[3], encoding='utf-8').read()
+            await call(ws, 'Runtime.evaluate', {'expression': f'window[{json.dumps(sys.argv[2])}] = {json.dumps(text)}; 0'})
         elif cmd == 'shot':
             r = await call(ws, 'Page.captureScreenshot', {'format': 'png', 'captureBeyondViewport': False})
             open(sys.argv[2], 'wb').write(base64.b64decode(r['data']))

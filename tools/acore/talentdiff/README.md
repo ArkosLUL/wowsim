@@ -19,6 +19,10 @@ DBC_DIR=<dir holding both sets> tools/acore/dock.sh run ./tools/acore/talentdiff
 dock.sh mounts one DBC directory, so both sides must sit under it. The default `A:\WOW\dbc` holds
 `Clean` and `Changed`; to bring the live copy in, put it beside them and point `DBC_DIR` at the parent.
 
+It reads DBC files only, but the server lays mod-spell-tweaks' `spell_dbc` and `talent_dbc` rows over them. For
+the value the server uses, read the spelldump (`assets/db_inputs/acore/spelldump.jsonl`) or the live DB: Rage of
+Rivendare, Virulence and Nerves of Cold Steel differ there while the live DBC files are stock.
+
 ## Output
 
 One CSV row per difference: `table`, `id`, `change` (added, removed, changed), `field`, both values,

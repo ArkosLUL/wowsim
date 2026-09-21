@@ -1,0 +1,112 @@
+player: Svrleadtntyo
+class: 3
+race: 4
+spec label: hunter
+seconds: 300
+yards: 20
+started: []
+rotation: []
+
+talents (spell, specMask):
+  3674 1
+  19259 1
+  19373 1
+  19386 1
+  19407 1
+  19431 1
+  19434 1
+  19490 1
+  24297 1
+  34484 1
+  34493 1
+  34496 1
+  34499 1
+  34502 1
+  34839 1
+  52788 1
+  53291 1
+  53297 1
+  53301 1
+  53304 1
+  56337 1
+  56341 1
+  56344 1
+  63458 1
+
+equipped (slot, item, enchantments):
+  0 50605 3817 0 0 0 0 0 3628 0 0 3557 0 0 0 0 0 3313 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+  1 50421 0 0 0 0 0 0 3537 0 0 0 0 0 0 0 0 2877 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+  2 54566 3776 0 0 0 0 0 3519 0 0 3519 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+  3 148 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+  4 50689 3832 0 0 0 0 0 3519 0 0 3519 0 0 3519 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+  5 50688 0 0 0 0 0 0 3519 0 0 3519 0 0 3519 0 0 0 0 0 3729 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+  6 51287 3328 0 0 0 0 0 3519 0 0 3519 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+  7 54577 983 0 0 0 0 0 3519 0 0 3519 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+  8 50655 3845 0 0 0 0 0 3519 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+  9 51285 3222 0 0 0 0 0 3519 0 0 0 0 0 0 0 0 2877 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+  10 54576 0 0 0 0 0 0 3519 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+  11 50618 0 0 0 0 0 0 3519 0 0 0 0 0 0 0 0 3263 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+  12 50363 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+  13 47131 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+  14 50653 1099 0 0 0 0 0 3519 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+  15 50735 3827 0 0 0 0 0 3519 0 0 3519 0 0 3519 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+  17 50733 3607 0 0 0 0 0 3519 0 0 0 0 0 0 0 0 2877 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+
+server snapshot before the fight (.simval info):
+  attack mainhand: 3599 ms unhasted, speed x0.922882, crit vs the dummy 59.6561%
+  attack offhand: 1999 ms unhasted, speed x0.922882, crit vs the dummy 43.6561%
+  attack ranged: 3000 ms unhasted, speed x0.793572, crit vs the dummy 64.6561%
+  rating weaponSkill: 0 (0.0000%)
+  rating defenseSkill: 0 (0.0000%)
+  rating dodge: 0 (0.0000%)
+  rating parry: 0 (0.0000%)
+  rating block: 0 (0.0000%)
+  rating hitMelee: 288 (8.7832%)
+  rating hitRanged: 288 (8.7832%)
+  rating hitSpell: 288 (10.9790%)
+  rating critMelee: 1072 (23.3521%)
+  rating critRanged: 1072 (23.3521%)
+  rating critSpell: 1072 (23.3521%)
+  rating hitTakenMelee: 0 (0.0000%)
+  rating hitTakenRanged: 0 (0.0000%)
+  rating hitTakenSpell: 0 (0.0000%)
+  rating critTakenMelee: 0 (0.0000%)
+  rating critTakenRanged: 0 (0.0000%)
+  rating critTakenSpell: 0 (0.0000%)
+  rating hasteMelee: 274 (8.3562%)
+  rating hasteRanged: 314 (9.5761%)
+  rating hasteSpell: 274 (8.3562%)
+  rating weaponSkillMainhand: 0 (0.0000%)
+  rating weaponSkillOffhand: 0 (0.0000%)
+  rating weaponSkillRanged: 0 (0.0000%)
+  rating expertise: 0 (0.0000%)
+  rating armorPenetration: 702 (50.1582%)
+  auras: [13358 19259 19373 19407 19431 19490 20582 20583 21009 24297 24949 29414 34082 34484 34493 34496 34499 34502 34839 39957 52788 53291 53297 53304 53555 56337 56341 56344 57866 57870 57903 60694 63066 63067 63068 63458 67771 70727 71562 89507]
+
+glyphs (GlyphProperties ids): [693 440 441 691 439 692]
+
+bags (slot, item, class):
+  19 44448 11
+  20 51809 1
+  21 51809 1
+  22 51809 1
+
+ammo: 52021
+
+pet: entry 16174 family 24 level 80 name Bat
+
+pet spells (spell, active):
+  1742 129
+  23145 129
+  52474 193
+  52858 1
+  53184 1
+  53508 129
+  53512 1
+  53517 129
+  53555 1
+  53568 193
+  61676 129
+  61683 1
+  62758 1
+  65220 1

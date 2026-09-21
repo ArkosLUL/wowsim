@@ -425,15 +425,16 @@ values. Human warrior, level 80, maxed skills, Worn Shortsword (Sword Specializa
 - Hunter recorded runs (`TestRecordedRunHunter`, `SIMVAL_RECORD_HUNTER`, 300 s at 20 yards; the factory hunter gets a
   ranged weapon, quiver and ammo, and its pet autocasts only its damage spells). It keeps Serpent Sting up and fires
   Arcane Shot on cooldown, else Steady Shot, with Rapid Fire, Kill Command and Bestial Wrath on cooldown. Each capture
-  is compared with `tools/simval chronicle -sim` against a sim built from its `.setup.txt` by a scratch converter
-  (PAR-P7-HUN's `tmp/rrsim`, not in `tools/` yet). The SV runs came before the harness cast Track Giants, so their
-  sims drop Improved Tracking.
+  is compared with `tools/simval chronicle -sim` against `tools/simval rrsim` on its `.setup.txt`; all three are in
+  testdata. The SV runs came before the harness cast Track Giants, so their sims drop Improved Tracking
+  (`-notracking`). Correction: the first sims, by PAR-P7-HUN's scratch converter, read race 4 as the sim's Gnome
+  rather than Night Elf; as night elves each sim loses about 0.2%, which the table has.
 
   | Run | Server DPS | Sim DPS | Gap |
   |---|---|---|---|
-  | BM + serpent (`hunter_Svrleadtbrfb_1789993143`, in testdata) | 5925.4 | 5830.4 | +1.63% |
-  | SV + bat | 4784.8 | 4775.3 | +0.20% |
-  | SV + wasp | 5008.1 | 4872.8 | **+2.78%**, over the 2% |
+  | BM + serpent (`hunter_Svrleadtbrfb_1789993143`) | 5925.4 | 5816.5 | +1.87% |
+  | SV + bat (`hunter_Svrleadtntyo_1789992248`) | 4784.8 | 4765.4 | +0.41% |
+  | SV + wasp (`hunter_Svrleadhbjyz_1789991622`) | 5008.1 | 4862.4 | **+3.00%**, over the 2% |
 
   - Auto Shot intervals sit on the 100 ms lattice at `NextServerTick` of the hasted speed.
   - Wasp run: the server chained queued Steady Shots every 1.5 s where the sim took 1.6 s: the hasted cast is under
@@ -442,7 +443,7 @@ values. Human warrior, level 80, maxed skills, Worn Shortsword (Sword Specializa
     ignored attack commands, with no swings or autocasts until the aura dropped. The one at the pull didn't do it.
     Cause unknown. It's why the server pet did 5% less than the sim's.
   - The server's Auto Shot and Steady Shot crit rates ran about 3 points over the sim's across the three runs (about
-    2σ pooled); Arcane Shot matched. The BM snapshot's melee sheet crit is 53.79%, the sim's 53.43%.
+    2σ pooled); Arcane Shot matched. The BM snapshot's melee sheet crit is 53.79%, the sim's 53.47%.
 - Death knight probes (`TestSimvalDeathKnight`, a human DK behind the boss dummy): Scourge Strike and Obliterate
   roll the yellow table, Icy Touch the magic one with partial resists, and `tools/simval` passes all 26 checks on
   those records. Both diseases are melee damage class and can't miss. Rage of Rivendare 5/5 adds 10 expertise and
