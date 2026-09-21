@@ -43,8 +43,12 @@ func (dk *Deathknight) registerDeathAndDecaySpell() {
 			},
 			NumberOfTicks: 10,
 			TickLength:    time.Second * 1,
+			// each tick is 52212, a spell of its own that spell_dk_death_and_decay casts, so it crits
+			// like one
+			TicksCanCrit: true,
 			OnSnapshot: func(sim *core.Simulation, _ *core.Unit, dot *core.Dot, _ bool) {
-				dot.SnapshotBaseDamage = 62 + 0.0475*dk.getImpurityBonus(dot.Spell)
+				// 52212's spell_bonus_data
+				dot.SnapshotBaseDamage = 62 + 0.04805*dk.getImpurityBonus(dot.Spell)
 			},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 				for _, aoeTarget := range sim.Encounter.TargetUnits {

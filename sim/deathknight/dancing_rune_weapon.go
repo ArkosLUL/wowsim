@@ -120,30 +120,14 @@ func (dk *Deathknight) DrwWeaponDamage(sim *core.Simulation, spell *core.Spell) 
 }
 
 func (dk *Deathknight) NewRuneWeapon() *RuneWeaponPet {
-	// Remove any hit that would be given by NocS as it does not translate to pets
-	var nocsHit float64
-	if dk.nervesOfColdSteelActive() {
-		nocsHit = float64(dk.Talents.NervesOfColdSteel) * core.MeleeHitRatingPerHitChance
-	}
-	if dk.HasDraeneiHitAura {
-		nocsHit += 1 * core.MeleeHitRatingPerHitChance
-	}
-
+	// Its hit and expertise come from the 61017 npc_pet_dk_dancing_rune_weapon gives it.
 	runeWeapon := &RuneWeaponPet{
 		Pet: core.NewPet("Rune Weapon", &dk.Character, stats.Stats{
-			stats.Stamina:   100,
-			stats.MeleeHit:  -nocsHit,
-			stats.SpellHit:  -nocsHit * PetSpellHitScale,
-			stats.Expertise: -nocsHit * PetExpertiseScale,
+			stats.Stamina: 100,
 		}, func(ownerStats stats.Stats) stats.Stats {
 			return stats.Stats{
 				stats.AttackPower: ownerStats[stats.AttackPower],
 				stats.MeleeHaste:  ownerStats[stats.MeleeHaste],
-
-				stats.MeleeHit: ownerStats[stats.MeleeHit],
-				stats.SpellHit: ownerStats[stats.MeleeHit] * PetSpellHitScale,
-
-				stats.Expertise: ownerStats[stats.MeleeHit] * PetExpertiseScale,
 
 				stats.MeleeCrit: ownerStats[stats.MeleeCrit],
 				stats.SpellCrit: ownerStats[stats.SpellCrit],
@@ -170,6 +154,10 @@ func (dk *Deathknight) NewRuneWeapon() *RuneWeaponPet {
 	})
 
 	runeWeapon.PseudoStats.DamageTakenMultiplier = 0
+	// the orc's Command (65221) only goes to risen ghouls and the gargoyle
+	if dk.RacialTraits == proto.Race_RaceOrc {
+		runeWeapon.PseudoStats.DamageDealtMultiplier /= 1.05
+	}
 	runeWeapon.PseudoStats.MeleeHasteRatingPerHastePercent = dk.PseudoStats.MeleeHasteRatingPerHastePercent
 
 	dk.AddPet(runeWeapon)

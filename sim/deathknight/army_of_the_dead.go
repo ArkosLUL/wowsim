@@ -13,6 +13,9 @@ func (dk *Deathknight) registerArmyOfTheDeadCD() {
 		ActionID: core.ActionID{SpellID: 42650},
 		Duration: time.Millisecond * 500 * 8,
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
+			// The channel holds melee (UNIT_STATE_CASTING, Player::Update) without resetting it: interrupt
+			// flags 0. Parking the swings keeps their timers where they are, and EnableAutoSwing takes each
+			// hand back at max(its timer, now), so one that came due mid-channel swings as it ends.
 			if sim.CurrentTime >= 0 {
 				dk.AutoAttacks.CancelAutoSwing(sim)
 			}

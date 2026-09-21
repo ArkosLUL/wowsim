@@ -18,6 +18,11 @@ const (
 
 const presenceEffectCategory = "Presence"
 
+var BloodPresenceActionID = core.ActionID{SpellID: 48266}
+
+// the heal Blood Presence and Improved Blood Presence cast off the damage dealt
+var bloodPresenceHealActionID = core.ActionID{SpellID: 50475}
+
 func (dk *Deathknight) PresenceMatches(other Presence) bool {
 	return (dk.Presence & other) != 0
 }
@@ -52,7 +57,7 @@ func (dk *Deathknight) registerBloodPresenceAura(timer *core.Timer) {
 	damageTakenMult := 1.0 - 0.01*float64(dk.Talents.ImprovedFrostPresence)
 
 	dk.BloodPresence = dk.RegisterSpell(core.SpellConfig{
-		ActionID: core.ActionID{SpellID: 50689},
+		ActionID: BloodPresenceActionID,
 		Flags:    core.SpellFlagAPL,
 
 		RuneCost: core.RuneCostOptions{
@@ -69,8 +74,8 @@ func (dk *Deathknight) registerBloodPresenceAura(timer *core.Timer) {
 		},
 	})
 
-	actionID := core.ActionID{SpellID: 50689}
-	healthMetrics := dk.NewHealthMetrics(actionID)
+	actionID := BloodPresenceActionID
+	healthMetrics := dk.NewHealthMetrics(bloodPresenceHealActionID)
 	statDep := dk.NewDynamicMultiplyStat(stats.Stamina, staminaMult)
 
 	aura := core.Aura{
@@ -158,7 +163,7 @@ func (dk *Deathknight) registerFrostPresenceAura(timer *core.Timer) {
 
 	if !dk.Inputs.IsDps && dk.Talents.ImprovedBloodPresence > 0 {
 		healFactor := 0.02 * float64(dk.Talents.ImprovedBloodPresence)
-		healthMetrics := dk.NewHealthMetrics(core.ActionID{SpellID: 50689})
+		healthMetrics := dk.NewHealthMetrics(bloodPresenceHealActionID)
 		dk.FrostPresenceAura.OnSpellHitDealt = func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
 			if result.Damage > 0 {
 				healthGain := healFactor * result.Damage
@@ -250,7 +255,7 @@ func (dk *Deathknight) registerUnholyPresenceAura(timer *core.Timer) {
 
 	if !dk.Inputs.IsDps && dk.Talents.ImprovedBloodPresence > 0 {
 		healFactor := 0.02 * float64(dk.Talents.ImprovedBloodPresence)
-		healthMetrics := dk.NewHealthMetrics(core.ActionID{SpellID: 50689})
+		healthMetrics := dk.NewHealthMetrics(bloodPresenceHealActionID)
 		dk.UnholyPresenceAura.OnSpellHitDealt = func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
 			if result.Damage > 0 {
 				healthGain := healFactor * result.Damage

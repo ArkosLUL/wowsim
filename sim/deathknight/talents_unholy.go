@@ -10,7 +10,8 @@ import (
 
 func (dk *Deathknight) ApplyUnholyTalents() {
 	dk.PseudoStats.BaseDodge += 0.01 * float64(dk.Talents.Anticipation)
-	dk.AddStat(stats.SpellHit, core.SpellHitRatingPerHitChance*float64(dk.Talents.Virulence))
+	// mod-spell-tweaks' spell_dbc rows for 48962/49567/49568: 2% a rank, where stock gives 1%
+	dk.AddStat(stats.SpellHit, core.SpellHitRatingPerHitChance*2*float64(dk.Talents.Virulence))
 
 	if dk.Talents.RavenousDead > 0 {
 		dk.MultiplyStat(stats.Strength, 1.0+0.01*float64(dk.Talents.RavenousDead))
@@ -35,7 +36,8 @@ func (dk *Deathknight) applyRageOfRivendare() {
 		return
 	}
 
-	dk.AddStat(stats.Expertise, float64(dk.Talents.RageOfRivendare)*core.ExpertisePerQuarterPercentReduction)
+	// 2 expertise a rank from mod-spell-tweaks' spell_dbc rows for 50117-50121, stock gives 1
+	dk.AddStat(stats.Expertise, 2*float64(dk.Talents.RageOfRivendare)*core.ExpertisePerQuarterPercentReduction)
 
 	bonus := 1.0 + 0.02*float64(dk.Talents.RageOfRivendare)
 	dk.RoRTSBonus = func(target *core.Unit) float64 {

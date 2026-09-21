@@ -2,6 +2,7 @@ package deathknight
 
 import (
 	"github.com/wowsims/wotlk/sim/core"
+	"github.com/wowsims/wotlk/sim/core/proto"
 	"github.com/wowsims/wotlk/sim/core/stats"
 )
 
@@ -11,35 +12,38 @@ type BloodwormPet struct {
 	dkOwner *Deathknight
 }
 
+// A bloodworm (28017) has no pet_levelstats row, so InitStatsForLevel's fallback stats and 2 * Str - 20
+// AP, with 61017 for hit and no DK pet scaling at all: no stats, haste or armor pen from its owner.
 func (dk *Deathknight) NewBloodwormPet(_ int) *BloodwormPet {
 	bloodworm := &BloodwormPet{
-		Pet:     core.NewPet("Bloodworm", &dk.Character, bloodwormPetBaseStats, dk.bloodwormStatInheritance(), false, true),
+		Pet: core.NewPet("Bloodworm", &dk.Character, stats.Stats{
+			stats.Stamina:     25,
+			stats.Agility:     22,
+			stats.Strength:    22,
+			stats.AttackPower: -20,
+			stats.MeleeCrit:   creatureCritChance,
+		}, func(stats.Stats) stats.Stats { return stats.Stats{} }, false, true),
 		dkOwner: dk,
 	}
 
 	bloodworm.EnableAutoAttacks(bloodworm, core.AutoAttackOptions{
 		MainHand: core.Weapon{
-			BaseDamageMin:  37,
-			BaseDamageMax:  42,
-			SwingSpeed:     2,
-			CritMultiplier: 2,
+			// the template's attack time; the damage is set when it's summoned
+			SwingSpeed:        2.66,
+			CritMultiplier:    2,
+			AttackPowerPerDPS: core.DefaultAttackPowerPerDPS,
 		},
 		AutoSwingMelee: true,
 	})
 
-	// Hit and Crit only
-	// bloodworm.AutoAttacks.MHConfig.ApplyEffects = func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-	// 	baseDamage := spell.Unit.MHWeaponDamage(sim, spell.MeleeAttackPower()) +
-	// 		spell.BonusWeaponDamage()
+	bloodworm.AddStatDependency(stats.Strength, stats.AttackPower, 2)
 
-	// 	spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeWhite)
-	// }
-
-	bloodworm.AddStatDependency(stats.Strength, stats.AttackPower, 1.0+1)
-	bloodworm.AddStatDependency(stats.Agility, stats.MeleeCrit, 1.0+(core.CritRatingPerCritChance/83.3))
+	// the orc's Command (65221) only goes to risen ghouls and the gargoyle
+	if dk.RacialTraits == proto.Race_RaceOrc {
+		bloodworm.PseudoStats.DamageDealtMultiplier /= 1.05
+	}
 
 	bloodworm.OnPetEnable = bloodworm.enable
-	bloodworm.OnPetDisable = bloodworm.disable
 
 	dk.AddPet(bloodworm)
 
@@ -60,27 +64,12 @@ func (bloodworm *BloodwormPet) Reset(_ *core.Simulation) {
 func (bloodworm *BloodwormPet) ExecuteCustomRotation(_ *core.Simulation) {
 }
 
-func (bloodworm *BloodwormPet) enable(sim *core.Simulation) {
-	// Snapshot extra % speed modifiers from dk owner
-	bloodworm.PseudoStats.MeleeSpeedMultiplier = 1
-	bloodworm.MultiplyMeleeSpeed(sim, bloodworm.dkOwner.PseudoStats.MeleeSpeedMultiplier)
-}
-
-func (bloodworm *BloodwormPet) disable(sim *core.Simulation) {
-	// Clear snapshot speed
-	bloodworm.PseudoStats.MeleeSpeedMultiplier = 1
-	bloodworm.MultiplyMeleeSpeed(sim, 1)
-}
-
-var bloodwormPetBaseStats = stats.Stats{
-	stats.MeleeCrit: 8 * core.CritRatingPerCritChance,
-}
-
-func (dk *Deathknight) bloodwormStatInheritance() core.PetStatInheritance {
-	return func(ownerStats stats.Stats) stats.Stats {
-		return stats.Stats{
-			stats.AttackPower: ownerStats[stats.AttackPower] * 0.112,
-			stats.MeleeHaste:  ownerStats[stats.MeleeHaste],
-		}
-	}
+// enable is InitStatsForLevel's NPC_BLOODWORM case: level - 30 -/+ a quarter of it, plus 0.6% of the
+// owner's attack power at the summon.
+func (bloodworm *BloodwormPet) enable(_ *core.Simulation) {
+	const level = core.CharacterLevel
+	fromAP := 0.006 * bloodworm.dkOwner.GetStat(stats.AttackPower)
+	weapon := bloodworm.AutoAttacks.MH()
+	weapon.BaseDamageMin = float64(level-30-level/4) + fromAP
+	weapon.BaseDamageMax = float64(level-30+level/4) + fromAP
 }

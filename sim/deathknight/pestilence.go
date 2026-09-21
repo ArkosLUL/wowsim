@@ -44,9 +44,9 @@ func (dk *Deathknight) registerPestilenceSpell() {
 					// Main target
 					if aoeTarget == target {
 						if hasGlyphOfDisease {
-							// Update expire instead of Apply to keep old snapshotted value
+							// spell_dk_pestilence: only the duration starts over
 							if dk.FrostFeverSpell.Dot(aoeTarget).IsActive() {
-								dk.FrostFeverSpell.Dot(aoeTarget).Rollover(sim)
+								refreshDiseaseDuration(sim, dk.FrostFeverSpell.Dot(aoeTarget), dk.FrostFeverExtended[aoeTarget.Index])
 								if dk.Talents.IcyTalons > 0 {
 									dk.IcyTalonsAura.Activate(sim)
 								}
@@ -58,7 +58,7 @@ func (dk *Deathknight) registerPestilenceSpell() {
 							}
 
 							if dk.BloodPlagueSpell.Dot(aoeTarget).IsActive() {
-								dk.BloodPlagueSpell.Dot(aoeTarget).Rollover(sim)
+								refreshDiseaseDuration(sim, dk.BloodPlagueSpell.Dot(aoeTarget), dk.BloodPlagueExtended[aoeTarget.Index])
 
 								if dk.Talents.CryptFever > 0 {
 									refreshCFEP = true

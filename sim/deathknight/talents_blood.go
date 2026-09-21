@@ -5,7 +5,6 @@ import (
 
 	//"time"
 
-	"math"
 	"slices"
 	"time"
 
@@ -422,9 +421,9 @@ func (dk *Deathknight) applyBloodworms() {
 	procSpell := dk.RegisterSpell(core.SpellConfig{
 		ActionID: core.ActionID{SpellID: 49543},
 		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, _ *core.Spell) {
-			// Summon Bloodworms
-			random := int(math.Round(sim.RandomFloat("Bloodworms count")*2.0)) + 2
-			for i := 0; i < random; i++ {
+			// 49543's value, 2 to 4 alike, is how many 50452 summons
+			count := 2 + int(sim.RandomFloat("Bloodworms count")*3)
+			for i := 0; i < count; i++ {
 				dk.Bloodworm[i].EnableWithTimeout(sim, dk.Bloodworm[i], time.Second*20)
 				dk.Bloodworm[i].CancelGCDTimer(sim)
 			}

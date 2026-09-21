@@ -161,8 +161,9 @@ Roll details the tables above don't show:
     and the doomguard: hit 8, spell hit 17, expertise 26, off ranged hit over a cap of 8 for a hunter owner,
     spell hit over 17 for one whose power type is mana (shamans and paladins included), else melee hit.
   - 67561, every risen ghoul plus the gargoyle and the army: spell hit 17 and expertise 26 off the owner's
-    melee hit over a cap of 8, and **no melee hit at all**. The dancing rune weapon carries neither aura, so
-    it inherits none of the three.
+    melee hit over a cap of 8, and **no melee hit at all**. The dancing rune weapon gets 61017 from its AI
+    (`npc_pet_dk_dancing_rune_weapon`). The owner's hit chance is `m_modMeleeHitChance`, so Nerves of Cold
+    Steel and Heroic Presence count.
 
   Only `IsPet()` recalculates, every 3 s; a guardian keeps what it got at summon.
 - Armor penetration (`Unit::CalcArmorReducedDamage`): a hunter pet and any risen ghoul use the owner's rating
@@ -178,22 +179,38 @@ Roll details the tables above don't show:
   `spell_dk_pet_scaling` leave `MOD_MELEE_HASTE` alone, so Frenzy and Ghoul Frenzy stack on top; 425792 blocks
   it too, since Windfury Totem and Improved Icy Talons reach the wolves as party auras and are already in the
   shaman's melee haste.
-- Left open in P7-0b, all of it needing a class-side marker core doesn't have:
-  - Core hands every pet the 61017 amounts, so the DK's ghouls, gargoyle, army and rune weapon carry melee
-    hit the server denies them.
-  - Only the permanent ghoul inherits ArP, since core can't tell the temporary Raise Dead ghoul from an army
-    ghoul. That also keeps Blood Gorged off every pet swing, because the talent needs a Blood build while
-    only an Unholy DK's ghoul is permanent: core hands the owner's white-swing bonus to the pet's swings,
-    but no preset can reach both halves.
-  - The hunter pet's inherited haste is continuous, not resnapshotted every 2 s, and the sim blocks Bloodlust
-    on an inheriting pet by ignoring `MultiplyAttackSpeed`, its closest match for `MOD_MELEE_RANGED_HASTE`.
-    The carrier blocks positive `MELEE_SLOW` too, and the sim's two buffs of that type are build-phase
-    multipliers rather than `MultiplyAttackSpeed` calls, so that guard missed them: Improved Moonkin Form
-    (50170-50172) and Swift Retribution (Retribution Aura 54043's third effect) reached an inheriting pet
-    both directly and through the owner's ranged speed, +3% twice. `applyPetBuffEffects` now strips them
-    the way it strips Bloodlust, keeping plain Moonkin Aura for the spell crit, which isn't blocked.
-    Both places now ask `Pet.inheritsOwnerAttackSpeed`, since it was two copies of that test drifting
-    apart that let it through.
+- A pet's melee crit is a flat 5% plus crit auras (`Unit::GetUnitCriticalChance`), nothing from agility,
+  and a creature's spell crit `m_baseSpellCritChance`, 5%. The DK's summons follow it; the hunter pet,
+  warlock pets, treants, spirit wolves and the infernal still take agility crit.
+- DK summons (`Guardian::InitStatsForLevel`, `pet_dk.cpp`, `spell_dk.cpp`); core tells 67561 and risen
+  ghouls apart by `Pet.HitScaling` and `Pet.RisenGhoul`, which the DK sets:
+  - Risen ghoul (26125, pet or guardian): pet_levelstats' 4665 health (+10 a point of Sta over 361), 331
+    Str, 247 Agi, 361 Sta, and `IsPetGhoul`'s AP of 589 + Str + Agi. It swings every 2.0 s for AP/14 with no
+    weapon damage: the pet's pet_levelstats 0-0, the guardian's the 0.13-0.20 `Creature::SelectLevel` rolled
+    at its template level 1. It inherits 70% of Str and 30% of Sta (Ravenous Dead +20% a rank, Glyph of the
+    Ghoul +40), whole percent of whole stats. Risen Ghoul Self Stun (47466) holds it 4.5 s after the summon.
+    The guardian runs `npc_pet_dk_ghoul`'s CombatAI, casting Claw every 5000 + rand() % 5000 ms from its
+    first attack; the pet's PetAI casts it from 75 energy.
+  - Army ghoul (24207): no pet_levelstats row, so 22 Str and Agi and 2 × Str − 20 AP, plus Army of the Dead
+    Passive's 6.5% of the owner's AP; a 60-100 weapon at 2.0 s; AggressorAI, so it never Claws.
+  - Bloodworm (28017): the same fallback stats and AP, a 2.66 s weapon of 30-70 plus 0.6% of the owner's AP
+    at the summon, and no DK pet scaling. 49543 summons 2 to 4, evenly.
+  - Gargoyle: Gargoyle Strike is 51-69 + 3 a level over 60, plus 0.453 of its spell power, which is 75% of
+    the owner's AP (Impurity +4% a rank on the 75), both truncated. `npc_pet_dk_ebon_gargoyle` decides every
+    400 ms from the summon: from 2 s in and once it has landed, it starts a cast at 80% when idle. 32 s in it
+    flies off, cutting its cast.
+  - A guardian's `spell_dk_pet_scaling` haste is fixed at the summon, and `MELEE_SLOW` hastes the gargoyle's
+    cast time too. The army is immune to Bloodlust by id. Of the DK's summons only risen ghouls and the
+    gargoyle get the orc's Command (65221).
+- The hunter pet's inherited haste is continuous, not resnapshotted every 2 s, and the sim blocks Bloodlust
+  on an inheriting pet by ignoring `MultiplyAttackSpeed`, its closest match for `MOD_MELEE_RANGED_HASTE`.
+  The carrier blocks positive `MELEE_SLOW` too, and the sim's two buffs of that type are build-phase
+  multipliers rather than `MultiplyAttackSpeed` calls, so that guard missed them: Improved Moonkin Form
+  (50170-50172) and Swift Retribution (Retribution Aura 54043's third effect) reached an inheriting pet
+  both directly and through the owner's ranged speed, +3% twice. `applyPetBuffEffects` now strips them
+  the way it strips Bloodlust, keeping plain Moonkin Aura for the spell crit, which isn't blocked.
+  Both places now ask `Pet.inheritsOwnerAttackSpeed`, since it was two copies of that test drifting
+  apart that let it through.
 - The sim's pet "+1.8% crit" hacks (`hunter/pet.go:140`, `shaman/fire_elemental_pet.go:151`, `shaman/spirit_wolves.go:45`) are Classic-only.
 
 **Hunter haste** (measured, `TestSimvalHunter`)
@@ -267,7 +284,8 @@ Roll details the tables above don't show:
   - **DoT ticks can crit:**
     - Moonfire/IS (Earth and Moon)
     - Blood Plague (Crypt Fever)
-    - Frost Fever (Runic Power Mastery; FF becomes magic damage class)
+    - Frost Fever (Runic Power Mastery; FF becomes melee damage class like Blood Plague: `DefenseType` 2,
+      which mod-spell-tweaks' docs mislabel magic)
     - Holy Vengeance/Blood Corruption (2H Weapon Spec)
     - Righteous Vengeance
     - Deadly Poison (Murder)
@@ -338,13 +356,14 @@ values. Human warrior, level 80, maxed skills, Worn Shortsword (Sword Specializa
 - Proc data (`tools/simval` over a `.simval procs` capture, 102 checks): every generated `spell_proc` row matches the
   live entry field for field, `core.ServerProcFor` reproduces the chance the server computed, and the PPM basis picks
   the main hand for a melee-class spell, the ranged slot for Steady Shot and max(base cast, 1.5 s) for Frostbolt.
-- Client vs server talent data (`tools/acore/talentdiff`): the live server's `Talent.dbc`, `TalentTab.dbc` and
-  `GlyphProperties.dbc` are byte-identical to stock, and every talent and glyph row of its `Spell.dbc` matches stock
-  too, so the sim's stock tree positions are the server's. The user's **client** differs: talents 1341 and 1818 swap
-  rows in tab 363 (the hunter Marksmanship tier swap), glyph 912 is new, and 26 talent-spell fields move — Runic Power
-  Mastery (49455, 50147) and Vicious Strikes (51745, 51746) gain aura 286 `ABILITY_PERIODIC_CRIT`, Rage of Rivendare
-  and Virulence change base points, Call of the Wild (53434) drops from a 300 s cooldown to 120 s. None of it reaches
-  the server, so the tooltips the user reads are not what the sim should model.
+- Client vs server talent data (`tools/acore/talentdiff`): the live server's `Talent.dbc`, `TalentTab.dbc`,
+  `GlyphProperties.dbc` and talent and glyph rows of `Spell.dbc` match stock. The user's **client** differs: talents
+  1341 and 1818 swap rows in tab 363 (the hunter Marksmanship tier swap), glyph 912 is new, and 26 talent-spell fields
+  move. But the server lays mod-spell-tweaks' `acore_world.*_dbc` rows over the DBC files talentdiff reads, so most of
+  it reaches the server (the spelldump shows it): Virulence 2/4/6% spell hit, Nerves of Cold Steel 2/4/6% hit, Rage
+  of Rivendare 2-10 expertise, Runic Power Mastery's aura 286 `ABILITY_PERIODIC_CRIT` on Frost Fever, Boar's Speed's
+  second effect, and `talent_dbc`'s tier swap. Client-only: Vicious Strikes' aura 286 (the server's is on Crypt Fever
+  instead) and Call of the Wild (53434) at 120 s, which stays 300 s.
 - Recorded runs (`TestRecordedRun`, 5 minutes on the boss dummy inside Naxxramas, in playerbot-factory epic gear;
   captures in `sim/core/testdata/chronicle/`): a Protection paladin did 144.7 DPS over 295.7 s with swing intervals of
   1.5-1.6 s — 143.7 of it on the dummy, the rest Consecration splashing a nearby Maggot, so a sim comparison wants
@@ -355,6 +374,14 @@ values. Human warrior, level 80, maxed skills, Worn Shortsword (Sword Specializa
 - A hunter recorded run dealt no damage at 20 yards: Auto Shot (75) comes back `INTERRUPTED` and the shot abilities
   produce neither a cast nor a failure, so the factory's hunter has no usable ranged weapon or ammo. The ranged capture
   is a finding for the hunter work item, not for the harness.
+- Death knight probes (`TestSimvalDeathKnight`, a human DK behind the boss dummy): Scourge Strike and Obliterate
+  roll the yellow table, Icy Touch the magic one with partial resists, and `tools/simval` passes all 26 checks on
+  those records. Both diseases are melee damage class and can't miss. Rage of Rivendare 5/5 adds 10 expertise and
+  Virulence 3/3 takes 600 bp off Icy Touch's miss threshold, 2 a point as the spell_dbc rows say. 47632 always hits
+  and resists partially. The Death Coil cast (49895) never misses the dummy: it's a positive spell, which
+  `Unit::SpellHitResult` lets miss only a hostile target, and the dummies' faction 7 isn't, so on a raid boss it
+  rolls the magic table. `tools/simval` doesn't model that, `ALWAYS_HIT` or a binary spell's lack of partials,
+  so those records fail it.
 
 ## Retail deviations
 
@@ -394,6 +421,13 @@ The fork copies the server. Patching any of these in [ac] means updating the mat
 | 29 | Auto Shot vs melee timers | every Auto Shot restarts both | untouched | `Unit::_UpdateAutoRepeatSpell` |
 | 30 | Off hand at the pull | a ready off hand waits max(own timer, main hand timer + half the main hand's hasted attack time) | a random hand waits a random 0-50% of the main hand's weapon speed | `Unit::Attack` |
 | 31 | Weapon swap | swing timers keep running; the new weapon only changes the attack time | both melee timers restart | `Player::_ApplyWeaponDamage` |
+| 32 | Death Coil with Sigil of the Wild Buck | +80 twice: the flat modifier covers the dummy (49895), whose value becomes the damage spell's custom base points, and the damage spell (47632) | +80 once | `Unit::ApplyEffectModifiers`, `spell_dk_death_coil` |
+| 33 | Pet melee crit | 5% plus crit auras, nothing from agility | agility crit | `Unit::GetUnitCriticalChance` |
+| 34 | Gargoyle casting | a cast starts on a 400 ms decision, 80% of the time | back to back | `npc_pet_dk_ebon_gargoyle` |
+| 35 | Ghoul Claw and the army | the guardian ghoul Claws every 5-10 s, the pet ghoul from 75 energy; army ghouls never Claw and have 24 AP plus 6.5% of the owner's | Claw on energy; the army's AP includes agility | `CombatAI`, `PetAI::UpdateAI`, `AggressorAI`, `Guardian::UpdateAttackPowerAndDamage` |
+| 36 | Razor Frost | 2% of a main-hand swing, attack power included, whichever weapon procced it; Frost Vulnerability only helps its caster's frost spells | 2% of the procing weapon's base damage; the vulnerability helps all frost damage | `Spell::EffectWeaponDmg`, 51714's `MOD_DAMAGE_FROM_CASTER` class mask |
+| 37 | Pestilence with Glyph of Disease | `Aura::RefreshDuration`: the target's diseases keep their amount, crit and tick interval, and restart at their max duration, Glyph of Scourge Strike's extensions included | the refresh takes the current attack power and haste | `spell_dk_pestilence` |
+| 38 | Wandering Plague | 1 s cooldown after a proc | 0.5 s | `spell_dk_wandering_plague_aura` |
 
 Not yet settled against retail, check before patching: the 200 ms other-hand push (`PlayerUpdates.cpp`), the DoT
 refresh tick-timer rule, the max(cast, 1500 ms) PPM basis for spell-triggered aura procs, the rule-based binary

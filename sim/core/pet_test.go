@@ -35,6 +35,7 @@ func TestPetOwnerHitScaling(t *testing.T) {
 		name                           string
 		class                          proto.Class
 		power                          PowerBarType
+		scaling                        PetHitScaling
 		ownerHit                       stats.Stats
 		hitPct, spellHitPct, expertise float64
 	}{
@@ -82,9 +83,27 @@ func TestPetOwnerHitScaling(t *testing.T) {
 			spellHitPct: 10,
 			expertise:   16,
 		},
+		{
+			name:  "a risen ghoul's 67561 hands out no melee hit",
+			class: proto.Class_ClassDeathknight, power: RunicPower, scaling: PetHitScalingMasterSpell06,
+			ownerHit:    stats.Stats{stats.MeleeHit: 5 * MeleeHitRatingPerHitChance, stats.SpellHit: 17 * SpellHitRatingPerHitChance},
+			hitPct:      0,
+			spellHitPct: 10,
+			expertise:   16,
+		},
+		{
+			name:  "nor does it cap past 8% melee hit",
+			class: proto.Class_ClassDeathknight, power: RunicPower, scaling: PetHitScalingMasterSpell06,
+			// 9% of an 8% cap -> 19.125% spell hit, 29.25 expertise
+			ownerHit:    stats.Stats{stats.MeleeHit: 9 * MeleeHitRatingPerHitChance},
+			hitPct:      0,
+			spellHitPct: 19,
+			expertise:   29,
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			pet := newTestPet(newTestOwner(tc.class, tc.power, tc.ownerHit))
+			pet.HitScaling = tc.scaling
 			scaling := pet.ownerHitScaling()
 
 			for _, got := range []struct {
@@ -118,6 +137,34 @@ func TestPetInheritedSwingSpeed(t *testing.T) {
 		if got := inheritedSwingSpeed(tc.owner); !WithinToleranceFloat64(tc.want, got, 1e-9) {
 			t.Errorf("owner swing speed %.4f: got %.4f, want %.4f", tc.owner, got, tc.want)
 		}
+	}
+}
+
+// Unit::CalcArmorReducedDamage hands the owner's armor pen to a hunter's pet and to any risen ghoul,
+// Raise Dead's guardian included, but not to the army or a hunter's guardians.
+func TestPetArmorPenInheritance(t *testing.T) {
+	for _, tc := range []struct {
+		name                 string
+		class                proto.Class
+		summonedAsPet, ghoul bool
+		want                 bool
+	}{
+		{"hunter pet", proto.Class_ClassHunter, true, false, true},
+		{"hunter guardian", proto.Class_ClassHunter, false, false, false},
+		{"permanent ghoul", proto.Class_ClassDeathknight, true, true, true},
+		{"raise dead ghoul", proto.Class_ClassDeathknight, false, true, true},
+		{"army ghoul", proto.Class_ClassDeathknight, false, false, false},
+		{"warlock pet", proto.Class_ClassWarlock, true, false, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			pet := newTestPet(newTestOwner(tc.class, ManaBar, stats.Stats{}))
+			pet.SummonedAsPet = tc.summonedAsPet
+			pet.RisenGhoul = tc.ghoul
+			pet.inheritOwnerArmorPen()
+			if got := pet.armorPenSource == &pet.Owner.Unit; got != tc.want {
+				t.Errorf("inherits the owner's armor pen = %v, want %v", got, tc.want)
+			}
+		})
 	}
 }
 

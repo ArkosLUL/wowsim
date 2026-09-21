@@ -30,7 +30,8 @@ func (dk *Deathknight) ApplyFrostTalents() {
 
 	// Nerves Of Cold Steel
 	if dk.nervesOfColdSteelActive() {
-		dk.AddStat(stats.MeleeHit, core.MeleeHitRatingPerHitChance*float64(dk.Talents.NervesOfColdSteel))
+		// mod-spell-tweaks' spell_dbc rows for 49226/50137/50138: 2% a rank, where stock gives 1%
+		dk.AddStat(stats.MeleeHit, core.MeleeHitRatingPerHitChance*2*float64(dk.Talents.NervesOfColdSteel))
 		dk.AutoAttacks.OHConfig().DamageMultiplier *= dk.nervesOfColdSteelBonus()
 	}
 

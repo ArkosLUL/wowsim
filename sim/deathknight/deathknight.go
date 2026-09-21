@@ -10,12 +10,6 @@ import (
 	"github.com/wowsims/wotlk/sim/core/stats"
 )
 
-const (
-	PetSpellHitScale   = 17.0 / 8.0 * core.SpellHitRatingPerHitChance / core.MeleeHitRatingPerHitChance    // 1.7
-	PetExpertiseScale  = 3.25 * core.ExpertisePerQuarterPercentReduction / core.MeleeHitRatingPerHitChance // 0.8125
-	PetSpellHasteScale = 1.3
-)
-
 var TalentTreeSizes = [3]int{28, 29, 31}
 
 type DeathknightInputs struct {
@@ -336,7 +330,8 @@ func (dk *Deathknight) ResetBonusCoeffs() {
 }
 
 func (dk *Deathknight) Reset(sim *core.Simulation) {
-	dk.LastTickTime = -1
+	// far enough back that the first disease tick can proc Wandering Plague, pre-pull ones included
+	dk.LastTickTime = -core.NeverExpires
 	dk.DeathStrikeHeals = dk.DeathStrikeHeals[:0]
 	dk.MakeTSRoRAssumptions = sim.Raid.Size() <= 1
 }
