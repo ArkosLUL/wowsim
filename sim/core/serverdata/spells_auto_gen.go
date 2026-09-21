@@ -5497,16 +5497,6 @@ var spells = []Spell{
 			{Effect: 31, BasePoints: 124, DieSides: 1, DamageMultiplier: 1},
 		},
 	},
-	// Wild Quiver (Rank 3)
-	{
-		ID: 53217, Family: 9, SchoolMask: 1, Flags: FlagBinary | FlagPassive | FlagPositive,
-		Attributes: [8]uint32{0xd0}, AttributesCu: 0x100000,
-		ProcFlags: 0x11140, ProcChance: 12,
-		Effects: [3]Effect{
-			{Effect: 6, Aura: 42, BasePoints: 9, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, MiscValue: 1, TriggerSpell: 53254, ClassMask: [3]uint32{0x1000}},
-			{Effect: 6, Aura: 274, DamageMultiplier: 1, ClassMask: [3]uint32{0, 0, 0x80}},
-		},
-	},
 	// Improved Steady Shot
 	{
 		ID: 53220, Family: 9, SchoolMask: 1, Flags: FlagBinary | FlagPositive,
