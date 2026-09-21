@@ -24,7 +24,7 @@ Where the code this fork touches lives. Everything else follows the upstream lay
 | `cast.go` | casts. `castTiming`, built per spell at registration, is the one place cast time, the GCD and swing resets are worked out, so `Spell.CastTime()` and `EffectiveCastTime()` tell the APL what the cast really costs |
 | `sim.go` | the run loop, and `NextServerTick` |
 | `serverdata_allowlist.go` | the shared entries for spells whose data the sim turns down, with `sim/<class>/serverdata_allowlist.go` per class and `sim/serverdata_test.go` checking every preset, each again over its class's glyphs, plus every race, hunter pet, pet talent and warlock summon |
-| `database.go`, `database_load.go` | item DB. `Item.TotalStats()` is item + enchant + gems + socket bonus. The `with_db` build tag embeds the DB. The global maps sit behind `dbMu`: after init, write with `AddToDatabase` and read with `Lookup*` |
+| `database.go`, `database_load.go` | item DB. `Item.TotalStats()` is item + enchant + gems + socket bonus. The `with_db` build tag embeds the DB. The global maps sit behind `dbMu`: after init, write with `AddToDatabase` and read with `Lookup*`. `AddToDatabase` keeps cached entries, except that a later copy with `ServerStats` replaces an item without them |
 | `reforging.go` | mod-reforging rules, mirrored in `ui/core/proto_utils/reforging.ts` |
 | `professions.go` | any number of professions; falls back to `profession1`/`profession2` |
 | `item_swaps.go`, `bulksim.go` | item swaps (the same item id never swaps); bulk sim, where candidates inherit a reforge valid on them |
@@ -37,12 +37,14 @@ Quirk: `UnitLevelFloat64` in `utils.go` treats every level outside 80–82 as +3
 - `sim/<class>/`: class code. Core sets the class stat dependencies: `addClassStatDependencies` adds
   Str/Agi → AP/RAP and Agi → crit, and `NewCharacter` sets melee haste and ArP per class from the
   generated scalars.
-  - Hunter ×1.15 ranged speed: `hunter/hunter.go`.
+  - Hunter quiver and ammo pouch haste: `quiverHaste` in `hunter/hunter.go`.
 - Pets: `hunter/pet.go`, `shaman/fire_elemental_pet.go`, `shaman/spirit_wolves.go`, `warlock/pet.go`,
   `deathknight/ghoul_pet.go`.
 - Item effects: `sim/common/{wotlk,tbc}`. Class set bonuses: `sim/<class>/items.go`. An effect's closure
   runs once per character, concurrently across sims (optimizer, stat weights, web requests), so copy a
-  captured config before changing it. Proc chance, PPM and ICD come from `sim/core/serverdata` through
+  captured config before changing it. Register effects at init, never from a constructor: the optimizer
+  asks `HasItemEffect` and `HasEnchantEffect` before it builds a character, and a late write races
+  parallel sims. Proc chance, PPM and ICD come from `sim/core/serverdata` through
   `core.ServerProcFor` (`sim/core/ppm.go`); name each spell id as a constant so `spellids` counts it.
 - Boss AIs, still with Classic numbers: `sim/encounters/{naxxramas,ulduar,toc,icc}`.
 - `sim/web/main.go` is the server, with flags `--usefs`, `--wasm`, `--host` and `--launch`.

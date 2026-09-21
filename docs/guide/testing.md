@@ -25,8 +25,8 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
     running moves them all by a fifth or more at once, which is enough to hide or invent a regression.
     Each spec case copies its golden suite's default player; `./sim/` is an 8-player raid on its specs'
     golden APLs and `StandardTalents`. All five run `iterations=1` and `iterations=100`, and the raid's
-    100 takes about 0.3 s an op, so give it a `-benchtime` of several. The Feral, Feral Tank,
-    Enhancement, Fury and Protection Warrior cases still sim one iteration.
+    100 takes about 0.3 s an op, so give it a `-benchtime` of several. Every package's bench goes
+    through `core.RaidBenchmarkIterations`.
   - A/B against a base without touching the tree: `go test -c -overlay overlay.json`, whose `Replace`
     maps each changed file to a `git show <base>:<path>` copy under `tmp/`. Interleave base and new runs
     and compare medians, which holds up on a busy machine.

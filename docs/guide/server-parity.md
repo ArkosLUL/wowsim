@@ -81,6 +81,10 @@ class by simval.
     rune weapon, and the hunter pet, so far.
   - The DK's summons carry scaling aura 67561, not 61017: no melee hit. Risen ghouls, not the army, take the
     owner's ArP (`Pet.HitScaling`, `Pet.RisenGhoul`).
+  - Guardians take party and raid auras like pets (`AnyGroupedUnitInObjectRangeCheck`).
+  - Haste carriers (the hunter pet, the DK's ghouls and gargoyle; `Unit.HasteCarrier`) ignore direct haste
+    and slows, Bloodlust included, and take the owner's attack speed (`Pet.OwnerHasteSource`): every 2 s
+    for a pet, once at the summon for a guardian.
 - **Enchant PPMs:** Mongoose 1, Icebreaker 3, Deathfrost 3. An enchant procs only from the weapon that
   hit.
 - **Dungeon scale** (`NewEncounter`): health and armor become `round(float32(value) × multiplier)`, half
@@ -124,11 +128,14 @@ which is what unit tests want).
   waits out any hardcast, Auto Shot only one without `SPELL_ATTR2_DO_NOT_RESET_COMBAT_TIMERS`. With that
   attribute a player's melee timers stand still through the cast instead (Slam). A cast started by the
   main hand's last APL check comes before that swing: the server handles the session before
-  `Player::Update`. Channels don't hold swings in core: Army of the Dead holds the DK's melee in class
-  code, and Volley stands the ranged timer still through its channel (`suspendRangedAttackTimer`).
+  `Player::Update`. A `CancelAutoSwing` from that check stops the swing. A haste change rescales only the
+  time left on a frozen timer.
+- A channel holds melee too. In the sim a channel opts in with `Spell.HoldMeleeUntil` (Army of the Dead;
+  Bladestorm isn't a server channel), and Volley stands the ranged timer still (`suspendRangedAttackTimer`).
 - The GCD follows `Spell::TriggerGlobalCooldown`: hasted only with `HasteGCD`, then kept within
   [1000, 1500] ms. Cast time scales by damage class: spell haste for magic, ranged attack speed for
-  ranged, nothing for melee.
+  ranged, nothing for melee. Hasted GCDs and cast times truncate to whole ms before the clamp and the
+  tick (`Unit::ModSpellCastTime`), which can save a tick.
 
 ## Items
 

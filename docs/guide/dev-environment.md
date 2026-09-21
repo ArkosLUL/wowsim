@@ -75,6 +75,7 @@ npx protoc --ts_out ui/core/proto --proto_path proto proto/ui.proto
     see changes.
   - Keep the `/wotlk/` path behind a reverse proxy.
   - Without `SIM_COMMIT`, optimizer results say sim "unknown": `.dockerignore` drops `.git`.
+  - After a rebuild, reload every open sim tab: a page from the old build keeps sending its old requests.
 - **Dev server** on :3334, since prod holds :3333. `--usefs` serves `./dist` from the mounted checkout.
   There's no hot reload: `docker rm -f wotlk-dev` and start it again after changes. With a worktree
   mounted, add `-e SIM_COMMIT=$(git -C <worktree> rev-parse HEAD)`: its `.git` points outside the mount,
