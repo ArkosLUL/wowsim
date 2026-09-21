@@ -388,6 +388,10 @@ The fork copies the server. Patching any of these in [ac] means updating the mat
 | 25 | Tick interval and count | whole ms, count = maxDuration/amplitude | fractional interval, the declared tick count | `SpellAuraEffects.cpp:650`, `:7074` |
 | 26 | Haste on a dot that isn't channeled | shortens the interval only, so the fixed duration gains ticks | interval and duration scale together | `SpellAuraEffects.cpp:650`, `SpellAuras.cpp:880` |
 | 27 | DoT tick crits | only with `SPELL_AURA_ABILITY_PERIODIC_CRIT` (286) or on Rupture | any dot can crit | `AuraEffect::CanPeriodicTickCrit` |
+| 28 | Swings during a hardcast that doesn't reset them | held: a swing due mid-cast goes on the update the cast lands, after its effects. Melee waits out any cast; Auto Shot only one without `ATTR2_DO_NOT_RESET_COMBAT_TIMERS`, but always follows a cast landing on its own update. With that attribute, a player's melee timers stand still for the updates the cast spans (Slam) | swings go on mid-cast, and before a cast landing the same moment; Slam pushes them back by its unrounded cast time | `Player::Update`, `Unit::Update` (`suspendAttackTimer`, spell events before `_UpdateSpells`), `Unit::IsNonMeleeSpellCast`, `UnitAI::DoMeleeAttackIfReady` |
+| 29 | Auto Shot vs melee timers | every Auto Shot restarts both | untouched | `Unit::_UpdateAutoRepeatSpell` |
+| 30 | Off hand at the pull | a ready off hand waits max(own timer, main hand timer + half the main hand's hasted attack time) | a random hand waits a random 0-50% of the main hand's weapon speed | `Unit::Attack` |
+| 31 | Weapon swap | swing timers keep running; the new weapon only changes the attack time | both melee timers restart | `Player::_ApplyWeaponDamage` |
 
 Not yet settled against retail, check before patching: the 200 ms other-hand push (`PlayerUpdates.cpp`), the DoT
 refresh tick-timer rule, the max(cast, 1500 ms) PPM basis for spell-triggered aura procs, the rule-based binary

@@ -427,7 +427,8 @@ func (unit *Unit) MultiplyRangedSpeed(sim *Simulation, amount float64) {
 func (unit *Unit) MultiplyAttackSpeed(sim *Simulation, amount float64) {
 	if unit.ownerSwingSpeed != nil {
 		// A pet that inherits its owner's attack speed is immune to the auras that carry both melee
-		// and ranged haste, Bloodlust above all. It gets them through the owner instead.
+		// and ranged haste, slows as much as Bloodlust: Unit::ApplySpellImmune ignores the carrier's
+		// SPELL_BLOCK_TYPE_POSITIVE. The buffs reach it through the owner's speed instead.
 		return
 	}
 	unit.PseudoStats.MeleeSpeedMultiplier *= amount

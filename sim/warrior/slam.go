@@ -23,11 +23,6 @@ func (warrior *Warrior) registerSlamSpell() {
 				CastTime: time.Millisecond*1500 - time.Millisecond*500*time.Duration(warrior.Talents.ImprovedSlam),
 			},
 			IgnoreHaste: true,
-			ModifyCast: func(sim *core.Simulation, spell *core.Spell, cast *core.Cast) {
-				if cast.CastTime > 0 {
-					warrior.AutoAttacks.DelayMeleeBy(sim, cast.CastTime)
-				}
-			},
 		},
 
 		BonusCritRating:  core.TernaryFloat64(warrior.HasSetBonus(ItemSetWrynnsBattlegear, 4), 5, 0) * core.CritRatingPerCritChance,
