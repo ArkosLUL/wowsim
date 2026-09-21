@@ -51,6 +51,7 @@ Before starting, read every doc whose trigger matches the task.
 | [acraid README](tools/database/acraid/README.md) | exporting the raid roster |
 | [accatalog README](tools/database/accatalog/README.md) | regenerating the server item catalog, or changing its tier rules |
 | [acbis README](tools/database/acbis/README.md) | exporting the BiS tooltip dataset |
+| [uicheck README](tools/uicheck/README.md) | checking a UI change in a real browser |
 
 ## Keeping the docs live
 

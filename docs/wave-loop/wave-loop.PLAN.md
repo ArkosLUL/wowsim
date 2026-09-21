@@ -72,12 +72,9 @@ eleven class items on top and a profile can no longer say what cost what.
 
 ## Current wave
 
-- Wave: G, not started. Wave F2 (base `0782b5be8`) landed on `master`.
-- Base SHA: set at wave start.
-- Workflow runId: none. Wave F2 ran as `wf_5bebfbfc-677`.
-- At G's start, add `tools/uicheck`'s README to CLAUDE.md's doc map ("checking a UI change in a real
-  browser"). F2 held it back: another session had CLAUDE.md uncommitted in [sim], which would have
-  blocked the land.
+- Wave: G, running.
+- Base SHA: the wave's setup commit on top of `683e63a89`.
+- Workflow runId: set at launch.
 
 ## BiS baseline
 
@@ -158,12 +155,15 @@ multi-iteration cases, which starts a new table.
 | PAR-PERF | merged | `8a963ff77` | goldens unchanged on top of PAR-P7-0c's; what changes results went to PAR-PERF-2 |
 | BIS-picker-switch | merged | `f1c9d4f4d` | the orchestrator kept Save for an equipped improved pick |
 | wave F2 cross-review | | `0fe9b481a` | no code bugs; a held-swing edge case to PAR-P7-WAR; Fury's `J_preset` drop traced to normalizer noise |
+| PAR-P7-DK | running | | |
+| PAR-P7-HUN | running | | |
+| BIS-batch-ui | running | | |
+| PAR-PERF-2 | running | | |
 
 Later WIs are added as their wave starts.
 
 ## User actions
 
-- "continue" for wave G.
 - Decide: should the gear picker show PvP gear at its catalog tier instead of hiding it at every
   phase? 16 gems whose designs sell only for PvP currency hide with it
   ([BIS-picker-switch](../bis-optimizer/bis-optimizer.PLAN.md#bis-picker-switch-wave-f2-done)).

@@ -457,7 +457,9 @@ floor, so `checkFloors` builds a whole environment per candidate through `Pool.f
 the sheet" helpers (`Pool.finalStats`, `surrogate.sheet`, `optimizer.playerSheet`) onto
 `core.ComputePlayerSheet`.
 
-**Owns:** `ui/raid/optimizer_batch.ts`, registered in `raid_sim_ui.ts`.
+**Owns:** `ui/raid/optimizer_batch.ts` and its registration in `raid_sim_ui.ts`;
+`ui/core/optimizer/pool_builder.ts`, to share `buildOptimizeRequest`; `sim/optimizer/**` and
+`sim/core/sheet.go`, for the memo, the sheet helpers and the two fixes below.
 
 Jobs are non-healers × phases, with warm starts and a localStorage resume keyed by a roster fingerprint. The
 grid, actions and export are as decided above. A job retries after a 409 and after a cancel it didn't
