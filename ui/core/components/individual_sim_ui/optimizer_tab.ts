@@ -51,6 +51,25 @@ const EFFORTS: Array<{ effort: OptimizerEffort; label: string }> = [
 	{ effort: OptimizerEffort.OptimizerEffortThorough, label: 'Thorough (5 to 10 minutes)' },
 ];
 
+// "Quick", "Normal" or "Thorough"
+function effortName(effort: OptimizerEffort): string {
+	return EFFORTS.find(e => e.effort == effort)?.label.split(' ')[0] || '';
+}
+
+// Said when nothing beat the starting gear, so the set shown doesn't read as a recommendation.
+// trimmed: the run started from that gear minus what the pool left out, so Equip still changes that much.
+function notImprovedText(effort: OptimizerEffort, cancelled: boolean, trimmed: boolean): string {
+	const gear = trimmed
+		? 'the set below is just that gear, minus what the pool left out (listed at the bottom), which is all Equip would change.'
+		: 'the set below is just that gear.';
+	if (cancelled) {
+		return `Nothing had beaten your starting gear by more than the noise when the run stopped, so ${gear}`;
+	}
+	const text = `Nothing beat your starting gear by more than the noise at ${effortName(effort)} effort, so ${gear}`;
+	const higher = EFFORTS.filter(e => e.effort > effort).map(e => effortName(e.effort));
+	return higher.length > 0 ? `${text} ${higher.join(' or ')} effort sims longer and might find something.` : text;
+}
+
 const METRIC_LABELS: Array<[keyof OptimizerMetrics, string]> = [
 	['dps', 'DPS'],
 	['hps', 'HPS'],
@@ -126,6 +145,9 @@ export class OptimizerTab extends SimTab {
 	private cancelRequested = false;
 	// null until the worker check answers
 	private serverAvailable: boolean | null = null;
+	// Equip and Save for each loadout on screen, hidden while it's what the player has on. An improved
+	// pick keeps Save, so it can still be saved as the phase's BiS after Equip.
+	private loadoutActions: Array<{ loadout: OptimizerLoadoutResult; offers: Array<HTMLElement>; worn: HTMLElement }> = [];
 
 	constructor(parentElem: HTMLElement, simUI: IndividualSimUI<Spec>, gearTab: GearTab) {
 		super(parentElem, simUI, { identifier: 'optimizer-tab', title: 'BiS Optimizer' });
@@ -166,6 +188,10 @@ export class OptimizerTab extends SimTab {
 			this.serverAvailable = available;
 			this.updateAvailability();
 		});
+		const player = this.simUI.player;
+		[player.gearChangeEmitter, player.raceChangeEmitter, player.racialTraitsChangeEmitter].forEach(emitter =>
+			emitter.on(() => this.updateLoadoutActions()),
+		);
 	}
 
 	private getSettingsKey(): string {
@@ -616,11 +642,13 @@ export class OptimizerTab extends SimTab {
 
 	private showResult(result: OptimizerResult, built: BuiltRequest) {
 		this.resultsBody.replaceChildren();
+		this.loadoutActions = [];
 		const phase = result.settings?.contentPhase || built.request.settings!.contentPhase;
+		const effort = result.settings?.effort ?? built.request.settings!.effort;
 
 		const provenance: Array<string> = [PHASE_LABELS[phase] || `P${phase}`];
 		if (result.settings) {
-			provenance.push(EFFORTS.find(e => e.effort == result.settings!.effort)?.label.split(' ')[0] || '');
+			provenance.push(effortName(result.settings.effort));
 		}
 		if (result.simCommit) {
 			// short hash, keeping a -dirty suffix
@@ -654,18 +682,24 @@ export class OptimizerTab extends SimTab {
 					beatsSeed ? 'Beats your starting gear by more than the noise.' : 'Replaces your starting gear, which breaks a rule (see above).',
 				),
 			);
+		} else if (result.best) {
+			this.resultsBody.appendChild(
+				newElement('div', 'optimizer-improved optimizer-not-improved', notImprovedText(effort, result.cancelled, built.seedChanges.length > 0)),
+			);
 		}
 
 		if (result.best) {
 			this.resultsBody.appendChild(this.renderActions(result, phase));
-			this.resultsBody.appendChild(this.renderLoadout('Best', result.best, result.seed));
+			this.resultsBody.appendChild(this.renderLoadout(result.improved ? 'Best' : 'Your starting gear', result.best, result.seed));
 		}
+		// kept when nothing won: each then swaps one slot of the starting gear
 		if (result.alternatives.length > 0) {
-			this.resultsBody.appendChild(this.renderAlternatives(result.alternatives, result.best));
+			this.resultsBody.appendChild(this.renderAlternatives(result.alternatives, result.best, result.improved));
 		}
 		if (result.top.length > 0) {
-			this.resultsBody.appendChild(this.renderTop(result.top, result.best));
+			this.resultsBody.appendChild(this.renderTop(result.top, result.best, result.improved));
 		}
+		this.updateLoadoutActions();
 		if (result.racialScreen.length > 0) {
 			const table = newElement('table', 'table table-sm optimizer-table');
 			table.appendChild(this.row('th', ['Racial traits', 'Score', 'Finalist']));
@@ -690,18 +724,45 @@ export class OptimizerTab extends SimTab {
 		const actions = newElement('div', 'optimizer-actions');
 		const note = newElement('span', 'optimizer-hint');
 		const name = `P${phase} BiS (optimizer)`;
+		const equip = button('Equip', 'btn-primary', () => this.equip(best));
+		const save = button(`Save as "${name}"`, 'btn-secondary', () => {
+			this.saveGearSet(name, best.equipment || EquipmentSpec.create());
+			note.textContent = "Saved under the Gear tab's Gear Sets.";
+		});
+		const worn = newElement(
+			'span',
+			'optimizer-hint',
+			result.improved ? 'You have this on now.' : "That's the gear you have on, so there's nothing to equip or save.",
+		);
+		this.loadoutActions.push({ loadout: best, offers: result.improved ? [equip] : [equip, save], worn });
 		actions.append(
-			button('Equip', 'btn-primary', () => this.equip(best)),
-			button(`Save as "${name}"`, 'btn-secondary', () => {
-				this.saveGearSet(name, best.equipment || EquipmentSpec.create());
-				note.textContent = "Saved under the Gear tab's Gear Sets.";
-			}),
+			equip,
+			save,
+			worn,
 			button('Export JSON', 'btn-secondary', () =>
 				downloadString(OptimizerResult.toJsonString(result, { prettySpaces: 2 }), `optimizer-result-p${phase}.json`),
 			),
 			note,
 		);
 		return actions;
+	}
+
+	private updateLoadoutActions() {
+		for (const { loadout, offers, worn } of this.loadoutActions) {
+			const wearing = this.isWorn(loadout);
+			offers.forEach(elem => (elem.hidden = wearing));
+			worn.hidden = !wearing;
+		}
+	}
+
+	// Whether Equip would change nothing: the same gear, compared the way Equip loads it, and the same
+	// racial traits.
+	private isWorn(loadout: OptimizerLoadoutResult): boolean {
+		const player = this.simUI.player;
+		if (loadout.racialTraits != Race.RaceUnknown && loadout.racialTraits != player.getEffectiveRacialTraits()) {
+			return false;
+		}
+		return this.simUI.sim.db.lookupEquipmentSpec(loadout.equipment || EquipmentSpec.create()).equals(player.getGear());
 	}
 
 	private equip(best: OptimizerLoadoutResult) {
@@ -825,10 +886,10 @@ export class OptimizerTab extends SimTab {
 		return this.section('Character sheet', table);
 	}
 
-	private renderAlternatives(alternatives: Array<OptimizerSlotAlternative>, best: OptimizerLoadoutResult | undefined): HTMLElement {
+	private renderAlternatives(alternatives: Array<OptimizerSlotAlternative>, best: OptimizerLoadoutResult | undefined, improved: boolean): HTMLElement {
 		const table = newElement('table', 'table table-sm optimizer-table');
 		const raid = alternatives.some(a => a.raidDpsDelta || a.raidDpsDeltaSe);
-		table.appendChild(this.row('th', ['Slot', 'Instead', 'Score vs best', ...(raid ? ['Raid DPS'] : []), '']));
+		table.appendChild(this.row('th', ['Slot', 'Instead', improved ? 'Score vs best' : 'Score vs your gear', ...(raid ? ['Raid DPS'] : []), '']));
 		const bestGear = best?.equipment ? this.simUI.sim.db.lookupEquipmentSpec(best.equipment) : null;
 		for (const alt of alternatives) {
 			const tr = newElement('tr');
@@ -856,7 +917,7 @@ export class OptimizerTab extends SimTab {
 			tr.appendChild(cell);
 			table.appendChild(tr);
 		}
-		return this.section('Runners-up per slot', table, 'Each swaps one slot of the best set.');
+		return this.section('Runners-up per slot', table, improved ? 'Each swaps one slot of the best set.' : 'Each swaps one slot of your starting gear.');
 	}
 
 	// The icon and hover tooltip the gear tab gives an item, sized for a table row.
@@ -881,7 +942,7 @@ export class OptimizerTab extends SimTab {
 		return wrapper;
 	}
 
-	private renderTop(top: Array<OptimizerLoadoutResult>, best: OptimizerLoadoutResult | undefined): HTMLElement {
+	private renderTop(top: Array<OptimizerLoadoutResult>, best: OptimizerLoadoutResult | undefined, improved: boolean): HTMLElement {
 		const list = newElement('ol', 'optimizer-list');
 		const bestItems = best?.equipment?.items || [];
 		for (const loadout of top) {
@@ -892,12 +953,15 @@ export class OptimizerTab extends SimTab {
 			if (loadout.scoreDelta || loadout.scoreDeltaSe) {
 				parts.push(`score ${formatDelta(loadout.scoreDelta, loadout.scoreDeltaSe, 2)} over your gear`);
 			}
-			parts.push(differs.length > 0 ? differs.join(', ') : 'the best set');
+			parts.push(differs.length > 0 ? differs.join(', ') : improved ? 'the best set' : 'your starting gear');
 			const li = newElement('li', undefined, parts.join('; ') + ' ');
-			li.appendChild(button('Equip', 'btn-link btn-sm', () => this.equip(loadout)));
+			const equip = button('Equip', 'btn-link btn-sm', () => this.equip(loadout));
+			const worn = newElement('span', 'optimizer-hint', '(what you have on)');
+			this.loadoutActions.push({ loadout, offers: [equip], worn });
+			li.append(equip, worn);
 			list.appendChild(li);
 		}
-		return this.section('Top sets', list);
+		return this.section('Top sets', list, improved ? undefined : 'None of these beat your starting gear by more than the noise.');
 	}
 
 	private excludeButton(id: number): HTMLButtonElement {

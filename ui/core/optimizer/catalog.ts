@@ -55,7 +55,8 @@ export class CatalogIndex {
 
 export interface Availability {
 	contentPhase: number;
-	faction: Faction;
+	// undefined counts both factions' items (the gear picker has its own faction filter)
+	faction?: Faction;
 	// Source kinds to count; undefined counts every kind (gems: all of them are crafted or prospected).
 	sources?: Array<CatalogSourceKind>;
 }
@@ -66,7 +67,7 @@ export function isAvailable(row: CatalogItem | undefined, availability: Availabi
 	if (!row || row.pvp) {
 		return false;
 	}
-	if (row.faction != Faction.Unknown && row.faction != availability.faction) {
+	if (availability.faction !== undefined && row.faction != Faction.Unknown && row.faction != availability.faction) {
 		return false;
 	}
 	const cap = tierCap(availability.contentPhase);
@@ -81,6 +82,7 @@ export function isAvailable(row: CatalogItem | undefined, availability: Availabi
 }
 
 let loadPromise: Promise<CatalogIndex> | null = null;
+let loaded: CatalogIndex | null = null;
 
 // Fetches the catalog once per page. A failed fetch isn't cached, so a retry fetches again.
 export function loadCatalog(): Promise<CatalogIndex> {
@@ -92,8 +94,19 @@ export function loadCatalog(): Promise<CatalogIndex> {
 				}
 				return response.json();
 			})
-			.then(json => new CatalogIndex(ServerCatalog.fromJson(json, { ignoreUnknownFields: true })));
+			.then(json => (loaded = new CatalogIndex(ServerCatalog.fromJson(json, { ignoreUnknownFields: true }))));
 		loadPromise.catch(() => (loadPromise = null));
 	}
 	return loadPromise;
+}
+
+// The catalog once a loadCatalog call has fetched it, else null.
+export function loadedCatalog(): CatalogIndex | null {
+	return loaded;
+}
+
+// isAvailable for code that can't wait on the fetch, like the gear picker and gem EP. Until the
+// catalog loads, or when it can't, the item's Classic phase decides.
+export function isObtainable(id: number, classicPhase: number, availability: Availability): boolean {
+	return loaded ? isAvailable(loaded.item(id), availability) : classicPhase <= availability.contentPhase;
 }

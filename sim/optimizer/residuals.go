@@ -69,14 +69,15 @@ func NeedsSim(c ItemChoice) bool {
 }
 
 // gearStats is what a loadout's items, enchants, gems, socket bonuses and reforges add up to, in the
-// same space as a Point's offsets: before the character's stat multipliers.
-func gearStats(l Loadout) stats.Stats {
+// same space as a Point's offsets: before the character's stat multipliers. Reforges count under
+// the run's mod-reforging config, like the pool's options and the sim.
+func (p *Pool) gearStats(l Loadout) stats.Stats {
 	var total stats.Stats
 	for _, c := range l.Items {
 		if c.ItemID == 0 {
 			continue
 		}
-		item := core.NewItem(c.CoreSpec(), nil)
+		item := core.NewItem(c.CoreSpec(), p.reforging)
 		total = total.Add(item.TotalStats())
 	}
 	return total
@@ -84,8 +85,8 @@ func gearStats(l Loadout) stats.Stats {
 
 // MeasureResiduals returns, per variant, what its changes from base are worth beyond their stats:
 // the paired sim delta minus what the response curves make of the gear stat change. The curves
-// were measured around seed.
-func MeasureResiduals(ctx context.Context, eval Evaluator, obj *Objective, resp Response, seed, base Loadout, variants []Loadout, iterations int) ([]Estimate, error) {
+// were measured around seed. pool prices the gear stats.
+func MeasureResiduals(ctx context.Context, eval Evaluator, obj *Objective, resp Response, pool *Pool, seed, base Loadout, variants []Loadout, iterations int) ([]Estimate, error) {
 	points := make([]Point, 0, len(variants)+1)
 	points = append(points, Point{Loadout: base})
 	for _, v := range variants {
@@ -96,12 +97,12 @@ func MeasureResiduals(ctx context.Context, eval Evaluator, obj *Objective, resp 
 		return nil, fmt.Errorf("residual sims: %w", err)
 	}
 
-	seedStats := gearStats(seed)
-	baseValue := resp.Value(gearStats(base).Subtract(seedStats))
+	seedStats := pool.gearStats(seed)
+	baseValue := resp.Value(pool.gearStats(base).Subtract(seedStats))
 	out := make([]Estimate, len(variants))
 	for i, v := range variants {
 		simmed := obj.Delta(evals[0], evals[i+1])
-		predicted := resp.Value(gearStats(v).Subtract(seedStats)) - baseValue
+		predicted := resp.Value(pool.gearStats(v).Subtract(seedStats)) - baseValue
 		out[i] = Estimate{Mean: simmed.Mean - predicted, SE: simmed.SE}
 	}
 	return out, nil
