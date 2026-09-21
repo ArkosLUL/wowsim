@@ -76,10 +76,9 @@ wave I, and H is full. The user ran it before H, so H's melee items build on its
 
 ## Current wave
 
-- Wave: H, not started. Wave H2 (base `820a2e0a6`) landed on `master`.
-- Base SHA: set at wave start.
-- Workflow runId: none. Wave H2 ran as `wf_a3617aeb-503`.
-- H's class items run in stages (RUNBOOK, Workflow contract): code, then live.
+- Wave: H, running.
+- Base SHA: the wave's setup commit on top of `e08b132f4`.
+- Workflow runId: not yet started.
 
 ## BiS baseline
 
@@ -183,12 +182,15 @@ crashed before F2, so its column starts there.
 | wave G cross-review | | `a2b24100d`, `3ac9069fc` | split in two (parity; optimizer and UI); one batch bug (Apply and Save on a roster changed mid-run); the old DK ids now alias in the APL lookup; tooling moved out of scratch in `73e159351` |
 | PAR-P7-0d | merged | `18b64143b` | 26 goldens promoted in `85c870717`; four stages and a review, 1.86M tokens across the five agents |
 | wave H2 cross-review | | `3b9a3c6e6`, `ec0164745` | fixed the user's DK reforge report: the item cache kept items a stale page sent without server stats, and the DK registered its runeforges and sigils late (mispriced first optimize, a possible crash); its claim that the permanent ghoul lacks 51996 was wrong (a Ghoul family passive) and was reverted |
+| PAR-P7-ROG | running | | stages: code, live |
+| PAR-P7-WAR | running | | stages: abilities, swing, live |
+| PAR-P7-RET | running | | stages: code, recorded run |
+| BIS-raid-contrib | running | | stages: engine, batch UI |
 
 Later WIs are added as their wave starts.
 
 ## User actions
 
-- "continue" for wave H.
 - Rebuild the prod container for H2's reforge fix and reload open sim tabs. Until then a restart clears
   items cached without server stats.
 - Worth a click-through when convenient: the optimizer tab's tank controls on a tank spec (the
