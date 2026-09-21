@@ -357,7 +357,23 @@ func CreateVirulenceProcAura(character *core.Character) *core.Aura {
 	return character.NewTemporaryStatsAura("Sigil of Virulence Proc", core.ActionID{SpellID: 67383}, stats.Stats{stats.Strength: 200.0}, time.Second*20)
 }
 
-func (dk *Deathknight) registerItems() {
+// newRuneOfTheFallenCrusaderAura is shared by both weapon slots: a single application handles
+// procs from either one.
+func newRuneOfTheFallenCrusaderAura(character *core.Character, auraLabel string, actionID core.ActionID) *core.Aura {
+	return character.NewTemporaryStatsAuraWrapped(auraLabel, actionID, stats.Stats{}, time.Second*15, func(aura *core.Aura) {
+		statDep := character.NewDynamicMultiplyStat(stats.Strength, 1.15)
+
+		aura.ApplyOnGain(func(aura *core.Aura, sim *core.Simulation) {
+			aura.Unit.EnableDynamicStatDep(sim, statDep)
+		})
+
+		aura.ApplyOnExpire(func(aura *core.Aura, sim *core.Simulation) {
+			aura.Unit.DisableDynamicStatDep(sim, statDep)
+		})
+	})
+}
+
+func init() {
 	// Rune of Razorice
 	addEnchantEffect(3370, func(agent core.Agent) {
 		character := agent.GetCharacter()
@@ -421,20 +437,6 @@ func (dk *Deathknight) registerItems() {
 	})
 
 	// Rune of the Fallen Crusader
-	newRuneOfTheFallenCrusaderAura := func(character *core.Character, auraLabel string, actionID core.ActionID) *core.Aura {
-		return character.NewTemporaryStatsAuraWrapped(auraLabel, actionID, stats.Stats{}, time.Second*15, func(aura *core.Aura) {
-			statDep := character.NewDynamicMultiplyStat(stats.Strength, 1.15)
-
-			aura.ApplyOnGain(func(aura *core.Aura, sim *core.Simulation) {
-				aura.Unit.EnableDynamicStatDep(sim, statDep)
-			})
-
-			aura.ApplyOnExpire(func(aura *core.Aura, sim *core.Simulation) {
-				aura.Unit.DisableDynamicStatDep(sim, statDep)
-			})
-		})
-	}
-
 	// ApplyRuneOfTheFallenCrusader will be applied twice if there is two weapons with this enchant.
 	//   However, it will automatically overwrite one of them, so it should be ok.
 	//   A single application of the aura will handle both mh and oh procs.
@@ -506,71 +508,6 @@ func (dk *Deathknight) registerItems() {
 	addEnchantEffect(3367, func(agent core.Agent) {
 		// TODO:
 		// Add 4% magic deflection
-	})
-
-	cinderBonusCoeff := 1.2
-
-	consumeSpells := [5]core.ActionID{
-		BloodBoilActionID,
-		DeathCoilDamageActionID,
-		FrostStrikeMHActionID,
-		HowlingBlastActionID,
-		IcyTouchActionID,
-	}
-
-	targetsHit := 0
-
-	dk.RegisterAura(core.Aura{
-		ActionID:  core.ActionID{SpellID: 53386},
-		Label:     "Cinderglacier",
-		Duration:  time.Second * 30,
-		MaxStacks: 2,
-		OnGain: func(aura *core.Aura, sim *core.Simulation) {
-			aura.SetStacks(sim, aura.MaxStacks)
-			aura.Unit.PseudoStats.SchoolDamageDealtMultiplier[stats.SchoolIndexShadow] *= cinderBonusCoeff
-			aura.Unit.PseudoStats.SchoolDamageDealtMultiplier[stats.SchoolIndexFrost] *= cinderBonusCoeff
-			dk.modifyShadowDamageModifier(0.2)
-		},
-		OnExpire: func(aura *core.Aura, sim *core.Simulation) {
-			aura.Unit.PseudoStats.SchoolDamageDealtMultiplier[stats.SchoolIndexShadow] /= cinderBonusCoeff
-			aura.Unit.PseudoStats.SchoolDamageDealtMultiplier[stats.SchoolIndexFrost] /= cinderBonusCoeff
-			dk.modifyShadowDamageModifier(-0.2)
-		},
-		OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
-			if spell.ActionID == HowlingBlastActionID || spell.ActionID == BloodBoilActionID {
-				if result.Target.Index == 0 {
-					targetsHit = 0
-				}
-				if result.Landed() {
-					targetsHit++
-				}
-				if result.Target.Index == sim.GetNumTargets()-1 {
-					// Last target, consume a stack for every target hit
-					for i := 0; i < targetsHit; i++ {
-						if aura.IsActive() {
-							aura.RemoveStack(sim)
-						}
-					}
-				}
-				return
-			}
-
-			if !result.Landed() {
-				return
-			}
-
-			shouldConsume := false
-			for _, consumeSpell := range consumeSpells {
-				if spell.ActionID == consumeSpell {
-					shouldConsume = true
-					break
-				}
-			}
-
-			if shouldConsume {
-				aura.RemoveStack(sim)
-			}
-		},
 	})
 
 	// Rune of Cinderglacier
@@ -765,6 +702,75 @@ func (dk *Deathknight) registerItems() {
 	CreateGladiatorsSigil(42621, "Furious", 144, 10)
 	CreateGladiatorsSigil(42622, "Relentless", 172, 10)
 	CreateGladiatorsSigil(51417, "Wrathful", 204, 10)
+}
+
+// registerItems sets up the Cinderglacier aura every DK carries regardless of gear, which Rune of
+// Cinderglacier's proc (registered globally above) looks up by label on this character.
+func (dk *Deathknight) registerItems() {
+	cinderBonusCoeff := 1.2
+
+	consumeSpells := [5]core.ActionID{
+		BloodBoilActionID,
+		DeathCoilDamageActionID,
+		FrostStrikeMHActionID,
+		HowlingBlastActionID,
+		IcyTouchActionID,
+	}
+
+	targetsHit := 0
+
+	dk.RegisterAura(core.Aura{
+		ActionID:  core.ActionID{SpellID: 53386},
+		Label:     "Cinderglacier",
+		Duration:  time.Second * 30,
+		MaxStacks: 2,
+		OnGain: func(aura *core.Aura, sim *core.Simulation) {
+			aura.SetStacks(sim, aura.MaxStacks)
+			aura.Unit.PseudoStats.SchoolDamageDealtMultiplier[stats.SchoolIndexShadow] *= cinderBonusCoeff
+			aura.Unit.PseudoStats.SchoolDamageDealtMultiplier[stats.SchoolIndexFrost] *= cinderBonusCoeff
+			dk.modifyShadowDamageModifier(0.2)
+		},
+		OnExpire: func(aura *core.Aura, sim *core.Simulation) {
+			aura.Unit.PseudoStats.SchoolDamageDealtMultiplier[stats.SchoolIndexShadow] /= cinderBonusCoeff
+			aura.Unit.PseudoStats.SchoolDamageDealtMultiplier[stats.SchoolIndexFrost] /= cinderBonusCoeff
+			dk.modifyShadowDamageModifier(-0.2)
+		},
+		OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
+			if spell.ActionID == HowlingBlastActionID || spell.ActionID == BloodBoilActionID {
+				if result.Target.Index == 0 {
+					targetsHit = 0
+				}
+				if result.Landed() {
+					targetsHit++
+				}
+				if result.Target.Index == sim.GetNumTargets()-1 {
+					// Last target, consume a stack for every target hit
+					for i := 0; i < targetsHit; i++ {
+						if aura.IsActive() {
+							aura.RemoveStack(sim)
+						}
+					}
+				}
+				return
+			}
+
+			if !result.Landed() {
+				return
+			}
+
+			shouldConsume := false
+			for _, consumeSpell := range consumeSpells {
+				if spell.ActionID == consumeSpell {
+					shouldConsume = true
+					break
+				}
+			}
+
+			if shouldConsume {
+				aura.RemoveStack(sim)
+			}
+		},
+	})
 }
 
 func CreateGladiatorsSigil(id int32, name string, ap float64, seconds time.Duration) {

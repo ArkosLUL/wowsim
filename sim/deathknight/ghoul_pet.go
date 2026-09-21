@@ -136,7 +136,9 @@ func (dk *Deathknight) NewGhoulPet(permanent bool) *GhoulPet {
 
 func (dk *Deathknight) SetupGhoul(ghoulPet *GhoulPet) {
 	// 51996 (Death Knight Pet Scaling 02): immune to direct haste and slows, Bloodlust included: its
-	// own melee swing speed tracks the owner's instead.
+	// own melee swing speed tracks the owner's instead. The permanent ghoul carries it too: it learns
+	// 51996 as a Ghoul family passive (skill line 782), which is why Guardian::InitStatsForLevel
+	// only adds it when !IsPet().
 	ghoulPet.HasteCarrier = true
 	ghoulPet.OwnerHasteSource = func() float64 { return ghoulPet.dkOwner.SwingSpeed() }
 

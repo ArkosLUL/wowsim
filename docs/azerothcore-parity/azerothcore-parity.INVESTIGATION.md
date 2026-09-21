@@ -258,7 +258,9 @@ Roll details the tables above don't show:
   family (temp ghoul, permanent ghoul, gargoyle, army), replacing the ghoul-only
   `EnableDynamicMeleeSpeed`/`DynamicMeleeSpeedPets` mirroring and the separate `MeleeHaste` rating
   pass-through in `ghoulStatInheritance`'s Master of Ghouls branch, both made redundant by the one 2 s
-  carrier snapshot.
+  carrier snapshot. The permanent ghoul learns 51996 as a Ghoul family passive (SkillLineAbility 782,
+  CreatureFamily 40, `Pet::LearnPetPassives`), which is why `Guardian::InitStatsForLevel` adds it only
+  `if (!IsPet())`.
 - The sim's pet "+1.8% crit" hacks (`shaman/fire_elemental_pet.go:151`, `shaman/spirit_wolves.go:45`) are Classic-only.
   The hunter pet's crit is the server's now (Hunter, Pets).
 

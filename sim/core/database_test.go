@@ -156,6 +156,30 @@ func TestNewItemDropsInvalidReforge(t *testing.T) {
 	}
 }
 
+// A web server without with_db caches items from requests only, so an item a stale page sent
+// without ServerStats has to pick them up from a later request, and keep them.
+func TestAddToDatabaseUpgradesToServerStats(t *testing.T) {
+	const id = 9100010
+	AddToDatabase(&proto.SimDatabase{Items: []*proto.SimItem{{Id: id, Stats: stats.Stats{stats.Stamina: 10}.ToFloatArray()}}})
+	if item, _ := LookupItem(id); len(item.ServerStats) != 0 {
+		t.Fatalf("stripped item already has ServerStats: %v", item.ServerStats)
+	}
+
+	AddToDatabase(&proto.SimDatabase{Items: []*proto.SimItem{{
+		Id:          id,
+		Stats:       stats.Stats{stats.Stamina: 10}.ToFloatArray(),
+		ServerStats: []*proto.ItemStat{{StatType: 7, Value: 10}},
+	}}})
+	if item, ok := LookupItem(id); !ok || len(item.ServerStats) != 1 {
+		t.Fatalf("LookupItem(%d) = %+v, %v, want one ServerStats entry", id, item, ok)
+	}
+
+	AddToDatabase(&proto.SimDatabase{Items: []*proto.SimItem{{Id: id}}})
+	if item, _ := LookupItem(id); len(item.ServerStats) != 1 {
+		t.Errorf("a later stripped copy erased ServerStats: %v", item.ServerStats)
+	}
+}
+
 func TestItemTotalStatsSocketBonus(t *testing.T) {
 	gemmed := NewItem(ItemSpec{ID: itemTestReforgeCrit, Gems: []int32{gemTestReforge}}, nil)
 	if got := gemmed.TotalStats()[stats.Stamina]; got != 56 {

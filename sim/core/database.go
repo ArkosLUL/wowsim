@@ -20,14 +20,15 @@ var enchantsByEffectID = map[int32]Enchant{}
 // dbMu guards the three maps above.
 var dbMu sync.RWMutex
 
-// AddToDatabase adds the items, enchants and gems the database doesn't have yet. Existing entries
-// never change, so a looked-up value stays valid.
+// AddToDatabase adds the items, enchants and gems the database doesn't have yet, and replaces a
+// cached item without ServerStats with a later copy that has them: without them it can't be
+// reforged. Lookups return copies, so a value looked up before a replacement stays valid.
 func AddToDatabase(newDB *proto.SimDatabase) {
 	dbMu.Lock()
 	defer dbMu.Unlock()
 
 	for _, v := range newDB.GetItems() {
-		if _, ok := itemsByID[v.Id]; !ok {
+		if existing, ok := itemsByID[v.Id]; !ok || (len(existing.ServerStats) == 0 && len(v.ServerStats) > 0) {
 			itemsByID[v.Id] = ItemFromProto(v)
 		}
 	}

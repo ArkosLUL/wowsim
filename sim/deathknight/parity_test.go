@@ -3,8 +3,24 @@ package deathknight
 import (
 	"testing"
 
+	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/serverdata"
 )
+
+// The optimizer asks HasEnchantEffect/HasItemEffect before it builds any DK, and parallel sims
+// building the first DKs would race the writes, so these register at init. Builds no DK on purpose.
+func TestItemEffectsRegisteredWithoutBuildingADeathknight(t *testing.T) {
+	for _, id := range []int32{3370, 3368, 3883, 3847, 3594, 3365, 3595, 3367, 3369} {
+		if !core.HasEnchantEffect(id) {
+			t.Errorf("enchant effect %d not registered", id)
+		}
+	}
+	for _, id := range []int32{40714, 40715, 45144, 47672, 47673, 50459, 50462, 42618, 42619, 42620, 42621, 42622, 51417} {
+		if !core.HasItemEffect(id) {
+			t.Errorf("item effect %d not registered", id)
+		}
+	}
+}
 
 // spell_dk_pet_scaling's CalculateHasteAmount works in float32 and keeps whole percent, and a slowed
 // owner hands over nothing.
