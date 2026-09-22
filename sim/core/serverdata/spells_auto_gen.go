@@ -1031,6 +1031,16 @@ var spells = []Spell{
 			{Effect: 6, Aura: 186, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, MiscValue: 127},
 		},
 	},
+	// Omen of Clarity
+	{
+		ID: 16864, Family: 7, FamilyFlags: [3]uint32{0, 0x200000}, SchoolMask: 8, DmgClass: DmgClassMagic, Flags: FlagHasteGCD | FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0xc0, 0, 0, 0x4000000},
+		GCDMs:      1500, GCDCategory: 133,
+		ProcFlags: 0x14004, ProcChance: 100,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 42, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, TriggerSpell: 16870},
+		},
+	},
 	// Clearcasting
 	{
 		ID: 16870, Family: 7, FamilyFlags: [3]uint32{0, 0x200000}, SchoolMask: 8, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagPositive,
@@ -7278,6 +7288,16 @@ var spells = []Spell{
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 99, BasePoints: 999, DieSides: 1, DamageMultiplier: 1},
 			{Effect: 6, Aura: 124, BasePoints: 999, DieSides: 1, DamageMultiplier: 1},
+		},
+	},
+	// Faerie Fire (Feral)
+	{
+		ID: 60089, Family: 7, SchoolMask: 8, DmgClass: DmgClassMagic, Flags: FlagAlwaysHit,
+		Attributes: [8]uint32{0x10, 0, 0, 0x40000}, AttributesCu: 0x3100,
+		ProcChance: 101, PowerType: 3,
+		Effects: [3]Effect{
+			{Effect: 63, BasePoints: 5, DieSides: 1, PointsPerLevel: 8, DamageMultiplier: 1},
+			{Effect: 2, DieSides: 1, DamageMultiplier: 1},
 		},
 	},
 	// Lava Lash (Rank 1)

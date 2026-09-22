@@ -153,6 +153,7 @@ var bonuses = []Bonus{
 	{SpellID: 59638, Row: 59638, Direct: 0.3},                                            // Frostbolt
 	{SpellID: 59886, Row: 59886, Direct: 0.0299, Dot: 0.0299, AP: 0.0175, APDot: 0.0175}, // Rake (Rank 6)
 	{SpellID: 60043, Row: 60043, Direct: 0.571},                                          // Lava Burst (Rank 2)
+	{SpellID: 60089, Row: 60089, AP: 0.15},                                               // Faerie Fire (Feral)
 	{SpellID: 61198, Row: 61198, Direct: 0.333, Dot: 0.333},                              // Spirit Strike (Rank 6)
 	{SpellID: 61301, Row: 61301, Direct: 0.402, Dot: 0.188},                              // Riptide (Rank 4)
 	{SpellID: 61654, Row: 61654, Direct: 0.214},                                          // Fire Nova (Rank 9)
