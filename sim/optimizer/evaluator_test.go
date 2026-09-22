@@ -41,7 +41,6 @@ func presetOptimizeRequest(tb testing.TB, name string) *proto.OptimizeGearReques
 				Major1: int32(proto.WarriorMajorGlyph_GlyphOfWhirlwind),
 				Major2: int32(proto.WarriorMajorGlyph_GlyphOfHeroicStrike),
 				Major3: int32(proto.WarriorMajorGlyph_GlyphOfRending),
-				Minor1: int32(proto.WarriorMinorGlyph_GlyphOfShatteringThrow),
 			},
 			Spec: &proto.Player_Warrior{Warrior: &proto.Warrior{Options: &proto.Warrior_Options{
 				StartingRage:       50,

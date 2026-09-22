@@ -23,18 +23,13 @@ func (warrior *Warrior) RegisterShatteringThrowCD() {
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
 				GCD:      core.GCDDefault,
-				CastTime: core.TernaryDuration(hasGlyph, time.Duration(0), time.Millisecond*1500),
+				CastTime: time.Millisecond * 1500,
 			},
 			CD: core.Cooldown{
 				Timer:    warrior.NewTimer(),
 				Duration: time.Minute * 5,
 			},
 			ModifyCast: func(sim *core.Simulation, spell *core.Spell, cast *core.Cast) {
-				if warrior.AutoAttacks.MH().SwingSpeed == warrior.AutoAttacks.OH().SwingSpeed {
-					warrior.AutoAttacks.StopMeleeUntil(sim, sim.CurrentTime+cast.CastTime, true)
-				} else {
-					warrior.AutoAttacks.StopMeleeUntil(sim, sim.CurrentTime+cast.CastTime, false)
-				}
 				if !hasGlyph && !warrior.StanceMatches(BattleStance) && warrior.BattleStance.IsReady(sim) {
 					warrior.BattleStance.Cast(sim, nil)
 				}

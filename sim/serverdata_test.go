@@ -270,8 +270,8 @@ var serverDataPresets = []serverDataPreset{
 
 	{"Fury", proto.Class_ClassWarrior, proto.Race_RaceOrc, "warrior", "p1_fury", "fury",
 		"302023102331-305053000520310053120500351", glyphs(int32(proto.WarriorMajorGlyph_GlyphOfWhirlwind),
-			int32(proto.WarriorMajorGlyph_GlyphOfHeroicStrike), int32(proto.WarriorMajorGlyph_GlyphOfRending),
-			int32(proto.WarriorMinorGlyph_GlyphOfShatteringThrow)), warriorOptions, false},
+			int32(proto.WarriorMajorGlyph_GlyphOfHeroicStrike), int32(proto.WarriorMajorGlyph_GlyphOfRending)),
+		warriorOptions, false},
 	{"Arms", proto.Class_ClassWarrior, proto.Race_RaceOrc, "warrior", "p1_arms", "arms",
 		"3022032023335100102012213231251-305-2033", glyphs(int32(proto.WarriorMajorGlyph_GlyphOfRending),
 			int32(proto.WarriorMajorGlyph_GlyphOfMortalStrike), int32(proto.WarriorMajorGlyph_GlyphOfExecution),

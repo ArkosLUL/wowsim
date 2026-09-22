@@ -26,6 +26,8 @@ func (warrior *Warrior) applyDeepWounds() {
 			},
 			NumberOfTicks: 6,
 			TickLength:    time.Second * 1,
+			// No SPELL_AURA_ABILITY_PERIODIC_CRIT aura covers Deep Wounds, so its ticks never crit.
+			TicksCanCrit: false,
 
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 				dot.SnapshotAttackerMultiplier = target.PseudoStats.PeriodicPhysicalDamageTakenMultiplier
@@ -56,6 +58,12 @@ func (warrior *Warrior) applyDeepWounds() {
 	})
 }
 
+// deepWoundsMunchDelay is Unit::CastDelayedSpellWithPeriodicAmount (MunchingBlizzlike.Enabled, live
+// on): every Deep Wounds refresh queues on the target's event list 400 ms out instead of landing right
+// away, so the old dot keeps ticking at its old amount for that stretch. Overlapping crits within the
+// window each read the outstanding damage as it stood at their own proc, same as the server.
+const deepWoundsMunchDelay = time.Millisecond * 400
+
 func (warrior *Warrior) procDeepWounds(sim *core.Simulation, target *core.Unit, isOh bool) {
 	dot := warrior.DeepWounds.Dot(target)
 
@@ -73,8 +81,14 @@ func (warrior *Warrior) procDeepWounds(sim *core.Simulation, target *core.Unit, 
 		awd = (warrior.AutoAttacks.MH().CalculateAverageWeaponDamage(dot.Spell.MeleeAttackPower()) + dot.Spell.BonusWeaponDamage()) * adm * tdm
 	}
 	newDamage := awd * 0.16 * float64(warrior.Talents.DeepWounds)
+	totalDamage := outstandingDamage + newDamage
 
-	dot.SnapshotBaseDamage = (outstandingDamage + newDamage) / float64(dot.NumberOfTicks)
-	dot.SnapshotAttackerMultiplier = 1
-	warrior.DeepWounds.Cast(sim, target)
+	sim.AddPendingAction(&core.PendingAction{
+		NextActionAt: sim.NextServerTick(sim.CurrentTime + deepWoundsMunchDelay),
+		OnAction: func(sim *core.Simulation) {
+			dot.SnapshotBaseDamage = totalDamage / float64(dot.NumberOfTicks)
+			dot.SnapshotAttackerMultiplier = 1
+			warrior.DeepWounds.Cast(sim, target)
+		},
+	})
 }

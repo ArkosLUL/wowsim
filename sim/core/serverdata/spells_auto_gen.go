@@ -5071,6 +5071,17 @@ var spells = []Spell{
 			{Effect: 64, DamageMultiplier: 1, TriggerSpell: 44949},
 		},
 	},
+	// Slam
+	{
+		ID: 50783, Family: 4, FamilyFlags: [3]uint32{0x200000}, SchoolMask: 1, DmgClass: DmgClassMelee, Flags: FlagAlwaysHit,
+		Attributes: [8]uint32{0x50010, 0x8000200, 0x20000, 0x40600}, AttributesCu: 0x1100,
+		CastMs: 1500, BaseCastMs: 1500, GCDMs: 1500, GCDCategory: 133,
+		ProcChance: 101, PowerType: 1, ManaCost: 150,
+		CastMods: ModBounds{FlatMin: -1000},
+		Effects: [3]Effect{
+			{Effect: 58, BasePoints: 249, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1},
+		},
+	},
 	// Pestilence
 	{
 		ID: 50842, Family: 15, FamilyFlags: [3]uint32{0, 0x10000}, SchoolMask: 32, DmgClass: DmgClassMagic, Flags: FlagHasteGCD,
