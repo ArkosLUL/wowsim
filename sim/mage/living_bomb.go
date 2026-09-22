@@ -77,6 +77,9 @@ func (mage *Mage) registerLivingBombSpell() {
 
 			NumberOfTicks: 4,
 			TickLength:    time.Second * 3,
+			// Glyph of Living Bomb is what lets these ticks crit at all; without it no periodic-crit
+			// aura covers the dot.
+			TicksCanCrit: mage.HasMajorGlyph(proto.MageMajorGlyph_GlyphOfLivingBomb),
 
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
 				dot.SnapshotBaseDamage = 345 + 0.2*dot.Spell.SpellPower()

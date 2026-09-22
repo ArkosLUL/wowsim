@@ -100,18 +100,23 @@ func (we *WaterElemental) ExecuteCustomRotation(sim *core.Simulation) {
 	spell.Cast(sim, we.CurrentTarget)
 }
 
-// These numbers are just rough guesses based on looking at some logs.
+// Base mana and intellect are rough guesses based on looking at some logs.
 var waterElementalBaseStats = stats.Stats{
 	stats.Mana:      1082,
 	stats.Intellect: 369,
+	// spell_mage_pet_scaling never sets an amount for a pet's crit, so it keeps the creature default
+	// (Unit::GetUnitCriticalChance): a flat 5%, nothing from agility.
+	stats.SpellCrit: 5 * core.CritRatingPerCritChance,
 }
 
+// spell_mage_pet_scaling::CalculateStatAmount/CalculateSPAmount (spell_mage.cpp:266-296): 30% of the
+// owner's stamina and intellect, 33% of the owner's frost spell power (the sim's one spell power
+// stat, in practice).
 var waterElementalStatInheritance = func(ownerStats stats.Stats) stats.Stats {
-	// These numbers are just rough guesses based on looking at some logs.
 	return stats.Stats{
-		stats.Stamina:    ownerStats[stats.Stamina] * 0.2,
+		stats.Stamina:    ownerStats[stats.Stamina] * 0.3,
 		stats.Intellect:  ownerStats[stats.Intellect] * 0.3,
-		stats.SpellPower: ownerStats[stats.SpellPower] * 0.333,
+		stats.SpellPower: ownerStats[stats.SpellPower] * 0.33,
 	}
 }
 

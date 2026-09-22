@@ -41,9 +41,10 @@ func (mage *Mage) registerFlamestrikeSpell(rank8 bool) *core.Spell {
 		},
 
 		BonusCritRating: float64(mage.Talents.CriticalMass+mage.Talents.WorldInFlames) * 2 * core.CritRatingPerCritChance,
-		DamageMultiplierAdditive: 1 +
-			.02*float64(mage.Talents.SpellImpact) +
+		DamageMultiplierAdditive: spellModDamage(
+			.02*float64(mage.Talents.SpellImpact),
 			.02*float64(mage.Talents.FirePower),
+		),
 		CritMultiplier:   mage.SpellCritMultiplier(1, mage.bonusCritDamage),
 		ThreatMultiplier: 1 - 0.05*float64(mage.Talents.BurningSoul),
 
@@ -54,6 +55,8 @@ func (mage *Mage) registerFlamestrikeSpell(rank8 bool) *core.Spell {
 			},
 			NumberOfTicks: 4,
 			TickLength:    time.Second * 2,
+			// No SPELL_AURA_ABILITY_PERIODIC_CRIT aura covers this dot, so its ticks never crit.
+			TicksCanCrit: false,
 			OnSnapshot: func(sim *core.Simulation, _ *core.Unit, dot *core.Dot, _ bool) {
 				target := mage.CurrentTarget
 				dot.SnapshotBaseDamage = dotDamage + 0.122*dot.Spell.SpellPower()*spCoeffMultiplier

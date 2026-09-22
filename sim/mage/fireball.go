@@ -36,10 +36,11 @@ func (mage *Mage) registerFireballSpell() {
 			core.TernaryFloat64(mage.HasSetBonus(ItemSetKhadgarsRegalia, 4), 5*core.CritRatingPerCritChance, 0),
 		DamageMultiplier: 1 *
 			(1 + .04*float64(mage.Talents.TormentTheWeak)),
-		DamageMultiplierAdditive: 1 +
-			.02*float64(mage.Talents.SpellImpact) +
-			.02*float64(mage.Talents.FirePower) +
+		DamageMultiplierAdditive: spellModDamage(
+			.02*float64(mage.Talents.SpellImpact),
+			.02*float64(mage.Talents.FirePower),
 			core.TernaryFloat64(mage.HasSetBonus(ItemSetTempestRegalia, 4), .05, 0),
+		),
 		CritMultiplier:   mage.SpellCritMultiplier(1, mage.bonusCritDamage),
 		ThreatMultiplier: 1 - 0.1*float64(mage.Talents.BurningSoul),
 
@@ -49,6 +50,8 @@ func (mage *Mage) registerFireballSpell() {
 			},
 			NumberOfTicks: 4,
 			TickLength:    time.Second * 2,
+			// No SPELL_AURA_ABILITY_PERIODIC_CRIT aura covers this dot, so its ticks never crit.
+			TicksCanCrit: false,
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
 				dot.SnapshotBaseDamage = 116.0 / 4.0
 				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(dot.Spell.Unit.AttackTables[target.UnitIndex])

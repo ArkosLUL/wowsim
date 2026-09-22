@@ -9,7 +9,7 @@ import (
 
 func (mage *Mage) registerFrostfireBoltSpell() {
 	spellCoeff := 3.0/3.5 + .05*float64(mage.Talents.EmpoweredFire)
-	bonusPeriodicDamageMultiplier := -core.TernaryFloat64(mage.HasMajorGlyph(proto.MageMajorGlyph_GlyphOfFrostfire), .02, 0)
+	glyphOfFrostfireBonus := core.TernaryFloat64(mage.HasMajorGlyph(proto.MageMajorGlyph_GlyphOfFrostfire), .02, 0)
 
 	mage.FrostfireBolt = mage.RegisterSpell(core.SpellConfig{
 		ActionID:     core.ActionID{SpellID: 47610},
@@ -40,10 +40,11 @@ func (mage *Mage) registerFrostfireBoltSpell() {
 			(1 + .02*float64(mage.Talents.PiercingIce)) *
 			(1 + .01*float64(mage.Talents.ArcticWinds)) *
 			(1 + .04*float64(mage.Talents.TormentTheWeak)),
-		DamageMultiplierAdditive: 1 +
-			.02*float64(mage.Talents.FirePower) +
-			.01*float64(mage.Talents.ChilledToTheBone) +
-			core.TernaryFloat64(mage.HasMajorGlyph(proto.MageMajorGlyph_GlyphOfFrostfire), .02, 0),
+		DamageMultiplierAdditive: spellModDamage(
+			.02*float64(mage.Talents.FirePower),
+			.01*float64(mage.Talents.ChilledToTheBone),
+			glyphOfFrostfireBonus,
+		),
 		CritMultiplier:   mage.SpellCritMultiplier(1, mage.bonusCritDamage+float64(mage.Talents.IceShards)/3),
 		ThreatMultiplier: 1 - 0.1*float64(mage.Talents.BurningSoul) - .04*float64(mage.Talents.FrostChanneling),
 
@@ -53,11 +54,14 @@ func (mage *Mage) registerFrostfireBoltSpell() {
 			},
 			NumberOfTicks: 3,
 			TickLength:    time.Second * 3,
+			// No SPELL_AURA_ABILITY_PERIODIC_CRIT aura covers this dot, so its ticks never crit.
+			TicksCanCrit: false,
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
 				dot.SnapshotBaseDamage = 90 / 3
-				dot.Spell.DamageMultiplierAdditive += bonusPeriodicDamageMultiplier
+				// Glyph of Frostfire boosts the direct hit only, so pull its factor back out here.
+				dot.Spell.DamageMultiplierAdditive /= 1 + glyphOfFrostfireBonus
 				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(dot.Spell.Unit.AttackTables[target.UnitIndex])
-				dot.Spell.DamageMultiplierAdditive -= bonusPeriodicDamageMultiplier
+				dot.Spell.DamageMultiplierAdditive *= 1 + glyphOfFrostfireBonus
 			},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 				dot.CalcAndDealPeriodicSnapshotDamage(sim, target, dot.OutcomeTick)

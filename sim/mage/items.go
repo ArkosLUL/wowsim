@@ -69,12 +69,13 @@ var ItemSetKirinTorGarb = core.NewItemSet(core.ItemSet{
 			})
 		},
 		4: func(agent core.Agent) {
-			//Implemented at 10% chance needs testing
+			// Implemented in each spell.
 		},
 	},
 })
 
-const T84PcProcChance = 0.2
+// 64869 effect1 (roll_chance_i in Player.cpp): 10%, not the 20% Classic gave it.
+const T84PcProcChance = 0.1
 
 // T9
 var ItemSetKhadgarsRegalia = core.NewItemSet(core.ItemSet{

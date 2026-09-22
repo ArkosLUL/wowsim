@@ -169,17 +169,41 @@ Roll details the tables above don't show:
   same stale dot, so the later application overwrites the earlier one's (munching).
   `core.DelayedPeriodicApplier` (PAR-P7-0e) draws that boundary's phase once per caster per iteration,
   since the sim has no equivalent of the caster's own creation-time clock. On it: Deep Wounds, Unholy
-  Blight, Piercing Shots, Righteous Vengeance. Still owed: Ignite, Languish, the two Shaman procs
-  (`spell_mage/druid/shaman.cpp`).
+  Blight, Piercing Shots, Righteous Vengeance, Ignite (PAR-P7-MAG). Still owed: Languish, the two Shaman
+  procs (`spell_druid/shaman.cpp`).
   - The proc counts the old dot's outstanding damage, so an old tick landing before the refresh is paid
     twice. A tick or swing due on the refresh's own server tick comes after it: `Player::Update` runs the
     caster's events before its swings, and `Map::Update` updates players before the creatures whose auras
     tick. The sim lands the refresh 1 ns early for that; ticking and swinging first had put Righteous
     Vengeance 8% and Fury's Deep Wounds 11% high (H3 cross-review).
-  - The Ret capture's 78 Righteous Vengeance refreshes all sit on one 400 ms lattice, 0-400 ms after their
-    crits. Open: they average 189 ms after the crit, the sim's 250 ms (100-400 ms). Likely cause: a cast is
-    handled with the session, before `Player::Update` advances the event clock, so its refresh can land in
-    the same update, after the cast, where the sim's goes a tick later or before a cast on its tick.
+  - PAR-P7-MAG (I): the Ret capture's 78 Righteous Vengeance refreshes sit on one 400 ms lattice,
+    averaging 189 ms after the crit that fed them. Isolating the two unambiguous feeders (Crusader
+    Strike and Divine Storm, 33 crits total) gives a weighted mean of 176 ms; the third feeder the sim
+    credits, the Seal of Vengeance proc (42463), paired inconsistently with nearby crits and wasn't
+    used for the mean. `Delay()` was landing a mean of 250 ms (100-400 ms): its own 400 ms boundary was
+    right, but it then rounded the landing up to the sim's general server tick a second time. That
+    second rounding has no server counterpart here: `Unit::CastDelayedSpellWithPeriodicAmount` queues
+    onto the *caster's own* `m_Events`, which `WorldObject::Update` advances on every `Map::Update` pass
+    for that player, not gated to the slower ~100 ms `MapUpdateInterval` that throttles
+    `UpdateNonPlayerObjects` (where a dot tick on the target actually runs). Dropping it moves `Delay()`'s
+    mean to 200 ms, matching the capture within normal sampling noise for 33 crits off a uniform
+    (0, 400 ms] draw.
+  - The capture's casts were a bot's, which matters for a second reason: mod-playerbots casts through
+    `PlayerbotAI::CastSpell` -> `Spell::prepare`, called synchronously from `PlayerbotAI::UpdateAI`,
+    hooked to `OnPlayerAfterUpdate` at the very end of `Player::Update`, after `Unit::Update`'s
+    `WorldObject::Update` has already advanced `m_Events` for that pass. A bot's own cast sees the same
+    up-to-date clock as a swing or a hardcast landing in `_UpdateSpells`, so the fixed `Delay()` already
+    covers it. A *human* player's instant cast differs: `CMSG_CAST_SPELL` is `PROCESS_THREADSAFE`
+    (`Opcodes.cpp`), handled by `WorldSession::Update` in `Map::Update`'s session pass, one pass before
+    that same player's own `Player::Update` runs. Its boundary is drawn off the clock as it stood one
+    pass ago, so it can already be behind "now" by the time the pass catches up, landing sooner, in the
+    same update at the earliest. `DelayFromInstantCast()` models that. Righteous Vengeance's Crusader
+    Strike/Divine Storm feeders and Ignite's instant-cast feeders (Living Bomb's direct hit, and
+    Pyroblast/Frostfire Bolt made instant by Hot Streak/Brain Freeze, read off `spell.CurCast.CastTime
+    == 0`) use it; everything else, including Righteous Vengeance's Seal of Vengeance feeder (a weapon
+    swing proc, not a cast), stays on `Delay()`.
+  - A live Fire mage capture (Findings, Mage) checks both `Delay()` and `procIgnite`'s tick-damage math against
+    ~80 real Ignite applications; both hold.
 
 **Pets**
 - Scaling scripts:
@@ -698,6 +722,91 @@ Roll details the tables above don't show:
   tagged `attackType: ranged`, not a separate "magic" one: it can miss but is never dodged, parried or
   blocked. All four pass.
 
+**Mage** (`TestArcane`, `TestFire`, `TestFrost`, `TestFrostFire`, code)
+- Ignite (`spell_mage_ignite`, `spell_mage.cpp:709-761`): `pct = 8 * rank`, matching the sim's `0.08` a
+  point, but the per-tick amount is server-truncated twice — `int32(CalculatePct(critDamage, pct)) /
+  igniteDot->GetMaxTicks()` (`Util.h:52`'s `CalculatePct` truncates to a whole number, then the `/`
+  truncates again) — and only that new share reaches `Unit::CastDelayedSpellWithPeriodicAmount`
+  (`Unit.cpp:16310-16328`), which adds the dot's own remaining share,
+  `oldAmount * max(totalTicks - tickNumber, 0) / totalTicks`, all int32, not the sim's old continuous
+  float split. Ignite reads that blend at the proc, before the delay, and applies it through
+  `core.DelayedPeriodicApplier` (closes PAR-P7-0e's "still owed"). No aura 286
+  (`SPELL_AURA_ABILITY_PERIODIC_CRIT`) covers 12654: `TicksCanCrit: false`.
+  A crit from an instant cast (Living Bomb's direct hit, or Pyroblast/Frostfire Bolt made instant by
+  Hot Streak/Brain Freeze) applies through `ApplyFromInstantCast` instead of `Apply`, read off
+  `spell.CurCast.CastTime == 0`; a hardcast crit or a Living Bomb tick crit still uses `Apply` (DoTs
+  and periodic ticks, above).
+- Water Elemental scaling (`spell_mage_pet_scaling`, `spell_mage.cpp:260-370`, gated on
+  `m_scriptSpellId 35657`/`35658`): 30% of the owner's stamina (the sim had 20%) and intellect, 33% of
+  the owner's Frost spell power (the sim's one spell-power stat already stands in for the school-masked
+  one; its old `0.333` overstated the server's flat 33%), 0% AP. Resistance inheritance (40%
+  non-physical / 35% physical) and the pet's own base stats stay unmodeled: neither moves a DPS-only
+  sim, and the base numbers are already flagged as rough log reads pending a live capture. The pet had
+  no baseline spell crit; nothing in the scaling script touches `SPELL_AURA_MOD_SPELL_CRIT_CHANCE`, so
+  it now gets `Unit::GetUnitCriticalChance`'s flat 5% (Pets, above). Already `isGuardian: true` in
+  `core.NewPet`, matching its 61017 scaling-aura membership (Pets, above); P7-0d's guardian raid-buff fix
+  already reaches it — spot-checked by code, not a live encounter.
+- Frostbolt (42842): the spelldump already marks it `"binary":false`, and nothing in `sim/mage`
+  declares `SpellFlagBinary`, so P3-2's `syncServerFlag` (`spell.go:781`) already leaves it non-binary.
+  The PLAN's premise was a fact to confirm, not a bug: no code change.
+- T8 4pc (Kirin Tor Garb, `sets_review.csv` row 29): `T84PcProcChance` was `0.2`; 64869 effect1's
+  `basePoints: 9` (the +1 convention) is 10%, read by `roll_chance_i` in `Player.cpp`. Fixed in
+  `sim/mage/items.go:77`. The PLAN's "Missile Barrage/Hot Streak/Brain Freeze" scope was also wrong:
+  every `SPELL_MAGE_T8_4P_BONUS` (64869) reference in `spell_mage.cpp` shows only
+  `spell_mage_missile_barrage_proc::CheckProc` (1584) rolling the save chance; Hot Streak's and Brain
+  Freeze's own scripts never touch it, and the one other reference
+  (`spell_mage_gen_extra_effects::CheckProc`, 1139) is the unrelated "don't double-proc Hot Streak off
+  Arcane Missiles" guard. `pyroblast.go`'s `ModifyCast` and `talents.go`'s Brain Freeze aura no longer
+  roll `T84PcProcChance`; only `arcane_missiles.go`'s Missile Barrage aura still does.
+- Percent `SPELLMOD_DAMAGE` mods (per-spell checklist, `Player::ApplySpellMod`): Fire Power (11124),
+  Spell Impact, Chilled to the Bone and the Frostbolt/Frostfire glyphs are all `aura: 108`
+  (`ADD_PCT_MODIFIER`), `miscValue: 0` (SPELLMOD_DAMAGE) in the spelldump, so they multiply on the
+  server, not sum. Fireball, Frostbolt, Frostfire Bolt and Flamestrike had summed them in
+  `DamageMultiplierAdditive`; `spellModDamage()` (`sim/mage/talents.go`, mirroring `sim/paladin`'s) now
+  multiplies them, like that field's set-bonus and glyph terms elsewhere already do. Frostfire Bolt's
+  glyph-excluded-from-the-DoT trick (below) moved from subtracting to dividing out the glyph's factor to
+  match.
+  - Open: Fire Power's second effect, `miscValue: 22` (SPELLMOD_DOT), carries a different classMask
+    (`[4194309,135168,0]`) from its damage effect's (`[12845079,69704,0]`), and Spell Impact has no DOT
+    effect at all. Whether Fireball's and Flamestrike's ticks should take Fire Power's bonus at all (as
+    Frostfire Bolt's dot already excludes its glyph) needs that classMask decoded against each spell's
+    family flags; left unchanged, taking the same multiplier as the direct hit.
+- `TicksCanCrit`: none of Fireball's, Pyroblast's, Flamestrike's or Frostfire Bolt's dots carry aura
+  286, so all four are `false`. Living Bomb only crits with its glyph (the sim already swaps its
+  `OnTick` for that), so its declaration follows the same check, keeping the glyph's ticks crit-eligible
+  once P8 flips the default.
+- Default APLs: no change this wave shifts a mage priority.
+- APL `spell.cast_time` (`APLValueSpellCastTime`) read the haste-scaled cast time only; a hardcast
+  actually lands on the next server tick (`cast.go`'s `makeCastFunc`), which the value now rounds to
+  as well. Fire and FrostFire read it in their rotations, folded into the deltas below; Frost and
+  Arcane don't read it and are unaffected.
+- **As built:** all four suites moved. Fire -3.716% and FrostFire -1.912% (Average-Default), both
+  Ignite-delay-dominated: reverting just the delay leaves Fire at +0.303%, the same direction PAR-P7-0e
+  found for Deep Wounds. Frost +0.357% (the spell-mod and Water Elemental spell-power fixes net
+  positive; no Ignite points). Arcane +0.114% on one item variant (Kirin Tor Garb), sized like the
+  RNG-stream noise a changed roll count leaves on later rolls, not a directional signal. The Kirin Tor
+  Garb row moves further than its suite average from losing Hot Streak's and Brain Freeze's save
+  chance: Fire -4.419%, FrostFire -3.473%, Frost barely (-0.055%, no points in either talent).
+  The delay stage's fix to `DelayedPeriodicApplier` (DoTs and periodic ticks, above) moved Fire and
+  FrostFire again, in opposite directions: Fire -3.372% -> -3.716% (Kirin Tor Garb -4.277% -> -4.419%),
+  FrostFire -2.311% -> -1.912% (Kirin Tor Garb -3.863% -> -3.473%). Both builds carry Ignite points, but
+  in different mixes of hardcast, Living Bomb and Hot Streak/Brain Freeze procs, so a shorter average
+  delay changes how often a refresh cuts an already-ticking Ignite off before it finishes its two
+  ticks, and the two builds land on opposite sides of that.
+- Live (`e2e/p7_mag_test.go`'s `TestSimvalMage`): Frostbolt, Fireball and Living Bomb's explosion (55362) all come
+  back magic (dmgClass 1) with partial resists, matching the code stage's fixes; Living Bomb's dot (55360) itself
+  carries no periodic-crit effect, confirming only the glyph enables its tick crits.
+- Fire capture (`fire_Svrleadggztq_1790099652`, 295.7 s, Scorch/Fireball/Fire Blast/Living Bomb on a 1.5 s cycle):
+  recasting a spell — even the same one — while a hardcast is still resolving cancels it
+  (`SPELL_FAILED_INTERRUPTED`), so a >1.5 s hardcast's cycle slot needs an unlearned filler id after it, not a
+  repeat, to ever complete; worth remembering for the next capture with a long hardcast. Of 84 Ignite applications,
+  77 pair to a Fire-school crit (Scorch, Fireball, Fire Blast, Living Bomb's explosion at this character's
+  talent-taught rank 44461) inside a 420 ms window, landing mean 228 ms / median 214 ms — matching the delay
+  stage's ~200 ms model. Replaying `procIgnite`'s truncation and carry-over against the actual tick damage (each
+  tick's independent resist roll undone first) matches 36 of 41 checkable applications exactly, across all three
+  `remainingTicks` cases; the 5 misses trace to a chain broken by one of the unpaired applications, not a formula
+  error. Confirms the code and delay stages' Ignite model live; no further fix needed.
+
 **Items** (`docs/azerothcore-item-diff/data/summary.md`)
 - 1509 of 8043 sim items differ.
 - Classic raised Ulduar/emblem item levels, e.g. 226→232 on 329 items and 239→252 on 92.
@@ -836,6 +945,10 @@ values. Human warrior, level 80, maxed skills, Worn Shortsword (Sword Specializa
   Trauma (both ranks) carries the 286 periodic-crit override scoped to that same flag, plus its own 42
   proc-trigger effect; Deep Wounds' periodic spell (12721) has a periodic-damage effect and no
   periodic-crit one; Shattering Throw's base cast time is 1500 ms. All match the sim unchanged.
+- Mage (`TestSimvalMage`, human mage vs. the boss dummy): Frostbolt, Fireball and Living Bomb's explosion all roll
+  the magic table with partial resists; Living Bomb's dot itself carries no periodic-crit effect. A 295.7 s Fire
+  capture (`fire_Svrleadggztq_1790099652`) checks Ignite's delay and tick-damage model against ~80 live
+  applications (Findings, Mage).
 
 ## Retail deviations
 

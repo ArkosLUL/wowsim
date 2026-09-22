@@ -70,20 +70,67 @@ func TestDelayedPeriodicApplierPhasePerIterationPerCaster(t *testing.T) {
 	}
 }
 
-// The server tick lattice (Map::Update) still rounds the landing up, on top of the caster's own
-// 400 ms boundary.
-func TestDelayedPeriodicApplierRoundsToServerTick(t *testing.T) {
+// Delay lands on the caster's own clock, which the server advances every update regardless of the
+// map's slower creature/visibility tick, so a server tick interval doesn't round its landing.
+func TestDelayedPeriodicApplierIgnoresServerTickInterval(t *testing.T) {
 	sim := newDelayedPeriodicTestSim(3)
 	sim.serverTickInterval = 100 * time.Millisecond
 	sim.serverTickPhase = 0
 	dpa := NewDelayedPeriodicApplier(&Unit{Label: "Caster"})
 
+	sawOffTick := false
 	for ms := 0; ms < 500; ms += 17 {
 		sim.CurrentTime = time.Duration(ms) * time.Millisecond
 		landing := sim.CurrentTime + dpa.Delay(sim)
 		if landing%sim.serverTickInterval != 0 {
-			t.Fatalf("CurrentTime %s: landing %s isn't on the %s server tick lattice", sim.CurrentTime, landing, sim.serverTickInterval)
+			sawOffTick = true
 		}
+	}
+	if !sawOffTick {
+		t.Fatal("every landing fell on the server tick lattice, want Delay to draw a continuous boundary")
+	}
+}
+
+// DelayFromInstantCast draws its boundary off the caster's clock as of one server tick ago, so its
+// range sits one tick short of Delay's own (0, 400 ms].
+func TestDelayedPeriodicApplierDelayFromInstantCastRange(t *testing.T) {
+	sim := newDelayedPeriodicTestSim(11)
+	sim.serverTickInterval = 100 * time.Millisecond
+	sim.serverTickPhase = 0
+	dpa := NewDelayedPeriodicApplier(&Unit{Label: "Caster"})
+
+	want := delayedPeriodicWindow - sim.serverTickInterval
+	min, max := delayedPeriodicWindow, time.Duration(0)
+	for ms := 0; ms < int(2*delayedPeriodicWindow/time.Millisecond); ms++ {
+		sim.CurrentTime = time.Duration(ms) * time.Millisecond
+		d := dpa.DelayFromInstantCast(sim)
+		if d <= 0 || d > want {
+			t.Fatalf("CurrentTime %s: DelayFromInstantCast = %s, want (0, %s]", sim.CurrentTime, d, want)
+		}
+		if d < min {
+			min = d
+		}
+		if d > max {
+			max = d
+		}
+	}
+	if min > 2*time.Millisecond {
+		t.Errorf("min DelayFromInstantCast over a full sweep = %s, want close to the floor", min)
+	}
+	if max < want-time.Millisecond {
+		t.Errorf("max DelayFromInstantCast over a full sweep = %s, want close to %s", max, want)
+	}
+}
+
+// With exact timing (no server tick batching, as in the other unit tests), an instant cast has
+// nothing to go stale against, so it lands exactly where Delay would.
+func TestDelayedPeriodicApplierDelayFromInstantCastMatchesDelayWithExactTiming(t *testing.T) {
+	sim := newDelayedPeriodicTestSim(13)
+	dpa := NewDelayedPeriodicApplier(&Unit{Label: "Caster"})
+
+	sim.CurrentTime = 12345 * time.Millisecond
+	if got, want := dpa.DelayFromInstantCast(sim), dpa.Delay(sim); got != want {
+		t.Errorf("DelayFromInstantCast = %s, want %s (Delay, with no server tick to go stale against)", got, want)
 	}
 }
 
@@ -105,6 +152,24 @@ func TestDelayedPeriodicApplierBeatsATickDueThen(t *testing.T) {
 	}
 }
 
+// Same tie-break for the instant-cast path: it can beat a tick due even sooner, since it draws a
+// shorter delay than Apply's.
+func TestDelayedPeriodicApplierFromInstantCastBeatsATickDueThen(t *testing.T) {
+	sim := newDelayedPeriodicTestSim(5)
+	sim.serverTickInterval = 100 * time.Millisecond
+	sim.serverTickPhase = 0
+	dpa := NewDelayedPeriodicApplier(&Unit{Label: "Caster"})
+
+	sim.CurrentTime = 1000 * time.Millisecond
+	tick := &PendingAction{NextActionAt: sim.CurrentTime + dpa.DelayFromInstantCast(sim), OnAction: func(*Simulation) {}}
+	sim.AddPendingAction(tick)
+	dpa.ApplyFromInstantCast(sim, &Unit{Label: "Target"}, func(*Simulation) {})
+
+	if next := sim.pendingActions[len(sim.pendingActions)-1]; next == tick || next.NextActionAt >= tick.NextActionAt {
+		t.Errorf("the tick at %s runs before the refresh", tick.NextActionAt)
+	}
+}
+
 // A caster applying to itself skips the queue outright (Unit::CastDelayedSpellWithPeriodicAmount:
 // `this == caster`).
 func TestDelayedPeriodicApplierSkipsQueueForSelfTarget(t *testing.T) {
@@ -114,6 +179,23 @@ func TestDelayedPeriodicApplierSkipsQueueForSelfTarget(t *testing.T) {
 
 	ran := false
 	dpa.Apply(sim, caster, func(sim *Simulation) { ran = true })
+
+	if !ran {
+		t.Fatal("onApply didn't run immediately for a self-targeted apply")
+	}
+	if len(sim.pendingActions) != 1 {
+		t.Errorf("pendingActions = %d, want just the sentinel (nothing queued)", len(sim.pendingActions))
+	}
+}
+
+// ApplyFromInstantCast skips the queue on a self-target too.
+func TestDelayedPeriodicApplierFromInstantCastSkipsQueueForSelfTarget(t *testing.T) {
+	sim := newDelayedPeriodicTestSim(1)
+	caster := &Unit{Label: "Caster"}
+	dpa := NewDelayedPeriodicApplier(caster)
+
+	ran := false
+	dpa.ApplyFromInstantCast(sim, caster, func(sim *Simulation) { ran = true })
 
 	if !ran {
 		t.Fatal("onApply didn't run immediately for a self-targeted apply")
