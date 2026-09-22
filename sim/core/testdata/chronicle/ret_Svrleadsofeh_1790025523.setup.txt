@@ -1,0 +1,66 @@
+player: Svrleadsofeh
+class: 2
+race: 1
+spec label: ret
+seconds: 300
+yards: 4
+started: [31801 53736]
+rotation: [53408 35395 53385 48819]
+
+correction: the queried character_talent rows were a Protection build, not the Retribution one
+SIMVAL_RECORD_TALENT_SPELLS learned before the fight. Plain `.learn <id>` (cs_learn.cpp's
+HandleLearnSpellCommand, unlike `.learn talents`) grants the spellbook entry through the generic
+learnSpell path, not LearnTalent, so it never writes character_talent: the query instead shows
+whatever .playerbots bot initself=epic spent talent points on (Redoubt procs from 31s in prove it
+was there from the start, not a later respec). The Retribution spells stayed castable the whole
+fight regardless; restored below to the 26 ids SIMVAL_RECORD_TALENT_SPELLS actually learned. Separately,
+Crusader Strike, Divine Storm, Judgement of Wisdom and Consecration all stop landing around 271-273s
+into the 300s fight while free melee and the seal proc keep going: real mana exhaustion, unrelated to
+the talent bookkeeping above.
+talents (spell, specMask):
+  20045 1
+  20057 1
+  20066 1
+  20105 1
+  20113 1
+  20121 1
+  20261 1
+  20266 1
+  20332 1
+  20337 1
+  20375 1
+  25957 1
+  26023 1
+  31821 1
+  31868 1
+  31869 1
+  31878 1
+  31881 1
+  35395 1
+  35397 1
+  53376 1
+  53382 1
+  53385 1
+  53488 1
+  53503 1
+  53648 1
+
+equipped (slot, item, enchantments):
+  0 51266 3818 0 0 0 0 0 3634 0 0 3540 0 0 0 0 0 3766 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+  1 50682 0 0 0 0 0 0 3532 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+  2 51269 3330 0 0 0 0 0 3532 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+  3 45 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+  4 51265 3297 0 0 0 0 0 3532 0 0 3532 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+  5 50691 0 0 0 0 0 0 3532 0 0 3532 0 0 3532 0 0 0 0 0 3729 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+  6 51268 3327 0 0 0 0 0 3532 0 0 3532 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+  7 53129 1075 0 0 0 0 0 3532 0 0 3532 0 0 0 0 0 3307 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+  8 50611 3850 0 0 0 0 0 3532 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+  9 50716 3330 0 0 0 0 0 3532 0 0 3532 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+  10 50642 0 0 0 0 0 0 3532 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+  11 50622 0 0 0 0 0 0 3532 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+  12 50344 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+  13 50364 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+  14 50718 2622 0 0 0 0 0 3532 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+  15 51869 3851 0 0 0 0 0 3532 0 0 0 0 0 0 0 0 2871 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+  16 50729 3849 0 0 0 0 0 3532 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+  17 50461 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0

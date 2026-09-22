@@ -506,6 +506,7 @@ func init() {
 				},
 				NumberOfTicks: 4,
 				TickLength:    time.Second * 2,
+				TicksCanCrit:  false,
 				OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
 					dot.SnapshotBaseDamage = 480 / 4
 					dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(dot.Spell.Unit.AttackTables[target.UnitIndex])

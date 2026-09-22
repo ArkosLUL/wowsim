@@ -65,8 +65,6 @@ type Paladin struct {
 
 	SpiritualAttunementMetrics *core.ResourceMetrics
 
-	HasTuralyonsOrLiadrinsBattlegear2Pc bool
-
 	DemonAndUndeadTargetCount int32
 
 	mutualLockoutDPAW *core.Timer
@@ -170,9 +168,6 @@ func NewPaladin(character *core.Character, talentsStr string) *Paladin {
 		Talents:   &proto.PaladinTalents{},
 	}
 	core.FillTalentsProto(paladin.Talents.ProtoReflect(), talentsStr, TalentTreeSizes)
-
-	// This is used to cache its effect in talents.go
-	paladin.HasTuralyonsOrLiadrinsBattlegear2Pc = paladin.HasSetBonus(ItemSetTuralyonsBattlegear, 2)
 
 	paladin.PseudoStats.CanParry = true
 

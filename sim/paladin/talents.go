@@ -585,6 +585,10 @@ func (paladin *Paladin) applyRighteousVengeance() {
 		ProcMask:    core.ProcMaskEmpty,
 		Flags:       core.SpellFlagNoOnCastComplete | core.SpellFlagMeleeMetrics | core.SpellFlagIgnoreModifiers,
 
+		// The talent itself grants the DoT's crit chance (the early return above guarantees it's
+		// trained). Turalyon's/Liadrin's Battlegear 2pc (67188) carries the same aura-286 unlock plus
+		// a +100% crit-damage effect, but SpellInfoCorrections.cpp zeroes that second effect for
+		// 67188 (a known Blizzard DBC bug fix), so the 2pc adds nothing here.
 		DamageMultiplier: 1,
 		CritMultiplier:   paladin.MeleeCritMultiplier(),
 		ThreatMultiplier: 1,
@@ -595,13 +599,10 @@ func (paladin *Paladin) applyRighteousVengeance() {
 			},
 			NumberOfTicks: 4,
 			TickLength:    time.Second * 2,
+			TicksCanCrit:  true,
 
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
-				if paladin.HasTuralyonsOrLiadrinsBattlegear2Pc {
-					dot.CalcAndDealPeriodicSnapshotDamage(sim, target, dot.Spell.OutcomeMeleeSpecialCritOnly)
-				} else {
-					dot.CalcAndDealPeriodicSnapshotDamage(sim, target, dot.Spell.OutcomeAlwaysHit)
-				}
+				dot.CalcAndDealPeriodicSnapshotDamage(sim, target, dot.Spell.OutcomeMeleeSpecialCritOnly)
 			},
 		},
 	})

@@ -95,7 +95,7 @@ func (paladin *Paladin) registerSealOfRighteousnessSpellAndAura() {
 					onSpecialOrSwingProc.Cast(sim, result.Target)
 				}
 			} else {
-				if spell.IsMelee() {
+				if paladin.sealCanProcOn(spell) {
 					onSpecialOrSwingProc.Cast(sim, result.Target)
 				}
 			}

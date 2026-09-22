@@ -45,6 +45,7 @@ func (paladin *Paladin) registerConsecrationSpell() {
 			},
 			NumberOfTicks: 8 + core.TernaryInt32(paladin.HasMajorGlyph(proto.PaladinMajorGlyph_GlyphOfConsecration), 2, 0),
 			TickLength:    time.Second * 1,
+			TicksCanCrit:  false,
 
 			OnSnapshot: func(sim *core.Simulation, _ *core.Unit, dot *core.Dot, _ bool) {
 				target := paladin.CurrentTarget
