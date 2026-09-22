@@ -85,7 +85,7 @@ rides along, as it only needs the live server. BIS-alt5 joined mid-wave, also th
   `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\wf_ff31a9cb-dfe`.
 - Args and results: `waveH3-args.json` and `waveH3-results.json` in `G:\DevStuff\GitHub\.wave-loop`.
 - BIS-alt5 runs apart as `wf_50d769ad-706` (base `c1a4650b9`, transcript dir next to the first run's, args
-  `waveH3b-args.json`).
+  `waveH3b-args.json`), and PAR-P7-RET-RR's repair round as `wf_769ddd4d-534`.
 
 ## BiS baseline
 
@@ -200,8 +200,8 @@ crashed before F2, so its column starts there.
 | BIS-raid-contrib | merged | `f6da0097a` | goldens unchanged |
 | wave H cross-review | | `2ae1e1906` | 5 bugs: Slam's split left Recklessness and the T8 2pc on the cast, Deadly Poison kept its first haste, Exorcism was limited to undead and demons, the Ret capture's talent reset failed; Assassination +2.2% (goldens `6ca712f26`); module `39e086e`; spell audit refreshed in `ba4252567` |
 
-| PAR-P7-0e | running | | stages: outcome, delay |
-| PAR-P7-RET-RR | running | | |
+| PAR-P7-0e | merged | `c056bfd24` | 6 goldens promoted in `051d8e6b9` |
+| PAR-P7-RET-RR | repair round | | the first run's per-ability table compared melee with glances on one side only and mixed crit rate into hit size |
 | BIS-alt5 | running | | |
 
 Later WIs are added as their wave starts.
