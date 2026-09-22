@@ -550,7 +550,7 @@ func (sim *Simulation) advanceWeaponAttacks() {
 
 	sim.minWeaponAttackTime = NeverExpires
 	for _, wa := range sim.weaponAttacks {
-		sim.minWeaponAttackTime = min(sim.minWeaponAttackTime, wa.trySwing(sim))
+		sim.minWeaponAttackTime = min(sim.minWeaponAttackTime, wa.trySwing(sim, false))
 	}
 }
 

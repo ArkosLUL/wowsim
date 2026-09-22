@@ -237,7 +237,7 @@ func (warrior *Warrior) applyBloodsurge() {
 			warrior.Slam.DefaultCast.CastTime = 0
 		},
 		OnExpire: func(aura *core.Aura, sim *core.Simulation) {
-			warrior.Slam.DefaultCast.CastTime = 1500 * time.Millisecond
+			warrior.Slam.DefaultCast.CastTime = warrior.slamCastTime()
 		},
 		OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
 			if spell == warrior.Slam { // removed even if slam doesn't land
@@ -262,7 +262,7 @@ func (warrior *Warrior) applyBloodsurge() {
 				warrior.Slam.DefaultCast.GCD = core.GCDMin
 			},
 			OnExpire: func(aura *core.Aura, sim *core.Simulation) {
-				warrior.Slam.DefaultCast.CastTime = 1500 * time.Millisecond
+				warrior.Slam.DefaultCast.CastTime = warrior.slamCastTime()
 				warrior.Slam.DefaultCast.GCD = core.GCDDefault
 			},
 			OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
@@ -357,6 +357,10 @@ func (warrior *Warrior) applyTitansGrip() {
 		return
 	}
 	if warrior.MainHand().HandType != proto.HandType_HandTypeTwoHand && warrior.OffHand().HandType != proto.HandType_HandTypeTwoHand {
+		return
+	}
+
+	if warrior.Server().SpellTweaks.TitansGripNoDamagePenalty {
 		return
 	}
 

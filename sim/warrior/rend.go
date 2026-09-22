@@ -16,6 +16,12 @@ func (warrior *Warrior) RegisterRendSpell() {
 		dotTicks += 2
 	}
 
+	// Trauma's crit is a static override on the talent itself (SpellTweaks_classes.cpp's
+	// spell_tweaks_rend_haste comment), so it always applies once talented; only the haste add-ticks
+	// half reads the RendTrauma config switch.
+	canCrit := warrior.Talents.Trauma > 0
+	addsTicks := canCrit && warrior.Server().SpellTweaks.RendTrauma
+
 	warrior.Rend = warrior.RegisterSpell(core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: 47465},
 		SpellSchool: core.SpellSchoolPhysical,
@@ -38,6 +44,7 @@ func (warrior *Warrior) RegisterRendSpell() {
 		},
 
 		DamageMultiplier: 1 + 0.1*float64(warrior.Talents.ImprovedRend),
+		CritMultiplier:   warrior.critMultiplier(mh),
 		ThreatMultiplier: 1,
 
 		Dot: core.DotConfig{
@@ -45,8 +52,11 @@ func (warrior *Warrior) RegisterRendSpell() {
 				Label: "Rend",
 				Tag:   "Rend",
 			},
-			NumberOfTicks: dotTicks,
-			TickLength:    time.Second * 3,
+			NumberOfTicks:       dotTicks,
+			TickLength:          time.Second * 3,
+			AffectedByCastSpeed: addsTicks,
+			TickHaste:           core.MeleeHasteAddsTicks,
+			TicksCanCrit:        canCrit,
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
 				dot.SnapshotBaseDamage = (380 + warrior.AutoAttacks.MH().CalculateAverageWeaponDamage(dot.Spell.MeleeAttackPower())) / 5
 				// 135% damage multiplier is applied at the beginning of the fight and removed when target is at 75% health
@@ -54,9 +64,16 @@ func (warrior *Warrior) RegisterRendSpell() {
 					dot.SnapshotBaseDamage *= 1.35
 				}
 				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(dot.Spell.Unit.AttackTables[target.UnitIndex])
+				if canCrit {
+					dot.SnapshotCritChance = dot.Spell.PhysicalCritChance(dot.Spell.Unit.AttackTables[target.UnitIndex])
+				}
 			},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
-				dot.CalcAndDealPeriodicSnapshotDamage(sim, target, dot.OutcomeTick)
+				if canCrit {
+					dot.CalcAndDealPeriodicSnapshotDamage(sim, target, dot.OutcomeSnapshotCrit)
+				} else {
+					dot.CalcAndDealPeriodicSnapshotDamage(sim, target, dot.OutcomeTick)
+				}
 			},
 		},
 

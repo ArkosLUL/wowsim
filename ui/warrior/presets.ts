@@ -75,7 +75,6 @@ export const ArmsTalents = {
 			major3: WarriorMajorGlyph.GlyphOfExecution,
 			minor1: WarriorMinorGlyph.GlyphOfThunderClap,
 			minor2: WarriorMinorGlyph.GlyphOfCommand,
-			minor3: WarriorMinorGlyph.GlyphOfShatteringThrow,
 		}),
 	}),
 };
@@ -89,8 +88,7 @@ export const FuryTalents = {
 			major2: WarriorMajorGlyph.GlyphOfHeroicStrike,
 			major3: WarriorMajorGlyph.GlyphOfExecution,
 			minor1: WarriorMinorGlyph.GlyphOfCommand,
-			minor2: WarriorMinorGlyph.GlyphOfShatteringThrow,
-			minor3: WarriorMinorGlyph.GlyphOfCharge,
+			minor2: WarriorMinorGlyph.GlyphOfCharge,
 		}),
 	}),
 };

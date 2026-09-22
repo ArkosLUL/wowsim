@@ -537,6 +537,40 @@ func TestSlamStartedAsTheSwingComesDueGoesFirst(t *testing.T) {
 	}
 }
 
+// A held main hand goes out the moment its cast lands, even when the main hand's own last-moment
+// check immediately chains into another Slam: Unit::Update clears UNIT_STATE_CASTING in _UpdateSpells
+// before Player::Update's melee check runs, and a cast reacting to that landing only takes effect on
+// the next update (ProcessSpellQueue, or a new packet). Back-to-back 1.5 s Slams (cast time == GCD)
+// used to hold the swing forever.
+func TestHeldSwingGoesBeforeAChainedSlamFromItsOwnLanding(t *testing.T) {
+	var slam *Spell
+	sim, a := newTimingTestSim(t, 0, func(a *timingTestAgent) {
+		a.EnableAutoAttacks(a, AutoAttackOptions{
+			MainHand:       testWeapon(2),
+			AutoSwingMelee: true,
+			ReplaceMHSwing: func(_ *Simulation, mhSwingSpell *Spell) *Spell { return mhSwingSpell },
+		})
+		slam = a.RegisterSpell(castConfig(testSpellSlam, ms(1500)))
+	})
+	aa := &a.AutoAttacks
+	swings := recordCasts(aa.MHAuto())
+	casts := 0
+	a.Rotation = &APLRotation{unit: &a.Unit, priorityList: []*APLAction{{impl: &testAPLAction{
+		ready:   func(sim *Simulation) bool { return casts < 2 && sim.CurrentTime >= ms(2000) && a.GCD.IsReady(sim) },
+		execute: func(sim *Simulation) { casts++; slam.Cast(sim, a.CurrentTarget) },
+	}}}}
+	aa.mh.setTimer(sim, ms(2000))
+	sim.PrePull()
+	runUntil(sim, ms(7500))
+
+	// Slam #1 (2s-3.5s) holds the swing due at 2s. Slam #2 starts the instant Slam #1 lands, cast right
+	// off that landing, and must not hold this swing again: it goes at 3.5s, then resumes its own 2 s
+	// cadence once Slam #2 (which pauses it, unaffected) lands at 5s.
+	if want := []time.Duration{ms(3500), ms(7000)}; !slices.Equal(*swings, want) {
+		t.Errorf("swings %v, want %v: a Slam chained off its own landing must not hold the swing that landing just released", *swings, want)
+	}
+}
+
 // A haste change while Slam's pause has the melee timer frozen rescales what's left of that frozen
 // timer (UpdateSwingTimers), not the time still left on the freeze itself.
 func TestHasteDuringSlamsPauseRescalesTheFrozenTimer(t *testing.T) {

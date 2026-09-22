@@ -288,14 +288,14 @@ func (wa *WeaponAttack) setWeapon(weapon Weapon) {
 }
 
 // inlineable stub for swing
-func (wa *WeaponAttack) trySwing(sim *Simulation) time.Duration {
+func (wa *WeaponAttack) trySwing(sim *Simulation, releasingHold bool) time.Duration {
 	if sim.CurrentTime < wa.swingAt {
 		return wa.swingAt
 	}
-	return wa.swing(sim)
+	return wa.swing(sim, releasingHold)
 }
 
-func (wa *WeaponAttack) swing(sim *Simulation) time.Duration {
+func (wa *WeaponAttack) swing(sim *Simulation, releasingHold bool) time.Duration {
 	// SetOffhandSwingAt can leave a swing between server ticks
 	if at := sim.NextServerTick(wa.swingAt); at > sim.CurrentTime {
 		wa.swingAt = at
@@ -328,13 +328,18 @@ func (wa *WeaponAttack) swing(sim *Simulation) time.Duration {
 			return NeverExpires
 		}
 
-		// the server takes casts before it gets to melee, so one started just now can restart, pause
-		// or hold this swing
-		if wa.swingAt > sim.CurrentTime {
-			return wa.swingAt
-		}
-		if until, held := wa.castHold(sim); held {
-			return wa.hold(until)
+		// the server takes casts before it gets to melee, so a fresh one can restart, pause or hold
+		// this swing. Except when this swing is the one landing right now: Unit::Update clears
+		// UNIT_STATE_CASTING in _UpdateSpells before Player::Update's melee check runs, and anything
+		// cast in reaction to that landing only takes effect next update (ProcessSpellQueue, or a new
+		// packet). A chained hardcast here can't hold the very swing its own landing just freed.
+		if !releasingHold {
+			if wa.swingAt > sim.CurrentTime {
+				return wa.swingAt
+			}
+			if until, held := wa.castHold(sim); held {
+				return wa.hold(until)
+			}
 		}
 	}
 
@@ -799,13 +804,14 @@ func (aa *AutoAttacks) resumeMelee(sim *Simulation) {
 		}
 		wa.setTimer(sim, sim.CurrentTime+wa.suspendedLeft)
 		if aa.enabled {
-			sim.rescheduleWeaponAttack(wa.trySwing(sim))
+			sim.rescheduleWeaponAttack(wa.trySwing(sim, true))
 		}
 	}
 }
 
 // releaseCastHold swings what a cast held, right as it lands and before anything cast after it. Ranged
-// goes first, as Unit::_UpdateSpells runs Auto Shot before Player::Update gets to melee.
+// goes first, as Unit::_UpdateSpells runs Auto Shot before Player::Update gets to melee. Passes
+// releasingHold through so a cast this triggers can't turn around and hold the same swing (see swing()).
 func (aa *AutoAttacks) releaseCastHold(sim *Simulation) {
 	for _, wa := range []*WeaponAttack{&aa.ranged, &aa.mh, &aa.oh} {
 		if !wa.held {
@@ -814,7 +820,7 @@ func (aa *AutoAttacks) releaseCastHold(sim *Simulation) {
 		// an earlier hand's swing can restart this one, which clears held
 		wa.held = false
 		if aa.enabled {
-			sim.rescheduleWeaponAttack(wa.trySwing(sim))
+			sim.rescheduleWeaponAttack(wa.trySwing(sim, true))
 		}
 	}
 }

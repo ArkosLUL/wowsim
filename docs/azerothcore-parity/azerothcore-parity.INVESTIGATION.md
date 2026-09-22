@@ -417,6 +417,85 @@ Roll details the tables above don't show:
 - Module hooks that run inside `CalculateMeleeDamage` (`ModifyMeleeDamage` in mod-dungeon-scale, mod-dungeon-master,
   mod-individual-progression) only scale damage; no module implements `OnBeforeRollMeleeOutcomeAgainst`.
 
+**Warrior** (`TestFury`, `TestArms`, `TestProtectionWarrior`, code)
+- Slam (`sim/warrior/slam.go`): `spell_warr_slam::HandleDummy` (`spell_warrior.cpp:318-353`) only casts
+  50783 once the cast (47475, `SPELL_ATTR0_NO_ACTIVE_DEFENSE`) lands, so the table roll happens once, on
+  the cast. The regenerated capture shows 50783 itself carries `SPELL_ATTR3_ALWAYS_HIT`, not the
+  dodge/parry-able hit the P3-2 allowlist assumed, so the sim now splits Slam into two spells: 47475
+  rolls a hit-or-miss check, 50783 deals the damage. `SpellFlagAlwaysHit` reaches `applyServerData`
+  (`spell.go:789-791`) but nothing reads it back off `rollYellow`, so 50783 uses
+  `OutcomeMeleeSpecialCritOnly` (the "roll happened elsewhere" applier Mutilate, Rune Strike and
+  Stormstrike already use) as the closest match: it still rolls the separate yellow block chance, which
+  `SPELL_ATTR3_ALWAYS_HIT` rules out. Wiring `SpellFlagAlwaysHit` into `rollYellow` and dropping that
+  residual block roll is a P7-0c-style core follow-up.
+- Deep Wounds (`sim/warrior/deep_wounds.go`): `Unit::CastDelayedSpellWithPeriodicAmount`
+  (`Unit.cpp:16310-16328`) queues the aura's recombined amount as an `AuraMunchingQueue` event 400 ms
+  out whenever the caster and target differ, gated by `MunchingBlizzlike.Enabled`
+  (`worldserver.conf` `= 1` live), an AzerothCore core setting, not a mod-spell-tweaks toggle. Every
+  proc, the first application included, goes through the delay; the outstanding-damage math the sim
+  already had is unchanged, just wrapped in a `core.PendingAction` fired 400 ms after the crit.
+  Review round: the 400 ms is `CalculateQueueTime`'s ceiling, not its actual value
+  (`EventProcessor.cpp:164-167`): it queues to the next multiple of 400 ms of the world clock, 0-400 ms
+  out depending on a phase the sim has no equivalent for (only `serverTickPhase`, which is per-tick,
+  not per-400ms-window), so live procs average ~200 ms, not ~400, and the sim over-applies munching
+  loss versus live. Left as this item's follow-up alongside the `rollYellow` one above: it's the same
+  `CastDelayedSpellWithPeriodicAmount` path DK, Druid, Hunter, Mage, Paladin and Shaman also use.
+- Rend (`sim/warrior/rend.go`) now reads `Server().SpellTweaks.RendTrauma` for the melee-haste add-ticks
+  half and `Talents.Trauma > 0` alone for the crit half, matching `SpellTweaks_classes.cpp:372-395`
+  (`spell_tweaks_rend_haste`) and the Trauma talent's static `spell_dbc` override. It needed a
+  `CritMultiplier` it never had before, since it couldn't crit until now.
+- Titan's Grip (`sim/warrior/talents.go`): the -10% penalty now checks
+  `Server().SpellTweaks.TitansGripNoDamagePenalty` first (`SpellTweaks_classes.cpp:610-636`,
+  `spell_tweaks_titans_grip_no_penalty::NeutralizePenalty`), live on.
+- Shattering Throw and Heroic Throw (`sim/warrior/shattering_throw.go`, `heroic_throw.go`): both carry
+  `FlagResetsAutoAttack` in the generated data (57755, 64382), which `cast.go`'s `resetsSwing` already
+  resets on cast start and completion, so the hand-rolled `StopMeleeUntil` calls were redundant, and
+  modeled the wrong reset shape besides (retail deviation #19). Shattering Throw's cast time is
+  unconditionally 1.5 s now; Glyph of Shattering Throw (206953) is a Cataclysm item unimplemented on
+  this server, so it's out of the presets (`ui/warrior/presets.ts`, `FuryGlyphs`, `presetOptimizeRequest`'s
+  Fury player, `fury_p1.json`) but stays live in `hasGlyph`'s stance-switch and cast condition for a
+  hand-built profile, and `ArmsGlyphs` (`dps_warrior_test.go`) keeps it glyphed for coverage of that path.
+- Recklessness and Death Wish (`sim/warrior/recklessness.go`, `talents.go`): the P3-2 GCD entries are
+  correct as declared. `applyServerData` already forces `DefaultCast.GCD` to 1500 ms, and each
+  ability's own `WaitUntil(sim.CurrentTime+GCDDefault)` sets the same absolute GCD-ready time a second
+  time, not a second GCD.
+- Slam's cast time reset (`sim/warrior/talents.go`): Bloodsurge's and the Ymirjar 4pc's `OnExpire`
+  hardcoded 1500 ms, dropping Improved Slam's -500 ms a point. Both now call the `slamCastTime()`
+  helper the spell itself registers with.
+- `tools/acore/spellaudit -area warrior` found no unresolved warrior spell ids (`spells_missing.csv`'s
+  20 rows are all in `sim/core`, `sim/common`, `sim/optimizer` and `sim/rogue`), and no other warrior
+  spell's cast, GCD, cooldown or binary flag disagrees with the server beyond what
+  `TestServerDataConflicts` already catches.
+- Heroic Strike and Cleave already suppress the dual-wield miss penalty through
+  `PseudoStats.DisableDWMissPenalty` (`spell_outcome.go:397`); no warrior APL reads `spell.cast_time`,
+  so the tick-rounding item doesn't touch this class.
+- `sim/core/serverdata/*_auto_gen.go` regenerated (`gen_serverdata`) to add 50783, the only spell id
+  this item newly names.
+- A held main hand's last-moment APL check could chain straight into another Slam once cast time
+  equals GCD (0-point Improved Slam), which re-held the swing before it fired, forever, for
+  back-to-back Slams. `Player::Update`'s melee check (`PlayerUpdates.cpp:159`) runs only after
+  `Unit::Update`'s `_UpdateSpells` lands the cast and clears `UNIT_STATE_CASTING`, and a cast
+  reacting to that landing (`ProcessSpellQueue`, or a new packet) can't start before the next
+  update, so it can't preempt the swing that already landed. `attack.go`'s `swing()`/`trySwing()`
+  now take a `releasingHold` flag, skipping the re-check only for the swing being released. No
+  suite hits this: talented Slam decouples cast time from GCD, and the tested builds never chain
+  untalented Slam back-to-back with zero gap (confirmed with and without the fix, all three
+  suites' goldens identical). Covered by `TestHeldSwingGoesBeforeAChainedSlamFromItsOwnLanding`.
+- Review round: `releasingHold` above only reached `releaseCastHold`'s two `trySwing` calls.
+  `resumeMelee` also calls `trySwing` directly once a suspended hand's restored timer is already
+  due (the second hand a shared cast landing releases), still passing `false`, so it could hit the
+  same race. Both of its calls now pass `true` too. Same caveat: no suite hits it, confirmed by
+  full-suite `dock.sh delta` before and after (zero suites, zero DPS moved).
+- `sim/optimizer/testdata/search/fury_p1.json` drifts on a plain `-update` well beyond the glyph: slot
+  14's enchant options gain id 3851, unchanged even with every warrior and evaluator edit reverted, so
+  it's the live reforge/enchant data moving since the file was last regenerated, not this item. The
+  committed file keeps that drift out and only drops the glyph by hand; a stale search fixture is a
+  finding for whichever item next owns `sim/optimizer/testdata`.
+- Live-verified (`TestSimvalWarriorP7`): Rend's tick data, Trauma's scoped crit override, Deep Wounds'
+  no-crit and Shattering Throw's flat cast time all match the server; Heroic Strike's yellow miss
+  matches the plain boss baseline, confirming the dual-wield penalty never leaks into it. Numbers in
+  **Verified on the live server**.
+
 **Items** (`docs/azerothcore-item-diff/data/summary.md`)
 - 1509 of 8043 sim items differ.
 - Classic raised Ulduar/emblem item levels, e.g. 226→232 on 329 items and 239→252 on 92.
@@ -527,6 +606,16 @@ values. Human warrior, level 80, maxed skills, Worn Shortsword (Sword Specializa
   `Unit::SpellHitResult` lets miss only a hostile target, and the dummies' faction 7 isn't, so on a raid boss it
   rolls the magic table. `tools/simval` doesn't model that, `ALWAYS_HIT` or a binary spell's lack of partials,
   so those records fail it.
+- Warrior probes (`TestSimvalWarriorP7`, human warrior vs. the boss dummy): Rend's yellow table dodges
+  (5.70%) and parries (13.25%) but never blocks — no `SPELL_ATTR3_COMPLETELY_BLOCKED` — at the plain
+  8.00% miss and 4.40% partial block; Shattering Throw only misses (8.00%), no dodge/parry/block,
+  matching its `OutcomeMeleeSpecialNoBlockDodgeParry`; Heroic Strike's yellow miss is the same 8.00%,
+  confirming the dual-wield penalty (gated on `spellId == 0` in `MeleeSpellMissChance`) never reaches
+  it. `.simval spelldump` on 47465/46854/46855/12721/64382: Rend's periodic-damage effect ticks every
+  3000 ms for a 15000 ms duration, carries family flag 0x20, and has `spell_tweaks_rend_haste` bound;
+  Trauma (both ranks) carries the 286 periodic-crit override scoped to that same flag, plus its own 42
+  proc-trigger effect; Deep Wounds' periodic spell (12721) has a periodic-damage effect and no
+  periodic-crit one; Shattering Throw's base cast time is 1500 ms. All match the sim unchanged.
 
 ## Retail deviations
 
@@ -584,6 +673,8 @@ The fork copies the server. Patching any of these in [ac] means updating the mat
 | 47 | Hunter pet focus | 24 every 4 s | 5 a second | `Creature::Regenerate` |
 | 48 | Hunter pet magic-class abilities | +50% crits, 0.333 of pet spell damage (dots less); Poison Spit and Demoralizing Screech roll the magic table too | +100% crits, 0.049 of pet AP; those two on the melee table | `spell_bonus_data`, `Unit::SpellCriticalDamageBonus` |
 | 49 | Explosive Trap damage (49065) | magic class: never misses, crits off spell crit for +50%, no ten-target cap (the trap's trigger creature casts it) | ranged hit and crit, +100%, capped | `GameObject::CastSpell`, `Spell::AddUnitTarget` |
+| 50 | Slam's damage hit (50783) | `SPELL_ATTR3_ALWAYS_HIT`: the table roll happens once, on the cast (47475) | rolls its own hit/dodge/parry/glance/crit like the cast | `spell_warr_slam::HandleDummy`, `spell.dbc` |
+| 51 | Deep Wounds refresh | queued 400 ms out, `MunchingBlizzlike.Enabled` | applies immediately | `Unit.cpp:16310-16328` |
 
 Not yet settled against retail, check before patching: the 200 ms other-hand push (`PlayerUpdates.cpp`), the DoT
 refresh tick-timer rule, the max(cast, 1500 ms) PPM basis for spell-triggered aura procs, the rule-based binary
