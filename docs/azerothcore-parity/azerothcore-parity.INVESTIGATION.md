@@ -35,6 +35,10 @@ Roll details the tables above don't show:
   `GetEffectiveResistChance(..., spellInfo)`·10000 to the resist threshold.
 - Spell crit: `SpellDoneCritChance` then `SpellTakenCritChance`, rolled with `roll_chance_f(max(0, chance))`
   (`Spell.cpp:8476-8478`), independent of the hit roll.
+- ALWAYS_HIT returns before the yellow table rolls at all, not just before active defense, and
+  `isSpellBlocked` exempts it and NO_ACTIVE_DEFENSE from the partial block roll. `rollYellow` and
+  `OutcomeMeleeSpecialCritOnly` read the flag now (PAR-P7-0e); Stormstrike's 32175/32176 still don't,
+  since the sim rolls both hits under the outer 17364 spell object, which carries neither flag.
 
 **Resists.** Sim: `sim/core/spell_resistances.go:87-106`. Server: `Unit.cpp:2304-2412`, `SpellMgr.cpp:3405-3466,3597-3633`.
 - Sim: avg resist = R/(C+R) + 2% per level, i.e. 6% at +3.
@@ -159,7 +163,14 @@ Roll details the tables above don't show:
 - Ticks crit only with aura 286 or on Rupture. `Dot.TicksCanCrit` records that per dot, and
   `periodicCritsNeedDeclaration` (`spell_outcome.go`) enforces it once every class has declared its crit-capable
   dots (P8).
-- Ignite munching: `MunchingBlizzlike = 1`.
+- `Unit::CastDelayedSpellWithPeriodicAmount`'s refresh (`MunchingBlizzlike.Enabled`, live on) queues on
+  the caster's own 400 ms event-clock boundary (`EventProcessor::CalculateQueueTime`) whenever caster
+  and target differ, and the old dot keeps ticking meanwhile; two procs inside one window read the
+  same stale dot, so the later application overwrites the earlier one's (munching).
+  `core.DelayedPeriodicApplier` (PAR-P7-0e) draws that boundary's phase once per caster per iteration,
+  since the sim has no equivalent of the caster's own creation-time clock. On it: Deep Wounds, Unholy
+  Blight, Piercing Shots, Righteous Vengeance. Still owed: Ignite, Languish, the two Shaman procs
+  (`spell_mage/druid/shaman.cpp`).
 
 **Pets**
 - Scaling scripts:
@@ -476,24 +487,14 @@ Roll details the tables above don't show:
   the cast. The regenerated capture shows 50783 itself carries `SPELL_ATTR3_ALWAYS_HIT`, not the
   dodge/parry-able hit the P3-2 allowlist assumed, so the sim now splits Slam into two spells: 47475
   rolls a hit-or-miss check, 50783 deals the damage. `SpellFlagAlwaysHit` reaches `applyServerData`
-  (`spell.go:789-791`) but nothing reads it back off `rollYellow`, so 50783 uses
-  `OutcomeMeleeSpecialCritOnly` (the "roll happened elsewhere" applier Mutilate, Rune Strike and
-  Stormstrike already use) as the closest match: it still rolls the separate yellow block chance, which
-  `SPELL_ATTR3_ALWAYS_HIT` rules out (`Unit::isSpellBlocked`). Wiring `SpellFlagAlwaysHit` into
-  `rollYellow` and dropping that residual block roll is a P7-0c-style core follow-up. Whatever keys on
+  (`spell.go:789-791`), and 50783 uses `OutcomeMeleeSpecialCritOnly` (the "roll happened elsewhere"
+  applier Mutilate, Rune Strike and Stormstrike already use), which now reads the flag and skips the
+  residual block roll `Unit::isSpellBlocked` rules out (PAR-P7-0e). Whatever keys on
   Slam's damage or crit must key on 50783 (`warrior.SlamHit`): after the split, Recklessness's crit list
   and the Siegebreaker 2pc still keyed on the cast, which never crits (fixed in cross-review).
-- Deep Wounds (`sim/warrior/deep_wounds.go`): `Unit::CastDelayedSpellWithPeriodicAmount`
-  (`Unit.cpp:16310-16328`) queues the aura's recombined amount as an `AuraMunchingQueue` event on the
-  caster's own event list whenever the caster and target differ, gated by `MunchingBlizzlike.Enabled`
-  (`worldserver.conf` `= 1` live), an AzerothCore core setting, not a mod-spell-tweaks toggle. Every
-  proc, the first application included, goes through the delay; the outstanding-damage math the sim
-  already had is unchanged, just wrapped in a `core.PendingAction` fired 400 ms after the crit. The
-  400 ms is `CalculateQueueTime`'s ceiling (`EventProcessor.cpp:164-167`): the event lands on the next
-  400 ms boundary of the caster's event clock, up to 400 ms out on a phase the sim has no equivalent for
-  (`serverTickPhase` is per tick), so live procs average ~200 ms and the sim over-applies munching
-  loss. Follow-up, like the `rollYellow` one above: DK, Druid, Hunter, Mage, Paladin and Shaman use the
-  same `CastDelayedSpellWithPeriodicAmount` path.
+- Deep Wounds (`sim/warrior/deep_wounds.go`) now goes through `core.DelayedPeriodicApplier` (**DoTs
+  and periodic ticks**, PAR-P7-0e), matching the caster's own phase instead of a flat 400 ms; the
+  outstanding-damage math is unchanged.
 - Rend (`sim/warrior/rend.go`) now reads `Server().SpellTweaks.RendTrauma` for the melee-haste add-ticks
   half and `Talents.Trauma > 0` alone for the crit half, matching `SpellTweaks_classes.cpp:372-395`
   (`spell_tweaks_rend_haste`) and the Trauma talent's static `spell_dbc` override. It needed a
@@ -832,7 +833,8 @@ The fork copies the server. Patching any of these in [ac] means updating the mat
 | 48 | Hunter pet magic-class abilities | +50% crits, 0.333 of pet spell damage (dots less); Poison Spit and Demoralizing Screech roll the magic table too | +100% crits, 0.049 of pet AP; those two on the melee table | `spell_bonus_data`, `Unit::SpellCriticalDamageBonus` |
 | 49 | Explosive Trap damage (49065) | magic class: never misses, crits off spell crit for +50%, no ten-target cap (the trap's trigger creature casts it) | ranged hit and crit, +100%, capped | `GameObject::CastSpell`, `Spell::AddUnitTarget` |
 | 50 | Slam | can only miss: the cast (47475) is `NO_ACTIVE_DEFENSE`, its damage (50783) `ALWAYS_HIT` | one yellow roll: miss, dodge, parry, crit | `spell_warr_slam::HandleDummy`, `Spell.dbc` |
-| 51 | Deep Wounds refresh | queued to the caster's next 400 ms event boundary (up to 400 ms), `MunchingBlizzlike.Enabled` | applies immediately | `Unit::CastDelayedSpellWithPeriodicAmount`, `EventProcessor::CalculateQueueTime` |
+| 51 | Delayed periodic refresh (Deep Wounds, Unholy Blight, Piercing Shots, Righteous Vengeance) | queued to the caster's next 400 ms event boundary (up to 400 ms), `MunchingBlizzlike.Enabled` | applies immediately | `Unit::CastDelayedSpellWithPeriodicAmount`, `EventProcessor::CalculateQueueTime` |
+| 52 | Munching (same refresh) | two procs inside one window: the later application overwrites the earlier one's contribution, which is lost | none, every proc's contribution lands | `Unit::CastDelayedSpellWithPeriodicAmount`, `AuraMunchingQueue` |
 
 Not yet settled against retail, check before patching: the 200 ms other-hand push (`PlayerUpdates.cpp`), the DoT
 refresh tick-timer rule, the max(cast, 1500 ms) PPM basis for spell-triggered aura procs, the rule-based binary

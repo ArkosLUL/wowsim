@@ -236,11 +236,13 @@ func (dk *Deathknight) procUnholyBlight(sim *core.Simulation, target *core.Unit,
 
 	newDamage := deathCoilDamage * 0.10
 	outstandingDamage := core.TernaryFloat64(dot.IsActive(), dot.SnapshotBaseDamage*float64(dot.NumberOfTicks-dot.TickCount), 0)
+	totalDamage := outstandingDamage + newDamage
 
-	dot.SnapshotAttackerMultiplier = dk.UnholyBlightSpell.DamageMultiplier
-	dot.SnapshotBaseDamage = (outstandingDamage + newDamage) / float64(dot.NumberOfTicks)
-
-	dk.UnholyBlightSpell.Cast(sim, target)
+	core.NewDelayedPeriodicApplier(&dk.Unit).Apply(sim, target, func(sim *core.Simulation) {
+		dot.SnapshotAttackerMultiplier = dk.UnholyBlightSpell.DamageMultiplier
+		dot.SnapshotBaseDamage = totalDamage / float64(dot.NumberOfTicks)
+		dk.UnholyBlightSpell.Cast(sim, target)
+	})
 }
 
 func (dk *Deathknight) applyUnholyBlight() {

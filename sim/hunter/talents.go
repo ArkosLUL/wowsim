@@ -284,6 +284,8 @@ func (hunter *Hunter) applyPiercingShots() {
 		},
 	})
 
+	piercingShotsDelay := core.NewDelayedPeriodicApplier(&hunter.Unit)
+
 	hunter.RegisterAura(core.Aura{
 		Label:    "Piercing Shots Talent",
 		Duration: core.NeverExpires,
@@ -298,12 +300,15 @@ func (hunter *Hunter) applyPiercingShots() {
 				return
 			}
 
-			dot := psSpell.Dot(result.Target)
+			target := result.Target
+			dot := psSpell.Dot(target)
 			outstandingDamage := core.TernaryFloat64(dot.IsActive(), dot.SnapshotBaseDamage*float64(dot.NumberOfTicks-dot.TickCount), 0)
-			newDamage := result.Damage * 0.1 * float64(hunter.Talents.PiercingShots)
+			totalDamage := outstandingDamage + result.Damage*0.1*float64(hunter.Talents.PiercingShots)
 
-			dot.SnapshotBaseDamage = (outstandingDamage + newDamage) / float64(dot.NumberOfTicks)
-			psSpell.Cast(sim, result.Target)
+			piercingShotsDelay.Apply(sim, target, func(sim *core.Simulation) {
+				dot.SnapshotBaseDamage = totalDamage / float64(dot.NumberOfTicks)
+				psSpell.Cast(sim, target)
+			})
 		},
 	})
 }
