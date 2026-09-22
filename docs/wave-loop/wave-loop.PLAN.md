@@ -83,8 +83,10 @@ In I, PAR-P7-MAG also fixes the delay helper's timing gap (the user's call) and 
 ## Current wave
 
 - Wave: I, running.
-- Base SHA: the wave's setup commit on top of `c5bdb12b7`.
-- Workflow runId: not yet started.
+- Base SHA: `b895e44be`, `master` (the BiS tooltip's five runners-up) merged into the setup commit `c412fb8fc`.
+- Workflow runId: `wf_891dd2c6-596`, transcript dir
+  `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\wf_891dd2c6-596`.
+- Args and results: `waveI-args.json` and `waveI-results.json` in `G:\DevStuff\GitHub\.wave-loop`.
 
 ## BiS baseline
 
