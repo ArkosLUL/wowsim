@@ -169,10 +169,6 @@ func applyDebuffEffects(target *Unit, targetIdx int, debuffs *proto.Debuffs, rai
 		MakePermanent(TotemOfWrathDebuff(target))
 	}
 
-	if debuffs.MasterPoisoner {
-		MakePermanent(MasterPoisonerDebuff(target, 3))
-	}
-
 	if debuffs.HeartOfTheCrusader && targetIdx == 0 {
 		MakePermanent(HeartOfTheCrusaderDebuff(target, 3))
 	}
@@ -913,8 +909,22 @@ func TotemOfWrathDebuff(target *Unit) *Aura {
 	return minorCritDebuffAura(target, "Totem of Wrath Debuff", ActionID{SpellID: 30708}, time.Minute*5, 3*CritRatingPerCritChance)
 }
 
-func MasterPoisonerDebuff(target *Unit, points int32) *Aura {
-	return minorCritDebuffAura(target, "Master Poisoner", ActionID{SpellID: 58410}, time.Second*20, float64(points)*CritRatingPerCritChance)
+// MasterPoisonerDebuff is aura 45176, SPELL_AURA_MOD_CRIT_CHANCE_FOR_CASTER (Unit.cpp:3940, 9455):
+// it only raises crit chance for the rogue whose poison carries it, so it's registered on that
+// caster, not the target. sim/rogue/poisons.go toggles it with its own Deadly/Wound Poison debuff.
+func MasterPoisonerDebuff(caster *Unit, points int32) *Aura {
+	critBonus := float64(points) * CritRatingPerCritChance
+	return caster.GetOrRegisterAura(Aura{
+		Label:    "Master Poisoner",
+		ActionID: ActionID{SpellID: 58410},
+		Duration: time.Second * 15,
+		OnGain: func(aura *Aura, sim *Simulation) {
+			aura.Unit.AddStatsDynamic(sim, stats.Stats{stats.MeleeCrit: critBonus, stats.SpellCrit: critBonus})
+		},
+		OnExpire: func(aura *Aura, sim *Simulation) {
+			aura.Unit.AddStatsDynamic(sim, stats.Stats{stats.MeleeCrit: -critBonus, stats.SpellCrit: -critBonus})
+		},
+	})
 }
 
 func HeartOfTheCrusaderDebuff(target *Unit, points int32) *Aura {

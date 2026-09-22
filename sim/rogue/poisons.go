@@ -21,12 +21,36 @@ func (rogue *Rogue) registerPoisonAuras() {
 		})
 	}
 	if rogue.Talents.MasterPoisoner > 0 {
-		rogue.masterPoisonerDebuffAuras = rogue.NewEnemyAuraArray(func(target *core.Unit) *core.Aura {
-			aura := core.MasterPoisonerDebuff(target, rogue.Talents.MasterPoisoner)
-			aura.Duration = core.NeverExpires
-			return aura
-		})
+		rogue.masterPoisonerAura = core.MasterPoisonerDebuff(&rogue.Unit, rogue.Talents.MasterPoisoner)
+		// gainMasterPoisoner/loseMasterPoisoner activate and deactivate this aura by hand, so its own
+		// timer must never run out from under them: it needs to hold for as long as the ref count
+		// says a poison is up, not just its first 15s.
+		rogue.masterPoisonerAura.Duration = core.NeverExpires
 	}
+}
+
+// gainMasterPoisoner and loseMasterPoisoner reference-count the rogue's own Deadly/Wound Poison
+// instances, since the crit aura lives on the rogue, not per target: it stays up as long as any of
+// them is.
+func (rogue *Rogue) gainMasterPoisoner(sim *core.Simulation) {
+	rogue.masterPoisonerActiveCount++
+	if rogue.masterPoisonerActiveCount == 1 {
+		rogue.masterPoisonerAura.Activate(sim)
+	}
+}
+
+func (rogue *Rogue) loseMasterPoisoner(sim *core.Simulation) {
+	rogue.masterPoisonerActiveCount--
+	if rogue.masterPoisonerActiveCount == 0 {
+		rogue.masterPoisonerAura.Deactivate(sim)
+	}
+}
+
+// deadlyPoisonAddsTicks is mod-spell-tweaks' spell_tweaks_deadly_poison_haste: with Murder, the
+// rogue's melee haste shortens Deadly Poison's tick interval while its duration stays fixed, so it
+// fits more ticks.
+func (rogue *Rogue) deadlyPoisonAddsTicks() bool {
+	return rogue.Talents.Murder > 0 && rogue.Server().SpellTweaks.DeadlyPoisonMurder
 }
 
 func (rogue *Rogue) registerDeadlyPoisonSpell() {
@@ -35,12 +59,15 @@ func (rogue *Rogue) registerDeadlyPoisonSpell() {
 		energyMetrics = rogue.NewEnergyMetrics(core.ActionID{SpellID: 64913})
 	}
 
+	canCrit := rogue.Talents.Murder > 0
+
 	rogue.DeadlyPoison = rogue.RegisterSpell(core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: 57970},
 		SpellSchool: core.SpellSchoolNature,
 		ProcMask:    core.ProcMaskWeaponProc,
 
 		DamageMultiplier: []float64{1, 1.07, 1.14, 1.20}[rogue.Talents.VilePoisons],
+		CritMultiplier:   rogue.SpellCritMultiplier(),
 		ThreatMultiplier: 1,
 
 		Dot: core.DotConfig{
@@ -53,7 +80,7 @@ func (rogue *Rogue) registerDeadlyPoisonSpell() {
 						rogue.savageCombatDebuffAuras.Get(aura.Unit).Activate(sim)
 					}
 					if rogue.Talents.MasterPoisoner > 0 {
-						rogue.masterPoisonerDebuffAuras.Get(aura.Unit).Activate(sim)
+						rogue.gainMasterPoisoner(sim)
 					}
 				},
 				OnExpire: func(aura *core.Aura, sim *core.Simulation) {
@@ -61,23 +88,34 @@ func (rogue *Rogue) registerDeadlyPoisonSpell() {
 						rogue.savageCombatDebuffAuras.Get(aura.Unit).Deactivate(sim)
 					}
 					if rogue.Talents.MasterPoisoner > 0 {
-						rogue.masterPoisonerDebuffAuras.Get(aura.Unit).Deactivate(sim)
+						rogue.loseMasterPoisoner(sim)
 					}
 				},
 			},
-			NumberOfTicks: 4,
-			TickLength:    time.Second * 3,
+			NumberOfTicks:       4,
+			TickLength:          time.Second * 3,
+			AffectedByCastSpeed: rogue.deadlyPoisonAddsTicks(),
+			TickHaste:           core.MeleeHasteAddsTicks,
+			TicksCanCrit:        canCrit,
 
 			OnSnapshot: func(_ *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
 				if stacks := dot.GetStacks(); stacks > 0 {
 					dot.SnapshotBaseDamage = (74 + 0.027*dot.Spell.MeleeAttackPower()) * float64(stacks)
 					attackTable := dot.Spell.Unit.AttackTables[target.UnitIndex]
 					dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(attackTable)
+					if canCrit {
+						dot.SnapshotCritChance = dot.Spell.SpellCritChance(target)
+					}
 				}
 			},
 
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
-				result := dot.CalcAndDealPeriodicSnapshotDamage(sim, target, dot.OutcomeTick)
+				var result *core.SpellResult
+				if canCrit {
+					result = dot.CalcAndDealPeriodicSnapshotDamage(sim, target, dot.OutcomeSnapshotCrit)
+				} else {
+					result = dot.CalcAndDealPeriodicSnapshotDamage(sim, target, dot.OutcomeTick)
+				}
 				if energyMetrics != nil && result.Landed() {
 					rogue.AddEnergy(sim, 1, energyMetrics)
 				}
@@ -265,7 +303,7 @@ func (rogue *Rogue) registerWoundPoisonSpell() {
 				rogue.savageCombatDebuffAuras.Get(aura.Unit).Activate(sim)
 			}
 			if rogue.Talents.MasterPoisoner > 0 {
-				rogue.masterPoisonerDebuffAuras.Get(aura.Unit).Activate(sim)
+				rogue.gainMasterPoisoner(sim)
 			}
 		},
 		OnExpire: func(aura *core.Aura, sim *core.Simulation) {
@@ -273,7 +311,7 @@ func (rogue *Rogue) registerWoundPoisonSpell() {
 				rogue.savageCombatDebuffAuras.Get(aura.Unit).Deactivate(sim)
 			}
 			if rogue.Talents.MasterPoisoner > 0 {
-				rogue.masterPoisonerDebuffAuras.Get(aura.Unit).Deactivate(sim)
+				rogue.loseMasterPoisoner(sim)
 			}
 		},
 	}

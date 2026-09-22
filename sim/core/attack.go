@@ -651,7 +651,12 @@ func (aa *AutoAttacks) EnableAutoSwing(sim *Simulation) {
 		aa.mh.setTimer(sim, max(aa.mh.timerAt, sim.CurrentTime, 0))
 		aa.mh.addWeaponAttack(sim, aa.mh.unit.SwingSpeed())
 		if aa.IsDualWielding {
-			aa.oh.setTimer(sim, max(aa.oh.timerAt, sim.CurrentTime, 0))
+			// Unit::Attack: a ready off hand waits half the main hand's hasted attack time behind it
+			if aa.oh.timerAt <= sim.CurrentTime {
+				aa.oh.setTimer(sim, max(aa.oh.timerAt, aa.mh.timerAt+aa.mh.curSwingDuration/2))
+			} else {
+				aa.oh.setTimer(sim, max(aa.oh.timerAt, sim.CurrentTime, 0))
+			}
 			aa.oh.addWeaponAttack(sim, aa.mh.unit.SwingSpeed())
 		}
 	}

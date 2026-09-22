@@ -902,11 +902,6 @@ const RAID_STATS_OPTIONS: RaidStatsOptions = {
 							actionId: ActionId.fromSpellId(20337),
 							playerData: playerClassAndTalent(Class.ClassPaladin, 'heartOfTheCrusader', player => [Spec.SpecRetributionPaladin, Spec.SpecProtectionPaladin].includes(player.spec)),
 						},
-						{
-							label: 'Master Poisoner',
-							actionId: ActionId.fromSpellId(58410),
-							playerData: playerClassAndTalent(Class.ClassRogue, 'masterPoisoner'),
-						},
 					],
 				},
 				{

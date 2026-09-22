@@ -417,6 +417,56 @@ Roll details the tables above don't show:
 - Module hooks that run inside `CalculateMeleeDamage` (`ModifyMeleeDamage` in mod-dungeon-scale, mod-dungeon-master,
   mod-individual-progression) only scale damage; no module implements `OnBeforeRollMeleeOutcomeAgainst`.
 
+**Rogue** (`TestCombat`, `TestAssassination`, `TestSubtlety`, code)
+- Deadly Poison (57970, magic dmg class) and Rupture (48672, melee dmg class) both go through
+  `sim/rogue/{poisons,rupture}.go`'s `AffectedByCastSpeed`/`TickHaste: core.MeleeHasteAddsTicks`, gated
+  on `Talents.Murder`/`Talents.WeaponExpertise` and `Server().SpellTweaks.{DeadlyPoisonMurder,
+  RuptureWeaponExpertise}` (P7-0a's audit already lists both scripts; this item wires them). Duration
+  stays fixed and the tick interval shrinks with melee haste, the same shape as the DK disease tweak.
+- Deadly Poison's tick crit is Murder-gated too: rank 1 and 2 both carry a second effect, aura 286
+  (`SPELL_AURA_ABILITY_PERIODIC_CRIT`) on class mask `[0, 0x80000, 0]` (spelldump ids 14158/14159),
+  which covers Deadly and Wound Poison's family flags. Since Deadly Poison is magic dmg class, its
+  snapshot crit chance reads `Spell.SpellCritChance` (crit rating, no agility), not the physical
+  formula the diseases use. Rupture already crits unconditionally
+  (`AuraEffect::CalcPeriodicCritChance`'s `SPELLFAMILY_ROGUE` case, family flag `0x100000`), so its
+  `OutcomeSnapshotCrit` call predates this item; `TicksCanCrit` on both is now declared explicitly
+  (`true` for Rupture, Murder-gated for Deadly Poison, `false` on Garrote, which neither aura covers).
+- Off-hand start after Vanish or a stealth break: `AutoAttacks.EnableAutoSwing` (`rogue.BreakStealth`'s
+  only caller) put both hands live at the same instant, where `startPull` already staggered a ready off
+  hand `max(own timer, main hand timer + half the main hand's hasted swing)` (retail deviation #30,
+  `Unit::Attack`). `EnableAutoSwing` now applies the same stagger. `IsDualWielding` gates it, so pets,
+  druid forms and the ghoul (the other callers) are untouched.
+- Master Poisoner (45176) is `SPELL_AURA_MOD_CRIT_CHANCE_FOR_CASTER` (confirmed in the spelldump, aura
+  308, and `Unit.cpp:3940,9455`): `victim->GetTotalAuraModifier` filters to auras whose caster GUID
+  matches the attacker, so it raises crit chance only for the rogue whose Deadly/Wound Poison carries it
+  (58410's `triggerSpell`), never the raid. `core.MasterPoisonerDebuff` now takes that caster and adds
+  `stats.MeleeCrit`/`stats.SpellCrit` to it (`AddStatsDynamic`) instead of `PseudoStats.BonusCritRatingTaken`
+  on the target; duration corrected to 15 s (spelldump, was the shared 20 s `HeartOfTheCrusaderDebuff` used).
+  `sim/rogue/poisons.go` reference-counts targets carrying the rogue's own poison debuff
+  (`gainMasterPoisoner`/`loseMasterPoisoner`) so the bonus survives one target's poison dropping while
+  another's is still up; it's exact for a single target and an approximation once a rogue keeps poison
+  on two targets at once (no suite exercises that). The raid-wide `Debuffs.master_poisoner` option had no
+  target to apply the per-caster bonus to (`applyDebuffEffects` only ever sees the enemy), so it can't
+  represent this mechanic at all: the branch in `debuffs.go` is gone, along with the raidctx provider row
+  and the `ui/raid/raid_stats.ts` "Master Poisoner" entry that mirrored it. The proto field and the
+  `buffs_debuffs.ts` checkbox stay, since `ui/core/player.ts`'s melee crit-cap calculator still reads it
+  as a player's own assumption.
+- Poison proc chance (Instant/Wound/Deadly's application, not their damage): `Player::CastItemCombatSpell`
+  rolls a flat `SpellItemEnchantmentEntry::amount` per landed hit for a `ITEM_ENCHANTMENT_TYPE_COMBAT_SPELL`
+  enchant (poisons occupy `PERM_ENCHANTMENT_SLOT`), through `ApplySpellMod(..., SPELLMOD_CHANCE_OF_SUCCESS,
+  ...)` for Improved Poisons, unless the enchant has a `spell_enchant_proc_data` row with its own PPM or
+  custom chance. No such row turned up for the poison enchant ids, so the chance looks weapon-speed
+  independent, where `sim/rogue/poisons.go`'s Instant and Wound Poison already use a PPM manager
+  ("the former X% normalized to a 1.4 speed weapon"). Deadly Poison rolls a flat chance already
+  (`GetDeadlyPoisonProcChance`). Left unresolved: nothing in the offline capture gives the enchant's
+  `amount` values, so whether Instant/Wound Poison's PPM model over- or under-rolls away from 1.4 speed
+  needs a live `.simval procs`-style capture on the poison enchant ids, not the damage spell ids.
+- Killing Spree's two per-hit swings (`sim/rogue/killing_spree.go`) register under
+  `ActionID{SpellID: 51690, Tag: 1|2}` with a code comment giving the real ids (57841/57842), so the
+  P3-2 serverdata lookup never finds them: `spells_missing.csv` doesn't list them either, since the scan
+  only flags ids it expected to resolve and couldn't. Not fixed here: retagging needs the real ids as
+  constants and a check that no set bonus or script keys off spell family flags on the wrapper id instead.
+
 **Items** (`docs/azerothcore-item-diff/data/summary.md`)
 - 1509 of 8043 sim items differ.
 - Classic raised Ulduar/emblem item levels, e.g. 226→232 on 329 items and 239→252 on 92.
@@ -527,6 +577,16 @@ values. Human warrior, level 80, maxed skills, Worn Shortsword (Sword Specializa
   `Unit::SpellHitResult` lets miss only a hostile target, and the dummies' faction 7 isn't, so on a raid boss it
   rolls the magic table. `tools/simval` doesn't model that, `ALWAYS_HIT` or a binary spell's lack of partials,
   so those records fail it.
+- Rogue probes (`TestSimvalRogue`, a human rogue behind the boss dummy): `.simval spell 57970` confirms Deadly
+  Poison is damage class 1 (magic), with its miss and resist buckets matching the server's own thresholds over
+  200,000 iterations (|z| ≤ 0.93); `.simval yellow 48672` confirms Rupture is damage class 2 (melee), miss and
+  dodge matching (|z| ≤ 1.44). A `.simval spelldump` of 45176, 14159 and 30920 confirms Master Poisoner (45176)
+  carries `MOD_CRIT_CHANCE_FOR_CASTER` (aura 308) and Murder rank 2 (14159) carries `ABILITY_PERIODIC_CRIT`
+  (aura 286) on Deadly Poison's class mask, as the Rogue findings above assume. Weapon Expertise rank 2 (30920)
+  carries only `MOD_EXPERTISE` (240), no crit aura: Rupture's crit stays the engine's hardcoded, talent-blind
+  case (retail deviation #27), so `sim/rogue/rupture.go`'s unconditional `TicksCanCrit: true` needed no change.
+  **Fixed:** `p7_rog_test.go`'s original check expected Weapon Expertise to carry that same aura, which the
+  live spelldump disproved; it now asserts the aura's absence instead.
 
 ## Retail deviations
 

@@ -368,7 +368,9 @@ func TestProviderConditions(t *testing.T) {
 			return r.Debuffs.FrostFever == improved && r.Debuffs.EbonPlaguebringer
 		}},
 		{"rogue", newPlayer("Rogue", proto.Spec_SpecRogue, map[string]int32{"savage_combat": 2, "master_poisoner": 3}), func(r *proto.Raid) bool {
-			return r.Debuffs.ExposeArmor && r.Debuffs.SavageCombat && r.Debuffs.MasterPoisoner
+			// Master Poisoner only helps the rogue who applies it (core.MasterPoisonerDebuff), so it
+			// gives the raid no debuff to provide here.
+			return r.Debuffs.ExposeArmor && r.Debuffs.SavageCombat && !r.Debuffs.MasterPoisoner
 		}},
 		{"mage", newPlayer("Mage", proto.Spec_SpecMage, map[string]int32{"improved_scorch": 3, "winters_chill": 3, "enduring_winter": 3}), func(r *proto.Raid) bool {
 			return r.Debuffs.ImprovedScorch && r.Debuffs.WintersChill && r.Parties[0].Players[0].Buffs.EnduringWinter
