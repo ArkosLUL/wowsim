@@ -51,6 +51,7 @@ func (druid *Druid) registerRipSpell() {
 			}),
 			NumberOfTicks: ripBaseNumTicks,
 			TickLength:    time.Second * 2,
+			TicksCanCrit:  druid.Talents.PrimalGore,
 
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
 				cp := float64(druid.ComboPoints())

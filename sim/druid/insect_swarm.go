@@ -12,7 +12,12 @@ const CryingWind int32 = 45270
 func (druid *Druid) registerInsectSwarmSpell() {
 	missAuras := druid.NewEnemyAuraArray(core.InsectSwarmAura)
 	hasGlyph := druid.HasMajorGlyph(proto.DruidMajorGlyph_GlyphOfInsectSwarm)
-	idolSpellPower := core.TernaryFloat64(druid.Ranged().ID == CryingWind, 396, 0)
+	numTicks := 6 + core.TernaryInt32(druid.Talents.NaturesSplendor, 1, 0)
+	// spell_dru_insect_swarm (spell_druid.cpp:2008-2013): the relic's 374 is added to the tick's own
+	// base points, split evenly over the ticks, not run through the dot's SP coefficient.
+	idolFlatDamage := core.TernaryFloat64(druid.Ranged().ID == CryingWind, 374/float64(numTicks), 0)
+	dotCanCrit := druid.balanceDotTicksCanCrit()
+	addsTicks := druid.balanceDotAddsTicks()
 
 	impISMultiplier := 1 + 0.01*float64(druid.Talents.ImprovedInsectSwarm)
 
@@ -51,10 +56,12 @@ func (druid *Druid) registerInsectSwarmSpell() {
 			},
 		},
 
-		DamageMultiplier: 1 +
-			0.01*float64(druid.Talents.Genesis) +
-			core.TernaryFloat64(druid.HasSetBonus(ItemSetDreamwalkerGarb, 2), 0.1, 0) +
+		DamageMultiplier: spellModDamage(
+			0.01*float64(druid.Talents.Genesis),
+			core.TernaryFloat64(druid.HasSetBonus(ItemSetDreamwalkerGarb, 2), 0.1, 0),
 			core.TernaryFloat64(druid.HasMajorGlyph(proto.DruidMajorGlyph_GlyphOfInsectSwarm), 0.3, 0),
+		),
+		CritMultiplier:   druid.BalanceCritMultiplier(),
 		ThreatMultiplier: 1,
 
 		Dot: core.DotConfig{
@@ -67,15 +74,23 @@ func (druid *Druid) registerInsectSwarmSpell() {
 					druid.Wrath.DamageMultiplier /= impISMultiplier
 				},
 			},
-			NumberOfTicks: 6 + core.TernaryInt32(druid.Talents.NaturesSplendor, 1, 0),
-			TickLength:    time.Second * 2,
+			NumberOfTicks:       numTicks,
+			TickLength:          time.Second * 2,
+			AffectedByCastSpeed: addsTicks,
+			TickHaste:           core.SpellHasteAddsTicks,
+			TicksCanCrit:        dotCanCrit,
 
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-				dot.SnapshotBaseDamage = 215 + 0.2*(dot.Spell.SpellPower()+idolSpellPower)
+				dot.SnapshotBaseDamage = 215 + idolFlatDamage + 0.2*dot.Spell.SpellPower()
+				dot.SnapshotCritChance = dot.Spell.SpellCritChance(target)
 				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(dot.Spell.Unit.AttackTables[target.UnitIndex])
 			},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
-				dot.CalcAndDealPeriodicSnapshotDamage(sim, target, dot.OutcomeTick)
+				if dotCanCrit {
+					dot.CalcAndDealPeriodicSnapshotDamage(sim, target, dot.OutcomeSnapshotCrit)
+				} else {
+					dot.CalcAndDealPeriodicSnapshotDamage(sim, target, dot.OutcomeTick)
+				}
 
 				if druid.MoonkinT84PCAura != nil && sim.RandomFloat("Elune's Wrath proc") < 0.08 {
 					druid.MoonkinT84PCAura.Activate(sim)

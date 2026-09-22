@@ -52,6 +52,7 @@ func (druid *Druid) registerLacerateSpell() {
 			}),
 			NumberOfTicks: 5,
 			TickLength:    time.Second * 3,
+			TicksCanCrit:  druid.Talents.PrimalGore,
 
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
 				dot.SnapshotBaseDamage = tickDamage + 0.01*dot.Spell.MeleeAttackPower()
@@ -74,7 +75,9 @@ func (druid *Druid) registerLacerateSpell() {
 		},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := initialDamage + 0.01*spell.MeleeAttackPower()
+			// spell_bonus_data (spell 48568): ap: 0 on the direct effect, apDot: 0.01 on the periodic
+			// one, so only the tick (OnSnapshot above) carries an AP coefficient.
+			baseDamage := initialDamage
 			if druid.BleedCategories.Get(target).AnyActive() {
 				baseDamage *= 1.3
 			}

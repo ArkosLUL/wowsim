@@ -214,8 +214,10 @@ func (cat *FeralDruid) preRotationCleanup(sim *core.Simulation) bool {
 		cat.shiftBearCat(sim, false)
 		// Snek weave: Albino Snake (10713) is an instant cast with SPELL_INTERRUPT_FLAG_INTERRUPT, so
 		// Spell::_cast resets the swing timer. The shift itself doesn't, and neither would an idol swap.
+		// It also starts the caster's own GCD, which this rotation otherwise skips.
 		if cat.InForm(druid.Cat) && cat.Rotation.SnekWeave {
 			cat.AutoAttacks.StopMeleeUntil(sim, sim.CurrentTime, false)
+			cat.SetGCDTimer(sim, sim.CurrentTime+core.GCDDefault)
 		}
 		return false
 	}
@@ -372,7 +374,7 @@ func (cat *FeralDruid) doRotation(sim *core.Simulation) (bool, time.Duration) {
 		rakeCost := core.Ternary(cat.berserkExpectedAt(sim, rakeDot.ExpiresAt()), cat.Rake.DefaultCast.Cost*0.5, cat.Rake.DefaultCast.Cost)
 		pendingPool.addAction(rakeDot.ExpiresAt(), rakeCost)
 	}
-	if mangleRefreshPending {
+	if cat.MangleCat != nil && mangleRefreshPending {
 		mangleCost := core.Ternary(cat.berserkExpectedAt(sim, cat.bleedAura.ExpiresAt()), cat.MangleCat.DefaultCast.Cost*0.5, cat.MangleCat.DefaultCast.Cost)
 		pendingPool.addAction(cat.bleedAura.ExpiresAt(), mangleCost)
 	}
@@ -583,8 +585,8 @@ func (cat *FeralDruid) doRotation(sim *core.Simulation) (bool, time.Duration) {
 		cat.readyToShift = true
 	} else if flowershiftNow && curEnergy < 42 {
 		cat.readyToGift = true
-	} else if (rotation.MangleSpam && !isClearcast) || cat.PseudoStats.InFrontOfTarget {
-		if cat.MangleCat != nil && excessE >= cat.CurrentMangleCatCost() {
+	} else if cat.MangleCat != nil && ((rotation.MangleSpam && !isClearcast) || cat.PseudoStats.InFrontOfTarget) {
+		if excessE >= cat.CurrentMangleCatCost() {
 			cat.MangleCat.Cast(sim, cat.CurrentTarget)
 			return false, 0
 		}
