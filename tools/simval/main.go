@@ -27,6 +27,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
@@ -86,6 +87,9 @@ func runChronicle(args []string) int {
 	gap := flags.Float64("gap", 5, "a pause longer than this many seconds is left out of the active duration")
 	top := flags.Int("top", 20, "how many ability rows to print")
 	verbose := flags.Bool("v", false, "also print per-outcome averages, swing intervals, tick intervals and aura uptimes")
+	refreshAura := flags.Int("refreshAura", 0, "a dot/buff spell id: measure the delay from each -refreshFeeders crit to its SPELL_AURA_APPLIED")
+	refreshFeeders := flags.String("refreshFeeders", "", "comma-separated spell ids whose crits can feed -refreshAura's refresh")
+	refreshWindow := flags.Int64("refreshWindow", 500, "ms: a crit further back than this can't be the one that fed a -refreshAura refresh")
 	flags.Usage = func() {
 		fmt.Fprintf(flags.Output(), "usage: simval chronicle [flags] <log file>\n\n"+
 			"Reads a mod-chronicle raw log; captured runs live in %s.\n\n", chronicleDir)
@@ -112,10 +116,54 @@ func runChronicle(args []string) int {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
 	}
-	if reportChronicle(os.Stdout, log, stats, opts) > 0 {
+	failed := reportChronicle(os.Stdout, log, stats, opts)
+
+	if *refreshAura != 0 {
+		feeders, err := parseSpellIDs(*refreshFeeders)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return 1
+		}
+		pairs, unpaired, excess := pairRefreshes(log, stats.Source.Name, refreshOptions{
+			AuraSpellID: int32(*refreshAura), Feeders: feeders, WindowMs: *refreshWindow,
+		})
+		reportRefreshDelays(os.Stdout, refreshAuraName(log, int32(*refreshAura)), int32(*refreshAura), pairs, unpaired, excess, *verbose)
+	}
+
+	if failed > 0 {
 		return 1
 	}
 	return 0
+}
+
+// parseSpellIDs reads a comma-separated -refreshFeeders list.
+func parseSpellIDs(text string) ([]int32, error) {
+	var ids []int32
+	for _, field := range strings.Split(text, ",") {
+		field = strings.TrimSpace(field)
+		if field == "" {
+			continue
+		}
+		id, err := strconv.Atoi(field)
+		if err != nil {
+			return nil, fmt.Errorf("-refreshFeeders: %q is not a spell id", field)
+		}
+		ids = append(ids, int32(id))
+	}
+	if len(ids) == 0 {
+		return nil, fmt.Errorf("-refreshAura needs -refreshFeeders, a comma-separated list of spell ids")
+	}
+	return ids, nil
+}
+
+// refreshAuraName finds the aura's name off any event that names it, for the report header.
+func refreshAuraName(log *chronicleLog, id int32) string {
+	for _, event := range log.Events {
+		if event.Spell.ID == id && event.Spell.Name != "" {
+			return event.Spell.Name
+		}
+	}
+	return "spell"
 }
 
 func readRecords(path string) ([]record, error) {

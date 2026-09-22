@@ -14,8 +14,6 @@ func (mage *Mage) registerPyroblastSpell() {
 	spellCoeff := 1.15 + 0.05*float64(mage.Talents.EmpoweredFire)
 	tickCoeff := 0.05 + 0.05*float64(mage.Talents.EmpoweredFire)
 
-	hasT8_4pc := mage.HasSetBonus(ItemSetKirinTorGarb, 4)
-
 	var pyroblastDot *core.Spell
 
 	pyroblastConfig := core.SpellConfig{
@@ -36,9 +34,7 @@ func (mage *Mage) registerPyroblastSpell() {
 			ModifyCast: func(sim *core.Simulation, spell *core.Spell, cast *core.Cast) {
 				if mage.HotStreakAura.IsActive() {
 					cast.CastTime = 0
-					if !hasT8_4pc || sim.RandomFloat("MageT84PC") > T84PcProcChance {
-						mage.HotStreakAura.Deactivate(sim)
-					}
+					mage.HotStreakAura.Deactivate(sim)
 				}
 			},
 		},
@@ -59,6 +55,8 @@ func (mage *Mage) registerPyroblastSpell() {
 			},
 			NumberOfTicks: 4,
 			TickLength:    time.Second * 3,
+			// No SPELL_AURA_ABILITY_PERIODIC_CRIT aura covers this dot, so its ticks never crit.
+			TicksCanCrit: false,
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
 				dot.SnapshotBaseDamage = 113.0 + tickCoeff*dot.Spell.SpellPower()
 				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(dot.Spell.Unit.AttackTables[target.UnitIndex])

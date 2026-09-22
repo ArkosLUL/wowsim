@@ -53,9 +53,22 @@ the DPS gap against the plan's ±2% and exits non-zero outside it.
 | `-gap` | 5 s; a longer pause is left out of the active duration |
 | `-top` | 20 ability rows |
 | `-v` | also print per-outcome averages (see [rrsim](#rrsim)), swing intervals, tick intervals and aura uptimes |
+| `-refreshAura` | a dot/buff spell id: measure the delay from each `-refreshFeeders` crit to its refresh (`core.DelayedPeriodicApplier`'s landing) |
+| `-refreshFeeders` | comma-separated spell ids whose crits (direct hits or ticks) can feed `-refreshAura` |
+| `-refreshWindow` | 500 ms; a crit further back than this can't be the one that fed a refresh |
 
 Interval histograms bucket at 100 ms, the server's map update. They show the lattice only roughly:
 Chronicle timestamps the packet send, which adds a few ms of jitter.
+
+`-refreshAura`/`-refreshFeeders` pairs each of that spell's `SPELL_AURA_APPLIED` events with the most recent
+still-unclaimed listed crit within `-refreshWindow`, oldest crit first: a crit's own refresh doesn't always land
+in crit order (each draws its own 0-400 ms delay), so a later crit can't simply displace an earlier one still
+waiting to fire. Prints each feeder's count, mean and median delay and a 50 ms histogram, then the same pooled
+across feeders; with `-v`, also every individual pair (feeder id, crit damage, crit ms, refresh ms, delay ms), for
+replaying a formula like `procIgnite`'s against the actual tick damage by hand. An application chronicle can't
+pair, or a crit no application claims, means the feeder list or window is incomplete, not that the aura applied
+with no cause: the proc this measures (Ignite, Righteous Vengeance, Deep Wounds, ...) is unconditional on a
+qualifying crit.
 
 Chronicle gaps to keep in mind:
 - `SWING_DAMAGE` carries no main/off hand flag, so a dual wielder's two hands interleave in one swing timeline.

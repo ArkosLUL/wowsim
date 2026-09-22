@@ -96,8 +96,14 @@ func (rot *APLRotation) newValueSpellCastTime(config *proto.APLValueSpellCastTim
 func (value *APLValueSpellCastTime) Type() proto.APLValueType {
 	return proto.APLValueType_ValueTypeDuration
 }
-func (value *APLValueSpellCastTime) GetDuration(_ *Simulation) time.Duration {
-	return value.spell.CastTime()
+
+// Rounds to the next server tick, same as makeCastFunc (cast.go): a hardcast always lands there.
+func (value *APLValueSpellCastTime) GetDuration(sim *Simulation) time.Duration {
+	castTime := value.spell.CastTime()
+	if castTime > 0 {
+		castTime = sim.NextServerTick(sim.CurrentTime+castTime) - sim.CurrentTime
+	}
+	return castTime
 }
 func (value *APLValueSpellCastTime) String() string {
 	return fmt.Sprintf("Cast Time(%s)", value.spell.ActionID)

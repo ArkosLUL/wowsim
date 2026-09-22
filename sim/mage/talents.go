@@ -8,6 +8,16 @@ import (
 	"github.com/wowsims/wotlk/sim/core/stats"
 )
 
+// spellModDamage stacks percent damage bonuses from talents, glyphs and set pieces the server's way:
+// Player::ApplySpellMod multiplies SPELLMOD_DAMAGE and SPELLMOD_DOT percentages, it doesn't add them.
+func spellModDamage(bonuses ...float64) float64 {
+	multiplier := 1.0
+	for _, bonus := range bonuses {
+		multiplier *= 1 + bonus
+	}
+	return multiplier
+}
+
 func (mage *Mage) ApplyTalents() {
 	mage.applyArcaneConcentration()
 	mage.applyFocusMagic()
@@ -702,7 +712,6 @@ func (mage *Mage) applyBrainFreeze() {
 		return
 	}
 
-	hasT8_4pc := mage.HasSetBonus(ItemSetKirinTorGarb, 4)
 	t10ProcAura := mage.BloodmagesRegalia2pcAura()
 
 	mage.BrainFreezeAura = mage.RegisterAura(core.Aura{
@@ -726,9 +735,7 @@ func (mage *Mage) applyBrainFreeze() {
 		},
 		OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
 			if spell == mage.FrostfireBolt || spell == mage.Fireball {
-				if !hasT8_4pc || sim.RandomFloat("MageT84PC") > T84PcProcChance {
-					aura.Deactivate(sim)
-				}
+				aura.Deactivate(sim)
 			}
 		},
 	})

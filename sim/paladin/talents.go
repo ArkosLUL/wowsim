@@ -639,7 +639,8 @@ func (paladin *Paladin) applyRighteousVengeance() {
 			if !result.DidCrit() {
 				return
 			}
-			if spell != paladin.CrusaderStrike && spell != paladin.DivineStorm && !spell.Flags.Matches(SpellFlagSecondaryJudgement) {
+			isInstantCast := spell == paladin.CrusaderStrike || spell == paladin.DivineStorm
+			if !isInstantCast && !spell.Flags.Matches(SpellFlagSecondaryJudgement) {
 				return
 			}
 
@@ -648,11 +649,19 @@ func (paladin *Paladin) applyRighteousVengeance() {
 			outstandingDamage := core.TernaryFloat64(dot.IsActive(), dot.SnapshotBaseDamage*float64(dot.NumberOfTicks-dot.TickCount), 0)
 			totalDamage := outstandingDamage + result.Damage*(0.10*float64(paladin.Talents.RighteousVengeance))
 
-			rvDelay.Apply(sim, target, func(sim *core.Simulation) {
+			onApply := func(sim *core.Simulation) {
 				dot.SnapshotAttackerMultiplier = 1
 				dot.SnapshotBaseDamage = totalDamage / float64(dot.NumberOfTicks)
 				rvSpell.Cast(sim, target)
-			})
+			}
+			// Crusader Strike and Divine Storm are instant casts, processed with the session ahead
+			// of this update's own clock advance; the seal's own proc runs on a weapon swing,
+			// processed after it (DoTs and periodic ticks, azerothcore-parity.INVESTIGATION.md).
+			if isInstantCast {
+				rvDelay.ApplyFromInstantCast(sim, target, onApply)
+			} else {
+				rvDelay.Apply(sim, target, onApply)
+			}
 		},
 	})
 }
