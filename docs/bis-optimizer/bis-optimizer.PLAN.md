@@ -625,8 +625,8 @@ move; only the neighborhood sims and reports 5. **Owns:** `search.go`'s `runners
 - Calibration: full raid vs the derived context, with a warning past ±3%. Expected gaps: derived contexts
   get Battle Shout that DPS warrior APLs never cast and Divine Guardian the raid sim's paladins never cast,
   and miss Judgement of Wisdom and Light and Hunter's Mark, which `RAID_STATS_OPTIONS` doesn't list.
-- Time whole runs. `EffortBudget` assumes every thread busy, but sequential steps (bisection, search moves)
-  leave threads idle. The INVESTIGATION's tank and batch times are still estimates.
+- The INVESTIGATION's tank and batch times are still estimates: measure them with PERF-TOOLS' harness. Idle
+  threads in whole runs are PERF-OPT's ([sim-performance PLAN](../sim-performance/sim-performance.PLAN.md)).
 - An end-to-end batch over the roster. Stage 2 took 340-415 s per DPS raider at Quick on the real roster, over
   2 h a phase for 19 DPS raiders: measure it, replace the INVESTIGATION's batch rows, and trim stage 2 or move
   the target.

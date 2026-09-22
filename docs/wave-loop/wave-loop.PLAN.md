@@ -54,6 +54,8 @@ G = changes goldens. FS = runs all 37 suites.
 | H | PAR-P7-ROG · PAR-P7-WAR · PAR-P7-RET (G) · BIS-raid-contrib | ✔ |
 | H3 | PAR-P7-0e (G, FS) · PAR-P7-RET-RR · BIS-alt5 | ✔ |
 | I | PAR-P7-MAG (G, FS) · PAR-P7-SHA · PAR-P7-DRU · PAR-P7-WLK (G) | ✔ |
+| I2 | PERF-TOOLS · PERF-CONC | ✔ |
+| I3 | PERF-OPT · PERF-HOT | ✔ |
 | J | PAR-P7-PRI (G) · PAR-P7-TANK (G) · BIS-e2e-perf · AC-3 | ✔ |
 | K | BIS-presets · PAR-P8 (G, FS) · BIS-tank-boss | ✔ |
 
@@ -69,7 +71,8 @@ user's call too (2026-09-22): wave I's Mage item needs PAR-P7-0e's delay helper 
 rides along, as it only needs the live server. BIS-alt5 joined mid-wave, also the user's call.
 
 In I, PAR-P7-MAG also fixes the delay helper's timing gap (the user's call) and tick-rounds the APL's
-`spell.cast_time`, both in core, so it runs all 37 suites and merges first.
+`spell.cast_time`, both in core, so it runs all 37 suites and merges first. I2 and I3, the performance pass,
+are the user's call too: they come before J, whose BIS-e2e-perf uses their tools.
 
 **Where the specs are:**
 
@@ -79,6 +82,7 @@ In I, PAR-P7-MAG also fixes the delay helper's timing gap (the user's call) and 
 | `AC-` | [item-diff PLAN, "Loop work items"](../azerothcore-item-diff/azerothcore-item-diff.PLAN.md) |
 | `RI-3` | [raid-import PLAN, Phase 3](../azerothcore-raid-import/azerothcore-raid-import.PLAN.md) |
 | `BIS-` | [bis-optimizer PLAN, "Work items"](../bis-optimizer/bis-optimizer.PLAN.md) |
+| `PERF-` | [sim-performance PLAN, "Work items"](../sim-performance/sim-performance.PLAN.md) |
 
 ## Current wave
 
