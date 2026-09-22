@@ -185,6 +185,11 @@ func checkSpell(rec record) []Check {
 		}
 
 		table := core.YellowMeleeTableBP(in, opts)
+		if server.Yellow.AlwaysHit {
+			// ALWAYS_HIT returns before the yellow table is rolled at all, so every threshold the
+			// server derives, partial block included, stays 0.
+			table = core.MeleeTableBP{}
+		}
 		checks = append(checks,
 			checkBP("yellow miss", table.Miss, server.Yellow.MissBp),
 			checkBP("yellow dodge", table.Dodge, server.Yellow.DodgeBp),
@@ -195,7 +200,7 @@ func checkSpell(rec record) []Check {
 		// isSpellBlocked is only rolled for physical damage, and only from the
 		// front.
 		var partial int32
-		if rec.physical() && rec.Target.OtherInFront {
+		if rec.physical() && rec.Target.OtherInFront && !server.Yellow.AlwaysHit {
 			partial = core.PartialBlockBP(
 				float32(rec.Target.Defense.Block),
 				core.MaxSkill(rec.Attacker.Level),
@@ -214,8 +219,11 @@ func checkSpell(rec record) []Check {
 	}
 
 	if server.Magic != nil {
-		levelDiff := rec.Target.LevelForOther - rec.Attacker.LevelForOther
-		miss := core.SpellMissBP(levelDiff, float32(rec.Attacker.HitMods.Spell), rec.Target.IsPlayer)
+		var miss int32
+		if !server.Magic.AutoHit {
+			levelDiff := rec.Target.LevelForOther - rec.Attacker.LevelForOther
+			miss = core.SpellMissBP(levelDiff, float32(rec.Attacker.HitMods.Spell), rec.Target.IsPlayer)
+		}
 		checks = append(checks, checkBP("spell miss threshold", miss, server.Magic.MissThreshold))
 
 		if counts, ok := rec.HitResults["miss"]; ok && miss > 0 {
@@ -245,6 +253,15 @@ func checkResists(rec record, server spellDerived) []Check {
 	}
 
 	if rec.Resists == nil {
+		return checks
+	}
+
+	// A binary spell folds its resist into the hit roll, so whatever lands takes full damage: one
+	// bucket, no distribution to compare.
+	if !server.PartialResistsApply {
+		if len(rec.Resists.Buckets) > 0 {
+			checks = append(checks, checkRate("no partial resists", rec.Resists.Buckets[0], rec.Iterations, core.MaxRollBP))
+		}
 		return checks
 	}
 

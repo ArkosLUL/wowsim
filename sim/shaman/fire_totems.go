@@ -9,11 +9,14 @@ import (
 // The bolt the totem fires is its own spell (58702): the summon (58704) is binary on the server, the
 // bolt isn't, so they can't share one spell object. The dot stays on the summon, the id an APL names;
 // only its ticks roll under 58702.
+//
+// No proc mask: the totem is the caster, so the procs go on it, not on the shaman. Only crit reads
+// the owner (Spell::DoAllEffectOnLaunchTarget's IsTotem branch).
 func (shaman *Shaman) registerSearingTotemAttackSpell() *core.Spell {
 	return shaman.RegisterSpell(core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: 58702},
 		SpellSchool: core.SpellSchoolFire,
-		ProcMask:    core.ProcMaskSpellDamage,
+		ProcMask:    core.ProcMaskEmpty,
 		Flags:       core.SpellFlagNoOnCastComplete,
 
 		BonusHitRating:   float64(shaman.Talents.ElementalPrecision) * core.SpellHitRatingPerHitChance,
@@ -74,12 +77,13 @@ func (shaman *Shaman) registerSearingTotemSpell() {
 
 // Same split as Searing Totem: the pulse is 58735 and isn't binary, the summon (58734) is, and the dot
 // stays on the summon for the APL. The totem casts the pulse itself, and the ten-target cap only gates
-// a player caster, so it doesn't reach it (INVESTIGATION, Findings: Attack table).
+// a player caster, so it doesn't reach it (INVESTIGATION, Findings: Attack table). No proc mask for
+// the same reason Searing Totem's bolt has none.
 func (shaman *Shaman) registerMagmaTotemAttackSpell() *core.Spell {
 	return shaman.RegisterSpell(core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: 58735},
 		SpellSchool: core.SpellSchoolFire,
-		ProcMask:    core.ProcMaskSpellDamage,
+		ProcMask:    core.ProcMaskEmpty,
 		Flags:       core.SpellFlagNoOnCastComplete,
 
 		BonusHitRating:   float64(shaman.Talents.ElementalPrecision) * core.SpellHitRatingPerHitChance,

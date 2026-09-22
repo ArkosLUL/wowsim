@@ -246,8 +246,9 @@ Roll details the tables above don't show:
   `spell_dk_pet_scaling` leave `MOD_MELEE_HASTE` alone, so Frenzy and Ghoul Frenzy stack on top; 425792 blocks
   it too, since Windfury Totem and Improved Icy Talons reach the wolves as party auras and are already in the
   shaman's melee haste. **Fixed (PAR-P7-SHA review):** Spirit Wolves now carry `Unit.HasteCarrier` too
-  (`spirit_wolves.go`); `sim/core`'s carrier immunity still doesn't cover `WindfuryTotem`/`IcyTalons`
-  specifically (see the Shaman section), so those two can still double-count on the wolves.
+  (`spirit_wolves.go`). **Fixed (wave I cross-review):** `Pet.OwnerHasteCoversMeleeHasteAuras` marks the
+  carriers that block `MOD_MELEE_HASTE`, and `applyPetBuffEffects` (`sim/core/buffs.go`) strips
+  `WindfuryTotem`/`IcyTalons` for those; the hunter pet and the ghoul still take both directly.
 - A pet's melee crit is a flat 5% plus crit auras (`Unit::GetUnitCriticalChance`), nothing from agility,
   and a creature's spell crit `m_baseSpellCritChance`, 5%. The DK's summons, the hunter pet and now the
   warlock's demons and infernal (PAR-P7-WLK) follow it; treants and spirit wolves still take agility crit
@@ -332,12 +333,10 @@ Roll details the tables above don't show:
   of Enhancement's total damage; `LongMultiTarget` suites move by roughly -0.5% to +1% beyond what
   stages 1-2 already reported, `AllItems` rows that swap in a haste or haste-proc piece move up to +9%
   (e.g. `BlessedGarboftheUndeadSlayer`), since the wolves now actually benefit from it.
-  Left open (core-scoped, not this item's to fix): 425792's own `HandleEffectApply` blocks
-  `MOD_MELEE_HASTE` specifically because Windfury Totem and Improved Icy Talons reach the wolves as
-  party auras that are already folded into the shaman's own `SwingSpeed()`; `applyPetBuffEffects`
-  (`sim/core/buffs.go`) strips `SwiftRetribution`/`MoonkinAura` for a haste-carrier pet but not
-  `WindfuryTotem`/`IcyTalons`, so a `FullBuffs` suite with either active likely still double-counts them
-  on the wolves. A future core item should add them to that same `inheritsOwnerAttackSpeed` block.
+  **Fixed (wave I cross-review):** those `AllItems` gains were the double count 425792's own
+  `MOD_MELEE_HASTE` block exists to stop, since Windfury Totem and Improved Icy Talons are already in the
+  shaman's `SwingSpeed()`. `applyPetBuffEffects` now strips both for a carrier that blocks them (Pets,
+  above), which takes most of it back: Enhancement 189 rows move, median -1.08%, -3.86% to +0.52%.
 
 **Hunter** (`TestSimvalHunter`, the hunter recorded runs, code)
 - Ranged haste: the server core has no base bonus. mod-individual-progression recasts spell 89507 on login (aura 141
@@ -764,9 +763,12 @@ Roll details the tables above don't show:
   `core.DelayedPeriodicApplier` (closes PAR-P7-0e's "still owed"). No aura 286
   (`SPELL_AURA_ABILITY_PERIODIC_CRIT`) covers 12654: `TicksCanCrit: false`.
   A crit from an instant cast (Living Bomb's direct hit, or Pyroblast/Frostfire Bolt made instant by
-  Hot Streak/Brain Freeze) applies through `ApplyFromInstantCast` instead of `Apply`, read off
-  `spell.CurCast.CastTime == 0`; a hardcast crit or a Living Bomb tick crit still uses `Apply` (DoTs
-  and periodic ticks, above).
+  Hot Streak/Brain Freeze) applies through `ApplyFromInstantCast` instead of `Apply`; a hardcast crit or
+  a Living Bomb tick crit still uses `Apply` (DoTs and periodic ticks, above). **Fixed (wave I
+  cross-review):** it read `spell.CurCast.CastTime == 0` at the hit, which a missile outlives. At GCD
+  1 s a hardcast Frostfire Bolt starts 1071 ms before an instant one lands (30 yards, missile speed 28),
+  so each reads the other's cast time. `SpellResult` captures it instead (`FromInstantCast`), at the
+  cast. No golden moves: the overlap needs about 40% haste and both cast shapes back to back.
 - Water Elemental scaling (`spell_mage_pet_scaling`, `spell_mage.cpp:260-370`, gated on
   `m_scriptSpellId 35657`/`35658`): 30% of the owner's stamina (the sim had 20%) and intellect, 33% of
   the owner's Frost spell power (the sim's one spell-power stat already stands in for the school-masked
@@ -971,6 +973,17 @@ Roll details the tables above don't show:
   hands the summon to `Spell.Dot`, which indexes an empty `dots` slice and panics the raid build.
   `sim/optimizer/raidctx`'s `raid25.json` fixture and any saved user APL still name the summons, and
   `TestDeriveFixtureGolden` went red on exactly that. The five preset APL files keep the summon ids too.
+  **Fixed (wave I cross-review):** the split also has to carry each id's proc side over.
+  - The two totem hits went from the summon's `ProcMaskEmpty` to `ProcMaskSpellDamage`, which let a
+    totem tick proc the shaman's own trinkets and Elemental Devastation. `Spell::DoAllEffectOnTarget`
+    procs on `m_originalCaster`, the totem here, and only crit reads the owner
+    (`DoAllEffectOnLaunchTarget`'s `IsTotem` branch), so both are back on `ProcMaskEmpty`. Elemental 30
+    rows move, median -1.15%, -9.61% to -0.02% (`LongMultiTarget` most); Enhancement 207 rows, median
+    -0.26%, -1.78% to +0.48%.
+  - Fire Nova's hit lost `SpellFlagFocusable`, which the cast kept, so its crits stopped granting
+    Elemental Focus's Clearcasting. `spell_sha_elemental_focus::CheckProc` refuses only the two weapon
+    imbue attacks, so the flag belongs on whichever half deals the damage. Enhancement 195 rows move,
+    median +0.09%, -0.56% to +9.73%; no Elemental row, since no Elemental APL casts it.
 - AoE cap (`Spell::DoAllEffectOnLaunchTarget`): the ten-target cap gates on `m_caster->IsPlayer()`
   alone, whoever the spell is aimed at. Magma Totem's pulse (58735) is cast by the totem, so it loses
   the cap (deviation 56). **Fixed (PAR-P7-SHA review):** Fire Nova's pulse (61654) keeps it, since
@@ -1064,9 +1077,11 @@ Roll details the tables above don't show:
     nothing at all. Fire Nova's restored cap takes all 24 Enhancement `LongMultiTarget` rows down
     -14.6% to -22.1% (`WF-default_ft-FullBuffs-LongMultiTarget`, Troll: 28876.42 → 22492.91). The fire
     elemental's dropped cap lifts the 8 `EleFireElemental-*-LongMultiTarget` rows +19.0% to +31.4%
-    (Orc `default-NoBuffs`: 5221.37 → 6858.86), and no other Elemental row. Against the wave base the
-    suites end at: Elemental 183 rows, median -0.010%, -0.505% to +31.4%; Enhancement 207 rows, median
-    +3.2%, -7.5% to +9.4%.
+    (Orc `default-NoBuffs`: 5221.37 → 6858.86), and no other Elemental row.
+  - Against the wave base, before the cross-review's own three shaman fixes: Elemental 183 rows, median
+    -0.010%, -2.46% to +31.4%; Enhancement 207 rows, median +3.2%, -7.5% to +9.0%. The cross-review then
+    moves Elemental another median -1.15% (30 rows) and Enhancement another median -1.11% (all 207 rows,
+    -4.04% to +9.77%).
 - Live probes (`TestSimvalShaman`): the Stormstrike cast's yellow table, its two hits skipping the
   partial block, Lava Burst's and Flame Shock's magic table, and Flame Shock's dot carrying no aura 286
   all match the sim unchanged; numbers under **Verified on the live server**. `sim/serverdata_test.go`
@@ -1175,6 +1190,19 @@ Roll details the tables above don't show:
   always hits and resists partially, 53227 is binary), Omen's own 3.5 PPM entry with both of its PPM
   bases, and the periodic-crit scoping of the Earth and Moon carrier and of Primal Gore. Numbers under
   **Verified on the live server**.
+- **Goldens** (`dock.sh delta` against the wave base), bisected by reverting one change at a time:
+  - `TestBalance` 148 rows, median +12.4%, +4.4% to +39.7%; `TestBalancePhase3` 136 rows, median +10.8%,
+    +5.3% to +20.0%. Two drivers, compounding: the mod-spell-tweaks balance dot scaling (haste adds ticks
+    with Eclipse, tick crit with Earth and Moon) is the larger at a median +8.3% on both, and Eclipse
+    rolling on every landed cast (deviation 61) adds a median +3.5% and +2.1%. The rest, under a percent,
+    is Moonfire's coefficient, the multiplicative spell mods and Omen's PPM. The `NoBuffs` rows move most,
+    since low crit is what the old crit-only Eclipse punished.
+  - `TestFeralTank` 136 rows, median +3.8%, +2.3% to +24.7%, nearly all of it Faerie Fire (Feral)'s
+    guaranteed Clearcasting (+4.4% median alone): the tank build never had Glyph of Omen of Clarity, which
+    is what used to gate it.
+  - `TestFeral` 149 rows, median -0.7%, and `TestFeralApl` 136 rows, median -0.4%. The cat build already
+    had that glyph, so the Clearcasting rewiring is a wash there and what is left is the Faerie Fire damage
+    split and Omen's PPM.
 
 **Items** (`docs/azerothcore-item-diff/data/summary.md`)
 - 1509 of 8043 sim items differ.
@@ -1346,9 +1374,11 @@ values. Human warrior, level 80, maxed skills, Worn Shortsword (Sword Specializa
   40 Starfire crit (aura 107, SPELLMOD_CRITICAL_CHANCE). `.simval procs` reads Omen of Clarity (16864)
   as 3.5 PPM with no flat chance, 16.917% off the 2.9 s weapon both for a white swing and for Shred
   (melee class) and 8.750% for Moonfire (the 1.5 s floor), what `core.ServerProcFor`/`AuraPPMProcChance`
-  compute. `tools/simval` passes 68 of 78 checks on the records; the 10 failures are its two known gaps,
+  compute. `tools/simval` failed 10 of 78 checks on the records, all two known gaps of its own checker:
   `ALWAYS_HIT` (60089's miss threshold) and a binary spell's lack of partials (16857, 53227), the same
-  ones the DK probes hit. Nothing disagreed with the sim.
+  ones the DK probes hit. **Fixed (wave I cross-review):** `check.go` expects no miss on an always-hit
+  spell and one unresisted bucket on a binary one, so both read the same as the sim. Nothing disagreed
+  with the sim.
 - A non-binary magic hit lands fully resisted about once in 300k rolls (seen twice in 900k):
   `Unit::CalcAbsorbResist` builds its eleven discrete resist probabilities as floats, and a roll in the
   rounding gap above their sum walks the loop to the last bucket (`Unit.cpp:2360-2382`). Worth ~2e-6 of

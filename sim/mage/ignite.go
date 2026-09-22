@@ -33,7 +33,7 @@ func (mage *Mage) applyIgnite() {
 				// instant by Hot Streak/Brain Freeze) is processed with the session, ahead of this
 				// update's own clock advance; a hardcast landing in _UpdateSpells is processed
 				// after it.
-				mage.procIgnite(sim, result, igniteDelay, spell.CurCast.CastTime == 0)
+				mage.procIgnite(sim, result, igniteDelay, result.FromInstantCast())
 			}
 		},
 		OnPeriodicDamageDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {

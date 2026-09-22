@@ -15,7 +15,9 @@ func (shaman *Shaman) registerFireNovaAttackSpell() *core.Spell {
 		ActionID:    core.ActionID{SpellID: 61654},
 		SpellSchool: core.SpellSchoolFire,
 		ProcMask:    core.ProcMaskSpellDamage,
-		Flags:       core.SpellFlagNoOnCastComplete,
+		// Focusable belongs on whichever half deals the damage: spell_sha_elemental_focus only refuses
+		// the two weapon imbue attacks, so a Fire Nova crit still hands out Clearcasting.
+		Flags: SpellFlagFocusable | core.SpellFlagNoOnCastComplete,
 
 		BonusHitRating:   float64(shaman.Talents.ElementalPrecision) * core.SpellHitRatingPerHitChance,
 		DamageMultiplier: 1 + float64(shaman.Talents.CallOfFlame)*0.05 + float64(shaman.Talents.ImprovedFireNova)*0.1,

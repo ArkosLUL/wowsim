@@ -58,6 +58,7 @@ func (shaman *Shaman) NewSpiritWolf(index int) *SpiritWolf {
 	if shaman.Server().SpellTweaks.FeralSpiritHaste {
 		spiritWolf.HasteCarrier = true
 		spiritWolf.OwnerHasteSource = func() float64 { return shaman.SwingSpeed() }
+		spiritWolf.OwnerHasteCoversMeleeHasteAuras = true
 	}
 
 	spiritWolf.EnableAutoAttacks(spiritWolf, core.AutoAttackOptions{

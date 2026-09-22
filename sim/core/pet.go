@@ -56,6 +56,11 @@ type Pet struct {
 	// hunter pet, melee for the DK's ghoul family. The class sets it before the pet is enabled; nil for
 	// a haste-carrier pet with no melee swings of its own to rescale, like the gargoyle.
 	OwnerHasteSource func() float64
+	// Whether the carrier blocks MOD_MELEE_HASTE too, which keeps Windfury Totem and Improved Icy
+	// Talons off the pet: the owner's own melee haste already carries them. Only the Spirit Wolves'
+	// 425792 does that. The hunter pet's 425790 and spell_dk_pet_scaling leave it open, so Frenzy and
+	// Ghoul Frenzy stack on top there.
+	OwnerHasteCoversMeleeHasteAuras bool
 	// The carrier's last snapshot, as a swing-speed multiplier. A real pet retakes it every 2 s
 	// (ownerHasteRefresh); a guardian keeps what it got at the summon.
 	ownerHasteAmount  float64

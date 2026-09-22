@@ -682,6 +682,17 @@ Done when every "Classic" or `wotlk-classic-bugs` reference in `sim/` has been r
   Judgement of Wisdom and Light. Holy Vengeance and Righteous Vengeance roll crit on each tick, where the
   server fixes it when the DoT lands or refreshes (`CalculatePeriodicData`), as the rogue and warrior DoTs
   already do; switching moves Ret.
+- Wave I leftover (predates the wave, found in its cross-review): the percent damage mods a class hangs on
+  one spell ignore each effect's own `SPELLMOD_DAMAGE`/`SPELLMOD_DOT` split and classMask, so a mod reaches
+  halves and spells the server never gives it. Conflagrate takes Aftermath (`SPELLMOD_DOT` only) on its
+  direct hit, and Glyph of Immolate (56228, `SPELLMOD_DOT`, classMask Immolate alone) at all. The mage has
+  the same question open for Fire Power's DOT effect (INVESTIGATION, Mage). Decode each mod's mask against
+  the spell's family flags and split the multiplier per half.
+- Wave I leftover, in `mod-sim-validation`: `checkResists` (`e2e/records_test.go`) fails any bucket whose
+  derived probability is 0, and `CalcAbsorbResist`'s float rounding still lands the fully-resisted one
+  about once in 300k rolls. Every magic probe hits it, so the tolerance belongs there rather than in
+  `dropFullResistArtifact`, which `p7_dru_test.go` added per probe. Needs a live e2e run to re-verify,
+  which is why the cross-review left it.
 
 ## Loop work items
 

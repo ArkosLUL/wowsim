@@ -19,6 +19,8 @@ type SpellResult struct {
 	ResistanceMultiplier float64 // Partial Resists / Armor multiplier
 	PreOutcomeDamage     float64 // Damage done by this cast before Outcome is applied
 
+	castWasInstant bool
+
 	inUse bool
 }
 
@@ -32,6 +34,7 @@ func (spell *Spell) NewResult(target *Unit) *SpellResult {
 	result.Damage = 0
 	result.Threat = 0
 	result.Outcome = OutcomeEmpty // for blocks
+	result.castWasInstant = spell.CurCast.CastTime == 0
 	result.inUse = true
 
 	return result
@@ -46,6 +49,13 @@ func (result *SpellResult) Landed() bool {
 
 func (result *SpellResult) DidCrit() bool {
 	return result.Outcome.Matches(OutcomeCrit)
+}
+
+// FromInstantCast is whether the cast behind this result had no cast time, which decides how long a
+// proc it feeds waits (DelayedPeriodicApplier.DelayFromInstantCast). Read at the cast, not at the
+// hit: a missile outlives CurCast, which the next cast of the same spell overwrites mid-flight.
+func (result *SpellResult) FromInstantCast() bool {
+	return result.castWasInstant
 }
 
 func (result *SpellResult) DamageString() string {

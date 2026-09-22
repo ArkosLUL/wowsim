@@ -336,6 +336,12 @@ func applyPetBuffEffects(petAgent PetAgent, raidBuffs *proto.RaidBuffs, partyBuf
 		if raidBuffs.MoonkinAura == proto.TristateEffect_TristateEffectImproved {
 			raidBuffs.MoonkinAura = proto.TristateEffect_TristateEffectRegular
 		}
+		// Windfury Totem and Improved Icy Talons are MOD_MELEE_HASTE, which only some carriers block
+		// (Pet.OwnerHasteCoversMeleeHasteAuras).
+		if petAgent.GetPet().OwnerHasteCoversMeleeHasteAuras {
+			raidBuffs.IcyTalons = false
+			raidBuffs.WindfuryTotem = 0
+		}
 	}
 	individualBuffs.HymnOfHope = 0
 	individualBuffs.HandOfSalvation = 0
