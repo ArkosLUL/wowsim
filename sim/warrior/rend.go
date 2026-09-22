@@ -20,7 +20,7 @@ func (warrior *Warrior) RegisterRendSpell() {
 	// spell_tweaks_rend_haste comment), so it always applies once talented; only the haste add-ticks
 	// half reads the RendTrauma config switch.
 	canCrit := warrior.Talents.Trauma > 0
-	addsTicks := canCrit && warrior.Server().SpellTweaks.RendTrauma
+	addsTicks := warrior.Talents.Trauma > 0 && warrior.Server().SpellTweaks.RendTrauma
 
 	warrior.Rend = warrior.RegisterSpell(core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: 47465},
@@ -40,7 +40,7 @@ func (warrior *Warrior) RegisterRendSpell() {
 		},
 
 		ExtraCastCondition: func(sim *core.Simulation, target *core.Unit) bool {
-			return warrior.StanceMatches(BattleStance|DefensiveStance)
+			return warrior.StanceMatches(BattleStance | DefensiveStance)
 		},
 
 		DamageMultiplier: 1 + 0.1*float64(warrior.Talents.ImprovedRend),

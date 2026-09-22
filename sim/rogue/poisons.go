@@ -21,7 +21,7 @@ func (rogue *Rogue) registerPoisonAuras() {
 		})
 	}
 	if rogue.Talents.MasterPoisoner > 0 {
-		rogue.masterPoisonerAura = core.MasterPoisonerDebuff(&rogue.Unit, rogue.Talents.MasterPoisoner)
+		rogue.masterPoisonerAura = core.MasterPoisonerAura(&rogue.Unit, rogue.Talents.MasterPoisoner)
 		// gainMasterPoisoner/loseMasterPoisoner activate and deactivate this aura by hand, so its own
 		// timer must never run out from under them: it needs to hold for as long as the ref count
 		// says a poison is up, not just its first 15s.
@@ -137,6 +137,9 @@ func (rogue *Rogue) registerDeadlyPoisonSpell() {
 			}
 
 			if dot.GetStacks() < 5 {
+				// every refresh works the tick interval out again off current haste
+				// (Aura::RefreshTimers), the running tick timer keeps going
+				dot.RecomputeAuraDuration()
 				dot.Refresh(sim)
 				dot.AddStack(sim)
 				dot.TakeSnapshot(sim, false)
@@ -159,6 +162,7 @@ func (rogue *Rogue) registerDeadlyPoisonSpell() {
 					rogue.WoundPoison[DeadlyProc].Cast(sim, target)
 				}
 			}
+			dot.RecomputeAuraDuration()
 			dot.Refresh(sim)
 			dot.TakeSnapshot(sim, false)
 		},

@@ -59,9 +59,10 @@ func (warrior *Warrior) applyDeepWounds() {
 }
 
 // deepWoundsMunchDelay is Unit::CastDelayedSpellWithPeriodicAmount (MunchingBlizzlike.Enabled, live
-// on): every Deep Wounds refresh queues on the target's event list 400 ms out instead of landing right
-// away, so the old dot keeps ticking at its old amount for that stretch. Overlapping crits within the
-// window each read the outstanding damage as it stood at their own proc, same as the server.
+// on): every Deep Wounds refresh queues on the warrior's own event list until its next 400 ms boundary
+// (EventProcessor::CalculateQueueTime), so up to 400 ms out, and the old dot keeps ticking at its old
+// amount meanwhile. The sim has no phase for that clock and always takes the full 400 ms. Overlapping
+// crits within the window each read the outstanding damage as it stood at their own proc.
 const deepWoundsMunchDelay = time.Millisecond * 400
 
 func (warrior *Warrior) procDeepWounds(sim *core.Simulation, target *core.Unit, isOh bool) {

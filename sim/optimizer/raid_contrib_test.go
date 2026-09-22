@@ -9,62 +9,12 @@ import (
 	"github.com/wowsims/wotlk/sim/core/stats"
 )
 
-// furyWarrior is the evaluator tests' fury_p1 preset, built again here so this file doesn't depend
-// on evaluator_test.go's presetOptimizeRequest.
-func furyWarrior(name string) *proto.Player {
-	return &proto.Player{
-		Name:          name,
-		Race:          proto.Race_RaceOrc,
-		Class:         proto.Class_ClassWarrior,
-		Equipment:     core.GetGearSet("../../ui/warrior/gear_sets", "p1_fury").GearSet,
-		Rotation:      core.GetAplRotation("../../ui/warrior/apls", "fury").Rotation,
-		TalentsString: "302023102331-305053000520310053120500351",
-		Glyphs: &proto.Glyphs{
-			Major1: int32(proto.WarriorMajorGlyph_GlyphOfWhirlwind),
-			Major2: int32(proto.WarriorMajorGlyph_GlyphOfHeroicStrike),
-			Major3: int32(proto.WarriorMajorGlyph_GlyphOfRending),
-			Minor1: int32(proto.WarriorMinorGlyph_GlyphOfShatteringThrow),
-		},
-		Spec: &proto.Player_Warrior{Warrior: &proto.Warrior{Options: &proto.Warrior_Options{
-			StartingRage:       50,
-			UseRecklessness:    true,
-			UseShatteringThrow: true,
-			Shout:              proto.WarriorShout_WarriorShoutBattle,
-		}}},
-		Consumes: &proto.Consumes{
-			Flask:         proto.Flask_FlaskOfEndlessRage,
-			DefaultPotion: proto.Potions_PotionOfSpeed,
-			PrepopPotion:  proto.Potions_PotionOfSpeed,
-			Food:          proto.Food_FoodFishFeast,
-		},
-		Buffs: core.FullIndividualBuffs,
-	}
-}
-
-// arcaneMage is the evaluator tests' arcane_p3 preset, built again here for the same reason.
-func arcaneMage(name string) *proto.Player {
-	return &proto.Player{
-		Name:          name,
-		Race:          proto.Race_RaceTroll,
-		Class:         proto.Class_ClassMage,
-		Equipment:     core.GetGearSet("../../ui/mage/gear_sets", "p3_arcane_alliance").GearSet,
-		Rotation:      core.GetAplRotation("../../ui/mage/apls", "arcane").Rotation,
-		TalentsString: "23000513310033015032310250532-03-023303001",
-		Glyphs: &proto.Glyphs{
-			Major1: int32(proto.MageMajorGlyph_GlyphOfArcaneBlast),
-			Major2: int32(proto.MageMajorGlyph_GlyphOfArcaneMissiles),
-			Major3: int32(proto.MageMajorGlyph_GlyphOfMoltenArmor),
-		},
-		Spec: &proto.Player_Mage{Mage: &proto.Mage{Options: &proto.Mage_Options{
-			Armor: proto.Mage_Options_MoltenArmor,
-		}}},
-		Consumes: &proto.Consumes{
-			Flask:         proto.Flask_FlaskOfTheFrostWyrm,
-			Food:          proto.Food_FoodFirecrackerSalmon,
-			DefaultPotion: proto.Potions_PotionOfSpeed,
-		},
-		Buffs: core.FullIndividualBuffs,
-	}
+// presetPlayer is presetOptimizeRequest's player under another name, for a raid slot.
+func presetPlayer(tb testing.TB, preset, name string) *proto.Player {
+	tb.Helper()
+	player := presetOptimizeRequest(tb, preset).Base.Raid.Parties[0].Players[0]
+	player.Name = name
+	return player
 }
 
 // demonologyWarlock is Demonology's own package test build (sim/warlock/warlock_test.go), with a
@@ -129,7 +79,7 @@ func raidContribRequest(tb testing.TB, targetIndex int, players ...*proto.Player
 // Reevaluating the seed loadout, with a fresh evaluator and no shared cache, reproduces the same
 // paired random numbers for the whole raid: the delta between the two runs is exactly 0.
 func TestRaidEvaluatorIdenticalLoadoutHasNoDelta(t *testing.T) {
-	req := raidContribRequest(t, 0, furyWarrior("Target"), arcaneMage("Mage"))
+	req := raidContribRequest(t, 0, presetPlayer(t, "fury_p1", "Target"), presetPlayer(t, "arcane_p3", "Mage"))
 	r, err := PrepareRequest(req)
 	if err != nil {
 		t.Fatal(err)
@@ -153,7 +103,7 @@ func TestRaidEvaluatorIdenticalLoadoutHasNoDelta(t *testing.T) {
 // raider replays identically under IsTest, so a paired raid-DPS delta stays as quiet as a solo
 // evaluator's, not louder for carrying the whole raid's output.
 func TestRaidEvaluatorPairsAcrossTheRaid(t *testing.T) {
-	req := raidContribRequest(t, 0, furyWarrior("Target"), arcaneMage("Mage"))
+	req := raidContribRequest(t, 0, presetPlayer(t, "fury_p1", "Target"), presetPlayer(t, "arcane_p3", "Mage"))
 	r, err := PrepareRequest(req)
 	if err != nil {
 		t.Fatal(err)
@@ -185,7 +135,7 @@ func TestDemonologyValuesSpellPowerHigherInRaidMode(t *testing.T) {
 	// Several pact recipients, so its raid-wide contribution clears the sims' noise: each gets the
 	// same aura, so their combined gain scales with their count while the paired standard error
 	// only grows with its square root.
-	req := raidContribRequest(t, 0, demonologyWarlock("Warlock"), arcaneMage("Mage1"), arcaneMage("Mage2"), arcaneMage("Mage3"))
+	req := raidContribRequest(t, 0, demonologyWarlock("Warlock"), presetPlayer(t, "arcane_p3", "Mage1"), presetPlayer(t, "arcane_p3", "Mage2"), presetPlayer(t, "arcane_p3", "Mage3"))
 	r, err := PrepareRequest(req)
 	if err != nil {
 		t.Fatal(err)
@@ -225,9 +175,9 @@ func TestDemonologyValuesSpellPowerHigherInRaidMode(t *testing.T) {
 // hit-starved partymate's own DPS and the race survives the cut; the individual context has no
 // partymate to give it to.
 func TestRaidRacialScreenCountsPartyRacials(t *testing.T) {
-	needsHit := furyWarrior("Needs Hit")
+	needsHit := presetPlayer(t, "fury_p1", "Needs Hit")
 	needsHit.BonusStats = &proto.UnitStats{Stats: stats.Stats{stats.MeleeHit: -300}.ToFloatArray()}
-	req := raidContribRequest(t, 0, furyWarrior("Target"), needsHit)
+	req := raidContribRequest(t, 0, presetPlayer(t, "fury_p1", "Target"), needsHit)
 	req.Settings.RacialMode = proto.OptimizerRacialMode_OptimizerRacialSearch
 	r, err := PrepareRequest(req)
 	if err != nil {

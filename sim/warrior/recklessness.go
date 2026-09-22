@@ -26,7 +26,7 @@ func (warrior *Warrior) RegisterRecklessnessCD() {
 				warrior.Overpower,
 				warrior.Revenge,
 				warrior.ShieldSlam,
-				warrior.Slam,
+				warrior.SlamHit,
 				warrior.ThunderClap,
 				warrior.Whirlwind,
 				warrior.WhirlwindOH,

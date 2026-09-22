@@ -718,7 +718,7 @@ export class Player<SpecType extends Spec> {
 		let debuffCrit = 0.0;
 
 		const debuffs = this.sim.raid.getDebuffs();
-		if (debuffs.totemOfWrath || debuffs.heartOfTheCrusader || debuffs.masterPoisoner) {
+		if (debuffs.totemOfWrath || debuffs.heartOfTheCrusader) {
 			debuffCrit = 3.0;
 		}
 

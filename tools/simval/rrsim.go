@@ -268,17 +268,16 @@ const hunterRotation = `{"type":"TypeAPL","priorityList":[
  {"action":{"castSpell":{"spellId":{"spellId":49052}}}}
 ]}`
 
-// retRotation is the priority list off ui/retribution_paladin/apls/default.apl.json (its prepull
-// potion action doesn't apply to a rrsim comparison, so it's left out): Hammer of Wrath in execute,
-// Judgement of Wisdom, Crusader Strike, Divine Storm, Exorcism on an Art of War proc, else
-// Consecration outside the last 4 s.
+// retRotation is the priority list off ui/retribution_paladin/apls/default.apl.json, minus the
+// prepull potion and Exorcism, which the recorded Ret cycle (SIMVAL_RECORD_SPELLS) doesn't cast:
+// Hammer of Wrath in execute, Judgement of Wisdom, Crusader Strike, Divine Storm, else Consecration
+// outside the last 4 s.
 const retRotation = `{"type":"TypeAPL","priorityList":[
  {"action":{"autocastOtherCooldowns":{}}},
  {"action":{"castSpell":{"spellId":{"spellId":48806}}}},
  {"action":{"castSpell":{"spellId":{"spellId":53408}}}},
  {"action":{"castSpell":{"spellId":{"spellId":35395}}}},
  {"action":{"castSpell":{"spellId":{"spellId":53385}}}},
- {"action":{"condition":{"auraIsActive":{"auraId":{"spellId":53488}}},"castSpell":{"spellId":{"spellId":48801}}}},
  {"action":{"condition":{"cmp":{"op":"OpGt","lhs":{"remainingTime":{}},"rhs":{"const":{"val":"4s"}}}},"castSpell":{"spellId":{"spellId":48819}}}}
 ]}`
 

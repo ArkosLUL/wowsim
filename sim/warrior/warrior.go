@@ -60,6 +60,7 @@ type Warrior struct {
 	ShieldBlock          *core.Spell
 	ShieldSlam           *core.Spell
 	Slam                 *core.Spell
+	SlamHit              *core.Spell
 	SunderArmor          *core.Spell
 	SunderArmorDevastate *core.Spell
 	ThunderClap          *core.Spell

@@ -423,6 +423,9 @@ Roll details the tables above don't show:
   on `Talents.Murder`/`Talents.WeaponExpertise` and `Server().SpellTweaks.{DeadlyPoisonMurder,
   RuptureWeaponExpertise}` (P7-0a's audit already lists both scripts; this item wires them). Duration
   stays fixed and the tick interval shrinks with melee haste, the same shape as the DK disease tweak.
+  Every Deadly Poison refresh and stack recomputes the interval off current haste (`Aura::RefreshTimers`
+  reruns the script's `CalcPeriodic` hook), not just its first application: the missing recompute, found
+  in cross-review, froze the interval at the pull's haste and cost Assassination 2-5%.
 - Deadly Poison's tick crit is Murder-gated too: rank 1 and 2 both carry a second effect, aura 286
   (`SPELL_AURA_ABILITY_PERIODIC_CRIT`) on class mask `[0, 0x80000, 0]` (spelldump ids 14158/14159),
   which covers Deadly and Wound Poison's family flags. Since Deadly Poison is magic dmg class, its
@@ -439,7 +442,7 @@ Roll details the tables above don't show:
 - Master Poisoner (45176) is `SPELL_AURA_MOD_CRIT_CHANCE_FOR_CASTER` (confirmed in the spelldump, aura
   308, and `Unit.cpp:3940,9455`): `victim->GetTotalAuraModifier` filters to auras whose caster GUID
   matches the attacker, so it raises crit chance only for the rogue whose Deadly/Wound Poison carries it
-  (58410's `triggerSpell`), never the raid. `core.MasterPoisonerDebuff` now takes that caster and adds
+  (58410's `triggerSpell`), never the raid. `core.MasterPoisonerAura` now takes that caster and adds
   `stats.MeleeCrit`/`stats.SpellCrit` to it (`AddStatsDynamic`) instead of `PseudoStats.BonusCritRatingTaken`
   on the target; duration corrected to 15 s (spelldump, was the shared 20 s `HeartOfTheCrusaderDebuff` used).
   `sim/rogue/poisons.go` reference-counts targets carrying the rogue's own poison debuff
@@ -447,10 +450,10 @@ Roll details the tables above don't show:
   another's is still up; it's exact for a single target and an approximation once a rogue keeps poison
   on two targets at once (no suite exercises that). The raid-wide `Debuffs.master_poisoner` option had no
   target to apply the per-caster bonus to (`applyDebuffEffects` only ever sees the enemy), so it can't
-  represent this mechanic at all: the branch in `debuffs.go` is gone, along with the raidctx provider row
-  and the `ui/raid/raid_stats.ts` "Master Poisoner" entry that mirrored it. The proto field and the
-  `buffs_debuffs.ts` checkbox stay, since `ui/core/player.ts`'s melee crit-cap calculator still reads it
-  as a player's own assumption.
+  represent this mechanic at all, and nothing reads it any more: the `debuffs.go` branch, the raidctx
+  provider row, `ui/raid/raid_stats.ts`'s entry, the `buffs_debuffs.ts` checkbox, `player.ts`'s crit-cap
+  term, `character_stats.tsx`'s debuff stats and the feral tank default are gone. The proto field stays so
+  saved settings still load.
 - Poison proc chance (Instant/Wound/Deadly's application, not their damage): `Player::CastItemCombatSpell`
   rolls a flat `SpellItemEnchantmentEntry::amount` per landed hit for a `ITEM_ENCHANTMENT_TYPE_COMBAT_SPELL`
   enchant (poisons occupy `PERM_ENCHANTMENT_SLOT`), through `ApplySpellMod(..., SPELLMOD_CHANCE_OF_SUCCESS,
@@ -476,20 +479,21 @@ Roll details the tables above don't show:
   (`spell.go:789-791`) but nothing reads it back off `rollYellow`, so 50783 uses
   `OutcomeMeleeSpecialCritOnly` (the "roll happened elsewhere" applier Mutilate, Rune Strike and
   Stormstrike already use) as the closest match: it still rolls the separate yellow block chance, which
-  `SPELL_ATTR3_ALWAYS_HIT` rules out. Wiring `SpellFlagAlwaysHit` into `rollYellow` and dropping that
-  residual block roll is a P7-0c-style core follow-up.
+  `SPELL_ATTR3_ALWAYS_HIT` rules out (`Unit::isSpellBlocked`). Wiring `SpellFlagAlwaysHit` into
+  `rollYellow` and dropping that residual block roll is a P7-0c-style core follow-up. Whatever keys on
+  Slam's damage or crit must key on 50783 (`warrior.SlamHit`): after the split, Recklessness's crit list
+  and the Siegebreaker 2pc still keyed on the cast, which never crits (fixed in cross-review).
 - Deep Wounds (`sim/warrior/deep_wounds.go`): `Unit::CastDelayedSpellWithPeriodicAmount`
-  (`Unit.cpp:16310-16328`) queues the aura's recombined amount as an `AuraMunchingQueue` event 400 ms
-  out whenever the caster and target differ, gated by `MunchingBlizzlike.Enabled`
+  (`Unit.cpp:16310-16328`) queues the aura's recombined amount as an `AuraMunchingQueue` event on the
+  caster's own event list whenever the caster and target differ, gated by `MunchingBlizzlike.Enabled`
   (`worldserver.conf` `= 1` live), an AzerothCore core setting, not a mod-spell-tweaks toggle. Every
   proc, the first application included, goes through the delay; the outstanding-damage math the sim
-  already had is unchanged, just wrapped in a `core.PendingAction` fired 400 ms after the crit.
-  Review round: the 400 ms is `CalculateQueueTime`'s ceiling, not its actual value
-  (`EventProcessor.cpp:164-167`): it queues to the next multiple of 400 ms of the world clock, 0-400 ms
-  out depending on a phase the sim has no equivalent for (only `serverTickPhase`, which is per-tick,
-  not per-400ms-window), so live procs average ~200 ms, not ~400, and the sim over-applies munching
-  loss versus live. Left as this item's follow-up alongside the `rollYellow` one above: it's the same
-  `CastDelayedSpellWithPeriodicAmount` path DK, Druid, Hunter, Mage, Paladin and Shaman also use.
+  already had is unchanged, just wrapped in a `core.PendingAction` fired 400 ms after the crit. The
+  400 ms is `CalculateQueueTime`'s ceiling (`EventProcessor.cpp:164-167`): the event lands on the next
+  400 ms boundary of the caster's event clock, up to 400 ms out on a phase the sim has no equivalent for
+  (`serverTickPhase` is per tick), so live procs average ~200 ms and the sim over-applies munching
+  loss. Follow-up, like the `rollYellow` one above: DK, Druid, Hunter, Mage, Paladin and Shaman use the
+  same `CastDelayedSpellWithPeriodicAmount` path.
 - Rend (`sim/warrior/rend.go`) now reads `Server().SpellTweaks.RendTrauma` for the melee-haste add-ticks
   half and `Talents.Trauma > 0` alone for the crit half, matching `SpellTweaks_classes.cpp:372-395`
   (`spell_tweaks_rend_haste`) and the Trauma talent's static `spell_dbc` override. It needed a
@@ -501,8 +505,8 @@ Roll details the tables above don't show:
   `FlagResetsAutoAttack` in the generated data (57755, 64382), which `cast.go`'s `resetsSwing` already
   resets on cast start and completion, so the hand-rolled `StopMeleeUntil` calls were redundant, and
   modeled the wrong reset shape besides (retail deviation #19). Shattering Throw's cast time is
-  unconditionally 1.5 s now; Glyph of Shattering Throw (206953) is a Cataclysm item unimplemented on
-  this server, so it's out of the presets (`ui/warrior/presets.ts`, `FuryGlyphs`, `presetOptimizeRequest`'s
+  unconditionally 1.5 s now; Glyph of Shattering Throw (206953) is a WotLK Classic item this server
+  doesn't have, so it's out of the presets (`ui/warrior/presets.ts`, `FuryGlyphs`, `presetOptimizeRequest`'s
   Fury player, `fury_p1.json`) but stays live in `hasGlyph`'s stance-switch and cast condition for a
   hand-built profile, and `ArmsGlyphs` (`dps_warrior_test.go`) keeps it glyphed for coverage of that path.
 - Recklessness and Death Wish (`sim/warrior/recklessness.go`, `talents.go`): the P3-2 GCD entries are
@@ -542,9 +546,8 @@ Roll details the tables above don't show:
   committed file keeps that drift out and only drops the glyph by hand; a stale search fixture is a
   finding for whichever item next owns `sim/optimizer/testdata`.
 - Live-verified (`TestSimvalWarriorP7`): Rend's tick data, Trauma's scoped crit override, Deep Wounds'
-  no-crit and Shattering Throw's flat cast time all match the server; Heroic Strike's yellow miss
-  matches the plain boss baseline, confirming the dual-wield penalty never leaks into it. Numbers in
-  **Verified on the live server**.
+  no-crit and Shattering Throw's flat cast time all match the server. Numbers in **Verified on the live
+  server**.
 
 **Retribution Paladin** (`TestSimvalRetribution`, code)
 - Seal DoT via strikes was already right: `spell_pal_seal_of_vengeance_aura::HandleApplyDoT`
@@ -598,36 +601,31 @@ Roll details the tables above don't show:
 - Recorded run (`TestRecordedRun`, `SIMVAL_RECORD_SPEC=ret`, human paladin, 300 s at 4 yards,
   `SIMVAL_RECORD_TALENT_SPELLS` set to `StandardTalents`'s 26 ids, Seal of Vengeance/Corruption cast once
   before the pull via `SIMVAL_RECORD_START_SPELLS`, the fixed cycle rotating Judgement of Wisdom, Crusader
-  Strike, Divine Storm and Consecration every 1.5 s). Hammer of Wrath and Exorcism stay out of the cycle:
-  the dummy's health never drops (module README), so Hammer of Wrath never reaches execute range, and
-  Exorcism can't target a Giant (below).
+  Strike, Divine Storm and Consecration every 1.5 s). Hammer of Wrath stays out of the cycle, since the
+  dummy's health never drops (module README), and so does Exorcism.
 
   | Run | Server DPS | Sim DPS | Gap |
   |---|---|---|---|
   | Ret (`ret_Svrleadsofeh_1790025523`, boss-only) | 1978.9 | 1871.0 | +5.77%, over the 2% |
-- The capture's queried `character_talent` rows came back as a Protection build, not the Retribution one
-  just learned. Cause: plain `.learn <id>` (`cs_learn.cpp`'s `HandleLearnSpellCommand`) grants the spellbook
-  entry through the generic `learnSpell` path, not `LearnTalent`, so it never writes `character_talent`; that
-  table only ever held whatever `.playerbots bot initself=epic` itself spent points on (a Redoubt proc 31 s
-  into the fight, a Protection talent, confirms that build was there from the start, not a later respec).
-  The learned Retribution spells stayed castable the whole fight regardless. Fixed in `recorded_run_test.go`:
-  `writeSetup` now writes `run.TalentSpells` directly instead of querying `character_talent` whenever a
-  caller set them, so a future capture self-corrects.
+- **The capture mixes builds, so the gap above and the per-ability breakdown below aren't a parity
+  measurement: recapture.** `setTalents` sent `.reset talents` without a name, and `HandleResetTalentsCommand`
+  (`cs_reset.cpp`) doesn't fall back to the selection, so the reset failed and the factory's Protection talents
+  (`.playerbots bot initself=epic`, via `LearnTalent`) stayed live under the 26 learned Retribution spells; a
+  Redoubt proc 31 s in confirms it. Plain `.learn <id>` goes through `learnSpell`, not `LearnTalent`, so
+  `character_talent` only held the Protection build, and the setup's `correction:` note swapped in the 26 Ret
+  ids the sim runs. Fixed in `recorded_run_test.go`: `.reset talents <name>`, and `writeSetup` writes
+  `run.TalentSpells` instead of querying `character_talent` whenever a caller set them.
 - Separately, real mana exhaustion: Crusader Strike, Divine Storm, Judgement of Wisdom and Consecration
   (every mana-cost spell in the cycle) all land their last hit between 271 s and 273 s into the fight, while
   free melee and the Seal of Vengeance proc keep going to the end.
-- **Found and fixed:** Exorcism (48801) had no creature-type restriction in the sim, so `tools/simval rrsim`'s
-  comparison request (`MobType_MobTypeGiant`, matching the boss dummy) still let it fire, for 124.4 of an
-  unfixed 1938.7 DPS. The live capture never lands it once in five minutes despite the cycle trying it every
-  6 s: `SpellInfo::CheckTargetCreatureType` (`SpellInfo.cpp:1888-1900`) gates the cast on Spell.dbc's
-  `TargetCreatureType`, matching Exorcism's retail Undead/Demon restriction. Added the same
-  `ExtraCastCondition` the spell's own crit bonus already checked for. Every promoted suite's target is
-  `MobTypeDemon` (`test_utils.go`'s `DefaultTargetProto`), so this moves no golden: confirmed both by a debug
-  trace (2.15M `ExtraCastCondition` calls in `TestRetribution/Average-Default`, always `MobTypeDemon`, always
-  true) and by running `dock.sh delta` with and without the fix, byte-identical either way.
-- With Exorcism's phantom damage gone the true gap is +5.77%, not the +2.08% it was masking. Per ability
-  (sim vs. server, boss-only DPS): Crusader Strike +22.8% over (164.4 vs. 133.9), Judgement (the seal's own
-  secondary hit, 31804) +3.6% over, the seal's own proc within noise (+0.3%), then melee -4.8%, Consecration
+- Exorcism (48801) hits any creature type: its Spell.dbc `TargetCreatureType` is 0 (all ranks, live DBC), so
+  `SpellInfo::CheckTargetCreatureType` passes every target, and `Unit::SpellTakenCritChance` only forces its crit
+  on undead and demons. The capture has none because its cycle (the setup's `rotation:`) never casts it. The
+  Undead/Demon `ExtraCastCondition` this item added was reverted; `rrsim`'s Ret rotation leaves Exorcism out
+  instead, which drops the 124.4 of 1938.7 DPS it added against the Giant dummy (gap +2.08% with it, +5.77%
+  without). No golden moves either way: every suite's target is `MobTypeDemon`.
+- Per ability (sim vs. server, boss-only DPS): Crusader Strike +22.8% over (164.4 vs. 133.9), Judgement
+  (the seal's own secondary hit, 31804) +3.6% over, the seal's own proc within noise (+0.3%), then melee -4.8%, Consecration
   -6.4%, Righteous Vengeance -17.0%, Holy Vengeance -19.2% and Divine Storm -30.9% all under. Crusader
   Strike's and Judgement's overshoot lines up with cast frequency: the real cycle only *tries* each once
   every 6 s regardless of its cooldown, landing Crusader Strike every 7.16 s on average against the sim's
@@ -642,7 +640,7 @@ Roll details the tables above don't show:
   a real defense table from behind the dummy (`CanDodge` true), unlike the secondary judgements' always-hit
   one; parry and block drop out only because attacking from behind removes them structurally (`simval_test.go`'s
   own from-behind checks confirm the same for Heroic Strike), not because either spell is gated. Holy
-  Vengeance stays `DmgClassMelee` on a hit-or-miss roll. Judgement of Wisdom rolls the "yellow" table too,
+  Vengeance is `DmgClassMelee`. Judgement of Wisdom rolls the "yellow" table too,
   tagged `attackType: ranged`, not a separate "magic" one: it can miss but is never dodged, parried or
   blocked. All four pass.
 
@@ -769,10 +767,10 @@ values. Human warrior, level 80, maxed skills, Worn Shortsword (Sword Specializa
 - Warrior probes (`TestSimvalWarriorP7`, human warrior vs. the boss dummy): Rend's yellow table dodges
   (5.70%) and parries (13.25%) but never blocks — no `SPELL_ATTR3_COMPLETELY_BLOCKED` — at the plain
   8.00% miss and 4.40% partial block; Shattering Throw only misses (8.00%), no dodge/parry/block,
-  matching its `OutcomeMeleeSpecialNoBlockDodgeParry`; Heroic Strike's yellow miss is the same 8.00%,
-  confirming the dual-wield penalty (gated on `spellId == 0` in `MeleeSpellMissChance`) never reaches
-  it. `.simval spelldump` on 47465/46854/46855/12721/64382: Rend's periodic-damage effect ticks every
-  3000 ms for a 15000 ms duration, carries family flag 0x20, and has `spell_tweaks_rend_haste` bound;
+  matching its `OutcomeMeleeSpecialNoBlockDodgeParry`; Heroic Strike's yellow miss is the same 8.00%
+  (asserted in `TestSimvalWarrior`). The bot wields one weapon, so that doesn't exercise the dual-wield
+  penalty; `MeleeSpellMissChance` only adds it when `spellId == 0`. `.simval spelldump` on
+  47465/46854/46855/12721/64382: Rend's periodic-damage effect ticks every 3000 ms for a 15000 ms duration, carries family flag 0x20, and has `spell_tweaks_rend_haste` bound;
   Trauma (both ranks) carries the 286 periodic-crit override scoped to that same flag, plus its own 42
   proc-trigger effect; Deep Wounds' periodic spell (12721) has a periodic-damage effect and no
   periodic-crit one; Shattering Throw's base cast time is 1500 ms. All match the sim unchanged.
@@ -833,10 +831,8 @@ The fork copies the server. Patching any of these in [ac] means updating the mat
 | 47 | Hunter pet focus | 24 every 4 s | 5 a second | `Creature::Regenerate` |
 | 48 | Hunter pet magic-class abilities | +50% crits, 0.333 of pet spell damage (dots less); Poison Spit and Demoralizing Screech roll the magic table too | +100% crits, 0.049 of pet AP; those two on the melee table | `spell_bonus_data`, `Unit::SpellCriticalDamageBonus` |
 | 49 | Explosive Trap damage (49065) | magic class: never misses, crits off spell crit for +50%, no ten-target cap (the trap's trigger creature casts it) | ranged hit and crit, +100%, capped | `GameObject::CastSpell`, `Spell::AddUnitTarget` |
-| 50 | Slam's damage hit (50783) | `SPELL_ATTR3_ALWAYS_HIT`: the table roll happens once, on the cast (47475) | rolls its own hit/dodge/parry/glance/crit like the cast | `spell_warr_slam::HandleDummy`, `spell.dbc` |
-| 51 | Deep Wounds refresh | queued 400 ms out, `MunchingBlizzlike.Enabled` | applies immediately | `Unit.cpp:16310-16328` |
-| 52 | Holy Vengeance/Blood Corruption tick crit | any Two-Handed Weapon Specialization rank grants it, aura 286 on the talent (mod-spell-tweaks) | never crits | `spell_20111-20113_2h_weapon_spec_holy_vengeance_crit.sql` |
-| 53 | Righteous Vengeance tick crit | the talent itself grants it (aura 286, mod-spell-tweaks); the T9 2pc's own crit effect is disabled server-side (`SpellInfoCorrections.cpp`) so it adds nothing | only the T9 2pc grants any crit chance | `spell_53380-53382_righteous_vengeance_dot_crit.sql`, `SpellInfoCorrections.cpp` (67188) |
+| 50 | Slam | can only miss: the cast (47475) is `NO_ACTIVE_DEFENSE`, its damage (50783) `ALWAYS_HIT` | one yellow roll: miss, dodge, parry, crit | `spell_warr_slam::HandleDummy`, `Spell.dbc` |
+| 51 | Deep Wounds refresh | queued to the caster's next 400 ms event boundary (up to 400 ms), `MunchingBlizzlike.Enabled` | applies immediately | `Unit::CastDelayedSpellWithPeriodicAmount`, `EventProcessor::CalculateQueueTime` |
 
 Not yet settled against retail, check before patching: the 200 ms other-hand push (`PlayerUpdates.cpp`), the DoT
 refresh tick-timer rule, the max(cast, 1500 ms) PPM basis for spell-triggered aura procs, the rule-based binary

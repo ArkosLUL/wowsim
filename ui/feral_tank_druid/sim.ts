@@ -143,7 +143,6 @@ const SPEC_CONFIG = registerSpecConfig(Spec.SpecFeralTankDruid, {
 			faerieFire: TristateEffect.TristateEffectImproved,
 			exposeArmor: true,
 			frostFever: TristateEffect.TristateEffectImproved,
-			masterPoisoner: true,
 			ebonPlaguebringer: true,
 			shadowMastery: true,
 		}),

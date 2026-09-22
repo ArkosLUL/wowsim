@@ -909,10 +909,11 @@ func TotemOfWrathDebuff(target *Unit) *Aura {
 	return minorCritDebuffAura(target, "Totem of Wrath Debuff", ActionID{SpellID: 30708}, time.Minute*5, 3*CritRatingPerCritChance)
 }
 
-// MasterPoisonerDebuff is aura 45176, SPELL_AURA_MOD_CRIT_CHANCE_FOR_CASTER (Unit.cpp:3940, 9455):
-// it only raises crit chance for the rogue whose poison carries it, so it's registered on that
-// caster, not the target. sim/rogue/poisons.go toggles it with its own Deadly/Wound Poison debuff.
-func MasterPoisonerDebuff(caster *Unit, points int32) *Aura {
+// MasterPoisonerAura is the debuff 45176, SPELL_AURA_MOD_CRIT_CHANCE_FOR_CASTER
+// (Unit::GetUnitCriticalChance, Unit::SpellTakenCritChance): it only raises crit chance for the rogue
+// whose poison carries it, so it's registered on that caster, not the target. sim/rogue/poisons.go
+// toggles it with its own Deadly/Wound Poison debuff.
+func MasterPoisonerAura(caster *Unit, points int32) *Aura {
 	critBonus := float64(points) * CritRatingPerCritChance
 	return caster.GetOrRegisterAura(Aura{
 		Label:    "Master Poisoner",

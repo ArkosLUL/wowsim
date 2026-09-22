@@ -63,8 +63,8 @@ func (rogue *Rogue) registerRupture() {
 			TickLength:          time.Second * 2,
 			AffectedByCastSpeed: rogue.ruptureAddsTicks(),
 			TickHaste:           core.MeleeHasteAddsTicks,
-			// Rupture always crits (AuraEffect::CalcPeriodicCritChance's SPELLFAMILY_ROGUE case, family
-			// flag 0x100000), unlike every other rogue dot.
+			// ticks can crit with no talent at all (AuraEffect::CalcPeriodicCritChance's
+			// SPELLFAMILY_ROGUE case, family flag 0x100000), unlike every other rogue dot
 			TicksCanCrit: true,
 
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {

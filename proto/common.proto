@@ -566,6 +566,8 @@ message Debuffs {
 	
 	// +3% to crit against target
 	bool heart_of_the_crusader = 8;
+	// unused: on this server Master Poisoner only helps the rogue whose poison applies it. Kept so
+	// saved settings still load.
 	bool master_poisoner = 9;
 	bool totem_of_wrath = 10;
 

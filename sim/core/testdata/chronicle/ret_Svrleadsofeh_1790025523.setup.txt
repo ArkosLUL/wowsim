@@ -7,16 +7,13 @@ yards: 4
 started: [31801 53736]
 rotation: [53408 35395 53385 48819]
 
-correction: the queried character_talent rows were a Protection build, not the Retribution one
-SIMVAL_RECORD_TALENT_SPELLS learned before the fight. Plain `.learn <id>` (cs_learn.cpp's
-HandleLearnSpellCommand, unlike `.learn talents`) grants the spellbook entry through the generic
-learnSpell path, not LearnTalent, so it never writes character_talent: the query instead shows
-whatever .playerbots bot initself=epic spent talent points on (Redoubt procs from 31s in prove it
-was there from the start, not a later respec). The Retribution spells stayed castable the whole
-fight regardless; restored below to the 26 ids SIMVAL_RECORD_TALENT_SPELLS actually learned. Separately,
-Crusader Strike, Divine Storm, Judgement of Wisdom and Consecration all stop landing around 271-273s
-into the 300s fight while free melee and the seal proc keep going: real mana exhaustion, unrelated to
-the talent bookkeeping above.
+correction: the queried character_talent rows were the playerbot factory's Protection build. The
+unnamed `.reset talents` failed (cs_reset.cpp needs the name), so that build stayed live all fight
+(Redoubt procs from 31s in) under the 26 Retribution talent spells SIMVAL_RECORD_TALENT_SPELLS learned
+with plain `.learn`, which never writes character_talent. The talents below are those 26 ids only, so
+this setup doesn't reproduce the fight's build. Separately, Crusader Strike, Divine Storm, Judgement of
+Wisdom and Consecration all stop landing around 271-273s into the 300s fight while free melee and the
+seal proc keep going: real mana exhaustion.
 talents (spell, specMask):
   20045 1
   20057 1

@@ -197,7 +197,7 @@ var ItemSetSiegebreakerBattlegear = core.NewItemSet(core.ItemSet{
 					aura.Activate(sim)
 				},
 				OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
-					if spell.ActionID.SpellID != 47450 && spell != warrior.Slam {
+					if spell.ActionID.SpellID != 47450 && spell != warrior.SlamHit {
 						return
 					}
 					if !result.Outcome.Matches(core.OutcomeCrit) {

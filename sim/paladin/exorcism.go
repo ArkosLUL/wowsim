@@ -28,9 +28,6 @@ func (paladin *Paladin) registerExorcismSpell() {
 				Duration: time.Second * 15,
 			},
 		},
-		ExtraCastCondition: func(sim *core.Simulation, target *core.Unit) bool {
-			return target.MobType == proto.MobType_MobTypeDemon || target.MobType == proto.MobType_MobTypeUndead
-		},
 
 		DamageMultiplierAdditive: 1 +
 			paladin.getTalentSanctityOfBattleBonus() +
@@ -45,8 +42,12 @@ func (paladin *Paladin) registerExorcismSpell() {
 				.15*spell.SpellPower() +
 				.15*spell.MeleeAttackPower()
 
-			// always crits against undead and demons, the only targets ExtraCastCondition lets through
-			bonusCrit := 100 * core.CritRatingPerCritChance
+			// hits any creature type (no TargetCreatureType in Spell.dbc), but undead and demons always
+			// take a crit (Unit::SpellTakenCritChance)
+			bonusCrit := core.TernaryFloat64(
+				target.MobType == proto.MobType_MobTypeDemon || target.MobType == proto.MobType_MobTypeUndead,
+				100*core.CritRatingPerCritChance,
+				0)
 			spell.BonusCritRating += bonusCrit
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 			spell.BonusCritRating -= bonusCrit

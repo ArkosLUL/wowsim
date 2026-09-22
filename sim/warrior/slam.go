@@ -13,10 +13,10 @@ func (warrior *Warrior) slamCastTime() time.Duration {
 
 // registerSlamSpell splits the cast (47475) from its damage (spell_warr_slam::HandleDummy triggers
 // 50783 on a landed hit): 47475 is SPELL_ATTR0_NO_ACTIVE_DEFENSE, so it can only miss, and 50783 is
-// SPELL_ATTR3_ALWAYS_HIT (the table roll already happened on the cast), so it only rolls crit and the
-// separate yellow block chance.
+// SPELL_ATTR3_ALWAYS_HIT (the table roll already happened on the cast). Anything keyed on Slam's
+// damage or crit (Recklessness, set bonuses) wants SlamHit, not Slam.
 func (warrior *Warrior) registerSlamSpell() {
-	slamDamage := warrior.RegisterSpell(core.SpellConfig{
+	warrior.SlamHit = warrior.RegisterSpell(core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: 50783},
 		SpellSchool: core.SpellSchoolPhysical,
 		ProcMask:    core.ProcMaskMeleeMHSpecial,
@@ -58,7 +58,7 @@ func (warrior *Warrior) registerSlamSpell() {
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			result := spell.CalcAndDealOutcome(sim, target, spell.OutcomeMeleeSpecialHit)
 			if result.Landed() {
-				slamDamage.Cast(sim, target)
+				warrior.SlamHit.Cast(sim, target)
 			} else {
 				spell.IssueRefund(sim)
 			}

@@ -214,7 +214,6 @@ export const BleedDebuff = InputHelpers.makeMultiIconInput([
 export const CritDebuff = InputHelpers.makeMultiIconInput([
 	makeBooleanDebuffInput({actionId: ActionId.fromSpellId(30706), fieldName: 'totemOfWrath'}),
 	makeBooleanDebuffInput({actionId: ActionId.fromSpellId(20337), fieldName: 'heartOfTheCrusader'}),
-	makeBooleanDebuffInput({actionId: ActionId.fromSpellId(58410), fieldName: 'masterPoisoner'}),
 ], 'Crit');
 
 export const MeleeAttackSpeedDebuff = InputHelpers.makeMultiIconInput([
