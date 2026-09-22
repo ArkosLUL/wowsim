@@ -34,7 +34,8 @@ Other differences:
 - Holy gets the level-based resist vs creatures. The Classic sim read Strength as its resistance stat.
 - The pets' flat +1.8% crit (hunter pet, fire elemental, spirit wolves) is Classic-only.
 - The partial block is rolled in `CalculateSpellDamageTaken`: never on a hit check without damage (Sunder
-  Armor), and against a player only with a shield, at their sheet block chance.
+  Armor) or for an ALWAYS_HIT or NO_ACTIVE_DEFENSE spell (`Unit::isSpellBlocked`), and against a player only
+  with a shield, at their sheet block chance.
 - `SPELL_ATTR3_COMPLETELY_BLOCKED` without direct damage blocks inside the yellow table, as
   `SPELL_MISS_BLOCK`, which stops the spell.
 - Chill of the Throne (aura 49) is -20% dodge on the player, not the boss.
@@ -70,6 +71,10 @@ class by simval.
 - **Master Poisoner** (`SPELL_AURA_MOD_CRIT_CHANCE_FOR_CASTER`) raises only its rogue's crit against a
   poisoned target, so the sim gives it to that rogue as a buff, not to the raid as a debuff.
 - **Binary spells** follow the spelldump. Mind Flay isn't binary; Steady Shot and Expose Armor are.
+- **Damage mods:** percent `SPELLMOD_DAMAGE` and `SPELLMOD_DOT` mods from talents, glyphs and set pieces
+  multiply (`Player::ApplySpellMod`); only `sim/paladin` does so far (`spellModDamage`). A holy spell dealing
+  weapon damage (seal procs, judgements) skips physical percent mods such as Two-Handed Weapon
+  Specialization: `Spell::EffectWeaponDmg` and `Unit::MeleeDamageBonusDone` match auras by school.
 - **Armor debuffs:** Sunder ×5 (debuff 58567, not ability 47467) and Expose Armor don't stack. Faerie
   Fire multiplies.
 - **Timing and procs** (the rest is under [Spell data and timing](#spell-data-and-timing)):
@@ -106,8 +111,7 @@ spell is only as right as its id.
 
 - **Flags** take the server's value for Binary, NoActiveDefense, CompletelyBlocked and Channeled, and
   only gain AlwaysHit, the ATTR7 no-dodge and no-parry bits, and IgnoreResists (ATTR4_NO_CAST_LOG, on
-  non-physical spells). The yellow roll doesn't read AlwaysHit, so an always-hit spell needs an outcome
-  that skips the table (Slam's damage, 50783, uses `OutcomeMeleeSpecialCritOnly`).
+  non-physical spells). The yellow roll skips its whole table for AlwaysHit, crit aside.
 - **Timing** applies to what the spell declares: cast time against `CastMs` (which already carries the
   ranged slot's +500 ms), GCD against `GCDMs` in category 133, and the cooldowns. A declared value
   inside what passive talents and glyphs can reach agrees; anything else is a conflict, and an

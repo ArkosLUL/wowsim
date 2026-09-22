@@ -79,13 +79,10 @@ rides along, as it only needs the live server. BIS-alt5 joined mid-wave, also th
 
 ## Current wave
 
-- Wave: H3, running.
-- Base SHA: `078ed402b`, the wave's setup commit on top of `bf0383241`.
-- Workflow runId: `wf_ff31a9cb-dfe`, transcript dir
-  `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\wf_ff31a9cb-dfe`.
-- Args and results: `waveH3-args.json` and `waveH3-results.json` in `G:\DevStuff\GitHub\.wave-loop`.
-- BIS-alt5 runs apart as `wf_50d769ad-706` (base `c1a4650b9`, transcript dir next to the first run's, args
-  `waveH3b-args.json`), and PAR-P7-RET-RR's repair round as `wf_769ddd4d-534`.
+- Wave: I, not started. Wave H3 (base `078ed402b`) landed on `master`.
+- Base SHA: set at wave start.
+- Workflow runId: none. Wave H3 ran as `wf_ff31a9cb-dfe`, `wf_50d769ad-706` (BIS-alt5) and `wf_769ddd4d-534`
+  (PAR-P7-RET-RR's repair round).
 
 ## BiS baseline
 
@@ -102,6 +99,7 @@ Reckoning that way), but J isn't DPS: see below.
 | G | 8808.8, +258 / +258 | 10546.6, +833 / +865 | 5042.7, +15 / +9 | 13141.4, +117 / +143 | -91924.9, +5493 / +5984 | -1326.7, +1408 / +1460 |
 | H2 | 8808.8, +258 / +258 | 10546.6, +833 / +865 | 5059.8, +31 / +29 | 13141.4, +117 / +97 | -92086.3, +5511 / +5999 | -1326.7, +1408 / +1460 |
 | H | 8744.8, +259 / +326 | 10686.4, +616 / +748 | 5059.8, +31 / +29 | 12929.9, +103 / +184 | -91847.8, +5451 / +5891 | -1326.7, +1408 / +1460 |
+| H3 | 8865.0, +282 / +278 | 10686.4, +616 / +942 | 5059.8, +31 / +29 | 12956.4, +231 / +227 | -91848.5, +5451 / +5891 | -1326.7, +1408 / +1460 |
 
 Quick / Normal. Ret P4 ran at Quick only in wave D, after the glyph fix; its wave C numbers
 (12821.9, +54 / +73) came from a seed that wore the glyph. The two tanks arrive with
@@ -115,11 +113,13 @@ decorrelates the paired sims, against 0.04% for Combat Rogue. F2's Fury drop (-1
 the preset's DPS rose on all 7 seeds tried, and at 100k iterations the two builds agree. Feral Tank's
 +0.7% is real, from P7-0c's off-hand start on Algalon. Wave E's open gaps, Fury +4.1% and Ret flat
 against goldens +0.1% and +8.9%, fit the same reading but weren't traced. Judge the deltas, and a
-`J_preset` move against the slow line's `dps_preset`. From H: Fury 8142.4, Combat Rogue 9945.9, Fire
-Mage 11746.7, Ret 16434.7, Prot Pal 295.3, Feral Tank 4159.7. Normal's pick is path-dependent: H2 moved
+`J_preset` move against the slow line's `dps_preset`. From H3: Fury 8197.8, Combat Rogue 9945.9, Fire
+Mage 11746.7, Ret 16143.7, Prot Pal 294.9, Feral Tank 4159.7. Normal's pick is path-dependent: H2 moved
 Ret's golden by 0.007% and its Normal gain fell from +143 to +97. In H the DPS presets rose with their
 goldens (Fury +9.6%, Combat Rogue +9.1%, Ret +7.0%); Combat Rogue's Quick gain fell from +720 to +574 DPS
 while Normal held. Prot Pal's preset lost 11% DPS against TestProtection's -0.6%, not traced (PAR-P7-TANK).
+In H3 Ret's preset lost 1.8% with its goldens (-1.4%) and its gains rose to +231 / +227, as its items were
+revalued; Combat Rogue's Normal gain rose to +942 from a 4th or 5th runner-up (BIS-alt5).
 
 ## Sim throughput
 
@@ -133,11 +133,14 @@ From G the benches run their suites' default players with rotations, at 1 and 10
 | G | 1.538 / 130.8 | 0.491 / 33.6 | 0.610 / 41.7 | 0.327 / 15.1 | 4.604 / 311.4 |
 | H2 | 1.561 / 129.4 | 0.515 / 35.0 | 0.613 / 43.2 | 0.343 / 16.1 | 4.755 / 313.9 |
 | H | 1.451 / 130.8 | 0.477 / 32.4 | 0.585 / 40.8 | 0.327 / 15.1 | 4.568 / 300.2 |
+| H3 | 1.490 / 132.8 | 0.493 / 33.6 | 0.602 / 42.9 | 0.332 / 15.4 | 4.586 / 304.2 |
 
 H2 ran with the live worldserver using half a core, which moved whole runs by up to 2×
 and cost a few percent here (Ret, which H2 barely touched, +4%). An interleaved A/B against the base
 puts H2's own cost at 5-7% for Hunter and Elemental at 100 iterations, the raid flat. H ran with the
-worldserver at a sixth of a core, and every case came in at or under G's.
+worldserver at a sixth of a core, and every case came in at or under G's. H3, same load, came in 0.4-5% over
+H: Combat Rogue, whose hot path H3 barely touched, +1.5-2.7%, so most of it is noise; Hunter at 100
+iterations +5%, likely the pending action each Piercing Shots proc now queues.
 
 E to F2 ran the old requests: one iteration, and no rotation for Ret, Hunter and Elemental.
 

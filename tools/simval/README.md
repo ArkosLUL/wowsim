@@ -57,9 +57,12 @@ the DPS gap against the plan's ±2% and exits non-zero outside it.
 Interval histograms bucket at 100 ms, the server's map update. They show the lattice only roughly:
 Chronicle timestamps the packet send, which adds a few ms of jitter.
 
-Chronicle gaps to keep in mind: `SWING_DAMAGE` carries no main/off hand flag, so a dual wielder's two
-hands interleave in one swing timeline; an aura refresh re-emits `SPELL_AURA_APPLIED`, so applications
-count refreshes; and there are no stack counts.
+Chronicle gaps to keep in mind:
+- `SWING_DAMAGE` carries no main/off hand flag, so a dual wielder's two hands interleave in one swing timeline.
+- An aura refresh re-emits `SPELL_AURA_APPLIED`, so applications count refreshes, and there are no stack counts.
+- A spell's dodge or parry comes only as `CHRONICLE_SPELL_TARGET_RESULT`: `SPELL_MISSED` covers only immunity
+  and damage shields. `chronicle` counts both.
+- A persistent area aura's missed tick isn't logged, only a longer gap between its ticks (Consecration).
 
 ## rrsim
 
