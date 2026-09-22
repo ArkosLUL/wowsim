@@ -186,8 +186,9 @@ crashed before F2, so its column starts there.
 | wave H2 cross-review | | `3b9a3c6e6`, `ec0164745` | fixed the user's DK reforge report: the item cache kept items a stale page sent without server stats, and the DK registered its runeforges and sigils late (mispriced first optimize, a possible crash); its claim that the permanent ghoul lacks 51996 was wrong (a Ghoul family passive) and was reverted |
 | PAR-P7-ROG | merged | `bfe3ec2f3` | 3 rogue goldens promoted in `1e1cbdc6a`; e2e `55764db` |
 | PAR-P7-WAR | merged | `3b51edc5b` | 3 warrior goldens promoted in `3f29eb79a`; e2e `3f59b6b`; serverdata regenerated for Slam's damage spell |
-| PAR-P7-RET | merged | `74a9a8c60` | 2 paladin goldens promoted in `be8b078a0`; e2e and the recorded run's talent and tier steps `da7028e`; its deviation rows renumbered 52-53 at merge |
+| PAR-P7-RET | merged | `74a9a8c60` | 2 paladin goldens promoted in `be8b078a0`; e2e and the recorded run's talent and tier steps `da7028e`; its two deviation rows were module behaviour, dropped by the cross-review |
 | BIS-raid-contrib | merged | `f6da0097a` | goldens unchanged |
+| wave H cross-review | | `2ae1e1906` | 5 bugs: Slam's split left Recklessness and the T8 2pc on the cast, Deadly Poison kept its first haste, Exorcism was limited to undead and demons, the Ret capture's talent reset failed; Assassination +2.2% (goldens `6ca712f26`); module `39e086e`; spell audit refreshed in `ba4252567` |
 
 Later WIs are added as their wave starts.
 

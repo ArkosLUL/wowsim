@@ -595,6 +595,7 @@ checks each one and the web server has no `with_db`.
   (`NewRaidEvaluator` swaps it in): a solo DPS raider's loadout view shows the whole raid's DPS before and
   after, the same figures the `raid_dps_delta` line already reports as a delta. Left as is: `LoadoutView`
   is shared with the individual tab, and the raid-DPS line already disambiguates the number.
+- `acraid` exports the quiver as yes or no, so an imported hunter always gets the 15% one.
 - Manual check on a real 25-player roster (two Rogues, P1, Quick): stage 2 measured 340-415 s per raider,
   16-20x the 2-player smoke raid the engine stage measured, which makes the batch estimates in
   `bis-optimizer.INVESTIGATION.md#performance` stale by over an order of magnitude; noted there.

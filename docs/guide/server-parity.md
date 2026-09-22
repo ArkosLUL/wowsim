@@ -79,7 +79,7 @@ class by simval.
   - A DoT refresh resets the tick timer only when StackAmount < 2.
   - Periodic ticks crit only with aura 286.
   - A munched periodic (Deep Wounds, Ignite, Righteous Vengeance, Piercing Shots) applies on the next 400 ms
-    step of the world clock, up to 400 ms late (`CalculateQueueTime`, `MunchingBlizzlike.Enabled`). The sim
+    step of the caster's event clock, up to 400 ms late (`CalculateQueueTime`, `MunchingBlizzlike.Enabled`). The sim
     delays only Deep Wounds, a flat 400 ms.
 - **Pets:** pet hit is floored to a whole percent. Pet scaling comes from the server's scripts.
   - A pet crits 5% plus crit auras, none from agility; the sim does this for the DK's summons but the
