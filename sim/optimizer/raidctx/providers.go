@@ -283,12 +283,6 @@ var providers = []provider{
 		apply:  func(e *effects) { e.debuffs.HeartOfTheCrusader = true },
 	},
 	{
-		ui:     "DPS Debuffs/Crit/Master Poisoner",
-		class:  proto.Class_ClassRogue,
-		talent: "master_poisoner",
-		apply:  func(e *effects) { e.debuffs.MasterPoisoner = true },
-	},
-	{
 		ui:     "DPS Debuffs/Spell Crit/Improved Shadow Bolt",
 		class:  proto.Class_ClassWarlock,
 		talent: "improved_shadow_bolt",

@@ -10,6 +10,13 @@ import (
 const RuptureEnergyCost = 25.0
 const RuptureSpellID = 48672
 
+// ruptureAddsTicks is mod-spell-tweaks' spell_tweaks_rupture_haste: with Weapon Expertise, the
+// rogue's melee haste shortens Rupture's tick interval while its duration stays fixed, so it fits
+// more ticks.
+func (rogue *Rogue) ruptureAddsTicks() bool {
+	return rogue.Talents.WeaponExpertise > 0 && rogue.Server().SpellTweaks.RuptureWeaponExpertise
+}
+
 func (rogue *Rogue) registerRupture() {
 	glyphTicks := core.TernaryInt32(rogue.HasMajorGlyph(proto.RogueMajorGlyph_GlyphOfRupture), 2, 0)
 
@@ -52,8 +59,13 @@ func (rogue *Rogue) registerRupture() {
 				Label: "Rupture",
 				Tag:   RogueBleedTag,
 			},
-			NumberOfTicks: 0, // Set dynamically
-			TickLength:    time.Second * 2,
+			NumberOfTicks:       0, // Set dynamically
+			TickLength:          time.Second * 2,
+			AffectedByCastSpeed: rogue.ruptureAddsTicks(),
+			TickHaste:           core.MeleeHasteAddsTicks,
+			// Rupture always crits (AuraEffect::CalcPeriodicCritChance's SPELLFAMILY_ROGUE case, family
+			// flag 0x100000), unlike every other rogue dot.
+			TicksCanCrit: true,
 
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
 				dot.SnapshotBaseDamage = rogue.RuptureDamage(rogue.ComboPoints())
