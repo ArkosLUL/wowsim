@@ -600,6 +600,13 @@ checks each one and the web server has no `with_db`.
   16-20x the 2-player smoke raid the engine stage measured, which makes the batch estimates in
   `bis-optimizer.INVESTIGATION.md#performance` stale by over an order of magnitude; noted there.
 
+### BIS-alt5 (wave H3)
+
+The user's call (2026-09-22): 5 alternatives per slot instead of 3, for the BiS Tooltip addon and in the
+optimizer tab and raid batch too. The search's polish still forces in 3 runners-up, so its picks don't
+move; only the neighborhood sims and reports 5. **Owns:** `search.go`'s `runnersUp` and its uses,
+`neighborhood.go`, the tests asserting the count, and the comment on `OptimizerResult.alternatives`.
+
 ### BIS-e2e-perf (wave J)
 
 - Calibration: full raid vs the derived context, with a warning past ±3%. Expected gaps: derived contexts

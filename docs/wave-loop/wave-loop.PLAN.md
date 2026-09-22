@@ -52,7 +52,7 @@ G = changes goldens. FS = runs all 37 suites.
 | G | PAR-P7-DK (G) · PAR-P7-HUN (G) · BIS-batch-ui · PAR-PERF-2 (G) | ✔ |
 | H2 | PAR-P7-0d (G, FS) | ✔ |
 | H | PAR-P7-ROG · PAR-P7-WAR · PAR-P7-RET (G) · BIS-raid-contrib | ✔ |
-| H3 | PAR-P7-0e (G, FS) · PAR-P7-RET-RR | ✔ |
+| H3 | PAR-P7-0e (G, FS) · PAR-P7-RET-RR · BIS-alt5 | ✔ |
 | I | PAR-P7-SHA · PAR-P7-DRU · PAR-P7-MAG · PAR-P7-WLK (G) | ✔ |
 | J | PAR-P7-PRI (G) · PAR-P7-TANK (G) · BIS-e2e-perf · AC-3 | ✔ |
 | K | BIS-presets · PAR-P8 (G, FS) · BIS-tank-boss | ✔ |
@@ -66,7 +66,7 @@ eleven class items on top and a profile can no longer say what cost what.
 H2 is inserted the same way: PAR-P7-0d's core cast, crit and pet fixes have to land before the caster
 wave I, and H is full. The user ran it before H, so H's melee items build on its swing fixes. H3 is the
 user's call too (2026-09-22): wave I's Mage item needs PAR-P7-0e's delay helper for Ignite. PAR-P7-RET-RR
-rides along, as it only needs the live server.
+rides along, as it only needs the live server. BIS-alt5 joined mid-wave, also the user's call.
 
 **Where the specs are:**
 
@@ -84,6 +84,8 @@ rides along, as it only needs the live server.
 - Workflow runId: `wf_ff31a9cb-dfe`, transcript dir
   `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\wf_ff31a9cb-dfe`.
 - Args and results: `waveH3-args.json` and `waveH3-results.json` in `G:\DevStuff\GitHub\.wave-loop`.
+- BIS-alt5 runs apart as `wf_50d769ad-706` (base `c1a4650b9`, transcript dir next to the first run's, args
+  `waveH3b-args.json`).
 
 ## BiS baseline
 
@@ -200,6 +202,7 @@ crashed before F2, so its column starts there.
 
 | PAR-P7-0e | running | | stages: outcome, delay |
 | PAR-P7-RET-RR | running | | |
+| BIS-alt5 | running | | |
 
 Later WIs are added as their wave starts.
 
