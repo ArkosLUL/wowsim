@@ -73,6 +73,7 @@ The live server: where it runs, how to reach it, what's installed. For table and
 | mod-playerbots | bots fill the raid; strategies in `acore_playerbots.playerbots_db_store` | none |
 | mod-chronicle | combat logs, inside instances only. The server deletes its copy after upload, so download from the app API | recorded runs |
 | mod-sim-validation | ours, and its own git repo. `.simval` GM commands, test dummies 999000–999003 (mod-dungeon-scale's `DisabledID`, so never scaled), output in `[ac]/env/dist/logs/simval/`. `Enable = 0` by default; `configurationOverrides/SimValidation.env` turns it on live. Every `.simval` command refuses while it's off | validation ([testing.md](testing.md#against-the-server)) |
+| mod-bis-tooltip | ours, and its own git repo. Serves the BiS dataset in `acore_world.bistooltip_*` to the BisTooltipAC addon over addon whispers; `.bistooltip` commands. Wire format, config and tests: its `README.md` | nothing; it ships what `acbis` exports ([acbis README](../../tools/database/acbis/README.md)) |
 | mod-npc-enchanter | NPC 601015 applies nearly every WotLK enchant free, at any tier. Profession enchants check skill == 450; Hyperspeed Accelerators checks Engineering == 400, so a 450 engineer can't buy it there | enchants count as available in every phase |
 
 The other installed modules (transmog, token-turnin, mount-scaling, …) only touch a few items.

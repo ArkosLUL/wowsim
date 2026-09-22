@@ -134,3 +134,22 @@ _Avoid_: item list
 **Raid contribution**:
 A raider's effect on the raid's total DPS: their own damage plus what they give others.
 _Avoid_: utility, raid value
+
+### BiS tooltip
+
+**Subject**:
+Who a BiS block is for: a roster raider, keyed by character GUID, or one of the addon's class/specs.
+_Avoid_: character (a subject can be a spec)
+
+**Block**:
+One subject's BiS in one content phase: the unit the addon asks for, checksums and caches, so a bad one
+costs only itself.
+
+**Dataset**:
+One acbis export: the subjects and blocks the server serves, with the sim commit, catalog date, objective
+and composition fingerprint they came from. Versioned by a hash of its contents, so an unchanged
+re-export starts no sync.
+
+**Composition fingerprint**:
+A hash of the roster's makeup — class and main talent tree per raider, healers included. The addon
+recomputes it from the live raid and warns when the group no longer matches what the BiS was optimized for.

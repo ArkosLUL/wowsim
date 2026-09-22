@@ -122,9 +122,15 @@ cost. BIS-e2e-perf still owes the rest:
 | Raid contribution, one raider and phase, 2-player smoke raid, Quick | 23 s |
 | Raid contribution, one raider and phase, 2-player smoke raid, Normal | 3 min 22 s |
 | Raid contribution, one raider and phase, real 25-player roster, Quick | 340–415 s |
-| Batch, Quick | 30–45 min |
-| Batch, Normal | 6–8 h |
+| Batch stage 1, one raider and phase, Quick | 7–54 s, the slowest all with another container up |
+| Batch stage 2, one raider and phase, Quick | 486–570 s |
+| Batch stage 1, one raider and phase, Normal | 139 s (Prot Paladin), 347 s (Unholy DK) |
+| Batch, both stages, 21 non-healers × 5 phases, Quick | ~15 h, extrapolated |
 
-The 25-player figure makes the batch estimate above stale: at ~400 s per DPS raider's stage 2, a roster
-with 19 DPS raiders takes over 2 hours per phase at Quick, not 30–45 minutes total. BIS-e2e-perf's
-full-roster batch measurement should replace both batch rows.
+The batch rows come from partial runs of the BiS tooltip effort's batch driver
+(`tools/database/acbis/driver/`) at sim commit `b9fc6c703039`, over the live 25-raider roster whose grid
+holds 21 non-healers (19 DPS, 2 tanks). None completed a batch: the widest covered 9 of one phase's 21
+stage 1 jobs, and the rest sample three phases. The total extrapolates the per-job rows over 21
+non-healers × 5 phases for stage 1 (~1–1.5 h) and 19 DPS × 5 for stage 2 (~14 h). Stage 2 ran above the
+340–415 s the Combat Rogue pair measured. BIS-e2e-perf still owes a measured full-roster batch; Normal
+has only the two stage 1 samples.

@@ -131,63 +131,28 @@ A **subject** is either a roster raider or a class/spec. A **block** is one (sub
 
 ### Wire format (frozen)
 
-Every message is `BIST\t<op>~<field>~...`, at most 255 bytes including `BIST\t`. `acbis`'s
-`bisdata_wire.go` is the reference for the payload, BLK framing, checksum and fingerprint; the module
-and the addon must match it.
+The format itself — the message table, subject entries, block ids, the checksum, the fingerprint, the
+version fields and the block payload grammar — lives in the module's
+[README](G:/DevStuff/GitHub/azerothcore-wotlk-pb/modules/mod-bis-tooltip/README.md), which the Go
+codec, the module and the addon's decoder all implement. Why it looks the way it does:
 
-| Op | Dir | Fields |
-|---|---|---|
-| `HELLO` | C→S | protocol version (1), addon build (integer), cached dataset version (empty for none) |
-| `META` | S→C | dataset version, sim commit, catalog date, objective, fingerprint, viewer tier (mod-individual-progression's, 0 for none), subject count, block count |
-| `SUBJ` | S→C | dataset version, then subject entries joined with `;` |
-| `WANT` | C→S | dataset version, block ids joined with `,`, chunked to fit |
-| `BLK` | S→C | dataset version, block id, `<seq>/<total>` (seq from 1), payload chunk |
-| `DONE` | S→C | dataset version, block id, checksum (`-` for no such block). `DONE~<version>~*`, with no checksum, closes a WANT |
-| `ERR` | S→C | code (`protocol`, `disabled` also for no dataset, `denied`), message |
-| `NOTE` | S→C | message, e.g. the update nudge |
-
-- **Subject entry:** `<id>,<kind>,<classId>,<specName>,<phases>[,<raidIndex>,<guid>,<name>]`. Kind 0 is
-  a roster raider, 1 a spec; the last three fields are roster-only. `phases` lists the content phases
-  that have a block, e.g. `1245`. Class ids are AzerothCore's (1 warrior .. 11 druid).
-- **Block id** = subject id × 10 + content phase.
-- **Checksum:** Adler-32 of the payload as 8 lowercase hex digits (`a=1, b=0`; per byte
-  `a=(a+byte)%65521, b=(b+a)%65521`; `b*65536+a`). `"Wikipedia"` → `11e60398`.
-- **Fingerprint:** the checksum of `<classId>:<tree>` per raider, sorted byte-wise (Lua 5.1's `<` follows the
-  locale, so the addon compares bytes), joined with `,`;
-  tree is the inspected talent tab with the most points (first on a tie), minus 1.
-- **Dataset version:** 8 hex digits of a SHA-256 over everything the addon caches, excluding the export
-  time, so re-exporting unchanged results doesn't trigger a sync.
-- **Sim commit:** 12 hex digits plus any suffix such as `-dirty`.
-
-Block payload: the filled slots in slot order, joined with `;`. Each slot:
-
-```
-0:51227,50712,50713,51866(e59954,g41398,g40111,r31-37)+142
-^ ^                       ^      ^      ^      ^       ^
-| up to 6 ranked item ids |      gems in socket order  rank 1's delta over rank 2, may be "+-3"
-proto ItemSlot 0-16       enchant spell        reforge, stat 31 -> 37
-```
-
-Rings and trinkets are separate slots (10/11, 12/13), each with its own ranks. Enhancements are rank
-1's only, in the order enchant, gems, reforge, each optional; so is the delta, which needs a rank 2.
-Six ranks per slot: the optimizer's best plus up to 5 `OptimizerSlotAlternative`s — matching the source
-exactly, so there's no truncation policy to regret. acbis warns about any runner-up past rank 6 and
-leaves it out. Gems and enchants reuse the addon's `enhs` icon
-renderer; the reforge becomes a plain text line. Only the rank-1 delta travels, so the tooltip can say
-what the slot is worth over its runner-up; full per-item deltas wait until wave H, because pre-H
-deltas are own-metrics and would mislead.
-
-**Sizing,** measured on a fury P1 result extended to 5 alternatives per slot (17 filled slots): ~926 B
-and 5 frames per block. 25 raiders × 5 phases = 125 roster blocks, up to 30 non-healer addon specs × 5
-= 150 spec blocks: ~275 blocks, ~255 KB. A cold sync fetches them all: ≈ 1,375 frames at 10 per
-`SendIntervalMs` (100 ms), **~17 s** from HELLO in the addon harness's model of the module; healers
-have no blocks, so less in practice.
-
-**No compression in v1.** Plain decimal stays readable on the wire, which makes bugs in a
-two-language codec far cheaper to find, and a ~17 s sync once per dataset change isn't worth buying
-complexity to fix. Two levers if the measured number annoys: base-36 item ids (~20% off) or raw
-deflate with LibDeflate client-side (~55% off, at the cost of a printable-encoding layer and a second
-way for the codecs to disagree).
+- **Six ranks per slot:** the optimizer's best plus up to 5 `OptimizerSlotAlternative`s — matching the
+  source exactly, so there's no truncation policy to regret. acbis warns about any runner-up past rank
+  6 and leaves it out.
+- **Only rank 1's delta travels,** so the tooltip can say what the slot is worth over its runner-up.
+  Full per-item deltas wait until wave H, because pre-H deltas are own-metrics and would mislead.
+- **Only rank 1 carries enhancements.** Gems and enchants reuse the addon's `enhs` icon renderer; the
+  reforge becomes a plain text line.
+- **Sizing,** measured on a fury P1 result extended to 5 alternatives per slot (17 filled slots): ~926 B
+  and 5 frames per block. 25 raiders × 5 phases = 125 roster blocks, up to 30 non-healer addon specs × 5
+  = 150 spec blocks: ~275 blocks, ~255 KB. A cold sync fetches them all: ≈ 1,375 frames at 10 per
+  `SendIntervalMs` (100 ms), **~17 s** from HELLO in the addon harness's model of the module; healers
+  have no blocks, so less in practice.
+- **No compression in v1.** Plain decimal stays readable on the wire, which makes bugs in a
+  two-language codec far cheaper to find, and a ~17 s sync once per dataset change isn't worth buying
+  complexity to fix. Two levers if the measured number annoys: base-36 item ids (~20% off) or raw
+  deflate with LibDeflate client-side (~55% off, at the cost of a printable-encoding layer and a second
+  way for the codecs to disagree).
 
 ### Protocol behaviour
 
@@ -433,16 +398,48 @@ Known limits:
 
 ### Phase 6 — Real data, zip, docs
 
-- Run the optimizer for each subject and phase via the driver, export, and import the `.sql`. **The
-  import needs the user's OK** — the live DB is otherwise SELECT-only.
-- A small script builds `BisTooltipAC-<version>.zip` for hand-distribution. Set `UpdateMessage` in the
-  module config (e.g. "ask Arkos for the latest zip"), shown once when an addon reports below
-  `MinAddonVersion`. **Only refuse a client on a genuine wire-format break** — otherwise keep serving
-  old addons rather than bricking a friend mid-raid, since there's no pull-based update path.
-- Docs, in the same change as the work, per `CLAUDE.md`:
-  - `docs/guide/azerothcore-server.md`: `mod-bis-tooltip` in the modules table.
-  - `CONTEXT.md`: *dataset*, *block*, *subject*, *composition fingerprint*.
-  - The module's `README.md`: the wire table, promoted from this PLAN.
+**Status:** the tooling is built; the **data run is postponed** — the user's call, 2026-09-22, until the
+optimizer's performance work lands. The live dataset stays Phase 1's `b235db6c` placeholder.
+
+- **Per-spec lists are dropped** (the user's call): the dataset carries roster raiders only, and every
+  spec keeps the shipped Wowhead lists.
+- **The driver**, `tools/database/acbis/driver/` (`driver.py`, `page.js`), drives the raid sim's BiS
+  Batch tab in headless Chrome through `tools/uicheck/cdp.py`: two passes over one batch, stage 1 (own
+  metrics, every non-healer) then stage 2 (raid DPS, the DPS raiders) later, each exporting an
+  `OptimizerBatchExport` for `acbis -batch`. How to run it:
+  [driver README](../../tools/database/acbis/driver/README.md).
+- **`make-zip.sh`** in the addon repo builds `BisTooltipAC-<version>.zip` from HEAD, for handing out.
+- **The live conf** `[ac]/env/dist/etc/modules/mod_bis_tooltip.conf` sets `BisTooltip.MinAddonBuild = 1`
+  and an `UpdateMessage`. It takes effect on `.reload config` or a restart, **the user's call, which
+  hasn't happened**. `[ac]` gitignores `env/dist/`, so that file has no backup in git.
+- **Only refuse a client on a genuine wire-format break** — otherwise keep serving old addons rather
+  than bricking a friend mid-raid, since there's no pull-based update path. `MinAddonBuild` only nudges.
+
+**Measured** at Quick on this 16-thread machine: nine full-grid stage 1 jobs ran 7–26 s on the server, a
+stage 2 job about 9 min. The grid holds 21 non-healers (19 DPS, 2 tanks) of the 25, so pass 1 is roughly
+an hour and pass 2 roughly 14 h. At Normal a stage 1 job measured 139 s (Prot Paladin) to 347 s (DK).
+
+- **Quick picks aren't stable:** one raider and phase run twice differed in 7 of its 17 slots, since the
+  UI seeds each run randomly.
+- **Storage:** a full two-stage batch sits near 85% of Chrome's ~5.24M-char localStorage quota for the
+  page. Past it the exports stay complete; only a reload re-runs the jobs since the last store.
+- **For the optimizer's performance work:** at Quick, 9 of 21 raiders settled in under half a minute
+  each, then a Hunter (Trueshot) hadn't settled after 27 minutes, with the sim server on about 4 of 16
+  threads.
+
+Changed from the plan: no spec subjects are left to run, and the "small script" grew into `driver/` with
+its own README.
+
+**Verified:** killing Chrome mid-job and taking the sim server away both resume the batch and finish the
+pass; `--retry-failed` reruns a failed job where a plain rerun skips it; past the quota the pass still
+exports everything; a stage 2 pass over a finished stage 1 exports both stages. `make-zip.sh` passes 43
+checks in a throwaway clone: the refusals (uncommitted changes, a toc/`ADDON_BUILD` mismatch, an out dir
+inside the repo or in `Interface/AddOns`) and a zip of 81 files that leaves out `test/`, the script and
+every `.git*`, keeps the committed bytes under `core.autocrlf=true`, and holds everything the toc loads.
+
+**Still open:** the run; the import, which **needs the user's OK** (the live DB is otherwise
+SELECT-only); and `docs/guide/azerothcore-server.md` still listing mod-bis-tooltip as running without a
+`.conf`, true only until that `.reload config`.
 
 ## Verification summary
 

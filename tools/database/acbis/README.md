@@ -6,7 +6,8 @@ character guids.
 
 This is the CLI. The logic lives in `tools/database/azerothcore/`:
 - `bisdata_wire.go`: block payload, BLK framing, checksum and composition fingerprint, shared with the
-  module and the addon
+  module and the addon. The format, and what the dataset version and the fingerprint hash, live in
+  `[ac]/modules/mod-bis-tooltip/README.md`
 - `bisdata_dataset.go`: subjects, blocks and the dataset version
 - `bisdata_slots.go`: the addon's class, spec, slot and phase names
 - `bisdata_sql.go`, `bisdata_lua.go`: the two outputs
@@ -70,8 +71,6 @@ MSYS_NO_PATHCONV=1 docker exec -i ac-database mysql -uroot -ppassword acore_worl
 
 - The import creates `bistooltip_dataset`, `bistooltip_subject` and `bistooltip_block` if they're
   missing, then swaps the whole dataset in one transaction.
-- The dataset version hashes everything the addon caches, but not the export time, so exporting the same
-  results again doesn't make clients sync again.
-- Only raiders with results become subjects. The fingerprint covers the whole roster, healers included.
+- Only raiders with results become subjects; the fingerprint still covers the whole roster.
 - A raider's spec comes from their main talent tree, so builds within a tree (Fury-Prot) read as the
   tree's spec. The main tank flag picks Blood tank and Feral tank.

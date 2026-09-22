@@ -52,6 +52,8 @@ Before starting, read every doc whose trigger matches the task.
 | [acraid README](tools/database/acraid/README.md) | exporting the raid roster |
 | [accatalog README](tools/database/accatalog/README.md) | regenerating the server item catalog, or changing its tier rules |
 | [acbis README](tools/database/acbis/README.md) | exporting the BiS tooltip dataset |
+| [acbis driver README](tools/database/acbis/driver/README.md) | running the optimizer batch the dataset is built from |
+| [mod-bis-tooltip README](../azerothcore-wotlk-pb/modules/mod-bis-tooltip/README.md) | changing the BiS tooltip wire format, or the module's config, commands or tests |
 | [uicheck README](tools/uicheck/README.md) | checking a UI change in a real browser |
 
 ## Keeping the docs live
