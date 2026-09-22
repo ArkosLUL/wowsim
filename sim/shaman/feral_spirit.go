@@ -40,10 +40,6 @@ func (shaman *Shaman) registerFeralSpirit() {
 
 			// Add a dummy aura to show in metrics
 			spiritWolvesActiveAura.Activate(sim)
-
-			// https://github.com/JamminL/wotlk-classic-bugs/issues/280
-			// instant casts (e.g. shocks) usually don't reset a shaman's swing timer
-			shaman.AutoAttacks.StopMeleeUntil(sim, sim.CurrentTime, false)
 		},
 	})
 

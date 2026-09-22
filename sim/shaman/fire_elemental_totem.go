@@ -30,7 +30,7 @@ func (shaman *Shaman) registerFireElementalTotem() {
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
-				GCD: core.GCDDefault,
+				GCD: time.Second,
 			},
 			CD: core.Cooldown{
 				Timer:    shaman.NewTimer(),

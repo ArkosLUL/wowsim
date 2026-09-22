@@ -16,7 +16,9 @@ func (shaman *Shaman) registerLavaBurstSpell() {
 		core.TernaryFloat64(shaman.HasMajorGlyph(proto.ShamanMajorGlyph_GlyphOfLava), 0.1, 0)
 
 	var lvbDotSpell *core.Spell
+	var lvbBonusDotDelay *core.DelayedPeriodicApplier
 	if shaman.HasSetBonus(ItemSetThrallsRegalia, 4) {
+		lvbBonusDotDelay = core.NewDelayedPeriodicApplier(&shaman.Unit)
 		lvbDotSpell = shaman.RegisterSpell(core.SpellConfig{
 			ActionID:    core.ActionID{SpellID: 71824},
 			SpellSchool: core.SpellSchoolFire,
@@ -32,6 +34,8 @@ func (shaman *Shaman) registerLavaBurstSpell() {
 				},
 				TickLength:    time.Second * 2,
 				NumberOfTicks: 3,
+				// mod-spell-tweaks doesn't give this bonus dot aura 286.
+				TicksCanCrit: false,
 
 				OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 					dot.CalcAndDealPeriodicSnapshotDamage(sim, target, dot.OutcomeTick)
@@ -40,7 +44,7 @@ func (shaman *Shaman) registerLavaBurstSpell() {
 
 			ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 				spell.CalcAndDealOutcome(sim, target, spell.OutcomeAlwaysHit)
-				spell.Dot(target).Apply(sim)
+				spell.Dot(target).ApplyOrReset(sim)
 			},
 		})
 	}
@@ -76,9 +80,16 @@ func (shaman *Shaman) registerLavaBurstSpell() {
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 			if lvbDotSpell != nil && result.Landed() {
 				dot := lvbDotSpell.Dot(target)
-				dot.SnapshotBaseDamage = result.Damage * 0.1 / float64(dot.NumberOfTicks)
-				dot.SnapshotAttackerMultiplier = 1
-				dot.Spell.Cast(sim, target)
+
+				newDamage := result.Damage * 0.1
+				outstandingDamage := core.TernaryFloat64(dot.IsActive(), dot.SnapshotBaseDamage*float64(dot.NumberOfTicks-dot.TickCount), 0)
+				totalDamage := outstandingDamage + newDamage
+
+				lvbBonusDotDelay.Apply(sim, target, func(sim *core.Simulation) {
+					dot.SnapshotBaseDamage = totalDamage / float64(dot.NumberOfTicks)
+					dot.SnapshotAttackerMultiplier = 1
+					dot.Spell.Cast(sim, target)
+				})
 			}
 			spell.DealDamage(sim, result)
 		},

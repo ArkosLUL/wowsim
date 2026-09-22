@@ -376,6 +376,15 @@ var spells = []Spell{
 			{Effect: 6, Aura: 72, BasePoints: -21, DieSides: 1, DamageMultiplier: 1, MiscValue: 126, MiscValueB: 1},
 		},
 	},
+	// Flametongue Attack
+	{
+		ID: 10444, Family: 11, FamilyFlags: [3]uint32{0x200000}, SchoolMask: 4, DmgClass: DmgClassMagic,
+		Attributes: [8]uint32{0x40000, 0x88}, AttributesCu: 0x1100,
+		ProcChance: 101,
+		Effects: [3]Effect{
+			{Effect: 2, DieSides: 1, DamageMultiplier: 1},
+		},
+	},
 	// Combustion
 	{
 		ID: 11129, Family: 3, FamilyFlags: [3]uint32{0, 0x4000000, 0x8}, SchoolMask: 4, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagResetsAutoAttack | FlagPositive,
@@ -6865,6 +6874,16 @@ var spells = []Spell{
 			{Effect: 6, Aura: 87, BasePoints: 3, DieSides: 1, DamageMultiplier: 1, MiscValue: 1},
 		},
 	},
+	// Attack (Rank 10)
+	{
+		ID: 58702, Family: 11, FamilyFlags: [3]uint32{0x40000000}, SchoolMask: 4, DmgClass: DmgClassMagic,
+		AttributesCu: 0x1100,
+		CastMs:       2200, BaseCastMs: 2200,
+		ProcChance: 101, Speed: 19,
+		Effects: [3]Effect{
+			{Effect: 2, BasePoints: 89, DieSides: 31, DamageMultiplier: 1, BonusMultiplier: 0.167},
+		},
+	},
 	// Searing Totem (Rank 10)
 	{
 		ID: 58704, Family: 11, FamilyFlags: [3]uint32{0x10}, SchoolMask: 1, Flags: FlagBinary | FlagPositive,
@@ -6883,6 +6902,15 @@ var spells = []Spell{
 		ProcChance: 101, ManaCostPct: 27,
 		Effects: [3]Effect{
 			{Effect: 28, BasePoints: 4, DieSides: 1, DamageMultiplier: 1, MiscValue: 31167, MiscValueB: 63},
+		},
+	},
+	// Magma Totem (Rank 7)
+	{
+		ID: 58735, Family: 11, FamilyFlags: [3]uint32{0x40000004}, SchoolMask: 4, DmgClass: DmgClassMagic,
+		Attributes: [8]uint32{0, 0x80, 0x40000000, 0x2000040}, AttributesCu: 0x1100,
+		ProcChance: 101,
+		Effects: [3]Effect{
+			{Effect: 2, BasePoints: 370, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 0.1},
 		},
 	},
 	// Stoneskin Totem (Rank 10)
@@ -6913,36 +6941,6 @@ var spells = []Spell{
 		ProcChance: 101, ManaCostPct: 4,
 		Effects: [3]Effect{
 			{Effect: 28, BasePoints: 4, DieSides: 1, DamageMultiplier: 1, MiscValue: 31190, MiscValueB: 82},
-		},
-	},
-	// Flametongue Weapon (Rank 9)
-	{
-		ID: 58789, Family: 11, FamilyFlags: [3]uint32{0, 0x800}, SchoolMask: 4, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagHasteGCD | FlagPositive,
-		Attributes: [8]uint32{0x50200, 0x20000, 0x8}, AttributesCu: 0x100000,
-		GCDMs: 1500, GCDCategory: 133,
-		ProcChance: 101, ManaCostPct: 6,
-		Effects: [3]Effect{
-			{Effect: 54, BasePoints: 1799, DieSides: 1, DamageMultiplier: 1, MiscValue: 3780},
-		},
-	},
-	// Flametongue Weapon (Rank 10)
-	{
-		ID: 58790, Family: 11, FamilyFlags: [3]uint32{0, 0x800}, SchoolMask: 4, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagHasteGCD | FlagPositive,
-		Attributes: [8]uint32{0x50200, 0x20000, 0x8}, AttributesCu: 0x100000,
-		GCDMs: 1500, GCDCategory: 133,
-		ProcChance: 101, ManaCostPct: 6,
-		Effects: [3]Effect{
-			{Effect: 54, BasePoints: 1799, DieSides: 1, DamageMultiplier: 1, MiscValue: 3781},
-		},
-	},
-	// Frostbrand Weapon (Rank 9)
-	{
-		ID: 58796, Family: 11, FamilyFlags: [3]uint32{0, 0x800}, SchoolMask: 16, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagHasteGCD | FlagPositive,
-		Attributes: [8]uint32{0x50200, 0x20000, 0x8}, AttributesCu: 0x100000,
-		GCDMs: 1500, GCDCategory: 133,
-		ProcChance: 101, ManaCostPct: 6,
-		Effects: [3]Effect{
-			{Effect: 54, BasePoints: 1799, DieSides: 1, DamageMultiplier: 1, MiscValue: 3784},
 		},
 	},
 	// Frostbrand Attack (Rank 9)
@@ -7912,6 +7910,15 @@ var spells = []Spell{
 		ProcChance: 101,
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 189, BasePoints: 257, DieSides: 1, DamageMultiplier: 1, MiscValue: 1792},
+		},
+	},
+	// Fire Nova (Rank 9)
+	{
+		ID: 61654, Family: 11, FamilyFlags: [3]uint32{0, 0x80040000}, SchoolMask: 4, DmgClass: DmgClassMagic,
+		Attributes: [8]uint32{0x10000, 0x88, 0x40000000, 0x40000000, 0, 0x4000000}, AttributesCu: 0x1100,
+		ProcChance: 100,
+		Effects: [3]Effect{
+			{Effect: 2, BasePoints: 892, DieSides: 105, PointsPerLevel: 4.5, DamageMultiplier: 1, BonusMultiplier: 0.214},
 		},
 	},
 	// Fire Nova (Rank 9)

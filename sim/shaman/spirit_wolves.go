@@ -41,13 +41,23 @@ var spiritWolfBaseStats = stats.Stats{
 	stats.Strength:    331,
 	stats.AttackPower: -20,
 
-	stats.MeleeCrit: 1.1515 * core.CritRatingPerCritChance,
+	// Unit::GetUnitCriticalChance gives every non-player unit a flat 5% base; a scripted aura adds the
+	// agility scaling below on top of it, the wolves keeping it where the DK's and hunter's summons lost it.
+	stats.MeleeCrit: 5 * core.CritRatingPerCritChance,
 }
 
 func (shaman *Shaman) NewSpiritWolf(index int) *SpiritWolf {
 	spiritWolf := &SpiritWolf{
 		Pet:         core.NewPet("Spirit Wolf "+strconv.Itoa(index), &shaman.Character, spiritWolfBaseStats, shaman.makeStatInheritance(), false, false),
 		shamanOwner: shaman,
+	}
+
+	// mod-spell-tweaks' 425792: immune to direct haste and slows, Bloodlust included; its own melee
+	// swing speed tracks the shaman's melee speed instead (Windfury Totem and Improved Icy Talons
+	// already reach the wolves through it, so they'd otherwise double up).
+	if shaman.Server().SpellTweaks.FeralSpiritHaste {
+		spiritWolf.HasteCarrier = true
+		spiritWolf.OwnerHasteSource = func() float64 { return shaman.SwingSpeed() }
 	}
 
 	spiritWolf.EnableAutoAttacks(spiritWolf, core.AutoAttackOptions{
@@ -79,7 +89,7 @@ func (shaman *Shaman) makeStatInheritance() core.PetStatInheritance {
 		return stats.Stats{
 			stats.Stamina:     ownerStats[stats.Stamina] * 0.3,
 			stats.Armor:       ownerStats[stats.Armor] * 0.35,
-			stats.AttackPower: ownerStats[stats.AttackPower] * (core.TernaryFloat64(shaman.HasMajorGlyph(proto.ShamanMajorGlyph_GlyphOfFeralSpirit), 0.61, 0.31)),
+			stats.AttackPower: ownerStats[stats.AttackPower] * (core.TernaryFloat64(shaman.HasMajorGlyph(proto.ShamanMajorGlyph_GlyphOfFeralSpirit), 0.60, 0.30)),
 
 			stats.MeleeHit:  hitRatingFromOwner,
 			stats.Expertise: math.Floor(math.Floor(ownerHitChance)*PetExpertiseScale) * core.ExpertisePerQuarterPercentReduction,

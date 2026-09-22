@@ -67,7 +67,7 @@ var ItemSetSkyshatterHarness = core.NewItemSet(core.ItemSet{
 func init() {
 	core.NewItemEffect(33506, func(agent core.Agent) {
 		shaman := agent.(ShamanAgent).GetShaman()
-		procAura := shaman.NewTemporaryStatsAura("Skycall Totem Proc", core.ActionID{SpellID: 43751}, stats.Stats{stats.SpellHaste: 101}, time.Second*10)
+		procAura := shaman.NewTemporaryStatsAura("Skycall Totem Proc", core.ActionID{SpellID: 43751}, stats.Stats{stats.SpellHaste: 100}, time.Second*10)
 
 		icd := core.Cooldown{
 			Timer:    shaman.NewTimer(),

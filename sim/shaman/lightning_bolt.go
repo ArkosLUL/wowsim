@@ -28,7 +28,9 @@ func (shaman *Shaman) newLightningBoltSpellConfig(isLightningOverload bool) core
 	}
 
 	var lbDotSpell *core.Spell
+	var electrifiedDelay *core.DelayedPeriodicApplier
 	if !isLightningOverload && shaman.HasSetBonus(ItemSetWorldbreakerGarb, 4) {
+		electrifiedDelay = core.NewDelayedPeriodicApplier(&shaman.Unit)
 		lbDotSpell = shaman.RegisterSpell(core.SpellConfig{
 			ActionID:         core.ActionID{SpellID: 64930},
 			SpellSchool:      core.SpellSchoolNature,
@@ -43,6 +45,8 @@ func (shaman *Shaman) newLightningBoltSpellConfig(isLightningOverload bool) core
 				},
 				TickLength:    time.Second * 2,
 				NumberOfTicks: 2,
+				// mod-spell-tweaks doesn't give Electrified aura 286.
+				TicksCanCrit: false,
 
 				OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 					dot.CalcAndDealPeriodicSnapshotDamage(sim, target, dot.OutcomeTick)
@@ -70,10 +74,13 @@ func (shaman *Shaman) newLightningBoltSpellConfig(isLightningOverload bool) core
 
 			newDamage := result.Damage * 0.08
 			outstandingDamage := core.TernaryFloat64(lbDot.IsActive(), lbDot.SnapshotBaseDamage*float64(lbDot.NumberOfTicks-lbDot.TickCount), 0)
+			totalDamage := outstandingDamage + newDamage
 
-			lbDot.SnapshotBaseDamage = (outstandingDamage + newDamage) / float64(lbDot.NumberOfTicks)
-			lbDot.SnapshotAttackerMultiplier = 1
-			lbDotSpell.Cast(sim, target)
+			electrifiedDelay.Apply(sim, target, func(sim *core.Simulation) {
+				lbDot.SnapshotBaseDamage = totalDamage / float64(lbDot.NumberOfTicks)
+				lbDot.SnapshotAttackerMultiplier = 1
+				lbDotSpell.Cast(sim, target)
+			})
 		}
 
 		if canLO && result.Landed() && sim.RandomFloat("LB Lightning Overload") < lightningOverloadChance {

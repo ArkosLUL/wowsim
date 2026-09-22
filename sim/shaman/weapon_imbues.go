@@ -132,16 +132,17 @@ func (shaman *Shaman) RegisterWindfuryImbue(procMask core.ProcMask) {
 	shaman.RegisterOnItemSwapWithImbue(3787, &procMask, aura)
 }
 
+// newFlametongueImbueSpell deals its damage under the id the server uses for it, Flametongue Attack
+// (10444): both ranks of the imbue itself (58789/58790) are binary on the server, but the hit isn't, so
+// it can't share the imbue's own spell.
 func (shaman *Shaman) newFlametongueImbueSpell(weapon *core.Item, isDownranked bool) *core.Spell {
-	spellID := 58790
 	baseDamage := 68.5
 	if isDownranked {
-		spellID = 58789
 		baseDamage = 64
 	}
 
 	return shaman.RegisterSpell(core.SpellConfig{
-		ActionID:    core.ActionID{SpellID: int32(spellID)},
+		ActionID:    core.ActionID{SpellID: 10444},
 		SpellSchool: core.SpellSchoolFire,
 		ProcMask:    core.ProcMaskWeaponProc,
 
@@ -269,9 +270,11 @@ func (shaman *Shaman) FrostbrandDebuffAura(target *core.Unit) *core.Aura {
 	})
 }
 
+// newFrostbrandImbueSpell deals its damage under Frostbrand Attack (58799), the id the server uses for
+// the hit; the imbue itself (58796) is a separate spell.
 func (shaman *Shaman) newFrostbrandImbueSpell() *core.Spell {
 	return shaman.RegisterSpell(core.SpellConfig{
-		ActionID:    core.ActionID{SpellID: 58796},
+		ActionID:    core.ActionID{SpellID: 58799},
 		SpellSchool: core.SpellSchoolFrost,
 		ProcMask:    core.ProcMaskEmpty,
 

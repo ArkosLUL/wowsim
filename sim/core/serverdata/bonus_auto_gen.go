@@ -143,6 +143,8 @@ var bonuses = []Bonus{
 	{SpellID: 58381, Row: 58381, Direct: 0.257},                                          // Mind Flay (Rank 9)
 	{SpellID: 58433, Row: 58433, AP: 0.0837},                                             // Volley (Rank 6)
 	{SpellID: 58611, Row: 58611, Direct: 0.333},                                          // Lava Breath (Rank 6)
+	{SpellID: 58702, Row: 58702, Direct: 0.1667},                                         // Attack (Rank 10)
+	{SpellID: 58735, Row: 58735, Direct: 0.1},                                            // Magma Totem (Rank 7)
 	{SpellID: 58799, Row: 58799, Direct: 0.1},                                            // Frostbrand Attack (Rank 9)
 	{SpellID: 59092, Row: 59092, Direct: 0.96},                                           // Dark Pact (Rank 5)
 	{SpellID: 59164, Row: 59164, Direct: 0.4286},                                         // Haunt (Rank 4)
@@ -153,6 +155,7 @@ var bonuses = []Bonus{
 	{SpellID: 60043, Row: 60043, Direct: 0.571},                                          // Lava Burst (Rank 2)
 	{SpellID: 61198, Row: 61198, Direct: 0.333, Dot: 0.333},                              // Spirit Strike (Rank 6)
 	{SpellID: 61301, Row: 61301, Direct: 0.402, Dot: 0.188},                              // Riptide (Rank 4)
+	{SpellID: 61654, Row: 61654, Direct: 0.214},                                          // Fire Nova (Rank 9)
 	{SpellID: 63672, Row: 63672, APDot: 0.02},                                            // Black Arrow (Rank 6)
 	{SpellID: 64382, Row: 64382, AP: 0.5},                                                // Shattering Throw
 }

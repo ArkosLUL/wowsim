@@ -94,6 +94,8 @@ func (shaman *Shaman) registerFlameShockSpell(shockTimer *core.Timer) {
 		NumberOfTicks:       flameShockBaseNumberOfTicks,
 		TickLength:          time.Second * 3,
 		AffectedByCastSpeed: true,
+		// mod-spell-tweaks doesn't give Flame Shock's tick aura 286, unlike Blood Plague or Rend's.
+		TicksCanCrit: false,
 
 		OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
 			dot.SnapshotBaseDamage = 834/6 + 0.1*dot.Spell.SpellPower()
