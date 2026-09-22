@@ -86,11 +86,10 @@ are the user's call too: they come before J, whose BIS-e2e-perf uses their tools
 
 ## Current wave
 
-- Wave: I, running.
-- Base SHA: `b895e44be`, `master` (the BiS tooltip's five runners-up) merged into the setup commit `c412fb8fc`.
-- Workflow runId: `wf_891dd2c6-596`, transcript dir
-  `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\wf_891dd2c6-596`.
-- Args and results: `waveI-args.json` and `waveI-results.json` in `G:\DevStuff\GitHub\.wave-loop`.
+- Wave: I2, not started. Wave I (base `b895e44be`) landed on `master`.
+- Base SHA: set at wave start.
+- Workflow runId: none. Wave I ran as `wf_891dd2c6-596`, its two stranded live stages as `wf_0f859fcf-466`
+  (args and results `waveI-args.json`, `waveI-results.json`, `waveI-live-args.json`, `waveI-live-results.json` in `G:\DevStuff\GitHub\.wave-loop`).
 
 ## BiS baseline
 
@@ -108,6 +107,7 @@ Reckoning that way), but J isn't DPS: see below.
 | H2 | 8808.8, +258 / +258 | 10546.6, +833 / +865 | 5059.8, +31 / +29 | 13141.4, +117 / +97 | -92086.3, +5511 / +5999 | -1326.7, +1408 / +1460 |
 | H | 8744.8, +259 / +326 | 10686.4, +616 / +748 | 5059.8, +31 / +29 | 12929.9, +103 / +184 | -91847.8, +5451 / +5891 | -1326.7, +1408 / +1460 |
 | H3 | 8865.0, +282 / +278 | 10686.4, +616 / +942 | 5059.8, +31 / +29 | 12956.4, +231 / +227 | -91848.5, +5451 / +5891 | -1326.7, +1408 / +1460 |
+| I | 8842.8, +253 / +304 | 10686.4, +616 / +942 | 5064.5, +43 / +40 | 12956.7, +224 / +256 | -91848.5, +5451 / +5891 | -1324.8, +1405 / +1456 |
 
 Quick / Normal. Ret P4 ran at Quick only in wave D, after the glyph fix; its wave C numbers
 (12821.9, +54 / +73) came from a seed that wore the glyph. The two tanks arrive with
@@ -121,13 +121,15 @@ decorrelates the paired sims, against 0.04% for Combat Rogue. F2's Fury drop (-1
 the preset's DPS rose on all 7 seeds tried, and at 100k iterations the two builds agree. Feral Tank's
 +0.7% is real, from P7-0c's off-hand start on Algalon. Wave E's open gaps, Fury +4.1% and Ret flat
 against goldens +0.1% and +8.9%, fit the same reading but weren't traced. Judge the deltas, and a
-`J_preset` move against the slow line's `dps_preset`. From H3: Fury 8197.8, Combat Rogue 9945.9, Fire
-Mage 11746.7, Ret 16143.7, Prot Pal 294.9, Feral Tank 4159.7. Normal's pick is path-dependent: H2 moved
+`J_preset` move against the slow line's `dps_preset`. From I: Fury 8210.4, Combat Rogue 9945.9, Fire
+Mage 11280.3, Ret 16140.2, Prot Pal 294.9, Feral Tank 4140.9. Normal's pick is path-dependent: H2 moved
 Ret's golden by 0.007% and its Normal gain fell from +143 to +97. In H the DPS presets rose with their
 goldens (Fury +9.6%, Combat Rogue +9.1%, Ret +7.0%); Combat Rogue's Quick gain fell from +720 to +574 DPS
 while Normal held. Prot Pal's preset lost 11% DPS against TestProtection's -0.6%, not traced (PAR-P7-TANK).
 In H3 Ret's preset lost 1.8% with its goldens (-1.4%) and its gains rose to +231 / +227, as its items were
-revalued; Combat Rogue's Normal gain rose to +942 from a 4th or 5th runner-up (BIS-alt5).
+revalued; Combat Rogue's Normal gain rose to +942 from a 4th or 5th runner-up (BIS-alt5). In I the Fire Mage
+preset lost 4.0% with TestFire (-3.7%) while its J rose, since the normalizer fell with it; Combat Rogue and
+Prot Paladin, whose classes the wave left alone, didn't move at all.
 
 ## Sim throughput
 
@@ -142,6 +144,7 @@ From G the benches run their suites' default players with rotations, at 1 and 10
 | H2 | 1.561 / 129.4 | 0.515 / 35.0 | 0.613 / 43.2 | 0.343 / 16.1 | 4.755 / 313.9 |
 | H | 1.451 / 130.8 | 0.477 / 32.4 | 0.585 / 40.8 | 0.327 / 15.1 | 4.568 / 300.2 |
 | H3 | 1.490 / 132.8 | 0.493 / 33.6 | 0.602 / 42.9 | 0.332 / 15.4 | 4.586 / 304.2 |
+| I | 1.588 / 134.8 | 0.573 / 34.0 | 0.784 / 46.1 | 0.495 / 16.8 | 6.026 / 302.5 |
 
 H2 ran with the live worldserver using half a core, which moved whole runs by up to 2×
 and cost a few percent here (Ret, which H2 barely touched, +4%). An interleaved A/B against the base
@@ -149,6 +152,11 @@ puts H2's own cost at 5-7% for Hunter and Elemental at 100 iterations, the raid 
 worldserver at a sixth of a core, and every case came in at or under G's. H3, same load, came in 0.4-5% over
 H: Combat Rogue, whose hot path H3 barely touched, +1.5-2.7%, so most of it is noise; Hunter at 100
 iterations +5%, likely the pending action each Piercing Shots proc now queues.
+
+I's row sits 20-30% over H3's at one iteration, but the base re-measured beside it that day did too (Ret
+0.584, Hunter 0.865, Elemental 0.428, raid 5.915), so the machine moved, not the sim. Its interleaved A/B
+puts the wave's own cost at Elemental +15.7% at one iteration and +6.6% at 100, from the spells the id
+splits add at setup; every other case lands within ±5%, some negative. Read the A/B, not the row.
 
 E to F2 ran the old requests: one iteration, and no rotation for Ret, Hunter and Elemental.
 
@@ -214,10 +222,11 @@ crashed before F2, so its column starts there.
 | PAR-P7-RET-RR | merged | `30caa2716` | 2 paladin goldens promoted in `3390bacf0`; e2e `f4060b1`; a repair round redid the first run's per-ability table, which compared melee with glances on one side only and mixed crit rate into hit size |
 | BIS-alt5 | merged | `826e952c4` | goldens unchanged; its reviewer fixed a pick lost on a tight budget |
 | wave H3 cross-review | | `d2bf9e5e9`, `050ec2fac` | 1 bug: a delayed refresh landed after a same-tick swing or dot tick, paying the tick twice (Fury -1.5%, Arms -1.3%, Ret -0.8%); retail deviations for munching and spell mods dropped or moved to unsettled; module `1bd7607` |
-| PAR-P7-MAG | running | | stages: code, cast-time, delay, live |
-| PAR-P7-SHA | running | | stages: shared-enh, elemental, live |
-| PAR-P7-DRU | running | | stages: balance, feral, live |
-| PAR-P7-WLK | running | | stages: code, recorded-run |
+| PAR-P7-MAG | merged | `e01becb6d` | 13 goldens promoted in `de48cfabf`; a live Fire capture closed PAR-P7-0e's delay gap; module `4f2cb34` |
+| PAR-P7-WLK | merged | `727738cf6` | 3 goldens promoted in `eea8954f8`; serverdata regenerated in `733088729`; Affliction recaptured; module `7af08bd`, which also fixed a ranged recorded run losing line of sight |
+| PAR-P7-SHA | merged | `3b624ddf6` | 2 goldens promoted in `18c0e3429`; its live round found the totem-dot split panicking any APL that named the summon's dot; module `987b74e` |
+| PAR-P7-DRU | merged | `b4fff9609` | 5 goldens promoted in `667779e0f`; serverdata regenerated in `8fad1a579`; module `b5d8135` |
+| wave I cross-review | | `38c7b5243`, `4c9fde2d3` | 4 bugs: the spirit wolves took Windfury Totem and Improved Icy Talons twice, the totems' own hits fed the shaman's procs, Fire Nova's crits stopped granting Clearcasting, and Ignite read a cast time a missile had outlived; Elemental and Enhancement re-promoted |
 
 Later WIs are added as their wave starts.
 

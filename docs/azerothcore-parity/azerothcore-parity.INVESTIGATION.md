@@ -171,8 +171,8 @@ Roll details the tables above don't show:
   same stale dot, so the later application overwrites the earlier one's (munching).
   `core.DelayedPeriodicApplier` (PAR-P7-0e) draws that boundary's phase once per caster per iteration,
   since the sim has no equivalent of the caster's own creation-time clock. On it: Deep Wounds, Unholy
-  Blight, Piercing Shots, Righteous Vengeance, Ignite (PAR-P7-MAG). Still owed: Languish, the two Shaman
-  procs (`spell_druid/shaman.cpp`).
+  Blight, Piercing Shots, Righteous Vengeance, Ignite (PAR-P7-MAG), Languish (PAR-P7-DRU), Electrified and
+  Lava Burst's bonus dot (PAR-P7-SHA): every proc the server delays.
   - The proc counts the old dot's outstanding damage, so an old tick landing before the refresh is paid
     twice. A tick or swing due on the refresh's own server tick comes after it: `Player::Update` runs the
     caster's events before its swings, and `Map::Update` updates players before the creatures whose auras

@@ -616,17 +616,19 @@ the sources the server refuses.
    - `TestRecordedRun` sets progression with `.ip set <name> 18` after gearing, as `TestRecordedRunHunter`
      does: the playerbot factory resets mod-individual-progression, which scales a level 80's damage by 0.3.
      The Prot Paladin and Affliction captures predate it, so PAR-P7-TANK and PAR-P7-WLK re-record theirs.
-6. **Shaman:** Feral Spirit 30% AP, haste inheritance and swing reset from data; the wolves carry 425792, so wire
-   them through `Unit.HasteCarrier` and `Pet.OwnerHasteSource`. Elemental: core rules only.
-   - Stormstrike rolls both hits under 17364, which carries neither flag; the server deals them as 32175/32176
-     (ALWAYS_HIT, NO_ACTIVE_DEFENSE), so the sim still rolls a partial block from the front.
-   - Electrified (64930) and Lava Burst's bonus dot (71824) refresh through `core.DelayedPeriodicApplier`.
-7. **Druid:** FF(Feral) → Clearcasting, Omen PPM rule, Moonfire/IS add-ticks and tick crit, Treants.
-   `CurrentMangleCatCost` derefs a nil Mangle (Cat) without the talent, and the default cat APL calls it.
-   Snek weave doesn't model Albino Snake's own GCD. Languish refreshes through `core.DelayedPeriodicApplier`.
-8. **Mage:** Frostbolt is non-binary; Ignite munching, through `core.DelayedPeriodicApplier`, whose refreshes land
-   later than the server's (INVESTIGATION, **DoTs and periodic ticks**); Water Elemental.
-9. **Warlock (Affliction recorded):** pet scaling with floored hit; Haunt and Drain Soul non-binary; curses and UA per the spelldump.
+6. **Shaman** (I, done; facts in the INVESTIGATION): the totems, Flametongue and Fire Nova deal their damage
+   under the server's ids, which also decides who their hits proc and whether the ten-target cap applies (it
+   follows the caster, not the aim). The spirit wolves carry their owner's haste, and with it Windfury Totem and
+   Improved Icy Talons, which 425792 blocks. A dot declared on a triggered id panics any APL naming the summon.
+7. **Druid** (I, done; facts in the INVESTIGATION): Balance gained 12% from the balance-dot haste and crit
+   tweaks plus Eclipse rolling on every landed cast, and the Feral tank 3.8% from Faerie Fire's guaranteed
+   Clearcasting. Snek weave's GCD and Idol of the Crying Wind's tick count stay open.
+8. **Mage** (I, done; facts in the INVESTIGATION): Ignite carries the server's truncated blend and its delay,
+   which a live Fire capture confirmed against 84 applications, closing PAR-P7-0e's timing gap. A proc's delay
+   now depends on whether its feeder was the player's own instant cast, which `SpellResult` records at the cast.
+9. **Warlock** (I, done; facts in the INVESTIGATION): the pets take the server's flat 5% crit and floored
+   inheritance, percent damage mods multiply, and Seed of Corruption explodes under 47834. Affliction was
+   recaptured, since the old run had the wrong talents at a third of the damage.
 10. **Shadow Priest:** Mind Flay binary; Shadowfiend.
 11. **Tanks** (Prot Warrior, Prot Paladin (recorded), Bear, DK tank):
     - Creature-vs-player tables; per-class DR; no crushing at +3.
