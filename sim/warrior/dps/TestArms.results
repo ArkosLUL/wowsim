@@ -652,8 +652,8 @@ dps_results: {
 dps_results: {
  key: "TestArms-AllItems-SiegebreakerBattlegear"
  value: {
-  dps: 6828.03659
-  tps: 5536.06483
+  dps: 6852.23869
+  tps: 5553.98858
  }
 }
 dps_results: {
@@ -918,15 +918,15 @@ dps_results: {
 dps_results: {
  key: "TestArms-Settings-Human-p1_arms-Basic-arms-NoBuffs-LongSingleTarget"
  value: {
-  dps: 3761.27307
-  tps: 3055.69956
+  dps: 3765.27404
+  tps: 3058.86643
  }
 }
 dps_results: {
  key: "TestArms-Settings-Human-p1_arms-Basic-arms-NoBuffs-ShortSingleTarget"
  value: {
-  dps: 3702.61622
-  tps: 3045.43487
+  dps: 3722.62083
+  tps: 3061.26907
  }
 }
 dps_results: {
@@ -960,15 +960,15 @@ dps_results: {
 dps_results: {
  key: "TestArms-Settings-Orc-p1_arms-Basic-arms-NoBuffs-LongSingleTarget"
  value: {
-  dps: 3801.08706
-  tps: 3096.33694
+  dps: 3805.26209
+  tps: 3099.62181
  }
 }
 dps_results: {
  key: "TestArms-Settings-Orc-p1_arms-Basic-arms-NoBuffs-ShortSingleTarget"
  value: {
-  dps: 3685.02867
-  tps: 3038.03956
+  dps: 3705.90358
+  tps: 3054.46369
  }
 }
 dps_results: {
