@@ -55,7 +55,8 @@ Quirk: `UnitLevelFloat64` in `utils.go` treats every level outside 80–82 as +3
   `rules.go` and `gems.go` compile the candidate pool, check a loadout's equip rules and regem it.
   `raidctx/` derives what the rest of a roster gives one raider. `surrogate.go` prices and prunes
   candidates, `search.go` anneals and polishes, and `verify.go` and `neighborhood.go` confirm the pick
-  with paired sims and collect the runners-up.
+  with paired sims and collect the runners-up. For the raid-DPS objective (the BiS batch's stage 2),
+  `NewRaidEvaluator` sims the whole raid and scores its total DPS, so every sim step ranks by raid DPS.
 
 ## Protos
 
