@@ -201,7 +201,7 @@ crashed before F2, so its column starts there.
 | wave H cross-review | | `2ae1e1906` | 5 bugs: Slam's split left Recklessness and the T8 2pc on the cast, Deadly Poison kept its first haste, Exorcism was limited to undead and demons, the Ret capture's talent reset failed; Assassination +2.2% (goldens `6ca712f26`); module `39e086e`; spell audit refreshed in `ba4252567` |
 
 | PAR-P7-0e | merged | `c056bfd24` | 6 goldens promoted in `051d8e6b9` |
-| PAR-P7-RET-RR | repair round | | the first run's per-ability table compared melee with glances on one side only and mixed crit rate into hit size |
+| PAR-P7-RET-RR | merged | `30caa2716` | 2 paladin goldens promoted in `3390bacf0`; e2e `f4060b1`; a repair round redid the first run's per-ability table, which compared melee with glances on one side only and mixed crit rate into hit size |
 | BIS-alt5 | merged | `826e952c4` | goldens unchanged; its reviewer fixed a pick lost on a tight budget |
 
 Later WIs are added as their wave starts.
