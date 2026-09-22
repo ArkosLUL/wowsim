@@ -647,6 +647,25 @@ move; only the neighborhood sims and reports 5. **Owns:** `search.go`'s `runners
   and prune in the pool builder if size or search time hurts (items every other candidate beats, or TBC
   items by default).
 
+### BIS-seed (wave I2)
+
+A user's Unholy DK run scored its pick +46% over "your gear": the seed trimmer had emptied neck, main
+hand and off hand, since all three are Ulduar 10 drops and the run's sources had Raid 10 off, and the
+result's `seed` metrics come from that gear. The same gear sims 11,996 DPS as equipped and 8,858 with
+those three slots empty.
+
+- An equipped item joins its slot's pool whatever the source checkboxes and the picker's filters say: the
+  raider owns it. `isAvailable`'s tier rule still applies, so a phase's result keeps no later-phase gear.
+- The reported `scoreDelta` and the `seed` metrics come from the gear as equipped, even where a slot still
+  has to be emptied (a later-phase or excluded item). The search keeps starting from the trimmed seed, so
+  `Request` carries both and `api.go` evaluates the equipped one at the final iteration count.
+- A search slot left empty is a warning in the result, not a line under "Starting gear, trimmed to the
+  pool", and it names what an empty weapon slot does to the comparison.
+- Label the score in the tab as what it is: the reference stat's points (attack power, spell power or
+  ranged attack power, `referenceStat`), not DPS.
+- Tests: a trimmed seed whose items the sources exclude keeps them in the pool; a P3 item on a P2 run
+  still leaves the slot, and the delta is then measured against the equipped gear.
+
 ### BIS-presets (wave K)
 
 The preset files, as decided above, registered in `ui/<spec>/presets.ts` and `sim.ts` `defaultGear`. This

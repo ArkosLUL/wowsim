@@ -54,7 +54,7 @@ G = changes goldens. FS = runs all 37 suites.
 | H | PAR-P7-ROG · PAR-P7-WAR · PAR-P7-RET (G) · BIS-raid-contrib | ✔ |
 | H3 | PAR-P7-0e (G, FS) · PAR-P7-RET-RR · BIS-alt5 | ✔ |
 | I | PAR-P7-MAG (G, FS) · PAR-P7-SHA · PAR-P7-DRU · PAR-P7-WLK (G) | ✔ |
-| I2 | PERF-TOOLS · PERF-CONC | ✔ |
+| I2 | PERF-TOOLS · PERF-CONC · BIS-seed | ✔ |
 | I3 | PERF-OPT · PERF-HOT | ✔ |
 | J | PAR-P7-PRI (G) · PAR-P7-TANK (G) · BIS-e2e-perf · AC-3 | ✔ |
 | K | BIS-presets · PAR-P8 (G, FS) · BIS-tank-boss | ✔ |
