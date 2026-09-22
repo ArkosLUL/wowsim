@@ -202,7 +202,7 @@ crashed before F2, so its column starts there.
 
 | PAR-P7-0e | merged | `c056bfd24` | 6 goldens promoted in `051d8e6b9` |
 | PAR-P7-RET-RR | repair round | | the first run's per-ability table compared melee with glances on one side only and mixed crit rate into hit size |
-| BIS-alt5 | running | | |
+| BIS-alt5 | merged | `826e952c4` | goldens unchanged; its reviewer fixed a pick lost on a tight budget |
 
 Later WIs are added as their wave starts.
 

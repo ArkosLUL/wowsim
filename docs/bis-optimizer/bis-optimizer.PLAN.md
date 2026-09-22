@@ -117,7 +117,7 @@ The UI owns candidate pools and settings. Go owns every equip rule and the searc
 | `response.go` | response curves per stat family. Cap-prone families (hit, spell hit, expertise, ArP, defense) get 5 offsets and a bisected breakpoint |
 | `residuals.go` | effect value = paired sim Δ − surrogate Δ, for trinkets, relics, weapons, metas, effect enchants and 2/4-piece macros. About 63 hard-coded ID checks bypass `core.HasItemEffect`, so those slots are always simmed |
 | `surrogate.go`, `search.go` | separable surrogate plus residuals; dominance pruning; annealing with restarts (greedy, seed, previous phase) plus coordinate polish; exact per-item gem DP; keeps the top 20 distinct sets |
-| `verify.go`, `neighborhood.go` | accepts when Δ̄ > 2·se and Δ̄ > 0.05% J; top 3 per slot, which are also the alternatives |
+| `verify.go`, `neighborhood.go` | accepts when Δ̄ > 2·se and Δ̄ > 0.05% J; top 5 per slot, which are also the alternatives |
 | `racial.go`, `critimmunity.go` | the racial screen; D* by bisecting bonus defense with `core.ComputePlayerSheet` |
 | `sheet.go` | the target's `core.ComputePlayerSheet` in a loadout, memoized per `Loadout` on the `Pool`, which assumes the base never changes after `CompilePool` |
 | `raidctx/` | `derive.go`, `providers.go`, `contribution.go` |
@@ -600,12 +600,25 @@ checks each one and the web server has no `with_db`.
   16-20x the 2-player smoke raid the engine stage measured, which makes the batch estimates in
   `bis-optimizer.INVESTIGATION.md#performance` stale by over an order of magnitude; noted there.
 
-### BIS-alt5 (wave H3)
+### BIS-alt5 (wave H3, done)
 
 The user's call (2026-09-22): 5 alternatives per slot instead of 3, for the BiS Tooltip addon and in the
 optimizer tab and raid batch too. The search's polish still forces in 3 runners-up, so its picks don't
 move; only the neighborhood sims and reports 5. **Owns:** `search.go`'s `runnersUp` and its uses,
 `neighborhood.go`, the tests asserting the count, and the comment on `OptimizerResult.alternatives`.
+
+**As built:**
+- A round sims each slot's first 3 runners-up on the budget they had before, and ranks 4-5 only when none
+  of the 3 moved the best: all 5 at once halved a tight round below full iterations, and a short round
+  can't move the best (Prot Paladin P3 Normal lost its adoption). So picks stay or improve: the slow
+  suite kept 11 of 12, and Combat Rogue P3 Normal gained 180 DPS from a new runner-up.
+- Cost on Fury P1: Quick 7.8 to 8.3 s, Normal 62 to 70 s; the slow suite's sims rose 0.8-14% per case.
+  Thorough and raid-mode stage 2 are unmeasured.
+- At Quick, most adjacent alternatives sit within 2 se of each other (54 of 68 pairs), as ranks 2-3
+  already did.
+- `acbis` still exports the best plus 3 (`BisMaxRanks = 4` in `tools/database/azerothcore/bisdata_wire.go`,
+  part of the wire format with mod-bis-tooltip and the addon), now the top 3 of 5 by sim delta: raising it
+  is the addon effort's call.
 
 ### BIS-e2e-perf (wave J)
 
