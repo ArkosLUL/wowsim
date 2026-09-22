@@ -1,6 +1,7 @@
 package main
 
 import (
+	"math"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -86,5 +87,43 @@ func TestImprovedTrackingRanks(t *testing.T) {
 	}
 	if !slices.Equal(ranks, []int32{52783, 52785, 52786, 52787, 52788}) {
 		t.Errorf("Improved Tracking ranks = %v", ranks)
+	}
+}
+
+func TestParseSetupStartedSpells(t *testing.T) {
+	setup, err := parseSetup(strings.NewReader("player: X\nclass: 2\nrace: 1\nstarted: [54043 31801]\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Equal(setup.Started, []int32{54043, 31801}) {
+		t.Errorf("started %v", setup.Started)
+	}
+	if aura := paladinAura(setup.Started); aura != proto.PaladinAura_RetributionAura {
+		t.Errorf("aura %v, want Retribution Aura", aura)
+	}
+	if aura := paladinAura([]int32{31801, 53736}); aura != proto.PaladinAura_NoPaladinAura {
+		t.Errorf("aura %v for seals only, want none", aura)
+	}
+}
+
+func TestOutcomeStats(t *testing.T) {
+	var o outcomeStats
+	for _, amount := range []float64{1, 2, 3, 4} {
+		o.add(amount)
+	}
+	// sample standard deviation sqrt(5/3), over sqrt(4)
+	if o.mean() != 2.5 || math.Abs(o.stdErr()-math.Sqrt(5.0/3)/2) > 1e-12 {
+		t.Errorf("mean %v ± %v", o.mean(), o.stdErr())
+	}
+}
+
+func TestPrintOutcomesKeepsMissOnlyRows(t *testing.T) {
+	missed := &outcomeBreakdown{}
+	missed.avoid("parry")
+	var out strings.Builder
+	printOutcomes(&out, []outcomeRow{{Name: "missed", Outcomes: missed}, {Name: "empty", Outcomes: &outcomeBreakdown{}}}, 1)
+	if !strings.Contains(out.String(), "missed") || !strings.Contains(out.String(), "parry 1") ||
+		strings.Contains(out.String(), "empty") {
+		t.Errorf("outcomes:\n%s", out.String())
 	}
 }

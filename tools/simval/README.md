@@ -52,7 +52,7 @@ the DPS gap against the plan's ±2% and exits non-zero outside it.
 | `-sim` | the sim's DPS for the same gear, talents and rotation; 0 skips the check |
 | `-gap` | 5 s; a longer pause is left out of the active duration |
 | `-top` | 20 ability rows |
-| `-v` | also print swing intervals, tick intervals and aura uptimes |
+| `-v` | also print per-outcome averages (see [rrsim](#rrsim)), swing intervals, tick intervals and aura uptimes |
 
 Interval histograms bucket at 100 ms, the server's map update. They show the lattice only roughly:
 Chronicle timestamps the packet send, which adds a few ms of jitter.
@@ -66,8 +66,15 @@ count refreshes; and there are no stack counts.
 Sims a recorded run from its `.setup.txt`: gear, talents and glyphs as recorded, plus ammo, quiver and
 pet for a hunter (`TestRecordedRunHunter`'s rotation). A Retribution Paladin (`TestRecordedRun`,
 `SIMVAL_RECORD_TALENT_SPELLS` set) runs `ui/retribution_paladin/apls/default.apl.json`'s priority list
-minus Exorcism, which the recorded cycle doesn't cast, on its own real mana, no cheat power. It prints the DPS, pet included, to pass to `chronicle -sim`.
-Needs `--tags=with_db` and the live DBCs. Other classes have no rotation here.
+cut to what the recorded cycle casts (Divine Plea, Judgement of Wisdom, Crusader Strike, Divine Storm,
+Consecration; no Avenging Wrath), on its own mana, with the aura its `started:` spells name (none by
+default), swinging from the dummy's front as the run does. It prints the DPS, pet included, to pass to
+`chronicle -sim`. Needs `--tags=with_db` and the live DBCs. Other classes have no rotation here.
+
+The Ret capture's fixed 1.5 s round-robin (a refused spell waits for its next turn) has no APL
+equivalent, so the priority list casts more often and its DPS compares rotations, not formulas. Compare
+per ability instead: `-v` here and on `chronicle` prints each ability's non-crit, crit and glance
+averages and its crit rate over landed hits, each ± one standard error.
 
 | Flag | Default |
 |---|---|
@@ -76,7 +83,7 @@ Needs `--tags=with_db` and the live DBCs. Other classes have no rotation here.
 | `-iterations` | 3000 |
 | `-dbc` | `/dbc`, the live DBC copy |
 | `-out` | also write the sim request here as JSON |
-| `-v` | also print final stats, pet talents, glyphs and an ability breakdown |
+| `-v` | also print final stats, pet talents, glyphs, an ability breakdown and per-outcome averages |
 
 ## Captures
 

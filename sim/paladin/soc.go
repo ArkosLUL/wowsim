@@ -36,10 +36,7 @@ func (paladin *Paladin) registerSealOfCommandSpellAndAura() {
 		BonusCritRating: (6 * float64(paladin.Talents.Fanaticism) * core.CritRatingPerCritChance) +
 			(core.TernaryFloat64(paladin.HasSetBonus(ItemSetTuralyonsBattlegear, 4), 5, 0) * core.CritRatingPerCritChance),
 
-		DamageMultiplier: 1 *
-			(1 + paladin.getItemSetLightswornBattlegearBonus4() +
-				paladin.getMajorGlyphOfJudgementBonus() + paladin.getTalentTheArtOfWarBonus()) *
-			(1 + paladin.getTalentTwoHandedWeaponSpecializationBonus()),
+		DamageMultiplier: spellModDamage(paladin.getItemSetLightswornBattlegearBonus4(), paladin.getMajorGlyphOfJudgementBonus(), paladin.getTalentTheArtOfWarBonus()),
 		CritMultiplier:   paladin.MeleeCritMultiplier(),
 		ThreatMultiplier: 1,
 
@@ -63,9 +60,7 @@ func (paladin *Paladin) registerSealOfCommandSpellAndAura() {
 		ProcMask:    core.ProcMaskEmpty,
 		Flags:       core.SpellFlagMeleeMetrics,
 
-		DamageMultiplier: 1 *
-			(1 + paladin.getItemSetLightswornBattlegearBonus4()) *
-			(1 + paladin.getTalentTwoHandedWeaponSpecializationBonus()) *
+		DamageMultiplier: spellModDamage(paladin.getItemSetLightswornBattlegearBonus4()) *
 			0.36, // Only 36% of weapon damage.
 		CritMultiplier:   paladin.MeleeCritMultiplier(),
 		ThreatMultiplier: 1,
@@ -95,9 +90,7 @@ func (paladin *Paladin) registerSealOfCommandSpellAndAura() {
 		ProcMask:    core.ProcMaskEmpty, // unlike SoV, SoC crits don't proc Vengeance
 		Flags:       core.SpellFlagMeleeMetrics,
 
-		DamageMultiplier: 1 *
-			(1 + paladin.getItemSetLightswornBattlegearBonus4()) *
-			(1 + paladin.getTalentTwoHandedWeaponSpecializationBonus()) *
+		DamageMultiplier: spellModDamage(paladin.getItemSetLightswornBattlegearBonus4()) *
 			0.36, // Only 36% of weapon damage.
 		CritMultiplier:   paladin.MeleeCritMultiplier(),
 		ThreatMultiplier: 1,

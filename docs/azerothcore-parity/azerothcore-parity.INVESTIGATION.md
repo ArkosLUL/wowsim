@@ -598,44 +598,87 @@ Roll details the tables above don't show:
   moved too, -2.4% to +0.4% (its suite doesn't invest in Righteous Vengeance or Two-Handed Weapon
   Specialization, so it's purely losing the erroneous Hammer of Wrath/Shield of Righteousness seal procs, offset
   a little by whichever seal it runs).
-- Recorded run (`TestRecordedRun`, `SIMVAL_RECORD_SPEC=ret`, human paladin, 300 s at 4 yards,
-  `SIMVAL_RECORD_TALENT_SPELLS` set to `StandardTalents`'s 26 ids, Seal of Vengeance/Corruption cast once
-  before the pull via `SIMVAL_RECORD_START_SPELLS`, the fixed cycle rotating Judgement of Wisdom, Crusader
-  Strike, Divine Storm and Consecration every 1.5 s). Hammer of Wrath stays out of the cycle, since the
-  dummy's health never drops (module README), and so does Exorcism.
+- Recorded run (`TestRecordedRun`, `SIMVAL_RECORD_SPEC=ret`, human paladin, 600 s at 4 yards in front of the
+  dummy, `SIMVAL_RECORD_TALENT_SPELLS` set to `StandardTalents`'s 26 ids, `SIMVAL_RECORD_TWOHAND=1`): Retribution
+  Aura and Seal of Vengeance before the pull (`SIMVAL_RECORD_START_SPELLS=54043,31801`), then Judgement of
+  Wisdom, Crusader Strike, Divine Storm, Consecration and Divine Plea in a fixed 1.5 s cycle; Divine Plea keeps
+  every mana spell casting to the end. Hammer of Wrath and Exorcism stay out (the dummy's health never drops,
+  module README; Exorcism below). The factory's glyphs are its "ret pve" premade (Judgement, Consecration, Seal
+  of Vengeance major), which the setup now records.
 
   | Run | Server DPS | Sim DPS | Gap |
   |---|---|---|---|
-  | Ret (`ret_Svrleadsofeh_1790025523`, boss-only) | 1978.9 | 1871.0 | +5.77%, over the 2% |
-- **The capture mixes builds, so the gap above and the per-ability breakdown below aren't a parity
-  measurement: recapture.** `setTalents` sent `.reset talents` without a name, and `HandleResetTalentsCommand`
-  (`cs_reset.cpp`) doesn't fall back to the selection, so the reset failed and the factory's Protection talents
-  (`.playerbots bot initself=epic`, via `LearnTalent`) stayed live under the 26 learned Retribution spells; a
-  Redoubt proc 31 s in confirms it. Plain `.learn <id>` goes through `learnSpell`, not `LearnTalent`, so
-  `character_talent` only held the Protection build, and the setup's `correction:` note swapped in the 26 Ret
-  ids the sim runs. Fixed in `recorded_run_test.go`: `.reset talents <name>`, and `writeSetup` writes
-  `run.TalentSpells` instead of querying `character_talent` whenever a caller set them.
-- Separately, real mana exhaustion: Crusader Strike, Divine Storm, Judgement of Wisdom and Consecration
-  (every mana-cost spell in the cycle) all land their last hit between 271 s and 273 s into the fight, while
-  free melee and the Seal of Vengeance proc keep going to the end.
+  | Ret (`ret_Svrleadjxcky_1790084304`, boss-only, 600.4 s) | 4576.6 | 6229.0 | -26.5%, rotations (below) |
+
+- Two `recorded_run_test.go` bugs found and fixed while recapturing:
+  - `PlayerbotFactory::InitEquipment` never reads the spec `InitTalentsTree` just rolled (its
+    `GetPlayerSpecTab` call is commented out), so the gear command's weapon choice ignores
+    `SIMVAL_RECORD_TALENT_SPELLS`, and an off hand item it already equipped stays through every later gear
+    command on the same character (150 straight calls, same item, confirmed live). `gearedBot` now gears a
+    fresh character each attempt behind a new `SIMVAL_RECORD_TWOHAND` flag, since only a character's first
+    gearing pass has real variance.
+  - `grownLog` picked whichever instance log grew the most, which during one capture was a live raid's
+    (15 MB) rather than the dummy fight's (1.3 MB); it now requires the log to name the player.
+- The DPS gap compares rotations: rrsim's priority list can't replay the fixed cycle (no APL action gives up
+  on a refused cast until the next lap), so it casts Crusader Strike, Divine Storm and the judgement 50-80%
+  more often. Per ability (`rrsim -v`, `chronicle -v`; server mean ± standard error, crit rate over landed
+  hits), every row sits within 2 standard errors but two:
+
+  | Ability (server non-crits/crits) | Non-crit, server / sim | Crit, server / sim | Crit %, server / sim |
+  |---|---|---|---|
+  | Melee (54/75) | 2394±25 / 2437 (-1.8%) | 5060±44 / 5045 (+0.3%) | 40.5±3.6 / 45.2 |
+  | Melee glancing (56) | 1695±15 / 1713 (-1.1%) | – | – |
+  | Seal of Vengeance proc (42463; 206/152) | 1215±10 / 1241 (-2.1%) | 2578±22 / 2555 (+0.9%) | 42.5±2.6 / 42.6 |
+  | Holy Vengeance tick (31803; 117/81) | 1254±13 / 1276 (-1.7%) | 2645±35 / 2630 (+0.6%) | 40.9±3.5 / 42.6 |
+  | Crusader Strike (35395; 45/31) | 2206±22 / 2208 (-0.1%) | 4549±61 / 4550 (0.0%) | 40.8±5.6 / 42.6 |
+  | Divine Storm (53385; 33/24) | 2843±45 / 2821 (+0.8%) | 5720±68 / 5811 (-1.6%) | 42.1±6.5 / 42.4 |
+  | Judgement of Vengeance (31804; 17/23) | 3250±128 / 3283 (-1.0%) | 6795±176 / 6770 (+0.4%) | 57.5±7.8 / 60.5 |
+  | Consecration tick (48819; 387) | 524±3 / 526 (-0.4%) | – | – |
+  | Manifest Anger (71433, trinket; 28/15) | 1238±18 / 1227 (+0.9%) | 2515±42 / 2530 (-0.6%) | 34.9±7.3 / 42.6 |
+  | Righteous Vengeance tick (61840; 109/75), moves with PAR-P7-0e | 688±26 / 1061 (-35.2%) | 1437±71 / 2185 (-34.2%) | 40.8±3.6 / 42.6 |
+
+  - Seal of Vengeance's non-crit (-2.6σ) is sampling: its hits caught Piercing Twilight (+1472 AP, 32.5%
+    uptime) 28% of the time, its crits 38%. Inside and outside the buff, crit over non-crit is 2.06-2.08, the
+    2.06 the judgement's exact values show; the all-outcome mean is +0.3%.
+  - A Righteous Vengeance tick is a quarter of a pool the crits feed, so its size follows the rotation. Per
+    30% of the crit damage fed to it (Crusader Strike, Divine Storm, the judgement), both deliver the same:
+    server 1.40, sim 1.38, its own crits and resists included. It moves with PAR-P7-0e's delayed application
+    (up to 400 ms); re-measure on the merged tree.
+
+  At the capture's own outcome counts, the sim's per-outcome means give 0.30% more damage than the capture,
+  Righteous Vengeance aside. Chronicle records a dodged or parried spell only as
+  `CHRONICLE_SPELL_TARGET_RESULT`: `SPELL_MISSED` comes from `Unit::SendSpellMiss`, which only reports
+  hit-time immunity and damage shields. `chronicle` now counts it: 4 of 80 Crusader Strikes and 2 of 59
+  Divine Storms were parried. A missed Consecration tick leaves no record at all
+  (`AuraEffect::HandlePeriodicDamageAurasTick` returns unlogged), so the sim's 2.4% tick misses have no
+  server count to compare.
+- The first capture (300 s, no aura, glyphs unrecorded) read 6-15% under the sim on nearly every ability.
+  Closed by:
+  - rrsim setup: no Avenging Wrath (`autocastOtherCooldowns` cast it, the capture never does); the aura
+    `started:` names, none then (Sanctified Retribution's 63531 dropped 0.4 s after login); swings from the
+    front; the setup's glyphs; and the live DBC's stats, with a warning, for an enchant the sim's item
+    database lacks (3776: +45 AP and +15 crit rating on the shoulders of every Ret and hunter capture). The
+    sim's stats then match the pre-fight `.simval info`: AP 5970/5968, crit 40.15%/40.16%, hit 383, expertise
+    22, haste 345, ArP 536.
+  - Sim bugs, fixed in `sim/paladin`:
+    - Sanctified and Swift Retribution work only through the paladin's own aura (63531 area-checks for one,
+      `spell_pal_sanctified_retribution_effect::CheckAreaTarget`); `AddRaidBuffs` granted them with none.
+    - Two-Handed Weapon Specialization (20113: aura 79, physical school mask) no longer raises seal or
+      judgement damage: a holy weapon-percent spell takes weapon damage without the physical % mods
+      (`Spell::EffectWeaponDmg`, `CalculateDamage(..., isPhysical)`), and `MeleeDamageBonusDone` and
+      `SpellPctDamageModsDone` match the aura by school. Seal of Vengeance's proc read -7% before.
+    - Percent damage spell mods multiply (retail deviation 52): Seals of the Pure, The Art of War, Sanctity
+      of Battle, the damage glyphs and set bonuses. The judgement's exact values confirm it: Piercing
+      Twilight adds 734 to a 3195 non-crit, a ×1.609 multiplier against 1.609 multiplied and 1.561 added.
+    - Divine Storm deals normalized weapon damage (`Spell::EffectWeaponDmg` special-cases 53385).
+    - Seal of Vengeance's proc truncates its weapon percent per stack (33 × stacks / 5, `HandleSeal`).
+  - Suites: Retribution -1.5% on average, -0.4% to -2.1% (SOC -1.3% to -1.8%, SOR and SOV
+    -0.7% to -1.6%); Protection -0.004% to -0.03%, from the seal proc's truncation. Only DPS and TPS move.
 - Exorcism (48801) hits any creature type: its Spell.dbc `TargetCreatureType` is 0 (all ranks, live DBC), so
   `SpellInfo::CheckTargetCreatureType` passes every target, and `Unit::SpellTakenCritChance` only forces its crit
   on undead and demons. The capture has none because its cycle (the setup's `rotation:`) never casts it. The
   Undead/Demon `ExtraCastCondition` this item added was reverted; `rrsim`'s Ret rotation leaves Exorcism out
-  instead, which drops the 124.4 of 1938.7 DPS it added against the Giant dummy (gap +2.08% with it, +5.77%
-  without). No golden moves either way: every suite's target is `MobTypeDemon`.
-- Per ability (sim vs. server, boss-only DPS): Crusader Strike +22.8% over (164.4 vs. 133.9), Judgement
-  (the seal's own secondary hit, 31804) +3.6% over, the seal's own proc within noise (+0.3%), then melee -4.8%, Consecration
-  -6.4%, Righteous Vengeance -17.0%, Holy Vengeance -19.2% and Divine Storm -30.9% all under. Crusader
-  Strike's and Judgement's overshoot lines up with cast frequency: the real cycle only *tries* each once
-  every 6 s regardless of its cooldown, landing Crusader Strike every 7.16 s on average against the sim's
-  reactive APL casting it every 4.82 s, and Judgement every 13.07 s against the sim's 9.54 s. Divine Storm's
-  own frequency is the opposite case, matching almost exactly (13.66 s recorded, 13.42 s simmed), yet its
-  average hit is 32% lower in the sim, so that gap and Holy Vengeance's and Righteous Vengeance's DoT ticks
-  (both stacked mostly off white hits, which run at the same cadence either way) aren't explained by cast
-  frequency; with only 22-42 hits for the direct-damage spells and 69-100 ticks for the DoTs, a single 300 s
-  capture doesn't have enough samples to separate a real stacking or rating difference from noise. A second
-  capture, or a reactive cast loop closer to `fightHunter`'s instead of the fixed cycle, would settle it.
+  instead. No golden moves either way: every suite's target is `MobTypeDemon`.
 - `.simval yellow`/`spell` probes (`TestSimvalRetribution`, live, code): Crusader Strike and Divine Storm roll
   a real defense table from behind the dummy (`CanDodge` true), unlike the secondary judgements' always-hit
   one; parry and block drop out only because attacking from behind removes them structurally (`simval_test.go`'s
@@ -708,6 +751,10 @@ values. Human warrior, level 80, maxed skills, Worn Shortsword (Sword Specializa
   `PROGRESSION_PRE_TBC` the live `VanillaPowerAdjustment` of 0.5 scales a level 80's damage by 1 − 0.5·70/50
   (`ComputeVanillaAdjustment`). `TestRecordedRun` doesn't undo it yet; `TestRecordedRunHunter` runs `.ip set <name> 18`
   after gearing.
+- Ret Paladin recorded run (`TestRecordedRun`, `SIMVAL_RECORD_SPEC=ret`, `SIMVAL_RECORD_TWOHAND=1`, 600 s): Divine
+  Plea keeps every mana-cost spell casting to the end, Retribution Aura keeps Sanctified Retribution (63531) up,
+  and the pre-fight `.simval info` matches rrsim's stats. Per-ability comparison in the Retribution Paladin
+  findings above.
 - Hunter recorded runs (`TestRecordedRunHunter`, `SIMVAL_RECORD_HUNTER`, 300 s at 20 yards; the factory hunter gets a
   ranged weapon, quiver and ammo, and its pet autocasts only its damage spells). It keeps Serpent Sting up and fires
   Arcane Shot on cooldown, else Steady Shot, with Rapid Fire, Kill Command and Bestial Wrath on cooldown. Each capture
@@ -833,6 +880,8 @@ The fork copies the server. Patching any of these in [ac] means updating the mat
 | 49 | Explosive Trap damage (49065) | magic class: never misses, crits off spell crit for +50%, no ten-target cap (the trap's trigger creature casts it) | ranged hit and crit, +100%, capped | `GameObject::CastSpell`, `Spell::AddUnitTarget` |
 | 50 | Slam | can only miss: the cast (47475) is `NO_ACTIVE_DEFENSE`, its damage (50783) `ALWAYS_HIT` | one yellow roll: miss, dodge, parry, crit | `spell_warr_slam::HandleDummy`, `Spell.dbc` |
 | 51 | Deep Wounds refresh | queued to the caster's next 400 ms event boundary (up to 400 ms), `MunchingBlizzlike.Enabled` | applies immediately | `Unit::CastDelayedSpellWithPeriodicAmount`, `EventProcessor::CalculateQueueTime` |
+| 52 | Percent damage spell mods (`SPELLMOD_DAMAGE`, `SPELLMOD_DOT`) | multiply: Seals of the Pure, The Art of War and Glyph of Judgement give ×1.392 | add up: ×1.35 | `Player::ApplySpellMod` |
+| 53 | Two-Handed Weapon Specialization on seals and judgements | none: the aura is physical-only, and a holy weapon-percent spell's weapon damage skips the physical % mods | +2% a rank | `Spell::EffectWeaponDmg`, `Unit::MeleeDamageBonusDone` |
 
 Not yet settled against retail, check before patching: the 200 ms other-hand push (`PlayerUpdates.cpp`), the DoT
 refresh tick-timer rule, the max(cast, 1500 ms) PPM basis for spell-triggered aura procs, the rule-based binary

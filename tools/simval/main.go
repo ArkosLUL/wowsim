@@ -85,7 +85,7 @@ func runChronicle(args []string) int {
 	simDPS := flags.Float64("sim", 0, "the sim's DPS for the same gear, talents and rotation")
 	gap := flags.Float64("gap", 5, "a pause longer than this many seconds is left out of the active duration")
 	top := flags.Int("top", 20, "how many ability rows to print")
-	verbose := flags.Bool("v", false, "also print swing intervals, tick intervals and aura uptimes")
+	verbose := flags.Bool("v", false, "also print per-outcome averages, swing intervals, tick intervals and aura uptimes")
 	flags.Usage = func() {
 		fmt.Fprintf(flags.Output(), "usage: simval chronicle [flags] <log file>\n\n"+
 			"Reads a mod-chronicle raw log; captured runs live in %s.\n\n", chronicleDir)

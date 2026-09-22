@@ -38,11 +38,8 @@ func (paladin *Paladin) registerCrusaderStrikeSpell() {
 		},
 
 		BonusCritRating: core.TernaryFloat64(paladin.HasSetBonus(ItemSetAegisBattlegear, 4), 10, 0) * core.CritRatingPerCritChance,
-		DamageMultiplierAdditive: 1 +
-			paladin.getTalentSanctityOfBattleBonus() +
-			paladin.getTalentTheArtOfWarBonus() +
-			paladin.getItemSetGladiatorsVindicationBonusGloves(),
-		DamageMultiplier: 0.75,
+		DamageMultiplier: 0.75 * spellModDamage(paladin.getTalentSanctityOfBattleBonus(), paladin.getTalentTheArtOfWarBonus(),
+			paladin.getItemSetGladiatorsVindicationBonusGloves()),
 		CritMultiplier:   paladin.MeleeCritMultiplier(),
 		ThreatMultiplier: 1,
 

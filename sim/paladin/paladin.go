@@ -99,11 +99,15 @@ func (paladin *Paladin) AddRaidBuffs(raidBuffs *proto.RaidBuffs) {
 		raidBuffs.RetributionAura = true
 	}
 
-	if paladin.Talents.SanctifiedRetribution {
+	// Both talents work through the paladin's own aura: their shared buff (63531) drops off anyone
+	// without one (spell_paladin.cpp, spell_pal_sanctified_retribution_effect::CheckAreaTarget).
+	hasAura := paladin.PaladinAura != proto.PaladinAura_NoPaladinAura
+
+	if paladin.Talents.SanctifiedRetribution && hasAura {
 		raidBuffs.SanctifiedRetribution = true
 	}
 
-	if paladin.Talents.SwiftRetribution == 3 {
+	if paladin.Talents.SwiftRetribution == 3 && hasAura {
 		raidBuffs.SwiftRetribution = paladin.Talents.SwiftRetribution == 3 // TODO: Fix-- though having something between 0/3 and 3/3 is unlikely
 	}
 

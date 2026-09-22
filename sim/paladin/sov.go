@@ -38,7 +38,6 @@ func (paladin *Paladin) registerSealOfVengeanceSpellAndAura() {
 	 *  - Fix expertise rating on glyph application.
 	 */
 	// TODO: Test whether T8 Prot 2pc also affects Judgement, once available
-	// TODO: Verify whether these bonuses should indeed be additive with similar
 
 	// Two-Handed Weapon Specialization (any rank) carries a hidden aura-286 effect scoped to Holy
 	// Vengeance/Blood Corruption's family mask, so any rank makes the DoT crit-capable server-side.
@@ -50,8 +49,7 @@ func (paladin *Paladin) registerSealOfVengeanceSpellAndAura() {
 		ProcMask:    core.ProcMaskSpellDamage,
 		Flags:       core.SpellFlagMeleeMetrics,
 
-		DamageMultiplier: 1 *
-			(1 + paladin.getItemSetLightswornBattlegearBonus4() + paladin.getItemSetAegisPlateBonus2() + paladin.getTalentSealsOfThePureBonus()),
+		DamageMultiplier: spellModDamage(paladin.getItemSetLightswornBattlegearBonus4(), paladin.getItemSetAegisPlateBonus2(), paladin.getTalentSealsOfThePureBonus()),
 		CritMultiplier:   paladin.MeleeCritMultiplier(),
 		ThreatMultiplier: 1,
 
@@ -87,8 +85,7 @@ func (paladin *Paladin) registerSealOfVengeanceSpellAndAura() {
 		SpellSchool: core.SpellSchoolHoly,
 		ProcMask:    core.ProcMaskProc,
 
-		DamageMultiplier: 1 *
-			(1 + paladin.getItemSetLightswornBattlegearBonus4() + paladin.getItemSetAegisPlateBonus2() + paladin.getTalentSealsOfThePureBonus()),
+		DamageMultiplier: spellModDamage(paladin.getItemSetLightswornBattlegearBonus4(), paladin.getItemSetAegisPlateBonus2(), paladin.getTalentSealsOfThePureBonus()),
 		ThreatMultiplier: 1,
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
@@ -115,10 +112,7 @@ func (paladin *Paladin) registerSealOfVengeanceSpellAndAura() {
 
 		BonusCritRating: (6 * float64(paladin.Talents.Fanaticism) * core.CritRatingPerCritChance) +
 			(core.TernaryFloat64(paladin.HasSetBonus(ItemSetTuralyonsBattlegear, 4), 5, 0) * core.CritRatingPerCritChance),
-		DamageMultiplier: 1 *
-			(1 + paladin.getItemSetLightswornBattlegearBonus4() +
-				paladin.getTalentSealsOfThePureBonus() + paladin.getMajorGlyphOfJudgementBonus() + paladin.getTalentTheArtOfWarBonus()) *
-			(1 + paladin.getTalentTwoHandedWeaponSpecializationBonus()),
+		DamageMultiplier: spellModDamage(paladin.getItemSetLightswornBattlegearBonus4(), paladin.getTalentSealsOfThePureBonus(), paladin.getMajorGlyphOfJudgementBonus(), paladin.getTalentTheArtOfWarBonus()),
 		CritMultiplier:   paladin.MeleeCritMultiplier(),
 		ThreatMultiplier: 1,
 
@@ -142,16 +136,15 @@ func (paladin *Paladin) registerSealOfVengeanceSpellAndAura() {
 		ProcMask:    core.ProcMaskProc, // does proc certain spell damage-based items, e.g. Black Magic, Pendulum of Telluric Currents
 		Flags:       core.SpellFlagMeleeMetrics,
 
-		// (mult * weaponScaling / stacks)
-		DamageMultiplier: 1 *
-			(1 + paladin.getItemSetLightswornBattlegearBonus4() + paladin.getItemSetAegisPlateBonus2() + paladin.getTalentSealsOfThePureBonus()) *
-			(1 + paladin.getTalentTwoHandedWeaponSpecializationBonus()) * .33 / 5,
+		DamageMultiplier: spellModDamage(paladin.getItemSetLightswornBattlegearBonus4(), paladin.getItemSetAegisPlateBonus2(), paladin.getTalentSealsOfThePureBonus()),
 		CritMultiplier:   paladin.MeleeCritMultiplier(),
 		ThreatMultiplier: 1,
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := paladin.MHWeaponDamage(sim, spell.MeleeAttackPower()) *
-				float64(dotSpell.Dot(target).GetStacks())
+			// 33% of the weapon at 5 stacks, the percent truncated to an int per stack
+			// (spell_paladin.cpp, spell_pal_seal_of_vengeance_aura::HandleSeal)
+			weaponPercent := 33 * dotSpell.Dot(target).GetStacks() / 5
+			baseDamage := paladin.MHWeaponDamage(sim, spell.MeleeAttackPower()) * float64(weaponPercent) / 100
 
 			// can't miss if melee swing landed, but can crit
 			result := spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialCritOnly)

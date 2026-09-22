@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"math"
 	"os"
 	"path/filepath"
 	"slices"
@@ -28,6 +29,10 @@ const (
 	simDBJSON      = "assets/database/db.json"
 	serverPaladin  = 2
 	serverHunter   = 3
+
+	// the top ranks, as a level 80 casts them
+	retributionAuraSpell = 54043
+	devotionAuraSpell    = 48942
 )
 
 // recordedSetup is a recorded run's .setup.txt, as mod-sim-validation's TestRecordedRun writes it.
@@ -38,6 +43,7 @@ type recordedSetup struct {
 	Race    int32
 	Seconds float64
 	Yards   float64
+	Started []int32             // SIMVAL_RECORD_START_SPELLS, cast once before the pull
 	Talents []int32             // talent spells of the first talent group
 	Items   map[int32]setupItem // by AzerothCore equipment slot
 	Glyphs  [6]int32            // GlyphProperties ids
@@ -125,6 +131,8 @@ func (setup *recordedSetup) addHeader(line string) (string, error) {
 		setup.Yards, err = strconv.ParseFloat(value, 64)
 	case "ammo":
 		setup.Ammo, err = parseInt32(value)
+	case "started":
+		setup.Started, err = parseSpellList(value)
 	case "glyphs":
 		fields := strings.Fields(strings.Trim(value, "[]"))
 		if len(fields) != len(setup.Glyphs) {
@@ -206,6 +214,19 @@ func (setup *recordedSetup) addRow(section string, fields []string) error {
 	return nil
 }
 
+// parseSpellList reads a Go-printed id list, like `[31801 53736]`.
+func parseSpellList(value string) ([]int32, error) {
+	var spells []int32
+	for _, field := range strings.Fields(strings.Trim(value, "[]")) {
+		spell, err := parseInt32(field)
+		if err != nil {
+			return nil, err
+		}
+		spells = append(spells, spell)
+	}
+	return spells, nil
+}
+
 func parseInt32(text string) (int32, error) {
 	value, err := strconv.ParseInt(text, 10, 32)
 	return int32(value), err
@@ -268,13 +289,14 @@ const hunterRotation = `{"type":"TypeAPL","priorityList":[
  {"action":{"castSpell":{"spellId":{"spellId":49052}}}}
 ]}`
 
-// retRotation is the priority list off ui/retribution_paladin/apls/default.apl.json, minus the
-// prepull potion and Exorcism, which the recorded Ret cycle (SIMVAL_RECORD_SPELLS) doesn't cast:
-// Hammer of Wrath in execute, Judgement of Wisdom, Crusader Strike, Divine Storm, else Consecration
-// outside the last 4 s.
+// retRotation is ui/retribution_paladin/apls/default.apl.json's priority list cut down to what the
+// recorded cycle (SIMVAL_RECORD_SPELLS) casts: Divine Plea, Judgement of Wisdom, Crusader Strike,
+// Divine Storm, else Consecration outside the last 4 s. No autocastOtherCooldowns, since that would
+// cast Avenging Wrath, which the capture never does. It's reactive, not the capture's fixed 1.5 s
+// round-robin (no APL action gives up on a refused cast until the next lap), so it casts more often:
+// compare per-ability hit sizes and crit rates, not DPS.
 const retRotation = `{"type":"TypeAPL","priorityList":[
- {"action":{"autocastOtherCooldowns":{}}},
- {"action":{"castSpell":{"spellId":{"spellId":48806}}}},
+ {"action":{"castSpell":{"spellId":{"spellId":54428}}}},
  {"action":{"castSpell":{"spellId":{"spellId":53408}}}},
  {"action":{"castSpell":{"spellId":{"spellId":35395}}}},
  {"action":{"castSpell":{"spellId":{"spellId":53385}}}},
@@ -285,12 +307,17 @@ const retRotation = `{"type":"TypeAPL","priorityList":[
 type rrsimData struct {
 	root       string
 	dbc        *azerothcore.RosterDBC
+	spellDBC   *azerothcore.DBC // for enchants the sim's item database lacks
 	trees      azerothcore.TalentTrees
 	glyphItems map[int32]int32 // glyph spell -> glyph item
 }
 
 func loadRRSimData(root, dbcDir string) (*rrsimData, error) {
 	dbc, err := azerothcore.LoadRosterDBC(dbcDir)
+	if err != nil {
+		return nil, err
+	}
+	spellDBC, err := azerothcore.LoadDBC(dbcDir)
 	if err != nil {
 		return nil, err
 	}
@@ -315,7 +342,7 @@ func loadRRSimData(root, dbcDir string) (*rrsimData, error) {
 	for _, glyph := range db.GlyphIds {
 		glyphItems[glyph.SpellID] = glyph.ItemID
 	}
-	return &rrsimData{root: root, dbc: dbc, trees: trees, glyphItems: glyphItems}, nil
+	return &rrsimData{root: root, dbc: dbc, spellDBC: spellDBC, trees: trees, glyphItems: glyphItems}, nil
 }
 
 type rrsimOptions struct {
@@ -351,7 +378,7 @@ func recordedHunter(setup *recordedSetup, data *rrsimData, noTracking bool) (*pr
 		warnings = append(warnings, fmt.Sprintf("talent spell %d isn't in the sim's talent trees", spell))
 	}
 
-	equipment, itemWarnings, err := recordedEquipment(setup.Items, data.dbc)
+	equipment, enchantStats, itemWarnings, err := recordedEquipment(setup.Items, data)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -395,7 +422,7 @@ func recordedHunter(setup *recordedSetup, data *rrsimData, noTracking bool) (*pr
 		DistanceFromTarget: setup.Yards,
 		Consumes:           &proto.Consumes{},
 		Buffs:              &proto.IndividualBuffs{},
-		BonusStats:         &proto.UnitStats{Stats: stats.Stats{stats.MP5: unlimitedMP5}.ToFloatArray()},
+		BonusStats:         &proto.UnitStats{Stats: enchantStats.Add(stats.Stats{stats.MP5: unlimitedMP5}).ToFloatArray()},
 	}, warnings, nil
 }
 
@@ -417,7 +444,7 @@ func recordedPaladin(setup *recordedSetup, data *rrsimData) (*proto.Player, []st
 		warnings = append(warnings, fmt.Sprintf("talent spell %d isn't in the sim's talent trees", spell))
 	}
 
-	equipment, itemWarnings, err := recordedEquipment(setup.Items, data.dbc)
+	equipment, enchantStats, itemWarnings, err := recordedEquipment(setup.Items, data)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -453,16 +480,33 @@ func recordedPaladin(setup *recordedSetup, data *rrsimData) (*proto.Player, []st
 		Glyphs:        glyphs,
 		Spec: &proto.Player_RetributionPaladin{RetributionPaladin: &proto.RetributionPaladin{
 			Options: &proto.RetributionPaladin_Options{
-				Aura:      proto.PaladinAura_RetributionAura,
+				Aura:      paladinAura(setup.Started),
 				Seal:      proto.PaladinSeal_Vengeance,
 				Judgement: proto.PaladinJudgement_JudgementOfWisdom,
 			},
 		}},
 		Rotation:           rotation,
 		DistanceFromTarget: setup.Yards,
-		Consumes:           &proto.Consumes{},
-		Buffs:              &proto.IndividualBuffs{},
+		// TestRecordedRun swings from where spawnInFront left it, facing the dummy
+		InFrontOfTarget: true,
+		Consumes:        &proto.Consumes{},
+		Buffs:           &proto.IndividualBuffs{},
+		BonusStats:      &proto.UnitStats{Stats: enchantStats.ToFloatArray()},
 	}, warnings, nil
+}
+
+// paladinAura is the aura a Ret capture cast before the pull. It has none unless SIMVAL_RECORD_START_SPELLS
+// names one: the factory's character starts without.
+func paladinAura(started []int32) proto.PaladinAura {
+	for _, spell := range started {
+		switch spell {
+		case retributionAuraSpell:
+			return proto.PaladinAura_RetributionAura
+		case devotionAuraSpell:
+			return proto.PaladinAura_DevotionAura
+		}
+	}
+	return proto.PaladinAura_NoPaladinAura
 }
 
 func (data *rrsimData) glyphItem(spell int32, warnings *[]string) int32 {
@@ -473,11 +517,15 @@ func (data *rrsimData) glyphItem(spell int32, warnings *[]string) int32 {
 	return item
 }
 
-func recordedEquipment(items map[int32]setupItem, dbc *azerothcore.RosterDBC) (*proto.EquipmentSpec, []string, error) {
+// recordedEquipment builds the gear, plus the stats of any enchant the sim's item database lacks,
+// read off the live DBC: the playerbot factory hands out some the sim has never heard of (3776, +45
+// attack power and +15 crit rating on shoulders), which it would otherwise drop without a word.
+func recordedEquipment(items map[int32]setupItem, data *rrsimData) (*proto.EquipmentSpec, stats.Stats, []string, error) {
 	equipment := &proto.EquipmentSpec{Items: make([]*proto.ItemSpec, len(proto.ItemSlot_name))}
 	for i := range equipment.Items {
 		equipment.Items[i] = &proto.ItemSpec{}
 	}
+	var enchantStats stats.Stats
 	var warnings []string
 	for acSlot, item := range items {
 		slot, ok := acSlots[acSlot]
@@ -486,20 +534,41 @@ func recordedEquipment(items map[int32]setupItem, dbc *azerothcore.RosterDBC) (*
 		}
 		simItem, ok := core.LookupItem(item.ID)
 		if !ok {
-			return nil, nil, fmt.Errorf("slot %d: item %d isn't in the sim's item database", acSlot, item.ID)
+			return nil, stats.Stats{}, nil, fmt.Errorf("slot %d: item %d isn't in the sim's item database", acSlot, item.ID)
 		}
 		built, itemWarnings := azerothcore.BuildRosterItem(azerothcore.EquippedItem{
 			ACSlot: acSlot, ItemID: item.ID, Enchantments: item.Enchantments,
 			NativeSockets: int32(len(simItem.GemSockets)), KnownTemplate: true,
-		}, dbc, nil)
+		}, data.dbc, nil)
 		warnings = append(warnings, itemWarnings...)
+		if _, known := core.LookupEnchant(built.Enchant); built.Enchant != 0 && !known {
+			bonus, warning := dbcEnchantStats(built.Enchant, data.spellDBC)
+			enchantStats = enchantStats.Add(bonus)
+			warnings = append(warnings, fmt.Sprintf("slot %d: %s", acSlot, warning))
+			built.Enchant = 0
+		}
 		gems := built.Gems
 		if built.ExtraGem != 0 {
 			gems = append(slices.Clone(gems), built.ExtraGem)
 		}
 		equipment.Items[slot] = &proto.ItemSpec{Id: built.ID, Enchant: built.Enchant, Gems: gems}
 	}
-	return equipment, warnings, nil
+	return equipment, enchantStats, warnings, nil
+}
+
+// dbcEnchantStats is an enchant's flat stats off SpellItemEnchantment.dbc, and a warning naming what
+// the sim gets of it: procs and weapon damage don't carry over.
+func dbcEnchantStats(id int32, dbc *azerothcore.DBC) (stats.Stats, string) {
+	enchant := dbc.Enchantments[id]
+	if enchant == nil {
+		return stats.Stats{}, fmt.Sprintf("enchant %d is in neither the sim's item database nor the DBC, dropped", id)
+	}
+	dbStats, spells, weaponDamage := azerothcore.EnchantmentStats(enchant, dbc)
+	warning := fmt.Sprintf("enchant %d (%s) isn't in the sim's item database, added as bonus stats", id, enchant.Name)
+	if len(spells) > 0 || weaponDamage != 0 {
+		warning += fmt.Sprintf(", minus %d spells and %d weapon damage", len(spells), weaponDamage)
+	}
+	return stats.FromFloatArray(dbStats[:]), warning
 }
 
 func hunterOptions(setup *recordedSetup, data *rrsimData) (*proto.Hunter_Options, error) {
@@ -642,7 +711,7 @@ func runRecordedSim(args []string) int {
 	dbcDir := flags.String("dbc", "/dbc", "the live server's DBC files")
 	noTracking := flags.Bool("notracking", false, "drop Improved Tracking, for a run that tracked nothing")
 	out := flags.String("out", "", "also write the sim request here as JSON")
-	verbose := flags.Bool("v", false, "also print the final stats, the talents and an ability breakdown")
+	verbose := flags.Bool("v", false, "also print the final stats, the talents, an ability breakdown and per-outcome averages")
 	flags.Usage = func() {
 		fmt.Fprintf(flags.Output(), "usage: simval rrsim [flags] <setup file>\n\n"+
 			"Sims a recorded hunter or Retribution Paladin run from its .setup.txt, for `simval chronicle\n"+
@@ -708,14 +777,26 @@ func runRecordedSim(args []string) int {
 		fmt.Fprintln(os.Stderr, result.ErrorResult)
 		return 1
 	}
-	reportRecordedSim(os.Stdout, setup, request, result, *verbose)
+	var outcomes map[outcomeKey]*outcomeBreakdown
+	if *verbose {
+		var dps float64
+		outcomes, dps = tallyOutcomes(request)
+		if simDPS := result.RaidMetrics.Parties[0].Players[0].Dps.Avg; math.Abs(dps-simDPS) > 0.05 {
+			fmt.Fprintf(os.Stderr, "warning: the outcome pass simmed %.1f DPS, not %.1f, so it ran other fights\n", dps, simDPS)
+		}
+	}
+	reportRecordedSim(os.Stdout, setup, request, result, outcomes)
 	if log := capturePath(setupPath); log != "" {
 		fmt.Printf("compare: simval chronicle -sim %.1f %s\n", result.RaidMetrics.Parties[0].Players[0].Dps.Avg, log)
 	}
 	return 0
 }
 
-func reportRecordedSim(out io.Writer, setup *recordedSetup, request *proto.RaidSimRequest, result *proto.RaidSimResult, verbose bool) {
+// reportRecordedSim prints the DPS, plus the stats and each ability's breakdown when there are outcomes,
+// which only a verbose run tallies.
+func reportRecordedSim(out io.Writer, setup *recordedSetup, request *proto.RaidSimRequest, result *proto.RaidSimResult,
+	outcomes map[outcomeKey]*outcomeBreakdown) {
+	verbose := outcomes != nil
 	player := request.Raid.Parties[0].Players[0]
 	hunter := player.GetHunter()
 	label := "paladin"
@@ -736,10 +817,10 @@ func reportRecordedSim(out io.Writer, setup *recordedSetup, request *proto.RaidS
 		fmt.Fprintf(out, "glyphs {%v}\n", player.Glyphs)
 		computed := core.ComputeStats(&proto.ComputeStatsRequest{Raid: request.Raid, Encounter: request.Encounter})
 		final := computed.RaidStats.Parties[0].Players[0].FinalStats.Stats
-		fmt.Fprintf(out, "final: AP %.0f, RAP %.0f, agi %.0f, crit rating %.0f, hit rating %.0f, haste rating %.0f, ArP %.0f\n",
+		fmt.Fprintf(out, "final: AP %.0f, RAP %.0f, agi %.0f, crit rating %.0f, hit rating %.0f, expertise rating %.0f, haste rating %.0f, ArP %.0f\n",
 			final[proto.Stat_StatAttackPower], final[proto.Stat_StatRangedAttackPower], final[proto.Stat_StatAgility],
-			final[proto.Stat_StatMeleeCrit], final[proto.Stat_StatMeleeHit], final[proto.Stat_StatMeleeHaste],
-			final[proto.Stat_StatArmorPenetration])
+			final[proto.Stat_StatMeleeCrit], final[proto.Stat_StatMeleeHit], final[proto.Stat_StatExpertise],
+			final[proto.Stat_StatMeleeHaste], final[proto.Stat_StatArmorPenetration])
 	}
 
 	metrics := result.RaidMetrics.Parties[0].Players[0]
@@ -757,6 +838,7 @@ func reportRecordedSim(out io.Writer, setup *recordedSetup, request *proto.RaidS
 		for _, pet := range metrics.Pets {
 			printActions(out, pet.Name+": ", pet.Actions, iterations)
 		}
+		printOutcomes(out, outcomeRows(outcomes), iterations)
 	}
 }
 
