@@ -19,8 +19,8 @@ const (
 	BisProtocolVersion = 1
 	// 3.3.5a addon messages carry prefix, tab and message in at most this many bytes
 	BisMaxWireLength = 255
-	// the optimizer's pick plus its 3 runners-up
-	BisMaxRanks = 4
+	// the optimizer's pick plus up to 5 runners-up
+	BisMaxRanks = 6
 )
 
 // BisBlock is the BiS of one subject in one content phase.

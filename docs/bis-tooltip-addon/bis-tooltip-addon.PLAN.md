@@ -32,7 +32,7 @@ arbitrary, it was made deliberately; the reasoning is kept where it changes how 
 
 **The sim already produces the data shapes.**
 
-- `proto/optimizer.proto`: `OptimizerResult` (best `EquipmentSpec`, `alternatives` = top 3 per slot
+- `proto/optimizer.proto`: `OptimizerResult` (best `EquipmentSpec`, `alternatives` = runners-up per slot
   with `score_delta`, `sim_commit`, `catalog_date`), `OptimizerBatchExport` / `OptimizerBatchEntry`.
 - `sim/optimizer/raidctx/derive.go` (merged, wave C) derives a player's raid buffs, party buffs,
   debuffs and replenishment **from the actual roster composition** — the mechanism behind feature 2.
@@ -164,25 +164,27 @@ Block payload: the filled slots in slot order, joined with `;`. Each slot:
 ```
 0:51227,50712,50713,51866(e59954,g41398,g40111,r31-37)+142
 ^ ^                       ^      ^      ^      ^       ^
-| up to 4 ranked item ids |      gems in socket order  rank 1's delta over rank 2, may be "+-3"
+| up to 6 ranked item ids |      gems in socket order  rank 1's delta over rank 2, may be "+-3"
 proto ItemSlot 0-16       enchant spell        reforge, stat 31 -> 37
 ```
 
 Rings and trinkets are separate slots (10/11, 12/13), each with its own ranks. Enhancements are rank
 1's only, in the order enchant, gems, reforge, each optional; so is the delta, which needs a rank 2.
-Four ranks per slot: the optimizer's best plus its 3 `OptimizerSlotAlternative`s — matching the source
-exactly, so there's no truncation policy to regret. Gems and enchants reuse the addon's `enhs` icon
+Six ranks per slot: the optimizer's best plus up to 5 `OptimizerSlotAlternative`s — matching the source
+exactly, so there's no truncation policy to regret. acbis warns about any runner-up past rank 6 and
+leaves it out. Gems and enchants reuse the addon's `enhs` icon
 renderer; the reforge becomes a plain text line. Only the rank-1 delta travels, so the tooltip can say
 what the slot is worth over its runner-up; full per-item deltas wait until wave H, because pre-H
 deltas are own-metrics and would mislead.
 
-**Sizing,** measured on a real fury P1 result (17 filled slots): 716 B and 4 frames per block. 25
-raiders × 5 phases = 125 roster blocks, up to 30 non-healer addon specs × 5 = 150 spec blocks: ~275
-blocks, ~200 KB. A cold sync fetches them all: ≈ 1,100 frames at 10 per `SendIntervalMs` (100 ms), **~14
-s** from HELLO in the addon harness's model of the module; healers have no blocks, so less in practice.
+**Sizing,** measured on a fury P1 result extended to 5 alternatives per slot (17 filled slots): ~926 B
+and 5 frames per block. 25 raiders × 5 phases = 125 roster blocks, up to 30 non-healer addon specs × 5
+= 150 spec blocks: ~275 blocks, ~255 KB. A cold sync fetches them all: ≈ 1,375 frames at 10 per
+`SendIntervalMs` (100 ms), **~17 s** from HELLO in the addon harness's model of the module; healers
+have no blocks, so less in practice.
 
 **No compression in v1.** Plain decimal stays readable on the wire, which makes bugs in a
-two-language codec far cheaper to find, and a ~14 s sync once per dataset change isn't worth buying
+two-language codec far cheaper to find, and a ~17 s sync once per dataset change isn't worth buying
 complexity to fix. Two levers if the measured number annoys: base-36 item ids (~20% off) or raw
 deflate with LibDeflate client-side (~55% off, at the cost of a printable-encoding layer and a second
 way for the codecs to disagree).
@@ -231,7 +233,8 @@ machinery would cost more than it buys.
 
 **The freeze point.** The wire format above is frozen with Phase 1. The module and the addon's decoder
 are written against it; changing it later means touching three repos and bumping the protocol
-version.
+version. A change may skip the bump only while the one installed addon updates with it, as raising
+ranks per slot from 4 to 6 did.
 
 **Gates that need the user**, none of which a session may do on its own:
 
@@ -337,7 +340,7 @@ original Bistooltip as installed, then this phase, then Phase 4. Options, sync a
   unchanged as the offline and healer fallback. A baked server snapshot would go stale, compete with the
   live dataset for authority, and put you back to hand-distributing data.
 - `Bistooltip_server.lua`: the codec, the sync, and the API the options and tooltip use. It decodes into
-  exactly what `acbis -luaOut` writes. The cache sits in `BisTooltipDB.global.server`, so one install
+  exactly what `acbis -luaOut` writes. The cache sits in `BisTooltipACDB.global.server`, so one install
   syncs once for every character on it.
 - `Config.lua`: the `Server (live)` data source, the default, plus "Sync now" and a status line. A
   fallback is said in chat and in the status line.
@@ -346,9 +349,9 @@ Changed from the plan:
 
 - HELLO is retried 12 s apart, 3 times, then the addon falls back. A sync with no progress for 15 s
   handshakes again, up to 3 times, then reports it stalled.
-- `SavedVariables` is still `BisTooltipDB`, the original's name. With both addons enabled, the client
-  writes one table into both files, so the fork inherits the original's per-character data source. The
-  fork warns in chat when both are enabled.
+- `SavedVariables` kept the original's name, `BisTooltipDB`, until Phase 5 renamed it. With both addons
+  enabled, the client wrote one table into both files, so the fork inherited the original's
+  per-character data source. The fork warns in chat when both are enabled.
 
 **Verified:** `test/run-tests.sh` runs the addon's real code under Lua 5.1, with the WoW API and Ace
 stubbed, against a model of the module's session logic serving messages the module's own C++ built;
@@ -388,20 +391,45 @@ Changed from the plan:
 - In the client: hovers across phases, the shipped label, both toggles, source switching, the filters,
   Ctrl gating and shift-compare.
 - `CanInspect` and `CheckInteractDistance(unit, 1)` return 1 for online bots in range.
-- The offline-member handling is checked in the harness only.
-
-Open:
-
-- Renaming `SavedVariables` to e.g. `BisTooltipACDB`, so the fork never shares the original's settings.
-  The user's call.
-- Skipping the raid check in battlegrounds and arenas, which count as raids of 10+.
-- `Bislist.lua`'s comment says `CanInspect` is false for bots. In range it's true.
+- The offline-member handling was checked in the client with Phase 5.
 
 ### Phase 5 — Browser roster mode
 
-`Bislist.lua`: the class dropdown gains a "My raid" entry that swaps the spec dropdown for roster
-names; `updateForTarget` prefers a roster subject when the inspected target is a known raider. May
-slip without blocking phase 4.
+**Status:** done, in the addon repo.
+
+- `Bislist.lua`:
+  - "My raid" ends the class list while the server serves a roster. It lists the raiders in raid order
+    as `<class icon> Name (Spec)`, and starts on the raider shown last (saved by GUID), else you, else
+    the first. With Auto-track target on, targeting a raider picks them.
+  - Rows are padded to 6 item cells: AceGUI's `Table` layout fills cells in order, so a short slot
+    shifted every later row. The shipped lists always hold 6.
+  - BoE coins come from a hidden scan tooltip matched against `ITEM_BIND_ON_EQUIP`, since 3.3.5a's
+    `GetItemInfo` has no bind type. It also loads uncached items, so drawing the browser runs no
+    tooltip hooks.
+  - The browser's own inspect waits for `CanInspect` and the 28 yd range, like the raid check, so an
+    unanswered one can't take the raid check's reply.
+- `Codec.characterGuid` reads the character id from `UnitGUID`'s low 8 hex digits.
+- `SavedVariables` is `BisTooltipACDB`, with no migration: settings start fresh, and the cache syncs
+  once more.
+- The raid check skips PvP raids: `IsInInstance()` returning `pvp` or `arena`, and outdoors
+  `GetZonePVPInfo() == "combat"` (Wintergrasp).
+- Six ranks per slot (see Wire format) in acbis and the Lua decoder. The module needed no change.
+
+Changed from the plan: the six ranks, the BoE coins and the row padding weren't planned, and
+`Core.lua`'s owned-item scan now reads raiders' lists too.
+
+**Verified:**
+- `test/run-tests.sh`: 1,550 checks on a six-rank fixture from `gen-fixture.sh`, 4,929 on the live
+  export's. Deliberately broken copies were each caught. `go test ./tools/database/azerothcore/`
+  passes.
+- In the client: Deathsong's `UnitGUID` `0x000000000006A9B9` parses to 436665; the reset after the
+  rename; "My raid" and the target preference; aligned rows; BoE coins; and Phase 4's offline-member
+  warning. Wintergrasp detection is checked in the harness only.
+
+Known limits:
+- Raiders have no `PR` lists, so "My raid" on PR shows empty tables.
+- The addon's own Shift-compare (`ShowCompareTooltip`) never shows: it reads `GetItemInfo`'s stack
+  count as the equip slot. Left as is, since Blizzard's compare covers it.
 
 ### Phase 6 — Real data, zip, docs
 
@@ -423,7 +451,7 @@ slip without blocking phase 4.
 | Exporter | `go test ./tools/database/azerothcore/` in the toolchain container — round-trip, slot coverage, frame-size cap |
 | Codec agreement | `acbis -luaOut` dumps the decoded structure; diff against what the addon caches, the way `acraid`'s `crosscheck.py` independently re-derives its export |
 | Module | compiles; loads (worldserver log); `.bistooltip reload` picks up a re-import and nudges live sessions |
-| Protocol | cold sync ~6 s; warm login 2 frames; mid-sync disconnect resumes; `Enable = 0` falls back |
+| Protocol | cold sync ~17 s; warm login 2 frames; mid-sync disconnect resumes; `Enable = 0` falls back |
 | End to end | in-client hover across phases, roster + spec sections, healer fallback, tier default |
 
 ## Risks and calls made

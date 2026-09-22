@@ -31,7 +31,7 @@ func TestEncodeBlock(t *testing.T) {
 func TestBlockRoundTrip(t *testing.T) {
 	var everySlot BisBlock
 	for slot := proto.ItemSlot_ItemSlotHead; slot <= proto.ItemSlot_ItemSlotRanged; slot++ {
-		everySlot.Slots = append(everySlot.Slots, BisSlot{Slot: slot, Items: []int32{40000 + int32(slot), 41000, 42000, 43000},
+		everySlot.Slots = append(everySlot.Slots, BisSlot{Slot: slot, Items: []int32{40000 + int32(slot), 41000, 42000, 43000, 44000, 45000},
 			Enchant: 60000, Gems: []int32{40111, 40117, 41398}, ReforgeFrom: 13, ReforgeTo: 31, Delta: int32(slot) * 7, HasDelta: true})
 	}
 
@@ -76,7 +76,7 @@ func TestEncodeBlockRejects(t *testing.T) {
 	for comment, block := range map[string]BisBlock{
 		"no slots":           {},
 		"no items":           head(BisSlot{}),
-		"five items":         head(BisSlot{Items: []int32{1, 2, 3, 4, 5}}),
+		"seven items":        head(BisSlot{Items: []int32{1, 2, 3, 4, 5, 6, 7}}),
 		"zero item":          head(BisSlot{Items: []int32{0}}),
 		"zero gem":           head(BisSlot{Items: []int32{1}, Gems: []int32{0}}),
 		"half a reforge":     head(BisSlot{Items: []int32{1}, ReforgeFrom: 13}),
@@ -95,7 +95,7 @@ func TestEncodeBlockRejects(t *testing.T) {
 
 func TestDecodeBlockRejects(t *testing.T) {
 	for _, payload := range []string{
-		"", "0", "0:", ":1", "x:1", "17:1", "-1:1", "0:1,", "0:1,,2", "0:01", "0:+1", "0:1 ", "0:1,2,3,4,5",
+		"", "0", "0:", ":1", "x:1", "17:1", "-1:1", "0:1,", "0:1,,2", "0:01", "0:+1", "0:1 ", "0:1,2,3,4,5,6,7",
 		"0:1(", "0:1()", "0:1(e)", "0:1(e0)", "0:1(e1,e2)", "0:1(x1)", "0:1(r13)", "0:1(r13-31,r6-13)", "0:1(g-5)",
 		"0:1(g2,e3)", "0:1(r13-31,g2)", "0:1(r13-31,e3)", "0:1,1",
 		"0:1+", "0:1+x", "0:1+-0", "0:1+1+2", "0:1+5", "0:1;", "1:1;0:1", "0:1;0:2",
