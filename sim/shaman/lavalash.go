@@ -24,8 +24,13 @@ func (shaman *Shaman) registerLavaLashSpell() {
 
 	flatDamageBonus := core.TernaryFloat64(shaman.Ranged().ID == VentureCoFlameSlicer, 25, 0)
 
+	// spell_sha_lava_lash looks for the Flametongue Weapon dummy aura on the caster with no hand check,
+	// so either weapon carrying it grants the bonus, not just the off hand.
+	hasFlametongue := func(imbue proto.ShamanImbue) bool {
+		return imbue == proto.ShamanImbue_FlametongueWeapon || imbue == proto.ShamanImbue_FlametongueWeaponDownrank
+	}
 	imbueMultiplier := 1.0
-	if shaman.SelfBuffs.ImbueOH == proto.ShamanImbue_FlametongueWeapon || shaman.SelfBuffs.ImbueOH == proto.ShamanImbue_FlametongueWeaponDownrank {
+	if hasFlametongue(shaman.SelfBuffs.ImbueMH) || hasFlametongue(shaman.SelfBuffs.ImbueOH) {
 		imbueMultiplier = 1.25
 		if shaman.HasMajorGlyph(proto.ShamanMajorGlyph_GlyphOfLavaLash) {
 			imbueMultiplier = 1.35

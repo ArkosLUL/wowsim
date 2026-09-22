@@ -43,7 +43,6 @@ func (shaman *Shaman) NewFireElemental(bonusSpellPower float64) *FireElemental {
 		},
 		AutoSwingMelee: true,
 	})
-	fireElemental.AddStatDependency(stats.Intellect, stats.SpellCrit, core.CritRatingPerCritChance/212)
 
 	if bonusSpellPower > 0 {
 		fireElemental.AddStat(stats.SpellPower, float64(bonusSpellPower)*0.5218)
@@ -131,12 +130,7 @@ func (fireElemental *FireElemental) TryCast(sim *core.Simulation, target *core.U
 		return false
 	}
 
-	if !spell.Cast(sim, target) {
-		return false
-	}
-	// all spell casts reset the elemental's swing timer
-	fireElemental.AutoAttacks.StopMeleeUntil(sim, sim.CurrentTime+spell.CurCast.CastTime, false)
-	return true
+	return spell.Cast(sim, target)
 }
 
 var fireElementalPetBaseStats = stats.Stats{
@@ -147,9 +141,10 @@ var fireElementalPetBaseStats = stats.Stats{
 	stats.SpellPower:  0,    //Estimated
 	stats.AttackPower: 1303, //Estimated
 
-	// TODO : Log digging and my own samples this seems to be around the 5% mark.
+	// Unit::GetUnitCriticalChance and m_baseSpellCritChance give every non-player unit a flat 5%; the fire
+	// elemental isn't one of the pets a scripted aura scales further by a stat.
 	stats.MeleeCrit: 5 * core.CritRatingPerCritChance,
-	stats.SpellCrit: 2.61 * core.CritRatingPerCritChance,
+	stats.SpellCrit: 5 * core.CritRatingPerCritChance,
 }
 
 func (shaman *Shaman) fireElementalStatInheritance() core.PetStatInheritance {

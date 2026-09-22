@@ -37,8 +37,10 @@ Roll details the tables above don't show:
   (`Spell.cpp:8476-8478`), independent of the hit roll.
 - ALWAYS_HIT returns before the yellow table rolls at all, not just before active defense, and
   `isSpellBlocked` exempts it and NO_ACTIVE_DEFENSE from the partial block roll. `rollYellow` and
-  `OutcomeMeleeSpecialCritOnly` read the flag now (PAR-P7-0e); Stormstrike's 32175/32176 still don't,
-  since the sim rolls both hits under the outer 17364 spell object, which carries neither flag.
+  `OutcomeMeleeSpecialCritOnly` read the flag now (PAR-P7-0e). **Fixed (PAR-P7-SHA):** Stormstrike's two
+  hits now deal damage under their own ids, 32175 (MH) and 32176 (OH), which carry both flags; 17364
+  still rolls the yellow table once, for the debuff. Before, both hits rolled under 17364 too, which
+  carries neither flag, so they still took a partial block from the front.
 
 **Resists.** Sim: `sim/core/spell_resistances.go:87-106`. Server: `Unit.cpp:2304-2412`, `SpellMgr.cpp:3405-3466,3597-3633`.
 - Sim: avg resist = R/(C+R) + 2% per level, i.e. 6% at +3.
@@ -218,7 +220,9 @@ Roll details the tables above don't show:
   halves, is blocked and reaches the pet through the owner instead. 425790 and
   `spell_dk_pet_scaling` leave `MOD_MELEE_HASTE` alone, so Frenzy and Ghoul Frenzy stack on top; 425792 blocks
   it too, since Windfury Totem and Improved Icy Talons reach the wolves as party auras and are already in the
-  shaman's melee haste.
+  shaman's melee haste. **Fixed (PAR-P7-SHA review):** Spirit Wolves now carry `Unit.HasteCarrier` too
+  (`spirit_wolves.go`); `sim/core`'s carrier immunity still doesn't cover `WindfuryTotem`/`IcyTalons`
+  specifically (see the Shaman section), so those two can still double-count on the wolves.
 - A pet's melee crit is a flat 5% plus crit auras (`Unit::GetUnitCriticalChance`), nothing from agility,
   and a creature's spell crit `m_baseSpellCritChance`, 5%. The DK's summons and the hunter pet follow it;
   warlock pets, treants, spirit wolves and the infernal still take agility crit.
@@ -281,8 +285,33 @@ Roll details the tables above don't show:
   carrier snapshot. The permanent ghoul learns 51996 as a Ghoul family passive (SkillLineAbility 782,
   CreatureFamily 40, `Pet::LearnPetPassives`), which is why `Guardian::InitStatsForLevel` adds it only
   `if (!IsPet())`.
-- The sim's pet "+1.8% crit" hacks (`shaman/fire_elemental_pet.go:151`, `shaman/spirit_wolves.go:45`) are Classic-only.
-  The hunter pet's crit is the server's now (Hunter, Pets).
+- **Fixed (PAR-P7-SHA):** the crit hacks were Classic-only bases (Spirit Wolves 1.1515%, the fire
+  elemental 2.61% plus an Intellect dependency). `Unit::GetUnitCriticalChance` gives every non-player
+  unit a flat 5% base, matching `m_baseSpellCritChance`'s 5% for spell crit; a scripted aura adds agility
+  on top for the pets above still taking it (Spirit Wolves included, so its `Agility → MeleeCrit`
+  dependency stays), and the fire elemental isn't one of them, so its Intellect dependency is gone.
+- **Fixed (PAR-P7-SHA):** Feral Spirit and the fire elemental (Fire Blast, Fire Nova) each called
+  `AutoAttacks.StopMeleeUntil` by hand on cast. All three already carry `FlagResetsAutoAttack`, which
+  `RegisterSpell`'s serverdata sync now applies on its own (P3-2/P3-3); the manual calls only duplicated it.
+- **Fixed (PAR-P7-SHA review):** Spirit Wolves never wired the haste carrier the Pets section already
+  described (425792), so they took whatever buffs reached them directly and never echoed the shaman's
+  own gear Haste Rating at all. `spirit_wolves.go` now sets `HasteCarrier`/`OwnerHasteSource` to
+  `shaman.SwingSpeed()`, gated on `SpellTweaks.FeralSpiritHaste` (on live), matching the hunter pet and
+  DK ghoul pattern. Also fixed their AP inheritance, 31%/61% glyphed to the server's 30%/60%
+  (`spell_shaman.cpp:222-243`, `CalculateAPAmount`; Glyph of Feral Spirit 63271's own effect is +30, not
+  +31). Bisected on `WF-default_wf-NoBuffs-LongSingleTarget` (Orc p1): the pre-review code (both
+  fixes reverted) gives 3258.20 DPS; the AP fix alone drops it to 3256.68 (-0.05%, less AP from the
+  wolves); both fixes together give 3283.45 (+0.77% over the pre-review number). The net move varies by
+  suite and sign, since the AP cut and the new haste gain partly offset and Spirit Wolves are a minority
+  of Enhancement's total damage; `LongMultiTarget` suites move by roughly -0.5% to +1% beyond what
+  stages 1-2 already reported, `AllItems` rows that swap in a haste or haste-proc piece move up to +9%
+  (e.g. `BlessedGarboftheUndeadSlayer`), since the wolves now actually benefit from it.
+  Left open (core-scoped, not this item's to fix): 425792's own `HandleEffectApply` blocks
+  `MOD_MELEE_HASTE` specifically because Windfury Totem and Improved Icy Talons reach the wolves as
+  party auras that are already folded into the shaman's own `SwingSpeed()`; `applyPetBuffEffects`
+  (`sim/core/buffs.go`) strips `SwiftRetribution`/`MoonkinAura` for a haste-carrier pet but not
+  `WindfuryTotem`/`IcyTalons`, so a `FullBuffs` suite with either active likely still double-counts them
+  on the wolves. A future core item should add them to that same `inheritsOwnerAttackSpeed` block.
 
 **Hunter** (`TestSimvalHunter`, the hunter recorded runs, code)
 - Ranged haste: the server core has no base bonus. mod-individual-progression recasts spell 89507 on login (aura 141
@@ -698,6 +727,129 @@ Roll details the tables above don't show:
   tagged `attackType: ranged`, not a separate "magic" one: it can miss but is never dodged, parried or
   blocked. All four pass.
 
+**Shaman** (`TestElemental`, `TestEnhancement`, code; PAR-P7-SHA's "shared-enh" and "elemental" stages)
+- Stormstrike, the totems, weapon imbues and pet crit fixed as **Retail deviations** 52-57 describe.
+  `TestRestoration` doesn't move: shared code, but Restoration wasn't touched.
+- Fire Elemental Totem declares a 1 s GCD directly, dropping the `ServerConflictAllowance` entry that
+  papered over the mismatch (server data already forced 1 s at runtime).
+- P3-2 allowlist closed: Searing Totem (58704), Magma Totem (58734), Flametongue Weapon (58789/58790)
+  and the Fire Nova cast (61657) now trigger a separate spell for their real, non-binary hit (58702,
+  58735, 10444, 61654) instead of dealing it under their own binary id. The five now-redundant
+  allowances are gone (2894's GCD included); `sim/serverdata_test.go`'s Searing Totem case follows.
+  **Fixed (PAR-P7-SHA review):** the two totem dots stay declared on the summon spells, with
+  `DotConfig.Spell` pointing at the triggered hit, so only their ticks roll under 58702/58735. Moving
+  the whole dot broke every APL naming `dotIsActive(58704)` or `dotRemainingTime(58734)`: `GetAPLDot`
+  hands the summon to `Spell.Dot`, which indexes an empty `dots` slice and panics the raid build.
+  `sim/optimizer/raidctx`'s `raid25.json` fixture and any saved user APL still name the summons, and
+  `TestDeriveFixtureGolden` went red on exactly that. The five preset APL files keep the summon ids too.
+- AoE cap (`Spell::DoAllEffectOnLaunchTarget`): the ten-target cap gates on `m_caster->IsPlayer()`
+  alone, whoever the spell is aimed at. Magma Totem's pulse (58735) is cast by the totem, so it loses
+  the cap (deviation 54). **Fixed (PAR-P7-SHA review):** Fire Nova's pulse (61654) keeps it, since
+  `spell_sha_fire_nova::HandleDummy` has the *player* cast it, aimed at the fire totem; the code
+  stages read "aimed at the totem" as "the totem casts it" and dropped the cap. The fire elemental's
+  own Fire Nova (12470, `fire_elemental_spells.go`) had the opposite error, a cap on a guardian's
+  cast, and loses it.
+- Frostbrand Weapon's hit now deals damage under Frostbrand Attack (58799) instead of the imbue's own
+  id (58796); both are binary, so this moves no golden, only the combat-log id.
+- Windfury Weapon's hit stays under 58804: the capture's real "Windfury Attack" ids (25504 2H, 33750
+  1H/off-hand) share its binary and school data, so nothing breaks, but the split is still owed.
+- Side effect of Stormstrike's split, worth knowing when reading an `AllItems` row: the two hits used
+  to run through the 17364 spell object, so anything keyed on "a Stormstrike landed" fired three times
+  a cast. Totem of the Avalanche (50463) took all three stacks of its 146 AP buff off one Stormstrike;
+  now it takes one, which is what the item says.
+- TicksCanCrit: Flame Shock declares `false` (no mod-spell-tweaks entry grants it aura 286). Searing
+  and Magma Totem reroll the full hit-and-crit table each tick instead of using a snapshotted `Dot`
+  outcome, since they're repeated NPC casts, not periodic ticks, so the flag doesn't apply to them.
+- Feral Spirit and the fire elemental (Fire Blast, Fire Nova) dropped their manual
+  `AutoAttacks.StopMeleeUntil` calls: `RegisterSpell` already applies the server's `ResetsAutoAttack`
+  for all three. Removed a stale TODO on the same reset for Maelstrom Weapon's instant Lightning
+  Bolt/Chain Lightning: already handled, since `cast.go`'s `resetsSwing` skips it whenever
+  `CurCast.CastTime == 0` on a spell that normally has one, which that talent always produces.
+- Left open: Lava Flows' dispel-triggered crit buff (`spell_sha_flame_shock::HandleDispel`) isn't
+  modeled, only its flat Lava Burst bonus; no suite dispels Flame Shock. Maelstrom Weapon's
+  stack-grant rate (a PPM manager) wasn't re-derived against the talent's five rank ids
+  (51528-51532); 53817's own `spell_proc` row (`chance: 100, ppm: 0`) describes its T10 4pc bonus,
+  not the base grant.
+- Nature's Swiftness's cooldown is 2 min on the server (deviation 58), not retail's 3 min; dropped
+  the `ServerConflictAllowance` that papered over it. Neither spec's `StandardTalents` takes the
+  talent, so it moves no golden.
+- Elemental Mastery's own effect (16166, aura 108, the cast-time mod) carries a 30 s duration in the
+  capture, separate from 64701's 15 s haste buff; `emAura` had `NeverExpires`, now matches. No golden
+  moves: every APL that takes the talent uses it the moment it's off cooldown, well inside 30 s.
+- Closed the three remaining placeholder-cast-time allowances: Healing Wave 3 s, Chain Heal 2.5 s,
+  Riptide instant. Also dropped Healing Wave's copy of the Totem of the Third Wind bonus
+  (42598/42597/42596/42595): the tooltip reads "Increases spell power of Lesser Healing Wave", so it
+  shouldn't also land on Healing Wave (`effects_review.csv` flagged it as a sim bug).
+  `TestRestoration`'s rotation is `autocastOtherCooldowns` only and never casts these three heals, so
+  none of this moves its golden even though the code is shared.
+- P6-3 item rows: Skycall Totem's proc is 100 haste rating, not 101 (`effects_review.csv`); Totem of
+  Dueling's Stormstrike proc also grants 120 attack power (60766 effect2), which its own tooltip
+  omits; the Third Wind family (42598 et al.) is the Healing Wave fix above. **Fixed (PAR-P7-SHA
+  review):** Steamcaller's Totem (45114, `heals.go`) gave Chain Heal Classic's 257, not the server's
+  243; the code stages read the row as already matching. Both rows are healing-only, so neither
+  moves a golden. Still open on the Third Wind row: the Lesser Healing Wave side is 320 spell power
+  scaled by the spell's coefficient on the server, where the sim adds a flat heal (338 at 42598).
+- Electrified and Lava Burst's bonus dot (T8/T9 4pc: `spell_sha_t8_elemental_4p_bonus` and
+  `spell_sha_t9_elemental_4p_bonus` both route through `Unit::CastDelayedSpellWithPeriodicAmount`) now
+  refresh through `core.DelayedPeriodicApplier`, the way Deep Wounds does. That function also folds
+  the dot's remaining damage into the new tick before recasting it; Electrified already did that on
+  refresh, but Lava Burst's dot didn't, so a Lava Burst crit during an active dot used to overwrite it
+  instead of adding to it, now fixed. TicksCanCrit false on both (no mod-spell-tweaks entry grants
+  either spell aura 286). No suite in this worktree equips the full T8 or T9 4pc set (Elemental's `p1`
+  gear predates both tiers, and `AllItems` swaps one piece at a time), so none of this moves a golden
+  either.
+- This wave's item text calls 71824 (Lava Burst's bonus dot) the T10 4pc. The server disagrees: its
+  own aura is named "T9 Elemental 4P Bonus" (`spell_sha_t9_elemental_4p_bonus`), and the item ids
+  (ilvl 200/225/232/251 for Earthshatter/Worldbreaker/Thrall's/Frost Witch's Regalia, matching
+  Naxx/Ulduar/ToC/ICC) put Thrall's Regalia at T9 and Frost Witch's at T10, which already carries a
+  different 4pc bonus (the Flame Shock tick extension). `ItemSetThrallsRegalia`/`ItemSetWorldbreakerGarb`
+  already gate the right bonus on the right spell; left unchanged.
+- **Goldens** (`dock.sh delta`): every suite moves a few thousandths of a percent from the Searing
+  Totem/Fire Nova coefficient fixes alone (`spell_bonus_data`: 0.1667, 0.214, was 0.167, 0.2142).
+  Bisecting found two bigger drivers:
+  - Shamanistic Rage's PPM, 15 → 18 (`spell_proc`), the largest: better mana sustain during its 15 s
+    window moves every suite that takes the talent, single-target included
+    (`WF-default_wf-NoBuffs-LongSingleTarget`: 3048.97 → 3230.97 DPS, about +6%).
+  - Magma Totem's dropped AoE cap, `LongMultiTarget` only (20 targets):
+    `FT-default_ft-NoBuffs-LongMultiTarget` moves from 12613 to 10756 DPS with just the cap reverted.
+    The pet crit fix adds a further point or two, largest on `EleFireElemental` and Feral-Spirit-heavy
+    cases.
+  - Ruled out by the same bisection: the Flametongue/Frostbrand id changes, the Lava Lash imbue-hand
+    fix, the Stormstrike block fix.
+  - The elemental stage's own bisections, on top of the above: Totem of Dueling's 120 AP is the only
+    further driver worth naming, and only for Enhancement (it's in `p1`'s default gear, so every suite
+    gets it): `WF-default_wf-NoBuffs-LongMultiTarget` moves from 14000.18 to 14274.23 DPS (+1.96%) with
+    just the AP added back in, on top of the shared-enh stage's own 11016.59 → 14000.18. Everything
+    else this stage touched — Nature's Swiftness, Elemental Mastery's window, Skycall's -1 haste, the
+    heal cast times, and Electrified/Lava Burst's dot delay — bisects to zero on both `TestElemental`
+    and `TestEnhancement` (sorted DPS/TPS/HPS lines byte-identical with and without each change).
+  - **PAR-P7-SHA review:** Spirit Wolves' haste-carrier wiring and AP fix (this section, above) move
+    every suite a bit further, on top of the above. Direction and size vary with how much gear haste the
+    build carries and how big a share of total damage the wolves are: most rows move another -0.5% to
+    +2%, `AllItems` rows that swap in a haste-rating or haste-proc piece up to +9% (the wolves benefit
+    from it now, where before they didn't), and `LongMultiTarget` rows the least in relative terms (the
+    totem/AoE damage the fix doesn't touch dominates those). See the bisected `WF-default_wf-NoBuffs-
+    LongSingleTarget` example above for the isolated size of each half of the fix.
+  - **PAR-P7-SHA review, the two AoE cap fixes**, bisected against the run with both reverted. Only
+    `LongMultiTarget` rows (20 targets) move, and the totem dots going back on the summon spells move
+    nothing at all. Fire Nova's restored cap takes all 24 Enhancement `LongMultiTarget` rows down
+    -14.6% to -22.1% (`WF-default_ft-FullBuffs-LongMultiTarget`, Troll: 28876.42 → 22492.91). The fire
+    elemental's dropped cap lifts the 8 `EleFireElemental-*-LongMultiTarget` rows +19.0% to +31.4%
+    (Orc `default-NoBuffs`: 5221.37 → 6858.86), and no other Elemental row. Against the wave base the
+    suites end at: Elemental 183 rows, median -0.010%, -0.505% to +31.4%; Enhancement 207 rows, median
+    +3.2%, -7.5% to +9.4%.
+- Live probes (`TestSimvalShaman`): the Stormstrike cast's yellow table, its two hits skipping the
+  partial block, Lava Burst's and Flame Shock's magic table, and Flame Shock's dot carrying no aura 286
+  all match the sim unchanged; numbers under **Verified on the live server**. `sim/serverdata_test.go`
+  now pins the two hits' always-hit and no-active-defense flags, since only those keep
+  `OutcomeMeleeSpecialCritOnly` from rolling a partial block in front of the target.
+- Suites run: `TestElemental`, `TestEnhancement`, `TestRestoration` (unchanged), `sim`, `sim/core`,
+  `sim/optimizer`, `sim/optimizer/raidctx`, `tools/...`, `cmd/...`; `tools/simval` 508/508; `go vet`;
+  `gofmt`; `BenchmarkSimulate` on all three shaman packages; `tsc`; `gen_serverdata` (idempotent, no
+  new constants). `TestElemental` and `TestEnhancement` are the only red ones, on golden DPS, which is
+  the point. The UI APL files end unchanged against the wave base, so there is nothing for eslint to
+  re-check.
+
 **Items** (`docs/azerothcore-item-diff/data/summary.md`)
 - 1509 of 8043 sim items differ.
 - Classic raised Ulduar/emblem item levels, e.g. 226→232 on 329 items and 239→252 on 92.
@@ -836,6 +988,21 @@ values. Human warrior, level 80, maxed skills, Worn Shortsword (Sword Specializa
   Trauma (both ranks) carries the 286 periodic-crit override scoped to that same flag, plus its own 42
   proc-trigger effect; Deep Wounds' periodic spell (12721) has a periodic-damage effect and no
   periodic-crit one; Shattering Throw's base cast time is 1500 ms. All match the sim unchanged.
+- Shaman probes (`TestSimvalShaman`, an orc shaman in front of the boss dummy): the Stormstrike cast
+  (17364) rolls the yellow table (miss 7.97%, dodge 6.55%, parry 13.89%, partial block 4.40%) and never
+  crits, as `OutcomeMeleeSpecialHit` has it. Its two hits (32175/32176) are always-hit and took 0 partial
+  blocks in 300,000 rolls each: `isSpellBlocked` refuses an always-hit or a no-active-defense spell
+  (`Unit.cpp:3287`) and both ids carry both attributes, which is what `OutcomeMeleeSpecialCritOnly` and
+  the generated flags rely on. Lava Burst (60043) and Flame Shock (49233) roll the magic table with
+  partial resists, missing 16.83% and 16.72% against the 1700 threshold, buckets and mean resist matching;
+  a `.simval spelldump` of 49233 finds no aura 286, so its dot's `TicksCanCrit: false` stands. All match
+  the sim unchanged.
+  **Fixed:** the probe first asserted the record's `noActiveDefense` on the two hits, but
+  `DeriveYellowTable` returns on ALWAYS_HIT before filling that field or `partialBlockChance`, so both
+  read 0 whatever the spell carries. It now asserts the empty block roll, which is what the record proves.
+  The off-hand hit's crit reads 0 here and means nothing: 32176 needs an off-hand weapon, and an empty
+  off hand makes `GetWeaponSkillValue` 0 (`Unit.cpp:3970`), which costs `UpdateCritPercentage` 16 points
+  (`StatSystem.cpp:686-687`). The main hand read 3.174%, matching the sheet.
 
 ## Retail deviations
 
@@ -895,6 +1062,13 @@ The fork copies the server. Patching any of these in [ac] means updating the mat
 | 49 | Explosive Trap damage (49065) | magic class: never misses, crits off spell crit for +50%, no ten-target cap (the trap's trigger creature casts it) | ranged hit and crit, +100%, capped | `GameObject::CastSpell`, `Spell::AddUnitTarget` |
 | 50 | Slam | can only miss: the cast (47475) is `NO_ACTIVE_DEFENSE`, its damage (50783) `ALWAYS_HIT` | one yellow roll: miss, dodge, parry, crit | `spell_warr_slam::HandleDummy`, `Spell.dbc` |
 | 51 | Two-Handed Weapon Specialization on seals and judgements | none: the aura is physical-only, and a holy weapon-percent spell's weapon damage skips the physical % mods | +2% a rank | `Spell::EffectWeaponDmg`, `Unit::MeleeDamageBonusDone` |
+| 52 | Stormstrike's two hits | 32175 (MH) and 32176 (OH), `ALWAYS_HIT` and `NO_ACTIVE_DEFENSE`; the cast (17364) rolls the yellow table once, then they always hit and can't be blocked | one yellow roll per hit, each of which can be blocked | `Unit.cpp:3284-3308` (`isSpellBlocked`'s exemption), `Spell.dbc` (32175/32176 attributes) |
+| 53 | Searing Totem, Magma Totem, Flametongue Weapon and Fire Nova's damage | a separate, non-binary id the summon, imbue or dummy cast triggers (58702, 58735, 10444, 61654) | one spell, the summon's, imbue's or cast's own id | spelldump (`binary` per id) |
+| 54 | Magma Totem's pulse (58735) and the fire elemental's Fire Nova (12470) | the totem and the elemental cast these themselves, and the 10-target AoE cap gates a player caster only, so neither is capped. Fire Nova's own pulse (61654) the player casts, aimed at the totem, so it is | all three capped past 10 targets like other player AoE | `Spell::DoAllEffectOnLaunchTarget`, `spell_sha_fire_nova::HandleDummy` |
+| 55 | Lava Lash's Flametongue bonus | +25%/+35% whenever the caster carries the Flametongue Weapon dummy aura on either weapon | main hand and off hand scored separately, off hand only | `spell_sha_lava_lash::HandleDummy` |
+| 56 | Shamanistic Rage's mana proc | 18 PPM (`spell_proc`) | 15 PPM | `spell_proc` (30823) |
+| 57 | Spirit Wolves' and the fire elemental's crit | `Unit::GetUnitCriticalChance`'s flat 5% base (`m_baseSpellCritChance` 5% for spell crit), a scripted aura's agility scaling for the wolves on top, none for the fire elemental | Spirit Wolves 1.1515% base, the fire elemental 2.61% base plus an Intellect dependency | `Unit.cpp:418`, `3904-3960` |
+| 58 | Nature's Swiftness cooldown | 2 min (`category_cooldown_ms` 120000 on 16188) | 3 min | spelldump (16188) |
 
 Not yet settled against retail, check before patching: the 200 ms other-hand push (`PlayerUpdates.cpp`), the DoT
 refresh tick-timer rule, the max(cast, 1500 ms) PPM basis for spell-triggered aura procs, the rule-based binary

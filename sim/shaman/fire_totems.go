@@ -6,7 +6,25 @@ import (
 	"github.com/wowsims/wotlk/sim/core"
 )
 
+// The bolt the totem fires is its own spell (58702): the summon (58704) is binary on the server, the
+// bolt isn't, so they can't share one spell object. The dot stays on the summon, the id an APL names;
+// only its ticks roll under 58702.
+func (shaman *Shaman) registerSearingTotemAttackSpell() *core.Spell {
+	return shaman.RegisterSpell(core.SpellConfig{
+		ActionID:    core.ActionID{SpellID: 58702},
+		SpellSchool: core.SpellSchoolFire,
+		ProcMask:    core.ProcMaskSpellDamage,
+		Flags:       core.SpellFlagNoOnCastComplete,
+
+		BonusHitRating:   float64(shaman.Talents.ElementalPrecision) * core.SpellHitRatingPerHitChance,
+		DamageMultiplier: 1 + float64(shaman.Talents.CallOfFlame)*0.05,
+		CritMultiplier:   shaman.ElementalCritMultiplier(0),
+	})
+}
+
 func (shaman *Shaman) registerSearingTotemSpell() {
+	attack := shaman.registerSearingTotemAttackSpell()
+
 	shaman.SearingTotem = shaman.RegisterSpell(core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: 58704},
 		SpellSchool: core.SpellSchoolFire,
@@ -25,11 +43,8 @@ func (shaman *Shaman) registerSearingTotemSpell() {
 			},
 		},
 
-		BonusHitRating:   float64(shaman.Talents.ElementalPrecision) * core.SpellHitRatingPerHitChance,
-		DamageMultiplier: 1 + float64(shaman.Talents.CallOfFlame)*0.05,
-		CritMultiplier:   shaman.ElementalCritMultiplier(0),
-
 		Dot: core.DotConfig{
+			Spell: attack,
 			Aura: core.Aura{
 				Label: "SearingTotem",
 			},
@@ -42,7 +57,7 @@ func (shaman *Shaman) registerSearingTotemSpell() {
 			NumberOfTicks: 24,
 			TickLength:    time.Second * 60 / 24,
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
-				baseDamage := sim.Roll(90, 120) + 0.167*dot.Spell.SpellPower()
+				baseDamage := sim.Roll(90, 120) + 0.1667*dot.Spell.SpellPower()
 				dot.Spell.CalcAndDealDamage(sim, target, baseDamage, dot.Spell.OutcomeMagicHitAndCrit)
 			},
 		},
@@ -57,7 +72,25 @@ func (shaman *Shaman) registerSearingTotemSpell() {
 	})
 }
 
+// Same split as Searing Totem: the pulse is 58735 and isn't binary, the summon (58734) is, and the dot
+// stays on the summon for the APL. The totem casts the pulse itself, and the ten-target cap only gates
+// a player caster, so it doesn't reach it (INVESTIGATION, Findings: Attack table).
+func (shaman *Shaman) registerMagmaTotemAttackSpell() *core.Spell {
+	return shaman.RegisterSpell(core.SpellConfig{
+		ActionID:    core.ActionID{SpellID: 58735},
+		SpellSchool: core.SpellSchoolFire,
+		ProcMask:    core.ProcMaskSpellDamage,
+		Flags:       core.SpellFlagNoOnCastComplete,
+
+		BonusHitRating:   float64(shaman.Talents.ElementalPrecision) * core.SpellHitRatingPerHitChance,
+		DamageMultiplier: 1 + float64(shaman.Talents.CallOfFlame)*0.05,
+		CritMultiplier:   shaman.ElementalCritMultiplier(0),
+	})
+}
+
 func (shaman *Shaman) registerMagmaTotemSpell() {
+	attack := shaman.registerMagmaTotemAttackSpell()
+
 	shaman.MagmaTotem = shaman.RegisterSpell(core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: 58734},
 		SpellSchool: core.SpellSchoolFire,
@@ -76,11 +109,8 @@ func (shaman *Shaman) registerMagmaTotemSpell() {
 			},
 		},
 
-		BonusHitRating:   float64(shaman.Talents.ElementalPrecision) * core.SpellHitRatingPerHitChance,
-		DamageMultiplier: 1 + float64(shaman.Talents.CallOfFlame)*0.05,
-		CritMultiplier:   shaman.ElementalCritMultiplier(0),
-
 		Dot: core.DotConfig{
+			Spell: attack,
 			IsAOE: true,
 			Aura: core.Aura{
 				Label: "MagmaTotem",
@@ -90,7 +120,6 @@ func (shaman *Shaman) registerMagmaTotemSpell() {
 
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 				baseDamage := 371 + 0.1*dot.Spell.SpellPower()
-				baseDamage *= sim.Encounter.AOECapMultiplier()
 				for _, aoeTarget := range sim.Encounter.TargetUnits {
 					dot.Spell.CalcAndDealDamage(sim, aoeTarget, baseDamage, dot.Spell.OutcomeMagicHitAndCrit)
 				}

@@ -200,7 +200,9 @@ func (shaman *Shaman) registerElementalMasteryCD() {
 	emAura := shaman.RegisterAura(core.Aura{
 		Label:    "Elemental Mastery",
 		ActionID: eleMasterActionID,
-		Duration: core.NeverExpires,
+		// 16166's own effect (aura 108, the cast-time mod) carries a 30 s duration on the server,
+		// separate from 64701's 15 s haste buff.
+		Duration: time.Second * 30,
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
 			shaman.ChainLightning.CastTimeMultiplier -= 1
 			shaman.LavaBurst.CastTimeMultiplier -= 1
@@ -265,7 +267,7 @@ func (shaman *Shaman) registerNaturesSwiftnessCD() {
 	}
 	actionID := core.ActionID{SpellID: 16188}
 	cdTimer := shaman.NewTimer()
-	cd := time.Minute * 3
+	cd := time.Minute * 2
 
 	nsAura := shaman.RegisterAura(core.Aura{
 		Label:    "Natures Swiftness",
@@ -399,10 +401,6 @@ func (shaman *Shaman) applyMaelstromWeapon() {
 			},
 		})
 	}
-
-	// TODO: Don't forget to make it so that AA don't reset when casting when MW is active
-	// for LB / CL / LvB
-	// They can't actually hit while casting, but the AA timer doesnt reset if you cast during the AA timer.
 
 	// For sim purposes maelstrom weapon only impacts CL / LB
 	shaman.MaelstromWeaponAura = shaman.RegisterAura(core.Aura{

@@ -63,10 +63,11 @@ func (fireElemental *FireElemental) registerFireNova() {
 		CritMultiplier:   fireElemental.DefaultSpellCritMultiplier(),
 		ThreatMultiplier: 1,
 
+		// The elemental casts this itself, so the ten-target cap, which only gates a player caster,
+		// doesn't reach it (INVESTIGATION, Findings: Attack table).
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			for _, aoeTarget := range sim.Encounter.TargetUnits {
 				baseDamage := sim.Roll(955, 1098) + spell.SpellPower()
-				baseDamage *= sim.Encounter.AOECapMultiplier()
 				spell.CalcAndDealDamage(sim, aoeTarget, baseDamage, spell.OutcomeMagicHitAndCrit)
 			}
 		},

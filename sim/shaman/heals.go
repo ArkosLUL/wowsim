@@ -111,8 +111,7 @@ func (shaman *Shaman) registerRiptideSpell() {
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
-				GCD:      core.GCDDefault,
-				CastTime: time.Millisecond * 1500,
+				GCD: core.GCDDefault,
 			},
 			CD: core.Cooldown{
 				Timer:    shaman.NewTimer(),
@@ -181,12 +180,6 @@ func (shaman *Shaman) registerHealingWaveSpell() {
 
 	hasGlyph := shaman.HasMajorGlyph(proto.ShamanMajorGlyph_GlyphOfLesserHealingWave)
 
-	bonusHeal := 0 +
-		core.TernaryFloat64(shaman.Ranged().ID == 42598, 338, 0) +
-		core.TernaryFloat64(shaman.Ranged().ID == 42597, 267, 0) +
-		core.TernaryFloat64(shaman.Ranged().ID == 42596, 236, 0) +
-		core.TernaryFloat64(shaman.Ranged().ID == 42595, 204, 0)
-
 	shaman.HealingWave = shaman.RegisterSpell(core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: 49273},
 		SpellSchool: core.SpellSchoolNature,
@@ -201,7 +194,7 @@ func (shaman *Shaman) registerHealingWaveSpell() {
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
 				GCD:      core.GCDDefault,
-				CastTime: time.Millisecond * 1500,
+				CastTime: time.Millisecond * 3000,
 			},
 		},
 
@@ -213,7 +206,7 @@ func (shaman *Shaman) registerHealingWaveSpell() {
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			healPower := spell.HealingPower(target)
-			baseHealing := sim.Roll(1624, 1852) + spellCoeff*healPower + bonusCoeff*healPower + bonusHeal
+			baseHealing := sim.Roll(1624, 1852) + spellCoeff*healPower + bonusCoeff*healPower
 			if hasGlyph {
 				if shaman.EarthShield.Hot(target).IsActive() {
 					baseHealing *= 1.2
@@ -317,7 +310,8 @@ func (shaman *Shaman) registerChainHealSpell() {
 	bonusHeal := 0 +
 		core.TernaryFloat64(shaman.Ranged().ID == 28523, 87, 0) +
 		core.TernaryFloat64(shaman.Ranged().ID == 38368, 102, 0) +
-		core.TernaryFloat64(shaman.Ranged().ID == 45114, 257, 0)
+		// Steamcaller's Totem gives 243 on the server, where Classic gave 257 (effects_review.csv)
+		core.TernaryFloat64(shaman.Ranged().ID == 45114, 243, 0)
 
 	manaDiscount := 0 +
 		core.TernaryFloat64(shaman.Ranged().ID == 40709, 78, 0)
@@ -336,7 +330,7 @@ func (shaman *Shaman) registerChainHealSpell() {
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
 				GCD:      core.GCDDefault,
-				CastTime: time.Millisecond * 1500,
+				CastTime: time.Millisecond * 2500,
 			},
 		},
 		BonusCritRating:  float64(shaman.Talents.TidalMastery) * 1 * core.CritRatingPerCritChance,

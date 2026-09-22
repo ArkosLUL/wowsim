@@ -15,7 +15,7 @@ func (shaman *Shaman) registerShamanisticRageCD() {
 	t10Bonus := shaman.HasSetBonus(ItemSetFrostWitchBattlegear, 2)
 
 	actionID := core.ActionID{SpellID: 30823}
-	ppmm := shaman.AutoAttacks.NewPPMManager(15, core.ProcMaskMelee)
+	ppmm := shaman.AutoAttacks.NewPPMManager(18, core.ProcMaskMelee)
 	manaMetrics := shaman.NewManaMetrics(actionID)
 	srAura := shaman.RegisterAura(core.Aura{
 		Label:    "Shamanistic Rage",

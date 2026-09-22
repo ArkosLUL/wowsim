@@ -543,11 +543,21 @@ func TestServerDataApplied(t *testing.T) {
 		t.Errorf("Spirit Strike: GCD %v, %v", spiritStrike.DefaultCast.GCD, spiritStrike.ServerConflicts())
 	}
 
-	// Searing Totem: the shaman entry turns the binary flag of the summon down, and it still counts as a conflict
+	// Searing Totem: the summon (58704) deals no damage of its own, so picking up the server's binary
+	// flag is no conflict; its bolt (58702) is the spell that actually resists partially
 	searingTotem := register(core.SpellConfig{ActionID: core.ActionID{SpellID: 58704}})
-	if got := searingTotem.ServerConflicts(); searingTotem.Flags.Matches(core.SpellFlagBinary) || len(got) != 1 ||
-		got[0].Field != core.ServerBinary || got[0].Sim != 0 || got[0].Server != 1 || got[0].Allowed == nil {
+	if got := searingTotem.ServerConflicts(); !searingTotem.Flags.Matches(core.SpellFlagBinary) || len(got) != 0 {
 		t.Errorf("Searing Totem: %b, %v", searingTotem.Flags, got)
+	}
+
+	// Stormstrike's two hits: always-hit and no-active-defense, so OutcomeMeleeSpecialCritOnly skips the
+	// partial block roll in front of the target, the way isSpellBlocked refuses them on the server
+	for _, id := range []int32{32175, 32176} {
+		hit := register(core.SpellConfig{ActionID: core.ActionID{SpellID: id}, SpellSchool: core.SpellSchoolPhysical})
+		if !hit.Flags.Matches(core.SpellFlagAlwaysHit) || !hit.Flags.Matches(core.SpellFlagNoActiveDefense) ||
+			len(hit.ServerConflicts()) != 0 {
+			t.Errorf("Stormstrike hit %d: %b, %v", id, hit.Flags, hit.ServerConflicts())
+		}
 	}
 
 	// Death Coil: the dummy cast takes the server's binary flag, since the sim deals its damage as 47632
