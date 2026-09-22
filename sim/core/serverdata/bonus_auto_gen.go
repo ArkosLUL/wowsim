@@ -41,6 +41,7 @@ var bonuses = []Bonus{
 	{SpellID: 47815, Row: 47815, Direct: 0.4286},                                         // Searing Pain (Rank 10)
 	{SpellID: 47825, Row: 47825, Direct: 1.15},                                           // Soul Fire (Rank 6)
 	{SpellID: 47827, Row: 47827, Direct: 0.4286},                                         // Shadowburn (Rank 10)
+	{SpellID: 47834, Row: 47834, Direct: 0.2129},                                         // Seed of Corruption (Rank 3)
 	{SpellID: 47836, Row: 47836, Dot: 0.25},                                              // Seed of Corruption (Rank 3)
 	{SpellID: 47838, Row: 47838, Direct: 0.714},                                          // Incinerate (Rank 4)
 	{SpellID: 47843, Row: 47843, Dot: 0.2},                                               // Unstable Affliction (Rank 5)

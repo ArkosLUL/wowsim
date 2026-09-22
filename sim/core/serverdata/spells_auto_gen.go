@@ -3557,6 +3557,15 @@ var spells = []Spell{
 	},
 	// Seed of Corruption (Rank 3)
 	{
+		ID: 47834, Family: 5, FamilyFlags: [3]uint32{0, 0x8010}, SchoolMask: 32, DmgClass: DmgClassMagic,
+		Attributes: [8]uint32{0x800000, 0x80, 0x4, 0x1, 0, 0x4000000}, AttributesCu: 0x1100,
+		ProcChance: 101,
+		Effects: [3]Effect{
+			{Effect: 2, BasePoints: 1632, DieSides: 265, PointsPerLevel: 2, DamageMultiplier: 1, BonusMultiplier: 0.286},
+		},
+	},
+	// Seed of Corruption (Rank 3)
+	{
 		ID: 47836, Family: 5, FamilyFlags: [3]uint32{0, 0x10}, SchoolMask: 32, DmgClass: DmgClassMagic, Flags: FlagResetsAutoAttack | FlagHasteGCD,
 		Attributes: [8]uint32{0x40000, 0, 0, 0, 0, 0, 0x800000}, AttributesCu: 0x3000,
 		CastMs: 2000, BaseCastMs: 2000, GCDMs: 1500, GCDCategory: 133, DurationMs: 18000, MaxDurationMs: 18000,
