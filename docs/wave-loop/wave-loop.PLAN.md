@@ -79,9 +79,9 @@ rides along, as it only needs the live server.
 
 ## Current wave
 
-- Wave: H3, not started. Wave H (base `695c55b78`) landed on `master`.
-- Base SHA: set at wave start.
-- Workflow runId: none. Wave H ran as `wf_cc41a703-bd9`.
+- Wave: H3, running.
+- Base SHA: the wave's setup commit on top of `bf0383241`.
+- Workflow runId: not yet started.
 
 ## BiS baseline
 
@@ -195,6 +195,9 @@ crashed before F2, so its column starts there.
 | PAR-P7-RET | merged | `74a9a8c60` | 2 paladin goldens promoted in `be8b078a0`; e2e and the recorded run's talent and tier steps `da7028e`; its two deviation rows were module behaviour, dropped by the cross-review |
 | BIS-raid-contrib | merged | `f6da0097a` | goldens unchanged |
 | wave H cross-review | | `2ae1e1906` | 5 bugs: Slam's split left Recklessness and the T8 2pc on the cast, Deadly Poison kept its first haste, Exorcism was limited to undead and demons, the Ret capture's talent reset failed; Assassination +2.2% (goldens `6ca712f26`); module `39e086e`; spell audit refreshed in `ba4252567` |
+
+| PAR-P7-0e | running | | stages: outcome, delay |
+| PAR-P7-RET-RR | running | | |
 
 Later WIs are added as their wave starts.
 
