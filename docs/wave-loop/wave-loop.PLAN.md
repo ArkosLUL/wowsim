@@ -76,8 +76,7 @@ wave I, and H is full. The user ran it before H, so H's melee items build on its
 
 ## Current wave
 
-- Wave: H. The workflow finished with all four items green and no pending server stages; integration
-  (RUNBOOK step 4) hasn't started.
+- Wave: H. All four items merged; the cross-review (RUNBOOK step 5) is running.
 - Base SHA: `695c55b78`, the wave's setup commit on top of `e08b132f4`.
 - Workflow runId: `wf_cc41a703-bd9`, transcript dir
   `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\wf_cc41a703-bd9`.
@@ -185,10 +184,10 @@ crashed before F2, so its column starts there.
 | wave G cross-review | | `a2b24100d`, `3ac9069fc` | split in two (parity; optimizer and UI); one batch bug (Apply and Save on a roster changed mid-run); the old DK ids now alias in the APL lookup; tooling moved out of scratch in `73e159351` |
 | PAR-P7-0d | merged | `18b64143b` | 26 goldens promoted in `85c870717`; four stages and a review, 1.86M tokens across the five agents |
 | wave H2 cross-review | | `3b9a3c6e6`, `ec0164745` | fixed the user's DK reforge report: the item cache kept items a stale page sent without server stats, and the DK registered its runeforges and sigils late (mispriced first optimize, a possible crash); its claim that the permanent ghoul lacks 51996 was wrong (a Ghoul family passive) and was reverted |
-| PAR-P7-ROG | green, not merged | | stages: code, live |
-| PAR-P7-WAR | green, not merged | | stages: abilities, swing, live |
-| PAR-P7-RET | green, not merged | | stages: code, recorded run |
-| BIS-raid-contrib | green, not merged | | stages: engine, batch UI |
+| PAR-P7-ROG | merged | `bfe3ec2f3` | 3 rogue goldens promoted in `1e1cbdc6a`; e2e `55764db` |
+| PAR-P7-WAR | merged | `3b51edc5b` | 3 warrior goldens promoted in `3f29eb79a`; e2e `3f59b6b`; serverdata regenerated for Slam's damage spell |
+| PAR-P7-RET | merged | `74a9a8c60` | 2 paladin goldens promoted in `be8b078a0`; e2e and the recorded run's talent and tier steps `da7028e`; its deviation rows renumbered 52-53 at merge |
+| BIS-raid-contrib | merged | `f6da0097a` | goldens unchanged |
 
 Later WIs are added as their wave starts.
 

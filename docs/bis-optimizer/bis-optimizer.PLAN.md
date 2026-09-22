@@ -529,7 +529,7 @@ Two optimizer-tab fixes from the user's first runs:
   of the gem lists and gem EP too. The user keeps it that way: they raid PvE only (2026-09-21).
 - A seed the pool trimmed can win: the notice then says Equip changes only what the pool left out.
 
-### BIS-raid-contrib (wave H)
+### BIS-raid-contrib (wave H, done)
 
 **Owns:** the full-raid `Evaluator`, `raidctx/contribution.go`, raid-sim re-ranking, the raid-mode racial
 screen, the two-stage batch, the raid-DPS column.
@@ -605,8 +605,12 @@ checks each one and the web server has no `with_db`.
   get Battle Shout that DPS warrior APLs never cast and Divine Guardian the raid sim's paladins never cast,
   and miss Judgement of Wisdom and Light and Hunter's Mark, which `RAID_STATS_OPTIONS` doesn't list.
 - Time whole runs. `EffortBudget` assumes every thread busy, but sequential steps (bisection, search moves)
-  leave threads idle. The INVESTIGATION's tank, raid-contribution and batch times are still estimates.
-- An end-to-end batch over the roster.
+  leave threads idle. The INVESTIGATION's tank and batch times are still estimates.
+- An end-to-end batch over the roster. Stage 2 took 340-415 s per DPS raider at Quick on the real roster, over
+  2 h a phase for 19 DPS raiders: measure it, replace the INVESTIGATION's batch rows, and trim stage 2 or move
+  the target.
+- `sim/optimizer/testdata/search/fury_p1.json` is stale: `TestSearchTestdata -update` also changes slot 14's
+  enchant options (3851), from enchant data that moved since it was generated. Regenerate it.
 - Quick tank runs can list runners-up well above the pick: Bulwark P1's Trinket 1 has Darkmoon Card:
   Greatness at +663 ± 16. The neighborhood adopts one only after a full-iteration round that isn't its last
   (`neighborhood.go`).
