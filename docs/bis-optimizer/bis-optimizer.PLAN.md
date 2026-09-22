@@ -627,17 +627,29 @@ move; only the neighborhood sims and reports 5. **Owns:** `search.go`'s `runners
   and miss Judgement of Wisdom and Light and Hunter's Mark, which `RAID_STATS_OPTIONS` doesn't list.
 - The INVESTIGATION's tank and batch times are still estimates: measure them with PERF-TOOLS' harness. Idle
   threads in whole runs are PERF-OPT's ([sim-performance PLAN](../sim-performance/sim-performance.PLAN.md)).
-- An end-to-end batch over the roster. Stage 2 took 340-415 s per DPS raider at Quick on the real roster, over
-  2 h a phase for 19 DPS raiders: measure it, replace the INVESTIGATION's batch rows, and trim stage 2 or move
-  the target.
+- An end-to-end batch over the roster. A partial driver run put a Quick batch near 15 h for both stages over
+  21 non-healers × 5 phases, its stage 2 at 486-570 s per DPS raider
+  ([times](bis-optimizer.INVESTIGATION.md#performance)): measure a completed one, replace the INVESTIGATION's
+  extrapolated rows, and trim stage 2 or move the target.
 - `sim/optimizer/testdata/search/fury_p1.json` is stale: `TestSearchTestdata -update` also changes slot 14's
   enchant options (3851), from enchant data that moved since it was generated. Regenerate it.
 - Quick tank runs can list runners-up well above the pick: Bulwark P1's Trinket 1 has Darkmoon Card:
   Greatness at +663 ± 16. The neighborhood adopts one only after a full-iteration round that isn't its last
   (`neighborhood.go`).
+- Quick picks aren't reproducible. Same roster, phase and seed gear, run twice: Deathsong (Unholy DK) P3
+  stage 1 differed in 8 of its 17 slots, 3 by item and the rest by enchant, gem or reforge, scoring
+  +4284 ± 11 against +3369 ± 10; Bulwark (Prot Paladin) P3 differed in 13, its rings swapped and only
+  trinket 2 a new item, scoring +8107 ± 55 against +8549 ± 60; Deathsong P1 differed in 7, 4 of them its
+  rings and trinkets swapped between slots, and scored the same within noise. Items mostly hold, the trim
+  churns, and a cell's Δ can be hundreds out. The UI seeds every run randomly; the raid sim's Fixed RNG
+  Seed would make a rerun repeat, not a single run less noisy.
 - A run whose server goes away never settles: `net_worker.js`'s fetch rejects without posting a final
   message, so `runGearOptimizer` hangs and Stop can't free the tab or an overnight batch until a reload. The
   worker should post an error and the pool reject.
+- A Quick stage 1 job can hang with the server still working. In a phase 1 batch, 9 of the 21 raiders finished
+  in under half a minute each and then Trueshot (Hunter) had not settled 30 minutes on, when the driver's
+  stall timer reloaded the page; the sim server held about 4 of its 16 threads the whole time. Not
+  reproduced, and neither the page nor the server log reported anything.
 - Measure a full roster's stored batch (`__r.storedBatches()` in `tools/uicheck/raid.js`): the cross-review
   measured 5 to 6 KB a job on the fixture roster.
 - Quick runs took 4 to 21 s per spec in wave D against the 3 to 6 s target, Combat Rogue slowest. Trim
