@@ -38,6 +38,7 @@ type abilityStats struct {
 	Damage   int64
 	Absorbed int64
 	Misses   map[string]int
+	Outcomes outcomeBreakdown
 }
 
 func (a *abilityStats) attempts() int { return a.Hits + a.Ticks + a.missCount() }
@@ -171,6 +172,7 @@ func analyzeChronicle(log *chronicleLog, opts chronicleOptions) (*runStats, erro
 			}
 			ability.Damage += hit.Amount
 			ability.Absorbed += hit.Absorbed
+			ability.Outcomes.addDamage(float64(hit.Amount), hit.Crit, hit.Glancing, hit.Blocked > 0)
 			stats.Damage += hit.Amount
 
 			if stats.StartMs == 0 {
@@ -181,7 +183,9 @@ func analyzeChronicle(log *chronicleLog, opts chronicleOptions) (*runStats, erro
 			stats.EndMs = event.TimeMs
 
 		case event.isMiss():
-			stats.ability(source, event).Misses[event.missType()]++
+			ability := stats.ability(source, event)
+			ability.Misses[event.missType()]++
+			ability.Outcomes.avoid(strings.ToLower(event.missType()))
 			if stats.StartMs != 0 {
 				stats.PauseMs += pause(gapMs, lastActionMs, event.TimeMs)
 				lastActionMs = event.TimeMs
@@ -347,6 +351,16 @@ func reportChronicle(out io.Writer, log *chronicleLog, stats *runStats, opts chr
 
 	printAbilities(out, stats, opts.Top)
 	if opts.Verbose {
+		rows := make([]outcomeRow, 0, len(stats.Abilities))
+		for _, ability := range stats.Abilities {
+			name := ability.Name
+			if ability.Key.SpellID != 0 {
+				name = fmt.Sprintf("%s (%d)", name, ability.Key.SpellID)
+			}
+			rows = append(rows, outcomeRow{Name: name, Outcomes: &ability.Outcomes})
+		}
+		sort.Slice(rows, func(i, j int) bool { return rows[i].Name < rows[j].Name })
+		printOutcomes(out, rows, 1)
 		printSwings(out, stats)
 		printTicks(out, stats)
 		printAuras(out, stats)

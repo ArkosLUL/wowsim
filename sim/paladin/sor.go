@@ -33,10 +33,7 @@ func (paladin *Paladin) registerSealOfRighteousnessSpellAndAura() {
 		BonusCritRating: (6 * float64(paladin.Talents.Fanaticism) * core.CritRatingPerCritChance) +
 			(core.TernaryFloat64(paladin.HasSetBonus(ItemSetTuralyonsBattlegear, 4), 5, 0) * core.CritRatingPerCritChance),
 
-		DamageMultiplier: 1 *
-			(1 + paladin.getItemSetLightswornBattlegearBonus4() + paladin.getTalentSealsOfThePureBonus() +
-				paladin.getMajorGlyphOfJudgementBonus() + paladin.getTalentTheArtOfWarBonus()) *
-			(1 + paladin.getTalentTwoHandedWeaponSpecializationBonus()),
+		DamageMultiplier: spellModDamage(paladin.getItemSetLightswornBattlegearBonus4(), paladin.getTalentSealsOfThePureBonus(), paladin.getMajorGlyphOfJudgementBonus(), paladin.getTalentTheArtOfWarBonus()),
 		CritMultiplier:   paladin.MeleeCritMultiplier(),
 		ThreatMultiplier: 1,
 
@@ -57,10 +54,7 @@ func (paladin *Paladin) registerSealOfRighteousnessSpellAndAura() {
 		ProcMask:    core.ProcMaskEmpty,
 		Flags:       core.SpellFlagMeleeMetrics,
 
-		DamageMultiplier: 1 *
-			(1 + paladin.getItemSetLightswornBattlegearBonus4() + paladin.getItemSetAegisPlateBonus2() + paladin.getTalentSealsOfThePureBonus()) *
-			(1 + paladin.getMajorGlyphSealOfRighteousnessBonus()) *
-			(1 + paladin.getTalentTwoHandedWeaponSpecializationBonus()),
+		DamageMultiplier: spellModDamage(paladin.getItemSetLightswornBattlegearBonus4(), paladin.getItemSetAegisPlateBonus2(), paladin.getTalentSealsOfThePureBonus(), paladin.getMajorGlyphSealOfRighteousnessBonus()),
 		ThreatMultiplier: 1,
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {

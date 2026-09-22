@@ -175,7 +175,7 @@ func parseChronicleEvent(text string) (chronicleEvent, error) {
 // triples. The CHRONICLE_ extensions each have their own shape.
 func hasBaseParams(eventType string) bool {
 	switch eventType {
-	case "UNIT_DIED", "DAMAGE_SHIELD", "ENVIRONMENTAL_DAMAGE":
+	case "UNIT_DIED", "DAMAGE_SHIELD", "ENVIRONMENTAL_DAMAGE", spellTargetResult:
 		return true
 	}
 	return strings.HasPrefix(eventType, "SWING_") ||
@@ -185,7 +185,7 @@ func hasBaseParams(eventType string) bool {
 
 func hasSpellPrefix(eventType string) bool {
 	switch eventType {
-	case "DAMAGE_SHIELD":
+	case "DAMAGE_SHIELD", spellTargetResult:
 		return true
 	case "ENVIRONMENTAL_DAMAGE":
 		return false
@@ -302,10 +302,17 @@ func (e chronicleEvent) isDamage() bool {
 	return false
 }
 
+// spellTargetResult is a spell's per-target roll, `...,"PARRY",nil,0xmask`. It's the only record of a
+// dodged, parried or missed spell: SPELL_MISSED only comes from Unit::SendSpellMiss, which the server
+// calls for misses decided at hit time (immunity, evade) and damage shields, never for the roll itself.
+const spellTargetResult = "CHRONICLE_SPELL_TARGET_RESULT"
+
 func (e chronicleEvent) isMiss() bool {
 	switch e.Type {
 	case "SWING_MISSED", "SPELL_MISSED", "RANGE_MISSED":
 		return true
+	case spellTargetResult:
+		return e.missType() != "HIT"
 	}
 	return false
 }

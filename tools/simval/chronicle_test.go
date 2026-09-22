@@ -100,6 +100,43 @@ func TestChronicleSplitsAbilities(t *testing.T) {
 	}
 }
 
+func TestChronicleSplitsOutcomes(t *testing.T) {
+	_, stats := loadSample(t)
+
+	melee := stats.Abilities[abilityKey{}].Outcomes
+	if melee.Hit.N != 3 || melee.Hit.mean() != 1000 || melee.Crit.N != 1 || melee.Crit.mean() != 2000 || melee.Glance.N != 0 {
+		t.Errorf("melee outcomes %+v", melee)
+	}
+	if rate, stdErr := melee.critRate(); rate != 0.25 || math.Abs(stdErr-math.Sqrt(0.25*0.75/4)) > 1e-12 {
+		t.Errorf("melee crit rate %v ± %v, want 0.25 of 4 landed", rate, stdErr)
+	}
+	if melee.Avoided["dodge"] != 1 {
+		t.Errorf("melee avoided %v", melee.Avoided)
+	}
+
+	strike := stats.Abilities[abilityKey{SpellID: 35395}].Outcomes
+	if strike.Hit.N != 1 || strike.Hit.mean() != 3000 || strike.Avoided["miss"] != 1 {
+		t.Errorf("Crusader Strike outcomes %+v", strike)
+	}
+}
+
+func TestChronicleReadsSpellTargetMisses(t *testing.T) {
+	for _, tc := range []struct {
+		result string
+		miss   bool
+	}{{"PARRY", true}, {"HIT", false}} {
+		line := `1790084304000  CHRONICLE_SPELL_TARGET_RESULT,0x0000000000083EE3,"Pala",0x528,` +
+			`0xF1300F3E5800036F,"SimVal Boss Dummy",0xa28,35395,"Crusader Strike",0x1,"` + tc.result + `",nil,0x1`
+		event, err := parseChronicleEvent(line)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if event.isMiss() != tc.miss || event.Spell.ID != 35395 || event.Dst.Name != "SimVal Boss Dummy" || event.missType() != tc.result {
+			t.Errorf("%s: miss %v, spell %d on %q, type %q", tc.result, event.isMiss(), event.Spell.ID, event.Dst.Name, event.missType())
+		}
+	}
+}
+
 func TestChronicleTimesSwingsAndTicks(t *testing.T) {
 	_, stats := loadSample(t)
 

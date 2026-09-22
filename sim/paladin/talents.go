@@ -79,8 +79,14 @@ func (paladin *Paladin) getTalentSealsOfThePureBonus() float64 {
 	return 0.03 * float64(paladin.Talents.SealsOfThePure)
 }
 
-func (paladin *Paladin) getTalentTwoHandedWeaponSpecializationBonus() float64 {
-	return 0.02 * float64(paladin.Talents.TwoHandedWeaponSpecialization)
+// spellModDamage stacks percent damage bonuses from talents, glyphs and set pieces the server's way:
+// Player::ApplySpellMod multiplies SPELLMOD_DAMAGE and SPELLMOD_DOT percentages, it doesn't add them.
+func spellModDamage(bonuses ...float64) float64 {
+	multiplier := 1.0
+	for _, bonus := range bonuses {
+		multiplier *= 1 + bonus
+	}
+	return multiplier
 }
 
 func (paladin *Paladin) getTalentSanctityOfBattleBonus() float64 {
@@ -360,6 +366,8 @@ func (paladin *Paladin) applyWeaponSpecialization() {
 
 	switch mhWeapon.HandType {
 	case proto.HandType_HandTypeTwoHand:
+		// physical only (20113's aura is school mask 1), so no holy seal or judgement damage: holy weapon
+		// damage skips the physical % mods (Spell::EffectWeaponDmg's CalculateDamage with addTotalPct false)
 		paladin.PseudoStats.SchoolDamageDealtMultiplier[stats.SchoolIndexPhysical] *= 1 + 0.02*float64(paladin.Talents.TwoHandedWeaponSpecialization)
 	case proto.HandType_HandTypeOneHand, proto.HandType_HandTypeMainHand:
 		if paladin.Talents.OneHandedWeaponSpecialization > 0 {
