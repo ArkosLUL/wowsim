@@ -635,6 +635,8 @@ the sources the server refuses.
       it mirrors a miss and skips Sudden Doom's; the server procs off 47632's damage. The rune weapon has no
       glyph, so its Pestilence doesn't refresh diseases, where the sim's does. It takes its owner's crit, not
       a pet's 5%: check it against the script.
+    - The BiS slow suite's Prot Pal P3 preset lost 11% DPS in wave H (333 to 295) where `TestProtection`
+      moved -0.6%: trace it.
 
 **Per class**
 - Unit tests for new mechanics.
