@@ -27,14 +27,9 @@ func (paladin *Paladin) registerExorcismSpell() {
 				Timer:    paladin.NewTimer(),
 				Duration: time.Second * 15,
 			},
-			ModifyCast: func(sim *core.Simulation, spell *core.Spell, cast *core.Cast) {
-				if paladin.CurrentMana() >= cast.Cost {
-					castTime := paladin.ApplyCastSpeedForSpell(cast.CastTime, spell)
-					if castTime > 0 {
-						paladin.AutoAttacks.StopMeleeUntil(sim, sim.CurrentTime+castTime, false)
-					}
-				}
-			},
+		},
+		ExtraCastCondition: func(sim *core.Simulation, target *core.Unit) bool {
+			return target.MobType == proto.MobType_MobTypeDemon || target.MobType == proto.MobType_MobTypeUndead
 		},
 
 		DamageMultiplierAdditive: 1 +
@@ -50,11 +45,8 @@ func (paladin *Paladin) registerExorcismSpell() {
 				.15*spell.SpellPower() +
 				.15*spell.MeleeAttackPower()
 
-			bonusCrit := core.TernaryFloat64(
-				target.MobType == proto.MobType_MobTypeDemon || target.MobType == proto.MobType_MobTypeUndead,
-				100*core.CritRatingPerCritChance,
-				0)
-
+			// always crits against undead and demons, the only targets ExtraCastCondition lets through
+			bonusCrit := 100 * core.CritRatingPerCritChance
 			spell.BonusCritRating += bonusCrit
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 			spell.BonusCritRating -= bonusCrit

@@ -26,6 +26,7 @@ import (
 const (
 	talentTreesDir = "ui/core/talents/trees"
 	simDBJSON      = "assets/database/db.json"
+	serverPaladin  = 2
 	serverHunter   = 3
 )
 
@@ -267,6 +268,20 @@ const hunterRotation = `{"type":"TypeAPL","priorityList":[
  {"action":{"castSpell":{"spellId":{"spellId":49052}}}}
 ]}`
 
+// retRotation is the priority list off ui/retribution_paladin/apls/default.apl.json (its prepull
+// potion action doesn't apply to a rrsim comparison, so it's left out): Hammer of Wrath in execute,
+// Judgement of Wisdom, Crusader Strike, Divine Storm, Exorcism on an Art of War proc, else
+// Consecration outside the last 4 s.
+const retRotation = `{"type":"TypeAPL","priorityList":[
+ {"action":{"autocastOtherCooldowns":{}}},
+ {"action":{"castSpell":{"spellId":{"spellId":48806}}}},
+ {"action":{"castSpell":{"spellId":{"spellId":53408}}}},
+ {"action":{"castSpell":{"spellId":{"spellId":35395}}}},
+ {"action":{"castSpell":{"spellId":{"spellId":53385}}}},
+ {"action":{"condition":{"auraIsActive":{"auraId":{"spellId":53488}}},"castSpell":{"spellId":{"spellId":48801}}}},
+ {"action":{"condition":{"cmp":{"op":"OpGt","lhs":{"remainingTime":{}},"rhs":{"const":{"val":"4s"}}}},"castSpell":{"spellId":{"spellId":48819}}}}
+]}`
+
 // rrsimData is what the conversion reads besides the setup: the live DBCs and the sim's own files.
 type rrsimData struct {
 	root       string
@@ -382,6 +397,72 @@ func recordedHunter(setup *recordedSetup, data *rrsimData, noTracking bool) (*pr
 		Consumes:           &proto.Consumes{},
 		Buffs:              &proto.IndividualBuffs{},
 		BonusStats:         &proto.UnitStats{Stats: stats.Stats{stats.MP5: unlimitedMP5}.ToFloatArray()},
+	}, warnings, nil
+}
+
+// recordedPaladin builds the sim player for a Retribution Paladin's recorded run, on retRotation.
+// Unlike the hunter it spends real mana: TestRecordedRun casts no cheat power, so nothing here
+// should either.
+func recordedPaladin(setup *recordedSetup, data *rrsimData) (*proto.Player, []string, error) {
+	if setup.Class != serverPaladin {
+		return nil, nil, fmt.Errorf("class %d: only paladin runs have a rotation here", setup.Class)
+	}
+	race, ok := races[uint8(setup.Race)]
+	if !ok {
+		return nil, nil, fmt.Errorf("no sim race for server race %d", setup.Race)
+	}
+	var warnings []string
+
+	talents, _, unmatched := azerothcore.BuildTalentString(setup.Talents, setup.Class, data.dbc, data.trees)
+	for _, spell := range unmatched {
+		warnings = append(warnings, fmt.Sprintf("talent spell %d isn't in the sim's talent trees", spell))
+	}
+
+	equipment, itemWarnings, err := recordedEquipment(setup.Items, data.dbc)
+	if err != nil {
+		return nil, nil, err
+	}
+	warnings = append(warnings, itemWarnings...)
+
+	major, minor, unknown := azerothcore.SplitGlyphs(setup.Glyphs, data.dbc)
+	for _, glyph := range unknown {
+		warnings = append(warnings, fmt.Sprintf("glyph %d isn't in GlyphProperties.dbc", glyph))
+	}
+	glyphs := &proto.Glyphs{}
+	for i, slot := range []*int32{&glyphs.Major1, &glyphs.Major2, &glyphs.Major3} {
+		if i < len(major) {
+			*slot = data.glyphItem(major[i], &warnings)
+		}
+	}
+	for i, slot := range []*int32{&glyphs.Minor1, &glyphs.Minor2, &glyphs.Minor3} {
+		if i < len(minor) {
+			*slot = data.glyphItem(minor[i], &warnings)
+		}
+	}
+
+	rotation := &proto.APLRotation{}
+	if err := protojson.Unmarshal([]byte(retRotation), rotation); err != nil {
+		return nil, nil, err
+	}
+
+	return &proto.Player{
+		Name:          setup.Player,
+		Race:          race,
+		Class:         proto.Class_ClassPaladin,
+		Equipment:     equipment,
+		TalentsString: talents,
+		Glyphs:        glyphs,
+		Spec: &proto.Player_RetributionPaladin{RetributionPaladin: &proto.RetributionPaladin{
+			Options: &proto.RetributionPaladin_Options{
+				Aura:      proto.PaladinAura_RetributionAura,
+				Seal:      proto.PaladinSeal_Vengeance,
+				Judgement: proto.PaladinJudgement_JudgementOfWisdom,
+			},
+		}},
+		Rotation:           rotation,
+		DistanceFromTarget: setup.Yards,
+		Consumes:           &proto.Consumes{},
+		Buffs:              &proto.IndividualBuffs{},
 	}, warnings, nil
 }
 
@@ -565,8 +646,8 @@ func runRecordedSim(args []string) int {
 	verbose := flags.Bool("v", false, "also print the final stats, the talents and an ability breakdown")
 	flags.Usage = func() {
 		fmt.Fprintf(flags.Output(), "usage: simval rrsim [flags] <setup file>\n\n"+
-			"Sims a recorded hunter run from its .setup.txt, for `simval chronicle -sim`. Captured runs\n"+
-			"live in %s. Run from the repo root, built with --tags=with_db.\n\n", chronicleDir)
+			"Sims a recorded hunter or Retribution Paladin run from its .setup.txt, for `simval chronicle\n"+
+			"-sim`. Captured runs live in %s. Run from the repo root, built with --tags=with_db.\n\n", chronicleDir)
 		flags.PrintDefaults()
 	}
 	_ = flags.Parse(args)
@@ -596,7 +677,14 @@ func runRecordedSim(args []string) int {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
 	}
-	player, warnings, err := recordedHunter(setup, data, opts.NoTracking)
+	var player *proto.Player
+	var warnings []string
+	switch setup.Class {
+	case serverPaladin:
+		player, warnings, err = recordedPaladin(setup, data)
+	default:
+		player, warnings, err = recordedHunter(setup, data, opts.NoTracking)
+	}
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
@@ -630,17 +718,29 @@ func runRecordedSim(args []string) int {
 
 func reportRecordedSim(out io.Writer, setup *recordedSetup, request *proto.RaidSimRequest, result *proto.RaidSimResult, verbose bool) {
 	player := request.Raid.Parties[0].Players[0]
-	options := player.GetHunter().Options
-	fmt.Fprintf(out, "%s, %s hunter: talents %s, pet %v\n", setup.Player, azerothcore.RaceNames[setup.Race],
-		player.TalentsString, options.PetType)
+	hunter := player.GetHunter()
+	label := "paladin"
+	var petType any
+	if hunter != nil {
+		label, petType = "hunter", hunter.Options.PetType
+	}
+	fmt.Fprintf(out, "%s, %s %s: talents %s", setup.Player, azerothcore.RaceNames[setup.Race], label, player.TalentsString)
+	if hunter != nil {
+		fmt.Fprintf(out, ", pet %v", petType)
+	}
+	fmt.Fprintln(out)
 
 	if verbose {
-		fmt.Fprintf(out, "pet talents {%v}\nglyphs {%v}\n", options.PetTalents, player.Glyphs)
+		if hunter != nil {
+			fmt.Fprintf(out, "pet talents {%v}\n", hunter.Options.PetTalents)
+		}
+		fmt.Fprintf(out, "glyphs {%v}\n", player.Glyphs)
 		computed := core.ComputeStats(&proto.ComputeStatsRequest{Raid: request.Raid, Encounter: request.Encounter})
 		final := computed.RaidStats.Parties[0].Players[0].FinalStats.Stats
-		fmt.Fprintf(out, "final: RAP %.0f, agi %.0f, crit rating %.0f, hit rating %.0f, haste rating %.0f, ArP %.0f\n",
-			final[proto.Stat_StatRangedAttackPower], final[proto.Stat_StatAgility], final[proto.Stat_StatMeleeCrit],
-			final[proto.Stat_StatMeleeHit], final[proto.Stat_StatMeleeHaste], final[proto.Stat_StatArmorPenetration])
+		fmt.Fprintf(out, "final: AP %.0f, RAP %.0f, agi %.0f, crit rating %.0f, hit rating %.0f, haste rating %.0f, ArP %.0f\n",
+			final[proto.Stat_StatAttackPower], final[proto.Stat_StatRangedAttackPower], final[proto.Stat_StatAgility],
+			final[proto.Stat_StatMeleeCrit], final[proto.Stat_StatMeleeHit], final[proto.Stat_StatMeleeHaste],
+			final[proto.Stat_StatArmorPenetration])
 	}
 
 	metrics := result.RaidMetrics.Parties[0].Players[0]

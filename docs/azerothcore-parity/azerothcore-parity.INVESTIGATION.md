@@ -546,6 +546,106 @@ Roll details the tables above don't show:
   matches the plain boss baseline, confirming the dual-wield penalty never leaks into it. Numbers in
   **Verified on the live server**.
 
+**Retribution Paladin** (`TestSimvalRetribution`, code)
+- Seal DoT via strikes was already right: `spell_pal_seal_of_vengeance_aura::HandleApplyDoT`
+  (`spell_paladin.cpp:1947-1960`) stacks Holy Vengeance/Blood Corruption only off a white hit or
+  Hammer of the Righteous (icon check); mod-spell-tweaks' `spell_tweaks_seal_dot_on_strikes` adds
+  Crusader Strike and Divine Storm on top by casting the DoT directly, not through this gate. `HandleSeal`
+  (the stack-scaled damage bonus, same file 1962-1984) reads the stack count before `HandleApplyDoT`
+  increments it, and the sim's `OnSpellHitDealt` already calls them in that order.
+- Found and fixed: `HandleSeal`/`HandleApplyDoT` only run at all when the seal aura's own proc gate
+  passes, `Spell.dbc` `procFlags` 20 = `PROC_FLAG_DONE_MELEE_AUTO_ATTACK | PROC_FLAG_DONE_SPELL_MELEE_DMG_CLASS`
+  (`SpellMgr.h:113,116`, live on 31801/53736/20375/21084). Hammer of Wrath (48806) is `ProcMaskMeleeMHSpecial`
+  in the sim like every other special, but its server damage class is Ranged (confirmed in the spelldump and
+  `sim/core/serverdata/spells_auto_gen.go`), so it never reaches any seal there. All three seals
+  (`sov.go`, `soc.go`, `sor.go`) used `spell.IsMelee()` alone and let Hammer of Wrath proc; fixed with a
+  shared `sealCanProcOn` check. Shield of Righteousness (61411, melee damage class) keeps the damage bonus
+  but was also wrongly in the DoT stack list; dropped, since neither the core gate nor the module's addition
+  cover it.
+- Found and fixed: Holy Vengeance/Blood Corruption and Righteous Vengeance never crit. mod-spell-tweaks
+  (`docs/paladin/RetPaladinDotCrit.md`) adds an aura-286 (`SPELL_AURA_ABILITY_PERIODIC_CRIT`) effect to the
+  Two-Handed Weapon Specialization talent (20111-20113) scoped to Holy Vengeance/Blood Corruption, and to the
+  Righteous Vengeance talent (53380-53382) scoped to itself, so either DoT crits at the paladin's normal
+  melee chance once its talent has any points, independent of gear. The sim gated Holy Vengeance's tick on
+  nothing (never crit) and Righteous Vengeance's on the Turalyon's/Liadrin's Battlegear T9 2pc alone; both
+  now follow their talent instead. The T9 2pc (67188) turned out to carry the same aura-286 unlock plus a
+  separate +100% crit-damage effect, but `SpellInfoCorrections.cpp`'s `ApplySpellFix({67118, 67150, 67188}, ...)`
+  zeroes that second effect as a known Blizzard DBC bug, so on this server the 2pc adds nothing once the
+  talent is trained; the sim no longer references it for Righteous Vengeance.
+- Verified on the live server (`spell_script_names`, `glyphproperties_dbc`, `item_template`): Glyph of
+  Reckoning now has full server-side support (`spell_tweaks_glyph_of_reckoning` bound to Hand of Reckoning
+  62124; glyph 912, item 90060). It's still net-new 3.3.5a content: the module's own docs
+  (`docs/paladin/GlyphOfReckoning.md`) call the matching client `Spell.dbc`/`Item.dbc`/etc. rows a manual,
+  unapplied step, so a real player still can't train or socket it. The sim's stub stays.
+- Exorcism's `ModifyCast` held melee by hand (`AutoAttacks.StopMeleeUntil`); the generated serverdata already
+  carries `FlagResetsAutoAttack` for 48801, which `cast.go`'s hardcast path (P7-0c) now holds or resets on its
+  own for every spell with a cast time. Dropped the redundant hand hold.
+- Judgement proc rules and damage classes check out: Judgement of Wisdom/Light are `DmgClassRanged` server side
+  and use `OutcomeRangedHit` (a real hit roll, no dodge/parry/block); the three secondary judgements
+  (Judgement of Righteousness/Command/Vengeance) are `DmgClassMelee` with `FlagNoActiveDefense | FlagAlwaysHit`
+  and use `OutcomeMeleeSpecialCritOnly`. Coefficients match `spell_bonus_data` for every spell that has a row
+  (Judgement of Righteousness 0.32/0.20, Judgement of Vengeance 0.22/0.14, Holy Vengeance 0.013/0.025 a tick,
+  Exorcism and Hammer of Wrath 0.15/0.15).
+- P6-3's 47661 (Libram of Valiance) already matches the live `spell_proc` row for 67365 (70% chance, 8 s ICD
+  off a Holy Vengeance tick); the T9 2pc row folds into the Righteous Vengeance crit fix above.
+- Suites moved (SOC/SOR/SOV builds, `dock.sh delta`): SOC roughly flat, -0.35% to +2.8% (Hammer of Wrath's
+  execute-phase seal loss can outweigh the Exorcism fix in a no-buff, no-Holy-Vengeance build); SOR +0.1% to
+  +2.7% (Shield of Righteousness never carried the DoT anyway, so this is the seal-proc-gate fix and Exorcism
+  alone); SOV and SOV 2-target +3.7% to +6.8%, dominated by Holy Vengeance's now-real crit chance. Protection
+  moved too, -2.4% to +0.4% (its suite doesn't invest in Righteous Vengeance or Two-Handed Weapon
+  Specialization, so it's purely losing the erroneous Hammer of Wrath/Shield of Righteousness seal procs, offset
+  a little by whichever seal it runs).
+- Recorded run (`TestRecordedRun`, `SIMVAL_RECORD_SPEC=ret`, human paladin, 300 s at 4 yards,
+  `SIMVAL_RECORD_TALENT_SPELLS` set to `StandardTalents`'s 26 ids, Seal of Vengeance/Corruption cast once
+  before the pull via `SIMVAL_RECORD_START_SPELLS`, the fixed cycle rotating Judgement of Wisdom, Crusader
+  Strike, Divine Storm and Consecration every 1.5 s). Hammer of Wrath and Exorcism stay out of the cycle:
+  the dummy's health never drops (module README), so Hammer of Wrath never reaches execute range, and
+  Exorcism can't target a Giant (below).
+
+  | Run | Server DPS | Sim DPS | Gap |
+  |---|---|---|---|
+  | Ret (`ret_Svrleadsofeh_1790025523`, boss-only) | 1978.9 | 1871.0 | +5.77%, over the 2% |
+- The capture's queried `character_talent` rows came back as a Protection build, not the Retribution one
+  just learned. Cause: plain `.learn <id>` (`cs_learn.cpp`'s `HandleLearnSpellCommand`) grants the spellbook
+  entry through the generic `learnSpell` path, not `LearnTalent`, so it never writes `character_talent`; that
+  table only ever held whatever `.playerbots bot initself=epic` itself spent points on (a Redoubt proc 31 s
+  into the fight, a Protection talent, confirms that build was there from the start, not a later respec).
+  The learned Retribution spells stayed castable the whole fight regardless. Fixed in `recorded_run_test.go`:
+  `writeSetup` now writes `run.TalentSpells` directly instead of querying `character_talent` whenever a
+  caller set them, so a future capture self-corrects.
+- Separately, real mana exhaustion: Crusader Strike, Divine Storm, Judgement of Wisdom and Consecration
+  (every mana-cost spell in the cycle) all land their last hit between 271 s and 273 s into the fight, while
+  free melee and the Seal of Vengeance proc keep going to the end.
+- **Found and fixed:** Exorcism (48801) had no creature-type restriction in the sim, so `tools/simval rrsim`'s
+  comparison request (`MobType_MobTypeGiant`, matching the boss dummy) still let it fire, for 124.4 of an
+  unfixed 1938.7 DPS. The live capture never lands it once in five minutes despite the cycle trying it every
+  6 s: `SpellInfo::CheckTargetCreatureType` (`SpellInfo.cpp:1888-1900`) gates the cast on Spell.dbc's
+  `TargetCreatureType`, matching Exorcism's retail Undead/Demon restriction. Added the same
+  `ExtraCastCondition` the spell's own crit bonus already checked for. Every promoted suite's target is
+  `MobTypeDemon` (`test_utils.go`'s `DefaultTargetProto`), so this moves no golden: confirmed both by a debug
+  trace (2.15M `ExtraCastCondition` calls in `TestRetribution/Average-Default`, always `MobTypeDemon`, always
+  true) and by running `dock.sh delta` with and without the fix, byte-identical either way.
+- With Exorcism's phantom damage gone the true gap is +5.77%, not the +2.08% it was masking. Per ability
+  (sim vs. server, boss-only DPS): Crusader Strike +22.8% over (164.4 vs. 133.9), Judgement (the seal's own
+  secondary hit, 31804) +3.6% over, the seal's own proc within noise (+0.3%), then melee -4.8%, Consecration
+  -6.4%, Righteous Vengeance -17.0%, Holy Vengeance -19.2% and Divine Storm -30.9% all under. Crusader
+  Strike's and Judgement's overshoot lines up with cast frequency: the real cycle only *tries* each once
+  every 6 s regardless of its cooldown, landing Crusader Strike every 7.16 s on average against the sim's
+  reactive APL casting it every 4.82 s, and Judgement every 13.07 s against the sim's 9.54 s. Divine Storm's
+  own frequency is the opposite case, matching almost exactly (13.66 s recorded, 13.42 s simmed), yet its
+  average hit is 32% lower in the sim, so that gap and Holy Vengeance's and Righteous Vengeance's DoT ticks
+  (both stacked mostly off white hits, which run at the same cadence either way) aren't explained by cast
+  frequency; with only 22-42 hits for the direct-damage spells and 69-100 ticks for the DoTs, a single 300 s
+  capture doesn't have enough samples to separate a real stacking or rating difference from noise. A second
+  capture, or a reactive cast loop closer to `fightHunter`'s instead of the fixed cycle, would settle it.
+- `.simval yellow`/`spell` probes (`TestSimvalRetribution`, live, code): Crusader Strike and Divine Storm roll
+  a real defense table from behind the dummy (`CanDodge` true), unlike the secondary judgements' always-hit
+  one; parry and block drop out only because attacking from behind removes them structurally (`simval_test.go`'s
+  own from-behind checks confirm the same for Heroic Strike), not because either spell is gated. Holy
+  Vengeance stays `DmgClassMelee` on a hit-or-miss roll. Judgement of Wisdom rolls the "yellow" table too,
+  tagged `attackType: ranged`, not a separate "magic" one: it can miss but is never dodged, parried or
+  blocked. All four pass.
+
 **Items** (`docs/azerothcore-item-diff/data/summary.md`)
 - 1509 of 8043 sim items differ.
 - Classic raised Ulduar/emblem item levels, e.g. 226→232 on 329 items and 239→252 on 92.
@@ -735,6 +835,8 @@ The fork copies the server. Patching any of these in [ac] means updating the mat
 | 49 | Explosive Trap damage (49065) | magic class: never misses, crits off spell crit for +50%, no ten-target cap (the trap's trigger creature casts it) | ranged hit and crit, +100%, capped | `GameObject::CastSpell`, `Spell::AddUnitTarget` |
 | 50 | Slam's damage hit (50783) | `SPELL_ATTR3_ALWAYS_HIT`: the table roll happens once, on the cast (47475) | rolls its own hit/dodge/parry/glance/crit like the cast | `spell_warr_slam::HandleDummy`, `spell.dbc` |
 | 51 | Deep Wounds refresh | queued 400 ms out, `MunchingBlizzlike.Enabled` | applies immediately | `Unit.cpp:16310-16328` |
+| 52 | Holy Vengeance/Blood Corruption tick crit | any Two-Handed Weapon Specialization rank grants it, aura 286 on the talent (mod-spell-tweaks) | never crits | `spell_20111-20113_2h_weapon_spec_holy_vengeance_crit.sql` |
+| 53 | Righteous Vengeance tick crit | the talent itself grants it (aura 286, mod-spell-tweaks); the T9 2pc's own crit effect is disabled server-side (`SpellInfoCorrections.cpp`) so it adds nothing | only the T9 2pc grants any crit chance | `spell_53380-53382_righteous_vengeance_dot_crit.sql`, `SpellInfoCorrections.cpp` (67188) |
 
 Not yet settled against retail, check before patching: the 200 ms other-hand push (`PlayerUpdates.cpp`), the DoT
 refresh tick-timer rule, the max(cast, 1500 ms) PPM basis for spell-triggered aura procs, the rule-based binary

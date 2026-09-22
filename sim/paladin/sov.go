@@ -40,6 +40,10 @@ func (paladin *Paladin) registerSealOfVengeanceSpellAndAura() {
 	// TODO: Test whether T8 Prot 2pc also affects Judgement, once available
 	// TODO: Verify whether these bonuses should indeed be additive with similar
 
+	// Two-Handed Weapon Specialization (any rank) carries a hidden aura-286 effect scoped to Holy
+	// Vengeance/Blood Corruption's family mask, so any rank makes the DoT crit-capable server-side.
+	holyVengeanceCanCrit := paladin.Talents.TwoHandedWeaponSpecialization > 0
+
 	dotSpell := paladin.RegisterSpell(core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: 31803, Tag: 2},
 		SpellSchool: core.SpellSchoolHoly,
@@ -48,6 +52,7 @@ func (paladin *Paladin) registerSealOfVengeanceSpellAndAura() {
 
 		DamageMultiplier: 1 *
 			(1 + paladin.getItemSetLightswornBattlegearBonus4() + paladin.getItemSetAegisPlateBonus2() + paladin.getTalentSealsOfThePureBonus()),
+		CritMultiplier:   paladin.MeleeCritMultiplier(),
 		ThreatMultiplier: 1,
 
 		Dot: core.DotConfig{
@@ -57,6 +62,7 @@ func (paladin *Paladin) registerSealOfVengeanceSpellAndAura() {
 			},
 			NumberOfTicks: 5,
 			TickLength:    time.Second * 3, // ticking every three seconds for a grand total of 15s of duration
+			TicksCanCrit:  holyVengeanceCanCrit,
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
 				tickValue := 0 +
 					.013*dot.Spell.SpellPower() +
@@ -66,7 +72,11 @@ func (paladin *Paladin) registerSealOfVengeanceSpellAndAura() {
 				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(dot.Spell.Unit.AttackTables[target.UnitIndex])
 			},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
-				dot.CalcAndDealPeriodicSnapshotDamage(sim, target, dot.Spell.OutcomeAlwaysHit)
+				if holyVengeanceCanCrit {
+					dot.CalcAndDealPeriodicSnapshotDamage(sim, target, dot.Spell.OutcomeMeleeSpecialCritOnly)
+				} else {
+					dot.CalcAndDealPeriodicSnapshotDamage(sim, target, dot.Spell.OutcomeAlwaysHit)
+				}
 			},
 		},
 	})
@@ -186,19 +196,20 @@ func (paladin *Paladin) registerSealOfVengeanceSpellAndAura() {
 					}
 				}
 			} else {
-				if spell.IsMelee() {
+				if paladin.sealCanProcOn(spell) {
 					if dotSpell.Dot(result.Target).GetStacks() > 0 {
 						onSpecialOrSwingProc.Cast(sim, result.Target)
 					}
 				}
 			}
 
+			// The DoT itself only stacks off a white hit or Hammer of the Righteous (icon check),
+			// plus Crusader Strike and Divine Storm via mod-spell-tweaks. Hammer of Wrath and Shield
+			// of Righteousness still get the damage bonus above, just never stack the DoT.
 			dotApplicableSpells := []*core.Spell{
 				paladin.HammerOfTheRighteous,
 				paladin.CrusaderStrike,
 				paladin.DivineStorm,
-				paladin.HammerOfWrath,
-				paladin.ShieldOfRighteousness,
 			}
 			isApplicableSpell := false
 			for _, validSpell := range dotApplicableSpells {

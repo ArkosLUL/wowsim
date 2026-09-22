@@ -63,9 +63,11 @@ count refreshes; and there are no stack counts.
 
 ## rrsim
 
-Sims a recorded hunter run from its `.setup.txt`: gear, talents, glyphs, ammo, quiver and pet as
-recorded, on `TestRecordedRunHunter`'s rotation. It prints the DPS, pet included, to pass to
-`chronicle -sim`. Needs `--tags=with_db` and the live DBCs. Other classes have no rotation here.
+Sims a recorded run from its `.setup.txt`: gear, talents and glyphs as recorded, plus ammo, quiver and
+pet for a hunter (`TestRecordedRunHunter`'s rotation). A Retribution Paladin (`TestRecordedRun`,
+`SIMVAL_RECORD_TALENT_SPELLS` set) runs `ui/retribution_paladin/apls/default.apl.json`'s priority list
+and its own real mana, no cheat power. It prints the DPS, pet included, to pass to `chronicle -sim`.
+Needs `--tags=with_db` and the live DBCs. Other classes have no rotation here.
 
 | Flag | Default |
 |---|---|

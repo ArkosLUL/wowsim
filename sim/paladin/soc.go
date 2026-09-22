@@ -143,7 +143,7 @@ func (paladin *Paladin) registerSealOfCommandSpellAndAura() {
 					// For SoC this is a cleave.
 					onSpecialOrSwingProcCleave.Cast(sim, result.Target)
 				}
-			} else if spell.IsMelee() {
+			} else if paladin.sealCanProcOn(spell) {
 				// Temporary check to avoid AOE double procing.
 				if spell.SpellID == paladin.HammerOfTheRighteous.SpellID || spell.SpellID == paladin.DivineStorm.SpellID {
 					onSpecialOrSwingProc.Cast(sim, result.Target)
