@@ -539,16 +539,65 @@ raid index and phase and export as stage 1, so stage 2 needs jobs of its own (`J
 `ui/raid/optimizer_batch.ts`). `acraid` should export the quiver or ammo pouch, so an imported hunter sets
 `Hunter.Options.quiver`.
 
-The sheet memo (`sheet.go`) assumes the pool's base never changes after `CompilePool`: a full-raid evaluator,
-or a stage 2 that swaps the others' gear into the base, needs a fresh `Pool` or a memo reset. Stage 2's warm
-starts may only hold items and gems the request's database carries, since `PrepareRequest` checks each one
-and the web server has no `with_db`.
+Stage 2's warm starts may only hold items and gems the request's database carries, since `PrepareRequest`
+checks each one and the web server has no `with_db`.
+
+**As built (engine):**
+- `NewRaidEvaluator` is `NewSimEvaluator` pointed at the asked request (the real raid, target at its
+  real index) instead of the derived one, with `MetricDPS` swapped for `raidctx.RaidDPS`: core's own
+  raid-wide `Dps`, already the sum of every player's. Everything else - sharding, caching, `IsTest`
+  pairing - is unchanged.
+- `objectiveWeights`'s raid branch just weights `MetricDPS`: the evaluator already reports raid DPS
+  there, so J stays a scaled raid DPS with no other file needing a raid-mode branch. Swapping the
+  evaluator in `Optimize` alone makes verify, the neighborhood and the racial screen already rank and
+  pick by paired raid sims - that's the re-ranking and the "party racials count" screen, both for free.
+- Dropped the individual-context-plus-analytic-terms search: the search itself never sims, only the
+  surrogate does, so the evaluator only runs the bounded points `budget.Evaluations` already caps
+  (Objective, Stat curves, Effects, Verify, Alternatives, the screen), whatever raid they sim against.
+  Simming the real raid throughout prices Demonic Pact and Heroic Presence exactly instead of
+  approximating them, at the cost measured below. `raidctx/contribution.go` ended up holding just that
+  extraction, not a formula.
+- `raid_dps_delta`/`_se`: the plain (unnormalized) `MetricDPS` delta against the seed (results) or the
+  best (alternatives), set only in raid mode.
+- The sheet memo's staleness risk doesn't apply: the Pool keeps using the derived context throughout,
+  and only the evaluator's own per-sim clone touches the real raid, so nothing rebuilds `Pool.base`
+  mid-run.
+- A stage 2 request needs no new field: it's an ordinary request whose other raiders' `Equipment` in
+  `Base.Raid` is already their stage-1 BiS when it's submitted.
+- Quick/Normal wall times, and what they were measured on: `bis-optimizer.INVESTIGATION.md#performance`.
 
 **Tests:**
 - An identical loadout gives Δ = 0.
 - se ≪ a single raider's effect.
 - A Demonology warlock values SP higher in raid mode.
 - Draenei survives the screen when a party needs hit.
+
+**As built (batch-ui):**
+- A `Job` now carries a `stage` (1 or 2) and keys on raider × phase × stage. `plannedJobs()` only appends
+  a phase's stage 2 jobs (DPS raiders only) once every raider it planned for that phase there is done or
+  failed, so the existing run loop, busy-retry and reload resume sequence stage 1 before stage 2 with no
+  new state machine. The grid and detail show whichever stage is furthest along per raider and phase.
+- Stage 2 sends `OptimizerObjectiveRaidDps` (a new `objective` field on `pool_builder.ts`'s
+  `PoolBuilderInput`, unset everywhere else, individual tab and `fixture_driver.ts` included) and, before
+  building the request, wears every other active raider's done phase stage 1 pick - gear, gems, enchants,
+  reforges, racial traits, each with its own item database merged in - onto a fresh raid request clone,
+  the same pattern `validate()` already used. The target's own seed and pool stay untouched.
+- Warm starts add the raider's own same-phase stage 1 pick to the usual earlier-phase carryover (now
+  preferring a phase's stage 2 pick to its stage 1 one). Both stay inside the target's own pool, so they
+  ride the request's database with no extra plumbing.
+- `OptimizerBatchExport` carries both stages' entries with their real `stage`.
+- `acraid` exports a `quiver` bool (`item_template.class` 11 in a bag slot); `acore_roster.ts`'s
+  `applyCharacter` sets a hunter's `Hunter.Options.quiver` from it on both Replace and Update import,
+  since it's a bag-slot fact from the server, not a rotation choice.
+
+**Findings:**
+- `OptimizerLoadoutResult.metrics.dps` is the raid's total DPS in raid mode, not the raider's own
+  (`NewRaidEvaluator` swaps it in): a solo DPS raider's loadout view shows the whole raid's DPS before and
+  after, the same figures the `raid_dps_delta` line already reports as a delta. Left as is: `LoadoutView`
+  is shared with the individual tab, and the raid-DPS line already disambiguates the number.
+- Manual check on a real 25-player roster (two Rogues, P1, Quick): stage 2 measured 340-415 s per raider,
+  16-20x the 2-player smoke raid the engine stage measured, which makes the batch estimates in
+  `bis-optimizer.INVESTIGATION.md#performance` stale by over an order of magnitude; noted there.
 
 ### BIS-e2e-perf (wave J)
 

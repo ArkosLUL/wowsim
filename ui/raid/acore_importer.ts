@@ -76,9 +76,9 @@ export class RaidAcoreImporter extends Importer {
 				<code>go run ./tools/database/acraid -leader &lt;name&gt; -out raid.json</code>.
 			</p>
 			<p>
-				Gear (with gems, enchants and reforges), talents, glyphs, race, racial traits and professions come
-				from the server. Rotations, consumes, spec options, raid buffs and the encounter don't: those stay
-				yours.
+				Gear (with gems, enchants and reforges), talents, glyphs, race, racial traits, professions and a
+				hunter's quiver come from the server. Rotations, consumes, other spec options, raid buffs and the
+				encounter don't: those stay yours.
 			</p>
 			<p>
 				To import, upload the roster file or paste it below, pick a mode, then click 'Import'.

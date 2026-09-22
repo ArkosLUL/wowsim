@@ -2,7 +2,6 @@ package optimizer
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/wowsims/wotlk/sim/core"
@@ -38,7 +37,9 @@ func objectiveWeights(settings *proto.OptimizerSettings) (Metrics, error) {
 	case proto.OptimizerObjective_OptimizerObjectiveOwnMetrics:
 		weights = MetricsFromProto(settings.GetMetricWeights())
 	case proto.OptimizerObjective_OptimizerObjectiveRaidDps:
-		return weights, errors.New("the raid DPS objective isn't implemented yet")
+		// NewRaidEvaluator reports the raid's total DPS as MetricDPS, so weighing it alone makes J the
+		// raid's DPS (scaled by its normalizer, like every other objective).
+		weights[MetricDPS] = 1
 	default:
 		return weights, fmt.Errorf("unknown objective %v", settings.GetObjective())
 	}

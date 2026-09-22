@@ -150,11 +150,23 @@ func TestOptimizeBadRequest(t *testing.T) {
 	}
 }
 
-func TestOptimizeRaidDpsIsAnError(t *testing.T) {
+// A raid-DPS run with nothing to change still returns cleanly, and the pick's raid_dps_delta is
+// exactly 0 against itself.
+func TestOptimizeRaidDpsWithNothingToChange(t *testing.T) {
 	req := loneRequest()
 	req.Settings.Objective = proto.OptimizerObjective_OptimizerObjectiveRaidDps
-	if result := Optimize(context.Background(), req, nil); !strings.Contains(result.ErrorResult, "raid DPS") {
-		t.Errorf("error_result = %q, want raid DPS unimplemented", result.ErrorResult)
+	result := Optimize(context.Background(), req, nil)
+	if result.ErrorResult != "" {
+		t.Fatal(result.ErrorResult)
+	}
+	if result.Improved {
+		t.Error("nothing was in the pool to change")
+	}
+	if result.Best.RaidDpsDelta != 0 || result.Best.RaidDpsDeltaSe != 0 {
+		t.Errorf("best raid_dps_delta = %v ± %v, want 0", result.Best.RaidDpsDelta, result.Best.RaidDpsDeltaSe)
+	}
+	if result.Seed.RaidDpsDelta != 0 || result.Seed.RaidDpsDeltaSe != 0 {
+		t.Errorf("seed raid_dps_delta = %v ± %v, want 0", result.Seed.RaidDpsDelta, result.Seed.RaidDpsDeltaSe)
 	}
 }
 

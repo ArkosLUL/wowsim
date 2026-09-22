@@ -109,6 +109,9 @@ export interface PoolBuilderInput {
 	// drops what the pool doesn't offer, but Go rejects the whole request over an item or gem it has no
 	// data for, and the web server only knows what the pool and the players' gear carry.
 	warmStarts?: Array<EquipmentSpec>;
+	// OptimizerObjectiveOwnMetrics when unset. The raid batch's stage 2 sends OptimizerObjectiveRaidDps
+	// for its DPS raiders, which scores against the whole raid in `base` instead of the target alone.
+	objective?: OptimizerObjective;
 }
 
 export interface BuiltRequest {
@@ -421,7 +424,7 @@ export function buildOptimizeRequest(input: PoolBuilderInput): BuiltRequest {
 		settings: OptimizerSettings.create({
 			contentPhase: settings.contentPhase,
 			effort: settings.effort,
-			objective: OptimizerObjective.OptimizerObjectiveOwnMetrics,
+			objective: input.objective ?? OptimizerObjective.OptimizerObjectiveOwnMetrics,
 			metricWeights: settings.metricWeights
 				? OptimizerMetrics.clone(settings.metricWeights)
 				: tank

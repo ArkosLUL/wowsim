@@ -111,12 +111,20 @@ worldserver busy on about 1.5 of the 16 threads, and J gained over the preset (p
 | Ret P4 | 4569 | 11 s, +54 J | 125 s, +73 J |
 
 The search stage itself takes at most 3 s at Quick and 8 s at Normal with 4.6k candidates, the top of the
-UI's pools (its Ret replay fixtures hold 2.6k–4.6k). BIS-e2e-perf times the rest; still estimates, for 16
-threads:
+UI's pools (its Ret replay fixtures hold 2.6k–4.6k). Raid contribution is measured two ways: `wowsimcli
+optimize` on a 2-player smoke raid (a floor, since a full roster's raid sims cost more per iteration), and
+the BiS Batch's own stage 2 on a real 25-player roster (two Combat Rogues, Quick), 16–20× the smoke raid's
+cost. BIS-e2e-perf still owes the rest:
 
 | Run | Time |
 |---|---|
 | Tanks | 1.5× a DPS run |
-| Raid contribution, one raider and phase | 4–6 min |
+| Raid contribution, one raider and phase, 2-player smoke raid, Quick | 23 s |
+| Raid contribution, one raider and phase, 2-player smoke raid, Normal | 3 min 22 s |
+| Raid contribution, one raider and phase, real 25-player roster, Quick | 340–415 s |
 | Batch, Quick | 30–45 min |
 | Batch, Normal | 6–8 h |
+
+The 25-player figure makes the batch estimate above stale: at ~400 s per DPS raider's stage 2, a roster
+with 19 DPS raiders takes over 2 hours per phase at Quick, not 30–45 minutes total. BIS-e2e-perf's
+full-roster batch measurement should replace both batch rows.

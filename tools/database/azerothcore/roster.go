@@ -51,7 +51,10 @@ type RosterCharacter struct {
 	Glyphs      RosterGlyphs `json:"glyphs"`
 	Professions []string     `json:"professions"`
 	Gear        []RosterItem `json:"gear"`
-	Warnings    []string     `json:"warnings"`
+	// A quiver or ammo pouch sits in one of the character's bag slots. Only hunters use it: the
+	// AzerothCore importer sets Hunter.Options.quiver from it.
+	Quiver   bool     `json:"quiver"`
+	Warnings []string `json:"warnings"`
 }
 
 // RosterGlyphs holds glyph spell ids, which the sim maps to glyph items.
@@ -89,6 +92,16 @@ const (
 	ACSlotCount    = 19
 )
 
+// ACSlotBagStart and ACSlotBagEnd are the 4 bag slots, where a quiver or ammo pouch can sit equipped
+// like any other bag.
+const (
+	ACSlotBagStart = 19
+	ACSlotBagEnd   = 22
+)
+
+// ItemClassQuiver is item_template.class for quivers and ammo pouches.
+const ItemClassQuiver = 11
+
 // MaxLevel is the only level the sim supports.
 const MaxLevel = 80
 
@@ -125,6 +138,7 @@ type CharacterRows struct {
 	Glyphs            [6]int32
 	Skills            map[int32]int32
 	Items             []EquippedItem
+	HasQuiver         bool
 }
 
 // BuildCharacter turns one character's rows into its roster entry. Anything it can't express lands
@@ -140,6 +154,7 @@ func BuildCharacter(rows *CharacterRows, dbc *RosterDBC, trees TalentTrees, minS
 		Subgroup:    rows.Subgroup,
 		MemberFlags: rows.MemberFlags,
 		Gear:        []RosterItem{},
+		Quiver:      rows.HasQuiver,
 		Warnings:    []string{},
 	}
 	warn := func(format string, args ...any) {

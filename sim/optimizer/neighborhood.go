@@ -17,11 +17,12 @@ const neighborhoodRounds = 5
 func (r *run) neighborhood(s *surrogate, verified []*verifiedLoadout) ([]*proto.OptimizerSlotAlternative, []*verifiedLoadout, error) {
 	se := newSearcher(s, r)
 	type alternative struct {
-		slot    proto.ItemSlot
-		choice  ItemChoice
-		loadout Loadout
-		eval    *Evaluation
-		delta   Estimate
+		slot      proto.ItemSlot
+		choice    ItemChoice
+		loadout   Loadout
+		eval      *Evaluation
+		delta     Estimate
+		raidDelta Estimate
 	}
 	for round := 0; round < neighborhoodRounds; round++ {
 		if err := se.check(r.best); err != nil {
@@ -70,6 +71,9 @@ func (r *run) neighborhood(s *surrogate, verified []*verifiedLoadout) ([]*proto.
 				continue
 			}
 			a.delta = r.obj.Delta(bestEval, a.eval)
+			if r.raidMode() {
+				a.raidDelta = Delta(bestEval, a.eval, MetricDPS)
+			}
 			// the search only sees floors through its penalty, so a runner-up can miss one
 			if (top == nil || a.delta.Mean > top.delta.Mean) && r.pool.checkFloors(a.loadout) == nil {
 				top = a
@@ -101,10 +105,12 @@ func (r *run) neighborhood(s *surrogate, verified []*verifiedLoadout) ([]*proto.
 				continue
 			}
 			out = append(out, &proto.OptimizerSlotAlternative{
-				Slot:         a.slot,
-				Item:         a.choice.ToProto(),
-				ScoreDelta:   a.delta.Mean,
-				ScoreDeltaSe: a.delta.SE,
+				Slot:           a.slot,
+				Item:           a.choice.ToProto(),
+				ScoreDelta:     a.delta.Mean,
+				ScoreDeltaSe:   a.delta.SE,
+				RaidDpsDelta:   a.raidDelta.Mean,
+				RaidDpsDeltaSe: a.raidDelta.SE,
 			})
 		}
 		return out, verified, nil

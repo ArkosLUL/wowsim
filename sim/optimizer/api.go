@@ -83,7 +83,13 @@ func Optimize(ctx context.Context, req *proto.OptimizeGearRequest, progress Prog
 	if err != nil {
 		return errorResult(err)
 	}
-	return optimize(ctx, r, simmed, NewSimEvaluator(simmed, keep...), progress, start)
+	// Raid contribution scores against the real roster (r, the asked request), not the derived
+	// individual context: everything else - the pool, the seed, the search - still runs there.
+	var eval Evaluator = NewSimEvaluator(simmed, keep...)
+	if r.Settings.GetObjective() == proto.OptimizerObjective_OptimizerObjectiveRaidDps {
+		eval = NewRaidEvaluator(r, keep...)
+	}
+	return optimize(ctx, r, simmed, eval, progress, start)
 }
 
 func errorResult(err error) *proto.OptimizerResult {
@@ -640,6 +646,12 @@ func (r *run) result(verified []*verifiedLoadout, alternatives []*proto.Optimize
 // maxTop is how many verified sets a result lists.
 const maxTop = 20
 
+// raidMode is whether the run scores DPS raiders by raid contribution rather than their own
+// metrics; NewRaidEvaluator then reports MetricDPS as the raid's total DPS.
+func (r *run) raidMode() bool {
+	return r.asked.Settings.GetObjective() == proto.OptimizerObjective_OptimizerObjectiveRaidDps
+}
+
 // loadoutResult scores l against the seed. eval is nil when l wasn't simmed.
 func (r *run) loadoutResult(l Loadout, eval *Evaluation) *proto.OptimizerLoadoutResult {
 	out := &proto.OptimizerLoadoutResult{
@@ -651,6 +663,10 @@ func (r *run) loadoutResult(l Loadout, eval *Evaluation) *proto.OptimizerLoadout
 		if r.seedEval != nil {
 			d := r.obj.Delta(r.seedEval, eval)
 			out.ScoreDelta, out.ScoreDeltaSe = d.Mean, d.SE
+			if r.raidMode() {
+				rd := Delta(r.seedEval, eval, MetricDPS)
+				out.RaidDpsDelta, out.RaidDpsDeltaSe = rd.Mean, rd.SE
+			}
 		}
 		var m Metrics
 		for i := range m {

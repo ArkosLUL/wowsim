@@ -1,8 +1,8 @@
 """Checks an acraid export against the server it came from.
 
-Rebuilds gear, gems, reforges, glyphs, professions, races and subgroups from SQL, the DBC files and the
-sim's item database, then diffs that against the JSON. It's a second implementation on purpose: the Go
-tests cover the pure conversions, this covers the queries and the DBC field indices they run on.
+Rebuilds gear, gems, reforges, glyphs, professions, races, subgroups and quivers from SQL, the DBC files
+and the sim's item database, then diffs that against the JSON. It's a second implementation on purpose:
+the Go tests cover the pure conversions, this covers the queries and the DBC field indices they run on.
 
   python tools/database/acraid/crosscheck.py raid.json --dbc <dir> [--leader Deathsong] [--names a,b]
 
@@ -19,6 +19,7 @@ import sys
 
 MAX_GEM_SOCKETS = 3
 MAX_RAID_SIZE = 40
+ITEM_CLASS_QUIVER = 11  # item_template.class for quivers and ammo pouches
 PRIMARY_PROFESSIONS = {164: 'Blacksmithing', 165: 'Leatherworking', 171: 'Alchemy', 182: 'Herbalism', 186: 'Mining',
                        197: 'Tailoring', 202: 'Engineering', 333: 'Enchanting', 393: 'Skinning', 755: 'Jewelcrafting',
                        773: 'Inscription'}
@@ -171,6 +172,11 @@ equipped = by_guid("""SELECT ci.guid, ci.slot, ii.guid, ii.itemEntry, ii.enchant
                       JOIN acore_characters.item_instance ii ON ii.guid = ci.item
                       LEFT JOIN acore_world.item_template it ON it.entry = ii.itemEntry
                       WHERE ci.bag = 0 AND ci.slot < 19 AND ci.slot NOT IN (3, 18) AND ci.guid IN (%s)""", guids)
+quivers = by_guid("""SELECT ci.guid, it.class
+                     FROM acore_characters.character_inventory ci
+                     JOIN acore_characters.item_instance ii ON ii.guid = ci.item
+                     JOIN acore_world.item_template it ON it.entry = ii.itemEntry
+                     WHERE ci.bag = 0 AND ci.slot BETWEEN 19 AND 22 AND ci.guid IN (%s)""", guids)
 # the character's active spec only, which is what the server would load
 equipped_glyphs = by_guid("""SELECT cg.guid, cg.glyph1, cg.glyph2, cg.glyph3, cg.glyph4, cg.glyph5, cg.glyph6
                              FROM acore_characters.character_glyphs cg
@@ -199,6 +205,10 @@ for member in members:
     want_swap = int(swap[0][0]) if swap else 0
     if character['swapRaceId'] != want_swap:
         problems.append(f'{name}.swapRaceId = {character["swapRaceId"]}, server says {want_swap}')
+
+    want_quiver = any(int(row[0]) == ITEM_CLASS_QUIVER for row in quivers[member.guid])
+    if character.get('quiver', False) != want_quiver:
+        problems.append(f'{name}.quiver = {character.get("quiver", False)}, server says {want_quiver}')
 
     item_reforges = {int(row[0]): (int(row[1]), int(row[2])) for row in reforges[member.guid]}
 

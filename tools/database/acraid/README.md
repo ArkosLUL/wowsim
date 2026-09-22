@@ -59,10 +59,12 @@ command or shared per account, so the skill value says nothing about who has the
 | Level | Fields |
 |---|---|
 | Top level | `version`, `exportedAt`, `group` (`selector`, `leader`, `leaderIsGroupLeader`, `names`), `warnings`, `characters` |
-| Each character | `name`, `classId`, `raceId`, `swapRaceId`, `level`, `subgroup`, `memberFlags`, `talents`, `glyphs` (`major` and `minor` spell ids), `professions`, `gear`, `warnings` |
+| Each character | `name`, `classId`, `raceId`, `swapRaceId`, `level`, `subgroup`, `memberFlags`, `talents`, `glyphs` (`major` and `minor` spell ids), `professions`, `gear`, `quiver`, `warnings` |
 | Each gear entry | `acSlot`, `id`, `enchant`, `gems`, `extraGem`, `reforge` |
 
 - `reforge` is `{fromStatType, toStatType}`, readable with `ItemReforge.fromJson`.
+- `quiver` is true when a quiver or ammo pouch sits in one of the character's 4 bag slots. Only hunters
+  use it.
 - Only the active talent spec is exported.
 - Herbalism is exported as a profession even when the character doesn't know Lifeblood (55503), and
   the sim grants Lifeblood to every herbalist.
