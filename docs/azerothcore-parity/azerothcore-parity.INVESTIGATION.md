@@ -171,6 +171,15 @@ Roll details the tables above don't show:
   since the sim has no equivalent of the caster's own creation-time clock. On it: Deep Wounds, Unholy
   Blight, Piercing Shots, Righteous Vengeance. Still owed: Ignite, Languish, the two Shaman procs
   (`spell_mage/druid/shaman.cpp`).
+  - The proc counts the old dot's outstanding damage, so an old tick landing before the refresh is paid
+    twice. A tick or swing due on the refresh's own server tick comes after it: `Player::Update` runs the
+    caster's events before its swings, and `Map::Update` updates players before the creatures whose auras
+    tick. The sim lands the refresh 1 ns early for that; ticking and swinging first had put Righteous
+    Vengeance 8% and Fury's Deep Wounds 11% high (H3 cross-review).
+  - The Ret capture's 78 Righteous Vengeance refreshes all sit on one 400 ms lattice, 0-400 ms after their
+    crits. Open: they average 189 ms after the crit, the sim's 250 ms (100-400 ms). Likely cause: a cast is
+    handled with the session, before `Player::Update` advances the event clock, so its refresh can land in
+    the same update, after the cast, where the sim's goes a tick later or before a cast on its tick.
 
 **Pets**
 - Scaling scripts:
@@ -609,7 +618,7 @@ Roll details the tables above don't show:
 
   | Run | Server DPS | Sim DPS | Gap |
   |---|---|---|---|
-  | Ret (`ret_Svrleadjxcky_1790084304`, boss-only, 600.4 s) | 4576.6 | 6229.0 | -26.5%, rotations (below) |
+  | Ret (`ret_Svrleadjxcky_1790084304`, boss-only, 600.4 s) | 4576.6 | 6230.4 | -26.5%, rotations (below) |
 
 - Two `recorded_run_test.go` bugs found and fixed while recapturing:
   - `PlayerbotFactory::InitEquipment` never reads the spec `InitTalentsTree` just rolled (its
@@ -636,15 +645,16 @@ Roll details the tables above don't show:
   | Judgement of Vengeance (31804; 17/23) | 3250±128 / 3283 (-1.0%) | 6795±176 / 6770 (+0.4%) | 57.5±7.8 / 60.5 |
   | Consecration tick (48819; 387) | 524±3 / 526 (-0.4%) | – | – |
   | Manifest Anger (71433, trinket; 28/15) | 1238±18 / 1227 (+0.9%) | 2515±42 / 2530 (-0.6%) | 34.9±7.3 / 42.6 |
-  | Righteous Vengeance tick (61840; 109/75), moves with PAR-P7-0e | 688±26 / 1061 (-35.2%) | 1437±71 / 2185 (-34.2%) | 40.8±3.6 / 42.6 |
+  | Righteous Vengeance tick (61840; 109/75) | 688±26 / 1085 (-36.6%) | 1437±71 / 2239 (-35.8%) | 40.8±3.6 / 42.5 |
 
   - Seal of Vengeance's non-crit (-2.6σ) is sampling: its hits caught Piercing Twilight (+1472 AP, 32.5%
     uptime) 28% of the time, its crits 38%. Inside and outside the buff, crit over non-crit is 2.06-2.08, the
     2.06 the judgement's exact values show; the all-outcome mean is +0.3%.
   - A Righteous Vengeance tick is a quarter of a pool the crits feed, so its size follows the rotation. Per
     30% of the crit damage fed to it (Crusader Strike, Divine Storm, the judgement), both deliver the same:
-    server 1.40, sim 1.38, its own crits and resists included. It moves with PAR-P7-0e's delayed application
-    (up to 400 ms); re-measure on the merged tree.
+    server 1.40, sim 1.39, its own crits and resists included, with PAR-P7-0e's delayed refresh. The server
+    paid an old tick twice on 4 of its 78 procs (**DoTs and periodic ticks**). The sim read 1.50 while it also
+    paid a tick due on the refresh's own server tick, fixed in the H3 cross-review.
 
   At the capture's own outcome counts, the sim's per-outcome means give 0.30% more damage than the capture,
   Righteous Vengeance aside. Chronicle records a dodged or parried spell only as
@@ -668,7 +678,7 @@ Roll details the tables above don't show:
       judgement damage: a holy weapon-percent spell takes weapon damage without the physical % mods
       (`Spell::EffectWeaponDmg`, `CalculateDamage(..., isPhysical)`), and `MeleeDamageBonusDone` and
       `SpellPctDamageModsDone` match the aura by school. Seal of Vengeance's proc read -7% before.
-    - Percent damage spell mods multiply (retail deviation 53): Seals of the Pure, The Art of War, Sanctity
+    - Percent damage spell mods multiply (`Player::ApplySpellMod`): Seals of the Pure, The Art of War, Sanctity
       of Battle, the damage glyphs and set bonuses. The judgement's exact values confirm it: Piercing
       Twilight adds 734 to a 3195 non-crit, a ×1.609 multiplier against 1.609 multiplied and 1.561 added.
     - Divine Storm deals normalized weapon damage (`Spell::EffectWeaponDmg` special-cases 53385).
@@ -766,16 +776,19 @@ values. Human warrior, level 80, maxed skills, Worn Shortsword (Sword Specializa
 
   | Run | Server DPS | Sim DPS | Gap |
   |---|---|---|---|
-  | BM + serpent (`hunter_Svrleadtbrfb_1789993143`) | 5925.4 | 5813.4 | +1.93% |
-  | SV + bat (`hunter_Svrleadtntyo_1789992248`) | 4784.8 | 4763.8 | +0.44% |
-  | SV + wasp (`hunter_Svrleadhbjyz_1789991622`) | 5008.1 | 4863.7 | **+2.97%**, over the 2% |
+  | BM + serpent (`hunter_Svrleadtbrfb_1789993143`) | 5925.4 | 5842.4 | +1.42% |
+  | SV + bat (`hunter_Svrleadtntyo_1789992248`) | 4784.8 | 4785.7 | -0.02% |
+  | SV + wasp (`hunter_Svrleadhbjyz_1789991622`) | 5008.1 | 4886.6 | **+2.49%**, over the 2% |
 
   Correction (PAR-P7-0d): sim DPS was 5816.5/4765.4/4862.4 (+1.87%/+0.41%/+3.00%) before the queued-cast fix below;
   the ~0.1 pt moves are re-sim noise (3000 iterations, no fixed seed), not the fix's effect on these totals.
 
-  Correction (PAR-P7-0d pets): sim DPS is 5813.4/4763.8/4863.7 (+1.93%/+0.44%/+2.97%) after the pets stage's 2 s
+  Correction (PAR-P7-0d pets): sim DPS was 5813.4/4763.8/4863.7 (+1.93%/+0.44%/+2.97%) after the pets stage's 2 s
   haste resnapshot (below), moving the hunter pet's share of each total by a point or two; still noise-sized, and
   the wasp run's gap is still the open crit question, not this stage's pet work.
+
+  Correction (H3 cross-review): rrsim now adds, from the live DBC, the shoulder enchant 3776 the sim's item database
+  lacks (+45 AP, +15 crit rating), which gives the table's numbers.
 
   - Auto Shot intervals sit on the 100 ms lattice at `NextServerTick` of the hasted speed.
   - **Fixed (PAR-P7-0d):** `cast.go` rounded `CastTime` to the server tick but not `GCD`, so a hasted GCD or cast
@@ -792,8 +805,9 @@ values. Human warrior, level 80, maxed skills, Worn Shortsword (Sword Specializa
     accounts for the whole ranged-vs-melee sheet split in both available live captures (+2%/+5% exactly, at rank 2
     and rank 5). Careful Aim, Survival Instincts (classMask excludes Auto Shot on the server too) and Kill Command
     carry no crit term; Glyph of Steady Shot has no server script. All three shots share one outcome function.
-    Pooling hits across the captures against the current code reproduces the claim: Auto+Steady +2.91 points
-    (1.88σ), Arcane -0.65 (0.17σ, matched). Left alone; a live `.simval` probe would settle whether it's real.
+    Pooling hits across the captures against the current code reproduces the claim: Auto+Steady +2.60 points
+    (1.66σ; +2.91 before enchant 3776's crit rating), Arcane -0.96 (0.26σ, matched). Left alone; a live `.simval`
+    probe would settle whether it's real.
 - Death knight probes (`TestSimvalDeathKnight`, a human DK behind the boss dummy): Scourge Strike and Obliterate
   roll the yellow table, Icy Touch the magic one with partial resists, and `tools/simval` passes all 26 checks on
   those records. Both diseases are melee damage class and can't miss. Rage of Rivendare 5/5 adds 10 expertise and
@@ -880,14 +894,13 @@ The fork copies the server. Patching any of these in [ac] means updating the mat
 | 48 | Hunter pet magic-class abilities | +50% crits, 0.333 of pet spell damage (dots less); Poison Spit and Demoralizing Screech roll the magic table too | +100% crits, 0.049 of pet AP; those two on the melee table | `spell_bonus_data`, `Unit::SpellCriticalDamageBonus` |
 | 49 | Explosive Trap damage (49065) | magic class: never misses, crits off spell crit for +50%, no ten-target cap (the trap's trigger creature casts it) | ranged hit and crit, +100%, capped | `GameObject::CastSpell`, `Spell::AddUnitTarget` |
 | 50 | Slam | can only miss: the cast (47475) is `NO_ACTIVE_DEFENSE`, its damage (50783) `ALWAYS_HIT` | one yellow roll: miss, dodge, parry, crit | `spell_warr_slam::HandleDummy`, `Spell.dbc` |
-| 51 | Delayed periodic refresh (Deep Wounds, Unholy Blight, Piercing Shots, Righteous Vengeance) | queued to the caster's next 400 ms event boundary (up to 400 ms), `MunchingBlizzlike.Enabled` | applies immediately | `Unit::CastDelayedSpellWithPeriodicAmount`, `EventProcessor::CalculateQueueTime` |
-| 52 | Munching (same refresh) | two procs inside one window: the later application overwrites the earlier one's contribution, which is lost | none, every proc's contribution lands | `Unit::CastDelayedSpellWithPeriodicAmount`, `AuraMunchingQueue` |
-| 53 | Percent damage spell mods (`SPELLMOD_DAMAGE`, `SPELLMOD_DOT`) | multiply: Seals of the Pure, The Art of War and Glyph of Judgement give ×1.392 | add up: ×1.35 | `Player::ApplySpellMod` |
-| 54 | Two-Handed Weapon Specialization on seals and judgements | none: the aura is physical-only, and a holy weapon-percent spell's weapon damage skips the physical % mods | +2% a rank | `Spell::EffectWeaponDmg`, `Unit::MeleeDamageBonusDone` |
+| 51 | Two-Handed Weapon Specialization on seals and judgements | none: the aura is physical-only, and a holy weapon-percent spell's weapon damage skips the physical % mods | +2% a rank | `Spell::EffectWeaponDmg`, `Unit::MeleeDamageBonusDone` |
 
 Not yet settled against retail, check before patching: the 200 ms other-hand push (`PlayerUpdates.cpp`), the DoT
 refresh tick-timer rule, the max(cast, 1500 ms) PPM basis for spell-triggered aura procs, the rule-based binary
-spell list (`SpellMgr.cpp:3405-3466`), and the 5 yard missile floor, which `Spell::AddUnitTarget` calls a hack.
+spell list (`SpellMgr.cpp:3405-3466`), the 5 yard missile floor, which `Spell::AddUnitTarget` calls a hack, and
+percent `SPELLMOD_DAMAGE` and `SPELLMOD_DOT` mods multiplying where the sim's model added them: Seals of the Pure,
+The Art of War and Glyph of Judgement give ×1.392, not ×1.35 (`Player::ApplySpellMod`, which cites Glyph of Renew).
 
 ## Performance
 

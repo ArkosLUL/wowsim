@@ -118,3 +118,33 @@ func TestNeighborhoodMovesTheBest(t *testing.T) {
 		})
 	}
 }
+
+// The first 3 runners-up don't move the best and use most of the budget, so ranks 4-5 sim at fewer
+// iterations. The final seed check and the result's scores still read the full-iteration evals.
+func TestNeighborhoodKeepsTheMostIterations(t *testing.T) {
+	rank := map[int32]float64{nbTrinket40: 40, nbTrinket30: 30, nbTrinket20: 20, kaTrinketB: 10, kaTrinketA: 5, kaTrinketAP2: 1}
+	rn, s := nbRun(t, rank, 15000)
+	// no cache: every call sims each point again at exactly the iterations asked
+	rn.eval.inner = newFakeEvaluator(func(p Point) Metrics {
+		m, err := kaMetrics(p)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return m
+	})
+	full := rn.bestEval.Iterations
+
+	if _, _, err := rn.neighborhood(s, nil); err != nil {
+		t.Fatal(err)
+	}
+	short := false
+	for _, n := range rn.eval.have {
+		short = short || n < full
+	}
+	if !short {
+		t.Fatalf("every batch ran at %d iterations, so nothing was short", full)
+	}
+	if rn.bestEval.Iterations != full || rn.seedEval.Iterations != full {
+		t.Errorf("best at %d iterations and seed at %d, want both at %d", rn.bestEval.Iterations, rn.seedEval.Iterations, full)
+	}
+}

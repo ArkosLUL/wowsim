@@ -83,7 +83,8 @@ rounds:
 				return nil, verified, err
 			}
 			bestEval := evals[0]
-			r.bestEval, r.seedEval = bestEval, evals[1]
+			// a later batch can run fewer iterations than the first, and Evaluate may return just those
+			r.bestEval, r.seedEval = mostIterations(r.bestEval, bestEval), mostIterations(r.seedEval, evals[1])
 			var top *alternative
 			for i, a := range batch {
 				a.eval = evals[i+2]
@@ -138,4 +139,11 @@ rounds:
 		return out, verified, nil
 	}
 	return nil, verified, nil
+}
+
+func mostIterations(a, b *Evaluation) *Evaluation {
+	if a == nil || (b != nil && b.Iterations > a.Iterations) {
+		return b
+	}
+	return a
 }

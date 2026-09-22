@@ -88,7 +88,8 @@ averages and its crit rate over landed hits, each ± one standard error.
 ## Captures
 
 `sim/core/testdata/chronicle/` holds recorded runs as `<spec>_<player>_<unix>.log.gz`, each with a
-`.setup.txt` naming the gear, talents and rotation it was fought with — the sim needs all three to be
-comparable. `TestChronicleCaptures` parses every one of them, so a capture whose format drifted fails
-there. Record new ones with mod-sim-validation's `TestRecordedRun`, or for a hunter `TestRecordedRunHunter`
-(`SIMVAL_RECORD_HUNTER=<label>`); its README has the run line.
+`.setup.txt` naming the gear, talents, glyphs and rotation it was fought with, which the sim needs to be
+comparable, and the server's pre-fight `.simval info` snapshot to check the sim's stats against. The oldest
+captures lack glyphs, and some the snapshot. `TestChronicleCaptures` parses every one of them, so a capture
+whose format drifted fails there. Record new ones with mod-sim-validation's `TestRecordedRun`, or for a hunter
+`TestRecordedRunHunter` (`SIMVAL_RECORD_HUNTER=<label>`); its README has the run line.

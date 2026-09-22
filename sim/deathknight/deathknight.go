@@ -161,6 +161,7 @@ type Deathknight struct {
 	BloodPlagueExtended []int
 
 	UnholyBlightSpell *core.Spell
+	unholyBlightDelay *core.DelayedPeriodicApplier
 
 	// Talent Auras
 	KillingMachineAura  *core.Aura

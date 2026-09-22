@@ -61,8 +61,12 @@ func TestDelayedPeriodicApplierPhasePerIterationPerCaster(t *testing.T) {
 	}
 
 	sim.rand.Seed(8) // a new iteration reseeds sim.rand before any proc runs
-	if next := warrior.Delay(sim); next == warriorDelay {
+	next := warrior.Delay(sim)
+	if next == warriorDelay {
 		t.Errorf("delay after reseeding for a new iteration = %s, same as the old iteration's %s", next, warriorDelay)
+	}
+	if fresh := NewDelayedPeriodicApplier(warrior.caster).Delay(sim); fresh != next {
+		t.Errorf("cached phase gives %s after reseeding, a fresh applier %s", next, fresh)
 	}
 }
 
@@ -80,6 +84,24 @@ func TestDelayedPeriodicApplierRoundsToServerTick(t *testing.T) {
 		if landing%sim.serverTickInterval != 0 {
 			t.Fatalf("CurrentTime %s: landing %s isn't on the %s server tick lattice", sim.CurrentTime, landing, sim.serverTickInterval)
 		}
+	}
+}
+
+// The refresh has to go before the old dot's tick due on the same server tick, which it cancels, as
+// on the server, where the caster updates before the creatures whose auras tick.
+func TestDelayedPeriodicApplierBeatsATickDueThen(t *testing.T) {
+	sim := newDelayedPeriodicTestSim(5)
+	sim.serverTickInterval = 100 * time.Millisecond
+	sim.serverTickPhase = 0
+	dpa := NewDelayedPeriodicApplier(&Unit{Label: "Caster"})
+
+	sim.CurrentTime = 1000 * time.Millisecond
+	tick := &PendingAction{NextActionAt: sim.CurrentTime + dpa.Delay(sim), OnAction: func(*Simulation) {}}
+	sim.AddPendingAction(tick)
+	dpa.Apply(sim, &Unit{Label: "Target"}, func(*Simulation) {})
+
+	if next := sim.pendingActions[len(sim.pendingActions)-1]; next == tick || next.NextActionAt >= tick.NextActionAt {
+		t.Errorf("the tick at %s runs before the refresh", tick.NextActionAt)
 	}
 }
 
