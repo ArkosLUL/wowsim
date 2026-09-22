@@ -203,6 +203,7 @@ crashed before F2, so its column starts there.
 | PAR-P7-0e | merged | `c056bfd24` | 6 goldens promoted in `051d8e6b9` |
 | PAR-P7-RET-RR | merged | `30caa2716` | 2 paladin goldens promoted in `3390bacf0`; e2e `f4060b1`; a repair round redid the first run's per-ability table, which compared melee with glances on one side only and mixed crit rate into hit size |
 | BIS-alt5 | merged | `826e952c4` | goldens unchanged; its reviewer fixed a pick lost on a tight budget |
+| wave H3 cross-review | | `d2bf9e5e9`, `050ec2fac` | 1 bug: a delayed refresh landed after a same-tick swing or dot tick, paying the tick twice (Fury -1.5%, Arms -1.3%, Ret -0.8%); retail deviations for munching and spell mods dropped or moved to unsettled; module `1bd7607` |
 
 Later WIs are added as their wave starts.
 
