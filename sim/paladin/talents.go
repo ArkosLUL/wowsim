@@ -619,6 +619,8 @@ func (paladin *Paladin) applyRighteousVengeance() {
 		},
 	})
 
+	rvDelay := core.NewDelayedPeriodicApplier(&paladin.Unit)
+
 	paladin.RegisterAura(core.Aura{
 		Label:    "Righteous Vengeance",
 		Duration: core.NeverExpires,
@@ -633,14 +635,16 @@ func (paladin *Paladin) applyRighteousVengeance() {
 				return
 			}
 
-			dot := rvDot.Dot(result.Target)
-
-			newDamage := result.Damage * (0.10 * float64(paladin.Talents.RighteousVengeance))
+			target := result.Target
+			dot := rvDot.Dot(target)
 			outstandingDamage := core.TernaryFloat64(dot.IsActive(), dot.SnapshotBaseDamage*float64(dot.NumberOfTicks-dot.TickCount), 0)
+			totalDamage := outstandingDamage + result.Damage*(0.10*float64(paladin.Talents.RighteousVengeance))
 
-			dot.SnapshotAttackerMultiplier = 1
-			dot.SnapshotBaseDamage = (outstandingDamage + newDamage) / float64(dot.NumberOfTicks)
-			rvSpell.Cast(sim, result.Target)
+			rvDelay.Apply(sim, target, func(sim *core.Simulation) {
+				dot.SnapshotAttackerMultiplier = 1
+				dot.SnapshotBaseDamage = totalDamage / float64(dot.NumberOfTicks)
+				rvSpell.Cast(sim, target)
+			})
 		},
 	})
 }

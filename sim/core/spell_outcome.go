@@ -185,7 +185,9 @@ func (spell *Spell) OutcomeMeleeSpecialNoBlockDodgeParryNoCrit(sim *Simulation, 
 func (spell *Spell) OutcomeMeleeSpecialCritOnly(sim *Simulation, result *SpellResult, attackTable *AttackTable) {
 	result.Outcome = OutcomeHit
 	result.rollCrit(sim, spell, attackTable)
-	result.rollPartialBlock(sim, spell, attackTable)
+	if !spell.Flags.Matches(SpellFlagNoActiveDefense | SpellFlagAlwaysHit) {
+		result.rollPartialBlock(sim, spell, attackTable)
+	}
 	result.countLanded(spell)
 }
 
@@ -240,16 +242,20 @@ func (spell *Spell) rollYellow(sim *Simulation, result *SpellResult, attackTable
 	opts.NoActiveDefense = opts.NoActiveDefense || spell.Flags.Matches(SpellFlagNoActiveDefense)
 	opts.BlockedInTable = opts.BlockedInTable || spell.Flags.Matches(SpellFlagCompletelyBlocked)
 
-	table := YellowMeleeTableBP(spell.YellowTableInput(attackTable), opts)
-	if result.applyMeleeTable(spell, attackTable, table, sim.rollBP("White Hit Table"), true) {
-		return
+	// ALWAYS_HIT returns before MeleeSpellHitResult rolls anything, including miss.
+	alwaysHit := spell.Flags.Matches(SpellFlagAlwaysHit)
+	if !alwaysHit {
+		table := YellowMeleeTableBP(spell.YellowTableInput(attackTable), opts)
+		if result.applyMeleeTable(spell, attackTable, table, sim.rollBP("White Hit Table"), true) {
+			return
+		}
 	}
 
 	result.Outcome = OutcomeHit
 	if canCrit {
 		result.rollCrit(sim, spell, attackTable)
 	}
-	if !opts.NoActiveDefense {
+	if !opts.NoActiveDefense && !alwaysHit {
 		result.rollPartialBlock(sim, spell, attackTable)
 	}
 	result.countLanded(spell)

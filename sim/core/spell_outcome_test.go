@@ -95,6 +95,41 @@ func TestYellowCritAndBlockAreIndependent(t *testing.T) {
 	}
 }
 
+// SPELL_ATTR3_ALWAYS_HIT spells (Shiv, the judgements) skip the yellow table
+// outright, per Unit::MeleeSpellHitResult, but crit still rolls independently
+// and isSpellBlocked still exempts them from the partial block roll.
+func TestAlwaysHitNeverMissesOrBlocks(t *testing.T) {
+	const iterations = 200_000
+
+	sim := newOutcomeSim()
+	spell, defender, attackTable := newOutcomePair(40)
+	spell.Flags |= SpellFlagAlwaysHit
+
+	crits, blocks := 0, 0
+	for i := 0; i < iterations; i++ {
+		result := &SpellResult{Target: defender, Damage: 10000}
+		spell.OutcomeMeleeSpecialHitAndCrit(sim, result, attackTable)
+
+		if !result.Landed() {
+			t.Fatalf("an always-hit spell missed: %s", result.Outcome)
+		}
+		if result.Outcome.Matches(OutcomeCrit) {
+			crits++
+		}
+		if result.Outcome.Matches(OutcomeBlock) {
+			blocks++
+		}
+	}
+
+	if blocks != 0 {
+		t.Errorf("always-hit blocks = %d, want 0", blocks)
+	}
+	// Same 39.4% as TestYellowCritAndBlockAreIndependent: crit is unaffected.
+	if pCrit := float64(crits) / iterations; math.Abs(pCrit-0.394) > 0.005 {
+		t.Errorf("crit rate = %.4f, want 0.394", pCrit)
+	}
+}
+
 // The white table's rates, which the e2e suite read off the server over a million
 // swings.
 func TestWhiteSwingRates(t *testing.T) {
@@ -261,6 +296,38 @@ func TestCritOnlyHitsCanBeBlocked(t *testing.T) {
 
 	if got := float64(blocks) / iterations; math.Abs(got-0.044) > 0.003 {
 		t.Errorf("block rate = %.4f, want 0.044", got)
+	}
+}
+
+// isSpellBlocked exempts NO_ACTIVE_DEFENSE and ALWAYS_HIT spells, so a secondary
+// judgement (NoActiveDefense) or Righteous Vengeance's tick (AlwaysHit) never
+// takes the 4.4% roll TestCritOnlyHitsCanBeBlocked found.
+func TestCritOnlyHitsSkipBlockWhenExempt(t *testing.T) {
+	const iterations = 200_000
+
+	for _, tc := range []struct {
+		name string
+		flag SpellFlag
+	}{
+		{"no active defense", SpellFlagNoActiveDefense},
+		{"always hit", SpellFlagAlwaysHit},
+	} {
+		sim := newOutcomeSim()
+		spell, defender, attackTable := newOutcomePair(0)
+		spell.Flags |= tc.flag
+
+		blocks := 0
+		for i := 0; i < iterations; i++ {
+			result := &SpellResult{Target: defender, Damage: 10000}
+			spell.OutcomeMeleeSpecialCritOnly(sim, result, attackTable)
+			if result.Outcome.Matches(OutcomeBlock) {
+				blocks++
+			}
+		}
+
+		if blocks != 0 {
+			t.Errorf("%s: blocks = %d, want 0", tc.name, blocks)
+		}
 	}
 }
 
