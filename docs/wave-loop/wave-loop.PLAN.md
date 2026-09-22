@@ -52,6 +52,7 @@ G = changes goldens. FS = runs all 37 suites.
 | G | PAR-P7-DK (G) · PAR-P7-HUN (G) · BIS-batch-ui · PAR-PERF-2 (G) | ✔ |
 | H2 | PAR-P7-0d (G, FS) | ✔ |
 | H | PAR-P7-ROG · PAR-P7-WAR · PAR-P7-RET (G) · BIS-raid-contrib | ✔ |
+| H3 | PAR-P7-0e (G, FS) · PAR-P7-RET-RR | ✔ |
 | I | PAR-P7-SHA · PAR-P7-DRU · PAR-P7-MAG · PAR-P7-WLK (G) | ✔ |
 | J | PAR-P7-PRI (G) · PAR-P7-TANK (G) · BIS-e2e-perf · AC-3 | ✔ |
 | K | BIS-presets · PAR-P8 (G, FS) · BIS-tank-boss | ✔ |
@@ -63,7 +64,9 @@ second, light item. PAR-PERF sits there because F2 ends the core combat work: af
 eleven class items on top and a profile can no longer say what cost what.
 
 H2 is inserted the same way: PAR-P7-0d's core cast, crit and pet fixes have to land before the caster
-wave I, and H is full. The user ran it before H, so H's melee items build on its swing fixes.
+wave I, and H is full. The user ran it before H, so H's melee items build on its swing fixes. H3 is the
+user's call too (2026-09-22): wave I's Mage item needs PAR-P7-0e's delay helper for Ignite. PAR-P7-RET-RR
+rides along, as it only needs the live server.
 
 **Where the specs are:**
 
@@ -76,11 +79,9 @@ wave I, and H is full. The user ran it before H, so H's melee items build on its
 
 ## Current wave
 
-- Wave: I, not started. Wave H (base `695c55b78`) landed on `master`.
+- Wave: H3, not started. Wave H (base `695c55b78`) landed on `master`.
 - Base SHA: set at wave start.
 - Workflow runId: none. Wave H ran as `wf_cc41a703-bd9`.
-- Before I, the user decides whether PAR-P7-0e runs first as its own wave, as P7-0d did in H2: wave I's
-  Mage item needs its delay helper for Ignite.
 
 ## BiS baseline
 
