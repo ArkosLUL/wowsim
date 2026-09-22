@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/wowsims/wotlk/sim/core"
-	"github.com/wowsims/wotlk/sim/core/proto"
 	"github.com/wowsims/wotlk/sim/core/stats"
 )
 
@@ -384,7 +383,9 @@ func (druid *Druid) applyOmenOfClarity() {
 		}
 	}
 
-	hasOocGlyph := druid.HasMajorGlyph(proto.DruidMajorGlyph_GlyphOfOmenOfClarity)
+	// Omen of Clarity's own spell_proc row (16864): 3.5 PPM, no fixed chance, rolled the same way as
+	// any other proc-trigger aura (Aura::CalcProcChance / GetPPMProcChance).
+	ppm := core.ServerProcFor(16864).PPM
 
 	druid.RegisterAura(core.Aura{
 		Label:    "Omen of Clarity",
@@ -397,47 +398,25 @@ func (druid *Druid) applyOmenOfClarity() {
 				return
 			}
 
-			// https://github.com/JamminL/wotlk-classic-bugs/issues/66#issuecomment-1182017571
-			if druid.HurricaneTickSpell.IsEqual(spell) {
-				curCastTickSpeed := spell.CurDot().TickPeriod().Seconds() / 10
-				hurricaneCoeff := 1.0 - (7.0 / 9.0)
-				spellCoeff := hurricaneCoeff * curCastTickSpeed
-				chanceToProc := ((1.5 / 60) * 3.5) * spellCoeff
-				if sim.RandomFloat("Clearcasting") < chanceToProc {
-					druid.ProcOoc(sim)
-				}
-			} else if druid.AutoAttacks.PPMProc(sim, 3.5, core.ProcMaskMeleeWhiteHit, "Omen of Clarity", spell) { // Melee
+			// spell_tweaks_omen_faerie_fire (SpellTweaks_classes.cpp) guarantees the proc, no roll,
+			// off Faerie Fire (Feral) landing on a plain NPC (not a player, pet or charm).
+			if druid.FaerieFire.IsEqual(spell) && druid.InForm(Cat|Bear) &&
+				result.Target.Type == core.EnemyUnit && druid.Server().SpellTweaks.OmenClarityFaerieFire {
 				druid.ProcOoc(sim)
-			} else if spell.Flags.Matches(SpellFlagOmenTrigger) { // Spells
-				// Heavily based on comment here
-				// https://github.com/JamminL/wotlk-classic-bugs/issues/66#issuecomment-1182017571
-				// Instants are treated as 1.5
-				// Uses current cast time rather than default cast time (PPM is constant with haste)
-				castTime := spell.CurCast.CastTime.Seconds()
-				if castTime == 0 {
-					castTime = 1.5
-				}
-
-				chanceToProc := (castTime / 60) * 3.5
-				if druid.Typhoon.IsEqual(spell) { // Add Typhoon
-					chanceToProc *= 0.25
-				} else if druid.Moonfire.IsEqual(spell) { // Add Moonfire
-					chanceToProc *= 0.076
-				} else if druid.GiftOfTheWild.IsEqual(spell) { // Add Gift of the Wild
-					// the above comment says it's 0.0875 * (1-0.924) which apparently is out-dated,
-					// there is no longer an instant suppression factor
-					// we assume 30 targets (25man + pets)
-					chanceToProc = 1 - math.Pow(1-chanceToProc, 30)
-				} else {
-					chanceToProc *= 0.666
-				}
-				if sim.RandomFloat("Clearcasting") < chanceToProc {
-					druid.ProcOoc(sim)
-				}
+				return
 			}
-		},
-		OnCastComplete: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell) {
-			if druid.FaerieFire.IsEqual(spell) && druid.InForm(Cat|Bear) && hasOocGlyph {
+
+			if !spell.ProcMask.Matches(core.ProcMaskMeleeWhiteHit) && !spell.Flags.Matches(SpellFlagOmenTrigger) {
+				return
+			}
+
+			chanceToProc := druid.AuraPPMProcChance(ppm, spell)
+			if druid.GiftOfTheWild.IsEqual(spell) {
+				// This cast stands in for the real spell's ~30 raid-wide targets, each rolling its
+				// own chance (sim/druid/fake_gotw.go).
+				chanceToProc = 1 - math.Pow(1-chanceToProc, 30)
+			}
+			if sim.RandomFloat("Clearcasting") < chanceToProc {
 				druid.ProcOoc(sim)
 			}
 		},
@@ -479,7 +458,9 @@ func (druid *Druid) applyEclipse() {
 			aura.Activate(sim)
 		},
 		OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
-			if !result.Outcome.Matches(core.OutcomeCrit) {
+			// spell_dru_eclipse::CheckProc (spell_druid.cpp:1486-1519) rolls on every landed cast, not
+			// just crits.
+			if !result.Landed() {
 				return
 			}
 			if !druid.Starfire.IsEqual(spell) {
@@ -521,7 +502,9 @@ func (druid *Druid) applyEclipse() {
 			aura.Activate(sim)
 		},
 		OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
-			if !result.Outcome.Matches(core.OutcomeCrit) {
+			// spell_dru_eclipse::CheckProc (spell_druid.cpp:1486-1519) rolls on every landed cast, not
+			// just crits.
+			if !result.Landed() {
 				return
 			}
 			if !druid.Wrath.IsEqual(spell) {

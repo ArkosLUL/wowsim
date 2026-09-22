@@ -35,6 +35,8 @@ func (druid *Druid) registerTigersFurySpell() {
 				Duration: time.Second*30 - cdReduction,
 			},
 		},
+		// Spell.dbc gives every Tiger's Fury rank ExcludeCasterAuraSpell 50334, so Spell::CheckCast
+		// (Spell.cpp) refuses the cast while Berserk is up.
 		ExtraCastCondition: func(sim *core.Simulation, target *core.Unit) bool {
 			return !druid.BerserkAura.IsActive()
 		},

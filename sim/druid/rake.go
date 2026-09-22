@@ -37,6 +37,7 @@ func (druid *Druid) registerRakeSpell() {
 			}),
 			NumberOfTicks: 3 + core.TernaryInt32(druid.HasSetBonus(ItemSetMalfurionsBattlegear, 2), 1, 0),
 			TickLength:    time.Second * 3,
+			TicksCanCrit:  dotCanCrit,
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
 				dot.SnapshotBaseDamage = 358 + 0.06*dot.Spell.MeleeAttackPower()
 				attackTable := dot.Spell.Unit.AttackTables[target.UnitIndex]

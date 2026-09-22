@@ -64,13 +64,12 @@ func (druid *Druid) NewTreant() *TreantPet {
 	treant := &TreantPet{
 		Pet: core.NewPet("Treant", &druid.Character, treantBaseStats, func(ownerStats stats.Stats) stats.Stats {
 			return stats.Stats{}
-		}, false, false),
+		}, false, true),
 		druidOwner: druid,
 	}
 	treant.AddStatDependency(stats.Strength, stats.AttackPower, 2)
 	treant.AddStatDependency(stats.Agility, stats.MeleeCrit, core.CritRatingPerCritChance/83.3)
 
-	treant.PseudoStats.DamageDealtMultiplier = 1 + 0.05*float64(druid.Talents.Brambles)
 	treant.EnableAutoAttacks(treant, core.AutoAttackOptions{
 		MainHand: core.Weapon{
 			BaseDamageMin:  252,
@@ -92,9 +91,18 @@ func (treant *TreantPet) GetPet() *core.Pet {
 	return &treant.Pet
 }
 
+// spell_dru_treant_scaling (spell_druid.cpp:389-424): 30% of the owner's Intellect and Stamina,
+// attack power at 105% of the owner's spell power, and Brambles adds its own percent to that AP
+// conversion rather than a flat treant damage bonus.
 func (treant *TreantPet) enable(sim *core.Simulation) {
-	// Snapshot spellpower
-	treant.snapshotStat = stats.Stats{stats.Strength: treant.druidOwner.GetStat(stats.SpellPower) * 0.5}
+	spellPower := treant.druidOwner.GetStat(stats.SpellPower)
+	attackPower := spellPower * 1.05 * (1 + 0.05*float64(treant.druidOwner.Talents.Brambles))
+
+	treant.snapshotStat = stats.Stats{
+		stats.Intellect:   treant.druidOwner.GetStat(stats.Intellect) * 0.3,
+		stats.Stamina:     treant.druidOwner.GetStat(stats.Stamina) * 0.3,
+		stats.AttackPower: attackPower,
+	}
 	treant.AddStatsDynamic(sim, treant.snapshotStat)
 }
 

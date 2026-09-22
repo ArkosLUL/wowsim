@@ -22,8 +22,8 @@ func (cat *FeralDruid) doAoeRotation(sim *core.Simulation) (bool, time.Duration)
 
 	useBuilder := curCp == 0 && (!cat.SavageRoarAura.IsActive() || cat.SavageRoarAura.RemainingDuration(sim) <= time.Second)
 
-	mangleNow := useBuilder && rotation.AoeMangleBuilder
-	rakeNow := useBuilder && !rotation.AoeMangleBuilder
+	mangleNow := useBuilder && rotation.AoeMangleBuilder && cat.MangleCat != nil
+	rakeNow := useBuilder && !mangleNow
 
 	ffThresh := 87.0
 	if cat.BerserkAura.IsActive() {
@@ -73,7 +73,10 @@ func (cat *FeralDruid) doAoeRotation(sim *core.Simulation) (bool, time.Duration)
 		if curCp == 0 && cat.SavageRoarAura.RemainingDuration(sim) > time.Second {
 			expireTime := cat.SavageRoarAura.ExpiresAt() - time.Second
 			if cat.FaerieFire.TimeToReady(sim) > expireTime-sim.CurrentTime {
-				builderCost := core.Ternary(rotation.AoeMangleBuilder, cat.MangleCat.DefaultCast.Cost, cat.Rake.DefaultCast.Cost)
+				builderCost := cat.Rake.DefaultCast.Cost
+				if rotation.AoeMangleBuilder && cat.MangleCat != nil {
+					builderCost = cat.MangleCat.DefaultCast.Cost
+				}
 				builderCost = core.Ternary(cat.berserkExpectedAt(sim, expireTime), builderCost*0.5, builderCost)
 				pendingPool.addAction(expireTime, builderCost)
 			}

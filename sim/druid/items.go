@@ -103,6 +103,7 @@ var ItemSetLasherweaveRegalia = core.NewItemSet(core.ItemSet{
 					},
 					NumberOfTicks: 2,
 					TickLength:    time.Second * 2,
+					TicksCanCrit:  false,
 
 					OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 						dot.CalcAndDealPeriodicSnapshotDamage(sim, target, dot.OutcomeTick)
@@ -114,6 +115,11 @@ var ItemSetLasherweaveRegalia = core.NewItemSet(core.ItemSet{
 				},
 			})
 
+			// Unit::CastDelayedSpellWithPeriodicAmount (INVESTIGATION, DoTs and periodic ticks): the
+			// refresh queues on the caster's own 400 ms event-clock boundary, and the old dot keeps
+			// ticking until then, so the outstanding damage has to be read before the delay.
+			languishDelay := core.NewDelayedPeriodicApplier(&druid.Unit)
+
 			druid.RegisterAura(core.Aura{
 				Label:    "Languish proc",
 				Duration: core.NeverExpires,
@@ -124,16 +130,20 @@ var ItemSetLasherweaveRegalia = core.NewItemSet(core.ItemSet{
 					if !druid.Starfire.IsEqual(spell) && !druid.Wrath.IsEqual(spell) {
 						return
 					}
-					if result.DidCrit() {
-						dot := druid.Languish.Dot(result.Target)
-
-						newDamage := result.Damage * 0.07
-						outstandingDamage := core.TernaryFloat64(dot.IsActive(), dot.SnapshotBaseDamage*float64(dot.NumberOfTicks-dot.TickCount), 0)
-
-						dot.SnapshotAttackerMultiplier = 1
-						dot.SnapshotBaseDamage = (outstandingDamage + newDamage) / 2.0
-						druid.Languish.Cast(sim, result.Target)
+					if !result.DidCrit() {
+						return
 					}
+
+					dot := druid.Languish.Dot(result.Target)
+					newDamage := result.Damage * 0.07
+					outstandingDamage := core.TernaryFloat64(dot.IsActive(), dot.SnapshotBaseDamage*float64(dot.NumberOfTicks-dot.TickCount), 0)
+					totalDamage := outstandingDamage + newDamage
+
+					languishDelay.Apply(sim, result.Target, func(sim *core.Simulation) {
+						dot.SnapshotAttackerMultiplier = 1
+						dot.SnapshotBaseDamage = totalDamage / float64(dot.NumberOfTicks)
+						druid.Languish.Cast(sim, result.Target)
+					})
 				},
 			})
 		},
@@ -416,10 +426,11 @@ func init() {
 
 	core.NewItemEffect(45509, func(agent core.Agent) {
 		druid := agent.(DruidAgent).GetDruid()
-		procAura := druid.NewTemporaryStatsAura("Idol of the Corruptor Proc", core.ActionID{SpellID: 64951}, stats.Stats{stats.Agility: 162}, time.Second*12)
+		// 64951 effect1=153 on the server, and Mangle (Bear)'s spell_proc row (64952) has Chance=0,
+		// which falls back to the DBC's 100% for both Mangles.
+		procAura := druid.NewTemporaryStatsAura("Idol of the Corruptor Proc", core.ActionID{SpellID: 64951}, stats.Stats{stats.Agility: 153}, time.Second*12)
 
-		// Proc chances based on testing by druid discord
-		procChanceBear := 0.50
+		procChanceBear := 1.0
 		procChanceCat := 1.0
 		core.MakePermanent(druid.RegisterAura(core.Aura{
 			Label: "Idol of the Corruptor",

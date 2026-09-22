@@ -698,6 +698,104 @@ Roll details the tables above don't show:
   tagged `attackType: ranged`, not a separate "magic" one: it can miss but is never dodged, parried or
   blocked. All four pass.
 
+**Druid** (`TestBalance`, `TestBalancePhase3`, `TestFeral`, `TestFeralApl`, `TestFeralTank`, code)
+- Moonfire/Insect Swarm add-ticks and tick crit are mod-spell-tweaks carrier auras
+  (`modules/mod-spell-tweaks/data/sql/db-world/base/druid/spell_moonfire_insect_swarm_eclipse_haste_scriptname.sql`,
+  `spell_425791_balance_dot_crit.sql`), gated on the Eclipse and Earth and Moon talents respectively
+  (`SpellTweaks_classes.cpp:400-512`), both behind `SpellTweaks.BalanceDotScaling.Enable`. The sim gated
+  Moonfire's tick crit on the T9 2pc bonus alone (a real, separate carrier: `sets_review.csv` row 39) and
+  Insect Swarm's not at all; both now check `druid.Talents.EarthAndMoon` too, and the tick interval hastes
+  with `druid.Talents.Eclipse` (`core.SpellHasteAddsTicks`, matching the script's own clamp at 1×).
+- **Eclipse's proc condition:** `spell_dru_eclipse::CheckProc` (`spell_druid.cpp:1486-1519`, core AC script,
+  not a module) rolls on every landed Wrath or Starfire cast, not just a crit; the chance is the talent's
+  own `ProcChance` (33/66/100% by rank, `spelldump.jsonl` ids 48516/48521/48525), full for Starfire and
+  ×0.6 for Wrath. The sim's chances already matched that (1/3 and 0.2 a point), so only the crit
+  requirement was dropped, in both `OnSpellHitDealt` handlers of `applyEclipse` (retail deviation #52).
+- **Typhoon** deals its damage under the cast id (61384); the server triggers it from 53227
+  (`spells_auto_gen.go`), which carries the binary flag and the Speed 30 missile the cast doesn't. Split
+  into a cast spell and a nested damage spell registered under 53227, the way `sim/deathknight`'s Death
+  Coil splits its cast from `DeathCoilDamageActionID`.
+- **Typhoon's and Hurricane's crit multiplier** was 1, so both rolled a crit and paid nothing for it.
+  Both ids are `critCapable` in the spelldump; both now take `BalanceCritMultiplier()`. No balance APL
+  casts either, so no golden moves.
+- **Force of Nature's treants** followed no server formula at all (a flat 50% of the owner's spell power
+  as Strength). `spell_dru_treant_scaling` (`spell_druid.cpp:389-424`, aura 35669) gives 30% of the
+  owner's Intellect and Stamina and attack power at 105% of the owner's spell power, with Brambles adding
+  its own percent to that AP conversion rather than a flat treant damage bonus (the sim's old
+  `PseudoStats.DamageDealtMultiplier` hack). The resistance and PLAYER_PET_SPELL_POWER-display shares of
+  that same aura aren't modeled: neither affects a DPS sim. Pets, guardians and raid buffs already covers
+  why the treants needed no `isGuardian` change beyond the classification itself: `applyPetBuffEffects`
+  runs for every `PetAgent` regardless.
+- **Languish** (Lasherweave Regalia 4pc) now refreshes through `core.DelayedPeriodicApplier`, on the same
+  `Unit::CastDelayedSpellWithPeriodicAmount` path as Deep Wounds (DoTs and periodic ticks, above).
+- **Idol of the Crying Wind (45270):** `spell_dru_insect_swarm::CalculateAmount` (`spell_druid.cpp:2008-2013`)
+  adds the relic's 374 to the tick's own base points, split evenly over the ticks; the sim ran it through
+  the dot's 0.2 SP coefficient instead (79/tick instead of ~62). Known gap: the server divides by
+  `AuraEffect::GetTotalTicks()`, read after `CalculatePeriodic` has already shortened the period, so with
+  Eclipse the relic's total stays 374 however hasted the dot is, while the sim divides by the unhasted 6
+  or 7 and pays the haste factor on top. No preset equips the idol, so no golden sees it.
+- **Idol of the Corruptor (45509):** the agility proc is 153, not 162 (spell 64951's own effect1); Mangle
+  (Bear)'s proc chance is 100%, since its `spell_proc` row (64952) has `Chance=0` and falls back to the
+  DBC's default, the same as Mangle (Cat) already had.
+- **Moonfire's direct hit** used a 0.15 spell power coefficient; `spell_bonus_data` gives it 0.13, matching
+  the dot's own coefficient (retail deviation #53).
+- Percent `SPELLMOD_DAMAGE`/`SPELLMOD_DOT` mods multiply (`Player::ApplySpellMod`, sim/paladin's
+  `spellModDamage`): Moonfire's Improved Moonfire and Moonfury, Insect Swarm's Genesis/T7 2pc/glyph, and
+  Hurricane's Gale Winds/Genesis were summed instead. Starfire and Wrath already multiplied theirs; moved
+  to the same `spellModDamage` helper for consistency. Glyph of Moonfire (54829) goes through it too: its
+  two halves are percent mods of the same kind, -90% `SPELLMOD_DAMAGE` on the hit and +75% `SPELLMOD_DOT`
+  on the tick, so they multiply with the talents rather than being added to and subtracted from them.
+  Which mod reaches which is `Unit::SpellDamageBonusDone`'s `damagetype == DOT ? SPELLMOD_DOT :
+  SPELLMOD_DAMAGE` (`Unit.cpp:8985`); Moonfury and Improved Moonfire list Moonfire under both, Genesis
+  only under `SPELLMOD_DOT`.
+- `TicksCanCrit` declared for Moonfire, Insect Swarm (both above) and Languish (`false`: no
+  `SPELL_AURA_ABILITY_PERIODIC_CRIT` aura covers it).
+- Faerie Fire (Feral)'s wrapper (60089, the other P3-2 allowlist entry from the class row) is Feral, not
+  Balance: left for the next stage.
+- **Faerie Fire (Feral)'s Bear Form damage** was dealt under 16857 itself, in one binary hit roll. The
+  server only puts the armor/dodge-parry debuffs there; in Bear or Dire Bear form it triggers 60089 for
+  the damage (`Spell::PrepareTriggersExecutedOnHit`, `Spell.cpp:8916-8921`, `Spell::DoTriggersOnSpellHit`,
+  `Spell.cpp:3260-3262`), which resists partially. Split the same way Typhoon splits its cast from its
+  damage id, dropping the `ServerBinary` allowlist entry the old single-spell version needed (retail
+  deviation #54).
+- **Omen of Clarity's proc chance** was WotLK Classic community math: cast time / 60 × 3.5, a 0.666
+  "instant suppression" factor, and hand-tuned multipliers for Typhoon, Moonfire and Hurricane. The server
+  rolls its own `spell_proc` row (16864: 3.5 PPM, no fixed chance) the way every other proc-trigger aura
+  does, which `core.ServerProcFor`/`AuraPPMProcChance` (`sim/core/ppm.go`) already model. Hurricane's tick
+  spell already casts once per tick on its own (`sim/druid/hurricane.go`), so the generic roll needs no
+  Hurricane special case; the "fake" Gift of the Wild clearcast-fisher spell (`sim/druid/fake_gotw.go`)
+  still needs its `1-(1-p)^30` stand-in, since it fires the hit callback once per cast where the real
+  spell hits around 30 raid members (retail deviation #55).
+- **Faerie Fire (Feral)'s guaranteed Clearcasting** was gated on Glyph of Omen of Clarity (206580), a
+  WotLK Classic glyph missing from the capture, the same as Warrior's Glyph of Shattering Throw (206953).
+  The real mechanism is mod-spell-tweaks' `spell_tweaks_omen_faerie_fire` (**Server customizations**,
+  above), which always procs it off a landed hit on a non-player target, no glyph needed. Wired to
+  `Server().SpellTweaks.OmenClarityFaerieFire` and `result.Target.Type == core.EnemyUnit`; dropped the
+  glyph from `ui/feral_druid/presets.ts`'s default build, the same as the Warrior preset.
+- **Lacerate's initial hit** added a 0.01 AP coefficient; `spell_bonus_data` gives 48568 `ap: 0` on the
+  direct effect (`apDot: 0.01` is the tick's, already right). Dropped the direct hit's AP term.
+- **Berserk** (`spell_dru_berserk::HandleAfterCast`, `spell_druid.cpp:1226-1256`) drops an active Tiger's
+  Fury and clears Mangle (Bear)'s cooldown; the sim did neither. Mangle (Bear) staying off cooldown for
+  the rest of Berserk (50334's flat -6000 ms `SPELLMOD_COOLDOWN`) was already modeled in
+  `sim/druid/mangle.go`. Tiger's Fury keeps its `ExtraCastCondition`: every rank carries
+  `ExcludeCasterAuraSpell` 50334 in `Spell.dbc`, which `Spell::CheckCast` (`Spell.cpp:5793`) enforces, so
+  a recast during Berserk fails. `spell_dru_tiger_s_fury` has no `CheckCast` of its own, which is why the
+  block is easy to miss in the scripts.
+- `TicksCanCrit` declared for Rake (Lasherweave Battlegear 4pc only), Rip and Lacerate (Primal Gore),
+  matching the outcome function each already picks.
+- `CurrentMangleCatCost` dereferenced a nil `MangleCat` on a build without the Mangle talent. The default
+  cat rotation's `InFrontOfTarget` branch and the `CatExcessEnergy` APL value's Mangle-refresh pooling
+  (`sim/druid/feral/{rotation,apl_values}.go`) both read it off a bleed/positioning condition that doesn't
+  imply Mangle is talented; the AOE rotation's Mangle-builder-cost pick (`rotation_aoe.go`) read it inside
+  a `core.Ternary` call, which evaluates both arguments regardless of the condition. All three now check
+  `MangleCat != nil` first.
+- Snek weave's swing-timer reset (`preRotationCleanup`) didn't model Albino Snake's own GCD; it now also
+  sets the caster's GCD timer forward by `core.GCDDefault`.
+- **Live probes** confirmed every premise above and moved no sim code: the two split damage ids (60089
+  always hits and resists partially, 53227 is binary), Omen's own 3.5 PPM entry with both of its PPM
+  bases, and the periodic-crit scoping of the Earth and Moon carrier and of Primal Gore. Numbers under
+  **Verified on the live server**.
+
 **Items** (`docs/azerothcore-item-diff/data/summary.md`)
 - 1509 of 8043 sim items differ.
 - Classic raised Ulduar/emblem item levels, e.g. 226→232 on 329 items and 239→252 on 92.
@@ -836,6 +934,26 @@ values. Human warrior, level 80, maxed skills, Worn Shortsword (Sword Specializa
   Trauma (both ranks) carries the 286 periodic-crit override scoped to that same flag, plus its own 42
   proc-trigger effect; Deep Wounds' periodic spell (12721) has a periodic-damage effect and no
   periodic-crit one; Shattering Throw's base cast time is 1500 ms. All match the sim unchanged.
+- Druid probes (`TestSimvalDruid`, `TestSimvalDruidOmen`, a naked night elf druid in front of the boss
+  dummy, 300k rolls a probe and 100k for 16857): Moonfire and Starfire are damage class 1 with partial
+  resists at the plain 1700 bp miss threshold; Shred is class 2 at miss 800, dodge 645, parry 1400, no
+  block, partial block 440 bp and the 0.6 crit suppression. Both ids the sim splits off their casts
+  behave as the split assumes: Faerie Fire (Feral) 16857 is binary and takes no partial resist, the
+  60089 it triggers never misses and resists partially (mean 3.62% against the derived 3.6145%), and
+  Typhoon's 53227 is binary. `.simval spelldump`: the Earth and Moon carrier (425791) holds aura 286 on
+  Moonfire's and Insect Swarm's class masks while Moonfire holds none of its own, Primal Gore (63503)
+  holds it on Rip's and Lacerate's, and Eclipse grants 40% Wrath damage (aura 108, SPELLMOD_DAMAGE) and
+  40 Starfire crit (aura 107, SPELLMOD_CRITICAL_CHANCE). `.simval procs` reads Omen of Clarity (16864)
+  as 3.5 PPM with no flat chance, 16.917% off the 2.9 s weapon both for a white swing and for Shred
+  (melee class) and 8.750% for Moonfire (the 1.5 s floor), what `core.ServerProcFor`/`AuraPPMProcChance`
+  compute. `tools/simval` passes 68 of 78 checks on the records; the 10 failures are its two known gaps,
+  `ALWAYS_HIT` (60089's miss threshold) and a binary spell's lack of partials (16857, 53227), the same
+  ones the DK probes hit. Nothing disagreed with the sim.
+- A non-binary magic hit lands fully resisted about once in 300k rolls (seen twice in 900k):
+  `Unit::CalcAbsorbResist` builds its eleven discrete resist probabilities as floats, and a roll in the
+  rounding gap above their sum walks the loop to the last bucket (`Unit.cpp:2360-2382`). Worth ~2e-6 of
+  damage, so the sim models nothing; `p7_dru_test.go` drops that bucket before checking the derived
+  distribution, since the harness derives it as exactly 0.
 
 ## Retail deviations
 
@@ -895,6 +1013,10 @@ The fork copies the server. Patching any of these in [ac] means updating the mat
 | 49 | Explosive Trap damage (49065) | magic class: never misses, crits off spell crit for +50%, no ten-target cap (the trap's trigger creature casts it) | ranged hit and crit, +100%, capped | `GameObject::CastSpell`, `Spell::AddUnitTarget` |
 | 50 | Slam | can only miss: the cast (47475) is `NO_ACTIVE_DEFENSE`, its damage (50783) `ALWAYS_HIT` | one yellow roll: miss, dodge, parry, crit | `spell_warr_slam::HandleDummy`, `Spell.dbc` |
 | 51 | Two-Handed Weapon Specialization on seals and judgements | none: the aura is physical-only, and a holy weapon-percent spell's weapon damage skips the physical % mods | +2% a rank | `Spell::EffectWeaponDmg`, `Unit::MeleeDamageBonusDone` |
+| 52 | Eclipse proc condition | rolls on every landed Wrath or Starfire cast | only a critical strike rolls it | `spell_dru_eclipse::CheckProc`, `spell_druid.cpp:1486-1519` |
+| 53 | Moonfire direct hit coefficient | 0.13 spell power | 0.15 | `spell_bonus_data`, spell 48463 |
+| 54 | Faerie Fire (Feral) Bear Form damage | dealt under the triggered 60089, resists partially | dealt under the cast 16857, binary | `Spell::PrepareTriggersExecutedOnHit`, `Spell.cpp:8916-8921` |
+| 55 | Omen of Clarity proc chance | the aura's own `spell_proc` row: 3.5 PPM off weapon speed or cast time, floored at 1.5 s | cast time / 60 × 3.5, a 0.666 instant-cast factor, and per-spell multipliers | `Aura::CalcProcChance`, `spell_proc` row for 16864 |
 
 Not yet settled against retail, check before patching: the 200 ms other-hand push (`PlayerUpdates.cpp`), the DoT
 refresh tick-timer rule, the max(cast, 1500 ms) PPM basis for spell-triggered aura procs, the rule-based binary

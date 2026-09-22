@@ -8,17 +8,19 @@ import (
 
 func (druid *Druid) registerHurricaneSpell() {
 	druid.HurricaneTickSpell = druid.RegisterSpell(Humanoid|Moonkin, core.SpellConfig{
-		ActionID:       core.ActionID{SpellID: 48466},
-		SpellSchool:    core.SpellSchoolNature,
-		ProcMask:       core.ProcMaskProc,
-		Flags:          SpellFlagOmenTrigger,
-		CritMultiplier: 1,
-		DamageMultiplier: 1 +
-			0.15*float64(druid.Talents.GaleWinds) +
+		ActionID:    core.ActionID{SpellID: 48466},
+		SpellSchool: core.SpellSchoolNature,
+		ProcMask:    core.ProcMaskProc,
+		Flags:       SpellFlagOmenTrigger,
+		// critCapable in the spelldump, so a crit pays the full spell multiplier, not 1x
+		CritMultiplier: druid.BalanceCritMultiplier(),
+		DamageMultiplier: spellModDamage(
+			0.15*float64(druid.Talents.GaleWinds),
 			0.01*float64(druid.Talents.Genesis),
+		),
 		ThreatMultiplier: 1,
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			damage := 451 + 0.129*spell.SpellPower()
+			damage := 451 + 0.12898*spell.SpellPower()
 			damage *= sim.Encounter.AOECapMultiplier()
 			for _, aoeTarget := range sim.Encounter.TargetUnits {
 				spell.CalcAndDealDamage(sim, aoeTarget, damage, spell.OutcomeMagicHitAndCrit)

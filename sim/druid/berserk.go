@@ -58,6 +58,14 @@ func (druid *Druid) registerBerserkCD() {
 			IgnoreHaste: true,
 		},
 		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, _ *core.Spell) {
+			// spell_dru_berserk::HandleAfterCast (spell_druid.cpp): Berserk drops an active Tiger's
+			// Fury and clears Mangle (Bear)'s cooldown.
+			if druid.TigersFuryAura != nil {
+				druid.TigersFuryAura.Deactivate(sim)
+			}
+			if druid.MangleBear != nil {
+				druid.MangleBear.CD.Reset()
+			}
 			druid.BerserkAura.Activate(sim)
 		},
 	})

@@ -46,7 +46,7 @@ func (value *APLValueCatExcessEnergy) GetFloat(sim *core.Simulation) float64 {
 		rakeCost := core.Ternary(cat.berserkExpectedAt(sim, rakeDot.ExpiresAt()), cat.Rake.DefaultCast.Cost*0.5, cat.Rake.DefaultCast.Cost)
 		pendingPool.addAction(rakeDot.ExpiresAt(), rakeCost)
 	}
-	if cat.bleedAura.IsActive() && cat.bleedAura.RemainingDuration(sim) < simTimeRemain-time.Second {
+	if cat.MangleCat != nil && cat.bleedAura.IsActive() && cat.bleedAura.RemainingDuration(sim) < simTimeRemain-time.Second {
 		mangleCost := core.Ternary(cat.berserkExpectedAt(sim, cat.bleedAura.ExpiresAt()), cat.MangleCat.DefaultCast.Cost*0.5, cat.MangleCat.DefaultCast.Cost)
 		pendingPool.addAction(cat.bleedAura.ExpiresAt(), mangleCost)
 	}
