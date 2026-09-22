@@ -211,7 +211,7 @@ message OptimizerResult {
 	OptimizerLoadoutResult seed = 2;
 	// Verified top sets, best first, all distinct.
 	repeated OptimizerLoadoutResult top = 3;
-	// Up to 3 runners-up per slot, best first.
+	// Up to 5 runners-up per slot, best first.
 	repeated OptimizerSlotAlternative alternatives = 4;
 	repeated OptimizerRacialScreen racial_screen = 5;
 	// best beat the seed: mean delta over 2 standard errors and over 0.05% of J. Set as well when the

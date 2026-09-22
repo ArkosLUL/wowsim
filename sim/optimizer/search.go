@@ -976,7 +976,7 @@ func (se *searcher) search() ([]Loadout, error) {
 		if se.pool.Locked[slot] {
 			continue
 		}
-		for _, changes := range se.runnersUp(best, slot, runnersUp) {
+		for _, changes := range se.runnersUp(best, slot, forcedRunnersUp) {
 			alts = append(alts, forced{slot, changes})
 		}
 	}
@@ -1026,8 +1026,8 @@ func (se *searcher) search() ([]Loadout, error) {
 	return out, nil
 }
 
-// runnersUp is how many alternatives per slot the search polishes, and the neighborhood sims.
-const runnersUp = 3
+// forcedRunnersUp is how many runners-up per slot the search forces into its best set and polishes.
+const forcedRunnersUp = 3
 
 // runnersUp are the best configured moves to another item in slot, from st, best first. Each is a
 // change to that slot alone, plus the off hand when a main hand fills both hands; moves that break

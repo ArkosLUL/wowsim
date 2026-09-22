@@ -9,11 +9,20 @@ import (
 // neighborhoodRounds caps how often the neighborhood can move the best and look again.
 const neighborhoodRounds = 5
 
-// neighborhood sims the best loadout's alternatives: per slot, the surrogate's top runnersUp other
-// items, each with the rest of the best unchanged, paired with the best. An alternative that passes
-// the acceptance test against the best and beats the seed becomes the new best, and its neighborhood
-// is simmed in turn. The alternatives returned are the last round's, around the final best, best
-// first within each slot; verified gains every best the rounds adopt.
+// alternativesPerSlot is how many runners-up per slot the neighborhood sims and reports.
+// firstRunnersUp of them get simmed before the rest: all at once they can push a round under full
+// iterations, and a short round can't move the best.
+const (
+	alternativesPerSlot = 5
+	firstRunnersUp      = 3
+)
+
+// neighborhood sims the best loadout's alternatives: per slot, the surrogate's top
+// alternativesPerSlot other items, each with the rest of the best unchanged, paired with the best. A
+// round sims each slot's first firstRunnersUp, then the rest only if none of those moved the best. An
+// alternative that passes the acceptance test against the best and beats the seed becomes the new
+// best, and its neighborhood is simmed in turn. The alternatives returned are the last round's,
+// around the final best, best first within each slot; verified gains every best the rounds adopt.
 func (r *run) neighborhood(s *surrogate, verified []*verifiedLoadout) ([]*proto.OptimizerSlotAlternative, []*verifiedLoadout, error) {
 	se := newSearcher(s, r)
 	type alternative struct {
@@ -24,67 +33,80 @@ func (r *run) neighborhood(s *surrogate, verified []*verifiedLoadout) ([]*proto.
 		delta     Estimate
 		raidDelta Estimate
 	}
+rounds:
 	for round := 0; round < neighborhoodRounds; round++ {
 		if err := se.check(r.best); err != nil {
 			r.warn("no alternatives: the pick breaks a rule (%v)", err)
 			return nil, verified, nil
 		}
 		st := se.newState(r.best)
-		var alts []*alternative
+		var first, rest []*alternative
 		for slot := range r.best.Items {
 			slot := proto.ItemSlot(slot)
 			if r.pool.Locked[slot] {
 				continue
 			}
-			for _, changes := range se.runnersUp(st, slot, runnersUp) {
+			for i, changes := range se.runnersUp(st, slot, alternativesPerSlot) {
 				l := r.best
 				for _, ch := range changes {
 					l.Items[ch.slot] = ch.choice
 				}
-				alts = append(alts, &alternative{slot: slot, choice: changes[0].choice, loadout: l})
+				a := &alternative{slot: slot, choice: changes[0].choice, loadout: l}
+				if i < firstRunnersUp {
+					first = append(first, a)
+				} else {
+					rest = append(rest, a)
+				}
 			}
 		}
-		if len(alts) == 0 {
+		if len(first) == 0 {
 			return nil, verified, nil
 		}
 
-		points := []Point{{Loadout: r.best}, {Loadout: r.r.Seed}}
-		for _, a := range alts {
-			points = append(points, Point{Loadout: a.loadout})
-		}
-		iterations := max(r.budget.Iterations, r.eval.iterations(points[0]))
-		for iterations > DefaultShardIterations && r.eval.cost(points, iterations) > r.remaining() {
-			iterations /= 2
-		}
-		// a short round still reports alternatives, but too noisy to move the best
-		full := iterations >= r.budget.Iterations
-		evals, err := r.evaluate(points, iterations)
-		if err != nil {
-			return nil, verified, err
-		}
-		bestEval := evals[0]
-		r.bestEval, r.seedEval = bestEval, evals[1]
-		var top *alternative
-		for i, a := range alts {
-			a.eval = evals[i+2]
-			if a.eval == nil {
+		var alts []*alternative
+		iterations := max(r.budget.Iterations, r.eval.iterations(Point{Loadout: r.best}))
+		for _, batch := range [][]*alternative{first, rest} {
+			if len(batch) == 0 {
 				continue
 			}
-			a.delta = r.obj.Delta(bestEval, a.eval)
-			if r.raidMode() {
-				a.raidDelta = Delta(bestEval, a.eval, MetricDPS)
+			points := []Point{{Loadout: r.best}, {Loadout: r.r.Seed}}
+			for _, a := range batch {
+				points = append(points, Point{Loadout: a.loadout})
 			}
-			// the search only sees floors through its penalty, so a runner-up can miss one
-			if (top == nil || a.delta.Mean > top.delta.Mean) && r.pool.checkFloors(a.loadout) == nil {
-				top = a
+			for iterations > DefaultShardIterations && r.eval.cost(points, iterations) > r.remaining() {
+				iterations /= 2
 			}
-		}
-		if full && top != nil && r.accepts(top.delta) && r.beatsSeed(top.eval) && round < neighborhoodRounds-1 {
-			r.best, r.bestEval = top.loadout, top.eval
-			verified = append(verified, &verifiedLoadout{top.loadout, top.eval})
-			r.sortVerified(verified)
-			r.report()
-			continue
+			// a short round still reports alternatives, but too noisy to move the best
+			full := iterations >= r.budget.Iterations
+			evals, err := r.evaluate(points, iterations)
+			if err != nil {
+				return nil, verified, err
+			}
+			bestEval := evals[0]
+			r.bestEval, r.seedEval = bestEval, evals[1]
+			var top *alternative
+			for i, a := range batch {
+				a.eval = evals[i+2]
+				if a.eval == nil {
+					continue
+				}
+				a.delta = r.obj.Delta(bestEval, a.eval)
+				if r.raidMode() {
+					a.raidDelta = Delta(bestEval, a.eval, MetricDPS)
+				}
+				// the search only sees floors through its penalty, so a runner-up can miss one
+				if (top == nil || a.delta.Mean > top.delta.Mean) && r.pool.checkFloors(a.loadout) == nil {
+					top = a
+				}
+			}
+			alts = append(alts, batch...)
+			if full && top != nil && r.accepts(top.delta) && r.beatsSeed(top.eval) && round < neighborhoodRounds-1 {
+				r.best, r.bestEval = top.loadout, top.eval
+				verified = append(verified, &verifiedLoadout{top.loadout, top.eval})
+				r.sortVerified(verified)
+				r.report()
+				continue rounds
+			}
 		}
 
 		var out []*proto.OptimizerSlotAlternative

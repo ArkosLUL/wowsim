@@ -605,8 +605,8 @@ func checkResultShape(t *testing.T, result *proto.OptimizerResult, r *Request) {
 		}
 	}
 	for slot, n := range perSlot {
-		if n > runnersUp {
-			t.Errorf("%d alternatives for %s, want at most %d", n, slot, runnersUp)
+		if n > alternativesPerSlot {
+			t.Errorf("%d alternatives for %s, want at most %d", n, slot, alternativesPerSlot)
 		}
 	}
 	if len(result.Alternatives) == 0 {
