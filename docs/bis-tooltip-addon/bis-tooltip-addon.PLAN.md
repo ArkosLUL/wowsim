@@ -124,9 +124,10 @@ A **subject** is either a roster raider or a class/spec. A **block** is one (sub
 - The dataset carries a **composition fingerprint** over the whole roster, healers included: the
   sorted (class id, main talent tree) multiset. Not names — swapping one Fury warrior for another
   changes no buffs — and not spec names, which the addon can't read off a group member; the tree it
-  can, by inspect. The addon compares it to your live group only when you're in a group of 10+, and on
-  mismatch shows a one-line warning in the roster section header while still showing the data.
-  Degraded data beats none.
+  can, by inspect. In a raid of 10+, once it has every online member's tree, the addon compares it to
+  theirs and on mismatch shows a one-line warning in the roster section header while still showing the
+  data. Degraded data beats none. Offline members give no buffs and can't be inspected, so they're left
+  out and named in the warning.
 
 ### Wire format (frozen)
 
@@ -177,11 +178,11 @@ deltas are own-metrics and would mislead.
 
 **Sizing,** measured on a real fury P1 result (17 filled slots): 716 B and 4 frames per block. 25
 raiders × 5 phases = 125 roster blocks, up to 30 non-healer addon specs × 5 = 150 spec blocks: ~275
-blocks, ~200 KB. First sync fetches roster + your own spec = 130 blocks ≈ 520 frames ≈ **5.2 s** at 10
-frames/tick on the live 100 ms `MapUpdateInterval`; healers have no blocks, so less in practice.
+blocks, ~200 KB. A cold sync fetches them all: ≈ 1,100 frames at 10 per `SendIntervalMs` (100 ms), **~14
+s** from HELLO in the addon harness's model of the module; healers have no blocks, so less in practice.
 
 **No compression in v1.** Plain decimal stays readable on the wire, which makes bugs in a
-two-language codec far cheaper to find, and a ~6 s sync once per dataset change isn't worth buying
+two-language codec far cheaper to find, and a ~14 s sync once per dataset change isn't worth buying
 complexity to fix. Two levers if the measured number annoys: base-36 item ids (~20% off) or raw
 deflate with LibDeflate client-side (~55% off, at the cost of a printable-encoding layer and a second
 way for the codecs to disagree).
@@ -275,6 +276,9 @@ Regeneration is **manual**: one documented command, run when you want it, never 
 loop's re-baseline. Don't commit the payload; record the dataset version, sim commit, catalog date
 and objective in this PLAN so any dataset on the server traces back to a sim state.
 
+**Live dataset:** `b235db6c`, a placeholder: one fury P1 result fanned out to every subject and phase.
+Sim `unknown`, catalog 2026-09-19, objective `own`, imported 2026-09-21.
+
 Tables in `acore_world` (DDL: `BisTablesSQL`):
 
 | Table | Columns |
@@ -324,54 +328,74 @@ the worldserver logs `mod-bis-tooltip: no dataset loaded`, then "World Initializ
 
 ### Phase 3 — Addon fork: transport and cache
 
-Fork [Bistooltip](A:/WOW/world%20of%20warcraft%203.3.5a%20hd/interface/addons/Bistooltip) to a new
-folder `BisTooltipAC`, leaving the original installed but disabled — reversible, and stops both
-hooking the tooltip. MIT: keep the attribution in `README.md` and `LICENSE`, add the fork's line.
-`git init` in place (the MultiBot pattern in that folder), **not pushed**; `git init` needs the user's
-go-ahead per their git rule.
+**Status:** done. `BisTooltipAC` is its own git repo in the AddOns folder, on `master`, not pushed: the
+original Bistooltip as installed, then this phase, then Phase 4. Options, sync and tests: its `README.md`.
 
-**Drop `Bistooltip_tbc_bislists.lua` (593 KB) and `Bistooltip_classic_bislists.lua` (409 KB).** The
-realm is WotLK-only; this halves the addon and reduces the data-source selector to "server" vs
-"shipped WotLK". Keep the Wowhead-derived WotLK list unchanged as the offline and healer fallback,
-labelled as not-yours — a baked server snapshot would go stale, compete with the live dataset for
-authority, and put you back to hand-distributing data.
+- A fork of [Bistooltip](A:/WOW/world%20of%20warcraft%203.3.5a%20hd/interface/addons/Bistooltip), which
+  stays installed but disabled. MIT attribution kept in `README.md` and `LICENSE`, plus the fork's line.
+- The TBC and Classic lists are dropped: the realm is WotLK-only. The shipped Wowhead WotLK list stays
+  unchanged as the offline and healer fallback. A baked server snapshot would go stale, compete with the
+  live dataset for authority, and put you back to hand-distributing data.
+- `Bistooltip_server.lua`: the codec, the sync, and the API the options and tooltip use. It decodes into
+  exactly what `acbis -luaOut` writes. The cache sits in `BisTooltipDB.global.server`, so one install
+  syncs once for every character on it.
+- `Config.lua`: the `Server (live)` data source, the default, plus "Sync now" and a status line. A
+  fallback is said in chat and in the status line.
 
-- New `Bistooltip_server.lua`, in the `.toc` before `Core.lua`:
-  - Comm: event frame on `CHAT_MSG_ADDON` filtering `prefix == "BIST"`; drive
-    `HELLO → META → SUBJ → WANT → BLK/DONE`; reassemble by `blockId~seq/total`; verify checksums;
-    implement the retry and version-discard rules above.
-  - The module drops some messages unanswered (its README lists them): retry HELLO after
-    `HelloCooldownMs` (10 s) of silence, and send each WANT after the last one's `DONE~<version>~*`.
-  - Cache: decoded blocks and the dataset version in AceDB's **`global`** scope, not `char`, so one
-    install syncs once for every character on it. `SavedVariables: BisTooltipDB` is already declared.
-  - Decode into exactly what `acbis -luaOut` writes: `Bistooltip_server_bislists`, which
-    `searchIDInBislistsClassSpec`, the browser and the checkmark code read unchanged, and
-    `Bistooltip_server_roster`.
-  - Fetch policy: all roster blocks plus your own spec on first sync; other specs on demand.
-- `Config.lua`: add `Server (live)` to the existing "Data source" select, a "Sync now" button, and a
-  status line (dataset version, catalog date, objective, last sync, fallback state). When the module
-  doesn't answer, fall back and **say so** rather than silently.
+Changed from the plan:
 
-**Verify:** cold sync completes; a warm login costs two frames; `Enable = 0` falls back cleanly;
-killing the connection mid-sync resumes without re-fetching completed blocks; the cached tables match
-`acbis -luaOut` for the imported dataset.
+- HELLO is retried 12 s apart, 3 times, then the addon falls back. A sync with no progress for 15 s
+  handshakes again, up to 3 times, then reports it stalled.
+- `SavedVariables` is still `BisTooltipDB`, the original's name. With both addons enabled, the client
+  writes one table into both files, so the fork inherits the original's per-character data source. The
+  fork warns in chat when both are enabled.
+
+**Verified:** `test/run-tests.sh` runs the addon's real code under Lua 5.1, with the WoW API and Ace
+stubbed, against a model of the module's session logic serving messages the module's own C++ built;
+decoded tables equal `acbis -luaOut`. In the client, on the live dataset: a cold sync, a warm login at
+one message each way, resuming a sync cut off by logout without refetching, and switching source both
+ways. `Enable = 0` is checked in the harness only.
 
 ### Phase 4 — Tooltip (the shippable milestone)
 
-`Bistooltip.lua`, in `OnGameTooltipSetItem`: add a roster section above the existing spec section —
-one line per raider wanting the item, `<class icon> <Raider> (<spec>)` left, phases/ranks right,
-reusing the `"P4 BIS" / "P4 alt 2"` string shape. Add the rank-1 delta where present, and the reforge
-text line. Respect the existing `tooltip_with_ctrl` and spec filters; add a roster toggle. Keep the
-`Bistooltip_LastItemId` guard so the modifier-key refresh still works.
+**Status:** done, in the addon repo.
 
-Default to showing phases at or below the viewer's progression tier plus one — the module supplies the
-tier in `META` — with a config toggle for all five, so the tooltip doesn't become a wall.
+- `Bistooltip.lua`: a roster section, "BiS for your raid", above the spec section. Each line reads
+  `<class icon> <Raider> (<spec>)`, then `T8 BIS +142 / T9 alt 2` on the right, the delta being rank 1's.
+  Under it goes a dim sub-line per reforge, named like mod-reforging's `ItemReforge::StatTypeToString`.
+  With the server selected, spec lines from the shipped list are marked with a grey `(Wowhead)`. Hide specs
+  and Highlight spec now apply, and Alt shows everything.
+- Phases are shown up to the one after the viewer's: `min(5, max(0, tier - 12) + 1)`, since tier 13 opens
+  T7 and 17 opens RS. `PR` always shows, and a nil or 0 tier shows all. "Show all phases" and "Show raid
+  roster" toggles.
+- `Bistooltip_raid.lua`: the fingerprint check (see Subject and dataset model), with its progress in the
+  options status line.
+  - Inspects one member at a time, 1.5 s apart with a 5 s timeout, least recently tried first.
+  - Skips offline members and those out of the 28 yd inspect range.
+  - Waits while the InspectFrame is shown, and after anyone else's `NotifyInspect`:
+    `INSPECT_TALENT_READY` doesn't say whose talents it carries.
+  - Reads the inspected unit's active talent group, and caches trees by GUID for the session.
 
-**This phase is the product.** It must be shippable without phase 5.
+Changed from the plan:
 
-**Verify:** by hand in the client. Hover a known P4 trinket, confirm the named raiders match the
-dataset; confirm a healer item falls back and is labelled; confirm the tier-based phase default and
-the all-phases toggle.
+- Every spec's blocks are fetched, not just your own with the rest on demand, because the tooltip reads
+  every spec on every hover. The order is your spec, then the roster, then the other specs.
+- Offline members are left out of the fingerprint.
+
+**Verified:**
+- `test/run-tests.sh` covers each behaviour, and the full export's 25 raiders reproduce its fingerprint
+  `0c5c1449`. Deliberately broken copies were each caught.
+- In the client: hovers across phases, the shipped label, both toggles, source switching, the filters,
+  Ctrl gating and shift-compare.
+- `CanInspect` and `CheckInteractDistance(unit, 1)` return 1 for online bots in range.
+- The offline-member handling is checked in the harness only.
+
+Open:
+
+- Renaming `SavedVariables` to e.g. `BisTooltipACDB`, so the fork never shares the original's settings.
+  The user's call.
+- Skipping the raid check in battlegrounds and arenas, which count as raids of 10+.
+- `Bislist.lua`'s comment says `CanInspect` is false for bots. In range it's true.
 
 ### Phase 5 — Browser roster mode
 
