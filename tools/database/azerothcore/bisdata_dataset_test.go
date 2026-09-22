@@ -97,27 +97,32 @@ func TestBuildBisBlock(t *testing.T) {
 		proto.ItemSlot_ItemSlotNeck:     {Id: 50633, Enchant: 9999},
 		proto.ItemSlot_ItemSlotMainHand: {Id: 50730, Enchant: 3789},
 	},
+		// six runners-up for the head, so the worst one, listed first here, is left out
+		bisAlt(proto.ItemSlot_ItemSlotHead, 51002, -60),
 		bisAlt(proto.ItemSlot_ItemSlotHead, 50713, -20.4),
 		bisAlt(proto.ItemSlot_ItemSlotHead, 51000, -40),
 		bisAlt(proto.ItemSlot_ItemSlotHead, 50712, -5.6),
 		// the best item again, e.g. with other gems: it mustn't take a rank or set the delta
 		bisAlt(proto.ItemSlot_ItemSlotHead, 51227, -1),
 		bisAlt(proto.ItemSlot_ItemSlotHead, 51866, -30),
+		bisAlt(proto.ItemSlot_ItemSlotHead, 51001, -50),
+		bisAlt(proto.ItemSlot_ItemSlotMainHand, 50731, -12),
 		// alternatives for an empty slot go nowhere
 		bisAlt(proto.ItemSlot_ItemSlotOffHand, 50616, -2),
 	)
 
 	block, warnings := BuildBisBlock(result, testEnchants)
 	want := BisBlock{Slots: []BisSlot{
-		{Slot: proto.ItemSlot_ItemSlotHead, Items: []int32{51227, 50712, 50713, 51866}, Enchant: 59954,
+		{Slot: proto.ItemSlot_ItemSlotHead, Items: []int32{51227, 50712, 50713, 51866, 51000, 51001}, Enchant: 59954,
 			Gems: []int32{41398, 40111}, ReforgeFrom: 31, ReforgeTo: 37, Delta: 6, HasDelta: true},
 		{Slot: proto.ItemSlot_ItemSlotNeck, Items: []int32{50633}},
-		{Slot: proto.ItemSlot_ItemSlotMainHand, Items: []int32{50730}, Enchant: 59621},
+		{Slot: proto.ItemSlot_ItemSlotMainHand, Items: []int32{50730, 50731}, Enchant: 59621, Delta: 12, HasDelta: true},
 	}}
 	if !reflect.DeepEqual(block, want) {
 		t.Errorf("got  %+v\nwant %+v", block, want)
 	}
-	if len(warnings) != 1 || !strings.Contains(warnings[0], "enchant effect 9999") {
+	if len(warnings) != 2 || !strings.Contains(warnings[0], "runners-up [51002]") ||
+		!strings.Contains(warnings[1], "enchant effect 9999") {
 		t.Errorf("warnings = %q", warnings)
 	}
 }

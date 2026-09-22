@@ -273,18 +273,23 @@ func BuildBisBlock(result *proto.OptimizerResult, enchants EnchantSpells) (BisBl
 		slices.SortStableFunc(alts, func(a, b *proto.OptimizerSlotAlternative) int {
 			return cmp.Compare(b.GetScoreDelta(), a.GetScoreDelta())
 		})
+		var dropped []int32
 		for _, alt := range alts {
-			if len(slot.Items) == BisMaxRanks {
-				break
-			}
 			id := alt.GetItem().GetId()
-			if id == 0 || slices.Contains(slot.Items, id) {
+			if id == 0 || slices.Contains(slot.Items, id) || slices.Contains(dropped, id) {
+				continue
+			}
+			if len(slot.Items) == BisMaxRanks {
+				dropped = append(dropped, id)
 				continue
 			}
 			if len(slot.Items) == 1 {
 				slot.Delta, slot.HasDelta = int32(math.Round(-alt.GetScoreDelta())), true
 			}
 			slot.Items = append(slot.Items, id)
+		}
+		if len(dropped) > 0 {
+			warnings = append(warnings, fmt.Sprintf("slot %d: runners-up %v don't fit the %d ranks, left out", i, dropped, BisMaxRanks))
 		}
 
 		if effect := item.GetEnchant(); effect != 0 {
