@@ -22,7 +22,7 @@ import { buildOptimizeRequest, BuiltRequest, defaultTabSettings } from '../core/
 import { getSpecConfig, Player } from '../core/player';
 import { ProgressMetrics, RaidSimRequest, RaidSimResult } from '../core/proto/api';
 import { EquipmentSpec, Glyphs, Race, SimDatabase } from '../core/proto/common';
-import { OptimizerBatchEntry, OptimizerBatchExport, OptimizerEffort, OptimizerProgress, OptimizerRacialMode, OptimizerResult } from '../core/proto/optimizer';
+import { OptimizerBatchEntry, OptimizerBatchExport, OptimizerEffort, OptimizerObjective, OptimizerProgress, OptimizerRacialMode, OptimizerResult } from '../core/proto/optimizer';
 import { SavedGearSet } from '../core/proto/ui';
 import { Database } from '../core/proto_utils/database';
 import { raceNames } from '../core/proto_utils/names';
@@ -46,11 +46,16 @@ const STORAGE_PREFIX = 'optimizer-batch.v1.';
 
 type JobState = 'queued' | 'running' | 'done' | 'failed';
 
-// One raider in one content phase.
+// 1: everyone's own-metrics BiS. 2: DPS raiders only, re-optimized for raid DPS with everyone else
+// wearing their stage 1 pick.
+type Stage = 1 | 2;
+
+// One raider in one content phase, one stage.
 interface Job {
 	raidIndex: number;
 	raider: string;
 	phase: number;
+	stage: Stage;
 	state: JobState;
 	result?: OptimizerResult;
 	error?: string;
@@ -94,7 +99,12 @@ interface Validation {
 	error?: string;
 }
 
-function jobKey(raidIndex: number, phase: number): string {
+function jobKey(raidIndex: number, phase: number, stage: Stage): string {
+	return `${raidIndex}:${phase}:${stage}`;
+}
+
+// Identifies a grid cell, independent of which stage's job it's currently showing.
+function cellKey(raidIndex: number, phase: number): string {
 	return `${raidIndex}:${phase}`;
 }
 
@@ -188,9 +198,10 @@ function shortCommit(commit: string): string {
 }
 
 // The raid batch: every non-healer's BiS for each content phase, one optimizer run after another on
-// the sim's web server (it runs one at a time). Each raider runs on their own metrics, with the buffs
-// and debuffs the rest of the roster gives them, tanks on the survival/threat blend. Cells only show
-// what a result carries: raid DPS appears once a result has it.
+// the sim's web server (it runs one at a time). Stage 1 runs everyone on their own metrics, with the
+// buffs and debuffs the rest of the roster gives them; tanks stay on the survival/threat blend there.
+// Stage 2 re-optimizes DPS raiders for raid DPS, with everyone else in their stage 1 pick. Cells show
+// whichever stage last ran for that raider and phase.
 export class OptimizerBatchTab extends SimTab {
 	readonly simUI: RaidSimUI;
 
@@ -203,7 +214,7 @@ export class OptimizerBatchTab extends SimTab {
 	private validationPool: WorkerPool | null = null;
 	private storageFailed = false;
 	private rosterCheck: number | null = null;
-	// grid cells by job key, so progress redraws only the running one
+	// grid cells by cell key, so progress redraws only the running one
 	private cells = new Map<string, HTMLTableCellElement>();
 
 	private readonly setupBody: HTMLElement;
@@ -257,6 +268,12 @@ export class OptimizerBatchTab extends SimTab {
 			.getActivePlayers()
 			.filter(player => !isHealingSpec(player.spec))
 			.sort((a, b) => a.getRaidIndex() - b.getRaidIndex());
+	}
+
+	// DPS raiders get a stage 2: tanks keep their survival/threat blend either way, so re-running them
+	// against the raid wouldn't change their pick.
+	private dpsRaiders(): Array<Player<any>> {
+		return this.raiders().filter(player => !isTankSpec(player.spec));
 	}
 
 	// Identifies the roster: who sits where, with their spec, race, talents, glyphs and professions.
@@ -325,10 +342,12 @@ export class OptimizerBatchTab extends SimTab {
 			batch.running = saved.running == true;
 			for (const job of Array.isArray(saved.jobs) ? saved.jobs : []) {
 				const state: JobState = job.state == 'done' || job.state == 'failed' ? job.state : 'queued';
-				batch.jobs.set(jobKey(job.raidIndex, job.phase), {
+				const stage: Stage = job.stage == 2 ? 2 : 1;
+				batch.jobs.set(jobKey(job.raidIndex, job.phase, stage), {
 					raidIndex: job.raidIndex,
 					raider: String(job.raider || ''),
 					phase: job.phase,
+					stage,
 					state,
 					result: job.result ? OptimizerResult.fromJson(job.result, { ignoreUnknownFields: true }) : undefined,
 					error: typeof job.error == 'string' ? job.error : undefined,
@@ -352,6 +371,7 @@ export class OptimizerBatchTab extends SimTab {
 			raidIndex: job.raidIndex,
 			raider: job.raider,
 			phase: job.phase,
+			stage: job.stage,
 			state: job.state == 'running' ? 'queued' : job.state,
 			result: job.result ? OptimizerResult.toJson(job.result) : undefined,
 			error: job.error,
@@ -441,9 +461,10 @@ export class OptimizerBatchTab extends SimTab {
 			newElement(
 				'p',
 				'optimizer-hint',
-				"Finds each DPS and tank raider's best gear for every content phase you pick, one optimizer run at a time. Each run uses " +
-					"the raider's own metrics, with the buffs and debuffs the rest of this roster gives them. Tanks trade 70% survival " +
-					'against 30% threat and have to end up crit immune. Healers sit this one out.',
+				"Finds each DPS and tank raider's best gear for every content phase you pick, one optimizer run at a time, with the " +
+					"buffs and debuffs the rest of this roster gives them. Tanks trade 70% survival against 30% threat and have to end up " +
+					'crit immune. Healers sit this one out. Each phase runs twice: first everyone gets their own-metrics pick, then DPS ' +
+					"raiders run again scored on the whole raid's DPS with everyone else wearing their first pick.",
 			),
 		);
 
@@ -504,23 +525,54 @@ export class OptimizerBatchTab extends SimTab {
 		return actions;
 	}
 
-	// The runs the settings ask for, in the order they go: phase by phase, so each raider's run can
-	// start from their BiS of the phase before.
+	// The runs the settings ask for, in the order they go: phase by phase, stage 1 for everyone before
+	// stage 2 for that phase's DPS raiders, so each raider's run can start from their BiS of the phase
+	// before. A phase's stage 2 jobs only join the list once every raider's stage 1 there has settled
+	// (done or failed): stage 2 needs the others' stage 1 picks to score raid DPS against.
 	private plannedJobs(): Array<Job> {
 		const skipped = new Set(this.batch.settings.skipped);
 		const phases = this.batch.settings.phases.slice().sort((a, b) => a - b);
 		const raiders = this.raiders().filter(player => !skipped.has(player.getRaidIndex()));
-		return phases.flatMap(phase => raiders.map(player => this.job(player, phase)));
+		const dps = this.dpsRaiders().filter(player => !skipped.has(player.getRaidIndex()));
+		const out: Array<Job> = [];
+		for (const phase of phases) {
+			const stage1 = raiders.map(player => this.job(player, phase, 1));
+			out.push(...stage1);
+			if (dps.length > 0 && stage1.every(job => job.state == 'done' || job.state == 'failed')) {
+				out.push(...dps.map(player => this.job(player, phase, 2)));
+			}
+		}
+		return out;
 	}
 
-	private job(player: Player<any>, phase: number): Job {
-		const key = jobKey(player.getRaidIndex(), phase);
+	private job(player: Player<any>, phase: number, stage: Stage): Job {
+		const key = jobKey(player.getRaidIndex(), phase, stage);
 		let job = this.batch.jobs.get(key);
 		if (!job) {
-			job = { raidIndex: player.getRaidIndex(), raider: player.getName(), phase, state: 'queued', seedChanges: [], bossName: '', serverStops: 0 };
+			job = { raidIndex: player.getRaidIndex(), raider: player.getName(), phase, stage, state: 'queued', seedChanges: [], bossName: '', serverStops: 0 };
 			this.batch.jobs.set(key, job);
 		}
 		return job;
+	}
+
+	// The raider's job for a phase that's most worth showing: stage 2 once it's started, else stage 1.
+	private currentJob(raidIndex: number, phase: number): Job | undefined {
+		const stage2 = this.batch.jobs.get(jobKey(raidIndex, phase, 2));
+		if (stage2 && stage2.state != 'queued') {
+			return stage2;
+		}
+		return this.batch.jobs.get(jobKey(raidIndex, phase, 1)) ?? stage2;
+	}
+
+	// The raider's best finished pick for a phase, for Apply, Save and Validate: stage 2's once it has
+	// one, else stage 1's.
+	private bestUsableJob(raidIndex: number, phase: number): Job | undefined {
+		const stage2 = this.batch.jobs.get(jobKey(raidIndex, phase, 2));
+		if (stage2?.state == 'done' && stage2.result?.best?.equipment) {
+			return stage2;
+		}
+		const stage1 = this.batch.jobs.get(jobKey(raidIndex, phase, 1));
+		return stage1?.state == 'done' && stage1.result?.best?.equipment ? stage1 : undefined;
 	}
 
 	private resumeIfRunning() {
@@ -613,13 +665,32 @@ export class OptimizerBatchTab extends SimTab {
 		const settings = defaultTabSettings(job.phase);
 		settings.effort = this.batch.settings.effort;
 		settings.racialMode = this.batch.settings.racialMode;
-		// the latest phase before this one that has a result
+
+		const warmStarts: Array<EquipmentSpec> = [];
+		// the latest earlier phase that has a result, preferring its stage 2 pick when it ran one
 		const earlier = PHASES.filter(phase => phase < job.phase)
-			.map(phase => this.batch.jobs.get(jobKey(job.raidIndex, phase)))
-			.filter(prev => prev?.state == 'done' && prev.result?.best?.equipment)
-			.pop();
+			.sort((a, b) => b - a)
+			.map(phase => this.bestUsableJob(job.raidIndex, phase))
+			.find(prev => prev);
+		if (earlier) {
+			warmStarts.push(earlier.result!.best!.equipment!);
+		}
+
+		const base = this.simUI.sim.makeRaidSimRequest(false);
+		let objective: OptimizerObjective | undefined;
+		if (job.stage == 2) {
+			objective = OptimizerObjective.OptimizerObjectiveRaidDps;
+			this.wearStage1Picks(base, job.phase, job.raidIndex);
+			// this phase's own stage 1 pick is a strong start for the raid-scored search too, and it's
+			// already inside this target's own pool, so it's safe to warm-start from
+			const own = this.batch.jobs.get(jobKey(job.raidIndex, job.phase, 1));
+			if (own?.state == 'done' && own.result?.best?.equipment) {
+				warmStarts.push(own.result.best.equipment);
+			}
+		}
+
 		return buildOptimizeRequest({
-			base: this.simUI.sim.makeRaidSimRequest(false),
+			base,
 			targetRaidIndex: job.raidIndex,
 			settings,
 			catalog,
@@ -627,8 +698,37 @@ export class OptimizerBatchTab extends SimTab {
 			getItems: slot => player.getItems(slot),
 			getEnchants: slot => player.getEnchants(slot),
 			db: this.simUI.sim.db,
-			warmStarts: earlier ? [earlier.result!.best!.equipment!] : [],
+			warmStarts,
+			objective,
 		});
+	}
+
+	// Wears every other active raider's phase stage 1 pick, so a stage 2 request's raid sims score the
+	// target against the raid stage 1 leaves them in. Raiders without a done stage 1 there (skipped, or
+	// mid-run) keep whatever gear the live raid has them in.
+	private wearStage1Picks(base: RaidSimRequest, phase: number, exceptRaidIndex: number) {
+		for (const player of this.raiders()) {
+			const raidIndex = player.getRaidIndex();
+			if (raidIndex == exceptRaidIndex) {
+				continue;
+			}
+			const stage1 = this.batch.jobs.get(jobKey(raidIndex, phase, 1));
+			const best = stage1?.state == 'done' ? stage1.result?.best : undefined;
+			if (!best?.equipment) {
+				continue;
+			}
+			const raidPlayer = base.raid?.parties[Math.floor(raidIndex / 5)]?.players[raidIndex % 5];
+			if (!raidPlayer) {
+				continue;
+			}
+			const gear = this.simUI.sim.db.lookupEquipmentSpec(best.equipment);
+			raidPlayer.equipment = gear.asSpec();
+			// the server has no item database of its own, so the request carries what everyone wears
+			raidPlayer.database = Database.mergeSimDatabases(raidPlayer.database || SimDatabase.create(), gear.toDatabase());
+			if (best.racialTraits != Race.RaceUnknown) {
+				raidPlayer.racialTraits = best.racialTraits;
+			}
+		}
 	}
 
 	private async runJob(job: Job, run: BatchRun) {
@@ -677,7 +777,7 @@ export class OptimizerBatchTab extends SimTab {
 			job.progress = undefined;
 			this.storeBatch();
 			this.renderGrid();
-			if (this.selected == jobKey(job.raidIndex, job.phase)) {
+			if (this.selected == cellKey(job.raidIndex, job.phase)) {
 				this.renderDetail();
 			}
 		}
@@ -731,7 +831,7 @@ export class OptimizerBatchTab extends SimTab {
 		this.showStatus(parts.join(', '));
 		// progress lands every half second: redrawing the whole grid that often eats clicks and
 		// tooltips on the other cells
-		const td = this.cells.get(jobKey(job.raidIndex, job.phase));
+		const td = this.cells.get(cellKey(job.raidIndex, job.phase));
 		if (td) {
 			this.fillCell(td, job, true);
 		}
@@ -777,11 +877,11 @@ export class OptimizerBatchTab extends SimTab {
 			name.appendChild(raider);
 			tr.appendChild(name);
 			for (const phase of PHASES) {
-				const job = this.batch.jobs.get(jobKey(index, phase));
+				const job = this.currentJob(index, phase);
 				const planned = settings.phases.includes(phase) && !skipped.has(index);
 				const td = newElement('td');
 				this.fillCell(td, job, planned);
-				this.cells.set(jobKey(index, phase), td);
+				this.cells.set(cellKey(index, phase), td);
 				tr.appendChild(td);
 			}
 			table.appendChild(tr);
@@ -792,7 +892,8 @@ export class OptimizerBatchTab extends SimTab {
 				'div',
 				'optimizer-hint',
 				"Each cell is the run's score gain over the raider's gear with what the phase rules out taken off, ± its standard error, " +
-					'in points of their EP reference stat. Click one for the gear.',
+					"in points of their EP reference stat. A DPS raider's cell also gets a raid DPS line once their stage 2 run scores " +
+					'it. Click one for the gear.',
 			),
 		);
 	}
@@ -811,7 +912,7 @@ export class OptimizerBatchTab extends SimTab {
 	private fillCell(td: HTMLTableCellElement, job: Job | undefined, planned: boolean) {
 		td.replaceChildren();
 		td.className = '';
-		const key = job ? jobKey(job.raidIndex, job.phase) : null;
+		const key = job ? cellKey(job.raidIndex, job.phase) : null;
 		if (key && key == this.selected) {
 			td.classList.add('table-active');
 		}
@@ -840,7 +941,7 @@ export class OptimizerBatchTab extends SimTab {
 				break;
 			}
 			case 'failed':
-				link.appendChild(newElement('span', 'text-danger', 'failed'));
+				link.appendChild(newElement('span', 'text-danger', job.stage == 2 ? 'stage 2 failed' : 'failed'));
 				link.title = job.error || '';
 				break;
 			case 'done': {
@@ -882,8 +983,9 @@ export class OptimizerBatchTab extends SimTab {
 	}
 
 	private phaseJobs(phase: number): Array<Job> {
-		return [...this.batch.jobs.values()]
-			.filter(job => job.phase == phase && job.state == 'done' && job.result?.best?.equipment)
+		return this.raiders()
+			.map(player => this.bestUsableJob(player.getRaidIndex(), phase))
+			.filter((job): job is Job => !!job)
 			.sort((a, b) => a.raidIndex - b.raidIndex);
 	}
 
@@ -1050,7 +1152,8 @@ export class OptimizerBatchTab extends SimTab {
 
 	private renderDetail() {
 		this.detailBody.replaceChildren();
-		const job = this.selected ? this.batch.jobs.get(this.selected) : undefined;
+		const parsed = this.selected?.split(':').map(Number);
+		const job = parsed ? this.currentJob(parsed[0], parsed[1]) : undefined;
 		if (!job) {
 			this.detailBody.appendChild(newElement('p', 'optimizer-hint', 'Click a cell to see its gear, runners-up and character sheet.'));
 			return;
@@ -1084,7 +1187,7 @@ export class OptimizerBatchTab extends SimTab {
 		}
 
 		const result = job.result;
-		const provenance: Array<string> = [];
+		const provenance: Array<string> = [job.stage == 2 ? 'stage 2, raid DPS' : 'stage 1, own metrics'];
 		if (result.settings) {
 			provenance.push(effortName(result.settings.effort));
 		}
@@ -1195,7 +1298,7 @@ export class OptimizerBatchTab extends SimTab {
 	private exportJson() {
 		const done = [...this.batch.jobs.values()]
 			.filter(job => job.state == 'done' && job.result)
-			.sort((a, b) => a.phase - b.phase || a.raidIndex - b.raidIndex);
+			.sort((a, b) => a.phase - b.phase || a.raidIndex - b.raidIndex || a.stage - b.stage);
 		const first = done[0]?.result;
 		const batchExport = OptimizerBatchExport.create({
 			simCommit: first?.simCommit || '',
@@ -1203,7 +1306,7 @@ export class OptimizerBatchTab extends SimTab {
 			exportedAt: new Date().toISOString(),
 			rosterFingerprint: this.batch.fingerprint,
 			entries: done.map(job =>
-				OptimizerBatchEntry.create({ raider: job.raider, raidIndex: job.raidIndex, contentPhase: job.phase, stage: 1, result: job.result }),
+				OptimizerBatchEntry.create({ raider: job.raider, raidIndex: job.raidIndex, contentPhase: job.phase, stage: job.stage, result: job.result }),
 			),
 		});
 		downloadString(OptimizerBatchExport.toJsonString(batchExport, { prettySpaces: 2 }), 'optimizer-batch.json');

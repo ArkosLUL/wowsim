@@ -347,6 +347,20 @@ func TestBuildCharacter(t *testing.T) {
 	}
 }
 
+func TestBuildCharacterQuiver(t *testing.T) {
+	rows := &CharacterRows{Name: "Angry", ClassID: 3, Level: MaxLevel, Skills: map[int32]int32{}, HasQuiver: true}
+	character := BuildCharacter(rows, &RosterDBC{}, testTrees, DefaultMinSkill, nil)
+	if !character.Quiver {
+		t.Errorf("quiver = %v, want true", character.Quiver)
+	}
+
+	rows.HasQuiver = false
+	character = BuildCharacter(rows, &RosterDBC{}, testTrees, DefaultMinSkill, nil)
+	if character.Quiver {
+		t.Errorf("quiver = %v, want false", character.Quiver)
+	}
+}
+
 func TestBuildCharacterBlacksmithSocket(t *testing.T) {
 	// gloves with a Blacksmithing socket, and the gem sitting in it
 	gloves := EquippedItem{ACSlot: ACSlotHands, ItemID: 45141, KnownTemplate: true,

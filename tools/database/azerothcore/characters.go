@@ -66,7 +66,7 @@ func BuildRoster(db *sql.DB, dbc *RosterDBC, trees TalentTrees, selector Selecto
 
 	// loadEquippedItems has to come before loadReforges, which hangs each reforge off the item it finds
 	for _, load := range []func(*sql.DB, []uint32, map[uint32]*CharacterRows) (string, error){
-		loadEquippedItems, loadTalents, loadGlyphs, loadSkills, loadReforges, loadRacialSwaps,
+		loadEquippedItems, loadTalents, loadGlyphs, loadSkills, loadReforges, loadRacialSwaps, loadQuivers,
 	} {
 		warning, err := load(db, guids, rows)
 		if err != nil {
@@ -381,6 +381,31 @@ func loadReforges(db *sql.DB, guids []uint32, characters map[uint32]*CharacterRo
 				character.Items[i].Reforge = &reforge
 				break
 			}
+		}
+	}
+	return "", rows.Err()
+}
+
+// loadQuivers flags a character carrying a quiver or ammo pouch in one of their bag slots.
+func loadQuivers(db *sql.DB, guids []uint32, characters map[uint32]*CharacterRows) (string, error) {
+	placeholders, args := inClause(guids)
+	rows, err := db.Query(fmt.Sprintf(`SELECT ci.guid FROM acore_characters.character_inventory ci
+			JOIN acore_characters.item_instance ii ON ii.guid = ci.item
+			JOIN acore_world.item_template it ON it.entry = ii.itemEntry
+			WHERE ci.bag = 0 AND ci.slot BETWEEN %d AND %d AND it.class = %d AND ci.guid IN (%s)`,
+		ACSlotBagStart, ACSlotBagEnd, ItemClassQuiver, placeholders), args...)
+	if err != nil {
+		return "", err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var guid uint32
+		if err := rows.Scan(&guid); err != nil {
+			return "", err
+		}
+		if character := characters[guid]; character != nil {
+			character.HasQuiver = true
 		}
 	}
 	return "", rows.Err()

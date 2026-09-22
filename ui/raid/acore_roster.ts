@@ -2,6 +2,7 @@ import { RaidSimPreset } from '../core/individual_sim_ui';
 import { MAX_PARTY_SIZE } from '../core/party';
 import { Player } from '../core/player';
 import { Class, EquipmentSpec, Glyphs, ItemReforge, ItemSlot, ItemSpec, Profession, Race, Spec } from '../core/proto/common';
+import { Hunter_Options_Quiver } from '../core/proto/hunter';
 import { Database } from '../core/proto_utils/database';
 import { Gear } from '../core/proto_utils/gear';
 import { nameToProfession } from '../core/proto_utils/names';
@@ -50,6 +51,8 @@ export interface RosterCharacter {
 	glyphs?: RosterGlyphs;
 	professions: Array<string>;
 	gear: Array<RosterGearItem>;
+	// A quiver or ammo pouch in a bag slot. Only hunters use it.
+	quiver?: boolean;
 	warnings?: Array<string>;
 }
 
@@ -392,7 +395,8 @@ function trimTrailingZeros(gems: Array<number>): Array<number> {
 	return trimmed;
 }
 
-// Everything the roster knows about a character. Rotation, consumes and spec options stay put.
+// Everything the roster knows about a character. Rotation, consumes and spec options stay put,
+// except a hunter's quiver: that's a bag slot on the server, not a choice, so it follows the gear.
 export function applyCharacter(player: Player<any>, imported: CharacterImport, eventID: EventID) {
 	player.setName(eventID, imported.char.name);
 	player.setRace(eventID, imported.race);
@@ -401,6 +405,11 @@ export function applyCharacter(player: Player<any>, imported: CharacterImport, e
 	player.setTalentsString(eventID, imported.talentsString);
 	player.setGlyphs(eventID, imported.glyphs);
 	player.setGear(eventID, imported.gear);
+	if (imported.playerClass == Class.ClassHunter) {
+		const options = player.getSpecOptions() as any;
+		options.quiver = imported.char.quiver ? Hunter_Options_Quiver.Quiver15Percent : Hunter_Options_Quiver.QuiverNone;
+		player.setSpecOptions(eventID, options);
+	}
 }
 
 // Same starting point a preset dragged onto the raid grid gets, minus what applyCharacter sets.

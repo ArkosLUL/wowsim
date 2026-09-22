@@ -21,7 +21,7 @@ func TestObjectiveWeights(t *testing.T) {
 		{"nil settings", nil, Metrics{MetricDPS: 1}, ""},
 		{"tank blend", &proto.OptimizerSettings{MetricWeights: &proto.OptimizerMetrics{Tps: 0.3, Tmi: 0.7}}, Metrics{MetricTPS: 0.3, MetricTMI: 0.7}, ""},
 		{"negative", &proto.OptimizerSettings{MetricWeights: &proto.OptimizerMetrics{Dtps: -1}}, Metrics{}, "negative"},
-		{"raid mode", &proto.OptimizerSettings{Objective: proto.OptimizerObjective_OptimizerObjectiveRaidDps}, Metrics{}, "raid DPS"},
+		{"raid mode", &proto.OptimizerSettings{Objective: proto.OptimizerObjective_OptimizerObjectiveRaidDps}, Metrics{MetricDPS: 1}, ""},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			got, err := objectiveWeights(tc.settings)

@@ -11,6 +11,7 @@ import (
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
 	"github.com/wowsims/wotlk/sim/core/stats"
+	"github.com/wowsims/wotlk/sim/optimizer/raidctx"
 	goproto "google.golang.org/protobuf/proto"
 )
 
@@ -241,6 +242,9 @@ type SimEvaluator struct {
 	seed        int64
 	shardSize   int
 	keep        [NumMetrics]bool
+	// True for a raid-contribution evaluator: MetricDPS comes from raidctx.RaidDPS instead of the
+	// target's own player metrics.
+	raidWide bool
 	// One token per worker, shared by concurrent Evaluate calls.
 	workers chan struct{}
 
@@ -270,6 +274,16 @@ func NewSimEvaluator(r *Request, keep ...Metric) *SimEvaluator {
 			e.keep[m] = true
 		}
 	}
+	return e
+}
+
+// NewRaidEvaluator sims r's target inside the whole raid r.Base names, at r.TargetIndex: r is the
+// asked request (the real roster), not the derived individual context. MetricDPS comes back as the
+// raid's total DPS (raidctx.RaidDPS), which is what OptimizerObjectiveRaidDps scores a DPS raider's
+// gear against; the other metrics still read the target's own, same as NewSimEvaluator.
+func NewRaidEvaluator(r *Request, keep ...Metric) *SimEvaluator {
+	e := NewSimEvaluator(r, keep...)
+	e.raidWide = true
 	return e
 }
 
@@ -415,7 +429,8 @@ func (e *SimEvaluator) runShard(p Point, k int) (s shard, err *SimError) {
 	if result.ErrorResult != "" {
 		return s, &SimError{Point: p, Message: result.ErrorResult}
 	}
-	parties := result.GetRaidMetrics().GetParties()
+	metrics := result.GetRaidMetrics()
+	parties := metrics.GetParties()
 	if e.targetIndex/5 >= len(parties) || e.targetIndex%5 >= len(parties[e.targetIndex/5].GetPlayers()) {
 		return s, &SimError{Point: p, Message: fmt.Sprintf("the sim reported no metrics for raid index %d", e.targetIndex)}
 	}
@@ -426,6 +441,9 @@ func (e *SimEvaluator) runShard(p Point, k int) (s shard, err *SimError) {
 		MetricTPS:  m.GetThreat().GetAllValues(),
 		MetricDTPS: m.GetDtps().GetAllValues(),
 		MetricTMI:  m.GetTmi().GetAllValues(),
+	}
+	if e.raidWide {
+		values[MetricDPS] = raidctx.RaidDPS(metrics)
 	}
 	n := len(values[MetricDPS])
 	// the cache counts whole shards, and an empty one would never finish

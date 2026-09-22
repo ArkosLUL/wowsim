@@ -26,6 +26,7 @@ MAX_QUERIES = 10
 EMPTY_ENCHANTMENTS = ' '.join(['0'] * 36) + ' '
 GROUP = [('Raider%02d' % i, i // 5, 0, 100 + i) for i in range(24)]
 EXTRA_NAME, EXTRA_GUID, EXTRA_SUBGROUP = 'Felesta', 900, 4
+QUIVER_GUID = GROUP[0][3]  # only this raider carries a quiver
 
 
 def write_wdbc(path, fields, rows):
@@ -53,6 +54,8 @@ def server_rows(query, guids):
         return [[str(guid), '171', '450'] for guid in guids]
     if 'character_racial_swap' in query or 'character_reforging' in query:
         return []
+    if 'character_inventory' in query and 'BETWEEN 19 AND 22' in query:
+        return [[str(QUIVER_GUID), '11']] if QUIVER_GUID in guids else []
     if 'character_inventory' in query:
         return [[str(guid), '0', str(guid * 10), '47112', EMPTY_ENCHANTMENTS, '0', '1', '0'] for guid in guids]
     if 'character_glyphs' in query:
@@ -79,7 +82,8 @@ def export():
     return {'version': 1, 'characters': [
         {'name': name, 'classId': 2, 'raceId': 1, 'level': 80, 'subgroup': subgroup, 'memberFlags': flags,
          'swapRaceId': 0, 'professions': ['Alchemy'], 'glyphs': {'major': [54733], 'minor': [58386]},
-         'gear': [{'acSlot': 0, 'id': 47112, 'enchant': 0, 'gems': [], 'extraGem': 0}]}
+         'gear': [{'acSlot': 0, 'id': 47112, 'enchant': 0, 'gems': [], 'extraGem': 0}],
+         'quiver': guid == QUIVER_GUID}
         for name, subgroup, flags, guid in members]}
 
 
@@ -120,6 +124,7 @@ CASES = [
     ('a gem that was never socketed', tamper(lambda c: c['gear'][0].update(gems=[40111])), 'slot 0'),
     ('a dropped profession', tamper(lambda c: c.update(professions=[])), 'professions'),
     ('a dropped glyph', tamper(lambda c: c['glyphs'].update(major=[])), 'glyphs'),
+    ('a quiver the server does not have', tamper(lambda c: c.update(quiver=True)), 'quiver'),
 ]
 
 
