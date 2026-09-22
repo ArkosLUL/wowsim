@@ -6,26 +6,31 @@ import (
 	"github.com/wowsims/wotlk/sim/core"
 )
 
+// SeedExplosionSpellID is Seed of Corruption's explosion, dealt under its own id rather than the
+// applier spell's (47836): spelldump.jsonl bonus.direct is 0.2129, not 47836's.
+const SeedExplosionSpellID = 47834
+
 func (warlock *Warlock) registerSeedSpell() {
 	actionID := core.ActionID{SpellID: 47836}
 
 	seedExplosion := warlock.RegisterSpell(core.SpellConfig{
-		ActionID:    actionID.WithTag(1), // actually 47834
+		ActionID:    core.ActionID{SpellID: SeedExplosionSpellID},
 		SpellSchool: core.SpellSchoolShadow,
 		ProcMask:    core.ProcMaskSpellDamage,
 		Flags:       core.SpellFlagHauntSE | core.SpellFlagNoLogs,
 
 		BonusCritRating: 0 +
 			float64(warlock.Talents.ImprovedCorruption)*core.CritRatingPerCritChance,
-		DamageMultiplierAdditive: 1 +
-			warlock.GrandFirestoneBonus() +
-			0.03*float64(warlock.Talents.ShadowMastery) +
+		DamageMultiplier: spellModDamage(
+			warlock.GrandFirestoneBonus(),
+			0.03*float64(warlock.Talents.ShadowMastery),
 			0.01*float64(warlock.Talents.Contagion),
+		),
 		CritMultiplier:   warlock.DefaultSpellCritMultiplier(),
 		ThreatMultiplier: 1 - 0.1*float64(warlock.Talents.ImprovedDrainSoul),
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDmg := (sim.Roll(1633, 1897) + 0.286*spell.SpellPower()) * sim.Encounter.AOECapMultiplier()
+			baseDmg := (sim.Roll(1633, 1897) + 0.2129*spell.SpellPower()) * sim.Encounter.AOECapMultiplier()
 			for _, aoeTarget := range sim.Encounter.TargetUnits {
 				spell.CalcAndDealDamage(sim, aoeTarget, baseDmg, spell.OutcomeMagicHitAndCrit)
 			}
@@ -59,11 +64,12 @@ func (warlock *Warlock) registerSeedSpell() {
 			},
 		},
 
-		DamageMultiplierAdditive: 1 +
-			warlock.GrandSpellstoneBonus() +
-			0.03*float64(warlock.Talents.ShadowMastery) +
-			0.01*float64(warlock.Talents.Contagion) +
+		DamageMultiplier: spellModDamage(
+			warlock.GrandSpellstoneBonus(),
+			0.03*float64(warlock.Talents.ShadowMastery),
+			0.01*float64(warlock.Talents.Contagion),
 			core.TernaryFloat64(warlock.Talents.SiphonLife, 0.05, 0),
+		),
 		ThreatMultiplier: 1 - 0.1*float64(warlock.Talents.ImprovedDrainSoul),
 
 		Dot: core.DotConfig{
@@ -91,6 +97,7 @@ func (warlock *Warlock) registerSeedSpell() {
 
 			NumberOfTicks: 6,
 			TickLength:    time.Second * 3,
+			TicksCanCrit:  false,
 
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
 				dot.SnapshotBaseDamage = 1518/6 + 0.25*dot.Spell.SpellPower()

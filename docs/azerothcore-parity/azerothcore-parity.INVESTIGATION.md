@@ -211,7 +211,8 @@ Roll details the tables above don't show:
   - ghoul: 70% Str / 30% Sta + owner melee haste (`spell_dk.cpp:792-845`)
   - gargoyle: 75% AP→SP
   - Feral Spirit: 30% AP (`spell_shaman.cpp:234-254`)
-  - warlock pets: 57% SP→AP, 15% SP (`spell_warlock.cpp:462-480`)
+  - warlock pets: 57% SP→AP, 15% SP, both floored to a whole point (`CalculatePct` on an `int32`,
+    `spell_warl_generic_scaling`/`spell_warl_infernal_scaling` in `spell_warlock.cpp:335-360,460-486`)
   - Shadowfiend: `spell_priest.cpp:102-137`
   - Treants: `spell_druid.cpp:380-419`
   - Water Elemental: `spell_mage.cpp:266-296`
@@ -244,8 +245,9 @@ Roll details the tables above don't show:
   it too, since Windfury Totem and Improved Icy Talons reach the wolves as party auras and are already in the
   shaman's melee haste.
 - A pet's melee crit is a flat 5% plus crit auras (`Unit::GetUnitCriticalChance`), nothing from agility,
-  and a creature's spell crit `m_baseSpellCritChance`, 5%. The DK's summons and the hunter pet follow it;
-  warlock pets, treants, spirit wolves and the infernal still take agility crit.
+  and a creature's spell crit `m_baseSpellCritChance`, 5%. The DK's summons, the hunter pet and now the
+  warlock's demons and infernal (PAR-P7-WLK) follow it; treants and spirit wolves still take agility crit
+  in the sim, pending their own class items.
 - DK summons (`Guardian::InitStatsForLevel`, `pet_dk.cpp`, `spell_dk.cpp`); core tells 67561 and risen
   ghouls apart by `Pet.HitScaling` and `Pet.RisenGhoul`, which the DK sets:
   - Risen ghoul (26125, pet or guardian): pet_levelstats' 4665 health (+10 a point of Sta over 361), 331
@@ -807,6 +809,125 @@ Roll details the tables above don't show:
   `remainingTicks` cases; the 5 misses trace to a chain broken by one of the unpaired applications, not a formula
   error. Confirms the code and delay stages' Ignite model live; no further fix needed.
 
+**Warlock** (`TestAffliction`, `TestDemonology`, `TestDestruction`, code)
+- Pet crit follows the generic fix (Pets, above): every demon and the infernal move from a
+  Classic-testing agility dependency (`AddStatDependency(Agility, MeleeCrit, ...)`, tuned so a
+  90-agility demon landed near 5%) to the server's flat 5% base, `MeleeCrit` and `SpellCrit` alike.
+  The imp's old `SpellCrit` had no agility term at all (only `MeleeCrit` did), pinning its Firebolt
+  crit near the old hardcoded 0.9075%; it's 5% now, most of Destruction's suite delta below. The
+  felguard and felhunter were already near 5% at base agility, but the old dependency also picked up
+  raid buffs that raise a pet's agility (Blessing of Kings and the like), which
+  `Unit::GetUnitCriticalChance` never reads for a non-player unit — that buffed-agility sliver is what
+  Affliction and Demonology lose.
+- Pet/infernal AP and spell power inheritance (57%/15% of the owner's spell power,
+  `spell_warl_generic_scaling`/`spell_warl_infernal_scaling::CalculateAPAmount`/`CalculateSPAmount`)
+  now floors to a whole point (`CalculatePct` on the server's `int32`, retail deviation #53), like the
+  pet hit/expertise floor already in `sim/core/pet.go` (#12). `Pet.HitScaling` needed no change: both
+  already default to `PetHitScalingDefault` (61017/61013), which PAR-P7-0b built generically.
+- Guardians taking raid buffs since PAR-P7-0d already covers the infernal: `applyPetBuffEffects` no
+  longer special-cases it, and the DK/hunter fixes needed no infernal-specific follow-up.
+- Haunt (59164) and Drain Soul (47855) are non-binary on the server (neither's entry in
+  `sim/core/serverdata/spells_auto_gen.go` carries `FlagBinary`), which P3-2's sync already applies since
+  neither declares `SpellFlagBinary`: confirmed from the generated table, nothing to fix.
+- The imp's Firebolt (47964) 1 s GCD is already live: `spells_audit.csv` shows `gcd_ms=1000`,
+  `haste_gcd=no` (fixed, not scaled), outside the server's exact [1000,1000] range for the spell, so
+  `applyServerData`'s `syncServerTiming` overrides the class code's 1500 ms declaration at runtime.
+  `serverdata_allowlist.go`'s entry just documents the conflict for `serverdata_test.go`.
+- **Fixed:** Corruption and Unstable Affliction's `CritMultiplier` hardcoded the full Pandemic bonus
+  (`SpellCritMultiplier(1, 1)`, doubling crit damage) regardless of the talent, unlike Haunt's own
+  `TernaryFloat64(Talents.Pandemic, 1, 0)` beside it. The live spelldump confirms Pandemic's aura-286
+  (`SPELL_AURA_ABILITY_PERIODIC_CRIT`) effect covers only Corruption's family flag (`classMask [2,0,0]`,
+  spell 58435) and Unstable Affliction's (`[0,256,0]`), not Curse of Agony's (`[0x400,0,0]`) or Drain
+  Soul's (`[0x4000,0,0]`); its crit-damage-bonus effect (aura 108) covers the same two plus Haunt's
+  flag (`[0,0x40000,0]`). Both spells now gate `CritMultiplier` on `Talents.Pandemic` like Haunt's.
+  `TicksCanCrit` is declared throughout: `canCrit` (Corruption, Unstable Affliction), unconditional
+  `true` (Immolate, Conflagrate's dot — no talent gates either), `false` elsewhere (Curse of Agony,
+  Curse of Doom, Seed, Drain Soul, the infernal's and Metamorphosis's AOE dots — none use a
+  crit-capable outcome function). `periodicCritsNeedDeclaration` is still off, so this changes nothing
+  yet; it's what P8's flip should read.
+- **Fixed:** every warlock spell's `DamageMultiplierAdditive` summed its talent, glyph and set-bonus
+  percentages (`1 + a + b + c + ...`), where the server applies each spell mod independently and
+  multiplies the results (`Player::ApplySpellMod`) — the bug the Retribution Paladin item already
+  found for seals and judgements. The fourteen files with more than one such term now build
+  `DamageMultiplier` through a shared `spellModDamage(bonuses...)` helper (`warlock.go`,
+  `(1+a)*(1+b)*...`); Immolate's and Conflagrate's DoT-only exclusions (no Firestone on the tick) now
+  multiply/divide `DamageMultiplier` by a periodic-only factor instead of adding/subtracting on
+  `DamageMultiplierAdditive`, same net effect. Positive percentages multiply to more than their sum,
+  so every affected spell hits harder; Destruction (many talented, glyphed, Firestone-imbued fire
+  spells) shows most of it.
+- **Fixed:** Seed of Corruption's explosion dealt damage under the applier spell's wrapper id
+  (`ActionID{SpellID: 47836}.WithTag(1)`, comment noting the real one), so the P3-2 serverdata lookup
+  never resolved it and the class code kept a hardcoded 0.286 coefficient (`Spell.dbc`'s own
+  `bonusMultiplier`, Classic's value). It now casts under its real id, `SeedExplosionSpellID = 47834`,
+  whose live `spell_bonus_data` is 0.2129 (retail deviation #52); `gen_serverdata` picked up the new
+  constant cleanly (10 lines: one `spells_auto_gen.go` row, one `bonus_auto_gen.go` row, nothing else
+  moved), listed in this wave's contract change requests for the merge-tree regeneration.
+- Curses' and Unstable Affliction's base damage and periodic coefficients already matched
+  `spell_bonus_data` exactly (Corruption, Immolate, Seed's dot, Unstable Affliction, Drain Soul, Curse
+  of Agony, Curse of Doom): confirmed against `bonus_auto_gen.go`, no change needed. Curse of Elements
+  and Curse of Weakness already call the shared, PAR-P7-0a-fixed `core.CurseOfElementsAura`/
+  `core.CurseOfWeaknessAura`.
+- `tools/acore/spellaudit -area warlock`, rerun into `tmp/audit/` (not committed): no missing or
+  unresolved warlock spell ids, no manual-row flags beyond the above.
+- Suites moved (`dock.sh delta`; pet-only share isolated by temporarily reverting `pet.go`/`inferno.go`
+  and re-running):
+  Affliction +1.235% to +2.171% (avg +1.406%; `AfflictionTalents` already talents Pandemic, so the
+  `CritMultiplier` gate is a no-op here — the whole move is the `DamageMultiplier` multiplicative fix,
+  trimmed ~0.15% by the pet crit/AP-SP-floor fixes on its Felhunter);
+  Demonology -0.92% to -0.03% (avg -0.64%), entirely from the Felguard pet fixes, since Demonology's build
+  carries none of the Affliction- or Destruction-tree talents any changed `DamageMultiplier` term reads;
+  Destruction +2.26% to +4.18% (avg +3.15%; isolating the pet fix alone accounts for +0.53% of it, the
+  imp's Firebolt crit jump, the rest the `DamageMultiplier` multiplicative fix across Conflagrate,
+  Incinerate, Shadow Bolt, Searing Pain, Soul Fire, Shadowburn and Chaos Bolt).
+- Recorded run (`TestRecordedRun`, `SIMVAL_RECORD_SPEC=affliction`, human warlock, 500 s at 20 yards,
+  `SIMVAL_RECORD_TALENT_SPELLS` set to `AfflictionTalents` decoded against `ui/core/talents/trees/warlock.json`
+  plus the Haunt/Unstable Affliction rank chains a talent point alone doesn't teach, Fel Armor pre-cast, a
+  fixed 1.5 s cycle of Corruption, Curse of Agony, Unstable Affliction, Haunt, Shadow Bolt, Life Tap): the
+  first attempt at 20 yards landed no Corruption, Curse of Agony, Unstable Affliction, Haunt or Shadow Bolt
+  cast in 500 s, only the self-targeted Life Tap and the pre-cast Fel Armor, because `standOff()`
+  (`mod-sim-validation/e2e/recorded_run_test.go`) backs the character away along the direction
+  `spawnInFront` faced it, which runs into a wall a few yards out in this room; `TestRecordedRunHunter`
+  already worked around the same wall by moving due north instead, so `standOff()` now does too. The
+  recapture (below) lands every ability.
+
+  | Run | Server DPS | Sim DPS | Gap |
+  |---|---|---|---|
+  | Affliction (`affliction_Svrleadektqu_1790097370`, boss-only, 495.3 s active of 500 s) | 4384.3 | 6766.5 | +54.3%, rotations (below) |
+
+  As with Ret, the fixed 1.5 s cycle has no APL equivalent (rrsim's `afflictionRotation` keeps every dot up
+  and casts Shadow Bolt otherwise), so total DPS compares rotations rather than formulas: Corruption needs
+  only its first cast all fight, since Everlasting Affliction (5/5 in this build) has a 100% chance to roll
+  it over on every landed Shadow Bolt or Haunt, so the priority list spends nearly every remaining GCD on
+  Shadow Bolt filler (202.8 casts an iteration against the capture's 55, one slot in its six). Per ability
+  (`rrsim -v`, `chronicle -v -source <player> -sim <dps> <log>`; server mean ± standard error, crit rate
+  over landed hits):
+
+  | Ability (server non-crits/crits) | Non-crit, server / sim | Crit, server / sim | Crit %, server / sim |
+  |---|---|---|---|
+  | Corruption (47813; 103/120) | 2974±38 / 2591 (-12.9%) | 6086±69 / 5416 (-11.0%) | 53.8±3.3 / 48.5 |
+  | Shadow Bolt (47809; 38/17) | 5972±99 / 5389 (-9.8%) | 12562±243 / 11271 (-10.3%) | 30.9±6.2 / 44.4 |
+  | Unstable Affliction (47843; 85/53) | 2182±31 / 2023 (-7.3%) | 4627±68 / 4229 (-8.6%) | 38.4±4.1 / 48.2 |
+  | Haunt (59164; 20/12) | 3126±60 / 2848 (-8.9%) | 6276±184 / 5950 (-5.2%) | 37.5±8.6 / 39.2 |
+  | Curse of Agony (47864; 222/0) | 568±12 / 978 (+72.2%) | – | 0.0±0.0 / 0.0 |
+
+  - Every non-crit and crit average but Curse of Agony's reads 5-13% low, on both hit types and across
+    four unrelated spells alike: the capture's trinket slot held item 49686 ("Maghia's Misguided Quill"),
+    1000 flat Spirit, 5-10x a real ilvl-277 piece's stat magnitude here (Dark Coven's pieces give 60-200,
+    `item_template`), and not in the sim's item database. `recordedEquipment` (`tools/simval/rrsim.go`) used
+    to fail the whole conversion on an unmatched item; it now leaves that slot empty with a warning, same as
+    an unmatched enchant, but the ~300 spell power that Spirit alone would add through Fel Armor's 0.3
+    Spirit→spell power dependency accounts for most of the shortfall. The item is likely a debug/placeholder
+    row the playerbot factory's `initself=epic` shouldn't have handed out; not something this item can fix.
+  - Curse of Agony reads 72% high because its ramp (`curses.go`'s `dot.TickCount%4==0` adding half its base
+    tick damage every 4th tick) needs about 24-28 s uninterrupted to reach its top tier. The priority list
+    only recasts it once `dotIsActive` clears, 20.4 casts an iteration, one every ~24.3 s, its own duration
+    with the glyph, so most casts ramp all the way; the capture's fixed lap recast it every ~8.8 s (56 real
+    casts) regardless of remaining duration, cutting most ramps off after two or three ticks.
+  - Every crit-capable ability's crit-to-non-crit ratio sits at 2.0-2.1x, matching Pandemic's crit-damage
+    bonus cleanly; crit% itself differs by more than a couple of points only for Shadow Bolt and Unstable
+    Affliction, both within about 2 standard errors of the capture's own small samples (55 and 138 landed
+    hits). No sim/warlock formula bug survives this comparison beyond what the code stage already fixed.
+
 **Items** (`docs/azerothcore-item-diff/data/summary.md`)
 - 1509 of 8043 sim items differ.
 - Classic raised Ulduar/emblem item levels, e.g. 226→232 on 329 items and 239→252 on 92.
@@ -863,14 +984,15 @@ values. Human warrior, level 80, maxed skills, Worn Shortsword (Sword Specializa
 - Recorded runs (`TestRecordedRun`, 5 minutes on the boss dummy inside Naxxramas, in playerbot-factory epic gear;
   captures in `sim/core/testdata/chronicle/`): a Protection paladin did 144.7 DPS over 295.7 s with swing intervals of
   1.5-1.6 s — 143.7 of it on the dummy, the rest Consecration splashing a nearby Maggot, so a sim comparison wants
-  `-target` — an Affliction warlock 236.0 DPS over 297.1 s with Corruption ticking at a median 2.36 s and Curse of Agony
-  at 2.03 s under haste. Glancing landed on 39 of 185 and 30 of 128 swings, both within a standard error and a half of
-  the white table's 2500 bp. Chronicle timestamps the packet send, so the 100 ms map-update lattice only shows through
-  a few ms of jitter — a tick or swing interval reads within about ±50 ms of the server's own.
-  Correction: both ran at ×0.3 damage. The factory's init resets mod-individual-progression, and below
+  `-target`. Glancing landed on 39 of 185 swings, within a standard error and a half of the white table's 2500 bp.
+  Chronicle timestamps the packet send, so the 100 ms map-update lattice only shows through a few ms of jitter — a tick
+  or swing interval reads within about ±50 ms of the server's own.
+  Correction: it ran at ×0.3 damage. The factory's init resets mod-individual-progression, and below
   `PROGRESSION_PRE_TBC` the live `VanillaPowerAdjustment` of 0.5 scales a level 80's damage by 1 − 0.5·70/50
   (`ComputeVanillaAdjustment`). `TestRecordedRun` doesn't undo it yet; `TestRecordedRunHunter` runs `.ip set <name> 18`
-  after gearing.
+  after gearing. The Affliction capture (`affliction_Svrleadoxfbj_1789926928`) had the same ×0.3 bug plus the
+  playerbot factory's own talents staying live under the learned ones; PAR-P7-WLK replaced it with a fresh capture
+  (Warlock findings, above).
 - Ret Paladin recorded run (`TestRecordedRun`, `SIMVAL_RECORD_SPEC=ret`, `SIMVAL_RECORD_TWOHAND=1`, 600 s): Divine
   Plea keeps every mana-cost spell casting to the end, Retribution Aura keeps Sanctified Retribution (63531) up,
   and the pre-fight `.simval info` matches rrsim's stats. Per-ability comparison in the Retribution Paladin
@@ -1008,6 +1130,8 @@ The fork copies the server. Patching any of these in [ac] means updating the mat
 | 49 | Explosive Trap damage (49065) | magic class: never misses, crits off spell crit for +50%, no ten-target cap (the trap's trigger creature casts it) | ranged hit and crit, +100%, capped | `GameObject::CastSpell`, `Spell::AddUnitTarget` |
 | 50 | Slam | can only miss: the cast (47475) is `NO_ACTIVE_DEFENSE`, its damage (50783) `ALWAYS_HIT` | one yellow roll: miss, dodge, parry, crit | `spell_warr_slam::HandleDummy`, `Spell.dbc` |
 | 51 | Two-Handed Weapon Specialization on seals and judgements | none: the aura is physical-only, and a holy weapon-percent spell's weapon damage skips the physical % mods | +2% a rank | `Spell::EffectWeaponDmg`, `Unit::MeleeDamageBonusDone` |
+| 52 | Seed of Corruption's explosion (47834) spell power coefficient | 0.2129 (`spell_bonus_data`) | 0.286 (`Spell.dbc`'s own `bonusMultiplier`, Classic's value) | `spell_bonus_data`, confirmed against the live `.simval spelldump` capture |
+| 53 | Warlock pet and infernal AP/spell power inheritance (57%/15% of the owner's spell power) | floored to a whole point | exact | `spell_warl_generic_scaling`/`spell_warl_infernal_scaling::CalculateAPAmount`/`CalculateSPAmount` |
 
 Not yet settled against retail, check before patching: the 200 ms other-hand push (`PlayerUpdates.cpp`), the DoT
 refresh tick-timer rule, the max(cast, 1500 ms) PPM basis for spell-triggered aura procs, the rule-based binary

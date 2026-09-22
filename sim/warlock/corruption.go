@@ -30,14 +30,15 @@ func (warlock *Warlock) registerCorruptionSpell() {
 		BonusCritRating: 0 +
 			3*float64(warlock.Talents.Malediction)*core.CritRatingPerCritChance +
 			core.TernaryFloat64(warlock.HasSetBonus(ItemSetDarkCovensRegalia, 2), 5*core.CritRatingPerCritChance, 0),
-		DamageMultiplierAdditive: 1 +
-			warlock.GrandSpellstoneBonus() +
-			0.03*float64(warlock.Talents.ShadowMastery) +
-			0.01*float64(warlock.Talents.Contagion) +
-			0.02*float64(warlock.Talents.ImprovedCorruption) +
-			core.TernaryFloat64(warlock.Talents.SiphonLife, 0.05, 0) +
+		DamageMultiplier: spellModDamage(
+			warlock.GrandSpellstoneBonus(),
+			0.03*float64(warlock.Talents.ShadowMastery),
+			0.01*float64(warlock.Talents.Contagion),
+			0.02*float64(warlock.Talents.ImprovedCorruption),
+			core.TernaryFloat64(warlock.Talents.SiphonLife, 0.05, 0),
 			core.TernaryFloat64(warlock.HasSetBonus(ItemSetGuldansRegalia, 4), 0.1, 0),
-		CritMultiplier:   warlock.SpellCritMultiplier(1, 1),
+		),
+		CritMultiplier:   warlock.SpellCritMultiplier(1, core.TernaryFloat64(warlock.Talents.Pandemic, 1, 0)),
 		ThreatMultiplier: 1 - 0.1*float64(warlock.Talents.ImprovedDrainSoul),
 
 		Dot: core.DotConfig{
@@ -47,6 +48,7 @@ func (warlock *Warlock) registerCorruptionSpell() {
 			NumberOfTicks:       6,
 			TickLength:          time.Second * 3,
 			AffectedByCastSpeed: warlock.HasMajorGlyph(proto.WarlockMajorGlyph_GlyphOfQuickDecay),
+			TicksCanCrit:        canCrit,
 
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
 				dot.SnapshotBaseDamage = 1080/6 + spellCoeff*dot.Spell.SpellPower()

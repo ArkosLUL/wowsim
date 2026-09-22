@@ -32,11 +32,12 @@ func (warlock *Warlock) registerIncinerateSpell() {
 			core.TernaryFloat64(warlock.Talents.Devastation, 5*core.CritRatingPerCritChance, 0) +
 			core.TernaryFloat64(warlock.HasSetBonus(ItemSetDeathbringerGarb, 4), 5*core.CritRatingPerCritChance, 0) +
 			core.TernaryFloat64(warlock.HasSetBonus(ItemSetDarkCovensRegalia, 2), 5*core.CritRatingPerCritChance, 0),
-		DamageMultiplierAdditive: 1 +
-			warlock.GrandFirestoneBonus() +
-			0.03*float64(warlock.Talents.Emberstorm) +
-			core.TernaryFloat64(warlock.HasMajorGlyph(proto.WarlockMajorGlyph_GlyphOfIncinerate), 0.05, 0) +
+		DamageMultiplier: spellModDamage(
+			warlock.GrandFirestoneBonus(),
+			0.03*float64(warlock.Talents.Emberstorm),
+			core.TernaryFloat64(warlock.HasMajorGlyph(proto.WarlockMajorGlyph_GlyphOfIncinerate), 0.05, 0),
 			core.TernaryFloat64(warlock.HasSetBonus(ItemSetMaleficRaiment, 4), 0.06, 0),
+		),
 		CritMultiplier:   warlock.SpellCritMultiplier(1, float64(warlock.Talents.Ruin)/5),
 		ThreatMultiplier: 1 - 0.1*float64(warlock.Talents.DestructiveReach),
 

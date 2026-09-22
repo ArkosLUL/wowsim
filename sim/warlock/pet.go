@@ -42,8 +42,8 @@ func (warlock *Warlock) NewWarlockPet() *WarlockPet {
 			stats.Intellect: 150,
 			stats.Spirit:    209,
 			stats.Mana:      1559,
-			stats.MeleeCrit: 3.2685 * core.CritRatingPerCritChance,
-			stats.SpellCrit: 3.3355 * core.CritRatingPerCritChance,
+			stats.MeleeCrit: 5 * core.CritRatingPerCritChance,
+			stats.SpellCrit: 5 * core.CritRatingPerCritChance,
 		}
 		cfg.AutoAttacks = core.AutoAttackOptions{
 			MainHand: core.Weapon{
@@ -65,8 +65,8 @@ func (warlock *Warlock) NewWarlockPet() *WarlockPet {
 			stats.Spirit:    367,
 			stats.Mana:      1174,
 			stats.MP5:       270, // rough guess, unclear if it's affected by other stats
-			stats.MeleeCrit: 3.454 * core.CritRatingPerCritChance,
-			stats.SpellCrit: 0.9075 * core.CritRatingPerCritChance,
+			stats.MeleeCrit: 5 * core.CritRatingPerCritChance,
+			stats.SpellCrit: 5 * core.CritRatingPerCritChance,
 		}
 	case proto.Warlock_Options_Succubus:
 		cfg.Name = "Succubus"
@@ -78,8 +78,8 @@ func (warlock *Warlock) NewWarlockPet() *WarlockPet {
 			stats.Intellect: 150,
 			stats.Spirit:    209,
 			stats.Mana:      1559,
-			stats.MeleeCrit: 3.2685 * core.CritRatingPerCritChance,
-			stats.SpellCrit: 3.3355 * core.CritRatingPerCritChance,
+			stats.MeleeCrit: 5 * core.CritRatingPerCritChance,
+			stats.SpellCrit: 5 * core.CritRatingPerCritChance,
 		}
 		cfg.AutoAttacks = core.AutoAttackOptions{
 			MainHand: core.Weapon{
@@ -100,8 +100,8 @@ func (warlock *Warlock) NewWarlockPet() *WarlockPet {
 			stats.Intellect: 150,
 			stats.Spirit:    209,
 			stats.Mana:      1559,
-			stats.MeleeCrit: 3.2685 * core.CritRatingPerCritChance,
-			stats.SpellCrit: 3.3355 * core.CritRatingPerCritChance,
+			stats.MeleeCrit: 5 * core.CritRatingPerCritChance,
+			stats.SpellCrit: 5 * core.CritRatingPerCritChance,
 		}
 		cfg.AutoAttacks = core.AutoAttackOptions{
 			MainHand: core.Weapon{
@@ -124,13 +124,6 @@ func (warlock *Warlock) NewWarlockPet() *WarlockPet {
 
 	wp.AddStatDependency(stats.Strength, stats.AttackPower, 2)
 	wp.AddStat(stats.AttackPower, -20)
-
-	if warlock.Options.Summon == proto.Warlock_Options_Imp {
-		// imp has a slightly different agi crit scaling coef for some reason
-		wp.AddStatDependency(stats.Agility, stats.MeleeCrit, core.CritRatingPerCritChance*1/51.0204)
-	} else {
-		wp.AddStatDependency(stats.Agility, stats.MeleeCrit, core.CritRatingPerCritChance*1/52.0833)
-	}
 
 	wp.AddStats(stats.Stats{
 		stats.MeleeCrit: float64(warlock.Talents.DemonicTactics) * 2 * core.CritRatingPerCritChance,
@@ -335,11 +328,13 @@ func (warlock *Warlock) makeStatInheritance() core.PetStatInheritance {
 
 		// TODO: Account for sunfire/soulfrost
 		return stats.Stats{
-			stats.Stamina:          ownerStats[stats.Stamina] * 0.75,
-			stats.Intellect:        ownerStats[stats.Intellect] * 0.3,
-			stats.Armor:            ownerStats[stats.Armor] * 0.35,
-			stats.AttackPower:      ownerStats[stats.SpellPower] * 0.57,
-			stats.SpellPower:       ownerStats[stats.SpellPower] * 0.15,
+			stats.Stamina:   ownerStats[stats.Stamina] * 0.75,
+			stats.Intellect: ownerStats[stats.Intellect] * 0.3,
+			stats.Armor:     ownerStats[stats.Armor] * 0.35,
+			// spell_warl_generic_scaling::CalculateAPAmount/CalculateSPAmount compute these as
+			// server-side int32 percentages of the owner's spell power (CalculatePct), so they floor.
+			stats.AttackPower:      math.Floor(ownerStats[stats.SpellPower] * 0.57),
+			stats.SpellPower:       math.Floor(ownerStats[stats.SpellPower] * 0.15),
 			stats.SpellPenetration: ownerStats[stats.SpellPenetration],
 			stats.SpellCrit:        improvedDemonicTactics * 0.1 * ownerStats[stats.SpellCrit],
 			stats.MeleeCrit:        improvedDemonicTactics * 0.1 * ownerStats[stats.SpellCrit],

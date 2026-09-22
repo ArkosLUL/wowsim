@@ -29,6 +29,7 @@ const (
 	simDBJSON      = "assets/database/db.json"
 	serverPaladin  = 2
 	serverHunter   = 3
+	serverWarlock  = 9
 
 	// the top ranks, as a level 80 casts them
 	retributionAuraSpell = 54043
@@ -303,6 +304,81 @@ const retRotation = `{"type":"TypeAPL","priorityList":[
  {"action":{"condition":{"cmp":{"op":"OpGt","lhs":{"remainingTime":{}},"rhs":{"const":{"val":"4s"}}}},"castSpell":{"spellId":{"spellId":48819}}}}
 ]}`
 
+// afflictionRotation keeps Corruption, Curse of Agony, Unstable Affliction and Haunt up on the target,
+// Life Tap under 60% mana, else Shadow Bolt: the priorities behind the recorded cycle
+// (SIMVAL_RECORD_SPELLS), not its fixed 1.5 s round-robin, so it casts on cooldown instead of once a
+// lap.
+const afflictionRotation = `{"type":"TypeAPL","priorityList":[
+ {"action":{"condition":{"not":{"val":{"dotIsActive":{"spellId":{"spellId":47813}}}}},"castSpell":{"spellId":{"spellId":47813}}}},
+ {"action":{"condition":{"not":{"val":{"dotIsActive":{"spellId":{"spellId":47864}}}}},"castSpell":{"spellId":{"spellId":47864}}}},
+ {"action":{"condition":{"not":{"val":{"dotIsActive":{"spellId":{"spellId":47843}}}}},"castSpell":{"spellId":{"spellId":47843}}}},
+ {"action":{"condition":{"not":{"val":{"auraIsActive":{"sourceUnit":{"type":"CurrentTarget"},"auraId":{"spellId":59164}}}}},"castSpell":{"spellId":{"spellId":59164}}}},
+ {"action":{"condition":{"cmp":{"op":"OpLt","lhs":{"currentManaPercent":{}},"rhs":{"const":{"val":"60%"}}}},"castSpell":{"spellId":{"spellId":57946}}}},
+ {"action":{"castSpell":{"spellId":{"spellId":47809}}}}
+]}`
+
+// recordedWarlock builds the sim player for an Affliction Warlock's recorded run, on afflictionRotation.
+// TestRecordedRun casts no cheat power, so this spends real mana too.
+func recordedWarlock(setup *recordedSetup, data *rrsimData) (*proto.Player, []string, error) {
+	if setup.Class != serverWarlock {
+		return nil, nil, fmt.Errorf("class %d: only warlock runs have a rotation here", setup.Class)
+	}
+	race, ok := races[uint8(setup.Race)]
+	if !ok {
+		return nil, nil, fmt.Errorf("no sim race for server race %d", setup.Race)
+	}
+	var warnings []string
+
+	talents, _, unmatched := azerothcore.BuildTalentString(setup.Talents, setup.Class, data.dbc, data.trees)
+	for _, spell := range unmatched {
+		warnings = append(warnings, fmt.Sprintf("talent spell %d isn't in the sim's talent trees", spell))
+	}
+
+	equipment, enchantStats, itemWarnings, err := recordedEquipment(setup.Items, data)
+	if err != nil {
+		return nil, nil, err
+	}
+	warnings = append(warnings, itemWarnings...)
+
+	major, minor, unknown := azerothcore.SplitGlyphs(setup.Glyphs, data.dbc)
+	for _, glyph := range unknown {
+		warnings = append(warnings, fmt.Sprintf("glyph %d isn't in GlyphProperties.dbc", glyph))
+	}
+	glyphs := &proto.Glyphs{}
+	for i, slot := range []*int32{&glyphs.Major1, &glyphs.Major2, &glyphs.Major3} {
+		if i < len(major) {
+			*slot = data.glyphItem(major[i], &warnings)
+		}
+	}
+	for i, slot := range []*int32{&glyphs.Minor1, &glyphs.Minor2, &glyphs.Minor3} {
+		if i < len(minor) {
+			*slot = data.glyphItem(minor[i], &warnings)
+		}
+	}
+
+	rotation := &proto.APLRotation{}
+	if err := protojson.Unmarshal([]byte(afflictionRotation), rotation); err != nil {
+		return nil, nil, err
+	}
+
+	return &proto.Player{
+		Name:          setup.Player,
+		Race:          race,
+		Class:         proto.Class_ClassWarlock,
+		Equipment:     equipment,
+		TalentsString: talents,
+		Glyphs:        glyphs,
+		Spec: &proto.Player_Warlock{Warlock: &proto.Warlock{
+			Options: &proto.Warlock_Options{Armor: proto.Warlock_Options_FelArmor},
+		}},
+		Rotation:           rotation,
+		DistanceFromTarget: setup.Yards,
+		Consumes:           &proto.Consumes{},
+		Buffs:              &proto.IndividualBuffs{},
+		BonusStats:         &proto.UnitStats{Stats: enchantStats.ToFloatArray()},
+	}, warnings, nil
+}
+
 // rrsimData is what the conversion reads besides the setup: the live DBCs and the sim's own files.
 type rrsimData struct {
 	root       string
@@ -519,7 +595,9 @@ func (data *rrsimData) glyphItem(spell int32, warnings *[]string) int32 {
 
 // recordedEquipment builds the gear, plus the stats of any enchant the sim's item database lacks,
 // read off the live DBC: the playerbot factory hands out some the sim has never heard of (3776, +45
-// attack power and +15 crit rating on shoulders), which it would otherwise drop without a word.
+// attack power and +15 crit rating on shoulders), which it would otherwise drop without a word. An
+// item the database lacks entirely leaves its slot empty, with a warning, rather than failing the
+// whole conversion.
 func recordedEquipment(items map[int32]setupItem, data *rrsimData) (*proto.EquipmentSpec, stats.Stats, []string, error) {
 	equipment := &proto.EquipmentSpec{Items: make([]*proto.ItemSpec, len(proto.ItemSlot_name))}
 	for i := range equipment.Items {
@@ -534,7 +612,8 @@ func recordedEquipment(items map[int32]setupItem, data *rrsimData) (*proto.Equip
 		}
 		simItem, ok := core.LookupItem(item.ID)
 		if !ok {
-			return nil, stats.Stats{}, nil, fmt.Errorf("slot %d: item %d isn't in the sim's item database", acSlot, item.ID)
+			warnings = append(warnings, fmt.Sprintf("slot %d: item %d isn't in the sim's item database, left empty", acSlot, item.ID))
+			continue
 		}
 		built, itemWarnings := azerothcore.BuildRosterItem(azerothcore.EquippedItem{
 			ACSlot: acSlot, ItemID: item.ID, Enchantments: item.Enchantments,
@@ -714,7 +793,7 @@ func runRecordedSim(args []string) int {
 	verbose := flags.Bool("v", false, "also print the final stats, the talents, an ability breakdown and per-outcome averages")
 	flags.Usage = func() {
 		fmt.Fprintf(flags.Output(), "usage: simval rrsim [flags] <setup file>\n\n"+
-			"Sims a recorded hunter or Retribution Paladin run from its .setup.txt, for `simval chronicle\n"+
+			"Sims a recorded hunter, Retribution Paladin or Affliction Warlock run from its .setup.txt, for `simval chronicle\n"+
 			"-sim`. Captured runs live in %s. Run from the repo root, built with --tags=with_db.\n\n", chronicleDir)
 		flags.PrintDefaults()
 	}
@@ -750,6 +829,8 @@ func runRecordedSim(args []string) int {
 	switch setup.Class {
 	case serverPaladin:
 		player, warnings, err = recordedPaladin(setup, data)
+	case serverWarlock:
+		player, warnings, err = recordedWarlock(setup, data)
 	default:
 		player, warnings, err = recordedHunter(setup, data, opts.NoTracking)
 	}
@@ -801,8 +882,11 @@ func reportRecordedSim(out io.Writer, setup *recordedSetup, request *proto.RaidS
 	hunter := player.GetHunter()
 	label := "paladin"
 	var petType any
-	if hunter != nil {
+	switch {
+	case hunter != nil:
 		label, petType = "hunter", hunter.Options.PetType
+	case player.GetWarlock() != nil:
+		label = "warlock"
 	}
 	fmt.Fprintf(out, "%s, %s %s: talents %s", setup.Player, azerothcore.RaceNames[setup.Race], label, player.TalentsString)
 	if hunter != nil {

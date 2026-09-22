@@ -83,14 +83,16 @@ Sims a recorded run from its `.setup.txt`: gear, talents and glyphs as recorded,
 pet for a hunter (`TestRecordedRunHunter`'s rotation). A Retribution Paladin (`TestRecordedRun`,
 `SIMVAL_RECORD_TALENT_SPELLS` set) runs `ui/retribution_paladin/apls/default.apl.json`'s priority list
 cut to what the recorded cycle casts (Divine Plea, Judgement of Wisdom, Crusader Strike, Divine Storm,
-Consecration; no Avenging Wrath), on its own mana, with the aura its `started:` spells name (none by
-default), swinging from the dummy's front as the run does. It prints the DPS, pet included, to pass to
+Consecration; no Avenging Wrath), with the aura its `started:` spells name (none by default), swinging
+from the dummy's front as the run does. An Affliction Warlock (same env vars, `SIMVAL_RECORD_CLASS=warlock`)
+runs a priority list keeping Corruption, Curse of Agony, Unstable Affliction and Haunt up, Life Tap under
+60% mana, else Shadow Bolt; no pet. Both spend their own mana. It prints the DPS, pet included, to pass to
 `chronicle -sim`. Needs `--tags=with_db` and the live DBCs. Other classes have no rotation here.
 
-The Ret capture's fixed 1.5 s round-robin (a refused spell waits for its next turn) has no APL
-equivalent, so the priority list casts more often and its DPS compares rotations, not formulas. Compare
-per ability instead: `-v` here and on `chronicle` prints each ability's non-crit, crit and glance
-averages and its crit rate over landed hits, each ± one standard error.
+Both fixed-cycle captures (Ret, Affliction) have no APL equivalent for their 1.5 s round-robin (a refused
+spell waits for its next turn), so the priority list casts more often and DPS compares rotations, not
+formulas. Compare per ability instead: `-v` here and on `chronicle` prints each ability's non-crit, crit
+and glance averages and its crit rate over landed hits, each ± one standard error.
 
 | Flag | Default |
 |---|---|

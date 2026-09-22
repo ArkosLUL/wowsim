@@ -30,13 +30,14 @@ func (warlock *Warlock) registerUnstableAfflictionSpell() {
 
 		BonusCritRating: 0 +
 			3*core.CritRatingPerCritChance*float64(warlock.Talents.Malediction),
-		DamageMultiplierAdditive: 1 +
-			warlock.GrandSpellstoneBonus() +
-			0.03*float64(warlock.Talents.ShadowMastery) +
-			core.TernaryFloat64(warlock.Talents.SiphonLife, 0.05, 0) +
-			core.TernaryFloat64(warlock.HasSetBonus(ItemSetDeathbringerGarb, 2), 0.2, 0) +
+		DamageMultiplier: spellModDamage(
+			warlock.GrandSpellstoneBonus(),
+			0.03*float64(warlock.Talents.ShadowMastery),
+			core.TernaryFloat64(warlock.Talents.SiphonLife, 0.05, 0),
+			core.TernaryFloat64(warlock.HasSetBonus(ItemSetDeathbringerGarb, 2), 0.2, 0),
 			core.TernaryFloat64(warlock.HasSetBonus(ItemSetGuldansRegalia, 4), 0.1, 0),
-		CritMultiplier:   warlock.SpellCritMultiplier(1, 1),
+		),
+		CritMultiplier:   warlock.SpellCritMultiplier(1, core.TernaryFloat64(warlock.Talents.Pandemic, 1, 0)),
 		ThreatMultiplier: 1 - 0.1*float64(warlock.Talents.ImprovedDrainSoul),
 
 		Dot: core.DotConfig{
@@ -45,6 +46,7 @@ func (warlock *Warlock) registerUnstableAfflictionSpell() {
 			},
 			NumberOfTicks: 5,
 			TickLength:    time.Second * 3,
+			TicksCanCrit:  canCrit,
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
 				dot.SnapshotBaseDamage = 230 + spellCoeff*dot.Spell.SpellPower()
 				attackTable := dot.Spell.Unit.AttackTables[target.UnitIndex]

@@ -40,11 +40,12 @@ func (warlock *Warlock) registerShadowBoltSpell() {
 			core.TernaryFloat64(warlock.Talents.Devastation, 5*core.CritRatingPerCritChance, 0) +
 			core.TernaryFloat64(warlock.HasSetBonus(ItemSetDeathbringerGarb, 4), 5*core.CritRatingPerCritChance, 0) +
 			core.TernaryFloat64(warlock.HasSetBonus(ItemSetDarkCovensRegalia, 2), 5*core.CritRatingPerCritChance, 0),
-		DamageMultiplierAdditive: 1 +
-			warlock.GrandFirestoneBonus() +
-			0.03*float64(warlock.Talents.ShadowMastery) +
-			0.02*float64(warlock.Talents.ImprovedShadowBolt) +
+		DamageMultiplier: spellModDamage(
+			warlock.GrandFirestoneBonus(),
+			0.03*float64(warlock.Talents.ShadowMastery),
+			0.02*float64(warlock.Talents.ImprovedShadowBolt),
 			core.TernaryFloat64(warlock.HasSetBonus(ItemSetMaleficRaiment, 4), 0.06, 0),
+		),
 		CritMultiplier:   warlock.SpellCritMultiplier(1, float64(warlock.Talents.Ruin)/5),
 		ThreatMultiplier: 1 - 0.1*float64(warlock.Talents.DestructiveReach),
 
