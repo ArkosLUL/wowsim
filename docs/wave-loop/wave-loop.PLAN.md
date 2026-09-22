@@ -53,7 +53,7 @@ G = changes goldens. FS = runs all 37 suites.
 | H2 | PAR-P7-0d (G, FS) | ✔ |
 | H | PAR-P7-ROG · PAR-P7-WAR · PAR-P7-RET (G) · BIS-raid-contrib | ✔ |
 | H3 | PAR-P7-0e (G, FS) · PAR-P7-RET-RR · BIS-alt5 | ✔ |
-| I | PAR-P7-SHA · PAR-P7-DRU · PAR-P7-MAG · PAR-P7-WLK (G) | ✔ |
+| I | PAR-P7-MAG (G, FS) · PAR-P7-SHA · PAR-P7-DRU · PAR-P7-WLK (G) | ✔ |
 | J | PAR-P7-PRI (G) · PAR-P7-TANK (G) · BIS-e2e-perf · AC-3 | ✔ |
 | K | BIS-presets · PAR-P8 (G, FS) · BIS-tank-boss | ✔ |
 
@@ -68,6 +68,9 @@ wave I, and H is full. The user ran it before H, so H's melee items build on its
 user's call too (2026-09-22): wave I's Mage item needs PAR-P7-0e's delay helper for Ignite. PAR-P7-RET-RR
 rides along, as it only needs the live server. BIS-alt5 joined mid-wave, also the user's call.
 
+In I, PAR-P7-MAG also fixes the delay helper's timing gap (the user's call) and tick-rounds the APL's
+`spell.cast_time`, both in core, so it runs all 37 suites and merges first.
+
 **Where the specs are:**
 
 | WI prefix | Spec |
@@ -79,10 +82,9 @@ rides along, as it only needs the live server. BIS-alt5 joined mid-wave, also th
 
 ## Current wave
 
-- Wave: I, not started. Wave H3 (base `078ed402b`) landed on `master`.
-- Base SHA: set at wave start.
-- Workflow runId: none. Wave H3 ran as `wf_ff31a9cb-dfe`, `wf_50d769ad-706` (BIS-alt5) and `wf_769ddd4d-534`
-  (PAR-P7-RET-RR's repair round).
+- Wave: I, running.
+- Base SHA: the wave's setup commit on top of `c5bdb12b7`.
+- Workflow runId: not yet started.
 
 ## BiS baseline
 
@@ -202,11 +204,14 @@ crashed before F2, so its column starts there.
 | PAR-P7-RET | merged | `74a9a8c60` | 2 paladin goldens promoted in `be8b078a0`; e2e and the recorded run's talent and tier steps `da7028e`; its two deviation rows were module behaviour, dropped by the cross-review |
 | BIS-raid-contrib | merged | `f6da0097a` | goldens unchanged |
 | wave H cross-review | | `2ae1e1906` | 5 bugs: Slam's split left Recklessness and the T8 2pc on the cast, Deadly Poison kept its first haste, Exorcism was limited to undead and demons, the Ret capture's talent reset failed; Assassination +2.2% (goldens `6ca712f26`); module `39e086e`; spell audit refreshed in `ba4252567` |
-
 | PAR-P7-0e | merged | `c056bfd24` | 6 goldens promoted in `051d8e6b9` |
 | PAR-P7-RET-RR | merged | `30caa2716` | 2 paladin goldens promoted in `3390bacf0`; e2e `f4060b1`; a repair round redid the first run's per-ability table, which compared melee with glances on one side only and mixed crit rate into hit size |
 | BIS-alt5 | merged | `826e952c4` | goldens unchanged; its reviewer fixed a pick lost on a tight budget |
 | wave H3 cross-review | | `d2bf9e5e9`, `050ec2fac` | 1 bug: a delayed refresh landed after a same-tick swing or dot tick, paying the tick twice (Fury -1.5%, Arms -1.3%, Ret -0.8%); retail deviations for munching and spell mods dropped or moved to unsettled; module `1bd7607` |
+| PAR-P7-MAG | running | | stages: code, cast-time, delay, live |
+| PAR-P7-SHA | running | | stages: shared-enh, elemental, live |
+| PAR-P7-DRU | running | | stages: balance, feral, live |
+| PAR-P7-WLK | running | | stages: code, recorded-run |
 
 Later WIs are added as their wave starts.
 
