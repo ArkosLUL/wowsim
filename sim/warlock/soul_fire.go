@@ -28,9 +28,10 @@ func (warlock *Warlock) registerSoulFireSpell() {
 		BonusCritRating: 0 +
 			core.TernaryFloat64(warlock.Talents.Devastation, 5*core.CritRatingPerCritChance, 0) +
 			core.TernaryFloat64(warlock.HasSetBonus(ItemSetDarkCovensRegalia, 2), 5*core.CritRatingPerCritChance, 0),
-		DamageMultiplierAdditive: 1 +
-			warlock.GrandFirestoneBonus() +
+		DamageMultiplier: spellModDamage(
+			warlock.GrandFirestoneBonus(),
 			0.03*float64(warlock.Talents.Emberstorm),
+		),
 		CritMultiplier:   warlock.SpellCritMultiplier(1, float64(warlock.Talents.Ruin)/5),
 		ThreatMultiplier: 1 - 0.1*float64(warlock.Talents.DestructiveReach),
 

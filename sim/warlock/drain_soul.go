@@ -51,10 +51,10 @@ func (warlock *Warlock) registerDrainSoulSpell() {
 			},
 		},
 
-		DamageMultiplierAdditive: 1 +
-			warlock.GrandSpellstoneBonus() +
+		DamageMultiplier: spellModDamage(
+			warlock.GrandSpellstoneBonus(),
 			0.03*float64(warlock.Talents.ShadowMastery),
-		DamageMultiplier: 1,
+		),
 		ThreatMultiplier: 1 - 0.1*float64(warlock.Talents.ImprovedDrainSoul),
 
 		Dot: core.DotConfig{
@@ -64,6 +64,8 @@ func (warlock *Warlock) registerDrainSoulSpell() {
 			NumberOfTicks:       5,
 			TickLength:          3 * time.Second,
 			AffectedByCastSpeed: true,
+			// Pandemic's periodic-crit aura (58435) covers only Corruption and Unstable Affliction.
+			TicksCanCrit: false,
 
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
 				baseDmg := 142 + 0.429*dot.Spell.SpellPower()
@@ -101,7 +103,9 @@ func (warlock *Warlock) registerDrainSoulSpell() {
 		sim.RegisterExecutePhaseCallback(func(sim *core.Simulation, isExecute int32) {
 			if isExecute == 25 {
 				mult := (4.0 + 0.04*float64(warlock.Talents.DeathsEmbrace)) / (1 + 0.04*float64(warlock.Talents.DeathsEmbrace))
-				warlock.DrainSoul.DamageMultiplier = mult
+				// DamageMultiplier now carries the Spellstone/Shadow Mastery bonus (spellModDamage
+				// above); overwrite the other factor instead, so it doesn't get lost below 25% health.
+				warlock.DrainSoul.DamageMultiplierAdditive = mult
 			}
 		})
 	})

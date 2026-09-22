@@ -51,9 +51,10 @@ func (warlock *Warlock) registerHauntSpell() {
 			},
 		},
 
-		DamageMultiplierAdditive: 1 +
-			warlock.GrandFirestoneBonus() +
+		DamageMultiplier: spellModDamage(
+			warlock.GrandFirestoneBonus(),
 			0.03*float64(warlock.Talents.ShadowMastery),
+		),
 		CritMultiplier:   warlock.SpellCritMultiplier(1, core.TernaryFloat64(warlock.Talents.Pandemic, 1, 0)),
 		ThreatMultiplier: 1 - 0.1*float64(warlock.Talents.ImprovedDrainSoul),
 

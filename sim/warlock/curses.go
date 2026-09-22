@@ -137,10 +137,11 @@ func (warlock *Warlock) registerCurseOfAgonySpell() {
 			},
 		},
 
-		DamageMultiplierAdditive: 1 +
-			0.03*float64(warlock.Talents.ShadowMastery) +
-			0.01*float64(warlock.Talents.Contagion) +
+		DamageMultiplier: spellModDamage(
+			0.03*float64(warlock.Talents.ShadowMastery),
+			0.01*float64(warlock.Talents.Contagion),
 			0.05*float64(warlock.Talents.ImprovedCurseOfAgony),
+		),
 		ThreatMultiplier: 1 - 0.1*float64(warlock.Talents.ImprovedDrainSoul),
 		FlatThreatBonus:  0,
 
@@ -150,6 +151,7 @@ func (warlock *Warlock) registerCurseOfAgonySpell() {
 			},
 			NumberOfTicks: numberOfTicks,
 			TickLength:    time.Second * 2,
+			TicksCanCrit:  false,
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
 				dot.SnapshotBaseDamage = 0.5*baseTickDmg + 0.1*dot.Spell.SpellPower()
 				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(dot.Spell.Unit.AttackTables[target.UnitIndex])
@@ -205,6 +207,7 @@ func (warlock *Warlock) registerCurseOfDoomSpell() {
 			},
 			NumberOfTicks: 1,
 			TickLength:    time.Minute,
+			TicksCanCrit:  false,
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
 				dot.SnapshotBaseDamage = 7300 + 2*dot.Spell.SpellPower()
 				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(dot.Spell.Unit.AttackTables[target.UnitIndex])

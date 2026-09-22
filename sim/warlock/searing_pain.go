@@ -27,9 +27,10 @@ func (warlock *Warlock) registerSearingPainSpell() {
 		BonusCritRating: 0 +
 			core.TernaryFloat64(warlock.Talents.Devastation, 5*core.CritRatingPerCritChance, 0) +
 			[]float64{0, .04, .07, .10}[warlock.Talents.ImprovedSearingPain]*core.CritRatingPerCritChance,
-		DamageMultiplierAdditive: 1 +
-			warlock.GrandFirestoneBonus() +
+		DamageMultiplier: spellModDamage(
+			warlock.GrandFirestoneBonus(),
 			0.03*float64(warlock.Talents.Emberstorm),
+		),
 		// TODO: is that actually how the searing pain glyph works?
 		CritMultiplier: warlock.SpellCritMultiplier(1, float64(warlock.Talents.Ruin)/5+
 			core.TernaryFloat64(warlock.HasMajorGlyph(proto.WarlockMajorGlyph_GlyphOfSearingPain), 0.2, 0)),

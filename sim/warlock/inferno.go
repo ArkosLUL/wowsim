@@ -70,11 +70,12 @@ func (warlock *Warlock) NewInfernal() *InfernalPet {
 
 		// TODO: account for fire spell damage
 		return stats.Stats{
-			stats.Stamina:          ownerStats[stats.Stamina] * 0.75,
-			stats.Intellect:        ownerStats[stats.Intellect] * 0.3,
-			stats.Armor:            ownerStats[stats.Armor] * 0.35,
-			stats.AttackPower:      ownerStats[stats.SpellPower] * 0.57,
-			stats.SpellPower:       ownerStats[stats.SpellPower] * 0.15,
+			stats.Stamina:   ownerStats[stats.Stamina] * 0.75,
+			stats.Intellect: ownerStats[stats.Intellect] * 0.3,
+			stats.Armor:     ownerStats[stats.Armor] * 0.35,
+			// spell_warl_infernal_scaling::CalculateAPAmount/CalculateSPAmount floor these server-side.
+			stats.AttackPower:      math.Floor(ownerStats[stats.SpellPower] * 0.57),
+			stats.SpellPower:       math.Floor(ownerStats[stats.SpellPower] * 0.15),
 			stats.SpellPenetration: ownerStats[stats.SpellPenetration],
 			stats.MeleeHit:         ownerHitChance * core.MeleeHitRatingPerHitChance,
 			stats.SpellHit:         ownerHitChance * core.SpellHitRatingPerHitChance,
@@ -91,17 +92,13 @@ func (warlock *Warlock) NewInfernal() *InfernalPet {
 			stats.Intellect: 65,
 			stats.Spirit:    109,
 			stats.Mana:      0,
-			stats.MeleeCrit: 3.192 * core.CritRatingPerCritChance,
+			stats.MeleeCrit: 5 * core.CritRatingPerCritChance,
 		}, statInheritance, false, false),
 		owner: warlock,
 	}
 
 	infernal.AddStatDependency(stats.Strength, stats.AttackPower, 2)
 	infernal.AddStat(stats.AttackPower, -20)
-
-	// infernal is classified as a warrior class, so we assume it gets the
-	// same agi crit coefficient
-	infernal.AddStatDependency(stats.Agility, stats.MeleeCrit, core.CritRatingPerCritChance*1/62.5)
 
 	// command doesn't apply to infernal
 	if warlock.RacialTraits == proto.Race_RaceOrc {
@@ -151,6 +148,7 @@ func (infernal *InfernalPet) Initialize() {
 			NumberOfTicks:       31,
 			TickLength:          time.Second * 2,
 			AffectedByCastSpeed: false,
+			TicksCanCrit:        false,
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 				// TODO: use highest SP amount of all schools
 				// base formula is 25 + (lvl-50)*0.5 * Warlock_SP*0.2

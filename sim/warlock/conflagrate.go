@@ -13,6 +13,8 @@ func (warlock *Warlock) registerConflagrateSpell() {
 	}
 
 	hasGlyphOfConflag := warlock.HasMajorGlyph(proto.WarlockMajorGlyph_GlyphOfConflagrate)
+	// The DoT doesn't benefit from Firestone.
+	dotOnlyMultiplier := 1 / spellModDamage(warlock.GrandFirestoneBonus())
 	warlock.Conflagrate = warlock.RegisterSpell(core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: 17962},
 		SpellSchool: core.SpellSchoolFire,
@@ -39,14 +41,15 @@ func (warlock *Warlock) registerConflagrateSpell() {
 		BonusCritRating: 0 +
 			core.TernaryFloat64(warlock.Talents.Devastation, 5*core.CritRatingPerCritChance, 0) +
 			5*float64(warlock.Talents.FireAndBrimstone)*core.CritRatingPerCritChance,
-		DamageMultiplierAdditive: 1 +
-			warlock.GrandFirestoneBonus() +
-			0.03*float64(warlock.Talents.Emberstorm) +
-			0.03*float64(warlock.Talents.Aftermath) +
-			0.1*float64(warlock.Talents.ImprovedImmolate) +
-			core.TernaryFloat64(warlock.HasMajorGlyph(proto.WarlockMajorGlyph_GlyphOfImmolate), 0.1, 0) +
-			core.TernaryFloat64(warlock.HasSetBonus(ItemSetDeathbringerGarb, 2), 0.1, 0) +
+		DamageMultiplier: spellModDamage(
+			warlock.GrandFirestoneBonus(),
+			0.03*float64(warlock.Talents.Emberstorm),
+			0.03*float64(warlock.Talents.Aftermath),
+			0.1*float64(warlock.Talents.ImprovedImmolate),
+			core.TernaryFloat64(warlock.HasMajorGlyph(proto.WarlockMajorGlyph_GlyphOfImmolate), 0.1, 0),
+			core.TernaryFloat64(warlock.HasSetBonus(ItemSetDeathbringerGarb, 2), 0.1, 0),
 			core.TernaryFloat64(warlock.HasSetBonus(ItemSetGuldansRegalia, 4), 0.1, 0),
+		),
 		CritMultiplier:   warlock.SpellCritMultiplier(1, float64(warlock.Talents.Ruin)/5),
 		ThreatMultiplier: 1 - 0.1*float64(warlock.Talents.DestructiveReach),
 
@@ -56,16 +59,17 @@ func (warlock *Warlock) registerConflagrateSpell() {
 			},
 			NumberOfTicks: 3,
 			TickLength:    time.Second * 2,
+			TicksCanCrit:  true,
 
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
 				dot.SnapshotBaseDamage = (314.0 / 3) + (0.4/3)*dot.Spell.SpellPower()
 				attackTable := dot.Spell.Unit.AttackTables[target.UnitIndex]
 				dot.SnapshotCritChance = dot.Spell.SpellCritChance(target)
 
-				// DoT does not benefit from firestone and also not from spellstone
-				dot.Spell.DamageMultiplierAdditive -= warlock.GrandFirestoneBonus()
+				// The DoT doesn't benefit from Firestone.
+				dot.Spell.DamageMultiplier *= dotOnlyMultiplier
 				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(attackTable)
-				dot.Spell.DamageMultiplierAdditive += warlock.GrandFirestoneBonus()
+				dot.Spell.DamageMultiplier /= dotOnlyMultiplier
 			},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 				dot.CalcAndDealPeriodicSnapshotDamage(sim, target, dot.OutcomeSnapshotCrit)

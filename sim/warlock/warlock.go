@@ -89,6 +89,16 @@ func (warlock *Warlock) GrandFirestoneBonus() float64 {
 	return core.TernaryFloat64(warlock.Options.WeaponImbue == proto.Warlock_Options_GrandFirestone, 0.01, 0)
 }
 
+// Each percent damage bonus (talent, glyph or set bonus) is its own spell mod, and spell mods from
+// different sources multiply (Player::ApplySpellMod) rather than add.
+func spellModDamage(bonuses ...float64) float64 {
+	multiplier := 1.0
+	for _, bonus := range bonuses {
+		multiplier *= 1 + bonus
+	}
+	return multiplier
+}
+
 func (warlock *Warlock) Initialize() {
 	warlock.registerIncinerateSpell()
 	warlock.registerShadowBoltSpell()

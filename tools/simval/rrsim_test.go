@@ -47,6 +47,27 @@ func TestParseSetup(t *testing.T) {
 	}
 }
 
+func TestParseSetupWarlock(t *testing.T) {
+	setup := captureSetup(t, "affliction_Svrleadektqu_1790097370")
+
+	if setup.Player != "Svrleadektqu" || setup.Class != 9 || setup.Race != 1 || setup.Seconds != 500 || setup.Yards != 20 {
+		t.Errorf("header = %q class %d race %d, %v s at %v yd", setup.Player, setup.Class, setup.Race, setup.Seconds, setup.Yards)
+	}
+	if len(setup.Talents) != 30 || !slices.Contains(setup.Talents, 58435) { // Pandemic
+		t.Errorf("%d talents %v, want 30 with Pandemic (58435)", len(setup.Talents), setup.Talents)
+	}
+	// slot 13 holds item 49686, which the sim's item database doesn't have
+	if len(setup.Items) != 18 {
+		t.Errorf("%d items, want 18", len(setup.Items))
+	}
+	if setup.Glyphs != [6]int32{760, 478, 482, 911, 481, 278} {
+		t.Errorf("glyphs = %v", setup.Glyphs)
+	}
+	if setup.Pet != nil {
+		t.Errorf("pet = %+v, want none", setup.Pet)
+	}
+}
+
 // The SV captures are older, with the server snapshot as text lines rather than JSON.
 func TestParseSetupTextSnapshot(t *testing.T) {
 	setup := captureSetup(t, "hunter_Svrleadtntyo_1789992248")
