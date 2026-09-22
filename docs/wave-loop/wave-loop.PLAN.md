@@ -80,8 +80,10 @@ rides along, as it only needs the live server.
 ## Current wave
 
 - Wave: H3, running.
-- Base SHA: the wave's setup commit on top of `bf0383241`.
-- Workflow runId: not yet started.
+- Base SHA: `078ed402b`, the wave's setup commit on top of `bf0383241`.
+- Workflow runId: `wf_ff31a9cb-dfe`, transcript dir
+  `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\wf_ff31a9cb-dfe`.
+- Args and results: `waveH3-args.json` and `waveH3-results.json` in `G:\DevStuff\GitHub\.wave-loop`.
 
 ## BiS baseline
 
