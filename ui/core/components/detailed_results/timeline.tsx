@@ -11,7 +11,7 @@ import { resourceNames } from '../../proto_utils/names.js';
 import { UnitMetrics } from '../../proto_utils/sim_result.js';
 import { orderedResourceTypes } from '../../proto_utils/utils.js';
 import { TypedEvent } from '../../typed_event.js';
-import { bucket, distinct, htmlDecode, maxIndex, stringComparator } from '../../utils.js';
+import { bucket, distinct, htmlDecode, stringComparator } from '../../utils.js';
 import { actionColors } from './color_settings.js';
 import { ResultComponent, ResultComponentConfig, SimResultData } from './result_component.js';
 
@@ -33,6 +33,10 @@ export class Timeline extends ResultComponent {
 
 	private resultData: SimResultData | null;
 	private rendered: boolean;
+
+	// Last chart the viewer picked. The raid has no rotation and a raider no threat chart of their
+	// own, so those fall back to DPS and keep this for later.
+	private preferredChart = 'rotation';
 
 	private hiddenIds: Array<ActionId>;
 	private hiddenIdsChangeEmitter;
@@ -84,13 +88,7 @@ export class Timeline extends ResultComponent {
 
 		this.chartPicker = this.rootElem.getElementsByClassName('timeline-chart-picker')[0] as HTMLSelectElement;
 		this.chartPicker.addEventListener('change', () => {
-			if (this.chartPicker.value == 'rotation') {
-				this.dpsResourcesPlotElem.classList.add('hide');
-				this.rotationPlotElem.classList.remove('hide');
-			} else {
-				this.dpsResourcesPlotElem.classList.remove('hide');
-				this.rotationPlotElem.classList.add('hide');
-			}
+			this.preferredChart = this.chartPicker.value;
 			this.updatePlot();
 		});
 
@@ -218,13 +216,11 @@ export class Timeline extends ResultComponent {
 		};
 
 		const players = this.resultData!.result.getPlayers(this.resultData!.filter);
-		if (players.length == 1) {
-			const player = players[0];
+		const singlePlayer = players.length == 1;
+		this.showChart(singlePlayer);
 
-			const rotationOption = this.rootElem.getElementsByClassName('rotation-option')[0] as HTMLElement;
-			rotationOption.classList.remove('hide');
-			const threatOption = this.rootElem.getElementsByClassName('threat-option')[0] as HTMLElement;
-			threatOption.classList.add('hide');
+		if (singlePlayer) {
+			const player = players[0];
 
 			try {
 				this.updateRotationChart(player, duration);
@@ -241,21 +237,12 @@ export class Timeline extends ResultComponent {
 
 			this.addMajorCooldownAnnotations(player, options);
 		} else {
-			if (this.chartPicker.value == 'rotation') {
-				this.chartPicker.value = 'dps';
-				return;
-			}
-			const rotationOption = this.rootElem.getElementsByClassName('rotation-option')[0] as HTMLElement;
-			rotationOption.classList.add('hide');
-			const threatOption = this.rootElem.getElementsByClassName('threat-option')[0] as HTMLElement;
-			threatOption.classList.remove('hide');
-
 			this.clearRotationChart();
 
 			if (this.chartPicker.value == 'dps') {
 				let maxDps = 0;
 				players.forEach(player => {
-					const dpsData = this.addDpsSeries(player, options, `var(--bs-${player.classColor}`);
+					const dpsData = this.addDpsSeries(player, options, `var(--bs-${player.classColor})`);
 					maxDps = Math.max(maxDps, dpsData.maxDps);
 					tooltipHandlers.push(dpsData.tooltipHandler);
 				});
@@ -264,7 +251,7 @@ export class Timeline extends ResultComponent {
 				// threat
 				let maxThreat = 0;
 				players.forEach(player => {
-					tooltipHandlers.push(this.addThreatSeries(player, options, player.classColor));
+					tooltipHandlers.push(this.addThreatSeries(player, options, `var(--bs-${player.classColor})`));
 					maxThreat = Math.max(maxThreat, player.maxThreat);
 				});
 				this.addThreatYAxis(maxThreat, options);
@@ -274,11 +261,29 @@ export class Timeline extends ResultComponent {
 		this.dpsResourcesPlot.updateOptions(options);
 	}
 
+	private showChart(singlePlayer: boolean) {
+		(this.rootElem.getElementsByClassName('rotation-option')[0] as HTMLElement).classList.toggle('hide', !singlePlayer);
+		(this.rootElem.getElementsByClassName('threat-option')[0] as HTMLElement).classList.toggle('hide', singlePlayer);
+
+		let chart = this.preferredChart;
+		if (singlePlayer && chart == 'threat') {
+			chart = 'dps';
+		} else if (!singlePlayer && chart == 'rotation') {
+			chart = 'dps';
+		}
+		this.chartPicker.value = chart;
+
+		this.rotationPlotElem.classList.toggle('hide', chart != 'rotation');
+		this.dpsResourcesPlotElem.classList.toggle('hide', chart == 'rotation');
+	}
+
+	// seriesName as a list, not a string: with a string ApexCharts pairs lines and axes by position
+	// and throws on the raid chart, where every raider's line is named DPS.
 	private addDpsYAxis(maxDps: number, options: any) {
 		const dpsAxisMax = Math.ceil(maxDps / 100) * 100;
 		options.yaxis.push({
 			color: dpsColor,
-			seriesName: 'DPS',
+			seriesName: ['DPS'],
 			min: 0,
 			max: dpsAxisMax,
 			tickAmount: 10,
@@ -309,7 +314,7 @@ export class Timeline extends ResultComponent {
 		const axisMax = Math.ceil(maxThreat / 10000) * 10000;
 		options.yaxis.push({
 			color: threatColor,
-			seriesName: 'Threat',
+			seriesName: ['Threat'],
 			min: 0,
 			max: axisMax,
 			tickAmount: 10,
@@ -353,7 +358,7 @@ export class Timeline extends ResultComponent {
 		});
 
 		return {
-			maxDps: dpsLogs[maxIndex(dpsLogs.map(l => l.dps))!].dps,
+			maxDps: Math.max(0, ...dpsLogs.map(log => log.dps)),
 			tooltipHandler: (dataPointIndex: number) => {
 				const log = dpsLogs[dataPointIndex];
 				return this.dpsTooltip(log, true, unit, colorOverride);
@@ -419,22 +424,22 @@ export class Timeline extends ResultComponent {
 
 	// Returns a function for drawing the tooltip, or null if no series was added.
 	private addThreatSeries(unit: UnitMetrics, options: any, colorOverride: string): TooltipHandler | null {
+		const threatLogs = unit.threatLogs.filter(log => log.timestamp >= 0);
+
 		options.colors.push(colorOverride || threatColor);
 		options.series.push({
 			name: 'Threat',
 			type: 'line',
-			data: unit.threatLogs
-				.filter(log => log.timestamp >= 0)
-				.map(log => {
-					return {
-						x: log.timestamp,
-						y: log.threatAfter,
-					};
-				}),
+			data: threatLogs.map(log => {
+				return {
+					x: log.timestamp,
+					y: log.threatAfter,
+				};
+			}),
 		});
 
 		return (dataPointIndex: number) => {
-			const log = unit.threatLogs[dataPointIndex];
+			const log = threatLogs[dataPointIndex];
 			return this.threatTooltip(log, true, unit, colorOverride);
 		};
 	}
@@ -546,8 +551,8 @@ export class Timeline extends ResultComponent {
 		}
 
 		// Don't add a row for buffs that were already visualized in a cast row.
-		const buffsToShow = buffsById.filter(auraUptimeLogs =>
-			playerCastsByAbility.findIndex(casts => casts[0].actionId!.equalsIgnoringTag(auraUptimeLogs[0].actionId!)),
+		const buffsToShow = buffsById.filter(
+			auraUptimeLogs => !playerCastsByAbility.some(casts => casts[0].actionId!.equalsIgnoringTag(auraUptimeLogs[0].actionId!)),
 		);
 		if (buffsToShow.length > 0) {
 			this.addSeparatorRow(duration);

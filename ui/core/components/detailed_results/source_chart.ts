@@ -1,10 +1,10 @@
+import { Chart } from 'chart.js';
+
 import { Component } from '../../components/component.js';
 import { SimResult, SimResultFilter, ActionMetrics } from '../../proto_utils/sim_result.js';
 import { sum } from '../../utils.js';
 
 import { actionColors } from './color_settings.js';
-
-declare var Chart: any;
 
 export class SourceChart extends Component {
 	constructor(parentElem: HTMLElement, allActionMetrics: Array<ActionMetrics>) {
@@ -24,8 +24,7 @@ export class SourceChart extends Component {
 		const vals = actionMetrics.map(actionMetric => actionMetric.damage / totalDmg);
 		const bgColors = actionColors.slice(0, actionMetrics.length);
 
-		const ctx = chartCanvas.getContext('2d');
-		const chart = new Chart(ctx, {
+		new Chart(chartCanvas, {
 			type: 'pie',
 			data: {
 				labels: names,

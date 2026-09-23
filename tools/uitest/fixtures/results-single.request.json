@@ -1,0 +1,426 @@
+{
+	"raid": {
+		"parties": [
+			{
+				"players": [
+					{
+						"name": "Marks",
+						"race": "RaceDwarf",
+						"class": "ClassHunter",
+						"equipment": {
+							"items": [
+								{
+									"id": 40543,
+									"enchant": 3817,
+									"gems": [
+										41398,
+										42143
+									]
+								},
+								{
+									"id": 44664,
+									"gems": [
+										42143
+									]
+								},
+								{
+									"id": 40507,
+									"enchant": 3808,
+									"gems": [
+										39997
+									]
+								},
+								{
+									"id": 40403,
+									"enchant": 3605
+								},
+								{
+									"id": 43998,
+									"enchant": 3832,
+									"gems": [
+										42143,
+										39997
+									]
+								},
+								{
+									"id": 40282,
+									"enchant": 3845,
+									"gems": [
+										39997,
+										0
+									]
+								},
+								{
+									"id": 40541,
+									"enchant": 3604,
+									"gems": [
+										0
+									]
+								},
+								{
+									"id": 40275,
+									"enchant": 3601,
+									"gems": [
+										39997
+									]
+								},
+								{
+									"id": 40506,
+									"enchant": 3823,
+									"gems": [
+										39997,
+										49110
+									]
+								},
+								{
+									"id": 40549,
+									"enchant": 3606
+								},
+								{
+									"id": 40074
+								},
+								{
+									"id": 40474
+								},
+								{
+									"id": 40684
+								},
+								{
+									"id": 44253
+								},
+								{
+									"id": 40388,
+									"enchant": 3827
+								},
+								{},
+								{
+									"id": 40385,
+									"enchant": 3608
+								}
+							]
+						},
+						"consumes": {
+							"flask": "FlaskOfRelentlessAssault",
+							"petFood": "PetFoodKiblersBits",
+							"defaultPotion": "HastePotion",
+							"defaultConjured": "ConjuredFlameCap"
+						},
+						"buffs": {
+							"blessingOfKings": true,
+							"blessingOfMight": "TristateEffectImproved",
+							"blessingOfSanctuary": true
+						},
+						"hunter": {
+							"options": {
+								"ammo": "SaroniteRazorheads",
+								"petType": "Wolf",
+								"petTalents": {
+									"cobraReflexes": 2,
+									"dive": true,
+									"boarsSpeed": true,
+									"spikedCollar": 3,
+									"cullingTheHerd": 3,
+									"wildHunt": 1,
+									"spidersBite": 3,
+									"rabid": true,
+									"callOfTheWild": true
+								},
+								"petUptime": 0.9,
+								"sniperTrainingUptime": 0.8,
+								"timeToTrapWeaveMs": 2000,
+								"useHuntersMark": true
+							}
+						},
+						"talentsString": "502-035335131030013233035031051-5000002",
+						"glyphs": {
+							"major1": 42912,
+							"major2": 42914,
+							"major3": 45625
+						},
+						"rotation": {
+							"type": "TypeAPL",
+							"prepullActions": [
+								{
+									"action": {
+										"castSpell": {
+											"spellId": {
+												"otherId": "OtherActionPotion"
+											}
+										}
+									},
+									"doAtValue": {
+										"const": {
+											"val": "-1s"
+										}
+									}
+								}
+							],
+							"priorityList": [
+								{
+									"action": {
+										"condition": {
+											"cmp": {
+												"op": "OpGt",
+												"lhs": {
+													"currentTime": {}
+												},
+												"rhs": {
+													"const": {
+														"val": "10s"
+													}
+												}
+											}
+										},
+										"autocastOtherCooldowns": {}
+									}
+								},
+								{
+									"action": {
+										"condition": {
+											"and": {
+												"vals": [
+													{
+														"not": {
+															"val": {
+																"auraIsActive": {
+																	"auraId": {
+																		"spellId": 34074
+																	}
+																}
+															}
+														}
+													},
+													{
+														"cmp": {
+															"op": "OpLt",
+															"lhs": {
+																"currentManaPercent": {}
+															},
+															"rhs": {
+																"const": {
+																	"val": "10%"
+																}
+															}
+														}
+													}
+												]
+											}
+										},
+										"castSpell": {
+											"spellId": {
+												"spellId": 34074
+											}
+										}
+									}
+								},
+								{
+									"action": {
+										"condition": {
+											"and": {
+												"vals": [
+													{
+														"not": {
+															"val": {
+																"auraIsActive": {
+																	"auraId": {
+																		"spellId": 61847
+																	}
+																}
+															}
+														}
+													},
+													{
+														"cmp": {
+															"op": "OpGt",
+															"lhs": {
+																"currentManaPercent": {}
+															},
+															"rhs": {
+																"const": {
+																	"val": "30%"
+																}
+															}
+														}
+													}
+												]
+											}
+										},
+										"castSpell": {
+											"spellId": {
+												"spellId": 61847
+											}
+										}
+									}
+								},
+								{
+									"action": {
+										"castSpell": {
+											"spellId": {
+												"spellId": 34490
+											}
+										}
+									}
+								},
+								{
+									"action": {
+										"castSpell": {
+											"spellId": {
+												"spellId": 61006
+											}
+										}
+									}
+								},
+								{
+									"action": {
+										"condition": {
+											"not": {
+												"val": {
+													"dotIsActive": {
+														"spellId": {
+															"spellId": 49001
+														}
+													}
+												}
+											}
+										},
+										"castSpell": {
+											"spellId": {
+												"spellId": 49001
+											}
+										}
+									}
+								},
+								{
+									"action": {
+										"condition": {
+											"not": {
+												"val": {
+													"dotIsActive": {
+														"spellId": {
+															"spellId": 49067
+														}
+													}
+												}
+											}
+										},
+										"castSpell": {
+											"spellId": {
+												"spellId": 49067,
+												"tag": 1
+											}
+										}
+									}
+								},
+								{
+									"action": {
+										"castSpell": {
+											"spellId": {
+												"spellId": 53209
+											}
+										}
+									}
+								},
+								{
+									"action": {
+										"castSpell": {
+											"spellId": {
+												"spellId": 49050
+											}
+										}
+									}
+								},
+								{
+									"action": {
+										"castSpell": {
+											"spellId": {
+												"spellId": 49048
+											}
+										}
+									}
+								},
+								{
+									"hide": true,
+									"action": {
+										"castSpell": {
+											"spellId": {
+												"spellId": 49045
+											}
+										}
+									}
+								},
+								{
+									"action": {
+										"castSpell": {
+											"spellId": {
+												"spellId": 49052
+											}
+										}
+									}
+								}
+							]
+						}
+					}
+				],
+				"buffs": {}
+			}
+		],
+		"numActiveParties": 1
+	},
+	"encounter": {
+		"duration": 20,
+		"executeProportion20": 0.2,
+		"executeProportion25": 0.25,
+		"executeProportion35": 0.35,
+		"targets": [
+			{
+				"level": 83,
+				"mobType": "MobTypeGiant",
+				"stats": [
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					805,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					10643,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0
+				],
+				"minBaseDamage": 65000,
+				"swingSpeed": 1.5,
+				"parryHaste": true
+			}
+		]
+	}
+}

@@ -82,6 +82,14 @@ func main() {
 		log.Fatalf("writing %s: %v", *outfile, err)
 	}
 
-	fmt.Printf("wrote %s (%d bytes), %d players over %d iterations\n",
-		*outfile, len(run), len(result.RaidMetrics.Parties)*5, *iterations)
+	players := 0
+	for _, party := range result.RaidMetrics.Parties {
+		for _, player := range party.Players {
+			// empty raid slots come back as blank metrics
+			if player.Name != "" {
+				players++
+			}
+		}
+	}
+	fmt.Printf("wrote %s (%d bytes), %d players over %d iterations\n", *outfile, len(run), players, *iterations)
 }

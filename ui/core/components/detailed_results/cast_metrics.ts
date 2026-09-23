@@ -1,4 +1,5 @@
 import { ActionMetrics, SimResult, SimResultFilter } from '../../proto_utils/sim_result.js';
+import { bucket } from '../../utils.js';
 
 import { ColumnSortType, MetricsTable } from './metrics_table.js';
 import { ResultComponent, ResultComponentConfig, SimResultData } from './result_component.js';
@@ -39,7 +40,13 @@ export class CastMetricsTable extends MetricsTable<ActionMetrics> {
 
 		const actions = player.actions.filter(action => action.casts != 0).map(action => action.forTarget(resultData.filter));
 		const actionGroups = ActionMetrics.groupById(actions);
-		const petGroups = player.pets.map(pet => pet.actions.filter(action => action.casts != 0).map(action => action.forTarget(resultData.filter)));
+		const petsByName = bucket(player.pets, pet => pet.name);
+		const petGroups = Object.values(petsByName).map(pets =>
+			ActionMetrics.joinById(
+				pets.map(pet => pet.actions.filter(action => action.casts != 0).map(action => action.forTarget(resultData.filter))).flat(),
+				true,
+			),
+		);
 
 		return actionGroups.concat(petGroups);
 	}
