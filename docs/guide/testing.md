@@ -68,6 +68,8 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
 
 ## UI
 
+- Behaviour: the Playwright suite in `tools/uitest` ([README](../../tools/uitest/README.md)), against a dev
+  server. Verify a UI change there, with a test for the behaviour it changes.
 - Type-check: `npx tsc --noEmit`.
 - `npm run lint:js` already fails on master (`bulk_tab.ts`, `equipped_item.ts`, `importers.ts`). Compare
   each touched file against HEAD instead:

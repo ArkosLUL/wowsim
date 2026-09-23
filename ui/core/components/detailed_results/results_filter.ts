@@ -7,6 +7,8 @@ import { ResultComponent, ResultComponentConfig, SimResultData } from './result_
 
 const ALL_UNITS = -1;
 
+// Unit indexes, the sim's own numbering over the targets and then the raid, which is what
+// SimResult matches a filter on. Not the raid index behind the "(#N)" in a unit's label.
 interface FilterData {
 	player: number,
 	target: number,
@@ -100,9 +102,9 @@ export class ResultsFilter extends ResultComponent {
 		} else if (this.hasLastSimResult()) {
 			const simResult = this.getLastSimResult();
 			const unit = ref.type == UnitType.Player
-				? simResult.result.getPlayerWithRaidIndex(ref.index)
-				: ref.type == UnitType.Target 
-					? simResult.result.getTargetWithEncounterIndex(ref.index)
+				? simResult.result.getPlayerWithIndex(ref.index)
+				: ref.type == UnitType.Target
+					? simResult.result.getTargetWithIndex(ref.index)
 					: null;
 
 			if (unit) {
@@ -140,7 +142,7 @@ export class ResultsFilter extends ResultComponent {
 		const allUnitsOption = UnitReference.create({type: isPlayer ? UnitType.AllPlayers : UnitType.AllTargets});
 
 		const unitOptions = (isPlayer ? simResult.getPlayers() : simResult.getTargets())
-			.map(unit => UnitReference.create({type: isPlayer ? UnitType.Player : UnitType.Target, index: unit.index}));
+			.map(unit => UnitReference.create({type: isPlayer ? UnitType.Player : UnitType.Target, index: unit.unitIndex}));
 
 		const options = [allUnitsOption].concat(unitOptions);
 

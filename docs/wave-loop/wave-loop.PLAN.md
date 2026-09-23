@@ -54,6 +54,7 @@ G = changes goldens. FS = runs all 37 suites.
 | H | PAR-P7-ROG · PAR-P7-WAR · PAR-P7-RET (G) · BIS-raid-contrib | ✔ |
 | H3 | PAR-P7-0e (G, FS) · PAR-P7-RET-RR · BIS-alt5 | ✔ |
 | I | PAR-P7-MAG (G, FS) · PAR-P7-SHA · PAR-P7-DRU · PAR-P7-WLK (G) | ✔ |
+| U | UI-RESULTS · UI-GEAR · UI-RAID · UI-SETTINGS | |
 | I2 | PERF-TOOLS · PERF-CONC · BIS-seed | ✔ |
 | I3 | PERF-OPT · PERF-HOT | ✔ |
 | J | PAR-P7-PRI (G) · PAR-P7-TANK (G) · BIS-e2e-perf · AC-3 | ✔ |
@@ -74,6 +75,9 @@ In I, PAR-P7-MAG also fixes the delay helper's timing gap (the user's call) and 
 `spell.cast_time`, both in core, so it runs all 37 suites and merges first. I2 and I3, the performance pass,
 are the user's call too: they come before J, whose BIS-e2e-perf uses their tools.
 
+U, the Playwright suite and the UI bugs it finds, comes before I2 (the user's call, 2026-09-23). Its items
+touch only UI and test paths, so goldens, BiS and throughput can't move, and it skips the re-baseline.
+
 **Where the specs are:**
 
 | WI prefix | Spec |
@@ -83,11 +87,13 @@ are the user's call too: they come before J, whose BIS-e2e-perf uses their tools
 | `RI-3` | [raid-import PLAN, Phase 3](../azerothcore-raid-import/azerothcore-raid-import.PLAN.md) |
 | `BIS-` | [bis-optimizer PLAN, "Work items"](../bis-optimizer/bis-optimizer.PLAN.md) |
 | `PERF-` | [sim-performance PLAN, "Work items"](../sim-performance/sim-performance.PLAN.md) |
+| `UI-` | [ui-tests PLAN, "Work items"](../ui-tests/ui-tests.PLAN.md) |
 
 ## Current wave
 
-- Wave: I2, not started. Wave I (base `b895e44be`) landed on `master`.
-- Base SHA: set at wave start.
+- Wave: U, running. Wave I (base `b895e44be`) landed on `master`; I2 comes next.
+- Base SHA: `bec948cd5`. Items branch off the setup commit, the Workflow's `baseSha`; the cross-review
+  diffs from `bec948cd5`, so it covers the setup's code too.
 - Workflow runId: none. Wave I ran as `wf_891dd2c6-596`, its two stranded live stages as `wf_0f859fcf-466`
   (args and results `waveI-args.json`, `waveI-results.json`, `waveI-live-args.json`, `waveI-live-results.json` in `G:\DevStuff\GitHub\.wave-loop`).
 

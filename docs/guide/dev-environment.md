@@ -7,7 +7,7 @@ Host, toolchain container, protos, builds, running the sim. For verification, se
 - Windows 11, with Git Bash and PowerShell. `core.autocrlf=true`, so working-tree files are CRLF.
 - Missing: Go, make, the mysql CLI, `bc`.
 - Present: Python 3.14, Docker and Node. `node_modules` was installed from Linux, so npx, tsc and eslint
-  only work in the container.
+  only work in the container. `tools/uitest` has its own, installed on the host.
 - Versions come from `go.mod` (Go 1.23), `Dockerfile` (`golang:1.23-bookworm`, `node:19.8.1`) and
   `.nvmrc`. The README's versions are stale.
 

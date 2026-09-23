@@ -95,6 +95,10 @@ Quirk: `UnitLevelFloat64` in `utils.go` treats every level outside 80–82 as +3
   of the mechanic constants and re-exports the generated `ratings_auto_gen.ts`.
   `server_defaults_auto_gen.ts` holds the live server settings.
 - `ui/<spec>/presets.ts` and `ui/<spec>/gear_sets/*.gear.json`: presets.
+- `ui/core/components/detailed_results/`: the results page, also standalone at `/wotlk/detailed_results/`,
+  where it takes `DetailedResultsUpdate` JSON by `postMessage`. A `SimResult` unit has two indexes: `index`,
+  the raid slot its "(#N)" label counts, and `unitIndex`, the sim's, which numbers the targets first.
+  Filters match `unitIndex`.
 - `ui/raid/raid_sim_ui.ts`: the raid sim, where importers and the BiS batch (`optimizer_batch.ts`) are
   registered.
 

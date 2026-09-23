@@ -25,22 +25,22 @@ export class PlayerDamageMetricsTable extends MetricsTable<UnitMetrics> {
 				fillCell: (player: UnitMetrics, cellElem: HTMLElement, rowElem: HTMLElement) => {
 					cellElem.classList.add('amount-cell');
 
-					let chart: HTMLElement | null = null;
-					const makeChart = () => {
-						const chartContainer = document.createElement('div');
-						rowElem.appendChild(chartContainer);
-						const sourceChart = new SourceChart(chartContainer, player.actions);
-						return chartContainer;
-					};
+					// Sized up front so the tooltip can be placed before the chart draws into it.
+					const chartContainer = document.createElement('div');
+					chartContainer.style.width = '600px';
+					chartContainer.style.height = '400px';
+					let charted = false;
 
 					tippy(rowElem, {
-						content: 'Loading...',
+						content: chartContainer,
 						placement: 'bottom',
 						ignoreAttributes: true,
-						onShow(instance: any) {
-							if (!chart) {
-								chart = makeChart();
-								instance.setContent(chart);
+						// Chart.js sizes itself from its container, so it can only draw once the
+						// tooltip has put the container on the page.
+						onShown: () => {
+							if (!charted) {
+								charted = true;
+								new SourceChart(chartContainer, player.actions);
 							}
 						},
 					});

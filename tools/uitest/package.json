@@ -1,0 +1,13 @@
+{
+	"name": "wotlk-uitest",
+	"version": "0.0.0",
+	"private": true,
+	"description": "Playwright regression tests for the sim UI. Runs on the host, not in the toolchain container.",
+	"scripts": {
+		"test": "playwright test",
+		"report": "playwright show-report"
+	},
+	"devDependencies": {
+		"@playwright/test": "^1.49.1"
+	}
+}

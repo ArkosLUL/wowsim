@@ -54,7 +54,8 @@ Before starting, read every doc whose trigger matches the task.
 | [acbis README](tools/database/acbis/README.md) | exporting the BiS tooltip dataset |
 | [acbis driver README](tools/database/acbis/driver/README.md) | running the optimizer batch the dataset is built from |
 | [mod-bis-tooltip README](../azerothcore-wotlk-pb/modules/mod-bis-tooltip/README.md) | changing the BiS tooltip wire format, or the module's config, commands or tests |
-| [uicheck README](tools/uicheck/README.md) | checking a UI change in a real browser |
+| [uitest README](tools/uitest/README.md) | verifying a UI change, or writing a UI test |
+| [uicheck README](tools/uicheck/README.md) | driving a page by hand in headless Chrome, e.g. for screenshots |
 
 ## Keeping the docs live
 

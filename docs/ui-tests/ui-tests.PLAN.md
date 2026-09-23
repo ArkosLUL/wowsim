@@ -1,0 +1,129 @@
+# UI tests: a Playwright regression suite for the sim UI
+
+The user was finding UI bugs by hand: the results page's player dropdown showed a neighbour's numbers, and
+hovering a damage row stretched it 400px. This effort gives agents a browser suite to test UI behaviour
+with, and fixes what it finds. It runs in the wave loop ([RUNBOOK](../wave-loop/wave-loop.RUNBOOK.md)).
+
+## Decisions (settled with the user)
+
+- Playwright, on the host against the installed Chrome ([README](../../tools/uitest/README.md)).
+- Tests replay a recorded result where they can: fast and deterministic. A real sim runs only where the
+  round trip is the behaviour under test, at low iterations.
+- A fix lands with its test, in the same item.
+- Wave U, before I2 (2026-09-23).
+
+## Done at wave U setup
+
+- The harness, the fixtures and `gen_fixture`, the shared helpers, and a smoke test that loads every spec
+  page, the raid page and the results page without a console error.
+- `results_filter.ts` built its options from the raid slot but filtered on the sim's unit index
+  (targets first), so every raider showed the one before, and the first showed the boss.
+- `player_damage.ts` appended the tooltip's 600×400 chart into the table row, which grew to 413px while
+  the tooltip stayed empty.
+
+## Work items
+
+### Every UI-* item
+
+- Tests go in `tools/uitest/tests/<area>/`, helpers for the area beside them. `tests/lib/**`,
+  `tests/smoke.spec.ts`, `playwright.config.ts`, `package.json` and the two `fixtures/raid25*` files
+  are shared and frozen for the wave: changes go in `contractChangeRequests`. So do changes to
+  `ui/core/{player,sim,sim_ui}.ts`, `ui/core/proto_utils/` files not listed below, `proto/`, and
+  `ui/core/optimizer/**` and `optimizer_tab.ts`, which BIS-seed reworks in I2.
+- Each bug: a failing test first, then the fix, then green. A bug outside your owned paths keeps its test
+  as `test.fixme('<reason>')` and goes in `followUps`.
+- Assert what a player would notice: the right numbers and names, what survives a reload. Derive
+  expected values from the fixture or the page, never hard-coded sim numbers: goldens move every wave.
+- Never edit `ui/<spec>/apls/*` or `ui/<spec>/gear_sets/*` (the Go tests load them), nor `db.json`.
+- Set iterations to 100 or fewer before a real Simulate.
+- Dev server: container `wotlk-dev-<id>` on your port, started as in
+  [dev-environment, Run](../guide/dev-environment.md#run) with your worktree mounted, image
+  `wowsim-toolchain` and volumes `wowsim-gomod`/`wowsim-gocache`. After a UI change,
+  `dock.sh exec make dist/wotlk/.dirstamp`, no restart; after a Go change, restart. Leave it running.
+- Verify: `cd <worktree>/tools/uitest && npm install && UITEST_URL=http://localhost:<port> npx playwright test --workers=4`,
+  the whole suite; `dock.sh tsc`; eslint per changed file vs HEAD ([testing, UI](../guide/testing.md#ui)).
+- The report's summary lists every bug found, one line each, fixed or fixme'd.
+- The lists below are in priority order. Cover them, then hunt in your area until the finds dry up.
+
+### UI-RESULTS
+
+The results page, standalone (`/wotlk/detailed_results/`) and embedded in a sim page.
+
+1. The target filter, on a multi-target fixture: damage narrows to the target picked, labels match.
+2. Every metrics table (damage, healing, damage taken, buffs, debuffs, casts, resources) shows the picked
+   unit's rows (as `results/results_tabs.spec.ts` does for casts), and sorts by its headers.
+3. The timeline's charts and selectors, per raider.
+4. The log tab's search and filters, and its debug toggle.
+5. A reference run (`SimRunData.referenceRun`) and its comparison.
+6. Individual-sim mode (`?isIndividualSim`), on a single-player fixture.
+7. Tank and healer metrics (damage taken, TMI, HPS) for raid25's tanks and healers.
+8. Embedded: a small Simulate on a spec page fills its results tab, and "View in Separate Tab" gets the
+   same data.
+
+**Owns:** `ui/core/components/detailed_results.ts`, `ui/core/components/detailed_results/**`,
+`ui/detailed_results/**`, `ui/core/components/{results_viewer.tsx,raid_sim_action.ts,unit_picker.ts}`,
+`ui/core/proto_utils/{sim_result.ts,logs_parser.tsx}`, `ui/scss/core/components/detailed_results/**`,
+`ui/scss/core/components/{_detailed_results,_raid_sim_action,_unit_picker}.scss`,
+`ui/scss/sims/detailed_results/**`, `tools/uitest/gen_fixture/**`, `tools/uitest/tests/results/**`, new
+`tools/uitest/fixtures/results-*` (inputs beside them).
+
+### UI-GEAR
+
+The individual sim's Gear and Bulk tabs.
+
+1. The item picker per slot: search, phase and source filters, equip. The slot shows the item, and the
+   character stats move the way the item's stats say.
+2. Enchants and gems: sockets by colour, the meta gem's active state, socket bonuses.
+3. The Reforging tab: a reforge moves the two stats, and only reforges mod-reforging allows are offered.
+4. Gear sets: save, load, delete, and all three survive a reload.
+5. Unequip, Clear, Unequip All Gems, Suggest Gems.
+6. The Bulk tab: add items, a small batch, its results.
+7. Item swaps, on a spec that has them.
+
+`ItemRenderer` draws items on the bulk and optimizer tabs too, so its styles in `_gear_picker.scss` are
+global ([sim-architecture, UI](../guide/sim-architecture.md#ui)).
+
+**Owns:** `ui/core/components/{gear_picker.tsx,item_swap_picker.tsx,character_stats.tsx,suggest_gems_action.ts,filters_menu.ts}`,
+`ui/core/components/virtual_scroll/**`, `ui/core/components/individual_sim_ui/{gear_tab.ts,gem_summary.tsx,bulk_tab.ts}`,
+`ui/core/proto_utils/{gear.ts,equipped_item.ts,gems.ts,enchants.ts,reforging.ts}`, their scss partials
+(`_gear_picker`, `_item_swap_picker`, `_character_stats`, `_filters_menu`, `_bulk`, `_gear_tab`,
+`_gem_summary`), `tools/uitest/tests/gear/**`.
+
+### UI-RAID
+
+The raid page.
+
+1. The raid picker: add a player from the presets, move them between parties and slots, rename, remove,
+   and edit one; the changes stick.
+2. The raid stats panel follows the roster as players come and go.
+3. The blessings, assignments and tanks pickers, and the raid settings tab.
+4. Raid export then import gives the same raid.
+5. A real raid sim, few iterations: the results name the right raider in the player dropdown and the
+   damage rows, live rather than replayed.
+6. The AzerothCore importer with `ui/raid/acore_harness/testdata/raid.json`: its dialog, the grid and the
+   alerts, which [its harness](../../ui/raid/acore_harness/README.md) leaves to a person.
+7. The BiS Batch tab on that roster: the grid, and ticking raiders and phases. At most one Quick job.
+
+**Owns:** `ui/raid/**`, `ui/core/{raid,party}.ts`, `ui/core/components/raid_target_picker.ts`,
+`ui/scss/sims/raid/**`, `ui/scss/core/components/_raid_target_picker.scss`, `tools/uitest/tests/raid/**`.
+
+### UI-SETTINGS
+
+The individual sim's other tabs, the header, and the generic inputs.
+
+1. The Settings tab: buffs, debuffs, consumes, cooldowns, the encounter (presets, targets, execute ranges),
+   racial traits, professions and the "Server (AzerothCore)" section. Every change survives a reload.
+2. Talents: points, prerequisites, reset, glyphs, saved talents.
+3. Rotation: add, remove and reorder APL actions and prepull actions, edit values, save; it survives a
+   reload.
+4. Every exporter's output imports back to the same settings, and each importer the page offers works.
+5. The header: the settings menu (iterations and the rest) and the sim title dropdown.
+6. Simulate and Stat Weights at low iterations: the results and the weights table appear.
+
+**Owns:** `ui/core/components/individual_sim_ui/{settings_tab.ts,talents_tab.ts,rotation_tab.ts,consumes_picker.ts,cooldowns_picker.ts}`,
+`ui/core/components/individual_sim_ui/apl_*.ts`, `ui/core/components/inputs/**`,
+`ui/core/components/{encounter_picker,other_inputs,icon_inputs,totem_inputs,fire_elemental_inputs,server_settings_picker,importers,saved_data_manager,settings_menu,sim_title_dropdown,stat_weights_action,input_helpers,boolean_picker,enum_picker,number_picker,string_picker,number_list_picker,multi_icon_picker,dropdown_picker,base_modal}.ts`,
+`ui/core/components/{exporters,sim_header,input,list_picker,icon_picker,icon_enum_picker,content_block,copy_button}.tsx`,
+`ui/core/talents/**`, `ui/core/individual_sim_ui.ts`, `ui/core/encounter.ts`, `ui/<spec>/{inputs,sim}.ts`,
+the scss partials for those components (`ui/scss/core/components/` and `individual_sim_ui/`, not the
+other items'), `tools/uitest/tests/settings/**`.
