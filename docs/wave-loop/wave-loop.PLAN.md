@@ -97,10 +97,13 @@ UI-FIX joins I2 (the user's call): four fixes wave U's tests left open.
 
 ## Current wave
 
-- Wave: I2, not started. Wave U (base `bec948cd5`) landed on `master`.
-- Base SHA: set at wave start.
-- Workflow runId: none. Wave U ran as `wf_ac96d2c0-319` (args and results `waveU-args.json`,
-  `waveU-results.json` in `G:\DevStuff\GitHub\.wave-loop`).
+- Wave: I2, running. Wave U (base `bec948cd5`) landed on `master`.
+- Base SHA: `21e9dee91`. Dev servers `wotlk-dev-<item>` run on 3335 to 3338. PERF-TOOLS runs in two
+  stages, Profiling then Harness.
+- Workflow runId: `wf_34bff626-0f1` (args `waveI2-args.json`), transcripts in
+  `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\wf_34bff626-0f1`.
+  Wave U ran as `wf_ac96d2c0-319` (args and results `waveU-args.json`, `waveU-results.json` in
+  `G:\DevStuff\GitHub\.wave-loop`).
 
 ## BiS baseline
 
