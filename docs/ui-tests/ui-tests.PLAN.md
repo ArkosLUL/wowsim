@@ -11,6 +11,7 @@ with, and fixes what it finds. It runs in the wave loop ([RUNBOOK](../wave-loop/
   round trip is the behaviour under test, at low iterations.
 - A fix lands with its test, in the same item.
 - Wave U, before I2 (2026-09-23).
+- After wave U (2026-09-23): keep the log tab's search and raider filter; UI-FIX in I2 takes the rest.
 
 ## Done at wave U setup
 
@@ -27,23 +28,6 @@ All four items merged: 294 tests pass, and 3 wait as `test.fixme` on the sim bug
 Each bug went test first; the fixes are in the items' commits ([wave-loop status](../wave-loop/wave-loop.PLAN.md#status)).
 
 ## Follow-ups
-
-**The user's call:**
-- Character stats tooltip: for stats a stance, form or presence multiplies, the parts don't add up to the
-  Total (warrior Strength 2327 vs 2792, bear Armor 10915 vs 31079): the parts are snapshots taken before
-  those multipliers. Fix in `sim/core` (moves the character-stats goldens) or add a tooltip row. Test:
-  the fixme in `tests/gear/character_stats.spec.ts`.
-- UI-RESULTS gave the log tab a search box and made it follow the picked raider (pets included) and
-  target, which the spec had assumed existed. Keep?
-- The Batch tab's Sim Talents list offers only saved loadouts, never the spec's preset talents. Intended?
-
-**Sim bugs, for a sim item** (each has a `test.fixme`):
-- `sim/warlock/talents.go` `setupDemonicPact` sizes its aura array at 25 and indexes it by raid index, so
-  a 40-player raid with a Demonic Pact warlock panics (`tests/raid/raid_picker.spec.ts`).
-- `sim/core/racials.go`: Blood Elf racial traits on a rage user register Arcane Torrent with ActionID 0
-  (only runic power, energy and mana get one), so the APL Cast list shows a nameless cooldown and the UI
-  fetches spell 0's tooltip (`tests/settings/spec_inputs.spec.ts`; swap its fixed 1.5 s wait for a
-  condition when enabling it).
 
 **For a later UI wave:**
 - Closed components stay in memory: every closed item picker is kept alive by `input.tsx`, which never
@@ -66,6 +50,30 @@ Each bug went test first; the fixes are in the items' commits ([wave-loop status
   after 'Aura faded'.
 
 ## Work items
+
+### UI-FIX (wave I2)
+
+Four fixes wave U left open. Items 1, 3 and 4 have a `test.fixme` to turn into a test, red first.
+
+1. The character stats tooltip's parts don't add up to the Total for stats a stance, form or presence
+   multiplies (warrior Strength 2327 vs 2792, bear Armor 10915 vs 31079): the parts are snapshots taken
+   before those multipliers. Add a tooltip row for what they add; the sim stays as is
+   (`tests/gear/character_stats.spec.ts`).
+2. The Batch tab's Sim Talents list offers only saved loadouts: add the spec's preset talents
+   (`tests/gear/bulk.spec.ts`, a new test).
+3. `setupDemonicPact` sizes its aura array at 25 and indexes it by raid index, so a 40-player raid with a
+   Demonic Pact warlock panics (`tests/raid/raid_picker.spec.ts`).
+4. Blood Elf racial traits on a rage user register Arcane Torrent with ActionID 0 (only runic power,
+   energy and mana get one): the APL Cast list shows a nameless cooldown and the UI fetches spell 0's
+   tooltip. Give it the spell the server gives a rage user under mod-racial-trait-swap (Spell.dbc,
+   `[ac]/modules/`), or don't register it if there's none (`tests/settings/spec_inputs.spec.ts`; swap its
+   fixed 1.5 s wait for a condition).
+
+No test runs a 40-player raid or a Blood Elf rage user, so goldens shouldn't move: run the warlock and
+warrior suites and report any delta.
+
+**Owns:** `ui/core/components/character_stats.tsx`, `ui/core/components/individual_sim_ui/bulk_tab.ts`,
+`sim/warlock/talents.go`, `sim/core/racials.go`, and those four test files.
 
 ### Every UI-* item
 

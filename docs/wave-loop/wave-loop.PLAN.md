@@ -55,7 +55,7 @@ G = changes goldens. FS = runs all 37 suites.
 | H3 | PAR-P7-0e (G, FS) · PAR-P7-RET-RR · BIS-alt5 | ✔ |
 | I | PAR-P7-MAG (G, FS) · PAR-P7-SHA · PAR-P7-DRU · PAR-P7-WLK (G) | ✔ |
 | U | UI-RESULTS · UI-GEAR · UI-RAID · UI-SETTINGS | |
-| I2 | PERF-TOOLS · PERF-CONC · BIS-seed | ✔ |
+| I2 | PERF-TOOLS · PERF-CONC · BIS-seed · UI-FIX | ✔ |
 | I3 | PERF-OPT · PERF-HOT | ✔ |
 | I4 | PAR-DECL (G, FS) | ✔ |
 | I5 | PAR-DECL-1 (G) · PAR-DECL-2 (G) · PAR-DECL-3 (G) | ✔ |
@@ -82,6 +82,7 @@ PRI, TANK and K's PAR-P8 build on them.
 
 U, the Playwright suite and the UI bugs it finds, comes before I2 (the user's call, 2026-09-23). Its items
 touch only UI and test paths, so goldens, BiS and throughput can't move, and it skips the re-baseline.
+UI-FIX joins I2 (the user's call): four fixes wave U's tests left open.
 
 **Where the specs are:**
 
@@ -249,7 +250,6 @@ Later WIs are added as their wave starts.
 
 - Rebuild the prod container for H2's reforge fix and wave U's UI fixes, and reload open sim tabs. Until
   then a restart clears items cached without server stats.
-- Wave U's open questions: [ui-tests PLAN, Follow-ups](../ui-tests/ui-tests.PLAN.md#follow-ups).
 - Worth a click-through when convenient: the optimizer tab's tank controls on a tank spec (the
   survival/threat slider, the crit-immunity box, the racial select). No agent can judge those, and
   BIS-ui-tab's own click-through found three real bugs.
