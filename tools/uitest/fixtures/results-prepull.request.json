@@ -1,0 +1,482 @@
+{
+	"raid": {
+		"parties": [
+			{
+				"players": [
+					{
+						"name": "Demo",
+						"race": "RaceGnome",
+						"class": "ClassWarlock",
+						"equipment": {
+							"items": [
+								{
+									"id": 40421,
+									"enchant": 3820,
+									"gems": [
+										41285,
+										40014
+									]
+								},
+								{
+									"id": 44661,
+									"gems": [
+										40099
+									]
+								},
+								{
+									"id": 40424,
+									"enchant": 3810,
+									"gems": [
+										40049
+									]
+								},
+								{
+									"id": 44005,
+									"enchant": 3722,
+									"gems": [
+										40099
+									]
+								},
+								{
+									"id": 40423,
+									"enchant": 3832,
+									"gems": [
+										40049,
+										40014
+									]
+								},
+								{
+									"id": 44008,
+									"enchant": 2332,
+									"gems": [
+										39998,
+										0
+									]
+								},
+								{
+									"id": 40420,
+									"enchant": 3604,
+									"gems": [
+										39998,
+										0
+									]
+								},
+								{
+									"id": 40561,
+									"gems": [
+										40014
+									]
+								},
+								{
+									"id": 40560,
+									"enchant": 3719
+								},
+								{
+									"id": 40558,
+									"enchant": 3606
+								},
+								{
+									"id": 40399
+								},
+								{
+									"id": 40719
+								},
+								{
+									"id": 40432
+								},
+								{
+									"id": 40255
+								},
+								{
+									"id": 40396,
+									"enchant": 3834
+								},
+								{
+									"id": 39766
+								},
+								{
+									"id": 39712
+								}
+							]
+						},
+						"consumes": {
+							"flask": "FlaskOfTheFrostWyrm",
+							"food": "FoodFishFeast",
+							"defaultPotion": "PotionOfSpeed",
+							"prepopPotion": "PotionOfWildMagic"
+						},
+						"buffs": {
+							"blessingOfKings": true,
+							"blessingOfWisdom": "TristateEffectImproved",
+							"blessingOfSanctuary": true
+						},
+						"warlock": {
+							"options": {
+								"armor": "FelArmor",
+								"summon": "Felguard",
+								"weaponImbue": "GrandSpellstone",
+								"detonateSeed": true
+							}
+						},
+						"talentsString": "-203203301035012530135201351-550000052",
+						"glyphs": {
+							"major1": 50077,
+							"major2": 45785,
+							"major3": 42459
+						},
+						"rotation": {
+							"type": "TypeAPL",
+							"prepullActions": [
+								{
+									"action": {
+										"castSpell": {
+											"spellId": {
+												"spellId": 57946
+											}
+										}
+									},
+									"doAtValue": {
+										"const": {
+											"val": "-4s"
+										}
+									}
+								},
+								{
+									"action": {
+										"castSpell": {
+											"spellId": {
+												"otherId": "OtherActionPotion"
+											}
+										}
+									},
+									"doAtValue": {
+										"const": {
+											"val": "-2.5s"
+										}
+									}
+								},
+								{
+									"action": {
+										"castSpell": {
+											"spellId": {
+												"spellId": 47809
+											}
+										}
+									},
+									"doAtValue": {
+										"const": {
+											"val": "-2.5s"
+										}
+									}
+								}
+							],
+							"priorityList": [
+								{
+									"action": {
+										"autocastOtherCooldowns": {}
+									}
+								},
+								{
+									"action": {
+										"castSpell": {
+											"spellId": {
+												"spellId": 50589
+											}
+										}
+									}
+								},
+								{
+									"action": {
+										"condition": {
+											"cmp": {
+												"op": "OpGt",
+												"lhs": {
+													"remainingTime": {}
+												},
+												"rhs": {
+													"const": {
+														"val": "60s"
+													}
+												}
+											}
+										},
+										"castSpell": {
+											"spellId": {
+												"spellId": 47867
+											}
+										}
+									}
+								},
+								{
+									"action": {
+										"multidot": {
+											"spellId": {
+												"spellId": 47813
+											},
+											"maxDots": 1,
+											"maxOverlap": {
+												"const": {
+													"val": "0ms"
+												}
+											}
+										}
+									}
+								},
+								{
+									"action": {
+										"condition": {
+											"and": {
+												"vals": [
+													{
+														"not": {
+															"val": {
+																"dotIsActive": {
+																	"spellId": {
+																		"spellId": 47867
+																	}
+																}
+															}
+														}
+													},
+													{
+														"not": {
+															"val": {
+																"dotIsActive": {
+																	"spellId": {
+																		"spellId": 47864
+																	}
+																}
+															}
+														}
+													},
+													{
+														"cmp": {
+															"op": "OpGt",
+															"lhs": {
+																"remainingTime": {}
+															},
+															"rhs": {
+																"const": {
+																	"val": "22s"
+																}
+															}
+														}
+													}
+												]
+											}
+										},
+										"castSpell": {
+											"spellId": {
+												"spellId": 47864
+											}
+										}
+									}
+								},
+								{
+									"action": {
+										"condition": {
+											"and": {
+												"vals": [
+													{
+														"cmp": {
+															"op": "OpLt",
+															"lhs": {
+																"auraRemainingTime": {
+																	"auraId": {
+																		"spellId": 63321
+																	}
+																}
+															},
+															"rhs": {
+																"const": {
+																	"val": "3s"
+																}
+															}
+														}
+													},
+													{
+														"cmp": {
+															"op": "OpGt",
+															"lhs": {
+																"remainingTime": {}
+															},
+															"rhs": {
+																"const": {
+																	"val": "10s"
+																}
+															}
+														}
+													}
+												]
+											}
+										},
+										"castSpell": {
+											"spellId": {
+												"spellId": 57946
+											}
+										}
+									}
+								},
+								{
+									"action": {
+										"condition": {
+											"and": {
+												"vals": [
+													{
+														"cmp": {
+															"op": "OpLt",
+															"lhs": {
+																"dotRemainingTime": {
+																	"spellId": {
+																		"spellId": 47811
+																	}
+																}
+															},
+															"rhs": {
+																"spellCastTime": {
+																	"spellId": {
+																		"spellId": 47811
+																	}
+																}
+															}
+														}
+													},
+													{
+														"cmp": {
+															"op": "OpGe",
+															"lhs": {
+																"remainingTime": {}
+															},
+															"rhs": {
+																"const": {
+																	"val": "12s"
+																}
+															}
+														}
+													}
+												]
+											}
+										},
+										"castSpell": {
+											"spellId": {
+												"spellId": 47811
+											}
+										}
+									}
+								},
+								{
+									"action": {
+										"condition": {
+											"auraIsActive": {
+												"auraId": {
+													"spellId": 63167
+												}
+											}
+										},
+										"castSpell": {
+											"spellId": {
+												"spellId": 47825
+											}
+										}
+									}
+								},
+								{
+									"action": {
+										"condition": {
+											"auraIsActive": {
+												"auraId": {
+													"spellId": 71165
+												}
+											}
+										},
+										"castSpell": {
+											"spellId": {
+												"spellId": 47838
+											}
+										}
+									}
+								},
+								{
+									"action": {
+										"castSpell": {
+											"spellId": {
+												"spellId": 47809
+											}
+										}
+									}
+								},
+								{
+									"action": {
+										"castSpell": {
+											"spellId": {
+												"spellId": 57946
+											}
+										}
+									}
+								}
+							]
+						}
+					}
+				]
+			}
+		],
+		"numActiveParties": 1
+	},
+	"encounter": {
+		"duration": 20,
+		"executeProportion20": 0.2,
+		"executeProportion25": 0.25,
+		"executeProportion35": 0.35,
+		"targets": [
+			{
+				"level": 83,
+				"mobType": "MobTypeGiant",
+				"stats": [
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					805,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					10643,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0
+				],
+				"minBaseDamage": 65000,
+				"swingSpeed": 1.5,
+				"parryHaste": true
+			}
+		]
+	}
+}

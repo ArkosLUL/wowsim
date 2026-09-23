@@ -1,4 +1,15 @@
 .log-runner-root {
+	.log-runner-controls {
+		display: flex;
+		align-items: center;
+		gap: map-get($spacers, 3);
+		margin-bottom: map-get($spacers, 2);
+
+		.log-search-input {
+			max-width: 20rem;
+		}
+	}
+
 	.log-runner-table {
 		th {
 			padding: map-get($spacers, 2);

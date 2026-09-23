@@ -420,6 +420,18 @@ export class UnitMetrics {
 		return this.dps.avg * this.duration;
 	}
 
+	// DPS against the filter's target, pets included, or overall when the filter picks none.
+	getDps(filter?: SimResultFilter): number {
+		if (this.getTargetIndex(filter) == null) {
+			return this.dps.avg;
+		}
+		return sum(this.getPlayerAndPetActions().map(action => action.forTarget(filter).dps));
+	}
+
+	getTotalDamage(filter?: SimResultFilter): number {
+		return this.getDps(filter) * this.duration;
+	}
+
 	getPlayerAndPetActions(): Array<ActionMetrics> {
 		return this.actions.concat(this.pets.map(pet => pet.getPlayerAndPetActions()).flat());
 	}
@@ -572,6 +584,7 @@ export class AuraMetrics {
 			actionId,
 			AuraMetricsProto.create({
 				uptimeSecondsAvg: Math.max(...auras.map(a => a.data.uptimeSecondsAvg)),
+				procsAvg: sum(auras.map(a => a.data.procsAvg)),
 			}),
 			firstAura.resultData);
 	}
@@ -939,7 +952,7 @@ export class TargetedActionMetrics {
 	}
 
 	get avgCastTimeMs() {
-		return this.data.castTimeMs / this.iterations / this.casts;
+		return this.casts ? this.data.castTimeMs / this.iterations / this.casts : 0;
 	}
 
 	get healingThroughput() {

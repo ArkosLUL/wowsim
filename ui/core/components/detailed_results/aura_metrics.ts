@@ -1,5 +1,6 @@
 import { ActionId } from '../../proto_utils/action_id';
 import { AuraMetrics, SimResult, SimResultFilter } from '../../proto_utils/sim_result';
+import { bucket } from '../../utils';
 
 import { ColumnSortType, MetricsTable } from './metrics_table';
 import { ResultComponent, ResultComponentConfig, SimResultData } from './result_component';
@@ -55,7 +56,13 @@ export class AuraMetricsTable extends MetricsTable<AuraMetrics> {
 
 			const auras = player.auras;
 			const actionGroups = AuraMetrics.groupById(auras);
-			const petGroups = player.pets.map(pet => pet.auras);
+			const petsByName = bucket(player.pets, pet => pet.name);
+			const petGroups = Object.values(petsByName).map(pets => {
+				const auras = AuraMetrics.joinById(pets.map(pet => pet.auras).flat(), true);
+				// merging copies from several pets drops the unit, and the group is named after it
+				auras.forEach(aura => (aura.unit = pets[0]));
+				return auras;
+			});
 
 			return actionGroups.concat(petGroups);
 		}

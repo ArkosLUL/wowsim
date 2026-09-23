@@ -67,7 +67,10 @@ export class DtpsSpellMetricsTable extends MetricsTable<ActionMetrics> {
 		const player = players[0];
 
 		const targets = resultData.result.getTargets(resultData.filter);
-		const targetActions = targets.map(target => target.getSpellActions().map(action => action.forTarget(resultData.filter))).flat();
+		const targetActions = targets
+			.map(target => target.getSpellActions().map(action => action.forTarget(resultData.filter)))
+			.flat()
+			.filter(action => action.hitAttempts != 0 || action.damage != 0);
 		const actionGroups = ActionMetrics.groupById(targetActions);
 
 		return actionGroups;

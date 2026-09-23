@@ -6,7 +6,7 @@ import { SimRunData } from '../proto/ui.js';
 import { ActionMetrics, SimResult, SimResultFilter } from '../proto_utils/sim_result.js';
 import { SimUI } from '../sim_ui.js';
 import { EventID, TypedEvent } from '../typed_event.js';
-import { formatDeltaTextElem } from '../utils.js';
+import { formatDeltaTextElem, sum } from '../utils.js';
 import { Tooltip } from 'bootstrap';
 import tippy from 'tippy.js';
 
@@ -408,13 +408,10 @@ export class RaidSimResultsManager {
 				}
 
 				const targetActions = simResult.getTargets(filter)[0].actions.map(action => action.forTarget(filter));
-				if (targetActions.length > 0) {
-					const mergedTargetActions = ActionMetrics.merge(targetActions);
-					content += this.buildResultsLine({
-						average: mergedTargetActions.dps,
-						classes: this.getResultsLineClasses('dtps'),
-					}).outerHTML;
-				}
+				content += this.buildResultsLine({
+					average: targetActions.length > 0 ? ActionMetrics.merge(targetActions).dps : 0,
+					classes: this.getResultsLineClasses('dtps'),
+				}).outerHTML;
 			}
 
 			content += this.buildResultsLine({
@@ -426,6 +423,11 @@ export class RaidSimResultsManager {
 				average: playerMetrics.hps.avg,
 				stdev: playerMetrics.hps.stdev,
 				classes: this.getResultsLineClasses('hps'),
+			}).outerHTML;
+		} else if (filter?.target != null) {
+			content += this.buildResultsLine({
+				average: sum(players.map(player => player.getDps(filter))),
+				classes: this.getResultsLineClasses('dps'),
 			}).outerHTML;
 		} else {
 			const dpsMetrics = simResult.raidMetrics.dps;
