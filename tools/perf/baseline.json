@@ -1,0 +1,5698 @@
+{
+  "started": "2026-09-23T20:25:10.375619853Z",
+  "finished": "2026-09-23T20:55:06.956217909Z",
+  "args": [
+    "-note",
+    "idle: worldserver stopped; load sampled per minute in i2-baseline2-load.txt",
+    "-commit",
+    "93e62aecd"
+  ],
+  "commit": "93e62aecd",
+  "goVersion": "go1.23.12",
+  "numCPU": 16,
+  "iterations": 3000,
+  "note": "idle: worldserver stopped; load sampled per minute in i2-baseline2-load.txt",
+  "loadStart": "1.09 9.27 11.62",
+  "loadEnd": "16.14 14.20 10.57",
+  "points": [
+    {
+      "scenario": "sim/druid_feral",
+      "kind": "sim",
+      "gomaxprocs": 1,
+      "samples": [
+        {
+          "wallSeconds": 1.879692902,
+          "cpuSeconds": 1.882739,
+          "utilization": 1.0016205296071283,
+          "gcShare": 0.032259925534927195,
+          "allocBytes": 276156248,
+          "peakHeapBytes": 52316256
+        }
+      ]
+    },
+    {
+      "scenario": "sim/druid_feral",
+      "kind": "sim",
+      "gomaxprocs": 2,
+      "samples": [
+        {
+          "wallSeconds": 1.757480636,
+          "cpuSeconds": 1.8304369999999999,
+          "utilization": 0.5207559510203331,
+          "gcShare": 0.0041481069238484235,
+          "allocBytes": 276133184,
+          "peakHeapBytes": 49503536
+        }
+      ]
+    },
+    {
+      "scenario": "sim/druid_feral",
+      "kind": "sim",
+      "gomaxprocs": 4,
+      "samples": [
+        {
+          "wallSeconds": 0.605952032,
+          "cpuSeconds": 1.856392,
+          "utilization": 0.7658989086449668,
+          "gcShare": 0.028507685104783468,
+          "allocBytes": 276601080,
+          "peakHeapBytes": 52757920
+        }
+      ]
+    },
+    {
+      "scenario": "sim/druid_feral",
+      "kind": "sim",
+      "gomaxprocs": 8,
+      "samples": [
+        {
+          "wallSeconds": 0.333838076,
+          "cpuSeconds": 2.062665,
+          "utilization": 0.7723298914531247,
+          "gcShare": 0.032395827493725465,
+          "allocBytes": 277677240,
+          "peakHeapBytes": 52139584
+        }
+      ]
+    },
+    {
+      "scenario": "sim/druid_feral",
+      "kind": "sim",
+      "gomaxprocs": 12,
+      "samples": [
+        {
+          "wallSeconds": 0.273004913,
+          "cpuSeconds": 2.752688,
+          "utilization": 0.8402437309495109,
+          "gcShare": 0.03529641735251493,
+          "allocBytes": 278978552,
+          "peakHeapBytes": 54486112
+        }
+      ]
+    },
+    {
+      "scenario": "sim/druid_feral",
+      "kind": "sim",
+      "gomaxprocs": 16,
+      "samples": [
+        {
+          "wallSeconds": 0.253514411,
+          "cpuSeconds": 3.573994,
+          "utilization": 0.8811121392227285,
+          "gcShare": 0.035013127359854755,
+          "allocBytes": 280092232,
+          "peakHeapBytes": 63225408
+        },
+        {
+          "wallSeconds": 0.245360373,
+          "cpuSeconds": 3.405509,
+          "utilization": 0.8674763161531386,
+          "gcShare": 0.03586234313421044,
+          "allocBytes": 280265616,
+          "peakHeapBytes": 61960456
+        },
+        {
+          "wallSeconds": 0.233012552,
+          "cpuSeconds": 3.241624,
+          "utilization": 0.8694874943904308,
+          "gcShare": 0.03228167698313596,
+          "allocBytes": 280187768,
+          "peakHeapBytes": 63134936
+        }
+      ],
+      "cpuProfile": "sim_druid_feral.cpu.pprof"
+    },
+    {
+      "scenario": "sim/druid_tank",
+      "kind": "sim",
+      "gomaxprocs": 1,
+      "samples": [
+        {
+          "wallSeconds": 1.197853165,
+          "cpuSeconds": 1.199915,
+          "utilization": 1.0017212752449505,
+          "gcShare": 0,
+          "allocBytes": 18008320,
+          "peakHeapBytes": 42700520
+        }
+      ]
+    },
+    {
+      "scenario": "sim/druid_tank",
+      "kind": "sim",
+      "gomaxprocs": 2,
+      "samples": [
+        {
+          "wallSeconds": 1.207122754,
+          "cpuSeconds": 1.214172,
+          "utilization": 0.5029198546612766,
+          "gcShare": 0,
+          "allocBytes": 17967208,
+          "peakHeapBytes": 42649168
+        }
+      ]
+    },
+    {
+      "scenario": "sim/druid_tank",
+      "kind": "sim",
+      "gomaxprocs": 4,
+      "samples": [
+        {
+          "wallSeconds": 0.400767228,
+          "cpuSeconds": 1.197498,
+          "utilization": 0.7470034451020531,
+          "gcShare": 0,
+          "allocBytes": 18331384,
+          "peakHeapBytes": 43014320
+        }
+      ]
+    },
+    {
+      "scenario": "sim/druid_tank",
+      "kind": "sim",
+      "gomaxprocs": 8,
+      "samples": [
+        {
+          "wallSeconds": 0.23631377,
+          "cpuSeconds": 1.518413,
+          "utilization": 0.8031763235802974,
+          "gcShare": 0.004758692502099831,
+          "allocBytes": 19637824,
+          "peakHeapBytes": 42903856
+        }
+      ]
+    },
+    {
+      "scenario": "sim/druid_tank",
+      "kind": "sim",
+      "gomaxprocs": 12,
+      "samples": [
+        {
+          "wallSeconds": 0.167932174,
+          "cpuSeconds": 1.7372640000000001,
+          "utilization": 0.8620861419920641,
+          "gcShare": 0.007118573122325686,
+          "allocBytes": 20394272,
+          "peakHeapBytes": 41017096
+        }
+      ]
+    },
+    {
+      "scenario": "sim/druid_tank",
+      "kind": "sim",
+      "gomaxprocs": 16,
+      "samples": [
+        {
+          "wallSeconds": 0.171453774,
+          "cpuSeconds": 2.413027,
+          "utilization": 0.879620109732901,
+          "gcShare": 0.00792584327063017,
+          "allocBytes": 21347128,
+          "peakHeapBytes": 40201680
+        },
+        {
+          "wallSeconds": 0.168382008,
+          "cpuSeconds": 2.332458,
+          "utilization": 0.8657612932137024,
+          "gcShare": 0.005172528590837977,
+          "allocBytes": 21575048,
+          "peakHeapBytes": 42737608
+        },
+        {
+          "wallSeconds": 0.147255492,
+          "cpuSeconds": 2.11464,
+          "utilization": 0.8975217032991885,
+          "gcShare": 0.00500643194618877,
+          "allocBytes": 21989712,
+          "peakHeapBytes": 46179152
+        }
+      ],
+      "cpuProfile": "sim_druid_tank.cpu.pprof"
+    },
+    {
+      "scenario": "sim/hunter",
+      "kind": "sim",
+      "gomaxprocs": 1,
+      "samples": [
+        {
+          "wallSeconds": 1.310445406,
+          "cpuSeconds": 1.312535,
+          "utilization": 1.0015945677633213,
+          "gcShare": 0.017313998071184358,
+          "allocBytes": 105189992,
+          "peakHeapBytes": 51488264
+        }
+      ]
+    },
+    {
+      "scenario": "sim/hunter",
+      "kind": "sim",
+      "gomaxprocs": 2,
+      "samples": [
+        {
+          "wallSeconds": 1.282962377,
+          "cpuSeconds": 1.318001,
+          "utilization": 0.513655358733875,
+          "gcShare": 0.001432423153989074,
+          "allocBytes": 105164944,
+          "peakHeapBytes": 49063576
+        }
+      ]
+    },
+    {
+      "scenario": "sim/hunter",
+      "kind": "sim",
+      "gomaxprocs": 4,
+      "samples": [
+        {
+          "wallSeconds": 0.435601673,
+          "cpuSeconds": 1.319468,
+          "utilization": 0.7572675231667442,
+          "gcShare": 0.012153122304490916,
+          "allocBytes": 105843368,
+          "peakHeapBytes": 50684840
+        }
+      ]
+    },
+    {
+      "scenario": "sim/hunter",
+      "kind": "sim",
+      "gomaxprocs": 8,
+      "samples": [
+        {
+          "wallSeconds": 0.253369865,
+          "cpuSeconds": 1.7121110000000002,
+          "utilization": 0.8446698071216954,
+          "gcShare": 0.01914274943930256,
+          "allocBytes": 107378416,
+          "peakHeapBytes": 52999952
+        }
+      ]
+    },
+    {
+      "scenario": "sim/hunter",
+      "kind": "sim",
+      "gomaxprocs": 12,
+      "samples": [
+        {
+          "wallSeconds": 0.179731144,
+          "cpuSeconds": 1.8274110000000001,
+          "utilization": 0.8472891598575704,
+          "gcShare": 0.02270284604691384,
+          "allocBytes": 108810272,
+          "peakHeapBytes": 54615832
+        }
+      ]
+    },
+    {
+      "scenario": "sim/hunter",
+      "kind": "sim",
+      "gomaxprocs": 16,
+      "samples": [
+        {
+          "wallSeconds": 0.156835444,
+          "cpuSeconds": 2.148795,
+          "utilization": 0.8563095437788922,
+          "gcShare": 0.02214701230060963,
+          "allocBytes": 110413352,
+          "peakHeapBytes": 56107208
+        },
+        {
+          "wallSeconds": 0.172170786,
+          "cpuSeconds": 2.45034,
+          "utilization": 0.8895019506967925,
+          "gcShare": 0.021418779236352697,
+          "allocBytes": 110379136,
+          "peakHeapBytes": 58697112
+        },
+        {
+          "wallSeconds": 0.159891162,
+          "cpuSeconds": 2.236886,
+          "utilization": 0.8743783787123894,
+          "gcShare": 0.022495059095841728,
+          "allocBytes": 110498336,
+          "peakHeapBytes": 63160616
+        }
+      ],
+      "cpuProfile": "sim_hunter.cpu.pprof"
+    },
+    {
+      "scenario": "sim/paladin_holy",
+      "kind": "sim",
+      "gomaxprocs": 1,
+      "samples": [
+        {
+          "wallSeconds": 0.021607082,
+          "cpuSeconds": 0.021659,
+          "utilization": 1.002402823296547,
+          "gcShare": 0,
+          "allocBytes": 2741176,
+          "peakHeapBytes": 27662456
+        }
+      ]
+    },
+    {
+      "scenario": "sim/paladin_holy",
+      "kind": "sim",
+      "gomaxprocs": 2,
+      "samples": [
+        {
+          "wallSeconds": 0.020113381,
+          "cpuSeconds": 0.022323,
+          "utilization": 0.5549290793029774,
+          "gcShare": 0,
+          "allocBytes": 2732072,
+          "peakHeapBytes": 27645592
+        }
+      ]
+    },
+    {
+      "scenario": "sim/paladin_holy",
+      "kind": "sim",
+      "gomaxprocs": 4,
+      "samples": [
+        {
+          "wallSeconds": 0.007097307,
+          "cpuSeconds": 0.020678,
+          "utilization": 0.7283748610564542,
+          "gcShare": 0,
+          "allocBytes": 3102336,
+          "peakHeapBytes": 28016640
+        }
+      ]
+    },
+    {
+      "scenario": "sim/paladin_holy",
+      "kind": "sim",
+      "gomaxprocs": 8,
+      "samples": [
+        {
+          "wallSeconds": 0.00420852,
+          "cpuSeconds": 0.023312,
+          "utilization": 0.6924049309495974,
+          "gcShare": 0,
+          "allocBytes": 3871520,
+          "peakHeapBytes": 28787608
+        }
+      ]
+    },
+    {
+      "scenario": "sim/paladin_holy",
+      "kind": "sim",
+      "gomaxprocs": 12,
+      "samples": [
+        {
+          "wallSeconds": 0.004467519,
+          "cpuSeconds": 0.034268,
+          "utilization": 0.6392063842742844,
+          "gcShare": 0,
+          "allocBytes": 4633248,
+          "peakHeapBytes": 29552376
+        }
+      ]
+    },
+    {
+      "scenario": "sim/paladin_holy",
+      "kind": "sim",
+      "gomaxprocs": 16,
+      "samples": [
+        {
+          "wallSeconds": 0.003906856,
+          "cpuSeconds": 0.044884,
+          "utilization": 0.7180326072934349,
+          "gcShare": 0,
+          "allocBytes": 5380440,
+          "peakHeapBytes": 30302560
+        },
+        {
+          "wallSeconds": 0.003721094,
+          "cpuSeconds": 0.042572,
+          "utilization": 0.715045091577907,
+          "gcShare": 0,
+          "allocBytes": 5400792,
+          "peakHeapBytes": 30312056
+        },
+        {
+          "wallSeconds": 0.003846567,
+          "cpuSeconds": 0.046132,
+          "utilization": 0.7495644817833669,
+          "gcShare": 0,
+          "allocBytes": 5375976,
+          "peakHeapBytes": 31475304
+        }
+      ],
+      "cpuProfile": "sim_paladin_holy.cpu.pprof"
+    },
+    {
+      "scenario": "sim/paladin_protection",
+      "kind": "sim",
+      "gomaxprocs": 1,
+      "samples": [
+        {
+          "wallSeconds": 0.191361819,
+          "cpuSeconds": 0.1917,
+          "utilization": 1.001767233410339,
+          "gcShare": 0,
+          "allocBytes": 3017160,
+          "peakHeapBytes": 27941640
+        }
+      ]
+    },
+    {
+      "scenario": "sim/paladin_protection",
+      "kind": "sim",
+      "gomaxprocs": 2,
+      "samples": [
+        {
+          "wallSeconds": 0.187618558,
+          "cpuSeconds": 0.191351,
+          "utilization": 0.5099468891558159,
+          "gcShare": 0,
+          "allocBytes": 3001992,
+          "peakHeapBytes": 27916696
+        }
+      ]
+    },
+    {
+      "scenario": "sim/paladin_protection",
+      "kind": "sim",
+      "gomaxprocs": 4,
+      "samples": [
+        {
+          "wallSeconds": 0.069198271,
+          "cpuSeconds": 0.206596,
+          "utilization": 0.7463914813709723,
+          "gcShare": 0,
+          "allocBytes": 3376528,
+          "peakHeapBytes": 28292016
+        }
+      ]
+    },
+    {
+      "scenario": "sim/paladin_protection",
+      "kind": "sim",
+      "gomaxprocs": 8,
+      "samples": [
+        {
+          "wallSeconds": 0.034427243,
+          "cpuSeconds": 0.211845,
+          "utilization": 0.7691764629540623,
+          "gcShare": 0,
+          "allocBytes": 4087888,
+          "peakHeapBytes": 29005456
+        }
+      ]
+    },
+    {
+      "scenario": "sim/paladin_protection",
+      "kind": "sim",
+      "gomaxprocs": 12,
+      "samples": [
+        {
+          "wallSeconds": 0.028486115,
+          "cpuSeconds": 0.291769,
+          "utilization": 0.8535415704575136,
+          "gcShare": 0,
+          "allocBytes": 4788864,
+          "peakHeapBytes": 29710080
+        }
+      ]
+    },
+    {
+      "scenario": "sim/paladin_protection",
+      "kind": "sim",
+      "gomaxprocs": 16,
+      "samples": [
+        {
+          "wallSeconds": 0.026996702,
+          "cpuSeconds": 0.349754,
+          "utilization": 0.8097146458852641,
+          "gcShare": 0,
+          "allocBytes": 5433192,
+          "peakHeapBytes": 30366224
+        },
+        {
+          "wallSeconds": 0.025265289,
+          "cpuSeconds": 0.337254,
+          "utilization": 0.8342819668518338,
+          "gcShare": 0,
+          "allocBytes": 5452984,
+          "peakHeapBytes": 30367632
+        },
+        {
+          "wallSeconds": 0.025926058,
+          "cpuSeconds": 0.328589,
+          "utilization": 0.792130161091208,
+          "gcShare": 0,
+          "allocBytes": 5388584,
+          "peakHeapBytes": 31491024
+        }
+      ],
+      "cpuProfile": "sim_paladin_protection.cpu.pprof"
+    },
+    {
+      "scenario": "sim/paladin_retribution",
+      "kind": "sim",
+      "gomaxprocs": 1,
+      "samples": [
+        {
+          "wallSeconds": 0.982719991,
+          "cpuSeconds": 0.984334,
+          "utilization": 1.0016423895054356,
+          "gcShare": 0.011496411173553576,
+          "allocBytes": 50946328,
+          "peakHeapBytes": 50051288
+        }
+      ]
+    },
+    {
+      "scenario": "sim/paladin_retribution",
+      "kind": "sim",
+      "gomaxprocs": 2,
+      "samples": [
+        {
+          "wallSeconds": 0.965548626,
+          "cpuSeconds": 0.984999,
+          "utilization": 0.5100721877056453,
+          "gcShare": 0.0021252653960690837,
+          "allocBytes": 50963848,
+          "peakHeapBytes": 49111256
+        }
+      ]
+    },
+    {
+      "scenario": "sim/paladin_retribution",
+      "kind": "sim",
+      "gomaxprocs": 4,
+      "samples": [
+        {
+          "wallSeconds": 0.352124594,
+          "cpuSeconds": 1.054751,
+          "utilization": 0.7488478637763086,
+          "gcShare": 0.006830366855300808,
+          "allocBytes": 51507088,
+          "peakHeapBytes": 49597296
+        }
+      ]
+    },
+    {
+      "scenario": "sim/paladin_retribution",
+      "kind": "sim",
+      "gomaxprocs": 8,
+      "samples": [
+        {
+          "wallSeconds": 0.170759849,
+          "cpuSeconds": 1.130066,
+          "utilization": 0.8272333972373096,
+          "gcShare": 0.011935858376668832,
+          "allocBytes": 52629248,
+          "peakHeapBytes": 49556392
+        }
+      ]
+    },
+    {
+      "scenario": "sim/paladin_retribution",
+      "kind": "sim",
+      "gomaxprocs": 12,
+      "samples": [
+        {
+          "wallSeconds": 0.150331866,
+          "cpuSeconds": 1.540707,
+          "utilization": 0.8540587795271563,
+          "gcShare": 0.01583801065506872,
+          "allocBytes": 53895216,
+          "peakHeapBytes": 51060720
+        }
+      ]
+    },
+    {
+      "scenario": "sim/paladin_retribution",
+      "kind": "sim",
+      "gomaxprocs": 16,
+      "samples": [
+        {
+          "wallSeconds": 0.122186218,
+          "cpuSeconds": 1.735023,
+          "utilization": 0.8874891069956843,
+          "gcShare": 0.016128169440247753,
+          "allocBytes": 55181192,
+          "peakHeapBytes": 54628664
+        },
+        {
+          "wallSeconds": 0.131401724,
+          "cpuSeconds": 1.662221,
+          "utilization": 0.7906198589905867,
+          "gcShare": 0.01529206543482626,
+          "allocBytes": 54988304,
+          "peakHeapBytes": 51538512
+        },
+        {
+          "wallSeconds": 0.131844024,
+          "cpuSeconds": 1.875832,
+          "utilization": 0.889228775359587,
+          "gcShare": 0.017120317826776366,
+          "allocBytes": 55282168,
+          "peakHeapBytes": 54654048
+        }
+      ],
+      "cpuProfile": "sim_paladin_retribution.cpu.pprof"
+    },
+    {
+      "scenario": "sim/raid",
+      "kind": "sim",
+      "gomaxprocs": 1,
+      "samples": [
+        {
+          "wallSeconds": 9.210032785,
+          "cpuSeconds": 9.225623,
+          "utilization": 1.0016927426170938,
+          "gcShare": 0.01741271181245237,
+          "allocBytes": 655165488,
+          "peakHeapBytes": 58774856
+        }
+      ]
+    },
+    {
+      "scenario": "sim/raid",
+      "kind": "sim",
+      "gomaxprocs": 2,
+      "samples": [
+        {
+          "wallSeconds": 8.809417921,
+          "cpuSeconds": 9.024287,
+          "utilization": 0.5121954186375806,
+          "gcShare": 0.0030290813906760105,
+          "allocBytes": 650837912,
+          "peakHeapBytes": 56892320
+        }
+      ]
+    },
+    {
+      "scenario": "sim/raid",
+      "kind": "sim",
+      "gomaxprocs": 4,
+      "samples": [
+        {
+          "wallSeconds": 3.120834921,
+          "cpuSeconds": 9.414855,
+          "utilization": 0.7541936083071661,
+          "gcShare": 0.009564549022411906,
+          "allocBytes": 665915576,
+          "peakHeapBytes": 68548040
+        }
+      ]
+    },
+    {
+      "scenario": "sim/raid",
+      "kind": "sim",
+      "gomaxprocs": 8,
+      "samples": [
+        {
+          "wallSeconds": 1.530001291,
+          "cpuSeconds": 10.544292,
+          "utilization": 0.8614610378129413,
+          "gcShare": 0.014535400298141295,
+          "allocBytes": 697795672,
+          "peakHeapBytes": 94630512
+        }
+      ]
+    },
+    {
+      "scenario": "sim/raid",
+      "kind": "sim",
+      "gomaxprocs": 12,
+      "samples": [
+        {
+          "wallSeconds": 1.177646907,
+          "cpuSeconds": 12.554391,
+          "utilization": 0.888381096049531,
+          "gcShare": 0.01772870070538287,
+          "allocBytes": 737777600,
+          "peakHeapBytes": 122161656
+        }
+      ]
+    },
+    {
+      "scenario": "sim/raid",
+      "kind": "sim",
+      "gomaxprocs": 16,
+      "samples": [
+        {
+          "wallSeconds": 1.044600589,
+          "cpuSeconds": 15.289151,
+          "utilization": 0.9147725432691671,
+          "gcShare": 0.019548693876901252,
+          "allocBytes": 782064800,
+          "peakHeapBytes": 141678416
+        },
+        {
+          "wallSeconds": 1.017479219,
+          "cpuSeconds": 14.594533,
+          "utilization": 0.8964883955040266,
+          "gcShare": 0.019216241199039804,
+          "allocBytes": 782016272,
+          "peakHeapBytes": 146410216
+        },
+        {
+          "wallSeconds": 1.065948181,
+          "cpuSeconds": 15.328119,
+          "utilization": 0.8987373444375716,
+          "gcShare": 0.017940896993074985,
+          "allocBytes": 783281696,
+          "peakHeapBytes": 152356824
+        }
+      ],
+      "cpuProfile": "sim_raid.cpu.pprof"
+    },
+    {
+      "scenario": "sim/rogue",
+      "kind": "sim",
+      "gomaxprocs": 1,
+      "samples": [
+        {
+          "wallSeconds": 3.82151088,
+          "cpuSeconds": 3.828318,
+          "utilization": 1.0017812640638093,
+          "gcShare": 0.005533611085374227,
+          "allocBytes": 82080912,
+          "peakHeapBytes": 47457288
+        }
+      ]
+    },
+    {
+      "scenario": "sim/rogue",
+      "kind": "sim",
+      "gomaxprocs": 2,
+      "samples": [
+        {
+          "wallSeconds": 3.770972756,
+          "cpuSeconds": 3.8099309999999997,
+          "utilization": 0.5051655430204333,
+          "gcShare": 0.0021770124329302666,
+          "allocBytes": 82079040,
+          "peakHeapBytes": 49621648
+        }
+      ]
+    },
+    {
+      "scenario": "sim/rogue",
+      "kind": "sim",
+      "gomaxprocs": 4,
+      "samples": [
+        {
+          "wallSeconds": 1.284634877,
+          "cpuSeconds": 3.835849,
+          "utilization": 0.7464862329127002,
+          "gcShare": 0.003470473388677537,
+          "allocBytes": 82773136,
+          "peakHeapBytes": 50278384
+        }
+      ]
+    },
+    {
+      "scenario": "sim/rogue",
+      "kind": "sim",
+      "gomaxprocs": 8,
+      "samples": [
+        {
+          "wallSeconds": 0.650470696,
+          "cpuSeconds": 4.442064,
+          "utilization": 0.8536249264025263,
+          "gcShare": 0.005987196527655497,
+          "allocBytes": 84489216,
+          "peakHeapBytes": 52097936
+        }
+      ]
+    },
+    {
+      "scenario": "sim/rogue",
+      "kind": "sim",
+      "gomaxprocs": 12,
+      "samples": [
+        {
+          "wallSeconds": 0.497618659,
+          "cpuSeconds": 5.266803,
+          "utilization": 0.8820011911972939,
+          "gcShare": 0.007041084750392865,
+          "allocBytes": 86039848,
+          "peakHeapBytes": 53135000
+        }
+      ]
+    },
+    {
+      "scenario": "sim/rogue",
+      "kind": "sim",
+      "gomaxprocs": 16,
+      "samples": [
+        {
+          "wallSeconds": 0.435172911,
+          "cpuSeconds": 6.296422,
+          "utilization": 0.9042988776477403,
+          "gcShare": 0.006912645771266371,
+          "allocBytes": 87894328,
+          "peakHeapBytes": 55903312
+        },
+        {
+          "wallSeconds": 0.456614102,
+          "cpuSeconds": 6.653557,
+          "utilization": 0.9107193813738148,
+          "gcShare": 0.008729608887697655,
+          "allocBytes": 87815704,
+          "peakHeapBytes": 55014840
+        },
+        {
+          "wallSeconds": 0.46883481,
+          "cpuSeconds": 6.797047,
+          "utilization": 0.9061089928454759,
+          "gcShare": 0.0067842933309008825,
+          "allocBytes": 88087144,
+          "peakHeapBytes": 58749672
+        }
+      ],
+      "cpuProfile": "sim_rogue.cpu.pprof"
+    },
+    {
+      "scenario": "sim/shaman_elemental",
+      "kind": "sim",
+      "gomaxprocs": 1,
+      "samples": [
+        {
+          "wallSeconds": 0.457391704,
+          "cpuSeconds": 0.458184,
+          "utilization": 1.0017322045701116,
+          "gcShare": 0.01325977011282444,
+          "allocBytes": 25968712,
+          "peakHeapBytes": 48853672
+        }
+      ]
+    },
+    {
+      "scenario": "sim/shaman_elemental",
+      "kind": "sim",
+      "gomaxprocs": 2,
+      "samples": [
+        {
+          "wallSeconds": 0.463629499,
+          "cpuSeconds": 0.477502,
+          "utilization": 0.5149607618043303,
+          "gcShare": 0.000986025601106373,
+          "allocBytes": 25980616,
+          "peakHeapBytes": 48829624
+        }
+      ]
+    },
+    {
+      "scenario": "sim/shaman_elemental",
+      "kind": "sim",
+      "gomaxprocs": 4,
+      "samples": [
+        {
+          "wallSeconds": 0.16020956,
+          "cpuSeconds": 0.48228,
+          "utilization": 0.7525768125198021,
+          "gcShare": 0.007651630695196998,
+          "allocBytes": 26695224,
+          "peakHeapBytes": 48634264
+        }
+      ]
+    },
+    {
+      "scenario": "sim/shaman_elemental",
+      "kind": "sim",
+      "gomaxprocs": 8,
+      "samples": [
+        {
+          "wallSeconds": 0.084990402,
+          "cpuSeconds": 0.562317,
+          "utilization": 0.8270301510045803,
+          "gcShare": 0.013997274092615294,
+          "allocBytes": 28129480,
+          "peakHeapBytes": 46452200
+        }
+      ]
+    },
+    {
+      "scenario": "sim/shaman_elemental",
+      "kind": "sim",
+      "gomaxprocs": 12,
+      "samples": [
+        {
+          "wallSeconds": 0.07093985,
+          "cpuSeconds": 0.688251,
+          "utilization": 0.8084912781743969,
+          "gcShare": 0.0199341762722183,
+          "allocBytes": 29689744,
+          "peakHeapBytes": 44013240
+        }
+      ]
+    },
+    {
+      "scenario": "sim/shaman_elemental",
+      "kind": "sim",
+      "gomaxprocs": 16,
+      "samples": [
+        {
+          "wallSeconds": 0.058972681,
+          "cpuSeconds": 0.83328,
+          "utilization": 0.8831207792638764,
+          "gcShare": 0.02298098385177362,
+          "allocBytes": 31204032,
+          "peakHeapBytes": 44099008
+        },
+        {
+          "wallSeconds": 0.066098208,
+          "cpuSeconds": 0.812255,
+          "utilization": 0.7680380306225547,
+          "gcShare": 0.022149122555617805,
+          "allocBytes": 31146640,
+          "peakHeapBytes": 43100984
+        },
+        {
+          "wallSeconds": 0.062179531,
+          "cpuSeconds": 0.865346,
+          "utilization": 0.8698059334027463,
+          "gcShare": 0.020794350822214015,
+          "allocBytes": 31167464,
+          "peakHeapBytes": 44417712
+        }
+      ],
+      "cpuProfile": "sim_shaman_elemental.cpu.pprof"
+    },
+    {
+      "scenario": "sim/shaman_enhancement",
+      "kind": "sim",
+      "gomaxprocs": 1,
+      "samples": [
+        {
+          "wallSeconds": 2.191019369,
+          "cpuSeconds": 2.194556,
+          "utilization": 1.0016141486698102,
+          "gcShare": 0.0053467058276999305,
+          "allocBytes": 51261424,
+          "peakHeapBytes": 50674496
+        }
+      ]
+    },
+    {
+      "scenario": "sim/shaman_enhancement",
+      "kind": "sim",
+      "gomaxprocs": 2,
+      "samples": [
+        {
+          "wallSeconds": 2.173001958,
+          "cpuSeconds": 2.204432,
+          "utilization": 0.5072319405613716,
+          "gcShare": 0.0003616547686001732,
+          "allocBytes": 51256480,
+          "peakHeapBytes": 50152368
+        }
+      ]
+    },
+    {
+      "scenario": "sim/shaman_enhancement",
+      "kind": "sim",
+      "gomaxprocs": 4,
+      "samples": [
+        {
+          "wallSeconds": 0.743173587,
+          "cpuSeconds": 2.219551,
+          "utilization": 0.7466462206224775,
+          "gcShare": 0.003259108804718274,
+          "allocBytes": 52476760,
+          "peakHeapBytes": 51320456
+        }
+      ]
+    },
+    {
+      "scenario": "sim/shaman_enhancement",
+      "kind": "sim",
+      "gomaxprocs": 8,
+      "samples": [
+        {
+          "wallSeconds": 0.387466695,
+          "cpuSeconds": 2.569544,
+          "utilization": 0.8289564087566287,
+          "gcShare": 0.007515287250613523,
+          "allocBytes": 54878272,
+          "peakHeapBytes": 53967464
+        }
+      ]
+    },
+    {
+      "scenario": "sim/shaman_enhancement",
+      "kind": "sim",
+      "gomaxprocs": 12,
+      "samples": [
+        {
+          "wallSeconds": 0.287518286,
+          "cpuSeconds": 3.059311,
+          "utilization": 0.886700414363674,
+          "gcShare": 0.00891625233694209,
+          "allocBytes": 57341936,
+          "peakHeapBytes": 55741648
+        }
+      ]
+    },
+    {
+      "scenario": "sim/shaman_enhancement",
+      "kind": "sim",
+      "gomaxprocs": 16,
+      "samples": [
+        {
+          "wallSeconds": 0.256359507,
+          "cpuSeconds": 3.68951,
+          "utilization": 0.8994960931954047,
+          "gcShare": 0.008634578686347651,
+          "allocBytes": 60228968,
+          "peakHeapBytes": 59263088
+        },
+        {
+          "wallSeconds": 0.250051669,
+          "cpuSeconds": 3.64938,
+          "utilization": 0.9121564791475157,
+          "gcShare": 0.009167016514618513,
+          "allocBytes": 60122920,
+          "peakHeapBytes": 57938448
+        },
+        {
+          "wallSeconds": 0.272336461,
+          "cpuSeconds": 3.95843,
+          "utilization": 0.9084419841968939,
+          "gcShare": 0.009822061248306074,
+          "allocBytes": 60314944,
+          "peakHeapBytes": 61101720
+        }
+      ],
+      "cpuProfile": "sim_shaman_enhancement.cpu.pprof"
+    },
+    {
+      "scenario": "sim/shaman_restoration",
+      "kind": "sim",
+      "gomaxprocs": 1,
+      "samples": [
+        {
+          "wallSeconds": 0.031584489,
+          "cpuSeconds": 0.031666,
+          "utilization": 1.0025807287874753,
+          "gcShare": 0,
+          "allocBytes": 3235584,
+          "peakHeapBytes": 28571704
+        }
+      ]
+    },
+    {
+      "scenario": "sim/shaman_restoration",
+      "kind": "sim",
+      "gomaxprocs": 2,
+      "samples": [
+        {
+          "wallSeconds": 0.036220076,
+          "cpuSeconds": 0.042307,
+          "utilization": 0.5840269357800354,
+          "gcShare": 0,
+          "allocBytes": 3227424,
+          "peakHeapBytes": 28553544
+        }
+      ]
+    },
+    {
+      "scenario": "sim/shaman_restoration",
+      "kind": "sim",
+      "gomaxprocs": 4,
+      "samples": [
+        {
+          "wallSeconds": 0.010031074,
+          "cpuSeconds": 0.029858,
+          "utilization": 0.7441376666147613,
+          "gcShare": 0,
+          "allocBytes": 3814640,
+          "peakHeapBytes": 29141240
+        }
+      ]
+    },
+    {
+      "scenario": "sim/shaman_restoration",
+      "kind": "sim",
+      "gomaxprocs": 8,
+      "samples": [
+        {
+          "wallSeconds": 0.005168762,
+          "cpuSeconds": 0.033611,
+          "utilization": 0.8128397090057542,
+          "gcShare": 0,
+          "allocBytes": 5072896,
+          "peakHeapBytes": 30401680
+        }
+      ]
+    },
+    {
+      "scenario": "sim/shaman_restoration",
+      "kind": "sim",
+      "gomaxprocs": 12,
+      "samples": [
+        {
+          "wallSeconds": 0.006021757,
+          "cpuSeconds": 0.04919,
+          "utilization": 0.6807260184472184,
+          "gcShare": 0,
+          "allocBytes": 6262216,
+          "peakHeapBytes": 31594552
+        }
+      ]
+    },
+    {
+      "scenario": "sim/shaman_restoration",
+      "kind": "sim",
+      "gomaxprocs": 16,
+      "samples": [
+        {
+          "wallSeconds": 0.005033594,
+          "cpuSeconds": 0.060448,
+          "utilization": 0.7505571565763945,
+          "gcShare": 0,
+          "allocBytes": 7608696,
+          "peakHeapBytes": 32944776
+        },
+        {
+          "wallSeconds": 0.005401188,
+          "cpuSeconds": 0.063237,
+          "utilization": 0.7317487374999722,
+          "gcShare": 0,
+          "allocBytes": 7499224,
+          "peakHeapBytes": 32799936
+        },
+        {
+          "wallSeconds": 0.004914598,
+          "cpuSeconds": 0.059462,
+          "utilization": 0.7561910455341414,
+          "gcShare": 0,
+          "allocBytes": 7683448,
+          "peakHeapBytes": 34172752
+        }
+      ],
+      "cpuProfile": "sim_shaman_restoration.cpu.pprof"
+    },
+    {
+      "scenario": "sim/warrior_dps",
+      "kind": "sim",
+      "gomaxprocs": 1,
+      "samples": [
+        {
+          "wallSeconds": 1.8511644760000001,
+          "cpuSeconds": 1.854247,
+          "utilization": 1.0016651810468298,
+          "gcShare": 0.021618831620119353,
+          "allocBytes": 182900568,
+          "peakHeapBytes": 53357216
+        }
+      ]
+    },
+    {
+      "scenario": "sim/warrior_dps",
+      "kind": "sim",
+      "gomaxprocs": 2,
+      "samples": [
+        {
+          "wallSeconds": 1.791941349,
+          "cpuSeconds": 1.842038,
+          "utilization": 0.5139783177133439,
+          "gcShare": 0.006585572274906481,
+          "allocBytes": 182881432,
+          "peakHeapBytes": 50746808
+        }
+      ]
+    },
+    {
+      "scenario": "sim/warrior_dps",
+      "kind": "sim",
+      "gomaxprocs": 4,
+      "samples": [
+        {
+          "wallSeconds": 0.651417509,
+          "cpuSeconds": 1.955468,
+          "utilization": 0.7504664723403989,
+          "gcShare": 0.0134311678189745,
+          "allocBytes": 183488800,
+          "peakHeapBytes": 52665072
+        }
+      ]
+    },
+    {
+      "scenario": "sim/warrior_dps",
+      "kind": "sim",
+      "gomaxprocs": 8,
+      "samples": [
+        {
+          "wallSeconds": 0.305328635,
+          "cpuSeconds": 2.060683,
+          "utilization": 0.8436332052511223,
+          "gcShare": 0.02084784190267876,
+          "allocBytes": 184950968,
+          "peakHeapBytes": 54482776
+        }
+      ]
+    },
+    {
+      "scenario": "sim/warrior_dps",
+      "kind": "sim",
+      "gomaxprocs": 12,
+      "samples": [
+        {
+          "wallSeconds": 0.254611169,
+          "cpuSeconds": 2.647513,
+          "utilization": 0.8665216227546298,
+          "gcShare": 0.02531110991321784,
+          "allocBytes": 186004248,
+          "peakHeapBytes": 55367160
+        }
+      ]
+    },
+    {
+      "scenario": "sim/warrior_dps",
+      "kind": "sim",
+      "gomaxprocs": 16,
+      "samples": [
+        {
+          "wallSeconds": 0.220550384,
+          "cpuSeconds": 3.1060470000000002,
+          "utilization": 0.8801976853506636,
+          "gcShare": 0.028560461101933252,
+          "allocBytes": 188035384,
+          "peakHeapBytes": 59985216
+        },
+        {
+          "wallSeconds": 0.207349952,
+          "cpuSeconds": 2.926581,
+          "utilization": 0.8821381955275303,
+          "gcShare": 0.027151267794270278,
+          "allocBytes": 187087184,
+          "peakHeapBytes": 56566240
+        },
+        {
+          "wallSeconds": 0.302291739,
+          "cpuSeconds": 3.8963799999999997,
+          "utilization": 0.8055918127488094,
+          "gcShare": 0.024047049293073244,
+          "allocBytes": 187849792,
+          "peakHeapBytes": 69102608
+        }
+      ],
+      "cpuProfile": "sim_warrior_dps.cpu.pprof"
+    },
+    {
+      "scenario": "sim/warrior_protection",
+      "kind": "sim",
+      "gomaxprocs": 1,
+      "samples": [
+        {
+          "wallSeconds": 1.481639581,
+          "cpuSeconds": 1.484078,
+          "utilization": 1.0016457571944415,
+          "gcShare": 0.011121815788624092,
+          "allocBytes": 54289952,
+          "peakHeapBytes": 46160880
+        }
+      ]
+    },
+    {
+      "scenario": "sim/warrior_protection",
+      "kind": "sim",
+      "gomaxprocs": 2,
+      "samples": [
+        {
+          "wallSeconds": 1.419717449,
+          "cpuSeconds": 1.439727,
+          "utilization": 0.5070470187621114,
+          "gcShare": 0.0029295155758426858,
+          "allocBytes": 54310992,
+          "peakHeapBytes": 44214352
+        }
+      ]
+    },
+    {
+      "scenario": "sim/warrior_protection",
+      "kind": "sim",
+      "gomaxprocs": 4,
+      "samples": [
+        {
+          "wallSeconds": 0.496061035,
+          "cpuSeconds": 1.468875,
+          "utilization": 0.7402692896449728,
+          "gcShare": 0.0061428876628988535,
+          "allocBytes": 54723904,
+          "peakHeapBytes": 50959728
+        }
+      ]
+    },
+    {
+      "scenario": "sim/warrior_protection",
+      "kind": "sim",
+      "gomaxprocs": 8,
+      "samples": [
+        {
+          "wallSeconds": 0.233013732,
+          "cpuSeconds": 1.581165,
+          "utilization": 0.8482144949294232,
+          "gcShare": 0.010680644441614512,
+          "allocBytes": 55825992,
+          "peakHeapBytes": 51364216
+        }
+      ]
+    },
+    {
+      "scenario": "sim/warrior_protection",
+      "kind": "sim",
+      "gomaxprocs": 12,
+      "samples": [
+        {
+          "wallSeconds": 0.224513859,
+          "cpuSeconds": 2.418239,
+          "utilization": 0.8975834167398399,
+          "gcShare": 0.011594034232802558,
+          "allocBytes": 57020984,
+          "peakHeapBytes": 52387296
+        }
+      ]
+    },
+    {
+      "scenario": "sim/warrior_protection",
+      "kind": "sim",
+      "gomaxprocs": 16,
+      "samples": [
+        {
+          "wallSeconds": 0.182215996,
+          "cpuSeconds": 2.5543,
+          "utilization": 0.8761236856505178,
+          "gcShare": 0.011230414407839487,
+          "allocBytes": 57983528,
+          "peakHeapBytes": 56573104
+        },
+        {
+          "wallSeconds": 0.189499439,
+          "cpuSeconds": 2.61622,
+          "utilization": 0.8628719476050798,
+          "gcShare": 0.01021939396129271,
+          "allocBytes": 58060984,
+          "peakHeapBytes": 56562736
+        },
+        {
+          "wallSeconds": 0.210753454,
+          "cpuSeconds": 3.009058,
+          "utilization": 0.8923513300996718,
+          "gcShare": 0.010484703974501243,
+          "allocBytes": 58287840,
+          "peakHeapBytes": 55772368
+        }
+      ],
+      "cpuProfile": "sim_warrior_protection.cpu.pprof"
+    },
+    {
+      "scenario": "statweights/rogue",
+      "kind": "statweights",
+      "gomaxprocs": 1,
+      "samples": [
+        {
+          "wallSeconds": 49.695068627,
+          "cpuSeconds": 49.776144,
+          "utilization": 1.0016314571091256,
+          "gcShare": 0.004523146965276334,
+          "allocBytes": 1052540824,
+          "peakHeapBytes": 64656272
+        }
+      ]
+    },
+    {
+      "scenario": "statweights/rogue",
+      "kind": "statweights",
+      "gomaxprocs": 2,
+      "samples": [
+        {
+          "wallSeconds": 26.938922847,
+          "cpuSeconds": 51.894917,
+          "utilization": 0.9631958429581229,
+          "gcShare": 0.004485380334697586,
+          "allocBytes": 1042730472,
+          "peakHeapBytes": 64592808
+        }
+      ]
+    },
+    {
+      "scenario": "statweights/rogue",
+      "kind": "statweights",
+      "gomaxprocs": 4,
+      "samples": [
+        {
+          "wallSeconds": 14.736957246,
+          "cpuSeconds": 52.632565,
+          "utilization": 0.8928668944582484,
+          "gcShare": 0.0042623636442517,
+          "allocBytes": 1048794464,
+          "peakHeapBytes": 65114120
+        }
+      ]
+    },
+    {
+      "scenario": "statweights/rogue",
+      "kind": "statweights",
+      "gomaxprocs": 8,
+      "samples": [
+        {
+          "wallSeconds": 9.360247634,
+          "cpuSeconds": 60.183438,
+          "utilization": 0.8037105474297327,
+          "gcShare": 0.004825479727051448,
+          "allocBytes": 1052526696,
+          "peakHeapBytes": 68947648
+        }
+      ]
+    },
+    {
+      "scenario": "statweights/rogue",
+      "kind": "statweights",
+      "gomaxprocs": 12,
+      "samples": [
+        {
+          "wallSeconds": 9.455417608,
+          "cpuSeconds": 71.968062,
+          "utilization": 0.6342753698076538,
+          "gcShare": 0.005256105559643986,
+          "allocBytes": 1061552424,
+          "peakHeapBytes": 73435088
+        }
+      ]
+    },
+    {
+      "scenario": "statweights/rogue",
+      "kind": "statweights",
+      "gomaxprocs": 16,
+      "samples": [
+        {
+          "wallSeconds": 7.371820694,
+          "cpuSeconds": 86.348037,
+          "utilization": 0.7320786189078733,
+          "gcShare": 0.005183658385234936,
+          "allocBytes": 1064244000,
+          "peakHeapBytes": 79592384
+        },
+        {
+          "wallSeconds": 7.338125668,
+          "cpuSeconds": 85.769272,
+          "utilization": 0.7305107247449227,
+          "gcShare": 0.005164712027458056,
+          "allocBytes": 1063964400,
+          "peakHeapBytes": 81405520
+        },
+        {
+          "wallSeconds": 7.677439327,
+          "cpuSeconds": 91.098781,
+          "utilization": 0.7416110463389143,
+          "gcShare": 0.0049868108454716,
+          "allocBytes": 1066928384,
+          "peakHeapBytes": 82324928
+        }
+      ],
+      "cpuProfile": "statweights_rogue.cpu.pprof"
+    },
+    {
+      "scenario": "bulk/rogue",
+      "kind": "bulk",
+      "gomaxprocs": 1,
+      "samples": [
+        {
+          "wallSeconds": 28.095391377,
+          "cpuSeconds": 28.13917,
+          "utilization": 1.0015582136732875,
+          "gcShare": 0.007207356126621934,
+          "allocBytes": 678412264,
+          "peakHeapBytes": 71551496
+        }
+      ]
+    },
+    {
+      "scenario": "bulk/rogue",
+      "kind": "bulk",
+      "gomaxprocs": 2,
+      "samples": [
+        {
+          "wallSeconds": 14.513732895,
+          "cpuSeconds": 29.010103,
+          "utilization": 0.9994018496094144,
+          "gcShare": 0.007215397748816841,
+          "allocBytes": 678418352,
+          "peakHeapBytes": 71814376
+        }
+      ]
+    },
+    {
+      "scenario": "bulk/rogue",
+      "kind": "bulk",
+      "gomaxprocs": 4,
+      "samples": [
+        {
+          "wallSeconds": 7.544301728,
+          "cpuSeconds": 29.771059,
+          "utilization": 0.9865412358014322,
+          "gcShare": 0.006903352397197074,
+          "allocBytes": 678304624,
+          "peakHeapBytes": 71262392
+        }
+      ]
+    },
+    {
+      "scenario": "bulk/rogue",
+      "kind": "bulk",
+      "gomaxprocs": 8,
+      "samples": [
+        {
+          "wallSeconds": 4.447549642,
+          "cpuSeconds": 33.894328,
+          "utilization": 0.952612413808781,
+          "gcShare": 0.007105567707099572,
+          "allocBytes": 679204496,
+          "peakHeapBytes": 71665480
+        }
+      ]
+    },
+    {
+      "scenario": "bulk/rogue",
+      "kind": "bulk",
+      "gomaxprocs": 12,
+      "samples": [
+        {
+          "wallSeconds": 3.663582432,
+          "cpuSeconds": 42.477042,
+          "utilization": 0.9662000420903863,
+          "gcShare": 0.008113311687063512,
+          "allocBytes": 681296280,
+          "peakHeapBytes": 70032520
+        }
+      ]
+    },
+    {
+      "scenario": "bulk/rogue",
+      "kind": "bulk",
+      "gomaxprocs": 16,
+      "samples": [
+        {
+          "wallSeconds": 3.93925417,
+          "cpuSeconds": 56.26704,
+          "utilization": 0.8927299047575801,
+          "gcShare": 0.008823698952713843,
+          "allocBytes": 688544040,
+          "peakHeapBytes": 74756440
+        },
+        {
+          "wallSeconds": 4.016675599,
+          "cpuSeconds": 57.898216,
+          "utilization": 0.9009038471767309,
+          "gcShare": 0.00897509605060822,
+          "allocBytes": 688156792,
+          "peakHeapBytes": 72542600
+        },
+        {
+          "wallSeconds": 3.585908196,
+          "cpuSeconds": 51.42683,
+          "utilization": 0.8963355165046729,
+          "gcShare": 0.008269529508832378,
+          "allocBytes": 688109504,
+          "peakHeapBytes": 75724656
+        }
+      ],
+      "cpuProfile": "bulk_rogue.cpu.pprof"
+    },
+    {
+      "scenario": "optimizer/quick/combat_rogue_p3",
+      "kind": "optimizer",
+      "gomaxprocs": 1,
+      "workers": 1,
+      "samples": [
+        {
+          "wallSeconds": 128.939464818,
+          "cpuSeconds": 129.146845,
+          "utilization": 1.001608353053836,
+          "gcShare": 0.00561533749204327,
+          "allocBytes": 5668542288,
+          "peakHeapBytes": 123294624,
+          "workers": 1,
+          "sims": 145750,
+          "evaluatorBusy": 0.9271768697369632,
+          "stages": [
+            {
+              "name": "Setup",
+              "startSeconds": 0,
+              "wallSeconds": 0.026349112,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Objective",
+              "startSeconds": 0.026349112,
+              "wallSeconds": 1.227751179,
+              "sims": 1500,
+              "evaluatorBusy": 0.9999272792390452
+            },
+            {
+              "name": "Racial screen",
+              "startSeconds": 1.2541002909999999,
+              "wallSeconds": 0.000002034,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Stat curves",
+              "startSeconds": 1.254102325,
+              "wallSeconds": 30.282094491,
+              "sims": 37250,
+              "evaluatorBusy": 0.9994444103922534
+            },
+            {
+              "name": "Effects",
+              "startSeconds": 31.536196816,
+              "wallSeconds": 60.860226589,
+              "sims": 75750,
+              "evaluatorBusy": 0.99962834142645
+            },
+            {
+              "name": "Search",
+              "startSeconds": 92.396423405,
+              "wallSeconds": 9.303374734,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Verify",
+              "startSeconds": 101.699798139,
+              "wallSeconds": 8.710528602,
+              "sims": 10000,
+              "evaluatorBusy": 0.9999052228587125
+            },
+            {
+              "name": "Alternatives",
+              "startSeconds": 110.410326741,
+              "wallSeconds": 18.528690479,
+              "sims": 21250,
+              "evaluatorBusy": 0.9989390246967382
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": "optimizer/quick/combat_rogue_p3",
+      "kind": "optimizer",
+      "gomaxprocs": 2,
+      "workers": 2,
+      "samples": [
+        {
+          "wallSeconds": 67.823679291,
+          "cpuSeconds": 134.696934,
+          "utilization": 0.9929934162232472,
+          "gcShare": 0.005568318629513948,
+          "allocBytes": 5668098104,
+          "peakHeapBytes": 137092664,
+          "workers": 2,
+          "sims": 145750,
+          "evaluatorBusy": 0.9204118861900814,
+          "stages": [
+            {
+              "name": "Setup",
+              "startSeconds": 0,
+              "wallSeconds": 0.024372823,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Objective",
+              "startSeconds": 0.024372823,
+              "wallSeconds": 0.651168285,
+              "sims": 1500,
+              "evaluatorBusy": 0.9952549401265758
+            },
+            {
+              "name": "Racial screen",
+              "startSeconds": 0.675541108,
+              "wallSeconds": 0.000001884,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Stat curves",
+              "startSeconds": 0.675542992,
+              "wallSeconds": 15.973013653,
+              "sims": 37250,
+              "evaluatorBusy": 0.9908954466477472
+            },
+            {
+              "name": "Effects",
+              "startSeconds": 16.648556645,
+              "wallSeconds": 31.658043364,
+              "sims": 75750,
+              "evaluatorBusy": 0.9958964868894037
+            },
+            {
+              "name": "Search",
+              "startSeconds": 48.306600009,
+              "wallSeconds": 4.934191367,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Verify",
+              "startSeconds": 53.240791376,
+              "wallSeconds": 4.682517409,
+              "sims": 10000,
+              "evaluatorBusy": 0.9902793176139583
+            },
+            {
+              "name": "Alternatives",
+              "startSeconds": 57.923308785,
+              "wallSeconds": 9.899953108,
+              "sims": 21250,
+              "evaluatorBusy": 0.9883417665476886
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": "optimizer/quick/combat_rogue_p3",
+      "kind": "optimizer",
+      "gomaxprocs": 4,
+      "workers": 4,
+      "samples": [
+        {
+          "wallSeconds": 35.77031332,
+          "cpuSeconds": 138.278566,
+          "utilization": 0.966433846713647,
+          "gcShare": 0.00506451477406086,
+          "allocBytes": 5667941392,
+          "peakHeapBytes": 124652328,
+          "workers": 4,
+          "sims": 145750,
+          "evaluatorBusy": 0.8981315388693002,
+          "stages": [
+            {
+              "name": "Setup",
+              "startSeconds": 0,
+              "wallSeconds": 0.021771324,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Objective",
+              "startSeconds": 0.021771324,
+              "wallSeconds": 0.428224333,
+              "sims": 1500,
+              "evaluatorBusy": 0.7370912788601389
+            },
+            {
+              "name": "Racial screen",
+              "startSeconds": 0.449995657,
+              "wallSeconds": 0.000002205,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Stat curves",
+              "startSeconds": 0.449997862,
+              "wallSeconds": 8.526436469,
+              "sims": 37250,
+              "evaluatorBusy": 0.9507517860155653
+            },
+            {
+              "name": "Effects",
+              "startSeconds": 8.976434331,
+              "wallSeconds": 16.617542618,
+              "sims": 75750,
+              "evaluatorBusy": 0.9872738643365397
+            },
+            {
+              "name": "Search",
+              "startSeconds": 25.593976949,
+              "wallSeconds": 2.607528192,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Verify",
+              "startSeconds": 28.201505141,
+              "wallSeconds": 2.391240317,
+              "sims": 10000,
+              "evaluatorBusy": 0.9703153514118339
+            },
+            {
+              "name": "Alternatives",
+              "startSeconds": 30.592745458,
+              "wallSeconds": 5.1771672,
+              "sims": 21250,
+              "evaluatorBusy": 0.9614522153157425
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": "optimizer/quick/combat_rogue_p3",
+      "kind": "optimizer",
+      "gomaxprocs": 8,
+      "workers": 8,
+      "samples": [
+        {
+          "wallSeconds": 21.062177817,
+          "cpuSeconds": 155.851572,
+          "utilization": 0.9249492939080528,
+          "gcShare": 0.005545169135046734,
+          "allocBytes": 5667810688,
+          "peakHeapBytes": 147741280,
+          "workers": 8,
+          "sims": 145750,
+          "evaluatorBusy": 0.862423773837908,
+          "stages": [
+            {
+              "name": "Setup",
+              "startSeconds": 0,
+              "wallSeconds": 0.022580405,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Objective",
+              "startSeconds": 0.022580405,
+              "wallSeconds": 0.444802689,
+              "sims": 1500,
+              "evaluatorBusy": 0.3704796218082216
+            },
+            {
+              "name": "Racial screen",
+              "startSeconds": 0.467383094,
+              "wallSeconds": 0.000001903,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Stat curves",
+              "startSeconds": 0.467384997,
+              "wallSeconds": 4.9008276649999996,
+              "sims": 37250,
+              "evaluatorBusy": 0.9249936945599575
+            },
+            {
+              "name": "Effects",
+              "startSeconds": 5.368212662,
+              "wallSeconds": 9.56147075,
+              "sims": 75750,
+              "evaluatorBusy": 0.9748174168053592
+            },
+            {
+              "name": "Search",
+              "startSeconds": 14.929683412,
+              "wallSeconds": 1.638304961,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Verify",
+              "startSeconds": 16.567988373,
+              "wallSeconds": 1.369758023,
+              "sims": 10000,
+              "evaluatorBusy": 0.9797969081689402
+            },
+            {
+              "name": "Alternatives",
+              "startSeconds": 17.937746396,
+              "wallSeconds": 3.123922668,
+              "sims": 21250,
+              "evaluatorBusy": 0.897360947092433
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": "optimizer/quick/combat_rogue_p3",
+      "kind": "optimizer",
+      "gomaxprocs": 12,
+      "workers": 12,
+      "samples": [
+        {
+          "wallSeconds": 17.835468911,
+          "cpuSeconds": 187.550987,
+          "utilization": 0.8763015424297227,
+          "gcShare": 0.006192548165658649,
+          "allocBytes": 5667979016,
+          "peakHeapBytes": 191179120,
+          "workers": 12,
+          "sims": 145750,
+          "evaluatorBusy": 0.8173909023352752,
+          "stages": [
+            {
+              "name": "Setup",
+              "startSeconds": 0,
+              "wallSeconds": 0.021747928,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Objective",
+              "startSeconds": 0.021747928,
+              "wallSeconds": 0.425470619,
+              "sims": 1500,
+              "evaluatorBusy": 0.24971011120119985
+            },
+            {
+              "name": "Racial screen",
+              "startSeconds": 0.447218547,
+              "wallSeconds": 0.000001964,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Stat curves",
+              "startSeconds": 0.447220511,
+              "wallSeconds": 4.351150102,
+              "sims": 37250,
+              "evaluatorBusy": 0.8059582200013624
+            },
+            {
+              "name": "Effects",
+              "startSeconds": 4.798370613,
+              "wallSeconds": 7.932398887,
+              "sims": 75750,
+              "evaluatorBusy": 0.9665174177088758
+            },
+            {
+              "name": "Search",
+              "startSeconds": 12.7307695,
+              "wallSeconds": 1.394399778,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Verify",
+              "startSeconds": 14.125169278,
+              "wallSeconds": 1.214490657,
+              "sims": 10000,
+              "evaluatorBusy": 0.8677490247392382
+            },
+            {
+              "name": "Alternatives",
+              "startSeconds": 15.339659935,
+              "wallSeconds": 2.495348166,
+              "sims": 21250,
+              "evaluatorBusy": 0.8994372476745062
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": "optimizer/quick/combat_rogue_p3",
+      "kind": "optimizer",
+      "gomaxprocs": 16,
+      "workers": 16,
+      "samples": [
+        {
+          "wallSeconds": 16.946849068,
+          "cpuSeconds": 221.296881,
+          "utilization": 0.8161431666147652,
+          "gcShare": 0.005995094319687334,
+          "allocBytes": 5668385792,
+          "peakHeapBytes": 206328784,
+          "workers": 16,
+          "sims": 145750,
+          "evaluatorBusy": 0.7627565946052329,
+          "stages": [
+            {
+              "name": "Setup",
+              "startSeconds": 0,
+              "wallSeconds": 0.020496217,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Objective",
+              "startSeconds": 0.020496217,
+              "wallSeconds": 0.436582085,
+              "sims": 1500,
+              "evaluatorBusy": 0.18443910782550776
+            },
+            {
+              "name": "Racial screen",
+              "startSeconds": 0.457078302,
+              "wallSeconds": 0.000002044,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Stat curves",
+              "startSeconds": 0.457080346,
+              "wallSeconds": 4.19340469,
+              "sims": 37250,
+              "evaluatorBusy": 0.7156404860813708
+            },
+            {
+              "name": "Effects",
+              "startSeconds": 4.650485036,
+              "wallSeconds": 7.276254195,
+              "sims": 75750,
+              "evaluatorBusy": 0.9345259620049599
+            },
+            {
+              "name": "Search",
+              "startSeconds": 11.926739230999999,
+              "wallSeconds": 1.4338429449999999,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Verify",
+              "startSeconds": 13.360582176,
+              "wallSeconds": 1.1280947000000001,
+              "sims": 10000,
+              "evaluatorBusy": 0.8571008939342593
+            },
+            {
+              "name": "Alternatives",
+              "startSeconds": 14.488676876,
+              "wallSeconds": 2.457766361,
+              "sims": 21250,
+              "evaluatorBusy": 0.8453931825947064
+            }
+          ]
+        },
+        {
+          "wallSeconds": 16.849899286,
+          "cpuSeconds": 220.160966,
+          "utilization": 0.8166256748153242,
+          "gcShare": 0.006341762735917942,
+          "allocBytes": 5668115736,
+          "peakHeapBytes": 186456952,
+          "workers": 16,
+          "sims": 145750,
+          "evaluatorBusy": 0.7641697543559354,
+          "stages": [
+            {
+              "name": "Setup",
+              "startSeconds": 0,
+              "wallSeconds": 0.020882361,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Objective",
+              "startSeconds": 0.020882361,
+              "wallSeconds": 0.423753052,
+              "sims": 1500,
+              "evaluatorBusy": 0.1852375832563915
+            },
+            {
+              "name": "Racial screen",
+              "startSeconds": 0.444635413,
+              "wallSeconds": 0.000001844,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Stat curves",
+              "startSeconds": 0.444637257,
+              "wallSeconds": 4.233941788,
+              "sims": 37250,
+              "evaluatorBusy": 0.7155031997956464
+            },
+            {
+              "name": "Effects",
+              "startSeconds": 4.678579045,
+              "wallSeconds": 7.216292689,
+              "sims": 75750,
+              "evaluatorBusy": 0.9392468445337195
+            },
+            {
+              "name": "Search",
+              "startSeconds": 11.894871734,
+              "wallSeconds": 1.43135036,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Verify",
+              "startSeconds": 13.326222094,
+              "wallSeconds": 1.078062642,
+              "sims": 10000,
+              "evaluatorBusy": 0.8767317100739495
+            },
+            {
+              "name": "Alternatives",
+              "startSeconds": 14.404284736,
+              "wallSeconds": 2.445188167,
+              "sims": 21250,
+              "evaluatorBusy": 0.8363003991003282
+            }
+          ]
+        },
+        {
+          "wallSeconds": 16.731955902,
+          "cpuSeconds": 218.781906,
+          "utilization": 0.8172307651949727,
+          "gcShare": 0.006177647364655342,
+          "allocBytes": 5669751432,
+          "peakHeapBytes": 178535528,
+          "workers": 16,
+          "sims": 145750,
+          "evaluatorBusy": 0.7657054059318931,
+          "stages": [
+            {
+              "name": "Setup",
+              "startSeconds": 0,
+              "wallSeconds": 0.020709217,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Objective",
+              "startSeconds": 0.020709217,
+              "wallSeconds": 0.449458359,
+              "sims": 1500,
+              "evaluatorBusy": 0.1869434804248462
+            },
+            {
+              "name": "Racial screen",
+              "startSeconds": 0.470167576,
+              "wallSeconds": 0.000001864,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Stat curves",
+              "startSeconds": 0.47016944,
+              "wallSeconds": 4.104313965,
+              "sims": 37250,
+              "evaluatorBusy": 0.7253797828213905
+            },
+            {
+              "name": "Effects",
+              "startSeconds": 4.574483405,
+              "wallSeconds": 7.251342336,
+              "sims": 75750,
+              "evaluatorBusy": 0.9357744499507519
+            },
+            {
+              "name": "Search",
+              "startSeconds": 11.825825741,
+              "wallSeconds": 1.389753853,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Verify",
+              "startSeconds": 13.215579594,
+              "wallSeconds": 1.069756263,
+              "sims": 10000,
+              "evaluatorBusy": 0.871234411155768
+            },
+            {
+              "name": "Alternatives",
+              "startSeconds": 14.285335857,
+              "wallSeconds": 2.4462076010000002,
+              "sims": 21250,
+              "evaluatorBusy": 0.8309164922446007
+            }
+          ]
+        }
+      ],
+      "cpuProfile": "optimizer_quick_combat_rogue_p3.cpu.pprof"
+    },
+    {
+      "scenario": "optimizer/quick/feral_tank_p2",
+      "kind": "optimizer",
+      "gomaxprocs": 1,
+      "workers": 1,
+      "samples": [
+        {
+          "wallSeconds": 74.39547377,
+          "cpuSeconds": 74.512872,
+          "utilization": 1.0015780292005796,
+          "gcShare": 0.010168525674168481,
+          "allocBytes": 5495442024,
+          "peakHeapBytes": 106809536,
+          "workers": 1,
+          "sims": 132500,
+          "evaluatorBusy": 0.7451512283907838,
+          "stages": [
+            {
+              "name": "Setup",
+              "startSeconds": 0,
+              "wallSeconds": 0.025608397,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Objective",
+              "startSeconds": 0.025608397,
+              "wallSeconds": 1.275082298,
+              "sims": 3000,
+              "evaluatorBusy": 0.9999122668394225
+            },
+            {
+              "name": "Racial screen",
+              "startSeconds": 1.3006906950000001,
+              "wallSeconds": 0.000003006,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Stat curves",
+              "startSeconds": 1.300693701,
+              "wallSeconds": 21.400909425,
+              "sims": 50500,
+              "evaluatorBusy": 0.9989493356308619
+            },
+            {
+              "name": "Effects",
+              "startSeconds": 22.701603126,
+              "wallSeconds": 20.142502015,
+              "sims": 49000,
+              "evaluatorBusy": 0.9992817851034977
+            },
+            {
+              "name": "Search",
+              "startSeconds": 42.844105141,
+              "wallSeconds": 18.851600252,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Verify",
+              "startSeconds": 61.695705393,
+              "wallSeconds": 4.169171502,
+              "sims": 10000,
+              "evaluatorBusy": 0.9987938730758407
+            },
+            {
+              "name": "Alternatives",
+              "startSeconds": 65.864876895,
+              "wallSeconds": 8.530282451,
+              "sims": 20000,
+              "evaluatorBusy": 0.9952860783648159
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": "optimizer/quick/feral_tank_p2",
+      "kind": "optimizer",
+      "gomaxprocs": 2,
+      "workers": 2,
+      "samples": [
+        {
+          "wallSeconds": 39.145427494,
+          "cpuSeconds": 76.812153,
+          "utilization": 0.9811127112071178,
+          "gcShare": 0.01012228712125711,
+          "allocBytes": 5495221872,
+          "peakHeapBytes": 111540008,
+          "workers": 2,
+          "sims": 132500,
+          "evaluatorBusy": 0.730685477980485,
+          "stages": [
+            {
+              "name": "Setup",
+              "startSeconds": 0,
+              "wallSeconds": 0.021370966,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Objective",
+              "startSeconds": 0.021370966,
+              "wallSeconds": 0.658353246,
+              "sims": 3000,
+              "evaluatorBusy": 0.9942498422799605
+            },
+            {
+              "name": "Racial screen",
+              "startSeconds": 0.679724212,
+              "wallSeconds": 0.000002855,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Stat curves",
+              "startSeconds": 0.679727067,
+              "wallSeconds": 10.938199273,
+              "sims": 50500,
+              "evaluatorBusy": 0.9936819535121666
+            },
+            {
+              "name": "Effects",
+              "startSeconds": 11.61792634,
+              "wallSeconds": 10.553210642,
+              "sims": 49000,
+              "evaluatorBusy": 0.994157364560259
+            },
+            {
+              "name": "Search",
+              "startSeconds": 22.171136982,
+              "wallSeconds": 10.319988021,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Verify",
+              "startSeconds": 32.491125003,
+              "wallSeconds": 2.172219702,
+              "sims": 10000,
+              "evaluatorBusy": 0.9967536513486609
+            },
+            {
+              "name": "Alternatives",
+              "startSeconds": 34.663344705,
+              "wallSeconds": 4.481750446,
+              "sims": 20000,
+              "evaluatorBusy": 0.9867514451740627
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": "optimizer/quick/feral_tank_p2",
+      "kind": "optimizer",
+      "gomaxprocs": 4,
+      "workers": 4,
+      "samples": [
+        {
+          "wallSeconds": 20.779524537,
+          "cpuSeconds": 80.019694,
+          "utilization": 0.9627228700242517,
+          "gcShare": 0.009712817180608593,
+          "allocBytes": 5494916056,
+          "peakHeapBytes": 111830784,
+          "workers": 4,
+          "sims": 132500,
+          "evaluatorBusy": 0.7137246038661778,
+          "stages": [
+            {
+              "name": "Setup",
+              "startSeconds": 0,
+              "wallSeconds": 0.019425954,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Objective",
+              "startSeconds": 0.019425954,
+              "wallSeconds": 0.344272287,
+              "sims": 3000,
+              "evaluatorBusy": 0.9744000654923468
+            },
+            {
+              "name": "Racial screen",
+              "startSeconds": 0.363698241,
+              "wallSeconds": 0.000003056,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Stat curves",
+              "startSeconds": 0.363701297,
+              "wallSeconds": 5.74958604,
+              "sims": 50500,
+              "evaluatorBusy": 0.9722369739074294
+            },
+            {
+              "name": "Effects",
+              "startSeconds": 6.113287337,
+              "wallSeconds": 5.576583269,
+              "sims": 49000,
+              "evaluatorBusy": 0.9771711557311994
+            },
+            {
+              "name": "Search",
+              "startSeconds": 11.689870606,
+              "wallSeconds": 5.53885392,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Verify",
+              "startSeconds": 17.228724526,
+              "wallSeconds": 1.18337695,
+              "sims": 10000,
+              "evaluatorBusy": 0.9697013559373452
+            },
+            {
+              "name": "Alternatives",
+              "startSeconds": 18.412101476,
+              "wallSeconds": 2.367045655,
+              "sims": 20000,
+              "evaluatorBusy": 0.9752118329969431
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": "optimizer/quick/feral_tank_p2",
+      "kind": "optimizer",
+      "gomaxprocs": 8,
+      "workers": 8,
+      "samples": [
+        {
+          "wallSeconds": 12.35678268,
+          "cpuSeconds": 87.934866,
+          "utilization": 0.8895404681504037,
+          "gcShare": 0.010109275202555236,
+          "allocBytes": 5494823672,
+          "peakHeapBytes": 128163272,
+          "workers": 8,
+          "sims": 132500,
+          "evaluatorBusy": 0.6711502559863789,
+          "stages": [
+            {
+              "name": "Setup",
+              "startSeconds": 0,
+              "wallSeconds": 0.019460408,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Objective",
+              "startSeconds": 0.019460408,
+              "wallSeconds": 0.259628988,
+              "sims": 3000,
+              "evaluatorBusy": 0.6906247796374725
+            },
+            {
+              "name": "Racial screen",
+              "startSeconds": 0.279089396,
+              "wallSeconds": 0.000003046,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Stat curves",
+              "startSeconds": 0.279092442,
+              "wallSeconds": 3.375939442,
+              "sims": 50500,
+              "evaluatorBusy": 0.9446935659813296
+            },
+            {
+              "name": "Effects",
+              "startSeconds": 3.655031884,
+              "wallSeconds": 3.228156869,
+              "sims": 49000,
+              "evaluatorBusy": 0.9442545907997508
+            },
+            {
+              "name": "Search",
+              "startSeconds": 6.883188753,
+              "wallSeconds": 3.4931817130000002,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Verify",
+              "startSeconds": 10.376370466000001,
+              "wallSeconds": 0.708665933,
+              "sims": 10000,
+              "evaluatorBusy": 0.9436554857646868
+            },
+            {
+              "name": "Alternatives",
+              "startSeconds": 11.085036399,
+              "wallSeconds": 1.271438832,
+              "sims": 20000,
+              "evaluatorBusy": 0.9497732511641582
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": "optimizer/quick/feral_tank_p2",
+      "kind": "optimizer",
+      "gomaxprocs": 12,
+      "workers": 12,
+      "samples": [
+        {
+          "wallSeconds": 10.783485739,
+          "cpuSeconds": 105.779362,
+          "utilization": 0.8174487402948781,
+          "gcShare": 0.0115302328237105,
+          "allocBytes": 5495564688,
+          "peakHeapBytes": 125860984,
+          "workers": 12,
+          "sims": 132500,
+          "evaluatorBusy": 0.610387150918275,
+          "stages": [
+            {
+              "name": "Setup",
+              "startSeconds": 0,
+              "wallSeconds": 0.019365896,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Objective",
+              "startSeconds": 0.019365896,
+              "wallSeconds": 0.253139604,
+              "sims": 3000,
+              "evaluatorBusy": 0.482574709052638
+            },
+            {
+              "name": "Racial screen",
+              "startSeconds": 0.2725055,
+              "wallSeconds": 0.000002996,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Stat curves",
+              "startSeconds": 0.272508496,
+              "wallSeconds": 2.87998319,
+              "sims": 50500,
+              "evaluatorBusy": 0.8484171420632494
+            },
+            {
+              "name": "Effects",
+              "startSeconds": 3.152491686,
+              "wallSeconds": 2.6968990699999997,
+              "sims": 49000,
+              "evaluatorBusy": 0.9242006720394867
+            },
+            {
+              "name": "Search",
+              "startSeconds": 5.849390756,
+              "wallSeconds": 3.2055379,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Verify",
+              "startSeconds": 9.054928656,
+              "wallSeconds": 0.580118562,
+              "sims": 10000,
+              "evaluatorBusy": 0.8660432666865777
+            },
+            {
+              "name": "Alternatives",
+              "startSeconds": 9.635047218,
+              "wallSeconds": 1.148128807,
+              "sims": 20000,
+              "evaluatorBusy": 0.8896584600140021
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": "optimizer/quick/feral_tank_p2",
+      "kind": "optimizer",
+      "gomaxprocs": 16,
+      "workers": 16,
+      "samples": [
+        {
+          "wallSeconds": 9.89904689,
+          "cpuSeconds": 124.249894,
+          "utilization": 0.7844814214229872,
+          "gcShare": 0.011778639484064313,
+          "allocBytes": 5494491168,
+          "peakHeapBytes": 134604144,
+          "workers": 16,
+          "sims": 132500,
+          "evaluatorBusy": 0.5947073645469221,
+          "stages": [
+            {
+              "name": "Setup",
+              "startSeconds": 0,
+              "wallSeconds": 0.018618712,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Objective",
+              "startSeconds": 0.018618712,
+              "wallSeconds": 0.245155717,
+              "sims": 3000,
+              "evaluatorBusy": 0.3528928350465512
+            },
+            {
+              "name": "Racial screen",
+              "startSeconds": 0.263774429,
+              "wallSeconds": 0.000002846,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Stat curves",
+              "startSeconds": 0.263777275,
+              "wallSeconds": 2.683872811,
+              "sims": 50500,
+              "evaluatorBusy": 0.8105543991862809
+            },
+            {
+              "name": "Effects",
+              "startSeconds": 2.947650086,
+              "wallSeconds": 2.462199443,
+              "sims": 49000,
+              "evaluatorBusy": 0.9091063266579579
+            },
+            {
+              "name": "Search",
+              "startSeconds": 5.409849529,
+              "wallSeconds": 2.980235763,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Verify",
+              "startSeconds": 8.390085292,
+              "wallSeconds": 0.513769682,
+              "sims": 10000,
+              "evaluatorBusy": 0.8572551485482556
+            },
+            {
+              "name": "Alternatives",
+              "startSeconds": 8.903854974,
+              "wallSeconds": 0.99489392,
+              "sims": 20000,
+              "evaluatorBusy": 0.9509430523633112
+            }
+          ]
+        },
+        {
+          "wallSeconds": 9.981463546,
+          "cpuSeconds": 124.558413,
+          "utilization": 0.7799358056684726,
+          "gcShare": 0.011805836728896952,
+          "allocBytes": 5495047136,
+          "peakHeapBytes": 124537832,
+          "workers": 16,
+          "sims": 132500,
+          "evaluatorBusy": 0.592036671986354,
+          "stages": [
+            {
+              "name": "Setup",
+              "startSeconds": 0,
+              "wallSeconds": 0.019337628,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Objective",
+              "startSeconds": 0.019337628,
+              "wallSeconds": 0.261632526,
+              "sims": 3000,
+              "evaluatorBusy": 0.35641353538168263
+            },
+            {
+              "name": "Racial screen",
+              "startSeconds": 0.280970154,
+              "wallSeconds": 0.000003106,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Stat curves",
+              "startSeconds": 0.28097326,
+              "wallSeconds": 2.669934639,
+              "sims": 50500,
+              "evaluatorBusy": 0.8127247981996386
+            },
+            {
+              "name": "Effects",
+              "startSeconds": 2.9509078989999997,
+              "wallSeconds": 2.488737818,
+              "sims": 49000,
+              "evaluatorBusy": 0.8999383953991091
+            },
+            {
+              "name": "Search",
+              "startSeconds": 5.439645717,
+              "wallSeconds": 2.99399563,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Verify",
+              "startSeconds": 8.433641347,
+              "wallSeconds": 0.554338642,
+              "sims": 10000,
+              "evaluatorBusy": 0.8339164732313574
+            },
+            {
+              "name": "Alternatives",
+              "startSeconds": 8.987979989,
+              "wallSeconds": 0.993141158,
+              "sims": 20000,
+              "evaluatorBusy": 0.9505551460591063
+            }
+          ]
+        },
+        {
+          "wallSeconds": 9.975440999,
+          "cpuSeconds": 125.076925,
+          "utilization": 0.783655360528287,
+          "gcShare": 0.011518797124862975,
+          "allocBytes": 5496805072,
+          "peakHeapBytes": 137803664,
+          "workers": 16,
+          "sims": 132500,
+          "evaluatorBusy": 0.595452931524877,
+          "stages": [
+            {
+              "name": "Setup",
+              "startSeconds": 0,
+              "wallSeconds": 0.018493368,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Objective",
+              "startSeconds": 0.018493368,
+              "wallSeconds": 0.245693378,
+              "sims": 3000,
+              "evaluatorBusy": 0.37689956661143714
+            },
+            {
+              "name": "Racial screen",
+              "startSeconds": 0.264186746,
+              "wallSeconds": 0.000002876,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Stat curves",
+              "startSeconds": 0.264189622,
+              "wallSeconds": 2.686148503,
+              "sims": 50500,
+              "evaluatorBusy": 0.8107257522965773
+            },
+            {
+              "name": "Effects",
+              "startSeconds": 2.950338125,
+              "wallSeconds": 2.499755276,
+              "sims": 49000,
+              "evaluatorBusy": 0.9087674674338801
+            },
+            {
+              "name": "Search",
+              "startSeconds": 5.450093401,
+              "wallSeconds": 2.9907092090000003,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Verify",
+              "startSeconds": 8.44080261,
+              "wallSeconds": 0.520368914,
+              "sims": 10000,
+              "evaluatorBusy": 0.8381987080755943
+            },
+            {
+              "name": "Alternatives",
+              "startSeconds": 8.961171524000001,
+              "wallSeconds": 1.013968148,
+              "sims": 20000,
+              "evaluatorBusy": 0.9482801265346059
+            }
+          ]
+        }
+      ],
+      "cpuProfile": "optimizer_quick_feral_tank_p2.cpu.pprof"
+    },
+    {
+      "scenario": "optimizer/quick/fire_mage_p3",
+      "kind": "optimizer",
+      "gomaxprocs": 1,
+      "workers": 1,
+      "samples": [
+        {
+          "wallSeconds": 23.146965864,
+          "cpuSeconds": 23.183622,
+          "utilization": 1.0015836259583815,
+          "gcShare": 0.03741187997488146,
+          "allocBytes": 6222757752,
+          "peakHeapBytes": 99491480,
+          "workers": 1,
+          "sims": 133000,
+          "evaluatorBusy": 0.9457666409915263,
+          "stages": [
+            {
+              "name": "Setup",
+              "startSeconds": 0,
+              "wallSeconds": 0.02157733,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Objective",
+              "startSeconds": 0.02157733,
+              "wallSeconds": 0.242326187,
+              "sims": 1500,
+              "evaluatorBusy": 0.995197865264145
+            },
+            {
+              "name": "Racial screen",
+              "startSeconds": 0.263903517,
+              "wallSeconds": 0.000001523,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Stat curves",
+              "startSeconds": 0.26390504,
+              "wallSeconds": 3.808065373,
+              "sims": 22750,
+              "evaluatorBusy": 0.9965829281471213
+            },
+            {
+              "name": "Effects",
+              "startSeconds": 4.071970413,
+              "wallSeconds": 11.652710953,
+              "sims": 71500,
+              "evaluatorBusy": 0.9965959878212042
+            },
+            {
+              "name": "Search",
+              "startSeconds": 15.724681366,
+              "wallSeconds": 1.163150006,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Verify",
+              "startSeconds": 16.887831372,
+              "wallSeconds": 2.6772775749999997,
+              "sims": 16000,
+              "evaluatorBusy": 0.9996821812545903
+            },
+            {
+              "name": "Alternatives",
+              "startSeconds": 19.565108947,
+              "wallSeconds": 3.581407827,
+              "sims": 21250,
+              "evaluatorBusy": 0.9955627728626171
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": "optimizer/quick/fire_mage_p3",
+      "kind": "optimizer",
+      "gomaxprocs": 2,
+      "workers": 2,
+      "samples": [
+        {
+          "wallSeconds": 12.421957812,
+          "cpuSeconds": 24.537364,
+          "utilization": 0.9876608973947786,
+          "gcShare": 0.035193112660739954,
+          "allocBytes": 6222739656,
+          "peakHeapBytes": 106007992,
+          "workers": 2,
+          "sims": 133000,
+          "evaluatorBusy": 0.9345834522606765,
+          "stages": [
+            {
+              "name": "Setup",
+              "startSeconds": 0,
+              "wallSeconds": 0.016599119,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Objective",
+              "startSeconds": 0.016599119,
+              "wallSeconds": 0.131958111,
+              "sims": 1500,
+              "evaluatorBusy": 0.9650201418842681
+            },
+            {
+              "name": "Racial screen",
+              "startSeconds": 0.14855723,
+              "wallSeconds": 0.000001563,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Stat curves",
+              "startSeconds": 0.148558793,
+              "wallSeconds": 2.073153587,
+              "sims": 22750,
+              "evaluatorBusy": 0.981775808971938
+            },
+            {
+              "name": "Effects",
+              "startSeconds": 2.22171238,
+              "wallSeconds": 6.211989489,
+              "sims": 71500,
+              "evaluatorBusy": 0.9878727058966535
+            },
+            {
+              "name": "Search",
+              "startSeconds": 8.433701869,
+              "wallSeconds": 0.624353209,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Verify",
+              "startSeconds": 9.058055078,
+              "wallSeconds": 1.441149054,
+              "sims": 16000,
+              "evaluatorBusy": 0.989340758711
+            },
+            {
+              "name": "Alternatives",
+              "startSeconds": 10.499204132,
+              "wallSeconds": 1.922445169,
+              "sims": 21250,
+              "evaluatorBusy": 0.9799557760494962
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": "optimizer/quick/fire_mage_p3",
+      "kind": "optimizer",
+      "gomaxprocs": 4,
+      "workers": 4,
+      "samples": [
+        {
+          "wallSeconds": 6.40345564,
+          "cpuSeconds": 24.208694,
+          "utilization": 0.9451417859747991,
+          "gcShare": 0.03222541430173254,
+          "allocBytes": 6222781192,
+          "peakHeapBytes": 98336008,
+          "workers": 4,
+          "sims": 133000,
+          "evaluatorBusy": 0.8957786033799073,
+          "stages": [
+            {
+              "name": "Setup",
+              "startSeconds": 0,
+              "wallSeconds": 0.014437058,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Objective",
+              "startSeconds": 0.014437058,
+              "wallSeconds": 0.085342993,
+              "sims": 1500,
+              "evaluatorBusy": 0.7451513974908286
+            },
+            {
+              "name": "Racial screen",
+              "startSeconds": 0.099780051,
+              "wallSeconds": 0.000001663,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Stat curves",
+              "startSeconds": 0.099781714,
+              "wallSeconds": 1.125700007,
+              "sims": 22750,
+              "evaluatorBusy": 0.8721749270629613
+            },
+            {
+              "name": "Effects",
+              "startSeconds": 1.225481721,
+              "wallSeconds": 3.096765698,
+              "sims": 71500,
+              "evaluatorBusy": 0.9757595453383894
+            },
+            {
+              "name": "Search",
+              "startSeconds": 4.322247419,
+              "wallSeconds": 0.350942572,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Verify",
+              "startSeconds": 4.673189991,
+              "wallSeconds": 0.743075162,
+              "sims": 16000,
+              "evaluatorBusy": 0.9683885669293842
+            },
+            {
+              "name": "Alternatives",
+              "startSeconds": 5.416265153,
+              "wallSeconds": 0.986926772,
+              "sims": 21250,
+              "evaluatorBusy": 0.961730286307402
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": "optimizer/quick/fire_mage_p3",
+      "kind": "optimizer",
+      "gomaxprocs": 8,
+      "workers": 8,
+      "samples": [
+        {
+          "wallSeconds": 4.219281968,
+          "cpuSeconds": 29.644749,
+          "utilization": 0.8782521891412023,
+          "gcShare": 0.03728855403106953,
+          "allocBytes": 6222841176,
+          "peakHeapBytes": 133075000,
+          "workers": 8,
+          "sims": 133000,
+          "evaluatorBusy": 0.8437901516156008,
+          "stages": [
+            {
+              "name": "Setup",
+              "startSeconds": 0,
+              "wallSeconds": 0.014055396,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Objective",
+              "startSeconds": 0.014055396,
+              "wallSeconds": 0.085099253,
+              "sims": 1500,
+              "evaluatorBusy": 0.36508608365810213
+            },
+            {
+              "name": "Racial screen",
+              "startSeconds": 0.099154649,
+              "wallSeconds": 0.000001793,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Stat curves",
+              "startSeconds": 0.099156442,
+              "wallSeconds": 0.824361434,
+              "sims": 22750,
+              "evaluatorBusy": 0.7335815716665367
+            },
+            {
+              "name": "Effects",
+              "startSeconds": 0.923517876,
+              "wallSeconds": 1.96400858,
+              "sims": 71500,
+              "evaluatorBusy": 0.9677668632562695
+            },
+            {
+              "name": "Search",
+              "startSeconds": 2.887526456,
+              "wallSeconds": 0.219443306,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Verify",
+              "startSeconds": 3.106969762,
+              "wallSeconds": 0.461763574,
+              "sims": 16000,
+              "evaluatorBusy": 0.9289025626997595
+            },
+            {
+              "name": "Alternatives",
+              "startSeconds": 3.568733336,
+              "wallSeconds": 0.650267194,
+              "sims": 21250,
+              "evaluatorBusy": 0.9142555596538366
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": "optimizer/quick/fire_mage_p3",
+      "kind": "optimizer",
+      "gomaxprocs": 12,
+      "workers": 12,
+      "samples": [
+        {
+          "wallSeconds": 3.7578452369999997,
+          "cpuSeconds": 37.529486,
+          "utilization": 0.8322474634861251,
+          "gcShare": 0.037749317103617716,
+          "allocBytes": 6222971928,
+          "peakHeapBytes": 167866648,
+          "workers": 12,
+          "sims": 133000,
+          "evaluatorBusy": 0.8104201990892378,
+          "stages": [
+            {
+              "name": "Setup",
+              "startSeconds": 0,
+              "wallSeconds": 0.014411701,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Objective",
+              "startSeconds": 0.014411701,
+              "wallSeconds": 0.081659815,
+              "sims": 1500,
+              "evaluatorBusy": 0.2457858995067933
+            },
+            {
+              "name": "Racial screen",
+              "startSeconds": 0.096071516,
+              "wallSeconds": 0.000001653,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Stat curves",
+              "startSeconds": 0.096073169,
+              "wallSeconds": 0.724920476,
+              "sims": 22750,
+              "evaluatorBusy": 0.6991449454749112
+            },
+            {
+              "name": "Effects",
+              "startSeconds": 0.820993645,
+              "wallSeconds": 1.7525752589999999,
+              "sims": 71500,
+              "evaluatorBusy": 0.9486699819091763
+            },
+            {
+              "name": "Search",
+              "startSeconds": 2.573568904,
+              "wallSeconds": 0.190095743,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Verify",
+              "startSeconds": 2.763664647,
+              "wallSeconds": 0.440469522,
+              "sims": 16000,
+              "evaluatorBusy": 0.8181535494147841
+            },
+            {
+              "name": "Alternatives",
+              "startSeconds": 3.204134169,
+              "wallSeconds": 0.5533786,
+              "sims": 21250,
+              "evaluatorBusy": 0.895014166612153
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": "optimizer/quick/fire_mage_p3",
+      "kind": "optimizer",
+      "gomaxprocs": 16,
+      "workers": 16,
+      "samples": [
+        {
+          "wallSeconds": 3.512484134,
+          "cpuSeconds": 43.638521,
+          "utilization": 0.7764896462020573,
+          "gcShare": 0.03768844050977668,
+          "allocBytes": 6222916432,
+          "peakHeapBytes": 172096856,
+          "workers": 16,
+          "sims": 133000,
+          "evaluatorBusy": 0.7834971046121444,
+          "stages": [
+            {
+              "name": "Setup",
+              "startSeconds": 0,
+              "wallSeconds": 0.014093174,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Objective",
+              "startSeconds": 0.014093174,
+              "wallSeconds": 0.083244264,
+              "sims": 1500,
+              "evaluatorBusy": 0.18349277494963498
+            },
+            {
+              "name": "Racial screen",
+              "startSeconds": 0.097337438,
+              "wallSeconds": 0.000001613,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Stat curves",
+              "startSeconds": 0.097339051,
+              "wallSeconds": 0.710290129,
+              "sims": 22750,
+              "evaluatorBusy": 0.6173313194107475
+            },
+            {
+              "name": "Effects",
+              "startSeconds": 0.80762918,
+              "wallSeconds": 1.6077519649999998,
+              "sims": 71500,
+              "evaluatorBusy": 0.9524897070332612
+            },
+            {
+              "name": "Search",
+              "startSeconds": 2.415381145,
+              "wallSeconds": 0.191617098,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Verify",
+              "startSeconds": 2.606998243,
+              "wallSeconds": 0.398587112,
+              "sims": 16000,
+              "evaluatorBusy": 0.8492251139946542
+            },
+            {
+              "name": "Alternatives",
+              "startSeconds": 3.005585355,
+              "wallSeconds": 0.506648241,
+              "sims": 21250,
+              "evaluatorBusy": 0.8451789057676803
+            }
+          ]
+        },
+        {
+          "wallSeconds": 3.470944139,
+          "cpuSeconds": 43.066482,
+          "utilization": 0.7754821216383742,
+          "gcShare": 0.03563883512725423,
+          "allocBytes": 6223048680,
+          "peakHeapBytes": 185097616,
+          "workers": 16,
+          "sims": 133000,
+          "evaluatorBusy": 0.776775634948767,
+          "stages": [
+            {
+              "name": "Setup",
+              "startSeconds": 0,
+              "wallSeconds": 0.014104786,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Objective",
+              "startSeconds": 0.014104786,
+              "wallSeconds": 0.089928966,
+              "sims": 1500,
+              "evaluatorBusy": 0.18006130110514115
+            },
+            {
+              "name": "Racial screen",
+              "startSeconds": 0.104033752,
+              "wallSeconds": 0.000001713,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Stat curves",
+              "startSeconds": 0.104035465,
+              "wallSeconds": 0.692659296,
+              "sims": 22750,
+              "evaluatorBusy": 0.6011712296249901
+            },
+            {
+              "name": "Effects",
+              "startSeconds": 0.796694761,
+              "wallSeconds": 1.568150054,
+              "sims": 71500,
+              "evaluatorBusy": 0.9484018754814901
+            },
+            {
+              "name": "Search",
+              "startSeconds": 2.364844815,
+              "wallSeconds": 0.185719101,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Verify",
+              "startSeconds": 2.5505639159999998,
+              "wallSeconds": 0.380206881,
+              "sims": 16000,
+              "evaluatorBusy": 0.8384246882883216
+            },
+            {
+              "name": "Alternatives",
+              "startSeconds": 2.930770797,
+              "wallSeconds": 0.539919697,
+              "sims": 21250,
+              "evaluatorBusy": 0.8470462542460273
+            }
+          ]
+        },
+        {
+          "wallSeconds": 3.381645734,
+          "cpuSeconds": 41.571389,
+          "utilization": 0.76832761822945,
+          "gcShare": 0.0360585317368888,
+          "allocBytes": 6223327808,
+          "peakHeapBytes": 178894112,
+          "workers": 16,
+          "sims": 133000,
+          "evaluatorBusy": 0.767035555762446,
+          "stages": [
+            {
+              "name": "Setup",
+              "startSeconds": 0,
+              "wallSeconds": 0.014166846,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Objective",
+              "startSeconds": 0.014166846,
+              "wallSeconds": 0.08493225,
+              "sims": 1500,
+              "evaluatorBusy": 0.1831328021746745
+            },
+            {
+              "name": "Racial screen",
+              "startSeconds": 0.099099096,
+              "wallSeconds": 0.000001873,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Stat curves",
+              "startSeconds": 0.099100969,
+              "wallSeconds": 0.680080964,
+              "sims": 22750,
+              "evaluatorBusy": 0.5988029528753286
+            },
+            {
+              "name": "Effects",
+              "startSeconds": 0.779181933,
+              "wallSeconds": 1.5505334149999999,
+              "sims": 71500,
+              "evaluatorBusy": 0.944015957324596
+            },
+            {
+              "name": "Search",
+              "startSeconds": 2.329715348,
+              "wallSeconds": 0.187196114,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Verify",
+              "startSeconds": 2.516911462,
+              "wallSeconds": 0.354579233,
+              "sims": 16000,
+              "evaluatorBusy": 0.8215297224555731
+            },
+            {
+              "name": "Alternatives",
+              "startSeconds": 2.871490695,
+              "wallSeconds": 0.509891456,
+              "sims": 21250,
+              "evaluatorBusy": 0.8155192584017332
+            }
+          ]
+        }
+      ],
+      "cpuProfile": "optimizer_quick_fire_mage_p3.cpu.pprof"
+    },
+    {
+      "scenario": "optimizer/quick/fury_p1",
+      "kind": "optimizer",
+      "gomaxprocs": 1,
+      "workers": 1,
+      "samples": [
+        {
+          "wallSeconds": 57.749347949,
+          "cpuSeconds": 57.841089,
+          "utilization": 1.0015886075645568,
+          "gcShare": 0.014495676761678154,
+          "allocBytes": 6998901872,
+          "peakHeapBytes": 128032872,
+          "workers": 1,
+          "sims": 146250,
+          "evaluatorBusy": 0.9207269213666057,
+          "stages": [
+            {
+              "name": "Setup",
+              "startSeconds": 0,
+              "wallSeconds": 0.035701282,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Objective",
+              "startSeconds": 0.035701282,
+              "wallSeconds": 0.547416201,
+              "sims": 1500,
+              "evaluatorBusy": 0.9998553002270387
+            },
+            {
+              "name": "Racial screen",
+              "startSeconds": 0.583117483,
+              "wallSeconds": 0.000001663,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Stat curves",
+              "startSeconds": 0.583119146,
+              "wallSeconds": 12.148040759,
+              "sims": 34000,
+              "evaluatorBusy": 0.9992212407590919
+            },
+            {
+              "name": "Effects",
+              "startSeconds": 12.731159905,
+              "wallSeconds": 30.527603968,
+              "sims": 82500,
+              "evaluatorBusy": 0.9986817457720499
+            },
+            {
+              "name": "Search",
+              "startSeconds": 43.258763873,
+              "wallSeconds": 4.474579296,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Verify",
+              "startSeconds": 47.733343169,
+              "wallSeconds": 2.493577459,
+              "sims": 7000,
+              "evaluatorBusy": 0.999752218645637
+            },
+            {
+              "name": "Alternatives",
+              "startSeconds": 50.226920628,
+              "wallSeconds": 7.521976197,
+              "sims": 21250,
+              "evaluatorBusy": 0.9977067219373973
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": "optimizer/quick/fury_p1",
+      "kind": "optimizer",
+      "gomaxprocs": 2,
+      "workers": 2,
+      "samples": [
+        {
+          "wallSeconds": 30.485562579,
+          "cpuSeconds": 60.509602,
+          "utilization": 0.9924304634890039,
+          "gcShare": 0.013972219920786958,
+          "allocBytes": 6998811576,
+          "peakHeapBytes": 137319624,
+          "workers": 2,
+          "sims": 146250,
+          "evaluatorBusy": 0.9131605785573403,
+          "stages": [
+            {
+              "name": "Setup",
+              "startSeconds": 0,
+              "wallSeconds": 0.029614019,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Objective",
+              "startSeconds": 0.029614019,
+              "wallSeconds": 0.301382471,
+              "sims": 1500,
+              "evaluatorBusy": 0.9889608128536447
+            },
+            {
+              "name": "Racial screen",
+              "startSeconds": 0.33099649,
+              "wallSeconds": 0.000001644,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Stat curves",
+              "startSeconds": 0.330998134,
+              "wallSeconds": 6.461494798,
+              "sims": 34000,
+              "evaluatorBusy": 0.9825275341032628
+            },
+            {
+              "name": "Effects",
+              "startSeconds": 6.792492932,
+              "wallSeconds": 16.044966667,
+              "sims": 82500,
+              "evaluatorBusy": 0.9956609672089137
+            },
+            {
+              "name": "Search",
+              "startSeconds": 22.837459599,
+              "wallSeconds": 2.366095845,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Verify",
+              "startSeconds": 25.203555444,
+              "wallSeconds": 1.298389357,
+              "sims": 7000,
+              "evaluatorBusy": 0.9967769483187469
+            },
+            {
+              "name": "Alternatives",
+              "startSeconds": 26.501944801,
+              "wallSeconds": 3.9831152100000002,
+              "sims": 21250,
+              "evaluatorBusy": 0.9845438092412094
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": "optimizer/quick/fury_p1",
+      "kind": "optimizer",
+      "gomaxprocs": 4,
+      "workers": 4,
+      "samples": [
+        {
+          "wallSeconds": 15.827404212,
+          "cpuSeconds": 61.364075,
+          "utilization": 0.9692694104803848,
+          "gcShare": 0.013079023327776364,
+          "allocBytes": 6998533464,
+          "peakHeapBytes": 135464200,
+          "workers": 4,
+          "sims": 146250,
+          "evaluatorBusy": 0.89341680240788,
+          "stages": [
+            {
+              "name": "Setup",
+              "startSeconds": 0,
+              "wallSeconds": 0.02632476,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Objective",
+              "startSeconds": 0.02632476,
+              "wallSeconds": 0.187504933,
+              "sims": 1500,
+              "evaluatorBusy": 0.7365157307621342
+            },
+            {
+              "name": "Racial screen",
+              "startSeconds": 0.213829693,
+              "wallSeconds": 0.000001433,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Stat curves",
+              "startSeconds": 0.213831126,
+              "wallSeconds": 3.368286179,
+              "sims": 34000,
+              "evaluatorBusy": 0.952088638056903
+            },
+            {
+              "name": "Effects",
+              "startSeconds": 3.582117305,
+              "wallSeconds": 8.17885923,
+              "sims": 82500,
+              "evaluatorBusy": 0.9889935715399273
+            },
+            {
+              "name": "Search",
+              "startSeconds": 11.760976535,
+              "wallSeconds": 1.261514659,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Verify",
+              "startSeconds": 13.022491194,
+              "wallSeconds": 0.694685129,
+              "sims": 7000,
+              "evaluatorBusy": 0.9734463248456842
+            },
+            {
+              "name": "Alternatives",
+              "startSeconds": 13.717176323,
+              "wallSeconds": 2.109619735,
+              "sims": 21250,
+              "evaluatorBusy": 0.9621830288054259
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": "optimizer/quick/fury_p1",
+      "kind": "optimizer",
+      "gomaxprocs": 8,
+      "workers": 8,
+      "samples": [
+        {
+          "wallSeconds": 9.216026659,
+          "cpuSeconds": 66.198151,
+          "utilization": 0.8978672893615377,
+          "gcShare": 0.014173451951073784,
+          "allocBytes": 6998685488,
+          "peakHeapBytes": 138754416,
+          "workers": 8,
+          "sims": 146250,
+          "evaluatorBusy": 0.8343957569360043,
+          "stages": [
+            {
+              "name": "Setup",
+              "startSeconds": 0,
+              "wallSeconds": 0.025689633,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Objective",
+              "startSeconds": 0.025689633,
+              "wallSeconds": 0.187478346,
+              "sims": 1500,
+              "evaluatorBusy": 0.3676388892133708
+            },
+            {
+              "name": "Racial screen",
+              "startSeconds": 0.213167979,
+              "wallSeconds": 0.000001813,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Stat curves",
+              "startSeconds": 0.213169792,
+              "wallSeconds": 2.08178887,
+              "sims": 34000,
+              "evaluatorBusy": 0.8149809432284072
+            },
+            {
+              "name": "Effects",
+              "startSeconds": 2.294958662,
+              "wallSeconds": 4.54223133,
+              "sims": 82500,
+              "evaluatorBusy": 0.9775273245220207
+            },
+            {
+              "name": "Search",
+              "startSeconds": 6.837189992,
+              "wallSeconds": 0.709654158,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Verify",
+              "startSeconds": 7.54684415,
+              "wallSeconds": 0.423732831,
+              "sims": 7000,
+              "evaluatorBusy": 0.8751993682547576
+            },
+            {
+              "name": "Alternatives",
+              "startSeconds": 7.970576981,
+              "wallSeconds": 1.244994983,
+              "sims": 21250,
+              "evaluatorBusy": 0.8938876273166476
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": "optimizer/quick/fury_p1",
+      "kind": "optimizer",
+      "gomaxprocs": 12,
+      "workers": 12,
+      "samples": [
+        {
+          "wallSeconds": 8.02663055,
+          "cpuSeconds": 82.542601,
+          "utilization": 0.8569660756758429,
+          "gcShare": 0.015711053586626396,
+          "allocBytes": 6998601144,
+          "peakHeapBytes": 162847656,
+          "workers": 12,
+          "sims": 146250,
+          "evaluatorBusy": 0.7999388854444802,
+          "stages": [
+            {
+              "name": "Setup",
+              "startSeconds": 0,
+              "wallSeconds": 0.026158085,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Objective",
+              "startSeconds": 0.026158085,
+              "wallSeconds": 0.183575201,
+              "sims": 1500,
+              "evaluatorBusy": 0.24488883168919967
+            },
+            {
+              "name": "Racial screen",
+              "startSeconds": 0.209733286,
+              "wallSeconds": 0.000001753,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Stat curves",
+              "startSeconds": 0.209735039,
+              "wallSeconds": 1.9265649599999999,
+              "sims": 34000,
+              "evaluatorBusy": 0.7430517625785118
+            },
+            {
+              "name": "Effects",
+              "startSeconds": 2.1362999990000002,
+              "wallSeconds": 3.890935758,
+              "sims": 82500,
+              "evaluatorBusy": 0.9579807829867543
+            },
+            {
+              "name": "Search",
+              "startSeconds": 6.027235757,
+              "wallSeconds": 0.603180031,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Verify",
+              "startSeconds": 6.630415788,
+              "wallSeconds": 0.382479066,
+              "sims": 7000,
+              "evaluatorBusy": 0.8300104486415648
+            },
+            {
+              "name": "Alternatives",
+              "startSeconds": 7.012894854,
+              "wallSeconds": 1.013190135,
+              "sims": 21250,
+              "evaluatorBusy": 0.8872778549770095
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": "optimizer/quick/fury_p1",
+      "kind": "optimizer",
+      "gomaxprocs": 16,
+      "workers": 16,
+      "samples": [
+        {
+          "wallSeconds": 7.502036503,
+          "cpuSeconds": 97.928609,
+          "utilization": 0.8158502108130837,
+          "gcShare": 0.016814220380003818,
+          "allocBytes": 6998195848,
+          "peakHeapBytes": 161798088,
+          "workers": 16,
+          "sims": 146250,
+          "evaluatorBusy": 0.7723082529723337,
+          "stages": [
+            {
+              "name": "Setup",
+              "startSeconds": 0,
+              "wallSeconds": 0.025372207,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Objective",
+              "startSeconds": 0.025372207,
+              "wallSeconds": 0.190107143,
+              "sims": 1500,
+              "evaluatorBusy": 0.18761549079457787
+            },
+            {
+              "name": "Racial screen",
+              "startSeconds": 0.21547935,
+              "wallSeconds": 0.000001483,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Stat curves",
+              "startSeconds": 0.215480833,
+              "wallSeconds": 1.8100729100000001,
+              "sims": 34000,
+              "evaluatorBusy": 0.7093450708015955
+            },
+            {
+              "name": "Effects",
+              "startSeconds": 2.025553743,
+              "wallSeconds": 3.5649000280000003,
+              "sims": 82500,
+              "evaluatorBusy": 0.9457671680709191
+            },
+            {
+              "name": "Search",
+              "startSeconds": 5.590453771,
+              "wallSeconds": 0.603531973,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Verify",
+              "startSeconds": 6.193985744,
+              "wallSeconds": 0.302763694,
+              "sims": 7000,
+              "evaluatorBusy": 0.8578465093720914
+            },
+            {
+              "name": "Alternatives",
+              "startSeconds": 6.496749438,
+              "wallSeconds": 1.004798513,
+              "sims": 21250,
+              "evaluatorBusy": 0.8385600279919005
+            }
+          ]
+        },
+        {
+          "wallSeconds": 7.537249049,
+          "cpuSeconds": 97.536185,
+          "utilization": 0.8087846803083659,
+          "gcShare": 0.01671879543663015,
+          "allocBytes": 6998087424,
+          "peakHeapBytes": 158451040,
+          "workers": 16,
+          "sims": 146250,
+          "evaluatorBusy": 0.7651843059174787,
+          "stages": [
+            {
+              "name": "Setup",
+              "startSeconds": 0,
+              "wallSeconds": 0.025375836,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Objective",
+              "startSeconds": 0.025375836,
+              "wallSeconds": 0.184653116,
+              "sims": 1500,
+              "evaluatorBusy": 0.18525832411352322
+            },
+            {
+              "name": "Racial screen",
+              "startSeconds": 0.210028952,
+              "wallSeconds": 0.000001513,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Stat curves",
+              "startSeconds": 0.210030465,
+              "wallSeconds": 1.806802593,
+              "sims": 34000,
+              "evaluatorBusy": 0.7013829225711655
+            },
+            {
+              "name": "Effects",
+              "startSeconds": 2.016833058,
+              "wallSeconds": 3.5731047179999997,
+              "sims": 82500,
+              "evaluatorBusy": 0.9478373923492718
+            },
+            {
+              "name": "Search",
+              "startSeconds": 5.589937776,
+              "wallSeconds": 0.651554114,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Verify",
+              "startSeconds": 6.24149189,
+              "wallSeconds": 0.309233232,
+              "sims": 7000,
+              "evaluatorBusy": 0.8640026405700149
+            },
+            {
+              "name": "Alternatives",
+              "startSeconds": 6.550725122,
+              "wallSeconds": 0.986068414,
+              "sims": 21250,
+              "evaluatorBusy": 0.8231340966444343
+            }
+          ]
+        },
+        {
+          "wallSeconds": 7.533948326,
+          "cpuSeconds": 97.207814,
+          "utilization": 0.8064149250975364,
+          "gcShare": 0.016089677056652547,
+          "allocBytes": 7000530536,
+          "peakHeapBytes": 179929880,
+          "workers": 16,
+          "sims": 146250,
+          "evaluatorBusy": 0.7607559777953864,
+          "stages": [
+            {
+              "name": "Setup",
+              "startSeconds": 0,
+              "wallSeconds": 0.026843118,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Objective",
+              "startSeconds": 0.026843118,
+              "wallSeconds": 0.204003226,
+              "sims": 1500,
+              "evaluatorBusy": 0.17967523096914165
+            },
+            {
+              "name": "Racial screen",
+              "startSeconds": 0.230846344,
+              "wallSeconds": 0.000001633,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Stat curves",
+              "startSeconds": 0.230847977,
+              "wallSeconds": 1.797995443,
+              "sims": 34000,
+              "evaluatorBusy": 0.6932929135975012
+            },
+            {
+              "name": "Effects",
+              "startSeconds": 2.02884342,
+              "wallSeconds": 3.5563040729999997,
+              "sims": 82500,
+              "evaluatorBusy": 0.944715342311366
+            },
+            {
+              "name": "Search",
+              "startSeconds": 5.585147493,
+              "wallSeconds": 0.634409829,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Verify",
+              "startSeconds": 6.219557322,
+              "wallSeconds": 0.297028653,
+              "sims": 7000,
+              "evaluatorBusy": 0.8533521602291345
+            },
+            {
+              "name": "Alternatives",
+              "startSeconds": 6.516585975,
+              "wallSeconds": 1.016878344,
+              "sims": 21250,
+              "evaluatorBusy": 0.8209154326822796
+            }
+          ]
+        }
+      ],
+      "cpuProfile": "optimizer_quick_fury_p1.cpu.pprof"
+    },
+    {
+      "scenario": "optimizer/quick/prot_paladin_p3",
+      "kind": "optimizer",
+      "gomaxprocs": 1,
+      "workers": 1,
+      "samples": [
+        {
+          "wallSeconds": 61.970140164,
+          "cpuSeconds": 62.06817,
+          "utilization": 1.0015818882407006,
+          "gcShare": 0.009190453575971121,
+          "allocBytes": 5211861760,
+          "peakHeapBytes": 147713256,
+          "workers": 1,
+          "sims": 145000,
+          "evaluatorBusy": 0.6551535101384212,
+          "stages": [
+            {
+              "name": "Setup",
+              "startSeconds": 0,
+              "wallSeconds": 0.044416426,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Objective",
+              "startSeconds": 0.044416426,
+              "wallSeconds": 0.825321567,
+              "sims": 3000,
+              "evaluatorBusy": 0.9998711593101989
+            },
+            {
+              "name": "Racial screen",
+              "startSeconds": 0.869737993,
+              "wallSeconds": 0.000003066,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Stat curves",
+              "startSeconds": 0.869741059,
+              "wallSeconds": 15.811421195,
+              "sims": 57250,
+              "evaluatorBusy": 0.998642937991761
+            },
+            {
+              "name": "Effects",
+              "startSeconds": 16.681162254,
+              "wallSeconds": 17.880648937,
+              "sims": 62750,
+              "evaluatorBusy": 0.9982771366907017
+            },
+            {
+              "name": "Search",
+              "startSeconds": 34.561811191,
+              "wallSeconds": 21.193814128,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Verify",
+              "startSeconds": 55.755625319,
+              "wallSeconds": 0.559319843,
+              "sims": 2000,
+              "evaluatorBusy": 0.9926286094591499
+            },
+            {
+              "name": "Alternatives",
+              "startSeconds": 56.314945162,
+              "wallSeconds": 5.65465364,
+              "sims": 20000,
+              "evaluatorBusy": 0.9866883602794813
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": "optimizer/quick/prot_paladin_p3",
+      "kind": "optimizer",
+      "gomaxprocs": 2,
+      "workers": 2,
+      "samples": [
+        {
+          "wallSeconds": 32.899366716,
+          "cpuSeconds": 65.100293,
+          "utilization": 0.9893851994473143,
+          "gcShare": 0.009187171013505446,
+          "allocBytes": 5211643064,
+          "peakHeapBytes": 151754784,
+          "workers": 2,
+          "sims": 145000,
+          "evaluatorBusy": 0.6474695704714658,
+          "stages": [
+            {
+              "name": "Setup",
+              "startSeconds": 0,
+              "wallSeconds": 0.036632566,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Objective",
+              "startSeconds": 0.036632566,
+              "wallSeconds": 0.427049482,
+              "sims": 3000,
+              "evaluatorBusy": 0.9925214731907812
+            },
+            {
+              "name": "Racial screen",
+              "startSeconds": 0.463682048,
+              "wallSeconds": 0.000002835,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Stat curves",
+              "startSeconds": 0.463684883,
+              "wallSeconds": 8.378103138,
+              "sims": 57250,
+              "evaluatorBusy": 0.9891272567310808
+            },
+            {
+              "name": "Effects",
+              "startSeconds": 8.841788021,
+              "wallSeconds": 9.478086253,
+              "sims": 62750,
+              "evaluatorBusy": 0.9930371088911423
+            },
+            {
+              "name": "Search",
+              "startSeconds": 18.319874274,
+              "wallSeconds": 11.300483923,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Verify",
+              "startSeconds": 29.620358197,
+              "wallSeconds": 0.300878254,
+              "sims": 2000,
+              "evaluatorBusy": 0.9646934387621114
+            },
+            {
+              "name": "Alternatives",
+              "startSeconds": 29.921236451,
+              "wallSeconds": 2.977598356,
+              "sims": 20000,
+              "evaluatorBusy": 0.9698359193344477
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": "optimizer/quick/prot_paladin_p3",
+      "kind": "optimizer",
+      "gomaxprocs": 4,
+      "workers": 4,
+      "samples": [
+        {
+          "wallSeconds": 17.676314754,
+          "cpuSeconds": 67.017294,
+          "utilization": 0.9478403011695998,
+          "gcShare": 0.00868707975534448,
+          "allocBytes": 5211220160,
+          "peakHeapBytes": 156168592,
+          "workers": 4,
+          "sims": 145000,
+          "evaluatorBusy": 0.6190876787456087,
+          "stages": [
+            {
+              "name": "Setup",
+              "startSeconds": 0,
+              "wallSeconds": 0.032083593,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Objective",
+              "startSeconds": 0.032083593,
+              "wallSeconds": 0.243541905,
+              "sims": 3000,
+              "evaluatorBusy": 0.9459775043641874
+            },
+            {
+              "name": "Racial screen",
+              "startSeconds": 0.275625498,
+              "wallSeconds": 0.000002846,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Stat curves",
+              "startSeconds": 0.275628344,
+              "wallSeconds": 4.520684886,
+              "sims": 57250,
+              "evaluatorBusy": 0.9380068006690967
+            },
+            {
+              "name": "Effects",
+              "startSeconds": 4.79631323,
+              "wallSeconds": 4.991528493,
+              "sims": 62750,
+              "evaluatorBusy": 0.9728226840355131
+            },
+            {
+              "name": "Search",
+              "startSeconds": 9.787841723,
+              "wallSeconds": 6.16236584,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Verify",
+              "startSeconds": 15.950207563,
+              "wallSeconds": 0.150108949,
+              "sims": 2000,
+              "evaluatorBusy": 0.9561061829165162
+            },
+            {
+              "name": "Alternatives",
+              "startSeconds": 16.100316512,
+              "wallSeconds": 1.575443186,
+              "sims": 20000,
+              "evaluatorBusy": 0.9347429879327936
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": "optimizer/quick/prot_paladin_p3",
+      "kind": "optimizer",
+      "gomaxprocs": 8,
+      "workers": 8,
+      "samples": [
+        {
+          "wallSeconds": 10.359558086,
+          "cpuSeconds": 72.550098,
+          "utilization": 0.8754004924452914,
+          "gcShare": 0.009867740987922676,
+          "allocBytes": 5210858024,
+          "peakHeapBytes": 176530920,
+          "workers": 8,
+          "sims": 145000,
+          "evaluatorBusy": 0.577978878619529,
+          "stages": [
+            {
+              "name": "Setup",
+              "startSeconds": 0,
+              "wallSeconds": 0.032469396,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Objective",
+              "startSeconds": 0.032469396,
+              "wallSeconds": 0.166588437,
+              "sims": 3000,
+              "evaluatorBusy": 0.6831863096236386
+            },
+            {
+              "name": "Racial screen",
+              "startSeconds": 0.199057833,
+              "wallSeconds": 0.000002846,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Stat curves",
+              "startSeconds": 0.199060679,
+              "wallSeconds": 2.620073607,
+              "sims": 57250,
+              "evaluatorBusy": 0.8710942935543261
+            },
+            {
+              "name": "Effects",
+              "startSeconds": 2.819134286,
+              "wallSeconds": 2.8528088499999997,
+              "sims": 62750,
+              "evaluatorBusy": 0.9432266186095855
+            },
+            {
+              "name": "Search",
+              "startSeconds": 5.671943136,
+              "wallSeconds": 3.651809182,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Verify",
+              "startSeconds": 9.323752318,
+              "wallSeconds": 0.096445862,
+              "sims": 2000,
+              "evaluatorBusy": 0.8763451186220929
+            },
+            {
+              "name": "Alternatives",
+              "startSeconds": 9.42019818,
+              "wallSeconds": 0.938848299,
+              "sims": 20000,
+              "evaluatorBusy": 0.8689400147169037
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": "optimizer/quick/prot_paladin_p3",
+      "kind": "optimizer",
+      "gomaxprocs": 12,
+      "workers": 12,
+      "samples": [
+        {
+          "wallSeconds": 8.720906767,
+          "cpuSeconds": 89.862134,
+          "utilization": 0.8586849242561873,
+          "gcShare": 0.011164936259184088,
+          "allocBytes": 5211293776,
+          "peakHeapBytes": 182585032,
+          "workers": 12,
+          "sims": 145000,
+          "evaluatorBusy": 0.5561700475606443,
+          "stages": [
+            {
+              "name": "Setup",
+              "startSeconds": 0,
+              "wallSeconds": 0.031436547,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Objective",
+              "startSeconds": 0.031436547,
+              "wallSeconds": 0.164639506,
+              "sims": 3000,
+              "evaluatorBusy": 0.47815680298101315
+            },
+            {
+              "name": "Racial screen",
+              "startSeconds": 0.196076053,
+              "wallSeconds": 0.000002905,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Stat curves",
+              "startSeconds": 0.196078958,
+              "wallSeconds": 2.108258432,
+              "sims": 57250,
+              "evaluatorBusy": 0.8784969010304584
+            },
+            {
+              "name": "Effects",
+              "startSeconds": 2.30433739,
+              "wallSeconds": 2.373885457,
+              "sims": 62750,
+              "evaluatorBusy": 0.9234217232495561
+            },
+            {
+              "name": "Search",
+              "startSeconds": 4.678222847,
+              "wallSeconds": 3.144393532,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Verify",
+              "startSeconds": 7.822616379,
+              "wallSeconds": 0.092294237,
+              "sims": 2000,
+              "evaluatorBusy": 0.5778060326417419
+            },
+            {
+              "name": "Alternatives",
+              "startSeconds": 7.914910616,
+              "wallSeconds": 0.805413218,
+              "sims": 20000,
+              "evaluatorBusy": 0.8365089386534834
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": "optimizer/quick/prot_paladin_p3",
+      "kind": "optimizer",
+      "gomaxprocs": 16,
+      "workers": 16,
+      "samples": [
+        {
+          "wallSeconds": 8.458090229,
+          "cpuSeconds": 109.777035,
+          "utilization": 0.8111836716964397,
+          "gcShare": 0.011164105737284052,
+          "allocBytes": 5210791984,
+          "peakHeapBytes": 194773376,
+          "workers": 16,
+          "sims": 145000,
+          "evaluatorBusy": 0.5210322592830096,
+          "stages": [
+            {
+              "name": "Setup",
+              "startSeconds": 0,
+              "wallSeconds": 0.032066903,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Objective",
+              "startSeconds": 0.032066903,
+              "wallSeconds": 0.158940639,
+              "sims": 3000,
+              "evaluatorBusy": 0.35620232013160585
+            },
+            {
+              "name": "Racial screen",
+              "startSeconds": 0.191007542,
+              "wallSeconds": 0.000003036,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Stat curves",
+              "startSeconds": 0.191010578,
+              "wallSeconds": 1.993278413,
+              "sims": 57250,
+              "evaluatorBusy": 0.8104153798032427
+            },
+            {
+              "name": "Effects",
+              "startSeconds": 2.184288991,
+              "wallSeconds": 2.192333488,
+              "sims": 62750,
+              "evaluatorBusy": 0.9074677620396774
+            },
+            {
+              "name": "Search",
+              "startSeconds": 4.376622479,
+              "wallSeconds": 3.15398787,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Verify",
+              "startSeconds": 7.530610349,
+              "wallSeconds": 0.093852396,
+              "sims": 2000,
+              "evaluatorBusy": 0.4162832614310667
+            },
+            {
+              "name": "Alternatives",
+              "startSeconds": 7.624462745,
+              "wallSeconds": 0.833006828,
+              "sims": 20000,
+              "evaluatorBusy": 0.8476218966088714
+            }
+          ]
+        },
+        {
+          "wallSeconds": 8.268437852,
+          "cpuSeconds": 107.281154,
+          "utilization": 0.8109236889744721,
+          "gcShare": 0.011614761115311093,
+          "allocBytes": 5210619736,
+          "peakHeapBytes": 200341960,
+          "workers": 16,
+          "sims": 145000,
+          "evaluatorBusy": 0.5288549109420722,
+          "stages": [
+            {
+              "name": "Setup",
+              "startSeconds": 0,
+              "wallSeconds": 0.032385863,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Objective",
+              "startSeconds": 0.032385863,
+              "wallSeconds": 0.173068672,
+              "sims": 3000,
+              "evaluatorBusy": 0.3416112019539851
+            },
+            {
+              "name": "Racial screen",
+              "startSeconds": 0.205454535,
+              "wallSeconds": 0.000002995,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Stat curves",
+              "startSeconds": 0.20545753,
+              "wallSeconds": 2.054157592,
+              "sims": 57250,
+              "evaluatorBusy": 0.8107898009134344
+            },
+            {
+              "name": "Effects",
+              "startSeconds": 2.259615122,
+              "wallSeconds": 2.16261478,
+              "sims": 62750,
+              "evaluatorBusy": 0.9053064533469525
+            },
+            {
+              "name": "Search",
+              "startSeconds": 4.422229902,
+              "wallSeconds": 2.9963902559999998,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Verify",
+              "startSeconds": 7.418620158,
+              "wallSeconds": 0.095688226,
+              "sims": 2000,
+              "evaluatorBusy": 0.4373443068638351
+            },
+            {
+              "name": "Alternatives",
+              "startSeconds": 7.514308384,
+              "wallSeconds": 0.753530119,
+              "sims": 20000,
+              "evaluatorBusy": 0.8602137318813663
+            }
+          ]
+        },
+        {
+          "wallSeconds": 8.290568362,
+          "cpuSeconds": 107.543262,
+          "utilization": 0.8107349920432391,
+          "gcShare": 0.011407681332178718,
+          "allocBytes": 5212774392,
+          "peakHeapBytes": 219610528,
+          "workers": 16,
+          "sims": 145000,
+          "evaluatorBusy": 0.5300376645101588,
+          "stages": [
+            {
+              "name": "Setup",
+              "startSeconds": 0,
+              "wallSeconds": 0.031458304,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Objective",
+              "startSeconds": 0.031458304,
+              "wallSeconds": 0.161361144,
+              "sims": 3000,
+              "evaluatorBusy": 0.36207740205721395
+            },
+            {
+              "name": "Racial screen",
+              "startSeconds": 0.192819448,
+              "wallSeconds": 0.000002966,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Stat curves",
+              "startSeconds": 0.192822414,
+              "wallSeconds": 2.002493987,
+              "sims": 57250,
+              "evaluatorBusy": 0.8073441881700891
+            },
+            {
+              "name": "Effects",
+              "startSeconds": 2.195316401,
+              "wallSeconds": 2.231010876,
+              "sims": 62750,
+              "evaluatorBusy": 0.9106715750385252
+            },
+            {
+              "name": "Search",
+              "startSeconds": 4.426327277,
+              "wallSeconds": 3.015006605,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Verify",
+              "startSeconds": 7.441333882,
+              "wallSeconds": 0.102808299,
+              "sims": 2000,
+              "evaluatorBusy": 0.433285129296809
+            },
+            {
+              "name": "Alternatives",
+              "startSeconds": 7.544142181,
+              "wallSeconds": 0.745850273,
+              "sims": 20000,
+              "evaluatorBusy": 0.8615906715133695
+            }
+          ]
+        }
+      ],
+      "cpuProfile": "optimizer_quick_prot_paladin_p3.cpu.pprof"
+    },
+    {
+      "scenario": "optimizer/quick/retribution_p4",
+      "kind": "optimizer",
+      "gomaxprocs": 1,
+      "workers": 1,
+      "samples": [
+        {
+          "wallSeconds": 47.760615074,
+          "cpuSeconds": 47.831739,
+          "utilization": 1.0014891752522408,
+          "gcShare": 0.010238777771548989,
+          "allocBytes": 4665932768,
+          "peakHeapBytes": 167600440,
+          "workers": 1,
+          "sims": 136500,
+          "evaluatorBusy": 0.7790939481864351,
+          "stages": [
+            {
+              "name": "Setup",
+              "startSeconds": 0,
+              "wallSeconds": 0.047439995,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Objective",
+              "startSeconds": 0.047439995,
+              "wallSeconds": 0.431873779,
+              "sims": 1500,
+              "evaluatorBusy": 0.9974929086861742
+            },
+            {
+              "name": "Racial screen",
+              "startSeconds": 0.479313774,
+              "wallSeconds": 0.000001503,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Stat curves",
+              "startSeconds": 0.479315277,
+              "wallSeconds": 10.875440535,
+              "sims": 38500,
+              "evaluatorBusy": 0.9988886941212998
+            },
+            {
+              "name": "Effects",
+              "startSeconds": 11.354755812,
+              "wallSeconds": 17.998463089,
+              "sims": 68000,
+              "evaluatorBusy": 0.9977718023588075
+            },
+            {
+              "name": "Search",
+              "startSeconds": 29.353218900999998,
+              "wallSeconds": 10.418308550999999,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Verify",
+              "startSeconds": 39.771527452,
+              "wallSeconds": 2.833159331,
+              "sims": 10000,
+              "evaluatorBusy": 0.9997145395279571
+            },
+            {
+              "name": "Alternatives",
+              "startSeconds": 42.604686783,
+              "wallSeconds": 5.155319932,
+              "sims": 18500,
+              "evaluatorBusy": 0.9940560637546869
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": "optimizer/quick/retribution_p4",
+      "kind": "optimizer",
+      "gomaxprocs": 2,
+      "workers": 2,
+      "samples": [
+        {
+          "wallSeconds": 24.957738744,
+          "cpuSeconds": 49.15506,
+          "utilization": 0.9847658977481922,
+          "gcShare": 0.009963717230827205,
+          "allocBytes": 4665659728,
+          "peakHeapBytes": 171495648,
+          "workers": 2,
+          "sims": 136500,
+          "evaluatorBusy": 0.7723377857365926,
+          "stages": [
+            {
+              "name": "Setup",
+              "startSeconds": 0,
+              "wallSeconds": 0.039681361,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Objective",
+              "startSeconds": 0.039681361,
+              "wallSeconds": 0.227840677,
+              "sims": 1500,
+              "evaluatorBusy": 0.9895146115634128
+            },
+            {
+              "name": "Racial screen",
+              "startSeconds": 0.267522038,
+              "wallSeconds": 0.000001473,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Stat curves",
+              "startSeconds": 0.267523511,
+              "wallSeconds": 5.805055059,
+              "sims": 38500,
+              "evaluatorBusy": 0.98547407662064
+            },
+            {
+              "name": "Effects",
+              "startSeconds": 6.07257857,
+              "wallSeconds": 9.358907213,
+              "sims": 68000,
+              "evaluatorBusy": 0.9911424498487545
+            },
+            {
+              "name": "Search",
+              "startSeconds": 15.431485783,
+              "wallSeconds": 5.433595951,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Verify",
+              "startSeconds": 20.865081734,
+              "wallSeconds": 1.4617904,
+              "sims": 10000,
+              "evaluatorBusy": 0.9980409352804616
+            },
+            {
+              "name": "Alternatives",
+              "startSeconds": 22.326872134,
+              "wallSeconds": 2.63018608,
+              "sims": 18500,
+              "evaluatorBusy": 0.9863025529737425
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": "optimizer/quick/retribution_p4",
+      "kind": "optimizer",
+      "gomaxprocs": 4,
+      "workers": 4,
+      "samples": [
+        {
+          "wallSeconds": 13.306722116,
+          "cpuSeconds": 50.321141,
+          "utilization": 0.9454082786378674,
+          "gcShare": 0.00926100454630655,
+          "allocBytes": 4665353224,
+          "peakHeapBytes": 170515144,
+          "workers": 4,
+          "sims": 136500,
+          "evaluatorBusy": 0.7419907039380365,
+          "stages": [
+            {
+              "name": "Setup",
+              "startSeconds": 0,
+              "wallSeconds": 0.036251296,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Objective",
+              "startSeconds": 0.036251296,
+              "wallSeconds": 0.147400087,
+              "sims": 1500,
+              "evaluatorBusy": 0.7322524833380865
+            },
+            {
+              "name": "Racial screen",
+              "startSeconds": 0.183651383,
+              "wallSeconds": 0.000001553,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Stat curves",
+              "startSeconds": 0.183652936,
+              "wallSeconds": 3.013862415,
+              "sims": 38500,
+              "evaluatorBusy": 0.9584041028628044
+            },
+            {
+              "name": "Effects",
+              "startSeconds": 3.197515351,
+              "wallSeconds": 4.908436487,
+              "sims": 68000,
+              "evaluatorBusy": 0.9785510502114397
+            },
+            {
+              "name": "Search",
+              "startSeconds": 8.105951838,
+              "wallSeconds": 3.020394125,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Verify",
+              "startSeconds": 11.126345963,
+              "wallSeconds": 0.755916501,
+              "sims": 10000,
+              "evaluatorBusy": 0.9652393756913107
+            },
+            {
+              "name": "Alternatives",
+              "startSeconds": 11.882262464,
+              "wallSeconds": 1.423837526,
+              "sims": 18500,
+              "evaluatorBusy": 0.9437693832421158
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": "optimizer/quick/retribution_p4",
+      "kind": "optimizer",
+      "gomaxprocs": 8,
+      "workers": 8,
+      "samples": [
+        {
+          "wallSeconds": 7.765954645,
+          "cpuSeconds": 55.072254,
+          "utilization": 0.8864372848780654,
+          "gcShare": 0.010171361839042768,
+          "allocBytes": 4665596936,
+          "peakHeapBytes": 177439304,
+          "workers": 8,
+          "sims": 136500,
+          "evaluatorBusy": 0.699593061269972,
+          "stages": [
+            {
+              "name": "Setup",
+              "startSeconds": 0,
+              "wallSeconds": 0.036371001,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Objective",
+              "startSeconds": 0.036371001,
+              "wallSeconds": 0.147681856,
+              "sims": 1500,
+              "evaluatorBusy": 0.3694074054025973
+            },
+            {
+              "name": "Racial screen",
+              "startSeconds": 0.184052857,
+              "wallSeconds": 0.000001583,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Stat curves",
+              "startSeconds": 0.18405444,
+              "wallSeconds": 1.756246059,
+              "sims": 38500,
+              "evaluatorBusy": 0.893087957528621
+            },
+            {
+              "name": "Effects",
+              "startSeconds": 1.9403004990000001,
+              "wallSeconds": 2.828767448,
+              "sims": 68000,
+              "evaluatorBusy": 0.9492267360643073
+            },
+            {
+              "name": "Search",
+              "startSeconds": 4.769067947,
+              "wallSeconds": 1.774629467,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Verify",
+              "startSeconds": 6.543697414,
+              "wallSeconds": 0.421919829,
+              "sims": 10000,
+              "evaluatorBusy": 0.9544667465723684
+            },
+            {
+              "name": "Alternatives",
+              "startSeconds": 6.965617243,
+              "wallSeconds": 0.799696407,
+              "sims": 18500,
+              "evaluatorBusy": 0.9024330065234368
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": "optimizer/quick/retribution_p4",
+      "kind": "optimizer",
+      "gomaxprocs": 12,
+      "workers": 12,
+      "samples": [
+        {
+          "wallSeconds": 6.726988836,
+          "cpuSeconds": 67.449747,
+          "utilization": 0.8355614060067692,
+          "gcShare": 0.011188583178620906,
+          "allocBytes": 4665784392,
+          "peakHeapBytes": 202647088,
+          "workers": 12,
+          "sims": 136500,
+          "evaluatorBusy": 0.6614358717758159,
+          "stages": [
+            {
+              "name": "Setup",
+              "startSeconds": 0,
+              "wallSeconds": 0.035981112,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Objective",
+              "startSeconds": 0.035981112,
+              "wallSeconds": 0.141415557,
+              "sims": 1500,
+              "evaluatorBusy": 0.24888683098234612
+            },
+            {
+              "name": "Racial screen",
+              "startSeconds": 0.177396669,
+              "wallSeconds": 0.000001724,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Stat curves",
+              "startSeconds": 0.177398393,
+              "wallSeconds": 1.569403346,
+              "sims": 38500,
+              "evaluatorBusy": 0.7957198536731891
+            },
+            {
+              "name": "Effects",
+              "startSeconds": 1.746801739,
+              "wallSeconds": 2.358614218,
+              "sims": 68000,
+              "evaluatorBusy": 0.9340475559845597
+            },
+            {
+              "name": "Search",
+              "startSeconds": 4.105415957,
+              "wallSeconds": 1.5021425320000001,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Verify",
+              "startSeconds": 5.607558489,
+              "wallSeconds": 0.39597618,
+              "sims": 10000,
+              "evaluatorBusy": 0.8805282841339934
+            },
+            {
+              "name": "Alternatives",
+              "startSeconds": 6.003534669,
+              "wallSeconds": 0.722768468,
+              "sims": 18500,
+              "evaluatorBusy": 0.8485293196502129
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "scenario": "optimizer/quick/retribution_p4",
+      "kind": "optimizer",
+      "gomaxprocs": 16,
+      "workers": 16,
+      "samples": [
+        {
+          "wallSeconds": 6.33996927,
+          "cpuSeconds": 80.080015,
+          "utilization": 0.7894361509263278,
+          "gcShare": 0.011779490140034128,
+          "allocBytes": 4665849824,
+          "peakHeapBytes": 207501080,
+          "workers": 16,
+          "sims": 136500,
+          "evaluatorBusy": 0.629558765388856,
+          "stages": [
+            {
+              "name": "Setup",
+              "startSeconds": 0,
+              "wallSeconds": 0.034755147,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Objective",
+              "startSeconds": 0.034755147,
+              "wallSeconds": 0.151762878,
+              "sims": 1500,
+              "evaluatorBusy": 0.18302266949958607
+            },
+            {
+              "name": "Racial screen",
+              "startSeconds": 0.186518025,
+              "wallSeconds": 0.000001483,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Stat curves",
+              "startSeconds": 0.186519508,
+              "wallSeconds": 1.50670566,
+              "sims": 38500,
+              "evaluatorBusy": 0.7128222517263259
+            },
+            {
+              "name": "Effects",
+              "startSeconds": 1.6932251680000001,
+              "wallSeconds": 2.1985626480000002,
+              "sims": 68000,
+              "evaluatorBusy": 0.9214295928036706
+            },
+            {
+              "name": "Search",
+              "startSeconds": 3.891787816,
+              "wallSeconds": 1.455691339,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Verify",
+              "startSeconds": 5.347479155,
+              "wallSeconds": 0.341781884,
+              "sims": 10000,
+              "evaluatorBusy": 0.8681221588678468
+            },
+            {
+              "name": "Alternatives",
+              "startSeconds": 5.689261039,
+              "wallSeconds": 0.650062009,
+              "sims": 18500,
+              "evaluatorBusy": 0.8716982423864429
+            }
+          ]
+        },
+        {
+          "wallSeconds": 6.372711364,
+          "cpuSeconds": 80.809507,
+          "utilization": 0.7925345899127403,
+          "gcShare": 0.011104865942384653,
+          "allocBytes": 4665671016,
+          "peakHeapBytes": 234117280,
+          "workers": 16,
+          "sims": 136500,
+          "evaluatorBusy": 0.6280409380512544,
+          "stages": [
+            {
+              "name": "Setup",
+              "startSeconds": 0,
+              "wallSeconds": 0.034936763,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Objective",
+              "startSeconds": 0.034936763,
+              "wallSeconds": 0.145741828,
+              "sims": 1500,
+              "evaluatorBusy": 0.18583812208668057
+            },
+            {
+              "name": "Racial screen",
+              "startSeconds": 0.180678591,
+              "wallSeconds": 0.000001583,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Stat curves",
+              "startSeconds": 0.180680174,
+              "wallSeconds": 1.4633967,
+              "sims": 38500,
+              "evaluatorBusy": 0.7189759960081228
+            },
+            {
+              "name": "Effects",
+              "startSeconds": 1.644076874,
+              "wallSeconds": 2.180454402,
+              "sims": 68000,
+              "evaluatorBusy": 0.9150814539425072
+            },
+            {
+              "name": "Search",
+              "startSeconds": 3.824531276,
+              "wallSeconds": 1.489350669,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Verify",
+              "startSeconds": 5.313881945,
+              "wallSeconds": 0.330902576,
+              "sims": 10000,
+              "evaluatorBusy": 0.8651189884133752
+            },
+            {
+              "name": "Alternatives",
+              "startSeconds": 5.644784521,
+              "wallSeconds": 0.727225443,
+              "sims": 18500,
+              "evaluatorBusy": 0.8815535091915094
+            }
+          ]
+        },
+        {
+          "wallSeconds": 6.5026651300000005,
+          "cpuSeconds": 82.783947,
+          "utilization": 0.7956732484392902,
+          "gcShare": 0.011247722053571108,
+          "allocBytes": 4666002928,
+          "peakHeapBytes": 224091304,
+          "workers": 16,
+          "sims": 136500,
+          "evaluatorBusy": 0.6404551133587841,
+          "stages": [
+            {
+              "name": "Setup",
+              "startSeconds": 0,
+              "wallSeconds": 0.034768793,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Objective",
+              "startSeconds": 0.034768793,
+              "wallSeconds": 0.151925022,
+              "sims": 1500,
+              "evaluatorBusy": 0.18233821985229004
+            },
+            {
+              "name": "Racial screen",
+              "startSeconds": 0.186693815,
+              "wallSeconds": 0.000001633,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Stat curves",
+              "startSeconds": 0.186695448,
+              "wallSeconds": 1.523694416,
+              "sims": 38500,
+              "evaluatorBusy": 0.7239481017596642
+            },
+            {
+              "name": "Effects",
+              "startSeconds": 1.7103898640000001,
+              "wallSeconds": 2.346749864,
+              "sims": 68000,
+              "evaluatorBusy": 0.9194080786894636
+            },
+            {
+              "name": "Search",
+              "startSeconds": 4.057139728,
+              "wallSeconds": 1.448415115,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Verify",
+              "startSeconds": 5.505554843,
+              "wallSeconds": 0.340146633,
+              "sims": 10000,
+              "evaluatorBusy": 0.8650084500836438
+            },
+            {
+              "name": "Alternatives",
+              "startSeconds": 5.845701476,
+              "wallSeconds": 0.656354238,
+              "sims": 18500,
+              "evaluatorBusy": 0.8861783501579219
+            }
+          ]
+        }
+      ],
+      "cpuProfile": "optimizer_quick_retribution_p4.cpu.pprof"
+    },
+    {
+      "scenario": "optimizer/normal/combat_rogue_p3",
+      "kind": "optimizer",
+      "gomaxprocs": 16,
+      "workers": 16,
+      "samples": [
+        {
+          "wallSeconds": 190.619667441,
+          "cpuSeconds": 2994.727323,
+          "utilization": 0.9819052787164915,
+          "gcShare": 0.0034950071213892407,
+          "allocBytes": 40176273848,
+          "peakHeapBytes": 250494840,
+          "workers": 16,
+          "sims": 2004250,
+          "evaluatorBusy": 0.9830432409342275,
+          "stages": [
+            {
+              "name": "Setup",
+              "startSeconds": 0,
+              "wallSeconds": 0.020753442,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Objective",
+              "startSeconds": 0.020753442,
+              "wallSeconds": 1.080858877,
+              "sims": 12000,
+              "evaluatorBusy": 0.9864298198408561
+            },
+            {
+              "name": "Racial screen",
+              "startSeconds": 1.101612319,
+              "wallSeconds": 0.000009077,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Stat curves",
+              "startSeconds": 1.101621396,
+              "wallSeconds": 31.463072433,
+              "sims": 347000,
+              "evaluatorBusy": 0.9864296363150257
+            },
+            {
+              "name": "Effects",
+              "startSeconds": 32.564693829,
+              "wallSeconds": 93.658451411,
+              "sims": 1013000,
+              "evaluatorBusy": 0.996273332023254
+            },
+            {
+              "name": "Search",
+              "startSeconds": 126.22314524,
+              "wallSeconds": 1.881957285,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Verify",
+              "startSeconds": 128.105102525,
+              "wallSeconds": 7.820542647,
+              "sims": 80000,
+              "evaluatorBusy": 0.993717634140919
+            },
+            {
+              "name": "Alternatives",
+              "startSeconds": 135.925645172,
+              "wallSeconds": 54.693611714,
+              "sims": 552250,
+              "evaluatorBusy": 0.9910452656907437
+            }
+          ]
+        }
+      ],
+      "cpuProfile": "optimizer_normal_combat_rogue_p3.cpu.pprof"
+    },
+    {
+      "scenario": "optimizer/normal/feral_tank_p2",
+      "kind": "optimizer",
+      "gomaxprocs": 16,
+      "workers": 16,
+      "samples": [
+        {
+          "wallSeconds": 89.045441455,
+          "cpuSeconds": 1356.908741,
+          "utilization": 0.9523990776704494,
+          "gcShare": 0.0069741201669773194,
+          "allocBytes": 36610343792,
+          "peakHeapBytes": 225826248,
+          "workers": 16,
+          "sims": 1709000,
+          "evaluatorBusy": 0.9758566325235637,
+          "stages": [
+            {
+              "name": "Setup",
+              "startSeconds": 0,
+              "wallSeconds": 0.019701198,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Objective",
+              "startSeconds": 0.019701198,
+              "wallSeconds": 1.359901193,
+              "sims": 24000,
+              "evaluatorBusy": 0.9682592897394421
+            },
+            {
+              "name": "Racial screen",
+              "startSeconds": 1.379602391,
+              "wallSeconds": 0.000020561,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Stat curves",
+              "startSeconds": 1.379622952,
+              "wallSeconds": 26.394424443,
+              "sims": 534000,
+              "evaluatorBusy": 0.987640715711874
+            },
+            {
+              "name": "Effects",
+              "startSeconds": 27.774047395,
+              "wallSeconds": 37.106951357,
+              "sims": 771000,
+              "evaluatorBusy": 0.9943069008107116
+            },
+            {
+              "name": "Search",
+              "startSeconds": 64.880998752,
+              "wallSeconds": 1.264943846,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Verify",
+              "startSeconds": 66.145942598,
+              "wallSeconds": 4.802420414,
+              "sims": 80000,
+              "evaluatorBusy": 0.9851486162624203
+            },
+            {
+              "name": "Alternatives",
+              "startSeconds": 70.948363012,
+              "wallSeconds": 18.09677684,
+              "sims": 300000,
+              "evaluatorBusy": 0.9882173846682634
+            }
+          ]
+        }
+      ],
+      "cpuProfile": "optimizer_normal_feral_tank_p2.cpu.pprof"
+    },
+    {
+      "scenario": "optimizer/normal/fire_mage_p3",
+      "kind": "optimizer",
+      "gomaxprocs": 16,
+      "workers": 16,
+      "samples": [
+        {
+          "wallSeconds": 30.890594768,
+          "cpuSeconds": 411.750584,
+          "utilization": 0.8330824217945664,
+          "gcShare": 0.027019267228027218,
+          "allocBytes": 51417812800,
+          "peakHeapBytes": 185703368,
+          "workers": 16,
+          "sims": 1124000,
+          "evaluatorBusy": 0.9647835943447027,
+          "stages": [
+            {
+              "name": "Setup",
+              "startSeconds": 0,
+              "wallSeconds": 0.017793161,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Objective",
+              "startSeconds": 0.017793161,
+              "wallSeconds": 0.311529403,
+              "sims": 12000,
+              "evaluatorBusy": 0.9407260333705965
+            },
+            {
+              "name": "Racial screen",
+              "startSeconds": 0.329322564,
+              "wallSeconds": 0.000008536,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Stat curves",
+              "startSeconds": 0.3293311,
+              "wallSeconds": 5.11344832,
+              "sims": 192000,
+              "evaluatorBusy": 0.9661197300538084
+            },
+            {
+              "name": "Effects",
+              "startSeconds": 5.44277942,
+              "wallSeconds": 13.148606262,
+              "sims": 500000,
+              "evaluatorBusy": 0.9899898532920645
+            },
+            {
+              "name": "Search",
+              "startSeconds": 18.591385682,
+              "wallSeconds": 0.585210139,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Verify",
+              "startSeconds": 19.176595821,
+              "wallSeconds": 2.245064573,
+              "sims": 80000,
+              "evaluatorBusy": 0.9809338028559235
+            },
+            {
+              "name": "Alternatives",
+              "startSeconds": 21.421660394,
+              "wallSeconds": 9.468665766,
+              "sims": 340000,
+              "evaluatorBusy": 0.9874639669943018
+            }
+          ]
+        }
+      ],
+      "cpuProfile": "optimizer_normal_fire_mage_p3.cpu.pprof"
+    },
+    {
+      "scenario": "optimizer/normal/fury_p1",
+      "kind": "optimizer",
+      "gomaxprocs": 16,
+      "workers": 16,
+      "samples": [
+        {
+          "wallSeconds": 82.122048879,
+          "cpuSeconds": 1235.743153,
+          "utilization": 0.9404775954420935,
+          "gcShare": 0.013952849466578803,
+          "allocBytes": 72829214336,
+          "peakHeapBytes": 244128200,
+          "workers": 16,
+          "sims": 1765000,
+          "evaluatorBusy": 0.9729992229981899,
+          "stages": [
+            {
+              "name": "Setup",
+              "startSeconds": 0,
+              "wallSeconds": 0.028359207,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Objective",
+              "startSeconds": 0.028359207,
+              "wallSeconds": 0.652399748,
+              "sims": 12000,
+              "evaluatorBusy": 0.9198679038844448
+            },
+            {
+              "name": "Racial screen",
+              "startSeconds": 0.680758955,
+              "wallSeconds": 0.000008436,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Stat curves",
+              "startSeconds": 0.680767391,
+              "wallSeconds": 18.072156221,
+              "sims": 354000,
+              "evaluatorBusy": 0.973300696771489
+            },
+            {
+              "name": "Effects",
+              "startSeconds": 18.752923612,
+              "wallSeconds": 45.067176461,
+              "sims": 999000,
+              "evaluatorBusy": 0.9969682953125932
+            },
+            {
+              "name": "Search",
+              "startSeconds": 63.820100073,
+              "wallSeconds": 1.353238701,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Verify",
+              "startSeconds": 65.173338774,
+              "wallSeconds": 3.309945069,
+              "sims": 80000,
+              "evaluatorBusy": 0.9903702002342807
+            },
+            {
+              "name": "Alternatives",
+              "startSeconds": 68.483283843,
+              "wallSeconds": 13.638175427,
+              "sims": 320000,
+              "evaluatorBusy": 0.9902890053807856
+            }
+          ]
+        }
+      ],
+      "cpuProfile": "optimizer_normal_fury_p1.cpu.pprof"
+    },
+    {
+      "scenario": "optimizer/normal/prot_paladin_p3",
+      "kind": "optimizer",
+      "gomaxprocs": 16,
+      "workers": 16,
+      "samples": [
+        {
+          "wallSeconds": 73.648724352,
+          "cpuSeconds": 1129.400473,
+          "utilization": 0.9584351960412892,
+          "gcShare": 0.008547506318151087,
+          "allocBytes": 45006109328,
+          "peakHeapBytes": 310679984,
+          "workers": 16,
+          "sims": 1990000,
+          "evaluatorBusy": 0.8867362388544479,
+          "stages": [
+            {
+              "name": "Setup",
+              "startSeconds": 0,
+              "wallSeconds": 0.033659057,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Objective",
+              "startSeconds": 0.033659057,
+              "wallSeconds": 0.771495511,
+              "sims": 24000,
+              "evaluatorBusy": 0.9827484015652296
+            },
+            {
+              "name": "Racial screen",
+              "startSeconds": 0.805154568,
+              "wallSeconds": 0.000017796,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Stat curves",
+              "startSeconds": 0.805172364,
+              "wallSeconds": 19.58424302,
+              "sims": 601000,
+              "evaluatorBusy": 0.9870833077040984
+            },
+            {
+              "name": "Effects",
+              "startSeconds": 20.389415384,
+              "wallSeconds": 33.07425283,
+              "sims": 985000,
+              "evaluatorBusy": 0.9942518003342451
+            },
+            {
+              "name": "Search",
+              "startSeconds": 53.463668214,
+              "wallSeconds": 7.576520694,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Verify",
+              "startSeconds": 61.040188908,
+              "wallSeconds": 2.682899779,
+              "sims": 80000,
+              "evaluatorBusy": 0.9835012280009584
+            },
+            {
+              "name": "Alternatives",
+              "startSeconds": 63.723088687,
+              "wallSeconds": 9.925030807,
+              "sims": 300000,
+              "evaluatorBusy": 0.9767446227446758
+            }
+          ]
+        }
+      ],
+      "cpuProfile": "optimizer_normal_prot_paladin_p3.cpu.pprof"
+    },
+    {
+      "scenario": "optimizer/normal/retribution_p4",
+      "kind": "optimizer",
+      "gomaxprocs": 16,
+      "workers": 16,
+      "samples": [
+        {
+          "wallSeconds": 56.32457353,
+          "cpuSeconds": 869.88836,
+          "utilization": 0.9652629233143171,
+          "gcShare": 0.007697605498757711,
+          "allocBytes": 31180266672,
+          "peakHeapBytes": 312144408,
+          "workers": 16,
+          "sims": 1614000,
+          "evaluatorBusy": 0.9375164704485434,
+          "stages": [
+            {
+              "name": "Setup",
+              "startSeconds": 0,
+              "wallSeconds": 0.037336644,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Objective",
+              "startSeconds": 0.037336644,
+              "wallSeconds": 0.405410034,
+              "sims": 12000,
+              "evaluatorBusy": 0.9608457178072707
+            },
+            {
+              "name": "Racial screen",
+              "startSeconds": 0.442746678,
+              "wallSeconds": 0.000008577,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Stat curves",
+              "startSeconds": 0.442755255,
+              "wallSeconds": 12.200520498,
+              "sims": 362000,
+              "evaluatorBusy": 0.9801583351472847
+            },
+            {
+              "name": "Effects",
+              "startSeconds": 12.643275753,
+              "wallSeconds": 28.691647253,
+              "sims": 888000,
+              "evaluatorBusy": 0.9935015442676264
+            },
+            {
+              "name": "Search",
+              "startSeconds": 41.334923006,
+              "wallSeconds": 2.884526788,
+              "sims": 0,
+              "evaluatorBusy": 0
+            },
+            {
+              "name": "Verify",
+              "startSeconds": 44.219449794,
+              "wallSeconds": 2.618898971,
+              "sims": 80000,
+              "evaluatorBusy": 0.9900174673681599
+            },
+            {
+              "name": "Alternatives",
+              "startSeconds": 46.838348765,
+              "wallSeconds": 9.485557506,
+              "sims": 272000,
+              "evaluatorBusy": 0.9866220165517702
+            }
+          ]
+        }
+      ],
+      "cpuProfile": "optimizer_normal_retribution_p4.cpu.pprof"
+    }
+  ]
+}

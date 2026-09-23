@@ -94,8 +94,8 @@ Columns, per point (median over its runs):
 
 Each scenario first sims its (base) request at 100 iterations untimed, and each run starts after a GC.
 Workers default to GOMAXPROCS, the CLI's default, so the curve runs 1 to 16; the web server runs one fewer
-(`-workers` fixes it). Stat weights and the bulk sim size their goroutine pools by `NumCPU`, so a narrow
-point still starts 30 and 17.
+(`-workers` fixes it). Stat weights, the bulk sim and a sim's shards size their goroutine pools by
+GOMAXPROCS, so they follow the sweep; a sim runs GOMAXPROCS-1 shards, so at 2 it runs one.
 
 Output, in `-o` (default `tmp/perf/bench-<time>/`): `report.json` with every run, rewritten after each point
 so a stopped run keeps what finished; `report.txt`, the printed summary (`perf show report.json` reprints
@@ -116,8 +116,8 @@ cp tmp/perf/bench-<time>/report.json tools/perf/baseline.json
 ```
 
 Its numbers fill the [INVESTIGATION](../../docs/sim-performance/sim-performance.INVESTIGATION.md)'s baseline
-tables. About 55 min on the 7800X3D, estimated from loaded timings: the optimizer at Normal about 20, Quick's
-sweep 25, the rest 10. The defaults and why:
+tables. About 30 min on the idle 7800X3D: the optimizer at Normal 9, Quick's sweep 17, the rest 4. The
+defaults and why:
 - `-procs 1,2,4,8,12,16` for everything but Normal: each scenario's full curve, 8 being the core count.
 - `-reps 3` at the widest point, `-sweep-reps 1` elsewhere: the comparison's noise comes from the widest
   point, the one the server runs at; a curve point needs one run.

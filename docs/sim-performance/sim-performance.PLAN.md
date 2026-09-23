@@ -20,22 +20,19 @@ they use the machine, find the bottlenecks, and add tooling that keeps finding t
 
 | Path | Threads busy | Why |
 |---|---|---|
-| Simulate button (`/raidSimAsync`) | 1 of 16 | `core.RunRaidSimAsync` runs every iteration on one goroutine |
-| Stat weights | 30 goroutines | `statweight.go`: `(NumCPU-1)*2` |
-| Bulk sim | 17 goroutines | `bulksim.go`: `NumCPU+1` |
+| Simulate button (`/raidSimAsync`) | up to 15 of 16 | `core.RunRaidSimAsync` shards the iterations over GOMAXPROCS-1 goroutines (PERF-CONC) |
+| Stat weights | 30 goroutines | `statweight.go`: `(GOMAXPROCS-1)*2`; 8 and 16 were no faster |
+| Bulk sim | 16 goroutines | `bulksim.go`: GOMAXPROCS, which beat 8 and 17 |
 | Optimizer | up to 15 | `sim/web/main.go` caps `Settings.Workers` at GOMAXPROCS-1. `SimEvaluator.Evaluate` starts min(workers, points × 250-iteration shards) goroutines, so a batch with fewer jobs leaves threads idle: the racial screen, bisection, verify rounds, one-shard screening sims. Quick Fury P1 took 9 s against a 5.7 s all-threads budget |
-| Wasm (static hosting) | 1 | `ui/core/sim.ts`: `WorkerPool(1)` |
+| Wasm (static hosting) | 1 | `ui/core/sim.ts`: `WorkerPool(1)`; GOMAXPROCS 1 gives one shard |
 
 16 threads do about 8× one on the optimizer's sims (SMT adds little), so 8 is the real ceiling to scale against.
-
-`sim/web/main.go` imports `net/http/pprof` on the default mux, so `/debug/pprof/` answers on :3333, which Docker
-publishes on every interface: anyone on the LAN can profile the server.
 
 ## Work items
 
 All golden-neutral: a fix that changes results becomes its own item, as PAR-PERF-2 was.
 
-### PERF-TOOLS: bottleneck tooling and a baseline
+### PERF-TOOLS: bottleneck tooling and a baseline (wave I2, done)
 
 1. **Profile a live run.** Put pprof behind a `--pprof <addr>` flag, off by default, with mutex and block
    profiling. Add `--cpuprofile`, `--memprofile` and `--trace` to `wowsimcli sim` and `optimize`. Script a live
@@ -62,7 +59,12 @@ Owns: `tools/perf/**`, `cmd/wowsimcli/cmd/`, `sim/web/main.go` (the pprof flag),
 (the busy counter and trace regions only), the `Dockerfile` toolchain stage, testing.md's benchmark lines, the new
 INVESTIGATION.
 
-### PERF-CONC: the Simulate button on every thread
+**As built:** everything runs from [tools/perf](../../tools/perf/README.md). pprof now answers only with
+`--pprof <addr>`, on its own listener; the sim's port 404s it (`sim/web/pprof_test.go`). The harness's
+requests are pinned in `tools/perf/harness/scenarios/` and its baseline is `tools/perf/baseline.json`,
+read in the [INVESTIGATION](sim-performance.INVESTIGATION.md).
+
+### PERF-CONC: the Simulate button on every thread (wave I2, done)
 
 - Split a raid sim's iterations into shards on up to GOMAXPROCS-1 goroutines, seeded `RandomSeed + k·shard` as the
   optimizer's evaluator does, and merge the results: every distribution (mean, stdev, min, max, histogram), action,
@@ -80,6 +82,14 @@ INVESTIGATION.
 
 Owns: `sim/core/api.go`, a new `sim/core` file for split and merge plus tests, the concurrency lines of
 `statweight.go` and `bulksim.go`.
+
+**As built:** `sim/core/sim_shards.go`. A shard seeds from `RandomSeed` plus its first iteration, so each
+iteration, and the max and min seeds, match one stream's. Idle, 3000 iterations run 7.1 to 8.8× faster at 16
+threads than at one ([baseline](sim-performance.INVESTIGATION.md)). Left open:
+- Every shard runs its own presim: CPU, not wall time.
+- A failed shard leaves the others running unread: `sim.run` has no cancel hook.
+- Bulk sim, before I2: after a failed combo the remaining sims can block on the 10-slot `results` buffer,
+  its error message dereferences a nil `Result`, and both `Run` and `BulkSim` send a `FinalBulkResult`.
 
 ### PERF-OPT: keep the optimizer's threads busy
 
@@ -107,5 +117,5 @@ Owns: `sim/core` hot paths, and a class file only where its profile names a hot 
 
 The user put the pass before wave J, whose BIS-e2e-perf times the optimizer with PERF-TOOLS' harness
 (2026-09-22):
-- **I2:** PERF-TOOLS and PERF-CONC, which share no files.
+- **I2 (done):** PERF-TOOLS and PERF-CONC, which share no files.
 - **I3:** PERF-OPT and PERF-HOT, file-disjoint, once I2's baseline sets their targets.

@@ -97,13 +97,10 @@ UI-FIX joins I2 (the user's call): four fixes wave U's tests left open.
 
 ## Current wave
 
-- Wave: I2, running. Wave U (base `bec948cd5`) landed on `master`.
-- Base SHA: `21e9dee91`. Dev servers `wotlk-dev-<item>` run on 3335 to 3338. PERF-TOOLS runs in two
-  stages, Profiling then Harness.
-- Workflow runId: `wf_34bff626-0f1` (args `waveI2-args.json`), transcripts in
-  `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\wf_34bff626-0f1`.
-  Wave U ran as `wf_ac96d2c0-319` (args and results `waveU-args.json`, `waveU-results.json` in
-  `G:\DevStuff\GitHub\.wave-loop`).
+- Wave: I3, not started. Wave I2 (base `21e9dee91`) landed on `master`.
+- Base SHA: set at wave start.
+- Workflow runId: none. Wave I2 ran as `wf_34bff626-0f1` (args and results `waveI2-args.json`,
+  `waveI2-results.json` in `G:\DevStuff\GitHub\.wave-loop`).
 
 ## BiS baseline
 
@@ -122,6 +119,7 @@ Reckoning that way), but J isn't DPS: see below.
 | H | 8744.8, +259 / +326 | 10686.4, +616 / +748 | 5059.8, +31 / +29 | 12929.9, +103 / +184 | -91847.8, +5451 / +5891 | -1326.7, +1408 / +1460 |
 | H3 | 8865.0, +282 / +278 | 10686.4, +616 / +942 | 5059.8, +31 / +29 | 12956.4, +231 / +227 | -91848.5, +5451 / +5891 | -1326.7, +1408 / +1460 |
 | I | 8842.8, +253 / +304 | 10686.4, +616 / +942 | 5064.5, +43 / +40 | 12956.7, +224 / +256 | -91848.5, +5451 / +5891 | -1324.8, +1405 / +1456 |
+| I2 | 8842.8, +253 / +304 | 10686.4, +616 / +942 | 5064.5, +43 / +40 | 12956.7, +224 / +256 | -89694.0, +3349 / +3736 | -668.4, +750 / +799 |
 
 Quick / Normal. Ret P4 ran at Quick only in wave D, after the glyph fix; its wave C numbers
 (12821.9, +54 / +73) came from a seed that wore the glyph. The two tanks arrive with
@@ -143,7 +141,10 @@ while Normal held. Prot Pal's preset lost 11% DPS against TestProtection's -0.6%
 In H3 Ret's preset lost 1.8% with its goldens (-1.4%) and its gains rose to +231 / +227, as its items were
 revalued; Combat Rogue's Normal gain rose to +942 from a 4th or 5th runner-up (BIS-alt5). In I the Fire Mage
 preset lost 4.0% with TestFire (-3.7%) while its J rose, since the normalizer fell with it; Combat Rogue and
-Prot Paladin, whose classes the wave left alone, didn't move at all.
+Prot Paladin, whose classes the wave left alone, didn't move at all. In I2 the DPS rows held. BIS-seed scores
+the slow line's `J_preset`, gains and `dps_preset` against the preset as equipped, which the pool's trim
+had cut into for both tanks: their `J_preset` rose and their gains fell by as much, while their Normal
+`J_opt` held within 0.4. Their `dps_preset` now reads Prot Pal 257.1, Feral Tank 4282.9.
 
 ## Sim throughput
 
@@ -159,6 +160,7 @@ From G the benches run their suites' default players with rotations, at 1 and 10
 | H | 1.451 / 130.8 | 0.477 / 32.4 | 0.585 / 40.8 | 0.327 / 15.1 | 4.568 / 300.2 |
 | H3 | 1.490 / 132.8 | 0.493 / 33.6 | 0.602 / 42.9 | 0.332 / 15.4 | 4.586 / 304.2 |
 | I | 1.588 / 134.8 | 0.573 / 34.0 | 0.784 / 46.1 | 0.495 / 16.8 | 6.026 / 302.5 |
+| I2 | 1.685 / 128.3 | 0.639 / 33.2 | 0.774 / 43.1 | 0.444 / 15.6 | 5.382 / 294.8 |
 
 H2 ran with the live worldserver using half a core, which moved whole runs by up to 2×
 and cost a few percent here (Ret, which H2 barely touched, +4%). An interleaved A/B against the base
@@ -171,6 +173,13 @@ I's row sits 20-30% over H3's at one iteration, but the base re-measured beside 
 0.584, Hunter 0.865, Elemental 0.428, raid 5.915), so the machine moved, not the sim. Its interleaved A/B
 puts the wave's own cost at Elemental +15.7% at one iteration and +6.6% at 100, from the spells the id
 splits add at setup; every other case lands within ±5%, some negative. Read the A/B, not the row.
+
+I2's row ran idle, the worldserver stopped: at 100 iterations every case sits 2-7% under I's, at one
+iteration between 11% under (the raid) and 12% over (Ret). An interleaved A/B against master, the wave's
+base, taken under load, put every case within ±10%, 8 of 10 faster. The bench drives `RunRaidSim`, which
+PERF-CONC left one stream, so the Simulate button's speedup shows in the
+[harness baseline](../sim-performance/sim-performance.INVESTIGATION.md#baseline-integration-idle-machine),
+not here.
 
 E to F2 ran the old requests: one iteration, and no rotation for Ret, Hunter and Elemental.
 
@@ -246,13 +255,19 @@ crashed before F2, so its column starts there.
 | UI-RAID | merged | `cafc5b44d` | 11 bugs fixed: tanks and buff targets follow their raider through edits, imports and reloads; 1 fixme; `1851b79d8` settled its clash with UI-SETTINGS's exporter header |
 | UI-SETTINGS | merged | `70247564c` | 22 bugs fixed across the encounter, talents, importers and exporters; 1 fixme |
 | wave U cross-review | | `305acaf57` | 3 bugs: the results page built the whole log with the Log tab closed, slowing every tab; `activateTab` never switched tabs; closed modals kept their window listeners. 3 timing-dependent tests fixed. The gate now lists every eslint file (`68720687a`) and no longer breaks tsc while it lints (`9d73e93b4`) |
+| PERF-TOOLS | merged | `5751dd72b` | profiling flags on the CLI, pprof moved off the sim's port behind `--pprof`, `tools/perf` trace reader and bench harness, benchstat in the toolchain image; baseline taken at `93e62aecd` |
+| PERF-CONC | merged | `891421898` | the Simulate button shards its iterations over GOMAXPROCS-1 goroutines: 7.1 to 8.8× at 16 threads, idle; bulk sim at GOMAXPROCS goroutines |
+| BIS-seed | merged | `d31d32c9e` | equipped items stay in the pool, gains are against the gear as equipped, the score names its stat; 1 bug fixed in review (a locked second ring that moved up left its pool entry behind) |
+| UI-FIX | merged | `b332259d9` | all four fixes, plus Block Value's multiplier; the warrior row is "Stance & Shout"; Might counted twice in the tooltip's snapshots found and left (moves goldens) |
+| wave I2 cross-review | | `93e62aecd` | 2 bugs: a 40-player raid crashed when a raider in groups 6 to 8 had a healing model (presim sized 25), and the batch sim's progress reporter could send on a closed channel; the harness's optimizer requests refreshed for BIS-seed's `equipped`; a test keeps pprof off the sim's port |
 
 Later WIs are added as their wave starts.
 
 ## User actions
 
-- Rebuild the prod container for H2's reforge fix and wave U's UI fixes, and reload open sim tabs. Until
-  then a restart clears items cached without server stats.
+- Rebuild the prod container for H2's reforge fix, wave U's UI fixes and wave I2 (Simulate on every
+  thread, pprof off the LAN), and reload open sim tabs. Until then a restart clears items cached without
+  server stats.
 - Worth a click-through when convenient: the optimizer tab's tank controls on a tank spec (the
   survival/threat slider, the crit-immunity box, the racial select). No agent can judge those, and
   BIS-ui-tab's own click-through found three real bugs.

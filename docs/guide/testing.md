@@ -12,7 +12,8 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
   - `dock.sh test [args]` runs `./sim/...` by default and generates `binary_dist` itself.
 - Vet: `go vet ./sim/... ./tools/... ./cmd/...`
 - Race: `go test --tags=with_db -race ./sim/optimizer/... ./sim/web/...`, plus
-  `-run TestDatabaseConcurrentAddAndRead ./sim/core/` for the item DB lock. Item-effect races need sims
+  `-run TestDatabaseConcurrentAddAndRead ./sim/core/` for the item DB lock and `-run 'Shard|Merge' ./sim/core/`
+  for the Simulate button's shards. Item-effect races need sims
   running in parallel on gear that has the effect, which the unit tests' presets lack:
   `-race -run '^$' -bench BenchmarkOptimizerEval -benchtime=1x ./sim/optimizer/`.
 - Benchmarks, both under `go test --tags=with_db -run '^$' -bench`:
@@ -33,12 +34,13 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
     `benchstat base.txt new.txt` (in the toolchain image): its medians hold up on a busy machine.
   - Profiles, traces, and a harness timing every bench's request, stat weights, bulk and the optimizer across
     GOMAXPROCS against a baseline: [tools/perf](../../tools/perf/README.md).
-- The optimizer's slow suite, which every wave re-runs as the BiS baseline (about 8 min):
+- The optimizer's slow suite, which every wave re-runs as the BiS baseline (about 16 min):
   `go test --tags=with_db,optimizer_slow -count=1 -timeout 90m -run TestOptimizerSlow -v ./sim/optimizer/`.
   It prints one `slow: spec=… phase=… effort=… J_preset=… J_opt=… delta=…±… dps_preset=… dps_delta=…±…
   norm_<metric>=mean±se/<reference stat>` line per case (J's normalizer is measured fresh, so judge a
-  `J_preset` move against `dps_preset`), and
-  `-decisions` logs what each stage picked. The CLI does the same run end to end:
+  `J_preset` move against `dps_preset`). `J_preset`, the gains and `dps_preset` are against the preset as
+  equipped; the pass check is against the preset trimmed to the pool. `-decisions`
+  logs what each stage picked. The CLI does the same run end to end:
   `go run --tags=with_db ./cmd/wowsimcli optimize --infile sim/optimizer/testdata/search/fury_p1.json --verbose`,
   whose request comes from `go test --tags=with_db ./sim/optimizer -run TestSearchTestdata -update`.
 - gofmt reads CRLF as a diff, so use `tr -d '\r' < f | gofmt -l`, with the whole pipe in the container:
@@ -63,6 +65,8 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
 - `TestReplayFixtures` replays requests the UI's pool builder really produced
   (`sim/optimizer/testdata/replay/*.json.gz`, written by the driver in
   [ui/core/optimizer](../../ui/core/optimizer/README.md)). An exported request drops in as is.
+  `TestReplayEquippedGear` checks every fixture's owned items; it needs `equipped` on the driver's `.json.gz`
+  files and skips an export without it.
 - Two sessions testing in one worktree mix each other's changes and overwrite each other's `.tmp` files.
   Promote only when both are done.
 - To commit one phase out of a worktree that holds two, rebuild its tree in scratch from `git archive HEAD`,

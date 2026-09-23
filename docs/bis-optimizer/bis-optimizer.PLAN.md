@@ -659,8 +659,14 @@ move; only the neighborhood sims and reports 5. **Owns:** `search.go`'s `runners
   2.9 MB of JSON, which `worker_pool.optimizeGearAsync` also logs in full on every run. Drop that log,
   and prune in the pool builder if size or search time hurts (items every other candidate beats, or TBC
   items by default).
+- A class set bonus casts its wearer to that class's agent (`agent.(ShamanAgent)` in
+  `sim/shaman/items.go`, and likewise per class), so a set another class can wear fails its sim: a stage 2
+  batch dropped Tidefury Raiment's bonus from Deathsong (Unholy DK) with a warning.
+- When the trimmer empties a weapon slot, the normalizers still come from the trimmed seed, which sizes the
+  score's points about 12% larger (BIS-seed's DK check). Measuring them on the gear as equipped changes the
+  objective.
 
-### BIS-seed (wave I2)
+### BIS-seed (wave I2, done)
 
 A user's Unholy DK run scored its pick +46% over "your gear": the seed trimmer had emptied neck, main
 hand and off hand, since all three are Ulduar 10 drops and the run's sources had Raid 10 off, and the

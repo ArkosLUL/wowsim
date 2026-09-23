@@ -23,6 +23,7 @@ Where the code this fork touches lives. Everything else follows the upstream lay
 | `spell.go` | `RegisterSpell`. It applies the server's flags and timing by spell id and records what the spell declared against them, reachable as `Spell.ServerSpell()` and `Spell.ServerConflicts()` |
 | `cast.go` | casts. `castTiming`, built per spell at registration, is the one place cast time, the GCD and swing resets are worked out, so `Spell.CastTime()` and `EffectiveCastTime()` tell the APL what the cast really costs |
 | `sim.go` | the run loop, and `NextServerTick` |
+| `api.go`, `sim_shards.go` | entry points. `RunRaidSimAsync`, behind the Simulate button, shards the iterations over GOMAXPROCS-1 goroutines, each seeded `RandomSeed` plus its first iteration, and merges their metrics; `RunRaidSim` stays one stream, for the goldens and tools |
 | `serverdata_allowlist.go` | the shared entries for spells whose data the sim turns down, with `sim/<class>/serverdata_allowlist.go` per class and `sim/serverdata_test.go` checking every preset, each again over its class's glyphs, plus every race, hunter pet, pet talent and warlock summon |
 | `database.go`, `database_load.go` | item DB. `Item.TotalStats()` is item + enchant + gems + socket bonus. The `with_db` build tag embeds the DB. The global maps sit behind `dbMu`: after init, write with `AddToDatabase` and read with `Lookup*`. `AddToDatabase` keeps cached entries, except that a later copy with `ServerStats` replaces an item without them |
 | `reforging.go` | mod-reforging rules, mirrored in `ui/core/proto_utils/reforging.ts` |
@@ -47,7 +48,8 @@ Quirk: `UnitLevelFloat64` in `utils.go` treats every level outside 80–82 as +3
   parallel sims. Proc chance, PPM and ICD come from `sim/core/serverdata` through
   `core.ServerProcFor` (`sim/core/ppm.go`); name each spell id as a constant so `spellids` counts it.
 - Boss AIs, still with Classic numbers: `sim/encounters/{naxxramas,ulduar,toc,icc}`.
-- `sim/web/main.go` is the server, with flags `--usefs`, `--wasm`, `--host` and `--launch`.
+- `sim/web/main.go` is the server, with flags `--usefs`, `--wasm`, `--host`, `--launch` and `--pprof`
+  (profiling on its own address, off by default: [tools/perf](../../tools/perf/README.md)).
 - `sim/optimizer/`: the BiS gear optimizer ([PLAN](../bis-optimizer/bis-optimizer.PLAN.md)), with its
   contract in `types.go` and `proto/optimizer.proto`. `wowsimcli optimize`, `/optimizeGearAsync` and the
   wasm export run it. `evaluator.go` runs loadouts as paired, sharded sims behind the `Evaluator` seam;
@@ -88,7 +90,8 @@ Quirk: `UnitLevelFloat64` in `utils.go` treats every level outside 80–82 as +3
     decides.
 - `ui/core/optimizer/` and `ui/core/components/individual_sim_ui/optimizer_tab.ts`: the BiS Optimizer
   tab, shown for DPS and tank specs. `pool_builder.ts` builds the request (its `filterItemsByFilters` is the gear
-  picker's own filter, and it trims the seed to what the pool offers, since Go rejects anything else),
+  picker's own filter; it trims the seed to what the pool offers, where the search starts, and sends the gear
+  as equipped too, which the gains are measured against),
   `catalog.ts` reads `server_catalog.json`, and `fixture_driver.ts` writes the replay fixtures under
   Node ([README](../../ui/core/optimizer/README.md)).
 - `ui/core/encounter.ts` sets the default target and holds the raid difficulty and server settings. `ui/core/constants/mechanics.ts` holds the UI copies

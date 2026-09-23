@@ -24,10 +24,28 @@ with, and fixes what it finds. It runs in the wave loop ([RUNBOOK](../wave-loop/
 
 ## Done in wave U
 
-All four items merged: 294 tests pass, and 3 wait as `test.fixme` on the sim bugs below.
+All four items merged: 294 tests passed, and 3 waited as `test.fixme` on sim bugs UI-FIX then fixed.
 Each bug went test first; the fixes are in the items' commits ([wave-loop status](../wave-loop/wave-loop.PLAN.md#status)).
 
+## Done in wave I2
+
+UI-FIX merged: 319 tests pass, 7 skip on the Might bug below. The tooltip's late part is "Stance & Shout"
+for warriors (their own shout lands after the Buffs snapshot too) and "Form" for druids. A Blood Elf
+warrior's Arcane Torrent is 50613, the one mod-racial-trait-swap teaches; it restores nothing, so it never
+casts itself.
+
 ## Follow-ups
+
+**Sim, for a sim item:**
+- `applyAllEffects` (`sim/core/character.go`) applies the attack power multiplier twice to Blessing of Might
+  and Battle Shout in the phase snapshots: the tooltip's Buffs row reads about 75 AP (Ranged AP for
+  hunters) and, for Enhancement and Retribution, 250 Spell Dmg high, and the warrior's and bear's late row
+  about 76 AP low. FinalStats is right. The fix moves the character-stats goldens; then drop
+  `MIGHT_TWICE_*` and the partial test in `tests/gear/character_stats.spec.ts`.
+- Server parity: mod-racial-trait-swap teaches a Blood Elf druid both 28730 (mana) and 25046 (energy); the
+  sim registers one.
+- Server parity, unchecked: the sim gives Demonic Pact's spell power to the whole raid. Its aura, 48090,
+  isn't in the spelldump, so whether the server limits it to the party is open.
 
 **For a later UI wave:**
 - Closed components stay in memory: every closed item picker is kept alive by `input.tsx`, which never
@@ -51,7 +69,7 @@ Each bug went test first; the fixes are in the items' commits ([wave-loop status
 
 ## Work items
 
-### UI-FIX (wave I2)
+### UI-FIX (wave I2, done)
 
 Four fixes wave U left open. Items 1, 3 and 4 have a `test.fixme` to turn into a test, red first.
 
