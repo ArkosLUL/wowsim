@@ -120,6 +120,12 @@ function makeWrappedNumberInput<SpecType extends Spec, ModObject>(config: Wrappe
 		extraCssClasses: config.extraCssClasses,
 	}
 }
+
+// A fraction as a percent, rounded past float noise: 0.57 * 100 is 56.99999999999999.
+export function toPercent(fraction: number): number {
+	return Number((fraction * 100).toPrecision(12));
+}
+
 export interface PlayerNumberInputConfig<SpecType extends Spec, Message> extends BasePlayerConfig<SpecType, number> {
 	fieldName: keyof Message,
 	label: string,
@@ -151,7 +157,7 @@ export function makeSpecOptionsNumberInput<SpecType extends Spec>(config: Player
 	};
 	if (config.percent) {
 		const getValue = internalConfig.getValue;
-		internalConfig.getValue = (player: Player<SpecType>) => getValue(player) * 100;
+		internalConfig.getValue = (player: Player<SpecType>) => toPercent(getValue(player));
 		const setValue = internalConfig.setValue;
 		internalConfig.setValue = (eventID: EventID, player: Player<SpecType>, newVal: number) => setValue(eventID, player, newVal / 100);
 	}
@@ -177,7 +183,7 @@ export function makeRotationNumberInput<SpecType extends Spec>(config: PlayerNum
 	};
 	if (config.percent) {
 		const getValue = internalConfig.getValue;
-		internalConfig.getValue = (player: Player<SpecType>) => getValue(player) * 100;
+		internalConfig.getValue = (player: Player<SpecType>) => toPercent(getValue(player));
 		const setValue = internalConfig.setValue;
 		internalConfig.setValue = (eventID: EventID, player: Player<SpecType>, newVal: number) => setValue(eventID, player, newVal / 100);
 	}

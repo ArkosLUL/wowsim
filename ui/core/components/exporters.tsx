@@ -21,25 +21,25 @@ import { IndividualLinkImporter, IndividualWowheadGearPlannerImporter } from './
 
 interface ExporterOptions {
 	title: string;
-	header?: boolean;
 	allowDownload?: boolean;
 }
 
 export abstract class Exporter extends BaseModal {
-	private readonly textElem: HTMLElement;
+	private readonly textElem: HTMLTextAreaElement;
 	protected readonly changedEvent: TypedEvent<void> = new TypedEvent();
 
 	constructor(parent: HTMLElement, simUI: SimUI, options: ExporterOptions) {
-		super(parent, 'exporter', { title: options.title, header: options.header, footer: true });
+		// The header holds the close button: without one, the body below would overwrite it.
+		super(parent, 'exporter', { title: options.title, footer: true });
 
 		this.body.innerHTML = `
 			<textarea spellCheck="false" class="exporter-textarea form-control"></textarea>
 		`;
-		this.textElem = this.rootElem.getElementsByClassName('exporter-textarea')[0] as HTMLElement;
+		this.textElem = this.rootElem.getElementsByClassName('exporter-textarea')[0] as HTMLTextAreaElement;
 
 		new CopyButton(this.footer!, {
 			extraCssClasses: ['btn-primary', 'me-2'],
-			getContent: () => this.textElem.innerHTML,
+			getContent: () => this.textElem.value,
 			text: 'Copy',
 			tooltip: 'Copy to clipboard',
 		});
@@ -55,8 +55,7 @@ export abstract class Exporter extends BaseModal {
 
 			const downloadButton = downloadBtnRef.value!;
 			downloadButton.addEventListener('click', _event => {
-				const data = this.textElem.textContent!;
-				downloadString(data, 'wowsims.json');
+				downloadString(this.textElem.value, 'wowsims.json');
 			});
 		}
 	}
@@ -67,7 +66,7 @@ export abstract class Exporter extends BaseModal {
 	}
 
 	private updateContent() {
-		this.textElem.textContent = this.getData();
+		this.textElem.value = this.getData();
 	}
 
 	abstract getData(): string;
@@ -123,7 +122,7 @@ export class IndividualLinkExporter<SpecType extends Spec> extends Exporter {
 	private readonly exportCategories: Record<SimSettingCategories, boolean>;
 
 	constructor(parent: HTMLElement, simUI: IndividualSimUI<SpecType>) {
-		super(parent, simUI, { title: 'Sharable Link', header: true });
+		super(parent, simUI, { title: 'Sharable Link' });
 		this.simUI = simUI;
 
 		const exportCategories: Partial<Record<SimSettingCategories, boolean>> = {};

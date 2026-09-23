@@ -248,7 +248,7 @@ export class SavedDataManager<ModObject, T> extends Component {
 				return;
 			}
 
-			if (newName in this.presets) {
+			if (this.presets.some(preset => preset.name == newName)) {
 				alert(`${this.config.label} with name ${newName} already exists.`);
 				return;
 			}

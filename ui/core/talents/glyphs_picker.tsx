@@ -236,14 +236,8 @@ class GlyphSelectorModal extends BaseModal {
 		searchInput.addEventListener('input', applyFilters);
 		searchInput.addEventListener("keyup", ev => {
 			if (ev.key == "Enter") {
-				listItemElems.find(ele => {
-					if (ele.classList.contains("hidden")) {
-						return false;
-					}
-					const nameElem = ele.getElementsByClassName('selector-modal-list-item-name')[0] as HTMLElement;
-					nameElem.click();
-					return true;
-				});
+				// the list only holds the glyphs the search matched
+				(listElem.querySelector('.selector-modal-list-item-name') as HTMLElement | null)?.click();
 			}
 		});
 

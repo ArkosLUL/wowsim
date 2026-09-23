@@ -295,7 +295,7 @@ export class Individual80UImporter<SpecType extends Spec> extends Importer {
 
 		const gear = this.simUI.sim.db.lookupEquipmentSpec(equipmentSpec);
 
-		this.finishIndividualImport(this.simUI, charClass, race, equipmentSpec, talentsStr, null, []);
+		await this.finishIndividualImport(this.simUI, charClass, race, equipmentSpec, talentsStr, null, []);
 	}
 }
 
@@ -466,7 +466,7 @@ export class IndividualWowheadGearPlannerImporter<SpecType extends Spec> extends
 		}
 		const gear = this.simUI.sim.db.lookupEquipmentSpec(equipmentSpec);
 
-		this.finishIndividualImport(this.simUI, charClass, race, equipmentSpec, talentsStr, hasGlyphs ? glyphs : null, []);
+		await this.finishIndividualImport(this.simUI, charClass, race, equipmentSpec, talentsStr, hasGlyphs ? glyphs : null, []);
 	}
 
 	static slotIDs: Record<ItemSlot, number> = {
@@ -526,7 +526,7 @@ export class IndividualAddonImporter<SpecType extends Spec> extends Importer {
 		const professions = (importJson['professions'] as Array<{ name: string; level: number }>).map(profData => nameToProfession(profData.name));
 		professions.forEach((prof, i) => {
 			if (prof == Profession.ProfessionUnknown) {
-				throw new Error(`Could not parse profession '${importJson['professions'][i]}'`);
+				throw new Error(`Could not parse profession '${importJson['professions'][i].name}'`);
 			}
 		});
 
@@ -560,7 +560,7 @@ export class IndividualAddonImporter<SpecType extends Spec> extends Importer {
 		});
 		const equipmentSpec = EquipmentSpec.fromJson(gearJson);
 
-		this.finishIndividualImport(this.simUI, charClass, race, equipmentSpec, talentsStr, glyphs, professions);
+		await this.finishIndividualImport(this.simUI, charClass, race, equipmentSpec, talentsStr, glyphs, professions);
 	}
 }
 

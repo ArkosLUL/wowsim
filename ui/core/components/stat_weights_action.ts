@@ -333,13 +333,20 @@ class EpWeightsMenu extends BaseModal {
 			this.container.classList.add('pending');
 			this.resultsViewer.setPending();
 			const iterations = this.simUI.sim.getIterations();
-			const result = await this.simUI.player.computeStatWeights(TypedEvent.nextEventID(), this.epStats, this.epPseudoStats, this.epReferenceStat, (progress: ProgressMetrics) => {
-				this.setSimProgress(progress);
-			});
-			this.container.classList.remove('pending');
-			this.resultsViewer.hideAll();
-			calcButton.innerHTML = previousContents;
-			calcButton.classList.remove('disabled');
+			let result: StatWeightsResult;
+			try {
+				result = await this.simUI.player.computeStatWeights(TypedEvent.nextEventID(), this.epStats, this.epPseudoStats, this.epReferenceStat, (progress: ProgressMetrics) => {
+					this.setSimProgress(progress);
+				});
+			} catch (e) {
+				this.simUI.handleCrash(e);
+				return;
+			} finally {
+				this.container.classList.remove('pending');
+				this.resultsViewer.hideAll();
+				calcButton.innerHTML = previousContents;
+				calcButton.classList.remove('disabled');
+			}
 			this.simUI.prevEpIterations = iterations;
 			this.simUI.prevEpSimResult = this.calculateEp(result);
 			this.updateTable();
@@ -466,8 +473,8 @@ class EpWeightsMenu extends BaseModal {
 
 		EpWeightsMenu.epUnitStats.forEach(stat => {
 			// Don't show extra stats when 'Show all stats' is not selected
-			if ((!this.showAllStats && (
-				stat.isStat() && !this.epStats.includes(stat.getStat())) ||
+			if (!this.showAllStats && (
+				(stat.isStat() && !this.epStats.includes(stat.getStat())) ||
 				(stat.isPseudoStat() && !this.epPseudoStats.includes(stat.getPseudoStat()))
 			)) {
 				return;

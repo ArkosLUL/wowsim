@@ -14,8 +14,6 @@ import { sum } from '../utils.js';
 import { Player } from '../player.js';
 
 const MAX_POINTS_PLAYER = 71;
-const MAX_POINTS_HUNTER_PET = 16;
-const MAX_POINTS_HUNTER_PET_BM = 20;
 
 export interface TalentsPickerConfig<TalentsProto> extends InputConfig<Player<Spec>, string> {
 	klass: Class,
@@ -33,6 +31,7 @@ export class TalentsPicker<TalentsProto> extends Input<Player<Spec>, string> {
 	maxPoints: number;
 
 	readonly trees: Array<TalentTreePicker<TalentsProto>>;
+	private readonly pointsRemainingElem: HTMLElement;
 
 	constructor(parent: HTMLElement, player: Player<Spec>, config: TalentsPickerConfig<TalentsProto>) {
 		super(parent, 'talents-picker-root', player, { ...config, inline: true });
@@ -43,24 +42,13 @@ export class TalentsPicker<TalentsProto> extends Input<Player<Spec>, string> {
 		this.maxPoints = config.maxPoints
 
 		const pointsRemainingElemRef = ref<HTMLSpanElement>();
-		const getPointsRemaining = () => this.maxPoints - player.getTalentTreePoints().reduce((sum, points) => sum + points, 0);
-
-		const PointsRemainingElem = () => {
-			const pointsRemaining = getPointsRemaining();
-			return <span className="talent-tree-points" ref={pointsRemainingElemRef}>{pointsRemaining}</span>
-		}
-
-		TypedEvent.onAny([player.talentsChangeEmitter]).on(() => {
-			pointsRemainingElemRef.value!.replaceWith(PointsRemainingElem())
-		});
-
 		const actionsContainerRef = ref<HTMLDivElement>();
 		this.rootElem.appendChild(
 			<div id="talents-carousel" className="carousel slide">
 				<div className="talents-picker-header">
 					<div>
 						<label>Points Remaining:</label>
-						{PointsRemainingElem()}
+						<span className="talent-tree-points" ref={pointsRemainingElemRef}></span>
 					</div>
 					<div className="talents-picker-actions" ref={actionsContainerRef}></div>
 				</div>
@@ -80,6 +68,7 @@ export class TalentsPicker<TalentsProto> extends Input<Player<Spec>, string> {
 				</div>
 			</div>
 		);
+		this.pointsRemainingElem = pointsRemainingElemRef.value!;
 
 		new CopyButton(actionsContainerRef.value!, {
 			extraCssClasses: ['btn-sm', 'btn-outline-primary', 'copy-talents'],
@@ -146,6 +135,7 @@ export class TalentsPicker<TalentsProto> extends Input<Player<Spec>, string> {
 	}
 
 	updateTrees() {
+		this.pointsRemainingElem.textContent = String(this.maxPoints - this.numPoints);
 		if (this.isFull()) {
 			this.rootElem.classList.add('talents-full');
 		} else {
@@ -279,10 +269,9 @@ class TalentTreePicker<TalentsProto> extends Component {
 		this.talents.forEach((talent, idx) => talent.setPoints(Number(str.charAt(idx)), false));
 	}
 
+	// A pet has a single tree, so its budget is the picker's, which Beast Mastery raises.
 	getMaxSpendablePoints() {
-		if (!this.picker.isHunterPet()) return MAX_POINTS_PLAYER;
-		if ((this.picker.modObject as Player<Spec.SpecHunter>).getTalents().beastMastery) return MAX_POINTS_HUNTER_PET_BM;
-		return MAX_POINTS_HUNTER_PET;
+		return this.picker.isHunterPet() ? this.picker.maxPoints : MAX_POINTS_PLAYER;
 	}
 }
 
