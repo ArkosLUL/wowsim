@@ -25,10 +25,10 @@ npx playwright show-trace test-results/<test>/trace.zip         # a failure's tr
 
 | Path | Holds |
 |---|---|
-| `tests/lib/page.ts` | `SPECS`, `openSim(page, spec)`, `openRaid`, `openSimTab(page, id)`, `watchForErrors(page)` |
-| `tests/lib/fixture.ts` | `loadFixture(name)`, `showFixture(page, fixture)`, `label(player)` |
-| `tests/smoke.spec.ts` | every spec page, the raid page and the results page load without a console error |
-| `tests/<area>/` | one directory per area: `results`, `gear`, `raid`, `settings` |
+| `tests/lib/page.ts` | `SPECS`, `openSim(page, spec)`, `openRaid`, `openSimTab(page, id)`, `watchForErrors(page)`, which skips requests the network dropped (`net::`) |
+| `tests/lib/fixture.ts` | `loadFixture(name)`, `showFixture(page, fixture, { url, settings })`, `label(player)` |
+| `tests/smoke.spec.ts` | every spec page, the raid page and the results page load without a console error; `watchForErrors` itself |
+| `tests/<area>/` | one directory per area (`results`, `gear`, `raid`, `settings`), its helpers beside the specs |
 
 ## Fixtures
 
@@ -41,8 +41,12 @@ hard-code sim numbers.
 |---|---|
 | `raid25.simrun.json.gz` | the 25-player P1 raid, 100 iterations, no log |
 | `raid25-logged.simrun.json.gz` | the same raid over 15 s, 10 iterations, with the first iteration's log |
+| `results-multitarget.simrun.json.gz` | 6 raiders in 2 parties and an empty slot, 3 targets (1 untanked), 20 s, 20 iterations, with the log |
+| `results-single.simrun.json.gz` | one Marks hunter against one target, 20 s, 20 iterations, with the log |
+| `results-prepull.simrun.json.gz` | raid25's Demo warlock alone, whose Shadow Bolt lands before the pull; 20 s, 5 iterations, with the log |
 
-Both come from `sim/optimizer/raidctx/testdata/raid25.json` through `gen_fixture`:
+The `raid25` ones come from `sim/optimizer/raidctx/testdata/raid25.json` through `gen_fixture`, each `results-*`
+one from the trimmed copy beside it, `<name>.request.json`:
 
 ```sh
 tools/acore/dock.sh exec go run --tags=with_db ./tools/uitest/gen_fixture \
@@ -58,3 +62,13 @@ fixture, so sim changes don't break them.
 
 - The repo `tsconfig.json` excludes this directory: its Playwright types break `dock.sh tsc`.
 - The healing tab has its own topline: scope a locator to `.damage-content` for the damage one.
+- The Log tab builds its rows only while open, but then every one: opened on `raid25-logged` or a long real
+  raid sim, each step slows to seconds as the trace snapshots the page, and a failure's trace can crash the
+  worker. Use `results-multitarget` or a short fight.
+- Icon dropdowns (buff categories, flasks) and APL submenus open on hover, and a click on the toggle closes
+  them again. `DropdownPicker` buttons open on click.
+- Wowhead's `tooltips.js` draws tooltips over the next click target: stub it (`stubWowheadTooltips` in
+  `tests/settings/helpers.ts`).
+- `fill()` of a ~100 KB import takes about 20 s; `setInputFiles` on `.importer-upload-input` is instant.
+- A spec page keeps its settings in localStorage under `__wotlk_<spec>__currentSettings__`, except
+  enhancement's `__wotlk_enhacement_shaman` prefix (`storageKey` in `tests/settings/helpers.ts`).

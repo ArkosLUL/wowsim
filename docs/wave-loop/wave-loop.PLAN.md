@@ -96,14 +96,10 @@ touch only UI and test paths, so goldens, BiS and throughput can't move, and it 
 
 ## Current wave
 
-- Wave: U, running. Wave I (base `b895e44be`) landed on `master`.
-- Base SHA: `bec948cd5`. Items branch off the setup commit `527ba9a52`, the Workflow's `baseSha`; the
-  cross-review diffs from `bec948cd5`, so it covers the setup's code too. `integration`'s later commits are
-  docs and lint only, so the item worktrees stay on `527ba9a52`. Dev servers `wotlk-dev-ui-<item>` run on
-  3335 to 3338.
-- Workflow runId: `wf_ac96d2c0-319` (args `waveU-args.json`).
-  Wave I ran as `wf_891dd2c6-596`, its two stranded live stages as `wf_0f859fcf-466`
-  (args and results `waveI-args.json`, `waveI-results.json`, `waveI-live-args.json`, `waveI-live-results.json` in `G:\DevStuff\GitHub\.wave-loop`).
+- Wave: I2, not started. Wave U (base `bec948cd5`) landed on `master`.
+- Base SHA: set at wave start.
+- Workflow runId: none. Wave U ran as `wf_ac96d2c0-319` (args and results `waveU-args.json`,
+  `waveU-results.json` in `G:\DevStuff\GitHub\.wave-loop`).
 
 ## BiS baseline
 
@@ -241,13 +237,19 @@ crashed before F2, so its column starts there.
 | PAR-P7-SHA | merged | `3b624ddf6` | 2 goldens promoted in `18c0e3429`; its live round found the totem-dot split panicking any APL that named the summon's dot; module `987b74e` |
 | PAR-P7-DRU | merged | `b4fff9609` | 5 goldens promoted in `667779e0f`; serverdata regenerated in `8fad1a579`; module `b5d8135` |
 | wave I cross-review | | `38c7b5243`, `4c9fde2d3` | 4 bugs: the spirit wolves took Windfury Totem and Improved Icy Talons twice, the totems' own hits fed the shaman's procs, Fire Nova's crits stopped granting Clearcasting, and Ignite read a cast time a missile had outlived; Elemental and Enhancement re-promoted |
+| UI-RESULTS | merged | `05329a523` | 15 bugs fixed, among them the whole-raid timeline, the target filter and the damage-row pie; the log tab gained search and raider filtering; 3 fixtures |
+| UI-GEAR | merged | `febe74f8b` | 13 bugs fixed, mostly swap and batch enchant lists, the batch setup on reload, and leaked listeners; 1 fixme |
+| UI-RAID | merged | `cafc5b44d` | 11 bugs fixed: tanks and buff targets follow their raider through edits, imports and reloads; 1 fixme; `1851b79d8` settled its clash with UI-SETTINGS's exporter header |
+| UI-SETTINGS | merged | `70247564c` | 22 bugs fixed across the encounter, talents, importers and exporters; 1 fixme |
+| wave U cross-review | | `305acaf57` | 3 bugs: the results page built the whole log with the Log tab closed, slowing every tab; `activateTab` never switched tabs; closed modals kept their window listeners. 3 timing-dependent tests fixed. The gate now lists every eslint file (`68720687a`) and no longer breaks tsc while it lints (`9d73e93b4`) |
 
 Later WIs are added as their wave starts.
 
 ## User actions
 
-- Rebuild the prod container for H2's reforge fix and reload open sim tabs. Until then a restart clears
-  items cached without server stats.
+- Rebuild the prod container for H2's reforge fix and wave U's UI fixes, and reload open sim tabs. Until
+  then a restart clears items cached without server stats.
+- Wave U's open questions: [ui-tests PLAN, Follow-ups](../ui-tests/ui-tests.PLAN.md#follow-ups).
 - Worth a click-through when convenient: the optimizer tab's tank controls on a tank spec (the
   survival/threat slider, the crit-immunity box, the racial select). No agent can judge those, and
   BIS-ui-tab's own click-through found three real bugs.

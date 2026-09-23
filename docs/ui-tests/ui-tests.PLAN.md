@@ -21,6 +21,50 @@ with, and fixes what it finds. It runs in the wave loop ([RUNBOOK](../wave-loop/
 - `player_damage.ts` appended the tooltip's 600×400 chart into the table row, which grew to 413px while
   the tooltip stayed empty.
 
+## Done in wave U
+
+All four items merged: 294 tests pass, and 3 wait as `test.fixme` on the sim bugs below.
+Each bug went test first; the fixes are in the items' commits ([wave-loop status](../wave-loop/wave-loop.PLAN.md#status)).
+
+## Follow-ups
+
+**The user's call:**
+- Character stats tooltip: for stats a stance, form or presence multiplies, the parts don't add up to the
+  Total (warrior Strength 2327 vs 2792, bear Armor 10915 vs 31079): the parts are snapshots taken before
+  those multipliers. Fix in `sim/core` (moves the character-stats goldens) or add a tooltip row. Test:
+  the fixme in `tests/gear/character_stats.spec.ts`.
+- UI-RESULTS gave the log tab a search box and made it follow the picked raider (pets included) and
+  target, which the spec had assumed existed. Keep?
+- The Batch tab's Sim Talents list offers only saved loadouts, never the spec's preset talents. Intended?
+
+**Sim bugs, for a sim item** (each has a `test.fixme`):
+- `sim/warlock/talents.go` `setupDemonicPact` sizes its aura array at 25 and indexes it by raid index, so
+  a 40-player raid with a Demonic Pact warlock panics (`tests/raid/raid_picker.spec.ts`).
+- `sim/core/racials.go`: Blood Elf racial traits on a rage user register Arcane Torrent with ActionID 0
+  (only runic power, energy and mana get one), so the APL Cast list shows a nameless cooldown and the UI
+  fetches spell 0's tooltip (`tests/settings/spec_inputs.spec.ts`; swap its fixed 1.5 s wait for a
+  condition when enabling it).
+
+**For a later UI wave:**
+- Closed components stay in memory: every closed item picker is kept alive by `input.tsx`, which never
+  drops its `changedEvent` listener, and in `gear_picker.tsx` by `ItemList`'s experimental-toggle listener
+  and the EP and favourite-star Bootstrap tooltips. It spans owners, so it needs one item; `detached(page,
+  '.modal')` in `tests/gear/gear.ts` measures it.
+- `BulkSimResultRenderer` (`bulk_tab.ts`) never disposes its `ItemRenderer`s: one listener per wrist or
+  hands result, per batch run.
+- Opening the Log tab builds a row for every line: about 1.16M elements after a 25-man, 3-minute raid sim.
+  Virtualize it.
+- The damage-row pie leaves out pet damage, which the row's Amount includes.
+- The DPS histogram doesn't narrow to a picked target, as the run has no per-target distribution. Hide it
+  then?
+- Each click on the Timeline tab renders `dpsResourcesPlot` again, adding a chart instance.
+- `icon_enum_picker.tsx` `setImage` with a colour-only value doesn't cancel a pending
+  `ActionId.fillAndSet`, so a late icon paints over a blank.
+- The Link exporter with no category ticked exports everything; the glyph modal allows one glyph in two
+  slots and stays open after a pick; every exporter downloads as `wowsims.json`.
+- Loading a raid log prints 'Unmatched aura stacks change log' warnings: the sim logs `stacks: N --> 0`
+  after 'Aura faded'.
+
 ## Work items
 
 ### Every UI-* item

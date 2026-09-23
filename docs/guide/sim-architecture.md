@@ -100,7 +100,8 @@ Quirk: `UnitLevelFloat64` in `utils.go` treats every level outside 80–82 as +3
   the raid slot its "(#N)" label counts, and `unitIndex`, the sim's, which numbers the targets first.
   Filters match `unitIndex`.
 - `ui/raid/raid_sim_ui.ts`: the raid sim, where importers and the BiS batch (`optimizer_batch.ts`) are
-  registered.
+  registered. Its tank and buff-target pickers only display: a roster edit runs inside `keepRaidReferences`
+  (`raid_references.ts`), which keeps each reference on its raider as seats change.
 
 ## Tools
 

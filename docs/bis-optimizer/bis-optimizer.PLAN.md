@@ -385,7 +385,8 @@ the request and `seedChanges`, one line per trim.
 
 **Findings:**
 - wasm detection fetches `/wotlk/sim_worker.js`: only the server's net worker calls `/asyncProgress`.
-- `SimHeader.activateTab` does nothing: it clicks the `<li>`, not the tab link Bootstrap listens on.
+- `SimHeader.activateTab` did nothing until wave U: it clicked the `<li>`, not the tab link Bootstrap
+  listens on.
 - Retribution pools run 2.6k (P1) to 4.6k (P5) slot candidates, 1.6 to 2.9 MB of request JSON: nothing
   prunes gear no DPS spec wants (TBC, other roles).
 - Fixtures: Retribution's P1 to P5 presets (P4 with locked trinkets, its worn head excluded and a hit

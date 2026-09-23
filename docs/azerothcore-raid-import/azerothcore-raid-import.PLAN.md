@@ -556,7 +556,8 @@ registered in `individual_sim_ui.ts:427-447`.
   replacement by name — only leaving the raid clears one.
 - Offline checks, with the committed roster fixtures they run on:
   [`ui/raid/acore_harness`](../../ui/raid/acore_harness/README.md). They cover everything about the
-  importer that isn't the DOM; the dialog, the grid and the alerts still need a person.
+  importer that isn't the DOM; `tools/uitest/tests/raid/acore_import.spec.ts` covers the dialog, the grid
+  and the alerts.
 
 **Verification (Phase 3)**
 1. `npm run type-check` and `npm run lint:js` pass.

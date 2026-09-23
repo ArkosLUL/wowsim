@@ -76,7 +76,8 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
   `git -c safe.directory=/wotlk show HEAD:$f | npx eslint --stdin --stdin-filename $f` vs `npx eslint $f`.
   In a worktree, git fails in the container (`.git` points outside the mount): `git show` the HEAD copy
   into the gitignored `tmp/` on the host, then lint `< tmp/$f` in the container. Name that copy `.txt`:
-  `tsconfig.json` includes `.`, so a stray `.ts` file under `tmp/` fails the type-check.
+  `tsconfig.json` includes `.` with `allowJs`, so a stray `.ts`, `.js` or `.cjs` file under `tmp/` fails the
+  type-check and `make dist`.
 - Add a new import to the existing import line for that module (`import/no-duplicates`).
 - `npm run build` and `npm test` call bazel and don't work.
 
