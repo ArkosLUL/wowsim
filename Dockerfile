@@ -17,6 +17,9 @@ RUN ln -s ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
 COPY gitconfig /etc/gitconfig
 WORKDIR /wotlk
 
+# pinned: the last x/perf whose go.mod still takes Go 1.23, and the image won't fetch a newer toolchain
+RUN go install golang.org/x/perf/cmd/benchstat@v0.0.0-20250807204132-c4b8702907f0
+
 # no version here on purpose: resolves from go.mod so the generated code matches the protobuf runtime
 COPY go.mod go.sum ./
 RUN go mod download \

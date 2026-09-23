@@ -7,6 +7,7 @@ import (
 	"runtime/debug"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
@@ -287,6 +288,15 @@ func NewRaidEvaluator(r *Request, keep ...Metric) *SimEvaluator {
 	return e
 }
 
+var simBusy atomic.Int64
+
+// SimBusyTime is how long SimEvaluator workers have spent simming so far, summed over workers and
+// every evaluator in the process. Over a stretch where one optimization runs, its change divided by
+// wall time and workers is how busy the evaluator kept its workers.
+func SimBusyTime() time.Duration {
+	return time.Duration(simBusy.Load())
+}
+
 // SimmedIterations counts the iterations this evaluator has run; cache hits don't count.
 func (e *SimEvaluator) SimmedIterations() int64 {
 	return e.simmed.Load()
@@ -359,7 +369,9 @@ func (e *SimEvaluator) Evaluate(ctx context.Context, points []Point, iterations 
 					case <-runCtx.Done():
 						continue
 					}
+					start := time.Now()
 					s, err := e.runShard(j.p.point, j.k)
+					simBusy.Add(int64(time.Since(start)))
 					<-e.workers
 					if err != nil {
 						errMu.Lock()

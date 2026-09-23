@@ -24,12 +24,15 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
     Run it on an idle machine, with no sim, container build or golden run alongside: what else is
     running moves them all by a fifth or more at once, which is enough to hide or invent a regression.
     Each spec case copies its golden suite's default player; `./sim/` is an 8-player raid on its specs'
-    golden APLs and `StandardTalents`. All five run `iterations=1` and `iterations=100`, and the raid's
-    100 takes about 0.3 s an op, so give it a `-benchtime` of several. Every package's bench goes
-    through `core.RaidBenchmarkIterations`.
+    golden APLs and `StandardTalents`. All five run `iterations=1` and `iterations=100` through
+    `core.RaidBenchmarkIterations` (the holy and protection paladin and resto shaman benches use
+    `core.RaidBenchmark`), and the raid's 100 takes about 0.3 s an op, so give it a `-benchtime` of several.
   - A/B against a base without touching the tree: `go test -c -overlay overlay.json`, whose `Replace`
-    maps each changed file to a `git show <base>:<path>` copy under `tmp/`. Interleave base and new runs
-    and compare medians, which holds up on a busy machine.
+    maps each changed file to a `git show <base>:<path>` copy under `tmp/`. Interleave the two binaries
+    for 10+ rounds of `-test.count 1`, appending to `base.txt` and `new.txt`, then
+    `benchstat base.txt new.txt` (in the toolchain image): its medians hold up on a busy machine.
+  - Profiles, traces, and a harness timing every bench's request, stat weights, bulk and the optimizer across
+    GOMAXPROCS against a baseline: [tools/perf](../../tools/perf/README.md).
 - The optimizer's slow suite, which every wave re-runs as the BiS baseline (about 8 min):
   `go test --tags=with_db,optimizer_slow -count=1 -timeout 90m -run TestOptimizerSlow -v ./sim/optimizer/`.
   It prints one `slow: spec=… phase=… effort=… J_preset=… J_opt=… delta=…±… dps_preset=… dps_delta=…±…

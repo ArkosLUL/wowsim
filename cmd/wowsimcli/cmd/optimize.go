@@ -18,6 +18,7 @@ func newOptimizeCommand() *cobra.Command {
 	var infile, outfile string
 	var workers int
 	var verbose bool
+	var profiles profileFlags
 
 	cmd := &cobra.Command{
 		Use:   "optimize",
@@ -39,13 +40,19 @@ func newOptimizeCommand() *cobra.Command {
 			if verbose {
 				progress = cmd.ErrOrStderr()
 			}
-			return optimizeFile(ctx, infile, outfile, workers, progress, cmd.OutOrStdout())
+			stopProfiles, err := profiles.start()
+			if err != nil {
+				return err
+			}
+			err = optimizeFile(ctx, infile, outfile, workers, progress, cmd.OutOrStdout())
+			return errors.Join(err, stopProfiles())
 		},
 	}
 	cmd.Flags().StringVar(&infile, "infile", "", "location of input file (OptimizeGearRequest in protojson format)")
 	cmd.Flags().StringVar(&outfile, "outfile", "", "location of output file (OptimizerResult in protojson format), defaults to stdout")
 	cmd.Flags().IntVar(&workers, "workers", 0, "sim goroutines, overriding the request's settings.workers; 0 keeps the request's")
 	cmd.Flags().BoolVar(&verbose, "verbose", false, "print progress to stderr")
+	profiles.register(cmd)
 	cmd.MarkFlagRequired("infile")
 	return cmd
 }

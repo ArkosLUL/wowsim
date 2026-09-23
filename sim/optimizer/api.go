@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/rand"
 	"runtime/debug"
+	"runtime/trace"
 	"slices"
 	"strings"
 	"sync"
@@ -178,6 +179,8 @@ type run struct {
 	progMu   sync.Mutex
 	start    time.Time
 	stage    int
+	// the stage's runtime/trace region: it has to start and end on the run's goroutine
+	region *trace.Region
 
 	warnMu   sync.Mutex
 	warnings []string
@@ -231,6 +234,8 @@ func optimize(ctx context.Context, asked, simmed *Request, eval Evaluator, progr
 		best:     simmed.Seed,
 	}
 	r.eval = &countingEvaluator{inner: eval, have: map[Point]int{}, after: r.report}
+	r.region = trace.StartRegion(ctx, stages[0])
+	defer func() { r.region.End() }()
 	return r.execute()
 }
 
@@ -438,6 +443,10 @@ func (r *run) allWarnings() []string {
 }
 
 func (r *run) setStage(name string) {
+	if r.region != nil {
+		r.region.End()
+	}
+	r.region = trace.StartRegion(r.ctx, name)
 	r.progMu.Lock()
 	r.stage = slices.Index(stages, name)
 	r.progMu.Unlock()
