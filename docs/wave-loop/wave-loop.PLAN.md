@@ -96,11 +96,12 @@ touch only UI and test paths, so goldens, BiS and throughput can't move, and it 
 
 ## Current wave
 
-- Wave: U, set up but on hold until the user says go. Wave I (base `b895e44be`) landed on `master`.
+- Wave: U, running. Wave I (base `b895e44be`) landed on `master`.
 - Base SHA: `bec948cd5`. Items branch off the setup commit `527ba9a52`, the Workflow's `baseSha`; the
-  cross-review diffs from `bec948cd5`, so it covers the setup's code too. Their worktrees predate
-  `integration`'s later merges: merge it into each before launching.
-- Workflow runId: none. A launch (`wf_65282157-3a3`, args `waveU-args.json`) was stopped before any work.
+  cross-review diffs from `bec948cd5`, so it covers the setup's code too. `integration`'s later commits are
+  docs and lint only, so the item worktrees stay on `527ba9a52`. Dev servers `wotlk-dev-ui-<item>` run on
+  3335 to 3338.
+- Workflow runId: `wf_ac96d2c0-319` (args `waveU-args.json`).
   Wave I ran as `wf_891dd2c6-596`, its two stranded live stages as `wf_0f859fcf-466`
   (args and results `waveI-args.json`, `waveI-results.json`, `waveI-live-args.json`, `waveI-live-results.json` in `G:\DevStuff\GitHub\.wave-loop`).
 
