@@ -93,8 +93,9 @@ class BulkSimResultRenderer {
 				result.itemsAdded.forEach(itemAdded => {
 					const item = simUI.sim.db.lookupItemSpec(itemAdded.item!);
 					simUI.player.equipItem(TypedEvent.nextEventID(), itemAdded.slot, item);
-					simUI.simHeader.activateTab('gear-tab');
 				});
+				// simHeader.activateTab clicks the <li>, which Bootstrap's tab handler ignores
+				simUI.rootElem.querySelector<HTMLElement>('a[data-bs-target="#gear-tab"]')?.click();
 			};
 
 			parent.appendChild(equipBtn);
@@ -145,6 +146,7 @@ export class BulkItemPicker extends Component {
 		this.index = index;
 		this.item = item;
 		this.itemElem = new ItemRenderer(parent, this.rootElem, simUI.player);
+		this.addOnDisposeCallback(() => this.itemElem.dispose());
 
 		this.simUI.sim.waitForInit().then(() => {
 			this.setItem(item);
@@ -227,6 +229,7 @@ export class BulkTab extends SimTab {
 	readonly simUI: IndividualSimUI<Spec>;
 
 	readonly itemsChangedEmitter = new TypedEvent<void>();
+	readonly settingsChangedEmitter = new TypedEvent<void>();
 
 	readonly leftPanel: HTMLElement;
 	readonly rightPanel: HTMLElement;
@@ -307,14 +310,24 @@ export class BulkTab extends SimTab {
 				SimGem.create({ id: settings.defaultMetaGem }),
 			);
 
-			this.defaultGems.forEach((gem, idx) => {
-				ActionId.fromItemId(gem.id)
-					.fill()
-					.then(filledId => {
-						this.gemIconElements[idx].src = filledId.iconUrl;
-					});
-			});
+			this.defaultGems.forEach((gem, idx) => this.showDefaultGem(idx));
+			this.settingsChangedEmitter.emit(TypedEvent.nextEventID());
 		}
+	}
+
+	private showDefaultGem(idx: number) {
+		const icon = this.gemIconElements[idx];
+		const id = this.defaultGems[idx].id;
+		icon.classList.toggle('hide', !id);
+		if (!id) {
+			icon.removeAttribute('src');
+			return;
+		}
+		ActionId.fromItemId(id)
+			.fill()
+			.then(filledId => {
+				icon.src = filledId.iconUrl;
+			});
 	}
 
 	private storeSettings() {
@@ -440,14 +453,17 @@ export class BulkTab extends SimTab {
 		itemList.classList.add('tab-panel-col', 'bulk-gear-combo');
 		itemsBlock.bodyElement.appendChild(itemList);
 
+		let itemPickers: BulkItemPicker[] = [];
 		this.itemsChangedEmitter.on(() => {
+			itemPickers.forEach(picker => picker.dispose());
+			itemPickers = [];
 			itemList.innerHTML = '';
 			if (this.items.length > 0) {
 				itemTextIntro.textContent = 'The following items will be simmed together with your equipped gear.';
 				for (let i = 0; i < this.items.length; ++i) {
 					const spec = this.items[i];
 					const item = this.simUI.sim.db.lookupItemSpec(spec);
-					const bulkItemPicker = new BulkItemPicker(itemList, this.simUI, this, item!, i);
+					itemPickers.push(new BulkItemPicker(itemList, this.simUI, this, item!, i));
 				}
 			}
 		});
@@ -674,11 +690,6 @@ export class BulkTab extends SimTab {
 
 		// Talents to sim
 		const talentsToSimDiv = document.createElement('div');
-		if (this.simTalents) {
-			talentsToSimDiv.style.display = 'flex';
-		} else {
-			talentsToSimDiv.style.display = 'none';
-		}
 		talentsToSimDiv.classList.add('talents-picker-container');
 		const talentsLabel = document.createElement('label');
 		talentsLabel.innerText = 'Pick talents to sim (will increase time to sim)';
@@ -686,66 +697,61 @@ export class BulkTab extends SimTab {
 		const talentsContainerDiv = document.createElement('div');
 		talentsContainerDiv.classList.add('talents-container');
 
-		const dataStr = window.localStorage.getItem(this.simUI.getSavedTalentsStorageKey());
-
-		let jsonData;
-		try {
-			if (dataStr !== null) {
-				jsonData = JSON.parse(dataStr);
-			}
-		} catch (e) {
-			console.warn('Invalid json for local storage value: ' + dataStr);
-		}
-		const handleToggle = (frag: HTMLElement, load: TalentLoadout) => {
-			const chipDiv = frag.querySelector('.saved-data-set-chip');
-			const exists = this.savedTalents.some(talent => talent.name === load.name); // Replace 'id' with your unique identifier
-
-			console.log('Exists:', exists);
-			console.log('Load Object:', load);
-			console.log('Saved Talents Before Update:', this.savedTalents);
-
-			if (exists) {
-				// If the object exists, find its index and remove it
-				const indexToRemove = this.savedTalents.findIndex(talent => talent.name === load.name);
+		const talentChips = new Map<string, Element>();
+		const handleToggle = (load: TalentLoadout) => {
+			const indexToRemove = this.savedTalents.findIndex(talent => talent.name === load.name);
+			if (indexToRemove != -1) {
 				this.savedTalents.splice(indexToRemove, 1);
-				chipDiv?.classList.remove('active');
 			} else {
-				// If the object does not exist, add it
 				this.savedTalents.push(load);
-				chipDiv?.classList.add('active');
+			}
+			this.storeSettings();
+			this.settingsChangedEmitter.emit(TypedEvent.nextEventID());
+		};
+
+		// The talents tab saves loadouts any time, so the list is read again whenever this tab opens.
+		// A picked loadout deleted or saved over since then follows what's stored now.
+		const buildTalentChips = () => {
+			const stored = new Map<string, TalentLoadout>();
+			const dataStr = window.localStorage.getItem(this.simUI.getSavedTalentsStorageKey());
+			let jsonData: Record<string, unknown> = {};
+			try {
+				if (dataStr !== null) {
+					jsonData = JSON.parse(dataStr);
+				}
+			} catch (e) {
+				console.warn('Invalid json for local storage value: ' + dataStr);
+			}
+			for (const name in jsonData) {
+				try {
+					const savedTalentLoadout = SavedTalents.fromJson(jsonData[name] as any);
+					stored.set(name, { talentsString: savedTalentLoadout.talentsString, glyphs: savedTalentLoadout.glyphs, name: name });
+				} catch (e) {
+					console.warn('Failed parsing saved data: ' + jsonData[name]);
+				}
 			}
 
-			console.log('Updated savedTalents:', this.savedTalents);
-		};
-		for (const name in jsonData) {
-			try {
-				console.log(name, jsonData[name]);
-				const savedTalentLoadout = SavedTalents.fromJson(jsonData[name]);
-				var loadout = {
-					talentsString: savedTalentLoadout.talentsString,
-					glyphs: savedTalentLoadout.glyphs,
-					name: name,
-				};
-
-				const index = this.savedTalents.findIndex(talent => JSON.stringify(talent) === JSON.stringify(loadout));
+			talentsContainerDiv.replaceChildren();
+			talentChips.clear();
+			stored.forEach((loadout, name) => {
 				const talentFragment = document.createElement('fragment');
 				talentFragment.innerHTML = `
-					<div class="saved-data-set-chip badge rounded-pill ${index !== -1 ? 'active' : ''}">
+					<div class="saved-data-set-chip badge rounded-pill">
 						<a href="javascript:void(0)" class="saved-data-set-name" role="button">${name}</a>
 					</div>`;
-
-				console.log('Adding event for loadout', loadout);
-				// Wrap the event listener addition in an IIFE
-				(function (talentFragment, loadout) {
-					talentFragment.addEventListener('click', () => handleToggle(talentFragment, loadout));
-				})(talentFragment, loadout);
-
+				talentFragment.addEventListener('click', () => handleToggle(loadout));
+				talentChips.set(name, talentFragment.querySelector('.saved-data-set-chip')!);
 				talentsContainerDiv.appendChild(talentFragment);
-			} catch (e) {
-				console.log(e);
-				console.warn('Failed parsing saved data: ' + jsonData[name]);
+			});
+
+			const picked = this.savedTalents.flatMap(talent => (stored.has(talent.name) ? [stored.get(talent.name)!] : []));
+			if (JSON.stringify(picked) != JSON.stringify(this.savedTalents)) {
+				this.savedTalents = picked;
+				this.storeSettings();
 			}
-		}
+			this.settingsChangedEmitter.emit(TypedEvent.nextEventID());
+		};
+		this.navLink.addEventListener('show.bs.tab', buildTalentChips);
 
 		talentsToSimDiv.append(talentsContainerDiv);
 		//////////////////////
@@ -753,12 +759,6 @@ export class BulkTab extends SimTab {
 
 		// Default Gem Options
 		const defaultGemDiv = document.createElement('div');
-		if (this.autoGem) {
-			defaultGemDiv.style.display = 'flex';
-		} else {
-			defaultGemDiv.style.display = 'none';
-		}
-
 		defaultGemDiv.classList.add('default-gem-container');
 		const gemLabel = document.createElement('label');
 		gemLabel.innerText = 'Defaults for Auto Gem';
@@ -781,96 +781,77 @@ export class BulkTab extends SimTab {
 			const socketIconElem = gemContainer.querySelector('.socket-icon') as HTMLImageElement;
 			socketIconElem.src = getEmptyGemSocketIconUrl(socketColor);
 
-			let selector: GemSelectorModal;
+			let selector: GemSelectorModal | null = null;
 
 			const handleChoose = (itemData: ItemData<UIGem>) => {
 				this.defaultGems[socketIndex] = itemData.item;
 				this.storeSettings();
-				ActionId.fromItemId(itemData.id)
-					.fill()
-					.then(filledId => {
-						this.gemIconElements[socketIndex].src = filledId.iconUrl;
-					});
-				selector.close();
+				this.showDefaultGem(socketIndex);
+				selector?.close();
 			};
 
-			const openGemSelector = (color: GemColor, socketIndex: number) => {
-				return (event: Event) => {
-					if (selector == null) {
-						selector = new GemSelectorModal(this.simUI.rootElem, this.simUI, socketColor, handleChoose);
-					}
-					selector.show();
-				};
-			};
-
-			this.gemIconElements[socketIndex].addEventListener('click', openGemSelector(socketColor, socketIndex));
-			gemContainer.addEventListener('click', openGemSelector(socketColor, socketIndex));
+			// a modal removes itself once hidden, so every click opens a new one
+			gemContainer.addEventListener('click', () => {
+				selector = new GemSelectorModal(this.simUI.rootElem, this.simUI, socketColor, handleChoose);
+			});
 			gemSocketsDiv.appendChild(gemContainer);
+			this.showDefaultGem(socketIndex);
 		});
 		defaultGemDiv.appendChild(gemSocketsDiv);
 
-		new BooleanPicker<BulkTab>(settingsBlock.bodyElement, this, {
-			label: 'Fast Mode',
-			labelTooltip: 'Fast mode reduces accuracy but will run faster.',
-			changedEvent: (obj: BulkTab) => this.itemsChangedEmitter,
-			getValue: obj => this.fastMode,
-			setValue: (id: EventID, obj: BulkTab, value: boolean) => {
-				obj.fastMode = value;
-			},
-		});
-		new BooleanPicker<BulkTab>(settingsBlock.bodyElement, this, {
-			label: 'Combinations',
-			labelTooltip:
-				'When checked bulk simulator will create all possible combinations of the items. When disabled trinkets and rings will still run all combinations becausee they have two slots to fill each.',
-			changedEvent: (obj: BulkTab) => this.itemsChangedEmitter,
-			getValue: obj => this.doCombos,
-			setValue: (id: EventID, obj: BulkTab, value: boolean) => {
-				obj.doCombos = value;
-			},
-		});
-		new BooleanPicker<BulkTab>(settingsBlock.bodyElement, this, {
-			label: 'Auto Enchant',
-			labelTooltip: 'When checked bulk simulator apply the current enchant for a slot to each replacement item it can.',
-			changedEvent: (obj: BulkTab) => this.itemsChangedEmitter,
-			getValue: obj => this.autoEnchant,
-			setValue: (id: EventID, obj: BulkTab, value: boolean) => {
-				obj.autoEnchant = value;
-				if (value) {
-					defaultGemDiv.style.display = 'flex';
-				} else {
-					defaultGemDiv.style.display = 'none';
-				}
-			},
-		});
-		new BooleanPicker<BulkTab>(settingsBlock.bodyElement, this, {
-			label: 'Auto Gem',
-			labelTooltip: 'When checked bulk simulator will fill any un-filled gem sockets with default gems.',
-			changedEvent: (obj: BulkTab) => this.itemsChangedEmitter,
-			getValue: obj => this.autoGem,
-			setValue: (id: EventID, obj: BulkTab, value: boolean) => {
-				obj.autoGem = value;
-				if (value) {
-					defaultGemDiv.style.display = 'flex';
-				} else {
-					defaultGemDiv.style.display = 'none';
-				}
-			},
-		});
+		// stored on every change, and redrawn when loadSettings reads them back
+		const setupToggle = (label: string, labelTooltip: string, get: () => boolean, set: (value: boolean) => void) =>
+			new BooleanPicker<BulkTab>(settingsBlock.bodyElement, this, {
+				label,
+				labelTooltip,
+				changedEvent: () => this.settingsChangedEmitter,
+				getValue: get,
+				setValue: (eventID: EventID, _obj: BulkTab, value: boolean) => {
+					set(value);
+					this.storeSettings();
+					this.settingsChangedEmitter.emit(eventID);
+				},
+			});
 
-		new BooleanPicker<BulkTab>(settingsBlock.bodyElement, this, {
-			label: 'Sim Talents',
-			labelTooltip: 'When checked bulk simulator will sim chosen talent setups. Warning, it might cause the bulk sim to run for a lot longer',
-			changedEvent: (obj: BulkTab) => this.itemsChangedEmitter,
-			getValue: obj => this.simTalents,
-			setValue: (id: EventID, obj: BulkTab, value: boolean) => {
-				obj.simTalents = value;
-				if (value) {
-					talentsToSimDiv.style.display = 'flex';
-				} else {
-					talentsToSimDiv.style.display = 'none';
-				}
-			},
-		});
+		setupToggle(
+			'Fast Mode',
+			'Fast mode reduces accuracy but will run faster.',
+			() => this.fastMode,
+			value => (this.fastMode = value),
+		);
+		setupToggle(
+			'Combinations',
+			'When checked bulk simulator will create all possible combinations of the items. When disabled trinkets and rings will still run all combinations becausee they have two slots to fill each.',
+			() => this.doCombos,
+			value => (this.doCombos = value),
+		);
+		setupToggle(
+			'Auto Enchant',
+			'When checked bulk simulator apply the current enchant for a slot to each replacement item it can.',
+			() => this.autoEnchant,
+			value => (this.autoEnchant = value),
+		);
+		setupToggle(
+			'Auto Gem',
+			'When checked bulk simulator will fill any un-filled gem sockets with default gems.',
+			() => this.autoGem,
+			value => (this.autoGem = value),
+		);
+		setupToggle(
+			'Sim Talents',
+			'When checked bulk simulator will sim chosen talent setups. Warning, it might cause the bulk sim to run for a lot longer',
+			() => this.simTalents,
+			value => (this.simTalents = value),
+		);
+
+		const showSettings = () => {
+			defaultGemDiv.style.display = this.autoGem ? 'flex' : 'none';
+			talentsToSimDiv.style.display = this.simTalents ? 'flex' : 'none';
+			const picked = new Set(this.savedTalents.map(talent => talent.name));
+			talentChips.forEach((chip, name) => chip.classList.toggle('active', picked.has(name)));
+		};
+		this.settingsChangedEmitter.on(showSettings);
+		showSettings();
 
 		settingsBlock.bodyElement.appendChild(defaultGemDiv);
 		settingsBlock.bodyElement.appendChild(talentsToSimDiv);
@@ -901,88 +882,64 @@ export class BulkTab extends SimTab {
 }
 
 class GemSelectorModal extends BaseModal {
-	private readonly simUI: IndividualSimUI<Spec>;
-
-	private readonly contentElem: HTMLElement;
-	private ilist: ItemList<UIGem> | null;
-	private socketColor: GemColor;
-	private onSelect: (itemData: ItemData<UIGem>) => void;
+	private readonly ilist: ItemList<UIGem>;
 
 	constructor(parent: HTMLElement, simUI: IndividualSimUI<Spec>, socketColor: GemColor, onSelect: (itemData: ItemData<UIGem>) => void) {
 		super(parent, 'selector-modal');
-
-		this.simUI = simUI;
-		this.onSelect = onSelect;
-		this.socketColor = socketColor;
-		this.ilist = null;
 
 		window.scrollTo({ top: 0 });
 
 		this.header!.insertAdjacentHTML('afterbegin', `<span>Choose Default Gem</span>`);
 		this.body.innerHTML = `<div class="tab-content selector-modal-tab-content"></div>`;
-		this.contentElem = this.rootElem.querySelector('.selector-modal-tab-content') as HTMLElement;
+
+		this.ilist = new ItemList<UIGem>(
+			this.body,
+			simUI,
+			{
+				selectedTab: SelectorModalTabs.Gem1,
+				slot: ItemSlot.ItemSlotHead,
+				equippedItem: null,
+				eligibleItems: new Array<UIItem>(),
+				eligibleEnchants: new Array<UIEnchant>(),
+				gearData: {
+					equipItem: (_eventID: EventID, _equippedItem: EquippedItem | null) => {},
+					getEquippedItem: () => null,
+					changeEvent: new TypedEvent(),
+				},
+			},
+			simUI.player,
+			'Gem1',
+			simUI.player.getGems(socketColor).map((gem: UIGem) => {
+				return {
+					item: gem,
+					id: gem.id,
+					actionId: ActionId.fromItemId(gem.id),
+					name: gem.name,
+					quality: gem.quality,
+					phase: gem.phase,
+					heroic: false,
+					baseEP: 0,
+					ignoreEPFilter: true,
+					onEquip: (_eventID, _gem: UIGem) => {},
+				};
+			}),
+			gem => simUI.player.computeGemEP(gem),
+			() => null,
+			socketColor,
+			() => {},
+			onSelect,
+		);
+
+		const applyFilter = () => this.ilist.applyFilters();
+		const listeners = [simUI.sim.phaseChangeEmitter.on(applyFilter), simUI.sim.filtersChangeEmitter.on(applyFilter)];
+		this.addOnDisposeCallback(() => {
+			listeners.forEach(listener => listener.dispose());
+			this.ilist.dispose();
+		});
 	}
 
-	show() {
-		// construct item list the first time its opened.
-		// This makes startup faster and also means we are sure to have item database loaded.
-		if (this.ilist == null) {
-			this.ilist = new ItemList<UIGem>(
-				this.body,
-				this.simUI,
-				{
-					selectedTab: SelectorModalTabs.Gem1,
-					slot: ItemSlot.ItemSlotHead,
-					equippedItem: null,
-					eligibleItems: new Array<UIItem>(),
-					eligibleEnchants: new Array<UIEnchant>(),
-					gearData: {
-						equipItem: (eventID: EventID, equippedItem: EquippedItem | null) => {},
-						getEquippedItem: () => null,
-						changeEvent: new TypedEvent(), // FIXME
-					},
-				},
-				this.simUI.player,
-				'Gem1',
-				this.simUI.player.getGems(this.socketColor).map((gem: UIGem) => {
-					return {
-						item: gem,
-						id: gem.id,
-						actionId: ActionId.fromItemId(gem.id),
-						name: gem.name,
-						quality: gem.quality,
-						phase: gem.phase,
-						heroic: false,
-						baseEP: 0,
-						ignoreEPFilter: true,
-						onEquip: (eventID, gem: UIGem) => {},
-					};
-				}),
-				gem => {
-					return this.simUI.player.computeGemEP(gem);
-				},
-				() => {
-					return null;
-				},
-				this.socketColor,
-				() => {},
-				this.onSelect,
-			);
-
-			// let invokeUpdate = () => {this.ilist?.updateSelected()}
-			const applyFilter = () => {
-				this.ilist?.applyFilters();
-			};
-			// Add event handlers
-			// this.itemsChangedEmitter.on(invokeUpdate);
-
-			this.addOnDisposeCallback(() => this.ilist?.dispose());
-
-			this.simUI.sim.phaseChangeEmitter.on(applyFilter);
-			this.simUI.sim.filtersChangeEmitter.on(applyFilter);
-			// gearData.changeEvent.on(applyFilter);
-		}
-
-		this.open();
+	// the list can only measure its rows once the modal is on screen
+	protected override onShow() {
+		this.ilist.sizeRefresh();
 	}
 }

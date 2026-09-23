@@ -115,6 +115,8 @@ function playerReforging(player: Player<any>) {
 
 export class ItemRenderer extends Component {
 	private readonly player: Player<any>;
+	// shows or hides the drawn item's blacksmithing socket, replaced on every redraw
+	private professionListener: Disposable | null = null;
 
 	readonly iconElem: HTMLAnchorElement;
 	readonly nameElem: HTMLAnchorElement;
@@ -155,9 +157,16 @@ export class ItemRenderer extends Component {
 		this.enchantElem = enchantElem.value!;
 		this.reforgeElem = reforgeElem.value!;
 		this.socketsContainerElem = sce.value!;
+		this.addOnDisposeCallback(() => this.stopProfessionListener());
+	}
+
+	private stopProfessionListener() {
+		this.professionListener?.dispose();
+		this.professionListener = null;
 	}
 
 	clear() {
+		this.stopProfessionListener();
 		this.nameElem.removeAttribute('data-wowhead');
 		this.nameElem.removeAttribute('href');
 		this.iconElem.removeAttribute('data-wowhead');
@@ -231,7 +240,8 @@ export class ItemRenderer extends Component {
 						gemContainer.classList.add('hide');
 					}
 				};
-				this.player.professionChangeEmitter.on(updateProfession);
+				this.stopProfessionListener();
+				this.professionListener = this.player.professionChangeEmitter.on(updateProfession);
 				updateProfession();
 			}
 			this.socketsContainerElem.appendChild(gemContainer);
@@ -435,7 +445,8 @@ export class SelectorModal extends BaseModal {
 	private readonly simUI: SimUI;
 	private player: Player<any>;
 	private config: SelectorModalConfig;
-	private ilists: ItemList<any>[];
+	// by tab content id
+	private ilists: Map<string, ItemList<any>>;
 	private reforgeTabListener: Disposable | null = null;
 
 	private readonly tabsElem: HTMLElement;
@@ -447,7 +458,7 @@ export class SelectorModal extends BaseModal {
 		this.simUI = simUI;
 		this.player = player;
 		this.config = config;
-		this.ilists = [];
+		this.ilists = new Map();
 		this.addOnDisposeCallback(() => this.reforgeTabListener?.dispose());
 
 		window.scrollTo({ top: 0 });
@@ -562,13 +573,11 @@ export class SelectorModal extends BaseModal {
 	}
 
 	protected override onShow(e: Event) {
-		// Only refresh opened tab
+		// Only refresh the opened tab, which can be any of them: the batch tab's pickers have no Items tab
 		const t = e.target! as HTMLElement;
-		const tab = t.querySelector<HTMLElement>('.active')!.dataset.contentId!;
-		if (tab.includes('Item')) {
-			this.ilists[0].sizeRefresh();
-		} else if (tab.includes('Enchant')) {
-			this.ilists[1].sizeRefresh();
+		const tab = t.querySelector<HTMLElement>('.selector-modal-tabs .active')?.dataset.contentId;
+		if (tab) {
+			this.ilists.get(tab)?.sizeRefresh();
 		}
 	}
 
@@ -844,7 +853,7 @@ export class SelectorModal extends BaseModal {
 			ilist.sizeRefresh();
 		});
 
-		this.ilists.push(ilist);
+		this.ilists.set(tabContentId, ilist);
 	}
 
 	private removeTabs(labelSubstring: string) {
@@ -1182,7 +1191,8 @@ export class ItemList<T> {
 			itemIdxs[i] = i;
 		}
 
-		const currentEquippedItem = this.player.getEquippedItem(this.slot);
+		// the item this list is for, which the item swap and batch pickers keep outside the worn gear
+		const currentEquippedItem = this.gearData.getEquippedItem();
 
 		if (this.label == 'Items') {
 			itemIdxs = this.player.filterItemData(itemIdxs, i => this.itemData[i].item as unknown as Item, this.slot);
