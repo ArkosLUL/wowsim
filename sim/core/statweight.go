@@ -160,7 +160,8 @@ func CalcStatWeight(swr *proto.StatWeightsRequest, referenceStat stats.Stat, pro
 	var simsTotal int32
 	var simsCompleted int32
 
-	concurrency := (runtime.NumCPU() - 1) * 2
+	// 30 on 16 threads, which timed faster than 8 or 16
+	concurrency := (runtime.GOMAXPROCS(0) - 1) * 2
 	if concurrency <= 0 {
 		concurrency = 2
 	}

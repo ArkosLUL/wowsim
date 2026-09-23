@@ -566,3 +566,103 @@ func (auraMetrics *AuraMetrics) ToProto() *proto.AuraMetrics {
 		ProcsAvg:           float64(auraMetrics.procsSum) / float64(auraMetrics.n),
 	}
 }
+
+// merge adds o's iterations, which ran after these, as if one sim had run them all.
+func (distMetrics *DistributionMetrics) merge(o *DistributionMetrics) {
+	if o.n == 0 {
+		return
+	}
+	// same tie-breaks as doneIteration: max keeps the earlier iteration, min the later one
+	if o.max > distMetrics.max {
+		distMetrics.max = o.max
+		distMetrics.maxSeed = o.maxSeed
+	}
+	if o.min <= distMetrics.min || distMetrics.min < 0 {
+		distMetrics.min = o.min
+		distMetrics.minSeed = o.minSeed
+	}
+	distMetrics.aggregator = *distMetrics.aggregator.merge(&o.aggregator)
+	for bucket, count := range o.hist {
+		distMetrics.hist[bucket] += count
+	}
+	distMetrics.sample = append(distMetrics.sample, o.sample...)
+}
+
+func (tam *TargetedActionMetrics) merge(o *TargetedActionMetrics) {
+	tam.Casts += o.Casts
+	tam.Hits += o.Hits
+	tam.Crits += o.Crits
+	tam.Misses += o.Misses
+	tam.Dodges += o.Dodges
+	tam.Parries += o.Parries
+	tam.Blocks += o.Blocks
+	tam.Glances += o.Glances
+	tam.Crushes += o.Crushes
+	tam.Damage += o.Damage
+	tam.Threat += o.Threat
+	tam.Healing += o.Healing
+	tam.Shielding += o.Shielding
+	tam.CastTime += o.CastTime
+}
+
+func (actionMetrics *ActionMetrics) merge(o *ActionMetrics) {
+	for i := range o.Targets {
+		if i == len(actionMetrics.Targets) {
+			actionMetrics.Targets = append(actionMetrics.Targets, o.Targets[i:]...)
+			return
+		}
+		actionMetrics.Targets[i].merge(&o.Targets[i])
+	}
+}
+
+func (resourceMetrics *ResourceMetrics) merge(o *ResourceMetrics) {
+	resourceMetrics.Events += o.Events
+	resourceMetrics.Gain += o.Gain
+	resourceMetrics.ActualGain += o.ActualGain
+}
+
+// merge adds o's iterations, which ran after these. Auras merge through their unit's aura tracker.
+func (unitMetrics *UnitMetrics) merge(o *UnitMetrics) {
+	unitMetrics.dps.merge(&o.dps)
+	unitMetrics.dpasp.merge(&o.dpasp)
+	unitMetrics.threat.merge(&o.threat)
+	unitMetrics.dtps.merge(&o.dtps)
+	unitMetrics.tmi.merge(&o.tmi)
+	unitMetrics.hps.merge(&o.hps)
+	unitMetrics.tto.merge(&o.tto)
+	unitMetrics.numItersDead += o.numItersDead
+	unitMetrics.oomTimeSum += o.oomTimeSum
+
+	for actionID, action := range o.actions {
+		if mine, ok := unitMetrics.actions[actionID]; ok {
+			mine.merge(action)
+		} else {
+			unitMetrics.actions[actionID] = &ActionMetrics{
+				IsMelee: action.IsMelee,
+				Targets: append([]TargetedActionMetrics(nil), action.Targets...),
+			}
+		}
+	}
+
+	// resource metrics can share an action and type, so the nth of o's pairs with the nth here
+	unmatched := make(map[ResourceKey][]*ResourceMetrics, len(unitMetrics.resources))
+	for _, resource := range unitMetrics.resources {
+		key := ResourceKey{ActionID: resource.ActionID, Type: resource.Type}
+		unmatched[key] = append(unmatched[key], resource)
+	}
+	for _, resource := range o.resources {
+		key := ResourceKey{ActionID: resource.ActionID, Type: resource.Type}
+		if mine := unmatched[key]; len(mine) > 0 {
+			mine[0].merge(resource)
+			unmatched[key] = mine[1:]
+		} else {
+			added := *resource
+			unitMetrics.resources = append(unitMetrics.resources, &added)
+		}
+	}
+}
+
+func (auraMetrics *AuraMetrics) merge(o *AuraMetrics) {
+	auraMetrics.aggregator = *auraMetrics.aggregator.merge(&o.aggregator)
+	auraMetrics.procsSum += o.procsSum
+}

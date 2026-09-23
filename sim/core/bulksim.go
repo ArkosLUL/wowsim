@@ -315,10 +315,8 @@ func (b *bulkSimRunner) Run(pctx context.Context, progress chan *proto.ProgressM
 }
 
 func (b *bulkSimRunner) getRankedResults(pctx context.Context, validCombos []singleBulkSim, iterations int64, progress chan *proto.ProgressMetrics) ([]*itemSubstitutionSimResult, *itemSubstitutionSimResult, error) {
-	concurrency := runtime.NumCPU() + 1
-	if concurrency <= 0 {
-		concurrency = 2
-	}
+	// one per thread: on 16 threads, that timed faster than 17 or 8
+	concurrency := runtime.GOMAXPROCS(0)
 
 	tickets := make(chan struct{}, concurrency)
 	for i := 0; i < concurrency; i++ {
