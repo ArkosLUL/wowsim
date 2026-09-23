@@ -1,6 +1,6 @@
-import { gunzipSync } from 'node:zlib';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
+import { gunzipSync } from 'node:zlib';
 
 import type { Page } from '@playwright/test';
 

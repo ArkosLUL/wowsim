@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-import { SPECS, openRaid, openSim, watchForErrors } from './lib/page';
+import { openRaid, openSim, SPECS, watchForErrors } from './lib/page';
 
 for (const spec of SPECS) {
 	test(`the ${spec} page loads cleanly`, async ({ page }) => {
