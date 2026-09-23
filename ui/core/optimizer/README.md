@@ -8,8 +8,8 @@ Request building for the BiS optimizer tab ([PLAN](../../../docs/bis-optimizer/b
 ## Replay fixtures
 
 `fixture_driver.ts` runs the pool builder under Node over `db.json`, `server_catalog.json` and the
-Retribution presets, writing `sim/optimizer/testdata/replay/*.json.gz` for `TestReplayFixtures`. Rerun it
-after changing the pool builder, those presets, `db.json` or the catalog:
+Retribution presets, writing `sim/optimizer/testdata/replay/*.json.gz` for `TestReplayFixtures` and
+`TestReplayEquippedGear`. Rerun it after changing the pool builder, those presets, `db.json` or the catalog:
 
 ```sh
 tools/acore/dock.sh exec bash -c 'npx esbuild ui/core/optimizer/fixture_driver.ts --bundle --platform=node --format=esm --target=node18 --outfile=tmp/optimizer/fixture_driver.mjs && node tmp/optimizer/fixture_driver.mjs write sim/optimizer/testdata/replay'

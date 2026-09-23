@@ -18,14 +18,16 @@ import (
 )
 
 // The slow suite optimizes four presets over realistic pools, at Quick and Normal, and checks that
-// the pick is no worse than the preset in a fresh paired sim on other random numbers. Run it with:
+// the pick is no worse than the preset trimmed to its pool in a fresh paired sim on other random
+// numbers. Run it with:
 //
 //	tools/acore/dock.sh exec go test --tags=with_db,optimizer_slow -count=1 -timeout 90m -run TestOptimizerSlow -v ./sim/optimizer/
 //
 // -decisions also logs what each stage decides. Each case logs one line to compare from run to run,
-// J in reference-stat points and the deltas paired over slowCheckIterations. J's normalizers are
-// measured fresh each run, so the line prints the preset's DPS and each normalizer with its SE too:
-// a J_preset that moves with its normalizer while dps_preset holds is noise, not a regression.
+// J in reference-stat points and the deltas paired over slowCheckIterations, against the preset as
+// equipped. J's normalizers are measured fresh each run, so the line prints the preset's DPS and each
+// normalizer with its SE too: a J_preset that moves with its normalizer while dps_preset holds is
+// noise, not a regression.
 //
 //	slow: spec=… phase=… effort=… candidates=… J_preset=… J_opt=… delta=…±… dps_preset=… dps_delta=…±… norm_dps=…±…/AP improved=… sims=… wall=…s
 
@@ -165,6 +167,7 @@ func slowRequest(tb testing.TB, c slowCase, effort proto.OptimizerEffort) *proto
 		req.Settings.RequireCritImmunity = true
 	}
 	req.Pool = realisticPool(tb, player, c.phase, nil)
+	req.Equipped = goproto.Clone(player.Equipment).(*proto.EquipmentSpec)
 	trimSeedToPool(tb, player, req.Pool)
 	return req
 }
@@ -173,6 +176,8 @@ func slowRequest(tb testing.TB, c slowCase, effort proto.OptimizerEffort) *proto
 // seed before it sends a request (ui/core/optimizer/pool_builder.ts SeedTrimmer). Presets mix
 // factions and the odd PvP piece, and a seed the equip rules reject makes every pick count as an
 // improvement whatever it scores, which is exactly what this suite is trying to measure.
+// realisticPool doesn't filter on sources, so it already holds the equipped items the pool builder
+// adds whatever the sources say.
 func trimSeedToPool(tb testing.TB, player *proto.Player, pool *proto.CandidatePool) {
 	slots := map[proto.ItemSlot]*proto.SlotPool{}
 	for _, sp := range pool.Slots {
@@ -283,7 +288,9 @@ func TestOptimizerSlow(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				evals, err := eval.Evaluate(context.Background(), []Point{{Loadout: r.Seed}, {Loadout: best}}, slowCheckIterations)
+				// Evaluate sims the preset once when trimming left it as it was
+				points := []Point{{Loadout: r.Equipped}, {Loadout: best}, {Loadout: r.Seed}}
+				evals, err := eval.Evaluate(context.Background(), points, slowCheckIterations)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -293,8 +300,10 @@ func TestOptimizerSlow(t *testing.T) {
 				t.Logf("slow: spec=%s phase=%d effort=%s candidates=%d J_preset=%.1f J_opt=%.1f delta=%+.1f±%.1f dps_preset=%.1f dps_delta=%+.1f±%.1f %s improved=%v sims=%d wall=%.1fs",
 					c.spec, c.phase, name, poolSize, jPreset.Mean, jOpt.Mean, d.Mean, d.SE, evals[0].Metrics[MetricDPS].Mean, dps.Mean, dps.SE,
 					normalizerFields(obj), result.Improved, result.TotalSims, wall.Seconds())
-				if d.Mean < -2*d.SE {
-					t.Errorf("the pick scores %.1f ± %.1f under the preset", -d.Mean, d.SE)
+				// preset items the phase rules out can outscore the pick, so this checks against the
+				// trimmed preset the search started from
+				if s := obj.Delta(evals[2], evals[1]); s.Mean < -2*s.SE {
+					t.Errorf("the pick scores %.1f ± %.1f under the trimmed preset", -s.Mean, s.SE)
 				}
 				if c.tank {
 					sheet, err := playerSheet(r.Base, r.TargetIndex, best, stats.Stats{})

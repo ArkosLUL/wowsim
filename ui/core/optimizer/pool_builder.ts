@@ -116,8 +116,10 @@ export interface PoolBuilderInput {
 
 export interface BuiltRequest {
 	request: OptimizeGearRequest;
-	// What the seed lost to fit the pool, one line each.
+	// What the seed lost to fit the pool, one line each, short of whole items.
 	seedChanges: Array<string>;
+	// Items the seed lost, one line each. The result warns about these itself.
+	seedLeftOut: Array<string>;
 	// The boss the run fights, for the tab to show.
 	bossName: string;
 }
@@ -304,16 +306,20 @@ function toSimItem(item: Item): SimItem {
 // under Node.
 //
 // Per slot, the pool is the target's usable items, through the gear picker's filters, then the server
-// catalog (tier, faction, sources, no PvP) and professions. Enchants follow enchantAppliesToItem.
-// Excluded items and gems stay out.
+// catalog (tier, faction, sources, no PvP) and professions. The item the target wears in a slot skips
+// the filters and the sources there, since the target owns it, but not the rest. Only there: one owned
+// copy in both rings' or both hands' pools could come back as a pair. Enchants follow
+// enchantAppliesToItem. Excluded items and gems stay out.
 //
 // The seed has to pass the optimizer's equip rules, so it's trimmed to what the pool offers: that
 // way a phase's result can't keep gear from a later phase. Locked slots keep the seed's choice, but a
 // locked second ring, trinket or off-hand weapon moves up, lock and all, when the first slot empties.
+// The untrimmed gear goes along as `equipped`, which the result scores against.
 export function buildOptimizeRequest(input: PoolBuilderInput): BuiltRequest {
 	const { settings, catalog } = input;
 	const base = RaidSimRequest.clone(input.base);
 	const target = raidPlayer(base, input.targetRaidIndex);
+	const equipped = EquipmentSpec.clone(target.equipment || EquipmentSpec.create());
 	const professions = playerProtoProfessions(target);
 	const blacksmith = professions.includes(Profession.Blacksmithing);
 	const hasProfession = (profession: Profession) => profession == Profession.ProfessionUnknown || professions.includes(profession);
@@ -321,7 +327,8 @@ export function buildOptimizeRequest(input: PoolBuilderInput): BuiltRequest {
 	const locked = new Set(settings.lockedSlots);
 	const faction = raceToFaction[target.race];
 	const itemAvailability: Availability = { contentPhase: settings.contentPhase, faction, sources: settings.sources };
-	const gemAvailability: Availability = { contentPhase: settings.contentPhase, faction };
+	// gems and the target's own items
+	const anySource: Availability = { contentPhase: settings.contentPhase, faction };
 	const usable = (id: number, profession: Profession, availability: Availability) => {
 		const row = catalog.item(id);
 		return !excluded.has(id) && isAvailable(row, availability) && hasProfession(profession) && hasProfession(row!.requiredProfession);
@@ -329,10 +336,22 @@ export function buildOptimizeRequest(input: PoolBuilderInput): BuiltRequest {
 
 	// Locked slots too: the trimmer can move a locked item to another slot, which frees its own.
 	const offers: SlotOffers = new Map();
+	// slot -> the worn item only ownership put in its pool
+	const ownedOnly = new Map<ItemSlot, number>();
 	for (const slot of ALL_SLOTS) {
-		const items = filterItemsByFilters(input.getItems(slot), item => item, slot, input.filters).filter(item =>
-			usable(item.id, item.requiredProfession, itemAvailability),
-		);
+		const all = input.getItems(slot);
+		const shown = new Set(filterItemsByFilters(all, item => item, slot, input.filters).map(item => item.id));
+		const worn = equipped.items[slot]?.id || 0;
+		const items = all.filter(item => {
+			if (shown.has(item.id) && usable(item.id, item.requiredProfession, itemAvailability)) {
+				return true;
+			}
+			if (item.id == worn && usable(item.id, item.requiredProfession, anySource)) {
+				ownedOnly.set(slot, item.id);
+				return true;
+			}
+			return false;
+		});
 		const enchants = input.getEnchants(slot).filter(enchant => enchant.effectId != 0 && hasProfession(enchant.requiredProfession));
 		const slotOffers = new Map<number, ItemOffer>();
 		for (const item of items) {
@@ -350,7 +369,7 @@ export function buildOptimizeRequest(input: PoolBuilderInput): BuiltRequest {
 	const poolGems = new Map<number, Gem>();
 	input.db
 		.getGems()
-		.filter(gem => usable(gem.id, gem.requiredProfession, gemAvailability))
+		.filter(gem => usable(gem.id, gem.requiredProfession, anySource))
 		.forEach(gem => poolGems.set(gem.id, gem));
 	const metaConditions = new Map<number, MetaGemCondition>();
 	for (const gem of poolGems.values()) {
@@ -368,6 +387,7 @@ export function buildOptimizeRequest(input: PoolBuilderInput): BuiltRequest {
 		excluded,
 		blacksmith,
 		offers,
+		ownedOnly,
 		poolGems,
 		metaConditions,
 		reforgingFor(base.encounter?.serverSettings),
@@ -396,7 +416,9 @@ export function buildOptimizeRequest(input: PoolBuilderInput): BuiltRequest {
 		}
 	}
 
-	const catalogIds = distinct([...poolItems.keys(), ...poolGems.keys(), ...seed.itemIds(), ...seed.gemIds()]);
+	// the equipped gear's rows too, for its unmodeled effects in the result
+	const equippedIds = equipped.items.flatMap(spec => [spec.id, ...spec.gems]).filter(id => id != 0);
+	const catalogIds = distinct([...poolItems.keys(), ...poolGems.keys(), ...seed.itemIds(), ...seed.gemIds(), ...equippedIds]);
 	const catalogItems = catalogIds.map(id => catalog.item(id)).filter((row): row is CatalogItem => !!row);
 	const limitGroups = distinct(catalogItems.map(row => row.limitCategory).filter(id => id != 0))
 		.map(id => catalog.limitGroup(id))
@@ -452,8 +474,9 @@ export function buildOptimizeRequest(input: PoolBuilderInput): BuiltRequest {
 			}),
 			catalogDate: catalog.date,
 		}),
+		equipped,
 	});
-	return { request, seedChanges: seed.changes, bossName: boss?.name || 'a level 83 boss' };
+	return { request, seedChanges: seed.changes, seedLeftOut: seed.leftOut, bossName: boss?.name || 'a level 83 boss' };
 }
 
 // A player proto's spec can be unset in a half-built raid, which playerToSpec throws on; nothing
@@ -470,6 +493,7 @@ function isTank(player: PlayerProto): boolean {
 // slot against the pool, then limits, placement and metas. It can move a lock, so it owns `locked`.
 class SeedTrimmer {
 	readonly changes: Array<string> = [];
+	readonly leftOut: Array<string> = [];
 	private readonly specs: Array<ItemSpec>;
 
 	constructor(
@@ -480,6 +504,7 @@ class SeedTrimmer {
 		private readonly excluded: Set<number>,
 		private readonly blacksmith: boolean,
 		private readonly offers: SlotOffers,
+		private readonly ownedOnly: Map<ItemSlot, number>,
 		private readonly poolGems: Map<number, Gem>,
 		private readonly metaConditions: Map<number, MetaGemCondition>,
 		private readonly reforging: Reforging,
@@ -527,7 +552,7 @@ class SeedTrimmer {
 	}
 
 	private clear(slot: ItemSlot, why: string) {
-		this.note(slot, `left out ${this.itemName(this.specs[slot].id)} (${why}).`);
+		this.leftOut.push(`${slotNames.get(slot)}: left out ${this.itemName(this.specs[slot].id)} (${why}).`);
 		this.specs[slot] = ItemSpec.create();
 	}
 
@@ -583,7 +608,10 @@ class SeedTrimmer {
 		if (second == ItemSlot.ItemSlotOffHand && !weapon) {
 			return;
 		}
-		const firstOffer = this.offers.get(first)?.get(spec.id);
+		// an item only ownership put in the second slot's pool moves pools with it, never into both,
+		// lock or no lock: a lock that moves up unlocks the second slot's pool
+		const owned = !this.offers.get(first)?.has(spec.id) && this.ownedOnly.get(second) == spec.id;
+		const firstOffer = owned ? this.offers.get(second)?.get(spec.id) : this.offers.get(first)?.get(spec.id);
 		if (this.locked.has(second)) {
 			if (!this.locked.has(first)) {
 				this.locked.delete(second);
@@ -598,6 +626,10 @@ class SeedTrimmer {
 		} else {
 			this.clear(second, `${slotNames.get(first)} is empty`);
 			return;
+		}
+		if (owned && firstOffer) {
+			this.offers.get(first)?.set(spec.id, firstOffer);
+			this.offers.get(second)?.delete(spec.id);
 		}
 		this.specs[first] = spec;
 		this.specs[second] = ItemSpec.create();

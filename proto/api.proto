@@ -495,10 +495,13 @@ message ItemSpecWithSlot {
 // RPC: OptimizeGear
 message OptimizeGearRequest {
 	// The raid, encounter and sim options to optimize in. The target's current gear and racial traits
-	// are the seed.
+	// are the seed the search starts from, already trimmed to what the pool offers.
 	RaidSimRequest base = 1;
 	// Whose gear to optimize: party index * 5 + position in the party.
 	int32 target_raid_index = 2;
 	OptimizerSettings settings = 3;
 	CandidatePool pool = 4;
+	// The target's gear as equipped, before it was trimmed into the seed. The result's seed and every
+	// score delta are against it. Unset means the seed. Its items need sim data in the request too.
+	EquipmentSpec equipped = 5;
 }

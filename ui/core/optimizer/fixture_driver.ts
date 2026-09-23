@@ -14,6 +14,7 @@ import {
 	EquipmentSpec,
 	IndividualBuffs,
 	ItemSlot,
+	ItemSpec,
 	PartyBuffs,
 	Profession,
 	Race,
@@ -24,7 +25,7 @@ import {
 	TristateEffect,
 	WeaponType,
 } from '../proto/common.js';
-import { OptimizerResult, StatMinimum } from '../proto/optimizer.js';
+import { CatalogSourceKind, OptimizerResult, StatMinimum } from '../proto/optimizer.js';
 import { DatabaseFilters, RaidFilterOption, SourceFilterOption, UIEnchant, UIItem } from '../proto/ui.js';
 import type { Database as DatabaseType } from '../proto_utils/database.js';
 import { getEnumValues } from '../utils.js';
@@ -173,7 +174,30 @@ const FIXTURES: Array<Fixture> = [
 		},
 	},
 	{ name: 'ret_p5', gear: Presets.P5_PRESET.gear, contentPhase: 5 },
+	// the raider owns the Ulduar 25 gear, so it stays with Raid 25 unticked. The ToC trinket and ring
+	// aren't out yet, so they leave: Comet's Trail moves up from trinket 2 with its place in the pool,
+	// and the locked Seal of the Betrayed King moves up with its lock and leaves finger 2's pool
+	{
+		name: 'ret_p2_owned',
+		gear: withItems(Presets.P2_PRESET.gear, [
+			[ItemSlot.ItemSlotFinger1, Presets.P3_PRESET.gear.items[ItemSlot.ItemSlotFinger1]],
+			[ItemSlot.ItemSlotTrinket1, Presets.P3_PRESET.gear.items[ItemSlot.ItemSlotTrinket1]],
+			[ItemSlot.ItemSlotTrinket2, Presets.P2_PRESET.gear.items[ItemSlot.ItemSlotTrinket1]],
+		]),
+		contentPhase: 2,
+		change: settings => {
+			const raid25 = [CatalogSourceKind.CatalogSourceRaid25, CatalogSourceKind.CatalogSourceRaid25Heroic];
+			settings.sources = settings.sources.filter(kind => !raid25.includes(kind));
+			settings.lockedSlots = [ItemSlot.ItemSlotFinger2];
+		},
+	},
 ];
+
+function withItems(gear: EquipmentSpec, items: Array<[ItemSlot, ItemSpec]>): EquipmentSpec {
+	const out = EquipmentSpec.clone(gear);
+	items.forEach(([slot, spec]) => (out.items[slot] = ItemSpec.clone(spec)));
+	return out;
+}
 
 async function writeFixtures(outDir: string) {
 	const db = await Database.get();
@@ -182,7 +206,7 @@ async function writeFixtures(outDir: string) {
 	for (const fixture of FIXTURES) {
 		const settings = defaultTabSettings(fixture.contentPhase);
 		fixture.change?.(settings, fixture.gear);
-		const { request, seedChanges } = buildOptimizeRequest({
+		const { request, seedChanges, seedLeftOut } = buildOptimizeRequest({
 			base: raidSimRequest(db, fixture.gear),
 			targetRaidIndex: 0,
 			settings,
@@ -202,7 +226,7 @@ async function writeFixtures(outDir: string) {
 			`${file}: ${pool.slots.reduce((n, s) => n + s.itemIds.length, 0)} slot candidates, ${pool.gemIds.length} gems, ` +
 				`${pool.database!.items.length} items in the database`,
 		);
-		seedChanges.forEach(change => console.log(`  seed: ${change}`));
+		[...seedLeftOut, ...seedChanges].forEach(change => console.log(`  seed: ${change}`));
 	}
 }
 

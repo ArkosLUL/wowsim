@@ -62,7 +62,7 @@ export function effortName(effort: OptimizerEffort): string {
 // trimmed: the run started from that gear minus what the pool left out, so Equip still changes that much.
 function notImprovedText(effort: OptimizerEffort, cancelled: boolean, trimmed: boolean): string {
 	const gear = trimmed
-		? 'the set below is just that gear, minus what the pool left out (listed at the bottom), which is all Equip would change.'
+		? 'the set below is just that gear, minus what the pool left out (see the warnings above and the list at the bottom), which is all Equip would change.'
 		: 'the set below is just that gear.';
 	if (cancelled) {
 		return `Nothing had beaten your starting gear by more than the noise when the run stopped, so ${gear}`;
@@ -106,6 +106,48 @@ export function formatNumber(value: number, digits = 1): string {
 
 export function formatDelta(delta: number, se: number, digits = 1): string {
 	return `${delta >= 0 ? '+' : ''}${formatNumber(delta, digits)} ± ${formatNumber(se, digits)}`;
+}
+
+// What a score counts, from a result's score_stats: points of the spec's reference stat, plus armor
+// for a tank's survival. Both names are empty when the result doesn't say, e.g. one stored before.
+export interface ScoreUnit {
+	// e.g. 'AP', or 'AP/armor'
+	short: string;
+	// e.g. 'attack power points'
+	long: string;
+}
+
+const SCORE_STAT_NAMES: Partial<Record<Stat, [string, string]>> = {
+	[Stat.StatAttackPower]: ['AP', 'attack power'],
+	[Stat.StatSpellPower]: ['SP', 'spell power'],
+	[Stat.StatRangedAttackPower]: ['RAP', 'ranged attack power'],
+	[Stat.StatArmor]: ['armor', 'armor'],
+};
+
+export function scoreUnit(scoreStats: Array<Stat>): ScoreUnit {
+	const names = scoreStats.map(stat => SCORE_STAT_NAMES[stat] || [Stat[stat], Stat[stat]]);
+	return {
+		short: names.map(([short]) => short).join('/'),
+		long: names.length > 0 ? `${names.map(([, long]) => long).join(' and ')} points` : '',
+	};
+}
+
+export function withUnit(text: string, unit: ScoreUnit): string {
+	return unit.short ? `${text} ${unit.short}` : text;
+}
+
+// improved alone doesn't say this: it's against the gear the search started from, which can be
+// missing items the gear as equipped has
+export function beatsEquipped(result: OptimizerResult): boolean {
+	const best = result.best;
+	return !!best && best.scoreDelta > 0 && best.scoreDelta > 2 * best.scoreDeltaSe;
+}
+
+// The run started from less than the gear as equipped, so Equip changes something even when nothing
+// beat it.
+export function seedTrimmed(result: OptimizerResult): boolean {
+	const { best, seed } = result;
+	return !!best && !!seed && !EquipmentSpec.equals(best.equipment || EquipmentSpec.create(), seed.equipment || EquipmentSpec.create());
 }
 
 export function newElement<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, text?: string): HTMLElementTagNameMap[K] {
@@ -183,15 +225,16 @@ export class LoadoutView {
 		return item?.item.name || this.db.lookupGem(id)?.name || `Item ${id}`;
 	}
 
-	renderLoadout(title: string, loadout: OptimizerLoadoutResult, seed: OptimizerLoadoutResult | undefined): HTMLElement {
+	// seed is the result's: the gear as equipped
+	renderLoadout(title: string, loadout: OptimizerLoadoutResult, seed: OptimizerLoadoutResult | undefined, unit: ScoreUnit): HTMLElement {
 		const body = newElement('div', 'optimizer-loadout');
 
 		const summary: Array<string> = [];
 		if (loadout.score) {
-			summary.push(`Score ${formatNumber(loadout.score, 2)}`);
+			summary.push(withUnit(`Score ${formatNumber(loadout.score, 2)}`, unit));
 		}
 		if (loadout.scoreDelta || loadout.scoreDeltaSe) {
-			summary.push(`Δ ${formatDelta(loadout.scoreDelta, loadout.scoreDeltaSe, 2)} over ${this.config.possessive} gear`);
+			summary.push(`${withUnit(`Δ ${formatDelta(loadout.scoreDelta, loadout.scoreDeltaSe, 2)}`, unit)} over ${this.config.possessive} gear as equipped`);
 		}
 		if (loadout.raidDpsDelta || loadout.raidDpsDeltaSe) {
 			summary.push(`raid DPS ${formatDelta(loadout.raidDpsDelta, loadout.raidDpsDeltaSe)}`);
@@ -202,6 +245,9 @@ export class LoadoutView {
 		}
 		if (summary.length > 0) {
 			body.appendChild(newElement('div', 'optimizer-summary', summary.join(', ')));
+			if (unit.long && (loadout.score || loadout.scoreDelta)) {
+				body.appendChild(newElement('div', 'optimizer-hint', `Scores are in ${unit.long}, not DPS.`));
+			}
 		}
 		const metrics = this.metricsText(loadout.metrics, seed?.metrics);
 		if (metrics) {
@@ -281,15 +327,21 @@ export class LoadoutView {
 		return section('Character sheet', table);
 	}
 
-	renderAlternatives(alternatives: Array<OptimizerSlotAlternative>, best: OptimizerLoadoutResult | undefined, improved: boolean): HTMLElement {
+	renderAlternatives(
+		alternatives: Array<OptimizerSlotAlternative>,
+		best: OptimizerLoadoutResult | undefined,
+		improved: boolean,
+		unit: ScoreUnit,
+	): HTMLElement {
 		const table = newElement('table', 'table table-sm optimizer-table');
 		const raid = alternatives.some(a => a.raidDpsDelta || a.raidDpsDeltaSe);
 		const action = this.config.itemAction;
+		const unitSuffix = unit.short ? ` (${unit.short})` : '';
 		table.appendChild(
 			tableRow('th', [
 				'Slot',
 				'Instead',
-				improved ? 'Score vs best' : `Score vs ${this.config.possessive} gear`,
+				(improved ? 'Score vs best' : `Score vs ${this.config.possessive} starting gear`) + unitSuffix,
 				...(raid ? ['Raid DPS'] : []),
 				...(action ? [''] : []),
 			]),
@@ -865,7 +917,8 @@ export class OptimizerTab extends SimTab {
 			parts.push(`${raceNames.get(progress.racialTraits)} traits`);
 		}
 		if (progress.bestScoreDelta) {
-			parts.push(`best so far ${progress.bestScoreDelta >= 0 ? '+' : ''}${formatNumber(progress.bestScoreDelta)}`);
+			const delta = `${progress.bestScoreDelta >= 0 ? '+' : ''}${formatNumber(progress.bestScoreDelta)}`;
+			parts.push(`best so far ${withUnit(delta, scoreUnit(progress.scoreStats))} over your gear as equipped`);
 		}
 		if (progress.elapsedSeconds) {
 			parts.push(`${Math.round(progress.elapsedSeconds)} s`);
@@ -906,36 +959,39 @@ export class OptimizerTab extends SimTab {
 		}
 		warnings.forEach(w => this.resultsBody.appendChild(newElement('div', 'optimizer-warning', w)));
 		if (result.improved) {
-			// improved is also set when the starting gear broke a rule, where the pick can score lower
-			const beatsSeed = (result.best?.scoreDelta || 0) > 0;
+			// improved is also set when the gear couldn't stay as it was, where the pick can score lower
 			this.resultsBody.appendChild(
 				newElement(
 					'div',
 					'optimizer-improved',
-					beatsSeed ? 'Beats your starting gear by more than the noise.' : 'Replaces your starting gear, which breaks a rule (see above).',
+					beatsEquipped(result)
+						? 'Beats your gear as equipped by more than the noise.'
+						: "Doesn't beat your gear as equipped by more than the noise, but this run can't keep that gear as it is (see the warnings above). " +
+								'This is the best set it found that it can.',
 				),
 			);
 		} else if (result.best) {
 			this.resultsBody.appendChild(
-				newElement('div', 'optimizer-improved optimizer-not-improved', notImprovedText(effort, result.cancelled, built.seedChanges.length > 0)),
+				newElement('div', 'optimizer-improved optimizer-not-improved', notImprovedText(effort, result.cancelled, seedTrimmed(result))),
 			);
 		}
 
+		const unit = scoreUnit(result.scoreStats);
 		if (result.best) {
 			this.resultsBody.appendChild(this.renderActions(result, phase));
-			this.resultsBody.appendChild(this.view.renderLoadout(result.improved ? 'Best' : 'Your starting gear', result.best, result.seed));
+			this.resultsBody.appendChild(this.view.renderLoadout(result.improved ? 'Best' : 'Your starting gear', result.best, result.seed, unit));
 		}
 		// kept when nothing won: each then swaps one slot of the starting gear
 		if (result.alternatives.length > 0) {
-			this.resultsBody.appendChild(this.view.renderAlternatives(result.alternatives, result.best, result.improved));
+			this.resultsBody.appendChild(this.view.renderAlternatives(result.alternatives, result.best, result.improved, unit));
 		}
 		if (result.top.length > 0) {
-			this.resultsBody.appendChild(this.renderTop(result.top, result.best, result.improved));
+			this.resultsBody.appendChild(this.renderTop(result.top, result.best, result.improved, unit));
 		}
 		this.updateLoadoutActions();
 		if (result.racialScreen.length > 0) {
 			const table = newElement('table', 'table table-sm optimizer-table');
-			table.appendChild(tableRow('th', ['Racial traits', 'Score', 'Finalist']));
+			table.appendChild(tableRow('th', ['Racial traits', unit.short ? `Score (${unit.short})` : 'Score', 'Finalist']));
 			for (const screen of result.racialScreen) {
 				table.appendChild(
 					tableRow('td', [raceNames.get(screen.racialTraits) || '', `${formatNumber(screen.score)} ± ${formatNumber(screen.scoreSe)}`, screen.finalist ? 'yes' : '']),
@@ -1021,7 +1077,7 @@ export class OptimizerTab extends SimTab {
 		);
 	}
 
-	private renderTop(top: Array<OptimizerLoadoutResult>, best: OptimizerLoadoutResult | undefined, improved: boolean): HTMLElement {
+	private renderTop(top: Array<OptimizerLoadoutResult>, best: OptimizerLoadoutResult | undefined, improved: boolean, unit: ScoreUnit): HTMLElement {
 		const list = newElement('ol', 'optimizer-list');
 		const bestItems = best?.equipment?.items || [];
 		for (const loadout of top) {
@@ -1030,7 +1086,7 @@ export class OptimizerTab extends SimTab {
 				.filter(d => d);
 			const parts: Array<string> = [];
 			if (loadout.scoreDelta || loadout.scoreDeltaSe) {
-				parts.push(`score ${formatDelta(loadout.scoreDelta, loadout.scoreDeltaSe, 2)} over your gear`);
+				parts.push(`score ${withUnit(formatDelta(loadout.scoreDelta, loadout.scoreDeltaSe, 2), unit)} over your gear as equipped`);
 			}
 			parts.push(differs.length > 0 ? differs.join(', ') : improved ? 'the best set' : 'your starting gear');
 			const li = newElement('li', undefined, parts.join('; ') + ' ');

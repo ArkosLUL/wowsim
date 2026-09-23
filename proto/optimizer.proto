@@ -145,11 +145,11 @@ message OptimizerLoadoutResult {
 	EquipmentSpec equipment = 1;
 	Race racial_traits = 2;
 
-	// Objective J, and its paired difference from the seed with standard error.
+	// Objective J, and its paired difference from OptimizerResult.seed with standard error.
 	double score = 3;
 	double score_delta = 4;
 	double score_delta_se = 5;
-	// Raid-DPS difference from the seed, from paired raid sims. Raid contribution only.
+	// Raid-DPS difference from OptimizerResult.seed, from paired raid sims. Raid contribution only.
 	double raid_dps_delta = 6;
 	double raid_dps_delta_se = 7;
 
@@ -197,25 +197,29 @@ message OptimizerProgress {
 	int32 total_sims = 5;
 	// The racial traits being optimized right now.
 	Race racial_traits = 6;
-	// Best so far.
+	// Best so far, and its delta from what OptimizerResult.seed will hold.
 	double best_score = 7;
 	double best_score_delta = 8;
 	double elapsed_seconds = 9;
+	// As OptimizerResult.score_stats, once there's a score.
+	repeated Stat score_stats = 10;
 }
 
 message OptimizerResult {
 	// The pick. It's the seed when nothing beat the seed by the acceptance test. When the seed itself
 	// breaks a rule, it's the best verified loadout that keeps every rule, whatever it scores.
 	OptimizerLoadoutResult best = 1;
-	// The starting gear, scored the same way.
+	// The gear as equipped (OptimizeGearRequest.equipped, else the seed), scored the same way. Every
+	// score_delta is against it, so a pick can come out below it when the seed had to lose items.
 	OptimizerLoadoutResult seed = 2;
 	// Verified top sets, best first, all distinct.
 	repeated OptimizerLoadoutResult top = 3;
 	// Up to 5 runners-up per slot, best first.
 	repeated OptimizerSlotAlternative alternatives = 4;
 	repeated OptimizerRacialScreen racial_screen = 5;
-	// best beat the seed: mean delta over 2 standard errors and over 0.05% of J. Set as well when the
-	// seed broke a rule and a legal loadout replaced it, whatever the delta is.
+	// best beat the seed the search started from, which can differ from the seed field: mean delta over
+	// 2 standard errors and over 0.05% of J. Set as well when the seed broke a rule and a legal loadout
+	// replaced it, whatever the delta is.
 	bool improved = 6;
 
 	// The settings as run, after defaults.
@@ -234,6 +238,11 @@ message OptimizerResult {
 	// Stopped by a cancel; best is the best verified by then.
 	bool cancelled = 15;
 	string error_result = 16;
+
+	// What score and the score deltas count: points of these stats, each once, in metric order. The
+	// spec's reference stat stands for DPS, HPS and TPS, Armor for DTPS, TMI and death chance. Empty
+	// when nothing was scored.
+	repeated Stat score_stats = 17;
 }
 
 // One raider and content phase in a raid batch.

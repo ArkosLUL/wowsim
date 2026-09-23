@@ -1,5 +1,6 @@
 import { ContentBlock } from '../core/components/content_block';
 import {
+	beatsEquipped,
 	BUSY_PATTERN,
 	button,
 	cancelOptimizerRun,
@@ -11,9 +12,12 @@ import {
 	newElement,
 	PHASE_LABELS,
 	RACIAL_MODES,
+	scoreUnit,
 	section,
+	seedTrimmed,
 	simServerAvailable,
 	tableRow,
+	withUnit,
 } from '../core/components/individual_sim_ui/optimizer_tab';
 import { SimTab } from '../core/components/sim_tab';
 import { IndividualSimUIConfig } from '../core/individual_sim_ui';
@@ -891,8 +895,9 @@ export class OptimizerBatchTab extends SimTab {
 			newElement(
 				'div',
 				'optimizer-hint',
-				"Each cell is the run's score gain over the raider's gear with what the phase rules out taken off, ± its standard error, " +
-					"in points of their EP reference stat. A DPS raider's cell also gets a raid DPS line once their stage 2 run scores " +
+				"Each cell is the run's score gain over the raider's gear as equipped, ± its standard error, in points of their EP " +
+					"reference stat (AP, SP or RAP), not DPS, with a tank's survival in armor points. It can come out negative when the " +
+					"raider wears gear the phase rules out. A DPS raider's cell also gets a raid DPS line once their stage 2 run scores " +
 					'it. Click one for the gear.',
 			),
 		);
@@ -947,8 +952,10 @@ export class OptimizerBatchTab extends SimTab {
 			case 'done': {
 				const result = job.result!;
 				const best = result.best;
-				// no gain: best is the seed itself, so its delta is always 0 ± 0
-				const gain = result.improved && best ? formatDelta(best.scoreDelta, best.scoreDeltaSe) : 'no gain';
+				// no gain: best is the starting gear, whose delta is what the phase took off the gear as equipped
+				const delta = best ? withUnit(formatDelta(best.scoreDelta, best.scoreDeltaSe), scoreUnit(result.scoreStats)) : '';
+				const trimmed = !!best && seedTrimmed(result) && !!(best.scoreDelta || best.scoreDeltaSe);
+				const gain = result.improved && best ? delta : trimmed ? `no gain, ${delta}` : 'no gain';
 				link.appendChild(newElement('div', result.improved ? undefined : 'optimizer-hint', gain));
 				// raid-sim numbers, once a run measures them
 				if (best && (best.raidDpsDelta || best.raidDpsDeltaSe)) {
@@ -1216,16 +1223,19 @@ export class OptimizerBatchTab extends SimTab {
 
 		const name = job.raider;
 		if (result.improved) {
-			const beatsSeed = (result.best?.scoreDelta || 0) > 0;
 			this.detailBody.appendChild(
 				newElement(
 					'div',
 					'optimizer-improved',
-					beatsSeed ? `Beats ${name}'s gear by more than the noise.` : `Replaces ${name}'s gear, which breaks a rule (see above).`,
+					beatsEquipped(result)
+						? `Beats ${name}'s gear as equipped by more than the noise.`
+						: `Doesn't beat ${name}'s gear as equipped by more than the noise, but this run can't keep that gear as it is (see the warnings above). ` +
+								'This is the best set it found that it can.',
 				),
 			);
 		} else {
-			const trimmed = job.seedChanges.length > 0 ? ', minus what the phase left out (listed at the bottom)' : '';
+			const trimmed =
+				seedTrimmed(result) || job.seedChanges.length > 0 ? ', minus what the phase left out (see the warnings above and the list at the bottom)' : '';
 			this.detailBody.appendChild(
 				newElement(
 					'div',
@@ -1266,15 +1276,16 @@ export class OptimizerBatchTab extends SimTab {
 			possessive: `${name}'s`,
 			object: name,
 		});
+		const unit = scoreUnit(result.scoreStats);
 		if (result.best) {
-			this.detailBody.appendChild(view.renderLoadout(result.improved ? 'Best' : `${name}'s gear`, result.best, result.seed));
+			this.detailBody.appendChild(view.renderLoadout(result.improved ? 'Best' : `${name}'s gear`, result.best, result.seed, unit));
 		}
 		if (result.alternatives.length > 0) {
-			this.detailBody.appendChild(view.renderAlternatives(result.alternatives, result.best, result.improved));
+			this.detailBody.appendChild(view.renderAlternatives(result.alternatives, result.best, result.improved, unit));
 		}
 		if (result.racialScreen.length > 0) {
 			const table = newElement('table', 'table table-sm optimizer-table');
-			table.appendChild(tableRow('th', ['Racial traits', 'Score', 'Finalist']));
+			table.appendChild(tableRow('th', ['Racial traits', unit.short ? `Score (${unit.short})` : 'Score', 'Finalist']));
 			for (const screen of result.racialScreen) {
 				table.appendChild(
 					tableRow('td', [
