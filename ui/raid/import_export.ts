@@ -66,7 +66,8 @@ export class RaidJsonExporter extends Exporter {
 	private readonly simUI: RaidSimUI;
 
 	constructor(parent: HTMLElement, simUI: RaidSimUI) {
-		super(parent, simUI, { title: 'JSON Export', allowDownload: true });
+		// without a header the dialog loses its title and its close button
+		super(parent, simUI, { title: 'JSON Export', header: true, allowDownload: true });
 		this.simUI = simUI;
 		this.init();
 	}

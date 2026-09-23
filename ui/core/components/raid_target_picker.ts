@@ -1,13 +1,12 @@
 import { Input, InputConfig } from '../components/input.js';
 import { Player } from '../player.js';
 import { Raid } from '../raid.js';
-import { EventID, TypedEvent } from '../typed_event.js';
+import { TypedEvent } from '../typed_event.js';
 import { UnitReference } from '../proto/common.js';
 import { emptyUnitReference, cssClassForClass } from '../proto_utils/utils.js';
 
 export interface UnitReferencePickerConfig<ModObject> extends InputConfig<ModObject, UnitReference> {
 	noTargetLabel: string,
-	compChangeEmitter: TypedEvent<void>,
 }
 
 interface OptionElemOptions {
@@ -15,15 +14,15 @@ interface OptionElemOptions {
 	player: Player<any> | null,
 }
 
-// Dropdown menu for selecting a player.
+// Dropdown menu for selecting a player. It only ever shows the stored reference: that names a raid
+// slot, so whatever moves raiders around has to re-point it (see keepRaidReferences).
 export class UnitReferencePicker<ModObject> extends Input<ModObject, UnitReference> {
 	private readonly config: UnitReferencePickerConfig<ModObject>;
 	private readonly raid: Raid;
 
-	private curPlayer: Player<any> | null;
-	private curUnitReference: UnitReference;
+	private curPlayer: Player<any> | null = null;
 
-	private currentOptions: Array<OptionElemOptions>;
+	private currentOptions: Array<OptionElemOptions> = [];
 
 	private readonly buttonElem: HTMLElement;
 	private readonly dropdownElem: HTMLElement;
@@ -33,8 +32,6 @@ export class UnitReferencePicker<ModObject> extends Input<ModObject, UnitReferen
 		this.rootElem.classList.add('dropdown');
 		this.config = config;
 		this.raid = raid;
-		this.curPlayer = this.raid.getPlayerFromUnitReference(config.getValue(modObj));
-		this.curUnitReference = this.getInputValue();
 
 		this.rootElem.innerHTML = `
 			<a
@@ -51,9 +48,10 @@ export class UnitReferencePicker<ModObject> extends Input<ModObject, UnitReferen
 
 		this.buttonElem.addEventListener('click', event => event.preventDefault());
 
-		this.currentOptions = [];
-		this.updateOptions(TypedEvent.nextEventID());
-		config.compChangeEmitter.on(eventID => this.updateOptions(eventID));
+		this.updateOptions();
+		// any raid change, not just who's in it: a rename has to show up here too
+		const listener = this.raid.changeEmitter.on(() => this.updateOptions());
+		this.addOnDisposeCallback(() => listener.dispose());
 
 		this.init();
 	}
@@ -67,19 +65,10 @@ export class UnitReferencePicker<ModObject> extends Input<ModObject, UnitReferen
 		return [unassignedOption, ...playerOptions]
 	}
 
-	private updateOptions(eventID: EventID) {
+	private updateOptions() {
 		this.currentOptions = this.makeTargetOptions();
-
-		this.dropdownElem.innerHTML = '';
-		this.currentOptions.forEach(option => this.dropdownElem.appendChild(this.makeOption(option)));
-
-		const prevUnitReference = this.curUnitReference;
-		this.curUnitReference = this.getInputValue();
-		if (!UnitReference.equals(prevUnitReference, this.curUnitReference)) {
-			this.inputChanged(eventID);
-		} else {
-			this.setInputValue(this.curUnitReference);
-		}
+		this.dropdownElem.replaceChildren(...this.currentOptions.map(option => this.makeOption(option)));
+		this.setInputValue(this.getSourceValue());
 	}
 
 	private makeOption(data: OptionElemOptions): HTMLElement {
@@ -88,7 +77,6 @@ export class UnitReferencePicker<ModObject> extends Input<ModObject, UnitReferen
 		option.addEventListener('click', event => {
 			event.preventDefault();
 			this.curPlayer = data.player;
-			this.curUnitReference = this.getInputValue();
 			this.inputChanged(TypedEvent.nextEventID());
 		});
 
@@ -108,8 +96,7 @@ export class UnitReferencePicker<ModObject> extends Input<ModObject, UnitReferen
 	}
 
 	setInputValue(newValue: UnitReference) {
-		this.curUnitReference = UnitReference.clone(newValue);
-		this.curPlayer = this.raid.getPlayerFromUnitReference(this.curUnitReference);
+		this.curPlayer = this.raid.getPlayerFromUnitReference(newValue);
 
 		const optionData = this.currentOptions.find(optionData => optionData.player == this.curPlayer);
 

@@ -46,6 +46,8 @@ abstract class AssignedBuffPicker extends Component {
 	private readonly playersContainer: HTMLElement;
 
 	private targetPickers: Array<AssignmentTargetPicker>;
+	// who gives the buff and under what name, as last drawn
+	private drawnSources: Array<{ player: Player<any>; name: string }> | null = null;
 
 	constructor(parentElem: HTMLElement, raidSimUI: RaidSimUI) {
 		super(parentElem, 'assigned-buff-picker-root');
@@ -61,11 +63,20 @@ abstract class AssignedBuffPicker extends Component {
 	}
 
 	private update() {
+		const sourcePlayers = this.getSourcePlayers();
+		const sources = sourcePlayers.map(player => ({ player, name: player.getName() }));
+		// the target pickers keep up with the raid themselves, so only a change in who gives the buff redraws
+		const drawn = this.drawnSources;
+		if (drawn && drawn.length == sources.length && sources.every((source, i) => source.player == drawn[i].player && source.name == drawn[i].name)) {
+			return;
+		}
+		this.drawnSources = sources;
+		this.targetPickers.forEach(picker => picker.targetPicker.dispose());
+
 		this.playersContainer.innerHTML = `
 			<label class="assignmented-buff-label form-label">${this.getTitle()}</label>
 		`
 
-		const sourcePlayers = this.getSourcePlayers();
 		if (sourcePlayers.length == 0)
 			this.rootElem.classList.add('hide');
 		else
@@ -90,7 +101,6 @@ abstract class AssignedBuffPicker extends Component {
 			const raidTargetPicker: UnitReferencePicker<Player<any>> | null = new UnitReferencePicker<Player<any>>(row, this.raidSimUI.sim.raid, sourcePlayer, {
 				extraCssClasses: ['assigned-buff-target-picker'],
 				noTargetLabel: 'Unassigned',
-				compChangeEmitter: this.raidSimUI.sim.raid.compChangeEmitter,
 
 				changedEvent: (player: Player<any>) => player.specOptionsChangeEmitter,
 				getValue: (player: Player<any>) => this.getPlayerValue(player),

@@ -43,7 +43,7 @@ async function main() {
 	const bulwark = placed.find(p => p.name == 'Bulwark')!;
 	console.log(`Bulwark at raid index ${bulwark.player.getRaidIndex()}, spec ${specNames[bulwark.player.spec]}, gear slots ${bulwark.player.getGear().asSpec().items.filter(i => i.id != 0).length}`);
 	const mainHand = bulwark.player.getGear().asSpec().items.find(i => i.id == 45442);
-	console.log('Bulwark main hand enchant in gear:', mainHand?.enchant, '(expect 0, the sim has no 3851)');
+	console.log('Bulwark main hand enchant in gear:', mainHand?.enchant, '(expect 3851, Titanguard)');
 
 	const angry = placed.find(p => p.name == 'Angry')!;
 	const angryGear = angry.player.getGear().asSpec();

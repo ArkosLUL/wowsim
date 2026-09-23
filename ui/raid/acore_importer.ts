@@ -24,10 +24,9 @@ import {
 	rosterEquipmentSpec,
 } from './acore_roster';
 import { playerPresets } from './presets';
+import { RAID_TARGET_OPTIONS } from './raid_references';
 import { RaidSimUI } from './raid_sim_ui';
-
-// tanks_picker.ts shows this many tank slots, and nothing past them is editable.
-const MAX_TANKS = 4;
+import { MAX_TANKS } from './tanks_picker';
 
 // Past this the alert gets unreadable, so the rest only goes to the console.
 const MAX_SUMMARY_WARNINGS = 20;
@@ -48,16 +47,6 @@ interface AssignmentSnapshot {
 	field: string;
 	target: Player<any> | null;
 }
-
-// Spec options that hold a raid index, keyed by class. Not every spec of a class has the field, so
-// both the read and the write check first.
-const assignmentFields: Array<{ playerClass: Class; field: string }> = [
-	{ playerClass: Class.ClassDruid, field: 'innervateTarget' },
-	{ playerClass: Class.ClassPriest, field: 'powerInfusionTarget' },
-	{ playerClass: Class.ClassRogue, field: 'tricksOfTheTradeTarget' },
-	{ playerClass: Class.ClassDeathknight, field: 'unholyFrenzyTarget' },
-	{ playerClass: Class.ClassMage, field: 'focusMagicTarget' },
-];
 
 export class RaidAcoreImporter extends Importer {
 	private readonly simUI: RaidSimUI;
@@ -301,20 +290,18 @@ function snapshotAssignments(raid: Raid): Array<AssignmentSnapshot> {
 		if (!player) {
 			return;
 		}
-		assignmentFields
-			.filter(assignment => assignment.playerClass == player.getClass())
-			.forEach(assignment => {
-				const options = player.getSpecOptions() as any;
-				const reference: UnitReference | undefined = options[assignment.field];
-				if (!reference || reference.type != UnitReference_Type.Player) {
-					return;
-				}
-				snapshots.push({
-					player: player,
-					field: assignment.field,
-					target: raid.getPlayerFromUnitReference(reference),
-				});
+		const options = player.getSpecOptions() as any;
+		RAID_TARGET_OPTIONS.forEach(field => {
+			const reference: UnitReference | undefined = options[field];
+			if (!reference || reference.type != UnitReference_Type.Player) {
+				return;
+			}
+			snapshots.push({
+				player: player,
+				field: field,
+				target: raid.getPlayerFromUnitReference(reference),
 			});
+		});
 	});
 	return snapshots;
 }

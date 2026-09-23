@@ -8,7 +8,7 @@ import { Class, Encounter as EncounterProto, EquipmentSpec, ItemSpec, RaidBuffs,
 import { Blessings } from "../core/proto/paladin.js";
 import { BlessingsAssignments, RaidSimSettings, SavedEncounter } from "../core/proto/ui.js";
 import { Database } from "../core/proto_utils/database.js";
-import { playerToSpec } from "../core/proto_utils/utils.js";
+import { makeDefaultBlessings, playerToSpec } from "../core/proto_utils/utils.js";
 import { Sim } from "../core/sim.js";
 import { SimUI } from "../core/sim_ui.js";
 import { raidSimStatus } from '../core/launched_sims.js';
@@ -227,6 +227,7 @@ export class RaidSimUI extends SimUI {
 			this.sim.encounter.applyDefaults(eventID);
 			this.sim.applyDefaults(eventID, true, true);
 			this.sim.setShowDamageMetrics(eventID, true);
+			this.blessingsPicker!.setAssignments(eventID, makeDefaultBlessings(4));
 		});
 	}
 

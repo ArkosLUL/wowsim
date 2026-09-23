@@ -20,6 +20,8 @@ import { getEnumValues } from '../core/utils.js';
 
 import { RaidSimUI } from './raid_sim_ui.js';
 import { playerPresets, specSimFactories } from './presets.js';
+import { keepRaidReferences } from './raid_references.js';
+import { MAX_TANKS } from './tanks_picker.js';
 
 import { BalanceDruid_Options as BalanceDruidOptions } from '../core/proto/druid.js';
 import { Mage_Options as MageOptions } from '../core/proto/mage.js';
@@ -102,7 +104,7 @@ export class RaidPicker extends Component {
 				return { name: 'Phase ' + phase, value: phase };
 			}),
 			changedEvent: (_picker: NewPlayerPicker) => this.raid.sim.phaseChangeEmitter,
-			getValue: (_picker: NewPlayerPicker) => this.raid.sim.getPhase(),
+			getValue: (_picker: NewPlayerPicker) => this.getCurrentPhase(),
 			setValue: (eventID: EventID, picker: NewPlayerPicker, newValue: number) => {
 				this.raid.sim.setPhase(eventID, newValue);
 			},
@@ -142,8 +144,10 @@ export class RaidPicker extends Component {
 		return this.raid.sim.getFaction();
 	}
 
+	// The phase new raiders get their preset gear from. The sim's own phase can be past the last one
+	// every preset has gear for.
 	getCurrentPhase(): number {
-		return this.raid.sim.getPhase();
+		return Math.min(this.raid.sim.getPhase(), LATEST_PHASE_WITH_ALL_PRESETS);
 	}
 
 	getPlayerPicker(raidIndex: number): PlayerPicker {
@@ -284,7 +288,7 @@ export class PartyPicker extends Component {
 			this.rootElem.classList.remove('dragto');
 
 			const eventID = TypedEvent.nextEventID();
-			TypedEvent.freezeAllAndDo(() => {
+			keepRaidReferences(this.raidPicker.raid, eventID, () => {
 				const srcPartyPicker = this.raidPicker.currentDragParty!;
 
 				for (let i = 0; i < MAX_PARTY_SIZE; i++) {
@@ -294,8 +298,8 @@ export class PartyPicker extends Component {
 					const srcPlayer = srcPlayerPicker.player;
 					const dstPlayer = dstPlayerPicker.player;
 
-					srcPlayerPicker.setPlayer(eventID, dstPlayer, DragType.Swap);
-					dstPlayerPicker.setPlayer(eventID, srcPlayer, DragType.Swap);
+					srcPlayerPicker.setPlayer(eventID, dstPlayer);
+					dstPlayerPicker.setPlayer(eventID, srcPlayer);
 				}
 			});
 
@@ -343,7 +347,13 @@ export class PlayerPicker extends Component {
 		this.partyPicker.party.compChangeEmitter.on(eventID => {
 			const newPlayer = this.partyPicker.party.getPlayer(this.index);
 			if (newPlayer != this.player)
-				this.setPlayer(eventID, newPlayer, DragType.None);
+				this.setPlayer(eventID, newPlayer);
+		});
+		// loading a raid keeps a slot's Player when the spec matches, and only renames them
+		this.partyPicker.party.changeEmitter.on(() => {
+			if (this.player && this.nameElem && this.nameElem.value != this.player.getName()) {
+				this.nameElem.value = this.player.getName();
+			}
 		});
 
 		this.raidPicker.raidSimUI.referenceChangeEmitter.on(() => {
@@ -394,52 +404,62 @@ export class PlayerPicker extends Component {
 
 			const eventID = TypedEvent.nextEventID();
 			TypedEvent.freezeAllAndDo(() => {
-				if (this.raidPicker.currentDragPlayer == null && dropData.length == 0) {
-					return;
+				const newPlayer = keepRaidReferences(this.raidPicker.raid, eventID, () => this.dropPlayer(eventID, dropData));
+				// after the references moved, so a new tank dropped on the old one takes their place
+				if (newPlayer) {
+					applyNewPlayerAssignments(eventID, newPlayer, this.raidPicker.raid);
 				}
-
-				if (this.raidPicker.currentDragPlayerFromIndex == this.raidIndex) {
-					this.raidPicker.clearDragPlayer();
-					return;
-				}
-
-				const dragType = this.raidPicker.currentDragType;
-
-				if (this.raidPicker.currentDragPlayerFromIndex != NEW_PLAYER) {
-					const fromPlayerPicker = this.raidPicker.getPlayerPicker(this.raidPicker.currentDragPlayerFromIndex);
-					if (dragType == DragType.Swap) {
-						fromPlayerPicker.setPlayer(eventID, this.player, dragType);
-					} else if (dragType == DragType.Move) {
-						fromPlayerPicker.setPlayer(eventID, null, dragType);
-					}
-				} else if (this.raidPicker.currentDragPlayer == null) {
-					// This would be a copy from another window.
-					const binary = atob(dropData);
-					const bytes = new Uint8Array(binary.length);
-					for (let i = 0; i < bytes.length; i++) {
-						bytes[i] = binary.charCodeAt(i);
-					}
-					const playerProto = PlayerProto.fromBinary(bytes);
-
-					var localPlayer = new Player(playerToSpec(playerProto), this.raidPicker.raidSimUI.sim);
-					localPlayer.fromProto(eventID, playerProto);
-					this.raidPicker.currentDragPlayer = localPlayer;
-				}
-
-				if (dragType == DragType.Copy) {
-					this.setPlayer(eventID, this.raidPicker.currentDragPlayer!.clone(eventID), dragType);
-				} else {
-					this.setPlayer(eventID, this.raidPicker.currentDragPlayer, dragType);
-				}
-
-				this.raidPicker.clearDragPlayer();
 			});
 		};
 
 		this.update();
 	}
 
-	setPlayer(eventID: EventID, newPlayer: Player<any> | null, dragType: DragType) {
+	// Puts the dragged raider in this slot, and returns them if they're new to the raid.
+	private dropPlayer(eventID: EventID, dropData: string): Player<any> | null {
+		if (this.raidPicker.currentDragPlayer == null && dropData.length == 0) {
+			return null;
+		}
+
+		if (this.raidPicker.currentDragPlayerFromIndex == this.raidIndex) {
+			this.raidPicker.clearDragPlayer();
+			return null;
+		}
+
+		const dragType = this.raidPicker.currentDragType;
+
+		if (this.raidPicker.currentDragPlayerFromIndex != NEW_PLAYER) {
+			const fromPlayerPicker = this.raidPicker.getPlayerPicker(this.raidPicker.currentDragPlayerFromIndex);
+			if (dragType == DragType.Swap) {
+				fromPlayerPicker.setPlayer(eventID, this.player);
+			} else if (dragType == DragType.Move) {
+				fromPlayerPicker.setPlayer(eventID, null);
+			}
+		} else if (this.raidPicker.currentDragPlayer == null) {
+			// This would be a copy from another window.
+			const binary = atob(dropData);
+			const bytes = new Uint8Array(binary.length);
+			for (let i = 0; i < bytes.length; i++) {
+				bytes[i] = binary.charCodeAt(i);
+			}
+			const playerProto = PlayerProto.fromBinary(bytes);
+
+			var localPlayer = new Player(playerToSpec(playerProto), this.raidPicker.raidSimUI.sim);
+			localPlayer.fromProto(eventID, playerProto);
+			this.raidPicker.currentDragPlayer = localPlayer;
+		}
+
+		if (dragType == DragType.Copy) {
+			this.setPlayer(eventID, this.raidPicker.currentDragPlayer!.clone(eventID));
+		} else {
+			this.setPlayer(eventID, this.raidPicker.currentDragPlayer);
+		}
+
+		this.raidPicker.clearDragPlayer();
+		return dragType == DragType.New ? this.player : null;
+	}
+
+	setPlayer(eventID: EventID, newPlayer: Player<any> | null) {
 		if (newPlayer == this.player) {
 			return;
 		}
@@ -448,10 +468,6 @@ export class PlayerPicker extends Component {
 			this.player = newPlayer;
 			if (newPlayer) {
 				this.partyPicker.party.setPlayer(eventID, this.index, newPlayer);
-
-				if (dragType == DragType.New) {
-					applyNewPlayerAssignments(eventID, newPlayer, this.raidPicker.raid);
-				}
 			} else {
 				this.partyPicker.party.setPlayer(eventID, this.index, newPlayer);
 				this.partyPicker.party.compChangeEmitter.emit(eventID);
@@ -595,7 +611,8 @@ export class PlayerPicker extends Component {
 		}
 		deleteElem.onclick = _event => {
 			deleteTooltip.hide();
-			this.setPlayer(TypedEvent.nextEventID(), null, DragType.None);
+			const eventID = TypedEvent.nextEventID();
+			keepRaidReferences(this.raidPicker.raid, eventID, () => this.setPlayer(eventID, null));
 		}
 	}
 }
@@ -682,8 +699,7 @@ class NewPlayerPicker extends Component {
 
 						// Need to wait because the gear might not be loaded yet.
 						this.raidPicker.raid.sim.waitForInit().then(() => {
-							const phase = Math.min(this.raidPicker.getCurrentPhase(), LATEST_PHASE_WITH_ALL_PRESETS);
-							const gearSet = matchingPreset.defaultGear[this.raidPicker.getCurrentFaction()][phase];
+							const gearSet = matchingPreset.defaultGear[this.raidPicker.getCurrentFaction()][this.raidPicker.getCurrentPhase()];
 							newPlayer.setGear(eventID, this.raidPicker.raid.sim.db.lookupEquipmentSpec(gearSet));
 						});
 
@@ -700,7 +716,7 @@ function applyNewPlayerAssignments(eventID: EventID, newPlayer: Player<any>, rai
 		const tanks = raid.getTanks();
 		const emptyIdx = tanks.findIndex(tank => raid.getPlayerFromUnitReference(tank) == null);
 		if (emptyIdx == -1) {
-			if (tanks.length < 3) {
+			if (tanks.length < MAX_TANKS) {
 				raid.setTanks(eventID, tanks.concat([newPlayer.makeUnitReference()]));
 			}
 		} else {
