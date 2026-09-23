@@ -52,8 +52,8 @@ if [ -n "$changed_ui" ]; then
 	for f in $changed_ui; do
 		mkdir -p "tmp/eslint-old/$(dirname "$f")"
 		if git cat-file -e "$BASE:$f" 2>/dev/null; then
-			git show "$BASE:$f" >"tmp/eslint-old/$f"
-			lines+="old=\$(npx eslint --stdin --stdin-filename $f < tmp/eslint-old/$f 2>&1 | grep -cE '^ +[0-9]+:[0-9]+ '); "
+			git show "$BASE:$f" >"tmp/eslint-old/$f.txt"
+			lines+="old=\$(npx eslint --stdin --stdin-filename $f < tmp/eslint-old/$f.txt 2>&1 | grep -cE '^ +[0-9]+:[0-9]+ '); "
 		else
 			lines+="old=0; "
 		fi
