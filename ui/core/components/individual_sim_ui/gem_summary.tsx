@@ -28,7 +28,8 @@ export class GemSummary extends Component {
 		this.container = new ContentBlock(this.rootElem, 'gem-summary-container', {
 			header: { title: 'Gem Summary' },
 		});
-		player.gearChangeEmitter.on(() => this.updateTable());
+		// Blacksmithing decides whether the extra wrist and hands sockets count
+		TypedEvent.onAny([player.gearChangeEmitter, player.professionChangeEmitter]).on(() => this.updateTable());
 
 		const headerElement = this.container.headerElement;
 		if (headerElement) {

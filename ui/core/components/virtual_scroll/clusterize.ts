@@ -78,6 +78,10 @@ export class Clusterize {
     private ds: ClusterizeDatasource;
     private cache = {};
 
+    // kept so destroy() can remove the same functions it added
+    private readonly onScroll = this.scrollEv.bind(this);
+    private readonly onResize = this.resizeEv.bind(this);
+
     constructor(ds: ClusterizeDatasource, params: ClusterizeParams) {
         this.options = {
             rows_in_block: params.rows_in_block !== undefined ? params.rows_in_block : defaults.rows_in_block,
@@ -115,13 +119,14 @@ export class Clusterize {
         this.scroll_elem.scrollTop = scroll_top;
     
         // adding scroll handler
-        this.scroll_elem.addEventListener('scroll', this.scrollEv.bind(this));
-        window.addEventListener('resize', this.resizeEv.bind(this));
+        this.scroll_elem.addEventListener('scroll', this.onScroll);
+        window.addEventListener('resize', this.onResize);
     }
 
     destroy(clean? : boolean) {
-        this.scroll_elem.removeEventListener('scroll', this.scrollEv.bind(this));
-        window.removeEventListener('resize', this.resizeEv.bind(this));
+        this.scroll_elem.removeEventListener('scroll', this.onScroll);
+        window.removeEventListener('resize', this.onResize);
+        clearTimeout(this.resize_debounce);
         if (clean)
             this.setContentElemRows(this.generateEmptyRow());
     }
