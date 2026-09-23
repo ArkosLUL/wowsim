@@ -79,7 +79,7 @@ export class ListPicker<ModObject, ItemType> extends Input<ModObject, Array<Item
 		)
 
 		if (this.config.hideUi) {
-			this.rootElem.classList.add('d-none');
+			this.rootElem.classList.add('hide-ui');
 		}
 		if (this.config.horizontalLayout) {
 			this.config.inlineMenuBar = true;
@@ -130,6 +130,11 @@ export class ListPicker<ModObject, ItemType> extends Input<ModObject, Array<Item
 	}
 
 	setInputValue(newValue: Array<ItemType>): void {
+		// only the items of a list without its own UI show, so an empty one takes no room
+		if (this.config.hideUi) {
+			this.rootElem.classList.toggle('d-none', newValue.length == 0);
+		}
+
 		// Add/remove pickers to make the lengths match.
 		if (newValue.length < this.itemPickerPairs.length) {
 			this.itemPickerPairs.slice(newValue.length).forEach(ipp => ipp.elem.remove());

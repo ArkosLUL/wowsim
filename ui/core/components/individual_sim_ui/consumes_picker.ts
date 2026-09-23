@@ -1,6 +1,7 @@
 import { IndividualSimUI } from "../../individual_sim_ui";
 import { Player } from "../../player";
 import {
+	Profession,
 	Spec,
 } from "../../proto/common";
 import { TypedEvent } from "../../typed_event";
@@ -167,23 +168,28 @@ export class ConsumesPicker extends Component {
 		const decoyElem = this.rootElem.querySelector('.consumes-decoy') as HTMLElement;
 		const explosivesElem = this.rootElem.querySelector('.consumes-explosives') as HTMLElement;
 
+		// The sim skips every explosive without Engineering.
+		const isEngineer = (player: Player<Spec>) => player.hasProfession(Profession.Engineering);
 		this.buildPickers({
 			changeEmitters: [this.simUI.player.professionChangeEmitter],
 			containerElem: rowElem,
 			options: [
 				{
-					getConfig: () => ConsumablesInputs.ThermalSapper,
+					getConfig: () => ({ ...ConsumablesInputs.ThermalSapper, showWhen: isEngineer }),
 					parentElem: sapperElem,
 				},
 				{
-					getConfig: () => ConsumablesInputs.ExplosiveDecoy,
+					getConfig: () => ({ ...ConsumablesInputs.ExplosiveDecoy, showWhen: isEngineer }),
 					parentElem: decoyElem,
 				},
 				{
-					getConfig: () => ConsumablesInputs.makeExplosivesInput(
-						relevantStatOptions(ConsumablesInputs.EXPLOSIVES_CONFIG, this.simUI),
-						'Explosives',
-					),
+					getConfig: () => ({
+						...ConsumablesInputs.makeExplosivesInput(
+							relevantStatOptions(ConsumablesInputs.EXPLOSIVES_CONFIG, this.simUI),
+							'Explosives',
+						),
+						showWhen: isEngineer,
+					}),
 					parentElem: explosivesElem,
 				}
 			],

@@ -55,8 +55,9 @@ export class Encounter {
 		].forEach(emitter => emitter.on(eventID => this.changeEmitter.emit(eventID)));
 	}
 
+	// blank once every target is deleted, which Simulate reports to the user
 	get primaryTarget(): TargetProto {
-		return TargetProto.clone(this.targets[0]);
+		return TargetProto.clone(this.targets[0] || TargetProto.create());
 	}
 
 	getDurationVariation(): number {
@@ -150,13 +151,14 @@ export class Encounter {
 		return preset.targets.length == this.targets.length && this.targets.every((t, i) => TargetProto.equals(t, preset.targets[i].target));
 	}
 
+	// Targets are edited in place, so they're copied in: an edit must never reach a preset or a saved encounter.
 	applyPreset(eventID: EventID, preset: PresetEncounter) {
-		this.targets = preset.targets.map(presetTarget => presetTarget.target || TargetProto.create());
+		this.targets = preset.targets.map(presetTarget => TargetProto.clone(presetTarget.target || TargetProto.create()));
 		this.targetsChangeEmitter.emit(eventID);
 	}
 
 	applyPresetTarget(eventID: EventID, preset: PresetTarget, index: number) {
-		this.targets[index] = preset.target || TargetProto.create();
+		this.targets[index] = TargetProto.clone(preset.target || TargetProto.create());
 		this.targetsChangeEmitter.emit(eventID);
 	}
 
@@ -185,7 +187,7 @@ export class Encounter {
 			this.setUseHealth(eventID, proto.useHealth);
 			this.setRaidDifficulty(eventID, proto.raidDifficulty);
 			this.setServerSettings(eventID, proto.serverSettings || ServerSettings.create());
-			this.targets = proto.targets;
+			this.targets = proto.targets.map(target => TargetProto.clone(target));
 			this.targetsChangeEmitter.emit(eventID);
 		});
 	}

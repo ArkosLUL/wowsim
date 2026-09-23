@@ -15,6 +15,7 @@ import { EventID, TypedEvent } from '../typed_event.js';
 import { BaseModal } from './base_modal.js';
 import { Component } from './component.js';
 import { Input } from './input.js';
+import { toPercent } from './input_helpers.js';
 
 export interface EncounterPickerConfig {
 	showExecuteProportion: boolean;
@@ -110,7 +111,11 @@ export class EncounterPicker extends Component {
 					changedEvent: (encounter: Encounter) => encounter.changeEmitter,
 					getValue: (encounter: Encounter) => encounter.primaryTarget.minBaseDamage,
 					setValue: (eventID: EventID, encounter: Encounter, newValue: number) => {
-						encounter.primaryTarget.minBaseDamage = newValue;
+						const target = encounter.targets[0];
+						if (target) {
+							target.minBaseDamage = newValue;
+						}
+						// still emits without a target, so the field goes back to the blank target's 0
 						encounter.targetsChangeEmitter.emit(eventID);
 					},
 				});
@@ -124,7 +129,7 @@ export class EncounterPicker extends Component {
 				targetInputs.length != modEncounter.primaryTarget.targetInputs.length ||
 				modEncounter.primaryTarget.targetInputs.some((ti, i) => ti.label != targetInputs[i].label)
 			) {
-				modEncounter.primaryTarget.targetInputs = targetInputs;
+				modEncounter.targets[0].targetInputs = targetInputs.map(ti => TargetInput.clone(ti));
 				modEncounter.targetsChangeEmitter.emit(TypedEvent.nextEventID());
 			}
 
@@ -542,9 +547,11 @@ class TargetInputPicker extends Input<Encounter, TargetInput> {
 
 	private boolPicker: Input<null, boolean> | null;
 	private numberPicker: Input<null, number> | null;
+	private shown = '';
 
+	// Pickers stay subscribed after their target is deleted, so the target can be missing.
 	private getTargetInput(): TargetInput {
-		return this.encounter.targets[this.targetIndex].targetInputs[this.targetInputIndex] || TargetInput.create();
+		return this.encounter.targets[this.targetIndex]?.targetInputs[this.targetInputIndex] || TargetInput.create();
 	}
 
 	constructor(
@@ -577,11 +584,18 @@ class TargetInputPicker extends Input<Encounter, TargetInput> {
 		if (!newValue) {
 			return;
 		}
-		if (newValue.inputType == InputType.Number && !this.numberPicker) {
-			if (this.boolPicker) {
-				this.boolPicker.rootElem.remove();
-				this.boolPicker = null;
-			}
+		// Another boss's input can land in this slot, so it's rebuilt whenever it isn't the one shown.
+		const shown = `${newValue.inputType}|${newValue.label}|${newValue.tooltip}`;
+		if (shown == this.shown) {
+			return;
+		}
+		this.shown = shown;
+		this.boolPicker?.rootElem.remove();
+		this.boolPicker = null;
+		this.numberPicker?.rootElem.remove();
+		this.numberPicker = null;
+
+		if (newValue.inputType == InputType.Number) {
 			this.numberPicker = new NumberPicker(this.rootElem, null, {
 				label: newValue.label,
 				labelTooltip: newValue.tooltip,
@@ -592,14 +606,12 @@ class TargetInputPicker extends Input<Encounter, TargetInput> {
 					this.encounter.targetsChangeEmitter.emit(eventID);
 				},
 			});
-		} else if (newValue.inputType == InputType.Bool && !this.boolPicker) {
-			if (this.numberPicker) {
-				this.numberPicker.rootElem.remove();
-				this.numberPicker = null;
-			}
+		} else if (newValue.inputType == InputType.Bool) {
 			this.boolPicker = new BooleanPicker(this.rootElem, null, {
 				label: newValue.label,
 				labelTooltip: newValue.tooltip,
+				inline: true,
+				reverse: true,
 				changedEvent: () => this.encounter.targetsChangeEmitter,
 				getValue: () => this.getTargetInput().boolValue,
 				setValue: (eventID: EventID, _: null, newValue: boolean) => {
@@ -651,7 +663,7 @@ function addEncounterFieldPickers(rootElem: HTMLElement, encounter: Encounter, s
 			labelTooltip:
 				'Percentage of the total encounter duration, for which the targets will be considered to be in execute range (< 20% HP) for the purpose of effects like Warrior Execute or Mage Molten Fury.',
 			changedEvent: (encounter: Encounter) => encounter.changeEmitter,
-			getValue: (encounter: Encounter) => encounter.getExecuteProportion20() * 100,
+			getValue: (encounter: Encounter) => toPercent(encounter.getExecuteProportion20()),
 			setValue: (eventID: EventID, encounter: Encounter, newValue: number) => {
 				encounter.setExecuteProportion20(eventID, newValue / 100);
 			},
@@ -664,7 +676,7 @@ function addEncounterFieldPickers(rootElem: HTMLElement, encounter: Encounter, s
 			labelTooltip:
 				"Percentage of the total encounter duration, for which the targets will be considered to be in execute range (< 25% HP) for the purpose of effects like Warlock's Drain Soul.",
 			changedEvent: (encounter: Encounter) => encounter.changeEmitter,
-			getValue: (encounter: Encounter) => encounter.getExecuteProportion25() * 100,
+			getValue: (encounter: Encounter) => toPercent(encounter.getExecuteProportion25()),
 			setValue: (eventID: EventID, encounter: Encounter, newValue: number) => {
 				encounter.setExecuteProportion25(eventID, newValue / 100);
 			},
@@ -677,7 +689,7 @@ function addEncounterFieldPickers(rootElem: HTMLElement, encounter: Encounter, s
 			labelTooltip:
 				'Percentage of the total encounter duration, for which the targets will be considered to be in execute range (< 35% HP) for the purpose of effects like Warrior Execute or Mage Molten Fury.',
 			changedEvent: (encounter: Encounter) => encounter.changeEmitter,
-			getValue: (encounter: Encounter) => encounter.getExecuteProportion35() * 100,
+			getValue: (encounter: Encounter) => toPercent(encounter.getExecuteProportion35()),
 			setValue: (eventID: EventID, encounter: Encounter, newValue: number) => {
 				encounter.setExecuteProportion35(eventID, newValue / 100);
 			},
@@ -692,7 +704,8 @@ function makeTargetInputsPicker(parent: HTMLElement, encounter: Encounter, targe
 	return new ListPicker<Encounter, TargetInput>(parent, encounter, {
 		itemLabel: 'Target Input',
 		changedEvent: (encounter: Encounter) => encounter.targetsChangeEmitter,
-		getValue: (encounter: Encounter) => encounter.targets[targetIndex].targetInputs,
+		// a deleted target's picker still hears target changes
+		getValue: (encounter: Encounter) => encounter.targets[targetIndex]?.targetInputs || [],
 		setValue: (eventID: EventID, encounter: Encounter, newValue: Array<TargetInput>) => {
 			encounter.targets[targetIndex].targetInputs = newValue;
 			encounter.targetsChangeEmitter.emit(eventID);
