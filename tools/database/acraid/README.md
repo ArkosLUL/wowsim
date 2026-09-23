@@ -9,7 +9,7 @@ This is the CLI. The logic lives in `tools/database/azerothcore/`:
 - `roster.go`: conversion and the JSON shape
 - `roster_dbc.go`: DBC lookups
 
-The sim UI can't import the roster yet.
+The sim imports it under Import → AzerothCore.
 
 ## Before exporting
 

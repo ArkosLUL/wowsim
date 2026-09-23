@@ -88,6 +88,25 @@ warrior suites and report any delta.
 **Owns:** `ui/core/components/character_stats.tsx`, `ui/core/components/individual_sim_ui/bulk_tab.ts`,
 `sim/warlock/talents.go`, `sim/core/racials.go`, and those four test files.
 
+### UI-FIX2 (wave I3)
+
+Two bugs the user found (2026-09-24):
+
+1. The Raid page's BiS Batch tab has no item-source filter: `buildRequest` (`ui/raid/optimizer_batch.ts`)
+   runs every job on `defaultTabSettings`, so every source counts. Give it the BiS tab's "Item sources"
+   checkboxes (`SOURCE_KINDS`, `ui/core/optimizer/catalog.ts`), saved and restored with the batch's other
+   settings (`tests/raid/bis_batch.spec.ts`).
+2. After a reload, the Raid page's Edit window shows every character stat as 0 until the raid changes:
+   `updateCharacterStats` (`ui/core/sim.ts`) skips event ID 0, and `RaidSimUI.loadSettings`
+   (`ui/raid/raid_sim_ui.ts`) runs as the page's first event, 0. The rotation warnings, Suggest gems and the
+   set-bonus spec inputs read the same stats. Compute them once the saved raid has loaded (`tests/raid/`:
+   the Edit window's stats match before and after a reload).
+
+Golden-neutral.
+
+**Owns:** `ui/raid/optimizer_batch.ts`, `ui/raid/raid_sim_ui.ts`, `updateCharacterStats` in `ui/core/sim.ts`,
+and those tests.
+
 ### Every UI-* item
 
 - Tests go in `tools/uitest/tests/<area>/`, helpers for the area beside them. `tests/lib/**`,

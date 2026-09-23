@@ -56,8 +56,8 @@ G = changes goldens. FS = runs all 37 suites.
 | I | PAR-P7-MAG (G, FS) · PAR-P7-SHA · PAR-P7-DRU · PAR-P7-WLK (G) | ✔ |
 | U | UI-RESULTS · UI-GEAR · UI-RAID · UI-SETTINGS | |
 | I2 | PERF-TOOLS · PERF-CONC · BIS-seed · UI-FIX | ✔ |
-| I3 | PERF-OPT · PERF-HOT · PAR-P7-0f | ✔ |
-| I4 | PAR-DECL (G, FS) | ✔ |
+| I3 | PERF-OPT · PERF-HOT · PAR-P7-0f · UI-FIX2 | ✔ |
+| I4 | PAR-DECL (G, FS) · RI-4 | ✔ |
 | I5 | PAR-DECL-1 (G) · PAR-DECL-2 (G) · PAR-DECL-3 (G) | ✔ |
 | J | PAR-P7-PRI (G) · PAR-P7-TANK (G) · BIS-e2e-perf · AC-3 | ✔ |
 | K | BIS-presets · PAR-P8 (G, FS) · BIS-tank-boss | ✔ |
@@ -76,14 +76,15 @@ rides along, as it only needs the live server. BIS-alt5 joined mid-wave, also th
 In I, PAR-P7-MAG also fixes the delay helper's timing gap (the user's call) and tick-rounds the APL's
 `spell.cast_time`, both in core, so it runs all 37 suites and merges first. I2 and I3, the performance pass,
 are the user's call too: they come before J, whose BIS-e2e-perf uses their tools. So are I4 and I5
-(2026-09-23), the [effect declarations](../azerothcore-parity/effect-declarations.PLAN.md): PAR-DECL runs alone,
+(2026-09-23), the [effect declarations](../azerothcore-parity/effect-declarations.PLAN.md): PAR-DECL is I4's only sim item,
 since a class item can't build on a core change merging in its own wave, and both come before J so that
 PRI, TANK and K's PAR-P8 build on them.
 
 U, the Playwright suite and the UI bugs it finds, comes before I2 (the user's call, 2026-09-23). Its items
 touch only UI and test paths, so goldens, BiS and throughput can't move, and it skips the re-baseline.
 UI-FIX joins I2 (the user's call): four fixes wave U's tests left open. PAR-P7-0f joins I3 (the user's call,
-2026-09-24): two core fixes wave I2 found.
+2026-09-24): two core fixes wave I2 found. So do UI-FIX2 in I3 and RI-4 in I4: two UI bugs and the
+importer's missing pets, ammo and consumables, all found by the user.
 
 **Where the specs are:**
 
@@ -91,14 +92,14 @@ UI-FIX joins I2 (the user's call): four fixes wave U's tests left open. PAR-P7-0
 |---|---|
 | `PAR-` | [parity PLAN, "Loop work items"](../azerothcore-parity/azerothcore-parity.PLAN.md) |
 | `AC-` | [item-diff PLAN, "Loop work items"](../azerothcore-item-diff/azerothcore-item-diff.PLAN.md) |
-| `RI-3` | [raid-import PLAN, Phase 3](../azerothcore-raid-import/azerothcore-raid-import.PLAN.md) |
+| `RI-` | [raid-import PLAN, Phase 3 and RI-4](../azerothcore-raid-import/azerothcore-raid-import.PLAN.md) |
 | `BIS-` | [bis-optimizer PLAN, "Work items"](../bis-optimizer/bis-optimizer.PLAN.md) |
 | `PERF-` | [sim-performance PLAN, "Work items"](../sim-performance/sim-performance.PLAN.md) |
 | `UI-` | [ui-tests PLAN, "Work items"](../ui-tests/ui-tests.PLAN.md) |
 
 ## Current wave
 
-- Wave: I3, not started. Wave I2 (base `21e9dee91`) landed on `master`.
+- Wave: I3, not started: the user deferred it (2026-09-24). Wave I2 (base `21e9dee91`) landed on `master`.
 - Base SHA: set at wave start.
 - Workflow runId: none. Wave I2 ran as `wf_34bff626-0f1` (args and results `waveI2-args.json`,
   `waveI2-results.json` in `G:\DevStuff\GitHub\.wave-loop`).
@@ -266,6 +267,7 @@ Later WIs are added as their wave starts.
 
 ## User actions
 
+- Before I4: start the server's database (`ac-database`), which RI-4's export reads.
 - Rebuild the prod container for H2's reforge fix, wave U's UI fixes and wave I2 (Simulate on every
   thread, pprof off the LAN), and reload open sim tabs. Until then a restart clears items cached without
   server stats.

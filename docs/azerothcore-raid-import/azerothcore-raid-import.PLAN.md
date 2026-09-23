@@ -12,6 +12,7 @@ Outcome:
 - **Phase 2:** a Go exporter turns the leader's raid group (or a name list) into a roster JSON.
 - **Phase 3:** a Raid Sim importer loads or updates the whole raid from that roster, and an individual sim
   importer loads one character.
+- **RI-4:** the roster and both importers also carry each character's pet, ammo and consumables.
 
 ## Decisions (settled with the user)
 
@@ -582,10 +583,55 @@ registered in `individual_sim_ui.ts:427-447`.
    found two UI defects, both fixed in `059eb8004`: chrome cut the import alert off before its warnings,
    and a long label squeezed the profession checkboxes to a sliver.
 
+## RI-4: pets, ammo and consumables (wave I4)
+
+Both importers give a raider their spec preset's pet, ammo and consumables. RI-4 reads them from the server
+(the user's decisions, 2026-09-24). Golden-neutral.
+
+**Export**, as roster version 2 (the importers still take version 1, as today):
+- **Pet:** the current pet, `character_pet` with `slot = 0`. Family from `acore_world.creature_template.family`,
+  talents from `pet_spell` (spells matched to Talent.dbc's pet tabs). A hunter gets `petType` and
+  `petTalents`, a warlock its demon (`summon`). No slot-0 row: today's pet, with a warning.
+- **Ammo:** `characters.ammoId`, as the `Hunter_Options_Ammo` value of the same DPS (arrows and bullets alike).
+- **Consumables** (flask, elixirs, food, potion and pre-pot, conjured, explosives, pet food):
+  - A **bot** uses only what mod-playerbots makes it use (`[ac]/modules/mod-playerbots`):
+    - Flask, elixirs and food: its `AiPlayerbot.WorldBuffMatrix` row for faction, class, bot spec
+      (`AiFactory::GetPlayerSpecTab`) and level: the user's bots all run the world-buff cheat. The live
+      matrix is the `AC_AI_PLAYERBOT_WORLD_BUFF_MATRIX` override in `[ac]/configurationOverrides/Playerbot.env`,
+      passed to the exporter as a file.
+    - Potion: the offensive one in its bags (the list in `PlayerbotAI.h`), else a mana potion in its bags
+      when `SkipsManaPotions` lets its class drink one, else none. Never a pre-pot.
+    - Never explosives, conjured items, pet food or scrolls.
+  - A **player** character: flask, elixirs and food from its saved buffs (`character_aura`), else its bags.
+    The potion from its bags, offensive first. Pre-pot, explosives, conjured items and pet food only when
+    its bags hold them.
+  - The item works out how the live DB tells a bot from a character someone plays (e.g. the playerbots DB's
+    `playerbots_db_store`, random-bot accounts). A `-players a,b` flag overrides it.
+- An id the sim has no value for keeps today's choice, with a warning.
+
+**Import:**
+- Replace, and raiders new to the raid: pet, ammo and consumables from the roster.
+- Update: pet and ammo always; consumables when a new "Also refresh consumables" box in the dialog is
+  ticked, on by default.
+- The individual importer sets all three.
+- The summary gives each raider's pet, ammo and where the consumables came from (bot rules, saved buffs,
+  bags), plus every skipped id.
+
+**Owns:** `tools/database/azerothcore/{characters,roster,roster_dbc}.go` and tests, `tools/database/acraid/**`,
+`ui/raid/acore_{roster,importer}.ts`, `IndividualAcoreImporter` in `ui/core/components/importers.ts`,
+`ui/raid/acore_harness/**`, `tools/uitest/tests/raid/acore_import.spec.ts`.
+
+**Verification:**
+- Go tests over hand-built rows. `crosscheck.py` covers the new fields and passes on a live export (SELECT
+  only; needs the database up).
+- The harness fixtures (synthetic: never commit a real export) and `acore_import.spec.ts` cover the new
+  fields, Update's box and a version 1 roster.
+- A live export of Deathsong's raid, against the game: Nightwarrior's pet is a Worm with its talents, the
+  ammo matches, and a bot has its matrix row's flask and food, its bag's potion and no explosives.
+
 ## Out of scope
 - Sim-server endpoint for one-click import.
 - Server item stats (item-data rework).
 - mod-spell-tweaks and mod-individual-progression modeling.
 - Random suffix items.
 - Auto best-reforge from stat weights.
-- Hunter/warlock pet data from `character_pet`.
