@@ -555,13 +555,16 @@ func (warlock *Warlock) setupDemonicPact() {
 		Duration: 1 * time.Second,
 	}
 
-	var demonicPactAuras [25]*core.Aura
+	var demonicPactAuras []*core.Aura
 	for _, party := range warlock.Party.Raid.Parties {
 		for _, player := range party.Players {
-			demonicPactAuras[player.GetCharacter().Index] = core.DemonicPactAura(player.GetCharacter())
+			aura := core.DemonicPactAura(player.GetCharacter())
+			demonicPactAuras = append(demonicPactAuras, aura)
+			if player.GetCharacter() == &warlock.Character {
+				warlock.DemonicPactAura = aura
+			}
 		}
 	}
-	warlock.DemonicPactAura = demonicPactAuras[warlock.Index]
 
 	warlock.Pet.RegisterAura(core.Aura{
 		Label:    "Demonic Pact Hidden Aura",
@@ -589,10 +592,8 @@ func (warlock *Warlock) setupDemonicPact() {
 			if warlock.DemonicPactAura.RemainingDuration(sim) < 10*time.Second || newSPBonus >= lastBonus {
 				warlock.updateDPASP(sim)
 				for _, dpAura := range demonicPactAuras {
-					if dpAura != nil {
-						dpAura.ExclusiveEffects[0].SetPriority(sim, newSPBonus)
-						dpAura.Activate(sim)
-					}
+					dpAura.ExclusiveEffects[0].SetPriority(sim, newSPBonus)
+					dpAura.Activate(sim)
 				}
 			}
 		},

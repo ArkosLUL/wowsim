@@ -1,4 +1,4 @@
-import { Stat, PseudoStat, Spec } from '..//proto/common.js';
+import { Class, Stat, PseudoStat, Spec } from '..//proto/common.js';
 import { TristateEffect } from '..//proto/common.js'
 import { getClassStatName, statOrder } from '..//proto_utils/names.js';
 import { Stats } from '..//proto_utils/stats.js';
@@ -15,6 +15,12 @@ import { Popover, Tooltip } from 'bootstrap';
 import { element, fragment } from 'tsx-vanilla';
 
 export type StatMods = { talents: Stats };
+
+// The sim applies stances, forms and a warrior's own shouts after it measures the other rows, so only the total has them.
+const STANCE_LABELS: Partial<Record<Class, string>> = {
+	[Class.ClassWarrior]: 'Stance & Shout',
+	[Class.ClassDruid]: 'Form',
+};
 
 export class CharacterStats extends Component {
 	readonly stats: Array<Stat>;
@@ -100,6 +106,8 @@ export class CharacterStats extends Component {
 		const talentsDelta = talentsStats.subtract(gearStats).add(statMods.talents);
 		const buffsDelta = buffsStats.subtract(talentsStats);
 		const consumesDelta = consumesStats.subtract(buffsStats);
+		const stanceLabel = STANCE_LABELS[player.getClass()];
+		const stanceDelta = Stats.fromProto(playerStats.finalStats).subtract(consumesStats);
 
 		const finalStats = Stats.fromProto(playerStats.finalStats).add(statMods.talents).add(debuffStats);
 
@@ -134,20 +142,26 @@ export class CharacterStats extends Component {
 				</div>
 				<div className="character-stats-tooltip-row">
 					<span>Gear:</span>
-					<span>{this.statDisplayString(gearStats, gearDelta, stat)}</span>
+					<span>{this.statDisplayString(gearStats, gearDelta, stat, baseStats)}</span>
 				</div>
 				<div className="character-stats-tooltip-row">
 					<span>Talents:</span>
-					<span>{this.statDisplayString(talentsStats, talentsDelta, stat)}</span>
+					<span>{this.statDisplayString(talentsStats, talentsDelta, stat, gearStats)}</span>
 				</div>
 				<div className="character-stats-tooltip-row">
 					<span>Buffs:</span>
-					<span>{this.statDisplayString(buffsStats, buffsDelta, stat)}</span>
+					<span>{this.statDisplayString(buffsStats, buffsDelta, stat, talentsStats)}</span>
 				</div>
 				<div className="character-stats-tooltip-row">
 					<span>Consumes:</span>
-					<span>{this.statDisplayString(consumesStats, consumesDelta, stat)}</span>
+					<span>{this.statDisplayString(consumesStats, consumesDelta, stat, buffsStats)}</span>
 				</div>
+				{stanceLabel && Math.round(stanceDelta.getStat(stat)) != 0 &&
+				<div className="character-stats-tooltip-row">
+					<span>{stanceLabel}:</span>
+					<span>{this.statDisplayString(finalStats, stanceDelta, stat, consumesStats)}</span>
+				</div>
+				}
 				{debuffStats.getStat(stat) != 0 &&
 				<div className="character-stats-tooltip-row">
 					<span>Debuffs:</span>
@@ -242,11 +256,17 @@ export class CharacterStats extends Component {
 		}
 	}
 
-	private statDisplayString(stats: Stats, deltaStats: Stats, stat: Stat): string {
+	// prevStats: the stats before this row's part, when the row is one part of a total
+	private statDisplayString(stats: Stats, deltaStats: Stats, stat: Stat, prevStats?: Stats): string {
 		let rawValue = deltaStats.getStat(stat);
 
 		if (stat == Stat.StatBlockValue) {
-			rawValue *= stats.getPseudoStat(PseudoStat.PseudoStatBlockValueMultiplier) || 1;
+			const multiplier = (s: Stats) => s.getPseudoStat(PseudoStat.PseudoStatBlockValueMultiplier) || 1;
+			rawValue *= multiplier(stats);
+			// a part that raises the multiplier also adds what it does to the block value before it
+			if (prevStats) {
+				rawValue += prevStats.getStat(stat) * (multiplier(stats) - multiplier(prevStats));
+			}
 		}
 
 		let displayStr = String(Math.round(rawValue));

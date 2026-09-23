@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 import { openSimTab, SPECS, watchForErrors } from '../lib/page';
-import { changeEverything, numberInput, openSpec, reloadSim, setNumber, snapshot } from './helpers';
+import { changeEverything, numberInput, openSpec, pickFromDropdown, reloadSim, select, setNumber, snapshot } from './helpers';
 
 for (const spec of SPECS) {
 	test(`the ${spec} player and spec settings survive a reload`, async ({ page }) => {
@@ -38,16 +38,23 @@ for (const spec of ['feral_druid', 'feral_tank_druid', 'hunter', 'mage']) {
 	});
 }
 
-test('a warrior with Blood Elf racial traits loads cleanly', async ({ page }) => {
-	test.fixme(true, 'sim/core/racials.go gives rage users an Arcane Torrent with spell ID 0, whose tooltip 404s');
+test('a warrior with Blood Elf racial traits can cast Arcane Torrent, and loads cleanly', async ({ page }) => {
 	const errors = watchForErrors(page);
 	await openSpec(page, 'warrior', 'settings-tab');
 
 	const statsUpdated = page.waitForResponse(response => response.url().endsWith('/computeStats'));
-	await page.locator('#settings-tab .player-settings .input-root:has(> label:text-is("Racial Traits")) select').selectOption({ label: 'Blood Elf' });
+	await select(page.locator('#settings-tab .player-settings'), 'Racial Traits').selectOption({ label: 'Blood Elf' });
 	await statsUpdated;
-	// The page loads the new spells' icons after the stats come back, with nothing to wait on.
-	await page.waitForTimeout(1500);
+
+	await openSimTab(page, 'rotation-tab');
+	const tab = page.locator('#rotation-tab');
+	await select(tab.locator('.rotation-tab-header'), 'Rotation Type').selectOption({ label: 'APL' });
+	await tab.locator('.apl-list-item-picker > .list-picker-new-button').click();
+	const added = tab.locator('.apl-list-item-picker > .list-picker-items > .list-picker-item-container').last();
+	await pickFromDropdown(added.locator('.apl-action-picker-action > .dropdown-picker-root').first(), 'Cast');
+	// the list names a spell once its tooltip is in, which is also when a failed one logs its error
+	await pickFromDropdown(added.locator('.apl-action-castSpell > .dropdown-picker-root').first(), 'Cooldowns', 'Arcane Torrent');
+	await expect(added.locator('.apl-action-picker-action').first()).toContainText('Arcane Torrent');
 	expect(errors).toEqual([]);
 });
 
