@@ -49,8 +49,10 @@ func RunRaidSim(request *proto.RaidSimRequest) *proto.RaidSimResult {
 	return RunSim(request, nil)
 }
 
+// RunRaidSimAsync splits the iterations across threads. RunRaidSim stays one sim, which the goldens
+// pin down.
 func RunRaidSimAsync(request *proto.RaidSimRequest, progress chan *proto.ProgressMetrics) {
-	go RunSim(request, progress)
+	go runRaidSimShards(request, progress, raidSimShards())
 }
 
 func RunBulkSim(request *proto.BulkSimRequest) *proto.BulkSimResult {
