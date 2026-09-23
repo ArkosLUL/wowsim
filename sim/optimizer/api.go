@@ -11,6 +11,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode"
 
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
@@ -97,12 +98,12 @@ func errorResult(err error) *proto.OptimizerResult {
 	return &proto.OptimizerResult{SimCommit: SimCommit, ErrorResult: err.Error()}
 }
 
-// cancelledBeforeStart is the seed, unscored, for a run cancelled before it simmed anything.
+// cancelledBeforeStart is the seed and the gear as equipped, unscored, for a run cancelled before it
+// simmed anything.
 func cancelledBeforeStart(r *Request, start time.Time) *proto.OptimizerResult {
-	seed := &proto.OptimizerLoadoutResult{Equipment: r.Seed.Equipment(), RacialTraits: r.Seed.RacialTraits}
 	return &proto.OptimizerResult{
-		Best:            seed,
-		Seed:            goproto.Clone(seed).(*proto.OptimizerLoadoutResult),
+		Best:            &proto.OptimizerLoadoutResult{Equipment: r.Seed.Equipment(), RacialTraits: r.Seed.RacialTraits},
+		Seed:            &proto.OptimizerLoadoutResult{Equipment: r.Equipped.Equipment(), RacialTraits: r.Equipped.RacialTraits},
 		Settings:        r.Settings,
 		TargetRaidIndex: int32(r.TargetIndex),
 		SimCommit:       SimCommit,
@@ -192,6 +193,10 @@ type run struct {
 	resp       Response
 	seedEval   *Evaluation
 	seedJ      Estimate
+	// What results score against: the gear as equipped, or the seed when that's all there is or the
+	// equipped gear's sim failed. refEval is only set while ref isn't the seed.
+	ref     Loadout
+	refEval *Evaluation
 
 	// Every race the screen scored, best first, and the ones the search pairs its gear with.
 	racialScreen []*proto.OptimizerRacialScreen
@@ -232,6 +237,7 @@ func optimize(ctx context.Context, asked, simmed *Request, eval Evaluator, progr
 		progress: progress,
 		start:    start,
 		best:     simmed.Seed,
+		ref:      simmed.Equipped,
 	}
 	r.eval = &countingEvaluator{inner: eval, have: map[Point]int{}, after: r.report}
 	r.region = trace.StartRegion(ctx, stages[0])
@@ -242,6 +248,7 @@ func optimize(ctx context.Context, asked, simmed *Request, eval Evaluator, progr
 func (r *run) execute() *proto.OptimizerResult {
 	settings := r.asked.Settings
 	r.report()
+	r.warnLeftOut()
 
 	if err := r.pinHealingModel(); err != nil {
 		r.warn("couldn't pin the healing model's HPS, so every sim runs core's presim again and each loadout's healing follows its own damage taken: %v", err)
@@ -281,12 +288,20 @@ func (r *run) execute() *proto.OptimizerResult {
 	for _, w := range obj.Warnings {
 		r.warn("%s", w)
 	}
-	evals, err := r.evaluate([]Point{{Loadout: r.r.Seed}}, r.budget.Iterations)
+	// the equipped gear goes along now so progress can report against it; result tops it up
+	points := []Point{{Loadout: r.r.Seed}}
+	if r.ref != r.r.Seed {
+		points = append(points, Point{Loadout: r.ref})
+	}
+	evals, err := r.evaluate(points, r.budget.Iterations)
 	if err != nil {
 		return r.stop(fmt.Errorf("seed sims: %w", err))
 	}
 	r.seedEval, r.bestEval = evals[0], evals[0]
 	r.seedJ = obj.Score(r.seedEval)
+	if len(evals) > 1 {
+		r.setRefEval(evals[1])
+	}
 
 	r.setStage("Racial screen")
 	if settings.GetRacialMode() == proto.OptimizerRacialMode_OptimizerRacialSearch {
@@ -471,11 +486,131 @@ func (r *run) report() {
 		RacialTraits:   r.best.RacialTraits,
 		ElapsedSeconds: time.Since(r.start).Seconds(),
 	}
-	if r.obj != nil && r.bestEval != nil && r.seedEval != nil {
+	if ref := r.referenceEval(); r.obj != nil && r.bestEval != nil && ref != nil {
 		p.BestScore = r.obj.Score(r.bestEval).Mean
-		p.BestScoreDelta = r.obj.Delta(r.seedEval, r.bestEval).Mean
+		p.BestScoreDelta = r.obj.Delta(ref, r.bestEval).Mean
+		p.ScoreStats = r.scoreStats()
 	}
 	r.progress(p)
+}
+
+// referenceEval is ref's evaluation, nil until it's simmed.
+func (r *run) referenceEval() *Evaluation {
+	if r.ref == r.r.Seed {
+		return r.seedEval
+	}
+	return r.refEval
+}
+
+// setRefEval takes the equipped gear's evaluation. Nil means its sim failed, and results then score
+// against the seed.
+func (r *run) setRefEval(eval *Evaluation) {
+	if eval != nil {
+		r.refEval = eval
+		return
+	}
+	r.warn("couldn't sim the gear as equipped, so deltas are against the gear the search started from")
+	r.ref, r.refEval = r.r.Seed, nil
+}
+
+// topUpReference sims the equipped gear to as many iterations as anything the result reports, so every
+// delta pairs over all of its iterations. A cancelled run keeps what it has.
+func (r *run) topUpReference(verified []*verifiedLoadout) {
+	if r.ref == r.r.Seed || r.refEval == nil || r.ctx.Err() != nil {
+		return
+	}
+	iterations := 0
+	for _, e := range []*Evaluation{r.seedEval, r.bestEval} {
+		if e != nil {
+			iterations = max(iterations, e.Iterations)
+		}
+	}
+	for _, v := range verified {
+		iterations = max(iterations, v.eval.Iterations)
+	}
+	if iterations <= r.refEval.Iterations {
+		return
+	}
+	evals, err := r.evaluate([]Point{{Loadout: r.ref}}, iterations)
+	if err != nil {
+		if r.ctx.Err() == nil {
+			r.warn("couldn't sim the gear as equipped past %d iterations: %v", r.refEval.Iterations, err)
+		}
+		return
+	}
+	if evals[0] != nil {
+		r.refEval = evals[0]
+	}
+}
+
+// warnLeftOut names each item the gear as equipped has and the seed doesn't: the search starts without
+// it, but the result still scores against it.
+func (r *run) warnLeftOut() {
+	kept := map[int32]int{}
+	for _, c := range r.r.Seed.Items {
+		kept[c.ItemID]++
+	}
+	pools := map[proto.ItemSlot][]int32{}
+	for _, sp := range r.r.Pool.GetSlots() {
+		pools[sp.Slot] = sp.ItemIds
+	}
+	for slot, c := range r.r.Equipped.Items {
+		if c.ItemID == 0 {
+			continue
+		}
+		if kept[c.ItemID] > 0 {
+			kept[c.ItemID]--
+			continue
+		}
+		item, _ := core.LookupItem(c.ItemID)
+		name := item.Name
+		if name == "" {
+			name = fmt.Sprintf("item %d", c.ItemID)
+		}
+		why := "it breaks an equip rule there"
+		switch {
+		case slices.Contains(r.r.Settings.GetExcludedItemIds(), c.ItemID):
+			why = "it's excluded"
+		case !slices.Contains(pools[proto.ItemSlot(slot)], c.ItemID):
+			why = fmt.Sprintf("the P%d pool doesn't have it", r.r.Settings.GetContentPhase())
+		}
+		msg := fmt.Sprintf("%s: the search started without %s, since %s. Deltas still count it: they're against the gear as equipped.",
+			slotLabel(proto.ItemSlot(slot)), name, why)
+		if isWeapon(item, r.r.Target().GetClass() == proto.Class_ClassHunter) {
+			msg += " The gear the search started from is a weapon short, so it sims well below the gear as equipped, and the" +
+				" score's points are sized on that weaker gear: compare DPS rather than the score."
+		}
+		r.warn("%s", msg)
+	}
+}
+
+// shields, off-hand frills and relics don't count, and a ranged weapon only does for a hunter:
+// anyone else's is a small slot
+func isWeapon(item core.Item, hunter bool) bool {
+	switch item.Type {
+	case proto.ItemType_ItemTypeWeapon:
+		return item.WeaponType != proto.WeaponType_WeaponTypeShield && item.WeaponType != proto.WeaponType_WeaponTypeOffHand
+	case proto.ItemType_ItemTypeRanged:
+		return hunter && slices.Contains([]proto.RangedWeaponType{proto.RangedWeaponType_RangedWeaponTypeBow, proto.RangedWeaponType_RangedWeaponTypeCrossbow,
+			proto.RangedWeaponType_RangedWeaponTypeGun, proto.RangedWeaponType_RangedWeaponTypeThrown}, item.RangedWeaponType)
+	}
+	return false
+}
+
+// slotLabel is a slot's name as the UI's slotNames shows it, e.g. "Main Hand" or "Finger 1".
+func slotLabel(slot proto.ItemSlot) string {
+	if slot == proto.ItemSlot_ItemSlotShoulder {
+		return "Shoulders"
+	}
+	name := strings.TrimPrefix(slot.String(), "ItemSlot")
+	var b strings.Builder
+	for i, c := range name {
+		if i > 0 && (unicode.IsUpper(c) || unicode.IsDigit(c)) {
+			b.WriteByte(' ')
+		}
+		b.WriteRune(c)
+	}
+	return b.String()
 }
 
 // evaluate sims points, dropping any whose sim fails and asking again. A dropped point gets a nil
@@ -598,9 +733,10 @@ func statsOf(resp Response) []stats.Stat {
 	return out
 }
 
-// result assembles the answer: the best verified loadout (the seed when nothing beat it), the seed,
-// the verified top sets and the alternatives. verified is empty when the run stopped early.
+// result assembles the answer: the best verified loadout (the seed when nothing beat it), the gear as
+// equipped, the verified top sets and the alternatives. verified is empty when the run stopped early.
 func (r *run) result(verified []*verifiedLoadout, alternatives []*proto.OptimizerSlotAlternative) *proto.OptimizerResult {
+	r.topUpReference(verified)
 	result := &proto.OptimizerResult{
 		Settings:        r.asked.Settings,
 		TargetRaidIndex: int32(r.asked.TargetIndex),
@@ -608,8 +744,9 @@ func (r *run) result(verified []*verifiedLoadout, alternatives []*proto.Optimize
 		CatalogDate:     r.asked.Pool.GetCatalogDate(),
 		Alternatives:    alternatives,
 		RacialScreen:    r.racialScreen,
+		ScoreStats:      r.scoreStats(),
 	}
-	result.Seed = r.loadoutResult(r.r.Seed, r.seedEval)
+	result.Seed = r.loadoutResult(r.ref, r.referenceEval())
 	// the neighborhood resims the pick and the seed at more iterations, where its gain can shrink
 	if r.best != r.r.Seed && !r.beatsSeed(r.bestEval) {
 		r.warn("the pick's gain didn't hold up against the seed at %d iterations, so the seed stays", min(r.seedEval.Iterations, r.bestEval.Iterations))
@@ -621,9 +758,12 @@ func (r *run) result(verified []*verifiedLoadout, alternatives []*proto.Optimize
 	if r.seedEval != nil {
 		r.sortVerified(verified)
 	}
-	if r.best == r.r.Seed {
+	switch {
+	case r.best == r.r.Seed && r.ref == r.r.Seed:
 		result.Best = goproto.Clone(result.Seed).(*proto.OptimizerLoadoutResult)
-	} else {
+	case r.best == r.r.Seed:
+		result.Best = r.loadoutResult(r.r.Seed, r.seedEval)
+	default:
 		result.Best = r.loadoutResult(r.best, r.bestEval)
 		result.Improved = true
 	}
@@ -661,7 +801,21 @@ func (r *run) raidMode() bool {
 	return r.asked.Settings.GetObjective() == proto.OptimizerObjective_OptimizerObjectiveRaidDps
 }
 
-// loadoutResult scores l against the seed. eval is nil when l wasn't simmed.
+// scoreStats lists the stats J's terms are in, each once, in metric order.
+func (r *run) scoreStats() []proto.Stat {
+	if r.obj == nil {
+		return nil
+	}
+	var out []proto.Stat
+	for m, c := range r.obj.coef {
+		if st := proto.Stat(r.obj.ReferenceStats[m]); c != 0 && !slices.Contains(out, st) {
+			out = append(out, st)
+		}
+	}
+	return out
+}
+
+// loadoutResult scores l against the gear as equipped. eval is nil when l wasn't simmed.
 func (r *run) loadoutResult(l Loadout, eval *Evaluation) *proto.OptimizerLoadoutResult {
 	out := &proto.OptimizerLoadoutResult{
 		Equipment:    l.Equipment(),
@@ -669,11 +823,11 @@ func (r *run) loadoutResult(l Loadout, eval *Evaluation) *proto.OptimizerLoadout
 	}
 	if eval != nil && r.obj != nil {
 		out.Score = r.obj.Score(eval).Mean
-		if r.seedEval != nil {
-			d := r.obj.Delta(r.seedEval, eval)
+		if ref := r.referenceEval(); ref != nil {
+			d := r.obj.Delta(ref, eval)
 			out.ScoreDelta, out.ScoreDeltaSe = d.Mean, d.SE
 			if r.raidMode() {
-				rd := Delta(r.seedEval, eval, MetricDPS)
+				rd := Delta(ref, eval, MetricDPS)
 				out.RaidDpsDelta, out.RaidDpsDeltaSe = rd.Mean, rd.SE
 			}
 		}

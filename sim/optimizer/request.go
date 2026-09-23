@@ -61,6 +61,15 @@ func PrepareRequest(req *proto.OptimizeGearRequest) (*Request, error) {
 	if err := checkLoadout(seed); err != nil {
 		return nil, fmt.Errorf("seed gear: %w", err)
 	}
+	equipped := seed
+	if req.Equipped != nil {
+		if equipped, err = LoadoutFromProto(req.Equipped, racialTraits); err != nil {
+			return nil, fmt.Errorf("equipped gear: %w", err)
+		}
+		if err := checkLoadout(equipped); err != nil {
+			return nil, fmt.Errorf("equipped gear: %w", err)
+		}
+	}
 
 	warmStarts := make([]Loadout, len(settings.WarmStarts))
 	for i, es := range settings.WarmStarts {
@@ -83,6 +92,7 @@ func PrepareRequest(req *proto.OptimizeGearRequest) (*Request, error) {
 		Pool:           pool,
 		Seed:           seed,
 		WarmStarts:     warmStarts,
+		Equipped:       equipped,
 		Catalog:        make(map[int32]*proto.CatalogItem, len(pool.CatalogItems)),
 		LimitGroups:    make(map[int32]*proto.LimitGroup, len(pool.LimitGroups)),
 		MetaConditions: make(map[int32]*proto.MetaGemCondition, len(pool.MetaConditions)),

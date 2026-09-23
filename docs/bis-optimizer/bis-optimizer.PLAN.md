@@ -679,6 +679,37 @@ those three slots empty.
 - Tests: a trimmed seed whose items the sources exclude keeps them in the pool; a P3 item on a P2 run
   still leaves the slot, and the delta is then measured against the equipped gear.
 
+**As built:**
+- `OptimizeGearRequest.equipped` carries the untrimmed gear; without it Go uses the seed. The run sims it
+  with the seed, so progress reports against it too, and `result` tops it up to the most iterations any
+  reported loadout has. If its sim fails, results fall back to the seed with a warning.
+- The result's `seed` is that gear, and every `score_delta` and `raid_dps_delta` is against it.
+  Acceptance (`improved`), the normalizers and the curves still come from the trimmed seed, so an
+  improved pick can land below the equipped gear; the UI then says it doesn't beat it (`beatsEquipped`:
+  Δ over 2 se). A no-gain batch cell shows that Δ when the phase trimmed the gear (`no gain, <Δ>`).
+- An owned item skips the picker's filters and the sources, not tier, faction, PvP, professions or
+  exclusions, and joins only the pool of the slot it's worn in: in both rings' or hands' pools one copy
+  came back as a pair (Caress of Insanity in both hands). When the trimmer moves a second ring, trinket
+  or off-hand weapon up, locked or not, that pool entry moves with it.
+- Go warns once per left-out item (`warnLeftOut`: slot, name, and why: excluded, not in the phase's
+  pool, or an equip rule); for a weapon (ranged only on a hunter) it adds that the weapon-short seed sims
+  far lower and sizes the score's points. The UI's trimmed list keeps only enchant, gem, reforge and move
+  lines; `BuiltRequest.seedLeftOut` feeds the fixture driver.
+- `score_stats`, on the result and on progress, name what J counts. The UI labels AP, SP or RAP, and
+  AP/armor for a tank's blend; results stored before show no unit.
+- The spec's DK case is the default P2 DW Unholy gear, whose neck and both hands are Ulduar 10 only. At
+  P2, Quick, Raid 10 and Raid 10 heroic unticked: +235 ± 9 AP over the gear as equipped, 9,768 to 9,983
+  DPS, both owned weapons kept. With a ToC mace in the main hand, the weapon-short seed sized the points
+  about 12% larger (1.24 AP per DPS against 1.10).
+- Fixture `ret_p2_owned`: the P2 gear with the P3 trinket and first ring, Raid 25 unticked, finger 2
+  locked. `TestReplayEquippedGear` checks every fixture: allowed items stay, the rest leave, an
+  owned-only item sits in one pool or locked slot per copy. Regenerating also took in enchant 3851 on
+  main hands, BIS-e2e-perf's drift.
+- Slow suite: `slowRequest` sends the untrimmed preset as `equipped`, the line's `J_preset`, `delta` and
+  `dps_delta` are against it, and the pass check stays against the trimmed preset. `realisticPool`
+  doesn't filter sources, so it matches the owned rule; `trimSeedToPool` still lacks the trimmer's
+  off-hand weapon move-up.
+
 ### BIS-presets (wave K)
 
 The preset files, as decided above, registered in `ui/<spec>/presets.ts` and `sim.ts` `defaultGear`. This

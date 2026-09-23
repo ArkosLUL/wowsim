@@ -171,6 +171,9 @@ type Request struct {
 	// The target's gear and racial traits going in.
 	Seed       Loadout
 	WarmStarts []Loadout
+	// The gear as equipped, with the seed's racial traits. Results score against it, the search starts
+	// from Seed. Seed when the request didn't send it.
+	Equipped Loadout
 
 	// The pool's catalog rows, limit groups and meta conditions, by id.
 	Catalog        map[int32]*proto.CatalogItem
