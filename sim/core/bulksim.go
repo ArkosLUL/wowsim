@@ -332,9 +332,20 @@ func (b *bulkSimRunner) getRankedResults(pctx context.Context, validCombos []sin
 	var totalCompletedSims int32
 
 	ctx, cancel := context.WithCancel(pctx)
+	reporterDone := make(chan struct{})
+	// wait for the reporter: BulkSim closes progress once the run returns
+	defer func() {
+		cancel()
+		<-reporterDone
+	}()
 	// reporter for all sims combined.
 	go func() {
-		for ctx.Err() == nil {
+		defer close(reporterDone)
+		// RunBulkSim has no progress channel
+		if progress == nil {
+			return
+		}
+		for {
 			complIters := atomic.LoadInt32(&totalCompletedIterations)
 			complSims := atomic.LoadInt32(&totalCompletedSims)
 
@@ -343,13 +354,21 @@ func (b *bulkSimRunner) getRankedResults(pctx context.Context, validCombos []sin
 				return
 			}
 
-			progress <- &proto.ProgressMetrics{
+			select {
+			case progress <- &proto.ProgressMetrics{
 				TotalSims:           numCombinations,
 				CompletedSims:       complSims,
 				CompletedIterations: complIters,
 				TotalIterations:     int32(totalIterationsUpperBound),
+			}:
+			case <-ctx.Done():
+				return
 			}
-			time.Sleep(time.Second)
+			select {
+			case <-time.After(time.Second):
+			case <-ctx.Done():
+				return
+			}
 		}
 	}()
 
@@ -394,7 +413,6 @@ func (b *bulkSimRunner) getRankedResults(pctx context.Context, validCombos []sin
 	for i := range rankedResults {
 		result := <-results
 		if result.Result == nil || result.Result.ErrorResult != "" {
-			cancel() // cancel reporter
 			return nil, nil, errors.New("simulation failed: " + result.Result.ErrorResult)
 		}
 		if !result.Substitution.HasItemReplacements() && result.ChangeLog.TalentLoadout == nil {
@@ -402,7 +420,6 @@ func (b *bulkSimRunner) getRankedResults(pctx context.Context, validCombos []sin
 		}
 		rankedResults[i] = result
 	}
-	cancel() // cancel reporter
 
 	sort.Slice(rankedResults, func(i, j int) bool {
 		return rankedResults[i].Score() > rankedResults[j].Score()

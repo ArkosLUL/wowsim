@@ -34,8 +34,8 @@ type PresimOptions struct {
 func (sim *Simulation) runPresims(request *proto.RaidSimRequest) *proto.RaidSimResult {
 	const numPresimIterations = 100
 
-	// Run presims if requested.
-	raidPresimOptions := make([]*PresimOptions, 25)
+	// Run presims if requested. Keyed by raid index, which goes up to 39 in a 40-player raid.
+	raidPresimOptions := map[int32]*PresimOptions{}
 	remainingAgents := 0
 	for _, party := range sim.Raid.Parties {
 		for _, player := range party.Players {

@@ -435,7 +435,7 @@ const (
 
 // servePprof serves the profiling endpoints on a listener of their own. Importing net/http/pprof
 // registers them on http.DefaultServeMux too, so the sim's port must never serve that mux.
-func servePprof(addr string) {
+func servePprof(addr string) net.Listener {
 	listener, err := net.Listen("tcp", addr)
 	if err != nil {
 		log.Fatalf("pprof: %s", err)
@@ -452,6 +452,7 @@ func servePprof(addr string) {
 	go func() {
 		log.Printf("pprof server stopped: %s", http.Serve(listener, mux))
 	}()
+	return listener
 }
 
 func (s *server) runServer(useFS bool, host string, launchBrowser bool, simName string, wasm bool, inputReader *bufio.Reader) {

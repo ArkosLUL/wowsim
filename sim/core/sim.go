@@ -180,7 +180,12 @@ func runSim(rsr *proto.RaidSimRequest, progress chan *proto.ProgressMetrics, ski
 	}
 
 	// using a variable here allows us to mutate it in the deferred recover, sending out error info
+	t0 := time.Now()
 	result = sim.run()
+	// here rather than in run, which the sharded sims call once per shard
+	if d := sim.Options.Iterations; d > 3000 {
+		log.Printf("running %d iterations took %s", d, time.Since(t0))
+	}
 
 	return result
 }
@@ -310,8 +315,6 @@ func (sim *Simulation) Reseed(seed int64) {
 // Run runs the simulation for the configured number of iterations, and
 // collects all the metrics together.
 func (sim *Simulation) run() *proto.RaidSimResult {
-	t0 := time.Now()
-
 	logsBuffer := &strings.Builder{}
 	if sim.Options.Debug || sim.Options.DebugFirstIteration {
 		sim.Log = func(message string, vals ...interface{}) {
@@ -368,10 +371,6 @@ func (sim *Simulation) run() *proto.RaidSimResult {
 	// Final progress report
 	if sim.ProgressReport != nil {
 		sim.ProgressReport(&proto.ProgressMetrics{TotalIterations: sim.Options.Iterations, CompletedIterations: sim.Options.Iterations, Dps: result.RaidMetrics.Dps.Avg, FinalRaidResult: result})
-	}
-
-	if d := sim.Options.Iterations; d > 3000 {
-		log.Printf("running %d iterations took %s", d, time.Since(t0))
 	}
 
 	return result

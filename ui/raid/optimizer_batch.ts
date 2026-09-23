@@ -17,6 +17,7 @@ import {
 	seedTrimmed,
 	simServerAvailable,
 	tableRow,
+	trimmedWhere,
 	withUnit,
 } from '../core/components/individual_sim_ui/optimizer_tab';
 import { SimTab } from '../core/components/sim_tab';
@@ -1234,8 +1235,8 @@ export class OptimizerBatchTab extends SimTab {
 				),
 			);
 		} else {
-			const trimmed =
-				seedTrimmed(result) || job.seedChanges.length > 0 ? ', minus what the phase left out (see the warnings above and the list at the bottom)' : '';
+			const trimmedAt = trimmedWhere(result, job.seedChanges.length > 0);
+			const trimmed = trimmedAt ? `, minus what the phase left out (see ${trimmedAt})` : '';
 			this.detailBody.appendChild(
 				newElement(
 					'div',

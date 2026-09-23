@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/wowsims/wotlk/sim/core/proto"
@@ -112,6 +113,31 @@ func TestBulkSim(t *testing.T) {
 		return protojson.Format(a) == protojson.Format(b)
 	})); diff != "" {
 		t.Fatalf("BulkSim() returned diff (-want +got):\n%s", diff)
+	}
+}
+
+// BulkSim closes progress right after the run, so the reporter has to be done by the time
+// getRankedResults returns. Nobody reads the unbuffered channel, so a reporter still running is
+// stuck sending, and closing the channel makes it panic.
+func TestGetRankedResultsStopsReporting(t *testing.T) {
+	runner := &bulkSimRunner{SingleRaidSimRunner: func(*proto.RaidSimRequest, chan *proto.ProgressMetrics, bool) *proto.RaidSimResult {
+		// long enough for the reporter to start sending
+		time.Sleep(50 * time.Millisecond)
+		return &proto.RaidSimResult{RaidMetrics: &proto.RaidMetrics{Dps: &proto.DistributionMetrics{Avg: 1}}}
+	}}
+	combos := make([]singleBulkSim, 3)
+	for i := range combos {
+		combos[i] = singleBulkSim{req: &proto.RaidSimRequest{SimOptions: &proto.SimOptions{}}, cl: &raidSimRequestChangeLog{}, eq: &equipmentSubstitution{}}
+	}
+	// nil is RunBulkSim's
+	for _, progress := range []chan *proto.ProgressMetrics{nil, make(chan *proto.ProgressMetrics)} {
+		ranked, _, err := runner.getRankedResults(context.Background(), combos, 10, progress)
+		if err != nil || len(ranked) != len(combos) {
+			t.Fatalf("%d results, error %v; want %d and none", len(ranked), err, len(combos))
+		}
+		if progress != nil {
+			close(progress)
+		}
 	}
 }
 

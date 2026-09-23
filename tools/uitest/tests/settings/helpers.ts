@@ -148,8 +148,7 @@ export async function changeEverything(scope: Locator) {
 		if (!(await select.isVisible())) continue;
 		const options = await select.locator('option').evaluateAll(opts => opts.map(o => (o as HTMLOptionElement).value));
 		const current = await select.inputValue();
-		// The last other option: the first racial trait on offer, Blood Elf, trips a known sim bug on warriors.
-		const other = options.filter(o => o != current).pop();
+		const other = options.find(o => o != current);
 		if (other !== undefined) await select.selectOption(other);
 	}
 

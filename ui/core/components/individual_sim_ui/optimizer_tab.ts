@@ -59,10 +59,11 @@ export function effortName(effort: OptimizerEffort): string {
 }
 
 // Said when nothing beat the starting gear, so the set shown doesn't read as a recommendation.
-// trimmed: the run started from that gear minus what the pool left out, so Equip still changes that much.
-function notImprovedText(effort: OptimizerEffort, cancelled: boolean, trimmed: boolean): string {
-	const gear = trimmed
-		? 'the set below is just that gear, minus what the pool left out (see the warnings above and the list at the bottom), which is all Equip would change.'
+// trimmedAt: trimmedWhere's answer, when the run started from that gear minus what the pool left out, so
+// Equip still changes that much.
+function notImprovedText(effort: OptimizerEffort, cancelled: boolean, trimmedAt: string): string {
+	const gear = trimmedAt
+		? `the set below is just that gear, minus what the pool left out (see ${trimmedAt}), which is all Equip would change.`
 		: 'the set below is just that gear.';
 	if (cancelled) {
 		return `Nothing had beaten your starting gear by more than the noise when the run stopped, so ${gear}`;
@@ -148,6 +149,20 @@ export function beatsEquipped(result: OptimizerResult): boolean {
 export function seedTrimmed(result: OptimizerResult): boolean {
 	const { best, seed } = result;
 	return !!best && !!seed && !EquipmentSpec.equals(best.equipment || EquipmentSpec.create(), seed.equipment || EquipmentSpec.create());
+}
+
+// Where a result that kept the starting gear shows what trimming took off: whole items in the warnings,
+// enchant, gem and move lines in the list at the bottom when listed. Empty when neither.
+export function trimmedWhere(result: OptimizerResult, listed: boolean): string {
+	const kept = (result.best?.equipment?.items || []).map(spec => spec.id);
+	const leftOut = (result.seed?.equipment?.items || []).some(spec => {
+		const i = kept.indexOf(spec.id);
+		if (spec.id != 0 && i >= 0) {
+			kept.splice(i, 1);
+		}
+		return spec.id != 0 && i < 0;
+	});
+	return [...(leftOut ? ['the warnings above'] : []), ...(listed ? ['the list at the bottom'] : [])].join(' and ');
 }
 
 export function newElement<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, text?: string): HTMLElementTagNameMap[K] {
@@ -972,7 +987,11 @@ export class OptimizerTab extends SimTab {
 			);
 		} else if (result.best) {
 			this.resultsBody.appendChild(
-				newElement('div', 'optimizer-improved optimizer-not-improved', notImprovedText(effort, result.cancelled, seedTrimmed(result))),
+				newElement(
+					'div',
+					'optimizer-improved optimizer-not-improved',
+					notImprovedText(effort, result.cancelled, trimmedWhere(result, built.seedChanges.length > 0)),
+				),
 			);
 		}
 
