@@ -8,8 +8,9 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"net/http"
-	_ "net/http/pprof"
+	httppprof "net/http/pprof"
 	"os"
 	"os/signal"
 	"runtime"
@@ -50,8 +51,13 @@ func main() {
 	var host = flag.String("host", "localhost:3333", "URL to host the interface on.")
 	var launch = flag.Bool("launch", true, "auto launch browser")
 	var skipVersionCheck = flag.Bool("nvc", false, "set true to skip version check")
+	var pprofAddr = flag.String("pprof", "", "serve net/http/pprof, with mutex and block profiling, on this address (e.g. localhost:6060); off when empty")
 
 	flag.Parse()
+
+	if *pprofAddr != "" {
+		servePprof(*pprofAddr)
+	}
 
 	fmt.Printf("Version: %s\n", Version)
 	if !*skipVersionCheck && Version != "development" {
@@ -420,8 +426,37 @@ func (s *server) setupAsyncServer(mux *http.ServeMux) {
 	})
 }
 
+// --pprof's mutex and block sampling: one contention event in 10, and about one blocking event per
+// 10 µs spent blocked
+const (
+	mutexProfileFraction = 10
+	blockProfileRate     = 10_000
+)
+
+// servePprof serves the profiling endpoints on a listener of their own. Importing net/http/pprof
+// registers them on http.DefaultServeMux too, so the sim's port must never serve that mux.
+func servePprof(addr string) {
+	listener, err := net.Listen("tcp", addr)
+	if err != nil {
+		log.Fatalf("pprof: %s", err)
+	}
+	runtime.SetMutexProfileFraction(mutexProfileFraction)
+	runtime.SetBlockProfileRate(blockProfileRate)
+	mux := http.NewServeMux()
+	mux.HandleFunc("/debug/pprof/", httppprof.Index)
+	mux.HandleFunc("/debug/pprof/cmdline", httppprof.Cmdline)
+	mux.HandleFunc("/debug/pprof/profile", httppprof.Profile)
+	mux.HandleFunc("/debug/pprof/symbol", httppprof.Symbol)
+	mux.HandleFunc("/debug/pprof/trace", httppprof.Trace)
+	log.Printf("pprof on http://%s/debug/pprof/", listener.Addr())
+	go func() {
+		log.Printf("pprof server stopped: %s", http.Serve(listener, mux))
+	}()
+}
+
 func (s *server) runServer(useFS bool, host string, launchBrowser bool, simName string, wasm bool, inputReader *bufio.Reader) {
-	s.setupAsyncServer(http.DefaultServeMux)
+	mux := http.NewServeMux()
+	s.setupAsyncServer(mux)
 
 	var fs http.Handler
 	if useFS {
@@ -433,14 +468,14 @@ func (s *server) runServer(useFS bool, host string, launchBrowser bool, simName 
 	}
 
 	for route := range handlers {
-		http.HandleFunc(route, handleAPI)
+		mux.HandleFunc(route, handleAPI)
 	}
 
-	http.HandleFunc("/version", func(resp http.ResponseWriter, req *http.Request) {
+	mux.HandleFunc("/version", func(resp http.ResponseWriter, req *http.Request) {
 		msg := fmt.Sprintf(`{"version": "%s", "outdated": %d}`, Version, outdated)
 		resp.Write([]byte(msg))
 	})
-	http.HandleFunc("/", func(resp http.ResponseWriter, req *http.Request) {
+	mux.HandleFunc("/", func(resp http.ResponseWriter, req *http.Request) {
 		if req.URL.Path == "/" {
 			http.Redirect(resp, req, "/wotlk/", http.StatusPermanentRedirect)
 			return
@@ -477,7 +512,7 @@ func (s *server) runServer(useFS bool, host string, launchBrowser bool, simName 
 
 	go func() {
 		// Launch server!
-		if err := http.ListenAndServe(host, nil); err != nil {
+		if err := http.ListenAndServe(host, mux); err != nil {
 			log.Printf("Failed to shutdown server: %s", err)
 			os.Exit(1)
 		}

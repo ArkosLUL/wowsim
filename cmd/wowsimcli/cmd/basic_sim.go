@@ -17,10 +17,13 @@ var simCmd = &cobra.Command{
 	Run:   simMain,
 }
 
+var simProfiles profileFlags
+
 func init() {
 	simCmd.Flags().StringVar(&infile, "infile", "input.json", "location of input file (RaidSimRequest in protojson format)")
 	simCmd.Flags().StringVar(&outfile, "outfile", "", "location of output file, defaults to stdout")
 	simCmd.Flags().BoolVar(&verbose, "verbose", false, "print information during runtime")
+	simProfiles.register(simCmd)
 	simCmd.MarkFlagRequired("infile")
 }
 
@@ -36,6 +39,11 @@ func simMain(cmd *cobra.Command, args []string) {
 		log.Fatalf("failed to load input json file: %s", err)
 	}
 
+	stopProfiles, err := simProfiles.start()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	var output []byte
 	reporter := make(chan *proto.ProgressMetrics, 10)
 	core.RunRaidSimAsync(input, reporter)
@@ -49,6 +57,9 @@ func simMain(cmd *cobra.Command, args []string) {
 		if verbose {
 			fmt.Printf("Sim Progress: %d / %d\n", v.CompletedIterations, v.TotalIterations)
 		}
+	}
+	if err := stopProfiles(); err != nil {
+		log.Fatal(err)
 	}
 
 	output, err = protojson.MarshalOptions{EmitUnpopulated: true}.Marshal(finalResult)
