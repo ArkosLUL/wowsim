@@ -97,6 +97,10 @@ threads than at one ([baseline](sim-performance.INVESTIGATION.md)). Left open:
   the racial screen, verify and neighborhood rounds), and cut shards smaller when a batch has fewer jobs than
   workers. Keep the pairing (compared points share shard seeds) and the evaluation cache.
 - Set the default worker count from the scaling curve.
+- In raid mode (the batch's stage 2) J is the raid's DPS, so `setScreen` (5% of the seed's J, `surrogate.go`)
+  admits every set with two pieces in the pool and sims each with whole-raid sims: a DK's stage 2 simmed
+  Tidefury Raiment, a shaman caster set. Screen against the raider's own share of J, and report stage 2's set
+  sims before and after.
 - Takes over BIS-e2e-perf's "time whole runs" bullet ([BiS PLAN](../bis-optimizer/bis-optimizer.PLAN.md)).
 - Smaller shards change the random streams: the slow suite's picks and gains must hold within noise.
 - Verify: the optimizer tests, the slow suite, and the harness per stage before and after.
@@ -111,7 +115,8 @@ Owns: `sim/optimizer/**`, `sim/web/main.go`'s worker cap.
   metrics `ToProto` 3-5% at one iteration, `NewEnvironment` 13-37% of one-iteration cases, `NewPet` by value.
 - Verify: all 37 goldens byte-identical, the simval replay, benchstat before and after, a throughput table row.
 
-Owns: `sim/core` hot paths, and a class file only where its profile names a hot spot.
+Owns: `sim/core` hot paths, and a class file only where its profile names a hot spot; not `applyAllEffects` or
+the item-set and item-effect code, which PAR-P7-0f owns in I3.
 
 ## Order
 

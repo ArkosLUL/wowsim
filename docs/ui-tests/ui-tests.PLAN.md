@@ -29,7 +29,7 @@ Each bug went test first; the fixes are in the items' commits ([wave-loop status
 
 ## Done in wave I2
 
-UI-FIX merged: 319 tests pass, 7 skip on the Might bug below. The tooltip's late part is "Stance & Shout"
+UI-FIX merged: 319 tests pass, 7 skip on the Might bug PAR-P7-0f fixes in I3. The tooltip's late part is "Stance & Shout"
 for warriors (their own shout lands after the Buffs snapshot too) and "Form" for druids. A Blood Elf
 warrior's Arcane Torrent is 50613, the one mod-racial-trait-swap teaches; it restores nothing, so it never
 casts itself.
@@ -37,11 +37,6 @@ casts itself.
 ## Follow-ups
 
 **Sim, for a sim item:**
-- `applyAllEffects` (`sim/core/character.go`) applies the attack power multiplier twice to Blessing of Might
-  and Battle Shout in the phase snapshots: the tooltip's Buffs row reads about 75 AP (Ranged AP for
-  hunters) and, for Enhancement and Retribution, 250 Spell Dmg high, and the warrior's and bear's late row
-  about 76 AP low. FinalStats is right. The fix moves the character-stats goldens; then drop
-  `MIGHT_TWICE_*` and the partial test in `tests/gear/character_stats.spec.ts`.
 - Server parity: mod-racial-trait-swap teaches a Blood Elf druid both 28730 (mana) and 25046 (energy); the
   sim registers one.
 - Server parity, unchecked: the sim gives Demonic Pact's spell power to the whole raid. Its aura, 48090,

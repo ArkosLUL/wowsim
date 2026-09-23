@@ -56,7 +56,7 @@ G = changes goldens. FS = runs all 37 suites.
 | I | PAR-P7-MAG (G, FS) · PAR-P7-SHA · PAR-P7-DRU · PAR-P7-WLK (G) | ✔ |
 | U | UI-RESULTS · UI-GEAR · UI-RAID · UI-SETTINGS | |
 | I2 | PERF-TOOLS · PERF-CONC · BIS-seed · UI-FIX | ✔ |
-| I3 | PERF-OPT · PERF-HOT | ✔ |
+| I3 | PERF-OPT · PERF-HOT · PAR-P7-0f | ✔ |
 | I4 | PAR-DECL (G, FS) | ✔ |
 | I5 | PAR-DECL-1 (G) · PAR-DECL-2 (G) · PAR-DECL-3 (G) | ✔ |
 | J | PAR-P7-PRI (G) · PAR-P7-TANK (G) · BIS-e2e-perf · AC-3 | ✔ |
@@ -82,7 +82,8 @@ PRI, TANK and K's PAR-P8 build on them.
 
 U, the Playwright suite and the UI bugs it finds, comes before I2 (the user's call, 2026-09-23). Its items
 touch only UI and test paths, so goldens, BiS and throughput can't move, and it skips the re-baseline.
-UI-FIX joins I2 (the user's call): four fixes wave U's tests left open.
+UI-FIX joins I2 (the user's call): four fixes wave U's tests left open. PAR-P7-0f joins I3 (the user's call,
+2026-09-24): two core fixes wave I2 found.
 
 **Where the specs are:**
 
