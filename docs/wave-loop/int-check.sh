@@ -60,7 +60,7 @@ if [ -n "$changed_ui" ]; then
 		lines+="new=\$(npx eslint $f 2>&1 | grep -cE '^ +[0-9]+:[0-9]+ '); echo \"$f old=\$old new=\$new\"; "
 	done
 	printf '%s\n' "$lines" >tmp/eslint.sh
-	$DOCK exec bash tmp/eslint.sh 2>&1 | tail -30
+	$DOCK exec bash tmp/eslint.sh 2>&1 | grep -v "npm notice"
 fi
 rm -rf tmp/gofmt.sh tmp/eslint.sh tmp/eslint-old
 echo "== done"
