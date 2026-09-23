@@ -712,6 +712,9 @@ export class BulkTab extends SimTab {
 		// A picked loadout deleted or saved over since then follows what's stored now.
 		const buildTalentChips = () => {
 			const stored = new Map<string, TalentLoadout>();
+			this.simUI.individualConfig.presets.talents.forEach(preset => {
+				stored.set(preset.name, { talentsString: preset.data.talentsString, glyphs: preset.data.glyphs, name: preset.name });
+			});
 			const dataStr = window.localStorage.getItem(this.simUI.getSavedTalentsStorageKey());
 			let jsonData: Record<string, unknown> = {};
 			try {

@@ -1,5 +1,6 @@
 import { expect, type Page, test } from '@playwright/test';
 
+import { SPECS } from '../lib/page';
 import { openGear, readStats, statsAfterChange } from './gear';
 
 const statRow = (page: Page, label: string) =>
@@ -59,9 +60,19 @@ test('a saved gear set brings its bonus stats back', async ({ page }) => {
 	await expect.poll(() => readStats(page)).toEqual(bonus);
 });
 
-test.fixme('the breakdown of every stat adds up to its total', async ({ page }) => {
-	// sim/core measures the phases before stance and form multipliers, which only the total has
-	await openGear(page);
+test('what a stance, form or own shout adds is its own part of the breakdown', async ({ page }) => {
+	await openGear(page, 'warrior');
+	expect((await breakdown(page, 'Strength'))['Stance & Shout']).toBeGreaterThan(0);
+	// the preset's own Commanding Shout, which no stance gives
+	expect((await breakdown(page, 'Health'))['Stance & Shout']).toBeGreaterThan(0);
+	await openGear(page, 'feral_tank_druid');
+	expect((await breakdown(page, 'Armor'))['Form']).toBeGreaterThan(0);
+});
+
+// Each stat whose breakdown doesn't add up, as label -> parts minus total.
+async function mismatchedBreakdowns(page: Page, spec: string): Promise<Record<string, number>> {
+	await openGear(page, spec);
+	const off: Record<string, number> = {};
 	for (const label of Object.keys(await readStats(page))) {
 		if (label == 'Melee Crit Cap') continue;
 		const parts = await breakdown(page, label);
@@ -69,6 +80,26 @@ test.fixme('the breakdown of every stat adds up to its total', async ({ page }) 
 			.filter(([k]) => k != 'Total')
 			.reduce((a, [, v]) => a + v, 0);
 		// each part is rounded on its own
-		expect(Math.abs(sum - parts['Total']), label).toBeLessThanOrEqual(3);
+		if (Math.abs(sum - parts['Total']) > 3) off[label] = sum - parts['Total'];
 	}
-});
+	return off;
+}
+
+// presets pairing Blessing of Might or Battle Shout with a 10% attack power buff like Abomination's Might
+const MIGHT_TWICE_MULTIPLIED = ['deathknight', 'enhancement_shaman', 'hunter', 'protection_paladin', 'retribution_paladin', 'rogue', 'tank_deathknight'];
+// enhancement and retribution turn part of their attack power into spell power
+const MIGHT_TWICE_STATS = ['Attack Power', 'Ranged AP', 'Spell Dmg'];
+
+for (const spec of SPECS) {
+	const mightTwice = MIGHT_TWICE_MULTIPLIED.includes(spec);
+	test(`the ${spec} breakdown of every stat adds up to its total`, async ({ page }) => {
+		test.fixme(mightTwice, "sim/core's Buffs snapshot applies the 10% attack power buff to Might twice");
+		expect(await mismatchedBreakdowns(page, spec)).toEqual({});
+	});
+	if (mightTwice) {
+		test(`the ${spec} breakdown of every stat but attack and spell power adds up to its total`, async ({ page }) => {
+			const off = await mismatchedBreakdowns(page, spec);
+			expect(Object.keys(off).filter(label => !MIGHT_TWICE_STATS.includes(label))).toEqual([]);
+		});
+	}
+}

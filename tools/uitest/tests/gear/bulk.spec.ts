@@ -262,3 +262,31 @@ test('talents saved on the talents tab can be picked for the batch, and the pick
 	await expect(chip('Mine')).toBeVisible();
 	await expect(chip('Mine')).not.toHaveClass(/active/);
 });
+
+test("the spec's preset talents can be picked for the batch too, and the batch sims them", async ({ page }) => {
+	test.setTimeout(90_000);
+	await openGear(page);
+	await setIterations(page, 50);
+	await openBulk(page);
+	await setupBox(page, 'Sim Talents').check();
+
+	const presets = '#talents-tab .saved-data-presets .saved-data-set-chip';
+	const names = await page.locator(`${presets} .saved-data-set-name`).allTextContents();
+	expect(names.length).toBeGreaterThan(1);
+	const chip = (name: string) =>
+		bulk(page).locator('.talents-picker-container .saved-data-set-chip', { has: page.locator(`.saved-data-set-name:text-is(${JSON.stringify(name)})`) });
+	for (const name of names) await expect(chip(name)).toBeVisible();
+
+	// the batch skips a loadout the same as the worn talents
+	const pick = (await page.locator(`${presets}:not(.active) .saved-data-set-name`).first().textContent())!;
+	expect(await page.locator(`${presets}.active`).count(), 'a preset is worn').toBe(1);
+	await chip(pick).locator('a').click();
+	await expect(chip(pick)).toHaveClass(/active/);
+	await reloadBulk(page);
+	await expect(chip(pick)).toHaveClass(/active/);
+
+	await addBySearch(page, 'Penumbra');
+	await bulk(page).locator('button', { hasText: 'Simulate Batch' }).click();
+	await expect(bulk(page).locator('.bulk-results')).toBeVisible({ timeout: 60_000 });
+	await expect(bulk(page).locator('.bulk-results .talent-loadout-text', { hasText: `Talent loadout used: ${pick}` }).first()).toBeVisible();
+});

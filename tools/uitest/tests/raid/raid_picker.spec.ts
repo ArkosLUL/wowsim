@@ -15,24 +15,22 @@ test('every preset adds a raider', async ({ page }) => {
 	await openRaid(page);
 	const presets = await page.locator('.new-player-picker-root a').evaluateAll(links => links.map(link => link.getAttribute('data-bs-title')!));
 
-	// a 25-player raid at a time: a bigger one trips the sim bug in the fixme below
-	for (let start = 0; start < presets.length; start += 25) {
-		const batch = presets.slice(start, start + 25);
+	for (let start = 0; start < presets.length; start += 40) {
+		const batch = presets.slice(start, start + 40);
 		await page.evaluate(() => localStorage.clear());
 		await reloadRaid(page);
+		await raidSize(page).selectOption({ label: '40' });
 		for (const [i, preset] of batch.entries()) {
 			await addPreset(page, preset, i);
 		}
-		const names = await roster(page);
+		const names = await roster(page, 40);
 		expect(names.slice(0, batch.length).filter(name => name == '')).toEqual([]);
 		expect(await raiderCount(page)).toBe(batch.length);
 	}
 	expect(errors).toEqual([]);
 });
 
-test.fixme('a 40-player raid with a Demonology warlock gets its character stats', async ({ page }) => {
-	// sim/warlock/talents.go sizes Demonic Pact's aura table for 25 raiders, so computeStats panics
-	// as soon as anyone sits in groups 6 to 8
+test('a 40-player raid with a Demonology warlock gets its character stats', async ({ page }) => {
 	await openRaid(page);
 	await raidSize(page).selectOption({ label: '40' });
 	await addPreset(page, 'Demonology Warlock', 0);
