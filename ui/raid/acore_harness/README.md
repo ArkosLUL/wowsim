@@ -3,7 +3,8 @@
 Offline checks for the AzerothCore raid importer ([PLAN](../../../docs/azerothcore-raid-import/azerothcore-raid-import.PLAN.md)).
 They import the committed roster export through the shipped `acore_roster.ts` and `acore_importer.ts` and
 print what came out, so the parts of the importer that aren't about the DOM can be checked without a
-browser. Nothing here drives a browser, so the dialog, the grid and the alerts still need a person.
+browser. The dialog, the grid and the alerts get their browser tests in
+[acore_import.spec.ts](../../../tools/uitest/tests/raid/acore_import.spec.ts).
 
 | Harness | Checks |
 |---|---|

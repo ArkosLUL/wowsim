@@ -9,7 +9,7 @@ import { Blessings } from '../core/proto/paladin';
 import { BlessingsAssignments } from '../core/proto/ui';
 import { ActionId } from '../core/proto_utils/action_id';
 import {
-	makeDefaultBlessings,
+	makeBlankBlessingsAssignments,
 	classColors,
 	naturalSpecOrder,
 	specNames,
@@ -33,7 +33,9 @@ export class BlessingsPicker extends Component {
 	constructor(parentElem: HTMLElement, raidSimUI: RaidSimUI) {
 		super(parentElem, 'blessings-picker-root');
 		this.simUI = raidSimUI;
-		this.assignments = BlessingsAssignments.clone(makeDefaultBlessings(4));
+		// blank until the saved or default blessings arrive: a default's icon still loading by then
+		// would paint over a blessing the saved raid left blank
+		this.assignments = makeBlankBlessingsAssignments(MAX_PALADINS);
 
 		const specs = naturalSpecOrder
 			.filter(spec => implementedSpecs.includes(spec))
@@ -122,6 +124,11 @@ export class BlessingsPicker extends Component {
 
 	setAssignments(eventID: EventID, newAssignments: BlessingsAssignments) {
 		this.assignments = BlessingsAssignments.clone(newAssignments);
+		// a raid saved or imported with fewer paladins still gets a column for each one who joins later
+		const missing = MAX_PALADINS - this.assignments.paladins.length;
+		if (missing > 0) {
+			this.assignments.paladins.push(...makeBlankBlessingsAssignments(missing).paladins);
+		}
 		this.changeEmitter.emit(eventID);
 	}
 }

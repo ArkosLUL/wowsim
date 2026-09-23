@@ -9,7 +9,7 @@ import { emptyUnitReference } from '../core/proto_utils/utils';
 
 import { RaidSimUI } from './raid_sim_ui';
 
-const MAX_TANKS = 4;
+export const MAX_TANKS = 4;
 
 export class TanksPicker extends Component {
 	readonly raidSimUI: RaidSimUI;
@@ -33,7 +33,6 @@ export class TanksPicker extends Component {
 			new UnitReferencePicker<Raid>(row, raid, raid, {
 				extraCssClasses: ['tank-picker'],
 				noTargetLabel: 'Unassigned',
-				compChangeEmitter: raid.compChangeEmitter,
 
 				changedEvent: (raid: Raid) => raid.tanksChangeEmitter,
 				getValue: (raid: Raid) => raid.getTanks()[i] || emptyUnitReference(),

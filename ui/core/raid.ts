@@ -38,9 +38,6 @@ export class Raid {
 	// Should always hold exactly MAX_NUM_PARTIES elements.
 	private parties: Array<Party>;
 
-	// Cached return value for getActivePlayers().
-	private activePlayers: Array<Player<any>>;
-
 	readonly sim: Sim;
 
 	constructor(sim: Sim) {
@@ -52,8 +49,6 @@ export class Raid {
 			newParty.changeEmitter.on(eventID => this.changeEmitter.emit(eventID));
 			return newParty;
 		});
-		this.activePlayers = [];
-
 		this.numActivePartiesChangeEmitter.on(eventID => this.compChangeEmitter.emit(eventID));
 
 		this.changeEmitter = TypedEvent.onAny([
@@ -63,10 +58,6 @@ export class Raid {
 			this.tanksChangeEmitter,
 			this.targetDummiesChangeEmitter,
 		], 'RaidChange');
-
-		this.changeEmitter.on(() => {
-			this.activePlayers = [];
-		});
 	}
 
 	size(): number {
@@ -196,15 +187,13 @@ export class Raid {
 			this.numActivePartiesChangeEmitter.emit(eventID);
 		}
 	}
+	// Not cached: listeners on the sim's settings can run before this raid's own change event on a
+	// load that changes both, and would read the old raid.
 	getActivePlayers(): Array<Player<any>> {
-		if (this.activePlayers.length == 0) {
-			const activeParties = this.getParties().filter((party, i) => i < this.numActiveParties);
-			this.activePlayers = activeParties
-				.map(party => party.getPlayers())
-				.flat()
-				.filter(player => player != null) as Array<Player<any>>;
-		}
-		return this.activePlayers;
+		return this.parties
+			.slice(0, this.numActiveParties)
+			.flatMap(party => party.getPlayers())
+			.filter((player): player is Player<any> => player != null);
 	}
 
 	toProto(forExport?: boolean, forSimming?: boolean): RaidProto {
