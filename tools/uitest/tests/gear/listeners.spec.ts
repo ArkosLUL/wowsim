@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 
 import { closePicker, detached, openGear, openPicker } from './gear';
 
@@ -50,8 +50,7 @@ test('redrawing the gear tab lets go of the sockets it drew before', async ({ pa
 	await expect.poll(() => detached(page, '.gem-socket-container')).toBe(0);
 });
 
-test.fixme('closing a modal lets go of every window listener it added', async ({ page }) => {
-	// base_modal.ts never disposes the Bootstrap Modal, which keeps a window resize listener
+test('closing a modal lets go of every window listener it added', async ({ page }) => {
 	await openGear(page);
 	await openAndClose(page, 1);
 	const settled = (await resizeListeners(page)).length;

@@ -105,3 +105,21 @@ test('the search and the raider picked narrow the log together', async ({ page }
 		expect(text).toContain(mage.name);
 	}
 });
+
+test('the log is only drawn once its tab is opened, for the raider picked by then', async ({ page }) => {
+	await showFixture(page, logged);
+	const mage = findPlayer(logged, 'Arcane');
+	await pickPlayer(page, label(mage));
+	// a raid's log runs to tens of thousands of rows, which slow every other tab down while they're on the page
+	await expect(lines(page)).toHaveCount(0);
+
+	await openTab(page, 'logTab');
+	await expect(lines(page).first()).toBeVisible();
+	const tags = [`[${mage.name} ${mage.raidIndex + 1}]`, label(mage)];
+	for (const text of await lineTexts(page)) {
+		expect(
+			tags.some(tag => text.includes(tag)),
+			text,
+		).toBe(true);
+	}
+});

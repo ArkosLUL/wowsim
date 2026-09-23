@@ -1,19 +1,9 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 
-import type { Fixture, FixturePlayer } from '../lib/fixture';
+import { type Fixture, type FixturePlayer, showFixture } from '../lib/fixture';
 
 // showFixture for the page the individual sims open, which hides the raid-only parts.
-export const showIndividualFixture = async (page: Page, fixture: Fixture) => {
-	await page.goto('/wotlk/detailed_results/index.html?isIndividualSim');
-	await page.evaluate(s => window.postMessage({ settings: s }, '*'), {
-		showDamageMetrics: true,
-		showThreatMetrics: true,
-		showHealingMetrics: true,
-		showExperimental: true,
-	});
-	await page.evaluate(run => window.postMessage({ runData: { run } }, '*'), fixture.run);
-	await page.locator('.dr-root:not(.dr-no-results)').waitFor();
-};
+export const showIndividualFixture = (page: Page, fixture: Fixture) => showFixture(page, fixture, { url: '/wotlk/detailed_results/index.html?isIndividualSim' });
 
 export const pickPlayer = async (page: Page, text: string) => {
 	await page.locator('.player-filter-root .dropdown-picker-button').click();

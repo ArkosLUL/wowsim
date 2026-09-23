@@ -82,6 +82,7 @@ export class BaseModal extends Component {
 		}
 
 		this.modal = new Modal(this.rootElem);
+		this.addOnDisposeCallback(() => this.modal.dispose());
 		this.open();
 
 		this.rootElem.addEventListener('hidden.bs.modal', (event) => {

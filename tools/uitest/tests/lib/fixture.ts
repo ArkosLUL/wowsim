@@ -64,9 +64,15 @@ const ALL_METRICS = {
 	showExperimental: true,
 };
 
+interface ShowOptions {
+	// e.g. '/wotlk/detailed_results/index.html?isIndividualSim', the page the individual sims open
+	url?: string;
+	settings?: Record<string, boolean>;
+}
+
 // Opens the standalone results page and hands it the fixture the way the sim page does.
-export async function showFixture(page: Page, fixture: Fixture, settings: Record<string, boolean> = ALL_METRICS) {
-	await page.goto('/wotlk/detailed_results/index.html');
+export async function showFixture(page: Page, fixture: Fixture, { url = '/wotlk/detailed_results/index.html', settings = ALL_METRICS }: ShowOptions = {}) {
+	await page.goto(url);
 	await page.evaluate(s => window.postMessage({ settings: s }, '*'), settings);
 	await page.evaluate(run => window.postMessage({ runData: { run } }, '*'), fixture.run);
 	await page.locator('.dr-root:not(.dr-no-results)').waitFor();

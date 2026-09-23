@@ -315,6 +315,9 @@ export abstract class DetailedResults extends Component {
 			cssScheme: cssScheme,
 			resultsEmitter: this.resultsEmitter,
 		});
+		const logTabLink = this.rootElem.querySelector('#logTabTab');
+		logTabLink?.addEventListener('show.bs.tab', () => log.setTabOpen(true));
+		logTabLink?.addEventListener('hide.bs.tab', () => log.setTabOpen(false));
 
 		this.rootElem.classList.add('hide-threat-metrics');
 		this.rootElem.classList.add('hide-healing-metrics');

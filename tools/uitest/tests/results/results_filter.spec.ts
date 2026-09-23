@@ -1,6 +1,7 @@
-import { expect, test } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 
 import { Fixture, label, loadFixture, showFixture } from '../lib/fixture';
+import { pickPlayer, topline } from './helpers';
 
 let fixture: Fixture;
 
@@ -8,14 +9,8 @@ test.beforeAll(() => {
 	fixture = loadFixture();
 });
 
-const pickPlayer = async (page: any, text: string) => {
-	await page.locator('.player-filter-root .dropdown-picker-button').click();
-	await page.locator('.player-filter-root .dropdown-picker-item button', { hasText: text }).first().click();
-};
-
-const selectedPlayer = (page: any) => page.locator('.player-filter-root .dropdown-picker-button');
-// The healing tab carries its own topline, so the damage one has to be named explicitly.
-const toplineDps = (page: any) => page.locator('.damage-content .results-sim-dps .topline-result-avg');
+const selectedPlayer = (page: Page) => page.locator('.player-filter-root .dropdown-picker-button');
+const toplineDps = (page: Page) => topline(page, 'damage-content', 'dps');
 
 test('the player dropdown offers every raider once', async ({ page }) => {
 	await showFixture(page, fixture);

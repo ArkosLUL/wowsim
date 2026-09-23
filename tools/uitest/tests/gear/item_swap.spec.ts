@@ -1,7 +1,7 @@
-import { expect, test, type Locator, type Page } from '@playwright/test';
+import { expect, type Locator, type Page, test } from '@playwright/test';
 
 import { openSimTab } from '../lib/page';
-import { type Db, closePicker, equipRow, equippedId, listSize, loadDb, modal, openGear, openPicker, pane, rowEnchants, rowIds, showTab } from './gear';
+import { closePicker, type Db, equippedId, equipRow, listSize, loadDb, modal, openGear, openPicker, pane, rowEnchants, rowIds, showTab } from './gear';
 
 // Deathknight swaps main and off hand.
 const SPEC = 'deathknight';

@@ -1,4 +1,4 @@
-import { Tooltip } from 'bootstrap';
+import { Tab, Tooltip } from 'bootstrap';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { element } from 'tsx-vanilla';
 
@@ -47,7 +47,10 @@ export class SimHeader extends Component {
 	}
 
 	activateTab(className: string) {
-		(this.simTabsContainer.getElementsByClassName(className)[0] as HTMLElement).click();
+		const link = this.simTabsContainer.querySelector<HTMLElement>(`.${className} > .nav-link`);
+		if (link) {
+			Tab.getOrCreateInstance(link).show();
+		}
 	}
 
 	addTab(title: string, contentId: string) {

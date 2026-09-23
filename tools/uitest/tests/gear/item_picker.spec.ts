@@ -1,13 +1,14 @@
-import { expect, test, type Locator } from '@playwright/test';
+import { expect, type Locator, test } from '@playwright/test';
 
 import { openSimTab, watchForErrors } from '../lib/page';
+import { loadCatalog, obtainableBy } from './catalog';
 import {
-	FLAT_RATINGS,
 	closeModal,
 	closePicker,
-	equipRow,
 	equippedId,
+	equipRow,
 	expectMovedBy,
+	FLAT_RATINGS,
 	listSize,
 	loadDb,
 	openGear,
@@ -23,7 +24,6 @@ import {
 	stat,
 	statsAfterChange,
 } from './gear';
-import { loadCatalog, obtainableBy } from './catalog';
 
 test('equipping an item shows it in the slot and moves the stats by what it carries', async ({ page }) => {
 	const errors = watchForErrors(page);

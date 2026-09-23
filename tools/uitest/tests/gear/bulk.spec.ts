@@ -1,11 +1,11 @@
-import { expect, test, type Locator, type Page } from '@playwright/test';
+import { expect, type Locator, type Page, test } from '@playwright/test';
 
-import { openSimTab } from '../lib/page';
+import { openSimTab, watchForErrors } from '../lib/page';
 import {
 	closePicker,
 	detached,
-	equipRow,
 	equippedId,
+	equipRow,
 	listSize,
 	loadDb,
 	modal,
@@ -157,8 +157,7 @@ test('a batch item is offered the enchants that fit it, not the worn one', async
 });
 
 test('the Auto Gem defaults list gems on opening, and a pick shows in its socket after a reload', async ({ page }) => {
-	const errors: string[] = [];
-	page.on('console', message => message.type() == 'error' && errors.push(message.text()));
+	const errors = watchForErrors(page);
 	await openGear(page);
 	await openBulk(page);
 
@@ -169,9 +168,10 @@ test('the Auto Gem defaults list gems on opening, and a pick shows in its socket
 	const name = (await rowNames(modal(page)))[0];
 	await list.first().locator('a').click();
 	await expect(page.locator('.modal.show')).toHaveCount(0);
+	// the icon's url is looked up after the pick
 	const icon = defaultSockets(page).nth(1).locator('.gem-icon');
+	await expect(icon).toHaveAttribute('src', /\/icons\/large\/\w+\.jpg$/);
 	const src = await icon.getAttribute('src');
-	expect(src).toMatch(/\/icons\/large\/\w+\.jpg$/);
 
 	// opens again, still listing gems
 	await defaultSockets(page).nth(1).click();
@@ -182,7 +182,7 @@ test('the Auto Gem defaults list gems on opening, and a pick shows in its socket
 	await expect(defaultSockets(page).nth(1).locator('.gem-icon')).toHaveAttribute('src', src!);
 	// the sockets left empty show just the socket, not a broken gem image
 	for (const i of [0, 2, 3]) {
-		await expect(defaultSockets(page).nth(i).locator('.gem-icon')).not.toHaveAttribute('src', /large\/\.jpg/);
+		await expect(defaultSockets(page).nth(i).locator('.gem-icon')).toBeHidden();
 	}
 	expect(errors).toEqual([]);
 	expect(name).toBeTruthy();

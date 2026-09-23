@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-import { closePicker, equipRow, equippedGems, equippedId, loadDb, openGear, openPicker, pane, rowIds, showTab } from './gear';
+import { closePicker, equippedGems, equippedId, equipRow, loadDb, openGear, openPicker, pane, rowIds, showTab } from './gear';
 
 test('a unique item worn in the other ring or trinket slot leaves the first one', async ({ page }) => {
 	await openGear(page);

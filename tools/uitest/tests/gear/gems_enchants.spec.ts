@@ -1,15 +1,14 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 
 import { openSimTab, watchForErrors } from '../lib/page';
 import {
-	GEM_COLOR,
-	SLOTS,
-	type Db,
 	closePicker,
-	equipRow,
+	type Db,
 	equippedGems,
 	equippedId,
+	equipRow,
 	expectMovedBy,
+	GEM_COLOR,
 	gemFits,
 	loadDb,
 	minus,
@@ -23,6 +22,7 @@ import {
 	rowIds,
 	rows,
 	showTab,
+	SLOTS,
 	statsAfterChange,
 	warnings,
 } from './gear';

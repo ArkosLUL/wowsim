@@ -1007,8 +1007,7 @@ export class OptimizerTab extends SimTab {
 				player.setRacialTraits(eventID, best.racialTraits == player.getRace() ? Race.RaceUnknown : best.racialTraits);
 			}
 		});
-		// simHeader.activateTab clicks the <li>, which Bootstrap's tab handler ignores
-		this.gearTab.navLink.click();
+		this.simUI.simHeader.activateTab('gear-tab');
 	}
 
 	// current bonus stats, which the run simmed with; the set then shows as active after Equip

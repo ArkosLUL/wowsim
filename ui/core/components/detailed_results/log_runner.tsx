@@ -27,6 +27,9 @@ export class LogRunner extends ResultComponent {
 	// search and debug toggle only pick which rows show.
 	private rows: Array<LogRow> = [];
 	private rowsFor: SimResult | null = null;
+	// Rows are only built while the log tab is open, and the first change after it closes takes them
+	// off the page: that many elements slow every other tab down.
+	private tabOpen = false;
 
 	readonly showDebugChangeEmitter = new TypedEvent<void>('Show Debug');
 
@@ -80,27 +83,15 @@ export class LogRunner extends ResultComponent {
 		});
 	}
 
-	onSimResult(resultData: SimResultData): void {
-		if (resultData.result !== this.rowsFor) {
-			this.rows = resultData.result.logs
-				.filter(log => !log.isCastCompleted())
-				.filter(log => log.raw.length > 0)
-				.map(log => {
-					const elem = (
-						<tr>
-							<td className="log-timestamp">{log.formattedTimestamp()}</td>
-							<td className="log-event">{this.newEventFrom(log)}</td>
-						</tr>
-					) as HTMLElement;
-					return {
-						log,
-						elem,
-						text: elem.textContent!.toLowerCase(),
-						isDebug: log.raw.includes('[DEBUG]'),
-					};
-				});
-			this.rowsFor = resultData.result;
+	// Closing leaves the rows up, so the tab doesn't fade out empty.
+	setTabOpen(open: boolean) {
+		this.tabOpen = open;
+		if (open) {
+			this.render();
 		}
+	}
+
+	onSimResult(_resultData: SimResultData): void {
 		this.render();
 	}
 
@@ -108,13 +99,46 @@ export class LogRunner extends ResultComponent {
 		if (!this.hasLastSimResult()) {
 			return;
 		}
-		const isAbout = this.unitMatcher(this.getLastSimResult());
+		const resultData = this.getLastSimResult();
+		if (!this.tabOpen) {
+			this.logsContainer.replaceChildren();
+			if (resultData.result !== this.rowsFor) {
+				this.rows = [];
+				this.rowsFor = null;
+			}
+			return;
+		}
+		if (resultData.result !== this.rowsFor) {
+			this.rows = this.buildRows(resultData.result);
+			this.rowsFor = resultData.result;
+		}
+		const isAbout = this.unitMatcher(resultData);
 
 		const shown = document.createDocumentFragment();
 		this.rows
 			.filter(row => (this.showDebug || !row.isDebug) && isAbout(row.log) && (!this.search || row.text.includes(this.search)))
 			.forEach(row => shown.appendChild(row.elem));
 		this.logsContainer.replaceChildren(shown);
+	}
+
+	private buildRows(result: SimResult): Array<LogRow> {
+		return result.logs
+			.filter(log => !log.isCastCompleted())
+			.filter(log => log.raw.length > 0)
+			.map(log => {
+				const elem = (
+					<tr>
+						<td className="log-timestamp">{log.formattedTimestamp()}</td>
+						<td className="log-event">{this.newEventFrom(log)}</td>
+					</tr>
+				) as HTMLElement;
+				return {
+					log,
+					elem,
+					text: elem.textContent!.toLowerCase(),
+					isDebug: log.raw.includes('[DEBUG]'),
+				};
+			});
 	}
 
 	// Lines where the picked raider (or one of their pets) and the picked target take part, as source

@@ -94,8 +94,7 @@ class BulkSimResultRenderer {
 					const item = simUI.sim.db.lookupItemSpec(itemAdded.item!);
 					simUI.player.equipItem(TypedEvent.nextEventID(), itemAdded.slot, item);
 				});
-				// simHeader.activateTab clicks the <li>, which Bootstrap's tab handler ignores
-				simUI.rootElem.querySelector<HTMLElement>('a[data-bs-target="#gear-tab"]')?.click();
+				simUI.simHeader.activateTab('gear-tab');
 			};
 
 			parent.appendChild(equipBtn);

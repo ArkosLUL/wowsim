@@ -1,7 +1,7 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 
 import { openSimTab } from '../lib/page';
-import { type DbItem, closePicker, equippedId, loadDb, openGear, openPicker, pane, picker, readStats, showTab, statsAfterChange } from './gear';
+import { closePicker, type DbItem, equippedId, loadDb, openGear, openPicker, pane, picker, readStats, showTab, statsAfterChange } from './gear';
 
 // mod-reforging's names for the item_template stat types, and the stats panel rows each lands on.
 const STAT_TYPES: Record<number, { name: string; label?: string }> = {

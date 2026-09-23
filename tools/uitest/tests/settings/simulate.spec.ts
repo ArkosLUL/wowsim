@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 
 import { checkbox, numberInput, openSpec, reloadSim, setNumber } from './helpers';
 
@@ -36,12 +36,14 @@ test('a fixed RNG seed gives the same DPS every run, and shows as the last seed 
 	await options.locator('.close-button').click();
 	await expect(page.locator('.modal.show')).toHaveCount(0);
 
-	const dps = page.locator('.sim-sidebar-results .results-sim-dps .topline-result-avg');
+	const results = page.locator('.sim-sidebar-results');
+	const dps = results.locator('.results-sim-dps .topline-result-avg');
 	const runs: string[] = [];
 	for (let i = 0; i < 2; i++) {
+		// A quick run can be over before its progress shows, so mark the old result and wait for a new one.
+		await results.evaluate(elem => elem.querySelector('.results-sim-reference')?.setAttribute('data-stale', ''));
 		await page.locator('.sim-sidebar-actions button', { hasText: 'Simulate' }).click();
-		await expect(page.locator('.sim-sidebar-results')).toContainText('iterations complete');
-		await expect(page.locator('.sim-sidebar-results')).not.toContainText('iterations complete', { timeout: 60_000 });
+		await expect(results.locator('.results-sim-reference:not([data-stale])')).toHaveCount(1, { timeout: 60_000 });
 		runs.push(await dps.innerText());
 	}
 	expect(runs[1]).toBe(runs[0]);

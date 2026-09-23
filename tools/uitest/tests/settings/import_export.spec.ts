@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
-import { test as base, expect, type Page } from '@playwright/test';
+import { expect, type Page, test as base } from '@playwright/test';
 
 import { openSimTab, watchForErrors } from '../lib/page';
 import { acceptDialogs, checkbox, icon, numberInput, openSpec, savedData, select, setNumber, storedSettings, stubWowheadTooltips } from './helpers';

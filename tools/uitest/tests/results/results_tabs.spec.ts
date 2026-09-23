@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 
 import { Fixture, label, loadFixture, showFixture } from '../lib/fixture';
 import { watchForErrors } from '../lib/page';
+import { openTab, pickPlayer } from './helpers';
 
 let fixture: Fixture;
 let logged: Fixture;
@@ -23,18 +24,9 @@ const TABS = [
 	'logTab',
 ];
 
-const openTab = async (page: any, tab: string) => {
-	await page.locator(`[data-bs-target="#${tab}"]`).click();
-	await expect(page.locator(`#${tab}`)).toHaveClass(/show/);
-};
-
-const pickPlayer = async (page: any, text: string) => {
-	await page.locator('.player-filter-root .dropdown-picker-button').click();
-	await page.locator('.player-filter-root .dropdown-picker-item button', { hasText: text }).first().click();
-};
-
 for (const tab of TABS) {
 	test(`the ${tab} draws for the whole raid`, async ({ page }) => {
+		test.slow(tab == 'logTab', "the raid's log puts tens of thousands of rows on the page");
 		const errors = watchForErrors(page);
 		await showFixture(page, logged);
 		await openTab(page, tab);
@@ -68,6 +60,7 @@ test('the casts tab counts casts for the raider that was picked', async ({ page 
 });
 
 test('the log tab shows the fight from the start', async ({ page }) => {
+	test.slow(true, "the raid's log puts tens of thousands of rows on the page");
 	await showFixture(page, logged);
 	await openTab(page, 'logTab');
 

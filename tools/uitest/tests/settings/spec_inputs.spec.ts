@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-import { SPECS, openSimTab, watchForErrors } from '../lib/page';
+import { openSimTab, SPECS, watchForErrors } from '../lib/page';
 import { changeEverything, numberInput, openSpec, reloadSim, setNumber, snapshot } from './helpers';
 
 for (const spec of SPECS) {

@@ -1,13 +1,12 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, type Page, type Request, test } from '@playwright/test';
 
 import { openSimTab, watchForErrors } from '../lib/page';
 import {
-	GEM_COLOR,
-	SLOTS,
 	closePicker,
 	equippedGems,
 	equippedId,
 	expectMovedBy,
+	GEM_COLOR,
 	gemStats,
 	loadDb,
 	openGear,
@@ -16,6 +15,7 @@ import {
 	picker,
 	plus,
 	readStats,
+	SLOTS,
 	statsAfterChange,
 	warnings,
 } from './gear';
@@ -24,9 +24,27 @@ async function allGems(page: Page): Promise<number[][]> {
 	return Promise.all(SLOTS.map(slot => equippedGems(page, slot)));
 }
 
-// Resolves once `read` has returned the same value for `quietMs`: Suggest Gems re-gems the set
-// several times while it works and says nothing when it's done.
-async function settled<T>(read: () => Promise<T>, quietMs = 1500): Promise<T> {
+// How long since the page last had a stats request out, 0 while one is. Call it before the action
+// it's timing, so it sees that action's first request.
+function statsIdle(page: Page): () => number {
+	let pending = 0;
+	let last = Date.now();
+	const track = (request: Request, step: number) => {
+		if (request.url().endsWith('/computeStats')) {
+			pending += step;
+			last = Date.now();
+		}
+	};
+	page.on('request', request => track(request, 1));
+	page.on('requestfinished', request => track(request, -1));
+	page.on('requestfailed', request => track(request, -1));
+	return () => (pending > 0 ? 0 : Date.now() - last);
+}
+
+// Resolves once `read` has returned the same value, and no stats request has been out, for
+// `quietMs`: Suggest Gems re-gems the set many times, a stats round trip each, and says nothing
+// when it's done. A slow server stretches the round trips, not the gaps between them.
+async function settled<T>(read: () => Promise<T>, idle: () => number, quietMs = 1000): Promise<T> {
 	let last = JSON.stringify(await read());
 	let since = Date.now();
 	await expect
@@ -37,7 +55,7 @@ async function settled<T>(read: () => Promise<T>, quietMs = 1500): Promise<T> {
 					last = now;
 					since = Date.now();
 				}
-				return Date.now() - since >= quietMs;
+				return Date.now() - since >= quietMs && idle() >= quietMs;
 			},
 			{ timeout: 30_000 },
 		)
@@ -107,8 +125,9 @@ for (const spec of ['warrior', 'feral_druid', 'hunter', 'feral_tank_druid']) {
 		await page.locator('#gear-tab .gem-summary-root .gem-reset-button').click();
 		await expect.poll(async () => (await allGems(page)).flat().filter(id => id > 0)).toEqual([]);
 
+		const idle = statsIdle(page);
 		await page.locator('.suggest-gems-action').click();
-		const gems = await settled(() => allGems(page));
+		const gems = await settled(() => allGems(page), idle);
 
 		for (const [i, slot] of SLOTS.entries()) {
 			const id = await equippedId(page, slot);

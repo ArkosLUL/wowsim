@@ -1,7 +1,7 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 
 import { openSimTab } from '../lib/page';
-import { SLOTS, closePicker, equippedId, openGear, openPicker, pane, picker, readStats, statsAfterChange } from './gear';
+import { closePicker, equippedId, openGear, openPicker, pane, picker, readStats, SLOTS, statsAfterChange } from './gear';
 
 const sets = (page: Page) => page.locator('#gear-tab .saved-data-manager-root');
 const chip = (page: Page, name: string) =>
