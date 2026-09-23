@@ -1,0 +1,593 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Architecture review for wowsimwotlk</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+      mermaid.initialize({ startOnLoad: false, theme: "neutral", securityLevel: "loose", flowchart: { htmlLabels: true } });
+      const blocks = [...document.querySelectorAll("pre.mermaid")];
+      for (const [i, pre] of blocks.entries()) {
+        const text = pre.innerHTML.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
+        const { svg } = await mermaid.render(`diagram-${i}`, text);
+        pre.innerHTML = svg;
+        pre.dataset.rendered = "true";
+      }
+    </script>
+    <style>
+      .seam { border-style: dashed; }
+      .leak { color: #dc2626; }
+      .deep { background: linear-gradient(135deg, #0f172a, #1e293b); color: #e2e8f0; }
+      .faded { opacity: 0.45; }
+      .diagram { min-height: 300px; }
+      .mermaid svg { max-width: 100%; height: auto; }
+      .schem { font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; }
+    </style>
+  </head>
+  <body class="bg-stone-50 text-slate-900 font-sans">
+    <main class="max-w-5xl mx-auto px-6 py-12 space-y-12">
+      <header class="space-y-4">
+        <h1 class="font-serif text-4xl">wowsimwotlk: deepening candidates</h1>
+        <p class="text-sm text-slate-500">2026-09-23 · scope from git history: per-class parity items, <code>sim/core/pet.go</code>, the BiS optimizer, server-data tools</p>
+        <div class="flex flex-wrap gap-4 text-xs text-slate-600">
+          <span class="flex items-center gap-2"><span class="inline-block w-5 h-4 border border-slate-500 bg-white"></span>module</span>
+          <span class="flex items-center gap-2"><span class="inline-block w-5 h-0 border-t-2 border-dashed border-slate-500"></span>seam</span>
+          <span class="flex items-center gap-2"><span class="inline-block w-5 h-0 border-t-2 border-red-600"></span>leakage</span>
+          <span class="flex items-center gap-2"><span class="inline-block w-5 h-4 deep rounded-sm"></span>deep module</span>
+        </div>
+      </header>
+
+      <section id="candidates" class="space-y-10">
+
+        <!-- 1 -->
+        <article id="c1" class="rounded-xl border border-slate-200 bg-white p-6 space-y-5 shadow-sm">
+          <div class="flex flex-wrap items-baseline justify-between gap-3">
+            <h2 class="font-serif text-2xl">1 · One module owns "add to the dot"</h2>
+            <div class="flex gap-2 text-xs">
+              <span class="rounded-full bg-emerald-100 text-emerald-800 px-3 py-1 font-medium">Strong</span>
+              <span class="rounded-full bg-slate-100 text-slate-700 px-3 py-1">in-process</span>
+            </div>
+          </div>
+          <ul class="font-mono text-sm text-slate-600 grid sm:grid-cols-2 gap-x-6">
+            <li>sim/core/delayed_periodic.go</li>
+            <li>sim/warrior/deep_wounds.go</li>
+            <li>sim/paladin/talents.go (Righteous Vengeance)</li>
+            <li>sim/hunter/talents.go (Piercing Shots)</li>
+            <li>sim/mage/ignite.go</li>
+            <li>sim/shaman/{lightning_bolt,lavaburst}.go</li>
+            <li>sim/druid/items.go (Languish)</li>
+            <li>sim/deathknight/talents_unholy.go (Unholy Blight)</li>
+          </ul>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="rounded-lg border border-slate-200 p-4 diagram">
+              <div class="schem text-slate-500 mb-2">Before</div>
+              <pre class="mermaid">
+flowchart LR
+  c1b_DW[Deep Wounds] --> c1b_A
+  c1b_RV[Righteous Vengeance] --> c1b_A
+  c1b_PS[Piercing Shots] --> c1b_A
+  c1b_IG[Ignite] --> c1b_A
+  c1b_SH["Shaman ×2"] --> c1b_A
+  c1b_LA[Languish] --> c1b_A
+  c1b_UB[Unholy Blight] --> c1b_A
+  c1b_A["DelayedPeriodicApplier<br/><i>delay only</i>"]
+  c1b_DW -. "read outstanding, reset mult" .-> c1b_X((dot))
+  c1b_IG -. "truncate (only here)" .-> c1b_X
+  c1b_RV -. "instant = CS or DS" .-> c1b_X
+  c1b_PS -. "no mult reset" .-> c1b_X
+  classDef leak stroke:#dc2626,stroke-width:2px,color:#991b1b;
+  class c1b_DW,c1b_IG,c1b_RV,c1b_PS leak
+              </pre>
+            </div>
+            <div class="rounded-lg border border-slate-200 p-4 diagram flex flex-col">
+              <div class="schem text-slate-500 mb-2">After</div>
+              <div class="flex-1 flex flex-col justify-center gap-3">
+                <div class="grid grid-cols-4 gap-2 text-[0.65rem] text-center text-slate-600">
+                  <div class="border border-slate-300 rounded p-1">Deep Wounds</div>
+                  <div class="border border-slate-300 rounded p-1">Ignite</div>
+                  <div class="border border-slate-300 rounded p-1">RV</div>
+                  <div class="border border-slate-300 rounded p-1">+5 more</div>
+                </div>
+                <div class="text-center text-xs text-slate-500 border-t-2 border-dashed border-slate-400 pt-1">Add(sim, target, amount, result)</div>
+                <div class="deep rounded-lg p-4 space-y-2">
+                  <div class="schem">rolling dot</div>
+                  <div class="grid grid-cols-5 gap-1 text-[0.6rem] text-center faded">
+                    <div class="border border-slate-400 rounded p-1">read outstanding</div>
+                    <div class="border border-slate-400 rounded p-1">int32 truncate</div>
+                    <div class="border border-slate-400 rounded p-1">instant path from result</div>
+                    <div class="border border-slate-400 rounded p-1">snapshot</div>
+                    <div class="border border-slate-400 rounded p-1">cast on 400 ms step</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p><span class="font-semibold">Problem:</span> the applier is shallow, so 8 callers hand-roll the same 5 steps and disagree; the server takes <code>int32 addAmount</code> and only Ignite truncates.</p>
+          <p><span class="font-semibold">Solution:</span> callers hand over dot, target, amount and the triggering result; the module does the rest.</p>
+          <ul class="text-sm list-disc pl-5 text-slate-700">
+            <li>Locality: one fix, 8 procs</li>
+            <li>Interface is the test surface</li>
+            <li>Parity gaps close as a side effect</li>
+          </ul>
+        </article>
+
+        <!-- 2 -->
+        <article id="c2" class="rounded-xl border border-slate-200 bg-white p-6 space-y-5 shadow-sm">
+          <div class="flex flex-wrap items-baseline justify-between gap-3">
+            <h2 class="font-serif text-2xl">2 · Pet kind as one spec</h2>
+            <div class="flex gap-2 text-xs">
+              <span class="rounded-full bg-emerald-100 text-emerald-800 px-3 py-1 font-medium">Strong</span>
+              <span class="rounded-full bg-slate-100 text-slate-700 px-3 py-1">in-process</span>
+            </div>
+          </div>
+          <ul class="font-mono text-sm text-slate-600 grid sm:grid-cols-2 gap-x-6">
+            <li>sim/core/pet.go</li>
+            <li>sim/deathknight/{ghoul_pet,summon_gargoyle}.go</li>
+            <li>sim/hunter/pet.go</li>
+            <li>sim/shaman/{spirit_wolves,fire_elemental_pet}.go</li>
+            <li>sim/warlock/{pet,inferno}.go</li>
+            <li>sim/mage/mirror_image.go</li>
+            <li>sim/priest/shadowfiend_pet.go</li>
+            <li>sim/druid/force_of_nature.go</li>
+          </ul>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="rounded-lg border border-slate-200 p-4 diagram">
+              <div class="schem text-slate-500 mb-3">Before · interface ≈ implementation</div>
+              <div class="flex gap-4 items-end h-60">
+                <div class="flex-1 flex flex-col justify-end">
+                  <div class="border-2 border-red-500 rounded bg-red-50 p-2 text-[0.62rem] leading-tight space-y-0.5 h-56 overflow-hidden">
+                    <div class="schem text-red-700">interface</div>
+                    <div>NewPet(…, enabledOnStart, isGuardian)</div>
+                    <div>Unit.SummonedAsPet</div>
+                    <div>Unit.HasteCarrier</div>
+                    <div>Pet.HitScaling</div>
+                    <div>Pet.RisenGhoul</div>
+                    <div>Pet.OwnerHasteSource</div>
+                    <div>Pet.OwnerHasteCoversMeleeHasteAuras</div>
+                    <div class="italic">set all before enable</div>
+                    <div class="leak">hit/expertise per pet (zeroed by core)</div>
+                  </div>
+                </div>
+                <div class="flex-1 flex flex-col justify-end">
+                  <div class="border border-slate-400 rounded bg-slate-100 p-2 text-[0.62rem] h-60">
+                    <div class="schem text-slate-600">implementation</div>
+                    <div class="mt-1 text-slate-600">ownerHitScaling, inheritedSwingSpeed, scaling-aura ticks</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="rounded-lg border border-slate-200 p-4 diagram">
+              <div class="schem text-slate-500 mb-3">After · small interface, deep implementation</div>
+              <div class="flex gap-4 items-end h-60">
+                <div class="flex-1 flex flex-col justify-end">
+                  <div class="border-2 border-emerald-600 rounded bg-emerald-50 p-2 text-[0.62rem] h-14">
+                    <div class="schem text-emerald-800">interface</div>
+                    <div>PetKind spec + class coefficients</div>
+                  </div>
+                </div>
+                <div class="flex-1 flex flex-col justify-end">
+                  <div class="deep rounded p-2 text-[0.62rem] h-60 space-y-1">
+                    <div class="schem">pet.go</div>
+                    <div class="faded">pet vs guardian</div>
+                    <div class="faded">scaling aura: hit, expertise, 3 s refresh</div>
+                    <div class="faded">haste carrier, 2 s resnapshot</div>
+                    <div class="faded">Str→AP, Agi→crit</div>
+                    <div class="faded">server int rounding</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p><span class="font-semibold">Problem:</span> a pet's kind is spread over ~8 order-sensitive settings, and 6 pets still compute hit that core throws away (the shadowfiend's "never misses" never applies).</p>
+          <p><span class="font-semibold">Solution:</span> one pet-kind spec that <code>pet.go</code> interprets; inheritance functions shrink to class coefficients.</p>
+          <ul class="text-sm list-disc pl-5 text-slate-700">
+            <li>Interface shrinks from 8 settings to 1</li>
+            <li>Delete dead hit code in 6 pets</li>
+            <li>Tests assert pet stats, not settings</li>
+          </ul>
+        </article>
+
+        <!-- 3 -->
+        <article id="c3" class="rounded-xl border-2 border-emerald-600 bg-white p-6 space-y-5 shadow-sm">
+          <div class="flex flex-wrap items-baseline justify-between gap-3">
+            <h2 class="font-serif text-2xl">3 · Spell registration checks damage numbers</h2>
+            <div class="flex gap-2 text-xs">
+              <span class="rounded-full bg-emerald-100 text-emerald-800 px-3 py-1 font-medium">Strong</span>
+              <span class="rounded-full bg-slate-100 text-slate-700 px-3 py-1">in-process</span>
+            </div>
+          </div>
+          <ul class="font-mono text-sm text-slate-600 grid sm:grid-cols-2 gap-x-6">
+            <li>sim/core/spell.go (applyServerData)</li>
+            <li>sim/core/dot.go</li>
+            <li>sim/core/serverdata/types.go (Bonus, Effect)</li>
+            <li>tools/acore/gen_serverdata/</li>
+            <li>sim/serverdata_test.go</li>
+            <li>sim/*/serverdata_allowlist.go</li>
+            <li>sim/&lt;class&gt;/*.go spell configs</li>
+          </ul>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="rounded-lg border border-slate-200 p-4 diagram">
+              <div class="schem text-slate-500 mb-2">Before</div>
+              <pre class="mermaid">
+flowchart TB
+  c3b_SD["serverdata<br/>timing · flags · Bonus · Effects"]
+  c3b_RS["RegisterSpell<br/>checks timing + flags"]
+  c3b_CL["ApplyEffects closure<br/>Roll(804, 866) + 0.857 × SP"]
+  c3b_G["goldens<br/>catch change, not error"]
+  c3b_SD -- timing --> c3b_RS
+  c3b_SD -. "Bonus, BasePoints: unread" .-> c3b_X((nobody))
+  c3b_RS --> c3b_CL
+  c3b_CL --> c3b_G
+  classDef leak stroke:#dc2626,stroke-width:2px,color:#991b1b;
+  class c3b_CL,c3b_X leak
+              </pre>
+            </div>
+            <div class="rounded-lg border border-slate-200 p-4 diagram">
+              <div class="schem text-slate-500 mb-2">After</div>
+              <pre class="mermaid">
+flowchart TB
+  c3a_ED["Effect declaration<br/>Effect 1 · 803–865 · SP 0.857"]
+  c3a_SD["serverdata<br/>level-80 range · bonus row · effect 31 · school · speed"]
+  c3a_RS["RegisterSpell<br/>compares, records conflicts"]
+  c3a_AL["allowlist with Why"]
+  c3a_CL["closure<br/>spell rolls declared value"]
+  c3a_ED --> c3a_RS
+  c3a_SD --> c3a_RS
+  c3a_RS --> c3a_AL
+  c3a_RS --> c3a_CL
+  classDef deep fill:#0f172a,color:#e2e8f0,stroke:#0f172a;
+  class c3a_RS deep
+              </pre>
+            </div>
+          </div>
+          <p><span class="font-semibold">Problem:</span> ~128 class lines hardcode coefficients and rolls inside closures nothing can read; already wrong: Arcane Barrage declared Frost, Holy Fire dot 0.024 vs 0.0529, four off-by-one ranges.</p>
+          <p><span class="font-semibold">Solution:</span> spells declare their numbers per server effect on the config; <code>RegisterSpell</code> checks them like timing, and the closure uses the declared values.</p>
+          <ul class="text-sm list-disc pl-5 text-slate-700">
+            <li>Leverage: preset sweep checks every spell</li>
+            <li>Locality: parity edits data, not closures</li>
+            <li>Mod order owned once: (base + flat) × pct</li>
+          </ul>
+          <div class="rounded-md bg-amber-50 border border-amber-200 px-4 py-2 text-sm text-amber-900">ADR 0003 holds: numbers stay in Go. This delivers the ADR's promised "test fails on any mismatch", which doesn't exist today.</div>
+        </article>
+
+        <!-- 4 -->
+        <article id="c4" class="rounded-xl border border-slate-200 bg-white p-6 space-y-5 shadow-sm">
+          <div class="flex flex-wrap items-baseline justify-between gap-3">
+            <h2 class="font-serif text-2xl">4 · Go owns the seed</h2>
+            <div class="flex gap-2 text-xs">
+              <span class="rounded-full bg-emerald-100 text-emerald-800 px-3 py-1 font-medium">Strong</span>
+              <span class="rounded-full bg-slate-100 text-slate-700 px-3 py-1">cross-language seam</span>
+            </div>
+          </div>
+          <ul class="font-mono text-sm text-slate-600 grid sm:grid-cols-2 gap-x-6">
+            <li>ui/core/optimizer/pool_builder.ts (SeedTrimmer)</li>
+            <li>sim/optimizer/rules.go (CheckGear)</li>
+            <li>sim/optimizer/{pool,search,api}.go</li>
+            <li>sim/optimizer/slow_test.go (trimSeedToPool)</li>
+            <li>ui/core/components/individual_sim_ui/optimizer_tab.ts</li>
+            <li>ui/raid/optimizer_batch.ts</li>
+          </ul>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="rounded-lg border border-slate-200 p-4 diagram">
+              <div class="schem text-slate-500 mb-2">Before</div>
+              <pre class="mermaid">
+flowchart LR
+  subgraph c4b_TS [TS]
+    c4b_ST["SeedTrimmer<br/>equip rules copy"]
+    c4b_UI["tab / batch<br/>guess from scoreDelta"]
+  end
+  subgraph c4b_Go [Go]
+    c4b_CG["CheckGear"]
+    c4b_SB["seedBroken: warn,<br/>any pick wins"]
+    c4b_TT["trimSeedToPool<br/>test copy"]
+  end
+  c4b_ST --> c4b_CG --> c4b_SB -.-> c4b_UI
+  classDef leak stroke:#dc2626,stroke-width:2px,color:#991b1b;
+  class c4b_ST,c4b_TT,c4b_UI leak
+              </pre>
+            </div>
+            <div class="rounded-lg border border-slate-200 p-4 diagram">
+              <div class="schem text-slate-500 mb-2">After</div>
+              <pre class="mermaid">
+flowchart LR
+  c4a_EQ["TS sends gear<br/>as equipped"]
+  subgraph c4a_Go [Go]
+    c4a_NS["normalize seed<br/>repair + move-up + CheckGear"]
+  end
+  c4a_R["result.seed_changes<br/>result.seed_broken"]
+  c4a_EQ --> c4a_NS --> c4a_R
+  classDef deep fill:#0f172a,color:#e2e8f0,stroke:#0f172a;
+  class c4a_NS deep
+              </pre>
+            </div>
+          </div>
+          <p><span class="font-semibold">Problem:</span> the equip rules exist three times plus a fourth socket rule, and the guide says Go rejects a bad seed when it only warns; BIS-seed (wave I2) is about to grow the TS copy.</p>
+          <p><span class="font-semibold">Solution:</span> Go normalizes the seed with its own repair and reports what changed.</p>
+          <ul class="text-sm list-disc pl-5 text-slate-700">
+            <li>One copy of the equip rules</li>
+            <li>BIS-seed testable through Optimize</li>
+            <li>UI stops guessing the seed's state</li>
+          </ul>
+          <div class="rounded-md bg-slate-50 border border-slate-200 px-4 py-2 text-sm text-slate-700">Depends on #5: trimming later-phase gear needs a tier rule Go doesn't have.</div>
+        </article>
+
+        <!-- 5 -->
+        <article id="c5" class="rounded-xl border border-slate-200 bg-white p-6 space-y-5 shadow-sm">
+          <div class="flex flex-wrap items-baseline justify-between gap-3">
+            <h2 class="font-serif text-2xl">5 · One availability rule</h2>
+            <div class="flex gap-2 text-xs">
+              <span class="rounded-full bg-amber-100 text-amber-800 px-3 py-1 font-medium">Worth exploring</span>
+              <span class="rounded-full bg-slate-100 text-slate-700 px-3 py-1">cross-language seam</span>
+            </div>
+          </div>
+          <ul class="font-mono text-sm text-slate-600 grid sm:grid-cols-2 gap-x-6">
+            <li>tools/database/azerothcore/catalog_resolve.go</li>
+            <li>tools/database/accatalog/report.go</li>
+            <li>ui/core/optimizer/catalog.ts</li>
+            <li>sim/optimizer/realpool_test.go</li>
+            <li>ui/core/player.ts, gear_picker.tsx</li>
+          </ul>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="rounded-lg border border-slate-200 p-4 diagram">
+              <div class="schem text-slate-500 mb-3">Before · "tier − 12" written 5 times</div>
+              <div class="grid grid-cols-2 gap-3 text-xs">
+                <div class="border-2 border-red-400 rounded p-2"><div class="font-mono">catalog_resolve.go</div><div class="leak">12 + phase</div></div>
+                <div class="border-2 border-red-400 rounded p-2"><div class="font-mono">accatalog/report.go</div><div class="leak">phase(), &lt; 13</div></div>
+                <div class="border-2 border-red-400 rounded p-2"><div class="font-mono">catalog.ts</div><div class="leak">PHASE_TIER_OFFSET, isAvailable</div></div>
+                <div class="border-2 border-red-400 rounded p-2"><div class="font-mono">realpool_test.go</div><div class="leak">partial isAvailable</div></div>
+                <div class="border-2 border-red-400 rounded p-2 col-span-2"><div class="font-mono">player.ts · gear_picker.tsx</div><div class="leak">phase + faction, phase only</div></div>
+              </div>
+            </div>
+            <div class="rounded-lg border border-slate-200 p-4 diagram flex flex-col justify-center gap-3">
+              <div class="schem text-slate-500">After</div>
+              <div class="deep rounded-lg p-4">
+                <div class="schem">catalog</div>
+                <div class="text-sm mt-1">tier → content phase · faction · PvP · source kind</div>
+              </div>
+              <div class="border-t-2 border-dashed border-slate-400"></div>
+              <div class="grid grid-cols-3 gap-2 text-[0.65rem] text-center text-slate-600">
+                <div class="border border-slate-300 rounded p-1">Go pool</div>
+                <div class="border border-slate-300 rounded p-1">TS picker + optimizer</div>
+                <div class="border border-slate-300 rounded p-1">report, tests</div>
+              </div>
+            </div>
+          </div>
+          <p><span class="font-semibold">Problem:</span> availability (tier, faction, PvP, source kind) is re-derived in 5 places, and Go never checks it, so a hand-built CLI request with future-tier gear runs silently.</p>
+          <p><span class="font-semibold">Solution:</span> the catalog owns the rule and ships it (content phase in <code>server_catalog.json</code>, or one Go <code>IsAvailable</code> with generated TS constants).</p>
+          <ul class="text-sm list-disc pl-5 text-slate-700">
+            <li>Locality: tier rules change once</li>
+            <li>CLI and acbis requests become safe</li>
+          </ul>
+        </article>
+
+        <!-- 6 -->
+        <article id="c6" class="rounded-xl border border-slate-200 bg-white p-6 space-y-5 shadow-sm">
+          <div class="flex flex-wrap items-baseline justify-between gap-3">
+            <h2 class="font-serif text-2xl">6 · Procs apply the whole spell_proc row</h2>
+            <div class="flex gap-2 text-xs">
+              <span class="rounded-full bg-amber-100 text-amber-800 px-3 py-1 font-medium">Worth exploring</span>
+              <span class="rounded-full bg-slate-100 text-slate-700 px-3 py-1">in-process</span>
+            </div>
+          </div>
+          <ul class="font-mono text-sm text-slate-600 grid sm:grid-cols-2 gap-x-6">
+            <li>sim/core/aura_helpers.go (MakeProcTriggerAura)</li>
+            <li>sim/core/ppm.go</li>
+            <li>sim/core/debuffs.go (Judgement of Wisdom)</li>
+            <li>sim/druid/talents.go (Omen of Clarity)</li>
+            <li>sim/warrior/talents.go, sim/shaman/shamanistic_rage.go</li>
+            <li>sim/deathknight/talents_frost.go</li>
+          </ul>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="rounded-lg border border-slate-200 p-4 diagram">
+              <div class="schem text-slate-500 mb-3">Before · row fields read by ProcSpellID</div>
+              <div class="grid grid-cols-2 gap-2 text-xs font-mono">
+                <div class="rounded p-2 bg-emerald-100">Chance</div>
+                <div class="rounded p-2 bg-emerald-100">ProcsPerMinute</div>
+                <div class="rounded p-2 bg-emerald-100">Cooldown</div>
+                <div class="rounded p-2 border-2 border-red-400 leak">HitMask · by hand</div>
+                <div class="rounded p-2 border-2 border-red-400 leak">SpellTypeMask · by hand</div>
+                <div class="rounded p-2 border-2 border-red-400 leak">SpellPhaseMask · by hand</div>
+                <div class="rounded p-2 border-2 border-red-400 leak">ProcFlags · by hand</div>
+                <div class="rounded p-2 border-2 border-red-400 leak">aura chance model · weapon PPM</div>
+              </div>
+              <div class="text-xs text-slate-500 mt-3">38 call sites use 212 generated rows</div>
+            </div>
+            <div class="rounded-lg border border-slate-200 p-4 diagram flex flex-col justify-center gap-3">
+              <div class="schem text-slate-500">After</div>
+              <div class="text-xs text-center text-slate-600">class supplies spell id + effect</div>
+              <div class="border-t-2 border-dashed border-slate-400"></div>
+              <div class="deep rounded-lg p-4 space-y-1 text-[0.7rem]">
+                <div class="schem">proc registration</div>
+                <div class="faded">every row field · Aura::CalcProcChance · ICD · triggered-can-proc</div>
+              </div>
+            </div>
+          </div>
+          <p><span class="font-semibold">Problem:</span> only chance, PPM and cooldown come from the row; masks and the aura chance model are re-derived per proc, and talents hardcode rates the table already holds.</p>
+          <p><span class="font-semibold">Solution:</span> a proc registration that takes the spell id and applies the whole row.</p>
+          <ul class="text-sm list-disc pl-5 text-slate-700">
+            <li>Leverage over every proc</li>
+            <li>Delete hardcoded proc rates</li>
+          </ul>
+        </article>
+
+        <!-- 7 -->
+        <article id="c7" class="rounded-xl border border-slate-200 bg-white p-6 space-y-5 shadow-sm">
+          <div class="flex flex-wrap items-baseline justify-between gap-3">
+            <h2 class="font-serif text-2xl">7 · Server character → sim Player in one place</h2>
+            <div class="flex gap-2 text-xs">
+              <span class="rounded-full bg-amber-100 text-amber-800 px-3 py-1 font-medium">Worth exploring</span>
+              <span class="rounded-full bg-slate-100 text-slate-700 px-3 py-1">in-process</span>
+            </div>
+          </div>
+          <ul class="font-mono text-sm text-slate-600 grid sm:grid-cols-2 gap-x-6">
+            <li>tools/database/azerothcore/roster.go (BuildCharacter)</li>
+            <li>ui/raid/acore_roster.ts</li>
+            <li>tools/simval/rrsim.go (recorded*)</li>
+            <li>tools/database/azerothcore/bisdata_{dataset,slots}.go</li>
+          </ul>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="rounded-lg border border-slate-200 p-4 diagram">
+              <div class="schem text-slate-500 mb-2">Before</div>
+              <pre class="mermaid">
+flowchart TB
+  c7b_DB[(server DB)]
+  c7b_BC["roster.go<br/>BuildCharacter"]
+  c7b_TS["acore_roster.ts<br/>inferSpec, gems, glyphs"]
+  c7b_RR["rrsim.go<br/>race, slot, glyph maps"]
+  c7b_BD["bisdata<br/>RaiderSpecName"]
+  c7b_DB --> c7b_BC --> c7b_TS
+  c7b_DB --> c7b_RR
+  c7b_BC --> c7b_BD
+  c7b_TS -. "spec rules differ" .- c7b_BD
+  classDef leak stroke:#dc2626,stroke-width:2px,color:#991b1b;
+  class c7b_TS,c7b_RR,c7b_BD leak
+              </pre>
+            </div>
+            <div class="rounded-lg border border-slate-200 p-4 diagram">
+              <div class="schem text-slate-500 mb-2">After</div>
+              <pre class="mermaid">
+flowchart TB
+  c7a_DB[(server DB)]
+  c7a_AC["acraid<br/>sim-ready values"]
+  c7a_PL["RosterCharacter → Player"]
+  c7a_TS["TS: spec + preset only"]
+  c7a_RR["simval"]
+  c7a_BD["acbis"]
+  c7a_DB --> c7a_AC --> c7a_PL
+  c7a_PL --> c7a_TS
+  c7a_PL --> c7a_RR
+  c7a_PL --> c7a_BD
+  classDef deep fill:#0f172a,color:#e2e8f0,stroke:#0f172a;
+  class c7a_AC,c7a_PL deep
+              </pre>
+            </div>
+          </div>
+          <p><span class="font-semibold">Problem:</span> three converters already disagree (spec inference, raid index, extra-socket slots); class id is mapped 5 times, race 4, profession 3.</p>
+          <p><span class="font-semibold">Solution:</span> acraid emits sim-ready values, and one Go step builds the Player for simval and acbis.</p>
+          <ul class="text-sm list-disc pl-5 text-slate-700">
+            <li>Divergences fixed once</li>
+            <li>rrsim setup becomes testable</li>
+          </ul>
+        </article>
+
+        <!-- 8 -->
+        <article id="c8" class="rounded-xl border border-slate-200 bg-white p-6 space-y-5 shadow-sm">
+          <div class="flex flex-wrap items-baseline justify-between gap-3">
+            <h2 class="font-serif text-2xl">8 · Server spell loading for the tools</h2>
+            <div class="flex gap-2 text-xs">
+              <span class="rounded-full bg-amber-100 text-amber-800 px-3 py-1 font-medium">Worth exploring</span>
+              <span class="rounded-full bg-slate-100 text-slate-700 px-3 py-1">local-substitutable</span>
+            </div>
+          </div>
+          <ul class="font-mono text-sm text-slate-600 grid sm:grid-cols-2 gap-x-6">
+            <li>tools/database/azerothcore/{mysql,dbc,catalog_load}.go</li>
+            <li>tools/database/gen_db/azerothcore.go</li>
+            <li>tools/database/{acdiff,acraid}/main.go</li>
+            <li>tools/acore/gen_serverdata/model.go</li>
+            <li>tools/acore/gen_basestats/gt.go</li>
+          </ul>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="rounded-lg border border-slate-200 p-4 diagram">
+              <div class="schem text-slate-500 mb-3">Before · every tool stacks its own layers</div>
+              <div class="grid grid-cols-3 gap-2 text-[0.62rem]">
+                <div class="space-y-1">
+                  <div class="font-mono text-slate-500">gen_db</div>
+                  <div class="h-8 border-l-4 border-red-400 bg-red-50 px-1">loadServerDBC</div>
+                  <div class="h-8 border-l-4 border-red-400 bg-red-50 px-1">spell_dbc override</div>
+                </div>
+                <div class="space-y-1">
+                  <div class="font-mono text-slate-500">acdiff</div>
+                  <div class="h-8 border-l-4 border-red-400 bg-red-50 px-1">loadDBC</div>
+                  <div class="h-8 border-l-4 border-red-400 bg-red-50 px-1">spell_dbc + cooldowns</div>
+                  <div class="h-8 border-l-4 border-red-400 bg-red-50 px-1">LoadSpellProcs: first rank</div>
+                </div>
+                <div class="space-y-1">
+                  <div class="font-mono text-slate-500">gen_serverdata</div>
+                  <div class="h-8 border-l-4 border-red-400 bg-red-50 px-1">raw queries</div>
+                  <div class="h-8 border-l-4 border-red-400 bg-red-50 px-1">resolveProc: rank chain</div>
+                </div>
+              </div>
+              <div class="text-xs text-slate-500 mt-3">acraid repeats the DBC copy; spellids and catalog_load repeat the override order</div>
+            </div>
+            <div class="rounded-lg border border-slate-200 p-4 diagram flex flex-col justify-center gap-3">
+              <div class="schem text-slate-500">After</div>
+              <div class="grid grid-cols-4 gap-2 text-[0.65rem] text-center text-slate-600">
+                <div class="border border-slate-300 rounded p-1">gen_db</div>
+                <div class="border border-slate-300 rounded p-1">acdiff</div>
+                <div class="border border-slate-300 rounded p-1">acraid</div>
+                <div class="border border-slate-300 rounded p-1">gen_serverdata</div>
+              </div>
+              <div class="border-t-2 border-dashed border-slate-400 text-center text-xs text-slate-500 pt-1">LoadServerSpells(db, dbcSource)</div>
+              <div class="deep rounded-lg p-4 text-[0.7rem] space-y-1">
+                <div class="schem">server spells</div>
+                <div class="faded">one DBC source · both overrides in order · SpellMgr proc rule · NULL-safe SQL</div>
+              </div>
+            </div>
+          </div>
+          <p><span class="font-semibold">Problem:</span> DBC acquisition is copied 3 times, the override order is left to callers, and two proc readers apply different rank rules, so acdiff's proc check doesn't match the sim's data.</p>
+          <p><span class="font-semibold">Solution:</span> one loader that always applies both overrides and the server's rank rule; the row-struct seam keeps logic testable.</p>
+          <ul class="text-sm list-disc pl-5 text-slate-700">
+            <li>acdiff matches the sim's procs</li>
+            <li>4+ call sites shrink</li>
+          </ul>
+        </article>
+
+        <!-- 9 -->
+        <article id="c9" class="rounded-xl border border-slate-200 bg-white p-6 space-y-5 shadow-sm">
+          <div class="flex flex-wrap items-baseline justify-between gap-3">
+            <h2 class="font-serif text-2xl">9 · Optimizer run construction</h2>
+            <div class="flex gap-2 text-xs">
+              <span class="rounded-full bg-slate-200 text-slate-700 px-3 py-1 font-medium">Speculative</span>
+              <span class="rounded-full bg-slate-100 text-slate-700 px-3 py-1">in-process</span>
+            </div>
+          </div>
+          <ul class="font-mono text-sm text-slate-600 grid sm:grid-cols-2 gap-x-6">
+            <li>sim/optimizer/api.go (run, optimize, pinHealingModel)</li>
+            <li>sim/optimizer/neighborhood_test.go</li>
+            <li>sim/optimizer/raid_contrib_test.go</li>
+            <li>sim/optimizer/racial_test.go</li>
+          </ul>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="rounded-lg border border-slate-200 p-4 diagram">
+              <div class="schem text-slate-500 mb-2">Before</div>
+              <pre class="mermaid">
+flowchart LR
+  c9b_T["tests"] -- "&run{…25 fields}" --> c9b_R["run"]
+  c9b_O["Optimize"] --> c9b_R
+  c9b_P["pinHealingModel"] -. "pins derived request" .-> c9b_D["simmed"]
+  c9b_E["raid evaluator"] -. "sims asked request" .-> c9b_A["asked"]
+  classDef leak stroke:#dc2626,stroke-width:2px,color:#991b1b;
+  class c9b_T,c9b_P leak
+              </pre>
+            </div>
+            <div class="rounded-lg border border-slate-200 p-4 diagram">
+              <div class="schem text-slate-500 mb-2">After</div>
+              <pre class="mermaid">
+flowchart LR
+  c9a_T["tests"] --> c9a_N
+  c9a_O["Optimize"] --> c9a_N
+  c9a_N["newRun(ctx, asked, eval)<br/>pins healing before any evaluator"] --> c9a_S["stages"]
+  classDef deep fill:#0f172a,color:#e2e8f0,stroke:#0f172a;
+  class c9a_N deep
+              </pre>
+            </div>
+          </div>
+          <p><span class="font-semibold">Problem:</span> tests hand-build the internal <code>run</code> and copy its setup; the healing-model pin misses the raid evaluator's request (latent: raid DPS is only sent for DPS raiders).</p>
+          <p><span class="font-semibold">Solution:</span> one constructor that prepares requests in order, used by tests and <code>Optimize</code>.</p>
+          <ul class="text-sm list-disc pl-5 text-slate-700">
+            <li>Tests survive internal refactors</li>
+            <li>The ordering hazard closes</li>
+          </ul>
+        </article>
+      </section>
+
+      <section id="top-recommendation" class="rounded-2xl deep p-8 space-y-3">
+        <div class="schem text-slate-400">Top recommendation</div>
+        <h2 class="font-serif text-3xl"><a href="#c3" class="underline decoration-emerald-400 underline-offset-4">#3 · Spell registration checks damage numbers</a></h2>
+        <p class="text-slate-300">Every parity item edits spell numbers nothing checks today; this builds on the timing check, allowlists and preset sweep that already exist, and keeps ADR 0003. Picked and designed: effect declarations, core in wave I4, class sweep in I5.</p>
+      </section>
+    </main>
+  </body>
+</html>

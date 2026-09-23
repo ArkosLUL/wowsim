@@ -57,6 +57,8 @@ G = changes goldens. FS = runs all 37 suites.
 | U | UI-RESULTS · UI-GEAR · UI-RAID · UI-SETTINGS | |
 | I2 | PERF-TOOLS · PERF-CONC · BIS-seed | ✔ |
 | I3 | PERF-OPT · PERF-HOT | ✔ |
+| I4 | PAR-DECL (G, FS) | ✔ |
+| I5 | PAR-DECL-1 (G) · PAR-DECL-2 (G) · PAR-DECL-3 (G) | ✔ |
 | J | PAR-P7-PRI (G) · PAR-P7-TANK (G) · BIS-e2e-perf · AC-3 | ✔ |
 | K | BIS-presets · PAR-P8 (G, FS) · BIS-tank-boss | ✔ |
 
@@ -73,7 +75,10 @@ rides along, as it only needs the live server. BIS-alt5 joined mid-wave, also th
 
 In I, PAR-P7-MAG also fixes the delay helper's timing gap (the user's call) and tick-rounds the APL's
 `spell.cast_time`, both in core, so it runs all 37 suites and merges first. I2 and I3, the performance pass,
-are the user's call too: they come before J, whose BIS-e2e-perf uses their tools.
+are the user's call too: they come before J, whose BIS-e2e-perf uses their tools. So are I4 and I5
+(2026-09-23), the [effect declarations](../azerothcore-parity/effect-declarations.PLAN.md): PAR-DECL runs alone,
+since a class item can't build on a core change merging in its own wave, and both come before J so that
+PRI, TANK and K's PAR-P8 build on them.
 
 U, the Playwright suite and the UI bugs it finds, comes before I2 (the user's call, 2026-09-23). Its items
 touch only UI and test paths, so goldens, BiS and throughput can't move, and it skips the re-baseline.
