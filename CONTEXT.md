@@ -70,6 +70,11 @@ replay against the sim.
 **Spelldump**:
 Simval's export of server spell data.
 
+**Effect declaration**:
+A spell's numbers for one server effect, as the sim states them: base roll, coefficients and weapon
+percent, checked against the server's data.
+_Avoid_: damage config
+
 **Recorded run**:
 A real fight against a server test dummy, logged by mod-chronicle, that the sim must match within ±2% DPS.
 
