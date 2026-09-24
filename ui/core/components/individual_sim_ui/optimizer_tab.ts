@@ -15,6 +15,7 @@ import { Player } from '../../player';
 import { AsyncAPIResult, OptimizeGearRequest, ProgressMetrics } from '../../proto/api';
 import { EquipmentSpec, ItemSpec, Race, Spec, Stat } from '../../proto/common';
 import {
+	CatalogSourceKind,
 	OptimizerEffort,
 	OptimizerLoadoutResult,
 	OptimizerMetrics,
@@ -191,6 +192,32 @@ export async function cancelOptimizerRun(progressId: string): Promise<boolean> {
 		body: AsyncAPIResult.toBinary(AsyncAPIResult.create({ progressId })),
 	});
 	return response.ok;
+}
+
+function checkbox(label: string, checked: boolean, onChange: (checked: boolean) => void): HTMLElement {
+	const wrapper = newElement('label', 'form-check');
+	const input = newElement('input', 'form-check-input');
+	input.type = 'checkbox';
+	input.checked = checked;
+	input.addEventListener('change', () => onChange(input.checked));
+	wrapper.append(input, newElement('span', 'form-check-label', label));
+	return wrapper;
+}
+
+export const SOURCES_HINT = 'Gems count from every source. PvP gear never does.';
+
+export function sourceCheckboxes(sources: Array<CatalogSourceKind>, onChange: (sources: Array<CatalogSourceKind>) => void): HTMLElement {
+	const grid = newElement('div', 'optimizer-checkbox-grid');
+	const inputs: Array<HTMLInputElement> = [];
+	for (const { kind, label } of SOURCE_KINDS) {
+		const box = checkbox(label, sources.includes(kind), () => onChange(SOURCE_KINDS.filter((_, i) => inputs[i].checked).map(s => s.kind)));
+		const input = box.querySelector('input')!;
+		// tools/uitest reads the kind off the box to check a request's sources
+		input.value = String(kind);
+		inputs.push(input);
+		grid.appendChild(box);
+	}
+	return grid;
 }
 
 export function section(title: string, content: HTMLElement, hint?: string): HTMLElement {
@@ -607,15 +634,8 @@ export class OptimizerTab extends SimTab {
 			this.labeled('Racial traits', racialSelect, 'A search scores all ten races on your gear, then runs the best few in full.'),
 		);
 
-		const sources = newElement('div', 'optimizer-checkbox-grid');
-		for (const { kind, label } of SOURCE_KINDS) {
-			sources.appendChild(
-				this.checkbox(label, this.settings.sources.includes(kind), checked =>
-					this.changeSettings(s => (s.sources = checked ? [...s.sources, kind] : s.sources.filter(k => k != kind))),
-				),
-			);
-		}
-		this.setupBody.appendChild(this.labeled('Item sources', sources, 'Gems count from every source. PvP gear never does.'));
+		const sources = sourceCheckboxes(this.settings.sources, picked => this.changeSettings(s => (s.sources = picked)));
+		this.setupBody.appendChild(this.labeled('Item sources', sources, SOURCES_HINT));
 
 		const actions = newElement('div', 'optimizer-actions');
 		this.runButton = button('Optimize', 'btn-primary', () => this.run());
@@ -677,7 +697,7 @@ export class OptimizerTab extends SimTab {
 		this.setupBody.appendChild(
 			this.labeled(
 				'Crit immunity',
-				this.checkbox('Never let the boss crit me', this.settings.requireCritImmunity, checked =>
+				checkbox('Never let the boss crit me', this.settings.requireCritImmunity, checked =>
 					this.changeSettings(s => (s.requireCritImmunity = checked)),
 				),
 				"From the sim's own crit formula for this boss, not a flat 540 defense.",
@@ -728,7 +748,7 @@ export class OptimizerTab extends SimTab {
 		const locks = newElement('div', 'optimizer-checkbox-grid');
 		for (const slot of ALL_SLOTS) {
 			locks.appendChild(
-				this.checkbox(slotNames.get(slot)!, this.settings.lockedSlots.includes(slot), checked =>
+				checkbox(slotNames.get(slot)!, this.settings.lockedSlots.includes(slot), checked =>
 					this.changeSettings(s => (s.lockedSlots = checked ? [...s.lockedSlots, slot] : s.lockedSlots.filter(l => l != slot))),
 				),
 			);
@@ -803,16 +823,6 @@ export class OptimizerTab extends SimTab {
 			group.appendChild(newElement('div', 'optimizer-hint', hint));
 		}
 		return group;
-	}
-
-	private checkbox(label: string, checked: boolean, onChange: (checked: boolean) => void): HTMLElement {
-		const wrapper = newElement('label', 'form-check');
-		const input = newElement('input', 'form-check-input');
-		input.type = 'checkbox';
-		input.checked = checked;
-		input.addEventListener('change', () => onChange(input.checked));
-		wrapper.append(input, newElement('span', 'form-check-label', label));
-		return wrapper;
 	}
 
 	private itemName(id: number): string {

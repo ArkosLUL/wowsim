@@ -8,6 +8,7 @@ import {
 	importRoster,
 	openImporter,
 	pickTarget,
+	playerEditor,
 	readRoster,
 	reloadRaid,
 	roster,
@@ -149,7 +150,7 @@ test('gear only the leftovers database knows survives a reload', async ({ page }
 	const itemId = angry.gear.find((item: any) => item.acSlot == 10).id;
 	await importRoster(page, dialogs, leftover);
 
-	const editor = page.locator('.modal.show', { has: page.locator('.player-editor-modal') });
+	const editor = playerEditor(page);
 	const item = editor.locator(`#gear-tab .item-picker-root .item-picker-name[href*="item=${itemId}"]`);
 	const raidIndex = rosterSlots(leftover).indexOf('Angry');
 	await slot(page, raidIndex).locator('.player-edit').click();

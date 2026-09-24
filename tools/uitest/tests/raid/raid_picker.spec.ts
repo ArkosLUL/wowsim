@@ -1,7 +1,26 @@
 import { expect, type Page, test } from '@playwright/test';
 
 import { openRaid, watchForErrors } from '../lib/page';
-import { addPreset, copyPlayer, fixtureRoster, reloadRaid, removePlayer, renamePlayer, roster, seedRaid, slot, statCount, swapPlayers } from './raid';
+import {
+	addPreset,
+	collectDialogs,
+	copyPlayer,
+	editorStats,
+	fixtureRoster,
+	importRoster,
+	playerEditor,
+	readRoster,
+	reloadRaid,
+	removePlayer,
+	renamePlayer,
+	roster,
+	rosterMainTank,
+	rosterSlots,
+	seedRaid,
+	slot,
+	statCount,
+	swapPlayers,
+} from './raid';
 
 const raidSize = (page: Page) => page.locator('.raid-controls .enum-picker-root', { hasText: 'Raid Size' }).locator('select');
 const defaultGear = (page: Page) => page.locator('.raid-controls .enum-picker-root', { hasText: 'Default Gear' }).locator('select');
@@ -115,7 +134,7 @@ test('renaming a raider sticks, and an empty name becomes Unnamed', async ({ pag
 
 test('editing a raider changes their gear for good', async ({ page }) => {
 	await seedRaid(page);
-	const editor = page.locator('.modal.show', { has: page.locator('.player-editor-modal') });
+	const editor = playerEditor(page);
 	const headName = editor.locator('#gear-tab .item-picker-root').first().locator('.item-picker-name');
 
 	await slot(page, 1).locator('.player-edit').click();
@@ -135,6 +154,31 @@ test('editing a raider changes their gear for good', async ({ page }) => {
 	await reloadRaid(page);
 	await slot(page, 1).locator('.player-edit').click();
 	await expect(headName).toHaveText(after);
+});
+
+test("a raider's stats in the Edit window come back after a reload", async ({ page }) => {
+	const dialogs = collectDialogs(page);
+	await openRaid(page);
+	const rosterText = readRoster();
+	await importRoster(page, dialogs, rosterText);
+	const raidIndex = rosterSlots(rosterText).indexOf(rosterMainTank(rosterText));
+	const editor = playerEditor(page);
+
+	await slot(page, raidIndex).locator('.player-edit').click();
+	let before: Record<string, string> = {};
+	// a few stats, like Expertise, show before the sim works the rest out
+	await expect
+		.poll(async () => {
+			before = await editorStats(editor);
+			return parseFloat(before['Stamina'] ?? '0');
+		})
+		.toBeGreaterThan(0);
+	await editor.locator('.close-button').click();
+	await expect(editor).toHaveCount(0);
+
+	await reloadRaid(page);
+	await slot(page, raidIndex).locator('.player-edit').click();
+	await expect.poll(() => editorStats(editor)).toEqual(before);
 });
 
 test('Default Gear names a phase, and a picked one sticks', async ({ page }) => {

@@ -16,18 +16,29 @@ import {
 	section,
 	seedTrimmed,
 	simServerAvailable,
+	sourceCheckboxes,
+	SOURCES_HINT,
 	tableRow,
 	trimmedWhere,
 	withUnit,
 } from '../core/components/individual_sim_ui/optimizer_tab';
 import { SimTab } from '../core/components/sim_tab';
 import { IndividualSimUIConfig } from '../core/individual_sim_ui';
-import { loadCatalog, MAX_CONTENT_PHASE, MIN_CONTENT_PHASE } from '../core/optimizer/catalog';
+import { ALL_SOURCE_KINDS, loadCatalog, MAX_CONTENT_PHASE, MIN_CONTENT_PHASE } from '../core/optimizer/catalog';
 import { buildOptimizeRequest, BuiltRequest, defaultTabSettings } from '../core/optimizer/pool_builder';
 import { getSpecConfig, Player } from '../core/player';
 import { ProgressMetrics, RaidSimRequest, RaidSimResult } from '../core/proto/api';
 import { EquipmentSpec, Glyphs, Race, SimDatabase } from '../core/proto/common';
-import { OptimizerBatchEntry, OptimizerBatchExport, OptimizerEffort, OptimizerObjective, OptimizerProgress, OptimizerRacialMode, OptimizerResult } from '../core/proto/optimizer';
+import {
+	CatalogSourceKind,
+	OptimizerBatchEntry,
+	OptimizerBatchExport,
+	OptimizerEffort,
+	OptimizerObjective,
+	OptimizerProgress,
+	OptimizerRacialMode,
+	OptimizerResult,
+} from '../core/proto/optimizer';
 import { SavedGearSet } from '../core/proto/ui';
 import { Database } from '../core/proto_utils/database';
 import { raceNames } from '../core/proto_utils/names';
@@ -76,6 +87,7 @@ interface BatchSettings {
 	phases: Array<number>;
 	effort: OptimizerEffort;
 	racialMode: OptimizerRacialMode;
+	sources: Array<CatalogSourceKind>;
 	// raid indexes left out of the batch
 	skipped: Array<number>;
 }
@@ -118,6 +130,7 @@ function defaultSettings(): BatchSettings {
 		phases: PHASES.slice(),
 		effort: OptimizerEffort.OptimizerEffortQuick,
 		racialMode: OptimizerRacialMode.OptimizerRacialSearch,
+		sources: ALL_SOURCE_KINDS.slice(),
 		skipped: [],
 	};
 }
@@ -342,6 +355,10 @@ export class OptimizerBatchTab extends SimTab {
 				phases: numbers(saved.settings?.phases).filter(phase => PHASES.includes(phase)),
 				effort: EFFORTS.some(e => e.effort == saved.settings?.effort) ? saved.settings.effort : batch.settings.effort,
 				racialMode: RACIAL_MODES.some(m => m.mode == saved.settings?.racialMode) ? saved.settings.racialMode : batch.settings.racialMode,
+				// older batches have no sources: those count every one
+				sources: Array.isArray(saved.settings?.sources)
+					? numbers(saved.settings.sources).filter(kind => ALL_SOURCE_KINDS.includes(kind))
+					: batch.settings.sources,
 				skipped: numbers(saved.settings?.skipped),
 			};
 			batch.running = saved.running == true;
@@ -486,6 +503,9 @@ export class OptimizerBatchTab extends SimTab {
 			value => this.changeSettings(s => (s.racialMode = value)),
 		);
 		this.setupBody.appendChild(this.labeled('Racial traits', racial));
+
+		const sources = sourceCheckboxes(settings.sources, picked => this.changeSettings(s => (s.sources = picked)));
+		this.setupBody.appendChild(this.labeled('Item sources', sources, SOURCES_HINT));
 
 		const jobs = this.plannedJobs();
 		const left = jobs.filter(job => job.state != 'done').length;
@@ -670,6 +690,7 @@ export class OptimizerBatchTab extends SimTab {
 		const settings = defaultTabSettings(job.phase);
 		settings.effort = this.batch.settings.effort;
 		settings.racialMode = this.batch.settings.racialMode;
+		settings.sources = this.batch.settings.sources.slice();
 
 		const warmStarts: Array<EquipmentSpec> = [];
 		// the latest earlier phase that has a result, preferring its stage 2 pick when it ran one

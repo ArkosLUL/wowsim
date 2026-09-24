@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { expect, type Locator, type Page, test } from '@playwright/test';
 
 import { openRaid, openSimTab } from '../lib/page';
-import { collectDialogs, importRoster, readRoster, reloadRaid, roster, rosterMainTank, slot, statCount } from './raid';
+import { collectDialogs, importRoster, playerEditor, readRoster, reloadRaid, roster, rosterMainTank, slot, statCount } from './raid';
 
 const ROSTER = readRoster();
 const mainTank = rosterMainTank(ROSTER);
@@ -16,6 +16,12 @@ const raiderRow = (page: Page, name: string) => rows(page).filter({ has: page.lo
 const raiderBox = (page: Page, name: string) => raiderRow(page, name).locator('td').first().locator('input');
 const cell = (page: Page, name: string, phase: number) => raiderRow(page, name).locator('td').nth(phase);
 const progress = (page: Page) => batchTab(page).locator('.optimizer-setup .optimizer-hint').last();
+const sourceBoxes = (page: Page) => batchTab(page).locator('.optimizer-setup .optimizer-checkbox-grid input');
+const sourceBox = (page: Page, label: string) => batchTab(page).locator('.optimizer-setup .optimizer-checkbox-grid').getByLabel(label, { exact: true });
+const tickedSources = (page: Page) => sourceBoxes(page).evaluateAll((boxes: Array<HTMLInputElement>) => boxes.map(box => box.checked));
+
+const BATCH_KEY_PREFIX = '__wotlk_raid__optimizer-batch.v1.';
+const REQUEST_LOG = 'Optimize gear request: ';
 
 // the label holds the name, then the spec on a line of its own
 const gridNames = (page: Page) =>
@@ -78,6 +84,68 @@ test('the grid lists everyone but the healers, and the ticks stick', async ({ pa
 	await expect(raiderBox(page, grid[2])).not.toBeChecked();
 });
 
+test('the item sources start all ticked and stick, and a batch saved without them gets them all', async ({ page }) => {
+	await openBatch(page);
+	const all = await tickedSources(page);
+	expect(all.length).toBeGreaterThan(2);
+	expect(all).not.toContain(false);
+
+	await setTicked(sourceBox(page, 'Raid 25 heroic'), false);
+	await setTicked(sourceBox(page, 'World drop'), false);
+	const picked = await tickedSources(page);
+	expect(picked.filter(ticked => !ticked)).toHaveLength(2);
+
+	await reloadRaid(page);
+	await openSimTab(page, 'bis-batch-tab');
+	await expect.poll(() => tickedSources(page)).toEqual(picked);
+
+	// what a batch stored by an older build looks like
+	const stripped = await page.evaluate(prefix => {
+		const keys = Object.keys(localStorage).filter(key => key.startsWith(prefix));
+		for (const key of keys) {
+			const saved = JSON.parse(localStorage.getItem(key)!);
+			delete saved.settings.sources;
+			localStorage.setItem(key, JSON.stringify(saved));
+		}
+		return keys.length;
+	}, BATCH_KEY_PREFIX);
+	expect(stripped).toBeGreaterThan(0);
+	await reloadRaid(page);
+	await openSimTab(page, 'bis-batch-tab');
+	await expect.poll(() => tickedSources(page)).toEqual(all);
+});
+
+// No real run: the routes answer empty, so each job fails right after sending its request.
+test('a run asks the server for the ticked item sources only', async ({ page }) => {
+	await page.route('**/optimizeGearAsync', route => route.fulfill({ status: 200, body: '' }));
+	await page.route('**/asyncProgress', route => route.fulfill({ status: 204 }));
+	const requests: Array<any> = [];
+	page.on('console', message => {
+		if (message.text().startsWith(REQUEST_LOG)) {
+			requests.push(JSON.parse(message.text().slice(REQUEST_LOG.length)));
+		}
+	});
+	const sorted = (kinds: Array<number>) => kinds.slice().sort((a, b) => a - b);
+	const tickedKinds = async () =>
+		sorted(await sourceBoxes(page).evaluateAll((boxes: Array<HTMLInputElement>) => boxes.filter(box => box.checked).map(box => Number(box.value))));
+	const requested = (i: number) => sorted(requests[i].settings.sources ?? []);
+
+	await openBatch(page);
+	await tickOnly(page, [mainTank], [1]);
+	await batchTab(page).getByRole('button', { name: 'Start' }).click();
+	await expect(cell(page, mainTank, 1)).toHaveText('failed');
+	expect(requests).toHaveLength(1);
+	expect(requested(0)).toEqual(await tickedKinds());
+	expect(requested(0)).toHaveLength(await sourceBoxes(page).count());
+
+	await setTicked(sourceBox(page, 'Raid 10 heroic'), false);
+	await setTicked(sourceBox(page, 'Crafted'), false);
+	await batchTab(page).getByRole('button', { name: 'Run failed ones again' }).click();
+	await expect.poll(() => requests.length).toBe(2);
+	expect(requested(1)).toEqual(await tickedKinds());
+	expect(requested(1)).toHaveLength(requested(0).length - 2);
+});
+
 // The server runs one optimization at a time, so this is the suite's only real run: a tank, since a
 // DPS raider gets a second, raid-scored run after the first.
 test('one Quick run fills its cell, and its gear can be saved and cleared', async ({ page }) => {
@@ -113,7 +181,7 @@ test('one Quick run fills its cell, and its gear can be saved and cleared', asyn
 	await openSimTab(page, 'raid-tab');
 	const names = await roster(page);
 	await slot(page, names.indexOf(mainTank)).locator('.player-edit').click();
-	const editor = page.locator('.modal.show', { has: page.locator('.player-editor-modal') });
+	const editor = playerEditor(page);
 	await expect(editor.locator('.saved-data-set-chip', { hasText: `${mainTank} P1 BiS` })).toHaveCount(1);
 	await editor.locator('.close-button').click();
 	await expect(editor).toHaveCount(0);
