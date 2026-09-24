@@ -127,6 +127,8 @@ export class RaidSimUI extends SimUI {
 				window.localStorage.setItem(this.getSettingsStorageKey(), jsonStr);
 			});
 		});
+		// the load above usually runs as event 0, which updateCharacterStats skips
+		this.sim.updateCharacterStats(TypedEvent.nextEventID());
 	}
 
 	private addSidebarComponents() {

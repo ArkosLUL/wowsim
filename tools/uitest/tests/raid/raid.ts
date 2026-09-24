@@ -115,6 +115,21 @@ export async function renamePlayer(page: Page, raidIndex: number, name: string) 
 	await input.blur();
 }
 
+export const playerEditor = (page: Page) => page.locator('.modal.show', { has: page.locator('.player-editor-modal') });
+
+// The Edit window's character stats by label, as shown.
+export async function editorStats(editor: Locator): Promise<Record<string, string>> {
+	const rows = await editor
+		.locator('.character-stats-table-row')
+		.evaluateAll(rowElems =>
+			rowElems.map(row => [
+				row.querySelector('.character-stats-table-label')?.textContent?.trim() ?? '',
+				row.querySelector('.stat-value-link')?.textContent?.trim() ?? '',
+			]),
+		);
+	return Object.fromEntries(rows.filter(([, value]) => value));
+}
+
 // The name a raid target picker shows, or 'Unassigned'.
 export async function targetName(picker: Locator): Promise<string> {
 	return (await picker.locator('.raid-target-picker-button').innerText()).trim();
