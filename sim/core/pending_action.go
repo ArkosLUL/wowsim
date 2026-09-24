@@ -35,6 +35,8 @@ type PendingAction struct {
 
 	cancelled bool
 	consumed  bool
+
+	slot int32 // in Simulation.pendingSlots, from the last time it was added
 }
 
 func (pa *PendingAction) Cancel(sim *Simulation) {

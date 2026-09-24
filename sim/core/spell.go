@@ -30,7 +30,8 @@ type SpellConfig struct {
 	RuneCost   RuneCostOptions
 	FocusCost  FocusCostOptions
 
-	Cast               CastConfig
+	Cast CastConfig
+	// must not change the sim (logging is fine): the APL skips it while the spell can't be cast anyway
 	ExtraCastCondition CanCastCondition
 
 	BonusHitRating       float64
@@ -407,10 +408,8 @@ func (spell *Spell) finalize() {
 }
 
 func (spell *Spell) reset(_ *Simulation) {
-	for i := range spell.splitSpellMetrics {
-		for j := range spell.SpellMetrics {
-			spell.splitSpellMetrics[i][j] = SpellMetrics{}
-		}
+	for _, metrics := range spell.splitSpellMetrics {
+		clear(metrics)
 	}
 	spell.casts = 0
 
@@ -484,25 +483,7 @@ func (spell *Spell) CanCast(sim *Simulation, target *Unit) bool {
 		return false
 	}
 
-	// While casting or channeling, no other action is possible
-	if spell.Unit.Hardcast.Expires > sim.CurrentTime {
-		//if sim.Log != nil {
-		//	sim.Log("Cant cast because already casting/channeling")
-		//}
-		return false
-	}
-
-	if spell.DefaultCast.GCD > 0 && !spell.Unit.GCD.IsReady(sim) {
-		//if sim.Log != nil {
-		//	sim.Log("Cant cast because of GCD")
-		//}
-		return false
-	}
-
-	if !BothTimersReady(spell.CD.Timer, spell.SharedCD.Timer, sim) {
-		//if sim.Log != nil {
-		//	sim.Log("Cant cast because of CDs")
-		//}
+	if spell.castBlocked(sim) {
 		return false
 	}
 
@@ -518,6 +499,14 @@ func (spell *Spell) CanCast(sim *Simulation, target *Unit) bool {
 	}
 
 	return true
+}
+
+// A hardcast or channel, the GCD or a cooldown: CanCast fails on any of them whatever the
+// extra condition or the cost says.
+func (spell *Spell) castBlocked(sim *Simulation) bool {
+	return spell.Unit.Hardcast.Expires > sim.CurrentTime ||
+		(spell.DefaultCast.GCD > 0 && !spell.Unit.GCD.IsReady(sim)) ||
+		!BothTimersReady(spell.CD.Timer, spell.SharedCD.Timer, sim)
 }
 
 func (spell *Spell) Cast(sim *Simulation, target *Unit) bool {

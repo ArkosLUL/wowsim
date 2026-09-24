@@ -28,6 +28,11 @@ func (rot *APLRotation) newActionCastSpell(config *proto.APLActionCastSpell) APL
 func (action *APLActionCastSpell) IsReady(sim *Simulation) bool {
 	return action.spell.CanCast(sim, action.target.Get()) && (!action.spell.Flags.Matches(SpellFlagMCD) || action.spell.Unit.GCD.IsReady(sim))
 }
+
+// keep in step with IsReady
+func (action *APLActionCastSpell) isReadyPastGate(sim *Simulation) bool {
+	return aplCanCastPastGate(action.spell, sim, action.target.Get()) && (!action.spell.Flags.Matches(SpellFlagMCD) || action.spell.Unit.GCD.IsReady(sim))
+}
 func (action *APLActionCastSpell) Execute(sim *Simulation) {
 	action.spell.Cast(sim, action.target.Get())
 }
@@ -77,6 +82,11 @@ func (action *APLActionChannelSpell) GetAPLValues() []APLValue {
 }
 func (action *APLActionChannelSpell) IsReady(sim *Simulation) bool {
 	return action.spell.CanCast(sim, action.target.Get())
+}
+
+// keep in step with IsReady
+func (action *APLActionChannelSpell) isReadyPastGate(sim *Simulation) bool {
+	return aplCanCastPastGate(action.spell, sim, action.target.Get())
 }
 func (action *APLActionChannelSpell) Execute(sim *Simulation) {
 	action.spell.Cast(sim, action.target.Get())

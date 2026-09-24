@@ -32,10 +32,12 @@ type Simulation struct {
 	testRands map[string]Rand
 
 	// Current Simulation State
-	pendingActions []*PendingAction
-	CurrentTime    time.Duration // duration that has elapsed in the sim since starting
-	Duration       time.Duration // Duration of current iteration
-	NeedsInput     bool          // Sim is in interactive mode and needs input
+	pendingActions []pendingEntry   // sorted, see AddPendingAction
+	pendingSlots   []*PendingAction // the actions queued this iteration, indexed by pendingEntry.slot
+	advancingSlot  int32            // the popped action's slot while Step advances time to it, else the sentinel's (0)
+	CurrentTime    time.Duration    // duration that has elapsed in the sim since starting
+	Duration       time.Duration    // Duration of current iteration
+	NeedsInput     bool             // Sim is in interactive mode and needs input
 
 	ProgressReport func(*proto.ProgressMetrics)
 
@@ -64,6 +66,13 @@ type Simulation struct {
 	// the first tick at or after their timer runs out. Interval 0 means exact timing.
 	serverTickInterval time.Duration
 	serverTickPhase    time.Duration
+
+	// Spell.ResistanceMultiplier's last thresholds. A resist that got here is above 0, so the zero
+	// value never matches.
+	lastResist struct {
+		averageResist float64
+		thresholds    Thresholds
+	}
 }
 
 func (sim *Simulation) rescheduleTracker(trackerTime time.Duration) {
@@ -343,8 +352,10 @@ func (sim *Simulation) run() *proto.RaidSimResult {
 	for i := int32(1); i < sim.Options.Iterations; i++ {
 		// fmt.Printf("Iteration: %d\n", i)
 		if sim.ProgressReport != nil && time.Since(st) > time.Millisecond*100 {
-			metrics := sim.Raid.GetMetrics()
-			sim.ProgressReport(&proto.ProgressMetrics{TotalIterations: sim.Options.Iterations, CompletedIterations: i, Dps: metrics.Dps.Avg, Hps: metrics.Hps.Avg})
+			// the raid's averages only: Raid.GetMetrics would build every unit's metrics to get them
+			dps, _ := sim.Raid.dpsMetrics.meanAndStdDev()
+			hps, _ := sim.Raid.hpsMetrics.meanAndStdDev()
+			sim.ProgressReport(&proto.ProgressMetrics{TotalIterations: sim.Options.Iterations, CompletedIterations: i, Dps: dps, Hps: hps})
 			runtime.Gosched() // ensure that reporting threads are given time to report, mostly only important in wasm (only 1 thread)
 			st = time.Now()
 		}
@@ -412,8 +423,7 @@ func (sim *Simulation) reset() {
 		sim.serverTickPhase = time.Duration(sim.RandomFloat("Server Tick Phase") * float64(sim.serverTickInterval))
 	}
 
-	sim.pendingActions = sim.pendingActions[:0]
-	sim.pendingActions = append(sim.pendingActions, sentinelPendingAction)
+	sim.resetPendingActions()
 
 	sim.executePhase = 0
 	sim.nextExecutePhase()
@@ -476,8 +486,8 @@ func (sim *Simulation) Cleanup() {
 	// intuitive.
 	sim.CurrentTime = sim.Duration
 
-	for _, pa := range sim.pendingActions {
-		if pa.CleanUp != nil {
+	for _, e := range sim.pendingActions {
+		if pa := sim.pendingSlots[e.slot]; pa.CleanUp != nil {
 			pa.CleanUp(sim)
 		}
 	}
@@ -503,9 +513,9 @@ func (sim *Simulation) runPendingActions() {
 
 func (sim *Simulation) Step() bool {
 	last := len(sim.pendingActions) - 1
-	pa := sim.pendingActions[last]
+	next := sim.pendingActions[last]
 
-	if pa.NextActionAt >= sim.minWeaponAttackTime && sim.minWeaponAttackTime <= sim.minTaskTime {
+	if next.at >= sim.minWeaponAttackTime && sim.minWeaponAttackTime <= sim.minTaskTime {
 		if sim.minWeaponAttackTime > sim.endOfCombatDuration || sim.Encounter.DamageTaken > sim.endOfCombatDamage {
 			return true
 		}
@@ -513,7 +523,7 @@ func (sim *Simulation) Step() bool {
 		return false
 	}
 
-	if pa.NextActionAt >= sim.minTaskTime {
+	if next.at >= sim.minTaskTime {
 		if sim.minTaskTime > sim.endOfCombatDuration || sim.Encounter.DamageTaken > sim.endOfCombatDamage {
 			return true
 		}
@@ -522,16 +532,20 @@ func (sim *Simulation) Step() bool {
 	}
 
 	sim.pendingActions = sim.pendingActions[:last]
+	pa := sim.pendingSlots[next.slot]
 	if pa.cancelled {
 		return false
 	}
 
-	if pa.NextActionAt > sim.endOfCombatDuration || sim.Encounter.DamageTaken > sim.endOfCombatDamage {
+	if next.at > sim.endOfCombatDuration || sim.Encounter.DamageTaken > sim.endOfCombatDamage {
 		return true
 	}
 
-	if pa.NextActionAt > sim.CurrentTime {
-		sim.advance(pa.NextActionAt)
+	if next.at > sim.CurrentTime {
+		// pa is out of the queue but hasn't run: a Cancel from here stops it, so detaching mustn't
+		sim.advancingSlot = next.slot
+		sim.advance(next.at)
+		sim.advancingSlot = 0
 	}
 	pa.consumed = true
 
@@ -613,24 +627,64 @@ func (sim *Simulation) nextExecutePhase() {
 	}
 }
 
+// A queued action's NextActionAt and Priority, copied when it's added, and its index in pendingSlots.
+// No pointers in here, so an insert shifts the queue with a plain memmove, no GC write barriers.
+type pendingEntry struct {
+	at   time.Duration
+	prio ActionPriority
+	slot int32
+}
+
+// Stands in for a queued action detachPendingAction took out. Never written, so shared by every sim.
+var detachedPendingAction = &PendingAction{cancelled: true}
+
+// detachPendingAction points pa's slot at a cancelled stand-in, so pa's queued entries stay where
+// they are and do nothing when popped: what cancelling pa and dropping it would do, but pa is free
+// to be queued again, in a new slot. Reports false, changing nothing, when pa has a CleanUp to run,
+// holds no slot this iteration or is the action Step is about to run.
+func (sim *Simulation) detachPendingAction(pa *PendingAction) bool {
+	if pa.CleanUp != nil || pa.slot == sim.advancingSlot || pa.slot >= int32(len(sim.pendingSlots)) || sim.pendingSlots[pa.slot] != pa {
+		return false
+	}
+	sim.pendingSlots[pa.slot] = detachedPendingAction
+	return true
+}
+
+func (sim *Simulation) resetPendingActions() {
+	clear(sim.pendingSlots)
+	sim.pendingSlots = append(sim.pendingSlots[:0], sentinelPendingAction)
+	sim.advancingSlot = 0
+	sim.pendingActions = append(sim.pendingActions[:0], pendingEntry{at: sentinelPendingAction.NextActionAt, prio: sentinelPendingAction.Priority})
+}
+
 // Sorted so the next action is last: NextActionAt descending, then Priority ascending, sentinel at 0.
 // A new action goes below every queued one with the same time and priority, so those run in the order
-// they were added. The binary search needs a queued action's NextActionAt and Priority left alone: set
-// them only while it's out of the queue.
+// they were added. The queue keeps the keys the action had when added: set a queued action's
+// NextActionAt and Priority only while it's out of the queue.
 func (sim *Simulation) AddPendingAction(pa *PendingAction) {
 	pa.consumed = false
+
+	// an action keeps its slot for the iteration, unless detached, so requeueing it writes no pointer
+	slot := pa.slot
+	if slot >= int32(len(sim.pendingSlots)) || sim.pendingSlots[slot] != pa {
+		slot = int32(len(sim.pendingSlots))
+		sim.pendingSlots = append(sim.pendingSlots, pa)
+		pa.slot = slot
+	}
+
+	at, prio := pa.NextActionAt, pa.Priority
 	lo, hi := 1, len(sim.pendingActions)
 	for lo < hi {
 		mid := int(uint(lo+hi) >> 1)
-		if v := sim.pendingActions[mid]; v.NextActionAt < pa.NextActionAt || (v.NextActionAt == pa.NextActionAt && v.Priority >= pa.Priority) {
+		if v := &sim.pendingActions[mid]; v.at < at || (v.at == at && v.prio >= prio) {
 			hi = mid
 		} else {
 			lo = mid + 1
 		}
 	}
-	sim.pendingActions = append(sim.pendingActions, nil)
+	sim.pendingActions = append(sim.pendingActions, pendingEntry{})
 	copy(sim.pendingActions[lo+1:], sim.pendingActions[lo:])
-	sim.pendingActions[lo] = pa
+	sim.pendingActions[lo] = pendingEntry{at: at, prio: prio, slot: slot}
 }
 
 func (sim *Simulation) RegisterExecutePhaseCallback(callback func(sim *Simulation, isExecute int32)) {

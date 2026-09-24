@@ -209,3 +209,40 @@ func (rot *APLRotation) newAPLValue(config *proto.APLValue) APLValue {
 func (unit *Unit) NewAPLValue(rot *APLRotation, config *proto.APLValue) APLValue {
 	return nil
 }
+
+// Whether evaluating value only reads the sim. Only the types listed are known to, so any other,
+// a class's own included, counts as changing it: Spell Can Cast writes the spell's cost and can
+// start an OOM event, and so can a sequence's readiness through its cast.
+func aplValueIsPure(value APLValue) bool {
+	switch v := value.(type) {
+	case *APLValueMath:
+		// an int or duration division by zero panics, which skipping it would hide
+		if v.op == proto.APLValueMath_OpDiv {
+			return false
+		}
+	case *APLValueConst, *APLValueCoerced, *APLValueAnd, *APLValueOr, *APLValueNot, *APLValueCompare,
+		*APLValueMax, *APLValueMin,
+		*APLValueCurrentTime, *APLValueCurrentTimePercent, *APLValueRemainingTime, *APLValueRemainingTimePercent,
+		*APLValueNumberTargets, *APLValueIsExecutePhase,
+		*APLValueBossSpellIsCasting, *APLValueBossSpellTimeToReady,
+		*APLValueCurrentHealth, *APLValueCurrentHealthPercent, *APLValueCurrentMana, *APLValueCurrentManaPercent,
+		*APLValueCurrentRage, *APLValueCurrentEnergy, *APLValueCurrentComboPoints, *APLValueCurrentRunicPower,
+		*APLValueCurrentRuneCount, *APLValueCurrentNonDeathRuneCount, *APLValueCurrentRuneActive, *APLValueCurrentRuneDeath,
+		*APLValueRuneCooldown, *APLValueNextRuneCooldown, *APLValueRuneSlotCooldown, *APLValueRuneGrace, *APLValueRuneSlotGrace,
+		*APLValueGCDIsReady, *APLValueGCDTimeToReady, *APLValueAutoTimeToNext,
+		*APLValueSpellIsReady, *APLValueSpellTimeToReady, *APLValueSpellCastTime, *APLValueSpellTravelTime,
+		*APLValueSpellCPM, *APLValueSpellIsChanneling, *APLValueSpellChanneledTicks, *APLValueSpellCurrentCost,
+		*APLValueAuraIsActive, *APLValueAuraIsActiveWithReactionTime, *APLValueAuraRemainingTime, *APLValueAuraNumStacks,
+		*APLValueAuraInternalCooldown, *APLValueAuraICDIsReadyWithReactionTime, *APLValueAuraShouldRefresh,
+		*APLValueDotIsActive, *APLValueDotRemainingTime, *APLValueSequenceIsComplete,
+		*APLValueChannelClipDelay, *APLValueFrontOfTarget:
+	default:
+		return false
+	}
+	for _, inner := range value.GetInnerValues() {
+		if inner != nil && !aplValueIsPure(inner) {
+			return false
+		}
+	}
+	return true
+}

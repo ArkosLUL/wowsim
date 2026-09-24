@@ -236,3 +236,214 @@ refined to 500. Picks are rescored at seed 999 over 4000 iterations, in raid DPS
   scourge-invasion sets such as Borean Embrace, Frostwoven Power and Blessed Regalia of Undead Cleansing.
 - Verify spends what Effects frees, so total sims barely move (150,250-151,000 to 145,500-146,250). Every pick wears
   VanCleef's, before and after.
+
+## PERF-HOT (wave I3)
+
+### APL stage
+
+Base `2f1b8eb7d`. PERF-OPT's optimizer runs kept 8 to 15 of 16 threads busy throughout, so every timing here is an
+interleaved A/B with that load beside it.
+
+**Before** (harness `-run '^sim/' -procs 1,16`, GOMAXPROCS 16 profiles): `getNextAction` is 67% cumulative of Rogue
+(`APLValueCompare.GetBool` 11 to 18% flat, `APLValueAnd.GetBool` 5 to 8%, `Spell.CanCast` 5%), 60% of Protection
+Warrior and 20% of the raid, whose top entry is `AddPendingAction` (16% cumulative).
+
+**Why:** most `APLAction.IsReady` calls evaluate a condition tree for a spell that can't be cast anyway (on cooldown,
+on the GCD, mid-cast, short on energy). Per 100 `BenchmarkSimulate` iterations, with the fix below:
+
+| Bench | `getNextAction` passes | `IsReady` calls | Blocked by the gate |
+|---|---|---|---|
+| sim/rogue | 370k | 7.32M | 5.66M (77%): 3.66M cast blocked, 1.55M energy, 0.45M sequences |
+| sim/paladin/retribution | 128k | 838k | 605k (72%) |
+| sim/shaman/elemental | 44k | 336k | 209k (62%) |
+| sim/warrior/dps | 265k | 3.46M | 1.85M (54%) |
+| sim/shaman/enhancement | 979k | 2.59M | 1.34M (52%) |
+| sim/hunter | 224k | 758k | 372k (49%) |
+| sim (raid) | 2.75M | 7.48M | 3.38M (45%) |
+| sim/druid/feral | 828k | 2.48M | 825k (33%) |
+| sim/druid/tank | 422k | 2.37M | 529k (22%) |
+| sim/warrior/protection | 530k | 4.68M | 870k (19%) |
+
+Feral's rotation is one class action (`catOptimalRotationAction`), outside the gate: 67% of its calls.
+
+**Fix: a gate in `APLAction.IsReady`** (`sim/core/apl_action.go`). When the condition only reads the sim, check first
+whether the action can be ready at all:
+- Cast and channel actions: `Spell.castBlocked` (hardcast, GCD, cooldowns; `CanCast` calls it too), then
+  `aplCostBlocked` (energy short). Past the gate, `isReadyPastGate` finishes `CanCast` without repeating them: the
+  extra cast condition, then any cost but energy.
+- Sequences: the current subaction's spell. Strict sequences: the GCD, then the first subaction's spell.
+- Pure conditions: `aplValueIsPure` (`apl_value.go`), a whitelist of core value types. Class values, Spell Can Cast,
+  sequence readiness and Math division (its int and duration panics) stay out.
+- Logs on: the long way, so `ExtraCastCondition` log lines stay.
+
+**Why no result moves:**
+- Skipping a pure condition skips only reads.
+- A blocked spell's `ExtraCastCondition` is skipped too. All 70 only read (`SpellConfig.ExtraCastCondition`'s comment
+  now requires it), except: Druid's form check logs (hence logs off); the hunter's trap weave calls Explosive Trap's
+  `CanCast`, which fails on the same hardcast first; the owner's Furious Howl calls the pet's `CanCast`, whose only
+  write is a focus `CurCast.Cost`.
+- The energy check skips `CanCast`'s write to `CurCast.Cost`, which only the spell's own cast reads, after resetting
+  it (refunds, the VanCleef 2-piece). Rage, mana (whose check starts OOM events) and the rest stay in `CanCast`.
+
+**Tried and dropped:**
+- `APLValueCompare` caching its operand types and a constant right-hand side: Compare's share fell (Rogue 20 to 14%),
+  `getNextAction`'s didn't. The interpreter waits on loads (spells, auras), not on dispatch.
+- The gate with a rage check and no pass-through (a full `CanCast` after the gate): Protection Warrior ran 11% slower,
+  since it spends most passes GCD-ready with nothing to cast. Rage in the gate alone still cost it 8%.
+
+**Checks:** 37 `.results` byte-identical; simval 508/508; `sim/core/apl_gate_test.go`; an assertion build (the long
+way on every call, panicking when the gate blocked a ready action or the pass-through disagreed) passed every sim test
+and simval with byte-identical goldens, over 6.7M checked calls in Rogue's bench alone.
+
+**`BenchmarkSimulate`**, cpu-sec/op, 12 interleaved rounds, benchstat:
+
+| Package | 1 iteration | 100 iterations |
+|---|---|---|
+| sim/rogue | -27.0% | -34.6% |
+| sim/paladin/retribution | -4.3% | -5.8% |
+| sim/hunter | ~ (p=0.06) | -2.6% |
+| sim/shaman/elemental | ~ | -8.3% |
+| sim (raid) | -3.8% | -7.7% |
+
+At 100 iterations, 10 to 12 rounds, median of the paired ratios (the load swung too much for benchstat): Enhancement
+-16%, Warrior DPS -13%, Feral Tank -6%, Protection Warrior -1%, Feral +0.5 to +2% (won 1 to 4 of 10 to 12). Feral's
+only gated action is a Berserk cast behind a constant `false`: the gate's `castBlocked` reads the spell's cold fields
+where the constant was one call. Leaving constant conditions ungated didn't measure better (+1%, won 1 of 12).
+
+**Harness** (`bench -run '^sim/' -procs 1,16`, base and new back to back for 4 rounds, median paired CPU ratio): at
+GOMAXPROCS 1 Rogue -33%, Retribution, Enhancement, Warrior DPS, the raid and Hunter -8 to -9%, Feral Tank and
+Elemental -3%; Protection Warrior +2% and Feral +3%, both inside their rounds' spread (0.95 to 1.09). At 16 the same
+within noise, Feral +4% (1.00 to 1.07).
+
+**After:** Rogue's `getNextAction` 49% cumulative (And 11%, Compare 7%); the gate itself 14% (`castBlocked` 8%,
+`aplCostBlocked` 6%, mostly loads of `Unit.PseudoStats` and `Spell.CostMultiplier`). The raid: `getNextAction` 15%,
+`AddPendingAction` 19%.
+
+**Left:**
+- Autocast Other Cooldowns runs `getFirstReadyMCD` every pass before its GCD check: 20% of Feral, 9% of Rogue. Checking
+  the GCD first is exact only if every MCD's `ShouldActivate` and cost check only reads; mana MCDs' don't.
+- With the GCD ready and nothing castable, `DoNextAction` re-polls every 50 ms (`apl.go`), and energy thresholds add
+  passes. Fewer passes would move results.
+
+### Core stage
+
+On the APL stage's tree, with PERF-OPT's load beside it most of the time.
+
+**Before** (single-stream `BenchmarkSimulate` profiles unless noted):
+- **Pending queue:** `AddPendingAction` 9.5% of the raid at 100 iterations, 18% of the harness's raid at GOMAXPROCS
+  16, where the GC runs often: its `copy` of `*PendingAction`s paid bulk write barriers (`bulkBarrierPreWrite` 9%,
+  `wbBufFlush1` 7%). The raid queues 17.8k actions an iteration, 39 deep on average, 79% of them `SetGCDTimer`'s;
+  single-player queues run 2 to 9 deep.
+- **`SetGCDTimer`** allocated a new action whenever the GCD action was still queued: 78% of Rogue's bytes per
+  iteration, 45% of Enhancement's, 10% of Warrior DPS's, 6% of the raid's.
+- **`partialResistRollThresholds`** rebuilt the same table on every magic hit: 3.3% of the raid.
+- **`Spell.doneIteration`** added every spell's metrics for every unit each iteration, nearly all zero (the raid: 334
+  spell metrics × 23 units): 3% of the raid.
+- **Progress reports** (every 100 ms per shard, the Simulate button's path) built all of `Raid.GetMetrics` for two
+  averages, about 1 MB per report in the raid.
+- **One iteration:** `NewEnvironment` 15% (Rogue) to 38% (Elemental); `GetMetrics` 2 to 5%, with an allocation per
+  action and per target list.
+
+**Fixes**, none moving a result:
+
+| Fix | Why the results can't move |
+|---|---|
+| The queue holds `pendingEntry{at, prio, slot}`, no pointers, so an insert shifts plain memory and the binary search reads contiguous keys. The actions sit in `Simulation.pendingSlots`, each keeping its slot for the iteration, so requeueing writes no pointer | Same order: an entry's keys are its action's, which nothing changes while queued (the existing rule). `Cleanup` walks the same entries in the same order, and the entries grow at the same lengths the pointers did |
+| `SetGCDTimer` requeues a still-queued GCD action instead of replacing it: `detachPendingAction` points its slot at a shared cancelled stand-in | What `Cancel` did to the old action: its entries only get popped. Only for an action without `CleanUp` that holds its slot and isn't the one `Step` popped and is advancing time for: a `Cancel` then stops it running (`Simulation.advancingSlot`) |
+| `ResistanceMultiplier` keeps the last average resist's thresholds on the `Simulation` | A pure function of the resist |
+| `addSpellMetrics` skips all-zero entries; `Spell.reset` zeroes with `clear` | Every sum starts at +0 and can't reach -0, so adding zero changes nothing |
+| Progress reports read the raid's dps and hps means directly | The values `Raid.GetMetrics` returned |
+| `UnitMetrics.ToProto` and `auraTracker.GetMetricsProto` allocate a unit's messages in a few slices | The same messages |
+
+**Checks:** 37 `.results` byte-identical; simval 508/508; `sim/core/pending_queue_test.go` (order against a plain list
+under random adds, cancels and requeues; `Cleanup` order; the GCD requeue, also from inside `Step`'s advance; slot
+ownership), mutation-checked. An assertion build ran the old pointer queue beside the new one on every add, pop and
+`Cleanup`, panicking on another action or order, a key unlike its action's or an add during the `Cleanup` walk. It
+caught the first requeue in the optimizer's raid evaluator tests: an aura expiring in `Step`'s advance moved the GCD
+whose action `Step` had just popped, so that action ran then and again at the new time; the goldens never hit it.
+With the guard, every sim test, simval and ten `BenchmarkSimulate` packages pass under it, goldens byte-identical.
+
+**Each fix alone**, cpu-sec/op, 8 to 12 interleaved rounds, median paired ratio:
+- Queue, first with a free list of slots: single stream 0.998 to 1.005 on the raid, Retribution and Hunter; harness at
+  GOMAXPROCS 16, idle, the raid 0.946, Rogue 0.946, Hunter 0.963. But it cost the shallow queues: Warrior DPS 1.074
+  and Bear 1.115 (0 of 10 won, idle). Sticky slots against the free list: Warrior DPS 0.957, Protection Warrior
+  0.984, Rogue and the raid 0.985; against the APL stage's queue: Bear 1.005 (4/12), Protection Warrior 0.996,
+  Warrior DPS 0.985.
+- Resist cache, zero skip, `clear` (idle, 8/8 won): at 100 iterations Elemental 0.881, Retribution 0.921, raid 0.938,
+  Hunter 0.975, Rogue 0.984.
+- GCD requeue: Rogue 0.950 (6/8), Enhancement 0.969 (7/8), the rest neutral. Bytes per 100 iterations: Rogue
+  2.96 → 0.68 MB, Enhancement 2.19 → 1.17 MB.
+
+**Tried and dropped:** walking the last 8 entries before the binary search: 0.99 to 1.02 at 100 iterations, 1 to 2%
+slower at 1.
+
+**Left:**
+- Dot ticks: each application allocates an action and two closures (21% of the raid's bytes per iteration, 35% of
+  Warrior DPS's). Requeueing one breaks the tick's `dot.tickAction != pa` check when a tick refreshes its own dot.
+- `DelayedPeriodicApplier.queue` and Deep Wounds (`sim/warrior`) allocate per proc: 18% of Warrior DPS's bytes each.
+- `Spell.NewResult` allocates when the spell's cached result is in use: 15% of the raid's bytes. A pool needs every
+  caller to dispose of its results.
+- `NewSim` builds raid stats and metadata that `NewEnvironment` returns and it drops: `GetMetadata` 2.6% of Elemental
+  at 1 iteration. Skipping only the metadata takes a flag into `Character.FillPlayerStats` (`character.go`, PAR-P7-0f's
+  in I3); its build-phase aura round trip has to stay.
+- `NewPet` returns the 35 KB `Pet` by value, 19 KB of it the `Equipment` pets never use: a pointer means 15
+  constructors in 14 class files, for ≤1% of a 1-iteration sim.
+- The rest of a 1-iteration `NewEnvironment` is class construction and `applyAllEffects` (7.5% of Elemental).
+- Under PERF-OPT's load, `runtime.asyncPreempt` took 15 to 35% of a harness profile's samples: read shares from an idle
+  machine.
+
+### Before and after
+
+Base `2f1b8eb7d` against both stages; in parentheses, the APL stage against both (the core stage alone). Measured
+before the `advancingSlot` guard, which costs nothing measurable: 0.995 to 1.002 against it (6 rounds, idle).
+
+**`BenchmarkSimulate`**, cpu-sec/op, 12 interleaved rounds as PERF-OPT's load went from 15 cores to none, so
+benchstat's spreads run 50 to 90%: median paired ratio (all won 10 to 12 of 12, except the core stage's Hunter at 1
+iteration, 9/12), and benchstat's change (p ≤ 0.02):
+
+| Package | 1 iteration | 100 iterations |
+|---|---|---|
+| sim/rogue | 0.669, -33% (0.972) | 0.589, -41% (0.957) |
+| sim/paladin/retribution | 0.908, -9% (0.948) | 0.842, -16% (0.901) |
+| sim/hunter | 0.979, -2% (0.990) | 0.949, -6% (0.976) |
+| sim/shaman/elemental | 0.929, -7% (0.953) | 0.805, -20% (0.888) |
+| sim (raid) | 0.935, -7% (0.984) | 0.862, -14% (0.944) |
+
+Bytes per op at 100 iterations: Rogue -76%, the raid -6%, Hunter -4%. At 1 iteration up to 3% more: the slot table
+and 16-byte entries, once per sim.
+
+**Harness** (`bench -run '^sim/' -procs 1,16`, 3 rounds back to back, idle machine), median paired CPU ratio at
+GOMAXPROCS 1 / 16:
+
+| Scenario | Both stages | Core stage |
+|---|---|---|
+| sim/rogue | 0.583 / 0.632 | 0.937 / 0.953 |
+| sim/shaman_elemental | 0.778 / 0.817 | 0.847 / 0.893 |
+| sim/shaman_enhancement | 0.837 / 0.827 | 0.934 / 0.915 |
+| sim/paladin_retribution | 0.837 / 0.868 | 0.906 / 0.920 |
+| sim/raid | 0.851 / 0.837 | 0.920 / 0.925 |
+| sim/paladin_protection | 0.858 / 0.915 | 0.854 / 0.931 |
+| sim/warrior_dps | 0.865 / 0.883 | 1.004 / 0.991 |
+| sim/hunter | 0.946 / 0.923 | 0.958 / 0.934 |
+| sim/druid_tank | 0.950 / 0.933 | 1.005 / 0.996 |
+| sim/druid_feral | 0.952 / 0.919 | 0.940 / 0.919 |
+| sim/warrior_protection | 1.000 / 1.031 | 1.027 / 1.024 |
+
+Every ratio won 3 of 3, except Warrior DPS and Bear in the core column (1 or 2 of 3) and Protection Warrior (0 or 1 of
+3): likely the slot lookup, paid on its 4.9k adds an iteration to a queue 2 deep, where the old one cost nothing to
+shift. Holy Paladin and Restoration Shaman, under 0.05 s, stay within noise. Allocated bytes: the raid 783 → 582 MB at
+16, Rogue 88 → 15 MB.
+
+**Review re-run**, the final tree (guard included) against base, idle:
+- `BenchmarkSimulate` cpu-sec/op, 12 interleaved rounds, benchstat's spreads ±1%, every change p=0.000 and won 12/12,
+  at 1 / 100 iterations: Rogue -33 / -42%, Retribution -9 / -16%, Hunter -2 / -5%, Elemental -7 / -20%, the raid
+  -7 / -13%.
+- Harness, 4 rounds, CPU ratio at GOMAXPROCS 1 / 16: Rogue 0.59 / 0.62, Elemental 0.80 / 0.80, Retribution
+  0.84 / 0.88, Enhancement 0.84 / 0.84, the raid 0.85 / 0.85, Protection Paladin 0.85 / 0.89, Warrior DPS
+  0.86 / 0.92, Hunter 0.94 / 0.95, Feral 0.96 / 0.97, Bear 0.97 / 1.02 (1/4 won at 16), Protection Warrior
+  0.98 / 1.03 (0/4 won at 16).
+
+**Top entries after**, cumulative, harness at GOMAXPROCS 16, idle, base → both stages: the raid's `getNextAction`
+21.6 → 20.3%, `AddPendingAction` 12.9 → 8.8% (`bulkBarrierPreWrite` 2.3% → gone), `SetGCDTimer` 9.9 → 7.0%,
+`ResistanceMultiplier` 7.4 → 3.5%; Rogue's `getNextAction` 68 → 55%; `ResistanceMultiplier` 24 → 8% of Elemental,
+12 → 4% of Retribution.
