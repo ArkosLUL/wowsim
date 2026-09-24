@@ -209,6 +209,8 @@ type run struct {
 	bestEval *Evaluation
 	// What verification simmed, for a result cut short by a cancel.
 	verified []*verifiedLoadout
+
+	prefetching sync.WaitGroup
 }
 
 // traceHook, when set, gets a line for each decision a run makes. Tests set it to t.Logf.
@@ -226,6 +228,8 @@ func optimize(ctx context.Context, asked, simmed *Request, eval Evaluator, progr
 	if seed == 0 {
 		seed = defaultRandomSeed
 	}
+	// a run that ends early stops its prefetches rather than waiting them out
+	ctx, cancel := context.WithCancel(ctx)
 	r := &run{
 		ctx:      ctx,
 		asked:    asked,
@@ -242,7 +246,45 @@ func optimize(ctx context.Context, asked, simmed *Request, eval Evaluator, progr
 	r.eval = &countingEvaluator{inner: eval, have: map[Point]int{}, after: r.report}
 	r.region = trace.StartRegion(ctx, stages[0])
 	defer func() { r.region.End() }()
+	defer r.prefetching.Wait()
+	defer cancel()
 	return r.execute()
+}
+
+// batch is points to sim at iterations.
+type batch struct {
+	points     []Point
+	iterations int
+}
+
+// prefetch sims b in the background, into the evaluator's cache, on the workers the steps running
+// meanwhile leave idle. Its errors are dropped: the step that reads b sims whatever's missing and
+// reports them. Call wait before that step, or both sim the same points.
+func (r *run) prefetch(b batch) (wait func()) {
+	// only the sim evaluator caches, and its results don't depend on the order of its calls
+	if _, ok := r.eval.inner.(*SimEvaluator); !ok || len(b.points) == 0 {
+		return func() {}
+	}
+	done := make(chan struct{})
+	r.prefetching.Add(1)
+	go func() {
+		defer r.prefetching.Done()
+		defer close(done)
+		r.eval.inner.Evaluate(r.ctx, b.points, b.iterations)
+	}()
+	return func() { <-done }
+}
+
+// screenBatch is what the racial screen, when it runs, and the stat screen sim, less the seed, which the
+// objective's stage sims longer anyway.
+func (r *run) screenBatch(sc *statScreen) batch {
+	var points []Point
+	if r.asked.Settings.GetRacialMode() == proto.OptimizerRacialMode_OptimizerRacialSearch {
+		points = racialScreenPoints(r.r.Seed)
+	}
+	points = append(points, sc.points...)
+	seed := Point{Loadout: r.r.Seed}
+	return batch{slices.DeleteFunc(points, func(p Point) bool { return p == seed }), r.screen}
 }
 
 func (r *run) execute() *proto.OptimizerResult {
@@ -280,6 +322,15 @@ func (r *run) execute() *proto.OptimizerResult {
 	}
 
 	r.setStage("Objective")
+	// the objective's few sims leave most workers idle, so the seed's and both screens' run alongside
+	screen := r.newStatScreen()
+	waitScreens := r.prefetch(r.screenBatch(screen))
+	// the equipped gear goes along now so progress can report against it; result tops it up
+	points := []Point{{Loadout: r.r.Seed}}
+	if r.ref != r.r.Seed {
+		points = append(points, Point{Loadout: r.ref})
+	}
+	waitSeed := r.prefetch(batch{points, r.budget.Iterations})
 	obj, err := NewObjective(r.ctx, r.eval, r.r, r.budget.Iterations)
 	if err != nil {
 		return r.stop(err)
@@ -288,11 +339,7 @@ func (r *run) execute() *proto.OptimizerResult {
 	for _, w := range obj.Warnings {
 		r.warn("%s", w)
 	}
-	// the equipped gear goes along now so progress can report against it; result tops it up
-	points := []Point{{Loadout: r.r.Seed}}
-	if r.ref != r.r.Seed {
-		points = append(points, Point{Loadout: r.ref})
-	}
+	waitSeed()
 	evals, err := r.evaluate(points, r.budget.Iterations)
 	if err != nil {
 		return r.stop(fmt.Errorf("seed sims: %w", err))
@@ -305,6 +352,7 @@ func (r *run) execute() *proto.OptimizerResult {
 
 	r.setStage("Racial screen")
 	if settings.GetRacialMode() == proto.OptimizerRacialMode_OptimizerRacialSearch {
+		waitScreens()
 		finalists, err := r.screenRacials()
 		if err != nil {
 			return r.stop(fmt.Errorf("racial screen: %w", err))
@@ -313,7 +361,9 @@ func (r *run) execute() *proto.OptimizerResult {
 	}
 
 	r.setStage("Stat curves")
-	resp, rangeStats, err := r.measureCurves()
+	// without a racial screen the wait lands here, so progress doesn't show one running
+	waitScreens()
+	resp, rangeStats, err := r.measureCurves(screen)
 	if err != nil {
 		return r.stop(err)
 	}
@@ -799,6 +849,15 @@ const maxTop = 20
 // metrics; NewRaidEvaluator then reports MetricDPS as the raid's total DPS.
 func (r *run) raidMode() bool {
 	return r.asked.Settings.GetObjective() == proto.OptimizerObjective_OptimizerObjectiveRaidDps
+}
+
+// ownJ is the target's own share of the seed's J: all of it, except in raid mode, where J is the whole
+// raid's DPS and the share is the target's own DPS in J's points.
+func (r *run) ownJ() float64 {
+	if !r.raidMode() {
+		return abs(r.seedJ.Mean)
+	}
+	return abs(r.obj.coef[MetricDPS] * r.seedEval.ownDPS())
 }
 
 // scoreStats lists the stats J's terms are in, each once, in metric order.

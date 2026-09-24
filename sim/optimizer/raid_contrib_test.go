@@ -2,7 +2,9 @@ package optimizer
 
 import (
 	"context"
+	"fmt"
 	"testing"
+	"time"
 
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
@@ -97,6 +99,67 @@ func TestRaidEvaluatorIdenticalLoadoutHasNoDelta(t *testing.T) {
 		t.Errorf("two independent raid evaluators scoring the same loadout differ by %+v, want exactly 0", d)
 	}
 	t.Logf("raid DPS %.1f ± %.1f", evalA.Metrics[MetricDPS].Mean, evalA.Metrics[MetricDPS].SE)
+}
+
+// A raid evaluator scores the raid's DPS but still knows the target's own, the same number an ordinary
+// evaluator over the same raid reports.
+func TestRaidEvaluatorKeepsTheTargetsOwnDPS(t *testing.T) {
+	req := raidContribRequest(t, 0, presetPlayer(t, "fury_p1", "Target"), presetPlayer(t, "arcane_p3", "Mage"))
+	r, err := PrepareRequest(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	raid := NewRaidEvaluator(r, MetricDPS)
+	raid.shardSize = 100
+	own := NewSimEvaluator(r, MetricDPS)
+	own.shardSize = 100
+	raidEval := evaluate(t, raid, 200, Point{Loadout: r.Seed})[0]
+	ownEval := evaluate(t, own, 200, Point{Loadout: r.Seed})[0]
+
+	if got, want := raidEval.ownDPS(), ownEval.Metrics[MetricDPS].Mean; got != want {
+		t.Errorf("raid evaluator's own DPS = %.3f, an ordinary evaluator's = %.3f", got, want)
+	}
+	if got := ownEval.ownDPS(); got != ownEval.Metrics[MetricDPS].Mean {
+		t.Errorf("ordinary evaluator's own DPS = %.3f, its DPS = %.3f", got, ownEval.Metrics[MetricDPS].Mean)
+	}
+	if raidEval.ownDPS() >= raidEval.Metrics[MetricDPS].Mean {
+		t.Errorf("own DPS %.1f isn't below the raid's %.1f", raidEval.ownDPS(), raidEval.Metrics[MetricDPS].Mean)
+	}
+	t.Logf("own DPS %.1f of the raid's %.1f over %d iterations", raidEval.ownDPS(), raidEval.Metrics[MetricDPS].Mean, raidEval.Iterations)
+}
+
+// Set bonuses only move the target's own damage, so a raid-mode run screens sets against its own
+// share of J: the rest of the raid's DPS doesn't loosen the screen.
+func TestRaidModeScreensSetsAgainstTheTargetsShare(t *testing.T) {
+	screen := func(others float64) float64 {
+		req := kaRequest(proto.OptimizerEffort_OptimizerEffortQuick)
+		if others > 0 {
+			req.Settings.Objective = proto.OptimizerObjective_OptimizerObjectiveRaidDps
+		}
+		r, err := PrepareRequest(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		got := -1.0
+		traceHook = func(format string, args ...any) {
+			fmt.Sscanf(fmt.Sprintf(format, args...), "set screen: %f of J", &got)
+		}
+		defer func() { traceHook = nil }()
+		fake := newKnownEvaluator(kaMetrics)
+		fake.others = others
+		if result := optimize(context.Background(), r, r, fake, nil, time.Now()); result.ErrorResult != "" {
+			t.Fatal(result.ErrorResult)
+		}
+		if got < 0 {
+			t.Fatal("the run never screened sets")
+		}
+		return got
+	}
+	solo, raid := screen(0), screen(80000)
+	if !near(raid, solo, 0.01*solo) {
+		t.Errorf("raid mode screens sets at %.1f of J, a solo run at %.1f; want the same", raid, solo)
+	}
+	t.Logf("set screen: %.1f solo, %.1f in raid mode", solo, raid)
 }
 
 // A gear change moves the target's own damage and whatever it buffs elsewhere, but every other

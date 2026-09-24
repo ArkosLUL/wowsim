@@ -224,6 +224,8 @@ type knownEvaluator struct {
 	metrics func(Point) (Metrics, error)
 	shared  float64
 	own     float64
+	// non-zero fakes a raid-wide evaluator: MetricDPS is the target's plus this much from the rest of the raid
+	others float64
 
 	mu     sync.Mutex
 	noise  [][NumMetrics]float64
@@ -284,10 +286,16 @@ func (f *knownEvaluator) Evaluate(ctx context.Context, points []Point, iteration
 				values[m][it] = means[i][m] + f.shared*f.noise[have+it][m] + f.own*rng.NormFloat64()
 			}
 		}
+		own := 0.0
+		for it := range values[MetricDPS] {
+			own += values[MetricDPS][it]
+			values[MetricDPS][it] += f.others
+		}
 		s, err := newShard(values, 0, [NumMetrics]bool{true, true, true, true, true})
 		if err != nil {
 			return nil, err
 		}
+		s.ownDPSSum = own
 		out[i] = prev.extend([]shard{s})
 		f.cache[p] = out[i]
 	}

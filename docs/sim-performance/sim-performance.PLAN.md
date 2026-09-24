@@ -107,6 +107,22 @@ threads than at one ([baseline](sim-performance.INVESTIGATION.md)). Left open:
 
 Owns: `sim/optimizer/**`, `sim/web/main.go`'s worker cap.
 
+**As built, stage 1 (busy threads)** ([findings](sim-performance.INVESTIGATION.md#perf-opt-wave-i3-loaded-machine)):
+- Quick sims every shard as 5 sims of 50 iterations (`shardSpans`, `evaluator.go`), whatever the batch: the layout
+  follows the effort, so a cached point extends shard by shard and results don't depend on the batch or the worker
+  count. Normal and Thorough, 16 and 40 shards an evaluation, don't split.
+- `prefetch` (`api.go`) sims into the evaluator's cache ahead of need: the seed and both screens during the
+  Objective stage, and `addKnots`' knots for stats that aren't cap-prone during bisection. It changes no result.
+- The web server's cap stays GOMAXPROCS-1: 15 and 16 workers tie.
+- Left open: Search, which sims nothing, is now the least busy stage, at 62 to 75% util.
+
+**As built, stage 2 (raid screen)** ([findings](sim-performance.INVESTIGATION.md#perf-opt-wave-i3-loaded-machine)):
+- `setScreen` sizes against `ownJ` (`api.go`): the seed's J, but in raid mode only the target's own DPS in J's
+  points, which the raid evaluator keeps beside the raid's (`Evaluation.ownDPS`). Raid25's combat rogue simmed 11
+  sets in 21,000 whole-raid iterations; now its 4 tier sets in 5,000 to 6,000.
+- Left open: raid mode's acceptance bar (`acceptFraction`, `api.go`) still takes 0.05% of the whole raid's J, 15
+  times the rogue's own share.
+
 ### PERF-HOT: single-thread hot paths
 
 - Profile again: the class waves added cost (H3 ran 0.4-5% over H). Candidates from the parity INVESTIGATION:

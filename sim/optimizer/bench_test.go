@@ -37,6 +37,7 @@ func BenchmarkOptimizerEval(b *testing.B) {
 			b.Run(preset+"/"+effort.name, func(b *testing.B) {
 				budget := EffortBudget(effort.effort)
 				r := presetRequest(b, preset)
+				r.Settings.Effort = effort.effort
 				workers := int(r.Settings.Workers)
 				// one point per worker; each op gets a fresh evaluator, so nothing's cached
 				points := make([]Point, workers)
@@ -63,11 +64,10 @@ func BenchmarkOptimizerEval(b *testing.B) {
 func benchShards(b *testing.B, preset string, size int) {
 	r := presetRequest(b, preset)
 	e := NewSimEvaluator(r, MetricDPS)
-	e.shardSize = size
 	seed := Point{Loadout: r.Seed}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		if _, err := e.runShard(seed, i); err != nil {
+		if _, err := e.runSpan(seed, i*size, size); err != nil {
 			b.Fatal(err)
 		}
 	}

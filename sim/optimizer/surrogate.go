@@ -896,26 +896,31 @@ func weaponDPS(item *core.Item) float64 {
 	return (item.WeaponDamageMin + item.WeaponDamageMax) / 2 / item.SwingSpeed
 }
 
-// measureCurves measures response curves for the stats the pool moves. Each stat first gets one
-// screening sim at the far end of its range (both ends for a cap-prone stat, whose value can sit on
-// either side of its cap); a stat that doesn't move J there gets no curve. The screening offsets are
-// knots MeasureResponse sims anyway, so the evaluator extends them rather than starting over.
-func (r *run) measureCurves() (Response, []stats.Stat, error) {
+// statScreen is measureCurves' first step: one screening sim per stat at the far end of its range (both
+// ends for a cap-prone stat, whose value can sit on either side of its cap), after the seed's. It only
+// needs the seed and the pool, so the objective's stage sims it in the background.
+type statScreen struct {
+	ranges     map[stats.Stat]ResponseRange
+	rangeStats []stats.Stat
+	// the seed, then one per owner
+	points []Point
+	owners []screenedStat
+}
+
+type screenedStat struct {
+	stat   stats.Stat
+	offset float64
+}
+
+func (r *run) newStatScreen() *statScreen {
 	seed := r.r.Seed
-	ranges := newSurrogate(r.pool, seed, nil).statRanges()
-	var rangeStats []stats.Stat
-	type screened struct {
-		stat   stats.Stat
-		offset float64
-	}
-	var owners []screened
-	points := []Point{{Loadout: seed}}
+	sc := &statScreen{ranges: newSurrogate(r.pool, seed, nil).statRanges(), points: []Point{{Loadout: seed}}}
 	for st := stats.Stat(0); st < stats.Len; st++ {
-		rng, ok := ranges[st]
+		rng, ok := sc.ranges[st]
 		if !ok {
 			continue
 		}
-		rangeStats = append(rangeStats, st)
+		sc.rangeStats = append(sc.rangeStats, st)
 		var ends []float64
 		switch {
 		case capProneStats[st]:
@@ -930,32 +935,43 @@ func (r *run) measureCurves() (Response, []stats.Stat, error) {
 			ends = []float64{rng.Max}
 		}
 		for _, end := range ends {
-			points = append(points, offsetPoint(seed, st, end))
-			owners = append(owners, screened{st, end})
+			sc.points = append(sc.points, offsetPoint(seed, st, end))
+			sc.owners = append(sc.owners, screenedStat{st, end})
 		}
 	}
-	evals, err := r.evaluate(points, r.screen)
+	return sc
+}
+
+// measureCurves measures response curves for the stats the pool moves. A stat whose screening sim
+// doesn't move J gets no curve. The screening offsets are knots MeasureResponse sims anyway, so the
+// evaluator extends them rather than starting over.
+func (r *run) measureCurves(sc *statScreen) (Response, []stats.Stat, error) {
+	seed := r.r.Seed
+	evals, err := r.evaluate(sc.points, r.screen)
 	if err != nil {
 		return nil, nil, fmt.Errorf("stat screening sims: %w", err)
 	}
 	relevant := map[stats.Stat]ResponseRange{}
-	for i, o := range owners {
+	for i, o := range sc.owners {
 		if evals[i+1] == nil {
 			continue
 		}
 		if d := r.obj.Delta(evals[0], evals[i+1]); abs(d.Mean) > 2*d.SE {
-			relevant[o.stat] = ranges[o.stat]
+			relevant[o.stat] = sc.ranges[o.stat]
 		}
 	}
 
 	for {
+		// addKnots' sims for stats that aren't cap-prone don't need the bisection, so they run during it
+		waitKnots := r.prefetch(batch{r.earlyKnotPoints(relevant), r.budget.Iterations})
 		resp, err := MeasureResponse(r.ctx, r.eval, r.obj, seed, relevant, r.budget.Iterations)
+		waitKnots()
 		if err == nil {
 			err = r.addKnots(resp, relevant)
 		}
 		var simErr *SimError
 		if !errors.As(err, &simErr) {
-			return resp, rangeStats, err
+			return resp, sc.rangeStats, err
 		}
 		dropped := false
 		for st := range relevant {
@@ -988,6 +1004,38 @@ func knotFractions(effort proto.OptimizerEffort, capProne bool) []float64 {
 // minKnotOffset is the smallest offset worth a knot of its own.
 const minKnotOffset = 5
 
+// newKnots are the offsets addKnots sims for a stat whose curve already has knots at have.
+func (r *run) newKnots(st stats.Stat, rng ResponseRange, have []float64) []float64 {
+	var out []float64
+	for _, end := range []float64{rng.Min, rng.Max} {
+		for _, f := range knotFractions(r.asked.Settings.GetEffort(), capProneStats[st]) {
+			off := math.Round(end * f)
+			near := func(k float64) bool { return abs(k-off) < abs(off)/4 }
+			if abs(off) < minKnotOffset || slices.ContainsFunc(have, near) {
+				continue
+			}
+			out = append(out, off)
+		}
+	}
+	return out
+}
+
+// earlyKnotPoints are addKnots' sims for the stats that aren't cap-prone: MeasureResponse only gives those
+// the seed's knot and their initial offsets, so they're known before it runs.
+func (r *run) earlyKnotPoints(ranges map[stats.Stat]ResponseRange) []Point {
+	var points []Point
+	for st := stats.Stat(0); st < stats.Len; st++ {
+		rng, ok := ranges[st]
+		if !ok || capProneStats[st] || rng.Min > rng.Max || rng.Min == 0 && rng.Max == 0 {
+			continue
+		}
+		for _, off := range r.newKnots(st, rng, append([]float64{0}, initialOffsets(st, rng)...)) {
+			points = append(points, offsetPoint(r.r.Seed, st, off))
+		}
+	}
+	return points
+}
+
 // addKnots sims each curve closer to the seed than MeasureResponse does. It only sims the ends of a
 // stat's range, which the pool's extremes set, and a stat's value can bend well inside it: a Ret
 // paladin's agility is worth 1.5 a point near the seed but 0.66 on average out to the 2300 its
@@ -1001,16 +1049,13 @@ func (r *run) addKnots(resp Response, ranges map[stats.Stat]ResponseRange) error
 	var owners []owner
 	points := []Point{{Loadout: seed}}
 	for _, st := range statsOf(resp) {
-		for _, end := range []float64{ranges[st].Min, ranges[st].Max} {
-			for _, f := range knotFractions(r.asked.Settings.GetEffort(), capProneStats[st]) {
-				off := math.Round(end * f)
-				near := func(k Knot) bool { return abs(k.Offset-off) < abs(off)/4 }
-				if abs(off) < minKnotOffset || slices.ContainsFunc(resp[st].Knots, near) {
-					continue
-				}
-				points = append(points, offsetPoint(seed, st, off))
-				owners = append(owners, owner{st, off})
-			}
+		have := make([]float64, len(resp[st].Knots))
+		for i, k := range resp[st].Knots {
+			have[i] = k.Offset
+		}
+		for _, off := range r.newKnots(st, ranges[st], have) {
+			points = append(points, offsetPoint(seed, st, off))
+			owners = append(owners, owner{st, off})
 		}
 	}
 	if len(owners) == 0 {
@@ -1624,8 +1669,9 @@ func pairedSlot(slot proto.ItemSlot) proto.ItemSlot {
 	return slot
 }
 
-// setScreen is how much J, as a fraction of the seed's, wearing a set's best pieces may cost in stats
-// before its bonuses aren't worth a sim.
+// setScreen is how much J wearing a set's best pieces may cost in stats, as a fraction of ownJ, before
+// its bonuses aren't worth a sim. Bonuses only move the target's own damage, and in raid mode a fraction
+// of the whole raid's J lets nearly any set through.
 const setScreen = 0.05
 
 // singleSlots are the slots with one item each and no weapon pairing.
@@ -1980,7 +2026,7 @@ func (r *run) effectFamilies(s *surrogate, v stats.Stats, gp *gemPlan, fx *effec
 
 // setFamilies registers the pool's sets with the surrogate and lists sims of their bonuses: the
 // set's 2 and 4 best pieces on top of the seed with its own pieces of that set swapped out. A set
-// whose best pieces cost more than setScreen of J in stats isn't simmed.
+// whose best pieces cost more than setScreen of the target's share of J in stats isn't simmed.
 func (r *run) setFamilies(s *surrogate, v stats.Stats, gp *gemPlan, statLB func(proto.ItemSlot, *Candidate) float64) []*effectFamily {
 	p, seed := s.pool, s.seed
 	type piece struct {
@@ -2017,7 +2063,8 @@ func (r *run) setFamilies(s *surrogate, v stats.Stats, gp *gemPlan, statLB func(
 		}
 	}
 
-	threshold := setScreen * abs(r.seedJ.Mean)
+	threshold := setScreen * r.ownJ()
+	r.trace("set screen: %.1f of J", threshold)
 	var out []*effectFamily
 	for _, name := range names {
 		pieces := bySet[name]

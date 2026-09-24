@@ -55,15 +55,26 @@ type Evaluation struct {
 	sum     [NumMetrics]float64
 	sumSq   [NumMetrics]float64
 	deaths  int
+	// the target's own DPS summed; differs from sum[MetricDPS] only from a raid-wide evaluator
+	ownDPSSum float64
+}
+
+// ownDPS is the target's own mean DPS, even where MetricDPS is the raid's.
+func (e *Evaluation) ownDPS() float64 {
+	if e.Iterations == 0 {
+		return 0
+	}
+	return e.ownDPSSum / float64(e.Iterations)
 }
 
 // shard is one sim's iterations, before they're merged into an Evaluation.
 type shard struct {
-	n       int
-	samples [NumMetrics][]float32
-	sum     [NumMetrics]float64
-	sumSq   [NumMetrics]float64
-	deaths  int
+	n         int
+	samples   [NumMetrics][]float32
+	sum       [NumMetrics]float64
+	sumSq     [NumMetrics]float64
+	deaths    int
+	ownDPSSum float64
 }
 
 // newShard takes per-iteration values for every metric but death chance, which comes as a count.
@@ -87,6 +98,7 @@ func newShard(values [NumMetrics][]float64, deaths int, keep [NumMetrics]bool) (
 			}
 		}
 	}
+	s.ownDPSSum = s.sum[MetricDPS]
 	return s, nil
 }
 
@@ -95,7 +107,7 @@ func (e *Evaluation) extend(shards []shard) *Evaluation {
 	out := &Evaluation{}
 	if e != nil {
 		out.Iterations = e.Iterations
-		out.sum, out.sumSq, out.deaths = e.sum, e.sumSq, e.deaths
+		out.sum, out.sumSq, out.deaths, out.ownDPSSum = e.sum, e.sumSq, e.deaths, e.ownDPSSum
 	}
 	total := out.Iterations
 	for _, s := range shards {
@@ -116,6 +128,7 @@ func (e *Evaluation) extend(shards []shard) *Evaluation {
 	for _, s := range shards {
 		out.Iterations += s.n
 		out.deaths += s.deaths
+		out.ownDPSSum += s.ownDPSSum
 		for m := range out.sum {
 			out.sum[m] += s.sum[m]
 			out.sumSq[m] += s.sumSq[m]
@@ -228,10 +241,22 @@ func combinedScore(e *Evaluation, c Metrics) Estimate {
 	return Estimate{Mean: mean, SE: math.Sqrt(variance)}
 }
 
-// DefaultShardIterations is how many iterations one sim runs. Building a sim costs about 1% of
-// that many Fury or Arcane iterations (BenchmarkOptimizerEval's /setup against /iteration), and
+// DefaultShardIterations is the unit the evaluator caches and budgets count in. Building a sim costs
+// about one iteration (BenchmarkOptimizerEval's /setup, a one-iteration sim, against /iteration), and
 // shards this small keep every worker busy on a handful of points and notice a cancel quickly.
 const DefaultShardIterations = 250
+
+// minSimsPerEvaluation: one evaluation at the effort's iterations splits into at least this many sims,
+// so a batch of one or two points still keeps most workers busy. Quick's 500 iterations are 2 shards of
+// 5 sims each; Normal's and Thorough's are 16 and 40 shards already.
+const minSimsPerEvaluation = 10
+
+// shardSpans is how many sims each shard splits into. Same for every point of a run: split one point's
+// shards and not another's and a 25-player raid's paired deltas lose most of their pairing.
+func shardSpans(effort proto.OptimizerEffort) int {
+	iterations := EffortBudget(effort).Iterations
+	return max(1, (minSimsPerEvaluation*DefaultShardIterations+iterations-1)/iterations)
+}
 
 // defaultRandomSeed stands in when the request has none, so runs stay reproducible.
 const defaultRandomSeed = 1
@@ -242,7 +267,9 @@ type SimEvaluator struct {
 	targetIndex int
 	seed        int64
 	shardSize   int
-	keep        [NumMetrics]bool
+	// sims per shard (shardSpans)
+	spans int
+	keep  [NumMetrics]bool
 	// True for a raid-contribution evaluator: MetricDPS comes from raidctx.RaidDPS instead of the
 	// target's own player metrics.
 	raidWide bool
@@ -264,6 +291,7 @@ func NewSimEvaluator(r *Request, keep ...Metric) *SimEvaluator {
 		targetIndex: r.TargetIndex,
 		seed:        r.Base.GetSimOptions().GetRandomSeed(),
 		shardSize:   DefaultShardIterations,
+		spans:       shardSpans(r.Settings.GetEffort()),
 		workers:     make(chan struct{}, max(1, int(r.Settings.GetWorkers()))),
 		cache:       make(map[Point]*Evaluation),
 	}
@@ -302,24 +330,26 @@ func (e *SimEvaluator) SimmedIterations() int64 {
 	return e.simmed.Load()
 }
 
-// Evaluate rounds iterations up to whole shards. Shard k always covers iterations k*m to
-// (k+1)*m - 1 with RandomSeed + k*m, so a cached point only sims the shards it's missing, and the
-// result doesn't depend on the worker count.
+// Evaluate rounds iterations up to whole shards. Shard k always covers iterations k*m to (k+1)*m - 1, in
+// the same sims for every point, each seeded RandomSeed plus its first iteration, so a cached point only
+// sims the shards it's missing, and the result doesn't depend on the worker count.
 func (e *SimEvaluator) Evaluate(ctx context.Context, points []Point, iterations int) ([]*Evaluation, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
 	shards := max(1, (iterations+e.shardSize-1)/e.shardSize)
+	spans := e.shardSpans()
 
 	type pending struct {
-		point  Point
-		prev   *Evaluation
-		first  int
-		shards []shard
+		point Point
+		prev  *Evaluation
+		// the first shard it sims; spans holds that shard's spans, then the next shard's
+		first int
+		spans []shard
 	}
 	type job struct {
 		p *pending
-		k int
+		i int
 	}
 
 	e.mu.Lock()
@@ -339,10 +369,10 @@ func (e *SimEvaluator) Evaluate(ctx context.Context, points []Point, iterations 
 		if have >= shards {
 			continue
 		}
-		pd := &pending{point: p, prev: prev, first: have, shards: make([]shard, shards-have)}
+		pd := &pending{point: p, prev: prev, first: have, spans: make([]shard, (shards-have)*spans)}
 		todo = append(todo, pd)
-		for k := have; k < shards; k++ {
-			jobs = append(jobs, job{pd, k})
+		for i := range pd.spans {
+			jobs = append(jobs, job{pd, i})
 		}
 	}
 	e.mu.Unlock()
@@ -369,8 +399,9 @@ func (e *SimEvaluator) Evaluate(ctx context.Context, points []Point, iterations 
 					case <-runCtx.Done():
 						continue
 					}
+					first, n := e.span(j.p.first*spans + j.i)
 					start := time.Now()
-					s, err := e.runShard(j.p.point, j.k)
+					s, err := e.runSpan(j.p.point, first, n)
 					simBusy.Add(int64(time.Since(start)))
 					<-e.workers
 					if err != nil {
@@ -382,7 +413,7 @@ func (e *SimEvaluator) Evaluate(ctx context.Context, points []Point, iterations 
 						cancel()
 						continue
 					}
-					j.p.shards[j.k-j.p.first] = s
+					j.p.spans[j.i] = s
 				}
 			}()
 		}
@@ -400,16 +431,17 @@ func (e *SimEvaluator) Evaluate(ctx context.Context, points []Point, iterations 
 
 	e.mu.Lock()
 	defer e.mu.Unlock()
-	// after an error or a cancel, whatever run of shards finished first still counts
+	// after an error or a cancel, whatever run of whole shards finished first still counts
 	for _, pd := range todo {
 		done := 0
-		for done < len(pd.shards) && pd.shards[done].n > 0 {
+		for done < len(pd.spans) && pd.spans[done].n > 0 {
 			done++
 		}
+		done -= done % spans
 		if done == 0 {
 			continue
 		}
-		ev := pd.prev.extend(pd.shards[:done])
+		ev := pd.prev.extend(pd.spans[:done])
 		// a concurrent call may have gone further already
 		if cur := e.cache[pd.point]; cur == nil || cur.Iterations < ev.Iterations {
 			e.cache[pd.point] = ev
@@ -429,7 +461,26 @@ func (e *SimEvaluator) Evaluate(ctx context.Context, points []Point, iterations 
 	return out, nil
 }
 
-func (e *SimEvaluator) runShard(p Point, k int) (s shard, err *SimError) {
+// shardSpans is how many sims a shard splits into, at most one per iteration.
+func (e *SimEvaluator) shardSpans() int {
+	return max(1, min(e.spans, e.shardSize))
+}
+
+// span is the first iteration and length of span i, counting every shard's spans from the start. A shard
+// that doesn't split evenly gives its first spans one iteration more.
+func (e *SimEvaluator) span(i int) (first, n int) {
+	spans := e.shardSpans()
+	k, j := i/spans, i%spans
+	size, extra := e.shardSize/spans, e.shardSize%spans
+	first, n = k*e.shardSize+j*size+min(j, extra), size
+	if j < extra {
+		n++
+	}
+	return first, n
+}
+
+// runSpan sims n iterations of p from iteration first.
+func (e *SimEvaluator) runSpan(p Point, first, n int) (s shard, err *SimError) {
 	defer func() {
 		// IsTest turns off core's own recover
 		if r := recover(); r != nil {
@@ -437,7 +488,7 @@ func (e *SimEvaluator) runShard(p Point, k int) (s shard, err *SimError) {
 		}
 	}()
 
-	result := core.RunRaidSim(e.request(p, k))
+	result := core.RunRaidSim(e.request(p, first, n))
 	if result.ErrorResult != "" {
 		return s, &SimError{Point: p, Message: result.ErrorResult}
 	}
@@ -454,24 +505,31 @@ func (e *SimEvaluator) runShard(p Point, k int) (s shard, err *SimError) {
 		MetricDTPS: m.GetDtps().GetAllValues(),
 		MetricTMI:  m.GetTmi().GetAllValues(),
 	}
+	own := values[MetricDPS]
 	if e.raidWide {
 		values[MetricDPS] = raidctx.RaidDPS(metrics)
 	}
-	n := len(values[MetricDPS])
-	// the cache counts whole shards, and an empty one would never finish
-	if n != e.shardSize {
-		return s, &SimError{Point: p, Message: fmt.Sprintf("the sim reported %d iterations, want %d", n, e.shardSize)}
+	got := len(values[MetricDPS])
+	// the cache counts whole shards, and an empty span would never finish one
+	if got != n {
+		return s, &SimError{Point: p, Message: fmt.Sprintf("the sim reported %d iterations, want %d", got, n)}
 	}
 	s, verr := newShard(values, int(math.Round(m.GetChanceOfDeath()*float64(n))), e.keep)
 	if verr != nil {
 		return s, &SimError{Point: p, Message: verr.Error()}
+	}
+	if e.raidWide {
+		s.ownDPSSum = 0
+		for _, x := range own {
+			s.ownDPSSum += x
+		}
 	}
 	e.simmed.Add(int64(n))
 	return s, nil
 }
 
 // request clones the base for every sim: core's GetRaidBuffs writes into the raid it's given.
-func (e *SimEvaluator) request(p Point, k int) *proto.RaidSimRequest {
+func (e *SimEvaluator) request(p Point, first, n int) *proto.RaidSimRequest {
 	rsr := goproto.Clone(e.base).(*proto.RaidSimRequest)
 	player := rsr.Raid.Parties[e.targetIndex/5].Players[e.targetIndex%5]
 	player.Equipment = p.Loadout.Equipment()
@@ -483,8 +541,9 @@ func (e *SimEvaluator) request(p Point, k int) *proto.RaidSimRequest {
 		player.BonusStats.Stats = stats.FromFloatArray(player.BonusStats.Stats).Add(p.Offset).ToFloatArray()
 	}
 	rsr.SimOptions = &proto.SimOptions{
-		Iterations: int32(e.shardSize),
-		RandomSeed: e.seed + int64(k*e.shardSize),
+		Iterations: int32(n),
+		// core reseeds iteration i with RandomSeed + i, so this gives the span the seeds one long sim would
+		RandomSeed: e.seed + int64(first),
 		// one random stream per label, reseeded every iteration, is what pairs the points
 		IsTest:        true,
 		SaveAllValues: true,
