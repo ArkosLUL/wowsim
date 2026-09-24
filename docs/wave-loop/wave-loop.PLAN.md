@@ -100,11 +100,12 @@ importer's missing pets, ammo and consumables, all found by the user.
 ## Current wave
 
 - Wave: I3, running. Wave I2 (base `21e9dee91`) landed on `master`.
-- Base SHA: `2f1b8eb7d`. Dev servers `wotlk-dev-p7-0f` and `wotlk-dev-ui-fix2` run on 3337 and 3338. Every
-  item runs in two stages but UI-FIX2: PERF-OPT Busy threads then Raid screen, PERF-HOT APL then Core,
-  PAR-P7-0f Might then Class sets.
-- Workflow runId: `wf_818c7adc-89f` (args `waveI3-args.json`), transcripts in
-  `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\wf_818c7adc-89f`.
+- Base SHA: `2f1b8eb7d`. PAR-P7-0f and UI-FIX2 are merged. PERF-OPT (stages Busy threads, Raid screen) and
+  PERF-HOT (APL, Core) are running.
+- Workflow runId: `wf_2d964cdb-4a2` (args `waveI3-resume-args.json`), transcripts in
+  `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\wf_2d964cdb-4a2`.
+  It resumes both PERF items' first stages, cut off when the first run, `wf_818c7adc-89f` (args
+  `waveI3-args.json`, finished reports `waveI3-results-part1.json`), died with Windows out of memory.
   Wave I2 ran as `wf_34bff626-0f1` (args and results `waveI2-args.json`, `waveI2-results.json` in
   `G:\DevStuff\GitHub\.wave-loop`).
 - Idle timing at integration: ask the user to stop the worldserver and Chronicle first.
@@ -266,6 +267,8 @@ crashed before F2, so its column starts there.
 | PERF-CONC | merged | `891421898` | the Simulate button shards its iterations over GOMAXPROCS-1 goroutines: 7.1 to 8.8× at 16 threads, idle; bulk sim at GOMAXPROCS goroutines |
 | BIS-seed | merged | `d31d32c9e` | equipped items stay in the pool, gains are against the gear as equipped, the score names its stat; 1 bug fixed in review (a locked second ring that moved up left its pool entry behind) |
 | UI-FIX | merged | `b332259d9` | all four fixes, plus Block Value's multiplier; the warrior row is "Stance & Shout"; Might counted twice in the tooltip's snapshots found and left (moves goldens) |
+| PAR-P7-0f | merged | `3abef3a1f` | Enhancement and Retribution goldens promoted in `48fd72cab` (+20.61 Spell Power; the spec expected none) |
+| UI-FIX2 | merged | `49344a96c` | |
 | wave I2 cross-review | | `93e62aecd` | 2 bugs: a 40-player raid crashed when a raider in groups 6 to 8 had a healing model (presim sized 25), and the batch sim's progress reporter could send on a closed channel; the harness's optimizer requests refreshed for BIS-seed's `equipped`; a test keeps pprof off the sim's port |
 
 Later WIs are added as their wave starts.

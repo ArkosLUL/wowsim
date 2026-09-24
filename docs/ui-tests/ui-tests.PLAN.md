@@ -34,6 +34,12 @@ for warriors (their own shout lands after the Buffs snapshot too) and "Form" for
 warrior's Arcane Torrent is 50613, the one mod-racial-trait-swap teaches; it restores nothing, so it never
 casts itself.
 
+## Done in wave I3
+
+UI-FIX2 merged: the Batch tab builds its item sources with the BiS tab's `sourceCheckboxes`
+(`optimizer_tab.ts`), and a batch saved without them restores with every source on. The Raid page computes
+character stats once its saved raid has loaded. PAR-P7-0f fixed the Might bug, so the 7 tests that skipped on it run.
+
 ## Follow-ups
 
 **Sim, for a sim item:**
@@ -61,6 +67,8 @@ casts itself.
   slots and stays open after a pick; every exporter downloads as `wowsims.json`.
 - Loading a raid log prints 'Unmatched aura stacks change log' warnings: the sim logs `stacks: N --> 0`
   after 'Aura faded'.
+- Changing the BiS batch's sources or effort doesn't mark finished cells stale: they keep their pick until
+  Clear results or a rerun.
 
 ## Work items
 
