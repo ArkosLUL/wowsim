@@ -69,6 +69,8 @@ type Stage struct {
 	Wall  float64 `json:"wallSeconds"`
 	Sims  int64   `json:"sims"`
 	Busy  float64 `json:"evaluatorBusy"`
+	// CPU over wall and GOMAXPROCS, like the sample's.
+	Util float64 `json:"utilization,omitempty"`
 }
 
 func ReadReport(file string) (*Report, error) {
@@ -175,9 +177,9 @@ func (rep *Report) Write(w io.Writer) error {
 		}
 		fmt.Fprintf(w, "\n%s at %d procs, %d workers\n", p.Scenario, p.Procs, p.Workers)
 		tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
-		fmt.Fprintln(tw, "  stage\tstart\twall\tsims\tbusy\t")
+		fmt.Fprintln(tw, "  stage\tstart\twall\tsims\tbusy\tutil\t")
 		for _, s := range stages {
-			fmt.Fprintf(tw, "  %s\t%s\t%s\t%d\t%s\t\n", s.Name, secs(s.Start), secs(s.Wall), s.Sims, percent(s.Busy))
+			fmt.Fprintf(tw, "  %s\t%s\t%s\t%d\t%s\t%s\t\n", s.Name, secs(s.Start), secs(s.Wall), s.Sims, percent(s.Busy), percent(s.Util))
 		}
 		if err := tw.Flush(); err != nil {
 			return err
@@ -207,6 +209,7 @@ func stageMedians(samples []Sample) []Stage {
 			Wall:  medianOf(values(runs, func(s Stage) float64 { return s.Wall })),
 			Sims:  int64(medianOf(values(runs, func(s Stage) float64 { return float64(s.Sims) }))),
 			Busy:  medianOf(values(runs, func(s Stage) float64 { return s.Busy })),
+			Util:  medianOf(values(runs, func(s Stage) float64 { return s.Util })),
 		})
 	}
 	return out

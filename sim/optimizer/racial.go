@@ -39,13 +39,7 @@ const (
 // races. The finalists get the real spend: every one of their sets goes into verification, which sims
 // them paired, so the sim picks the race, not the screen.
 func (r *run) screenRacials() ([]proto.Race, error) {
-	points := make([]Point, len(allRaces))
-	for i, race := range allRaces {
-		l := r.r.Seed
-		l.RacialTraits = race
-		points[i] = Point{Loadout: l}
-	}
-	evals, err := r.evaluate(points, r.screen)
+	evals, err := r.evaluate(racialScreenPoints(r.r.Seed), r.screen)
 	if err != nil {
 		return nil, err
 	}
@@ -101,6 +95,17 @@ func (r *run) screenRacials() ([]proto.Race, error) {
 		r.warn("%d more races tied with the last finalist, so the search only ran the best %d", tied, maxRacialFinalists)
 	}
 	return finalists, nil
+}
+
+// racialScreenPoints are the seed gear under every race's traits, in allRaces' order.
+func racialScreenPoints(seed Loadout) []Point {
+	points := make([]Point, len(allRaces))
+	for i, race := range allRaces {
+		l := seed
+		l.RacialTraits = race
+		points[i] = Point{Loadout: l}
+	}
+	return points
 }
 
 // withRacialTraits pairs every gear set the search found with every finalist race. A set's variants

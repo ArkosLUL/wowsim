@@ -29,6 +29,7 @@ func TestSimBusyTime(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	r.Settings.Workers = 2
 	eval := optimizer.NewSimEvaluator(r)
 
 	before := optimizer.SimBusyTime()
@@ -37,7 +38,7 @@ func TestSimBusyTime(t *testing.T) {
 		t.Fatal(err)
 	}
 	wall := time.Since(start)
-	// two shards run on two workers at most
+	// two workers, so at most twice the wall
 	if busy := optimizer.SimBusyTime() - before; busy <= 0 || busy > 2*wall {
 		t.Errorf("simming two shards took %v of worker time in %v, want some and at most twice that", busy, wall)
 	}

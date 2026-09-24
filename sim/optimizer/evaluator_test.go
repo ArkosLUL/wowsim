@@ -5,6 +5,7 @@ import (
 	"errors"
 	"math"
 	"math/rand"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -249,9 +250,9 @@ func TestDeltaPairsIterations(t *testing.T) {
 func TestSimEvaluatorShardsMatchOneSim(t *testing.T) {
 	r := presetRequest(t, "fury_p1")
 	sharded := NewSimEvaluator(r, MetricDPS)
-	sharded.shardSize = 100
+	sharded.shardSize, sharded.spans = 100, 1
 	whole := NewSimEvaluator(r, MetricDPS)
-	whole.shardSize = 400
+	whole.shardSize, whole.spans = 400, 1
 
 	a := evaluate(t, sharded, 400, Point{Loadout: r.Seed})[0]
 	b := evaluate(t, whole, 400, Point{Loadout: r.Seed})[0]
@@ -263,6 +264,97 @@ func TestSimEvaluatorShardsMatchOneSim(t *testing.T) {
 		t.Errorf("sharded DPS %v, unsharded %v: more than 1 se apart", dpsA, dpsB)
 	}
 	t.Logf("sharded %.2f ± %.2f, unsharded %.2f ± %.2f", dpsA.Mean, dpsA.SE, dpsB.Mean, dpsB.SE)
+}
+
+func TestShardSpans(t *testing.T) {
+	for effort, want := range map[proto.OptimizerEffort]int{
+		proto.OptimizerEffort_OptimizerEffortQuick:    5,
+		proto.OptimizerEffort_OptimizerEffortNormal:   1,
+		proto.OptimizerEffort_OptimizerEffortThorough: 1,
+	} {
+		if got := shardSpans(effort); got != want {
+			t.Errorf("%s splits each shard into %d sims, want %d", effort, got, want)
+		}
+	}
+
+	e := &SimEvaluator{shardSize: 100, spans: 3}
+	next := 0
+	for i := range 6 {
+		first, n := e.span(i)
+		if first != next || n < 33 || n > 34 {
+			t.Fatalf("span %d covers %d iterations from %d, want 33 or 34 from %d", i, n, first, next)
+		}
+		next += n
+		if i%3 == 2 && next != (i/3+1)*100 {
+			t.Fatalf("shard %d ends at iteration %d", i/3, next)
+		}
+	}
+	if e.spans = 500; e.shardSpans() != 100 {
+		t.Errorf("a 100-iteration shard splits into %d sims, want one per iteration at most", e.shardSpans())
+	}
+}
+
+// Quick sims each shard as 5 spans of 50 iterations, seeded where one long sim reseeds them, so they
+// come out as whole shards do, give or take a rare random label that starts mid-sim.
+func TestSimEvaluatorSpansMatchWholeShards(t *testing.T) {
+	r := presetRequest(t, "fury_p1")
+	spans := NewSimEvaluator(r, MetricDPS)
+	if spans.spans != 5 {
+		t.Fatalf("a Quick evaluator splits shards into %d sims, want 5", spans.spans)
+	}
+	whole := NewSimEvaluator(r, MetricDPS)
+	whole.spans = 1
+
+	points := []Point{{Loadout: r.Seed}, withOffset(r.Seed, stats.AttackPower, 100)}
+	a := evaluate(t, spans, 500, points...)
+	b := evaluate(t, whole, 500, points...)
+	if spans.SimmedIterations() != 1000 {
+		t.Fatalf("simmed %d iterations, want 1000", spans.SimmedIterations())
+	}
+	for i := range points {
+		dpsA, dpsB := a[i].Metrics[MetricDPS], b[i].Metrics[MetricDPS]
+		if a[i].Iterations != 500 || math.Abs(dpsA.Mean-dpsB.Mean) > dpsA.SE {
+			t.Errorf("point %d: %d iterations at %v DPS in spans, %v in whole shards", i, a[i].Iterations, dpsA, dpsB)
+		}
+	}
+	if paired, unsplit := Delta(a[0], a[1], MetricDPS), Delta(b[0], b[1], MetricDPS); paired.SE > 1.1*unsplit.SE {
+		t.Errorf("+100 AP = %v in spans, %v in whole shards: the spans lost the pairing", paired, unsplit)
+	}
+}
+
+func TestSimEvaluatorIgnoresTheWorkerCount(t *testing.T) {
+	r := presetRequest(t, "fury_p1")
+	points := []Point{{Loadout: r.Seed}, withOffset(r.Seed, stats.AttackPower, 100)}
+	r.Settings.Workers = 1
+	one := evaluate(t, NewSimEvaluator(r, MetricDPS), 500, points...)
+	r.Settings.Workers = 7
+	seven := evaluate(t, NewSimEvaluator(r, MetricDPS), 500, points...)
+	for i := range points {
+		if !slices.Equal(one[i].samples[MetricDPS], seven[i].samples[MetricDPS]) {
+			t.Errorf("point %d: 1 and 7 workers simmed different iterations", i)
+		}
+	}
+}
+
+// A prefetched batch lands in the cache, so the step that reads it sims nothing more, and the run
+// counts its sims only then.
+func TestPrefetchFillsTheCache(t *testing.T) {
+	r := presetRequest(t, "fury_p1")
+	inner := NewSimEvaluator(r, MetricDPS)
+	rn := &run{ctx: context.Background(), r: r, eval: &countingEvaluator{inner: inner, have: map[Point]int{}}}
+	points := []Point{{Loadout: r.Seed}, withOffset(r.Seed, stats.AttackPower, 100)}
+
+	rn.prefetch(batch{points, 250})()
+	if got := inner.SimmedIterations(); got != 500 || rn.eval.simmed() != 0 {
+		t.Fatalf("the prefetch simmed %d iterations and the run counted %d, want 500 and 0", got, rn.eval.simmed())
+	}
+	if _, err := rn.evaluate(points, 250); err != nil {
+		t.Fatal(err)
+	}
+	if got := inner.SimmedIterations(); got != 500 || rn.eval.simmed() != 500 {
+		t.Errorf("reading the prefetched points simmed %d iterations in all and the run counted %d, want 500 and 500", got, rn.eval.simmed())
+	}
+	rn.prefetching.Wait()
 }
 
 func TestSimEvaluatorLeavesTheRequestAlone(t *testing.T) {

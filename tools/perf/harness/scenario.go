@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"path"
+	"runtime"
 	"strings"
 	"time"
 
@@ -244,6 +245,7 @@ type stageMark struct {
 	name string
 	at   time.Time
 	busy time.Duration
+	cpu  time.Duration
 	sims int64
 }
 
@@ -251,10 +253,16 @@ func optimize(ctx context.Context, req *proto.OptimizeGearRequest, workers int) 
 	req.Settings.Workers = int32(workers)
 	start := time.Now()
 	startBusy := optimizer.SimBusyTime()
+	startCPU, err := cpuTime()
+	if err != nil {
+		return nil, err
+	}
+	// it only fails where getrusage doesn't exist, and the first read worked
+	cpuNow := func() time.Duration { d, _ := cpuTime(); return d }
 	// every run starts in Setup, which may end before the first progress call
-	cur := stageMark{name: "Setup", at: start, busy: startBusy}
+	cur := stageMark{name: "Setup", at: start, busy: startBusy, cpu: startCPU}
 	var stages []Stage
-	end := func(at time.Time, busy time.Duration, sims int64) {
+	end := func(at time.Time, busy, cpu time.Duration, sims int64) {
 		wall := at.Sub(cur.at)
 		stages = append(stages, Stage{
 			Name:  cur.name,
@@ -262,6 +270,7 @@ func optimize(ctx context.Context, req *proto.OptimizeGearRequest, workers int) 
 			Wall:  wall.Seconds(),
 			Sims:  sims - cur.sims,
 			Busy:  busyFraction(busy-cur.busy, wall, workers),
+			Util:  busyFraction(cpu-cur.cpu, wall, runtime.GOMAXPROCS(0)),
 		})
 	}
 	// Optimize makes these calls one at a time, and one right as each stage starts
@@ -269,18 +278,18 @@ func optimize(ctx context.Context, req *proto.OptimizeGearRequest, workers int) 
 		if p.Stage == cur.name {
 			return
 		}
-		now, busy := time.Now(), optimizer.SimBusyTime()
-		end(now, busy, int64(p.CompletedSims))
-		cur = stageMark{name: p.Stage, at: now, busy: busy, sims: int64(p.CompletedSims)}
+		now, busy, cpu := time.Now(), optimizer.SimBusyTime(), cpuNow()
+		end(now, busy, cpu, int64(p.CompletedSims))
+		cur = stageMark{name: p.Stage, at: now, busy: busy, cpu: cpu, sims: int64(p.CompletedSims)}
 	})
-	now, busy := time.Now(), optimizer.SimBusyTime()
+	now, busy, cpu := time.Now(), optimizer.SimBusyTime(), cpuNow()
 	if result.ErrorResult != "" {
 		return nil, errors.New(result.ErrorResult)
 	}
 	if result.Cancelled {
 		return nil, context.Cause(ctx)
 	}
-	end(now, busy, int64(result.TotalSims))
+	end(now, busy, cpu, int64(result.TotalSims))
 	wall := now.Sub(start)
 	return &Sample{
 		Workers: workers,
@@ -290,7 +299,7 @@ func optimize(ctx context.Context, req *proto.OptimizeGearRequest, workers int) 
 	}, nil
 }
 
-// busyFraction is how much of the workers' time went to simming.
+// busyFraction is how much of the workers' time went to simming, or of the threads' to running.
 func busyFraction(busy, wall time.Duration, workers int) float64 {
 	if wall <= 0 || workers <= 0 {
 		return 0

@@ -156,3 +156,83 @@ to 13% of CPU samples.
 - Comparison check: an unchanged rerun while other load came and went flagged the rogue sim 40% slower. Back to back
   on a quiet machine (only the worldserver, 0.5 cores) it moved 1% and nothing was flagged, while a planted 1.5 s
   spin in `core.RunRaidSimAsync` read 41% slower and left the optimizer's point alone.
+
+## PERF-OPT (wave I3, loaded machine)
+
+Stage 1, busy threads ([as built](sim-performance.PLAN.md#perf-opt-keep-the-optimizers-threads-busy)). Every timing
+is back to back against the base (`2f1b8eb7d`'s optimizer files through `go build -overlay`), with about one core of
+other load (`docker stats`).
+
+**Prefetching alone** leaves results byte-identical (Quick feral tank and prot paladin, spans forced to 1).
+
+**Split sims pair as whole shards do.** A span seeds from RandomSeed plus its first iteration, where one long sim
+reseeds, so an iteration only changes where a random label is first used mid-span: core seeds a new label from
+the sim's RandomSeed, not the iteration's.
+- The six Quick requests: 0 to 5 of 500 iterations change; means agree to 0.01 DPS.
+- raid25 with a rogue target: 213 of 250 iterations change, in runs after each span start; means within 1.5 DPS.
+  Raid DPS deltas over 1000 iterations move under 0.25 SE and pair as tightly (+100 AP ±0.08, +300 ArP ±0.49, with
+  and without spans). Only hit, which pairs badly in a raid anyway, loosens: ±25.5 to ±26.7.
+- Two points pair only on the same layout, hence one layout per effort rather than per batch.
+
+**Cost:** a sim's setup is 0.4 to 1.2 iterations (the six requests and raid25), 1 to 2% of a span. Quick allocates
+8 to 15% more and burns 3 to 7% more CPU.
+
+**Quick A/B:** GOMAXPROCS 16, 3 rounds of 2 reps, medians.
+
+| Request | Wall | Util | Busy | CPU |
+|---|---|---|---|---|
+| combat_rogue_p3 | 17.93 → 16.12 s (-10%) | 78 → 88% | 77 → 88% | 222 → 228 s |
+| feral_tank_p2 | 10.72 → 10.34 s (-4%) | 74 → 80% | 59 → 66% | 128 → 132 s |
+| fire_mage_p3 | 3.75 → 3.58 s (-5%) | 75 → 83% | 78 → 89% | 44 → 47 s |
+| fury_p1 | 8.08 → 7.59 s (-6%) | 78 → 86% | 78 → 88% | 100 → 105 s |
+| prot_paladin_p3 | 8.92 → 8.61 s (-3%) | 77 → 83% | 53 → 59% | 110 → 114 s |
+| retribution_p4 | 6.77 → 6.49 s (-4%) | 76 → 83% | 63 → 71% | 82 → 86 s |
+
+**Per stage**, the final build's rerun of the same A/B (within 3% of the table above): each stage's median wall
+summed over the six requests, and its range over them.
+
+| Stage | Wall | Evaluator busy | Util |
+|---|---|---|---|
+| Objective | 1.31 → 1.13 s | 18-36 → 75-92% | 19-36 → 81-91% |
+| Stat curves | 13.56 → 11.46 s | 61-82 → 92-95% | 57-77 → 82-88% |
+| Effects | 20.57 → 20.21 s | 91-95 → 97-99% | 84-87 → 87-91% |
+| Search | 10.22 → 10.33 s | sims nothing | 63-75 → 62-74% |
+| Verify | 2.86 → 2.83 s | 43-87 → 81-97% | 44-83 → 77-91% |
+| Alternatives | 6.64 → 6.32 s | 83-93 → 86-96% | 78-89 → 81-90% |
+| Whole run | 55.51 → 52.61 s | | |
+
+- The wait for the prefetched screens falls in Racial screen when one runs, else in Stat curves; none of the six
+  runs one. Objective and Stat curves together run 6 to 27% shorter per request, 15% summed. A prefetched sim
+  counts in the stage it ends in, so a stage can read over 100% busy.
+- Search, which sims nothing, is now the least busy stage: 3.1 to 3.3 s of feral tank's 10.2 and prot paladin's 8.7.
+- Workers: 15 and 16 at GOMAXPROCS 16 tie (the six medians sum to 52.7 and 52.8 s, each within 5% either way), and
+  the baseline curve still gains from 12 to 16, so the web server keeps GOMAXPROCS-1, a thread spare for serving,
+  and the CLI GOMAXPROCS.
+
+**Raid mode**, as the Raid page batch's stage 2: the harness's combat rogue P3 request as raid25's rogue
+(`sim/optimizer/raidctx/testdata/raid25.json`), Quick, `OptimizerObjectiveRaidDps`, 16 workers.
+- Wall, 3 runs each: Objective, Racial screen and Stat curves 96-137 s to 68-74 s; Effects, whose batches were
+  full already, 177-184 s to 188-198 s; the whole run 328-368 s to 307-322 s.
+- Picks swing from nothing to +500 raid DPS by seed in both builds. Rescored at seed 999 over 4000 iterations:
+  base +0, +115, +245, +502; new +0, +200, +226, +447. A hit offset's raid delta carries ±37 to ±40 at 500
+  iterations, so whether bisection finds the melee hit breakpoint depends on the seed.
+- Seeds closer than the iteration count share streams (iteration i seeds RandomSeed + i): 101, 102 and 103 share
+  499 of 500 iterations. Compare runs 100000 apart.
+
+Stage 2, raid screen ([as built](sim-performance.PLAN.md#perf-opt-keep-the-optimizers-threads-busy)): raid25 as
+above, seeds 100101, 200101 and 300101, stage 1's build then stage 2's back to back per seed, with about one core of
+other load. A set variant is two whole-raid points (the set and its stat twin), screened at 250 iterations and
+refined to 500. Picks are rescored at seed 999 over 4000 iterations, in raid DPS ±15.
+
+| Seed | Sets, variants, whole-raid iterations | Effects | Verify | Whole run | Pick |
+|---|---|---|---|---|---|
+| 100101 | 11, 21, 21,000 → 4, 6, 6,000 | 217.5 → 151.3 s | 2.4 → 18.7 s | 354.3 → 296.7 s | +200 → +267 |
+| 200101 | 11, 21, 21,000 → 4, 5, 5,000 | 188.5 → 160.0 s | 1.2 → 20.7 s | 313.5 → 307.4 s | +0 → +175 |
+| 300101 | 11, 21, 21,000 → 4, 6, 6,000 | 183.3 → 154.9 s | 1.2 → 19.4 s | 319.3 → 298.0 s | +447 → +433 |
+
+- The screen falls from 7,920 of J, 5% of the raid's, to 528: the rogue's own 9,050 DPS is 6.7% of the raid's
+  135,700. Its solo run screens at 534.
+- Left in: the rogue tier sets, Slayer's Armor, Bonescythe, Terrorblade and VanCleef's. Out: crafted, caster and
+  scourge-invasion sets such as Borean Embrace, Frostwoven Power and Blessed Regalia of Undead Cleansing.
+- Verify spends what Effects frees, so total sims barely move (150,250-151,000 to 145,500-146,250). Every pick wears
+  VanCleef's, before and after.

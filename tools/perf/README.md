@@ -90,7 +90,7 @@ Columns, per point (median over its runs):
   runtime's CPU estimate (idle-priority mark workers left out); `alloc`, bytes allocated; `peak heap`, heap
   objects sampled every 10 ms; `speedup`, wall at the scenario's narrowest point over this one's.
 - Optimizer only: `workers`; `sims`, iterations simmed; `busy`, `optimizer.SimBusyTime` over wall × workers.
-  The same per stage, below the table.
+  The same per stage below the table, with the stage's `util`.
 
 Each scenario first sims its (base) request at 100 iterations untimed, and each run starts after a GC.
 Workers default to GOMAXPROCS, the CLI's default, so the curve runs 1 to 16; the web server runs one fewer
