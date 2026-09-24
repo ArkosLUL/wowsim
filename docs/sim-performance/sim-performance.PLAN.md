@@ -23,7 +23,7 @@ they use the machine, find the bottlenecks, and add tooling that keeps finding t
 | Simulate button (`/raidSimAsync`) | up to 15 of 16 | `core.RunRaidSimAsync` shards the iterations over GOMAXPROCS-1 goroutines (PERF-CONC) |
 | Stat weights | 30 goroutines | `statweight.go`: `(GOMAXPROCS-1)*2`; 8 and 16 were no faster |
 | Bulk sim | 16 goroutines | `bulksim.go`: GOMAXPROCS, which beat 8 and 17 |
-| Optimizer | up to 15 | `sim/web/main.go` caps `Settings.Workers` at GOMAXPROCS-1. `SimEvaluator.Evaluate` starts min(workers, points × 250-iteration shards) goroutines, so a batch with fewer jobs leaves threads idle: the racial screen, bisection, verify rounds, one-shard screening sims. Quick Fury P1 took 9 s against a 5.7 s all-threads budget |
+| Optimizer | up to 15 | `sim/web/main.go` caps `Settings.Workers` at GOMAXPROCS-1. `SimEvaluator.Evaluate` runs 250-iteration shards, which Quick splits into five 50-iteration sims, and a prefetch sims the screens and early curve knots during Objective (PERF-OPT). Idle at 16 threads, Quick keeps the evaluator 56 to 89% busy and Normal 88 to 98%; Search, which sims nothing, is the least busy stage |
 | Wasm (static hosting) | 1 | `ui/core/sim.ts`: `WorkerPool(1)`; GOMAXPROCS 1 gives one shard |
 
 16 threads do about 8× one on the optimizer's sims (SMT adds little), so 8 is the real ceiling to scale against.
@@ -91,7 +91,7 @@ threads than at one ([baseline](sim-performance.INVESTIGATION.md)). Left open:
 - Bulk sim, before I2: after a failed combo the remaining sims can block on the 10-slot `results` buffer,
   its error message dereferences a nil `Result`, and both `Run` and `BulkSim` send a `FinalBulkResult`.
 
-### PERF-OPT: keep the optimizer's threads busy
+### PERF-OPT: keep the optimizer's threads busy (wave I3, done)
 
 - From PERF-TOOLS' per-stage busy fractions: batch what now runs one evaluation at a time (bisection brackets,
   the racial screen, verify and neighborhood rounds), and cut shards smaller when a batch has fewer jobs than
@@ -123,7 +123,7 @@ Owns: `sim/optimizer/**`, `sim/web/main.go`'s worker cap.
 - Left open: raid mode's acceptance bar (`acceptFraction`, `api.go`) still takes 0.05% of the whole raid's J, 15
   times the rogue's own share.
 
-### PERF-HOT: single-thread hot paths
+### PERF-HOT: single-thread hot paths (wave I3, done)
 
 - Profile again: the class waves added cost (H3 ran 0.4-5% over H). Candidates from the parity INVESTIGATION:
   APL interpretation (`getNextAction` 71% of Rogue at 100 iterations, mostly `APLValueCompare` and
@@ -150,4 +150,4 @@ numbers, what's left):
 The user put the pass before wave J, whose BIS-e2e-perf times the optimizer with PERF-TOOLS' harness
 (2026-09-22):
 - **I2 (done):** PERF-TOOLS and PERF-CONC, which share no files.
-- **I3:** PERF-OPT and PERF-HOT, file-disjoint, once I2's baseline sets their targets.
+- **I3 (done):** PERF-OPT and PERF-HOT, file-disjoint, once I2's baseline sets their targets.

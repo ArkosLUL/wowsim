@@ -99,16 +99,11 @@ importer's missing pets, ammo and consumables, all found by the user.
 
 ## Current wave
 
-- Wave: I3, running. Wave I2 (base `21e9dee91`) landed on `master`.
-- Base SHA: `2f1b8eb7d`. PAR-P7-0f and UI-FIX2 are merged. PERF-OPT (stages Busy threads, Raid screen) and
-  PERF-HOT (APL, Core) are running.
-- Workflow runId: `wf_2d964cdb-4a2` (args `waveI3-resume-args.json`), transcripts in
-  `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\wf_2d964cdb-4a2`.
-  It resumes both PERF items' first stages, cut off when the first run, `wf_818c7adc-89f` (args
-  `waveI3-args.json`, finished reports `waveI3-results-part1.json`), died with Windows out of memory.
-  Wave I2 ran as `wf_34bff626-0f1` (args and results `waveI2-args.json`, `waveI2-results.json` in
-  `G:\DevStuff\GitHub\.wave-loop`).
-- Idle timing at integration: ask the user to stop the worldserver and Chronicle first.
+- Wave: I4, not started. Wave I3 (base `2f1b8eb7d`) landed on `master`.
+- Base SHA: set at wave start.
+- Workflow runId: none. Wave I3 ran as `wf_818c7adc-89f`, stopped when Windows ran out of memory, then
+  `wf_2d964cdb-4a2` for PERF-OPT and PERF-HOT (args `waveI3-args.json`, `waveI3-resume-args.json`, reports
+  `waveI3-results-part1.json`, `waveI3-results-part2.json` in `G:\DevStuff\GitHub\.wave-loop`).
 
 ## BiS baseline
 
@@ -128,6 +123,7 @@ Reckoning that way), but J isn't DPS: see below.
 | H3 | 8865.0, +282 / +278 | 10686.4, +616 / +942 | 5059.8, +31 / +29 | 12956.4, +231 / +227 | -91848.5, +5451 / +5891 | -1326.7, +1408 / +1460 |
 | I | 8842.8, +253 / +304 | 10686.4, +616 / +942 | 5064.5, +43 / +40 | 12956.7, +224 / +256 | -91848.5, +5451 / +5891 | -1324.8, +1405 / +1456 |
 | I2 | 8842.8, +253 / +304 | 10686.4, +616 / +942 | 5064.5, +43 / +40 | 12956.7, +224 / +256 | -89694.0, +3349 / +3736 | -668.4, +750 / +799 |
+| I3 | 8842.8, +272 / +304 | 10686.4, +608 / +942 | 5064.5, +43 / +40 | 12962.2, +224 / +228 | -89694.0, +3349 / +3736 | -668.4, +750 / +799 |
 
 Quick / Normal. Ret P4 ran at Quick only in wave D, after the glyph fix; its wave C numbers
 (12821.9, +54 / +73) came from a seed that wore the glyph. The two tanks arrive with
@@ -152,7 +148,10 @@ preset lost 4.0% with TestFire (-3.7%) while its J rose, since the normalizer fe
 Prot Paladin, whose classes the wave left alone, didn't move at all. In I2 the DPS rows held. BIS-seed scores
 the slow line's `J_preset`, gains and `dps_preset` against the preset as equipped, which the pool's trim
 had cut into for both tanks: their `J_preset` rose and their gains fell by as much, while their Normal
-`J_opt` held within 0.4. Their `dps_preset` now reads Prot Pal 257.1, Feral Tank 4282.9.
+`J_opt` held within 0.4. Their `dps_preset` now reads Prot Pal 257.1, Feral Tank 4282.9. In I3 PERF-OPT
+moved two Quick gains within earlier rows' range: Fury +272, Combat Rogue +608. Ret's `J_preset` and
+`dps_preset` (16147.1) rose 0.04% with PAR-P7-0f's +20.61 Spell Power, and its Normal gain fell from +256
+to +228, the path dependence H2 showed.
 
 ## Sim throughput
 
@@ -169,6 +168,7 @@ From G the benches run their suites' default players with rotations, at 1 and 10
 | H3 | 1.490 / 132.8 | 0.493 / 33.6 | 0.602 / 42.9 | 0.332 / 15.4 | 4.586 / 304.2 |
 | I | 1.588 / 134.8 | 0.573 / 34.0 | 0.784 / 46.1 | 0.495 / 16.8 | 6.026 / 302.5 |
 | I2 | 1.685 / 128.3 | 0.639 / 33.2 | 0.774 / 43.1 | 0.444 / 15.6 | 5.382 / 294.8 |
+| I3 | 1.101 / 74.8 | 0.553 / 27.9 | 0.757 / 41.4 | 0.386 / 12.2 | 5.355 / 250.0 |
 
 H2 ran with the live worldserver using half a core, which moved whole runs by up to 2×
 and cost a few percent here (Ret, which H2 barely touched, +4%). An interleaved A/B against the base
@@ -188,6 +188,11 @@ base, taken under load, put every case within ±10%, 8 of 10 faster. The bench d
 PERF-CONC left one stream, so the Simulate button's speedup shows in the
 [harness baseline](../sim-performance/sim-performance.INVESTIGATION.md#baseline-integration-idle-machine),
 not here.
+
+I3's row ran idle, with the worldserver, database and Chronicle stopped. Against I2's, PERF-HOT's cuts at 1 /
+100 iterations: Rogue -35% / -42%, Elemental -13% / -22%, Retribution -13% / -16%, the raid -1% / -15%, Hunter
+-2% / -4%. The harness's re-timing is in the
+[INVESTIGATION](../sim-performance/sim-performance.INVESTIGATION.md#re-timing-after-wave-i3-integration-idle-machine).
 
 E to F2 ran the old requests: one iteration, and no rotation for Ret, Hunter and Elemental.
 
@@ -267,17 +272,22 @@ crashed before F2, so its column starts there.
 | PERF-CONC | merged | `891421898` | the Simulate button shards its iterations over GOMAXPROCS-1 goroutines: 7.1 to 8.8× at 16 threads, idle; bulk sim at GOMAXPROCS goroutines |
 | BIS-seed | merged | `d31d32c9e` | equipped items stay in the pool, gains are against the gear as equipped, the score names its stat; 1 bug fixed in review (a locked second ring that moved up left its pool entry behind) |
 | UI-FIX | merged | `b332259d9` | all four fixes, plus Block Value's multiplier; the warrior row is "Stance & Shout"; Might counted twice in the tooltip's snapshots found and left (moves goldens) |
+| wave I2 cross-review | | `93e62aecd` | 2 bugs: a 40-player raid crashed when a raider in groups 6 to 8 had a healing model (presim sized 25), and the batch sim's progress reporter could send on a closed channel; the harness's optimizer requests refreshed for BIS-seed's `equipped`; a test keeps pprof off the sim's port |
+| PERF-OPT | merged | `8c1ab4802` | Quick 9 to 40% faster idle, evaluator busy 56 to 89% at 16 threads (was 53 to 78%); raid mode screens sets on the raider's own DPS, 4 simmed where 11 were |
+| PERF-HOT | merged | `bb1e35ab4` | goldens byte-identical; sims up to 41% faster idle (Rogue), stat weights 39%, bulk 48%; Protection Warrior +3% CPU at 16 threads in its A/B |
 | PAR-P7-0f | merged | `3abef3a1f` | Enhancement and Retribution goldens promoted in `48fd72cab` (+20.61 Spell Power; the spec expected none) |
 | UI-FIX2 | merged | `49344a96c` | |
-| wave I2 cross-review | | `93e62aecd` | 2 bugs: a 40-player raid crashed when a raider in groups 6 to 8 had a healing model (presim sized 25), and the batch sim's progress reporter could send on a closed channel; the harness's optimizer requests refreshed for BIS-seed's `equipped`; a test keeps pprof off the sim's port |
+| wave I3 cross-review | | | no findings |
 
 Later WIs are added as their wave starts.
 
 ## User actions
 
-- Before I4: start the server's database (`ac-database`), which RI-4's export reads.
-- Rebuild the prod container for H2's reforge fix, wave U's UI fixes and wave I2 (Simulate on every
-  thread, pprof off the LAN), and reload open sim tabs. Until then a restart clears items cached without
+- Before I4: start the server's database (`docker start ac-database`, stopped for I3's timing), which
+  RI-4's export reads.
+- Rebuild the prod container for H2's reforge fix, wave U's UI fixes, wave I2 (Simulate on every
+  thread, pprof off the LAN) and wave I3 (faster sims and optimizer, the Batch tab's item sources), and
+  reload open sim tabs. Until then a restart clears items cached without
   server stats.
 - Worth a click-through when convenient: the optimizer tab's tank controls on a tank spec (the
   survival/threat slider, the crit-immunity box, the racial select). No agent can judge those, and

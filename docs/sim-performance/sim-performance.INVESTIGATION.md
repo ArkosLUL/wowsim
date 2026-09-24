@@ -8,7 +8,7 @@ come from the integration baseline (PERF-TOOLS item 5).
 
 Method: the harness's [full baseline](../../tools/perf/README.md#full-baseline), with nothing else running; its
 [columns](../../tools/perf/README.md#scenario-harness) are the ones below. Its `report.json` becomes
-`tools/perf/baseline.json`.
+`tools/perf/baseline.json` until the [I3 re-timing](#re-timing-after-wave-i3-integration-idle-machine) replaced it.
 
 - Commit: `93e62aecd`, wave I2's integration; go1.23.12, 3000 iterations.
 - Load: none. The user stopped the worldserver for it, and a per-minute `docker stats` saw nothing else over 6%.
@@ -447,3 +447,37 @@ shift. Holy Paladin and Restoration Shaman, under 0.05 s, stay within noise. All
 21.6 → 20.3%, `AddPendingAction` 12.9 → 8.8% (`bulkBarrierPreWrite` 2.3% → gone), `SetGCDTimer` 9.9 → 7.0%,
 `ResistanceMultiplier` 7.4 → 3.5%; Rogue's `getNextAction` 68 → 55%; `ResistanceMultiplier` 24 → 8% of Elemental,
 12 → 4% of Retribution.
+
+## Re-timing after wave I3 (integration, idle machine)
+
+The [full baseline](../../tools/perf/README.md#full-baseline) at `bb1e35ab4`, with the worldserver, database and
+Chronicle stopped and nothing else over 1%: 23 min. Its report replaced `tools/perf/baseline.json`. Against I2's,
+305 points ran better past the noise and 26 worse: the Quick optimizer's allocation, +9 to +14% on four requests
+from PERF-OPT's 50-iteration sims, and holy paladin's 0.02 s sim at GOMAXPROCS 2.
+
+At GOMAXPROCS 16, I2 → I3:
+
+| Scenario | Wall | Util | Busy | Speedup at 16 |
+|---|---|---|---|---|
+| sim/rogue | 0.46 → 0.27 s | 91 → 91% | | 8.37 → 8.03 |
+| sim/raid | 1.04 → 0.85 s | 90 → 91% | | 8.82 → 8.95 |
+| statweights/rogue | 7.37 → 4.50 s | 73 → 75% | | 6.74 → 6.44 |
+| bulk/rogue | 3.94 → 2.06 s | 90 → 90% | | 7.13 → 7.65 |
+| optimizer/quick/combat_rogue_p3 | 16.85 → 10.20 s | 82 → 92% | 76 → 84% | 7.65 → 7.90 |
+| optimizer/quick/feral_tank_p2 | 9.98 → 8.52 s | 78 → 84% | 59 → 63% | 7.46 → 7.67 |
+| optimizer/quick/fire_mage_p3 | 3.47 → 2.83 s | 78 → 87% | 78 → 89% | 6.67 → 7.32 |
+| optimizer/quick/fury_p1 | 7.53 → 6.21 s | 81 → 92% | 77 → 87% | 7.67 → 8.00 |
+| optimizer/quick/prot_paladin_p3 | 8.29 → 7.53 s | 81 → 87% | 53 → 56% | 7.47 → 7.81 |
+| optimizer/quick/retribution_p4 | 6.37 → 5.48 s | 79 → 88% | 63 → 70% | 7.49 → 7.93 |
+| optimizer/normal/combat_rogue_p3 | 190.6 → 120.3 s | 98 → 99% | 98 → 98% | |
+| optimizer/normal/feral_tank_p2 | 89.1 → 70.7 s | 95 → 98% | 98 → 98% | |
+| optimizer/normal/fire_mage_p3 | 30.9 → 21.6 s | 83 → 93% | 96 → 97% | |
+| optimizer/normal/fury_p1 | 82.1 → 66.7 s | 94 → 97% | 97 → 97% | |
+| optimizer/normal/prot_paladin_p3 | 73.7 → 65.9 s | 96 → 96% | 89 → 88% | |
+| optimizer/normal/retribution_p4 | 56.3 → 48.6 s | 97 → 97% | 94 → 94% | |
+
+- PERF-HOT's cheaper sims carry most of it: at 16 the other rotation sims ran 13 to 26% faster, Protection
+  Warrior 10% within its noise, and the rotation sims still scale 8 to 9 times.
+- Quick runs gained both ways, 9 to 40% faster at 84 to 92% util. The tanks stay the least busy, since their
+  Search stage sims nothing.
+- Normal, already 88 to 98% busy, gained 11 to 37% from the sims alone.

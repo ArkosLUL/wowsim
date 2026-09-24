@@ -43,8 +43,10 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
   logs what each stage picked. The CLI does the same run end to end:
   `go run --tags=with_db ./cmd/wowsimcli optimize --infile sim/optimizer/testdata/search/fury_p1.json --verbose`,
   whose request comes from `go test --tags=with_db ./sim/optimizer -run TestSearchTestdata -update`.
+- Iteration i reseeds with `RandomSeed + i`, so runs seeded closer than their iteration count share streams:
+  seed independent runs at least that far apart.
 - gofmt reads CRLF as a diff, so use `tr -d '\r' < f | gofmt -l`, with the whole pipe in the container:
-  `dock.sh exec` doesn't forward stdin. `sim/warrior/rend.go` already fails on master.
+  `dock.sh exec` doesn't forward stdin.
 - Float asserts need a tolerance, e.g. `math.Abs(got-want) > 0.001`.
 - Reviewers build and test too. A review that skipped the build ("Go not installed") once missed a
   compile error.

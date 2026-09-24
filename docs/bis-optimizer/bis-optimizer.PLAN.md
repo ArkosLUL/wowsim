@@ -210,7 +210,8 @@ the sheet's cap.
 **Interface for BIS-search:**
 - `Evaluator.Evaluate(ctx, []Point, iterations)`. A `Point` is a `Loadout` plus bonus-stat `Offset`s,
   which only curves and normalizers set. `Delta(a, b, metric)` pairs over the iterations both ran.
-- `SimEvaluator` runs 250-iteration shards, shard k at `RandomSeed + 250k`, and extends a cached point
+- `SimEvaluator` runs 250-iteration shards, shard k at `RandomSeed + 250k` (Quick sims each as five
+  50-iteration spans, with the same results), and extends a cached point
   by its missing shards. It keeps per-iteration samples, which pairing needs, only for the metrics it's
   given (`WeightedMetrics`). One failed sim fails the whole call with a `*SimError`, never cached; a
   cancel keeps finished shards.
@@ -547,7 +548,8 @@ checks each one and the web server has no `with_db`.
 - `NewRaidEvaluator` is `NewSimEvaluator` pointed at the asked request (the real raid, target at its
   real index) instead of the derived one, with `MetricDPS` swapped for `raidctx.RaidDPS`: core's own
   raid-wide `Dps`, already the sum of every player's. Everything else - sharding, caching, `IsTest`
-  pairing - is unchanged.
+  pairing - is unchanged. `setScreen` sizes against `ownJ`, the target's own DPS in J's points
+  (`Evaluation.ownDPS`), not the raid's J.
 - `objectiveWeights`'s raid branch just weights `MetricDPS`: the evaluator already reports raid DPS
   there, so J stays a scaled raid DPS with no other file needing a raid-mode branch. Swapping the
   evaluator in `Optimize` alone makes verify, the neighborhood and the racial screen already rank and
@@ -627,7 +629,11 @@ move; only the neighborhood sims and reports 5. **Owns:** `search.go`'s `runners
   get Battle Shout that DPS warrior APLs never cast and Divine Guardian the raid sim's paladins never cast,
   and miss Judgement of Wisdom and Light and Hunter's Mark, which `RAID_STATS_OPTIONS` doesn't list.
 - The INVESTIGATION's tank and batch times are still estimates: measure them with PERF-TOOLS' harness. Idle
-  threads in whole runs are PERF-OPT's ([sim-performance PLAN](../sim-performance/sim-performance.PLAN.md)).
+  threads in whole runs were PERF-OPT's ([sim-performance PLAN](../sim-performance/sim-performance.PLAN.md));
+  the harness has no raid-mode scenario for the batch's stage 2.
+- Raid mode's acceptance bar and `measureEffects`' weapon-damage flatness test still size against the whole
+  raid's J (`acceptFraction × |seedJ|`, about 15 times a raid25 rogue's own share): size them on `ownJ`, which
+  changes picks.
 - An end-to-end batch over the roster. A partial driver run put a Quick batch near 15 h for both stages over
   21 non-healers × 5 phases, its stage 2 at 486-570 s per DPS raider
   ([times](bis-optimizer.INVESTIGATION.md#performance)): measure a completed one, replace the INVESTIGATION's

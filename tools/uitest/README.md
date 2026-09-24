@@ -70,5 +70,8 @@ fixture, so sim changes don't break them.
 - Wowhead's `tooltips.js` draws tooltips over the next click target: stub it (`stubWowheadTooltips` in
   `tests/settings/helpers.ts`).
 - `fill()` of a ~100 KB import takes about 20 s; `setInputFiles` on `.importer-upload-input` is instant.
+- `page.route` also catches the net worker's fetches: stubbing `**/optimizeGearAsync` or `**/asyncProgress`
+  fails a batch job right after its request. To check a request without an optimizer run, read the page's
+  `Optimize gear request: <json>` console line (`WorkerPool.optimizeGearAsync`, integer enums).
 - A spec page keeps its settings in localStorage under `__wotlk_<spec>__currentSettings__`, except
   enhancement's `__wotlk_enhacement_shaman` prefix (`storageKey` in `tests/settings/helpers.ts`).
