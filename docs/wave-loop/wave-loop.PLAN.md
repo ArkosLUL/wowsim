@@ -99,10 +99,15 @@ importer's missing pets, ammo and consumables, all found by the user.
 
 ## Current wave
 
-- Wave: I3, not started: the user deferred it (2026-09-24). Wave I2 (base `21e9dee91`) landed on `master`.
-- Base SHA: set at wave start.
-- Workflow runId: none. Wave I2 ran as `wf_34bff626-0f1` (args and results `waveI2-args.json`,
-  `waveI2-results.json` in `G:\DevStuff\GitHub\.wave-loop`).
+- Wave: I3, running. Wave I2 (base `21e9dee91`) landed on `master`.
+- Base SHA: `2f1b8eb7d`. Dev servers `wotlk-dev-p7-0f` and `wotlk-dev-ui-fix2` run on 3337 and 3338. Every
+  item runs in two stages but UI-FIX2: PERF-OPT Busy threads then Raid screen, PERF-HOT APL then Core,
+  PAR-P7-0f Might then Class sets.
+- Workflow runId: `wf_818c7adc-89f` (args `waveI3-args.json`), transcripts in
+  `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\wf_818c7adc-89f`.
+  Wave I2 ran as `wf_34bff626-0f1` (args and results `waveI2-args.json`, `waveI2-results.json` in
+  `G:\DevStuff\GitHub\.wave-loop`).
+- Idle timing at integration: ask the user to stop the worldserver and Chronicle first.
 
 ## BiS baseline
 
