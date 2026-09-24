@@ -283,12 +283,6 @@ Later WIs are added as their wave starts.
 
 ## User actions
 
-- Before I4: start the server's database (`docker start ac-database`, stopped for I3's timing), which
-  RI-4's export reads.
-- Rebuild the prod container for H2's reforge fix, wave U's UI fixes, wave I2 (Simulate on every
-  thread, pprof off the LAN) and wave I3 (faster sims and optimizer, the Batch tab's item sources), and
-  reload open sim tabs. Until then a restart clears items cached without
-  server stats.
 - Worth a click-through when convenient: the optimizer tab's tank controls on a tank spec (the
   survival/threat slider, the crit-immunity box, the racial select). No agent can judge those, and
   BIS-ui-tab's own click-through found three real bugs.
