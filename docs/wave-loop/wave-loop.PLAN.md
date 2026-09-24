@@ -57,7 +57,7 @@ G = changes goldens. FS = runs all 37 suites.
 | U | UI-RESULTS · UI-GEAR · UI-RAID · UI-SETTINGS | |
 | I2 | PERF-TOOLS · PERF-CONC · BIS-seed · UI-FIX | ✔ |
 | I3 | PERF-OPT · PERF-HOT · PAR-P7-0f · UI-FIX2 | ✔ |
-| I4 | PAR-DECL (G, FS) · RI-4 | ✔ |
+| I4 | PAR-DECL (G, FS) · RI-4 · BIS-hunter-ranged | ✔ |
 | I5 | PAR-DECL-1 (G) · PAR-DECL-2 (G) · PAR-DECL-3 (G) | ✔ |
 | J | PAR-P7-PRI (G) · PAR-P7-TANK (G) · BIS-e2e-perf · AC-3 | ✔ |
 | K | BIS-presets · PAR-P8 (G, FS) · BIS-tank-boss | ✔ |
@@ -76,15 +76,15 @@ rides along, as it only needs the live server. BIS-alt5 joined mid-wave, also th
 In I, PAR-P7-MAG also fixes the delay helper's timing gap (the user's call) and tick-rounds the APL's
 `spell.cast_time`, both in core, so it runs all 37 suites and merges first. I2 and I3, the performance pass,
 are the user's call too: they come before J, whose BIS-e2e-perf uses their tools. So are I4 and I5
-(2026-09-23), the [effect declarations](../azerothcore-parity/effect-declarations.PLAN.md): PAR-DECL is I4's only sim item,
+(2026-09-23), the [effect declarations](../azerothcore-parity/effect-declarations.PLAN.md): PAR-DECL is I4's only parity item,
 since a class item can't build on a core change merging in its own wave, and both come before J so that
 PRI, TANK and K's PAR-P8 build on them.
 
 U, the Playwright suite and the UI bugs it finds, comes before I2 (the user's call, 2026-09-23). Its items
 touch only UI and test paths, so goldens, BiS and throughput can't move, and it skips the re-baseline.
 UI-FIX joins I2 (the user's call): four fixes wave U's tests left open. PAR-P7-0f joins I3 (the user's call,
-2026-09-24): two core fixes wave I2 found. So do UI-FIX2 in I3 and RI-4 in I4: two UI bugs and the
-importer's missing pets, ammo and consumables, all found by the user.
+2026-09-24): two core fixes wave I2 found. So do UI-FIX2 in I3, and RI-4 and BIS-hunter-ranged in I4: two UI
+bugs, the importer's missing pets, ammo and consumables, and a batch hung on a hunter, all found by the user.
 
 **Where the specs are:**
 

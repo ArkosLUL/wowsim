@@ -719,6 +719,24 @@ those three slots empty.
   doesn't filter sources, so it matches the owned rule; `trimSeedToPool` still lacks the trimmer's
   off-hand weapon move-up.
 
+### BIS-hunter-ranged (wave I4)
+
+A user's batch hung at step 5 (Effects) on a hunter wearing a bow. `effectFamilies` prices the ranged
+slot from a base with it emptied (any weapon needs a sim), and a hunter without a ranged weapon never
+ends an iteration: `WeaponFromRanged` gives a 0 s swing speed, `sim/hunter/hunter.go` still sets
+`AutoSwingRanged`, so Auto Shot fires every 0 s. The UI and the seed trimmer can empty that slot too.
+Stop can't end such a run (the evaluator waits for its running sims), so fixing the loop is enough.
+
+- A hunter without a ranged weapon doesn't Auto Shot. Hunter goldens don't move: every test hunter has
+  one. Drop `wearerBowID` from `sim/item_wearers_test.go`, so its sweep covers the empty slot.
+- A hunter's ranged family counts from the seed's ranged weapon, as main hands do (its residual is 0),
+  or from the pool's best by stat lower bound when the seed has none. Other classes keep the empty-slot base.
+- Tests: a hunter with an empty ranged slot sims to completion; a hunter's Effects stage sims no loadout
+  without a ranged weapon.
+
+**Owns:** `sim/hunter/hunter.go`, `effectFamilies` in `sim/optimizer/surrogate.go`,
+`sim/item_wearers_test.go`, and their tests.
+
 ### BIS-presets (wave K)
 
 The preset files, as decided above, registered in `ui/<spec>/presets.ts` and `sim.ts` `defaultGear`. This
