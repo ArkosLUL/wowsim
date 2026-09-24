@@ -46,6 +46,11 @@ func (unit *Unit) SetGCDTimer(sim *Simulation, gcdReadyAt time.Duration) {
 	if unit.gcdAction.consumed {
 		unit.gcdAction.cancelled = false
 		unit.gcdAction.NextActionAt = gcdReadyAt
+	} else if sim.detachPendingAction(unit.gcdAction) {
+		// what the branch below does, minus the allocation: the queued entry no longer points here
+		unit.gcdAction.cancelled = false
+		unit.gcdAction.NextActionAt = gcdReadyAt
+		unit.gcdAction.Priority = ActionPriorityGCD
 	} else {
 		unit.gcdAction.Cancel(sim)
 		oldAction := unit.gcdAction.OnAction

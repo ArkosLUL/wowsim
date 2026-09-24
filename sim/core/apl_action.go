@@ -9,6 +9,22 @@ import (
 type APLAction struct {
 	condition APLValue
 	impl      APLActionImpl
+
+	// set when condition only reads the sim, so IsReady can skip it while impl can't be ready:
+	// the spell impl casts or channels, or impl itself when it's a sequence
+	gatedSpell    *Spell
+	gatedImpl     aplGatedImpl
+	gatedSequence aplSequenceGate
+}
+
+// impl.IsReady minus what the gate already checked on gatedSpell
+type aplGatedImpl interface {
+	isReadyPastGate(sim *Simulation) bool
+}
+
+// a cheap subset of a sequence's !IsReady that reads no subaction's condition
+type aplSequenceGate interface {
+	blocked(sim *Simulation) bool
 }
 
 func (action *APLAction) Finalize(rot *APLRotation) {
@@ -19,7 +35,47 @@ func (action *APLAction) Finalize(rot *APLRotation) {
 }
 
 func (action *APLAction) IsReady(sim *Simulation) bool {
+	// with logs on, take the long way so an ExtraCastCondition's log lines stay
+	if sim.Log == nil {
+		if spell := action.gatedSpell; spell != nil {
+			// aplSpellBlocked by hand: it's too big to inline, castBlocked isn't
+			if spell.castBlocked(sim) || aplCostBlocked(spell) {
+				return false
+			}
+			return (action.condition == nil || action.condition.GetBool(sim)) && action.gatedImpl.isReadyPastGate(sim)
+		} else if sequence := action.gatedSequence; sequence != nil && sequence.blocked(sim) {
+			return false
+		}
+	}
 	return (action.condition == nil || action.condition.GetBool(sim)) && action.impl.IsReady(sim)
+}
+
+// true when spell.CanCast would fail whatever its ExtraCastCondition says
+func aplSpellBlocked(spell *Spell, sim *Simulation) bool {
+	return spell.castBlocked(sim) || aplCostBlocked(spell)
+}
+
+// CanCast's energy check without its write to CurCast.Cost: nothing reads an energy spell's
+// CurCast.Cost outside its own cast, which resets it first. Energy only: rage rarely blocks, so
+// checking it here cost the rage specs more than it saved, and a mana check can start an OOM event.
+func aplCostBlocked(spell *Spell) bool {
+	if _, ok := spell.Cost.(*EnergyCost); ok {
+		return !(spell.Unit.CurrentEnergy() >= spell.ApplyCostModifiers(spell.DefaultCast.Cost))
+	}
+	return false
+}
+
+// CanCast right after castBlocked and aplCostBlocked came back false, with nothing changed since
+func aplCanCastPastGate(spell *Spell, sim *Simulation, target *Unit) bool {
+	if spell.ExtraCastCondition != nil && !spell.ExtraCastCondition(sim, target) {
+		return false
+	}
+	switch spell.Cost.(type) {
+	case nil, *EnergyCost:
+		return true
+	}
+	spell.CurCast.Cost = spell.DefaultCast.Cost
+	return spell.Cost.MeetsRequirement(sim, spell)
 }
 
 func (action *APLAction) Execute(sim *Simulation) {
@@ -122,9 +178,22 @@ func (rot *APLRotation) newAPLAction(config *proto.APLAction) *APLAction {
 
 	if action.impl == nil {
 		return nil
-	} else {
-		return action
 	}
+	if action.condition == nil || aplValueIsPure(action.condition) {
+		switch impl := action.impl.(type) {
+		case *APLActionCastSpell:
+			action.gatedSpell = impl.spell
+			action.gatedImpl = impl
+		case *APLActionChannelSpell:
+			action.gatedSpell = impl.spell
+			action.gatedImpl = impl
+		case *APLActionSequence:
+			action.gatedSequence = impl
+		case *APLActionStrictSequence:
+			action.gatedSequence = impl
+		}
+	}
+	return action
 }
 
 func (rot *APLRotation) newAPLActionImpl(config *proto.APLAction) APLActionImpl {

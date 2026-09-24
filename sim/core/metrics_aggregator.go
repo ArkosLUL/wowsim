@@ -126,18 +126,24 @@ type tmiListItem struct {
 }
 
 func (actionMetrics *ActionMetrics) ToProto(actionID ActionID) *proto.ActionMetrics {
-	// one allocation for every target's message: there's one per unit, pets included, for every spell
-	msgs := make([]proto.TargetedActionMetrics, len(actionMetrics.Targets))
-	targetMetrics := make([]*proto.TargetedActionMetrics, len(actionMetrics.Targets))
+	n := len(actionMetrics.Targets)
+	msg := &proto.ActionMetrics{}
+	actionMetrics.fillProto(msg, actionID, make([]proto.TargetedActionMetrics, n), make([]*proto.TargetedActionMetrics, n))
+	return msg
+}
+
+// fillProto takes the target messages' storage, one per target: there's one per unit, pets included,
+// for every spell.
+func (actionMetrics *ActionMetrics) fillProto(msg *proto.ActionMetrics, actionID ActionID, targetMsgs []proto.TargetedActionMetrics, targetPtrs []*proto.TargetedActionMetrics) {
 	for i := range actionMetrics.Targets {
-		actionMetrics.Targets[i].fillProto(&msgs[i])
-		targetMetrics[i] = &msgs[i]
+		actionMetrics.Targets[i].fillProto(&targetMsgs[i])
+		targetPtrs[i] = &targetMsgs[i]
 	}
 
-	return &proto.ActionMetrics{
+	*msg = proto.ActionMetrics{
 		Id:      actionID.ToProto(),
 		IsMelee: actionMetrics.IsMelee,
-		Targets: targetMetrics,
+		Targets: targetPtrs,
 	}
 }
 
@@ -317,7 +323,12 @@ func (unitMetrics *UnitMetrics) addSpellMetrics(spell *Spell, actionID ActionID,
 		}
 	}
 
-	for i, spellTargetMetrics := range spellMetrics {
+	for i := range spellMetrics {
+		// most spells never touch most units, and adding a zero entry changes nothing
+		if spellMetrics[i] == (SpellMetrics{}) {
+			continue
+		}
+		spellTargetMetrics := &spellMetrics[i]
 		tam := &actionMetrics.Targets[i]
 		tam.Casts += spellTargetMetrics.Casts
 		tam.Misses += spellTargetMetrics.Misses
@@ -517,9 +528,22 @@ func (unitMetrics *UnitMetrics) ToProto() *proto.UnitMetrics {
 		ChanceOfDeath: float64(unitMetrics.numItersDead) / n,
 	}
 
+	// every action's messages share a few allocations
+	numTargets := 0
+	for _, action := range unitMetrics.actions {
+		numTargets += len(action.Targets)
+	}
+	actionMsgs := make([]proto.ActionMetrics, len(unitMetrics.actions))
+	targetMsgs := make([]proto.TargetedActionMetrics, numTargets)
+	targetPtrs := make([]*proto.TargetedActionMetrics, numTargets)
+
 	protoMetrics.Actions = make([]*proto.ActionMetrics, 0, len(unitMetrics.actions))
 	for actionID, action := range unitMetrics.actions {
-		protoMetrics.Actions = append(protoMetrics.Actions, action.ToProto(actionID))
+		msg := &actionMsgs[len(protoMetrics.Actions)]
+		nt := len(action.Targets)
+		action.fillProto(msg, actionID, targetMsgs[:nt:nt], targetPtrs[:nt:nt])
+		targetMsgs, targetPtrs = targetMsgs[nt:], targetPtrs[nt:]
+		protoMetrics.Actions = append(protoMetrics.Actions, msg)
 	}
 
 	protoMetrics.Resources = make([]*proto.ResourceMetrics, 0, len(unitMetrics.resources))
@@ -556,9 +580,15 @@ func (auraMetrics *AuraMetrics) doneIteration() {
 }
 
 func (auraMetrics *AuraMetrics) ToProto() *proto.AuraMetrics {
+	msg := &proto.AuraMetrics{}
+	auraMetrics.fillProto(msg)
+	return msg
+}
+
+func (auraMetrics *AuraMetrics) fillProto(msg *proto.AuraMetrics) {
 	mean, stdev := auraMetrics.meanAndStdDev()
 
-	return &proto.AuraMetrics{
+	*msg = proto.AuraMetrics{
 		Id: auraMetrics.ID.ToProto(),
 
 		UptimeSecondsAvg:   mean,

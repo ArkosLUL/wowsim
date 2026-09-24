@@ -41,7 +41,12 @@ func (spell *Spell) ResistanceMultiplier(sim *Simulation, isPeriodic bool, attac
 		return 1
 	}
 
-	thresholds := partialResistRollThresholds(averageResist)
+	// nearly every hit in a sim meets the same average resist, so keep the last one's thresholds
+	if averageResist != sim.lastResist.averageResist {
+		sim.lastResist.averageResist = averageResist
+		sim.lastResist.thresholds = partialResistRollThresholds(averageResist)
+	}
+	thresholds := &sim.lastResist.thresholds
 
 	switch resistanceRoll := sim.RandomFloat("Partial Resist"); {
 	case resistanceRoll < thresholds[0].cumulativeChance:

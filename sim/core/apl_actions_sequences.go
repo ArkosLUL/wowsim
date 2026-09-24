@@ -44,6 +44,13 @@ func (action *APLActionSequence) Reset(*Simulation) {
 func (action *APLActionSequence) IsReady(sim *Simulation) bool {
 	return action.curIdx < len(action.subactions) && action.subactions[action.curIdx].IsReady(sim)
 }
+func (action *APLActionSequence) blocked(sim *Simulation) bool {
+	if action.curIdx >= len(action.subactions) {
+		return true
+	}
+	spell := action.subactions[action.curIdx].gatedSpell
+	return spell != nil && aplSpellBlocked(spell, sim)
+}
 func (action *APLActionSequence) Execute(sim *Simulation) {
 	action.subactions[action.curIdx].Execute(sim)
 	action.curIdx++
@@ -134,6 +141,13 @@ func (action *APLActionStrictSequence) IsReady(sim *Simulation) bool {
 		}
 	}
 	return true
+}
+func (action *APLActionStrictSequence) blocked(sim *Simulation) bool {
+	if !action.unit.GCD.IsReady(sim) {
+		return true
+	}
+	spell := action.subactions[0].gatedSpell
+	return spell != nil && aplSpellBlocked(spell, sim)
 }
 func (action *APLActionStrictSequence) Execute(sim *Simulation) {
 	action.unit.Rotation.pushControllingAction(action)

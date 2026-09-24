@@ -118,6 +118,17 @@ Owns: `sim/optimizer/**`, `sim/web/main.go`'s worker cap.
 Owns: `sim/core` hot paths, and a class file only where its profile names a hot spot; not `applyAllEffects` or
 the item-set and item-effect code, which PAR-P7-0f owns in I3.
 
+**As built** ([INVESTIGATION](sim-performance.INVESTIGATION.md#perf-hot-wave-i3): each fix, why no result moves, the
+numbers, what's left):
+- APL: `APLAction.IsReady` skips a pure condition when its spell can't be cast anyway, and past that gate finishes
+  `CanCast` without repeating it (`sim/core/apl_action.go`). Every `ExtraCastCondition` must only read the sim.
+- Core: the pending queue holds pointer-free entries over a slot table, so inserts pay no GC write barriers;
+  `SetGCDTimer` requeues a still-queued GCD action instead of allocating one (`sim/core/sim.go`). The partial resist
+  table is cached, spells skip zero metrics, and progress reports stop building the whole metrics proto.
+- Idle, `BenchmarkSimulate` at 100 iterations: Rogue -42%, Elemental -20%, Retribution -16%, the raid -13%, Hunter
+  -5%. The harness's CPU at GOMAXPROCS 16: Rogue 0.62, the raid 0.85, the other rotation specs 0.80 to 0.97, but Bear
+  1.02 and Protection Warrior 1.03.
+
 ## Order
 
 The user put the pass before wave J, whose BIS-e2e-perf times the optimizer with PERF-TOOLS' harness

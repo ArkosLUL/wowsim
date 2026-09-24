@@ -9,7 +9,7 @@ func newDelayedPeriodicTestSim(seed int64) *Simulation {
 	sim := newOutcomeSim()
 	sim.rand.Seed(seed)
 	sim.serverTickInterval = 0
-	sim.pendingActions = []*PendingAction{sentinelPendingAction}
+	sim.resetPendingActions()
 	return sim
 }
 
@@ -147,7 +147,7 @@ func TestDelayedPeriodicApplierBeatsATickDueThen(t *testing.T) {
 	sim.AddPendingAction(tick)
 	dpa.Apply(sim, &Unit{Label: "Target"}, func(*Simulation) {})
 
-	if next := sim.pendingActions[len(sim.pendingActions)-1]; next == tick || next.NextActionAt >= tick.NextActionAt {
+	if next := sim.nextPendingAction(); next == tick || next.NextActionAt >= tick.NextActionAt {
 		t.Errorf("the tick at %s runs before the refresh", tick.NextActionAt)
 	}
 }
@@ -165,7 +165,7 @@ func TestDelayedPeriodicApplierFromInstantCastBeatsATickDueThen(t *testing.T) {
 	sim.AddPendingAction(tick)
 	dpa.ApplyFromInstantCast(sim, &Unit{Label: "Target"}, func(*Simulation) {})
 
-	if next := sim.pendingActions[len(sim.pendingActions)-1]; next == tick || next.NextActionAt >= tick.NextActionAt {
+	if next := sim.nextPendingAction(); next == tick || next.NextActionAt >= tick.NextActionAt {
 		t.Errorf("the tick at %s runs before the refresh", tick.NextActionAt)
 	}
 }
@@ -220,12 +220,12 @@ func TestDelayedPeriodicApplierMunchesWithinOneWindow(t *testing.T) {
 	var outstanding int
 	sim.CurrentTime = boundary + 10*time.Millisecond
 	dpa.Apply(sim, target, func(sim *Simulation) { outstanding = 1 })
-	firstProc := sim.pendingActions[len(sim.pendingActions)-1]
+	firstProc := sim.nextPendingAction()
 
 	sim.CurrentTime = boundary + 60*time.Millisecond
 	dpa.Apply(sim, target, func(sim *Simulation) { outstanding = 2 })
 	var secondProc *PendingAction
-	for _, pa := range sim.pendingActions[1:] {
+	for _, pa := range sim.queuedActions()[1:] {
 		if pa != firstProc {
 			secondProc = pa
 		}
