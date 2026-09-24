@@ -11,8 +11,8 @@ import (
 var ItemSetLightbringerBattlegear = core.NewItemSet(core.ItemSet{
 	Name: "Lightbringer Battlegear",
 	Bonuses: map[int32]core.ApplyEffect{
-		2: func(agent core.Agent) {
-			paladin := agent.(PaladinAgent).GetPaladin()
+		2: core.ClassEffect(func(agent PaladinAgent) {
+			paladin := agent.GetPaladin()
 			manaMetrics := paladin.NewManaMetrics(core.ActionID{SpellID: 38428})
 
 			paladin.RegisterAura(core.Aura{
@@ -31,7 +31,7 @@ var ItemSetLightbringerBattlegear = core.NewItemSet(core.ItemSet{
 					paladin.AddMana(sim, 50, manaMetrics)
 				},
 			})
-		},
+		}),
 		4: func(agent core.Agent) {
 			// Implemented in hammer_of_wrath.go
 		},
@@ -94,8 +94,8 @@ var ItemSetTuralyonsBattlegear = core.NewItemSet(core.ItemSet{
 var ItemSetLightswornBattlegear = core.NewItemSet(core.ItemSet{
 	Name: "Lightsworn Battlegear",
 	Bonuses: map[int32]core.ApplyEffect{
-		2: func(agent core.Agent) {
-			paladin := agent.(PaladinAgent).GetPaladin()
+		2: core.ClassEffect(func(agent PaladinAgent) {
+			paladin := agent.GetPaladin()
 
 			procSpell := paladin.RegisterSpell(core.SpellConfig{
 				ActionID: core.ActionID{SpellID: 70765},
@@ -120,7 +120,7 @@ var ItemSetLightswornBattlegear = core.NewItemSet(core.ItemSet{
 					procSpell.Cast(sim, &paladin.Unit)
 				},
 			})
-		},
+		}),
 		4: func(agent core.Agent) {
 			// Implemented in soc.go, sor.go, sov.go
 		},
@@ -135,16 +135,16 @@ func (paladin *Paladin) getItemSetLightswornBattlegearBonus4() float64 {
 var ItemSetGladiatorsVindication = core.NewItemSet(core.ItemSet{
 	Name: "Gladiator's Vindication",
 	Bonuses: map[int32]core.ApplyEffect{
-		2: func(agent core.Agent) {
-			paladin := agent.(PaladinAgent).GetPaladin()
+		2: core.ClassEffect(func(agent PaladinAgent) {
+			paladin := agent.GetPaladin()
 			paladin.AddStat(stats.AttackPower, 50)
 			paladin.AddStat(stats.Resilience, 100)
-		},
-		4: func(agent core.Agent) {
-			paladin := agent.(PaladinAgent).GetPaladin()
+		}),
+		4: core.ClassEffect(func(agent PaladinAgent) {
+			paladin := agent.GetPaladin()
 			paladin.AddStat(stats.AttackPower, 150)
 			// Rest implemented in judgement.go
-		},
+		}),
 	},
 })
 
@@ -231,8 +231,8 @@ func (paladin *Paladin) getItemSetGladiatorsVindicationBonusGloves() float64 {
 func init() {
 	// Librams implemented in seals.go and judgement.go
 
-	core.NewItemEffect(37574, func(agent core.Agent) {
-		paladin := agent.(PaladinAgent).GetPaladin()
+	core.NewItemEffect(37574, core.ClassEffect(func(agent PaladinAgent) {
+		paladin := agent.GetPaladin()
 		procAura := paladin.NewTemporaryStatsAura("Libram of Furious Blows Proc", core.ActionID{SpellID: 48835}, stats.Stats{stats.MeleeCrit: 61, stats.SpellCrit: 61}, time.Second*5)
 
 		paladin.RegisterAura(core.Aura{
@@ -247,10 +247,10 @@ func init() {
 				}
 			},
 		})
-	})
+	}))
 
-	core.NewItemEffect(40706, func(agent core.Agent) {
-		paladin := agent.(PaladinAgent).GetPaladin()
+	core.NewItemEffect(40706, core.ClassEffect(func(agent PaladinAgent) {
+		paladin := agent.GetPaladin()
 		procAura := paladin.NewTemporaryStatsAura("Libram of Reciprocation Proc", core.ActionID{SpellID: 60819}, stats.Stats{stats.MeleeCrit: 173, stats.SpellCrit: 173}, time.Second*10)
 
 		paladin.RegisterAura(core.Aura{
@@ -268,10 +268,10 @@ func init() {
 				}
 			},
 		})
-	})
+	}))
 
-	core.NewItemEffect(42611, func(agent core.Agent) {
-		paladin := agent.(PaladinAgent).GetPaladin()
+	core.NewItemEffect(42611, core.ClassEffect(func(agent PaladinAgent) {
+		paladin := agent.GetPaladin()
 		procAura := paladin.NewTemporaryStatsAura("Savage Gladiator's Libram of Fortitude Proc", core.ActionID{SpellID: 60577}, stats.Stats{stats.AttackPower: 94}, time.Second*6)
 
 		paladin.RegisterAura(core.Aura{
@@ -286,10 +286,10 @@ func init() {
 				}
 			},
 		})
-	})
+	}))
 
-	core.NewItemEffect(42851, func(agent core.Agent) {
-		paladin := agent.(PaladinAgent).GetPaladin()
+	core.NewItemEffect(42851, core.ClassEffect(func(agent PaladinAgent) {
+		paladin := agent.GetPaladin()
 		procAura := paladin.NewTemporaryStatsAura("Hateful Gladiator's Libram of Fortitude Proc", core.ActionID{SpellID: 60632}, stats.Stats{stats.AttackPower: 106}, time.Second*6)
 
 		paladin.RegisterAura(core.Aura{
@@ -304,10 +304,10 @@ func init() {
 				}
 			},
 		})
-	})
+	}))
 
-	core.NewItemEffect(42852, func(agent core.Agent) {
-		paladin := agent.(PaladinAgent).GetPaladin()
+	core.NewItemEffect(42852, core.ClassEffect(func(agent PaladinAgent) {
+		paladin := agent.GetPaladin()
 		procAura := paladin.NewTemporaryStatsAura("Deadly Gladiator's Libram of Fortitude Proc", core.ActionID{SpellID: 60633}, stats.Stats{stats.AttackPower: 120}, time.Second*10)
 
 		paladin.RegisterAura(core.Aura{
@@ -322,10 +322,10 @@ func init() {
 				}
 			},
 		})
-	})
+	}))
 
-	core.NewItemEffect(42853, func(agent core.Agent) {
-		paladin := agent.(PaladinAgent).GetPaladin()
+	core.NewItemEffect(42853, core.ClassEffect(func(agent PaladinAgent) {
+		paladin := agent.GetPaladin()
 		procAura := paladin.NewTemporaryStatsAura("Furious Gladiator's Libram of Fortitude Proc", core.ActionID{SpellID: 60634}, stats.Stats{stats.AttackPower: 144}, time.Second*10)
 
 		paladin.RegisterAura(core.Aura{
@@ -340,10 +340,10 @@ func init() {
 				}
 			},
 		})
-	})
+	}))
 
-	core.NewItemEffect(42854, func(agent core.Agent) {
-		paladin := agent.(PaladinAgent).GetPaladin()
+	core.NewItemEffect(42854, core.ClassEffect(func(agent PaladinAgent) {
+		paladin := agent.GetPaladin()
 		procAura := paladin.NewTemporaryStatsAura("Relentless Gladiator's Libram of Fortitude Proc", core.ActionID{SpellID: 60635}, stats.Stats{stats.AttackPower: 172}, time.Second*10)
 
 		paladin.RegisterAura(core.Aura{
@@ -358,10 +358,10 @@ func init() {
 				}
 			},
 		})
-	})
+	}))
 
-	core.NewItemEffect(51478, func(agent core.Agent) {
-		paladin := agent.(PaladinAgent).GetPaladin()
+	core.NewItemEffect(51478, core.ClassEffect(func(agent PaladinAgent) {
+		paladin := agent.GetPaladin()
 		procAura := paladin.NewTemporaryStatsAura("Wrathful Gladiator's Libram of Fortitude Proc", core.ActionID{SpellID: 60636}, stats.Stats{stats.AttackPower: 204}, time.Second*10)
 
 		paladin.RegisterAura(core.Aura{
@@ -376,10 +376,10 @@ func init() {
 				}
 			},
 		})
-	})
+	}))
 
-	core.NewItemEffect(50455, func(agent core.Agent) {
-		paladin := agent.(PaladinAgent).GetPaladin()
+	core.NewItemEffect(50455, core.ClassEffect(func(agent PaladinAgent) {
+		paladin := agent.GetPaladin()
 
 		procAura := core.MakeStackingAura(paladin.GetCharacter(), core.StackingStatAura{
 			Aura: core.Aura{
@@ -404,10 +404,10 @@ func init() {
 				}
 			},
 		})
-	})
+	}))
 
-	core.NewItemEffect(47661, func(agent core.Agent) {
-		paladin := agent.(PaladinAgent).GetPaladin()
+	core.NewItemEffect(47661, core.ClassEffect(func(agent PaladinAgent) {
+		paladin := agent.GetPaladin()
 		procAura := paladin.NewTemporaryStatsAura("Libram Of Valiance Proc", core.ActionID{SpellID: 67365}, stats.Stats{stats.Strength: 200}, time.Second*15)
 
 		icd := core.Cooldown{
@@ -433,10 +433,10 @@ func init() {
 				}
 			},
 		})
-	})
+	}))
 
-	core.NewItemEffect(32368, func(agent core.Agent) {
-		paladin := agent.(PaladinAgent).GetPaladin()
+	core.NewItemEffect(32368, core.ClassEffect(func(agent PaladinAgent) {
+		paladin := agent.GetPaladin()
 		procAura := paladin.NewTemporaryStatsAura("Tome of the Lightbringer Proc", core.ActionID{SpellID: 41042}, stats.Stats{stats.BlockValue: 186}, time.Second*10)
 
 		paladin.RegisterAura(core.Aura{
@@ -451,10 +451,10 @@ func init() {
 				}
 			},
 		})
-	})
+	}))
 
-	core.NewItemEffect(40707, func(agent core.Agent) {
-		paladin := agent.(PaladinAgent).GetPaladin()
+	core.NewItemEffect(40707, core.ClassEffect(func(agent PaladinAgent) {
+		paladin := agent.GetPaladin()
 		procAura := paladin.NewTemporaryStatsAura("Libram of Obstruction Proc", core.ActionID{SpellID: 60794}, stats.Stats{stats.BlockValue: 352}, time.Second*10)
 
 		paladin.RegisterAura(core.Aura{
@@ -469,10 +469,10 @@ func init() {
 				}
 			},
 		})
-	})
+	}))
 
-	core.NewItemEffect(45145, func(agent core.Agent) {
-		paladin := agent.(PaladinAgent).GetPaladin()
+	core.NewItemEffect(45145, core.ClassEffect(func(agent PaladinAgent) {
+		paladin := agent.GetPaladin()
 		procAura := paladin.NewTemporaryStatsAura("Libram of the Sacred Shield Proc", core.ActionID{SpellID: 65182}, stats.Stats{stats.BlockValue: 450}, time.Second*20)
 
 		paladin.RegisterAura(core.Aura{
@@ -487,10 +487,10 @@ func init() {
 				}
 			},
 		})
-	})
+	}))
 
-	core.NewItemEffect(32489, func(agent core.Agent) {
-		paladin := agent.(PaladinAgent).GetPaladin()
+	core.NewItemEffect(32489, core.ClassEffect(func(agent PaladinAgent) {
+		paladin := agent.GetPaladin()
 
 		// The spell effect is https://www.wowhead.com/wotlk/spell=40472/enduring-judgement, most likely
 		dotSpell := paladin.RegisterSpell(core.SpellConfig{
@@ -529,6 +529,6 @@ func init() {
 				}
 			},
 		})
-	})
+	}))
 
 }

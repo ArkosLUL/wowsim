@@ -50,8 +50,8 @@ var ItemSetFrostWitchRegalia = core.NewItemSet(core.ItemSet{
 		2: func(agent core.Agent) {
 			// This is implemented in talents.go so that the aura has easy access to the elemental mastery MCD.
 		},
-		4: func(agent core.Agent) {
-			shaman := agent.(ShamanAgent).GetShaman()
+		4: core.ClassEffect(func(agent ShamanAgent) {
+			shaman := agent.GetShaman()
 			shaman.RegisterAura(core.Aura{
 				Label:    "Shaman T10 Elemental 4P Bonus",
 				Duration: core.NeverExpires,
@@ -77,13 +77,13 @@ var ItemSetFrostWitchRegalia = core.NewItemSet(core.ItemSet{
 					}
 				},
 			})
-		},
+		}),
 	},
 })
 
 func init() {
-	core.NewItemEffect(40708, func(agent core.Agent) {
-		shaman := agent.(ShamanAgent).GetShaman()
+	core.NewItemEffect(40708, core.ClassEffect(func(agent ShamanAgent) {
+		shaman := agent.GetShaman()
 		procAura := shaman.NewTemporaryStatsAura("Totem of the Elemental Plane Proc", core.ActionID{SpellID: 60771}, stats.Stats{stats.SpellHaste: 196, stats.MeleeHaste: 196}, time.Second*10)
 
 		icd := core.Cooldown{
@@ -107,10 +107,10 @@ func init() {
 				}
 			},
 		})
-	})
+	}))
 
-	core.NewItemEffect(47666, func(agent core.Agent) {
-		shaman := agent.(ShamanAgent).GetShaman()
+	core.NewItemEffect(47666, core.ClassEffect(func(agent ShamanAgent) {
+		shaman := agent.GetShaman()
 		procAura := shaman.NewTemporaryStatsAura("ToEW - Energized", core.ActionID{SpellID: 67385}, stats.Stats{stats.SpellHaste: 200, stats.MeleeHaste: 200}, time.Second*12)
 
 		icd := core.Cooldown{
@@ -134,10 +134,10 @@ func init() {
 				}
 			},
 		})
-	})
+	}))
 
-	core.NewItemEffect(50463, func(agent core.Agent) {
-		shaman := agent.(ShamanAgent).GetShaman()
+	core.NewItemEffect(50463, core.ClassEffect(func(agent ShamanAgent) {
+		shaman := agent.GetShaman()
 		procAura := shaman.RegisterAura(core.Aura{
 			Label:     "Enraged",
 			ActionID:  core.ActionID{SpellID: 71216},
@@ -164,11 +164,11 @@ func init() {
 				}
 			},
 		})
-	})
+	}))
 
 	// Bizuri's Totem of Shattered Ice
-	core.NewItemEffect(50458, func(agent core.Agent) {
-		shaman := agent.(ShamanAgent).GetShaman()
+	core.NewItemEffect(50458, core.ClassEffect(func(agent ShamanAgent) {
+		shaman := agent.GetShaman()
 		procAura := shaman.RegisterAura(core.Aura{
 			Label:     "Furious",
 			ActionID:  core.ActionID{SpellID: 71199},
@@ -194,7 +194,7 @@ func init() {
 				}
 			},
 		})
-	})
+	}))
 }
 
 var ItemSetEarthshatterBattlegear = core.NewItemSet(core.ItemSet{
@@ -249,30 +249,30 @@ var ItemSetFrostWitchBattlegear = core.NewItemSet(core.ItemSet{
 var ItemSetGladiatorsEarthshaker = core.NewItemSet(core.ItemSet{
 	Name: "Gladiator's Earthshaker",
 	Bonuses: map[int32]core.ApplyEffect{
-		2: func(agent core.Agent) {
-			shaman := agent.(ShamanAgent).GetShaman()
+		2: core.ClassEffect(func(agent ShamanAgent) {
+			shaman := agent.GetShaman()
 			shaman.AddStat(stats.AttackPower, 50)
 			shaman.AddStat(stats.Resilience, 100)
-		},
-		4: func(agent core.Agent) {
-			shaman := agent.(ShamanAgent).GetShaman()
+		}),
+		4: core.ClassEffect(func(agent ShamanAgent) {
+			shaman := agent.GetShaman()
 			shaman.AddStat(stats.AttackPower, 150)
 			// also -2s on stormstrike CD
-		},
+		}),
 	},
 })
 
 var ItemSetGladiatorsWartide = core.NewItemSet(core.ItemSet{
 	Name: "Gladiator's Wartide",
 	Bonuses: map[int32]core.ApplyEffect{
-		2: func(agent core.Agent) {
-			shaman := agent.(ShamanAgent).GetShaman()
+		2: core.ClassEffect(func(agent ShamanAgent) {
+			shaman := agent.GetShaman()
 			shaman.AddStat(stats.SpellPower, 29)
 			shaman.AddStat(stats.Resilience, 100)
-		},
-		4: func(agent core.Agent) {
-			shaman := agent.(ShamanAgent).GetShaman()
+		}),
+		4: core.ClassEffect(func(agent ShamanAgent) {
+			shaman := agent.GetShaman()
 			shaman.AddStat(stats.SpellPower, 88)
-		},
+		}),
 	},
 })

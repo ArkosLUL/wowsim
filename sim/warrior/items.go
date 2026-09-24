@@ -124,9 +124,9 @@ var ItemSetDreadnaughtBattlegear = core.NewItemSet(core.ItemSet{
 		2: func(agent core.Agent) {
 			// Increases the damage of your Slam by 10%.
 		},
-		4: func(agent core.Agent) {
+		4: core.ClassEffect(func(agent WarriorAgent) {
 			// Your Bleed periodic effects have a chance to make your next ability cost 5 less rage.
-			warrior := agent.(WarriorAgent).GetWarrior()
+			warrior := agent.GetWarrior()
 			rageMetrics := warrior.NewRageMetrics(core.ActionID{SpellID: 61571})
 
 			procAura := warrior.RegisterAura(core.Aura{
@@ -168,16 +168,16 @@ var ItemSetDreadnaughtBattlegear = core.NewItemSet(core.ItemSet{
 					}
 				},
 			})
-		},
+		}),
 	},
 })
 
 var ItemSetSiegebreakerBattlegear = core.NewItemSet(core.ItemSet{
 	Name: "Siegebreaker Battlegear",
 	Bonuses: map[int32]core.ApplyEffect{
-		2: func(agent core.Agent) {
+		2: core.ClassEffect(func(agent WarriorAgent) {
 			// Heroic Strike and Slam critical strikes have a chance to grant you 150 haste rating for 5 sec.
-			warrior := agent.(WarriorAgent).GetWarrior()
+			warrior := agent.GetWarrior()
 			procAura := warrior.RegisterAura(core.Aura{
 				Label:    "Siegebreaker Battlegear 2pc Proc",
 				ActionID: core.ActionID{SpellID: 64937},
@@ -208,7 +208,7 @@ var ItemSetSiegebreakerBattlegear = core.NewItemSet(core.ItemSet{
 					}
 				},
 			})
-		},
+		}),
 		4: func(agent core.Agent) {
 			// Increases the critical strike chance of Mortal Strike and Bloodthirst by 10%.
 			// Handled in bloodthirst.go and mortal_strike.go.
@@ -234,9 +234,9 @@ var ItemSetWrynnsBattlegear = core.NewItemSet(core.ItemSet{
 var ItemSetYmirjarLordsBattlegear = core.NewItemSet(core.ItemSet{
 	Name: "Ymirjar Lord's Battlegear",
 	Bonuses: map[int32]core.ApplyEffect{
-		2: func(agent core.Agent) {
+		2: core.ClassEffect(func(agent WarriorAgent) {
 			// When your Deep Wounds ability deals damage you have a 3% chance to gain 16% attack power for 10 sec.
-			warrior := agent.(WarriorAgent).GetWarrior()
+			warrior := agent.GetWarrior()
 			var bonusAP float64
 			procAura := warrior.RegisterAura(core.Aura{
 				Label:    "Ymirjar Lord's Battlegear 2pc Proc",
@@ -266,7 +266,7 @@ var ItemSetYmirjarLordsBattlegear = core.NewItemSet(core.ItemSet{
 					}
 				},
 			})
-		},
+		}),
 		4: func(agent core.Agent) {
 			// You have a 20% chance for your Bloodsurge and Sudden Death talents to grant 2 charges of their effect instead of 1,
 			// reduce the global cooldown on Execute or Slam by 0.5 sec, and for the duration of the effect to be increased by 100%.

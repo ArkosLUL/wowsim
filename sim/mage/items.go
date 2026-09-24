@@ -29,10 +29,10 @@ var ItemSetFrostfireGarb = core.NewItemSet(core.ItemSet{
 		2: func(agent core.Agent) {
 			//Implemented in mana gems
 		},
-		4: func(agent core.Agent) {
-			mage := agent.(MageAgent).GetMage()
+		4: core.ClassEffect(func(agent MageAgent) {
+			mage := agent.GetMage()
 			mage.bonusCritDamage += .05
-		},
+		}),
 	},
 })
 
@@ -41,13 +41,13 @@ var ItemSetKirinTorGarb = core.NewItemSet(core.ItemSet{
 	Name:            "Kirin Tor Garb",
 	AlternativeName: "Kirin'dor Garb", // Wowhead spells this incorrectly
 	Bonuses: map[int32]core.ApplyEffect{
-		2: func(agent core.Agent) {
-			mage := agent.(MageAgent).GetMage()
+		2: core.ClassEffect(func(agent MageAgent) {
+			mage := agent.GetMage()
 			procAura := mage.NewTemporaryStatsAura("Kirin Tor 2pc", core.ActionID{SpellID: 64868}, stats.Stats{stats.SpellPower: 350}, 15*time.Second)
 
 			// Handle ICD ourselves since we use a custom check.
 			icd := core.Cooldown{
-				Timer:    agent.GetCharacter().NewTimer(),
+				Timer:    mage.GetCharacter().NewTimer(),
 				Duration: time.Second * 45,
 			}
 			procAura.Icd = &icd
@@ -67,7 +67,7 @@ var ItemSetKirinTorGarb = core.NewItemSet(core.ItemSet{
 					}
 				},
 			})
-		},
+		}),
 		4: func(agent core.Agent) {
 			// Implemented in each spell.
 		},

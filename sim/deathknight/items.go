@@ -99,12 +99,12 @@ var ItemSetThassariansBattlegear = core.NewItemSet(core.ItemSet{
 	Name:            "Thassarian's Battlegear",
 	AlternativeName: "Koltira's Battlegear",
 	Bonuses: map[int32]core.ApplyEffect{
-		2: func(agent core.Agent) {
+		2: core.ClassEffect(func(agent DeathKnightAgent) {
 			// Your Blood Strike and Heart Strike abilities have a
 			// chance to grant you 180 additional strength for 15 sec.
-			dk := agent.(DeathKnightAgent).GetDeathKnight()
+			dk := agent.GetDeathKnight()
 			dk.registerThassariansBattlegearProc()
-		},
+		}),
 		4: func(agent core.Agent) {
 			// Your Blood Plague ability now has a chance for its
 			// damage to be critical strikes.
@@ -177,12 +177,12 @@ var ItemSetScourgelordsBattlegear = core.NewItemSet(core.ItemSet{
 			// Your Obliterate and Scourge Strike abilities deal 10% increased damage
 			// and your Heart Strike ability deals 7% increased damage.
 		},
-		4: func(agent core.Agent) {
+		4: core.ClassEffect(func(agent DeathKnightAgent) {
 			// Whenever all your runes are on cooldown, you gain 3% increased
 			// damage done with weapons, spells, and abilities for the next 15 sec.
-			dk := agent.(DeathKnightAgent).GetDeathKnight()
+			dk := agent.GetDeathKnight()
 			dk.registerScourgelordsBattlegearProc()
-		},
+		}),
 	},
 })
 
@@ -240,11 +240,11 @@ var ItemSetScourgelordsPlate = core.NewItemSet(core.ItemSet{
 		2: func(agent core.Agent) {
 			// Increases the damage done by your Death and Decay ability by 20%.
 		},
-		4: func(agent core.Agent) {
+		4: core.ClassEffect(func(agent DeathKnightAgent) {
 			// When you activate Blood Tap, you gain 12% damage reduction from all attacks for 10 sec.
-			dk := agent.(DeathKnightAgent).GetDeathKnight()
+			dk := agent.GetDeathKnight()
 			dk.registerScourgelordsPlateProc()
-		},
+		}),
 	},
 })
 
@@ -535,8 +535,8 @@ func init() {
 
 	// Sigils
 
-	addItemEffect(40714, func(agent core.Agent) {
-		dk := agent.(DeathKnightAgent).GetDeathKnight()
+	addItemEffect(40714, core.ClassEffect(func(agent DeathKnightAgent) {
+		dk := agent.GetDeathKnight()
 		procAura := dk.NewTemporaryStatsAura("Sigil of the Unfaltering Knight Proc", core.ActionID{SpellID: 62146}, stats.Stats{stats.Defense: 53.0 / core.DefenseRatingPerDefense}, time.Second*30)
 
 		core.MakePermanent(dk.GetOrRegisterAura(core.Aura{
@@ -549,10 +549,10 @@ func init() {
 				procAura.Activate(sim)
 			},
 		}))
-	})
+	}))
 
-	addItemEffect(40715, func(agent core.Agent) {
-		dk := agent.(DeathKnightAgent).GetDeathKnight()
+	addItemEffect(40715, core.ClassEffect(func(agent DeathKnightAgent) {
+		dk := agent.GetDeathKnight()
 		procAura := dk.NewTemporaryStatsAura("Sigil of Haunted Dreams Proc", core.ActionID{SpellID: 60828}, stats.Stats{stats.MeleeCrit: 173.0, stats.SpellCrit: 173.0}, time.Second*10)
 
 		icd := core.Cooldown{
@@ -574,10 +574,10 @@ func init() {
 				}
 			},
 		}))
-	})
+	}))
 
-	addItemEffect(45144, func(agent core.Agent) {
-		dk := agent.(DeathKnightAgent).GetDeathKnight()
+	addItemEffect(45144, core.ClassEffect(func(agent DeathKnightAgent) {
+		dk := agent.GetDeathKnight()
 		procAura := dk.NewTemporaryStatsAura("Sigil of Deflection Proc", core.ActionID{SpellID: 64963}, stats.Stats{stats.Dodge: 136.0}, time.Second*5)
 
 		core.MakePermanent(dk.GetOrRegisterAura(core.Aura{
@@ -590,10 +590,10 @@ func init() {
 				procAura.Activate(sim)
 			},
 		}))
-	})
+	}))
 
-	addItemEffect(47672, func(agent core.Agent) {
-		dk := agent.(DeathKnightAgent).GetDeathKnight()
+	addItemEffect(47672, core.ClassEffect(func(agent DeathKnightAgent) {
+		dk := agent.GetDeathKnight()
 		procAura := dk.NewTemporaryStatsAura("Sigil of Insolence Proc", core.ActionID{SpellID: 67380}, stats.Stats{stats.Dodge: 200.0}, time.Second*20)
 
 		icd := core.Cooldown{
@@ -615,10 +615,10 @@ func init() {
 				}
 			},
 		}))
-	})
+	}))
 
-	addItemEffect(47673, func(agent core.Agent) {
-		dk := agent.(DeathKnightAgent).GetDeathKnight()
+	addItemEffect(47673, core.ClassEffect(func(agent DeathKnightAgent) {
+		dk := agent.GetDeathKnight()
 		procAura := CreateVirulenceProcAura(dk.GetCharacter())
 
 		icd := core.Cooldown{
@@ -640,11 +640,11 @@ func init() {
 				}
 			},
 		}))
-	})
+	}))
 
-	addItemEffect(50459, func(agent core.Agent) {
-		character := agent.GetCharacter()
-		dk := agent.(DeathKnightAgent).GetDeathKnight()
+	addItemEffect(50459, core.ClassEffect(func(agent DeathKnightAgent) {
+		dk := agent.GetDeathKnight()
+		character := dk.GetCharacter()
 
 		procAura := core.MakeStackingAura(character, core.StackingStatAura{
 			Aura: core.Aura{
@@ -667,11 +667,11 @@ func init() {
 				procAura.AddStack(sim)
 			},
 		}))
-	})
+	}))
 
-	addItemEffect(50462, func(agent core.Agent) {
-		character := agent.GetCharacter()
-		dk := agent.(DeathKnightAgent).GetDeathKnight()
+	addItemEffect(50462, core.ClassEffect(func(agent DeathKnightAgent) {
+		dk := agent.GetDeathKnight()
+		character := dk.GetCharacter()
 
 		procAura := core.MakeStackingAura(character, core.StackingStatAura{
 			Aura: core.Aura{
@@ -694,7 +694,7 @@ func init() {
 				procAura.AddStack(sim)
 			},
 		}))
-	})
+	}))
 
 	CreateGladiatorsSigil(42618, "Savage", 94, 6)
 	CreateGladiatorsSigil(42619, "Hateful", 106, 6)
@@ -774,8 +774,8 @@ func (dk *Deathknight) registerItems() {
 }
 
 func CreateGladiatorsSigil(id int32, name string, ap float64, seconds time.Duration) {
-	addItemEffect(id, func(agent core.Agent) {
-		dk := agent.(DeathKnightAgent).GetDeathKnight()
+	addItemEffect(id, core.ClassEffect(func(agent DeathKnightAgent) {
+		dk := agent.GetDeathKnight()
 		procAura := dk.NewTemporaryStatsAura(name+" Gladiator's Sigil of Strife Proc", core.ActionID{ItemID: id}, stats.Stats{stats.AttackPower: ap}, time.Second*seconds)
 
 		core.MakePermanent(dk.GetOrRegisterAura(core.Aura{
@@ -788,5 +788,5 @@ func CreateGladiatorsSigil(id int32, name string, ap float64, seconds time.Durat
 				procAura.Activate(sim)
 			},
 		}))
-	})
+	}))
 }

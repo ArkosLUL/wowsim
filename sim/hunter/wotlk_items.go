@@ -5,40 +5,39 @@ import (
 
 	"github.com/wowsims/wotlk/sim/common/wotlk"
 	"github.com/wowsims/wotlk/sim/core"
-	"github.com/wowsims/wotlk/sim/core/proto"
 	"github.com/wowsims/wotlk/sim/core/stats"
 )
 
 var ItemSetGladiatorsPursuit = core.NewItemSet(core.ItemSet{
 	Name: "Gladiator's Pursuit",
 	Bonuses: map[int32]core.ApplyEffect{
-		2: func(agent core.Agent) {
-			hunter := agent.(HunterAgent).GetHunter()
+		2: core.ClassEffect(func(agent HunterAgent) {
+			hunter := agent.GetHunter()
 			hunter.AddStats(stats.Stats{
 				stats.AttackPower:       50,
 				stats.RangedAttackPower: 50,
 				stats.Resilience:        50,
 			})
-		},
-		4: func(agent core.Agent) {
-			hunter := agent.(HunterAgent).GetHunter()
+		}),
+		4: core.ClassEffect(func(agent HunterAgent) {
+			hunter := agent.GetHunter()
 			hunter.AddStats(stats.Stats{
 				stats.AttackPower:       150,
 				stats.RangedAttackPower: 150,
 			})
-		},
+		}),
 	},
 })
 
 var ItemSetCryptstalkerBattlegear = core.NewItemSet(core.ItemSet{
 	Name: "Cryptstalker Battlegear",
 	Bonuses: map[int32]core.ApplyEffect{
-		2: func(agent core.Agent) {
-			hunter := agent.(HunterAgent).GetHunter()
+		2: core.ClassEffect(func(agent HunterAgent) {
+			hunter := agent.GetHunter()
 			if hunter.pet != nil {
 				hunter.pet.PseudoStats.DamageDealtMultiplier *= 1.05
 			}
-		},
+		}),
 		4: func(agent core.Agent) {
 		},
 	},
@@ -49,8 +48,8 @@ var ItemSetScourgestalkerBattlegear = core.NewItemSet(core.ItemSet{
 	Bonuses: map[int32]core.ApplyEffect{
 		2: func(agent core.Agent) {
 		},
-		4: func(agent core.Agent) {
-			hunter := agent.(HunterAgent).GetHunter()
+		4: core.ClassEffect(func(agent HunterAgent) {
+			hunter := agent.GetHunter()
 
 			procAura := hunter.NewTemporaryStatsAura("Scourgestalker 4pc Proc", core.ActionID{SpellID: 64860}, stats.Stats{stats.AttackPower: 600, stats.RangedAttackPower: 600}, time.Second*15)
 			const procChance = 0.1
@@ -82,7 +81,7 @@ var ItemSetScourgestalkerBattlegear = core.NewItemSet(core.ItemSet{
 					procAura.Activate(sim)
 				},
 			})
-		},
+		}),
 	},
 })
 
@@ -92,8 +91,8 @@ var ItemSetWindrunnersPursuit = core.NewItemSet(core.ItemSet{
 	Bonuses: map[int32]core.ApplyEffect{
 		2: func(agent core.Agent) {
 		},
-		4: func(agent core.Agent) {
-			hunter := agent.(HunterAgent).GetHunter()
+		4: core.ClassEffect(func(agent HunterAgent) {
+			hunter := agent.GetHunter()
 			if hunter.pet == nil {
 				return
 			}
@@ -128,15 +127,15 @@ var ItemSetWindrunnersPursuit = core.NewItemSet(core.ItemSet{
 					procAura.Activate(sim)
 				},
 			})
-		},
+		}),
 	},
 })
 
 var ItemSetAhnKaharBloodHuntersBattlegear = core.NewItemSet(core.ItemSet{
 	Name: "Ahn'Kahar Blood Hunter's Battlegear",
 	Bonuses: map[int32]core.ApplyEffect{
-		2: func(agent core.Agent) {
-			hunter := agent.(HunterAgent).GetHunter()
+		2: core.ClassEffect(func(agent HunterAgent) {
+			hunter := agent.GetHunter()
 			const procChance = 0.05
 			actionID := core.ActionID{SpellID: 70727}
 
@@ -164,9 +163,9 @@ var ItemSetAhnKaharBloodHuntersBattlegear = core.NewItemSet(core.ItemSet{
 					}
 				},
 			})
-		},
-		4: func(agent core.Agent) {
-			hunter := agent.(HunterAgent).GetHunter()
+		}),
+		4: core.ClassEffect(func(agent HunterAgent) {
+			hunter := agent.GetHunter()
 			const procChance = 0.05
 			actionID := core.ActionID{SpellID: 70730}
 
@@ -200,7 +199,7 @@ var ItemSetAhnKaharBloodHuntersBattlegear = core.NewItemSet(core.ItemSet{
 					}
 				},
 			})
-		},
+		}),
 	},
 })
 
@@ -216,12 +215,8 @@ func init() {
 			procChance = 0.05
 		}
 
-		core.NewItemEffect(itemID, func(agent core.Agent) {
-			if agent.GetCharacter().Class != proto.Class_ClassHunter {
-				return
-			}
-
-			hunter := agent.(HunterAgent).GetHunter()
+		core.NewItemEffect(itemID, core.ClassEffect(func(agent HunterAgent) {
+			hunter := agent.GetHunter()
 
 			var rangedSpell *core.Spell
 			initSpell := func() {
@@ -259,7 +254,7 @@ func init() {
 			triggerAura.OnInit = func(aura *core.Aura, sim *core.Simulation) {
 				initSpell()
 			}
-		})
+		}))
 	})
 
 }

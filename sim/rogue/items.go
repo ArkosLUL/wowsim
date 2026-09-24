@@ -39,9 +39,9 @@ var Tier9 = core.NewItemSet(core.ItemSet{
 	Name:            "VanCleef's Battlegear",
 	AlternativeName: "Garona's Battlegear",
 	Bonuses: map[int32]core.ApplyEffect{
-		2: func(agent core.Agent) {
+		2: core.ClassEffect(func(agent RogueAgent) {
 			// Your Rupture ability has a chance each time it deals damage to reduce the cost of your next ability by 40 energy.
-			rogue := agent.(RogueAgent).GetRogue()
+			rogue := agent.GetRogue()
 			energyMetrics := rogue.NewEnergyMetrics(core.ActionID{SpellID: 67209})
 
 			procAura := rogue.RegisterAura(core.Aura{
@@ -96,7 +96,7 @@ var Tier9 = core.NewItemSet(core.ItemSet{
 					procAura.Activate(sim)
 				},
 			})
-		},
+		}),
 		4: func(agent core.Agent) {
 			// Increases the critical strike chance of your Hemorrhage, Sinister Strike, Backstab, and Mutilate abilities by 5%.
 			// Handled in ability sources
@@ -147,8 +147,8 @@ var Tier6 = core.NewItemSet(core.ItemSet{
 })
 
 func init() {
-	core.NewItemEffect(32492, func(agent core.Agent) {
-		rogue := agent.(RogueAgent).GetRogue()
+	core.NewItemEffect(32492, core.ClassEffect(func(agent RogueAgent) {
+		rogue := agent.GetRogue()
 		procAura := rogue.NewTemporaryStatsAura("Ashtongue Talisman Proc", core.ActionID{ItemID: 32492}, stats.Stats{stats.MeleeCrit: 145}, time.Second*10)
 
 		var numPoints int32
@@ -185,6 +185,6 @@ func init() {
 				}
 			},
 		})
-	})
+	}))
 
 }
