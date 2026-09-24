@@ -16,6 +16,17 @@ import (
 // but there are occasionally class-specific item effects.
 type ApplyEffect func(Agent)
 
+// ClassEffect is a set bonus or item effect for one class's agents, e.g. shaman.ShamanAgent. The
+// server gives any wearer the bonus, but it only touches that class's spells, so another class gets
+// nothing.
+func ClassEffect[A any](effect func(A)) ApplyEffect {
+	return func(agent Agent) {
+		if classAgent, ok := agent.(A); ok {
+			effect(classAgent)
+		}
+	}
+}
+
 // Function for applying permanent effects to an agent's weapon
 type ApplyWeaponEffect func(Agent, proto.ItemSlot)
 
@@ -35,6 +46,12 @@ func HasItemEffect(id int32) bool {
 }
 func HasItemEffectForTest(id int32) bool {
 	return slices.Contains(itemEffectsForTest, id)
+}
+
+// ItemEffect returns the effect registered for an item or gem.
+func ItemEffect(id int32) (ApplyEffect, bool) {
+	effect, ok := itemEffects[id]
+	return effect, ok
 }
 
 func HasWeaponEffect(id int32) bool {

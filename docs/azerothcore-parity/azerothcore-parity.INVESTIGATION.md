@@ -1218,6 +1218,26 @@ Roll details the tables above don't show:
   `Unit.cpp:4661`) unless the spell carries `SPELL_ATTR0_CU_SINGLE_AURA_STACK`, which 51714 doesn't, so
   each caster keeps its own count there. The label now folds in the caster.
 
+**Character stats (PAR-P7-0f)** (`applyAllEffects`, `sim/core/character.go`)
+- Before finalize, `character.stats` holds no stat deps, while `AddStatsDynamic` adds a build-phase aura's
+  bonus with them applied. So the phase snapshots, which only the character stats tooltip reads, multiplied
+  Blessing of Might and Battle Shout twice by a 10% AP buff, and Commanding Shout by Strength of Wrynn. They
+  now take those bonuses raw.
+- `AddStatsDynamic` applies the deps in list order, where those added since the last sort sit last. Might's
+  AP went on through Mental Quickness's or Sheath of Light's AP→SP before the buff's ×1.1, and came off in
+  sorted order, ×1.1 first. That left Enhancement's and Retribution's spell power, FinalStats and sim alike,
+  short by 3% of Might's AP (20.61 with Improved Blessing of Might). The server converts the total AP,
+  multiplier included (`Unit::SpellBaseDamageBonusDone` reads `GetTotalAttackPowerValue`, `Unit.cpp:9156`).
+  The deps are now sorted before each phase's auras go on: `TestEnhancement` +0.16 to +0.30%,
+  `TestRetribution` +0.05 to +0.15%, final spell power +20.61 and no other stat.
+
+**Class sets and item effects (PAR-P7-0f)** (`core.ClassEffect`, `sim/core/item_effects.go`)
+- Class set bonuses and item effects cast the wearer to their class's agent, which panicked for another
+  class, e.g. a DK in Tidefury Raiment. The server gives any wearer the aura, but it only touches that
+  class's spells, so `core.ClassEffect` now gives another class nothing.
+  `TestSetsAndClassItemEffectsOnEveryWearer` (`sim/item_wearers_test.go`) sims every set and class item
+  effect on each class whose armor and weapon types fit it, except the class an allowlist names.
+
 ## Verified on the live server
 
 `[ac]/modules/mod-sim-validation/e2e` (`TestSimvalWarrior`, `TestSimvalHunter`) ran every probe inside Naxxramas and

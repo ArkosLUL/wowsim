@@ -14,21 +14,21 @@ var ItemSetTidefury = core.NewItemSet(core.ItemSet{
 		2: func(agent core.Agent) {
 			// Handled in chain_lightning.go
 		},
-		4: func(agent core.Agent) {
-			shaman := agent.(ShamanAgent).GetShaman()
+		4: core.ClassEffect(func(agent ShamanAgent) {
+			shaman := agent.GetShaman()
 
 			if shaman.SelfBuffs.Shield == proto.ShamanShield_WaterShield {
 				shaman.AddStat(stats.MP5, 3)
 			}
-		},
+		}),
 	},
 })
 
 var ItemSetSkyshatterRegalia = core.NewItemSet(core.ItemSet{
 	Name: "Skyshatter Regalia",
 	Bonuses: map[int32]core.ApplyEffect{
-		2: func(agent core.Agent) {
-			shaman := agent.(ShamanAgent).GetShaman()
+		2: core.ClassEffect(func(agent ShamanAgent) {
+			shaman := agent.GetShaman()
 
 			if shaman.Totems.Air == proto.AirTotem_NoAirTotem ||
 				shaman.Totems.Water == proto.WaterTotem_NoWaterTotem ||
@@ -40,7 +40,7 @@ var ItemSetSkyshatterRegalia = core.NewItemSet(core.ItemSet{
 			shaman.AddStat(stats.MP5, 19)
 			shaman.AddStat(stats.SpellCrit, 35)
 			shaman.AddStat(stats.SpellPower, 45)
-		},
+		}),
 		4: func(agent core.Agent) {
 			// Increases damage done by Lightning Bolt by 5%.
 			// Implemented in lightning_bolt.go.
@@ -65,8 +65,8 @@ var ItemSetSkyshatterHarness = core.NewItemSet(core.ItemSet{
 })
 
 func init() {
-	core.NewItemEffect(33506, func(agent core.Agent) {
-		shaman := agent.(ShamanAgent).GetShaman()
+	core.NewItemEffect(33506, core.ClassEffect(func(agent ShamanAgent) {
+		shaman := agent.GetShaman()
 		procAura := shaman.NewTemporaryStatsAura("Skycall Totem Proc", core.ActionID{SpellID: 43751}, stats.Stats{stats.SpellHaste: 100}, time.Second*10)
 
 		icd := core.Cooldown{
@@ -90,10 +90,10 @@ func init() {
 				}
 			},
 		})
-	})
+	}))
 
-	core.NewItemEffect(33507, func(agent core.Agent) {
-		shaman := agent.(ShamanAgent).GetShaman()
+	core.NewItemEffect(33507, core.ClassEffect(func(agent ShamanAgent) {
+		shaman := agent.GetShaman()
 		procAura := shaman.NewTemporaryStatsAura("Stonebreakers Totem Proc", core.ActionID{SpellID: 43749}, stats.Stats{stats.AttackPower: 110}, time.Second*10)
 
 		icd := core.Cooldown{
@@ -130,7 +130,7 @@ func init() {
 				procAura.Activate(sim)
 			},
 		})
-	})
+	}))
 
 	registerSpellPVPTotem("Savage Gladiator's Totem of Survival", 42594, 60565, 52, 6)
 	registerSpellPVPTotem("Hateful Gladiator's Totem of Survival", 42601, 60566, 62, 6)
@@ -139,8 +139,8 @@ func init() {
 	registerSpellPVPTotem("Relentless Gladiator's Totem of Survival", 42604, 60569, 101, 10)
 	registerSpellPVPTotem("Wrathful Gladiator's Totem of Survival", 51513, 60570, 119, 10)
 
-	core.NewItemEffect(47667, func(agent core.Agent) {
-		shaman := agent.(ShamanAgent).GetShaman()
+	core.NewItemEffect(47667, core.ClassEffect(func(agent ShamanAgent) {
+		shaman := agent.GetShaman()
 
 		statAura := shaman.NewTemporaryStatsAura("Volcanic Fury", core.ActionID{SpellID: 67391}, stats.Stats{stats.AttackPower: 400}, time.Second*18)
 
@@ -157,12 +157,12 @@ func init() {
 			},
 		})
 		statAura.Icd = triggerAura.Icd
-	})
+	}))
 }
 
 func registerSpellPVPTotem(name string, itemId int32, spellId int32, sp float64, seconds float64) {
-	core.NewItemEffect(itemId, func(agent core.Agent) {
-		shaman := agent.(ShamanAgent).GetShaman()
+	core.NewItemEffect(itemId, core.ClassEffect(func(agent ShamanAgent) {
+		shaman := agent.GetShaman()
 		procAura := shaman.NewTemporaryStatsAura(name+" proc", core.ActionID{SpellID: spellId}, stats.Stats{stats.SpellPower: sp}, time.Second*time.Duration(seconds))
 
 		shaman.RegisterAura(core.Aura{
@@ -183,5 +183,5 @@ func registerSpellPVPTotem(name string, itemId int32, spellId int32, sp float64,
 				procAura.Activate(sim)
 			},
 		})
-	})
+	}))
 }

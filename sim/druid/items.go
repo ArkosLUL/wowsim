@@ -85,9 +85,9 @@ var ItemSetLasherweaveRegalia = core.NewItemSet(core.ItemSet{
 			// When you gain Clearcasting from your Omen of Clarity talent, you deal 15% additional Nature and Arcane damage for 6 sec.
 			// Implemented in talents.go
 		},
-		4: func(agent core.Agent) {
+		4: core.ClassEffect(func(agent DruidAgent) {
 			// Your critical strikes from Starfire and Wrath cause the target to languish for an additional 7% of your spell's damage over 4 sec.
-			druid := agent.(DruidAgent).GetDruid()
+			druid := agent.GetDruid()
 
 			druid.Languish = druid.RegisterSpell(Any, core.SpellConfig{
 				ActionID:         core.ActionID{SpellID: 71023},
@@ -146,20 +146,20 @@ var ItemSetLasherweaveRegalia = core.NewItemSet(core.ItemSet{
 					})
 				},
 			})
-		},
+		}),
 	},
 })
 
 var ItemSetGladiatorsWildhide = core.NewItemSet(core.ItemSet{
 	Name: "Gladiator's Wildhide",
 	Bonuses: map[int32]core.ApplyEffect{
-		2: func(agent core.Agent) {
-			druid := agent.(DruidAgent).GetDruid()
+		2: core.ClassEffect(func(agent DruidAgent) {
+			druid := agent.GetDruid()
 			druid.AddStat(stats.SpellPower, 29)
 			druid.AddStat(stats.Resilience, 100)
-		},
-		4: func(agent core.Agent) {
-			druid := agent.(DruidAgent).GetDruid()
+		}),
+		4: core.ClassEffect(func(agent DruidAgent) {
+			druid := agent.GetDruid()
 			druid.AddStat(stats.SpellPower, 88)
 
 			percentReduction := float64(time.Millisecond*1500) / float64(druid.starfireCastTime())
@@ -192,7 +192,7 @@ var ItemSetGladiatorsWildhide = core.NewItemSet(core.ItemSet{
 					}
 				},
 			})
-		},
+		}),
 	},
 })
 
@@ -212,8 +212,8 @@ var ItemSetGladiatorsSanctuary = core.NewItemSet(core.ItemSet{
 var ItemSetNightsongBattlegear = core.NewItemSet(core.ItemSet{
 	Name: "Nightsong Battlegear",
 	Bonuses: map[int32]core.ApplyEffect{
-		2: func(agent core.Agent) {
-			druid := agent.(DruidAgent).GetDruid()
+		2: core.ClassEffect(func(agent DruidAgent) {
+			druid := agent.GetDruid()
 			// The periodic damage dealt by your Rake, Rip, and Lacerate abilities
 			// has a chance to cause you to enter a Clearcasting state.
 			// (Proc chance: 2%, 15s cooldown)
@@ -251,7 +251,7 @@ var ItemSetNightsongBattlegear = core.NewItemSet(core.ItemSet{
 					}
 				},
 			})
-		},
+		}),
 		4: func(agent core.Agent) {
 			// Implemented in savage roar
 		},
@@ -297,8 +297,8 @@ var ItemSetMalfurionsBattlegear = core.NewItemSet(core.ItemSet{
 
 func init() {
 
-	core.NewItemEffect(32486, func(agent core.Agent) {
-		druid := agent.(DruidAgent).GetDruid()
+	core.NewItemEffect(32486, core.ClassEffect(func(agent DruidAgent) {
+		druid := agent.GetDruid()
 
 		// Not in the game yet so cant test; this logic assumes that:
 		// - does not affect the starfire which procs it
@@ -331,10 +331,10 @@ func init() {
 				}
 			},
 		}))
-	})
+	}))
 
-	core.NewItemEffect(32257, func(agent core.Agent) {
-		druid := agent.(DruidAgent).GetDruid()
+	core.NewItemEffect(32257, core.ClassEffect(func(agent DruidAgent) {
+		druid := agent.GetDruid()
 
 		procAura := druid.NewTemporaryStatsAura("Idol of the White Stag Proc", core.ActionID{SpellID: 41037}, stats.Stats{stats.AttackPower: 94}, time.Second*20)
 
@@ -346,10 +346,10 @@ func init() {
 				}
 			},
 		}))
-	})
+	}))
 
-	core.NewItemEffect(33510, func(agent core.Agent) {
-		druid := agent.(DruidAgent).GetDruid()
+	core.NewItemEffect(33510, core.ClassEffect(func(agent DruidAgent) {
+		druid := agent.GetDruid()
 
 		procAura := druid.NewTemporaryStatsAura("Idol of the Unseen Moon Proc", core.ActionID{SpellID: 43740}, stats.Stats{stats.SpellPower: 140}, time.Second*10)
 
@@ -372,13 +372,13 @@ func init() {
 				}
 			},
 		})
-	})
+	}))
 
 	// This Idol is badly listed on Wowhead, not accessible from UI
-	core.NewItemEffect(50457, func(agent core.Agent) {
-		druid := agent.(DruidAgent).GetDruid()
+	core.NewItemEffect(50457, core.ClassEffect(func(agent DruidAgent) {
+		druid := agent.GetDruid()
 
-		procAura := core.MakeStackingAura(agent.GetCharacter(), core.StackingStatAura{
+		procAura := core.MakeStackingAura(druid.GetCharacter(), core.StackingStatAura{
 			Aura: core.Aura{
 				Label:     "Idol of the Lunar Eclipse proc",
 				ActionID:  core.ActionID{SpellID: 71177},
@@ -399,10 +399,10 @@ func init() {
 				procAura.AddStack(sim)
 			},
 		}))
-	})
+	}))
 
-	core.NewItemEffect(32387, func(agent core.Agent) {
-		druid := agent.(DruidAgent).GetDruid()
+	core.NewItemEffect(32387, core.ClassEffect(func(agent DruidAgent) {
+		druid := agent.GetDruid()
 		core.MakePermanent(druid.RegisterAura(core.Aura{
 			Label:      "Idol of the Raven Goddess",
 			BuildPhase: core.CharacterBuildPhaseGear,
@@ -422,10 +422,10 @@ func init() {
 				}
 			},
 		}))
-	})
+	}))
 
-	core.NewItemEffect(45509, func(agent core.Agent) {
-		druid := agent.(DruidAgent).GetDruid()
+	core.NewItemEffect(45509, core.ClassEffect(func(agent DruidAgent) {
+		druid := agent.GetDruid()
 		// 64951 effect1=153 on the server, and Mangle (Bear)'s spell_proc row (64952) has Chance=0,
 		// which falls back to the DBC's 100% for both Mangles.
 		procAura := druid.NewTemporaryStatsAura("Idol of the Corruptor Proc", core.ActionID{SpellID: 64951}, stats.Stats{stats.Agility: 153}, time.Second*12)
@@ -454,10 +454,10 @@ func init() {
 				procAura.Activate(sim)
 			},
 		}))
-	})
+	}))
 
-	core.NewItemEffect(47668, func(agent core.Agent) {
-		druid := agent.(DruidAgent).GetDruid()
+	core.NewItemEffect(47668, core.ClassEffect(func(agent DruidAgent) {
+		druid := agent.GetDruid()
 		bearAura := druid.NewTemporaryStatsAura("Idol of Mutilation Bear Proc", core.ActionID{SpellID: 67354}, stats.Stats{stats.Dodge: 200.0}, time.Second*9)
 		catAura := druid.NewTemporaryStatsAura("Idol of Mutilation Cat Proc", core.ActionID{SpellID: 67355}, stats.Stats{stats.Agility: 200.0}, time.Second*16)
 
@@ -494,11 +494,11 @@ func init() {
 				}
 			},
 		}))
-	})
+	}))
 
-	core.NewItemEffect(50456, func(agent core.Agent) {
-		druid := agent.(DruidAgent).GetDruid()
-		procAura := core.MakeStackingAura(agent.GetCharacter(), core.StackingStatAura{
+	core.NewItemEffect(50456, core.ClassEffect(func(agent DruidAgent) {
+		druid := agent.GetDruid()
+		procAura := core.MakeStackingAura(druid.GetCharacter(), core.StackingStatAura{
 			Aura: core.Aura{
 				Label:     "Idol of the Crying Moon Proc",
 				ActionID:  core.ActionID{SpellID: 71175},
@@ -518,10 +518,10 @@ func init() {
 				procAura.AddStack(sim)
 			},
 		}))
-	})
+	}))
 
-	core.NewItemEffect(33947, func(agent core.Agent) {
-		druid := agent.(DruidAgent).GetDruid()
+	core.NewItemEffect(33947, core.ClassEffect(func(agent DruidAgent) {
+		druid := agent.GetDruid()
 		procAura := druid.NewTemporaryStatsAura("Vengeful Gladiator's Idol of Resolve Proc", core.ActionID{ItemID: 33947}, stats.Stats{stats.Resilience: 34}, time.Second*6)
 
 		core.MakePermanent(druid.RegisterAura(core.Aura{
@@ -533,10 +533,10 @@ func init() {
 				procAura.Activate(sim)
 			},
 		}))
-	})
+	}))
 
-	core.NewItemEffect(35019, func(agent core.Agent) {
-		druid := agent.(DruidAgent).GetDruid()
+	core.NewItemEffect(35019, core.ClassEffect(func(agent DruidAgent) {
+		druid := agent.GetDruid()
 		procAura := druid.NewTemporaryStatsAura("Brutal Gladiator's Idol of Resolve Proc", core.ActionID{ItemID: 35019}, stats.Stats{stats.Resilience: 39}, time.Second*6)
 
 		core.MakePermanent(druid.RegisterAura(core.Aura{
@@ -548,10 +548,10 @@ func init() {
 				procAura.Activate(sim)
 			},
 		}))
-	})
+	}))
 
-	core.NewItemEffect(47670, func(agent core.Agent) {
-		druid := agent.(DruidAgent).GetDruid()
+	core.NewItemEffect(47670, core.ClassEffect(func(agent DruidAgent) {
+		druid := agent.GetDruid()
 		procAura := druid.NewTemporaryStatsAura("Lunar Fire", core.ActionID{SpellID: 67360}, stats.Stats{stats.MeleeCrit: 200, stats.SpellCrit: 200}, time.Second*12)
 		icd := core.Cooldown{
 			Timer:    druid.NewTimer(),
@@ -568,11 +568,11 @@ func init() {
 				}
 			},
 		}))
-	})
+	}))
 
 	makeGladiatorIdolEffect := func(itemId int32, spellId int32, atkPwr float64, numSeconds int, label string) {
-		core.NewItemEffect(itemId, func(agent core.Agent) {
-			druid := agent.(DruidAgent).GetDruid()
+		core.NewItemEffect(itemId, core.ClassEffect(func(agent DruidAgent) {
+			druid := agent.GetDruid()
 			procAura := druid.NewTemporaryStatsAura(label+" Proc", core.ActionID{SpellID: spellId}, stats.Stats{stats.AttackPower: atkPwr}, time.Second*time.Duration(numSeconds))
 
 			core.MakePermanent(druid.RegisterAura(core.Aura{
@@ -583,7 +583,7 @@ func init() {
 					}
 				},
 			}))
-		})
+		}))
 	}
 	makeGladiatorIdolEffect(42574, 60693, 94, 6, "Savage Gladiator's Idol of Resolve")
 	makeGladiatorIdolEffect(42587, 60695, 106, 6, "Hateful Gladiator's Idol of Resolve")

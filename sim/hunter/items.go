@@ -42,8 +42,8 @@ func init() {
 		})
 	})
 
-	core.NewItemEffect(32487, func(agent core.Agent) {
-		hunter := agent.(HunterAgent).GetHunter()
+	core.NewItemEffect(32487, core.ClassEffect(func(agent HunterAgent) {
+		hunter := agent.GetHunter()
 
 		procAura := hunter.NewTemporaryStatsAura("Ashtongue Talisman Proc", core.ActionID{ItemID: 32487}, stats.Stats{stats.AttackPower: 275, stats.RangedAttackPower: 275}, time.Second*8)
 		const procChance = 0.15
@@ -64,6 +64,6 @@ func init() {
 				procAura.Activate(sim)
 			},
 		})
-	})
+	}))
 
 }

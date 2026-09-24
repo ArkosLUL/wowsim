@@ -254,34 +254,47 @@ func (character *Character) addUniversalStatDependencies() {
 func (character *Character) applyAllEffects(agent Agent, raidBuffs *proto.RaidBuffs, partyBuffs *proto.PartyBuffs, individualBuffs *proto.IndividualBuffs) *proto.PlayerStats {
 	playerStats := &proto.PlayerStats{}
 
+	// before finalize character.stats has no stat deps, while AddStatsDynamic adds a build phase
+	// aura's bonus with deps: snapshots use the raw bonus instead, or the deps apply twice
+	var auraDepsPart stats.Stats
+	applyPhaseAuras := func(phase CharacterBuildPhase) {
+		// sorts the deps added since the last snapshot, which AddStatsDynamic would otherwise apply
+		// out of order here and in order when the auras are cleared, leaving the difference behind
+		character.SortAndApplyStatDependencies(stats.Stats{})
+		statsBefore, rawBefore := character.stats, character.statsWithoutDeps
+		character.applyBuildPhaseAuras(phase)
+		withDeps := character.stats.Subtract(statsBefore)
+		raw := character.statsWithoutDeps.Subtract(rawBefore)
+		auraDepsPart = auraDepsPart.Add(withDeps.Subtract(raw))
+	}
 	measureStats := func() *proto.UnitStats {
 		return &proto.UnitStats{
-			Stats:       character.SortAndApplyStatDependencies(character.stats).ToFloatArray(),
+			Stats:       character.SortAndApplyStatDependencies(character.stats.Subtract(auraDepsPart)).ToFloatArray(),
 			PseudoStats: character.GetPseudoStatsProto(),
 		}
 	}
 
 	applyRaceEffects(agent)
 	character.applyProfessionEffects()
-	character.applyBuildPhaseAuras(CharacterBuildPhaseBase)
+	applyPhaseAuras(CharacterBuildPhaseBase)
 	playerStats.BaseStats = measureStats()
 
 	character.applyEquipment()
 	character.applyItemEffects(agent)
 	character.applyItemSetBonusEffects(agent)
-	character.applyBuildPhaseAuras(CharacterBuildPhaseGear)
+	applyPhaseAuras(CharacterBuildPhaseGear)
 	playerStats.GearStats = measureStats()
 
 	agent.ApplyTalents()
-	character.applyBuildPhaseAuras(CharacterBuildPhaseTalents)
+	applyPhaseAuras(CharacterBuildPhaseTalents)
 	playerStats.TalentsStats = measureStats()
 
 	applyBuffEffects(agent, raidBuffs, partyBuffs, individualBuffs)
-	character.applyBuildPhaseAuras(CharacterBuildPhaseBuffs)
+	applyPhaseAuras(CharacterBuildPhaseBuffs)
 	playerStats.BuffsStats = measureStats()
 
 	applyConsumeEffects(agent)
-	character.applyBuildPhaseAuras(CharacterBuildPhaseConsumes)
+	applyPhaseAuras(CharacterBuildPhaseConsumes)
 	playerStats.ConsumesStats = measureStats()
 	character.clearBuildPhaseAuras(CharacterBuildPhaseAll)
 

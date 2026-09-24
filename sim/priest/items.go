@@ -61,8 +61,8 @@ var ItemSetConquerorSanct = core.NewItemSet(core.ItemSet{
 		2: func(agent core.Agent) {
 			// Implemented in devouring_plague.go
 		},
-		4: func(agent core.Agent) {
-			priest := agent.(PriestAgent).GetPriest()
+		4: core.ClassEffect(func(agent PriestAgent) {
+			priest := agent.GetPriest()
 			procAura := priest.NewTemporaryStatsAura("Devious Mind", core.ActionID{SpellID: 64907}, stats.Stats{stats.SpellHaste: 240}, time.Second*4)
 
 			priest.RegisterAura(core.Aura{
@@ -78,7 +78,7 @@ var ItemSetConquerorSanct = core.NewItemSet(core.ItemSet{
 					}
 				},
 			})
-		},
+		}),
 	},
 })
 
@@ -87,8 +87,8 @@ var ItemSetSanctificationRegalia = core.NewItemSet(core.ItemSet{
 	Bonuses: map[int32]core.ApplyEffect{
 		2: func(agent core.Agent) {
 		},
-		4: func(agent core.Agent) {
-			priest := agent.(PriestAgent).GetPriest()
+		4: core.ClassEffect(func(agent PriestAgent) {
+			priest := agent.GetPriest()
 			procAura := priest.NewTemporaryStatsAura("Sanctification Reglia 4pc", core.ActionID{SpellID: 64912}, stats.Stats{stats.SpellPower: 250}, time.Second*5)
 
 			priest.RegisterAura(core.Aura{
@@ -104,7 +104,7 @@ var ItemSetSanctificationRegalia = core.NewItemSet(core.ItemSet{
 					}
 				},
 			})
-		},
+		}),
 	},
 })
 
@@ -149,8 +149,8 @@ var ItemSetCrimsonAcolyte = core.NewItemSet(core.ItemSet{
 var ItemSetCrimsonAcolytesRaiment = core.NewItemSet(core.ItemSet{
 	Name: "Crimson Acolyte's Raiment",
 	Bonuses: map[int32]core.ApplyEffect{
-		2: func(agent core.Agent) {
-			priest := agent.(PriestAgent).GetPriest()
+		2: core.ClassEffect(func(agent PriestAgent) {
+			priest := agent.GetPriest()
 
 			var curAmount float64
 			procSpell := priest.RegisterSpell(core.SpellConfig{
@@ -194,7 +194,7 @@ var ItemSetCrimsonAcolytesRaiment = core.NewItemSet(core.ItemSet{
 					hot.Apply(sim)
 				},
 			})
-		},
+		}),
 		4: func(agent core.Agent) {
 			// Implemented in power_word_shield.go and circle_of_healing.go
 		},

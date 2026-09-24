@@ -85,21 +85,8 @@ async function mismatchedBreakdowns(page: Page, spec: string): Promise<Record<st
 	return off;
 }
 
-// presets pairing Blessing of Might or Battle Shout with a 10% attack power buff like Abomination's Might
-const MIGHT_TWICE_MULTIPLIED = ['deathknight', 'enhancement_shaman', 'hunter', 'protection_paladin', 'retribution_paladin', 'rogue', 'tank_deathknight'];
-// enhancement and retribution turn part of their attack power into spell power
-const MIGHT_TWICE_STATS = ['Attack Power', 'Ranged AP', 'Spell Dmg'];
-
 for (const spec of SPECS) {
-	const mightTwice = MIGHT_TWICE_MULTIPLIED.includes(spec);
 	test(`the ${spec} breakdown of every stat adds up to its total`, async ({ page }) => {
-		test.fixme(mightTwice, "sim/core's Buffs snapshot applies the 10% attack power buff to Might twice");
 		expect(await mismatchedBreakdowns(page, spec)).toEqual({});
 	});
-	if (mightTwice) {
-		test(`the ${spec} breakdown of every stat but attack and spell power adds up to its total`, async ({ page }) => {
-			const off = await mismatchedBreakdowns(page, spec);
-			expect(Object.keys(off).filter(label => !MIGHT_TWICE_STATS.includes(label))).toEqual([]);
-		});
-	}
 }

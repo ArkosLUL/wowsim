@@ -26,8 +26,8 @@ var ItemSetMaleficRaiment = core.NewItemSet(core.ItemSet{
 var ItemSetPlagueheartGarb = core.NewItemSet(core.ItemSet{
 	Name: "Plagueheart Garb",
 	Bonuses: map[int32]core.ApplyEffect{
-		2: func(agent core.Agent) {
-			warlock := agent.(WarlockAgent).GetWarlock()
+		2: core.ClassEffect(func(agent WarlockAgent) {
+			warlock := agent.GetWarlock()
 
 			const bonusCrit = 10 * core.CritRatingPerCritChance
 			warlock.DemonicSoulAura = warlock.RegisterAura(core.Aura{
@@ -62,9 +62,9 @@ var ItemSetPlagueheartGarb = core.NewItemSet(core.ItemSet{
 					}
 				},
 			})
-		},
-		4: func(agent core.Agent) {
-			warlock := agent.(WarlockAgent).GetWarlock()
+		}),
+		4: core.ClassEffect(func(agent WarlockAgent) {
+			warlock := agent.GetWarlock()
 
 			warlock.SpiritsoftheDamnedAura = warlock.RegisterAura(core.Aura{
 				Label:    "Spirits of the Damned",
@@ -90,7 +90,7 @@ var ItemSetPlagueheartGarb = core.NewItemSet(core.ItemSet{
 					}
 				},
 			})
-		},
+		}),
 	},
 })
 
@@ -112,15 +112,15 @@ var ItemSetGuldansRegalia = core.NewItemSet(core.ItemSet{
 	Name:            "Gul'dan's Regalia",
 	AlternativeName: "Kel'Thuzad's Regalia",
 	Bonuses: map[int32]core.ApplyEffect{
-		2: func(agent core.Agent) {
-			warlock := agent.(WarlockAgent).GetWarlock()
+		2: core.ClassEffect(func(agent WarlockAgent) {
+			warlock := agent.GetWarlock()
 			if warlock.Pet != nil {
 				warlock.Pet.AddStats(stats.Stats{
 					stats.MeleeCrit: 10 * core.CritRatingPerCritChance,
 					stats.SpellCrit: 10 * core.CritRatingPerCritChance,
 				})
 			}
-		},
+		}),
 		4: func(agent core.Agent) {
 			// Implemented
 		},
@@ -134,8 +134,8 @@ var ItemSetDarkCovensRegalia = core.NewItemSet(core.ItemSet{
 		2: func(agent core.Agent) {
 			// Implemented
 		},
-		4: func(agent core.Agent) {
-			warlock := agent.(WarlockAgent).GetWarlock()
+		4: core.ClassEffect(func(agent WarlockAgent) {
+			warlock := agent.GetWarlock()
 
 			deviousMindsAura := warlock.RegisterAura(core.Aura{
 				Label:    "Devious Minds",
@@ -181,21 +181,21 @@ var ItemSetDarkCovensRegalia = core.NewItemSet(core.ItemSet{
 					}
 				},
 			})
-		},
+		}),
 	},
 })
 
 var ItemSetGladiatorsFelshroud = core.NewItemSet(core.ItemSet{
 	Name: "Gladiator's Felshroud",
 	Bonuses: map[int32]core.ApplyEffect{
-		2: func(agent core.Agent) {
-			warlock := agent.(WarlockAgent).GetWarlock()
+		2: core.ClassEffect(func(agent WarlockAgent) {
+			warlock := agent.GetWarlock()
 			warlock.AddStat(stats.SpellPower, 29)
-		},
-		4: func(agent core.Agent) {
-			warlock := agent.(WarlockAgent).GetWarlock()
+		}),
+		4: core.ClassEffect(func(agent WarlockAgent) {
+			warlock := agent.GetWarlock()
 			warlock.AddStat(stats.SpellPower, 88)
-		},
+		}),
 	},
 })
 
@@ -233,8 +233,8 @@ func (warlock *Warlock) registerBlackBook() {
 }
 
 func init() {
-	core.NewItemEffect(32493, func(agent core.Agent) {
-		warlock := agent.(WarlockAgent).GetWarlock()
+	core.NewItemEffect(32493, core.ClassEffect(func(agent WarlockAgent) {
+		warlock := agent.GetWarlock()
 		procAura := warlock.NewTemporaryStatsAura("Ashtongue Talisman Proc", core.ActionID{SpellID: 40478}, stats.Stats{stats.SpellPower: 220}, time.Second*5)
 
 		warlock.RegisterAura(core.Aura{
@@ -249,5 +249,5 @@ func init() {
 				}
 			},
 		})
-	})
+	}))
 }
