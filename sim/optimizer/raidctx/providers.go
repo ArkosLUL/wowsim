@@ -233,7 +233,7 @@ var providers = []provider{
 	{
 		ui:    "DPS Debuffs/Minor ArP/Spore Cloud",
 		class: proto.Class_ClassHunter,
-		when:  hasPet(proto.Hunter_Options_Bat),
+		when:  hasPet(proto.Hunter_Options_SporeBat),
 		apply: func(e *effects) { e.debuffs.SporeCloud = true },
 	},
 	{

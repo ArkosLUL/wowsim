@@ -786,7 +786,7 @@ func TestBuildAmmo(t *testing.T) {
 			&RosterAmmo{ItemID: 30319, DPS: 63.5}, true},
 		{"no ammo", CharacterRows{ClassID: classHunter}, &RosterAmmo{Value: "AmmoNone"}, true},
 		{"no ammo with Thori'dal", CharacterRows{ClassID: classHunter, Items: []EquippedItem{{ACSlot: ACSlotRanged, ItemID: thoridalItemID}}},
-			&RosterAmmo{Value: "AmmoNone"}, false},
+			nil, false},
 		{"a warrior's ammo isn't a sim option", CharacterRows{ClassID: classWarrior, AmmoID: 52020, AmmoDPS: 91.5}, nil, false},
 	} {
 		ammo, warnings := BuildAmmo(&tc.rows)

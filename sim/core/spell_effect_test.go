@@ -126,6 +126,17 @@ func TestCheckEffect(t *testing.T) {
 	if e.Min != 1 || len(orphan.ServerConflicts()) != 0 {
 		t.Errorf("no server data: %+v, %v", e, orphan.ServerConflicts())
 	}
+
+	// but a FromSpellID the tables lack is a typo, not a spell without data
+	func() {
+		defer func() {
+			if recover() == nil {
+				t.Error("an unknown FromSpellID: no panic")
+			}
+		}()
+		e = SpellEffect{Effect: 1, FromSpellID: testSpellID, Min: 1}
+		orphan.checkEffect(&e, row, directEffectFields)
+	}()
 }
 
 func TestServerSchoolAndMissileSpeed(t *testing.T) {

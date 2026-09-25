@@ -34,6 +34,7 @@ REFORGE_STATS = {6: (4,), 13: (25,), 14: (26,), 31: (12, 7), 32: (13, 8), 36: (1
 REFORGE_PERCENTAGE = 0.4
 
 HUNTER, WARLOCK = 3, 9
+RANGED_SLOT, THORIDAL = 17, 34334
 ALLIANCE_RACES = {1, 3, 4, 7, 11}
 NO_MANA_CLASSES = {1, 4, 6}  # warrior, rogue, death knight
 # The consumables the sim's pickers show one item for, where the server has others that give the same.
@@ -500,14 +501,22 @@ def pet_entry(member, pet, pet_spells):
     return entry
 
 
-def ammo_entry(ammo_id, dps):
+def ammo_entry(ammo_id, dps, ranged_id):
     if not ammo_id:
-        return {'itemId': 0, 'dps': 0, 'value': 'AmmoNone'}
+        # Thori'dal makes its own arrows, so acraid leaves the player's ammo as it is
+        return None if ranged_id == THORIDAL else {'itemId': 0, 'dps': 0, 'value': 'AmmoNone'}
     entry = {'itemId': ammo_id, 'dps': dps}
     value = next((value for value, known in ammo_dps if abs(known - dps) < 0.01), None)
     if value:
         entry['value'] = value
     return entry
+
+
+def same_ammo(got, want):
+    # both sides average the DPS from item_template floats, so it gets ammo_entry's tolerance
+    if got is None or want is None:
+        return got == want
+    return {**got, 'dps': 0} == {**want, 'dps': 0} and abs(got.get('dps', 0) - want['dps']) < 0.01
 
 
 parser = argparse.ArgumentParser()
@@ -716,8 +725,8 @@ for member in members:
     if member.class_id == HUNTER:
         ammo_id, low, high = ammo[member.guid][0]
         dps = (float(low) + float(high)) / 2 if low != 'NULL' else 0
-        want_ammo = ammo_entry(int(ammo_id), dps)
-    if character.get('ammo') != want_ammo:
+        want_ammo = ammo_entry(int(ammo_id), dps, want_gear.get(RANGED_SLOT, {}).get('id'))
+    if not same_ammo(character.get('ammo'), want_ammo):
         problems.append(f'{name}.ammo = {character.get("ammo")}, server {want_ammo}')
 
     bags = [{'id': int(row[0]), 'subclass': int(row[1]), 'quality': int(row[2]), 'level': int(row[3]),

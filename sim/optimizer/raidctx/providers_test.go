@@ -299,7 +299,9 @@ func TestProviderConditions(t *testing.T) {
 			return !r.Debuffs.AcidSpit && !r.Debuffs.Sting && !r.Debuffs.SporeCloud && !r.Debuffs.Stampede && !r.Debuffs.DemoralizingScreech
 		}},
 		{"wasp", hunter(proto.Hunter_Options_Wasp), func(r *proto.Raid) bool { return r.Debuffs.Sting }},
-		{"bat", hunter(proto.Hunter_Options_Bat), func(r *proto.Raid) bool { return r.Debuffs.SporeCloud }},
+		{"spore bat", hunter(proto.Hunter_Options_SporeBat), func(r *proto.Raid) bool { return r.Debuffs.SporeCloud }},
+		// a plain bat's special is Sonic Blast
+		{"bat", hunter(proto.Hunter_Options_Bat), func(r *proto.Raid) bool { return !r.Debuffs.SporeCloud }},
 		{"rhino", hunter(proto.Hunter_Options_Rhino), func(r *proto.Raid) bool { return r.Debuffs.Stampede }},
 		{"carrion bird", hunter(proto.Hunter_Options_CarrionBird), func(r *proto.Raid) bool { return r.Debuffs.DemoralizingScreech }},
 		{"survival", newPlayer("Hunter", proto.Spec_SpecHunter, map[string]int32{"hunting_party": 5}), func(r *proto.Raid) bool {

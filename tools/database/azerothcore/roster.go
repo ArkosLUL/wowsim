@@ -871,13 +871,13 @@ func BuildAmmo(rows *CharacterRows) (*RosterAmmo, []string) {
 		return nil, nil
 	}
 	if rows.AmmoID == 0 {
-		ammo := &RosterAmmo{Value: proto.Hunter_Options_AmmoNone.String()}
+		// Thori'dal needs no arrows, but a bow swapped in for it does, so the player's ammo stays
 		if slices.ContainsFunc(rows.Items, func(item EquippedItem) bool {
 			return item.ACSlot == ACSlotRanged && item.ItemID == thoridalItemID
 		}) {
-			return ammo, nil
+			return nil, nil
 		}
-		return ammo, []string{"no ammo equipped"}
+		return &RosterAmmo{Value: proto.Hunter_Options_AmmoNone.String()}, []string{"no ammo equipped"}
 	}
 	ammo := &RosterAmmo{ItemID: rows.AmmoID, DPS: rows.AmmoDPS}
 	for _, known := range simAmmoDPS {

@@ -850,7 +850,7 @@ const RAID_STATS_OPTIONS: RaidStatsOptions = {
 						{
 							label: 'Spore Cloud',
 							actionId: ActionId.fromSpellId(53598),
-							playerData: playerClass(Class.ClassHunter, player => player.getSpecOptions().petType == HunterPetType.Bat),
+							playerData: playerClass(Class.ClassHunter, player => player.getSpecOptions().petType == HunterPetType.SporeBat),
 						},
 					],
 				},

@@ -211,7 +211,10 @@ func (spell *Spell) checkEffect(e *SpellEffect, own *serverdata.Spell, f effectF
 	}
 	s := own
 	if e.FromSpellID != 0 {
-		s = serverdata.SpellByID(e.FromSpellID)
+		// a mistyped id would otherwise leave the declaration unchecked
+		if s = serverdata.SpellByID(e.FromSpellID); s == nil {
+			panic(fmt.Sprintf("%s declares FromSpellID %d, which has no server data", spell.ActionID, e.FromSpellID))
+		}
 	}
 	if s == nil {
 		return
