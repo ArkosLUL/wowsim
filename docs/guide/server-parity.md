@@ -116,11 +116,18 @@ spell is only as right as its id.
   ranged slot's +500 ms), GCD against `GCDMs` in category 133, and the cooldowns. A declared value
   inside what passive talents and glyphs can reach agrees; anything else is a conflict, and an
   allowlist entry either lets the server win or keeps the sim's value with a reason.
+- **Damage** is declared per server effect: `core.SpellEffect` on `SpellConfig.Direct` and `DotConfig.Tick`
+  (`sim/core/spell_effect.go`), with talent and glyph mods in `SpellConfig.Mods`, folded as
+  `Player::ApplySpellMod` does. `RegisterSpell` checks the level-80 base range, the coefficients and the
+  weapon percent against the server's; school and missile speed sync like timing. A class spell with server
+  damage but no declaration goes on its class's `serverdata_undeclared.go`, and `TestServerDataConflicts`
+  fails on a missing or stale entry.
 - **Wrapper ids** are the trap. The sim often deals damage under the id of a spell that, on the server,
   only triggers the real one (totems, Faerie Fire (Feral), Typhoon). The wrapper's
   flags are not the damage's, so those entries keep the sim's values until the class's P7 item moves
   the damage to the real id. When a suite moves for a spell you didn't touch, look here first.
-- Missiles travel at least 5 yards (`Spell::AddUnitTarget`), in whole ms.
+- Missiles travel at least 5 yards (`Spell::AddUnitTarget`), in whole ms. The sim waits out the travel only
+  where the closure calls `spell.WaitTravelTime`.
 
 The server only acts on its map update, 100 ms live (`ServerSettings.MapUpdateInterval`; 0 means exact,
 which is what unit tests want).

@@ -81,6 +81,12 @@ layouts come from [ac] `src/server/shared/DataStores/DBCStructure.h` and `DBCfmt
   - memberFlags: 1 assistant, 2 main tank, 4 main assist.
   - `groupType & 2` marks a raid.
   - The table is empty while no group exists.
+- **Pet:** `character_pet` with `slot = 0` is the current one. Its `entry` gives
+  `acore_world.creature_template.family`; its talents are the `pet_spell` rows on Talent.dbc's pet tabs,
+  and a pet may have none.
+- **Ammo:** `characters.ammoId`; 0 means none, which Thori'dal doesn't need.
+- **Consumables:** saved buffs in `character_aura`. Bags: `character_inventory` in the backpack (`bag = 0`,
+  slots 23–38), or with `bag` set to the `item` of a bag in slots 19–22.
 
 ## Professions
 
@@ -106,3 +112,8 @@ layouts come from [ac] `src/server/shared/DataStores/DBCStructure.h` and `DBCfmt
 - `character_reforging(guid, item_guid, stat_decrease, stat_increase, stat_value)`. `stat_value` is
   floor(40% of the server's stat), so it can be 1–2 off the sim's. The sim recomputes from its own item.
 - `character_racial_swap(guid, selected_race)`.
+- **mod-playerbots** (`acore_playerbots`): a character is a bot when `playerbots_db_store` holds rows for it
+  (its saved strategies: `co`, `nc`, `dead`) or its account is typed 1 in `playerbots_account_type` (random
+  bots). A bot takes flask, elixirs and food from `AiPlayerbot.WorldBuffMatrix` (live: the
+  `AC_AI_PLAYERBOT_WORLD_BUFF_MATRIX` override in `[ac]/configurationOverrides/Playerbot.env`) only with the
+  `worldbuff` strategy, and a potion from its bags only with `potions`.

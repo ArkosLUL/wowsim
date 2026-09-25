@@ -99,9 +99,10 @@ bugs, the importer's missing pets, ammo and consumables, and a batch hung on a h
 
 ## Current wave
 
-- Wave: I4, running. Base SHA `a4292b95a`.
-- Workflow runId: `wf_6e7f2afb-ea5`, args `waveI4-args.json` in `G:\DevStuff\GitHub\.wave-loop`. Transcript dir:
-  `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\wf_6e7f2afb-ea5`.
+- Wave: I5, not started. Wave I4 (base `a4292b95a`) landed on `master`.
+- Base SHA: set at wave start.
+- Workflow runId: none. Wave I4 ran as `wf_6e7f2afb-ea5` (args `waveI4-args.json`, results `waveI4-results.json`
+  in `G:\DevStuff\GitHub\.wave-loop`).
 
 ## BiS baseline
 
@@ -122,6 +123,7 @@ Reckoning that way), but J isn't DPS: see below.
 | I | 8842.8, +253 / +304 | 10686.4, +616 / +942 | 5064.5, +43 / +40 | 12956.7, +224 / +256 | -91848.5, +5451 / +5891 | -1324.8, +1405 / +1456 |
 | I2 | 8842.8, +253 / +304 | 10686.4, +616 / +942 | 5064.5, +43 / +40 | 12956.7, +224 / +256 | -89694.0, +3349 / +3736 | -668.4, +750 / +799 |
 | I3 | 8842.8, +272 / +304 | 10686.4, +608 / +942 | 5064.5, +43 / +40 | 12962.2, +224 / +228 | -89694.0, +3349 / +3736 | -668.4, +750 / +799 |
+| I4 | 8842.8, +272 / +304 | 10686.4, +608 / +942 | 5064.5, +43 / +40 | 12962.2, +224 / +228 | -89694.0, +3349 / +3736 | -668.4, +750 / +799 |
 
 Quick / Normal. Ret P4 ran at Quick only in wave D, after the glyph fix; its wave C numbers
 (12821.9, +54 / +73) came from a seed that wore the glyph. The two tanks arrive with
@@ -149,7 +151,8 @@ had cut into for both tanks: their `J_preset` rose and their gains fell by as mu
 `J_opt` held within 0.4. Their `dps_preset` now reads Prot Pal 257.1, Feral Tank 4282.9. In I3 PERF-OPT
 moved two Quick gains within earlier rows' range: Fury +272, Combat Rogue +608. Ret's `J_preset` and
 `dps_preset` (16147.1) rose 0.04% with PAR-P7-0f's +20.61 Spell Power, and its Normal gain fell from +256
-to +228, the path dependence H2 showed.
+to +228, the path dependence H2 showed. In I4 nothing moved: the wave's one golden move, Frost mage, isn't
+in the suite.
 
 ## Sim throughput
 
@@ -167,6 +170,7 @@ From G the benches run their suites' default players with rotations, at 1 and 10
 | I | 1.588 / 134.8 | 0.573 / 34.0 | 0.784 / 46.1 | 0.495 / 16.8 | 6.026 / 302.5 |
 | I2 | 1.685 / 128.3 | 0.639 / 33.2 | 0.774 / 43.1 | 0.444 / 15.6 | 5.382 / 294.8 |
 | I3 | 1.101 / 74.8 | 0.553 / 27.9 | 0.757 / 41.4 | 0.386 / 12.2 | 5.355 / 250.0 |
+| I4 | 1.088 / 75.2 | 0.510 / 27.8 | 0.743 / 40.3 | 0.414 / 12.5 | 5.029 / 250.6 |
 
 H2 ran with the live worldserver using half a core, which moved whole runs by up to 2×
 and cost a few percent here (Ret, which H2 barely touched, +4%). An interleaved A/B against the base
@@ -191,6 +195,10 @@ I3's row ran idle, with the worldserver, database and Chronicle stopped. Against
 100 iterations: Rogue -35% / -42%, Elemental -13% / -22%, Retribution -13% / -16%, the raid -1% / -15%, Hunter
 -2% / -4%. The harness's re-timing is in the
 [INVESTIGATION](../sim-performance/sim-performance.INVESTIGATION.md#re-timing-after-wave-i3-integration-idle-machine).
+
+I4's row ran idle (the worldserver stopped, the database up). Elemental is 7% over I3's at one iteration and
+2% at 100: PAR-DECL's cost, +2.5% / +3.5% in its A/B against the wave base, with no new code in the profile,
+so the cause is open. The other cases are within 3% at 100 iterations and 1-8% faster at one.
 
 E to F2 ran the old requests: one iteration, and no rotation for Ret, Hunter and Elemental.
 
@@ -279,6 +287,7 @@ crashed before F2, so its column starts there.
 | PAR-DECL | merged | `accba95f6` | Frost goldens promoted in `812eb7771` (-0.02%, Frostbolt); missile speeds move nothing until I5 adds the travel waits; Elemental bench +2.5% / +3.5%, cause open |
 | RI-4 | merged | `fc052a747` | acbis rejected version 1 rosters, fixed at merge; Nightwarrior's Worm has no talents in `pet_spell` |
 | BIS-hunter-ranged | merged | `4a04a6c4d` | |
+| wave I4 cross-review | | `d1814fae3` | 2 bugs: RI-4's real pets exposed Spore Cloud going to a Bat, not a Spore Bat, in the raid stats and the BiS batch's raid context; a Thori'dal hunter's export cleared their ammo, so every other bow simmed without any. A mistyped `FromSpellID` now panics |
 
 Later WIs are added as their wave starts.
 
