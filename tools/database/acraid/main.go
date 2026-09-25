@@ -8,6 +8,7 @@
 package main
 
 import (
+	"cmp"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -28,6 +29,8 @@ var (
 	trees       = flag.String("trees", "ui/core/talents/trees", "sim talent tree layouts")
 	simDB       = flag.String("simDb", "assets/database/db.json", "sim item database, which decides whether a reforge does anything")
 	minSkill    = flag.Int("minSkill", azerothcore.DefaultMinSkill, "skill level a profession counts as known at")
+	players     = flag.String("players", "", "comma separated characters someone plays; everyone else counts as a bot. Empty: read off mod-playerbots' tables")
+	worldBuffs  = flag.String("worldBuffMatrix", "", "file holding the bots' AiPlayerbot.WorldBuffMatrix: Playerbot.env, playerbots.conf or the bare matrix")
 	out         = flag.String("out", "", "roster JSON to write (required)")
 )
 
@@ -36,25 +39,31 @@ func main() {
 	if *out == "" {
 		log.Fatal("-out is required")
 	}
-	selector := azerothcore.Selector{Leader: *leader}
-	for _, name := range strings.Split(*names, ",") {
-		if name = strings.TrimSpace(name); name != "" {
-			selector.Names = append(selector.Names, name)
-		}
-	}
+	selector := azerothcore.Selector{Leader: *leader, Names: splitNames(*names)}
 
 	db, err := azerothcore.OpenDB(*dsn)
 	check(err)
 	defer db.Close()
 
-	dbc, err := loadDBC()
+	inputs := azerothcore.RosterInputs{MinSkill: int32(*minSkill), Players: splitNames(*players)}
+	inputs.DBC, err = loadDBC()
 	check(err)
-	talentTrees, err := azerothcore.LoadTalentTrees(*trees)
+	inputs.Trees, err = azerothcore.LoadTalentTrees(*trees)
 	check(err)
-	itemStats, err := azerothcore.SimItemStats(*simDB)
+	inputs.PetTrees, err = azerothcore.LoadPetTalentTrees(*trees)
 	check(err)
+	inputs.ItemStats, err = azerothcore.SimItemStats(*simDB)
+	check(err)
+	if *worldBuffs != "" {
+		var problems []string
+		inputs.WorldBuffs, problems, err = azerothcore.ReadWorldBuffMatrix(*worldBuffs)
+		check(err)
+		for _, problem := range problems {
+			log.Printf("world-buff matrix: %s, skipped as mod-playerbots skips it", problem)
+		}
+	}
 
-	roster, err := azerothcore.BuildRoster(db, dbc, talentTrees, selector, int32(*minSkill), itemStats)
+	roster, err := azerothcore.BuildRoster(db, selector, inputs)
 	check(err)
 
 	data, err := json.MarshalIndent(roster, "", "  ")
@@ -69,6 +78,17 @@ func check(err error) {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+// splitNames reads a comma separated flag, nil when it's empty.
+func splitNames(list string) []string {
+	var names []string
+	for _, name := range strings.Split(list, ",") {
+		if name = strings.TrimSpace(name); name != "" {
+			names = append(names, name)
+		}
+	}
+	return names
 }
 
 // loadDBC reads -dbcDir, or copies the DBCs out of -acContainer into a temp dir it removes before
@@ -109,10 +129,14 @@ func printSummary(roster *azerothcore.Roster) {
 				reforges++
 			}
 		}
-		fmt.Fprintf(table, "%s\tsg %d\t%s\t%s\t%s\t%d pts\t%d items\t%d reforges\t%d/%d glyphs\t%s\n",
-			character.Name, character.Subgroup, azerothcore.ClassNames[character.ClassID], race, role,
+		controller := "played"
+		if character.Bot {
+			controller = "bot"
+		}
+		fmt.Fprintf(table, "%s\tsg %d\t%s\t%s\t%s\t%s\t%d pts\t%d items\t%d reforges\t%d/%d glyphs\t%s\t%s\n",
+			character.Name, character.Subgroup, azerothcore.ClassNames[character.ClassID], race, role, controller,
 			talentPoints(character.Talents), len(character.Gear), reforges,
-			len(character.Glyphs.Major), len(character.Glyphs.Minor), strings.Join(character.Professions, ", "))
+			len(character.Glyphs.Major), len(character.Glyphs.Minor), loadout(character), strings.Join(character.Professions, ", "))
 	}
 	table.Flush()
 
@@ -121,6 +145,27 @@ func printSummary(roster *azerothcore.Roster) {
 			fmt.Printf("! %s: %s\n", character.Name, warning)
 		}
 	}
+}
+
+// loadout sums up the pet, ammo, flask, food and potion, a "?" standing for one the sim has no value for.
+func loadout(character *azerothcore.RosterCharacter) string {
+	var parts []string
+	if pet := character.Pet; pet != nil {
+		parts = append(parts, "pet "+cmp.Or(pet.PetType, pet.Summon, "?"))
+	}
+	if ammo := character.Ammo; ammo != nil {
+		parts = append(parts, "ammo "+cmp.Or(ammo.Value, "?"))
+	}
+	for _, field := range []string{azerothcore.ConsumeFlask, azerothcore.ConsumeFood, azerothcore.ConsumeDefaultPotion} {
+		if consume, ok := character.Consumes[field]; ok {
+			value := "?"
+			if consume.Value != nil {
+				value = fmt.Sprint(consume.Value)
+			}
+			parts = append(parts, fmt.Sprintf("%s %s (%s)", field, value, consume.Source))
+		}
+	}
+	return strings.Join(parts, ", ")
 }
 
 func talentPoints(talents string) int {

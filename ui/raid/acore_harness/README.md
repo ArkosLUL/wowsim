@@ -13,12 +13,13 @@ browser. The dialog, the grid and the alerts get their browser tests in
 | `replace.ts` | Replace mode's `Player.toProto` → `Raid.fromProto` round trip, tanks and party layout |
 | `update.ts` | Update mode through the shipped `updateRaid`: kept consumes, replaced specs, removals, remapped assignments |
 | `edges.ts` | `parseRoster` rejections, overfull subgroups, main-tank flags |
+| `loadout.ts` | pets, ammo and consumables (version 2) through Replace, Update with and without refreshing consumables, a version 1 roster, and values the sim lacks; exits 1 on any `FAIL` line |
 
 ## Running
 
 ```sh
 tools/acore/dock.sh exec bash -c '
-for n in smoke raid replace update edges; do
+for n in smoke raid replace update edges loadout; do
   npx esbuild ui/raid/acore_harness/$n.ts --bundle --platform=node --format=cjs \
     --outfile=tmp/acore_harness/$n.cjs --loader:.json=json \
     --tsconfig=ui/raid/acore_harness/tsconfig.json --log-level=error
@@ -29,6 +30,7 @@ node ui/raid/acore_harness/run.cjs tmp/acore_harness/raid.cjs    $T
 node ui/raid/acore_harness/run.cjs tmp/acore_harness/replace.cjs $T
 node ui/raid/acore_harness/run.cjs tmp/acore_harness/update.cjs
 node ui/raid/acore_harness/run.cjs tmp/acore_harness/edges.cjs
+node ui/raid/acore_harness/run.cjs tmp/acore_harness/loadout.cjs
 '
 ```
 
@@ -53,3 +55,7 @@ changed, for cases the plain roster can't reach:
 | `raid-justice-prot.json` | Justice takes Bulwark's protection talents | Update replacing a raider whose top tree moved |
 | `raid-no-tree.json` | Tree is gone | Update removing a raider |
 | `raid-leftover.json` | Angry's Finger 1 is Freezing Band (942) | the reload fix, since that item is only in `leftover_db.json` |
+
+`loadout.json` is a synthetic version 2 roster, written by hand: never commit a real export. Six gearless
+raiders cover bot and played consumables, hunter pets with and without talents, a warlock demon the sim
+has (Succubus) and one it lacks (Doomguard), and ammo and consumable entries without a sim value.

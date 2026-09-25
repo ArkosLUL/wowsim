@@ -23,7 +23,7 @@ import { playerPresets } from '../presets';
 // The shipped updateRaid, so this checks the real thing. Its notes come back as one line each.
 function runUpdate(sim: Sim, imports: Array<RaidCharacter>): Array<string> {
 	const notes = new ImportNotes();
-	updateRaid(sim, imports, notes);
+	updateRaid(sim, imports, notes, true);
 	return notes.added
 		.map(name => `added ${name}`)
 		.concat(notes.replaced.map(entry => `replaced ${entry.name}: ${specNames[entry.from]} -> ${specNames[entry.to]}`))

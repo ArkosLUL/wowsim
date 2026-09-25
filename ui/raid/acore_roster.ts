@@ -1,8 +1,17 @@
+import { JsonObject } from '@protobuf-ts/runtime';
+
 import { RaidSimPreset } from '../core/individual_sim_ui';
 import { MAX_PARTY_SIZE } from '../core/party';
 import { Player } from '../core/player';
-import { Class, EquipmentSpec, Glyphs, ItemReforge, ItemSlot, ItemSpec, Profession, Race, Spec } from '../core/proto/common';
-import { Hunter_Options_Quiver } from '../core/proto/hunter';
+import { Class, Consumes, EquipmentSpec, Glyphs, ItemReforge, ItemSlot, ItemSpec, Profession, Race, Spec } from '../core/proto/common';
+import {
+	Hunter_Options,
+	Hunter_Options_Ammo,
+	Hunter_Options_PetType,
+	Hunter_Options_Quiver,
+	HunterPetTalents,
+} from '../core/proto/hunter';
+import { Warlock_Options, Warlock_Options_Summon } from '../core/proto/warlock';
 import { Database } from '../core/proto_utils/database';
 import { Gear } from '../core/proto_utils/gear';
 import { nameToProfession } from '../core/proto_utils/names';
@@ -10,12 +19,13 @@ import { isValidReforge, reforgeStatTypeName } from '../core/proto_utils/reforgi
 import { getTalentTree, getTalentTreePoints, specNames } from '../core/proto_utils/utils';
 import { MAX_NUM_PARTIES } from '../core/raid';
 import { Sim } from '../core/sim';
-import { playerTalentStringToProto } from '../core/talents/factory';
+import { playerTalentStringToProto, talentStringToProto } from '../core/talents/factory';
+import { getPetTalentsConfig } from '../core/talents/hunter_pet';
 import { EventID } from '../core/typed_event';
 
-// Roster JSON written by `go run ./tools/database/acraid`. Its shape is documented in
-// docs/azerothcore-raid-import/azerothcore-raid-import.PLAN.md.
-export const ROSTER_VERSION = 1;
+// Roster JSON written by `go run ./tools/database/acraid`; tools/database/acraid/README.md has the
+// format. Version 1 has no bot flag, pets, ammo or consumables.
+const ROSTER_VERSIONS = [1, 2];
 
 // group_member.memberFlags bits: 1 assistant, 2 main tank, 4 main assist.
 export const MEMBER_FLAG_MAIN_TANK = 2;
@@ -53,7 +63,44 @@ export interface RosterCharacter {
 	gear: Array<RosterGearItem>;
 	// A quiver or ammo pouch in a bag slot. Only hunters use it.
 	quiver?: boolean;
+	// Everything below is version 2 on. A missing pet, ammo or consumes field leaves the player's as is.
+	// A bot's consumables follow mod-playerbots' rules, not its bags.
+	bot?: boolean;
+	pet?: RosterPet;
+	ammo?: RosterAmmo;
+	// keyed by Consumes proto JSON field name
+	consumes?: Record<string, RosterConsume>;
 	warnings?: Array<string>;
+}
+
+// A hunter's or warlock's pet. petType and summon are left out when the sim has no such pet.
+export interface RosterPet {
+	name: string;
+	family: number;
+	familyName: string;
+	// Hunter.Options.PetType name
+	petType?: string;
+	// talent string for the family's pet tree; '' is a pet without talents
+	talents?: string;
+	// Warlock.Options.Summon name
+	summon?: string;
+}
+
+export interface RosterAmmo {
+	itemId: number;
+	dps: number;
+	// Hunter.Options.Ammo name, left out when no sim ammo has this DPS
+	value?: string;
+}
+
+// One Consumes field. No value means the sim has nothing for what the character uses.
+export interface RosterConsume {
+	// proto JSON value: an enum value name, a bool or a number
+	value?: string | number | boolean;
+	// matrix (a bot's world-buff matrix), rules (bots never use it), bags or buffs (saved auras)
+	source: string;
+	itemId?: number;
+	spellId?: number;
 }
 
 export interface Roster {
@@ -63,9 +110,25 @@ export interface Roster {
 		selector?: string;
 		leader?: string;
 		leaderIsGroupLeader?: boolean;
+		names?: Array<string>;
+		players?: Array<string>;
 	};
 	warnings?: Array<string>;
 	characters: Array<RosterCharacter>;
+}
+
+// What the roster sets of a character's pet, ammo and consumables. Anything undefined here, or
+// missing from consumes, stays as the player has it.
+export interface Loadout {
+	petType?: Hunter_Options_PetType;
+	petTalents?: HunterPetTalents;
+	summon?: Warlock_Options_Summon;
+	ammo?: Hunter_Options_Ammo;
+	consumes: Partial<Consumes>;
+	// roster sources of the consumables set, e.g. ['buffs', 'bags']
+	consumeSources: Array<string>;
+	// what the sim has no value for, e.g. 'flask (spell 53760, item 46377)'
+	skipped: Array<string>;
 }
 
 // Everything one roster character turns into, before it touches a Player.
@@ -80,6 +143,7 @@ export interface CharacterImport {
 	glyphs: Glyphs;
 	equipment: EquipmentSpec;
 	gear: Gear;
+	loadout: Loadout;
 	warnings: Array<string>;
 }
 
@@ -93,8 +157,8 @@ export function parseRoster(data: string): Roster {
 	if (!json || typeof json != 'object' || Array.isArray(json)) {
 		throw new Error('That JSON is not a roster export.');
 	}
-	if (json.version != ROSTER_VERSION) {
-		throw new Error(`Roster version ${json.version} isn't supported, this sim reads version ${ROSTER_VERSION}.`);
+	if (!ROSTER_VERSIONS.includes(json.version)) {
+		throw new Error(`Roster version ${json.version} isn't supported, this sim reads versions ${ROSTER_VERSIONS.join(' and ')}.`);
 	}
 	if (!Array.isArray(json.characters) || json.characters.length == 0) {
 		throw new Error('The roster has no characters in it.');
@@ -286,8 +350,117 @@ export function buildCharacterImport(db: Database, char: RosterCharacter): Chara
 		equipment: equipment,
 		// Throws "No slots left" on gear the sim can't wear, which keeps it out of the import freeze.
 		gear: db.lookupEquipmentSpec(equipment),
+		loadout: buildLoadout(char, playerClass, warnings),
 		warnings: warnings,
 	};
+}
+
+const spaced = (name: string) => name.replace(/([a-z])([A-Z])/g, '$1 $2');
+
+const consumeLabels: Record<string, string> = {
+	flask: 'flask',
+	battleElixir: 'battle elixir',
+	guardianElixir: 'guardian elixir',
+	food: 'food',
+	petFood: 'pet food',
+	petScrollOfAgility: 'pet agility scroll',
+	petScrollOfStrength: 'pet strength scroll',
+	defaultPotion: 'potion',
+	prepopPotion: 'pre-pot',
+	defaultConjured: 'conjured item',
+	thermalSapper: 'thermal sapper',
+	explosiveDecoy: 'explosive decoy',
+	fillerExplosive: 'explosive',
+};
+
+// undefined when the value isn't one this sim has, e.g. from an export made against a newer sim
+function fromProtoJson<T>(read: () => T): T | undefined {
+	try {
+		return read();
+	} catch {
+		return undefined;
+	}
+}
+
+function buildLoadout(char: RosterCharacter, playerClass: Class, warnings: Array<string>): Loadout {
+	const loadout: Loadout = { consumes: {}, consumeSources: [], skipped: [] };
+	const unknownValue = (what: string, value: unknown) => warnings.push(`${what} '${value}' isn't one this sim knows, so it stays as it is`);
+
+	const pet = char.pet;
+	const petLabel = pet ? `pet ${pet.familyName ? `${pet.familyName} (family ${pet.family})` : `family ${pet.family}`}` : '';
+	if (pet && playerClass == Class.ClassHunter) {
+		const petType = pet.petType ? fromProtoJson(() => Hunter_Options.fromJson({ petType: pet.petType! }).petType) : undefined;
+		if (petType === undefined) {
+			loadout.skipped.push(petLabel);
+			if (pet.petType) {
+				unknownValue('pet type', pet.petType);
+			}
+		} else {
+			loadout.petType = petType;
+			if (pet.talents !== undefined && petType != Hunter_Options_PetType.PetNone) {
+				// talentStringToProto takes any digit string and throws past the end of the tree
+				const talents = /^\d*$/.test(pet.talents)
+					? fromProtoJson(() => talentStringToProto(HunterPetTalents.create(), pet.talents!, getPetTalentsConfig(petType)))
+					: undefined;
+				if (talents) {
+					loadout.petTalents = talents;
+				} else {
+					warnings.push(`pet talents '${pet.talents}' don't fit the ${spaced(Hunter_Options_PetType[petType])}'s talent tree, so they stay as they are`);
+				}
+			}
+		}
+	}
+	if (pet && playerClass == Class.ClassWarlock) {
+		const summon = pet.summon ? fromProtoJson(() => Warlock_Options.fromJson({ summon: pet.summon! }).summon) : undefined;
+		if (summon === undefined) {
+			loadout.skipped.push(petLabel);
+			if (pet.summon) {
+				unknownValue('demon', pet.summon);
+			}
+		} else {
+			loadout.summon = summon;
+		}
+	}
+
+	const ammo = char.ammo;
+	if (ammo && playerClass == Class.ClassHunter) {
+		const value = ammo.value ? fromProtoJson(() => Hunter_Options.fromJson({ ammo: ammo.value! }).ammo) : undefined;
+		if (value === undefined) {
+			loadout.skipped.push(`ammo item ${ammo.itemId}`);
+			if (ammo.value) {
+				unknownValue('ammo', ammo.value);
+			}
+		} else {
+			loadout.ammo = value;
+		}
+	}
+
+	Object.entries(char.consumes || {}).forEach(([key, entry]) => {
+		const field = Consumes.fields.find(f => f.jsonName == key);
+		if (!field) {
+			warnings.push(`the roster's '${key}' isn't a consumable this sim has`);
+			return;
+		}
+		const label = consumeLabels[field.localName] || field.localName;
+		const ids = [entry?.spellId ? `spell ${entry.spellId}` : '', entry?.itemId ? `item ${entry.itemId}` : ''].filter(id => id).join(', ');
+		const skip = () => loadout.skipped.push(ids ? `${label} (${ids})` : label);
+		if (entry?.value === undefined || entry.value === null) {
+			skip();
+			return;
+		}
+		const value = fromProtoJson(() => (Consumes.fromJson({ [key]: entry.value } as JsonObject) as any)[field.localName]);
+		if (value === undefined) {
+			unknownValue(label, entry.value);
+			skip();
+			return;
+		}
+		(loadout.consumes as any)[field.localName] = value;
+		if (entry.source && !loadout.consumeSources.includes(entry.source)) {
+			loadout.consumeSources.push(entry.source);
+		}
+	});
+
+	return loadout;
 }
 
 function buildEquipmentSpec(db: Database, char: RosterCharacter, warnings: Array<string>): EquipmentSpec {
@@ -395,8 +568,9 @@ function trimTrailingZeros(gems: Array<number>): Array<number> {
 	return trimmed;
 }
 
-// Everything the roster knows about a character. Rotation, consumes and spec options stay put,
-// except a hunter's quiver: that's a bag slot on the server, not a choice, so it follows the gear.
+// Everything the roster knows about a character but the consumables, which Update can leave alone.
+// Rotation and spec options stay put, except what the server decides: the pet, the ammo and a
+// hunter's quiver, which is a bag slot there, not a choice.
 export function applyCharacter(player: Player<any>, imported: CharacterImport, eventID: EventID) {
 	player.setName(eventID, imported.char.name);
 	player.setRace(eventID, imported.race);
@@ -406,10 +580,75 @@ export function applyCharacter(player: Player<any>, imported: CharacterImport, e
 	player.setGlyphs(eventID, imported.glyphs);
 	player.setGear(eventID, imported.gear);
 	if (imported.playerClass == Class.ClassHunter) {
-		const options = player.getSpecOptions() as any;
+		const options = player.getSpecOptions() as Hunter_Options;
 		options.quiver = imported.char.quiver ? Hunter_Options_Quiver.Quiver15Percent : Hunter_Options_Quiver.QuiverNone;
 		player.setSpecOptions(eventID, options);
 	}
+	applyPetAndAmmo(player, imported.playerClass, imported.loadout, eventID);
+}
+
+export function applyPetAndAmmo(player: Player<any>, playerClass: Class, loadout: Loadout, eventID: EventID) {
+	if (playerClass == Class.ClassHunter) {
+		const options = player.getSpecOptions() as Hunter_Options;
+		if (loadout.ammo !== undefined) {
+			options.ammo = loadout.ammo;
+		}
+		if (loadout.petType !== undefined) {
+			options.petType = loadout.petType;
+		}
+		if (loadout.petTalents) {
+			options.petTalents = loadout.petTalents;
+		}
+		player.setSpecOptions(eventID, options);
+	} else if (playerClass == Class.ClassWarlock && loadout.summon !== undefined) {
+		const options = player.getSpecOptions() as Warlock_Options;
+		options.summon = loadout.summon;
+		player.setSpecOptions(eventID, options);
+	}
+}
+
+export function applyConsumes(player: Player<any>, imported: CharacterImport, eventID: EventID) {
+	player.setConsumes(eventID, Consumes.create({ ...player.getConsumes(), ...imported.loadout.consumes }));
+}
+
+// e.g. 'Wolf with its talents, Iceblade Arrow'; '' when the roster has no pet or ammo for them.
+export function describePetAndAmmo(imported: CharacterImport): string {
+	const loadout = imported.loadout;
+	const parts: Array<string> = [];
+	if (loadout.petType !== undefined) {
+		let pet = loadout.petType == Hunter_Options_PetType.PetNone ? 'no pet' : spaced(Hunter_Options_PetType[loadout.petType]);
+		if (loadout.petTalents) {
+			pet += imported.char.pet?.talents ? ' with its talents' : ', no talents';
+		}
+		parts.push(pet);
+	}
+	if (loadout.summon !== undefined) {
+		parts.push(loadout.summon == Warlock_Options_Summon.NoSummon ? 'no demon' : Warlock_Options_Summon[loadout.summon]);
+	}
+	if (loadout.ammo !== undefined) {
+		parts.push(loadout.ammo == Hunter_Options_Ammo.AmmoNone ? 'no ammo' : spaced(Hunter_Options_Ammo[loadout.ammo]));
+	}
+	return parts.join(', ');
+}
+
+const consumeSourceNames: Record<string, string> = {
+	buffs: 'saved buffs',
+	bags: 'bags',
+	matrix: 'world-buff matrix',
+	rules: 'bot rules',
+};
+
+// Where the consumables came from, e.g. 'bot rules' or 'saved buffs and bags'; '' when there are none.
+export function describeConsumeSource(imported: CharacterImport): string {
+	const sources = imported.loadout.consumeSources;
+	if (sources.length == 0) {
+		return '';
+	}
+	// a bot's matrix, rules and bags are all mod-playerbots deciding
+	if (imported.char.bot) {
+		return 'bot rules';
+	}
+	return sources.map(source => consumeSourceNames[source] || source).join(' and ');
 }
 
 // Same starting point a preset dragged onto the raid grid gets, minus what applyCharacter sets.
