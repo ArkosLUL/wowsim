@@ -8,8 +8,6 @@ import (
 )
 
 func (mage *Mage) registerFrostboltSpell() {
-	spellCoeff := (3.0 / 3.5) + 0.05*float64(mage.Talents.EmpoweredFrostbolt)
-
 	replProcChance := float64(mage.Talents.EnduringWinter) / 3
 	var replSrc core.ReplenishmentSource
 	if replProcChance > 0 {
@@ -43,8 +41,13 @@ func (mage *Mage) registerFrostboltSpell() {
 		CritMultiplier:   mage.SpellCritMultiplier(1, mage.bonusCritDamage+float64(mage.Talents.IceShards)/3),
 		ThreatMultiplier: 1 - (0.1/3)*float64(mage.Talents.FrostChanneling),
 
+		Direct: core.SpellEffect{Effect: 1, Min: 803, Max: 865, SP: 0.857},
+		Mods: []core.SpellMod{
+			{Op: core.SpellModBonusMultiplier, Flat: 5 * mage.Talents.EmpoweredFrostbolt},
+		},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := sim.Roll(804, 866) + spellCoeff*spell.SpellPower()
+			baseDamage := spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 
 			spell.WaitTravelTime(sim, func(sim *core.Simulation) {

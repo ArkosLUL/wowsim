@@ -14,10 +14,11 @@ func (hunter *Hunter) registerBlackArrowSpell(timer *core.Timer) {
 	actionID := core.ActionID{SpellID: 63672}
 
 	hunter.BlackArrow = hunter.RegisterSpell(core.SpellConfig{
-		ActionID:    actionID,
-		SpellSchool: core.SpellSchoolShadow,
-		ProcMask:    core.ProcMaskRangedSpecial,
-		Flags:       core.SpellFlagAPL,
+		ActionID:     actionID,
+		SpellSchool:  core.SpellSchoolShadow,
+		ProcMask:     core.ProcMaskRangedSpecial,
+		Flags:        core.SpellFlagAPL,
+		MissileSpeed: 40,
 
 		ManaCost: core.ManaCostOptions{
 			BaseCost: 0.06,

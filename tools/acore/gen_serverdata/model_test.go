@@ -12,11 +12,11 @@ func magicSpell() *spellset.DumpSpell {
 	return &spellset.DumpSpell{
 		ID: 42842, FirstRankID: 116, Name: "Frostbolt", Rank: "Rank 16", DmgClass: 1, SchoolMask: 16,
 		CastTimeMs: 3000, CastTimeBaseMs: 3000, StartRecoveryTimeMs: 1500, StartRecoveryCategory: 133,
-		InterruptFlags: 15, PowerType: 4294967294, ProcChance: 101,
+		InterruptFlags: 15, PowerType: 4294967294, ProcChance: 101, SpellLevel: 79, BaseLevel: 79, MaxLevel: 83,
 		Effects: []spellset.DumpEffect{
 			{Index: 0, Effect: 6, Aura: 33, BasePoints: -41, DieSides: 1},
 			{Index: 1, Effect: 0, DamageMultiplier: 1},
-			{Index: 2, Effect: 2, BasePoints: 798, DieSides: 63, BonusMultiplier: 0.857, TriggerSpell: 4294967295},
+			{Index: 2, Effect: 2, BasePoints: 798, DieSides: 63, RealPointsPerLevel: 4.8, BonusMultiplier: 0.857, TriggerSpell: 4294967295},
 		},
 	}
 }
@@ -34,6 +34,12 @@ func TestBuildSpell(t *testing.T) {
 	}
 	if s.Flags != serverdata.FlagResetsAutoAttack|serverdata.FlagHasteGCD {
 		t.Errorf("flags %b", s.Flags)
+	}
+	if s.SpellLevel != 79 || s.BaseLevel != 79 || s.MaxLevel != 83 {
+		t.Errorf("levels %d, %d, %d", s.SpellLevel, s.BaseLevel, s.MaxLevel)
+	}
+	if lo, hi := s.EffectRange(2); lo != 803 || hi != 865 {
+		t.Errorf("level 80 range %d..%d, want 803..865", lo, hi)
 	}
 }
 
@@ -128,6 +134,7 @@ func TestRenderSpells(t *testing.T) {
 		"// Frostbolt (Rank 16)",
 		"ID: 42842, SchoolMask: 16, DmgClass: DmgClassMagic, Flags: FlagResetsAutoAttack | FlagHasteGCD",
 		"PowerType: -2",
+		"SpellLevel: 79, BaseLevel: 79, MaxLevel: 83",
 		"{},",
 		"BonusMultiplier: 0.857, TriggerSpell: -1",
 	} {

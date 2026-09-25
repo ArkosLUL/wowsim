@@ -163,11 +163,10 @@ type PetSpecialAbilityConfig struct {
 	CantCrit bool
 	GCD      time.Duration
 	CD       time.Duration
-	MinDmg   float64
-	MaxDmg   float64
-	// spell_bonus_data's ap_bonus and direct_damage. The pet's spell damage only reaches magic schools.
-	APRatio float64
-	SPRatio float64
+	// yards per second, 0 for a melee ability
+	MissileSpeed float64
+	// SP only counts for a magic school: the pet's spell damage reaches no other
+	Damage core.SpellEffect
 
 	Dot core.DotConfig
 
@@ -188,10 +187,14 @@ func (hp *HunterPet) newSpecialAbility(config PetSpecialAbilityConfig) *core.Spe
 	if config.Magic {
 		critMultiplier = hp.DefaultSpellCritMultiplier()
 	}
+	magicSchool := config.School.Matches(core.SpellSchoolMagic)
 
 	onSpellHitDealt := config.OnSpellHitDealt
 	applyEffects := func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-		baseDamage := sim.Roll(config.MinDmg, config.MaxDmg) + config.APRatio*spell.MeleeAttackPower() + config.SPRatio*spell.SpellPower()
+		baseDamage := spell.Direct.Roll(sim) + spell.Direct.AP*spell.MeleeAttackPower()
+		if magicSchool {
+			baseDamage += spell.Direct.SP * spell.SpellPower()
+		}
 		baseDamage *= hp.killCommandMult()
 		outcome := spell.OutcomeMeleeSpecialHitAndCrit
 		switch {
@@ -209,10 +212,11 @@ func (hp *HunterPet) newSpecialAbility(config PetSpecialAbilityConfig) *core.Spe
 	}
 
 	return hp.RegisterSpell(core.SpellConfig{
-		ActionID:    core.ActionID{SpellID: config.SpellID},
-		SpellSchool: config.School,
-		ProcMask:    procMask,
-		Flags:       flags,
+		ActionID:     core.ActionID{SpellID: config.SpellID},
+		SpellSchool:  config.School,
+		ProcMask:     procMask,
+		Flags:        flags,
+		MissileSpeed: config.MissileSpeed,
 
 		DamageMultiplier: 1 * hp.hunterOwner.markedForDeathMultiplier(),
 		CritMultiplier:   critMultiplier,
@@ -231,6 +235,7 @@ func (hp *HunterPet) newSpecialAbility(config PetSpecialAbilityConfig) *core.Spe
 				Duration: hp.hunterOwner.applyLongevity(config.CD),
 			},
 		},
+		Direct:       config.Damage,
 		Dot:          config.Dot,
 		ApplyEffects: applyEffects,
 	})
@@ -239,16 +244,15 @@ func (hp *HunterPet) newSpecialAbility(config PetSpecialAbilityConfig) *core.Spe
 func (hp *HunterPet) newAcidSpit() *core.Spell {
 	acidSpitAuras := hp.NewEnemyAuraArray(core.AcidSpitAura)
 	return hp.newSpecialAbility(PetSpecialAbilityConfig{
-		Type:    AcidSpit,
-		Cost:    20,
-		GCD:     core.GCDDefault,
-		CD:      time.Second * 10,
-		SpellID: 55754,
-		School:  core.SpellSchoolNature,
-		Magic:   true,
-		MinDmg:  124,
-		MaxDmg:  176,
-		SPRatio: 0.333,
+		Type:         AcidSpit,
+		Cost:         20,
+		GCD:          core.GCDDefault,
+		CD:           time.Second * 10,
+		SpellID:      55754,
+		School:       core.SpellSchoolNature,
+		Magic:        true,
+		MissileSpeed: 24,
+		Damage:       core.SpellEffect{Effect: 0, Min: 124, Max: 176, SP: 0.333},
 		OnSpellHitDealt: func(sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
 			if result.Landed() {
 				aura := acidSpitAuras.Get(result.Target)
@@ -273,9 +277,7 @@ func (hp *HunterPet) newDemoralizingScreech() *core.Spell {
 		School:   core.SpellSchoolPhysical,
 		Magic:    true,
 		CantCrit: true,
-		MinDmg:   85,
-		MaxDmg:   129,
-		APRatio:  0.07,
+		Damage:   core.SpellEffect{Effect: 0, Min: 85, Max: 129, SP: 0.119658, AP: 0.07},
 		OnSpellHitDealt: func(sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
 			if result.Landed() {
 				for _, aoeTarget := range sim.Encounter.TargetUnits {
@@ -296,9 +298,7 @@ func (hp *HunterPet) newFireBreath() *core.Spell {
 		School:   core.SpellSchoolFire,
 		Magic:    true,
 		CantCrit: true,
-		MinDmg:   43,
-		MaxDmg:   57,
-		SPRatio:  0.333,
+		Damage:   core.SpellEffect{Effect: 0, Min: 43, Max: 57, SP: 0.333},
 
 		Dot: core.DotConfig{
 			Aura: core.Aura{
@@ -329,11 +329,9 @@ func (hp *HunterPet) newFroststormBreath() *core.Spell {
 		GCD:     0,
 		CD:      time.Second * 10,
 		SpellID: 55492,
-		School:  core.SpellSchoolFrost,
+		School:  core.SpellSchoolFrost | core.SpellSchoolNature,
 		Magic:   true,
-		MinDmg:  128,
-		MaxDmg:  172,
-		SPRatio: 0.333,
+		Damage:  core.SpellEffect{Effect: 0, Min: 128, Max: 172, SP: 0.333},
 	})
 }
 
@@ -391,9 +389,7 @@ func (hp *HunterPet) newGore() *core.Spell {
 		CD:      time.Second * 10,
 		SpellID: 35295,
 		School:  core.SpellSchoolPhysical,
-		MinDmg:  122,
-		MaxDmg:  164,
-		APRatio: 0.07,
+		Damage:  core.SpellEffect{Effect: 0, Min: 122, Max: 164, SP: 0.119658, AP: 0.07},
 	})
 }
 
@@ -406,9 +402,7 @@ func (hp *HunterPet) newLavaBreath() *core.Spell {
 		SpellID: 58611,
 		School:  core.SpellSchoolFire,
 		Magic:   true,
-		MinDmg:  128,
-		MaxDmg:  172,
-		SPRatio: 0.333,
+		Damage:  core.SpellEffect{Effect: 0, Min: 128, Max: 172, SP: 0.333},
 	})
 }
 
@@ -421,9 +415,7 @@ func (hp *HunterPet) newLightningBreath() *core.Spell {
 		SpellID: 25012,
 		School:  core.SpellSchoolNature,
 		Magic:   true,
-		MinDmg:  80,
-		MaxDmg:  120,
-		SPRatio: 0.333,
+		Damage:  core.SpellEffect{Effect: 0, Min: 80, Max: 120, SP: 0.333},
 	})
 }
 
@@ -446,9 +438,7 @@ func (hp *HunterPet) newMonstrousBite() *core.Spell {
 		CD:      time.Second * 10,
 		SpellID: 55499,
 		School:  core.SpellSchoolPhysical,
-		MinDmg:  91,
-		MaxDmg:  123,
-		APRatio: 0.07,
+		Damage:  core.SpellEffect{Effect: 0, Min: 91, Max: 123, SP: 0.119658, AP: 0.07},
 		OnSpellHitDealt: func(sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
 			if result.Landed() {
 				procAura.Activate(sim)
@@ -466,9 +456,7 @@ func (hp *HunterPet) newNetherShock() *core.Spell {
 		SpellID: 53589,
 		School:  core.SpellSchoolShadow,
 		Magic:   true,
-		MinDmg:  64,
-		MaxDmg:  86,
-		SPRatio: 0.333,
+		Damage:  core.SpellEffect{Effect: 1, Min: 64, Max: 86, SP: 0.333},
 	})
 }
 
@@ -515,9 +503,10 @@ func (hp *HunterPet) newPin() *core.Spell {
 
 func (hp *HunterPet) newPoisonSpit() *core.Spell {
 	return hp.RegisterSpell(core.SpellConfig{
-		ActionID:    core.ActionID{SpellID: 55557},
-		SpellSchool: core.SpellSchoolNature,
-		ProcMask:    core.ProcMaskEmpty,
+		ActionID:     core.ActionID{SpellID: 55557},
+		SpellSchool:  core.SpellSchoolNature,
+		ProcMask:     core.ProcMaskEmpty,
+		MissileSpeed: 40,
 
 		FocusCost: core.FocusCostOptions{
 			Cost: 20,
@@ -569,9 +558,7 @@ func (hp *HunterPet) newRake() *core.Spell {
 		CD:      time.Second * 10,
 		SpellID: 59886,
 		School:  core.SpellSchoolPhysical,
-		MinDmg:  47,
-		MaxDmg:  67,
-		APRatio: 0.0175,
+		Damage:  core.SpellEffect{Effect: 0, Min: 47, Max: 67, SP: 0.0299, AP: 0.0175},
 		Dot: core.DotConfig{
 			Aura: core.Aura{
 				Label: "Rake",
@@ -602,9 +589,7 @@ func (hp *HunterPet) newRavage() *core.Spell {
 		CD:      time.Second * 40,
 		SpellID: 53562,
 		School:  core.SpellSchoolPhysical,
-		MinDmg:  106,
-		MaxDmg:  150,
-		APRatio: 0.07,
+		Damage:  core.SpellEffect{Effect: 0, Min: 106, Max: 150, SP: 0.119658, AP: 0.07},
 	})
 }
 
@@ -739,9 +724,7 @@ func (hp *HunterPet) newSnatch() *core.Spell {
 		CD:      time.Second * 60,
 		SpellID: 53543,
 		School:  core.SpellSchoolPhysical,
-		MinDmg:  89,
-		MaxDmg:  125,
-		APRatio: 0.07,
+		Damage:  core.SpellEffect{Effect: 0, Min: 89, Max: 125, SP: 0.119658, AP: 0.07},
 	})
 }
 
@@ -753,9 +736,7 @@ func (hp *HunterPet) newSonicBlast() *core.Spell {
 		SpellID: 53568,
 		School:  core.SpellSchoolNature,
 		Magic:   true,
-		MinDmg:  62,
-		MaxDmg:  88,
-		SPRatio: 0.333,
+		Damage:  core.SpellEffect{Effect: 0, Min: 62, Max: 88, SP: 0.333},
 	})
 }
 
@@ -768,9 +749,7 @@ func (hp *HunterPet) newSpiritStrike() *core.Spell {
 		SpellID: 61198,
 		School:  core.SpellSchoolArcane,
 		Magic:   true,
-		MinDmg:  49,
-		MaxDmg:  65,
-		SPRatio: 0.333,
+		Damage:  core.SpellEffect{Effect: 1, Min: 49, Max: 65, SP: 0.333},
 
 		Dot: core.DotConfig{
 			Aura: core.Aura{
@@ -856,8 +835,7 @@ func (hp *HunterPet) newStampede() *core.Spell {
 		CD:      time.Second * 60,
 		SpellID: 57393,
 		School:  core.SpellSchoolPhysical,
-		MinDmg:  182,
-		MaxDmg:  246,
+		Damage:  core.SpellEffect{Effect: 0, Min: 182, Max: 246, SP: 0.333},
 		OnSpellHitDealt: func(sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
 			if result.Landed() {
 				debuffs.Get(result.Target).Activate(sim)
@@ -875,9 +853,7 @@ func (hp *HunterPet) newSting() *core.Spell {
 		CD:      time.Second * 6,
 		SpellID: 56631,
 		School:  core.SpellSchoolNature,
-		MinDmg:  64,
-		MaxDmg:  86,
-		SPRatio: 0.333,
+		Damage:  core.SpellEffect{Effect: 0, Min: 64, Max: 86, SP: 0.333},
 		OnSpellHitDealt: func(sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
 			if result.Landed() {
 				debuffs.Get(result.Target).Activate(sim)
@@ -896,9 +872,7 @@ func (hp *HunterPet) newSwipe() *core.Spell {
 		CD:      time.Second * 5,
 		SpellID: 53533,
 		School:  core.SpellSchoolPhysical,
-		MinDmg:  90,
-		MaxDmg:  126,
-		APRatio: 0.07,
+		Damage:  core.SpellEffect{Effect: 0, Min: 90, Max: 126, SP: 0.119658, AP: 0.07},
 	})
 }
 
@@ -909,9 +883,7 @@ func (hp *HunterPet) newTendonRip() *core.Spell {
 		CD:      time.Second * 20,
 		SpellID: 53575,
 		School:  core.SpellSchoolPhysical,
-		MinDmg:  49,
-		MaxDmg:  69,
-		APRatio: 0,
+		Damage:  core.SpellEffect{Effect: 1, Min: 49, Max: 69, SP: 0.333},
 	})
 }
 

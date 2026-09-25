@@ -28,5 +28,16 @@ func init() {
 
 		core.ServerConflictAllowance{Spell: core.ActionID{SpellID: 2825}, Field: core.ServerCD, Sim: 600000, Server: 300000, KeepSim: true,
 			Why: "Sated (57724) lasts 10 min, so the raid can't take Bloodlust sooner"},
+
+		core.ServerConflictAllowance{Spell: core.ActionID{SpellID: 58804}, Field: core.ServerSchool, Sim: 2, Server: 64, KeepSim: true,
+			Why: "the sim deals the Windfury attacks under the enchant's id, the server as its own spell 25504, Physical"},
+		core.ServerConflictAllowance{Spell: core.ActionID{SpellID: 58704}, Field: core.ServerSchool, Sim: 8, Server: 2,
+			Why: "the Searing Totem summon is Physical on the server, declared Fire. Only its bolt (58702) deals damage"},
+		core.ServerConflictAllowance{Spell: core.ActionID{SpellID: 58734}, Field: core.ServerSchool, Sim: 8, Server: 2,
+			Why: "the Magma Totem summon is Physical on the server, declared Fire. Only its pulse (58735) deals damage"},
+		core.ServerConflictAllowance{Spell: core.ActionID{SpellID: 49238}, Field: core.ServerMissileSpeed, SimFloat: 0, ServerFloat: 20,
+			Why: "Lightning Bolt travels at 20 yd/s on the server, declared instant"},
+		core.ServerConflictAllowance{Spell: core.ActionID{SpellID: 60043}, Field: core.ServerMissileSpeed, SimFloat: 0, ServerFloat: 24,
+			Why: "Lava Burst travels at 24 yd/s on the server, declared instant"},
 	)
 }

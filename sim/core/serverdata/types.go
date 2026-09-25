@@ -86,6 +86,11 @@ type Spell struct {
 	Speed      float32 // missile speed, yards per second; 0 hits instantly
 	MaxTargets int32
 
+	// how PointsPerLevel scales the effects with the caster's level, see EffectRange
+	SpellLevel int32
+	BaseLevel  int32
+	MaxLevel   int32 // 0: no cap
+
 	Effects [3]Effect // unused slots are zero
 
 	// what talents, glyphs, set bonuses and items can do to CastMs, GCDMs and both cooldowns
@@ -143,6 +148,35 @@ func (s *Spell) OwnCooldownMs() int32 {
 }
 
 const attr6NoCategoryCooldownMods = 0x80000000
+
+// CasterLevel is the level EffectRange rolls at: a level 80 player, or a pet or totem of one.
+const CasterLevel = 80
+
+// EffectRange is SpellEffectInfo::CalcValue's roll for effect i at CasterLevel, before combo points and
+// the caster's spell mods. The level only counts with PointsPerLevel: clamped to BaseLevel..MaxLevel,
+// less the higher of BaseLevel and SpellLevel, times PointsPerLevel, truncated.
+func (s *Spell) EffectRange(i int) (lo, hi int32) {
+	e := &s.Effects[i]
+	base := e.BasePoints
+	if e.PointsPerLevel != 0 {
+		level := int32(CasterLevel)
+		if s.MaxLevel > 0 && level > s.MaxLevel {
+			level = s.MaxLevel
+		} else if level < s.BaseLevel {
+			level = s.BaseLevel
+		}
+		level -= max(s.BaseLevel, s.SpellLevel)
+		base += int32(float32(level) * e.PointsPerLevel)
+	}
+	switch {
+	case e.DieSides == 0:
+		return base, base
+	case e.DieSides > 0:
+		return base + 1, base + e.DieSides
+	default: // irand(DieSides, 1)
+		return base + e.DieSides, base + 1
+	}
+}
 
 // modRange is base * (100 + pct)% + flat. Percent modifiers skip a zero base.
 func modRange(base int32, b ModBounds) (lo, hi int32) {

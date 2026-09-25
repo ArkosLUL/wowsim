@@ -122,9 +122,10 @@ var waterElementalStatInheritance = func(ownerStats stats.Stats) stats.Stats {
 
 func (we *WaterElemental) registerWaterboltSpell() {
 	we.Waterbolt = we.RegisterSpell(core.SpellConfig{
-		ActionID:    core.ActionID{SpellID: 31707},
-		SpellSchool: core.SpellSchoolFrost,
-		ProcMask:    core.ProcMaskSpellDamage,
+		ActionID:     core.ActionID{SpellID: 31707},
+		SpellSchool:  core.SpellSchoolFrost,
+		ProcMask:     core.ProcMaskSpellDamage,
+		MissileSpeed: 16,
 
 		ManaCost: core.ManaCostOptions{
 			BaseCost: 0.01,

@@ -8,10 +8,11 @@ func (hunter *Hunter) registerScorpidStingSpell() {
 	hunter.ScorpidStingAuras = hunter.NewEnemyAuraArray(core.ScorpidStingAura)
 
 	hunter.ScorpidSting = hunter.RegisterSpell(core.SpellConfig{
-		ActionID:    core.ActionID{SpellID: 3043},
-		SpellSchool: core.SpellSchoolNature,
-		ProcMask:    core.ProcMaskRangedSpecial,
-		Flags:       core.SpellFlagAPL,
+		ActionID:     core.ActionID{SpellID: 3043},
+		SpellSchool:  core.SpellSchoolNature,
+		ProcMask:     core.ProcMaskRangedSpecial,
+		Flags:        core.SpellFlagAPL,
+		MissileSpeed: 40,
 
 		ManaCost: core.ManaCostOptions{
 			BaseCost:   0.09,

@@ -1,6 +1,7 @@
 package sim
 
 import (
+	"cmp"
 	"fmt"
 	"maps"
 	"slices"
@@ -10,6 +11,18 @@ import (
 
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
+	"github.com/wowsims/wotlk/sim/core/serverdata"
+	"github.com/wowsims/wotlk/sim/core/stats"
+	"github.com/wowsims/wotlk/sim/deathknight"
+	"github.com/wowsims/wotlk/sim/druid"
+	"github.com/wowsims/wotlk/sim/hunter"
+	"github.com/wowsims/wotlk/sim/mage"
+	"github.com/wowsims/wotlk/sim/paladin"
+	"github.com/wowsims/wotlk/sim/priest"
+	"github.com/wowsims/wotlk/sim/rogue"
+	"github.com/wowsims/wotlk/sim/shaman"
+	"github.com/wowsims/wotlk/sim/warlock"
+	"github.com/wowsims/wotlk/sim/warrior"
 	googleProto "google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
@@ -310,6 +323,28 @@ var everyPetTalent = func() *proto.HunterPetTalents {
 	return talents.Interface().(*proto.HunterPetTalents)
 }()
 
+var talentTreeSizes = map[proto.Class][3]int{
+	proto.Class_ClassDeathknight: deathknight.TalentTreeSizes,
+	proto.Class_ClassDruid:       druid.TalentTreeSizes,
+	proto.Class_ClassHunter:      hunter.TalentTreeSizes,
+	proto.Class_ClassMage:        mage.TalentTreeSizes,
+	proto.Class_ClassPaladin:     paladin.TalentTreeSizes,
+	proto.Class_ClassPriest:      priest.TalentTreeSizes,
+	proto.Class_ClassRogue:       rogue.TalentTreeSizes,
+	proto.Class_ClassShaman:      shaman.TalentTreeSizes,
+	proto.Class_ClassWarlock:     warlock.TalentTreeSizes,
+	proto.Class_ClassWarrior:     warrior.TalentTreeSizes,
+}
+
+// everyTalent is the talent string with one point in every talent of the class.
+func everyTalent(class proto.Class) string {
+	var trees []string
+	for _, n := range talentTreeSizes[class] {
+		trees = append(trees, strings.Repeat("1", n))
+	}
+	return strings.Join(trees, "-")
+}
+
 // Everything that registers a consumable, whichever class it suits.
 var serverDataConsumes = &proto.Consumes{
 	Flask:           proto.Flask_FlaskOfEndlessRage,
@@ -366,14 +401,170 @@ func (p serverDataPreset) raid() *proto.Raid {
 	return raid
 }
 
+var undeclaredSpells = map[proto.Class][]int32{
+	proto.Class_ClassDeathknight: deathknight.UndeclaredSpells,
+	proto.Class_ClassDruid:       druid.UndeclaredSpells,
+	proto.Class_ClassHunter:      hunter.UndeclaredSpells,
+	proto.Class_ClassMage:        mage.UndeclaredSpells,
+	proto.Class_ClassPaladin:     paladin.UndeclaredSpells,
+	proto.Class_ClassPriest:      priest.UndeclaredSpells,
+	proto.Class_ClassRogue:       rogue.UndeclaredSpells,
+	proto.Class_ClassShaman:      shaman.UndeclaredSpells,
+	proto.Class_ClassWarlock:     warlock.UndeclaredSpells,
+	proto.Class_ClassWarrior:     warrior.UndeclaredSpells,
+}
+
+// SpellFamilyName of each class's own spells
+var classFamilies = map[proto.Class]int32{
+	proto.Class_ClassMage: 3, proto.Class_ClassWarrior: 4, proto.Class_ClassWarlock: 5, proto.Class_ClassPriest: 6,
+	proto.Class_ClassDruid: 7, proto.Class_ClassRogue: 8, proto.Class_ClassHunter: 9, proto.Class_ClassPaladin: 10,
+	proto.Class_ClassShaman: 11, proto.Class_ClassDeathknight: 15,
+}
+
+// SpellEffects and AuraType values that hand the damage to the spell they trigger: Summon Infernal,
+// Blizzard, Volley
+const (
+	effectTriggerMissile         = 32
+	effectTriggerSpell           = 64
+	auraTypePeriodicTriggerSpell = 23
+)
+
+// declarationCoverage finds the class spells whose damage or heal effects on the server have no
+// declaration. A spell is a class's when only that class registers it, and on a player, when it carries
+// the class's SpellFamilyName: raid buffs, items and racials don't.
+type declarationCoverage struct {
+	covered    map[core.EffectRef]bool
+	registered map[core.ActionID]map[classUnit]*serverdata.Spell
+	where      map[core.ActionID]string // the first preset and unit that registers each spell
+}
+
+type classUnit struct {
+	class proto.Class
+	pet   bool
+}
+
+func (c *declarationCoverage) add(label string, env *core.Environment) {
+	for _, unit := range env.AllUnits {
+		for _, spell := range unit.Spellbook {
+			for _, ref := range spell.DeclaredEffects() {
+				c.covered[ref] = true
+			}
+		}
+	}
+	for _, party := range env.Raid.Parties {
+		for _, player := range party.Players {
+			character := player.GetCharacter()
+			units := []*core.Unit{&character.Unit}
+			for _, pet := range character.Pets {
+				units = append(units, &pet.Unit)
+			}
+			for i, unit := range units {
+				for _, spell := range unit.Spellbook {
+					s := spell.ServerSpell()
+					if s == nil {
+						continue
+					}
+					if c.registered[spell.ActionID] == nil {
+						c.registered[spell.ActionID] = map[classUnit]*serverdata.Spell{}
+					}
+					c.registered[spell.ActionID][classUnit{character.Class, i > 0}] = s
+					if _, ok := c.where[spell.ActionID]; !ok {
+						c.where[spell.ActionID] = label + ", " + unit.Label
+					}
+				}
+			}
+		}
+	}
+}
+
+// missing are the effects of s, and of the spells it hands its damage to, that no declaration covers.
+func (c *declarationCoverage) missing(s *serverdata.Spell) []core.SpellEffect {
+	spells := []*serverdata.Spell{s}
+	for _, e := range s.Effects {
+		if e.TriggerSpell > 0 && (e.Effect == effectTriggerMissile || e.Effect == effectTriggerSpell || e.Aura == auraTypePeriodicTriggerSpell) {
+			if triggered := serverdata.SpellByID(e.TriggerSpell); triggered != nil {
+				spells = append(spells, triggered)
+			}
+		}
+	}
+	var missing []core.SpellEffect
+	for _, spell := range spells {
+		declarable := core.DeclarableEffects(spell)
+		for _, ref := range slices.SortedFunc(maps.Keys(declarable), func(a, b core.EffectRef) int { return int(a.Effect - b.Effect) }) {
+			if !c.covered[ref] {
+				missing = append(missing, declarable[ref])
+			}
+		}
+	}
+	return missing
+}
+
+func (c *declarationCoverage) verify(t *testing.T) {
+	type undeclaredSpell struct {
+		where   string
+		missing []core.SpellEffect
+	}
+	undeclared := map[proto.Class]map[int32]undeclaredSpell{}
+	byID := func(a, b core.ActionID) int {
+		return cmp.Or(cmp.Compare(a.SpellID, b.SpellID), cmp.Compare(a.Tag, b.Tag))
+	}
+	for _, id := range slices.SortedFunc(maps.Keys(c.registered), byID) {
+		units := c.registered[id]
+		classes := map[proto.Class]bool{}
+		for u := range units {
+			classes[u.class] = true
+		}
+		if len(classes) > 1 {
+			continue
+		}
+		for u, s := range units {
+			if !u.pet && s.Family != classFamilies[u.class] {
+				continue
+			}
+			if _, ok := undeclared[u.class][s.ID]; ok {
+				continue
+			}
+			if missing := c.missing(s); len(missing) > 0 {
+				if undeclared[u.class] == nil {
+					undeclared[u.class] = map[int32]undeclaredSpell{}
+				}
+				undeclared[u.class][s.ID] = undeclaredSpell{c.where[id], missing}
+			}
+		}
+	}
+	for class, list := range undeclaredSpells {
+		name := strings.TrimPrefix(class.String(), "Class")
+		file := fmt.Sprintf("sim/%s/serverdata_undeclared.go", strings.ToLower(name))
+		listed := map[int32]bool{}
+		for _, id := range list {
+			if listed[id] {
+				t.Errorf("%s lists %d twice", file, id)
+			}
+			listed[id] = true
+			if _, ok := undeclared[class][id]; !ok {
+				t.Errorf("%s: %d isn't an undeclared %s spell, so its entry is stale", file, id, name)
+			}
+		}
+		for _, id := range slices.Sorted(maps.Keys(undeclared[class])) {
+			if !listed[id] {
+				t.Errorf("%s: %d (%s) deals damage or heals without a declaration, add one or list it. The server's values:\n\t%+v",
+					file, id, undeclared[class][id].where, undeclared[class][id].missing)
+			}
+		}
+	}
+}
+
 // The class and shared allowlists are registered by init functions the imports of register_all.go run.
 func TestServerDataConflicts(t *testing.T) {
 	used := map[*core.ServerConflictAllowance]bool{}
 	registered := map[core.ActionID]bool{}
 	uncovered := map[string]string{} // entry to add, first preset that needs it
 	mismatched := map[string]string{}
+	declarations := &declarationCoverage{covered: map[core.EffectRef]bool{},
+		registered: map[core.ActionID]map[classUnit]*serverdata.Spell{}, where: map[core.ActionID]string{}}
 
 	check := func(label string, env *core.Environment) {
+		declarations.add(label, env)
 		for _, unit := range env.AllUnits {
 			for _, spell := range unit.Spellbook {
 				registered[spell.ActionID] = true
@@ -386,11 +577,19 @@ func TestServerDataConflicts(t *testing.T) {
 						}
 						line := fmt.Sprintf("{Spell: %s, Field: core.Server%s, Sim: %d, Server: %d, Why: \"\"},",
 							spell, c.Field, c.Sim, c.Server)
+						if c.Field.IsFloat() {
+							line = fmt.Sprintf("{Spell: %s, Field: core.Server%s, SimFloat: %v, ServerFloat: %v, Why: \"\"},",
+								spell, c.Field, c.SimFloat, c.ServerFloat)
+						}
 						if _, ok := uncovered[line]; !ok {
 							uncovered[line] = label + ", " + unit.Label
 						}
-					case a.Sim != c.Sim || a.Server != c.Server:
-						mismatched[fmt.Sprintf("%s, the entry says sim %d, server %d", c, a.Sim, a.Server)] = label + ", " + unit.Label
+					case a.Sim != c.Sim || a.Server != c.Server || a.SimFloat != c.SimFloat || a.ServerFloat != c.ServerFloat:
+						entry := fmt.Sprintf("sim %d, server %d", a.Sim, a.Server)
+						if c.Field.IsFloat() {
+							entry = fmt.Sprintf("sim %v, server %v", a.SimFloat, a.ServerFloat)
+						}
+						mismatched[fmt.Sprintf("%s, the entry says %s", c, entry)] = label + ", " + unit.Label
 					default:
 						used[a] = true
 					}
@@ -418,11 +617,13 @@ func TestServerDataConflicts(t *testing.T) {
 	// every race on every class: the presets between them pick six of the ten, and a racial can register
 	// a different spell per class (Arcane Torrent, Blood Fury)
 	swept := map[proto.Class]bool{}
+	var onePerClass []serverDataPreset
 	for _, p := range serverDataPresets {
 		if swept[p.class] {
 			continue
 		}
 		swept[p.class] = true
+		onePerClass = append(onePerClass, p)
 		for name, race := range proto.Race_value {
 			if race != 0 {
 				v := p
@@ -431,6 +632,49 @@ func TestServerDataConflicts(t *testing.T) {
 			}
 		}
 	}
+	// every weapon imbue, poison, seal, judgement, aura and armor: each registers its own spells, and the
+	// golden suites' other spec options take some the presets don't (Enhancement's Windfury)
+	optionVariants := func(name string, values map[string]int32, apply func(spec any, v int32) any) {
+		for label, v := range values {
+			if v != 0 {
+				p := presetNamed(name)
+				p.name, p.spec = name+" with "+label, apply(p.spec, v)
+				presets = append(presets, p)
+			}
+		}
+	}
+	optionVariants("Enhancement", proto.ShamanImbue_value, func(spec any, v int32) any {
+		o := googleProto.Clone(spec.(*proto.Player_EnhancementShaman).EnhancementShaman).(*proto.EnhancementShaman)
+		o.Options.ImbueMh, o.Options.ImbueOh = proto.ShamanImbue(v), proto.ShamanImbue(v)
+		return &proto.Player_EnhancementShaman{EnhancementShaman: o}
+	})
+	optionVariants("Combat", proto.Rogue_Options_PoisonImbue_value, func(spec any, v int32) any {
+		return rogueOptions(proto.Rogue_Options_PoisonImbue(v), proto.Rogue_Options_PoisonImbue(v))
+	})
+	retribution := func(edit func(o *proto.RetributionPaladin_Options, v int32)) func(any, int32) any {
+		return func(spec any, v int32) any {
+			o := googleProto.Clone(spec.(*proto.Player_RetributionPaladin).RetributionPaladin).(*proto.RetributionPaladin)
+			edit(o.Options, v)
+			return &proto.Player_RetributionPaladin{RetributionPaladin: o}
+		}
+	}
+	optionVariants("Retribution", proto.PaladinSeal_value, retribution(func(o *proto.RetributionPaladin_Options, v int32) {
+		o.Seal = proto.PaladinSeal(v)
+	}))
+	optionVariants("Retribution", proto.PaladinJudgement_value, retribution(func(o *proto.RetributionPaladin_Options, v int32) {
+		o.Judgement = proto.PaladinJudgement(v)
+	}))
+	optionVariants("Retribution", proto.PaladinAura_value, retribution(func(o *proto.RetributionPaladin_Options, v int32) {
+		o.Aura = proto.PaladinAura(v)
+	}))
+	optionVariants("Arcane", proto.Mage_Options_ArmorType_value, func(spec any, v int32) any {
+		return mageOptions(proto.Mage_Options_ArmorType(v))
+	})
+	optionVariants("Affliction", proto.Warlock_Options_Armor_value, func(spec any, v int32) any {
+		o := googleProto.Clone(spec.(*proto.Player_Warlock).Warlock).(*proto.Warlock)
+		o.Options.Armor = proto.Warlock_Options_Armor(v)
+		return &proto.Player_Warlock{Warlock: o}
+	})
 	// the hunter pet talents that gate an ability
 	{
 		p := presetNamed("BM")
@@ -439,13 +683,28 @@ func TestServerDataConflicts(t *testing.T) {
 		p.name, p.spec = "BM with every pet talent", &proto.Player_Hunter{Hunter: options}
 		presets = append(presets, p)
 	}
-	// every glyph each class can take
+	// every glyph each class can take, and one point in every talent, which is all a talent that gates a
+	// spell checks (Arcane Barrage)
 	for _, p := range serverDataPresets {
 		presets = append(presets, glyphVariants(p)...)
+		v := p
+		v.name, v.talents = p.name+" with every talent", everyTalent(p.class)
+		presets = append(presets, v)
 	}
 	for _, p := range presets {
 		env, _, _ := core.NewEnvironment(p.raid(), core.MakeSingleTargetEncounter(0), false)
 		check(p.name, env)
+	}
+	// every item, set and meta gem with an effect on every class, as the golden suites' AllItems tests
+	// wear them: their procs are spells too
+	for _, p := range onePerClass {
+		items := &core.ItemsTestGenerator{Player: p.raid().Parties[0].Players[0], PartyBuffs: core.FullPartyBuffs,
+			RaidBuffs: core.FullRaidBuffs, Debuffs: core.FullDebuffs, Encounter: core.MakeSingleTargetEncounter(0)}
+		for i := range items.NumTests() {
+			label, _, _, request := items.GetTest(i)
+			env, _, _ := core.NewEnvironment(request.Raid, request.Encounter, false)
+			check(p.name+" with "+label, env)
+		}
 	}
 	// every boss AI, against a tank
 	tank := presetNamed("ProtectionWarrior")
@@ -476,6 +735,7 @@ func TestServerDataConflicts(t *testing.T) {
 			t.Errorf("%s %s: the entry needs a reason", a.Spell, a.Field)
 		}
 	}
+	declarations.verify(t)
 }
 
 // RegisterSpell against spells no entry covers, and one an entry keeps as declared.
@@ -494,12 +754,12 @@ func TestServerDataApplied(t *testing.T) {
 	onGCD := core.CastConfig{DefaultCast: core.Cast{GCD: core.GCDDefault}}
 
 	// Frostbolt: 3 s, and talents or glyphs reach 2.4 s at the least
-	frostbolt := register(core.SpellConfig{ActionID: core.ActionID{SpellID: 42842},
+	frostbolt := register(core.SpellConfig{ActionID: core.ActionID{SpellID: 42842}, MissileSpeed: 28,
 		Cast: core.CastConfig{DefaultCast: core.Cast{GCD: core.GCDDefault, CastTime: 2500 * time.Millisecond}}})
 	if frostbolt.DefaultCast.CastTime != 2500*time.Millisecond || len(frostbolt.ServerConflicts()) != 0 {
 		t.Errorf("a cast time talents reach stays: %v, %v", frostbolt.DefaultCast.CastTime, frostbolt.ServerConflicts())
 	}
-	frostbolt = register(core.SpellConfig{ActionID: core.ActionID{SpellID: 42842}, Flags: core.SpellFlagBinary,
+	frostbolt = register(core.SpellConfig{ActionID: core.ActionID{SpellID: 42842}, Flags: core.SpellFlagBinary, MissileSpeed: 28,
 		Cast: core.CastConfig{DefaultCast: core.Cast{GCD: core.GCDDefault, CastTime: time.Second}}})
 	if frostbolt.DefaultCast.CastTime != 3*time.Second || frostbolt.Flags.Matches(core.SpellFlagBinary) {
 		t.Errorf("the server's cast time and flags apply: %v, %b", frostbolt.DefaultCast.CastTime, frostbolt.Flags)
@@ -510,7 +770,7 @@ func TestServerDataApplied(t *testing.T) {
 	}
 
 	// Steady Shot is binary on the server; an undeclared flag is just added
-	steady := register(core.SpellConfig{ActionID: core.ActionID{SpellID: 49052},
+	steady := register(core.SpellConfig{ActionID: core.ActionID{SpellID: 49052}, MissileSpeed: 40,
 		Cast: core.CastConfig{DefaultCast: core.Cast{GCD: core.GCDDefault, CastTime: 2 * time.Second}}})
 	if !steady.Flags.Matches(core.SpellFlagBinary) || len(steady.ServerConflicts()) != 0 {
 		t.Errorf("Steady Shot: %b, %v", steady.Flags, steady.ServerConflicts())
@@ -522,12 +782,67 @@ func TestServerDataApplied(t *testing.T) {
 		t.Errorf("Blood Plague: %b, %v", bloodPlague.Flags, bloodPlague.ServerConflicts())
 	}
 
-	// Envenom: SPELL_ATTR4_NO_CAST_LOG means no partial resists, but a physical spell keeps its armor
-	for school, want := range map[core.SpellSchool]bool{core.SpellSchoolNature: true, core.SpellSchoolPhysical: false} {
-		envenom := register(core.SpellConfig{ActionID: core.ActionID{SpellID: 57993}, SpellSchool: school})
-		if envenom.Flags.Matches(core.SpellFlagIgnoreResists) != want {
-			t.Errorf("Envenom as %v: IgnoreResists %v, want %v", school, !want, want)
+	// Envenom and Shiv: SPELL_ATTR4_NO_CAST_LOG means no partial resists, but a physical spell keeps its armor
+	for _, tc := range []struct {
+		id     int32
+		school core.SpellSchool
+		want   bool
+	}{{57993, core.SpellSchoolNature, true}, {5938, core.SpellSchoolPhysical, false}} {
+		spell := register(core.SpellConfig{ActionID: core.ActionID{SpellID: tc.id}, SpellSchool: tc.school})
+		if spell.Flags.Matches(core.SpellFlagIgnoreResists) != tc.want || len(spell.ServerConflicts()) != 0 {
+			t.Errorf("%d: IgnoreResists %v, want %v, %v", tc.id, !tc.want, tc.want, spell.ServerConflicts())
 		}
+	}
+
+	// Frostbolt declared one over the server's range, and as Fire with no missile: all four take the
+	// server's values, the damage too
+	frostbolt = register(core.SpellConfig{ActionID: core.ActionID{SpellID: 42842}, SpellSchool: core.SpellSchoolFire,
+		Direct: core.SpellEffect{Effect: 1, Min: 804, Max: 866, SP: 0.857}})
+	want := []string{"Min: sim 804, server 803", "Max: sim 866, server 865", "School: sim 8, server 16", "MissileSpeed: sim 0, server 28"}
+	if got := frostbolt.ServerConflicts(); len(got) != len(want) {
+		t.Errorf("Frostbolt conflicts %v, want %v", got, want)
+	} else {
+		for i, c := range got {
+			if !strings.HasSuffix(c.String(), want[i]) || c.Allowed != nil {
+				t.Errorf("Frostbolt conflict %v, want %s", c, want[i])
+			}
+		}
+	}
+	if frostbolt.SpellSchool != core.SpellSchoolFrost || frostbolt.SchoolIndex != stats.SchoolIndexFrost || frostbolt.MissileSpeed != 28 ||
+		frostbolt.Direct != (core.SpellEffect{Effect: 1, Min: 803, Max: 865, SP: 0.857}) {
+		t.Errorf("Frostbolt after the check: %v, %v, %v, %+v", frostbolt.SpellSchool, frostbolt.SchoolIndex, frostbolt.MissileSpeed, frostbolt.Direct)
+	}
+
+	// Corruption's tick, declared with the wrong coefficient: the dots get the server's
+	corruption := register(core.SpellConfig{ActionID: core.ActionID{SpellID: 47813}, SpellSchool: core.SpellSchoolShadow, Cast: onGCD,
+		Dot: core.DotConfig{Aura: core.Aura{Label: "Corruption test"}, NumberOfTicks: 6, TickLength: 3 * time.Second,
+			Tick: core.SpellEffect{Effect: 0, Min: 180, Max: 180, SP: 0.1}}})
+	if got := corruption.ServerConflicts(); len(got) != 1 || got[0].Field != core.ServerTickSP || got[0].SimFloat != 0.1 || got[0].ServerFloat != 0.2 {
+		t.Errorf("Corruption conflicts %v", got)
+	}
+	if tick := corruption.Dot(env.Encounter.TargetUnits[0]).Tick; tick != (core.SpellEffect{Effect: 0, Min: 180, Max: 180, SP: 0.2}) {
+		t.Errorf("Corruption's dot ticks for %+v", tick)
+	}
+
+	// Empowered Corruption and Everlasting Affliction go on the checked 0.2 as op 24
+	corruption = register(core.SpellConfig{ActionID: core.ActionID{SpellID: 47813}, SpellSchool: core.SpellSchoolShadow, Cast: onGCD,
+		Mods: []core.SpellMod{{Op: core.SpellModBonusMultiplier, Flat: 6}, {Op: core.SpellModBonusMultiplier, Flat: 5}},
+		Dot: core.DotConfig{Aura: core.Aura{Label: "Corruption mods test"}, NumberOfTicks: 6, TickLength: 3 * time.Second,
+			Tick: core.SpellEffect{Effect: 0, Min: 180, Max: 180, SP: 0.1}}})
+	if tick := corruption.Dot(env.Encounter.TargetUnits[0]).Tick; tick != (core.SpellEffect{Effect: 0, Min: 180, Max: 180, SP: 0.31}) {
+		t.Errorf("Corruption with mods ticks for %+v", tick)
+	}
+
+	// Obliterate's off-hand hit, which the server deals as 66974: the rank's roll is checked, then the sigil
+	// and the glyph go on the roll and the percent
+	offHand := register(core.SpellConfig{ActionID: core.ActionID{SpellID: 51425}, SpellSchool: core.SpellSchoolPhysical,
+		Direct: core.SpellEffect{FromSpellID: 66974, Min: 293, Max: 293, WeaponPct: 0.8},
+		Mods:   []core.SpellMod{{Op: core.SpellModEffect1, Flat: 420}, {Op: core.SpellModEffect2, Flat: 20}}})
+	if got := offHand.ServerConflicts(); len(got) != 2 || got[0].Field != core.ServerMin || got[0].ServerFloat != 292 || got[1].Field != core.ServerMax {
+		t.Errorf("Obliterate off-hand conflicts %v", got)
+	}
+	if offHand.Direct != (core.SpellEffect{FromSpellID: 66974, Min: 712, Max: 712, WeaponPct: 1}) {
+		t.Errorf("Obliterate off-hand after its mods: %+v", offHand.Direct)
 	}
 
 	// Mortal Strike: a 6 s category cooldown the sim left out gets its own timer

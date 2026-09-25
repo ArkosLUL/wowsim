@@ -52,6 +52,9 @@ type DotConfig struct {
 	// an SPELL_AURA_ABILITY_PERIODIC_CRIT aura covering the spell, or for Rupture).
 	TicksCanCrit bool
 
+	// each tick's numbers, checked like SpellConfig.Direct
+	Tick SpellEffect
+
 	OnSnapshot OnSnapshot
 	OnTick     OnTick
 }
@@ -92,6 +95,9 @@ type Dot struct {
 	nextTickNominal time.Duration
 	nextTickAt      time.Duration
 	isChanneled     bool
+
+	// DotConfig.Tick, with the server's values where RegisterSpell found a conflict, then SpellConfig.Mods
+	Tick SpellEffect
 }
 
 // TickPeriod is how fast the snapshot dot ticks.
@@ -404,6 +410,7 @@ func (spell *Spell) createDots(config DotConfig, isHot bool) {
 		AffectedByCastSpeed: config.AffectedByCastSpeed,
 		TickHaste:           config.TickHaste,
 		TicksCanCrit:        config.TicksCanCrit,
+		Tick:                config.Tick,
 
 		OnSnapshot: config.OnSnapshot,
 		OnTick:     config.OnTick,

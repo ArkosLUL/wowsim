@@ -14,10 +14,11 @@ import (
 // the owner (Spell::DoAllEffectOnLaunchTarget's IsTotem branch).
 func (shaman *Shaman) registerSearingTotemAttackSpell() *core.Spell {
 	return shaman.RegisterSpell(core.SpellConfig{
-		ActionID:    core.ActionID{SpellID: 58702},
-		SpellSchool: core.SpellSchoolFire,
-		ProcMask:    core.ProcMaskEmpty,
-		Flags:       core.SpellFlagNoOnCastComplete,
+		ActionID:     core.ActionID{SpellID: 58702},
+		SpellSchool:  core.SpellSchoolFire,
+		ProcMask:     core.ProcMaskEmpty,
+		Flags:        core.SpellFlagNoOnCastComplete,
+		MissileSpeed: 19,
 
 		BonusHitRating:   float64(shaman.Talents.ElementalPrecision) * core.SpellHitRatingPerHitChance,
 		DamageMultiplier: 1 + float64(shaman.Talents.CallOfFlame)*0.05,

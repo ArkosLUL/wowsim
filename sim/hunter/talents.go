@@ -323,10 +323,11 @@ func (hunter *Hunter) applyWildQuiver() {
 	procChance := 0.04 * float64(hunter.Talents.WildQuiver)
 
 	wqSpell := hunter.RegisterSpell(core.SpellConfig{
-		ActionID:    actionID,
-		SpellSchool: core.SpellSchoolNature,
-		ProcMask:    core.ProcMaskRangedAuto,
-		Flags:       core.SpellFlagNoOnCastComplete,
+		ActionID:     actionID,
+		SpellSchool:  core.SpellSchoolNature,
+		ProcMask:     core.ProcMaskRangedAuto,
+		Flags:        core.SpellFlagNoOnCastComplete,
+		MissileSpeed: 40,
 
 		// Marked for Death's class mask covers it like Auto Shot's
 		DamageMultiplier: 0.8 * hunter.markedForDeathMultiplier(),

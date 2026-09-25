@@ -14,7 +14,7 @@ func (mage *Mage) registerArcaneBarrageSpell() {
 
 	mage.ArcaneBarrage = mage.RegisterSpell(core.SpellConfig{
 		ActionID:     core.ActionID{SpellID: 44781},
-		SpellSchool:  core.SpellSchoolFrost,
+		SpellSchool:  core.SpellSchoolArcane,
 		ProcMask:     core.ProcMaskSpellDamage,
 		Flags:        SpellFlagMage | BarrageSpells | core.SpellFlagAPL,
 		MissileSpeed: 24,

@@ -15,10 +15,11 @@ func (hunter *Hunter) registerArcaneShotSpell(timer *core.Timer) {
 	}
 
 	hunter.ArcaneShot = hunter.RegisterSpell(core.SpellConfig{
-		ActionID:    core.ActionID{SpellID: 49045},
-		SpellSchool: core.SpellSchoolArcane,
-		ProcMask:    core.ProcMaskRangedSpecial,
-		Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagAPL,
+		ActionID:     core.ActionID{SpellID: 49045},
+		SpellSchool:  core.SpellSchoolArcane,
+		ProcMask:     core.ProcMaskRangedSpecial,
+		Flags:        core.SpellFlagMeleeMetrics | core.SpellFlagAPL,
+		MissileSpeed: 40,
 
 		ManaCost: core.ManaCostOptions{
 			BaseCost:   0.05,
@@ -46,8 +47,10 @@ func (hunter *Hunter) registerArcaneShotSpell(timer *core.Timer) {
 		CritMultiplier:   hunter.critMultiplier(true, true),
 		ThreatMultiplier: 1,
 
+		Direct: core.SpellEffect{Effect: 0, Min: 492, Max: 492, AP: 0.15},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := 492 + 0.15*spell.RangedAttackPower(target)
+			baseDamage := spell.Direct.Roll(sim) + spell.Direct.AP*spell.RangedAttackPower(target)
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeRangedHitAndCrit)
 			if hasGlyph && result.Landed() && (hunter.SerpentSting.Dot(target).IsActive() || hunter.ScorpidStingAuras.Get(target).IsActive()) {
 				hunter.AddMana(sim, 0.2*hunter.ArcaneShot.DefaultCast.Cost, manaMetrics)

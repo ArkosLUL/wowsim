@@ -8,10 +8,11 @@ import (
 
 func (warrior *Warrior) RegisterHeroicThrow() {
 	warrior.RegisterSpell(core.SpellConfig{
-		ActionID:    core.ActionID{SpellID: 57755},
-		SpellSchool: core.SpellSchoolPhysical,
-		ProcMask:    core.ProcMaskMeleeMHSpecial,
-		Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagAPL,
+		ActionID:     core.ActionID{SpellID: 57755},
+		SpellSchool:  core.SpellSchoolPhysical,
+		ProcMask:     core.ProcMaskMeleeMHSpecial,
+		Flags:        core.SpellFlagMeleeMetrics | core.SpellFlagAPL,
+		MissileSpeed: 50,
 
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{

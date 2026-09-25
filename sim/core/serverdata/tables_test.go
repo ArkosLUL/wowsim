@@ -100,3 +100,29 @@ func TestKnownSpells(t *testing.T) {
 		t.Errorf("Improved Blizzard proc: %+v", p)
 	}
 }
+
+func TestEffectRange(t *testing.T) {
+	for _, tc := range []struct {
+		name                         string
+		spellLevel, baseLevel, maxLv int32
+		effect                       Effect
+		lo, hi                       int32
+	}{
+		{"no per-level gain ignores the levels", 20, 20, 0, Effect{BasePoints: 99, DieSides: 1}, 100, 100},
+		{"no dice", 1, 1, 0, Effect{BasePoints: 50}, 50, 50},
+		{"levels past SpellLevel, truncated", 79, 79, 83, Effect{BasePoints: 798, DieSides: 63, PointsPerLevel: 4.8}, 803, 865},
+		{"MaxLevel caps the level", 60, 60, 70, Effect{BasePoints: 10, DieSides: 1, PointsPerLevel: 2}, 31, 31},
+		{"MaxLevel 0 is no cap", 60, 60, 0, Effect{BasePoints: 10, DieSides: 1, PointsPerLevel: 2}, 51, 51},
+		{"counted from BaseLevel when it's higher", 50, 70, 0, Effect{BasePoints: 10, DieSides: 1, PointsPerLevel: 1}, 21, 21},
+		{"negative dice roll DieSides..1", 1, 1, 0, Effect{BasePoints: 10, DieSides: -5}, 5, 11},
+	} {
+		s := Spell{SpellLevel: tc.spellLevel, BaseLevel: tc.baseLevel, MaxLevel: tc.maxLv, Effects: [3]Effect{{}, tc.effect}}
+		if lo, hi := s.EffectRange(1); lo != tc.lo || hi != tc.hi {
+			t.Errorf("%s: %d..%d, want %d..%d", tc.name, lo, hi, tc.lo, tc.hi)
+		}
+	}
+
+	if lo, hi := SpellByID(42842).EffectRange(1); lo != 803 || hi != 865 {
+		t.Errorf("Frostbolt %d..%d, want 803..865", lo, hi)
+	}
+}

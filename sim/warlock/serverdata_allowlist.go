@@ -9,5 +9,7 @@ func init() {
 			Why: "the Imp's Firebolt has a 1 s GCD on the server"},
 		core.ServerConflictAllowance{Spell: core.ActionID{SpellID: 23720}, Field: core.ServerCD, Sim: 300000, Server: 0, KeepSim: true,
 			Why: "The Black Book's cooldown is item_template's, which Spell.dbc doesn't carry"},
+		core.ServerConflictAllowance{Spell: core.ActionID{SpellID: 1122}, Field: core.ServerSchool, Sim: 8, Server: 128, KeepSim: true,
+			Why: "the sim deals the Infernal's landing under the summon's id, the server as its own spell 22703, Fire"},
 	)
 }

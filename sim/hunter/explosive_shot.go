@@ -28,10 +28,11 @@ func (hunter *Hunter) makeExplosiveShotSpell(timer *core.Timer, downrank bool) *
 	}
 
 	return hunter.RegisterSpell(core.SpellConfig{
-		ActionID:    actionID,
-		SpellSchool: core.SpellSchoolFire,
-		ProcMask:    core.ProcMaskRangedSpecial,
-		Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagAPL,
+		ActionID:     actionID,
+		SpellSchool:  core.SpellSchoolFire,
+		ProcMask:     core.ProcMaskRangedSpecial,
+		Flags:        core.SpellFlagMeleeMetrics | core.SpellFlagAPL,
+		MissileSpeed: 40,
 
 		ManaCost: core.ManaCostOptions{
 			BaseCost:   0.07,

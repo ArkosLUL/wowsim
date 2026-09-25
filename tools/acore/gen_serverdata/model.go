@@ -66,6 +66,9 @@ func buildSpell(d *spellset.DumpSpell) namedSpell {
 		RuneCostID:         i32(d.RuneCostID),
 		Speed:              d.Speed,
 		MaxTargets:         i32(d.MaxAffectedTargets),
+		SpellLevel:         i32(d.SpellLevel),
+		BaseLevel:          i32(d.BaseLevel),
+		MaxLevel:           i32(d.MaxLevel),
 	}
 	for i := range s.FamilyFlags {
 		s.FamilyFlags[i] = u32(d.FamilyFlags[i])

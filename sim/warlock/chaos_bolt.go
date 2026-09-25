@@ -18,10 +18,11 @@ func (warlock *Warlock) registerChaosBoltSpell() {
 	// TODO If there's bosses with elevated fire resistances, we'd need another spell flag,
 	//  or add an unlimited amount of "bonusSpellPenetration".
 	warlock.ChaosBolt = warlock.RegisterSpell(core.SpellConfig{
-		ActionID:    core.ActionID{SpellID: 59172},
-		SpellSchool: core.SpellSchoolFire,
-		ProcMask:    core.ProcMaskSpellDamage,
-		Flags:       core.SpellFlagAPL,
+		ActionID:     core.ActionID{SpellID: 59172},
+		SpellSchool:  core.SpellSchoolFire,
+		ProcMask:     core.ProcMaskSpellDamage,
+		Flags:        core.SpellFlagAPL,
+		MissileSpeed: 20,
 
 		ManaCost: core.ManaCostOptions{
 			BaseCost:   0.07,

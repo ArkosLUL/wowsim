@@ -1,7 +1,7 @@
 package core
 
-// Server data conflicts in spells no class owns: raid buffs, external cooldowns and items
-// (ServerConflictAllowance); sim/serverdata_test.go checks them.
+// Server data conflicts in spells no class owns: raid buffs and debuffs, external cooldowns, items and boss
+// spells (ServerConflictAllowance); sim/serverdata_test.go checks them.
 func init() {
 	// A tag -1 spell is a raid member's cast on this character: it costs the character no GCD, and its
 	// cooldown is how often that raid member hands it out.
@@ -29,8 +29,28 @@ func init() {
 		external(64382, ServerCastTime, 0, 1500), // Shattering Throw
 		external(64382, ServerGCD, 0, 1500),      // Shattering Throw
 		external(64382, ServerCD, 10000, 300000), // Shattering Throw
+		ServerConflictAllowance{Spell: ActionID{SpellID: 64382, Tag: -1}, Field: ServerMissileSpeed, SimFloat: 0, ServerFloat: 50, KeepSim: true,
+			Why: "thrown by a raid member from wherever it stands, so it lands when the schedule says"},
 
 		ServerConflictAllowance{Spell: ActionID{SpellID: 56186}, Field: ServerCD, Sim: 300000, Server: 0, KeepSim: true, Why: itemCooldown},    // Sapphire Owl
 		ServerConflictAllowance{Spell: ActionID{SpellID: 71586}, Field: ServerCD, Sim: 120000, Server: 1000, KeepSim: true, Why: itemCooldown}, // Hardened Skin
+
+		ServerConflictAllowance{Spell: ActionID{SpellID: 41989}, Field: ServerSchool, Sim: 8, Server: 64, KeepSim: true,
+			Why: "the sim deals the set's Fire proc under the set bonus aura, the server as its own spell 41990"}, // The Fists of Fury
+		ServerConflictAllowance{Spell: ActionID{SpellID: 54758}, Field: ServerSchool, Sim: 254, Server: 2,
+			Why: "a haste buff that deals nothing, declared as every school where the server has Physical"}, // Hyperspeed Acceleration
+
+		// the 0 damage spell Crypt Fever and Ebon Plaguebringer cast to fire harmful spell procs, a visual dummy on the server
+		ServerConflictAllowance{Spell: ActionID{SpellID: 52789}, Field: ServerSchool, Sim: 252, Server: 16, KeepSim: true,
+			Why: "stands in for any harmful spell, so it keeps every magic school"},
+		ServerConflictAllowance{Spell: ActionID{SpellID: 52789}, Field: ServerMissileSpeed, SimFloat: 0, ServerFloat: 15, KeepSim: true,
+			Why: "stands in for the harmful spell landing, so it doesn't travel"},
+
+		ServerConflictAllowance{Spell: ActionID{SpellID: 63511, Tag: 1}, Field: ServerSchool, Sim: 2, Server: 16, KeepSim: true,
+			Why: "Hodir's white swings during Frozen Blows, which the sim deals under the Frost proc's id"},
+		ServerConflictAllowance{Spell: ActionID{SpellID: 63512}, Field: ServerSchool, Sim: 2, Server: 16,
+			Why: "Frozen Blows is Frost on the server, declared Physical. It deals nothing itself"},
+		ServerConflictAllowance{Spell: ActionID{SpellID: 66118}, Field: ServerMissileSpeed, SimFloat: 0, ServerFloat: 30,
+			Why: "Leeching Swarm travels at 30 yd/s on the server, declared instant"},
 	)
 }

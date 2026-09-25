@@ -12,10 +12,11 @@ func (warrior *Warrior) RegisterShatteringThrowCD() {
 	shattDebuffs := warrior.NewEnemyAuraArray(core.ShatteringThrowAura)
 
 	ShatteringThrowSpell := warrior.RegisterSpell(core.SpellConfig{
-		ActionID:    core.ActionID{SpellID: 64382},
-		SpellSchool: core.SpellSchoolPhysical,
-		ProcMask:    core.ProcMaskMeleeMHSpecial,
-		Flags:       core.SpellFlagMeleeMetrics,
+		ActionID:     core.ActionID{SpellID: 64382},
+		SpellSchool:  core.SpellSchoolPhysical,
+		ProcMask:     core.ProcMaskMeleeMHSpecial,
+		Flags:        core.SpellFlagMeleeMetrics,
+		MissileSpeed: 50,
 
 		RageCost: core.RageCostOptions{
 			Cost: 25 - float64(warrior.Talents.FocusedRage),
