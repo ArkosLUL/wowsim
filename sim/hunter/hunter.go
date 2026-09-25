@@ -192,7 +192,7 @@ func NewHunter(character *core.Character, options *proto.Player) *Hunter {
 		OffHand:         hunter.WeaponFromOffHand(0),
 		Ranged:          rangedWeapon,
 		ReplaceMHSwing:  hunter.TryRaptorStrike,
-		AutoSwingRanged: true,
+		AutoSwingRanged: hunter.HasRangedWeapon(), // with no weapon Auto Shot swings every 0 s and the sim never ends
 	})
 	hunter.AutoAttacks.RangedConfig().ApplyEffects = func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 		baseDamage := hunter.RangedWeaponDamage(sim, spell.RangedAttackPower(target)) +

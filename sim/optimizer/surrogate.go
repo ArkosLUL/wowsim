@@ -1861,22 +1861,43 @@ func (r *run) effectFamilies(s *surrogate, v stats.Stats, gp *gemPlan, fx *effec
 	}
 
 	// the other slots, from an item without an effect
+	hunter := r.r.Target().GetClass() == proto.Class_ClassHunter
 	for _, slot := range singleSlots {
 		if p.Locked[slot] {
 			continue
 		}
 		base := seed
-		if itemNeedsSim(seed.Items[slot].ItemID) {
+		ranged := slot == proto.ItemSlot_ItemSlotRanged
+		switch {
+		case ranged && hunter:
+			// a hunter's ranged weapons count from the seed's, or the pool's best by stats, as main
+			// hands do: without one a hunter has no Auto Shot at all
+			if base.Items[slot].ItemID == 0 {
+				var best *Candidate
+				bestLB := math.Inf(-1)
+				for _, cand := range p.Slots[slot] {
+					if lb := statLB(slot, cand); lb > bestLB {
+						best, bestLB = cand, lb
+					}
+				}
+				if best != nil {
+					base.Items[slot] = quick(slot, best, base)
+				}
+			}
+			if id := base.Items[slot].ItemID; id != 0 {
+				fx.raw[effectKey{effectItem, slot, id}] = Estimate{}
+			}
+		case itemNeedsSim(seed.Items[slot].ItemID):
 			base.Items[slot] = ItemChoice{}
 		}
-		f := &effectFamily{name: slot.String() + " items", base: base, weapons: slot == proto.ItemSlot_ItemSlotRanged}
+		f := &effectFamily{name: slot.String() + " items", base: base, weapons: ranged}
 		var dominated map[int32]bool
 		if f.weapons {
 			dominated = s.dominatedWeapons(slot, p.Slots[slot], lo, hi, gb)
 		}
 		seen := map[int32]bool{}
 		for _, cand := range p.Slots[slot] {
-			if !cand.NeedsSim || dominated[cand.Item.ID] {
+			if !cand.NeedsSim || dominated[cand.Item.ID] || cand.Item.ID == base.Items[slot].ItemID {
 				continue
 			}
 			seen[cand.Item.ID] = true
@@ -1884,7 +1905,7 @@ func (r *run) effectFamilies(s *surrogate, v stats.Stats, gp *gemPlan, fx *effec
 			variant.Items[slot] = quick(slot, cand, base)
 			f.add(effectKey{effectItem, slot, cand.Item.ID}, variant, prior(slot, cand), false)
 		}
-		if c := seed.Items[slot]; itemNeedsSim(c.ItemID) && !seen[c.ItemID] {
+		if c := seed.Items[slot]; itemNeedsSim(c.ItemID) && !seen[c.ItemID] && c.ItemID != base.Items[slot].ItemID {
 			variant := base
 			variant.Items[slot] = c
 			f.add(effectKey{effectItem, slot, c.ItemID}, variant, math.Inf(1), false)
