@@ -125,6 +125,9 @@ var (
 		proto.Class_ClassDruid: {proto.WeaponType_WeaponTypeDagger: false, proto.WeaponType_WeaponTypeFist: false,
 			proto.WeaponType_WeaponTypeMace: true, proto.WeaponType_WeaponTypeOffHand: false,
 			proto.WeaponType_WeaponTypePolearm: true, proto.WeaponType_WeaponTypeStaff: true},
+		proto.Class_ClassHunter: {proto.WeaponType_WeaponTypeAxe: true, proto.WeaponType_WeaponTypeDagger: false, proto.WeaponType_WeaponTypeFist: false,
+			proto.WeaponType_WeaponTypeOffHand: false, proto.WeaponType_WeaponTypePolearm: true, proto.WeaponType_WeaponTypeSword: true,
+			proto.WeaponType_WeaponTypeStaff: true},
 		proto.Class_ClassMage: {proto.WeaponType_WeaponTypeDagger: false, proto.WeaponType_WeaponTypeOffHand: false,
 			proto.WeaponType_WeaponTypeStaff: true, proto.WeaponType_WeaponTypeSword: false},
 		proto.Class_ClassPaladin: {proto.WeaponType_WeaponTypeAxe: true, proto.WeaponType_WeaponTypeMace: true, proto.WeaponType_WeaponTypeOffHand: false,
@@ -136,7 +139,9 @@ var (
 			proto.WeaponType_WeaponTypeShield: false, proto.WeaponType_WeaponTypeStaff: true, proto.WeaponType_WeaponTypeSword: true},
 	}
 	classRanged = map[proto.Class][]proto.RangedWeaponType{
-		proto.Class_ClassDruid:   {proto.RangedWeaponType_RangedWeaponTypeIdol},
+		proto.Class_ClassDruid: {proto.RangedWeaponType_RangedWeaponTypeIdol},
+		proto.Class_ClassHunter: {proto.RangedWeaponType_RangedWeaponTypeBow, proto.RangedWeaponType_RangedWeaponTypeCrossbow,
+			proto.RangedWeaponType_RangedWeaponTypeGun},
 		proto.Class_ClassMage:    {proto.RangedWeaponType_RangedWeaponTypeWand},
 		proto.Class_ClassPaladin: {proto.RangedWeaponType_RangedWeaponTypeLibram},
 		proto.Class_ClassRogue: {proto.RangedWeaponType_RangedWeaponTypeBow, proto.RangedWeaponType_RangedWeaponTypeCrossbow,

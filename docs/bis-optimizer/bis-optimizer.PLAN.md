@@ -737,6 +737,19 @@ Stop can't end such a run (the evaluator waits for its running sims), so fixing 
 **Owns:** `sim/hunter/hunter.go`, `effectFamilies` in `sim/optimizer/surrogate.go`,
 `sim/item_wearers_test.go`, and their tests.
 
+**As built:**
+- `AutoSwingRanged` is `HasRangedWeapon()`. `TestNoRangedWeapon` sims the P1 MM preset with the slot
+  empty: it ends, with no Auto Shot (the base hung past a 90 s timeout). The wearers sweep's 70 hunter
+  sims now run without a bow. Hunter goldens unchanged.
+- `TestRangedFamilyBase`, on the MM preset's realistic P1 pool: the base holds the seed's gun, or the
+  best by stat lower bound without one, and every family's loadouts keep a ranged weapon; a rogue keeps
+  the empty slot. `realpool_test.go` gained the hunter's weapon and ranged types.
+- `TestOptimizeMarksmanshipHunter`: a real Quick P1 run (16 s) through an evaluator that fails any sim
+  without a ranged weapon. None asked for; Effects simmed 14 bows and 8 guns besides the seed's; best
+  +279 ± 12 J, still Envoy of Mortality. On the base, Effects asked for 2 and simmed none; with the
+  ranged family unpriced, the search dropped the seed's gun, so Verify asked for 20. The preset's
+  Nightmare Tear isn't in the P1 pool, so its seed breaks a rule (a warning only).
+
 ### BIS-presets (wave K)
 
 The preset files, as decided above, registered in `ui/<spec>/presets.ts` and `sim.ts` `defaultGear`. This

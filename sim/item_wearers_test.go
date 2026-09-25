@@ -19,21 +19,7 @@ type wearer struct {
 	dualWield bool
 }
 
-// without a ranged weapon a hunter Auto Shoots at a 0 s speed, so the sim never ends
-const wearerBowID = 9000002
-
-var wearerDatabase = &proto.SimDatabase{
-	Items: []*proto.SimItem{{
-		Id:               wearerBowID,
-		Type:             proto.ItemType_ItemTypeRanged,
-		RangedWeaponType: proto.RangedWeaponType_RangedWeaponTypeBow,
-		WeaponDamageMin:  100,
-		WeaponDamageMax:  200,
-		WeaponSpeed:      3,
-	}},
-}
-
-// no talents, actions or gear but a hunter's bow: the items under test are all a player has
+// no talents, actions or gear: the items under test are all a player has
 var wearers = []wearer{
 	{&proto.Player{Name: "Death Knight", Class: proto.Class_ClassDeathknight, Race: proto.Race_RaceOrc,
 		Spec: &proto.Player_Deathknight{Deathknight: &proto.Deathknight{Options: &proto.Deathknight_Options{}}}}, true},
@@ -186,16 +172,12 @@ func TestSetsAndClassItemEffectsOnEveryWearer(t *testing.T) {
 
 func runWearerSim(t *testing.T, w wearer, items []core.Item) {
 	var equipment core.Equipment
-	if w.player.Class == proto.Class_ClassHunter {
-		equipment[proto.ItemSlot_ItemSlotRanged].ID = wearerBowID
-	}
 	for _, item := range items {
 		equipment.EquipItem(item)
 	}
 	player := googleProto.Clone(w.player).(*proto.Player)
 	player.Equipment = equipment.ToEquipmentSpecProto()
 	player.Rotation = &proto.APLRotation{}
-	player.Database = wearerDatabase
 
 	result := core.RunRaidSim(&proto.RaidSimRequest{
 		Raid: core.SinglePlayerRaidProto(player, nil, nil, nil),
