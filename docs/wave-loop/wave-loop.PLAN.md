@@ -99,11 +99,9 @@ bugs, the importer's missing pets, ammo and consumables, and a batch hung on a h
 
 ## Current wave
 
-- Wave: I4, not started. Wave I3 (base `2f1b8eb7d`) landed on `master`.
-- Base SHA: set at wave start.
-- Workflow runId: none. Wave I3 ran as `wf_818c7adc-89f`, stopped when Windows ran out of memory, then
-  `wf_2d964cdb-4a2` for PERF-OPT and PERF-HOT (args `waveI3-args.json`, `waveI3-resume-args.json`, reports
-  `waveI3-results-part1.json`, `waveI3-results-part2.json` in `G:\DevStuff\GitHub\.wave-loop`).
+- Wave: I4, running. Base SHA `a4292b95a`.
+- Workflow runId: `wf_6e7f2afb-ea5`, args `waveI4-args.json` in `G:\DevStuff\GitHub\.wave-loop`. Transcript dir:
+  `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\wf_6e7f2afb-ea5`.
 
 ## BiS baseline
 
@@ -278,6 +276,9 @@ crashed before F2, so its column starts there.
 | PAR-P7-0f | merged | `3abef3a1f` | Enhancement and Retribution goldens promoted in `48fd72cab` (+20.61 Spell Power; the spec expected none) |
 | UI-FIX2 | merged | `49344a96c` | |
 | wave I3 cross-review | | | no findings |
+| PAR-DECL | running | | |
+| RI-4 | running | | |
+| BIS-hunter-ranged | running | | |
 
 Later WIs are added as their wave starts.
 
