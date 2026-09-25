@@ -1,7 +1,16 @@
 import { JsonObject } from '@protobuf-ts/runtime';
 import pako from 'pako';
 
-import { buildCharacterImport, parseRoster, rosterClass, rosterEquipmentSpec } from '../../raid/acore_roster';
+import {
+	applyConsumes,
+	applyPetAndAmmo,
+	buildCharacterImport,
+	describeConsumeSource,
+	describePetAndAmmo,
+	parseRoster,
+	rosterClass,
+	rosterEquipmentSpec,
+} from '../../raid/acore_roster';
 import { IndividualSimUI } from '../individual_sim_ui';
 import {
 	Class,
@@ -578,8 +587,9 @@ export class IndividualAcoreImporter<SpecType extends Spec> extends Importer {
 				<code>go run ./tools/database/acraid -leader &lt;name&gt; -out raid.json</code>.
 			</p>
 			<p>
-				This brings over gear (with gems, enchants and reforges), race, racial traits, talents, glyphs and
-				professions. It does NOT import buffs, debuffs, consumes, rotation, or custom stats.
+				This brings over gear (with gems, enchants and reforges), race, racial traits, talents, glyphs,
+				professions, the pet, ammo and consumables. It does NOT import buffs, debuffs, rotation, or custom
+				stats.
 			</p>
 			<p>
 				To import, upload the roster file or paste it below, pick the character, then click 'Import'.
@@ -647,11 +657,30 @@ export class IndividualAcoreImporter<SpecType extends Spec> extends Importer {
 			imported.glyphs,
 			imported.professions,
 		);
-		this.simUI.player.setRacialTraits(TypedEvent.nextEventID(), imported.racialTraits);
+		const player = this.simUI.player;
+		player.setRacialTraits(TypedEvent.nextEventID(), imported.racialTraits);
+		// The pet talents picker swaps in its own talents when the pet moves to another talent tree, so
+		// the roster's go in after the pet type.
+		applyPetAndAmmo(player, imported.playerClass, { ...imported.loadout, petTalents: undefined }, TypedEvent.nextEventID());
+		applyPetAndAmmo(player, imported.playerClass, imported.loadout, TypedEvent.nextEventID());
+		applyConsumes(player, imported, TypedEvent.nextEventID());
 
 		const notes = (roster.warnings || []).concat(picked.warnings || []).concat(imported.warnings);
-		if (imported.spec != this.simUI.player.spec) {
-			notes.unshift(`${picked.name}'s talents look like ${specNames[imported.spec]}, but this is the ${specNames[this.simUI.player.spec]} page.`);
+		if (imported.loadout.skipped.length) {
+			notes.unshift(`Kept, the sim has no value for: ${imported.loadout.skipped.join(', ')}.`);
+		}
+		if (roster.version < 2) {
+			notes.unshift('The pet, ammo and consumables stay as they are: a version 1 roster has none.');
+		} else {
+			const petAndAmmo = describePetAndAmmo(imported);
+			const petLabel = imported.playerClass == Class.ClassWarlock ? 'Demon' : 'Pet and ammo';
+			const consumes = describeConsumeSource(imported);
+			notes.unshift(
+				...[petAndAmmo && `${petLabel}: ${petAndAmmo}.`, consumes && `Consumables from ${consumes}.`].filter(line => line),
+			);
+		}
+		if (imported.spec != player.spec) {
+			notes.unshift(`${picked.name}'s talents look like ${specNames[imported.spec]}, but this is the ${specNames[player.spec]} page.`);
 		}
 		if (notes.length) {
 			alert(`${picked.name}:\n\n${notes.join('\n')}`);

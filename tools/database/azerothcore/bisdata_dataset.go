@@ -190,7 +190,7 @@ func readProtoJSON(path string, message googleProto.Message) error {
 	return nil
 }
 
-// LoadRoster reads an acraid roster.
+// LoadRoster reads an acraid roster of any version up to RosterVersion: later versions only add fields.
 func LoadRoster(path string) (*Roster, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -200,8 +200,8 @@ func LoadRoster(path string) (*Roster, error) {
 	if err := json.Unmarshal(data, &roster); err != nil {
 		return nil, fmt.Errorf("%s: %w", path, err)
 	}
-	if roster.Version != RosterVersion {
-		return nil, fmt.Errorf("%s: roster version %d, want %d", path, roster.Version, RosterVersion)
+	if roster.Version < 1 || roster.Version > RosterVersion {
+		return nil, fmt.Errorf("%s: roster version %d, want 1 to %d", path, roster.Version, RosterVersion)
 	}
 	return &roster, nil
 }

@@ -629,6 +629,41 @@ Both importers give a raider their spec preset's pet, ammo and consumables. RI-4
 - A live export of Deathsong's raid, against the game: Nightwarrior's pet is a Worm with its talents, the
   ammo matches, and a bot has its matrix row's flask and food, its bag's potion and no explosives.
 
+**Built as (export)**
+- A character is a bot when mod-playerbots saved strategies for it (`playerbots_db_store`) or its account
+  is a random-bot one (`playerbots_account_type` 1). Live (2026-09-25): Deathsong and Felesta are played;
+  Agony and Nightwarrior are bots on the user's account.
+- Bot rules the spec left implicit, read off mod-playerbots:
+  - Flask, elixirs and food need `worldbuff` among its non-combat strategies. The matrix spec is
+    `GetPlayerSpecTab`, except that a feral druid without Thick Hide 3 and a blood DK without Blade
+    Barrier 5 read spec 3.
+  - A potion needs the `potions` strategy. The offensive one also needs `IsDps`, which reads the bot's
+    strategies (`dps assist` counts, so healers qualify); a mana potion needs a mana bar. Bags rank as
+    `compare_items`, and a tie is warned.
+- Played characters, where the spec left it open: potion order offensive, defensive, mana (mana classes
+  only), healing; the pre-pot is the best of the sim's pre-pot values in the bags; conjured, explosives
+  and pet food take the first sim value the bags hold. Pet scrolls aren't read.
+- An id the sim has no value for exports its entry without `value`, keeping `source` and the ids.
+- `LoadRosterDBC` also needs CreatureFamily.dbc and Spell.dbc (energize effects, Well Fed buffs) in
+  every caller's DBC directory.
+- Live (2026-09-25): Nightwarrior's Worm has no talent spells in `pet_spell` (its stabled wolf has), so it
+  exports empty talents with a warning.
+- The version 2 fields: [acraid README](../../tools/database/acraid/README.md#output-version-2).
+
+**Built as (import)**
+- `parseRoster` reads versions 1 and 2. Loadout values go through the protos' `fromJson`, so a name this
+  sim lacks keeps today's value with a warning, like an entry without `value`.
+- A raider Update builds from a preset (new, or a new top tree) always takes the roster's consumables;
+  the box only decides for raiders kept in place, and Replace disables it.
+- The hunter pet talents picker swaps in its own set when the pet moves to another talent tree, and a
+  closed raid Edit window leaves its picker listening. So `updateRaid` sets pet and ammo again after its
+  freeze, and the individual importer sets the pet type before the talents.
+- The quiver stays raid-only, as before.
+- Summary: each raider's pet, ammo, consumables source (bot rules, saved buffs, bags, or kept) and
+  skipped ids. The alert groups raiders by source; the console lists each one.
+- Checks: `loadout.ts` in the harness on the synthetic `testdata/loadout.json`; `acore_import.spec.ts`
+  adds the fields, the box, a version 1 roster, the individual importer and the Edit-window case.
+
 ## Out of scope
 - Sim-server endpoint for one-click import.
 - Server item stats (item-data rework).

@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -325,6 +326,23 @@ func TestLoadBisResults(t *testing.T) {
 	if len(results) != 2 || results[0].Raider != "Deathsong" || results[1].Class != "Mage" || results[1].Spec != "Fire" ||
 		results[1].Result.GetSettings().GetContentPhase() != 2 {
 		t.Errorf("results = %+v", results)
+	}
+}
+
+func TestLoadRosterVersions(t *testing.T) {
+	dir := t.TempDir()
+	for version := 0; version <= RosterVersion+1; version++ {
+		path := filepath.Join(dir, "raid.json")
+		data := `{"version": ` + strconv.Itoa(version) + `, "characters": [{"name": "Deathsong"}]}`
+		if err := os.WriteFile(path, []byte(data), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		roster, err := LoadRoster(path)
+		if want := version >= 1 && version <= RosterVersion; want != (err == nil) {
+			t.Errorf("version %d: err = %v", version, err)
+		} else if err == nil && (len(roster.Characters) != 1 || roster.Characters[0].Name != "Deathsong") {
+			t.Errorf("version %d: roster = %+v", version, roster)
+		}
 	}
 }
 

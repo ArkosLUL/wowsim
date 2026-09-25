@@ -23,7 +23,7 @@ console.log('main-tank warrior:', specNames[prot], '(expect Protection Warrior)'
 console.log('main-tank mage:', specNames[noTankSpec], '(expect Mage)');
 
 // version and shape guards
-const bad = ['', 'not json', '{}', '{"version":2,"characters":[]}', '{"version":1,"characters":[]}', '[]'];
+const bad = ['', 'not json', '{}', '{"version":3,"characters":[]}', '{"version":1,"characters":[]}', '[]'];
 bad.forEach(data => {
 	try {
 		parseRoster(data);

@@ -13,9 +13,13 @@ import { EventID, TypedEvent } from '../core/typed_event';
 import {
 	activeParties,
 	applyCharacter,
+	applyConsumes,
+	applyPetAndAmmo,
 	assignRaidIndexes,
 	buildCharacterImport,
 	CharacterImport,
+	describeConsumeSource,
+	describePetAndAmmo,
 	matchPreset,
 	MEMBER_FLAG_MAIN_TANK,
 	newPlayerFromPreset,
@@ -51,6 +55,7 @@ interface AssignmentSnapshot {
 export class RaidAcoreImporter extends Importer {
 	private readonly simUI: RaidSimUI;
 	private mode: ImportMode;
+	private refreshConsumes = true;
 
 	constructor(parent: HTMLElement, simUI: RaidSimUI) {
 		super(parent, simUI, 'AzerothCore Import', true);
@@ -65,9 +70,9 @@ export class RaidAcoreImporter extends Importer {
 				<code>go run ./tools/database/acraid -leader &lt;name&gt; -out raid.json</code>.
 			</p>
 			<p>
-				Gear (with gems, enchants and reforges), talents, glyphs, race, racial traits, professions and a
-				hunter's quiver come from the server. Rotations, consumes, other spec options, raid buffs and the
-				encounter don't: those stay yours.
+				Gear (with gems, enchants and reforges), talents, glyphs, race, racial traits, professions, pets,
+				ammo, consumables and a hunter's quiver come from the server. Rotations, other spec options, raid
+				buffs and the encounter don't: those stay yours.
 			</p>
 			<p>
 				To import, upload the roster file or paste it below, pick a mode, then click 'Import'.
@@ -86,7 +91,13 @@ export class RaidAcoreImporter extends Importer {
 				<input class="form-check-input" type="radio" name="${groupName}" id="${groupName}-update" value="update">
 				<label class="form-check-label" for="${groupName}-update">
 					<strong>Update</strong> the raid: match raiders by name and refresh what the server knows, keeping
-					their rotation, consumes and spec options.
+					their rotation and other spec options.
+				</label>
+			</div>
+			<div class="form-check ms-4">
+				<input class="form-check-input acore-refresh-consumes" type="checkbox" id="${groupName}-consumes">
+				<label class="form-check-label" for="${groupName}-consumes">
+					Also refresh consumables. Untick to keep the ones raiders already in the raid have.
 				</label>
 			</div>
 			<div class="form-check">
@@ -97,12 +108,19 @@ export class RaidAcoreImporter extends Importer {
 			</div>
 		`;
 
+		// Replace builds everyone from scratch, so there are no consumables to keep.
+		const refreshBox = container.querySelector('.acore-refresh-consumes') as HTMLInputElement;
+		refreshBox.checked = this.refreshConsumes;
+		refreshBox.disabled = this.mode != 'update';
+		refreshBox.addEventListener('change', () => (this.refreshConsumes = refreshBox.checked));
+
 		container.querySelectorAll('input[type=radio]').forEach(elem => {
 			const radio = elem as HTMLInputElement;
 			radio.checked = radio.value == this.mode;
 			radio.addEventListener('change', () => {
 				if (radio.checked) {
 					this.mode = radio.value as ImportMode;
+					refreshBox.disabled = this.mode != 'update';
 				}
 			});
 		});
@@ -141,7 +159,7 @@ export class RaidAcoreImporter extends Importer {
 		if (this.mode == 'replace') {
 			this.replaceRaid(imports, notes);
 		} else {
-			updateRaid(this.simUI.sim, imports, notes);
+			updateRaid(this.simUI.sim, imports, notes, this.refreshConsumes);
 		}
 
 		this.close();
@@ -190,6 +208,7 @@ export class RaidAcoreImporter extends Importer {
 			imports.forEach(imported => {
 				const player = newPlayerFromPreset(imported.spec, imported.preset, this.simUI.sim, eventID);
 				applyCharacter(player, imported, eventID);
+				applyConsumes(player, imported, eventID);
 				const partyIdx = Math.floor(imported.raidIndex / MAX_PARTY_SIZE);
 				raidProto.parties[partyIdx].players[imported.raidIndex % MAX_PARTY_SIZE] = player.toProto();
 			});
@@ -209,10 +228,12 @@ export class RaidAcoreImporter extends Importer {
 }
 
 // Matches raiders by name, moves them to their roster subgroups, adds and drops the difference.
-// Sits outside the modal so a test can drive it.
-export function updateRaid(sim: Sim, imports: Array<RaidCharacter>, notes: ImportNotes) {
+// A raider built from a preset always gets the roster's consumables, since the preset's aren't
+// anyone's choice. Sits outside the modal so a test can drive it.
+export function updateRaid(sim: Sim, imports: Array<RaidCharacter>, notes: ImportNotes, refreshConsumes: boolean) {
 	const eventID = TypedEvent.nextEventID();
 	const raid = sim.raid;
+	let placed: Array<{ imported: RaidCharacter; player: Player<any> }> = [];
 
 	TypedEvent.freezeAllAndDo(() => {
 		const before = raid.getPlayers().filter(player => player != null) as Array<Player<any>>;
@@ -225,7 +246,7 @@ export function updateRaid(sim: Sim, imports: Array<RaidCharacter>, notes: Impor
 		// Raid indexes move around below, so remember who the assignments point at, not where.
 		const assignments = snapshotAssignments(raid);
 
-		const placed = imports.map(imported => {
+		placed = imports.map(imported => {
 			const match = byName.get(imported.char.name);
 			if (match) {
 				byName.delete(imported.char.name);
@@ -249,6 +270,11 @@ export function updateRaid(sim: Sim, imports: Array<RaidCharacter>, notes: Impor
 				}
 			}
 			applyCharacter(player, imported, eventID);
+			if (!keep || refreshConsumes) {
+				applyConsumes(player, imported, eventID);
+			} else {
+				notes.consumesKept.push(imported.char.name);
+			}
 			return { imported: imported, player: player };
 		});
 
@@ -272,6 +298,10 @@ export function updateRaid(sim: Sim, imports: Array<RaidCharacter>, notes: Impor
 		remapAssignments(assignments, placedByName, eventID);
 		raid.setNumActiveParties(eventID, activeParties(imports.map(imported => imported.char)));
 	});
+
+	// A hunter's closed Edit window leaves its pet talents picker listening, and once the freeze lifts
+	// it swaps in its own talents if the pet moved to another tree. Same pet type now, so this sticks.
+	placed.forEach(entry => applyPetAndAmmo(entry.player, entry.imported.playerClass, entry.imported.loadout, TypedEvent.nextEventID()));
 }
 
 // Main-tank flagged raiders first, then whoever else brought a tank spec.
@@ -331,6 +361,8 @@ export class ImportNotes {
 	readonly removed: Array<string> = [];
 	readonly replaced: Array<{ name: string; from: Spec; to: Spec }> = [];
 	readonly kept: Array<{ name: string; spec: Spec; inferred: Spec }> = [];
+	// Update without refreshing consumables: raiders who kept theirs
+	readonly consumesKept: Array<string> = [];
 
 	summarize(mode: ImportMode, roster: Roster, imports: Array<RaidCharacter>, skipped: Array<string>, brief = false): string {
 		const lines: Array<string> = [];
@@ -360,6 +392,11 @@ export class ImportNotes {
 		} else {
 			lines.push('', 'Specs:');
 			imports.forEach(imported => lines.push(specLine(imported)));
+		}
+
+		const loadouts = this.summarizeLoadouts(roster, imports, brief);
+		if (loadouts.length) {
+			lines.push('', ...loadouts);
 		}
 
 		if (this.added.length) {
@@ -399,10 +436,54 @@ export class ImportNotes {
 			'Keep in mind:',
 			"  Item stats come from the server, but a few item and set effects are still Classic's.",
 			"  mod-spell-tweaks and mod-individual-progression aren't modelled.",
-			"  Rotations, consumes, spec options and raid buffs are the sim's, not what you run in game.",
+			"  Rotations, other spec options and raid buffs are the sim's, not what you run in game.",
 		);
 		return lines.join('\n');
 	}
+
+	private summarizeLoadouts(roster: Roster, imports: Array<RaidCharacter>, brief: boolean): Array<string> {
+		if (roster.version < 2) {
+			return ["Pets, ammo and consumables: a version 1 roster has none, so they're the sim's."];
+		}
+		const consumeSource = (imported: RaidCharacter) => {
+			if (this.consumesKept.includes(imported.char.name)) {
+				return 'kept as they were';
+			}
+			const source = describeConsumeSource(imported);
+			return source ? `from ${source}` : '';
+		};
+		const raiderLine = (imported: RaidCharacter, withConsumes: boolean) => {
+			const parts = [describePetAndAmmo(imported)];
+			if (withConsumes && consumeSource(imported)) {
+				parts.push(`consumables ${consumeSource(imported)}`);
+			}
+			if (imported.loadout.skipped.length) {
+				parts.push(`kept, the sim has no value for: ${imported.loadout.skipped.join(', ')}`);
+			}
+			const text = parts.filter(part => part).join('; ');
+			return text ? `  ${imported.char.name}: ${text}` : '';
+		};
+
+		const lines = ['Pets, ammo and consumables:'];
+		if (brief) {
+			// a line per source, then only the raiders with a pet, ammo or something skipped
+			const bySource = new Map<string, Array<string>>();
+			imports.forEach(imported => {
+				const source = consumeSource(imported);
+				if (source) {
+					bySource.set(source, (bySource.get(source) || []).concat(imported.char.name));
+				}
+			});
+			bySource.forEach((names, source) => lines.push(`  consumables ${source}: ${nameList(names)}`));
+		}
+		imports.forEach(imported => lines.push(raiderLine(imported, !brief)));
+		const filled = lines.filter(line => line);
+		return filled.length > 1 ? filled : [];
+	}
+}
+
+function nameList(names: Array<string>): string {
+	return names.length > 3 ? `${names.slice(0, 3).join(', ')} and ${names.length - 3} more` : names.join(', ');
 }
 
 // One line per distinct message, with the characters it hit, so 25 copies of the same note stay readable.
@@ -417,9 +498,6 @@ function collectWarnings(roster: Roster, imports: Array<RaidCharacter>): Array<s
 			byMessage.set(message, names);
 		});
 	});
-	byMessage.forEach((names, message) => {
-		const who = names.length > 3 ? `${names.slice(0, 3).join(', ')} and ${names.length - 3} more` : names.join(', ');
-		lines.push(`${who}: ${message}`);
-	});
+	byMessage.forEach((names, message) => lines.push(`${nameList(names)}: ${message}`));
 	return lines;
 }

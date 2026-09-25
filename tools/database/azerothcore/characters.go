@@ -25,11 +25,22 @@ type Selector struct {
 // maxRaidSize is what the sim can hold: 8 subgroups of 5.
 const maxRaidSize = 40
 
+// RosterInputs is what BuildRoster reads besides the databases.
+type RosterInputs struct {
+	DBC       *RosterDBC
+	Trees     TalentTrees
+	PetTrees  PetTalentTrees
+	MinSkill  int32 // where a profession counts as known
+	ItemStats ItemStats
+	// WorldBuffs is the bots' AiPlayerbot.WorldBuffMatrix, nil when none was given.
+	WorldBuffs []WorldBuff
+	// Players, when set, are the only characters someone plays; everyone else counts as a bot.
+	Players []string
+}
+
 // BuildRoster reads a group of characters off the server. It only reads, and the server writes gear,
-// talents and glyphs on character save, so run saveall in the worldserver console first. minSkill is
-// where a profession counts as known.
-func BuildRoster(db *sql.DB, dbc *RosterDBC, trees TalentTrees, selector Selector, minSkill int32,
-	itemStats ItemStats) (*Roster, error) {
+// talents and glyphs on character save, so run saveall in the worldserver console first.
+func BuildRoster(db *sql.DB, selector Selector, inputs RosterInputs) (*Roster, error) {
 	roster := &Roster{
 		Version:    RosterVersion,
 		ExportedAt: time.Now().UTC().Truncate(time.Second),
@@ -41,6 +52,7 @@ func BuildRoster(db *sql.DB, dbc *RosterDBC, trees TalentTrees, selector Selecto
 	if err != nil {
 		return nil, err
 	}
+	roster.Group.Players = inputs.Players
 	if len(members) == 0 {
 		return nil, errors.New("no characters selected")
 	}
@@ -67,6 +79,7 @@ func BuildRoster(db *sql.DB, dbc *RosterDBC, trees TalentTrees, selector Selecto
 	// loadEquippedItems has to come before loadReforges, which hangs each reforge off the item it finds
 	for _, load := range []func(*sql.DB, []uint32, map[uint32]*CharacterRows) (string, error){
 		loadEquippedItems, loadTalents, loadGlyphs, loadSkills, loadReforges, loadRacialSwaps, loadQuivers,
+		loadPets, loadAuras, loadBags, loadShadowfiend, loadBotState,
 	} {
 		warning, err := load(db, guids, rows)
 		if err != nil {
@@ -76,11 +89,44 @@ func BuildRoster(db *sql.DB, dbc *RosterDBC, trees TalentTrees, selector Selecto
 			roster.Warnings = append(roster.Warnings, warning)
 		}
 	}
+	if inputs.Players != nil {
+		roster.Warnings = append(roster.Warnings, markPlayers(rows, inputs.Players)...)
+	}
 
+	auraItems, err := loadAuraItems(db)
+	if err != nil {
+		return nil, err
+	}
+	if inputs.WorldBuffs == nil {
+		roster.Warnings = append(roster.Warnings, "no world-buff matrix given, so the bots' flask, elixirs and food stay as they are")
+	}
+	loadout := Loadout{DBC: inputs.DBC, PetTrees: inputs.PetTrees, WorldBuffs: inputs.WorldBuffs, AuraItems: auraItems}
 	for _, member := range members {
-		roster.Characters = append(roster.Characters, BuildCharacter(rows[member.guid], dbc, trees, minSkill, itemStats))
+		character := BuildCharacter(rows[member.guid], inputs.DBC, inputs.Trees, inputs.MinSkill, inputs.ItemStats)
+		BuildLoadout(character, rows[member.guid], loadout)
+		roster.Characters = append(roster.Characters, character)
 	}
 	return roster, nil
+}
+
+// markPlayers makes exactly the named characters the played ones, and warns about names the export
+// doesn't have.
+func markPlayers(characters map[uint32]*CharacterRows, players []string) []string {
+	found := map[string]bool{}
+	for _, character := range characters {
+		played := slices.ContainsFunc(players, func(name string) bool { return strings.EqualFold(name, character.Name) })
+		character.Bot = !played
+		if played {
+			found[strings.ToLower(character.Name)] = true
+		}
+	}
+	var warnings []string
+	for _, name := range players {
+		if !found[strings.ToLower(name)] {
+			warnings = append(warnings, fmt.Sprintf("-players names %s, who isn't in the export", name))
+		}
+	}
+	return warnings
 }
 
 type member struct {
@@ -235,8 +281,10 @@ func selectNamedMembers(db *sql.DB, names []string) ([]member, error) {
 
 func loadCharacters(db *sql.DB, guids []uint32) (map[uint32]*CharacterRows, error) {
 	placeholders, args := inClause(guids)
-	rows, err := db.Query("SELECT guid, name, class, race, level, activeTalentGroup FROM acore_characters.characters"+
-		" WHERE guid IN ("+placeholders+")", args...)
+	// an ammo's DPS is the middle of its damage range: Iceblade Arrow's 91.5 is stored as 91 to 92
+	rows, err := db.Query("SELECT c.guid, c.name, c.class, c.race, c.level, c.activeTalentGroup, c.ammoId,"+
+		" COALESCE((it.dmg_min1 + it.dmg_max1) / 2, 0) FROM acore_characters.characters c"+
+		" LEFT JOIN acore_world.item_template it ON it.entry = c.ammoId WHERE c.guid IN ("+placeholders+")", args...)
 	if err != nil {
 		return nil, err
 	}
@@ -247,7 +295,7 @@ func loadCharacters(db *sql.DB, guids []uint32) (map[uint32]*CharacterRows, erro
 		var guid uint32
 		character := &CharacterRows{Skills: map[int32]int32{}}
 		if err := rows.Scan(&guid, &character.Name, &character.ClassID, &character.RaceID, &character.Level,
-			&character.ActiveTalentGroup); err != nil {
+			&character.ActiveTalentGroup, &character.AmmoID, &character.AmmoDPS); err != nil {
 			return nil, err
 		}
 		characters[guid] = character
@@ -435,12 +483,229 @@ func loadRacialSwaps(db *sql.DB, guids []uint32, characters map[uint32]*Characte
 	return "", rows.Err()
 }
 
-// missingTableWarning turns "no such table" into a warning, since a server without the module simply
-// has nothing to export. Everything else stays an error.
+// loadPets reads the pet each character has out, character_pet slot 0, and its spells.
+func loadPets(db *sql.DB, guids []uint32, characters map[uint32]*CharacterRows) (string, error) {
+	placeholders, args := inClause(guids)
+	rows, err := db.Query("SELECT p.owner, p.id, p.entry, p.name, COALESCE(ct.family, 0) FROM acore_characters.character_pet p"+
+		" LEFT JOIN acore_world.creature_template ct ON ct.entry = p.entry WHERE p.slot = 0 AND p.owner IN ("+placeholders+")"+
+		" ORDER BY p.id", args...)
+	if err != nil {
+		return "", err
+	}
+	defer rows.Close()
+
+	owners := map[uint32]*PetRows{} // pet id -> the owner's pet
+	for rows.Next() {
+		var owner, id uint32
+		pet := &PetRows{}
+		if err := rows.Scan(&owner, &id, &pet.Entry, &pet.Name, &pet.Family); err != nil {
+			return "", err
+		}
+		if character := characters[owner]; character != nil && character.Pet == nil {
+			character.Pet = pet
+			owners[id] = pet
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return "", err
+	}
+
+	spells, err := db.Query("SELECT ps.guid, ps.spell FROM acore_characters.pet_spell ps"+
+		" JOIN acore_characters.character_pet p ON p.id = ps.guid WHERE p.slot = 0 AND p.owner IN ("+placeholders+")", args...)
+	if err != nil {
+		return "", err
+	}
+	defer spells.Close()
+	for spells.Next() {
+		var id uint32
+		var spell int32
+		if err := spells.Scan(&id, &spell); err != nil {
+			return "", err
+		}
+		if pet := owners[id]; pet != nil {
+			pet.Spells = append(pet.Spells, spell)
+		}
+	}
+	return "", spells.Err()
+}
+
+func loadAuras(db *sql.DB, guids []uint32, characters map[uint32]*CharacterRows) (string, error) {
+	placeholders, args := inClause(guids)
+	rows, err := db.Query("SELECT guid, spell FROM acore_characters.character_aura WHERE guid IN ("+placeholders+")", args...)
+	if err != nil {
+		return "", err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var guid uint32
+		var spell int32
+		if err := rows.Scan(&guid, &spell); err != nil {
+			return "", err
+		}
+		if character := characters[guid]; character != nil {
+			character.Auras = append(character.Auras, spell)
+		}
+	}
+	return "", rows.Err()
+}
+
+// loadBags reads the consumables in the backpack and the bags in the 4 bag slots, one row per item
+// however many stacks there are. The bank is left out, since nobody drinks from it.
+func loadBags(db *sql.DB, guids []uint32, characters map[uint32]*CharacterRows) (string, error) {
+	placeholders, args := inClause(guids)
+	rows, err := db.Query(fmt.Sprintf(`SELECT ci.guid, it.entry, it.subclass, it.Quality, it.ItemLevel,
+			it.spellid_1, it.spellid_2, it.spellid_3, it.spellid_4, it.spellid_5
+		FROM acore_characters.character_inventory ci
+		JOIN acore_characters.item_instance ii ON ii.guid = ci.item
+		JOIN acore_world.item_template it ON it.entry = ii.itemEntry
+		LEFT JOIN acore_characters.character_inventory holder ON holder.item = ci.bag
+		WHERE it.class = %d AND ci.guid IN (%s)
+			AND ((ci.bag = 0 AND ci.slot BETWEEN %d AND %d) OR (holder.bag = 0 AND holder.slot BETWEEN %d AND %d))
+		ORDER BY ci.guid, it.entry`,
+		ItemClassConsumable, placeholders, ACSlotBackpackStart, ACSlotBackpackEnd, ACSlotBagStart, ACSlotBagEnd), args...)
+	if err != nil {
+		return "", err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var guid uint32
+		var item BagItem
+		if err := rows.Scan(&guid, &item.ItemID, &item.SubClass, &item.Quality, &item.ItemLevel,
+			&item.Spells[0], &item.Spells[1], &item.Spells[2], &item.Spells[3], &item.Spells[4]); err != nil {
+			return "", err
+		}
+		character := characters[guid]
+		if character != nil && !slices.ContainsFunc(character.Bags, func(bagged BagItem) bool { return bagged.ItemID == item.ItemID }) {
+			character.Bags = append(character.Bags, item)
+		}
+	}
+	return "", rows.Err()
+}
+
+// loadShadowfiend flags the priests who know Shadowfiend, which a bot shadow priest drinks no mana
+// potions for.
+func loadShadowfiend(db *sql.DB, guids []uint32, characters map[uint32]*CharacterRows) (string, error) {
+	const shadowfiend = 34433
+	placeholders, args := inClause(guids)
+	rows, err := db.Query(fmt.Sprintf("SELECT guid FROM acore_characters.character_spell WHERE spell = %d AND guid IN (%s)",
+		shadowfiend, placeholders), args...)
+	if err != nil {
+		return "", err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var guid uint32
+		if err := rows.Scan(&guid); err != nil {
+			return "", err
+		}
+		if character := characters[guid]; character != nil {
+			character.KnowsShadowfiend = true
+		}
+	}
+	return "", rows.Err()
+}
+
+// loadBotState tells bots from characters someone plays. mod-playerbots saves a bot's strategies in
+// playerbots_db_store whenever it logs one out, and a random bot's account is typed 1, so a character
+// with neither has never been a bot.
+func loadBotState(db *sql.DB, guids []uint32, characters map[uint32]*CharacterRows) (string, error) {
+	placeholders, args := inClause(guids)
+	rows, err := db.Query("SELECT guid, `key`, value FROM acore_playerbots.playerbots_db_store WHERE guid IN ("+placeholders+")", args...)
+	if err != nil {
+		if warning := missingTableWarning(err, "mod-playerbots"); warning != "" {
+			return warning + ", so every character counts as played", nil
+		}
+		return "", err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var guid uint32
+		var key string
+		var value sql.NullString
+		if err := rows.Scan(&guid, &key, &value); err != nil {
+			return "", err
+		}
+		character := characters[guid]
+		if character == nil {
+			continue
+		}
+		character.Bot = true
+		if key != "co" && key != "nc" && key != "dead" {
+			continue
+		}
+		if character.Strategies == nil {
+			character.Strategies = &BotStrategies{}
+		}
+		switch strategies := ParseStrategies(value.String); key {
+		case "co":
+			character.Strategies.Combat = strategies
+		case "nc":
+			character.Strategies.NonCombat = strategies
+		default:
+			character.Strategies.Dead = strategies
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return "", err
+	}
+
+	const randomBotAccount = 1
+	accounts, err := db.Query(fmt.Sprintf("SELECT c.guid FROM acore_characters.characters c"+
+		" JOIN acore_playerbots.playerbots_account_type t ON t.account_id = c.account"+
+		" WHERE t.account_type = %d AND c.guid IN (%s)", randomBotAccount, placeholders), args...)
+	if err != nil {
+		if warning := missingTableWarning(err, "mod-playerbots"); warning != "" {
+			return warning + ", so only characters with saved bot strategies count as bots", nil
+		}
+		return "", err
+	}
+	defer accounts.Close()
+	for accounts.Next() {
+		var guid uint32
+		if err := accounts.Scan(&guid); err != nil {
+			return "", err
+		}
+		if character := characters[guid]; character != nil {
+			character.Bot = true
+		}
+	}
+	return "", accounts.Err()
+}
+
+// loadAuraItems maps each flask's and elixir's buff to the item, the lowest entry when several give it.
+func loadAuraItems(db *sql.DB) (map[int32]AuraItem, error) {
+	rows, err := db.Query(fmt.Sprintf("SELECT spellid_1, entry, subclass FROM acore_world.item_template"+
+		" WHERE class = %d AND subclass IN (%d, %d) AND spellid_1 <> 0 ORDER BY entry",
+		ItemClassConsumable, itemSubClassElixir, itemSubClassFlask))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	items := map[int32]AuraItem{}
+	for rows.Next() {
+		var spell int32
+		var item AuraItem
+		if err := rows.Scan(&spell, &item.ItemID, &item.SubClass); err != nil {
+			return nil, err
+		}
+		if _, ok := items[spell]; !ok {
+			items[spell] = item
+		}
+	}
+	return items, rows.Err()
+}
+
+// missingTableWarning turns "no such table" or "no such database" into a warning, since a server
+// without the module simply has nothing to export. Everything else stays an error.
 func missingTableWarning(err error, module string) string {
-	const errNoSuchTable = 1146
+	const errNoSuchDatabase, errNoSuchTable = 1049, 1146
 	var mysqlErr *mysql.MySQLError
-	if errors.As(err, &mysqlErr) && mysqlErr.Number == errNoSuchTable {
+	if errors.As(err, &mysqlErr) && (mysqlErr.Number == errNoSuchTable || mysqlErr.Number == errNoSuchDatabase) {
 		return fmt.Sprintf("%s isn't installed on the server, skipped: %s", module, mysqlErr.Message)
 	}
 	return ""
