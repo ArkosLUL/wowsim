@@ -12,10 +12,11 @@ func (paladin *Paladin) registerHammerOfTheRighteousSpell() {
 	results := make([]*core.SpellResult, numHits)
 
 	paladin.HammerOfTheRighteous = paladin.RegisterSpell(core.SpellConfig{
-		ActionID:    core.ActionID{SpellID: 53595},
-		SpellSchool: core.SpellSchoolHoly,
-		ProcMask:    core.ProcMaskMeleeMHSpecial,
-		Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagAPL,
+		ActionID:     core.ActionID{SpellID: 53595},
+		SpellSchool:  core.SpellSchoolHoly,
+		ProcMask:     core.ProcMaskMeleeMHSpecial,
+		Flags:        core.SpellFlagMeleeMetrics | core.SpellFlagAPL,
+		MissileSpeed: 35,
 
 		ManaCost: core.ManaCostOptions{
 			BaseCost:   0.06,

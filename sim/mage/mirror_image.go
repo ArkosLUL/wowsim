@@ -156,7 +156,7 @@ func (mi *MirrorImage) registerFireblastSpell() {
 
 	mi.Fireblast = mi.RegisterSpell(core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: 59637},
-		SpellSchool: core.SpellSchoolFrost,
+		SpellSchool: core.SpellSchoolFire,
 		ProcMask:    core.ProcMaskSpellDamage,
 
 		ManaCost: core.ManaCostOptions{

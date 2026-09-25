@@ -27,9 +27,10 @@ func init() {
 		chaosBaneAura := player.NewTemporaryStatsAura("Chaos Bane", core.ActionID{SpellID: 73422}, stats.Stats{stats.Strength: 270}, time.Second*10)
 
 		choasBaneSpell := player.RegisterSpell(core.SpellConfig{
-			ActionID:    core.ActionID{SpellID: 71904},
-			SpellSchool: core.SpellSchoolShadow,
-			ProcMask:    core.ProcMaskEmpty, // not sure if this can proc things.
+			ActionID:     core.ActionID{SpellID: 71904},
+			SpellSchool:  core.SpellSchoolShadow,
+			ProcMask:     core.ProcMaskEmpty, // not sure if this can proc things.
+			MissileSpeed: 10,
 
 			DamageMultiplier: 1,
 			ThreatMultiplier: 1,

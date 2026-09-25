@@ -11,10 +11,11 @@ func (paladin *Paladin) registerHolyWrathSpell() {
 	results := make([]*core.SpellResult, len(paladin.Env.Encounter.TargetUnits))
 
 	paladin.HolyWrath = paladin.RegisterSpell(core.SpellConfig{
-		ActionID:    core.ActionID{SpellID: 48817},
-		SpellSchool: core.SpellSchoolHoly,
-		ProcMask:    core.ProcMaskSpellDamage,
-		Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagAPL,
+		ActionID:     core.ActionID{SpellID: 48817},
+		SpellSchool:  core.SpellSchoolHoly,
+		ProcMask:     core.ProcMaskSpellDamage,
+		Flags:        core.SpellFlagMeleeMetrics | core.SpellFlagAPL,
+		MissileSpeed: 20,
 
 		ManaCost: core.ManaCostOptions{
 			BaseCost:   0.20,

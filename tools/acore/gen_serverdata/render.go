@@ -171,6 +171,9 @@ func renderSpells(spells []namedSpell) ([]byte, error) {
 		other.int("RuneCostID", s.RuneCostID)
 		other.float("Speed", s.Speed)
 		other.int("MaxTargets", s.MaxTargets)
+		other.int("SpellLevel", s.SpellLevel)
+		other.int("BaseLevel", s.BaseLevel)
+		other.int("MaxLevel", s.MaxLevel)
 
 		var mods fields
 		mods.bounds("CastMods", s.CastMods)

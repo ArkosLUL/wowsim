@@ -111,6 +111,69 @@ checks timing.
     the Righteous, Hammer of Wrath, Holy Wrath, Chaos Bolt, Heroic Throw, Shattering Throw, Waterbolt,
     Searing Totem, felhunter 47964, Shadowmourne 71904. Their travel time moves goldens.
 
+#### As built
+
+**API** (`sim/core/spell_effect.go`):
+- `core.SpellEffect{Effect, FromSpellID, Min, Max, SP, AP, WeaponPct}` goes on `SpellConfig.Direct` and
+  `DotConfig.Tick` (Dot or Hot). Closures read `spell.Direct` and `dot.Tick`, which hold the server's value
+  where a conflict applied, then the mods: `spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()`.
+  `Roll` draws no random number when `Min == Max`.
+- `SpellConfig.Mods []core.SpellMod{Op, Flat, Pct}`, one list per spell, in server units (BasePoints+1,
+  op-24 flats in hundredths). Ops: `SpellModEffect1/2/3`, `SpellModAllEffects`, `SpellModBonusMultiplier`.
+  `RegisterSpell` checks the rank values, then folds the mods like `CalcValue` (float32, truncated). Op 24
+  skips a 0 coefficient; no op touches AP.
+- Conflict fields: `ServerSchool` (unchecked when either side has no school), then the floats
+  (`ServerField.IsFloat`): `ServerMissileSpeed`, `ServerMin/Max/SP/AP/WeaponPct`, `ServerTick*`. A float
+  entry sets `SimFloat`/`ServerFloat`, as the table's decimal (0.857).
+
+**Declaring:**
+- A physical spell declares the server's SP but doesn't apply it: the server scales only the physical
+  damage-done bonus, which the sim lacks (pet abilities, Bloodthirst, Shield Slam).
+- `WeaponPct` also scales the flat roll when the server lists the flat effect first, so not for Devastate
+  20243 or Blood-Caked Strike 50463.
+- An off-hand strike's flat bonus takes the off-hand's 0.5 too (`fixed_bonus × weapon_total_pct`); the
+  sim halves only the weapon part.
+- `CalcValue` adds `PointsPerComboPoint` × points before the effect mods. No field holds it: the combo
+  part stays in the closure, with the effect percent applied.
+- A dot dealt as another spell (`DotConfig.Spell`: Searing and Magma Totem) is checked against the
+  registering spell, so declare it with `FromSpellID`.
+- `PetSpecialAbilityConfig` passes `Damage` and `MissileSpeed` through, not `Mods`.
+
+**Undeclared lists:** `UndeclaredSpells []int32` in `sim/<class>/serverdata_undeclared.go`, 194 spells.
+`TestServerDataConflicts` fails on a missing or stale entry and prints the server's values to declare.
+- A class spell is registered by that class alone (player or pet) and, on a player, has its
+  SpellFamilyName. Items, relics and racials (family 0) aren't listed.
+- Counted: school damage, leech, heal, periodic damage/heal/leech, and the weapon effects as one, plus
+  those of a spell triggered through TRIGGER_SPELL, TRIGGER_MISSILE or PERIODIC_TRIGGER_SPELL (Volley's
+  58433: declare with `FromSpellID`). An effect all 0 at level 80 isn't.
+- Missed: damage a script deals behind a dummy effect (Execute 47471's 20647, Explosive Shot, Death and
+  Decay, Holy Shock). Declare those anyway.
+- An effect the sim doesn't deal stays listed, with a comment saying so.
+
+**Missile speed:** only a closure calling `spell.WaitTravelTime` waits, and none of the spec's missile
+spells do, so declaring their speeds moved no golden. The sweeps add the wait: hunter shots, the paladin
+four, Chaos Bolt, both throws, Waterbolt, Searing Totem's bolt, Imp Firebolt (the spec's "felhunter
+47964"). Shadowmourne 71904 is shared, so no item owns its wait.
+
+**Entries:**
+- KeepSim, for an id carrying another server spell's damage, until the class deals it as that spell:
+  Windfury 58804 (25504), Summon Infernal 1122 (22703), Scourge Strike 55271 tag 2 (70890), Divine Aegis
+  47515 (47753), Empowered Renew 63543 (63544), T10 70770 (70772), The Fists of Fury 41989 (41990), Hodir's
+  swing 63511 tag 1. Also the stand-in harmful spell 52789, the external Shattering Throw, and Empower
+  Rune Weapon 47568's 1 yd/s (a self cast never travels).
+- Not KeepSim, so the server's value applies until the class declares it: missile speeds of Lightning
+  Bolt, Lava Burst, Fan of Knives, Unholy Blight, Gargoyle Strike and Typhoon's cast 61384 (declare, then
+  wait); Mind Freeze 47528 Frost; the totem summons 58704/58734 Physical; Shadowcrawl 63619 Arcane
+  (PAR-P7-PRI). Shared: Hyperspeed
+  Acceleration 54758, Frozen Blows 63512 and Leeching Swarm 66118 (PAR-P7-TANK).
+
+**Goldens:** Frost mage -0.02%, from Frostbolt's 803–865 and 0.857. Every other suite holds.
+
+**BenchmarkSimulate** against a4292b95a: raid, hunter, Ret and rogue within ±2%, Elemental +2.5% (1
+iteration) and +3.5% (100). No new code shows in its profile, but layout moves it: keeping `Direct` and
+`Tick` last in `Spell` and `Dot` saved about 1%, and 40 bytes of `SpellConfig` padding cut an earlier
++6.8% to +1.8%. Moving `AutoAttacks` to the end of `Unit` didn't help, so the cause is open.
+
 ### Class sweep (I5)
 
 Three items:

@@ -152,9 +152,10 @@ func (wp *WarlockPet) registerShadowBiteSpell() {
 
 func (wp *WarlockPet) registerFireboltSpell() {
 	wp.primaryAbility = wp.RegisterSpell(core.SpellConfig{
-		ActionID:    core.ActionID{SpellID: 47964},
-		SpellSchool: core.SpellSchoolFire,
-		ProcMask:    core.ProcMaskSpellDamage,
+		ActionID:     core.ActionID{SpellID: 47964},
+		SpellSchool:  core.SpellSchoolFire,
+		ProcMask:     core.ProcMaskSpellDamage,
+		MissileSpeed: 16,
 
 		ManaCost: core.ManaCostOptions{
 			FlatCost: 180,

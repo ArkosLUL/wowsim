@@ -9,10 +9,11 @@ import (
 
 func (hunter *Hunter) registerVolleySpell() {
 	hunter.Volley = hunter.RegisterSpell(core.SpellConfig{
-		ActionID:    core.ActionID{SpellID: 58434},
-		SpellSchool: core.SpellSchoolArcane,
-		ProcMask:    core.ProcMaskRangedSpecial,
-		Flags:       core.SpellFlagChanneled | core.SpellFlagAPL,
+		ActionID:     core.ActionID{SpellID: 58434},
+		SpellSchool:  core.SpellSchoolArcane,
+		ProcMask:     core.ProcMaskRangedSpecial,
+		Flags:        core.SpellFlagChanneled | core.SpellFlagAPL,
+		MissileSpeed: 30,
 
 		ManaCost: core.ManaCostOptions{
 			BaseCost:   0.17,

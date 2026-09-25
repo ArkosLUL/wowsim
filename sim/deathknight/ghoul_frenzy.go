@@ -13,7 +13,7 @@ func (dk *Deathknight) registerGhoulFrenzySpell() {
 
 	dk.GhoulFrenzy = dk.RegisterSpell(core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: 63560},
-		SpellSchool: core.SpellSchoolShadow,
+		SpellSchool: core.SpellSchoolNature,
 		ProcMask:    core.ProcMaskSpellHealing,
 		Flags:       core.SpellFlagAPL,
 

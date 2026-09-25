@@ -41,10 +41,12 @@ func (warrior *Warrior) registerMortalStrikeSpell(cdTimer *core.Timer) {
 		CritMultiplier:   warrior.critMultiplier(mh),
 		ThreatMultiplier: 1,
 
+		Direct: core.SpellEffect{Effect: 1, Min: 380, Max: 380, WeaponPct: 1},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := 380 +
+			baseDamage := (spell.Direct.Roll(sim) +
 				spell.Unit.MHNormalizedWeaponDamage(sim, spell.MeleeAttackPower()) +
-				spell.BonusWeaponDamage()
+				spell.BonusWeaponDamage()) * spell.Direct.WeaponPct
 
 			result := spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 

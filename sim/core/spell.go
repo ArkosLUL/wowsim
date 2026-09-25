@@ -55,6 +55,11 @@ type SpellConfig struct {
 	ExpectedInitialDamage ExpectedDamageCalculator
 	ExpectedTickDamage    ExpectedDamageCalculator
 
+	// the numbers of the direct damage or heal; a Dot's or Hot's ticks declare theirs in DotConfig.Tick
+	Direct SpellEffect
+	// talents, glyphs, relics and set bonuses on the declared rank values, for Direct and the ticks alike
+	Mods []SpellMod
+
 	Dot    DotConfig
 	Hot    DotConfig
 	Shield ShieldConfig
@@ -151,6 +156,30 @@ type Spell struct {
 	serverSpell     *serverdata.Spell
 	serverConflicts []ServerConflict
 	timing          castTiming
+
+	// SpellConfig.Direct, with the server's values where RegisterSpell found a conflict, then its Mods
+	Direct SpellEffect
+}
+
+// schoolIndex picks the first school of a mix, in stats.SchoolIndex order.
+func schoolIndex(school SpellSchool) stats.SchoolIndex {
+	switch {
+	case school.Matches(SpellSchoolPhysical):
+		return stats.SchoolIndexPhysical
+	case school.Matches(SpellSchoolArcane):
+		return stats.SchoolIndexArcane
+	case school.Matches(SpellSchoolFire):
+		return stats.SchoolIndexFire
+	case school.Matches(SpellSchoolFrost):
+		return stats.SchoolIndexFrost
+	case school.Matches(SpellSchoolHoly):
+		return stats.SchoolIndexHoly
+	case school.Matches(SpellSchoolNature):
+		return stats.SchoolIndexNature
+	case school.Matches(SpellSchoolShadow):
+		return stats.SchoolIndexShadow
+	}
+	return stats.SchoolIndexNone
 }
 
 func (unit *Unit) OnSpellRegistered(handler SpellRegisteredHandler) {
@@ -211,6 +240,7 @@ func (unit *Unit) RegisterSpell(config SpellConfig) *Spell {
 		castTimeFn: config.Cast.CastTime,
 
 		ApplyEffects: config.ApplyEffects,
+		Direct:       config.Direct,
 
 		expectedInitialDamageInternal: config.ExpectedInitialDamage,
 		expectedTickDamageInternal:    config.ExpectedTickDamage,
@@ -234,22 +264,7 @@ func (unit *Unit) RegisterSpell(config SpellConfig) *Spell {
 		RelatedAuras: config.RelatedAuras,
 	}
 
-	switch {
-	case spell.SpellSchool.Matches(SpellSchoolPhysical):
-		spell.SchoolIndex = stats.SchoolIndexPhysical
-	case spell.SpellSchool.Matches(SpellSchoolArcane):
-		spell.SchoolIndex = stats.SchoolIndexArcane
-	case spell.SpellSchool.Matches(SpellSchoolFire):
-		spell.SchoolIndex = stats.SchoolIndexFire
-	case spell.SpellSchool.Matches(SpellSchoolFrost):
-		spell.SchoolIndex = stats.SchoolIndexFrost
-	case spell.SpellSchool.Matches(SpellSchoolHoly):
-		spell.SchoolIndex = stats.SchoolIndexHoly
-	case spell.SpellSchool.Matches(SpellSchoolNature):
-		spell.SchoolIndex = stats.SchoolIndexNature
-	case spell.SpellSchool.Matches(SpellSchoolShadow):
-		spell.SchoolIndex = stats.SchoolIndexShadow
-	}
+	spell.SchoolIndex = schoolIndex(spell.SpellSchool)
 
 	// newXXXCost() all update spell.DefaultCast.Cost
 	if config.ManaCost.BaseCost != 0 || config.ManaCost.FlatCost != 0 {
@@ -264,8 +279,9 @@ func (unit *Unit) RegisterSpell(config SpellConfig) *Spell {
 		spell.Cost = newFocusCost(spell, config.FocusCost)
 	}
 
-	// before the dots, which read Channeled, and before the cast function is picked
-	spell.applyServerData(&config.Cast)
+	// before the dots, which read Channeled and copy Tick, and before the cast function is picked
+	spell.applyServerData(&config)
+	spell.applyMods(&config)
 
 	spell.createDots(config.Dot, false)
 	spell.createDots(config.Hot, true)
@@ -640,6 +656,26 @@ const (
 	// The SpellID is another spell on the server (Sim is the id, Server the right one), so none of its
 	// data applies. Only an entry sets it, with KeepSim.
 	ServerSpellID
+	// SpellSchool against SchoolMask, both as SpellSchool bits. A spell with no school on either side
+	// deals nothing, so isn't checked.
+	ServerSchool
+
+	// The fields from here on hold their values in SimFloat and ServerFloat.
+
+	ServerMissileSpeed // MissileSpeed against Speed, yards per second
+	// SpellConfig.Direct against its effect: the level 80 range (Min, Max), the coefficients and the
+	// weapon percent
+	ServerMin
+	ServerMax
+	ServerSP
+	ServerAP
+	ServerWeaponPct
+	// the same for DotConfig.Tick, of the spell's Dot or Hot
+	ServerTickMin
+	ServerTickMax
+	ServerTickSP
+	ServerTickAP
+	ServerTickWeaponPct
 )
 
 var serverFieldNames = [...]string{
@@ -652,6 +688,23 @@ var serverFieldNames = [...]string{
 	ServerCompletelyBlocked: "CompletelyBlocked",
 	ServerChanneled:         "Channeled",
 	ServerSpellID:           "SpellID",
+	ServerSchool:            "School",
+	ServerMissileSpeed:      "MissileSpeed",
+	ServerMin:               "Min",
+	ServerMax:               "Max",
+	ServerSP:                "SP",
+	ServerAP:                "AP",
+	ServerWeaponPct:         "WeaponPct",
+	ServerTickMin:           "TickMin",
+	ServerTickMax:           "TickMax",
+	ServerTickSP:            "TickSP",
+	ServerTickAP:            "TickAP",
+	ServerTickWeaponPct:     "TickWeaponPct",
+}
+
+// IsFloat reports whether the field's conflicts hold their values in SimFloat and ServerFloat.
+func (f ServerField) IsFloat() bool {
+	return f >= ServerMissileSpeed
 }
 
 func (f ServerField) String() string {
@@ -663,18 +716,24 @@ func (f ServerField) String() string {
 
 // ServerConflict is a value a spell declares that its server data rules out, or a server flag an entry
 // turns down. Timings are in ms, flags 0 or 1. A timing talents, glyphs, set bonuses or items can reach
-// isn't one.
+// isn't one. A value the spell leaves undeclared (0) where the server has one is.
 type ServerConflict struct {
 	Spell  ActionID
 	Field  ServerField
 	Sim    int64
 	Server int64
+	// the values of a field that IsFloat, Sim and Server staying 0
+	SimFloat    float64
+	ServerFloat float64
 
 	// the entry that covers it; without one, the server's value replaced the sim's
 	Allowed *ServerConflictAllowance
 }
 
 func (c ServerConflict) String() string {
+	if c.Field.IsFloat() {
+		return fmt.Sprintf("%s %s: sim %v, server %v", c.Spell, c.Field, c.SimFloat, c.ServerFloat)
+	}
 	return fmt.Sprintf("%s %s: sim %d, server %d", c.Spell, c.Field, c.Sim, c.Server)
 }
 
@@ -683,12 +742,14 @@ func (c ServerConflict) String() string {
 // buff, an item's cooldown, the triggered spell behind a dummy cast. Without it the server's value
 // applies, and the entry stands for a declaration its class still has to fix.
 type ServerConflictAllowance struct {
-	Spell   ActionID
-	Field   ServerField
-	Sim     int64
-	Server  int64
-	KeepSim bool
-	Why     string
+	Spell       ActionID
+	Field       ServerField
+	Sim         int64
+	Server      int64
+	SimFloat    float64 // for a field that IsFloat, as in ServerConflict
+	ServerFloat float64
+	KeepSim     bool
+	Why         string
 }
 
 type serverConflictKey struct {
@@ -749,23 +810,37 @@ const (
 // the StartRecoveryCategory nearly every spell with a GCD shares
 const gcdCategoryShared = 133
 
-// applyServerData swaps what the spell declares for its server data: the flags its hit and resist rolls
-// read, and for a spell the sim casts itself, its cast time, GCD and cooldowns.
-func (spell *Spell) applyServerData(cast *CastConfig) {
-	if spell.ActionID.SpellID == 0 || spell.Flags.Matches(SpellFlagNoServerData) {
+// applyServerData swaps what the spell declares for its server data: the numbers of its damage and
+// healing, its school and missile speed, the flags its hit and resist rolls read, and for a spell the sim
+// casts itself, its cast time, GCD and cooldowns.
+func (spell *Spell) applyServerData(config *SpellConfig) {
+	cast := &config.Cast
+	if spell.Flags.Matches(SpellFlagNoServerData) {
 		return
 	}
-	s := serverdata.SpellByID(spell.ActionID.SpellID)
+	var s *serverdata.Spell
+	if spell.ActionID.SpellID != 0 {
+		s = serverdata.SpellByID(spell.ActionID.SpellID)
+	}
+	if s != nil {
+		if e := findServerAllowance(spell.ActionID, ServerSpellID); e != nil && e.KeepSim {
+			spell.serverConflicts = append(spell.serverConflicts, ServerConflict{
+				Spell: spell.ActionID, Field: ServerSpellID, Sim: int64(spell.ActionID.SpellID), Server: e.Server, Allowed: e,
+			})
+			s = nil
+		}
+	}
+
+	// all before the early returns for triggered spells, which deal most procs' damage
+	spell.checkEffect(&spell.Direct, s, directEffectFields)
+	spell.checkEffect(&config.Dot.Tick, s, tickEffectFields)
+	spell.checkEffect(&config.Hot.Tick, s, tickEffectFields)
 	if s == nil {
 		return
 	}
-	if e := findServerAllowance(spell.ActionID, ServerSpellID); e != nil && e.KeepSim {
-		spell.serverConflicts = append(spell.serverConflicts, ServerConflict{
-			Spell: spell.ActionID, Field: ServerSpellID, Sim: int64(spell.ActionID.SpellID), Server: e.Server, Allowed: e,
-		})
-		return
-	}
 	spell.serverSpell = s
+	spell.syncServerSchool(s)
+	spell.syncServerMissileSpeed(s)
 
 	spell.syncServerFlag(ServerBinary, SpellFlagBinary, s.Flags&serverdata.FlagBinary != 0)
 	spell.syncServerFlag(ServerNoActiveDefense, SpellFlagNoActiveDefense, s.Flags&serverdata.FlagNoActiveDefense != 0)
@@ -825,6 +900,26 @@ func (spell *Spell) applyServerData(cast *CastConfig) {
 	}
 }
 
+func (spell *Spell) syncServerSchool(s *serverdata.Spell) {
+	server := SpellSchoolFromServerMask(s.SchoolMask)
+	if spell.SpellSchool == SpellSchoolNone || server == SpellSchoolNone || spell.SpellSchool == server {
+		return
+	}
+	if spell.recordServerConflict(ServerSchool, int64(spell.SpellSchool), int64(server)) {
+		spell.SpellSchool = server
+		spell.SchoolIndex = schoolIndex(server)
+	}
+}
+
+func (spell *Spell) syncServerMissileSpeed(s *serverdata.Spell) {
+	if float32(spell.MissileSpeed) == s.Speed {
+		return
+	}
+	if server := serverFloat(s.Speed); spell.recordServerFloatConflict(ServerMissileSpeed, spell.MissileSpeed, server) {
+		spell.MissileSpeed = server
+	}
+}
+
 // syncServerFlag takes the server's flag. A flag the spell doesn't set is nothing it declared, so only
 // one it sets and the server lacks is a conflict, unless a KeepSim entry turns the server's flag down:
 // a dummy cast whose hit the server rolls on the triggered spell that does the damage.
@@ -865,9 +960,16 @@ func (spell *Spell) syncServerTiming(field ServerField, value *time.Duration, se
 
 // recordServerConflict reports whether the server's value applies.
 func (spell *Spell) recordServerConflict(field ServerField, sim, server int64) bool {
-	allowed := findServerAllowance(spell.ActionID, field)
-	spell.serverConflicts = append(spell.serverConflicts, ServerConflict{
-		Spell: spell.ActionID, Field: field, Sim: sim, Server: server, Allowed: allowed,
-	})
-	return allowed == nil || !allowed.KeepSim
+	return spell.addServerConflict(ServerConflict{Field: field, Sim: sim, Server: server})
+}
+
+func (spell *Spell) recordServerFloatConflict(field ServerField, sim, server float64) bool {
+	return spell.addServerConflict(ServerConflict{Field: field, SimFloat: sim, ServerFloat: server})
+}
+
+func (spell *Spell) addServerConflict(c ServerConflict) bool {
+	c.Spell = spell.ActionID
+	c.Allowed = findServerAllowance(spell.ActionID, c.Field)
+	spell.serverConflicts = append(spell.serverConflicts, c)
+	return c.Allowed == nil || !c.Allowed.KeepSim
 }

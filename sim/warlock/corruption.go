@@ -8,7 +8,6 @@ import (
 )
 
 func (warlock *Warlock) registerCorruptionSpell() {
-	spellCoeff := 0.2 + 0.12*float64(warlock.Talents.EmpoweredCorruption)/6 + 0.01*float64(warlock.Talents.EverlastingAffliction)
 	canCrit := warlock.Talents.Pandemic
 
 	warlock.Corruption = warlock.RegisterSpell(core.SpellConfig{
@@ -41,6 +40,11 @@ func (warlock *Warlock) registerCorruptionSpell() {
 		CritMultiplier:   warlock.SpellCritMultiplier(1, core.TernaryFloat64(warlock.Talents.Pandemic, 1, 0)),
 		ThreatMultiplier: 1 - 0.1*float64(warlock.Talents.ImprovedDrainSoul),
 
+		Mods: []core.SpellMod{
+			{Op: core.SpellModBonusMultiplier, Flat: 2 * warlock.Talents.EmpoweredCorruption},
+			{Op: core.SpellModBonusMultiplier, Flat: warlock.Talents.EverlastingAffliction},
+		},
+
 		Dot: core.DotConfig{
 			Aura: core.Aura{
 				Label: "Corruption",
@@ -50,8 +54,10 @@ func (warlock *Warlock) registerCorruptionSpell() {
 			AffectedByCastSpeed: warlock.HasMajorGlyph(proto.WarlockMajorGlyph_GlyphOfQuickDecay),
 			TicksCanCrit:        canCrit,
 
+			Tick: core.SpellEffect{Effect: 0, Min: 180, Max: 180, SP: 0.2},
+
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-				dot.SnapshotBaseDamage = 1080/6 + spellCoeff*dot.Spell.SpellPower()
+				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + dot.Tick.SP*dot.Spell.SpellPower()
 				if !isRollover {
 					attackTable := dot.Spell.Unit.AttackTables[target.UnitIndex]
 					dot.SnapshotCritChance = dot.Spell.SpellCritChance(target)
@@ -79,7 +85,8 @@ func (warlock *Warlock) registerCorruptionSpell() {
 				dot := spell.Dot(target)
 				return dot.CalcSnapshotDamage(sim, target, dot.OutcomeExpectedMagicSnapshotCrit)
 			} else {
-				baseDmg := 180 + spellCoeff*spell.SpellPower()
+				tick := &spell.Dot(target).Tick
+				baseDmg := tick.Average() + tick.SP*spell.SpellPower()
 				return spell.CalcPeriodicDamage(sim, target, baseDmg, spell.OutcomeExpectedMagicCrit)
 			}
 		},
