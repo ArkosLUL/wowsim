@@ -719,7 +719,7 @@ those three slots empty.
   doesn't filter sources, so it matches the owned rule; `trimSeedToPool` still lacks the trimmer's
   off-hand weapon move-up.
 
-### BIS-hunter-ranged (wave I4)
+### BIS-hunter-ranged (wave I4, done)
 
 A user's batch hung at step 5 (Effects) on a hunter wearing a bow. `effectFamilies` prices the ranged
 slot from a base with it emptied (any weapon needs a sim), and a hunter without a ranged weapon never

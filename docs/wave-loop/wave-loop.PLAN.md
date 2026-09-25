@@ -276,9 +276,9 @@ crashed before F2, so its column starts there.
 | PAR-P7-0f | merged | `3abef3a1f` | Enhancement and Retribution goldens promoted in `48fd72cab` (+20.61 Spell Power; the spec expected none) |
 | UI-FIX2 | merged | `49344a96c` | |
 | wave I3 cross-review | | | no findings |
-| PAR-DECL | running | | |
-| RI-4 | running | | |
-| BIS-hunter-ranged | running | | |
+| PAR-DECL | merged | `accba95f6` | Frost goldens promoted in `812eb7771` (-0.02%, Frostbolt); missile speeds move nothing until I5 adds the travel waits; Elemental bench +2.5% / +3.5%, cause open |
+| RI-4 | merged | `fc052a747` | acbis rejected version 1 rosters, fixed at merge; Nightwarrior's Worm has no talents in `pet_spell` |
+| BIS-hunter-ranged | merged | `4a04a6c4d` | |
 
 Later WIs are added as their wave starts.
 

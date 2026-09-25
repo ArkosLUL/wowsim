@@ -583,7 +583,7 @@ registered in `individual_sim_ui.ts:427-447`.
    found two UI defects, both fixed in `059eb8004`: chrome cut the import alert off before its warnings,
    and a long label squeezed the profession checkboxes to a sliver.
 
-## RI-4: pets, ammo and consumables (wave I4)
+## RI-4: pets, ammo and consumables (wave I4, done)
 
 Both importers give a raider their spec preset's pet, ammo and consumables. RI-4 reads them from the server
 (the user's decisions, 2026-09-24). Golden-neutral.

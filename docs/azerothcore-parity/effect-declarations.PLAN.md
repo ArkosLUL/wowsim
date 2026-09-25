@@ -185,6 +185,8 @@ Each item:
 - declares every damage and heal effect
 - moves effect and op-24 mods onto the declarations
 - splits `WeaponPct` out of `DamageMultiplier`
+- halves an off-hand strike's flat bonus too (As built, Declaring), e.g. Obliterate
+- adds `spell.WaitTravelTime` to its missile spells (As built, Missile speed)
 - for each mismatch, fixes the number or adds an allowlist entry
 - empties its classes' undeclared list
 
@@ -197,7 +199,7 @@ Each item:
 ## Not scheduled
 
 - Shared damage spells in `sim/common` and `sim/core`: item procs (give `ProcDamageEffect` its proc spell
-  id), explosives, racials.
+  id), explosives, racials, and Shadowmourne 71904's travel wait.
 - Checking the op-24 mod values that talents declare against the server's spell mods. `indexSpellMods`
   (`tools/acore/gen_serverdata/model.go`) indexes them but builds bounds only for ops 10, 11 and 21.
 
