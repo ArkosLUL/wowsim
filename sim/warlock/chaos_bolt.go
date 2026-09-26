@@ -12,8 +12,6 @@ func (warlock *Warlock) registerChaosBoltSpell() {
 		return
 	}
 
-	spellCoeff := 0.714 * (1 + 0.04*float64(warlock.Talents.ShadowAndFlame))
-
 	// ChaosBolt is affected by level-based partial resists.
 	// TODO If there's bosses with elevated fire resistances, we'd need another spell flag,
 	//  or add an unlimited amount of "bonusSpellPenetration".
@@ -48,9 +46,17 @@ func (warlock *Warlock) registerChaosBoltSpell() {
 		CritMultiplier:   warlock.SpellCritMultiplier(1, float64(warlock.Talents.Ruin)/5),
 		ThreatMultiplier: 1 - 0.1*float64(warlock.Talents.DestructiveReach),
 
+		Direct: core.SpellEffect{Effect: 0, Min: 1429, Max: 1813, SP: 0.714},
+		Mods: []core.SpellMod{
+			{Op: core.SpellModBonusMultiplier, Pct: 4 * warlock.Talents.ShadowAndFlame},
+		},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := sim.Roll(1429, 1813) + spellCoeff*spell.SpellPower()
-			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMagicCrit)
+			baseDamage := spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()
+			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMagicCrit)
+			spell.WaitTravelTime(sim, func(sim *core.Simulation) {
+				spell.DealDamage(sim, result)
+			})
 		},
 	})
 }

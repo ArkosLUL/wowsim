@@ -8,20 +8,18 @@ import (
 
 func (mage *Mage) registerFlamestrikeSpell(rank8 bool) *core.Spell {
 	actionID := core.ActionID{SpellID: 42926}.WithTag(9)
-	dotDamage := 780.0 / 4
-	minDamage := 876.0
-	maxDamage := 1071.0
+	direct := core.SpellEffect{Effect: 0, Min: 876, Max: 1070, SP: 0.2357}
+	tick := core.SpellEffect{Effect: 1, Min: 195, Max: 195, SP: 0.122}
 	spCoeffMultiplier := 1.0
 	label := "Flamestrike (Rank 9)"
 	if rank8 {
 		actionID = core.ActionID{SpellID: 42925}.WithTag(8)
-		dotDamage = 620.0 / 4
-		minDamage = 699.0
-		maxDamage = 854.0
+		direct.Min, direct.Max = 699, 853
+		tick.Min, tick.Max = 155, 155
 		label = "Flamestrike (Rank 8)"
-		// Flamestrike (Rank 8) has a 90% SP coefficient penalty
-		// https://wowpedia.fandom.com/wiki/Downranking#Wrath_of_the_Lich_King
-		spCoeffMultiplier = 0.9
+		// downranking penalty on the spell power part (Unit::CalculateLevelPenalty): rank 8 is a level 72
+		// spell, so (72 + 6) / 80
+		spCoeffMultiplier = 0.975
 	}
 
 	return mage.RegisterSpell(core.SpellConfig{
@@ -48,6 +46,8 @@ func (mage *Mage) registerFlamestrikeSpell(rank8 bool) *core.Spell {
 		CritMultiplier:   mage.SpellCritMultiplier(1, mage.bonusCritDamage),
 		ThreatMultiplier: 1 - 0.05*float64(mage.Talents.BurningSoul),
 
+		Direct: direct,
+
 		Dot: core.DotConfig{
 			IsAOE: true,
 			Aura: core.Aura{
@@ -57,9 +57,12 @@ func (mage *Mage) registerFlamestrikeSpell(rank8 bool) *core.Spell {
 			TickLength:    time.Second * 2,
 			// No SPELL_AURA_ABILITY_PERIODIC_CRIT aura covers this dot, so its ticks never crit.
 			TicksCanCrit: false,
+
+			Tick: tick,
+
 			OnSnapshot: func(sim *core.Simulation, _ *core.Unit, dot *core.Dot, _ bool) {
 				target := mage.CurrentTarget
-				dot.SnapshotBaseDamage = dotDamage + 0.122*dot.Spell.SpellPower()*spCoeffMultiplier
+				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + dot.Tick.SP*dot.Spell.SpellPower()*spCoeffMultiplier
 				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(dot.Spell.Unit.AttackTables[target.UnitIndex])
 			},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
@@ -70,9 +73,9 @@ func (mage *Mage) registerFlamestrikeSpell(rank8 bool) *core.Spell {
 		},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			dmgFromSP := 0.243 * spell.SpellPower() * spCoeffMultiplier
+			dmgFromSP := spell.Direct.SP * spell.SpellPower() * spCoeffMultiplier
 			for _, aoeTarget := range sim.Encounter.TargetUnits {
-				baseDamage := sim.Roll(minDamage, maxDamage) + dmgFromSP
+				baseDamage := spell.Direct.Roll(sim) + dmgFromSP
 				baseDamage *= sim.Encounter.AOECapMultiplier()
 				spell.CalcAndDealDamage(sim, aoeTarget, baseDamage, spell.OutcomeMagicHitAndCrit)
 			}

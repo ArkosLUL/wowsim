@@ -8,8 +8,6 @@ import (
 )
 
 func (warlock *Warlock) registerIncinerateSpell() {
-	spellCoeff := 0.714 * (1 + 0.04*float64(warlock.Talents.ShadowAndFlame))
-
 	warlock.Incinerate = warlock.RegisterSpell(core.SpellConfig{
 		ActionID:     core.ActionID{SpellID: 47838},
 		SpellSchool:  core.SpellSchoolFire,
@@ -41,13 +39,18 @@ func (warlock *Warlock) registerIncinerateSpell() {
 		CritMultiplier:   warlock.SpellCritMultiplier(1, float64(warlock.Talents.Ruin)/5),
 		ThreatMultiplier: 1 - 0.1*float64(warlock.Talents.DestructiveReach),
 
+		Direct: core.SpellEffect{Effect: 0, Min: 582, Max: 676, SP: 0.714},
+		Mods: []core.SpellMod{
+			{Op: core.SpellModBonusMultiplier, Pct: 4 * warlock.Talents.ShadowAndFlame},
+		},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			var baseDamage float64
+			baseDamage := spell.Direct.Roll(sim)
+			// Spell::EffectSchoolDMG adds a quarter of the roll, before spell power, while Immolate is up
 			if warlock.Immolate.Dot(target).IsActive() {
-				baseDamage = sim.Roll(582+145, 676+169) + spellCoeff*spell.SpellPower()
-			} else {
-				baseDamage = sim.Roll(582, 676) + spellCoeff*spell.SpellPower()
+				baseDamage += baseDamage / 4
 			}
+			baseDamage += spell.Direct.SP * spell.SpellPower()
 
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 			spell.WaitTravelTime(sim, func(sim *core.Simulation) {

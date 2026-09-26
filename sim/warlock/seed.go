@@ -12,6 +12,10 @@ const SeedExplosionSpellID = 47834
 
 func (warlock *Warlock) registerSeedSpell() {
 	actionID := core.ActionID{SpellID: 47836}
+	// only Everlasting Affliction's first rank has Seed of Corruption in its class mask
+	everlastingAffliction := []core.SpellMod{
+		{Op: core.SpellModBonusMultiplier, Flat: core.TernaryInt32(warlock.Talents.EverlastingAffliction == 1, 1, 0)},
+	}
 
 	seedExplosion := warlock.RegisterSpell(core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: SeedExplosionSpellID},
@@ -29,8 +33,11 @@ func (warlock *Warlock) registerSeedSpell() {
 		CritMultiplier:   warlock.DefaultSpellCritMultiplier(),
 		ThreatMultiplier: 1 - 0.1*float64(warlock.Talents.ImprovedDrainSoul),
 
+		Direct: core.SpellEffect{Effect: 0, Min: 1633, Max: 1897, SP: 0.2129},
+		Mods:   everlastingAffliction,
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDmg := (sim.Roll(1633, 1897) + 0.2129*spell.SpellPower()) * sim.Encounter.AOECapMultiplier()
+			baseDmg := (spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()) * sim.Encounter.AOECapMultiplier()
 			for _, aoeTarget := range sim.Encounter.TargetUnits {
 				spell.CalcAndDealDamage(sim, aoeTarget, baseDmg, spell.OutcomeMagicHitAndCrit)
 			}
@@ -72,6 +79,8 @@ func (warlock *Warlock) registerSeedSpell() {
 		),
 		ThreatMultiplier: 1 - 0.1*float64(warlock.Talents.ImprovedDrainSoul),
 
+		Mods: everlastingAffliction,
+
 		Dot: core.DotConfig{
 			Aura: core.Aura{
 				Label: "Seed",
@@ -99,8 +108,10 @@ func (warlock *Warlock) registerSeedSpell() {
 			TickLength:    time.Second * 3,
 			TicksCanCrit:  false,
 
+			Tick: core.SpellEffect{Effect: 0, Min: 253, Max: 253, SP: 0.25},
+
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-				dot.SnapshotBaseDamage = 1518/6 + 0.25*dot.Spell.SpellPower()
+				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + dot.Tick.SP*dot.Spell.SpellPower()
 				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(dot.Spell.Unit.AttackTables[target.UnitIndex])
 			},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {

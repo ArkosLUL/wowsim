@@ -1238,6 +1238,52 @@ Roll details the tables above don't show:
   `TestSetsAndClassItemEffectsOnEveryWearer` (`sim/item_wearers_test.go`) sims every set and class item
   effect on each class whose armor and weapon types fit it, except the class an allowlist names.
 
+**Effect declarations, mage and warlock (PAR-DECL-1)** ([PLAN](effect-declarations.PLAN.md#par-decl-1-as-built))
+- Mirror Image casts with the mage's spell mods: `Unit::GetSpellModOwner` returns a guardian's owner, and
+  `Player::ApplySpellMod`'s `temporaryPet` flag drops only charged mods. Its Frostbolt (59638, flags
+  `[32,0,0]`) matches every mage Frostbolt mod, its Fire Blast (59637, `[131074,0,0]`) Fire Blast's and
+  Ice Lance's. The sim now applies the effect and op-24 ones; still missing: cast time (Improved and
+  Empowered Frostbolt, 3 s to 2.3 s on the Frost preset), crit chance and damage, the `SPELLMOD_DAMAGE`
+  percents (Fire Power, Spell Impact, Chilled to the Bone, Glyph of Frostbolt, Arcane Power) and Improved
+  Fire Blast's cooldown.
+- Downranking: `Unit::CalculateLevelPenalty` scales the spell power part of a player's spell below its
+  MaxLevel by (SpellLevel + 6) / level, capped at 1. Flamestrike rank 8 (level 72) gets 0.975; the sim had
+  wowpedia's 0.9.
+- Pet missiles: `PetAI` chases a caster pet only into its spell's max range (Waterbolt, Imp Firebolt), so
+  it casts from about the owner's distance, but a pet's `DistanceFromTarget` is 0 and its missiles wait
+  the 5 yd floor.
+- Waterbolt (31707) has SpellFamilyName 5, so no mage talent reaches it.
+- `ui/mage/apls/frost_aoe.apl.json` casts Blizzard 42939, a rank the sim doesn't register (it has 42940),
+  so that rotation deals only pet damage.
+- Flamestrike's dot is a persistent area aura, so each tick takes `SpellDamageBonusDone` (current SP and
+  done mods) and a hit roll (`HandlePeriodicDamageAurasTick`); the sim snapshots SP and done mods at the
+  cast and never misses a tick.
+- Conflagrate is script math (`Spell::EffectSchoolDMG`): the hit adds effect 1's value, 60, as a percent
+  of the consumed Immolate's amount after the target's taken mods, times its 5 base ticks, and skips
+  Conflagrate's own `SpellDamageBonusDone` and `SpellDamageBonusTaken`. The dot's ticks deal effect 2's
+  40 / 3 = 13 (integer) percent of that, then take Conflagrate's own done mods (Emberstorm's op 22) and
+  the target's taken mods a second time. The sim takes the Immolate's snapshot and the 13%, but its
+  `DamageMultiplier` still stands in for Immolate's done mods, at Conflagrate's cast.
+- `spell_warl_curse_of_agony` ramps the whole tick amount, spell power included: half for ticks 1–4, 1.5×
+  from 9, 2× from 13 (glyphed). The sim ramped only the base.
+- Incinerate adds a quarter of its roll, before spell power, while any warlock's Immolate is on the
+  target (every rank has SpellIconID 2128).
+- The Infernal: `spell_warl_infernal_scaling` gives it 15% of the warlock's `SpellBaseDamageBonusDone`,
+  which counts spirit-based SP (Fel Armor, Glyph of Life Tap), and Immolation 20153 uses the Infernal's
+  SP × 1.35. The Classic spirit exclusion (wotlk-classic-bugs#329) doesn't apply. The same aura makes it
+  immune to positive `MOD_DAMAGE_DONE`, `MOD_ATTACK_POWER(_PCT)`, `MOD_STAT`, `MOD_TOTAL_STAT_PERCENTAGE`
+  and `MOD_RESISTANCE` auras, so it takes no raid SP, AP or stat buffs; the sim gives it them
+  (`applyPetBuffEffects`). `spell_warl_generic_scaling` (Imp, Felhunter, Felguard) grants no immunity.
+- The sim's Infernal never deals Immolation: `ExecuteCustomRotation` recasts 20153 whenever its rotation
+  runs (about 1,200 times a summon), and each cast restarts the 2 s tick. Casting it only while inactive
+  moved Affliction +1.1% and Destruction +0.7% (Average-Default), multi-target rows up to +12%, with the
+  raid buffs above still inflating its SP about 2× in FullBuffs rows.
+- `spell_warl_seed_of_corruption_dummy` runs the 1518 detonation threshold through
+  `SpellDamageBonusDone` (coefficient 0, so only Seed's done percents); the sim uses a flat 1518. It
+  matters only with `DetonateSeed` off.
+- Everlasting Affliction rank 1's class mask (`[2,273,0]`) has Seed of Corruption; ranks 2–5 (`[2,257,0]`)
+  don't.
+
 ## Verified on the live server
 
 `[ac]/modules/mod-sim-validation/e2e` (`TestSimvalWarrior`, `TestSimvalHunter`) ran every probe inside Naxxramas and

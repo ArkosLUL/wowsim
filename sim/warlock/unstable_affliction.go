@@ -8,7 +8,6 @@ import (
 )
 
 func (warlock *Warlock) registerUnstableAfflictionSpell() {
-	spellCoeff := 0.2 + 0.01*float64(warlock.Talents.EverlastingAffliction)
 	canCrit := warlock.Talents.Pandemic
 
 	warlock.UnstableAffliction = warlock.RegisterSpell(core.SpellConfig{
@@ -40,6 +39,10 @@ func (warlock *Warlock) registerUnstableAfflictionSpell() {
 		CritMultiplier:   warlock.SpellCritMultiplier(1, core.TernaryFloat64(warlock.Talents.Pandemic, 1, 0)),
 		ThreatMultiplier: 1 - 0.1*float64(warlock.Talents.ImprovedDrainSoul),
 
+		Mods: []core.SpellMod{
+			{Op: core.SpellModBonusMultiplier, Flat: warlock.Talents.EverlastingAffliction},
+		},
+
 		Dot: core.DotConfig{
 			Aura: core.Aura{
 				Label: "UnstableAffliction",
@@ -47,8 +50,11 @@ func (warlock *Warlock) registerUnstableAfflictionSpell() {
 			NumberOfTicks: 5,
 			TickLength:    time.Second * 3,
 			TicksCanCrit:  canCrit,
+
+			Tick: core.SpellEffect{Effect: 0, Min: 230, Max: 230, SP: 0.2},
+
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
-				dot.SnapshotBaseDamage = 230 + spellCoeff*dot.Spell.SpellPower()
+				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + dot.Tick.SP*dot.Spell.SpellPower()
 				attackTable := dot.Spell.Unit.AttackTables[target.UnitIndex]
 				dot.SnapshotCritChance = dot.Spell.SpellCritChance(target)
 				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(attackTable)

@@ -31,9 +31,12 @@ func (mage *Mage) registerDragonsBreathSpell() {
 		DamageMultiplierAdditive: 1 + .02*float64(mage.Talents.FirePower),
 		CritMultiplier:           mage.SpellCritMultiplier(1, mage.bonusCritDamage),
 		ThreatMultiplier:         1 - 0.1*float64(mage.Talents.BurningSoul),
+
+		Direct: core.SpellEffect{Effect: 0, Min: 1101, Max: 1279, SP: 0.193},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			for _, aoeTarget := range sim.Encounter.TargetUnits {
-				baseDamage := sim.Roll(1101, 1279) + 0.193*spell.SpellPower()
+				baseDamage := spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()
 				baseDamage *= sim.Encounter.AOECapMultiplier()
 				spell.CalcAndDealDamage(sim, aoeTarget, baseDamage, spell.OutcomeMagicHitAndCrit)
 			}

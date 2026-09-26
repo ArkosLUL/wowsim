@@ -34,12 +34,13 @@ func (wp *WarlockPet) registerCleaveSpell() {
 		CritMultiplier:   2,
 		ThreatMultiplier: 1,
 
-		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			constBaseDamage := 124 + spell.BonusWeaponDamage()
+		Direct: core.SpellEffect{Effect: 0, Min: 124, Max: 124, WeaponPct: 1},
 
+		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			curTarget := target
 			for hitIndex := int32(0); hitIndex < numHits; hitIndex++ {
-				baseDamage := constBaseDamage + spell.Unit.MHWeaponDamage(sim, spell.MeleeAttackPower())
+				baseDamage := (spell.Direct.Roll(sim) + spell.Unit.MHWeaponDamage(sim, spell.MeleeAttackPower()) +
+					spell.BonusWeaponDamage()) * spell.Direct.WeaponPct
 				spell.CalcAndDealDamage(sim, curTarget, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 				curTarget = sim.Environment.NextTargetUnit(curTarget)
 			}
@@ -75,9 +76,11 @@ func (wp *WarlockPet) registerLashOfPainSpell() {
 		CritMultiplier:   1.5,
 		ThreatMultiplier: 1,
 
+		Direct: core.SpellEffect{Effect: 0, Min: 237, Max: 237, SP: 0.429},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			// TODO: the hidden 5% damage modifier succ currently gets also applies to this ...
-			baseDamage := 237 + 0.429*spell.SpellPower()
+			baseDamage := spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 		},
 	})
@@ -117,8 +120,10 @@ func (wp *WarlockPet) registerShadowBiteSpell() {
 		CritMultiplier:   1.5 + 0.1*float64(wp.owner.Talents.Ruin),
 		ThreatMultiplier: 1,
 
+		Direct: core.SpellEffect{Effect: 0, Min: 98, Max: 138, SP: 0.429},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := sim.Roll(97+1, 97+41) + 0.429*spell.SpellPower()
+			baseDamage := spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()
 
 			w := wp.owner
 			spells := []*core.Spell{
@@ -167,14 +172,22 @@ func (wp *WarlockPet) registerFireboltSpell() {
 			},
 		},
 
-		DamageMultiplier: (1 + 0.1*float64(wp.owner.Talents.ImprovedImp)) *
-			(1 + 0.2*core.TernaryFloat64(wp.owner.HasMajorGlyph(proto.WarlockMajorGlyph_GlyphOfImp), 1, 0)),
+		DamageMultiplier: 1 + 0.2*core.TernaryFloat64(wp.owner.HasMajorGlyph(proto.WarlockMajorGlyph_GlyphOfImp), 1, 0),
 		CritMultiplier:   2,
 		ThreatMultiplier: 1,
 
+		Direct: core.SpellEffect{Effect: 0, Min: 203, Max: 227, SP: 0.714},
+		// the warlock's mods reach the Imp's spells (Unit::GetSpellModOwner)
+		Mods: []core.SpellMod{
+			{Op: core.SpellModAllEffects, Pct: 10 * wp.owner.Talents.ImprovedImp},
+		},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := sim.Roll(203, 227) + 0.571*spell.SpellPower()
-			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
+			baseDamage := spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()
+			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
+			spell.WaitTravelTime(sim, func(sim *core.Simulation) {
+				spell.DealDamage(sim, result)
+			})
 		},
 	})
 }

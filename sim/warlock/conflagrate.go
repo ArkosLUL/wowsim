@@ -15,6 +15,11 @@ func (warlock *Warlock) registerConflagrateSpell() {
 	hasGlyphOfConflag := warlock.HasMajorGlyph(proto.WarlockMajorGlyph_GlyphOfConflagrate)
 	// The DoT doesn't benefit from Firestone.
 	dotOnlyMultiplier := 1 / spellModDamage(warlock.GrandFirestoneBonus())
+	// Spell::EffectSchoolDMG scripts Conflagrate from the consumed Immolate's five ticks: the hit adds
+	// effect 1's value as a percent of them, and each dot tick deals effect 2's 40/3 = 13 (integer) percent.
+	immolateTicks := func(target *core.Unit) float64 {
+		return 5 * warlock.Immolate.Dot(target).SnapshotBaseDamage
+	}
 	warlock.Conflagrate = warlock.RegisterSpell(core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: 17962},
 		SpellSchool: core.SpellSchoolFire,
@@ -53,6 +58,8 @@ func (warlock *Warlock) registerConflagrateSpell() {
 		CritMultiplier:   warlock.SpellCritMultiplier(1, float64(warlock.Talents.Ruin)/5),
 		ThreatMultiplier: 1 - 0.1*float64(warlock.Talents.DestructiveReach),
 
+		Direct: core.SpellEffect{Effect: 0, Min: 1, Max: 1},
+
 		Dot: core.DotConfig{
 			Aura: core.Aura{
 				Label: "Conflagrate",
@@ -61,8 +68,10 @@ func (warlock *Warlock) registerConflagrateSpell() {
 			TickLength:    time.Second * 2,
 			TicksCanCrit:  true,
 
+			Tick: core.SpellEffect{Effect: 1, Min: 60, Max: 60},
+
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-				dot.SnapshotBaseDamage = (314.0 / 3) + (0.4/3)*dot.Spell.SpellPower()
+				dot.SnapshotBaseDamage = 0.13 * immolateTicks(target)
 				attackTable := dot.Spell.Unit.AttackTables[target.UnitIndex]
 				dot.SnapshotCritChance = dot.Spell.SpellCritChance(target)
 
@@ -77,8 +86,7 @@ func (warlock *Warlock) registerConflagrateSpell() {
 		},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			// takes the SP of the immolate (or shadowflame) dot on the target
-			baseDamage := 471.0 + 0.6*warlock.Immolate.Dot(target).Spell.SpellPower()
+			baseDamage := spell.Direct.Roll(sim) + spell.Dot(target).Tick.Roll(sim)/100*immolateTicks(target)
 			result := spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 			if !result.Landed() {
 				return

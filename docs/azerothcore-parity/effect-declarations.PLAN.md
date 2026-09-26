@@ -190,6 +190,69 @@ Each item:
 - for each mismatch, fixes the number or adds an allowlist entry
 - empties its classes' undeclared list
 
+#### PAR-DECL-1 as built
+
+**Mage** (`sim/mage/serverdata_undeclared.go` is empty):
+- Every damage spell declares, Mirror Image's and the Water Elemental's included, except Deep Freeze: the
+  server deals it as 71757 (2369–2641, SP 2.143), which `serverdata` lacks, so 44572 keeps its hand-written
+  numbers until a regeneration adds it.
+- Op-24 mods: Empowered Fire (Flat 5 a rank) on Fireball, Frostfire Bolt and Pyroblast (dot included),
+  Arcane Empowerment (Flat 3 a rank) on Arcane Blast and the missile 42845.
+- Mirror Image's spells take the mage's mods (`Unit::GetSpellModOwner`), and its Frostbolt 59638 has
+  Frostbolt's class mask: Empowered Frostbolt's op 24, plus Permafrost's and Chilled to the Bone's
+  `SpellModEffect1` flats, which land on its damage (effect 0) instead of a slow.
+- Fixed numbers: Ice Lance 223–257, Arcane Missiles 361, Scorch, Fireball, Pyroblast and Flamestrike one
+  lower at the top, Flamestrike's direct SP 0.2357 (Spell.dbc's 0.243 before), Waterbolt SP 0.83, Mirror
+  Image's rolls 88–98 and 163–169 (flat before), and every `x/3.5` coefficient as the table's decimal.
+- Flamestrike rank 8's downranking factor is `Unit::CalculateLevelPenalty`'s (72 + 6) / 80 = 0.975, not 0.9.
+- Waterbolt waits its travel; the other mage missiles already did. Pets have no `DistanceFromTarget`, so
+  they wait the 5 yd floor.
+- Goldens (Average-Default): Frost +0.383%, from Mirror Image's Frostbolt mods (+0.43%) less Waterbolt's
+  SP and wait; Arcane -0.026% (Arcane Blast and Missiles); Fire +0.005% and FrostFire +0.003%. Mirror
+  Image's new rolls shift the random stream, up to ±0.23% on single rows; with averages in their place,
+  every Arcane, Fire and FrostFire single-target row stays within 0.03%. `frost_aoe`, all pet damage,
+  +2.0 to +4.6%; `fire_aoe` +0.05 to +0.43% (Flamestrike).
+
+**Warlock** (`sim/warlock/serverdata_undeclared.go` is empty):
+- Every damage spell declares, the pets' and the Infernal's included. Immolation Aura declares its tick
+  from 50590 and Summon Infernal its landing from 22703 (`FromSpellID`); 1122 keeps its KeepSim school.
+- Mods: Shadow and Flame (op 24, Pct 4 a rank) on Shadow Bolt, Shadowburn, Incinerate and Chaos Bolt;
+  Everlasting Affliction (Flat 1 a rank) on Unstable Affliction, and on both Seed spells at rank 1 only,
+  the one rank whose class mask has Seed. Improved Imp (op 8, Pct 10 a rank) moved out of Firebolt's
+  `DamageMultiplier`, so it scales the roll only.
+- Fixed numbers: Shadow Bolt max 774, Searing Pain 347–409, SP 0.4286 on Searing Pain, Shadowburn and
+  Haunt, Firebolt SP 0.714 (0.571 before).
+- Script math stays in the closure, on the declared values:
+  - Incinerate adds a quarter of its roll while Immolate is up.
+  - Conflagrate declares effect 0's 1 and effect 1's 60, the hit's percent of the consumed Immolate's
+    five snapshot ticks. Each dot tick deals 13% of them.
+  - Curse of Agony ramps the whole tick, spell power included: 0.5, 1, 1.5 and 2 from ticks 1, 5, 9, 13.
+- The Infernal's Immolation is 40 + 1.35 × its own SP (15% of the warlock's, spirit-based included),
+  not 0.2 × the warlock's SP less the spirit part. The sim never ticks it (INVESTIGATION).
+- Chaos Bolt and Firebolt wait their travel, the Imp from the 5 yd pet floor.
+- Goldens (Average-Default): Destruction -0.536%: Conflagrate -0.31 (the Immolate snapshot's SP misses
+  Phylactery and Dislodged Foreign Object procs that land after it, -0.17; 13% for 13.3%, -0.14),
+  Firebolt -0.20 (0.742 × SP before, 0.714 now), Chaos Bolt's wait -0.04. Its FullBuffs
+  ShortSingleTarget -2.29%: a Chaos Bolt still in flight at the 60 s end (-1.57) and Conflagrate (-0.72).
+  Affliction -0.007% (Shadow Bolt's max, Haunt's SP, Curse of Agony), Demonology -0.002% (Shadow Bolt).
+
+**For wave J and PAR-P8:**
+- A pet's or guardian's spells take the owner's spell mods where the class mask matches
+  (`Unit::GetSpellModOwner`): Mirror Image, Firebolt. A pet spell's family can differ from its owner's
+  (Waterbolt 5, Felguard's Cleave 4).
+- A script that reads an effect's value (Conflagrate's 60) still declares the server's value, and the
+  closure reads the declaration.
+- PAR-P8: warlock percent mods already multiply (`spellModDamage`). Conflagrate's `DamageMultiplier`
+  stands in for the consumed Immolate's done mods: the server's hit skips `SpellDamageBonusDone`, and its
+  dot takes Conflagrate's own done mods and the target's taken mods twice. Mirror Image still lacks the
+  mage's `SPELLMOD_DAMAGE` percents.
+
+**Allowlist entries left** (PAR-DECL-1 added none):
+- Mage 59637 and 59638 GCD, KeepSim: the GCD paces Mirror Image's AI, which the server scripts.
+- Warlock 47964 GCD: the server's 1 s applies.
+- Warlock 23720 cooldown, KeepSim: The Black Book's 5 min is item_template's, which Spell.dbc lacks.
+- Warlock 1122 school, KeepSim: the sim deals the Infernal's landing under the summon's id.
+
 ### Wave J
 
 - **PAR-P7-PRI** declares the priest's effects. Holy Fire's dot and Devouring Plague are its known

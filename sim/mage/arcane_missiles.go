@@ -8,7 +8,6 @@ import (
 )
 
 func (mage *Mage) registerArcaneMissilesSpell() {
-	spellCoeff := 1/3.5 + 0.03*float64(mage.Talents.ArcaneEmpowerment)
 	hasT8_4pc := mage.HasSetBonus(ItemSetKirinTorGarb, 4)
 
 	mage.ArcaneMissilesTickSpell = mage.GetOrRegisterSpell(core.SpellConfig{
@@ -27,8 +26,14 @@ func (mage *Mage) registerArcaneMissilesSpell() {
 			core.TernaryFloat64(mage.HasSetBonus(ItemSetTempestRegalia, 4), .05, 0),
 		CritMultiplier:   mage.SpellCritMultiplier(1, mage.bonusCritDamage+core.TernaryFloat64(mage.HasMajorGlyph(proto.MageMajorGlyph_GlyphOfArcaneMissiles), .25, 0)),
 		ThreatMultiplier: 1 - 0.2*float64(mage.Talents.ArcaneSubtlety),
+
+		Direct: core.SpellEffect{Effect: 0, Min: 361, Max: 361, SP: 0.2857},
+		Mods: []core.SpellMod{
+			{Op: core.SpellModBonusMultiplier, Flat: 3 * mage.Talents.ArcaneEmpowerment},
+		},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			damage := 362 + spellCoeff*spell.SpellPower()
+			damage := spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()
 			result := spell.CalcDamage(sim, target, damage, spell.OutcomeMagicHitAndCrit)
 
 			spell.WaitTravelTime(sim, func(sim *core.Simulation) {

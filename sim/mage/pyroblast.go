@@ -11,9 +11,6 @@ func (mage *Mage) registerPyroblastSpell() {
 		return
 	}
 
-	spellCoeff := 1.15 + 0.05*float64(mage.Talents.EmpoweredFire)
-	tickCoeff := 0.05 + 0.05*float64(mage.Talents.EmpoweredFire)
-
 	var pyroblastDot *core.Spell
 
 	pyroblastConfig := core.SpellConfig{
@@ -49,6 +46,11 @@ func (mage *Mage) registerPyroblastSpell() {
 		CritMultiplier:   mage.SpellCritMultiplier(1, mage.bonusCritDamage),
 		ThreatMultiplier: 1 - 0.1*float64(mage.Talents.BurningSoul),
 
+		Direct: core.SpellEffect{Effect: 0, Min: 1210, Max: 1530, SP: 1.15},
+		Mods: []core.SpellMod{
+			{Op: core.SpellModBonusMultiplier, Flat: 5 * mage.Talents.EmpoweredFire},
+		},
+
 		Dot: core.DotConfig{
 			Aura: core.Aura{
 				Label: "Pyroblast",
@@ -57,8 +59,11 @@ func (mage *Mage) registerPyroblastSpell() {
 			TickLength:    time.Second * 3,
 			// No SPELL_AURA_ABILITY_PERIODIC_CRIT aura covers this dot, so its ticks never crit.
 			TicksCanCrit: false,
+
+			Tick: core.SpellEffect{Effect: 1, Min: 113, Max: 113, SP: 0.05},
+
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
-				dot.SnapshotBaseDamage = 113.0 + tickCoeff*dot.Spell.SpellPower()
+				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + dot.Tick.SP*dot.Spell.SpellPower()
 				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(dot.Spell.Unit.AttackTables[target.UnitIndex])
 			},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
@@ -67,7 +72,7 @@ func (mage *Mage) registerPyroblastSpell() {
 		},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := sim.Roll(1210, 1531) + spellCoeff*spell.SpellPower()
+			baseDamage := spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 			spell.WaitTravelTime(sim, func(sim *core.Simulation) {
 				if result.Landed() {
