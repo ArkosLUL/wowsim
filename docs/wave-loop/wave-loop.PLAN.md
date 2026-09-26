@@ -99,10 +99,9 @@ bugs, the importer's missing pets, ammo and consumables, and a batch hung on a h
 
 ## Current wave
 
-- Wave: I5, not started. Wave I4 (base `a4292b95a`) landed on `master`.
-- Base SHA: set at wave start.
-- Workflow runId: none. Wave I4 ran as `wf_6e7f2afb-ea5` (args `waveI4-args.json`, results `waveI4-results.json`
-  in `G:\DevStuff\GitHub\.wave-loop`).
+- Wave: I5, running. Base SHA `4a0f8d5c8`.
+- Workflow runId: `wf_d6757f45-58d`, args `waveI5-args.json` in `G:\DevStuff\GitHub\.wave-loop`. Transcript dir:
+  `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\wf_d6757f45-58d`.
 
 ## BiS baseline
 
@@ -285,9 +284,12 @@ crashed before F2, so its column starts there.
 | UI-FIX2 | merged | `49344a96c` | |
 | wave I3 cross-review | | | no findings |
 | PAR-DECL | merged | `accba95f6` | Frost goldens promoted in `812eb7771` (-0.02%, Frostbolt); missile speeds move nothing until I5 adds the travel waits; Elemental bench +2.5% / +3.5%, cause open |
-| RI-4 | merged | `fc052a747` | acbis rejected version 1 rosters, fixed at merge; Nightwarrior's Worm has no talents in `pet_spell` |
+| RI-4 | merged | `fc052a747` | acbis rejected version 1 rosters, fixed at merge |
 | BIS-hunter-ranged | merged | `4a04a6c4d` | |
 | wave I4 cross-review | | `d1814fae3` | 2 bugs: RI-4's real pets exposed Spore Cloud going to a Bat, not a Spore Bat, in the raid stats and the BiS batch's raid context; a Thori'dal hunter's export cleared their ammo, so every other bow simmed without any. A mistyped `FromSpellID` now panics |
+| PAR-DECL-1 | running | | |
+| PAR-DECL-2 | running | | |
+| PAR-DECL-3 | running | | |
 
 Later WIs are added as their wave starts.
 
