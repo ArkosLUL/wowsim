@@ -104,8 +104,15 @@ bugs, the importer's missing pets, ammo and consumables, and a batch hung on a h
 - Wave: J, running. Base SHA `baa30c194`.
 - Workflow runId: `wf_98b95fd4-07a`, args `waveJ-args.json` in `G:\DevStuff\GitHub\.wave-loop`. Transcript dir:
   `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\wf_98b95fd4-07a`.
-- All four items merged. Next: the cross-review, then on the idle machine BIS-e2e-perf's timings (a second
-  Workflow) and the re-baselines, then the orchestrator's full-roster batch.
+- All four items merged and cross-reviewed; paused there for the night (2026-09-26). Next, each alone on the
+  machine:
+  1. BIS-e2e-perf's timing run: a second Workflow, one item on a worktree off `integration`, doing its spec's
+     timing bullets (tanks and raid mode's stage 2 through the two `raid25` harness scenarios, Quick per spec,
+     trim stage 2 or Quick or move their targets) and the INVESTIGATION's Performance rows. The game server
+     stays up with its load recorded, as for the earlier rows.
+  2. The re-baselines: `BenchmarkSimulate` with the game server stopped, then the BiS slow suite.
+  3. The full-roster batch through `tools/database/acbis/driver` (Quick, both stages, roster
+     `G:\DevStuff\GitHub\.wave-loop\raid.json`), for the INVESTIGATION's batch rows and the stored batch size.
 
 ## BiS baseline
 
@@ -321,6 +328,7 @@ crashed before F2, so its column starts there.
 | PAR-P7-TANK | merged | `b9e77cded` | 7 goldens promoted in `32d09f2be`: a GenericBoss case in each tank suite, Protection +0.41% (Holy Shield never misses), Feral Tank DTPS +5.9% (Faerie Fire no longer procs Savage Defense), Blood -0.15% (rune weapon); BM and Combat lose a phantom dodge rating; module `926df4c`. The orchestrator sent back a permanent Savage Defense and Feral Swiftness dropped from bear dodge, and gave the generic boss Patchwerk 25's damage (`fb7dbda45`); `db.json` in `63209f728` |
 | BIS-e2e-perf | code merged | `6dc2141b5` | goldens unchanged; its timing run follows |
 | AC-3 | merged | `b634b26cc` | goldens unchanged; `db.json` regenerated in the merge |
+| wave J cross-review | | `eaafe11bd` | no bugs: Mind Sear under-counted its casts in multi-target fights, and the INVESTIGATION had Leeching Swarm's two ids swapped; spell audit refreshed |
 
 Later WIs are added as their wave starts.
 
