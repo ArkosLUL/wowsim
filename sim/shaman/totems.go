@@ -55,9 +55,11 @@ func (shaman *Shaman) registerHealingStreamTotemSpell() {
 		DamageMultiplier: 1 + (.02 * float64(shaman.Talents.Purification)) + 0.15*float64(shaman.Talents.RestorativeTotems),
 		CritMultiplier:   1,
 		ThreatMultiplier: 1 - (float64(shaman.Talents.HealingGrace) * 0.05),
-		Direct:           core.SpellEffect{Effect: 0, Min: 25, Max: 25, SP: 0.0827},
+		// spell_sha_healing_stream_totem casts 52042 with the totem tick's amount as its base points, adding
+		// 52042's coefficient
+		Direct: core.SpellEffect{Effect: 0, SP: 0.0827},
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			healing := spell.Direct.Roll(sim) + spell.Direct.SP*spell.HealingPower(target)
+			healing := shaman.HealingStreamTotem.Hot(target).Tick.Roll(sim) + spell.Direct.SP*spell.HealingPower(target)
 			spell.CalcAndDealHealing(sim, target, healing, spell.OutcomeHealing)
 		},
 	})
@@ -67,6 +69,8 @@ func (shaman *Shaman) registerHealingStreamTotemSpell() {
 		},
 		NumberOfTicks: 150,
 		TickLength:    time.Second * 2,
+		// the totem's periodic trigger casts 58761, whose value the script heals for
+		Tick: core.SpellEffect{Effect: 0, FromSpellID: 58761, Min: 25, Max: 25},
 		OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 			hsHeal.Cast(sim, target)
 		},

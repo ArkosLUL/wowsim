@@ -37,6 +37,10 @@ func (dk *Deathknight) registerDeathAndDecaySpell() {
 		ThreatMultiplier: 1.9,
 		CritMultiplier:   dk.DefaultMeleeCritMultiplier(),
 
+		// each tick casts 52212 with the aura's amount as its base points (spell_dk_death_and_decay_aura),
+		// adding 52212's AP
+		Direct: core.SpellEffect{Effect: 0, FromSpellID: 52212, AP: 0.04805},
+
 		Mods: []core.SpellMod{
 			{Op: core.SpellModEffect1, Pct: core.TernaryInt32(hasGlyph, 20, 0)},
 			{Op: core.SpellModAllEffects, Pct: dk.scourgelordsPlateDeathAndDecayPct()},
@@ -52,10 +56,9 @@ func (dk *Deathknight) registerDeathAndDecaySpell() {
 			// each tick is 52212, a spell of its own that spell_dk_death_and_decay casts, so it crits
 			// like one
 			TicksCanCrit: true,
-			// the aura's amount goes to 52212 as its base points, under 52212's AP
-			Tick: core.SpellEffect{Effect: 0, Min: 62, Max: 62, AP: 0.04805},
+			Tick:         core.SpellEffect{Effect: 0, Min: 62, Max: 62},
 			OnSnapshot: func(sim *core.Simulation, _ *core.Unit, dot *core.Dot, _ bool) {
-				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + dot.Tick.AP*dk.getImpurityBonus(dot.Spell)
+				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + dot.Spell.Direct.AP*dk.getImpurityBonus(dot.Spell)
 			},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 				for _, aoeTarget := range sim.Encounter.TargetUnits {

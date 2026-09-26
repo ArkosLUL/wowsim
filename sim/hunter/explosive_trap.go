@@ -38,6 +38,8 @@ func (hunter *Hunter) registerExplosiveTrapSpell(timer *core.Timer) {
 		CritMultiplier:   hunter.DefaultSpellCritMultiplier(),
 		ThreatMultiplier: 1,
 
+		Direct: core.SpellEffect{Effect: 0, FromSpellID: 49065, Min: 532, Max: 680, AP: 0.1},
+
 		Dot: core.DotConfig{
 			IsAOE: true,
 			Aura: core.Aura{
@@ -47,9 +49,10 @@ func (hunter *Hunter) registerExplosiveTrapSpell(timer *core.Timer) {
 			TickLength:    time.Second * 2,
 			// Glyph of Explosive Trap is an SPELL_AURA_ABILITY_PERIODIC_CRIT on the trap's periodic
 			TicksCanCrit: hasGlyph,
+			Tick:         core.SpellEffect{Effect: 1, FromSpellID: 49065, Min: 90, Max: 90, AP: 0.1},
 
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
-				baseDamage := 90 + 0.1*dot.Spell.RangedAttackPower(target)
+				baseDamage := dot.Tick.Roll(sim) + dot.Tick.AP*dot.Spell.RangedAttackPower(target)
 				dot.Spell.DamageMultiplierAdditive += bonusPeriodicDamageMultiplier
 				for _, aoeTarget := range sim.Encounter.TargetUnits {
 					if hasGlyph {
@@ -76,7 +79,7 @@ func (hunter *Hunter) registerExplosiveTrapSpell(timer *core.Timer) {
 					// no 10 target cap: the trap's trigger creature casts it, not a player
 					// (GameObject::CastSpell)
 					for _, aoeTarget := range sim.Encounter.TargetUnits {
-						baseDamage := sim.Roll(523, 671) + 0.1*spell.RangedAttackPower(aoeTarget)
+						baseDamage := spell.Direct.Roll(sim) + spell.Direct.AP*spell.RangedAttackPower(aoeTarget)
 						spell.CalcAndDealDamage(sim, aoeTarget, baseDamage, spell.OutcomeMagicCrit)
 					}
 					hunter.ExplosiveTrap.AOEDot().Apply(sim)

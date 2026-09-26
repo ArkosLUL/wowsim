@@ -19,12 +19,10 @@ func (hunter *Hunter) registerExplosiveShotSpell(timer *core.Timer) {
 
 func (hunter *Hunter) makeExplosiveShotSpell(timer *core.Timer, downrank bool) *core.Spell {
 	actionID := core.ActionID{SpellID: 60053}
-	// each tick casts 53352 with the rolled amount (AuraEffect::HandlePeriodicDummyAuraTick), and 53352's
-	// spell_bonus_data row adds the ranged AP
-	tick := core.SpellEffect{Effect: 0, Min: 386, Max: 464, AP: 0.16}
+	tick := core.SpellEffect{Effect: 0, Min: 386, Max: 464}
 	if downrank {
 		actionID = core.ActionID{SpellID: 60052}
-		tick = core.SpellEffect{Effect: 0, Min: 325, Max: 391, AP: 0.16}
+		tick = core.SpellEffect{Effect: 0, Min: 325, Max: 391}
 	}
 
 	return hunter.RegisterSpell(core.SpellConfig{
@@ -58,6 +56,10 @@ func (hunter *Hunter) makeExplosiveShotSpell(timer *core.Timer, downrank bool) *
 		CritMultiplier:   hunter.critMultiplier(true, false),
 		ThreatMultiplier: 1,
 
+		// each tick casts 53352 with the rolled amount in place of its own 10
+		// (AuraEffect::HandlePeriodicDummyAuraTick), adding 53352's ranged AP
+		Direct: core.SpellEffect{Effect: 0, FromSpellID: 53352, Min: 10, Max: 10, AP: 0.16},
+
 		Dot: core.DotConfig{
 			Aura: core.Aura{
 				Label: fmt.Sprintf("ExplosiveShot-%d", actionID.SpellID),
@@ -68,7 +70,7 @@ func (hunter *Hunter) makeExplosiveShotSpell(timer *core.Timer, downrank bool) *
 			TicksCanCrit: true,
 			Tick:         tick,
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + dot.Tick.AP*dot.Spell.RangedAttackPower(target)
+				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + dot.Spell.Direct.AP*dot.Spell.RangedAttackPower(target)
 				attackTable := dot.Spell.Unit.AttackTables[target.UnitIndex]
 				dot.SnapshotCritChance = dot.Spell.PhysicalCritChance(attackTable)
 				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(attackTable)

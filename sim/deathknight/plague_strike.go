@@ -36,13 +36,7 @@ func (dk *Deathknight) newPlagueStrikeSpell(isMH bool) *core.Spell {
 		ThreatMultiplier: 1,
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			var baseDamage float64
-			if isMH {
-				baseDamage = normalizedStrikeBase(sim, spell, true, spell.Direct.Roll(sim)) * spell.Direct.WeaponPct
-			} else {
-				// the off-hand strike, 66992, which serverdata doesn't cover
-				baseDamage = normalizedStrikeBase(sim, spell, false, 189) * 0.5
-			}
+			baseDamage := normalizedStrikeBase(sim, spell, isMH, spell.Direct.Roll(sim)) * spell.Direct.WeaponPct
 			baseDamage *= dk.RoRTSBonus(target)
 
 			result := spell.CalcDamage(sim, target, baseDamage, dk.threatOfThassarianOutcomeApplier(spell))
@@ -62,6 +56,8 @@ func (dk *Deathknight) newPlagueStrikeSpell(isMH bool) *core.Spell {
 	if !isMH { // only MH has cost & gcd
 		conf.RuneCost = core.RuneCostOptions{}
 		conf.Cast = core.CastConfig{}
+		// Threat of Thassarian's off-hand strike
+		conf.Direct = core.SpellEffect{Effect: 0, FromSpellID: 66992, Min: 189, Max: 189, WeaponPct: 0.5}
 	} else {
 		conf.Flags |= core.SpellFlagAPL
 		conf.Direct = plagueStrikeEffect

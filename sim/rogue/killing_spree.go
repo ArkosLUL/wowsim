@@ -10,34 +10,30 @@ import (
 
 func (rogue *Rogue) registerKillingSpreeSpell() {
 	mhWeaponSwing := rogue.GetOrRegisterSpell(core.SpellConfig{
-		ActionID:         core.ActionID{SpellID: 51690, Tag: 1}, // actual spellID is 57841
+		ActionID:         core.ActionID{SpellID: 51690, Tag: 1},
 		SpellSchool:      core.SpellSchoolPhysical,
 		ProcMask:         core.ProcMaskMeleeMHSpecial,
 		Flags:            core.SpellFlagMeleeMetrics | core.SpellFlagIncludeTargetBonusDamage,
 		DamageMultiplier: 1 + 0.02*float64(rogue.Talents.FindWeakness),
 		CritMultiplier:   rogue.MeleeCritMultiplier(false),
 		ThreatMultiplier: 1,
+		Direct:           core.SpellEffect{Effect: 0, FromSpellID: 57841, WeaponPct: 1},
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := 0 +
-				spell.Unit.MHNormalizedWeaponDamage(sim, spell.MeleeAttackPower()) +
-				spell.BonusWeaponDamage()
-
+			baseDamage := normalizedStrike(sim, spell, &spell.Direct, true)
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialNoBlockDodgeParry)
 		},
 	})
 	ohWeaponSwing := rogue.GetOrRegisterSpell(core.SpellConfig{
-		ActionID:         core.ActionID{SpellID: 51690, Tag: 2}, // actual spellID is 57842
+		ActionID:         core.ActionID{SpellID: 51690, Tag: 2},
 		SpellSchool:      core.SpellSchoolPhysical,
 		ProcMask:         core.ProcMaskMeleeOHSpecial,
 		Flags:            core.SpellFlagMeleeMetrics | core.SpellFlagIncludeTargetBonusDamage,
 		DamageMultiplier: (1 + 0.02*float64(rogue.Talents.FindWeakness)) * rogue.dwsMultiplier(),
 		CritMultiplier:   rogue.MeleeCritMultiplier(false),
 		ThreatMultiplier: 1,
+		Direct:           core.SpellEffect{Effect: 0, FromSpellID: 57842, WeaponPct: 1},
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := 0 +
-				spell.Unit.OHNormalizedWeaponDamage(sim, spell.MeleeAttackPower()) +
-				spell.BonusWeaponDamage()
-
+			baseDamage := normalizedStrike(sim, spell, &spell.Direct, false)
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialNoBlockDodgeParry)
 		},
 	})

@@ -273,6 +273,8 @@ func (paladin *Paladin) applyArdentDefender() {
 		CritMultiplier:   1, // Assuming this can't really crit?
 		ThreatMultiplier: 0.25,
 		DamageMultiplier: 1,
+		// the server heals as 66235, whose base points spell_pal_ardent_defender replaces with its own amount
+		Direct: core.SpellEffect{Effect: 0, FromSpellID: 66235, Min: 30, Max: 30},
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			spell.CalcAndDealHealing(sim, &paladin.Unit, ardentHealAmount*paladin.MaxHealth(), spell.OutcomeHealingCrit)
 		},

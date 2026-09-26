@@ -456,6 +456,37 @@ The committed capture holds them all, so none needs a live one: name each in its
 keeping the sim's spell ids), then regenerate `serverdata`, which adds only their rows. Fix or allowlist every
 mismatch; entries naming a script stay. Runs all 37 suites, since the tables are shared.
 
+#### PAR-DECL-4 as built
+
+**Generated:** 16 spells and 5 bonus rows: 71757, 49065, 53352, 66953, 66962, 66979, 66992, 66217, 52212, 57841,
+57842, 5940, 52874, 66235, 57984, 58761. Also Damage Shield rank 1 (58872) and its proc row, which PAR-DECL-3 named
+but couldn't generate. Fire Shield 11350/11351 went: the sim names 13376/13377 instead (PAR-DECL-2), which the
+capture lacks.
+
+**Declared**, the sim's ids kept:
+- Deep Freeze 44572 from 71757: SP 2.143 for 7.5/3.5.
+- Explosive Trap 49067: burst and tick from 49065. The burst is 532–680, not 523–671 (INVESTIGATION).
+- The DK off-hand strikes from 66953, 66962, 66979, 66992 and 66217, with the main hand's sigil mods.
+- Killing Spree's hits from 57841/57842, Shiv's from 5940, Fan of Knives' off hand from 52874.
+- The fire elemental's Fire Blast 13339 from 57984. The shaman undeclared list names 13339: its own effect is
+  never dealt.
+- Ardent Defender's heal 66233 from 66235, numbers only: the amount is PAR-P7-TANK's.
+
+**A script casting one spell with another's amount as base points:** the amount's effect goes on `Tick`, the cast
+spell's coefficient on `Direct`, whose roll the closure skips:
+- Explosive Shot: 60052/60053's tick, 53352's 0.16 RAP.
+- Death and Decay: 49938's tick, 52212's 0.04805 AP.
+- Healing Stream Totem: the totem's Hot from 58761 (25), 52042's 0.0827.
+
+**Left out, all script:** Execute's 20647, Deep Wounds' 12721, Damage Shield's 59653 and the Seal of Righteousness
+proc's 25742. Each effect is a 0 or 1 that the script's base points replace, with no coefficient that applies.
+
+**Entries dropped:** hunter 60052/60053 tick AP, DK 49938 tick AP, shaman 13339 SP and 52042 Min/Max. The rest name
+a script or a school.
+
+**Goldens** (Average-Default): BM +0.006%, MM +0.006%, SV +0.007%, from Explosive Trap's burst (multi-target rows
+up to +0.08%); Frost mage +0.0004%, from Deep Freeze's SP. The other 33 suites and all character stats hold.
+
 ### Wave J
 
 - **PAR-P7-PRI** declares the priest's effects. Holy Fire's dot and Devouring Plague are its known

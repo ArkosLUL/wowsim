@@ -83,6 +83,7 @@ var bonuses = []Bonus{
 	{SpellID: 49045, Row: 49045, AP: 0.15},                                               // Arcane Shot (Rank 11)
 	{SpellID: 49048, Row: 49048, AP: 0.2},                                                // Multi-Shot (Rank 8)
 	{SpellID: 49052, Row: 49052, AP: 0.1},                                                // Steady Shot (Rank 4)
+	{SpellID: 49065, Row: 49065, AP: 0.1, APDot: 0.1},                                    // Explosive Trap Effect (Rank 6)
 	{SpellID: 49231, Row: 49231, Direct: 0.3858},                                         // Earth Shock (Rank 10)
 	{SpellID: 49233, Row: 49233, Direct: 0.214, Dot: 0.1},                                // Flame Shock (Rank 9)
 	{SpellID: 49236, Row: 49236, Direct: 0.3858},                                         // Frost Shock (Rank 7)
@@ -100,6 +101,7 @@ var bonuses = []Bonus{
 	{SpellID: 51963, Row: 51963, Direct: 0.453},                                          // Gargoyle Strike
 	{SpellID: 52000, Row: 52000, Dot: 0.164},                                             // Earthliving (Rank 6)
 	{SpellID: 52042, Row: 52042, Direct: 0.0827},                                         // Healing Stream Totem
+	{SpellID: 52212, Row: 52212, AP: 0.04805},                                            // Death and Decay
 	{SpellID: 52472, Row: 52472, Direct: 0.119658, AP: 0.07},                             // Claw (Rank 11)
 	{SpellID: 52474, Row: 52474, Direct: 0.119658, AP: 0.07},                             // Bite (Rank 11)
 	{SpellID: 52476, Row: 52476, Direct: 0.119658, AP: 0.07},                             // Smack (Rank 11)
@@ -109,6 +111,7 @@ var bonuses = []Bonus{
 	{SpellID: 53227, Row: 53227, Direct: 0.193},                                          // Typhoon (Rank 5)
 	{SpellID: 53251, Row: 53251, Dot: 0.115},                                             // Wild Growth (Rank 4)
 	{SpellID: 53307, Row: 53307, Direct: 0.033},                                          // Thorns (Rank 8)
+	{SpellID: 53352, Row: 53352, AP: 0.16},                                               // Explosive Shot
 	{SpellID: 53533, Row: 53533, Direct: 0.119658, AP: 0.07},                             // Swipe (Rank 6)
 	{SpellID: 53543, Row: 53543, Direct: 0.119658, AP: 0.07},                             // Snatch (Rank 6)
 	{SpellID: 53548, Row: 53548, Direct: 0.333},                                          // Pin (Rank 6)
@@ -140,6 +143,7 @@ var bonuses = []Bonus{
 	{SpellID: 57965, Row: 57965, AP: 0.1},                                                // Instant Poison IX (Rank 9)
 	{SpellID: 57970, Row: 57970, APDot: 0.03},                                            // Deadly Poison IX (Rank 9)
 	{SpellID: 57975, Row: 57975, AP: 0.04},                                               // Wound Poison VII (Rank 7)
+	{SpellID: 57984, Row: 57984, Direct: 0.2},                                            // Fire Blast
 	{SpellID: 58381, Row: 58381, Direct: 0.257},                                          // Mind Flay (Rank 9)
 	{SpellID: 58433, Row: 58433, AP: 0.0837},                                             // Volley (Rank 6)
 	{SpellID: 58611, Row: 58611, Direct: 0.333},                                          // Lava Breath (Rank 6)
@@ -159,4 +163,5 @@ var bonuses = []Bonus{
 	{SpellID: 61654, Row: 61654, Direct: 0.214},                                          // Fire Nova (Rank 9)
 	{SpellID: 63672, Row: 63672, APDot: 0.02},                                            // Black Arrow (Rank 6)
 	{SpellID: 64382, Row: 64382, AP: 0.5},                                                // Shattering Throw
+	{SpellID: 71757, Row: 71757, Direct: 2.143},                                          // Deep Freeze
 }

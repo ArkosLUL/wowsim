@@ -58,9 +58,10 @@ func (dk *Deathknight) newRuneStrikeSpell(isMH bool) *core.Spell {
 
 				outcomeApplier = spell.OutcomeMeleeSpecialNoBlockDodgeParry
 			} else {
-				// the off-hand strike, 66217, which serverdata doesn't cover
-				baseDamage = (spell.Unit.OHWeaponDamage(sim, spell.MeleeAttackPower())+spell.BonusWeaponDamage())*1.5 +
-					offHandFixedPct*0.15*spell.MeleeAttackPower()
+				baseDamage = (spell.Direct.Roll(sim)+
+					spell.Unit.OHWeaponDamage(sim, spell.MeleeAttackPower())+
+					spell.BonusWeaponDamage())*spell.Direct.WeaponPct +
+					offHandFixedPct*spell.Direct.AP*spell.MeleeAttackPower()
 
 				outcomeApplier = spell.OutcomeMeleeSpecialCritOnly
 			}
@@ -79,12 +80,13 @@ func (dk *Deathknight) newRuneStrikeSpell(isMH bool) *core.Spell {
 			}
 		},
 	}
+	conf.Direct = runeStrikeEffect
 	if !isMH { // only MH has cost & gcd
 		conf.RuneCost = core.RuneCostOptions{}
 		conf.Cast = core.CastConfig{}
 		conf.ExtraCastCondition = nil
-	} else {
-		conf.Direct = runeStrikeEffect
+		// Threat of Thassarian's off-hand strike
+		conf.Direct.FromSpellID = 66217
 	}
 
 	return dk.RegisterSpell(conf)
