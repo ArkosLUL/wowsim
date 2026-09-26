@@ -101,10 +101,10 @@ bugs, the importer's missing pets, ammo and consumables, and a batch hung on a h
 
 ## Current wave
 
-- Wave: J, not started. Wave I6 (base `b15817c30`) landed on `master`.
-- Base SHA: set at wave start.
-- Workflow runId: none. Wave I6 ran as `wf_70ca9fc3-ef5` (args `waveI6-args.json`, results `waveI6-results.json`
-  in `G:\DevStuff\GitHub\.wave-loop`).
+- Wave: J, running. Base SHA `baa30c194`.
+- Workflow runId: set once started. Args `waveJ-args.json` in `G:\DevStuff\GitHub\.wave-loop`.
+- BIS-e2e-perf's timings run in a second Workflow, alone on the idle machine, once the other three items
+  merge; then the orchestrator runs the full-roster batch.
 
 ## BiS baseline
 
