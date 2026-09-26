@@ -46,14 +46,14 @@ func (paladin *Paladin) registerConsecrationSpell() {
 			NumberOfTicks: 8 + core.TernaryInt32(paladin.HasMajorGlyph(proto.PaladinMajorGlyph_GlyphOfConsecration), 2, 0),
 			TickLength:    time.Second * 1,
 			TicksCanCrit:  false,
+			Tick:          core.SpellEffect{Effect: 0, Min: 113, Max: 113, SP: 0.04, AP: 0.04},
 
 			OnSnapshot: func(sim *core.Simulation, _ *core.Unit, dot *core.Dot, _ bool) {
 				target := paladin.CurrentTarget
 
-				// i = 113 + 0.04*HolP + 0.04*AP
-				dot.SnapshotBaseDamage = 113 +
-					.04*dot.Spell.MeleeAttackPower() +
-					.04*(dot.Spell.SpellPower()+bonusSpellPower)
+				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) +
+					dot.Tick.AP*dot.Spell.MeleeAttackPower() +
+					dot.Tick.SP*(dot.Spell.SpellPower()+bonusSpellPower)
 
 				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(dot.Spell.Unit.AttackTables[target.UnitIndex])
 			},

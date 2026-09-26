@@ -8,8 +8,13 @@ import (
 // TODO: Cleanup death strike the same way we did for plague strike
 var DeathStrikeActionID = core.ActionID{SpellID: 49924}
 
+func (dk *Deathknight) deathStrikeEffect() (core.SpellEffect, []core.SpellMod) {
+	return core.SpellEffect{Effect: 0, Min: 297, Max: 297, WeaponPct: 0.75},
+		[]core.SpellMod{{Op: core.SpellModEffect1, Flat: dk.sigilOfAwarenessBonus()}}
+}
+
 func (dk *Deathknight) newDeathStrikeSpell(isMH bool) *core.Spell {
-	bonusBaseDamage := dk.sigilOfAwarenessBonus()
+	offHandFixed := 148 + float64(dk.sigilOfAwarenessBonus())
 	hasGlyph := dk.HasMajorGlyph(proto.DeathknightMajorGlyph_GlyphOfDeathStrike)
 	deathConvertChance := float64(dk.Talents.DeathRuneMastery) / 3
 
@@ -38,8 +43,7 @@ func (dk *Deathknight) newDeathStrikeSpell(isMH bool) *core.Spell {
 		},
 
 		BonusCritRating: (dk.annihilationCritBonus() + dk.improvedDeathStrikeCritBonus()) * core.CritRatingPerCritChance,
-		DamageMultiplier: .75 *
-			core.TernaryFloat64(isMH, 1, dk.nervesOfColdSteelBonus()) *
+		DamageMultiplier: core.TernaryFloat64(isMH, 1, dk.nervesOfColdSteelBonus()) *
 			dk.improvedDeathStrikeDamageBonus(),
 		CritMultiplier:   dk.bonusCritMultiplier(dk.Talents.MightOfMograine),
 		ThreatMultiplier: 1,
@@ -47,15 +51,10 @@ func (dk *Deathknight) newDeathStrikeSpell(isMH bool) *core.Spell {
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			var baseDamage float64
 			if isMH {
-				baseDamage = 297 +
-					bonusBaseDamage +
-					spell.Unit.MHNormalizedWeaponDamage(sim, spell.MeleeAttackPower()) +
-					spell.BonusWeaponDamage()
+				baseDamage = normalizedStrikeBase(sim, spell, true, spell.Direct.Roll(sim)) * spell.Direct.WeaponPct
 			} else {
-				baseDamage = 148 +
-					bonusBaseDamage +
-					spell.Unit.OHNormalizedWeaponDamage(sim, spell.MeleeAttackPower()) +
-					spell.BonusWeaponDamage()
+				// the off-hand strike, 66953, which serverdata doesn't cover
+				baseDamage = normalizedStrikeBase(sim, spell, false, offHandFixed) * 0.75
 			}
 			baseDamage *= dk.RoRTSBonus(target)
 			if hasGlyph {
@@ -85,6 +84,7 @@ func (dk *Deathknight) newDeathStrikeSpell(isMH bool) *core.Spell {
 		conf.Cast = core.CastConfig{}
 	} else {
 		conf.Flags |= core.SpellFlagAPL
+		conf.Direct, conf.Mods = dk.deathStrikeEffect()
 	}
 
 	return dk.RegisterSpell(conf)
@@ -97,8 +97,8 @@ func (dk *Deathknight) registerDeathStrikeSpell() {
 }
 
 func (dk *Deathknight) registerDrwDeathStrikeSpell() {
-	bonusBaseDamage := dk.sigilOfAwarenessBonus()
 	hasGlyph := dk.HasMajorGlyph(proto.DeathknightMajorGlyph_GlyphOfDeathStrike)
+	direct, mods := dk.deathStrikeEffect()
 
 	dk.RuneWeapon.DeathStrike = dk.RuneWeapon.RegisterSpell(core.SpellConfig{
 		ActionID:    DeathStrikeActionID.WithTag(1),
@@ -107,12 +107,15 @@ func (dk *Deathknight) registerDrwDeathStrikeSpell() {
 		Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagIncludeTargetBonusDamage,
 
 		BonusCritRating:  (dk.annihilationCritBonus() + dk.improvedDeathStrikeCritBonus()) * core.CritRatingPerCritChance,
-		DamageMultiplier: .75 * dk.improvedDeathStrikeDamageBonus(),
+		DamageMultiplier: dk.improvedDeathStrikeDamageBonus(),
 		CritMultiplier:   dk.bonusCritMultiplier(dk.Talents.MightOfMograine),
 		ThreatMultiplier: 1,
 
+		Direct: direct,
+		Mods:   mods,
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := 297 + bonusBaseDamage + dk.DrwWeaponDamage(sim, spell)
+			baseDamage := (spell.Direct.Roll(sim) + dk.DrwWeaponDamage(sim, spell)) * spell.Direct.WeaponPct
 
 			if hasGlyph {
 				baseDamage *= 1 + 0.01*min(dk.CurrentRunicPower(), 25)

@@ -1,6 +1,7 @@
 package warrior
 
 import (
+	"math"
 	"time"
 
 	"github.com/wowsims/wotlk/sim/core"
@@ -95,9 +96,9 @@ func (warrior *Warrior) applyDamageShield() {
 		return
 	}
 
-	coeff := 0.1 * float64(warrior.Talents.DamageShield)
+	blockPct := 10 * float64(warrior.Talents.DamageShield)
 	damageShieldProcSpell := warrior.GetOrRegisterSpell(core.SpellConfig{
-		ActionID:    core.ActionID{SpellID: 58874},
+		ActionID:    core.ActionID{SpellID: []int32{0, 58872, 58874}[warrior.Talents.DamageShield]},
 		SpellSchool: core.SpellSchoolPhysical,
 		ProcMask:    core.ProcMaskEmpty,
 		Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagNoOnCastComplete,
@@ -105,8 +106,11 @@ func (warrior *Warrior) applyDamageShield() {
 		DamageMultiplier: 1,
 		ThreatMultiplier: 1,
 
+		// spell_warr_damage_shield deals the rank's percent of the block value, in whole points, as 59653
+		Direct: core.SpellEffect{Effect: 0, Min: blockPct, Max: blockPct},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := coeff * warrior.BlockValue()
+			baseDamage := math.Floor(math.Floor(max(warrior.BlockValue(), 0)) * spell.Direct.Roll(sim) / 100)
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeAlwaysHit)
 		},
 	})
@@ -802,6 +806,9 @@ func (warrior *Warrior) RegisterBladestormCD() {
 			DamageMultiplier: 1 + 0.05*float64(warrior.Talents.DualWieldSpecialization),
 			CritMultiplier:   warrior.critMultiplier(oh),
 			ThreatMultiplier: 1.25,
+
+			// each Bladestorm tick's 50622 triggers the off-hand Whirlwind
+			Direct: core.SpellEffect{Effect: 0, FromSpellID: 44949, WeaponPct: 1},
 		})
 	}
 
@@ -836,15 +843,14 @@ func (warrior *Warrior) RegisterBladestormCD() {
 			},
 			NumberOfTicks: 6,
 			TickLength:    time.Second * 1,
+			Tick:          core.SpellEffect{Effect: 0, FromSpellID: 50622, WeaponPct: 1},
 			OnTick: func(sim *core.Simulation, _ *core.Unit, dot *core.Dot) {
 				target := warrior.CurrentTarget
 				spell := dot.Spell
 
 				curTarget := target
 				for hitIndex := int32(0); hitIndex < numHits; hitIndex++ {
-					baseDamage := 0 +
-						spell.Unit.MHNormalizedWeaponDamage(sim, spell.MeleeAttackPower()) +
-						spell.BonusWeaponDamage()
+					baseDamage := normalizedStrike(sim, spell, &dot.Tick, true)
 					results[hitIndex] = spell.CalcDamage(sim, curTarget, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 
 					curTarget = sim.Environment.NextTargetUnit(curTarget)
@@ -859,9 +865,7 @@ func (warrior *Warrior) RegisterBladestormCD() {
 				if warrior.BladestormOH != nil {
 					curTarget = target
 					for hitIndex := int32(0); hitIndex < numHits; hitIndex++ {
-						baseDamage := 0 +
-							spell.Unit.OHNormalizedWeaponDamage(sim, spell.MeleeAttackPower()) +
-							spell.BonusWeaponDamage()
+						baseDamage := normalizedStrike(sim, warrior.BladestormOH, &warrior.BladestormOH.Direct, false)
 						results[hitIndex] = warrior.BladestormOH.CalcDamage(sim, curTarget, baseDamage, warrior.BladestormOH.OutcomeMeleeSpecialHitAndCrit)
 
 						curTarget = sim.Environment.NextTargetUnit(curTarget)

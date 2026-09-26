@@ -1,6 +1,7 @@
 package warrior
 
 import (
+	"math"
 	"time"
 
 	"github.com/wowsims/wotlk/sim/core"
@@ -36,8 +37,11 @@ func (warrior *Warrior) registerConcussionBlowSpell() {
 		CritMultiplier:   warrior.critMultiplier(mh),
 		ThreatMultiplier: 2,
 
+		// spell_warr_concussion_blow deals the dummy effect's 38 as a percent of attack power
+		Direct: core.SpellEffect{Effect: 2, Min: 38, Max: 38},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := 0.38 * spell.MeleeAttackPower()
+			baseDamage := math.Floor(spell.Direct.Roll(sim) * spell.MeleeAttackPower() / 100)
 			result := spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 
 			if !result.Landed() {

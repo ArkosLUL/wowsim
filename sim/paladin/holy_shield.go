@@ -19,11 +19,13 @@ func (paladin *Paladin) registerHolyShieldSpell() {
 		DamageMultiplier: 1,
 		ThreatMultiplier: 1,
 
+		// the aura's SPELL_AURA_PROC_TRIGGER_DAMAGE effect, dealt through 48952's own spell_bonus_data row
+		Direct: core.SpellEffect{Effect: 1, Min: 274, Max: 274, SP: 0.09, AP: 0.056},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			// Beta testing shows wowhead coeffs are probably correct
-			baseDamage := 274 +
-				0.0732*spell.MeleeAttackPower() +
-				0.117*spell.SpellPower()
+			baseDamage := spell.Direct.Roll(sim) +
+				spell.Direct.AP*spell.MeleeAttackPower() +
+				spell.Direct.SP*spell.SpellPower()
 
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMagicHit)
 		},

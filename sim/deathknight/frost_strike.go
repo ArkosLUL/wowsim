@@ -10,7 +10,7 @@ var FrostStrikeMHActionID = frostStrikeActionID.WithTag(1)
 var FrostStrikeOHActionID = frostStrikeActionID.WithTag(2)
 
 func (dk *Deathknight) newFrostStrikeHitSpell(isMH bool) *core.Spell {
-	bonusBaseDamage := dk.sigilOfTheVengefulHeartFrostStrike()
+	offHandFixed := 125 + float64(dk.sigilOfTheVengefulHeartFrostStrike())
 
 	actionID := FrostStrikeMHActionID
 	if !isMH {
@@ -34,26 +34,22 @@ func (dk *Deathknight) newFrostStrikeHitSpell(isMH bool) *core.Spell {
 			IgnoreHaste: true,
 		},
 
-		BonusCritRating: (dk.annihilationCritBonus() + dk.darkrunedBattlegearCritBonus()) * core.CritRatingPerCritChance,
-		DamageMultiplier: .55 *
-			core.TernaryFloat64(isMH, 1, dk.nervesOfColdSteelBonus()) *
-			dk.bloodOfTheNorthCoeff(),
+		BonusCritRating:  (dk.annihilationCritBonus() + dk.darkrunedBattlegearCritBonus()) * core.CritRatingPerCritChance,
+		DamageMultiplier: dk.bloodOfTheNorthCoeff(),
 		CritMultiplier:   dk.bonusCritMultiplier(dk.Talents.GuileOfGorefiend),
 		ThreatMultiplier: 1,
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			var baseDamage float64
 			if isMH {
-				baseDamage = 250 +
-					bonusBaseDamage +
-					spell.Unit.MHNormalizedWeaponDamage(sim, spell.MeleeAttackPower()) +
-					spell.BonusWeaponDamage()
+				baseDamage = normalizedStrikeBase(sim, spell, true, spell.Direct.Roll(sim)) * spell.Direct.WeaponPct
 			} else {
-				// SpellID 66962
-				baseDamage = 125 +
-					bonusBaseDamage +
-					spell.Unit.OHNormalizedWeaponDamage(sim, spell.MeleeAttackPower()) +
-					spell.BonusWeaponDamage()
+				// 66962, which serverdata doesn't cover. Spell::EffectWeaponDmg applies the hand's TOTAL_PCT to
+				// physical strikes only, so this Frost one skips the off hand's half and Nerves of Cold Steel,
+				// on the weapon and the fixed bonus alike.
+				baseDamage = (offHandFixed +
+					spell.Unit.AutoAttacks.OH().CalculateNormalizedWeaponDamage(sim, spell.MeleeAttackPower()) +
+					spell.BonusWeaponDamage()) * 0.55
 			}
 			baseDamage *= dk.glacielRotBonus(target) *
 				dk.RoRTSBonus(target) *
@@ -75,6 +71,8 @@ func (dk *Deathknight) newFrostStrikeHitSpell(isMH bool) *core.Spell {
 		conf.Cast = core.CastConfig{}
 	} else {
 		conf.Flags |= core.SpellFlagAPL
+		conf.Direct = core.SpellEffect{Effect: 0, Min: 250, Max: 250, WeaponPct: 0.55}
+		conf.Mods = []core.SpellMod{{Op: core.SpellModEffect1, Flat: dk.sigilOfTheVengefulHeartFrostStrike()}}
 	}
 
 	return dk.RegisterSpell(conf)

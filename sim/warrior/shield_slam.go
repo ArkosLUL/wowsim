@@ -8,6 +8,7 @@ import (
 )
 
 func (warrior *Warrior) registerShieldSlamSpell() {
+	gagOrderPct := 5 * int32(warrior.Talents.GagOrder)
 	hasGlyph := warrior.HasMajorGlyph(proto.WarriorMajorGlyph_GlyphOfBlocking)
 	var glyphOfBlockingAura *core.Aura = nil
 	if hasGlyph {
@@ -50,7 +51,6 @@ func (warrior *Warrior) registerShieldSlamSpell() {
 
 		BonusCritRating: 5 * core.CritRatingPerCritChance * float64(warrior.Talents.CriticalBlock),
 		DamageMultiplier: 1 +
-			.05*float64(warrior.Talents.GagOrder) +
 			core.TernaryFloat64(warrior.HasSetBonus(ItemSetOnslaughtArmor, 4), .10, 0) +
 			core.TernaryFloat64(warrior.HasSetBonus(ItemSetDreadnaughtPlate, 2), .10, 0) +
 			core.TernaryFloat64(warrior.HasSetBonus(ItemSetYmirjarLordsPlate, 2), .20, 0), // TODO: All additive multipliers?
@@ -58,19 +58,22 @@ func (warrior *Warrior) registerShieldSlamSpell() {
 		ThreatMultiplier: 1.3,
 		FlatThreatBonus:  770,
 
+		Direct: core.SpellEffect{Effect: 1, Min: 990, Max: 1040, SP: 1},
+		Mods:   []core.SpellMod{{Op: core.SpellModEffect2, Pct: gagOrderPct}},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+			// Spell::EffectSchoolDMG adds the block value, halved past 24.5 a level and capped at 34.5 a
+			// level (both doubled under Shield Block), with the effect's mods, in whole points
+			limit := core.TernaryFloat64(warrior.ShieldBlockAura.IsActive(), 2, 1)
+			soft, hard := uint32(core.CharacterLevel*24.5*limit), uint32(core.CharacterLevel*34.5*limit)
+			block := uint32(max(warrior.BlockValue(), 0))
+			if block >= hard {
+				block = (soft + hard) / 2
+			} else if block > soft {
+				block = soft + (block-soft)/2
+			}
 
-			// Apply SBV cap with special bypass rules for Shield Block and Glyph of Blocking
-			// TODO: Verify that this bypass behavior and DR curve are correct
-
-			sbvMod := warrior.PseudoStats.BlockValueMultiplier
-			sbvMod /= (sbvMod - core.TernaryFloat64(warrior.ShieldBlockAura.IsActive(), 1, 0) - core.TernaryFloat64(glyphOfBlockingAura.IsActive(), 0.1, 0))
-
-			sbv := warrior.BlockValue() / sbvMod
-
-			sbv = sbvMod * (core.TernaryFloat64(sbv <= 1960.0, sbv, 0.0) + core.TernaryFloat64(sbv > 1960.0 && sbv <= 3160.0, 0.09333333333*sbv+1777.06666667, 0.0) + core.TernaryFloat64(sbv > 3160.0, 2072.0, 0.0))
-
-			baseDamage := sim.Roll(990, 1040) + sbv
+			baseDamage := spell.Direct.Roll(sim) + float64(int32(float32(block)*(1+float32(gagOrderPct)/100)))
 			result := spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 
 			if result.Landed() {

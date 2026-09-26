@@ -8,8 +8,8 @@ import (
 )
 
 func (paladin *Paladin) registerCrusaderStrikeSpell() {
-	bonusDmg := core.TernaryFloat64(paladin.Ranged().ID == 31033, 36, 0) + // Libram of Righteous Power
-		core.TernaryFloat64(paladin.Ranged().ID == 40191, 79, 0) // Libram of Radiance
+	// Libram of Radiance (60821) adds to the fixed bonus, which the weapon percent then scales: 105 x 75%
+	libramFlat := core.TernaryInt32(paladin.Ranged().ID == 40191, 105, 0)
 
 	jowAuras := paladin.NewEnemyAuraArray(core.JudgementOfWisdomAura)
 	jolAuras := paladin.NewEnemyAuraArray(core.JudgementOfLightAura)
@@ -38,15 +38,18 @@ func (paladin *Paladin) registerCrusaderStrikeSpell() {
 		},
 
 		BonusCritRating: core.TernaryFloat64(paladin.HasSetBonus(ItemSetAegisBattlegear, 4), 10, 0) * core.CritRatingPerCritChance,
-		DamageMultiplier: 0.75 * spellModDamage(paladin.getTalentSanctityOfBattleBonus(), paladin.getTalentTheArtOfWarBonus(),
+		DamageMultiplier: spellModDamage(paladin.getTalentSanctityOfBattleBonus(), paladin.getTalentTheArtOfWarBonus(),
 			paladin.getItemSetGladiatorsVindicationBonusGloves()),
 		CritMultiplier:   paladin.MeleeCritMultiplier(),
 		ThreatMultiplier: 1,
 
+		Direct: core.SpellEffect{Effect: 0, WeaponPct: 0.75},
+		Mods:   []core.SpellMod{{Op: core.SpellModEffect1, Flat: libramFlat}},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := bonusDmg +
+			baseDamage := (spell.Direct.Roll(sim) +
 				spell.Unit.MHNormalizedWeaponDamage(sim, spell.MeleeAttackPower()) +
-				spell.BonusWeaponDamage()
+				spell.BonusWeaponDamage()) * spell.Direct.WeaponPct
 
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 

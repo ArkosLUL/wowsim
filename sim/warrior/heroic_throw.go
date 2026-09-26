@@ -28,9 +28,15 @@ func (warrior *Warrior) RegisterHeroicThrow() {
 		CritMultiplier:   warrior.critMultiplier(mh),
 		ThreatMultiplier: 1.5,
 
+		Direct: core.SpellEffect{Effect: 0, Min: 12, Max: 12, AP: 0.5},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := 12 + 0.5*spell.MeleeAttackPower()
-			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialNoBlockDodgeParry)
+			// the damage and crit are worked out at the launch, and land with the missile
+			baseDamage := spell.Direct.Roll(sim) + spell.Direct.AP*spell.MeleeAttackPower()
+			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialNoBlockDodgeParry)
+			spell.WaitTravelTime(sim, func(sim *core.Simulation) {
+				spell.DealDamage(sim, result)
+			})
 		},
 	})
 }

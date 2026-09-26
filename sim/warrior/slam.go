@@ -28,10 +28,13 @@ func (warrior *Warrior) registerSlamSpell() {
 		ThreatMultiplier: 1,
 		FlatThreatBonus:  140,
 
+		// spell_warr_slam hands 50783 the cast's 250, which is 50783's own value too
+		Direct: core.SpellEffect{Effect: 0, Min: 250, Max: 250, WeaponPct: 1},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := 250 +
+			baseDamage := (spell.Direct.Roll(sim) +
 				spell.Unit.MHWeaponDamage(sim, spell.MeleeAttackPower()) +
-				spell.BonusWeaponDamage()
+				spell.BonusWeaponDamage()) * spell.Direct.WeaponPct
 
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialCritOnly)
 		},

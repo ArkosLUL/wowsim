@@ -1,6 +1,7 @@
 package warrior
 
 import (
+	"math"
 	"time"
 
 	"github.com/wowsims/wotlk/sim/core"
@@ -36,8 +37,11 @@ func (warrior *Warrior) registerShockwaveSpell() {
 		CritMultiplier:   warrior.critMultiplier(none),
 		ThreatMultiplier: 1,
 
+		// Spell::EffectSchoolDMG adds the third effect's 75 as a percent of attack power to the second's 0
+		Direct: core.SpellEffect{Effect: 2, Min: 75, Max: 75},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := 0.75 * spell.MeleeAttackPower()
+			baseDamage := math.Floor(spell.Direct.Roll(sim) * spell.MeleeAttackPower() / 100)
 			baseDamage *= sim.Encounter.AOECapMultiplier()
 			for _, aoeTarget := range sim.Encounter.TargetUnits {
 				spell.CalcAndDealDamage(sim, aoeTarget, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)

@@ -159,6 +159,8 @@ func (dk *Deathknight) applyBloodCakedBlade() {
 	}))
 }
 
+// bloodCakedBladeHit is the strike a swing of either hand procs. 50463 lacks
+// SPELL_ATTR3_REQUIRES_OFF_HAND_WEAPON, so the server always swings the main hand for it.
 func (dk *Deathknight) bloodCakedBladeHit(isMh bool) *core.Spell {
 	return dk.Unit.RegisterSpell(core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: 50463}.WithTag(core.TernaryInt32(isMh, 1, 2)),
@@ -166,22 +168,16 @@ func (dk *Deathknight) bloodCakedBladeHit(isMh bool) *core.Spell {
 		ProcMask:    core.ProcMaskProc,
 		Flags:       core.SpellFlagNoOnCastComplete | core.SpellFlagMeleeMetrics,
 
-		DamageMultiplier: 1 *
-			core.TernaryFloat64(isMh, 1, dk.nervesOfColdSteelBonus()),
+		DamageMultiplier: 1,
 		ThreatMultiplier: 1,
 
+		Direct: core.SpellEffect{Effect: 1, WeaponPct: 0.25},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			var baseDamage float64
-			if isMh {
-				baseDamage = 0 +
-					spell.Unit.MHWeaponDamage(sim, spell.MeleeAttackPower()) +
-					spell.BonusWeaponDamage()
-			} else {
-				baseDamage = 0 +
-					spell.Unit.OHWeaponDamage(sim, spell.MeleeAttackPower()) +
-					spell.BonusWeaponDamage()
-			}
-			baseDamage *= 0.25 + 0.125*dk.dkCountActiveDiseasesBcb(target)
+			baseDamage := (spell.Unit.MHWeaponDamage(sim, spell.MeleeAttackPower()) + spell.BonusWeaponDamage()) *
+				spell.Direct.WeaponPct
+			// Spell::EffectWeaponDmg's 50% a disease
+			baseDamage *= 1 + 0.5*dk.dkCountActiveDiseasesBcb(target)
 
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHit)
 		},
@@ -232,16 +228,27 @@ func (dk *Deathknight) procUnholyBlight(sim *core.Simulation, target *core.Unit,
 		return
 	}
 
-	dot := dk.UnholyBlightSpell.Dot(target)
+	spell := dk.UnholyBlightSpell
+	dot := spell.Dot(target)
 
-	newDamage := deathCoilDamage * 0.10
-	outstandingDamage := core.TernaryFloat64(dot.IsActive(), dot.SnapshotBaseDamage*float64(dot.NumberOfTicks-dot.TickCount), 0)
-	totalDamage := outstandingDamage + newDamage
+	// spell_dk_unholy_blight, in whole points: 10% of the hit and the glyph's 40% on that, spread over
+	// the 10 ticks
+	amount := int32(deathCoilDamage) * 10 / 100
+	if dk.HasMajorGlyph(proto.DeathknightMajorGlyph_GlyphOfUnholyBlight) {
+		amount += amount * 40 / 100
+	}
+	amount /= dot.NumberOfTicks
+	// CastDelayedSpellWithPeriodicAmount adds what's left of the old amount at the proc
+	if dot.IsActive() {
+		amount += int32(dot.SnapshotBaseDamage) * max(dot.NumberOfTicks-dot.TickCount, 0) / dot.NumberOfTicks
+	}
 
 	dk.unholyBlightDelay.Apply(sim, target, func(sim *core.Simulation) {
-		dot.SnapshotAttackerMultiplier = dk.UnholyBlightSpell.DamageMultiplier
-		dot.SnapshotBaseDamage = totalDamage / float64(dot.NumberOfTicks)
-		dk.UnholyBlightSpell.Cast(sim, target)
+		spell.WaitTravelTime(sim, func(sim *core.Simulation) {
+			dot.SnapshotBaseDamage = float64(amount)
+			dot.SnapshotAttackerMultiplier = spell.DamageMultiplier
+			spell.Cast(sim, target)
+		})
 	})
 }
 
@@ -252,12 +259,13 @@ func (dk *Deathknight) applyUnholyBlight() {
 
 	dk.unholyBlightDelay = core.NewDelayedPeriodicApplier(&dk.Unit)
 	dk.UnholyBlightSpell = dk.Unit.RegisterSpell(core.SpellConfig{
-		ActionID:    core.ActionID{SpellID: 50536},
-		SpellSchool: core.SpellSchoolShadow,
-		ProcMask:    core.ProcMaskEmpty,
-		Flags:       core.SpellFlagNoOnCastComplete | core.SpellFlagIgnoreModifiers | core.SpellFlagNoOnDamageDealt,
+		ActionID:     core.ActionID{SpellID: 50536},
+		SpellSchool:  core.SpellSchoolShadow,
+		ProcMask:     core.ProcMaskEmpty,
+		Flags:        core.SpellFlagNoOnCastComplete | core.SpellFlagIgnoreModifiers | core.SpellFlagNoOnDamageDealt,
+		MissileSpeed: 15,
 
-		DamageMultiplier: core.TernaryFloat64(dk.HasMajorGlyph(proto.DeathknightMajorGlyph_GlyphOfUnholyBlight), 1.4, 1),
+		DamageMultiplier: 1,
 		ThreatMultiplier: 1,
 
 		Dot: core.DotConfig{
@@ -266,6 +274,9 @@ func (dk *Deathknight) applyUnholyBlight() {
 			},
 			NumberOfTicks: 10,
 			TickLength:    time.Second * 1,
+			// the script hands each tick its amount as custom base points, which replace the 1
+			// (Spell::SetSpellValue stores them 1 less, and CalcValue's roll adds it back)
+			Tick: core.SpellEffect{Effect: 0, Min: 1, Max: 1},
 
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 				dot.CalcAndDealPeriodicSnapshotDamage(sim, target, dot.OutcomeTick)

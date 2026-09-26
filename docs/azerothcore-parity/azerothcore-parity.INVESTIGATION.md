@@ -1238,6 +1238,124 @@ Roll details the tables above don't show:
   `TestSetsAndClassItemEffectsOnEveryWearer` (`sim/item_wearers_test.go`) sims every set and class item
   effect on each class whose armor and weapon types fit it, except the class an allowlist names.
 
+**Effect declarations (PAR-DECL-3)** (`sim/{deathknight,warrior,rogue,paladin}`, code and spelldump; † a retail
+deviation)
+- Death knight, fixed:
+  - Threat of Thassarian's off-hand spells (66953, 66962, 66974, 66979, 66992, 66217) carry half the main
+    hand's base points, truncated (Death Strike 148), and its class mask, so the sigils reach them.
+    `Spell::EffectWeaponDmg` scales a physical strike's fixed bonus, and Rune Strike's 15% AP, by the hand's
+    TOTAL_PCT, which holds the off hand's 0.5 and Nerves of Cold Steel.
+  - † Frost Strike's off hand skips TOTAL_PCT: `CalculateDamage(..., isPhysical)` and the fixed-bonus
+    scaling both need a physical school, so it deals the whole off-hand weapon and fixed bonus, without
+    Nerves of Cold Steel. Frost +1.9%, Frost UH +1.5% with the halvings.
+  - † Blood-Caked Strike (50463) lacks `SPELL_ATTR3_REQUIRES_OFF_HAND_WEAPON`, so an off-hand swing's proc
+    strikes with the main hand (`Spell::Spell` sets `m_attackType`). Unholy +0.9% with Unholy Blight.
+  - Rune Strike's 15% AP comes after the 150% weapon percent, which the sim applied to it too. Blood Tank -2.7%.
+  - Sigil of the Vengeful Heart adds its second effect's base amount to Death Coil, the raw 379
+    (`AuraEffect::GetBaseAmount`). `SpellDamageBonusDone`'s own Vengeful Heart case raises a `DoneTotal`
+    still at 0, so does nothing.
+  - † Glyph of Death and Decay counts twice: an `SPELLMOD_EFFECT1` +20% on 49938's 62, and
+    `spell_dk_death_and_decay`'s +20% on each 52212 hit. Scourgelord's Plate 2pc (70650) is only an
+    `SPELLMOD_ALL_EFFECTS` +20%, so it misses the AP part. Unholy's Death and Decay +2%.
+  - Blood Boil on a target with the caster's diseases: `SpellDamageBonusDone` adds 95 and multiplies the AP
+    coefficient by 1.5835 in place of Impurity, where the sim multiplied everything by 1.5: Blood Boil -10%.
+  - Death Pact heals 40% of the caster's max health (`Spell::EffectHeal`), not of the ghoul's.
+  - The rune weapon takes its owner's spell mods (`Unit::GetSpellModOwner`): Sigil of the Wild Buck on its
+    Death Coil.
+  - Unholy Blight's amount is `spell_dk_unholy_blight`'s whole points: 10% of the hit, the glyph's 40% on
+    that, over 10 ticks, plus the old aura's rest at the proc. The old aura keeps ticking through the queue
+    delay and the 15 yd/s missile, so those ticks pay twice.
+  - A missile's damage and crit are rolled at launch (`Spell::DoAllEffectOnLaunchTarget`), which Gargoyle
+    Strike and both Death Coils now do.
+- Death knight, left open:
+  - Wandering Plague (50526) has `SPELL_ATTR3_IGNORE_CASTER_MODIFIERS`, so `SpellDamageBonusDone` returns
+    its base points unchanged, while the sim's `wanderingPlagueMultiplier` keeps retail's partial scaling.
+  - Glyph of Death Strike takes min(runic power in tenths, 25): the full 25% from 2.5 runic power. The sim
+    uses min(runic power, 25).
+  - The rune weapon's `SpellDamageBonusDone` runs as its owner: the owner's AP and Impurity, and Blood Boil
+    checks the owner's diseases.
+  - Ghoul Frenzy (63560) heals every 3 s for 30 s; the sim, every 6 s.
+  - `PseudoStats.BonusDamage` goes on off-hand hits whole; the server scales TOTAL_VALUE by TOTAL_PCT.
+- Custom base points get no extra 1: `Spell::SetSpellValue` stores them through `CalcBaseValue`, 1 less
+  for an effect with DieSides, and `CalcValue`'s roll adds it back. So Death Coil's 47632, Unholy Blight's ticks, Execute's
+  20647, Slam's 50783 and Damage Shield's 59653 deal exactly what their scripts hand them.
+- Warrior, fixed:
+  - Whole points: `spell_warr_execute` hands 20647 1456 + int(3.8 per tenth of rage + 20% AP);
+    Bloodthirst, Concussion Blow and Shockwave truncate their AP percent; Damage Shield its block value
+    percent (59653).
+  - `spell_warr_rend` adds int(a fifth of the average weapon hit) to each tick, both parts with Improved
+    Rend (`SPELLMOD_EFFECT1`), then 35% (effect 2) truncated while the target is above 75%.
+  - Improved Cleave is `SPELLMOD_ALL_EFFECTS` on the 222 (488 at 3/3). Gag Order is `SPELLMOD_EFFECT2` on
+    Shield Slam's roll and block value, so it multiplies the sets' `SPELLMOD_DAMAGE` percents instead of
+    adding to them.
+  - Shield Slam's block value (`Spell::EffectSchoolDMG`): `GetShieldBlockValue(1960, 2760)`, doubled under
+    Shield Block, halves the part past 1960 and pays 2360 from 2760 on. The sim's curve left Glyph of
+    Blocking's 10% and Shield Block out of the cap and capped at 2072 past 3160: Shield Slam +9% on Wrynn's
+    Plate, -1.2% on Scourgelord's Plate; block value weight 0.450 to 0.339.
+  - † Devastate applies its Sunder (58567, a second stack with the glyph) before `Spell::EffectWeaponDmg`
+    counts it: 242 per stack after this one, where the sim dealt nothing without a prior Sunder. The
+    weapon's bonus damage is inside the 120% too.
+- Warrior, left open:
+  - Concussion Blow's `SetHitDamage` replaces the launch damage in the hit phase, after
+    `SpellDamageBonusDone`, so no caster damage done percent reaches it; the sim applies them.
+  - Deep Wounds: serverdata lacks 12721. `spell_warr_deep_wounds_aura` reads the displayed weapon damage
+    (`UNIT_FIELD_MINDAMAGE`/`MAXDAMAGE`), the sim its attacker and target multipliers.
+- Rogue, fixed:
+  - † `Spell::EffectWeaponDmg` gives Fan of Knives, Hemorrhage and Ghostly Strike 50% more with a dagger in
+    the striking hand, on top of the weapon percent: Hemorrhage 165%, Ghostly Strike 187.5%, where the sim
+    had retail's 160% and 180%.
+  - Ghostly Strike and Fan of Knives have no normalized weapon effect, so `CalculateDamage` uses the
+    weapon's speed; the sim normalized Ghostly Strike.
+  - † `spell_rog_rupture` adds int(AP × 0.015 to 0.0375 by combo points) in `AuraEffect::CalculateAmount`'s
+    script handlers, after `SpellDamageBonusDone`: no caster damage-done percent or `SPELLMOD_DOT` (Blood
+    Spatter, Serrated Blades, Find Weakness, T7 2pc, T8 4pc) reaches it. Rupture -13% (Assassination) to
+    -25% (Subtlety).
+  - Envenom deals effect 0's 216 a dose, not 215. Eviscerate and Envenom add int(AP × combo points × 7% or
+    9%) (`Spell::EffectSchoolDMG`).
+  - `spell_bonus_data` AP: Instant Poison 0.1, Deadly Poison 0.03 a dose a tick (`CalculateAmount` works out
+    one dose, then multiplies), Wound Poison 0.04, where the sim had 0.09, 0.027 and 0.036. Poisons +7 to +8%.
+  - Fan of Knives' off hand is 52874, which `spell_linked_spell` casts once 51723 has launched
+    (`Spell::_cast`): both hands roll at launch, main hand first, and land together at 18 yd/s. The sim
+    dealt the off hand first, so its procs reached the main hand's hit.
+- Rogue, left open:
+  - Serverdata lacks Killing Spree's 57841/57842, Shiv's 5940 and Fan of Knives' 52874.
+  - Shadowstep's 36563 is `SPELLMOD_DAMAGE` +20% on Sinister Strike, Backstab, Ambush, Eviscerate,
+    Hemorrhage, Ghostly Strike, Mutilate's main hand and Envenom, and `SPELLMOD_EFFECT1` +20% on Garrote's
+    and Rupture's base points, not their AP. The sim multiplies every builder and finisher by 1.2.
+  - Mutilate: 48666 triggers the main hand's 48665 before the off hand's 48664; the sim casts the off hand
+    first. Its 20% needs any poison on the target (`DISPEL_POISON`, any caster's); the sim checks its own
+    Deadly and Wound Poison.
+  - Fan of Knives waits for `DistanceFromTarget`: 30 yd in the suites (1.67 s), where a rogue in its 8 yd
+    radius waits 277 ms (the 5 yd floor).
+- Paladin, fixed:
+  - Holy Shield deals its aura's `SPELL_AURA_PROC_TRIGGER_DAMAGE` effect (274) through
+    `AuraEffect::HandleProcTriggerDamageAuraProc`, so `SpellDamageBonusDone` with 48952's own
+    `spell_bonus_data` row: 0.09 SP and 0.056 AP, where the sim had the effect's 0.117 and 0.0732. Holy
+    Shield -15%, Protection -1.1% where the boss attacks.
+  - Judgement of Command (20467) is 24% weapon damage (effect 1), not 19%, plus int(8% AP) and int(13% SP)
+    after the percent (`Spell::EffectWeaponDmg`). Retribution SOC +1%.
+  - Level-scaled ranges: Exorcism 1033–1151, Holy Wrath 1058–1242; the sim had 1028–1146 and 1050–1234.
+  - Libram of Radiance (60821) is `SPELLMOD_EFFECT1` +105 on Crusader Strike's fixed bonus, which the 75%
+    scales to 78.75. The sim added the tooltip's 79 before the 75%.
+  - Shield of Righteousness (`Spell::EffectSchoolDMG`) adds `GetShieldBlockValue(29.5, 34.5 a level)`: block
+    value past 2360 counts half, and from 2760 on it pays 2560. The T8 4pc (64882) adds 225 after the cap,
+    and its Aegis (64883, `spell_proc` on Shield of Righteousness) comes from the hit. The sim capped at
+    2400 and 3120, with Aegis before the damage.
+  - Hammer of the Righteous deals 1 (effect 0) plus effect 2's 4 × int(average main-hand hit × 1000) / the
+    unhasted attack time in ms; the average takes attack power and bonus damage, no percent mods.
+  - Whole points: the Seal of Righteousness proc hands 25742 int(weapon speed × (2.2% AP + 4.4% SP)), with
+    SP truncated first; Righteous Vengeance's tick is int(int(crit × 10% a rank) / 4), plus int(old tick ×
+    ticks left / 4) (`Unit::CastDelayedSpellWithPeriodicAmount`).
+- Paladin, left open:
+  - Holy Shield's proc rolls no hit or crit (`HandleProcTriggerDamageAuraProc`); the sim rolls a magic hit.
+  - Ardent Defender heals as 66235, which serverdata lacks: min(1, defense skill / 540) × 10% a rank of max
+    health, the percent truncated (`spell_pal_ardent_defender`). The sim heals max(1, bonus defense / 140)
+    × 10% a rank as 66233.
+  - Divine Storm's librams (64957 Libram of Discord, 63353 Venture Co.) are `SPELLMOD_DAMAGE` flats, which
+    `MeleeDamageBonusDone` adds after every percent; the sim adds them inside the 110%.
+  - Unmodeled: Holy Shock, and the heals of Divine Storm (54172), Sheath of Light and Judgement of Light.
+    Serverdata lacks the Seal of Righteousness proc's 25742.
+
 ## Verified on the live server
 
 `[ac]/modules/mod-sim-validation/e2e` (`TestSimvalWarrior`, `TestSimvalHunter`) ran every probe inside Naxxramas and

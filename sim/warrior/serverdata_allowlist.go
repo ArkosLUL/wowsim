@@ -13,5 +13,7 @@ func init() {
 			Why: "12723 is the triggered Sweeping Strikes hit; the ability with the 30 s cooldown is 12328"},
 		core.ServerConflictAllowance{Spell: core.ActionID{SpellID: 46924}, Field: core.ServerChanneled, Sim: 1, Server: 0, KeepSim: true,
 			Why: "Bladestorm is a periodic aura on the server, modeled as a channel so nothing else is cast during it"},
+		core.ServerConflictAllowance{Spell: core.ActionID{SpellID: 47471}, Field: core.ServerAP, SimFloat: 0.2, ServerFloat: 0, KeepSim: true,
+			Why: "spell_warr_execute adds 20% of attack power to the base points it hands 20647"},
 	)
 }

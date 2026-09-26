@@ -34,22 +34,22 @@ func (rogue *Rogue) registerBackstabSpell() {
 			[]float64{0, 2, 4, 6}[rogue.Talents.TurnTheTables]*core.CritRatingPerCritChance +
 			10*core.CritRatingPerCritChance*float64(rogue.Talents.PuncturingWounds),
 		// All of these use "Apply Aura: Modifies Damage/Healing Done", and stack additively (up to 142%).
-		DamageMultiplier: 1.5 * (1 +
+		DamageMultiplier: 1 +
 			0.02*float64(rogue.Talents.FindWeakness) +
 			0.1*float64(rogue.Talents.Opportunity) +
 			0.03*float64(rogue.Talents.Aggression) +
 			0.05*float64(rogue.Talents.BladeTwisting) +
 			core.TernaryFloat64(rogue.Talents.SurpriseAttacks, 0.1, 0) +
-			core.TernaryFloat64(rogue.HasSetBonus(Tier6, 4), 0.06, 0)) *
-			(1 + 0.02*float64(rogue.Talents.SinisterCalling)),
+			core.TernaryFloat64(rogue.HasSetBonus(Tier6, 4), 0.06, 0),
 		CritMultiplier:   rogue.MeleeCritMultiplier(true),
 		ThreatMultiplier: 1,
 
+		Direct: core.SpellEffect{Effect: 0, Min: 310, Max: 310, WeaponPct: 1.5},
+		Mods:   []core.SpellMod{rogue.sinisterCallingMod()},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			rogue.BreakStealth(sim)
-			baseDamage := 310 +
-				spell.Unit.MHNormalizedWeaponDamage(sim, spell.MeleeAttackPower()) +
-				spell.BonusWeaponDamage()
+			baseDamage := normalizedStrike(sim, spell, &spell.Direct, true)
 
 			result := spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 

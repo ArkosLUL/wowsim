@@ -43,9 +43,11 @@ func (dk *Deathknight) registerHowlingBlastSpell() {
 		CritMultiplier:   dk.bonusCritMultiplier(dk.Talents.GuileOfGorefiend),
 		ThreatMultiplier: 1,
 
+		Direct: core.SpellEffect{Effect: 1, Min: 518, Max: 562, AP: 0.2},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			for _, aoeTarget := range sim.Encounter.TargetUnits {
-				baseDamage := (sim.Roll(518, 562) + 0.2*dk.getImpurityBonus(spell)) *
+				baseDamage := (spell.Direct.Roll(sim) + spell.Direct.AP*dk.getImpurityBonus(spell)) *
 					dk.glacielRotBonus(aoeTarget) *
 					dk.RoRTSBonus(aoeTarget) *
 					dk.mercilessCombatBonus(sim) *

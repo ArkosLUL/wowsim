@@ -1,6 +1,7 @@
 package rogue
 
 import (
+	"math"
 	"time"
 
 	"github.com/wowsims/wotlk/sim/core"
@@ -66,12 +67,17 @@ func (rogue *Rogue) registerRupture() {
 			// ticks can crit with no talent at all (AuraEffect::CalcPeriodicCritChance's
 			// SPELLFAMILY_ROGUE case, family flag 0x100000), unlike every other rogue dot
 			TicksCanCrit: true,
+			Tick:         core.SpellEffect{Effect: 0, Min: 127, Max: 127},
 
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
-				dot.SnapshotBaseDamage = rogue.RuptureDamage(rogue.ComboPoints())
+				comboPoints := rogue.ComboPoints()
 				attackTable := dot.Spell.Unit.AttackTables[target.UnitIndex]
+				// spell_rog_rupture adds its attack power part after SpellDamageBonusDone, so none of the
+				// caster's damage modifiers reach that part
+				tick := dot.Tick.Roll(sim) + 18*float64(comboPoints)
+				dot.SnapshotBaseDamage = math.Floor(tick*dot.Spell.AttackerDamageMultiplier(attackTable)) + rogue.ruptureAPDamage(comboPoints)
+				dot.SnapshotAttackerMultiplier = 1
 				dot.SnapshotCritChance = dot.Spell.PhysicalCritChance(attackTable)
-				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(attackTable)
 			},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 				dot.CalcAndDealPeriodicSnapshotDamage(sim, target, dot.OutcomeSnapshotCrit)
@@ -97,10 +103,10 @@ func (rogue *Rogue) registerRupture() {
 	})
 }
 
-func (rogue *Rogue) RuptureDamage(comboPoints int32) float64 {
-	return 127 +
-		18*float64(comboPoints) +
-		[]float64{0, 0.06 / 4, 0.12 / 5, 0.18 / 6, 0.24 / 7, 0.30 / 8}[comboPoints]*rogue.Rupture.MeleeAttackPower()
+// ruptureAPDamage is spell_rog_rupture's share of attack power in a tick, in whole points.
+func (rogue *Rogue) ruptureAPDamage(comboPoints int32) float64 {
+	apPerTick := [...]float64{0, 0.015, 0.024, 0.03, 0.03428571, 0.0375}[comboPoints]
+	return math.Floor(apPerTick * rogue.Rupture.MeleeAttackPower())
 }
 
 func (rogue *Rogue) RuptureTicks(comboPoints int32) int32 {

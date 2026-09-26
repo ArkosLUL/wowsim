@@ -1,6 +1,7 @@
 package warrior
 
 import (
+	"math"
 	"time"
 
 	"github.com/wowsims/wotlk/sim/core"
@@ -37,8 +38,11 @@ func (warrior *Warrior) registerBloodthirstSpell(cdTimer *core.Timer) {
 		CritMultiplier:   warrior.critMultiplier(mh),
 		ThreatMultiplier: 1,
 
+		// spell_warr_bloodthirst reads the 50 as a percent of attack power
+		Direct: core.SpellEffect{Effect: 0, Min: 50, Max: 50, SP: 1},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := 0.5 * spell.MeleeAttackPower()
+			baseDamage := math.Floor(spell.Direct.Roll(sim) * spell.MeleeAttackPower() / 100)
 			result := spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 			if !result.Landed() {
 				spell.IssueRefund(sim)

@@ -70,12 +70,14 @@ func (warrior *Warrior) registerOverpowerSpell(cdTimer *core.Timer) {
 		CritMultiplier:   warrior.critMultiplier(mh),
 		ThreatMultiplier: 0.75,
 
+		Direct: core.SpellEffect{Effect: 0, WeaponPct: 1},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			warrior.OverpowerAura.Deactivate(sim)
 
-			baseDamage := 0 +
+			baseDamage := (spell.Direct.Roll(sim) +
 				spell.Unit.MHNormalizedWeaponDamage(sim, spell.MeleeAttackPower()) +
-				spell.BonusWeaponDamage()
+				spell.BonusWeaponDamage()) * spell.Direct.WeaponPct
 
 			result := spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialNoBlockDodgeParry)
 			if !result.Landed() {

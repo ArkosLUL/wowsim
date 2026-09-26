@@ -35,11 +35,14 @@ func (paladin *Paladin) registerHolyWrathSpell() {
 		ThreatMultiplier: 1,
 		CritMultiplier:   paladin.SpellCritMultiplier(),
 
-		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			constBaseDamage := .07*spell.SpellPower() + .07*spell.MeleeAttackPower()
+		Direct: core.SpellEffect{Effect: 0, Min: 1058, Max: 1242, SP: 0.07, AP: 0.07},
 
+		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+			constBaseDamage := spell.Direct.SP*spell.SpellPower() + spell.Direct.AP*spell.MeleeAttackPower()
+
+			// worked out at the launch, landing with the missile
 			for i, aoeTarget := range sim.Encounter.TargetUnits {
-				baseDamage := constBaseDamage + sim.Roll(1050, 1234)
+				baseDamage := constBaseDamage + spell.Direct.Roll(sim)
 
 				if aoeTarget.MobType == proto.MobType_MobTypeDemon || aoeTarget.MobType == proto.MobType_MobTypeUndead {
 					results[i] = spell.CalcDamage(sim, aoeTarget, baseDamage, spell.OutcomeMagicHitAndCrit)
@@ -48,9 +51,11 @@ func (paladin *Paladin) registerHolyWrathSpell() {
 				}
 			}
 
-			for i := range sim.Encounter.TargetUnits {
-				spell.DealDamage(sim, results[i])
-			}
+			spell.WaitTravelTime(sim, func(sim *core.Simulation) {
+				for _, result := range results {
+					spell.DealDamage(sim, result)
+				}
+			})
 		},
 	})
 }

@@ -33,19 +33,21 @@ func (paladin *Paladin) registerDivineStormSpell() {
 			},
 		},
 
-		BonusCritRating: core.TernaryFloat64(paladin.HasSetBonus(ItemSetAegisBattlegear, 4), 10, 0) * core.CritRatingPerCritChance,
-		// base 1.1 multiplier, can be further improved by 10% via taow for a grand total of 1.21. NOTE: Unlike cs, ds tooltip IS NOT updated to reflect this.
-		DamageMultiplier: 1.1 * spellModDamage(paladin.getTalentTheArtOfWarBonus(), paladin.getItemSetRedemptionBattlegearBonus2()),
+		BonusCritRating:  core.TernaryFloat64(paladin.HasSetBonus(ItemSetAegisBattlegear, 4), 10, 0) * core.CritRatingPerCritChance,
+		DamageMultiplier: spellModDamage(paladin.getTalentTheArtOfWarBonus(), paladin.getItemSetRedemptionBattlegearBonus2()),
 		CritMultiplier:   paladin.MeleeCritMultiplier(),
 		ThreatMultiplier: 1,
+
+		// effects 0 and 1 are dummies, 2 is the weapon percent
+		Direct: core.SpellEffect{Effect: 2, WeaponPct: 1.1},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			curTarget := target
 			for hitIndex := int32(0); hitIndex < numHits; hitIndex++ {
 				// normalized on the server (Spell::EffectWeaponDmg special-cases 53385), unlike its DBC effects
-				baseDamage := bonusDmg +
+				baseDamage := (bonusDmg +
 					spell.Unit.MHNormalizedWeaponDamage(sim, spell.MeleeAttackPower()) +
-					spell.BonusWeaponDamage()
+					spell.BonusWeaponDamage()) * spell.Direct.WeaponPct
 
 				results[hitIndex] = spell.CalcDamage(sim, curTarget, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 				curTarget = sim.Environment.NextTargetUnit(curTarget)

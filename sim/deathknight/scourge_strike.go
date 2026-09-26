@@ -11,7 +11,7 @@ var ScourgeStrikeActionID = core.ActionID{SpellID: 55271}
 
 // this is just a simple spell because it has no rune costs and is really just a wrapper.
 func (dk *Deathknight) registerScourgeStrikeShadowDamageSpell() *core.Spell {
-	diseaseMulti := dk.dkDiseaseMultiplier(0.12)
+	t8Bonus := dk.dkDiseaseMultiplier(1)
 
 	// This spell (70890) is marked as "Ignore Damage Taken Modifiers" and "Ignore Caster Damage Modifiers", but does neither.
 	//  E.g. Ebon Plague affects it like a normal spell, but caster damage modifiers (Apply Aura: Mod Damage Done % (Shadow))
@@ -27,7 +27,11 @@ func (dk *Deathknight) registerScourgeStrikeShadowDamageSpell() *core.Spell {
 		DamageMultiplier: 1,
 		ThreatMultiplier: 1,
 
+		// spell_dk_scourge_strike reads the strike's third effect as the percent per disease
+		Direct: core.SpellEffect{Effect: 2, Min: 12, Max: 12},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+			diseaseMulti := spell.Direct.Roll(sim) / 100 * t8Bonus
 			baseDamage := dk.LastScourgeStrikeDamage * diseaseMulti * dk.dkCountActiveDiseases(target) * dk.bonusCoeffs.scourgeStrikeShadowMultiplier
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeAlwaysHit)
 		},
@@ -40,7 +44,6 @@ func (dk *Deathknight) registerScourgeStrikeSpell() {
 	}
 
 	shadowDamageSpell := dk.registerScourgeStrikeShadowDamageSpell()
-	bonusBaseDamage := dk.sigilOfAwarenessBonus() + dk.sigilOfArthriticBindingBonus()
 	hasGlyph := dk.HasMajorGlyph(proto.DeathknightMajorGlyph_GlyphOfScourgeStrike)
 
 	dk.ScourgeStrike = dk.RegisterSpell(core.SpellConfig{
@@ -64,18 +67,20 @@ func (dk *Deathknight) registerScourgeStrikeSpell() {
 
 		BonusCritRating: (dk.subversionCritBonus() + dk.viciousStrikesCritChanceBonus() + dk.scourgeborneBattlegearCritBonus()) * core.CritRatingPerCritChance,
 
-		DamageMultiplier: .7 *
-			[]float64{1.0, 1.07, 1.13, 1.2}[dk.Talents.Outbreak] *
+		DamageMultiplier: []float64{1.0, 1.07, 1.13, 1.2}[dk.Talents.Outbreak] *
 			dk.scourgelordsBattlegearDamageBonus(ScourgelordBonusSpellSS),
 
 		CritMultiplier:   dk.bonusCritMultiplier(dk.Talents.ViciousStrikes),
 		ThreatMultiplier: 1,
 
+		Direct: core.SpellEffect{Effect: 0, Min: 800, Max: 800, WeaponPct: 0.7},
+		Mods: []core.SpellMod{
+			{Op: core.SpellModEffect1, Flat: dk.sigilOfAwarenessBonus()},
+			{Op: core.SpellModEffect1, Flat: dk.sigilOfArthriticBindingBonus()},
+		},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := 800 +
-				bonusBaseDamage +
-				spell.Unit.MHNormalizedWeaponDamage(sim, spell.MeleeAttackPower()) +
-				spell.BonusWeaponDamage()
+			baseDamage := normalizedStrikeBase(sim, spell, true, spell.Direct.Roll(sim)) * spell.Direct.WeaponPct
 			baseDamage *= dk.RoRTSBonus(target)
 
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)

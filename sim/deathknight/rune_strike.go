@@ -9,6 +9,10 @@ import (
 
 var RuneStrikeActionID = core.ActionID{SpellID: 56815}
 
+// Spell::EffectWeaponDmg adds Rune Strike's 15% of attack power after the weapon percent, scaled by the
+// hand's TOTAL_PCT like a fixed bonus.
+var runeStrikeEffect = core.SpellEffect{Effect: 0, WeaponPct: 1.5, AP: 0.15}
+
 func (dk *Deathknight) threatOfThassarianRuneStrikeProcMask(isMH bool) core.ProcMask {
 	if isMH {
 		return core.ProcMaskMeleeMHSpecial | core.ProcMaskMeleeMHAuto
@@ -37,7 +41,7 @@ func (dk *Deathknight) newRuneStrikeSpell(isMH bool) *core.Spell {
 		},
 
 		BonusCritRating: (dk.annihilationCritBonus() + runeStrikeGlyphCritBonus) * core.CritRatingPerCritChance,
-		DamageMultiplier: 1.5 *
+		DamageMultiplier: core.TernaryFloat64(isMH, 1, dk.nervesOfColdSteelBonus()) *
 			dk.darkrunedPlateRuneStrikeDamageBonus(),
 		CritMultiplier:   dk.DefaultMeleeCritMultiplier(),
 		ThreatMultiplier: 1.75,
@@ -47,17 +51,16 @@ func (dk *Deathknight) newRuneStrikeSpell(isMH bool) *core.Spell {
 			var outcomeApplier core.OutcomeApplier
 
 			if isMH {
-				baseDamage = 0 +
-					0.15*spell.MeleeAttackPower() +
-					spell.Unit.MHWeaponDamage(sim, spell.MeleeAttackPower()) +
-					spell.BonusWeaponDamage()
+				baseDamage = (spell.Direct.Roll(sim)+
+					spell.Unit.MHWeaponDamage(sim, spell.MeleeAttackPower())+
+					spell.BonusWeaponDamage())*spell.Direct.WeaponPct +
+					spell.Direct.AP*spell.MeleeAttackPower()
 
 				outcomeApplier = spell.OutcomeMeleeSpecialNoBlockDodgeParry
 			} else {
-				baseDamage = 0 +
-					0.15*spell.MeleeAttackPower() +
-					spell.Unit.OHWeaponDamage(sim, spell.MeleeAttackPower()) +
-					spell.BonusWeaponDamage()
+				// the off-hand strike, 66217, which serverdata doesn't cover
+				baseDamage = (spell.Unit.OHWeaponDamage(sim, spell.MeleeAttackPower())+spell.BonusWeaponDamage())*1.5 +
+					offHandFixedPct*0.15*spell.MeleeAttackPower()
 
 				outcomeApplier = spell.OutcomeMeleeSpecialCritOnly
 			}
@@ -80,6 +83,8 @@ func (dk *Deathknight) newRuneStrikeSpell(isMH bool) *core.Spell {
 		conf.RuneCost = core.RuneCostOptions{}
 		conf.Cast = core.CastConfig{}
 		conf.ExtraCastCondition = nil
+	} else {
+		conf.Direct = runeStrikeEffect
 	}
 
 	return dk.RegisterSpell(conf)
@@ -126,14 +131,16 @@ func (dk *Deathknight) registerDrwRuneStrikeSpell() {
 		ProcMask:    core.ProcMaskMeleeMHSpecial,
 		Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagIncludeTargetBonusDamage,
 
-		BonusCritRating: (dk.annihilationCritBonus() + runeStrikeGlyphCritBonus) * core.CritRatingPerCritChance,
-		DamageMultiplier: 1.5 *
-			dk.darkrunedPlateRuneStrikeDamageBonus(),
+		BonusCritRating:  (dk.annihilationCritBonus() + runeStrikeGlyphCritBonus) * core.CritRatingPerCritChance,
+		DamageMultiplier: dk.darkrunedPlateRuneStrikeDamageBonus(),
 		CritMultiplier:   dk.DefaultMeleeCritMultiplier(),
 		ThreatMultiplier: 1.75,
 
+		Direct: runeStrikeEffect,
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := 0.15*spell.MeleeAttackPower() + dk.DrwWeaponDamage(sim, spell)
+			baseDamage := (spell.Direct.Roll(sim)+dk.DrwWeaponDamage(sim, spell))*spell.Direct.WeaponPct +
+				spell.Direct.AP*spell.MeleeAttackPower()
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialNoBlockDodgeParry)
 		},
 	})

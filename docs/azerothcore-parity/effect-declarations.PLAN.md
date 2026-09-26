@@ -190,6 +190,107 @@ Each item:
 - for each mismatch, fixes the number or adds an allowlist entry
 - empties its classes' undeclared list
 
+#### PAR-DECL-3 as built
+
+**Death knight:**
+- Declared every spell the undeclared list named, plus Death and Decay (a script behind a dummy effect),
+  Scourge Strike's shadow part (55271's effect 2, the percent `spell_dk_scourge_strike` reads) and Mind
+  Freeze's Frost school. Wandering Plague (family 0, a script's base points) isn't.
+- Mods: the sigils (flat `SpellModEffect1`), Glyph of Death and Decay (`SpellModEffect1` +20%) and
+  Scourgelord's Plate 2pc (`SpellModAllEffects` +20%).
+- `WeaponPct` left `DamageMultiplier` in every strike, the rune weapon's and Claw included.
+  `normalizedStrikeBase` (`sim/deathknight/weapon_strikes.go`) halves an off hand's fixed bonus.
+- Off-hand strikes but Obliterate's keep hand-written numbers: serverdata lacks 66953, 66962, 66979, 66992
+  and 66217.
+- KeepSim AP entries, for AP from another spell's `spell_bonus_data` or a script: Death Coil 47632 (declared
+  from 49895), Death and Decay's tick (52212's row), Rune Strike (`Spell::EffectWeaponDmg`).
+- Travel: Unholy Blight, after its queue delay; Gargoyle Strike and both Death Coils, worked out at launch.
+- What the declarations exposed is in the INVESTIGATION (**Effect declarations (PAR-DECL-3)**).
+- Goldens, Average-Default: Frost +1.86%, Frost UH +1.52%, Unholy +0.91%, Blood +0.06%, Blood Tank -2.66%.
+
+**Warrior:**
+- Declared every spell the undeclared list named, plus the script damage behind dummy effects: Execute,
+  Concussion Blow, Shockwave, Damage Shield. Not Deep Wounds or Sweeping Strikes: their amounts are all
+  script, and serverdata lacks Deep Wounds' 12721.
+- Bloodthirst, Concussion Blow, Shockwave and Damage Shield declare the effect their script reads as a
+  percent (of attack power, or block value), so it drives the damage and needs no entry. Execute's 20% AP
+  is a KeepSim entry naming `spell_warr_execute`; its 3.8 per tenth of rage stays in the closure.
+- Mods: Improved Rend (`SpellModEffect1`), Improved Cleave (`SpellModAllEffects`), Gag Order
+  (`SpellModEffect2`, out of `DamageMultiplier`).
+- Devastate's 1.2 `WeaponPct` skips its flat, which counts this Devastate's own Sunder stacks.
+- Off hand: Whirlwind's and Bladestorm's declare 44949 (flat 0); `normalizedStrike`
+  (`sim/warrior/weapon_strikes.go`) halves an off-hand fixed bonus.
+- Travel: Heroic Throw and Shattering Throw, rolled at launch; Shattering's armor debuff lands with them.
+- Damage Shield registers as its rank's spell, 58872 or 58874.
+- Goldens, Average-Default: Fury +0.06%, Arms +0.01%, Protection +0.09%. Fury and Arms: the declarations
+  alone -0.003% to -0.03%, then the throws' travel reshuffles the RNG (-0.7% to +1.2% a test).
+  Protection: Shield Slam's block cap and Gag Order (Shield Slam +0.3%; high block value sets up to +4% a
+  test), and Devastate's flat without a raid Sunder (NoBuffs +1.4%).
+
+**Rogue:**
+- Declared every spell the undeclared list named. Not Killing Spree (57841/57842), Shiv's hit (5940) or
+  Fan of Knives' off hand (52874): serverdata lacks them. That off hand declares on 51723 tag 2, whose
+  values 52874 shares.
+- Mods: Sinister Calling (`SpellModEffect2` on Backstab's and Hemorrhage's weapon percent) and Glyph of
+  Ghostly Strike (`SpellModEffect1`), both out of `DamageMultiplier`.
+- `WeaponPct` left `DamageMultiplier` in Backstab, Ambush, Hemorrhage, Ghostly Strike and Fan of Knives; the
+  last three take the server's dagger 1.5 (`daggerPct`, `sim/rogue/weapon_strikes.go`) on top.
+- Off hand: `normalizedStrike` halves Mutilate's 181.
+- Combo parts stay in the closures, none with an effect mod: Eviscerate's 370 and 7% AP a point, Envenom's
+  9% AP a point, Rupture's 18 and AP table. Rupture's AP part skips the caster's damage modifiers.
+- No entries: the Fan of Knives missile speed entry went, and with it the rogue allowlist file.
+- Travel: Fan of Knives, both hands rolled at launch.
+- Goldens, Average-Default: Assassination +1.63%, Combat -0.73%, Subtlety -0.66%. Poisons +7 to +8% (AP
+  coefficients), Rupture -13 to -25%, Mutilate's off hand -13%; `fan_aoe` up to +4.6% (poisons on every
+  target). No suite's APL casts Backstab, Ambush, Hemorrhage, Ghostly Strike or Garrote.
+
+**Paladin:**
+- Declared every spell the undeclared list named, plus Holy Shield's proc (48952 tag 1, effect 1). Not the
+  Seal of Righteousness proc: serverdata lacks 25742, so it keeps 20154's id. The sim has no Holy Shock or
+  Holy spec heal (the Holy suite casts nothing); Ardent Defender heals as 66235, which serverdata lacks.
+- Values fixed: Exorcism 1033–1151, Holy Wrath 1058–1242, Holy Shield 0.09 SP and 0.056 AP, Judgement of
+  Command 24% weapon (was 19%).
+- Mods: Libram of Radiance is `SpellModEffect1` +105 on Crusader Strike, so the 75% scales it. The 31033
+  libram check went: that id is a necklace.
+- `WeaponPct` left `DamageMultiplier` in Crusader Strike, Divine Storm (effect 2) and Seal of Command.
+- Script math in whole points: Judgement of Command's 8% AP and 13% SP after the percent, Hammer of the
+  Righteous's dps, Shield of Righteousness's block cap (T8 4pc included), the Seal of Righteousness proc,
+  Righteous Vengeance.
+- Travel: Avenger's Shield, Hammer of the Righteous, Hammer of Wrath and Holy Wrath roll every target at
+  launch.
+- Goldens, Average-Default: Retribution -0.05% (Hammer of Wrath's last missile, Exorcism +0.2%,
+  Righteous Vengeance -0.2%), Protection -1.09% (Holy Shield -15% where the boss attacks, Shield of
+  Righteousness -0.5% from the cap), Holy unchanged. Retribution SOC single target +0.9 to +1.3%
+  (Judgement of Command +9%).
+
+**For wave J and PAR-P8** (details in the INVESTIGATION):
+- The undeclared list misses script damage behind a dummy (Execute, Death and Decay, Holy Shock) and
+  `SPELL_AURA_PROC_TRIGGER_DAMAGE`/`DAMAGE_SHIELD` auras (Holy Shield, Damage Shield): declare them anyway.
+- Custom base points (`CastCustomSpell`) deal exactly the handed value: declare the effect, add no roll.
+- A script reading an effect's percent: declare that effect, use `Roll()/100`, no entry. A script
+  constant: declare it with a KeepSim entry naming the script.
+- Missiles roll damage and crit at launch; AoE and chain targets all fly from the caster. Waits use
+  `DistanceFromTarget`, 30 yd in the suites even for melee-range Fan of Knives and Hammer of the Righteous.
+- PAR-P7-TANK, open: Holy Shield's proc never misses or crits on the server; Ardent Defender's heal amount;
+  Concussion Blow gets no caster modifiers; the rune weapon's spell bonus runs as its owner.
+- PAR-P8: `SpellDamageBonusDone` truncates its SP and AP parts separately, which most closures don't.
+  `SPELLMOD_DAMAGE` flats come after every percent; Divine Storm's librams still sit inside its 110%.
+  Rupture's AP part and Concussion Blow skip caster modifiers. Shadowstep is `SPELLMOD_DAMAGE` on the
+  builders but an effect mod on Garrote's and Rupture's base.
+- Serverdata lacks, for the next regenerating item: 66953, 66962, 66979, 66992, 66217, 52212 (DK); 20647,
+  12721, 58872, 59653 (warrior); 57841, 57842, 5940, 52874 (rogue); 25742, 66235 (paladin).
+
+**Effect entries left**, all KeepSim:
+- Death knight: Death Coil 47632 AP 0.15 (47632's own row); Death and Decay 49938 tick AP 0.04805 (52212's
+  row); Rune Strike 56815 AP 0.15 (`Spell::EffectWeaponDmg`); Scourge Strike 55271 tag 2 Shadow (dealt as
+  70890); Empower Rune Weapon 47568's missile speed (a self cast never travels).
+- Warrior: Execute 47471 AP 0.2 (`spell_warr_execute`).
+- Paladin: Judgement of Command 20467 SP 0.13 and AP 0.08 (`Spell::EffectWeaponDmg`).
+- Rogue: none.
+
+The P3-2 timing entries stand: warrior Recklessness and Death Wish GCD, Sweeping Strikes 12723's cooldown,
+Bladestorm's channel; paladin 498/31884's shared cooldown.
+
 ### Wave J
 
 - **PAR-P7-PRI** declares the priest's effects. Holy Fire's dot and Devouring Plague are its known

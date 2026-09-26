@@ -30,17 +30,17 @@ func (rogue *Rogue) registerAmbushSpell() {
 		BonusCritRating: []float64{0, 2, 4, 6}[rogue.Talents.TurnTheTables]*core.CritRatingPerCritChance +
 			25*core.CritRatingPerCritChance*float64(rogue.Talents.ImprovedAmbush),
 		// All of these use "Apply Aura: Modifies Damage/Healing Done", and stack additively.
-		DamageMultiplier: 2.75 * (1 +
+		DamageMultiplier: 1 +
 			0.02*float64(rogue.Talents.FindWeakness) +
-			0.1*float64(rogue.Talents.Opportunity)),
+			0.1*float64(rogue.Talents.Opportunity),
 		CritMultiplier:   rogue.MeleeCritMultiplier(true),
 		ThreatMultiplier: 1,
 
+		Direct: core.SpellEffect{Effect: 0, Min: 330, Max: 330, WeaponPct: 2.75},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			rogue.BreakStealth(sim)
-			baseDamage := 330 +
-				spell.Unit.MHNormalizedWeaponDamage(sim, spell.MeleeAttackPower()) +
-				spell.BonusWeaponDamage()
+			baseDamage := normalizedStrike(sim, spell, &spell.Direct, true)
 
 			result := spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 

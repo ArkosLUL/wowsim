@@ -1,6 +1,7 @@
 package rogue
 
 import (
+	"math"
 	"time"
 
 	"github.com/wowsims/wotlk/sim/core"
@@ -52,8 +53,9 @@ func (rogue *Rogue) registerGarrote() {
 			// No SPELL_AURA_ABILITY_PERIODIC_CRIT aura covers Garrote and it isn't Rupture, so its ticks
 			// never crit (AuraEffect::CanPeriodicTickCrit).
 			TicksCanCrit: false,
+			Tick:         core.SpellEffect{Effect: 0, Min: 119, Max: 119, AP: 0.07},
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
-				dot.SnapshotBaseDamage = 119 + dot.Spell.MeleeAttackPower()*0.07
+				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + math.Floor(dot.Tick.AP*dot.Spell.MeleeAttackPower())
 				attackTable := dot.Spell.Unit.AttackTables[target.UnitIndex]
 				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(attackTable)
 			},

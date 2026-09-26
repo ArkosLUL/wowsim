@@ -66,11 +66,9 @@ func (dk *Deathknight) registerDiseaseDots() {
 	dk.registerBloodPlague()
 }
 
-// Both diseases tick for CalcValue at level 80: -1 + int32(realPointsPerLevel * (80 - max(baseLevel,
-// spellLevel))) + 1, with the 0.06325 AP of their spell_bonus_data.
-const (
-	frostFeverTickBase  = 25 // 0.32 * 80
-	bloodPlagueTickBase = 31 // 0.394 * 79
+var (
+	frostFeverTick  = core.SpellEffect{Effect: 0, Min: 25, Max: 25, AP: 0.06325}
+	bloodPlagueTick = core.SpellEffect{Effect: 0, Min: 31, Max: 31, AP: 0.06325}
 )
 
 // Only an SPELL_AURA_ABILITY_PERIODIC_CRIT aura lets a disease tick crit (AuraEffect::CalcPeriodicCritChance):
@@ -144,8 +142,9 @@ func (dk *Deathknight) registerFrostFever() {
 			AffectedByCastSpeed: dk.diseasesAddTicks(),
 			TickHaste:           core.MeleeHasteAddsTicks,
 			TicksCanCrit:        canCrit,
+			Tick:                frostFeverTick,
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-				dot.SnapshotBaseDamage = frostFeverTickBase + 0.06325*dk.getImpurityBonus(dot.Spell)
+				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + dot.Tick.AP*dk.getImpurityBonus(dot.Spell)
 
 				if !isRollover {
 					dot.SnapshotCritChance = dk.diseaseCritChance(dot, target)
@@ -214,9 +213,10 @@ func (dk *Deathknight) registerBloodPlague() {
 			AffectedByCastSpeed: dk.diseasesAddTicks(),
 			TickHaste:           core.MeleeHasteAddsTicks,
 			TicksCanCrit:        canCrit,
+			Tick:                bloodPlagueTick,
 
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-				dot.SnapshotBaseDamage = bloodPlagueTickBase + 0.06325*dk.getImpurityBonus(dot.Spell)
+				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + dot.Tick.AP*dk.getImpurityBonus(dot.Spell)
 
 				if !isRollover {
 					dot.SnapshotCritChance = dk.diseaseCritChance(dot, target)
@@ -267,8 +267,9 @@ func (dk *Deathknight) registerDrwFrostFever() {
 			NumberOfTicks: 5 + dk.Talents.Epidemic,
 			TickLength:    time.Second * 3,
 			TicksCanCrit:  canCrit,
+			Tick:          frostFeverTick,
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-				dot.SnapshotBaseDamage = frostFeverTickBase + 0.06325*dk.getImpurityBonus(dot.Spell)
+				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + dot.Tick.AP*dk.getImpurityBonus(dot.Spell)
 
 				if !isRollover {
 					dot.SnapshotCritChance = dk.diseaseCritChance(dot, target)
@@ -310,9 +311,10 @@ func (dk *Deathknight) registerDrwBloodPlague() {
 			NumberOfTicks: 5 + dk.Talents.Epidemic,
 			TickLength:    time.Second * 3,
 			TicksCanCrit:  canCrit,
+			Tick:          bloodPlagueTick,
 
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-				dot.SnapshotBaseDamage = bloodPlagueTickBase + 0.06325*dk.getImpurityBonus(dot.Spell)
+				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + dot.Tick.AP*dk.getImpurityBonus(dot.Spell)
 
 				if !isRollover {
 					dot.SnapshotCritChance = dk.diseaseCritChance(dot, target)

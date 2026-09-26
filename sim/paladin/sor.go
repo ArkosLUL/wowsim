@@ -1,6 +1,8 @@
 package paladin
 
 import (
+	"math"
+
 	"github.com/wowsims/wotlk/sim/core"
 )
 
@@ -37,11 +39,12 @@ func (paladin *Paladin) registerSealOfRighteousnessSpellAndAura() {
 		CritMultiplier:   paladin.MeleeCritMultiplier(),
 		ThreatMultiplier: 1,
 
+		Direct: core.SpellEffect{Effect: 0, Min: 1, Max: 1, SP: 0.32, AP: 0.2},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			// i = 1 + 0.2 * AP + 0.32 * HolP
-			baseDamage := 1 +
-				.20*spell.MeleeAttackPower() +
-				.32*spell.SpellPower()
+			baseDamage := spell.Direct.Roll(sim) +
+				spell.Direct.AP*spell.MeleeAttackPower() +
+				spell.Direct.SP*spell.SpellPower()
 
 			// Secondary Judgements cannot miss if the Primary Judgement hit, only roll for crit.
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialCritOnly)
@@ -58,8 +61,8 @@ func (paladin *Paladin) registerSealOfRighteousnessSpellAndAura() {
 		ThreatMultiplier: 1,
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			// weapon_speed * (0.022* AP + 0.044*HolP)
-			baseDamage := paladin.GetMHWeapon().SwingSpeed * (.022*spell.MeleeAttackPower() + .044*spell.SpellPower())
+			// spell_pal_seal_of_righteousness hands 25742 int(weapon speed x (2.2% AP + 4.4% whole spell power))
+			baseDamage := math.Floor(paladin.GetMHWeapon().SwingSpeed * (.022*spell.MeleeAttackPower() + .044*math.Floor(spell.SpellPower())))
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeAlwaysHit)
 		},
 	})

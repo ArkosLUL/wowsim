@@ -44,8 +44,10 @@ func (warrior *Warrior) registerThunderClapSpell() {
 		CritMultiplier:   warrior.critMultiplier(none),
 		ThreatMultiplier: 1.85,
 
+		Direct: core.SpellEffect{Effect: 0, Min: 300, Max: 300, AP: 0.12},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := 300 + 0.12*spell.MeleeAttackPower()
+			baseDamage := spell.Direct.Roll(sim) + spell.Direct.AP*spell.MeleeAttackPower()
 			baseDamage *= sim.Encounter.AOECapMultiplier()
 
 			for _, aoeTarget := range sim.Encounter.TargetUnits {

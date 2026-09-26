@@ -61,6 +61,11 @@ func (rogue *Rogue) dwsMultiplier() float64 {
 	return 1 + 0.1*float64(rogue.Talents.DualWieldSpecialization)
 }
 
+// sinisterCallingMod is Sinister Calling's effect mod on the weapon percent of Backstab and Hemorrhage.
+func (rogue *Rogue) sinisterCallingMod() core.SpellMod {
+	return core.SpellMod{Op: core.SpellModEffect2, Pct: 2 * rogue.Talents.SinisterCalling}
+}
+
 func getRelentlessStrikesSpellID(talentPoints int32) int32 {
 	if talentPoints == 1 {
 		return 14179

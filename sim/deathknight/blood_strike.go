@@ -6,8 +6,13 @@ import (
 
 var BloodStrikeActionID = core.ActionID{SpellID: 49930}
 
+func (dk *Deathknight) bloodStrikeEffect() (core.SpellEffect, []core.SpellMod) {
+	return core.SpellEffect{Effect: 0, Min: 764, Max: 764, WeaponPct: 0.4},
+		[]core.SpellMod{{Op: core.SpellModEffect1, Flat: dk.sigilOfTheDarkRiderBonus()}}
+}
+
 func (dk *Deathknight) newBloodStrikeSpell(isMH bool) *core.Spell {
-	bonusBaseDamage := dk.sigilOfTheDarkRiderBonus()
+	offHandFixed := 382 + float64(dk.sigilOfTheDarkRiderBonus())
 	diseaseMulti := dk.dkDiseaseMultiplier(0.125)
 	deathConvertChance := float64(dk.Talents.BloodOfTheNorth+dk.Talents.Reaping) / 3
 
@@ -30,8 +35,7 @@ func (dk *Deathknight) newBloodStrikeSpell(isMH bool) *core.Spell {
 		},
 
 		BonusCritRating: (dk.subversionCritBonus() + dk.annihilationCritBonus()) * core.CritRatingPerCritChance,
-		DamageMultiplier: 0.4 *
-			core.TernaryFloat64(isMH, 1, dk.nervesOfColdSteelBonus()) *
+		DamageMultiplier: core.TernaryFloat64(isMH, 1, dk.nervesOfColdSteelBonus()) *
 			dk.bloodOfTheNorthCoeff() *
 			dk.thassariansPlateDamageBonus() *
 			dk.bloodyStrikesBonus(BloodyStrikesBS),
@@ -41,16 +45,10 @@ func (dk *Deathknight) newBloodStrikeSpell(isMH bool) *core.Spell {
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			var baseDamage float64
 			if isMH {
-				baseDamage = 764 +
-					bonusBaseDamage +
-					spell.Unit.MHNormalizedWeaponDamage(sim, spell.MeleeAttackPower()) +
-					spell.BonusWeaponDamage()
+				baseDamage = normalizedStrikeBase(sim, spell, true, spell.Direct.Roll(sim)) * spell.Direct.WeaponPct
 			} else {
-				// SpellID 66979
-				baseDamage = 382 +
-					bonusBaseDamage +
-					spell.Unit.OHNormalizedWeaponDamage(sim, spell.MeleeAttackPower()) +
-					spell.BonusWeaponDamage()
+				// the off-hand strike, 66979, which serverdata doesn't cover
+				baseDamage = normalizedStrikeBase(sim, spell, false, offHandFixed) * 0.4
 			}
 			baseDamage *= dk.RoRTSBonus(target) *
 				(1.0 + dk.dkCountActiveDiseases(target)*diseaseMulti)
@@ -77,6 +75,7 @@ func (dk *Deathknight) newBloodStrikeSpell(isMH bool) *core.Spell {
 		conf.Cast = core.CastConfig{}
 	} else {
 		conf.Flags |= core.SpellFlagAPL
+		conf.Direct, conf.Mods = dk.bloodStrikeEffect()
 	}
 
 	return dk.RegisterSpell(conf)
@@ -89,8 +88,8 @@ func (dk *Deathknight) registerBloodStrikeSpell() {
 }
 
 func (dk *Deathknight) registerDrwBloodStrikeSpell() {
-	bonusBaseDamage := dk.sigilOfTheDarkRiderBonus()
 	diseaseMulti := dk.dkDiseaseMultiplier(0.125)
+	direct, mods := dk.bloodStrikeEffect()
 
 	dk.RuneWeapon.BloodStrike = dk.RuneWeapon.RegisterSpell(core.SpellConfig{
 		ActionID:    BloodStrikeActionID.WithTag(1),
@@ -99,15 +98,17 @@ func (dk *Deathknight) registerDrwBloodStrikeSpell() {
 		Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagIncludeTargetBonusDamage,
 
 		BonusCritRating: (dk.subversionCritBonus() + dk.annihilationCritBonus()) * core.CritRatingPerCritChance,
-		DamageMultiplier: 0.4 *
-			dk.bloodOfTheNorthCoeff() *
+		DamageMultiplier: dk.bloodOfTheNorthCoeff() *
 			dk.thassariansPlateDamageBonus() *
 			dk.bloodyStrikesBonus(BloodyStrikesBS),
 		CritMultiplier:   dk.bonusCritMultiplier(dk.Talents.MightOfMograine + dk.Talents.GuileOfGorefiend),
 		ThreatMultiplier: 1,
 
+		Direct: direct,
+		Mods:   mods,
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := 764 + bonusBaseDamage + dk.DrwWeaponDamage(sim, spell)
+			baseDamage := (spell.Direct.Roll(sim) + dk.DrwWeaponDamage(sim, spell)) * spell.Direct.WeaponPct
 
 			baseDamage *= dk.RoRTSBonus(target) *
 				(1.0 + dk.drwCountActiveDiseases(target)*diseaseMulti)

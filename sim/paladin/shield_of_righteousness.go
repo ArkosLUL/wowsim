@@ -38,22 +38,29 @@ func (paladin *Paladin) registerShieldOfRighteousnessSpell() {
 		CritMultiplier:   paladin.MeleeCritMultiplier(),
 		ThreatMultiplier: 1,
 
+		Direct: core.SpellEffect{Effect: 0, Min: 520, Max: 520},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+			// Spell::EffectSchoolDMG adds effect 1's 100% of the block value, halved past 29.5 a level and
+			// capped at 34.5 a level, plus a flat 225 with the T8 4pc, in whole points
+			soft, hard := uint32(core.CharacterLevel*29.5), uint32(core.CharacterLevel*34.5)
+			block := uint32(max(paladin.BlockValue(), 0))
+			if block >= hard {
+				block = (soft + hard) / 2
+			} else if block > soft {
+				block = soft + (block-soft)/2
+			}
 			if aegisPlateProcAura != nil {
+				block += 225
+			}
+
+			baseDamage := spell.Direct.Roll(sim) + float64(block)
+			result := spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
+
+			// the 4pc's block value proc (64883) comes from the hit, after its damage
+			if aegisPlateProcAura != nil && result.Landed() {
 				aegisPlateProcAura.Activate(sim)
 			}
-
-			var baseDamage float64
-			// TODO: Derive or find accurate source for DR curve
-			bv := paladin.BlockValue()
-			if bv <= 2400.0 {
-				baseDamage = 520.0 + bv
-			} else {
-				bv = 2400.0 + (bv-2400.0)/2
-				baseDamage = 520.0 + core.TernaryFloat64(bv > 2760.0, 2760.0, bv)
-			}
-
-			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 		},
 	})
 }
