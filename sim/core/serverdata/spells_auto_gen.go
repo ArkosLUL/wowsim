@@ -269,6 +269,16 @@ var spells = []Spell{
 			{Effect: 3, DamageMultiplier: 1, BonusMultiplier: 1},
 		},
 	},
+	// Shiv
+	{
+		ID: 5940, Family: 8, FamilyFlags: [3]uint32{0x20000000}, SchoolMask: 1, DmgClass: DmgClassMelee, Flags: FlagBinary | FlagNoActiveDefense,
+		Attributes: [8]uint32{0x240010, 0, 0x20000004, 0x41000200, 0x1}, AttributesCu: 0x103100,
+		ProcChance: 101, SpellLevel: 70, BaseLevel: 70,
+		Effects: [3]Effect{
+			{Effect: 80, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1},
+			{Effect: 121, DamageMultiplier: 1, BonusMultiplier: 1},
+		},
+	},
 	// Quick Shots
 	{
 		ID: 6150, Family: 9, FamilyFlags: [3]uint32{0, 0x200}, SchoolMask: 1, Flags: FlagPositive,
@@ -394,25 +404,6 @@ var spells = []Spell{
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 108, BasePoints: 49, DieSides: 1, DamageMultiplier: 1, MiscValue: 15, ClassMask: [3]uint32{0x8c00017, 0x31048}},
 			{Effect: 64, DamageMultiplier: 1, TriggerSpell: 28682},
-		},
-	},
-	// Fire Shield
-	{
-		ID: 11350, SchoolMask: 4, DmgClass: DmgClassMagic, Flags: FlagResetsAutoAttack | FlagPositive,
-		Attributes: [8]uint32{0x28000000},
-		Category:   4, DurationMs: 15000, MaxDurationMs: 15000,
-		ProcChance: 101, SpellLevel: 41, BaseLevel: 41, MaxLevel: 41,
-		Effects: [3]Effect{
-			{Effect: 6, Aura: 23, AmplitudeMs: 3000, BasePoints: 19, DieSides: 1, DamageMultiplier: 1, TriggerSpell: 11351},
-		},
-	},
-	// Fire Shield
-	{
-		ID: 11351, Family: 13, SchoolMask: 4, DmgClass: DmgClassMagic,
-		Attributes: [8]uint32{0x40000, 0x88}, AttributesCu: 0x1100,
-		ProcChance: 101, SpellLevel: 41, BaseLevel: 41, MaxLevel: 41,
-		Effects: [3]Effect{
-			{Effect: 2, BasePoints: 49, DieSides: 1, DamageMultiplier: 1},
 		},
 	},
 	// Gift of Arthas
@@ -4590,6 +4581,17 @@ var spells = []Spell{
 			{Effect: 3, BasePoints: 174, DieSides: 1, DamageMultiplier: 1},
 		},
 	},
+	// Explosive Trap Effect (Rank 6)
+	{
+		ID: 49065, Family: 9, FamilyFlags: [3]uint32{0x4, 0, 0x4000}, SchoolMask: 4, DmgClass: DmgClassMagic, Flags: FlagAlwaysHit,
+		Attributes: [8]uint32{0, 0x88, 0, 0x40240}, AttributesCu: 0x3100,
+		DurationMs: 20000, MaxDurationMs: 20000,
+		ProcChance: 101, SpellLevel: 77, BaseLevel: 77, MaxLevel: 81,
+		Effects: [3]Effect{
+			{Effect: 2, BasePoints: 522, DieSides: 149, PointsPerLevel: 3, DamageMultiplier: 1},
+			{Effect: 27, Aura: 3, AmplitudeMs: 2000, BasePoints: 89, DieSides: 1, DamageMultiplier: 1},
+		},
+	},
 	// Explosive Trap (Rank 6)
 	{
 		ID: 49067, Family: 9, FamilyFlags: [3]uint32{0x80}, SchoolMask: 4, Flags: FlagHasteGCD | FlagPositive,
@@ -5343,6 +5345,15 @@ var spells = []Spell{
 			{Effect: 10, DamageMultiplier: 1, BonusMultiplier: 0.0827},
 		},
 	},
+	// Death and Decay
+	{
+		ID: 52212, Family: 15, FamilyFlags: [3]uint32{0, 0, 0x8}, SchoolMask: 32, DmgClass: DmgClassMagic,
+		Attributes: [8]uint32{0x4800000, 0x88, 0x4, 0x42000000, 0, 0x200, 0x2000}, AttributesCu: 0x7100,
+		ProcChance: 101, PowerType: 6, RuneCostID: 901,
+		Effects: [3]Effect{
+			{Effect: 2, DamageMultiplier: 1},
+		},
+	},
 	// Will of the Necropolis (Rank 3)
 	{
 		ID: 52286, Family: 15, SchoolMask: 1, Flags: FlagBinary | FlagPassive | FlagPositive,
@@ -5442,6 +5453,15 @@ var spells = []Spell{
 		ProcFlags: 0x10, ProcChance: 100, PowerType: 2,
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 231, BasePoints: 2, DieSides: 1, DamageMultiplier: 1, TriggerSpell: 70893},
+		},
+	},
+	// Fan of Knives
+	{
+		ID: 52874, Family: 8, FamilyFlags: [3]uint32{0, 0x40000}, SchoolMask: 1, DmgClass: DmgClassMelee,
+		Attributes: [8]uint32{0x10010, 0x10, 0, 0x1000000}, AttributesCu: 0x1100,
+		ProcChance: 101, PowerType: 3, Speed: 18, SpellLevel: 80, BaseLevel: 80,
+		Effects: [3]Effect{
+			{Effect: 31, BasePoints: 69, DieSides: 1, DamageMultiplier: 1},
 		},
 	},
 	// Honor Among Thieves
@@ -5671,6 +5691,15 @@ var spells = []Spell{
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 68, BasePoints: -1, DieSides: 1, ValueMultiplier: 1, DamageMultiplier: 1},
 			{Effect: 6, Aura: 127, BasePoints: 499, DieSides: 1, DamageMultiplier: 1},
+		},
+	},
+	// Explosive Shot
+	{
+		ID: 53352, Family: 9, FamilyFlags: [3]uint32{0, 0, 0x200}, SchoolMask: 4, DmgClass: DmgClassRanged, Flags: FlagAlwaysHit,
+		Attributes: [8]uint32{0x850000, 0, 0x4, 0x40000, 0x80, 0, 0x20}, AttributesCu: 0x1100,
+		ProcChance: 101,
+		Effects: [3]Effect{
+			{Effect: 2, BasePoints: 9, DieSides: 1, DamageMultiplier: 1, ClassMask: [3]uint32{0xc00017}},
 		},
 	},
 	// Chimera Shot - Serpent
@@ -6639,6 +6668,25 @@ var spells = []Spell{
 			{Effect: 2, BasePoints: 1635, DieSides: 363, DamageMultiplier: 1, BonusMultiplier: 1},
 		},
 	},
+	// Killing Spree
+	{
+		ID: 57841, Family: 8, SchoolMask: 1, DmgClass: DmgClassMelee, Flags: FlagNoActiveDefense,
+		Attributes: [8]uint32{0x250010, 0x200, 0x40000000, 0x601}, AttributesCu: 0x3100,
+		ProcChance: 101, PowerType: 3, SpellLevel: 1, BaseLevel: 1,
+		Effects: [3]Effect{
+			{Effect: 121, BasePoints: -1, DieSides: 1, DamageMultiplier: 1},
+			{Effect: 64, DamageMultiplier: 1, TriggerSpell: 57842},
+		},
+	},
+	// Killing Spree
+	{
+		ID: 57842, Family: 8, SchoolMask: 1, DmgClass: DmgClassMelee, Flags: FlagNoActiveDefense,
+		Attributes: [8]uint32{0x250010, 0x10, 0x40000000, 0x1000201, 0x80}, AttributesCu: 0x1100,
+		PowerType: 3, MaxTargets: 1, SpellLevel: 1, BaseLevel: 1,
+		Effects: [3]Effect{
+			{Effect: 121, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1},
+		},
+	},
 	// Tricks of the Trade
 	{
 		ID: 57933, Family: 8, FamilyFlags: [3]uint32{0, 0x4000000}, SchoolMask: 1, Flags: FlagBinary | FlagPositive,
@@ -6722,6 +6770,17 @@ var spells = []Spell{
 			{Effect: 6, Aura: 118, BasePoints: -51, DieSides: 1, DamageMultiplier: 1, MiscValue: 127},
 			{Effect: 2, BasePoints: 230, DieSides: 1, DamageMultiplier: 1},
 			{Effect: 6, Aura: 197, BasePoints: -1, DieSides: 1, DamageMultiplier: 1},
+		},
+	},
+	// Fire Blast
+	{
+		ID: 57984, Family: 3, FamilyFlags: [3]uint32{0x20002}, SchoolMask: 4, DmgClass: DmgClassMagic, Flags: FlagResetsAutoAttack,
+		Attributes: [8]uint32{0x90000}, AttributesCu: 0x1100,
+		Category:   19,
+		ProcChance: 101, ManaCost: 40, SpellLevel: 20, BaseLevel: 20,
+		CooldownMods: ModBounds{FlatMin: -2000},
+		Effects: [3]Effect{
+			{Effect: 2, BasePoints: 109, DieSides: 21, DamageMultiplier: 1, BonusMultiplier: 0.429},
 		},
 	},
 	// Envenom (Rank 4)
@@ -6948,6 +7007,15 @@ var spells = []Spell{
 			{Effect: 28, BasePoints: 4, DieSides: 1, DamageMultiplier: 1, MiscValue: 31185, MiscValueB: 82},
 		},
 	},
+	// Healing Stream Totem
+	{
+		ID: 58761, Family: 11, FamilyFlags: [3]uint32{0x4002000}, SchoolMask: 32, Flags: FlagBinary | FlagPositive,
+		Attributes: [8]uint32{0x8000180, 0, 0x10000004}, AttributesCu: 0x100000,
+		ProcChance: 101, SpellLevel: 1, BaseLevel: 1,
+		Effects: [3]Effect{
+			{Effect: 3, BasePoints: 24, DieSides: 1, DamageMultiplier: 1},
+		},
+	},
 	// Mana Spring Totem (Rank 8)
 	{
 		ID: 58774, Family: 11, FamilyFlags: [3]uint32{0x80000}, SchoolMask: 1, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagPositive,
@@ -7030,6 +7098,15 @@ var spells = []Spell{
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 279, DamageMultiplier: 1},
 			{Effect: 93, DamageMultiplier: 1},
+		},
+	},
+	// Damage Shield (Rank 1)
+	{
+		ID: 58872, Family: 4, SchoolMask: 1, Flags: FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0x1d0, 0, 0, 0x2},
+		ProcFlags:  0x28, ProcChance: 100, SpellLevel: 1,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 4, BasePoints: 9, DieSides: 1, DamageMultiplier: 1, MiscValue: 1},
 		},
 	},
 	// Damage Shield (Rank 2)
@@ -8870,6 +8947,17 @@ var spells = []Spell{
 			{Effect: 129, Aura: 226, AmplitudeMs: 1000, BasePoints: 9, DieSides: 1, DamageMultiplier: 1, MiscValue: 25171},
 		},
 	},
+	// Rune Strike (Rank 1)
+	{
+		ID: 66217, Family: 15, FamilyFlags: [3]uint32{0, 0x20000000}, SchoolMask: 1, DmgClass: DmgClassMelee, Flags: FlagNoActiveDefense | FlagAlwaysHit,
+		Attributes: [8]uint32{0x240010, 0, 0, 0x41040000}, AttributesCu: 0x3100,
+		Category:   65,
+		ProcChance: 101, PowerType: 6,
+		Effects: [3]Effect{
+			{Effect: 58, BasePoints: -1, DieSides: 1, DamageMultiplier: 1},
+			{Effect: 31, BasePoints: 149, DieSides: 1, DamageMultiplier: 1},
+		},
+	},
 	// Ardent Defender
 	{
 		ID: 66233, Family: 10, SchoolMask: 2,
@@ -8878,6 +8966,15 @@ var spells = []Spell{
 		ProcChance: 101,
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 4, BasePoints: -26, DieSides: 1, DamageMultiplier: 1, ClassMask: [3]uint32{0xc0000000, 0x10000}},
+		},
+	},
+	// Ardent Defender
+	{
+		ID: 66235, Family: 10, SchoolMask: 2, Flags: FlagBinary | FlagPositive,
+		Attributes: [8]uint32{0, 0, 0, 0, 0, 0, 0x8000000}, AttributesCu: 0x100100,
+		ProcChance: 101, SpellLevel: 40, BaseLevel: 40,
+		Effects: [3]Effect{
+			{Effect: 10, BasePoints: 29, DieSides: 1, DamageMultiplier: 1},
 		},
 	},
 	// Staggering Stomp
@@ -8941,6 +9038,29 @@ var spells = []Spell{
 			{Effect: 19, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1},
 		},
 	},
+	// Death Strike (Rank 5)
+	{
+		ID: 66953, Family: 15, FamilyFlags: [3]uint32{0x10}, SchoolMask: 1, DmgClass: DmgClassMelee, Flags: FlagNoActiveDefense | FlagAlwaysHit,
+		Attributes: [8]uint32{0x240010, 0x8000000, 0, 0x1040000}, AttributesCu: 0x7100,
+		GCDMs: 1500, GCDCategory: 133, Category: 1196,
+		PowerType: 5, RuneCostID: 1967,
+		Effects: [3]Effect{
+			{Effect: 121, BasePoints: 147, DieSides: 1, DamageMultiplier: 5},
+			{Effect: 31, BasePoints: 74, DieSides: 1, DamageMultiplier: 1},
+			{Effect: 3, BasePoints: 1309, DieSides: 1, DamageMultiplier: 1},
+		},
+	},
+	// Frost Strike (Rank 6)
+	{
+		ID: 66962, Family: 15, FamilyFlags: [3]uint32{0, 0x4}, SchoolMask: 16, DmgClass: DmgClassMelee, Flags: FlagNoActiveDefense | FlagAlwaysHit,
+		Attributes: [8]uint32{0x240010, 0x8000000, 0, 0x1040000}, AttributesCu: 0x7100,
+		GCDMs: 1500, GCDCategory: 133,
+		ProcChance: 101, PowerType: 6, RuneCostID: 1972,
+		Effects: [3]Effect{
+			{Effect: 121, BasePoints: 124, DieSides: 1, DamageMultiplier: 1},
+			{Effect: 31, BasePoints: 54, DieSides: 1, DamageMultiplier: 1},
+		},
+	},
 	// Obliterate (Rank 4)
 	{
 		ID: 66974, Family: 15, FamilyFlags: [3]uint32{0, 0x20000}, SchoolMask: 1, DmgClass: DmgClassMelee, Flags: FlagNoActiveDefense | FlagAlwaysHit,
@@ -8951,6 +9071,28 @@ var spells = []Spell{
 			{Effect: 121, BasePoints: 291, DieSides: 1, DamageMultiplier: 1},
 			{Effect: 31, BasePoints: 79, DieSides: 1, DamageMultiplier: 1},
 			{Effect: 3, BasePoints: 24, DieSides: 1, DamageMultiplier: 1},
+		},
+	},
+	// Blood Strike (Rank 6)
+	{
+		ID: 66979, Family: 15, FamilyFlags: [3]uint32{0x400000}, SchoolMask: 1, DmgClass: DmgClassMelee, Flags: FlagNoActiveDefense | FlagAlwaysHit,
+		Attributes: [8]uint32{0x240010, 0x8000000, 0, 0x1040000}, AttributesCu: 0x3100,
+		GCDMs: 1500, GCDCategory: 133, Category: 1207,
+		ProcChance: 101, PowerType: 5, RuneCostID: 2317,
+		Effects: [3]Effect{
+			{Effect: 121, BasePoints: 381, DieSides: 1, DamageMultiplier: 1},
+			{Effect: 31, BasePoints: 39, DieSides: 1, DamageMultiplier: 1},
+		},
+	},
+	// Plague Strike (Rank 6)
+	{
+		ID: 66992, Family: 15, FamilyFlags: [3]uint32{0x1}, SchoolMask: 1, DmgClass: DmgClassMelee, Flags: FlagNoActiveDefense | FlagAlwaysHit,
+		Attributes: [8]uint32{0x240010, 0x8000000, 0, 0x1040000}, AttributesCu: 0x3100,
+		GCDMs: 1500, GCDCategory: 133,
+		PowerType: 5, RuneCostID: 2308,
+		Effects: [3]Effect{
+			{Effect: 121, BasePoints: 188, DieSides: 1, DamageMultiplier: 1},
+			{Effect: 31, BasePoints: 49, DieSides: 1, DamageMultiplier: 1},
 		},
 	},
 	// Unholy Might
@@ -9957,6 +10099,15 @@ var spells = []Spell{
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 13, BasePoints: 1206, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, MiscValue: 126},
 			{Effect: 6, Aura: 135, BasePoints: 1206, DieSides: 1, DamageMultiplier: 1, MiscValue: 126},
+		},
+	},
+	// Deep Freeze
+	{
+		ID: 71757, Family: 3, FamilyFlags: [3]uint32{0, 0, 0x20}, SchoolMask: 16, DmgClass: DmgClassMagic, Flags: FlagResetsAutoAttack,
+		Attributes: [8]uint32{0x10000, 0, 0, 0x200}, AttributesCu: 0x1100,
+		ProcChance: 101, SpellLevel: 60, BaseLevel: 60,
+		Effects: [3]Effect{
+			{Effect: 2, BasePoints: 1468, DieSides: 273, PointsPerLevel: 45, DamageMultiplier: 1, BonusMultiplier: 2.143},
 		},
 	},
 	// Lava Burst

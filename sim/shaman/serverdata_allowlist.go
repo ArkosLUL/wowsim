@@ -21,8 +21,6 @@ func init() {
 		a.Spell.Tag = 1
 		return a
 	}
-	healingStream := "spell_sha_healing_stream_totem heals for the value of the rank's trigger (58761: 25), " +
-		"which 52042's own effect leaves at 0"
 	core.AllowServerConflicts(
 		totem(3738),  // Wrath of Air
 		totem(8143),  // Tremor
@@ -45,19 +43,10 @@ func init() {
 		core.ServerConflictAllowance{Spell: core.ActionID{SpellID: 58804}, Field: core.ServerSchool, Sim: 2, Server: 64, KeepSim: true,
 			Why: "the sim deals the Windfury attacks under the enchant's id, the server as its own spell 25504, Physical"},
 
-		core.ServerConflictAllowance{Spell: core.ActionID{SpellID: 13339}, Field: core.ServerSP, SimFloat: 0.2, ServerFloat: 0, KeepSim: true,
-			Why: "npc_pet_shaman_fire_elemental casts Fire Blast 57984, whose spell_bonus_data row is 0.2. It has 13339's " +
-				"roll, but serverdata doesn't have it"},
-
 		flametongue(core.ServerSP, 0.03811, 0),
 		flametongue(core.ServerMin, 68.5, 1),
 		flametongue(core.ServerMax, 68.5, 1),
 		flametongueDownranked(core.ServerMin, 60, 1),
 		flametongueDownranked(core.ServerMax, 60, 1),
-
-		core.ServerConflictAllowance{Spell: core.ActionID{SpellID: 52042}, Field: core.ServerMin, SimFloat: 25, ServerFloat: 0, KeepSim: true,
-			Why: healingStream},
-		core.ServerConflictAllowance{Spell: core.ActionID{SpellID: 52042}, Field: core.ServerMax, SimFloat: 25, ServerFloat: 0, KeepSim: true,
-			Why: healingStream},
 	)
 }

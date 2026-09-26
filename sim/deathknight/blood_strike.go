@@ -12,7 +12,6 @@ func (dk *Deathknight) bloodStrikeEffect() (core.SpellEffect, []core.SpellMod) {
 }
 
 func (dk *Deathknight) newBloodStrikeSpell(isMH bool) *core.Spell {
-	offHandFixed := 382 + float64(dk.sigilOfTheDarkRiderBonus())
 	diseaseMulti := dk.dkDiseaseMultiplier(0.125)
 	deathConvertChance := float64(dk.Talents.BloodOfTheNorth+dk.Talents.Reaping) / 3
 
@@ -43,13 +42,7 @@ func (dk *Deathknight) newBloodStrikeSpell(isMH bool) *core.Spell {
 		ThreatMultiplier: 1,
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			var baseDamage float64
-			if isMH {
-				baseDamage = normalizedStrikeBase(sim, spell, true, spell.Direct.Roll(sim)) * spell.Direct.WeaponPct
-			} else {
-				// the off-hand strike, 66979, which serverdata doesn't cover
-				baseDamage = normalizedStrikeBase(sim, spell, false, offHandFixed) * 0.4
-			}
+			baseDamage := normalizedStrikeBase(sim, spell, isMH, spell.Direct.Roll(sim)) * spell.Direct.WeaponPct
 			baseDamage *= dk.RoRTSBonus(target) *
 				(1.0 + dk.dkCountActiveDiseases(target)*diseaseMulti)
 
@@ -70,12 +63,14 @@ func (dk *Deathknight) newBloodStrikeSpell(isMH bool) *core.Spell {
 		},
 	}
 
+	conf.Direct, conf.Mods = dk.bloodStrikeEffect()
 	if !isMH { // offhand doesn't need GCD
 		conf.RuneCost = core.RuneCostOptions{}
 		conf.Cast = core.CastConfig{}
+		// Threat of Thassarian's off-hand strike
+		conf.Direct = core.SpellEffect{Effect: 0, FromSpellID: 66979, Min: 382, Max: 382, WeaponPct: 0.4}
 	} else {
 		conf.Flags |= core.SpellFlagAPL
-		conf.Direct, conf.Mods = dk.bloodStrikeEffect()
 	}
 
 	return dk.RegisterSpell(conf)

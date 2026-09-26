@@ -12,14 +12,13 @@ const FanOfKnivesSpellID int32 = 51723
 // both hands' knives are missiles on the server: 51723 and its linked off-hand cast 52874
 const fanOfKnivesMissileSpeed = 18
 
-// makeFanOfKnivesWeaponHitSpell registers a hand's hit. The server deals the off hand's as 52874, which
-// serverdata lacks, so both check against 51723, whose values it shares.
 func (rogue *Rogue) makeFanOfKnivesWeaponHitSpell(isMH bool) *core.Spell {
 	var procMask core.ProcMask
 	var actionID core.ActionID
 	multiplier := 1 +
 		0.02*float64(rogue.Talents.FindWeakness) +
 		core.TernaryFloat64(rogue.HasMajorGlyph(proto.RogueMajorGlyph_GlyphOfFanOfKnives), 0.2, 0.0)
+	direct := core.SpellEffect{Effect: 0, WeaponPct: 0.7}
 	if isMH {
 		actionID = core.ActionID{SpellID: FanOfKnivesSpellID}.WithTag(1)
 		procMask = core.ProcMaskMeleeMHSpecial
@@ -27,6 +26,7 @@ func (rogue *Rogue) makeFanOfKnivesWeaponHitSpell(isMH bool) *core.Spell {
 		actionID = core.ActionID{SpellID: FanOfKnivesSpellID}.WithTag(2)
 		multiplier *= rogue.dwsMultiplier()
 		procMask = core.ProcMaskMeleeOHSpecial
+		direct.FromSpellID = 52874
 	}
 
 	return rogue.RegisterSpell(core.SpellConfig{
@@ -40,7 +40,7 @@ func (rogue *Rogue) makeFanOfKnivesWeaponHitSpell(isMH bool) *core.Spell {
 		CritMultiplier:   rogue.MeleeCritMultiplier(false),
 		ThreatMultiplier: 1,
 
-		Direct: core.SpellEffect{Effect: 0, WeaponPct: 0.7},
+		Direct: direct,
 	})
 }
 

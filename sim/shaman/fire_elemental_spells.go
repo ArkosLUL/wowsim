@@ -30,9 +30,8 @@ func (fireElemental *FireElemental) registerFireBlast() {
 		CritMultiplier:   fireElemental.DefaultSpellCritMultiplier(),
 		ThreatMultiplier: 1,
 
-		// The elemental's AI casts 57984, which has this spell's roll and 0.2 from its own
-		// spell_bonus_data row. serverdata only has 13339.
-		Direct: core.SpellEffect{Effect: 0, Min: 110, Max: 130, SP: 0.2},
+		// the elemental's AI casts 57984, which has this spell's roll and its own spell_bonus_data row
+		Direct: core.SpellEffect{Effect: 0, FromSpellID: 57984, Min: 110, Max: 130, SP: 0.2},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			baseDamage := spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()

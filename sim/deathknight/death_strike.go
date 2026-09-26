@@ -14,7 +14,6 @@ func (dk *Deathknight) deathStrikeEffect() (core.SpellEffect, []core.SpellMod) {
 }
 
 func (dk *Deathknight) newDeathStrikeSpell(isMH bool) *core.Spell {
-	offHandFixed := 148 + float64(dk.sigilOfAwarenessBonus())
 	hasGlyph := dk.HasMajorGlyph(proto.DeathknightMajorGlyph_GlyphOfDeathStrike)
 	deathConvertChance := float64(dk.Talents.DeathRuneMastery) / 3
 
@@ -49,13 +48,7 @@ func (dk *Deathknight) newDeathStrikeSpell(isMH bool) *core.Spell {
 		ThreatMultiplier: 1,
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			var baseDamage float64
-			if isMH {
-				baseDamage = normalizedStrikeBase(sim, spell, true, spell.Direct.Roll(sim)) * spell.Direct.WeaponPct
-			} else {
-				// the off-hand strike, 66953, which serverdata doesn't cover
-				baseDamage = normalizedStrikeBase(sim, spell, false, offHandFixed) * 0.75
-			}
+			baseDamage := normalizedStrikeBase(sim, spell, isMH, spell.Direct.Roll(sim)) * spell.Direct.WeaponPct
 			baseDamage *= dk.RoRTSBonus(target)
 			if hasGlyph {
 				baseDamage *= 1 + 0.01*min(dk.CurrentRunicPower(), 25)
@@ -79,12 +72,14 @@ func (dk *Deathknight) newDeathStrikeSpell(isMH bool) *core.Spell {
 		},
 	}
 
+	conf.Direct, conf.Mods = dk.deathStrikeEffect()
 	if !isMH {
 		conf.RuneCost = core.RuneCostOptions{}
 		conf.Cast = core.CastConfig{}
+		// Threat of Thassarian's off-hand strike
+		conf.Direct = core.SpellEffect{Effect: 0, FromSpellID: 66953, Min: 148, Max: 148, WeaponPct: 0.75}
 	} else {
 		conf.Flags |= core.SpellFlagAPL
-		conf.Direct, conf.Mods = dk.deathStrikeEffect()
 	}
 
 	return dk.RegisterSpell(conf)

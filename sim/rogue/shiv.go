@@ -35,9 +35,13 @@ func (rogue *Rogue) registerShivSpell() {
 		CritMultiplier:   rogue.MeleeCritMultiplier(true),
 		ThreatMultiplier: 1,
 
+		// spell_rog_shiv casts the off-hand hit, 5940
+		Direct: core.SpellEffect{Effect: 1, FromSpellID: 5940, WeaponPct: 1},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			rogue.BreakStealth(sim)
-			baseDamage := spell.Unit.OHNormalizedWeaponDamage(sim, spell.MeleeAttackPower())
+			baseDamage := (spell.Direct.Roll(sim) + spell.Unit.OHNormalizedWeaponDamage(sim, spell.MeleeAttackPower())) *
+				spell.Direct.WeaponPct
 			result := spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialNoBlockDodgeParryNoCrit)
 
 			if result.Landed() {

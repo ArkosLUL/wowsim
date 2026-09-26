@@ -1453,6 +1453,18 @@ deviation)
   - Unmodeled: Holy Shock, and the heals of Divine Storm (54172), Sheath of Light and Judgement of Light.
     Serverdata lacks the Seal of Righteousness proc's 25742.
 
+**Effect declarations (PAR-DECL-4)** ([PLAN](effect-declarations.PLAN.md#par-decl-4-as-built))
+- Explosive Trap: `GameObject::CastSpell` gives the trigger creature the hunter's level, so 49065's burst scales to
+  80 (3 a level from 77): 532–680. The sim had 523–671.
+- Deep Freeze: Deep Freeze Immunity State (71761, `spell_mage_deep_freeze_immunity_state`) casts 71757 only on a
+  creature with a stun template immunity. The sim deals it to any target.
+- Ardent Defender: `spell_pal_ardent_defender` casts 66235 with its own amount as base points, so 66235's 30 is
+  never dealt.
+- Healing Stream Totem, left open: `spell_sha_healing_stream_totem` runs 58761's 25 through the owner's
+  `SpellHealingBonusDone` (coefficient 0), Restorative Totems, the glyph and `SpellHealingBonusTaken`, then
+  52042's `Spell::EffectHeal` runs both again with 0.0827. Done and taken percents count twice; the sim counts
+  them once.
+
 ## Verified on the live server
 
 `[ac]/modules/mod-sim-validation/e2e` (`TestSimvalWarrior`, `TestSimvalHunter`) ran every probe inside Naxxramas and
