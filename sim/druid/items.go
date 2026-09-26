@@ -134,15 +134,16 @@ var ItemSetLasherweaveRegalia = core.NewItemSet(core.ItemSet{
 						return
 					}
 
-					dot := druid.Languish.Dot(result.Target)
+					target := result.Target
+					dot := druid.Languish.Dot(target)
 					newDamage := result.Damage * 0.07
 					outstandingDamage := core.TernaryFloat64(dot.IsActive(), dot.SnapshotBaseDamage*float64(dot.NumberOfTicks-dot.TickCount), 0)
 					totalDamage := outstandingDamage + newDamage
 
-					languishDelay.Apply(sim, result.Target, func(sim *core.Simulation) {
+					languishDelay.Apply(sim, target, func(sim *core.Simulation) {
 						dot.SnapshotAttackerMultiplier = 1
 						dot.SnapshotBaseDamage = totalDamage / float64(dot.NumberOfTicks)
-						druid.Languish.Cast(sim, result.Target)
+						druid.Languish.Cast(sim, target)
 					})
 				},
 			})
