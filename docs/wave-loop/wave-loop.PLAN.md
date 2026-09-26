@@ -102,7 +102,8 @@ bugs, the importer's missing pets, ammo and consumables, and a batch hung on a h
 ## Current wave
 
 - Wave: I6, running. Base SHA `b15817c30`.
-- Workflow runId: set once started. Args `waveI6-args.json` in `G:\DevStuff\GitHub\.wave-loop`.
+- Workflow runId: `wf_70ca9fc3-ef5`, args `waveI6-args.json` in `G:\DevStuff\GitHub\.wave-loop`. Transcript dir:
+  `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\wf_70ca9fc3-ef5`.
 
 ## BiS baseline
 
