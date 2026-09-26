@@ -720,10 +720,16 @@ func annealSteps(effort proto.OptimizerEffort) int {
 }
 
 // annealRuns is how many annealing runs each start gets, on different random numbers, by effort.
+// Quick's 3 used to leave a real chance that no run from a given random seed ever tried the item a
+// different seed picked (the search never sims, so a run costs no extra iterations, only CPU on
+// parallel forks): two runs of the same roster, phase and gear could pick items 900+ J apart with
+// both sides measured to within 11 J, not explained by sim noise (BIS-e2e-perf's Deathsong P3 case).
+// A fixed RNG seed would make a rerun repeat that same miss instead of finding the better item, so
+// this raises the odds any one run finds it instead.
 func annealRuns(effort proto.OptimizerEffort) int {
 	switch effort {
 	case proto.OptimizerEffort_OptimizerEffortQuick:
-		return 3
+		return 4
 	case proto.OptimizerEffort_OptimizerEffortThorough:
 		return 8
 	}

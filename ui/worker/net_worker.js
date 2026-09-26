@@ -40,57 +40,70 @@ addEventListener('message', async (e) => {
 		asyncTasks.set(id, task);
 	}
 
-	var url = "/" + msg;
-	let response = await fetch(url, {
-		method: 'POST',
-		headers: {
-			'Content-Type': 'application/x-protobuf'
-		},
-		body: e.data.inputData
-	});
+	// A fetch here throws when the server's gone (a dropped connection, a restarted container): without
+	// this, the caller's promise never settles, so a run hangs and Stop can't free it.
+	try {
+		var url = "/" + msg;
+		let response = await fetch(url, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/x-protobuf'
+			},
+			body: e.data.inputData
+		});
 
-	var content = await response.arrayBuffer();
-	var outputData;
-	if (isAsync) {
-		task.handle = content;
-		if (task.cancelRequested) {
-			cancelAsync(content);
-		}
-		while (true) {
-			let progressResponse = await fetch("/asyncProgress", {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/x-protobuf'
-				},
-				body: content,
-			});
-
-			// If no new data available, stop querying.
-			if (progressResponse.status == 204) {
-				break
+		var content = await response.arrayBuffer();
+		var outputData;
+		if (isAsync) {
+			task.handle = content;
+			if (task.cancelRequested) {
+				cancelAsync(content);
 			}
+			while (true) {
+				let progressResponse = await fetch("/asyncProgress", {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/x-protobuf'
+					},
+					body: content,
+				});
 
-			outputData = await progressResponse.arrayBuffer();
-			var uint8View = new Uint8Array(outputData);
-			postMessage({
-				msg: msg,
-				outputData: uint8View,
-				id: id + "progress",
-			});
-			await new Promise(resolve => setTimeout(resolve, 500));
+				// If no new data available, stop querying.
+				if (progressResponse.status == 204) {
+					break
+				}
+
+				outputData = await progressResponse.arrayBuffer();
+				var uint8View = new Uint8Array(outputData);
+				postMessage({
+					msg: msg,
+					outputData: uint8View,
+					id: id + "progress",
+				});
+				await new Promise(resolve => setTimeout(resolve, 500));
+			}
+		} else {
+			outputData = content;
 		}
-		asyncTasks.delete(id);
-	} else {
-		outputData = content;
+
+		var uint8View = new Uint8Array(outputData);
+		postMessage({
+			msg: msg,
+			outputData: uint8View,
+			id: id,
+		});
+	} catch (err) {
+		const error = (err && err.message) || String(err);
+		postMessage({ msg: msg, id: id, error: error });
+		if (isAsync) {
+			// a progress handler could be pending on this id too
+			postMessage({ msg: msg, id: id + "progress", error: error });
+		}
+	} finally {
+		if (isAsync) {
+			asyncTasks.delete(id);
+		}
 	}
-
-	var uint8View = new Uint8Array(outputData);
-	postMessage({
-		msg: msg,
-		outputData: uint8View,
-		id: id,
-	});
-
 }, false);
 
 // Let UI know worker is ready.

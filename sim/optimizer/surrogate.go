@@ -1242,7 +1242,7 @@ func (r *run) measureEffects(s *surrogate) error {
 			fast, slow := f.keys[pk[0]], f.keys[pk[1]]
 			a, okA := fx.raw[fast]
 			b, okB := fx.raw[slow]
-			if okA && okB && abs(a.Mean-b.Mean) <= 2*math.Hypot(a.SE, b.SE)+acceptFraction*abs(r.seedJ.Mean) {
+			if okA && okB && abs(a.Mean-b.Mean) <= 2*math.Hypot(a.SE, b.SE)+acceptFraction*r.ownJ() {
 				fx.flat[fast.slot] = Estimate{Mean: (a.Mean + b.Mean) / 2, SE: max(a.SE, b.SE)}
 				f = f.subset(func(i int) bool { return ItemHasEffect(f.keys[i].id) })
 			}

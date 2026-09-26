@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 #
-# Rebuilds the harness's scenario requests: every BenchmarkSimulate's request and the optimizer slow
-# suite's six. Run it in the toolchain container, from the checkout's root:
+# Rebuilds the harness's scenario requests: every BenchmarkSimulate's request, the optimizer slow
+# suite's six, and a tank run plus a raid-mode (stage 2) run against raidctx's synthetic 25-player
+# raid. Run it in the toolchain container, from the checkout's root:
 #
 #   tools/acore/dock.sh exec bash tools/perf/harness/scenarios/update.sh
 set -euo pipefail
@@ -39,8 +40,8 @@ if ! go test --tags=with_db -vet=off -overlay "$work/overlay.json" -run '^$' -be
 	cat "$work/bench.log" >&2
 	exit 1
 fi
-echo "dumping the optimizer slow suite's requests"
-if ! go test --tags=with_db,optimizer_slow -vet=off -overlay "$work/overlay.json" -count=1 -run '^TestPerfDumpSlowRequests$' \
+echo "dumping the optimizer slow suite's requests and the raid25 tank and raid-mode requests"
+if ! go test --tags=with_db,optimizer_slow -vet=off -overlay "$work/overlay.json" -count=1 -run '^TestPerfDump(SlowRequests|Raid25Requests)$' \
 	./sim/optimizer/ >"$work/opt.log" 2>&1; then
 	cat "$work/opt.log" >&2
 	exit 1

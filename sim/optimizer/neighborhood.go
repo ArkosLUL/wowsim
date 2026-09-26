@@ -6,8 +6,9 @@ import (
 	"github.com/wowsims/wotlk/sim/core/proto"
 )
 
-// neighborhoodRounds caps how often the neighborhood can move the best and look again.
-const neighborhoodRounds = 5
+// neighborhoodRounds caps how often the neighborhood can move the best and look again. A var, not a
+// const, so tests can shrink it to reach the last round without a long adoption chain.
+var neighborhoodRounds = 5
 
 // alternativesPerSlot is how many runners-up per slot the neighborhood sims and reports.
 // firstRunnersUp of them get simmed before the rest: all at once they can push a round under full
@@ -21,7 +22,10 @@ const (
 // alternativesPerSlot other items, each with the rest of the best unchanged, paired with the best. A
 // round sims each slot's first firstRunnersUp, then the rest only if none of those moved the best. An
 // alternative that passes the acceptance test against the best and beats the seed becomes the new
-// best, and its neighborhood is simmed in turn. The alternatives returned are the last round's,
+// best, and its neighborhood is simmed in turn. On the round cap, there's no round left to look
+// again, so the cap's own first and rest batches both run against whatever is current when they're
+// reached, rebasing the round's other alternatives onto each adoption instead of leaving them
+// pointing at a pick that's since been replaced. The alternatives returned are the last round's,
 // around the final best, best first within each slot; verified gains every best the rounds adopt.
 func (r *run) neighborhood(s *surrogate, verified []*verifiedLoadout) ([]*proto.OptimizerSlotAlternative, []*verifiedLoadout, error) {
 	se := newSearcher(s, r)
@@ -101,12 +105,28 @@ rounds:
 				}
 			}
 			alts = append(alts, batch...)
-			if full && top != nil && r.accepts(top.delta) && r.beatsSeed(top.eval) && round < neighborhoodRounds-1 {
+			if full && top != nil && r.accepts(top.delta) && r.beatsSeed(top.eval) {
 				r.best, r.bestEval = top.loadout, top.eval
 				verified = append(verified, &verifiedLoadout{top.loadout, top.eval})
 				r.sortVerified(verified)
 				r.report()
-				continue rounds
+				if round < neighborhoodRounds-1 {
+					continue rounds
+				}
+				// no round left to scan a fresh neighborhood around this pick: rebase what's
+				// already simmed onto it instead of reporting alternatives against the pick it
+				// just replaced, which is why a Quick tank run could list a runner-up well above
+				// the loadout it reports as best
+				for _, a := range alts {
+					if a == top || a.eval == nil {
+						continue
+					}
+					a.delta = r.obj.Delta(top.eval, a.eval)
+					if r.raidMode() {
+						a.raidDelta = Delta(top.eval, a.eval, MetricDPS)
+					}
+				}
+				alts = slices.DeleteFunc(alts, func(a *alternative) bool { return a == top })
 			}
 		}
 

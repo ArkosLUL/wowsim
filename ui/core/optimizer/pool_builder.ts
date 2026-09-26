@@ -8,6 +8,7 @@ import {
 	HealingModel,
 	ItemSlot,
 	ItemSpec,
+	ItemStat,
 	ItemType,
 	MobType,
 	Profession,
@@ -273,6 +274,72 @@ function serverSockets(item: Item, blacksmith: boolean): Array<GemColor> {
 	return sockets.slice(0, MAX_GEMS);
 }
 
+// Below this many candidates, pruning isn't worth the risk of trimming a real spec's test fixture:
+// only Retribution-sized pools (the search's testdata holds 2.6k-4.6k) need the smaller request.
+const PRUNE_CANDIDATES_THRESHOLD = 500;
+
+// pruneDominatedItems drops a plain item (no set bonus, no on-equip effect: nothing a stat
+// comparison would miss) when another candidate in its slot beats it on every stat with an
+// identical socket layout, so no reforge or gem choice could ever give it a use the other item
+// doesn't already cover. It never touches the equipped item, which the seed still needs even
+// where the pool has moved past it.
+function pruneDominatedItems(offers: SlotOffers, catalog: CatalogIndex, equipped: EquipmentSpec) {
+	const total = [...offers.values()].reduce((sum, slot) => sum + slot.size, 0);
+	if (total < PRUNE_CANDIDATES_THRESHOLD) {
+		return;
+	}
+	const weaponSlots = new Set([ItemSlot.ItemSlotMainHand, ItemSlot.ItemSlotOffHand, ItemSlot.ItemSlotRanged]);
+	for (const [slot, slotOffers] of offers) {
+		// a weapon's DPS trades against its stats in ways a stat comparison alone can't judge
+		if (slotOffers.size < 2 || weaponSlots.has(slot)) {
+			continue;
+		}
+		const worn = equipped.items[slot]?.id || 0;
+		const items = [...slotOffers.values()].map(offer => offer.item);
+		for (const b of items) {
+			if (b.id == worn || b.setName || catalog.item(b.id)?.hasEffect) {
+				continue;
+			}
+			if (items.some(a => a.id != b.id && dominates(a, b))) {
+				slotOffers.delete(b.id);
+			}
+		}
+	}
+}
+
+// dominates is true when a matches or beats b on every stat, with at least one stat strictly
+// better, and the two share everything a stat comparison alone can't price: sockets, the socket
+// bonus, and the server stats reforging reads (so b's reforge options are exactly a's too).
+function dominates(a: Item, b: Item): boolean {
+	if (a.stats.length != b.stats.length || !sameSockets(a, b) || !sameServerStats(a, b)) {
+		return false;
+	}
+	let strictlyBetter = false;
+	for (let i = 0; i < a.stats.length; i++) {
+		if (a.stats[i] < b.stats[i]) {
+			return false;
+		}
+		strictlyBetter ||= a.stats[i] > b.stats[i];
+	}
+	return strictlyBetter;
+}
+
+function sameSockets(a: Item, b: Item): boolean {
+	return (
+		a.gemSockets.length == b.gemSockets.length &&
+		a.gemSockets.every((color, i) => color == b.gemSockets[i]) &&
+		a.socketBonus.length == b.socketBonus.length &&
+		a.socketBonus.every((v, i) => v == b.socketBonus[i])
+	);
+}
+
+function sameServerStats(a: Item, b: Item): boolean {
+	const asMap = (stats: Array<ItemStat>) => new Map(stats.map(s => [s.statType, s.value]));
+	const am = asMap(a.serverStats);
+	const bm = asMap(b.serverStats);
+	return am.size == bm.size && [...am].every(([stat, value]) => bm.get(stat) == value);
+}
+
 function raidPlayer(base: RaidSimRequest, index: number): PlayerProto {
 	const player = base.raid?.parties[Math.floor(index / 5)]?.players[index % 5];
 	if (!player || !player.class) {
@@ -393,6 +460,7 @@ export function buildOptimizeRequest(input: PoolBuilderInput): BuiltRequest {
 		reforgingFor(base.encounter?.serverSettings),
 	);
 	target.equipment = seed.trim(settings.contentPhase);
+	pruneDominatedItems(offers, catalog, equipped);
 
 	const slotPools: Array<SlotPool> = [];
 	const poolItems = new Map<number, Item>();

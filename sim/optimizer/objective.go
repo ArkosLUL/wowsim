@@ -116,9 +116,11 @@ func normalizerOffset(s stats.Stat) float64 {
 	return 100
 }
 
-// NewObjective measures the normalizers: paired sims of the seed with each reference stat moved
-// down and up. A weighted metric whose normalizer doesn't clear 2 standard errors with the right
-// sign is left out, with a warning; if that leaves nothing, it's an error.
+// NewObjective measures the normalizers: paired sims of the gear as equipped with each reference
+// stat moved down and up, so a slot the trimmer emptied (a weapon, most sharply: about 12% on
+// BIS-seed's DK case) doesn't size the objective's points against gear the player doesn't have. A
+// weighted metric whose normalizer doesn't clear 2 standard errors with the right sign is left out,
+// with a warning; if that leaves nothing, it's an error.
 func NewObjective(ctx context.Context, eval Evaluator, r *Request, iterations int) (*Objective, error) {
 	weights, err := objectiveWeights(r.Settings)
 	if err != nil {
@@ -133,19 +135,31 @@ func NewObjective(ctx context.Context, eval Evaluator, r *Request, iterations in
 		}
 	}
 
-	var points []Point
-	pointIndex := map[stats.Stat]int{}
-	for m, w := range weights {
-		s := o.ReferenceStats[m]
-		if _, ok := pointIndex[s]; w == 0 || ok {
-			continue
+	normalizerPoints := func(base Loadout) ([]Point, map[stats.Stat]int) {
+		var points []Point
+		pointIndex := map[stats.Stat]int{}
+		for m, w := range weights {
+			s := o.ReferenceStats[m]
+			if _, ok := pointIndex[s]; w == 0 || ok {
+				continue
+			}
+			pointIndex[s] = len(points)
+			var down, up stats.Stats
+			down[s], up[s] = -normalizerOffset(s), normalizerOffset(s)
+			points = append(points, Point{Loadout: base, Offset: down}, Point{Loadout: base, Offset: up})
 		}
-		pointIndex[s] = len(points)
-		var down, up stats.Stats
-		down[s], up[s] = -normalizerOffset(s), normalizerOffset(s)
-		points = append(points, Point{Loadout: r.Seed, Offset: down}, Point{Loadout: r.Seed, Offset: up})
+		return points, pointIndex
 	}
+
+	base := r.Equipped
+	points, pointIndex := normalizerPoints(base)
 	evals, err := eval.Evaluate(ctx, points, iterations)
+	if err != nil && base != r.Seed {
+		o.Warnings = append(o.Warnings, fmt.Sprintf("measured the objective's normalizers against the trimmed seed instead of the gear as equipped, which failed to sim: %v", err))
+		base = r.Seed
+		points, pointIndex = normalizerPoints(base)
+		evals, err = eval.Evaluate(ctx, points, iterations)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("normalizer sims: %w", err)
 	}
@@ -165,7 +179,7 @@ func NewObjective(ctx context.Context, eval Evaluator, r *Request, iterations in
 			signed = -signed
 		}
 		if signed <= 2*norm.SE {
-			o.Warnings = append(o.Warnings, fmt.Sprintf("left %s out of the objective: %g %s doesn't move it measurably at the seed (%g ± %g per point)",
+			o.Warnings = append(o.Warnings, fmt.Sprintf("left %s out of the objective: %g %s doesn't move it measurably there (%g ± %g per point)",
 				metricName(Metric(m)), normalizerOffset(s), s.StatName(), norm.Mean, norm.SE))
 			continue
 		}
