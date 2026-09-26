@@ -119,6 +119,7 @@ var createMirrorImageInheritance = func(mage *Mage) func(stats.Stats) stats.Stat
 
 func (mi *MirrorImage) registerFrostboltSpell() {
 	numImages := core.TernaryFloat64(mi.mageOwner.HasMajorGlyph(proto.MageMajorGlyph_GlyphOfMirrorImage), 4, 3)
+	talents := mi.mageOwner.Talents
 
 	mi.Frostbolt = mi.RegisterSpell(core.SpellConfig{
 		ActionID:     core.ActionID{SpellID: 59638},
@@ -140,9 +141,18 @@ func (mi *MirrorImage) registerFrostboltSpell() {
 		CritMultiplier:   mi.DefaultSpellCritMultiplier(),
 		ThreatMultiplier: 1,
 
+		Direct: core.SpellEffect{Effect: 0, Min: 163, Max: 169, SP: 0.3},
+		// images cast with the mage's spell mods and share Frostbolt's class mask, so the effect 0 mods meant
+		// for Frostbolt's slow (Permafrost, Chilled to the Bone) cut this damage
+		Mods: []core.SpellMod{
+			{Op: core.SpellModEffect1, Flat: []int32{0, -4, -7, -10}[talents.Permafrost]},
+			{Op: core.SpellModEffect1, Flat: -2 * talents.ChilledToTheBone},
+			{Op: core.SpellModBonusMultiplier, Flat: 5 * talents.EmpoweredFrostbolt},
+		},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			//3x damage for 3 mirror images
-			baseDamage := (163 + 0.3*spell.SpellPower()) * numImages
+			baseDamage := (spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()) * numImages
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 			spell.WaitTravelTime(sim, func(sim *core.Simulation) {
 				spell.DealDamage(sim, result)
@@ -176,9 +186,11 @@ func (mi *MirrorImage) registerFireblastSpell() {
 		CritMultiplier:   mi.DefaultSpellCritMultiplier(),
 		ThreatMultiplier: 1,
 
+		Direct: core.SpellEffect{Effect: 0, Min: 88, Max: 98, SP: 0.15},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			//3x damage for 3 mirror images
-			baseDamage := (88 + 0.15*spell.SpellPower()) * numImages
+			baseDamage := (spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()) * numImages
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 		},
 	})

@@ -8,7 +8,6 @@ import (
 )
 
 func (mage *Mage) registerFireballSpell() {
-	spellCoeff := 1 + 0.05*float64(mage.Talents.EmpoweredFire)
 	hasGlyph := mage.HasMajorGlyph(proto.MageMajorGlyph_GlyphOfFireball)
 
 	mage.Fireball = mage.RegisterSpell(core.SpellConfig{
@@ -44,6 +43,11 @@ func (mage *Mage) registerFireballSpell() {
 		CritMultiplier:   mage.SpellCritMultiplier(1, mage.bonusCritDamage),
 		ThreatMultiplier: 1 - 0.1*float64(mage.Talents.BurningSoul),
 
+		Direct: core.SpellEffect{Effect: 0, Min: 898, Max: 1142, SP: 1},
+		Mods: []core.SpellMod{
+			{Op: core.SpellModBonusMultiplier, Flat: 5 * mage.Talents.EmpoweredFire},
+		},
+
 		Dot: core.DotConfig{
 			Aura: core.Aura{
 				Label: "Fireball",
@@ -52,8 +56,11 @@ func (mage *Mage) registerFireballSpell() {
 			TickLength:    time.Second * 2,
 			// No SPELL_AURA_ABILITY_PERIODIC_CRIT aura covers this dot, so its ticks never crit.
 			TicksCanCrit: false,
+
+			Tick: core.SpellEffect{Effect: 1, Min: 29, Max: 29},
+
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
-				dot.SnapshotBaseDamage = 116.0 / 4.0
+				dot.SnapshotBaseDamage = dot.Tick.Roll(sim)
 				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(dot.Spell.Unit.AttackTables[target.UnitIndex])
 			},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
@@ -62,7 +69,7 @@ func (mage *Mage) registerFireballSpell() {
 		},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := sim.Roll(898, 1143) + spellCoeff*spell.SpellPower()
+			baseDamage := spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 			spell.WaitTravelTime(sim, func(sim *core.Simulation) {
 				if result.Landed() && !hasGlyph {

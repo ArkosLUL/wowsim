@@ -8,7 +8,6 @@ import (
 )
 
 func (mage *Mage) registerFrostfireBoltSpell() {
-	spellCoeff := 3.0/3.5 + .05*float64(mage.Talents.EmpoweredFire)
 	glyphOfFrostfireBonus := core.TernaryFloat64(mage.HasMajorGlyph(proto.MageMajorGlyph_GlyphOfFrostfire), .02, 0)
 
 	mage.FrostfireBolt = mage.RegisterSpell(core.SpellConfig{
@@ -48,6 +47,11 @@ func (mage *Mage) registerFrostfireBoltSpell() {
 		CritMultiplier:   mage.SpellCritMultiplier(1, mage.bonusCritDamage+float64(mage.Talents.IceShards)/3),
 		ThreatMultiplier: 1 - 0.1*float64(mage.Talents.BurningSoul) - .04*float64(mage.Talents.FrostChanneling),
 
+		Direct: core.SpellEffect{Effect: 1, Min: 722, Max: 838, SP: 0.857},
+		Mods: []core.SpellMod{
+			{Op: core.SpellModBonusMultiplier, Flat: 5 * mage.Talents.EmpoweredFire},
+		},
+
 		Dot: core.DotConfig{
 			Aura: core.Aura{
 				Label: "FrostfireBolt",
@@ -56,8 +60,11 @@ func (mage *Mage) registerFrostfireBoltSpell() {
 			TickLength:    time.Second * 3,
 			// No SPELL_AURA_ABILITY_PERIODIC_CRIT aura covers this dot, so its ticks never crit.
 			TicksCanCrit: false,
+
+			Tick: core.SpellEffect{Effect: 2, Min: 30, Max: 30},
+
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
-				dot.SnapshotBaseDamage = 90 / 3
+				dot.SnapshotBaseDamage = dot.Tick.Roll(sim)
 				// Glyph of Frostfire boosts the direct hit only, so pull its factor back out here.
 				dot.Spell.DamageMultiplierAdditive /= 1 + glyphOfFrostfireBonus
 				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(dot.Spell.Unit.AttackTables[target.UnitIndex])
@@ -69,7 +76,7 @@ func (mage *Mage) registerFrostfireBoltSpell() {
 		},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := sim.Roll(722, 838) + spellCoeff*spell.SpellPower()
+			baseDamage := spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()
 
 			// FFB also double-dips the bonus from debuff crit modifiers:
 			//  1) Totem of Wrath / Heart of the Crusader / Master Poisoner

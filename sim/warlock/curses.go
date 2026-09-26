@@ -119,7 +119,6 @@ func (warlock *Warlock) registerCurseOfTonguesSpell() {
 
 func (warlock *Warlock) registerCurseOfAgonySpell() {
 	numberOfTicks := core.TernaryInt32(warlock.HasMajorGlyph(proto.WarlockMajorGlyph_GlyphOfCurseOfAgony), 14, 12)
-	baseTickDmg := 145.0
 
 	warlock.CurseOfAgony = warlock.RegisterSpell(core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: 47864},
@@ -152,14 +151,20 @@ func (warlock *Warlock) registerCurseOfAgonySpell() {
 			NumberOfTicks: numberOfTicks,
 			TickLength:    time.Second * 2,
 			TicksCanCrit:  false,
+
+			Tick: core.SpellEffect{Effect: 0, Min: 145, Max: 145, SP: 0.1},
+
+			// spell_warl_curse_of_agony ramps the whole tick, spell power included: half for ticks 1 to 4,
+			// then 1, 1.5 and 2 times from ticks 5, 9 and 13
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-				dot.SnapshotBaseDamage = 0.5*baseTickDmg + 0.1*dot.Spell.SpellPower()
+				dot.SnapshotBaseDamage = 0.5 * (dot.Tick.Roll(sim) + dot.Tick.SP*dot.Spell.SpellPower())
 				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(dot.Spell.Unit.AttackTables[target.UnitIndex])
 			},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 				dot.CalcAndDealPeriodicSnapshotDamage(sim, target, dot.OutcomeTickCounted)
-				if dot.TickCount%4 == 0 { // CoA ramp up
-					dot.SnapshotBaseDamage += 0.5 * baseTickDmg
+				if dot.TickCount > 0 && dot.TickCount%4 == 0 {
+					step := float64(dot.TickCount / 4)
+					dot.SnapshotBaseDamage *= (step + 1) / step
 				}
 			},
 		},
@@ -208,8 +213,11 @@ func (warlock *Warlock) registerCurseOfDoomSpell() {
 			NumberOfTicks: 1,
 			TickLength:    time.Minute,
 			TicksCanCrit:  false,
+
+			Tick: core.SpellEffect{Effect: 0, Min: 7300, Max: 7300, SP: 2},
+
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-				dot.SnapshotBaseDamage = 7300 + 2*dot.Spell.SpellPower()
+				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + dot.Tick.SP*dot.Spell.SpellPower()
 				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(dot.Spell.Unit.AttackTables[target.UnitIndex])
 			},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {

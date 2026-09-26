@@ -28,10 +28,12 @@ func (mage *Mage) registerArcaneExplosionSpell() {
 		CritMultiplier:   mage.SpellCritMultiplier(1, mage.bonusCritDamage),
 		ThreatMultiplier: 1 - 0.2*float64(mage.Talents.ArcaneSubtlety),
 
+		Direct: core.SpellEffect{Effect: 0, Min: 538, Max: 582, SP: 0.214},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			dmgFromSP := (1.5 / 3.5 / 2) * spell.SpellPower()
+			dmgFromSP := spell.Direct.SP * spell.SpellPower()
 			for _, aoeTarget := range sim.Encounter.TargetUnits {
-				baseDamage := sim.Roll(538, 582) + dmgFromSP
+				baseDamage := spell.Direct.Roll(sim) + dmgFromSP
 				baseDamage *= sim.Encounter.AOECapMultiplier()
 				spell.CalcAndDealDamage(sim, aoeTarget, baseDamage, spell.OutcomeMagicHitAndCrit)
 			}

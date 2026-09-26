@@ -34,8 +34,11 @@ func (mage *Mage) registerBlizzardSpell() {
 		CritMultiplier:   mage.SpellCritMultiplier(1, mage.bonusCritDamage+float64(mage.Talents.IceShards)/3),
 		DamageMultiplier: 1,
 		ThreatMultiplier: 1 - (0.1/3)*float64(mage.Talents.FrostChanneling),
+
+		Direct: core.SpellEffect{Effect: 0, Min: 426, Max: 426, SP: 0.1429},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			damage := 426 + (4.0/3.5/8)*spell.SpellPower()
+			damage := spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()
 			damage *= sim.Encounter.AOECapMultiplier()
 			for _, aoeTarget := range sim.Encounter.TargetUnits {
 				spell.CalcAndDealDamage(sim, aoeTarget, damage, spell.OutcomeMagicHitAndCrit)

@@ -8,7 +8,6 @@ import (
 )
 
 func (warlock *Warlock) registerShadowBoltSpell() {
-	spellCoeff := 0.857 * (1 + 0.04*float64(warlock.Talents.ShadowAndFlame))
 	ISBProcChance := 0.2 * float64(warlock.Talents.ImprovedShadowBolt)
 
 	var shadowMasteryAuras core.AuraArray
@@ -49,8 +48,13 @@ func (warlock *Warlock) registerShadowBoltSpell() {
 		CritMultiplier:   warlock.SpellCritMultiplier(1, float64(warlock.Talents.Ruin)/5),
 		ThreatMultiplier: 1 - 0.1*float64(warlock.Talents.DestructiveReach),
 
+		Direct: core.SpellEffect{Effect: 0, Min: 694, Max: 774, SP: 0.857},
+		Mods: []core.SpellMod{
+			{Op: core.SpellModBonusMultiplier, Pct: 4 * warlock.Talents.ShadowAndFlame},
+		},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := sim.Roll(694, 775) + spellCoeff*spell.SpellPower()
+			baseDamage := spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 			spell.WaitTravelTime(sim, func(sim *core.Simulation) {
 				spell.DealDamage(sim, result)

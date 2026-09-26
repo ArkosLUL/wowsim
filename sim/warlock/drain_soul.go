@@ -67,8 +67,10 @@ func (warlock *Warlock) registerDrainSoulSpell() {
 			// Pandemic's periodic-crit aura (58435) covers only Corruption and Unstable Affliction.
 			TicksCanCrit: false,
 
+			Tick: core.SpellEffect{Effect: 1, Min: 142, Max: 142, SP: 0.429},
+
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-				baseDmg := 142 + 0.429*dot.Spell.SpellPower()
+				baseDmg := dot.Tick.Roll(sim) + dot.Tick.SP*dot.Spell.SpellPower()
 				dot.SnapshotBaseDamage = baseDmg * calcSoulSiphonMult(target)
 				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(dot.Spell.Unit.AttackTables[target.UnitIndex])
 			},
@@ -93,7 +95,8 @@ func (warlock *Warlock) registerDrainSoulSpell() {
 				dot := spell.Dot(target)
 				return dot.CalcSnapshotDamage(sim, target, spell.OutcomeExpectedMagicAlwaysHit)
 			} else {
-				baseDmg := (142 + 0.429*spell.SpellPower()) * calcSoulSiphonMult(target)
+				tick := &spell.Dot(target).Tick
+				baseDmg := (tick.Average() + tick.SP*spell.SpellPower()) * calcSoulSiphonMult(target)
 				return spell.CalcPeriodicDamage(sim, target, baseDmg, spell.OutcomeExpectedMagicAlwaysHit)
 			}
 		},

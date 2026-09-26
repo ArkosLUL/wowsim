@@ -25,8 +25,10 @@ func (mage *Mage) registerIceLanceSpell() {
 		CritMultiplier:           mage.SpellCritMultiplier(1, mage.bonusCritDamage+float64(mage.Talents.IceShards)/3),
 		ThreatMultiplier:         1 - (0.1/3)*float64(mage.Talents.FrostChanneling),
 
+		Direct: core.SpellEffect{Effect: 0, Min: 223, Max: 257, SP: 0.1429},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := sim.Roll(224, 258) + (1.5/3.5/3.0)*spell.SpellPower()
+			baseDamage := spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 			spell.WaitTravelTime(sim, func(sim *core.Simulation) {
 				spell.DealDamage(sim, result)

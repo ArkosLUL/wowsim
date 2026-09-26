@@ -45,6 +45,8 @@ func (warlock *Warlock) registerImmolateSpell() {
 		CritMultiplier:   warlock.SpellCritMultiplier(1, float64(warlock.Talents.Ruin)/5),
 		ThreatMultiplier: 1 - 0.1*float64(warlock.Talents.DestructiveReach),
 
+		Direct: core.SpellEffect{Effect: 1, Min: 460, Max: 460, SP: 0.2},
+
 		Dot: core.DotConfig{
 			Aura: core.Aura{
 				Label: "Immolate",
@@ -65,8 +67,10 @@ func (warlock *Warlock) registerImmolateSpell() {
 			TickLength:    time.Second * 3,
 			TicksCanCrit:  true,
 
+			Tick: core.SpellEffect{Effect: 0, Min: 157, Max: 157, SP: 0.2},
+
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-				dot.SnapshotBaseDamage = 157 + 0.2*dot.Spell.SpellPower()
+				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + dot.Tick.SP*dot.Spell.SpellPower()
 				attackTable := dot.Spell.Unit.AttackTables[target.UnitIndex]
 				dot.SnapshotCritChance = dot.Spell.SpellCritChance(target)
 
@@ -80,7 +84,7 @@ func (warlock *Warlock) registerImmolateSpell() {
 		},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := 460 + 0.2*spell.SpellPower()
+			baseDamage := spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 			if result.Landed() {
 				spell.Dot(target).Apply(sim)
