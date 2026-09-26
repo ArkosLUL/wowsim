@@ -44,14 +44,17 @@ func (priest *Priest) registerShadowWordDeathSpell() {
 
 		BonusHitRating:  float64(priest.Talents.ShadowFocus) * 1 * core.SpellHitRatingPerHitChance,
 		BonusCritRating: 0 + core.TernaryFloat64(priest.HasSetBonus(ItemSetValorous, 4), 10, 0)*core.CritRatingPerCritChance, // might be 0.1?
-		DamageMultiplier: 1 +
-			0.02*float64(priest.Talents.Darkness) +
+		DamageMultiplier: spellModDamage(
+			0.02*float64(priest.Talents.Darkness),
 			0.01*float64(priest.Talents.TwinDisciplines),
+		),
 		CritMultiplier:   priest.SpellCritMultiplier(1, float64(priest.Talents.ShadowPower)/5),
 		ThreatMultiplier: 1 - 0.08*float64(priest.Talents.ShadowAffinity),
 
+		Direct: core.SpellEffect{Effect: 0, Min: 750, Max: 870, SP: 0.4286},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := sim.Roll(750, 870) + 0.429*spell.SpellPower()
+			baseDamage := spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 
 			if result.Landed() {
@@ -66,7 +69,7 @@ func (priest *Priest) registerShadowWordDeathSpell() {
 			spell.DealDamage(sim, result)
 		},
 		ExpectedInitialDamage: func(sim *core.Simulation, target *core.Unit, spell *core.Spell, _ bool) *core.SpellResult {
-			baseDamage := (750.0+870.0)/2 + 0.429*spell.SpellPower()
+			baseDamage := spell.Direct.Average() + spell.Direct.SP*spell.SpellPower()
 			return spell.CalcDamage(sim, target, baseDamage, spell.OutcomeExpectedMagicHitAndCrit)
 		},
 	})

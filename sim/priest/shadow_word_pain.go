@@ -37,10 +37,11 @@ func (priest *Priest) registerShadowWordPainSpell() {
 
 		BonusHitRating:  float64(priest.Talents.ShadowFocus) * 1 * core.SpellHitRatingPerHitChance,
 		BonusCritRating: float64(priest.Talents.MindMelt)*3*core.CritRatingPerCritChance + core.TernaryFloat64(priest.HasSetBonus(ItemSetCrimsonAcolyte, 2), 5, 0)*core.CritRatingPerCritChance,
-		DamageMultiplier: 1 +
-			float64(priest.Talents.Darkness)*0.02 +
-			float64(priest.Talents.TwinDisciplines)*0.01 +
-			float64(priest.Talents.ImprovedShadowWordPain)*0.03,
+		DamageMultiplier: spellModDamage(
+			0.02*float64(priest.Talents.Darkness),
+			0.01*float64(priest.Talents.TwinDisciplines),
+			0.03*float64(priest.Talents.ImprovedShadowWordPain),
+		),
 		CritMultiplier:   priest.SpellCritMultiplier(1, 1),
 		ThreatMultiplier: 1 - 0.08*float64(priest.Talents.ShadowAffinity),
 
@@ -60,9 +61,12 @@ func (priest *Priest) registerShadowWordPainSpell() {
 			NumberOfTicks: 6 +
 				core.TernaryInt32(priest.HasSetBonus(ItemSetAbsolution, 2), 1, 0),
 			TickLength: time.Second * 3,
+			// Shadowform (49868) grants CanPeriodicTickCrit to SW:P's dot.
+			TicksCanCrit: true,
+			Tick:         core.SpellEffect{Effect: 0, Min: 230, Max: 230, SP: 0.1833},
 
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-				dot.SnapshotBaseDamage = 1380/6 + 0.1833*dot.Spell.SpellPower()
+				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + dot.Tick.SP*dot.Spell.SpellPower()
 				if !isRollover {
 					dot.SnapshotCritChance = dot.Spell.SpellCritChance(target)
 					dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(dot.Spell.Unit.AttackTables[target.UnitIndex])
@@ -99,7 +103,8 @@ func (priest *Priest) registerShadowWordPainSpell() {
 					return dot.CalcSnapshotDamage(sim, target, spell.OutcomeExpectedMagicAlwaysHit)
 				}
 			} else {
-				baseDamage := 1380/6 + 0.1833*spell.SpellPower()
+				tick := spell.Dot(target).Tick
+				baseDamage := tick.Roll(sim) + tick.SP*spell.SpellPower()
 				if priest.Talents.Shadowform {
 					return spell.CalcPeriodicDamage(sim, target, baseDamage, spell.OutcomeExpectedMagicCrit)
 				} else {

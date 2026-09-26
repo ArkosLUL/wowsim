@@ -1204,6 +1204,69 @@ Roll details the tables above don't show:
     had that glyph, so the Clearcasting rewiring is a wash there and what is left is the Faerie Fire damage
     split and Omen's PPM.
 
+**Priest** (`TestDisc`, `TestHoly`, `TestShadow`, `TestSmite`, code; PAR-P7-PRI's "declare" and "checklist" stages)
+- Effect declarations (Smite, Holy Fire, Shadow Word: Pain, Mind Blast, Shadow Word: Death, Vampiric
+  Touch, Devouring Plague, Mind Flay's and Mind Sear's ticks, Greater Heal, Flash Heal, Prayer of
+  Healing, Circle of Healing, Binding Heal, Renew) and their number fixes are in
+  [effect-declarations.PLAN.md](effect-declarations.PLAN.md#par-p7-pri-as-built).
+- Darkness, Twin Disciplines and Improved Shadow Word: Pain are all `SPELLMOD_DAMAGE`/`SPELLMOD_DOT`
+  on the server (aura 108, miscValue 0/22; confirmed by classMask against each spell's family flags in
+  the spelldump), so they multiply (`Player::ApplySpellMod`), not add, as `sim/paladin`'s
+  `spellModDamage` already does. The sim added them on any spell more than one covered: Shadow Word:
+  Pain's dot (all three), Shadow Word: Death (Darkness + Twin Disciplines), Devouring Plague's dot and
+  Improved Devouring Plague's burst (Darkness + Twin Disciplines + Improved Devouring Plague's own
+  SPELLMOD_DOT + Conqueror's Sanctuary 2pc), and Mind Flay's and Mind Sear's ticks (Darkness + Twin
+  Disciplines). Mind Blast and Smite already combined their one talent bonus multiplicatively.
+- Mind Sear's tick loop (`sim/priest/mind_sear.go`) skipped the unit actually being channeled at
+  (`aoeTarget != target`), so in a single-target fight it dealt no tick damage at all, only splashing
+  onto other targets in a multi-target one. `Spell::SelectImplicitAreaTargets` has no such exception for
+  the caster's current target; the loop now ticks every target in the encounter. Doesn't move Shadow's
+  Average-Default row: Mind Sear isn't in the single-target default APL.
+- Shadowfiend (`spell_priest.cpp:96-170`, Pets): fixed three mismatches.
+  - Shadowcrawl's cast used a 6 s "GCD" as a stand-in throttle for its real cooldown. The server's
+    63619 has the ordinary 1.5 s GCD (category 133) plus its own 6 s `recoveryTimeMs`; both are now
+    modeled directly, and the two now-redundant `ServerConflictAllowance` entries for it are gone.
+    Behavior-preserving (Shadowcrawl still refreshes on the same 6 s cadence either way).
+  - Melee crit was a hand-tuned 8% ("with 3% crit debuff, crits around 9-12%"), a leftover guess. Every
+    non-player unit gets a flat 5% base (`Unit::GetUnitCriticalChance`), the same fix already made for
+    the warlock and hunter pets; also declared SpellCrit at 5% for consistency, though Shadowfiend deals
+    no spell damage today.
+  - `isGuardian` was false, so the sim resnapshot Shadowfiend's inherited AP/SP every time the priest's
+    stats changed during its 15 s life. `spell_pri_shadowfiend_scaling`'s `CalculateSPAmount`/
+    `CalculateAPAmount` never set `canBeRecalculated`, so the server computes them once at the summon and
+    never resyncs, like every other guardian summon (Water Elemental, Fire Elemental, Mirror Image,
+    Treant, Bloodworm, Gargoyle). Now `isGuardian: true`.
+  - Already correct, no change: Shadowfiend takes raid and party buffs through the generic P7-0d
+    mechanism (`applyPetBuffEffects` runs for every registered pet regardless of `isGuardian`); only
+    pre-pull individual buffs are stripped, correctly, since it isn't `enabledOnStart`.
+- `TicksCanCrit` declared for every priest dot and hot: true for Shadow Word: Pain, Devouring Plague and
+  Vampiric Touch (Shadowform's 49868 grants `SPELL_AURA_ABILITY_PERIODIC_CRIT`, aura 286, to exactly
+  these three by classMask), false for Holy Fire's dot (Holy school, outside Shadowform's classMask) and
+  Renew's hot (no periodic-crit aura touches healing in 3.3.5). Inert until PAR-P8 flips
+  `periodicCritsNeedDeclaration`.
+- Verified, no code needed: Mind Flay is binary=false on the server for both the channel (48156) and its
+  tick (58381), like every other priest damage spell, matching the sim's existing non-binary outcome
+  calls; mod-spell-tweaks has zero priest rows (`SpellTweaks_classes.cpp`, `spell_tweaks.conf.dist`, and
+  this doc's own Server customizations list all agree); the Shadow and Smite default APLs read no
+  `spell.cast_time`, so PAR-P7-MAG's ms-truncation of `spellCastTime` changes no priority order;
+  `spellaudit -area priest` has no manual-verdict rows left.
+- Left open: `spell_pri_shadow_word_death`'s script recasts Shadow Word: Death on the caster as
+  self-damage recoil (reduced by a Pain and Suffering percent) outside execute range; the sim has no
+  player-death or self-damage model to feed, so this has no DPS effect and is left for a defensive-modeling pass.
+  Devouring Plague's dot is also a periodic-leech effect (aura 53): it should heal the caster per tick, which
+  the sim doesn't. Prayer of Mending's heal (48113) uses effect type 142, unrecognized by
+  `dealsDamageOrHeals`, so it's outside this check (0.807 bonus vs. the sim's hand-coded 0.8057, likely fine).
+  Glyph of Inner Fire (55686) has a real effect-1 mod (+50%) on Inner Fire's own data; the sim's glyph only
+  doubles the armor half, not the spell-power half.
+- **Goldens** (`dock.sh delta` Average-Default against the wave base), Shadow and Smite bisected by
+  reverting one change at a time. Character stats hold; these suites carry no casts or weights.
+  - Shadow dps -0.143%, tps +0.331%: the SPELLMOD multiply fix +0.76 points (tps +0.78), Devouring
+    Plague's 0.18 -0.44 (tps -0.46), Shadowfiend's fixes -0.47, dps only. Mind Flay's tick doesn't move.
+  - Smite dps +2.339%, tps +2.214%: Holy Fire's dot +2.40 points (tps +2.29), the multiply fix on Shadow
+    Word: Pain and Devouring Plague +0.12, Devouring Plague's 0.18 -0.16. Smite's APL hides its Shadow
+    Word: Death and Mind Flay actions, so it never casts them.
+  - Holy hps +0.556%, mostly Empowered Renew, now multiplicative; Disc -0.001%, the roll maximums.
+
 **Items** (`docs/azerothcore-item-diff/data/summary.md`)
 - 1509 of 8043 sim items differ.
 - Classic raised Ulduar/emblem item levels, e.g. 226→232 on 329 items and 239→252 on 92.
@@ -1626,6 +1689,15 @@ values. Human warrior, level 80, maxed skills, Worn Shortsword (Sword Specializa
   ones the DK probes hit. **Fixed (wave I cross-review):** `check.go` expects no miss on an always-hit
   spell and one unresisted bucket on a binary one, so both read the same as the sim. Nothing disagreed
   with the sim.
+- Priest probes (`TestSimvalPriest`, an undead priest in front of the boss dummy, 300k rolls each): Mind
+  Blast (48127), Shadow Word: Pain (48125) and Mind Flay's tick (58381) all roll the magic table with
+  partial resists at the plain 1700 bp miss threshold. Shadow Word: Pain's own cast crits 0%:
+  `SpellDoneCritChance` returns 0 for a spell with no direct-damage effect, matching the sim's crit-free
+  `OutcomeMagicHit` application (only its ticks are declared crittable). A `.simval spelldump` of 49868,
+  48125, 48160, 48300, 58381 and 48156 confirms Shadowform carries aura 286 scoped to Shadow Word: Pain's,
+  Vampiric Touch's and Devouring Plague's own family flags, and that Mind Flay's effect 2 is aura 227
+  triggering 58381 with basePoints 195/dieSides 1. A real Mind Flay channel at 0 spell power dealt 196
+  a tick before partial resists. All match the sim.
 - A non-binary magic hit lands fully resisted about once in 300k rolls (seen twice in 900k):
   `Unit::CalcAbsorbResist` builds its eleven discrete resist probabilities as floats, and a roll in the
   rounding gap above their sum walks the loop to the last bucket (`Unit.cpp:2360-2382`). Worth ~2e-6 of

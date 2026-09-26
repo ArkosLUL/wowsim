@@ -9,7 +9,6 @@ import (
 
 func (priest *Priest) registerRenewSpell() {
 	actionID := core.ActionID{SpellID: 48068}
-	spellCoeff := (1.88 + .05*float64(priest.Talents.EmpoweredRenew)) / 5
 
 	if priest.Talents.EmpoweredRenew > 0 {
 		priest.EmpoweredRenew = priest.RegisterSpell(core.SpellConfig{
@@ -28,7 +27,8 @@ func (priest *Priest) registerRenewSpell() {
 			ThreatMultiplier: 1 - []float64{0, .07, .14, .20}[priest.Talents.SilentResolve],
 
 			ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-				baseHealing := 280 + spellCoeff*spell.HealingPower(target)
+				tick := priest.Renew.Hot(target).Tick
+				baseHealing := tick.Roll(sim) + tick.SP*spell.HealingPower(target)
 				spell.CalcAndDealHealing(sim, target, baseHealing, spell.OutcomeHealingCrit)
 			},
 		})
@@ -53,14 +53,21 @@ func (priest *Priest) registerRenewSpell() {
 		DamageMultiplier: priest.renewHealingMultiplier(),
 		ThreatMultiplier: 1 - []float64{0, .07, .14, .20}[priest.Talents.SilentResolve],
 
+		Mods: []core.SpellMod{
+			{Op: core.SpellModBonusMultiplier, Pct: 5 * int32(priest.Talents.EmpoweredRenew)},
+		},
+
 		Hot: core.DotConfig{
 			Aura: core.Aura{
 				Label: "Renew",
 			},
 			NumberOfTicks: priest.renewTicks(),
 			TickLength:    time.Second * 3,
+			// No periodic-crit aura covers Renew in 3.3.5; HoTs don't crit.
+			TicksCanCrit: false,
+			Tick:         core.SpellEffect{Effect: 0, Min: 280, Max: 280, SP: 0.376},
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
-				dot.SnapshotBaseDamage = 280 + spellCoeff*dot.Spell.HealingPower(target)
+				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + dot.Tick.SP*dot.Spell.HealingPower(target)
 				dot.SnapshotAttackerMultiplier = dot.Spell.CasterHealingMultiplier()
 			},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
