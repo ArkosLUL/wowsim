@@ -121,13 +121,25 @@ spell is only as right as its id.
   `Player::ApplySpellMod` does. `RegisterSpell` checks the level-80 base range, the coefficients and the
   weapon percent against the server's; school and missile speed sync like timing. A class spell with server
   damage but no declaration goes on its class's `serverdata_undeclared.go`, and `TestServerDataConflicts`
-  fails on a missing or stale entry.
+  fails on a missing or stale entry. Declaring:
+  - A pet's or guardian's spell takes its owner's spell mods where the class mask matches
+    (`Unit::GetSpellModOwner`).
+  - A physical strike's fixed bonus takes its hand's TOTAL_PCT, 0.5 in the off hand; other schools don't
+    (`Spell::EffectWeaponDmg`). The sim's helpers: `sim/{deathknight,rogue,warrior}/weapon_strikes.go`.
+  - Damage a script hands over (`CastCustomSpell`) is dealt exactly, with no roll.
+  - Below its MaxLevel, a spell's spell power part scales by (SpellLevel + 6) / level, at most 1
+    (`Unit::CalculateLevelPenalty`).
+  - A talent's effect mod is flat (aura 107) or a percent (108): read Spell.dbc, not the tooltip.
+  - The undeclared list misses damage a script deals behind a dummy effect (Execute, Death and Decay, Holy
+    Shock) and proc-damage and damage-shield auras (Holy Shield): declare those anyway.
 - **Wrapper ids** are the trap. The sim often deals damage under the id of a spell that, on the server,
   only triggers the real one (totems, Faerie Fire (Feral), Typhoon). The wrapper's
   flags are not the damage's, so those entries keep the sim's values until the class's P7 item moves
   the damage to the real id. When a suite moves for a spell you didn't touch, look here first.
-- Missiles travel at least 5 yards (`Spell::AddUnitTarget`), in whole ms. The sim waits out the travel only
-  where the closure calls `spell.WaitTravelTime`.
+- Missiles roll hit, crit and damage at launch (`Spell::DoAllEffectOnLaunchTarget`) and deal it on landing,
+  after at least 5 yards of travel (`Spell::AddUnitTarget`), in whole ms. The sim waits out the travel only
+  where the closure calls `spell.WaitTravelTime`, over `DistanceFromTarget`, which is 0 for a pet: its
+  missiles wait the 5 yd floor.
 
 The server only acts on its map update, 100 ms live (`ServerSettings.MapUpdateInterval`; 0 means exact,
 which is what unit tests want).

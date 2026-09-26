@@ -99,9 +99,10 @@ bugs, the importer's missing pets, ammo and consumables, and a batch hung on a h
 
 ## Current wave
 
-- Wave: I5, running. Base SHA `4a0f8d5c8`.
-- Workflow runId: `wf_d6757f45-58d`, args `waveI5-args.json` in `G:\DevStuff\GitHub\.wave-loop`. Transcript dir:
-  `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\wf_d6757f45-58d`.
+- Wave: J, not started. Wave I5 (base `4a0f8d5c8`) landed on `master`.
+- Base SHA: set at wave start.
+- Workflow runId: none. Wave I5 ran as `wf_d6757f45-58d` (args `waveI5-args.json`, results `waveI5-results.json`
+  in `G:\DevStuff\GitHub\.wave-loop`).
 
 ## BiS baseline
 
@@ -123,6 +124,7 @@ Reckoning that way), but J isn't DPS: see below.
 | I2 | 8842.8, +253 / +304 | 10686.4, +616 / +942 | 5064.5, +43 / +40 | 12956.7, +224 / +256 | -89694.0, +3349 / +3736 | -668.4, +750 / +799 |
 | I3 | 8842.8, +272 / +304 | 10686.4, +608 / +942 | 5064.5, +43 / +40 | 12962.2, +224 / +228 | -89694.0, +3349 / +3736 | -668.4, +750 / +799 |
 | I4 | 8842.8, +272 / +304 | 10686.4, +608 / +942 | 5064.5, +43 / +40 | 12962.2, +224 / +228 | -89694.0, +3349 / +3736 | -668.4, +750 / +799 |
+| I5 | 8860.8, +284 / +293 | 10728.5, +653 / +813 | 5064.6, +43 / +43 | 12963.5, +224 / +182 | -89267.2, +3186 / +3703 | -668.4, +750 / +799 |
 
 Quick / Normal. Ret P4 ran at Quick only in wave D, after the glyph fix; its wave C numbers
 (12821.9, +54 / +73) came from a seed that wore the glyph. The two tanks arrive with
@@ -151,7 +153,9 @@ had cut into for both tanks: their `J_preset` rose and their gains fell by as mu
 moved two Quick gains within earlier rows' range: Fury +272, Combat Rogue +608. Ret's `J_preset` and
 `dps_preset` (16147.1) rose 0.04% with PAR-P7-0f's +20.61 Spell Power, and its Normal gain fell from +256
 to +228, the path dependence H2 showed. In I4 nothing moved: the wave's one golden move, Frost mage, isn't
-in the suite.
+in the suite. In I5 Prot Pal's `dps_preset` fell 16% (215.6) against TestProtection's -1.1%, likely Holy
+Shield's proc (-15%) weighing more against a boss that keeps hitting (not traced). Combat Rogue's fell 0.2%
+(9927.0) with its goldens (-0.7%); its Normal gain fell to +813 and Ret's to +182, the path dependence again.
 
 ## Sim throughput
 
@@ -170,6 +174,7 @@ From G the benches run their suites' default players with rotations, at 1 and 10
 | I2 | 1.685 / 128.3 | 0.639 / 33.2 | 0.774 / 43.1 | 0.444 / 15.6 | 5.382 / 294.8 |
 | I3 | 1.101 / 74.8 | 0.553 / 27.9 | 0.757 / 41.4 | 0.386 / 12.2 | 5.355 / 250.0 |
 | I4 | 1.088 / 75.2 | 0.510 / 27.8 | 0.743 / 40.3 | 0.414 / 12.5 | 5.029 / 250.6 |
+| I5 | 1.059 / 78.6 | 0.508 / 28.5 | 0.727 / 45.7 | 0.488 / 18.7 | 5.463 / 263.4 |
 
 H2 ran with the live worldserver using half a core, which moved whole runs by up to 2×
 and cost a few percent here (Ret, which H2 barely touched, +4%). An interleaved A/B against the base
@@ -198,6 +203,13 @@ I3's row ran idle, with the worldserver, database and Chronicle stopped. Against
 I4's row ran idle (the worldserver stopped, the database up). Elemental is 7% over I3's at one iteration and
 2% at 100: PAR-DECL's cost, +2.5% / +3.5% in its A/B against the wave base, with no new code in the profile,
 so the cause is open. The other cases are within 3% at 100 iterations and 1-8% faster at one.
+
+I5's row ran idle (the worldserver, authserver and database stopped). At 100 iterations Elemental is 50%
+over I4's, Hunter 13%, the raid 5%, Rogue 5%, Ret 3%. An interleaved A/B of Elemental against `sim/shaman`
+at the wave base puts PAR-DECL-2's cost at +39% / +47%: a 100-iteration op allocates 139k objects, not
+34k (7.2 MB, not 1.2), from `WaitTravelTime`'s delayed action per missile and `NewResult` allocating
+while an earlier missile holds the spell's cached result (Lightning Bolt, Searing Totem). Clearing that
+cache in `Spell.reset` alone saves 1.6%. Hunter's +13% fits the same cause, not measured.
 
 E to F2 ran the old requests: one iteration, and no rotation for Ret, Hunter and Elemental.
 
@@ -290,6 +302,7 @@ crashed before F2, so its column starts there.
 | PAR-DECL-1 | merged | `26663ada7` | 7 goldens promoted in `8f4752244`: Frost mage +0.38% (Mirror Image takes the mage's Frostbolt talents), Destruction -0.54% (Conflagrate, Imp Firebolt, Chaos Bolt's travel) |
 | PAR-DECL-2 | merged | `facac0b37` | 7 goldens promoted in `b0c156289`: Survival +3.3% (Explosive Shot's 0.16 AP), Enhancement -2.9% (fire elemental), Elemental -1.5% (travel, Clearcasting kept for the next cast, fire elemental; Intellect weight 0.37 to 3.03); review fixed Savage Fury declared flat, not a percent |
 | PAR-DECL-3 | merged | `90a8ea16f` | 13 goldens promoted in `b15974648`: DK Frost +1.9% (off-hand Frost Strike's flat bonus unhalved, Obliterate's halved), Blood Tank -2.7% (Rune Strike), Assassination +1.6% (poisons), Protection Paladin -1.1% (Holy Shield); review fixed Death Coil and Unholy Blight dealing 1 over, and Death Coil rolling at landing |
+| wave I5 cross-review | | | no findings; Improved Earth Shield's percent mod on Earth Shield, which it couldn't confirm from source, checked in the live Spell.dbc |
 
 Later WIs are added as their wave starts.
 
