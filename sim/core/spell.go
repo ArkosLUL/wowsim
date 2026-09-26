@@ -142,7 +142,9 @@ type Spell struct {
 	initialThreatMultiplier         float64
 	// Note that bonus expertise and armor pen are static, so we don't bother resetting them.
 
-	resultCache SpellResult
+	resultCache  SpellResult
+	spareResults []*SpellResult // every spare NewResult made, see spareResult
+	freeResults  []*SpellResult // the spares not in use
 
 	dots   DotArray
 	aoeDot *Dot
@@ -428,6 +430,7 @@ func (spell *Spell) reset(_ *Simulation) {
 		clear(metrics)
 	}
 	spell.casts = 0
+	spell.resetResults()
 
 	// Reset dynamic effects.
 	spell.BonusHitRating = spell.initialBonusHitRating
@@ -565,7 +568,7 @@ func (spell *Spell) finalizeExpectedDamage(result *SpellResult) {
 		result.Damage *= AverageMagicPartialResistMultiplier
 		result.ResistanceMultiplier = AverageMagicPartialResistMultiplier
 	}
-	result.inUse = false
+	spell.DisposeResult(result)
 }
 func (spell *Spell) ExpectedInitialDamage(sim *Simulation, target *Unit) float64 {
 	result := spell.expectedInitialDamageInternal(sim, target, spell, false)

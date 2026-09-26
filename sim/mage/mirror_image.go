@@ -154,9 +154,7 @@ func (mi *MirrorImage) registerFrostboltSpell() {
 			//3x damage for 3 mirror images
 			baseDamage := (spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()) * numImages
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
-			spell.WaitTravelTime(sim, func(sim *core.Simulation) {
-				spell.DealDamage(sim, result)
-			})
+			spell.DealDamageAfterTravel(sim, result)
 		},
 	})
 }

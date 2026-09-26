@@ -59,9 +59,7 @@ func (shaman *Shaman) registerSearingTotemSpell() {
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 				baseDamage := dot.Tick.Roll(sim) + dot.Tick.SP*dot.Spell.SpellPower()
 				result := dot.Spell.CalcDamage(sim, target, baseDamage, dot.Spell.OutcomeMagicHitAndCrit)
-				dot.Spell.WaitTravelTime(sim, func(sim *core.Simulation) {
-					dot.Spell.DealDamage(sim, result)
-				})
+				dot.Spell.DealDamageAfterTravel(sim, result)
 			},
 		},
 

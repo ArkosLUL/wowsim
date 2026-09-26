@@ -201,9 +201,7 @@ func NewHunter(character *core.Character, options *proto.Player) *Hunter {
 			hunter.AmmoDamageBonus +
 			spell.BonusWeaponDamage()
 		result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeRangedHitAndCrit)
-		spell.WaitTravelTime(sim, func(sim *core.Simulation) {
-			spell.DealDamage(sim, result)
-		})
+		spell.DealDamageAfterTravel(sim, result)
 	}
 
 	hunter.pet = hunter.NewHunterPet()

@@ -165,6 +165,17 @@ the A/B shows their closures cost enough. Profile Elemental at one iteration too
 - Owns: `sim/core/**` except `sim/core/serverdata/`; the `WaitTravelTime` call lines in `sim/**`, which may
   sit in PAR-DECL-4's files (settled at merge).
 
+**As built** ([INVESTIGATION](sim-performance.INVESTIGATION.md#perf-missile-wave-i6): the profile, each fix, why no
+result moves, the numbers, what's left):
+- `WaitTravelTime` queues a pooled landing (`Simulation.startLanding`, `sim/core/sim.go`), and
+  `Spell.DealDamageAfterTravel` does it without a closure for the 20 call sites whose landing only deals the result.
+  `NewResult` hands out per-spell spares from a free list, `DisposeResult` returns them, and `Spell.reset` frees the
+  cache and every spare (`sim/core/spell_result.go`): a disposed result is only safe to read until its spell's next
+  `NewResult`.
+- `BenchmarkSimulate` at 100 iterations, loaded machine: Elemental -13% (allocations -59%), Hunter -5% (-38%), the
+  raid flat on the wall (-40%) but -2.4% at `-test.cpu 1`. Elemental still runs 29% over I4, mostly the extra
+  queued actions and rotation passes I5 brought.
+
 ## Order
 
 The user put the pass before wave J, whose BIS-e2e-perf times the optimizer with PERF-TOOLS' harness

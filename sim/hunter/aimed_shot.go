@@ -55,9 +55,7 @@ func (hunter *Hunter) registerAimedShotSpell(timer *core.Timer) {
 				hunter.NormalizedAmmoDamageBonus +
 				spell.BonusWeaponDamage()) * spell.Direct.WeaponPct
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeRangedHitAndCrit)
-			spell.WaitTravelTime(sim, func(sim *core.Simulation) {
-				spell.DealDamage(sim, result)
-			})
+			spell.DealDamageAfterTravel(sim, result)
 		},
 	})
 }

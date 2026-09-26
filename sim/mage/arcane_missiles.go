@@ -36,9 +36,7 @@ func (mage *Mage) registerArcaneMissilesSpell() {
 			damage := spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()
 			result := spell.CalcDamage(sim, target, damage, spell.OutcomeMagicHitAndCrit)
 
-			spell.WaitTravelTime(sim, func(sim *core.Simulation) {
-				spell.DealDamage(sim, result)
-			})
+			spell.DealDamageAfterTravel(sim, result)
 		},
 	})
 

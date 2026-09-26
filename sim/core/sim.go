@@ -35,6 +35,8 @@ type Simulation struct {
 	pendingActions []pendingEntry   // sorted, see AddPendingAction
 	pendingSlots   []*PendingAction // the actions queued this iteration, indexed by pendingEntry.slot
 	advancingSlot  int32            // the popped action's slot while Step advances time to it, else the sentinel's (0)
+	landings       []*landingAction // every missile landing this sim made, see startLanding
+	freeLandings   []*landingAction // the ones not queued
 	CurrentTime    time.Duration    // duration that has elapsed in the sim since starting
 	Duration       time.Duration    // Duration of current iteration
 	NeedsInput     bool             // Sim is in interactive mode and needs input
@@ -655,6 +657,47 @@ func (sim *Simulation) resetPendingActions() {
 	sim.pendingSlots = append(sim.pendingSlots[:0], sentinelPendingAction)
 	sim.advancingSlot = 0
 	sim.pendingActions = append(sim.pendingActions[:0], pendingEntry{at: sentinelPendingAction.NextActionAt, prio: sentinelPendingAction.Priority})
+
+	for _, la := range sim.landings {
+		la.onLand, la.spell, la.result = nil, nil, nil
+	}
+	sim.freeLandings = append(sim.freeLandings[:0], sim.landings...)
+}
+
+// A missile's landing: a PendingAction the sim reuses. Only the pool and the queue ever point at one,
+// so it's free once it runs, and every one is free when an iteration starts.
+type landingAction struct {
+	PendingAction
+	onLand func(*Simulation) // or, when nil, spell deals result
+	spell  *Spell
+	result *SpellResult
+}
+
+// startLanding queues the landing at the given time, as StartDelayedAction would, without allocating.
+func (sim *Simulation) startLanding(at time.Duration, onLand func(*Simulation), spell *Spell, result *SpellResult) {
+	var la *landingAction
+	if n := len(sim.freeLandings); n > 0 {
+		la = sim.freeLandings[n-1]
+		sim.freeLandings = sim.freeLandings[:n-1]
+	} else {
+		la = &landingAction{}
+		la.OnAction = la.land
+		sim.landings = append(sim.landings, la)
+	}
+	la.NextActionAt = at
+	la.onLand, la.spell, la.result = onLand, spell, result
+	sim.AddPendingAction(&la.PendingAction)
+}
+
+func (la *landingAction) land(sim *Simulation) {
+	onLand, spell, result := la.onLand, la.spell, la.result
+	la.onLand, la.spell, la.result = nil, nil, nil
+	sim.freeLandings = append(sim.freeLandings, la)
+	if onLand != nil {
+		onLand(sim)
+	} else {
+		spell.DealDamage(sim, result)
+	}
 }
 
 // Sorted so the next action is last: NextActionAt descending, then Priority ascending, sentinel at 0.

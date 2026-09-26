@@ -34,9 +34,7 @@ func (warrior *Warrior) RegisterHeroicThrow() {
 			// the damage and crit are worked out at the launch, and land with the missile
 			baseDamage := spell.Direct.Roll(sim) + spell.Direct.AP*spell.MeleeAttackPower()
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialNoBlockDodgeParry)
-			spell.WaitTravelTime(sim, func(sim *core.Simulation) {
-				spell.DealDamage(sim, result)
-			})
+			spell.DealDamageAfterTravel(sim, result)
 		},
 	})
 }

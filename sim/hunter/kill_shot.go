@@ -51,9 +51,7 @@ func (hunter *Hunter) registerKillShotSpell() {
 				spell.BonusWeaponDamage()) * spell.Direct.WeaponPct
 			baseDamage += spell.Direct.AP * spell.RangedAttackPower(target)
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeRangedHitAndCrit)
-			spell.WaitTravelTime(sim, func(sim *core.Simulation) {
-				spell.DealDamage(sim, result)
-			})
+			spell.DealDamageAfterTravel(sim, result)
 		},
 	})
 }
