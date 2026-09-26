@@ -114,6 +114,7 @@ func main() {
 		// after ItemOverrides: the live DB owns every field ApplyTo writes (ADR 0002), so overrides of
 		// those only count in -gen=db. Before the filters, so they judge server ilvls and qualities.
 		applyServerData(db, server)
+		addMissingServerItems(db, server)
 	}
 	ApplyGlobalFilters(db)
 	AttachFactionInformation(db, factionRestrictions)

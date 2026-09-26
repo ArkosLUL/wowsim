@@ -158,6 +158,27 @@ func TestTopLevelIDListFollowsItsUses(t *testing.T) {
 	}
 }
 
+const actionIDTagSrc = `package tbc
+
+func init() {
+	core.NewEnchantEffect(2673, func(agent core.Agent) {
+		mhAura := character.NewTemporaryStatsAura("Lightning Speed MH", core.ActionID{SpellID: 28093, Tag: 1}, stats.Stats{stats.Agility: 120}, time.Second*15)
+		ohAura := character.NewTemporaryStatsAura("Lightning Speed OH", core.ActionID{SpellID: 28093, Tag: 2}, stats.Stats{stats.Agility: 120}, time.Second*15)
+	})
+}
+`
+
+// Tag disambiguates MH/OH auras, not a server value: numbers() must skip it inside ActionID{}.
+func TestNumbersExcludeActionIDTag(t *testing.T) {
+	idx := newGoSourceIndex()
+	if err := idx.addFile("sim/common/tbc/enchant_effects.go", actionIDTagSrc); err != nil {
+		t.Fatal(err)
+	}
+	if got := numbersAt(idx.findID(28093)); !slices.Equal(got, []float64{28093}) {
+		t.Errorf("numbers = %v, want [28093] (Tag values 1 and 2 excluded)", got)
+	}
+}
+
 func TestSetUsages(t *testing.T) {
 	idx := testIndex(t)
 	locs := idx.findSetUsages("Dark Coven's Regalia")

@@ -108,6 +108,21 @@ const (
 
 	durationFieldID       = 0
 	durationFieldDuration = 1
+
+	ssdFieldID       = 0
+	ssdFieldStatMod  = 1
+	ssdFieldModifier = 11
+	ssdFieldMaxLevel = 21
+
+	ssvFieldID             = 0
+	ssvFieldLevel          = 1
+	ssvFieldSSDMultiplier  = 2
+	ssvFieldArmorMod       = 6
+	ssvFieldDPSMod         = 10
+	ssvFieldSpellPower     = 16
+	ssvFieldSSDMultiplier2 = 17
+	ssvFieldSSDMultiplier3 = 18
+	ssvFieldArmorMod2      = 19
 )
 
 // SpellEntry holds the Spell.dbc columns this package reads. ApplySpellDBCOverrides can swap in a
@@ -168,17 +183,125 @@ type GemPropertiesEntry struct {
 	Color     int32
 }
 
+// ScalingStatDistributionEntry is a heirloom's per-slot stat spread (ScalingStatDistribution.dbc):
+// StatMod[i] is the ItemModType (or -1, unused) that Modifier[i] scales, once ScalingStatValuesEntry
+// applies its own per-item-type multiplier.
+type ScalingStatDistributionEntry struct {
+	ID       int32
+	StatMod  [10]int32
+	Modifier [10]int32
+	MaxLevel int32
+}
+
+// ScalingStatValuesEntry is one character level's row of ScalingStatValues.dbc. LookupEntry indexes
+// this table by Level, not ID.
+type ScalingStatValuesEntry struct {
+	ID                int32
+	Level             int32
+	SSDMultiplierCols [4]int32
+	ArmorModCols      [4]int32
+	DPSModCols        [6]int32
+	SpellPower        int32
+	SSDMultiplier2    int32
+	SSDMultiplier3    int32
+	ArmorMod2Cols     [5]int32
+}
+
+// SSDMultiplier is ScalingStatValuesEntry::getssdMultiplier (DBCStructure.h): the item's
+// ScalingStatValue mask picks which multiplier column scales its ScalingStatDistribution.
+func (v *ScalingStatValuesEntry) SSDMultiplier(mask uint32) int32 {
+	switch {
+	case mask&0x1 != 0:
+		return v.SSDMultiplierCols[0] // shoulder
+	case mask&0x2 != 0:
+		return v.SSDMultiplierCols[1] // trinket
+	case mask&0x4 != 0:
+		return v.SSDMultiplierCols[2] // 1H weapon
+	case mask&0x8 != 0:
+		return v.SSDMultiplier2
+	case mask&0x10 != 0:
+		return v.SSDMultiplierCols[3] // ranged
+	case mask&0x40000 != 0:
+		return v.SSDMultiplier3
+	}
+	return 0
+}
+
+// ArmorMod is ScalingStatValuesEntry::getArmorMod.
+func (v *ScalingStatValuesEntry) ArmorMod(mask uint32) int32 {
+	switch {
+	case mask&0x20 != 0:
+		return v.ArmorModCols[0] // cloth shoulder
+	case mask&0x40 != 0:
+		return v.ArmorModCols[1] // leather shoulder
+	case mask&0x80 != 0:
+		return v.ArmorModCols[2] // mail shoulder
+	case mask&0x100 != 0:
+		return v.ArmorModCols[3] // plate shoulder
+	case mask&0x80000 != 0:
+		return v.ArmorMod2Cols[0] // cloak
+	case mask&0x100000 != 0:
+		return v.ArmorMod2Cols[1] // cloth
+	case mask&0x200000 != 0:
+		return v.ArmorMod2Cols[2] // leather
+	case mask&0x400000 != 0:
+		return v.ArmorMod2Cols[3] // mail
+	case mask&0x800000 != 0:
+		return v.ArmorMod2Cols[4] // plate
+	}
+	return 0
+}
+
+// DPSMod is ScalingStatValuesEntry::getDPSMod: the weapon dps used to derive min/max damage in
+// Player::_ApplyWeaponDamage.
+func (v *ScalingStatValuesEntry) DPSMod(mask uint32) int32 {
+	switch {
+	case mask&0x200 != 0:
+		return v.DPSModCols[0] // 1H weapon
+	case mask&0x400 != 0:
+		return v.DPSModCols[1] // 2H weapon
+	case mask&0x800 != 0:
+		return v.DPSModCols[2] // caster 1H
+	case mask&0x1000 != 0:
+		return v.DPSModCols[3] // caster 2H
+	case mask&0x2000 != 0:
+		return v.DPSModCols[4] // ranged
+	case mask&0x4000 != 0:
+		return v.DPSModCols[5] // wand
+	}
+	return 0
+}
+
+// IsTwoHand is ScalingStatValuesEntry::IsTwoHand: it narrows _ApplyWeaponDamage's min/max spread.
+func (v *ScalingStatValuesEntry) IsTwoHand(mask uint32) bool {
+	return mask&0x400 != 0 || mask&0x1000 != 0
+}
+
+// SpellBonus is ScalingStatValuesEntry::getSpellBonus: a flat spell power any masked item type gets,
+// independent of its ScalingStatDistribution stats.
+func (v *ScalingStatValuesEntry) SpellBonus(mask uint32) int32 {
+	if mask&0x8000 != 0 {
+		return v.SpellPower
+	}
+	return 0
+}
+
 // DBC holds the client tables needed to interpret item_template rows.
 type DBC struct {
-	Spells         map[int32]*SpellEntry
-	SpellDurations map[int32]int32 // duration index -> milliseconds
-	Enchantments   map[int32]*SpellItemEnchantmentEntry
-	ItemSets       map[int32]*ItemSetEntry
-	GemProperties  map[int32]*GemPropertiesEntry
+	Spells                   map[int32]*SpellEntry
+	SpellDurations           map[int32]int32 // duration index -> milliseconds
+	Enchantments             map[int32]*SpellItemEnchantmentEntry
+	ItemSets                 map[int32]*ItemSetEntry
+	GemProperties            map[int32]*GemPropertiesEntry
+	ScalingStatDistributions map[int32]*ScalingStatDistributionEntry
+	ScalingStatValues        map[int32]*ScalingStatValuesEntry // keyed by character level
 }
 
 // DBCFileNames are the files LoadDBC reads.
-var DBCFileNames = []string{"Spell.dbc", "SpellDuration.dbc", "SpellItemEnchantment.dbc", "ItemSet.dbc", "GemProperties.dbc"}
+var DBCFileNames = []string{
+	"Spell.dbc", "SpellDuration.dbc", "SpellItemEnchantment.dbc", "ItemSet.dbc", "GemProperties.dbc",
+	"ScalingStatDistribution.dbc", "ScalingStatValues.dbc",
+}
 
 // CopyDBCFromContainer copies the needed DBCs out of a running worldserver container, since the
 // client data lives in a Docker volume the host can't read directly.
@@ -230,11 +353,13 @@ func LoadDBC(dir string) (*DBC, error) {
 // dbcFromFiles reads DBCFileNames out of files, which can hold more.
 func dbcFromFiles(files map[string]*DBCFile) *DBC {
 	return &DBC{
-		Spells:         readSpells(files["Spell.dbc"]),
-		SpellDurations: readSpellDurations(files["SpellDuration.dbc"]),
-		Enchantments:   readEnchantments(files["SpellItemEnchantment.dbc"]),
-		ItemSets:       readItemSets(files["ItemSet.dbc"]),
-		GemProperties:  readGemProperties(files["GemProperties.dbc"]),
+		Spells:                   readSpells(files["Spell.dbc"]),
+		SpellDurations:           readSpellDurations(files["SpellDuration.dbc"]),
+		Enchantments:             readEnchantments(files["SpellItemEnchantment.dbc"]),
+		ItemSets:                 readItemSets(files["ItemSet.dbc"]),
+		GemProperties:            readGemProperties(files["GemProperties.dbc"]),
+		ScalingStatDistributions: readScalingStatDistributions(files["ScalingStatDistribution.dbc"]),
+		ScalingStatValues:        readScalingStatValues(files["ScalingStatValues.dbc"]),
 	}
 }
 
@@ -325,6 +450,49 @@ func readGemProperties(f *DBCFile) map[int32]*GemPropertiesEntry {
 		gems[gem.ID] = gem
 	}
 	return gems
+}
+
+func readScalingStatDistributions(f *DBCFile) map[int32]*ScalingStatDistributionEntry {
+	entries := make(map[int32]*ScalingStatDistributionEntry, f.RecordCount)
+	for row := 0; row < f.RecordCount; row++ {
+		entry := &ScalingStatDistributionEntry{
+			ID:       f.Int32(row, ssdFieldID),
+			MaxLevel: f.Int32(row, ssdFieldMaxLevel),
+		}
+		for i := 0; i < 10; i++ {
+			entry.StatMod[i] = f.Int32(row, ssdFieldStatMod+i)
+			entry.Modifier[i] = f.Int32(row, ssdFieldModifier+i)
+		}
+		entries[entry.ID] = entry
+	}
+	return entries
+}
+
+// readScalingStatValues keys the table by Level: Player::_ApplyItemBonuses looks it up by the
+// character's (capped) level, not by row ID.
+func readScalingStatValues(f *DBCFile) map[int32]*ScalingStatValuesEntry {
+	entries := make(map[int32]*ScalingStatValuesEntry, f.RecordCount)
+	for row := 0; row < f.RecordCount; row++ {
+		entry := &ScalingStatValuesEntry{
+			ID:             f.Int32(row, ssvFieldID),
+			Level:          f.Int32(row, ssvFieldLevel),
+			SpellPower:     f.Int32(row, ssvFieldSpellPower),
+			SSDMultiplier2: f.Int32(row, ssvFieldSSDMultiplier2),
+			SSDMultiplier3: f.Int32(row, ssvFieldSSDMultiplier3),
+		}
+		for i := 0; i < 4; i++ {
+			entry.SSDMultiplierCols[i] = f.Int32(row, ssvFieldSSDMultiplier+i)
+			entry.ArmorModCols[i] = f.Int32(row, ssvFieldArmorMod+i)
+		}
+		for i := 0; i < 6; i++ {
+			entry.DPSModCols[i] = f.Int32(row, ssvFieldDPSMod+i)
+		}
+		for i := 0; i < 5; i++ {
+			entry.ArmorMod2Cols[i] = f.Int32(row, ssvFieldArmorMod2+i)
+		}
+		entries[entry.Level] = entry
+	}
+	return entries
 }
 
 // SpellDurationSeconds returns 0 for spells without a duration or with an unknown index.

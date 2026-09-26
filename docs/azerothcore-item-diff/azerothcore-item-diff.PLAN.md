@@ -163,14 +163,14 @@ the [wave loop](../wave-loop/wave-loop.PLAN.md#wave-registry), under the
 **Decisions (settled with the user):**
 - The 202 unobtainable items stay in `db.json`. The BiS server catalog excludes them.
 - AC-1 adds no `UIItem` fields: limits and faction live in the catalog, and parity P6-1 adds `server_stats`.
-- Heirlooms keep their Wowhead values; AC-3 is optional.
+- Heirlooms keep their Wowhead values, until AC-3 gave them server-computed ones.
 - DBCs come from the live container.
 
 | Item (wave) | Scope | Owns | Goldens | Needs |
 |---|---|---|---|---|
 | AC-1 (A, done) | A `gen_db -gen=azerothcore` pass (see below). Freezes the package's exported API for BIS-catalog | `tools/database/gen_db/*`, `tools/database/azerothcore/{convert,mysql,dbc}.go`, `tools/database/{database,overrides}.go`, the makefile `items` target | none; 37/37 unchanged, no DB regeneration | – |
 | AC-2 (B, done) | Regenerate `assets/database/{db,leftover_db}.{json,bin}` from the live DBCs (`/dbc` isn't the live copy; recipe in the gen_db README). Re-run acdiff: `items_diff.csv` should hold 97 rows, all unobtainable, `gems_diff` none and `effects_diff` 861 (+6 form-only feral AP spells). Re-check `bulksim_test.go`'s reforge test (45271, 45620, 46350). Delete `.github/workflows/update_items.yml` (a GitHub runner can't reach the live DB) and fix the README's `make items` line. acdiff cleanups: the `-dsn` default (127.0.0.1 doesn't reach the DB from dock.sh), the README's image name, dead `isUnrestrictedRelic` | `assets/database/*`, `docs/azerothcore-item-diff/data/*`, `tools/database/acdiff/*`, `.github/workflows/update_items.yml`, `README.md` (that line) | 34 of 37: priest healing moves on HPS; the other 3 healer suites record nothing item data can move | AC-1 |
-| AC-3 (J) | Heirlooms from `ScalingStatDistribution`/`ScalingStatValues`; the 4 server items the sim lacks. acdiff's effects diff matched Mongoose's PPM (server 1) to a stray `1` in the Go code, so `effects_diff.csv` has no Mongoose row: make it match the PPM literal. Shoulder enchant 3776 (+45 AP, +15 crit rating), which playerbots wear, is missing from the sim's enchants; `rrsim` adds its live-DBC stats with a warning until then | `tools/database/azerothcore/{dbc,convert}.go`, `overrides.go`, `tools/database/acdiff/*` | none | AC-1 |
+| AC-3 (J, done) | Heirlooms from `ScalingStatDistribution`/`ScalingStatValues`; the 4 server items the sim lacks. acdiff's effects diff matched Mongoose's PPM (server 1) to a stray `1` in the Go code, so `effects_diff.csv` has no Mongoose row: make it match the PPM literal. Shoulder enchant 3776 (+45 AP, +15 crit rating), which playerbots wear, is missing from the sim's enchants; `rrsim` adds its live-DBC stats with a warning until then | `tools/database/azerothcore/{dbc,convert}.go`, `overrides.go`, `tools/database/acdiff/*` | none | AC-1 |
 
 **AC-1 in detail:**
 - **What it overwrites,** from `azerothcore.ConvertItem`: ilvl, quality, stats, sockets, socket bonus,
@@ -181,3 +181,20 @@ the [wave loop](../wave-loop/wave-loop.PLAN.md#wave-registry), under the
   - set-name aliases (35 TBC arena sets, Kirin Tor Garb)
   - feral AP on the 438 pre-3.0 items
   - 33633 isn't a gem on the server
+
+**AC-3 as built:**
+- **Heirlooms** compute the same way `Player::_ApplyItemBonuses`/`_ApplyWeaponDamage` (Player.cpp) do:
+  `ScalingStatDistribution`'s per-slot `Modifier` scaled by the `ScalingStatValues` row for level 80, picked
+  out by the item's `ScalingStatValue` mask (`computeHeirloomStats`, `tools/database/azerothcore/convert.go`;
+  the DBC reader is in `dbc.go`). `ScalingStatValue` 0 skips scaling entirely, same as the server: 38691
+  Ancestral Claymore has it, so it keeps its Wowhead value like any other item nothing awards. `-gen=azerothcore`
+  now overwrites heirlooms like any other obtainable item.
+- **The 4 server items** are in `db.json`, built from `azerothcore.ConvertItem` with a hand-picked
+  `ItemType`/`ArmorType`/`WeaponType`/`HandType` (`database.MissingServerItems`, `overrides.go`;
+  `addMissingServerItems`, `gen_db/azerothcore.go`). 45994/45995/49227 are random-suffix items, so only
+  their base (pre-suffix) stats are modeled.
+- **Mongoose's ppm** check no longer walks into a `core.ActionID{..., Tag: n}`'s `Tag` field, which isn't a
+  server value; it now cites the real `enchant_procs_auto_gen.go:31` literal.
+- **Enchant 3776** "Inscription of the Frostblade" is in `EnchantOverrides`, off the live DBC.
+- **acdiff/re-run:** `docs/azerothcore-item-diff/azerothcore-item-diff.INVESTIGATION.md#re-run-after-ac-3`.
+  `accatalog`'s catalog is unchanged: none of the 4 new items resolve into its obtainable tiers.

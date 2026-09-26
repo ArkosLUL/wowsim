@@ -49,6 +49,7 @@ type ItemRow struct {
 	StatValues [10]int32
 
 	ScalingStatDistribution int32
+	ScalingStatValue        int32
 	DmgMin                  float64
 	DmgMax                  float64
 	Delay                   int32 // ms
@@ -85,7 +86,7 @@ func LoadItems(db *sql.DB) (map[int32]*ItemRow, error) {
 	for i := 1; i <= 10; i++ {
 		columns = append(columns, fmt.Sprintf("stat_type%d", i), fmt.Sprintf("stat_value%d", i))
 	}
-	columns = append(columns, "ScalingStatDistribution", "dmg_min1", "dmg_max1", "delay",
+	columns = append(columns, "ScalingStatDistribution", "ScalingStatValue", "dmg_min1", "dmg_max1", "delay",
 		"armor", "ArmorDamageModifier", "holy_res", "fire_res", "nature_res", "frost_res", "shadow_res", "arcane_res", "block")
 	for i := 1; i <= 5; i++ {
 		columns = append(columns, fmt.Sprintf("spellid_%d", i), fmt.Sprintf("spelltrigger_%d", i), fmt.Sprintf("spellppmRate_%d", i),
@@ -108,7 +109,7 @@ func LoadItems(db *sql.DB) (map[int32]*ItemRow, error) {
 		for i := 0; i < 10; i++ {
 			dest = append(dest, &item.StatTypes[i], &item.StatValues[i])
 		}
-		dest = append(dest, &item.ScalingStatDistribution, &item.DmgMin, &item.DmgMax, &item.Delay,
+		dest = append(dest, &item.ScalingStatDistribution, &item.ScalingStatValue, &item.DmgMin, &item.DmgMax, &item.Delay,
 			&item.Armor, &item.ArmorDamageModifier, &item.HolyRes, &item.FireRes, &item.NatureRes, &item.FrostRes,
 			&item.ShadowRes, &item.ArcaneRes, &item.Block)
 		for i := 0; i < 5; i++ {

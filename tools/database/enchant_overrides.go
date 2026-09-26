@@ -46,6 +46,7 @@ var EnchantOverrides = []*proto.UIEnchant{
 	{EffectId: 3836, SpellId: 61118, Name: "Master's Inscription of the Crag", Quality: proto.ItemQuality_ItemQualityCommon, Stats: stats.Stats{stats.SpellPower: 70, stats.MP5: 8}.ToFloatArray(), Type: proto.ItemType_ItemTypeShoulder, RequiredProfession: proto.Profession_Inscription},
 	{EffectId: 3835, SpellId: 61117, Name: "Master's Inscription of the Axe", Quality: proto.ItemQuality_ItemQualityCommon, Stats: stats.Stats{stats.AttackPower: 120, stats.RangedAttackPower: 120, stats.MeleeCrit: 15, stats.SpellCrit: 15}.ToFloatArray(), Type: proto.ItemType_ItemTypeShoulder, RequiredProfession: proto.Profession_Inscription},
 	{EffectId: 3837, SpellId: 61119, Name: "Master's Inscription of the Pinnacle", Quality: proto.ItemQuality_ItemQualityCommon, Stats: stats.Stats{stats.Dodge: 60, stats.Defense: 15}.ToFloatArray(), Type: proto.ItemType_ItemTypeShoulder, RequiredProfession: proto.Profession_Inscription},
+	{EffectId: 3776, SpellId: 58128, Name: "Inscription of the Frostblade", Quality: proto.ItemQuality_ItemQualityEpic, Stats: stats.Stats{stats.AttackPower: 45, stats.RangedAttackPower: 45, stats.MeleeCrit: 15, stats.SpellCrit: 15}.ToFloatArray(), Type: proto.ItemType_ItemTypeShoulder},
 
 	// Back
 	{EffectId: 1262, ItemId: 37330, SpellId: 44596, Name: "Superior Arcane Resistance", Quality: proto.ItemQuality_ItemQualityUncommon, Stats: stats.Stats{stats.ArcaneResistance: 20}.ToFloatArray(), Type: proto.ItemType_ItemTypeBack},

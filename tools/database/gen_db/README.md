@@ -14,7 +14,11 @@ quality, stats, sockets, socket bonus, weapon damage and speed, heroic, class al
 - Runs after `ItemOverrides`, so overrides of those fields only count in `-gen=db`; phases still come from
   them. Runs before the filters, so the `db`/`leftover_db` split uses server ilvls and qualities.
 - Skipped, keeping Wowhead data: items missing on the server, items nothing awards there (placeholder rows,
-  Classic-only sources), heirlooms, random-enchant items.
+  Classic-only sources), random-enchant items, and heirlooms with no matching ScalingStatDistribution/Values
+  DBC row. Every other heirloom's stats come from those DBCs, computed the way the server does
+  (`computeHeirloomStats`).
+- Also adds obtainable server items Wowhead never scraped (`database.MissingServerItems`), built straight from
+  `item_template` and the DBCs.
 - Drops gems whose id is a non-gem item on the server, e.g. 33633 Forceful Earthstorm Diamond.
 
 **Conversion choices** (`tools/database/azerothcore/convert.go`):
@@ -32,7 +36,7 @@ quality, stats, sockets, socket bonus, weapon damage and speed, heroic, class al
 
 ```sh
 dir=<host dir>
-for f in Spell SpellDuration SpellItemEnchantment ItemSet GemProperties; do
+for f in Spell SpellDuration SpellItemEnchantment ItemSet GemProperties ScalingStatDistribution ScalingStatValues; do
   MSYS_NO_PATHCONV=1 docker cp ac-worldserver:/azerothcore/env/dist/data/dbc/$f.dbc "$dir/"
 done
 DBC_DIR="$dir" tools/acore/dock.sh exec make items AC_DBC_DIR=/dbc

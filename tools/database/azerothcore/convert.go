@@ -44,15 +44,29 @@ func ConvertItem(row *ItemRow, dbc *DBC) *ConvertedItem {
 	converted := &ConvertedItem{}
 
 	// ItemTemplate::ItemStat, compacted the way ObjectMgr::LoadItemTemplates fills it: zero values
-	// dropped, so the length is StatsCount. mod-reforging reads these.
+	// dropped, so the length is StatsCount. mod-reforging reads these. Player::_ApplyItemBonuses
+	// ignores these columns entirely once ScalingStatDistribution is set, so heirlooms skip them.
 	var serverStats []*proto.ItemStat
-	for i := 0; i < 10; i++ {
-		if row.StatValues[i] == 0 {
-			continue
-		}
-		serverStats = append(serverStats, &proto.ItemStat{StatType: row.StatTypes[i], Value: row.StatValues[i]})
-		if !AddItemMod(&stats, row.StatTypes[i], row.StatValues[i]) {
-			converted.UnmappedStatTypes = append(converted.UnmappedStatTypes, row.StatTypes[i])
+	var heirloom heirloomItemStats
+	var isHeirloom bool
+	// Player::_ApplyItemBonuses only builds a ScalingStatValuesEntry, and so only scales at all, when
+	// ScalingStatValue is set too; a ScalingStatDistribution with no ScalingStatValue falls back to
+	// this item's own (usually all-zero) stat_type/value columns, same as any other item.
+	scales := row.ScalingStatDistribution != 0 && row.ScalingStatValue != 0
+	if scales {
+		heirloom, isHeirloom = computeHeirloomStats(row, dbc)
+	}
+	if isHeirloom {
+		stats = heirloom.Stats
+	} else {
+		for i := 0; i < 10; i++ {
+			if row.StatValues[i] == 0 {
+				continue
+			}
+			serverStats = append(serverStats, &proto.ItemStat{StatType: row.StatTypes[i], Value: row.StatValues[i]})
+			if !AddItemMod(&stats, row.StatTypes[i], row.StatValues[i]) {
+				converted.UnmappedStatTypes = append(converted.UnmappedStatTypes, row.StatTypes[i])
+			}
 		}
 	}
 
@@ -77,9 +91,13 @@ func ConvertItem(row *ItemRow, dbc *DBC) *ConvertedItem {
 		})
 	}
 
-	armor, bonusArmor := splitArmor(row)
-	stats[proto.Stat_StatArmor] += armor
-	stats[proto.Stat_StatBonusArmor] += bonusArmor
+	if isHeirloom {
+		stats[proto.Stat_StatArmor] += heirloom.Armor
+	} else {
+		armor, bonusArmor := splitArmor(row)
+		stats[proto.Stat_StatArmor] += armor
+		stats[proto.Stat_StatBonusArmor] += bonusArmor
+	}
 	stats[proto.Stat_StatFireResistance] += float64(row.FireRes)
 	stats[proto.Stat_StatNatureResistance] += float64(row.NatureRes)
 	stats[proto.Stat_StatFrostResistance] += float64(row.FrostRes)
@@ -112,7 +130,11 @@ func ConvertItem(row *ItemRow, dbc *DBC) *ConvertedItem {
 	}
 	item.SocketBonus = socketBonus[:]
 
-	if row.Delay > 0 && (row.DmgMin > 0 || row.DmgMax > 0) {
+	if isHeirloom && (heirloom.DmgMin > 0 || heirloom.DmgMax > 0) {
+		item.WeaponDamageMin = heirloom.DmgMin
+		item.WeaponDamageMax = heirloom.DmgMax
+		item.WeaponSpeed = float64(row.Delay) / 1000
+	} else if !isHeirloom && row.Delay > 0 && (row.DmgMin > 0 || row.DmgMax > 0) {
 		item.WeaponDamageMin = row.DmgMin
 		item.WeaponDamageMax = row.DmgMax
 		item.WeaponSpeed = float64(row.Delay) / 1000
@@ -125,7 +147,7 @@ func ConvertItem(row *ItemRow, dbc *DBC) *ConvertedItem {
 	switch {
 	case row.RandomProperty != 0 || row.RandomSuffix != 0:
 		converted.NotComparable = "random enchant"
-	case row.ScalingStatDistribution != 0:
+	case scales && !isHeirloom:
 		converted.NotComparable = "scaling stats"
 	}
 
@@ -181,6 +203,63 @@ func simSetName(dbcName, itemName string) string {
 		return "Kirin'dor Garb"
 	}
 	return name
+}
+
+// heirloomLevel is the level the sim gears characters at, which every heirloom's ScalingStatValue
+// row is computed for (capped at the ScalingStatDistribution row's own MaxLevel, if lower).
+const heirloomLevel = 80
+
+type heirloomItemStats struct {
+	Stats          database.Stats
+	Armor          float64
+	DmgMin, DmgMax float64
+}
+
+// computeHeirloomStats is Player::_ApplyItemBonuses and Player::_ApplyWeaponDamage (Player.cpp) for
+// an item with ScalingStatDistribution set: item_template's own stat, armor and damage columns are
+// ignored entirely, replaced by ssd's per-slot Modifier scaled by the ScalingStatValues row for the
+// (capped) target level, picked out of that row's mask columns by ScalingStatValue. ok is false when
+// the DBCs don't have a matching row, and ConvertItem falls back to marking the item not comparable.
+func computeHeirloomStats(row *ItemRow, dbc *DBC) (heirloomItemStats, bool) {
+	ssd := dbc.ScalingStatDistributions[row.ScalingStatDistribution]
+	if ssd == nil {
+		return heirloomItemStats{}, false
+	}
+	level := int32(heirloomLevel)
+	if level > ssd.MaxLevel {
+		level = ssd.MaxLevel
+	}
+	ssv := dbc.ScalingStatValues[level]
+	if ssv == nil {
+		return heirloomItemStats{}, false
+	}
+
+	var result heirloomItemStats
+	mask := uint32(row.ScalingStatValue)
+	if multiplier := ssv.SSDMultiplier(mask); multiplier != 0 {
+		for i := 0; i < 10; i++ {
+			if ssd.StatMod[i] < 0 {
+				continue
+			}
+			if val := int32(int64(multiplier) * int64(ssd.Modifier[i]) / 10000); val != 0 {
+				AddItemMod(&result.Stats, ssd.StatMod[i], val)
+			}
+		}
+	}
+	if spellPower := ssv.SpellBonus(mask); spellPower != 0 {
+		result.Stats[proto.Stat_StatSpellPower] += float64(spellPower)
+	}
+	result.Armor = float64(ssv.ArmorMod(mask))
+	if dps := ssv.DPSMod(mask); dps != 0 && row.Delay > 0 {
+		average := float64(dps) * float64(row.Delay) / 1000
+		spread := 0.3
+		if ssv.IsTwoHand(mask) {
+			spread = 0.2
+		}
+		result.DmgMin = (1 - spread) * average
+		result.DmgMax = (1 + spread) * average
+	}
+	return result, true
 }
 
 // splitArmor follows the tooltip parser: armor slots and shields keep base armor separate from bonus

@@ -16,6 +16,23 @@ var OtherItemIdsToFetch = []string{
 	"211851",
 }
 
+// MissingServerItems are obtainable AzerothCore items entirely absent from the Wowhead scrape.
+// -gen=azerothcore builds them straight from item_template and the DBCs (azerothcore.ConvertItem);
+// only the type classification here, which item_template's class/subclass don't map to the sim's
+// own item/armor/weapon/hand type enums, is picked by hand.
+var MissingServerItems = []struct {
+	ID         int32
+	Type       proto.ItemType
+	ArmorType  proto.ArmorType
+	WeaponType proto.WeaponType
+	HandType   proto.HandType
+}{
+	{ID: 37254, Type: proto.ItemType_ItemTypeTrinket}, // Super Simian Sphere
+	{ID: 45994, Type: proto.ItemType_ItemTypeFinger},  // Lost Ring
+	{ID: 45995, Type: proto.ItemType_ItemTypeNeck},    // Forgotten Necklace
+	{ID: 49227, Type: proto.ItemType_ItemTypeWeapon, WeaponType: proto.WeaponType_WeaponTypeDagger, HandType: proto.HandType_HandTypeMainHand}, // Skoll's Fang
+}
+
 var ItemOverrides = []*proto.UIItem{
 	{ /** Destruction Holo-gogs */ Id: 32494, ClassAllowlist: []proto.Class{proto.Class_ClassMage, proto.Class_ClassPriest, proto.Class_ClassWarlock}},
 	{ /** Gadgetstorm Goggles */ Id: 32476, ClassAllowlist: []proto.Class{proto.Class_ClassShaman}},

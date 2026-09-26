@@ -89,6 +89,103 @@ func TestConvertItemServerStats(t *testing.T) {
 	}
 }
 
+func TestConvertItemHeirloomStats(t *testing.T) {
+	dbc := &DBC{
+		ScalingStatDistributions: map[int32]*ScalingStatDistributionEntry{
+			5: {ID: 5, StatMod: [10]int32{7, 4, -1, -1, -1, -1, -1, -1, -1, -1}, Modifier: [10]int32{100, 60}, MaxLevel: 80},
+		},
+		ScalingStatValues: map[int32]*ScalingStatValuesEntry{
+			80: {ID: 1, Level: 80, SSDMultiplierCols: [4]int32{5000}, ArmorModCols: [4]int32{200}, SpellPower: 50},
+		},
+	}
+	// shoulder stat multiplier (0x1) + cloth shoulder armor (0x20) + spell power bonus (0x8000)
+	row := &ItemRow{Entry: 1, ScalingStatDistribution: 5, ScalingStatValue: 0x1 | 0x20 | 0x8000}
+	converted := ConvertItem(row, dbc)
+
+	if converted.NotComparable != "" {
+		t.Fatalf("NotComparable = %q, want a real heirloom to be comparable", converted.NotComparable)
+	}
+	stats := converted.Item.Stats
+	if got := stats[proto.Stat_StatStamina]; got != 50 { // 5000 * 100 / 10000
+		t.Errorf("stamina = %v, want 50", got)
+	}
+	if got := stats[proto.Stat_StatStrength]; got != 30 { // 5000 * 60 / 10000
+		t.Errorf("strength = %v, want 30", got)
+	}
+	if got := stats[proto.Stat_StatSpellPower]; got != 50 {
+		t.Errorf("spell power = %v, want the flat ScalingStatValues bonus (50)", got)
+	}
+	if got := stats[proto.Stat_StatArmor]; got != 200 {
+		t.Errorf("armor = %v, want 200", got)
+	}
+}
+
+// Player::_ApplyItemBonuses only builds a ScalingStatValuesEntry when ScalingStatValue is set, so a
+// ScalingStatDistribution item with ScalingStatValue 0 never scales: it falls back to its own
+// stat_type/value columns, same as any other item.
+func TestConvertItemSkipsScalingWhenScalingStatValueZero(t *testing.T) {
+	dbc := &DBC{ScalingStatDistributions: map[int32]*ScalingStatDistributionEntry{5: {ID: 5, MaxLevel: 80}}}
+	row := &ItemRow{Entry: 1, ScalingStatDistribution: 5, ScalingStatValue: 0, StatTypes: [10]int32{7}, StatValues: [10]int32{20}}
+	converted := ConvertItem(row, dbc)
+
+	if converted.NotComparable != "" {
+		t.Fatalf("NotComparable = %q, want comparable via the raw stat columns", converted.NotComparable)
+	}
+	if got := converted.Item.Stats[proto.Stat_StatStamina]; got != 20 {
+		t.Errorf("stamina = %v, want 20 from stat_value1", got)
+	}
+}
+
+func TestConvertItemHeirloomCapsLevel(t *testing.T) {
+	dbc := &DBC{
+		ScalingStatDistributions: map[int32]*ScalingStatDistributionEntry{
+			5: {ID: 5, StatMod: [10]int32{7, -1, -1, -1, -1, -1, -1, -1, -1, -1}, Modifier: [10]int32{100}, MaxLevel: 70},
+		},
+		ScalingStatValues: map[int32]*ScalingStatValuesEntry{
+			70: {ID: 1, Level: 70, SSDMultiplierCols: [4]int32{1000}},
+			80: {ID: 2, Level: 80, SSDMultiplierCols: [4]int32{5000}},
+		},
+	}
+	row := &ItemRow{Entry: 1, ScalingStatDistribution: 5, ScalingStatValue: 0x1}
+	converted := ConvertItem(row, dbc)
+	if got := converted.Item.Stats[proto.Stat_StatStamina]; got != 10 { // 1000 * 100 / 10000, level capped at 70
+		t.Errorf("stamina = %v, want 10 (MaxLevel 70, not the level 80 row)", got)
+	}
+}
+
+// _ApplyItemBonuses caps ssd_level unconditionally, even to a MaxLevel of 0.
+func TestConvertItemHeirloomZeroMaxLevelHasNoScalingStatValuesRow(t *testing.T) {
+	dbc := &DBC{ScalingStatDistributions: map[int32]*ScalingStatDistributionEntry{5: {ID: 5, MaxLevel: 0}}}
+	row := &ItemRow{Entry: 1, ScalingStatDistribution: 5, ScalingStatValue: 0x1}
+	converted := ConvertItem(row, dbc)
+	if converted.NotComparable != "scaling stats" {
+		t.Errorf("NotComparable = %q, want %q", converted.NotComparable, "scaling stats")
+	}
+}
+
+func TestConvertItemHeirloomWeaponDamage(t *testing.T) {
+	dbc := &DBC{
+		ScalingStatDistributions: map[int32]*ScalingStatDistributionEntry{5: {ID: 5, MaxLevel: 80}},
+		ScalingStatValues:        map[int32]*ScalingStatValuesEntry{80: {ID: 1, Level: 80, DPSModCols: [6]int32{0, 100}}},
+	}
+	row := &ItemRow{Entry: 1, ScalingStatDistribution: 5, ScalingStatValue: 0x400, Delay: 2800} // 2H weapon
+	item := ConvertItem(row, dbc).Item
+
+	// average = 100 * 2800ms / 1000; a 2H weapon spreads +-20% around it (1H spreads +-30%)
+	if item.WeaponDamageMin != 224 || item.WeaponDamageMax != 336 {
+		t.Errorf("weapon damage = %v-%v, want 224-336", item.WeaponDamageMin, item.WeaponDamageMax)
+	}
+}
+
+func TestConvertItemHeirloomNotComparableWithoutScalingStatValuesRow(t *testing.T) {
+	dbc := &DBC{ScalingStatDistributions: map[int32]*ScalingStatDistributionEntry{5: {ID: 5, MaxLevel: 80}}}
+	row := &ItemRow{Entry: 1, ScalingStatDistribution: 5, ScalingStatValue: 1}
+	converted := ConvertItem(row, dbc)
+	if converted.NotComparable != "scaling stats" {
+		t.Errorf("NotComparable = %q, want %q", converted.NotComparable, "scaling stats")
+	}
+}
+
 func TestApplyToOverwritesZeroValuesAndLists(t *testing.T) {
 	var wowheadStats database.Stats
 	wowheadStats[proto.Stat_StatAttackPower] = 94
