@@ -748,7 +748,7 @@ Specs for the `PAR-` items in the [wave registry](../wave-loop/wave-loop.PLAN.md
 | PAR-DECL-1 (I5, done) | The [class sweep](effect-declarations.PLAN.md#class-sweep-i5) for mage and warlock | `sim/{mage,warlock}/**` | their suites | PAR-DECL |
 | PAR-DECL-2 (I5, done) | The class sweep for shaman, druid (Feral Tank included) and hunter with pets | `sim/{shaman,druid,hunter}/**` | their suites | PAR-DECL |
 | PAR-DECL-3 (I5, done) | The class sweep for warrior, rogue, paladin and DK, tank-spec spells included | `sim/{warrior,rogue,paladin,deathknight}/**` | their suites | PAR-DECL |
-| PAR-DECL-4 (I6) | [Generate and declare](effect-declarations.PLAN.md#par-decl-4-i6) the spell ids the sweeps found `serverdata` lacking | `sim/core/serverdata/*_auto_gen.go`, `sim/{mage,hunter,deathknight,warrior,rogue,paladin,shaman}/**` | all 37 | PAR-DECL-1..3 |
+| PAR-DECL-4 (I6, done) | [Generate and declare](effect-declarations.PLAN.md#par-decl-4-i6) the spell ids the sweeps found `serverdata` lacking | `sim/core/serverdata/*_auto_gen.go`, `sim/{mage,hunter,deathknight,warrior,rogue,paladin,shaman}/**` | all 37 | PAR-DECL-1..3 |
 | PAR-P8 (K) | Sweep `classic`/`wotlk-classic-bugs` in `sim/`; flip `TicksCanCrit`; multiply percent damage spell mods (`Player::ApplySpellMod`) in the classes that landed before H3 (DK, Hunter, Rogue, Warrior); close this plan | `sim/**` references | all | every P7 item |
 
 - **Class order:** DK and HUN (G); ROG, WAR and RET (H); SHA, DRU, MAG and WLK (I); PRI (J).

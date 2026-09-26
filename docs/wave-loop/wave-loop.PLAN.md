@@ -304,6 +304,8 @@ crashed before F2, so its column starts there.
 | PAR-DECL-2 | merged | `facac0b37` | 7 goldens promoted in `b0c156289`: Survival +3.3% (Explosive Shot's 0.16 AP), Enhancement -2.9% (fire elemental), Elemental -1.5% (travel, Clearcasting kept for the next cast, fire elemental; Intellect weight 0.37 to 3.03); review fixed Savage Fury declared flat, not a percent |
 | PAR-DECL-3 | merged | `90a8ea16f` | 13 goldens promoted in `b15974648`: DK Frost +1.9% (off-hand Frost Strike's flat bonus unhalved, Obliterate's halved), Blood Tank -2.7% (Rune Strike), Assassination +1.6% (poisons), Protection Paladin -1.1% (Holy Shield); review fixed Death Coil and Unholy Blight dealing 1 over, and Death Coil rolling at landing |
 | wave I5 cross-review | | | no findings; Improved Earth Shield's percent mod on Earth Shield, which it couldn't confirm from source, checked in the live Spell.dbc |
+| PERF-MISSILE | merged | `ffe8b7ea1` | goldens byte-identical; its A/B at 100 iterations: Elemental -12% (allocations -59%), Hunter -4%, the raid -2%. Elemental stays ~29% over I4, from more queued actions, not allocation |
+| PAR-DECL-4 | merged | `97b207b14` | 4 goldens promoted in `57b62de5b`: hunter BM, MM and SV +0.006% to +0.007% (Explosive Trap's burst scales to level 80), Frost mage +0.0004% (Deep Freeze's SP) |
 
 Later WIs are added as their wave starts.
 

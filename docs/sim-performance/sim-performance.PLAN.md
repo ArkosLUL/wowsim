@@ -145,7 +145,7 @@ numbers, what's left):
   -5%. The harness's CPU at GOMAXPROCS 16: Rogue 0.62, the raid 0.85, the other rotation specs 0.80 to 0.97, but Bear
   1.02 and Protection Warrior 1.03.
 
-### PERF-MISSILE: missiles without allocations (wave I6)
+### PERF-MISSILE: missiles without allocations (wave I6, done)
 
 Wave I5's travel waits made every missile allocate. Idle, `BenchmarkSimulate` at 100 iterations went up 50%
 for Elemental and 13% for Hunter over I4; a 100-iteration Elemental op allocates 139k objects, not 34k (7.2 MB,
@@ -182,4 +182,4 @@ The user put the pass before wave J, whose BIS-e2e-perf times the optimizer with
 (2026-09-22):
 - **I2 (done):** PERF-TOOLS and PERF-CONC, which share no files.
 - **I3 (done):** PERF-OPT and PERF-HOT, file-disjoint, once I2's baseline sets their targets.
-- **I6:** PERF-MISSILE, the user's call (2026-09-26), before J times the optimizer.
+- **I6 (done):** PERF-MISSILE, the user's call (2026-09-26), before J times the optimizer.
