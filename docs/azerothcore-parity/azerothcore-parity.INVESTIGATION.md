@@ -1270,9 +1270,9 @@ Roll details the tables above don't show:
 **Tanks** (`TestProtectionWarrior`, `TestProtection` (paladin), `TestFeralTank`, `TestBloodTank`, code)
 - Added a generic AzerothCore boss (level 83, class 1, off a live `creature_classlevelstats` select, checked
   against `Creature::SelectLevel`/`CreatureBaseStats`) as the four tank specs' UI default and an extra golden
-  case in each suite. BIS-tank-boss (wave K) scales its `MinBaseDamage` by each phase boss's
-  `creature_template.DamageModifier`, exposed on preset encounters as an additive `raid_difficulty` proto
-  field for that item to pick up.
+  case in each suite. It hits like Patchwerk 25 (`creature_template.DamageModifier` 70,
+  `encounters.GenericBossDamageModifier`); BIS-tank-boss (wave K) swaps in each phase boss's. Preset
+  encounters gained an additive `raid_difficulty` proto field.
 - Found and fixed on the boss-side files: a `Target`'s `gcdAction` never finished a hardcast sharing its
   pending action with the GCD (Hodir's 9 s Flash Freeze silently never applied); the dungeon-scale `Damage`
   multiplier was skipped for spells flagged `SpellFlagIgnoreAttackerModifiers` (Anub'arak's Leeching Swarm,
