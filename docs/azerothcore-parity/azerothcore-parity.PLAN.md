@@ -716,7 +716,7 @@ Specs for the `PAR-` items in the [wave registry](../wave-loop/wave-loop.PLAN.md
 - **`sim/core/serverdata`:** regenerate it with `gen_serverdata`, never by hand. It covers the sim's spell-id
   constants and what they trigger, so name any spell id the sim computes (Relentless Strikes'
   `58420 + talentPoints`) as a constant. One item per wave owns the generated files: P6-2 (C), P3-2 (D),
-  P3-4 (E), P7-0a (F), PAR-DECL (I4).
+  P3-4 (E), P7-0a (F), PAR-DECL (I4), PAR-DECL-4 (I6).
 - **`TicksCanCrit`:** P3-5 adds it with default false. Each class item declares which of its DoTs may crit,
   and P8 flips the default.
 
@@ -748,6 +748,7 @@ Specs for the `PAR-` items in the [wave registry](../wave-loop/wave-loop.PLAN.md
 | PAR-DECL-1 (I5, done) | The [class sweep](effect-declarations.PLAN.md#class-sweep-i5) for mage and warlock | `sim/{mage,warlock}/**` | their suites | PAR-DECL |
 | PAR-DECL-2 (I5, done) | The class sweep for shaman, druid (Feral Tank included) and hunter with pets | `sim/{shaman,druid,hunter}/**` | their suites | PAR-DECL |
 | PAR-DECL-3 (I5, done) | The class sweep for warrior, rogue, paladin and DK, tank-spec spells included | `sim/{warrior,rogue,paladin,deathknight}/**` | their suites | PAR-DECL |
+| PAR-DECL-4 (I6) | [Generate and declare](effect-declarations.PLAN.md#par-decl-4-i6) the spell ids the sweeps found `serverdata` lacking | `sim/core/serverdata/*_auto_gen.go`, `sim/{mage,hunter,deathknight,warrior,rogue,paladin,shaman}/**` | all 37 | PAR-DECL-1..3 |
 | PAR-P8 (K) | Sweep `classic`/`wotlk-classic-bugs` in `sim/`; flip `TicksCanCrit`; multiply percent damage spell mods (`Player::ApplySpellMod`) in the classes that landed before H3 (DK, Hunter, Rogue, Warrior); close this plan | `sim/**` references | all | every P7 item |
 
 - **Class order:** DK and HUN (G); ROG, WAR and RET (H); SHA, DRU, MAG and WLK (I); PRI (J).

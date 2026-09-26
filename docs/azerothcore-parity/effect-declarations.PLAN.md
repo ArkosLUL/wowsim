@@ -441,6 +441,21 @@ Each item:
 The P3-2 timing entries stand: warrior Recklessness and Death Wish GCD, Sweeping Strikes 12723's cooldown,
 Bladestorm's channel; paladin 498/31884's shared cooldown.
 
+### PAR-DECL-4 (I6)
+
+Adds to `serverdata` the ids the sweeps lacked, declares them, and drops the KeepSim entries standing in:
+- Mage: Deep Freeze's 71757 (44572's numbers are hand-written).
+- Hunter: Explosive Trap 49065; Explosive Shot's 53352 (60052/60053's tick AP entries).
+- Death knight: the off-hand strikes 66953, 66962, 66979, 66992, 66217; Death and Decay's tick 52212.
+- Warrior: Execute's 20647, Deep Wounds' 12721, Damage Shield's 58872 and 59653.
+- Rogue: Killing Spree's 57841/57842, Shiv's hit 5940, Fan of Knives' off hand 52874.
+- Paladin: the Seal of Righteousness proc 25742 (dealt as 20154), Ardent Defender's heal 66235.
+- Any other KeepSim entry whose `Why` names another spell's row, e.g. the shaman's 57984 and 58761.
+
+The committed capture holds them all, so none needs a live one: name each in its declaration (`FromSpellID`,
+keeping the sim's spell ids), then regenerate `serverdata`, which adds only their rows. Fix or allowlist every
+mismatch; entries naming a script stay. Runs all 37 suites, since the tables are shared.
+
 ### Wave J
 
 - **PAR-P7-PRI** declares the priest's effects. Holy Fire's dot and Devouring Plague are its known
@@ -451,9 +466,6 @@ Bladestorm's channel; paladin 498/31884's shared cooldown.
 
 - Shared damage spells in `sim/common` and `sim/core`: item procs (give `ProcDamageEffect` its proc spell
   id), explosives, racials, and Shadowmourne 71904's travel wait.
-- A `serverdata` regeneration adding the spell ids the sweeps' As built sections list as lacking (Deep
-  Freeze 71757, the off-hand strikes, Explosive Trap 49065, …), then declaring them with `FromSpellID` and
-  dropping the KeepSim entries that stand in for them.
 - Checking the op-24 mod values that talents declare against the server's spell mods. `indexSpellMods`
   (`tools/acore/gen_serverdata/model.go`) indexes them but builds bounds only for ops 10, 11 and 21.
 

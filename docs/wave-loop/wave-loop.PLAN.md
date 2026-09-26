@@ -59,6 +59,7 @@ G = changes goldens. FS = runs all 37 suites.
 | I3 | PERF-OPT · PERF-HOT · PAR-P7-0f · UI-FIX2 | ✔ |
 | I4 | PAR-DECL (G, FS) · RI-4 · BIS-hunter-ranged | ✔ |
 | I5 | PAR-DECL-1 (G) · PAR-DECL-2 (G) · PAR-DECL-3 (G) | ✔ |
+| I6 | PERF-MISSILE (FS) · PAR-DECL-4 (G, FS) | ✔ |
 | J | PAR-P7-PRI (G) · PAR-P7-TANK (G) · BIS-e2e-perf · AC-3 | ✔ |
 | K | BIS-presets · PAR-P8 (G, FS) · BIS-tank-boss | ✔ |
 
@@ -78,7 +79,8 @@ In I, PAR-P7-MAG also fixes the delay helper's timing gap (the user's call) and 
 are the user's call too: they come before J, whose BIS-e2e-perf uses their tools. So are I4 and I5
 (2026-09-23), the [effect declarations](../azerothcore-parity/effect-declarations.PLAN.md): PAR-DECL is I4's only parity item,
 since a class item can't build on a core change merging in its own wave, and both come before J so that
-PRI, TANK and K's PAR-P8 build on them.
+PRI, TANK and K's PAR-P8 build on them. I6 too (2026-09-26): PERF-MISSILE wins back what I5's travel waits
+cost before J's BIS-e2e-perf times the optimizer, and PAR-DECL-4 adds the ids I5 found `serverdata` lacking.
 
 U, the Playwright suite and the UI bugs it finds, comes before I2 (the user's call, 2026-09-23). Its items
 touch only UI and test paths, so goldens, BiS and throughput can't move, and it skips the re-baseline.
@@ -99,10 +101,8 @@ bugs, the importer's missing pets, ammo and consumables, and a batch hung on a h
 
 ## Current wave
 
-- Wave: J, not started. Wave I5 (base `4a0f8d5c8`) landed on `master`.
-- Base SHA: set at wave start.
-- Workflow runId: none. Wave I5 ran as `wf_d6757f45-58d` (args `waveI5-args.json`, results `waveI5-results.json`
-  in `G:\DevStuff\GitHub\.wave-loop`).
+- Wave: I6, running. Base SHA `b15817c30`.
+- Workflow runId: set once started. Args `waveI6-args.json` in `G:\DevStuff\GitHub\.wave-loop`.
 
 ## BiS baseline
 

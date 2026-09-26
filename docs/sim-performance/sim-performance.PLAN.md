@@ -145,9 +145,30 @@ numbers, what's left):
   -5%. The harness's CPU at GOMAXPROCS 16: Rogue 0.62, the raid 0.85, the other rotation specs 0.80 to 0.97, but Bear
   1.02 and Protection Warrior 1.03.
 
+### PERF-MISSILE: missiles without allocations (wave I6)
+
+Wave I5's travel waits made every missile allocate. Idle, `BenchmarkSimulate` at 100 iterations went up 50%
+for Elemental and 13% for Hunter over I4; a 100-iteration Elemental op allocates 139k objects, not 34k (7.2 MB,
+not 1.2) ([throughput](../wave-loop/wave-loop.PLAN.md#sim-throughput)). Per missile:
+- `Spell.WaitTravelTime` (`sim/core/spell_result.go`) allocates a `PendingAction` and a `pendingSlots` entry
+  through `StartDelayedAction`, plus the caller's closure.
+- `NewResult` allocates while an earlier missile holds the spell's `resultCache` (Lightning Bolt, Searing
+  Totem). A missile in flight at an iteration's end leaves the cache held for every later iteration, since
+  `Spell.reset` doesn't free it; freeing it there alone saves 1.6%.
+
+Fix it in core: reuse landing actions and results, reset each iteration. A result is reused only after
+`DisposeResult`, so check that no caller reads one after that. Change `WaitTravelTime`'s call sites only if
+the A/B shows their closures cost enough. Profile Elemental at one iteration too (+18% over I4).
+
+- Verify: all 37 goldens byte-identical, the simval replay, and an interleaved benchstat A/B with allocs/op
+  of Elemental, Hunter and the raid against the wave base ([testing](../guide/testing.md#go)).
+- Owns: `sim/core/**` except `sim/core/serverdata/`; the `WaitTravelTime` call lines in `sim/**`, which may
+  sit in PAR-DECL-4's files (settled at merge).
+
 ## Order
 
 The user put the pass before wave J, whose BIS-e2e-perf times the optimizer with PERF-TOOLS' harness
 (2026-09-22):
 - **I2 (done):** PERF-TOOLS and PERF-CONC, which share no files.
 - **I3 (done):** PERF-OPT and PERF-HOT, file-disjoint, once I2's baseline sets their targets.
+- **I6:** PERF-MISSILE, the user's call (2026-09-26), before J times the optimizer.
