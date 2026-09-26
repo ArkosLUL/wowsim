@@ -80,8 +80,8 @@ func (priest *Priest) newMindSearSpell(numTicksIdx int32) *core.Spell {
 			// has no special case for the caster's own current target.
 			for _, aoeTarget := range sim.Encounter.TargetUnits {
 				mindSearTickSpell.Cast(sim, aoeTarget)
+				mindSearTickSpell.SpellMetrics[aoeTarget.UnitIndex].Casts -= 1
 			}
-			mindSearTickSpell.SpellMetrics[target.UnitIndex].Casts -= 1
 		},
 	}
 	config.ApplyEffects = func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {

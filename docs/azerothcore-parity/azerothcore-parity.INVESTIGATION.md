@@ -1276,8 +1276,8 @@ Roll details the tables above don't show:
 - Found and fixed on the boss-side files: a `Target`'s `gcdAction` never finished a hardcast sharing its
   pending action with the GCD (Hodir's 9 s Flash Freeze silently never applied); the dungeon-scale `Damage`
   multiplier was skipped for spells flagged `SpellFlagIgnoreAttackerModifiers` (Anub'arak's Leeching Swarm,
-  server id 66118 — the spec's cited 66240 is the server's hidden per-tick id with no client `Spell.dbc` row
-  or generated serverdata entry at all); Hodir's Starlight granted cast speed the server doesn't
+  modeled under server id 66118, the raid-wide dummy aura the boss casts; its script triggers the spec's
+  cited 66240 each tick for the actual damage, via `CastCustomSpell`); Hodir's Starlight granted cast speed the server doesn't
   (`spell_hodir_starlight_aura` only hooks the melee-slow aura); Bulwark of Azzinoth's proc chance
   (`sim/common/tbc/melee_items.go`) was keyed to the attacker's own hand instead of the wearer's main hand
   speed, so a dual-wielder's off-hand swings could never proc it (retail deviation 14, table above).
