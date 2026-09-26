@@ -21,13 +21,16 @@ var baseStats = stats.Stats{
 	stats.Stamina:     348,
 	stats.Intellect:   201,
 	stats.AttackPower: -20,
-	// with 3% crit debuff, shadowfiend crits around 9-12% (TODO: verify and narrow down)
-	stats.MeleeCrit: 8 * core.CritRatingPerCritChance,
+	// Unit::GetUnitCriticalChance's flat 5% base, same as every other guardian.
+	stats.MeleeCrit: 5 * core.CritRatingPerCritChance,
+	stats.SpellCrit: 5 * core.CritRatingPerCritChance,
 }
 
 func (priest *Priest) NewShadowfiend() *Shadowfiend {
 	shadowfiend := &Shadowfiend{
-		Pet:    core.NewPet("Shadowfiend", &priest.Character, baseStats, priest.shadowfiendStatInheritance(), false, false),
+		// spell_pri_shadowfiend_scaling's CalculateSPAmount/CalculateAPAmount never set canBeRecalculated,
+		// so the server snapshots the owner's stats once at the summon and never resyncs them.
+		Pet:    core.NewPet("Shadowfiend", &priest.Character, baseStats, priest.shadowfiendStatInheritance(), false, true),
 		Priest: priest,
 	}
 
@@ -61,7 +64,11 @@ func (priest *Priest) NewShadowfiend() *Shadowfiend {
 
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
-				GCD: time.Second * 6,
+				GCD: core.GCDDefault,
+			},
+			CD: core.Cooldown{
+				Timer:    shadowfiend.NewTimer(),
+				Duration: time.Second * 6,
 			},
 		},
 

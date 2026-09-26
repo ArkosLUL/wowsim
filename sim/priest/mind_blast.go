@@ -8,7 +8,6 @@ import (
 )
 
 func (priest *Priest) registerMindBlastSpell() {
-	spellCoeff := 0.429 * (1 + 0.05*float64(priest.Talents.Misery))
 	hasGlyphOfShadow := priest.HasGlyph(int32(proto.PriestMajorGlyph_GlyphOfShadow))
 
 	var replSrc core.ReplenishmentSource
@@ -58,8 +57,13 @@ func (priest *Priest) registerMindBlastSpell() {
 		CritMultiplier:   priest.SpellCritMultiplier(1, float64(priest.Talents.ShadowPower)/5),
 		ThreatMultiplier: 1 - 0.08*float64(priest.Talents.ShadowAffinity),
 
+		Direct: core.SpellEffect{Effect: 0, Min: 997, Max: 1053, SP: 0.4286},
+		Mods: []core.SpellMod{
+			{Op: core.SpellModBonusMultiplier, Pct: 5 * int32(priest.Talents.Misery)},
+		},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := sim.Roll(997, 1053) + spellCoeff*spell.SpellPower()
+			baseDamage := spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()
 			baseDamage *= priest.MindBlastModifier
 
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
@@ -85,7 +89,7 @@ func (priest *Priest) registerMindBlastSpell() {
 			}
 		},
 		ExpectedInitialDamage: func(sim *core.Simulation, target *core.Unit, spell *core.Spell, _ bool) *core.SpellResult {
-			baseDamage := (997.0+1053.0)/2 + spellCoeff*spell.SpellPower()
+			baseDamage := spell.Direct.Average() + spell.Direct.SP*spell.SpellPower()
 			return spell.CalcDamage(sim, target, baseDamage, spell.OutcomeExpectedMagicHitAndCrit)
 		},
 	})

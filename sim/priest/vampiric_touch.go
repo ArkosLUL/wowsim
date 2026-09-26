@@ -39,9 +39,12 @@ func (priest *Priest) registerVampiricTouchSpell() {
 			NumberOfTicks:       5 + core.TernaryInt32(priest.HasSetBonus(ItemSetZabras, 2), 2, 0),
 			TickLength:          time.Second * 3,
 			AffectedByCastSpeed: priest.Talents.Shadowform,
+			// Shadowform (49868) grants CanPeriodicTickCrit to Vampiric Touch's dot.
+			TicksCanCrit: true,
+			Tick:         core.SpellEffect{Effect: 1, Min: 170, Max: 170, SP: 0.4},
 
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
-				dot.SnapshotBaseDamage = 850/5 + 0.4*dot.Spell.SpellPower()
+				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + dot.Tick.SP*dot.Spell.SpellPower()
 				dot.SnapshotCritChance = dot.Spell.SpellCritChance(target)
 				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(dot.Spell.Unit.AttackTables[target.UnitIndex])
 			},
@@ -72,7 +75,8 @@ func (priest *Priest) registerVampiricTouchSpell() {
 					return dot.CalcSnapshotDamage(sim, target, spell.OutcomeExpectedMagicAlwaysHit)
 				}
 			} else {
-				baseDamage := 850/5 + 0.4*spell.SpellPower()
+				tick := spell.Dot(target).Tick
+				baseDamage := tick.Roll(sim) + tick.SP*spell.SpellPower()
 				if priest.Talents.Shadowform {
 					return spell.CalcPeriodicDamage(sim, target, baseDamage, spell.OutcomeExpectedMagicCrit)
 				} else {

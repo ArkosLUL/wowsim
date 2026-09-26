@@ -506,3 +506,13 @@ func (priest *Priest) registerInnerFocus() {
 		},
 	})
 }
+
+// spellModDamage stacks percent damage bonuses from talents and set pieces the server's way:
+// Player::ApplySpellMod multiplies SPELLMOD_DAMAGE and SPELLMOD_DOT percentages, it doesn't add them.
+func spellModDamage(bonuses ...float64) float64 {
+	multiplier := 1.0
+	for _, bonus := range bonuses {
+		multiplier *= 1 + bonus
+	}
+	return multiplier
+}

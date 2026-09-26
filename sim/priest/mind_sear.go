@@ -8,19 +8,16 @@ import (
 	"github.com/wowsims/wotlk/sim/core/proto"
 )
 
-func (priest *Priest) getMindSearMiseryCoefficient() float64 {
-	return 0.2861 * (1 + 0.05*float64(priest.Talents.Misery))
-}
-
 func (priest *Priest) getMindSearBaseConfig() core.SpellConfig {
 	return core.SpellConfig{
 		SpellSchool:     core.SpellSchoolShadow,
 		ProcMask:        core.ProcMaskProc,
 		BonusHitRating:  float64(priest.Talents.ShadowFocus) * 1 * core.SpellHitRatingPerHitChance,
 		BonusCritRating: float64(priest.Talents.MindMelt) * 2 * core.CritRatingPerCritChance,
-		DamageMultiplier: 1 +
-			0.02*float64(priest.Talents.Darkness) +
+		DamageMultiplier: spellModDamage(
+			0.02*float64(priest.Talents.Darkness),
 			0.01*float64(priest.Talents.TwinDisciplines),
+		),
 		ThreatMultiplier: 1 - 0.08*float64(priest.Talents.ShadowAffinity),
 		CritMultiplier:   priest.DefaultSpellCritMultiplier(),
 	}
@@ -28,12 +25,15 @@ func (priest *Priest) getMindSearBaseConfig() core.SpellConfig {
 
 func (priest *Priest) getMindSearTickSpell(numTicks int32) *core.Spell {
 	hasGlyphOfShadow := priest.HasGlyph(int32(proto.PriestMajorGlyph_GlyphOfShadow))
-	miseryCoeff := priest.getMindSearMiseryCoefficient()
 
 	config := priest.getMindSearBaseConfig()
 	config.ActionID = core.ActionID{SpellID: 53022}.WithTag(numTicks)
+	config.Direct = core.SpellEffect{Effect: 0, Min: 212, Max: 228, SP: 0.2857}
+	config.Mods = []core.SpellMod{
+		{Op: core.SpellModBonusMultiplier, Pct: 5 * int32(priest.Talents.Misery)},
+	}
 	config.ApplyEffects = func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-		damage := sim.Roll(212, 228) + miseryCoeff*spell.SpellPower()
+		damage := spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()
 		result := spell.CalcAndDealDamage(sim, target, damage, spell.OutcomeMagicHitAndCrit)
 
 		if result.Landed() {
@@ -54,7 +54,6 @@ func (priest *Priest) newMindSearSpell(numTicksIdx int32) *core.Spell {
 		flags |= core.SpellFlagAPL
 	}
 
-	miseryCoeff := priest.getMindSearMiseryCoefficient()
 	mindSearTickSpell := priest.getMindSearTickSpell(numTicksIdx)
 
 	config := priest.getMindSearBaseConfig()
@@ -77,12 +76,12 @@ func (priest *Priest) newMindSearSpell(numTicksIdx int32) *core.Spell {
 		TickLength:          time.Second,
 		AffectedByCastSpeed: true,
 		OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
+			// Ticks every target in range, the channeled one included: Spell::SelectImplicitAreaTargets
+			// has no special case for the caster's own current target.
 			for _, aoeTarget := range sim.Encounter.TargetUnits {
-				if aoeTarget != target {
-					mindSearTickSpell.Cast(sim, aoeTarget)
-					mindSearTickSpell.SpellMetrics[target.UnitIndex].Casts -= 1
-				}
+				mindSearTickSpell.Cast(sim, aoeTarget)
 			}
+			mindSearTickSpell.SpellMetrics[target.UnitIndex].Casts -= 1
 		},
 	}
 	config.ApplyEffects = func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
@@ -93,7 +92,7 @@ func (priest *Priest) newMindSearSpell(numTicksIdx int32) *core.Spell {
 		}
 	}
 	config.ExpectedTickDamage = func(sim *core.Simulation, target *core.Unit, spell *core.Spell, _ bool) *core.SpellResult {
-		baseDamage := sim.Roll(212, 228) + miseryCoeff*spell.SpellPower()
+		baseDamage := mindSearTickSpell.Direct.Roll(sim) + mindSearTickSpell.Direct.SP*spell.SpellPower()
 		return spell.CalcPeriodicDamage(sim, target, baseDamage, spell.OutcomeExpectedMagicCrit)
 	}
 	return priest.GetOrRegisterSpell(config)

@@ -493,6 +493,71 @@ up to +0.08%); Frost mage +0.0004%, from Deep Freeze's SP. The other 33 suites a
   mismatches.
 - **PAR-P7-TANK** builds on the tank-spec spells of PAR-DECL-2 (Feral Tank) and PAR-DECL-3.
 
+#### PAR-P7-PRI as built
+
+**Priest** (`sim/priest/serverdata_undeclared.go` is empty):
+- Every damage and heal effect declares: Smite, Holy Fire (direct + dot), Shadow Word: Pain, Mind
+  Blast, Shadow Word: Death, Vampiric Touch, Devouring Plague, Mind Flay's and Mind Sear's tick
+  spells (58381, 53022), Greater Heal, Flash Heal, Prayer of Healing, Circle of Healing, Binding
+  Heal, Renew. No priest spell has a missile speed, so no travel wait moved a golden.
+- Mods: Misery (op 24, Pct 5 a rank) on Mind Blast and both tick spells — its classMask leaves out
+  Shadow Word: Pain and Devouring Plague despite their tooltips; Empowered Healing (op 24, Flat 8 a
+  rank) on Greater Heal and (Flat 4) on Flash Heal and Binding Heal, two separate classMask rows;
+  Empowered Renew (op 24, Pct 5 a rank) on Renew itself, replacing the sim's flat +.01 a rank with
+  the server's percent. Its burst heal (63543) still hand-rolls (server spell 63544 isn't in
+  serverdata) but now reads Renew's own modded tick instead of duplicating the coefficient.
+- Binding Heal deals two identical school-heal effects, self and target. `SpellConfig` has one
+  Direct slot, so effect 1 gets a `Hot` that's declared but never applied, solely to cover it.
+- Improved Devouring Plague (63675) keeps `DpInitMultiplier`'s script math (a share of the tick per
+  talent rank); its own server effect (1, SP 0) plays no part and only clears the undeclared entry.
+- Fixed numbers: Smite 0.7143→0.714; Mind Blast and Shadow Word: Death 0.429→0.4286; Mind Sear
+  0.2861→0.2857; Greater Heal 1.6114→1.611 and its roll's max 4621→4620; Flash Heal's max
+  2203→2202; Prayer of Healing's max 2228→2227; Binding Heal's max 2516→2515; Circle of Healing
+  0.4029→0.402. Holy Fire's dot 0.024→0.0529 and Devouring Plague 0.1849→0.18, the plan's known
+  mismatches.
+- Mind Flay is PAR-DECL-4's script pattern: 48156's effect 2 is aura 227, whose tick casts 58381
+  with the aura's amount as base points (`AuraEffect::HandlePeriodicTriggerSpellWithValueAuraTick`).
+  The channel's `Dot.Tick` declares that 196 and hands it to each tick, in place of the roll of 0
+  (BasePoints -1, DieSides 1) that 58381's `Direct` declares with its 0.257 SP (Misery's op 24 on
+  it). A tick is 196 + 0.257 SP, as the sim's old 588/3 was.
+- Shadowfiend: nothing to declare. 34433 (the summon) has no damage effect and Shadowcrawl deals
+  none; its existing KeepSim entries stand unchanged.
+- One new allowlist entry, 48156's tick SP: the check takes effect 2's DBC 0.271 for it, which the
+  server never reads, since `AuraEffect::CalculateAmount` adds no spell power to an aura-227 amount.
+  Every other mismatch was a number to fix.
+
+**checklist stage, on top of the above:**
+- Darkness, Twin Disciplines and Improved Shadow Word: Pain are all `SPELLMOD_DAMAGE`/`SPELLMOD_DOT`
+  (aura 108, miscValue 0/22), confirmed by classMask against each covered spell's family flags, so
+  they multiply, not add: Shadow Word: Pain's dot (all three), Shadow Word: Death (Darkness + Twin
+  Disciplines), Devouring Plague's dot and Improved Devouring Plague's burst (Darkness + Twin
+  Disciplines + Improved Devouring Plague's own SPELLMOD_DOT + Conqueror's Sanctuary 2pc), and Mind
+  Flay's and Mind Sear's ticks (Darkness + Twin Disciplines). Mind Blast and Smite only ever had one
+  such source each, so their existing multiplication was already a no-op either way.
+- `TicksCanCrit` declared on every priest dot/hot: true for Shadow Word: Pain, Devouring Plague and
+  Vampiric Touch (Shadowform's 49868 grants aura 286 to exactly these three by classMask), false for
+  Holy Fire's dot and Renew's hot (neither is covered). Inert until PAR-P8 flips
+  `periodicCritsNeedDeclaration`.
+- Shadowfiend: the "nothing to declare" note above still holds for `core.SpellEffect`, but its GCD/CD
+  stand-in, crit base and `isGuardian` flag were wrong; fixed, with the two now-redundant
+  `ServerConflictAllowance` entries dropped. Mind Sear's target-skip bug (below) is fixed too. Full
+  detail in the INVESTIGATION's new Priest section.
+
+**live stage:** `TestSimvalPriest` (new `p7_pri_test.go`) probed Mind Blast, Shadow Word: Pain and
+Mind Flay's tick live, spelldumped Shadowform's periodic-crit scoping and 48156's aura-227 amount,
+and channelled Mind Flay: every tick dealt 196 before resists at 0 spell power. Everything matched.
+
+**Goldens** (Average-Default against the wave base): Shadow dps -0.143%, Smite +2.339%, Holy hps
++0.556%, Disc -0.001%. Bisected in the INVESTIGATION's Priest section.
+
+**For PAR-P8:**
+- Devouring Plague's dot is a periodic-leech effect on the server (aura 53); the sim never heals
+  the caster from it.
+- Prayer of Mending's heal (48113) uses a server effect type (142) `dealsDamageOrHeals` doesn't
+  recognize, so it stays outside this check; its bonus row shows 0.807, close to its coded 0.8057.
+- Glyph of Inner Fire (55686) is an effect-1 mod (+50%) on Inner Fire's own data; the sim's glyph
+  bonus only touches the armor half.
+
 ## Not scheduled
 
 - Shared damage spells in `sim/common` and `sim/core`: item procs (give `ProcDamageEffect` its proc spell

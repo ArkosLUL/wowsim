@@ -35,6 +35,8 @@ func (priest *Priest) RegisterHolyFireSpell() {
 		CritMultiplier:   priest.DefaultSpellCritMultiplier(),
 		ThreatMultiplier: 1 - []float64{0, .07, .14, .20}[priest.Talents.SilentResolve],
 
+		Direct: core.SpellEffect{Effect: 0, Min: 900, Max: 1140, SP: 0.571},
+
 		Dot: core.DotConfig{
 			Aura: core.Aura{
 				Label: "HolyFire",
@@ -51,8 +53,11 @@ func (priest *Priest) RegisterHolyFireSpell() {
 			},
 			NumberOfTicks: 7,
 			TickLength:    time.Second * 1,
+			// Holy school: Shadowform's periodic-crit grant doesn't cover it.
+			TicksCanCrit: false,
+			Tick:         core.SpellEffect{Effect: 1, Min: 50, Max: 50, SP: 0.0529},
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
-				dot.SnapshotBaseDamage = 50 + 0.024*dot.Spell.SpellPower()
+				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + dot.Tick.SP*dot.Spell.SpellPower()
 				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(dot.Spell.Unit.AttackTables[target.UnitIndex])
 			},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
@@ -61,7 +66,7 @@ func (priest *Priest) RegisterHolyFireSpell() {
 		},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := sim.Roll(900, 1140) + 0.5711*spell.SpellPower()
+			baseDamage := spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 			if result.Landed() {
 				spell.Dot(target).Apply(sim)
