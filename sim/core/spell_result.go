@@ -22,12 +22,15 @@ type SpellResult struct {
 	castWasInstant bool
 
 	inUse bool
+	owner *Spell // the spell whose spares this is, nil for its resultCache
 }
 
+// NewResult hands out the spell's cached result, or a spare while that one's in use, e.g. by a missile
+// in flight. A disposed one (CalcAndDealDamage returns those) is only safe to read until the next NewResult.
 func (spell *Spell) NewResult(target *Unit) *SpellResult {
 	result := &spell.resultCache
 	if result.inUse {
-		result = &SpellResult{}
+		result = spell.spareResult()
 	}
 
 	result.Target = target
@@ -39,8 +42,36 @@ func (spell *Spell) NewResult(target *Unit) *SpellResult {
 
 	return result
 }
+
+// spareResult comes back zeroed, the same as a new one.
+func (spell *Spell) spareResult() *SpellResult {
+	n := len(spell.freeResults)
+	if n == 0 {
+		result := &SpellResult{owner: spell}
+		spell.spareResults = append(spell.spareResults, result)
+		return result
+	}
+	result := spell.freeResults[n-1]
+	spell.freeResults = spell.freeResults[:n-1]
+	*result = SpellResult{owner: spell}
+	return result
+}
+
 func (spell *Spell) DisposeResult(result *SpellResult) {
+	// only an in-use spare goes back, so none is ever free twice
+	if result.inUse && result.owner != nil {
+		result.owner.freeResults = append(result.owner.freeResults, result)
+	}
 	result.inUse = false
+}
+
+// Every result is free again when an iteration starts: whatever held one last iteration is gone.
+func (spell *Spell) resetResults() {
+	spell.resultCache.inUse = false
+	for _, result := range spell.spareResults {
+		result.inUse = false
+	}
+	spell.freeResults = append(spell.freeResults[:0], spell.spareResults...)
 }
 
 func (result *SpellResult) Landed() bool {
@@ -411,10 +442,16 @@ func (dot *Dot) CalcAndDealPeriodicSnapshotHealing(sim *Simulation, target *Unit
 }
 
 func (spell *Spell) WaitTravelTime(sim *Simulation, callback func(*Simulation)) {
-	StartDelayedAction(sim, DelayedActionOptions{
-		DoAt:     sim.CurrentTime + spell.TravelTime(),
-		OnAction: callback,
-	})
+	if callback == nil {
+		panic("WaitTravelTime: callback must not be nil")
+	}
+	sim.startLanding(sim.CurrentTime+spell.TravelTime(), callback, nil, nil)
+}
+
+// DealDamageAfterTravel is WaitTravelTime with a landing that only deals result, minus the closure's
+// allocation.
+func (spell *Spell) DealDamageAfterTravel(sim *Simulation, result *SpellResult) {
+	sim.startLanding(sim.CurrentTime+spell.TravelTime(), nil, spell, result)
 }
 
 // Returns the combined attacker modifiers.

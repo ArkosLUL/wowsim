@@ -198,9 +198,7 @@ func (garg *GargoylePet) registerGargoyleStrikeSpell() {
 			// worked out at the launch (Spell::DoAllEffectOnLaunchTarget), and land with the missile.
 			baseDamage := spell.Direct.Roll(sim) + 3*float64(core.CharacterLevel-60) + spell.Direct.SP*spell.SpellPower()
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
-			spell.WaitTravelTime(sim, func(sim *core.Simulation) {
-				spell.DealDamage(sim, result)
-			})
+			spell.DealDamageAfterTravel(sim, result)
 		},
 	})
 }

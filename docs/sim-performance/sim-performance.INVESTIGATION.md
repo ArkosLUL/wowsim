@@ -481,3 +481,75 @@ At GOMAXPROCS 16, I2 → I3:
 - Quick runs gained both ways, 9 to 40% faster at 84 to 92% util. The tanks stay the least busy, since their
   Search stage sims nothing.
 - Normal, already 88 to 98% busy, gained 11 to 37% from the sims alone.
+
+## PERF-MISSILE (wave I6)
+
+Base `494f1b040`, on a machine loaded by another work item's tests and the worldserver's playerbots.
+
+**Profile**, objects allocated per `BenchmarkSimulate` op at 100 iterations:
+- Elemental, 139k (6.9 MiB): `WaitTravelTime`'s `PendingAction` 26%, `NewResult`'s spares 25%, the call sites'
+  closures 25% (Lightning Bolt 15, Searing Totem 9, Lava Burst 2), the hardcast `OnComplete` closure in
+  `makeCastFunc` 13%, dot ticks 6%. CPU: `mallocgc` 14%, GC mark workers 5%, `WaitTravelTime` 8% cumulative.
+- Hunter, 253k: `NewDelayedAction` 19% (93% of it `WaitTravelTime`'s), the hardcast closure 18%, dot ticks 16%,
+  `NewResult` 14%, Auto Shot's closure 7%.
+- The raid, 590k: dot ticks 29%, `NewDelayedAction` 16%, the hardcast closure 16%, the call sites' closures 16%,
+  `NewResult` 11%.
+- A missile in flight at an iteration's end kept its spell's `resultCache` taken for every later iteration, so all
+  that spell's results allocated: 41 spells across the sim tests.
+
+**Fixes**, none moving a result:
+
+| Fix | Why the results can't move |
+|---|---|
+| `WaitTravelTime` queues a pooled `landingAction` (`sim/core/sim.go`), back in the pool as it runs, and all of them when an iteration starts | Queued at the same point with the same time and priority 0, so it runs where the `PendingAction` did; only its slot differs, which the order never reads. Nothing else points at one, so it's never reused while queued |
+| `NewResult` takes a spare from the spell's free list while the cache is taken; `DisposeResult` returns an in-use spare to its own spell's list; `Spell.reset` frees the cache and every spare | A reused spare is zeroed like a new one. The poison build shows no caller reads a result once a later `NewResult` reused it, or a result from the last iteration, or `ResistanceMultiplier` and `PreOutcomeDamage` before `applyResistances` sets them, the only fields a freed cache carries over |
+| `finalizeExpectedDamage` disposes through `DisposeResult` | The same `inUse` flag, and the spare goes back to the pool |
+| `Spell.DealDamageAfterTravel(sim, result)` replaces the 20 call sites whose landing only dealt the result (Searing Totem, Auto Shot, Arcane Missiles, Wrath, …) | Its landing makes the closure's one call, `spell.DealDamage(sim, result)`, from the same place in the queue |
+
+**Checks:** 37 `.results` byte-identical; simval 508/508; `sim/core/missile_pool_test.go` (order among other
+delayed actions, reuse from inside a landing, a landing in flight at the iteration's end, spares going back to their
+own spell once and zeroed, all free after a reset), every test failing under one of 5 mutants. A poison build
+(`go test -overlay` over `spell_result.go` and `sim.go`):
+- hands out a new spare wherever the real code reuses one, and poisons the old one: nil target, NaN damage and
+  threat, every outcome bit;
+- at an iteration's start, poisons every spare and a still-held cache, and keeps that cache held;
+- sets `ResistanceMultiplier` and `PreOutcomeDamage` to NaN in every `NewResult`;
+- panics on a landing reused while queued, run twice or keeping state.
+
+Under it every sim test passes except the pool test, which checks the reuse itself, and the 37 goldens stay
+byte-identical, with poisoned held caches in 41 spells and poisoned spares in 54.
+
+**Call sites:** the closures cost enough to change the simple ones. The core fixes against them plus
+`DealDamageAfterTravel`, 10 interleaved rounds at 100 iterations: Elemental -1.2% (p=0.005), Hunter -2.6%
+(p=0.000), the raid -1.2% (p=0.004), each won 10/10; allocations -17%, -14% and -17%. The other closures (Lightning
+Bolt, Lava Burst, Steady Shot, …) do more than deal and capture their spell's config, so they'd have to move out of
+`ApplyEffects`.
+
+**Before and after**, base against the final tree, 12 interleaved rounds, benchstat medians:
+
+| Package | ms/op, 1 iteration | ms/op, 100 | allocs/op, 1 | allocs/op, 100 |
+|---|---|---|---|---|
+| sim/shaman/elemental | 0.396 ±24% → 0.377 ±1%, -4.6% (p=0.001) | 18.43 ±3% → 16.10 ±3%, -12.6% (p=0.000) | 3.50k → 3.04k | 139.3k → 57.1k |
+| sim/hunter | 0.618 ±2% → 0.609 ±5%, ~ (p=0.291) | 45.38 ±2% → 43.20 ±2%, -4.8% (p=0.000) | 4.43k → 3.80k | 253.0k → 156.7k |
+| sim (raid) | 4.221 ±2% → 4.192 ±14%, ~ (p=0.799) | 263.9 ±2% → 259.2 ±5%, ~ (p=0.291) | 21.2k → 19.5k | 589.7k → 356.7k |
+
+- Allocations fall 8 to 14% at one iteration and 38 to 59% at 100; bytes at 100: Elemental 6.9 → 2.9 MiB, Hunter
+  8.5 → 4.2, the raid 24.8 → 14.8.
+- At GOMAXPROCS 16 the GC marks on idle cores, so wall time hides part of the saving. At `-test.cpu 1`, 8 rounds, 100
+  iterations: Elemental -14.2%, Hunter -4.8%, the raid -2.4%, each p=0.000 and 8/8 won; at 1 iteration -3.5%, -2.4%
+  and flat.
+
+**Elemental against I4** (`4a0f8d5c8`'s class files through an overlay, 8 interleaved rounds): I4 0.307 / 12.47 ms
+at 1 / 100 iterations; base +26% / +46%, final +23% / +29%. The rest is simulated work, not allocation. Per
+100-iteration op the queue runs 112k actions, not 64k, and `DoNextAction` runs 34.1k times, not 21.6k, for the same
+22k rotation actions: 12.5k more passes that find nothing to do. At one iteration `RegisterSpell` adds 8 µs, 6 of it
+`applyServerData`.
+
+**Left:**
+- The hardcast `OnComplete` closure in `makeCastFunc`, one per hardcast: now the largest core allocation, 32% of
+  Elemental's and Hunter's objects, 27% of the raid's.
+- The closures that do more than deal: Lightning Bolt 37% of Elemental's objects, Steady Shot 9% of Hunter's.
+- Elemental's extra rotation passes and queued actions since I4.
+- Dot ticks, as PERF-HOT left them: 48% of the raid's objects.
+- Languish (`sim/druid/items.go`) reads a disposed Wrath or Starfire result's `Target` after a delay: a cast in between
+  can retarget it, cache or spare.
