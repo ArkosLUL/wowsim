@@ -78,7 +78,7 @@ func genericBossRequest() *proto.RaidSimRequest {
 			core.FullDebuffs),
 		Encounter: &proto.Encounter{
 			Duration: 300,
-			Targets:  []*proto.Target{encounters.GenericBossTarget()},
+			Targets:  []*proto.Target{encounters.GenericBossTarget(encounters.GenericBossDamageModifier)},
 		},
 		SimOptions: core.DefaultSimTestOptions,
 	}
