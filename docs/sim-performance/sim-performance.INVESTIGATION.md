@@ -551,5 +551,3 @@ at 1 / 100 iterations; base +26% / +46%, final +23% / +29%. The rest is simulate
 - The closures that do more than deal: Lightning Bolt 37% of Elemental's objects, Steady Shot 9% of Hunter's.
 - Elemental's extra rotation passes and queued actions since I4.
 - Dot ticks, as PERF-HOT left them: 48% of the raid's objects.
-- Languish (`sim/druid/items.go`) reads a disposed Wrath or Starfire result's `Target` after a delay: a cast in between
-  can retarget it, cache or spare.

@@ -101,9 +101,10 @@ bugs, the importer's missing pets, ammo and consumables, and a batch hung on a h
 
 ## Current wave
 
-- Wave: I6, running. Base SHA `b15817c30`.
-- Workflow runId: `wf_70ca9fc3-ef5`, args `waveI6-args.json` in `G:\DevStuff\GitHub\.wave-loop`. Transcript dir:
-  `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\wf_70ca9fc3-ef5`.
+- Wave: J, not started. Wave I6 (base `b15817c30`) landed on `master`.
+- Base SHA: set at wave start.
+- Workflow runId: none. Wave I6 ran as `wf_70ca9fc3-ef5` (args `waveI6-args.json`, results `waveI6-results.json`
+  in `G:\DevStuff\GitHub\.wave-loop`).
 
 ## BiS baseline
 
@@ -126,6 +127,7 @@ Reckoning that way), but J isn't DPS: see below.
 | I3 | 8842.8, +272 / +304 | 10686.4, +608 / +942 | 5064.5, +43 / +40 | 12962.2, +224 / +228 | -89694.0, +3349 / +3736 | -668.4, +750 / +799 |
 | I4 | 8842.8, +272 / +304 | 10686.4, +608 / +942 | 5064.5, +43 / +40 | 12962.2, +224 / +228 | -89694.0, +3349 / +3736 | -668.4, +750 / +799 |
 | I5 | 8860.8, +284 / +293 | 10728.5, +653 / +813 | 5064.6, +43 / +43 | 12963.5, +224 / +182 | -89267.2, +3186 / +3703 | -668.4, +750 / +799 |
+| I6 | 8860.8, +284 / +293 | 10728.5, +653 / +813 | 5064.6, +43 / +43 | 12963.5, +224 / +182 | -89267.2, +3186 / +3703 | -668.4, +750 / +799 |
 
 Quick / Normal. Ret P4 ran at Quick only in wave D, after the glyph fix; its wave C numbers
 (12821.9, +54 / +73) came from a seed that wore the glyph. The two tanks arrive with
@@ -157,6 +159,7 @@ to +228, the path dependence H2 showed. In I4 nothing moved: the wave's one gold
 in the suite. In I5 Prot Pal's `dps_preset` fell 16% (215.6) against TestProtection's -1.1%, likely Holy
 Shield's proc (-15%) weighing more against a boss that keeps hitting (not traced). Combat Rogue's fell 0.2%
 (9927.0) with its goldens (-0.7%); its Normal gain fell to +813 and Ret's to +182, the path dependence again.
+In I6 nothing moved: PERF-MISSILE keeps every golden, and PAR-DECL-4's (hunter, Frost mage) aren't in the suite.
 
 ## Sim throughput
 
@@ -176,6 +179,7 @@ From G the benches run their suites' default players with rotations, at 1 and 10
 | I3 | 1.101 / 74.8 | 0.553 / 27.9 | 0.757 / 41.4 | 0.386 / 12.2 | 5.355 / 250.0 |
 | I4 | 1.088 / 75.2 | 0.510 / 27.8 | 0.743 / 40.3 | 0.414 / 12.5 | 5.029 / 250.6 |
 | I5 | 1.059 / 78.6 | 0.508 / 28.5 | 0.727 / 45.7 | 0.488 / 18.7 | 5.463 / 263.4 |
+| I6 | 1.104 / 76.5 | 0.530 / 28.6 | 0.823 / 44.1 | 0.503 / 17.0 | 5.296 / 263.6 |
 
 H2 ran with the live worldserver using half a core, which moved whole runs by up to 2×
 and cost a few percent here (Ret, which H2 barely touched, +4%). An interleaved A/B against the base
@@ -211,6 +215,11 @@ at the wave base puts PAR-DECL-2's cost at +39% / +47%: a 100-iteration op alloc
 34k (7.2 MB, not 1.2), from `WaitTravelTime`'s delayed action per missile and `NewResult` allocating
 while an earlier missile holds the spell's cached result (Lightning Bolt, Searing Totem). Clearing that
 cache in `Spell.reset` alone saves 1.6%. Hunter's +13% fits the same cause, not measured.
+
+I6's row ran idle too. At 100 iterations PERF-MISSILE brought Elemental 9% under I5's and Hunter 4%; the rest
+moved under 3%. Elemental stays 36% over I4: an op queues 112k actions, not 64k, and makes 12.5k more APL
+passes that cast nothing, the rotation since I5 rather than allocation. One-iteration Hunter reads 13% over I5
+here, but an interleaved A/B of the whole wave puts it at -1.6% (-4.0% at 100 iterations): read the A/B.
 
 E to F2 ran the old requests: one iteration, and no rotation for Ret, Hunter and Elemental.
 
@@ -306,6 +315,7 @@ crashed before F2, so its column starts there.
 | wave I5 cross-review | | | no findings; Improved Earth Shield's percent mod on Earth Shield, which it couldn't confirm from source, checked in the live Spell.dbc |
 | PERF-MISSILE | merged | `ffe8b7ea1` | goldens byte-identical; its A/B at 100 iterations: Elemental -12% (allocations -59%), Hunter -4%, the raid -2%. Elemental stays ~29% over I4, from more queued actions, not allocation |
 | PAR-DECL-4 | merged | `97b207b14` | 4 goldens promoted in `57b62de5b`: hunter BM, MM and SV +0.006% to +0.007% (Explosive Trap's burst scales to level 80), Frost mage +0.0004% (Deep Freeze's SP) |
+| wave I6 cross-review | | `148cd9eaf` | 1 bug: Languish read its triggering hit's result after a delay, which PERF-MISSILE's reuse lets another cast overwrite (multi-target only, no golden moves) |
 
 Later WIs are added as their wave starts.
 

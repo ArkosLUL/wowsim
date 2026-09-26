@@ -499,6 +499,8 @@ up to +0.08%); Frost mage +0.0004%, from Deep Freeze's SP. The other 33 suites a
   id), explosives, racials, and Shadowmourne 71904's travel wait.
 - Checking the op-24 mod values that talents declare against the server's spell mods. `indexSpellMods`
   (`tools/acore/gen_serverdata/model.go`) indexes them but builds bounds only for ops 10, 11 and 21.
+- The fire elemental's Fire Shield 13376/13377: a live capture, then their declarations.
+- Shiv 5940 leaves out `BonusWeaponDamage`, which `Spell::EffectWeaponDmg` adds (moves goldens).
 
 ## Verification
 

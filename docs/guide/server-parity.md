@@ -138,8 +138,8 @@ spell is only as right as its id.
   the damage to the real id. When a suite moves for a spell you didn't touch, look here first.
 - Missiles roll hit, crit and damage at launch (`Spell::DoAllEffectOnLaunchTarget`) and deal it on landing,
   after at least 5 yards of travel (`Spell::AddUnitTarget`), in whole ms. The sim waits out the travel only
-  where the closure calls `spell.WaitTravelTime`, over `DistanceFromTarget`, which is 0 for a pet: its
-  missiles wait the 5 yd floor.
+  where the closure calls `spell.WaitTravelTime`, or `spell.DealDamageAfterTravel` for a landing that only
+  deals the result, over `DistanceFromTarget`, which is 0 for a pet: its missiles wait the 5 yd floor.
 
 The server only acts on its map update, 100 ms live (`ServerSettings.MapUpdateInterval`; 0 means exact,
 which is what unit tests want).

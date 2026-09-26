@@ -9,7 +9,7 @@ Where the code this fork touches lives. Everything else follows the upstream lay
 | `target.go` | targets, `AttackTable`, the default level-83 boss, dungeon scale (`NewEncounter`), the AoE target cap |
 | `raid.go`, `environment.go` | raid and environment setup. `party.Players` skips empty slots, so a player's proto is `raidProto.Parties[party.Index].Players[char.PartyIndex]` |
 | `spell_outcome.go` | every `Outcome*` roll, including enemy vs player |
-| `spell_result.go` | hit, crit, expertise |
+| `spell_result.go` | hit, crit, expertise. A disposed result (what `CalcAndDeal*` return) goes to the spell's next `NewResult`: copy what a delayed closure reads from it |
 | `spell_resistances.go` | armor and magic resistance |
 | `combat_table.go` | the server's combat tables, in integer basis points |
 | `flags.go` | `SpellFlag*` |
