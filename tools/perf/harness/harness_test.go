@@ -32,8 +32,8 @@ func TestScenarios(t *testing.T) {
 		seen[s.Name] = true
 		kinds[s.Kind]++
 	}
-	// 12 specs and the raid; the slow suite's six requests at Quick and Normal
-	want := map[Kind]int{KindSim: 13, KindStatWeights: 1, KindBulk: 1, KindOptimizer: 12}
+	// 12 specs and the raid; the slow suite's six requests plus the two raid25 ones, at Quick and Normal
+	want := map[Kind]int{KindSim: 13, KindStatWeights: 1, KindBulk: 1, KindOptimizer: 16}
 	for kind, n := range want {
 		if kinds[kind] != n {
 			t.Errorf("%d %s scenarios, want %d", kinds[kind], kind, n)

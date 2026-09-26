@@ -8,6 +8,7 @@ import (
 
 	"github.com/wowsims/wotlk/sim/core/proto"
 	"github.com/wowsims/wotlk/sim/core/stats"
+	goproto "google.golang.org/protobuf/proto"
 )
 
 func TestObjectiveWeights(t *testing.T) {
@@ -146,6 +147,48 @@ func TestNewObjectiveFury(t *testing.T) {
 		t.Errorf("J = %v, want DPS / (DPS per AP) = %v", score.Mean, seed.Metrics[MetricDPS].Mean/w.Mean)
 	}
 	t.Logf("%.3f ± %.3f DPS per AP; J = %.1f ± %.1f AP", w.Mean, w.SE, score.Mean, score.SE)
+}
+
+// A slot the trimmer emptied for lack of a pool candidate (a weapon, most sharply) inflates the
+// trimmed seed's own DPS-per-AP: the objective measures its normalizers against the gear as
+// equipped instead, so an emptied weapon slot doesn't size the score's points on gear the player
+// doesn't have (BIS-seed's DK case, about 12%).
+func TestNewObjectiveNormalizesAgainstEquippedNotTrimmedSeed(t *testing.T) {
+	req := presetOptimizeRequest(t, "fury_p1")
+	player := req.Base.Raid.Parties[0].Players[0]
+	req.Equipped = goproto.Clone(player.Equipment).(*proto.EquipmentSpec)
+	// as the trimmer leaves it when the pool has no weapon for this phase
+	player.Equipment.Items[proto.ItemSlot_ItemSlotMainHand] = &proto.ItemSpec{}
+	player.Equipment.Items[proto.ItemSlot_ItemSlotOffHand] = &proto.ItemSpec{}
+
+	r, err := PrepareRequest(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if r.Seed == r.Equipped {
+		t.Fatal("the fixture needs the trimmed seed to differ from the gear as equipped")
+	}
+
+	const iterations = 4000
+	e := NewSimEvaluator(r, MetricDPS)
+	e.shardSize = 100
+	o, err := NewObjective(context.Background(), e, r, iterations)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := o.Normalizers[MetricDPS]
+
+	// what measuring against the weapon-less trimmed seed, the old behavior, would have found
+	seedEval := NewSimEvaluator(r, MetricDPS)
+	seedEval.shardSize = 100
+	evals := evaluate(t, seedEval, iterations, withOffset(r.Seed, stats.AttackPower, -100), withOffset(r.Seed, stats.AttackPower, 100))
+	d := Delta(evals[0], evals[1], MetricDPS)
+	seedNorm := d.Mean / 200
+
+	if near(got.Mean, seedNorm, 0.03*math.Abs(seedNorm)) {
+		t.Errorf("normalizer %.4f is within 3%% of the weapon-less seed's %.4f, want it measured against the equipped weapon instead", got.Mean, seedNorm)
+	}
+	t.Logf("equipped-based normalizer %.4f vs the weapon-less trimmed seed's %.4f (%+.1f%%)", got.Mean, seedNorm, 100*(got.Mean-seedNorm)/seedNorm)
 }
 
 // The survival/threat slider puts both sides into J: taking less damage raises it, and so does

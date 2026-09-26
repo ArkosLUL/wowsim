@@ -92,7 +92,6 @@ export class WorkerPool {
 	// Aborting signal cancels the run on the web server (not under wasm), and the promise still
 	// resolves, with the result marked cancelled.
 	async optimizeGearAsync(request: OptimizeGearRequest, onProgress: (progress: ProgressMetrics) => void, signal?: AbortSignal): Promise<OptimizerResult> {
-		console.log('Optimize gear request: ' + OptimizeGearRequest.toJsonString(request, { enumAsInteger: true }));
 		const worker = this.getLeastBusyWorker();
 		const id = worker.makeTaskId();
 		worker.addPromiseFunc(id + 'progress', this.newProgressHandler(id, worker, onProgress), console.error);
@@ -164,7 +163,11 @@ class SimWorker {
 				delete this.taskIdsToPromiseFuncs[id];
 				this.numTasksRunning--;
 
-				promiseFuncs[0](event.data.outputData);
+				if (event.data.error) {
+					promiseFuncs[1](new Error(event.data.error));
+				} else {
+					promiseFuncs[0](event.data.outputData);
+				}
 			}
 		};
 	}

@@ -3,6 +3,7 @@ package optimizer
 import (
 	"context"
 	"fmt"
+	"math"
 	"testing"
 	"time"
 
@@ -232,6 +233,105 @@ func TestDemonologyValuesSpellPowerHigherInRaidMode(t *testing.T) {
 		t.Errorf("raid-mode DPS per spell power = %+v, solo = %+v; want raid mode clearly higher, the pact it feeds the mage", raidNorm, soloNorm)
 	}
 	t.Logf("DPS per spell power: %.3f ± %.3f raid mode, %.3f ± %.3f solo", raidNorm.Mean, raidNorm.SE, soloNorm.Mean, soloNorm.SE)
+}
+
+// calibrationPoolReq attaches a one-slot fake pool to req, so the run has something to change and
+// runs its full pipeline instead of stopping at "nothing to change".
+func calibrationPoolReq(req *proto.OptimizeGearRequest) *proto.OptimizeGearRequest {
+	kaRegister()
+	req.Pool = &proto.CandidatePool{Slots: []*proto.SlotPool{
+		{Slot: proto.ItemSlot_ItemSlotHead, ItemIds: []int32{kaHeadPlain, kaHeadMeta}},
+	}}
+	return req
+}
+
+// A raid batch's own-metrics stage sims the target inside a derived, single-player context: the
+// calibration gap says how far that context's own DPS sits from simming the seed in the real raid,
+// which the derived context's approximate buffs and debuffs don't reproduce exactly.
+func TestCalibrationGapComparesTheDerivedContextToTheRealRaid(t *testing.T) {
+	req := calibrationPoolReq(raidContribRequest(t, 0, presetPlayer(t, "fury_p1", "Target"), presetPlayer(t, "arcane_p3", "Mage")))
+	req.Settings.Objective = proto.OptimizerObjective_OptimizerObjectiveOwnMetrics
+	req.Settings.Effort = proto.OptimizerEffort_OptimizerEffortQuick
+	result := Optimize(context.Background(), req, nil)
+	if result.ErrorResult != "" {
+		t.Fatal(result.ErrorResult)
+	}
+	if result.CalibrationGap == 0 {
+		t.Error("a real raid of two specced players reported no calibration gap at all")
+	}
+	if math.IsNaN(result.CalibrationGap) || math.Abs(result.CalibrationGap) > 1 {
+		t.Errorf("calibration gap %v isn't a sane fraction of the real raid's DPS", result.CalibrationGap)
+	}
+	t.Logf("calibration gap: %+.2f%%", result.CalibrationGap*100)
+}
+
+// A lone target has no real raid to differ from, raid mode already scores against the real raid
+// directly, and a run with no DPS term in its objective has nothing to calibrate.
+func TestCalibrationGapSkipsWhereItDoesntApply(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		req  func(tb testing.TB) *proto.OptimizeGearRequest
+	}{
+		{"a lone target", func(tb testing.TB) *proto.OptimizeGearRequest {
+			return calibrationPoolReq(raidContribRequest(tb, 0, presetPlayer(tb, "fury_p1", "Target")))
+		}},
+		{"raid mode", func(tb testing.TB) *proto.OptimizeGearRequest {
+			req := calibrationPoolReq(raidContribRequest(tb, 0, presetPlayer(tb, "fury_p1", "Target"), presetPlayer(tb, "arcane_p3", "Mage")))
+			req.Settings.Objective = proto.OptimizerObjective_OptimizerObjectiveRaidDps
+			return req
+		}},
+		{"no DPS term in the objective", func(tb testing.TB) *proto.OptimizeGearRequest {
+			req := calibrationPoolReq(raidContribRequest(tb, 0, presetPlayer(tb, "fury_p1", "Target"), presetPlayer(tb, "arcane_p3", "Mage")))
+			req.Settings.MetricWeights = &proto.OptimizerMetrics{Tps: 1}
+			return req
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			req := tc.req(t)
+			req.Settings.Effort = proto.OptimizerEffort_OptimizerEffortQuick
+			result := Optimize(context.Background(), req, nil)
+			if result.ErrorResult != "" {
+				t.Fatal(result.ErrorResult)
+			}
+			if result.CalibrationGap != 0 {
+				t.Errorf("calibration gap = %v, want exactly 0", result.CalibrationGap)
+			}
+		})
+	}
+}
+
+// The acceptance bar sizes a raid-mode gain against the target's own share of J (ownJ), not the
+// whole raid's: a gain worth clearing 0.05% of the target's own points must clear that bar even
+// where the rest of the raid's DPS would otherwise swamp it.
+func TestRaidModeAcceptanceBarUsesTheTargetsShare(t *testing.T) {
+	req := kaRequest(proto.OptimizerEffort_OptimizerEffortQuick)
+	req.Settings.Objective = proto.OptimizerObjective_OptimizerObjectiveRaidDps
+	r, err := PrepareRequest(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fake := newKnownEvaluator(kaMetrics)
+	fake.others = 1e6
+	obj, err := NewObjective(context.Background(), fake, r, 200)
+	if err != nil {
+		t.Fatal(err)
+	}
+	seedEvals, err := fake.Evaluate(context.Background(), []Point{{Loadout: r.Seed}}, 200)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rn := &run{asked: r, r: r, obj: obj, seedEval: seedEvals[0]}
+	rn.seedJ = obj.Score(rn.seedEval)
+	own := rn.ownJ()
+	if own >= abs(rn.seedJ.Mean) {
+		t.Fatalf("own share %.1f isn't smaller than the raid's J %.1f; the fixture needs a bigger others", own, rn.seedJ.Mean)
+	}
+	if gain := (Estimate{Mean: acceptFraction * own * 1.5}); !rn.accepts(gain) {
+		t.Errorf("a %.4f gain, over 0.05%% of the target's own %.1f, wasn't accepted", gain.Mean, own)
+	}
+	if gain := (Estimate{Mean: acceptFraction * own * 0.5}); rn.accepts(gain) {
+		t.Errorf("a %.4f gain, under 0.05%% of the target's own %.1f, was accepted; the bar must not shrink against the rest of the raid", gain.Mean, own)
+	}
 }
 
 // The raid-mode racial screen sims the whole party, so a Draenei's Heroic Presence lifts a

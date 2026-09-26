@@ -669,6 +669,52 @@ move; only the neighborhood sims and reports 5. **Owns:** `search.go`'s `runners
   score's points about 12% larger (BIS-seed's DK check). Measuring them on the gear as equipped changes the
   objective.
 
+#### As built
+
+- **Calibration:** `run.calibrate` sims the seed in the real raid (`NewRaidEvaluator`) alongside every other
+  stage, only where a derived context exists, DPS is weighted, and it isn't raid mode (raid mode already
+  scores against the real raid; a tank's blend has no DPS term to compare). `OptimizerResult.calibration_gap`
+  was already wired into the tab and the batch cell's warnings (over 3%); only the Go side was missing.
+- **ownJ:** `accepts` (the acceptance bar) and `measureEffects`' weapon-flatness test now size against
+  `ownJ()` instead of `abs(seedJ)`, like `setScreen` already did. In raid mode `ownJ` is the target's own
+  share; elsewhere it's unchanged.
+- **fury_p1.json:** regenerated. The only change is enchant 3851 becoming a main- and off-hand option on
+  about 100 weapons (enchant data moved since the fixture was made); pool size, catalog rows and gems are
+  unchanged.
+- **Neighborhood's last round:** `neighborhood.go` no longer refuses a clear win just because the round cap
+  is reached; it adopts and rebases the round's remaining alternatives (and the rest batch, if the first
+  one adopted) onto the new pick instead of leaving them scored against the one it replaced. `neighborhoodRounds`
+  is now a `var` so a test can lower it without a long adoption chain.
+- **Server-gone runs:** `net_worker.js` now wraps its fetches in try/finally: a rejected fetch posts an
+  `error` on the task's id (and its progress id, for a pending handler), instead of leaving the worker
+  silent. `worker_pool.ts`'s `onmessage` rejects the pending promise on that field instead of always
+  resolving. `runGearOptimizer`, the tab and the batch already had the try/catch to settle on a rejection;
+  they just never got one.
+- **Quick stage 1 hang:** not found. Checked and ruled out: the ranged-slot swing-timer bug (fixed in
+  BIS-hunter-ranged), every other hunter periodic action (all fixed, gear-independent periods),
+  `response.go`'s bisection (a hard 5-step cap), and the worker pool's semaphore (released unconditionally,
+  even after a core panic, since `runSpan` recovers internally). If a gear combination truly hangs
+  `core.RunRaidSim`, the worker pool has no per-sim timeout to reclaim its slot; that's the leading
+  hypothesis, not a confirmed cause.
+- **Request size:** `worker_pool.ts` no longer logs the full request. `pool_builder.ts` drops a plain item
+  (no set, no effect) that another candidate in its slot beats on every stat with an identical socket
+  layout and server stats, once a request passes 500 total candidates - comfortably above every test
+  fixture, well below the 1.9k-4.6k real specs carry. Weapons are skipped: DPS trades against stats in ways
+  a stat comparison can't judge.
+- **Normalizers vs. the trimmed seed:** `NewObjective` measures them against `r.Equipped` (falling back to
+  `r.Seed` with a warning if it fails to sim), instead of always `r.Seed`.
+- **Quick picks that don't repeat:** a fixed RNG seed was rejected (per this section's own finding, it
+  would make a rerun repeat the same miss, not find a better one). Instead, `search.go`'s `annealRuns` for
+  Quick rises 3 → 4: the search never sims (it costs CPU on the surrogate, not iterations), and the
+  Deathsong-P3-sized gap comes from the search missing the better item, not from sim noise, so more
+  independent restarts directly raise the odds any one run finds it. Measured cost: Fury P1 Quick's wall
+  time rose from 6.7-6.8s to 7.3-8.0s (about +10-15%) with no regression in the slow suite's acceptance
+  check; if the timing run finds Quick regressed overall, this is the first thing to trim back.
+- **Harness scenarios:** `optimizer/{quick,normal}/raid25_tank_p1` and `..._raiddps_p1`
+  (`tools/perf/harness/scenarios/`), built from `raidctx`'s synthetic 25-player raid instead of a live
+  roster. Both verified to run to completion (raid-mode stage 2 took 276s at Quick, 16 procs, under this
+  run's shared-machine load - not a timing claim, just proof it completes).
+
 ### BIS-seed (wave I2, done)
 
 A user's Unholy DK run scored its pick +46% over "your gear": the seed trimmer had emptied neck, main

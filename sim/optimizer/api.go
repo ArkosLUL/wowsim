@@ -210,6 +210,10 @@ type run struct {
 	// What verification simmed, for a result cut short by a cancel.
 	verified []*verifiedLoadout
 
+	// How far the derived individual context's own DPS at the seed sits from simming the seed in the
+	// real raid, as a fraction of the real raid's number; 0 where calibrate found nothing to compare.
+	calibrationGap float64
+
 	prefetching sync.WaitGroup
 }
 
@@ -339,6 +343,8 @@ func (r *run) execute() *proto.OptimizerResult {
 	for _, w := range obj.Warnings {
 		r.warn("%s", w)
 	}
+	// runs alongside every later stage; only its wait, right before the result, needs the seed eval
+	waitCalibration := r.calibrate()
 	waitSeed()
 	evals, err := r.evaluate(points, r.budget.Iterations)
 	if err != nil {
@@ -412,7 +418,45 @@ func (r *run) execute() *proto.OptimizerResult {
 	if err != nil {
 		return r.stop(err)
 	}
+	waitCalibration()
 	return r.result(verified, alternatives)
+}
+
+// calibrate kicks off, in the background, a sim of the seed inside the real raid r.asked names, so it
+// overlaps every later stage; the wait it returns sets calibrationGap once the seed eval it compares
+// against is ready too. A lone target has no real raid to differ from, raid mode already scores
+// against it directly, and a tank's survival/threat blend has no DPS term to compare.
+func (r *run) calibrate() (wait func()) {
+	if r.raidMode() || r.obj.Weights[MetricDPS] == 0 || !hasOtherPlayers(r.asked.Base.Raid, r.asked.TargetIndex) {
+		return func() {}
+	}
+	seed := r.r.Seed
+	iterations := r.budget.Iterations
+	var real float64
+	var simErr error
+	done := make(chan struct{})
+	r.prefetching.Add(1)
+	go func() {
+		defer r.prefetching.Done()
+		defer close(done)
+		evals, err := NewRaidEvaluator(r.asked, MetricDPS).Evaluate(r.ctx, []Point{{Loadout: seed}}, iterations)
+		if err != nil {
+			simErr = err
+			return
+		}
+		real = evals[0].ownDPS()
+	}()
+	return func() {
+		<-done
+		if simErr != nil {
+			r.warn("calibration: %v", simErr)
+			return
+		}
+		if real == 0 {
+			return
+		}
+		r.calibrationGap = (r.seedEval.Metrics[MetricDPS].Mean - real) / real
+	}
 }
 
 // healingPresimIterations is core's numPresimIterations, so a pinned HPS is the number the presim
@@ -795,6 +839,7 @@ func (r *run) result(verified []*verifiedLoadout, alternatives []*proto.Optimize
 		Alternatives:    alternatives,
 		RacialScreen:    r.racialScreen,
 		ScoreStats:      r.scoreStats(),
+		CalibrationGap:  r.calibrationGap,
 	}
 	result.Seed = r.loadoutResult(r.ref, r.referenceEval())
 	// the neighborhood resims the pick and the seed at more iterations, where its gain can shrink
@@ -959,12 +1004,13 @@ func (r *run) beatsSeed(eval *Evaluation) bool {
 	return r.seedBroken != nil || r.accepts(r.obj.Delta(r.seedEval, eval))
 }
 
-// accepts is the acceptance test: a paired gain over 2 standard errors and over 0.05% of the seed's J.
+// accepts is the acceptance test: a paired gain over 2 standard errors and over 0.05% of ownJ. In raid
+// mode that's the target's own share, not the whole raid's inflated J.
 func (r *run) accepts(d Estimate) bool {
-	return d.Mean > 2*d.SE && d.Mean > acceptFraction*abs(r.seedJ.Mean)
+	return d.Mean > 2*d.SE && d.Mean > acceptFraction*r.ownJ()
 }
 
-// acceptFraction is the smallest gain, as a fraction of the seed's J, that counts as an improvement.
+// acceptFraction is the smallest gain, as a fraction of ownJ, that counts as an improvement.
 const acceptFraction = 0.0005
 
 func abs(x float64) float64 {

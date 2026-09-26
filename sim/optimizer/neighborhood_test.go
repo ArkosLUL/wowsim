@@ -119,6 +119,34 @@ func TestNeighborhoodMovesTheBest(t *testing.T) {
 	}
 }
 
+// A round that lands on the round cap still adopts every clear win it finds, in both its first and
+// its rest batch, instead of reporting one as a mere alternative: with the cap lowered to 2, trinket
+// 1 moves three times (AP2, then A, then B, each a real gain), and none of the alternatives returned
+// outscores the final pick.
+func TestNeighborhoodAdoptsOnTheLastRound(t *testing.T) {
+	old := neighborhoodRounds
+	neighborhoodRounds = 2
+	defer func() { neighborhoodRounds = old }()
+
+	rank := map[int32]float64{kaTrinketAP2: 60, nbTrinket40: 50, nbTrinket30: 40, kaTrinketA: 30, kaTrinketB: 20, nbTrinket20: 10}
+	rn, s := nbRun(t, rank, 1_000_000)
+	alts, verified, err := rn.neighborhood(s, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := rn.best.Items[proto.ItemSlot_ItemSlotTrinket1].ItemID; got != kaTrinketB || len(verified) != 3 {
+		t.Fatalf("trinket 1 is %d after %d moves, want %d after three (AP2, then A, then B: real dps 72, 100, 120)", got, len(verified), kaTrinketB)
+	}
+	for _, a := range alts {
+		if a.Item.GetId() == kaTrinketB {
+			t.Errorf("the adopted pick %d was also listed among its own alternatives", kaTrinketB)
+		}
+		if a.ScoreDelta > 2*a.ScoreDeltaSe {
+			t.Errorf("alternative %d scores %+.1f ± %.1f over the pick, which the round adopted precisely because nothing beat it", a.Item.GetId(), a.ScoreDelta, a.ScoreDeltaSe)
+		}
+	}
+}
+
 // The first 3 runners-up don't move the best and use most of the budget, so ranks 4-5 sim at fewer
 // iterations. The final seed check and the result's scores still read the full-iteration evals.
 func TestNeighborhoodKeepsTheMostIterations(t *testing.T) {

@@ -84,6 +84,10 @@ Scenarios, requests in `harness/scenarios/`:
 - `statweights/rogue`: the rogue bench's request on the rogue UI's EP stats. `bulk/rogue`: six P2 combat items at
   the bulk tab's defaults (combinations, fast mode, auto enchant).
 - `optimizer/{quick,normal}/<spec>_p<phase>`: the six requests of the optimizer's slow suite (`slow_test.go`).
+- `optimizer/{quick,normal}/raid25_tank_p1`, `..._raiddps_p1`: a tank run and a raid-mode (stage 2) run
+  against `raidctx`'s synthetic 25-player raid (`raidctx/testdata/raid25.json`), so the batch's real cost -
+  each own-metrics run deriving a solo context, raid-mode simming the whole raid - shows up without
+  committing a live roster.
 
 Columns, per point (median over its runs):
 - `wall`; `cpu`, user plus system from getrusage; `util`, cpu / wall / GOMAXPROCS; `gc`, the GC's share of the
