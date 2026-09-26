@@ -7,8 +7,6 @@ import (
 )
 
 func (druid *Druid) registerFerociousBiteSpell() {
-	dmgPerComboPoint := 290.0 + core.TernaryFloat64(druid.Ranged().ID == 25667, 14, 0)
-
 	druid.FerociousBite = druid.RegisterSpell(Cat, core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: 48577},
 		SpellSchool: core.SpellSchoolPhysical,
@@ -38,14 +36,17 @@ func (druid *Druid) registerFerociousBiteSpell() {
 		CritMultiplier:   druid.MeleeCritMultiplier(Cat),
 		ThreatMultiplier: 1,
 
+		Direct: core.SpellEffect{Effect: 0, Min: 120, Max: 260},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			comboPoints := float64(druid.ComboPoints())
 			attackPower := spell.MeleeAttackPower()
 			excessEnergy := min(druid.CurrentEnergy(), 30)
 
-			baseDamage := 120.0 +
-				sim.RandomFloat("Ferocious Bite")*140.0 +
-				dmgPerComboPoint*comboPoints +
+			// 290 a combo point from the effect, the energy and AP shares from Spell::EffectSchoolDMG
+			baseDamage := spell.Direct.Min +
+				sim.RandomFloat("Ferocious Bite")*(spell.Direct.Max-spell.Direct.Min) +
+				290*comboPoints +
 				excessEnergy*(9.4+attackPower/410) +
 				attackPower*0.07*comboPoints
 

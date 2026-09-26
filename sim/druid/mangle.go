@@ -37,14 +37,17 @@ func (druid *Druid) registerMangleBearSpell() {
 			},
 		},
 
-		DamageMultiplier: (1 + 0.1*float64(druid.Talents.SavageFury)) * 1.15 * glyphBonus,
+		DamageMultiplier: glyphBonus,
 		CritMultiplier:   druid.MeleeCritMultiplier(Bear),
 		ThreatMultiplier: core.TernaryFloat64(druid.HasSetBonus(ItemSetThunderheartHarness, 2), 1.15, 1),
 
+		Direct: core.SpellEffect{Effect: 0, Min: 260, Max: 260, WeaponPct: 1.15},
+		Mods:   druid.mangleMods(),
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := 299/1.15 +
+			baseDamage := (spell.Direct.Roll(sim) +
 				spell.Unit.MHWeaponDamage(sim, spell.MeleeAttackPower()) +
-				spell.BonusWeaponDamage()
+				spell.BonusWeaponDamage()) * spell.Direct.WeaponPct
 
 			result := spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 
@@ -88,14 +91,17 @@ func (druid *Druid) registerMangleCatSpell() {
 			IgnoreHaste: true,
 		},
 
-		DamageMultiplier: (1 + 0.1*float64(druid.Talents.SavageFury)) * 2.0 * glyphBonus,
+		DamageMultiplier: glyphBonus,
 		CritMultiplier:   druid.MeleeCritMultiplier(Cat),
 		ThreatMultiplier: 1,
 
+		Direct: core.SpellEffect{Effect: 0, Min: 283, Max: 283, WeaponPct: 2},
+		Mods:   druid.mangleMods(),
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := 566/2.0 +
+			baseDamage := (spell.Direct.Roll(sim) +
 				spell.Unit.MHWeaponDamage(sim, spell.MeleeAttackPower()) +
-				spell.BonusWeaponDamage()
+				spell.BonusWeaponDamage()) * spell.Direct.WeaponPct
 
 			result := spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 
@@ -109,6 +115,14 @@ func (druid *Druid) registerMangleCatSpell() {
 
 		RelatedAuras: []core.AuraArray{mangleAuras},
 	})
+}
+
+// Savage Fury on both Mangles is a percent on the weapon percent effect (115% or 200%), so the flat
+// part rides it too
+func (druid *Druid) mangleMods() []core.SpellMod {
+	return []core.SpellMod{
+		{Op: core.SpellModEffect3, Pct: 10 * druid.Talents.SavageFury},
+	}
 }
 
 func (druid *Druid) CurrentMangleCatCost() float64 {

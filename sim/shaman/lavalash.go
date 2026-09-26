@@ -74,10 +74,11 @@ func (shaman *Shaman) registerLavaLashSpell() {
 		CritMultiplier:   shaman.ElementalCritMultiplier(0),
 		ThreatMultiplier: shaman.spellThreatMultiplier(),
 
+		Direct: core.SpellEffect{Effect: 0, WeaponPct: 1},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			baseDamage := flatDamageBonus +
-				spell.Unit.OHWeaponDamage(sim, spell.MeleeAttackPower()) +
-				spell.BonusWeaponDamage()
+				(spell.Unit.OHWeaponDamage(sim, spell.MeleeAttackPower())+spell.BonusWeaponDamage())*spell.Direct.WeaponPct
 
 			result := spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 

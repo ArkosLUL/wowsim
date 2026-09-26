@@ -135,14 +135,21 @@ func (shaman *Shaman) RegisterWindfuryImbue(procMask core.ProcMask) {
 // newFlametongueImbueSpell deals its damage under the id the server uses for it, Flametongue Attack
 // (10444): both ranks of the imbue itself (58789/58790) are binary on the server, but the hit isn't, so
 // it can't share the imbue's own spell.
+//
+// spell_sha_flametongue_weapon casts it for the passive rank's effect value / 100 per second of weapon
+// speed, held between value / 77 and value / 25, plus 0.03811 spell power per second, truncated. It reads
+// the value without a caster, so level doesn't scale it: 6850 for 58792, 6000 for the downranked 58791.
 func (shaman *Shaman) newFlametongueImbueSpell(weapon *core.Item, isDownranked bool) *core.Spell {
-	baseDamage := 68.5
+	actionID := core.ActionID{SpellID: 10444}
+	perSecond := 68.5
 	if isDownranked {
-		baseDamage = 64
+		// tagged apart, since its declaration differs from the top rank's
+		actionID.Tag = 1
+		perSecond = 60
 	}
 
 	return shaman.RegisterSpell(core.SpellConfig{
-		ActionID:    core.ActionID{SpellID: 10444},
+		ActionID:    actionID,
 		SpellSchool: core.SpellSchoolFire,
 		ProcMask:    core.ProcMaskWeaponProc,
 
@@ -151,11 +158,17 @@ func (shaman *Shaman) newFlametongueImbueSpell(weapon *core.Item, isDownranked b
 		CritMultiplier:   shaman.ElementalCritMultiplier(0),
 		ThreatMultiplier: 1,
 
+		Direct: core.SpellEffect{Effect: 0, Min: perSecond, Max: perSecond, SP: 0.03811},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			if weapon.SwingSpeed != 0 {
-				damage := weapon.SwingSpeed * (baseDamage + 0.1/2.6*spell.SpellPower())
-				spell.CalcAndDealDamage(sim, target, damage, spell.OutcomeMagicHitAndCrit)
+			speed := weapon.SwingSpeed
+			if speed == 0 {
+				return
 			}
+			rate := spell.Direct.Roll(sim)
+			fireDamage := min(max(rate*speed, rate*100/77), rate*100/25)
+			damage := float64(int32(fireDamage + spell.Direct.SP*spell.SpellPower()*speed))
+			spell.CalcAndDealDamage(sim, target, damage, spell.OutcomeMagicHitAndCrit)
 		},
 	})
 }
@@ -283,8 +296,10 @@ func (shaman *Shaman) newFrostbrandImbueSpell() *core.Spell {
 		CritMultiplier:   shaman.ElementalCritMultiplier(0),
 		ThreatMultiplier: 1,
 
+		Direct: core.SpellEffect{Effect: 0, Min: 530, Max: 530, SP: 0.1},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := 530 + 0.1*spell.SpellPower()
+			baseDamage := spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 		},
 	})
@@ -351,8 +366,9 @@ func (shaman *Shaman) newEarthlivingImbueSpell() *core.Spell {
 			},
 			NumberOfTicks: 4,
 			TickLength:    time.Second * 3,
+			Tick:          core.SpellEffect{Effect: 0, FromSpellID: 52000, Min: 163, Max: 163, SP: 0.164},
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
-				dot.SnapshotBaseDamage = 280 + 0.171*dot.Spell.HealingPower(target)
+				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + dot.Tick.SP*dot.Spell.HealingPower(target)
 				dot.SnapshotAttackerMultiplier = dot.Spell.CasterHealingMultiplier()
 			},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {

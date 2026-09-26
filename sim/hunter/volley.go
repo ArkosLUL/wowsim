@@ -47,10 +47,11 @@ func (hunter *Hunter) registerVolleySpell() {
 			AffectedByCastSpeed: true,
 			// each tick is 58433's own hit, which crits like any other
 			TicksCanCrit: true,
+			Tick:         core.SpellEffect{Effect: 0, FromSpellID: 58433, Min: 353, Max: 353, AP: 0.0837},
 
 			OnSnapshot: func(sim *core.Simulation, _ *core.Unit, dot *core.Dot, _ bool) {
 				target := hunter.CurrentTarget
-				dot.SnapshotBaseDamage = 353 + 0.0837*dot.Spell.RangedAttackPower(target)
+				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + dot.Tick.AP*dot.Spell.RangedAttackPower(target)
 				dot.SnapshotBaseDamage *= sim.Encounter.AOECapMultiplier()
 
 				attackTable := dot.Spell.Unit.AttackTables[target.UnitIndex]

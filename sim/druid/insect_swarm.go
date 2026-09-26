@@ -19,8 +19,6 @@ func (druid *Druid) registerInsectSwarmSpell() {
 	dotCanCrit := druid.balanceDotTicksCanCrit()
 	addsTicks := druid.balanceDotAddsTicks()
 
-	impISMultiplier := 1 + 0.01*float64(druid.Talents.ImprovedInsectSwarm)
-
 	if druid.HasSetBonus(ItemSetNightsongGarb, 4) {
 		druid.MoonkinT84PCAura = druid.RegisterAura(core.Aura{
 			Label:    "Elune's Wrath",
@@ -60,6 +58,8 @@ func (druid *Druid) registerInsectSwarmSpell() {
 			0.01*float64(druid.Talents.Genesis),
 			core.TernaryFloat64(druid.HasSetBonus(ItemSetDreamwalkerGarb, 2), 0.1, 0),
 			core.TernaryFloat64(druid.HasMajorGlyph(proto.DruidMajorGlyph_GlyphOfInsectSwarm), 0.3, 0),
+			// Glyph of Hurricane's second effect (54831) is Glyph of Insect Swarm's +30% too
+			core.TernaryFloat64(druid.HasMajorGlyph(proto.DruidMajorGlyph_GlyphOfHurricane), 0.3, 0),
 		),
 		CritMultiplier:   druid.BalanceCritMultiplier(),
 		ThreatMultiplier: 1,
@@ -67,12 +67,6 @@ func (druid *Druid) registerInsectSwarmSpell() {
 		Dot: core.DotConfig{
 			Aura: core.Aura{
 				Label: "Insect Swarm",
-				OnGain: func(aura *core.Aura, sim *core.Simulation) {
-					druid.Wrath.DamageMultiplier *= impISMultiplier
-				},
-				OnExpire: func(aura *core.Aura, sim *core.Simulation) {
-					druid.Wrath.DamageMultiplier /= impISMultiplier
-				},
 			},
 			NumberOfTicks:       numTicks,
 			TickLength:          time.Second * 2,
@@ -80,8 +74,9 @@ func (druid *Druid) registerInsectSwarmSpell() {
 			TickHaste:           core.SpellHasteAddsTicks,
 			TicksCanCrit:        dotCanCrit,
 
+			Tick: core.SpellEffect{Effect: 0, Min: 215, Max: 215, SP: 0.2},
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-				dot.SnapshotBaseDamage = 215 + idolFlatDamage + 0.2*dot.Spell.SpellPower()
+				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + idolFlatDamage + dot.Tick.SP*dot.Spell.SpellPower()
 				dot.SnapshotCritChance = dot.Spell.SpellCritChance(target)
 				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(dot.Spell.Unit.AttackTables[target.UnitIndex])
 			},

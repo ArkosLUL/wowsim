@@ -66,8 +66,10 @@ func (hunter *Hunter) registerSerpentStingSpell() {
 			// the T9 2pc (67150) is an SPELL_AURA_ABILITY_PERIODIC_CRIT on Serpent Sting
 			TicksCanCrit: canCrit,
 
+			Tick: core.SpellEffect{Effect: 0, Min: 242, Max: 242, AP: 0.04},
+
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-				dot.SnapshotBaseDamage = 242 + 0.04*dot.Spell.RangedAttackPower(target)
+				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + dot.Tick.AP*dot.Spell.RangedAttackPower(target)
 				if !isRollover {
 					attackTable := dot.Spell.Unit.AttackTables[target.UnitIndex]
 					dot.SnapshotCritChance = dot.Spell.PhysicalCritChance(attackTable)
@@ -85,11 +87,13 @@ func (hunter *Hunter) registerSerpentStingSpell() {
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			result := spell.CalcOutcome(sim, target, spell.OutcomeRangedHit)
-			if result.Landed() {
-				spell.SpellMetrics[target.UnitIndex].Hits--
-				spell.Dot(target).Apply(sim)
-			}
-			spell.DealOutcome(sim, result)
+			spell.WaitTravelTime(sim, func(sim *core.Simulation) {
+				if result.Landed() {
+					spell.SpellMetrics[target.UnitIndex].Hits--
+					spell.Dot(target).Apply(sim)
+				}
+				spell.DealOutcome(sim, result)
+			})
 		},
 	})
 }

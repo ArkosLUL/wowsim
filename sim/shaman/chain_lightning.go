@@ -22,6 +22,8 @@ func (shaman *Shaman) newChainLightningSpell(isLightningOverload bool) *core.Spe
 		0.26,
 		time.Millisecond*2000,
 		isLightningOverload)
+	spellConfig.Direct = core.SpellEffect{Effect: 0, Min: 973, Max: 1111, SP: 0.571}
+	spellConfig.Mods = []core.SpellMod{{Op: core.SpellModBonusMultiplier, Flat: 4 * shaman.Talents.Shamanism}}
 
 	if !isLightningOverload {
 		spellConfig.Cast.CD = core.Cooldown{
@@ -32,8 +34,7 @@ func (shaman *Shaman) newChainLightningSpell(isLightningOverload bool) *core.Spe
 
 	numHits := min(core.TernaryInt32(shaman.HasMajorGlyph(proto.ShamanMajorGlyph_GlyphOfChainLightning), 4, 3), shaman.Env.GetNumTargets())
 	dmgReductionPerBounce := core.TernaryFloat64(shaman.HasSetBonus(ItemSetTidefury, 2), 0.83, 0.7)
-	dmgBonus := shaman.electricSpellBonusDamage(0.5714)
-	spellCoeff := 0.5714 + 0.04*float64(shaman.Talents.Shamanism)
+	relicSpellPower := shaman.electricSpellRelicSpellPower()
 
 	canLO := !isLightningOverload && shaman.Talents.LightningOverload > 0
 	lightningOverloadChance := float64(shaman.Talents.LightningOverload) * 0.11 / 3
@@ -42,7 +43,7 @@ func (shaman *Shaman) newChainLightningSpell(isLightningOverload bool) *core.Spe
 		bounceCoeff := 1.0
 		curTarget := target
 		for hitIndex := int32(0); hitIndex < numHits; hitIndex++ {
-			baseDamage := dmgBonus + sim.Roll(973, 1111) + spellCoeff*spell.SpellPower()
+			baseDamage := spell.Direct.Roll(sim) + spell.Direct.SP*(spell.SpellPower()+relicSpellPower)
 			baseDamage *= bounceCoeff
 			result := spell.CalcDamage(sim, curTarget, baseDamage, spell.OutcomeMagicHitAndCrit)
 

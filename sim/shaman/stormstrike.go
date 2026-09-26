@@ -46,7 +46,7 @@ func (shaman *Shaman) StormstrikeDebuffAura(target *core.Unit) *core.Aura {
 	})
 }
 
-func (shaman *Shaman) newStormstrikeHitSpell(actionID core.ActionID, procMask core.ProcMask, isMH bool, flatDamageBonus float64, damageMultiplier float64) *core.Spell {
+func (shaman *Shaman) newStormstrikeHitSpell(actionID core.ActionID, procMask core.ProcMask, isMH bool, relicBonus int32, damageMultiplier float64) *core.Spell {
 	return shaman.RegisterSpell(core.SpellConfig{
 		ActionID:    actionID,
 		SpellSchool: core.SpellSchoolPhysical,
@@ -57,17 +57,20 @@ func (shaman *Shaman) newStormstrikeHitSpell(actionID core.ActionID, procMask co
 		CritMultiplier:   shaman.DefaultMeleeCritMultiplier(),
 		ThreatMultiplier: 1,
 
+		Direct: core.SpellEffect{Effect: 0, WeaponPct: 1},
+		Mods:   []core.SpellMod{{Op: core.SpellModEffect1, Flat: relicBonus}},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			var baseDamage float64
+			flatBonus := spell.Direct.Roll(sim)
+			var weaponDamage float64
 			if isMH {
-				baseDamage = flatDamageBonus +
-					spell.Unit.MHWeaponDamage(sim, spell.MeleeAttackPower()) +
-					spell.BonusWeaponDamage()
+				weaponDamage = spell.Unit.MHWeaponDamage(sim, spell.MeleeAttackPower())
 			} else {
-				baseDamage = flatDamageBonus +
-					spell.Unit.OHWeaponDamage(sim, spell.MeleeAttackPower()) +
-					spell.BonusWeaponDamage()
+				// the off hand's 50% cuts the flat bonus too, truncated (Spell::EffectWeaponDmg)
+				flatBonus = float64(int32(flatBonus * 0.5))
+				weaponDamage = spell.Unit.OHWeaponDamage(sim, spell.MeleeAttackPower())
 			}
+			baseDamage := (flatBonus + weaponDamage + spell.BonusWeaponDamage()) * spell.Direct.WeaponPct
 
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialCritOnly)
 		},
@@ -75,14 +78,11 @@ func (shaman *Shaman) newStormstrikeHitSpell(actionID core.ActionID, procMask co
 }
 
 func (shaman *Shaman) registerStormstrikeSpell() {
-	var flatDamageBonus float64 = 0
-	if shaman.Ranged().ID == TotemOfTheDancingFlame {
-		flatDamageBonus += 155
-	}
+	relicBonus := core.TernaryInt32(shaman.Ranged().ID == TotemOfTheDancingFlame, 155, 0)
 	damageMultiplier := core.TernaryFloat64(shaman.HasSetBonus(ItemSetWorldbreakerBattlegear, 2), 1.2, 1)
 
-	mhHit := shaman.newStormstrikeHitSpell(StormstrikeMHActionID, core.ProcMaskMeleeMHSpecial, true, flatDamageBonus, damageMultiplier)
-	ohHit := shaman.newStormstrikeHitSpell(StormstrikeOHActionID, core.ProcMaskMeleeOHSpecial, false, flatDamageBonus, damageMultiplier)
+	mhHit := shaman.newStormstrikeHitSpell(StormstrikeMHActionID, core.ProcMaskMeleeMHSpecial, true, relicBonus, damageMultiplier)
+	ohHit := shaman.newStormstrikeHitSpell(StormstrikeOHActionID, core.ProcMaskMeleeOHSpecial, false, relicBonus, damageMultiplier)
 
 	ssDebuffAuras := shaman.NewEnemyAuraArray(shaman.StormstrikeDebuffAura)
 

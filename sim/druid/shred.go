@@ -8,9 +8,8 @@ import (
 )
 
 func (druid *Druid) registerShredSpell() {
-	flatDamageBonus := (666 +
-		core.TernaryFloat64(druid.Ranged().ID == 29390, 88, 0) +
-		core.TernaryFloat64(druid.Ranged().ID == 40713, 203, 0)) / 2.25
+	idolBonus := core.TernaryInt32(druid.Ranged().ID == 29390, 39, 0) + // Everbloom Idol
+		core.TernaryInt32(druid.Ranged().ID == 40713, 90, 0) // Idol of the Ravenous Beast
 
 	hasGlyphofShred := druid.HasMajorGlyph(proto.DruidMajorGlyph_GlyphOfShred)
 	maxRipTicks := druid.MaxRipTicks()
@@ -35,14 +34,19 @@ func (druid *Druid) registerShredSpell() {
 			return !druid.PseudoStats.InFrontOfTarget
 		},
 
-		DamageMultiplier: 2.25,
+		DamageMultiplier: 1,
 		CritMultiplier:   druid.MeleeCritMultiplier(Cat),
 		ThreatMultiplier: 1,
 
+		Direct: core.SpellEffect{Effect: 0, Min: 296, Max: 296, WeaponPct: 2.25},
+		Mods: []core.SpellMod{
+			{Op: core.SpellModEffect1, Flat: idolBonus},
+		},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := flatDamageBonus +
+			baseDamage := (spell.Direct.Roll(sim) +
 				spell.Unit.MHWeaponDamage(sim, spell.MeleeAttackPower()) +
-				spell.BonusWeaponDamage()
+				spell.BonusWeaponDamage()) * spell.Direct.WeaponPct
 
 			modifier := 1.0
 			if druid.BleedCategories.Get(target).AnyActive() {
@@ -72,7 +76,8 @@ func (druid *Druid) registerShredSpell() {
 			}
 		},
 		ExpectedInitialDamage: func(sim *core.Simulation, target *core.Unit, spell *core.Spell, _ bool) *core.SpellResult {
-			baseDamage := flatDamageBonus + spell.Unit.AutoAttacks.MH().CalculateAverageWeaponDamage(spell.MeleeAttackPower()) + spell.BonusWeaponDamage()
+			baseDamage := (spell.Direct.Average() + spell.Unit.AutoAttacks.MH().CalculateAverageWeaponDamage(spell.MeleeAttackPower()) +
+				spell.BonusWeaponDamage()) * spell.Direct.WeaponPct
 
 			modifier := 1.0
 			if druid.BleedCategories.Get(target).AnyActive() {

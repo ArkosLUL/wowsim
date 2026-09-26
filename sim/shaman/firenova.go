@@ -24,11 +24,12 @@ func (shaman *Shaman) registerFireNovaAttackSpell() *core.Spell {
 		CritMultiplier:   shaman.ElementalCritMultiplier(0),
 		ThreatMultiplier: shaman.spellThreatMultiplier(),
 
+		Direct: core.SpellEffect{Effect: 0, Min: 893, Max: 997, SP: 0.214},
+
 		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, spell *core.Spell) {
-			// spell_bonus_data (61654): Direct 0.214
-			dmgFromSP := 0.214 * spell.SpellPower()
+			dmgFromSP := spell.Direct.SP * spell.SpellPower()
 			for _, aoeTarget := range sim.Encounter.TargetUnits {
-				baseDamage := (sim.Roll(893, 997) + dmgFromSP) * sim.Encounter.AOECapMultiplier()
+				baseDamage := (spell.Direct.Roll(sim) + dmgFromSP) * sim.Encounter.AOECapMultiplier()
 				spell.CalcAndDealDamage(sim, aoeTarget, baseDamage, spell.OutcomeMagicHitAndCrit)
 			}
 		},

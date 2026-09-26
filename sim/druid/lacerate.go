@@ -7,12 +7,7 @@ import (
 )
 
 func (druid *Druid) registerLacerateSpell() {
-	tickDamage := 320.0 / 5
-	initialDamage := 88.0
-	if druid.Ranged().ID == 27744 { // Idol of Ursoc
-		tickDamage += 8
-		initialDamage += 8
-	}
+	idolBonus := core.TernaryInt32(druid.Ranged().ID == 27744, 8, 0) // Idol of Ursoc
 
 	initialDamageMul := 1 *
 		core.TernaryFloat64(druid.HasSetBonus(ItemSetLasherweaveBattlegear, 2), 1.2, 1) *
@@ -54,8 +49,9 @@ func (druid *Druid) registerLacerateSpell() {
 			TickLength:    time.Second * 3,
 			TicksCanCrit:  druid.Talents.PrimalGore,
 
+			Tick: core.SpellEffect{Effect: 0, Min: 64, Max: 64, AP: 0.01},
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-				dot.SnapshotBaseDamage = tickDamage + 0.01*dot.Spell.MeleeAttackPower()
+				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + dot.Tick.AP*dot.Spell.MeleeAttackPower()
 				dot.SnapshotBaseDamage *= float64(dot.Aura.GetStacks())
 
 				if !isRollover {
@@ -74,10 +70,13 @@ func (druid *Druid) registerLacerateSpell() {
 			},
 		},
 
+		Direct: core.SpellEffect{Effect: 1, Min: 88, Max: 88},
+		Mods: []core.SpellMod{
+			{Op: core.SpellModAllEffects, Flat: idolBonus},
+		},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			// spell_bonus_data (spell 48568): ap: 0 on the direct effect, apDot: 0.01 on the periodic
-			// one, so only the tick (OnSnapshot above) carries an AP coefficient.
-			baseDamage := initialDamage
+			baseDamage := spell.Direct.Roll(sim)
 			if druid.BleedCategories.Get(target).AnyActive() {
 				baseDamage *= 1.3
 			}

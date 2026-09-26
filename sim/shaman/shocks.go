@@ -50,8 +50,9 @@ func (shaman *Shaman) newShockSpellConfig(spellID int32, spellSchool core.SpellS
 
 func (shaman *Shaman) registerEarthShockSpell(shockTimer *core.Timer) {
 	config := shaman.newShockSpellConfig(49231, core.SpellSchoolNature, 0.18, shockTimer)
+	config.Direct = core.SpellEffect{Effect: 1, Min: 854, Max: 900, SP: 0.3858}
 	config.ApplyEffects = func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-		baseDamage := sim.Roll(854, 900) + 0.386*spell.SpellPower()
+		baseDamage := spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()
 		spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 	}
 
@@ -66,8 +67,9 @@ func (shaman *Shaman) registerFlameShockSpell(shockTimer *core.Timer) {
 	config.DamageMultiplier += 0.1 * float64(shaman.Talents.BoomingEchoes)
 
 	flameShockBaseNumberOfTicks := 6 + core.TernaryInt32(shaman.HasSetBonus(ItemSetThrallsRegalia, 2), 3, 0)
+	config.Direct = core.SpellEffect{Effect: 0, Min: 500, Max: 500, SP: 0.214}
 	config.ApplyEffects = func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-		baseDamage := 500 + 0.214*spell.SpellPower()
+		baseDamage := spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()
 		result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 		if result.Landed() {
 			spell.Dot(target).NumberOfTicks = flameShockBaseNumberOfTicks
@@ -97,8 +99,10 @@ func (shaman *Shaman) registerFlameShockSpell(shockTimer *core.Timer) {
 		// mod-spell-tweaks doesn't give Flame Shock's tick aura 286, unlike Blood Plague or Rend's.
 		TicksCanCrit: false,
 
+		Tick: core.SpellEffect{Effect: 1, Min: 139, Max: 139, SP: 0.1},
+
 		OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
-			dot.SnapshotBaseDamage = 834/6 + 0.1*dot.Spell.SpellPower()
+			dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + dot.Tick.SP*dot.Spell.SpellPower()
 			dot.SnapshotCritChance = dot.Spell.SpellCritChance(target)
 
 			dot.Spell.DamageMultiplierAdditive += bonusPeriodicDamageMultiplier
@@ -118,8 +122,9 @@ func (shaman *Shaman) registerFrostShockSpell(shockTimer *core.Timer) {
 	config.Cast.CD.Duration -= time.Duration(shaman.Talents.BoomingEchoes) * time.Second
 	config.DamageMultiplier += 0.1 * float64(shaman.Talents.BoomingEchoes)
 	config.ThreatMultiplier *= 2
+	config.Direct = core.SpellEffect{Effect: 1, Min: 812, Max: 858, SP: 0.3858}
 	config.ApplyEffects = func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-		baseDamage := sim.Roll(812, 858) + 0.386*spell.SpellPower()
+		baseDamage := spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()
 		spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 	}
 

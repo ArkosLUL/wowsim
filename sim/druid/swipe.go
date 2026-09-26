@@ -7,11 +7,11 @@ import (
 )
 
 func (druid *Druid) registerSwipeBearSpell() {
-	flatBaseDamage := 108.0
-	if druid.Ranged().ID == 23198 { // Idol of Brutality
-		flatBaseDamage += 10
-	} else if druid.Ranged().ID == 38365 { // Idol of Perspicacious Attacks
-		flatBaseDamage += 24
+	idolBonus := int32(0)
+	if druid.Ranged().ID == IdolOfBrutality {
+		idolBonus = 10
+	} else if druid.Ranged().ID == IdolOfPerspicaciousAttacks {
+		idolBonus = 24
 	}
 
 	lbdm := core.TernaryFloat64(druid.HasSetBonus(ItemSetLasherweaveBattlegear, 2), 1.2, 1.0)
@@ -38,8 +38,13 @@ func (druid *Druid) registerSwipeBearSpell() {
 		CritMultiplier:   druid.MeleeCritMultiplier(Bear),
 		ThreatMultiplier: 1,
 
+		Direct: core.SpellEffect{Effect: 0, Min: 108, Max: 108, AP: 0.063},
+		Mods: []core.SpellMod{
+			{Op: core.SpellModEffect1, Flat: idolBonus},
+		},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := flatBaseDamage + 0.063*spell.MeleeAttackPower()
+			baseDamage := spell.Direct.Roll(sim) + spell.Direct.AP*spell.MeleeAttackPower()
 			baseDamage *= sim.Encounter.AOECapMultiplier()
 			for _, aoeTarget := range sim.Encounter.TargetUnits {
 				spell.CalcAndDealDamage(sim, aoeTarget, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
@@ -49,7 +54,6 @@ func (druid *Druid) registerSwipeBearSpell() {
 }
 
 func (druid *Druid) registerSwipeCatSpell() {
-	weaponMulti := 2.5
 	fidm := 1.0 + 0.1*float64(druid.Talents.FeralInstinct)
 
 	druid.SwipeCat = druid.RegisterSpell(Cat, core.SpellConfig{
@@ -68,12 +72,14 @@ func (druid *Druid) registerSwipeCatSpell() {
 			IgnoreHaste: true,
 		},
 
-		DamageMultiplier: fidm * weaponMulti,
+		DamageMultiplier: fidm,
 		CritMultiplier:   druid.MeleeCritMultiplier(Cat),
 		ThreatMultiplier: 1,
 
+		Direct: core.SpellEffect{Effect: 0, WeaponPct: 2.5},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := spell.Unit.MHNormalizedWeaponDamage(sim, spell.MeleeAttackPower())
+			baseDamage := spell.Unit.MHNormalizedWeaponDamage(sim, spell.MeleeAttackPower()) * spell.Direct.WeaponPct
 			baseDamage *= sim.Encounter.AOECapMultiplier()
 			for _, aoeTarget := range sim.Encounter.TargetUnits {
 				spell.CalcAndDealDamage(sim, aoeTarget, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)

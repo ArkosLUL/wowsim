@@ -1284,6 +1284,57 @@ Roll details the tables above don't show:
 - Everlasting Affliction rank 1's class mask (`[2,273,0]`) has Seed of Corruption; ranks 2–5 (`[2,257,0]`)
   don't.
 
+**Effect declarations (PAR-DECL-2)** ([PLAN](effect-declarations.PLAN.md#par-decl-2-as-built))
+- Hunter:
+  - Explosive Shot's tick casts 53352 with the rolled amount (`AuraEffect::HandlePeriodicDummyAuraTick`),
+    whose live `spell_bonus_data` row gives 0.16 ranged AP (retail's 0.14 was the sim's). serverdata lacks
+    53352 and Explosive Trap's 49065 (live row: 0.1 AP, direct and tick).
+  - Wolverine Bite (53508) is 405 flat, 5 a level: no `spell_bonus_data` row, so no AP (the sim had 400 +
+    0.07 AP).
+  - Missiles: Auto Shot (75) travels at 40 yd/s like the other shots. `Spell::_cast` skips the delay for a
+    channel, so Volley's ticks don't travel, but not for a triggered spell: Chimera Shot's Serpent (53353)
+    flies again once the shot lands.
+  - Kill Shot's 0.4 RAP goes on after the 200% (`Spell::EffectWeaponDmg`), so it isn't doubled.
+- Shaman:
+  - The fire elemental (`npc_pet_shaman_fire_elemental`) casts Fire Blast 57984, Fire Nova 12470 and, on
+    engaging, Fire Shield 13377, whose 3 s trigger 13376 deals 95 at level 80 (1.2 a level). With the live
+    `spell_bonus_data` rows: 110–130 + 0.2, 148–170 + 0.5, 95 + 0.015 SP. The sim had retail-scale
+    714–844 + 0.429, 955–1098 + 1.0 and Fire Shield 11350. The AI casts Fire Nova every 8–15 s and Fire
+    Blast every 4–8 s, first 5–20 s in, which the sim's cadence doesn't follow. serverdata lacks 57984,
+    13376 and 13377.
+  - Earth Shield heals 337 + 0.5371 healing power a charge (live row; retail 0.286), fixed at apply by
+    `spell_sha_earth_shield`, which then adds the glyph's 20% and Improved Shields' percent again on the
+    part above the base value.
+  - `spell_sha_flametongue_weapon` reads the passive rank's value without a caster: the downranked rank 9
+    (58791) deals 60 per second of weapon speed, where retail's level scaling gave about 64. Its spell
+    power share is 0.03811 per second, not 0.1/2.6.
+  - `spell_sha_lightning_overload` casts 45284/45297 for half the proc's damage, halved again on a crit.
+    The sim recasts a half-damage bolt with its own roll and crit.
+  - Clearcasting (16246), Elemental Mastery (16166) and Maelstrom Weapon (53817) have `spell_proc` rows, so
+    `Player::RemoveSpellMods` leaves their charges to the cast-phase proc, which needs the cast to have used
+    the mod (`PROC_ATTR_REQ_SPELLMOD`). With travel, a Lightning Bolt or Lava Burst crit's Clearcasting
+    lands during the next cast, which already paid full cost.
+  - `TotemAI` recasts Searing Totem's 2.2 s bolt once the cast ends: `IsNonMeleeSpellCast(false)` skips a
+    spell in flight. The sim's 24 bolts of 2.5 s stand in for that.
+  - The Lightning Bolt/Chain Lightning relics (class scripts 4554, 5142, 6008, 8627) and the Totems of the
+    Third Wind (3736) add spell or healing power in `SpellDamageBonusDone`/`SpellHealingBonusDone`, so the
+    coefficient with its op-24 mods scales them. Furious Gladiator's Totem of the Third Wind (60559) gives
+    320, not 338.
+- Druid:
+  - Improved Insect Swarm adds its percent to Wrath's rolled value before `SpellDamageBonusDone`
+    (`Spell::EffectSchoolDMG`), so spell power doesn't take it.
+  - Glyph of Hurricane (54831): the -20 on effect 0 meant for Hurricane's slow also lowers the damage tick 48466
+    (451 → 431), which shares the class mask, and its second effect repeats Glyph of Insect Swarm's +30%.
+  - Idol of the Beast's 32410 is a bare dummy no script reads, so Ferocious Bite gains nothing.
+  - Rip's AP share and idol (`spell_dru_rip`) and Crying Wind's 374 on Insect Swarm (`spell_dru_insect_swarm`, an
+    int over the aura's total ticks, haste-added ones included) come after `SpellDamageBonusDone`, so the caster's
+    done percents skip them. The sim multiplies them. Not fixed.
+  - Charges and procs, not changed: Clearcasting (16870) needs the cast to have used the mod
+    (`PROC_ATTR_REQ_SPELLMOD`), so a proc landing mid-cast is kept for the next cast, where the sim spends it on
+    the current one, which already paid full cost. Nature's Grace (-16880, cast and hit phases, crits) also procs
+    at Wrath's launch: this fork's `Spell::_cast` passes the precomputed crit to the cast phase. Eclipse (-48516)
+    has `HitMask` crit, so only crits roll it; the sim rolls on every landed Wrath and Starfire.
+
 ## Verified on the live server
 
 `[ac]/modules/mod-sim-validation/e2e` (`TestSimvalWarrior`, `TestSimvalHunter`) ran every probe inside Naxxramas and

@@ -373,8 +373,11 @@ func (hp *HunterPet) registerWolverineBite() {
 		CritMultiplier:   2,
 		ThreatMultiplier: 1,
 
+		// 5 a level, and no AP: no spell_bonus_data row
+		Direct: core.SpellEffect{Effect: 0, Min: 405, Max: 405},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := 5*80 + 0.07*spell.MeleeAttackPower()
+			baseDamage := spell.Direct.Roll(sim)
 			baseDamage *= hp.killCommandMult()
 
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialNoBlockDodgeParry)

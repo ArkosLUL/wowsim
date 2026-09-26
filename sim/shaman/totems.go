@@ -55,9 +55,9 @@ func (shaman *Shaman) registerHealingStreamTotemSpell() {
 		DamageMultiplier: 1 + (.02 * float64(shaman.Talents.Purification)) + 0.15*float64(shaman.Talents.RestorativeTotems),
 		CritMultiplier:   1,
 		ThreatMultiplier: 1 - (float64(shaman.Talents.HealingGrace) * 0.05),
+		Direct:           core.SpellEffect{Effect: 0, Min: 25, Max: 25, SP: 0.0827},
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			// TODO: find healing stream coeff
-			healing := 25 + spell.HealingPower(target)*0.08272
+			healing := spell.Direct.Roll(sim) + spell.Direct.SP*spell.HealingPower(target)
 			spell.CalcAndDealHealing(sim, target, healing, spell.OutcomeHealing)
 		},
 	})

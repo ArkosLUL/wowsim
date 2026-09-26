@@ -40,15 +40,20 @@ func (hunter *Hunter) registerKillShotSpell() {
 		CritMultiplier:   hunter.critMultiplier(true, true),
 		ThreatMultiplier: 1,
 
+		// Spell::EffectWeaponDmg adds the AP after the weapon percent
+		Direct: core.SpellEffect{Effect: 0, Min: 325, Max: 325, AP: 0.4, WeaponPct: 2},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			// 0.2 rap from normalized weapon (2.8/14) and 0.2 from bonus ratio
-			baseDamage := 0.4*spell.RangedAttackPower(target) +
+			// the weapon's AP part, normalized: RAP / 14 × 2.8 s
+			baseDamage := (spell.Direct.Roll(sim) + 0.2*spell.RangedAttackPower(target) +
 				hunter.AutoAttacks.Ranged().BaseDamage(sim) +
 				hunter.AmmoDamageBonus +
-				spell.BonusWeaponDamage() +
-				325
-			baseDamage *= 2
-			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeRangedHitAndCrit)
+				spell.BonusWeaponDamage()) * spell.Direct.WeaponPct
+			baseDamage += spell.Direct.AP * spell.RangedAttackPower(target)
+			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeRangedHitAndCrit)
+			spell.WaitTravelTime(sim, func(sim *core.Simulation) {
+				spell.DealDamage(sim, result)
+			})
 		},
 	})
 }

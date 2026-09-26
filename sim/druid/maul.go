@@ -5,12 +5,15 @@ import (
 	"github.com/wowsims/wotlk/sim/core/proto"
 )
 
+const IdolOfBrutality int32 = 23198
+const IdolOfPerspicaciousAttacks int32 = 38365
+
 func (druid *Druid) registerMaulSpell() {
-	flatBaseDamage := 578.0
-	if druid.Ranged().ID == 23198 { // Idol of Brutality
-		flatBaseDamage += 50
-	} else if druid.Ranged().ID == 38365 { // Idol of Perspicacious Attacks
-		flatBaseDamage += 120
+	idolBonus := int32(0)
+	if druid.Ranged().ID == IdolOfBrutality {
+		idolBonus = 50
+	} else if druid.Ranged().ID == IdolOfPerspicaciousAttacks {
+		idolBonus = 120
 	}
 
 	numHits := core.TernaryInt32(druid.HasMajorGlyph(proto.DruidMajorGlyph_GlyphOfMaul) && druid.Env.GetNumTargets() > 1, 2, 1)
@@ -31,6 +34,11 @@ func (druid *Druid) registerMaulSpell() {
 		ThreatMultiplier: 1,
 		FlatThreatBonus:  424,
 
+		Direct: core.SpellEffect{Effect: 0, Min: 578, Max: 578, WeaponPct: 1},
+		Mods: []core.SpellMod{
+			{Op: core.SpellModEffect1, Flat: idolBonus},
+		},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			// Need to specially deactivate CC here in case maul is cast simultaneously with another spell.
 			if druid.ClearcastingAura != nil {
@@ -47,9 +55,9 @@ func (druid *Druid) registerMaulSpell() {
 
 			curTarget := target
 			for hitIndex := int32(0); hitIndex < numHits; hitIndex++ {
-				baseDamage := flatBaseDamage +
+				baseDamage := (spell.Direct.Roll(sim) +
 					spell.Unit.MHWeaponDamage(sim, spell.MeleeAttackPower()) +
-					spell.BonusWeaponDamage()
+					spell.BonusWeaponDamage()) * spell.Direct.WeaponPct
 				baseDamage *= modifier
 
 				result := spell.CalcAndDealDamage(sim, curTarget, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)

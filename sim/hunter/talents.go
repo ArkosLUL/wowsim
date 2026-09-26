@@ -330,17 +330,21 @@ func (hunter *Hunter) applyWildQuiver() {
 		MissileSpeed: 40,
 
 		// Marked for Death's class mask covers it like Auto Shot's
-		DamageMultiplier: 0.8 * hunter.markedForDeathMultiplier(),
+		DamageMultiplier: 1 * hunter.markedForDeathMultiplier(),
 		CritMultiplier:   hunter.critMultiplier(false, false),
 		ThreatMultiplier: 1,
 
+		Direct: core.SpellEffect{Effect: 0, WeaponPct: 0.8},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			// 80% weapon damage, and the ranged weapon's damage includes the ammo
-			// (Player::CalculateMinMaxDamage)
-			baseDamage := spell.Unit.RangedWeaponDamage(sim, spell.RangedAttackPower(target)) +
+			// the ranged weapon's damage includes the ammo (Player::CalculateMinMaxDamage)
+			baseDamage := (spell.Unit.RangedWeaponDamage(sim, spell.RangedAttackPower(target)) +
 				hunter.AmmoDamageBonus +
-				spell.BonusWeaponDamage()
-			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeRangedHitAndCrit)
+				spell.BonusWeaponDamage()) * spell.Direct.WeaponPct
+			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeRangedHitAndCrit)
+			spell.WaitTravelTime(sim, func(sim *core.Simulation) {
+				spell.DealDamage(sim, result)
+			})
 		},
 	})
 

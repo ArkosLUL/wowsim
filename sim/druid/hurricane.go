@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/wowsims/wotlk/sim/core"
+	"github.com/wowsims/wotlk/sim/core/proto"
 )
 
 func (druid *Druid) registerHurricaneSpell() {
@@ -19,8 +20,13 @@ func (druid *Druid) registerHurricaneSpell() {
 			0.01*float64(druid.Talents.Genesis),
 		),
 		ThreatMultiplier: 1,
+		Direct:           core.SpellEffect{Effect: 0, Min: 451, Max: 451, SP: 0.12898},
+		Mods: []core.SpellMod{
+			// Glyph of Hurricane's -20 is meant for the slow, but its class mask takes this tick's damage too
+			{Op: core.SpellModEffect1, Flat: core.TernaryInt32(druid.HasMajorGlyph(proto.DruidMajorGlyph_GlyphOfHurricane), -20, 0)},
+		},
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			damage := 451 + 0.12898*spell.SpellPower()
+			damage := spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()
 			damage *= sim.Encounter.AOECapMultiplier()
 			for _, aoeTarget := range sim.Encounter.TargetUnits {
 				spell.CalcAndDealDamage(sim, aoeTarget, damage, spell.OutcomeMagicHitAndCrit)

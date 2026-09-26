@@ -42,13 +42,15 @@ func (shaman *Shaman) registerThunderstormSpell() {
 		CritMultiplier:   shaman.ElementalCritMultiplier(0),
 		ThreatMultiplier: shaman.spellThreatMultiplier(),
 
+		Direct: core.SpellEffect{Effect: 0, Min: 1450, Max: 1656, SP: 0.172},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			shaman.AddMana(sim, shaman.MaxMana()*manaRestore, manaMetrics)
 
 			if shaman.thunderstormInRange {
-				dmgFromSP := 0.172 * spell.SpellPower()
+				dmgFromSP := spell.Direct.SP * spell.SpellPower()
 				for _, aoeTarget := range sim.Encounter.TargetUnits {
-					baseDamage := sim.Roll(1450, 1656) + dmgFromSP
+					baseDamage := spell.Direct.Roll(sim) + dmgFromSP
 					baseDamage *= sim.Encounter.AOECapMultiplier()
 					spell.CalcAndDealDamage(sim, aoeTarget, baseDamage, spell.OutcomeMagicHitAndCrit)
 				}
