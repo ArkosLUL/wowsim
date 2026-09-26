@@ -29,10 +29,12 @@ func (hunter *Hunter) registerScorpidStingSpell() {
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			result := spell.CalcOutcome(sim, target, spell.OutcomeRangedHit)
-			if result.Landed() {
-				hunter.ScorpidStingAuras.Get(target).Activate(sim)
-			}
-			spell.DealOutcome(sim, result)
+			spell.WaitTravelTime(sim, func(sim *core.Simulation) {
+				if result.Landed() {
+					hunter.ScorpidStingAuras.Get(target).Activate(sim)
+				}
+				spell.DealOutcome(sim, result)
+			})
 		},
 
 		RelatedAuras: []core.AuraArray{hunter.ScorpidStingAuras},

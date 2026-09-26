@@ -194,11 +194,16 @@ func NewHunter(character *core.Character, options *proto.Player) *Hunter {
 		ReplaceMHSwing:  hunter.TryRaptorStrike,
 		AutoSwingRanged: hunter.HasRangedWeapon(), // with no weapon Auto Shot swings every 0 s and the sim never ends
 	})
+	// Auto Shot (75) travels at 40 yd/s. Its action id has no server data, so nothing checks the speed
+	hunter.AutoAttacks.RangedConfig().MissileSpeed = 40
 	hunter.AutoAttacks.RangedConfig().ApplyEffects = func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 		baseDamage := hunter.RangedWeaponDamage(sim, spell.RangedAttackPower(target)) +
 			hunter.AmmoDamageBonus +
 			spell.BonusWeaponDamage()
-		spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeRangedHitAndCrit)
+		result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeRangedHitAndCrit)
+		spell.WaitTravelTime(sim, func(sim *core.Simulation) {
+			spell.DealDamage(sim, result)
+		})
 	}
 
 	hunter.pet = hunter.NewHunterPet()

@@ -58,8 +58,10 @@ func (druid *Druid) registerFaerieFireSpell() {
 			ThreatMultiplier: 1,
 			CritMultiplier:   druid.BalanceCritMultiplier(),
 
+			Direct: core.SpellEffect{Effect: 1, Min: 1, Max: 1, AP: 0.15},
+
 			ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-				baseDamage := 1 + 0.15*spell.MeleeAttackPower()
+				baseDamage := spell.Direct.Roll(sim) + spell.Direct.AP*spell.MeleeAttackPower()
 				spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 			},
 		})

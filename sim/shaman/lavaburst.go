@@ -9,11 +9,8 @@ import (
 
 func (shaman *Shaman) registerLavaBurstSpell() {
 	actionID := core.ActionID{SpellID: 60043}
-	dmgBonus := core.TernaryFloat64(shaman.Ranged().ID == VentureCoLightningRod, 121, 0) +
-		core.TernaryFloat64(shaman.Ranged().ID == ThunderfallTotem, 215, 0)
-	spellCoeff := 0.5714 +
-		0.05*float64(shaman.Talents.Shamanism) +
-		core.TernaryFloat64(shaman.HasMajorGlyph(proto.ShamanMajorGlyph_GlyphOfLava), 0.1, 0)
+	// a SPELLMOD_DAMAGE flat, not an effect mod like Thunderfall Totem's
+	dmgBonus := core.TernaryFloat64(shaman.Ranged().ID == VentureCoLightningRod, 121, 0)
 
 	var lvbDotSpell *core.Spell
 	var lvbBonusDotDelay *core.DelayedPeriodicApplier
@@ -75,23 +72,33 @@ func (shaman *Shaman) registerLavaBurstSpell() {
 		CritMultiplier:   shaman.ElementalCritMultiplier([]float64{0, 0.06, 0.12, 0.24}[shaman.Talents.LavaFlows] + core.TernaryFloat64(shaman.HasSetBonus(ItemSetEarthShatterGarb, 4), 0.1, 0)),
 		ThreatMultiplier: shaman.spellThreatMultiplier(),
 
+		MissileSpeed: 24,
+		Direct:       core.SpellEffect{Effect: 0, Min: 1192, Max: 1518, SP: 0.571},
+		Mods: []core.SpellMod{
+			{Op: core.SpellModBonusMultiplier, Flat: 5 * shaman.Talents.Shamanism},
+			{Op: core.SpellModBonusMultiplier, Flat: core.TernaryInt32(shaman.HasMajorGlyph(proto.ShamanMajorGlyph_GlyphOfLava), 10, 0)},
+			{Op: core.SpellModEffect1, Flat: core.TernaryInt32(shaman.Ranged().ID == ThunderfallTotem, 215, 0)},
+		},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := dmgBonus + sim.Roll(1192, 1518) + spellCoeff*spell.SpellPower()
+			baseDamage := dmgBonus + spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
-			if lvbDotSpell != nil && result.Landed() {
-				dot := lvbDotSpell.Dot(target)
+			spell.WaitTravelTime(sim, func(sim *core.Simulation) {
+				if lvbDotSpell != nil && result.Landed() {
+					dot := lvbDotSpell.Dot(target)
 
-				newDamage := result.Damage * 0.1
-				outstandingDamage := core.TernaryFloat64(dot.IsActive(), dot.SnapshotBaseDamage*float64(dot.NumberOfTicks-dot.TickCount), 0)
-				totalDamage := outstandingDamage + newDamage
+					newDamage := result.Damage * 0.1
+					outstandingDamage := core.TernaryFloat64(dot.IsActive(), dot.SnapshotBaseDamage*float64(dot.NumberOfTicks-dot.TickCount), 0)
+					totalDamage := outstandingDamage + newDamage
 
-				lvbBonusDotDelay.Apply(sim, target, func(sim *core.Simulation) {
-					dot.SnapshotBaseDamage = totalDamage / float64(dot.NumberOfTicks)
-					dot.SnapshotAttackerMultiplier = 1
-					dot.Spell.Cast(sim, target)
-				})
-			}
-			spell.DealDamage(sim, result)
+					lvbBonusDotDelay.Apply(sim, target, func(sim *core.Simulation) {
+						dot.SnapshotBaseDamage = totalDamage / float64(dot.NumberOfTicks)
+						dot.SnapshotAttackerMultiplier = 1
+						dot.Spell.Cast(sim, target)
+					})
+				}
+				spell.DealDamage(sim, result)
+			})
 		},
 	})
 }

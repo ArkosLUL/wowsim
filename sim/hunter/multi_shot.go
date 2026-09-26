@@ -42,19 +42,29 @@ func (hunter *Hunter) registerMultiShotSpell(timer *core.Timer) {
 		CritMultiplier:   hunter.critMultiplier(true, false),
 		ThreatMultiplier: 1,
 
-		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			sharedDmg := hunter.AutoAttacks.Ranged().BaseDamage(sim) +
-				hunter.NormalizedAmmoDamageBonus +
-				spell.BonusWeaponDamage() +
-				408
+		// the spell_bonus_data row's 0.2 ranged AP goes unread: weapon damage takes no coefficient
+		Direct: core.SpellEffect{Effect: 0, Min: 408, Max: 408, WeaponPct: 1},
 
+		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+			sharedDmg := spell.Direct.Roll(sim) +
+				hunter.AutoAttacks.Ranged().BaseDamage(sim) +
+				hunter.NormalizedAmmoDamageBonus +
+				spell.BonusWeaponDamage()
+
+			results := make([]*core.SpellResult, numHits)
 			curTarget := target
-			for hitIndex := int32(0); hitIndex < numHits; hitIndex++ {
-				baseDamage := sharedDmg + 0.2*spell.RangedAttackPower(curTarget)
-				spell.CalcAndDealDamage(sim, curTarget, baseDamage, spell.OutcomeRangedHitAndCrit)
+			for hitIndex := range results {
+				// the weapon's AP part, normalized: RAP / 14 × 2.8 s
+				baseDamage := (sharedDmg + 0.2*spell.RangedAttackPower(curTarget)) * spell.Direct.WeaponPct
+				results[hitIndex] = spell.CalcDamage(sim, curTarget, baseDamage, spell.OutcomeRangedHitAndCrit)
 
 				curTarget = sim.Environment.NextTargetUnit(curTarget)
 			}
+			spell.WaitTravelTime(sim, func(sim *core.Simulation) {
+				for _, result := range results {
+					spell.DealDamage(sim, result)
+				}
+			})
 		},
 	})
 }

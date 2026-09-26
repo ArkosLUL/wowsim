@@ -53,11 +53,13 @@ func (druid *Druid) registerRipSpell() {
 			TickLength:    time.Second * 2,
 			TicksCanCrit:  druid.Talents.PrimalGore,
 
+			Tick: core.SpellEffect{Effect: 0, Min: 36, Max: 36},
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
 				cp := float64(druid.ComboPoints())
 				ap := dot.Spell.MeleeAttackPower()
 
-				dot.SnapshotBaseDamage = 36 + comboPointCoeff*cp + 0.01*cp*ap
+				// 93 a combo point from the effect, the AP share and the idol from spell_dru_rip
+				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + comboPointCoeff*cp + 0.01*cp*ap
 
 				if !isRollover {
 					attackTable := dot.Spell.Unit.AttackTables[target.UnitIndex]

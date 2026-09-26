@@ -31,7 +31,7 @@ func (shaman *Shaman) registerSearingTotemSpell() {
 
 	shaman.SearingTotem = shaman.RegisterSpell(core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: 58704},
-		SpellSchool: core.SpellSchoolFire,
+		SpellSchool: core.SpellSchoolPhysical,
 		ProcMask:    core.ProcMaskEmpty,
 		Flags:       SpellFlagTotem | core.SpellFlagAPL,
 
@@ -52,17 +52,16 @@ func (shaman *Shaman) registerSearingTotemSpell() {
 			Aura: core.Aura{
 				Label: "SearingTotem",
 			},
-			// These are the real tick values, but searing totem doesn't start its next
-			// cast until the previous missile hits the target. We don't have an option
-			// for target distance yet so just pretend the tick rate is lower.
-			// https://wotlk.wowhead.com/spell=25530/attack
-			//NumberOfTicks:        30,
-			//TickLength:           time.Second * 2.2,
+			// stand-in cadence: the totem recasts its 2.2 s bolt without waiting for the missile to land
 			NumberOfTicks: 24,
 			TickLength:    time.Second * 60 / 24,
+			Tick:          core.SpellEffect{Effect: 0, FromSpellID: 58702, Min: 90, Max: 120, SP: 0.1667},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
-				baseDamage := sim.Roll(90, 120) + 0.1667*dot.Spell.SpellPower()
-				dot.Spell.CalcAndDealDamage(sim, target, baseDamage, dot.Spell.OutcomeMagicHitAndCrit)
+				baseDamage := dot.Tick.Roll(sim) + dot.Tick.SP*dot.Spell.SpellPower()
+				result := dot.Spell.CalcDamage(sim, target, baseDamage, dot.Spell.OutcomeMagicHitAndCrit)
+				dot.Spell.WaitTravelTime(sim, func(sim *core.Simulation) {
+					dot.Spell.DealDamage(sim, result)
+				})
 			},
 		},
 
@@ -98,7 +97,7 @@ func (shaman *Shaman) registerMagmaTotemSpell() {
 
 	shaman.MagmaTotem = shaman.RegisterSpell(core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: 58734},
-		SpellSchool: core.SpellSchoolFire,
+		SpellSchool: core.SpellSchoolPhysical,
 		ProcMask:    core.ProcMaskEmpty,
 		Flags:       SpellFlagTotem | core.SpellFlagAPL,
 
@@ -122,9 +121,10 @@ func (shaman *Shaman) registerMagmaTotemSpell() {
 			},
 			NumberOfTicks: 10,
 			TickLength:    time.Second * 2,
+			Tick:          core.SpellEffect{Effect: 0, FromSpellID: 58735, Min: 371, Max: 371, SP: 0.1},
 
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
-				baseDamage := 371 + 0.1*dot.Spell.SpellPower()
+				baseDamage := dot.Tick.Roll(sim) + dot.Tick.SP*dot.Spell.SpellPower()
 				for _, aoeTarget := range sim.Encounter.TargetUnits {
 					dot.Spell.CalcAndDealDamage(sim, aoeTarget, baseDamage, dot.Spell.OutcomeMagicHitAndCrit)
 				}

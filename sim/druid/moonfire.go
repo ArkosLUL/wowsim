@@ -65,9 +65,10 @@ func (druid *Druid) registerMoonfireSpell() {
 			TickHaste:           core.SpellHasteAddsTicks,
 			TicksCanCrit:        dotCanCrit,
 
+			Tick: core.SpellEffect{Effect: 0, Min: 200, Max: 200, SP: 0.13},
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
 				dot.Spell.DamageMultiplier = periodicDamageMultiplier
-				dot.SnapshotBaseDamage = 200 + 0.13*dot.Spell.SpellPower()
+				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + dot.Tick.SP*dot.Spell.SpellPower()
 				attackTable := dot.Spell.Unit.AttackTables[target.UnitIndex]
 				dot.SnapshotCritChance = dot.Spell.SpellCritChance(target)
 				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(attackTable)
@@ -82,8 +83,10 @@ func (druid *Druid) registerMoonfireSpell() {
 			},
 		},
 
+		Direct: core.SpellEffect{Effect: 1, Min: 406, Max: 476, SP: 0.13},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := sim.Roll(406, 476) + 0.13*spell.SpellPower()
+			baseDamage := spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 			if result.Landed() {
 				druid.ExtendingMoonfireStacks = 3

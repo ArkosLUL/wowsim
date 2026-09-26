@@ -18,6 +18,9 @@ func (shaman *Shaman) newLightningBoltSpellConfig(isLightningOverload bool) core
 		0.1*core.TernaryFloat64(shaman.HasSetBonus(ItemSetEarthShatterGarb, 2), 0.95, 1),
 		time.Millisecond*2500,
 		isLightningOverload)
+	spellConfig.MissileSpeed = 20
+	spellConfig.Direct = core.SpellEffect{Effect: 0, Min: 719, Max: 819, SP: 0.714}
+	spellConfig.Mods = []core.SpellMod{{Op: core.SpellModBonusMultiplier, Flat: 4 * shaman.Talents.Shamanism}}
 
 	if shaman.HasMajorGlyph(proto.ShamanMajorGlyph_GlyphOfLightningBolt) {
 		spellConfig.DamageMultiplier += 0.04
@@ -60,34 +63,36 @@ func (shaman *Shaman) newLightningBoltSpellConfig(isLightningOverload bool) core
 		})
 	}
 
-	dmgBonus := shaman.electricSpellBonusDamage(0.7143)
-	spellCoeff := 0.7143 + 0.04*float64(shaman.Talents.Shamanism)
+	relicSpellPower := shaman.electricSpellRelicSpellPower()
 
 	canLO := !isLightningOverload && shaman.Talents.LightningOverload > 0
 	lightningOverloadChance := float64(shaman.Talents.LightningOverload) * 0.11
 	spellConfig.ApplyEffects = func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-		baseDamage := dmgBonus + sim.Roll(719, 819) + spellCoeff*spell.SpellPower()
+		baseDamage := spell.Direct.Roll(sim) + spell.Direct.SP*(spell.SpellPower()+relicSpellPower)
 		result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 
-		if !isLightningOverload && lbDotSpell != nil && result.DidCrit() {
-			lbDot := lbDotSpell.Dot(target)
+		// Electrified and Lightning Overload proc off the hit, so they wait for the bolt too
+		spell.WaitTravelTime(sim, func(sim *core.Simulation) {
+			if !isLightningOverload && lbDotSpell != nil && result.DidCrit() {
+				lbDot := lbDotSpell.Dot(target)
 
-			newDamage := result.Damage * 0.08
-			outstandingDamage := core.TernaryFloat64(lbDot.IsActive(), lbDot.SnapshotBaseDamage*float64(lbDot.NumberOfTicks-lbDot.TickCount), 0)
-			totalDamage := outstandingDamage + newDamage
+				newDamage := result.Damage * 0.08
+				outstandingDamage := core.TernaryFloat64(lbDot.IsActive(), lbDot.SnapshotBaseDamage*float64(lbDot.NumberOfTicks-lbDot.TickCount), 0)
+				totalDamage := outstandingDamage + newDamage
 
-			electrifiedDelay.Apply(sim, target, func(sim *core.Simulation) {
-				lbDot.SnapshotBaseDamage = totalDamage / float64(lbDot.NumberOfTicks)
-				lbDot.SnapshotAttackerMultiplier = 1
-				lbDotSpell.Cast(sim, target)
-			})
-		}
+				electrifiedDelay.Apply(sim, target, func(sim *core.Simulation) {
+					lbDot.SnapshotBaseDamage = totalDamage / float64(lbDot.NumberOfTicks)
+					lbDot.SnapshotAttackerMultiplier = 1
+					lbDotSpell.Cast(sim, target)
+				})
+			}
 
-		if canLO && result.Landed() && sim.RandomFloat("LB Lightning Overload") < lightningOverloadChance {
-			shaman.LightningBoltLO.Cast(sim, target)
-		}
+			if canLO && result.Landed() && sim.RandomFloat("LB Lightning Overload") < lightningOverloadChance {
+				shaman.LightningBoltLO.Cast(sim, target)
+			}
 
-		spell.DealDamage(sim, result)
+			spell.DealDamage(sim, result)
+		})
 	}
 
 	return spellConfig

@@ -42,23 +42,27 @@ func (hunter *Hunter) registerChimeraShotSpell() {
 		CritMultiplier:   hunter.critMultiplier(true, true),
 		ThreatMultiplier: 1,
 
+		Direct: core.SpellEffect{Effect: 1, Min: 0, Max: 0, WeaponPct: 1.25},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := 0.2*spell.RangedAttackPower(target) +
+			// the weapon's AP part, normalized: RAP / 14 × 2.8 s
+			baseDamage := (spell.Direct.Roll(sim) + 0.2*spell.RangedAttackPower(target) +
 				hunter.AutoAttacks.Ranged().BaseDamage(sim) +
 				hunter.NormalizedAmmoDamageBonus +
-				spell.BonusWeaponDamage()
-			baseDamage *= 1.25
+				spell.BonusWeaponDamage()) * spell.Direct.WeaponPct
 
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeRangedHitAndCrit)
-			if result.Landed() {
-				if hunter.SerpentSting.Dot(target).IsActive() {
-					hunter.SerpentSting.Dot(target).Rollover(sim)
-					ssProcSpell.Cast(sim, target)
-				} else if hunter.ScorpidStingAuras.Get(target).IsActive() {
-					hunter.ScorpidStingAuras.Get(target).Refresh(sim)
+			spell.WaitTravelTime(sim, func(sim *core.Simulation) {
+				if result.Landed() {
+					if hunter.SerpentSting.Dot(target).IsActive() {
+						hunter.SerpentSting.Dot(target).Rollover(sim)
+						ssProcSpell.Cast(sim, target)
+					} else if hunter.ScorpidStingAuras.Get(target).IsActive() {
+						hunter.ScorpidStingAuras.Get(target).Refresh(sim)
+					}
 				}
-			}
-			spell.DealDamage(sim, result)
+				spell.DealDamage(sim, result)
+			})
 		},
 	})
 }
@@ -80,9 +84,15 @@ func (hunter *Hunter) chimeraShotSerpentStingSpell() *core.Spell {
 		CritMultiplier:   hunter.critMultiplier(true, false),
 		ThreatMultiplier: 1,
 
+		// spell_hun_chimera_shot deals the sting's tick, times 40% of its tick count in DamageMultiplier
+		Direct: core.SpellEffect{Effect: 0, FromSpellID: 49001, Min: 242, Max: 242, AP: 0.04},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := 242 + 0.04*spell.RangedAttackPower(target)
-			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialCritOnly)
+			baseDamage := spell.Direct.Roll(sim) + spell.Direct.AP*spell.RangedAttackPower(target)
+			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialCritOnly)
+			spell.WaitTravelTime(sim, func(sim *core.Simulation) {
+				spell.DealDamage(sim, result)
+			})
 		},
 	})
 }

@@ -10,9 +10,9 @@ const IdolAvenger int32 = 31025
 const IdolSteadfastRenewal int32 = 40712
 
 func (druid *Druid) registerWrathSpell() {
-	spellCoeff := 0.571 + (0.02 * float64(druid.Talents.WrathOfCenarius))
 	bonusFlatDamage := core.TernaryFloat64(druid.Ranged().ID == IdolAvenger, 25, 0) +
 		core.TernaryFloat64(druid.Ranged().ID == IdolSteadfastRenewal, 70, 0)
+	impInsectSwarm := 1 + 0.01*float64(druid.Talents.ImprovedInsectSwarm)
 
 	druid.Wrath = druid.RegisterSpell(Humanoid|Moonkin, core.SpellConfig{
 		ActionID:     core.ActionID{SpellID: 48461},
@@ -42,8 +42,18 @@ func (druid *Druid) registerWrathSpell() {
 		CritMultiplier:   druid.BalanceCritMultiplier(),
 		ThreatMultiplier: 1,
 
+		Direct: core.SpellEffect{Effect: 0, Min: 557, Max: 627, SP: 0.571},
+		Mods: []core.SpellMod{
+			{Op: core.SpellModBonusMultiplier, Flat: 2 * druid.Talents.WrathOfCenarius},
+		},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := bonusFlatDamage + sim.Roll(557, 627) + spellCoeff*spell.SpellPower()
+			roll := spell.Direct.Roll(sim)
+			// Improved Insect Swarm scales the roll alone, before spell power (Spell::EffectSchoolDMG)
+			if druid.InsectSwarm != nil && druid.InsectSwarm.Dot(target).IsActive() {
+				roll *= impInsectSwarm
+			}
+			baseDamage := bonusFlatDamage + roll + spell.Direct.SP*spell.SpellPower()
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 			spell.WaitTravelTime(sim, func(sim *core.Simulation) {
 				spell.DealDamage(sim, result)

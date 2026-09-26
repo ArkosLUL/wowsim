@@ -23,15 +23,14 @@ func (shaman *Shaman) registerAncestralHealingSpell() {
 }
 
 func (shaman *Shaman) registerLesserHealingWaveSpell() {
-	spellCoeff := 0.807
-	bonusCoeff := 0.02 * float64(shaman.Talents.TidalWaves)
 	impShieldChance := 0.2 * float64(shaman.Talents.ImprovedWaterShield)
 	impShieldManaGain := 428.0 * (1 + 0.05*float64(shaman.Talents.ImprovedShields))
 
 	hasGlyph := shaman.HasMajorGlyph(proto.ShamanMajorGlyph_GlyphOfLesserHealingWave)
 
-	bonusHeal := 0 +
-		core.TernaryFloat64(shaman.Ranged().ID == 42598, 338, 0) +
+	// The Totems of the Third Wind add healing power (class script 3736), which the coefficient scales
+	relicHealingPower := 0 +
+		core.TernaryFloat64(shaman.Ranged().ID == 42598, 320, 0) +
 		core.TernaryFloat64(shaman.Ranged().ID == 42597, 267, 0) +
 		core.TernaryFloat64(shaman.Ranged().ID == 42596, 236, 0) +
 		core.TernaryFloat64(shaman.Ranged().ID == 42595, 204, 0)
@@ -60,9 +59,12 @@ func (shaman *Shaman) registerLesserHealingWaveSpell() {
 		CritMultiplier:   shaman.DefaultHealingCritMultiplier(),
 		ThreatMultiplier: 1 - (float64(shaman.Talents.HealingGrace) * 0.05),
 
+		Direct: core.SpellEffect{Effect: 0, Min: 1624, Max: 1852, SP: 0.8057},
+		Mods:   []core.SpellMod{{Op: core.SpellModBonusMultiplier, Flat: 2 * shaman.Talents.TidalWaves}},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			healPower := spell.HealingPower(target)
-			baseHealing := sim.Roll(1624, 1852) + spellCoeff*healPower + bonusCoeff*healPower + bonusHeal
+			baseHealing := spell.Direct.Roll(sim) + spell.Direct.SP*(healPower+relicHealingPower)
 			if hasGlyph {
 				if shaman.EarthShield.Hot(target).IsActive() {
 					baseHealing *= 1.2
@@ -93,8 +95,6 @@ func (shaman *Shaman) registerLesserHealingWaveSpell() {
 }
 
 func (shaman *Shaman) registerRiptideSpell() {
-	spellCoeff := 0.402
-	hotCoeff := 0.188
 	impShieldChance := []float64{0, 0.33, 0.66, 1.0}[shaman.Talents.ImprovedWaterShield]
 	impShieldManaGain := 428.0 * (1 + 0.05*float64(shaman.Talents.ImprovedShields))
 
@@ -125,14 +125,16 @@ func (shaman *Shaman) registerRiptideSpell() {
 		CritMultiplier:   shaman.DefaultHealingCritMultiplier(),
 		ThreatMultiplier: 1 - (float64(shaman.Talents.HealingGrace) * 0.05),
 
+		Direct: core.SpellEffect{Effect: 0, Min: 1604, Max: 1736, SP: 0.402},
 		Hot: core.DotConfig{
 			Aura: core.Aura{
 				Label: "Riptide",
 			},
 			NumberOfTicks: 5,
 			TickLength:    time.Second * 3,
+			Tick:          core.SpellEffect{Effect: 1, Min: 334, Max: 334, SP: 0.188},
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
-				dot.SnapshotBaseDamage = 334 + hotCoeff*dot.Spell.HealingPower(target)
+				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + dot.Tick.SP*dot.Spell.HealingPower(target)
 				dot.SnapshotAttackerMultiplier = dot.Spell.CasterHealingMultiplier()
 			},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
@@ -142,7 +144,7 @@ func (shaman *Shaman) registerRiptideSpell() {
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			healPower := spell.HealingPower(target)
-			baseHealing := sim.Roll(1604, 1736) + spellCoeff*healPower
+			baseHealing := spell.Direct.Roll(sim) + spell.Direct.SP*healPower
 			result := spell.CalcAndDealHealing(sim, target, baseHealing, spell.OutcomeHealingCrit)
 			spell.Hot(target).Apply(sim)
 
@@ -173,12 +175,8 @@ func (shaman *Shaman) registerHealingWaveSpell() {
 
 	// -79 mana totem: 39728
 
-	spellCoeff := 0.807
-	bonusCoeff := 0.02 * float64(shaman.Talents.TidalWaves)
 	impShieldChance := 0.2 * float64(shaman.Talents.ImprovedWaterShield)
 	impShieldManaGain := 428.0 * (1 + 0.05*float64(shaman.Talents.ImprovedShields))
-
-	hasGlyph := shaman.HasMajorGlyph(proto.ShamanMajorGlyph_GlyphOfLesserHealingWave)
 
 	shaman.HealingWave = shaman.RegisterSpell(core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: 49273},
@@ -204,14 +202,12 @@ func (shaman *Shaman) registerHealingWaveSpell() {
 		CritMultiplier:   shaman.DefaultHealingCritMultiplier(),
 		ThreatMultiplier: 1 - (float64(shaman.Talents.HealingGrace) * 0.05),
 
+		Direct: core.SpellEffect{Effect: 0, Min: 3034, Max: 3466, SP: 1.611},
+		Mods:   []core.SpellMod{{Op: core.SpellModBonusMultiplier, Flat: 4 * shaman.Talents.TidalWaves}},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			healPower := spell.HealingPower(target)
-			baseHealing := sim.Roll(1624, 1852) + spellCoeff*healPower + bonusCoeff*healPower
-			if hasGlyph {
-				if shaman.EarthShield.Hot(target).IsActive() {
-					baseHealing *= 1.2
-				}
-			}
+			baseHealing := spell.Direct.Roll(sim) + spell.Direct.SP*healPower
 			result := spell.CalcAndDealHealing(sim, target, baseHealing, spell.OutcomeHealingCrit)
 
 			if result.Outcome.Matches(core.OutcomeCrit) {
@@ -238,12 +234,11 @@ func (shaman *Shaman) registerHealingWaveSpell() {
 
 func (shaman *Shaman) registerEarthShieldSpell() {
 	actionID := core.ActionID{SpellID: 49284}
-	spCoeff := 0.286
 
-	bonusHeal := 0.0
-	if shaman.HasMajorGlyph(proto.ShamanMajorGlyph_GlyphOfEarthShield) {
-		bonusHeal = 0.2
-	}
+	// spell_sha_earth_shield adds the glyph's 20% to the whole charge, then Improved Shields' percent
+	// once more to what the bonuses added over the base value
+	glyphMultiplier := core.TernaryFloat64(shaman.HasMajorGlyph(proto.ShamanMajorGlyph_GlyphOfEarthShield), 1.2, 1)
+	improvedShields := 0.05 * float64(shaman.Talents.ImprovedShields)
 
 	icd := core.Cooldown{
 		Timer:    shaman.NewTimer(),
@@ -263,8 +258,12 @@ func (shaman *Shaman) registerEarthShieldSpell() {
 		},
 
 		BonusCritRating:  float64(shaman.Talents.TidalMastery) * 1 * core.CritRatingPerCritChance,
-		DamageMultiplier: 1 + 0.05*float64(shaman.Talents.ImprovedShields) + 0.05*float64(shaman.Talents.ImprovedEarthShield) + bonusHeal,
+		DamageMultiplier: 1,
 		ThreatMultiplier: 1,
+		Mods: []core.SpellMod{
+			{Op: core.SpellModEffect1, Pct: 5 * shaman.Talents.ImprovedShields},
+			{Op: core.SpellModEffect1, Pct: 5 * shaman.Talents.ImprovedEarthShield},
+		},
 		Hot: core.DotConfig{
 			Aura: core.Aura{
 				Label:    "Earth Shield",
@@ -284,8 +283,11 @@ func (shaman *Shaman) registerEarthShieldSpell() {
 			},
 			NumberOfTicks: 6 + shaman.Talents.ImprovedEarthShield,
 			TickLength:    time.Minute*10 + 1, // tick length longer than expire time.
+			Tick:          core.SpellEffect{Effect: 0, Min: 337, Max: 337, SP: 0.5371},
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
-				dot.SnapshotBaseDamage = 377 + dot.Spell.HealingPower(target)*spCoeff
+				base := dot.Tick.Roll(sim)
+				amount := (base + dot.Tick.SP*dot.Spell.HealingPower(target)) * glyphMultiplier
+				dot.SnapshotBaseDamage = amount + (amount-base)*improvedShields
 				dot.SnapshotAttackerMultiplier = dot.Spell.CasterHealingMultiplier()
 			},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
@@ -299,7 +301,6 @@ func (shaman *Shaman) registerEarthShieldSpell() {
 }
 
 func (shaman *Shaman) registerChainHealSpell() {
-	spellCoeff := 1.342884
 	impShieldChance := 0.1 * float64(shaman.Talents.ImprovedWaterShield)
 	impShieldManaGain := 428.0 * (1 + 0.05*float64(shaman.Talents.ImprovedShields))
 
@@ -338,6 +339,8 @@ func (shaman *Shaman) registerChainHealSpell() {
 		CritMultiplier:   shaman.DefaultHealingCritMultiplier(),
 		ThreatMultiplier: 1 - (float64(shaman.Talents.HealingGrace) * 0.05),
 
+		Direct: core.SpellEffect{Effect: 0, Min: 1055, Max: 1205, SP: 1.3428},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			bounceCoeff := 1.0
 			dmgReductionPerBounce := 0.6
@@ -346,7 +349,7 @@ func (shaman *Shaman) registerChainHealSpell() {
 			targets := sim.Environment.Raid.GetFirstNPlayersOrPets(numHits)
 			for hitIndex := int32(0); hitIndex < numHits; hitIndex++ {
 				healPower := spell.HealingPower(target)
-				baseHealing := sim.Roll(1055, 1205) + spellCoeff*healPower + bonusHeal
+				baseHealing := spell.Direct.Roll(sim) + spell.Direct.SP*healPower + bonusHeal
 				baseHealing *= bounceCoeff
 
 				riptide := shaman.Riptide.Hot(curTarget)

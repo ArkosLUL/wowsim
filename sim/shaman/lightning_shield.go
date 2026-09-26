@@ -26,8 +26,10 @@ func (shaman *Shaman) registerLightningShieldSpell() {
 			core.TernaryFloat64(shaman.HasMajorGlyph(proto.ShamanMajorGlyph_GlyphOfLightningShield), 0.2, 0),
 		ThreatMultiplier: 1, //fix when spirit weapons is fixed
 
+		Direct: core.SpellEffect{Effect: 0, Min: 380, Max: 380, SP: 0.267},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := 380 + 0.267*spell.SpellPower()
+			baseDamage := spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMagicHit)
 		},
 	})

@@ -46,13 +46,18 @@ func (hunter *Hunter) registerAimedShotSpell(timer *core.Timer) {
 		CritMultiplier:   hunter.critMultiplier(true, true),
 		ThreatMultiplier: 1,
 
+		Direct: core.SpellEffect{Effect: 0, Min: 408, Max: 408, WeaponPct: 1},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := 0.2*spell.RangedAttackPower(target) +
+			// the weapon's AP part, normalized: RAP / 14 × 2.8 s
+			baseDamage := (spell.Direct.Roll(sim) + 0.2*spell.RangedAttackPower(target) +
 				hunter.AutoAttacks.Ranged().BaseDamage(sim) +
 				hunter.NormalizedAmmoDamageBonus +
-				spell.BonusWeaponDamage() +
-				408
-			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeRangedHitAndCrit)
+				spell.BonusWeaponDamage()) * spell.Direct.WeaponPct
+			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeRangedHitAndCrit)
+			spell.WaitTravelTime(sim, func(sim *core.Simulation) {
+				spell.DealDamage(sim, result)
+			})
 		},
 	})
 }

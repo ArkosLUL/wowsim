@@ -76,19 +76,22 @@ func (hunter *Hunter) registerSteadyShotSpell() {
 		CritMultiplier:   hunter.critMultiplier(true, true),
 		ThreatMultiplier: 1,
 
+		Direct: core.SpellEffect{Effect: 0, Min: 252, Max: 252, AP: 0.1},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			// Spell::EffectSchoolDMG: a plain roll of the weapon's damage and ammo at the weapon's own
-			// speed, neither normalized, plus spell_bonus_data's 0.1 ranged AP
-			baseDamage := 0.1*spell.RangedAttackPower(target) +
+			// Spell::EffectSchoolDMG adds a plain roll of the weapon's damage and ammo at the weapon's own
+			// speed, neither normalized
+			baseDamage := spell.Direct.Roll(sim) + spell.Direct.AP*spell.RangedAttackPower(target) +
 				hunter.AutoAttacks.Ranged().BaseDamage(sim) +
-				hunter.AmmoDamageBonus +
-				252
+				hunter.AmmoDamageBonus
 
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeRangedHitAndCrit)
-			if result.Landed() && impSSProcChance > 0 && sim.RandomFloat("Imp Steady Shot") < impSSProcChance {
-				hunter.ImprovedSteadyShotAura.Activate(sim)
-			}
-			spell.DealDamage(sim, result)
+			spell.WaitTravelTime(sim, func(sim *core.Simulation) {
+				if result.Landed() && impSSProcChance > 0 && sim.RandomFloat("Imp Steady Shot") < impSSProcChance {
+					hunter.ImprovedSteadyShotAura.Activate(sim)
+				}
+				spell.DealDamage(sim, result)
+			})
 		},
 	})
 }

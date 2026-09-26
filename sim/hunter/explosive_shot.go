@@ -19,12 +19,12 @@ func (hunter *Hunter) registerExplosiveShotSpell(timer *core.Timer) {
 
 func (hunter *Hunter) makeExplosiveShotSpell(timer *core.Timer, downrank bool) *core.Spell {
 	actionID := core.ActionID{SpellID: 60053}
-	minFlatDamage := 386.0
-	maxFlatDamage := 464.0
+	// each tick casts 53352 with the rolled amount (AuraEffect::HandlePeriodicDummyAuraTick), and 53352's
+	// spell_bonus_data row adds the ranged AP
+	tick := core.SpellEffect{Effect: 0, Min: 386, Max: 464, AP: 0.16}
 	if downrank {
 		actionID = core.ActionID{SpellID: 60052}
-		minFlatDamage = 325.0
-		maxFlatDamage = 391.0
+		tick = core.SpellEffect{Effect: 0, Min: 325, Max: 391, AP: 0.16}
 	}
 
 	return hunter.RegisterSpell(core.SpellConfig{
@@ -64,11 +64,11 @@ func (hunter *Hunter) makeExplosiveShotSpell(timer *core.Timer, downrank bool) *
 			},
 			NumberOfTicks: 2,
 			TickLength:    time.Second * 1,
-			// each tick casts 53352 (AuraEffect::HandlePeriodicDummyAuraTick), a hit that crits like any
-			// other but never misses (SPELL_ATTR3_ALWAYS_HIT)
+			// 53352 is a hit that crits like any other but never misses (SPELL_ATTR3_ALWAYS_HIT)
 			TicksCanCrit: true,
+			Tick:         tick,
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-				dot.SnapshotBaseDamage = sim.Roll(minFlatDamage, maxFlatDamage) + 0.14*dot.Spell.RangedAttackPower(target)
+				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + dot.Tick.AP*dot.Spell.RangedAttackPower(target)
 				attackTable := dot.Spell.Unit.AttackTables[target.UnitIndex]
 				dot.SnapshotCritChance = dot.Spell.PhysicalCritChance(attackTable)
 				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(attackTable)
@@ -79,14 +79,16 @@ func (hunter *Hunter) makeExplosiveShotSpell(timer *core.Timer, downrank bool) *
 		},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			result := spell.CalcAndDealOutcome(sim, target, spell.OutcomeRangedHit)
-
-			if result.Landed() {
-				spell.SpellMetrics[target.UnitIndex].Hits--
-				dot := spell.Dot(target)
-				dot.Apply(sim)
-				dot.TickOnce(sim)
-			}
+			result := spell.CalcOutcome(sim, target, spell.OutcomeRangedHit)
+			spell.WaitTravelTime(sim, func(sim *core.Simulation) {
+				spell.DealOutcome(sim, result)
+				if result.Landed() {
+					spell.SpellMetrics[target.UnitIndex].Hits--
+					dot := spell.Dot(target)
+					dot.Apply(sim)
+					dot.TickOnce(sim)
+				}
+			})
 		},
 	})
 }

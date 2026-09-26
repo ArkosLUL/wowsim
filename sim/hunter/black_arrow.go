@@ -56,9 +56,12 @@ func (hunter *Hunter) registerBlackArrowSpell(timer *core.Timer) {
 			},
 			NumberOfTicks: 5,
 			TickLength:    time.Second * 3,
+
+			// ranged AP with the target's Hunter's Mark
+			Tick: core.SpellEffect{Effect: 0, Min: 553, Max: 553, AP: 0.02},
+
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-				// spell_bonus_data's ap_dot_bonus: 0.02 a tick, on ranged AP with the target's Hunter's Mark
-				dot.SnapshotBaseDamage = 553 + 0.02*dot.Spell.RangedAttackPower(target)
+				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + dot.Tick.AP*dot.Spell.RangedAttackPower(target)
 				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(dot.Spell.Unit.AttackTables[target.UnitIndex])
 			},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
@@ -68,10 +71,12 @@ func (hunter *Hunter) registerBlackArrowSpell(timer *core.Timer) {
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			result := spell.CalcOutcome(sim, target, spell.OutcomeRangedHit)
-			if result.Landed() {
-				spell.Dot(target).Apply(sim)
-			}
-			spell.DealOutcome(sim, result)
+			spell.WaitTravelTime(sim, func(sim *core.Simulation) {
+				if result.Landed() {
+					spell.Dot(target).Apply(sim)
+				}
+				spell.DealOutcome(sim, result)
+			})
 		},
 	})
 }

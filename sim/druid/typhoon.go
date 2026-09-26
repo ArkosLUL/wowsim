@@ -29,20 +29,29 @@ func (druid *Druid) registerTyphoonSpell() {
 		// critCapable in the spelldump, so a crit pays the full spell multiplier, not 1x
 		CritMultiplier: druid.BalanceCritMultiplier(),
 
+		Direct: core.SpellEffect{Effect: 1, Min: 1190, Max: 1190, SP: 0.193},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := 1190 + 0.193*spell.SpellPower()
+			baseDamage := spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()
 			baseDamage *= sim.Encounter.AOECapMultiplier()
-			for _, aoeTarget := range sim.Encounter.TargetUnits {
-				spell.CalcAndDealDamage(sim, aoeTarget, baseDamage, spell.OutcomeMagicHitAndCrit)
+			results := make([]*core.SpellResult, len(sim.Encounter.TargetUnits))
+			for i, aoeTarget := range sim.Encounter.TargetUnits {
+				results[i] = spell.CalcDamage(sim, aoeTarget, baseDamage, spell.OutcomeMagicHitAndCrit)
 			}
+			spell.WaitTravelTime(sim, func(sim *core.Simulation) {
+				for _, result := range results {
+					spell.DealDamage(sim, result)
+				}
+			})
 		},
 	})
 
 	druid.Typhoon = druid.RegisterSpell(Humanoid|Moonkin, core.SpellConfig{
-		ActionID:    core.ActionID{SpellID: 61384},
-		SpellSchool: core.SpellSchoolNature,
-		ProcMask:    core.ProcMaskEmpty,
-		Flags:       core.SpellFlagAPL,
+		ActionID:     core.ActionID{SpellID: 61384},
+		SpellSchool:  core.SpellSchoolNature,
+		ProcMask:     core.ProcMaskEmpty,
+		Flags:        core.SpellFlagAPL,
+		MissileSpeed: 27,
 
 		ManaCost: core.ManaCostOptions{
 			BaseCost:   0.25,
@@ -61,9 +70,9 @@ func (druid *Druid) registerTyphoonSpell() {
 		ThreatMultiplier: 1,
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			typhoonDamage.WaitTravelTime(sim, func(sim *core.Simulation) {
-				typhoonDamage.Cast(sim, target)
-			})
+			// the trigger fires at launch (Spell::EffectTriggerSpell), so this cast's own travel
+			// delays nothing: the damage waits on 53227's
+			typhoonDamage.Cast(sim, target)
 		},
 	})
 }

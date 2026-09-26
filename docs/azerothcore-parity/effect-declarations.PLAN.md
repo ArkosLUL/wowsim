@@ -190,6 +190,93 @@ Each item:
 - for each mismatch, fixes the number or adds an allowlist entry
 - empties its classes' undeclared list
 
+#### PAR-DECL-2 as built
+
+**Hunter:**
+- Travel: every shot rolls at the cast and lands after `WaitTravelTime`: Arcane, Steady, Aimed, Multi-,
+  Chimera, Kill and Explosive Shot, Serpent and Scorpid Sting, Black Arrow, Wild Quiver, Chimera's Serpent
+  (53353, which travels again), and Auto Shot, whose 40 yd/s is set by hand (its action id has no server
+  data). Hit procs (Glyph of Arcane Shot, Improved Steady Shot, Chimera's sting refresh) move to the landing.
+  Pet missiles wait too: `newSpecialAbility` when `MissileSpeed` isn't 0 (Acid Spit), and Poison Spit. No
+  wait: Volley (`Spell::_cast` handles channels at once) and Silencing Shot (speed 0).
+- `WeaponPct`: Aimed, Multi- and Raptor Strike 1; Chimera 1.25 and Kill Shot 2, out of the closure; Silencing
+  Shot 0.5 and Wild Quiver 0.8, out of `DamageMultiplier`. The normalized shots' 0.2 RAP is the weapon's AP
+  part, inside the percent. Multi-Shot's bonus row (0.2 AP) goes unread: weapon damage takes no coefficient.
+- `FromSpellID`: Volley's tick 58433; Chimera's Serpent takes Serpent Sting 49001's tick, times the script's
+  40% a tick in `DamageMultiplier`.
+- Mods: none reach a declared effect. Noxious Stings' `SPELLMOD_EFFECT2` hits Serpent Sting's damage-taken
+  aura.
+- KeepSim (`sim/hunter/serverdata_allowlist.go`): Kill Shot's 0.4 AP, which `Spell::EffectWeaponDmg` adds
+  after the 200%; Explosive Shot's tick AP, 53352's.
+- Fixed: Explosive Shot's tick AP 0.14 → 0.16 (53352's live row); Wolverine Bite 400 + 0.07 AP → 405 flat.
+- Undeclared: Explosive Trap (49065 isn't in serverdata); Piercing Shots, a share of the crit.
+- Goldens, Average rows: BM -0.01%, MM -0.11%, SV +3.33%, of which Explosive Shot's AP is +3.65% (measured
+  without the waits). Without the waits only BM's multi-target rows also move (-0.01%): Multi-Shot rolls
+  every target before dealing any. Character stats hold.
+
+**Shaman:**
+- Travel: Lightning Bolt (its overload too), Lava Burst and Searing Totem's bolt roll at the cast and land
+  after `WaitTravelTime`, with Lightning Overload and the T8/T9 4pc dots at the landing. Charges go at the
+  launch, where `spell_proc` drops them in the cast phase: Maelstrom Weapon and Elemental Mastery on
+  `OnCastComplete`, not on the hit. Clearcasting has 2 charges, not the 3-stack stand-in, taken only from
+  a cast it was up for as it began (`PROC_ATTR_REQ_SPELLMOD`), and never from the cast whose own instant
+  hit refreshed it.
+- Mods: Shamanism, Glyph of Lava, Tidal Waves (op 24); Thunderfall Totem, Totem of the Dancing Flame,
+  Improved Shields and Improved Earth Shield on Earth Shield (op 3). The Lightning Bolt/Chain Lightning
+  relics and the Totems of the Third Wind add spell power (class scripts), so the coefficient scales them,
+  op 24 included.
+- `WeaponPct` 1: Stormstrike's hits, whose off-hand flat bonus is halved and truncated, and Lava Lash.
+- `FromSpellID`: Searing and Magma Totem's ticks (58702, 58735); Earthliving's HoT (52000).
+- Also declared: Earth Shield, Healing Stream Totem's heal (52042), Flametongue Attack. The totem summons
+  58704/58734 declare Physical; their entries and the missile-speed ones are gone.
+- KeepSim (`sim/shaman/serverdata_allowlist.go`): Fire Blast 13339's 0.2 (57984's row); Flametongue
+  Attack's script values, its downranked hit tagged 1 for its own entries; Healing Stream's 25 (58761's).
+- Fixed: Healing Wave 1624–1852 + 0.807 → 3034–3466 + 1.611, Tidal Waves 4 a rank; Earth Shield 377 +
+  0.286 → 337 + 0.5371; Earthliving 280 + 0.171 → 163 + 0.164; Earth and Frost Shock 0.386 → 0.3858;
+  downranked Flametongue 64 → 60 a second, both ranks 0.0385 → 0.03811 SP, clipped and truncated; Furious
+  Totem of the Third Wind 338 → 320; Healing Wave no longer takes Glyph of Lesser Healing Wave's 20%. The
+  fire elemental: Fire Blast 714–844 + 0.429 → 110–130 + 0.2, Fire Nova 955–1098 + 1.0 → 148–170 + 0.5,
+  Fire Shield 11350 → 13377/13376 at 95 + 0.015 a tick.
+- Undeclared: none. Left out as shares of other damage or healing: Ancestral Awakening, Electrified, Lava
+  Burst's T9 dot. Windfury keeps its 58804 entry.
+- Goldens, Average rows: Elemental -1.55%, Enhancement -2.86%, Restoration holds. By cause, per-row
+  medians: travel waits Elemental -2.14% (to -8.6% on NoBuffs rows, as Clearcasting's charges now land a
+  cast late), Enhancement -0.16%; the relics through Shamanism Elemental +0.54%; the fire elemental's
+  numbers Enhancement -2.50% (its FT rows, to -10.8%), Elemental's 24 fire elemental rows -2.7% to -31.9%;
+  Flametongue Enhancement -0.31%. Elemental's weights: Intellect 0.37 → 3.03, spell crit 1.15 → 1.45.
+  Character stats hold.
+
+**Druid:**
+- Travel: Wrath already waited. Typhoon's cast 61384 declares 27 yd/s but doesn't wait: `Spell::EffectTriggerSpell`
+  casts 53227 at launch, so the damage rolls at the cast and lands on every target after 53227's own 30 yd/s.
+  No other druid spell has a speed.
+- Mods: Wrath of Cenarius (op 24, 2 a rank on Wrath, 4 on Starfire); Savage Fury on both Mangles (op 23, 10% a
+  rank of the weapon percent, flat included: 240% and 138%); the Maul, Swipe (Bear) and Shred idols (op 3) and Idol
+  of Ursoc on Lacerate (op 8); Glyph of Hurricane's -20 (op 3), which its class mask puts on Hurricane's tick 48466
+  too.
+- `WeaponPct`, out of `DamageMultiplier`: Mangle (Bear) 1.15, Mangle (Cat) 2 and Shred 2.25, each scaling the flat
+  roll too; Maul 1; Swipe (Cat) 2.5.
+- Also declared: Moonfire's hit (effect 1) and tick, Insect Swarm's tick, Hurricane's tick 48466 (covering 48467),
+  both Starfall spells, Typhoon's 53227 (covering 61384), Faerie Fire (Feral) 60089, Lacerate, Rake, Swipe (Bear),
+  Rip's tick and Ferocious Bite's roll. Their combo point parts (93 and 290 a point), Ferocious Bite's energy and AP
+  shares (`Spell::EffectSchoolDMG`) and Rip's AP share and idol (`spell_dru_rip`) stay in the closures.
+- Entries: no KeepSim; the 61384 missile speed entry is gone. Only Rebirth 48477's cast time stays: a Moonkin's
+  Rebirth folds in the GCD of shifting back.
+- Fixed: Improved Insect Swarm raises Wrath's roll, before spell power, not the whole hit; the Starfire idols add
+  spell power (override class script 5148) that the op-24-modded coefficient scales; Idol of the Beast's +14 a combo
+  point on Ferocious Bite is gone (32410 has no handler). Glyph of Hurricane, which the sim ignored, also gives Insect
+  Swarm +30%.
+- Undeclared: none. Restoration registers no heal; treants only swing.
+- Goldens, Average rows: Balance -0.26%, BalancePhase3 -0.51%; Feral, FeralApl, Feral Tank and Restoration hold.
+  By cause, per-row medians: Improved Insect Swarm Balance -0.48%, BalancePhase3 -0.50%; the Starfire idol +0.24% on
+  Balance's 126 Idol of the Shooting Star rows. With both reverted, no druid suite moves. Character stats hold.
+- For wave J and P8: the `SPELLMOD_DAMAGE`/`DOT` percents stay in `DamageMultiplier`. On the server an op-0 flat
+  (Wrath's idols, +25 and +70) goes on after those percents, and a script's addition after `SpellDamageBonusDone`
+  skips the caster's done percents (Rip's AP share and idol, Crying Wind's 374 over Insect Swarm's ticks); the sim
+  multiplies both. A class mask can reach an effect the tooltip doesn't name (Glyph of Hurricane), and a talent's
+  points can be a percent (Savage Fury's op 23 is aura 108), so check effect mods against Spell.dbc. PAR-P7-TANK:
+  Feral Tank's Maul, Swipe (Bear), Mangle (Bear), Lacerate and Faerie Fire (Feral) are declared.
+
 ### Wave J
 
 - **PAR-P7-PRI** declares the priest's effects. Holy Fire's dot and Devouring Plague are its known

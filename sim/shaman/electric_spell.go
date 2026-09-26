@@ -77,12 +77,13 @@ func (shaman *Shaman) newElectricSpellConfig(actionID core.ActionID, baseCost fl
 	return spell
 }
 
-func (shaman *Shaman) electricSpellBonusDamage(spellCoeff float64) float64 {
-	bonusDamage := 0 +
+// electricSpellRelicSpellPower is the spell power these totems add to Lightning Bolt and Chain Lightning.
+// SpellDamageBonusDone adds their class scripts to the spell power the coefficient scales, Shamanism's
+// share included.
+func (shaman *Shaman) electricSpellRelicSpellPower() float64 {
+	return 0 +
 		core.TernaryFloat64(shaman.Ranged().ID == TotemOfStorms, 33, 0) +
 		core.TernaryFloat64(shaman.Ranged().ID == TotemOfTheVoid, 55, 0) +
 		core.TernaryFloat64(shaman.Ranged().ID == TotemOfAncestralGuidance, 85, 0) +
 		core.TernaryFloat64(shaman.Ranged().ID == TotemOfHex, 165, 0)
-
-	return bonusDamage * spellCoeff // These items do not benefit from the bonus coeff from shamanism.
 }

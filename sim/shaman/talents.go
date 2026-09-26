@@ -72,16 +72,16 @@ func (shaman *Shaman) applyElementalFocus() {
 	oathBonus := 1 + (0.05 * float64(shaman.Talents.ElementalOath))
 	var affectedSpells []*core.Spell
 
-	// TODO: fix this.
-	// Right now: Set to 3 so that the spell that cast it consumes a charge down to expected 2.
-	// Correct fix would be to figure out how to make 'onCastComplete' fire before 'onspellhitdealt' without breaking all the other things.
-	maxStacks := int32(3)
+	// spell_proc takes a charge in the cast phase, and only from a cast Clearcasting was up for as it
+	// began (PROC_ATTR_REQ_SPELLMOD: the cost mod applies at Spell::prepare). A crit resets the charges
+	// after that, so the cast whose own instant hit crits keeps both.
+	var activeFrom, instantProcAt time.Duration
 
 	clearcastingAura := shaman.RegisterAura(core.Aura{
 		Label:     "Clearcasting",
 		ActionID:  core.ActionID{SpellID: 16246},
 		Duration:  time.Second * 15,
-		MaxStacks: maxStacks,
+		MaxStacks: 2,
 		OnInit: func(aura *core.Aura, sim *core.Simulation) {
 			affectedSpells = core.FilterSlice([]*core.Spell{
 				shaman.LightningBolt,
@@ -94,6 +94,7 @@ func (shaman *Shaman) applyElementalFocus() {
 			}, func(spell *core.Spell) bool { return spell != nil })
 		},
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
+			activeFrom = sim.CurrentTime
 			for _, spell := range affectedSpells {
 				spell.CostMultiplier -= 0.4
 			}
@@ -120,6 +121,9 @@ func (shaman *Shaman) applyElementalFocus() {
 			if spell.ActionID.Tag == 6 { // Filter LO casts
 				return
 			}
+			if activeFrom > sim.CurrentTime-spell.CurCast.CastTime || instantProcAt == sim.CurrentTime {
+				return
+			}
 			aura.RemoveStack(sim)
 		},
 	})
@@ -128,6 +132,7 @@ func (shaman *Shaman) applyElementalFocus() {
 		Label:    "Elemental Focus",
 		Duration: core.NeverExpires,
 		OnReset: func(aura *core.Aura, sim *core.Simulation) {
+			instantProcAt = core.NeverExpires
 			aura.Activate(sim)
 		},
 		OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
@@ -137,8 +142,12 @@ func (shaman *Shaman) applyElementalFocus() {
 			if !result.Outcome.Matches(core.OutcomeCrit) {
 				return
 			}
+			// a bolt lands after its cast took the charge, an instant hit inside its cast
+			if spell.MissileSpeed == 0 {
+				instantProcAt = sim.CurrentTime
+			}
 			clearcastingAura.Activate(sim)
-			clearcastingAura.SetStacks(sim, maxStacks)
+			clearcastingAura.SetStacks(sim, 2)
 		},
 	})
 }
@@ -213,7 +222,8 @@ func (shaman *Shaman) registerElementalMasteryCD() {
 			shaman.LavaBurst.CastTimeMultiplier += 1
 			shaman.LightningBolt.CastTimeMultiplier += 1
 		},
-		OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
+		// spell_proc takes the charge in the cast phase, at launch, not once the bolt lands
+		OnCastComplete: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell) {
 			if spell != shaman.LightningBolt && spell != shaman.ChainLightning && spell != shaman.LavaBurst {
 				return
 			}
@@ -419,8 +429,10 @@ func (shaman *Shaman) applyMaelstromWeapon() {
 				}
 			}
 		},
-		OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
-			if !spell.Flags.Matches(SpellFlagElectric) {
+		// spell_proc takes the charges in the cast phase, at launch, not once the bolt lands. An
+		// overload has no cast time for the mod to shorten, so it takes none.
+		OnCastComplete: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell) {
+			if !spell.Flags.Matches(SpellFlagElectric) || spell.ActionID.Tag == CastTagLightningOverload {
 				return
 			}
 			shaman.MaelstromWeaponAura.Deactivate(sim)

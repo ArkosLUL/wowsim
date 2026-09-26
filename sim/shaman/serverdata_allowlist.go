@@ -10,6 +10,19 @@ func init() {
 				"Cast alone it takes 1 s, so the two paths need splitting first"}
 	}
 	fireElementalAI := "the Greater Fire Elemental's AI picks its spells, which the server scripts"
+	flametongueScript := "spell_sha_flametongue_weapon casts 10444 for the passive rank's effect value / 100 (58792's 6850, " +
+		"58791's 6000) per second of weapon speed, plus 0.03811 spell power per second"
+	flametongue := func(field core.ServerField, sim, server float64) core.ServerConflictAllowance {
+		return core.ServerConflictAllowance{Spell: core.ActionID{SpellID: 10444}, Field: field, SimFloat: sim, ServerFloat: server,
+			KeepSim: true, Why: flametongueScript}
+	}
+	flametongueDownranked := func(field core.ServerField, sim, server float64) core.ServerConflictAllowance {
+		a := flametongue(field, sim, server)
+		a.Spell.Tag = 1
+		return a
+	}
+	healingStream := "spell_sha_healing_stream_totem heals for the value of the rank's trigger (58761: 25), " +
+		"which 52042's own effect leaves at 0"
 	core.AllowServerConflicts(
 		totem(3738),  // Wrath of Air
 		totem(8143),  // Tremor
@@ -31,13 +44,20 @@ func init() {
 
 		core.ServerConflictAllowance{Spell: core.ActionID{SpellID: 58804}, Field: core.ServerSchool, Sim: 2, Server: 64, KeepSim: true,
 			Why: "the sim deals the Windfury attacks under the enchant's id, the server as its own spell 25504, Physical"},
-		core.ServerConflictAllowance{Spell: core.ActionID{SpellID: 58704}, Field: core.ServerSchool, Sim: 8, Server: 2,
-			Why: "the Searing Totem summon is Physical on the server, declared Fire. Only its bolt (58702) deals damage"},
-		core.ServerConflictAllowance{Spell: core.ActionID{SpellID: 58734}, Field: core.ServerSchool, Sim: 8, Server: 2,
-			Why: "the Magma Totem summon is Physical on the server, declared Fire. Only its pulse (58735) deals damage"},
-		core.ServerConflictAllowance{Spell: core.ActionID{SpellID: 49238}, Field: core.ServerMissileSpeed, SimFloat: 0, ServerFloat: 20,
-			Why: "Lightning Bolt travels at 20 yd/s on the server, declared instant"},
-		core.ServerConflictAllowance{Spell: core.ActionID{SpellID: 60043}, Field: core.ServerMissileSpeed, SimFloat: 0, ServerFloat: 24,
-			Why: "Lava Burst travels at 24 yd/s on the server, declared instant"},
+
+		core.ServerConflictAllowance{Spell: core.ActionID{SpellID: 13339}, Field: core.ServerSP, SimFloat: 0.2, ServerFloat: 0, KeepSim: true,
+			Why: "npc_pet_shaman_fire_elemental casts Fire Blast 57984, whose spell_bonus_data row is 0.2. It has 13339's " +
+				"roll, but serverdata doesn't have it"},
+
+		flametongue(core.ServerSP, 0.03811, 0),
+		flametongue(core.ServerMin, 68.5, 1),
+		flametongue(core.ServerMax, 68.5, 1),
+		flametongueDownranked(core.ServerMin, 60, 1),
+		flametongueDownranked(core.ServerMax, 60, 1),
+
+		core.ServerConflictAllowance{Spell: core.ActionID{SpellID: 52042}, Field: core.ServerMin, SimFloat: 25, ServerFloat: 0, KeepSim: true,
+			Why: healingStream},
+		core.ServerConflictAllowance{Spell: core.ActionID{SpellID: 52042}, Field: core.ServerMax, SimFloat: 25, ServerFloat: 0, KeepSim: true,
+			Why: healingStream},
 	)
 }
