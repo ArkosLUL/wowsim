@@ -1,6 +1,7 @@
 package rogue
 
 import (
+	"math"
 	"time"
 
 	"github.com/wowsims/wotlk/sim/core"
@@ -53,6 +54,8 @@ func (rogue *Rogue) registerEnvenom() {
 		CritMultiplier:   rogue.MeleeCritMultiplier(false),
 		ThreatMultiplier: 1,
 
+		Direct: core.SpellEffect{Effect: 0, Min: 216, Max: 216},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			rogue.BreakStealth(sim)
 			comboPoints := rogue.ComboPoints()
@@ -63,10 +66,11 @@ func (rogue *Rogue) registerEnvenom() {
 			rogue.EnvenomAura.Activate(sim)
 
 			dp := rogue.DeadlyPoison.Dot(target)
-			// - 215 base is scaled by consumed doses (<= comboPoints)
-			// - apRatio is independent of consumed doses (== comboPoints)
+			// Spell::EffectSchoolDMG: the effect's value per consumed dose (<= comboPoints), plus 9% AP per
+			// combo point in whole points, whatever the doses
 			consumed := min(dp.GetStacks(), comboPoints)
-			baseDamage := 215*float64(consumed) + 0.09*float64(comboPoints)*spell.MeleeAttackPower()
+			baseDamage := spell.Direct.Roll(sim)*float64(consumed) +
+				math.Floor(0.09*float64(comboPoints)*spell.MeleeAttackPower())
 
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 

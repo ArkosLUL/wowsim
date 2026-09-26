@@ -1,6 +1,7 @@
 package rogue
 
 import (
+	"math"
 	"time"
 
 	"github.com/wowsims/wotlk/sim/core"
@@ -42,16 +43,16 @@ func (rogue *Rogue) registerEviscerate() {
 		CritMultiplier:   rogue.MeleeCritMultiplier(false),
 		ThreatMultiplier: 1,
 
+		Direct: core.SpellEffect{Effect: 0, Min: 127, Max: 381, SP: 1},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			rogue.BreakStealth(sim)
-			comboPoints := rogue.ComboPoints()
-			flatBaseDamage := 127 + 370*float64(comboPoints)
-			// tooltip implies 3..7% AP scaling, but testing shows it's fixed at 7% (3.4.0.46158)
-			apRatio := 0.07 * float64(comboPoints)
+			comboPoints := float64(rogue.ComboPoints())
+			roll := spell.Direct.Min + (spell.Direct.Max-spell.Direct.Min)*sim.RandomFloat("Eviscerate")
 
-			baseDamage := flatBaseDamage +
-				254.0*sim.RandomFloat("Eviscerate") +
-				apRatio*spell.MeleeAttackPower() +
+			// the effect's 370 per combo point, then Spell::EffectSchoolDMG's 7% AP per point, in whole points
+			baseDamage := roll + 370*comboPoints +
+				math.Floor(0.07*comboPoints*spell.MeleeAttackPower()) +
 				spell.BonusWeaponDamage()
 
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)

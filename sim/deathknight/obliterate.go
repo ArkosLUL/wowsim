@@ -40,19 +40,13 @@ func (dk *Deathknight) newObliterateHitSpell(isMH bool) *core.Spell {
 
 		Direct: core.SpellEffect{Effect: 0, Min: 584, Max: 584, WeaponPct: 0.8},
 		Mods: []core.SpellMod{
-			{Op: core.SpellModEffect1, Flat: int32(dk.sigilOfAwarenessBonus())},
+			{Op: core.SpellModEffect1, Flat: dk.sigilOfAwarenessBonus()},
 			{Op: core.SpellModEffect2, Flat: core.TernaryInt32(dk.HasMajorGlyph(proto.DeathknightMajorGlyph_GlyphOfObliterate), 20, 0)},
 		},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			var weaponDamage float64
-			if isMH {
-				weaponDamage = spell.Unit.MHNormalizedWeaponDamage(sim, spell.MeleeAttackPower())
-			} else {
-				weaponDamage = spell.Unit.OHNormalizedWeaponDamage(sim, spell.MeleeAttackPower())
-			}
 			// the flat effect comes before the percent one, so the percent scales it too
-			baseDamage := (spell.Direct.Roll(sim) + weaponDamage + spell.BonusWeaponDamage()) * spell.Direct.WeaponPct
+			baseDamage := normalizedStrikeBase(sim, spell, isMH, spell.Direct.Roll(sim)) * spell.Direct.WeaponPct
 			baseDamage *= dk.RoRTSBonus(target) *
 				(1.0 + dk.dkCountActiveDiseases(target)*diseaseMulti) *
 				dk.mercilessCombatBonus(sim)

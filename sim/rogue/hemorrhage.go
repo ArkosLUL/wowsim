@@ -57,6 +57,8 @@ func (rogue *Rogue) registerHemorrhageSpell() {
 		})
 	}
 
+	daggerPct := rogue.daggerPct(core.MainHand)
+
 	rogue.Hemorrhage = rogue.RegisterSpell(core.SpellConfig{
 		ActionID:    actionID,
 		SpellSchool: core.SpellSchoolPhysical,
@@ -77,18 +79,18 @@ func (rogue *Rogue) registerHemorrhageSpell() {
 		BonusCritRating: core.TernaryFloat64(rogue.HasSetBonus(Tier9, 4), 5*core.CritRatingPerCritChance, 0) +
 			[]float64{0, 2, 4, 6}[rogue.Talents.TurnTheTables]*core.CritRatingPerCritChance,
 
-		DamageMultiplier: core.TernaryFloat64(rogue.HasDagger(core.MainHand), 1.6, 1.1) * (1 +
+		DamageMultiplier: 1 +
 			0.02*float64(rogue.Talents.FindWeakness) +
-			core.TernaryFloat64(rogue.HasSetBonus(Tier6, 4), 0.06, 0)) *
-			(1 + 0.02*float64(rogue.Talents.SinisterCalling)),
+			core.TernaryFloat64(rogue.HasSetBonus(Tier6, 4), 0.06, 0),
 		CritMultiplier:   rogue.MeleeCritMultiplier(true),
 		ThreatMultiplier: 1,
 
+		Direct: core.SpellEffect{Effect: 0, WeaponPct: 1.1},
+		Mods:   []core.SpellMod{rogue.sinisterCallingMod()},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			rogue.BreakStealth(sim)
-			baseDamage := 0 +
-				spell.Unit.MHNormalizedWeaponDamage(sim, spell.MeleeAttackPower()) +
-				spell.BonusWeaponDamage()
+			baseDamage := normalizedStrike(sim, spell, &spell.Direct, true) * daggerPct
 
 			result := spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 

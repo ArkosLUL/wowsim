@@ -1,12 +1,16 @@
 package warrior
 
 import (
+	"math"
+
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
 )
 
 func (warrior *Warrior) registerExecuteSpell() {
 	const maxRage = 30
+	// spell_warr_execute: the effect's DamageMultiplier, 3.8, per tenth of a rage point
+	const damagePerRage = 38
 
 	var extraRageBonus float64
 	if warrior.HasMajorGlyph(proto.WarriorMajorGlyph_GlyphOfExecution) {
@@ -41,6 +45,10 @@ func (warrior *Warrior) registerExecuteSpell() {
 		CritMultiplier:   warrior.critMultiplier(mh),
 		ThreatMultiplier: 1.25,
 
+		// spell_warr_execute hands 20647 the dummy effect's value plus 20% of attack power and the extra
+		// rage's damage, in whole points
+		Direct: core.SpellEffect{Effect: 0, Min: 1456, Max: 1456, SP: 1, AP: 0.2},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			extraRage := spell.Unit.CurrentRage()
 			if extraRage > maxRage-spell.CurCast.Cost {
@@ -49,7 +57,8 @@ func (warrior *Warrior) registerExecuteSpell() {
 			warrior.SpendRage(sim, extraRage, rageMetrics)
 			rageMetrics.Events--
 
-			baseDamage := 1456 + 0.2*spell.MeleeAttackPower() + 38*(extraRage+extraRageBonus)
+			baseDamage := spell.Direct.Roll(sim) +
+				math.Floor(damagePerRage*(extraRage+extraRageBonus)+spell.Direct.AP*spell.MeleeAttackPower())
 			result := spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 
 			if !result.Landed() {

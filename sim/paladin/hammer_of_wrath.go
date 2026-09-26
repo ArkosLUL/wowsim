@@ -38,12 +38,18 @@ func (paladin *Paladin) registerHammerOfWrathSpell() {
 		CritMultiplier:   paladin.MeleeCritMultiplier(),
 		ThreatMultiplier: 1,
 
-		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := sim.Roll(1139, 1257) +
-				.15*spell.SpellPower() +
-				.15*spell.MeleeAttackPower()
+		Direct: core.SpellEffect{Effect: 0, Min: 1139, Max: 1257, SP: 0.15, AP: 0.15},
 
-			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialNoBlockDodgeParry)
+		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+			// the damage and crit are worked out at the launch, and land with the missile
+			baseDamage := spell.Direct.Roll(sim) +
+				spell.Direct.SP*spell.SpellPower() +
+				spell.Direct.AP*spell.MeleeAttackPower()
+
+			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialNoBlockDodgeParry)
+			spell.WaitTravelTime(sim, func(sim *core.Simulation) {
+				spell.DealDamage(sim, result)
+			})
 		},
 	})
 }

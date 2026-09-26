@@ -301,14 +301,15 @@ func (ghoulPet *GhoulPet) registerClaw() *core.Spell {
 			IgnoreHaste: true,
 		},
 
-		DamageMultiplier: 1.5,
+		DamageMultiplier: 1,
 		CritMultiplier:   2,
 		ThreatMultiplier: 1,
 
+		Direct: core.SpellEffect{Effect: 0, WeaponPct: 1.5},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := 0 +
-				spell.Unit.MHWeaponDamage(sim, spell.MeleeAttackPower()) +
-				spell.BonusWeaponDamage()
+			baseDamage := (spell.Unit.MHWeaponDamage(sim, spell.MeleeAttackPower()) + spell.BonusWeaponDamage()) *
+				spell.Direct.WeaponPct
 
 			result := spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 			if !result.Landed() {

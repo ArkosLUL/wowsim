@@ -6,8 +6,13 @@ import (
 
 var IcyTouchActionID = core.ActionID{SpellID: 49909}
 
+func (dk *Deathknight) icyTouchEffect() (core.SpellEffect, []core.SpellMod) {
+	return core.SpellEffect{Effect: 0, Min: 227, Max: 245, AP: 0.1},
+		[]core.SpellMod{{Op: core.SpellModEffect1, Flat: dk.sigilOfTheFrozenConscienceBonus()}}
+}
+
 func (dk *Deathknight) registerIcyTouchSpell() {
-	sigilBonus := dk.sigilOfTheFrozenConscienceBonus()
+	direct, mods := dk.icyTouchEffect()
 
 	dk.IcyTouch = dk.RegisterSpell(core.SpellConfig{
 		ActionID:    IcyTouchActionID,
@@ -31,8 +36,11 @@ func (dk *Deathknight) registerIcyTouchSpell() {
 		CritMultiplier:   dk.DefaultMeleeCritMultiplier(),
 		ThreatMultiplier: 1.0,
 
+		Direct: direct,
+		Mods:   mods,
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := (sim.Roll(227, 245) + sigilBonus + 0.1*dk.getImpurityBonus(spell)) *
+			baseDamage := (spell.Direct.Roll(sim) + spell.Direct.AP*dk.getImpurityBonus(spell)) *
 				dk.glacielRotBonus(target) *
 				dk.RoRTSBonus(target) *
 				dk.mercilessCombatBonus(sim)
@@ -50,7 +58,7 @@ func (dk *Deathknight) registerIcyTouchSpell() {
 	})
 }
 func (dk *Deathknight) registerDrwIcyTouchSpell() {
-	sigilBonus := dk.sigilOfTheFrozenConscienceBonus()
+	direct, mods := dk.icyTouchEffect()
 
 	dk.RuneWeapon.IcyTouch = dk.RuneWeapon.RegisterSpell(core.SpellConfig{
 		ActionID:    IcyTouchActionID,
@@ -63,8 +71,11 @@ func (dk *Deathknight) registerDrwIcyTouchSpell() {
 		CritMultiplier:   dk.DefaultMeleeCritMultiplier(),
 		ThreatMultiplier: 1,
 
+		Direct: direct,
+		Mods:   mods,
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := sim.Roll(227, 245) + sigilBonus + 0.1*dk.RuneWeapon.getImpurityBonus(spell)
+			baseDamage := spell.Direct.Roll(sim) + spell.Direct.AP*dk.RuneWeapon.getImpurityBonus(spell)
 
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 			if result.Landed() {

@@ -15,6 +15,8 @@ func (rogue *Rogue) registerGhostlyStrikeSpell() {
 	hasGlyph := rogue.HasMajorGlyph(proto.RogueMajorGlyph_GlyphOfGhostlyStrike)
 
 	actionID := core.ActionID{SpellID: 14278}
+	daggerPct := rogue.daggerPct(core.MainHand)
+	glyphPct := core.TernaryInt32(hasGlyph, 40, 0)
 
 	rogue.GhostlyStrike = rogue.RegisterSpell(core.SpellConfig{
 		ActionID:    actionID,
@@ -39,13 +41,18 @@ func (rogue *Rogue) registerGhostlyStrikeSpell() {
 
 		BonusCritRating: []float64{0, 2, 4, 6}[rogue.Talents.TurnTheTables] * core.CritRatingPerCritChance,
 
-		DamageMultiplier: core.TernaryFloat64(rogue.HasDagger(core.MainHand), 1.8, 1.25) * core.TernaryFloat64(hasGlyph, 1.4, 1) * (1 + 0.02*float64(rogue.Talents.FindWeakness)),
+		DamageMultiplier: 1 + 0.02*float64(rogue.Talents.FindWeakness),
 		CritMultiplier:   rogue.MeleeCritMultiplier(true),
 		ThreatMultiplier: 1,
 
+		Direct: core.SpellEffect{Effect: 0, WeaponPct: 1.25},
+		Mods:   []core.SpellMod{{Op: core.SpellModEffect1, Pct: glyphPct}},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			rogue.BreakStealth(sim)
-			baseDamage := spell.Unit.MHNormalizedWeaponDamage(sim, spell.MeleeAttackPower())
+			// no normalized weapon effect, so the weapon's own speed
+			baseDamage := (spell.Unit.MHWeaponDamage(sim, spell.MeleeAttackPower()) + spell.BonusWeaponDamage()) *
+				spell.Direct.WeaponPct * daggerPct
 
 			result := spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 

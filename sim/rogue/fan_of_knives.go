@@ -9,44 +9,52 @@ import (
 
 const FanOfKnivesSpellID int32 = 51723
 
+// both hands' knives are missiles on the server: 51723 and its linked off-hand cast 52874
+const fanOfKnivesMissileSpeed = 18
+
+// makeFanOfKnivesWeaponHitSpell registers a hand's hit. The server deals the off hand's as 52874, which
+// serverdata lacks, so both check against 51723, whose values it shares.
 func (rogue *Rogue) makeFanOfKnivesWeaponHitSpell(isMH bool) *core.Spell {
 	var procMask core.ProcMask
-	var weaponMultiplier float64
 	var actionID core.ActionID
+	multiplier := 1 +
+		0.02*float64(rogue.Talents.FindWeakness) +
+		core.TernaryFloat64(rogue.HasMajorGlyph(proto.RogueMajorGlyph_GlyphOfFanOfKnives), 0.2, 0.0)
 	if isMH {
 		actionID = core.ActionID{SpellID: FanOfKnivesSpellID}.WithTag(1)
-		weaponMultiplier = core.TernaryFloat64(rogue.HasDagger(core.MainHand), 1.05, 0.7)
 		procMask = core.ProcMaskMeleeMHSpecial
 	} else {
 		actionID = core.ActionID{SpellID: FanOfKnivesSpellID}.WithTag(2)
-		weaponMultiplier = core.TernaryFloat64(rogue.HasDagger(core.OffHand), 1.05, 0.7)
-		weaponMultiplier *= rogue.dwsMultiplier()
+		multiplier *= rogue.dwsMultiplier()
 		procMask = core.ProcMaskMeleeOHSpecial
 	}
 
 	return rogue.RegisterSpell(core.SpellConfig{
-		ActionID:    actionID,
-		SpellSchool: core.SpellSchoolPhysical,
-		ProcMask:    procMask,
-		Flags:       core.SpellFlagMeleeMetrics | SpellFlagColdBlooded,
+		ActionID:     actionID,
+		SpellSchool:  core.SpellSchoolPhysical,
+		ProcMask:     procMask,
+		Flags:        core.SpellFlagMeleeMetrics | SpellFlagColdBlooded,
+		MissileSpeed: fanOfKnivesMissileSpeed,
 
-		DamageMultiplier: weaponMultiplier * (1 +
-			0.02*float64(rogue.Talents.FindWeakness) +
-			core.TernaryFloat64(rogue.HasMajorGlyph(proto.RogueMajorGlyph_GlyphOfFanOfKnives), 0.2, 0.0)),
+		DamageMultiplier: multiplier,
 		CritMultiplier:   rogue.MeleeCritMultiplier(false),
 		ThreatMultiplier: 1,
+
+		Direct: core.SpellEffect{Effect: 0, WeaponPct: 0.7},
 	})
 }
 
 func (rogue *Rogue) registerFanOfKnives() {
 	mhSpell := rogue.makeFanOfKnivesWeaponHitSpell(true)
 	ohSpell := rogue.makeFanOfKnivesWeaponHitSpell(false)
-	results := make([]*core.SpellResult, len(rogue.Env.Encounter.TargetUnits))
+	mhDaggerPct := rogue.daggerPct(core.MainHand)
+	ohDaggerPct := rogue.daggerPct(core.OffHand)
 
 	rogue.FanOfKnives = rogue.RegisterSpell(core.SpellConfig{
-		ActionID:    core.ActionID{SpellID: FanOfKnivesSpellID},
-		SpellSchool: core.SpellSchoolPhysical,
-		Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagAPL,
+		ActionID:     core.ActionID{SpellID: FanOfKnivesSpellID},
+		SpellSchool:  core.SpellSchoolPhysical,
+		Flags:        core.SpellFlagMeleeMetrics | core.SpellFlagAPL,
+		MissileSpeed: fanOfKnivesMissileSpeed,
 
 		EnergyCost: core.EnergyCostOptions{
 			Cost: 50,
@@ -60,24 +68,31 @@ func (rogue *Rogue) registerFanOfKnives() {
 
 		ApplyEffects: func(sim *core.Simulation, unit *core.Unit, spell *core.Spell) {
 			rogue.BreakStealth(sim)
-			// Calc and apply all OH hits first, because MH hits can benefit from an OH felstriker proc.
-			for i, aoeTarget := range sim.Encounter.TargetUnits {
-				baseDamage := ohSpell.Unit.OHWeaponDamage(sim, ohSpell.MeleeAttackPower())
+			// both hands roll at launch, main hand first since the server casts 52874 once 51723 has
+			// launched, and land together in that order. Every target's at the same distance, so one wait
+			targets := sim.Encounter.TargetUnits
+			mhResults := make([]*core.SpellResult, len(targets))
+			ohResults := make([]*core.SpellResult, len(targets))
+			for i, aoeTarget := range targets {
+				baseDamage := (mhSpell.Unit.MHWeaponDamage(sim, mhSpell.MeleeAttackPower()) + mhSpell.BonusWeaponDamage()) *
+					mhSpell.Direct.WeaponPct * mhDaggerPct
 				baseDamage *= sim.Encounter.AOECapMultiplier()
-				results[i] = ohSpell.CalcDamage(sim, aoeTarget, baseDamage, ohSpell.OutcomeMeleeSpecialHitAndCrit)
+				mhResults[i] = mhSpell.CalcDamage(sim, aoeTarget, baseDamage, mhSpell.OutcomeMeleeSpecialHitAndCrit)
 			}
-			for i := range sim.Encounter.TargetUnits {
-				ohSpell.DealDamage(sim, results[i])
-			}
-
-			for i, aoeTarget := range sim.Encounter.TargetUnits {
-				baseDamage := mhSpell.Unit.MHWeaponDamage(sim, mhSpell.MeleeAttackPower())
+			for i, aoeTarget := range targets {
+				baseDamage := (ohSpell.Unit.OHWeaponDamage(sim, ohSpell.MeleeAttackPower()) + ohSpell.BonusWeaponDamage()) *
+					ohSpell.Direct.WeaponPct * ohDaggerPct
 				baseDamage *= sim.Encounter.AOECapMultiplier()
-				results[i] = mhSpell.CalcDamage(sim, aoeTarget, baseDamage, mhSpell.OutcomeMeleeSpecialHitAndCrit)
+				ohResults[i] = ohSpell.CalcDamage(sim, aoeTarget, baseDamage, ohSpell.OutcomeMeleeSpecialHitAndCrit)
 			}
-			for i := range sim.Encounter.TargetUnits {
-				mhSpell.DealDamage(sim, results[i])
-			}
+			spell.WaitTravelTime(sim, func(sim *core.Simulation) {
+				for _, result := range mhResults {
+					mhSpell.DealDamage(sim, result)
+				}
+				for _, result := range ohResults {
+					ohSpell.DealDamage(sim, result)
+				}
+			})
 		},
 	})
 }

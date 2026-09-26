@@ -1,6 +1,7 @@
 package rogue
 
 import (
+	"math"
 	"strconv"
 	"time"
 
@@ -97,10 +98,13 @@ func (rogue *Rogue) registerDeadlyPoisonSpell() {
 			AffectedByCastSpeed: rogue.deadlyPoisonAddsTicks(),
 			TickHaste:           core.MeleeHasteAddsTicks,
 			TicksCanCrit:        canCrit,
+			Tick:                core.SpellEffect{Effect: 0, Min: 74, Max: 74, AP: 0.03},
 
-			OnSnapshot: func(_ *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
+			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
 				if stacks := dot.GetStacks(); stacks > 0 {
-					dot.SnapshotBaseDamage = (74 + 0.027*dot.Spell.MeleeAttackPower()) * float64(stacks)
+					// AuraEffect::CalculateAmount works out one dose, AP part in whole points, then
+					// multiplies by the doses
+					dot.SnapshotBaseDamage = (dot.Tick.Roll(sim) + math.Floor(dot.Tick.AP*dot.Spell.MeleeAttackPower())) * float64(stacks)
 					attackTable := dot.Spell.Unit.AttackTables[target.UnitIndex]
 					dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(attackTable)
 					if canCrit {
@@ -255,8 +259,10 @@ func (rogue *Rogue) makeInstantPoison(procSource PoisonProcSource) *core.Spell {
 		CritMultiplier:   rogue.SpellCritMultiplier(),
 		ThreatMultiplier: 1,
 
+		Direct: core.SpellEffect{Effect: 0, Min: 300, Max: 400, AP: 0.1},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := sim.Roll(300, 400) + 0.09*spell.MeleeAttackPower()
+			baseDamage := spell.Direct.Roll(sim) + math.Floor(spell.Direct.AP*spell.MeleeAttackPower())
 			if isShivProc {
 				spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMagicHit)
 			} else {
@@ -278,8 +284,10 @@ func (rogue *Rogue) makeWoundPoison(procSource PoisonProcSource) *core.Spell {
 		CritMultiplier:   rogue.SpellCritMultiplier(),
 		ThreatMultiplier: 1,
 
+		Direct: core.SpellEffect{Effect: 1, Min: 231, Max: 231, AP: 0.04},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := 231 + 0.036*spell.MeleeAttackPower()
+			baseDamage := spell.Direct.Roll(sim) + math.Floor(spell.Direct.AP*spell.MeleeAttackPower())
 
 			var result *core.SpellResult
 			if isShivProc {

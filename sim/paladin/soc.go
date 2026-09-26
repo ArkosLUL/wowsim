@@ -1,6 +1,8 @@
 package paladin
 
 import (
+	"math"
+
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
 )
@@ -40,13 +42,16 @@ func (paladin *Paladin) registerSealOfCommandSpellAndAura() {
 		CritMultiplier:   paladin.MeleeCritMultiplier(),
 		ThreatMultiplier: 1,
 
+		// Spell::EffectWeaponDmg adds int(8% AP) and int(13% SP) after the weapon percent
+		Direct: core.SpellEffect{Effect: 0, SP: 0.13, AP: 0.08, WeaponPct: 0.24},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			mhWeaponDamage := 0 +
 				spell.Unit.MHWeaponDamage(sim, spell.MeleeAttackPower()) +
 				spell.BonusWeaponDamage()
-			baseDamage := 0.19*mhWeaponDamage +
-				0.08*spell.MeleeAttackPower() +
-				0.13*spell.SpellPower()
+			baseDamage := spell.Direct.WeaponPct*mhWeaponDamage +
+				math.Floor(spell.Direct.AP*spell.MeleeAttackPower()) +
+				math.Floor(spell.Direct.SP*spell.SpellPower())
 
 			// Secondary Judgements cannot miss if the Primary Judgement hit, only roll for crit.
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialCritOnly)
@@ -60,17 +65,17 @@ func (paladin *Paladin) registerSealOfCommandSpellAndAura() {
 		ProcMask:    core.ProcMaskEmpty,
 		Flags:       core.SpellFlagMeleeMetrics,
 
-		DamageMultiplier: spellModDamage(paladin.getItemSetLightswornBattlegearBonus4()) *
-			0.36, // Only 36% of weapon damage.
+		DamageMultiplier: spellModDamage(paladin.getItemSetLightswornBattlegearBonus4()),
 		CritMultiplier:   paladin.MeleeCritMultiplier(),
 		ThreatMultiplier: 1,
+
+		Direct: core.SpellEffect{Effect: 0, WeaponPct: 0.36},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			curTarget := target
 			for hitIndex := int32(0); hitIndex < numHits; hitIndex++ {
-				baseDamage := 0 +
-					spell.Unit.MHWeaponDamage(sim, spell.MeleeAttackPower()) +
-					spell.BonusWeaponDamage()
+				baseDamage := (spell.Unit.MHWeaponDamage(sim, spell.MeleeAttackPower()) +
+					spell.BonusWeaponDamage()) * spell.Direct.WeaponPct
 
 				results[hitIndex] = spell.CalcDamage(sim, curTarget, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 				curTarget = sim.Environment.NextTargetUnit(curTarget)
@@ -90,15 +95,15 @@ func (paladin *Paladin) registerSealOfCommandSpellAndAura() {
 		ProcMask:    core.ProcMaskEmpty, // unlike SoV, SoC crits don't proc Vengeance
 		Flags:       core.SpellFlagMeleeMetrics,
 
-		DamageMultiplier: spellModDamage(paladin.getItemSetLightswornBattlegearBonus4()) *
-			0.36, // Only 36% of weapon damage.
+		DamageMultiplier: spellModDamage(paladin.getItemSetLightswornBattlegearBonus4()),
 		CritMultiplier:   paladin.MeleeCritMultiplier(),
 		ThreatMultiplier: 1,
 
+		Direct: core.SpellEffect{Effect: 0, WeaponPct: 0.36},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := 0 +
-				spell.Unit.MHWeaponDamage(sim, spell.MeleeAttackPower()) +
-				spell.BonusWeaponDamage()
+			baseDamage := (spell.Unit.MHWeaponDamage(sim, spell.MeleeAttackPower()) +
+				spell.BonusWeaponDamage()) * spell.Direct.WeaponPct
 
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 		},

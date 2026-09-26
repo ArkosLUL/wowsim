@@ -34,10 +34,12 @@ func (paladin *Paladin) registerExorcismSpell() {
 		ThreatMultiplier: 1,
 		CritMultiplier:   paladin.SpellCritMultiplier(),
 
+		Direct: core.SpellEffect{Effect: 0, Min: 1033, Max: 1151, SP: 0.15, AP: 0.15},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := sim.Roll(1028, 1146) +
-				.15*spell.SpellPower() +
-				.15*spell.MeleeAttackPower()
+			baseDamage := spell.Direct.Roll(sim) +
+				spell.Direct.SP*spell.SpellPower() +
+				spell.Direct.AP*spell.MeleeAttackPower()
 
 			// hits any creature type (no TargetCreatureType in Spell.dbc), but undead and demons always
 			// take a crit (Unit::SpellTakenCritChance)

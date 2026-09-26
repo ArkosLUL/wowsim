@@ -36,13 +36,10 @@ func (rogue *Rogue) newMutilateHitSpell(isMH bool) *core.Spell {
 		CritMultiplier:   rogue.MeleeCritMultiplier(true),
 		ThreatMultiplier: 1,
 
+		Direct: core.SpellEffect{Effect: 0, Min: 181, Max: 181, WeaponPct: 1},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			var baseDamage float64
-			if isMH {
-				baseDamage = 181 + spell.Unit.MHNormalizedWeaponDamage(sim, spell.MeleeAttackPower())
-			} else {
-				baseDamage = 181 + spell.Unit.OHNormalizedWeaponDamage(sim, spell.MeleeAttackPower())
-			}
+			baseDamage := normalizedStrike(sim, spell, &spell.Direct, isMH)
 			// TODO: Add support for all poison effects
 			if rogue.DeadlyPoison.Dot(target).IsActive() || rogue.woundPoisonDebuffAuras.Get(target).IsActive() {
 				baseDamage *= 1.2

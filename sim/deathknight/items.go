@@ -248,8 +248,10 @@ var ItemSetScourgelordsPlate = core.NewItemSet(core.ItemSet{
 	},
 })
 
-func (dk *Deathknight) scourgelordsPlateDamageBonus() float64 {
-	return core.TernaryFloat64(dk.HasSetBonus(ItemSetScourgelordsPlate, 2), 1.2, 1.0)
+// the 2pc is 70650, a SPELLMOD_ALL_EFFECTS percent on Death and Decay, so it raises the tick's base
+// value but not its attack power part
+func (dk *Deathknight) scourgelordsPlateDeathAndDecayPct() int32 {
+	return core.TernaryInt32(dk.HasSetBonus(ItemSetScourgelordsPlate, 2), 20, 0)
 }
 
 func (dk *Deathknight) registerScourgelordsPlateProc() {
@@ -278,34 +280,43 @@ func (dk *Deathknight) registerScourgelordsPlateProc() {
 	}))
 }
 
-func (dk *Deathknight) sigilOfTheDarkRiderBonus() float64 {
-	return core.TernaryFloat64(dk.Ranged().ID == 39208, 90, 0)
+// The sigils below are flat SPELLMOD_EFFECT1 mods, so they reach the off-hand strikes too, which share
+// the main hand's class mask.
+
+// 52394: Blood Strike and Heart Strike
+func (dk *Deathknight) sigilOfTheDarkRiderBonus() int32 {
+	return core.TernaryInt32(dk.Ranged().ID == 39208, 90, 0)
 }
 
-func (dk *Deathknight) sigilOfAwarenessBonus() float64 {
-	return core.TernaryFloat64(dk.Ranged().ID == 40207, 420, 0)
+// 60837: Death Strike, Obliterate and Scourge Strike
+func (dk *Deathknight) sigilOfAwarenessBonus() int32 {
+	return core.TernaryInt32(dk.Ranged().ID == 40207, 420, 0)
 }
 
-func (dk *Deathknight) sigilOfTheFrozenConscienceBonus() float64 {
-	return core.TernaryFloat64(dk.Ranged().ID == 40822, 111, 0)
+// 54800: Icy Touch
+func (dk *Deathknight) sigilOfTheFrozenConscienceBonus() int32 {
+	return core.TernaryInt32(dk.Ranged().ID == 40822, 111, 0)
 }
 
-func (dk *Deathknight) sigilOfTheWildBuckBonus() float64 {
-	return core.TernaryFloat64(dk.Ranged().ID == 40867, 80, 0)
+// 54807: Death Coil, the dummy cast and the damage spell alike
+func (dk *Deathknight) sigilOfTheWildBuckBonus() int32 {
+	return core.TernaryInt32(dk.Ranged().ID == 40867, 80, 0)
 }
 
-func (dk *Deathknight) sigilOfArthriticBindingBonus() float64 {
-	return core.TernaryFloat64(dk.Ranged().ID == 40875, 203, 0)
+// 54809: Scourge Strike
+func (dk *Deathknight) sigilOfArthriticBindingBonus() int32 {
+	return core.TernaryInt32(dk.Ranged().ID == 40875, 203, 0)
 }
 
+// spell_dk_death_coil adds 64962's second effect to the damage by its base amount, the raw 379, which
+// misses the effect's roll of 1
 func (dk *Deathknight) sigilOfTheVengefulHeartDeathCoil() float64 {
-	// 64962's second effect, which spell_dk_death_coil adds to the damage
-	return core.TernaryFloat64(dk.Ranged().ID == 45254, 380, 0)
+	return core.TernaryFloat64(dk.Ranged().ID == 45254, 379, 0)
 }
 
-func (dk *Deathknight) sigilOfTheVengefulHeartFrostStrike() float64 {
-	// 64962's flat modifier on Frost Strike's first effect, before the 55% weapon scaling
-	return core.TernaryFloat64(dk.Ranged().ID == 45254, 205, 0)
+// 64962's first effect: Frost Strike
+func (dk *Deathknight) sigilOfTheVengefulHeartFrostStrike() int32 {
+	return core.TernaryInt32(dk.Ranged().ID == 45254, 205, 0)
 }
 
 func addEnchantEffect(id int32, effect func(core.Agent)) {
@@ -402,8 +413,10 @@ func init() {
 			DamageMultiplier: 1,
 			ThreatMultiplier: 1,
 
+			Direct: core.SpellEffect{Effect: 0, WeaponPct: 0.02},
+
 			ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-				baseDamage := 0.02 * spell.Unit.MHWeaponDamage(sim, spell.MeleeAttackPower())
+				baseDamage := spell.Direct.WeaponPct * spell.Unit.MHWeaponDamage(sim, spell.MeleeAttackPower())
 				spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeAlwaysHit)
 			},
 		})

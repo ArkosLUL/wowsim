@@ -13,8 +13,8 @@ func (warrior *Warrior) registerDevastateSpell() {
 	hasGlyph := warrior.HasMajorGlyph(proto.WarriorMajorGlyph_GlyphOfDevastate)
 	flatThreatBonus := core.TernaryFloat64(hasGlyph, 630, 315)
 	dynaThreatBonus := core.TernaryFloat64(hasGlyph, 0.1, 0.05)
+	sunderStacks := core.TernaryInt32(hasGlyph, 2, 1)
 
-	weaponMulti := 1.2
 	overallMulti := core.TernaryFloat64(warrior.HasSetBonus(ItemSetWrynnsPlate, 2), 1.05, 1.00)
 
 	warrior.Devastate = warrior.RegisterSpell(core.SpellConfig{
@@ -45,15 +45,16 @@ func (warrior *Warrior) registerDevastateSpell() {
 		ThreatMultiplier: 1,
 		FlatThreatBonus:  flatThreatBonus,
 
-		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			// Bonus 242 damage / stack of sunder. Counts stacks AFTER cast but only if stacks > 0.
-			sunderBonus := 0.0
-			saStacks := warrior.SunderArmorAuras.Get(target).GetStacks()
-			if saStacks != 0 {
-				sunderBonus = 242 * float64(min(saStacks+1, 5))
-			}
+		// the percent effect comes before the flat one, so it leaves the flat alone
+		Direct: core.SpellEffect{Effect: 2, Min: 242, Max: 242, WeaponPct: 1.2},
 
-			baseDamage := (weaponMulti * spell.Unit.MHNormalizedWeaponDamage(sim, spell.MeleeAttackPower())) + sunderBonus
+		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+			// Spell::EffectWeaponDmg applies this Devastate's Sunder Armor first, then deals the flat once
+			// per stack
+			stacks := min(warrior.SunderArmorAuras.Get(target).GetStacks()+sunderStacks, 5)
+
+			baseDamage := (spell.Unit.MHNormalizedWeaponDamage(sim, spell.MeleeAttackPower())+spell.BonusWeaponDamage())*spell.Direct.WeaponPct +
+				spell.Direct.Roll(sim)*float64(stacks)
 
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 			result.Threat = spell.ThreatFromDamage(result.Outcome, result.Damage+dynaThreatBonus*spell.MeleeAttackPower())

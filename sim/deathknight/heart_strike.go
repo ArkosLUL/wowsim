@@ -7,7 +7,6 @@ import (
 var HeartStrikeActionID = core.ActionID{SpellID: 55262}
 
 func (dk *Deathknight) newHeartStrikeSpell(isMainTarget bool, isDrw bool) *core.Spell {
-	bonusBaseDamage := dk.sigilOfTheDarkRiderBonus()
 	diseaseMulti := dk.dkDiseaseMultiplier(0.1)
 
 	critMultiplier := dk.bonusCritMultiplier(dk.Talents.MightOfMograine)
@@ -31,22 +30,23 @@ func (dk *Deathknight) newHeartStrikeSpell(isMainTarget bool, isDrw bool) *core.
 		},
 
 		BonusCritRating: (dk.subversionCritBonus() + dk.annihilationCritBonus()) * core.CritRatingPerCritChance,
-		DamageMultiplier: .5 *
-			core.TernaryFloat64(isMainTarget, 1, 0.5) *
+		// the second target takes the effects' 0.5 chain multiplier
+		DamageMultiplier: core.TernaryFloat64(isMainTarget, 1, 0.5) *
 			dk.thassariansPlateDamageBonus() *
 			dk.scourgelordsBattlegearDamageBonus(ScourgelordBonusSpellHS) *
 			dk.bloodyStrikesBonus(BloodyStrikesHS),
 		CritMultiplier:   critMultiplier,
 		ThreatMultiplier: 1,
 
-		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := 736 + bonusBaseDamage
+		Direct: core.SpellEffect{Effect: 0, Min: 736, Max: 736, WeaponPct: 0.5},
+		Mods:   []core.SpellMod{{Op: core.SpellModEffect1, Flat: dk.sigilOfTheDarkRiderBonus()}},
 
+		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+			var baseDamage float64
 			if isDrw {
-				baseDamage += dk.DrwWeaponDamage(sim, spell)
+				baseDamage = (spell.Direct.Roll(sim) + dk.DrwWeaponDamage(sim, spell)) * spell.Direct.WeaponPct
 			} else {
-				baseDamage += spell.Unit.MHNormalizedWeaponDamage(sim, spell.MeleeAttackPower()) +
-					spell.BonusWeaponDamage()
+				baseDamage = normalizedStrikeBase(sim, spell, true, spell.Direct.Roll(sim)) * spell.Direct.WeaponPct
 			}
 
 			activeDiseases := core.TernaryFloat64(isDrw, dk.drwCountActiveDiseases(target), dk.dkCountActiveDiseases(target))

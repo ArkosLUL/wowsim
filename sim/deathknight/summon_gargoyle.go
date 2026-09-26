@@ -176,9 +176,10 @@ func (garg *GargoylePet) startAI(sim *core.Simulation) {
 
 func (garg *GargoylePet) registerGargoyleStrikeSpell() {
 	garg.GargoyleStrike = garg.RegisterSpell(core.SpellConfig{
-		ActionID:    core.ActionID{SpellID: 51963},
-		SpellSchool: core.SpellSchoolNature,
-		ProcMask:    core.ProcMaskSpellDamage,
+		ActionID:     core.ActionID{SpellID: 51963},
+		SpellSchool:  core.SpellSchoolNature,
+		ProcMask:     core.ProcMaskSpellDamage,
+		MissileSpeed: 20,
 
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
@@ -190,10 +191,16 @@ func (garg *GargoylePet) registerGargoyleStrikeSpell() {
 		CritMultiplier:   1.5,
 		ThreatMultiplier: 1,
 
+		Direct: core.SpellEffect{Effect: 0, Min: 51, Max: 69, SP: 0.453},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			// spell_pet_dk_gargoyle_strike adds 3 a level past 60 to the 51-69 roll
-			baseDamage := sim.Roll(51, 69) + 3*float64(core.CharacterLevel-60) + 0.453*spell.SpellPower()
-			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
+			// spell_pet_dk_gargoyle_strike adds 3 a level past 60 to the roll. The damage and crit are
+			// worked out at the launch (Spell::DoAllEffectOnLaunchTarget), and land with the missile.
+			baseDamage := spell.Direct.Roll(sim) + 3*float64(core.CharacterLevel-60) + spell.Direct.SP*spell.SpellPower()
+			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
+			spell.WaitTravelTime(sim, func(sim *core.Simulation) {
+				spell.DealDamage(sim, result)
+			})
 		},
 	})
 }

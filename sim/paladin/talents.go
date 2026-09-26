@@ -1,6 +1,7 @@
 package paladin
 
 import (
+	"math"
 	"time"
 
 	"github.com/wowsims/wotlk/sim/core"
@@ -608,6 +609,8 @@ func (paladin *Paladin) applyRighteousVengeance() {
 			NumberOfTicks: 4,
 			TickLength:    time.Second * 2,
 			TicksCanCrit:  true,
+			// the talent's script hands each tick its amount as custom base points, which replace the 1
+			Tick: core.SpellEffect{Effect: 0, Min: 1, Max: 1},
 
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 				dot.CalcAndDealPeriodicSnapshotDamage(sim, target, dot.Spell.OutcomeMeleeSpecialCritOnly)
@@ -646,12 +649,16 @@ func (paladin *Paladin) applyRighteousVengeance() {
 
 			target := result.Target
 			dot := rvDot.Dot(target)
-			outstandingDamage := core.TernaryFloat64(dot.IsActive(), dot.SnapshotBaseDamage*float64(dot.NumberOfTicks-dot.TickCount), 0)
-			totalDamage := outstandingDamage + result.Damage*(0.10*float64(paladin.Talents.RighteousVengeance))
+			// spell_pal_righteous_vengeance and Unit::CastDelayedSpellWithPeriodicAmount, in whole points: a
+			// quarter of the crit's share, plus the old aura's rest spread over the 4 ticks
+			tickDamage := math.Floor(math.Floor(math.Floor(result.Damage)*float64(10*paladin.Talents.RighteousVengeance)/100) / 4)
+			if dot.IsActive() {
+				tickDamage += math.Floor(dot.SnapshotBaseDamage * float64(dot.NumberOfTicks-dot.TickCount) / float64(dot.NumberOfTicks))
+			}
 
 			onApply := func(sim *core.Simulation) {
 				dot.SnapshotAttackerMultiplier = 1
-				dot.SnapshotBaseDamage = totalDamage / float64(dot.NumberOfTicks)
+				dot.SnapshotBaseDamage = tickDamage
 				rvSpell.Cast(sim, target)
 			}
 			// Crusader Strike and Divine Storm are instant casts, processed with the session ahead

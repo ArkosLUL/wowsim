@@ -8,7 +8,7 @@ import (
 )
 
 func (dk *Deathknight) registerDeathAndDecaySpell() {
-	glyphBonus := core.TernaryFloat64(dk.HasMajorGlyph(proto.DeathknightMajorGlyph_GlyphOfDeathAndDecay), 1.2, 1.0)
+	hasGlyph := dk.HasMajorGlyph(proto.DeathknightMajorGlyph_GlyphOfDeathAndDecay)
 
 	dk.DeathAndDecay = dk.RegisterSpell(core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: 49938},
@@ -32,9 +32,15 @@ func (dk *Deathknight) registerDeathAndDecaySpell() {
 			},
 		},
 
-		DamageMultiplier: glyphBonus * dk.scourgelordsPlateDamageBonus(),
+		// spell_dk_death_and_decay adds the glyph's 20% to each tick's damage, on top of its spell mod
+		DamageMultiplier: core.TernaryFloat64(hasGlyph, 1.2, 1),
 		ThreatMultiplier: 1.9,
 		CritMultiplier:   dk.DefaultMeleeCritMultiplier(),
+
+		Mods: []core.SpellMod{
+			{Op: core.SpellModEffect1, Pct: core.TernaryInt32(hasGlyph, 20, 0)},
+			{Op: core.SpellModAllEffects, Pct: dk.scourgelordsPlateDeathAndDecayPct()},
+		},
 
 		Dot: core.DotConfig{
 			IsAOE: true,
@@ -46,9 +52,10 @@ func (dk *Deathknight) registerDeathAndDecaySpell() {
 			// each tick is 52212, a spell of its own that spell_dk_death_and_decay casts, so it crits
 			// like one
 			TicksCanCrit: true,
+			// the aura's amount goes to 52212 as its base points, under 52212's AP
+			Tick: core.SpellEffect{Effect: 0, Min: 62, Max: 62, AP: 0.04805},
 			OnSnapshot: func(sim *core.Simulation, _ *core.Unit, dot *core.Dot, _ bool) {
-				// 52212's spell_bonus_data
-				dot.SnapshotBaseDamage = 62 + 0.04805*dk.getImpurityBonus(dot.Spell)
+				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + dot.Tick.AP*dk.getImpurityBonus(dot.Spell)
 			},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 				for _, aoeTarget := range sim.Encounter.TargetUnits {

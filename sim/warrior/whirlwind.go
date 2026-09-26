@@ -25,6 +25,8 @@ func (warrior *Warrior) registerWhirlwindSpell() {
 				(1 + 0.05*float64(warrior.Talents.DualWieldSpecialization)),
 			CritMultiplier:   warrior.critMultiplier(oh),
 			ThreatMultiplier: 1.25,
+
+			Direct: core.SpellEffect{Effect: 0, FromSpellID: 44949, WeaponPct: 1},
 		})
 	}
 
@@ -56,12 +58,12 @@ func (warrior *Warrior) registerWhirlwindSpell() {
 		CritMultiplier:   warrior.critMultiplier(mh),
 		ThreatMultiplier: 1.25,
 
+		Direct: core.SpellEffect{Effect: 0, WeaponPct: 1},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			curTarget := target
 			for hitIndex := int32(0); hitIndex < numHits; hitIndex++ {
-				baseDamage := 0 +
-					spell.Unit.MHNormalizedWeaponDamage(sim, spell.MeleeAttackPower()) +
-					spell.BonusWeaponDamage()
+				baseDamage := normalizedStrike(sim, spell, &spell.Direct, true)
 				results[hitIndex] = spell.CalcDamage(sim, curTarget, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 
 				curTarget = sim.Environment.NextTargetUnit(curTarget)
@@ -76,9 +78,7 @@ func (warrior *Warrior) registerWhirlwindSpell() {
 			if warrior.WhirlwindOH != nil {
 				curTarget = target
 				for hitIndex := int32(0); hitIndex < numHits; hitIndex++ {
-					baseDamage := 0 +
-						spell.Unit.OHNormalizedWeaponDamage(sim, spell.MeleeAttackPower()) +
-						spell.BonusWeaponDamage()
+					baseDamage := normalizedStrike(sim, warrior.WhirlwindOH, &warrior.WhirlwindOH.Direct, false)
 					results[hitIndex] = warrior.WhirlwindOH.CalcDamage(sim, curTarget, baseDamage, warrior.WhirlwindOH.OutcomeMeleeSpecialHitAndCrit)
 
 					curTarget = sim.Environment.NextTargetUnit(curTarget)

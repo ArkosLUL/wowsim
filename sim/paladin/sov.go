@@ -1,6 +1,7 @@
 package paladin
 
 import (
+	"math"
 	"time"
 
 	"github.com/wowsims/wotlk/sim/core"
@@ -61,10 +62,11 @@ func (paladin *Paladin) registerSealOfVengeanceSpellAndAura() {
 			NumberOfTicks: 5,
 			TickLength:    time.Second * 3, // ticking every three seconds for a grand total of 15s of duration
 			TicksCanCrit:  holyVengeanceCanCrit,
+			Tick:          core.SpellEffect{Effect: 0, SP: 0.013, AP: 0.025},
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-				tickValue := 0 +
-					.013*dot.Spell.SpellPower() +
-					.025*dot.Spell.MeleeAttackPower()
+				tickValue := dot.Tick.Roll(sim) +
+					dot.Tick.SP*dot.Spell.SpellPower() +
+					dot.Tick.AP*dot.Spell.MeleeAttackPower()
 				dot.SnapshotBaseDamage = tickValue * float64(dot.GetStacks())
 
 				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(dot.Spell.Unit.AttackTables[target.UnitIndex])
@@ -116,13 +118,14 @@ func (paladin *Paladin) registerSealOfVengeanceSpellAndAura() {
 		CritMultiplier:   paladin.MeleeCritMultiplier(),
 		ThreatMultiplier: 1,
 
-		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			// i = 1 + 0.22 * HolP + 0.14 * AP
-			baseDamage := 1 +
-				.22*spell.SpellPower() +
-				.14*spell.MeleeAttackPower()
+		Direct: core.SpellEffect{Effect: 0, Min: 1, Max: 1, SP: 0.22, AP: 0.14},
 
-			// i = i * (1 + (0.10 * stacks))
+		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+			baseDamage := spell.Direct.Roll(sim) +
+				spell.Direct.SP*spell.SpellPower() +
+				spell.Direct.AP*spell.MeleeAttackPower()
+
+			// 10% more a Holy Vengeance stack (Unit::SpellDamageBonusDone)
 			baseDamage *= 1 + .1*float64(dotSpell.Dot(target).GetStacks())
 
 			// Secondary Judgements cannot miss if the Primary Judgement hit, only roll for crit.
@@ -140,11 +143,13 @@ func (paladin *Paladin) registerSealOfVengeanceSpellAndAura() {
 		CritMultiplier:   paladin.MeleeCritMultiplier(),
 		ThreatMultiplier: 1,
 
+		Direct: core.SpellEffect{Effect: 0, WeaponPct: 0.33},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			// 33% of the weapon at 5 stacks, the percent truncated to an int per stack
+			// the weapon percent at 5 stacks, truncated to an int per stack
 			// (spell_paladin.cpp, spell_pal_seal_of_vengeance_aura::HandleSeal)
-			weaponPercent := 33 * dotSpell.Dot(target).GetStacks() / 5
-			baseDamage := paladin.MHWeaponDamage(sim, spell.MeleeAttackPower()) * float64(weaponPercent) / 100
+			weaponPercent := int32(math.Round(spell.Direct.WeaponPct*100)) * dotSpell.Dot(target).GetStacks() / 5
+			baseDamage := (paladin.MHWeaponDamage(sim, spell.MeleeAttackPower()) + spell.BonusWeaponDamage()) * float64(weaponPercent) / 100
 
 			// can't miss if melee swing landed, but can crit
 			result := spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialCritOnly)

@@ -29,10 +29,12 @@ func (warrior *Warrior) registerHeroicStrikeSpell() {
 		ThreatMultiplier: 1,
 		FlatThreatBonus:  259,
 
+		Direct: core.SpellEffect{Effect: 0, Min: 495, Max: 495, WeaponPct: 1},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := 495 +
+			baseDamage := (spell.Direct.Roll(sim) +
 				spell.Unit.MHWeaponDamage(sim, spell.MeleeAttackPower()) +
-				spell.BonusWeaponDamage()
+				spell.BonusWeaponDamage()) * spell.Direct.WeaponPct
 
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 
@@ -52,8 +54,6 @@ func (warrior *Warrior) registerHeroicStrikeSpell() {
 }
 
 func (warrior *Warrior) registerCleaveSpell() {
-	flatDamageBonus := 222 * (1 + 0.4*float64(warrior.Talents.ImprovedCleave))
-
 	targets := core.TernaryInt32(warrior.HasMajorGlyph(proto.WarriorMajorGlyph_GlyphOfCleaving), 3, 2)
 	numHits := min(targets, warrior.Env.GetNumTargets())
 	results := make([]*core.SpellResult, numHits)
@@ -74,12 +74,15 @@ func (warrior *Warrior) registerCleaveSpell() {
 		ThreatMultiplier: 1,
 		FlatThreatBonus:  225,
 
+		Direct: core.SpellEffect{Effect: 0, Min: 222, Max: 222, WeaponPct: 1},
+		Mods:   []core.SpellMod{{Op: core.SpellModAllEffects, Pct: 40 * int32(warrior.Talents.ImprovedCleave)}},
+
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			curTarget := target
 			for hitIndex := int32(0); hitIndex < numHits; hitIndex++ {
-				baseDamage := flatDamageBonus +
+				baseDamage := (spell.Direct.Roll(sim) +
 					spell.Unit.MHWeaponDamage(sim, spell.MeleeAttackPower()) +
-					spell.BonusWeaponDamage()
+					spell.BonusWeaponDamage()) * spell.Direct.WeaponPct
 				results[hitIndex] = spell.CalcDamage(sim, curTarget, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 
 				curTarget = sim.Environment.NextTargetUnit(curTarget)
