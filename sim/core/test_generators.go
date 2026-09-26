@@ -389,6 +389,34 @@ func (generator *ItemsTestGenerator) GetTest(testIdx int) (string, *proto.Comput
 	return label, nil, nil, rsr
 }
 
+// JoinTestGenerators runs several generators end to end, one golden file. Unlike CombinedTestGenerator
+// it keeps each generator's own test names as is, so appending a case never renames another
+// generator's existing golden entries.
+type joinedTestGenerators []TestGenerator
+
+func JoinTestGenerators(generators ...TestGenerator) TestGenerator {
+	return joinedTestGenerators(generators)
+}
+
+func (g joinedTestGenerators) NumTests() int {
+	total := 0
+	for _, gen := range g {
+		total += gen.NumTests()
+	}
+	return total
+}
+
+func (g joinedTestGenerators) GetTest(testIdx int) (string, *proto.ComputeStatsRequest, *proto.StatWeightsRequest, *proto.RaidSimRequest) {
+	for _, gen := range g {
+		if n := gen.NumTests(); testIdx < n {
+			return gen.GetTest(testIdx)
+		} else {
+			testIdx -= n
+		}
+	}
+	panic("invalid testIdx")
+}
+
 type SubGenerator struct {
 	name      string
 	generator TestGenerator

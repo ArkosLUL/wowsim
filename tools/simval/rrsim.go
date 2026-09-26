@@ -39,18 +39,19 @@ const (
 // recordedSetup is a recorded run's .setup.txt, as mod-sim-validation's TestRecordedRun writes it.
 // TestRecordedRunHunter adds the glyphs, bags, ammo and pet.
 type recordedSetup struct {
-	Player  string
-	Class   int32
-	Race    int32
-	Seconds float64
-	Yards   float64
-	Started []int32             // SIMVAL_RECORD_START_SPELLS, cast once before the pull
-	Talents []int32             // talent spells of the first talent group
-	Items   map[int32]setupItem // by AzerothCore equipment slot
-	Glyphs  [6]int32            // GlyphProperties ids
-	Bags    []setupBag
-	Ammo    int32
-	Pet     *setupPet // nil when the run had no pet
+	Player    string
+	Class     int32
+	Race      int32
+	SpecLabel string // SIMVAL_RECORD_SPEC, e.g. "prot" or "ret"; both are class 2
+	Seconds   float64
+	Yards     float64
+	Started   []int32             // SIMVAL_RECORD_START_SPELLS, cast once before the pull
+	Talents   []int32             // talent spells of the first talent group
+	Items     map[int32]setupItem // by AzerothCore equipment slot
+	Glyphs    [6]int32            // GlyphProperties ids
+	Bags      []setupBag
+	Ammo      int32
+	Pet       *setupPet // nil when the run had no pet
 }
 
 type setupItem struct {
@@ -126,6 +127,8 @@ func (setup *recordedSetup) addHeader(line string) (string, error) {
 		setup.Class, err = parseInt32(value)
 	case "race":
 		setup.Race, err = parseInt32(value)
+	case "spec label":
+		setup.SpecLabel = value
 	case "seconds":
 		setup.Seconds, err = strconv.ParseFloat(value, 64)
 	case "yards":
@@ -302,6 +305,20 @@ const retRotation = `{"type":"TypeAPL","priorityList":[
  {"action":{"castSpell":{"spellId":{"spellId":35395}}}},
  {"action":{"castSpell":{"spellId":{"spellId":53385}}}},
  {"action":{"condition":{"cmp":{"op":"OpGt","lhs":{"remainingTime":{}},"rhs":{"const":{"val":"4s"}}}},"castSpell":{"spellId":{"spellId":48819}}}}
+]}`
+
+// protRotation is ui/protection_paladin/apls/default.apl.json's priority list cut down to what the
+// recorded cycle (SIMVAL_RECORD_SPELLS) casts: Shield of Righteousness or Hammer of the Righteous,
+// whichever the other's cooldown favors, Holy Shield, Consecration, then Judgement. Hammer of Wrath
+// is in the recorded cycle too, but the dummy's health never drops far enough to make it castable, on
+// either side, so it's left out here rather than modeled as a gap. Like retRotation this is reactive,
+// not the capture's fixed 1.5 s round-robin, so compare per-ability hit sizes and crit rates, not DPS.
+const protRotation = `{"type":"TypeAPL","priorityList":[
+ {"action":{"condition":{"cmp":{"op":"OpLe","lhs":{"spellTimeToReady":{"spellId":{"spellId":53595}}},"rhs":{"const":{"val":"3s"}}}},"castSpell":{"spellId":{"spellId":61411}}}},
+ {"action":{"condition":{"cmp":{"op":"OpLe","lhs":{"spellTimeToReady":{"spellId":{"spellId":61411}}},"rhs":{"const":{"val":"3s"}}}},"castSpell":{"spellId":{"spellId":53595}}}},
+ {"action":{"castSpell":{"spellId":{"spellId":48952}}}},
+ {"action":{"castSpell":{"spellId":{"spellId":48819}}}},
+ {"action":{"castSpell":{"spellId":{"spellId":53408}}}}
 ]}`
 
 // afflictionRotation keeps Corruption, Curse of Agony, Unstable Affliction and Haunt up on the target,
@@ -571,8 +588,76 @@ func recordedPaladin(setup *recordedSetup, data *rrsimData) (*proto.Player, []st
 	}, warnings, nil
 }
 
-// paladinAura is the aura a Ret capture cast before the pull. It has none unless SIMVAL_RECORD_START_SPELLS
-// names one: the factory's character starts without.
+// recordedProtectionPaladin builds the sim player for a Protection Paladin's recorded run, on
+// protRotation. Like the Ret capture it spends real mana.
+func recordedProtectionPaladin(setup *recordedSetup, data *rrsimData) (*proto.Player, []string, error) {
+	if setup.Class != serverPaladin {
+		return nil, nil, fmt.Errorf("class %d: only paladin runs have a rotation here", setup.Class)
+	}
+	race, ok := races[uint8(setup.Race)]
+	if !ok {
+		return nil, nil, fmt.Errorf("no sim race for server race %d", setup.Race)
+	}
+	var warnings []string
+
+	talents, _, unmatched := azerothcore.BuildTalentString(setup.Talents, setup.Class, data.dbc, data.trees)
+	for _, spell := range unmatched {
+		warnings = append(warnings, fmt.Sprintf("talent spell %d isn't in the sim's talent trees", spell))
+	}
+
+	equipment, enchantStats, itemWarnings, err := recordedEquipment(setup.Items, data)
+	if err != nil {
+		return nil, nil, err
+	}
+	warnings = append(warnings, itemWarnings...)
+
+	major, minor, unknown := azerothcore.SplitGlyphs(setup.Glyphs, data.dbc)
+	for _, glyph := range unknown {
+		warnings = append(warnings, fmt.Sprintf("glyph %d isn't in GlyphProperties.dbc", glyph))
+	}
+	glyphs := &proto.Glyphs{}
+	for i, slot := range []*int32{&glyphs.Major1, &glyphs.Major2, &glyphs.Major3} {
+		if i < len(major) {
+			*slot = data.glyphItem(major[i], &warnings)
+		}
+	}
+	for i, slot := range []*int32{&glyphs.Minor1, &glyphs.Minor2, &glyphs.Minor3} {
+		if i < len(minor) {
+			*slot = data.glyphItem(minor[i], &warnings)
+		}
+	}
+
+	rotation := &proto.APLRotation{}
+	if err := protojson.Unmarshal([]byte(protRotation), rotation); err != nil {
+		return nil, nil, err
+	}
+
+	return &proto.Player{
+		Name:          setup.Player,
+		Race:          race,
+		Class:         proto.Class_ClassPaladin,
+		Equipment:     equipment,
+		TalentsString: talents,
+		Glyphs:        glyphs,
+		Spec: &proto.Player_ProtectionPaladin{ProtectionPaladin: &proto.ProtectionPaladin{
+			Options: &proto.ProtectionPaladin_Options{
+				Aura:      paladinAura(setup.Started),
+				Seal:      proto.PaladinSeal_Command,
+				Judgement: proto.PaladinJudgement_JudgementOfWisdom,
+			},
+		}},
+		Rotation:           rotation,
+		DistanceFromTarget: setup.Yards,
+		// TestRecordedRun swings from where spawnInFront left it, facing the dummy
+		InFrontOfTarget: true,
+		Consumes:        &proto.Consumes{},
+		Buffs:           &proto.IndividualBuffs{},
+		BonusStats:      &proto.UnitStats{Stats: enchantStats.ToFloatArray()},
+	}, warnings, nil
+}
+
+// paladinAura is the aura a Ret or Protection capture cast before the pull. It has none unless
+// SIMVAL_RECORD_START_SPELLS names one: the factory's character starts without.
 func paladinAura(started []int32) proto.PaladinAura {
 	for _, spell := range started {
 		switch spell {
@@ -793,8 +878,9 @@ func runRecordedSim(args []string) int {
 	verbose := flags.Bool("v", false, "also print the final stats, the talents, an ability breakdown and per-outcome averages")
 	flags.Usage = func() {
 		fmt.Fprintf(flags.Output(), "usage: simval rrsim [flags] <setup file>\n\n"+
-			"Sims a recorded hunter, Retribution Paladin or Affliction Warlock run from its .setup.txt, for `simval chronicle\n"+
-			"-sim`. Captured runs live in %s. Run from the repo root, built with --tags=with_db.\n\n", chronicleDir)
+			"Sims a recorded hunter, Retribution or Protection Paladin, or Affliction Warlock run from its\n"+
+			".setup.txt, for `simval chronicle -sim`. Captured runs live in %s. Run from the repo root, "+
+			"built with --tags=with_db.\n\n", chronicleDir)
 		flags.PrintDefaults()
 	}
 	_ = flags.Parse(args)
@@ -826,10 +912,12 @@ func runRecordedSim(args []string) int {
 	}
 	var player *proto.Player
 	var warnings []string
-	switch setup.Class {
-	case serverPaladin:
+	switch {
+	case setup.Class == serverPaladin && setup.SpecLabel == "prot":
+		player, warnings, err = recordedProtectionPaladin(setup, data)
+	case setup.Class == serverPaladin:
 		player, warnings, err = recordedPaladin(setup, data)
-	case serverWarlock:
+	case setup.Class == serverWarlock:
 		player, warnings, err = recordedWarlock(setup, data)
 	default:
 		player, warnings, err = recordedHunter(setup, data, opts.NoTracking)
@@ -887,6 +975,8 @@ func reportRecordedSim(out io.Writer, setup *recordedSetup, request *proto.RaidS
 		label, petType = "hunter", hunter.Options.PetType
 	case player.GetWarlock() != nil:
 		label = "warlock"
+	case player.GetProtectionPaladin() != nil:
+		label = "protection paladin"
 	}
 	fmt.Fprintf(out, "%s, %s %s: talents %s", setup.Player, azerothcore.RaceNames[setup.Race], label, player.TalentsString)
 	if hunter != nil {

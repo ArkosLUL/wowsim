@@ -266,11 +266,9 @@ func (ai *HodirAI) registerBuffsDebuffs(target *core.Target) {
 				Duration: time.Second * 30,
 				OnGain: func(aura *core.Aura, sim *core.Simulation) {
 					character.MultiplyAttackSpeed(sim, 1.5)
-					character.MultiplyCastSpeed(1.5)
 				},
 				OnExpire: func(aura *core.Aura, sim *core.Simulation) {
 					character.MultiplyAttackSpeed(sim, 1/1.5)
-					character.MultiplyCastSpeed(1 / 1.5)
 				},
 			})
 
@@ -319,7 +317,7 @@ func (ai *HodirAI) registerFrozenBlowSpell(target *core.Target) {
 
 	ai.FrozenBlows = target.GetOrRegisterSpell(core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: core.TernaryInt32(ai.raidSize == 25, 63512, 62478)},
-		SpellSchool: core.SpellSchoolPhysical,
+		SpellSchool: core.SpellSchoolFrost,
 		ProcMask:    core.ProcMaskMeleeMHAuto,
 		Flags:       core.SpellFlagMeleeMetrics,
 

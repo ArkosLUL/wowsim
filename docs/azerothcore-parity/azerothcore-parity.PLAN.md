@@ -482,7 +482,8 @@ fixture.
 - The server truncates primary stats to integers and the sim doesn't (a Gnome's 256.2 intellect is 256), worth up to
   one point of anything derived; `tools/simval` allows for exactly that.
 - Talents that are percent auras on the server but rating in the sim (Lightning Reflexes, Catlike Reflexes, Shaman
-  Anticipation, Deflection for rogues) still diminish in the sim: P7.
+  Anticipation, Deflection for rogues) still diminish in the sim: fixed in PAR-P7-TANK, onto
+  `PseudoStats.BaseDodge`/`BaseParry` like the warrior's and paladin's own copies of these talents already were.
 - Pet avoidance (server creatures: flat 5% dodge, no agility): P7.
 - A `maxPower` field in mod-sim-validation's snapshot (next server rebuild) would let the mana check run with buffs.
 

@@ -421,8 +421,11 @@ Each item:
   constant: declare it with a KeepSim entry naming the script.
 - Missiles roll damage and crit at launch; AoE and chain targets all fly from the caster. Waits use
   `DistanceFromTarget`, 30 yd in the suites even for melee-range Fan of Knives and Hammer of the Righteous.
-- PAR-P7-TANK, open: Holy Shield's proc never misses or crits on the server; Ardent Defender's heal amount;
-  Concussion Blow gets no caster modifiers; the rune weapon's spell bonus runs as its owner.
+- PAR-P7-TANK: Holy Shield's proc now deals its damage via `OutcomeAlwaysHit` (no roll, matching
+  `HandleProcTriggerDamageAuraProc`); Ardent Defender's heal now scales off total defense skill
+  (400 + rating) against 540, capped at 1, instead of rating alone uncapped; Concussion Blow now carries
+  `SpellFlagIgnoreAttackerModifiers` (`spell_warr_concussion_blow::HandleDummy` sets the hit damage
+  directly, skipping `SpellDamageBonusDone`). Still open: the rune weapon's spell bonus runs as its owner.
 - PAR-P8: `SpellDamageBonusDone` truncates its SP and AP parts separately, which most closures don't.
   `SPELLMOD_DAMAGE` flats come after every percent; Divine Storm's librams still sit inside its 110%.
   Rupture's AP part and Concussion Blow skip caster modifiers. Shadowstep is `SPELLMOD_DAMAGE` on the
@@ -492,6 +495,34 @@ up to +0.08%); Frost mage +0.0004%, from Deep Freeze's SP. The other 33 suites a
 - **PAR-P7-PRI** declares the priest's effects. Holy Fire's dot and Devouring Plague are its known
   mismatches.
 - **PAR-P7-TANK** builds on the tank-spec spells of PAR-DECL-2 (Feral Tank) and PAR-DECL-3.
+
+#### PAR-P7-TANK as built
+
+- Frozen Blows (63512), Leeching Swarm (66118, its tank-side heal-tracking dummy spell included) and
+  Hyperspeed Acceleration (54758) now declare their school/missile speed directly instead of relying on the
+  `ServerConflictAllowance` entries `serverdata_allowlist.go` carried for them; those three entries dropped
+  as stale.
+- Holy Shield's proc (`OutcomeAlwaysHit`), Ardent Defender's heal fraction and Concussion Blow's
+  `SpellFlagIgnoreAttackerModifiers` are declared as this wave's PAR-P7-TANK line above already recorded;
+  confirmed against a live capture instead of server source alone (Protection Paladin recorded run,
+  INVESTIGATION **Tanks**): Holy Shield's crit rate and Concussion Blow's own citation weren't directly
+  exercised by the capture's rotation, so this is source-level confirmation, not a live one, for those two.
+- Savage Defense keeps its 10 s shield (62606) procced by the bear's own crits; the trigger drops
+  magic-class crits and the one charge also goes on a landed melee or ranged hit of any school
+  (INVESTIGATION **Tanks**). No roll to declare: `spell_dru_savage_defense::Absorb` takes a flat 25% of
+  attack power.
+- Dancing Rune Weapon's Death Coil mirror and Pestilence fixes (INVESTIGATION **Tanks**) changed which event
+  triggers a mirrored cast and whose glyph gates a refresh; neither adds or removes a declared effect.
+- Still open: the rune weapon's own spell/melee damage bonus (halved per hit, from the owner's bonus) needs a
+  core-level per-component multiplier a class item can't add (PAR-P7-TANK's own follow-up, INVESTIGATION
+  **Tanks**).
+- Goldens: the four tank suites gain one `GenericBoss` case each (no rename of existing cases); Paladin
+  Protection also moves on Holy Shield's fixed roll (+0.3-0.4% dps/tps); Feral Tank's Default rows move on
+  Savage Defense no longer procing off Faerie Fire (Feral) crits (dtps +5.9% and +0.5%); Blood DK's own dps
+  suite (not one of the four tank suites) moves a little on the Dancing Rune Weapon fixes. `TestBM` and
+  `TestCombat` lose a phantom Dodge-rating character-stat entry as a side effect of the percent-aura-talent
+  fix outside the tank classes; zero dps/tps change. Full deltas and the promote decision are the item's
+  report, not repeated here.
 
 ## Not scheduled
 

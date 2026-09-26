@@ -121,16 +121,18 @@ func (ai *Anub25HAI) registerLeechingSwarmSpell(target *core.Target) {
 	// Add a dummy spell for the main tank to keep track of the effective raid DPS loss caused by the leech ticks
 	if ai.Target.CurrentTarget != nil {
 		ai.LeechingSwarmHeal = ai.Target.CurrentTarget.RegisterSpell(core.SpellConfig{
-			ActionID: actionID,
-			Flags:    core.SpellFlagNoOnDamageDealt,
+			ActionID:     actionID,
+			Flags:        core.SpellFlagNoOnDamageDealt,
+			MissileSpeed: 30,
 		})
 	}
 
 	ai.LeechingSwarm = target.RegisterSpell(core.SpellConfig{
-		ActionID:    actionID,
-		SpellSchool: core.SpellSchoolNature,
-		ProcMask:    core.ProcMaskSpellDamage,
-		Flags:       core.SpellFlagIgnoreModifiers,
+		ActionID:     actionID,
+		SpellSchool:  core.SpellSchoolNature,
+		ProcMask:     core.ProcMaskSpellDamage,
+		Flags:        core.SpellFlagIgnoreModifiers,
+		MissileSpeed: 30,
 
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
@@ -193,6 +195,6 @@ func (ai *Anub25HAI) ExecuteCustomRotation(sim *core.Simulation) {
 		}
 	}
 
-	// Anub follows the standard Classic WoW boss AI behavior of evaluating actions on a 1.62 second server tick.
+	// 1.62s is this AI's own decision cadence, not a real server tick.
 	ai.Target.WaitUntil(sim, sim.CurrentTime+time.Millisecond*1620)
 }

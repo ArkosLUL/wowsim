@@ -235,8 +235,11 @@ func (paladin *Paladin) applyArdentDefender() {
 		ardentDamageReduction = 0.20
 	}
 
-	// 540 defense (+140) yields the full heal amount
-	ardentHealAmount := max(1.0, float64(paladin.GetStat(stats.Defense))/core.DefenseRatingPerDefense/140.0) * 0.10 * float64(paladin.Talents.ArdentDefender)
+	// spell_pal_ardent_defender::Absorb: the heal scales with total defense skill (base + rating)
+	// against level*5+140 (540 at 80), capping at that ratio instead of the rating alone.
+	reqDefenseSkill := float64(core.MaxSkill(core.CharacterLevel)) + 140
+	totalDefenseSkill := float64(core.MaxSkill(core.CharacterLevel) + core.DefenseSkillFromRating(paladin.GetStat(stats.Defense)))
+	ardentHealAmount := min(1.0, totalDefenseSkill/reqDefenseSkill) * 0.10 * float64(paladin.Talents.ArdentDefender)
 
 	// TBD? Buff to mark time spent fully below 35% and attribute absorbs
 	// rangeAura := paladin.RegisterAura(core.Aura{

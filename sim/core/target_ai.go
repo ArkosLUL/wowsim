@@ -41,9 +41,33 @@ func (target *Target) initialize(config *proto.Target) {
 	if target.AI != nil {
 		target.AI.Initialize(target, config)
 
+		// applyDungeonScale folds the Damage multiplier into PseudoStats.DamageDealtMultiplier, which a
+		// spell flagged SpellFlagIgnoreAttackerModifiers skips outright (spell_result.go). The server's
+		// DungeonScale hooks (ModifySpellDamageTaken, ModifyMeleeDamage, ModifyPeriodicDamageAurasTick)
+		// scale a creature's damage regardless of the spell's attributes, so an ability that ignores
+		// attacker modifiers still needs the scale, folded into its own DamageMultiplier instead, which
+		// nothing skips.
+		if dungeonScale := target.PseudoStats.DamageDealtMultiplier; dungeonScale != 1 {
+			for _, spell := range target.Spellbook {
+				if spell.Flags.Matches(SpellFlagIgnoreAttackerModifiers) {
+					spell.DamageMultiplier *= dungeonScale
+				}
+			}
+		}
+
 		target.gcdAction = &PendingAction{
 			Priority: ActionPriorityGCD,
 			OnAction: func(sim *Simulation) {
+				// A hardcast whose Expires lands on the same tick as the GCD shares this same pending
+				// action (SetGCDTimer), so it never gets its own hardcastAction: complete it here first,
+				// as character.go's gcdAction does for players.
+				if hc := &target.Hardcast; hc.Expires != startingCDTime && hc.Expires <= sim.CurrentTime {
+					hc.Expires = startingCDTime
+					if hc.OnComplete != nil {
+						hc.OnComplete(sim, hc.Target)
+					}
+				}
+
 				target.Rotation.DoNextAction(sim)
 			},
 		}
@@ -116,6 +140,13 @@ func GetPresetTargetWithID(id int32) *PresetTarget {
 }
 
 func AddPresetEncounter(name string, targetPaths []string) {
+	AddPresetEncounterWithDifficulty(name, targetPaths, proto.RaidDifficulty_RaidDifficultyUnknown)
+}
+
+// AddPresetEncounterWithDifficulty is AddPresetEncounter for a preset that also picks a raid
+// difficulty, e.g. one built for a specific raid size so its dungeon scale applies without the player
+// setting it by hand.
+func AddPresetEncounterWithDifficulty(name string, targetPaths []string, difficulty proto.RaidDifficulty) {
 	if len(targetPaths) == 0 {
 		log.Fatalf("Encounter must have targets!")
 	}
@@ -142,7 +173,8 @@ func AddPresetEncounter(name string, targetPaths []string) {
 	}
 
 	PresetEncounters = append(PresetEncounters, &proto.PresetEncounter{
-		Path:    path,
-		Targets: targetProtos,
+		Path:           path,
+		Targets:        targetProtos,
+		RaidDifficulty: difficulty,
 	})
 }

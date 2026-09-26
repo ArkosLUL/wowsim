@@ -19,6 +19,7 @@ import {
 } from '../core/proto/apl.js';
 import { Stats } from '../core/proto_utils/stats.js';
 import { Player } from '../core/player.js';
+import { Encounter } from '../core/encounter.js';
 import { getSpecIcon } from '../core/proto_utils/utils.js';
 import { IndividualSimUI, registerSpecConfig } from '../core/individual_sim_ui.js';
 import { TypedEvent } from '../core/typed_event.js';
@@ -184,6 +185,8 @@ const SPEC_CONFIG = registerSpecConfig(Spec.SpecProtectionPaladin, {
 			thunderClap: TristateEffect.TristateEffectImproved,
 			insectSwarm: true,
 		}),
+		// The generic AzerothCore boss, in place of this fork's Classic default.
+		encounterTarget: Encounter.genericBossTargetProto(),
 	},
 
 	// IconInputs to include in the 'Player' section on the settings tab.

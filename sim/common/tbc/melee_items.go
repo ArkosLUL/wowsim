@@ -303,8 +303,11 @@ func init() {
 		character := agent.GetCharacter()
 
 		procAura := character.NewTemporaryStatsAura("Bulwark Of Azzinoth Proc", core.ActionID{ItemID: 32375}, stats.Stats{stats.Armor: 2000}, time.Second*10)
-		// PPM on hits taken, at the wearer's own weapon speed for the attack's hand
-		ppmm := character.AutoAttacks.NewPPMManager(bulwark.PPM, core.ProcMaskMeleeOrRanged)
+		// The server rolls this PPM against the wearer's own main-hand attack time on every landed hit
+		// taken, whatever hand the attacker used, so a dual-wielding attacker's off-hand swings proc it
+		// too (retail deviation 14). NewPPMManager keys its chance by the attacker's own hand instead,
+		// which never matches here since the wearer isn't the one swinging.
+		procChance := bulwark.PPM * character.AutoAttacks.MH().SwingSpeed / 60
 
 		character.GetOrRegisterAura(core.Aura{
 			Label:    "Bulwark Of Azzinoth",
@@ -313,7 +316,7 @@ func init() {
 				aura.Activate(sim)
 			},
 			OnSpellHitTaken: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
-				if result.Landed() && spell.ProcMask.Matches(core.ProcMaskMeleeOrRanged) && ppmm.Proc(sim, spell.ProcMask, "Bulwark of Azzinoth") {
+				if result.Landed() && spell.ProcMask.Matches(core.ProcMaskMeleeOrRanged) && sim.RandomFloat("Bulwark of Azzinoth") < procChance {
 					procAura.Activate(sim)
 				}
 			},

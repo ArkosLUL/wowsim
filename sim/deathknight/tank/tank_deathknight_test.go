@@ -6,6 +6,7 @@ import (
 	_ "github.com/wowsims/wotlk/sim/common" // imported to get item effects included.
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
+	"github.com/wowsims/wotlk/sim/encounters"
 )
 
 func init() {
@@ -13,34 +14,67 @@ func init() {
 }
 
 func TestBloodTank(t *testing.T) {
-	core.RunTestSuite(t, t.Name(), core.FullCharacterTestSuiteGenerator(core.CharacterSuiteConfig{
-		Class:      proto.Class_ClassDeathknight,
-		Race:       proto.Race_RaceOrc,
-		OtherRaces: []proto.Race{proto.Race_RaceHuman},
+	core.RunTestSuite(t, t.Name(), core.JoinTestGenerators(
+		core.FullCharacterTestSuiteGenerator(core.CharacterSuiteConfig{
+			Class:      proto.Class_ClassDeathknight,
+			Race:       proto.Race_RaceOrc,
+			OtherRaces: []proto.Race{proto.Race_RaceHuman},
 
-		GearSet:     core.GetGearSet("../../../ui/tank_deathknight/gear_sets", "p1_blood"),
-		Talents:     BloodTankTalents,
-		Glyphs:      Glyphs,
-		Consumes:    FullConsumes,
-		SpecOptions: core.SpecOptionsCombo{Label: "Basic", SpecOptions: PlayerOptionsBloodTank},
-		Rotation:    core.GetAplRotation("../../../ui/tank_deathknight/apls", "blood_icy_touch"),
-		OtherRotations: []core.RotationCombo{
-			core.GetAplRotation("../../../ui/tank_deathknight/apls", "blood_aggro"),
-		},
-
-		IsTank:          true,
-		InFrontOfTarget: true,
-
-		ItemFilter: core.ItemFilter{
-			ArmorType: proto.ArmorType_ArmorTypePlate,
-
-			WeaponTypes: []proto.WeaponType{
-				proto.WeaponType_WeaponTypeAxe,
-				proto.WeaponType_WeaponTypeSword,
-				proto.WeaponType_WeaponTypeMace,
+			GearSet:     core.GetGearSet("../../../ui/tank_deathknight/gear_sets", "p1_blood"),
+			Talents:     BloodTankTalents,
+			Glyphs:      Glyphs,
+			Consumes:    FullConsumes,
+			SpecOptions: core.SpecOptionsCombo{Label: "Basic", SpecOptions: PlayerOptionsBloodTank},
+			Rotation:    core.GetAplRotation("../../../ui/tank_deathknight/apls", "blood_icy_touch"),
+			OtherRotations: []core.RotationCombo{
+				core.GetAplRotation("../../../ui/tank_deathknight/apls", "blood_aggro"),
 			},
+
+			IsTank:          true,
+			InFrontOfTarget: true,
+
+			ItemFilter: core.ItemFilter{
+				ArmorType: proto.ArmorType_ArmorTypePlate,
+
+				WeaponTypes: []proto.WeaponType{
+					proto.WeaponType_WeaponTypeAxe,
+					proto.WeaponType_WeaponTypeSword,
+					proto.WeaponType_WeaponTypeMace,
+				},
+			},
+		}),
+		&core.SingleDpsTestGenerator{Name: "GenericBoss", Request: genericBossRequest()},
+	))
+}
+
+// The generic AzerothCore boss, on the same gear and rotation as TestBloodTank's default, alongside
+// the Classic-style target that suite still keeps.
+func genericBossRequest() *proto.RaidSimRequest {
+	rsr := &proto.RaidSimRequest{
+		Raid: core.SinglePlayerRaidProto(
+			&proto.Player{
+				Race:            proto.Race_RaceOrc,
+				Class:           proto.Class_ClassDeathknight,
+				Equipment:       core.GetGearSet("../../../ui/tank_deathknight/gear_sets", "p1_blood").GearSet,
+				Consumes:        FullConsumes,
+				Spec:            PlayerOptionsBloodTank,
+				Buffs:           core.FullIndividualBuffs,
+				Rotation:        core.GetAplRotation("../../../ui/tank_deathknight/apls", "blood_icy_touch").Rotation,
+				TalentsString:   BloodTankTalents,
+				Glyphs:          Glyphs,
+				InFrontOfTarget: true,
+			},
+			core.FullPartyBuffs,
+			core.FullRaidBuffs,
+			core.FullDebuffs),
+		Encounter: &proto.Encounter{
+			Duration: 300,
+			Targets:  []*proto.Target{encounters.GenericBossTarget()},
 		},
-	}))
+		SimOptions: core.DefaultSimTestOptions,
+	}
+	rsr.Raid.Tanks = []*proto.UnitReference{{Type: proto.UnitReference_Player, Index: 0}}
+	return rsr
 }
 
 var BloodTankTalents = "005510153330330220102013-3050505100023101-002"

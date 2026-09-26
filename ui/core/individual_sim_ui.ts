@@ -38,6 +38,7 @@ import {
 	RaidBuffs,
 	Spec,
 	Stat,
+	Target,
 } from './proto/common';
 import { IndividualSimSettings, SavedTalents } from './proto/ui';
 import { getMetaGemConditionDescription } from './proto_utils/gems';
@@ -122,6 +123,9 @@ export interface IndividualSimUIConfig<SpecType extends Spec> extends PlayerConf
 		debuffs: Debuffs;
 
 		other?: OtherDefaults;
+
+		// Overrides Encounter.defaultTargetProto(), e.g. the generic AzerothCore boss the tank specs default to.
+		encounterTarget?: Target;
 	};
 
 	playerInputs?: InputSection;
@@ -550,7 +554,7 @@ export abstract class IndividualSimUI<SpecType extends Spec> extends SimUI {
 				this.sim.raid.setTargetDummies(eventID, 0);
 			} else {
 				this.sim.raid.setTargetDummies(eventID, healingSpec ? 9 : 0);
-				this.sim.encounter.applyDefaults(eventID);
+				this.sim.encounter.applyDefaults(eventID, this.individualConfig.defaults.encounterTarget);
 				this.sim.raid.setDebuffs(eventID, this.individualConfig.defaults.debuffs);
 				this.sim.applyDefaults(eventID, tankSpec, healingSpec);
 

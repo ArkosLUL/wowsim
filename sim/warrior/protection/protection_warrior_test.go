@@ -6,6 +6,7 @@ import (
 	_ "github.com/wowsims/wotlk/sim/common" // imported to get item effects included.
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
+	"github.com/wowsims/wotlk/sim/encounters"
 )
 
 func init() {
@@ -13,43 +14,76 @@ func init() {
 }
 
 func TestProtectionWarrior(t *testing.T) {
-	core.RunTestSuite(t, t.Name(), core.FullCharacterTestSuiteGenerator(core.CharacterSuiteConfig{
-		Class:      proto.Class_ClassWarrior,
-		Race:       proto.Race_RaceOrc,
-		OtherRaces: []proto.Race{proto.Race_RaceHuman},
+	core.RunTestSuite(t, t.Name(), core.JoinTestGenerators(
+		core.FullCharacterTestSuiteGenerator(core.CharacterSuiteConfig{
+			Class:      proto.Class_ClassWarrior,
+			Race:       proto.Race_RaceOrc,
+			OtherRaces: []proto.Race{proto.Race_RaceHuman},
 
-		GearSet:     core.GetGearSet("../../../ui/protection_warrior/gear_sets", "p1_balanced"),
-		Talents:     DefaultTalents,
-		Glyphs:      DefaultGlyphs,
-		Consumes:    FullConsumes,
-		SpecOptions: core.SpecOptionsCombo{Label: "Basic", SpecOptions: PlayerOptionsBasic},
-		Rotation:    core.GetAplRotation("../../../ui/protection_warrior/apls", "default"),
+			GearSet:     core.GetGearSet("../../../ui/protection_warrior/gear_sets", "p1_balanced"),
+			Talents:     DefaultTalents,
+			Glyphs:      DefaultGlyphs,
+			Consumes:    FullConsumes,
+			SpecOptions: core.SpecOptionsCombo{Label: "Basic", SpecOptions: PlayerOptionsBasic},
+			Rotation:    core.GetAplRotation("../../../ui/protection_warrior/apls", "default"),
 
-		IsTank:          true,
-		InFrontOfTarget: true,
+			IsTank:          true,
+			InFrontOfTarget: true,
 
-		ItemFilter: core.ItemFilter{
-			ArmorType: proto.ArmorType_ArmorTypePlate,
+			ItemFilter: core.ItemFilter{
+				ArmorType: proto.ArmorType_ArmorTypePlate,
 
-			WeaponTypes: []proto.WeaponType{
-				proto.WeaponType_WeaponTypeAxe,
-				proto.WeaponType_WeaponTypeSword,
-				proto.WeaponType_WeaponTypeMace,
-				proto.WeaponType_WeaponTypeDagger,
-				proto.WeaponType_WeaponTypeFist,
-				proto.WeaponType_WeaponTypeShield,
+				WeaponTypes: []proto.WeaponType{
+					proto.WeaponType_WeaponTypeAxe,
+					proto.WeaponType_WeaponTypeSword,
+					proto.WeaponType_WeaponTypeMace,
+					proto.WeaponType_WeaponTypeDagger,
+					proto.WeaponType_WeaponTypeFist,
+					proto.WeaponType_WeaponTypeShield,
+				},
 			},
-		},
 
-		EPReferenceStat: proto.Stat_StatAttackPower,
-		StatsToWeigh: []proto.Stat{
-			proto.Stat_StatStrength,
-			proto.Stat_StatAttackPower,
-			proto.Stat_StatArmor,
-			proto.Stat_StatDodge,
-			proto.Stat_StatBlockValue,
+			EPReferenceStat: proto.Stat_StatAttackPower,
+			StatsToWeigh: []proto.Stat{
+				proto.Stat_StatStrength,
+				proto.Stat_StatAttackPower,
+				proto.Stat_StatArmor,
+				proto.Stat_StatDodge,
+				proto.Stat_StatBlockValue,
+			},
+		}),
+		&core.SingleDpsTestGenerator{Name: "GenericBoss", Request: genericBossRequest()},
+	))
+}
+
+// The generic AzerothCore boss, on the same gear and rotation as TestProtectionWarrior's default,
+// alongside the Classic-style target that suite still keeps.
+func genericBossRequest() *proto.RaidSimRequest {
+	rsr := &proto.RaidSimRequest{
+		Raid: core.SinglePlayerRaidProto(
+			&proto.Player{
+				Race:            proto.Race_RaceOrc,
+				Class:           proto.Class_ClassWarrior,
+				Equipment:       core.GetGearSet("../../../ui/protection_warrior/gear_sets", "p1_balanced").GearSet,
+				Consumes:        FullConsumes,
+				Spec:            PlayerOptionsBasic,
+				Buffs:           core.FullIndividualBuffs,
+				Rotation:        core.GetAplRotation("../../../ui/protection_warrior/apls", "default").Rotation,
+				TalentsString:   DefaultTalents,
+				Glyphs:          DefaultGlyphs,
+				InFrontOfTarget: true,
+			},
+			core.FullPartyBuffs,
+			core.FullRaidBuffs,
+			core.FullDebuffs),
+		Encounter: &proto.Encounter{
+			Duration: 300,
+			Targets:  []*proto.Target{encounters.GenericBossTarget()},
 		},
-	}))
+		SimOptions: core.DefaultSimTestOptions,
+	}
+	rsr.Raid.Tanks = []*proto.UnitReference{{Type: proto.UnitReference_Player, Index: 0}}
+	return rsr
 }
 
 func BenchmarkSimulate(b *testing.B) {
