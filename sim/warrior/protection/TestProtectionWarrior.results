@@ -927,6 +927,14 @@ dps_results: {
  }
 }
 dps_results: {
+ key: "TestProtectionWarrior-GenericBoss"
+ value: {
+  dps: 2994.06824
+  tps: 7270.09715
+  dtps: 582.64058
+ }
+}
+dps_results: {
  key: "TestProtectionWarrior-Settings-Human-p1_balanced-Basic-default-FullBuffs-LongMultiTarget"
  value: {
   dps: 1562.88089

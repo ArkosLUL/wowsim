@@ -924,6 +924,14 @@ dps_results: {
  }
 }
 dps_results: {
+ key: "TestBloodTank-GenericBoss"
+ value: {
+  dps: 2533.95934
+  tps: 8298.11059
+  dtps: 972.96139
+ }
+}
+dps_results: {
  key: "TestBloodTank-Settings-Human-p1_blood-Basic-blood_aggro-FullBuffs-LongMultiTarget"
  value: {
   dps: 2128.86685
