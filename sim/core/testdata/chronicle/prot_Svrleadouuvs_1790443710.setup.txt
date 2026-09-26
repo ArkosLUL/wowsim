@@ -1,0 +1,64 @@
+player: Svrleadouuvs
+class: 2
+race: 1
+spec label: prot
+seconds: 300
+yards: 4
+started: [20375 25780]
+rotation: [61411 53595 48806 48819 48952 53408]
+
+talents (spell, specMask):
+  20266 1
+  20100 1
+  64205 1
+  20470 1
+  20147 1
+  53530 1
+  20911 1
+  20181 1
+  31849 1
+  20198 1
+  31785 1
+  20925 1
+  31852 1
+  20135 1
+  31860 1
+  53592 1
+  31935 1
+  53585 1
+  53711 1
+  53696 1
+  53595 1
+  20064 1
+  20101 1
+  25956 1
+  20337 1
+  26016 1
+  20375 1
+  26023 1
+  31868 1
+
+equipped (slot, item, enchantments):
+  0 51272 3820 0 0 0 0 0 3627 0 0 3558 0 0 0 0 0 3753 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+  1 50724 0 0 0 0 0 0 3526 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+  2 51166 3775 0 0 0 0 0 3558 0 0 0 0 0 0 0 0 3752 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+  3 45 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+  4 51274 3233 0 0 0 0 0 3558 0 0 3526 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+  5 50667 0 0 0 0 0 0 3526 0 0 3526 0 0 3526 0 0 0 0 0 3729 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+  6 51928 3719 0 0 0 0 0 3526 0 0 3583 0 0 3558 0 0 3753 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+  7 50632 3826 0 0 0 0 0 3526 0 0 3558 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+  8 50721 2332 0 0 0 0 0 3526 0 0 0 0 0 0 0 0 3752 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+  9 51270 3246 0 0 0 0 0 3526 0 0 0 0 0 0 0 0 3752 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+  10 54585 0 0 0 0 0 0 3558 0 0 0 0 0 0 0 0 3752 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+  11 50664 0 0 0 0 0 0 3526 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+  12 50366 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+  13 47059 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+  14 54583 3831 0 0 0 0 0 3558 0 0 0 0 0 0 0 0 3752 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+  15 50734 3834 0 0 0 0 0 3558 0 0 0 0 0 0 0 0 3752 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+  16 50616 1128 0 0 0 0 0 3526 0 0 0 0 0 0 0 0 3752 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+  17 50460 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+
+glyphs (GlyphProperties ids): [196 455 456 701 452 199]
+
+server snapshot before the fight (.simval info), as recorded:
+  {"schema":1,"command":"info","unixMs":1790443709845,"gameTimeMs":12565909,"map":{"id":533,"instanceId":10,"difficulty":0,"isDungeon":true,"isRaid":true},"attacker":{"guid":"GUID Full: 0x0000000000083edd Type: Player Low: 540381","entry":0,"name":"Svrleadouuvs","level":80,"class":2,"race":1,"isPlayer":true,"isPet":false,"isHunterPet":false,"isGuardian":false,"isTotem":false,"controlledByPlayer":true,"levelForOther":80,"maxSkillForOther":400,"defenseSkillVsOther":400,"otherInFront":true,"distance":0,"health":23334,"maxHealth":23334,"powerType":0,"power":31589,"inCombat":false,"stats":{"strength":173,"agility":90,"stamina":1658,"intellect":1815,"spirit":128},"resistances":[27801,0,0,0,0,0,0],"hitMods":{"melee":0.36596522,"ranged":0.36596522,"spell":0.45745653},"auraExpertise":12,"castSpeedMultiplier":0.79164654,"spellPower":{"physical":3423,"holy":3526,"fire":3526,"nature":3526,"frost":3526,"shadow":3526,"arcane":3526},"defense":{"dodge":9.996908,"parry":10,"block":5,"blockValue":436,"ignoreHitDirection":false,"cannotDefend":false},"attacks":[{"type":"mainhand","canUse":true,"hasWeapon":true,"unhastedMs":1800,"speedMultiplier":0.745075,"hastedMs":1341,"damageMin":161,"damageMax":447,"attackPower":566,"missChanceTaken":5,"weapon":{"itemId":50734,"subClass":4,"delayMs":1800,"damageMin":161,"damageMax":447},"expertiseReduction":2.25,"weaponSkillVsOther":400,"critVsOther":34.33673},{"type":"offhand","canUse":true,"hasWeapon":false,"unhastedMs":2000,"speedMultiplier":0.745075,"hastedMs":1490,"damageMin":0,"damageMax":0,"attackPower":566,"missChanceTaken":5,"expertiseReduction":1.5,"weaponSkillVsOther":0,"critVsOther":18.33673},{"type":"ranged","canUse":true,"hasWeapon":false,"unhastedMs":2000,"speedMultiplier":0.79164654,"hastedMs":1583,"damageMin":1,"damageMax":2,"attackPower":80,"missChanceTaken":5,"expertiseReduction":0,"weaponSkillVsOther":0,"critVsOther":18.33673}],"ratings":[{"id":0,"name":"weaponSkill","rating":0,"bonus":0},{"id":1,"name":"defenseSkill","rating":0,"bonus":0},{"id":2,"name":"dodge","rating":0,"bonus":0},{"id":3,"name":"parry","rating":0,"bonus":0},{"id":4,"name":"block","rating":0,"bonus":0},{"id":5,"name":"hitMelee","rating":12,"bonus":0.36596522},{"id":6,"name":"hitRanged","rating":12,"bonus":0.36596522},{"id":7,"name":"hitSpell","rating":12,"bonus":0.45745653},{"id":8,"name":"critMelee","rating":1099,"bonus":23.940228},{"id":9,"name":"critRanged","rating":1099,"bonus":23.940228},{"id":10,"name":"critSpell","rating":1099,"bonus":23.940228},{"id":11,"name":"hitTakenMelee","rating":0,"bonus":0},{"id":12,"name":"hitTakenRanged","rating":0,"bonus":0},{"id":13,"name":"hitTakenSpell","rating":0,"bonus":0},{"id":14,"name":"critTakenMelee","rating":0,"bonus":0},{"id":15,"name":"critTakenRanged","rating":0,"bonus":0},{"id":16,"name":"critTakenSpell","rating":0,"bonus":0},{"id":17,"name":"hasteMelee","rating":863,"bonus":34.2147},{"id":18,"name":"hasteRanged","rating":863,"bonus":26.318998},{"id":19,"name":"hasteSpell","rating":863,"bonus":26.318998},{"id":20,"name":"weaponSkillMainhand","rating":0,"bonus":0},{"id":21,"name":"weaponSkillOffhand","rating":0,"bonus":0},{"id":22,"name":"weaponSkillRanged","rating":0,"bonus":0},{"id":23,"name":"expertise","rating":0,"bonus":0},{"id":24,"name":"armorPenetration","rating":0,"bonus":0}],"sheet":{"critMainhand":34.93673,"critOffhand":18.93673,"critRanged":18.93673,"spellCrit":[0,44.165726,44.165726,44.165726,44.165726,44.165726,44.165726],"expertiseMainhand":9,"expertiseOffhand":6,"dodge":9.996908,"parry":10,"block":5,"shieldBlock":436,"realDodge":9.996908},"spellPenetrationItemMod":0,"armorPenetrationAuraPct":0,"auras":[{"id":20064,"name":"Deflection","stacks":1,"charges":0,"durationMs":-1,"fromSelf":true},{"id":20100,"name":"Anticipation","stacks":1,"charges":0,"durationMs":-1,"fromSelf":true},{"id":20101,"name":"Benediction","stacks":1,"charges":0,"durationMs":-1,"fromSelf":true},{"id":20135,"name":"Redoubt","stacks":1,"charges":0,"durationMs":-1,"fromSelf":true},{"id":20147,"name":"Toughness","stacks":1,"charges":0,"durationMs":-1,"fromSelf":true},{"id":20181,"name":"Reckoning","stacks":1,"charges":0,"durationMs":-1,"fromSelf":true},{"id":20198,"name":"One-Handed Weapon Specialization","stacks":1,"charges":0,"durationMs":-1,"fromSelf":true},{"id":20266,"name":"Divine Strength","stacks":1,"charges":0,"durationMs":-1,"fromSelf":true},{"id":20337,"name":"Heart of the Crusader","stacks":1,"charges":0,"durationMs":-1,"fromSelf":true},{"id":20470,"name":"Improved Righteous Fury","stacks":1,"charges":0,"durationMs":-1,"fromSelf":true},{"id":20597,"name":"Sword Specialization","stacks":1,"charges":0,"durationMs":-1,"fromSelf":true},{"id":20598,"name":"The Human Spirit","stacks":1,"charges":0,"durationMs":-1,"fromSelf":true},{"id":20599,"name":"Diplomacy","stacks":1,"charges":0,"durationMs":-1,"fromSelf":true},{"id":20864,"name":"Mace Specialization","stacks":1,"charges":0,"durationMs":-1,"fromSelf":true},{"id":25956,"name":"Improved Judgements","stacks":1,"charges":0,"durationMs":-1,"fromSelf":true},{"id":26016,"name":"Vindication","stacks":1,"charges":0,"durationMs":-1,"fromSelf":true},{"id":26023,"name":"Pursuit of Justice","stacks":1,"charges":0,"durationMs":-1,"fromSelf":true},{"id":31785,"name":"Spiritual Attunement","stacks":1,"charges":0,"durationMs":-1,"fromSelf":true},{"id":31849,"name":"Sacred Duty","stacks":1,"charges":0,"durationMs":-1,"fromSelf":true},{"id":31852,"name":"Ardent Defender","stacks":1,"charges":0,"durationMs":-1,"fromSelf":true},{"id":31860,"name":"Combat Expertise","stacks":1,"charges":0,"durationMs":-1,"fromSelf":true},{"id":31868,"name":"Crusade","stacks":1,"charges":0,"durationMs":-1,"fromSelf":true},{"id":53530,"name":"Divine Guardian","stacks":1,"charges":0,"durationMs":-1,"fromSelf":true},{"id":53585,"name":"Guarded by the Light","stacks":1,"charges":0,"durationMs":-1,"fromSelf":true},{"id":53592,"name":"Touched by the Light","stacks":1,"charges":0,"durationMs":-1,"fromSelf":true},{"id":53696,"name":"Judgements of the Just","stacks":1,"charges":0,"durationMs":-1,"fromSelf":true},{"id":53711,"name":"Shield of the Templar","stacks":1,"charges":0,"durationMs":-1,"fromSelf":true},{"id":54937,"name":"Glyph of Holy Light","stacks":1,"charges":0,"durationMs":-1,"fromSelf":true},{"id":54940,"name":"Glyph of Seal of Wisdom","stacks":1,"charges":0,"durationMs":-1,"fromSelf":true},{"id":55381,"name":"Mana Restore","stacks":1,"charges":0,"durationMs":-1,"fromSelf":true},{"id":57937,"name":"Glyph of Blessing of Kings","stacks":1,"charges":0,"durationMs":-1,"fromSelf":true},{"id":57947,"name":"Glyph of Sense Undead","stacks":1,"charges":0,"durationMs":-1,"fromSelf":true},{"id":57955,"name":"Glyph of Lay on Hands","stacks":1,"charges":0,"durationMs":-1,"fromSelf":true},{"id":58985,"name":"Perception","stacks":1,"charges":0,"durationMs":-1,"fromSelf":true},{"id":60091,"name":"Judgement Anti-Parry/Dodge Passive","stacks":1,"charges":0,"durationMs":-1,"fromSelf":true},{"id":61418,"name":"Pursuit of Justice rank 2","stacks":1,"charges":0,"durationMs":-1,"fromSelf":true},{"id":63218,"name":"Glyph of Beacon of Light","stacks":1,"charges":0,"durationMs":-1,"fromSelf":true},{"id":67752,"name":"Item - Coliseum 25 Heroic Healer Trinket","stacks":1,"charges":0,"durationMs":-1,"fromSelf":true},{"id":70755,"name":"Item - Paladin T10 Holy 2P Bonus","stacks":1,"charges":0,"durationMs":-1,"fromSelf":true},{"id":70756,"name":"Item - Paladin T10 Holy 4P Bonus","stacks":1,"charges":0,"durationMs":-1,"fromSelf":true},{"id":71191,"name":"Item - Paladin T10 Holy Relic (Holy Shock)","stacks":1,"charges":0,"durationMs":-1,"fromSelf":true},{"id":71642,"name":"Item - Icecrown 25 Heroic Healer Trinket 2","stacks":1,"charges":0,"durationMs":-1,"fromSelf":true}]},"target":{"guid":"GUID Full: 0xf1300f3e58000365 Type: Creature Entry: 999000  Low: 869","entry":999000,"name":"SimVal Boss Dummy","level":83,"class":1,"race":0,"isPlayer":false,"isPet":false,"isHunterPet":false,"isGuardian":false,"isTotem":false,"controlledByPlayer":false,"worldBoss":true,"rank":3,"creatureType":5,"typeFlags":4,"flagsExtra":262208,"scriptName":"npc_simval_dummy","baseSpellCrit":5,"levelForOther":83,"maxSkillForOther":415,"defenseSkillVsOther":415,"otherInFront":true,"distance":0,"health":24009944,"maxHealth":24009944,"powerType":0,"power":0,"inCombat":false,"stats":{"strength":0,"agility":0,"stamina":0,"intellect":0,"spirit":0},"resistances":[10643,0,0,0,0,0,0],"hitMods":{"melee":0,"ranged":0,"spell":0},"auraExpertise":0,"castSpeedMultiplier":1,"spellPower":{"physical":0,"holy":0,"fire":0,"nature":0,"frost":0,"shadow":0,"arcane":0},"defense":{"dodge":5.85,"parry":13.4,"block":5,"blockValue":41,"ignoreHitDirection":false,"cannotDefend":false},"attacks":[{"type":"mainhand","canUse":true,"hasWeapon":false,"unhastedMs":2000,"speedMultiplier":1,"hastedMs":2000,"damageMin":177.074,"damageMax":265.61102,"attackPower":805,"missChanceTaken":5,"weaponSkillVsOther":415,"critVsOther":5.6},{"type":"offhand","canUse":true,"hasWeapon":false,"unhastedMs":2000,"speedMultiplier":1,"hastedMs":2000,"damageMin":0,"damageMax":0,"attackPower":805,"missChanceTaken":5,"weaponSkillVsOther":415,"critVsOther":5.6},{"type":"ranged","canUse":true,"hasWeapon":false,"unhastedMs":2000,"speedMultiplier":1,"hastedMs":2000,"damageMin":177.074,"damageMax":265.61102,"attackPower":135,"missChanceTaken":5,"weaponSkillVsOther":415,"critVsOther":5.6}],"auras":[]}}

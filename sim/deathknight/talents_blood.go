@@ -333,29 +333,6 @@ func (dk *Deathknight) applySuddenDoom() {
 			}
 		},
 	}))
-
-	if !dk.Talents.DancingRuneWeapon {
-		return
-	}
-
-	core.MakePermanent(dk.RuneWeapon.RegisterAura(core.Aura{
-		Label: "Sudden Doom Drw",
-		OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
-			if !result.Landed() {
-				return
-			}
-
-			if spell != dk.RuneWeapon.HeartStrike && spell != dk.RuneWeapon.HeartStrikeOffHit {
-				return
-			}
-
-			if sim.RandomFloat("Sudden Doom Proc") < procChance {
-				sdAura.Activate(sim)
-				dk.RuneWeapon.DeathCoil.SkipCastAndApplyEffects(sim, result.Target)
-				sdAura.Deactivate(sim)
-			}
-		},
-	}))
 }
 
 func (dk *Deathknight) applyBloodGorged() {

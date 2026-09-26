@@ -113,7 +113,8 @@ type Deathknight struct {
 	LastScourgeStrikeDamage float64
 	ScourgeStrike           *core.Spell
 
-	DeathCoil *core.Spell
+	DeathCoil       *core.Spell
+	DeathCoilDamage *core.Spell
 
 	DeathAndDecay *core.Spell
 

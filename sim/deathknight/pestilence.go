@@ -95,7 +95,6 @@ func (dk *Deathknight) registerPestilenceSpell() {
 }
 
 func (dk *Deathknight) registerDrwPestilenceSpell() {
-	hasGlyphOfDisease := dk.HasMajorGlyph(proto.DeathknightMajorGlyph_GlyphOfDisease)
 	dk.RuneWeapon.Pestilence = dk.RuneWeapon.RegisterSpell(core.SpellConfig{
 		ActionID:    PestilenceActionID,
 		SpellSchool: core.SpellSchoolShadow,
@@ -114,22 +113,11 @@ func (dk *Deathknight) registerDrwPestilenceSpell() {
 				result := spell.CalcAndDealDamage(sim, aoeTarget, 0, spell.OutcomeMagicHit)
 
 				if result.Landed() {
-					// Main target
+					// Main target: spell_dk_pestilence only refreshes the caster's diseases when
+					// the caster has Glyph of Disease, and the rune weapon is a pet that never
+					// has it.
 					if aoeTarget == target {
-						if hasGlyphOfDisease {
-							// Update expire instead of Apply to keep old snapshotted value
-							if dk.RuneWeapon.FrostFeverSpell.Dot(aoeTarget).IsActive() {
-								dk.RuneWeapon.FrostFeverSpell.Dot(aoeTarget).Rollover(sim)
-							} else if shouldApplyDrwDots && dk.FrostFeverSpell.Dot(aoeTarget).IsActive() {
-								dk.RuneWeapon.FrostFeverSpell.Dot(aoeTarget).Apply(sim)
-							}
-
-							if dk.RuneWeapon.BloodPlagueSpell.Dot(aoeTarget).IsActive() {
-								dk.RuneWeapon.BloodPlagueSpell.Dot(aoeTarget).Rollover(sim)
-							} else if shouldApplyDrwDots && dk.BloodPlagueSpell.Dot(aoeTarget).IsActive() {
-								dk.RuneWeapon.BloodPlagueSpell.Dot(aoeTarget).Apply(sim)
-							}
-						} else if shouldApplyDrwDots {
+						if shouldApplyDrwDots {
 							if dk.FrostFeverSpell.Dot(aoeTarget).IsActive() {
 								dk.RuneWeapon.FrostFeverSpell.Dot(aoeTarget).Apply(sim)
 							}

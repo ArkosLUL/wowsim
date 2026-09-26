@@ -13,6 +13,7 @@ func init() {
 	ulduar.Register()
 	toc.Register()
 	icc.Register()
+	RegisterGenericBoss()
 }
 
 func AddSingleTargetBossEncounter(presetTarget *core.PresetTarget) {

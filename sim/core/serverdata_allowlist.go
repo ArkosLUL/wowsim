@@ -37,8 +37,6 @@ func init() {
 
 		ServerConflictAllowance{Spell: ActionID{SpellID: 41989}, Field: ServerSchool, Sim: 8, Server: 64, KeepSim: true,
 			Why: "the sim deals the set's Fire proc under the set bonus aura, the server as its own spell 41990"}, // The Fists of Fury
-		ServerConflictAllowance{Spell: ActionID{SpellID: 54758}, Field: ServerSchool, Sim: 254, Server: 2,
-			Why: "a haste buff that deals nothing, declared as every school where the server has Physical"}, // Hyperspeed Acceleration
 
 		// the 0 damage spell Crypt Fever and Ebon Plaguebringer cast to fire harmful spell procs, a visual dummy on the server
 		ServerConflictAllowance{Spell: ActionID{SpellID: 52789}, Field: ServerSchool, Sim: 252, Server: 16, KeepSim: true,
@@ -48,9 +46,5 @@ func init() {
 
 		ServerConflictAllowance{Spell: ActionID{SpellID: 63511, Tag: 1}, Field: ServerSchool, Sim: 2, Server: 16, KeepSim: true,
 			Why: "Hodir's white swings during Frozen Blows, which the sim deals under the Frost proc's id"},
-		ServerConflictAllowance{Spell: ActionID{SpellID: 63512}, Field: ServerSchool, Sim: 2, Server: 16,
-			Why: "Frozen Blows is Frost on the server, declared Physical. It deals nothing itself"},
-		ServerConflictAllowance{Spell: ActionID{SpellID: 66118}, Field: ServerMissileSpeed, SimFloat: 0, ServerFloat: 30,
-			Why: "Leeching Swarm travels at 30 yd/s on the server, declared instant"},
 	)
 }

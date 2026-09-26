@@ -14,7 +14,7 @@ var DeathCoilDamageActionID = core.ActionID{SpellID: 47632}
 func (dk *Deathknight) registerDeathCoilSpell() {
 	vengefulHeart := dk.sigilOfTheVengefulHeartDeathCoil()
 
-	damage := dk.RegisterSpell(core.SpellConfig{
+	dk.DeathCoilDamage = dk.RegisterSpell(core.SpellConfig{
 		ActionID:    DeathCoilDamageActionID,
 		SpellSchool: core.SpellSchoolShadow,
 		ProcMask:    core.ProcMaskSpellDamage,
@@ -73,7 +73,7 @@ func (dk *Deathknight) registerDeathCoilSpell() {
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			result := spell.CalcAndDealOutcome(sim, target, spell.OutcomeMagicHit)
 			if result.Landed() {
-				damage.Cast(sim, target)
+				dk.DeathCoilDamage.Cast(sim, target)
 			}
 		},
 	})

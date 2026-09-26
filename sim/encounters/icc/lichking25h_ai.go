@@ -125,9 +125,6 @@ func (ai *LichKing25HAI) registerSoulReaperSpell(target *core.Target) {
 
 			dot := spell.Dot(target)
 			dot.Apply(sim)
-
-			// Soul Reaper application resets the boss melee swing timer based on log analysis
-			spell.Unit.AutoAttacks.StopMeleeUntil(sim, sim.CurrentTime, false)
 		},
 	})
 }
@@ -153,6 +150,6 @@ func (ai *LichKing25HAI) ExecuteCustomRotation(sim *core.Simulation) {
 		}
 	}
 
-	// Lich King follows the standard Classic WoW boss AI behavior of evaluating actions on a 1.62 second server tick.
+	// 1.62s is this AI's own decision cadence, not a real server tick.
 	ai.Target.WaitUntil(sim, sim.CurrentTime+time.Millisecond*1620)
 }

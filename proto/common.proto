@@ -831,6 +831,10 @@ message PresetTarget {
 message PresetEncounter {
 	string path = 1;
 	repeated PresetTarget targets = 2;
+
+	// Picks mod-dungeon-scale's raid multipliers, as Encounter.raid_difficulty does. Unset (the
+	// default) leaves the encounter's own setting alone when the preset is applied.
+	RaidDifficulty raid_difficulty = 3;
 }
 
 // mod-reforging: stat types are raw server ItemModType ids (6 spirit, 13 dodge, 14 parry, 31 hit,

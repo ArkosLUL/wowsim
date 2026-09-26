@@ -27,7 +27,9 @@ func (paladin *Paladin) registerHolyShieldSpell() {
 				spell.Direct.AP*spell.MeleeAttackPower() +
 				spell.Direct.SP*spell.SpellPower()
 
-			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMagicHit)
+			// SPELL_AURA_PROC_TRIGGER_DAMAGE deals its damage straight through
+			// AuraEffect::HandleProcTriggerDamageAuraProc, with no hit or crit roll.
+			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeAlwaysHit)
 		},
 	})
 

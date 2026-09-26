@@ -37,12 +37,19 @@ func (dk *Deathknight) registerDancingRuneWeaponCD() {
 				dk.RuneWeapon.HeartStrike.Cast(sim, spell.Unit.CurrentTarget)
 			case dk.RuneStrike:
 				dk.RuneWeapon.RuneStrike.Cast(sim, spell.Unit.CurrentTarget)
-			case dk.DeathCoil:
-				dk.RuneWeapon.DeathCoil.Cast(sim, spell.Unit.CurrentTarget)
 			case dk.Pestilence:
 				dk.RuneWeapon.Pestilence.Cast(sim, spell.Unit.CurrentTarget)
 			case dk.BloodBoil:
 				dk.RuneWeapon.BloodBoil.Cast(sim, spell.Unit.CurrentTarget)
+			}
+		},
+		// spell_dk_dancing_rune_weapon's Death Coil exception matches on 47632's own damage
+		// event, so a miss (no damage dealt) mirrors nothing and a Sudden Doom-triggered cast
+		// mirrors the same as a normal one; dk.DeathCoil's OnCastComplete fires on both a miss
+		// and a hit, so the mirror hooks the inner damage spell's outcome instead.
+		OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
+			if spell == dk.DeathCoilDamage && result.Landed() {
+				dk.RuneWeapon.DeathCoil.Cast(sim, result.Target)
 			}
 		},
 	})
@@ -120,7 +127,9 @@ func (dk *Deathknight) DrwWeaponDamage(sim *core.Simulation, spell *core.Spell) 
 }
 
 func (dk *Deathknight) NewRuneWeapon() *RuneWeaponPet {
-	// Its hit and expertise come from the 61017 npc_pet_dk_dancing_rune_weapon gives it.
+	// Its hit and expertise come from the 61017 npc_pet_dk_dancing_rune_weapon gives it. Its
+	// crit chance is the owner's own (Spell.cpp:8466-8478, "totem's inherit owner crit chance
+	// and dancing rune weapon").
 	runeWeapon := &RuneWeaponPet{
 		Pet: core.NewPet("Rune Weapon", &dk.Character, stats.Stats{
 			stats.Stamina: 100,
@@ -180,6 +189,10 @@ func (runeWeapon *RuneWeaponPet) enable(sim *core.Simulation) {
 	runeWeapon.PseudoStats.MeleeSpeedMultiplier = 1
 	runeWeapon.MultiplyMeleeSpeed(sim, runeWeapon.dkOwner.PseudoStats.MeleeSpeedMultiplier)
 
+	// Unit::SpellDamageBonusDone and MeleeDamageBonusDone give entry 27893 the owner's own
+	// bonus (AP/SP, percent mods included) and halve it; this instead halves everything the
+	// rune weapon deals, base roll included, which overstates the cut on abilities whose base
+	// roll is a large share of the hit.
 	runeWeapon.dkOwner.drwDmgSnapshot = runeWeapon.dkOwner.PseudoStats.DamageDealtMultiplier * 0.5
 	runeWeapon.dkOwner.RuneWeapon.PseudoStats.DamageDealtMultiplier *= runeWeapon.dkOwner.drwDmgSnapshot
 

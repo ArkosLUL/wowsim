@@ -6,6 +6,7 @@ import (
 	_ "github.com/wowsims/wotlk/sim/common" // imported to get item effects included.
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
+	"github.com/wowsims/wotlk/sim/encounters"
 )
 
 func init() {
@@ -13,60 +14,93 @@ func init() {
 }
 
 func TestProtection(t *testing.T) {
-	core.RunTestSuite(t, t.Name(), core.FullCharacterTestSuiteGenerator(core.CharacterSuiteConfig{
-		Class:      proto.Class_ClassPaladin,
-		Race:       proto.Race_RaceBloodElf,
-		OtherRaces: []proto.Race{proto.Race_RaceHuman},
+	core.RunTestSuite(t, t.Name(), core.JoinTestGenerators(
+		core.FullCharacterTestSuiteGenerator(core.CharacterSuiteConfig{
+			Class:      proto.Class_ClassPaladin,
+			Race:       proto.Race_RaceBloodElf,
+			OtherRaces: []proto.Race{proto.Race_RaceHuman},
 
-		GearSet:     core.GetGearSet("../../../ui/protection_paladin/gear_sets", "p1"),
-		Talents:     StandardTalents,
-		Glyphs:      StandardGlyphs,
-		Consumes:    FullConsumes,
-		SpecOptions: core.SpecOptionsCombo{Label: "Protection Paladin SOV", SpecOptions: DefaultOptions},
-		OtherSpecOptions: []core.SpecOptionsCombo{
-			{
-				Label: "Protection Paladin SOC",
-				SpecOptions: &proto.Player_ProtectionPaladin{
-					ProtectionPaladin: &proto.ProtectionPaladin{
-						Options: &proto.ProtectionPaladin_Options{
-							Judgement: proto.PaladinJudgement_JudgementOfWisdom,
-							Seal:      proto.PaladinSeal_Command,
-							Aura:      proto.PaladinAura_RetributionAura,
+			GearSet:     core.GetGearSet("../../../ui/protection_paladin/gear_sets", "p1"),
+			Talents:     StandardTalents,
+			Glyphs:      StandardGlyphs,
+			Consumes:    FullConsumes,
+			SpecOptions: core.SpecOptionsCombo{Label: "Protection Paladin SOV", SpecOptions: DefaultOptions},
+			OtherSpecOptions: []core.SpecOptionsCombo{
+				{
+					Label: "Protection Paladin SOC",
+					SpecOptions: &proto.Player_ProtectionPaladin{
+						ProtectionPaladin: &proto.ProtectionPaladin{
+							Options: &proto.ProtectionPaladin_Options{
+								Judgement: proto.PaladinJudgement_JudgementOfWisdom,
+								Seal:      proto.PaladinSeal_Command,
+								Aura:      proto.PaladinAura_RetributionAura,
+							},
+						},
+					},
+				},
+				{
+					Label: "Protection Paladin SOR",
+					SpecOptions: &proto.Player_ProtectionPaladin{
+						ProtectionPaladin: &proto.ProtectionPaladin{
+							Options: &proto.ProtectionPaladin_Options{
+								Judgement: proto.PaladinJudgement_JudgementOfWisdom,
+								Seal:      proto.PaladinSeal_Righteousness,
+								Aura:      proto.PaladinAura_RetributionAura,
+							},
 						},
 					},
 				},
 			},
-			{
-				Label: "Protection Paladin SOR",
-				SpecOptions: &proto.Player_ProtectionPaladin{
-					ProtectionPaladin: &proto.ProtectionPaladin{
-						Options: &proto.ProtectionPaladin_Options{
-							Judgement: proto.PaladinJudgement_JudgementOfWisdom,
-							Seal:      proto.PaladinSeal_Righteousness,
-							Aura:      proto.PaladinAura_RetributionAura,
-						},
-					},
+			Rotation: core.GetAplRotation("../../../ui/protection_paladin/apls", "default"),
+
+			IsTank:          true,
+			InFrontOfTarget: true,
+
+			ItemFilter: core.ItemFilter{
+				WeaponTypes: []proto.WeaponType{
+					proto.WeaponType_WeaponTypeSword,
+					proto.WeaponType_WeaponTypePolearm,
+					proto.WeaponType_WeaponTypeMace,
+					proto.WeaponType_WeaponTypeShield,
+				},
+				ArmorType: proto.ArmorType_ArmorTypePlate,
+				RangedWeaponTypes: []proto.RangedWeaponType{
+					proto.RangedWeaponType_RangedWeaponTypeLibram,
 				},
 			},
-		},
-		Rotation: core.GetAplRotation("../../../ui/protection_paladin/apls", "default"),
+		}),
+		&core.SingleDpsTestGenerator{Name: "GenericBoss", Request: genericBossRequest()},
+	))
+}
 
-		IsTank:          true,
-		InFrontOfTarget: true,
-
-		ItemFilter: core.ItemFilter{
-			WeaponTypes: []proto.WeaponType{
-				proto.WeaponType_WeaponTypeSword,
-				proto.WeaponType_WeaponTypePolearm,
-				proto.WeaponType_WeaponTypeMace,
-				proto.WeaponType_WeaponTypeShield,
+// The generic AzerothCore boss, on the same gear and rotation as TestProtection's default, alongside
+// the Classic-style target that suite still keeps.
+func genericBossRequest() *proto.RaidSimRequest {
+	rsr := &proto.RaidSimRequest{
+		Raid: core.SinglePlayerRaidProto(
+			&proto.Player{
+				Race:            proto.Race_RaceBloodElf,
+				Class:           proto.Class_ClassPaladin,
+				Equipment:       core.GetGearSet("../../../ui/protection_paladin/gear_sets", "p1").GearSet,
+				Consumes:        FullConsumes,
+				Spec:            DefaultOptions,
+				Buffs:           core.FullIndividualBuffs,
+				Rotation:        core.GetAplRotation("../../../ui/protection_paladin/apls", "default").Rotation,
+				TalentsString:   StandardTalents,
+				Glyphs:          StandardGlyphs,
+				InFrontOfTarget: true,
 			},
-			ArmorType: proto.ArmorType_ArmorTypePlate,
-			RangedWeaponTypes: []proto.RangedWeaponType{
-				proto.RangedWeaponType_RangedWeaponTypeLibram,
-			},
+			core.FullPartyBuffs,
+			core.FullRaidBuffs,
+			core.FullDebuffs),
+		Encounter: &proto.Encounter{
+			Duration: 300,
+			Targets:  []*proto.Target{encounters.GenericBossTarget()},
 		},
-	}))
+		SimOptions: core.DefaultSimTestOptions,
+	}
+	rsr.Raid.Tanks = []*proto.UnitReference{{Type: proto.UnitReference_Player, Index: 0}}
+	return rsr
 }
 
 func BenchmarkSimulate(b *testing.B) {

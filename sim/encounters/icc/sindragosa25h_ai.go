@@ -319,11 +319,10 @@ func (ai *Sindragosa25HAI) ExecuteCustomRotation(sim *core.Simulation) {
 	}
 
 	if ai.Target.CurrentTarget != nil && ai.FrostBreath.IsReady(sim) {
-		ai.Target.Unit.AutoAttacks.StopMeleeUntil(sim, sim.CurrentTime+time.Millisecond*1500, false)
 		ai.FrostBreath.Cast(sim, ai.Target.CurrentTarget)
 		return
 	}
 
-	// Sindragosa follows the standard Classic WoW boss AI behavior of evaluating actions on a 1.62 second server tick.
+	// 1.62s is this AI's own decision cadence, not a real server tick.
 	ai.Target.WaitUntil(sim, sim.CurrentTime+time.Millisecond*1620)
 }

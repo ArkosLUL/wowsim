@@ -1267,6 +1267,137 @@ Roll details the tables above don't show:
     Word: Death and Mind Flay actions, so it never casts them.
   - Holy hps +0.556%, mostly Empowered Renew, now multiplicative; Disc -0.001%, the roll maximums.
 
+**Tanks** (`TestProtectionWarrior`, `TestProtection` (paladin), `TestFeralTank`, `TestBloodTank`, code)
+- Added a generic AzerothCore boss (level 83, class 1, off a live `creature_classlevelstats` select, checked
+  against `Creature::SelectLevel`/`CreatureBaseStats`) as the four tank specs' UI default and an extra golden
+  case in each suite. BIS-tank-boss (wave K) scales its `MinBaseDamage` by each phase boss's
+  `creature_template.DamageModifier`, exposed on preset encounters as an additive `raid_difficulty` proto
+  field for that item to pick up.
+- Found and fixed on the boss-side files: a `Target`'s `gcdAction` never finished a hardcast sharing its
+  pending action with the GCD (Hodir's 9 s Flash Freeze silently never applied); the dungeon-scale `Damage`
+  multiplier was skipped for spells flagged `SpellFlagIgnoreAttackerModifiers` (Anub'arak's Leeching Swarm,
+  server id 66118 — the spec's cited 66240 is the server's hidden per-tick id with no client `Spell.dbc` row
+  or generated serverdata entry at all); Hodir's Starlight granted cast speed the server doesn't
+  (`spell_hodir_starlight_aura` only hooks the melee-slow aura); Bulwark of Azzinoth's proc chance
+  (`sim/common/tbc/melee_items.go`) was keyed to the attacker's own hand instead of the wearer's main hand
+  speed, so a dual-wielder's off-hand swings could never proc it (retail deviation 14, table above).
+- Closed the P4 "Left open" item: Shaman's Anticipation, Rogue's Lightning Reflexes and Deflection, and the
+  hunter's own Deflection and Catlike Reflexes added dodge/parry as rating (diminishing per `avoid_dr.go`)
+  instead of `PseudoStats.BaseDodge`/`BaseParry`, unlike the warrior's, paladin's and DK's own copies. The
+  server's `SPELL_AURA_MOD_DODGE_PERCENT`/`MOD_PARRY_PERCENT` auras go straight into
+  `UpdateDodgePercentage`/`UpdateParryPercentage`'s non-diminishing term (`StatSystem.cpp:799-833`); all five
+  now match. Verified live (**Tanks probes**, below): Warrior, Paladin and DK's own Anticipation, and
+  Druid's Feral Swiftness and Natural Reaction in Bear Form, each read exactly the undiminished dodge
+  percentage; Warrior's and Paladin's own Deflection read exactly its 5% too, once isolated from the
+  parry-unlock quirk the probes also turned up (below).
+- Found and fixed, Protection Paladin: Holy Shield's proc used `OutcomeMagicHit` (a hit roll);
+  `AuraEffect::HandleProcTriggerDamageAuraProc` deals `SPELL_AURA_PROC_TRIGGER_DAMAGE` unconditionally, no
+  roll at all, fixed to `OutcomeAlwaysHit`. Ardent Defender's heal fraction ran `max(1.0, ...)` (backwards,
+  and missing the base 400 defense skill everyone has at 80) instead of
+  `min(1, (400 + rating skill)/540)` (`spell_pal_ardent_defender::Absorb`, `reqDefForMaxHeal = level*5+140`).
+  Concussion Blow now carries `SpellFlagIgnoreAttackerModifiers`: `spell_warr_concussion_blow::HandleDummy`
+  sets its hit damage straight from total attack power via `SetHitDamage`, bypassing every caster-side
+  percent modifier.
+- Found and fixed, Feral Tank: Savage Defense's trigger also took magic-class crits (Faerie Fire (Feral)).
+  On the server, passive 62600 (procFlags 0x40014: done melee auto attack, melee-class spell, periodic;
+  `spell_proc` HitMask crit) procs 62606 only on the bear's own crits from those. 62606 is a 10 s physical
+  absorb of 25% of attack power; `spell_dru_savage_defense::Absorb` then zeroes it, so
+  `Unit::CalcAbsorbResist` removes it after one absorb. Its one charge (`spell_proc` HitMask
+  normal/crit/absorb, taken melee/ranged procFlags 0x2a8, any school) also goes on a landed melee or ranged
+  hit it can't absorb, now modeled too. `TestFeralTank`'s Default rows: dtps +5.9% and +0.5%, all from the
+  Faerie Fire change.
+- Feral Tank: Feral Swiftness's bear-form dodge (`forms.go`) matches the server. `spell_dru_feral_swiftness`,
+  on Bear Form 5487 and Dire Bear Form 9634, casts 24867 (rank 1) or 24864 (rank 2), aura 49, +2%/+4%
+  dodge, when the form applies and `Player::HasTalent` holds; the talent's own 24866 is movement speed
+  (aura 31) and runs the same script (`-17002`). Verified live (**Tanks probes**).
+- Found and fixed, Blood Tank: Dancing Rune Weapon's Death Coil mirror hooked `OnCastComplete` (fires on
+  every cast including misses, never fires for a Sudden Doom free cast, since
+  `SkipCastAndApplyEffects` bypasses it); the server keys off Death Coil's own damage event
+  (`spell_dk_dancing_rune_weapon`), so moved the mirror onto `dk.DeathCoilDamage`'s landed-hit event, which
+  covers both cases at once, and dropped the separate "Sudden Doom Drw" aura that had been compensating for
+  the gap with its own inaccurate proc roll. Its Pestilence checked the DK owner's Glyph of Disease to decide
+  whether to refresh diseases; `spell_dk_pestilence` checks the caster (the rune weapon itself, which as a
+  pet never has the glyph), so dropped that branch. Left open: the rune weapon's spell/melee damage bonus
+  should be the owner's own bonus halved per hit (`Unit::SpellDamageBonusDone`/`MeleeDamageBonusDone`), but
+  the sim applies one flat 0.5× multiplier to the whole hit including the base roll; a byte-correct fix needs
+  a core-level per-component multiplier outside a class item's scope (follow-up).
+
+Protection Paladin recorded run (`TestRecordedRun`, `SIMVAL_RECORD_SPEC=prot`, `SIMVAL_RECORD_TALENT_SPELLS`
+set to `StandardTalents`'s 29 ids — decoded position by position off `PaladinTalents`' proto field numbers
+and looked up rank by rank in the live `Talent.dbc`, validated by reproducing the already-recorded
+Retribution build's 26 ids exactly before trusting it for Protection — `SIMVAL_RECORD_START_SPELLS=20375,25780`
+for Seal of Command and Righteous Fury, `SIMVAL_RECORD_SHIELD=1` (a new `recorded_run_test.go` lever,
+alongside `SIMVAL_RECORD_TWOHAND`, since nothing made the factory's gear follow a shield build either), 300 s):
+Shield of Righteousness or Hammer of the Righteous, Holy Shield, Consecration and Judgement in a fixed 1.5 s
+cycle; Hammer of Wrath is in the cycle too but the dummy's health never drops far enough to make it castable,
+on either side. The factory handed out Holy-spec loot (a Holy healer trinket, T10 Holy 2pc/4pc, Glyph of
+Holy Light) under the overridden Protection talents — `InitEquipment`'s spec read being dead code
+(module README) cuts both ways — so this run's raw damage numbers understate a properly tank-geared
+Protection Paladin; the slot types are right (one-hander plus an actual shield, confirmed against
+`item_template.class`/`subclass` on the live DB) and the ability mechanics below are still real data. Old
+capture replaced (**Verified on the live server**, above).
+
+| Run | Server DPS | Sim DPS | Gap |
+|---|---|---|---|
+| Prot (`prot_Svrleadouuvs_1790443710`, boss-only, 302.1 s) | 823.2 | 887.0 | -7.19%, rotations (below) |
+
+Per ability (`rrsim -v`, `chronicle -v`; server hit/crit counts, crit % over landed hits):
+
+| Ability | Server hits/crits, share | Sim hits/crits, share | Crit %, server / sim |
+|---|---|---|---|
+| Consecration tick (48819) | 213/0, 25.6% | 153.8/0.0, 17.3% | 0.0 / 0.0 |
+| Melee (white) | 40/75 (+66 glancing), 23.7% | 30.6/80.7 (+53.8 glancing), 23.7% | 41.4 / 48.9 |
+| Seal of Command proc (20424) | 130/74, 16.2% | 127.3/75.9, 15.9% | 36.3 / 37.4 |
+| Shield of Righteousness (61411) | 15/9, 14.0% | 22.8/13.6, 20.2% | 37.5 / 37.4 |
+| Hammer of the Righteous (53595) | 17/7, 11.3% | 22.0/13.0, 17.8% | 29.2 / 37.1 |
+| Judgement of Command (20467) | 15/10, 9.2% | 18.5/11.0, 8.5% | 40.0 / 37.3 |
+| Judgement (53408, cast only) | 0 hits, 4 misses | 0 hits, ~2.5 misses | – |
+
+- Judgement (53408) itself never deals damage on either side: a successful cast fires the seal-specific
+  damage spell as its own event (Judgement of Command, 20467, while Seal of Command is up) and only a missed
+  cast logs anything under 53408's own id. The sim already models this split the same way, unprompted, which
+  is why it needed no fix.
+- Seal of Command's proc and Judgement of Command line up within a couple percent on both count and crit
+  rate. Consecration and the two melee-cadence abilities (Shield of Righteousness, Hammer of the Righteous)
+  don't, and the direction is consistent: the reactive rrsim rotation prioritizes whichever of the two isn't
+  on cooldown, over Consecration and Judgement, exactly as `ui/protection_paladin/apls/default.apl.json`
+  says to; the recorded run's fixed 1.5 s cycle gives all six spells an equal turn regardless of cooldown
+  state. That's the module README's known limitation of a fixed-cycle capture (no APL equivalent), not a sim
+  bug, and it's what the -7.19% DPS gap mostly is.
+- Melee's crit rate (41.4% server, 48.9% sim) doesn't have that explanation: rrsim's final-stats line reads
+  1604 crit rating, the pre-fight `.simval info` snapshot 1099, a ~500-rating gap on identical gear.
+  Follow-up: check each of the 18 equipped items' random properties against what `BuildRosterItem` derives
+  for them, since this Holy-geared capture is the first to carry equipment plausible enough to have one the
+  earlier Ret/Affliction/hunter captures didn't exercise.
+
+**Tanks probes** (`p7_tank_test.go`, `.simval taken`): the boss dummy never attacks, so a live probe reads
+the server's own taken-melee table directly (the same self-contained roll `.simval melee` prints, for a hit
+the character takes instead of deals). All four pass: Warrior's and Paladin's Anticipation and Deflection,
+and the DK's own Anticipation, each move the server's own dodge/parry percentage by exactly the
+undiminished amount, confirming the P4 fix above live. The Druid in Bear Form reads 6.80% dodge untalented,
+10.80% with Feral Swiftness 2/2 and 16.80% with Natural Reaction 3/3 on top: exactly +4 and +6 points.
+
+Three real bugs turned up getting there, all in the harness, not the sim:
+- `.learn`ing a talent spell didn't grant its passive aura: `Player::_addSpell` only auto-casts a learned
+  passive when `IsNeedCastPassiveSpellAtLearn` says so, which none of these five needed to. Confirmed with
+  a live aura read (`.learn` alone never added the spell to the character's own aura list; `.cast` right
+  after did), so the Warrior, Paladin and DK probes cast each spell once it's learned.
+- `.learn` never fills `m_talents` (it goes through `learnSpell`, not `Player::LearnTalent`), so a
+  `Player::HasTalent` check, like the one gating Feral Swiftness's dodge, never passes. The Druid probe sends
+  `CMSG_LEARN_TALENT` instead, with dodge-neutral Feral fillers for the tier requirements, checks
+  `character_talent` after a save, and shifts only after learning.
+- A `SvP7Tank*` account (18 characters, one more than its `SvP7***` siblings from the longer "Tank" suffix)
+  never got a login response (`read logon challenge response: EOF`), reproduced independently of class with
+  a throwaway 18- vs 17-character account. Shortened the prefix to `SvP7Tnk`.
+
+One more finding, real but on the server, not a bug: Warrior's and Paladin's Deflection moves parry by 9.4
+points, not its own 5%. `CanParry` starts false on a character that never visited a trainer, and
+`SPELL_AURA_MOD_PARRY_PERCENT`'s own handler (`AuraEffect::HandleAuraModParryPercent`) flips it, same as a
+trained Parry ability would (`Spell::EffectParry`); learning Deflection therefore also unlocks
+`UpdateParryPercentage`'s own base term (flat 5%, plus (400 defense skill − 415 for this level 83 dummy) ×
+0.04 = −0.6%) alongside its own 5% aura. Dodge has no such gate. The test file builds, vets and
+gofmt-clean.
+
 **Items** (`docs/azerothcore-item-diff/data/summary.md`)
 - 1509 of 8043 sim items differ.
 - Classic raised Ulduar/emblem item levels, e.g. 226→232 on 329 items and 239→252 on 92.
@@ -1568,17 +1699,14 @@ values. Human warrior, level 80, maxed skills, Worn Shortsword (Sword Specializa
   second effect, and `talent_dbc`'s tier swap. Client-only: Vicious Strikes' aura 286 (the server's is on Crypt Fever
   instead) and Call of the Wild (53434) at 120 s, which stays 300 s.
 - Recorded runs (`TestRecordedRun`, 5 minutes on the boss dummy inside Naxxramas, in playerbot-factory epic gear;
-  captures in `sim/core/testdata/chronicle/`): a Protection paladin did 144.7 DPS over 295.7 s with swing intervals of
-  1.5-1.6 s — 143.7 of it on the dummy, the rest Consecration splashing a nearby Maggot, so a sim comparison wants
-  `-target`. Glancing landed on 39 of 185 swings, within a standard error and a half of the white table's 2500 bp.
-  Chronicle timestamps the packet send, so the 100 ms map-update lattice only shows through a few ms of jitter — a tick
-  or swing interval reads within about ±50 ms of the server's own.
-  Correction: it ran at ×0.3 damage. The factory's init resets mod-individual-progression, and below
-  `PROGRESSION_PRE_TBC` the live `VanillaPowerAdjustment` of 0.5 scales a level 80's damage by 1 − 0.5·70/50
+  captures in `sim/core/testdata/chronicle/`) ran at ×0.3 damage: the factory's init resets mod-individual-progression,
+  and below `PROGRESSION_PRE_TBC` the live `VanillaPowerAdjustment` of 0.5 scales a level 80's damage by 1 − 0.5·70/50
   (`ComputeVanillaAdjustment`). `TestRecordedRun` doesn't undo it yet; `TestRecordedRunHunter` runs `.ip set <name> 18`
-  after gearing. The Affliction capture (`affliction_Svrleadoxfbj_1789926928`) had the same ×0.3 bug plus the
-  playerbot factory's own talents staying live under the learned ones; PAR-P7-WLK replaced it with a fresh capture
-  (Warlock findings, above).
+  after gearing.
+- The Protection Paladin capture (`prot_Svrleadbsnco_1789925920`) hit this bug; PAR-P7-TANK replaced it with a fresh
+  one that sets progression itself (**Tanks** findings, above).
+- The Affliction capture (`affliction_Svrleadoxfbj_1789926928`) had the same bug plus the playerbot factory's own
+  talents staying live under the learned ones; PAR-P7-WLK replaced it with a fresh capture (Warlock findings, above).
 - Ret Paladin recorded run (`TestRecordedRun`, `SIMVAL_RECORD_SPEC=ret`, `SIMVAL_RECORD_TWOHAND=1`, 600 s): Divine
   Plea keeps every mana-cost spell casting to the end, Retribution Aura keeps Sanctified Retribution (63531) up,
   and the pre-fight `.simval info` matches rrsim's stats. Per-ability comparison in the Retribution Paladin

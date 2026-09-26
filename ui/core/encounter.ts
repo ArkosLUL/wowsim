@@ -153,8 +153,13 @@ export class Encounter {
 
 	// Targets are edited in place, so they're copied in: an edit must never reach a preset or a saved encounter.
 	applyPreset(eventID: EventID, preset: PresetEncounter) {
-		this.targets = preset.targets.map(presetTarget => TargetProto.clone(presetTarget.target || TargetProto.create()));
-		this.targetsChangeEmitter.emit(eventID);
+		TypedEvent.freezeAllAndDo(() => {
+			this.targets = preset.targets.map(presetTarget => TargetProto.clone(presetTarget.target || TargetProto.create()));
+			this.targetsChangeEmitter.emit(eventID);
+			if (preset.raidDifficulty != RaidDifficulty.RaidDifficultyUnknown) {
+				this.setRaidDifficulty(eventID, preset.raidDifficulty);
+			}
+		});
 	}
 
 	applyPresetTarget(eventID: EventID, preset: PresetTarget, index: number) {
@@ -192,14 +197,14 @@ export class Encounter {
 		});
 	}
 
-	applyDefaults(eventID: EventID) {
+	applyDefaults(eventID: EventID, defaultTarget?: TargetProto) {
 		this.fromProto(eventID, EncounterProto.create({
 			duration: 180,
 			durationVariation: 5,
 			executeProportion20: 0.2,
 			executeProportion25: 0.25,
 			executeProportion35: 0.35,
-			targets: [Encounter.defaultTargetProto()],
+			targets: [defaultTarget || Encounter.defaultTargetProto()],
 		}));
 	}
 
@@ -220,6 +225,29 @@ export class Encounter {
 			stats: Stats.fromMap({
 				[Stat.StatArmor]: 10643,
 				[Stat.StatAttackPower]: 805,
+			}).asArray(),
+			targetInputs: new Array<TargetInput>(0),
+		});
+	}
+
+	// A generic AzerothCore boss (level 83, class 1) from creature_classlevelstats, rather than this
+	// fork's own Classic numbers: the tank specs' default, in place of a Classic encounter AI.
+	static genericBossTargetProto(): TargetProto {
+		return TargetProto.create({
+			level: Mechanics.BOSS_LEVEL,
+			tankIndex: 0,
+			swingSpeed: 2.0,
+			minBaseDamage: 177.074,
+			damageSpread: 0.5,
+			dualWield: false,
+			dualWieldPenalty: false,
+			suppressDodge: false,
+			parryHaste: true,
+			spellSchool: SpellSchool.SpellSchoolPhysical,
+			stats: Stats.fromMap({
+				[Stat.StatArmor]: 10643,
+				[Stat.StatAttackPower]: 805,
+				[Stat.StatHealth]: 13945,
 			}).asArray(),
 			targetInputs: new Array<TargetInput>(0),
 		});

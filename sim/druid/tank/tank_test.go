@@ -6,6 +6,7 @@ import (
 	_ "github.com/wowsims/wotlk/sim/common"
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
+	"github.com/wowsims/wotlk/sim/encounters"
 )
 
 func init() {
@@ -13,33 +14,66 @@ func init() {
 }
 
 func TestFeralTank(t *testing.T) {
-	core.RunTestSuite(t, t.Name(), core.FullCharacterTestSuiteGenerator(core.CharacterSuiteConfig{
-		Class: proto.Class_ClassDruid,
-		Race:  proto.Race_RaceTauren,
+	core.RunTestSuite(t, t.Name(), core.JoinTestGenerators(
+		core.FullCharacterTestSuiteGenerator(core.CharacterSuiteConfig{
+			Class: proto.Class_ClassDruid,
+			Race:  proto.Race_RaceTauren,
 
-		GearSet:     core.GetGearSet("../../../ui/feral_tank_druid/gear_sets", "p1"),
-		Talents:     StandardTalents,
-		Glyphs:      StandardGlyphs,
-		Consumes:    FullConsumes,
-		SpecOptions: core.SpecOptionsCombo{Label: "Default", SpecOptions: PlayerOptionsDefault},
-		Rotation:    core.GetAplRotation("../../../ui/feral_tank_druid/apls", "default"),
+			GearSet:     core.GetGearSet("../../../ui/feral_tank_druid/gear_sets", "p1"),
+			Talents:     StandardTalents,
+			Glyphs:      StandardGlyphs,
+			Consumes:    FullConsumes,
+			SpecOptions: core.SpecOptionsCombo{Label: "Default", SpecOptions: PlayerOptionsDefault},
+			Rotation:    core.GetAplRotation("../../../ui/feral_tank_druid/apls", "default"),
 
-		IsTank:          true,
-		InFrontOfTarget: true,
+			IsTank:          true,
+			InFrontOfTarget: true,
 
-		ItemFilter: core.ItemFilter{
-			WeaponTypes: []proto.WeaponType{
-				proto.WeaponType_WeaponTypeDagger,
-				proto.WeaponType_WeaponTypeMace,
-				proto.WeaponType_WeaponTypeOffHand,
-				proto.WeaponType_WeaponTypeStaff,
+			ItemFilter: core.ItemFilter{
+				WeaponTypes: []proto.WeaponType{
+					proto.WeaponType_WeaponTypeDagger,
+					proto.WeaponType_WeaponTypeMace,
+					proto.WeaponType_WeaponTypeOffHand,
+					proto.WeaponType_WeaponTypeStaff,
+				},
+				ArmorType: proto.ArmorType_ArmorTypeLeather,
+				RangedWeaponTypes: []proto.RangedWeaponType{
+					proto.RangedWeaponType_RangedWeaponTypeIdol,
+				},
 			},
-			ArmorType: proto.ArmorType_ArmorTypeLeather,
-			RangedWeaponTypes: []proto.RangedWeaponType{
-				proto.RangedWeaponType_RangedWeaponTypeIdol,
+		}),
+		&core.SingleDpsTestGenerator{Name: "GenericBoss", Request: genericBossRequest()},
+	))
+}
+
+// The generic AzerothCore boss, on the same gear and rotation as TestFeralTank's default, alongside
+// the Classic-style target that suite still keeps.
+func genericBossRequest() *proto.RaidSimRequest {
+	rsr := &proto.RaidSimRequest{
+		Raid: core.SinglePlayerRaidProto(
+			&proto.Player{
+				Race:            proto.Race_RaceTauren,
+				Class:           proto.Class_ClassDruid,
+				Equipment:       core.GetGearSet("../../../ui/feral_tank_druid/gear_sets", "p1").GearSet,
+				Consumes:        FullConsumes,
+				Spec:            PlayerOptionsDefault,
+				Buffs:           core.FullIndividualBuffs,
+				Rotation:        core.GetAplRotation("../../../ui/feral_tank_druid/apls", "default").Rotation,
+				TalentsString:   StandardTalents,
+				Glyphs:          StandardGlyphs,
+				InFrontOfTarget: true,
 			},
+			core.FullPartyBuffs,
+			core.FullRaidBuffs,
+			core.FullDebuffs),
+		Encounter: &proto.Encounter{
+			Duration: 300,
+			Targets:  []*proto.Target{encounters.GenericBossTarget()},
 		},
-	}))
+		SimOptions: core.DefaultSimTestOptions,
+	}
+	rsr.Raid.Tanks = []*proto.UnitReference{{Type: proto.UnitReference_Player, Index: 0}}
+	return rsr
 }
 
 func BenchmarkSimulate(b *testing.B) {

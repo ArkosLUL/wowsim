@@ -16,7 +16,9 @@ func (warrior *Warrior) registerConcussionBlowSpell() {
 		ActionID:    core.ActionID{SpellID: 12809},
 		SpellSchool: core.SpellSchoolPhysical,
 		ProcMask:    core.ProcMaskMeleeMHSpecial,
-		Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagIncludeTargetBonusDamage | core.SpellFlagAPL,
+		// spell_warr_concussion_blow sets the hit damage directly from attack power, skipping
+		// SpellDamageBonusDone and its caster-side percent modifiers.
+		Flags: core.SpellFlagMeleeMetrics | core.SpellFlagIncludeTargetBonusDamage | core.SpellFlagAPL | core.SpellFlagIgnoreAttackerModifiers,
 
 		RageCost: core.RageCostOptions{
 			Cost:   15 - float64(warrior.Talents.FocusedRage),

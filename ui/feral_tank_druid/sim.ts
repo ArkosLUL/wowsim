@@ -20,6 +20,7 @@ import {
 import { Stats } from '../core/proto_utils/stats.js';
 import { getSpecIcon, specNames } from '../core/proto_utils/utils.js';
 import { Player } from '../core/player.js';
+import { Encounter } from '../core/encounter.js';
 import { IndividualSimUI, registerSpecConfig } from '../core/individual_sim_ui.js';
 import { TankGemOptimizer } from '../core/components/suggest_gems_action.js';
 
@@ -146,6 +147,8 @@ const SPEC_CONFIG = registerSpecConfig(Spec.SpecFeralTankDruid, {
 			ebonPlaguebringer: true,
 			shadowMastery: true,
 		}),
+		// The generic AzerothCore boss, in place of this fork's Classic default.
+		encounterTarget: Encounter.genericBossTargetProto(),
 	},
 
 	// IconInputs to include in the 'Player' section on the settings tab.
