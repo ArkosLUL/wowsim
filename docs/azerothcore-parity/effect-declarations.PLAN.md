@@ -451,6 +451,9 @@ Bladestorm's channel; paladin 498/31884's shared cooldown.
 
 - Shared damage spells in `sim/common` and `sim/core`: item procs (give `ProcDamageEffect` its proc spell
   id), explosives, racials, and Shadowmourne 71904's travel wait.
+- A `serverdata` regeneration adding the spell ids the sweeps' As built sections list as lacking (Deep
+  Freeze 71757, the off-hand strikes, Explosive Trap 49065, …), then declaring them with `FromSpellID` and
+  dropping the KeepSim entries that stand in for them.
 - Checking the op-24 mod values that talents declare against the server's spell mods. `indexSpellMods`
   (`tools/acore/gen_serverdata/model.go`) indexes them but builds bounds only for ops 10, 11 and 21.
 

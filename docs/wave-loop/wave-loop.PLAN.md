@@ -287,9 +287,9 @@ crashed before F2, so its column starts there.
 | RI-4 | merged | `fc052a747` | acbis rejected version 1 rosters, fixed at merge |
 | BIS-hunter-ranged | merged | `4a04a6c4d` | |
 | wave I4 cross-review | | `d1814fae3` | 2 bugs: RI-4's real pets exposed Spore Cloud going to a Bat, not a Spore Bat, in the raid stats and the BiS batch's raid context; a Thori'dal hunter's export cleared their ammo, so every other bow simmed without any. A mistyped `FromSpellID` now panics |
-| PAR-DECL-1 | running | | |
-| PAR-DECL-2 | running | | |
-| PAR-DECL-3 | running | | |
+| PAR-DECL-1 | merged | `26663ada7` | 7 goldens promoted in `8f4752244`: Frost mage +0.38% (Mirror Image takes the mage's Frostbolt talents), Destruction -0.54% (Conflagrate, Imp Firebolt, Chaos Bolt's travel) |
+| PAR-DECL-2 | merged | `facac0b37` | 7 goldens promoted in `b0c156289`: Survival +3.3% (Explosive Shot's 0.16 AP), Enhancement -2.9% (fire elemental), Elemental -1.5% (travel, Clearcasting kept for the next cast, fire elemental; Intellect weight 0.37 to 3.03); review fixed Savage Fury declared flat, not a percent |
+| PAR-DECL-3 | merged | `90a8ea16f` | 13 goldens promoted in `b15974648`: DK Frost +1.9% (off-hand Frost Strike's flat bonus unhalved, Obliterate's halved), Blood Tank -2.7% (Rune Strike), Assassination +1.6% (poisons), Protection Paladin -1.1% (Holy Shield); review fixed Death Coil and Unholy Blight dealing 1 over, and Death Coil rolling at landing |
 
 Later WIs are added as their wave starts.
 
