@@ -102,7 +102,8 @@ bugs, the importer's missing pets, ammo and consumables, and a batch hung on a h
 ## Current wave
 
 - Wave: J, running. Base SHA `baa30c194`.
-- Workflow runId: set once started. Args `waveJ-args.json` in `G:\DevStuff\GitHub\.wave-loop`.
+- Workflow runId: `wf_98b95fd4-07a`, args `waveJ-args.json` in `G:\DevStuff\GitHub\.wave-loop`. Transcript dir:
+  `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\wf_98b95fd4-07a`.
 - BIS-e2e-perf's timings run in a second Workflow, alone on the idle machine, once the other three items
   merge; then the orchestrator runs the full-roster batch.
 
