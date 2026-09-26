@@ -89,6 +89,32 @@ against it on 2026-09-19:
   mod-individual-progression's TBC staves (e.g. 44916 on 30883), which stay effects instead of stats.
 - Everything else is unchanged apart from Go line numbers.
 
+## Re-run after AC-3
+
+AC-3 added heirloom scaling, the 4 missing server items, and shoulder enchant 3776; it also fixed a false
+match in the Mongoose PPM check. Re-run on 2026-09-26:
+
+- `items_not_comparable.csv`: 3 rows, all random-suffix items (45994, 45995, 49227, added this run but not
+  simmable as random rolls). The 39 heirlooms compare like any other item now: `azerothcore.ConvertItem`
+  computes their level-80 stats the way `Player::_ApplyItemBonuses`/`_ApplyWeaponDamage` (Player.cpp) do,
+  scaling `ScalingStatDistribution`'s per-slot `Modifier` by the `ScalingStatValues` row for level 80
+  (`tools/database/azerothcore/{dbc,convert}.go`). One heirloom, 38691 Ancestral Claymore, has
+  `ScalingStatValue` 0 on this server, so it never scales (matching the C++: no `ScalingStatValuesEntry` is
+  built without it) and keeps its Wowhead value like any other item nothing awards.
+- `items_missing_in_sim.csv`: 0 rows. `db.json` now has 37254 Super Simian Sphere (a trinket, its "Going
+  Ape!" transform stays unimplemented, like other vanity items), 45994 Lost Ring, 45995 Forgotten Necklace
+  and 49227 Skoll's Fang (a dagger, 315 spell power, 56-179 damage at 1.7 speed). The last three are
+  random-suffix items: their sim stats are the base numbers only, same convention as everywhere else the
+  sim leaves random suffixes unmodeled.
+- `effects_diff.csv`: 862 rows, all unchanged except the new Super Simian Sphere row ("not in sim Go", a
+  cosmetic effect) and Mongoose's ppm check, which now cites the real
+  `sim/core/serverdata/enchant_procs_auto_gen.go:31` literal instead of a coincidental `Tag: 1` picked up
+  from the paired MH/OH aura IDs in `sim/common/tbc/enchant_effects.go`.
+- `enchants_diff.csv`: 227 sim enchants, 11 rows, unchanged. New enchant 3776 "+45 Attack Power and +15
+  Critical Strike Rating" matches the server.
+- `accatalog`'s catalog is unchanged: none of the 4 new items resolve into its obtainable tiers.
+- Everything else is unchanged apart from Go line numbers.
+
 ## Items
 
 8,043 sim items: 5 missing on the server, 39 heirlooms not comparable, 1,509 with differences
@@ -277,12 +303,11 @@ from Wowhead. Server-sourced set names must still match `core.ItemSet.Name`/`Alt
    item/armor/weapon types and sources. Not converted yet: `unique`, required profession, faction
    restriction, per-item PPM and cooldowns (read into `azerothcore.ItemSpell`, but `UIItem` has no field
    for them).
-2. **Heirlooms:** compute level-80 stats from `ScalingStatDistribution.dbc` + `ScalingStatValues.dbc`
-   (not read yet) or keep the Wowhead values.
+2. **Heirlooms:** done (AC-3, [re-run below](#re-run-after-ac-3)).
 3. **Obtainability:** decide whether to drop or flag the 202 sim items that can't be obtained on the
-   server (`azerothcore.LoadObtainableItemIDs`), and whether to add the 4 missing server items.
-4. **Gems:** no change needed. **Enchants:** optionally update the five trivial values in
-   `tools/database/enchant_overrides.go`.
+   server (`azerothcore.LoadObtainableItemIDs`). The 4 missing server items are added (AC-3).
+4. **Gems:** no change needed. **Enchants:** shoulder enchant 3776 is added (AC-3); the five trivial
+   values above are still open.
 5. **Item effects and set bonuses stay in Go:** apply the Go → server value changes in the tables above
    (26 Ulduar-tier rows, 19 proc-rate/mechanic rows, 4 set bonuses) and fix the listed sim bugs.
    Longer term, generating proc amounts from server spell data would stop this drift.

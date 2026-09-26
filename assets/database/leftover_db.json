@@ -12615,6 +12615,7 @@
 {"effectId":3761,"spellId":57696,"name":"Fur Lining - Shadow Resist","type":6,"stats":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,70,0,0,0,0,0,0],"quality":1,"requiredProfession":8},
 {"effectId":3762,"spellId":57699,"name":"Fur Lining - Nature Resist","type":6,"stats":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,70,0,0,0,0,0,0,0],"quality":1,"requiredProfession":8},
 {"effectId":3763,"spellId":57701,"name":"Fur Lining - Arcane Resist","type":6,"stats":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,70,0,0,0,0,0,0,0,0,0,0],"quality":1,"requiredProfession":8},
+{"effectId":3776,"spellId":58128,"name":"Inscription of the Frostblade","type":3,"stats":[0,0,0,0,0,0,0,0,15,0,0,45,0,15,0,0,0,0,0,0,0,45,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"quality":4},
 {"effectId":3788,"itemId":44496,"spellId":59619,"name":"Accuracy","type":13,"stats":[0,0,0,0,0,0,0,25,25,0,0,0,25,25,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"quality":3},
 {"effectId":3789,"itemId":44492,"spellId":59621,"name":"Berserking","type":13,"stats":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"quality":3},
 {"effectId":3790,"itemId":44495,"spellId":59625,"name":"Black Magic","type":13,"stats":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"quality":3},

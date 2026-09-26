@@ -6,6 +6,7 @@ import (
 	"os"
 	"slices"
 
+	"github.com/wowsims/wotlk/sim/core/proto"
 	"github.com/wowsims/wotlk/tools/database"
 	"github.com/wowsims/wotlk/tools/database/azerothcore"
 )
@@ -60,9 +61,9 @@ func loadServerDBC() (*azerothcore.DBC, error) {
 }
 
 // applyServerData overwrites item data with the server's for every item a player can get there.
-// Items the server lacks or nothing awards keep their Wowhead data, and so do heirlooms and random
-// enchant items, whose stats item_template doesn't hold. Gems whose id the server uses for a
-// non-gem item are dropped.
+// Items the server lacks or nothing awards keep their Wowhead data, and so do random enchant items,
+// whose stats item_template doesn't hold. Gems whose id the server uses for a non-gem item are
+// dropped.
 func applyServerData(db *database.WowDatabase, server *serverData) {
 	var applied, missing, unobtainable, notComparable int
 	for id, item := range db.Items {
@@ -99,4 +100,20 @@ func applyServerData(db *database.WowDatabase, server *serverData) {
 	}
 	slices.Sort(dropped)
 	log.Printf("azerothcore: dropped gems that aren't gems on the server: %v", dropped)
+}
+
+// addMissingServerItems adds obtainable server items the Wowhead scrape never captured, straight
+// from item_template and the DBCs (see database.MissingServerItems).
+func addMissingServerItems(db *database.WowDatabase, server *serverData) {
+	for _, m := range database.MissingServerItems {
+		row := server.items[m.ID]
+		if row == nil {
+			log.Printf("azerothcore: missing server item %d isn't in item_template, skipping", m.ID)
+			continue
+		}
+		item := azerothcore.ConvertItem(row, server.dbc).Item
+		item.Type, item.ArmorType, item.WeaponType, item.HandType = m.Type, m.ArmorType, m.WeaponType, m.HandType
+		item.Expansion = proto.Expansion_ExpansionWotlk
+		db.MergeItem(item)
+	}
 }

@@ -294,12 +294,18 @@ var timeUnitSeconds = map[string]float64{"Millisecond": 0.001, "Second": 1, "Min
 
 // numbers returns the numeric literals in the code that defines the value at loc, plus durations
 // in seconds (time.Minute*2 gives 2 and 120). Identifiers and comments aren't literals, so digits
-// in names like float64 or T84PcProcChance never count.
+// in names like float64 or T84PcProcChance never count. A core.ActionID{..., Tag: n}'s Tag only
+// disambiguates same-spell auras (e.g. a weapon enchant's MH/OH buffs); it carries no server value,
+// so it would otherwise read as a coincidental match (Mongoose's Tag: 1 against a 1 PPM).
 func (loc goLocation) numbers() []float64 {
 	var numbers []float64
 	scaled := map[ast.Node]bool{}
 	ast.Inspect(enclosingUnit(loc.path()), func(n ast.Node) bool {
 		switch n := n.(type) {
+		case *ast.KeyValueExpr:
+			if id, ok := n.Key.(*ast.Ident); ok && id.Name == "Tag" {
+				return false
+			}
 		case *ast.BasicLit:
 			if v, ok := literalValue(n); ok {
 				numbers = append(numbers, v)

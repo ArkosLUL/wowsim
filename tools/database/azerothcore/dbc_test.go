@@ -100,6 +100,66 @@ func TestSpellEffectValue(t *testing.T) {
 	}
 }
 
+func TestReadScalingStatDistributions(t *testing.T) {
+	record := make([]uint32, 22)
+	record[ssdFieldID] = 5
+	record[ssdFieldStatMod] = 7                    // stamina
+	record[ssdFieldStatMod+1] = uint32(0xFFFFFFFF) // unused slot
+	record[ssdFieldModifier] = 100
+	record[ssdFieldMaxLevel] = 80
+
+	ssd := readScalingStatDistributions(mustParse(t, buildDBC(22, [][]uint32{record}, "")))[5]
+	if ssd == nil || ssd.StatMod[0] != 7 || ssd.StatMod[1] != -1 || ssd.Modifier[0] != 100 || ssd.MaxLevel != 80 {
+		t.Errorf("ssd = %+v", ssd)
+	}
+}
+
+func TestReadScalingStatValues(t *testing.T) {
+	record := make([]uint32, 24)
+	record[ssvFieldID] = 1
+	record[ssvFieldLevel] = 80
+	record[ssvFieldSSDMultiplier] = 5000
+	record[ssvFieldArmorMod] = 200
+	record[ssvFieldDPSMod] = 150
+	record[ssvFieldSpellPower] = 50
+	record[ssvFieldArmorMod2] = 90
+
+	// LookupEntry indexes ScalingStatValues.dbc by Level, not by this row's own ID.
+	ssv := readScalingStatValues(mustParse(t, buildDBC(24, [][]uint32{record}, "")))[80]
+	if ssv == nil || ssv.ID != 1 || ssv.SSDMultiplierCols[0] != 5000 || ssv.ArmorModCols[0] != 200 ||
+		ssv.DPSModCols[0] != 150 || ssv.SpellPower != 50 || ssv.ArmorMod2Cols[0] != 90 {
+		t.Errorf("ssv = %+v", ssv)
+	}
+}
+
+func TestScalingStatValuesGetters(t *testing.T) {
+	ssv := &ScalingStatValuesEntry{
+		SSDMultiplierCols: [4]int32{100, 200, 300, 400},
+		ArmorModCols:      [4]int32{10, 20, 30, 40},
+		ArmorMod2Cols:     [5]int32{1, 2, 3, 4, 5},
+		DPSModCols:        [6]int32{5, 6, 7, 8, 9, 10},
+		SpellPower:        50,
+	}
+	if got := ssv.SSDMultiplier(0x2); got != 200 { // trinket
+		t.Errorf("SSDMultiplier(trinket) = %d, want 200", got)
+	}
+	if got := ssv.ArmorMod(0x100000); got != 2 { // cloth (armorMod2)
+		t.Errorf("ArmorMod(cloth) = %d, want 2", got)
+	}
+	if got := ssv.DPSMod(0x1000); got != 8 { // caster 2H
+		t.Errorf("DPSMod(caster 2H) = %d, want 8", got)
+	}
+	if !ssv.IsTwoHand(0x1000) || ssv.IsTwoHand(0x800) {
+		t.Error("IsTwoHand should be true only for the 2H masks (0x400, 0x1000)")
+	}
+	if got := ssv.SpellBonus(0x8000); got != 50 {
+		t.Errorf("SpellBonus(masked) = %d, want 50", got)
+	}
+	if got := ssv.SpellBonus(0x1); got != 0 {
+		t.Errorf("SpellBonus(unmasked) = %d, want 0", got)
+	}
+}
+
 func mustParse(t *testing.T, data []byte) *DBCFile {
 	t.Helper()
 	f, err := ParseDBC(data)

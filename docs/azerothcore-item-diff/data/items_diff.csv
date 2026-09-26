@@ -22,6 +22,7 @@ id,name,category,server_ilvl,sim_ilvl,zone,difficulty,diffs (server -> sim),serv
 38443,Mail Melee Leatherworking Shoulders,unobtainable,187,187,no source,,stat Armor: 0 -> 878,,,
 38444,Mail Melee Leatherworking Bracer,unobtainable,187,187,no source,,stat Armor: 0 -> 512,,,
 38445,Mail Caster Leatherworking Helm,unobtainable,187,187,no source,,stat Armor: 0 -> 952,,,
+38691,Ancestral Claymore,unobtainable,1,1,no source,,stat Strength: 0 -> 63; stat Stamina: 0 -> 95; stat SpellCrit: 0 -> 53; stat SpellHaste: 0 -> 41; stat MeleeCrit: 0 -> 53; stat MeleeHaste: 0 -> 41; weapon damage min: 0 -> 436; weapon damage max: 0 -> 655; weapon speed: 0 -> 3.5,,,
 39263,Dissevered Leggings,unobtainable,200,200,Ahn'kahet: The Old Kingdom,TitanRuneAlpha,stat Agility: 73 -> 64; stat Stamina: 134 -> 78; stat Intellect: 0 -> 47; stat SpellHit: 44 -> 35; stat SpellCrit: 60 -> 38; stat AttackPower: 0 -> 148; stat MeleeHit: 44 -> 35; stat MeleeCrit: 60 -> 38; stat Armor: 0 -> 1097; stat RangedAttackPower: 0 -> 148,,,drop Ahn'kahet: The Old Kingdom TitanRuneAlpha (Elder Nadox) | drop Ahn'kahet: The Old Kingdom TitanRuneBeta (Elder Nadox)
 39364,Hood of the Titan Defender,unobtainable,162,162,no source,,stat Intellect: 58 -> 0; stat SpellPower: 0 -> 68; stat Armor: 0 -> 160,,,
 39410,Gauntlets of Rampant Destruction,unobtainable,162,162,no source,,stat Intellect: 44 -> 0; stat SpellPower: 0 -> 51; stat Armor: 0 -> 232,,,

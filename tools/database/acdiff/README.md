@@ -38,7 +38,7 @@ Diffs read server → sim.
 |---|---|
 | `summary.md` | counts per category |
 | `items_diff.csv` | item differences, with `category` set to classic, module or unobtainable |
-| `items_not_comparable.csv` | heirlooms |
+| `items_not_comparable.csv` | random-suffix items, and any heirloom with no matching DBC row |
 | `items_missing_on_server.csv`, `items_missing_in_sim.csv` | items only one side has |
 | `items_unobtainable_on_server.csv` | sim items the server has but nothing awards |
 | `effects_diff.csv` | hardcoded effect values vs server spell data |
