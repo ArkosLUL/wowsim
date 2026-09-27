@@ -905,6 +905,56 @@ don't switch. Keep the pass to a couple of minutes a phase at Quick.
   time.
 - Owns: `ui/raid/optimizer_batch.ts`, `sim/optimizer/racial.go` and its tests, `tools/database/acbis/driver/**`.
 
+#### BIS-stage2b as built
+
+- **Go:** `compareRaces` (`racial.go`) asks only the Heroic Presence question (`comparedRaces`): a Draenei
+  target against every other race, anyone else against Draenei alone, so a party without one sims 2
+  points per candidate, not 10. No other caller used the every-race comparison. `compare_racial_traits`'
+  proto comment still says every race: a contract change request.
+- **Who:** once every planned job has settled, `runNextPartyCheck` (`optimizer_batch.ts`) checks one
+  party per call. `phaseParties` gives each member their final race: a non-healer's settled pick, else
+  the raid sim's (healers, raiders without a pick). Only DPS raiders with a pick switch; anyone else
+  who is Draenei covers the party.
+  - No Draenei (`missing`): each candidate against Draenei in paired raid sims on the final raid, the
+    largest gain past 2 SE switches. Skipped under "Keep their traits".
+  - More than one (`extra`): as built, except a Draenei healer now counts like a Draenei tank.
+- **State:** `Batch.partyChecks` keeps each party's latest check (kind, each candidate's gain, who
+  switched, seconds, `partyPicks`: a hash of the party's races and picks). A party nobody got switched
+  in waits until one of its picks changes, so Start no longer stays lit after a check with no winner;
+  a check that failed waits for the next Start. A check waits out a busy server like a job.
+- **Switches** still mutate the settled pick, plus `Job.partySwitch` (from, to, gain, notes), cleared
+  when the job reruns. The cell adds "Draenei for the party, raid DPS ±".
+- **Driver:** `--stage 2` runs with no stage 2 raider too; a phase is done once its runs have settled
+  and the page offers no Start for 10 s. It logs each check and the checks' time, writes a timings
+  line per check, keeps the stall timer through the checks, and snapshots after each check and pass.
+  Pass 1's export puts back each stage 1 pick's own race (`restore_own_races`).
+- **Tests:** `racial_test.go`: a Draenei moves to the race that gains most; anyone else only sims
+  Draenei; nothing clearing the noise keeps the race; in real raid sims, a hit-starved party gets its
+  Draenei (+163.6 ± 16.5) and a hit-capped one is left alone (±0). No Playwright test:
+  `tools/uitest` isn't this item's. A stubbed-server run of the page covered a party nobody switches
+  in (checked once, Start dark), `extra` (the larger gain moves away) and "Keep their traits" (no
+  work).
+
+**Live-roster check** (P1, Quick, `raid.json`, sim `d4416a957` plus this change): stage 1 took 269 s,
+stage 2 315 s: Fel's run 262 s, the checks 47 s, 16 s for each of 3 parties with 5 candidates.
+Parties 4 and 5 hold a Draenei healer. The pass switched Angry, Assasin and Smartface, scoring them
++238.1 ± 28.6, +259.4 ± 22.7 and +250.7 ± 11.6 at Quick's 500 iterations. CLI A/B at 4,000 iterations
+with per-unit streams (`G:\DevStuff\GitHub\.wave-loop\ab-j2b\reproduce.sh`): raid A (all stage 1
+picks) 158,367.6 ± 17.9, the page's own raid sim identical on all 4,000 iterations.
+
+| Against A | Raid DPS | Own DPS |
+|---|---|---|
+| Angry to Draenei | +254.0 ± 9.9 | +28.9 ± 4.4 |
+| Assasin to Draenei | +233.7 ± 8.2 | +24.8 ± 3.0 |
+| Smartface to Draenei | +244.1 ± 3.6 | −20.6 ± 1.4 |
+| Fel's stage 2 gear | +79.5 ± 3.0 | +66.1 ± 2.3 |
+| Every final pick | +822.3 ± 11.6 | |
+
+Switched alone, every other candidate: parties 2 and 3's picks were the A/B's best too, party 1's
+Angry 2.2 under Mighty (+256.2 ± 9.5). Only Nightwarrior would lose (−10.6 ± 3.6), and the check
+passed him over. With every final pick on, only Smartface's own DPS falls past 2 SE (−19.1 ± 1.4, the
+Orc racial he gave up).
+
 ### BIS-adopt (wave J2)
 
 Quick never adopts a runner-up: over budget, `neighborhood.go` runs a round at half the iterations, and

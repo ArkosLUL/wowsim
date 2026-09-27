@@ -25,6 +25,11 @@ RAID_JS = REPO / 'tools' / 'uicheck' / 'raid.js'
 PAGE_JS = HERE / 'page.js'
 CHROME = r'C:\Program Files\Google\Chrome\Application\chrome.exe'
 EFFORTS = {'Quick': 0, 'Normal': 1, 'Thorough': 2}
+# proto.Race by number, as the batch stores it and the export spells it
+RACES = ['RaceUnknown', 'RaceBloodElf', 'RaceDraenei', 'RaceDwarf', 'RaceGnome', 'RaceHuman', 'RaceNightElf',
+         'RaceOrc', 'RaceTauren', 'RaceTroll', 'RaceUndead']
+# how long an optional start waits for the page to offer Start before taking it as nothing to do
+OPTIONAL_START_WAIT = 10
 TOOLCHAIN_IMAGES = ('wowsims-wotlk-dev', 'wowsim-toolchain', 'wotlk-toolchain')
 # Chrome's localStorage quota per origin, measured: 5.2M chars fit, 5.3M throw
 STORAGE_CHARS = 5_242_880
@@ -246,6 +251,18 @@ def settled(state, phase, wanted, failed_ok=True):
     return all(w in done for w in wanted)
 
 
+def race_name(race):
+    return RACES[race] if 0 <= race < len(RACES) else str(race)
+
+
+def describe_check(check):
+    tried = ', '.join(f"{t['raider']} {t['error']!r}" if t.get('error') else
+                      f"{t['raider']} {race_name(t['race'])} {t['delta']:+.1f} ± {t['se']:.1f}" if t['delta'] or t['se'] else
+                      f"{t['raider']} no gain" for t in check['tried'])
+    outcome = f"switched {check['switched']}" if check.get('switched') else 'nobody switched'
+    return f"party {check['party'] + 1} ({check['kind']}): {outcome} in {check['seconds']:.0f} s; tried {tried}"
+
+
 class Driver:
     def __init__(self, args, log):
         self.args = args
@@ -342,11 +359,12 @@ class Driver:
             self.browser.eval(f'__bis.stopAfterStage1({phase}, {json.dumps(names)})')
         self.log(f'P{phase}: {len(names)} raiders ticked, effort {effort}')
 
-    # the page doesn't resume a batch on its own (prepareStorage clears its running flag), so every
-    # run starts here, set up for this phase
-    def start(self, names, phase, retry=False):
+    # The page doesn't resume a batch on its own (prepareStorage clears its running flag), so every
+    # run starts here, set up for this phase. Optional: the page may have nothing left to run, which
+    # returns False once Start stays disabled for OPTIONAL_START_WAIT s.
+    def start(self, names, phase, retry=False, optional=False):
         self.prepare(names, phase)
-        end = time.time() + 60
+        begun = time.time()
         while True:
             state = self.state()
             if state['wasm']:
@@ -358,13 +376,15 @@ class Driver:
                 label = state['start']['label']
             if label and self.browser.eval(f'__bis.click({json.dumps(label)})'):
                 break
-            if time.time() > end:
+            if optional and not state['running'] and time.time() > begun + OPTIONAL_START_WAIT:
+                return False
+            if time.time() > begun + 60:
                 raise CdpError(f"can't start the batch: {state['start']}, status {state['status']!r}")
             time.sleep(1)
         for _ in range(20):
             if self.state()['running']:
                 self.log(f'P{phase}: clicked {label}')
-                return
+                return True
             time.sleep(1)
         raise CdpError(f"the batch didn't start: {self.state()['status']!r}")
 
@@ -391,6 +411,9 @@ class Driver:
                 self.import_roster()
             if not settled(self.state(), phase, wanted):
                 self.start(names, phase)
+            elif self.args.stage == 2:
+                # the Heroic Presence checks may still have parties left
+                self.start(names, phase, optional=True)
 
         self.recover(f'P{phase} reload', resume)
 
@@ -423,6 +446,8 @@ class Driver:
             entries = data['entries'] = [e for e in entries if e.get('stage', 0) <= self.args.stage]
             text = json.dumps(data, indent=2)
             self.log(f'left {len(later)} stage 2 entries out of the stage 1 export')
+        if self.args.stage == 1 and self.restore_own_races(entries):
+            text = json.dumps(data, indent=2)
         # one file per pass, so stage 2's export (both stages) never overwrites stage 1's
         path = self.out / f'batch-stage{self.args.stage}.json'
         tmp = path.with_suffix('.tmp')
@@ -442,10 +467,52 @@ class Driver:
             self.log(f'! the export mixes efforts {sorted(efforts)}')
         return True
 
+    # A Heroic Presence check switches a settled pick's racial traits in place, stage 1 picks too. Puts
+    # back what each stage 1 run chose, so pass 1's file stays own metrics. Returns how many it changed.
+    def restore_own_races(self, entries):
+        try:
+            switches = {(j['raider'], j['phase']): j['partySwitch'] for j in self.state()['jobs']
+                        if j['stage'] == 1 and j.get('partySwitch')}
+        except CdpError as e:
+            self.log(f'! stage 1 picks a Heroic Presence check switched may keep that race in the export: {e}')
+            return 0
+        restored = 0
+        for entry in entries:
+            switch = switches.get((entry.get('raider'), entry.get('contentPhase')))
+            best = entry.get('result', {}).get('best')
+            if entry.get('stage', 0) != 1 or not switch or not best:
+                continue
+            best['racialTraits'] = race_name(switch['from'])
+            warnings = [w for w in best.get('warnings', []) if w not in switch['notes']]
+            if warnings:
+                best['warnings'] = warnings
+            else:
+                best.pop('warnings', None)
+            restored += 1
+        if restored:
+            self.log(f'gave {restored} stage 1 picks back the racial traits their own run chose')
+        return restored
+
+    def log_party_checks(self, state, phase, seen, timings):
+        for check in state.get('partyChecks', []):
+            key = (check['phase'], check['party'], check['picks'], check['seconds'])
+            if check['phase'] != phase or key in seen:
+                continue
+            seen.add(key)
+            self.log(f'P{phase} Heroic Presence, {describe_check(check)}')
+            record = {'at': time.strftime('%Y-%m-%dT%H:%M:%S'), 'phase': phase, 'party': check['party'] + 1,
+                      'check': check['kind'], 'switched': check.get('switched'), 'seconds': round(check['seconds'], 1),
+                      'tried': check['tried'], 'load': machine_load(self.args.container)}
+            timings.write(json.dumps(record) + '\n')
+            timings.flush()
+
     def monitor(self, names, phase, wanted, timings):
         stall = self.args.stall
         state = self.state()
         seen = {(j['raider'], j['stage']) for j in state['jobs'] if j['phase'] == phase and j['state'] in ('done', 'failed')}
+        seen_checks = {(c['phase'], c['party'], c['picks'], c['seconds']) for c in state.get('partyChecks', [])}
+        # when this phase's jobs had all settled but the batch ran on: its Heroic Presence checks
+        checks_from = None
         snapped = None
         last_settle = last_change = time.time()
         last_status = None
@@ -484,8 +551,10 @@ class Driver:
                          f"server, {wall:.0f} s wall, {job['sims']} sims, load {load}, "
                          f"storage {100 * state['needChars'] / STORAGE_CHARS:.0f}%"
                          + (f", error {job['error']}" if job['error'] else ''))
+            self.log_party_checks(state, phase, seen_checks, timings)
             # a reload can lose jobs, so this follows the settled set, not just newly seen jobs
-            done = {(j['raider'], j['phase'], j['stage'], j['state']) for j in state['jobs'] if j['state'] in ('done', 'failed')}
+            done = ({(j['raider'], j['phase'], j['stage'], j['state']) for j in state['jobs'] if j['state'] in ('done', 'failed')},
+                    {(c['phase'], c['party'], c['picks'], c['seconds']) for c in state.get('partyChecks', [])})
             if done != snapped and self.snapshot():
                 snapped = done
             if state['writeFailed'] != write_failed:
@@ -495,15 +564,19 @@ class Driver:
                              'and storage-snapshot.json still have it all, but a reload re-runs every job since')
                 else:
                     self.log('the batch fits in localStorage again')
-            if settled(state, phase, wanted):
-                if not state['running']:
-                    return
-                if self.args.stage == 1:
-                    self.log(f'P{phase}: stage 1 is done but the batch runs on, stopping it')
-                    try:
-                        self.browser.eval('__bis.stop()')
-                    except CdpError:
-                        pass
+            runs_settled = settled(state, phase, wanted)
+            if runs_settled and not state['running']:
+                if checks_from is not None:
+                    # a failed check leaves no record, only the page's closing status says so
+                    self.log(f'P{phase}: the Heroic Presence checks took {time.time() - checks_from:.0f} s'
+                             + ('' if state['status'] == 'All done.' else f", the page says {state['status']!r}"))
+                return
+            if runs_settled and self.args.stage == 1:
+                self.log(f'P{phase}: stage 1 is done but the batch runs on, stopping it')
+                try:
+                    self.browser.eval('__bis.stop()')
+                except CdpError:
+                    pass
             elif not state['running']:
                 restarts += 1
                 if restarts > 3:
@@ -517,6 +590,9 @@ class Driver:
                 except CdpError as e:
                     self.reload(names, phase, wanted, f"it didn't start again ({e})")
                 last_change = time.time()
+            elif runs_settled and checks_from is None:
+                checks_from = last_change = now
+                self.log(f"P{phase}: every stage 2 run here has settled, checking each party's Heroic Presence")
             elif state['status'] != last_status:
                 last_status = state['status']
                 last_change = now
@@ -543,8 +619,8 @@ class Driver:
         # only raiders whose own gear changes someone else's damage get a stage 2 run (BIS-stage2)
         stage2_names = [n for n in names if by_name[n]['stage2']]
         if args.stage == 2 and not stage2_names:
-            self.log('none of these raiders get a stage 2 run (no Demonic Pact or targeted Focus Magic among them), nothing to do')
-            return
+            self.log('none of these raiders get a stage 2 run (no Demonic Pact or targeted Focus Magic among them), '
+                     'so this pass only checks Heroic Presence')
         pass_start = time.time()
         skipped = []
         exported = None
@@ -552,8 +628,9 @@ class Driver:
             for phase in parse_phases(args.phases):
                 wanted = [(n, 1) for n in names] if args.stage == 1 else [(n, 2) for n in stage2_names]
                 state = self.state()
-                if settled(state, phase, wanted, failed_ok=not args.retry_failed):
-                    self.log(f'P{phase}: stage {args.stage} already done for these raiders')
+                # stage 2's Heroic Presence checks can have work left after its runs, which only the page knows
+                if args.stage == 1 and settled(state, phase, wanted, failed_ok=not args.retry_failed):
+                    self.log(f'P{phase}: stage 1 already done for these raiders')
                     continue
                 if args.stage == 2 and not settled(state, phase, [(n, 1) for n in names]):
                     self.log(f'! P{phase}: stage 1 is not done for every raider here, skipping stage 2 '
@@ -562,7 +639,10 @@ class Driver:
                     continue
                 phase_start = time.time()
                 try:
-                    self.start(names, phase, retry=args.retry_failed)
+                    runs_done = settled(state, phase, wanted, failed_ok=not args.retry_failed)
+                    if not self.start(names, phase, retry=args.retry_failed, optional=args.stage == 2 and runs_done):
+                        self.log(f'P{phase}: stage 2 and its Heroic Presence checks are already done for these raiders')
+                        continue
                 except CdpError as e:
                     self.reload(names, phase, wanted, f"the batch didn't start ({e})")
                 self.monitor(names, phase, wanted, timings)
@@ -570,6 +650,7 @@ class Driver:
                 exported = self.export()
         if not exported and not self.export():
             raise SystemExit('the batch could not be exported: run the same command again')
+        self.snapshot()
         final = self.state()
         failed = [f"P{j['phase']} s{j['stage']} {j['raider']}" for j in final['jobs'] if j['state'] == 'failed']
         self.log(f'pass done in {time.time() - pass_start:.0f} s; batch {final["storedChars"]} chars, '

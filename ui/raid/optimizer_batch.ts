@@ -84,6 +84,54 @@ interface Job {
 	serverStops: number;
 	// only while it runs
 	progress?: OptimizerProgress;
+	// set once a Heroic Presence pass switched this pick's racial traits
+	partySwitch?: PartySwitch;
+}
+
+// A Heroic Presence pass's change to a settled pick. The pick itself wears `to`; this keeps what the
+// run found, so the grid can show the switch and the driver can export stage 1 as it ran.
+interface PartySwitch {
+	from: Race;
+	to: Race;
+	// the switch's paired raid DPS gain, ± its standard error
+	delta: number;
+	se: number;
+	// the warnings the switches added to the pick
+	notes: Array<string>;
+}
+
+// A Heroic Presence pass over one party in one phase: 'extra' when it held more than one Draenei,
+// 'missing' when it held none.
+interface PartyCheck {
+	phase: number;
+	party: number;
+	kind: 'extra' | 'missing';
+	// partyPicks as the check left the party: a party nobody switched in only gets checked again once
+	// one of its picks changes
+	picks: string;
+	// every candidate's best switch; delta and se stay 0 where none cleared the noise, and error is
+	// set where the check itself failed
+	tried: Array<{ raider: string; race: Race; delta: number; se: number; error?: string }>;
+	switched?: string;
+	seconds: number;
+}
+
+// One raider in a phase's settled raid, as a Heroic Presence pass sees them.
+interface PartyMember {
+	raidIndex: number;
+	race: Race;
+	// their settled pick, if they have one
+	pick?: Job;
+	// a DPS raider's pick: tanks keep the race their own run chose, and healers have no pick
+	switchable: boolean;
+}
+
+interface PartyWork {
+	key: string;
+	phase: number;
+	party: number;
+	kind: 'extra' | 'missing';
+	candidates: Array<Job>;
 }
 
 interface BatchSettings {
@@ -99,6 +147,8 @@ interface Batch {
 	fingerprint: string;
 	settings: BatchSettings;
 	jobs: Map<string, Job>;
+	// by "phase:party", the latest Heroic Presence check of each party
+	partyChecks: Map<string, PartyCheck>;
 	// still running when the page went away, so a reload picks it up again
 	running: boolean;
 }
@@ -108,9 +158,9 @@ interface BatchRun {
 	abort: AbortController;
 	// picked up again after a reload
 	resumed: boolean;
-	// "phase:party" keys whose Draenei switch found no winner this run, so it isn't retried until the
+	// "phase:party" keys whose Heroic Presence check failed this run, so it isn't retried until the
 	// next Start
-	draeneiGaveUp: Set<string>;
+	partyGaveUp: Set<string>;
 }
 
 // What a phase's Validate found: raid DPS as the raid is, and with the phase's BiS on.
@@ -199,6 +249,55 @@ function compactResult(result: OptimizerResult): OptimizerResult {
 	return out;
 }
 
+function partyKey(phase: number, party: number): string {
+	return `${phase}:${party}`;
+}
+
+// Identifies a party's settled state: who's in it, their races and their picks' gear.
+function partyPicks(members: Array<PartyMember>): string {
+	return hashString(
+		JSON.stringify(
+			members.map(m => [m.raidIndex, m.race, m.pick ? [m.pick.stage, EquipmentSpec.toJson(m.pick.result?.best?.equipment || EquipmentSpec.create())] : null]),
+		),
+	);
+}
+
+const isNumber = (value: any): value is number => typeof value == 'number' && Number.isFinite(value);
+
+function parsePartySwitch(value: any): PartySwitch | undefined {
+	if (!value || !isNumber(value.from) || !isNumber(value.to)) {
+		return undefined;
+	}
+	return {
+		from: value.from,
+		to: value.to,
+		delta: isNumber(value.delta) ? value.delta : 0,
+		se: isNumber(value.se) ? value.se : 0,
+		notes: Array.isArray(value.notes) ? value.notes.map(String) : [],
+	};
+}
+
+function parsePartyCheck(value: any): PartyCheck | undefined {
+	if (!value || !isNumber(value.phase) || !isNumber(value.party) || (value.kind != 'extra' && value.kind != 'missing')) {
+		return undefined;
+	}
+	return {
+		phase: value.phase,
+		party: value.party,
+		kind: value.kind,
+		picks: String(value.picks || ''),
+		tried: (Array.isArray(value.tried) ? value.tried : []).map((t: any) => ({
+			raider: String(t?.raider || ''),
+			race: isNumber(t?.race) ? t.race : Race.RaceUnknown,
+			delta: isNumber(t?.delta) ? t.delta : 0,
+			se: isNumber(t?.se) ? t.se : 0,
+			error: typeof t?.error == 'string' ? t.error : undefined,
+		})),
+		switched: typeof value.switched == 'string' ? value.switched : undefined,
+		seconds: isNumber(value.seconds) ? value.seconds : 0,
+	};
+}
+
 function sleep(ms: number, stop: { stopped: boolean }): Promise<void> {
 	return new Promise(resolve => {
 		const started = Date.now();
@@ -243,8 +342,9 @@ function couplesToOthers(player: Player<any>): boolean {
 // the sim's web server (it runs one at a time). Stage 1 runs everyone on their own metrics, with the
 // buffs and debuffs the rest of the roster gives them; tanks stay on the survival/threat blend there.
 // Stage 2 re-optimizes for raid DPS, with everyone else in their stage 1 pick, only the DPS raiders
-// couplesToOthers picks out; the rest keep their stage 1 pick. Once a phase settles, at most one
-// Draenei stays per party (runDraeneiPass), whichever switch away costs its party's raid DPS least.
+// couplesToOthers picks out; the rest keep their stage 1 pick. Once a phase settles, the Heroic Presence
+// checks (runNextPartyCheck) give a party without a Draenei one when a switch gains the raid, and switch
+// extra DPS Draenei away.
 // Cells show whichever stage last ran for that raider and phase.
 export class OptimizerBatchTab extends SimTab {
 	readonly simUI: RaidSimUI;
@@ -272,7 +372,7 @@ export class OptimizerBatchTab extends SimTab {
 		this.simUI = simUI;
 		// reuses the optimizer tab's styles
 		this.rootElem.classList.add('optimizer-tab');
-		this.batch = { fingerprint: '', settings: defaultSettings(), jobs: new Map(), running: false };
+		this.batch = { fingerprint: '', settings: defaultSettings(), jobs: new Map(), partyChecks: new Map(), running: false };
 
 		const leftPanel = newElement('div', 'optimizer-tab-left tab-panel-left flex-column');
 		const rightPanel = newElement('div', 'optimizer-tab-right tab-panel-right');
@@ -374,7 +474,7 @@ export class OptimizerBatchTab extends SimTab {
 	}
 
 	private loadBatch(fingerprint: string): Batch {
-		const batch: Batch = { fingerprint, settings: defaultSettings(), jobs: new Map(), running: false };
+		const batch: Batch = { fingerprint, settings: defaultSettings(), jobs: new Map(), partyChecks: new Map(), running: false };
 		const stored = fingerprint ? readStorage(this.storageKey(fingerprint)) : null;
 		if (!stored) {
 			return batch;
@@ -407,11 +507,18 @@ export class OptimizerBatchTab extends SimTab {
 					seedChanges: Array.isArray(job.seedChanges) ? job.seedChanges.map(String) : [],
 					bossName: String(job.bossName || ''),
 					serverStops: 0,
+					partySwitch: parsePartySwitch(job.partySwitch),
 				});
+			}
+			for (const value of Array.isArray(saved.partyChecks) ? saved.partyChecks : []) {
+				const check = parsePartyCheck(value);
+				if (check) {
+					batch.partyChecks.set(partyKey(check.phase, check.party), check);
+				}
 			}
 		} catch (e) {
 			console.warn(`Ignoring the stored raid batch: ${e}`);
-			return { fingerprint, settings: defaultSettings(), jobs: new Map(), running: false };
+			return { fingerprint, settings: defaultSettings(), jobs: new Map(), partyChecks: new Map(), running: false };
 		}
 		return batch;
 	}
@@ -430,8 +537,10 @@ export class OptimizerBatchTab extends SimTab {
 			error: job.error,
 			seedChanges: job.seedChanges,
 			bossName: job.bossName,
+			partySwitch: job.partySwitch,
 		}));
-		const text = JSON.stringify({ savedAt: Date.now(), running: this.batch.running, settings: this.batch.settings, jobs });
+		const partyChecks = [...this.batch.partyChecks.values()];
+		const text = JSON.stringify({ savedAt: Date.now(), running: this.batch.running, settings: this.batch.settings, jobs, partyChecks });
 		const key = this.storageKey(this.batch.fingerprint);
 		let stored = writeStorage(key, text);
 		if (!stored) {
@@ -518,7 +627,9 @@ export class OptimizerBatchTab extends SimTab {
 					"buffs and debuffs the rest of this roster gives them. Tanks trade 70% survival against 30% threat and have to end up " +
 					'crit immune. Healers sit this one out. Everyone gets their own-metrics pick first. A raider whose own gear changes ' +
 					"someone else's damage (Demonic Pact, Focus Magic) runs again, scored on the whole raid's DPS with everyone else " +
-					'wearing their first pick. Once a phase settles, at most one Draenei stays per party.',
+					'wearing their first pick. Once a phase settles, each party ends up with at most one Draenei for Heroic Presence: a ' +
+					'party without one gets one when switching a DPS raider gains the raid DPS (unless you keep their traits), and a ' +
+					'party with more keeps just one.',
 			),
 		);
 
@@ -541,11 +652,11 @@ export class OptimizerBatchTab extends SimTab {
 
 		const jobs = this.plannedJobs();
 		const left = jobs.filter(job => job.state != 'done').length;
-		const draeneiWork = left == 0 && this.hasDraeneiWork();
+		const partyWork = left == 0 && this.hasPartyWork();
 		const actions = newElement('div', 'optimizer-actions');
 		const started = jobs.some(job => job.state == 'done' || job.state == 'failed');
 		const start = button(started ? 'Resume' : 'Start', 'btn-primary', () => this.start());
-		start.disabled = !available || this.run != null || (left == 0 && !draeneiWork);
+		start.disabled = !available || this.run != null || (left == 0 && !partyWork);
 		const stop = button('Stop', 'btn-secondary', () => this.stop());
 		stop.hidden = this.run == null;
 		const retry = button('Run failed ones again', 'btn-secondary', () => this.retryFailed());
@@ -561,8 +672,8 @@ export class OptimizerBatchTab extends SimTab {
 		let progressText: string;
 		if (jobs.length == 0) {
 			progressText = 'Tick at least one raider and one phase on the grid.';
-		} else if (draeneiWork) {
-			progressText = `${count(jobs.length, 'run')} done. One party still has more than one Draenei; Start settles that too.`;
+		} else if (partyWork) {
+			progressText = `${count(jobs.length, 'run')} done, but a party's Heroic Presence still needs a check. Start does that too.`;
 		} else if (left == 0) {
 			progressText = `${count(jobs.length, 'run')} done, none left.`;
 		} else {
@@ -636,7 +747,7 @@ export class OptimizerBatchTab extends SimTab {
 	}
 
 	private resumeIfRunning() {
-		if (this.batch.running && this.serverAvailable && !this.run && (this.plannedJobs().some(job => job.state == 'queued') || this.hasDraeneiWork())) {
+		if (this.batch.running && this.serverAvailable && !this.run && (this.plannedJobs().some(job => job.state == 'queued') || this.hasPartyWork())) {
 			this.start(true);
 		}
 	}
@@ -645,7 +756,7 @@ export class OptimizerBatchTab extends SimTab {
 		if (this.run || !this.serverAvailable) {
 			return;
 		}
-		const run: BatchRun = { stopped: false, abort: new AbortController(), resumed, draeneiGaveUp: new Set() };
+		const run: BatchRun = { stopped: false, abort: new AbortController(), resumed, partyGaveUp: new Set() };
 		this.run = run;
 		this.batch.running = true;
 		this.storeBatch();
@@ -662,14 +773,20 @@ export class OptimizerBatchTab extends SimTab {
 					await this.runJob(job, run);
 					continue;
 				}
-				if (await this.runNextDraeneiFix(run)) {
+				if (await this.runNextPartyCheck(run)) {
 					continue;
 				}
 				const failed = this.plannedJobs().filter(job => job.state == 'failed').length;
-				this.showStatus(
-					failed > 0 ? `Done, but ${count(failed, 'run')} failed. Click one to see why.` : 'All done.',
-					failed > 0 ? 'warning' : 'info',
-				);
+				const unchecked = run.partyGaveUp.size;
+				const parties = unchecked == 1 ? '1 party' : `${unchecked} parties`;
+				let text = failed > 0 ? `Done, but ${count(failed, 'run')} failed. Click one to see why.` : 'All done.';
+				if (unchecked > 0) {
+					text =
+						failed > 0
+							? `${text} The Heroic Presence check failed for ${parties} too.`
+							: `Done, but the Heroic Presence check failed for ${parties}. Start tries again.`;
+				}
+				this.showStatus(text, failed > 0 || unchecked > 0 ? 'warning' : 'info');
 				break;
 			}
 		} finally {
@@ -709,6 +826,7 @@ export class OptimizerBatchTab extends SimTab {
 		job.result = undefined;
 		job.error = undefined;
 		job.serverStops = 0;
+		job.partySwitch = undefined;
 	}
 
 	private clear() {
@@ -716,6 +834,7 @@ export class OptimizerBatchTab extends SimTab {
 			return;
 		}
 		this.batch.jobs.clear();
+		this.batch.partyChecks.clear();
 		this.batch.running = false;
 		this.selected = null;
 		this.validations.clear();
@@ -804,50 +923,61 @@ export class OptimizerBatchTab extends SimTab {
 		}
 	}
 
-	// A phase's final picks: whichever stage last settled for each raider, so this reads the same
-	// gear phaseJobs and bestUsableJob already treat as the phase's answer.
-	private phaseFinalPicks(phase: number): Array<{ job: Job; tank: boolean }> {
-		return this.raiders()
-			.map(player => {
-				const job = this.bestUsableJob(player.getRaidIndex(), phase);
-				return job ? { job, tank: isTankSpec(player.spec) } : undefined;
-			})
-			.filter((pick): pick is { job: Job; tank: boolean } => !!pick);
+	// Everyone in a phase's raid by party, as the Heroic Presence passes see them: a non-healer with a
+	// settled pick wears that pick's racial traits, everyone else (healers, raiders without a pick)
+	// whatever the raid sim has them in, the same raid buildFinalRaid builds.
+	private phaseParties(phase: number): Map<number, Array<PartyMember>> {
+		const parties = new Map<number, Array<PartyMember>>();
+		const players = this.simUI.sim.raid
+			.getActivePlayers()
+			.slice()
+			.sort((a, b) => a.getRaidIndex() - b.getRaidIndex());
+		for (const player of players) {
+			const raidIndex = player.getRaidIndex();
+			const pick = isHealingSpec(player.spec) ? undefined : this.bestUsableJob(raidIndex, phase);
+			const race = pick?.result?.best?.racialTraits || player.getEffectiveRacialTraits();
+			const party = Math.floor(raidIndex / 5);
+			const members = parties.get(party) ?? [];
+			members.push({ raidIndex, race, pick, switchable: !!pick && !isTankSpec(player.spec) });
+			parties.set(party, members);
+		}
+		return parties;
 	}
 
-	// The first party, by raid index, still holding more than one Draenei among this phase's settled
-	// picks, and which of its raiders may switch. A tank keeps whatever race its own run picked, so
-	// keep is 0 when a Draenei tank already covers the party's Heroic Presence, else 1. giveUp skips a
-	// party this run already tried with no winner, so it isn't retried in a loop.
-	private firstExcessDraeneiParty(phase: number, giveUp?: Set<string>): { key: string; candidates: Array<Job>; keep: number } | undefined {
-		const parties = new Map<number, Array<{ job: Job; tank: boolean }>>();
-		for (const pick of this.phaseFinalPicks(phase)) {
-			const raidIndex = pick.job.raidIndex;
-			const party = parties.get(Math.floor(raidIndex / 5)) ?? [];
-			party.push(pick);
-			parties.set(Math.floor(raidIndex / 5), party);
-		}
-		for (const partyIndex of [...parties.keys()].sort((a, b) => a - b)) {
-			const key = `${phase}:${partyIndex}`;
-			if (giveUp?.has(key)) {
+	// The first party in this phase, by raid index, that a Heroic Presence pass still has to check:
+	// one holding more than one Draenei ('extra'), or none while the batch may change racial traits
+	// ('missing'). Someone who can't switch (a tank or a healer) keeps their Draenei, so it covers the
+	// party and every switchable one may move. A party nobody got switched in last time waits until one
+	// of its picks changes, and skip holds the parties whose check failed this run.
+	private nextPartyWork(phase: number, skip?: Set<string>): PartyWork | undefined {
+		const parties = this.phaseParties(phase);
+		for (const party of [...parties.keys()].sort((a, b) => a - b)) {
+			const key = partyKey(phase, party);
+			const members = parties.get(party)!;
+			const last = this.batch.partyChecks.get(key);
+			if (skip?.has(key) || (last && !last.switched && last.picks == partyPicks(members))) {
 				continue;
 			}
-			const members = parties.get(partyIndex)!;
-			const draenei = members.filter(m => m.job.result?.best?.racialTraits == Race.RaceDraenei);
-			if (draenei.length < 2) {
-				continue;
-			}
-			const keep = draenei.some(m => m.tank) ? 0 : 1;
-			const candidates = draenei.filter(m => !m.tank).map(m => m.job);
-			if (candidates.length > keep) {
-				return { key, candidates, keep };
+			const draenei = members.filter(m => m.race == Race.RaceDraenei);
+			const switchable = (among: Array<PartyMember>) => among.filter(m => m.switchable).map(m => m.pick!);
+			if (draenei.length > 1) {
+				const keep = draenei.some(m => !m.switchable) ? 0 : 1;
+				const candidates = switchable(draenei);
+				if (candidates.length > keep) {
+					return { key, phase, party, kind: 'extra', candidates };
+				}
+			} else if (draenei.length == 0 && this.batch.settings.racialMode != OptimizerRacialMode.OptimizerRacialKeepCurrent) {
+				const candidates = switchable(members);
+				if (candidates.length > 0) {
+					return { key, phase, party, kind: 'missing', candidates };
+				}
 			}
 		}
 		return undefined;
 	}
 
-	private hasDraeneiWork(): boolean {
-		return this.batch.settings.phases.some(phase => !!this.firstExcessDraeneiParty(phase));
+	private hasPartyWork(): boolean {
+		return this.batch.settings.phases.some(phase => !!this.nextPartyWork(phase));
 	}
 
 	// A phase's settled picks worn by every raider who has one, gear and racial traits, so a party
@@ -864,7 +994,7 @@ export class OptimizerBatchTab extends SimTab {
 	}
 
 	// A request that holds the target's gear exactly as raid holds it and asks Go to compare racial
-	// traits only, in paired raid sims.
+	// traits only, in paired raid sims: a Draenei against every other race, anyone else against Draenei.
 	private compareRacesRequest(raid: RaidSimRequest, targetRaidIndex: number): OptimizeGearRequest {
 		const base = RaidSimRequest.clone(raid);
 		base.encounter = optimizerEncounter(base.encounter);
@@ -878,55 +1008,135 @@ export class OptimizerBatchTab extends SimTab {
 		});
 	}
 
-	// Resolves one excess party: races every switchable candidate away from Draenei on its own,
-	// keeping everyone else in the party as they settled, then keeps whichever switch gained that
-	// party's raid DPS most. Applying just one switch is enough even for three or more Draenei in a
-	// party: the next call finds the party still excess and tries again among what's left.
-	private async resolveDraeneiParty(phase: number, party: { key: string; candidates: Array<Job> }, run: BatchRun) {
-		const names = party.candidates.map(job => job.raider).join(', ');
-		this.showStatus(`Checking Heroic Presence for ${names} (P${phase}).`);
-		const raid = this.buildFinalRaid(phase);
-		let winner: { job: Job; race: Race; delta: number } | undefined;
-		for (const job of party.candidates) {
-			if (run.stopped) {
-				return;
-			}
+	// One raider's racial comparison, waiting its turn while another optimization holds the server.
+	// Undefined once the batch stops.
+	private async compareRaces(raid: RaidSimRequest, job: Job, run: BatchRun): Promise<OptimizerResult | undefined> {
+		while (!run.stopped) {
 			try {
-				const request = this.compareRacesRequest(raid, job.raidIndex);
-				const result = await this.simUI.sim.runGearOptimizer(request, () => undefined, run.abort.signal);
-				if (!result.cancelled && result.improved && result.best && (!winner || result.best.raidDpsDelta > winner.delta)) {
-					winner = { job, race: result.best.racialTraits, delta: result.best.raidDpsDelta };
+				const result = await this.simUI.sim.runGearOptimizer(this.compareRacesRequest(raid, job.raidIndex), () => undefined, run.abort.signal);
+				if (!result.cancelled) {
+					return result;
+				}
+				if (!run.stopped) {
+					throw new Error('the server stopped it without being asked');
 				}
 			} catch (e) {
-				this.showStatus(`Couldn't check ${job.raider}'s Heroic Presence pick: ${e instanceof SimError ? e.errorStr : String(e)}`, 'warning');
+				const busy = run.stopped ? null : BUSY_PATTERN.exec(e instanceof SimError ? e.errorStr : String(e));
+				if (!busy) {
+					throw e;
+				}
+				await this.waitForServer(busy[1], run);
 			}
 		}
-		if (!winner) {
-			run.draeneiGaveUp.add(party.key);
-			this.showStatus(`${names} are all Draenei in one party (P${phase}), but no switch beat the noise, so nothing changed.`, 'warning');
+		return undefined;
+	}
+
+	// Checks one party's Heroic Presence: compares each candidate's racial traits on their own, with
+	// everyone else as they settled, and switches whoever gains the raid most past 2 SE. A 'missing'
+	// party only takes a switch to Draenei, an 'extra' one only a switch away. One switch per call is
+	// enough even for three or more Draenei: the next call finds the party still over and goes again.
+	private async checkParty(work: PartyWork, run: BatchRun) {
+		const started = Date.now();
+		const raid = this.buildFinalRaid(work.phase);
+		const tried: PartyCheck['tried'] = [];
+		let winner: { job: Job; pick: OptimizerLoadoutResult; best: OptimizerLoadoutResult } | undefined;
+		for (const [i, job] of work.candidates.entries()) {
+			// "Run it again" still works mid-batch, so a candidate's pick can be gone by now
+			const pick = job.state == 'done' ? job.result?.best : undefined;
+			if (!pick) {
+				continue;
+			}
+			const which = `${job.raider}, ${i + 1} of ${work.candidates.length}`;
+			this.showStatus(
+				work.kind == 'extra'
+					? `P${work.phase}: party ${work.party + 1} has more than one Draenei, checking who should switch away (${which}).`
+					: `P${work.phase}: party ${work.party + 1} has no Draenei, checking who should be one (${which}).`,
+			);
+			const current = pick.racialTraits;
+			let result: OptimizerResult | undefined;
+			try {
+				result = await this.compareRaces(raid, job, run);
+			} catch (e) {
+				if (run.stopped) {
+					return;
+				}
+				tried.push({ raider: job.raider, race: current, delta: 0, se: 0, error: e instanceof SimError ? e.errorStr : String(e) });
+				continue;
+			}
+			if (!result) {
+				return;
+			}
+			const best = result.best;
+			const switched = !!best && result.improved && best.racialTraits != current;
+			if (!best || !switched || (work.kind == 'missing') != (best.racialTraits == Race.RaceDraenei)) {
+				tried.push({ raider: job.raider, race: current, delta: 0, se: 0 });
+				continue;
+			}
+			tried.push({ raider: job.raider, race: best.racialTraits, delta: best.raidDpsDelta, se: best.raidDpsDeltaSe });
+			if (!winner || best.raidDpsDelta > winner.best.raidDpsDelta) {
+				winner = { job, pick, best };
+			}
+		}
+		if (winner && winner.job.result?.best !== winner.pick) {
+			winner = undefined;
+		}
+
+		const failed = tried.filter(t => t.error);
+		if (!winner && failed.length > 0) {
+			run.partyGaveUp.add(work.key);
+			this.showStatus(
+				`P${work.phase}: couldn't check ${failed.map(t => t.raider).join(', ')} for Heroic Presence (${failed[0].error}). ` +
+					'That party gets another look on the next Start.',
+				'warning',
+			);
 			return;
 		}
-		const best = winner.job.result!.best!;
-		best.racialTraits = winner.race;
-		best.warnings = [
-			...best.warnings,
-			`Switched to ${raceNames.get(winner.race) || winner.race} for Heroic Presence: this party already has one Draenei, and switching away gained more raid DPS than staying did.`,
-		];
+		if (winner) {
+			this.switchRacialTraits(winner.job, winner.best, work.kind);
+		}
+		this.batch.partyChecks.set(work.key, {
+			phase: work.phase,
+			party: work.party,
+			kind: work.kind,
+			picks: partyPicks(this.phaseParties(work.phase).get(work.party) ?? []),
+			tried,
+			switched: winner?.job.raider,
+			seconds: (Date.now() - started) / 1000,
+		});
 		this.storeBatch();
 		this.renderGrid();
-		if (this.selected == cellKey(winner.job.raidIndex, winner.job.phase)) {
+		if (winner && this.selected == cellKey(winner.job.raidIndex, winner.job.phase)) {
 			this.renderDetail();
 		}
 	}
 
-	// Once a phase's jobs are all settled, at most one Draenei stays per party. Re-checked fresh each
-	// call, so a resumed run picks up where it left off. Resolves one party per call; returns whether
-	// it found one to resolve.
-	private async runNextDraeneiFix(run: BatchRun): Promise<boolean> {
-		for (const phase of this.batch.settings.phases) {
-			const party = this.firstExcessDraeneiParty(phase, run.draeneiGaveUp);
-			if (party) {
-				await this.resolveDraeneiParty(phase, party, run);
+	// Puts a settled pick in other racial traits, gear unchanged, noting why on the pick.
+	private switchRacialTraits(job: Job, best: OptimizerLoadoutResult, kind: PartyWork['kind']) {
+		const pick = job.result!.best!;
+		const gain = `${formatDelta(best.raidDpsDelta, best.raidDpsDeltaSe)} raid DPS`;
+		const note =
+			kind == 'extra'
+				? `Switched to ${raceNames.get(best.racialTraits) || best.racialTraits} for Heroic Presence: this party already has a Draenei, ` +
+				  `and switching away gained ${gain}.`
+				: `Switched to Draenei for Heroic Presence: nobody in this party had it, and of everyone who could switch this gained the raid most, ${gain}.`;
+		job.partySwitch = {
+			from: job.partySwitch?.from ?? pick.racialTraits,
+			to: best.racialTraits,
+			delta: best.raidDpsDelta,
+			se: best.raidDpsDeltaSe,
+			notes: [...(job.partySwitch?.notes ?? []), note],
+		};
+		pick.racialTraits = best.racialTraits;
+		pick.warnings = [...pick.warnings, note];
+	}
+
+	// Once every job has settled, works through the phases' Heroic Presence one party per call. Checked
+	// fresh each time, so a resumed run picks up where it left off. Returns whether it found a party.
+	private async runNextPartyCheck(run: BatchRun): Promise<boolean> {
+		for (const phase of this.batch.settings.phases.slice().sort((a, b) => a - b)) {
+			const work = this.nextPartyWork(phase, run.partyGaveUp);
+			if (work) {
+				await this.checkParty(work, run);
 				return true;
 			}
 		}
@@ -960,6 +1170,7 @@ export class OptimizerBatchTab extends SimTab {
 			}
 			job.state = 'done';
 			job.result = compactResult(result);
+			job.partySwitch = undefined;
 			job.error = undefined;
 			job.seedChanges = built.seedChanges;
 			job.bossName = built.bossName;
@@ -1100,7 +1311,7 @@ export class OptimizerBatchTab extends SimTab {
 				"Each cell is the run's score gain over the raider's gear as equipped, ± its standard error, in points of their EP " +
 					"reference stat (AP, SP or RAP), not DPS, with a tank's survival in armor points. It can come out negative when the " +
 					"raider wears gear the phase rules out. A DPS raider's cell also gets a raid DPS line once their stage 2 run scores " +
-					'it. Click one for the gear.',
+					"it, and another when their party's Heroic Presence check switches their racial traits. Click one for the gear.",
 			),
 		);
 	}
@@ -1162,6 +1373,11 @@ export class OptimizerBatchTab extends SimTab {
 				// raid-sim numbers, once a run measures them
 				if (best && (best.raidDpsDelta || best.raidDpsDeltaSe)) {
 					link.appendChild(newElement('div', 'optimizer-hint', `raid DPS ${formatDelta(best.raidDpsDelta, best.raidDpsDeltaSe)}`));
+				}
+				const partySwitch = job.partySwitch;
+				if (partySwitch) {
+					const race = partySwitch.to == Race.RaceDraenei ? 'Draenei for the party' : `${raceNames.get(partySwitch.to)} instead of Draenei`;
+					link.appendChild(newElement('div', 'optimizer-hint', `${race}, raid DPS ${formatDelta(partySwitch.delta, partySwitch.se)}`));
 				}
 				const warnings = this.warnings(result);
 				if (warnings.length > 0) {

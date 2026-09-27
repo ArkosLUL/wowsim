@@ -34,12 +34,16 @@ python tools/database/acbis/driver/driver.py run --roster "$SCRATCH/raid.json" -
 
 Give acbis `-batch "$SCRATCH/bis/batch-stage1.json"` for own metrics only, or `batch-stage2.json` for
 both stages ([README](../README.md)): every raider keeps their stage 1 pick unless stage 2 found a
-better one for them.
+better one for them or a Heroic Presence check switched their racial traits.
 
 - Stage 1 runs every chosen raider. Stage 2 runs only the chosen raiders whose own gear changes
   someone else's damage (Demonic Pact, a targeted Focus Magic), against everyone's stage 1 pick, and
   skips a phase whose stage 1 hasn't settled for every chosen raider. The grid marks who that is with
-  "(stage 2)" next to their spec; a `--stage 2` run with none of them among `--raiders` does nothing.
+  "(stage 2)" next to their spec.
+- Stage 2 then runs the page's Heroic Presence checks, one Draenei per party
+  ([PLAN](../../../../docs/bis-optimizer/bis-optimizer.PLAN.md#bis-stage2b-as-built)). So `--stage 2` runs
+  even with no "(stage 2)" raider among `--raiders`, and a phase is done once the page has nothing left
+  to start.
 - Both passes need the same `--out`, whose Chrome profile holds the batch, and the same roster file:
   the batch is keyed on the roster's specs, races, talents, glyphs and professions, so a changed
   roster starts an empty one.
@@ -48,9 +52,10 @@ better one for them.
 - One driver at a time per `--out` and `--port`: a Chrome already on the port with another profile stops
   the run, and two drivers on one profile would fight over the batch. `stop --out DIR` closes a Chrome
   a killed run left behind.
-- At Quick, a stage 1 job takes 4–32 s on the server (a tank up to 94 s) and a stage 2 job (BIS-stage2
-  narrowed who gets one) 5–7 min: a measured P1 pass, 21 raiders and 1 stage 2 job, took 575 s for
-  stage 1 and 416 s for stage 2, about 16.5 min total (`bis-optimizer.PLAN.md`'s BIS-stage2 section).
+- At Quick, a stage 1 job takes 4–32 s on the server (a tank up to 94 s), a stage 2 job (BIS-stage2
+  narrowed who gets one) 4–7 min, and the Heroic Presence checks about 16 s a party. A measured P1 pass,
+  21 raiders, 1 stage 2 job and 3 parties checked, took 269 s for stage 1 and 315 s for stage 2
+  (`bis-optimizer.PLAN.md`'s BIS-stage2b section).
 
 ## Unattended runs
 
@@ -62,8 +67,9 @@ better one for them.
   apart, when the batch stops with runs left 4 times, or when 3 reloads in a row bring no progress. The
   last two counts reset whenever a job settles.
 - Chrome writes localStorage to disk lazily, so a killed Chrome loses the last jobs, or the roster and
-  batch outright. After each job the driver saves the raid sim's keys to `storage-snapshot.json` and
-  puts back what a new Chrome lacks, re-importing the roster if the grid is still empty.
+  batch outright. After each job, Heroic Presence check and pass, the driver saves the raid sim's keys
+  to `storage-snapshot.json` and puts back what a new Chrome lacks, re-importing the roster if the grid
+  is still empty.
 - localStorage holds 5.24M chars per origin, and a full two-stage roster comes to about 91% of that.
   Each job's log line has the share. Once the page can't store the batch, the exports and the snapshot
   still carry everything, but a reload re-runs every job since the last store.
@@ -89,9 +95,11 @@ better one for them.
 
 In `--out`:
 - `batch-stage<N>.json`: the batch export, rewritten after each phase of pass N. Pass 1's file keeps
-  stage 1 entries only, even once the batch holds stage 2 runs, so it stays own metrics.
+  stage 1 entries only, each in the racial traits its own run chose, so it stays own metrics even once
+  the batch holds stage 2 runs and Heroic Presence switches.
 - `driver.log`: everything the driver prints.
 - `timings.jsonl`: a line per job with its state, server seconds, wall seconds since the previous job
   settled (request building and busy waits included), sims, error, and machine load (CPU % and other
-  toolchain containers).
+  toolchain containers); and a line per Heroic Presence check with its party, kind, who switched,
+  seconds and each candidate's raid DPS gain.
 - `chrome-profile/` and `storage-snapshot.json`: the batch. Keep both until both passes are done.
