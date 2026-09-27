@@ -23,7 +23,7 @@ Where the code this fork touches lives. Everything else follows the upstream lay
 | `spell.go` | `RegisterSpell`. It applies the server's flags and timing by spell id and records what the spell declared against them, reachable as `Spell.ServerSpell()` and `Spell.ServerConflicts()`. An `ExtraCastCondition` must only read the sim: the APL skips it, like any pure condition, while the spell can't cast (`APLAction.IsReady`) |
 | `spell_effect.go` | `SpellEffect`, a spell's damage or heal declared per server effect, its `SpellMod`s, and their check against server data |
 | `cast.go` | casts. `castTiming`, built per spell at registration, is the one place cast time, the GCD and swing resets are worked out, so `Spell.CastTime()` and `EffectiveCastTime()` tell the APL what the cast really costs |
-| `sim.go` | the run loop, `NextServerTick`, and the pending-action queue, which keys an action by its `NextActionAt` and `Priority` when queued: never change either while it's queued |
+| `sim.go` | the run loop, `NextServerTick`, and the pending-action queue, which keys an action by its `NextActionAt` and `Priority` when queued: never change either while it's queued. `IsTest` rolls (goldens, the optimizer) draw from streams keyed by label alone and shared by every unit, so a unit rolling more or less shifts every other unit's later rolls |
 | `api.go`, `sim_shards.go` | entry points. `RunRaidSimAsync`, behind the Simulate button, shards the iterations over GOMAXPROCS-1 goroutines, each seeded `RandomSeed` plus its first iteration, and merges their metrics; `RunRaidSim` stays one stream, for the goldens and tools |
 | `serverdata_allowlist.go` | the shared entries for spells whose data the sim turns down, with `sim/<class>/serverdata_allowlist.go` and `serverdata_undeclared.go` (class spells with server damage and no declaration) per class, and `sim/serverdata_test.go` checking every preset, each again over its class's glyphs, plus every race, hunter pet, pet talent and warlock summon |
 | `database.go`, `database_load.go` | item DB. `Item.TotalStats()` is item + enchant + gems + socket bonus. The `with_db` build tag embeds the DB. The global maps sit behind `dbMu`: after init, write with `AddToDatabase` and read with `Lookup*`. `AddToDatabase` keeps cached entries, except that a later copy with `ServerStats` replaces an item without them |
@@ -50,7 +50,9 @@ Quirk: `UnitLevelFloat64` in `utils.go` treats every level outside 80–82 as +3
   asks `HasItemEffect` and `HasEnchantEffect` before it builds a character, and a late write races
   parallel sims. Proc chance, PPM and ICD come from `sim/core/serverdata` through
   `core.ServerProcFor` (`sim/core/ppm.go`); name each spell id as a constant so `spellids` counts it.
-- Boss AIs, still with Classic numbers: `sim/encounters/{naxxramas,ulduar,toc,icc}`.
+- Boss AIs, still with Classic numbers: `sim/encounters/{naxxramas,ulduar,toc,icc}`. `generic_boss.go` is a
+  level 83 AzerothCore boss that hits like Patchwerk 25: the tank specs' default and each tank suite's
+  GenericBoss case.
 - `sim/web/main.go` is the server, with flags `--usefs`, `--wasm`, `--host`, `--launch` and `--pprof`
   (profiling on its own address, off by default: [tools/perf](../../tools/perf/README.md)).
 - `sim/optimizer/`: the BiS gear optimizer ([PLAN](../bis-optimizer/bis-optimizer.PLAN.md)), with its

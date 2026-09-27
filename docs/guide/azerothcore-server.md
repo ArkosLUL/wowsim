@@ -122,6 +122,8 @@ mod-individual-progression stores a character's tier as rewarded quest `66000 + 
 - `PSendSysMessage` prints nothing to a console session. Use `SendSysMessage` + `SetSentErrorMessage`.
 - Relog after `.maxskill`, or crit isn't recomputed.
 - Characters leveled by GM command never learn trainer spells, Parry (3127) included: `.learn` them.
+- `.learn` never fills `m_talents`, so a `Player::HasTalent` check fails for a talent learned that way:
+  a character (or recorded-run bot) given its talents by `.learn` misses every talent-gated server effect.
 - mod-individual-progression refuses death knights (`CHAR_CREATE_DISABLED`) until a character on the
   account reaches progression tier 12: `.ip set <name> 12` one and log it out first.
 - `.additem <id> -1` destroys the item even when it's equipped.

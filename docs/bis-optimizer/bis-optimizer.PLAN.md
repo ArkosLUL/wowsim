@@ -623,7 +623,7 @@ move; only the neighborhood sims and reports 5. **Owns:** `search.go`'s `runners
   part of the wire format with mod-bis-tooltip and the addon), now the top 3 of 5 by sim delta: raising it
   is the addon effort's call.
 
-### BIS-e2e-perf (wave J)
+### BIS-e2e-perf (wave J, done)
 
 - Calibration: full raid vs the derived context, with a warning past ±3%. Expected gaps: derived contexts
   get Battle Shout that DPS warrior APLs never cast and Divine Guardian the raid sim's paladins never cast,
@@ -741,6 +741,10 @@ No code changed. Quick's and the tanks' targets moved; the batch's awaits the us
   2), which no slow-suite case checks in raid mode. A deep cut needs a design change: measure stage 2's
   curves and effects (70% of its run) in the derived context, as stage 1 does, and keep raid sims for the
   objective, the racial screen, verify and the neighborhood.
+
+The full-roster batch then took 27 min for stage 1 and 96 min a phase for stage 2 (phase 1 only): about
+8.3 h at Quick ([rows](bis-optimizer.INVESTIGATION.md#performance)). What would cut it is the
+INVESTIGATION's [speed audit](bis-optimizer.INVESTIGATION.md#speed-audit-after-wave-j).
 
 ### BIS-seed (wave I2, done)
 

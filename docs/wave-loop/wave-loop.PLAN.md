@@ -101,14 +101,13 @@ bugs, the importer's missing pets, ammo and consumables, and a batch hung on a h
 
 ## Current wave
 
-- Wave: J, running. Base SHA `baa30c194`.
-- Workflow runId: `wf_98b95fd4-07a`, args `waveJ-args.json` in `G:\DevStuff\GitHub\.wave-loop`. Transcript dir:
-  `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\wf_98b95fd4-07a`.
-- All four items merged and cross-reviewed, BIS-e2e-perf's timing run too (the game server stopped, the user's
-  choice, 2026-09-27), and the re-baselines taken. Next, alone on the machine: the full-roster batch through
-  `tools/database/acbis/driver` (Quick, both stages, roster `G:\DevStuff\GitHub\.wave-loop\raid.json`), for the
-  INVESTIGATION's batch rows and the stored batch size. It runs with `--out G:\DevStuff\GitHub\.wave-loop\bis-j`
-  against `wotlk-bisdata` (port 3346, over [int]); the same command resumes it.
+- Wave: K, not started. Wave J (base `baa30c194`) landed on `master`.
+- Base SHA: set at wave start.
+- Workflow runId: none. Wave J ran as `wf_98b95fd4-07a` and its timing run as `wf_0fb0de63-0ed` (args and
+  results `waveJ-*` in `G:\DevStuff\GitHub\.wave-loop`).
+- Before K, the user decides the batch's "Normal overnight" (BIS-e2e-perf's Timing run) and whether to
+  narrow stage 2, whose Quick picks lose to stage 1's for 15 of 19 raiders, and schedule the optimizer's
+  [speed work](../bis-optimizer/bis-optimizer.INVESTIGATION.md#speed-audit-after-wave-j).
 
 ## BiS baseline
 
@@ -332,7 +331,7 @@ crashed before F2, so its column starts there.
 | wave I6 cross-review | | `148cd9eaf` | 1 bug: Languish read its triggering hit's result after a delay, which PERF-MISSILE's reuse lets another cast overwrite (multi-target only, no golden moves) |
 | PAR-P7-PRI | merged | `3812fd681` | 4 goldens promoted in `6679ad909`: Smite +2.3% (Holy Fire's dot), Holy +0.56% (Empowered Renew multiplies), Shadow -0.14%; module `dcecf85`. The orchestrator sent back Mind Flay's tick dropping its 196 base, which the channel hands it (Shadow had read -7.5%) |
 | PAR-P7-TANK | merged | `b9e77cded` | 7 goldens promoted in `32d09f2be`: a GenericBoss case in each tank suite, Protection +0.41% (Holy Shield never misses), Feral Tank DTPS +5.9% (Faerie Fire no longer procs Savage Defense), Blood -0.15% (rune weapon); BM and Combat lose a phantom dodge rating; module `926df4c`. The orchestrator sent back a permanent Savage Defense and Feral Swiftness dropped from bear dodge, and gave the generic boss Patchwerk 25's damage (`fb7dbda45`); `db.json` in `63209f728` |
-| BIS-e2e-perf | merged | `6dc2141b5`, timing run `cc0a1e03a` | goldens unchanged. The timing run moved Quick's target to 3-11 s and the tanks' to 1.6x a DPS run; a roster at Normal takes about 4 days, so the batch's "Normal overnight" waits on the user |
+| BIS-e2e-perf | merged | `6dc2141b5`, timing run `cc0a1e03a` | goldens unchanged. The timing run moved Quick's target to 3-11 s and the tanks' to 1.6x a DPS run; a roster at Normal takes about 4 days, so the batch's "Normal overnight" waits on the user. The batch took ~8.3 h at Quick, stage 2 for phase 1 only (the user's call) |
 | AC-3 | merged | `b634b26cc` | goldens unchanged; `db.json` regenerated in the merge |
 | wave J cross-review | | `eaafe11bd` | no bugs: Mind Sear under-counted its casts in multi-target fights, and the INVESTIGATION had Leeching Swarm's two ids swapped; spell audit refreshed |
 

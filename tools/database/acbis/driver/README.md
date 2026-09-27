@@ -33,7 +33,8 @@ python tools/database/acbis/driver/driver.py run --roster "$SCRATCH/raid.json" -
 ```
 
 Give acbis `-batch "$SCRATCH/bis/batch-stage1.json"` for own metrics only, or `batch-stage2.json` for
-both stages ([README](../README.md)).
+both stages ([README](../README.md)). Prefer stage 1's for now: stage 2's Quick picks lose to it for most
+DPS raiders ([speed audit](../../../../docs/bis-optimizer/bis-optimizer.INVESTIGATION.md#speed-audit-after-wave-j)).
 
 - Stage 1 runs every chosen raider. Stage 2 runs the chosen DPS raiders against everyone's stage 1 pick,
   and skips a phase whose stage 1 hasn't settled for every chosen raider.
@@ -45,8 +46,8 @@ both stages ([README](../README.md)).
 - One driver at a time per `--out` and `--port`: a Chrome already on the port with another profile stops
   the run, and two drivers on one profile would fight over the batch. `stop --out DIR` closes a Chrome
   a killed run left behind.
-- At Quick, a stage 1 job takes 7–54 s on the server (the slowest all with another container up) and a
-  stage 2 job about 9 min.
+- At Quick, a stage 1 job takes 4–32 s on the server (a tank up to 94 s) and a stage 2 job about 5 min:
+  a whole batch about 8.3 h, nearly all of it stage 2.
 
 ## Unattended runs
 
@@ -60,7 +61,7 @@ both stages ([README](../README.md)).
 - Chrome writes localStorage to disk lazily, so a killed Chrome loses the last jobs, or the roster and
   batch outright. After each job the driver saves the raid sim's keys to `storage-snapshot.json` and
   puts back what a new Chrome lacks, re-importing the roster if the grid is still empty.
-- localStorage holds 5.24M chars per origin, and a full two-stage roster comes to about 85% of that.
+- localStorage holds 5.24M chars per origin, and a full two-stage roster comes to about 91% of that.
   Each job's log line has the share. Once the page can't store the batch, the exports and the snapshot
   still carry everything, but a reload re-runs every job since the last store.
 

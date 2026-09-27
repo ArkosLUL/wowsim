@@ -103,6 +103,9 @@ class by simval.
   except spells with `SpellFlagIgnoreAttackerModifiers`. The server truncates each scaled hit; the sim
   doesn't. Targets with `world_boss` (else level ≥ 83) take the boss set. The placeholder target of an
   encounter without targets is never scaled.
+- **Creature melee** is (weapon damage + AP/14 × variance) × `creature_template.DamageModifier`
+  (`Creature::CalculateMinMaxDamage`). A target's `MinBaseDamage` scales its AP part too, so 177.074 ×
+  DamageModifier gives a level 83, class 1 creature (`encounters.GenericBossTarget`).
 
 ## Spell data and timing
 
@@ -132,6 +135,8 @@ spell is only as right as its id.
   - A talent's effect mod is flat (aura 107) or a percent (108): read Spell.dbc, not the tooltip.
   - The undeclared list misses damage a script deals behind a dummy effect (Execute, Death and Decay, Holy
     Shock) and proc-damage and damage-shield auras (Holy Shield): declare those anyway.
+  - Aura 227 (`SPELL_AURA_PERIODIC_TRIGGER_SPELL_WITH_VALUE`) hands its amount to the spell it triggers as
+    base points: Mind Flay's channel gives each tick its 196.
 - **Wrapper ids** are the trap. The sim often deals damage under the id of a spell that, on the server,
   only triggers the real one (totems, Faerie Fire (Feral), Typhoon). The wrapper's
   flags are not the damage's, so those entries keep the sim's values until the class's P7 item moves
