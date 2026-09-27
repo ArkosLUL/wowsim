@@ -91,37 +91,51 @@ threads, GOMAXPROCS 16. Each sim is 180 s ± 5 s against one target, with full b
 - Pairing cuts a delta's standard error 2.4× (+100 AP, Fury, 400 iterations), worth about 6× the
   iterations.
 
-The budgets `EffortBudget` pins, every thread busy:
+The budgets `EffortBudget` pins, and the whole-run targets:
 
-| Run | Evaluations × iterations | Fury P1 | Arcane P3 | Target |
-|---|---|---|---|---|
-| Quick | 250 × 500 | 5.7 s | 2.3 s | 3–6 s |
-| Normal | 500 × 4000 | 91 s | 36 s | 1–2 min |
-| Thorough | 1000 × 10000 | 7.5 min | 2.9 min | 5–10 min |
+| Run | Evaluations × iterations | Target |
+|---|---|---|
+| Quick | 250 × 500 | 3–11 s |
+| Normal | 500 × 4000 | 1–2 min |
+| Thorough | 1000 × 10000 | 5–10 min |
 
-Whole runs take longer: the curves' extra knots and the pair sims go up to 10% past the budget, and
-sequential steps like bisection and the search leave threads idle. The slow suite's DPS runs, with the
-worldserver busy on about 1.5 of the 16 threads, and J gained over the preset (paired, 10000 iterations):
+A tank run's target is up to 1.6× a DPS run's at the same effort. Thorough is untimed: its budget alone,
+every thread busy, comes to 7.5 min on Fury P1 and 2.9 on Arcane P3.
 
-| Run | Candidates | Quick | Normal |
-|---|---|---|---|
-| Fury P1 | 3062 | 9 s, +219 J | 105 s, +226 J |
-| Combat Rogue P3 | 2749 | 21 s, +550 J | 247 s, +553 J |
-| Fire Mage P3 | 1935 | 5 s, +33 J | 39 s, +39 J |
-| Ret P4 | 4569 | 11 s, +54 J | 125 s, +73 J |
+Whole runs, timed by the [perf harness](../../tools/perf/README.md#scenario-harness) at the web server's
+shape (`bench -procs 16 -workers 15`, median of 3 runs) at sim commit `06a2d3e7c`, on the 7800X3D with the
+worldserver and database stopped and only the idle prod sim container up. `raid25` is raidctx's synthetic
+25-player raid:
 
-The search stage itself takes at most 3 s at Quick and 8 s at Normal with 4.6k candidates, the top of the
-UI's pools (its Ret replay fixtures hold 2.6k–4.6k). Raid contribution is measured two ways: `wowsimcli
-optimize` on a 2-player smoke raid (a floor, since a full roster's raid sims cost more per iteration), and
-the BiS Batch's own stage 2 on a real 25-player roster (two Combat Rogues, Quick), 16–20× the smoke raid's
-cost. BIS-e2e-perf still owes the rest:
+| Run | Quick | Normal |
+|---|---|---|
+| Fury P1 | 6.6 s | 75 s |
+| Combat Rogue P3 | 10.6 s | |
+| Fire Mage P3 | 3.1 s | |
+| Ret P4 | 5.9 s | |
+| Prot Paladin P3, tank | 7.9 s | 66 s |
+| Feral Tank P2, tank | 7.5 s | 86 s |
+| Prot Warrior P1 in `raid25`, tank | 9.4 s | 119 s |
+| Fury P1 in `raid25`, raid mode (a batch's stage 2) | 255 s | 56 min, one run |
+
+- Every Quick run sims 134k–146k iterations, up to 17% past the budget (the curves' extra knots, the pair
+  sims), and every Normal one here 1.9M–2.1M. So the spread is the spec's cost per iteration: Combat
+  Rogue's takes 3.2× Fire Mage's CPU. Sequential steps like bisection and the search leave threads idle.
+- Tanks take 1.1–1.4× Fury P1 at Quick and 0.9–1.6× at Normal. Prot Warrior's 1.6× is its sim: 6% more
+  iterations, each 1.5× Fury's CPU.
+- Raid mode sims the whole raid every time, 41–45× Fury P1's CPU per iteration. Effects take 53% of its
+  Quick run and Stat curves 18%.
+- The search stage never sims; on these pools of 1.9k–4.6k candidates it took at most 3.1 s at Quick and
+  5.5 s at Normal, both Prot Paladin P3.
+- A whole roster's batch at these times, 21 non-healers' stage 1 and 19 DPS raiders' stage 2 over 5
+  phases: about 7 h at Quick, stage 2 all but 20 min of it, and about 4 days at Normal. The real roster's
+  stage 2 below ran 1.3–2.2× as long, its load unrecorded.
+
+The BiS Batch's own runs on a real 25-player roster, the machine's load unrecorded unless stated:
 
 | Run | Time |
 |---|---|
-| Tanks | 1.5× a DPS run |
-| Raid contribution, one raider and phase, 2-player smoke raid, Quick | 23 s |
-| Raid contribution, one raider and phase, 2-player smoke raid, Normal | 3 min 22 s |
-| Raid contribution, one raider and phase, real 25-player roster, Quick | 340–415 s |
+| Raid contribution, one raider and phase, two Combat Rogues, P1, Quick | 340–415 s |
 | Batch stage 1, one raider and phase, Quick | 7–54 s, the slowest all with another container up |
 | Batch stage 2, one raider and phase, Quick | 486–570 s |
 | Batch stage 1, one raider and phase, Normal | 139 s (Prot Paladin), 347 s (Unholy DK) |
