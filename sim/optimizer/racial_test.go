@@ -195,31 +195,48 @@ func TestOptimizeSearchesRacialTraits(t *testing.T) {
 	t.Logf("pick %v, %d sims; screen %v", result.Best.RacialTraits, result.TotalSims, result.RacialScreen)
 }
 
-func TestCompareRacesPicksTheRaceThatGainsMost(t *testing.T) {
+// compareRacesRequest is kaRequest's Orc warrior asking for a racial comparison, wearing traits.
+func compareRacesRequest(t *testing.T, traits proto.Race) *Request {
+	t.Helper()
 	req := kaRequest(proto.OptimizerEffort_OptimizerEffortQuick)
 	req.Settings.CompareRacialTraits = true
+	req.Base.Raid.Parties[0].Players[0].RacialTraits = traits
 	r, err := PrepareRequest(req)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if r.Seed.RacialTraits != proto.Race_RaceOrc {
-		t.Fatalf("seed traits = %v, want Orc (kaRequest's default)", r.Seed.RacialTraits)
+	if r.Seed.RacialTraits != traits {
+		t.Fatalf("seed traits = %v, want %v", r.Seed.RacialTraits, traits)
 	}
-	const want = proto.Race_RaceTauren
-	fake := newKnownEvaluator(func(p Point) (Metrics, error) {
+	return r
+}
+
+// A fake sim where each race's traits add a fixed amount of DPS to kaMetrics, recording which races
+// it was asked about.
+func racialValueEvaluator(value map[proto.Race]float64, simmed map[proto.Race]bool) *knownEvaluator {
+	return newKnownEvaluator(func(p Point) (Metrics, error) {
+		simmed[p.Loadout.RacialTraits] = true
 		m, err := kaMetrics(p)
-		if err == nil && p.Loadout.RacialTraits == want {
-			m[MetricDPS] += 400
+		if err == nil {
+			m[MetricDPS] += value[p.Loadout.RacialTraits]
 		}
 		return m, err
 	})
+}
+
+// A Draenei whose party already has one weighs every other race and moves to the one that gains
+// the raid most.
+func TestCompareRacesMovesADraeneiToTheRaceThatGainsMost(t *testing.T) {
+	r := compareRacesRequest(t, proto.Race_RaceDraenei)
+	simmed := map[proto.Race]bool{}
+	fake := racialValueEvaluator(map[proto.Race]float64{proto.Race_RaceTauren: 400, proto.Race_RaceOrc: 200}, simmed)
 
 	result := compareRaces(context.Background(), r, fake, time.Now())
 	if result.ErrorResult != "" {
 		t.Fatal(result.ErrorResult)
 	}
-	if !result.Improved || result.Best.RacialTraits != want {
-		t.Errorf("best = %v, improved %v, want %v", result.Best.RacialTraits, result.Improved, want)
+	if !result.Improved || result.Best.RacialTraits != proto.Race_RaceTauren {
+		t.Errorf("best = %v, improved %v, want Tauren", result.Best.RacialTraits, result.Improved)
 	}
 	if result.Best.RaidDpsDelta < 300 {
 		t.Errorf("raid_dps_delta = %.1f, want close to the 400 DPS the traits are worth", result.Best.RaidDpsDelta)
@@ -227,25 +244,96 @@ func TestCompareRacesPicksTheRaceThatGainsMost(t *testing.T) {
 	if !goproto.Equal(result.Best.Equipment, result.Seed.Equipment) {
 		t.Error("compareRaces changed the gear; it should only ever change racial traits")
 	}
-	if len(result.RacialScreen) != len(allRaces) {
-		t.Errorf("racial screen has %d entries, want all %d races", len(result.RacialScreen), len(allRaces))
+	if len(simmed) != len(allRaces) || len(result.RacialScreen) != len(allRaces) {
+		t.Errorf("simmed %d races and reported %d, want all %d", len(simmed), len(result.RacialScreen), len(allRaces))
+	}
+}
+
+// Anyone else only weighs Draenei, for their party's Heroic Presence: a race that would be worth
+// more on its own was stage 1's call, so it never gets simmed here.
+func TestCompareRacesWeighsEveryoneElseAgainstDraeneiOnly(t *testing.T) {
+	r := compareRacesRequest(t, proto.Race_RaceOrc)
+	simmed := map[proto.Race]bool{}
+	fake := racialValueEvaluator(map[proto.Race]float64{proto.Race_RaceTauren: 400, proto.Race_RaceDraenei: 200}, simmed)
+
+	result := compareRaces(context.Background(), r, fake, time.Now())
+	if result.ErrorResult != "" {
+		t.Fatal(result.ErrorResult)
+	}
+	if !result.Improved || result.Best.RacialTraits != proto.Race_RaceDraenei {
+		t.Errorf("best = %v, improved %v, want Draenei", result.Best.RacialTraits, result.Improved)
+	}
+	if result.Best.RaidDpsDelta < 150 {
+		t.Errorf("raid_dps_delta = %.1f, want close to the 200 DPS Draenei is worth", result.Best.RaidDpsDelta)
+	}
+	if len(simmed) != 2 || !simmed[proto.Race_RaceOrc] || !simmed[proto.Race_RaceDraenei] {
+		t.Errorf("simmed %v, want just Orc and Draenei", simmed)
+	}
+	if len(result.RacialScreen) != 2 || result.RacialScreen[0].RacialTraits != proto.Race_RaceOrc {
+		t.Errorf("screen = %v, want Orc then Draenei", result.RacialScreen)
 	}
 }
 
 // Every race scores the seed gear the same (kaMetrics never reads racial traits), so nothing clears
-// the noise and the current race stays.
+// the noise and the current race stays, Draenei or not.
 func TestCompareRacesKeepsTheCurrentRaceWhenNothingClearsTheNoise(t *testing.T) {
-	req := kaRequest(proto.OptimizerEffort_OptimizerEffortQuick)
+	for _, race := range []proto.Race{proto.Race_RaceOrc, proto.Race_RaceDraenei} {
+		r := compareRacesRequest(t, race)
+		result := compareRaces(context.Background(), r, newKnownEvaluator(kaMetrics), time.Now())
+		if result.ErrorResult != "" {
+			t.Fatal(result.ErrorResult)
+		}
+		if result.Improved || result.Best.RacialTraits != race {
+			t.Errorf("%v: improved = %v, best = %v, want %v kept", race, result.Improved, result.Best.RacialTraits, race)
+		}
+	}
+}
+
+// compareRacesInParty compares the first of players' racial traits in real raid sims, all of them in
+// one party.
+func compareRacesInParty(t *testing.T, players ...*proto.Player) *proto.OptimizerResult {
+	t.Helper()
+	req := raidContribRequest(t, 0, players...)
 	req.Settings.CompareRacialTraits = true
 	r, err := PrepareRequest(req)
 	if err != nil {
 		t.Fatal(err)
 	}
-	result := compareRaces(context.Background(), r, newKnownEvaluator(kaMetrics), time.Now())
+	result := compareRaces(context.Background(), r, NewRaidEvaluator(r, MetricDPS), time.Now())
 	if result.ErrorResult != "" {
 		t.Fatal(result.ErrorResult)
 	}
-	if result.Improved || result.Best.RacialTraits != proto.Race_RaceOrc {
-		t.Errorf("improved = %v, best = %v, want Orc kept", result.Improved, result.Best.RacialTraits)
+	t.Logf("best %v, raid DPS %+.1f ± %.1f, screen %v", result.Best.RacialTraits, result.Best.RaidDpsDelta, result.Best.RaidDpsDeltaSe, result.RacialScreen)
+	return result
+}
+
+// withHit is a fury_p1 raider wearing traits, its hit rating moved by bonus.
+func withHit(t *testing.T, name string, traits proto.Race, bonus float64) *proto.Player {
+	t.Helper()
+	player := presetPlayer(t, "fury_p1", name)
+	player.RacialTraits = traits
+	player.BonusStats = &proto.UnitStats{Stats: stats.Stats{stats.MeleeHit: bonus}.ToFloatArray()}
+	return player
+}
+
+// A party without a Draenei, whose other member misses a lot: switching the target to Draenei gives
+// the party Heroic Presence, which gains the raid more than Night Elf traits (worth nothing to a fury
+// warrior) do.
+func TestCompareRacesGivesAPartyItsDraenei(t *testing.T) {
+	result := compareRacesInParty(t, withHit(t, "Target", proto.Race_RaceNightElf, 0), withHit(t, "Needs Hit", proto.Race_RaceNightElf, -300))
+	if !result.Improved || result.Best.RacialTraits != proto.Race_RaceDraenei {
+		t.Errorf("best = %v, improved %v, want Draenei", result.Best.RacialTraits, result.Improved)
+	}
+	if d, se := result.Best.RaidDpsDelta, result.Best.RaidDpsDeltaSe; d <= 2*se {
+		t.Errorf("raid DPS %+.1f ± %.1f, want a gain past 2 SE", d, se)
+	}
+}
+
+// The same party, but both members are far past every hit cap, so Heroic Presence gains nothing and
+// the party is left as it is.
+func TestCompareRacesLeavesAPartyAloneWhenNothingClearsTheBar(t *testing.T) {
+	result := compareRacesInParty(t, withHit(t, "Target", proto.Race_RaceNightElf, 1500), withHit(t, "Capped", proto.Race_RaceNightElf, 1500))
+	if result.Improved || result.Best.RacialTraits != proto.Race_RaceNightElf {
+		t.Errorf("best = %v, improved %v, want Night Elf kept", result.Best.RacialTraits, result.Improved)
 	}
 }

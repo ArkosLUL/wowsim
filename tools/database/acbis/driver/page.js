@@ -4,9 +4,11 @@
 	const bis = (window.__bis = window.__bis || {});
 	bis.downloads = bis.downloads || {};
 	const isBatchKey = key => String(key).includes('optimizer-batch.v1.');
+	// settled jobs plus Heroic Presence checks: which of two copies of a batch got further
 	const settledCount = text => {
 		try {
-			return JSON.parse(text).jobs.filter(j => j.state == 'done' || j.state == 'failed').length;
+			const saved = JSON.parse(text);
+			return saved.jobs.filter(j => j.state == 'done' || j.state == 'failed').length + (saved.partyChecks || []).length;
 		} catch (e) {
 			return -1;
 		}
@@ -161,6 +163,8 @@
 			elapsed: job.result?.elapsedSeconds || 0,
 			sims: job.result?.totalSims || 0,
 			commit: job.result?.simCommit || '',
+			// racial traits a Heroic Presence check switched the pick to, and what the run itself chose
+			partySwitch: job.partySwitch || null,
 		}));
 		// what the page needs stored: the other keys plus the batch as it last wrote it
 		const needChars = Object.keys(localStorage)
@@ -179,6 +183,7 @@
 			writeFailed: !!bis.writeFailed,
 			settings,
 			jobs,
+			partyChecks: stored?.saved.partyChecks || [],
 		};
 	};
 
