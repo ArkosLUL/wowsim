@@ -176,3 +176,21 @@ func TestNeighborhoodKeepsTheMostIterations(t *testing.T) {
 		t.Errorf("best at %d iterations and seed at %d, want both at %d", rn.bestEval.Iterations, rn.seedEval.Iterations, full)
 	}
 }
+
+// A budget too tight for even one batch at full iterations (3 alternatives plus the seed at 4000 each
+// costs 12000, over the 5000 here) used to size the whole round down and then refuse to adopt anything
+// short of a full one. Racing decides trinket 1 on a handful of shards, well inside that budget, and
+// tops it up before adopting it, so this still moves.
+func TestNeighborhoodAdoptsOnATightBudget(t *testing.T) {
+	rank := map[int32]float64{kaTrinketB: 50, nbTrinket40: 40, nbTrinket30: 30, nbTrinket20: 20, kaTrinketA: 10, kaTrinketAP2: 5}
+	rn, s := nbRun(t, rank, 5000)
+	if _, _, err := rn.neighborhood(s, nil); err != nil {
+		t.Fatal(err)
+	}
+	if got := rn.best.Items[proto.ItemSlot_ItemSlotTrinket1].ItemID; got != kaTrinketB {
+		t.Fatalf("trinket 1 is %d, want %d: a clear win on a tight budget should still be adopted", got, kaTrinketB)
+	}
+	if rn.bestEval.Iterations < rn.budget.Iterations || rn.seedEval.Iterations < rn.budget.Iterations {
+		t.Errorf("best at %d iterations and seed at %d, want both topped up to at least %d before the pick replaced the seed", rn.bestEval.Iterations, rn.seedEval.Iterations, rn.budget.Iterations)
+	}
+}
