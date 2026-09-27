@@ -129,6 +129,8 @@ message SimOptions {
 	bool is_test = 5; // Only used internally.
 	bool save_all_values = 7; // Only used internally.
 	bool interactive = 8; // Enables interactive mode.
+	// Splits IsTest's streams by unit as well as by label. Only the optimizer's evaluator sets it.
+	bool per_unit_random_seeds = 9;
 }
 
 // The aggregated results from all uses of a particular action.

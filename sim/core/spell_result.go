@@ -146,7 +146,7 @@ func (spell *Spell) PhysicalCritChance(attackTable *AttackTable) float64 {
 	return critRating/(CritRatingPerCritChance*100) - attackTable.MeleeCritSuppression
 }
 func (spell *Spell) PhysicalCritCheck(sim *Simulation, attackTable *AttackTable) bool {
-	return sim.RandomFloat("Physical Crit Roll") < spell.PhysicalCritChance(attackTable)
+	return sim.UnitRandomFloat(spell.Unit, "Physical Crit Roll") < spell.PhysicalCritChance(attackTable)
 }
 
 func (spell *Spell) SpellPower() float64 {
@@ -193,7 +193,7 @@ func (spell *Spell) SpellChanceToMiss(attackTable *AttackTable) float64 {
 }
 
 func (spell *Spell) MagicHitCheck(sim *Simulation, attackTable *AttackTable) bool {
-	roll := int32(sim.RandomFloat("Magical Hit Roll")*MaxRollBP) + 1
+	roll := int32(sim.UnitRandomFloat(spell.Unit, "Magical Hit Roll")*MaxRollBP) + 1
 	return roll >= spell.spellMissThresholdBP(attackTable)
 }
 
@@ -212,7 +212,7 @@ func (spell *Spell) SpellCritChance(target *Unit) float64 {
 }
 func (spell *Spell) MagicCritCheck(sim *Simulation, target *Unit) bool {
 	critChance := spell.SpellCritChance(target)
-	return sim.RandomFloat("Magical Crit Roll") < critChance
+	return sim.UnitRandomFloat(spell.Unit, "Magical Crit Roll") < critChance
 }
 
 func (spell *Spell) HealingPower(target *Unit) float64 {
@@ -227,7 +227,7 @@ func (spell *Spell) HealingCritChance() float64 {
 
 func (spell *Spell) HealingCritCheck(sim *Simulation) bool {
 	critChance := spell.HealingCritChance()
-	return sim.RandomFloat("Healing Crit Roll") < critChance
+	return sim.UnitRandomFloat(spell.Unit, "Healing Crit Roll") < critChance
 }
 
 func (spell *Spell) ApplyPostOutcomeDamageModifiers(sim *Simulation, result *SpellResult) {

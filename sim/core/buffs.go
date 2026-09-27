@@ -1052,7 +1052,7 @@ func registerRevitalizeHotCD(agent Agent, label string, hotID ActionID, ticks in
 				Period:   tickPeriod,
 				NumTicks: ticks,
 				OnAction: func(s *Simulation) {
-					if s.RandomFloat("Revitalize Proc") < 0.15 {
+					if s.UnitRandomFloat(aura.Unit, "Revitalize Proc") < 0.15 {
 						cpb := aura.Unit.GetCurrentPowerBar()
 						if cpb == ManaBar {
 							aura.Unit.AddMana(s, 0.01*aura.Unit.MaxMana(), manaMetrics)

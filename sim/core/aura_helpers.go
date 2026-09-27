@@ -91,7 +91,7 @@ func ApplyProcTriggerCallback(unit *Unit, aura *Aura, config ProcTrigger) {
 		if icd.Duration != 0 && !icd.IsReady(sim) {
 			return
 		}
-		if config.ProcChance != 1 && sim.RandomFloat(config.Name) > config.ProcChance {
+		if config.ProcChance != 1 && sim.UnitRandomFloat(unit, config.Name) > config.ProcChance {
 			return
 		} else if config.PPM != 0 && !ppmm.Proc(sim, spell.ProcMask, config.Name) {
 			return
@@ -136,7 +136,7 @@ func ApplyProcTriggerCallback(unit *Unit, aura *Aura, config ProcTrigger) {
 			if icd.Duration != 0 && !icd.IsReady(sim) {
 				return
 			}
-			if config.ProcChance != 1 && sim.RandomFloat(config.Name) > config.ProcChance {
+			if config.ProcChance != 1 && sim.UnitRandomFloat(unit, config.Name) > config.ProcChance {
 				return
 			}
 
@@ -255,7 +255,7 @@ func ApplyFixedUptimeAura(aura *Aura, uptime float64, tickLength time.Duration, 
 		StartPeriodicAction(sim, PeriodicActionOptions{
 			Period: tickLength,
 			OnAction: func(sim *Simulation) {
-				if sim.RandomFloat("FixedAura") < chancePerTick {
+				if sim.UnitRandomFloat(aura.Unit, "FixedAura") < chancePerTick {
 					aura.Activate(sim)
 				}
 			},
@@ -266,9 +266,9 @@ func ApplyFixedUptimeAura(aura *Aura, uptime float64, tickLength time.Duration, 
 			Period:   startTime,
 			NumTicks: 1,
 			OnAction: func(sim *Simulation) {
-				if sim.RandomFloat("FixedAura") < uptime {
+				if sim.UnitRandomFloat(aura.Unit, "FixedAura") < uptime {
 					// Use random duration to compensate for increased chance collapsed into single tick.
-					randomDur := tickLength + time.Duration(float64(auraDuration-tickLength)*sim.RandomFloat("FixedAuraDur"))
+					randomDur := tickLength + time.Duration(float64(auraDuration-tickLength)*sim.UnitRandomFloat(aura.Unit, "FixedAuraDur"))
 
 					aura.Duration = randomDur
 					aura.Activate(sim)

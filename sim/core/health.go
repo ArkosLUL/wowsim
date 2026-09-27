@@ -187,8 +187,8 @@ func (character *Character) applyHealingModel(healingModel *proto.HealingModel) 
 			// Random roll for time to next heal. In the case where CadenceVariation exceeds CadenceSeconds, then
 			// CadenceSeconds is treated as the median, with two separate uniform distributions to the left and right
 			// of it.
-			signRoll := sim.RandomFloat("Healing Cadence Variation Sign")
-			magnitudeRoll := sim.RandomFloat("Healing Cadence Variation Magnitude")
+			signRoll := sim.UnitRandomFloat(&character.Unit, "Healing Cadence Variation Sign")
+			magnitudeRoll := sim.UnitRandomFloat(&character.Unit, "Healing Cadence Variation Magnitude")
 
 			if signRoll < 0.5 {
 				timeToNextHeal = DurationFromSeconds(minCadence + magnitudeRoll*cadenceVariationLow)
