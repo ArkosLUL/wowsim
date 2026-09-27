@@ -909,8 +909,7 @@ don't switch. Keep the pass to a couple of minutes a phase at Quick.
 
 - **Go:** `compareRaces` (`racial.go`) asks only the Heroic Presence question (`comparedRaces`): a Draenei
   target against every other race, anyone else against Draenei alone, so a party without one sims 2
-  points per candidate, not 10. No other caller used the every-race comparison. `compare_racial_traits`'
-  proto comment still says every race: a contract change request.
+  points per candidate, not 10. No other caller used the every-race comparison.
 - **Who:** once every planned job has settled, `runNextPartyCheck` (`optimizer_batch.ts`) checks one
   party per call. `phaseParties` gives each member their final race: a non-healer's settled pick, else
   the raid sim's (healers, raiders without a pick). Only DPS raiders with a pick switch; anyone else
@@ -925,7 +924,7 @@ don't switch. Keep the pass to a couple of minutes a phase at Quick.
 - **Switches** still mutate the settled pick, plus `Job.partySwitch` (from, to, gain, notes), cleared
   when the job reruns. The cell adds "Draenei for the party, raid DPS ±".
 - **Driver:** `--stage 2` runs with no stage 2 raider too; a phase is done once its runs have settled
-  and the page offers no Start for 10 s. It logs each check and the checks' time, writes a timings
+  and the page offers no Start for 10 s, or a Start that runs nothing. It logs each check and the checks' time, writes a timings
   line per check, keeps the stall timer through the checks, and snapshots after each check and pass.
   Pass 1's export puts back each stage 1 pick's own race (`restore_own_races`).
 - **Tests:** `racial_test.go`: a Draenei moves to the race that gains most; anyone else only sims

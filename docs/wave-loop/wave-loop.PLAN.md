@@ -108,7 +108,8 @@ gets fixed before K builds presets with it.
 - Wave: J2, running. Base SHA `b24799131`. Wave J landed on `master`, and prod runs it.
 - Workflow runId: `wf_b5e75270-6c6`, args `waveJ2-args.json` in `G:\DevStuff\GitHub\.wave-loop`. Transcript dir:
   `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\wf_b5e75270-6c6`.
-- PERF-RNG, BIS-adopt and BIS-stage2 merged. Next: BIS-stage2b, alone, on a worktree off `integration`.
+- All four items merged and cross-reviewed. Next, alone on the machine: the re-baselines, then the full-roster
+  batch at Quick (`--out G:\DevStuff\GitHub\.wave-loop\bis-j2`, `wotlk-bisdata` on 3346 over [int]).
 
 ## BiS baseline
 
@@ -338,6 +339,8 @@ crashed before F2, so its column starts there.
 | PERF-RNG | merged | `faeb8c649` | goldens unchanged. With it on, a raid-mode delta's SE fell from ±27.1 to ±4.2 raid DPS (raid25, +100 hit); "Damage Roll" and the PPM procs still share streams |
 | BIS-adopt | merged | `e3ae9d86c` | goldens unchanged. Quick adopts a clearly better swap: 2 of the slow suite's 6 Quick picks gained, none lost |
 | BIS-stage2 | merged | `1686e5c63` | goldens unchanged. Phase 1 on the live roster took 16.5 min against wave J's ~123 (only Fel re-ran, +248 raid DPS). Sent back: its party pass only removes extra Draenei (BIS-stage2b) |
+| BIS-stage2b | merged | `7e057b86c` | goldens unchanged; proto comment `6ded31a1e`. Phase 1: the party checks took 47 s and gave Angry, Assasin and Smartface Draenei (+234 to +254 raid DPS each); every final pick together beat all stage 1 picks by +822 ± 12 |
+| wave J2 cross-review | | `1493175df` | 1 bug: the driver gave up on a pass 2 with nothing left to run. Also: old stage 2 picks still counted for raiders without stage 2, stage 2 texts said "as equipped" for the stage 1 pick, a cancelled party check read as an error |
 
 Later WIs are added as their wave starts.
 
