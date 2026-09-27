@@ -361,7 +361,8 @@ class Driver:
 
     # The page doesn't resume a batch on its own (prepareStorage clears its running flag), so every
     # run starts here, set up for this phase. Optional: the page may have nothing left to run, which
-    # returns False once Start stays disabled for OPTIONAL_START_WAIT s.
+    # returns False once Start stays disabled for OPTIONAL_START_WAIT s, or a click on it never
+    # shows the batch running.
     def start(self, names, phase, retry=False, optional=False):
         self.prepare(names, phase)
         begun = time.time()
@@ -386,6 +387,10 @@ class Driver:
                 self.log(f'P{phase}: clicked {label}')
                 return True
             time.sleep(1)
+        if optional:
+            # Start stays lit while a run has failed, and then a click finds nothing to do and ends at once
+            self.log(f"P{phase}: clicked {label}, but the page had nothing to run ({self.state()['status']!r})")
+            return False
         raise CdpError(f"the batch didn't start: {self.state()['status']!r}")
 
     # Retries a hung page by starting over in a new Chrome: Chrome itself can be gone too (something

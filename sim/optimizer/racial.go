@@ -118,6 +118,9 @@ func compareRaces(ctx context.Context, r *Request, eval Evaluator, start time.Ti
 
 	evals, err := eval.Evaluate(ctx, points, budget.Iterations)
 	if err != nil {
+		if ctx.Err() != nil {
+			return cancelledBeforeStart(r, start)
+		}
 		return errorResult(err)
 	}
 

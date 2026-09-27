@@ -425,6 +425,13 @@ export class OptimizerBatchTab extends SimTab {
 		return this.dpsRaiders().filter(couplesToOthers);
 	}
 
+	// A stored stage 2 run only counts while its raider still gets one. Anyone else's is stale, e.g.
+	// their pet or Focus Magic target changed, which doesn't start a new batch.
+	private getsStage2(raidIndex: number): boolean {
+		const player = this.simUI.sim.raid.getPlayer(raidIndex);
+		return !!player && !isHealingSpec(player.spec) && !isTankSpec(player.spec) && couplesToOthers(player);
+	}
+
 	// Identifies the roster: who sits where, with their spec, race, talents, glyphs and professions.
 	// Gear and racial traits stay out, so Apply doesn't orphan the batch it came from.
 	private fingerprint(): string {
@@ -728,7 +735,7 @@ export class OptimizerBatchTab extends SimTab {
 
 	// The raider's job for a phase that's most worth showing: stage 2 once it's started, else stage 1.
 	private currentJob(raidIndex: number, phase: number): Job | undefined {
-		const stage2 = this.batch.jobs.get(jobKey(raidIndex, phase, 2));
+		const stage2 = this.getsStage2(raidIndex) ? this.batch.jobs.get(jobKey(raidIndex, phase, 2)) : undefined;
 		if (stage2 && stage2.state != 'queued') {
 			return stage2;
 		}
@@ -738,7 +745,7 @@ export class OptimizerBatchTab extends SimTab {
 	// The raider's best finished pick for a phase, for Apply, Save and Validate: stage 2's once it has
 	// one, else stage 1's.
 	private bestUsableJob(raidIndex: number, phase: number): Job | undefined {
-		const stage2 = this.batch.jobs.get(jobKey(raidIndex, phase, 2));
+		const stage2 = this.getsStage2(raidIndex) ? this.batch.jobs.get(jobKey(raidIndex, phase, 2)) : undefined;
 		if (stage2?.state == 'done' && stage2.result?.best?.equipment) {
 			return stage2;
 		}
@@ -1308,7 +1315,7 @@ export class OptimizerBatchTab extends SimTab {
 			newElement(
 				'div',
 				'optimizer-hint',
-				"Each cell is the run's score gain over the raider's gear as equipped, ± its standard error, in points of their EP " +
+				"Each cell is the run's score gain over the raider's gear as equipped (for a stage 2 run, over their stage 1 pick), ± its standard error, in points of their EP " +
 					"reference stat (AP, SP or RAP), not DPS, with a tank's survival in armor points. It can come out negative when the " +
 					"raider wears gear the phase rules out. A DPS raider's cell also gets a raid DPS line once their stage 2 run scores " +
 					"it, and another when their party's Heroic Presence check switches their racial traits. Click one for the gear.",
@@ -1632,6 +1639,11 @@ export class OptimizerBatchTab extends SimTab {
 			provenance.push(`${formatNumber(result.elapsedSeconds)} s`);
 		}
 		this.detailBody.appendChild(newElement('div', 'optimizer-provenance', provenance.join(' · ')));
+		if (job.stage == 2) {
+			this.detailBody.appendChild(
+				newElement('div', 'optimizer-hint', `Stage 2 starts from ${job.raider}'s stage 1 pick, so "gear as equipped" below means that pick.`),
+			);
+		}
 		const warnings = [...result.warnings];
 		if (result.calibrationGap) {
 			const gap = `Full raid vs the derived buffs differ by ${formatNumber(result.calibrationGap * 100)}%.`;
@@ -1726,7 +1738,7 @@ export class OptimizerBatchTab extends SimTab {
 
 	private exportJson() {
 		const done = [...this.batch.jobs.values()]
-			.filter(job => job.state == 'done' && job.result)
+			.filter(job => job.state == 'done' && job.result && (job.stage == 1 || this.getsStage2(job.raidIndex)))
 			.sort((a, b) => a.phase - b.phase || a.raidIndex - b.raidIndex || a.stage - b.stage);
 		const first = done[0]?.result;
 		const batchExport = OptimizerBatchExport.create({

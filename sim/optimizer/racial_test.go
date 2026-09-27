@@ -289,6 +289,20 @@ func TestCompareRacesKeepsTheCurrentRaceWhenNothingClearsTheNoise(t *testing.T) 
 	}
 }
 
+// Same as Optimize: a cancel comes back as cancelled with the gear as given, not as an error.
+func TestCompareRacesReportsACancel(t *testing.T) {
+	r := compareRacesRequest(t, proto.Race_RaceOrc)
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	result := compareRaces(ctx, r, newKnownEvaluator(kaMetrics), time.Now())
+	if result.ErrorResult != "" || !result.Cancelled {
+		t.Fatalf("error %q, cancelled %v, want cancelled with no error", result.ErrorResult, result.Cancelled)
+	}
+	if result.Best.RacialTraits != proto.Race_RaceOrc || !goproto.Equal(result.Best.Equipment, r.Seed.Equipment()) {
+		t.Errorf("best = %v in %v, want the Orc gear as given", result.Best.RacialTraits, result.Best.Equipment)
+	}
+}
+
 // compareRacesInParty compares the first of players' racial traits in real raid sims, all of them in
 // one party.
 func compareRacesInParty(t *testing.T, players ...*proto.Player) *proto.OptimizerResult {

@@ -11,8 +11,7 @@ import (
 var neighborhoodRounds = 5
 
 // alternativesPerSlot is how many runners-up per slot the neighborhood sims and reports.
-// firstRunnersUp of them get simmed before the rest: all at once they can push a round under full
-// iterations, and a short round can't move the best.
+// firstRunnersUp of them get simmed before the rest, which only run when none of those moved the best.
 const (
 	alternativesPerSlot = 5
 	firstRunnersUp      = 3
