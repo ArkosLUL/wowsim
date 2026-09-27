@@ -715,6 +715,33 @@ move; only the neighborhood sims and reports 5. **Owns:** `search.go`'s `runners
   roster. Both verified to run to completion (raid-mode stage 2 took 276s at Quick, 16 procs, under this
   run's shared-machine load - not a timing claim, just proof it completes).
 
+#### Timing run
+
+Timed through the perf harness with the worldserver and database stopped: times and conditions in
+[Performance](bis-optimizer.INVESTIGATION.md#performance), reports in
+`G:\DevStuff\GitHub\.wave-loop\logs\perf-j-timing\`. `update.sh` first refreshed all eight optimizer
+requests from the item database regenerated since: 3 or 4 new items per pool (37254, 45994, 45995, and
+49227 where the class wields it) and shoulder enchant 3776. `baseline.json` stays, so comparing against it
+also sees the new requests and one worker fewer (15, not 16).
+
+No code changed. Quick's and the tanks' targets moved; the batch's awaits the user:
+- **Quick, 3–6 s to 3–11 s per spec.** Measured 3.1 s (Fire Mage P3) to 10.6 s (Combat Rogue P3). Every
+  spec sims about the same iterations, so the spread is its cost per iteration, which no budget evens out:
+  Combat Rogue under 6 s takes roughly half the evaluations for every spec, when Quick picks already don't
+  repeat. `annealRuns` stays at 4: Quick's wall moved -12% to +11% against `baseline.json`, and the search
+  stage, which runs them, took at most 0.22 s longer than its 3-run one there.
+- **Tanks, 1.5× to up to 1.6× a DPS run.** Against Fury P1, only Prot Warrior at Normal passes 1.5×, from
+  its sim's cost per iteration: nothing in the optimizer's own work to trim.
+- **Batch: "Normal overnight" doesn't hold.** Proposed, for the user to decide (Decisions and the batch UI's
+  hint still say it): "Quick overnight, Normal for a few raiders". Raid mode's
+  stage 2 took 255 s per DPS raider and phase at Quick and 56 min at Normal on the synthetic raid, so a
+  roster takes about 7 h at Quick and 4 days at Normal. The real roster's stage 2 ran 1.3–2.2× as long,
+  its load unrecorded: a completed full-roster batch settles whether Quick fits a night. Not trimmed:
+  halving raid mode's budget still leaves near 4 h and 2 days, and cuts the effects screen (53% of stage
+  2), which no slow-suite case checks in raid mode. A deep cut needs a design change: measure stage 2's
+  curves and effects (70% of its run) in the derived context, as stage 1 does, and keep raid sims for the
+  objective, the racial screen, verify and the neighborhood.
+
 ### BIS-seed (wave I2, done)
 
 A user's Unholy DK run scored its pick +46% over "your gear": the seed trimmer had emptied neck, main
