@@ -142,7 +142,7 @@
 		window.__r.rows().map(tr => {
 			const label = tr.children[0].querySelector('.form-check-label');
 			const spec = label.querySelector('.optimizer-hint')?.textContent || '';
-			return { name: window.__r.raider(tr), spec, tank: spec.endsWith('(tank)') };
+			return { name: window.__r.raider(tr), spec, tank: spec.endsWith('(tank)'), stage2: spec.endsWith('(stage 2)') };
 		});
 
 	bis.state = () => {

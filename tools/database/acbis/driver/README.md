@@ -33,11 +33,13 @@ python tools/database/acbis/driver/driver.py run --roster "$SCRATCH/raid.json" -
 ```
 
 Give acbis `-batch "$SCRATCH/bis/batch-stage1.json"` for own metrics only, or `batch-stage2.json` for
-both stages ([README](../README.md)). Prefer stage 1's for now: stage 2's Quick picks lose to it for most
-DPS raiders ([speed audit](../../../../docs/bis-optimizer/bis-optimizer.INVESTIGATION.md#speed-audit-after-wave-j)).
+both stages ([README](../README.md)): every raider keeps their stage 1 pick unless stage 2 found a
+better one for them.
 
-- Stage 1 runs every chosen raider. Stage 2 runs the chosen DPS raiders against everyone's stage 1 pick,
-  and skips a phase whose stage 1 hasn't settled for every chosen raider.
+- Stage 1 runs every chosen raider. Stage 2 runs only the chosen raiders whose own gear changes
+  someone else's damage (Demonic Pact, a targeted Focus Magic), against everyone's stage 1 pick, and
+  skips a phase whose stage 1 hasn't settled for every chosen raider. The grid marks who that is with
+  "(stage 2)" next to their spec; a `--stage 2` run with none of them among `--raiders` does nothing.
 - Both passes need the same `--out`, whose Chrome profile holds the batch, and the same roster file:
   the batch is keyed on the roster's specs, races, talents, glyphs and professions, so a changed
   roster starts an empty one.
@@ -46,8 +48,9 @@ DPS raiders ([speed audit](../../../../docs/bis-optimizer/bis-optimizer.INVESTIG
 - One driver at a time per `--out` and `--port`: a Chrome already on the port with another profile stops
   the run, and two drivers on one profile would fight over the batch. `stop --out DIR` closes a Chrome
   a killed run left behind.
-- At Quick, a stage 1 job takes 4–32 s on the server (a tank up to 94 s) and a stage 2 job about 5 min:
-  a whole batch about 8.3 h, nearly all of it stage 2.
+- At Quick, a stage 1 job takes 4–32 s on the server (a tank up to 94 s) and a stage 2 job (BIS-stage2
+  narrowed who gets one) 5–7 min: a measured P1 pass, 21 raiders and 1 stage 2 job, took 575 s for
+  stage 1 and 416 s for stage 2, about 16.5 min total (`bis-optimizer.PLAN.md`'s BIS-stage2 section).
 
 ## Unattended runs
 

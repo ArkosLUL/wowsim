@@ -855,6 +855,41 @@ the Decisions' stage 2:
 - Owns: `ui/raid/optimizer_batch.ts`, `sim/optimizer/raidctx/**`, raid mode and the racial screen in
   `sim/optimizer/{api,racial}.go`, additive fields in `proto/optimizer.proto`, `tools/database/acbis/**`.
 
+#### As built
+
+- **Who:** `couplesToOthers` (`optimizer_batch.ts`) plans a stage 2 job only for a warlock with
+  Demonic Pact and a pet out, or a mage with Focus Magic and a target set; `raidctx.Couples`
+  (`providers.go`) is the same predicate, mirrored since batch planning happens before any request
+  reaches Go. The grid marks who with "(stage 2)" next to their spec, which the acbis driver now
+  reads too, instead of guessing every non-tank.
+- **Never worse than stage 1:** a stage 2 request wears the target's own stage 1 pick (`equipPick`)
+  onto the raid before building the request, so it's both the seed and `equipped`, and forces
+  `racialMode` to `KeepCurrent`: stage 2 only searches gear, never traits.
+- **One Draenei per party:** `OptimizerSettings.compare_racial_traits` (additive) skips the usual
+  pipeline: `compareRaces` (`racial.go`) scores every race against the target's gear held fixed, in
+  paired sims through the caller's evaluator (raid mode's `NewRaidEvaluator`), past the same 2-SE bar
+  as any other pick. Once a phase's jobs settle, `runNextDraeneiFix` finds the first party with more
+  than one Draenei among its picks (tanks count but don't switch; that's their own survival/threat
+  call) and switches whichever candidate's move away gains that party's raid DPS most. Re-checked
+  fresh each call, so 3+ Draenei in a party resolves over several rounds and a resumed run picks up
+  where it left off. Not a job: the outcome is a mutated `racialTraits` on the settled pick plus a
+  warning, both already shown where a pick's warnings are.
+- **acbis:** no code change needed. `batch-stage2.json` still means both stages, and `acbis -batch`
+  already keeps each raider/phase's latest usable stage (`BisResultsFromBatch`), so a raider with
+  only a stage 1 entry needs nothing special. The driver's `--stage 2` now waits only on raiders the
+  grid marks "(stage 2)" and is a no-op with none among `--raiders`.
+
+**Live-roster check** (P1, 21 non-healers, `raid.json`, Quick): stage 1 settled in 575 s, stage 2 in
+416 s (only Fel qualified, the roster's one Demonic Pact warlock) — about 16.5 min for the phase
+against wave J's ~123 min, with no other raider re-run. An independent CLI A/B (`ab-j2/`, adapted
+from wave J's `ab-p1/`) confirmed it: raid A (everyone's stage 1 pick) 155,910.7 ± 18.0 DPS at 4,000
+iterations, matching the page's own raid sim exactly (4,000/4,000 iterations identical); Fel's stage
+2 pick (9 item slots changed, racial traits unchanged, RaceOrc) gained +248.0 ± 24.4 raid DPS and
++252.5 ± 6.0 of its own, both clean wins, no raider lost. The roster has only one Draenei total (no
+party held two), so the one-Draenei-per-party pass had nothing to do here and wasn't exercised live;
+`TestCompareRacesPicksTheRaceThatGainsMost` and `TestCompareRacesKeepsTheCurrentRaceWhenNothingClearsTheNoise`
+(`racial_test.go`) cover `compareRaces` itself with a fake evaluator.
+
 ### BIS-adopt (wave J2)
 
 Quick never adopts a runner-up: over budget, `neighborhood.go` runs a round at half the iterations, and

@@ -266,6 +266,41 @@ func TestProviderTalentsExist(t *testing.T) {
 	}
 }
 
+// TestCouples checks BIS-stage2's "who gets a stage 2 job" predicate: a warlock needs Demonic Pact
+// and a pet out, a mage needs Focus Magic and a target set.
+func TestCouples(t *testing.T) {
+	warlock := func(points int32, summon proto.Warlock_Options_Summon) *proto.Player {
+		p := newPlayer("Warlock", proto.Spec_SpecWarlock, map[string]int32{"demonic_pact": points})
+		p.GetWarlock().Options.Summon = summon
+		return p
+	}
+	mage := func(points int32, target *proto.UnitReference) *proto.Player {
+		p := newPlayer("Mage", proto.Spec_SpecMage, map[string]int32{"focus_magic": points})
+		p.GetMage().Options.FocusMagicTarget = target
+		return p
+	}
+
+	for _, c := range []struct {
+		name string
+		want bool
+		p    *proto.Player
+	}{
+		{"warlock with pact and a pet", true, warlock(1, proto.Warlock_Options_Felguard)},
+		{"warlock with pact but no pet", false, warlock(1, proto.Warlock_Options_NoSummon)},
+		{"warlock without pact", false, warlock(0, proto.Warlock_Options_Felguard)},
+		{"mage with focus magic and a target", true, mage(1, playerRef(5))},
+		{"mage with focus magic but no target", false, mage(1, nil)},
+		{"mage without focus magic", false, mage(0, playerRef(5))},
+		{"hunter", false, newPlayer("Hunter", proto.Spec_SpecHunter, nil)},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			if got := Couples(c.p); got != c.want {
+				t.Errorf("Couples() = %v, want %v", got, c.want)
+			}
+		})
+	}
+}
+
 // TestProviderConditions checks the rows' conditions beyond class and talent, each with a raider
 // next to a plain warrior target.
 func TestProviderConditions(t *testing.T) {
