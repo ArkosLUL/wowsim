@@ -37,8 +37,9 @@ the sim, so they're provisional until parity lands. It runs as `BIS-` work items
   - Raid sims with paired random numbers then re-rank the verified top sets, the per-slot alternatives and
     the final pick.
 - The batch runs in two stages per phase. Stage 1 gives everyone a Quick own-metrics BiS. Stage 2
-  re-optimizes each raider against the others' stage-1 BiS.
-- In raid context, the racial screen uses raid sims, so party racials count.
+  re-optimizes, against the others' stage 1 BiS, only raiders whose gear changes others' damage, and
+  never keeps a pick that doesn't beat their stage 1 pick in the raid. Each party gets at most one
+  Draenei, chosen by raid sims (the user, 2026-09-27, after wave J's stage 2 lost to stage 1).
 
 **Tanks**
 - One slider from survival (TMI) to threat (TPS), default 70% survival. The 6-metric EP-ratio editor sits
@@ -732,8 +733,8 @@ No code changed. Quick's and the tanks' targets moved; the batch's awaits the us
   stage, which runs them, took at most 0.22 s longer than its 3-run one there.
 - **Tanks, 1.5× to up to 1.6× a DPS run.** Against Fury P1, only Prot Warrior at Normal passes 1.5×, from
   its sim's cost per iteration: nothing in the optimizer's own work to trim.
-- **Batch: "Normal overnight" doesn't hold.** Proposed, for the user to decide (Decisions and the batch UI's
-  hint still say it): "Quick overnight, Normal for a few raiders". Raid mode's
+- **Batch: "Normal overnight" doesn't hold** for today's stage 2. The user kept it (2026-09-27): with stage 2
+  narrowed (BIS-stage2), a Normal batch is mostly stage 1, about 3–4.5 h. Raid mode's
   stage 2 took 255 s per DPS raider and phase at Quick and 56 min at Normal on the synthetic raid, so a
   roster takes about 7 h at Quick and 4 days at Normal. The real roster's stage 2 ran 1.3–2.2× as long,
   its load unrecorded: a completed full-roster batch settles whether Quick fits a night. Not trimmed:
@@ -826,6 +827,48 @@ Stop can't end such a run (the evaluator waits for its running sims), so fixing 
   +279 ± 12 J, still Envoy of Mortality. On the base, Effects asked for 2 and simmed none; with the
   ranged family unpriced, the search dropped the seed's gun, so Verify asked for 20. The preset's
   Nightmare Tear isn't in the P1 pool, so its seed breaks a rule (a warning only).
+
+### BIS-stage2 (wave J2)
+
+Stage 2 is ~95% of a batch's time, and wave J's Quick stage 2 picks lost to stage 1's in the raid for 15 of
+19 DPS raiders, while every raider counted Heroic Presence as its own ([speed audit](bis-optimizer.INVESTIGATION.md#speed-audit-after-wave-j)). Build
+the Decisions' stage 2:
+- **Who:** `plannedJobs` (`ui/raid/optimizer_batch.ts`) plans a stage 2 job only for a raider whose gear
+  changes others' damage: a warlock with Demonic Pact, or a mage with Focus Magic on a target. Keep that
+  list in one place beside `raidctx`'s providers. Everyone else's stage 1 pick is their phase result.
+- **Never worse than stage 1:** a stage 2 request starts from the raider's stage 1 pick as both its seed and
+  its `equipped` gear, keeps its stage 1 racial traits, and so returns that pick unless another beats it in
+  the raid by the acceptance bar.
+- **Heroic Presence:** once a phase's picks settle, each party gets at most one Draenei: the switch (gear
+  unchanged) that gains the party's raid DPS most, net of the raider's own racial, past 2 SE in paired raid
+  sims. Run them through the optimizer's raid evaluator, so PERF-RNG's per-unit streams tighten them once it
+  merges.
+- **Results:** the grid marks a raider without a stage 2 job as keeping stage 1, and shows a party pass's
+  switch. `batch-stage2.json` holds every raider's final phase pick, so `acbis -batch` of it still means both
+  stages; drop the driver README's advice to prefer stage 1's.
+
+- Verify: tests for the job plan, a stage 2 run that finds nothing better returning its stage 1 pick, and
+  one Draenei per party. Then phase 1 on the live roster (`G:\DevStuff\GitHub\.wave-loop\raid.json`, never
+  in the repo): the new pass 2 against all stage 1 picks, paired in the raid with
+  `G:\DevStuff\GitHub\.wave-loop\ab-p1\reproduce.sh`'s setup. No raider may lose more than 2 SE and the raid's
+  total may not fall. Time the pass.
+- Owns: `ui/raid/optimizer_batch.ts`, `sim/optimizer/raidctx/**`, raid mode and the racial screen in
+  `sim/optimizer/{api,racial}.go`, additive fields in `proto/optimizer.proto`, `tools/database/acbis/**`.
+
+### BIS-adopt (wave J2)
+
+Quick never adopts a runner-up: over budget, `neighborhood.go` runs a round at half the iterations, and
+only a full round (`full := iterations >= r.budget.Iterations`) may adopt. 64 of wave J's 105 stage 1 runs
+list a one-slot alternative more than 4 SE over their pick, a median +0.8% J ([speed audit](bis-optimizer.INVESTIGATION.md#speed-audit-after-wave-j)).
+Race instead: sim comparisons in 250-iteration shards, stop one once it's decided (more than 3 SE apart) or
+can't reach the acceptance bar, let a short round adopt its winner after topping it up and checking it
+again, and treat the budget as a ceiling, not a target.
+
+- Verify: the slow suite passes, and at Quick none of its six picks lists a single-slot alternative more
+  than 4 SE over it. Old against new picks, paired at 4,000 iterations: none worse past 2 SE. Quick and
+  Normal times per spec through the perf harness.
+- Owns: `sim/optimizer/{neighborhood,verify,surrogate,search}.go`, the budget in `evaluator.go`
+  (`EffortBudget` and what spends it), their tests.
 
 ### BIS-presets (wave K)
 

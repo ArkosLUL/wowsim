@@ -61,6 +61,7 @@ G = changes goldens. FS = runs all 37 suites.
 | I5 | PAR-DECL-1 (G) · PAR-DECL-2 (G) · PAR-DECL-3 (G) | ✔ |
 | I6 | PERF-MISSILE (FS) · PAR-DECL-4 (G, FS) | ✔ |
 | J | PAR-P7-PRI (G) · PAR-P7-TANK (G) · BIS-e2e-perf · AC-3 | ✔ |
+| J2 | BIS-stage2 · BIS-adopt · PERF-RNG (FS) | ✔ |
 | K | BIS-presets · PAR-P8 (G, FS) · BIS-tank-boss | ✔ |
 
 F2 is an inserted wave, not a fifth item in F: the core swing and cast fixes of PAR-P7-0c have to land
@@ -87,6 +88,9 @@ touch only UI and test paths, so goldens, BiS and throughput can't move, and it 
 UI-FIX joins I2 (the user's call): four fixes wave U's tests left open. PAR-P7-0f joins I3 (the user's call,
 2026-09-24): two core fixes wave I2 found. So do UI-FIX2 in I3, and RI-4 and BIS-hunter-ranged in I4: two UI
 bugs, the importer's missing pets, ammo and consumables, and a batch hung on a hunter, all found by the user.
+J2 is the user's call too (2026-09-27): wave J's batch took ~8 h, and its stage 2 made most picks worse
+([speed audit](../bis-optimizer/bis-optimizer.INVESTIGATION.md#speed-audit-after-wave-j)), so the optimizer
+gets fixed before K builds presets with it.
 
 **Where the specs are:**
 
@@ -101,13 +105,10 @@ bugs, the importer's missing pets, ammo and consumables, and a batch hung on a h
 
 ## Current wave
 
-- Wave: K, not started. Wave J (base `baa30c194`) landed on `master`.
+- Wave: J2, not started. Wave J (base `baa30c194`) landed on `master`, and prod runs it.
 - Base SHA: set at wave start.
 - Workflow runId: none. Wave J ran as `wf_98b95fd4-07a` and its timing run as `wf_0fb0de63-0ed` (args and
   results `waveJ-*` in `G:\DevStuff\GitHub\.wave-loop`).
-- Before K, the user decides the batch's "Normal overnight" (BIS-e2e-perf's Timing run) and whether to
-  narrow stage 2, whose Quick picks lose to stage 1's for 15 of 19 raiders, and schedule the optimizer's
-  [speed work](../bis-optimizer/bis-optimizer.INVESTIGATION.md#speed-audit-after-wave-j).
 
 ## BiS baseline
 

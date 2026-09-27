@@ -176,6 +176,25 @@ result moves, the numbers, what's left):
   raid flat on the wall (-40%) but -2.4% at `-test.cpu 1`. Elemental still runs 29% over I4, mostly the extra
   queued actions and rotation passes I5 brought.
 
+### PERF-RNG: a random stream per unit for the optimizer (wave J2)
+
+`IsTest` rolls draw from `Simulation.testRands`, a map keyed by label alone (`labelRand`, `reseedRands`,
+`makeTestRandSeed` in `sim/core/sim.go`) that every unit shares. In a raid, a target whose gear changes its
+number of rolls shifts every other unit's later ones, so raid-mode paired deltas carry ±35–62 raid DPS where
+solo ones carry ±7–13 ([speed audit](../bis-optimizer/bis-optimizer.INVESTIGATION.md#speed-audit-after-wave-j)).
+Every roll also looks up the map, and reseeding hashes each label again.
+- An additive `SimOptions` field (`proto/api.proto`) keys `IsTest` streams by unit and label, pets and
+  guardians included. Only the optimizer's evaluator sets it; off, every stream and draw stays as today.
+- Resolve each label's stream once, so a roll looks up nothing and reseeding allocates nothing. Same seeds,
+  same draw order.
+
+- Verify: all 37 goldens byte-identical, the simval replay, and the optimizer's tests. The SE of a paired
+  raid-mode delta on `raidctx`'s raid25 (+100 hit rating on the target, 1,000 iterations) with the field on
+  and off. An interleaved benchstat A/B of `BenchmarkSimulate` for the lookups
+  ([testing](../guide/testing.md#go)). The slow suite runs; report what moved.
+- Owns: `sim/core/**` except `sim/core/serverdata/`, `SimOptions` in `proto/api.proto`, and the request the
+  evaluator builds in `sim/optimizer/evaluator.go`.
+
 ## Order
 
 The user put the pass before wave J, whose BIS-e2e-perf times the optimizer with PERF-TOOLS' harness
@@ -183,3 +202,4 @@ The user put the pass before wave J, whose BIS-e2e-perf times the optimizer with
 - **I2 (done):** PERF-TOOLS and PERF-CONC, which share no files.
 - **I3 (done):** PERF-OPT and PERF-HOT, file-disjoint, once I2's baseline sets their targets.
 - **I6 (done):** PERF-MISSILE, the user's call (2026-09-26), before J times the optimizer.
+- **J2:** PERF-RNG, the user's call (2026-09-27), with the optimizer fixes wave J's speed audit found.
