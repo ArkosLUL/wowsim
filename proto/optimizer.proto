@@ -77,10 +77,10 @@ message OptimizerSettings {
 	// Sim goroutines. 0 means GOMAXPROCS. The web server caps it at GOMAXPROCS - 1.
 	int32 workers = 13;
 
-	// Skips the usual search: scores every race against the target's own gear, held exactly as given,
-	// in paired raid sims (the whole raid in base, whatever objective says). effort picks the
-	// iterations; everything else in this message is ignored. BIS-stage2's one-Draenei-per-party pass
-	// uses this.
+	// Skips the usual search: compares the target's racial traits with Draenei, or a Draenei's with
+	// every other race, gear held exactly as given, in paired raid sims (the whole raid in base,
+	// whatever objective says). effort picks the iterations; everything else in this message is
+	// ignored. The raid batch's Heroic Presence checks use this.
 	bool compare_racial_traits = 14;
 }
 
