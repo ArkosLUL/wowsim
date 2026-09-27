@@ -176,7 +176,7 @@ result moves, the numbers, what's left):
   raid flat on the wall (-40%) but -2.4% at `-test.cpu 1`. Elemental still runs 29% over I4, mostly the extra
   queued actions and rotation passes I5 brought.
 
-### PERF-RNG: a random stream per unit for the optimizer (wave J2)
+### PERF-RNG: a random stream per unit for the optimizer (wave J2, done)
 
 `IsTest` rolls draw from `Simulation.testRands`, a map keyed by label alone (`labelRand`, `reseedRands`,
 `makeTestRandSeed` in `sim/core/sim.go`) that every unit shares. In a raid, a target whose gear changes its
@@ -223,4 +223,4 @@ The user put the pass before wave J, whose BIS-e2e-perf times the optimizer with
 - **I2 (done):** PERF-TOOLS and PERF-CONC, which share no files.
 - **I3 (done):** PERF-OPT and PERF-HOT, file-disjoint, once I2's baseline sets their targets.
 - **I6 (done):** PERF-MISSILE, the user's call (2026-09-26), before J times the optimizer.
-- **J2:** PERF-RNG, the user's call (2026-09-27), with the optimizer fixes wave J's speed audit found.
+- **J2 (done):** PERF-RNG, the user's call (2026-09-27), with the optimizer fixes wave J's speed audit found.

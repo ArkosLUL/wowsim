@@ -199,3 +199,9 @@ Options, estimated, none measured:
 Together: about 65–75 min for a whole batch with every raider's stage 2 kept, 30–50 min with stage 2
 narrowed, stage 1's ~20 min then the floor. Rejected: shorter encounters (the same noise per simmed second,
 plus bias) and a learned surrogate (retrained on every sim commit).
+
+**Built in J2:** stage 2 only for Demonic Pact's warlock (and a Focus Magic mage with a target), started
+from the stage 1 pick; one Draenei per party where it helps; per-unit random streams in optimizer sims
+(a raid25 paired delta's SE ±27.1 to ±4.2); racing, so Quick adopts a better swap. On the live roster's
+phase 1, stage 2 and the party checks took about 8 min against wave J's 96, and the final picks beat all
+stage 1 picks by +822 ± 12 raid DPS. Stage 1 ran 259–328 s a phase. A whole batch is left to the user.

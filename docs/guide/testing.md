@@ -34,7 +34,7 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
     `benchstat base.txt new.txt` (in the toolchain image): its medians hold up on a busy machine.
   - Profiles, traces, and a harness timing every bench's request, stat weights, bulk and the optimizer across
     GOMAXPROCS against a baseline: [tools/perf](../../tools/perf/README.md).
-- The optimizer's slow suite, which every wave re-runs as the BiS baseline (about 16 min):
+- The optimizer's slow suite, which every wave re-runs as the BiS baseline (about 7 min idle):
   `go test --tags=with_db,optimizer_slow -count=1 -timeout 90m -run TestOptimizerSlow -v ./sim/optimizer/`.
   It prints one `slow: spec=… phase=… effort=… J_preset=… J_opt=… delta=…±… dps_preset=… dps_delta=…±…
   norm_<metric>=mean±se/<reference stat>` line per case (J's normalizer is measured fresh, so judge a

@@ -828,7 +828,7 @@ Stop can't end such a run (the evaluator waits for its running sims), so fixing 
   ranged family unpriced, the search dropped the seed's gun, so Verify asked for 20. The preset's
   Nightmare Tear isn't in the P1 pool, so its seed breaks a rule (a warning only).
 
-### BIS-stage2 (wave J2)
+### BIS-stage2 (wave J2, done)
 
 Stage 2 is ~95% of a batch's time, and wave J's Quick stage 2 picks lost to stage 1's in the raid for 15 of
 19 DPS raiders, while every raider counted Heroic Presence as its own ([speed audit](bis-optimizer.INVESTIGATION.md#speed-audit-after-wave-j)). Build
@@ -954,7 +954,7 @@ Angry 2.2 under Mighty (+256.2 ± 9.5). Only Nightwarrior would lose (−10.6 ±
 passed him over. With every final pick on, only Smartface's own DPS falls past 2 SE (−19.1 ± 1.4, the
 Orc racial he gave up).
 
-### BIS-adopt (wave J2)
+### BIS-adopt (wave J2, done)
 
 Quick never adopts a runner-up: over budget, `neighborhood.go` runs a round at half the iterations, and
 only a full round (`full := iterations >= r.budget.Iterations`) may adopt. 64 of wave J's 105 stage 1 runs

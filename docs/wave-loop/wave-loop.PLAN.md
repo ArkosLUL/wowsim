@@ -105,11 +105,12 @@ gets fixed before K builds presets with it.
 
 ## Current wave
 
-- Wave: J2, running. Base SHA `b24799131`. Wave J landed on `master`, and prod runs it.
-- Workflow runId: `wf_b5e75270-6c6`, args `waveJ2-args.json` in `G:\DevStuff\GitHub\.wave-loop`. Transcript dir:
-  `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\wf_b5e75270-6c6`.
-- All four items merged and cross-reviewed. Next, alone on the machine: the re-baselines, then the full-roster
-  batch at Quick (`--out G:\DevStuff\GitHub\.wave-loop\bis-j2`, `wotlk-bisdata` on 3346 over [int]).
+- Wave: K, not started. Wave J2 (base `b24799131`) landed on `master`; prod runs J.
+- Base SHA: set at wave start.
+- Workflow runId: none. Wave J2 ran as `wf_b5e75270-6c6` and BIS-stage2b as `wf_499304fb-b30` (args and
+  results `waveJ2*` in `G:\DevStuff\GitHub\.wave-loop`).
+- J2's full-roster batch is the user's to run (2026-09-27): stage 1 of phases 1–4 ran, 259–328 s a phase,
+  and was stopped before stage 2. Its times replace the INVESTIGATION's batch rows.
 
 ## BiS baseline
 
