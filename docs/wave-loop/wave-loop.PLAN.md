@@ -104,11 +104,11 @@ bugs, the importer's missing pets, ammo and consumables, and a batch hung on a h
 - Wave: J, running. Base SHA `baa30c194`.
 - Workflow runId: `wf_98b95fd4-07a`, args `waveJ-args.json` in `G:\DevStuff\GitHub\.wave-loop`. Transcript dir:
   `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\wf_98b95fd4-07a`.
-- All four items merged and cross-reviewed, and BIS-e2e-perf's timing run too (the game server stopped, the
-  user's choice, 2026-09-27). Next, each alone on the machine:
-  1. The re-baselines: `BenchmarkSimulate` with the game server stopped, then the BiS slow suite.
-  2. The full-roster batch through `tools/database/acbis/driver` (Quick, both stages, roster
-     `G:\DevStuff\GitHub\.wave-loop\raid.json`), for the INVESTIGATION's batch rows and the stored batch size.
+- All four items merged and cross-reviewed, BIS-e2e-perf's timing run too (the game server stopped, the user's
+  choice, 2026-09-27), and the re-baselines taken. Next, alone on the machine: the full-roster batch through
+  `tools/database/acbis/driver` (Quick, both stages, roster `G:\DevStuff\GitHub\.wave-loop\raid.json`), for the
+  INVESTIGATION's batch rows and the stored batch size. It runs with `--out G:\DevStuff\GitHub\.wave-loop\bis-j`
+  against `wotlk-bisdata` (port 3346, over [int]); the same command resumes it.
 
 ## BiS baseline
 
@@ -132,6 +132,7 @@ Reckoning that way), but J isn't DPS: see below.
 | I4 | 8842.8, +272 / +304 | 10686.4, +608 / +942 | 5064.5, +43 / +40 | 12962.2, +224 / +228 | -89694.0, +3349 / +3736 | -668.4, +750 / +799 |
 | I5 | 8860.8, +284 / +293 | 10728.5, +653 / +813 | 5064.6, +43 / +43 | 12963.5, +224 / +182 | -89267.2, +3186 / +3703 | -668.4, +750 / +799 |
 | I6 | 8860.8, +284 / +293 | 10728.5, +653 / +813 | 5064.6, +43 / +43 | 12963.5, +224 / +182 | -89267.2, +3186 / +3703 | -668.4, +750 / +799 |
+| J | 8860.8, +282 / +286 | 10728.5, +624 / +926 | 5064.6, +43 / +63 | 12963.5, +229 / +228 | -97067.0, +3376 / +3759 | -1644.5, +727 / +821 |
 
 Quick / Normal. Ret P4 ran at Quick only in wave D, after the glyph fix; its wave C numbers
 (12821.9, +54 / +73) came from a seed that wore the glyph. The two tanks arrive with
@@ -164,6 +165,10 @@ in the suite. In I5 Prot Pal's `dps_preset` fell 16% (215.6) against TestProtect
 Shield's proc (-15%) weighing more against a boss that keeps hitting (not traced). Combat Rogue's fell 0.2%
 (9927.0) with its goldens (-0.7%); its Normal gain fell to +813 and Ret's to +182, the path dependence again.
 In I6 nothing moved: PERF-MISSILE keeps every golden, and PAR-DECL-4's (hunter, Frost mage) aren't in the suite.
+In J PAR-P7-TANK moved both tanks' `J_preset`: Prot Pal's `dps_preset` rose 21% (260.8), back near I4's, as
+Holy Shield no longer misses, and Feral Tank's DTPS rose with its goldens (+5.9%, Faerie Fire no longer procs
+Savage Defense). Four Normal gains rose, Combat Rogue's to +926, likely BIS-e2e-perf's neighborhood adopting a
+clear win on its last round.
 
 ## Sim throughput
 
@@ -184,6 +189,7 @@ From G the benches run their suites' default players with rotations, at 1 and 10
 | I4 | 1.088 / 75.2 | 0.510 / 27.8 | 0.743 / 40.3 | 0.414 / 12.5 | 5.029 / 250.6 |
 | I5 | 1.059 / 78.6 | 0.508 / 28.5 | 0.727 / 45.7 | 0.488 / 18.7 | 5.463 / 263.4 |
 | I6 | 1.104 / 76.5 | 0.530 / 28.6 | 0.823 / 44.1 | 0.503 / 17.0 | 5.296 / 263.6 |
+| J | 1.087 / 77.1 | 0.527 / 28.7 | 0.755 / 43.2 | 0.480 / 17.2 | 5.213 / 262.6 |
 
 H2 ran with the live worldserver using half a core, which moved whole runs by up to 2×
 and cost a few percent here (Ret, which H2 barely touched, +4%). An interleaved A/B against the base
@@ -224,6 +230,10 @@ I6's row ran idle too. At 100 iterations PERF-MISSILE brought Elemental 9% under
 moved under 3%. Elemental stays 36% over I4: an op queues 112k actions, not 64k, and makes 12.5k more APL
 passes that cast nothing, the rotation since I5 rather than allocation. One-iteration Hunter reads 13% over I5
 here, but an interleaved A/B of the whole wave puts it at -1.6% (-4.0% at 100 iterations): read the A/B.
+
+J's row ran idle (the worldserver and database stopped): every case within 2% of I6's at 100 iterations, and
+at one iteration Hunter 8% under, the rest within 5%. Elemental's is a re-run, one of the first three having
+read 74% over the others at 100 iterations; another session's container used under a core during it.
 
 E to F2 ran the old requests: one iteration, and no rotation for Ret, Hunter and Elemental.
 
