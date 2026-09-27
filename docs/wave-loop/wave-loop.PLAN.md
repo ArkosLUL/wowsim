@@ -61,7 +61,7 @@ G = changes goldens. FS = runs all 37 suites.
 | I5 | PAR-DECL-1 (G) · PAR-DECL-2 (G) · PAR-DECL-3 (G) | ✔ |
 | I6 | PERF-MISSILE (FS) · PAR-DECL-4 (G, FS) | ✔ |
 | J | PAR-P7-PRI (G) · PAR-P7-TANK (G) · BIS-e2e-perf · AC-3 | ✔ |
-| J2 | BIS-stage2 · BIS-adopt · PERF-RNG (FS) | ✔ |
+| J2 | BIS-stage2 · BIS-adopt · PERF-RNG (FS) · BIS-stage2b | ✔ |
 | K | BIS-presets · PAR-P8 (G, FS) · BIS-tank-boss | ✔ |
 
 F2 is an inserted wave, not a fifth item in F: the core swing and cast fixes of PAR-P7-0c have to land
@@ -108,6 +108,7 @@ gets fixed before K builds presets with it.
 - Wave: J2, running. Base SHA `b24799131`. Wave J landed on `master`, and prod runs it.
 - Workflow runId: `wf_b5e75270-6c6`, args `waveJ2-args.json` in `G:\DevStuff\GitHub\.wave-loop`. Transcript dir:
   `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\wf_b5e75270-6c6`.
+- PERF-RNG, BIS-adopt and BIS-stage2 merged. Next: BIS-stage2b, alone, on a worktree off `integration`.
 
 ## BiS baseline
 
@@ -334,6 +335,9 @@ crashed before F2, so its column starts there.
 | BIS-e2e-perf | merged | `6dc2141b5`, timing run `cc0a1e03a` | goldens unchanged. The timing run moved Quick's target to 3-11 s and the tanks' to 1.6x a DPS run; a roster at Normal takes about 4 days, so the batch's "Normal overnight" waits on the user. The batch took ~8.3 h at Quick, stage 2 for phase 1 only (the user's call) |
 | AC-3 | merged | `b634b26cc` | goldens unchanged; `db.json` regenerated in the merge |
 | wave J cross-review | | `eaafe11bd` | no bugs: Mind Sear under-counted its casts in multi-target fights, and the INVESTIGATION had Leeching Swarm's two ids swapped; spell audit refreshed |
+| PERF-RNG | merged | `faeb8c649` | goldens unchanged. With it on, a raid-mode delta's SE fell from ±27.1 to ±4.2 raid DPS (raid25, +100 hit); "Damage Roll" and the PPM procs still share streams |
+| BIS-adopt | merged | `e3ae9d86c` | goldens unchanged. Quick adopts a clearly better swap: 2 of the slow suite's 6 Quick picks gained, none lost |
+| BIS-stage2 | merged | `1686e5c63` | goldens unchanged. Phase 1 on the live roster took 16.5 min against wave J's ~123 (only Fel re-ran, +248 raid DPS). Sent back: its party pass only removes extra Draenei (BIS-stage2b) |
 
 Later WIs are added as their wave starts.
 

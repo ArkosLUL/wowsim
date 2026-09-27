@@ -890,6 +890,21 @@ party held two), so the one-Draenei-per-party pass had nothing to do here and wa
 `TestCompareRacesPicksTheRaceThatGainsMost` and `TestCompareRacesKeepsTheCurrentRaceWhenNothingClearsTheNoise`
 (`racial_test.go`) cover `compareRaces` itself with a fake evaluator.
 
+#### BIS-stage2b (send-back, wave J2)
+
+The pass above only takes extra Draenei away; it never gives a party its one. In wave J's A/B, one member
+switched to Draenei with gear unchanged gained the raid 120–250 DPS net of their own racial, in all 10
+cases tried ([speed audit](bis-optimizer.INVESTIGATION.md#speed-audit-after-wave-j)). Once a phase's
+picks settle, for each party whose picks hold no Draenei, compare each DPS member switched to Draenei
+against no switch, in paired raid sims through the raid evaluator (`compareRaces`), and switch the one
+that gains the raid most past 2 SE. A party holding one keeps it, extras still resolve as built, and tanks
+don't switch. Keep the pass to a couple of minutes a phase at Quick.
+
+- Verify: tests for a party given its Draenei and one left alone when nothing clears the bar; phase 1 on
+  the live roster, with the pass's switches, their raid DPS against all stage 1 picks (`ab-j2`), and its
+  time.
+- Owns: `ui/raid/optimizer_batch.ts`, `sim/optimizer/racial.go` and its tests, `tools/database/acbis/driver/**`.
+
 ### BIS-adopt (wave J2)
 
 Quick never adopts a runner-up: over budget, `neighborhood.go` runs a round at half the iterations, and
