@@ -77,6 +77,9 @@ func Optimize(ctx context.Context, req *proto.OptimizeGearRequest, progress Prog
 	if ctx.Err() != nil {
 		return cancelledBeforeStart(r, start)
 	}
+	if r.Settings.GetCompareRacialTraits() {
+		return compareRaces(ctx, r, NewRaidEvaluator(r, MetricDPS), start)
+	}
 	keep, err := WeightedMetrics(r.Settings)
 	if err != nil {
 		return errorResult(err)

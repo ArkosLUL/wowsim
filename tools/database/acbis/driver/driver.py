@@ -540,13 +540,17 @@ class Driver:
         unknown = [n for n in names if n not in by_name]
         if unknown:
             raise SystemExit(f'not in the grid (healers sit out): {unknown}')
-        dps = [n for n in names if not by_name[n]['tank']]
+        # only raiders whose own gear changes someone else's damage get a stage 2 run (BIS-stage2)
+        stage2_names = [n for n in names if by_name[n]['stage2']]
+        if args.stage == 2 and not stage2_names:
+            self.log('none of these raiders get a stage 2 run (no Demonic Pact or targeted Focus Magic among them), nothing to do')
+            return
         pass_start = time.time()
         skipped = []
         exported = None
         with open(self.out / 'timings.jsonl', 'a', encoding='utf-8') as timings:
             for phase in parse_phases(args.phases):
-                wanted = [(n, 1) for n in names] if args.stage == 1 else [(n, 2) for n in dps]
+                wanted = [(n, 1) for n in names] if args.stage == 1 else [(n, 2) for n in stage2_names]
                 state = self.state()
                 if settled(state, phase, wanted, failed_ok=not args.retry_failed):
                     self.log(f'P{phase}: stage {args.stage} already done for these raiders')

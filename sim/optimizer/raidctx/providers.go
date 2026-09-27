@@ -41,6 +41,11 @@ type provider struct {
 	// set for targeted buffs: the spec option naming who gets it
 	target protoreflect.Name
 	apply  func(*effects)
+	// true when this row's effect scales with the giver's own build, or needs a target set even
+	// though the effect itself is flat: BIS-stage2's batch plans a stage 2 job only for these
+	// raiders (see Couples). ui/raid/optimizer_batch.ts's couplesToOthers mirrors this list, since
+	// the batch decides who gets a stage 2 job before any request goes to Go.
+	couples bool
 }
 
 func (p *provider) gives(player *proto.Player, spec proto.Spec, talents protoreflect.Message, targetIndex int) bool {
@@ -170,11 +175,12 @@ var providers = []provider{
 		apply:  func(e *effects) { e.individual.PowerInfusions++ },
 	},
 	{
-		ui:     "External Buffs/Focus Magic/Focus Magic",
-		class:  proto.Class_ClassMage,
-		talent: "focus_magic",
-		target: "focus_magic_target",
-		apply:  func(e *effects) { e.individual.FocusMagic = true },
+		ui:      "External Buffs/Focus Magic/Focus Magic",
+		class:   proto.Class_ClassMage,
+		talent:  "focus_magic",
+		target:  "focus_magic_target",
+		apply:   func(e *effects) { e.individual.FocusMagic = true },
+		couples: true,
 	},
 	{
 		ui:     "External Buffs/Tricks of the Trade/Tricks of the Trade",
@@ -449,6 +455,35 @@ var demonicPact = provider{
 	when: func(p *proto.Player) bool {
 		return p.GetWarlock().GetOptions().GetSummon() != proto.Warlock_Options_NoSummon
 	},
+	couples: true,
+}
+
+// Couples reports whether player's gear can change another raider's damage: Demonic Pact (its spell
+// power scales with the warlock's own sheet spell power, DemonicPactSP) and Focus Magic (needs a
+// target set, even though the buff itself is flat). BIS-stage2's batch plans a stage 2 job only for
+// these raiders; everyone else's stage 1 pick is their phase result.
+func Couples(player *proto.Player) bool {
+	spec := core.PlayerProtoToSpec(player)
+	talents := parseTalents(player)
+	for _, p := range append(slices.Clone(providers), demonicPact) {
+		if !p.couples || player.Class != p.class {
+			continue
+		}
+		if len(p.specs) > 0 && !slices.Contains(p.specs, spec) {
+			continue
+		}
+		if p.talent != "" && hasTalent(talents, p.talent) == p.missing {
+			continue
+		}
+		if p.when != nil && !p.when(player) {
+			continue
+		}
+		if p.target != "" && specOptionRef(player, p.target).GetType() != proto.UnitReference_Player {
+			continue
+		}
+		return true
+	}
+	return false
 }
 
 // DemonicPactSP is the spell power Demonic Pact gives the raid from a warlock with this much spell

@@ -1,8 +1,10 @@
 package optimizer
 
 import (
+	"context"
 	"errors"
 	"slices"
+	"time"
 
 	"github.com/wowsims/wotlk/sim/core/proto"
 )
@@ -95,6 +97,75 @@ func (r *run) screenRacials() ([]proto.Race, error) {
 		r.warn("%d more races tied with the last finalist, so the search only ran the best %d", tied, maxRacialFinalists)
 	}
 	return finalists, nil
+}
+
+// compareRaces holds r's target's gear exactly as given and scores only its racial traits, in
+// paired sims through eval (the caller's raid evaluator, so PERF-RNG's per-unit random streams
+// tighten it too once it merges). A switch needs the same 2-standard-error bar as any other pick
+// here; nothing else about the request (its pool, warm starts, metric weights) is read.
+// BIS-stage2's one-Draenei-per-party pass is the caller.
+func compareRaces(ctx context.Context, r *Request, eval Evaluator, start time.Time) *proto.OptimizerResult {
+	budget := EffortBudget(r.Settings.GetEffort())
+
+	points := make([]Point, len(allRaces))
+	current := -1
+	for i, race := range allRaces {
+		l := r.Seed
+		l.RacialTraits = race
+		points[i] = Point{Loadout: l}
+		if race == r.Seed.RacialTraits {
+			current = i
+		}
+	}
+	if current < 0 {
+		// the target's actual traits aren't one of the 10 playable races (shouldn't happen): add them
+		// too, so there's still a current point to compare against.
+		points = append(points, Point{Loadout: r.Seed})
+		current = len(points) - 1
+	}
+
+	evals, err := eval.Evaluate(ctx, points, budget.Iterations)
+	if err != nil {
+		return errorResult(err)
+	}
+
+	best, bestDelta := current, Estimate{}
+	screen := make([]*proto.OptimizerRacialScreen, len(allRaces))
+	for i, race := range allRaces {
+		d := Delta(evals[current], evals[i], MetricDPS)
+		screen[i] = &proto.OptimizerRacialScreen{RacialTraits: race, Score: evals[i].Metrics[MetricDPS].Mean, ScoreSe: evals[i].Metrics[MetricDPS].SE}
+		if i != current && d.Mean > 2*d.SE && d.Mean > bestDelta.Mean {
+			best, bestDelta = i, d
+		}
+	}
+	if best < len(allRaces) {
+		screen[best].Finalist = true
+	}
+
+	seedLoadout, bestLoadout := points[current].Loadout, points[best].Loadout
+	improved := best != current
+	bestResult := &proto.OptimizerLoadoutResult{Equipment: bestLoadout.Equipment(), RacialTraits: bestLoadout.RacialTraits}
+	if improved {
+		bestResult.RaidDpsDelta, bestResult.RaidDpsDeltaSe = bestDelta.Mean, bestDelta.SE
+	}
+	var totalSims int32
+	for _, e := range evals {
+		if e != nil {
+			totalSims += int32(e.Iterations)
+		}
+	}
+	return &proto.OptimizerResult{
+		Best:            bestResult,
+		Seed:            &proto.OptimizerLoadoutResult{Equipment: seedLoadout.Equipment(), RacialTraits: seedLoadout.RacialTraits},
+		RacialScreen:    screen,
+		Improved:        improved,
+		Settings:        r.Settings,
+		TargetRaidIndex: int32(r.TargetIndex),
+		SimCommit:       SimCommit,
+		CatalogDate:     r.Pool.GetCatalogDate(),
+		TotalSims:       totalSims,
+		ElapsedSeconds:  time.Since(start).Seconds(),
+	}
 }
 
 // racialScreenPoints are the seed gear under every race's traits, in allRaces' order.

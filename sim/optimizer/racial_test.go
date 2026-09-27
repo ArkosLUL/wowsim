@@ -10,6 +10,7 @@ import (
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
 	"github.com/wowsims/wotlk/sim/core/stats"
+	goproto "google.golang.org/protobuf/proto"
 )
 
 // titanguardID is a one-handed sword, so Human weapon specialization applies to it and Orc's axes
@@ -192,4 +193,59 @@ func TestOptimizeSearchesRacialTraits(t *testing.T) {
 		t.Errorf("improved = %v with a %.1f gain; the traits alone are worth 400 DPS", result.Improved, result.Best.ScoreDelta)
 	}
 	t.Logf("pick %v, %d sims; screen %v", result.Best.RacialTraits, result.TotalSims, result.RacialScreen)
+}
+
+func TestCompareRacesPicksTheRaceThatGainsMost(t *testing.T) {
+	req := kaRequest(proto.OptimizerEffort_OptimizerEffortQuick)
+	req.Settings.CompareRacialTraits = true
+	r, err := PrepareRequest(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if r.Seed.RacialTraits != proto.Race_RaceOrc {
+		t.Fatalf("seed traits = %v, want Orc (kaRequest's default)", r.Seed.RacialTraits)
+	}
+	const want = proto.Race_RaceTauren
+	fake := newKnownEvaluator(func(p Point) (Metrics, error) {
+		m, err := kaMetrics(p)
+		if err == nil && p.Loadout.RacialTraits == want {
+			m[MetricDPS] += 400
+		}
+		return m, err
+	})
+
+	result := compareRaces(context.Background(), r, fake, time.Now())
+	if result.ErrorResult != "" {
+		t.Fatal(result.ErrorResult)
+	}
+	if !result.Improved || result.Best.RacialTraits != want {
+		t.Errorf("best = %v, improved %v, want %v", result.Best.RacialTraits, result.Improved, want)
+	}
+	if result.Best.RaidDpsDelta < 300 {
+		t.Errorf("raid_dps_delta = %.1f, want close to the 400 DPS the traits are worth", result.Best.RaidDpsDelta)
+	}
+	if !goproto.Equal(result.Best.Equipment, result.Seed.Equipment) {
+		t.Error("compareRaces changed the gear; it should only ever change racial traits")
+	}
+	if len(result.RacialScreen) != len(allRaces) {
+		t.Errorf("racial screen has %d entries, want all %d races", len(result.RacialScreen), len(allRaces))
+	}
+}
+
+// Every race scores the seed gear the same (kaMetrics never reads racial traits), so nothing clears
+// the noise and the current race stays.
+func TestCompareRacesKeepsTheCurrentRaceWhenNothingClearsTheNoise(t *testing.T) {
+	req := kaRequest(proto.OptimizerEffort_OptimizerEffortQuick)
+	req.Settings.CompareRacialTraits = true
+	r, err := PrepareRequest(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	result := compareRaces(context.Background(), r, newKnownEvaluator(kaMetrics), time.Now())
+	if result.ErrorResult != "" {
+		t.Fatal(result.ErrorResult)
+	}
+	if result.Improved || result.Best.RacialTraits != proto.Race_RaceOrc {
+		t.Errorf("improved = %v, best = %v, want Orc kept", result.Improved, result.Best.RacialTraits)
+	}
 }
