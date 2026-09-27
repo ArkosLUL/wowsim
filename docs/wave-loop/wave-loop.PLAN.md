@@ -105,10 +105,9 @@ gets fixed before K builds presets with it.
 
 ## Current wave
 
-- Wave: J2, not started. Wave J (base `baa30c194`) landed on `master`, and prod runs it.
-- Base SHA: set at wave start.
-- Workflow runId: none. Wave J ran as `wf_98b95fd4-07a` and its timing run as `wf_0fb0de63-0ed` (args and
-  results `waveJ-*` in `G:\DevStuff\GitHub\.wave-loop`).
+- Wave: J2, running. Base SHA `b24799131`. Wave J landed on `master`, and prod runs it.
+- Workflow runId: `wf_b5e75270-6c6`, args `waveJ2-args.json` in `G:\DevStuff\GitHub\.wave-loop`. Transcript dir:
+  `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\wf_b5e75270-6c6`.
 
 ## BiS baseline
 
