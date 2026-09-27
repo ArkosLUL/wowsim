@@ -870,6 +870,25 @@ again, and treat the budget as a ceiling, not a target.
 - Owns: `sim/optimizer/{neighborhood,verify,surrogate,search}.go`, the budget in `evaluator.go`
   (`EffortBudget` and what spends it), their tests.
 
+#### As built
+
+`neighborhood.go`'s per-batch check now races: it sims a batch's alternatives against the best in
+`DefaultShardIterations` shards, dropping one once it's decided (more than `raceSE`=3 SE from the best,
+either way) or its upper confidence bound still can't clear the acceptance bar. A batch's winner that
+passes the acceptance test gets `best`, itself and the seed re-simmed together up to
+`r.budget.Iterations`, or best's already-simmed iterations if verify's own race left it higher (or as
+much of either as the run's remaining budget affords), and rechecked before it replaces the best.
+`iterations >= r.budget.Iterations` is gone as a gate on adoption: the target still caps the race and
+the top-up, but a short round can adopt.
+
+- 2 of the slow suite's 6 Quick cases changed pick (combat rogue P3, prot paladin P3), both real gains
+  over the old pick (+226 and +314 J, paired at 4,000 iterations on a fresh seed); the other 4 came out
+  identical. `TestOptimizerSlow` now fails a Quick case whose alternatives list a single-slot swap more
+  than 4 SE over the pick.
+- Times, loaded (`tools/perf` bench, `-procs 16 -workers 15`, two other WIs' containers busy throughout,
+  load average 14-28, util 48-89%): Quick 4.0-18.7 s a spec, Normal 20.5-114.7 s. Not compared against
+  `baseline.json`, which is an idle-machine run.
+
 ### BIS-presets (wave K)
 
 The preset files, as decided above, registered in `ui/<spec>/presets.ts` and `sim.ts` `defaultGear`. This

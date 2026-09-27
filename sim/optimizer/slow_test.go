@@ -270,6 +270,17 @@ func TestOptimizerSlow(t *testing.T) {
 					t.Logf("warning: %s", w)
 				}
 
+				// Quick used to leave a clearly better runner-up on the table (BIS-adopt): a short
+				// round could never adopt, only report. It still races each one, so this stays a live
+				// check, not a one-off.
+				if effort == proto.OptimizerEffort_OptimizerEffortQuick {
+					for _, a := range result.Alternatives {
+						if a.ScoreDelta > 4*a.ScoreDeltaSe {
+							t.Errorf("slot %s: alternative %d scores %+.1f ± %.1f over the pick, more than 4 se", a.Slot, a.Item.GetId(), a.ScoreDelta, a.ScoreDeltaSe)
+						}
+					}
+				}
+
 				// an independent paired check on other random numbers, so the search's own noise
 				// can't flatter its pick
 				check := goproto.Clone(req).(*proto.OptimizeGearRequest)

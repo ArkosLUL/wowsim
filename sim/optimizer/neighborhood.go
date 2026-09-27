@@ -18,15 +18,24 @@ const (
 	firstRunnersUp      = 3
 )
 
+// raceSE is how many standard errors apart a race step treats as decided: a gap that wide is not
+// going to close with more iterations, so there's nothing left to learn from simming it further.
+const raceSE = 3
+
 // neighborhood sims the best loadout's alternatives: per slot, the surrogate's top
 // alternativesPerSlot other items, each with the rest of the best unchanged, paired with the best. A
-// round sims each slot's first firstRunnersUp, then the rest only if none of those moved the best. An
-// alternative that passes the acceptance test against the best and beats the seed becomes the new
-// best, and its neighborhood is simmed in turn. On the round cap, there's no round left to look
-// again, so the cap's own first and rest batches both run against whatever is current when they're
-// reached, rebasing the round's other alternatives onto each adoption instead of leaving them
-// pointing at a pick that's since been replaced. The alternatives returned are the last round's,
-// around the final best, best first within each slot; verified gains every best the rounds adopt.
+// round sims each slot's first firstRunnersUp, then the rest only if none of those moved the best.
+// Each batch races its alternatives against the best in DefaultShardIterations shards (race),
+// dropping one once it's decided or can't clear the acceptance bar, so a batch stops as soon as
+// there's nothing left to decide instead of always spending the round's full iterations. A batch's
+// leading alternative that passes the acceptance test gets topped up and rechecked (topUp) before it
+// replaces the best, so a race that decided early on a small sample still has to hold up at the
+// round's full iterations; only then does it become the new best, with its own neighborhood simmed in
+// turn. On the round cap, there's no round left to look again, so the cap's own first and rest batches
+// both run against whatever is current when they're reached, rebasing the round's other alternatives
+// onto each adoption instead of leaving them pointing at a pick that's since been replaced. The
+// alternatives returned are the last round's, around the final best, best first within each slot;
+// verified gains every best the rounds adopt.
 func (r *run) neighborhood(s *surrogate, verified []*verifiedLoadout) ([]*proto.OptimizerSlotAlternative, []*verifiedLoadout, error) {
 	se := newSearcher(s, r)
 	type alternative struct {
@@ -36,6 +45,75 @@ func (r *run) neighborhood(s *surrogate, verified []*verifiedLoadout) ([]*proto.
 		eval      *Evaluation
 		delta     Estimate
 		raidDelta Estimate
+	}
+
+	// race sims batch's alternatives against r.best, in DefaultShardIterations shards, dropping one
+	// once it's decided: more than raceSE standard errors from the best, whichever way, or (still too
+	// close to call against the best) its upper confidence bound can't clear the acceptance bar
+	// either. Each survivor's eval is set on it directly. It stops there, at r.budget.Iterations (or
+	// best's already-simmed iterations, whichever is more, since verify's own race can leave best past
+	// r.budget.Iterations), or wherever the run's remaining budget runs out first: the target caps the
+	// race, it doesn't schedule it, so a batch that decides early costs less than a full round and a
+	// batch that never does still stops at the cap.
+	race := func(batch []*alternative) (bestEval, seedEval *Evaluation, err error) {
+		active := slices.Clone(batch)
+		target := max(r.budget.Iterations, r.eval.iterations(Point{Loadout: r.best}))
+		iterations := 0
+		for {
+			step := min(DefaultShardIterations, target-iterations)
+			if step <= 0 {
+				break
+			}
+			next := iterations + step
+			points := []Point{{Loadout: r.best}, {Loadout: r.r.Seed}}
+			for _, a := range active {
+				points = append(points, Point{Loadout: a.loadout})
+			}
+			if iterations > 0 && r.eval.cost(points, next) > r.remaining() {
+				break
+			}
+			evals, err := r.evaluate(points, next)
+			if err != nil {
+				return nil, nil, err
+			}
+			iterations = next
+			bestEval, seedEval = evals[0], evals[1]
+			var undecided []*alternative
+			for i, a := range active {
+				if evals[i+2] == nil {
+					continue
+				}
+				a.eval = evals[i+2]
+				d := r.obj.Delta(bestEval, a.eval)
+				if abs(d.Mean) > raceSE*d.SE || d.Mean+raceSE*d.SE <= acceptFraction*r.ownJ() {
+					continue
+				}
+				undecided = append(undecided, a)
+			}
+			active = undecided
+			if len(active) == 0 || iterations >= target {
+				break
+			}
+		}
+		return bestEval, seedEval, nil
+	}
+
+	// topUp confirms a race's winner before it replaces the best: it raises best, l and the seed to
+	// r.budget.Iterations together, or to best's already-simmed iterations if verify's race left it
+	// higher (or as much of either as what's left of the run's budget affords), so a gap the race
+	// decided on a handful of shards still has to hold up at the round's full iterations, and adopting
+	// never leaves best less precisely known than it already was.
+	topUp := func(l Loadout) (bestEval, eval, seedEval *Evaluation, err error) {
+		iterations := max(r.budget.Iterations, r.eval.iterations(Point{Loadout: r.best}))
+		points := []Point{{Loadout: r.best}, {Loadout: l}, {Loadout: r.r.Seed}}
+		for iterations > DefaultShardIterations && r.eval.cost(points, iterations) > r.remaining() {
+			iterations /= 2
+		}
+		evals, err := r.evaluate(points, iterations)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		return evals[0], evals[1], evals[2], nil
 	}
 rounds:
 	for round := 0; round < neighborhoodRounds; round++ {
@@ -68,30 +146,18 @@ rounds:
 		}
 
 		var alts []*alternative
-		iterations := max(r.budget.Iterations, r.eval.iterations(Point{Loadout: r.best}))
 		for _, batch := range [][]*alternative{first, rest} {
 			if len(batch) == 0 {
 				continue
 			}
-			points := []Point{{Loadout: r.best}, {Loadout: r.r.Seed}}
-			for _, a := range batch {
-				points = append(points, Point{Loadout: a.loadout})
-			}
-			for iterations > DefaultShardIterations && r.eval.cost(points, iterations) > r.remaining() {
-				iterations /= 2
-			}
-			// a short round still reports alternatives, but too noisy to move the best
-			full := iterations >= r.budget.Iterations
-			evals, err := r.evaluate(points, iterations)
+			bestEval, seedEval, err := race(batch)
 			if err != nil {
 				return nil, verified, err
 			}
-			bestEval := evals[0]
-			// a later batch can run fewer iterations than the first, and Evaluate may return just those
-			r.bestEval, r.seedEval = mostIterations(r.bestEval, bestEval), mostIterations(r.seedEval, evals[1])
+			// a later batch can run fewer iterations than the first, and a race may decide early
+			r.bestEval, r.seedEval = mostIterations(r.bestEval, bestEval), mostIterations(r.seedEval, seedEval)
 			var top *alternative
-			for i, a := range batch {
-				a.eval = evals[i+2]
+			for _, a := range batch {
 				if a.eval == nil {
 					continue
 				}
@@ -105,7 +171,20 @@ rounds:
 				}
 			}
 			alts = append(alts, batch...)
-			if full && top != nil && r.accepts(top.delta) && r.beatsSeed(top.eval) {
+			if top != nil && r.accepts(top.delta) {
+				toppedBest, toppedTop, toppedSeed, err := topUp(top.loadout)
+				if err != nil {
+					return nil, verified, err
+				}
+				r.bestEval, r.seedEval = mostIterations(r.bestEval, toppedBest), mostIterations(r.seedEval, toppedSeed)
+				if toppedBest == nil || toppedTop == nil {
+					continue
+				}
+				top.delta = r.obj.Delta(toppedBest, toppedTop)
+				top.eval = toppedTop
+				if !r.accepts(top.delta) || !r.beatsSeed(top.eval) {
+					continue
+				}
 				r.best, r.bestEval = top.loadout, top.eval
 				verified = append(verified, &verifiedLoadout{top.loadout, top.eval})
 				r.sortVerified(verified)
