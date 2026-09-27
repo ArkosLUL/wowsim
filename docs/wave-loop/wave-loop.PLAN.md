@@ -134,6 +134,7 @@ Reckoning that way), but J isn't DPS: see below.
 | I5 | 8860.8, +284 / +293 | 10728.5, +653 / +813 | 5064.6, +43 / +43 | 12963.5, +224 / +182 | -89267.2, +3186 / +3703 | -668.4, +750 / +799 |
 | I6 | 8860.8, +284 / +293 | 10728.5, +653 / +813 | 5064.6, +43 / +43 | 12963.5, +224 / +182 | -89267.2, +3186 / +3703 | -668.4, +750 / +799 |
 | J | 8860.8, +282 / +286 | 10728.5, +624 / +926 | 5064.6, +43 / +63 | 12963.5, +229 / +228 | -97067.0, +3376 / +3759 | -1644.5, +727 / +821 |
+| J2 | 8725.6, +253 / +297 | 10728.7, +674 / +799 | 5064.5, +40 / +47 | 12964.3, +213 / +231 | -96051.1, +3590 / +3707 | -1642.4, +740 / +804 |
 
 Quick / Normal. Ret P4 ran at Quick only in wave D, after the glyph fix; its wave C numbers
 (12821.9, +54 / +73) came from a seed that wore the glyph. The two tanks arrive with
@@ -170,6 +171,11 @@ In J PAR-P7-TANK moved both tanks' `J_preset`: Prot Pal's `dps_preset` rose 21% 
 Holy Shield no longer misses, and Feral Tank's DTPS rose with its goldens (+5.9%, Faerie Fire no longer procs
 Savage Defense). Four Normal gains rose, Combat Rogue's to +926, likely BIS-e2e-perf's neighborhood adopting a
 clear win on its last round.
+In J2 PERF-RNG's per-unit streams gave the optimizer new random numbers: Fury's `J_preset` fell 1.5%
+(8725.6), inside its normalizer's noise, and the DPS specs' `dps_preset` moved under 0.1%. Where BIS-adopt
+took a better swap, Quick gained (Combat Rogue +674, Prot Pal +3590); Normal fell for Combat Rogue (+799)
+and Fire Mage (+47), the path dependence again. Racing cut Normal's sims about 23% and its wall 18–24% on
+the DPS specs.
 
 ## Sim throughput
 
@@ -191,6 +197,7 @@ From G the benches run their suites' default players with rotations, at 1 and 10
 | I5 | 1.059 / 78.6 | 0.508 / 28.5 | 0.727 / 45.7 | 0.488 / 18.7 | 5.463 / 263.4 |
 | I6 | 1.104 / 76.5 | 0.530 / 28.6 | 0.823 / 44.1 | 0.503 / 17.0 | 5.296 / 263.6 |
 | J | 1.087 / 77.1 | 0.527 / 28.7 | 0.755 / 43.2 | 0.480 / 17.2 | 5.213 / 262.6 |
+| J2 | 1.043 / 77.5 | 0.561 / 28.7 | 0.759 / 44.3 | 0.493 / 16.9 | 5.300 / 272.8 |
 
 H2 ran with the live worldserver using half a core, which moved whole runs by up to 2×
 and cost a few percent here (Ret, which H2 barely touched, +4%). An interleaved A/B against the base
@@ -235,6 +242,10 @@ here, but an interleaved A/B of the whole wave puts it at -1.6% (-4.0% at 100 it
 J's row ran idle (the worldserver and database stopped): every case within 2% of I6's at 100 iterations, and
 at one iteration Hunter 8% under, the rest within 5%. Elemental's is a re-run, one of the first three having
 read 74% over the others at 100 iterations; another session's container used under a core during it.
+
+J2's row ran idle too (the worldserver stopped, the database up). At 100 iterations every case is within 3%
+of J's but the raid, +3.9%. PERF-RNG's own interleaved A/B found no difference outside noise: these benches
+run with `IsTest` off, where rolls take the old path.
 
 E to F2 ran the old requests: one iteration, and no rotation for Ret, Hunter and Elemental.
 
