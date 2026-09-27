@@ -195,6 +195,27 @@ Every roll also looks up the map, and reseeding hashes each label again.
 - Owns: `sim/core/**` except `sim/core/serverdata/`, `SimOptions` in `proto/api.proto`, and the request the
   evaluator builds in `sim/optimizer/evaluator.go`.
 
+**As built** ([INVESTIGATION](sim-performance.INVESTIGATION.md#perf-rng-wave-j2): the profile, why a field on
+`SpellEffect` didn't fly, the numbers, what's left):
+- `SimOptions.PerUnitRandomSeeds` (`proto/api.proto`, additive); only `SimEvaluator.request` (`evaluator.go`)
+  sets it. `Simulation.UnitRandomFloat(unit, label)` resolves a stream from `unit.testRands` when it's on,
+  else falls through to the shared `sim.testRands` stream, same as `RandomFloat`. Both maps hold a
+  `*testRandStream` caching the label's (and, per unit, the unit's index's) FNV-1a hash, so a reseed mixes in
+  the new seed without rebuilding or rehashing the label.
+- Converted every `sim/core` roll with a unit or spell already in scope: crit, hit and resist checks
+  (`spell_outcome.go`, `spell_result.go`, `spell_resistances.go`), `aura_helpers.go`'s two proc-chance rolls,
+  the named procs in `buffs.go`, `consumes.go`, `debuffs.go`, `energy.go`, `health.go`, and `Weapon`'s two
+  damage rolls (`attack.go`; `Weapon` now carries a `unit`, stamped by `EnableAutoAttacks`/`setWeapon`).
+- Left shared even with the option on: `SpellEffect.Roll`'s "Damage Roll" (a `unit` field there made
+  `sim/serverdata_test.go`'s `SpellEffect{...}` equality checks fail outside this WI's owned paths; reverted),
+  `PPMManager.Proc`/`AutoAttacks.PPMProc` (14 files outside `sim/core` call them directly), and
+  `Simulation.Roll`/`RollWithLabel`/`Proc`/`RandomExpFloat`, the generic passthroughs 35+ class and encounter
+  files call with their own labels.
+- Paired raid-mode SE (`raidctx`'s raid25, +100 hit/spell hit on one raider, 1,000 iterations, loaded
+  machine): 27.1 off, 4.2 on, about 6.5× down (~42× fewer iterations for equal precision, inside the
+  16-50× the option table estimated). 37 goldens byte-identical, simval 508/508, `go vet` and `gofmt` clean.
+  `BenchmarkSimulate` (`IsTest` off, so untouched by the change) held within noise, interleaved.
+
 ## Order
 
 The user put the pass before wave J, whose BIS-e2e-perf times the optimizer with PERF-TOOLS' harness

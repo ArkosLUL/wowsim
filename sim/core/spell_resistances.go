@@ -48,7 +48,7 @@ func (spell *Spell) ResistanceMultiplier(sim *Simulation, isPeriodic bool, attac
 	}
 	thresholds := &sim.lastResist.thresholds
 
-	switch resistanceRoll := sim.RandomFloat("Partial Resist"); {
+	switch resistanceRoll := sim.UnitRandomFloat(spell.Unit, "Partial Resist"); {
 	case resistanceRoll < thresholds[0].cumulativeChance:
 		return thresholds[0].damageMultiplier()
 	case resistanceRoll < thresholds[1].cumulativeChance:

@@ -29,7 +29,11 @@ type Simulation struct {
 
 	// Used for testing only, see RandomFloat().
 	isTest    bool
-	testRands map[string]Rand
+	testRands map[string]*testRandStream
+
+	// Units with their own per-label streams (UnitRandomFloat, SimOptions.PerUnitRandomSeeds), so
+	// reseedRands can find them without walking the whole raid and encounter every iteration.
+	unitTestRandUnits []*Unit
 
 	// Current Simulation State
 	pendingActions []pendingEntry   // sorted, see AddPendingAction
@@ -220,7 +224,7 @@ func newSimWithEnv(env *Environment, simOptions *proto.SimOptions) *Simulation {
 		rseed: rseed,
 
 		isTest:    simOptions.IsTest,
-		testRands: make(map[string]Rand),
+		testRands: make(map[string]*testRandStream),
 
 		serverTickInterval: env.serverSettings().MapUpdateInterval,
 	}
@@ -262,18 +266,44 @@ func (sim *Simulation) RandomFloat(label string) float64 {
 	return sim.labelRand(label).NextFloat64()
 }
 
+// UnitRandomFloat is RandomFloat, additionally split per unit (pets and guardians included) once
+// SimOptions.PerUnitRandomSeeds is on: only the optimizer's evaluator sets it. Off, or with unit
+// nil, every caller shares one stream per label, same as RandomFloat.
+func (sim *Simulation) UnitRandomFloat(unit *Unit, label string) float64 {
+	return sim.unitLabelRand(unit, label).NextFloat64()
+}
+
 func (sim *Simulation) labelRand(label string) Rand {
 	if !sim.isTest {
 		return sim.rand
 	}
 
-	labelRng, ok := sim.testRands[label]
+	stream, ok := sim.testRands[label]
 	if !ok {
-		// Add rseed to the label, so we still have run-run variance for stat weights.
-		labelRng = NewSplitMix(uint64(makeTestRandSeed(sim.rseed, label)))
-		sim.testRands[label] = labelRng
+		stream = newTestRandStream(label, sim.rseed)
+		sim.testRands[label] = stream
 	}
-	return labelRng
+	return stream.rand
+}
+
+func (sim *Simulation) unitLabelRand(unit *Unit, label string) Rand {
+	if !sim.isTest {
+		return sim.rand
+	}
+	if unit == nil || !sim.Options.PerUnitRandomSeeds {
+		return sim.labelRand(label)
+	}
+
+	if unit.testRands == nil {
+		unit.testRands = make(map[string]*testRandStream)
+		sim.unitTestRandUnits = append(sim.unitTestRandUnits, unit)
+	}
+	stream, ok := unit.testRands[label]
+	if !ok {
+		stream = newUnitTestRandStream(unit, label, sim.rseed)
+		unit.testRands[label] = stream
+	}
+	return stream.rand
 }
 
 func (sim *Simulation) reseedRands(i int64) {
@@ -281,14 +311,75 @@ func (sim *Simulation) reseedRands(i int64) {
 	sim.rand.Seed(rseed)
 
 	if sim.isTest {
-		for label, rng := range sim.testRands {
-			rng.Seed(makeTestRandSeed(rseed, label))
+		for _, stream := range sim.testRands {
+			stream.reseed(rseed)
+		}
+		for _, unit := range sim.unitTestRandUnits {
+			for _, stream := range unit.testRands {
+				stream.reseed(rseed)
+			}
 		}
 	}
 }
 
-func makeTestRandSeed(rseed int64, label string) int64 {
-	return int64(hash(label + strconv.FormatInt(rseed, 16)))
+// testRandStream is an IsTest-only random stream. labelHash folds the label (and, per unit, the
+// unit's index) in once at creation, so reseeding every iteration only has to mix in the new seed
+// instead of re-hashing the label and building a new string for it.
+type testRandStream struct {
+	labelHash uint32
+	rand      Rand
+}
+
+func newTestRandStream(label string, rseed int64) *testRandStream {
+	labelHash := fnvHashString(fnvOffset32, label)
+	return &testRandStream{labelHash: labelHash, rand: NewSplitMix(uint64(seedFromLabelHash(labelHash, rseed)))}
+}
+
+func newUnitTestRandStream(unit *Unit, label string, rseed int64) *testRandStream {
+	labelHash := fnvHashUint32(fnvHashString(fnvOffset32, label), uint32(unit.UnitIndex))
+	return &testRandStream{labelHash: labelHash, rand: NewSplitMix(uint64(seedFromLabelHash(labelHash, rseed)))}
+}
+
+func (s *testRandStream) reseed(rseed int64) {
+	s.rand.Seed(seedFromLabelHash(s.labelHash, rseed))
+}
+
+// seedFromLabelHash matches hash(label + strconv.FormatInt(rseed, 16)): FNV-1a folds bytes in
+// sequence, so hashing the label's bytes and then the seed's hex digits gives the same result as
+// hashing them pre-concatenated, without allocating that string on every reseed.
+func seedFromLabelHash(labelHash uint32, rseed int64) int64 {
+	var buf [20]byte
+	return int64(fnvHashBytes(labelHash, strconv.AppendInt(buf[:0], rseed, 16)))
+}
+
+const (
+	fnvOffset32 = 2166136261
+	fnvPrime32  = 16777619
+)
+
+func fnvHashByte(h uint32, b byte) uint32 {
+	return (h ^ uint32(b)) * fnvPrime32
+}
+
+func fnvHashBytes(h uint32, data []byte) uint32 {
+	for _, b := range data {
+		h = fnvHashByte(h, b)
+	}
+	return h
+}
+
+func fnvHashString(h uint32, s string) uint32 {
+	for i := 0; i < len(s); i++ {
+		h = fnvHashByte(h, s[i])
+	}
+	return h
+}
+
+func fnvHashUint32(h uint32, v uint32) uint32 {
+	h = fnvHashByte(h, byte(v>>24))
+	h = fnvHashByte(h, byte(v>>16))
+	h = fnvHashByte(h, byte(v>>8))
+	return fnvHashByte(h, byte(v))
 }
 
 func (sim *Simulation) RandomExpFloat(label string) float64 {

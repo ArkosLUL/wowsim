@@ -176,6 +176,9 @@ type Unit struct {
 
 	// The currently-channeled DOT spell, otherwise nil.
 	ChanneledDot *Dot
+
+	// This unit's own IsTest streams, see Simulation.UnitRandomFloat. Nil until first used.
+	testRands map[string]*testRandStream
 }
 
 // Units can be disabled for several reasons:

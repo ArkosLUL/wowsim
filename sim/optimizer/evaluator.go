@@ -544,9 +544,10 @@ func (e *SimEvaluator) request(p Point, first, n int) *proto.RaidSimRequest {
 		Iterations: int32(n),
 		// core reseeds iteration i with RandomSeed + i, so this gives the span the seeds one long sim would
 		RandomSeed: e.seed + int64(first),
-		// one random stream per label, reseeded every iteration, is what pairs the points
-		IsTest:        true,
-		SaveAllValues: true,
+		// one random stream per unit and label, reseeded every iteration, is what pairs the points
+		IsTest:             true,
+		PerUnitRandomSeeds: true,
+		SaveAllValues:      true,
 	}
 	return rsr
 }

@@ -53,7 +53,7 @@ func (dot *Dot) OutcomeSnapshotCrit(sim *Simulation, result *SpellResult, _ *Att
 	if dot.Spell.CritMultiplier == 0 {
 		panic("Spell " + dot.Spell.ActionID.String() + " missing CritMultiplier")
 	}
-	if dot.CanTickCrit() && sim.RandomFloat("Snapshot Crit Roll") < dot.SnapshotCritChance {
+	if dot.CanTickCrit() && sim.UnitRandomFloat(dot.Spell.Unit, "Snapshot Crit Roll") < dot.SnapshotCritChance {
 		result.Outcome = OutcomeCrit
 		result.Damage *= dot.Spell.CritMultiplier
 		dot.Spell.SpellMetrics[result.Target.UnitIndex].Crits++
@@ -68,7 +68,7 @@ func (dot *Dot) OutcomeMagicHitAndSnapshotCrit(sim *Simulation, result *SpellRes
 		panic("Spell " + dot.Spell.ActionID.String() + " missing CritMultiplier")
 	}
 	if dot.Spell.MagicHitCheck(sim, attackTable) {
-		if dot.CanTickCrit() && sim.RandomFloat("Snapshot Crit Roll") < dot.SnapshotCritChance {
+		if dot.CanTickCrit() && sim.UnitRandomFloat(dot.Spell.Unit, "Snapshot Crit Roll") < dot.SnapshotCritChance {
 			result.Outcome = OutcomeCrit
 			result.Damage *= dot.Spell.CritMultiplier
 			dot.Spell.SpellMetrics[result.Target.UnitIndex].Crits++
@@ -157,7 +157,7 @@ func (spell *Spell) OutcomeMagicHit(sim *Simulation, result *SpellResult, attack
 
 func (spell *Spell) OutcomeMeleeWhite(sim *Simulation, result *SpellResult, attackTable *AttackTable) {
 	table := WhiteMeleeTableBP(spell.WhiteTableInput(attackTable))
-	if !result.applyMeleeTable(spell, attackTable, table, sim.rollBP("White Hit Table"), false) {
+	if !result.applyMeleeTable(spell, attackTable, table, sim.rollBP(spell.Unit, "White Hit Table"), false) {
 		result.applyAttackTableHit(spell)
 	}
 }
@@ -202,7 +202,7 @@ func (spell *Spell) OutcomeRangedHitAndCrit(sim *Simulation, result *SpellResult
 func (dot *Dot) OutcomeRangedHitAndCritSnapshot(sim *Simulation, result *SpellResult, attackTable *AttackTable) {
 	spell := dot.Spell
 	table := YellowMeleeTableBP(spell.YellowTableInput(attackTable), YellowOptions{Ranged: true})
-	if result.applyMeleeTable(spell, attackTable, table, sim.rollBP("White Hit Table"), true) {
+	if result.applyMeleeTable(spell, attackTable, table, sim.rollBP(spell.Unit, "White Hit Table"), true) {
 		return
 	}
 
@@ -210,7 +210,7 @@ func (dot *Dot) OutcomeRangedHitAndCritSnapshot(sim *Simulation, result *SpellRe
 		panic("Spell " + spell.ActionID.String() + " missing CritMultiplier")
 	}
 	result.Outcome = OutcomeHit
-	if dot.CanTickCrit() && sim.RandomFloat("Physical Crit Roll") < dot.SnapshotCritChance {
+	if dot.CanTickCrit() && sim.UnitRandomFloat(spell.Unit, "Physical Crit Roll") < dot.SnapshotCritChance {
 		result.Outcome = OutcomeCrit
 		result.Damage *= spell.CritMultiplier
 	}
@@ -220,18 +220,18 @@ func (dot *Dot) OutcomeRangedHitAndCritSnapshot(sim *Simulation, result *SpellRe
 
 func (spell *Spell) OutcomeEnemyMeleeWhite(sim *Simulation, result *SpellResult, attackTable *AttackTable) {
 	table := WhiteMeleeTableBP(spell.WhiteTableInput(attackTable))
-	if !result.applyMeleeTable(spell, attackTable, table, sim.rollBP("Enemy White Hit Table"), false) {
+	if !result.applyMeleeTable(spell, attackTable, table, sim.rollBP(spell.Unit, "Enemy White Hit Table"), false) {
 		result.applyAttackTableHit(spell)
 	}
 }
 
 func (spell *Spell) fixedCritCheck(sim *Simulation, critChance float64) bool {
-	return sim.RandomFloat("Fixed Crit Roll") < critChance
+	return sim.UnitRandomFloat(spell.Unit, "Fixed Crit Roll") < critChance
 }
 
 // rollBP is urand(0, 10000): the melee table's roll, inclusive at both ends.
-func (sim *Simulation) rollBP(label string) int32 {
-	return int32(sim.RandomFloat(label) * (MaxRollBP + 1))
+func (sim *Simulation) rollBP(unit *Unit, label string) int32 {
+	return int32(sim.UnitRandomFloat(unit, label) * (MaxRollBP + 1))
 }
 
 // rollYellow is MeleeSpellHitResult followed by the independent crit and block
@@ -246,7 +246,7 @@ func (spell *Spell) rollYellow(sim *Simulation, result *SpellResult, attackTable
 	alwaysHit := spell.Flags.Matches(SpellFlagAlwaysHit)
 	if !alwaysHit {
 		table := YellowMeleeTableBP(spell.YellowTableInput(attackTable), opts)
-		if result.applyMeleeTable(spell, attackTable, table, sim.rollBP("White Hit Table"), true) {
+		if result.applyMeleeTable(spell, attackTable, table, sim.rollBP(spell.Unit, "White Hit Table"), true) {
 			return
 		}
 	}
@@ -341,7 +341,7 @@ func (result *SpellResult) rollPartialBlock(sim *Simulation, spell *Spell, attac
 		return
 	}
 	chance := attackTable.partialBlockBP()
-	if chance <= 0 || sim.rollBP("Partial Block") >= chance {
+	if chance <= 0 || sim.rollBP(spell.Unit, "Partial Block") >= chance {
 		return
 	}
 

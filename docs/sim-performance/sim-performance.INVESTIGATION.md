@@ -551,3 +551,85 @@ at 1 / 100 iterations; base +26% / +46%, final +23% / +29%. The rest is simulate
 - The closures that do more than deal: Lightning Bolt 37% of Elemental's objects, Steady Shot 9% of Hunter's.
 - Elemental's extra rotation passes and queued actions since I4.
 - Dot ticks, as PERF-HOT left them: 48% of the raid's objects.
+
+## PERF-RNG (wave J2)
+
+Base `b24799131`, on a machine shared with two other work items and the worldserver's playerbots.
+
+**Problem** ([speed audit](../bis-optimizer/bis-optimizer.INVESTIGATION.md#speed-audit-after-wave-j)): `IsTest`
+rolls draw from `Simulation.testRands`, one `Rand` per label, shared by every unit. A target whose gear
+changes its own roll count (an extra swing, a saved miss) shifts every other unit's later draws from that
+label's stream too, so raid-mode paired deltas carried ±35-62 raid DPS against solo's ±7-13 at the same
+iterations.
+
+**Fix:** an additive `SimOptions.PerUnitRandomSeeds`, set only by the optimizer's evaluator. On,
+`Simulation.UnitRandomFloat(unit, label)` keys the stream by the unit's index as well as the label
+(`unit.testRands`, a new per-`Unit` map); off, or called with a nil unit, it's `RandomFloat(label)` exactly as
+before. Converted every `sim/core` roll whose caller already has a unit or spell in hand: `PhysicalCritCheck`,
+`MagicHitCheck`, `MagicCritCheck`, `HealingCritCheck`, `fixedCritCheck`, `rollBP` (its 6 call sites: white and
+enemy-white hit tables, partial block), the snapshot crit checks, `ResistanceMultiplier`'s partial resist,
+`ApplyProcTriggerCallback`'s and `ApplyFixedUptimeAura`'s proc-chance rolls, and the one-off procs in
+`buffs.go` (Revitalize), `consumes.go` (Gift of Arthas, Flame Cap), `debuffs.go` (Judgement of Wisdom),
+`energy.go` (the energy tick's jitter) and `health.go` (the healing model's cadence). `Weapon` gained a `unit`
+field too, stamped by `EnableAutoAttacks` and `setWeapon`, so `EnemyWeaponDamage` and `BaseDamage` convert.
+
+**Why `SpellEffect.Roll`'s "Damage Roll" didn't convert:** the sim's busiest stream (nearly every direct hit
+and dot tick), called as `e.Roll(sim)` with no unit in reach - `SpellEffect` is a plain value copied and
+compared throughout, and 170+ external call sites fix `.Roll(sim)`'s signature. The fix was a `unit *Unit`
+field on `SpellEffect`, stamped at registration (`RegisterSpell`, `createDots`) only when the declaration was
+already non-zero, so the existing `declaration != SpellEffect{}` checks inside `sim/core` still read an
+undeclared effect as zero. That held everywhere inside `sim/core`, but `sim/serverdata_test.go` (package
+`sim`, outside this WI's owned paths) compares `spell.Direct`/`dot.Tick` against fully spelled-out expected
+values (`!= (SpellEffect{Min: 803, ...})`), which now differ on the unexported `unit` pointer alone. Reverted
+rather than edit a file outside scope to work around a self-inflicted equality break; `Weapon` carries the
+same kind of field safely, since nothing anywhere compares one by value. Left shared: "Damage Roll",
+`PPMManager.Proc`/`AutoAttacks.PPMProc` (14 files outside `sim/core` call them directly), and the generic
+`Simulation.Roll`/`RollWithLabel`/`Proc`/`RandomExpFloat` passthroughs 35+ class and encounter files call with
+their own ad hoc labels.
+
+**Reseeding:** `reseedRands` used to hash `label + strconv.FormatInt(rseed, 16)` for every open stream, every
+iteration - a string built and thrown away each time. Each `testRandStream` now caches its label's FNV-1a hash
+at creation (`fnvHashString`/`fnvHashUint32`), and a reseed folds the new seed's hex digits into that cached
+hash directly (`seedFromLabelHash`, over a stack buffer via `strconv.AppendInt`): FNV-1a is a sequential fold,
+so hashing the label then the seed gives the identical `uint32` to hashing them pre-concatenated, with no
+allocation. Applies to both the shared and per-unit paths; verified by matching the two computations on a
+handful of seeds before wiring it in.
+
+**Checks:**
+- 37 `.results` goldens byte-identical (`dock.sh delta`); simval 508/508; `go vet` and `gofmt` clean.
+- Paired raid-mode SE: `raidctx`'s raid25 fixture, +100 melee and spell hit rating on one raider (party 0,
+  player 1, Tankpal), 1,000 iterations, seed 900001, everyone else's gear untouched. Mean raid DPS delta and its SE,
+  `PerUnitRandomSeeds` off vs on:
+
+  | | mean Δ | SE |
+  |---|---|---|
+  | off | +92.2 | ±27.1 |
+  | on | +80.0 | ±4.2 |
+
+  SE fell about 6.5×, so a raid-mode comparison needs about 42× fewer iterations for the same precision -
+  inside the option table's 16-50× estimate. The two means differ by less than the noisier one's own SE, as
+  expected from independent draws of the same underlying effect.
+- `BenchmarkSimulate` (`./sim`, the 8-player raid), interleaved with the wave's other two work items and the
+  worldserver also running: base and this tree don't differ outside noise at either iteration count
+  (iterations=1 ~, p=0.671; iterations=100 ~, p=0.887; geomean +4.5%, both legs' CIs cross zero). Expected:
+  these benchmarks run with `IsTest` off (`RaidBenchmarkIterations`), so `UnitRandomFloat` and `RandomFloat`
+  take the identical one-line fast path either build; this only confirms the two new struct fields
+  (`Simulation.unitTestRandUnits`, `Unit.testRands`) cost nothing when unused.
+- The optimizer's slow suite (base `b24799131`'s wave-J row in [wave-loop PLAN](../wave-loop/wave-loop.PLAN.md#bis-baseline)
+  against this run, `J_preset, +Quick/+Normal`): Fury 8860.8→8725.6 (-1.5%), +282/+286→+252.8/+297.0; Combat
+  Rogue 10728.5→10728.7 (flat), +624/+926→+606.6/+799.4; Fire Mage 5064.6→5064.5 (flat), +43/+63→+39.9/+47.4;
+  Ret 12963.5→12964.3 (flat), +229/+228→+213.2/+231.2; Prot Pal -97067.0→-96051.1, +3376/+3759→+3288.3/+3707.2;
+  Feral Tank -1644.5→-1642.4 (flat), +727/+821→+739.9/+803.9. All 12 subtests passed, including each one's own
+  `J_opt ≥ J_preset - 2 se` bar (978.59s total). `PerUnitRandomSeeds` is on for every optimizer run (not only
+  when a WI opts in), so every J_preset and gain here draws on a different random stream than wave J's baseline
+  row - the kind of run-to-run move the BiS baseline table already reads past for wave-to-wave noise, not a
+  regression to trace.
+
+**Left:**
+- The streams the previous section names as shared stay shared: "Damage Roll", the two `PPMManager` proc
+  paths, and every class/encounter file's direct `Simulation.Roll`/`RandomExpFloat` call. A future pass could
+  revisit "Damage Roll" by giving `sim/serverdata_test.go`'s checks a `SpellEffect.Declared()`-style helper
+  that clears transient fields before comparing, rather than raw `==`, but that's a change to a file outside
+  this WI's owned paths.
+- Per-unit maps only exist for units the option actually touches: a raid the optimizer never asks about it (the
+  default, everywhere but `SimEvaluator.request`) never allocates one.

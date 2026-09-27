@@ -232,7 +232,7 @@ func JudgementOfWisdomAura(target *Unit) *Aura {
 				return
 			}
 
-			if sim.RandomFloat("jow") > unit.AuraPPMProcChance(ppm, spell) {
+			if sim.UnitRandomFloat(unit, "jow") > unit.AuraPPMProcChance(ppm, spell) {
 				return
 			}
 

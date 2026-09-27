@@ -23,6 +23,9 @@ type Weapon struct {
 	NormalizedSwingSpeed float64
 	CritMultiplier       float64
 	SpellSchool          SpellSchool
+
+	// The unit swinging it, stamped on by EnableAutoAttacks/setWeapon, see UnitRandomFloat.
+	unit *Unit
 }
 
 func (weapon *Weapon) DPS() float64 {
@@ -104,13 +107,13 @@ func (weapon *Weapon) EnemyWeaponDamage(sim *Simulation, attackPower float64, da
 	// Patchwerk follows special damage range rules.
 	// TODO: Scrape more logs to determine these values more accurately. AP defined in constants.go
 
-	rand := 1 + damageSpread*sim.RandomFloat("Enemy Weapon Damage")
+	rand := 1 + damageSpread*sim.UnitRandomFloat(weapon.unit, "Enemy Weapon Damage")
 
 	return weapon.BaseDamageMin * (rand + attackPower*EnemyAutoAttackAPCoefficient)
 }
 
 func (weapon *Weapon) BaseDamage(sim *Simulation) float64 {
-	return weapon.BaseDamageMin + (weapon.BaseDamageMax-weapon.BaseDamageMin)*sim.RandomFloat("Weapon Base Damage")
+	return weapon.BaseDamageMin + (weapon.BaseDamageMax-weapon.BaseDamageMin)*sim.UnitRandomFloat(weapon.unit, "Weapon Base Damage")
 }
 
 func (weapon *Weapon) AverageDamage() float64 {
@@ -282,6 +285,7 @@ func (wa *WeaponAttack) park(from time.Duration) {
 }
 
 func (wa *WeaponAttack) setWeapon(weapon Weapon) {
+	weapon.unit = wa.unit
 	wa.Weapon = weapon
 	wa.spell.CritMultiplier = weapon.CritMultiplier
 	wa.updateSwingDuration(wa.curSwingSpeed)
@@ -453,6 +457,9 @@ func (unit *Unit) EnableAutoAttacks(agent Agent, options AutoAttackOptions) {
 	if options.OffHand.AttackPowerPerDPS == 0 {
 		options.OffHand.AttackPowerPerDPS = DefaultAttackPowerPerDPS
 	}
+	options.MainHand.unit = unit
+	options.OffHand.unit = unit
+	options.Ranged.unit = unit
 
 	unit.AutoAttacks = AutoAttacks{
 		AutoSwingMelee:  options.AutoSwingMelee,

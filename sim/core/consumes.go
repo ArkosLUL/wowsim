@@ -300,7 +300,7 @@ func applyConsumeEffects(agent Agent) {
 				OnSpellHitTaken: func(aura *Aura, sim *Simulation, spell *Spell, result *SpellResult) {
 					if result.Landed() &&
 						spell.SpellSchool == SpellSchoolPhysical &&
-						sim.RandomFloat("Gift of Arthas") < 0.3 {
+						sim.UnitRandomFloat(aura.Unit, "Gift of Arthas") < 0.3 {
 						goaProc.Cast(sim, spell.Unit)
 					}
 				},
@@ -868,7 +868,7 @@ func registerConjuredCD(agent Agent, consumes *proto.Consumes) {
 				if !result.Landed() || !spell.ProcMask.Matches(ProcMaskMeleeOrRanged) {
 					return
 				}
-				if sim.RandomFloat("Flame Cap Melee") > procChance {
+				if sim.UnitRandomFloat(spell.Unit, "Flame Cap Melee") > procChance {
 					return
 				}
 

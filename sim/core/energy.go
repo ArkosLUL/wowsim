@@ -239,7 +239,7 @@ func (eb *energyBar) reset(sim *Simulation) {
 
 func (eb *energyBar) enable(sim *Simulation, startAt time.Duration) {
 	sim.AddTask(eb)
-	eb.nextEnergyTick = startAt + time.Duration(sim.RandomFloat("Energy Tick")*float64(EnergyTickDuration))
+	eb.nextEnergyTick = startAt + time.Duration(sim.UnitRandomFloat(eb.unit, "Energy Tick")*float64(EnergyTickDuration))
 	sim.RescheduleTask(eb.nextEnergyTick)
 
 	if eb.cumulativeEnergyDecisionThresholds != nil && sim.Log != nil {
