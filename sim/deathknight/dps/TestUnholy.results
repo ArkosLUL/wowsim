@@ -934,16 +934,16 @@ dps_results: {
 dps_results: {
  key: "TestUnholy-AllItems-TinyAbominationinaJar-50351"
  value: {
-  dps: 10486.89979
-  tps: 6233.69038
+  dps: 10476.59575
+  tps: 6225.24297
   hps: 30.34439
  }
 }
 dps_results: {
  key: "TestUnholy-AllItems-TinyAbominationinaJar-50706"
  value: {
-  dps: 10521.79662
-  tps: 6253.63979
+  dps: 10513.2384
+  tps: 6246.60043
   hps: 30.34439
  }
 }

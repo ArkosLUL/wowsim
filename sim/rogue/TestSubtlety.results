@@ -715,15 +715,15 @@ dps_results: {
 dps_results: {
  key: "TestSubtlety-AllItems-TinyAbominationinaJar-50351"
  value: {
-  dps: 6314.30396
-  tps: 4483.15581
+  dps: 6315.51781
+  tps: 4484.01765
  }
 }
 dps_results: {
  key: "TestSubtlety-AllItems-TinyAbominationinaJar-50706"
  value: {
-  dps: 6356.04035
-  tps: 4512.78865
+  dps: 6348.03547
+  tps: 4507.10519
  }
 }
 dps_results: {
