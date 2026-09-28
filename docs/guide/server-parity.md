@@ -72,6 +72,9 @@ class by simval.
 - **Master Poisoner** (`SPELL_AURA_MOD_CRIT_CHANCE_FOR_CASTER`) raises only its rogue's crit against a
   poisoned target, so the sim gives it to that rogue as a buff, not to the raid as a debuff.
 - **Binary spells** follow the spelldump. Mind Flay isn't binary; Steady Shot and Expose Armor are.
+- **Weapon requirements:** a spell with `SPELL_ATTR3_REQUIRES_MAIN_HAND_WEAPON` or `_OFF_HAND_WEAPON` and
+  an item subclass mask fails without that weapon, triggered casts too (`Spell::CheckItems`): Mutilate
+  needs two daggers, and rogue off-hand strikes an off-hand weapon.
 - **Damage mods:** percent `SPELLMOD_DAMAGE` and `SPELLMOD_DOT` mods from talents, glyphs, set pieces and
   procs multiply (`Player::ApplySpellMod`; other ops' percents add). Class spells stack them through
   `spellModDamage`; `sim/shaman`'s still add. A holy spell dealing weapon damage (seal procs, judgements)

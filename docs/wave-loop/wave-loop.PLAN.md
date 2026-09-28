@@ -106,7 +106,8 @@ then regenerates the BiS presets on the merged tree: both change what the optimi
 
 ## Current wave
 
-- Wave: K, running. Prod runs J; the user OKed one rebuild once K lands (2026-09-28).
+- Wave: K landed on `master` (2026-09-28), prod rebuilt to it. The registry has no wave after K; open
+  follow-ups are in the parity PLAN's P8 as built and the wave K report.
 - Base SHA: `e0c43c592`; the WIs branch from its spec commit `a36c02588`.
 - Workflow runId: `wf_4b8a1c11-d41`, args `waveK-args.json` in `G:\DevStuff\GitHub\.wave-loop`, transcripts
   in `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\wf_4b8a1c11-d41`.
@@ -137,6 +138,7 @@ Reckoning that way), but J isn't DPS: see below.
 | I6 | 8860.8, +284 / +293 | 10728.5, +653 / +813 | 5064.6, +43 / +43 | 12963.5, +224 / +182 | -89267.2, +3186 / +3703 | -668.4, +750 / +799 |
 | J | 8860.8, +282 / +286 | 10728.5, +624 / +926 | 5064.6, +43 / +63 | 12963.5, +229 / +228 | -97067.0, +3376 / +3759 | -1644.5, +727 / +821 |
 | J2 | 8725.6, +253 / +297 | 10728.7, +674 / +799 | 5064.5, +40 / +47 | 12964.3, +213 / +231 | -96051.1, +3590 / +3707 | -1642.4, +740 / +804 |
+| K | 8725.1, +237 / +284 | 10730.8, +675 / +807 | 5064.5, +40 / +47 | 12963.8, +186 / +212 | -17821.9, +4813 / +4831 | -1056.8, +850 / +894 |
 
 Quick / Normal. Ret P4 ran at Quick only in wave D, after the glyph fix; its wave C numbers
 (12821.9, +54 / +73) came from a seed that wore the glyph. The two tanks arrive with
@@ -178,6 +180,10 @@ In J2 PERF-RNG's per-unit streams gave the optimizer new random numbers: Fury's 
 took a better swap, Quick gained (Combat Rogue +674, Prot Pal +3590); Normal fell for Combat Rogue (+799)
 and Fire Mage (+47), the path dependence again. Racing cut Normal's sims about 23% and its wall 18–24% on
 the DPS specs.
+In K both tanks fight BIS-tank-boss's generic boss, at the damage the cross-review corrected: Prot Pal's
+`dps_preset` rose from 269.3 on Anub'arak's scripted fight to 4489.9, Feral Tank's fell 2.3% (4183.3). The DPS
+rows moved with their goldens (Fury +0.22%, Combat Rogue +0.48%, Fire Mage and Ret flat); Ret's gains fell to
++186 / +212, the path dependence again.
 
 ## Sim throughput
 
@@ -200,6 +206,7 @@ From G the benches run their suites' default players with rotations, at 1 and 10
 | I6 | 1.104 / 76.5 | 0.530 / 28.6 | 0.823 / 44.1 | 0.503 / 17.0 | 5.296 / 263.6 |
 | J | 1.087 / 77.1 | 0.527 / 28.7 | 0.755 / 43.2 | 0.480 / 17.2 | 5.213 / 262.6 |
 | J2 | 1.043 / 77.5 | 0.561 / 28.7 | 0.759 / 44.3 | 0.493 / 16.9 | 5.300 / 272.8 |
+| K | 1.146 / 78.7 | 0.527 / 29.7 | 0.729 / 47.1 | 0.542 / 16.9 | 5.328 / 275.6 |
 
 H2 ran with the live worldserver using half a core, which moved whole runs by up to 2×
 and cost a few percent here (Ret, which H2 barely touched, +4%). An interleaved A/B against the base
@@ -248,6 +255,10 @@ read 74% over the others at 100 iterations; another session's container used und
 J2's row ran idle too (the worldserver stopped, the database up). At 100 iterations every case is within 3%
 of J's but the raid, +3.9%. PERF-RNG's own interleaved A/B found no difference outside noise: these benches
 run with `IsTest` off, where rolls take the old path.
+
+K's row ran idle (the worldserver, database and prod container stopped). At 100 iterations Hunter is 6% over
+J2's, likely PAR-P8's pet AI no longer pooling focus, so the pet casts more; Ret +3.5%, the rest within 2%.
+No A/B.
 
 E to F2 ran the old requests: one iteration, and no rotation for Ret, Hunter and Elemental.
 
@@ -358,11 +369,16 @@ crashed before F2, so its column starts there.
 | BIS-tank-boss | merged | `5354d6a60` | goldens unchanged. Its implementer's `taskkill /IM chrome.exe` closed every Chrome on the machine (a RUNBOOK rule since) |
 | BIS-presets | merged | `444d104ab` | goldens unchanged. Sent back: the generator wrote only at Quick and the tooltips were typed by hand; 43 unused Classic gear files deleted |
 | wave K cross-review | | `61d374f98`, `255b54f4a` | 3 bugs: Conflagrate reads Immolate's boosted amount (Destruction +4.7%, +0.6% net of P8), the generic boss hit for half since wave J (tanks take 2 to 3.4 times the damage), the hunter's runtime percent mods still added; `db.json` in `b415c0f48` |
+| Tiny Abomination fix | | `215fb2882` | the preset run crashed Assassination P5: a rogue's off-hand strike with no off-hand weapon made the trinket fire an off-hand attack it never registered (also at the wave base) |
+| rogue weapon fixes | | `01af4a0d8`, `1e0bc463a` | every Assassination preset held a mace off hand, which can't Mutilate on the server: Mutilate now needs two daggers and off-hand strikes an off-hand weapon; Mutilate and Fan of Knives multiply their bonuses, Tiny Abomination picks its hand 50/50. 8 goldens; TestAssassination sweeps daggers only |
+| BiS presets at Normal | | `ef5f48d20`, `f010ed638` | 140 runs in 3.9 h on `b415c0f48`; Assassination rerun on `1e0bc463a`. Perf harness tank requests in `60b063229` |
 
 Later WIs are added as their wave starts.
 
 ## User actions
 
+- Pick a default race: most specs' pages default to a Horde race, while their default gear is now an
+  Alliance-built BiS preset (a Troll mage wears gear picked with Alliance items).
 - Worth a click-through when convenient: the optimizer tab's tank controls on a tank spec (the
   survival/threat slider, the crit-immunity box, the racial select). No agent can judge those, and
   BIS-ui-tab's own click-through found three real bugs.
