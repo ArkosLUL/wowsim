@@ -27,12 +27,12 @@ func (rogue *Rogue) newMutilateHitSpell(isMH bool) *core.Spell {
 			[]float64{0, 2, 4, 6}[rogue.Talents.TurnTheTables]*core.CritRatingPerCritChance +
 			5*core.CritRatingPerCritChance*float64(rogue.Talents.PuncturingWounds),
 
-		DamageMultiplierAdditive: 1 +
-			0.1*float64(rogue.Talents.Opportunity) +
-			0.02*float64(rogue.Talents.FindWeakness) +
+		// all three classMasks reach both hands' family flags (48665 [0,2,0], 48664 [0,4,0])
+		DamageMultiplier: spellModDamage(
+			0.02*float64(rogue.Talents.FindWeakness),
+			0.1*float64(rogue.Talents.Opportunity),
 			core.TernaryFloat64(rogue.HasSetBonus(Tier6, 4), 0.06, 0),
-		DamageMultiplier: 1 *
-			core.TernaryFloat64(isMH, 1, rogue.dwsMultiplier()),
+		) * core.TernaryFloat64(isMH, 1, rogue.dwsMultiplier()),
 		CritMultiplier:   rogue.MeleeCritMultiplier(true),
 		ThreatMultiplier: 1,
 
@@ -73,6 +73,9 @@ func (rogue *Rogue) registerMutilateSpell() {
 				GCD: time.Second,
 			},
 			IgnoreHaste: true,
+		},
+		ExtraCastCondition: func(sim *core.Simulation, target *core.Unit) bool {
+			return rogue.HasDagger(core.MainHand) && rogue.HasDagger(core.OffHand)
 		},
 
 		ThreatMultiplier: 1,

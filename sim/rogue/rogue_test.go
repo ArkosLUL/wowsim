@@ -75,7 +75,6 @@ func TestAssassination(t *testing.T) {
 			},
 			WeaponTypes: []proto.WeaponType{
 				proto.WeaponType_WeaponTypeDagger,
-				proto.WeaponType_WeaponTypeFist,
 			},
 		},
 	}))

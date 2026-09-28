@@ -11,6 +11,8 @@ import (
 func (rogue *Rogue) registerKillingSpreeSpell() {
 	// Each swing is its own server spell (57841/57842), so RegisterSpell finds its data by ActionID.
 	// Both have empty family flags, so no classMask'd mod such as Find Weakness reaches them.
+	var ohWeaponSwing *core.Spell
+	hasOH := rogue.HasOHWeapon()
 	mhWeaponSwing := rogue.GetOrRegisterSpell(core.SpellConfig{
 		ActionID:         core.ActionID{SpellID: 57841},
 		SpellSchool:      core.SpellSchoolPhysical,
@@ -22,10 +24,16 @@ func (rogue *Rogue) registerKillingSpreeSpell() {
 		Direct:           core.SpellEffect{Effect: 0, WeaponPct: 1},
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			baseDamage := normalizedStrike(sim, spell, &spell.Direct, true)
-			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialNoBlockDodgeParry)
+			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialNoBlockDodgeParry)
+			// effect 1 triggers 57842 at launch and only on a hit, so the off hand lands first.
+			// 57842 needs an off-hand weapon
+			if result.Landed() && hasOH {
+				ohWeaponSwing.Cast(sim, target)
+			}
+			spell.DealDamage(sim, result)
 		},
 	})
-	ohWeaponSwing := rogue.GetOrRegisterSpell(core.SpellConfig{
+	ohWeaponSwing = rogue.GetOrRegisterSpell(core.SpellConfig{
 		ActionID:         core.ActionID{SpellID: 57842},
 		SpellSchool:      core.SpellSchoolPhysical,
 		ProcMask:         core.ProcMaskMeleeOHSpecial,
@@ -58,7 +66,6 @@ func (rogue *Rogue) registerKillingSpreeSpell() {
 						target = sim.GetTargetUnit(newUnitIndex)
 					}
 					mhWeaponSwing.Cast(sim, target)
-					ohWeaponSwing.Cast(sim, target)
 				},
 			})
 		},

@@ -161,7 +161,6 @@ func init() {
 		MaxDmg: 2275,
 	})
 
-	// see various posts around https://web.archive.org/web/20100530203708/http://elitistjerks.com/f78/t39136-combat_mutilate_spreadsheets_updated_3_3_a/p96/#post1518212
 	NewItemEffectWithHeroic(func(isHeroic bool) {
 		name := "Tiny Abomination in a Jar"
 		itemID := int32(50351)
@@ -212,8 +211,6 @@ func init() {
 				}
 			}
 
-			firstProc := core.MainHand
-
 			capacitorAura := makeCapacitorAura(&character.Unit, CapacitorAura{
 				Aura: core.Aura{
 					Label:     name,
@@ -225,9 +222,9 @@ func init() {
 					},
 				},
 				Handler: func(sim *core.Simulation) {
-					// no ohSpell without an off-hand weapon, but rogue off-hand strikes like
-					// Mutilate's still land then and can set firstProc
-					if firstProc == core.OffHand && ohSpell != nil {
+					// 50/50 which hand with an off-hand weapon, no matter which hand fed the motes
+					// (spell_item_tiny_abomination_in_a_jar)
+					if ohSpell != nil && sim.RandomFloat("Manifest Anger") < 0.5 {
 						ohSpell.Cast(sim, character.CurrentTarget)
 					} else {
 						mhSpell.Cast(sim, character.CurrentTarget)
@@ -245,13 +242,6 @@ func init() {
 				Handler: func(sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
 					if spell == mhSpell || spell == ohSpell { // can't proc itself
 						return
-					}
-					if !capacitorAura.IsActive() {
-						if spell.ProcMask.Matches(core.ProcMaskMeleeMH | core.ProcMaskProc) {
-							firstProc = core.MainHand
-						} else {
-							firstProc = core.OffHand
-						}
 					}
 					capacitorAura.Activate(sim)
 					capacitorAura.AddStack(sim)

@@ -9,7 +9,8 @@ import (
 
 func (rogue *Rogue) registerShivSpell() {
 	baseCost := 20.0
-	if ohWeapon := rogue.GetOHWeapon(); ohWeapon != nil {
+	ohWeapon := rogue.GetOHWeapon()
+	if ohWeapon != nil {
 		baseCost = rogue.costModifier(20 + 10*ohWeapon.SwingSpeed)
 	}
 
@@ -27,6 +28,9 @@ func (rogue *Rogue) registerShivSpell() {
 				GCD: time.Second,
 			},
 			IgnoreHaste: true,
+		},
+		ExtraCastCondition: func(sim *core.Simulation, target *core.Unit) bool {
+			return ohWeapon != nil
 		},
 
 		DamageMultiplier: spellModDamage(

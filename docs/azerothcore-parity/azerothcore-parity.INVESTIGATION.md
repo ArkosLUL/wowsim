@@ -542,6 +542,32 @@ Roll details the tables above don't show:
   `{SpellID: 51690, Tag: 1|2}`, so the P3-2 serverdata sync finds them by `ActionID.SpellID` like any
   other spell. No golden moved: their effect declarations were already checked against 57841/57842 via
   `FromSpellID`, and their flags were already hand-set to match — attribution only.
+- **Fixed (K-rogue):** weapon requirements and the last summed percents (`sim/rogue`,
+  `sim/common/wotlk/capacitors.go`; spelldump):
+  - Mutilate (48666) has `SPELL_ATTR3_REQUIRES_MAIN_HAND_WEAPON` and `_OFF_HAND_WEAPON` with a dagger-only
+    `EquippedItemSubClassMask` (0x8000), which `Spell::CheckItems` checks per hand
+    (`Item::IsFitToSpellRequirements`). It now needs a dagger in each hand, like Backstab and Ambush.
+  - Killing Spree's 57842, Fan of Knives' 52874 and Shiv (5938) have `_OFF_HAND_WEAPON` (any melee
+    subclass, 0x2a5f3), which `CheckItems` checks for triggered casts too: without an off-hand weapon none
+    happens. The sim dealt them from an empty off hand.
+  - 57841's effect 1 triggers 57842 at launch, only on a target it didn't miss
+    (`Spell::DoAllEffectOnLaunchTarget`): the off hand swings only on a main-hand hit, and lands first. The
+    sim swung both every tick, main hand first.
+  - Mutilate's hits (48665 `[0,2,0]`, 48664 `[0,4,0]`) and Fan of Knives (`[0,0x40000,0]`) still summed
+    percents. Opportunity (`[0x204,6,0]`), Find Weakness (`[0x2602021e,0x4010f,0]`), the T6 4pc (38389,
+    `[0x2000006,6,0]`) and Glyph of Fan of Knives (63254, `[0,0x40000,0]`) all reach them, so they now
+    multiply through `spellModDamage`. Nothing else in `sim/rogue` sums them.
+  - Tiny Abomination in a Jar (`spell_item_tiny_abomination_in_a_jar`) strikes with the off hand (71434) at
+    50% when there's an off-hand weapon, else the main hand (71433). The sim used the hand of each cycle's
+    first mote.
+  - Goldens: Assassination +0.10 to +0.25% (Find Weakness × Opportunity on Mutilate), its Slayer's Armor
+    row +0.29%, its Black Bruise and Fists of Fury rows -97% (a fist main hand: no Mutilate, the APLs' only
+    builder). Combat -0.5 to +0.2%, median -0.01% (Killing Spree). The Tiny Abomination `AllItems` rows of
+    Frost, Frost UH, Unholy, Subtlety, Enhancement and Fury: -0.35 to +0.04%.
+- Left open (K-rogue): every BiS Assassination preset (`ui/rogue/gear_sets/p{1..5}_bis_assassination`) has
+  Rod of the Sun King (29996, a mace) in the off hand, picked while Mutilate took any off hand. With it
+  Mutilate can't cast: P1 9403 → 348 DPS (the APL then Vanishes for Overkill and nothing breaks stealth).
+  The presets and the BiS tooltip dataset need a new optimizer run.
 
 **Warrior** (`TestFury`, `TestArms`, `TestProtectionWarrior`, code)
 - Slam (`sim/warrior/slam.go`): `spell_warr_slam::HandleDummy` (`spell_warrior.cpp:318-353`) only casts
