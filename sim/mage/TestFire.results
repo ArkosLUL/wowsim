@@ -812,43 +812,43 @@ dps_results: {
 dps_results: {
  key: "TestFire-Settings-Troll-p3_fire_alliance-Fire-fire_aoe-FullBuffs-LongMultiTarget"
  value: {
-  dps: 64209.14941
-  tps: 53674.42018
+  dps: 63827.24393
+  tps: 53330.70524
  }
 }
 dps_results: {
  key: "TestFire-Settings-Troll-p3_fire_alliance-Fire-fire_aoe-FullBuffs-LongSingleTarget"
  value: {
-  dps: 4483.25334
-  tps: 3508.52389
+  dps: 4455.25984
+  tps: 3483.32974
  }
 }
 dps_results: {
  key: "TestFire-Settings-Troll-p3_fire_alliance-Fire-fire_aoe-FullBuffs-ShortSingleTarget"
  value: {
-  dps: 5653.29322
-  tps: 4172.13485
+  dps: 5612.61613
+  tps: 4135.52547
  }
 }
 dps_results: {
  key: "TestFire-Settings-Troll-p3_fire_alliance-Fire-fire_aoe-NoBuffs-LongMultiTarget"
  value: {
-  dps: 37063.69384
-  tps: 31263.63067
+  dps: 36954.76749
+  tps: 31165.59695
  }
 }
 dps_results: {
  key: "TestFire-Settings-Troll-p3_fire_alliance-Fire-fire_aoe-NoBuffs-LongSingleTarget"
  value: {
-  dps: 1997.98255
-  tps: 1591.88777
+  dps: 1985.601
+  tps: 1580.74437
  }
 }
 dps_results: {
  key: "TestFire-Settings-Troll-p3_fire_alliance-Fire-fire_aoe-NoBuffs-ShortSingleTarget"
  value: {
-  dps: 3280.77627
-  tps: 2475.63452
+  dps: 3254.70294
+  tps: 2452.16852
  }
 }
 dps_results: {
