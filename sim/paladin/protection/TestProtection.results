@@ -913,8 +913,8 @@ dps_results: {
  key: "TestProtection-GenericBoss"
  value: {
   dps: 3600.33398
-  tps: 8664.94021
-  dtps: 403.17517
+  tps: 8666.28846
+  dtps: 1355.05103
  }
 }
 dps_results: {
