@@ -175,7 +175,7 @@ test('a Wowhead export imports back to the same gear, talents, glyphs and race',
 	expect(imported.talentsString).toBe(original.player.talentsString);
 	expect(imported.glyphs).toEqual(original.player.glyphs);
 	// Wowhead's gear planner has no reforging, so reforges don't survive the trip
-	const unreforged = original.player.equipment.items.map(({ reforge, ...item }: { reforge?: unknown }) => item);
+	const unreforged = original.player.equipment.items.map(({ reforge: _reforge, ...item }: { reforge?: unknown }) => item);
 	expect(imported.equipment).toEqual({ ...original.player.equipment, items: unreforged });
 });
 

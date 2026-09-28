@@ -13,12 +13,20 @@ func (warlock *Warlock) registerConflagrateSpell() {
 	}
 
 	hasGlyphOfConflag := warlock.HasMajorGlyph(proto.WarlockMajorGlyph_GlyphOfConflagrate)
-	deathbringerGarb2Bonus := core.TernaryFloat64(warlock.HasSetBonus(ItemSetDeathbringerGarb, 2), 0.1, 0)
-	// Aftermath, Improved Immolate and Glyph of Immolate are all classMask-restricted to Immolate
-	// (family flags [4,0,0]); Conflagrate's own flags are [0,8388608,0], so none of their damage mods reach it.
-	// The T8 2pc's SPELLMOD_DAMAGE effect does reach Conflagrate, but its SPELLMOD_DOT effect doesn't
-	// (that one names Immolate alone too), so the dot doesn't benefit from Firestone or the set bonus.
-	dotOnlyMultiplier := 1 / spellModDamage(warlock.GrandFirestoneBonus(), deathbringerGarb2Bonus)
+	// The hit is a share of the consumed Immolate's aura amount, which already carries Immolate's own
+	// periodic mods (AuraEffect::CalculateAmount), and it skips Conflagrate's own done mods
+	// (apply_direct_bonus off), so Firestone's and the T8 2pc's Conflagrate mods never reach it.
+	immolatePeriodicMods := spellModDamage(
+		0.03*float64(warlock.Talents.Emberstorm),
+		0.1*float64(warlock.Talents.ImprovedImmolate),
+		core.TernaryFloat64(warlock.HasSetBonus(ItemSetDeathbringerGarb, 2), 0.1, 0),
+		core.TernaryFloat64(warlock.HasSetBonus(ItemSetGuldansRegalia, 4), 0.1, 0),
+		0.03*float64(warlock.Talents.Aftermath),
+		core.TernaryFloat64(warlock.HasMajorGlyph(proto.WarlockMajorGlyph_GlyphOfImmolate), 0.1, 0),
+		warlock.GrandSpellstoneBonus(),
+	)
+	// the dot's own amount then takes Conflagrate's SPELLMOD_DOT, and only Emberstorm's mask covers it
+	dotOnlyMultiplier := spellModDamage(0.03 * float64(warlock.Talents.Emberstorm))
 	// Spell::EffectSchoolDMG scripts Conflagrate from the consumed Immolate's five ticks: the hit adds
 	// effect 1's value as a percent of them, and each dot tick deals effect 2's 40/3 = 13 (integer) percent.
 	immolateTicks := func(target *core.Unit) float64 {
@@ -50,11 +58,7 @@ func (warlock *Warlock) registerConflagrateSpell() {
 		BonusCritRating: 0 +
 			core.TernaryFloat64(warlock.Talents.Devastation, 5*core.CritRatingPerCritChance, 0) +
 			5*float64(warlock.Talents.FireAndBrimstone)*core.CritRatingPerCritChance,
-		DamageMultiplier: spellModDamage(
-			warlock.GrandFirestoneBonus(),
-			0.03*float64(warlock.Talents.Emberstorm),
-			deathbringerGarb2Bonus,
-		),
+		DamageMultiplier: immolatePeriodicMods,
 		CritMultiplier:   warlock.SpellCritMultiplier(1, float64(warlock.Talents.Ruin)/5),
 		ThreatMultiplier: 1 - 0.1*float64(warlock.Talents.DestructiveReach),
 
@@ -76,7 +80,6 @@ func (warlock *Warlock) registerConflagrateSpell() {
 				attackTable := dot.Spell.Unit.AttackTables[target.UnitIndex]
 				dot.SnapshotCritChance = dot.Spell.SpellCritChance(target)
 
-				// The DoT doesn't benefit from Firestone.
 				dot.Spell.DamageMultiplier *= dotOnlyMultiplier
 				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(attackTable)
 				dot.Spell.DamageMultiplier /= dotOnlyMultiplier

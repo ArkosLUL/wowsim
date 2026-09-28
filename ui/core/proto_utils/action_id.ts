@@ -307,10 +307,17 @@ export class ActionId {
 				}
 				break;
 			case 'Fan of Knives':
-			case 'Killing Spree':
 				if (this.tag == 1) {
 					name += ' (Main Hand)'
 				} else if (this.tag == 2) {
+					name += ' (Off Hand)'
+				}
+				break;
+			case 'Killing Spree':
+				// the swings are their own spells, all three named Killing Spree
+				if (this.spellId == 57841) {
+					name += ' (Main Hand)'
+				} else if (this.spellId == 57842) {
 					name += ' (Off Hand)'
 				}
 				break;

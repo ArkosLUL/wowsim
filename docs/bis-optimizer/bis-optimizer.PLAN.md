@@ -1097,7 +1097,9 @@ scale `GenericBossTarget`'s `MinBaseDamage` by `attackTimeMs/2000`: `Creature::C
 multiplies weapon damage by both `DamageModifier` and the attack time in seconds, so this keeps
 `GenericBossTarget`'s own DPS while a faster boss's swing lands smaller, not less per second.
 `GenericBossTarget`'s pinned 2.0 s Patchwerk output (`RegisterGenericBoss`, `genericBossTargetProto`)
-stays byte-identical.
+stays byte-identical. The wave K cross-review found that pinned output missing the same attack-time
+factor, so every tank boss hit at half the server's rate; it's doubled now, moving the four tank suites'
+`GenericBoss` cases.
 
 - `tankEncounter` dropped its now-unused `db` parameter; its other caller, `optimizer_tab.ts`'s
   `bossName`, lost the try/catch its stale preset-loading comment explained.

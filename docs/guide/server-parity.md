@@ -62,7 +62,8 @@ class by simval.
 ## Other measured server behaviour
 
 - **Hunter haste:** mod-individual-progression's aura 89507 never changes the speed, so ranged haste is
-  just the quiver's or ammo pouch's, which `Hunter.Options.quiver` picks (×1.15 by default).
+  just the quiver's or ammo pouch's, which `Hunter.Options.quiver` picks (×1.15 by default), times
+  Thori'dal's own ×1.15 (44972).
 - **Talent values** are the spelldump's, not the DBC files': mod-spell-tweaks' `spell_dbc` rows change some
   while the live DBC files stay stock. Rage of Rivendare is 2 expertise a point, Virulence and Nerves of Cold
   Steel 2% hit a point.
@@ -71,10 +72,11 @@ class by simval.
 - **Master Poisoner** (`SPELL_AURA_MOD_CRIT_CHANCE_FOR_CASTER`) raises only its rogue's crit against a
   poisoned target, so the sim gives it to that rogue as a buff, not to the raid as a debuff.
 - **Binary spells** follow the spelldump. Mind Flay isn't binary; Steady Shot and Expose Armor are.
-- **Damage mods:** percent `SPELLMOD_DAMAGE` and `SPELLMOD_DOT` mods from talents, glyphs and set pieces
-  multiply (`Player::ApplySpellMod`); only `sim/paladin` does so far (`spellModDamage`). A holy spell dealing
-  weapon damage (seal procs, judgements) skips physical percent mods such as Two-Handed Weapon
-  Specialization: `Spell::EffectWeaponDmg` and `Unit::MeleeDamageBonusDone` match auras by school.
+- **Damage mods:** percent `SPELLMOD_DAMAGE` and `SPELLMOD_DOT` mods from talents, glyphs, set pieces and
+  procs multiply (`Player::ApplySpellMod`; other ops' percents add). Class spells stack them through
+  `spellModDamage`; `sim/shaman`'s still add. A holy spell dealing weapon damage (seal procs, judgements)
+  skips physical percent mods such as Two-Handed Weapon Specialization: `Spell::EffectWeaponDmg` and
+  `Unit::MeleeDamageBonusDone` match auras by school.
 - **Armor debuffs:** Sunder ×5 (debuff 58567, not ability 47467) and Expose Armor don't stack. Faerie
   Fire multiplies.
 - **Timing and procs** (the rest is under [Spell data and timing](#spell-data-and-timing)):
@@ -103,9 +105,9 @@ class by simval.
   except spells with `SpellFlagIgnoreAttackerModifiers`. The server truncates each scaled hit; the sim
   doesn't. Targets with `world_boss` (else level ≥ 83) take the boss set. The placeholder target of an
   encounter without targets is never scaled.
-- **Creature melee** is (weapon damage + AP/14 × variance) × `creature_template.DamageModifier`
-  (`Creature::CalculateMinMaxDamage`). A target's `MinBaseDamage` scales its AP part too, so 177.074 ×
-  DamageModifier gives a level 83, class 1 creature (`encounters.GenericBossTarget`).
+- **Creature melee** is (weapon damage + AP/14 × variance) × `creature_template.DamageModifier` × attack
+  time in seconds (`Creature::CalculateMinMaxDamage`). A target's `MinBaseDamage` scales its AP part too, so
+  177.074 × DamageModifier × attack time gives a level 83, class 1 creature (`encounters.GenericBossTarget`).
 
 ## Spell data and timing
 

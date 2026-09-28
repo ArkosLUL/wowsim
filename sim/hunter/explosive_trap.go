@@ -9,7 +9,8 @@ import (
 
 func (hunter *Hunter) registerExplosiveTrapSpell(timer *core.Timer) {
 	hasGlyph := hunter.HasMajorGlyph(proto.HunterMajorGlyph_GlyphOfExplosiveTrap)
-	bonusPeriodicDamageMultiplier := .10 * float64(hunter.Talents.TrapMastery)
+	// Trap Mastery's SPELLMOD_DOT covers only the ticks, and multiplies with T.N.T.'s
+	bonusPeriodicDamageMultiplier := 1 + .10*float64(hunter.Talents.TrapMastery)
 
 	hunter.ExplosiveTrap = hunter.RegisterSpell(core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: 49067},
@@ -53,7 +54,7 @@ func (hunter *Hunter) registerExplosiveTrapSpell(timer *core.Timer) {
 
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 				baseDamage := dot.Tick.Roll(sim) + dot.Tick.AP*dot.Spell.RangedAttackPowerSpellBonus(target)
-				dot.Spell.DamageMultiplierAdditive += bonusPeriodicDamageMultiplier
+				dot.Spell.DamageMultiplier *= bonusPeriodicDamageMultiplier
 				for _, aoeTarget := range sim.Encounter.TargetUnits {
 					if hasGlyph {
 						dot.Spell.CalcAndDealPeriodicDamage(sim, aoeTarget, baseDamage, dot.Spell.OutcomeMagicCrit)
@@ -61,7 +62,7 @@ func (hunter *Hunter) registerExplosiveTrapSpell(timer *core.Timer) {
 						dot.Spell.CalcAndDealPeriodicDamage(sim, aoeTarget, baseDamage, dot.OutcomeTickCounted)
 					}
 				}
-				dot.Spell.DamageMultiplierAdditive -= bonusPeriodicDamageMultiplier
+				dot.Spell.DamageMultiplier /= bonusPeriodicDamageMultiplier
 			},
 		},
 

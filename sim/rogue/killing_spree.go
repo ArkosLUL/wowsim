@@ -9,14 +9,14 @@ import (
 )
 
 func (rogue *Rogue) registerKillingSpreeSpell() {
-	// Each swing registers under its own real id (57841/57842), not the 51690 cast spell's, so the
-	// P3-2 serverdata sync (cast/GCD/flags by ActionID.SpellID) finds its row like any other spell.
+	// Each swing is its own server spell (57841/57842), so RegisterSpell finds its data by ActionID.
+	// Both have empty family flags, so no classMask'd mod such as Find Weakness reaches them.
 	mhWeaponSwing := rogue.GetOrRegisterSpell(core.SpellConfig{
 		ActionID:         core.ActionID{SpellID: 57841},
 		SpellSchool:      core.SpellSchoolPhysical,
 		ProcMask:         core.ProcMaskMeleeMHSpecial,
 		Flags:            core.SpellFlagMeleeMetrics | core.SpellFlagIncludeTargetBonusDamage,
-		DamageMultiplier: 1 + 0.02*float64(rogue.Talents.FindWeakness),
+		DamageMultiplier: 1,
 		CritMultiplier:   rogue.MeleeCritMultiplier(false),
 		ThreatMultiplier: 1,
 		Direct:           core.SpellEffect{Effect: 0, WeaponPct: 1},
@@ -30,7 +30,7 @@ func (rogue *Rogue) registerKillingSpreeSpell() {
 		SpellSchool:      core.SpellSchoolPhysical,
 		ProcMask:         core.ProcMaskMeleeOHSpecial,
 		Flags:            core.SpellFlagMeleeMetrics | core.SpellFlagIncludeTargetBonusDamage,
-		DamageMultiplier: (1 + 0.02*float64(rogue.Talents.FindWeakness)) * rogue.dwsMultiplier(),
+		DamageMultiplier: rogue.dwsMultiplier(),
 		CritMultiplier:   rogue.MeleeCritMultiplier(false),
 		ThreatMultiplier: 1,
 		Direct:           core.SpellEffect{Effect: 0, WeaponPct: 1},

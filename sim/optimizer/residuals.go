@@ -20,7 +20,7 @@ var hardCodedItemIDs = map[int32]bool{
 	44322: true, 44323: true, 44324: true, 45703: true,
 	// mage/mana_gems.go: Serpent-Coil Braid
 	30720: true,
-	// hunter/hunter.go: Thori'dal skips ammo
+	// hunter/hunter.go: Thori'dal skips ammo and adds its own 15% ranged haste
 	34334: true,
 	// deathknight/items.go: sigils
 	39208: true, 40207: true, 40822: true, 40867: true, 40875: true, 45254: true,

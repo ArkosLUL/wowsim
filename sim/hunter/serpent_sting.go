@@ -48,8 +48,9 @@ func (hunter *Hunter) registerSerpentStingSpell() {
 					hunter.AttackTables[aura.Unit.UnitIndex].DamageTakenMultiplier *= noxiousStingsMultiplier
 					// Check for 1 because this aura will always be active inside OnGain.
 					if aura.Unit.NumActiveAurasWithTag("SerpentSting") == 1 {
+						// Unit::SpellPctDamageModsDone scales DoneTotalMod by the glyph, so it multiplies
 						for _, otherHunter := range huntersWithGlyphOfSteadyShot {
-							otherHunter.SteadyShot.DamageMultiplierAdditive += .1
+							otherHunter.SteadyShot.DamageMultiplier *= 1.1
 						}
 					}
 				},
@@ -57,7 +58,7 @@ func (hunter *Hunter) registerSerpentStingSpell() {
 					hunter.AttackTables[aura.Unit.UnitIndex].DamageTakenMultiplier /= noxiousStingsMultiplier
 					if !aura.Unit.HasActiveAuraWithTag("SerpentSting") {
 						for _, otherHunter := range huntersWithGlyphOfSteadyShot {
-							otherHunter.SteadyShot.DamageMultiplierAdditive -= .1
+							otherHunter.SteadyShot.DamageMultiplier /= 1.1
 						}
 					}
 				},

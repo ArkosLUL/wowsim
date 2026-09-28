@@ -320,6 +320,9 @@ class Driver:
         result = self.browser.eval(f'__pg.exportResult({phase})', timeout=30)
         if not isinstance(result, dict) or not result.get('best'):
             raise CdpError(f'{build.label} P{phase}: no result ({str(result)[:300]})')
+        # a run the server stopped early still shows its best set so far, with an Export JSON button
+        if result.get('cancelled'):
+            raise CdpError(f'{build.label} P{phase}: the server stopped the run before it finished')
         return result
 
     def run_build(self, build):

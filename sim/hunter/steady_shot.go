@@ -13,27 +13,28 @@ func (hunter *Hunter) registerSteadyShotSpell() {
 			Label:    "Improved Steady Shot",
 			ActionID: core.ActionID{SpellID: 53220},
 			Duration: time.Second * 12,
+			// a SPELLMOD_DAMAGE, so it multiplies with the shots' other percent mods
 			OnGain: func(aura *core.Aura, sim *core.Simulation) {
-				hunter.ArcaneShot.DamageMultiplierAdditive += .15
+				hunter.ArcaneShot.DamageMultiplier *= 1.15
 				hunter.ArcaneShot.CostMultiplier -= 0.2
 				if hunter.AimedShot != nil {
-					hunter.AimedShot.DamageMultiplierAdditive += .15
+					hunter.AimedShot.DamageMultiplier *= 1.15
 					hunter.AimedShot.CostMultiplier -= 0.2
 				}
 				if hunter.ChimeraShot != nil {
-					hunter.ChimeraShot.DamageMultiplierAdditive += .15
+					hunter.ChimeraShot.DamageMultiplier *= 1.15
 					hunter.ChimeraShot.CostMultiplier -= 0.2
 				}
 			},
 			OnExpire: func(aura *core.Aura, sim *core.Simulation) {
-				hunter.ArcaneShot.DamageMultiplierAdditive -= .15
+				hunter.ArcaneShot.DamageMultiplier /= 1.15
 				hunter.ArcaneShot.CostMultiplier += 0.2
 				if hunter.AimedShot != nil {
-					hunter.AimedShot.DamageMultiplierAdditive -= .15
+					hunter.AimedShot.DamageMultiplier /= 1.15
 					hunter.AimedShot.CostMultiplier += 0.2
 				}
 				if hunter.ChimeraShot != nil {
-					hunter.ChimeraShot.DamageMultiplierAdditive -= .15
+					hunter.ChimeraShot.DamageMultiplier /= 1.15
 					hunter.ChimeraShot.CostMultiplier += 0.2
 				}
 			},

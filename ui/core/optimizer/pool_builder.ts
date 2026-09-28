@@ -198,8 +198,7 @@ export const TANK_BOSSES: Record<number, TankBoss> = {
 // The generic AC boss (encounters.GenericBossTarget, Encounter.genericBossTargetProto), swinging at
 // a specific phase boss's own attack time instead of the pinned 2.0 s default. The server's
 // Creature::CalculateMinMaxDamage multiplies weapon damage by both DamageModifier and the attack
-// time in seconds, so scaling minBaseDamage by attackTimeMs/2000 keeps the same DPS the pinned 2.0 s
-// version has, while a faster boss's swing lands smaller, not less per second. Duplicated rather than
+// time in seconds, so a faster boss's swing lands smaller, not less per second. Duplicated rather than
 // imported from encounter.ts, which this module can't load under Node (see plainBossTarget).
 function genericBossTargetAt(boss: TankBoss): Target {
 	const attackTimeMs = boss.attackTimeMs > 0 ? boss.attackTimeMs : 2000;
@@ -208,7 +207,7 @@ function genericBossTargetAt(boss: TankBoss): Target {
 		level: BOSS_LEVEL,
 		tankIndex: 0,
 		swingSpeed: attackTimeMs / 1000,
-		minBaseDamage: (177.074 * boss.damageModifier * attackTimeMs) / 2000,
+		minBaseDamage: (177.074 * boss.damageModifier * attackTimeMs) / 1000,
 		damageSpread: 0.5,
 		parryHaste: true,
 		spellSchool: SpellSchool.SpellSchoolPhysical,

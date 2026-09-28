@@ -162,9 +162,8 @@ Roll details the tables above don't show:
   nothing but a GM's `.cast triggered` sets it and StackAmount decides alone. Every stacking dot the sim registers
   (Holy Vengeance 31803, Lacerate 48568, Deadly Poison 57970, Impale 66331, Chilled to the Bone 70106) already
   refreshed in place, so the rule moved no results.
-- Ticks crit only with aura 286 or on Rupture. `Dot.TicksCanCrit` records that per dot, and
-  `periodicCritsNeedDeclaration` (`spell_outcome.go`) enforces it once every class has declared its crit-capable
-  dots (P8).
+- Ticks crit only with aura 286 or on Rupture. `Dot.TicksCanCrit` records that per dot and is the only gate
+  (`Dot.CanTickCrit`); `sim/dotconfig_declared_test.go` fails on a `DotConfig` that leaves it unset.
 - `Unit::CastDelayedSpellWithPeriodicAmount`'s refresh (`MunchingBlizzlike.Enabled`, live on) queues on
   the caster's own 400 ms event-clock boundary (`EventProcessor::CalculateQueueTime`) whenever caster
   and target differ, and the old dot keeps ticking meanwhile; two procs inside one window read the
@@ -876,8 +875,7 @@ Roll details the tables above don't show:
   `TicksCanCrit` is declared throughout: `canCrit` (Corruption, Unstable Affliction), `true`
   (Immolate, 75445), Improved Immolate 3/3 (Conflagrate's dot; both Cleanup (P8)), `false` elsewhere
   (Curse of Agony, Curse of Doom, Seed, Drain Soul, the infernal's and Metamorphosis's AOE dots — none use a
-  crit-capable outcome function). `periodicCritsNeedDeclaration` is still off, so this changes nothing
-  yet; it's what P8's flip should read.
+  crit-capable outcome function).
 - **Fixed:** every warlock spell's `DamageMultiplierAdditive` summed its talent, glyph and set-bonus
   percentages (`1 + a + b + c + ...`), where the server applies each spell mod independently and
   multiplies the results (`Player::ApplySpellMod`) — the bug the Retribution Paladin item already
@@ -1243,8 +1241,7 @@ Roll details the tables above don't show:
 - `TicksCanCrit` declared for every priest dot and hot: `Talents.Shadowform` for Shadow Word: Pain,
   Devouring Plague and Vampiric Touch (Shadowform's 49868 grants `SPELL_AURA_ABILITY_PERIODIC_CRIT`, aura 286, to exactly
   these three by classMask), false for Holy Fire's dot (Holy school, outside Shadowform's classMask) and
-  Renew's hot (no periodic-crit aura touches healing in 3.3.5). Inert until PAR-P8 flips
-  `periodicCritsNeedDeclaration`.
+  Renew's hot (no periodic-crit aura touches healing in 3.3.5).
 - Verified, no code needed: Mind Flay is binary=false on the server for both the channel (48156) and its
   tick (58381), like every other priest damage spell, matching the sim's existing non-binary outcome
   calls; mod-spell-tweaks has zero priest rows (`SpellTweaks_classes.cpp`, `spell_tweaks.conf.dist`, and
@@ -1273,7 +1270,10 @@ Roll details the tables above don't show:
   against `Creature::SelectLevel`/`CreatureBaseStats`) as the four tank specs' UI default and an extra golden
   case in each suite. It hits like Patchwerk 25 (`creature_template.DamageModifier` 70,
   `encounters.GenericBossDamageModifier`); BIS-tank-boss (wave K) swaps in each phase boss's. Preset
-  encounters gained an additive `raid_difficulty` proto field.
+  encounters gained an additive `raid_difficulty` proto field. **Fixed (wave K cross-review):** it hit at
+  half the server's rate, since `Creature::CalculateMinMaxDamage` also multiplies by the attack time in
+  seconds; `MinBaseDamage` is now 177.074 × 70 × 2 for its 2.0 s swing, doubling the `GenericBoss` cases'
+  damage taken.
 - Found and fixed on the boss-side files: a `Target`'s `gcdAction` never finished a hardcast sharing its
   pending action with the GCD (Hodir's 9 s Flash Freeze silently never applied); the dungeon-scale `Damage`
   multiplier was skipped for spells flagged `SpellFlagIgnoreAttackerModifiers` (Anub'arak's Leeching Swarm,
@@ -1409,6 +1409,10 @@ gofmt-clean.
   spell move: hunter's Gronnstalker/Scourgestalker set pieces, warrior's `shield_slam.go` (whose own
   "TODO: All additive multipliers?" flagged this), and warrior's `whirlwind.go`, whose Unending
   Fury/Improved Whirlwind pair was summed inside an otherwise-multiplicative expression.
+  **Fixed (wave K cross-review):** the hunter's runtime percent mods still added onto those products:
+  Improved Steady Shot (53220), Sniper Training (64418-64420), Trap Mastery on Explosive Trap's ticks
+  (SPELLMOD_DAMAGE/DOT) and Glyph of Steady Shot (`SpellPctDamageModsDone`). All four now multiply
+  `DamageMultiplier`: BM +0.13%, SV +0.19% Average-Default; MM moves only its Gronnstalker row.
 - Decoded each spell's classMask against its own family flags (not the tooltip), per SPELLMOD_DAMAGE
   (direct) vs SPELLMOD_DOT (tick) — the wave I leftover:
   - Conflagrate (family flags `[0,8388608,0]`) doesn't match Aftermath's, Improved Immolate's or Glyph
@@ -1417,7 +1421,11 @@ gofmt-clean.
     Unstable Affliction" — not Conflagrate). All four dropped. The T8 2pc's SPELLMOD_DAMAGE effect
     matches Conflagrate's flags but its SPELLMOD_DOT one doesn't (Immolate only), so it's now hit-only,
     divided back out for the dot alongside Firestone. Emberstorm matches Conflagrate on both ops,
-    unchanged.
+    unchanged. **Wrong, fixed in the wave K cross-review:** the hit skips Conflagrate's own done mods;
+    it's a share of the Immolate aura's amount, which `AuraEffect::CalculateAmount` built with Immolate's
+    own periodic mods (Emberstorm, Improved Immolate, Aftermath, Glyph of Immolate, T8 2pc, T9 4pc,
+    Spellstone). `conflagrate.go` now uses those, and the dot adds Emberstorm, whose SPELLMOD_DOT mask
+    also covers Conflagrate.
   - Fireball's and Flamestrike's shared dot multiplier included Spell Impact (11242), whose only effect
     is SPELLMOD_DAMAGE — no SPELLMOD_DOT at all — so it never reached either dot; split out, hit-only.
     Fire Power's SPELLMOD_DOT effect does match both spells' family flags, unchanged (resolves the Open
@@ -1427,7 +1435,8 @@ gofmt-clean.
 - Goldens (`dock.sh delta`, Average-Default): DK Unholy +0.11% (Death Coil's Morbidity × Glyph of Dark
   Death, previously summed); Hunter BM +0.14% and MM +0.24% (one set-piece row each), SV +0.01%; Mage
   Fire -0.61% (Spell Impact off the dot); Rogue Assassination +0.09%, Combat +0.48%, Subtlety +0.33%;
-  Warlock Destruction -3.90% (Conflagrate's four dropped mods); Warrior Arms +0.08%, Fury +0.22%.
+  Warlock Destruction -3.90% (Conflagrate's four dropped mods; the cross-review's fix above puts back
+  +4.71%); Warrior Arms +0.08%, Fury +0.22%.
 - Tick crits: with `TicksCanCrit` the only gate now, a script checked every declaration against the
   spelldump's 30 aura-286 spells (family and classMask) and how the player gets each. A class skill
   teaches every shaman Flame Shock Passive (75461) and every warlock Demonic Immolate (75445):
@@ -1492,10 +1501,11 @@ gofmt-clean.
   `ActionID.SpellID` like any other spell (checked first that nothing else in `sim/rogue` keys off any
   of the three ids). No golden moved: their effect declarations were already checked against
   57841/57842 via `FromSpellID`, and their flags were already hand-set to match — an attribution fix,
-  not a behavior change. Confirmed unchanged, already documented: Master Poisoner's crit bonus is a
-  rogue-wide reference count (`poisons.go`), exact while the rogue's poison is on one target, an
-  approximation once it's on two at once; no suite exercises that, and a real fix needs a per-target
-  attack-table-scoped bonus instead of a rogue-side aura.
+  not a behavior change. **Fixed (wave K cross-review):** both swings have no family flags, so Find
+  Weakness never reached them; dropped (no suite takes both talents). Confirmed unchanged, already
+  documented: Master Poisoner's crit bonus is a rogue-wide reference count (`poisons.go`), exact while
+  the rogue's poison is on one target, an approximation once it's on two at once; no suite exercises
+  that, and a real fix needs a per-target attack-table-scoped bonus instead of a rogue-side aura.
 - Warrior's Shattering Throw (`shattering_throw.go`) drops its `hasGlyph` branch: Glyph of Shattering
   Throw (206953) has no DBC row on this server (`glyphproperties_dbc`, `item_template`), so every cast
   now unconditionally needs Battle Stance. Dropped the glyph from the two Go fixtures that set it only
@@ -1606,10 +1616,9 @@ gofmt-clean.
   of the consumed Immolate's amount after the target's taken mods, times its 5 base ticks, and skips
   Conflagrate's own `SpellDamageBonusDone` and `SpellDamageBonusTaken`. The dot's ticks deal effect 2's
   40 / 3 = 13 (integer) percent of that, then take Conflagrate's own done mods (Emberstorm's op 22) and
-  the target's taken mods a second time. The sim takes the Immolate's snapshot and the 13%, but its
-  `DamageMultiplier` still stands in for Conflagrate's own done mods, not a literal replay of the
-  snapshotted amount's — still an approximation, but no longer of the wrong spell's mods (Cleanup
-  (P8), below).
+  the target's taken mods a second time. The sim takes the Immolate's snapshot and the 13%, with
+  Immolate's periodic mods as `DamageMultiplier` and Emberstorm again on the dot (Cleanup (P8), below),
+  but the caster's other done mods and the target's taken mods only once.
 - `spell_warl_curse_of_agony` ramps the whole tick amount, spell power included: half for ticks 1–4, 1.5×
   from 9, 2× from 13 (glyphed). The sim ramped only the base.
 - Incinerate adds a quarter of its roll, before spell power, while any warlock's Immolate is on the
@@ -1909,6 +1918,8 @@ values. Human warrior, level 80, maxed skills, Worn Shortsword (Sword Specializa
     on Auto Shot and Steady Shot at 1,000,000 rolls each: pooled crit 0.0862% rolled against the server's own
     0.0880% threshold (z = -0.83, n = 2,000,000). At that sample size a real missing term would show up as a
     large z, so the recorded runs' +2.60-point gap was sampling noise on a few thousand swings, not a bug.
+    The probe's near-naked bot only rules out a term added at the roll; that the threshold itself matches
+    the sim's formula still rests on PAR-P7-0d's term-by-term check (wave K cross-review).
 - Death knight probes (`TestSimvalDeathKnight`, a human DK behind the boss dummy): Scourge Strike and Obliterate
   roll the yellow table, Icy Touch the magic one with partial resists, and `tools/simval` passes all 26 checks on
   those records. Both diseases are melee damage class and can't miss. Rage of Rivendare 5/5 adds 10 expertise and

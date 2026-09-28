@@ -37,9 +37,10 @@ func GenericBossTarget(damageModifier float64) *proto.Target {
 		// BASE_ATTACK_TIME (Unit.h), which creature_template.BaseAttackTime falls back to at 0.
 		SwingSpeed: 2.0,
 		// damage_exp2, max = min * 1.5 (Creature::SelectLevel). Creature::CalculateMinMaxDamage
-		// multiplies weapon damage plus AP/14 by DamageModifier, and EnemyWeaponDamage scales the AP
-		// part by MinBaseDamage/177, so scaling MinBaseDamage covers both.
-		MinBaseDamage: 177.074 * damageModifier,
+		// multiplies weapon damage plus AP/14 by DamageModifier and by the attack time in seconds
+		// (GetAPMultiplier), and EnemyWeaponDamage scales the AP part by MinBaseDamage/177, so scaling
+		// MinBaseDamage covers both.
+		MinBaseDamage: 177.074 * damageModifier * 2.0,
 		DamageSpread:  0.5,
 		ParryHaste:    true,
 	}

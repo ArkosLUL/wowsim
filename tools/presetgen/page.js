@@ -71,7 +71,7 @@
 		textarea.value = json;
 		textarea.dispatchEvent(new Event('input'));
 		document.querySelector('.modal .import-button').click();
-		await pg.until(() => !document.querySelector('.modal .importer-textarea'), 15000).catch(() => {});
+		await pg.until(() => !document.querySelector('.modal .importer-textarea'), 15000).catch(() => null);
 		pg.closeModals();
 		return 'ok';
 	};
@@ -116,7 +116,7 @@
 	// Starts Optimize and waits for it to settle. A rerun leaves the previous result (and its Export
 	// JSON button) on screen until showResult() replaces it, so completion is read off the Cancel
 	// button's visibility (shown while running), not off the result panel.
-	pg.runOptimizer = async (timeoutMs) => {
+	pg.runOptimizer = async timeoutMs => {
 		const optimize = pg.button('Optimize');
 		if (!optimize) {
 			throw new Error('no Optimize button (server unavailable?)');
@@ -126,13 +126,14 @@
 			const cancel = pg.button('Cancel');
 			return cancel && !cancel.hidden;
 		}, 10000);
-		await pg.until(() => {
+		const settled = await pg.until(() => {
 			const cancel = pg.button('Cancel');
 			if (cancel && !cancel.hidden) return null;
 			const status = document.querySelector('#optimizer-tab .optimizer-status');
 			return status && status.classList.contains('optimizer-status-error') ? 'error' : 'done';
 		}, timeoutMs);
-		if (!pg.button('Export JSON')) {
+		// a failed run leaves the previous phase's result and its Export JSON button on screen
+		if (settled === 'error' || !pg.button('Export JSON')) {
 			const status = document.querySelector('#optimizer-tab .optimizer-status');
 			throw new Error(`optimizer failed: ${status ? status.innerText.trim() : 'unknown'}`);
 		}
@@ -143,9 +144,6 @@
 		pg.button('Export JSON').click();
 		return pg.take(`optimizer-result-p${phase}.json`);
 	};
-
-	// seeds the next phase with this phase's pick
-	pg.equip = () => pg.button('Equip')?.click();
 
 	pg.ready = () => document.readyState == 'complete' && !!document.querySelector('.import-dropdown .dropdown-item');
 })();

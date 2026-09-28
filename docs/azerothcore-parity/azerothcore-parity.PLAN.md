@@ -706,7 +706,7 @@ effect (moved Affliction Warlock); swept the 13 `classic`/
 dropping #328's stale TODO, and found #329 already settled (the Infernal's Immolation deals real
 damage). Stage 2 made DK/Hunter/Rogue/Warrior's summed percent spell mods multiply
 (`spellModDamage`, matching PAR-DECL-1's paladin/warlock/priest fix), and decoded the wave I
-leftover's classMask/op split for Conflagrate (dropped four mods that never reached it) and
+leftover's classMask/op split for Conflagrate (dropped four mods it judged unreachable) and
 Fireball/Flamestrike (Spell Impact is hit-only). Stage 3 (leftovers): `core.NewPet` returns `*Pet`;
 fixed the hunter pet AI's focus pooling and its AP coefficients' creature-type overcount, and added
 Thori'dal's ranged haste; retagged Killing Spree to its real spell ids; dropped Shattering Throw's
@@ -728,6 +728,9 @@ Left open, with evidence in the INVESTIGATION's Cleanup (P8) section: the DK APL
 timing, warrior/DK tier-set classMask reach, Mirror Image's missing mod inheritance, Master Poisoner's
 multi-target approximation, and the BM capture's idle pet (checked mod-playerbots' Bestial Wrath code
 for a cheap answer; found none).
+The wave K cross-review fixed three misses (INVESTIGATION, Cleanup (P8)): Conflagrate's hit reads the
+Immolate aura's amount, so Immolate's own periodic mods do reach it (Destruction +4.71%); the hunter's
+runtime percent mods still added; Killing Spree's swings took Find Weakness.
 
 ## Loop work items
 

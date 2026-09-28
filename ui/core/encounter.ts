@@ -240,7 +240,8 @@ export class Encounter {
 			level: Mechanics.BOSS_LEVEL,
 			tankIndex: 0,
 			swingSpeed: 2.0,
-			minBaseDamage: 177.074 * 70,
+			// Creature::CalculateMinMaxDamage scales the swing by the attack time in seconds too
+			minBaseDamage: 177.074 * 70 * 2.0,
 			damageSpread: 0.5,
 			dualWield: false,
 			dualWieldPenalty: false,
