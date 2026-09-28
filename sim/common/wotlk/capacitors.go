@@ -225,10 +225,12 @@ func init() {
 					},
 				},
 				Handler: func(sim *core.Simulation) {
-					if firstProc == core.MainHand {
-						mhSpell.Cast(sim, character.CurrentTarget)
-					} else {
+					// no ohSpell without an off-hand weapon, but rogue off-hand strikes like
+					// Mutilate's still land then and can set firstProc
+					if firstProc == core.OffHand && ohSpell != nil {
 						ohSpell.Cast(sim, character.CurrentTarget)
+					} else {
+						mhSpell.Cast(sim, character.CurrentTarget)
 					}
 				},
 			})
