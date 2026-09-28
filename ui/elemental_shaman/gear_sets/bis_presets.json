@@ -3,45 +3,45 @@
 		"name": "P1 Elemental",
 		"build": "Elemental Shaman",
 		"phase": 1,
-		"effort": "Quick",
+		"effort": "Normal",
 		"racialTraits": "RaceOrc",
-		"simCommit": "a36c02588",
+		"simCommit": "b415c0f48",
 		"catalogDate": "2026-09-19"
 	},
 	"p2_bis": {
 		"name": "P2 Elemental",
 		"build": "Elemental Shaman",
 		"phase": 2,
-		"effort": "Quick",
+		"effort": "Normal",
 		"racialTraits": "RaceOrc",
-		"simCommit": "a36c02588",
+		"simCommit": "b415c0f48",
 		"catalogDate": "2026-09-19"
 	},
 	"p3_bis": {
 		"name": "P3 Elemental",
 		"build": "Elemental Shaman",
 		"phase": 3,
-		"effort": "Quick",
+		"effort": "Normal",
 		"racialTraits": "RaceOrc",
-		"simCommit": "a36c02588",
+		"simCommit": "b415c0f48",
 		"catalogDate": "2026-09-19"
 	},
 	"p4_bis": {
 		"name": "P4 Elemental",
 		"build": "Elemental Shaman",
 		"phase": 4,
-		"effort": "Quick",
+		"effort": "Normal",
 		"racialTraits": "RaceOrc",
-		"simCommit": "a36c02588",
+		"simCommit": "b415c0f48",
 		"catalogDate": "2026-09-19"
 	},
 	"p5_bis": {
 		"name": "P5 Elemental",
 		"build": "Elemental Shaman",
 		"phase": 5,
-		"effort": "Quick",
+		"effort": "Normal",
 		"racialTraits": "RaceOrc",
-		"simCommit": "a36c02588",
+		"simCommit": "b415c0f48",
 		"catalogDate": "2026-09-19"
 	}
 }

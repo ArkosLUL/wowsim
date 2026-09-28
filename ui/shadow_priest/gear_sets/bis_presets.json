@@ -3,45 +3,45 @@
 		"name": "P1 Shadow",
 		"build": "Shadow Priest",
 		"phase": 1,
-		"effort": "Quick",
+		"effort": "Normal",
 		"racialTraits": "RaceTroll",
-		"simCommit": "a36c02588",
+		"simCommit": "b415c0f48",
 		"catalogDate": "2026-09-19"
 	},
 	"p2_bis": {
 		"name": "P2 Shadow",
 		"build": "Shadow Priest",
 		"phase": 2,
-		"effort": "Quick",
+		"effort": "Normal",
 		"racialTraits": "RaceTroll",
-		"simCommit": "a36c02588",
+		"simCommit": "b415c0f48",
 		"catalogDate": "2026-09-19"
 	},
 	"p3_bis": {
 		"name": "P3 Shadow",
 		"build": "Shadow Priest",
 		"phase": 3,
-		"effort": "Quick",
-		"racialTraits": "RaceOrc",
-		"simCommit": "a36c02588",
+		"effort": "Normal",
+		"racialTraits": "RaceTroll",
+		"simCommit": "b415c0f48",
 		"catalogDate": "2026-09-19"
 	},
 	"p4_bis": {
 		"name": "P4 Shadow",
 		"build": "Shadow Priest",
 		"phase": 4,
-		"effort": "Quick",
+		"effort": "Normal",
 		"racialTraits": "RaceTroll",
-		"simCommit": "a36c02588",
+		"simCommit": "b415c0f48",
 		"catalogDate": "2026-09-19"
 	},
 	"p5_bis": {
 		"name": "P5 Shadow",
 		"build": "Shadow Priest",
 		"phase": 5,
-		"effort": "Quick",
+		"effort": "Normal",
 		"racialTraits": "RaceTroll",
-		"simCommit": "a36c02588",
+		"simCommit": "b415c0f48",
 		"catalogDate": "2026-09-19"
 	}
 }

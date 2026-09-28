@@ -5,7 +5,7 @@
 		"phase": 1,
 		"effort": "Normal",
 		"racialTraits": "RaceNightElf",
-		"simCommit": "a36c02588",
+		"simCommit": "b415c0f48",
 		"catalogDate": "2026-09-19"
 	},
 	"p2_bis": {
@@ -14,7 +14,7 @@
 		"phase": 2,
 		"effort": "Normal",
 		"racialTraits": "RaceNightElf",
-		"simCommit": "a36c02588",
+		"simCommit": "b415c0f48",
 		"catalogDate": "2026-09-19"
 	},
 	"p3_bis": {
@@ -22,8 +22,8 @@
 		"build": "Protection Paladin",
 		"phase": 3,
 		"effort": "Normal",
-		"racialTraits": "RaceTauren",
-		"simCommit": "a36c02588",
+		"racialTraits": "RaceNightElf",
+		"simCommit": "b415c0f48",
 		"catalogDate": "2026-09-19"
 	},
 	"p4_bis": {
@@ -32,7 +32,7 @@
 		"phase": 4,
 		"effort": "Normal",
 		"racialTraits": "RaceNightElf",
-		"simCommit": "a36c02588",
+		"simCommit": "b415c0f48",
 		"catalogDate": "2026-09-19"
 	},
 	"p5_bis": {
@@ -41,7 +41,7 @@
 		"phase": 5,
 		"effort": "Normal",
 		"racialTraits": "RaceNightElf",
-		"simCommit": "a36c02588",
+		"simCommit": "b415c0f48",
 		"catalogDate": "2026-09-19"
 	}
 }

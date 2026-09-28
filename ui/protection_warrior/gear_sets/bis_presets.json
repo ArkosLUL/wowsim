@@ -3,45 +3,45 @@
 		"name": "P1 Protection",
 		"build": "Protection Warrior",
 		"phase": 1,
-		"effort": "Quick",
+		"effort": "Normal",
 		"racialTraits": "RaceNightElf",
-		"simCommit": "a36c02588",
+		"simCommit": "b415c0f48",
 		"catalogDate": "2026-09-19"
 	},
 	"p2_bis": {
 		"name": "P2 Protection",
 		"build": "Protection Warrior",
 		"phase": 2,
-		"effort": "Quick",
+		"effort": "Normal",
 		"racialTraits": "RaceNightElf",
-		"simCommit": "a36c02588",
+		"simCommit": "b415c0f48",
 		"catalogDate": "2026-09-19"
 	},
 	"p3_bis": {
 		"name": "P3 Protection",
 		"build": "Protection Warrior",
 		"phase": 3,
-		"effort": "Quick",
+		"effort": "Normal",
 		"racialTraits": "RaceNightElf",
-		"simCommit": "a36c02588",
+		"simCommit": "b415c0f48",
 		"catalogDate": "2026-09-19"
 	},
 	"p4_bis": {
 		"name": "P4 Protection",
 		"build": "Protection Warrior",
 		"phase": 4,
-		"effort": "Quick",
+		"effort": "Normal",
 		"racialTraits": "RaceNightElf",
-		"simCommit": "a36c02588",
+		"simCommit": "b415c0f48",
 		"catalogDate": "2026-09-19"
 	},
 	"p5_bis": {
 		"name": "P5 Protection",
 		"build": "Protection Warrior",
 		"phase": 5,
-		"effort": "Quick",
+		"effort": "Normal",
 		"racialTraits": "RaceNightElf",
-		"simCommit": "a36c02588",
+		"simCommit": "b415c0f48",
 		"catalogDate": "2026-09-19"
 	}
 }

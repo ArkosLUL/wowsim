@@ -3,9 +3,9 @@
 		"name": "P1 Arcane",
 		"build": "Mage Arcane",
 		"phase": 1,
-		"effort": "Quick",
+		"effort": "Normal",
 		"racialTraits": "RaceTroll",
-		"simCommit": "a36c02588",
+		"simCommit": "b415c0f48",
 		"catalogDate": "2026-09-19"
 	},
 	"p1_bis_fire": {
@@ -14,25 +14,25 @@
 		"phase": 1,
 		"effort": "Normal",
 		"racialTraits": "RaceTroll",
-		"simCommit": "a36c02588",
+		"simCommit": "b415c0f48",
 		"catalogDate": "2026-09-19"
 	},
 	"p1_bis_frost": {
 		"name": "P1 Frost",
 		"build": "Mage Frost",
 		"phase": 1,
-		"effort": "Quick",
+		"effort": "Normal",
 		"racialTraits": "RaceOrc",
-		"simCommit": "a36c02588",
+		"simCommit": "b415c0f48",
 		"catalogDate": "2026-09-19"
 	},
 	"p2_bis_arcane": {
 		"name": "P2 Arcane",
 		"build": "Mage Arcane",
 		"phase": 2,
-		"effort": "Quick",
+		"effort": "Normal",
 		"racialTraits": "RaceTroll",
-		"simCommit": "a36c02588",
+		"simCommit": "b415c0f48",
 		"catalogDate": "2026-09-19"
 	},
 	"p2_bis_fire": {
@@ -41,25 +41,25 @@
 		"phase": 2,
 		"effort": "Normal",
 		"racialTraits": "RaceTroll",
-		"simCommit": "a36c02588",
+		"simCommit": "b415c0f48",
 		"catalogDate": "2026-09-19"
 	},
 	"p2_bis_frost": {
 		"name": "P2 Frost",
 		"build": "Mage Frost",
 		"phase": 2,
-		"effort": "Quick",
+		"effort": "Normal",
 		"racialTraits": "RaceOrc",
-		"simCommit": "a36c02588",
+		"simCommit": "b415c0f48",
 		"catalogDate": "2026-09-19"
 	},
 	"p3_bis_arcane": {
 		"name": "P3 Arcane",
 		"build": "Mage Arcane",
 		"phase": 3,
-		"effort": "Quick",
+		"effort": "Normal",
 		"racialTraits": "RaceTroll",
-		"simCommit": "a36c02588",
+		"simCommit": "b415c0f48",
 		"catalogDate": "2026-09-19"
 	},
 	"p3_bis_fire": {
@@ -68,25 +68,25 @@
 		"phase": 3,
 		"effort": "Normal",
 		"racialTraits": "RaceTroll",
-		"simCommit": "a36c02588",
+		"simCommit": "b415c0f48",
 		"catalogDate": "2026-09-19"
 	},
 	"p3_bis_frost": {
 		"name": "P3 Frost",
 		"build": "Mage Frost",
 		"phase": 3,
-		"effort": "Quick",
+		"effort": "Normal",
 		"racialTraits": "RaceOrc",
-		"simCommit": "a36c02588",
+		"simCommit": "b415c0f48",
 		"catalogDate": "2026-09-19"
 	},
 	"p4_bis_arcane": {
 		"name": "P4 Arcane",
 		"build": "Mage Arcane",
 		"phase": 4,
-		"effort": "Quick",
+		"effort": "Normal",
 		"racialTraits": "RaceGnome",
-		"simCommit": "a36c02588",
+		"simCommit": "b415c0f48",
 		"catalogDate": "2026-09-19"
 	},
 	"p4_bis_fire": {
@@ -95,25 +95,25 @@
 		"phase": 4,
 		"effort": "Normal",
 		"racialTraits": "RaceTroll",
-		"simCommit": "a36c02588",
+		"simCommit": "b415c0f48",
 		"catalogDate": "2026-09-19"
 	},
 	"p4_bis_frost": {
 		"name": "P4 Frost",
 		"build": "Mage Frost",
 		"phase": 4,
-		"effort": "Quick",
+		"effort": "Normal",
 		"racialTraits": "RaceOrc",
-		"simCommit": "a36c02588",
+		"simCommit": "b415c0f48",
 		"catalogDate": "2026-09-19"
 	},
 	"p5_bis_arcane": {
 		"name": "P5 Arcane",
 		"build": "Mage Arcane",
 		"phase": 5,
-		"effort": "Quick",
+		"effort": "Normal",
 		"racialTraits": "RaceGnome",
-		"simCommit": "a36c02588",
+		"simCommit": "b415c0f48",
 		"catalogDate": "2026-09-19"
 	},
 	"p5_bis_fire": {
@@ -122,16 +122,16 @@
 		"phase": 5,
 		"effort": "Normal",
 		"racialTraits": "RaceTroll",
-		"simCommit": "a36c02588",
+		"simCommit": "b415c0f48",
 		"catalogDate": "2026-09-19"
 	},
 	"p5_bis_frost": {
 		"name": "P5 Frost",
 		"build": "Mage Frost",
 		"phase": 5,
-		"effort": "Quick",
+		"effort": "Normal",
 		"racialTraits": "RaceOrc",
-		"simCommit": "a36c02588",
+		"simCommit": "b415c0f48",
 		"catalogDate": "2026-09-19"
 	}
 }

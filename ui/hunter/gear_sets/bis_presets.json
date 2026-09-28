@@ -3,90 +3,90 @@
 		"name": "P1 MM",
 		"build": "Hunter MM",
 		"phase": 1,
-		"effort": "Quick",
+		"effort": "Normal",
 		"racialTraits": "RaceOrc",
-		"simCommit": "a36c02588",
+		"simCommit": "b415c0f48",
 		"catalogDate": "2026-09-19"
 	},
 	"p1_bis_sv": {
 		"name": "P1 SV",
 		"build": "Hunter SV",
 		"phase": 1,
-		"effort": "Quick",
+		"effort": "Normal",
 		"racialTraits": "RaceOrc",
-		"simCommit": "a36c02588",
+		"simCommit": "b415c0f48",
 		"catalogDate": "2026-09-19"
 	},
 	"p2_bis_mm": {
 		"name": "P2 MM",
 		"build": "Hunter MM",
 		"phase": 2,
-		"effort": "Quick",
+		"effort": "Normal",
 		"racialTraits": "RaceOrc",
-		"simCommit": "a36c02588",
+		"simCommit": "b415c0f48",
 		"catalogDate": "2026-09-19"
 	},
 	"p2_bis_sv": {
 		"name": "P2 SV",
 		"build": "Hunter SV",
 		"phase": 2,
-		"effort": "Quick",
+		"effort": "Normal",
 		"racialTraits": "RaceOrc",
-		"simCommit": "a36c02588",
+		"simCommit": "b415c0f48",
 		"catalogDate": "2026-09-19"
 	},
 	"p3_bis_mm": {
 		"name": "P3 MM",
 		"build": "Hunter MM",
 		"phase": 3,
-		"effort": "Quick",
+		"effort": "Normal",
 		"racialTraits": "RaceOrc",
-		"simCommit": "a36c02588",
+		"simCommit": "b415c0f48",
 		"catalogDate": "2026-09-19"
 	},
 	"p3_bis_sv": {
 		"name": "P3 SV",
 		"build": "Hunter SV",
 		"phase": 3,
-		"effort": "Quick",
+		"effort": "Normal",
 		"racialTraits": "RaceOrc",
-		"simCommit": "a36c02588",
+		"simCommit": "b415c0f48",
 		"catalogDate": "2026-09-19"
 	},
 	"p4_bis_mm": {
 		"name": "P4 MM",
 		"build": "Hunter MM",
 		"phase": 4,
-		"effort": "Quick",
+		"effort": "Normal",
 		"racialTraits": "RaceOrc",
-		"simCommit": "a36c02588",
+		"simCommit": "b415c0f48",
 		"catalogDate": "2026-09-19"
 	},
 	"p4_bis_sv": {
 		"name": "P4 SV",
 		"build": "Hunter SV",
 		"phase": 4,
-		"effort": "Quick",
-		"racialTraits": "RaceTroll",
-		"simCommit": "a36c02588",
+		"effort": "Normal",
+		"racialTraits": "RaceOrc",
+		"simCommit": "b415c0f48",
 		"catalogDate": "2026-09-19"
 	},
 	"p5_bis_mm": {
 		"name": "P5 MM",
 		"build": "Hunter MM",
 		"phase": 5,
-		"effort": "Quick",
+		"effort": "Normal",
 		"racialTraits": "RaceOrc",
-		"simCommit": "a36c02588",
+		"simCommit": "b415c0f48",
 		"catalogDate": "2026-09-19"
 	},
 	"p5_bis_sv": {
 		"name": "P5 SV",
 		"build": "Hunter SV",
 		"phase": 5,
-		"effort": "Quick",
-		"racialTraits": "RaceTroll",
-		"simCommit": "a36c02588",
+		"effort": "Normal",
+		"racialTraits": "RaceOrc",
+		"simCommit": "b415c0f48",
 		"catalogDate": "2026-09-19"
 	}
 }
