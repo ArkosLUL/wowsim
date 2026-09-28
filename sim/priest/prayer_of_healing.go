@@ -73,6 +73,7 @@ func (priest *Priest) registerPrayerOfHealingSpell() {
 				},
 				NumberOfTicks: 2,
 				TickLength:    time.Second * 3,
+				TicksCanCrit:  false,
 				OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
 					base := priest.PrayerOfHealing.Direct
 					dot.SnapshotBaseDamage = base.Roll(sim) + base.SP*dot.Spell.HealingPower(target)

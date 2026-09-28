@@ -70,7 +70,7 @@ func (hunter *Hunter) makeExplosiveShotSpell(timer *core.Timer, downrank bool) *
 			TicksCanCrit: true,
 			Tick:         tick,
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + dot.Spell.Direct.AP*dot.Spell.RangedAttackPower(target)
+				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + dot.Spell.Direct.AP*dot.Spell.RangedAttackPowerSpellBonus(target)
 				attackTable := dot.Spell.Unit.AttackTables[target.UnitIndex]
 				dot.SnapshotCritChance = dot.Spell.PhysicalCritChance(attackTable)
 				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(attackTable)

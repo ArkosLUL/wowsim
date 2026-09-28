@@ -78,6 +78,7 @@ func (mage *Mage) registerArcaneMissilesSpell() {
 			},
 			NumberOfTicks:       5,
 			TickLength:          time.Second,
+			TicksCanCrit:        false,
 			AffectedByCastSpeed: true,
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 				mage.ArcaneMissilesTickSpell.Cast(sim, target)

@@ -40,7 +40,7 @@ func (priest *Priest) registerVampiricTouchSpell() {
 			TickLength:          time.Second * 3,
 			AffectedByCastSpeed: priest.Talents.Shadowform,
 			// Shadowform (49868) grants CanPeriodicTickCrit to Vampiric Touch's dot.
-			TicksCanCrit: true,
+			TicksCanCrit: priest.Talents.Shadowform,
 			Tick:         core.SpellEffect{Effect: 1, Min: 170, Max: 170, SP: 0.4},
 
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {

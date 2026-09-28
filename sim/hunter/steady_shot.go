@@ -68,9 +68,10 @@ func (hunter *Hunter) registerSteadyShotSpell() {
 
 		BonusCritRating: 0 +
 			2*core.CritRatingPerCritChance*float64(hunter.Talents.SurvivalInstincts),
-		DamageMultiplierAdditive: 1 +
-			.03*float64(hunter.Talents.FerociousInspiration) +
+		DamageMultiplierAdditive: spellModDamage(
+			.03*float64(hunter.Talents.FerociousInspiration),
 			core.TernaryFloat64(hunter.HasSetBonus(ItemSetGronnstalker, 4), .1, 0),
+		),
 		DamageMultiplier: 1 *
 			hunter.markedForDeathMultiplier(),
 		CritMultiplier:   hunter.critMultiplier(true, true),
@@ -80,8 +81,9 @@ func (hunter *Hunter) registerSteadyShotSpell() {
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			// Spell::EffectSchoolDMG adds a plain roll of the weapon's damage and ammo at the weapon's own
-			// speed, neither normalized
-			baseDamage := spell.Direct.Roll(sim) + spell.Direct.AP*spell.RangedAttackPower(target) +
+			// speed, neither normalized; the 0.1 AP lands separately, through Unit::SpellDamageBonusDone's
+			// own spell_bonus_data path (GetTotalAttackPowerValue), not creature-type AP
+			baseDamage := spell.Direct.Roll(sim) + spell.Direct.AP*spell.RangedAttackPowerSpellBonus(target) +
 				hunter.AutoAttacks.Ranged().BaseDamage(sim) +
 				hunter.AmmoDamageBonus
 

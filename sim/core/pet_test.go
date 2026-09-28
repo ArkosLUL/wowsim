@@ -24,8 +24,7 @@ func newTestOwner(class proto.Class, power PowerBarType, ownerStats stats.Stats)
 }
 
 func newTestPet(owner *Character) *Pet {
-	pet := NewPet("Pet", owner, stats.Stats{}, func(stats.Stats) stats.Stats { return stats.Stats{} }, true, false)
-	return &pet
+	return NewPet("Pet", owner, stats.Stats{}, func(stats.Stats) stats.Stats { return stats.Stats{} }, true, false)
 }
 
 // The scaling aura's amounts: the owner's hit chance rescaled to each stat's cap, truncated to a
@@ -185,9 +184,9 @@ func TestPetAvoidance(t *testing.T) {
 	}
 }
 
-type timingTestPet struct{ Pet }
+type timingTestPet struct{ *Pet }
 
-func (p *timingTestPet) GetPet() *Pet                        { return &p.Pet }
+func (p *timingTestPet) GetPet() *Pet                        { return p.Pet }
 func (p *timingTestPet) Initialize()                         {}
 func (p *timingTestPet) Reset(_ *Simulation)                 {}
 func (p *timingTestPet) ExecuteCustomRotation(_ *Simulation) {}

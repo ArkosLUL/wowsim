@@ -65,7 +65,8 @@ func (warlock *Warlock) registerImmolateSpell() {
 			},
 			NumberOfTicks: 5 + warlock.Talents.MoltenCore,
 			TickLength:    time.Second * 3,
-			TicksCanCrit:  true,
+			// every warlock gets Demonic Immolate (75445) with the Destruction skill
+			TicksCanCrit: true,
 
 			Tick: core.SpellEffect{Effect: 0, Min: 157, Max: 157, SP: 0.2},
 

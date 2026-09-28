@@ -164,6 +164,12 @@ func NewHunter(character *core.Character, options *proto.Player) *Hunter {
 
 	hunter.PseudoStats.RangedSpeedMultiplier *= quiverHaste(hunter.Options.Quiver, hunter.GetRangedWeapon())
 
+	// Thori'dal's own equip spell (44972, "Legendary Bow Haste"): +15% ranged attack speed, stacking
+	// with a quiver's own 15%.
+	if hunter.HasRangedWeapon() && hunter.GetRangedWeapon().ID == ThoridalTheStarsFuryItemID {
+		hunter.PseudoStats.RangedSpeedMultiplier *= 1.15
+	}
+
 	if hunter.HasRangedWeapon() && hunter.GetRangedWeapon().ID != ThoridalTheStarsFuryItemID {
 		switch hunter.Options.Ammo {
 		case proto.Hunter_Options_IcebladeArrow:
@@ -222,6 +228,16 @@ func quiverHaste(quiver proto.Hunter_Options_Quiver, weapon *core.Item) float64 
 		return 1.15
 	}
 	return 1
+}
+
+// spellModDamage stacks percent damage bonuses from talents and set pieces the server's way:
+// Player::ApplySpellMod multiplies SPELLMOD_DAMAGE and SPELLMOD_DOT percentages, it doesn't add them.
+func spellModDamage(bonuses ...float64) float64 {
+	multiplier := 1.0
+	for _, bonus := range bonuses {
+		multiplier *= 1 + bonus
+	}
+	return multiplier
 }
 
 // Agent is a generic way to access underlying hunter on any of the agents.

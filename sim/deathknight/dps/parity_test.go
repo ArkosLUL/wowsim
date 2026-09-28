@@ -82,9 +82,9 @@ func TestSummonScalingMarkers(t *testing.T) {
 		pet   *core.Pet
 		ghoul bool
 	}{
-		{"permanent ghoul", &unholy.Ghoul.Pet, true},
-		{"army ghoul", &unholy.ArmyGhoul[0].Pet, false},
-		{"gargoyle", &unholy.Gargoyle.Pet, false},
+		{"permanent ghoul", unholy.Ghoul.Pet, true},
+		{"army ghoul", unholy.ArmyGhoul[0].Pet, false},
+		{"gargoyle", unholy.Gargoyle.Pet, false},
 	} {
 		if c.pet.HitScaling != core.PetHitScalingMasterSpell06 || c.pet.RisenGhoul != c.ghoul {
 			t.Errorf("%s: hit scaling %v, risen ghoul %v", c.name, c.pet.HitScaling, c.pet.RisenGhoul)
@@ -92,15 +92,15 @@ func TestSummonScalingMarkers(t *testing.T) {
 	}
 
 	frost := parityEnv(t, parityPlayer(FrostTalents, "p3_frost", noRotation), nil)
-	if g := &frost.Ghoul.Pet; g.HitScaling != core.PetHitScalingMasterSpell06 || !g.RisenGhoul || g.SummonedAsPet {
+	if g := frost.Ghoul.Pet; g.HitScaling != core.PetHitScalingMasterSpell06 || !g.RisenGhoul || g.SummonedAsPet {
 		t.Errorf("raise dead ghoul: hit scaling %v, risen ghoul %v, pet %v", g.HitScaling, g.RisenGhoul, g.SummonedAsPet)
 	}
 
 	blood := parityEnv(t, parityPlayer(BloodTalents, "p3_blood", noRotation), nil)
-	if p := &blood.RuneWeapon.Pet; p.HitScaling != core.PetHitScalingDefault || p.RisenGhoul {
+	if p := blood.RuneWeapon.Pet; p.HitScaling != core.PetHitScalingDefault || p.RisenGhoul {
 		t.Errorf("rune weapon: hit scaling %v, risen ghoul %v", p.HitScaling, p.RisenGhoul)
 	}
-	if p := &blood.Bloodworm[0].Pet; p.HitScaling != core.PetHitScalingDefault {
+	if p := blood.Bloodworm[0].Pet; p.HitScaling != core.PetHitScalingDefault {
 		t.Errorf("bloodworm: hit scaling %v", p.HitScaling)
 	}
 }

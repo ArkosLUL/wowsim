@@ -20,9 +20,12 @@ func (warrior *Warrior) registerWhirlwindSpell() {
 			ProcMask:    core.ProcMaskEmpty, // whirlwind offhand hits usually don't proc auras
 			Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagIncludeTargetBonusDamage | core.SpellFlagNoOnCastComplete | SpellFlagWhirlwindOH,
 
-			DamageMultiplier: 1 *
-				(1 + 0.02*float64(warrior.Talents.UnendingFury) + 0.1*float64(warrior.Talents.ImprovedWhirlwind)) *
-				(1 + 0.05*float64(warrior.Talents.DualWieldSpecialization)),
+			// Dual Wield Specialization is a different aura (SPELL_AURA_MOD_OFFHAND_DAMAGE_PCT, not a
+			// spell mod), so it stays its own factor.
+			DamageMultiplier: spellModDamage(
+				0.02*float64(warrior.Talents.UnendingFury),
+				0.1*float64(warrior.Talents.ImprovedWhirlwind),
+			) * (1 + 0.05*float64(warrior.Talents.DualWieldSpecialization)),
 			CritMultiplier:   warrior.critMultiplier(oh),
 			ThreatMultiplier: 1.25,
 
@@ -53,8 +56,10 @@ func (warrior *Warrior) registerWhirlwindSpell() {
 			return warrior.StanceMatches(BerserkerStance)
 		},
 
-		DamageMultiplier: 1 *
-			(1 + 0.02*float64(warrior.Talents.UnendingFury) + 0.1*float64(warrior.Talents.ImprovedWhirlwind)),
+		DamageMultiplier: spellModDamage(
+			0.02*float64(warrior.Talents.UnendingFury),
+			0.1*float64(warrior.Talents.ImprovedWhirlwind),
+		),
 		CritMultiplier:   warrior.critMultiplier(mh),
 		ThreatMultiplier: 1.25,
 

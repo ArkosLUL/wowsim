@@ -11,7 +11,7 @@ import (
 )
 
 type SpiritWolf struct {
-	core.Pet
+	*core.Pet
 
 	shamanOwner *Shaman
 }
@@ -116,5 +116,5 @@ func (spiritWolf *SpiritWolf) Reset(sim *core.Simulation) {
 }
 
 func (spiritWolf *SpiritWolf) GetPet() *core.Pet {
-	return &spiritWolf.Pet
+	return spiritWolf.Pet
 }

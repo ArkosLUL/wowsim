@@ -54,7 +54,7 @@ func (druid *Druid) registerForceOfNatureCD() {
 }
 
 type TreantPet struct {
-	core.Pet
+	*core.Pet
 	druidOwner *Druid
 
 	snapshotStat stats.Stats
@@ -88,7 +88,7 @@ func (druid *Druid) NewTreant() *TreantPet {
 }
 
 func (treant *TreantPet) GetPet() *core.Pet {
-	return &treant.Pet
+	return treant.Pet
 }
 
 // spell_dru_treant_scaling (spell_druid.cpp:389-424): 30% of the owner's Intellect and Stamina,

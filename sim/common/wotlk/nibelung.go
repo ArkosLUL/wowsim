@@ -18,7 +18,7 @@ var valkyrStats = stats.Stats{
 }
 
 type ValkyrPet struct {
-	core.Pet
+	*core.Pet
 	smite         *core.Spell
 	healthMetrics *core.ResourceMetrics
 }
@@ -83,7 +83,7 @@ func (valkyr *ValkyrPet) ExecuteCustomRotation(sim *core.Simulation) {
 }
 
 func (valkyr *ValkyrPet) GetPet() *core.Pet {
-	return &valkyr.Pet
+	return valkyr.Pet
 }
 
 func MakeNibelungTriggerAura(agent core.Agent, isHeroic bool) {

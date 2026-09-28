@@ -9,6 +9,10 @@ import (
 
 func (mage *Mage) registerFireballSpell() {
 	hasGlyph := mage.HasMajorGlyph(proto.MageMajorGlyph_GlyphOfFireball)
+	// Spell Impact (11242) has only a SPELLMOD_DAMAGE effect, no SPELLMOD_DOT one, so it never reaches
+	// the periodic tick; Fire Power and the set bonus cover both halves.
+	spellImpactBonus := .02 * float64(mage.Talents.SpellImpact)
+	dotOnlyMultiplier := 1 / (1 + spellImpactBonus)
 
 	mage.Fireball = mage.RegisterSpell(core.SpellConfig{
 		ActionID:     core.ActionID{SpellID: 42833},
@@ -36,7 +40,7 @@ func (mage *Mage) registerFireballSpell() {
 		DamageMultiplier: 1 *
 			(1 + .04*float64(mage.Talents.TormentTheWeak)),
 		DamageMultiplierAdditive: spellModDamage(
-			.02*float64(mage.Talents.SpellImpact),
+			spellImpactBonus,
 			.02*float64(mage.Talents.FirePower),
 			core.TernaryFloat64(mage.HasSetBonus(ItemSetTempestRegalia, 4), .05, 0),
 		),
@@ -61,7 +65,9 @@ func (mage *Mage) registerFireballSpell() {
 
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
 				dot.SnapshotBaseDamage = dot.Tick.Roll(sim)
+				dot.Spell.DamageMultiplierAdditive *= dotOnlyMultiplier
 				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(dot.Spell.Unit.AttackTables[target.UnitIndex])
+				dot.Spell.DamageMultiplierAdditive /= dotOnlyMultiplier
 			},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 				dot.CalcAndDealPeriodicSnapshotDamage(sim, target, dot.OutcomeTick)

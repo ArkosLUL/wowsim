@@ -7,7 +7,7 @@ import (
 )
 
 type HunterPet struct {
-	core.Pet
+	*core.Pet
 
 	config PetConfig
 
@@ -19,8 +19,7 @@ type HunterPet struct {
 	specialAbility *core.Spell
 	focusDump      *core.Spell
 
-	uptimePercent    float64
-	hasOwnerCooldown bool
+	uptimePercent float64
 }
 
 func (hunter *Hunter) NewHunterPet() *HunterPet {
@@ -36,8 +35,6 @@ func (hunter *Hunter) NewHunterPet() *HunterPet {
 		Pet:         core.NewPet(petConfig.Name, &hunter.Character, hunterPetBaseStats, hunter.makeStatInheritance(), true, false),
 		config:      petConfig,
 		hunterOwner: hunter,
-
-		hasOwnerCooldown: petConfig.SpecialAbility == FuriousHowl || petConfig.SpecialAbility == SavageRend,
 	}
 	hp.SummonedAsPet = true
 
@@ -84,7 +81,7 @@ func (hunter *Hunter) NewHunterPet() *HunterPet {
 }
 
 func (hp *HunterPet) GetPet() *core.Pet {
-	return &hp.Pet
+	return hp.Pet
 }
 
 func (hp *HunterPet) Talents() *proto.HunterPetTalents {
@@ -130,12 +127,6 @@ func (hp *HunterPet) ExecuteCustomRotation(sim *core.Simulation) {
 	// PetAI::UpdateAI only runs on the pet's own update, so that's when it can cast
 	if next := sim.NextServerTick(sim.CurrentTime); next > sim.CurrentTime {
 		hp.WaitUntil(sim, next)
-		return
-	}
-
-	if hp.hasOwnerCooldown && hp.CurrentFocus() < 50 {
-		// When a major ability (Furious Howl or Savage Rend) is ready, pool enough
-		// energy to use on-demand.
 		return
 	}
 

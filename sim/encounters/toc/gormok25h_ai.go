@@ -115,6 +115,7 @@ func (ai *Gormok25HAI) registerImpaleSpell(target *core.Target) {
 			},
 			NumberOfTicks: 20,
 			TickLength:    time.Second * 2,
+			TicksCanCrit:  false,
 
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
 				dot.SnapshotBaseDamage = sim.Roll(3938, 5062)

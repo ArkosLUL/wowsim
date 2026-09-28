@@ -56,6 +56,7 @@ func applyShardOfTheGodsDamageProc(character *core.Character, isHeroic bool) {
 			},
 			NumberOfTicks: 6,
 			TickLength:    time.Second * 2,
+			TicksCanCrit:  false,
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
 				dot.SnapshotBaseDamage = tickAmount
 				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(dot.Spell.Unit.AttackTables[target.UnitIndex])

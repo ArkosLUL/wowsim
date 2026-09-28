@@ -97,6 +97,7 @@ func (fireElemental *FireElemental) registerFireShieldAura() {
 			},
 			NumberOfTicks: 40,
 			TickLength:    time.Second * 3,
+			TicksCanCrit:  false,
 			// 1.2 a level, 95 for the level 80 elemental; 0.015 is 13376's spell_bonus_data row
 			Tick: core.SpellEffect{Effect: 0, Min: 95, Max: 95, SP: 0.015},
 

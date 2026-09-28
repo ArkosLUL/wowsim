@@ -104,7 +104,6 @@ var ArmsGlyphs = &proto.Glyphs{
 	Major1: int32(proto.WarriorMajorGlyph_GlyphOfRending),
 	Major2: int32(proto.WarriorMajorGlyph_GlyphOfMortalStrike),
 	Major3: int32(proto.WarriorMajorGlyph_GlyphOfExecution),
-	Minor1: int32(proto.WarriorMinorGlyph_GlyphOfShatteringThrow),
 }
 
 var PlayerOptionsArms = &proto.Player_Warrior{

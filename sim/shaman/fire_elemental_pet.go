@@ -17,7 +17,7 @@ const (
 )
 
 type FireElemental struct {
-	core.Pet
+	*core.Pet
 
 	FireBlast *core.Spell
 	FireNova  *core.Spell
@@ -74,7 +74,7 @@ func (fireElemental *FireElemental) disable(sim *core.Simulation) {
 }
 
 func (fireElemental *FireElemental) GetPet() *core.Pet {
-	return &fireElemental.Pet
+	return fireElemental.Pet
 }
 
 func (fireElemental *FireElemental) Initialize() {

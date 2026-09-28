@@ -218,7 +218,8 @@ func (rogue *Rogue) applyWoundPoison() {
 		return
 	}
 
-	const basePPM = 0.5 / (1.4 / 60) // ~21.43, the former 50% normalized to a 1.4 speed weapon
+	// live spell_enchant_proc_data, enchant 3773 (Wound Poison VII, item 43235): PPMChance 21.43
+	const basePPM = 21.43
 	rogue.woundPoisonPPMM = rogue.AutoAttacks.NewPPMManager(basePPM, procMask)
 
 	rogue.RegisterAura(core.Aura{
@@ -356,7 +357,8 @@ func (rogue *Rogue) UpdateInstantPoisonPPM(bonusChance float64) {
 		return
 	}
 
-	const basePPM = 0.2 / (1.4 / 60) // ~8.57, the former 20% normalized to a 1.4 speed weapon
+	// live spell_enchant_proc_data, enchant 3769 (Instant Poison IX, item 43231): PPMChance 8.53
+	const basePPM = 8.53
 
 	ppm := basePPM * (1 + float64(rogue.Talents.ImprovedPoisons)*0.1 + bonusChance)
 	rogue.instantPoisonPPMM = rogue.AutoAttacks.NewPPMManager(ppm, procMask)

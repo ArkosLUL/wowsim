@@ -287,8 +287,8 @@ var serverDataPresets = []serverDataPreset{
 		warriorOptions, false},
 	{"Arms", proto.Class_ClassWarrior, proto.Race_RaceOrc, "warrior", "p1_arms", "arms",
 		"3022032023335100102012213231251-305-2033", glyphs(int32(proto.WarriorMajorGlyph_GlyphOfRending),
-			int32(proto.WarriorMajorGlyph_GlyphOfMortalStrike), int32(proto.WarriorMajorGlyph_GlyphOfExecution),
-			int32(proto.WarriorMinorGlyph_GlyphOfShatteringThrow)), warriorOptions, false},
+			int32(proto.WarriorMajorGlyph_GlyphOfMortalStrike), int32(proto.WarriorMajorGlyph_GlyphOfExecution)),
+		warriorOptions, false},
 	{"ProtectionWarrior", proto.Class_ClassWarrior, proto.Race_RaceOrc, "protection_warrior", "p1_balanced", "default",
 		"2500030023-302-053351225000012521030113321", glyphs(int32(proto.WarriorMajorGlyph_GlyphOfBlocking),
 			int32(proto.WarriorMajorGlyph_GlyphOfDevastate), int32(proto.WarriorMajorGlyph_GlyphOfVigilance)),
@@ -815,7 +815,7 @@ func TestServerDataApplied(t *testing.T) {
 
 	// Corruption's tick, declared with the wrong coefficient: the dots get the server's
 	corruption := register(core.SpellConfig{ActionID: core.ActionID{SpellID: 47813}, SpellSchool: core.SpellSchoolShadow, Cast: onGCD,
-		Dot: core.DotConfig{Aura: core.Aura{Label: "Corruption test"}, NumberOfTicks: 6, TickLength: 3 * time.Second,
+		Dot: core.DotConfig{Aura: core.Aura{Label: "Corruption test"}, NumberOfTicks: 6, TickLength: 3 * time.Second, TicksCanCrit: false,
 			Tick: core.SpellEffect{Effect: 0, Min: 180, Max: 180, SP: 0.1}}})
 	if got := corruption.ServerConflicts(); len(got) != 1 || got[0].Field != core.ServerTickSP || got[0].SimFloat != 0.1 || got[0].ServerFloat != 0.2 {
 		t.Errorf("Corruption conflicts %v", got)
@@ -827,7 +827,7 @@ func TestServerDataApplied(t *testing.T) {
 	// Empowered Corruption and Everlasting Affliction go on the checked 0.2 as op 24
 	corruption = register(core.SpellConfig{ActionID: core.ActionID{SpellID: 47813}, SpellSchool: core.SpellSchoolShadow, Cast: onGCD,
 		Mods: []core.SpellMod{{Op: core.SpellModBonusMultiplier, Flat: 6}, {Op: core.SpellModBonusMultiplier, Flat: 5}},
-		Dot: core.DotConfig{Aura: core.Aura{Label: "Corruption mods test"}, NumberOfTicks: 6, TickLength: 3 * time.Second,
+		Dot: core.DotConfig{Aura: core.Aura{Label: "Corruption mods test"}, NumberOfTicks: 6, TickLength: 3 * time.Second, TicksCanCrit: false,
 			Tick: core.SpellEffect{Effect: 0, Min: 180, Max: 180, SP: 0.1}}})
 	if tick := corruption.Dot(env.Encounter.TargetUnits[0]).Tick; tick != (core.SpellEffect{Effect: 0, Min: 180, Max: 180, SP: 0.31}) {
 		t.Errorf("Corruption with mods ticks for %+v", tick)

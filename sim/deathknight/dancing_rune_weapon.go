@@ -84,7 +84,7 @@ func (runeWeapon *RuneWeaponPet) getImpurityBonus(spell *core.Spell) float64 {
 }
 
 type RuneWeaponPet struct {
-	core.Pet
+	*core.Pet
 
 	dkOwner *Deathknight
 
@@ -175,7 +175,7 @@ func (dk *Deathknight) NewRuneWeapon() *RuneWeaponPet {
 }
 
 func (runeWeapon *RuneWeaponPet) GetPet() *core.Pet {
-	return &runeWeapon.Pet
+	return runeWeapon.Pet
 }
 
 func (runeWeapon *RuneWeaponPet) Reset(_ *core.Simulation) {

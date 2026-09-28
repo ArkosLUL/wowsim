@@ -132,6 +132,7 @@ func (shaman *Shaman) registerRiptideSpell() {
 			},
 			NumberOfTicks: 5,
 			TickLength:    time.Second * 3,
+			TicksCanCrit:  false,
 			Tick:          core.SpellEffect{Effect: 1, Min: 334, Max: 334, SP: 0.188},
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
 				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + dot.Tick.SP*dot.Spell.HealingPower(target)
@@ -283,6 +284,7 @@ func (shaman *Shaman) registerEarthShieldSpell() {
 			},
 			NumberOfTicks: 6 + shaman.Talents.ImprovedEarthShield,
 			TickLength:    time.Minute*10 + 1, // tick length longer than expire time.
+			TicksCanCrit:  false,
 			Tick:          core.SpellEffect{Effect: 0, Min: 337, Max: 337, SP: 0.5371},
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
 				base := dot.Tick.Roll(sim)

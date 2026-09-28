@@ -44,6 +44,7 @@ func (dk *Deathknight) registerGhoulFrenzySpell() {
 			},
 			NumberOfTicks: 5,
 			TickLength:    time.Second * 6,
+			TicksCanCrit:  false,
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
 				dot.SnapshotBaseDamage = 0.06 * dk.Ghoul.MaxHealth()
 				dot.SnapshotAttackerMultiplier = dot.Spell.CasterHealingMultiplier()

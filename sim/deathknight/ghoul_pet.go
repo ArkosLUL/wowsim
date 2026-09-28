@@ -10,7 +10,7 @@ import (
 )
 
 type GhoulPet struct {
-	core.Pet
+	*core.Pet
 
 	dkOwner *Deathknight
 
@@ -152,7 +152,7 @@ func (dk *Deathknight) SetupGhoul(ghoulPet *GhoulPet) {
 }
 
 func (ghoulPet *GhoulPet) GetPet() *core.Pet {
-	return &ghoulPet.Pet
+	return ghoulPet.Pet
 }
 
 func (ghoulPet *GhoulPet) Initialize() {

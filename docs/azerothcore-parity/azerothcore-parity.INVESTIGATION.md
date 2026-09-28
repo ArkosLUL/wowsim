@@ -538,11 +538,11 @@ Roll details the tables above don't show:
   (`GetDeadlyPoisonProcChance`). Left unresolved: nothing in the offline capture gives the enchant's
   `amount` values, so whether Instant/Wound Poison's PPM model over- or under-rolls away from 1.4 speed
   needs a live `.simval procs`-style capture on the poison enchant ids, not the damage spell ids.
-- Killing Spree's two per-hit swings (`sim/rogue/killing_spree.go`) register under
-  `ActionID{SpellID: 51690, Tag: 1|2}` with a code comment giving the real ids (57841/57842), so the
-  P3-2 serverdata lookup never finds them: `spells_missing.csv` doesn't list them either, since the scan
-  only flags ids it expected to resolve and couldn't. Not fixed here: retagging needs the real ids as
-  constants and a check that no set bonus or script keys off spell family flags on the wrapper id instead.
+- **Fixed (PAR-P8):** Killing Spree's two per-hit swings (`sim/rogue/killing_spree.go`) now register
+  under their real ids (`ActionID{SpellID: 57841}`/`57842`) instead of the wrapper
+  `{SpellID: 51690, Tag: 1|2}`, so the P3-2 serverdata sync finds them by `ActionID.SpellID` like any
+  other spell. No golden moved: their effect declarations were already checked against 57841/57842 via
+  `FromSpellID`, and their flags were already hand-set to match — attribution only.
 
 **Warrior** (`TestFury`, `TestArms`, `TestProtectionWarrior`, code)
 - Slam (`sim/warrior/slam.go`): `spell_warr_slam::HandleDummy` (`spell_warrior.cpp:318-353`) only casts
@@ -570,9 +570,11 @@ Roll details the tables above don't show:
   resets on cast start and completion, so the hand-rolled `StopMeleeUntil` calls were redundant, and
   modeled the wrong reset shape besides (retail deviation #19). Shattering Throw's cast time is
   unconditionally 1.5 s now; Glyph of Shattering Throw (206953) is a WotLK Classic item this server
-  doesn't have, so it's out of the presets (`ui/warrior/presets.ts`, `FuryGlyphs`, `presetOptimizeRequest`'s
-  Fury player, `fury_p1.json`) but stays live in `hasGlyph`'s stance-switch and cast condition for a
-  hand-built profile, and `ArmsGlyphs` (`dps_warrior_test.go`) keeps it glyphed for coverage of that path.
+  doesn't have (retail deviation #65), so it's out of the presets (`ui/warrior/presets.ts`,
+  `FuryGlyphs`, `presetOptimizeRequest`'s Fury player, `fury_p1.json`). **Fixed (PAR-P8):** every cast
+  now unconditionally needs Battle Stance (the `hasGlyph` branch is gone), and the two Go test fixtures
+  that set the glyph only to exercise that branch (`ArmsGlyphs`, `serverdata_test.go`'s Arms row) no
+  longer do.
 - Recklessness and Death Wish (`sim/warrior/recklessness.go`, `talents.go`): the P3-2 GCD entries are
   correct as declared. `applyServerData` already forces `DefaultCast.GCD` to 1500 ms, and each
   ability's own `WaitUntil(sim.CurrentTime+GCDDefault)` sets the same absolute GCD-ready time a second
@@ -799,11 +801,11 @@ Roll details the tables above don't show:
   multiplies them, like that field's set-bonus and glyph terms elsewhere already do. Frostfire Bolt's
   glyph-excluded-from-the-DoT trick (below) moved from subtracting to dividing out the glyph's factor to
   match.
-  - Open: Fire Power's second effect, `miscValue: 22` (SPELLMOD_DOT), carries a different classMask
-    (`[4194309,135168,0]`) from its damage effect's (`[12845079,69704,0]`), and Spell Impact has no DOT
-    effect at all. Whether Fireball's and Flamestrike's ticks should take Fire Power's bonus at all (as
-    Frostfire Bolt's dot already excludes its glyph) needs that classMask decoded against each spell's
-    family flags; left unchanged, taking the same multiplier as the direct hit.
+  - **Fixed (PAR-P8):** decoded both classMasks against Fireball's, Flamestrike's, Pyroblast's and
+    Frostfire Bolt's family flags. Fire Power's `miscValue: 22` effect still matches all four (same
+    word as its damage effect), so it correctly takes both halves unchanged. Spell Impact has no DOT
+    effect at all, so it never reached Fireball's or Flamestrike's tick; split out, hit-only
+    (`fireball.go`, `flamestrike.go`).
 - `TicksCanCrit`: none of Fireball's, Pyroblast's, Flamestrike's or Frostfire Bolt's dots carry aura
   286, so all four are `false`. Living Bomb only crits with its glyph (the sim already swaps its
   `OnTick` for that), so its declaration follows the same check, keeping the glyph's ticks crit-eligible
@@ -871,9 +873,9 @@ Roll details the tables above don't show:
   spell 58435) and Unstable Affliction's (`[0,256,0]`), not Curse of Agony's (`[0x400,0,0]`) or Drain
   Soul's (`[0x4000,0,0]`); its crit-damage-bonus effect (aura 108) covers the same two plus Haunt's
   flag (`[0,0x40000,0]`). Both spells now gate `CritMultiplier` on `Talents.Pandemic` like Haunt's.
-  `TicksCanCrit` is declared throughout: `canCrit` (Corruption, Unstable Affliction), unconditional
-  `true` (Immolate, Conflagrate's dot — no talent gates either), `false` elsewhere (Curse of Agony,
-  Curse of Doom, Seed, Drain Soul, the infernal's and Metamorphosis's AOE dots — none use a
+  `TicksCanCrit` is declared throughout: `canCrit` (Corruption, Unstable Affliction), `true`
+  (Immolate, 75445), Improved Immolate 3/3 (Conflagrate's dot; both Cleanup (P8)), `false` elsewhere
+  (Curse of Agony, Curse of Doom, Seed, Drain Soul, the infernal's and Metamorphosis's AOE dots — none use a
   crit-capable outcome function). `periodicCritsNeedDeclaration` is still off, so this changes nothing
   yet; it's what P8's flip should read.
 - **Fixed:** every warlock spell's `DamageMultiplierAdditive` summed its talent, glyph and set-bonus
@@ -999,7 +1001,7 @@ Roll details the tables above don't show:
   to run through the 17364 spell object, so anything keyed on "a Stormstrike landed" fired three times
   a cast. Totem of the Avalanche (50463) took all three stacks of its 146 AP buff off one Stormstrike;
   now it takes one, which is what the item says.
-- TicksCanCrit: Flame Shock declares `false` (no mod-spell-tweaks entry grants it aura 286). Searing
+- TicksCanCrit: Flame Shock declares `true` (every shaman's Flame Shock Passive, 75461; Cleanup (P8)). Searing
   and Magma Totem reroll the full hit-and-crit table each tick instead of using a snapshotted `Dot`
   outcome, since they're repeated NPC casts, not periodic ticks, so the flag doesn't apply to them.
 - Feral Spirit and the fire elemental (Fire Blast, Fire Nova) dropped their manual
@@ -1083,8 +1085,7 @@ Roll details the tables above don't show:
     moves Elemental another median -1.15% (30 rows) and Enhancement another median -1.11% (all 207 rows,
     -4.04% to +9.77%).
 - Live probes (`TestSimvalShaman`): the Stormstrike cast's yellow table, its two hits skipping the
-  partial block, Lava Burst's and Flame Shock's magic table, and Flame Shock's dot carrying no aura 286
-  all match the sim unchanged; numbers under **Verified on the live server**. `sim/serverdata_test.go`
+  partial block, and Lava Burst's and Flame Shock's magic table all match the sim unchanged; numbers under **Verified on the live server**. `sim/serverdata_test.go`
   now pins the two hits' always-hit and no-active-defense flags, since only those keep
   `OutcomeMeleeSpecialCritOnly` from rolling a partial block in front of the target.
 - Suites run: `TestElemental`, `TestEnhancement`, `TestRestoration` (unchanged), `sim`, `sim/core`,
@@ -1239,8 +1240,8 @@ Roll details the tables above don't show:
   - Already correct, no change: Shadowfiend takes raid and party buffs through the generic P7-0d
     mechanism (`applyPetBuffEffects` runs for every registered pet regardless of `isGuardian`); only
     pre-pull individual buffs are stripped, correctly, since it isn't `enabledOnStart`.
-- `TicksCanCrit` declared for every priest dot and hot: true for Shadow Word: Pain, Devouring Plague and
-  Vampiric Touch (Shadowform's 49868 grants `SPELL_AURA_ABILITY_PERIODIC_CRIT`, aura 286, to exactly
+- `TicksCanCrit` declared for every priest dot and hot: `Talents.Shadowform` for Shadow Word: Pain,
+  Devouring Plague and Vampiric Touch (Shadowform's 49868 grants `SPELL_AURA_ABILITY_PERIODIC_CRIT`, aura 286, to exactly
   these three by classMask), false for Holy Fire's dot (Holy school, outside Shadowform's classMask) and
   Renew's hot (no periodic-crit aura touches healing in 3.3.5). Inert until PAR-P8 flips
   `periodicCritsNeedDeclaration`.
@@ -1398,6 +1399,155 @@ trained Parry ability would (`Spell::EffectParry`); learning Deflection therefor
 0.04 = −0.6%) alongside its own 5% aura. Dodge has no such gate. The test file builds, vets and
 gofmt-clean.
 
+**Cleanup (P8)** (`sim/{deathknight,hunter,rogue,warrior}`, `sim/warlock/conflagrate.go`,
+`sim/mage/{fireball,flamestrike}.go`)
+- DK, Hunter, Rogue and Warrior summed talent/glyph/set-bonus percents into `DamageMultiplier(Additive)`
+  (`1 + a + b + ...`), the same bug PAR-DECL-1 already fixed for warlock and priest:
+  `Player::ApplySpellMod` multiplies SPELLMOD_DAMAGE/SPELLMOD_DOT percents (`totalmul *= ...`), it
+  doesn't sum them. Each class now builds it through its own `spellModDamage(bonuses...)` helper
+  (`(1+a)*(1+b)*...`), mirroring `sim/paladin`'s. Only rows where two such terms land on the same
+  spell move: hunter's Gronnstalker/Scourgestalker set pieces, warrior's `shield_slam.go` (whose own
+  "TODO: All additive multipliers?" flagged this), and warrior's `whirlwind.go`, whose Unending
+  Fury/Improved Whirlwind pair was summed inside an otherwise-multiplicative expression.
+- Decoded each spell's classMask against its own family flags (not the tooltip), per SPELLMOD_DAMAGE
+  (direct) vs SPELLMOD_DOT (tick) — the wave I leftover:
+  - Conflagrate (family flags `[0,8388608,0]`) doesn't match Aftermath's, Improved Immolate's or Glyph
+    of Immolate's classMask (`[4,0,0]`, Immolate alone) on either op, so none of the three reach it; nor
+    does Gul'dan's Regalia 4pc (`[6,256,0]`/`[4,0,0]`, its own name is "Immolate, Corruption, and
+    Unstable Affliction" — not Conflagrate). All four dropped. The T8 2pc's SPELLMOD_DAMAGE effect
+    matches Conflagrate's flags but its SPELLMOD_DOT one doesn't (Immolate only), so it's now hit-only,
+    divided back out for the dot alongside Firestone. Emberstorm matches Conflagrate on both ops,
+    unchanged.
+  - Fireball's and Flamestrike's shared dot multiplier included Spell Impact (11242), whose only effect
+    is SPELLMOD_DAMAGE — no SPELLMOD_DOT at all — so it never reached either dot; split out, hit-only.
+    Fire Power's SPELLMOD_DOT effect does match both spells' family flags, unchanged (resolves the Open
+    note above).
+  - Hemorrhage was missing Surprise Attacks, whose classMask reaches it the same as Backstab and
+    Sinister Strike; added.
+- Goldens (`dock.sh delta`, Average-Default): DK Unholy +0.11% (Death Coil's Morbidity × Glyph of Dark
+  Death, previously summed); Hunter BM +0.14% and MM +0.24% (one set-piece row each), SV +0.01%; Mage
+  Fire -0.61% (Spell Impact off the dot); Rogue Assassination +0.09%, Combat +0.48%, Subtlety +0.33%;
+  Warlock Destruction -3.90% (Conflagrate's four dropped mods); Warrior Arms +0.08%, Fury +0.22%.
+- Tick crits: with `TicksCanCrit` the only gate now, a script checked every declaration against the
+  spelldump's 30 aura-286 spells (family and classMask) and how the player gets each. A class skill
+  teaches every shaman Flame Shock Passive (75461) and every warlock Demonic Immolate (75445):
+  SkillLineAbility rows 21724 (Elemental Combat) and 21722 (Destruction) have AcquireMethod 2, learned
+  with the skill (`Player::learnSkillRewardedSpells`). So Flame Shock's ticks crit (now `true`, putting
+  Elemental and Enhancement back on their goldens), as Immolate's already did. Conflagrate's dot now
+  crits only with Improved Immolate 3/3 (17834's slot 3; ranks 1-2 lack it), and Shadow Word: Pain,
+  Devouring Plague and Vampiric Touch only with `Talents.Shadowform` (49868 comes with the form), both
+  golden-neutral: Destruction runs 3/3, and the priest `OnTick`s already skipped the crit without
+  Shadowform. Death and Decay, Explosive Shot and Volley keep `true` with no aura 286: each tick is a
+  separate hit (52212, 53352, 58433) rolling its own crit. Glyph of Explosive Trap (63068) is reachable
+  (glyph 693, taught by 63856), as `hasGlyph` has it.
+- mod-spell-tweaks' "aura 286 in slot 3 doesn't work" (`docs/death-knight/DiseaseCrit.md`) misread the
+  columns: `spell_dbc`'s `EffectSpellClassMask<slot A-C>_<word 1-3>` fills `std::array<flag96, 3>` in
+  order, so Vicious Strikes' `B_3` set slot 2's third word and left slot 3's mask empty. 17834's slot 3
+  has its mask (spelldump `[0,8388608,0]`).
+- Left open: a pet's or guardian's spells take the owner's spell mods where the class mask matches
+  (`Unit::GetSpellModOwner`); Mirror Image still lacks the mage's SPELLMOD_DAMAGE percents
+  (PAR-DECL-1's own note), which is a missing-inheritance gap, not a stacking-direction one, so it's
+  outside this cleanup.
+- PAR-P8's leftovers stage: `core.NewPet` returns `*Pet` now, not a value copy; all 14 pet types
+  (hunter; DK ghoul/bloodworm/rune weapon/gargoyle; druid treant; mage mirror image/water elemental;
+  priest shadowfiend; shaman fire elemental/spirit wolves; warlock pet/infernal; nibelung valkyr)
+  embed `*core.Pet`. No golden moved (TestUnholy's delta is unchanged from the spell-mod stage's own
+  numbers above).
+- Hunter pet AI (`ExecuteCustomRotation`, `sim/hunter/pet.go`) pooled focus to 50 before acting
+  whenever its special ability was Furious Howl or Savage Rend; the server's `PetAI::UpdateAI` just
+  picks at random among whatever it can currently afford, no pooling. Removed the gate
+  (`hasOwnerCooldown`): the main driver of Hunter BM/MM/SV's broad move below, since
+  `PlayerOptionsBasic`'s pet is always a Savage-Rend Wolf, so every row used it.
+- Hunter's `spell.RangedAttackPower(target)` folded in creature-type AP
+  (`PseudoStats.MobTypeAttackPower`, which Elixir of Demonslaying and the Twin Blades of Azzinoth 2pc
+  both grant), but the server's `spell_bonus_data` ap_bonus/ap_dot_bonus path
+  (`Unit::SpellDamageBonusDone` -> `GetTotalAttackPowerValue`) never reads it — only
+  `MeleeDamageBonusDone`'s weapon-damage path does (`SPELL_AURA_MOD_RANGED_ATTACK_POWER_VERSUS`). New
+  `Spell.RangedAttackPowerSpellBonus(target)` (Hunter's Mark kept, creature-type dropped) now backs
+  every such AP term outside a `WeaponPct`: Arcane Shot, Black Arrow, Chimera's Serpent Sting proc,
+  Explosive Shot/Trap, Kill Shot's 0.4, Serpent Sting, Volley, and **Steady Shot's own 0.1**
+  (`spell_hun_steady_shot`'s `EffectSchoolDMG` branch, `SpellEffects.cpp:568-607`, adds only the raw
+  weapon roll and ammo; the 0.1 AP is spell_bonus_data's, confirmed by the spelldump's own `bonus.ap`
+  row for 49052 — missed in the first pass of this stage, caught and fixed on review). The weapon-part
+  RAP terms stay on the old function. Not fully latent: the Twin Blades of Azzinoth 2pc grants +200
+  `MobTypeAttackPower` against a demon target (`sim/common/tbc/melee_sets.go`), and every hunter suite's
+  `AllItems` sweep runs it against one, so Steady Shot's fix alone moves that one gear row in BM
+  (-0.611% -> -0.828%), MM (-0.259% -> -0.488%) and SV (-1.035% -> -1.138%); no other item or suite
+  reaches non-weapon ranged AP. Confirmed already correct (PAR-DECL-2): Kill Shot's weapon part already
+  uses unnormalized ammo (`AmmoDamageBonus`, not the ×2.8 `NormalizedAmmoDamageBonus`) and its 0.4 AP
+  already lands after the 200%, both already reading Hunter's Mark via `target`.
+- Added Thori'dal's own equip spell (44972, `SPELL_AURA_MOD_RANGED_HASTE` +15%, spelldump-confirmed),
+  stacking with a quiver's own 15% (`hunter.go`). No suite equips it (item 34334), so latent. Confirmed
+  unchanged: pet focus regen still models the server's 24-every-4s lump as a continuous 6/s rate
+  (retail deviation #47 already covers the gap).
+- Left open, a test-coverage gap not a defect: the hunter suites' `FerocityTalents` (`hunter_test.go`)
+  spends 16 pet talent points; Beast Mastery's cap is 22 (`BEAST_MASTERY_PET_TALENT_POINTS`), so no
+  golden reaches it. Closing it needs a new BM-specific fixture, a bigger change than this stage.
+- Left open, not code this stage can settle: no DK APL (`ui/deathknight/apls/*.json`) has a
+  haste/Bloodlust-aware condition to time a disease refresh so its already-correct amplitude snapshot
+  (`AuraEffect::Update`, PAR-P3-5) locks in the faster tick rate. Needs APL priority tuning verified
+  against the optimizer, not a mechanical fix.
+- Killing Spree's swings (`killing_spree.go`) now register under their real ids (57841/57842) instead
+  of the wrapper `{SpellID: 51690, Tag: 1|2}`, so the P3-2 serverdata sync finds them by
+  `ActionID.SpellID` like any other spell (checked first that nothing else in `sim/rogue` keys off any
+  of the three ids). No golden moved: their effect declarations were already checked against
+  57841/57842 via `FromSpellID`, and their flags were already hand-set to match — an attribution fix,
+  not a behavior change. Confirmed unchanged, already documented: Master Poisoner's crit bonus is a
+  rogue-wide reference count (`poisons.go`), exact while the rogue's poison is on one target, an
+  approximation once it's on two at once; no suite exercises that, and a real fix needs a per-target
+  attack-table-scoped bonus instead of a rogue-side aura.
+- Warrior's Shattering Throw (`shattering_throw.go`) drops its `hasGlyph` branch: Glyph of Shattering
+  Throw (206953) has no DBC row on this server (`glyphproperties_dbc`, `item_template`), so every cast
+  now unconditionally needs Battle Stance. Dropped the glyph from the two Go fixtures that set it only
+  to exercise that branch (`ArmsGlyphs` in `dps_warrior_test.go`, the inline Arms row in
+  `serverdata_test.go`); presets already excluded it (wave H). TestArms's rotation never casts
+  Shattering Throw, so no golden moved: the fix is real but untested by any golden. New retail
+  deviation #65.
+- Paladin's `canJudgement` (`judgement.go`) was dead code (`//nolint:unused`, never called); wired as
+  `ExtraCastCondition` on Judgement of Wisdom and Light, so neither casts without an active seal.
+- Holy Vengeance (Seal of Vengeance's dot, `sov.go`) and Righteous Vengeance (`talents.go`) rolled
+  their crit chance fresh on every tick (`OutcomeMeleeSpecialCritOnly`, which doesn't even check
+  `TicksCanCrit`), where the server fixes a periodic aura's crit chance once, when it lands or
+  refreshes (`AuraEffect::CalculatePeriodicData` -> `SetCritChance`), the same snapshot-at-landing
+  pattern the rogue and warrior DoTs already use. Both now snapshot `SnapshotCritChance` and tick
+  through `dot.OutcomeSnapshotCrit`, matching `black_arrow.go`'s pattern. With the seal fix above, this
+  is the only cause of TestRetribution's move (a new suite for this item: avg -0.39%, -1.63% to
+  +0.71%, mixed sign since it's a change in RNG structure, not a systematic buff or nerf).
+- Confirmed already done by earlier waves, unchanged: Omen of Clarity's proc chance is real PPM data
+  (`druid/talents.go`, `core.ServerProcFor(16864)`); Feral Spirit no longer hand-calls
+  `AutoAttacks.StopMeleeUntil` (PAR-P7-SHA, `FlagResetsAutoAttack` covers it); warlock pet hit
+  (`warlock/pet.go`) was fixed by this item's own tick-crit stage; the Expertise comment and the
+  hardcoded boss block value of 76 were fixed in P2 (no literal 76 block value remains in `sim/core`).
+- PAR-P8's live stage settled the hunter crit gap: a million-roll `.simval yellow` probe on each of Auto
+  Shot and Steady Shot (`TestSimvalP8HunterCrit`, `mod-sim-validation/e2e/p8_test.go`) reads a pooled crit
+  rate of 0.0862% against the server's own 0.0880% threshold (z = -0.83, n = 2,000,000), tight enough to
+  rule out a missing term at the size PAR-P7-0d's three recorded runs saw (+2.60 points, 1.66σ pooled).
+  With `UpdateCritPercentage`/`GetUnitCriticalChance` already confirmed term-for-term against the sim's
+  formula, that gap was recorded-run sampling noise. No sim change; closed (**Verified on the live
+  server**, Hunter).
+- Fixed Instant and Wound Poison's PPM constants (`sim/rogue/poisons.go`): both poisons' max-rank enchants
+  (3769, 3773 — items 43231/43235, spells 57968/57978) do carry a `spell_enchant_proc_data` row after all
+  (`PPMChance` 8.53 and 21.43), which a narrower earlier check on the wrong enchant ids missed. `basePPM`
+  now reads those two live values directly instead of deriving them as `0.2/(1.4/60)` ≈ 8.5714 and
+  `0.5/(1.4/60)` ≈ 21.4286 from "the former X%". Goldens (`dock.sh delta`, Average-Default, on top of the
+  spell-mod stage's own numbers): Rogue Combat +0.351% avg (was +0.478%), Subtlety +0.259% (was +0.330%),
+  Assassination +0.028% (was +0.094%, Deadly Poison untouched) — all three move down slightly, as a lower
+  Instant Poison PPM should. Read live via `TestSimvalP8PoisonProcs` (`p8_test.go`), which pulls the same
+  two facts `.simval procs`' `WriteItemProcs` would (the enchant id off the apply spell's own
+  `SPELL_EFFECT_ENCHANT_ITEM_TEMPORARY` effect, then one read-only `spell_enchant_proc_data` SELECT)
+  instead of applying the poison to a weapon: AzerothGhost has no `CMSG_USE_ITEM`-with-item-target
+  support, and `Spell::EffectEnchantItemTmp` returns immediately when the GM `.cast` command's unit-only
+  target leaves `itemTarget` null, so a real weapon application isn't reachable from this harness today.
+- Moved the fully-resisted rounding-artifact tolerance (`Unit::CalcAbsorbResist`'s float rounding gap,
+  about 1 roll in 300k) out of `p7_dru_test.go`'s `dropFullResistArtifact` and into `checkResists` itself
+  (`e2e/records_test.go`), so every magic probe tolerates it, not only the ones that call the wrapper.
+  Every `TestSimval*` e2e suite (17, including `TestSimvalDruid`) re-ran live and stayed green.
+- Checked, no cheap answer found: the BM recorded run's pet idling through 2 of its 3 Bestial Wraths
+  (Hunter findings, above). Read mod-playerbots' `BestialWrathTrigger`/`CastBestialWrathAction`
+  (`Ai/Class/Hunter/...`) for anything touching the pet's command or reactive state around the cast;
+  nothing stood out. Settling it needs tracing the pet AI/movement-generator path in depth, which isn't
+  cheap, so it stays open.
+
 **Items** (`docs/azerothcore-item-diff/data/summary.md`)
 - 1509 of 8043 sim items differ.
 - Classic raised Ulduar/emblem item levels, e.g. 226→232 on 329 items and 239→252 on 92.
@@ -1457,7 +1607,9 @@ gofmt-clean.
   Conflagrate's own `SpellDamageBonusDone` and `SpellDamageBonusTaken`. The dot's ticks deal effect 2's
   40 / 3 = 13 (integer) percent of that, then take Conflagrate's own done mods (Emberstorm's op 22) and
   the target's taken mods a second time. The sim takes the Immolate's snapshot and the 13%, but its
-  `DamageMultiplier` still stands in for Immolate's done mods, at Conflagrate's cast.
+  `DamageMultiplier` still stands in for Conflagrate's own done mods, not a literal replay of the
+  snapshotted amount's — still an approximation, but no longer of the wrong spell's mods (Cleanup
+  (P8), below).
 - `spell_warl_curse_of_agony` ramps the whole tick amount, spell power included: half for ticks 1–4, 1.5×
   from 9, 2× from 13 (glyphed). The sim ramped only the base.
 - Incinerate adds a quarter of its roll, before spell power, while any warlock's Immolate is on the
@@ -1753,6 +1905,10 @@ values. Human warrior, level 80, maxed skills, Worn Shortsword (Sword Specializa
     Pooling hits across the captures against the current code reproduces the claim: Auto+Steady +2.60 points
     (1.66σ; +2.91 before enchant 3776's crit rating), Arcane -0.96 (0.26σ, matched). Left alone; a live `.simval`
     probe would settle whether it's real.
+  - **Settled (PAR-P8):** `TestSimvalP8HunterCrit` (`mod-sim-validation/e2e/p8_test.go`) ran `.simval yellow`
+    on Auto Shot and Steady Shot at 1,000,000 rolls each: pooled crit 0.0862% rolled against the server's own
+    0.0880% threshold (z = -0.83, n = 2,000,000). At that sample size a real missing term would show up as a
+    large z, so the recorded runs' +2.60-point gap was sampling noise on a few thousand swings, not a bug.
 - Death knight probes (`TestSimvalDeathKnight`, a human DK behind the boss dummy): Scourge Strike and Obliterate
   roll the yellow table, Icy Touch the magic one with partial resists, and `tools/simval` passes all 26 checks on
   those records. Both diseases are melee damage class and can't miss. Rage of Rivendare 5/5 adds 10 expertise and
@@ -1771,6 +1927,11 @@ values. Human warrior, level 80, maxed skills, Worn Shortsword (Sword Specializa
   case (retail deviation #27), so `sim/rogue/rupture.go`'s unconditional `TicksCanCrit: true` needed no change.
   **Fixed:** `p7_rog_test.go`'s original check expected Weapon Expertise to carry that same aura, which the
   live spelldump disproved; it now asserts the aura's absence instead.
+  **Settled (PAR-P8):** `TestSimvalP8PoisonProcs` (`p8_test.go`) resolved Instant Poison IX's (57968) and
+  Wound Poison VII's (57978) `SPELL_EFFECT_ENCHANT_ITEM_TEMPORARY` effect to enchants 3769 and 3773 via
+  `.simval spelldump`, then read one `spell_enchant_proc_data` row each live: both carry a `PPMChance`
+  (8.53, 21.43), so the poisons are PPM after all (Rogue findings, above, fixes `sim/rogue/poisons.go` to
+  match).
 - Warrior probes (`TestSimvalWarriorP7`, human warrior vs. the boss dummy): Rend's yellow table dodges
   (5.70%) and parries (13.25%) but never blocks — no `SPELL_ATTR3_COMPLETELY_BLOCKED` — at the plain
   8.00% miss and 4.40% partial block; Shattering Throw only misses (8.00%), no dodge/parry/block,
@@ -1792,8 +1953,8 @@ values. Human warrior, level 80, maxed skills, Worn Shortsword (Sword Specializa
   (`Unit.cpp:3287`) and both ids carry both attributes, which is what `OutcomeMeleeSpecialCritOnly` and
   the generated flags rely on. Lava Burst (60043) and Flame Shock (49233) roll the magic table with
   partial resists, missing 16.83% and 16.72% against the 1700 threshold, buckets and mean resist matching;
-  a `.simval spelldump` of 49233 finds no aura 286, so its dot's `TicksCanCrit: false` stands. All match
-  the sim unchanged.
+  a `.simval spelldump` of 49233 finds no aura 286 on it; its ticks crit through the caster's Flame Shock
+  Passive (75461, Cleanup (P8)). All match the sim unchanged.
   **Fixed:** the probe first asserted the record's `noActiveDefense` on the two hits, but
   `DeriveYellowTable` returns on ALWAYS_HIT before filling that field or `partialBlockChance`, so both
   read 0 whatever the spell carries. It now asserts the empty block roll, which is what the record proves.
@@ -1829,8 +1990,10 @@ values. Human warrior, level 80, maxed skills, Worn Shortsword (Sword Specializa
 - A non-binary magic hit lands fully resisted about once in 300k rolls (seen twice in 900k):
   `Unit::CalcAbsorbResist` builds its eleven discrete resist probabilities as floats, and a roll in the
   rounding gap above their sum walks the loop to the last bucket (`Unit.cpp:2360-2382`). Worth ~2e-6 of
-  damage, so the sim models nothing; `p7_dru_test.go` drops that bucket before checking the derived
-  distribution, since the harness derives it as exactly 0.
+  damage, so the sim models nothing. **Moved (PAR-P8):** the tolerance used to live only in
+  `p7_dru_test.go`'s `dropFullResistArtifact`; it's now in `checkResists` (`e2e/records_test.go`) itself,
+  so every magic probe drops that bucket before checking the derived distribution, not only the one that
+  called the wrapper. Every `TestSimval*` e2e suite re-ran live after the move and stayed green.
 
 ## Retail deviations
 
@@ -1903,6 +2066,7 @@ The fork copies the server. Patching any of these in [ac] means updating the mat
 | 62 | Moonfire direct hit coefficient | 0.13 spell power | 0.15 | `spell_bonus_data`, spell 48463 |
 | 63 | Faerie Fire (Feral) Bear Form damage | dealt under the triggered 60089, resists partially | dealt under the cast 16857, binary | `Spell::PrepareTriggersExecutedOnHit`, `Spell.cpp:8916-8921` |
 | 64 | Omen of Clarity proc chance | the aura's own `spell_proc` row: 3.5 PPM off weapon speed or cast time, floored at 1.5 s | cast time / 60 × 3.5, a 0.666 instant-cast factor, and per-spell multipliers | `Aura::CalcProcChance`, `spell_proc` row for 16864 |
+| 65 | Shattering Throw's glyph | no Glyph of Shattering Throw (206953) DBC data, so every cast needs Battle Stance | the glyph exists and skips the stance switch | `glyphproperties_dbc`, `item_template` |
 
 Not yet settled against retail, check before patching: the 200 ms other-hand push (`PlayerUpdates.cpp`), the DoT
 refresh tick-timer rule, the max(cast, 1500 ms) PPM basis for spell-triggered aura procs, the rule-based binary

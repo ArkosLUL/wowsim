@@ -72,6 +72,7 @@ func NewFakeElementalShaman(char *Character, _ *proto.Player) Agent {
 				},
 				NumberOfTicks:       6,
 				TickLength:          time.Second * 3,
+				TicksCanCrit:        false,
 				AffectedByCastSpeed: true,
 				OnSnapshot: func(sim *Simulation, target *Unit, dot *Dot, isRollover bool) {
 					dot.SnapshotBaseDamage = 100 + 1*dot.Spell.SpellPower()
@@ -105,6 +106,7 @@ func NewFakeElementalShaman(char *Character, _ *proto.Player) Agent {
 				Aura:          Aura{Label: "stackingdot"},
 				NumberOfTicks: 5,
 				TickLength:    time.Second * 3,
+				TicksCanCrit:  false,
 				OnTick: func(sim *Simulation, target *Unit, dot *Dot) {
 					dot.CalcAndDealPeriodicSnapshotDamage(sim, target, dot.OutcomeTick)
 				},
@@ -279,22 +281,14 @@ func TestTicksCanCritGatesTheCritRoll(t *testing.T) {
 	dot.SnapshotCritChance = 1
 	dot.Spell.CritMultiplier = 2
 
-	defer func(old bool) { periodicCritsNeedDeclaration = old }(periodicCritsNeedDeclaration)
-	for _, tc := range []struct {
-		needsDeclaration, declared, wantCrit bool
-	}{
-		{false, false, true}, // what the sim does today
-		{true, false, false},
-		{true, true, true},
-	} {
-		periodicCritsNeedDeclaration = tc.needsDeclaration
-		dot.TicksCanCrit = tc.declared
+	for _, declared := range []bool{false, true} {
+		dot.TicksCanCrit = declared
 
 		result := &SpellResult{Target: dot.Unit, Damage: 100}
 		dot.OutcomeSnapshotCrit(sim, result, nil)
 
-		if got := result.DidCrit(); got != tc.wantCrit {
-			t.Errorf("declaration needed %v, declared %v: crit %v, want %v", tc.needsDeclaration, tc.declared, got, tc.wantCrit)
+		if got := result.DidCrit(); got != declared {
+			t.Errorf("declared %v: crit %v, want %v", declared, got, declared)
 		}
 	}
 }

@@ -38,10 +38,11 @@ func (hunter *Hunter) registerArcaneShotSpell(timer *core.Timer) {
 
 		BonusCritRating: 0 +
 			2*core.CritRatingPerCritChance*float64(hunter.Talents.SurvivalInstincts),
-		DamageMultiplierAdditive: 1 +
-			.03*float64(hunter.Talents.FerociousInspiration) +
-			// Improved Arcane Shot (19454-19456): damage only, no cooldown cut in 3.3.5
+		// Improved Arcane Shot (19454-19456): damage only, no cooldown cut in 3.3.5
+		DamageMultiplierAdditive: spellModDamage(
+			.03*float64(hunter.Talents.FerociousInspiration),
 			.05*float64(hunter.Talents.ImprovedArcaneShot),
+		),
 		DamageMultiplier: 1 *
 			hunter.markedForDeathMultiplier(),
 		CritMultiplier:   hunter.critMultiplier(true, true),
@@ -50,7 +51,7 @@ func (hunter *Hunter) registerArcaneShotSpell(timer *core.Timer) {
 		Direct: core.SpellEffect{Effect: 0, Min: 492, Max: 492, AP: 0.15},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := spell.Direct.Roll(sim) + spell.Direct.AP*spell.RangedAttackPower(target)
+			baseDamage := spell.Direct.Roll(sim) + spell.Direct.AP*spell.RangedAttackPowerSpellBonus(target)
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeRangedHitAndCrit)
 			spell.WaitTravelTime(sim, func(sim *core.Simulation) {
 				if hasGlyph && result.Landed() && (hunter.SerpentSting.Dot(target).IsActive() || hunter.ScorpidStingAuras.Get(target).IsActive()) {

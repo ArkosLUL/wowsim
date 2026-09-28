@@ -843,6 +843,7 @@ func (warrior *Warrior) RegisterBladestormCD() {
 			},
 			NumberOfTicks: 6,
 			TickLength:    time.Second * 1,
+			TicksCanCrit:  false,
 			Tick:          core.SpellEffect{Effect: 0, FromSpellID: 50622, WeaponPct: 1},
 			OnTick: func(sim *core.Simulation, _ *core.Unit, dot *core.Dot) {
 				target := warrior.CurrentTarget

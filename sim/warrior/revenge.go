@@ -85,7 +85,10 @@ func (warrior *Warrior) registerRevengeSpell(cdTimer *core.Timer) {
 			return warrior.StanceMatches(DefensiveStance) && warrior.revengeProcAura.IsActive()
 		},
 
-		DamageMultiplier: 1.0 + 0.1*float64(warrior.Talents.UnrelentingAssault) + 0.3*float64(warrior.Talents.ImprovedRevenge),
+		DamageMultiplier: spellModDamage(
+			0.1*float64(warrior.Talents.UnrelentingAssault),
+			0.3*float64(warrior.Talents.ImprovedRevenge),
+		),
 		CritMultiplier:   warrior.critMultiplier(mh),
 		ThreatMultiplier: 1,
 		FlatThreatBonus:  121,

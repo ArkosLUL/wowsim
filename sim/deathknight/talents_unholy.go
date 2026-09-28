@@ -274,6 +274,7 @@ func (dk *Deathknight) applyUnholyBlight() {
 			},
 			NumberOfTicks: 10,
 			TickLength:    time.Second * 1,
+			TicksCanCrit:  false,
 			// the script hands each tick its amount as custom base points, which replace the 1
 			// (Spell::SetSpellValue stores them 1 less, and CalcValue's roll adds it back)
 			Tick: core.SpellEffect{Effect: 0, Min: 1, Max: 1},

@@ -366,6 +366,7 @@ func (shaman *Shaman) newEarthlivingImbueSpell() *core.Spell {
 			},
 			NumberOfTicks: 4,
 			TickLength:    time.Second * 3,
+			TicksCanCrit:  false,
 			Tick:          core.SpellEffect{Effect: 0, FromSpellID: 52000, Min: 163, Max: 163, SP: 0.164},
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
 				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + dot.Tick.SP*dot.Spell.HealingPower(target)

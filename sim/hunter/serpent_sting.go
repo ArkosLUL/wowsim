@@ -33,9 +33,10 @@ func (hunter *Hunter) registerSerpentStingSpell() {
 		// Need to specially apply LethalShots here, because this spell uses an empty proc mask
 		BonusCritRating: 1 * core.CritRatingPerCritChance * float64(hunter.Talents.LethalShots),
 
-		DamageMultiplierAdditive: 1 +
-			0.1*float64(hunter.Talents.ImprovedStings) +
+		DamageMultiplierAdditive: spellModDamage(
+			0.1*float64(hunter.Talents.ImprovedStings),
 			core.TernaryFloat64(hunter.HasSetBonus(ItemSetScourgestalkerBattlegear, 2), .1, 0),
+		),
 		CritMultiplier:   hunter.critMultiplier(true, false),
 		ThreatMultiplier: 1,
 
@@ -69,7 +70,7 @@ func (hunter *Hunter) registerSerpentStingSpell() {
 			Tick: core.SpellEffect{Effect: 0, Min: 242, Max: 242, AP: 0.04},
 
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + dot.Tick.AP*dot.Spell.RangedAttackPower(target)
+				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + dot.Tick.AP*dot.Spell.RangedAttackPowerSpellBonus(target)
 				if !isRollover {
 					attackTable := dot.Spell.Unit.AttackTables[target.UnitIndex]
 					dot.SnapshotCritChance = dot.Spell.PhysicalCritChance(attackTable)

@@ -49,7 +49,8 @@ func (hunter *Hunter) registerKillShotSpell() {
 				hunter.AutoAttacks.Ranged().BaseDamage(sim) +
 				hunter.AmmoDamageBonus +
 				spell.BonusWeaponDamage()) * spell.Direct.WeaponPct
-			baseDamage += spell.Direct.AP * spell.RangedAttackPower(target)
+			// spell_bonus_data's own 0.4 (Unit::GetTotalAttackPowerValue): Hunter's Mark, not creature-type AP
+			baseDamage += spell.Direct.AP * spell.RangedAttackPowerSpellBonus(target)
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeRangedHitAndCrit)
 			spell.DealDamageAfterTravel(sim, result)
 		},

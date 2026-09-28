@@ -699,6 +699,36 @@ Done when every "Classic" or `wotlk-classic-bugs` reference in `sim/` has been r
   `dropFullResistArtifact`, which `p7_dru_test.go` added per probe. Needs a live e2e run to re-verify,
   which is why the cross-review left it.
 
+**As built (PAR-P8):** Stage 1 declared `TicksCanCrit` on the 52 dots that still lacked it, then
+removed `periodicCritsNeedDeclaration` so every class's own declaration (waves G-J) finally takes
+effect (moved Affliction Warlock); swept the 13 `classic`/
+`wotlk-classic-bugs` references, fixing a dead Suppression pet-hit penalty in `warlock/pet.go` and
+dropping #328's stale TODO, and found #329 already settled (the Infernal's Immolation deals real
+damage). Stage 2 made DK/Hunter/Rogue/Warrior's summed percent spell mods multiply
+(`spellModDamage`, matching PAR-DECL-1's paladin/warlock/priest fix), and decoded the wave I
+leftover's classMask/op split for Conflagrate (dropped four mods that never reached it) and
+Fireball/Flamestrike (Spell Impact is hit-only). Stage 3 (leftovers): `core.NewPet` returns `*Pet`;
+fixed the hunter pet AI's focus pooling and its AP coefficients' creature-type overcount, and added
+Thori'dal's ranged haste; retagged Killing Spree to its real spell ids; dropped Shattering Throw's
+now-impossible glyph path (new retail deviation #65); wired paladin `canJudgement` and fixed Holy/
+Righteous Vengeance's crit-at-landing snapshot (moved Retribution); confirmed Omen of Clarity, Feral
+Spirit's swing reset, warlock pet hit and the P2 items already done. Stage 4 (live) closed the three
+items the code stages left for it. A million-roll `.simval yellow` probe on Auto Shot and Steady Shot
+settled the hunter ranged-crit gap: pooled crit lands within z = -0.83 of the server's own formula, so
+the recorded runs' +2.60-point gap was sampling noise, not a missing term. Instant and Wound Poison's
+`spell_enchant_proc_data` rows (found live, under the enchant ids their max ranks actually grant) fixed
+`sim/rogue/poisons.go`'s `basePPM` constants to the server's own 8.53/21.43 (Rogue Combat/Subtlety/
+Assassination move down slightly). `checkResists`' fully-resisted tolerance moved from
+`p7_dru_test.go`'s wrapper into `checkResists` itself, re-verified live across every `TestSimval*` suite.
+A fix pass checked every `TicksCanCrit` against the 30 aura-286 spells and how each is granted: Flame
+Shock's ticks crit (every shaman learns 75461 with Elemental Combat, so Elemental/Enhancement stay on
+their goldens); Conflagrate's dot needs Improved Immolate 3/3 and the three shadow dots Shadowform, both
+golden-neutral.
+Left open, with evidence in the INVESTIGATION's Cleanup (P8) section: the DK APL disease-snapshot
+timing, warrior/DK tier-set classMask reach, Mirror Image's missing mod inheritance, Master Poisoner's
+multi-target approximation, and the BM capture's idle pet (checked mod-playerbots' Bestial Wrath code
+for a cheap answer; found none).
+
 ## Loop work items
 
 Specs for the `PAR-` items in the [wave registry](../wave-loop/wave-loop.PLAN.md#wave-registry). The

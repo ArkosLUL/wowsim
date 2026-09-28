@@ -56,6 +56,7 @@ func (druid *Druid) registerStarfallSpell() {
 			},
 			NumberOfTicks: numberOfTicks,
 			TickLength:    tickLength,
+			TicksCanCrit:  false,
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 				starfallTickSpell.Cast(sim, target)
 			},
@@ -96,6 +97,7 @@ func (druid *Druid) registerStarfallSpell() {
 			},
 			NumberOfTicks: numberOfTicks,
 			TickLength:    tickLength,
+			TicksCanCrit:  false,
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 				starfallSplashTickSpell.Cast(sim, target)
 			},

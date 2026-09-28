@@ -20,14 +20,11 @@ func (spell *Spell) OutcomeAlwaysMiss(_ *Simulation, result *SpellResult, _ *Att
 	spell.SpellMetrics[result.Target.UnitIndex].Misses++
 }
 
-// periodicCritsNeedDeclaration turns on AuraEffect::CanPeriodicTickCrit, where a tick only crits if
-// an SPELL_AURA_ABILITY_PERIODIC_CRIT aura covers the spell. It stays off until every class has
-// declared which of its dots may crit. Until then an undeclared dot crits the way it always has.
-var periodicCritsNeedDeclaration = false
-
-// CanTickCrit is AuraEffect::CanPeriodicTickCrit.
+// CanTickCrit is AuraEffect::CanPeriodicTickCrit: a tick only crits if an
+// SPELL_AURA_ABILITY_PERIODIC_CRIT aura covers the spell (plus Rupture's hardcoded case), which every
+// DotConfig now declares through TicksCanCrit.
 func (dot *Dot) CanTickCrit() bool {
-	return dot.TicksCanCrit || !periodicCritsNeedDeclaration
+	return dot.TicksCanCrit
 }
 
 // A tick always hits, but we don't count them as hits in the metrics.

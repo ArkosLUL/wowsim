@@ -319,6 +319,7 @@ func (hp *HunterPet) newFireBreath() *core.Spell {
 			},
 			NumberOfTicks: 2,
 			TickLength:    time.Second * 1,
+			TicksCanCrit:  false,
 			Tick:          core.SpellEffect{Effect: 1, Min: 22, Max: 28, SP: 0.167},
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
 				dot.SnapshotBaseDamage = (dot.Tick.Roll(sim) + dot.Tick.SP*dot.Spell.SpellPower()) * hp.killCommandMult()
@@ -496,6 +497,7 @@ func (hp *HunterPet) newPin() *core.Spell {
 			},
 			NumberOfTicks: 4,
 			TickLength:    time.Second * 1,
+			TicksCanCrit:  false,
 			Tick:          core.SpellEffect{Effect: 1, Min: 28, Max: 36},
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
 				dot.SnapshotBaseDamage = dot.Tick.Roll(sim)
@@ -546,6 +548,7 @@ func (hp *HunterPet) newPoisonSpit() *core.Spell {
 			},
 			NumberOfTicks: 4,
 			TickLength:    time.Second * 2,
+			TicksCanCrit:  false,
 			Tick:          core.SpellEffect{Effect: 0, Min: 26, Max: 34, SP: 0.067},
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
 				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + dot.Tick.SP*dot.Spell.SpellPower()
@@ -584,6 +587,7 @@ func (hp *HunterPet) newRake() *core.Spell {
 			},
 			NumberOfTicks: 3,
 			TickLength:    time.Second * 3,
+			TicksCanCrit:  false,
 			Tick:          core.SpellEffect{Effect: 1, Min: 19, Max: 25, SP: 0.0299, AP: 0.0175},
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
 				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + dot.Tick.AP*dot.Spell.MeleeAttackPower()
@@ -657,6 +661,7 @@ func (hp *HunterPet) newSavageRend() *core.Spell {
 			},
 			NumberOfTicks: 3,
 			TickLength:    time.Second * 5,
+			TicksCanCrit:  false,
 			Tick:          core.SpellEffect{Effect: 1, Min: 21, Max: 27},
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
 				dot.SnapshotBaseDamage = dot.Tick.Roll(sim)
@@ -722,6 +727,7 @@ func (hp *HunterPet) newScorpidPoison() *core.Spell {
 			},
 			NumberOfTicks: 5,
 			TickLength:    time.Second * 2,
+			TicksCanCrit:  false,
 			Tick:          core.SpellEffect{Effect: 1, Min: 20, Max: 26, SP: 0.067},
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
 				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + dot.Tick.SP*dot.Spell.SpellPower()
@@ -782,6 +788,7 @@ func (hp *HunterPet) newSpiritStrike() *core.Spell {
 			},
 			NumberOfTicks: 1,
 			TickLength:    time.Second * 6,
+			TicksCanCrit:  false,
 			Tick:          core.SpellEffect{Effect: 0, Min: 49, Max: 65, SP: 0.333},
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
 				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + dot.Tick.SP*dot.Spell.SpellPower()
@@ -831,6 +838,7 @@ func (hp *HunterPet) newSporeCloud() *core.Spell {
 			},
 			NumberOfTicks: 3,
 			TickLength:    time.Second * 3,
+			TicksCanCrit:  false,
 			Tick:          core.SpellEffect{Effect: 0, Min: 22, Max: 28, SP: 0.333},
 			// an AOE dot sits on the pet, so snapshot against its target
 			OnSnapshot: func(sim *core.Simulation, _ *core.Unit, dot *core.Dot, isRollover bool) {
@@ -936,6 +944,7 @@ func (hp *HunterPet) newVenomWebSpray() *core.Spell {
 			},
 			NumberOfTicks: 4,
 			TickLength:    time.Second * 1,
+			TicksCanCrit:  false,
 			Tick:          core.SpellEffect{Effect: 1, Min: 46, Max: 68, SP: 0.333},
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
 				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + dot.Tick.SP*dot.Spell.SpellPower()

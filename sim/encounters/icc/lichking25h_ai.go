@@ -102,6 +102,7 @@ func (ai *LichKing25HAI) registerSoulReaperSpell(target *core.Target) {
 			},
 			NumberOfTicks: 1,
 			TickLength:    time.Second * 5,
+			TicksCanCrit:  false,
 
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 				// Soul Reaper ticks cannot be partially resisted even though the initial hit can, so temporarily change the spell flag accordingly.
