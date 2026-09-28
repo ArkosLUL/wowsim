@@ -88,10 +88,11 @@ the sim, so they're provisional until parity lands. It runs as `BIS-` work items
 - Results carry the sim commit and the catalog date.
 
 **Presets**
-- New `ui/<spec>/gear_sets/p{1..5}_bis[_a|_h].gear.json` files become the presets and `defaultGear`.
+- New `ui/<spec>/gear_sets/p{1..5}_bis[_<tree>].gear.json` files become the presets and `defaultGear`.
 - The Classic presets leave the UI list; files the tests use stay.
-- They're built for the spec's default talents, glyphs and race, with all 11 professions. The chosen racial
-  traits go in the tooltip.
+- One per phase for each talent tree with gear presets today, on that tree's talents and glyphs, with all
+  11 professions. The chosen racial traits go in the tooltip.
+- Alliance only, like the user's roster: an Alliance base race and Alliance items (the user, 2026-09-28).
 
 ## Architecture
 
@@ -991,9 +992,37 @@ the top-up, but a short round can adopt.
 
 ### BIS-presets (wave K)
 
-The preset files, as decided above, registered in `ui/<spec>/presets.ts` and `sim.ts` `defaultGear`. This
-takes over parity P6's re-pointing of presets.
+The preset files, as decided above, registered in `ui/<spec>/presets.ts` (gated by `talentTree` where a spec
+has several trees) and `sim.ts`: `presets.gear`, and `defaults.gear` = the default tree's P5 BiS. This takes
+over parity P6's re-pointing of presets, except the Go tests' gear sets: re-pointing those moves every golden.
+
+- **Builds:** 28 over the non-healer specs: DK Blood, Frost and Unholy; Hunter MM and SV; Mage Arcane, Fire
+  and Frost; Rogue Assassination, Combat and Subtlety; Warlock Affliction, Demonology and Destruction;
+  Warrior Arms and Fury; tank DK Blood and Frost; one for each other spec.
+- **A run:** the individual sim's optimizer tab at Normal, with the spec's default sources and buffs. P1 is
+  seeded from the tree's current P1 preset, each later phase from the previous pick. Tanks fight
+  BIS-tank-boss's phase boss.
+- **Generator:** drives the tab in headless Chrome through `tools/uicheck`, like the acbis driver, against a sim
+  server of its own. It writes the gear files and a summary per run (score and DPS Δ ± se over the seed,
+  racial traits, sim commit, catalog date), resumes, and has a README.
+- **Tooltip:** the tree, phase, racial traits, sim commit and catalog date.
+- Classic gear files no test loads are deleted, with their exports.
+
+The WI runs every build at Quick, plus a few at Normal. Once PAR-P8 and BIS-tank-boss merge, the
+orchestrator reruns the generator at Normal on `integration` and commits its presets, since both items change
+what the optimizer picks.
 
 ### BIS-tank-boss (wave K)
 
-Switch the tank table to the generic AzerothCore boss, scaled by `DamageModifier`.
+Switch `TANK_BOSSES` (`ui/core/optimizer/pool_builder.ts`) and its Go mirror (`critimmunity_test.go`'s
+`tankBosses`) from Classic encounter presets to parity's generic boss (`encounters.GenericBossTarget`,
+`Encounter.genericBossTargetProto`), swinging like each phase's boss: its live `creature_template`'s
+`DamageModifier` and `BaseAttackTime` (0 means 2000 ms). `Creature::CalculateMinMaxDamage` scales a swing by
+both, so the attack time moves swing size, not DPS. The bosses: Patchwerk 25, Algalon 25, Anub'arak 25H, the
+Lich King 25H, and Halion 25H for P5, which had no preset. A 25-player or heroic version is the base entry's
+`difficulty_entry_N`.
+
+- Each phase keeps its `raid_difficulty`, `healingModelForBoss` and the pinned healing model.
+- The tank suites' GenericBoss case and the tank specs' UI default keep Patchwerk's numbers, so no golden
+  moves.
+- The slow suite's tank cases re-run on the new bosses.

@@ -62,7 +62,7 @@ G = changes goldens. FS = runs all 37 suites.
 | I6 | PERF-MISSILE (FS) · PAR-DECL-4 (G, FS) | ✔ |
 | J | PAR-P7-PRI (G) · PAR-P7-TANK (G) · BIS-e2e-perf · AC-3 | ✔ |
 | J2 | BIS-stage2 · BIS-adopt · PERF-RNG (FS) · BIS-stage2b | ✔ |
-| K | BIS-presets · PAR-P8 (G, FS) · BIS-tank-boss | ✔ |
+| K | PAR-P8 (G, FS) · BIS-tank-boss · BIS-presets | ✔ |
 
 F2 is an inserted wave, not a fifth item in F: the core swing and cast fixes of PAR-P7-0c have to land
 before the class items in G, a class item can't build on a core fix merging in its own wave, and F already
@@ -90,7 +90,8 @@ UI-FIX joins I2 (the user's call): four fixes wave U's tests left open. PAR-P7-0
 bugs, the importer's missing pets, ammo and consumables, and a batch hung on a hunter, all found by the user.
 J2 is the user's call too (2026-09-27): wave J's batch took ~8 h, and its stage 2 made most picks worse
 ([speed audit](../bis-optimizer/bis-optimizer.INVESTIGATION.md#speed-audit-after-wave-j)), so the optimizer
-gets fixed before K builds presets with it.
+gets fixed before K builds presets with it. In K, PAR-P8 and BIS-tank-boss merge first, and the orchestrator
+then regenerates the BiS presets on the merged tree: both change what the optimizer picks.
 
 **Where the specs are:**
 
@@ -105,8 +106,8 @@ gets fixed before K builds presets with it.
 
 ## Current wave
 
-- Wave: K, not started. Wave J2 (base `b24799131`) landed on `master`; prod runs J.
-- Base SHA: set at wave start.
+- Wave: K, running. Prod runs J; the user OKed one rebuild once K lands (2026-09-28).
+- Base SHA: `e0c43c592`.
 - Workflow runId: none. Wave J2 ran as `wf_b5e75270-6c6` and BIS-stage2b as `wf_499304fb-b30` (args and
   results `waveJ2*` in `G:\DevStuff\GitHub\.wave-loop`).
 - J2's full-roster batch ran 2026-09-28 in 52 min at Quick, output in
