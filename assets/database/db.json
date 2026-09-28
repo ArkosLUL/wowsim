@@ -12276,6 +12276,8 @@
 {"id":57813,"name":"Genesis","icon":"spell_arcane_arcane03"},
 {"id":57814,"name":"Genesis","icon":"spell_arcane_arcane03"},
 {"id":57823,"name":"Revenge","icon":"ability_warrior_revenge"},
+{"id":57841,"name":"Killing Spree","icon":"ability_warrior_focusedrage"},
+{"id":57842,"name":"Killing Spree","icon":"ability_whirlwind"},
 {"id":57849,"name":"Improved Insect Swarm","icon":"spell_nature_insectswarm"},
 {"id":57850,"name":"Improved Insect Swarm","icon":"spell_nature_insectswarm"},
 {"id":57851,"name":"Improved Insect Swarm","icon":"spell_nature_insectswarm"},
@@ -12732,7 +12734,7 @@
 {"path":"ToGC 25/Anub'arak","targets":[{"path":"ToGC 25/Anub'arak","target":{"id":34564,"name":"Anub'arak","level":83,"mobType":8,"stats":[0,0,0,0,0,0,0,0,0,0,0,805,0,0,0,0,0,0,0,0,10643,0,0,0,0,0,0,0,27192750,0,0,0,0,0,0,0,0,0,0,0],"minBaseDamage":58411,"damageSpread":0.45,"swingSpeed":1.5}}]},
 {"path":"ICC 25/Sindragosa (Heroic)","targets":[{"path":"ICC 25/Sindragosa (Heroic)","target":{"id":36853,"name":"Sindragosa (Heroic)","level":83,"mobType":8,"stats":[0,0,0,0,0,0,0,0,0,0,0,805,0,0,0,0,0,0,0,0,10643,0,0,0,0,0,0,0,46018500,0,0,0,0,0,0,0,0,0,0,0],"minBaseDamage":88072,"damageSpread":0.5,"swingSpeed":1.5,"parryHaste":true,"suppressDodge":true,"targetInputs":[{"label":"Include Mystic Buffet","tooltip":"Model the ramping magic damage taken debuff applied during Phase 3 of the encounter, in addition to the normal Phase 1 mechanics."}]}}]},
 {"path":"ICC 25/Lich King (Heroic)","targets":[{"path":"ICC 25/Lich King (Heroic)","target":{"id":36597,"name":"Lich King (Heroic)","level":83,"mobType":8,"stats":[0,0,0,0,0,0,0,0,0,0,0,805,0,0,0,0,0,0,0,0,10643,0,0,0,0,0,0,0,103151165,0,0,0,0,0,0,0,0,0,0,0],"minBaseDamage":146497,"damageSpread":0.1557,"swingSpeed":1.5,"suppressDodge":true}}]},
-{"path":"Generic/Generic Boss","targets":[{"path":"Generic/Generic Boss","target":{"id":999999,"name":"Generic Boss","level":83,"stats":[0,0,0,0,0,0,0,0,0,0,0,805,0,0,0,0,0,0,0,0,10643,0,0,0,0,0,0,0,13945,0,0,0,0,0,0,0,0,0,0,0],"minBaseDamage":12395.18,"damageSpread":0.5,"swingSpeed":2,"parryHaste":true}}]}
+{"path":"Generic/Generic Boss","targets":[{"path":"Generic/Generic Boss","target":{"id":999999,"name":"Generic Boss","level":83,"stats":[0,0,0,0,0,0,0,0,0,0,0,805,0,0,0,0,0,0,0,0,10643,0,0,0,0,0,0,0,13945,0,0,0,0,0,0,0,0,0,0,0],"minBaseDamage":24790.36,"damageSpread":0.5,"swingSpeed":2,"parryHaste":true}}]}
 ],
 "glyphIds":[
 {"itemId":43361,"spellId":52648},
