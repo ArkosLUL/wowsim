@@ -1,26 +1,37 @@
 package optimizer
 
 import (
+	"bufio"
 	"math"
+	"os"
+	"regexp"
+	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
 	"github.com/wowsims/wotlk/sim/core/stats"
-	goproto "google.golang.org/protobuf/proto"
+	"github.com/wowsims/wotlk/sim/encounters"
 )
 
-// The tank bosses ui/core/optimizer/pool_builder.ts sends per content phase. Anub'arak and the Lich
-// King are the heroic fights; the other two are 25 normal.
-var tankBosses = map[int32]struct {
-	path       string
-	difficulty proto.RaidDifficulty
-}{
-	1: {"Naxxrammas 25/Patchwerk", proto.RaidDifficulty_RaidDifficulty25Normal},
-	2: {"Ulduar 25/Algalon", proto.RaidDifficulty_RaidDifficulty25Normal},
-	3: {"ToGC 25/Anub'arak", proto.RaidDifficulty_RaidDifficulty25Heroic},
-	4: {"ICC 25/Lich King (Heroic)", proto.RaidDifficulty_RaidDifficulty25Heroic},
-	5: {"ICC 25/Lich King (Heroic)", proto.RaidDifficulty_RaidDifficulty25Heroic},
+type tankBoss struct {
+	name           string
+	damageModifier float64
+	attackTimeMs   int32
+	difficulty     proto.RaidDifficulty
+}
+
+// The tank bosses ui/core/optimizer/pool_builder.ts sends per content phase, off each phase boss's
+// live creature_template row (DamageModifier, BaseAttackTime; 0 falls back to the server's 2000 ms
+// default): Patchwerk 25 (29324), Algalon 25 (33070), Anub'arak 25H (35616), the Lich King 25H
+// (39168), Halion 25H (39945). TestTankBossesMirrorUI checks this stays in sync with the UI's table.
+var tankBosses = map[int32]tankBoss{
+	1: {"Patchwerk", 70, 1200, proto.RaidDifficulty_RaidDifficulty25Normal},
+	2: {"Algalon", 285, 1000, proto.RaidDifficulty_RaidDifficulty25Normal},
+	3: {"Anub'arak", 149.1, 0, proto.RaidDifficulty_RaidDifficulty25Heroic},
+	4: {"the Lich King", 492.9, 1500, proto.RaidDifficulty_RaidDifficulty25Heroic},
+	5: {"Halion", 385.4, 1500, proto.RaidDifficulty_RaidDifficulty25Heroic},
 }
 
 func tankEncounter(tb testing.TB, phase int32) *proto.Encounter {
@@ -29,18 +40,89 @@ func tankEncounter(tb testing.TB, phase int32) *proto.Encounter {
 	if !ok {
 		tb.Fatalf("no tank boss for phase %d", phase)
 	}
-	preset := core.GetPresetTargetWithPath(boss.path)
-	if preset == nil {
-		tb.Fatalf("no preset target %q", boss.path)
-	}
+	target := encounters.GenericBossTargetAt(boss.damageModifier, boss.attackTimeMs)
+	target.Name = boss.name
 	return &proto.Encounter{
 		Duration:             180,
 		DurationVariation:    5,
 		ExecuteProportion_20: 0.2,
 		ExecuteProportion_25: 0.25,
 		ExecuteProportion_35: 0.35,
-		Targets:              []*proto.Target{goproto.Clone(preset.Config).(*proto.Target)},
+		Targets:              []*proto.Target{target},
 		RaidDifficulty:       boss.difficulty,
+	}
+}
+
+// tankBossLine matches one TANK_BOSSES entry in pool_builder.ts, e.g.
+// `1: { name: 'Patchwerk', damageModifier: 70, attackTimeMs: 1200, difficulty: RaidDifficulty.RaidDifficulty25Normal },`
+var tankBossLine = regexp.MustCompile(`^\s*(\d+):\s*\{\s*name:\s*(?:'([^']*)'|"([^"]*)"),\s*damageModifier:\s*([0-9.]+),\s*attackTimeMs:\s*(\d+),\s*difficulty:\s*RaidDifficulty\.(\w+)\s*\},?\s*$`)
+
+func readTankBossesFromUI(tb testing.TB) map[int32]tankBoss {
+	tb.Helper()
+	f, err := os.Open("../../ui/core/optimizer/pool_builder.ts")
+	if err != nil {
+		tb.Fatal(err)
+	}
+	defer f.Close()
+
+	result := map[int32]tankBoss{}
+	started := false
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if !started {
+			started = strings.HasPrefix(strings.TrimSpace(line), "export const TANK_BOSSES")
+			continue
+		}
+		if strings.HasPrefix(strings.TrimSpace(line), "};") {
+			break
+		}
+		m := tankBossLine.FindStringSubmatch(line)
+		if m == nil {
+			continue
+		}
+		phase, err := strconv.Atoi(m[1])
+		if err != nil {
+			tb.Fatalf("bad phase in %q: %v", line, err)
+		}
+		modifier, err := strconv.ParseFloat(m[4], 64)
+		if err != nil {
+			tb.Fatalf("bad damageModifier in %q: %v", line, err)
+		}
+		attackTime, err := strconv.Atoi(m[5])
+		if err != nil {
+			tb.Fatalf("bad attackTimeMs in %q: %v", line, err)
+		}
+		difficulty, ok := proto.RaidDifficulty_value[m[6]]
+		if !ok {
+			tb.Fatalf("unknown RaidDifficulty %q", m[6])
+		}
+		result[int32(phase)] = tankBoss{m[2] + m[3], modifier, int32(attackTime), proto.RaidDifficulty(difficulty)}
+	}
+	if err := scanner.Err(); err != nil {
+		tb.Fatal(err)
+	}
+	if !started {
+		tb.Fatal("pool_builder.ts has no TANK_BOSSES")
+	}
+	return result
+}
+
+// TestTankBossesMirrorUI fails when the UI's TANK_BOSSES (ui/core/optimizer/pool_builder.ts) and this
+// package's Go mirror drift apart: a phase only one side has, or one with different boss numbers.
+func TestTankBossesMirrorUI(t *testing.T) {
+	ui := readTankBossesFromUI(t)
+	for phase, want := range ui {
+		if got, ok := tankBosses[phase]; !ok {
+			t.Errorf("phase %d: the UI has a boss, tankBosses doesn't", phase)
+		} else if got != want {
+			t.Errorf("phase %d: tankBosses = %+v, the UI has %+v", phase, got, want)
+		}
+	}
+	for phase := range tankBosses {
+		if _, ok := ui[phase]; !ok {
+			t.Errorf("phase %d: tankBosses has a boss, the UI doesn't", phase)
+		}
 	}
 }
 

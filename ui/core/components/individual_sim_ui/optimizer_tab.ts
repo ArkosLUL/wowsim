@@ -652,18 +652,12 @@ export class OptimizerTab extends SimTab {
 		return isTankSpec(this.simUI.player.spec);
 	}
 
-	// The database only has the preset bosses once the sim has loaded it, and the tab builds itself
-	// before that.
 	private bossName(): string {
 		const plain = 'a plain level 83 boss';
 		if (!this.isTank()) {
 			return plain;
 		}
-		try {
-			return tankEncounter(undefined, this.settings.contentPhase, this.simUI.sim.db)?.targets[0]?.name || plain;
-		} catch (e) {
-			return plain;
-		}
+		return tankEncounter(undefined, this.settings.contentPhase)?.targets[0]?.name || plain;
 	}
 
 	// Tanks trade survival against threat on one slider, with the six metric weights under Advanced

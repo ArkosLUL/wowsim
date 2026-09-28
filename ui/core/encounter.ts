@@ -233,6 +233,8 @@ export class Encounter {
 	// A generic AzerothCore boss (level 83, class 1) from creature_classlevelstats, rather than this
 	// fork's own Classic numbers: the tank specs' default, in place of a Classic encounter AI.
 	// Hits like Patchwerk 25, whose creature_template.DamageModifier is 70 (encounters.GenericBossDamageModifier).
+	// The optimizer's tank fight (ui/core/optimizer/pool_builder.ts's TANK_BOSSES) scales this same
+	// shape to each phase's own boss instead.
 	static genericBossTargetProto(): TargetProto {
 		return TargetProto.create({
 			level: Mechanics.BOSS_LEVEL,
