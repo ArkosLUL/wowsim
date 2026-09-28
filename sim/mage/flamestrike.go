@@ -22,6 +22,11 @@ func (mage *Mage) registerFlamestrikeSpell(rank8 bool) *core.Spell {
 		spCoeffMultiplier = 0.975
 	}
 
+	// Spell Impact (11242) has only a SPELLMOD_DAMAGE effect, no SPELLMOD_DOT one, so it never reaches
+	// the periodic tick; Fire Power covers both halves.
+	spellImpactBonus := .02 * float64(mage.Talents.SpellImpact)
+	dotOnlyMultiplier := 1 / (1 + spellImpactBonus)
+
 	return mage.RegisterSpell(core.SpellConfig{
 		ActionID:    actionID,
 		SpellSchool: core.SpellSchoolFire,
@@ -40,7 +45,7 @@ func (mage *Mage) registerFlamestrikeSpell(rank8 bool) *core.Spell {
 
 		BonusCritRating: float64(mage.Talents.CriticalMass+mage.Talents.WorldInFlames) * 2 * core.CritRatingPerCritChance,
 		DamageMultiplierAdditive: spellModDamage(
-			.02*float64(mage.Talents.SpellImpact),
+			spellImpactBonus,
 			.02*float64(mage.Talents.FirePower),
 		),
 		CritMultiplier:   mage.SpellCritMultiplier(1, mage.bonusCritDamage),
@@ -63,7 +68,9 @@ func (mage *Mage) registerFlamestrikeSpell(rank8 bool) *core.Spell {
 			OnSnapshot: func(sim *core.Simulation, _ *core.Unit, dot *core.Dot, _ bool) {
 				target := mage.CurrentTarget
 				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + dot.Tick.SP*dot.Spell.SpellPower()*spCoeffMultiplier
+				dot.Spell.DamageMultiplierAdditive *= dotOnlyMultiplier
 				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(dot.Spell.Unit.AttackTables[target.UnitIndex])
+				dot.Spell.DamageMultiplierAdditive /= dotOnlyMultiplier
 			},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 				for _, aoeTarget := range sim.Encounter.TargetUnits {

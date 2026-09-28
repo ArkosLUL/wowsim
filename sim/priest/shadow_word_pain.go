@@ -62,7 +62,7 @@ func (priest *Priest) registerShadowWordPainSpell() {
 				core.TernaryInt32(priest.HasSetBonus(ItemSetAbsolution, 2), 1, 0),
 			TickLength: time.Second * 3,
 			// Shadowform (49868) grants CanPeriodicTickCrit to SW:P's dot.
-			TicksCanCrit: true,
+			TicksCanCrit: priest.Talents.Shadowform,
 			Tick:         core.SpellEffect{Effect: 0, Min: 230, Max: 230, SP: 0.1833},
 
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {

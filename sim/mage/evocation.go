@@ -33,6 +33,7 @@ func (mage *Mage) registerEvocation() {
 			},
 			NumberOfTicks:       maxTicks,
 			TickLength:          time.Second * 2,
+			TicksCanCrit:        false,
 			AffectedByCastSpeed: true,
 
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {

@@ -62,7 +62,7 @@ func (warlock *Warlock) registerInfernoSpell() {
 }
 
 type InfernalPet struct {
-	core.Pet
+	*core.Pet
 	owner          *Warlock
 	immolationAura *core.Spell
 }
@@ -127,7 +127,7 @@ func (warlock *Warlock) NewInfernal() *InfernalPet {
 }
 
 func (infernal *InfernalPet) GetPet() *core.Pet {
-	return &infernal.Pet
+	return infernal.Pet
 }
 
 func (infernal *InfernalPet) Initialize() {

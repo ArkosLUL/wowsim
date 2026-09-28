@@ -55,6 +55,7 @@ func (druid *Druid) registerHurricaneSpell() {
 			},
 			NumberOfTicks:       10,
 			TickLength:          time.Second * 1,
+			TicksCanCrit:        false,
 			AffectedByCastSpeed: true,
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 				druid.HurricaneTickSpell.Cast(sim, target)

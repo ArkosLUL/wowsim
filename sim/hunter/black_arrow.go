@@ -37,9 +37,10 @@ func (hunter *Hunter) registerBlackArrowSpell(timer *core.Timer) {
 			},
 		},
 
-		DamageMultiplierAdditive: 1 +
-			.10*float64(hunter.Talents.TrapMastery) +
+		DamageMultiplierAdditive: spellModDamage(
+			.10*float64(hunter.Talents.TrapMastery),
 			.02*float64(hunter.Talents.TNT),
+		),
 		DamageMultiplier: 1 *
 			(1.0 / 1.06), // Black Arrow is not affected by its own 1.06 aura.
 		ThreatMultiplier: 1,
@@ -56,12 +57,14 @@ func (hunter *Hunter) registerBlackArrowSpell(timer *core.Timer) {
 			},
 			NumberOfTicks: 5,
 			TickLength:    time.Second * 3,
+			TicksCanCrit:  false,
 
-			// ranged AP with the target's Hunter's Mark
+			// ranged AP with the target's Hunter's Mark, but not creature-type AP
+			// (Unit::GetTotalAttackPowerValue, the ap_dot_bonus source)
 			Tick: core.SpellEffect{Effect: 0, Min: 553, Max: 553, AP: 0.02},
 
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + dot.Tick.AP*dot.Spell.RangedAttackPower(target)
+				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + dot.Tick.AP*dot.Spell.RangedAttackPowerSpellBonus(target)
 				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(dot.Spell.Unit.AttackTables[target.UnitIndex])
 			},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {

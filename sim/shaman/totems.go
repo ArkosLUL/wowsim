@@ -69,6 +69,7 @@ func (shaman *Shaman) registerHealingStreamTotemSpell() {
 		},
 		NumberOfTicks: 150,
 		TickLength:    time.Second * 2,
+		TicksCanCrit:  false,
 		// the totem's periodic trigger casts 58761, whose value the script heals for
 		Tick: core.SpellEffect{Effect: 0, FromSpellID: 58761, Min: 25, Max: 25},
 		OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {

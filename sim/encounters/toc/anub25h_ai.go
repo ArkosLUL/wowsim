@@ -94,6 +94,7 @@ func (ai *Anub25HAI) registerFreezingSlashSpell(target *core.Target) {
 			},
 			NumberOfTicks: 1,
 			TickLength:    time.Second * 3,
+			TicksCanCrit:  false,
 
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
 				target.PseudoStats.Stunned = true
@@ -149,6 +150,7 @@ func (ai *Anub25HAI) registerLeechingSwarmSpell(target *core.Target) {
 			},
 			NumberOfTicks: math.MaxInt32,
 			TickLength:    time.Second,
+			TicksCanCrit:  false,
 
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 				baseDamage := max(0.3*target.CurrentHealth(), 250.)

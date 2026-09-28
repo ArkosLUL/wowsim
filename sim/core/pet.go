@@ -73,8 +73,8 @@ type Pet struct {
 	timeoutAction *PendingAction
 }
 
-func NewPet(name string, owner *Character, baseStats stats.Stats, statInheritance PetStatInheritance, enabledOnStart bool, isGuardian bool) Pet {
-	pet := Pet{
+func NewPet(name string, owner *Character, baseStats stats.Stats, statInheritance PetStatInheritance, enabledOnStart bool, isGuardian bool) *Pet {
+	pet := &Pet{
 		Character: Character{
 			Unit: Unit{
 				Type:        PetUnit,

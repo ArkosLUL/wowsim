@@ -8,7 +8,7 @@ import (
 )
 
 type Shadowfiend struct {
-	core.Pet
+	*core.Pet
 
 	Priest          *Priest
 	Shadowcrawl     *core.Spell
@@ -137,5 +137,5 @@ func (shadowfiend *Shadowfiend) OnPetDisable(sim *core.Simulation) {
 }
 
 func (shadowfiend *Shadowfiend) GetPet() *core.Pet {
-	return &shadowfiend.Pet
+	return shadowfiend.Pet
 }

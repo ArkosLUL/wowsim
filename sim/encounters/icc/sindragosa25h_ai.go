@@ -109,6 +109,7 @@ func (ai *Sindragosa25HAI) registerPermeatingChillAura(target *core.Target) {
 			},
 			NumberOfTicks: 4,
 			TickLength:    time.Second * 2,
+			TicksCanCrit:  false,
 
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
 				dot.SnapshotBaseDamage = 1000. * float64(dot.Aura.GetStacks())
@@ -225,6 +226,7 @@ func (ai *Sindragosa25HAI) registerFrostAuraSpell(target *core.Target) {
 			},
 			NumberOfTicks: math.MaxInt32,
 			TickLength:    time.Second * 3,
+			TicksCanCrit:  false,
 
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 				dot.Spell.CalcAndDealPeriodicDamage(sim, target, 6000, dot.Spell.OutcomeAlwaysHit)

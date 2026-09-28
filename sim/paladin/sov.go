@@ -69,14 +69,14 @@ func (paladin *Paladin) registerSealOfVengeanceSpellAndAura() {
 					dot.Tick.AP*dot.Spell.MeleeAttackPower()
 				dot.SnapshotBaseDamage = tickValue * float64(dot.GetStacks())
 
-				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(dot.Spell.Unit.AttackTables[target.UnitIndex])
+				attackTable := dot.Spell.Unit.AttackTables[target.UnitIndex]
+				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(attackTable)
+				// AuraEffect::CalculatePeriodicData fixes the crit chance when the dot lands or
+				// refreshes, not on every tick.
+				dot.SnapshotCritChance = dot.Spell.PhysicalCritChance(attackTable)
 			},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
-				if holyVengeanceCanCrit {
-					dot.CalcAndDealPeriodicSnapshotDamage(sim, target, dot.Spell.OutcomeMeleeSpecialCritOnly)
-				} else {
-					dot.CalcAndDealPeriodicSnapshotDamage(sim, target, dot.Spell.OutcomeAlwaysHit)
-				}
+				dot.CalcAndDealPeriodicSnapshotDamage(sim, target, dot.OutcomeSnapshotCrit)
 			},
 		},
 	})

@@ -29,10 +29,12 @@ func (rogue *Rogue) registerAmbushSpell() {
 
 		BonusCritRating: []float64{0, 2, 4, 6}[rogue.Talents.TurnTheTables]*core.CritRatingPerCritChance +
 			25*core.CritRatingPerCritChance*float64(rogue.Talents.ImprovedAmbush),
-		// All of these use "Apply Aura: Modifies Damage/Healing Done", and stack additively.
-		DamageMultiplier: 1 +
-			0.02*float64(rogue.Talents.FindWeakness) +
+		// Find Weakness and Opportunity are each their own SPELLMOD_DAMAGE (Player::ApplySpellMod
+		// multiplies them, it doesn't add them).
+		DamageMultiplier: spellModDamage(
+			0.02*float64(rogue.Talents.FindWeakness),
 			0.1*float64(rogue.Talents.Opportunity),
+		),
 		CritMultiplier:   rogue.MeleeCritMultiplier(true),
 		ThreatMultiplier: 1,
 

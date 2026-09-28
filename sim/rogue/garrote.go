@@ -36,11 +36,12 @@ func (rogue *Rogue) registerGarrote() {
 			return !rogue.PseudoStats.InFrontOfTarget && rogue.IsStealthed()
 		},
 
-		DamageMultiplier: 1 +
-			glyphMultiplier +
-			0.15*float64(rogue.Talents.BloodSpatter) +
-			0.10*float64(rogue.Talents.Opportunity) +
+		DamageMultiplier: spellModDamage(
+			glyphMultiplier,
+			0.15*float64(rogue.Talents.BloodSpatter),
+			0.10*float64(rogue.Talents.Opportunity),
 			0.02*float64(rogue.Talents.FindWeakness),
+		),
 		ThreatMultiplier: 1,
 
 		Dot: core.DotConfig{

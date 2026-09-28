@@ -55,6 +55,7 @@ func (shaman *Shaman) registerSearingTotemSpell() {
 			// stand-in cadence: the totem recasts its 2.2 s bolt without waiting for the missile to land
 			NumberOfTicks: 24,
 			TickLength:    time.Second * 60 / 24,
+			TicksCanCrit:  false,
 			Tick:          core.SpellEffect{Effect: 0, FromSpellID: 58702, Min: 90, Max: 120, SP: 0.1667},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 				baseDamage := dot.Tick.Roll(sim) + dot.Tick.SP*dot.Spell.SpellPower()
@@ -119,6 +120,7 @@ func (shaman *Shaman) registerMagmaTotemSpell() {
 			},
 			NumberOfTicks: 10,
 			TickLength:    time.Second * 2,
+			TicksCanCrit:  false,
 			Tick:          core.SpellEffect{Effect: 0, FromSpellID: 58735, Min: 371, Max: 371, SP: 0.1},
 
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {

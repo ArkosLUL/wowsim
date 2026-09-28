@@ -617,8 +617,13 @@ func (paladin *Paladin) applyRighteousVengeance() {
 			// the talent's script hands each tick its amount as custom base points, which replace the 1
 			Tick: core.SpellEffect{Effect: 0, Min: 1, Max: 1},
 
+			// AuraEffect::CalculatePeriodicData fixes the crit chance when the dot lands or refreshes,
+			// not on every tick.
+			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
+				dot.SnapshotCritChance = dot.Spell.PhysicalCritChance(dot.Spell.Unit.AttackTables[target.UnitIndex])
+			},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
-				dot.CalcAndDealPeriodicSnapshotDamage(sim, target, dot.Spell.OutcomeMeleeSpecialCritOnly)
+				dot.CalcAndDealPeriodicSnapshotDamage(sim, target, dot.OutcomeSnapshotCrit)
 			},
 		},
 	})

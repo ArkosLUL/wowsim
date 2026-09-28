@@ -96,8 +96,8 @@ func (shaman *Shaman) registerFlameShockSpell(shockTimer *core.Timer) {
 		NumberOfTicks:       flameShockBaseNumberOfTicks,
 		TickLength:          time.Second * 3,
 		AffectedByCastSpeed: true,
-		// mod-spell-tweaks doesn't give Flame Shock's tick aura 286, unlike Blood Plague or Rend's.
-		TicksCanCrit: false,
+		// every shaman gets Flame Shock Passive (75461) with the Elemental Combat skill
+		TicksCanCrit: true,
 
 		Tick: core.SpellEffect{Effect: 1, Min: 139, Max: 139, SP: 0.1},
 

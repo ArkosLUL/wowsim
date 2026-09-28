@@ -75,9 +75,10 @@ func (hunter *Hunter) chimeraShotSerpentStingSpell() *core.Spell {
 		Flags:        core.SpellFlagMeleeMetrics,
 		MissileSpeed: 40,
 
-		DamageMultiplierAdditive: 1 +
-			0.1*float64(hunter.Talents.ImprovedStings) +
+		DamageMultiplierAdditive: spellModDamage(
+			0.1*float64(hunter.Talents.ImprovedStings),
 			core.TernaryFloat64(hunter.HasSetBonus(ItemSetScourgestalkerBattlegear, 2), .1, 0),
+		),
 		DamageMultiplier: 1 *
 			(2.0 + core.TernaryFloat64(hunter.HasMajorGlyph(proto.HunterMajorGlyph_GlyphOfSerpentSting), 0.8, 0)) *
 			hunter.markedForDeathMultiplier(),
@@ -88,7 +89,7 @@ func (hunter *Hunter) chimeraShotSerpentStingSpell() *core.Spell {
 		Direct: core.SpellEffect{Effect: 0, FromSpellID: 49001, Min: 242, Max: 242, AP: 0.04},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := spell.Direct.Roll(sim) + spell.Direct.AP*spell.RangedAttackPower(target)
+			baseDamage := spell.Direct.Roll(sim) + spell.Direct.AP*spell.RangedAttackPowerSpellBonus(target)
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialCritOnly)
 			spell.DealDamageAfterTravel(sim, result)
 		},

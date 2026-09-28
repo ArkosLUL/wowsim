@@ -4,11 +4,9 @@ import (
 	"time"
 
 	"github.com/wowsims/wotlk/sim/core"
-	"github.com/wowsims/wotlk/sim/core/proto"
 )
 
 func (warrior *Warrior) RegisterShatteringThrowCD() {
-	hasGlyph := warrior.HasMinorGlyph(proto.WarriorMinorGlyph_GlyphOfShatteringThrow)
 	shattDebuffs := warrior.NewEnemyAuraArray(core.ShatteringThrowAura)
 
 	ShatteringThrowSpell := warrior.RegisterSpell(core.SpellConfig{
@@ -30,15 +28,17 @@ func (warrior *Warrior) RegisterShatteringThrowCD() {
 				Timer:    warrior.NewTimer(),
 				Duration: time.Minute * 5,
 			},
+			// Glyph of Shattering Throw (206953) is a WotLK Classic item this server doesn't have, so
+			// every cast needs Battle Stance.
 			ModifyCast: func(sim *core.Simulation, spell *core.Spell, cast *core.Cast) {
-				if !hasGlyph && !warrior.StanceMatches(BattleStance) && warrior.BattleStance.IsReady(sim) {
+				if !warrior.StanceMatches(BattleStance) && warrior.BattleStance.IsReady(sim) {
 					warrior.BattleStance.Cast(sim, nil)
 				}
 			},
 			IgnoreHaste: true,
 		},
 		ExtraCastCondition: func(sim *core.Simulation, target *core.Unit) bool {
-			return warrior.StanceMatches(BattleStance) || warrior.BattleStance.IsReady(sim) || hasGlyph
+			return warrior.StanceMatches(BattleStance) || warrior.BattleStance.IsReady(sim)
 		},
 
 		DamageMultiplier: 1,

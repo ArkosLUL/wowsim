@@ -68,6 +68,7 @@ func (priest *Priest) makePenanceSpell(isHeal bool) *core.Spell {
 			},
 			NumberOfTicks:       2,
 			TickLength:          time.Second,
+			TicksCanCrit:        false,
 			AffectedByCastSpeed: true,
 
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
@@ -81,6 +82,7 @@ func (priest *Priest) makePenanceSpell(isHeal bool) *core.Spell {
 			},
 			NumberOfTicks:       2,
 			TickLength:          time.Second,
+			TicksCanCrit:        false,
 			AffectedByCastSpeed: true,
 
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {

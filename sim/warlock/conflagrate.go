@@ -13,8 +13,12 @@ func (warlock *Warlock) registerConflagrateSpell() {
 	}
 
 	hasGlyphOfConflag := warlock.HasMajorGlyph(proto.WarlockMajorGlyph_GlyphOfConflagrate)
-	// The DoT doesn't benefit from Firestone.
-	dotOnlyMultiplier := 1 / spellModDamage(warlock.GrandFirestoneBonus())
+	deathbringerGarb2Bonus := core.TernaryFloat64(warlock.HasSetBonus(ItemSetDeathbringerGarb, 2), 0.1, 0)
+	// Aftermath, Improved Immolate and Glyph of Immolate are all classMask-restricted to Immolate
+	// (family flags [4,0,0]); Conflagrate's own flags are [0,8388608,0], so none of their damage mods reach it.
+	// The T8 2pc's SPELLMOD_DAMAGE effect does reach Conflagrate, but its SPELLMOD_DOT effect doesn't
+	// (that one names Immolate alone too), so the dot doesn't benefit from Firestone or the set bonus.
+	dotOnlyMultiplier := 1 / spellModDamage(warlock.GrandFirestoneBonus(), deathbringerGarb2Bonus)
 	// Spell::EffectSchoolDMG scripts Conflagrate from the consumed Immolate's five ticks: the hit adds
 	// effect 1's value as a percent of them, and each dot tick deals effect 2's 40/3 = 13 (integer) percent.
 	immolateTicks := func(target *core.Unit) float64 {
@@ -49,11 +53,7 @@ func (warlock *Warlock) registerConflagrateSpell() {
 		DamageMultiplier: spellModDamage(
 			warlock.GrandFirestoneBonus(),
 			0.03*float64(warlock.Talents.Emberstorm),
-			0.03*float64(warlock.Talents.Aftermath),
-			0.1*float64(warlock.Talents.ImprovedImmolate),
-			core.TernaryFloat64(warlock.HasMajorGlyph(proto.WarlockMajorGlyph_GlyphOfImmolate), 0.1, 0),
-			core.TernaryFloat64(warlock.HasSetBonus(ItemSetDeathbringerGarb, 2), 0.1, 0),
-			core.TernaryFloat64(warlock.HasSetBonus(ItemSetGuldansRegalia, 4), 0.1, 0),
+			deathbringerGarb2Bonus,
 		),
 		CritMultiplier:   warlock.SpellCritMultiplier(1, float64(warlock.Talents.Ruin)/5),
 		ThreatMultiplier: 1 - 0.1*float64(warlock.Talents.DestructiveReach),
@@ -66,7 +66,8 @@ func (warlock *Warlock) registerConflagrateSpell() {
 			},
 			NumberOfTicks: 3,
 			TickLength:    time.Second * 2,
-			TicksCanCrit:  true,
+			// only Improved Immolate rank 3 (17834) has the aura 286 covering Conflagrate
+			TicksCanCrit: warlock.Talents.ImprovedImmolate == 3,
 
 			Tick: core.SpellEffect{Effect: 1, Min: 60, Max: 60},
 

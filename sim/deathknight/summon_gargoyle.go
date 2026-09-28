@@ -66,7 +66,7 @@ const (
 )
 
 type GargoylePet struct {
-	core.Pet
+	*core.Pet
 
 	dkOwner *Deathknight
 
@@ -114,7 +114,7 @@ func (dk *Deathknight) NewGargoyle() *GargoylePet {
 }
 
 func (garg *GargoylePet) GetPet() *core.Pet {
-	return &garg.Pet
+	return garg.Pet
 }
 
 func (garg *GargoylePet) Initialize() {

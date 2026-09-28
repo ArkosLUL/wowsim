@@ -260,7 +260,7 @@ func TestWithMods(t *testing.T) {
 	immolate := &serverdata.Spell{ID: testSpellID, DmgClass: serverdata.DmgClassMagic,
 		Effects: [3]serverdata.Effect{{Effect: 2}, {Effect: 6, Aura: auraTypePeriodicDamage}}}
 	spell = &Spell{ActionID: ActionID{SpellID: testSpellID}, serverSpell: immolate, Direct: SpellEffect{Effect: 0, Min: 100, Max: 100, SP: 0.5}}
-	config := &SpellConfig{Dot: DotConfig{Tick: SpellEffect{Effect: 1, Min: 50, Max: 50, SP: 0.1}},
+	config := &SpellConfig{Dot: DotConfig{TicksCanCrit: false, Tick: SpellEffect{Effect: 1, Min: 50, Max: 50, SP: 0.1}},
 		Mods: []SpellMod{{Op: SpellModEffect2, Flat: 10}, {Op: SpellModBonusMultiplier, Flat: 10}}}
 	spell.applyMods(config)
 	if d, tick := spell.Direct, config.Dot.Tick; d.Min != 100 || !near(d.SP, 0.6) || tick.Min != 60 || tick.Max != 60 || !near(tick.SP, 0.2) {

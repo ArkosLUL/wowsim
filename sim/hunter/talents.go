@@ -271,6 +271,7 @@ func (hunter *Hunter) applyPiercingShots() {
 			},
 			NumberOfTicks: 8,
 			TickLength:    time.Second * 1,
+			TicksCanCrit:  false,
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 				// Specifically account for bleed modifiers, since it still affects the spell, but we're ignoring all modifiers.
 				dot.SnapshotAttackerMultiplier = target.PseudoStats.PeriodicPhysicalDamageTakenMultiplier

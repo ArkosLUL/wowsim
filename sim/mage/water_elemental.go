@@ -55,7 +55,7 @@ func (mage *Mage) registerSummonWaterElementalCD() {
 }
 
 type WaterElemental struct {
-	core.Pet
+	*core.Pet
 
 	// Water Ele almost never just stands still and spams like we want, it sometimes
 	// does its own thing. This controls how much it does that.
@@ -77,7 +77,7 @@ func (mage *Mage) NewWaterElemental(disobeyChance float64) *WaterElemental {
 }
 
 func (we *WaterElemental) GetPet() *core.Pet {
-	return &we.Pet
+	return we.Pet
 }
 
 func (we *WaterElemental) Initialize() {

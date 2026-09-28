@@ -7,7 +7,7 @@ import (
 )
 
 type BloodwormPet struct {
-	core.Pet
+	*core.Pet
 
 	dkOwner *Deathknight
 }
@@ -51,7 +51,7 @@ func (dk *Deathknight) NewBloodwormPet(_ int) *BloodwormPet {
 }
 
 func (bloodworm *BloodwormPet) GetPet() *core.Pet {
-	return &bloodworm.Pet
+	return bloodworm.Pet
 }
 
 func (bloodworm *BloodwormPet) Initialize() {

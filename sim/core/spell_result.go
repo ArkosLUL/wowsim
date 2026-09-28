@@ -118,6 +118,14 @@ func (spell *Spell) RangedAttackPower(target *Unit) float64 {
 		target.PseudoStats.BonusRangedAttackPowerTaken
 }
 
+// RangedAttackPowerSpellBonus is a spell_bonus_data row's own ap_bonus/ap_dot_bonus source
+// (Unit::GetTotalAttackPowerValue): Hunter's Mark included, but not a creature-type bonus, which only
+// Unit::MeleeDamageBonusDone's weapon-damage path reads (SPELL_AURA_MOD_RANGED_ATTACK_POWER_VERSUS). Use
+// this for a declared AP coefficient outside a WeaponPct multiplier; RangedAttackPower for the weapon part.
+func (spell *Spell) RangedAttackPowerSpellBonus(target *Unit) float64 {
+	return spell.Unit.stats[stats.RangedAttackPower] + target.PseudoStats.BonusRangedAttackPowerTaken
+}
+
 func (spell *Spell) BonusWeaponDamage() float64 {
 	return spell.Unit.PseudoStats.BonusDamage
 }

@@ -437,6 +437,7 @@ func TestDotTicksLandOnServerTicks(t *testing.T) {
 				Aura:          Aura{Label: "dot"},
 				NumberOfTicks: 4,
 				TickLength:    ms(1450),
+				TicksCanCrit:  false,
 			})
 		})
 		sim.PrePull()
@@ -465,6 +466,7 @@ func TestChannelEndsWithItsLastTick(t *testing.T) {
 			Aura:          Aura{Label: "channel"},
 			NumberOfTicks: 3,
 			TickLength:    time.Second,
+			TicksCanCrit:  false,
 		})
 	})
 	a.Rotation = &APLRotation{unit: &a.Unit} // a channel asks it whether to keep going

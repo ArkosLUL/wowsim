@@ -89,7 +89,7 @@ func (priest *Priest) registerDevouringPlagueSpell() {
 			TickLength:          time.Second * 3,
 			AffectedByCastSpeed: priest.Talents.Shadowform,
 			// Shadowform (49868) grants CanPeriodicTickCrit to Devouring Plague's dot.
-			TicksCanCrit: true,
+			TicksCanCrit: priest.Talents.Shadowform,
 			Tick:         core.SpellEffect{Effect: 0, Min: devouringPlagueTickBase, Max: devouringPlagueTickBase, SP: devouringPlagueTickSP},
 
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {

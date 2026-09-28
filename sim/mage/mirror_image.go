@@ -59,7 +59,7 @@ func (mage *Mage) registerMirrorImageCD() {
 }
 
 type MirrorImage struct {
-	core.Pet
+	*core.Pet
 
 	mageOwner *Mage
 
@@ -80,7 +80,7 @@ func (mage *Mage) NewMirrorImage() *MirrorImage {
 }
 
 func (mi *MirrorImage) GetPet() *core.Pet {
-	return &mi.Pet
+	return mi.Pet
 }
 
 func (mi *MirrorImage) Initialize() {

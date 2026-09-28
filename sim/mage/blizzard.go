@@ -70,6 +70,7 @@ func (mage *Mage) registerBlizzardSpell() {
 			},
 			NumberOfTicks:       8,
 			TickLength:          time.Second * 1,
+			TicksCanCrit:        false,
 			AffectedByCastSpeed: true,
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 				blizzardTickSpell.Cast(sim, target)

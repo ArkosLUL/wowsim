@@ -74,6 +74,7 @@ func (priest *Priest) newMindSearSpell(numTicksIdx int32) *core.Spell {
 		},
 		NumberOfTicks:       numTicks,
 		TickLength:          time.Second,
+		TicksCanCrit:        false,
 		AffectedByCastSpeed: true,
 		OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 			// Ticks every target in range, the channeled one included: Spell::SelectImplicitAreaTargets

@@ -235,6 +235,7 @@ func init() {
 				},
 				NumberOfTicks: 4,
 				TickLength:    time.Second * 3,
+				TicksCanCrit:  false,
 				OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
 					dot.SnapshotBaseDamage = 3572.0 / 4
 					dot.SnapshotAttackerMultiplier = dot.Spell.CasterHealingMultiplier()
@@ -839,6 +840,7 @@ func init() {
 					},
 					NumberOfTicks: 6,
 					TickLength:    time.Second * 1,
+					TicksCanCrit:  false,
 					OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
 						dot.SnapshotBaseDamage = healingPerTick
 						dot.SnapshotAttackerMultiplier = dot.Spell.CasterHealingMultiplier()

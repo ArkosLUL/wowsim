@@ -43,6 +43,7 @@ func (priest *Priest) registerBindingHealSpell() {
 			Aura:          core.Aura{Label: "BindingHealSecondEffect"},
 			NumberOfTicks: 1,
 			TickLength:    time.Second,
+			TicksCanCrit:  false,
 			Tick:          core.SpellEffect{Effect: 1, Min: 1959, Max: 2515, SP: 0.8057},
 		},
 

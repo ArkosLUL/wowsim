@@ -278,6 +278,16 @@ func (rogue *Rogue) IsStealthed() bool {
 	return false
 }
 
+// spellModDamage stacks percent damage bonuses from talents and set pieces the server's way:
+// Player::ApplySpellMod multiplies SPELLMOD_DAMAGE and SPELLMOD_DOT percentages, it doesn't add them.
+func spellModDamage(bonuses ...float64) float64 {
+	multiplier := 1.0
+	for _, bonus := range bonuses {
+		multiplier *= 1 + bonus
+	}
+	return multiplier
+}
+
 // Agent is a generic way to access underlying rogue on any of the agents.
 type RogueAgent interface {
 	GetRogue() *Rogue

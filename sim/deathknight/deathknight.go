@@ -427,6 +427,16 @@ func (dk *Deathknight) bonusCritMultiplier(bonusTalentPoints int32) float64 {
 	return dk.MeleeCritMultiplier(1, 0.15*float64(bonusTalentPoints))
 }
 
+// spellModDamage stacks percent damage bonuses from talents, glyphs and set pieces the server's way:
+// Player::ApplySpellMod multiplies SPELLMOD_DAMAGE and SPELLMOD_DOT percentages, it doesn't add them.
+func spellModDamage(bonuses ...float64) float64 {
+	multiplier := 1.0
+	for _, bonus := range bonuses {
+		multiplier *= 1 + bonus
+	}
+	return multiplier
+}
+
 // Agent is a generic way to access underlying warrior on any of the agents.
 
 func (dk *Deathknight) GetDeathKnight() *Deathknight {

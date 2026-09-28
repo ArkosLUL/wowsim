@@ -110,6 +110,7 @@ func (priest *Priest) newMindFlaySpell(numTicksIdx int32) *core.Spell {
 			},
 			NumberOfTicks:       numTicks,
 			TickLength:          tickLength,
+			TicksCanCrit:        false,
 			AffectedByCastSpeed: true,
 			// aura 227: each tick casts 58381 with this amount as its base points
 			// (AuraEffect::HandlePeriodicTriggerSpellWithValueAuraTick), plus 58381's own SP
