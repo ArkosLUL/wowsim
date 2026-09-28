@@ -62,7 +62,7 @@ const SPEC_CONFIG = registerSpecConfig(Spec.SpecMage, {
 
 	defaults: {
 		// Default equipped gear.
-		gear: Presets.FIRE_P3_PRESET_HORDE.gear,
+		gear: Presets.P5_BIS_FIRE_PRESET.gear,
 		// Default EP weights for sorting gear in the gear picker.
 		epWeights: Stats.fromMap({
 			[Stat.StatIntellect]: 0.48,
@@ -162,29 +162,21 @@ const SPEC_CONFIG = registerSpecConfig(Spec.SpecMage, {
 		],
 		// Preset gear configurations that the user can quickly select.
 		gear: [
-			Presets.ARCANE_PRERAID_PRESET,
-			Presets.FIRE_PRERAID_PRESET,
-			Presets.ARCANE_P1_PRESET,
-			Presets.FIRE_P1_PRESET,
-			Presets.FROST_P1_PRESET,
-			Presets.ARCANE_P2_PRESET,
-			Presets.FIRE_P2_PRESET,
-			Presets.FROST_P2_PRESET,
-			Presets.FFB_P2_PRESET,
-			Presets.ARCANE_P3_PRESET_ALLIANCE,
-			Presets.ARCANE_P3_PRESET_HORDE,
-			Presets.FROST_P3_PRESET_ALLIANCE,
-			Presets.FROST_P3_PRESET_HORDE,
-			Presets.FIRE_P3_PRESET_ALLIANCE,
-			Presets.FIRE_P3_PRESET_HORDE,
-			Presets.FFB_P3_PRESET_ALLIANCE,
-			Presets.FFB_P3_PRESET_HORDE,
-			Presets.FIRE_P4_PRESET_HORDE,
-			Presets.FIRE_P4_PRESET_ALLIANCE,
-			Presets.FFB_P4_PRESET_HORDE,
-			Presets.FFB_P4_PRESET_ALLIANCE,
-			Presets.ARCANE_P4_PRESET_HORDE,
-			Presets.ARCANE_P4_PRESET_ALLIANCE,
+			Presets.P1_BIS_ARCANE_PRESET,
+			Presets.P2_BIS_ARCANE_PRESET,
+			Presets.P3_BIS_ARCANE_PRESET,
+			Presets.P4_BIS_ARCANE_PRESET,
+			Presets.P5_BIS_ARCANE_PRESET,
+			Presets.P1_BIS_FIRE_PRESET,
+			Presets.P2_BIS_FIRE_PRESET,
+			Presets.P3_BIS_FIRE_PRESET,
+			Presets.P4_BIS_FIRE_PRESET,
+			Presets.P5_BIS_FIRE_PRESET,
+			Presets.P1_BIS_FROST_PRESET,
+			Presets.P2_BIS_FROST_PRESET,
+			Presets.P3_BIS_FROST_PRESET,
+			Presets.P4_BIS_FROST_PRESET,
+			Presets.P5_BIS_FROST_PRESET,
 		],
 	},
 

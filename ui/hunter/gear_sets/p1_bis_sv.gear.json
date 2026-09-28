@@ -1,0 +1,19 @@
+{"items": [
+    {"id":40543,"enchant":3817,"gems":[41398,45879]},
+    {"id":44664,"gems":[45879]},
+    {"id":40507,"enchant":3835,"gems":[45879],"reforge":{"fromStatType":36,"toStatType":31}},
+    {"id":54802,"enchant":3730},
+    {"id":40503,"enchant":3832,"gems":[45879,45879],"reforge":{"fromStatType":31,"toStatType":32}},
+    {"id":40282,"enchant":3756,"gems":[45879,42143],"reforge":{"fromStatType":31,"toStatType":36}},
+    {"id":40541,"enchant":3603,"gems":[45879],"reforge":{"fromStatType":31,"toStatType":36}},
+    {"id":40275,"gems":[45879]},
+    {"id":44011,"enchant":3823,"gems":[42143,42702],"reforge":{"fromStatType":31,"toStatType":32}},
+    {"id":40549,"enchant":983},
+    {"id":40074,"enchant":3839,"reforge":{"fromStatType":31,"toStatType":32}},
+    {"id":40474,"enchant":3839,"reforge":{"fromStatType":31,"toStatType":36}},
+    {"id":44253},
+    {"id":40256,"reforge":{"fromStatType":31,"toStatType":32}},
+    {"id":40388,"enchant":3827,"reforge":{"fromStatType":36,"toStatType":31}},
+    {},
+    {"id":40385,"enchant":3608}
+]}

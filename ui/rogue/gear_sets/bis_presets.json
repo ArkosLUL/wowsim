@@ -1,0 +1,137 @@
+{
+	"p1_bis_assassination": {
+		"name": "P1 Assassination",
+		"build": "Rogue Assassination",
+		"phase": 1,
+		"effort": "Quick",
+		"racialTraits": "RaceTroll",
+		"simCommit": "a36c02588",
+		"catalogDate": "2026-09-19"
+	},
+	"p1_bis_combat": {
+		"name": "P1 Combat",
+		"build": "Rogue Combat",
+		"phase": 1,
+		"effort": "Quick",
+		"racialTraits": "RaceOrc",
+		"simCommit": "a36c02588",
+		"catalogDate": "2026-09-19"
+	},
+	"p1_bis_subtlety": {
+		"name": "P1 Subtlety",
+		"build": "Rogue Subtlety",
+		"phase": 1,
+		"effort": "Quick",
+		"racialTraits": "RaceTroll",
+		"simCommit": "a36c02588",
+		"catalogDate": "2026-09-19"
+	},
+	"p2_bis_assassination": {
+		"name": "P2 Assassination",
+		"build": "Rogue Assassination",
+		"phase": 2,
+		"effort": "Quick",
+		"racialTraits": "RaceTroll",
+		"simCommit": "a36c02588",
+		"catalogDate": "2026-09-19"
+	},
+	"p2_bis_combat": {
+		"name": "P2 Combat",
+		"build": "Rogue Combat",
+		"phase": 2,
+		"effort": "Quick",
+		"racialTraits": "RaceOrc",
+		"simCommit": "a36c02588",
+		"catalogDate": "2026-09-19"
+	},
+	"p2_bis_subtlety": {
+		"name": "P2 Subtlety",
+		"build": "Rogue Subtlety",
+		"phase": 2,
+		"effort": "Quick",
+		"racialTraits": "RaceTroll",
+		"simCommit": "a36c02588",
+		"catalogDate": "2026-09-19"
+	},
+	"p3_bis_assassination": {
+		"name": "P3 Assassination",
+		"build": "Rogue Assassination",
+		"phase": 3,
+		"effort": "Quick",
+		"racialTraits": "RaceTroll",
+		"simCommit": "a36c02588",
+		"catalogDate": "2026-09-19"
+	},
+	"p3_bis_combat": {
+		"name": "P3 Combat",
+		"build": "Rogue Combat",
+		"phase": 3,
+		"effort": "Quick",
+		"racialTraits": "RaceOrc",
+		"simCommit": "a36c02588",
+		"catalogDate": "2026-09-19"
+	},
+	"p3_bis_subtlety": {
+		"name": "P3 Subtlety",
+		"build": "Rogue Subtlety",
+		"phase": 3,
+		"effort": "Quick",
+		"racialTraits": "RaceTroll",
+		"simCommit": "a36c02588",
+		"catalogDate": "2026-09-19"
+	},
+	"p4_bis_assassination": {
+		"name": "P4 Assassination",
+		"build": "Rogue Assassination",
+		"phase": 4,
+		"effort": "Quick",
+		"racialTraits": "RaceTroll",
+		"simCommit": "a36c02588",
+		"catalogDate": "2026-09-19"
+	},
+	"p4_bis_combat": {
+		"name": "P4 Combat",
+		"build": "Rogue Combat",
+		"phase": 4,
+		"effort": "Quick",
+		"racialTraits": "RaceDraenei",
+		"simCommit": "a36c02588",
+		"catalogDate": "2026-09-19"
+	},
+	"p4_bis_subtlety": {
+		"name": "P4 Subtlety",
+		"build": "Rogue Subtlety",
+		"phase": 4,
+		"effort": "Quick",
+		"racialTraits": "RaceTroll",
+		"simCommit": "a36c02588",
+		"catalogDate": "2026-09-19"
+	},
+	"p5_bis_assassination": {
+		"name": "P5 Assassination",
+		"build": "Rogue Assassination",
+		"phase": 5,
+		"effort": "Quick",
+		"racialTraits": "RaceTroll",
+		"simCommit": "a36c02588",
+		"catalogDate": "2026-09-19"
+	},
+	"p5_bis_combat": {
+		"name": "P5 Combat",
+		"build": "Rogue Combat",
+		"phase": 5,
+		"effort": "Quick",
+		"racialTraits": "RaceTroll",
+		"simCommit": "a36c02588",
+		"catalogDate": "2026-09-19"
+	},
+	"p5_bis_subtlety": {
+		"name": "P5 Subtlety",
+		"build": "Rogue Subtlety",
+		"phase": 5,
+		"effort": "Quick",
+		"racialTraits": "RaceTroll",
+		"simCommit": "a36c02588",
+		"catalogDate": "2026-09-19"
+	}
+}

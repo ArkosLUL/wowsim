@@ -157,6 +157,9 @@ test('a downloaded JSON export uploads back to the same settings', async ({ page
 test('a Wowhead export imports back to the same gear, talents, glyphs and race', async ({ page, other }) => {
 	await openSpec(page, SPEC);
 	await customize(page);
+	// the export leaves out gems in the blacksmith-only wrist and hands sockets otherwise
+	await openSimTab(page, 'settings-tab');
+	await checkbox(page.locator('#settings-tab .player-settings'), 'Blacksmithing').setChecked(true);
 	const original = await storedSettings(page, SPEC);
 
 	const url = await exportText(page, 'WoWHead');
@@ -171,7 +174,9 @@ test('a Wowhead export imports back to the same gear, talents, glyphs and race',
 	expect(imported.race).toBe(original.player.race);
 	expect(imported.talentsString).toBe(original.player.talentsString);
 	expect(imported.glyphs).toEqual(original.player.glyphs);
-	expect(imported.equipment).toEqual(original.player.equipment);
+	// Wowhead's gear planner has no reforging, so reforges don't survive the trip
+	const unreforged = original.player.equipment.items.map(({ reforge, ...item }: { reforge?: unknown }) => item);
+	expect(imported.equipment).toEqual({ ...original.player.equipment, items: unreforged });
 });
 
 test('an addon export imports gear, talents, race and professions', async ({ page, other }) => {

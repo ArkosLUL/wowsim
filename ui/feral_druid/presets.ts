@@ -24,8 +24,6 @@ import * as PresetUtils from '../core/preset_utils.js';
 // Eventually we will import these values for the raid sim too, so its good to
 // keep them in a separate file.
 
-import PreraidGear from './gear_sets/preraid.gear.json';
-export const PRERAID_PRESET = PresetUtils.makePresetGear('Preraid Preset', PreraidGear);
 import P1Gear from './gear_sets/p1.gear.json';
 export const P1_PRESET = PresetUtils.makePresetGear('P1 Preset', P1Gear);
 import P2Gear from './gear_sets/p2.gear.json';
@@ -34,6 +32,18 @@ import P3Gear from './gear_sets/p3.gear.json';
 export const P3_PRESET = PresetUtils.makePresetGear('P3 Preset', P3Gear);
 import P4Gear from './gear_sets/p4.gear.json';
 export const P4_PRESET = PresetUtils.makePresetGear('P4 Preset', P4Gear);
+
+import BisPresets from './gear_sets/bis_presets.json';
+import P1BisFeralGear from './gear_sets/p1_bis.gear.json';
+export const P1_BIS_FERAL_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p1_bis, P1BisFeralGear);
+import P2BisFeralGear from './gear_sets/p2_bis.gear.json';
+export const P2_BIS_FERAL_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p2_bis, P2BisFeralGear);
+import P3BisFeralGear from './gear_sets/p3_bis.gear.json';
+export const P3_BIS_FERAL_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p3_bis, P3BisFeralGear);
+import P4BisFeralGear from './gear_sets/p4_bis.gear.json';
+export const P4_BIS_FERAL_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p4_bis, P4BisFeralGear);
+import P5BisFeralGear from './gear_sets/p5_bis.gear.json';
+export const P5_BIS_FERAL_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p5_bis, P5BisFeralGear);
 
 import DefaultApl from './apls/default.apl.json';
 export const APL_ROTATION_DEFAULT = PresetUtils.makePresetAPLRotation('APL Default', DefaultApl);

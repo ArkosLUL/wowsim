@@ -85,7 +85,7 @@ const SPEC_CONFIG = registerSpecConfig(Spec.SpecElementalShaman, {
 
 	defaults: {
 		// Default equipped gear.
-		gear: Presets.P3_PRESET_HORDE.gear,
+		gear: Presets.P5_BIS_ELEMENTAL_PRESET.gear,
 		// Default EP weights for sorting gear in the gear picker.
 		epWeights: Stats.fromMap({
 			[Stat.StatIntellect]: 0.22,
@@ -164,12 +164,11 @@ const SPEC_CONFIG = registerSpecConfig(Spec.SpecElementalShaman, {
 		],
 		// Preset gear configurations that the user can quickly select.
 		gear: [
-			Presets.PRERAID_PRESET,
-			Presets.P1_PRESET,
-			Presets.P2_PRESET,
-			Presets.P3_PRESET_ALLI,
-			Presets.P3_PRESET_HORDE,
-			Presets.P4_PRESET,
+			Presets.P1_BIS_ELEMENTAL_PRESET,
+			Presets.P2_BIS_ELEMENTAL_PRESET,
+			Presets.P3_BIS_ELEMENTAL_PRESET,
+			Presets.P4_BIS_ELEMENTAL_PRESET,
+			Presets.P5_BIS_ELEMENTAL_PRESET,
 		],
 	},
 

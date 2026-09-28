@@ -63,7 +63,7 @@ const SPEC_CONFIG = registerSpecConfig(Spec.SpecSmitePriest, {
 
 	defaults: {
 		// Default equipped gear.
-		gear: Presets.P1_PRESET.gear,
+		gear: Presets.P5_BIS_SMITE_PRESET.gear,
 		// Default EP weights for sorting gear in the gear picker.
 		epWeights: Stats.fromMap({
 			[Stat.StatIntellect]: 0.38,
@@ -120,8 +120,11 @@ const SPEC_CONFIG = registerSpecConfig(Spec.SpecSmitePriest, {
 		],
 		// Preset gear configurations that the user can quickly select.
 		gear: [
-			Presets.PRERAID_PRESET,
-			Presets.P1_PRESET,
+			Presets.P1_BIS_SMITE_PRESET,
+			Presets.P2_BIS_SMITE_PRESET,
+			Presets.P3_BIS_SMITE_PRESET,
+			Presets.P4_BIS_SMITE_PRESET,
+			Presets.P5_BIS_SMITE_PRESET,
 		],
 	},
 

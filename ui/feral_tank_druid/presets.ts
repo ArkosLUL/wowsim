@@ -34,6 +34,18 @@ export const P3_PRESET = PresetUtils.makePresetGear('P3', P3Gear);
 import P4Gear from './gear_sets/p4.gear.json';
 export const P4_PRESET = PresetUtils.makePresetGear('P4', P4Gear);
 
+import BisPresets from './gear_sets/bis_presets.json';
+import P1BisFeralTankGear from './gear_sets/p1_bis.gear.json';
+export const P1_BIS_FERAL_TANK_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p1_bis, P1BisFeralTankGear);
+import P2BisFeralTankGear from './gear_sets/p2_bis.gear.json';
+export const P2_BIS_FERAL_TANK_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p2_bis, P2BisFeralTankGear);
+import P3BisFeralTankGear from './gear_sets/p3_bis.gear.json';
+export const P3_BIS_FERAL_TANK_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p3_bis, P3BisFeralTankGear);
+import P4BisFeralTankGear from './gear_sets/p4_bis.gear.json';
+export const P4_BIS_FERAL_TANK_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p4_bis, P4BisFeralTankGear);
+import P5BisFeralTankGear from './gear_sets/p5_bis.gear.json';
+export const P5_BIS_FERAL_TANK_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p5_bis, P5BisFeralTankGear);
+
 export const DefaultSimpleRotation = DruidRotation.create({
 	maulRageThreshold: 25,
 	maintainDemoralizingRoar: true,

@@ -15,6 +15,7 @@ import {
 	picker,
 	plus,
 	readStats,
+	reforgeStats,
 	SLOTS,
 	statsAfterChange,
 	warnings,
@@ -72,6 +73,7 @@ test('unequipping an item takes its gems, enchant and socket bonus off with it',
 	const enchantId = Number(/ench=(\d+)/.exec(tooltip)?.[1] ?? 0);
 	const enchant = db.enchants.find(e => e.effectId == enchantId);
 	expect(enchant, 'the preset chest is enchanted').toBeTruthy();
+	const reforge = await reforgeStats(page, 'chest');
 
 	const worn = await readStats(page);
 	const dialog = await openPicker(page, 'chest');
@@ -88,7 +90,7 @@ test('unequipping an item takes its gems, enchant and socket bonus off with it',
 
 	const bare = await statsAfterChange(page, worn);
 	expect(await warnings(page)).not.toContain('Meta gem disabled');
-	expectMovedBy(bare, worn, plus(plus(item.stats, gemStats(db, item, gems)), enchant!.stats));
+	expectMovedBy(bare, worn, plus(plus(plus(item.stats, gemStats(db, item, gems)), enchant!.stats), reforge));
 });
 
 test('Unequip All Gems empties every socket and the gem summary, and it stays that way after a reload', async ({ page }) => {

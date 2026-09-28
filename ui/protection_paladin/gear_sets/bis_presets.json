@@ -1,0 +1,47 @@
+{
+	"p1_bis": {
+		"name": "P1 Protection",
+		"build": "Protection Paladin",
+		"phase": 1,
+		"effort": "Normal",
+		"racialTraits": "RaceNightElf",
+		"simCommit": "a36c02588",
+		"catalogDate": "2026-09-19"
+	},
+	"p2_bis": {
+		"name": "P2 Protection",
+		"build": "Protection Paladin",
+		"phase": 2,
+		"effort": "Normal",
+		"racialTraits": "RaceNightElf",
+		"simCommit": "a36c02588",
+		"catalogDate": "2026-09-19"
+	},
+	"p3_bis": {
+		"name": "P3 Protection",
+		"build": "Protection Paladin",
+		"phase": 3,
+		"effort": "Normal",
+		"racialTraits": "RaceTauren",
+		"simCommit": "a36c02588",
+		"catalogDate": "2026-09-19"
+	},
+	"p4_bis": {
+		"name": "P4 Protection",
+		"build": "Protection Paladin",
+		"phase": 4,
+		"effort": "Normal",
+		"racialTraits": "RaceNightElf",
+		"simCommit": "a36c02588",
+		"catalogDate": "2026-09-19"
+	},
+	"p5_bis": {
+		"name": "P5 Protection",
+		"build": "Protection Paladin",
+		"phase": 5,
+		"effort": "Normal",
+		"racialTraits": "RaceNightElf",
+		"simCommit": "a36c02588",
+		"catalogDate": "2026-09-19"
+	}
+}

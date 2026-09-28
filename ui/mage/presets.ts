@@ -28,8 +28,6 @@ import * as PresetUtils from '../core/preset_utils.js';
 // Eventually we will import these values for the raid sim too, so its good to
 // keep them in a separate file.
 
-import PreraidArcaneGear from './gear_sets/preraid_arcane.gear.json';
-export const ARCANE_PRERAID_PRESET = PresetUtils.makePresetGear('Arcane Preraid Preset', PreraidArcaneGear, { talentTree: 0 });
 import P1ArcaneGear from './gear_sets/p1_arcane.gear.json';
 export const ARCANE_P1_PRESET = PresetUtils.makePresetGear('Arcane P1 Preset', P1ArcaneGear, { talentTree: 0 });
 import P2ArcaneGear from './gear_sets/p2_arcane.gear.json';
@@ -42,8 +40,6 @@ import P4ArcaneAllianceGear from './gear_sets/p4_arcane_alliance.gear.json';
 export const ARCANE_P4_PRESET_ALLIANCE = PresetUtils.makePresetGear('Arcane P4 Preset [A]', P4ArcaneAllianceGear, { talentTree: 0, faction: Faction.Alliance });
 import P4ArcaneHordeGear from './gear_sets/p4_arcane_horde.gear.json';
 export const ARCANE_P4_PRESET_HORDE = PresetUtils.makePresetGear('Arcane P4 Preset [H]', P4ArcaneHordeGear, { talentTree: 0, faction: Faction.Horde });
-import PreraidFireGear from './gear_sets/preraid_fire.gear.json';
-export const FIRE_PRERAID_PRESET = PresetUtils.makePresetGear('Fire Preraid Preset', PreraidFireGear, { talentTree: 1 });
 import P1FireGear from './gear_sets/p1_fire.gear.json';
 export const FIRE_P1_PRESET = PresetUtils.makePresetGear('Fire P1 Preset', P1FireGear, { talentTree: 1 });
 import P2FireGear from './gear_sets/p2_fire.gear.json';
@@ -68,12 +64,40 @@ import P4FfbHordeGear from './gear_sets/p4_ffb_horde.gear.json';
 export const FFB_P4_PRESET_HORDE = PresetUtils.makePresetGear('FFB P4 Preset [H]', P4FfbHordeGear, { talentTree: 1, customCondition: (player: Player<Spec.SpecMage>) => player.getTalents().icyVeins });
 import P1FrostGear from './gear_sets/p1_frost.gear.json';
 export const FROST_P1_PRESET = PresetUtils.makePresetGear('Frost P1 Preset', P1FrostGear, { talentTree: 2 });
-import P2FrostGear from './gear_sets/p2_frost.gear.json';
-export const FROST_P2_PRESET = PresetUtils.makePresetGear('Frost P2 Preset', P2FrostGear, { talentTree: 2 });
 import P3FrostAllianceGear from './gear_sets/p3_frost_alliance.gear.json';
 export const FROST_P3_PRESET_ALLIANCE = PresetUtils.makePresetGear('Frost P3 Preset [A]', P3FrostAllianceGear, { talentTree: 2, faction: Faction.Alliance });
-import P3FrostHordeGear from './gear_sets/p3_frost_horde.gear.json';
-export const FROST_P3_PRESET_HORDE = PresetUtils.makePresetGear('Frost P3 Preset [H]', P3FrostHordeGear, { talentTree: 2, faction: Faction.Horde });
+
+import BisPresets from './gear_sets/bis_presets.json';
+import P1BisArcaneGear from './gear_sets/p1_bis_arcane.gear.json';
+export const P1_BIS_ARCANE_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p1_bis_arcane, P1BisArcaneGear, { talentTree: 0 });
+import P2BisArcaneGear from './gear_sets/p2_bis_arcane.gear.json';
+export const P2_BIS_ARCANE_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p2_bis_arcane, P2BisArcaneGear, { talentTree: 0 });
+import P3BisArcaneGear from './gear_sets/p3_bis_arcane.gear.json';
+export const P3_BIS_ARCANE_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p3_bis_arcane, P3BisArcaneGear, { talentTree: 0 });
+import P4BisArcaneGear from './gear_sets/p4_bis_arcane.gear.json';
+export const P4_BIS_ARCANE_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p4_bis_arcane, P4BisArcaneGear, { talentTree: 0 });
+import P5BisArcaneGear from './gear_sets/p5_bis_arcane.gear.json';
+export const P5_BIS_ARCANE_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p5_bis_arcane, P5BisArcaneGear, { talentTree: 0 });
+import P1BisFireGear from './gear_sets/p1_bis_fire.gear.json';
+export const P1_BIS_FIRE_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p1_bis_fire, P1BisFireGear, { talentTree: 1 });
+import P2BisFireGear from './gear_sets/p2_bis_fire.gear.json';
+export const P2_BIS_FIRE_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p2_bis_fire, P2BisFireGear, { talentTree: 1 });
+import P3BisFireGear from './gear_sets/p3_bis_fire.gear.json';
+export const P3_BIS_FIRE_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p3_bis_fire, P3BisFireGear, { talentTree: 1 });
+import P4BisFireGear from './gear_sets/p4_bis_fire.gear.json';
+export const P4_BIS_FIRE_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p4_bis_fire, P4BisFireGear, { talentTree: 1 });
+import P5BisFireGear from './gear_sets/p5_bis_fire.gear.json';
+export const P5_BIS_FIRE_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p5_bis_fire, P5BisFireGear, { talentTree: 1 });
+import P1BisFrostGear from './gear_sets/p1_bis_frost.gear.json';
+export const P1_BIS_FROST_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p1_bis_frost, P1BisFrostGear, { talentTree: 2 });
+import P2BisFrostGear from './gear_sets/p2_bis_frost.gear.json';
+export const P2_BIS_FROST_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p2_bis_frost, P2BisFrostGear, { talentTree: 2 });
+import P3BisFrostGear from './gear_sets/p3_bis_frost.gear.json';
+export const P3_BIS_FROST_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p3_bis_frost, P3BisFrostGear, { talentTree: 2 });
+import P4BisFrostGear from './gear_sets/p4_bis_frost.gear.json';
+export const P4_BIS_FROST_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p4_bis_frost, P4BisFrostGear, { talentTree: 2 });
+import P5BisFrostGear from './gear_sets/p5_bis_frost.gear.json';
+export const P5_BIS_FROST_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p5_bis_frost, P5BisFrostGear, { talentTree: 2 });
 
 export const DefaultSimpleRotation = MageRotation.create({
 	only3ArcaneBlastStacksBelowManaPercent: 0.15,

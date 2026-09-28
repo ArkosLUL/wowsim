@@ -1,7 +1,7 @@
 import { expect, type Page, test } from '@playwright/test';
 
 import { openSimTab } from '../lib/page';
-import { closePicker, type DbItem, equippedId, loadDb, openGear, openPicker, pane, picker, readStats, showTab, statsAfterChange } from './gear';
+import { clearReforges, closePicker, type DbItem, equippedId, loadDb, openGear, openPicker, pane, picker, readStats, showTab, statsAfterChange } from './gear';
 
 // mod-reforging's names for the item_template stat types, and the stats panel rows each lands on.
 const STAT_TYPES: Record<number, { name: string; label?: string }> = {
@@ -81,6 +81,7 @@ test('the reforging tab offers exactly the reforges the server allows on the ite
 
 test('a reforge moves its two stats by the amount shown, survives a reload, and comes off again', async ({ page }) => {
 	await openGear(page);
+	await clearReforges(page);
 	const db = await loadDb(page);
 	const config = await readConfig(page);
 	const item = db.items.get(await equippedId(page, 'head'))!;
@@ -117,6 +118,7 @@ test('a reforge moves its two stats by the amount shown, survives a reload, and 
 
 test('with reforging off the server settings, a kept reforge is flagged and stops counting', async ({ page }) => {
 	await openGear(page);
+	await clearReforges(page);
 	const db = await loadDb(page);
 	const config = await readConfig(page);
 	const item = db.items.get(await equippedId(page, 'head'))!;
@@ -148,6 +150,7 @@ test('with reforging off the server settings, a kept reforge is flagged and stop
 
 test('a new reforge percentage in the server settings moves every amount shown and simmed', async ({ page }) => {
 	await openGear(page);
+	await clearReforges(page);
 	const db = await loadDb(page);
 	const config = await readConfig(page);
 	const item = db.items.get(await equippedId(page, 'head'))!;

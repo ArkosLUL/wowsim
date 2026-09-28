@@ -30,22 +30,28 @@ import * as PresetUtils from '../core/preset_utils.js';
 // Eventually we will import these values for the raid sim too, so its good to
 // keep them in a separate file.
 
-import PreraidGear from './gear_sets/preraid.gear.json';
-export const PRERAID_PRESET = PresetUtils.makePresetGear('Preraid Preset', PreraidGear);
 import P1Gear from './gear_sets/p1.gear.json';
 export const P1_PRESET = PresetUtils.makePresetGear('P1 Preset', P1Gear);
 import P2FtGear from './gear_sets/p2_ft.gear.json';
 export const P2_PRESET_FT = PresetUtils.makePresetGear('P2 Preset FT', P2FtGear);
-import P2WfGear from './gear_sets/p2_wf.gear.json';
-export const P2_PRESET_WF = PresetUtils.makePresetGear('P2 Preset WF', P2WfGear);
 import P3AllianceGear from './gear_sets/p3_alliance.gear.json';
 export const P3_PRESET_ALLIANCE = PresetUtils.makePresetGear('P3 Preset [A]', P3AllianceGear, { faction: Faction.Alliance });
 import P3HordeGear from './gear_sets/p3_horde.gear.json';
 export const P3_PRESET_HORDE = PresetUtils.makePresetGear('P3 Preset [H]', P3HordeGear, { faction: Faction.Horde });
 import P4FtGear from './gear_sets/p4_ft.gear.json';
 export const P4_PRESET_FT = PresetUtils.makePresetGear('P4 Preset FT', P4FtGear);
-import P4WfGear from './gear_sets/p4_wf.gear.json';
-export const P4_PRESET_WF = PresetUtils.makePresetGear('P4 Preset WF', P4WfGear);
+
+import BisPresets from './gear_sets/bis_presets.json';
+import P1BisEnhancementGear from './gear_sets/p1_bis.gear.json';
+export const P1_BIS_ENHANCEMENT_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p1_bis, P1BisEnhancementGear);
+import P2BisEnhancementGear from './gear_sets/p2_bis.gear.json';
+export const P2_BIS_ENHANCEMENT_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p2_bis, P2BisEnhancementGear);
+import P3BisEnhancementGear from './gear_sets/p3_bis.gear.json';
+export const P3_BIS_ENHANCEMENT_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p3_bis, P3BisEnhancementGear);
+import P4BisEnhancementGear from './gear_sets/p4_bis.gear.json';
+export const P4_BIS_ENHANCEMENT_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p4_bis, P4BisEnhancementGear);
+import P5BisEnhancementGear from './gear_sets/p5_bis.gear.json';
+export const P5_BIS_ENHANCEMENT_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p5_bis, P5BisEnhancementGear);
 
 import DefaultFt from './apls/default_ft.apl.json';
 export const ROTATION_FT_DEFAULT = PresetUtils.makePresetAPLRotation('Default FT', DefaultFt);

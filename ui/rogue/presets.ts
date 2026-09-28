@@ -20,8 +20,6 @@ import * as PresetUtils from '../core/preset_utils.js';
 // Eventually we will import these values for the raid sim too, so its good to
 // keep them in a separate file.
 
-import PreraidAssassinationGear from './gear_sets/preraid_assassination.gear.json';
-export const PRERAID_PRESET_ASSASSINATION = PresetUtils.makePresetGear('PreRaid Assassination', PreraidAssassinationGear, { talentTree: 0 });
 import P1AssassinationGear from './gear_sets/p1_assassination.gear.json';
 export const P1_PRESET_ASSASSINATION = PresetUtils.makePresetGear('P1 Assassination', P1AssassinationGear, { talentTree: 0 });
 import P2AssassinationGear from './gear_sets/p2_assassination.gear.json';
@@ -30,10 +28,6 @@ import P3AssassinationGear from './gear_sets/p3_assassination.gear.json';
 export const P3_PRESET_ASSASSINATION = PresetUtils.makePresetGear('P3 Assassination', P3AssassinationGear, { talentTree: 0 });
 import P4AssassinationGear from './gear_sets/p4_assassination.gear.json';
 export const P4_PRESET_ASSASSINATION = PresetUtils.makePresetGear('P4 Assassination', P4AssassinationGear, { talentTree: 0 });
-import P5AssassinationGear from './gear_sets/p5_assassination.gear.json';
-export const P5_PRESET_ASSASSINATION = PresetUtils.makePresetGear('P5 Assassination', P5AssassinationGear, { talentTree: 0 });
-import PreraidCombatGear from './gear_sets/preraid_combat.gear.json';
-export const PRERAID_PRESET_COMBAT = PresetUtils.makePresetGear('PreRaid Combat', PreraidCombatGear, { talentTree: 1 });
 import P1CombatGear from './gear_sets/p1_combat.gear.json';
 export const P1_PRESET_COMBAT = PresetUtils.makePresetGear('P1 Combat', P1CombatGear, { talentTree: 1 });
 import P2CombatGear from './gear_sets/p2_combat.gear.json';
@@ -42,16 +36,42 @@ import P3CombatGear from './gear_sets/p3_combat.gear.json';
 export const P3_PRESET_COMBAT = PresetUtils.makePresetGear('P3 Combat', P3CombatGear, { talentTree: 1 });
 import P4CombatGear from './gear_sets/p4_combat.gear.json';
 export const P4_PRESET_COMBAT = PresetUtils.makePresetGear('P4 Combat', P4CombatGear, { talentTree: 1 });
-import P5CombatGear from './gear_sets/p5_combat.gear.json';
-export const P5_PRESET_COMBAT = PresetUtils.makePresetGear('P5 Combat', P5CombatGear, { talentTree: 1 });
 import P1HemoSubGear from './gear_sets/p1_hemosub.gear.json';
 export const P1_PRESET_HEMO_SUB = PresetUtils.makePresetGear('P1 Hemo Sub', P1HemoSubGear, { talentTree: 2 });
 import P2HemoSubGear from './gear_sets/p2_hemosub.gear.json';
 export const P2_PRESET_HEMO_SUB = PresetUtils.makePresetGear('P2 Hemo Sub', P2HemoSubGear, { talentTree: 2 });
-import P3HemoSubGear from './gear_sets/p3_hemosub.gear.json';
-export const P3_PRESET_HEMO_SUB = PresetUtils.makePresetGear('P3 Hemo Sub', P3HemoSubGear, { talentTree: 2 });
-import P3DanceSubGear from './gear_sets/p3_dancesub.gear.json';
-export const P3_PRESET_DANCE_SUB = PresetUtils.makePresetGear('P3 Dance Sub', P3DanceSubGear, { talentTree: 2 });
+
+import BisPresets from './gear_sets/bis_presets.json';
+import P1BisAssassinationGear from './gear_sets/p1_bis_assassination.gear.json';
+export const P1_BIS_ASSASSINATION_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p1_bis_assassination, P1BisAssassinationGear, { talentTree: 0 });
+import P2BisAssassinationGear from './gear_sets/p2_bis_assassination.gear.json';
+export const P2_BIS_ASSASSINATION_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p2_bis_assassination, P2BisAssassinationGear, { talentTree: 0 });
+import P3BisAssassinationGear from './gear_sets/p3_bis_assassination.gear.json';
+export const P3_BIS_ASSASSINATION_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p3_bis_assassination, P3BisAssassinationGear, { talentTree: 0 });
+import P4BisAssassinationGear from './gear_sets/p4_bis_assassination.gear.json';
+export const P4_BIS_ASSASSINATION_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p4_bis_assassination, P4BisAssassinationGear, { talentTree: 0 });
+import P5BisAssassinationGear from './gear_sets/p5_bis_assassination.gear.json';
+export const P5_BIS_ASSASSINATION_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p5_bis_assassination, P5BisAssassinationGear, { talentTree: 0 });
+import P1BisCombatGear from './gear_sets/p1_bis_combat.gear.json';
+export const P1_BIS_COMBAT_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p1_bis_combat, P1BisCombatGear, { talentTree: 1 });
+import P2BisCombatGear from './gear_sets/p2_bis_combat.gear.json';
+export const P2_BIS_COMBAT_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p2_bis_combat, P2BisCombatGear, { talentTree: 1 });
+import P3BisCombatGear from './gear_sets/p3_bis_combat.gear.json';
+export const P3_BIS_COMBAT_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p3_bis_combat, P3BisCombatGear, { talentTree: 1 });
+import P4BisCombatGear from './gear_sets/p4_bis_combat.gear.json';
+export const P4_BIS_COMBAT_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p4_bis_combat, P4BisCombatGear, { talentTree: 1 });
+import P5BisCombatGear from './gear_sets/p5_bis_combat.gear.json';
+export const P5_BIS_COMBAT_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p5_bis_combat, P5BisCombatGear, { talentTree: 1 });
+import P1BisSubtletyGear from './gear_sets/p1_bis_subtlety.gear.json';
+export const P1_BIS_SUBTLETY_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p1_bis_subtlety, P1BisSubtletyGear, { talentTree: 2 });
+import P2BisSubtletyGear from './gear_sets/p2_bis_subtlety.gear.json';
+export const P2_BIS_SUBTLETY_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p2_bis_subtlety, P2BisSubtletyGear, { talentTree: 2 });
+import P3BisSubtletyGear from './gear_sets/p3_bis_subtlety.gear.json';
+export const P3_BIS_SUBTLETY_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p3_bis_subtlety, P3BisSubtletyGear, { talentTree: 2 });
+import P4BisSubtletyGear from './gear_sets/p4_bis_subtlety.gear.json';
+export const P4_BIS_SUBTLETY_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p4_bis_subtlety, P4BisSubtletyGear, { talentTree: 2 });
+import P5BisSubtletyGear from './gear_sets/p5_bis_subtlety.gear.json';
+export const P5_BIS_SUBTLETY_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p5_bis_subtlety, P5BisSubtletyGear, { talentTree: 2 });
 
 import MutilateApl from './apls/mutilate.apl.json'
 export const ROTATION_PRESET_MUTILATE = PresetUtils.makePresetAPLRotation('Mutilate', MutilateApl, { talentTree: 0 });

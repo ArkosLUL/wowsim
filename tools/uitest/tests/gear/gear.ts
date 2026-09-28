@@ -79,6 +79,7 @@ export interface DbItem {
 	type: number;
 	ilvl: number;
 	handType?: number;
+	weaponType?: number;
 	armorType?: number;
 	weaponSpeed?: number;
 	factionRestriction?: number;
@@ -281,7 +282,7 @@ export async function statsAfterChange(page: Page, before: Record<string, number
 
 // Checks the panel moved the way `values` (a db.json stats array) says. Ratings nothing converts
 // move exactly; crit too unless agility came along; primary stats get multiplied by buffs and
-// talents, so they move at least that far, and not at all when `values` has none.
+// talents, so they move at least that far either way, and not at all when `values` has none.
 export function expectMovedBy(before: Record<string, number>, after: Record<string, number>, values: number[]) {
 	const moved = (key: keyof typeof STAT) => after[STAT_LABEL[key]] - before[STAT_LABEL[key]];
 	for (const key of FLAT_RATINGS) {
@@ -293,9 +294,48 @@ export function expectMovedBy(before: Record<string, number>, after: Record<stri
 	for (const key of ['strength', 'agility', 'stamina'] as const) {
 		if (stat(values, key) == 0) {
 			expect(moved(key), STAT_LABEL[key]).toBe(0);
-		} else {
+		} else if (stat(values, key) > 0) {
 			expect(moved(key), STAT_LABEL[key]).toBeGreaterThanOrEqual(stat(values, key));
+		} else {
+			expect(moved(key), STAT_LABEL[key]).toBeLessThanOrEqual(stat(values, key));
 		}
+	}
+}
+
+// mod-reforging's stat names, as the item picker shows them, and the db.json stats each one is.
+const REFORGE_STATS: Record<string, (keyof typeof STAT)[]> = {
+	Spirit: ['spirit'],
+	Dodge: ['dodge'],
+	Parry: ['parry'],
+	Hit: ['meleeHit', 'spellHit'],
+	Crit: ['meleeCrit', 'spellCrit'],
+	Haste: ['meleeHaste', 'spellHaste'],
+	Expertise: ['expertise'],
+};
+
+// What the slot's reforge ("Reforged: 48 Crit → Hit") moves, as a db.json stats array.
+export async function reforgeStats(page: Page, slot: Slot): Promise<number[]> {
+	const text = (await picker(page, slot).locator('.item-picker-reforge').textContent()) ?? '';
+	const values = new Array(40).fill(0);
+	const match = /Reforged: (\d+) (\w+) → (\w+)/.exec(text);
+	if (match) {
+		REFORGE_STATS[match[2]].forEach(key => (values[STAT[key]] -= Number(match[1])));
+		REFORGE_STATS[match[3]].forEach(key => (values[STAT[key]] += Number(match[1])));
+	}
+	return values;
+}
+
+// Takes every reforge off, each one landing in the stats panel before the next.
+export async function clearReforges(page: Page) {
+	for (const slot of SLOTS) {
+		const shown = picker(page, slot).locator('.item-picker-reforge');
+		if (!(await shown.textContent())?.trim()) continue;
+		const before = await readStats(page);
+		const tab = await showTab(await openPicker(page, slot, 'reforge'), 'Reforging');
+		await tab.locator('.selector-modal-remove-button').click();
+		await expect(shown).toHaveText('');
+		await closePicker(page);
+		await statsAfterChange(page, before);
 	}
 }
 

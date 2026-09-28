@@ -1012,6 +1012,64 @@ The WI runs every build at Quick, plus a few at Normal. Once PAR-P8 and BIS-tank
 orchestrator reruns the generator at Normal on `integration` and commits its presets, since both items change
 what the optimizer picks.
 
+#### As built
+
+- **Generator (`tools/presetgen`):** drives the optimizer tab via `tools/uicheck/cdp.py`, one build (talent
+  tree) at a time: fresh `localStorage`, the tree's own talent preset clicked (so talents and glyphs never
+  get hand-typed), then race, professions and each phase's seed gear set through one JSON export/edit/reimport
+  round trip of `IndividualSimSettings` (buffs, debuffs, consumes and encounter stay whatever the spec's own
+  defaults are). A rerun on the same tab leaves the old result's Export JSON button on screen until the new
+  one lands, so completion reads off the Cancel button's visibility, not that button's presence.
+  - Any effort writes each phase's gear file and its `bis_presets.json` entry; `--no-write` (spot checks)
+    fills only `summary.jsonl`.
+  - `summary.jsonl` is the resume log, per `(build, phase, effort)`; a writing run redoes a phase only a
+    `--no-write` run settled. Its rows carry each pick's items, and a phase seeds from the previous phase's
+    row at the same effort, else from that phase's gear file.
+  - It stops the Chrome it started (by PID tree); a Chrome already on the port is reused and left running.
+- **Tooltip and label data:** `ui/<spec>/gear_sets/bis_presets.json`, keyed by gear file name: chip label
+  (`P<N> <tree>`), build, phase, effort, racial traits, sim commit, catalog date. `presets.ts` passes each
+  entry to `PresetUtils.makeBisPresetGear`, which builds the chip's label and its tooltip ("Phase N BiS for
+  <build>, picked by the BiS optimizer at <effort> effort. It assumes <race> racial traits." plus the sim
+  commit and catalog date), so a rerun restamps both with no hand edits. The 140 Quick entries were
+  backfilled from that run's summary and match the tooltips hand-typed before.
+- **Race:** each build's class default (`specToEligibleRaces[spec][0]`) if already Alliance, else that
+  class's first Alliance entry; Draenei for every class here but Druid (NightElf), Rogue (Dwarf) and Warlock
+  (Gnome). Professions: all 11, since the pool builder gates profession-locked items, enchants and gems on
+  the player's own.
+- **Registration:** `presets.gear` holds only the new presets and `defaults.gear` the default tree's P5.
+  Every hand-made gear preset left, including hunter MM's, warrior Fury's, mage FFB's and warlock's
+  "Straight Outa SWP". Each new preset takes the gating of those it replaces: hunter MM `talentTrees: [0, 1]`
+  (BM too), warrior Fury `[1, 2]`, tank DK ungated like its old ones, the other multi-tree specs one
+  `talentTree` each, single-tree specs none. Labels are unique per spec.
+- **Deleted** 43 Classic gear files, with their `presets.ts` imports and exports, that nothing loads by
+  name. The 119 kept are loaded by a Go test (a literal `core.GetGearSet`, a variable one resolved through
+  its package's literals, or `serverdata_test.go`'s table), a `raidSimPresets` entry in the spec's `sim.ts`
+  (the raid sim's per-phase default gear, unchanged here), or `gen.py`'s P1 seeds (mage `p1_frost`, rogue
+  `p1_hemosub` and tank DK `p1_frost` stay for that alone). Nothing in `tools/uitest` or elsewhere in
+  `tools/` names one.
+- **Ran** all 28 builds' 5 phases at Quick (140 runs, ~80 min).
+- **Normal sample** (3 builds x P1, P5): P1 tracked Quick closely (within a few points). P5, correctly seeded
+  from the true P4 pick, has Normal beating Quick by 86 (Fury), 82 (Fire) and 1348 (Blood tank) — real but
+  modest for the DPS specs, more so for the tank. The planned Normal rerun on `integration` (once PAR-P8 and
+  BIS-tank-boss merge) should refine P4-P5 picks, not move them sharply.
+- **Normal rerun** of Fire mage and Prot paladin, P1-P5 chained (~14 min): Δ over each seed +360, +739,
+  +1130, +1879, +68 (Fire, 44-95 s a phase) and +3853, +6121, +10540, +10247, +2438 (Prot paladin, 91-120 s).
+  It rewrote exactly their 10 gear files and 10 `bis_presets.json` entries (effort Normal; Prot paladin P3
+  now Tauren traits); the other 145 BiS files stayed byte-identical. After a forced bundle rebuild the page's
+  tooltips read "at Normal effort".
+- **uitest:** tests written against the Classic warrior and mage defaults broke on the reforged,
+  blacksmith-gemmed presets. Fixed: `gear.ts` gains `reforgeStats`, `clearReforges` (the reforge specs start
+  unreforged), `weaponType` and a negative-aware `expectMovedBy`; chip locators skip `.disabled` (hidden)
+  chips; Titan's Grip skips polearms and staves; the blacksmithing test counts gems already in the extra
+  sockets (from saved settings, since tooltip data omits them); the unique-gem and meta tests look past the
+  helm instead of skipping; the Wowhead round trip exports as a blacksmith and expects reforges dropped.
+  Full suite: 318 pass; the 9 failures predate this branch: a Wowhead tooltip 404 (spell 13377) on shaman
+  pages and raid pages seating one, and `bis_batch`'s sources test waiting on a console line 9479665b9
+  removed.
+- **Verification:** `sim/...` all pass (every Go test finds its gear file), 37/37 golden suites unchanged,
+  `tsc` clean, eslint per changed file (35) old = new. On the dev server, each of the 17 spec pages shows
+  only the new presets, gated per tree, with its default tree's P5 active by default.
+
 ### BIS-tank-boss (wave K)
 
 Switch `TANK_BOSSES` (`ui/core/optimizer/pool_builder.ts`) and its Go mirror (`critimmunity_test.go`'s

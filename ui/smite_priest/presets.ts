@@ -24,10 +24,20 @@ import * as PresetUtils from '../core/preset_utils.js';
 // Eventually we will import these values for the raid sim too, so its good to
 // keep them in a separate file.
 
-import PreraidGear from './gear_sets/preraid.gear.json';
-export const PRERAID_PRESET = PresetUtils.makePresetGear('Preraid Preset', PreraidGear);
 import P1Gear from './gear_sets/p1.gear.json';
 export const P1_PRESET = PresetUtils.makePresetGear('P1 Preset', P1Gear);
+
+import BisPresets from './gear_sets/bis_presets.json';
+import P1BisSmiteGear from './gear_sets/p1_bis.gear.json';
+export const P1_BIS_SMITE_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p1_bis, P1BisSmiteGear);
+import P2BisSmiteGear from './gear_sets/p2_bis.gear.json';
+export const P2_BIS_SMITE_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p2_bis, P2BisSmiteGear);
+import P3BisSmiteGear from './gear_sets/p3_bis.gear.json';
+export const P3_BIS_SMITE_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p3_bis, P3BisSmiteGear);
+import P4BisSmiteGear from './gear_sets/p4_bis.gear.json';
+export const P4_BIS_SMITE_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p4_bis, P4BisSmiteGear);
+import P5BisSmiteGear from './gear_sets/p5_bis.gear.json';
+export const P5_BIS_SMITE_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p5_bis, P5BisSmiteGear);
 
 import DefaultApl from './apls/default.apl.json'
 export const ROTATION_PRESET_APL = PresetUtils.makePresetAPLRotation('Default', DefaultApl);
