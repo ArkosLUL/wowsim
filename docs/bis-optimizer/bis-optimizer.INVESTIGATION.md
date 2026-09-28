@@ -129,24 +129,25 @@ worldserver and database stopped and only the idle prod sim container up. `raid2
   5.5 s at Normal, both Prot Paladin P3.
 - A whole roster's batch at these times, 21 non-healers' stage 1 and 19 DPS raiders' stage 2 over 5
   phases: about 7 h at Quick, stage 2 all but 20 min of it, and about 4 days at Normal. The real roster's
-  batch below takes about 8.3 h.
+  batch took about 8.3 h in wave J, and 52 min once J2 narrowed stage 2 (below).
 
 The BiS Batch's own runs on the live 25-raider roster, whose grid holds 21 non-healers (19 DPS, 2 tanks):
 
 | Run | Time |
 |---|---|
 | Raid contribution, one raider and phase, two Combat Rogues, P1, Quick | 340–415 s |
-| Batch stage 1, one raider and phase, Quick | 4–32 s for DPS (median 10 s), 17–94 s for the tanks |
-| Batch stage 2, one raider and phase, Quick | 277–388 s (median 287 s) |
+| Batch stage 1, one raider and phase, Quick | 4–33 s for DPS (median 10 s), 19–69 s for the tanks |
+| Batch stage 2, one raider and phase, Quick | 241–290 s (Fel, the only raider it runs) |
+| Batch Heroic Presence checks, Quick | 16–18 s a party, 19–48 s a phase |
 | Batch stage 1, one raider and phase, Normal | 139 s (Prot Paladin), 347 s (Unholy DK) |
-| Batch, both stages, 21 non-healers × 5 phases, Quick | ~8.3 h: stage 1 27 min, stage 2 96 min a phase |
+| Batch, both stages, 21 non-healers × 5 phases, Quick | 52 min: stage 1 260–348 s a phase, stage 2 292–335 s |
 
-The Quick batch rows come from wave J's batch through `tools/database/acbis/driver/` at sim commit
-`5d5ff1d23`, with the worldserver and database stopped. Stage 1 ran all 5 phases (105 jobs) and stage 2
-phase 1 only (19 jobs): the user stopped it there once its cost was clear, so the total extrapolates
-stage 2 over 5 phases. The stored batch filled 41% of the page's localStorage after stage 1 and 51%
-after phase 1's stage 2, so about 91% for a whole batch. The Normal rows and the Combat Rogue pair are
-earlier partial runs at sim `b9fc6c703039`, their load unrecorded.
+The Quick batch rows come from wave J2's whole batch through `tools/database/acbis/driver/` at sim commit
+`8160a4a3f`, with the worldserver and database stopped: 105 stage 1 jobs, 5 stage 2 jobs and 12 party
+checks, none failed, filling 43% of the page's localStorage. Wave J's batch at `5d5ff1d23`, stage 2 for
+every DPS raider, took about 8.3 h: stage 1 27 min, stage 2 96 min a phase (phase 1 only, extrapolated),
+and would have filled about 91%. The Normal rows and the Combat Rogue pair are earlier partial runs at
+sim `b9fc6c703039`, their load unrecorded.
 
 ## Speed audit (after wave J)
 
@@ -204,4 +205,5 @@ plus bias) and a learned surrogate (retrained on every sim commit).
 from the stage 1 pick; one Draenei per party where it helps; per-unit random streams in optimizer sims
 (a raid25 paired delta's SE ±27.1 to ±4.2); racing, so Quick adopts a better swap. On the live roster's
 phase 1, stage 2 and the party checks took about 8 min against wave J's 96, and the final picks beat all
-stage 1 picks by +822 ± 12 raid DPS. Stage 1 ran 259–328 s a phase. A whole batch is left to the user.
+stage 1 picks by +822 ± 12 raid DPS. The whole batch then took 52 min: Fel's stage 2 pick beat his stage 1
+pick in every phase (+3 to +56 raid DPS), and the party checks switched 12 raiders (+250 to +662 each).

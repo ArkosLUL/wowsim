@@ -737,7 +737,7 @@ No code changed. Quick's and the tanks' targets moved; the batch's awaits the us
   narrowed (BIS-stage2), a Normal batch is mostly stage 1, about 3–4.5 h. Raid mode's
   stage 2 took 255 s per DPS raider and phase at Quick and 56 min at Normal on the synthetic raid, so a
   roster takes about 7 h at Quick and 4 days at Normal. The real roster's stage 2 ran 1.3–2.2× as long,
-  its load unrecorded: a completed full-roster batch settles whether Quick fits a night. Not trimmed:
+  its load unrecorded. Not trimmed:
   halving raid mode's budget still leaves near 4 h and 2 days, and cuts the effects screen (53% of stage
   2), which no slow-suite case checks in raid mode. A deep cut needs a design change: measure stage 2's
   curves and effects (70% of its run) in the derived context, as stage 1 does, and keep raid sims for the
@@ -745,7 +745,8 @@ No code changed. Quick's and the tanks' targets moved; the batch's awaits the us
 
 The full-roster batch then took 27 min for stage 1 and 96 min a phase for stage 2 (phase 1 only): about
 8.3 h at Quick ([rows](bis-optimizer.INVESTIGATION.md#performance)). What would cut it is the
-INVESTIGATION's [speed audit](bis-optimizer.INVESTIGATION.md#speed-audit-after-wave-j).
+INVESTIGATION's [speed audit](bis-optimizer.INVESTIGATION.md#speed-audit-after-wave-j). With wave J2's
+cuts, the whole batch took 52 min.
 
 ### BIS-seed (wave I2, done)
 

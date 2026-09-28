@@ -109,8 +109,8 @@ gets fixed before K builds presets with it.
 - Base SHA: set at wave start.
 - Workflow runId: none. Wave J2 ran as `wf_b5e75270-6c6` and BIS-stage2b as `wf_499304fb-b30` (args and
   results `waveJ2*` in `G:\DevStuff\GitHub\.wave-loop`).
-- J2's full-roster batch is the user's to run (2026-09-27): stage 1 of phases 1–4 ran, 259–328 s a phase,
-  and was stopped before stage 2. Its times replace the INVESTIGATION's batch rows.
+- J2's full-roster batch ran 2026-09-28 in 52 min at Quick, output in
+  `G:\DevStuff\GitHub\.wave-loop\bis-j2-full`; its times are the INVESTIGATION's batch rows.
 
 ## BiS baseline
 

@@ -52,10 +52,10 @@ better one for them or a Heroic Presence check switched their racial traits.
 - One driver at a time per `--out` and `--port`: a Chrome already on the port with another profile stops
   the run, and two drivers on one profile would fight over the batch. `stop --out DIR` closes a Chrome
   a killed run left behind.
-- At Quick, a stage 1 job takes 4–32 s on the server (a tank up to 94 s), a stage 2 job (BIS-stage2
-  narrowed who gets one) 4–7 min, and the Heroic Presence checks about 16 s a party. A measured P1 pass,
-  21 raiders, 1 stage 2 job and 3 parties checked, took 269 s for stage 1 and 315 s for stage 2
-  (`bis-optimizer.PLAN.md`'s BIS-stage2b section).
+- At Quick, a stage 1 job takes 4–33 s on the server (a tank up to 94 s), a stage 2 job (BIS-stage2
+  narrowed who gets one) 4–7 min, and the Heroic Presence checks about 16 s a party. A whole batch of 21
+  raiders, 1 of them with stage 2, took 52 min, about half each pass
+  ([INVESTIGATION](../../../../docs/bis-optimizer/bis-optimizer.INVESTIGATION.md#performance)).
 
 ## Unattended runs
 
@@ -70,7 +70,7 @@ better one for them or a Heroic Presence check switched their racial traits.
   batch outright. After each job, Heroic Presence check and pass, the driver saves the raid sim's keys
   to `storage-snapshot.json` and puts back what a new Chrome lacks, re-importing the roster if the grid
   is still empty.
-- localStorage holds 5.24M chars per origin, and a full two-stage roster comes to about 91% of that.
+- localStorage holds 5.24M chars per origin, and a whole two-stage batch of 21 raiders came to 43% of that.
   Each job's log line has the share. Once the page can't store the batch, the exports and the snapshot
   still carry everything, but a reload re-runs every job since the last store.
 
