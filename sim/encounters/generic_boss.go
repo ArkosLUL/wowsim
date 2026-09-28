@@ -45,6 +45,24 @@ func GenericBossTarget(damageModifier float64) *proto.Target {
 	}
 }
 
+// baseAttackTimeMs is BASE_ATTACK_TIME (Unit.h), which creature_template.BaseAttackTime falls back
+// to at 0.
+const baseAttackTimeMs = 2000
+
+// GenericBossTargetAt is GenericBossTarget, swinging at a specific boss's own attack time instead of
+// the pinned 2000 ms. Creature::CalculateMinMaxDamage multiplies weapon damage by both DamageModifier
+// and the attack time in seconds, so scaling MinBaseDamage by attackTimeMs/2000 keeps
+// GenericBossTarget's DPS while a faster boss's swing lands smaller, not less per second.
+func GenericBossTargetAt(damageModifier float64, attackTimeMs int32) *proto.Target {
+	if attackTimeMs <= 0 {
+		attackTimeMs = baseAttackTimeMs
+	}
+	target := GenericBossTarget(damageModifier)
+	target.SwingSpeed = float64(attackTimeMs) / 1000
+	target.MinBaseDamage *= float64(attackTimeMs) / baseAttackTimeMs
+	return target
+}
+
 func RegisterGenericBoss() {
 	core.AddPresetTarget(&core.PresetTarget{
 		PathPrefix: "Generic",

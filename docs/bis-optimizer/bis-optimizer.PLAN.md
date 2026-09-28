@@ -1026,3 +1026,23 @@ Lich King 25H, and Halion 25H for P5, which had no preset. A 25-player or heroic
 - The tank suites' GenericBoss case and the tank specs' UI default keep Patchwerk's numbers, so no golden
   moves.
 - The slow suite's tank cases re-run on the new bosses.
+
+#### As built
+
+`TANK_BOSSES` (`pool_builder.ts`) now maps each phase to `{name, damageModifier, attackTimeMs,
+difficulty}` instead of a preset path, read from the phase boss's live `creature_template` row
+(`BaseVariance` is 1 for all five, matching the sim's fixed `EnemyAutoAttackAPCoefficient`, which
+already assumes 1): Patchwerk 25 (29324) 70/1200 ms, Algalon 25 (33070) 285/1000 ms, Anub'arak 25H
+(35616) 149.1/0 ms (→2000 default), the Lich King 25H (39168) 492.9/1500 ms, Halion 25H (39945)
+385.4/1500 ms. `genericBossTargetAt` (`pool_builder.ts`) and `encounters.GenericBossTargetAt` (Go)
+scale `GenericBossTarget`'s `MinBaseDamage` by `attackTimeMs/2000`: `Creature::CalculateMinMaxDamage`
+multiplies weapon damage by both `DamageModifier` and the attack time in seconds, so this keeps
+`GenericBossTarget`'s own DPS while a faster boss's swing lands smaller, not less per second.
+`GenericBossTarget`'s pinned 2.0 s Patchwerk output (`RegisterGenericBoss`, `genericBossTargetProto`)
+stays byte-identical.
+
+- `tankEncounter` dropped its now-unused `db` parameter; its other caller, `optimizer_tab.ts`'s
+  `bossName`, lost the try/catch its stale preset-loading comment explained.
+- `TestTankBossesMirrorUI` (`critimmunity_test.go`) parses `TANK_BOSSES` straight out of
+  `pool_builder.ts`'s source text and fails if it drifts from the Go mirror, the way raidctx's
+  `TestProvidersMirrorRaidStats` checks `raid_stats.ts`.

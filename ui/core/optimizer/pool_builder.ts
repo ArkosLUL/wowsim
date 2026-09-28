@@ -173,23 +173,58 @@ export function optimizerEncounter(current: Encounter | undefined): Encounter {
 	});
 }
 
-// The boss a tank optimizes against, per content phase: the fight of that phase its gear is for.
-// Anub'arak and the Lich King are the heroic 25-player versions; the other two run 25 normal, which
-// is what an unset raid_difficulty means to the sim.
-export const TANK_BOSSES: Record<number, { path: string; difficulty: RaidDifficulty }> = {
-	1: { path: 'Naxxrammas 25/Patchwerk', difficulty: RaidDifficulty.RaidDifficulty25Normal },
-	2: { path: 'Ulduar 25/Algalon', difficulty: RaidDifficulty.RaidDifficulty25Normal },
-	3: { path: "ToGC 25/Anub'arak", difficulty: RaidDifficulty.RaidDifficulty25Heroic },
-	4: { path: 'ICC 25/Lich King (Heroic)', difficulty: RaidDifficulty.RaidDifficulty25Heroic },
-	5: { path: 'ICC 25/Lich King (Heroic)', difficulty: RaidDifficulty.RaidDifficulty25Heroic },
+export interface TankBoss {
+	name: string;
+	// creature_template.DamageModifier.
+	damageModifier: number;
+	// creature_template.BaseAttackTime; 0 falls back to the server's 2000 ms default.
+	attackTimeMs: number;
+	difficulty: RaidDifficulty;
+}
+
+// The boss a tank optimizes against, per content phase, off that phase boss's live creature_template
+// row. Anub'arak, the Lich King and Halion are the heroic 25-player fights; Patchwerk and Algalon run
+// 25 normal, which is what an unset raid_difficulty means to the sim.
+//
+// sim/optimizer's TestTankBossesMirrorUI reads this table, so keep one phase per line, in this shape.
+export const TANK_BOSSES: Record<number, TankBoss> = {
+	1: { name: 'Patchwerk', damageModifier: 70, attackTimeMs: 1200, difficulty: RaidDifficulty.RaidDifficulty25Normal },
+	2: { name: 'Algalon', damageModifier: 285, attackTimeMs: 1000, difficulty: RaidDifficulty.RaidDifficulty25Normal },
+	3: { name: "Anub'arak", damageModifier: 149.1, attackTimeMs: 0, difficulty: RaidDifficulty.RaidDifficulty25Heroic },
+	4: { name: 'the Lich King', damageModifier: 492.9, attackTimeMs: 1500, difficulty: RaidDifficulty.RaidDifficulty25Heroic },
+	5: { name: 'Halion', damageModifier: 385.4, attackTimeMs: 1500, difficulty: RaidDifficulty.RaidDifficulty25Heroic },
 };
 
-// The phase's tank encounter, or undefined when the database has no preset for it. Length and
-// server settings carry over from the sim's own encounter, like the DPS one.
-export function tankEncounter(current: Encounter | undefined, contentPhase: number, db: Database): Encounter | undefined {
+// The generic AC boss (encounters.GenericBossTarget, Encounter.genericBossTargetProto), swinging at
+// a specific phase boss's own attack time instead of the pinned 2.0 s default. The server's
+// Creature::CalculateMinMaxDamage multiplies weapon damage by both DamageModifier and the attack
+// time in seconds, so scaling minBaseDamage by attackTimeMs/2000 keeps the same DPS the pinned 2.0 s
+// version has, while a faster boss's swing lands smaller, not less per second. Duplicated rather than
+// imported from encounter.ts, which this module can't load under Node (see plainBossTarget).
+function genericBossTargetAt(boss: TankBoss): Target {
+	const attackTimeMs = boss.attackTimeMs > 0 ? boss.attackTimeMs : 2000;
+	return Target.create({
+		name: boss.name,
+		level: BOSS_LEVEL,
+		tankIndex: 0,
+		swingSpeed: attackTimeMs / 1000,
+		minBaseDamage: (177.074 * boss.damageModifier * attackTimeMs) / 2000,
+		damageSpread: 0.5,
+		parryHaste: true,
+		spellSchool: SpellSchool.SpellSchoolPhysical,
+		stats: Stats.fromMap({
+			[Stat.StatArmor]: 10643,
+			[Stat.StatAttackPower]: 805,
+			[Stat.StatHealth]: 13945,
+		}).asArray(),
+	});
+}
+
+// The phase's tank encounter, or undefined when TANK_BOSSES has no boss for it. Length and server
+// settings carry over from the sim's own encounter, like the DPS one.
+export function tankEncounter(current: Encounter | undefined, contentPhase: number): Encounter | undefined {
 	const boss = TANK_BOSSES[contentPhase];
-	const preset = boss ? db.getPresetTarget(boss.path)?.target : undefined;
-	if (!preset) {
+	if (!boss) {
 		return undefined;
 	}
 	return Encounter.create({
@@ -198,7 +233,7 @@ export function tankEncounter(current: Encounter | undefined, contentPhase: numb
 		executeProportion20: 0.2,
 		executeProportion25: 0.25,
 		executeProportion35: 0.35,
-		targets: [Target.clone(preset)],
+		targets: [genericBossTargetAt(boss)],
 		raidDifficulty: boss.difficulty,
 		serverSettings: current?.serverSettings,
 	});
@@ -495,7 +530,7 @@ export function buildOptimizeRequest(input: PoolBuilderInput): BuiltRequest {
 	// tanks fight their phase's boss, and the healing they take follows it; everyone else gets the
 	// plain level 83 boss
 	const tank = isTank(target);
-	const tankFight = tank ? tankEncounter(base.encounter, settings.contentPhase, input.db) : undefined;
+	const tankFight = tank ? tankEncounter(base.encounter, settings.contentPhase) : undefined;
 	base.encounter = tankFight ?? optimizerEncounter(base.encounter);
 	const boss = base.encounter.targets[0];
 	if (tankFight) {
