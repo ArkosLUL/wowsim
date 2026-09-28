@@ -1,0 +1,47 @@
+{
+	"p1_bis": {
+		"name": "P1 Enhancement",
+		"build": "Enhancement Shaman",
+		"phase": 1,
+		"effort": "Quick",
+		"racialTraits": "RaceOrc",
+		"simCommit": "a36c02588",
+		"catalogDate": "2026-09-19"
+	},
+	"p2_bis": {
+		"name": "P2 Enhancement",
+		"build": "Enhancement Shaman",
+		"phase": 2,
+		"effort": "Quick",
+		"racialTraits": "RaceOrc",
+		"simCommit": "a36c02588",
+		"catalogDate": "2026-09-19"
+	},
+	"p3_bis": {
+		"name": "P3 Enhancement",
+		"build": "Enhancement Shaman",
+		"phase": 3,
+		"effort": "Quick",
+		"racialTraits": "RaceTroll",
+		"simCommit": "a36c02588",
+		"catalogDate": "2026-09-19"
+	},
+	"p4_bis": {
+		"name": "P4 Enhancement",
+		"build": "Enhancement Shaman",
+		"phase": 4,
+		"effort": "Quick",
+		"racialTraits": "RaceTroll",
+		"simCommit": "a36c02588",
+		"catalogDate": "2026-09-19"
+	},
+	"p5_bis": {
+		"name": "P5 Enhancement",
+		"build": "Enhancement Shaman",
+		"phase": 5,
+		"effort": "Quick",
+		"racialTraits": "RaceTroll",
+		"simCommit": "a36c02588",
+		"catalogDate": "2026-09-19"
+	}
+}

@@ -5,6 +5,7 @@ import {
 import {
 	EquipmentSpec,
     Faction,
+    Race,
     Spec,
 } from './proto/common';
 import {
@@ -12,6 +13,7 @@ import {
 } from './proto/ui';
 
 import { Player } from './player';
+import { raceNames } from './proto_utils/names';
 import {
     SpecRotation,
 	specTypeFunctions,
@@ -49,6 +51,24 @@ export interface PresetRotationOptions {
 export function makePresetGear(name: string, gearJson: any, options?: PresetGearOptions): PresetGear {
     const gear = EquipmentSpec.fromJson(gearJson);
     return makePresetGearHelper(name, gear, options || {});
+}
+
+// an entry of a spec's gear_sets/bis_presets.json, which tools/presetgen writes with each gear file
+export interface BisPresetInfo {
+    name: string,
+    build: string,
+    phase: number,
+    effort: string,
+    racialTraits: string,
+    simCommit: string,
+    catalogDate: string,
+}
+
+export function makeBisPresetGear(info: BisPresetInfo, gearJson: any, options?: PresetGearOptions): PresetGear {
+    const race = raceNames.get(Race[info.racialTraits as keyof typeof Race]) || info.racialTraits;
+    const tooltip = `<p>Phase ${info.phase} BiS for ${info.build}, picked by the BiS optimizer at ${info.effort} effort. It assumes ${race} racial traits.</p>`
+        + `<p>Sim commit ${info.simCommit}, item catalog from ${info.catalogDate}.</p>`;
+    return makePresetGear(info.name, gearJson, { ...options, tooltip });
 }
 
 function makePresetGearHelper(name: string, gear: EquipmentSpec, options: PresetGearOptions): PresetGear {

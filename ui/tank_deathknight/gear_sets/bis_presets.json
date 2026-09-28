@@ -1,0 +1,92 @@
+{
+	"p1_bis_blood": {
+		"name": "P1 Blood",
+		"build": "Tank DK Blood",
+		"phase": 1,
+		"effort": "Quick",
+		"racialTraits": "RaceNightElf",
+		"simCommit": "a36c02588",
+		"catalogDate": "2026-09-19"
+	},
+	"p1_bis_frost": {
+		"name": "P1 Frost",
+		"build": "Tank DK Frost",
+		"phase": 1,
+		"effort": "Quick",
+		"racialTraits": "RaceNightElf",
+		"simCommit": "a36c02588",
+		"catalogDate": "2026-09-19"
+	},
+	"p2_bis_blood": {
+		"name": "P2 Blood",
+		"build": "Tank DK Blood",
+		"phase": 2,
+		"effort": "Quick",
+		"racialTraits": "RaceNightElf",
+		"simCommit": "a36c02588",
+		"catalogDate": "2026-09-19"
+	},
+	"p2_bis_frost": {
+		"name": "P2 Frost",
+		"build": "Tank DK Frost",
+		"phase": 2,
+		"effort": "Quick",
+		"racialTraits": "RaceNightElf",
+		"simCommit": "a36c02588",
+		"catalogDate": "2026-09-19"
+	},
+	"p3_bis_blood": {
+		"name": "P3 Blood",
+		"build": "Tank DK Blood",
+		"phase": 3,
+		"effort": "Quick",
+		"racialTraits": "RaceNightElf",
+		"simCommit": "a36c02588",
+		"catalogDate": "2026-09-19"
+	},
+	"p3_bis_frost": {
+		"name": "P3 Frost",
+		"build": "Tank DK Frost",
+		"phase": 3,
+		"effort": "Quick",
+		"racialTraits": "RaceNightElf",
+		"simCommit": "a36c02588",
+		"catalogDate": "2026-09-19"
+	},
+	"p4_bis_blood": {
+		"name": "P4 Blood",
+		"build": "Tank DK Blood",
+		"phase": 4,
+		"effort": "Quick",
+		"racialTraits": "RaceNightElf",
+		"simCommit": "a36c02588",
+		"catalogDate": "2026-09-19"
+	},
+	"p4_bis_frost": {
+		"name": "P4 Frost",
+		"build": "Tank DK Frost",
+		"phase": 4,
+		"effort": "Quick",
+		"racialTraits": "RaceNightElf",
+		"simCommit": "a36c02588",
+		"catalogDate": "2026-09-19"
+	},
+	"p5_bis_blood": {
+		"name": "P5 Blood",
+		"build": "Tank DK Blood",
+		"phase": 5,
+		"effort": "Quick",
+		"racialTraits": "RaceNightElf",
+		"simCommit": "a36c02588",
+		"catalogDate": "2026-09-19"
+	},
+	"p5_bis_frost": {
+		"name": "P5 Frost",
+		"build": "Tank DK Frost",
+		"phase": 5,
+		"effort": "Quick",
+		"racialTraits": "RaceNightElf",
+		"simCommit": "a36c02588",
+		"catalogDate": "2026-09-19"
+	}
+}

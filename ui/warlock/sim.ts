@@ -57,7 +57,7 @@ const SPEC_CONFIG = registerSpecConfig(Spec.SpecWarlock, {
 
 	defaults: {
 		// Default equipped gear.
-		gear: Presets.P3_AFFLICTION_HORDE_PRESET.gear,
+		gear: Presets.P5_BIS_AFFLICTION_PRESET.gear,
 
 		// Default EP weights for sorting gear in the gear picker.
 		epWeights: Stats.fromMap({
@@ -147,22 +147,21 @@ const SPEC_CONFIG = registerSpecConfig(Spec.SpecWarlock, {
 
 		// Preset gear configurations that the user can quickly select.
 		gear: [
-			Presets.SWP_BIS,
-			Presets.PRERAID_AFFLICTION_PRESET,
-			Presets.P1_AFFLICTION_PRESET,
-			Presets.P2_AFFLICTION_PRESET,
-			Presets.P3_AFFLICTION_ALLIANCE_PRESET,
-			Presets.P3_AFFLICTION_HORDE_PRESET,
-			Presets.P4_AFFLICTION_PRESET,
-			Presets.PRERAID_DEMODESTRO_PRESET,
-			Presets.P1_DEMODESTRO_PRESET,
-			Presets.P2_DEMODESTRO_PRESET,
-			Presets.P3_DEMO_ALLIANCE_PRESET,
-			Presets.P3_DEMO_HORDE_PRESET,
-			Presets.P4_DEMO_PRESET,
-			Presets.P3_DESTRO_ALLIANCE_PRESET,
-			Presets.P3_DESTRO_HORDE_PRESET,
-			Presets.P4_DESTRO_PRESET,
+			Presets.P1_BIS_AFFLICTION_PRESET,
+			Presets.P2_BIS_AFFLICTION_PRESET,
+			Presets.P3_BIS_AFFLICTION_PRESET,
+			Presets.P4_BIS_AFFLICTION_PRESET,
+			Presets.P5_BIS_AFFLICTION_PRESET,
+			Presets.P1_BIS_DEMONOLOGY_PRESET,
+			Presets.P2_BIS_DEMONOLOGY_PRESET,
+			Presets.P3_BIS_DEMONOLOGY_PRESET,
+			Presets.P4_BIS_DEMONOLOGY_PRESET,
+			Presets.P5_BIS_DEMONOLOGY_PRESET,
+			Presets.P1_BIS_DESTRUCTION_PRESET,
+			Presets.P2_BIS_DESTRUCTION_PRESET,
+			Presets.P3_BIS_DESTRUCTION_PRESET,
+			Presets.P4_BIS_DESTRUCTION_PRESET,
+			Presets.P5_BIS_DESTRUCTION_PRESET,
 		],
 	},
 

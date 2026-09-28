@@ -91,7 +91,7 @@ const SPEC_CONFIG = registerSpecConfig(Spec.SpecFeralTankDruid, {
 
 	defaults: {
 		// Default equipped gear.
-		gear: Presets.P1_PRESET.gear,
+		gear: Presets.P5_BIS_FERAL_TANK_PRESET.gear,
 		// Default EP weights for sorting gear in the gear picker.
 		epWeights: Stats.fromMap({
 			[Stat.StatArmor]: 3.5665,
@@ -197,10 +197,11 @@ const SPEC_CONFIG = registerSpecConfig(Spec.SpecFeralTankDruid, {
 		],
 		// Preset gear configurations that the user can quickly select.
 		gear: [
-			Presets.P1_PRESET,
-			Presets.P2_PRESET,
-			Presets.P3_PRESET,
-			Presets.P4_PRESET,
+			Presets.P1_BIS_FERAL_TANK_PRESET,
+			Presets.P2_BIS_FERAL_TANK_PRESET,
+			Presets.P3_BIS_FERAL_TANK_PRESET,
+			Presets.P4_BIS_FERAL_TANK_PRESET,
+			Presets.P5_BIS_FERAL_TANK_PRESET,
 		],
 	},
 

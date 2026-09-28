@@ -189,7 +189,7 @@ const SPEC_CONFIG = registerSpecConfig(Spec.SpecRogue, {
 
 	defaults: {
 		// Default equipped gear.
-		gear: Presets.PRERAID_PRESET_ASSASSINATION.gear,
+		gear: Presets.P5_BIS_ASSASSINATION_PRESET.gear,
 		// Default EP weights for sorting gear in the gear picker.
 		epWeights: Stats.fromMap({
 			[Stat.StatAgility]: 1.86,
@@ -301,22 +301,21 @@ const SPEC_CONFIG = registerSpecConfig(Spec.SpecRogue, {
 		],
 		// Preset gear configurations that the user can quickly select.
 		gear: [
-			Presets.PRERAID_PRESET_ASSASSINATION,
-			Presets.PRERAID_PRESET_COMBAT,
-			Presets.P1_PRESET_ASSASSINATION,
-			Presets.P1_PRESET_COMBAT,
-			Presets.P1_PRESET_HEMO_SUB,
-			Presets.P2_PRESET_ASSASSINATION,
-			Presets.P2_PRESET_COMBAT,
-			Presets.P3_PRESET_ASSASSINATION,
-			Presets.P3_PRESET_COMBAT,
-			Presets.P4_PRESET_ASSASSINATION,
-			Presets.P4_PRESET_COMBAT,
-			Presets.P5_PRESET_ASSASSINATION,
-			Presets.P5_PRESET_COMBAT,
-			Presets.P2_PRESET_HEMO_SUB,
-			Presets.P3_PRESET_HEMO_SUB,
-			Presets.P3_PRESET_DANCE_SUB,
+			Presets.P1_BIS_ASSASSINATION_PRESET,
+			Presets.P2_BIS_ASSASSINATION_PRESET,
+			Presets.P3_BIS_ASSASSINATION_PRESET,
+			Presets.P4_BIS_ASSASSINATION_PRESET,
+			Presets.P5_BIS_ASSASSINATION_PRESET,
+			Presets.P1_BIS_COMBAT_PRESET,
+			Presets.P2_BIS_COMBAT_PRESET,
+			Presets.P3_BIS_COMBAT_PRESET,
+			Presets.P4_BIS_COMBAT_PRESET,
+			Presets.P5_BIS_COMBAT_PRESET,
+			Presets.P1_BIS_SUBTLETY_PRESET,
+			Presets.P2_BIS_SUBTLETY_PRESET,
+			Presets.P3_BIS_SUBTLETY_PRESET,
+			Presets.P4_BIS_SUBTLETY_PRESET,
+			Presets.P5_BIS_SUBTLETY_PRESET,
 		],
 	},
 

@@ -159,7 +159,7 @@ const SPEC_CONFIG = registerSpecConfig(Spec.SpecHunter, {
 
 	defaults: {
 		// Default equipped gear.
-		gear: Presets.SV_P1_PRESET.gear,
+		gear: Presets.P5_BIS_SV_PRESET.gear,
 		// Default EP weights for sorting gear in the gear picker.
 		epWeights: Stats.fromMap({
 			[Stat.StatStamina]: 0.5,
@@ -264,18 +264,16 @@ const SPEC_CONFIG = registerSpecConfig(Spec.SpecHunter, {
 		],
 		// Preset gear configurations that the user can quickly select.
 		gear: [
-			Presets.MM_PRERAID_PRESET,
-			Presets.MM_P1_PRESET,
-			Presets.MM_P2_PRESET,
-			Presets.MM_P3_PRESET,
-			Presets.MM_P4_PRESET,
-			Presets.MM_P5_PRESET,
-			Presets.SV_PRERAID_PRESET,
-			Presets.SV_P1_PRESET,
-			Presets.SV_P2_PRESET,
-			Presets.SV_P3_PRESET,
-			Presets.SV_P4_PRESET,
-			Presets.SV_P5_PRESET,
+			Presets.P1_BIS_MM_PRESET,
+			Presets.P2_BIS_MM_PRESET,
+			Presets.P3_BIS_MM_PRESET,
+			Presets.P4_BIS_MM_PRESET,
+			Presets.P5_BIS_MM_PRESET,
+			Presets.P1_BIS_SV_PRESET,
+			Presets.P2_BIS_SV_PRESET,
+			Presets.P3_BIS_SV_PRESET,
+			Presets.P4_BIS_SV_PRESET,
+			Presets.P5_BIS_SV_PRESET,
 		],
 	},
 

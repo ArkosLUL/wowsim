@@ -1,6 +1,7 @@
 import { expect, type Page, test } from '@playwright/test';
 
 import { openSimTab, watchForErrors } from '../lib/page';
+import { storedSettings } from '../settings/helpers';
 import {
 	closePicker,
 	type Db,
@@ -173,22 +174,33 @@ test('the meta gem turns off while its colours are missing, and back on', async 
 	const meta = db.gems.get(headGems.find(id => db.gems.get(id)?.color == GEM_COLOR.meta)!)!;
 	expect(await warnings(page)).not.toContain('Meta gem disabled');
 
-	// the preset's only blue-counting gem sits in the helm, so taking it out breaks the meta
-	const blueIdx = headGems.findIndex(id => id && gemFits(db.gems.get(id)!.color, GEM_COLOR.blue));
-	test.skip(blueIdx < 0, 'no blue-counting gem in the preset helm');
-	const blue = db.gems.get(headGems[blueIdx])!;
-	const gemIdsWorn = await allGems(page);
-	test.skip(gemIdsWorn.filter(id => id && gemFits(db.gems.get(id)!.color, GEM_COLOR.blue)).length != 1, 'more than one blue-counting gem');
+	const worn = await Promise.all(SLOTS.map(async slot => (await equippedGems(page, slot)).map((id, socket) => ({ slot, socket, id }))));
+	const blues = worn.flat().filter(g => g.id && gemFits(db.gems.get(g.id)!.color, GEM_COLOR.blue));
+	test.skip(blues.length == 0, 'no blue-counting gem in the preset');
 
-	const tab = await showTab(await openPicker(page, 'head'), `Gem${blueIdx + 1}`);
+	// blue-counting gems come out, wherever they sit, until too few are left for the meta
 	const active = await readStats(page);
-	await tab.locator('.selector-modal-remove-button').click();
+	const taken: typeof blues = [];
+	for (const blue of blues) {
+		const tab = await showTab(await openPicker(page, blue.slot), `Gem${blue.socket + 1}`);
+		await tab.locator('.selector-modal-remove-button').click();
+		await closePicker(page);
+		taken.push(blue);
+		await expect.poll(async () => (await equippedGems(page, blue.slot))[blue.socket]).toBe(0);
+		if ((await warnings(page)).includes(`Meta gem disabled (${meta.name})`)) break;
+	}
 	await expect.poll(() => warnings(page)).toContain(`Meta gem disabled (${meta.name})`);
 	const inactive = await statsAfterChange(page, active);
-	// the meta's own stats go with it, on top of the gem taken out
-	expect(active['Agility'] - inactive['Agility']).toBeGreaterThanOrEqual(blue.stats[1] + meta.stats[1]);
+	// the meta's own stats go with it, on top of the gems taken out
+	const agility = [...taken.map(g => db.gems.get(g.id)!), meta].reduce((sum, gem) => sum + gem.stats[1], 0);
+	expect(active['Agility'] - inactive['Agility']).toBeGreaterThanOrEqual(agility);
 
-	await equipRow(tab, blue.id);
+	for (const blue of taken) {
+		const tab = await showTab(await openPicker(page, blue.slot), `Gem${blue.socket + 1}`);
+		await tab.locator('.selector-modal-show-matching-gems input').setChecked(false);
+		await equipRow(tab, blue.id);
+		await closePicker(page);
+	}
 	await expect.poll(() => warnings(page)).not.toContain('Meta gem disabled');
 	await expect.poll(readStats.bind(null, page)).toEqual(active);
 });
@@ -204,6 +216,15 @@ test('blacksmithing opens the extra wrist and hands sockets, and their gems coun
 	await expect(extra('wrist')).toBeVisible();
 
 	const hands = db.items.get(await equippedId(page, 'hands'))!;
+	// the preset can already fill the extra sockets, and those gems only count with blacksmithing too.
+	// the tooltip data skips them until the gear changes, so they come from the saved settings
+	const extraGem = async (slot: 'wrist' | 'hands') => {
+		const id = await equippedId(page, slot);
+		const worn = (await storedSettings(page, 'warrior')).player.equipment.items.find((i: { id?: number }) => i.id == id);
+		return db.gems.get(worn?.gems?.[db.items.get(id)!.gemSockets?.length ?? 0] ?? 0)?.stats ?? [];
+	};
+	const replaced = await extraGem('hands');
+	const wristGem = await extraGem('wrist');
 	const extraTab = `Gem${hands.gemSockets!.length + 1}`;
 	const dialog = await openPicker(page, 'hands');
 	const tab = await showTab(dialog, extraTab);
@@ -213,13 +234,13 @@ test('blacksmithing opens the extra wrist and hands sockets, and their gems coun
 	await equipRow(tab, gem.id);
 	await closePicker(page);
 	const withGem = await statsAfterChange(page, before);
-	expectMovedBy(before, withGem, gem.stats);
+	expectMovedBy(before, withGem, minus(gem.stats, replaced));
 	await expect.poll(() => summaryCounts(page)).toMatchObject({ [gem.name]: 1 });
 
 	await toggleProfession(page, 'Blacksmithing', false);
 	await expect(extra('hands')).toBeHidden();
 	const without = await statsAfterChange(page, withGem);
-	expectMovedBy(without, withGem, gem.stats);
+	expectMovedBy(without, withGem, plus(gem.stats, wristGem));
 	await expect.poll(async () => (await summaryCounts(page))[gem.name]).toBeUndefined();
 });
 

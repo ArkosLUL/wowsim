@@ -112,7 +112,7 @@ const SPEC_CONFIG = registerSpecConfig(Spec.SpecProtectionPaladin, {
 	},
 	defaults: {
 		// Default equipped gear.
-		gear: Presets.P3_PRESET.gear,
+		gear: Presets.P5_BIS_PROTECTION_PRESET.gear,
 		// Default EP weights for sorting gear in the gear picker.
 		epWeights: Stats.fromMap({
 			[Stat.StatArmor]: 0.07,
@@ -231,12 +231,11 @@ const SPEC_CONFIG = registerSpecConfig(Spec.SpecProtectionPaladin, {
 		],
 		// Preset gear configurations that the user can quickly select.
 		gear: [
-			Presets.PRERAID_PRESET,
-			Presets.P4_PRERAID_PRESET,
-			Presets.P1_PRESET,
-			Presets.P2_PRESET,
-			Presets.P3_PRESET,
-			Presets.P4_PRESET,
+			Presets.P1_BIS_PROTECTION_PRESET,
+			Presets.P2_BIS_PROTECTION_PRESET,
+			Presets.P3_BIS_PROTECTION_PRESET,
+			Presets.P4_BIS_PROTECTION_PRESET,
+			Presets.P5_BIS_PROTECTION_PRESET,
 		],
 	},
 

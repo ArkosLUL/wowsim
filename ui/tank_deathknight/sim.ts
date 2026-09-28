@@ -92,7 +92,7 @@ const SPEC_CONFIG = registerSpecConfig(Spec.SpecTankDeathknight, {
 	],
 	defaults: {
 		// Default equipped gear.
-		gear: Presets.P2_BLOOD_PRESET.gear,
+		gear: Presets.P5_BIS_BLOOD_PRESET.gear,
 		// Default EP weights for sorting gear in the gear picker.
 		epWeights: Stats.fromMap({
 			[Stat.StatArmor]: 0.05,
@@ -206,12 +206,16 @@ const SPEC_CONFIG = registerSpecConfig(Spec.SpecTankDeathknight, {
 		],
 		// Preset gear configurations that the user can quickly select.
 		gear: [
-			Presets.P1_BLOOD_PRESET,
-			Presets.P1_FROST_PRESET,
-			Presets.P2_BLOOD_PRESET,
-			Presets.P2_FROST_PRESET,
-			Presets.P3_BLOOD_PRESET,
-			Presets.P4_BLOOD_PRESET,
+			Presets.P1_BIS_BLOOD_PRESET,
+			Presets.P2_BIS_BLOOD_PRESET,
+			Presets.P3_BIS_BLOOD_PRESET,
+			Presets.P4_BIS_BLOOD_PRESET,
+			Presets.P5_BIS_BLOOD_PRESET,
+			Presets.P1_BIS_FROST_PRESET,
+			Presets.P2_BIS_FROST_PRESET,
+			Presets.P3_BIS_FROST_PRESET,
+			Presets.P4_BIS_FROST_PRESET,
+			Presets.P5_BIS_FROST_PRESET,
 		],
 	},
 

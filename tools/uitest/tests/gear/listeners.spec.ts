@@ -42,7 +42,7 @@ test('closing an item picker lets go of its lists', async ({ page }) => {
 
 test('redrawing the gear tab lets go of the sockets it drew before', async ({ page }) => {
 	await openGear(page);
-	const presets = page.locator('#gear-tab .saved-data-presets .saved-data-set-chip .saved-data-set-name');
+	const presets = page.locator('#gear-tab .saved-data-presets .saved-data-set-chip:not(.disabled) .saved-data-set-name');
 	expect(await presets.count()).toBeGreaterThan(1);
 
 	// every gear change redraws all 17 slots, sockets included, and no picker is opened here

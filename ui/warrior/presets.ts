@@ -21,26 +21,18 @@ import * as PresetUtils from '../core/preset_utils.js';
 // Eventually we will import these values for the raid sim too, so its good to
 // keep them in a separate file.
 
-import PreraidArmsGear from './gear_sets/preraid_arms.gear.json';
-export const PRERAID_ARMS_PRESET = PresetUtils.makePresetGear('Preraid Arms', PreraidArmsGear, { talentTree: 0 });
 import P1ArmsGear from './gear_sets/p1_arms.gear.json';
 export const P1_ARMS_PRESET = PresetUtils.makePresetGear('P1 Arms', P1ArmsGear, { talentTree: 0 });
 import P2ArmsGear from './gear_sets/p2_arms.gear.json';
 export const P2_ARMS_PRESET = PresetUtils.makePresetGear('P2 Arms', P2ArmsGear, { talentTree: 0 });
-import P3Arms2pAllianceGear from './gear_sets/p3_arms_2p_alliance.gear.json';
-export const P3_ARMS_2P_PRESET_ALLIANCE = PresetUtils.makePresetGear('P3 Arms 2p [A]', P3Arms2pAllianceGear, { talentTree: 0, faction: Faction.Alliance });
 import P3Arms4pAllianceGear from './gear_sets/p3_arms_4p_alliance.gear.json';
 export const P3_ARMS_4P_PRESET_ALLIANCE = PresetUtils.makePresetGear('P3 Arms 4p [A]', P3Arms4pAllianceGear, { talentTree: 0, faction: Faction.Alliance });
-import P3Arms2pHordeGear from './gear_sets/p3_arms_2p_horde.gear.json';
-export const P3_ARMS_2P_PRESET_HORDE = PresetUtils.makePresetGear('P3 Arms 2p [H]', P3Arms2pHordeGear, { talentTree: 0, faction: Faction.Horde });
 import P3Arms4pHordeGear from './gear_sets/p3_arms_4p_horde.gear.json';
 export const P3_ARMS_4P_PRESET_HORDE = PresetUtils.makePresetGear('P3 Arms 4p [H]', P3Arms4pHordeGear, { talentTree: 0, faction: Faction.Horde });
 import P4ArmsAllianceGear from './gear_sets/p4_arms_alliance.gear.json';
 export const P4_ARMS_PRESET_ALLIANCE = PresetUtils.makePresetGear('P4 Arms [A]', P4ArmsAllianceGear, { talentTree: 0, faction: Faction.Alliance });
 import P4ArmsHordeGear from './gear_sets/p4_arms_horde.gear.json';
 export const P4_ARMS_PRESET_HORDE = PresetUtils.makePresetGear('P4 Arms [H]', P4ArmsHordeGear, { talentTree: 0, faction: Faction.Horde });
-import PreraidFuryGear from './gear_sets/preraid_fury.gear.json';
-export const PRERAID_FURY_PRESET = PresetUtils.makePresetGear('Preraid Fury', PreraidFuryGear, { talentTrees: [1,2] });
 import P1FuryGear from './gear_sets/p1_fury.gear.json';
 export const P1_FURY_PRESET = PresetUtils.makePresetGear('P1 Fury', P1FuryGear, { talentTrees: [1,2] });
 import P2FuryGear from './gear_sets/p2_fury.gear.json';
@@ -53,6 +45,28 @@ import P4FuryAllianceGear from './gear_sets/p4_fury_alliance.gear.json';
 export const P4_FURY_PRESET_ALLIANCE = PresetUtils.makePresetGear('P4 Fury [A]', P4FuryAllianceGear, { talentTrees: [1,2], faction: Faction.Alliance });
 import P4FuryHordeGear from './gear_sets/p4_fury_horde.gear.json';
 export const P4_FURY_PRESET_HORDE = PresetUtils.makePresetGear('P4 Fury [H]', P4FuryHordeGear, { talentTrees: [1,2], faction: Faction.Horde });
+
+import BisPresets from './gear_sets/bis_presets.json';
+import P1BisArmsGear from './gear_sets/p1_bis_arms.gear.json';
+export const P1_BIS_ARMS_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p1_bis_arms, P1BisArmsGear, { talentTree: 0 });
+import P2BisArmsGear from './gear_sets/p2_bis_arms.gear.json';
+export const P2_BIS_ARMS_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p2_bis_arms, P2BisArmsGear, { talentTree: 0 });
+import P3BisArmsGear from './gear_sets/p3_bis_arms.gear.json';
+export const P3_BIS_ARMS_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p3_bis_arms, P3BisArmsGear, { talentTree: 0 });
+import P4BisArmsGear from './gear_sets/p4_bis_arms.gear.json';
+export const P4_BIS_ARMS_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p4_bis_arms, P4BisArmsGear, { talentTree: 0 });
+import P5BisArmsGear from './gear_sets/p5_bis_arms.gear.json';
+export const P5_BIS_ARMS_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p5_bis_arms, P5BisArmsGear, { talentTree: 0 });
+import P1BisFuryGear from './gear_sets/p1_bis_fury.gear.json';
+export const P1_BIS_FURY_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p1_bis_fury, P1BisFuryGear, { talentTrees: [1, 2] });
+import P2BisFuryGear from './gear_sets/p2_bis_fury.gear.json';
+export const P2_BIS_FURY_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p2_bis_fury, P2BisFuryGear, { talentTrees: [1, 2] });
+import P3BisFuryGear from './gear_sets/p3_bis_fury.gear.json';
+export const P3_BIS_FURY_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p3_bis_fury, P3BisFuryGear, { talentTrees: [1, 2] });
+import P4BisFuryGear from './gear_sets/p4_bis_fury.gear.json';
+export const P4_BIS_FURY_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p4_bis_fury, P4BisFuryGear, { talentTrees: [1, 2] });
+import P5BisFuryGear from './gear_sets/p5_bis_fury.gear.json';
+export const P5_BIS_FURY_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p5_bis_fury, P5BisFuryGear, { talentTrees: [1, 2] });
 
 import FuryApl from './apls/fury.apl.json';
 export const ROTATION_FURY = PresetUtils.makePresetAPLRotation('Fury', FuryApl, { talentTree: 1 });

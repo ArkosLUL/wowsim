@@ -77,7 +77,7 @@ test('saving under a name already used replaces that set', async ({ page }) => {
 
 test('a preset gear set loads its items, and the loaded preset shows as active', async ({ page }) => {
 	await openGear(page);
-	const presets = sets(page).locator('.saved-data-presets .saved-data-set-chip');
+	const presets = sets(page).locator('.saved-data-presets .saved-data-set-chip:not(.disabled)');
 	expect(await presets.count()).toBeGreaterThan(1);
 
 	const active = await presets.evaluateAll(chips => chips.findIndex(c => c.classList.contains('active')));

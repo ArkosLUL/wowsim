@@ -92,7 +92,7 @@ const SPEC_CONFIG = registerSpecConfig(Spec.SpecRetributionPaladin, {
 
 	defaults: {
 		// Default equipped gear.
-		gear: Presets.P1_PRESET.gear,
+		gear: Presets.P5_BIS_RETRIBUTION_PRESET.gear,
 		// Default EP weights for sorting gear in the gear picker.
 		epWeights: Stats.fromMap({
 			[Stat.StatStrength]: 2.53,
@@ -194,12 +194,11 @@ const SPEC_CONFIG = registerSpecConfig(Spec.SpecRetributionPaladin, {
 		],
 		// Preset gear configurations that the user can quickly select.
 		gear: [
-			Presets.PRERAID_PRESET,
-			Presets.P1_PRESET,
-			Presets.P2_PRESET,
-			Presets.P3_PRESET,
-			Presets.P4_PRESET,
-			Presets.P5_PRESET,
+			Presets.P1_BIS_RETRIBUTION_PRESET,
+			Presets.P2_BIS_RETRIBUTION_PRESET,
+			Presets.P3_BIS_RETRIBUTION_PRESET,
+			Presets.P4_BIS_RETRIBUTION_PRESET,
+			Presets.P5_BIS_RETRIBUTION_PRESET,
 		],
 	},
 

@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-import { closePicker, equippedGems, equippedId, equipRow, loadDb, openGear, openPicker, pane, rowIds, showTab } from './gear';
+import { closePicker, equippedGems, equippedId, equipRow, loadDb, openGear, openPicker, pane, rowIds, showTab, type Slot, SLOTS } from './gear';
 
 test('a unique item worn in the other ring or trinket slot leaves the first one', async ({ page }) => {
 	await openGear(page);
@@ -23,9 +23,16 @@ test('a unique item worn in the other ring or trinket slot leaves the first one'
 test('a unique gem socketed elsewhere comes out of the socket it was in', async ({ page }) => {
 	await openGear(page);
 	const db = await loadDb(page);
-	const headGems = await equippedGems(page, 'head');
-	const unique = headGems.find(id => db.gems.get(id)?.unique);
-	test.skip(!unique, 'no unique gem in the preset helm');
+	let from: Slot = 'head';
+	let unique: number | undefined;
+	for (const slot of SLOTS.filter(s => s != 'chest')) {
+		unique = (await equippedGems(page, slot)).find(id => db.gems.get(id)?.unique);
+		if (unique) {
+			from = slot;
+			break;
+		}
+	}
+	test.skip(!unique, 'no unique gem in the preset outside the chest');
 
 	const chest = db.items.get(await equippedId(page, 'chest'))!;
 	expect(chest.gemSockets?.length).toBeGreaterThan(0);
@@ -35,7 +42,7 @@ test('a unique gem socketed elsewhere comes out of the socket it was in', async 
 	await closePicker(page);
 
 	await expect.poll(async () => (await equippedGems(page, 'chest'))[0]).toBe(unique);
-	await expect.poll(async () => (await equippedGems(page, 'head')).includes(unique!)).toBe(false);
+	await expect.poll(async () => (await equippedGems(page, from)).includes(unique!)).toBe(false);
 });
 
 test('a two-hander in the main hand takes the off hand off, unless the spec can dual wield them', async ({ page }) => {
@@ -68,7 +75,9 @@ test("titan's grip keeps two two-handers", async ({ page }) => {
 	test.skip(db.items.get(mh)?.handType != 4 || db.items.get(oh)?.handType != 4, 'the preset warrior does not wield two two-handers');
 
 	const items = pane(await openPicker(page, 'mainHand'), 'Items');
-	const other = (await rowIds(items)).find(id => id != mh && id != oh && db.items.get(id)?.handType == 4)!;
+	// Titan's Grip leaves out polearms and staves
+	const gripped = (id: number) => db.items.get(id)?.handType == 4 && ![6, 8].includes(db.items.get(id)?.weaponType ?? 0);
+	const other = (await rowIds(items)).find(id => id != mh && id != oh && gripped(id))!;
 	await equipRow(items, other);
 	await closePicker(page);
 	await expect.poll(() => equippedId(page, 'mainHand')).toBe(other);

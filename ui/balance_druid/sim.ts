@@ -53,7 +53,7 @@ const SPEC_CONFIG = registerSpecConfig(Spec.SpecBalanceDruid, {
 
 	defaults: {
 		// Default equipped gear.
-		gear: Presets.P3_PRESET_HORDE.gear,
+		gear: Presets.P5_BIS_BALANCE_PRESET.gear,
 		// Default EP weights for sorting gear in the gear picker.
 		epWeights: Stats.fromMap({
 			[Stat.StatIntellect]: 0.43,
@@ -123,13 +123,11 @@ const SPEC_CONFIG = registerSpecConfig(Spec.SpecBalanceDruid, {
 		],
 		// Preset gear configurations that the user can quickly select.
 		gear: [
-			Presets.PRERAID_PRESET,
-			Presets.P1_PRESET,
-			Presets.P2_PRESET,
-			Presets.P3_PRESET_HORDE,
-			Presets.P3_PRESET_ALLI,
-			Presets.P4_PRESET_HORDE,
-			Presets.P4_PRESET_ALLI,
+			Presets.P1_BIS_BALANCE_PRESET,
+			Presets.P2_BIS_BALANCE_PRESET,
+			Presets.P3_BIS_BALANCE_PRESET,
+			Presets.P4_BIS_BALANCE_PRESET,
+			Presets.P5_BIS_BALANCE_PRESET,
 		],
 	},
 
