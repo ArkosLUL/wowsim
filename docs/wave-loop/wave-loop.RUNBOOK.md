@@ -122,6 +122,8 @@ loop" re-affirms them.
 - Send long output (test runs, `delta`, logs) to a file in `tmp/` and read it with grep or tail: whatever
   you read stays in your context.
 - Only the one WI a wave assigns touches `db.json`.
+- Stop only processes you started, by PID, never by image name (`taskkill /IM chrome.exe`): that also
+  kills other items' runs and the user's own browser.
 
 **Live server**
 - Hold the lock: `mkdir G:\DevStuff\GitHub\.wave-loop\locks\server` (atomic). Remove it when done. Report

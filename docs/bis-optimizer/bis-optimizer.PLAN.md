@@ -55,9 +55,9 @@ the sim, so they're provisional until parity lands. It runs as `BIS-` work items
 
 **Encounters**
 - DPS: a plain single-target level-83 boss, with duration and variation taken from the current encounter.
-- Tanks: Patchwerk 25 (P1), Algalon 25 (P2), Anub'arak 25H (P3), Lich King 25H (P4 and P5). Editable.
-- BIS-tank-boss later switches tanks to parity's generic AzerothCore boss, scaled by each phase boss's
-  `creature_template.DamageModifier`.
+- Tanks: parity's generic AzerothCore boss, swinging like each phase's boss (its `creature_template`
+  DamageModifier and BaseAttackTime): Patchwerk 25, Algalon 25, Anub'arak 25H, the Lich King 25H,
+  Halion 25H.
 
 **Sources and the catalog**
 - Sources: all PvE (10 and 25, normal and heroic, heroic 5-mans, emblem vendors, crafted, quest, rep), with
@@ -990,7 +990,7 @@ the top-up, but a short round can adopt.
   load average 14-28, util 48-89%): Quick 4.0-18.7 s a spec, Normal 20.5-114.7 s. Not compared against
   `baseline.json`, which is an idle-machine run.
 
-### BIS-presets (wave K)
+### BIS-presets (wave K, done)
 
 The preset files, as decided above, registered in `ui/<spec>/presets.ts` (gated by `talentTree` where a spec
 has several trees) and `sim.ts`: `presets.gear`, and `defaults.gear` = the default tree's P5 BiS. This takes
@@ -1070,7 +1070,7 @@ what the optimizer picks.
   `tsc` clean, eslint per changed file (35) old = new. On the dev server, each of the 17 spec pages shows
   only the new presets, gated per tree, with its default tree's P5 active by default.
 
-### BIS-tank-boss (wave K)
+### BIS-tank-boss (wave K, done)
 
 Switch `TANK_BOSSES` (`ui/core/optimizer/pool_builder.ts`) and its Go mirror (`critimmunity_test.go`'s
 `tankBosses`) from Classic encounter presets to parity's generic boss (`encounters.GenericBossTarget`,

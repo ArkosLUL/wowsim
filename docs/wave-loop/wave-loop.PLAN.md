@@ -107,9 +107,9 @@ then regenerates the BiS presets on the merged tree: both change what the optimi
 ## Current wave
 
 - Wave: K, running. Prod runs J; the user OKed one rebuild once K lands (2026-09-28).
-- Base SHA: `e0c43c592`.
-- Workflow runId: none. Wave J2 ran as `wf_b5e75270-6c6` and BIS-stage2b as `wf_499304fb-b30` (args and
-  results `waveJ2*` in `G:\DevStuff\GitHub\.wave-loop`).
+- Base SHA: `e0c43c592`; the WIs branch from its spec commit `a36c02588`.
+- Workflow runId: `wf_4b8a1c11-d41`, args `waveK-args.json` in `G:\DevStuff\GitHub\.wave-loop`, transcripts
+  in `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\wf_4b8a1c11-d41`.
 - J2's full-roster batch ran 2026-09-28 in 52 min at Quick, output in
   `G:\DevStuff\GitHub\.wave-loop\bis-j2-full`; its times are the INVESTIGATION's batch rows.
 
@@ -354,6 +354,10 @@ crashed before F2, so its column starts there.
 | BIS-stage2 | merged | `1686e5c63` | goldens unchanged. Phase 1 on the live roster took 16.5 min against wave J's ~123 (only Fel re-ran, +248 raid DPS). Sent back: its party pass only removes extra Draenei (BIS-stage2b) |
 | BIS-stage2b | merged | `7e057b86c` | goldens unchanged; proto comment `6ded31a1e`. Phase 1: the party checks took 47 s and gave Angry, Assasin and Smartface Draenei (+234 to +254 raid DPS each); every final pick together beat all stage 1 picks by +822 ± 12 |
 | wave J2 cross-review | | `1493175df` | 1 bug: the driver gave up on a pass 2 with nothing left to run. Also: old stage 2 picks still counted for raiders without stage 2, stage 2 texts said "as equipped" for the stage 1 pick, a cancelled party check read as an error |
+| PAR-P8 | merged | `174d9a3ed` | 13 goldens promoted in `3052f1985`; module `9eebe97`. Sent back: every shaman learns Flame Shock's crit aura (75461) with Elemental Combat, which wave I and stage 1 missed; Conflagrate's dot now needs Improved Immolate 3/3, the shadow dots Shadowform |
+| BIS-tank-boss | merged | `5354d6a60` | goldens unchanged. Its implementer's `taskkill /IM chrome.exe` closed every Chrome on the machine (a RUNBOOK rule since) |
+| BIS-presets | merged | `444d104ab` | goldens unchanged. Sent back: the generator wrote only at Quick and the tooltips were typed by hand; 43 unused Classic gear files deleted |
+| wave K cross-review | | `61d374f98`, `255b54f4a` | 3 bugs: Conflagrate reads Immolate's boosted amount (Destruction +4.7%, +0.6% net of P8), the generic boss hit for half since wave J (tanks take 2 to 3.4 times the damage), the hunter's runtime percent mods still added; `db.json` in `b415c0f48` |
 
 Later WIs are added as their wave starts.
 

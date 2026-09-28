@@ -1528,13 +1528,13 @@ gofmt-clean.
   `AutoAttacks.StopMeleeUntil` (PAR-P7-SHA, `FlagResetsAutoAttack` covers it); warlock pet hit
   (`warlock/pet.go`) was fixed by this item's own tick-crit stage; the Expertise comment and the
   hardcoded boss block value of 76 were fixed in P2 (no literal 76 block value remains in `sim/core`).
-- PAR-P8's live stage settled the hunter crit gap: a million-roll `.simval yellow` probe on each of Auto
+- PAR-P8's live stage probed the hunter crit gap: a million-roll `.simval yellow` probe on each of Auto
   Shot and Steady Shot (`TestSimvalP8HunterCrit`, `mod-sim-validation/e2e/p8_test.go`) reads a pooled crit
-  rate of 0.0862% against the server's own 0.0880% threshold (z = -0.83, n = 2,000,000), tight enough to
-  rule out a missing term at the size PAR-P7-0d's three recorded runs saw (+2.60 points, 1.66σ pooled).
-  With `UpdateCritPercentage`/`GetUnitCriticalChance` already confirmed term-for-term against the sim's
-  formula, that gap was recorded-run sampling noise. No sim change; closed (**Verified on the live
-  server**, Hunter).
+  rate of 0.0862% against the server's own 0.0880% threshold (z = -0.83, n = 2,000,000). That rules out a
+  term added at the roll; the near-naked bot's 0.09% can't show one inside the crit formula. With
+  `UpdateCritPercentage`/`GetUnitCriticalChance` already confirmed term-for-term against the sim's formula,
+  PAR-P7-0d's +2.60 points (1.66σ pooled over three recorded runs) read as sampling noise. No sim change;
+  closed (**Verified on the live server**, Hunter).
 - Fixed Instant and Wound Poison's PPM constants (`sim/rogue/poisons.go`): both poisons' max-rank enchants
   (3769, 3773 — items 43231/43235, spells 57968/57978) do carry a `spell_enchant_proc_data` row after all
   (`PPMChance` 8.53 and 21.43), which a narrower earlier check on the wrong enchant ids missed. `basePPM`

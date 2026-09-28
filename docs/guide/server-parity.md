@@ -84,7 +84,9 @@ class by simval.
   - Spell-proc PPM uses max(cast time, 1500 ms).
   - `REDUCE_PROC_60` applies.
   - A DoT refresh resets the tick timer only when StackAmount < 2.
-  - Periodic ticks crit only with aura 286.
+  - Periodic ticks crit only with an aura 286 covering the spell, which can be a passive a skill teaches
+    (SkillLineAbility AcquireMethod 2: Flame Shock's 75461, Immolate's 75445). Every sim dot declares it
+    as `TicksCanCrit` (`sim/dotconfig_declared_test.go`).
   - A munched periodic (Deep Wounds, Unholy Blight, Piercing Shots, Righteous Vengeance, Ignite, Languish) applies
     on the next 400 ms step of the caster's event clock, up to 400 ms late (`CalculateQueueTime`,
     `MunchingBlizzlike.Enabled`), ahead of a swing or tick due on the same server tick. The sim does this for the

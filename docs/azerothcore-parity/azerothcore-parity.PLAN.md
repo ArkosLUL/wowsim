@@ -82,8 +82,8 @@ Its findings, verified against code, and the list of AzerothCore deviations from
   - P1 lives in [ac] as its own git repo: `[ac]/modules/mod-sim-validation` (`modules/*` is ignored by the
     [ac] repo).
   - Item-diff and raid-import run in the loop too ([workstreams](../guide/workstreams.md)).
-- **Sequencing:** P1, P0, P2 and P4 are built. P4's review and everything after it follow the
-  [wave registry](../wave-loop/wave-loop.PLAN.md#wave-registry).
+- **Sequencing:** done. Every phase has landed, P8 last, in wave K (2026-09-28); what stays open is in
+  [P8](#p8--classic-only-cleanup)'s as built.
 - Golden baselines: 37 `sim/**/*.results`. `make update-tests` deletes **all** `.results` before copying the `.tmp`
   files, so never use it for partial runs. Promote only the suites that ran (P0 `promote`) after checking each DPS
   delta's sign and size.
@@ -714,8 +714,8 @@ now-impossible glyph path (new retail deviation #65); wired paladin `canJudgemen
 Righteous Vengeance's crit-at-landing snapshot (moved Retribution); confirmed Omen of Clarity, Feral
 Spirit's swing reset, warlock pet hit and the P2 items already done. Stage 4 (live) closed the three
 items the code stages left for it. A million-roll `.simval yellow` probe on Auto Shot and Steady Shot
-settled the hunter ranged-crit gap: pooled crit lands within z = -0.83 of the server's own formula, so
-the recorded runs' +2.60-point gap was sampling noise, not a missing term. Instant and Wound Poison's
+lands within z = -0.83 of the server's own crit threshold, ruling out a term added at the roll; the
+threshold's formula rests on PAR-P7-0d's term-by-term check. Instant and Wound Poison's
 `spell_enchant_proc_data` rows (found live, under the enchant ids their max ranks actually grant) fixed
 `sim/rogue/poisons.go`'s `basePPM` constants to the server's own 8.53/21.43 (Rogue Combat/Subtlety/
 Assassination move down slightly). `checkResists`' fully-resisted tolerance moved from
@@ -730,7 +730,10 @@ multi-target approximation, and the BM capture's idle pet (checked mod-playerbot
 for a cheap answer; found none).
 The wave K cross-review fixed three misses (INVESTIGATION, Cleanup (P8)): Conflagrate's hit reads the
 Immolate aura's amount, so Immolate's own periodic mods do reach it (Destruction +4.71%); the hunter's
-runtime percent mods still added; Killing Spree's swings took Find Weakness.
+runtime percent mods still added; Killing Spree's swings took Find Weakness. It left open: the shaman's percent spell mods still add, static
+and at runtime (fixing it moves Elemental and Enhancement); Arcane Power and Fire and Brimstone add at
+runtime; Glyph of Steady Shot takes any hunter's Serpent Sting on any target, where the server needs the
+caster's own on that target; no live read yet shows a shaman or warlock carrying 75461 or 75445.
 
 ## Loop work items
 
@@ -785,7 +788,7 @@ Specs for the `PAR-` items in the [wave registry](../wave-loop/wave-loop.PLAN.md
 | PAR-DECL-2 (I5, done) | The class sweep for shaman, druid (Feral Tank included) and hunter with pets | `sim/{shaman,druid,hunter}/**` | their suites | PAR-DECL |
 | PAR-DECL-3 (I5, done) | The class sweep for warrior, rogue, paladin and DK, tank-spec spells included | `sim/{warrior,rogue,paladin,deathknight}/**` | their suites | PAR-DECL |
 | PAR-DECL-4 (I6, done) | [Generate and declare](effect-declarations.PLAN.md#par-decl-4-i6) the spell ids the sweeps found `serverdata` lacking | `sim/core/serverdata/*_auto_gen.go`, `sim/{mage,hunter,deathknight,warrior,rogue,paladin,shaman}/**` | all 37 | PAR-DECL-1..3 |
-| PAR-P8 (K) | Sweep `classic`/`wotlk-classic-bugs` in `sim/`; declare `TicksCanCrit` on every dot still undeclared (`AuraEffect::CanPeriodicTickCrit`), then flip `periodicCritsNeedDeclaration`; multiply percent damage spell mods (`Player::ApplySpellMod`) in the classes that landed before H3 (DK, Hunter, Rogue, Warrior); every bullet of [P8](#p8--classic-only-cleanup), fixed or shown with evidence to stay open. Stages: tick crits and the sweep; spell mods, with the Wave I leftover's per-effect split; the class leftovers and `NewPet`; live (the hunter crit probe, the rogue poison procs, `checkResists`). The orchestrator closes this plan | `sim/**`, `ui/<spec>/apls/*`, mod-sim-validation's e2e | all | every P7 item |
+| PAR-P8 (K, done) | Sweep `classic`/`wotlk-classic-bugs` in `sim/`; declare `TicksCanCrit` on every dot still undeclared (`AuraEffect::CanPeriodicTickCrit`), then flip `periodicCritsNeedDeclaration`; multiply percent damage spell mods (`Player::ApplySpellMod`) in the classes that landed before H3 (DK, Hunter, Rogue, Warrior); every bullet of [P8](#p8--classic-only-cleanup), fixed or shown with evidence to stay open. Stages: tick crits and the sweep; spell mods, with the Wave I leftover's per-effect split; the class leftovers and `NewPet`; live (the hunter crit probe, the rogue poison procs, `checkResists`). The orchestrator closes this plan | `sim/**`, `ui/<spec>/apls/*`, mod-sim-validation's e2e | all | every P7 item |
 
 - **Class order:** DK and HUN (G); ROG, WAR and RET (H); SHA, DRU, MAG and WLK (I); PRI (J).
 - **P8's listed items** go to P3-4 (JoW), DRU (Omen), SHA (Feral Spirit), WLK and HUN (pet hit, Serpent
