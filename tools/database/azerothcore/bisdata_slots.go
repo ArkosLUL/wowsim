@@ -43,7 +43,8 @@ var bisTreeSpecs = map[int32][3]string{
 	11: {"Balance", "Feral dps", "Restoration"},
 }
 
-// bisTankTreeSpecs are trees that tank and DPS share; the raid's main tank flag picks the tank spec.
+// bisTankTreeSpecs are trees that tank and DPS share, keyed by class id and tree. Which of the two a
+// raider plays only shows in what their run optimized for, so BisTankRun picks between them.
 var bisTankTreeSpecs = map[[2]int32]string{
 	{6, 0}:  "Blood tank",
 	{11, 1}: "Feral tank",
@@ -66,14 +67,33 @@ func MainTalentTree(talents string) int {
 	return best
 }
 
-// RaiderSpecName is the addon spec a roster character plays, going by their main talent tree. It
-// can't tell builds within a tree apart, e.g. Fury-Prot from Protection.
-func RaiderSpecName(character *RosterCharacter) string {
+// BisTankRun says whether an optimizer run optimized for tanking. The optimizer only asks for crit
+// immunity or reads the survival/threat slider for a tank, and a run scoring the tank metrics with
+// nothing on damage is one either way. A run carrying no weights at all scores DPS, so it isn't one.
+func BisTankRun(result *proto.OptimizerResult) bool {
+	settings := result.GetSettings()
+	if settings == nil {
+		return false
+	}
+	if settings.GetRequireCritImmunity() || settings.GetTankSurvival() > 0 {
+		return true
+	}
+	weights := settings.GetMetricWeights()
+	tankWeighted := weights.GetTps() > 0 || weights.GetDtps() > 0 || weights.GetTmi() > 0 || weights.GetPDeath() > 0
+	damageWeighted := weights.GetDps() > 0 || weights.GetHps() > 0
+	return tankWeighted && !damageWeighted
+}
+
+// RaiderSpecName is the addon spec a roster character's result belongs under, going by their main
+// talent tree. It can't tell builds within a tree apart, e.g. Fury-Prot from Protection. Blood and
+// Feral tank and DPS share a tree, so there the run decides; a result with nothing to go on stays on
+// the DPS spec, which is what an unweighted run scores anyway.
+func RaiderSpecName(character *RosterCharacter, result *proto.OptimizerResult) string {
 	tree := MainTalentTree(character.Talents)
 	if tree > 2 {
 		return ""
 	}
-	if spec, ok := bisTankTreeSpecs[[2]int32{character.ClassID, int32(tree)}]; ok && character.MemberFlags&2 != 0 {
+	if spec, ok := bisTankTreeSpecs[[2]int32{character.ClassID, int32(tree)}]; ok && BisTankRun(result) {
 		return spec
 	}
 	return bisTreeSpecs[character.ClassID][tree]

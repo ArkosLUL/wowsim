@@ -47,6 +47,19 @@ better one for them or a Heroic Presence check switched their racial traits.
 - Both passes need the same `--out`, whose Chrome profile holds the batch, and the same roster file:
   the batch is keyed on the roster's specs, races, talents, glyphs and professions, so a changed
   roster starts an empty one.
+- `--sources` ticks the tab's Item sources boxes, so the pool keeps those kinds only. A 25-man realm
+  leaves out dungeon, heroic dungeon and both 10-man kinds:
+
+  ```sh
+  python tools/database/acbis/driver/driver.py run --roster "$SCRATCH/raid.json" --out "$SCRATCH/bis" \
+    --stage 1 --sources raid25,raid25-heroic,vendor,crafted,quest,reputation,achievement,prospecting,world-drop
+  ```
+
+  Never excluded: the item a raider already wears in that slot, gems, enchants, and a source the
+  catalog couldn't classify (a handful of TBC and holiday-event drops, no raid or dungeon loot). PvP
+  gear never counts. Give both passes the same list: a settled job stays as it ran, so a rerun with
+  another doesn't redo it, and the export's log line names what its entries really ran with, flagged
+  when that isn't this pass's list.
 - A rerun skips what's settled and resumes a cut-off job. **A failed job counts as settled**, so a
   rerun skips it too; `--retry-failed` runs this pass's failed jobs once more instead.
 - One driver at a time per `--out` and `--port`: a Chrome already on the port with another profile stops
@@ -83,6 +96,7 @@ better one for them or a Heroic Presence check switched their racial traits.
 | `--raiders` | `all` | comma-separated names from the grid (healers sit out) |
 | `--phases` | `1-5` | e.g. `3` or `2,4` |
 | `--effort` | `Quick` | `Quick`, `Normal` or `Thorough`. A job already done stays as it ran |
+| `--sources` | `all` | `all`, or the kinds to keep: `dungeon`, `dungeon-heroic`, `raid10`, `raid10-heroic`, `raid25`, `raid25-heroic`, `vendor`, `crafted`, `quest`, `reputation`, `achievement`, `prospecting`, `world-drop` |
 | `--retry-failed` | | run this pass's failed jobs once more |
 | `--base` | `http://localhost:3346` | the sim server |
 | `--container` | `wotlk-bisdata` | the sim server's container, left out of the load log |

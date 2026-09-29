@@ -42,6 +42,15 @@ func headResult(phase int32, head int32) *proto.OptimizerResult {
 	return bisResult(phase, map[proto.ItemSlot]*proto.ItemSpec{proto.ItemSlot_ItemSlotHead: {Id: head}})
 }
 
+// tankRun turns a result into one the optimizer ran for a tank: the survival/threat slider at its
+// default, crit immunity, and the metric weights the UI derives from the slider.
+func tankRun(result *proto.OptimizerResult) *proto.OptimizerResult {
+	result.Settings.MetricWeights = &proto.OptimizerMetrics{Tps: 0.3, Dtps: 0.35, Tmi: 0.35}
+	result.Settings.TankSurvival = 0.7
+	result.Settings.RequireCritImmunity = true
+	return result
+}
+
 var testEnchants EnchantSpells = func(effectID int32, slot proto.ItemSlot) (int32, bool) {
 	spell, ok := map[int32]int32{3817: 59954, 3789: 59621}[effectID]
 	return spell, ok
@@ -148,7 +157,7 @@ func TestBuildBisDataset(t *testing.T) {
 		{Source: "ds2", Raider: "Deathsong", Result: headResult(2, 45000)},
 		{Source: "fire", Class: "Mage", Spec: "Fire FFB", Result: headResult(1, 40001)},
 		{Source: "ds1", Raider: "Deathsong", Result: headResult(1, 40000)},
-		{Source: "bear", Raider: "Bear", Result: headResult(1, 40002)},
+		{Source: "bear", Raider: "Bear", Result: tankRun(headResult(1, 40002))},
 		{Source: "unholy", Class: "Death knight", Spec: "Unholy", Result: raidDPS},
 		{Source: "unknown spec", Class: "Mage", Spec: "Spellblade", Result: headResult(1, 1)},
 		{Source: "unknown class", Class: "Monk", Spec: "Brewmaster", Result: headResult(1, 1)},
@@ -267,6 +276,42 @@ func TestBuildBisDatasetUnnamedSpec(t *testing.T) {
 	}
 }
 
+// The live raid's two cases: a Feral druid flagged main tank who plays a cat build, and a Blood tank
+// who carries no flag.
+func TestBuildBisDatasetSpecFromRun(t *testing.T) {
+	roster := &Roster{Version: RosterVersion, Characters: []*RosterCharacter{
+		{Name: "Bear", ClassID: 11, Subgroup: 0, MemberFlags: 2, Talents: "-55555"},
+		{Name: "Bloodwall", ClassID: 6, Subgroup: 0, Talents: "55555"},
+	}}
+	guids := map[string]uint32{"Bear": 2001, "Bloodwall": 2002}
+	results := []BisResult{
+		{Source: "bear p1", Raider: "Bear", Result: headResult(1, 40000)},
+		{Source: "bear p2", Raider: "Bear", Result: headResult(2, 40001)},
+		{Source: "blood p1", Raider: "Bloodwall", Result: tankRun(headResult(1, 40002))},
+	}
+	dataset, err := BuildBisDataset(results, roster, guids, testEnchants, time.Now())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	wantSubjects := []BisSubject{
+		{ID: 1, Kind: BisSubjectRoster, ClassID: 11, SpecName: "Feral dps", GUID: 2001, Name: "Bear", RaidIndex: 0},
+		{ID: 2, Kind: BisSubjectRoster, ClassID: 6, SpecName: "Blood tank", GUID: 2002, Name: "Bloodwall", RaidIndex: 1},
+	}
+	if !reflect.DeepEqual(dataset.Subjects, wantSubjects) {
+		t.Errorf("subjects:\ngot  %+v\nwant %+v", dataset.Subjects, wantSubjects)
+	}
+	if len(dataset.Warnings) != 0 {
+		t.Errorf("warnings = %q", dataset.Warnings)
+	}
+
+	split := append(slices.Clone(results), BisResult{Source: "bear p3", Raider: "Bear", Result: tankRun(headResult(3, 40003))})
+	_, err = BuildBisDataset(split, roster, guids, testEnchants, time.Now())
+	if err == nil || !strings.Contains(err.Error(), "bear p1 makes Bear Feral dps and bear p3 makes them Feral tank") {
+		t.Errorf("a raider whose runs disagree: err = %v", err)
+	}
+}
+
 func TestBisResultsFromBatch(t *testing.T) {
 	entry := func(raider string, phase, stage int32) *proto.OptimizerBatchEntry {
 		return &proto.OptimizerBatchEntry{Raider: raider, ContentPhase: phase, Stage: stage, Result: headResult(phase, 40000+stage)}
@@ -346,22 +391,65 @@ func TestLoadRosterVersions(t *testing.T) {
 	}
 }
 
+func TestBisTankRun(t *testing.T) {
+	for comment, result := range map[string]*proto.OptimizerResult{"no result": nil, "no settings": {}} {
+		if BisTankRun(result) {
+			t.Errorf("%s: read as a tank run", comment)
+		}
+	}
+	dps := &proto.OptimizerMetrics{Dps: 1}
+	hps := &proto.OptimizerMetrics{Hps: 1}
+	threat := &proto.OptimizerMetrics{Tps: 1}
+	slider := &proto.OptimizerMetrics{Tps: 0.3, Dtps: 0.35, Tmi: 0.35}
+	for comment, tc := range map[string]struct {
+		settings *proto.OptimizerSettings
+		wantTank bool
+	}{
+		"no weights at all, which the optimizer scores as DPS": {&proto.OptimizerSettings{}, false},
+		"a DPS run":       {&proto.OptimizerSettings{MetricWeights: dps}, false},
+		"a healer's run":  {&proto.OptimizerSettings{MetricWeights: hps}, false},
+		"the tank slider": {&proto.OptimizerSettings{TankSurvival: 0.7}, true},
+		"crit immunity":   {&proto.OptimizerSettings{RequireCritImmunity: true}, true},
+		"the slider, crit immunity and the weights the UI makes from them": {tankRun(headResult(1, 1)).GetSettings(), true},
+		// an all-threat tank sends weights with the slider at 0, and can have crit immunity switched off
+		"all threat and nothing else": {&proto.OptimizerSettings{MetricWeights: threat}, true},
+		"a tank scored on raid DPS": {&proto.OptimizerSettings{MetricWeights: slider, TankSurvival: 0.7,
+			RequireCritImmunity: true, Objective: proto.OptimizerObjective_OptimizerObjectiveRaidDps}, true},
+	} {
+		if tank := BisTankRun(&proto.OptimizerResult{Settings: tc.settings}); tank != tc.wantTank {
+			t.Errorf("%s: got tank=%v, want %v", comment, tank, tc.wantTank)
+		}
+	}
+}
+
 func TestRaiderSpecName(t *testing.T) {
+	// The main-tank flag is on the cases that carry it in the live raid, to pin down that it no longer
+	// counts: raiders there hold it while playing a DPS build.
 	for _, tc := range []struct {
 		classID, flags int32
-		talents, want  string
+		talents        string
+		result         *proto.OptimizerResult
+		want           string
 	}{
-		{6, 0, "55555", "Blood dps"},
-		{6, 2, "55555", "Blood tank"},
-		{6, 2, "-55555", "Frost"},
-		{11, 0, "-55555", "Feral dps"},
-		{11, 2, "-55555", "Feral tank"},
-		{1, 2, "5-5-55555", "Protection"},
-		{8, 0, "5-55555-5", "Fire"},
-		{8, 0, "55-55", "Arcane"},
-		{9, 0, "--5", "Destruction"},
+		{6, 0, "55555", headResult(1, 1), "Blood dps"},
+		{6, 2, "55555", headResult(1, 1), "Blood dps"},
+		{6, 0, "55555", tankRun(headResult(1, 1)), "Blood tank"},
+		// only Blood and Feral share a tree, so elsewhere a tank run changes nothing
+		{6, 2, "-55555", tankRun(headResult(1, 1)), "Frost"},
+		{11, 2, "-55555", headResult(1, 1), "Feral dps"},
+		{11, 0, "-55555", tankRun(headResult(1, 1)), "Feral tank"},
+		// nothing to go on falls back to the DPS spec
+		{11, 2, "-55555", &proto.OptimizerResult{}, "Feral dps"},
+		{1, 2, "5-5-55555", headResult(1, 1), "Protection"},
+		{8, 0, "5-55555-5", headResult(1, 1), "Fire"},
+		{8, 0, "55-55", headResult(1, 1), "Arcane"},
+		{9, 0, "--5", headResult(1, 1), "Destruction"},
+		// a class the addon has no specs for, and a talent string with a fourth tree
+		{10, 0, "5", headResult(1, 1), ""},
+		{6, 0, "---5", headResult(1, 1), ""},
 	} {
-		if got := RaiderSpecName(&RosterCharacter{ClassID: tc.classID, MemberFlags: tc.flags, Talents: tc.talents}); got != tc.want {
+		character := &RosterCharacter{ClassID: tc.classID, MemberFlags: tc.flags, Talents: tc.talents}
+		if got := RaiderSpecName(character, tc.result); got != tc.want {
 			t.Errorf("class %d, flags %d, %q: got %q, want %q", tc.classID, tc.flags, tc.talents, got, tc.want)
 		}
 	}

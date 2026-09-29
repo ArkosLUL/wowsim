@@ -48,7 +48,8 @@ MSYS_NO_PATHCONV=1 docker run --rm --network azerothcore-wotlk-pb_ac-network \
 It prints the dataset's version and provenance, one line per subject with its payload bytes and BLK
 frames, how long sending them all takes at 10 frames per 100 ms tick, and a `!` line per warning.
 Skipped results (failed runs, unknown specs, raiders missing from the roster) are warnings; two results
-for one subject and phase, or a raider without a roster or guid, are errors.
+for one subject and phase, results that name a raider two different specs, or a raider without a roster
+or guid, are errors.
 
 Importing replaces the server's dataset and needs the user's OK:
 
@@ -73,4 +74,7 @@ MSYS_NO_PATHCONV=1 docker exec -i ac-database mysql -uroot -ppassword acore_worl
   missing, then swaps the whole dataset in one transaction.
 - Only raiders with results become subjects; the fingerprint still covers the whole roster.
 - A raider's spec comes from their main talent tree, so builds within a tree (Fury-Prot) read as the
-  tree's spec. The main tank flag picks Blood tank and Feral tank.
+  tree's spec. Tank and DPS share the Blood and Feral trees, so there the run decides: tank metric
+  weights, the survival/threat slider or crit immunity mean the tank spec, anything else DPS. Not the
+  main tank flag ([azerothcore-data](../../../docs/guide/azerothcore-data.md#characters-acore_characters)).
+  The addon keys its roster on the character guid, so a raider can only hold one spec across phases.

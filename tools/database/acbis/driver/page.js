@@ -204,6 +204,29 @@
 		return option.textContent;
 	};
 
+	// the Item sources checkboxes, each carrying its CatalogSourceKind number in value
+	bis.sourceBoxes = () => [...bis.root().querySelectorAll('.optimizer-setup .optimizer-checkbox-grid input')];
+
+	// Ticks exactly these kinds, one box per round: a change redraws the setup, so the next box has to
+	// be found again. Returns every kind the tab offers.
+	bis.setSources = kinds => {
+		const wanted = kinds.map(Number);
+		const missing = wanted.filter(kind => !bis.sourceBoxes().some(box => Number(box.value) == kind));
+		if (missing.length) {
+			throw new Error(`no source checkbox for ${missing}`);
+		}
+		for (let round = bis.sourceBoxes().length; round >= 0; round--) {
+			const boxes = bis.sourceBoxes();
+			const off = boxes.find(box => box.checked != wanted.includes(Number(box.value)));
+			if (!off) {
+				return { offered: boxes.map(box => Number(box.value)) };
+			}
+			off.checked = !off.checked;
+			off.dispatchEvent(new Event('change'));
+		}
+		throw new Error(`the item sources would not stay ticked: wanted ${wanted}`);
+	};
+
 	bis.click = label => {
 		const b = bis.button(label);
 		if (!b || b.hidden || b.disabled) {

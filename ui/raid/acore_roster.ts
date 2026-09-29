@@ -213,13 +213,6 @@ const acSlotToItemSlot: Record<number, ItemSlot> = {
 	17: ItemSlot.ItemSlotRanged,
 };
 
-const classTankSpec: Partial<Record<Class, Spec>> = {
-	[Class.ClassDruid]: Spec.SpecFeralTankDruid,
-	[Class.ClassPaladin]: Spec.SpecProtectionPaladin,
-	[Class.ClassWarrior]: Spec.SpecProtectionWarrior,
-	[Class.ClassDeathknight]: Spec.SpecTankDeathknight,
-};
-
 export function rosterClass(classId: number): Class {
 	return acClassToClass[classId] ?? Class.ClassUnknown;
 }
@@ -228,13 +221,10 @@ export function rosterRace(raceId: number): Race {
 	return acRaceToRace[raceId] ?? Race.RaceUnknown;
 }
 
-// The sim has one spec per talent build, the server has none, so the talent string decides.
-export function inferSpec(playerClass: Class, talents: string, memberFlags: number): Spec {
-	const tankSpec = classTankSpec[playerClass];
-	if (memberFlags & MEMBER_FLAG_MAIN_TANK && tankSpec !== undefined) {
-		return tankSpec;
-	}
-
+// The sim has one spec per talent build, the server has none, so the talent string decides. The
+// group's main-tank flag doesn't: raiders on this server carry it while playing a DPS build, so it
+// only says who goes into the raid's tank slots first (isMainTank in acore_importer.ts).
+export function inferSpec(playerClass: Class, talents: string): Spec {
 	const tab = getTalentTree(talents);
 	switch (playerClass) {
 		case Class.ClassWarrior:
@@ -341,7 +331,7 @@ export function buildCharacterImport(db: Database, char: RosterCharacter): Chara
 	return {
 		char: char,
 		playerClass: playerClass,
-		spec: inferSpec(playerClass, char.talents, char.memberFlags),
+		spec: inferSpec(playerClass, char.talents),
 		race: race,
 		racialTraits: racialTraits,
 		professions: professions,

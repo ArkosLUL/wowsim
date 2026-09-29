@@ -12,7 +12,7 @@ browser. The dialog, the grid and the alerts get their browser tests in
 | `raid.ts` | placement, `applyCharacter` and `newPlayerFromPreset` against a real `Sim` |
 | `replace.ts` | Replace mode's `Player.toProto` → `Raid.fromProto` round trip, tanks and party layout |
 | `update.ts` | Update mode through the shipped `updateRaid`: kept consumes, replaced specs, removals, remapped assignments |
-| `edges.ts` | `parseRoster` rejections, overfull subgroups, main-tank flags |
+| `edges.ts` | `parseRoster` rejections, overfull subgroups, the spec each talent build names, the raid's tank slots; exits 1 on any `FAIL` line |
 | `loadout.ts` | pets, ammo and consumables (version 2) through Replace, Update with and without refreshing consumables, a version 1 roster, and values the sim lacks; exits 1 on any `FAIL` line |
 
 ## Running
@@ -34,7 +34,7 @@ node ui/raid/acore_harness/run.cjs tmp/acore_harness/loadout.cjs
 '
 ```
 
-Every line prints what it expects next to what it got, so a run is read rather than asserted.
+Every line prints what it expects next to what it got, so a run is read rather than asserted, except the two that exit 1.
 
 Three things bite:
 - esbuild picks up the repo tsconfig, whose `jsx: preserve` it can't bundle, hence the local

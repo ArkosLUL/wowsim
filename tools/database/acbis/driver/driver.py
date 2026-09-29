@@ -25,6 +25,23 @@ RAID_JS = REPO / 'tools' / 'uicheck' / 'raid.js'
 PAGE_JS = HERE / 'page.js'
 CHROME = r'C:\Program Files\Google\Chrome\Application\chrome.exe'
 EFFORTS = {'Quick': 0, 'Normal': 1, 'Thorough': 2}
+# CatalogSourceKind by --sources slug: its number, as the batch stores it, and the name the export spells it
+SOURCES = {
+    'dungeon': (1, 'CatalogSourceDungeon'),
+    'dungeon-heroic': (2, 'CatalogSourceDungeonHeroic'),
+    'raid10': (3, 'CatalogSourceRaid10'),
+    'raid10-heroic': (4, 'CatalogSourceRaid10Heroic'),
+    'raid25': (5, 'CatalogSourceRaid25'),
+    'raid25-heroic': (6, 'CatalogSourceRaid25Heroic'),
+    'vendor': (7, 'CatalogSourceVendor'),
+    'crafted': (8, 'CatalogSourceCrafted'),
+    'quest': (9, 'CatalogSourceQuest'),
+    'reputation': (10, 'CatalogSourceReputation'),
+    'achievement': (11, 'CatalogSourceAchievement'),
+    'prospecting': (12, 'CatalogSourceProspecting'),
+    'world-drop': (13, 'CatalogSourceWorldDrop'),
+}
+SOURCE_SLUGS = {name: slug for slug, (_, name) in SOURCES.items()}
 # proto.Race by number, as the batch stores it and the export spells it
 RACES = ['RaceUnknown', 'RaceBloodElf', 'RaceDraenei', 'RaceDwarf', 'RaceGnome', 'RaceHuman', 'RaceNightElf',
          'RaceOrc', 'RaceTauren', 'RaceTroll', 'RaceUndead']
@@ -245,6 +262,28 @@ def parse_phases(text):
     return sorted(phases)
 
 
+def parse_sources(text):
+    slugs = [part.strip() for part in text.split(',') if part.strip()]
+    if not slugs:
+        raise SystemExit(f'sources look like raid25,vendor or all: {text!r}')
+    if 'all' in slugs:
+        if len(slugs) > 1:
+            raise SystemExit(f'all already covers every kind, so it goes on its own: {text}')
+        return list(SOURCES)
+    unknown = [slug for slug in slugs if slug not in SOURCES]
+    if unknown:
+        raise SystemExit(f'no such source kind: {", ".join(unknown)}; pick from {", ".join(SOURCES)}, or all')
+    return [slug for slug in SOURCES if slug in slugs]
+
+
+# how a set of source slugs goes into a log line or --sources
+def source_words(slugs):
+    kept = [slug for slug in SOURCES if slug in slugs]
+    if len(kept) == len(SOURCES):
+        return 'all'
+    return ','.join(kept) or 'none'
+
+
 def settled(state, phase, wanted, failed_ok=True):
     ends = ('done', 'failed') if failed_ok else ('done',)
     done = {(j['raider'], j['stage']) for j in state['jobs'] if j['phase'] == phase and j['state'] in ends}
@@ -269,6 +308,8 @@ class Driver:
         self.log = log
         self.out = Path(args.out).resolve()
         self.browser = Browser(args.port, self.out / 'chrome-profile', log)
+        self.sources = parse_sources(args.sources)
+        self.source_text = source_words(self.sources)
         self.head = ''
 
     def state(self):
@@ -348,16 +389,22 @@ class Driver:
 
     def prepare(self, names, phase):
         effort = self.browser.eval(f'__bis.setEffort({json.dumps(self.args.effort)})')
+        kinds = [SOURCES[slug][0] for slug in self.sources]
+        offered = sorted(self.browser.eval(f'__bis.setSources({json.dumps(kinds)})')['offered'])
+        # SOURCES is a copy of the proto enum, so a kind only the tab knows would drop out of all
+        if offered != sorted(number for number, _ in SOURCES.values()):
+            raise CdpError(f'the tab offers item source kinds {offered}, not the ones --sources knows')
         self.browser.eval(f'__r.pick({json.dumps(names)}, [{phase}])', timeout=120)
         grid = self.browser.eval('JSON.stringify(__r.grid())')
         ticked = sorted(g['name'] for g in grid if g['ticked'])
         state = self.state()
         if ticked != sorted(names) or state['settings'].get('phases') != [phase] or \
-                state['settings'].get('effort') != EFFORTS[self.args.effort]:
+                state['settings'].get('effort') != EFFORTS[self.args.effort] or \
+                sorted(state['settings'].get('sources') or []) != sorted(kinds):
             raise CdpError(f'the batch setup did not take: ticked {ticked}, settings {state["settings"]}')
         if self.args.stage == 1:
             self.browser.eval(f'__bis.stopAfterStage1({phase}, {json.dumps(names)})')
-        self.log(f'P{phase}: {len(names)} raiders ticked, effort {effort}')
+        self.log(f'P{phase}: {len(names)} raiders ticked, effort {effort}, sources {self.source_text}')
 
     # The page doesn't resume a batch on its own (prepareStorage clears its running flag), so every
     # run starts here, set up for this phase. Optional: the page may have nothing left to run, which
@@ -466,10 +513,17 @@ class Driver:
         self.log(f'exported {len(entries)} entries {stages} to {path}, sim {commits}, catalog {data.get("catalogDate", "")}')
         if any(c in ('', 'unknown') for c in commits):
             self.log('! some results carry no sim commit: pass SIM_COMMIT to the sim container')
-        # a job that's already done stays as it ran, whatever --effort this pass asks for
+        # a job that's already done stays as it ran, whatever --effort or --sources this pass asks for
         efforts = {e.get('result', {}).get('settings', {}).get('effort', 'OptimizerEffortQuick') for e in entries}
         if len(efforts) > 1:
             self.log(f'! the export mixes efforts {sorted(efforts)}')
+        source_sets = sorted({source_words([SOURCE_SLUGS.get(name, name)
+                                            for name in e.get('result', {}).get('settings', {}).get('sources', [])])
+                              for e in entries})
+        if entries:
+            self.log(f'item sources as run: {" | ".join(source_sets)}')
+            if source_sets != [self.source_text]:
+                self.log(f"! some of these entries didn't run with the {self.source_text} this pass asked for")
         return True
 
     # A Heroic Presence check switches a settled pick's racial traits in place, stage 1 picks too. Puts
@@ -548,6 +602,7 @@ class Driver:
                 load = machine_load(self.args.container)
                 record = {'at': time.strftime('%Y-%m-%dT%H:%M:%S'), 'raider': job['raider'], 'phase': phase,
                           'stage': job['stage'], 'state': job['state'], 'effort': self.args.effort,
+                          'sources': self.source_text,
                           'server_s': round(job['elapsed'], 1), 'wall_s': round(wall, 1), 'sims': job['sims'],
                           'error': job['error'], 'load': load}
                 timings.write(json.dumps(record) + '\n')
@@ -672,6 +727,8 @@ def main():
     parser.add_argument('--raiders', default='all', help="comma-separated names, or all (default)")
     parser.add_argument('--phases', default='1-5', help='content phases, e.g. 1-5 or 2,4 (default 1-5)')
     parser.add_argument('--effort', default='Quick', choices=list(EFFORTS))
+    parser.add_argument('--sources', default='all', help='item source kinds the pool keeps: all (default), or '
+                                                        f'comma-separated from {", ".join(SOURCES)}')
     parser.add_argument('--retry-failed', action='store_true', help="run this pass's failed jobs again, once")
     parser.add_argument('--base', default='http://localhost:3346', help='the sim server (default http://localhost:3346)')
     parser.add_argument('--container', default='wotlk-bisdata', help="the sim server's container, left out of the load log")
