@@ -117,10 +117,15 @@ regenerate after it.
 
 ## Current wave
 
-- Wave: L, running. Prod runs K; the user OKed one rebuild once L lands.
+- Wave: L, running. All six items are merged (BIS-caps last, `a1d0a9079`), then master (`fc3b96070`).
+  Left, from 2026-09-30 (the user's call): regenerate all 28 presets at Normal, the re-baselines, landing,
+  then the one prod rebuild the user OKed once L lands (prod runs K).
+- [int]'s uncommitted `ui/*/gear_sets/*` changes are a superseded partial preset run: never commit them;
+  the regeneration overwrites them.
 - Base SHA: `1fc3f7c3d`; the WIs branch from its spec commit `773610faf`.
-- Workflow runId: `wf_34052b28-d62`, args `waveL-args.json` in `G:\DevStuff\GitHub\.wave-loop`, transcripts
-  in `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\wf_34052b28-d62`.
+- Workflow runIds: `wf_34052b28-d62`, `wf_1a26dbdb-51c`, `wf_ac1129b6-8d7`, `wf_a59f095c-4b7`; args
+  `waveL*-args.json` in `G:\DevStuff\GitHub\.wave-loop`, transcripts in
+  `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\<runId>`.
 - J2's full-roster batch ran 2026-09-28 in 52 min at Quick, output in
   `G:\DevStuff\GitHub\.wave-loop\bis-j2-full`; its times are the INVESTIGATION's batch rows.
 
