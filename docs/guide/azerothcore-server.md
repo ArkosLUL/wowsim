@@ -50,8 +50,9 @@ The live server: where it runs, how to reach it, what's installed. For table and
 - `[ac]/configurationOverrides/*.env` sets `AC_*` vars, which override keys in
   `[ac]/env/dist/etc/**/*.conf` (e.g. `modules/mod_reforging.conf`).
   - Only a module's `.conf` is read, never its `.conf.dist`. The container copies each conf.dist there
-    once, never updates it, and creates no module `.conf`: a module without one (mod-sim-validation,
-    mod-bis-tooltip) runs on its code defaults plus `AC_*` vars. The installed
+    once, never updates it, and creates no module `.conf`: a module without one (mod-sim-validation)
+    runs on its code defaults plus `AC_*` vars. A `.conf` you write by hand is read but lives outside
+    git, so rebuilding `env/dist/` loses it (mod-bis-tooltip has one). The installed
     `spell_tweaks.conf` lacks FeralSpiritHaste, RuptureWeaponExpertise and RendTrauma, so those run on
     their code defaults (on).
   - Env names follow `IniKeyToEnvVarKey`, with quirks: `StatModifierRaid25M` → `RAID_25_M`,

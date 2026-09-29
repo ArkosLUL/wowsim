@@ -329,7 +329,7 @@ ways. `Enable = 0` is checked in the harness only.
 **Status:** done, in the addon repo.
 
 - `Bistooltip.lua`: a roster section, "BiS for your raid", above the spec section. Each line reads
-  `<class icon> <Raider> (<spec>)`, then `T8 BIS +142 / T9 alt 2` on the right, the delta being rank 1's.
+  `<spec icon> <Raider> (<spec>)`, then `T8 BIS +142 / T9 alt 2` on the right, the delta being rank 1's.
   Under it goes a dim sub-line per reforge, named like mod-reforging's `ItemReforge::StatTypeToString`.
   With the server selected, spec lines from the shipped list are marked with a grey `(Wowhead)`. Hide specs
   and Highlight spec now apply, and Alt shows everything.
@@ -364,7 +364,7 @@ Changed from the plan:
 
 - `Bislist.lua`:
   - "My raid" ends the class list while the server serves a roster. It lists the raiders in raid order
-    as `<class icon> Name (Spec)`, and starts on the raider shown last (saved by GUID), else you, else
+    as `<spec icon> Name (Spec)`, and starts on the raider shown last (saved by GUID), else you, else
     the first. With Auto-track target on, targeting a raider picks them.
   - Rows are padded to 6 item cells: AceGUI's `Table` layout fills cells in order, so a short slot
     shifted every later row. The shipped lists always hold 6.
@@ -398,34 +398,34 @@ Known limits:
 
 ### Phase 6 — Real data, zip, docs
 
-**Status:** the tooling is built; the **data run is postponed** — the user's call, 2026-09-22, until the
-optimizer's performance work lands. The live dataset stays Phase 1's `b235db6c` placeholder.
+**Status:** done for content phase 2, the one the realm is raiding. Live dataset `557998fe` (sim
+`d2b022d5b`, catalog 2026-09-19), 21 raiders, imported 2026-09-29. Phases 1 and 3–5 are unrun.
 
 - **Per-spec lists are dropped** (the user's call): the dataset carries roster raiders only, and every
   spec keeps the shipped Wowhead lists.
+- **25-man only** (the user's call): the batch runs with dungeon, heroic dungeon and both 10-man source
+  kinds unticked. A raider still keeps what they already wear whatever its source, and gems still come
+  from every source.
 - **The driver**, `tools/database/acbis/driver/` (`driver.py`, `page.js`), drives the raid sim's BiS
   Batch tab in headless Chrome through `tools/uicheck/cdp.py`: two passes over one batch, stage 1 (own
-  metrics, every non-healer) then stage 2 (raid DPS, the DPS raiders) later, each exporting an
-  `OptimizerBatchExport` for `acbis -batch`. How to run it:
+  metrics, every non-healer) then stage 2 (raid DPS) later, each exporting an `OptimizerBatchExport` for
+  `acbis -batch`. How to run it, what a pass costs, and what `--sources` does:
   [driver README](../../tools/database/acbis/driver/README.md).
 - **`make-zip.sh`** in the addon repo builds `BisTooltipAC-<version>.zip` from HEAD, for handing out.
 - **The live conf** `[ac]/env/dist/etc/modules/mod_bis_tooltip.conf` sets `BisTooltip.MinAddonBuild = 1`
-  and an `UpdateMessage`. It takes effect on `.reload config` or a restart, **the user's call, which
-  hasn't happened**. `[ac]` gitignores `env/dist/`, so that file has no backup in git.
+  and an `UpdateMessage`, and the worldserver has read it. `[ac]` gitignores `env/dist/`, so rebuilding
+  that tree loses the file.
 - **Only refuse a client on a genuine wire-format break** — otherwise keep serving old addons rather
   than bricking a friend mid-raid, since there's no pull-based update path. `MinAddonBuild` only nudges.
 
-**Measured** at Quick on this 16-thread machine: nine full-grid stage 1 jobs ran 7–26 s on the server, a
-stage 2 job about 9 min. The grid holds 21 non-healers (19 DPS, 2 tanks) of the 25, so pass 1 is roughly
-an hour and pass 2 roughly 14 h. At Normal a stage 1 job measured 139 s (Prot Paladin) to 347 s (DK).
+**The phase 2 run** at Quick, 21 non-healers (19 DPS, 2 tanks) with one stage 2 raider: stage 1 297 s,
+stage 2 366 s including 54 s of Heroic Presence checks, nothing failed, 9% of the page's localStorage.
 
 - **Quick picks aren't stable:** one raider and phase run twice differed in 7 of its 17 slots, since the
-  UI seeds each run randomly.
-- **Storage:** a full two-stage batch sits near 85% of Chrome's ~5.24M-char localStorage quota for the
-  page. Past it the exports stay complete; only a reload re-runs the jobs since the last store.
-- **For the optimizer's performance work:** at Quick, 9 of 21 raiders settled in under half a minute
-  each, then a Hunter (Trueshot) hadn't settled after 27 minutes, with the sim server on about 4 of 16
-  threads.
+  UI seeds each run randomly, so a re-run can't confirm a pipeline change.
+- **A feral druid's idol is arbitrary:** every idol the search shortlisted scored an identical
+  0.00 ± 0.00, and the one the sim models for the spec never reached the shortlist. Handed to the
+  bis-optimizer effort with the runs that show it; until it lands, a feral druid's relic line is noise.
 
 Changed from the plan: no spec subjects are left to run, and the "small script" grew into `driver/` with
 its own README.
@@ -437,9 +437,8 @@ checks in a throwaway clone: the refusals (uncommitted changes, a toc/`ADDON_BUI
 inside the repo or in `Interface/AddOns`) and a zip of 81 files that leaves out `test/`, the script and
 every `.git*`, keeps the committed bytes under `core.autocrlf=true`, and holds everything the toc loads.
 
-**Still open:** the run; the import, which **needs the user's OK** (the live DB is otherwise
-SELECT-only); and `docs/guide/azerothcore-server.md` still listing mod-bis-tooltip as running without a
-`.conf`, true only until that `.reload config`.
+**Still open:** phases 1 and 3–5, each one more pass of both stages and a re-import, which **needs the
+user's OK** (the live DB is otherwise SELECT-only).
 
 ## Verification summary
 
