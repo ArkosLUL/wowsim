@@ -1811,19 +1811,30 @@ func (r *run) effectFamilies(s *surrogate, v stats.Stats, gp *gemPlan, fx *effec
 		add(f)
 	}
 
+	// bestMainHand is the pool's best main hand by stat lower bound, excluding one item id (0 for
+	// none): a stand-in wherever a family needs a real main hand other than the one it's pricing.
+	bestMainHand := func(exclude int32) *Candidate {
+		var best *Candidate
+		bestLB := math.Inf(-1)
+		for _, cand := range p.Slots[mh] {
+			if cand.Item.ID == exclude || p.fillsHands(&cand.Item) {
+				continue
+			}
+			if lb := statLB(mh, cand); lb > bestLB {
+				best, bestLB = cand, lb
+			}
+		}
+		return best
+	}
+
 	// off hands, from an empty one, next to a one-hander
 	if !p.Locked[oh] {
 		base := seed
 		mhItem, ok := p.item(mh, seedMH.ItemID)
 		if seedMH.ItemID == 0 || !ok || p.fillsHands(mhItem) {
 			var best *Candidate
-			bestLB := math.Inf(-1)
 			if !p.Locked[mh] {
-				for _, cand := range p.Slots[mh] {
-					if lb := statLB(mh, cand); !p.fillsHands(&cand.Item) && lb > bestLB {
-						best, bestLB = cand, lb
-					}
-				}
+				best = bestMainHand(0)
 			}
 			if best != nil {
 				base.Items[mh] = quick(mh, best, base)
@@ -1838,6 +1849,10 @@ func (r *run) effectFamilies(s *surrogate, v stats.Stats, gp *gemPlan, fx *effec
 		dominated := s.dominatedWeapons(oh, p.Slots[oh], lo, hi, gb)
 		seen := map[int32]bool{}
 		baseMH := base.Items[mh].ItemID
+		// A unique-equipped base main hand can't sit in the off hand too: checkLimits would reject
+		// that loadout. Price it there in its own family, against whichever other weapon ranks next
+		// best for the main hand.
+		var altFamily *effectFamily
 		for _, cand := range p.Slots[oh] {
 			id := cand.Item.ID
 			if !cand.NeedsSim || dominated[id] {
@@ -1848,7 +1863,23 @@ func (r *run) effectFamilies(s *surrogate, v stats.Stats, gp *gemPlan, fx *effec
 				continue
 			}
 			if id == baseMH && itemLimit(p.catalog[id]) == 1 {
-				fx.missing[effectKey{effectItem, oh, id}] = true
+				if p.Locked[mh] {
+					fx.missing[effectKey{effectItem, oh, id}] = true
+					continue
+				}
+				if altFamily == nil {
+					alt := bestMainHand(baseMH)
+					if alt == nil {
+						fx.missing[effectKey{effectItem, oh, id}] = true
+						continue
+					}
+					altBase := base
+					altBase.Items[mh] = quick(mh, alt, base)
+					altFamily = &effectFamily{name: "off-hand items, main hand held elsewhere", base: altBase, weapons: true}
+				}
+				variant := altFamily.base
+				variant.Items[oh] = quick(oh, cand, altFamily.base)
+				altFamily.add(effectKey{effectItem, oh, id}, variant, prior(oh, cand), false)
 				continue
 			}
 			seen[id] = true
@@ -1862,6 +1893,9 @@ func (r *run) effectFamilies(s *surrogate, v stats.Stats, gp *gemPlan, fx *effec
 			f.add(effectKey{effectItem, oh, seedOH.ItemID}, variant, math.Inf(1), false)
 		}
 		add(f)
+		if altFamily != nil {
+			add(altFamily)
+		}
 	}
 
 	// the other slots, from an item without an effect

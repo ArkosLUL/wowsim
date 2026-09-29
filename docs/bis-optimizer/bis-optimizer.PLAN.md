@@ -1186,3 +1186,27 @@ alternatives. The exports (`shadow-normal-d2b022d5b.json` and its driver log; th
 - Golden-neutral.
 
 **Owns:** `sim/optimizer/**` and its tests.
+
+#### As built
+
+The bug matched the spec: the off-hand family kept the base's own main hand in place, and a
+unique-equipped candidate sharing that id got marked `missing` outright, so `applyEffects` left it
+unpriced and `candBounds` dropped it from every slot's options for the rest of the run.
+
+Fix: that one candidate gets its own family instead, priced against whichever other main hand ranks
+next best by stat lower bound (`bestMainHand`, also now backing the existing "seed's main hand
+fills both hands" case). `checkLimits` still keeps the two hands off the same unique item; this
+only lets the surrogate price the off-hand option. A unique two-hander under Titan's Grip takes the
+same path, since the fix keys on `itemLimit` and `fillsHands`, not weapon type.
+
+Mirror direction (unique item seeded in the off hand, priced for the main hand) was already
+correct: the main-hand family already empties the off hand and corrects for it there
+(`id == seedOH.ItemID && itemLimit(...) == 1`, pre-existing). Confirmed by test, no code change.
+
+Confined to `sim/optimizer/surrogate.go`; no sim code touched, so no goldens move.
+
+Tests, over made-up items (a live roster can't ship as a fixture): `TestKnownAnswerOffHandUniqueMainHand`
+and its Titan's Grip twin optimize a small known-DPS pool against a brute-force optimum. Pre-fix the
+search couldn't reach it (one-hander: 4229.0 vs. the true 4371.5; two-hander: off hand left empty,
+4674.0 vs. 5129.0). `TestOffHandPricesTheSeedsUniqueWeaponForTheOtherHand` pins the residual
+directly, both directions.
