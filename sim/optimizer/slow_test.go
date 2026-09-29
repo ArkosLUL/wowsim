@@ -136,18 +136,6 @@ var slowCases = []slowCase{
 	{spec: "feral_tank", phase: 2, player: func(tb testing.TB) *proto.Player { return feralTank(tb, feralTankTalents) }, tank: true},
 }
 
-// tankHealing is the healing a tank takes from the boss it fights, the way the UI's pool builder
-// re-derives it per phase (ui/core/optimizer/pool_builder.ts healingModelForBoss). A concrete Hps
-// also keeps core's presim out of every sim shard.
-func tankHealing(boss *proto.Target) *proto.HealingModel {
-	cadence, hps := 1.5*boss.SwingSpeed, 0.175*boss.MinBaseDamage/boss.SwingSpeed
-	if boss.DualWield {
-		cadence /= 2
-		hps *= 1.5
-	}
-	return &proto.HealingModel{Hps: hps, CadenceSeconds: cadence, BurstWindow: 6}
-}
-
 // slowRequest is the case's player alone in a raid with full buffs, against the default encounter,
 // over its realistic pool.
 func slowRequest(tb testing.TB, c slowCase, effort proto.OptimizerEffort) *proto.OptimizeGearRequest {

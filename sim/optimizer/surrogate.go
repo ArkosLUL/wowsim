@@ -1106,6 +1106,10 @@ type effectFamily struct {
 	emptiedOH []bool
 	// Weapons, whose damage a probe may show doesn't matter.
 	weapons bool
+	// Never cut by the screening budget: every variant gets simmed. For a family whose candidates
+	// carry no stat signal to rank by (relics), so a budget cut would drop them by arbitrary order
+	// rather than by value.
+	full bool
 	// Each variant is simmed against base with the variant's stat change as bonus stats, not
 	// against base plus the curves (see measureMatched).
 	matched bool
@@ -1119,7 +1123,7 @@ func (f *effectFamily) add(key effectKey, variant Loadout, prior float64, emptie
 }
 
 func (f *effectFamily) subset(keep func(i int) bool) *effectFamily {
-	out := &effectFamily{name: f.name, base: f.base, weapons: f.weapons, matched: f.matched}
+	out := &effectFamily{name: f.name, base: f.base, weapons: f.weapons, full: f.full, matched: f.matched}
 	for i := range f.keys {
 		if keep(i) {
 			out.add(f.keys[i], f.variants[i], f.prior[i], f.emptiedOH[i])
@@ -1330,7 +1334,7 @@ func (r *run) trimToBudget(families []*effectFamily, fx *effects, iterations int
 	fraction := max(0, budget/cost)
 	var out []*effectFamily
 	for _, f := range families {
-		if len(f.keys) <= 3 || f.keys[0].kind != effectItem {
+		if len(f.keys) <= 3 || f.keys[0].kind != effectItem || f.full {
 			out = append(out, f)
 			continue
 		}
@@ -1890,7 +1894,10 @@ func (r *run) effectFamilies(s *surrogate, v stats.Stats, gp *gemPlan, fx *effec
 		case itemNeedsSim(seed.Items[slot].ItemID):
 			base.Items[slot] = ItemChoice{}
 		}
-		f := &effectFamily{name: slot.String() + " items", base: base, weapons: ranged}
+		// A relic (idol, libram, totem or sigil) carries no stats a lower bound can rank by, so the
+		// screening budget has nothing to cut by except arbitrary order: never cut it instead.
+		relic := ranged && !hunter
+		f := &effectFamily{name: slot.String() + " items", base: base, weapons: ranged && hunter, full: relic}
 		var dominated map[int32]bool
 		if f.weapons {
 			dominated = s.dominatedWeapons(slot, p.Slots[slot], lo, hi, gb)

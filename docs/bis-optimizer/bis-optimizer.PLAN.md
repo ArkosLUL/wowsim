@@ -1127,3 +1127,41 @@ case as a request by hand.
 
 **Owns:** `sim/optimizer/**` and its tests, `ui/core/optimizer/**` if the cause is in the pool, and
 `sim/druid/items.go` if it's in the idol.
+
+#### As built
+
+The spec's premise only half held: Corruptor's own residual was fine. `effectFamilies`' `prior`
+falls back to a candidate's stat upper bound when it isn't a weapon, and every relic (idol, libram,
+totem, sigil) carries no stats, so every relic but the seed's own tied at the same uninformative
+value. `trimToBudget`'s proportional cut then kept only a handful per its stable sort's original
+order, leaving the rest `unpriced`. On the Feral Tank P2 case, that was 3 of 9 relic candidates
+simmed and 6 defaulting to 0.00 ± 0.00; the seed's own item is exempt from the cut (`prior` gives it
+`math.Inf(1)`), so Corruptor itself always got a real sim (+236 in one run) and was never among the
+zeroed five. The reported swap onto an inert idol needs one of the *other* candidates to win despite
+this, or to be the one a batch imports as already-worn; that path isn't reproduced here, since a
+fixture can't carry the live roster's exact build, but the confirmed defect matches its shape
+exactly: relics scoring as an undifferentiated 0.00 ± 0.00 block, with no signal to tell a helpful
+one from an inert one before the cut.
+
+The relic-slot family also inherited `weapons: true` from the ranged slot's hunter-weapon path
+(BIS-hunter-ranged), though `dominatedWeapons` and the weapon probes both no-op on it already, since
+no relic has weapon damage.
+
+Fix: `weapons` on that family is now `ranged && hunter`, true only for an actual ranged weapon. A
+new `full` field on `effectFamily`, set for the non-hunter ranged/relic family, exempts it from
+`trimToBudget`'s cut, the same way a family of 3 or fewer keys already is: every relic candidate
+gets a real screening sim regardless of budget pressure. Relic pools are small enough (single digits
+to a few dozen per class per phase) that this costs little.
+
+Confined to `sim/optimizer/surrogate.go`; the idol's own sim code (`sim/druid/items.go`) already
+handled Corruptor's Mangle Bear and Mangle Cat procs correctly, so no goldens move.
+
+Live check, `TestOptimizerSlow/feral_tank_p2`: pre-fix `residuals ItemSlotRanged: 3 priced, 6
+unpriced`, post-fix `9 priced, 0 unpriced`. The pick stays Corruptor either way (crit immune, 0
+extra Defense needed): Quick J -206.7 → -213.4 (run-to-run noise, per BIS-e2e-perf's "Quick picks
+aren't reproducible"), Normal J -162.5 → -162.5 unchanged.
+
+Tests: `TestRelicResidualsScoreByEffect` prices Corruptor, White Stag and Raven Goddess (all help a
+bear) above 0 and five idols that only boost spells a bear never casts at 0, none left unpriced, on
+the Feral Tank P2 realistic pool. `TestOptimizeFeralTankFindsAHelpfulRelic` seeds an idol that does
+nothing and checks the optimizer still finds and keeps one that helps.
