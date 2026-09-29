@@ -4,6 +4,7 @@ import {
 	BUSY_PATTERN,
 	button,
 	cancelOptimizerRun,
+	checkbox,
 	effortName,
 	EFFORTS,
 	formatDelta,
@@ -18,6 +19,7 @@ import {
 	simServerAvailable,
 	sourceCheckboxes,
 	SOURCES_HINT,
+	STAT_CAPS_HINT,
 	tableRow,
 	trimmedWhere,
 	withUnit,
@@ -139,6 +141,8 @@ interface BatchSettings {
 	effort: OptimizerEffort;
 	racialMode: OptimizerRacialMode;
 	sources: Array<CatalogSourceKind>;
+	// DPS specs: floors hit, expertise and spell hit at their caps and haste at the cast-speed floor.
+	respectStatCaps: boolean;
 	// raid indexes left out of the batch
 	skipped: Array<number>;
 }
@@ -187,6 +191,7 @@ function defaultSettings(): BatchSettings {
 		effort: OptimizerEffort.OptimizerEffortQuick,
 		racialMode: OptimizerRacialMode.OptimizerRacialSearch,
 		sources: ALL_SOURCE_KINDS.slice(),
+		respectStatCaps: true,
 		skipped: [],
 	};
 }
@@ -497,6 +502,8 @@ export class OptimizerBatchTab extends SimTab {
 				sources: Array.isArray(saved.settings?.sources)
 					? numbers(saved.settings.sources).filter(kind => ALL_SOURCE_KINDS.includes(kind))
 					: batch.settings.sources,
+				// older batches have no caps setting: those restore ticked
+				respectStatCaps: typeof saved.settings?.respectStatCaps == 'boolean' ? saved.settings.respectStatCaps : batch.settings.respectStatCaps,
 				skipped: numbers(saved.settings?.skipped),
 			};
 			batch.running = saved.running == true;
@@ -656,6 +663,14 @@ export class OptimizerBatchTab extends SimTab {
 
 		const sources = sourceCheckboxes(settings.sources, picked => this.changeSettings(s => (s.sources = picked)));
 		this.setupBody.appendChild(this.labeled('Item sources', sources, SOURCES_HINT));
+
+		this.setupBody.appendChild(
+			this.labeled(
+				'Stat caps',
+				checkbox('Respect hit, expertise and haste caps', settings.respectStatCaps, checked => this.changeSettings(s => (s.respectStatCaps = checked))),
+				STAT_CAPS_HINT,
+			),
+		);
 
 		const jobs = this.plannedJobs();
 		const left = jobs.filter(job => job.state != 'done').length;
@@ -856,6 +871,7 @@ export class OptimizerBatchTab extends SimTab {
 		settings.effort = this.batch.settings.effort;
 		settings.racialMode = this.batch.settings.racialMode;
 		settings.sources = this.batch.settings.sources.slice();
+		settings.respectStatCaps = this.batch.settings.respectStatCaps;
 
 		const warmStarts: Array<EquipmentSpec> = [];
 		// the latest earlier phase that has a result, preferring its stage 2 pick when it ran one

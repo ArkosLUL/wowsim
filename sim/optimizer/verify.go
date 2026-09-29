@@ -40,10 +40,15 @@ func (r *run) verify(s *surrogate, candidates []Loadout) ([]*verifiedLoadout, er
 		picks = picks[:len(picks)-1]
 	}
 	if len(picks) == 0 {
-		if r.seedBroken != nil {
+		if closest, detail, ok := r.closestToCapFloors(candidates); ok {
+			picks = []Loadout{closest}
+			r.warn("no pick reaches every hit, expertise or spell-hit cap, so the closest one stands: %s", detail)
+		} else if r.seedBroken != nil {
 			r.warn("the search found nothing that keeps every rule, so the seed stays")
+			return nil, nil
+		} else {
+			return nil, nil
 		}
-		return nil, nil
 	}
 	evals, err := r.evaluate(pointsOf(picks), iterations)
 	if err != nil {

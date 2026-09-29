@@ -46,6 +46,13 @@ message StatMinimum {
 	double min_value = 2;
 }
 
+// A ceiling on one of the target's final stats, as the character sheet shows them: past it, more of
+// the stat is wasted.
+message StatMaximum {
+	Stat stat = 1;
+	double max_value = 2;
+}
+
 message OptimizerSettings {
 	// 1 to 5. The pool builder caps candidates at progression tier 12 + content_phase.
 	int32 content_phase = 1;
@@ -82,6 +89,13 @@ message OptimizerSettings {
 	// whatever objective says). effort picks the iterations; everything else in this message is
 	// ignored. The raid batch's Heroic Presence checks use this.
 	bool compare_racial_traits = 14;
+
+	// The run's own hit, expertise and spell-hit floors and haste ceiling for DPS specs, added here at
+	// Optimize time the way crit immunity's Defense floor joins stat_minimums; empty otherwise.
+	repeated StatMaximum stat_maximums = 15;
+	// Turns off the hit, expertise and haste caps above. Unset (false, proto3's zero value) means the
+	// caps are on, so a request that doesn't set this field gets the same default the UI ships with.
+	bool disable_stat_caps = 16;
 }
 
 // Candidates for one equipment slot. Rings, trinkets and one-handers show up under both their slots.

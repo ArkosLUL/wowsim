@@ -143,7 +143,9 @@ func kaRequest(effort proto.OptimizerEffort) *proto.OptimizeGearRequest {
 			Encounter:  &proto.Encounter{Duration: 180, Targets: []*proto.Target{{}}},
 			SimOptions: &proto.SimOptions{RandomSeed: 7},
 		},
-		Settings: &proto.OptimizerSettings{ContentPhase: 1, Effort: effort, RacialMode: proto.OptimizerRacialMode_OptimizerRacialKeepCurrent},
+		// kaDatabase itemizes no Expertise and only a little Hit, so a dual-wielding warrior's DPS
+		// cap floors would be unreachable here; these tests are about the search, not the caps.
+		Settings: &proto.OptimizerSettings{ContentPhase: 1, Effort: effort, RacialMode: proto.OptimizerRacialMode_OptimizerRacialKeepCurrent, DisableStatCaps: true},
 		Pool: &proto.CandidatePool{
 			Slots: []*proto.SlotPool{
 				{Slot: proto.ItemSlot_ItemSlotHead, ItemIds: []int32{kaHeadMeta, kaHeadSet, kaHeadPlain}},
@@ -788,7 +790,8 @@ func TestSlopeBoxFloors(t *testing.T) {
 	s := &surrogate{floorWeight: 10}
 	s.curves[stats.Strength] = newCurve(&ResponseCurve{SlopeBelow: 2, SlopeAbove: 2})
 	s.curved = []stats.Stat{stats.Strength}
-	s.floors = []floorTerm{{stat: stats.Armor, gradient: stats.Stats{stats.Strength: -1, stats.Agility: 2}}}
+	grad := stats.Stats{stats.Strength: -1, stats.Agility: 2}
+	s.floors = []floorTerm{{stat: stats.Armor, gradient: grad, sparse: sparseGradient(grad)}}
 	lo, hi := s.slopeBox()
 	if lo[stats.Strength] > 2-10 || hi[stats.Strength] != 2 {
 		t.Errorf("strength slopes [%g, %g], want [-8, 2] or wider below", lo[stats.Strength], hi[stats.Strength])

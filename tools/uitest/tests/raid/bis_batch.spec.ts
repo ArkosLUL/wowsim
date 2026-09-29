@@ -20,6 +20,7 @@ const progress = (page: Page) => batchTab(page).locator('.optimizer-setup .optim
 const sourceBoxes = (page: Page) => batchTab(page).locator('.optimizer-setup .optimizer-checkbox-grid input');
 const sourceBox = (page: Page, label: string) => batchTab(page).locator('.optimizer-setup .optimizer-checkbox-grid').getByLabel(label, { exact: true });
 const tickedSources = (page: Page) => sourceBoxes(page).evaluateAll((boxes: Array<HTMLInputElement>) => boxes.map(box => box.checked));
+const statCapsBox = (page: Page) => batchTab(page).getByLabel('Respect hit, expertise and haste caps', { exact: true });
 
 const BATCH_KEY_PREFIX = '__wotlk_raid__optimizer-batch.v1.';
 
@@ -115,6 +116,33 @@ test('the item sources start all ticked and stick, and a batch saved without the
 	await expect.poll(() => tickedSources(page)).toEqual(all);
 });
 
+test('stat caps start ticked and stick, and a batch saved without them gets them ticked', async ({ page }) => {
+	await openBatch(page);
+	await expect(statCapsBox(page)).toBeChecked();
+
+	await setTicked(statCapsBox(page), false);
+	await expect(statCapsBox(page)).not.toBeChecked();
+
+	await reloadRaid(page);
+	await openSimTab(page, 'bis-batch-tab');
+	await expect(statCapsBox(page)).not.toBeChecked();
+
+	// what a batch stored by an older build looks like
+	const stripped = await page.evaluate(prefix => {
+		const keys = Object.keys(localStorage).filter(key => key.startsWith(prefix));
+		for (const key of keys) {
+			const saved = JSON.parse(localStorage.getItem(key)!);
+			delete saved.settings.respectStatCaps;
+			localStorage.setItem(key, JSON.stringify(saved));
+		}
+		return keys.length;
+	}, BATCH_KEY_PREFIX);
+	expect(stripped).toBeGreaterThan(0);
+	await reloadRaid(page);
+	await openSimTab(page, 'bis-batch-tab');
+	await expect(statCapsBox(page)).toBeChecked();
+});
+
 // No real run: the routes answer empty, so each job fails right after sending its request.
 test('a run asks the server for the ticked item sources only', async ({ page }) => {
 	const requests: Array<OptimizeGearRequest> = [];
@@ -143,6 +171,29 @@ test('a run asks the server for the ticked item sources only', async ({ page }) 
 	await expect.poll(() => requests.length).toBe(2);
 	expect(requested(1)).toEqual(await tickedKinds());
 	expect(requested(1)).toHaveLength(requested(0).length - 2);
+});
+
+// No real run: the routes answer empty, so each job fails right after sending its request.
+test('a run sends the ticked stat caps setting, unticking sends it off', async ({ page }) => {
+	const requests: Array<OptimizeGearRequest> = [];
+	await page.route('**/optimizeGearAsync', async route => {
+		const body = route.request().postDataBuffer();
+		if (body) requests.push(OptimizeGearRequest.fromBinary(body));
+		await route.fulfill({ status: 200, body: '' });
+	});
+	await page.route('**/asyncProgress', route => route.fulfill({ status: 204 }));
+
+	await openBatch(page);
+	await tickOnly(page, [mainTank], [1]);
+	await batchTab(page).getByRole('button', { name: 'Start' }).click();
+	await expect(cell(page, mainTank, 1)).toHaveText('failed');
+	expect(requests).toHaveLength(1);
+	expect(requests[0].settings?.disableStatCaps).toBe(false);
+
+	await setTicked(statCapsBox(page), false);
+	await batchTab(page).getByRole('button', { name: 'Run failed ones again' }).click();
+	await expect.poll(() => requests.length).toBe(2);
+	expect(requests[1].settings?.disableStatCaps).toBe(true);
 });
 
 // The server runs one optimization at a time, so this is the suite's only real run: a tank, since a
