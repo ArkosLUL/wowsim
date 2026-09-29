@@ -1036,8 +1036,8 @@ dps_results: {
 dps_results: {
  key: "TestBalance-Settings-Tauren-p3_alliance-Default-basic_p3-FullBuffs-LongMultiTarget"
  value: {
-  dps: 17701.4406
-  tps: 20011.36781
+  dps: 17700.65775
+  tps: 20010.58496
  }
 }
 dps_results: {
@@ -1057,8 +1057,8 @@ dps_results: {
 dps_results: {
  key: "TestBalance-Settings-Tauren-p3_alliance-Default-basic_p3-NoBuffs-LongMultiTarget"
  value: {
-  dps: 9310.80393
-  tps: 10521.28658
+  dps: 9305.75527
+  tps: 10516.23792
  }
 }
 dps_results: {
