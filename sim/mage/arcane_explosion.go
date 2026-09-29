@@ -13,8 +13,9 @@ func (mage *Mage) registerArcaneExplosionSpell() {
 		Flags:       SpellFlagMage | core.SpellFlagAPL,
 
 		ManaCost: core.ManaCostOptions{
-			BaseCost:   0.22,
-			Multiplier: core.TernaryFloat64(mage.HasMajorGlyph(proto.MageMajorGlyph_GlyphOfArcaneExplosion), .9, 1),
+			BaseCost: 0.22,
+			Multiplier: core.TernaryFloat64(mage.HasMajorGlyph(proto.MageMajorGlyph_GlyphOfArcaneExplosion), .9, 1) *
+				(1 - .01*float64(mage.Talents.ArcaneFocus)),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
@@ -22,11 +23,12 @@ func (mage *Mage) registerArcaneExplosionSpell() {
 			},
 		},
 
-		BonusHitRating:   float64(mage.Talents.ArcaneFocus) * 2 * core.SpellHitRatingPerHitChance,
-		BonusCritRating:  float64(mage.Talents.SpellImpact) * 2 * core.CritRatingPerCritChance,
-		DamageMultiplier: 1,
-		CritMultiplier:   mage.SpellCritMultiplier(1, mage.bonusCritDamage),
-		ThreatMultiplier: 1 - 0.2*float64(mage.Talents.ArcaneSubtlety),
+		BonusHitRating:           float64(mage.Talents.ArcaneFocus) * core.SpellHitRatingPerHitChance,
+		BonusCritRating:          float64(mage.Talents.WorldInFlames) * 2 * core.CritRatingPerCritChance,
+		DamageMultiplier:         1,
+		DamageMultiplierAdditive: spellModDamage(.02 * float64(mage.Talents.SpellImpact)),
+		CritMultiplier:           mage.SpellCritMultiplier(1, mage.bonusCritDamage),
+		ThreatMultiplier:         1 - 0.2*float64(mage.Talents.ArcaneSubtlety),
 
 		Direct: core.SpellEffect{Effect: 0, Min: 538, Max: 582, SP: 0.214},
 

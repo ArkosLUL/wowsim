@@ -35,10 +35,11 @@ func (mage *Mage) registerScorchSpell() {
 		BonusCritRating: 0 +
 			float64(mage.Talents.Incineration+mage.Talents.CriticalMass)*2*core.CritRatingPerCritChance +
 			float64(mage.Talents.ImprovedScorch)*1*core.CritRatingPerCritChance,
-		DamageMultiplierAdditive: 1 +
-			.02*float64(mage.Talents.SpellImpact) +
-			.02*float64(mage.Talents.FirePower) +
+		DamageMultiplierAdditive: spellModDamage(
+			.02*float64(mage.Talents.SpellImpact),
+			.02*float64(mage.Talents.FirePower),
 			core.TernaryFloat64(mage.HasMajorGlyph(proto.MageMajorGlyph_GlyphOfScorch), 0.2, 0),
+		),
 		CritMultiplier:   mage.SpellCritMultiplier(1, mage.bonusCritDamage),
 		ThreatMultiplier: 1 - 0.1*float64(mage.Talents.BurningSoul),
 

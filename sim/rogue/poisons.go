@@ -67,7 +67,10 @@ func gainRoguePoisonPresent(sim *core.Simulation, target *core.Unit) {
 }
 
 func loseRoguePoisonPresent(sim *core.Simulation, target *core.Unit) {
-	anyRoguePoisonAura(target).RemoveStack(sim)
+	// inactive when the iteration's end expired the marker before this poison
+	if aura := anyRoguePoisonAura(target); aura.IsActive() {
+		aura.RemoveStack(sim)
+	}
 }
 
 // deadlyPoisonAddsTicks is mod-spell-tweaks' spell_tweaks_deadly_poison_haste: with Murder, the

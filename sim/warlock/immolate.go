@@ -7,8 +7,16 @@ import (
 	"github.com/wowsims/wotlk/sim/core/proto"
 )
 
+// fireAndBrimstoneMultiplier is Fire and Brimstone on Incinerate and Chaos Bolt. Not a spell mod: a dummy
+// aura Unit::SpellPctDamageModsDone applies (AddPct) only while the target being hit has Immolate.
+func (warlock *Warlock) fireAndBrimstoneMultiplier(target *core.Unit) float64 {
+	if warlock.Talents.FireAndBrimstone == 0 || !warlock.Immolate.Dot(target).IsActive() {
+		return 1
+	}
+	return 1 + 0.02*float64(warlock.Talents.FireAndBrimstone)
+}
+
 func (warlock *Warlock) registerImmolateSpell() {
-	fireAndBrimstoneBonus := 0.02 * float64(warlock.Talents.FireAndBrimstone)
 	// The periodic tick takes the Spellstone bonus instead of the Firestone one the direct hit gets.
 	periodicOnlyMultiplier := spellModDamage(
 		0.03*float64(warlock.Talents.Aftermath),
@@ -50,20 +58,6 @@ func (warlock *Warlock) registerImmolateSpell() {
 		Dot: core.DotConfig{
 			Aura: core.Aura{
 				Label: "Immolate",
-				// Fire and Brimstone is SPELLMOD_DAMAGE (Player::ApplySpellMod), which multiplies onto
-				// whatever these spells' own DamageMultiplierAdditive already carries.
-				OnGain: func(aura *core.Aura, sim *core.Simulation) {
-					if warlock.Talents.ChaosBolt {
-						warlock.ChaosBolt.DamageMultiplierAdditive *= 1 + fireAndBrimstoneBonus
-					}
-					warlock.Incinerate.DamageMultiplierAdditive *= 1 + fireAndBrimstoneBonus
-				},
-				OnExpire: func(aura *core.Aura, sim *core.Simulation) {
-					if warlock.Talents.ChaosBolt {
-						warlock.ChaosBolt.DamageMultiplierAdditive /= 1 + fireAndBrimstoneBonus
-					}
-					warlock.Incinerate.DamageMultiplierAdditive /= 1 + fireAndBrimstoneBonus
-				},
 			},
 			NumberOfTicks: 5 + warlock.Talents.MoltenCore,
 			TickLength:    time.Second * 3,

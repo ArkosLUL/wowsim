@@ -406,11 +406,11 @@ Roll details the tables above don't show:
   instead of a raid-wide toggle on `serpent_sting.go`'s `OnGain`/`OnExpire`; no golden moved, since every
   suite is one hunter on one target, where "any hunter, any target" and "this hunter, this target" coincide.
 - **Closed (PAR-FU-2):** `hunter_test.go`'s `TestWildHuntStatInheritance` and `TestBeastMastery22PtPetTalents`
-  close the Cleanup (P8) gap below: a unit test, not a new golden suite, since a golden needs its own
-  `.results` file and WI agents don't run `dock.sh promote`. The first checks `pet.go`'s
+  close the Cleanup (P8) gap below with unit tests, not a new golden suite. The first checks `pet.go`'s
   `makeStatInheritance` int32 truncation at Wild Hunt rank 2 (63%/28%, past `FerocityTalents`' rank 1); the
-  second runs a real 22-point build (adding Wild Hunt rank 2, Owl's Focus and Great Stamina) through a short
-  sim, checking only that it doesn't panic.
+  second sims a legal 22-point ferocity build (`FerocityTalents` plus Bloodthirsty 2, Heart of the Phoenix,
+  Shark Attack 2 and Wild Hunt's rank 2), checking only that it runs without an error. The cross-review
+  replaced the item's build, which put 3 points in Owl's Focus, a 2-rank Cunning talent no wolf has.
 
 **Raid buffs, debuffs and racials** (`sim/core/{buffs,debuffs,consumes,racials}.go` against the capture)
 - Reading an amount off the capture (`SpellEffectInfo::CalcValue`): `basePoints`, plus
@@ -585,13 +585,17 @@ Roll details the tables above don't show:
   - Shadowstep's 36563 now reaches only its own classMask instead of every builder/finisher:
     `SPELLMOD_DAMAGE` +20% on Sinister Strike, Backstab, Ambush, Eviscerate, Hemorrhage, Ghostly Strike,
     Mutilate's main hand (not its off hand) and Envenom; `SPELLMOD_EFFECT1` +20% on Garrote's and Rupture's
-    tick roll only, read off `rogue.ShadowstepAura.IsActive()` before their AP part
+    tick roll only (truncated as `SpellEffectInfo::CalcValue` does, a cross-review fix), read off
+    `rogue.ShadowstepAura.IsActive()` before their AP part
     (`dot.Tick.AP*MeleeAttackPower()`, `ruptureAPDamage`) is added, not through `DamageMultiplier`, which
     would also scale that AP part.
   - Mutilate (`SpellEffects.cpp`'s `SPELLFAMILY_ROGUE` case): 48666 now casts the main hand (48665) before
     the off hand (48664, was reversed), and its 20% checks a shared `RoguePoisonPresent` aura
     (`poisons.go`), ref-counted across every rogue's Deadly Poison dot and Wound Poison debuff on the
-    target, any caster's, not just the mutilating rogue's own.
+    target, not just the mutilating rogue's own. Left open: the server's scan also counts a hunter's
+    Serpent and Scorpid Sting (DISPEL_POISON too), and `FullDebuffs` keeps a permanent Scorpid Sting on
+    every suite's target. Counting it needs the marker registered on the target ahead of that debuff: a
+    permanent aura activates during `auraTracker.reset`, which panics on an aura already active.
   - Goldens: Assassination's Average-Default -0.066% (AllItems rows -1.17% to +0.51%, mixed sign, from the
     MH-before-OH reorder shifting RNG draw order, not a systematic change; the poison check is the same two
     auras for one rogue, so the ref-count refactor alone moves nothing). Combat and Subtlety unchanged:
@@ -938,28 +942,30 @@ Roll details the tables above don't show:
   `DamageMultiplierAdditive` (`+= 0.2`/`-= 0.2`) instead of multiplying — a live bug, since Frostbolt,
   Fireball, Frostfire Bolt and Flamestrike already build that field via `spellModDamage(...)` (PAR-P8),
   so the toggle summed 20 points onto their existing product instead of taking 20% of it. Now
-  `*= 1.2`/`/= 1.2`.
-- **Fixed (PAR-FU-1):** Mirror Image's Frostbolt (59638) and Fire Blast (59637) cast with none of the
-  mage's spell mods (`DamageMultiplier: 1` flat), though `Unit::GetSpellModOwner` returns the mage for
-  a guardian's cast and `Player::ApplySpellMod`'s `temporaryPet` flag drops only charged mods, none of
-  these among them. The live spelldump's classMask decides what each id now takes:
-  - 59638 shares real Frostbolt's classMask (`[32,0,0]`) exactly: now takes the same
-    `DamageMultiplierAdditive` (Chilled to the Bone, Glyph of Frostbolt, Tempest Regalia 4pc),
-    cast-time cut (Improved/Empowered Frostbolt), `BonusCritRating` (Khadgar's Regalia 4pc) and
-    `CritMultiplier` (Ice Shards) real Frostbolt does; the effect-1 mods (Permafrost, Chilled to the
-    Bone's slow) were already applied.
-  - 59637's classMask (`[131074,0,0]`) overlaps real Fire Blast's bit (2) and Ice Lance's (131072) in
-    one word: takes Fire Power and Spell Impact (Fire Blast's own) plus Chilled to the Bone (Ice
-    Lance's only), and Fire Blast's own `BonusCritRating`/`CritMultiplier` (Critical Mass, Incineration,
-    spell crit damage).
+  `*= 1.2`/`/= 1.2`. Its `SpellFlagMage` sweep also reaches two spells its classMask doesn't, Deep Freeze
+  (`SPELLMOD_DAMAGE`) and Living Bomb's dot (55360, `SPELLMOD_DOT`); left as is, since no 71-point build
+  has Arcane Power with either.
+- **Fixed (PAR-FU-1, corrected by the wave L cross-review):** Mirror Image's Frostbolt (59638) and Fire
+  Blast (59637) cast with none of the mage's spell mods (`DamageMultiplier: 1` flat), though
+  `Unit::GetSpellModOwner` returns the mage for a guardian's cast. `Player::ApplySpellMod`'s
+  `temporaryPet` drops charged mods only from the cast-time call (`Unit::ModSpellCastTime`); the damage
+  and crit calls take them. Only spell mods reach the images: the mage's school crit (Critical Mass, aura
+  71) and meta gem crit damage (aura 163) stay on the mage. The spelldump's classMask decides the rest:
+  - 59638 shares real Frostbolt's classMask (`[32,0,0]`): Chilled to the Bone, Glyph of Frostbolt and
+    Tempest Regalia 4pc (damage), Improved/Empowered Frostbolt (cast time), Winter's Chill and Khadgar's
+    Regalia 4pc (crit), Ice Shards (crit damage). Its effect 0 is the damage, not a slow as on real
+    Frostbolt, so Permafrost's and Chilled to the Bone's `SPELLMOD_EFFECT1` flats cut it (PAR-DECL-1).
+  - 59637's classMask (`[131074,0,0]`) overlaps real Fire Blast's bit (2) and Ice Lance's (131072): Fire
+    Power, Spell Impact and Chilled to the Bone (damage), Incineration and Combustion's stacks (crit), Ice
+    Shards and Combustion (crit damage). Its hits don't feed Combustion.
   - Both hook `mage.ArcanePowerAura.ApplyOnGain`/`ApplyOnExpire` directly: `mage.OnSpellRegistered`'s
     owner-side hook never sees a pet's spells, registered instead on the pet's own `Initialize()`,
     safely after `ApplyTalents()` built the aura (`Environment.initialize` runs `applyCharacterEffects`
     for every player before the `Initialize()` loop that covers pets).
-  - Improved Fire Blast's cooldown reduction does **not** reach 59637 despite the classMask overlap:
-    `TestServerDataConflicts` caught it (`Sim: 7000`/`8000` vs `Server: 6000` for "Arcane"/"Arcane with
-    every talent"), so 59637 keeps its flat 6 s. Not filed as a retail deviation: no server code read
-    explains the miss, only the declaration test's conflict.
+  - Improved Fire Blast's classMask (`[2,0,0]`) does reach 59637, but `npc_pet_mage_mirror_image`
+    (`pet_mage.cpp`) retries Fire Blast only every 6.5 s, past any cooldown the talent leaves, so 59637
+    keeps its flat 6 s. `TestServerDataConflicts`' 6000 ms, which the item cited, is only the unmodded DBC
+    cooldown.
   - Fire Blast's own `DamageMultiplierAdditive` (`fire_blast.go`) summed Spell Impact and Fire Power,
     the same bug PAR-P8 already fixed for Fireball/Frostfire/Flamestrike; fixed alongside, since Mirror
     Image's copy needed the correct product.
@@ -968,6 +974,18 @@ Roll details the tables above don't show:
     +1.147%), Frost +0.613% (+0.179% to +20.258%), FrostFire +0.210% (+0.113% to +0.447%). The
     double-digit `_aoe` rows are real, not noise: `frost_aoe` casts an unregistered Blizzard rank (Mage
     findings, above) so it deals almost only pet damage, and Mirror Image now hits much harder.
+- **Fixed (wave L cross-review):** the rest of the mage's spell-mod reach, decoded against the spelldump:
+  - Winter's Chill's second effect is +1% crit a rank on Frostbolt (`[32,0,0]`); the sim had only its
+    debuff.
+  - Scorch and Blast Wave still summed Spell Impact, Fire Power and Glyph of Scorch.
+  - Spell Impact (`[0x20021213,0x40,0]`) reaches Arcane Blast, Arcane Explosion, Blast Wave, Fire Blast,
+    Fireball, Ice Lance and Scorch, never Flamestrike (0x4): Flamestrike's hit took it, Ice Lance didn't.
+  - Arcane Explosion took Spell Impact as +2% crit a rank and Arcane Focus as +2% hit a rank; now it takes
+    Spell Impact's damage, World in Flames' crit, and Arcane Focus's 1% hit and 1% cost a rank.
+  - Blizzard takes World in Flames' crit.
+  - Goldens (Average-Default): Arcane -0.012% and Fire/FrostFire -0.03% (the images losing Critical Mass
+    and the meta gem), Frost +1.382% (Winter's Chill, Ice Lance); `arcane_aoe` and `fire_aoe` rows
+    -0.4% to +2.9% (Arcane Explosion, Flamestrike).
 
 **Warlock** (`TestAffliction`, `TestDemonology`, `TestDestruction`, code)
 - Pet crit follows the generic fix (Pets, above): every demon and the infernal move from a
@@ -1089,15 +1107,14 @@ Roll details the tables above don't show:
     hits). No sim/warlock formula bug survives this comparison beyond what the code stage already fixed.
 - **Fixed (PAR-FU-1):** Fire and Brimstone's runtime toggle (`immolate.go`'s `OnGain`/`OnExpire`), the
   wave K cross-review's open item, added its bonus straight onto Chaos Bolt's and Incinerate's
-  `DamageMultiplierAdditive` (`+=`/`-=`) instead of multiplying. `Unit::SpellDamageBonusDone`'s
-  `SPELLFAMILY_WARLOCK` case (`Unit.cpp:8768-8778`) places it: the talent's classMask
-  (`familyFlags[1] & 0x00020040` = Incinerate's word-2 bit `0x40` plus Chaos Bolt's `0x20000`) gates a
-  caster `DUMMY` aura's `AddPct(DoneTotalMod, amount)` on `victim->HasAuraState(AURA_STATE_CONFLAGRATE)`
-  — Immolate on the target, the sim's existing gate — and `AddPct` is `base += base*pct/100`,
-  multiplicative against whatever `DoneTotalMod` holds. Both spells' static terms already go through
-  `DamageMultiplier` (`spellModDamage(...)`, PAR-DECL-1), leaving `DamageMultiplierAdditive` at its
-  default of 1 untouched by anything else, so `+=`/`-=` and `*=`/`/=` coincide today; fixed anyway, on
-  principle and against a future second mod on either field. `dock.sh delta`: 3 of 3 suites unchanged.
+  `DamageMultiplierAdditive` (`+=`/`-=`) instead of multiplying. `Unit::SpellPctDamageModsDone`'s
+  `SPELLFAMILY_WARLOCK` case places it: the talent's classMask (`familyFlags[1] & 0x00020040` =
+  Incinerate's word-2 bit `0x40` plus Chaos Bolt's `0x20000`) gates a caster `DUMMY` aura's
+  `AddPct(DoneTotalMod, amount)` on `victim->HasAuraState(AURA_STATE_CONFLAGRATE)`, Immolate on the target
+  being hit, multiplicative against whatever `DoneTotalMod` holds. The item's toggle multiplied but kept
+  its gate, the warlock's Immolate on any target, compounding once per Immolated target; the cross-review
+  moved it into both spells' damage (`fireAndBrimstoneMultiplier`), checked per target. Golden-neutral:
+  every suite's Immolate sits on the one target the warlock hits.
   - The talent's other effect (idx1, `SPELLMOD_CRITICAL_CHANCE`, classMask `[0,8388608,0]` = Conflagrate
     alone, 5%/rank) is unconditional — no `AURA_STATE_CONFLAGRATE` gate; the dummy-aura branch above
     only reads a different aura's `SpellIconID == 3173` — and already correct in `conflagrate.go`'s
@@ -1266,11 +1283,12 @@ Roll details the tables above don't show:
   - Improved Chain Heal (30872/30873) reaches Chain Heal (`[256,0,0]`) alone; `heals.go` summed it with
     Purification.
   - Purification (16178-16213) and Restorative Totems (16187-16206) aren't `SPELLMOD_DAMAGE`/`DOT` at
-    all (aura 136 `MOD_HEALING_DONE_PERCENT`; aura 108 miscValue 8 `SPELLMOD_ALL_EFFECTS`) — a
-    different mechanism than `Player::ApplySpellMod`'s sweep, but `Unit::SpellHealingBonusDone`
-    multiplies its own aura list the same way (`DoneTotalMod *= (100+amount)/100`), so the fix is the
-    same: `heals.go`'s Chain Heal and `totems.go`'s Healing Stream Totem heal both summed Purification
-    with the spell's other term.
+    all, but multiply too: Purification is aura 136 `MOD_HEALING_DONE_PERCENT`, which
+    `Unit::SpellPctHealingModsDone` multiplies into `DoneTotalMod`; Restorative Totems' Healing Stream
+    bonus is its dummy effect (idx1, 15% a rank), which `spell_sha_healing_stream_totem` adds with
+    `AddPct` after `SpellHealingBonusDone` (its `SPELLMOD_ALL_EFFECTS` effect reaches only Mana Spring,
+    `[0x4000,0,0]`). `heals.go`'s Chain Heal and `totems.go`'s Healing Stream Totem heal both summed
+    Purification with the spell's other term.
   - Nine files now build the affected `DamageMultiplier` (or the dot-only ratio) through a new
     `spellModDamage(bonuses...)` helper (`talents.go`, mirroring `sim/paladin`'s), `(1+a)*(1+b)*...`.
   - Goldens (`dock.sh delta`, Average-Default): Elemental -0.471% (183 `AllItems` rows, -1.248% to

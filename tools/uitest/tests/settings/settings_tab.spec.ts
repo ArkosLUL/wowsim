@@ -1,6 +1,6 @@
 import { expect, type Page, test } from '@playwright/test';
 
-import { openSimTab, watchForErrors } from '../lib/page';
+import { openSimTab, SPECS, watchForErrors } from '../lib/page';
 import {
 	acceptDialogs,
 	changeEverything,
@@ -507,3 +507,15 @@ test('a saved encounter shows on every spec page', async ({ page }) => {
 	await openSettings(page, 'warlock');
 	await expect(savedData(settingsTab(page), 'Saved Encounters').chip('Shared boss')).toHaveCount(1);
 });
+
+const ALLIANCE_RACES = ['Draenei', 'Dwarf', 'Gnome', 'Human', 'Night Elf'];
+
+// every spec's default gear is an Alliance-built BiS preset
+for (const spec of SPECS) {
+	test(`a fresh ${spec} page takes the first Alliance race it offers`, async ({ page }) => {
+		await openSettings(page, spec);
+		const race = select(settingsTab(page).locator('.player-settings'), 'Race');
+		const offered = await race.locator('option').allTextContents();
+		await expect(race.locator('option:checked')).toHaveText(offered.find(name => ALLIANCE_RACES.includes(name))!);
+	});
+}

@@ -52,7 +52,7 @@ func (warlock *Warlock) registerChaosBoltSpell() {
 		},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()
+			baseDamage := (spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()) * warlock.fireAndBrimstoneMultiplier(target)
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMagicCrit)
 			spell.DealDamageAfterTravel(sim, result)
 		},

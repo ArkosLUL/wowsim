@@ -77,7 +77,7 @@ class by simval.
   needs two daggers, and rogue off-hand strikes an off-hand weapon.
 - **Damage mods:** percent `SPELLMOD_DAMAGE` and `SPELLMOD_DOT` mods from talents, glyphs, set pieces and
   procs multiply (`Player::ApplySpellMod`; other ops' percents add). Class spells stack them through
-  `spellModDamage`; `sim/shaman`'s still add. A holy spell dealing weapon damage (seal procs, judgements)
+  `spellModDamage`. A holy spell dealing weapon damage (seal procs, judgements)
   skips physical percent mods such as Two-Handed Weapon Specialization: `Spell::EffectWeaponDmg` and
   `Unit::MeleeDamageBonusDone` match auras by school.
 - **Armor debuffs:** Sunder ×5 (debuff 58567, not ability 47467) and Expose Armor don't stack. Faerie
@@ -132,8 +132,9 @@ spell is only as right as its id.
   weapon percent against the server's; school and missile speed sync like timing. A class spell with server
   damage but no declaration goes on its class's `serverdata_undeclared.go`, and `TestServerDataConflicts`
   fails on a missing or stale entry. Declaring:
-  - A pet's or guardian's spell takes its owner's spell mods where the class mask matches
-    (`Unit::GetSpellModOwner`).
+  - A pet's or guardian's spell takes its owner's spell mods (auras 107/108) where the class mask matches
+    (`Unit::GetSpellModOwner`), charged ones too except on a guardian's cast time. The owner's other auras
+    don't reach it, e.g. school crit (71) or a meta gem's crit damage (163).
   - A physical strike's fixed bonus takes its hand's TOTAL_PCT, 0.5 in the off hand; other schools don't
     (`Spell::EffectWeaponDmg`). The sim's helpers: `sim/{deathknight,rogue,warrior}/weapon_strikes.go`.
   - Damage a script hands over (`CastCustomSpell`) is dealt exactly, with no roll.

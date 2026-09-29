@@ -470,6 +470,12 @@ func (mage *Mage) registerCombustionCD() {
 	numCrits := 0
 	const critPerStack = 10 * core.CritRatingPerCritChance
 
+	// Mirror Image's Fire Blast takes both Combustion mods through the mage (Unit::GetSpellModOwner), but
+	// its hits neither add stacks nor count toward the three crits
+	imageCombCritMult := func() float64 {
+		return mage.mirrorImage.fireblastCritMultiplier(.5) / mage.mirrorImage.fireblastCritMultiplier(0)
+	}
+
 	mage.CombustionAura = mage.RegisterAura(core.Aura{
 		Label:     "Combustion",
 		ActionID:  actionID,
@@ -480,6 +486,7 @@ func (mage *Mage) registerCombustionCD() {
 			for _, spell := range fireSpells {
 				spell.CritMultiplier *= core.TernaryFloat64(spell != mage.FrostfireBolt, fireCombCritMult, frostfireCombCritMult)
 			}
+			mage.mirrorImage.Fireblast.CritMultiplier *= imageCombCritMult()
 		},
 		OnExpire: func(aura *core.Aura, sim *core.Simulation) {
 			cd.Use(sim)
@@ -487,12 +494,14 @@ func (mage *Mage) registerCombustionCD() {
 			for _, spell := range fireSpells {
 				spell.CritMultiplier /= core.TernaryFloat64(spell != mage.FrostfireBolt, fireCombCritMult, frostfireCombCritMult)
 			}
+			mage.mirrorImage.Fireblast.CritMultiplier /= imageCombCritMult()
 		},
 		OnStacksChange: func(aura *core.Aura, sim *core.Simulation, oldStacks int32, newStacks int32) {
 			bonusCrit := critPerStack * float64(newStacks-oldStacks)
 			for _, spell := range fireSpells {
 				spell.BonusCritRating += bonusCrit
 			}
+			mage.mirrorImage.Fireblast.BonusCritRating += bonusCrit
 		},
 		OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
 			if !spell.SpellSchool.Matches(core.SpellSchoolFire) || !spell.Flags.Matches(SpellFlagMage) {

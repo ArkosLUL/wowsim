@@ -140,6 +140,7 @@ func (mi *MirrorImage) registerFrostboltSpell() {
 		},
 
 		BonusCritRating: 0 +
+			float64(talents.WintersChill)*core.CritRatingPerCritChance +
 			core.TernaryFloat64(mage.HasSetBonus(ItemSetKhadgarsRegalia, 4), 5*core.CritRatingPerCritChance, 0),
 		DamageMultiplier: 1,
 		// images cast with the mage's spell mods and share Frostbolt's class mask (Unit::GetSpellModOwner),
@@ -149,7 +150,8 @@ func (mi *MirrorImage) registerFrostboltSpell() {
 			core.TernaryFloat64(mage.HasMajorGlyph(proto.MageMajorGlyph_GlyphOfFrostbolt), .05, 0),
 			core.TernaryFloat64(mage.HasSetBonus(ItemSetTempestRegalia, 4), .05, 0),
 		),
-		CritMultiplier:   mage.SpellCritMultiplier(1, mage.bonusCritDamage+float64(talents.IceShards)/3),
+		// the image's own multiplier: the meta gem's crit damage aura sits on the mage, not the image
+		CritMultiplier:   mi.SpellCritMultiplier(1, mage.bonusCritDamage+float64(talents.IceShards)/3),
 		ThreatMultiplier: 1,
 
 		Direct: core.SpellEffect{Effect: 0, Min: 163, Max: 169, SP: 0.3},
@@ -201,24 +203,24 @@ func (mi *MirrorImage) registerFireblastSpell() {
 			},
 			CD: core.Cooldown{
 				Timer: mi.NewTimer(),
-				// Server data pins 59637's cooldown at a flat 6 s regardless of Improved Fire Blast
-				// (TestServerDataConflicts, Sim 7000/8000 vs Server 6000): unlike the real Fire Blast,
-				// this one doesn't take the talent's cooldown reduction.
+				// Improved Fire Blast does reach 59637's class mask, but npc_pet_mage_mirror_image only
+				// retries Fire Blast every 6.5 s, so a shorter cooldown never shows
 				Duration: time.Second * 6,
 			},
 		},
 
-		BonusCritRating: 0 +
-			float64(talents.CriticalMass+talents.Incineration)*2*core.CritRatingPerCritChance,
+		// Critical Mass is a school crit aura on the mage (SPELL_AURA_MOD_SPELL_CRIT_CHANCE_SCHOOL), not a
+		// spell mod, so it doesn't reach the image
+		BonusCritRating:  float64(talents.Incineration) * 2 * core.CritRatingPerCritChance,
 		DamageMultiplier: 1,
 		// 59637's class mask (Unit::GetSpellModOwner) overlaps both the real Fire Blast's (Fire Power,
-		// Spell Impact) and Ice Lance's (Chilled to the Bone)
+		// Spell Impact) and Ice Lance's (Chilled to the Bone, Ice Shards)
 		DamageMultiplierAdditive: spellModDamage(
 			.02*float64(talents.SpellImpact),
 			.02*float64(talents.FirePower),
 			.01*float64(talents.ChilledToTheBone),
 		),
-		CritMultiplier:   mage.SpellCritMultiplier(1, mage.bonusCritDamage),
+		CritMultiplier:   mi.fireblastCritMultiplier(0),
 		ThreatMultiplier: 1,
 
 		Direct: core.SpellEffect{Effect: 0, Min: 88, Max: 98, SP: 0.15},
@@ -239,4 +241,11 @@ func (mi *MirrorImage) registerFireblastSpell() {
 			fireblast.DamageMultiplierAdditive /= 1.2
 		})
 	}
+}
+
+// fireblastCritMultiplier is 59637's crit multiplier with extra crit damage on top (Combustion's).
+// The image's own, since the meta gem's crit damage aura sits on the mage.
+func (mi *MirrorImage) fireblastCritMultiplier(extra float64) float64 {
+	mage := mi.mageOwner
+	return mi.SpellCritMultiplier(1, mage.bonusCritDamage+float64(mage.Talents.IceShards)/3+extra)
 }

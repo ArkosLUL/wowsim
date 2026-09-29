@@ -32,6 +32,7 @@ func (mage *Mage) registerFrostboltSpell() {
 		},
 
 		BonusCritRating: 0 +
+			float64(mage.Talents.WintersChill)*core.CritRatingPerCritChance +
 			core.TernaryFloat64(mage.HasSetBonus(ItemSetKhadgarsRegalia, 4), 5*core.CritRatingPerCritChance, 0),
 		DamageMultiplierAdditive: spellModDamage(
 			.01*float64(mage.Talents.ChilledToTheBone),

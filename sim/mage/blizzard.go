@@ -31,6 +31,7 @@ func (mage *Mage) registerBlizzardSpell() {
 		SpellSchool:      core.SpellSchoolFrost,
 		ProcMask:         core.ProcMaskSpellDamage,
 		Flags:            SpellFlagMage,
+		BonusCritRating:  float64(mage.Talents.WorldInFlames) * 2 * core.CritRatingPerCritChance,
 		CritMultiplier:   mage.SpellCritMultiplier(1, mage.bonusCritDamage+float64(mage.Talents.IceShards)/3),
 		DamageMultiplier: 1,
 		ThreatMultiplier: 1 - (0.1/3)*float64(mage.Talents.FrostChanneling),

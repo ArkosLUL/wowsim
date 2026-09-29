@@ -71,26 +71,25 @@ func TestSV(t *testing.T) {
 	}))
 }
 
-// beastMastery22PtPetTalents spends Beast Mastery's full 22 pet talent points; the suites'
-// FerocityTalents below spends 16, so no golden reaches Wild Hunt's rank 2, Owl's Focus or Great
-// Stamina.
+// a legal ferocity build with all 22 points Beast Mastery gives on this server. The suites'
+// FerocityTalents spend 16, so no golden reaches Bloodthirsty, Heart of the Phoenix, Shark Attack or
+// Wild Hunt's rank 2.
 var beastMastery22PtPetTalents = &proto.HunterPetTalents{
-	CobraReflexes:  2,
-	Dive:           true,
-	SpikedCollar:   3,
-	BoarsSpeed:     true,
-	CullingTheHerd: 3,
-	SpidersBite:    3,
-	Rabid:          true,
-	CallOfTheWild:  true,
-	WildHunt:       2,
-	OwlsFocus:      3,
-	GreatStamina:   2,
+	CobraReflexes:     2,
+	Dive:              true,
+	Bloodthirsty:      2,
+	HeartOfThePheonix: true,
+	SpikedCollar:      3,
+	BoarsSpeed:        true,
+	CullingTheHerd:    3,
+	SpidersBite:       3,
+	Rabid:             true,
+	CallOfTheWild:     true,
+	SharkAttack:       2,
+	WildHunt:          2,
 }
 
-// TestBeastMastery22PtPetTalents is a coverage-only unit test, not a new golden suite: a golden-diffing
-// suite needs its own .results file, and WI agents don't run dock.sh promote. It checks the pet
-// survives a full-points build (no nil deref or index panic at the higher ranks).
+// only checks that a full 22-point pet sims without an error
 func TestBeastMastery22PtPetTalents(t *testing.T) {
 	player := &proto.Player{
 		Race:          proto.Race_RaceOrc,
@@ -122,9 +121,8 @@ func TestBeastMastery22PtPetTalents(t *testing.T) {
 	}
 }
 
-// TestWildHuntStatInheritance checks pet.go's makeStatInheritance directly against the int32
-// truncation the investigation flagged: staminaPct is 45+45*20*wildHunt/100, apPct 22+22*15*wildHunt/100.
-// FerocityTalents only reaches rank 1 (54/25); Beast Mastery's 22-point cap reaches rank 2 (63/28).
+// makeStatInheritance truncates Wild Hunt's share to whole percents: stamina 45+45*20*rank/100, AP
+// 22+22*15*rank/100. The suites only reach rank 1 (54/25); rank 2 is 63/28.
 func TestWildHuntStatInheritance(t *testing.T) {
 	ownerStats := stats.Stats{
 		stats.Stamina:           1000,

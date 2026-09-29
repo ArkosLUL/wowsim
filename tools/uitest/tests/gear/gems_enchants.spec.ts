@@ -206,9 +206,6 @@ test('the meta gem turns off while its colours are missing, and back on', async 
 });
 
 test('blacksmithing opens the extra wrist and hands sockets, and their gems count only while it is known', async ({ page }) => {
-	// since the warrior BiS preset rework (b5e56c479): the picked extra-socket gem never
-	// shows up in the character stats, on an idle machine too, so it's not a timing issue
-	test.fixme();
 	await openGear(page);
 	const db = await loadDb(page);
 	const extra = (slot: 'wrist' | 'hands') => picker(page, slot).locator('.gem-socket-container').last();
@@ -232,7 +229,8 @@ test('blacksmithing opens the extra wrist and hands sockets, and their gems coun
 	const dialog = await openPicker(page, 'hands');
 	const tab = await showTab(dialog, extraTab);
 	const counts = await summaryCounts(page);
-	const gem = plainGems(db, await rowIds(tab)).find(g => !(g.name in counts))!;
+	// a gem with the replaced one's stats wouldn't move the panel
+	const gem = plainGems(db, await rowIds(tab)).find(g => !(g.name in counts) && minus(g.stats, replaced).some(v => v != 0))!;
 	const before = await readStats(page);
 	await equipRow(tab, gem.id);
 	await closePicker(page);

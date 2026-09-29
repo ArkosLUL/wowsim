@@ -51,6 +51,7 @@ func (warlock *Warlock) registerIncinerateSpell() {
 				baseDamage += baseDamage / 4
 			}
 			baseDamage += spell.Direct.SP * spell.SpellPower()
+			baseDamage *= warlock.fireAndBrimstoneMultiplier(target)
 
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 			spell.DealDamageAfterTravel(sim, result)

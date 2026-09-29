@@ -75,8 +75,8 @@ func (rogue *Rogue) registerRupture() {
 				attackTable := dot.Spell.Unit.AttackTables[target.UnitIndex]
 				// spell_rog_rupture adds its attack power part after SpellDamageBonusDone, so none of the
 				// caster's damage modifiers reach that part; Shadowstep's SPELLMOD_EFFECT1 (shadowstep.go)
-				// scales the base points below, before that split
-				tick := (dot.Tick.Roll(sim) + 18*float64(comboPoints)) * core.TernaryFloat64(rogue.ShadowstepAura.IsActive(), 1.2, 1)
+				// scales the base points below, truncated by CalcValue, before that split
+				tick := math.Floor((dot.Tick.Roll(sim) + 18*float64(comboPoints)) * core.TernaryFloat64(rogue.ShadowstepAura.IsActive(), 1.2, 1))
 				dot.SnapshotBaseDamage = math.Floor(tick*dot.Spell.AttackerDamageMultiplier(attackTable)) + rogue.ruptureAPDamage(comboPoints)
 				dot.SnapshotAttackerMultiplier = 1
 				dot.SnapshotCritChance = dot.Spell.PhysicalCritChance(attackTable)
