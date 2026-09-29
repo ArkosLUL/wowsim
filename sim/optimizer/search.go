@@ -181,8 +181,11 @@ func boolIndex(b bool) int {
 }
 
 // contenders are the measured items that survive pruning, keyed as effects, with the middle of their
-// bounds: the residuals worth measuring again at full iterations.
+// bounds over the curves alone (see curveBox): the residuals worth measuring again at full
+// iterations, and the order to measure them in.
 func (se *searcher) contenders() map[effectKey]float64 {
+	lo, hi := se.s.curveBox()
+	gb := se.s.newGemBounds(lo, hi)
 	out := map[effectKey]float64{}
 	for _, group := range se.groups() {
 		for _, o := range group.opts {
@@ -190,8 +193,9 @@ func (se *searcher) contenders() map[effectKey]float64 {
 			if _, measured := se.s.items[fam][o.cand.Item.ID]; !measured || o.ub < group.threshold {
 				continue
 			}
+			lb, ub, _ := se.s.candBounds(group.slot, o.cand, lo, hi, gb)
 			k := effectKey{effectItem, fam, o.cand.Item.ID}
-			out[k] = max(out[k], (o.lb+o.ub)/2)
+			out[k] = max(out[k], (lb+ub)/2)
 		}
 	}
 	return out

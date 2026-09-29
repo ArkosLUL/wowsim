@@ -511,13 +511,20 @@ func (s *surrogate) regime(total stats.Stats) uint64 {
 	return key
 }
 
-// slopeBox is the smallest and largest slope each stat's curve has, for bounds that hold wherever
-// the rest of the gear puts the totals.
-func (s *surrogate) slopeBox() (lo, hi stats.Stats) {
+// curveBox is the smallest and largest slope each stat's curve has, without the floor and ceiling
+// penalties. It ranks what's worth a sim; it isn't safe to prune by once a floor or ceiling is set.
+func (s *surrogate) curveBox() (lo, hi stats.Stats) {
 	for _, st := range s.curved {
 		c := s.curves[st]
 		lo[st], hi[st] = slices.Min(c.slope), slices.Max(c.slope)
 	}
+	return lo, hi
+}
+
+// slopeBox is curveBox widened by the floor and ceiling penalties, for bounds that hold wherever
+// the rest of the gear puts the totals.
+func (s *surrogate) slopeBox() (lo, hi stats.Stats) {
+	lo, hi = s.curveBox()
 	for i := range s.floors {
 		f := &s.floors[i]
 		// items that help reach a floor are never pruned, and a stat that pulls away from one costs
@@ -1447,8 +1454,8 @@ const (
 
 // trimToBudget keeps as many variants as fit in budget iterations. Families with a handful of item
 // variants, and families of enchants, gems and sets, keep them all; the rest keep the same fraction
-// each, best prior first. The variants cut and never measured are marked missing, so the search
-// leaves them alone.
+// each, best prior first, plus every variant with a +Inf prior. The variants cut and never measured
+// are marked missing, so the search leaves them alone.
 func (r *run) trimToBudget(families []*effectFamily, fx *effects, iterations int, budget float64) []*effectFamily {
 	cost := 0.0
 	for _, f := range families {
@@ -1479,6 +1486,10 @@ func (r *run) trimToBudget(families []*effectFamily, fx *effects, iterations int
 			}
 			return 0
 		})
+		// +Inf is the seed's own item: kept whatever the budget, so the search can rebuild the seed
+		for keep < len(order) && math.IsInf(f.prior[order[keep]], 1) {
+			keep++
+		}
 		kept := map[int]bool{}
 		for _, i := range order[:keep] {
 			kept[i] = true
@@ -1624,6 +1635,12 @@ func describeKey(k effectKey) string {
 	return fmt.Sprintf("item %d", k.id)
 }
 
+// hasResidual is whether item id in family slot has a measured residual the search may use.
+func (s *surrogate) hasResidual(slot proto.ItemSlot, id int32) bool {
+	_, ok := s.items[slot][id]
+	return ok && !s.unpriced[slot][id]
+}
+
 // applyEffects takes the measured residuals into the surrogate. Main-hand weapons that had to empty
 // the seed's off hand get back what that off hand was worth, so every main hand counts from the same
 // place. Anything a family should have priced but didn't is unpriced.
@@ -1675,6 +1692,11 @@ func (s *surrogate) applyEffects(fx *effects) {
 	for i, k := range fx.pairList {
 		est, ok := fx.raw[effectKey{effectPair, k.slot, int32(i)}]
 		if !ok {
+			continue
+		}
+		if !s.hasResidual(k.slot, k.a) || !s.hasResidual(k.slot, k.b) {
+			// with an item unpriced, the correction would soak up that item's whole worth
+			delete(s.pairs, k)
 			continue
 		}
 		a, b := s.items[k.slot][k.a], s.items[k.slot][k.b]
@@ -1836,10 +1858,14 @@ func (s *surrogate) keepMeta(base Loadout) int32 {
 // sim for are marked missing in fx.
 func (r *run) effectFamilies(s *surrogate, v stats.Stats, gp *gemPlan, fx *effects) []*effectFamily {
 	p, seed := s.pool, s.seed
+	// dominatedWeapons prunes, so it gets the box that holds under floors and ceilings. Ranking uses
+	// the curves alone: that box's +Inf slopes would tie every item that helps reach a floor.
 	lo, hi := s.slopeBox()
 	gb := s.newGemBounds(lo, hi)
+	rankLo, rankHi := s.curveBox()
+	rankGB := s.newGemBounds(rankLo, rankHi)
 	statLB := func(slot proto.ItemSlot, cand *Candidate) float64 {
-		lb, _ := s.candStatBounds(slot, cand, lo, hi, gb)
+		lb, _ := s.candStatBounds(slot, cand, rankLo, rankHi, rankGB)
 		return lb
 	}
 	prior := func(slot proto.ItemSlot, cand *Candidate) float64 {
@@ -1850,7 +1876,7 @@ func (r *run) effectFamilies(s *surrogate, v stats.Stats, gp *gemPlan, fx *effec
 		if dps := weaponDPS(&cand.Item); dps > 0 {
 			return dps
 		}
-		_, ub := s.candStatBounds(slot, cand, lo, hi, gb)
+		_, ub := s.candStatBounds(slot, cand, rankLo, rankHi, rankGB)
 		return float64(cand.Catalog.GetProgressionTier())*1e6 + ub
 	}
 	quick := func(slot proto.ItemSlot, cand *Candidate, base Loadout) ItemChoice {

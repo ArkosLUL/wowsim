@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"slices"
 	"strings"
 	"testing"
 
@@ -405,4 +406,69 @@ func TestHunterHasteCeilingNeverBindsARealisticPool(t *testing.T) {
 		t.Errorf("with the caps on, MeleeHaste is %.1f, over its ceiling of %.1f", got, ceiling)
 	}
 	t.Logf("hunter p5: MeleeHaste %.1f unconstrained, %.1f with the caps on, ceiling %.1f", without[stats.MeleeHaste], with[stats.MeleeHaste], ceiling)
+}
+
+// With a hit floor the seed already meets, the effects budget ranks every other item by a finite
+// prior, and a tight budget still keeps the seed's own items priced so the search can rebuild it.
+func TestTrimToBudgetKeepsTheSeedPricedUnderAFloor(t *testing.T) {
+	r, err := PrepareRequest(realCapRequest(t, "fury_p1", 1, true))
+	if err != nil {
+		t.Fatal(err)
+	}
+	pool, err := CompilePool(r)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp := Response{
+		stats.Strength:         {Stat: stats.Strength, SlopeBelow: 2.5, SlopeAbove: 2.5},
+		stats.Agility:          {Stat: stats.Agility, SlopeBelow: 1.5, SlopeAbove: 1.5},
+		stats.AttackPower:      {Stat: stats.AttackPower, SlopeBelow: 1, SlopeAbove: 1},
+		stats.MeleeHit:         {Stat: stats.MeleeHit, SlopeBelow: 3.5, SlopeAbove: 0},
+		stats.MeleeCrit:        {Stat: stats.MeleeCrit, SlopeBelow: 2, SlopeAbove: 2},
+		stats.MeleeHaste:       {Stat: stats.MeleeHaste, SlopeBelow: 1.5, SlopeAbove: 1.5},
+		stats.Expertise:        {Stat: stats.Expertise, SlopeBelow: 3, SlopeAbove: 3},
+		stats.ArmorPenetration: {Stat: stats.ArmorPenetration, SlopeBelow: 2, SlopeAbove: 2},
+	}
+	s := newSurrogate(pool, r.Seed, resp)
+	seedSheet, err := pool.finalStats(r.Seed)
+	if err != nil {
+		t.Fatal(err)
+	}
+	floor := []*proto.StatMinimum{{Stat: proto.Stat_StatMeleeHit, MinValue: seedSheet[stats.MeleeHit]}}
+	if err := s.setFloors(floor, statsOf(resp)); err != nil {
+		t.Fatal(err)
+	}
+
+	rn := &run{asked: r, r: r, pool: pool, eval: &countingEvaluator{have: map[Point]int{}}, total: math.MaxInt64 / 2}
+	v := s.slopes(s.seedStats)
+	fx := &effects{raw: map[effectKey]Estimate{}, missing: map[effectKey]bool{}, pairBase: map[proto.ItemSlot]Loadout{}}
+	families := rn.effectFamilies(s, v, s.newGemPlan(v), fx)
+
+	seedItems := map[int32]bool{}
+	for _, c := range r.Seed.Items {
+		seedItems[c.ItemID] = true
+	}
+	const iterations = 1000
+	cost := 0.0
+	for _, f := range families {
+		for i, k := range f.keys {
+			if k.kind == effectItem && !seedItems[k.id] && math.IsInf(f.prior[i], 0) {
+				t.Errorf("%s: item %d isn't the seed's, but its prior is %v", f.name, k.id, f.prior[i])
+			}
+		}
+		cost += float64(rn.eval.cost(pool.familyPoints(f.base, f.variants, f.matched), iterations))
+	}
+
+	kept := rn.trimToBudget(families, fx, iterations, 0.01*cost)
+	for slot, c := range r.Seed.Items {
+		if !itemNeedsSim(c.ItemID) || pool.Locked[slot] {
+			continue
+		}
+		k := effectKey{effectItem, familySlot(proto.ItemSlot(slot)), c.ItemID}
+		_, measured := fx.raw[k]
+		simmed := slices.ContainsFunc(kept, func(f *effectFamily) bool { return slices.Contains(f.keys, k) })
+		if fx.missing[k] || !measured && !simmed {
+			t.Errorf("the seed's %s, item %d, was cut from the effects budget", proto.ItemSlot(slot), c.ItemID)
+		}
+	}
 }

@@ -1305,20 +1305,23 @@ captured 7; a contended machine slowed the other 5 but they all finished here): 
 its floor(s), fire_mage's haste stays well under its ceiling both times, and J moves the way stage 1 already
 described.
 
-| case | effort | J_preset | J_opt | delta | caps (pick/floor or ceiling) |
-|---|---|---|---|---|---|
-| fury_p1 | Quick | 8725.1 | 8622.9 | -102.2±2.8 | MeleeHit 264/floor 262, Expertise 212/floor 212 |
-| fury_p1 | Normal | 8725.1 | 8965.3 | +240.2±3.0 | MeleeHit 279/floor 262, Expertise 221/floor 212 |
-| combat_rogue_p3 | Quick | 10730.8 | 10926.5 | +195.7±2.2 | MeleeHit 712/floor 263, Expertise 219/floor 212 |
-| combat_rogue_p3 | Normal | 10730.8 | 11610.1 | +879.3±2.1 | MeleeHit 679/floor 263, Expertise 214/floor 212 |
-| fire_mage_p3 | Quick | 5066.6 | 4980.6 | -86.1±1.3 | SpellHit 376/floor 368, haste 664/ceiling 1269 |
-| fire_mage_p3 | Normal | 5066.6 | 5116.1 | +49.4±1.5 | not logged (stage 1's run) |
-| retribution_p4 | Quick | 12963.8 | 12963.8 | +0.0±0.0 | MeleeHit 266/floor 262, Expertise 146/floor 130 |
-| retribution_p4 | Normal | 12963.8 | 13195.7 | +231.9±2.8 | MeleeHit 272/floor 262, Expertise 132/floor 130 |
-| prot_paladin_p3 | Quick | -17821.9 | -12985.9 | +4835.9±25.6 | Defense 922/floor 674 (crit immunity) |
-| prot_paladin_p3 | Normal | -17821.9 | -12990.5 | +4831.4±21.0 | Defense 864/floor 674 (crit immunity) |
-| feral_tank_p2 | Quick | -1056.8 | -213.4 | +843.4±2.4 | Defense 83/floor 0 (crit immunity) |
-| feral_tank_p2 | Normal | -1056.8 | -162.5 | +894.3±2.7 | Defense 83/floor 0 (crit immunity) |
+The table is the suite after the [seed-pricing fix](#as-built-review-fix-the-seeds-items-went-unpriced),
+beside the same code with the caps off and wave K's row. Tanks get no DPS caps, so no caps-off run.
+
+| case | effort | J_preset | J_opt | delta | caps (pick/floor or ceiling) | caps off | wave K |
+|---|---|---|---|---|---|---|---|
+| fury_p1 | Quick | 8725.1 | 8947.1 | +222.0±2.8 | MeleeHit 263/floor 262, Expertise 216/floor 212 | +234.2 | +237 |
+| fury_p1 | Normal | 8725.1 | 8948.6 | +223.6±2.8 | MeleeHit 276/floor 262, Expertise 213/floor 212 | +286.6 | +284 |
+| combat_rogue_p3 | Quick | 10730.8 | 11458.9 | +728.0±2.1 | MeleeHit 664/floor 263, Expertise 215/floor 212 | +772.8 | +675 |
+| combat_rogue_p3 | Normal | 10730.8 | 11641.2 | +910.4±2.1 | MeleeHit 677/floor 263, Expertise 212/floor 212 | +808.5 | +807 |
+| fire_mage_p3 | Quick | 5066.6 | 5107.1 | +40.5±1.5 | SpellHit 369/floor 368, haste 669/ceiling 1269 | +40.0 | +40 |
+| fire_mage_p3 | Normal | 5066.6 | 5104.4 | +37.7±1.5 | SpellHit 370/floor 368, haste 664/ceiling 1269 | +53.4 | +47 |
+| retribution_p4 | Quick | 12963.8 | 13138.4 | +174.6±2.8 | MeleeHit 273/floor 262, Expertise 130/floor 130 | +185.7 | +186 |
+| retribution_p4 | Normal | 12963.8 | 13195.7 | +231.9±2.8 | MeleeHit 272/floor 262, Expertise 132/floor 130 | +211.7 | +212 |
+| prot_paladin_p3 | Quick | -17821.9 | -12985.9 | +4835.9±25.6 | Defense 922/floor 674 (crit immunity) | | +4813 |
+| prot_paladin_p3 | Normal | -17821.9 | -13022.7 | +4799.2±21.7 | Defense 864/floor 674 (crit immunity) | | +4831 |
+| feral_tank_p2 | Quick | -1056.8 | -143.9 | +912.9±2.6 | Defense 91/floor 0 (crit immunity) | | +850 |
+| feral_tank_p2 | Normal | -1056.8 | -156.7 | +900.1±2.8 | Defense 83/floor 0 (crit immunity) | | +894 |
 
 #### As built (review fix: the search slowdown)
 
@@ -1347,8 +1350,8 @@ pointer instead of copying. A literal `floorTerm`/`ceilingTerm` built outside `s
 Same isolated A/B after the fix: fury_p1 1.25x, the Marksmanship hunter 1.88x, and the phase 1-5 pool
 that didn't finish before now takes about 30 s. The fix is exact, not an approximation swap —
 `configureFast` already matched a full rescore bit-for-bit with no floors, and `capGain` is the same
-math computed incrementally — so `optimizer_slow`'s numbers are unchanged from the stage 2 table
-above, run to run, and all 37 goldens stay unchanged. The remaining 1.25x-1.88x is the caps' own,
+math computed incrementally — so it left `optimizer_slow`'s numbers unchanged, run to run, and all 37
+goldens too. The remaining 1.25x-1.88x is the caps' own,
 proportionate share of the existing per-candidate cost (`capGain` fell from the top-2 CPU consumer to
 about 3% of it), not a runaway path; `acbis`'s driver and `presetgen` call the same `Optimize`, so
 they see the same fix, though this item didn't re-time them directly.
@@ -1363,3 +1366,47 @@ haste is strong enough that the unconstrained search overshoots on its own. `Tes
 covers the hunter ceiling end to end instead (a real search, caps on, over that pool, never exceeds
 it); `TestHunterCapsAreExact` already covers the ceiling's own bisection, and
 `TestCeilingPenalizesOverage` the surrogate term, both spec-agnostically.
+
+#### As built (review fix: the seed's items went unpriced)
+
+With the caps on, Quick fell well under wave K (Ret P4 +186 → +0.0, fury P1 +237 → -102,
+combat rogue P3 +675 → +196, fire mage P3 +40 → -86) while Normal barely moved. `effectFamilies` ranked the effects budget by
+`candStatBounds` over `slopeBox`, whose `hi` is +Inf for every stat a floor's gradient raises. So every item
+carrying hit, expertise or spell hit, or a socket a hit gem fits, got the +Inf prior meant to guarantee the
+seed's own items a sim, and `trimToBudget`'s stable sort kept a pool-order subset of the ties. In Ret P4
+Quick the seed's trinkets (47131, 50706) went unpriced: the search, which rejects unpriced items, couldn't
+rebuild the seed, and the seed pair's correction absorbed both trinkets' whole worth (+1589.2 beyond its
+items, against +88.5 caps off), so every candidate verified about 1,300 under the seed. Before BIS-caps only
+tank Defense floors took this path. The same box tied `contenders`' refinement order at +Inf too, and under
+a haste ceiling `statLB` scored each haste point at about minus the penalty weight, skewing set screening
+(fire mage never priced Sunstrider's Regalia's 4-piece) and the stand-in bases.
+
+Fix (`sim/optimizer/surrogate.go`, `search.go`):
+- `curveBox` is the curves' slope range alone; `slopeBox` widens it by the floor and ceiling terms. Ranking
+  reads `curveBox` (`effectFamilies`' `prior` and `statLB`, `contenders`' midpoints); whatever excludes an
+  option keeps the safe `slopeBox` (the search's option filter and move pruning, `dominatedWeapons`).
+- `trimToBudget` keeps every +Inf-prior variant (the seed's own items) whatever the budget.
+- `applyEffects` drops a pair correction unless both items have a measured residual (`hasResidual`).
+
+With no floor or ceiling the boxes match: the DPS cases' caps-off runs came out identical before and after.
+`TestTrimToBudgetKeepsTheSeedPricedUnderAFloor` (fury P1, a hit floor at the seed's own hit, a 1% budget)
+checks every non-seed prior is finite and both seed trinkets stay priced; the old code fails both (39
+non-seed items at +Inf, both trinkets cut).
+
+Against caps off ([table](#as-built-stage-2-ui)):
+- The caps' genuine cost: fury Quick -12 and Normal -63, combat rogue Quick -45. Their caps-off picks sit
+  under a floor (fury expertise 204 and 200, hit 259 on Normal; rogue expertise 194).
+- Not the caps: Ret Quick -11, fire mage Normal -16. Their caps-off picks clear every floor and ceiling, and a
+  caps-on run warm-started from that pick returns it exactly (+185.7, +53.4): the unaided search doesn't
+  reach it. Under a floor, `slopeBox`'s +Inf keeps every option a hit item or gem could fill (Ret Quick heads:
+  322 of 322 against 168; Search 6.6 s against 2.5 s), and `dominatedWeapons` can't rule out a weapon with
+  hit (Ret's main-hand family: 350 variants against 256, leaving 46 trinkets priced against 55). The path
+  moves both ways: combat rogue Normal (+102) and Ret Normal (+20) beat caps off.
+- DPS Normal before → after this fix (search path, as above): fury +240.2 → +223.6, combat rogue
+  +879.3 → +910.4, fire mage +49.4 → +37.7, Ret unchanged.
+- Wave K's combat rogue Quick (+675) is stale: this code scores +772.8 caps off.
+- Tanks share the path through their Defense floor: prot paladin Quick unchanged, Normal +4831.4 → +4799.2
+  (±21.7); feral tank Quick +843.4 → +912.9, Normal +894.3 → +900.1.
+
+Open: pruning that stays exact yet prunes under a floor would win back that search time and path; any
+finite bound must still hold for a loadout short of the floor.
