@@ -19,8 +19,11 @@ func (shaman *Shaman) registerFireNovaAttackSpell() *core.Spell {
 		// the two weapon imbue attacks, so a Fire Nova crit still hands out Clearcasting.
 		Flags: SpellFlagFocusable | core.SpellFlagNoOnCastComplete,
 
-		BonusHitRating:   float64(shaman.Talents.ElementalPrecision) * core.SpellHitRatingPerHitChance,
-		DamageMultiplier: 1 + float64(shaman.Talents.CallOfFlame)*0.05 + float64(shaman.Talents.ImprovedFireNova)*0.1,
+		BonusHitRating: float64(shaman.Talents.ElementalPrecision) * core.SpellHitRatingPerHitChance,
+		DamageMultiplier: spellModDamage(
+			float64(shaman.Talents.CallOfFlame)*0.05,
+			float64(shaman.Talents.ImprovedFireNova)*0.1,
+		),
 		CritMultiplier:   shaman.ElementalCritMultiplier(0),
 		ThreatMultiplier: shaman.spellThreatMultiplier(),
 

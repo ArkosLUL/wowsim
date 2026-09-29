@@ -50,17 +50,19 @@ func (warlock *Warlock) registerImmolateSpell() {
 		Dot: core.DotConfig{
 			Aura: core.Aura{
 				Label: "Immolate",
+				// Fire and Brimstone is SPELLMOD_DAMAGE (Player::ApplySpellMod), which multiplies onto
+				// whatever these spells' own DamageMultiplierAdditive already carries.
 				OnGain: func(aura *core.Aura, sim *core.Simulation) {
 					if warlock.Talents.ChaosBolt {
-						warlock.ChaosBolt.DamageMultiplierAdditive += fireAndBrimstoneBonus
+						warlock.ChaosBolt.DamageMultiplierAdditive *= 1 + fireAndBrimstoneBonus
 					}
-					warlock.Incinerate.DamageMultiplierAdditive += fireAndBrimstoneBonus
+					warlock.Incinerate.DamageMultiplierAdditive *= 1 + fireAndBrimstoneBonus
 				},
 				OnExpire: func(aura *core.Aura, sim *core.Simulation) {
 					if warlock.Talents.ChaosBolt {
-						warlock.ChaosBolt.DamageMultiplierAdditive -= fireAndBrimstoneBonus
+						warlock.ChaosBolt.DamageMultiplierAdditive /= 1 + fireAndBrimstoneBonus
 					}
-					warlock.Incinerate.DamageMultiplierAdditive -= fireAndBrimstoneBonus
+					warlock.Incinerate.DamageMultiplierAdditive /= 1 + fireAndBrimstoneBonus
 				},
 			},
 			NumberOfTicks: 5 + warlock.Talents.MoltenCore,

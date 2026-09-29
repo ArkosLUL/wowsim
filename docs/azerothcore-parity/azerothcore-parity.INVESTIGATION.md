@@ -866,6 +866,40 @@ Roll details the tables above don't show:
   tick's independent resist roll undone first) matches 36 of 41 checkable applications exactly, across all three
   `remainingTicks` cases; the 5 misses trace to a chain broken by one of the unpaired applications, not a formula
   error. Confirms the code and delay stages' Ignite model live; no further fix needed.
+- **Fixed (PAR-FU-1):** Arcane Power's runtime toggle (`registerArcanePowerCD`) added 20% straight onto
+  `DamageMultiplierAdditive` (`+= 0.2`/`-= 0.2`) instead of multiplying — a live bug, since Frostbolt,
+  Fireball, Frostfire Bolt and Flamestrike already build that field via `spellModDamage(...)` (PAR-P8),
+  so the toggle summed 20 points onto their existing product instead of taking 20% of it. Now
+  `*= 1.2`/`/= 1.2`.
+- **Fixed (PAR-FU-1):** Mirror Image's Frostbolt (59638) and Fire Blast (59637) cast with none of the
+  mage's spell mods (`DamageMultiplier: 1` flat), though `Unit::GetSpellModOwner` returns the mage for
+  a guardian's cast and `Player::ApplySpellMod`'s `temporaryPet` flag drops only charged mods, none of
+  these among them. The live spelldump's classMask decides what each id now takes:
+  - 59638 shares real Frostbolt's classMask (`[32,0,0]`) exactly: now takes the same
+    `DamageMultiplierAdditive` (Chilled to the Bone, Glyph of Frostbolt, Tempest Regalia 4pc),
+    cast-time cut (Improved/Empowered Frostbolt), `BonusCritRating` (Khadgar's Regalia 4pc) and
+    `CritMultiplier` (Ice Shards) real Frostbolt does; the effect-1 mods (Permafrost, Chilled to the
+    Bone's slow) were already applied.
+  - 59637's classMask (`[131074,0,0]`) overlaps real Fire Blast's bit (2) and Ice Lance's (131072) in
+    one word: takes Fire Power and Spell Impact (Fire Blast's own) plus Chilled to the Bone (Ice
+    Lance's only), and Fire Blast's own `BonusCritRating`/`CritMultiplier` (Critical Mass, Incineration,
+    spell crit damage).
+  - Both hook `mage.ArcanePowerAura.ApplyOnGain`/`ApplyOnExpire` directly: `mage.OnSpellRegistered`'s
+    owner-side hook never sees a pet's spells, registered instead on the pet's own `Initialize()`,
+    safely after `ApplyTalents()` built the aura (`Environment.initialize` runs `applyCharacterEffects`
+    for every player before the `Initialize()` loop that covers pets).
+  - Improved Fire Blast's cooldown reduction does **not** reach 59637 despite the classMask overlap:
+    `TestServerDataConflicts` caught it (`Sim: 7000`/`8000` vs `Server: 6000` for "Arcane"/"Arcane with
+    every talent"), so 59637 keeps its flat 6 s. Not filed as a retail deviation: no server code read
+    explains the miss, only the declaration test's conflict.
+  - Fire Blast's own `DamageMultiplierAdditive` (`fire_blast.go`) summed Spell Impact and Fire Power,
+    the same bug PAR-P8 already fixed for Fireball/Frostfire/Flamestrike; fixed alongside, since Mirror
+    Image's copy needed the correct product.
+  - Goldens (`dock.sh delta`, `SwitchInFrontOfTarget-Default` headline, `AllItems`/`_aoe` range in
+    parens): Arcane +0.600% (+0.179% to +6.387%, `arcane_aoe` the high end), Fire +0.203% (+0.023% to
+    +1.147%), Frost +0.613% (+0.179% to +20.258%), FrostFire +0.210% (+0.113% to +0.447%). The
+    double-digit `_aoe` rows are real, not noise: `frost_aoe` casts an unregistered Blizzard rank (Mage
+    findings, above) so it deals almost only pet damage, and Mirror Image now hits much harder.
 
 **Warlock** (`TestAffliction`, `TestDemonology`, `TestDestruction`, code)
 - Pet crit follows the generic fix (Pets, above): every demon and the infernal move from a
@@ -899,8 +933,9 @@ Roll details the tables above don't show:
   Soul's (`[0x4000,0,0]`); its crit-damage-bonus effect (aura 108) covers the same two plus Haunt's
   flag (`[0,0x40000,0]`). Both spells now gate `CritMultiplier` on `Talents.Pandemic` like Haunt's.
   `TicksCanCrit` is declared throughout: `canCrit` (Corruption, Unstable Affliction), `true`
-  (Immolate, 75445), Improved Immolate 3/3 (Conflagrate's dot; both Cleanup (P8)), `false` elsewhere
-  (Curse of Agony, Curse of Doom, Seed, Drain Soul, the infernal's and Metamorphosis's AOE dots — none use a
+  (Immolate: every warlock learns 75445 with Destruction, as a temporary spell `character_spell` never
+  lists), Improved Immolate 3/3 (Conflagrate's dot; both Cleanup (P8)), `false` elsewhere (Curse of
+  Agony, Curse of Doom, Seed, Drain Soul, the infernal's and Metamorphosis's AOE dots — none use a
   crit-capable outcome function).
 - **Fixed:** every warlock spell's `DamageMultiplierAdditive` summed its talent, glyph and set-bonus
   percentages (`1 + a + b + c + ...`), where the server applies each spell mod independently and
@@ -984,6 +1019,21 @@ Roll details the tables above don't show:
     bonus cleanly; crit% itself differs by more than a couple of points only for Shadow Bolt and Unstable
     Affliction, both within about 2 standard errors of the capture's own small samples (55 and 138 landed
     hits). No sim/warlock formula bug survives this comparison beyond what the code stage already fixed.
+- **Fixed (PAR-FU-1):** Fire and Brimstone's runtime toggle (`immolate.go`'s `OnGain`/`OnExpire`), the
+  wave K cross-review's open item, added its bonus straight onto Chaos Bolt's and Incinerate's
+  `DamageMultiplierAdditive` (`+=`/`-=`) instead of multiplying. `Unit::SpellDamageBonusDone`'s
+  `SPELLFAMILY_WARLOCK` case (`Unit.cpp:8768-8778`) places it: the talent's classMask
+  (`familyFlags[1] & 0x00020040` = Incinerate's word-2 bit `0x40` plus Chaos Bolt's `0x20000`) gates a
+  caster `DUMMY` aura's `AddPct(DoneTotalMod, amount)` on `victim->HasAuraState(AURA_STATE_CONFLAGRATE)`
+  — Immolate on the target, the sim's existing gate — and `AddPct` is `base += base*pct/100`,
+  multiplicative against whatever `DoneTotalMod` holds. Both spells' static terms already go through
+  `DamageMultiplier` (`spellModDamage(...)`, PAR-DECL-1), leaving `DamageMultiplierAdditive` at its
+  default of 1 untouched by anything else, so `+=`/`-=` and `*=`/`/=` coincide today; fixed anyway, on
+  principle and against a future second mod on either field. `dock.sh delta`: 3 of 3 suites unchanged.
+  - The talent's other effect (idx1, `SPELLMOD_CRITICAL_CHANCE`, classMask `[0,8388608,0]` = Conflagrate
+    alone, 5%/rank) is unconditional — no `AURA_STATE_CONFLAGRATE` gate; the dummy-aura branch above
+    only reads a different aura's `SpellIconID == 3173` — and already correct in `conflagrate.go`'s
+    `BonusCritRating`; confirmed against the DBC, untouched by this fix.
 **Shaman** (`TestElemental`, `TestEnhancement`, code; PAR-P7-SHA's "shared-enh" and "elemental" stages)
 - Stormstrike, the totems, weapon imbues and pet crit fixed as **Retail deviations** 54-59 describe.
   `TestRestoration` doesn't move: shared code, but Restoration wasn't touched.
@@ -1025,9 +1075,10 @@ Roll details the tables above don't show:
   to run through the 17364 spell object, so anything keyed on "a Stormstrike landed" fired three times
   a cast. Totem of the Avalanche (50463) took all three stacks of its 146 AP buff off one Stormstrike;
   now it takes one, which is what the item says.
-- TicksCanCrit: Flame Shock declares `true` (every shaman's Flame Shock Passive, 75461; Cleanup (P8)). Searing
-  and Magma Totem reroll the full hit-and-crit table each tick instead of using a snapshotted `Dot`
-  outcome, since they're repeated NPC casts, not periodic ticks, so the flag doesn't apply to them.
+- TicksCanCrit: Flame Shock declares `true` (every shaman learns Flame Shock Passive, 75461, with
+  Elemental Combat, as a temporary spell `character_spell` never lists; Cleanup (P8)). Searing and Magma
+  Totem reroll the full hit-and-crit table each tick instead of using a snapshotted `Dot` outcome, since
+  they're repeated NPC casts, not periodic ticks, so the flag doesn't apply to them.
 - Feral Spirit and the fire elemental (Fire Blast, Fire Nova) dropped their manual
   `AutoAttacks.StopMeleeUntil` calls: `RegisterSpell` already applies the server's `ResetsAutoAttack`
   for all three. Removed a stale TODO on the same reset for Maelstrom Weapon's instant Lightning
@@ -1118,6 +1169,49 @@ Roll details the tables above don't show:
   new constants). `TestElemental` and `TestEnhancement` are the only red ones, on golden DPS, which is
   the point. The UI APL files end unchanged against the wave base, so there is nothing for eslint to
   re-check.
+- **Fixed (PAR-FU-1):** every percent `SPELLMOD_DAMAGE`/`SPELLMOD_DOT` mod shaman still summed (the
+  wave K cross-review's open item), each decoded against the live spelldump's classMask/family flags
+  first, the way PAR-P8 did for DK/Hunter/Rogue/Warrior:
+  - Concussion (16035-16108): `[2416967683,12288,0]`/DAMAGE reaches Lightning Bolt, Chain Lightning,
+    Earth/Flame/Frost Shock, Lava Burst, Thunderstorm; `[268435456,0,0]`/DOT also reaches Flame Shock's
+    dot, same 1%/rank both halves — already covered by folding it into the shared `DamageMultiplier`
+    base (`electric_spell.go`, `newShockSpellConfig`, `lavaburst.go`, `thunderstorm.go`).
+  - Glyph of Lightning Bolt (55453) and Skyshatter Regalia 4pc reach Lightning Bolt alone;
+    `lightning_bolt.go` summed them onto Concussion's base.
+  - Item - Shaman T9 Enhancement 4P Bonus (67221, `ItemSetThrallsBattlegear` 4pc): DBC-named
+    "(Stormstrike)" but its classMask (`[2416967680,0,0]`, no word-2 bits) never reaches Stormstrike —
+    it's +25% on Earth/Flame/Frost Shock, hit and dot, matching the sim's own "+25% shock damage"
+    comment; `newShockSpellConfig` summed it with Concussion.
+  - Booming Echoes (63370/63372), 10%/rank, is hit-only (no `SPELLMOD_DOT` effect) on Flame/Frost Shock;
+    the shared shock base folds it into `DamageMultiplier`, which Flame Shock's dot also reads, so the
+    dot's own multiplier now divides it back out — the `dotOnlyMultiplier` idiom `sim/mage/fireball.go`
+    and `sim/warlock/immolate.go` already use.
+  - Storm, Earth and Fire (51483-51486, 20%/rank) and the T8 Elemental 2pc (64925, flat 20%) are
+    `SPELLMOD_DOT`-only on Flame Shock (`[268435456,0,0]`), already dot-scoped in
+    `bonusPeriodicDamageMultiplier` — just summed with each other and Booming Echoes' negation, not
+    multiplied into one ratio.
+  - Call of Flame (16038-16161): two effects, 5%/rank on Fire Nova's pulse and Searing/Magma Totem's
+    hits (`[1073741824,262144,0]`), 2%/rank on Lava Burst alone (`[0,4096,0]`) — summed with Improved
+    Fire Nova (`firenova.go`) and Concussion (`lavaburst.go`) respectively.
+  - Improved Shields (51881), Earthshatter Battlegear 2pc and Glyph of Lightning Shield (55448) all
+    reach Lightning Shield's proc spell (49279, `[1024,0,0]`) alone; `lightning_shield.go` summed all three.
+  - Improved Chain Heal (30872/30873) reaches Chain Heal (`[256,0,0]`) alone; `heals.go` summed it with
+    Purification.
+  - Purification (16178-16213) and Restorative Totems (16187-16206) aren't `SPELLMOD_DAMAGE`/`DOT` at
+    all (aura 136 `MOD_HEALING_DONE_PERCENT`; aura 108 miscValue 8 `SPELLMOD_ALL_EFFECTS`) — a
+    different mechanism than `Player::ApplySpellMod`'s sweep, but `Unit::SpellHealingBonusDone`
+    multiplies its own aura list the same way (`DoneTotalMod *= (100+amount)/100`), so the fix is the
+    same: `heals.go`'s Chain Heal and `totems.go`'s Healing Stream Totem heal both summed Purification
+    with the spell's other term.
+  - Nine files now build the affected `DamageMultiplier` (or the dot-only ratio) through a new
+    `spellModDamage(bonuses...)` helper (`talents.go`, mirroring `sim/paladin`'s), `(1+a)*(1+b)*...`.
+  - Goldens (`dock.sh delta`, Average-Default): Elemental -0.471% (183 `AllItems` rows, -1.248% to
+    +0.004%); Enhancement +0.222% (207 rows, +0.186% to +0.727%; the T9 4pc shock bonus and Concussion
+    the largest terms, Enhancement's own Lightning Shield choice adding the Improved Shields/
+    Earthshatter/glyph fix). Restoration unchanged (`TestRestoration` green): its
+    `autocastOtherCooldowns`-only rotation never reaches Chain Heal, Healing Stream Totem's heal or a
+    shock, so both headline rows report 0 hps before and after, as with every other shared-heal-code
+    change this wave.
 **Druid** (`TestBalance`, `TestBalancePhase3`, `TestFeral`, `TestFeralApl`, `TestFeralTank`, code)
 - Moonfire/Insect Swarm add-ticks and tick crit are mod-spell-tweaks carrier auras
   (`modules/mod-spell-tweaks/data/sql/db-world/base/druid/spell_moonfire_insect_swarm_eclipse_haste_scriptname.sql`,
@@ -1467,22 +1561,24 @@ gofmt-clean.
   spelldump's 30 aura-286 spells (family and classMask) and how the player gets each. A class skill
   teaches every shaman Flame Shock Passive (75461) and every warlock Demonic Immolate (75445):
   SkillLineAbility rows 21724 (Elemental Combat) and 21722 (Destruction) have AcquireMethod 2, learned
-  with the skill (`Player::learnSkillRewardedSpells`). So Flame Shock's ticks crit (now `true`, putting
-  Elemental and Enhancement back on their goldens), as Immolate's already did. Conflagrate's dot now
-  crits only with Improved Immolate 3/3 (17834's slot 3; ranks 1-2 lack it), and Shadow Word: Pain,
-  Devouring Plague and Vampiric Touch only with `Talents.Shadowform` (49868 comes with the form), both
-  golden-neutral: Destruction runs 3/3, and the priest `OnTick`s already skipped the crit without
-  Shadowform. Death and Decay, Explosive Shot and Volley keep `true` with no aura 286: each tick is a
+  with the skill (`Player::learnSkillRewardedSpells`) as temporary spells, which `_SaveSpells` skips, so
+  `character_spell` never lists them (PAR-FU-1, **Verified on the live server**). So Flame Shock's ticks
+  crit (now `true`, putting Elemental and Enhancement back on their goldens), as Immolate's already did.
+  Conflagrate's dot now crits only with Improved Immolate 3/3 (17834's slot 3; ranks 1-2 lack it), and
+  Shadow Word: Pain, Devouring Plague and Vampiric Touch only with `Talents.Shadowform` (49868 comes
+  with the form), both golden-neutral: Destruction runs 3/3, and the priest `OnTick`s already skipped
+  the crit without Shadowform. Death and Decay, Explosive Shot and Volley keep `true` with no aura 286: each tick is a
   separate hit (52212, 53352, 58433) rolling its own crit. Glyph of Explosive Trap (63068) is reachable
   (glyph 693, taught by 63856), as `hasGlyph` has it.
 - mod-spell-tweaks' "aura 286 in slot 3 doesn't work" (`docs/death-knight/DiseaseCrit.md`) misread the
   columns: `spell_dbc`'s `EffectSpellClassMask<slot A-C>_<word 1-3>` fills `std::array<flag96, 3>` in
   order, so Vicious Strikes' `B_3` set slot 2's third word and left slot 3's mask empty. 17834's slot 3
   has its mask (spelldump `[0,8388608,0]`).
-- Left open: a pet's or guardian's spells take the owner's spell mods where the class mask matches
-  (`Unit::GetSpellModOwner`); Mirror Image still lacks the mage's SPELLMOD_DAMAGE percents
-  (PAR-DECL-1's own note), which is a missing-inheritance gap, not a stacking-direction one, so it's
-  outside this cleanup.
+- A pet's or guardian's spells take the owner's spell mods where the classMask matches
+  (`Unit::GetSpellModOwner`); Mirror Image lacked the mage's SPELLMOD_DAMAGE percents (PAR-DECL-1), a
+  missing-inheritance gap not a stacking-direction one, left outside this cleanup. **Fixed (PAR-FU-1,
+  Mage findings above):** Mirror Image's Frostbolt and Fire Blast now take every mage mod their own
+  classMask reaches.
 - PAR-P8's leftovers stage: `core.NewPet` returns `*Pet` now, not a value copy; all 14 pet types
   (hunter; DK ghoul/bloodworm/rune weapon/gargoyle; druid treant; mage mirror image/water elemental;
   priest shadowfiend; shaman fire elemental/spirit wolves; warlock pet/infernal; nibelung valkyr)
@@ -2031,6 +2127,19 @@ values. Human warrior, level 80, maxed skills, Worn Shortsword (Sword Specializa
   `p7_dru_test.go`'s `dropFullResistArtifact`; it's now in `checkResists` (`e2e/records_test.go`) itself,
   so every magic probe drops that bucket before checking the derived distribution, not only the one that
   called the wrapper. Every `TestSimval*` e2e suite re-ran live after the move and stayed green.
+- Flame Shock Passive (75461) and Demonic Immolate (75445), PAR-FU-1 (`TestSimvalPfu1ShamanFlameShockPassive`,
+  `TestSimvalPfu1WarlockDemonicImmolate`, `mod-sim-validation/e2e/pfu1_test.go`): a level-80 orc shaman
+  and human warlock, after a relog, carry the aura in `.simval info` and Elemental Combat (375) or
+  Destruction (593) at 400 in `character_skills`, but no `character_spell` row for either spell. A
+  read-only sweep agrees: every shaman (52,407) holds 375 and every warlock (53,319) 593, none a
+  `character_spell` row for 75461 or 75445; `playercreateinfo_skills` grants 375 to classMask 64 and 593
+  to 256. The live SkillLineAbility.dbc maps them: row 21724, 375 → 75461, AcquireMethod 2, RaceMask
+  1791, ClassMask 64; row 21722, 593 → 75445, AcquireMethod 2, ClassMask 256. `_LoadSkills` calls
+  `Player::learnSkillRewardedSpells` for every loaded skill on each login, which adds AcquireMethod-2
+  rewards as temporary spells (`addSpell(..., temporary = true)` before the player is in world,
+  `learnSpell(..., true, true)` after), and `_SaveSpells` (`PlayerStorage.cpp`) skips temporary spells.
+  So both dots' ticks crit (`TicksCanCrit: true`), and `character_spell` alone can't tell whether a
+  character knows a skill-reward spell.
 
 ## Retail deviations
 

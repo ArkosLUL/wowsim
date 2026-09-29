@@ -23,11 +23,11 @@ func (shaman *Shaman) newLightningBoltSpellConfig(isLightningOverload bool) core
 	spellConfig.Mods = []core.SpellMod{{Op: core.SpellModBonusMultiplier, Flat: 4 * shaman.Talents.Shamanism}}
 
 	if shaman.HasMajorGlyph(proto.ShamanMajorGlyph_GlyphOfLightningBolt) {
-		spellConfig.DamageMultiplier += 0.04
+		spellConfig.DamageMultiplier *= 1.04
 	}
 
 	if shaman.HasSetBonus(ItemSetSkyshatterRegalia, 4) {
-		spellConfig.DamageMultiplier += 0.05
+		spellConfig.DamageMultiplier *= 1.05
 	}
 
 	var lbDotSpell *core.Spell

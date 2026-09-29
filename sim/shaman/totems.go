@@ -48,11 +48,14 @@ func (shaman *Shaman) registerManaSpringTotemSpell() {
 func (shaman *Shaman) registerHealingStreamTotemSpell() {
 	config := shaman.newTotemSpellConfig(0.03, 58757)
 	hsHeal := shaman.RegisterSpell(core.SpellConfig{
-		ActionID:         core.ActionID{SpellID: 52042},
-		SpellSchool:      core.SpellSchoolNature,
-		ProcMask:         core.ProcMaskEmpty,
-		Flags:            core.SpellFlagHelpful | core.SpellFlagNoOnCastComplete,
-		DamageMultiplier: 1 + (.02 * float64(shaman.Talents.Purification)) + 0.15*float64(shaman.Talents.RestorativeTotems),
+		ActionID:    core.ActionID{SpellID: 52042},
+		SpellSchool: core.SpellSchoolNature,
+		ProcMask:    core.ProcMaskEmpty,
+		Flags:       core.SpellFlagHelpful | core.SpellFlagNoOnCastComplete,
+		DamageMultiplier: spellModDamage(
+			.02*float64(shaman.Talents.Purification),
+			0.15*float64(shaman.Talents.RestorativeTotems),
+		),
 		CritMultiplier:   1,
 		ThreatMultiplier: 1 - (float64(shaman.Talents.HealingGrace) * 0.05),
 		// spell_sha_healing_stream_totem casts 52042 with the totem tick's amount as its base points, adding
