@@ -299,16 +299,25 @@ func TestOptimizerSlow(t *testing.T) {
 				t.Logf("slow: spec=%s phase=%d effort=%s candidates=%d J_preset=%.1f J_opt=%.1f delta=%+.1f±%.1f dps_preset=%.1f dps_delta=%+.1f±%.1f %s improved=%v sims=%d wall=%.1fs",
 					c.spec, c.phase, name, poolSize, jPreset.Mean, jOpt.Mean, d.Mean, d.SE, evals[0].Metrics[MetricDPS].Mean, dps.Mean, dps.SE,
 					normalizerFields(obj), result.Improved, result.TotalSims, wall.Seconds())
+				bestSheet, err := playerSheet(r.Base, r.TargetIndex, best, stats.Stats{})
+				if err != nil {
+					t.Fatal(err)
+				}
+				if caps := capMargins(result.Settings, bestSheet); caps != "" {
+					t.Logf("caps: %s", caps)
+				}
 				// preset items the phase rules out can outscore the pick, so this checks against the
-				// trimmed preset the search started from
-				if s := obj.Delta(evals[2], evals[1]); s.Mean < -2*s.SE {
+				// trimmed preset the search started from; a preset under a DPS cap floor is no longer a
+				// valid floor for the pick's score, since the cap costs DPS the preset never paid. The
+				// independent check's own PrepareRequest never ran dpsCapFloors, so the floors have to
+				// come from the original run's echoed settings, read against the trimmed seed's sheet.
+				if short, detail := capShortfallAgainst(t, r, result.Settings, r.Seed); short > 0 {
+					t.Logf("the trimmed preset is under its cap floor (%s), so its score isn't a floor for the pick's", detail)
+				} else if s := obj.Delta(evals[2], evals[1]); s.Mean < -2*s.SE {
 					t.Errorf("the pick scores %.1f ± %.1f under the trimmed preset", -s.Mean, s.SE)
 				}
 				if c.tank {
-					sheet, err := playerSheet(r.Base, r.TargetIndex, best, stats.Stats{})
-					if err != nil {
-						t.Fatal(err)
-					}
+					sheet := bestSheet
 					t.Logf("tank: %.0f Defense on the sheet, boss crit %.3f%%", sheet.FinalStats[stats.Defense], sheet.MeleeCritTakenChance*100)
 					// without this a boss that swings at nobody would pass the crit check on a flat 0
 					if !sheet.MeleeAttacker {

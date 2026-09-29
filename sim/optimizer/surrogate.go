@@ -47,6 +47,9 @@ type surrogate struct {
 
 	floors      []floorTerm
 	floorWeight float64
+	// A haste ceiling: unlike floors, this never rejects a loadout, only steers the search away from
+	// stacking wasted haste (Pool.Check never sees it).
+	ceilings []ceilingTerm
 }
 
 // curve is a response curve as straight lines between its simmed knots, carried on past the ends at
@@ -144,12 +147,50 @@ func (set *itemSet) jumpBounds() (lo, hi float64) {
 	return lo, hi
 }
 
+// gradEntry is one nonzero stat in a floor or ceiling's gradient. A sheet reading like hit chance or
+// cast speed usually moves with just its own rating, so the search reads this far fewer times than
+// the full, mostly-zero stats.Stats it's built from.
+type gradEntry struct {
+	stat stats.Stat
+	g    float64
+}
+
+func sparseGradient(g stats.Stats) []gradEntry {
+	var out []gradEntry
+	for st, v := range g {
+		if v != 0 {
+			out = append(out, gradEntry{stats.Stat(st), v})
+		}
+	}
+	return out
+}
+
+// have is what a floor or ceiling's sheet reading sits at when total's gear stats are away from the
+// seed's.
+func have(seed float64, sparse []gradEntry, total, seedStats *stats.Stats) float64 {
+	v := seed
+	for _, e := range sparse {
+		v += e.g * (total[e.stat] - seedStats[e.stat])
+	}
+	return v
+}
+
 // floorTerm is a stat floor, with the sheet stat approximated as linear in gear stats around the seed.
 type floorTerm struct {
 	stat     stats.Stat
 	min      float64
 	seed     float64
 	gradient stats.Stats
+	sparse   []gradEntry
+}
+
+// ceilingTerm is a stat ceiling (the haste caps), the same way floorTerm is a floor.
+type ceilingTerm struct {
+	stat     stats.Stat
+	max      float64
+	seed     float64
+	gradient stats.Stats
+	sparse   []gradEntry
 }
 
 // pairKey is a ring or trinket pair, by the first slot of the pair, lower item id first.
@@ -333,6 +374,9 @@ func (s *surrogate) score(total stats.Stats, res float64, counts []int8) float64
 	if len(s.floors) > 0 {
 		v -= s.floorWeight * s.floorShortfall(total)
 	}
+	if len(s.ceilings) > 0 {
+		v -= s.floorWeight * s.ceilingOverage(total)
+	}
 	return v
 }
 
@@ -353,16 +397,21 @@ func (s *surrogate) value(l Loadout) float64 {
 
 func (s *surrogate) floorShortfall(total stats.Stats) float64 {
 	short := 0.0
-	for _, f := range s.floors {
-		have := f.seed
-		for st, g := range f.gradient {
-			if g != 0 {
-				have += g * (total[st] - s.seedStats[st])
-			}
-		}
-		short += max(0, f.min-have)
+	for i := range s.floors {
+		f := &s.floors[i]
+		short += max(0, f.min-have(f.seed, f.sparse, &total, &s.seedStats))
 	}
 	return short
+}
+
+// ceilingOverage is floorShortfall's mirror for the haste ceilings: how far total sits over each one.
+func (s *surrogate) ceilingOverage(total stats.Stats) float64 {
+	over := 0.0
+	for i := range s.ceilings {
+		c := &s.ceilings[i]
+		over += max(0, have(c.seed, c.sparse, &total, &s.seedStats)-c.max)
+	}
+	return over
 }
 
 // curveValue is what the curves make of gear stats moved by offset from the seed's.
@@ -388,6 +437,35 @@ func (s *surrogate) statsGain(total, from, to *stats.Stats) float64 {
 	return gain
 }
 
+// capGain is statsGain's counterpart for the floor and ceiling penalty terms: what score's penalty
+// gains from total's stats moving by (to minus from). Both terms are already linear in gear stats
+// (see floorShortfall, ceilingOverage), so the gain is exact without rescoring the whole loadout.
+func (s *surrogate) capGain(total, from, to *stats.Stats) float64 {
+	if len(s.floors) == 0 && len(s.ceilings) == 0 {
+		return 0
+	}
+	gain := 0.0
+	for i := range s.floors {
+		f := &s.floors[i]
+		before := have(f.seed, f.sparse, total, &s.seedStats)
+		after := before
+		for _, e := range f.sparse {
+			after += e.g * (to[e.stat] - from[e.stat])
+		}
+		gain -= s.floorWeight * (max(0, f.min-after) - max(0, f.min-before))
+	}
+	for i := range s.ceilings {
+		c := &s.ceilings[i]
+		before := have(c.seed, c.sparse, total, &s.seedStats)
+		after := before
+		for _, e := range c.sparse {
+			after += e.g * (to[e.stat] - from[e.stat])
+		}
+		gain -= s.floorWeight * (max(0, after-c.max) - max(0, before-c.max))
+	}
+	return gain
+}
+
 // slopes is J's marginal value per point of each gear stat at total: each curve's slope where total
 // sits, plus the floor penalty's pull.
 func (s *surrogate) slopes(total stats.Stats) stats.Stats {
@@ -396,15 +474,16 @@ func (s *surrogate) slopes(total stats.Stats) stats.Stats {
 		c := s.curves[st]
 		v[st] = c.slope[c.segment(total[st]-s.seedStats[st])]
 	}
-	for _, f := range s.floors {
-		have := f.seed
-		for st, g := range f.gradient {
-			if g != 0 {
-				have += g * (total[st] - s.seedStats[st])
-			}
-		}
-		if have < f.min {
+	for i := range s.floors {
+		f := &s.floors[i]
+		if have(f.seed, f.sparse, &total, &s.seedStats) < f.min {
 			v = v.Add(f.gradient.Multiply(s.floorWeight))
+		}
+	}
+	for i := range s.ceilings {
+		c := &s.ceilings[i]
+		if have(c.seed, c.sparse, &total, &s.seedStats) > c.max {
+			v = v.Subtract(c.gradient.Multiply(s.floorWeight))
 		}
 	}
 	return v
@@ -421,14 +500,13 @@ func (s *surrogate) regime(total stats.Stats) uint64 {
 	for _, st := range s.curved {
 		mix(s.curves[st].segment(total[st] - s.seedStats[st]))
 	}
-	for _, f := range s.floors {
-		have := f.seed
-		for st, g := range f.gradient {
-			if g != 0 {
-				have += g * (total[st] - s.seedStats[st])
-			}
-		}
-		mix(boolIndex(have < f.min))
+	for i := range s.floors {
+		f := &s.floors[i]
+		mix(boolIndex(have(f.seed, f.sparse, &total, &s.seedStats) < f.min))
+	}
+	for i := range s.ceilings {
+		c := &s.ceilings[i]
+		mix(boolIndex(have(c.seed, c.sparse, &total, &s.seedStats) > c.max))
 	}
 	return key
 }
@@ -440,15 +518,29 @@ func (s *surrogate) slopeBox() (lo, hi stats.Stats) {
 		c := s.curves[st]
 		lo[st], hi[st] = slices.Min(c.slope), slices.Max(c.slope)
 	}
-	for _, f := range s.floors {
+	for i := range s.floors {
+		f := &s.floors[i]
 		// items that help reach a floor are never pruned, and a stat that pulls away from one costs
 		// up to the penalty's weight more while it's missed
-		for st, g := range f.gradient {
+		for _, e := range f.sparse {
 			switch {
-			case g > 0:
-				hi[st] = math.Inf(1)
-			case g < 0:
-				lo[st] += s.floorWeight * g
+			case e.g > 0:
+				hi[e.stat] = math.Inf(1)
+			case e.g < 0:
+				lo[e.stat] += s.floorWeight * e.g
+			}
+		}
+	}
+	for i := range s.ceilings {
+		c := &s.ceilings[i]
+		// the mirror of a floor: a stat that pulls back under a ceiling is never pruned, and one that
+		// pushes further over it costs up to the penalty's weight more
+		for _, e := range c.sparse {
+			switch {
+			case e.g < 0:
+				hi[e.stat] = math.Inf(1)
+			case e.g > 0:
+				lo[e.stat] -= s.floorWeight * e.g
 			}
 		}
 	}
@@ -883,7 +975,42 @@ func (s *surrogate) setFloors(floors []*proto.StatMinimum, gearStats []stats.Sta
 	}
 	s.floorWeight = 100 * (maxSlope + 1)
 	for i, f := range floors {
-		s.floors = append(s.floors, floorTerm{stat: stats.Stat(f.Stat), min: f.MinValue, seed: seedSheet[f.Stat], gradient: gradients[i]})
+		s.floors = append(s.floors, floorTerm{stat: stats.Stat(f.Stat), min: f.MinValue, seed: seedSheet[f.Stat], gradient: gradients[i], sparse: sparseGradient(gradients[i])})
+	}
+	return nil
+}
+
+// setCeilings is setFloors for the haste ceilings.
+func (s *surrogate) setCeilings(ceilings []*proto.StatMaximum, gearStats []stats.Stat) error {
+	if len(ceilings) == 0 {
+		return nil
+	}
+	seedSheet, err := s.pool.finalStats(s.seed)
+	if err != nil {
+		return err
+	}
+	const step = 100.0
+	gradients := make([]stats.Stats, len(ceilings))
+	for _, st := range gearStats {
+		var off stats.Stats
+		off[st] = step
+		sheet, err := playerSheet(s.pool.base, s.pool.targetIndex, s.seed, off)
+		if err != nil {
+			return err
+		}
+		for i, c := range ceilings {
+			gradients[i][st] = (sheet.FinalStats[c.Stat] - seedSheet[c.Stat]) / step
+		}
+	}
+	if s.floorWeight == 0 {
+		maxSlope := 0.0
+		for _, st := range s.curved {
+			maxSlope = max(maxSlope, math.Abs(slices.Min(s.curves[st].slope)), math.Abs(slices.Max(s.curves[st].slope)))
+		}
+		s.floorWeight = 100 * (maxSlope + 1)
+	}
+	for i, c := range ceilings {
+		s.ceilings = append(s.ceilings, ceilingTerm{stat: stats.Stat(c.Stat), max: c.MaxValue, seed: seedSheet[c.Stat], gradient: gradients[i], sparse: sparseGradient(gradients[i])})
 	}
 	return nil
 }

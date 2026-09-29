@@ -194,7 +194,7 @@ export async function cancelOptimizerRun(progressId: string): Promise<boolean> {
 	return response.ok;
 }
 
-function checkbox(label: string, checked: boolean, onChange: (checked: boolean) => void): HTMLElement {
+export function checkbox(label: string, checked: boolean, onChange: (checked: boolean) => void): HTMLElement {
 	const wrapper = newElement('label', 'form-check');
 	const input = newElement('input', 'form-check-input');
 	input.type = 'checkbox';
@@ -205,6 +205,9 @@ function checkbox(label: string, checked: boolean, onChange: (checked: boolean) 
 }
 
 export const SOURCES_HINT = 'Gems count from every source. PvP gear never does.';
+
+export const STAT_CAPS_HINT =
+	'DPS specs: floors hit, expertise and spell hit at their caps and stops haste at the cast-speed floor. Off searches for raw DPS instead.';
 
 export function sourceCheckboxes(sources: Array<CatalogSourceKind>, onChange: (sources: Array<CatalogSourceKind>) => void): HTMLElement {
 	const grid = newElement('div', 'optimizer-checkbox-grid');
@@ -547,6 +550,7 @@ export class OptimizerTab extends SimTab {
 				excludedItemIds: numbers(saved.excludedItemIds, []),
 				tankSurvival: typeof saved.tankSurvival == 'number' ? Math.min(1, Math.max(0, saved.tankSurvival)) : defaults.tankSurvival,
 				requireCritImmunity: typeof saved.requireCritImmunity == 'boolean' ? saved.requireCritImmunity : defaults.requireCritImmunity,
+				respectStatCaps: typeof saved.respectStatCaps == 'boolean' ? saved.respectStatCaps : defaults.respectStatCaps,
 				racialMode: RACIAL_MODES.some(m => m.mode == saved.racialMode) ? saved.racialMode : defaults.racialMode,
 				metricWeights: saved.metricWeights ? OptimizerMetrics.fromJson(saved.metricWeights) : undefined,
 			};
@@ -636,6 +640,16 @@ export class OptimizerTab extends SimTab {
 
 		const sources = sourceCheckboxes(this.settings.sources, picked => this.changeSettings(s => (s.sources = picked)));
 		this.setupBody.appendChild(this.labeled('Item sources', sources, SOURCES_HINT));
+
+		this.setupBody.appendChild(
+			this.labeled(
+				'Stat caps',
+				checkbox('Respect hit, expertise and haste caps', this.settings.respectStatCaps, checked =>
+					this.changeSettings(s => (s.respectStatCaps = checked)),
+				),
+				STAT_CAPS_HINT,
+			),
+		);
 
 		const actions = newElement('div', 'optimizer-actions');
 		this.runButton = button('Optimize', 'btn-primary', () => this.run());

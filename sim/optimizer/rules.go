@@ -389,6 +389,12 @@ func (p *Pool) checkMetas(l Loadout, items [NumSlots]*core.Item) error {
 }
 
 func (p *Pool) checkFloors(l Loadout) error {
+	return p.checkFloorsExcept(l, nil)
+}
+
+// checkFloorsExcept is checkFloors, skipping the floors in soft: dpsCapFloors' fallback uses it to
+// find how close a candidate gets when nothing reaches every floor.
+func (p *Pool) checkFloorsExcept(l Loadout, soft map[stats.Stat]bool) error {
 	if len(p.floors) == 0 {
 		return nil
 	}
@@ -397,8 +403,12 @@ func (p *Pool) checkFloors(l Loadout) error {
 		return err
 	}
 	for _, floor := range p.floors {
-		if have := sheet[stats.Stat(floor.Stat)]; have < floor.MinValue {
-			return ruleErr(RuleFloor, -1, 0, "%s is %.1f, under its floor of %.1f", stats.Stat(floor.Stat).StatName(), have, floor.MinValue)
+		st := stats.Stat(floor.Stat)
+		if soft[st] {
+			continue
+		}
+		if have := sheet[st]; have < floor.MinValue {
+			return ruleErr(RuleFloor, -1, 0, "%s is %.1f, under its floor of %.1f", st.StatName(), have, floor.MinValue)
 		}
 	}
 	return nil

@@ -62,6 +62,9 @@ export interface OptimizerTabSettings {
 	// Tanks only: 0 is all threat, 1 all survival.
 	tankSurvival: number;
 	requireCritImmunity: boolean;
+	// DPS specs: floors hit, expertise and spell hit at their caps and haste at the cast-speed floor.
+	// No-op for tanks and healers.
+	respectStatCaps: boolean;
 	racialMode: OptimizerRacialMode;
 	// The Advanced editor's own metric weights. Unset leaves the objective to the slider (tanks) or
 	// to DPS alone.
@@ -80,6 +83,7 @@ export function defaultTabSettings(contentPhase: number): OptimizerTabSettings {
 		excludedItemIds: [],
 		tankSurvival: DEFAULT_TANK_SURVIVAL,
 		requireCritImmunity: true,
+		respectStatCaps: true,
 		racialMode: OptimizerRacialMode.OptimizerRacialSearch,
 	};
 }
@@ -556,6 +560,7 @@ export function buildOptimizeRequest(input: PoolBuilderInput): BuiltRequest {
 					: OptimizerMetrics.create({ dps: 1 }),
 			tankSurvival: tank ? settings.tankSurvival : 0,
 			requireCritImmunity: tank && settings.requireCritImmunity,
+			disableStatCaps: !settings.respectStatCaps,
 			statMinimums: settings.statMinimums.map(floor => StatMinimum.clone(floor)),
 			racialMode: settings.racialMode,
 			sources: settings.sources.slice(),

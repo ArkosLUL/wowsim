@@ -1244,3 +1244,122 @@ added the way `critImmunityFloor` adds Defense (one floor per stat, raised rathe
 
 **Owns:** `proto/optimizer.proto` (the setting, and a ceiling beside `StatMinimum`), `sim/core/sheet.go`, `sim/optimizer/**` and its tests,
 `ui/core/optimizer/**`, `optimizer_tab.ts`, `ui/raid/optimizer_batch.ts`, and their uitest specs.
+
+#### As built (stage 1, Go)
+
+- Floors reuse `critImmunityFloor`'s mechanism as-is: `dpsCapFloors` (`sim/optimizer/caps.go`) bisects
+  each cap the way `requiredDefense` bisects D* (`bisectCapBonus`, the same shape) and raises
+  `StatMinimums`, so the pool, the surrogate's penalty and `checkFloors` see them unchanged. The haste
+  ceiling is new and soft instead: `StatMaximum`s (beside `StatMinimum` in the proto) steer the
+  surrogate only (`ceilingTerm`, `setCeilings`, mirroring `floorTerm`/`setFloors` through `score`,
+  `slopes`, `regime`, `slopeBox`) and never fail `Pool.Check` — going over already costs DPS the curve
+  prices, so nothing needs rejecting. `disable_stat_caps` is phrased negatively so proto3's unset
+  default (false) matches the UI's (caps on).
+- `dpsCapRole` reads melee/hunter/caster off `Player.GetSpec()`, the way `referenceStat` does; tanks
+  and healers fall through to none. WotLK has one hit rating for melee and ranged, so a hunter's floor
+  is the same `PhysicalMissChance` melee's is, just without the expertise floor.
+- `core.PlayerSheet` gained `PhysicalMissChance`, `ExpertiseDodgeChance`, `SpellMissChance`, `CastSpeed`
+  and `RangedSwingSpeed`, off the sim's own `MeleeMissBP`/`YellowMeleeTableBP`/`SpellMissBP` against the
+  encounter's first target. Finding: `ComputePlayerSheet` had to stop asking `NewEnvironment` for its
+  own fake-prepull-then-`Cleanup` (`runFakePrepull=true`) — `Cleanup` reverts permanent auras, debuffs
+  included, before returning, so a target-side effect like Improved Faerie Fire never survived to be
+  read. It resets the environment itself now and never cleans up; `FinalStats` and
+  `MeleeCritTakenChance` are unaffected, since `FillPlayerStats` already ran inside `NewEnvironment` and
+  neither depended on the debuff-driven `PseudoStats` this uncovered.
+- The unreachable-cap fallback: `verify` used to give up to the unmodified seed once nothing passed
+  `Check`. `closestToCapFloors` now picks, among the search's own candidates, the one with the least
+  total shortfall against just `run.capFloors` (never a floor outside the caps), through a new
+  `Pool.checkFloorsExcept`; the result warns by stat and margin instead of going quiet.
+- Heroic Presence, the plan's example, can't demonstrate "the floor follows the buffs": it adds rating
+  to the same stat a floor bisects, so it moves the seed's own reading, never the fixed sheet total the
+  miss chance zeroes out at. `TestTheFloorFollowsTargetDebuffs` uses Improved Faerie Fire and Misery
+  instead (target-side, the other side of the formula) — dropping just one still doesn't move it, since
+  they share an exclusive effect and don't stack.
+- Tests (`sim/optimizer/caps_test.go`) cover the spec's list: role classification; each cap exact via
+  bisection, floor and ceiling; the debuff sensitivity above; a tank gets none; the setting off is a
+  no-op; the ceiling's surrogate penalty; a melee and a caster search reaching their floors over a
+  realistic pool. All 37 suites unchanged; the optimizer_slow suite's J and cap margins are in the go
+  stage's report for the review stage.
+
+Open for stage 2 (UI): the checkbox, its default and persistence, the tab/batch wiring, uitest specs.
+
+#### As built (stage 2, UI)
+
+"Respect hit, expertise and haste caps" sits in each tab's Setup section (`optimizer_tab.ts`,
+`optimizer_batch.ts`), ticked by default, next to item sources. `OptimizerTabSettings.respectStatCaps` /
+`BatchSettings.respectStatCaps` (default `true`) back it; `buildOptimizeRequest`, shared by both tabs, sends
+`disable_stat_caps: !respectStatCaps`. A settings blob saved before this field existed has no
+`respectStatCaps` key, so it falls back to the default and restores ticked, like every other missing field.
+`checkbox()` moved from a private helper in `optimizer_tab.ts` to an exported one so the batch tab could
+reuse it. The batch's roster fingerprint stays roster-only, like effort, racial mode and sources already are,
+so a settings change never resets jobs already run.
+
+Tests: new `tools/uitest/tests/settings/optimizer_tab.spec.ts` covers the tab's default, reload persistence
+both ways (unticking sticks; a settings blob missing the field restores ticked), and that a run's request
+carries `disable_stat_caps` for both states. `bis_batch.spec.ts` gained the matching three checks.
+
+No Go changes. `tsc`, eslint (old vs. new, every touched or new file) and `go vet` are clean; the fast suite,
+the full 37-suite run and `dock.sh delta` (37/37 unchanged) are green; uitest is green, all 171 tests
+including the 6 new ones. `optimizer_slow` now has a clean read on all 12 case/effort combinations (stage 1
+captured 7; a contended machine slowed the other 5 but they all finished here): every pick sits at or over
+its floor(s), fire_mage's haste stays well under its ceiling both times, and J moves the way stage 1 already
+described.
+
+| case | effort | J_preset | J_opt | delta | caps (pick/floor or ceiling) |
+|---|---|---|---|---|---|
+| fury_p1 | Quick | 8725.1 | 8622.9 | -102.2±2.8 | MeleeHit 264/floor 262, Expertise 212/floor 212 |
+| fury_p1 | Normal | 8725.1 | 8965.3 | +240.2±3.0 | MeleeHit 279/floor 262, Expertise 221/floor 212 |
+| combat_rogue_p3 | Quick | 10730.8 | 10926.5 | +195.7±2.2 | MeleeHit 712/floor 263, Expertise 219/floor 212 |
+| combat_rogue_p3 | Normal | 10730.8 | 11610.1 | +879.3±2.1 | MeleeHit 679/floor 263, Expertise 214/floor 212 |
+| fire_mage_p3 | Quick | 5066.6 | 4980.6 | -86.1±1.3 | SpellHit 376/floor 368, haste 664/ceiling 1269 |
+| fire_mage_p3 | Normal | 5066.6 | 5116.1 | +49.4±1.5 | not logged (stage 1's run) |
+| retribution_p4 | Quick | 12963.8 | 12963.8 | +0.0±0.0 | MeleeHit 266/floor 262, Expertise 146/floor 130 |
+| retribution_p4 | Normal | 12963.8 | 13195.7 | +231.9±2.8 | MeleeHit 272/floor 262, Expertise 132/floor 130 |
+| prot_paladin_p3 | Quick | -17821.9 | -12985.9 | +4835.9±25.6 | Defense 922/floor 674 (crit immunity) |
+| prot_paladin_p3 | Normal | -17821.9 | -12990.5 | +4831.4±21.0 | Defense 864/floor 674 (crit immunity) |
+| feral_tank_p2 | Quick | -1056.8 | -213.4 | +843.4±2.4 | Defense 83/floor 0 (crit immunity) |
+| feral_tank_p2 | Normal | -1056.8 | -162.5 | +894.3±2.7 | Defense 83/floor 0 (crit immunity) |
+
+#### As built (review fix: the search slowdown)
+
+Review found the caps' default-on floor routed nearly every DPS search through `search.go`'s slow
+path: `configure()` fell back from `configureFast` (an O(1) delta per enchant/reforge trial) to
+`tryAll`, a full `surrogate.score` rescore over every curved stat, whenever `len(s.floors) > 0` —
+previously only the rare tank crit-immunity case. Isolated A/B (same request, caps on vs. off):
+fury_p1 phase 1 Quick 2.1x slower, a Marksmanship hunter 8.7x, and a hunter over the full phase 1-5
+pool didn't finish inside Go's 600 s test timeout at all.
+
+Floors and ceilings are already linear in gear stats (`floorShortfall`, `ceilingOverage`), so their
+trial-to-trial cost can be an O(1) delta too, the same way `statsGain` already priced the response
+curves' share of a trial. `surrogate.capGain` (`sim/optimizer/surrogate.go`) adds that delta;
+`configure` now always calls `configureFast`, and the `tryAll` full-rescore path is gone.
+
+Profiling the fix (`go test -cpuprofile`, hunter caps-on) found two more costs worth cutting, both
+from `floorTerm`/`ceilingTerm` carrying their gradient as a `[stats.Len]float64` (~470 B): ranging
+`for _, f := range s.floors` copied the whole struct per floor per call, and a cap's gradient is
+almost always nonzero in one stat (its own rating), so scanning all of `stats.Len` for it was mostly
+wasted work. Both `floorTerm` and `ceilingTerm` now carry a `sparse []gradEntry` (built once in
+`setFloors`/`setCeilings`) alongside the dense `gradient`; every hot read (`capGain`, `floorShortfall`,
+`ceilingOverage`, `slopes`, `regime`, `slopeBox`) uses `sparse` and indexes `s.floors`/`s.ceilings` by
+pointer instead of copying. A literal `floorTerm`/`ceilingTerm` built outside `setFloors`/`setCeilings`
+(`TestSlopeBoxFloors`, `TestCeilingPenalizesOverage`) must set `sparse` too, via `sparseGradient`.
+
+Same isolated A/B after the fix: fury_p1 1.25x, the Marksmanship hunter 1.88x, and the phase 1-5 pool
+that didn't finish before now takes about 30 s. The fix is exact, not an approximation swap —
+`configureFast` already matched a full rescore bit-for-bit with no floors, and `capGain` is the same
+math computed incrementally — so `optimizer_slow`'s numbers are unchanged from the stage 2 table
+above, run to run, and all 37 goldens stay unchanged. The remaining 1.25x-1.88x is the caps' own,
+proportionate share of the existing per-candidate cost (`capGain` fell from the top-2 CPU consumer to
+about 3% of it), not a runaway path; `acbis`'s driver and `presetgen` call the same `Optimize`, so
+they see the same fix, though this item didn't re-time them directly.
+
+Also closed from the review: `TestMeleeCapFloorsReachTheCap` and `TestCasterCapFloorReachesTheCap` now
+fail if the unconstrained (caps-off) pick no longer sits under its floor, so a future pool or
+item-data change that makes a floor a no-op can't pass silently. A hunter equivalent of
+`TestCasterHasteCeilingStopsTheSearch` doesn't exist for a different reason, not an oversight:
+Steady Shot's ceiling needs about 100% ranged haste, and a phase 5 realistic pool's DPS-optimal
+unconstrained pick never comes close (199 rating against a ~2258 ceiling) — unlike a caster, where
+haste is strong enough that the unconstrained search overshoots on its own. `TestHunterHasteCeilingNeverBindsARealisticPool`
+covers the hunter ceiling end to end instead (a real search, caps on, over that pool, never exceeds
+it); `TestHunterCapsAreExact` already covers the ceiling's own bisection, and
+`TestCeilingPenalizesOverage` the surrogate term, both spec-agnostically.

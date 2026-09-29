@@ -420,35 +420,12 @@ func (se *searcher) configure(st *state, slot proto.ItemSlot, cand *Candidate, e
 		meta = se.s.headMeta(st.l)
 	}
 	c := se.s.quickChoice(slot, cand, v, gp, meta)
-	if len(se.s.floors) == 0 {
-		return se.configureFast(st, slot, cand, c, extra)
-	}
-	tryAll := func(options []ItemChoice) {
-		best := se.trial(st, append([]change{{slot, c}}, extra...)...)
-		for _, o := range options {
-			if val := se.trial(st, append([]change{{slot, o}}, extra...)...); val > best {
-				best, c = val, o
-			}
-		}
-	}
-	enchants := []ItemChoice{withEnchant(c, 0)}
-	for _, e := range cand.Enchants {
-		if !se.s.unpricedEnchants[slot][e.ID] {
-			enchants = append(enchants, withEnchant(c, e.ID))
-		}
-	}
-	tryAll(enchants)
-	reforges := []ItemChoice{withReforge(c, 0, 0)}
-	for _, r := range cand.Reforges {
-		reforges = append(reforges, withReforge(c, r.From, r.To))
-	}
-	tryAll(reforges)
-	return c
+	return se.configureFast(st, slot, cand, c, extra)
 }
 
 // configureFast is configure's trials without a whole rescore each. An enchant or reforge only moves
-// a few stats and nothing else the score counts but the enchant's residual, so each costs just those
-// stats' curves. Floors tie every stat together, so with any configure rescores in full.
+// a few stats, so each costs just those stats' curves (statsGain) plus, when the run has floor or
+// ceiling terms, their own gradient-only cost (capGain) instead of the whole surrogate.score.
 func (se *searcher) configureFast(st *state, slot proto.ItemSlot, cand *Candidate, c ItemChoice, extra []change) ItemChoice {
 	total := st.total
 	for _, ch := range append([]change{{slot, c}}, extra...) {
@@ -470,12 +447,12 @@ func (se *searcher) configureFast(st *state, slot proto.ItemSlot, cand *Candidat
 	}
 	best, pick = 0, -2
 	if c.Enchant != 0 {
-		try(-1, se.s.statsGain(&total, cur, &none)-curRes)
+		try(-1, se.s.statsGain(&total, cur, &none)+se.s.capGain(&total, cur, &none)-curRes)
 	}
 	for i := range cand.Enchants {
 		e := &cand.Enchants[i]
 		if e.ID != c.Enchant && !se.s.unpricedEnchants[slot][e.ID] {
-			try(i, se.s.statsGain(&total, cur, &e.Stats)+se.s.enchants[slot][e.ID].Mean-curRes)
+			try(i, se.s.statsGain(&total, cur, &e.Stats)+se.s.capGain(&total, cur, &e.Stats)+se.s.enchants[slot][e.ID].Mean-curRes)
 		}
 	}
 	switch {
@@ -491,11 +468,11 @@ func (se *searcher) configureFast(st *state, slot proto.ItemSlot, cand *Candidat
 	}
 	best, pick = 0, -2
 	if c.ReforgeFrom != 0 || c.ReforgeTo != 0 {
-		try(-1, se.s.statsGain(&total, cur, &none))
+		try(-1, se.s.statsGain(&total, cur, &none)+se.s.capGain(&total, cur, &none))
 	}
 	for i := range cand.Reforges {
 		if r := &cand.Reforges[i]; r.From != c.ReforgeFrom || r.To != c.ReforgeTo {
-			try(i, se.s.statsGain(&total, cur, &r.Stats))
+			try(i, se.s.statsGain(&total, cur, &r.Stats)+se.s.capGain(&total, cur, &r.Stats))
 		}
 	}
 	switch {
@@ -523,16 +500,6 @@ func (c *Candidate) reforge(from, to int32) *ReforgeOption {
 		}
 	}
 	return nil
-}
-
-func withEnchant(c ItemChoice, id int32) ItemChoice {
-	c.Enchant = id
-	return c
-}
-
-func withReforge(c ItemChoice, from, to int32) ItemChoice {
-	c.ReforgeFrom, c.ReforgeTo = from, to
-	return c
 }
 
 // improvement is how much better a move must score to count, against float noise.
