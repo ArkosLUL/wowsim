@@ -8,6 +8,16 @@ import (
 	"github.com/wowsims/wotlk/sim/core/stats"
 )
 
+// spellModDamage stacks percent damage bonuses from talents, glyphs and set pieces the server's way:
+// Player::ApplySpellMod multiplies SPELLMOD_DAMAGE and SPELLMOD_DOT percentages, it doesn't add them.
+func spellModDamage(bonuses ...float64) float64 {
+	multiplier := 1.0
+	for _, bonus := range bonuses {
+		multiplier *= 1 + bonus
+	}
+	return multiplier
+}
+
 func (shaman *Shaman) ApplyTalents() {
 	// We are going to treat this like a snapshot if you have the glyph.
 	if shaman.HasMajorGlyph(proto.ShamanMajorGlyph_GlyphOfTotemOfWrath) {

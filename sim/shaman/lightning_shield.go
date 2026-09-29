@@ -20,10 +20,11 @@ func (shaman *Shaman) registerLightningShieldSpell() {
 		SpellSchool: core.SpellSchoolNature,
 		ProcMask:    core.ProcMaskEmpty,
 
-		DamageMultiplier: 1 +
-			0.05*float64(shaman.Talents.ImprovedShields) +
-			core.TernaryFloat64(shaman.HasSetBonus(ItemSetEarthshatterBattlegear, 2), 0.1, 0) +
+		DamageMultiplier: spellModDamage(
+			0.05*float64(shaman.Talents.ImprovedShields),
+			core.TernaryFloat64(shaman.HasSetBonus(ItemSetEarthshatterBattlegear, 2), 0.1, 0),
 			core.TernaryFloat64(shaman.HasMajorGlyph(proto.ShamanMajorGlyph_GlyphOfLightningShield), 0.2, 0),
+		),
 		ThreatMultiplier: 1, //fix when spirit weapons is fixed
 
 		Direct: core.SpellEffect{Effect: 0, Min: 380, Max: 380, SP: 0.267},

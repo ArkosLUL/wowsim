@@ -373,15 +373,17 @@ func (mage *Mage) registerArcanePowerCD() {
 		Label:    "Arcane Power",
 		ActionID: actionID,
 		Duration: core.TernaryDuration(mage.HasMajorGlyph(proto.MageMajorGlyph_GlyphOfArcanePower), time.Second*18, time.Second*15),
+		// Arcane Power is SPELLMOD_DAMAGE (Player::ApplySpellMod), which multiplies onto whatever a
+		// spell's own talents and glyphs already put in DamageMultiplierAdditive.
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
 			for _, spell := range affectedSpells {
-				spell.DamageMultiplierAdditive += 0.2
+				spell.DamageMultiplierAdditive *= 1.2
 				spell.CostMultiplier += 0.2
 			}
 		},
 		OnExpire: func(aura *core.Aura, sim *core.Simulation) {
 			for _, spell := range affectedSpells {
-				spell.DamageMultiplierAdditive -= 0.2
+				spell.DamageMultiplierAdditive /= 1.2
 				spell.CostMultiplier -= 0.2
 			}
 		},

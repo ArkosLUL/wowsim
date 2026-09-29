@@ -118,8 +118,9 @@ var createMirrorImageInheritance = func(mage *Mage) func(stats.Stats) stats.Stat
 }
 
 func (mi *MirrorImage) registerFrostboltSpell() {
-	numImages := core.TernaryFloat64(mi.mageOwner.HasMajorGlyph(proto.MageMajorGlyph_GlyphOfMirrorImage), 4, 3)
-	talents := mi.mageOwner.Talents
+	mage := mi.mageOwner
+	numImages := core.TernaryFloat64(mage.HasMajorGlyph(proto.MageMajorGlyph_GlyphOfMirrorImage), 4, 3)
+	talents := mage.Talents
 
 	mi.Frostbolt = mi.RegisterSpell(core.SpellConfig{
 		ActionID:     core.ActionID{SpellID: 59638},
@@ -132,13 +133,23 @@ func (mi *MirrorImage) registerFrostboltSpell() {
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
-				GCD:      core.GCDDefault,
-				CastTime: time.Second * 3,
+				GCD: core.GCDDefault,
+				// shares Frostbolt's own class mask, so its cast-time mods cut this cast too
+				CastTime: time.Second*3 - time.Millisecond*100*time.Duration(talents.ImprovedFrostbolt+talents.EmpoweredFrostbolt),
 			},
 		},
 
+		BonusCritRating: 0 +
+			core.TernaryFloat64(mage.HasSetBonus(ItemSetKhadgarsRegalia, 4), 5*core.CritRatingPerCritChance, 0),
 		DamageMultiplier: 1,
-		CritMultiplier:   mi.DefaultSpellCritMultiplier(),
+		// images cast with the mage's spell mods and share Frostbolt's class mask (Unit::GetSpellModOwner),
+		// so the same SPELLMOD_DAMAGE percents that Frostbolt itself takes reach this cast too
+		DamageMultiplierAdditive: spellModDamage(
+			.01*float64(talents.ChilledToTheBone),
+			core.TernaryFloat64(mage.HasMajorGlyph(proto.MageMajorGlyph_GlyphOfFrostbolt), .05, 0),
+			core.TernaryFloat64(mage.HasSetBonus(ItemSetTempestRegalia, 4), .05, 0),
+		),
+		CritMultiplier:   mage.SpellCritMultiplier(1, mage.bonusCritDamage+float64(talents.IceShards)/3),
 		ThreatMultiplier: 1,
 
 		Direct: core.SpellEffect{Effect: 0, Min: 163, Max: 169, SP: 0.3},
@@ -157,10 +168,24 @@ func (mi *MirrorImage) registerFrostboltSpell() {
 			spell.DealDamageAfterTravel(sim, result)
 		},
 	})
+
+	// Arcane Power's classMask also reaches 59638 (Unit::GetSpellModOwner); it isn't a charged mod, so
+	// Player::ApplySpellMod's temporaryPet check doesn't drop it.
+	if mage.ArcanePowerAura != nil {
+		frostbolt := mi.Frostbolt
+		mage.ArcanePowerAura.ApplyOnGain(func(aura *core.Aura, sim *core.Simulation) {
+			frostbolt.DamageMultiplierAdditive *= 1.2
+		})
+		mage.ArcanePowerAura.ApplyOnExpire(func(aura *core.Aura, sim *core.Simulation) {
+			frostbolt.DamageMultiplierAdditive /= 1.2
+		})
+	}
 }
 
 func (mi *MirrorImage) registerFireblastSpell() {
-	numImages := core.TernaryFloat64(mi.mageOwner.HasMajorGlyph(proto.MageMajorGlyph_GlyphOfMirrorImage), 4, 3)
+	mage := mi.mageOwner
+	numImages := core.TernaryFloat64(mage.HasMajorGlyph(proto.MageMajorGlyph_GlyphOfMirrorImage), 4, 3)
+	talents := mage.Talents
 
 	mi.Fireblast = mi.RegisterSpell(core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: 59637},
@@ -175,13 +200,25 @@ func (mi *MirrorImage) registerFireblastSpell() {
 				GCD: core.GCDMin,
 			},
 			CD: core.Cooldown{
-				Timer:    mi.NewTimer(),
+				Timer: mi.NewTimer(),
+				// Server data pins 59637's cooldown at a flat 6 s regardless of Improved Fire Blast
+				// (TestServerDataConflicts, Sim 7000/8000 vs Server 6000): unlike the real Fire Blast,
+				// this one doesn't take the talent's cooldown reduction.
 				Duration: time.Second * 6,
 			},
 		},
 
+		BonusCritRating: 0 +
+			float64(talents.CriticalMass+talents.Incineration)*2*core.CritRatingPerCritChance,
 		DamageMultiplier: 1,
-		CritMultiplier:   mi.DefaultSpellCritMultiplier(),
+		// 59637's class mask (Unit::GetSpellModOwner) overlaps both the real Fire Blast's (Fire Power,
+		// Spell Impact) and Ice Lance's (Chilled to the Bone)
+		DamageMultiplierAdditive: spellModDamage(
+			.02*float64(talents.SpellImpact),
+			.02*float64(talents.FirePower),
+			.01*float64(talents.ChilledToTheBone),
+		),
+		CritMultiplier:   mage.SpellCritMultiplier(1, mage.bonusCritDamage),
 		ThreatMultiplier: 1,
 
 		Direct: core.SpellEffect{Effect: 0, Min: 88, Max: 98, SP: 0.15},
@@ -192,4 +229,14 @@ func (mi *MirrorImage) registerFireblastSpell() {
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 		},
 	})
+
+	if mage.ArcanePowerAura != nil {
+		fireblast := mi.Fireblast
+		mage.ArcanePowerAura.ApplyOnGain(func(aura *core.Aura, sim *core.Simulation) {
+			fireblast.DamageMultiplierAdditive *= 1.2
+		})
+		mage.ArcanePowerAura.ApplyOnExpire(func(aura *core.Aura, sim *core.Simulation) {
+			fireblast.DamageMultiplierAdditive /= 1.2
+		})
+	}
 }

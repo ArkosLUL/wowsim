@@ -336,8 +336,11 @@ func (shaman *Shaman) registerChainHealSpell() {
 				CastTime: time.Millisecond * 2500,
 			},
 		},
-		BonusCritRating:  float64(shaman.Talents.TidalMastery) * 1 * core.CritRatingPerCritChance,
-		DamageMultiplier: 1 + .02*float64(shaman.Talents.Purification) + 0.1*float64(shaman.Talents.ImprovedChainHeal),
+		BonusCritRating: float64(shaman.Talents.TidalMastery) * 1 * core.CritRatingPerCritChance,
+		DamageMultiplier: spellModDamage(
+			.02*float64(shaman.Talents.Purification),
+			0.1*float64(shaman.Talents.ImprovedChainHeal),
+		),
 		CritMultiplier:   shaman.DefaultHealingCritMultiplier(),
 		ThreatMultiplier: 1 - (float64(shaman.Talents.HealingGrace) * 0.05),
 
