@@ -304,12 +304,13 @@ export function updateRaid(sim: Sim, imports: Array<RaidCharacter>, notes: Impor
 	placed.forEach(entry => applyPetAndAmmo(entry.player, entry.imported.playerClass, entry.imported.loadout, TypedEvent.nextEventID()));
 }
 
-// Main-tank flagged raiders first, then whoever else brought a tank spec.
-function tankReferences(raiders: Array<{ spec: Spec; raidIndex: number; isMainTank: boolean }>): Array<UnitReference> {
-	const mainTanks = raiders.filter(raider => raider.isMainTank);
-	const otherTanks = raiders.filter(raider => !raider.isMainTank && isTankSpec(raider.spec));
-	return mainTanks
-		.concat(otherTanks)
+// The raid's tank slots: whoever brought a tank spec, main-tank flagged first. The flag alone isn't
+// enough, since raiders here carry it on a DPS build, and the boss swings at whoever holds tanks[0].
+export function tankReferences(raiders: Array<{ spec: Spec; raidIndex: number; isMainTank: boolean }>): Array<UnitReference> {
+	const tanks = raiders.filter(raider => isTankSpec(raider.spec));
+	return tanks
+		.filter(raider => raider.isMainTank)
+		.concat(tanks.filter(raider => !raider.isMainTank))
 		.slice(0, MAX_TANKS)
 		.map(raider => newUnitReference(raider.raidIndex));
 }

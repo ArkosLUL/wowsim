@@ -322,7 +322,10 @@ func BuildBisDataset(results []BisResult, roster *Roster, guids map[string]uint3
 		dataset.Warnings = append(dataset.Warnings, fmt.Sprintf(format, args...))
 	}
 
+	// SpecName stays empty here: only the result says whether a Blood or Feral raider tanks, so each
+	// result names its own spec below.
 	raiders := map[string]BisSubject{}
+	characters := map[string]*RosterCharacter{}
 	if roster != nil {
 		var members []BisCompositionMember
 		perSubgroup := map[int32]int{}
@@ -330,8 +333,9 @@ func BuildBisDataset(results []BisResult, roster *Roster, guids map[string]uint3
 			members = append(members, BisCompositionMember{ClassID: character.ClassID, Tree: MainTalentTree(character.Talents)})
 			raidIndex := int(character.Subgroup)*5 + perSubgroup[character.Subgroup]
 			perSubgroup[character.Subgroup]++
+			characters[character.Name] = character
 			raiders[character.Name] = BisSubject{Kind: BisSubjectRoster, ClassID: character.ClassID,
-				SpecName: RaiderSpecName(character), GUID: guids[character.Name], Name: character.Name, RaidIndex: raidIndex}
+				GUID: guids[character.Name], Name: character.Name, RaidIndex: raidIndex}
 		}
 		dataset.Fingerprint = CompositionFingerprint(members)
 	}
@@ -348,6 +352,7 @@ func BuildBisDataset(results []BisResult, roster *Roster, guids map[string]uint3
 	}
 	var used []pending
 	seen := map[subjectKey]string{}
+	specByRaider := map[string]struct{ spec, source string }{}
 	for _, result := range results {
 		for _, warning := range result.Warnings {
 			warn("%s: %s", result.Source, warning)
@@ -385,9 +390,19 @@ func BuildBisDataset(results []BisResult, roster *Roster, guids map[string]uint3
 			if raider.GUID == 0 {
 				return nil, fmt.Errorf("%s: no character guid for %s", result.Source, result.Raider)
 			}
+			raider.SpecName = RaiderSpecName(characters[result.Raider], r)
 			if raider.SpecName == "" {
 				warn("%s: %s's class or talents don't name one of the addon's specs, skipped", result.Source, result.Raider)
 				continue
+			}
+			// Each spec would be a subject of its own, but the addon keys its roster on the character
+			// guid, so one subject silently replaces the other and the phases pile up under whichever
+			// spec won.
+			if other, ok := specByRaider[result.Raider]; !ok {
+				specByRaider[result.Raider] = struct{ spec, source string }{raider.SpecName, result.Source}
+			} else if other.spec != raider.SpecName {
+				return nil, fmt.Errorf("%s makes %s %s and %s makes them %s", other.source, result.Raider,
+					other.spec, result.Source, raider.SpecName)
 			}
 			subject, key = raider, subjectKey{BisSubjectRoster, result.Raider, phase}
 		default:

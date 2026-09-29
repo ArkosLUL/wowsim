@@ -78,7 +78,8 @@ layouts come from [ac] `src/server/shared/DataStores/DBCStructure.h` and `DBCfmt
   (1 SpellID; 2 flags, 0 major and 1 minor).
 - **Group:** `group_member(guid, memberGuid, memberFlags, subgroup)` joined to `` `groups`.leaderGuid ``.
   - Backtick `groups`: it's a reserved word.
-  - memberFlags: 1 assistant, 2 main tank, 4 main assist.
+  - memberFlags: 1 assistant, 2 main tank, 4 main assist. Raiders here hold the main tank flag on a
+    DPS build, so only the talents name a spec; the flag just picks which tank spec the sim seats first.
   - `groupType & 2` marks a raid.
   - The table is empty while no group exists.
 - **Pet:** `character_pet` with `slot = 0` is the current one. Its `entry` gives

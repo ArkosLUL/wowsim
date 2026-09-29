@@ -4,10 +4,11 @@ import { MAX_PARTY_SIZE } from '../../core/party';
 import { Party as PartyProto, Player as PlayerProto, Raid as RaidProto } from '../../core/proto/api';
 import { Class } from '../../core/proto/common';
 import { Database } from '../../core/proto_utils/database';
-import { isTankSpec, newUnitReference, specNames } from '../../core/proto_utils/utils';
+import { specNames } from '../../core/proto_utils/utils';
 import { MAX_NUM_PARTIES } from '../../core/raid';
 import { Sim } from '../../core/sim';
 import { TypedEvent } from '../../core/typed_event';
+import { tankReferences } from '../acore_importer';
 import {
 	activeParties,
 	applyCharacter,
@@ -50,11 +51,7 @@ async function main() {
 		),
 		numActiveParties: activeParties(roster.characters),
 	});
-	const tanks = imports
-		.filter(entry => entry.isMainTank)
-		.concat(imports.filter(entry => !entry.isMainTank && isTankSpec(entry.imported.spec)))
-		.map(entry => newUnitReference(entry.raidIndex));
-	raidProto.tanks = tanks;
+	raidProto.tanks = tankReferences(imports.map(entry => ({ spec: entry.imported.spec, raidIndex: entry.raidIndex, isMainTank: entry.isMainTank })));
 
 	TypedEvent.freezeAllAndDo(() => {
 		imports.forEach(entry => {
