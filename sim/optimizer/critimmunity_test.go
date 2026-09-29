@@ -53,6 +53,18 @@ func tankEncounter(tb testing.TB, phase int32) *proto.Encounter {
 	}
 }
 
+// tankHealing is the healing a tank takes from the boss it fights, the way the UI's pool builder
+// re-derives it per phase (ui/core/optimizer/pool_builder.ts healingModelForBoss). A concrete Hps
+// also keeps core's presim out of every sim shard.
+func tankHealing(boss *proto.Target) *proto.HealingModel {
+	cadence, hps := 1.5*boss.SwingSpeed, 0.175*boss.MinBaseDamage/boss.SwingSpeed
+	if boss.DualWield {
+		cadence /= 2
+		hps *= 1.5
+	}
+	return &proto.HealingModel{Hps: hps, CadenceSeconds: cadence, BurstWindow: 6}
+}
+
 // tankBossLine matches one TANK_BOSSES entry in pool_builder.ts, e.g.
 // `1: { name: 'Patchwerk', damageModifier: 70, attackTimeMs: 1200, difficulty: RaidDifficulty.RaidDifficulty25Normal },`
 var tankBossLine = regexp.MustCompile(`^\s*(\d+):\s*\{\s*name:\s*(?:'([^']*)'|"([^"]*)"),\s*damageModifier:\s*([0-9.]+),\s*attackTimeMs:\s*(\d+),\s*difficulty:\s*RaidDifficulty\.(\w+)\s*\},?\s*$`)
