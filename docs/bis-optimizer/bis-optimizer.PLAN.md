@@ -1165,3 +1165,24 @@ Tests: `TestRelicResidualsScoreByEffect` prices Corruptor, White Stag and Raven 
 bear) above 0 and five idols that only boost spells a bear never casts at 0, none left unpriced, on
 the Feral Tank P2 realistic pool. `TestOptimizeFeralTankFindsAHelpfulRelic` seeds an idol that does
 nothing and checks the optimizer still finds and keeps one that helps.
+
+### BIS-oh-unique (wave L)
+
+A unique-equipped one-hander in the seed's main hand can never go in the off hand. `effectFamilies`' off-hand
+family keeps the seed's main hand in its base, marks that same item `missing` for the off hand (one unique item
+can't be in both hands of the base), `applyEffects` makes it `unpriced` for the off-hand slot, and `candBounds`
+then drops it from the off hand's options for the whole run, even once the search moves the main hand. A live
+batch (sim `d2b022d5b`, phase 2, Quick and Normal) moved an Assassination rogue from Fang of Oblivion (45607,
+unique-equipped, 1.8) to a faster main-hand dagger and put a weaker 1.8 dagger in the off hand, with 45607 in
+neither slot's alternatives; an Enhancement shaman who doesn't own 45607 got it second among off-hand
+alternatives. The exports (`shadow-normal-d2b022d5b.json` and its driver log; the Quick run's Shadow entry in
+`batch-stage2-bear-1fc3f7c3d.json`) are in `C:\Users\boss2\AppData\Local\Temp\claude\g--DevStuff-GitHub-wowsimwotlk\bis-relic-evidence\`.
+
+- Price such an item for the off hand against a base with another main hand, and let the rules keep a unique
+  item out of both hands at once. Check the mirror case: a unique item seeded in the off hand, for the main hand.
+- A two-hander under Titan's Grip (a unique one like Shadowmourne) takes the same path.
+- Tests: with the seed's unique main hand outranked there, the optimizer can pick it for the off hand, and the
+  off hand's alternatives list it.
+- Golden-neutral.
+
+**Owns:** `sim/optimizer/**` and its tests.
