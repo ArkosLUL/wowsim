@@ -112,8 +112,9 @@ timing, Master Poisoner on two targets and the BM capture's idle pet stay open: 
 ## Current wave
 
 - Wave: L, running. Prod runs K; the user OKed one rebuild once L lands.
-- Base SHA: `1fc3f7c3d`; the WIs branch from its spec commit.
-- Workflow runId: pending, args `waveL-args.json` in `G:\DevStuff\GitHub\.wave-loop`.
+- Base SHA: `1fc3f7c3d`; the WIs branch from its spec commit `773610faf`.
+- Workflow runId: `wf_34052b28-d62`, args `waveL-args.json` in `G:\DevStuff\GitHub\.wave-loop`, transcripts
+  in `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\wf_34052b28-d62`.
 - J2's full-roster batch ran 2026-09-28 in 52 min at Quick, output in
   `G:\DevStuff\GitHub\.wave-loop\bis-j2-full`; its times are the INVESTIGATION's batch rows.
 
