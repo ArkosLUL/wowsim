@@ -115,6 +115,22 @@ Golden-neutral.
 **Owns:** `ui/raid/optimizer_batch.ts`, `ui/raid/raid_sim_ui.ts`, `updateCharacterStats` in `ui/core/sim.ts`,
 and those tests.
 
+### UI-FIX3 (wave L)
+
+1. A fresh spec page takes the first race in `specToEligibleRaces` (`ui/core/individual_sim_ui.ts`), Horde for most
+   specs, while its default gear is an Alliance-built BiS preset and the user's roster is all Alliance. Take the
+   first Alliance race in that list instead, healers included, as the presets did.
+2. 9 tests have failed since before wave K:
+   - 8 on the shaman pages (smoke ×3, `spec_inputs` ×3, `acore_import` Replace, `raid_picker` every preset): a
+     Wowhead tooltip 404 for spell 13377, the fire elemental's Fire Shield. The id is the server's, so it stays in
+     the sim.
+   - `bis_batch`'s "a run asks the server for the ticked item sources only" waits for an `Optimize gear request:`
+     console line that `9479665b9` removed.
+
+Golden-neutral.
+
+**Owns:** `ui/core/individual_sim_ui.ts`, `ui/core/proto_utils/{utils,action_id}.ts`, and `tools/uitest/**`.
+
 ### Every UI-* item
 
 - Tests go in `tools/uitest/tests/<area>/`, helpers for the area beside them. `tests/lib/**`,

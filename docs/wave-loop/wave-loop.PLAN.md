@@ -63,6 +63,7 @@ G = changes goldens. FS = runs all 37 suites.
 | J | PAR-P7-PRI (G) · PAR-P7-TANK (G) · BIS-e2e-perf · AC-3 | ✔ |
 | J2 | BIS-stage2 · BIS-adopt · PERF-RNG (FS) · BIS-stage2b | ✔ |
 | K | PAR-P8 (G, FS) · BIS-tank-boss · BIS-presets | ✔ |
+| L | PAR-FU-1 (G) · PAR-FU-2 (G) · UI-FIX3 | ✔ |
 
 F2 is an inserted wave, not a fifth item in F: the core swing and cast fixes of PAR-P7-0c have to land
 before the class items in G, a class item can't build on a core fix merging in its own wave, and F already
@@ -92,6 +93,10 @@ J2 is the user's call too (2026-09-27): wave J's batch took ~8 h, and its stage 
 ([speed audit](../bis-optimizer/bis-optimizer.INVESTIGATION.md#speed-audit-after-wave-j)), so the optimizer
 gets fixed before K builds presets with it. In K, PAR-P8 and BIS-tank-boss merge first, and the orchestrator
 then regenerates the BiS presets on the merged tree: both change what the optimizer picks.
+L is the user's call too (2026-09-28): the wave K leftovers a fix settles, and an Alliance default race on
+every spec page. After the merges the orchestrator regenerates at Normal the presets of the classes whose
+code moved; prod is rebuilt once L lands, and the full-roster batch isn't rerun. The DK disease-snapshot
+timing, Master Poisoner on two targets and the BM capture's idle pet stay open: none is a plain fix.
 
 **Where the specs are:**
 
@@ -106,11 +111,9 @@ then regenerates the BiS presets on the merged tree: both change what the optimi
 
 ## Current wave
 
-- Wave: K landed on `master` (2026-09-28), prod rebuilt to it. The registry has no wave after K; open
-  follow-ups are in the parity PLAN's P8 as built and the wave K report.
-- Base SHA: `e0c43c592`; the WIs branch from its spec commit `a36c02588`.
-- Workflow runId: `wf_4b8a1c11-d41`, args `waveK-args.json` in `G:\DevStuff\GitHub\.wave-loop`, transcripts
-  in `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\wf_4b8a1c11-d41`.
+- Wave: L, running. Prod runs K; the user OKed one rebuild once L lands.
+- Base SHA: `1fc3f7c3d`; the WIs branch from its spec commit.
+- Workflow runId: pending, args `waveL-args.json` in `G:\DevStuff\GitHub\.wave-loop`.
 - J2's full-roster batch ran 2026-09-28 in 52 min at Quick, output in
   `G:\DevStuff\GitHub\.wave-loop\bis-j2-full`; its times are the INVESTIGATION's batch rows.
 
@@ -377,8 +380,6 @@ Later WIs are added as their wave starts.
 
 ## User actions
 
-- Pick a default race: most specs' pages default to a Horde race, while their default gear is now an
-  Alliance-built BiS preset (a Troll mage wears gear picked with Alliance items).
 - Worth a click-through when convenient: the optimizer tab's tank controls on a tank spec (the
   survival/threat slider, the crit-immunity box, the racial select). No agent can judge those, and
   BIS-ui-tab's own click-through found three real bugs.
