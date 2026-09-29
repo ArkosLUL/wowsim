@@ -47,6 +47,29 @@ func (rogue *Rogue) loseMasterPoisoner(sim *core.Simulation) {
 	}
 }
 
+// anyRoguePoisonAura is a raid-wide, ref-counted marker of whether the target carries a poison debuff
+// from any rogue: SpellEffects.cpp's Mutilate case (mutilate.go) scans every aura on the target for
+// Dispel == DISPEL_POISON, not just the mutilating rogue's own Deadly or Wound Poison.
+func anyRoguePoisonAura(target *core.Unit) *core.Aura {
+	return target.GetOrRegisterAura(core.Aura{
+		Label:     "RoguePoisonPresent",
+		Duration:  core.NeverExpires,
+		MaxStacks: 100,
+	})
+}
+
+func gainRoguePoisonPresent(sim *core.Simulation, target *core.Unit) {
+	aura := anyRoguePoisonAura(target)
+	if !aura.IsActive() {
+		aura.Activate(sim)
+	}
+	aura.AddStack(sim)
+}
+
+func loseRoguePoisonPresent(sim *core.Simulation, target *core.Unit) {
+	anyRoguePoisonAura(target).RemoveStack(sim)
+}
+
 // deadlyPoisonAddsTicks is mod-spell-tweaks' spell_tweaks_deadly_poison_haste: with Murder, the
 // rogue's melee haste shortens Deadly Poison's tick interval while its duration stays fixed, so it
 // fits more ticks.
@@ -83,6 +106,7 @@ func (rogue *Rogue) registerDeadlyPoisonSpell() {
 					if rogue.Talents.MasterPoisoner > 0 {
 						rogue.gainMasterPoisoner(sim)
 					}
+					gainRoguePoisonPresent(sim, aura.Unit)
 				},
 				OnExpire: func(aura *core.Aura, sim *core.Simulation) {
 					if rogue.Talents.SavageCombat > 0 {
@@ -91,6 +115,7 @@ func (rogue *Rogue) registerDeadlyPoisonSpell() {
 					if rogue.Talents.MasterPoisoner > 0 {
 						rogue.loseMasterPoisoner(sim)
 					}
+					loseRoguePoisonPresent(sim, aura.Unit)
 				},
 			},
 			NumberOfTicks:       4,
@@ -318,6 +343,7 @@ func (rogue *Rogue) registerWoundPoisonSpell() {
 			if rogue.Talents.MasterPoisoner > 0 {
 				rogue.gainMasterPoisoner(sim)
 			}
+			gainRoguePoisonPresent(sim, aura.Unit)
 		},
 		OnExpire: func(aura *core.Aura, sim *core.Simulation) {
 			if rogue.Talents.SavageCombat > 0 {
@@ -326,6 +352,7 @@ func (rogue *Rogue) registerWoundPoisonSpell() {
 			if rogue.Talents.MasterPoisoner > 0 {
 				rogue.loseMasterPoisoner(sim)
 			}
+			loseRoguePoisonPresent(sim, aura.Unit)
 		},
 	}
 

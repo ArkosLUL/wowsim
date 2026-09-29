@@ -40,8 +40,9 @@ func (rogue *Rogue) newMutilateHitSpell(isMH bool) *core.Spell {
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			baseDamage := normalizedStrike(sim, spell, &spell.Direct, isMH)
-			// TODO: Add support for all poison effects
-			if rogue.DeadlyPoison.Dot(target).IsActive() || rogue.woundPoisonDebuffAuras.Get(target).IsActive() {
+			// Mutilate (for each hand): SpellEffects.cpp scans every aura on the target for
+			// Dispel == DISPEL_POISON, any caster's included, not just this rogue's own
+			if anyRoguePoisonAura(target).IsActive() {
 				baseDamage *= 1.2
 			}
 
@@ -85,8 +86,10 @@ func (rogue *Rogue) registerMutilateSpell() {
 			result := spell.CalcOutcome(sim, target, spell.OutcomeMeleeSpecialHit) // Miss/Dodge/Parry/Hit
 			if result.Landed() {
 				rogue.AddComboPoints(sim, 2, spell.ComboPointMetrics())
-				rogue.MutilateOH.Cast(sim, target)
+				// 48666's effect 1 triggers the main hand's 48665 before effect 2 triggers the off
+				// hand's 48664
 				rogue.MutilateMH.Cast(sim, target)
+				rogue.MutilateOH.Cast(sim, target)
 			} else {
 				spell.IssueRefund(sim)
 			}

@@ -56,6 +56,7 @@ func newCapacitorDamageEffect(config CapacitorDamageEffect) {
 			},
 		})
 
+		var procTarget *core.Unit
 		capacitorAura := makeCapacitorAura(&character.Unit, CapacitorAura{
 			Aura: core.Aura{
 				Label:     config.Name,
@@ -64,14 +65,17 @@ func newCapacitorDamageEffect(config CapacitorDamageEffect) {
 				MaxStacks: config.MaxStacks,
 			},
 			Handler: func(sim *core.Simulation) {
-				damageSpell.Cast(sim, character.CurrentTarget)
+				// spell_item_trinket_stack casts on the completing proc's own eventInfo.GetActionTarget(),
+				// not the wearer's current target
+				damageSpell.Cast(sim, procTarget)
 			},
 		})
 
 		// copy: config is shared by every character wearing the item
 		trigger := config.Trigger
 		trigger.Name = config.Name + " Trigger"
-		trigger.Handler = func(sim *core.Simulation, _ *core.Spell, _ *core.SpellResult) {
+		trigger.Handler = func(sim *core.Simulation, _ *core.Spell, result *core.SpellResult) {
+			procTarget = result.Target
 			capacitorAura.Activate(sim)
 			capacitorAura.AddStack(sim)
 		}
@@ -211,6 +215,7 @@ func init() {
 				}
 			}
 
+			var procTarget *core.Unit
 			capacitorAura := makeCapacitorAura(&character.Unit, CapacitorAura{
 				Aura: core.Aura{
 					Label:     name,
@@ -223,11 +228,12 @@ func init() {
 				},
 				Handler: func(sim *core.Simulation) {
 					// 50/50 which hand with an off-hand weapon, no matter which hand fed the motes
-					// (spell_item_tiny_abomination_in_a_jar)
+					// (spell_item_tiny_abomination_in_a_jar); strikes the completing proc's own target
+					// (eventInfo.GetActionTarget()), not the wearer's current one
 					if ohSpell != nil && sim.RandomFloat("Manifest Anger") < 0.5 {
-						ohSpell.Cast(sim, character.CurrentTarget)
+						ohSpell.Cast(sim, procTarget)
 					} else {
-						mhSpell.Cast(sim, character.CurrentTarget)
+						mhSpell.Cast(sim, procTarget)
 					}
 				},
 			})
@@ -243,6 +249,7 @@ func init() {
 					if spell == mhSpell || spell == ohSpell { // can't proc itself
 						return
 					}
+					procTarget = result.Target
 					capacitorAura.Activate(sim)
 					capacitorAura.AddStack(sim)
 				},
