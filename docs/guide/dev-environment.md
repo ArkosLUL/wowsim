@@ -94,6 +94,9 @@ npx protoc --ts_out ui/core/proto --proto_path proto proto/ui.proto
     it panics.
   - The server binary is built without `with_db`, so requests must carry item data in `player.database`,
     as the UI does.
+  - An exported settings JSON keeps the rotation as `TypeAuto` without the APL the page resolves, so it
+    sims at the wrong DPS (Fire Mage 0). For page-exact inputs, capture the `computeStats` request the
+    page posts to its worker, as `tools/statweights` does.
   - `/optimizeGearAsync` runs one optimization at a time (409 while busy, naming the running id) and
     cancels a run nobody has polled for 2 minutes. `/cancelAsync` cancels by progress id. The CLI
     equivalent: `wowsimcli optimize --infile <OptimizeGearRequest JSON>`. A request without item data,
