@@ -13,6 +13,14 @@ func (rogue *Rogue) registerShadowstepCD() {
 
 	actionID := core.ActionID{SpellID: 36554}
 	baseCost := 10 - 5*float64(rogue.Talents.FilthyTricks)
+
+	// classMask decode (spelldump 36563): its SPELLMOD_DAMAGE effect ([100794886,266,0]) reaches
+	// Sinister Strike, Backstab, Ambush, Eviscerate, Hemorrhage, Ghostly Strike, Mutilate's main hand
+	// (not its off hand) and Envenom. Its SPELLMOD_EFFECT1 effect ([1048832,0,0]) reaches only
+	// Garrote's and Rupture's own family flags: their tick's base points, not their AP
+	// (garrote.go/rupture.go read the aura directly for that). Both effects share one proc mask, so
+	// any of these ten landing consumes the charge.
+	var damageSpells []*core.Spell
 	var affectedSpells []*core.Spell
 
 	rogue.ShadowstepAura = rogue.RegisterAura(core.Aura{
@@ -20,23 +28,35 @@ func (rogue *Rogue) registerShadowstepCD() {
 		ActionID: actionID,
 		Duration: time.Second * 10,
 		OnInit: func(aura *core.Aura, sim *core.Simulation) {
-			for _, spell := range rogue.Spellbook {
-				if spell.Flags.Matches(SpellFlagBuilder|SpellFlagFinisher) && spell.DamageMultiplier > 0 {
-					affectedSpells = append(affectedSpells, spell)
-				}
+			damageSpells = []*core.Spell{
+				rogue.SinisterStrike, rogue.Backstab, rogue.Ambush, rogue.Eviscerate,
+				rogue.Hemorrhage, rogue.GhostlyStrike, rogue.MutilateMH, rogue.Envenom,
 			}
+			affectedSpells = append(append([]*core.Spell{}, damageSpells...), rogue.Garrote, rogue.Rupture)
 		},
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
 			// Damage of your next ability is increased by 20% and the threat caused is reduced by 50%.
+			for _, spell := range damageSpells {
+				if spell != nil {
+					spell.DamageMultiplier *= 1.2
+				}
+			}
 			for _, spell := range affectedSpells {
-				spell.DamageMultiplier *= 1.2
-				spell.ThreatMultiplier *= 0.5
+				if spell != nil {
+					spell.ThreatMultiplier *= 0.5
+				}
 			}
 		},
 		OnExpire: func(aura *core.Aura, sim *core.Simulation) {
+			for _, spell := range damageSpells {
+				if spell != nil {
+					spell.DamageMultiplier /= 1.2
+				}
+			}
 			for _, spell := range affectedSpells {
-				spell.DamageMultiplier *= 1 / 1.2
-				spell.ThreatMultiplier *= 1 / 0.5
+				if spell != nil {
+					spell.ThreatMultiplier /= 0.5
+				}
 			}
 		},
 		OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {

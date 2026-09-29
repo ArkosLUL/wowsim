@@ -4,10 +4,12 @@ import (
 	"time"
 
 	"github.com/wowsims/wotlk/sim/core"
+	"github.com/wowsims/wotlk/sim/core/proto"
 )
 
 func (hunter *Hunter) registerSteadyShotSpell() {
 	impSSProcChance := 0.05 * float64(hunter.Talents.ImprovedSteadyShot)
+	hasGlyphOfSteadyShot := hunter.HasMajorGlyph(proto.HunterMajorGlyph_GlyphOfSteadyShot)
 	if hunter.Talents.ImprovedSteadyShot > 0 {
 		hunter.ImprovedSteadyShotAura = hunter.RegisterAura(core.Aura{
 			Label:    "Improved Steady Shot",
@@ -87,6 +89,12 @@ func (hunter *Hunter) registerSteadyShotSpell() {
 			baseDamage := spell.Direct.Roll(sim) + spell.Direct.AP*spell.RangedAttackPowerSpellBonus(target) +
 				hunter.AutoAttacks.Ranged().BaseDamage(sim) +
 				hunter.AmmoDamageBonus
+			// Unit::SpellPctDamageModsDone's SPELLFAMILY_HUNTER case: the caster's own Glyph of Steady
+			// Shot (GetAuraEffect(56826, 0)) needs the caster's own Serpent Sting on this target
+			// (GetAuraEffect(..., GetGUID())), not any hunter's on any target
+			if hasGlyphOfSteadyShot && hunter.SerpentSting.Dot(target).IsActive() {
+				baseDamage *= 1.1
+			}
 
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeRangedHitAndCrit)
 			spell.WaitTravelTime(sim, func(sim *core.Simulation) {

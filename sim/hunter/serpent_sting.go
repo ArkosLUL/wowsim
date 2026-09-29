@@ -10,7 +10,6 @@ import (
 func (hunter *Hunter) registerSerpentStingSpell() {
 	canCrit := hunter.HasSetBonus(ItemSetWindrunnersPursuit, 2)
 	noxiousStingsMultiplier := 1 + 0.01*float64(hunter.Talents.NoxiousStings)
-	huntersWithGlyphOfSteadyShot := hunter.GetAllHuntersWithGlyphOfSteadyShot()
 
 	hunter.SerpentSting = hunter.RegisterSpell(core.SpellConfig{
 		ActionID:     core.ActionID{SpellID: 49001},
@@ -46,21 +45,9 @@ func (hunter *Hunter) registerSerpentStingSpell() {
 				Tag:   "SerpentSting",
 				OnGain: func(aura *core.Aura, sim *core.Simulation) {
 					hunter.AttackTables[aura.Unit.UnitIndex].DamageTakenMultiplier *= noxiousStingsMultiplier
-					// Check for 1 because this aura will always be active inside OnGain.
-					if aura.Unit.NumActiveAurasWithTag("SerpentSting") == 1 {
-						// Unit::SpellPctDamageModsDone scales DoneTotalMod by the glyph, so it multiplies
-						for _, otherHunter := range huntersWithGlyphOfSteadyShot {
-							otherHunter.SteadyShot.DamageMultiplier *= 1.1
-						}
-					}
 				},
 				OnExpire: func(aura *core.Aura, sim *core.Simulation) {
 					hunter.AttackTables[aura.Unit.UnitIndex].DamageTakenMultiplier /= noxiousStingsMultiplier
-					if !aura.Unit.HasActiveAuraWithTag("SerpentSting") {
-						for _, otherHunter := range huntersWithGlyphOfSteadyShot {
-							otherHunter.SteadyShot.DamageMultiplier /= 1.1
-						}
-					}
 				},
 			},
 			NumberOfTicks: 5 + core.TernaryInt32(hunter.HasMajorGlyph(proto.HunterMajorGlyph_GlyphOfSerpentSting), 2, 0),
@@ -98,17 +85,4 @@ func (hunter *Hunter) registerSerpentStingSpell() {
 			})
 		},
 	})
-}
-
-func (hunter *Hunter) GetAllHuntersWithGlyphOfSteadyShot() []*Hunter {
-	allHunterAgents := hunter.Env.Raid.GetPlayersOfClass(proto.Class_ClassHunter)
-
-	hunters := []*Hunter{}
-	for _, agent := range allHunterAgents {
-		h := agent.(HunterAgent).GetHunter()
-		if h.HasMajorGlyph(proto.HunterMajorGlyph_GlyphOfSteadyShot) {
-			hunters = append(hunters, h)
-		}
-	}
-	return hunters
 }

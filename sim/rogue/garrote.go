@@ -56,7 +56,9 @@ func (rogue *Rogue) registerGarrote() {
 			TicksCanCrit: false,
 			Tick:         core.SpellEffect{Effect: 0, Min: 119, Max: 119, AP: 0.07},
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
-				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + math.Floor(dot.Tick.AP*dot.Spell.MeleeAttackPower())
+				// Shadowstep's SPELLMOD_EFFECT1 +20% (shadowstep.go) reaches this base roll, not the AP part
+				basePoints := dot.Tick.Roll(sim) * core.TernaryFloat64(rogue.ShadowstepAura.IsActive(), 1.2, 1)
+				dot.SnapshotBaseDamage = basePoints + math.Floor(dot.Tick.AP*dot.Spell.MeleeAttackPower())
 				attackTable := dot.Spell.Unit.AttackTables[target.UnitIndex]
 				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(attackTable)
 			},

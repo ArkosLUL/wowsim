@@ -399,6 +399,18 @@ Roll details the tables above don't show:
     Savage Rend's ticks take none. Spore Cloud ticks once on each target (the sim hit its main target twice).
   - Exotic families (`CREATURE_TYPE_FLAG_TAMEABLE_EXOTIC`, Rhino included) take mod-spell-tweaks' exotic multiplier
     on everything they deal (`Unit::DealDamage`).
+- **Fixed (PAR-FU-2):** Glyph of Steady Shot (`steady_shot.go`) needs the caster's own Serpent Sting on the
+  target being shot (`Unit::SpellPctDamageModsDone`'s `SPELLFAMILY_HUNTER` case: `GetAuraEffect(56826, 0)`
+  on the caster, then `victim->GetAuraEffect(..., GetGUID())` scoped to that same caster), not any glyphed
+  hunter's Serpent Sting on any target. Now a per-cast check (`hunter.SerpentSting.Dot(target).IsActive()`)
+  instead of a raid-wide toggle on `serpent_sting.go`'s `OnGain`/`OnExpire`; no golden moved, since every
+  suite is one hunter on one target, where "any hunter, any target" and "this hunter, this target" coincide.
+- **Closed (PAR-FU-2):** `hunter_test.go`'s `TestWildHuntStatInheritance` and `TestBeastMastery22PtPetTalents`
+  close the Cleanup (P8) gap below: a unit test, not a new golden suite, since a golden needs its own
+  `.results` file and WI agents don't run `dock.sh promote`. The first checks `pet.go`'s
+  `makeStatInheritance` int32 truncation at Wild Hunt rank 2 (63%/28%, past `FerocityTalents`' rank 1); the
+  second runs a real 22-point build (adding Wild Hunt rank 2, Owl's Focus and Great Stamina) through a short
+  sim, checking only that it doesn't panic.
 
 **Raid buffs, debuffs and racials** (`sim/core/{buffs,debuffs,consumes,racials}.go` against the capture)
 - Reading an amount off the capture (`SpellEffectInfo::CalcValue`): `basePoints`, plus
@@ -568,6 +580,29 @@ Roll details the tables above don't show:
   Rod of the Sun King (29996, a mace) in the off hand, picked while Mutilate took any off hand. With it
   Mutilate can't cast: P1 9403 → 348 DPS (the APL then Vanishes for Overkill and nothing breaks stealth).
   The presets and the BiS tooltip dataset need a new optimizer run.
+- **Fixed (PAR-FU-2):** Shadowstep and Mutilate (`shadowstep.go`, `mutilate.go`, `garrote.go`, `rupture.go`;
+  spelldump), closing the PAR-DECL-3 "Rogue, left open" notes on both:
+  - Shadowstep's 36563 now reaches only its own classMask instead of every builder/finisher:
+    `SPELLMOD_DAMAGE` +20% on Sinister Strike, Backstab, Ambush, Eviscerate, Hemorrhage, Ghostly Strike,
+    Mutilate's main hand (not its off hand) and Envenom; `SPELLMOD_EFFECT1` +20% on Garrote's and Rupture's
+    tick roll only, read off `rogue.ShadowstepAura.IsActive()` before their AP part
+    (`dot.Tick.AP*MeleeAttackPower()`, `ruptureAPDamage`) is added, not through `DamageMultiplier`, which
+    would also scale that AP part.
+  - Mutilate (`SpellEffects.cpp`'s `SPELLFAMILY_ROGUE` case): 48666 now casts the main hand (48665) before
+    the off hand (48664, was reversed), and its 20% checks a shared `RoguePoisonPresent` aura
+    (`poisons.go`), ref-counted across every rogue's Deadly Poison dot and Wound Poison debuff on the
+    target, any caster's, not just the mutilating rogue's own.
+  - Goldens: Assassination's Average-Default -0.066% (AllItems rows -1.17% to +0.51%, mixed sign, from the
+    MH-before-OH reorder shifting RNG draw order, not a systematic change; the poison check is the same two
+    auras for one rogue, so the ref-count refactor alone moves nothing). Combat and Subtlety unchanged:
+    Combat has no Mutilate or Shadowstep talent, and Subtlety's suite casts Shadowstep in a `combat_expose`
+    rotation that never does so.
+- **Fixed (PAR-FU-2):** Tiny Abomination in a Jar (`sim/common/wotlk/capacitors.go`) strikes
+  `eventInfo.GetActionTarget()`, the completing proc's own target, not the wearer's `CurrentTarget`.
+  Widened to Thunder Capacitor and both Reign trinkets too: `spell_item_trinket_stack` (`spell_item.cpp`)
+  has the same `GetActionTarget()` call. No suite moved: every `FullCharacterTestSuiteGenerator`
+  subgenerator (`AllItems` included) runs `MakeSingleTargetEncounter`, where `CurrentTarget` and the proc's
+  target are the same unit.
 
 **Warrior** (`TestFury`, `TestArms`, `TestProtectionWarrior`, code)
 - Slam (`sim/warrior/slam.go`): `spell_warr_slam::HandleDummy` (`spell_warrior.cpp:318-353`) only casts
@@ -639,6 +674,39 @@ Roll details the tables above don't show:
 - Live-verified (`TestSimvalWarriorP7`): Rend's tick data, Trauma's scoped crit override, Deep Wounds'
   no-crit and Shattering Throw's flat cast time all match the server. Numbers in **Verified on the live
   server**.
+- Set-bonus classMask decode (PAR-FU-2): read every DPS/tank tier set's bonus spell id out of
+  `ItemSet.dbc` (`tools/database/azerothcore`'s reader, live copy) and checked its classMask/op against
+  the target spells' family flags in the spelldump. All twelve sets match what the sim already does:
+  Onslaught Armor 4pc/Dreadnaught Plate 2pc/Ymirjar Lord's Plate 2pc land on Shield Slam alone or with
+  Shockwave (`[0,512,0]`/`[0,33280,0]`); Onslaught Battlegear 4pc/Siegebreaker Battlegear 4pc both land on
+  Mortal Strike+Bloodthirst (`[33554432,1024,0]`); Dreadnaught Battlegear 2pc lands on Slam alone; Wrynn's/
+  Hellscream's Battlegear 4pc lands on Heroic Strike+Slam (`[2097216,0,0]`), never Cleave. Siegebreaker
+  Battlegear 2pc's own aura classMask happens to equal Devastate's flags, but it's a
+  `SPELL_AURA_PROC_TRIGGER_SPELL`: the proc system reads its `spell_proc` row instead
+  (`SpellMgr::GetSpellProcEntry`), whose family mask is Heroic Strike+Slam — the aura's own classMask field
+  is stale for this aura type, not what gates the proc.
+- DK set-bonus classMask decode (PAR-FU-2): same method for the eight DK sets. Darkruned Battlegear 2pc
+  (Death Coil+Frost Strike crit) and 4pc (the per-disease bonus, `dkDiseaseMultiplier`, on Blood Strike,
+  Heart Strike, Obliterate and Scourge Strike), Darkruned Plate 2pc (Rune Strike damage), Thassarian's/
+  Koltira's Plate 2pc (Blood Strike/Heart Strike damage) and Battlegear 2pc (its proc) and 4pc (Blood
+  Plague's `TicksCanCrit`, via `bloodPlagueCanCrit`), and both Scourgelord's sets all match their
+  classMask/`spell_proc` reach exactly — already correctly wired despite `items.go`'s empty-looking
+  `Bonuses` closures (the real logic lives in `diseases.go` and the ability files, keyed off `HasSetBonus`
+  directly). **Fixed:** Scourgeborne Battlegear's 2pc (60134, crit) and 4pc (60132's `spell_proc` row)
+  both carry Death Strike in their reach (`[16,134348800,0]`: Death Strike + Obliterate + Scourge Strike,
+  exactly the set's own tooltip text), but `scourgeborneBattlegearCritBonus`/`RunicPowerBonus` were only
+  wired into `obliterate.go` and `scourge_strike.go`; `death_strike.go` (the MH strike, and the rune
+  weapon's copy for the crit side, which already inherits the owner's other spell mods the same way) now
+  adds them too. Blood Tank +0.50%, Blood DPS +1.16% on the `AllItems-ScourgeborneBattlegear` row alone.
+- Confirmed the wider Tiny-Abomination-family fix (`capacitors.go`, stage 1) is a no-op for every warrior
+  and DK suite, the hunter/rogue single-target reasoning holding here too (every
+  `FullCharacterTestSuiteGenerator` subgenerator uses `MakeSingleTargetEncounter`). It isn't a no-op
+  everywhere: Balance Druid's and Fire/Arcane Mage's default gear (`p3_alliance`/`p3_fire_alliance`/
+  `p3_arcane_alliance`) equips Reign of the Unliving H (47188), and their `LongMultiTarget` rows move
+  a few thousandths of a percent — the redirected `GetActionTarget()` now lands on whichever enemy the
+  completing proc actually hit, not the wearer's persistent current target, and those differ once there's
+  more than one enemy. Neither class is this item's to fix; noted here since the cause is a file this item
+  owns.
 
 **Retribution Paladin** (`TestSimvalRetribution`, code)
 - Seal DoT via strikes was already right: `spell_pal_seal_of_vengeance_aura::HandleApplyDoT`
@@ -1515,9 +1583,9 @@ gofmt-clean.
   stacking with a quiver's own 15% (`hunter.go`). No suite equips it (item 34334), so latent. Confirmed
   unchanged: pet focus regen still models the server's 24-every-4s lump as a continuous 6/s rate
   (retail deviation #47 already covers the gap).
-- Left open, a test-coverage gap not a defect: the hunter suites' `FerocityTalents` (`hunter_test.go`)
-  spends 16 pet talent points; Beast Mastery's cap is 22 (`BEAST_MASTERY_PET_TALENT_POINTS`), so no
-  golden reaches it. Closing it needs a new BM-specific fixture, a bigger change than this stage.
+- Closed (PAR-FU-2, Hunter findings above): the hunter suites' `FerocityTalents` (`hunter_test.go`) spends
+  16 pet talent points, short of Beast Mastery's 22-point cap; a unit test now covers the gap instead of a
+  new golden suite.
 - Left open, not code this stage can settle: no DK APL (`ui/deathknight/apls/*.json`) has a
   haste/Bloodlust-aware condition to time a disease refresh so its already-correct amplitude snapshot
   (`AuraEffect::Update`, PAR-P3-5) locks in the faster tick rate. Needs APL priority tuning verified
@@ -1797,12 +1865,6 @@ deviation)
     dealt the off hand first, so its procs reached the main hand's hit.
 - Rogue, left open:
   - Serverdata lacks Killing Spree's 57841/57842, Shiv's 5940 and Fan of Knives' 52874.
-  - Shadowstep's 36563 is `SPELLMOD_DAMAGE` +20% on Sinister Strike, Backstab, Ambush, Eviscerate,
-    Hemorrhage, Ghostly Strike, Mutilate's main hand and Envenom, and `SPELLMOD_EFFECT1` +20% on Garrote's
-    and Rupture's base points, not their AP. The sim multiplies every builder and finisher by 1.2.
-  - Mutilate: 48666 triggers the main hand's 48665 before the off hand's 48664; the sim casts the off hand
-    first. Its 20% needs any poison on the target (`DISPEL_POISON`, any caster's); the sim checks its own
-    Deadly and Wound Poison.
   - Fan of Knives waits for `DistanceFromTarget`: 30 yd in the suites (1.67 s), where a rogue in its 8 yd
     radius waits 277 ms (the 5 yd floor).
 - Paladin, fixed:
