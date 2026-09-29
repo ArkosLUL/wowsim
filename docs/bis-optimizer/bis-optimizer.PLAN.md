@@ -49,7 +49,8 @@ the sim, so they're provisional until parity lands. It runs as `BIS-` work items
 - The healing model is re-derived for each phase's boss with `Player.setDefaultHealingParams`' defaults.
 
 **Other constraints**
-- Optional per-stat floors, empty by default.
+- Optional per-stat floors. DPS specs also get hit and expertise cap floors, on by default
+  ([BIS-caps](#bis-caps-wave-l)).
 - Racial traits: screen all 10 races, then fully optimize the top 3 plus ties. "Keep current traits" skips
   the search.
 
@@ -1210,3 +1211,29 @@ and its Titan's Grip twin optimize a small known-DPS pool against a brute-force 
 search couldn't reach it (one-hander: 4229.0 vs. the true 4371.5; two-hander: off hand left empty,
 4674.0 vs. 5129.0). `TestOffHandPricesTheSeedsUniqueWeaponForTheOtherHand` pins the residual
 directly, both directions.
+
+### BIS-caps (wave L)
+
+The user's call (2026-09-29): picks may sit under a hit or expertise cap, which beats capping in the sim's
+fight from behind, but a raid can't always attack from behind. In the phase 2 batch a DPS death knight had 112
+expertise rating of the 202 the dodge cap needs, and a DPS warrior 206 of 212. So DPS specs get hard floors,
+added the way `critImmunityFloor` adds Defense (one floor per stat, raised rather than joined by a second):
+
+- Melee: hit rating to the special-attack miss cap (not the dual-wield white cap), and expertise to the dodge
+  cap. Hunters: ranged hit, no expertise. Casters: spell hit to the spell miss cap.
+- Each cap is exact, the rating that brings that chance against the run's target to 0 on the sim's own combat
+  table (`MagicSpellHitResult`: 17% against a boss on the live config), after talents, racials and the run's
+  buffs and debuffs. Bisect it like `requiredDefense`, reading the chances off `core.ComputePlayerSheet`. The
+  caps a result reports come from response-curve breakpoints, which can be a few rating off.
+- Tanks get none of these floors.
+- A "Respect hit and expertise caps" checkbox in the BiS tab and the BiS Batch tab, ticked by default, saved and
+  restored with their other settings (settings saved before it restore ticked). Presets and the tooltip dataset
+  use the default.
+- A floor the pool can't reach doesn't fail the run: the pick gets as close as it can, and the result warns.
+- Tests: a melee DPS whose unfloored pick sits under the expertise cap reaches it; a caster reaches the spell hit cap; the
+  floor follows the buffs (Heroic Presence lowers the hit floor); a tank run gets none; unticked matches today's
+  picks. The slow suite runs with the floors on: report how its J moved.
+- Golden-neutral.
+
+**Owns:** `proto/optimizer.proto` (the setting), `sim/core/sheet.go`, `sim/optimizer/**` and its tests,
+`ui/core/optimizer/**`, `optimizer_tab.ts`, `ui/raid/optimizer_batch.ts`, and their uitest specs.

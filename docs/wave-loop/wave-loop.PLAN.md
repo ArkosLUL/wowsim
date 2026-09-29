@@ -63,7 +63,7 @@ G = changes goldens. FS = runs all 37 suites.
 | J | PAR-P7-PRI (G) · PAR-P7-TANK (G) · BIS-e2e-perf · AC-3 | ✔ |
 | J2 | BIS-stage2 · BIS-adopt · PERF-RNG (FS) · BIS-stage2b | ✔ |
 | K | PAR-P8 (G, FS) · BIS-tank-boss · BIS-presets | ✔ |
-| L | PAR-FU-1 (G) · PAR-FU-2 (G) · UI-FIX3 · BIS-relic · BIS-oh-unique | ✔ |
+| L | PAR-FU-1 (G) · PAR-FU-2 (G) · UI-FIX3 · BIS-relic · BIS-oh-unique · BIS-caps | ✔ |
 
 F2 is an inserted wave, not a fifth item in F: the core swing and cast fixes of PAR-P7-0c have to land
 before the class items in G, a class item can't build on a core fix merging in its own wave, and F already
@@ -100,7 +100,8 @@ timing, Master Poisoner on two targets and the BM capture's idle pet stay open: 
 BIS-relic joined mid-wave (the user's call, 2026-09-29): a batch run swapped a bear's effect idol for one
 that does nothing, so the druid builds join the preset rerun. So did BIS-oh-unique, a fifth item past the
 cap (the user's call, the same day): a unique one-hander worn in the main hand could never go in the off
-hand, so the dual-wield builds' presets rerun after it merges.
+hand, so the dual-wield builds' presets rerun after it merges. BIS-caps, a sixth (the user's call, the same
+day), makes DPS picks reach their hit and expertise caps, so all 28 builds' presets regenerate after it.
 
 **Where the specs are:**
 
