@@ -35,6 +35,12 @@ import { distinct } from '../utils.js';
 // The sim applies it only when the encounter's config does, and the gear picker says when it doesn't.
 const ANY_REFORGING: Reforging = { enabled: true, percentage: REFORGE_MAX_PERCENTAGE, statTypes: KNOWN_REFORGE_STAT_TYPES };
 
+// Spell ids the server uses that Wowhead has no tooltip for: fetch a sibling id's tooltip instead.
+// 13377 is the fire elemental's Fire Shield aura; Wowhead only has its damage tick, 13376.
+const spellTooltipRedirects: Record<number, number> = {
+	13377: 13376,
+};
+
 const dbUrlJson = '/wotlk/assets/database/db.json';
 const dbUrlBin = '/wotlk/assets/database/db.bin';
 const leftoversUrlJson = '/wotlk/assets/database/leftover_db.json';
@@ -270,7 +276,10 @@ export class Database {
 	static async getSpellIconData(spellId: number): Promise<IconData> {
 		const db = await Database.get();
 		if (!db.spellIcons[spellId]) {
-			db.spellIcons[spellId] = Database.getWowheadSpellTooltipData(spellId);
+			const redirectId = spellTooltipRedirects[spellId];
+			db.spellIcons[spellId] = redirectId
+				? Database.getSpellIconData(redirectId).then(data => IconData.create({ ...data, id: spellId }))
+				: Database.getWowheadSpellTooltipData(spellId);
 		}
 		return await db.spellIcons[spellId];
 	}

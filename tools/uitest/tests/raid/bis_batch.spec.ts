@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 
 import { expect, type Locator, type Page, test } from '@playwright/test';
 
+import { OptimizeGearRequest } from '../../../../ui/core/proto/api';
 import { openRaid, openSimTab } from '../lib/page';
 import { collectDialogs, importRoster, playerEditor, readRoster, reloadRaid, roster, rosterMainTank, slot, statCount } from './raid';
 
@@ -21,7 +22,6 @@ const sourceBox = (page: Page, label: string) => batchTab(page).locator('.optimi
 const tickedSources = (page: Page) => sourceBoxes(page).evaluateAll((boxes: Array<HTMLInputElement>) => boxes.map(box => box.checked));
 
 const BATCH_KEY_PREFIX = '__wotlk_raid__optimizer-batch.v1.';
-const REQUEST_LOG = 'Optimize gear request: ';
 
 // the label holds the name, then the spec on a line of its own
 const gridNames = (page: Page) =>
@@ -117,18 +117,17 @@ test('the item sources start all ticked and stick, and a batch saved without the
 
 // No real run: the routes answer empty, so each job fails right after sending its request.
 test('a run asks the server for the ticked item sources only', async ({ page }) => {
-	await page.route('**/optimizeGearAsync', route => route.fulfill({ status: 200, body: '' }));
-	await page.route('**/asyncProgress', route => route.fulfill({ status: 204 }));
-	const requests: Array<any> = [];
-	page.on('console', message => {
-		if (message.text().startsWith(REQUEST_LOG)) {
-			requests.push(JSON.parse(message.text().slice(REQUEST_LOG.length)));
-		}
+	const requests: Array<OptimizeGearRequest> = [];
+	await page.route('**/optimizeGearAsync', async route => {
+		const body = route.request().postDataBuffer();
+		if (body) requests.push(OptimizeGearRequest.fromBinary(body));
+		await route.fulfill({ status: 200, body: '' });
 	});
+	await page.route('**/asyncProgress', route => route.fulfill({ status: 204 }));
 	const sorted = (kinds: Array<number>) => kinds.slice().sort((a, b) => a - b);
 	const tickedKinds = async () =>
 		sorted(await sourceBoxes(page).evaluateAll((boxes: Array<HTMLInputElement>) => boxes.filter(box => box.checked).map(box => Number(box.value))));
-	const requested = (i: number) => sorted(requests[i].settings.sources ?? []);
+	const requested = (i: number) => sorted(requests[i].settings?.sources ?? []);
 
 	await openBatch(page);
 	await tickOnly(page, [mainTank], [1]);
