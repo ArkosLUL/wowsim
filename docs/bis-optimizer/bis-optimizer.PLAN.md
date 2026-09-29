@@ -1106,3 +1106,24 @@ factor, so every tank boss hit at half the server's rate; it's doubled now, movi
 - `TestTankBossesMirrorUI` (`critimmunity_test.go`) parses `TANK_BOSSES` straight out of
   `pool_builder.ts`'s source text and fails if it drifts from the Go mirror, the way raidctx's
   `TestProvidersMirrorRaidStats` checks `raid_stats.ts`.
+
+### BIS-relic (wave L)
+
+A BiS batch run (sim `1fc3f7c3d`, phase 2, Quick, 25-man sources) swapped a Feral Tank's Idol of the Corruptor
+(45509, +153 Agility for 12 s off each Mangle, `sim/druid/items.go`) for Idol of the Crying Wind (45270), which
+only boosts Insect Swarm. The relic slot's five alternatives all scored 0.00 ± 0.00, and the Corruptor isn't
+among them; a Feral DPS run of the same raider leaves it out too. `effectFamilies`' `prior` always sims the
+seed's own items, so the Corruptor was likely priced and came out no better than an idol that does nothing.
+The exports and roster are in `C:\Users\boss2\AppData\Local\Temp\claude\g--DevStuff-GitHub-wowsimwotlk\bis-relic-evidence\`.
+The roster will import that raider as Feral DPS once another session's import fix lands, so rebuild the tank
+case as a request by hand.
+
+- Trace where the Corruptor's value goes (a Go test with `traceHook`, as `slow_test.go` does): its residual,
+  the relic slot's family (built with `weapons: true` for every class), the objective, the alternatives.
+- Fix the cause for every class's relic slot (idols, librams, totems, sigils), not only this idol.
+- Tests: the Feral Tank case keeps an idol whose effect helps over one that does nothing, and relic
+  alternatives with different effects score differently.
+- Golden-neutral, unless the cause is the idol's own sim code: then say which goldens move.
+
+**Owns:** `sim/optimizer/**` and its tests, `ui/core/optimizer/**` if the cause is in the pool, and
+`sim/druid/items.go` if it's in the idol.
