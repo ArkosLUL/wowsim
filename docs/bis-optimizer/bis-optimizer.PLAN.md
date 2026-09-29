@@ -49,8 +49,8 @@ the sim, so they're provisional until parity lands. It runs as `BIS-` work items
 - The healing model is re-derived for each phase's boss with `Player.setDefaultHealingParams`' defaults.
 
 **Other constraints**
-- Optional per-stat floors. DPS specs also get hit and expertise cap floors, on by default
-  ([BIS-caps](#bis-caps-wave-l)).
+- Optional per-stat floors. DPS specs also get hit and expertise cap floors, and casters and hunters a
+  haste ceiling, on by default ([BIS-caps](#bis-caps-wave-l)).
 - Racial traits: screen all 10 races, then fully optimize the top 3 plus ties. "Keep current traits" skips
   the search.
 
@@ -1226,14 +1226,21 @@ added the way `critImmunityFloor` adds Defense (one floor per stat, raised rathe
   buffs and debuffs. Bisect it like `requiredDefense`, reading the chances off `core.ComputePlayerSheet`. The
   caps a result reports come from response-curve breakpoints, which can be a few rating off.
 - Tanks get none of these floors.
-- A "Respect hit and expertise caps" checkbox in the BiS tab and the BiS Batch tab, ticked by default, saved and
-  restored with their other settings (settings saved before it restore ticked). Presets and the tooltip dataset
-  use the default.
+- Casters and hunters also get a haste ceiling (the user's calls, the same day). Casters: the haste rating at
+  which a hasted global cooldown reaches its 1 s floor (`Spell::TriggerGlobalCooldown`'s `MIN_GCD`), about 1,270
+  with Wrath of Air and a 3% haste aura. Hunters, whose GCD haste doesn't touch: the rating at which Steady
+  Shot casts in 1 s, about 1,335 with a quiver, Serpent's Swiftness and a 3% aura. Both count talents and the
+  run's lasting buffs, not Bloodlust or Heroism, other temporary cooldowns or procs (Improved Aspect of the
+  Hawk's). Melee get none.
+- A "Respect hit, expertise and haste caps" checkbox in the BiS tab and the BiS Batch tab, ticked by default,
+  saved and restored with their other settings (settings saved before it restore ticked). Presets and the
+  tooltip dataset use the default.
 - A floor the pool can't reach doesn't fail the run: the pick gets as close as it can, and the result warns.
-- Tests: a melee DPS whose unfloored pick sits under the expertise cap reaches it; a caster reaches the spell hit cap; the
-  floor follows the buffs (Heroic Presence lowers the hit floor); a tank run gets none; unticked matches today's
-  picks. The slow suite runs with the floors on: report how its J moved.
+- Tests: a melee DPS whose unfloored pick sits under the expertise cap reaches it; a caster reaches the spell
+  hit cap; the floor follows the buffs (Heroic Presence lowers the hit floor); a caster and a hunter whose
+  unconstrained picks pass their haste ceiling stop at it; a tank run gets none; unticked matches today's picks.
+  The slow suite runs with the caps on: report how its J moved.
 - Golden-neutral.
 
-**Owns:** `proto/optimizer.proto` (the setting), `sim/core/sheet.go`, `sim/optimizer/**` and its tests,
+**Owns:** `proto/optimizer.proto` (the setting, and a ceiling beside `StatMinimum`), `sim/core/sheet.go`, `sim/optimizer/**` and its tests,
 `ui/core/optimizer/**`, `optimizer_tab.ts`, `ui/raid/optimizer_batch.ts`, and their uitest specs.

@@ -101,7 +101,8 @@ BIS-relic joined mid-wave (the user's call, 2026-09-29): a batch run swapped a b
 that does nothing, so the druid builds join the preset rerun. So did BIS-oh-unique, a fifth item past the
 cap (the user's call, the same day): a unique one-hander worn in the main hand could never go in the off
 hand, so the dual-wield builds' presets rerun after it merges. BIS-caps, a sixth (the user's call, the same
-day), makes DPS picks reach their hit and expertise caps, so all 28 builds' presets regenerate after it.
+day), makes DPS picks reach their hit and expertise caps and stop at a haste cap, so all 28 builds' presets
+regenerate after it.
 
 **Where the specs are:**
 
