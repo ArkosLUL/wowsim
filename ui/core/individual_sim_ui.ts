@@ -48,6 +48,7 @@ import {
 	getTalentPoints,
 	isHealingSpec,
 	isTankSpec,
+	raceToFaction,
 	SpecOptions,
 	specToEligibleRaces,
 	specToLocalStorageKey,
@@ -511,7 +512,9 @@ export abstract class IndividualSimUI<SpecType extends Spec> extends SimUI {
 			this.individualConfig.defaults.debuffs.totemOfWrath = towEnabled;
 
 			this.player.applySharedDefaults(eventID);
-			this.player.setRace(eventID, specToEligibleRaces[this.player.spec][0]);
+			const eligibleRaces = specToEligibleRaces[this.player.spec];
+			const defaultRace = eligibleRaces.find(race => raceToFaction[race] == Faction.Alliance) || eligibleRaces[0];
+			this.player.setRace(eventID, defaultRace);
 			this.player.setRacialTraits(eventID, Race.RaceUnknown);
 			this.player.setGear(
 				eventID,
