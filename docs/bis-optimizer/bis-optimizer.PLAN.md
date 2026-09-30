@@ -1410,3 +1410,33 @@ Against caps off ([table](#as-built-stage-2-ui)):
 
 Open: pruning that stays exact yet prunes under a floor would win back that search time and path; any
 finite bound must still hold for a loadout short of the floor.
+
+#### As built (hit talents on spells)
+
+Shadow Focus, Arcane Focus and Elemental Precision add hit per spell (`SpellConfig.BonusHitRating`), not
+to the SpellHit stat, and a TBC scope's `AddBonusRangedHitRating` does the same for ranged attacks. The
+floor read only the stat, so it asked those specs for up to 3% (79 rating) more hit than their spells need.
+
+- `core.ComputePlayerSheet` now reads `PhysicalMissChance` and `SpellMissChance` off the rotation's
+  likeliest spell to miss, each through its own roll's path (`MeleeMissBP(spell.YellowTableInput(at))`,
+  `SpellMissBP` on `spell.SpellHitChance`), so its `BonusHitRating` counts. `rotationDamageSpells`
+  (`sim/core/sheet.go`) takes the APL's cast, channel and multidot spells, prepull included, skipping
+  helpful ones and those with a zero `DamageMultiplier` (summons, buffs, cooldowns); `ProcMaskSpellDamage`
+  rolls spell hit, `ProcMaskMeleeOrRangedSpecial` yellow hit, any other mask counts for both (Serpent
+  Sting rolls ranged hit on `ProcMaskEmpty`). A rotation with none keeps the stat-only reading. A binary
+  spell's resist share stays out: no hit removes it. `caps.go` is unchanged.
+- Build floors, P1 seed, full debuffs: `mage_arcane`, `elemental_shaman` and `shadow_priest` drop from 368
+  to 289; every other caster and both hunters keep theirs (fire and frost mages take Arcane Focus but cast
+  no arcane spell; the Smite preset has no Shadow Focus). Melee floors can't move: no melee spell has a
+  per-spell hit bonus.
+- The scope skips Serpent Sting, which both hunter rotations cast, so a seed with it keeps the stat floor.
+  A rotation without Serpent Sting would get a floor 30 lower from such a seed, which a pick dropping the
+  scope doesn't meet: the floor is bisected once, on the seed.
+- `TestCasterCapFloorReachesTheCap` moved from arcane P3 (its unconstrained pick, 293.7, now clears the
+  289 floor) to fire mage P1 (364 against 368).
+- Tests (`caps_spellhit_test.go`): each of the three specs' floor sits the talent's 78.7 under its
+  talentless floor (79 at whole rating), and Mind Flay, Arcane Blast and Lightning Bolt read a 0 bp miss
+  threshold at the floor and above 0 one rating under; fire mage, affliction warlock, fury and MM hunter
+  floors equal their rotation-free ones, an MM hunter's with the scope too (Serpent Sting 0 bp at the
+  floor, above 0 one under; Steady Shot 0 bp 30 under). All 37 suites unchanged; `optimizer_slow` has no affected spec,
+  and all 12 J and caps lines match the [table](#as-built-stage-2-ui).

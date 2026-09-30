@@ -239,7 +239,13 @@ func realCapRequest(t *testing.T, name string, phase int32, caps bool) *proto.Op
 // kept, the way realCapRequest is for a preset.
 func hunterCapRequest(t *testing.T, phase int32, caps bool) *proto.OptimizeGearRequest {
 	t.Helper()
-	player := mmHunter()
+	return playerRealCapRequest(t, mmHunter(), phase, caps)
+}
+
+// playerRealCapRequest is player over a realistic pool at phase, the way realCapRequest is for a
+// preset.
+func playerRealCapRequest(t *testing.T, player *proto.Player, phase int32, caps bool) *proto.OptimizeGearRequest {
+	t.Helper()
 	req := presetOptimizeRequest(t, "fury_p1")
 	req.Base.Raid = core.SinglePlayerRaidProto(player, core.FullPartyBuffs, core.FullRaidBuffs, core.FullDebuffs)
 	req.Settings = &proto.OptimizerSettings{
@@ -353,8 +359,8 @@ func capMargins(settings *proto.OptimizerSettings, sheet core.PlayerSheet) strin
 
 // A caster's search reaches the spell hit floor.
 func TestCasterCapFloorReachesTheCap(t *testing.T) {
-	without, _ := optimizedSheet(t, realCapRequest(t, "arcane_p3", 3, false))
-	with, result := optimizedSheet(t, realCapRequest(t, "arcane_p3", 3, true))
+	without, _ := optimizedSheet(t, playerRealCapRequest(t, fireMagePlayer("p1_fire"), 1, false))
+	with, result := optimizedSheet(t, playerRealCapRequest(t, fireMagePlayer("p1_fire"), 1, true))
 	floor := floorOf(result.Settings, stats.SpellHit)
 	if floor == 0 {
 		t.Fatalf("no spell hit floor in the result's settings: %v", result.Settings.GetStatMinimums())
@@ -365,7 +371,7 @@ func TestCasterCapFloorReachesTheCap(t *testing.T) {
 	if got := with[stats.SpellHit]; got < floor-0.5 {
 		t.Errorf("spell hit is %.1f, under its floor of %.1f", got, floor)
 	}
-	t.Logf("arcane p3: spell hit %.1f unconstrained, %.1f with the caps on, floor %.1f", without[stats.SpellHit], with[stats.SpellHit], floor)
+	t.Logf("fire p1: spell hit %.1f unconstrained, %.1f with the caps on, floor %.1f", without[stats.SpellHit], with[stats.SpellHit], floor)
 }
 
 // A caster's unconstrained search, over a late enough pool, stacks SpellHaste past the ceiling; with
