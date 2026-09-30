@@ -122,6 +122,10 @@ regenerate after it.
   (`ff0920a96`: wands and physical ranged weapons took the relic path; the unreachable-cap fallback
   replaced seeds that met every floor).
 - Left, from 2026-10-01 (the user's call), in order:
+  0. Find why meeting a cap floor on `ff0920a96` cost two raid-batch raiders 10-13% (Mighty, arms: -12.6%
+     for 30 expertise rating; Stormweaver, elemental: -10.4% for 12 spell hit, on Draenei racials his own
+     screen dropped): search quality under floors, or the party Heroic Presence check. The BiS tooltip
+     session holds its import until then.
   1. Re-baselines on an idle machine: the slow suite, BenchmarkSimulate ×3, the `tools/perf` full baseline.
   2. Rerun presets on a preset server at the final HEAD for the 16 builds `ff0920a96` changes: `mage_arcane`,
      `mage_fire`, `mage_frost`, `rogue_assassination`, `rogue_combat`, `rogue_subtlety`,
