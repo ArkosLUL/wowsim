@@ -953,18 +953,26 @@ func (s *surrogate) statRanges() map[stats.Stat]ResponseRange {
 	return ranges
 }
 
-// setFloors approximates each floored sheet stat as linear in gear stats around the seed, from
-// character sheets with each gear stat moved by 100.
-func (s *surrogate) setFloors(floors []*proto.StatMinimum, gearStats []stats.Stat) error {
-	if len(floors) == 0 {
+// setFloorsAndCeilings approximates each floored or ceilinged sheet stat as linear in gear stats
+// around the seed, from character sheets with each gear stat moved by 100.
+func (s *surrogate) setFloorsAndCeilings(floors []*proto.StatMinimum, ceilings []*proto.StatMaximum, gearStats []stats.Stat) error {
+	if len(floors) == 0 && len(ceilings) == 0 {
 		return nil
 	}
 	seedSheet, err := s.pool.finalStats(s.seed)
 	if err != nil {
 		return err
 	}
+	// the floors' stats, then the ceilings'
+	read := make([]proto.Stat, 0, len(floors)+len(ceilings))
+	for _, f := range floors {
+		read = append(read, f.Stat)
+	}
+	for _, c := range ceilings {
+		read = append(read, c.Stat)
+	}
 	const step = 100.0
-	gradients := make([]stats.Stats, len(floors))
+	gradients := make([]stats.Stats, len(read))
 	for _, st := range gearStats {
 		var off stats.Stats
 		off[st] = step
@@ -972,8 +980,8 @@ func (s *surrogate) setFloors(floors []*proto.StatMinimum, gearStats []stats.Sta
 		if err != nil {
 			return err
 		}
-		for i, f := range floors {
-			gradients[i][st] = (sheet.FinalStats[f.Stat] - seedSheet[f.Stat]) / step
+		for i, sheetStat := range read {
+			gradients[i][st] = (sheet.FinalStats[sheetStat] - seedSheet[sheetStat]) / step
 		}
 	}
 	maxSlope := 0.0
@@ -982,42 +990,12 @@ func (s *surrogate) setFloors(floors []*proto.StatMinimum, gearStats []stats.Sta
 	}
 	s.floorWeight = 100 * (maxSlope + 1)
 	for i, f := range floors {
-		s.floors = append(s.floors, floorTerm{stat: stats.Stat(f.Stat), min: f.MinValue, seed: seedSheet[f.Stat], gradient: gradients[i], sparse: sparseGradient(gradients[i])})
-	}
-	return nil
-}
-
-// setCeilings is setFloors for the haste ceilings.
-func (s *surrogate) setCeilings(ceilings []*proto.StatMaximum, gearStats []stats.Stat) error {
-	if len(ceilings) == 0 {
-		return nil
-	}
-	seedSheet, err := s.pool.finalStats(s.seed)
-	if err != nil {
-		return err
-	}
-	const step = 100.0
-	gradients := make([]stats.Stats, len(ceilings))
-	for _, st := range gearStats {
-		var off stats.Stats
-		off[st] = step
-		sheet, err := playerSheet(s.pool.base, s.pool.targetIndex, s.seed, off)
-		if err != nil {
-			return err
-		}
-		for i, c := range ceilings {
-			gradients[i][st] = (sheet.FinalStats[c.Stat] - seedSheet[c.Stat]) / step
-		}
-	}
-	if s.floorWeight == 0 {
-		maxSlope := 0.0
-		for _, st := range s.curved {
-			maxSlope = max(maxSlope, math.Abs(slices.Min(s.curves[st].slope)), math.Abs(slices.Max(s.curves[st].slope)))
-		}
-		s.floorWeight = 100 * (maxSlope + 1)
+		g := gradients[i]
+		s.floors = append(s.floors, floorTerm{stat: stats.Stat(f.Stat), min: f.MinValue, seed: seedSheet[f.Stat], gradient: g, sparse: sparseGradient(g)})
 	}
 	for i, c := range ceilings {
-		s.ceilings = append(s.ceilings, ceilingTerm{stat: stats.Stat(c.Stat), max: c.MaxValue, seed: seedSheet[c.Stat], gradient: gradients[i], sparse: sparseGradient(gradients[i])})
+		g := gradients[len(floors)+i]
+		s.ceilings = append(s.ceilings, ceilingTerm{stat: stats.Stat(c.Stat), max: c.MaxValue, seed: seedSheet[c.Stat], gradient: g, sparse: sparseGradient(g)})
 	}
 	return nil
 }
@@ -1295,6 +1273,16 @@ func itemNeedsSim(id int32) bool {
 	}
 	item, ok := core.LookupItem(id)
 	return !ok || item.WeaponDamageMax > 0
+}
+
+// isRelic is whether item is an idol, libram, totem or sigil.
+func isRelic(item *core.Item) bool {
+	switch item.RangedWeaponType {
+	case proto.RangedWeaponType_RangedWeaponTypeIdol, proto.RangedWeaponType_RangedWeaponTypeLibram,
+		proto.RangedWeaponType_RangedWeaponTypeTotem, proto.RangedWeaponType_RangedWeaponTypeSigil:
+		return true
+	}
+	return false
 }
 
 // fillsHands is whether nothing can go in the target's off hand next to the item.
@@ -2081,10 +2069,10 @@ func (r *run) effectFamilies(s *surrogate, v stats.Stats, gp *gemPlan, fx *effec
 		case itemNeedsSim(seed.Items[slot].ItemID):
 			base.Items[slot] = ItemChoice{}
 		}
-		// A relic (idol, libram, totem or sigil) carries no stats a lower bound can rank by, so the
-		// screening budget has nothing to cut by except arbitrary order: never cut it instead.
-		relic := ranged && !hunter
-		f := &effectFamily{name: slot.String() + " items", base: base, weapons: ranged && hunter, full: relic}
+		// relics have no stats to rank by, so a budget cut would keep them in pool order: sim them all.
+		// Wands, bows and guns rank by stats like any other weapon.
+		relic := ranged && slices.ContainsFunc(p.Slots[slot], func(c *Candidate) bool { return isRelic(&c.Item) })
+		f := &effectFamily{name: slot.String() + " items", base: base, weapons: ranged && !relic, full: relic}
 		var dominated map[int32]bool
 		if f.weapons {
 			dominated = s.dominatedWeapons(slot, p.Slots[slot], lo, hi, gb)

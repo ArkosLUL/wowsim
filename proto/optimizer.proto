@@ -90,8 +90,9 @@ message OptimizerSettings {
 	// ignored. The raid batch's Heroic Presence checks use this.
 	bool compare_racial_traits = 14;
 
-	// The run's own hit, expertise and spell-hit floors and haste ceiling for DPS specs, added here at
-	// Optimize time the way crit immunity's Defense floor joins stat_minimums; empty otherwise.
+	// Ceilings the run adds at Optimize time, the way crit immunity's Defense floor joins stat_minimums:
+	// a DPS caster's or hunter's haste ceiling. Their hit, expertise and spell-hit floors join
+	// stat_minimums instead. Empty otherwise.
 	repeated StatMaximum stat_maximums = 15;
 	// Turns off the hit, expertise and haste caps above. Unset (false, proto3's zero value) means the
 	// caps are on, so a request that doesn't set this field gets the same default the UI ships with.

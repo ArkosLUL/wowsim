@@ -298,6 +298,83 @@ func ceilingOf(settings *proto.OptimizerSettings, st stats.Stat) float64 {
 	return 0
 }
 
+// The fallback only ever stands in for a seed that breaks a cap floor: a seed that keeps every rule
+// stays, however far short the search's candidates fall. And relaxing a cap floor stops at the floor
+// the settings put on that stat themselves.
+func TestClosestToCapFloors(t *testing.T) {
+	r, err := PrepareRequest(kohRequest(proto.OptimizerEffort_OptimizerEffortQuick, kohUnique, kohWeak))
+	if err != nil {
+		t.Fatal(err)
+	}
+	seed, err := playerSheet(r.Base, r.TargetIndex, r.Seed, stats.Stats{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	hit := seed.FinalStats[stats.MeleeHit]
+	floor := &proto.StatMinimum{Stat: proto.Stat_StatMeleeHit, MinValue: hit}
+	r.Settings.StatMinimums = []*proto.StatMinimum{floor}
+	pool, err := CompilePool(r)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// 30 hit under the seed: its hit ring's gone
+	short := r.Seed
+	short.Items[proto.ItemSlot_ItemSlotFinger2] = ItemChoice{}
+	if err := pool.CheckGear(short); err != nil {
+		t.Fatal(err)
+	}
+
+	t.Run("a seed at the floor stays", func(t *testing.T) {
+		floor.MinValue = hit
+		rn := &run{r: r, pool: pool, capFloors: map[stats.Stat]float64{stats.MeleeHit: 0}, seedBroken: pool.Check(r.Seed)}
+		if rn.seedBroken != nil {
+			t.Fatal(rn.seedBroken)
+		}
+		if _, detail, ok := rn.closestToCapFloors([]Loadout{short}); ok {
+			t.Errorf("the seed reaches the hit floor, yet a candidate %s stands in for it", detail)
+		}
+	})
+	t.Run("the seed under the floor stands when it's closest", func(t *testing.T) {
+		floor.MinValue = hit + 10
+		rn := &run{r: r, pool: pool, capFloors: map[stats.Stat]float64{stats.MeleeHit: 0}, seedBroken: pool.Check(r.Seed)}
+		if pick, detail, ok := rn.closestToCapFloors([]Loadout{short}); !ok || pick != r.Seed {
+			t.Errorf("want the seed, 10 short, over a candidate 40 short; got ok %v, %s", ok, detail)
+		}
+	})
+	t.Run("the settings' own floor stays", func(t *testing.T) {
+		floor.MinValue = hit + 10
+		// a seed that breaks a rule of its own, so only the candidate can stand
+		broken := *r
+		broken.Seed.Items[proto.ItemSlot_ItemSlotOffHand] = ItemChoice{ItemID: kohBetter}
+		rn := &run{r: &broken, pool: pool, capFloors: map[stats.Stat]float64{stats.MeleeHit: 0}, seedBroken: pool.CheckGear(broken.Seed)}
+		if rn.seedBroken == nil {
+			t.Fatal("the seed should break the pool's off-hand options")
+		}
+		if _, _, ok := rn.closestToCapFloors([]Loadout{short}); !ok {
+			t.Error("with no floor of the settings' own, the candidate should stand")
+		}
+		rn.capFloors[stats.MeleeHit] = hit - 5
+		if _, detail, ok := rn.closestToCapFloors([]Loadout{short}); ok {
+			t.Errorf("the candidate is under the settings' own hit floor, yet stands: %s", detail)
+		}
+	})
+}
+
+// A cap floor only takes over a stat's floor when it's higher: a higher floor the settings already
+// have stays theirs, and the fallback never relaxes it.
+func TestAddStatFloorKeepsAHigherFloor(t *testing.T) {
+	settings := &proto.OptimizerSettings{StatMinimums: []*proto.StatMinimum{{Stat: proto.Stat_StatMeleeHit, MinValue: 300}}}
+	if before, raised := addStatFloor(settings, stats.MeleeHit, 262); raised || before != 300 || settings.StatMinimums[0].MinValue != 300 {
+		t.Errorf("a 262 cap over a 300 floor: raised %v from %.0f to %.0f, want the 300 kept", raised, before, settings.StatMinimums[0].MinValue)
+	}
+	if before, raised := addStatFloor(settings, stats.MeleeHit, 320); !raised || before != 300 || settings.StatMinimums[0].MinValue != 320 {
+		t.Errorf("a 320 cap over a 300 floor: raised %v from %.0f to %.0f, want 300 raised to 320", raised, before, settings.StatMinimums[0].MinValue)
+	}
+	if before, raised := addStatFloor(settings, stats.Expertise, 212); !raised || before != 0 || len(settings.StatMinimums) != 2 {
+		t.Errorf("a 212 expertise cap with no floor: raised %v from %.0f, %d floors, want a second floor added", raised, before, len(settings.StatMinimums))
+	}
+}
+
 // A melee DPS's search reaches both the hit and expertise floors.
 func TestMeleeCapFloorsReachTheCap(t *testing.T) {
 	without, _ := optimizedSheet(t, realCapRequest(t, "fury_p1", 1, false))
@@ -441,7 +518,7 @@ func TestTrimToBudgetKeepsTheSeedPricedUnderAFloor(t *testing.T) {
 		t.Fatal(err)
 	}
 	floor := []*proto.StatMinimum{{Stat: proto.Stat_StatMeleeHit, MinValue: seedSheet[stats.MeleeHit]}}
-	if err := s.setFloors(floor, statsOf(resp)); err != nil {
+	if err := s.setFloorsAndCeilings(floor, nil, statsOf(resp)); err != nil {
 		t.Fatal(err)
 	}
 

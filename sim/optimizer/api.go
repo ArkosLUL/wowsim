@@ -206,9 +206,9 @@ type run struct {
 	finalists    []proto.Race
 	// Sheet Defense the boss can't crit through, once crit immunity is enforced; 0 when it isn't.
 	critImmunity float64
-	// The stats dpsCapFloors floored, so verify knows which ones it may relax when nothing reaches
-	// every floor. Empty when the run added none.
-	capFloors map[stats.Stat]bool
+	// The floors dpsCapFloors raised, each with the floor it had before (0 for none), so verify knows
+	// which ones it may relax, and how far, when nothing reaches every floor. Empty when it raised none.
+	capFloors map[stats.Stat]float64
 
 	// The best loadout verified so far, and its evaluation; the seed until verification picks another.
 	best     Loadout
@@ -383,10 +383,7 @@ func (r *run) execute() *proto.OptimizerResult {
 	r.resp = resp
 
 	s := newSurrogate(pool, r.r.Seed, resp)
-	if err := s.setFloors(settings.GetStatMinimums(), rangeStats); err != nil {
-		return r.fail(err)
-	}
-	if err := s.setCeilings(settings.GetStatMaximums(), rangeStats); err != nil {
+	if err := s.setFloorsAndCeilings(settings.GetStatMinimums(), settings.GetStatMaximums(), rangeStats); err != nil {
 		return r.fail(err)
 	}
 	r.setStage("Effects")

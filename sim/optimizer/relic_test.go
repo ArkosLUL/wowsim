@@ -176,6 +176,43 @@ func TestOptimizeFeralTankFindsAHelpfulRelic(t *testing.T) {
 	}
 }
 
+// Only relics skip the budget cut. A wand or a warrior's bow still ranks by its stats, and stays a
+// weapon family, so the probes can price weapon damage that doesn't matter flat.
+func TestOnlyRelicsSkipTheBudgetCut(t *testing.T) {
+	for _, tc := range []struct {
+		name  string
+		req   func(*testing.T) *proto.OptimizeGearRequest
+		relic bool
+	}{
+		{"feral tank idols", func(t *testing.T) *proto.OptimizeGearRequest { return feralTankRelicRequest(t) }, true},
+		{"arcane mage wands", func(t *testing.T) *proto.OptimizeGearRequest { return realCapRequest(t, "arcane_p3", 3, false) }, false},
+		{"fury warrior ranged weapons", func(t *testing.T) *proto.OptimizeGearRequest { return realCapRequest(t, "fury_p1", 1, false) }, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			r, err := PrepareRequest(tc.req(t))
+			if err != nil {
+				t.Fatal(err)
+			}
+			pool, err := CompilePool(r)
+			if err != nil {
+				t.Fatal(err)
+			}
+			s := newSurrogate(pool, r.Seed, Response{})
+			rn := &run{asked: r, r: r, pool: pool}
+			v := s.slopes(s.seedStats)
+			fx := &effects{raw: map[effectKey]Estimate{}, missing: map[effectKey]bool{}, pairBase: map[proto.ItemSlot]Loadout{}}
+			families := rn.effectFamilies(s, v, s.newGemPlan(v), fx)
+			i := slices.IndexFunc(families, func(f *effectFamily) bool { return f.name == proto.ItemSlot_ItemSlotRanged.String()+" items" })
+			if i < 0 {
+				t.Fatal("no ranged slot family")
+			}
+			if f := families[i]; f.full != tc.relic || f.weapons == tc.relic {
+				t.Errorf("%d variants: full %v and weapons %v, want full %v and weapons %v", len(f.keys), f.full, f.weapons, tc.relic, !tc.relic)
+			}
+		})
+	}
+}
+
 // effectsRecorder notes every distinct item id the Effects stage sims in slot.
 type effectsRecorder struct {
 	inner Evaluator
