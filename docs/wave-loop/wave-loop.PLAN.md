@@ -117,13 +117,19 @@ regenerate after it.
 
 ## Current wave
 
-- Wave: L, running. All six items are merged (BIS-caps last, `a1d0a9079`), then master (`fc3b96070`).
-  Left, from 2026-09-30 (the user's call): regenerate all 28 presets at Normal, the re-baselines, landing,
-  then the one prod rebuild the user OKed once L lands (prod runs K).
-- [int]'s uncommitted `ui/*/gear_sets/*` changes are a superseded partial preset run: never commit them;
-  the regeneration overwrites them.
+- Wave: L, running. All six items are merged (BIS-caps last, `a1d0a9079`), then master (`fc3b96070`),
+  BIS-caps-hit (`6c79a6a62`), all 28 presets at Normal (`f67242686`) and the second cross-review's fixes
+  (`ff0920a96`: wands and physical ranged weapons took the relic path; the unreachable-cap fallback
+  replaced seeds that met every floor).
+- Left, from 2026-10-01 (the user's call), in order:
+  1. Re-baselines on an idle machine: the slow suite, BenchmarkSimulate ×3, the `tools/perf` full baseline.
+  2. Rerun presets on a preset server at the final HEAD for the 16 builds `ff0920a96` changes: `mage_arcane`,
+     `mage_fire`, `mage_frost`, `rogue_assassination`, `rogue_combat`, `rogue_subtlety`,
+     `warlock_affliction`, `warlock_demonology`, `warlock_destruction`, `warrior_arms`, `warrior_fury`,
+     `protection_warrior`, `shadow_priest`, `smite_priest`, `dk_blood`, `elemental_shaman`.
+  3. Landing, then the one prod rebuild the user OKed once L lands (prod runs K).
 - Base SHA: `1fc3f7c3d`; the WIs branch from its spec commit `773610faf`.
-- Workflow runIds: `wf_34052b28-d62`, `wf_1a26dbdb-51c`, `wf_ac1129b6-8d7`, `wf_a59f095c-4b7`; args
+- Workflow runIds: `wf_34052b28-d62`, `wf_1a26dbdb-51c`, `wf_ac1129b6-8d7`, `wf_a59f095c-4b7`, `wf_f5be2bcf-e23`; args
   `waveL*-args.json` in `G:\DevStuff\GitHub\.wave-loop`, transcripts in
   `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\<runId>`.
 - J2's full-roster batch ran 2026-09-28 in 52 min at Quick, output in
