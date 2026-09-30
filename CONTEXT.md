@@ -60,6 +60,9 @@ The session that runs the waves and does all their git.
 A committed `.results` baseline that a sim test compares against.
 _Avoid_: snapshot, fixture
 
+**Ability result**:
+The per-ability block (casts, hits, crit, amount per hit, uptime) a golden stores for each `Average` row.
+
 **Promote**:
 Copying a suite's reviewed `.results.tmp` over its golden.
 
@@ -69,6 +72,9 @@ replay against the sim.
 
 **Spelldump**:
 Simval's export of server spell data.
+
+**Damage probe**:
+`.simval damage`: the server's damage and heal bonuses for one spell, recorded for replay against the sim.
 
 **Effect declaration**:
 A spell's numbers for one server effect, as the sim states them: base roll, coefficients and weapon
