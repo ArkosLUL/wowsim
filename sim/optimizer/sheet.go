@@ -13,6 +13,12 @@ import (
 // chance the encounter's boss crits it. Each call builds a whole environment, about what setting up
 // one sim costs.
 func playerSheet(base *proto.RaidSimRequest, targetIndex int, l Loadout, offset stats.Stats) (core.PlayerSheet, error) {
+	rsr := sheetRequest(base, targetIndex, l, offset)
+	return core.ComputePlayerSheet(rsr.Raid, rsr.Encounter, targetIndex)
+}
+
+// sheetRequest is base with the target wearing l, offset added to its bonus stats.
+func sheetRequest(base *proto.RaidSimRequest, targetIndex int, l Loadout, offset stats.Stats) *proto.RaidSimRequest {
 	rsr := goproto.Clone(base).(*proto.RaidSimRequest)
 	player := rsr.Raid.Parties[targetIndex/5].Players[targetIndex%5]
 	player.Equipment = l.Equipment()
@@ -23,7 +29,7 @@ func playerSheet(base *proto.RaidSimRequest, targetIndex int, l Loadout, offset 
 		}
 		player.BonusStats.Stats = stats.FromFloatArray(player.BonusStats.Stats).Add(offset).ToFloatArray()
 	}
-	return core.ComputePlayerSheet(rsr.Raid, rsr.Encounter, targetIndex)
+	return rsr
 }
 
 // sheetMemo keeps each loadout's sheet, since a run asks for the same ones over and over: verify,
