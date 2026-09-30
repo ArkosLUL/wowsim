@@ -5,7 +5,7 @@
 		"phase": 1,
 		"effort": "Normal",
 		"racialTraits": "RaceOrc",
-		"simCommit": "b415c0f48",
+		"simCommit": "f5fa0df9e",
 		"catalogDate": "2026-09-19"
 	},
 	"p2_bis": {
@@ -14,7 +14,7 @@
 		"phase": 2,
 		"effort": "Normal",
 		"racialTraits": "RaceOrc",
-		"simCommit": "b415c0f48",
+		"simCommit": "f5fa0df9e",
 		"catalogDate": "2026-09-19"
 	},
 	"p3_bis": {
@@ -23,7 +23,7 @@
 		"phase": 3,
 		"effort": "Normal",
 		"racialTraits": "RaceOrc",
-		"simCommit": "b415c0f48",
+		"simCommit": "f5fa0df9e",
 		"catalogDate": "2026-09-19"
 	},
 	"p4_bis": {
@@ -31,8 +31,8 @@
 		"build": "Enhancement Shaman",
 		"phase": 4,
 		"effort": "Normal",
-		"racialTraits": "RaceDraenei",
-		"simCommit": "b415c0f48",
+		"racialTraits": "RaceTroll",
+		"simCommit": "f5fa0df9e",
 		"catalogDate": "2026-09-19"
 	},
 	"p5_bis": {
@@ -40,8 +40,8 @@
 		"build": "Enhancement Shaman",
 		"phase": 5,
 		"effort": "Normal",
-		"racialTraits": "RaceOrc",
-		"simCommit": "b415c0f48",
+		"racialTraits": "RaceTroll",
+		"simCommit": "f5fa0df9e",
 		"catalogDate": "2026-09-19"
 	}
 }
