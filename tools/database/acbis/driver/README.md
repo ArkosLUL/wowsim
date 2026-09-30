@@ -19,7 +19,10 @@ page with `tools/uicheck/cdp.py` and `raid.js`; `page.js` adds download capture 
   checkout holds then, but its results keep the `SIM_COMMIT` the container was created with, so one
   batch would mix sims under a single stamp. The driver logs the move when it notices one.
 
-- An `acraid` roster ([README](../../acraid/README.md)), kept outside the repo.
+- A **fresh** `acraid` roster ([README](../../acraid/README.md)), kept outside the repo, exported in the
+  same session as pass 1: gear, talents and glyphs drift daily, so a stale one builds lists for builds
+  nobody has. Pin the core members with `-names`; `-leader` takes the live group, where a stand-in for
+  one boss would replace a raider in the dataset.
 - Host Python with `websockets`, Chrome at its default install path, and PowerShell — the driver asks it
   which process holds the debugging port, ends a Chrome that stopped answering, and reads the CPU load.
 
