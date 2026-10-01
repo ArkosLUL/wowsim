@@ -413,3 +413,92 @@ spells included.
   crit capable or not.
 - All 148 amounts sit at or above the server's, as its truncation predicts. The closest to tolerance is Lava
   Burst's max, 2.01 over against +2.11.
+
+## TE-TALENTS as built
+
+Measured on `b069c688b`.
+
+**Finding 3 re-measured.** Still 615 implemented talents and 69 untaken. Scourge Strike is taken now (TE-GUARD's
+Unholy); the grep's Divine Guardian is only a comment, and Permafrost is read through `talents := mage.Talents`.
+
+**Guard** (`TestTalentCoverage`, `sim/talent_coverage_test.go`; one subtest per class, so each passes alone).
+- Implemented: go/ast over non-test `sim/<class>/**`: `x.Talents.Field`, its getter, or `Field` on a variable
+  bound from `x.Talents` in the same declaration. The hunter pet's `Talents()` is a call, so it never counts.
+  Go name to the tree's `fieldName` through the struct tag and `JSONName`.
+- Talent string position n is proto field n (`core.FillTalentsProto`); a tree `fieldName` differing from that
+  field fails only when implemented (shaman.json's unread `ancestralUealing` is only logged).
+- Taken: a rank in any suite build. Builds come from go/ast, not `serverDataPresets`: from each `Test*` calling
+  `RunTestSuite`, through the package-level funcs, vars and consts it names, every `TalentsString` and every
+  `Talents` of a `CharacterSuiteConfig` or `TalentsCombo`, resolved to a string constant. 37 suites, 57
+  builds (36 before this item). The `ServerDataPresets` subtest fails on a build no preset runs.
+- Allowlist `untakenTalents` (class → fieldName → reason): an empty reason, an entry a build takes, or one the
+  class no longer reads fails.
+- `sim/core/testdata/simval/implemented_talents.json`: every implemented talent with class, tree, `fieldName`,
+  row, max points and rank spell ids, one per line. Stale fails; rewrite with
+  `go test ./sim -run TestTalentCoverage -update`.
+- Negative check: Judgements of the Just zeroed in the Prot Paladin build failed naming it; allowlisted it
+  passed; a blank reason and the restored build with the entry kept both failed; reverted.
+
+**Allowlist.** Targets only attack `raid.Tanks`, which only tank suites set.
+
+| Class | Talents | Reason |
+|---|---|---|
+| Hunter | improvedAspectOfTheMonkey, thickHide, deflection | tank-only (dodge, armor, parry) |
+| Mage | magicAbsorption | tank-only (resistances) |
+| Rogue | deflection | tank-only (parry) |
+| Shaman | anticipation, toughness, guardianTotems | tank-only (dodge, stamina, Stoneskin armor) |
+| Warlock | moltenSkin | tank-only (damage taken) |
+| Warlock | improvedCurseOfWeakness | `FullDebuffs` applies improved Curse of Weakness |
+| Warrior | rampage, commandingPresence | `FullBuffs` gives the crit and improved Battle Shout; Commanding Shout only adds health |
+
+**Builds.** Each a `SingleDpsTestGenerator` with Average-Default's setup
+(`MakeSingleTargetEncounter(5)`, `AverageDefaultSimTestOptions`, the suite's default gear, consumes and spec),
+a `serverDataPresets` entry, and the suite's UI APL where it already exercises the talents, else an inline
+one. Existing rows don't move.
+
+| Row | Takes | Ability block shows |
+|---|---|---|
+| TestBloodTank-Talents-FrostPresence-Average | Mark of Blood, Deathchill, Imp. Frost Presence | MoB casts and target aura; Icy Touch crit 35% (default 18%); DTPS 276 (default 284) |
+| TestBloodTank-Talents-UnholyPresence-Average | Imp. Blood Presence, Outbreak, Reaping, Imp. Unholy Presence | Unholy Presence; Plague Strike 1897 per hit (default 1228) |
+| TestBalance-Talents-Dreamstate-Average | Dreamstate, Natural Perfection | 33 Resto points leave no Eclipse or Starfall: Starfire filler |
+| TestFeral-Talents-FeralAggression-Average | Feral Aggression, Infected Wounds | Ferocious Bite +13.8%; Infected Wounds aura |
+| TestBM-Talents-SpiritBond-Average | Spirit Bond, Invigoration, Savage Strikes | Raptor Strike, 65% crit |
+| TestMM-Talents-TrueshotAura-Average | Rapid Killing, Efficiency, Trueshot Aura + glyph, Rapid Recuperation, Imp. Steady Shot | Rapid Fire 4 casts (default 3); Imp. Steady Shot aura; no Aspect of the Viper |
+| TestArcane-Talents-ArcaneBarrage-Average | Arcane Barrage | Arcane Barrage casts |
+| TestFire-Talents-Firestarter-Average | Firestarter, Imp. Fire Blast, Permafrost, Imp. Blizzard, Cold as Ice | Firestarter Flamestrikes; Fire Blast 35 casts; Imp. Blizzard target aura; Mirror Image damage |
+| TestHoly-Talents-BlessedResilience-Average | Blessed Resilience | HPS +3.0% |
+| TestShadow-Talents-ShadowAffinity-Average | Shadow Affinity (Shadow Reach's 2 points) | same DPS, TPS 6283 (default 7362) |
+| TestCombat-Talents-HackAndSlash-Average | Hack and Slash, Mace Spec. (1H sword MH, 1H mace OH) | Hack and Slash 17.5 procs; DPS 6421 (default 6939: weapons, no Close Quarters Combat) |
+| TestAssassination-Talents-TurnTheTables-Average | Turn the Tables, Quick Recovery | Mutilate crit 69.8% (default 66.9%: TTT +6, CQC −3) |
+| TestSubtlety-Talents-ShadowDance-Average | Ghostly Strike, Shadow Dance, Vigor, Imp. Expose Armor | Shadow Dance 5 casts, 30 s; Premeditation 5; Ghostly Strike 6.3 |
+| TestElemental-Talents-Convection-Average | Convection | LB 158.8 casts (default 155.9); DPS +6.7%, mostly Fire Elemental |
+| TestEnhancement-Talents-FrozenPower-Average | Frozen Power, Imp. Stormstrike, Reverberation, Convection (Frostbrand MH) | Earth Shock 32.9 casts (default 23.3); Frostbrand target aura 288 s |
+| TestRestoration-Talents-HealingGrace-Average | Totemic Focus, Healing Grace | HPS 8860 (default none: its APL never heals) |
+| TestAffliction-Talents-DarkPact-Average | Imp. Drain Soul, Imp. Life Tap, Amplify Curse, Dark Pact | Dark Pact 4.8, Life Tap 15.5 (default 21.6); TPS −14.6% |
+| TestDemonology-Talents-ImprovedDemonicTactics-Average | Imp. Demonic Tactics | Felguard crit 38.4% (default 23.1%) |
+| TestDestruction-Talents-Shadowburn-Average | Shadowburn, Imp. Searing Pain | Shadowburn 19 casts; Searing Pain crit 67%; Pyroclasm 270 s (default 240) |
+| TestFury-Talents-SwordSpecialization-Average | Anger Management, Sword and Mace Spec., Imp. Berserker Rage (31/40, 1H sword and mace, no Titan's Grip) | Sword Spec. 6.7 procs; Berserker Rage 15 casts (default 1); DPS 4427 (default 8008) |
+| TestProtectionWarrior-Talents-FocusedRage-Average | Puncture, Imp. Disciplines, Focused Rage, Booming Voice, Imp. Demoralizing Shout | Shield Wall 2 casts (default 1.4); Heroic Strike 109 (default 96); Demo Shout 7.4 casts (default 0) |
+
+Points mostly come from talents the sim doesn't read or `FullBuffs` already supplies; each talent string's
+comment names what it swaps. Rows with no UI APL that fits get an inline one or, via the package's
+`withActionsBefore`, extra actions ahead of a UI APL's first cast of a spell (Affliction's Dark Pact before
+Life Tap, Destruction's Shadowburn and Searing Pain before Incinerate, Fury's Berserker Rage before
+Bloodrage). Weapon swaps edit the suite's gear set in the test; their `serverDataPresets` entries keep the
+suite's gear, so Hack and Slash (13964) and Sword Specialization (12281) don't register there.
+
+Imp. Demoralizing Shout only raises the shout's AP reduction past `FullDebuffs`' Vindication (575 vs 574), so
+the APL's `auraShouldRefresh` starts casting it; DTPS doesn't drop.
+
+No golden field records: Imp. Blood Presence's heal and Spirit Bond (`GainHealth`), Dreamstate and
+Invigoration (mana), Cold as Ice (Cold Snap's cooldown stays longer than the fight), Vigor, Imp. Expose
+Armor and Quick Recovery (energy), Convection, Imp. Stormstrike, Totemic Focus and Imp. Life Tap (mana),
+Healing Grace (healing threat isn't in TPS), Anger Management (rage).
+
+`FuryTalents` (`sim/warrior/dps`) and Balance's `StandardTalents` (`sim/druid/balance`) spend 72 points.
+
+**Deathchill without Frost Strike panics** (`talents_frost.go`: the aura dereferences a nil
+`FrostStrikeMhHit`), so the Frost Presence build keeps Frost Strike. A follow-up, not fixed here.
+
+Negative checks: Shadow Affinity, Dark Pact and Hack and Slash, each zeroed in its only build, failed their
+class naming it; allowlisted, each passed; reverted.

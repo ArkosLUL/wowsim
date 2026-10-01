@@ -13,41 +13,44 @@ func init() {
 }
 
 func TestEnhancement(t *testing.T) {
-	core.RunTestSuite(t, t.Name(), core.FullCharacterTestSuiteGenerator(core.CharacterSuiteConfig{
-		Class:      proto.Class_ClassShaman,
-		Race:       proto.Race_RaceTroll,
-		OtherRaces: []proto.Race{proto.Race_RaceOrc},
+	core.RunTestSuite(t, t.Name(), core.JoinTestGenerators(
+		core.FullCharacterTestSuiteGenerator(core.CharacterSuiteConfig{
+			Class:      proto.Class_ClassShaman,
+			Race:       proto.Race_RaceTroll,
+			OtherRaces: []proto.Race{proto.Race_RaceOrc},
 
-		GearSet:     core.GetGearSet("../../../ui/enhancement_shaman/gear_sets", "p1"),
-		Talents:     StandardTalents,
-		Glyphs:      StandardGlyphs,
-		Consumes:    FullConsumes,
-		SpecOptions: core.SpecOptionsCombo{Label: "FT", SpecOptions: PlayerOptionsFTFT},
-		OtherSpecOptions: []core.SpecOptionsCombo{
-			{Label: "WF", SpecOptions: PlayerOptionsWFWF},
-		},
-		Rotation: core.GetAplRotation("../../../ui/enhancement_shaman/apls", "default_ft"),
-		OtherRotations: []core.RotationCombo{
-			core.GetAplRotation("../../../ui/enhancement_shaman/apls", "default_wf"),
-			core.GetAplRotation("../../../ui/enhancement_shaman/apls", "phase_3"),
-		},
+			GearSet:     core.GetGearSet("../../../ui/enhancement_shaman/gear_sets", "p1"),
+			Talents:     StandardTalents,
+			Glyphs:      StandardGlyphs,
+			Consumes:    FullConsumes,
+			SpecOptions: core.SpecOptionsCombo{Label: "FT", SpecOptions: PlayerOptionsFTFT},
+			OtherSpecOptions: []core.SpecOptionsCombo{
+				{Label: "WF", SpecOptions: PlayerOptionsWFWF},
+			},
+			Rotation: core.GetAplRotation("../../../ui/enhancement_shaman/apls", "default_ft"),
+			OtherRotations: []core.RotationCombo{
+				core.GetAplRotation("../../../ui/enhancement_shaman/apls", "default_wf"),
+				core.GetAplRotation("../../../ui/enhancement_shaman/apls", "phase_3"),
+			},
 
-		ItemFilter: core.ItemFilter{
-			WeaponTypes: []proto.WeaponType{
-				proto.WeaponType_WeaponTypeAxe,
-				proto.WeaponType_WeaponTypeDagger,
-				proto.WeaponType_WeaponTypeFist,
-				proto.WeaponType_WeaponTypeMace,
-				proto.WeaponType_WeaponTypeOffHand,
-				proto.WeaponType_WeaponTypeShield,
-				proto.WeaponType_WeaponTypeStaff,
+			ItemFilter: core.ItemFilter{
+				WeaponTypes: []proto.WeaponType{
+					proto.WeaponType_WeaponTypeAxe,
+					proto.WeaponType_WeaponTypeDagger,
+					proto.WeaponType_WeaponTypeFist,
+					proto.WeaponType_WeaponTypeMace,
+					proto.WeaponType_WeaponTypeOffHand,
+					proto.WeaponType_WeaponTypeShield,
+					proto.WeaponType_WeaponTypeStaff,
+				},
+				ArmorType: proto.ArmorType_ArmorTypeMail,
+				RangedWeaponTypes: []proto.RangedWeaponType{
+					proto.RangedWeaponType_RangedWeaponTypeTotem,
+				},
 			},
-			ArmorType: proto.ArmorType_ArmorTypeMail,
-			RangedWeaponTypes: []proto.RangedWeaponType{
-				proto.RangedWeaponType_RangedWeaponTypeTotem,
-			},
-		},
-	}))
+		}),
+		&core.SingleDpsTestGenerator{Name: "Talents-FrozenPower-Average", Request: frozenPowerTalentsRequest()},
+	))
 }
 
 func BenchmarkSimulate(b *testing.B) {
@@ -133,3 +136,45 @@ var enhShamWFFT = &proto.EnhancementShaman_Options{
 var FullConsumes = &proto.Consumes{
 	DefaultConjured: proto.Conjured_ConjuredFlameCap,
 }
+
+// Frozen Power, Improved Stormstrike, Reverberation and Convection, which no other build takes, on
+// TestEnhancement's default player with Frostbrand on the main hand
+func frozenPowerTalentsRequest() *proto.RaidSimRequest {
+	return &proto.RaidSimRequest{
+		Raid: core.SinglePlayerRaidProto(
+			&proto.Player{
+				Race:               proto.Race_RaceTroll,
+				Class:              proto.Class_ClassShaman,
+				Equipment:          core.GetGearSet("../../../ui/enhancement_shaman/gear_sets", "p1").GearSet,
+				Consumes:           FullConsumes,
+				Spec:               &proto.Player_EnhancementShaman{EnhancementShaman: &proto.EnhancementShaman{Options: enhShamFBFT}},
+				Buffs:              core.FullIndividualBuffs,
+				Rotation:           core.GetAplRotation("../../../ui/enhancement_shaman/apls", "default_ft").Rotation,
+				TalentsString:      FrozenPowerTalents,
+				Glyphs:             StandardGlyphs,
+				Profession1:        proto.Profession_Engineering,
+				DistanceFromTarget: 30,
+				ReactionTimeMs:     150,
+				ChannelClipDelayMs: 50,
+			},
+			core.FullPartyBuffs,
+			core.FullRaidBuffs,
+			core.FullDebuffs),
+		Encounter:  core.MakeSingleTargetEncounter(5),
+		SimOptions: core.AverageDefaultSimTestOptions,
+	}
+}
+
+var enhShamFBFT = &proto.EnhancementShaman_Options{
+	Shield:   proto.ShamanShield_LightningShield,
+	SyncType: proto.ShamanSyncType_Auto,
+	ImbueMh:  proto.ShamanImbue_FrostbrandWeapon,
+	ImbueOh:  proto.ShamanImbue_FlametongueWeapon,
+	Totems:   standardTotems,
+}
+
+// StandardTalents with Elemental Devastation, Improved Fire Nova, Elemental Focus, Unleashed Rage, Enhancing
+// Totems and Improved Windfury Totem in Reverberation, 2 points of Convection, Frozen Power and Improved
+// Stormstrike. FullBuffs already brings the three totem and rage buffs. Earth's Grasp and a point of
+// Improved Ghost Wolf, which the sim doesn't read, keep Frozen Power's row reachable.
+var FrozenPowerTalents = "25300505-02405103105001303231131231051"

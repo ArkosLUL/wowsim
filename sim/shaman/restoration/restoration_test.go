@@ -14,33 +14,36 @@ func init() {
 
 // The APL only autocasts cooldowns and never heals, so the suite checks stats and item heals only.
 func TestRestoration(t *testing.T) {
-	core.RunTestSuite(t, t.Name(), core.FullCharacterTestSuiteGenerator(core.CharacterSuiteConfig{
-		Class: proto.Class_ClassShaman,
-		Race:  proto.Race_RaceTroll,
+	core.RunTestSuite(t, t.Name(), core.JoinTestGenerators(
+		core.FullCharacterTestSuiteGenerator(core.CharacterSuiteConfig{
+			Class: proto.Class_ClassShaman,
+			Race:  proto.Race_RaceTroll,
 
-		GearSet:     core.GetGearSet("../../../ui/restoration_shaman/gear_sets", "p1"),
-		Talents:     StandardTalents,
-		Glyphs:      StandardGlyphs,
-		Consumes:    FullConsumes,
-		SpecOptions: core.SpecOptionsCombo{Label: "Standard", SpecOptions: PlayerOptionsStandard},
-		Rotation:    core.RotationCombo{Label: "Default", Rotation: DefaultRotation},
+			GearSet:     core.GetGearSet("../../../ui/restoration_shaman/gear_sets", "p1"),
+			Talents:     StandardTalents,
+			Glyphs:      StandardGlyphs,
+			Consumes:    FullConsumes,
+			SpecOptions: core.SpecOptionsCombo{Label: "Standard", SpecOptions: PlayerOptionsStandard},
+			Rotation:    core.RotationCombo{Label: "Default", Rotation: DefaultRotation},
 
-		ItemFilter: core.ItemFilter{
-			WeaponTypes: []proto.WeaponType{
-				proto.WeaponType_WeaponTypeAxe,
-				proto.WeaponType_WeaponTypeDagger,
-				proto.WeaponType_WeaponTypeFist,
-				proto.WeaponType_WeaponTypeMace,
-				proto.WeaponType_WeaponTypeOffHand,
-				proto.WeaponType_WeaponTypeShield,
-				proto.WeaponType_WeaponTypeStaff,
+			ItemFilter: core.ItemFilter{
+				WeaponTypes: []proto.WeaponType{
+					proto.WeaponType_WeaponTypeAxe,
+					proto.WeaponType_WeaponTypeDagger,
+					proto.WeaponType_WeaponTypeFist,
+					proto.WeaponType_WeaponTypeMace,
+					proto.WeaponType_WeaponTypeOffHand,
+					proto.WeaponType_WeaponTypeShield,
+					proto.WeaponType_WeaponTypeStaff,
+				},
+				ArmorType: proto.ArmorType_ArmorTypeMail,
+				RangedWeaponTypes: []proto.RangedWeaponType{
+					proto.RangedWeaponType_RangedWeaponTypeTotem,
+				},
 			},
-			ArmorType: proto.ArmorType_ArmorTypeMail,
-			RangedWeaponTypes: []proto.RangedWeaponType{
-				proto.RangedWeaponType_RangedWeaponTypeTotem,
-			},
-		},
-	}))
+		}),
+		&core.SingleDpsTestGenerator{Name: "Talents-HealingGrace-Average", Request: healingGraceTalentsRequest()},
+	))
 }
 
 func BenchmarkSimulate(b *testing.B) {
@@ -109,3 +112,48 @@ var DefaultRotation = core.APLRotationFromJsonString(`{
 		{"action":{"autocastOtherCooldowns":{}}}
 	]
 }`)
+
+// Totemic Focus and Healing Grace, which no other build takes, on TestRestoration's default player healing
+// a target dummy
+func healingGraceTalentsRequest() *proto.RaidSimRequest {
+	rsr := &proto.RaidSimRequest{
+		Raid: core.SinglePlayerRaidProto(
+			&proto.Player{
+				Race:               proto.Race_RaceTroll,
+				Class:              proto.Class_ClassShaman,
+				Equipment:          core.GetGearSet("../../../ui/restoration_shaman/gear_sets", "p1").GearSet,
+				Consumes:           FullConsumes,
+				Spec:               PlayerOptionsStandard,
+				Buffs:              core.FullIndividualBuffs,
+				Rotation:           core.APLRotationFromJsonString(healingGraceTalentsAPL),
+				TalentsString:      HealingGraceTalents,
+				Glyphs:             StandardGlyphs,
+				Profession1:        proto.Profession_Engineering,
+				DistanceFromTarget: 30,
+				ReactionTimeMs:     150,
+				ChannelClipDelayMs: 50,
+			},
+			core.FullPartyBuffs,
+			core.FullRaidBuffs,
+			core.FullDebuffs),
+		Encounter:  core.MakeSingleTargetEncounter(5),
+		SimOptions: core.AverageDefaultSimTestOptions,
+	}
+	rsr.Raid.TargetDummies = 1
+	return rsr
+}
+
+// StandardTalents with Improved Healing Wave and Healing Focus, which the sim doesn't read, in Totemic Focus
+// and Healing Grace
+var HealingGraceTalents = "-3020503-05035301335310501122331251"
+
+// Healing Stream Totem, then Riptide on cooldown and Chain Heal
+const healingGraceTalentsAPL = `{"type":"TypeAPL",
+"prepullActions":[
+	{"action":{"castSpell":{"spellId":{"spellId":58757}}},"doAtValue":{"const":{"val":"-1s"}}}
+],
+"priorityList":[
+	{"action":{"autocastOtherCooldowns":{}}},
+	{"action":{"castSpell":{"spellId":{"spellId":61301}}}},
+	{"action":{"castSpell":{"spellId":{"spellId":55459}}}}
+]}`
