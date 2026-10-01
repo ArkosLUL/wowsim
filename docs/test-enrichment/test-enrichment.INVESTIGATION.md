@@ -265,3 +265,17 @@ The decisions, the item split and the waves are in the [PLAN](test-enrichment.PL
   one work item per wave changes the module's C++, and new e2e tests go in per-item files.
 - **Tooling.** Probes that prove useful move out of scratch, next to the code they test, with a run command in a
   README. G1 and G3's guards make this investigation's probe permanent.
+
+## TE-ABILITY as built
+
+- `Average` tests store `ability_results` (`proto/test.proto`, field 5; `casts_results` removed, 4 reserved).
+  `abilityResults` in `sim/core/test_suite.go` fills it from the run `TestDPS` already did.
+- `hits` is landed hits: the metric's `Hits` + `Crits` + `Blocks`. The sim's `Hits` excludes crits on most
+  outcome paths, so a raw `crits / hits` went past 100 % (a hunter pet's Claw showed 205 %).
+  `crit_pct = crits / landed`, `amount_per_hit = (damage + healing + shielding) / landed`.
+- Every `Average` test of the 37 suites gains a block, 38 to 105 entries each. The three healer suites
+  with empty APLs hold only cooldown casts. No DPS, HPS, TPS or DTPS moved.
+- Until promoted, every Average test fails on "Unexpected abilities": the old goldens have no block.
+- `dock.sh delta` has to register a test from its ability rows too: a healer test with all-zero metrics has
+  no `dps_results` rows, so it would otherwise count as unchanged.
+- `int-check.sh` needed no change: its `grep -v '^  '` already drops the four-space ability lines.

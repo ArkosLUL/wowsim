@@ -24,8 +24,9 @@ usage: tools/acore/dock.sh <command> [args]
   exec <cmd> [args] anything else inside the container
   dps [dir]         print DPS per test from the .results goldens under dir
   delta [dir]       DPS, HPS, TPS and DTPS of the last run against the goldens,
-                    per test that moved; stats, casts and stat weights only show
-                    up in a plain diff of the two files
+                    per test that moved, each followed by its moved abilities
+                    (Average tests); stats and stat weights only show up in a
+                    plain diff of the two files
   promote <dir>     copy that dir's .results.tmp over its .results
 
 Mounts: the checkout at /wotlk, DBCs at /dbc, the AzerothCore checkout at /ac.
@@ -90,7 +91,8 @@ ensure_go_deps() {
 }
 
 # Pulls "<test name><tab><metric><tab><value>" out of a .results prototext file, for each of dps,
-# hps, tps and dtps the test has. Prototext leaves out zeros, so a missing metric is 0.
+# hps, tps and dtps the test has. Prototext leaves out zeros, so a missing metric is 0. An ability
+# result's field comes out as "<test name><tab>ab:<field><tab><value><tab><ability key>".
 result_metrics() {
 	awk '
 		{ sub(/\r$/, "") }
@@ -98,6 +100,11 @@ result_metrics() {
 		inrec && /^ key: / { key = $0; sub(/^ key: "/, "", key); sub(/"$/, "", key); next }
 		inrec && /^  (dps|hps|tps|dtps): / { if (key != "") print key "\t" substr($1, 1, length($1) - 1) "\t" $2; next }
 		inrec && /^\}/ { inrec = 0 }
+		/^ability_results: \{/ { inab = 1; key = ""; akey = ""; next }
+		inab && /^ key: / { key = $0; sub(/^ key: "/, "", key); sub(/"$/, "", key); next }
+		inab && /^   key: / { akey = $0; sub(/^   key: "/, "", akey); sub(/"$/, "", akey); next }
+		inab && /^    (casts|hits|crit_pct|amount_per_hit|uptime_s): / { if (key != "") print key "\tab:" substr($1, 1, length($1) - 1) "\t" $2 "\t" akey; next }
+		inab && /^\}/ { inab = 0 }
 	' "$1"
 }
 
@@ -109,19 +116,80 @@ cmd_dps() {
 	done < <(find "$root/$dir" -name '*.results' | sort)
 }
 
-# One line per test whose metrics moved, each moved metric as "name old -> new (change)". Tests
-# only in the run show as new, tests only in the golden as gone.
+# One block per test whose metrics or abilities moved: a line with each moved metric as
+# "name old -> new (change)", then one line per moved ability, indented four spaces, largest
+# damage or healing change first. Tests only in the run show as new, tests only in the golden
+# as gone. A test whose golden has no ability block gets a one-line count instead of a listing.
 metric_changes() {
 	awk -F'\t' '
-		BEGIN { nm = split("dps hps tps dtps", metrics, " ") }
+		BEGIN {
+			nm = split("dps hps tps dtps", metrics, " ")
+			naf = split("casts hits crit_pct amount_per_hit uptime_s", afields, " ")
+		}
+		function fabs(x) { return x < 0 ? -x : x }
+		function total(arr, t, a) { return arr[t, a, "hits"] * arr[t, a, "amount_per_hit"] }
 		FILENAME == ARGV[1] {
+			if ($2 ~ /^ab:/) {
+				f = substr($2, 4)
+				if (!(($1, $4) in oldabseen)) { oldabseen[$1, $4] = 1; oldab[$1, ++oldabn[$1]] = $4 }
+				oldv[$1, $4, f] = $3
+				next
+			}
 			if (!($1 in oldkey)) { oldkey[$1] = 1; oldorder[++no] = $1 }
 			old[$1, $2] = $3
 			next
 		}
 		{
+			if ($2 ~ /^ab:/) {
+				f = substr($2, 4)
+				if (!($1 in newkey)) { newkey[$1] = 1; neworder[++nn] = $1 }
+				if (!(($1, $4) in curabseen)) { curabseen[$1, $4] = 1; curab[$1, ++curabn[$1]] = $4 }
+				curv[$1, $4, f] = $3
+				next
+			}
 			if (!($1 in newkey)) { newkey[$1] = 1; neworder[++nn] = $1 }
 			cur[$1, $2] = $3
+		}
+		function abilityLines(k,    n, i, a, j, f, o, v, line, cnt, idx, key, tie, t, otot, ntot, status) {
+			if (oldabn[k] == 0) {
+				if (curabn[k] > 0) return sprintf("    abilities\tnew (%d entries)\n", curabn[k])
+				return ""
+			}
+			n = 0
+			for (i = 1; i <= curabn[k]; i++) allab[++n] = curab[k, i]
+			for (i = 1; i <= oldabn[k]; i++) if (!((k, oldab[k, i]) in curabseen)) allab[++n] = oldab[k, i]
+			cnt = 0
+			for (i = 1; i <= n; i++) {
+				a = allab[i]
+				otot = total(oldv, k, a); ntot = total(curv, k, a)
+				line = ""
+				if (!((k, a) in oldabseen)) status = "new"
+				else if (!((k, a) in curabseen)) status = "gone"
+				else status = ""
+				if (status != "") line = status
+				else for (j = 1; j <= naf; j++) {
+					f = afields[j]
+					o = oldv[k, a, f] + 0; v = curv[k, a, f] + 0
+					if (o == v) continue
+					line = line (line == "" ? "" : "\t") sprintf("%s %.5f -> %.5f", f, o, v)
+				}
+				if (line == "") continue
+				if (otot != ntot || status != "") line = line sprintf("\ttotal %.5f -> %.5f", otot, ntot)
+				cnt++
+				lines[cnt] = "    " a "\t" line
+				keyd[cnt] = fabs(ntot - otot)
+				keyu[cnt] = fabs(curv[k, a, "uptime_s"] - oldv[k, a, "uptime_s"])
+			}
+			for (i = 2; i <= cnt; i++) {
+				t = lines[i]; tie = keyd[i]; j = keyu[i]
+				for (idx = i - 1; idx >= 1 && (keyd[idx] < tie || (keyd[idx] == tie && keyu[idx] < j)); idx--) {
+					lines[idx + 1] = lines[idx]; keyd[idx + 1] = keyd[idx]; keyu[idx + 1] = keyu[idx]
+				}
+				lines[idx + 1] = t; keyd[idx + 1] = tie; keyu[idx + 1] = j
+			}
+			out = ""
+			for (i = 1; i <= cnt; i++) out = out lines[i] "\n"
+			return out
 		}
 		END {
 			for (i = 1; i <= nn; i++) {
@@ -138,8 +206,13 @@ metric_changes() {
 					if (o != 0) line = line sprintf("\t%s %.5f -> %.5f (%+.3f%%)", m, o, v, (v - o) / o * 100)
 					else line = line sprintf("\t%s %.5f -> %.5f", m, o, v)
 				}
-				if (!(k in oldkey)) print "  " k "\tnew" line
-				else if (line != "") print "  " k line
+				abil = abilityLines(k)
+				if (!(k in oldkey)) {
+					if (line != "") printf "  %s\tnew%s\n", k, line
+					else if (abil != "") printf "  %s\n", k
+				}
+				else if (line != "" || abil != "") printf "  %s%s\n", k, line
+				printf "%s", abil
 			}
 			for (i = 1; i <= no; i++) {
 				if (!(oldorder[i] in newkey)) print "  " oldorder[i] "\tgone"
