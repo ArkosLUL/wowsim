@@ -125,14 +125,13 @@ PAR-FU-3 and PERF-FU join N, the user's call too (the same day): wave L's and M'
 
 ## Current wave
 
-- Wave: N, landed (master fast-forwarded to this close-out). Next: O (TE-TALENTS, TE-GOLDCHAR). Prod runs L's
-  `23e9e9e79`.
+- Wave: O, running. N landed as `b069c688b`; prod runs L's `23e9e9e79`.
 - Left from N: the `tools/perf` full baseline on an idle machine; its 2026-10-01 run overlapped a game on the host.
 - Carried (the user's call, 2026-10-01): rerun every DPS preset on the final HEAD, since BIS-caps-race changes
   every racial search and `ff0920a96` the 16 builds `mage_*`, `rogue_*`, `warlock_*`, `warrior_arms`,
   `warrior_fury`, `protection_warrior`, `shadow_priest`, `smite_priest`, `dk_blood`, `elemental_shaman`.
-- N's base SHA: `7f4174efb`, the commit adding PAR-FU-3's and PERF-FU's specs. RunId `wf_4b37e171-123`.
-- Workflow runIds: M's `wf_8ab862a5-d37` (base `33da5ca34`); L's `wf_34052b28-d62`, `wf_1a26dbdb-51c`, `wf_ac1129b6-8d7`, `wf_a59f095c-4b7`, `wf_f5be2bcf-e23`,
+- O's base SHA: `b069c688b`. RunId `wf_cd004c46-c80`.
+- Workflow runIds: N's `wf_4b37e171-123` (base `7f4174efb`); M's `wf_8ab862a5-d37` (base `33da5ca34`); L's `wf_34052b28-d62`, `wf_1a26dbdb-51c`, `wf_ac1129b6-8d7`, `wf_a59f095c-4b7`, `wf_f5be2bcf-e23`,
   `wf_42fc0b7c-42a`; args `wave<X>*-args.json` in `G:\DevStuff\GitHub\.wave-loop`, transcripts in
   `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\<runId>`.
 - J2's full-roster batch ran 2026-09-28 in 52 min at Quick, output in
