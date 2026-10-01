@@ -50,6 +50,14 @@ type surrogate struct {
 	// A haste ceiling: unlike floors, this never rejects a loadout, only steers the search away from
 	// stacking wasted haste (Pool.Check never sees it).
 	ceilings []ceilingTerm
+	// The seed's race's weapon specialization, set only when a floor or ceiling reads the Expertise
+	// stat it lands on, and what it adds there with the seed's weapons.
+	weaponSpec *core.WeaponSpecialization
+	seedRacial float64
+	// What setFloorsAndCeilings priced, so forRace can price it again under other traits.
+	floorSettings   []*proto.StatMinimum
+	ceilingSettings []*proto.StatMaximum
+	gearStats       []stats.Stat
 }
 
 // curve is a response curve as straight lines between its simmed knots, carried on past the ends at
@@ -182,6 +190,14 @@ type floorTerm struct {
 	seed     float64
 	gradient stats.Stats
 	sparse   []gradEntry
+	// 1 when the sheet stat is Expertise, where the weapon specialization's expertise lands as is
+	racial float64
+}
+
+// at is the reading with total's gear stats, racial being how far the weapon specialization's
+// expertise sits from the seed's.
+func (f *floorTerm) at(total, seedStats *stats.Stats, racial float64) float64 {
+	return have(f.seed, f.sparse, total, seedStats) + f.racial*racial
 }
 
 // ceilingTerm is a stat ceiling (the haste caps), the same way floorTerm is a floor.
@@ -191,6 +207,11 @@ type ceilingTerm struct {
 	seed     float64
 	gradient stats.Stats
 	sparse   []gradEntry
+	racial   float64
+}
+
+func (c *ceilingTerm) at(total, seedStats *stats.Stats, racial float64) float64 {
+	return have(c.seed, c.sparse, total, seedStats) + c.racial*racial
 }
 
 // pairKey is a ring or trinket pair, by the first slot of the pair, lower item id first.
@@ -363,8 +384,9 @@ func (s *surrogate) priced(slot proto.ItemSlot, c ItemChoice) bool {
 	return true
 }
 
-// score is J's predicted change from the seed for gear stats total, residuals res and set counts.
-func (s *surrogate) score(total stats.Stats, res float64, counts []int8) float64 {
+// score is J's predicted change from the seed for gear stats total, residuals res, set counts and
+// racial, how far the weapon specialization's expertise sits from the seed's (see racialDelta).
+func (s *surrogate) score(total stats.Stats, res float64, counts []int8, racial float64) float64 {
 	v := res + s.curveValue(total.Subtract(s.seedStats))
 	for i, n := range counts {
 		if n >= 2 {
@@ -372,10 +394,10 @@ func (s *surrogate) score(total stats.Stats, res float64, counts []int8) float64
 		}
 	}
 	if len(s.floors) > 0 {
-		v -= s.floorWeight * s.floorShortfall(total)
+		v -= s.floorWeight * s.floorShortfall(total, racial)
 	}
 	if len(s.ceilings) > 0 {
-		v -= s.floorWeight * s.ceilingOverage(total)
+		v -= s.floorWeight * s.ceilingOverage(total, racial)
 	}
 	return v
 }
@@ -392,26 +414,92 @@ func (s *surrogate) value(l Loadout) float64 {
 			counts[i]++
 		}
 	}
-	return s.score(total, res, counts)
+	return s.score(total, res, counts, s.racialDelta(&l))
 }
 
-func (s *surrogate) floorShortfall(total stats.Stats) float64 {
+func (s *surrogate) floorShortfall(total stats.Stats, racial float64) float64 {
 	short := 0.0
 	for i := range s.floors {
 		f := &s.floors[i]
-		short += max(0, f.min-have(f.seed, f.sparse, &total, &s.seedStats))
+		short += max(0, f.min-f.at(&total, &s.seedStats, racial))
 	}
 	return short
 }
 
 // ceilingOverage is floorShortfall's mirror for the haste ceilings: how far total sits over each one.
-func (s *surrogate) ceilingOverage(total stats.Stats) float64 {
+func (s *surrogate) ceilingOverage(total stats.Stats, racial float64) float64 {
 	over := 0.0
 	for i := range s.ceilings {
 		c := &s.ceilings[i]
-		over += max(0, have(c.seed, c.sparse, &total, &s.seedStats)-c.max)
+		over += max(0, c.at(&total, &s.seedStats, racial)-c.max)
 	}
 	return over
+}
+
+// noItem is an empty hand, as core sees one.
+var noItem core.Item
+
+func (s *surrogate) handItem(slot proto.ItemSlot, id int32) *core.Item {
+	if id == 0 {
+		return &noItem
+	}
+	item, _ := s.pool.item(slot, id)
+	return item
+}
+
+// racialExpertise is what the weapon specialization puts on the Expertise stat with l's weapons. Both
+// hands count together, the way core decides it. Takes the hands as given: a lone off-hand weapon,
+// which core would move to the main hand, never passes checkPlacement.
+func (s *surrogate) racialExpertise(l *Loadout) float64 {
+	if s.weaponSpec == nil {
+		return 0
+	}
+	mh, oh := proto.ItemSlot_ItemSlotMainHand, proto.ItemSlot_ItemSlotOffHand
+	return s.weaponSpec.StatBonus(s.handItem(mh, l.Items[mh].ItemID), s.handItem(oh, l.Items[oh].ItemID))
+}
+
+// racialDelta is how far racialExpertise sits from the seed's.
+func (s *surrogate) racialDelta(l *Loadout) float64 {
+	if s.weaponSpec == nil {
+		return 0
+	}
+	return s.racialExpertise(l) - s.seedRacial
+}
+
+// otherHands is an empty hand and something of every weapon type held in it.
+var otherHands = func() []*core.Item {
+	out := []*core.Item{&noItem}
+	for wt := range proto.WeaponType_name {
+		out = append(out, &core.Item{ID: 1, WeaponType: proto.WeaponType(wt)})
+	}
+	return out
+}()
+
+// racialBounds bounds what a weapon in slot adds to J through the weapon specialization, against an
+// empty slot and whatever the other hand holds. That expertise only moves the floor and ceiling
+// penalties, by up to their weight a point; the curves never see it.
+func (s *surrogate) racialBounds(slot proto.ItemSlot, item *core.Item) (lb, ub float64) {
+	if s.weaponSpec == nil {
+		return 0, 0
+	}
+	var lo, hi float64
+	for _, other := range otherHands {
+		var d float64
+		if slot == proto.ItemSlot_ItemSlotMainHand {
+			d = s.weaponSpec.StatBonus(item, other) - s.weaponSpec.StatBonus(&noItem, other)
+		} else {
+			d = s.weaponSpec.StatBonus(other, item) - s.weaponSpec.StatBonus(other, &noItem)
+		}
+		lo, hi = min(lo, d), max(hi, d)
+	}
+	var up, down float64
+	for i := range s.floors {
+		up += s.floorWeight * s.floors[i].racial
+	}
+	for i := range s.ceilings {
+		down += s.floorWeight * s.ceilings[i].racial
+	}
+	return up*lo - down*hi, up*hi - down*lo
 }
 
 // curveValue is what the curves make of gear stats moved by offset from the seed's.
@@ -438,16 +526,17 @@ func (s *surrogate) statsGain(total, from, to *stats.Stats) float64 {
 }
 
 // capGain is statsGain's counterpart for the floor and ceiling penalty terms: what score's penalty
-// gains from total's stats moving by (to minus from). Both terms are already linear in gear stats
-// (see floorShortfall, ceilingOverage), so the gain is exact without rescoring the whole loadout.
-func (s *surrogate) capGain(total, from, to *stats.Stats) float64 {
+// gains from total's stats moving by (to minus from), racial staying put. Both terms are already
+// linear in gear stats (see floorShortfall, ceilingOverage), so the gain is exact without rescoring
+// the whole loadout.
+func (s *surrogate) capGain(total, from, to *stats.Stats, racial float64) float64 {
 	if len(s.floors) == 0 && len(s.ceilings) == 0 {
 		return 0
 	}
 	gain := 0.0
 	for i := range s.floors {
 		f := &s.floors[i]
-		before := have(f.seed, f.sparse, total, &s.seedStats)
+		before := f.at(total, &s.seedStats, racial)
 		after := before
 		for _, e := range f.sparse {
 			after += e.g * (to[e.stat] - from[e.stat])
@@ -456,7 +545,7 @@ func (s *surrogate) capGain(total, from, to *stats.Stats) float64 {
 	}
 	for i := range s.ceilings {
 		c := &s.ceilings[i]
-		before := have(c.seed, c.sparse, total, &s.seedStats)
+		before := c.at(total, &s.seedStats, racial)
 		after := before
 		for _, e := range c.sparse {
 			after += e.g * (to[e.stat] - from[e.stat])
@@ -466,9 +555,9 @@ func (s *surrogate) capGain(total, from, to *stats.Stats) float64 {
 	return gain
 }
 
-// slopes is J's marginal value per point of each gear stat at total: each curve's slope where total
-// sits, plus the floor penalty's pull.
-func (s *surrogate) slopes(total stats.Stats) stats.Stats {
+// slopes is J's marginal value per point of each gear stat at total and racial: each curve's slope
+// where total sits, plus the floor penalty's pull.
+func (s *surrogate) slopes(total stats.Stats, racial float64) stats.Stats {
 	var v stats.Stats
 	for _, st := range s.curved {
 		c := s.curves[st]
@@ -476,13 +565,13 @@ func (s *surrogate) slopes(total stats.Stats) stats.Stats {
 	}
 	for i := range s.floors {
 		f := &s.floors[i]
-		if have(f.seed, f.sparse, &total, &s.seedStats) < f.min {
+		if f.at(&total, &s.seedStats, racial) < f.min {
 			v = v.Add(f.gradient.Multiply(s.floorWeight))
 		}
 	}
 	for i := range s.ceilings {
 		c := &s.ceilings[i]
-		if have(c.seed, c.sparse, &total, &s.seedStats) > c.max {
+		if c.at(&total, &s.seedStats, racial) > c.max {
 			v = v.Subtract(c.gradient.Multiply(s.floorWeight))
 		}
 	}
@@ -491,7 +580,7 @@ func (s *surrogate) slopes(total stats.Stats) stats.Stats {
 
 // regime keys a set of slopes: the segment each curve is on, and which floors are missed. Gem plans
 // only change with it. It's a hash, FNV-1a; a collision would only cost a worse gem plan.
-func (s *surrogate) regime(total stats.Stats) uint64 {
+func (s *surrogate) regime(total stats.Stats, racial float64) uint64 {
 	key := uint64(14695981039346656037)
 	mix := func(b int) {
 		key ^= uint64(b)
@@ -502,11 +591,11 @@ func (s *surrogate) regime(total stats.Stats) uint64 {
 	}
 	for i := range s.floors {
 		f := &s.floors[i]
-		mix(boolIndex(have(f.seed, f.sparse, &total, &s.seedStats) < f.min))
+		mix(boolIndex(f.at(&total, &s.seedStats, racial) < f.min))
 	}
 	for i := range s.ceilings {
 		c := &s.ceilings[i]
-		mix(boolIndex(have(c.seed, c.sparse, &total, &s.seedStats) > c.max))
+		mix(boolIndex(c.at(&total, &s.seedStats, racial) > c.max))
 	}
 	return key
 }
@@ -954,8 +1043,10 @@ func (s *surrogate) statRanges() map[stats.Stat]ResponseRange {
 }
 
 // setFloorsAndCeilings approximates each floored or ceilinged sheet stat as linear in gear stats
-// around the seed, from character sheets with each gear stat moved by 100.
+// around the seed, from character sheets with each gear stat moved by 100, plus the seed's race's
+// weapon specialization exactly.
 func (s *surrogate) setFloorsAndCeilings(floors []*proto.StatMinimum, ceilings []*proto.StatMaximum, gearStats []stats.Stat) error {
+	s.floorSettings, s.ceilingSettings, s.gearStats = floors, ceilings, gearStats
 	if len(floors) == 0 && len(ceilings) == 0 {
 		return nil
 	}
@@ -989,15 +1080,45 @@ func (s *surrogate) setFloorsAndCeilings(floors []*proto.StatMinimum, ceilings [
 		maxSlope = max(maxSlope, math.Abs(slices.Min(s.curves[st].slope)), math.Abs(slices.Max(s.curves[st].slope)))
 	}
 	s.floorWeight = 100 * (maxSlope + 1)
+	readsExpertise := false
+	racial := func(st proto.Stat) float64 {
+		if stats.Stat(st) != stats.Expertise {
+			return 0
+		}
+		readsExpertise = true
+		return 1
+	}
 	for i, f := range floors {
 		g := gradients[i]
-		s.floors = append(s.floors, floorTerm{stat: stats.Stat(f.Stat), min: f.MinValue, seed: seedSheet[f.Stat], gradient: g, sparse: sparseGradient(g)})
+		s.floors = append(s.floors, floorTerm{stat: stats.Stat(f.Stat), min: f.MinValue, seed: seedSheet[f.Stat], gradient: g, sparse: sparseGradient(g), racial: racial(f.Stat)})
 	}
 	for i, c := range ceilings {
 		g := gradients[len(floors)+i]
-		s.ceilings = append(s.ceilings, ceilingTerm{stat: stats.Stat(c.Stat), max: c.MaxValue, seed: seedSheet[c.Stat], gradient: g, sparse: sparseGradient(g)})
+		s.ceilings = append(s.ceilings, ceilingTerm{stat: stats.Stat(c.Stat), max: c.MaxValue, seed: seedSheet[c.Stat], gradient: g, sparse: sparseGradient(g), racial: racial(c.Stat)})
+	}
+	if spec, ok := core.RacialWeaponSpecialization(s.seed.RacialTraits); ok && readsExpertise {
+		s.weaponSpec = &spec
+		// a lone off-hand weapon in the seed: its sheet reads it in the main hand, where core equips it
+		seed := s.seed
+		mh, oh := proto.ItemSlot_ItemSlotMainHand, proto.ItemSlot_ItemSlotOffHand
+		if seed.Items[mh].ItemID == 0 && seed.Items[oh].ItemID != 0 && movesToMainHand(s.handItem(oh, seed.Items[oh].ItemID)) {
+			seed.Items[mh], seed.Items[oh] = seed.Items[oh], ItemChoice{}
+		}
+		s.seedRacial = s.racialExpertise(&seed)
 	}
 	return nil
+}
+
+// forRace is s with its floors and ceilings priced around the seed worn with race's traits instead.
+// What the sims measured (curves, residuals, sets, pairs) stays shared, and read-only.
+func (s *surrogate) forRace(race proto.Race) (*surrogate, error) {
+	out := *s
+	out.seed.RacialTraits = race
+	out.floors, out.ceilings, out.weaponSpec, out.seedRacial = nil, nil, nil, 0
+	if err := out.setFloorsAndCeilings(s.floorSettings, s.ceilingSettings, s.gearStats); err != nil {
+		return nil, err
+	}
+	return &out, nil
 }
 
 // weaponDPS is a weapon's average damage per second; 0 for anything else.
@@ -1308,7 +1429,7 @@ func (p *Pool) fillsHands(item *core.Item) bool {
 //     enchant, gem and set residual, and pairs of the best ring and trinket effects, whose procs
 //     may not stack.
 func (r *run) measureEffects(s *surrogate) error {
-	v0 := s.slopes(s.seedStats)
+	v0 := s.slopes(s.seedStats, 0)
 	gp0 := s.newGemPlan(v0)
 	fx := &effects{
 		raw:       map[effectKey]Estimate{},

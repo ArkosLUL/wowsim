@@ -204,6 +204,8 @@ type run struct {
 	// Every race the screen scored, best first, and the ones the search pairs its gear with.
 	racialScreen []*proto.OptimizerRacialScreen
 	finalists    []proto.Race
+	// The surrogate each race's search priced with, the seed's race's included.
+	surrogates map[proto.Race]*surrogate
 	// Sheet Defense the boss can't crit through, once crit immunity is enforced; 0 when it isn't.
 	critImmunity float64
 	// The floors dpsCapFloors raised, each with the floor it had before (0 for none), so verify knows
@@ -392,11 +394,7 @@ func (r *run) execute() *proto.OptimizerResult {
 	}
 
 	r.setStage("Search")
-	se := newSearcher(s, r)
 	if traceHook != nil {
-		for slot := range se.opts {
-			r.trace("slot %s: %d options of %d priced, %d in the pool", proto.ItemSlot(slot), len(se.opts[slot]), len(se.all[slot]), len(pool.Slots[slot]))
-		}
 		for st, c := range resp {
 			r.trace("curve %s: breakpoint %.1f, slopes %.4f / %.4f", st.StatName(), c.Breakpoint, c.SlopeBelow, c.SlopeAbove)
 		}
@@ -404,24 +402,25 @@ func (r *run) execute() *proto.OptimizerResult {
 			r.trace("set %q: 2pc %v %+v, 4pc %v %+v", set.name, set.hasTwo, set.two, set.hasFour, set.four)
 		}
 	}
-	candidates, err := se.search()
+	candidates, err := r.searchRaces(s)
 	if err != nil {
 		return r.stop(err)
 	}
 	for i, l := range candidates {
-		r.trace("candidate %d: surrogate %+.1f", i, s.value(l)-s.value(r.r.Seed))
+		rs := r.surrogates[l.RacialTraits]
+		r.trace("candidate %d, %s: surrogate %+.1f", i, l.RacialTraits, rs.value(l)-rs.value(r.r.Seed))
 	}
-	candidates = withRacialTraits(candidates, r.finalists)
 
 	r.setStage("Verify")
-	verified, err := r.verify(s, candidates)
+	verified, err := r.verify(candidates)
 	if err != nil {
 		return r.stop(err)
 	}
 	r.verified = verified
 
 	r.setStage("Alternatives")
-	alternatives, verified, err := r.neighborhood(s, verified)
+	// the neighborhood only swaps items, so the best's race stays and its pricing with it
+	alternatives, verified, err := r.neighborhood(r.surrogates[r.best.RacialTraits], verified)
 	if err != nil {
 		return r.stop(err)
 	}

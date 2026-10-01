@@ -103,7 +103,7 @@ func TestRangedFamilyBase(t *testing.T) {
 				stats.AttackPower:       {Stat: stats.AttackPower, SlopeBelow: 0.5, SlopeAbove: 0.5},
 				stats.RangedAttackPower: {Stat: stats.RangedAttackPower, SlopeBelow: 0.5, SlopeAbove: 0.5},
 			})
-			v := s.slopes(s.seedStats)
+			v := s.slopes(s.seedStats, 0)
 			fx := &effects{raw: map[effectKey]Estimate{}, missing: map[effectKey]bool{}, pairBase: map[proto.ItemSlot]Loadout{}}
 			families := rn.effectFamilies(s, v, s.newGemPlan(v), fx)
 

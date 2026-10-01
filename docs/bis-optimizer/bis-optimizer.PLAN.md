@@ -1440,3 +1440,56 @@ floor read only the stat, so it asked those specs for up to 3% (79 rating) more 
   floors equal their rotation-free ones, an MM hunter's with the scope too (Serpent Sting 0 bp at the
   floor, above 0 one under; Steady Shot 0 bp 30 under). All 37 suites unchanged; `optimizer_slow` has no affected spec,
   and all 12 J and caps lines match the [table](#as-built-stage-2-ui).
+
+#### As built (racial traits under the caps)
+
+Floors are race-independent sheet totals, bisected at the seed under its traits, and the surrogate
+priced them around that seed's sheet. Racial traits feed those totals: Heroic Presence (1% melee and
+spell hit) and the weapon specializations (Human sword/mace 3 expertise, Orc axe/fist 5, Dwarf mace 5).
+The search ran once and `withRacialTraits` paired every candidate with every finalist, so a candidate
+under another race, or off its race's weapon type, missed floors the surrogate thought it met, and
+verify dropped it. P2 Normal batch: Mighty (arms, Orc, axe 45165) fell from Troll 11924 (Expertise
+148.8 under 178.8, let through by the since-removed fallback) to Orc 10422; Stormweaver (elemental,
+Draenei) from Troll 5827 to Draenei 5219.
+
+Fix:
+- `searchRaces` (`racial.go`) replaces `withRacialTraits`, so the "Racial screen" bullet's single
+  search is out of date: one search per race the run pairs gear with (the finalists, else the seed's
+  traits), each race's candidates verified under it alone, merged by rank (`byRank`). The searches run
+  concurrently; with several races each gets an RNG seeded from the run's in race order, so scheduling
+  can't move results, and a lone race keeps the run's RNG.
+- `surrogate.forRace` shares curves, residuals, sets and pairs (measured once at the seed) and reprices
+  floors and ceilings, seed reading and gradients, at the seed worn with that race's traits. Floor
+  values and `Pool.Check` are unchanged.
+- One table, `sim/core/weapon_specialization.go`, which `racials.go` reads: `RacialWeaponSpecialization`
+  and `StatBonus(mh, oh)`, the expertise core puts on the Expertise stat (only when every hand holding
+  a weapon is covered; otherwise per spell). Sims are bit-identical.
+- The surrogate counts `StatBonus` for each loadout's hands together (`racialExpertise`, `racialDelta`
+  against the seed's) on Expertise readings only (`floorTerm.racial`), through `score`, `capGain`,
+  `slopes` and `regime`; `state.racial` keeps `trial`, `set` and `configure` equal to a whole-loadout
+  `value`. `racialBounds` widens weapons' prune bounds by what the specialization can win or lose.
+- The neighborhood uses the best's race's surrogate.
+- A lone off-hand one- or two-hander gets no specialization (`checkPlacement` rejects it, since core
+  equips it in the main hand), except in the seed, whose sheet reads it there; `seedRacial` does too.
+
+Tests (`caps_race_test.go`): racial expertise equals the sheet's gain for each specialized race over a
+2H, dual wield (both, one, neither covered) and a main hand with a shield, a held-in-off-hand item or
+nothing, and a seed with a lone off-hand axe; trial, state and rescore agree; racial bounds hold; an Orc dual-wielding axes at an expertise
+floor with a better sword in the pool, and a Draenei at a spell hit floor, where every finalist's
+candidates meet the floor under their own traits (the others make Heroic Presence up from gear);
+repeated `searchRaces` match. `TestByRankInterleavesRaces` replaces the `withRacialTraits` test.
+
+Results:
+- 37 suites unchanged. `optimizer_slow` 12/12, every floor met: fire mage, Ret (Shadowmourne, an axe a
+  Human doesn't cover) and both tanks match `ff0920a96`. Fury (Orc, two 2H axes) and combat rogue
+  (Human, axes, so a sword or mace adds expertise) moved through the specialization term: fury Quick
+  +246.7 → +224.4, Normal +263.1 → +284.2; rogue Quick +636.5 → +733.8, Normal +855.3 → +777.1.
+- Batch rerun: Mighty Troll 11720.7 (+1460.7 ± 4.0, 9075 DPS), hit 264.8/262.8, expertise 181.8/178.8;
+  Stormweaver Troll 5880.9 (+1352.5 ± 2.3, 10156 DPS), spell hit 296/289.2; no new warnings. Against
+  `6c79a6a62` (Mighty +1456.9, 9047 DPS; Stormweaver +1298.7, 10055 DPS), Mighty's lower score is J's
+  normalizer (seed 10260 against 10467), not the gear.
+- Search stage, fury preset over a P2 pool, Normal, 3 finalists: roughly 4.8 s → 12.5 s on a busy
+  machine. The base run fell back to a pick 23 hit short; this one met every floor.
+
+Open: the sheet ignores per-spell `BonusExpertiseRating`, so a specialization covering one of two
+weapons counts toward no floor.

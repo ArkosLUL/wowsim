@@ -203,19 +203,19 @@ func TestCeilingPenalizesOverage(t *testing.T) {
 	under := stats.Stats{stats.SpellHaste: 10} // have = 90
 	over := stats.Stats{stats.SpellHaste: 30}  // have = 110, 10 over
 
-	if o := s.ceilingOverage(under); o != 0 {
+	if o := s.ceilingOverage(under, 0); o != 0 {
 		t.Errorf("under the ceiling: overage %.1f, want 0", o)
 	}
-	if o := s.ceilingOverage(over); o != 10 {
+	if o := s.ceilingOverage(over, 0); o != 10 {
 		t.Errorf("10 over the ceiling: overage %.1f, want 10", o)
 	}
-	if v := s.slopes(under)[stats.SpellHaste]; v != 0 {
+	if v := s.slopes(under, 0)[stats.SpellHaste]; v != 0 {
 		t.Errorf("under the ceiling: slope pull %.1f, want 0", v)
 	}
-	if v := s.slopes(over)[stats.SpellHaste]; v != -s.floorWeight {
+	if v := s.slopes(over, 0)[stats.SpellHaste]; v != -s.floorWeight {
 		t.Errorf("over the ceiling: slope pull %.1f, want %.1f", v, -s.floorWeight)
 	}
-	if underScore, overScore := s.score(under, 0, nil), s.score(over, 0, nil); overScore >= underScore {
+	if underScore, overScore := s.score(under, 0, nil, 0), s.score(over, 0, nil, 0); overScore >= underScore {
 		t.Errorf("20 more SpellHaste while going 10 over the ceiling scores %.1f, want it worse than %.1f", overScore, underScore)
 	}
 }
@@ -523,7 +523,7 @@ func TestTrimToBudgetKeepsTheSeedPricedUnderAFloor(t *testing.T) {
 	}
 
 	rn := &run{asked: r, r: r, pool: pool, eval: &countingEvaluator{have: map[Point]int{}}, total: math.MaxInt64 / 2}
-	v := s.slopes(s.seedStats)
+	v := s.slopes(s.seedStats, 0)
 	fx := &effects{raw: map[effectKey]Estimate{}, missing: map[effectKey]bool{}, pairBase: map[proto.ItemSlot]Loadout{}}
 	families := rn.effectFamilies(s, v, s.newGemPlan(v), fx)
 

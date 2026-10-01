@@ -749,7 +749,7 @@ func TestCandidateBoundsHold(t *testing.T) {
 						continue
 					}
 					total := s.seedStats.Add(rest)
-					v := s.score(total.Add(s.choiceStats(slot, c)), s.choiceResidual(slot, c), nil) - s.score(total, 0, nil)
+					v := s.score(total.Add(s.choiceStats(slot, c)), s.choiceResidual(slot, c), nil, 0) - s.score(total, 0, nil, 0)
 					if v > ub+1e-9 {
 						t.Errorf("%s %+v adds %.2f, over its upper bound %.2f", slot, c, v, ub)
 					}
@@ -763,7 +763,7 @@ func TestCandidateBoundsHold(t *testing.T) {
 				best := math.Inf(-1)
 				for _, c := range kaChoicesSample(p, slot, rng, 400) {
 					if c.ItemID == cand.Item.ID && !skipForLowerBound(s, c) {
-						best = max(best, s.score(total.Add(s.choiceStats(slot, c)), s.choiceResidual(slot, c), nil)-s.score(total, 0, nil))
+						best = max(best, s.score(total.Add(s.choiceStats(slot, c)), s.choiceResidual(slot, c), nil, 0)-s.score(total, 0, nil, 0))
 					}
 				}
 				if best < lb-1e-9 {

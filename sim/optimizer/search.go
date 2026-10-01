@@ -115,6 +115,10 @@ func newSearcher(s *surrogate, r *run) *searcher {
 	for slot := range se.pool.Slots {
 		for _, cand := range se.pool.Slots[slot] {
 			lb, ub, ok := s.candBounds(proto.ItemSlot(slot), cand, se.lo, se.hi, se.gb)
+			if isHand(proto.ItemSlot(slot)) {
+				rlb, rub := s.racialBounds(proto.ItemSlot(slot), &cand.Item)
+				lb, ub = lb+rlb, ub+rub
+			}
 			if ok || se.pool.Locked[slot] {
 				se.all[slot] = append(se.all[slot], &option{cand, lb, ub})
 			}
@@ -253,7 +257,9 @@ type state struct {
 	total  stats.Stats
 	resSum float64
 	// The ring and trinket pairs' correction (see surrogate.pairs).
-	pairs  float64
+	pairs float64
+	// The weapon specialization's expertise against the seed's (see surrogate.racialDelta).
+	racial float64
 	counts []int8
 	value  float64
 }
@@ -270,8 +276,30 @@ func (se *searcher) newState(l Loadout) *state {
 		}
 	}
 	st.pairs = se.s.pairCorrection(&st.l)
-	st.value = se.s.score(st.total, st.resSum+st.pairs, st.counts)
+	st.racial = se.s.racialDelta(&st.l)
+	st.value = se.s.score(st.total, st.resSum+st.pairs, st.counts, st.racial)
 	return st
+}
+
+func isHand(slot proto.ItemSlot) bool {
+	return slot == proto.ItemSlot_ItemSlotMainHand || slot == proto.ItemSlot_ItemSlotOffHand
+}
+
+// racialAfter is st's racial term with changes made.
+func (se *searcher) racialAfter(st *state, changes []change) float64 {
+	if se.s.weaponSpec == nil {
+		return st.racial
+	}
+	l, moved := st.l, false
+	for _, ch := range changes {
+		if isHand(ch.slot) {
+			l.Items[ch.slot], moved = ch.choice, true
+		}
+	}
+	if !moved {
+		return st.racial
+	}
+	return se.s.racialDelta(&l)
 }
 
 func (st *state) clone() *state {
@@ -296,7 +324,10 @@ func (se *searcher) set(st *state, slot proto.ItemSlot, c ItemChoice) {
 	st.stats[slot], st.res[slot] = cs, cr
 	st.l.Items[slot] = c
 	st.pairs = se.s.pairCorrection(&st.l)
-	st.value = se.s.score(st.total, st.resSum+st.pairs, st.counts)
+	if isHand(slot) {
+		st.racial = se.s.racialDelta(&st.l)
+	}
+	st.value = se.s.score(st.total, st.resSum+st.pairs, st.counts, st.racial)
 }
 
 // change is one slot's new choice.
@@ -329,7 +360,7 @@ func (se *searcher) trial(st *state, changes ...change) float64 {
 		}
 		pairs = se.s.pairCorrection(&l)
 	}
-	return se.s.score(total, res+pairs, se.counts)
+	return se.s.score(total, res+pairs, se.counts, se.racialAfter(st, changes))
 }
 
 // apply makes the changes if the result breaks no rule, and says whether it did. A broken gem rule
@@ -350,7 +381,7 @@ func (se *searcher) apply(st *state, changes ...change) bool {
 		for i, ch := range changes {
 			slots[i] = ch.slot
 		}
-		if regemmed, _, gemErr := se.pool.Gem(st.l, slots, se.linear(st.total)); gemErr == nil && se.check(regemmed) == nil {
+		if regemmed, _, gemErr := se.pool.Gem(st.l, slots, se.linear(st.total, st.racial)); gemErr == nil && se.check(regemmed) == nil {
 			for _, slot := range slots {
 				se.set(st, slot, regemmed.Items[slot])
 			}
@@ -398,14 +429,14 @@ func isGem(id int32) bool {
 }
 
 // linear prices a stat vector at total's slopes, for the gem DP.
-func (se *searcher) linear(total stats.Stats) func(stats.Stats) float64 {
-	v := se.s.slopes(total)
+func (se *searcher) linear(total stats.Stats, racial float64) func(stats.Stats) float64 {
+	v := se.s.slopes(total, racial)
 	return func(x stats.Stats) float64 { return dot(v, x) }
 }
 
-func (se *searcher) plan(total stats.Stats) (stats.Stats, *gemPlan) {
-	v := se.s.slopes(total)
-	key := se.s.regime(total)
+func (se *searcher) plan(total stats.Stats, racial float64) (stats.Stats, *gemPlan) {
+	v := se.s.slopes(total, racial)
+	key := se.s.regime(total, racial)
 	gp := se.plans[key]
 	if gp == nil {
 		gp = se.s.newGemPlan(v)
@@ -418,19 +449,22 @@ func (se *searcher) plan(total stats.Stats) (stats.Stats, *gemPlan) {
 // plan for the slopes cand would sit at.
 func (se *searcher) configure(st *state, slot proto.ItemSlot, cand *Candidate, extra ...change) ItemChoice {
 	around := st.total.Subtract(st.stats[slot]).Add(cand.Item.Stats)
-	v, gp := se.plan(around)
+	c := ItemChoice{ItemID: cand.Item.ID}
+	// enchants, reforges and gems never change a weapon's type, so the racial term holds from here on
+	racial := se.racialAfter(st, append([]change{{slot, c}}, extra...))
+	v, gp := se.plan(around, racial)
 	meta := int32(0)
 	if metaSocket(cand) >= 0 {
 		meta = se.s.headMeta(st.l)
 	}
-	c := se.s.quickChoice(slot, cand, v, gp, meta)
-	return se.configureFast(st, slot, cand, c, extra)
+	c = se.s.quickChoice(slot, cand, v, gp, meta)
+	return se.configureFast(st, slot, cand, c, extra, racial)
 }
 
 // configureFast is configure's trials without a whole rescore each. An enchant or reforge only moves
 // a few stats, so each costs just those stats' curves (statsGain) plus, when the run has floor or
 // ceiling terms, their own gradient-only cost (capGain) instead of the whole surrogate.score.
-func (se *searcher) configureFast(st *state, slot proto.ItemSlot, cand *Candidate, c ItemChoice, extra []change) ItemChoice {
+func (se *searcher) configureFast(st *state, slot proto.ItemSlot, cand *Candidate, c ItemChoice, extra []change, racial float64) ItemChoice {
 	total := st.total
 	for _, ch := range append([]change{{slot, c}}, extra...) {
 		total = total.Subtract(st.stats[ch.slot]).Add(se.s.choiceStats(ch.slot, ch.choice))
@@ -451,12 +485,12 @@ func (se *searcher) configureFast(st *state, slot proto.ItemSlot, cand *Candidat
 	}
 	best, pick = 0, -2
 	if c.Enchant != 0 {
-		try(-1, se.s.statsGain(&total, cur, &none)+se.s.capGain(&total, cur, &none)-curRes)
+		try(-1, se.s.statsGain(&total, cur, &none)+se.s.capGain(&total, cur, &none, racial)-curRes)
 	}
 	for i := range cand.Enchants {
 		e := &cand.Enchants[i]
 		if e.ID != c.Enchant && !se.s.unpricedEnchants[slot][e.ID] {
-			try(i, se.s.statsGain(&total, cur, &e.Stats)+se.s.capGain(&total, cur, &e.Stats)+se.s.enchants[slot][e.ID].Mean-curRes)
+			try(i, se.s.statsGain(&total, cur, &e.Stats)+se.s.capGain(&total, cur, &e.Stats, racial)+se.s.enchants[slot][e.ID].Mean-curRes)
 		}
 	}
 	switch {
@@ -472,11 +506,11 @@ func (se *searcher) configureFast(st *state, slot proto.ItemSlot, cand *Candidat
 	}
 	best, pick = 0, -2
 	if c.ReforgeFrom != 0 || c.ReforgeTo != 0 {
-		try(-1, se.s.statsGain(&total, cur, &none)+se.s.capGain(&total, cur, &none))
+		try(-1, se.s.statsGain(&total, cur, &none)+se.s.capGain(&total, cur, &none, racial))
 	}
 	for i := range cand.Reforges {
 		if r := &cand.Reforges[i]; r.From != c.ReforgeFrom || r.To != c.ReforgeTo {
-			try(i, se.s.statsGain(&total, cur, &r.Stats)+se.s.capGain(&total, cur, &r.Stats))
+			try(i, se.s.statsGain(&total, cur, &r.Stats)+se.s.capGain(&total, cur, &r.Stats, racial))
 		}
 	}
 	switch {
@@ -586,7 +620,7 @@ func (se *searcher) bestPartner(st *state, mhChoice ItemChoice) (change, bool) {
 // best that breaks no rule. It walks up to breakpoints the linear DP overshoots.
 func (se *searcher) gemSweep(st *state, locked *[NumSlots]bool) bool {
 	improved := false
-	shortlist := se.pool.gemOptions(se.linear(st.total), MaxGems*NumSlots)
+	shortlist := se.pool.gemOptions(se.linear(st.total, st.racial), MaxGems*NumSlots)
 	var metas []int32
 	for _, g := range se.pool.Gems {
 		if g.Gem.Color == proto.GemColor_GemColorMeta && !se.s.unpricedGems[g.Gem.ID] {
@@ -636,7 +670,7 @@ func (se *searcher) regemAll(st *state, locked *[NumSlots]bool) bool {
 			slots = append(slots, proto.ItemSlot(slot))
 		}
 	}
-	regemmed, _, err := se.pool.Gem(st.l, slots, se.linear(st.total))
+	regemmed, _, err := se.pool.Gem(st.l, slots, se.linear(st.total, st.racial))
 	if err != nil || regemmed == st.l {
 		return false
 	}
@@ -730,16 +764,17 @@ func (se *searcher) randomMove(st *state) []change {
 				return nil
 			}
 		}
+		changes := []change{{slot, ItemChoice{ItemID: o.cand.Item.ID}}}
+		if slot == mh && se.pool.fillsHands(&o.cand.Item) && st.l.Items[oh].ItemID != 0 {
+			changes = append(changes, change{oh, ItemChoice{}})
+		}
 		around := st.total.Subtract(st.stats[slot]).Add(o.cand.Item.Stats)
-		v, gp := se.plan(around)
+		v, gp := se.plan(around, se.racialAfter(st, changes))
 		meta := int32(0)
 		if metaSocket(o.cand) >= 0 {
 			meta = se.s.headMeta(st.l)
 		}
-		changes := []change{{slot, se.s.quickChoice(slot, o.cand, v, gp, meta)}}
-		if slot == mh && se.pool.fillsHands(&o.cand.Item) && st.l.Items[oh].ItemID != 0 {
-			changes = append(changes, change{oh, ItemChoice{}})
-		}
+		changes[0].choice = se.s.quickChoice(slot, o.cand, v, gp, meta)
 		return changes
 	case roll < 0.8:
 		cand := se.pool.candidate(slot, cur.ItemID)
@@ -821,6 +856,8 @@ func (se *searcher) anneal(start *state, steps int) *state {
 // returns nil when l can't be fixed.
 func (se *searcher) repair(l Loadout) *state {
 	out := l
+	// the race this searcher's surrogate prices, whatever l came with
+	out.RacialTraits = se.s.seed.RacialTraits
 	for slot, c := range l.Items {
 		if se.pool.Locked[slot] {
 			out.Items[slot] = se.s.seed.Items[slot]
@@ -852,7 +889,7 @@ func (se *searcher) repair(l Loadout) *state {
 					slots = append(slots, proto.ItemSlot(slot))
 				}
 			}
-			regemmed, _, gemErr := se.pool.Gem(st.l, slots, se.linear(st.total))
+			regemmed, _, gemErr := se.pool.Gem(st.l, slots, se.linear(st.total, st.racial))
 			if gemErr != nil {
 				// no gemming activates the meta, so drop it
 				regemmed = st.l
@@ -884,9 +921,7 @@ func (se *searcher) starts() []*state {
 		}
 	}
 	add(se.repair(se.s.seed))
-	var empty Loadout
-	empty.RacialTraits = se.s.seed.RacialTraits
-	greedy := se.repair(empty)
+	greedy := se.repair(Loadout{})
 	if greedy != nil {
 		var none [NumSlots]bool
 		se.polish(greedy, &none)

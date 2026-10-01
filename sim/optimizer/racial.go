@@ -3,6 +3,7 @@ package optimizer
 import (
 	"context"
 	"errors"
+	"math/rand"
 	"slices"
 	"time"
 
@@ -38,8 +39,9 @@ const (
 //
 // The screen runs on the seed rather than on each race's own best gear: the surrogate prices gear
 // stats, and racials add flat stats and effects on top, so the gear ranking barely moves between
-// races. The finalists get the real spend: every one of their sets goes into verification, which sims
-// them paired, so the sim picks the race, not the screen.
+// races. The finalists get the real spend: each gets a gear search of its own (searchRaces), and
+// every set it finds goes into verification, which sims them paired, so the sim picks the race, not
+// the screen.
 func (r *run) screenRacials() ([]proto.Race, error) {
 	evals, err := r.evaluate(racialScreenPoints(r.r.Seed), r.screen)
 	if err != nil {
@@ -188,19 +190,77 @@ func racialScreenPoints(seed Loadout) []Point {
 	return points
 }
 
-// withRacialTraits pairs every gear set the search found with every finalist race. A set's variants
-// stay together, so trimming the list to verification's budget drops the weakest gear rather than
-// one race's whole tail.
-func withRacialTraits(candidates []Loadout, races []proto.Race) []Loadout {
+// searchRaces runs the gear search once per race the run pairs gear with: every finalist, or just the
+// seed's traits when there's no screen. Each race's search prices the floors and ceilings around the
+// seed worn with its own traits (forRace), so gear that leans on another race's hit or expertise
+// never reaches verify under this one. The curves and residuals are base's, measured once at the seed.
+// It records each race's surrogate in r.surrogates, base's own race included, and returns the
+// candidates by rank across races (byRank).
+func (r *run) searchRaces(base *surrogate) ([]Loadout, error) {
+	races := r.finalists
 	if len(races) == 0 {
-		return candidates
+		races = []proto.Race{base.seed.RacialTraits}
 	}
-	out := make([]Loadout, 0, len(candidates)*len(races))
-	for _, l := range candidates {
-		for _, race := range races {
-			l.RacialTraits = race
-			out = append(out, l)
+	searchers := make([]*searcher, len(races))
+	errs := make([]error, len(races))
+	runParallel(len(races), len(races), func(i int) {
+		s := base
+		if races[i] != base.seed.RacialTraits {
+			if s, errs[i] = base.forRace(races[i]); errs[i] != nil {
+				return
+			}
+		}
+		searchers[i] = newSearcher(s, r)
+	})
+	if err := firstError(errs); err != nil {
+		return nil, err
+	}
+	r.surrogates = map[proto.Race]*surrogate{base.seed.RacialTraits: base}
+	for i, se := range searchers {
+		r.surrogates[races[i]] = se.s
+		// drawn up front in race order, so concurrent searches can't change each other's numbers
+		if len(races) > 1 {
+			se.rng = rand.New(rand.NewSource(r.rng.Int63()))
+		}
+		if traceHook != nil {
+			for slot := range se.opts {
+				r.trace("%s, slot %s: %d options of %d priced, %d in the pool", races[i], proto.ItemSlot(slot), len(se.opts[slot]), len(se.all[slot]), len(r.pool.Slots[slot]))
+			}
 		}
 	}
-	return out
+	found := make([][]Loadout, len(races))
+	runParallel(len(races), len(races), func(i int) {
+		found[i], errs[i] = searchers[i].search()
+	})
+	if err := firstError(errs); err != nil {
+		return nil, err
+	}
+	return byRank(found), nil
+}
+
+func firstError(errs []error) error {
+	for _, err := range errs {
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// byRank is every race's best candidate, then every race's second best, and so on, so trimming the
+// list to verification's budget drops the weakest gear rather than one race's whole tail.
+func byRank(lists [][]Loadout) []Loadout {
+	var out []Loadout
+	for rank := 0; ; rank++ {
+		more := false
+		for _, list := range lists {
+			if rank < len(list) {
+				out = append(out, list[rank])
+				more = true
+			}
+		}
+		if !more {
+			return out
+		}
+	}
 }

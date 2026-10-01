@@ -129,23 +129,23 @@ func TestScreenRacialsPicksFinalists(t *testing.T) {
 	}
 }
 
-// Every gear set the search found comes back once per finalist, with its variants together.
-func TestWithRacialTraitsPairsEverySet(t *testing.T) {
-	var a, b Loadout
-	a.Items[0].ItemID, b.Items[0].ItemID = 1, 2
-	races := []proto.Race{proto.Race_RaceOrc, proto.Race_RaceHuman}
-	got := withRacialTraits([]Loadout{a, b}, races)
-	want := []Loadout{
-		{Items: a.Items, RacialTraits: proto.Race_RaceOrc},
-		{Items: a.Items, RacialTraits: proto.Race_RaceHuman},
-		{Items: b.Items, RacialTraits: proto.Race_RaceOrc},
-		{Items: b.Items, RacialTraits: proto.Race_RaceHuman},
+// Each race's candidates come back best first, every race's first ahead of anyone's second, so a cut
+// for verification's budget takes the weakest gear across races.
+func TestByRankInterleavesRaces(t *testing.T) {
+	loadout := func(id int32, race proto.Race) Loadout {
+		var l Loadout
+		l.Items[0].ItemID, l.RacialTraits = id, race
+		return l
 	}
+	orc := []Loadout{loadout(1, proto.Race_RaceOrc), loadout(2, proto.Race_RaceOrc), loadout(3, proto.Race_RaceOrc)}
+	human := []Loadout{loadout(4, proto.Race_RaceHuman)}
+	got := byRank([][]Loadout{orc, human})
+	want := []Loadout{orc[0], human[0], orc[1], orc[2]}
 	if !slices.Equal(got, want) {
 		t.Errorf("got %v, want %v", got, want)
 	}
-	if again := withRacialTraits([]Loadout{a}, nil); !slices.Equal(again, []Loadout{a}) {
-		t.Errorf("without finalists the candidates should pass through, got %v", again)
+	if one := byRank([][]Loadout{orc}); !slices.Equal(one, orc) {
+		t.Errorf("one race's candidates should pass through, got %v", one)
 	}
 }
 
