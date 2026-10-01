@@ -52,6 +52,9 @@ type unitSnapshot struct {
 	// Armor first, then the magic schools.
 	Resistances []float64 `json:"resistances"`
 
+	// SpellBaseDamageBonusDone per school, physical through arcane.
+	SpellPower map[string]float64 `json:"spellPower"`
+
 	// The character sheet; players only.
 	Sheet *struct {
 		// Ranged crit is left out: without a ranged weapon the server's is 0.

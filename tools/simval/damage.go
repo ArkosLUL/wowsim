@@ -91,13 +91,17 @@ func (r damageRecord) label() string {
 }
 
 func readDamageRecords(path string) ([]damageRecord, error) {
+	return readJSONLines[damageRecord](path)
+}
+
+func readJSONLines[T any](path string) ([]T, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, err
 	}
 	defer f.Close()
 
-	var records []damageRecord
+	var records []T
 	scanner := bufio.NewScanner(f)
 	scanner.Buffer(make([]byte, 0, 64<<10), 8<<20)
 	for line := 1; scanner.Scan(); line++ {
@@ -105,7 +109,7 @@ func readDamageRecords(path string) ([]damageRecord, error) {
 		if text == "" {
 			continue
 		}
-		var rec damageRecord
+		var rec T
 		if err := json.Unmarshal([]byte(text), &rec); err != nil {
 			return nil, fmt.Errorf("%s line %d: %w", path, line, err)
 		}
@@ -315,10 +319,11 @@ type damageSim struct {
 	sim    *core.Simulation
 	char   *core.Character
 	target *core.Unit
-	// the sim's auras for setup.others
+	// the sim's auras for the server auras it was asked to put on
 	mirrored []*core.Aura
-	others   []int32
-	ran      bool
+	// those it has no aura for
+	others []int32
+	ran    bool
 }
 
 // simDecl is the sim's declaration of one server effect: Spell.Direct, or a Dot's Tick.
@@ -334,19 +339,14 @@ func (d simDecl) effect() core.SpellEffect {
 	return d.spell.Direct
 }
 
-func newDamageSim(rec damageRecord, setup damageSetup, spec protoreflect.Name) (d *damageSim, err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			err = fmt.Errorf("building the sim character: %v", r)
-		}
-	}()
+// damagePlayer is the record's class and race as the spec, with the setup's talents and glyphs and
+// nothing else.
+func damagePlayer(rec damageRecord, setup damageSetup, spec protoreflect.Name) (*proto.Player, error) {
 	class := classes[rec.Attacker.Class]
 	race, ok := races[rec.Attacker.Race]
 	if !ok {
 		return nil, fmt.Errorf("no sim race for server race %d", rec.Attacker.Race)
 	}
-	simpkg.RegisterAll()
-
 	player := &proto.Player{
 		Name:          "damage",
 		Race:          race,
@@ -357,11 +357,31 @@ func newDamageSim(rec damageRecord, setup damageSetup, spec protoreflect.Name) (
 		TalentsString: setup.talentsString(),
 		Glyphs:        setup.glyphs,
 	}
+	return player, setSpec(player, spec)
+}
+
+// setSpec gives the player that spec, its options and rotation empty.
+func setSpec(player *proto.Player, spec protoreflect.Name) error {
 	m := player.ProtoReflect()
 	fd := m.Descriptor().Fields().ByName(spec)
+	if fd == nil || fd.ContainingOneof() == nil {
+		return fmt.Errorf("proto.Player has no spec %q", spec)
+	}
 	specMsg := m.NewField(fd).Message()
 	fillEmpty(specMsg)
 	m.Set(fd, protoreflect.ValueOfMessage(specMsg))
+	return nil
+}
+
+// newDamageSim puts the player in a sim against the record's dummy. Of the server auras in mirror, the
+// ones the sim registers by id go on at every start.
+func newDamageSim(rec damageRecord, player *proto.Player, mirror []int32) (d *damageSim, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("building the sim character: %v", r)
+		}
+	}()
+	simpkg.RegisterAll()
 
 	var targetStats stats.Stats
 	if len(rec.Target.Resistances) > 0 {
@@ -380,7 +400,7 @@ func newDamageSim(rec damageRecord, setup damageSetup, spec protoreflect.Name) (
 	})
 
 	d = &damageSim{rec: rec, sim: s, char: s.Raid.Parties[0].Players[0].GetCharacter(), target: s.Encounter.TargetUnits[0]}
-	for _, id := range setup.others {
+	for _, id := range mirror {
 		if aura := d.char.GetAuraByID(core.ActionID{SpellID: id}); aura != nil {
 			d.mirrored = append(d.mirrored, aura)
 		} else {
@@ -408,7 +428,11 @@ func buildDamageSim(rec damageRecord) (*damageSim, error) {
 
 	for _, setup := range setups {
 		for _, spec := range specs {
-			d, err := newDamageSim(rec, setup, spec)
+			player, err := damagePlayer(rec, setup, spec)
+			if err != nil {
+				return nil, err
+			}
+			d, err := newDamageSim(rec, player, setup.others)
 			if err != nil {
 				return nil, err
 			}
@@ -466,8 +490,8 @@ func dotOn(spell *core.Spell, unit *core.Unit) (dot *core.Dot) {
 	return spell.Dot(unit)
 }
 
-// prepare starts the sim over with the record's auras, spell power and attack power on the character.
-func (d *damageSim) prepare(spellPower float64) {
+// start starts the sim over with the mirrored auras on the character.
+func (d *damageSim) start() {
 	// Reset panics on an aura still up from the last run, so end that run the way an iteration ends
 	if d.ran {
 		d.sim.Cleanup()
@@ -479,6 +503,11 @@ func (d *damageSim) prepare(spellPower float64) {
 			aura.Activate(d.sim)
 		}
 	}
+}
+
+// prepare starts the sim over with the record's auras, spell power and attack power on the character.
+func (d *damageSim) prepare(spellPower float64) {
+	d.start()
 	unit := &d.char.Unit
 	// attack power first: Sheath of Light and Mental Quickness add spell power off it
 	setStat(d.sim, unit, stats.AttackPower, d.attackPower("mainhand"))
@@ -550,6 +579,11 @@ func (d *damageSim) tick(dot *core.Dot, heal bool, victim *core.Unit, base, spel
 
 	d.prepare(spellPower)
 	dot.Apply(d.sim)
+	// the probe works the amount out for one stack (Lacerate), which a spell's own cast adds after Apply
+	if dot.MaxStacks > 0 && dot.GetStacks() == 0 {
+		dot.SetStacks(d.sim, 1)
+		dot.TakeSnapshot(d.sim, true)
+	}
 	var result *core.SpellResult
 	if heal {
 		result = dot.CalcSnapshotHealing(d.sim, victim, dot.Spell.OutcomeAlwaysHit)
@@ -619,7 +653,7 @@ func (d *damageSim) unmatchedAuras() (text string) {
 			text = fmt.Sprintf("auras unread: %v", r)
 		}
 	}()
-	d.prepare(d.rec.SpellPower.Damage)
+	d.start()
 	server := map[int32]bool{}
 	for _, a := range d.rec.Attacker.Auras {
 		server[a.ID] = true
@@ -666,6 +700,11 @@ func (r damageRecord) powerBonuses(e damageEffect) int {
 // checkDamage compares each probed effect of a record with the sim: the declared base and spell power
 // coefficient, the amount at both ends of the roll, and the crit multiplier. A shaped record gives none.
 func checkDamage(rec damageRecord) []Check {
+	return replayDamage(rec, buildDamageSim)
+}
+
+// replayDamage is checkDamage on the sim character build makes for the record.
+func replayDamage(rec damageRecord, build func(damageRecord) (*damageSim, error)) []Check {
 	if rec.Shaped != "" {
 		return nil
 	}
@@ -683,7 +722,7 @@ func checkDamage(rec damageRecord) []Check {
 			rec.Attacker.Level, rec.Attacker.IsPlayer, core.CharacterLevel))}
 	}
 
-	d, err := buildDamageSim(rec)
+	d, err := build(rec)
 	if err != nil {
 		return []Check{fail("sim character", err.Error())}
 	}

@@ -413,3 +413,61 @@ spells included.
   crit capable or not.
 - All 148 amounts sit at or above the server's, as its truncation predicts. The closest to tolerance is Lava
   Burst's max, 2.01 over against +2.11.
+
+## TE-GOLDCHAR as built
+
+**C++ and e2e stage** (golden-neutral; no rebuild yet).
+- `SimValidationCommands.cpp`, each with a help row in `simval_commands.sql`:
+  - `.simval talent <spellId>`: `GetTalentSpellPos` then `Player::LearnTalent(id, rank, true)`; it names why
+    `LearnTalent` refused (missing prerequisite, higher rank).
+  - `.simval glyph <slot> <glyphPropertiesId>`: `EffectApplyGlyph`'s slot level and type checks, old aura removal and
+    glyph spell cast, then `SetGlyph`.
+  - `.simval equip <slot> <itemId>`: not in the spec. Eight setups (both Orc frost DKs, Tauren BalancePhase3 and
+    FeralApl, all four Troll mages) wear Alliance-only ToC items, which `CanUseItem` refuses a Horde race; the command runs
+    `CanEquipNewItem`, and for those items only its slot, class, race, proficiency and level checks. Login unequips such items, so the e2e equips after its relog.
+  - `info` records gain `character` (talent rank spells, glyph per slot, equipped items), so the e2e verifies the
+    build and the replay can match a record to its setup; `damage` records match through the attacker's name.
+  - `spell_tweaks_shadow_dot_haste` (bound to SW:P, VT and DP after TE-DAMAGE) joins the tick-period allowlist;
+    without it TE-DAMAGE's shadow probes come back shaped.
+- The list: `sim/core/testdata/simval/goldchar_setups.json`, 32 setups (no two suites share a default player);
+  format and in-step test in the tools/simval README's Golden characters. Feral's Glyph of Omen of Clarity
+  (206580) isn't on the server and the sim doesn't implement it: glyph 0, left out.
+- `e2e/goldchar_test.go` `TestSimvalGoldenCharacters` (module README); `run.sh` mounts `SIMVAL_GOLDCHAR_SETUPS` and
+  passes `SIMVAL_GOLDCHAR_ONLY` and `E2E_TIMEOUT`. Expected `shaped` reasons are predictions from the builds'
+  talents (Molten Fury shapes every fire mage spell, Torment the Weak the arcane and frost mages' bolts, Glacier Rot
+  frost DKs' Icy Touch and Howling Blast, Improved Insect Swarm balance's Wrath and Starfire); the live run settles
+  them.
+
+**Sim stage** (golden-neutral; see the tools/simval README's Golden characters).
+- `TestGoldenCharacters` replays `goldchar.jsonl`: bots match their setup through the info record's `character`, the
+  sim builds the setup's character (`goldcharPlayer`), and the checks are the spec's info fields plus the damage replay.
+  `damage.go` now takes a ready player (`newDamageSim`, `replayDamage`); `TestDamageRecords` is unchanged.
+- The list's `forms` became `auras` (e2e too): the sim starts specs in states the bot lacked, found by
+  `TestGoldcharAurasCoverTheSimsStart`. Added: Seal of Vengeance for both paladins (Glyph of Seal of Vengeance's 10
+  expertise), Righteous Fury, Unholy's Bone Shield (2% damage), hunters' Aspect of the Dragonhawk, and the raid buffs
+  `AddRaidBuffs` gives every DK, druid, mage, priest and MM hunter whatever the options say (Horn of Winter, Mark of the
+  Wild, Arcane Intellect, Fortitude, Divine Spirit, Shadow Protection, Trueshot Aura), as the base stats test does.
+- The sheet's spell hit leaves out `SPELL_AURA_MOD_INCREASES_SPELL_PCT_TO_HIT`: the replay adds what every magic school
+  gets (Balance of Power). Suppression covers only fire and shadow, where the sim gives every school its 3%, so
+  WarlockAffliction's spell hit is expected to fail live: harmless for a warlock, drop it as a real mismatch.
+- Checked offline on the recorded-run captures' server snapshots (gear, gems, talents): hunter and Protection Paladin
+  pass every check; Ret's hasted speed and expertise differ only through rrsim's Retribution Aura and seal, which the
+  snapshot predates.
+- Lacerate's dot is replayed for one stack, as the probe works it out.
+
+**Live stage** (golden-neutral). Module rebuilt; `goldchar.jsonl` is one full run (all 32 setups pass the e2e,
+124 records after drops), and `TestGoldenCharacters` passes 628 checks.
+- Fixed in the e2e: profession skill and reputation for gated items (`.setskill`, `.modify reputation`); hunters'
+  starting 10% quiver swapped for a 15% one; full health before recording (bots sat at 35–50%, which turned off
+  Blood Gorged); Elemental's Flametongue Weapon cast on the main hand through a raw CMSG_CAST_SPELL.
+- Fixed in the list: talents learned prerequisite first (`talentStringSpells`; Dual Wield before its
+  specialization); Blood Presence for every DK (the server's default, the sim has none until its rotation); Track
+  Giants for hunters (the sim always counts Improved Tracking); `imbue`; `shaped` reasons as the server gave them
+  (Rage of Rivendare for all Unholy probes, Merciless Combat or Tundra Stalker for frost DKs' Death Coil and
+  diseases, Dirty Deeds for Subtlety's Garrote, spell_tweaks_omen_faerie_fire, Mind Flay has no probeable effect;
+  Balance's Starfire compares).
+- Dropped as real mismatches (fixture README): BM's Arcane Shot and Serpent Sting (The Beast Within's 10% needs a
+  pet in the sim), MM's Serpent Sting (Ranged Weapon Specialization), SV's Serpent Sting (Noxious Stings) and Black
+  Arrow, Elemental's spell power (+84), Affliction's spell hit (Suppression), Fury's and Arms' Thunder Clap
+  (Two-Handed Weapon Specialization; Arms' crit multiplier).
+- Priest Shadow's 48125 and 48300 compared live, so the shadow dot tick-period allowlist holds.

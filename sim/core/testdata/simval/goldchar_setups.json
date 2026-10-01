@@ -1,0 +1,1220 @@
+{"setups": [
+  {
+    "name": "DeathknightBlood",
+    "suites": ["sim/deathknight/dps TestBlood"],
+    "spec": "deathknight", "class": 6, "race": 2,
+    "gearSet": "ui/deathknight/gear_sets/p3_blood.gear.json",
+    "items": [
+      {"slot":0,"id":48493},
+      {"slot":1,"id":47458},
+      {"slot":2,"id":48495},
+      {"slot":14,"id":47546},
+      {"slot":4,"id":47449},
+      {"slot":8,"id":48008},
+      {"slot":9,"id":48492},
+      {"slot":5,"id":47429},
+      {"slot":6,"id":48494},
+      {"slot":7,"id":45599},
+      {"slot":10,"id":47993},
+      {"slot":11,"id":47413},
+      {"slot":12,"id":45931},
+      {"slot":13,"id":47464},
+      {"slot":15,"id":47446},
+      {"slot":17,"id":47673}
+    ],
+    "talents": "2305120530003303231023001351--230220305003",
+    "talentSpells": [49483,49491,49393,49004,55108,49480,50034,49395,50029,49504,53138,49543,49016,62908,49530,55050,49534,61158,49028,51746,49568,49562,49564,49572,51465,49628],
+    "glyphs": [
+      {"slot":0,"item":45799,"spell":63330,"glyph":768},
+      {"slot":3,"item":43827,"spell":59336,"glyph":558},
+      {"slot":5,"item":45805,"spell":63334,"glyph":772}
+    ],
+    "auras": [48266, 57623],
+    "probes": [
+      {"id":49909,"name":"Icy Touch"},
+      {"id":47632,"name":"Death Coil"},
+      {"id":55078,"name":"Blood Plague"},
+      {"id":55095,"name":"Frost Fever"}
+    ]
+  },
+  {
+    "name": "DeathknightUnholy",
+    "suites": ["sim/deathknight/dps TestUnholy"],
+    "spec": "deathknight", "class": 6, "race": 2,
+    "gearSet": "ui/deathknight/gear_sets/p3_uh_dw.gear.json",
+    "items": [
+      {"slot":0,"id":48493},
+      {"slot":1,"id":47458},
+      {"slot":2,"id":48495},
+      {"slot":14,"id":47548},
+      {"slot":4,"id":48491},
+      {"slot":8,"id":45663},
+      {"slot":9,"id":48492},
+      {"slot":5,"id":47429},
+      {"slot":6,"id":47465},
+      {"slot":7,"id":45599},
+      {"slot":10,"id":47413},
+      {"slot":11,"id":45534},
+      {"slot":12,"id":47464},
+      {"slot":13,"id":45609},
+      {"slot":15,"id":47528},
+      {"slot":16,"id":47528},
+      {"slot":17,"id":47673}
+    ],
+    "talents": "-320033500002-2300303050032152000150013133151",
+    "talentSpells": [51456,50147,49662,50138,50887,49657,51746,49568,49565,49572,51465,49628,55623,49194,49638,49599,52143,66817,63560,49632,49222,49655,51161,55090,50121,49206],
+    "glyphs": [
+      {"slot":0,"item":43549,"spell":58686,"glyph":527},
+      {"slot":3,"item":45804,"spell":63333,"glyph":771},
+      {"slot":5,"item":43542,"spell":58629,"glyph":520}
+    ],
+    "auras": [48266, 49222, 57623],
+    "probes": [
+      {"id":49909,"name":"Icy Touch","shaped":"Rage of Rivendare"},
+      {"id":47632,"name":"Death Coil","shaped":"Rage of Rivendare"},
+      {"id":55078,"name":"Blood Plague","shaped":"Rage of Rivendare"},
+      {"id":55095,"name":"Frost Fever","shaped":"Rage of Rivendare"}
+    ]
+  },
+  {
+    "name": "DeathknightFrost",
+    "suites": ["sim/deathknight/dps TestFrost"],
+    "spec": "deathknight", "class": 6, "race": 2,
+    "gearSet": "ui/deathknight/gear_sets/p3_frost.gear.json",
+    "items": [
+      {"slot":0,"id":48493},
+      {"slot":1,"id":45459},
+      {"slot":2,"id":48495},
+      {"slot":14,"id":47548},
+      {"slot":4,"id":48491},
+      {"slot":8,"id":45663},
+      {"slot":9,"id":47492},
+      {"slot":5,"id":45241},
+      {"slot":6,"id":48494},
+      {"slot":7,"id":47473},
+      {"slot":10,"id":46966},
+      {"slot":11,"id":45534},
+      {"slot":12,"id":47464},
+      {"slot":13,"id":45931},
+      {"slot":15,"id":47528},
+      {"slot":16,"id":47528},
+      {"slot":17,"id":40207}
+    ],
+    "talents": "23050005-32005350352203012300033101351",
+    "talentSpells": [49483,49491,49393,49480,51456,50147,49664,50138,50887,51473,51130,50115,49657,49791,55610,49538,59057,66192,54637,51271,49143,50191,50130,49184],
+    "glyphs": [
+      {"slot":0,"item":43543,"spell":58647,"glyph":521},
+      {"slot":3,"item":43547,"spell":58671,"glyph":525},
+      {"slot":5,"item":45805,"spell":63334,"glyph":772}
+    ],
+    "auras": [48266, 57623],
+    "probes": [
+      {"id":49909,"name":"Icy Touch","shaped":"Glacier Rot"},
+      {"id":51411,"name":"Howling Blast","shaped":"Glacier Rot"},
+      {"id":47632,"name":"Death Coil","shaped":"Merciless Combat or Tundra Stalker"},
+      {"id":55078,"name":"Blood Plague","shaped":"Merciless Combat or Tundra Stalker"},
+      {"id":55095,"name":"Frost Fever","shaped":"Merciless Combat or Tundra Stalker"}
+    ]
+  },
+  {
+    "name": "DeathknightFrostUH",
+    "suites": ["sim/deathknight/dps TestFrostUH"],
+    "spec": "deathknight", "class": 6, "race": 2,
+    "gearSet": "ui/deathknight/gear_sets/p3_frost.gear.json",
+    "items": [
+      {"slot":0,"id":48493},
+      {"slot":1,"id":45459},
+      {"slot":2,"id":48495},
+      {"slot":14,"id":47548},
+      {"slot":4,"id":48491},
+      {"slot":8,"id":45663},
+      {"slot":9,"id":47492},
+      {"slot":5,"id":45241},
+      {"slot":6,"id":48494},
+      {"slot":7,"id":47473},
+      {"slot":10,"id":46966},
+      {"slot":11,"id":45534},
+      {"slot":12,"id":47464},
+      {"slot":13,"id":45931},
+      {"slot":15,"id":47528},
+      {"slot":16,"id":47528},
+      {"slot":17,"id":40207}
+    ],
+    "talents": "01-32002350342203012300033101351-230200305003",
+    "talentSpells": [48997,51456,50147,49661,50138,50887,51473,51129,50115,49657,49791,55610,49538,59057,66192,54637,51271,49143,50191,50130,49184,51746,49568,49562,49572,51465,49628],
+    "glyphs": [
+      {"slot":0,"item":43543,"spell":58647,"glyph":521},
+      {"slot":3,"item":43547,"spell":58671,"glyph":525},
+      {"slot":5,"item":45805,"spell":63334,"glyph":772}
+    ],
+    "auras": [48266, 57623],
+    "probes": [
+      {"id":49909,"name":"Icy Touch","shaped":"Glacier Rot"},
+      {"id":51411,"name":"Howling Blast","shaped":"Glacier Rot"},
+      {"id":47632,"name":"Death Coil","shaped":"Merciless Combat or Tundra Stalker"},
+      {"id":55078,"name":"Blood Plague","shaped":"Merciless Combat or Tundra Stalker"},
+      {"id":55095,"name":"Frost Fever","shaped":"Merciless Combat or Tundra Stalker"}
+    ]
+  },
+  {
+    "name": "DeathknightBloodTank",
+    "suites": ["sim/deathknight/tank TestBloodTank"],
+    "spec": "tank_deathknight", "class": 6, "race": 2,
+    "gearSet": "ui/tank_deathknight/gear_sets/p1_blood.gear.json",
+    "items": [
+      {"slot":0,"id":40565},
+      {"slot":1,"id":40387},
+      {"slot":2,"id":39704},
+      {"slot":14,"id":40252},
+      {"slot":4,"id":40559},
+      {"slot":8,"id":40306},
+      {"slot":9,"id":40563},
+      {"slot":5,"id":39759},
+      {"slot":6,"id":40567},
+      {"slot":7,"id":40297},
+      {"slot":10,"id":40718},
+      {"slot":11,"id":40107},
+      {"slot":12,"id":44063},
+      {"slot":13,"id":42341},
+      {"slot":15,"id":40406},
+      {"slot":17,"id":40207}
+    ],
+    "talents": "005510153330330220102013-3050505100023101-002",
+    "talentSpells": [55226,49393,49004,48982,49480,50034,49489,49497,49395,50029,49503,53138,49016,62908,55233,50150,51456,49789,49664,50887,49039,49657,51109,49471,55610,55130],
+    "glyphs": [
+      {"slot":0,"item":43538,"spell":58613,"glyph":511},
+      {"slot":3,"item":43547,"spell":58671,"glyph":525},
+      {"slot":5,"item":43554,"spell":58676,"glyph":532}
+    ],
+    "auras": [48266, 57623],
+    "probes": [
+      {"id":49909,"name":"Icy Touch","shaped":"Glacier Rot"},
+      {"id":47632,"name":"Death Coil"},
+      {"id":55078,"name":"Blood Plague"},
+      {"id":55095,"name":"Frost Fever"}
+    ]
+  },
+  {
+    "name": "DruidBalance",
+    "suites": ["sim/druid/balance TestBalance"],
+    "spec": "balance_druid", "class": 11, "race": 6,
+    "gearSet": "ui/balance_druid/gear_sets/p1.gear.json",
+    "items": [
+      {"slot":0,"id":40467},
+      {"slot":1,"id":44661},
+      {"slot":2,"id":40470},
+      {"slot":14,"id":44005},
+      {"slot":4,"id":40469},
+      {"slot":8,"id":44008},
+      {"slot":9,"id":40466},
+      {"slot":5,"id":40561},
+      {"slot":6,"id":40560},
+      {"slot":7,"id":40519},
+      {"slot":10,"id":40399},
+      {"slot":11,"id":40080},
+      {"slot":12,"id":40255},
+      {"slot":13,"id":40432},
+      {"slot":15,"id":40395},
+      {"slot":16,"id":40192},
+      {"slot":17,"id":40321}
+    ],
+    "talents": "5012203115331303213315311231--205003012",
+    "talentSpells": [16818,16845,35364,16822,61346,57865,16819,16913,16924,33591,5570,57851,16899,33596,24858,48396,33602,48389,33607,48525,50516,33831,48514,48511,48505,17051,17061,16835,16864,48412],
+    "glyphs": [
+      {"slot":0,"item":40916,"spell":54845,"glyph":175},
+      {"slot":3,"item":40919,"spell":54830,"glyph":176},
+      {"slot":5,"item":40921,"spell":54828,"glyph":178},
+      {"slot":1,"item":44922,"spell":62135,"glyph":613}
+    ],
+    "auras": [24858, 48469],
+    "probes": [
+      {"id":48463,"name":"Moonfire"},
+      {"id":48461,"name":"Wrath","shaped":"Wrath with Improved Insect Swarm"},
+      {"id":48465,"name":"Starfire"}
+    ]
+  },
+  {
+    "name": "DruidBalancePhase3",
+    "suites": ["sim/druid/balance TestBalancePhase3"],
+    "spec": "balance_druid", "class": 11, "race": 6,
+    "gearSet": "ui/balance_druid/gear_sets/p3_alliance.gear.json",
+    "items": [
+      {"slot":0,"id":48171},
+      {"slot":1,"id":47144},
+      {"slot":2,"id":48168},
+      {"slot":14,"id":47552},
+      {"slot":4,"id":48169},
+      {"slot":8,"id":47066},
+      {"slot":9,"id":48172},
+      {"slot":5,"id":47084},
+      {"slot":6,"id":47190},
+      {"slot":7,"id":47097},
+      {"slot":10,"id":47237},
+      {"slot":11,"id":46046},
+      {"slot":12,"id":45518},
+      {"slot":13,"id":47188},
+      {"slot":15,"id":47206},
+      {"slot":16,"id":47064},
+      {"slot":17,"id":47670}
+    ],
+    "talents": "5102233115331303213305311031--205003002",
+    "talentSpells": [16818,57810,35364,16822,16840,61346,57865,16819,16913,16924,33591,5570,57851,16899,33596,24858,48396,33602,33607,48525,50516,33831,48511,48505,17051,17061,16835,48412],
+    "glyphs": [
+      {"slot":0,"item":40916,"spell":54845,"glyph":175},
+      {"slot":3,"item":40923,"spell":54829,"glyph":180},
+      {"slot":5,"item":40921,"spell":54828,"glyph":178}
+    ],
+    "auras": [24858, 48469],
+    "probes": [
+      {"id":48463,"name":"Moonfire"},
+      {"id":48461,"name":"Wrath","shaped":"Wrath with Improved Insect Swarm"},
+      {"id":48465,"name":"Starfire"}
+    ]
+  },
+  {
+    "name": "DruidFeral",
+    "suites": ["sim/druid/feral TestFeral"],
+    "spec": "feral_druid", "class": 11, "race": 6,
+    "gearSet": "ui/feral_druid/gear_sets/p1.gear.json",
+    "items": [
+      {"slot":0,"id":40473},
+      {"slot":1,"id":44664},
+      {"slot":2,"id":40494},
+      {"slot":14,"id":40403},
+      {"slot":4,"id":40539},
+      {"slot":8,"id":39765},
+      {"slot":9,"id":40541},
+      {"slot":5,"id":40205},
+      {"slot":6,"id":44011},
+      {"slot":7,"id":40243},
+      {"slot":10,"id":40474},
+      {"slot":11,"id":40717},
+      {"slot":12,"id":42987},
+      {"slot":13,"id":40256},
+      {"slot":15,"id":40388},
+      {"slot":17,"id":39757}
+    ],
+    "talents": "-503202132322010053120230310511-205503012",
+    "talentSpells": [16938,16949,16999,24866,61336,16944,16968,16975,37117,48410,49377,24894,33856,17007,34300,57876,33867,48495,33917,51269,63503,50334,17051,17061,17073,16835,16864,48412],
+    "glyphs": [
+      {"slot":0,"item":206580,"spell":413895,"glyph":0},
+      {"slot":3,"item":40901,"spell":54815,"glyph":165},
+      {"slot":5,"item":45601,"spell":62969,"glyph":671},
+      {"slot":1,"item":43335,"spell":57855,"glyph":433}
+    ],
+    "auras": [768, 48469],
+    "probes": [
+      {"id":48574,"name":"Rake"}
+    ]
+  },
+  {
+    "name": "DruidFeralApl",
+    "suites": ["sim/druid/feral TestFeralApl"],
+    "spec": "feral_druid", "class": 11, "race": 6,
+    "gearSet": "ui/feral_druid/gear_sets/p3.gear.json",
+    "items": [
+      {"slot":0,"id":48204},
+      {"slot":1,"id":47060},
+      {"slot":2,"id":48207},
+      {"slot":14,"id":47545},
+      {"slot":4,"id":48206},
+      {"slot":8,"id":45611},
+      {"slot":9,"id":47945},
+      {"slot":5,"id":47112},
+      {"slot":6,"id":48205},
+      {"slot":7,"id":47077},
+      {"slot":10,"id":47075},
+      {"slot":11,"id":45608},
+      {"slot":12,"id":45931},
+      {"slot":13,"id":47131},
+      {"slot":15,"id":47239},
+      {"slot":17,"id":47668}
+    ],
+    "talents": "-503202132322010053120230310511-205503012",
+    "talentSpells": [16938,16949,16999,24866,61336,16944,16968,16975,37117,48410,49377,24894,33856,17007,34300,57876,33867,48495,33917,51269,63503,50334,17051,17061,17073,16835,16864,48412],
+    "glyphs": [
+      {"slot":0,"item":206580,"spell":413895,"glyph":0},
+      {"slot":3,"item":40901,"spell":54815,"glyph":165},
+      {"slot":5,"item":45601,"spell":62969,"glyph":671},
+      {"slot":1,"item":43335,"spell":57855,"glyph":433}
+    ],
+    "auras": [768, 48469],
+    "probes": [
+      {"id":48574,"name":"Rake"}
+    ]
+  },
+  {
+    "name": "DruidFeralTank",
+    "suites": ["sim/druid/tank TestFeralTank"],
+    "spec": "feral_tank_druid", "class": 11, "race": 6,
+    "gearSet": "ui/feral_tank_druid/gear_sets/p1.gear.json",
+    "items": [
+      {"slot":0,"id":40329},
+      {"slot":1,"id":40387},
+      {"slot":2,"id":40494},
+      {"slot":14,"id":40252},
+      {"slot":4,"id":40471},
+      {"slot":8,"id":40186},
+      {"slot":9,"id":40472},
+      {"slot":5,"id":43591},
+      {"slot":6,"id":44011},
+      {"slot":7,"id":40243},
+      {"slot":10,"id":40370},
+      {"slot":11,"id":37784},
+      {"slot":12,"id":44253},
+      {"slot":13,"id":37220},
+      {"slot":15,"id":40280},
+      {"slot":17,"id":38365}
+    ],
+    "talents": "-503232132322010353120300313511-20350001",
+    "talentSpells": [16938,16949,16999,16931,24866,61336,16944,16968,16975,37117,48410,49377,57881,24894,33856,17007,34300,57877,48495,33917,48491,51269,63503,50334,17051,17059,17073,16864],
+    "glyphs": [
+      {"slot":0,"item":40897,"spell":54811,"glyph":162},
+      {"slot":3,"item":46372,"spell":65243,"glyph":811},
+      {"slot":5,"item":40896,"spell":54810,"glyph":161}
+    ],
+    "auras": [9634, 48469],
+    "probes": [
+      {"id":48568,"name":"Lacerate"},
+      {"id":48562,"name":"Swipe (Bear)"},
+      {"id":60089,"name":"Faerie Fire (Feral)","shaped":"spell_tweaks_omen_faerie_fire"}
+    ]
+  },
+  {
+    "name": "HunterBM",
+    "suites": ["sim/hunter TestBM"],
+    "spec": "hunter", "class": 3, "race": 2,
+    "gearSet": "ui/hunter/gear_sets/p1_sv.gear.json",
+    "items": [
+      {"slot":0,"id":40505},
+      {"slot":1,"id":44664},
+      {"slot":2,"id":40507},
+      {"slot":14,"id":40403},
+      {"slot":4,"id":43998},
+      {"slot":8,"id":40282},
+      {"slot":9,"id":40541},
+      {"slot":5,"id":39762},
+      {"slot":6,"id":40331},
+      {"slot":7,"id":40549},
+      {"slot":10,"id":40074},
+      {"slot":11,"id":40474},
+      {"slot":12,"id":40684},
+      {"slot":13,"id":44253},
+      {"slot":15,"id":40388},
+      {"slot":17,"id":40385}
+    ],
+    "talents": "51200201515012233110531351-005305001-4",
+    "talentSpells": [19556,19583,35030,19575,53265,19620,19572,19602,19577,19592,34454,19623,34460,19574,34462,34470,53264,34692,53260,56318,53270,19431,34484,19490,19434,52787],
+    "glyphs": [
+      {"slot":0,"item":42902,"spell":56830,"glyph":356},
+      {"slot":3,"item":42914,"spell":56826,"glyph":368},
+      {"slot":5,"item":42912,"spell":56832,"glyph":366}
+    ],
+    "auras": [61847, 19882],
+    "probes": [
+      {"id":49045,"name":"Arcane Shot"},
+      {"id":49001,"name":"Serpent Sting"}
+    ]
+  },
+  {
+    "name": "HunterMM",
+    "suites": ["sim/hunter TestMM"],
+    "spec": "hunter", "class": 3, "race": 2,
+    "gearSet": "ui/hunter/gear_sets/p1_mm.gear.json",
+    "items": [
+      {"slot":0,"id":40543},
+      {"slot":1,"id":44664},
+      {"slot":2,"id":40507},
+      {"slot":14,"id":40403},
+      {"slot":4,"id":43998},
+      {"slot":8,"id":40282},
+      {"slot":9,"id":40541},
+      {"slot":5,"id":40275},
+      {"slot":6,"id":40506},
+      {"slot":7,"id":40549},
+      {"slot":10,"id":40074},
+      {"slot":11,"id":40474},
+      {"slot":12,"id":40684},
+      {"slot":13,"id":44253},
+      {"slot":15,"id":40388},
+      {"slot":17,"id":40385}
+    ],
+    "talents": "502-035335131030013233035031051-5000002",
+    "talentSpells": [19556,35030,53622,19431,34484,19423,19490,34950,19456,19434,19466,23989,24691,34476,19509,53238,35111,34489,53217,34490,53246,53209,52788,34496],
+    "glyphs": [
+      {"slot":0,"item":42912,"spell":56832,"glyph":366},
+      {"slot":3,"item":42914,"spell":56826,"glyph":368},
+      {"slot":5,"item":45625,"spell":63065,"glyph":677}
+    ],
+    "auras": [61847, 19506, 19882],
+    "probes": [
+      {"id":49045,"name":"Arcane Shot","shaped":"Marked for Death"},
+      {"id":49001,"name":"Serpent Sting"}
+    ]
+  },
+  {
+    "name": "HunterSV",
+    "suites": ["sim/hunter TestSV"],
+    "spec": "hunter", "class": 3, "race": 2,
+    "gearSet": "ui/hunter/gear_sets/p1_sv.gear.json",
+    "items": [
+      {"slot":0,"id":40505},
+      {"slot":1,"id":44664},
+      {"slot":2,"id":40507},
+      {"slot":14,"id":40403},
+      {"slot":4,"id":43998},
+      {"slot":8,"id":40282},
+      {"slot":9,"id":40541},
+      {"slot":5,"id":39762},
+      {"slot":6,"id":40331},
+      {"slot":7,"id":40549},
+      {"slot":10,"id":40074},
+      {"slot":11,"id":40474},
+      {"slot":12,"id":40684},
+      {"slot":13,"id":44253},
+      {"slot":15,"id":40388},
+      {"slot":17,"id":40385}
+    ],
+    "talents": "-015305101-5000032500033330532135301311",
+    "talentSpells": [53620,19431,34484,19490,34950,19434,52788,63458,34496,19259,56337,56344,56341,19373,24297,34493,34502,19386,34499,34839,53297,3674,53304,53290,53301],
+    "glyphs": [
+      {"slot":0,"item":42912,"spell":56832,"glyph":366},
+      {"slot":3,"item":45731,"spell":63066,"glyph":691},
+      {"slot":5,"item":45732,"spell":63067,"glyph":692}
+    ],
+    "auras": [61847, 19882],
+    "probes": [
+      {"id":49045,"name":"Arcane Shot"},
+      {"id":49001,"name":"Serpent Sting"},
+      {"id":63672,"name":"Black Arrow"}
+    ]
+  },
+  {
+    "name": "MageArcane",
+    "suites": ["sim/mage TestArcane"],
+    "spec": "mage", "class": 8, "race": 8,
+    "gearSet": "ui/mage/gear_sets/p3_arcane_alliance.gear.json",
+    "items": [
+      {"slot":0,"id":47761},
+      {"slot":1,"id":47144},
+      {"slot":2,"id":47758},
+      {"slot":14,"id":47552},
+      {"slot":4,"id":46993},
+      {"slot":8,"id":47208},
+      {"slot":9,"id":47762},
+      {"slot":5,"id":46973},
+      {"slot":6,"id":47760},
+      {"slot":7,"id":47097},
+      {"slot":10,"id":45495},
+      {"slot":11,"id":47489},
+      {"slot":12,"id":47188},
+      {"slot":13,"id":45518},
+      {"slot":15,"id":46980},
+      {"slot":16,"id":47958},
+      {"slot":17,"id":47922}
+    ],
+    "talents": "23000513310033015032310250532-03-023303001",
+    "talentSpells": [12592,12840,12577,11247,12469,44399,54646,18464,55340,12043,12503,15060,31572,31583,12042,44379,31588,54490,44403,35581,54734,12473,55094,15047,29440,12472],
+    "glyphs": [
+      {"slot":0,"item":44955,"spell":62210,"glyph":651},
+      {"slot":3,"item":42735,"spell":56363,"glyph":312},
+      {"slot":5,"item":42751,"spell":56382,"glyph":328}
+    ],
+    "auras": [42995],
+    "probes": [
+      {"id":42845,"name":"Arcane Missiles","shaped":"Torment the Weak"},
+      {"id":44781,"name":"Arcane Barrage","shaped":"Torment the Weak"},
+      {"id":42873,"name":"Fire Blast"},
+      {"id":42859,"name":"Scorch"}
+    ]
+  },
+  {
+    "name": "MageFire",
+    "suites": ["sim/mage TestFire"],
+    "spec": "mage", "class": 8, "race": 8,
+    "gearSet": "ui/mage/gear_sets/p3_fire_alliance.gear.json",
+    "items": [
+      {"slot":0,"id":47761},
+      {"slot":1,"id":47144},
+      {"slot":2,"id":47758},
+      {"slot":14,"id":47552},
+      {"slot":4,"id":47129},
+      {"slot":8,"id":47208},
+      {"slot":9,"id":47762},
+      {"slot":5,"id":47084},
+      {"slot":6,"id":47760},
+      {"slot":7,"id":47097},
+      {"slot":10,"id":45495},
+      {"slot":11,"id":47237},
+      {"slot":12,"id":47188},
+      {"slot":13,"id":45518},
+      {"slot":15,"id":47517},
+      {"slot":16,"id":47064},
+      {"slot":17,"id":45294}
+    ],
+    "talents": "23000503110003-0055030012303331053120301351",
+    "talentSpells": [12592,12840,12577,12469,44397,54646,55340,12341,12848,12350,11366,12351,12873,29076,31640,11368,11113,12400,34296,11129,31680,31658,31661,44448,44472,44457],
+    "glyphs": [
+      {"slot":0,"item":42739,"spell":56368,"glyph":316},
+      {"slot":3,"item":42751,"spell":56382,"glyph":328},
+      {"slot":5,"item":45737,"spell":63091,"glyph":697}
+    ],
+    "auras": [42995],
+    "probes": [
+      {"id":42833,"name":"Fireball","shaped":"Molten Fury"},
+      {"id":42873,"name":"Fire Blast","shaped":"Molten Fury"},
+      {"id":42859,"name":"Scorch","shaped":"Molten Fury"},
+      {"id":42891,"name":"Pyroblast","shaped":"Molten Fury"}
+    ]
+  },
+  {
+    "name": "MageFrostFire",
+    "suites": ["sim/mage TestFrostFire"],
+    "spec": "mage", "class": 8, "race": 8,
+    "gearSet": "ui/mage/gear_sets/p3_ffb_alliance.gear.json",
+    "items": [
+      {"slot":0,"id":47761},
+      {"slot":1,"id":47144},
+      {"slot":2,"id":47758},
+      {"slot":14,"id":47552},
+      {"slot":4,"id":46993},
+      {"slot":8,"id":47208},
+      {"slot":9,"id":47762},
+      {"slot":5,"id":47084},
+      {"slot":6,"id":47760},
+      {"slot":7,"id":47097},
+      {"slot":10,"id":45495},
+      {"slot":11,"id":47237},
+      {"slot":12,"id":47188},
+      {"slot":13,"id":45518},
+      {"slot":15,"id":47517},
+      {"slot":16,"id":47064},
+      {"slot":17,"id":45294}
+    ],
+    "talents": "23000503110003-0055030012303331053120301351",
+    "talentSpells": [12592,12840,12577,12469,44397,54646,55340,12341,12848,12350,11366,12351,12873,29076,31640,11368,11113,12400,34296,11129,31680,31658,31661,44448,44472,44457],
+    "glyphs": [
+      {"slot":0,"item":44684,"spell":61205,"glyph":591},
+      {"slot":3,"item":42751,"spell":56382,"glyph":328},
+      {"slot":5,"item":45737,"spell":63091,"glyph":697}
+    ],
+    "auras": [42995],
+    "probes": [
+      {"id":42833,"name":"Fireball","shaped":"Molten Fury"},
+      {"id":42873,"name":"Fire Blast","shaped":"Molten Fury"},
+      {"id":42859,"name":"Scorch","shaped":"Molten Fury"}
+    ]
+  },
+  {
+    "name": "MageFrost",
+    "suites": ["sim/mage TestFrost"],
+    "spec": "mage", "class": 8, "race": 8,
+    "gearSet": "ui/mage/gear_sets/p3_frost_alliance.gear.json",
+    "items": [
+      {"slot":0,"id":47761},
+      {"slot":1,"id":47144},
+      {"slot":2,"id":47758},
+      {"slot":14,"id":47552},
+      {"slot":4,"id":47129},
+      {"slot":8,"id":47208},
+      {"slot":9,"id":47762},
+      {"slot":5,"id":46973},
+      {"slot":6,"id":47760},
+      {"slot":7,"id":47097},
+      {"slot":10,"id":45495},
+      {"slot":11,"id":46046},
+      {"slot":12,"id":47188},
+      {"slot":13,"id":45518},
+      {"slot":15,"id":47517},
+      {"slot":16,"id":47958},
+      {"slot":17,"id":45294}
+    ],
+    "talents": "23000503110003--0533030310233100030152231351",
+    "talentSpells": [12592,12840,12577,12469,44397,54646,55340,16766,55094,15047,29440,12953,12472,16758,12519,12983,11958,28593,11426,31678,31683,44545,44549,31687,44561,44571,44572],
+    "glyphs": [
+      {"slot":0,"item":42742,"spell":56370,"glyph":319},
+      {"slot":3,"item":42751,"spell":56382,"glyph":328},
+      {"slot":5,"item":50045,"spell":70937,"glyph":871}
+    ],
+    "auras": [42995],
+    "probes": [
+      {"id":42842,"name":"Frostbolt","shaped":"Torment the Weak"},
+      {"id":42873,"name":"Fire Blast"},
+      {"id":42859,"name":"Scorch"}
+    ]
+  },
+  {
+    "name": "PaladinProtection",
+    "suites": ["sim/paladin/protection TestProtection"],
+    "spec": "protection_paladin", "class": 2, "race": 10,
+    "gearSet": "ui/protection_paladin/gear_sets/p1.gear.json",
+    "items": [
+      {"slot":0,"id":40581},
+      {"slot":1,"id":40387},
+      {"slot":2,"id":40584},
+      {"slot":14,"id":40410},
+      {"slot":4,"id":40579},
+      {"slot":8,"id":39764},
+      {"slot":9,"id":40580},
+      {"slot":5,"id":39759},
+      {"slot":6,"id":40589},
+      {"slot":7,"id":39717},
+      {"slot":10,"id":40718},
+      {"slot":11,"id":40107},
+      {"slot":12,"id":44063},
+      {"slot":13,"id":37220},
+      {"slot":15,"id":40345},
+      {"slot":16,"id":40400},
+      {"slot":17,"id":40707}
+    ],
+    "talents": "-05005135200132311333312321-511302012003",
+    "talentSpells": [20266,20100,64205,20470,20147,53530,20911,20181,31849,20198,31785,20925,31852,20135,31860,53592,31935,53585,53711,53696,53595,20064,20101,25956,20337,26016,20375,26023,31868],
+    "glyphs": [
+      {"slot":0,"item":43869,"spell":56416,"glyph":561},
+      {"slot":3,"item":41100,"spell":54929,"glyph":190},
+      {"slot":5,"item":45745,"spell":63223,"glyph":705},
+      {"slot":1,"item":43367,"spell":57955,"glyph":455},
+      {"slot":2,"item":43368,"spell":57947,"glyph":456}
+    ],
+    "auras": [31801, 25780],
+    "probes": [
+      {"id":48827,"name":"Avenger's Shield"},
+      {"id":48819,"name":"Consecration"},
+      {"id":48806,"name":"Hammer of Wrath"}
+    ]
+  },
+  {
+    "name": "PaladinRetribution",
+    "suites": ["sim/paladin/retribution TestRetribution"],
+    "spec": "retribution_paladin", "class": 2, "race": 10,
+    "gearSet": "ui/retribution_paladin/gear_sets/p1.gear.json",
+    "items": [
+      {"slot":0,"id":44006},
+      {"slot":1,"id":44664},
+      {"slot":2,"id":40578},
+      {"slot":14,"id":40403},
+      {"slot":4,"id":40574},
+      {"slot":8,"id":40330},
+      {"slot":9,"id":40541},
+      {"slot":5,"id":40278},
+      {"slot":6,"id":44011},
+      {"slot":7,"id":40591},
+      {"slot":10,"id":40075},
+      {"slot":11,"id":40474},
+      {"slot":12,"id":42987},
+      {"slot":13,"id":40431},
+      {"slot":15,"id":40384},
+      {"slot":17,"id":42852}
+    ],
+    "talents": "050501-05-05232051203331302133231331",
+    "talentSpells": [20332,20261,31821,20266,20105,25957,20337,20045,20121,20375,26023,35397,31868,20113,31869,20057,53488,20066,31878,31881,53376,53648,35395,53503,53382,53385],
+    "glyphs": [
+      {"slot":0,"item":43869,"spell":56416,"glyph":561},
+      {"slot":3,"item":41092,"spell":54922,"glyph":183},
+      {"slot":5,"item":41099,"spell":54928,"glyph":189},
+      {"slot":1,"item":43368,"spell":57947,"glyph":456},
+      {"slot":2,"item":43367,"spell":57955,"glyph":455},
+      {"slot":4,"item":43365,"spell":57937,"glyph":452}
+    ],
+    "auras": [31801],
+    "probes": [
+      {"id":48801,"name":"Exorcism"},
+      {"id":48806,"name":"Hammer of Wrath"},
+      {"id":48819,"name":"Consecration"}
+    ]
+  },
+  {
+    "name": "PriestShadow",
+    "suites": ["sim/priest/shadow TestShadow"],
+    "spec": "shadow_priest", "class": 5, "race": 5,
+    "gearSet": "ui/shadow_priest/gear_sets/p1.gear.json",
+    "items": [
+      {"slot":0,"id":40562},
+      {"slot":1,"id":44661},
+      {"slot":2,"id":40459},
+      {"slot":14,"id":44005},
+      {"slot":4,"id":44002},
+      {"slot":8,"id":44008},
+      {"slot":9,"id":40454},
+      {"slot":5,"id":40561},
+      {"slot":6,"id":40560},
+      {"slot":7,"id":40558},
+      {"slot":10,"id":40719},
+      {"slot":11,"id":40399},
+      {"slot":12,"id":40255},
+      {"slot":13,"id":40432},
+      {"slot":15,"id":40395},
+      {"slot":16,"id":40273},
+      {"slot":17,"id":39712}
+    ],
+    "talents": "05032031--325023051223010323151301351",
+    "talentSpells": [52803,14771,14767,14777,14751,15336,15338,15310,15317,15328,15316,15407,15311,17323,15332,15286,33215,33371,63627,15473,33225,47569,33193,34914,47582,51167,47585],
+    "glyphs": [
+      {"slot":0,"item":42407,"spell":55689,"glyph":262},
+      {"slot":3,"item":42415,"spell":55687,"glyph":269},
+      {"slot":5,"item":45753,"spell":63229,"glyph":708}
+    ],
+    "auras": [15473, 48161, 48073, 48169],
+    "probes": [
+      {"id":48127,"name":"Mind Blast","shaped":"Twisted Faith"},
+      {"id":48125,"name":"Shadow Word: Pain"},
+      {"id":48300,"name":"Devouring Plague"},
+      {"id":48156,"name":"Mind Flay","shaped":"no direct, periodic or heal effect to probe"}
+    ]
+  },
+  {
+    "name": "PriestSmite",
+    "suites": ["sim/priest/smite TestSmite"],
+    "spec": "smite_priest", "class": 5, "race": 5,
+    "gearSet": "ui/smite_priest/gear_sets/p1.gear.json",
+    "items": [
+      {"slot":0,"id":40562},
+      {"slot":1,"id":44661},
+      {"slot":2,"id":40459},
+      {"slot":14,"id":44005},
+      {"slot":4,"id":40234},
+      {"slot":8,"id":44008},
+      {"slot":9,"id":40454},
+      {"slot":5,"id":40561},
+      {"slot":6,"id":40560},
+      {"slot":7,"id":40558},
+      {"slot":10,"id":40719},
+      {"slot":11,"id":40399},
+      {"slot":12,"id":40255},
+      {"slot":13,"id":40432},
+      {"slot":15,"id":40395},
+      {"slot":16,"id":40273},
+      {"slot":17,"id":39712}
+    ],
+    "talents": "05332031013005023310001-005551002020152-00502",
+    "talentSpells": [52803,14785,14771,14767,14777,14751,33167,14781,18555,33190,34910,45244,10060,47507,15011,27904,18535,19236,27790,15017,20711,15031,33154,15310,15317],
+    "glyphs": [
+      {"slot":0,"item":42416,"spell":55692,"glyph":270},
+      {"slot":3,"item":42401,"spell":55683,"glyph":256},
+      {"slot":5,"item":42414,"spell":55682,"glyph":268}
+    ],
+    "auras": [48161, 48073, 48169],
+    "probes": [
+      {"id":48123,"name":"Smite","shaped":"Glyph of Smite"},
+      {"id":48135,"name":"Holy Fire"},
+      {"id":48127,"name":"Mind Blast"},
+      {"id":48125,"name":"Shadow Word: Pain"}
+    ]
+  },
+  {
+    "name": "RogueCombat",
+    "suites": ["sim/rogue TestCombat"],
+    "spec": "rogue", "class": 4, "race": 1,
+    "gearSet": "ui/rogue/gear_sets/p1_combat.gear.json",
+    "items": [
+      {"slot":0,"id":40499},
+      {"slot":1,"id":44664},
+      {"slot":2,"id":40502},
+      {"slot":14,"id":40403},
+      {"slot":4,"id":40539},
+      {"slot":8,"id":39765},
+      {"slot":9,"id":40541},
+      {"slot":5,"id":40205},
+      {"slot":6,"id":44011},
+      {"slot":7,"id":39701},
+      {"slot":10,"id":40074},
+      {"slot":11,"id":40474},
+      {"slot":12,"id":40684},
+      {"slot":13,"id":44253},
+      {"slot":15,"id":40383},
+      {"slot":16,"id":39714},
+      {"slot":17,"id":40385}
+    ],
+    "talents": "00532000523-0252051050035010223100501251",
+    "talentSpells": [14142,14161,51633,14137,16514,14115,13863,13852,14166,13845,13742,13807,13789,61331,13877,30920,31126,61329,13750,35553,32601,58413,51689,51690],
+    "glyphs": [
+      {"slot":0,"item":45762,"spell":63252,"glyph":715},
+      {"slot":3,"item":45767,"spell":63256,"glyph":732},
+      {"slot":5,"item":42969,"spell":56801,"glyph":406}
+    ],
+    "auras": [],
+    "probes": [
+      {"id":57965,"name":"Instant Poison IX"},
+      {"id":57975,"name":"Wound Poison VII"}
+    ]
+  },
+  {
+    "name": "RogueAssassination",
+    "suites": ["sim/rogue TestAssassination"],
+    "spec": "rogue", "class": 4, "race": 1,
+    "gearSet": "ui/rogue/gear_sets/p1_assassination.gear.json",
+    "items": [
+      {"slot":0,"id":40499},
+      {"slot":1,"id":44664},
+      {"slot":2,"id":40502},
+      {"slot":14,"id":40403},
+      {"slot":4,"id":40539},
+      {"slot":8,"id":39765},
+      {"slot":9,"id":40496},
+      {"slot":5,"id":40260},
+      {"slot":6,"id":40500},
+      {"slot":7,"id":39701},
+      {"slot":10,"id":40074},
+      {"slot":11,"id":40474},
+      {"slot":12,"id":40684},
+      {"slot":13,"id":44253},
+      {"slot":15,"id":39714},
+      {"slot":16,"id":40386},
+      {"slot":17,"id":40385}
+    ],
+    "talents": "005303005352100520103331051-005005003-502",
+    "talentSpells": [14142,14161,13866,14137,16515,14117,31209,14177,14195,14159,58426,51636,31236,58410,1329,51669,51662,13852,13845,13805,58425,14072],
+    "glyphs": [
+      {"slot":0,"item":45768,"spell":63268,"glyph":733},
+      {"slot":3,"item":45767,"spell":63256,"glyph":732},
+      {"slot":5,"item":45761,"spell":63249,"glyph":714}
+    ],
+    "auras": [],
+    "probes": [
+      {"id":57965,"name":"Instant Poison IX"},
+      {"id":57975,"name":"Wound Poison VII"},
+      {"id":48676,"name":"Garrote"}
+    ]
+  },
+  {
+    "name": "RogueSubtlety",
+    "suites": ["sim/rogue TestSubtlety"],
+    "spec": "rogue", "class": 4, "race": 10,
+    "gearSet": "ui/rogue/gear_sets/p2_hemosub.gear.json",
+    "items": [
+      {"slot":0,"id":46125},
+      {"slot":1,"id":45517},
+      {"slot":2,"id":45245},
+      {"slot":14,"id":45461},
+      {"slot":4,"id":45473},
+      {"slot":8,"id":45611},
+      {"slot":9,"id":46124},
+      {"slot":5,"id":46095},
+      {"slot":6,"id":45536},
+      {"slot":7,"id":45564},
+      {"slot":10,"id":45608},
+      {"slot":11,"id":46048},
+      {"slot":12,"id":45609},
+      {"slot":13,"id":45931},
+      {"slot":15,"id":45132},
+      {"slot":16,"id":45484},
+      {"slot":17,"id":45296}
+    ],
+    "talents": "30532000235--512003203032012135011503113",
+    "talentSpells": [14164,14142,14161,51633,14132,16515,14117,58425,13958,14072,14063,14066,14173,13980,14080,14185,14083,16511,31223,30906,14183,31228,31220,51701,36554,58414,51710],
+    "glyphs": [
+      {"slot":0,"item":42967,"spell":56807,"glyph":404},
+      {"slot":3,"item":42961,"spell":56802,"glyph":398},
+      {"slot":5,"item":42969,"spell":56801,"glyph":406}
+    ],
+    "auras": [],
+    "probes": [
+      {"id":57965,"name":"Instant Poison IX"},
+      {"id":57975,"name":"Wound Poison VII"},
+      {"id":48676,"name":"Garrote","shaped":"Dirty Deeds"}
+    ]
+  },
+  {
+    "name": "ShamanElemental",
+    "suites": ["sim/shaman/elemental TestElemental"],
+    "spec": "elemental_shaman", "class": 7, "race": 8,
+    "gearSet": "ui/elemental_shaman/gear_sets/p1.gear.json",
+    "items": [
+      {"slot":0,"id":40516},
+      {"slot":1,"id":44661},
+      {"slot":2,"id":40286},
+      {"slot":14,"id":44005},
+      {"slot":4,"id":40514},
+      {"slot":8,"id":40324},
+      {"slot":9,"id":40302},
+      {"slot":5,"id":40301},
+      {"slot":6,"id":40560},
+      {"slot":7,"id":40519},
+      {"slot":10,"id":37694},
+      {"slot":11,"id":40399},
+      {"slot":12,"id":40432},
+      {"slot":13,"id":40255},
+      {"slot":15,"id":40395},
+      {"slot":16,"id":40401},
+      {"slot":17,"id":40267}
+    ],
+    "talents": "0532001523212351322301351-005052031",
+    "talentSpells": [16108,16161,28997,16164,60188,16544,29065,29000,16041,30665,30674,16582,16166,51486,63372,51470,30679,30706,51482,62101,51490,17489,16305,16287,29080,43338],
+    "glyphs": [
+      {"slot":0,"item":41524,"spell":55454,"glyph":214},
+      {"slot":3,"item":45776,"spell":63280,"glyph":752},
+      {"slot":5,"item":41536,"spell":55453,"glyph":226}
+    ],
+    "auras": [],
+    "imbue": 58790,
+    "probes": [
+      {"id":49238,"name":"Lightning Bolt"},
+      {"id":49271,"name":"Chain Lightning"},
+      {"id":60043,"name":"Lava Burst"},
+      {"id":49231,"name":"Earth Shock"}
+    ]
+  },
+  {
+    "name": "ShamanEnhancement",
+    "suites": ["sim/shaman/enhancement TestEnhancement"],
+    "spec": "enhancement_shaman", "class": 7, "race": 8,
+    "gearSet": "ui/enhancement_shaman/gear_sets/p1.gear.json",
+    "items": [
+      {"slot":0,"id":40543},
+      {"slot":1,"id":44661},
+      {"slot":2,"id":40524},
+      {"slot":14,"id":40403},
+      {"slot":4,"id":40523},
+      {"slot":8,"id":40282},
+      {"slot":9,"id":40520},
+      {"slot":5,"id":40275},
+      {"slot":6,"id":40522},
+      {"slot":7,"id":40367},
+      {"slot":10,"id":40474},
+      {"slot":11,"id":40074},
+      {"slot":12,"id":40684},
+      {"slot":13,"id":37390},
+      {"slot":15,"id":39763},
+      {"slot":16,"id":39468},
+      {"slot":17,"id":40322}
+    ],
+    "talents": "053030152-30405003105021333031131031051",
+    "talentSpells": [16108,16161,29180,16164,60188,16544,52456,17488,16305,29080,43338,16284,29193,16268,51885,30809,29086,30798,30819,17364,51527,60103,30814,30823,51532,51533],
+    "glyphs": [
+      {"slot":0,"item":41530,"spell":55450,"glyph":218},
+      {"slot":3,"item":41532,"spell":55451,"glyph":220},
+      {"slot":5,"item":45771,"spell":63271,"glyph":736}
+    ],
+    "auras": [],
+    "probes": [
+      {"id":49238,"name":"Lightning Bolt"},
+      {"id":49231,"name":"Earth Shock"}
+    ]
+  },
+  {
+    "name": "WarlockAffliction",
+    "suites": ["sim/warlock TestAffliction"],
+    "spec": "warlock", "class": 9, "race": 2,
+    "gearSet": "ui/warlock/gear_sets/p4_affliction.gear.json",
+    "items": [
+      {"slot":0,"id":51231},
+      {"slot":1,"id":50724},
+      {"slot":2,"id":51234},
+      {"slot":14,"id":50628},
+      {"slot":4,"id":51233},
+      {"slot":8,"id":50651},
+      {"slot":9,"id":51230},
+      {"slot":5,"id":50613},
+      {"slot":6,"id":50694},
+      {"slot":7,"id":50699},
+      {"slot":10,"id":50398},
+      {"slot":11,"id":50664},
+      {"slot":12,"id":50365},
+      {"slot":13,"id":50348},
+      {"slot":15,"id":50732},
+      {"slot":16,"id":50719},
+      {"slot":17,"id":50684}
+    ],
+    "talents": "2350002030023510253500331151--550000051",
+    "talentSpells": [18829,18176,17814,17805,17785,18095,32383,32394,63108,54038,18275,47197,30064,32484,47200,30108,58435,47205,48181,17803,17792,59741,18135],
+    "glyphs": [
+      {"slot":0,"item":50077,"spell":70947,"glyph":911},
+      {"slot":3,"item":45785,"spell":63320,"glyph":760},
+      {"slot":5,"item":45779,"spell":63302,"glyph":755}
+    ],
+    "auras": [],
+    "probes": [
+      {"id":47809,"name":"Shadow Bolt","shaped":"Death's Embrace"},
+      {"id":47813,"name":"Corruption","shaped":"Death's Embrace"},
+      {"id":47811,"name":"Immolate"}
+    ]
+  },
+  {
+    "name": "WarlockDemonology",
+    "suites": ["sim/warlock TestDemonology"],
+    "spec": "warlock", "class": 9, "race": 2,
+    "gearSet": "ui/warlock/gear_sets/p4_demo.gear.json",
+    "items": [
+      {"slot":0,"id":51231},
+      {"slot":1,"id":50658},
+      {"slot":2,"id":51234},
+      {"slot":14,"id":50668},
+      {"slot":4,"id":50717},
+      {"slot":8,"id":50686},
+      {"slot":9,"id":51230},
+      {"slot":5,"id":50702},
+      {"slot":6,"id":51232},
+      {"slot":7,"id":50699},
+      {"slot":10,"id":50398},
+      {"slot":11,"id":50636},
+      {"slot":12,"id":50365},
+      {"slot":13,"id":50348},
+      {"slot":15,"id":50732},
+      {"slot":16,"id":50635},
+      {"slot":17,"id":50631}
+    ],
+    "talents": "-203203301035012530135201351-550000052",
+    "talentSpells": [18693,18699,47231,18707,18744,19028,30145,18773,30326,18768,23825,47247,47193,35693,30248,63158,30146,63123,47240,59672,17803,17792,59741,18136],
+    "glyphs": [
+      {"slot":0,"item":50077,"spell":70947,"glyph":911},
+      {"slot":3,"item":45785,"spell":63320,"glyph":760},
+      {"slot":5,"item":42459,"spell":56246,"glyph":278}
+    ],
+    "auras": [],
+    "probes": [
+      {"id":47809,"name":"Shadow Bolt"},
+      {"id":47813,"name":"Corruption"},
+      {"id":47811,"name":"Immolate"}
+    ]
+  },
+  {
+    "name": "WarlockDestruction",
+    "suites": ["sim/warlock TestDestruction"],
+    "spec": "warlock", "class": 9, "race": 2,
+    "gearSet": "ui/warlock/gear_sets/p4_destro.gear.json",
+    "items": [
+      {"slot":0,"id":51231},
+      {"slot":1,"id":50658},
+      {"slot":2,"id":51234},
+      {"slot":14,"id":50628},
+      {"slot":4,"id":51233},
+      {"slot":8,"id":50651},
+      {"slot":9,"id":51230},
+      {"slot":5,"id":50613},
+      {"slot":6,"id":50694},
+      {"slot":7,"id":50699},
+      {"slot":10,"id":50664},
+      {"slot":11,"id":50398},
+      {"slot":12,"id":50365},
+      {"slot":13,"id":50348},
+      {"slot":15,"id":50732},
+      {"slot":16,"id":50719},
+      {"slot":17,"id":50684}
+    ],
+    "talents": "-03310030003-05203205210331051335230351",
+    "talentSpells": [18696,18699,47230,18744,30145,17792,18120,17780,18127,59741,18136,17917,34939,17834,18130,17958,17962,30296,63245,30292,54118,47260,47223,47270,50796],
+    "glyphs": [
+      {"slot":0,"item":42454,"spell":56235,"glyph":273},
+      {"slot":3,"item":45785,"spell":63320,"glyph":760},
+      {"slot":5,"item":42453,"spell":56242,"glyph":272}
+    ],
+    "auras": [],
+    "probes": [
+      {"id":47809,"name":"Shadow Bolt"},
+      {"id":47813,"name":"Corruption"},
+      {"id":47811,"name":"Immolate"},
+      {"id":59172,"name":"Chaos Bolt","shaped":"Fire and Brimstone"}
+    ]
+  },
+  {
+    "name": "WarriorFury",
+    "suites": ["sim/warrior/dps TestFury"],
+    "spec": "warrior", "class": 1, "race": 2,
+    "gearSet": "ui/warrior/gear_sets/p1_fury.gear.json",
+    "items": [
+      {"slot":0,"id":44006},
+      {"slot":1,"id":44664},
+      {"slot":2,"id":40530},
+      {"slot":14,"id":40403},
+      {"slot":4,"id":40539},
+      {"slot":8,"id":39765},
+      {"slot":9,"id":40541},
+      {"slot":5,"id":40205},
+      {"slot":6,"id":40529},
+      {"slot":7,"id":40591},
+      {"slot":10,"id":43993},
+      {"slot":11,"id":40717},
+      {"slot":12,"id":42987},
+      {"slot":13,"id":40256},
+      {"slot":15,"id":40384},
+      {"slot":16,"id":40384},
+      {"slot":17,"id":40385}
+    ],
+    "talents": "302023102331-305053000520310053120500351",
+    "talentSpells": [12664,12658,12959,12677,12290,16494,12867,12712,56636,61222,12856,13002,20496,23588,20503,29592,12292,12974,56924,23881,29776,29763,46915,56932,46917],
+    "glyphs": [
+      {"slot":0,"item":43432,"spell":58370,"glyph":509},
+      {"slot":3,"item":43418,"spell":58357,"glyph":496},
+      {"slot":5,"item":43423,"spell":58385,"glyph":500}
+    ],
+    "auras": [2458],
+    "probes": [
+      {"id":47502,"name":"Thunder Clap"},
+      {"id":57755,"name":"Heroic Throw"}
+    ]
+  },
+  {
+    "name": "WarriorArms",
+    "suites": ["sim/warrior/dps TestArms"],
+    "spec": "warrior", "class": 1, "race": 2,
+    "gearSet": "ui/warrior/gear_sets/p1_arms.gear.json",
+    "items": [
+      {"slot":0,"id":40528},
+      {"slot":1,"id":44664},
+      {"slot":2,"id":40530},
+      {"slot":14,"id":40403},
+      {"slot":4,"id":40539},
+      {"slot":8,"id":40330},
+      {"slot":9,"id":40541},
+      {"slot":5,"id":40205},
+      {"slot":6,"id":40318},
+      {"slot":7,"id":40591},
+      {"slot":10,"id":43993},
+      {"slot":11,"id":40474},
+      {"slot":12,"id":42987},
+      {"slot":13,"id":40256},
+      {"slot":15,"id":40384},
+      {"slot":17,"id":40385}
+    ],
+    "talents": "3022032023335100102012213231251-305-2033",
+    "talentSpells": [12664,12658,12697,12677,12963,16494,12867,12712,56638,12785,12328,20504,46855,12294,46866,12330,64976,35449,46860,29725,29623,29859,56614,46924,61222,12856,12818,12666,50687],
+    "glyphs": [
+      {"slot":0,"item":43423,"spell":58385,"glyph":500},
+      {"slot":3,"item":43421,"spell":58368,"glyph":489},
+      {"slot":5,"item":43416,"spell":58367,"glyph":494}
+    ],
+    "auras": [2457],
+    "probes": [
+      {"id":47502,"name":"Thunder Clap"},
+      {"id":57755,"name":"Heroic Throw"}
+    ]
+  },
+  {
+    "name": "WarriorProtectionWarrior",
+    "suites": ["sim/warrior/protection TestProtectionWarrior"],
+    "spec": "protection_warrior", "class": 1, "race": 2,
+    "gearSet": "ui/protection_warrior/gear_sets/p1_balanced.gear.json",
+    "items": [
+      {"slot":0,"id":40546},
+      {"slot":1,"id":40387},
+      {"slot":2,"id":39704},
+      {"slot":14,"id":40722},
+      {"slot":4,"id":44000},
+      {"slot":8,"id":39764},
+      {"slot":9,"id":40545},
+      {"slot":5,"id":39759},
+      {"slot":6,"id":40589},
+      {"slot":7,"id":39717},
+      {"slot":10,"id":40370},
+      {"slot":11,"id":40718},
+      {"slot":12,"id":40257},
+      {"slot":13,"id":44063},
+      {"slot":15,"id":40402},
+      {"slot":16,"id":40400},
+      {"slot":17,"id":41168}
+    ],
+    "talents": "2500030023-302-053351225000012521030113321",
+    "talentSpells": [12663,16466,12677,16494,12867,61222,12852,12727,12666,50687,12753,12975,12799,29599,12764,12809,12958,16542,29594,50720,29144,57499,20243,47296,46953,58874,46968],
+    "glyphs": [
+      {"slot":0,"item":43425,"spell":58375,"glyph":502},
+      {"slot":3,"item":43415,"spell":58388,"glyph":493},
+      {"slot":5,"item":45793,"spell":63326,"glyph":764}
+    ],
+    "auras": [71],
+    "probes": [
+      {"id":47502,"name":"Thunder Clap"},
+      {"id":57823,"name":"Revenge"},
+      {"id":57755,"name":"Heroic Throw"}
+    ]
+  }
+]}
