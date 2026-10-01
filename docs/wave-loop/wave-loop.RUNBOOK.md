@@ -77,7 +77,7 @@ loop" re-affirms them.
    4. Golden-changing WI:
       - `dock.sh delta`. The WI was built on the wave base, so judge its delta on top of the earlier merges
         and against its report.
-      - `dock.sh promote` only its suites. Diff stats, casts and weights.
+      - `dock.sh promote` only its suites. Diff stats, abilities and weights.
       - Commit "Promote goldens for <WI>".
    5. If APLs, encounters or item data changed, regenerate `db.json` once per wave, here.
    6. Commit its mod-sim-validation changes, if any.
@@ -117,7 +117,7 @@ loop" re-affirms them.
 - Build and test only through `tools/acore/dock.sh`.
 - Never `make update-tests`, and never promote.
 - Golden-changing WIs report `dock.sh delta` per suite, with the expected effect and a diff of stats,
-  casts and weights.
+  abilities and weights.
 - Golden-neutral WIs report the suites they ran as unchanged.
 - Generators: get `sim/core` compiling first (hand-edit the generated file), then regenerate.
 - Send long output (test runs, `delta`, logs) to a file in `tmp/` and read it with grep or tail: whatever
@@ -168,7 +168,7 @@ Each item is a pipeline:
 
 ```
 {status, summary, filesChanged, verification{commands, passed, tail},
-goldens{changed, suites[{dir, dpsDelta, expected, explanation}]},
+goldens{changed, suites[{dir, dpsDelta, abilityDelta?, expected, explanation}]},
 contractChangeRequests, serverActions, followUps, findings{bugs, minor, cleanup}}
 ```
 

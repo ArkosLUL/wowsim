@@ -39,6 +39,7 @@ const REPORT = {
             properties: {
               dir: { type: 'string' },
               dpsDelta: { type: 'string' },
+              abilityDelta: { type: 'string' },
               expected: { type: 'string' },
               explanation: { type: 'string' },
             },
@@ -74,7 +75,7 @@ function brief(item, stage) {
     `Rules: the "Rules for WI agents" section of ${item.worktree}/docs/wave-loop/wave-loop.RUNBOOK.md. Follow it exactly.`,
     `Owned paths: ${item.ownedPaths.join(', ')}.`,
     item.goldenChanging
-      ? `This item changes goldens${item.fullSuite ? ' and runs all 37 suites' : ''}: report each suite's dock.sh delta with the expected effect. Never promote.`
+      ? `This item changes goldens${item.fullSuite ? ' and runs all 37 suites' : ''}: report each suite's dock.sh delta with the expected effect, its moved abilities in abilityDelta. Never promote.`
       : 'This item must leave every golden unchanged.',
     `Verification: ${item.verify.join(' ; ')}`,
     server
