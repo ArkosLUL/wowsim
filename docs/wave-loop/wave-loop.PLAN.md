@@ -124,11 +124,12 @@ M to P are the test-enrichment effort, after L lands (the user's call, 2026-10-0
 
 ## Current wave
 
-- Wave: M, running. L landed as `23e9e9e79`, prod rebuilt from it.
+- Wave: M, landed (master fast-forwarded to this close-out); L landed as `23e9e9e79`, prod rebuilt from it.
+  Next: N (TE-GUARD, TE-DAMAGE).
 - Carried (the user's call, 2026-10-01): rerun every DPS preset on the final HEAD, since BIS-caps-race changes
   every racial search and `ff0920a96` the 16 builds `mage_*`, `rogue_*`, `warlock_*`, `warrior_arms`,
   `warrior_fury`, `protection_warrior`, `shadow_priest`, `smite_priest`, `dk_blood`, `elemental_shaman`.
-- Base SHA: `23e9e9e79`; the WIs branch from this onboarding commit.
+- M's base SHA: `33da5ca34`, the onboarding commit its WIs branched from. RunId `wf_8ab862a5-d37`.
 - Workflow runIds: L's `wf_34052b28-d62`, `wf_1a26dbdb-51c`, `wf_ac1129b6-8d7`, `wf_a59f095c-4b7`, `wf_f5be2bcf-e23`,
   `wf_42fc0b7c-42a`; args `wave<X>*-args.json` in `G:\DevStuff\GitHub\.wave-loop`, transcripts in
   `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\<runId>`.
@@ -161,6 +162,7 @@ Reckoning that way), but J isn't DPS: see below.
 | J2 | 8725.6, +253 / +297 | 10728.7, +674 / +799 | 5064.5, +40 / +47 | 12964.3, +213 / +231 | -96051.1, +3590 / +3707 | -1642.4, +740 / +804 |
 | K | 8725.1, +237 / +284 | 10730.8, +675 / +807 | 5064.5, +40 / +47 | 12963.8, +186 / +212 | -17821.9, +4813 / +4831 | -1056.8, +850 / +894 |
 | L | 8725.1, +224 / +284 | 10730.8, +734 / +777 | 5066.6, +41 / +48 | 12963.8, +175 / +232 | -17821.9, +4836 / +4799 | -1056.8, +913 / +900 |
+| M | 8725.1, +224 / +284 | 10730.8, +734 / +777 | 5066.6, +41 / +48 | 12963.8, +175 / +232 | -17821.9, +4836 / +4799 | -1056.8, +913 / +900 |
 
 Quick / Normal. Ret P4 ran at Quick only in wave D, after the glyph fix; its wave C numbers
 (12821.9, +54 / +73) came from a seed that wore the glyph. The two tanks arrive with
@@ -210,6 +212,7 @@ In L the DPS picks meet their hit and expertise floors and haste ceilings (BIS-c
 `dps_preset` rose 0.16% (11290.9) with PAR-FU-1's Fire goldens; the gains moved within earlier rows' range, the
 tanks' with BIS-relic pricing every libram and idol. Idle, Ret's Normal run took 40% longer than K's (64.9 s),
 the rest within 8% or faster.
+In M nothing moved: TE-ABILITY and TE-REPLAY change tests only.
 
 ## Sim throughput
 
@@ -234,6 +237,7 @@ From G the benches run their suites' default players with rotations, at 1 and 10
 | J2 | 1.043 / 77.5 | 0.561 / 28.7 | 0.759 / 44.3 | 0.493 / 16.9 | 5.300 / 272.8 |
 | K | 1.146 / 78.7 | 0.527 / 29.7 | 0.729 / 47.1 | 0.542 / 16.9 | 5.328 / 275.6 |
 | L | 1.069 / 77.6 | 0.559 / 29.7 | 0.782 / 45.5 | 0.555 / 16.9 | 5.460 / 268.1 |
+| M | 1.082 / 78.9 | 0.528 / 29.4 | 0.808 / 45.9 | 0.511 / 17.4 | 5.348 / 267.7 |
 
 H2 ran with the live worldserver using half a core, which moved whole runs by up to 2×
 and cost a few percent here (Ret, which H2 barely touched, +4%). An interleaved A/B against the base
@@ -289,7 +293,8 @@ No A/B.
 
 L's row ran idle (the worldserver, authserver and database stopped): within 4% of K's at 100 iterations, 7% at
 one. The `tools/perf` full baseline wasn't retaken: K's raid25 scenarios push it past 2 h (raid DPS Quick alone
-39 min at one proc), so it was cut off; its partial report sits in [int]'s `tmp/perf/bench-20261001-072308`.
+39 min at one proc), so it was cut off; its partial report sits in [int]'s `tmp/perf/bench-20261001-072308`. M's row ran idle the same way: within 3% of L's at 100
+iterations, 8% at one.
 
 E to F2 ran the old requests: one iteration, and no rotation for Ret, Hunter and Elemental.
 
@@ -415,6 +420,10 @@ crashed before F2, so its column starts there.
 | BiS presets at Normal | | `f67242686` | 140 runs in 4.7 h on `fc3b96070`, then the 15 arcane, elemental and shadow runs on `6c79a6a62`; 21 runs warn a cap 1 to 23 short |
 | wave L cross-review 2 | | `ff0920a96` | 2 bugs: wands and physical ranged weapons took the relic path; the unreachable-cap fallback replaced seeds that met every floor |
 | BIS-caps-race | merged | `202558043` | goldens unchanged. One gear search per racial finalist, its floors priced on its own traits. P2 Normal batch: Mighty Troll 12065, Stormweaver Troll 5853, every floor met (were Orc 10422, Draenei 5219); idle job wall 76 → 120 s and 28 → 48 s |
+
+| TE-ABILITY | merged | `ea9f1a150` | 37 suites' ability blocks promoted in `5b61e0488`, no metric moved; contract changes `c4c568cde` |
+| TE-REPLAY | merged | `a4515aecb` | goldens unchanged; fixture recaptured, simval 508 → 1060 checks; module `c5d0adc`. The unarmed warrior's white swings run 2 over the sim's, record dropped (follow-up) |
+| wave M cross-review | | `89d8dde7d`, `345c883aa` | 2 bugs: white swings didn't count glances as landed hits (Fury's main hand read 98% crits); dot ticks that aren't hits left their damage out of the block (Smite 14%), now an `amount` field. Also the replay's attack-type check, 1078 checks |
 
 Later WIs are added as their wave starts.
 

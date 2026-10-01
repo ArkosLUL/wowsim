@@ -48,7 +48,7 @@ Only one item per wave edits the e2e package (a single Go package).
 
 ## Work items
 
-### TE-ABILITY (M; goldens, full suite)
+### TE-ABILITY (M, done; goldens, full suite)
 
 - `proto/test.proto`: replace `CastsTestResult`/`casts_results` with
   `map<string, AbilitiesTestResult> ability_results = 5` keyed by test name; reserve 4.
@@ -71,7 +71,7 @@ Only one item per wave edits the e2e package (a single Go package).
 - **Owns:** `proto/test.proto`, `test_suite.go`, `test_generators.go`, `dock.sh` golden commands, `testing.md`
   Goldens.
 
-### TE-REPLAY (M; golden-neutral; stages: code, live)
+### TE-REPLAY (M, done; golden-neutral; stages: code, live)
 
 Code:
 - `check.go`:
