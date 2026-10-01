@@ -23,7 +23,7 @@ computed chance, |z| ≤ 5 on a rolled rate, ±0.1% on a multiplier. It exits no
 | `-fixture` | also copy the records to `sim/core/testdata/simval/` |
 | `-v` | print passing checks too |
 
-Commands covered: `melee`, `taken`, `yellow`, `spell`, `armor`, `info`, `procs`.
+Commands covered: `melee`, `taken`, `yellow`, `spell`, `armor`, `info`, `procs`; `damage` has its own test ([Damage probe](#damage-probe)).
 
 `yellow` and `spell` follow the server's own rules:
 - The hit table's attack type comes from the spell's `dmgClass` (ranged, else main hand), so Judgement of
@@ -57,6 +57,36 @@ committed replay fixture exercises none of them. `testdata/procs.jsonl` is a sep
 does: Judgement of Wisdom (15 PPM), Hand of Justice (1 PPM with `REDUCE_PROC_60`), probed for
 Frostbolt, Heroic Strike and Steady Shot, which pick a different PPM basis each. Recapture it with
 `e2e/run.sh TestSimvalProcPPM` while streaming `simval.jsonl` out of the worldserver.
+
+## Damage probe
+
+`TestDamageRecords` replays `sim/core/testdata/simval/damage.jsonl`, a capture of mod-sim-validation's
+`TestSimvalDamage` (`.simval damage`), on every `go test`; it skips without the file.
+`TestDamageFixtureHasEveryProbe` fails when a probe's bare or talented record is missing and not in
+`droppedDamageRecords`. `CheckRecord` ignores `damage` records, so a `simval.jsonl` recapture holding them still
+passes; move them to `damage.jsonl`. Recapture it like `simval.jsonl`
+([testing](../../docs/guide/testing.md#against-the-server)), running only `run.sh TestSimvalDamage` and keeping
+its `damage` lines.
+
+Per unshaped record (`damage.go`):
+- The character is the record's class and race. Talent rank and glyph auras become talents and glyphs (from
+  `ui/core/talents/trees` and `db.json`); other auras the sim registers by id (a presence, a stance) are put on.
+  The test's power auras are skipped: the record's `spellPower` and `attackPower` are set as the sim's stats,
+  attack power first (Sheath of Light adds spell power off it).
+- The spec is the class's `spec`, else an `otherSpecs` entry that registers the spell (`basestats.go`), retried
+  with the teaching talent for `talentTaughtSpells` (Black Arrow).
+- The target takes the dummy's level, creature type and armor.
+- Each probed effect matches the sim's `Direct` or dot `Tick` by effect index and spell id (its own or
+  `FromSpellID`). The sim's own code runs with that base pinned to the record's: `ApplyEffects` with a forced
+  hit, no crit and no resists, read at calculation through the target's damage taken hook; a dot is applied,
+  then one snapshot tick computed.
+- Checks: declared base (skipped when it comes from another spell, e.g. Death Coil's), SP coefficient (±5e-4),
+  `taken` at both roll ends, and the crit multiplier where both sides crit (server: a crit-capable spell, or a
+  tick unless `CANT_CRIT`; sim: dots only with ticks that crit). The sim may sit 0.1% or 1 point below the
+  server, and above it max(0.1%, 1 + bonuses × multiplier): the server truncates each SP or AP bonus before the
+  multipliers. A failing amount lists sim-only auras and server auras the sim lacks.
+
+Pets and non-80 characters fail. Shaped records give no checks.
 
 ## chronicle
 
