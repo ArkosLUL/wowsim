@@ -53,7 +53,7 @@ Only one item per wave edits the e2e package (a single Go package).
 - `proto/test.proto`: replace `CastsTestResult`/`casts_results` with
   `map<string, AbilitiesTestResult> ability_results = 5` keyed by test name; reserve 4.
   `AbilitiesTestResult {map<string, AbilityTestResult> entries}`;
-  `AbilityTestResult {casts, hits, crit_pct, amount_per_hit, uptime_s}`, per iteration, summed over `Targets`.
+  `AbilityTestResult {casts, hits, crit_pct, amount_per_hit, uptime_s, amount}`, per iteration, summed over `Targets`.
 - Keys: `<unit>|action|<id>` and `<unit>|aura|<id>`. `<id>` is `core.ProtoToActionID(m.Id).String()`;
   `<unit>` is `player`, `pet:<name>` or `target<i>` (`EncounterMetrics.Targets[i].Auras`). Same-named pets and
   repeated aura ids are summed. Only actions with casts or hits, auras with uptime.

@@ -65,7 +65,7 @@ G = changes goldens. FS = runs all 37 suites.
 | K | PAR-P8 (G, FS) · BIS-tank-boss · BIS-presets | ✔ |
 | L | PAR-FU-1 (G) · PAR-FU-2 (G) · UI-FIX3 · BIS-relic · BIS-oh-unique · BIS-caps · BIS-caps-hit · BIS-caps-race | ✔ |
 | M | TE-ABILITY (G, FS) · TE-REPLAY (live) | ✔ |
-| N | TE-GUARD (G) · TE-DAMAGE (C++, live) | ✔ |
+| N | TE-GUARD (G) · TE-DAMAGE (C++, live) · PAR-FU-3 (G, live) · PERF-FU | ✔ |
 | O | TE-TALENTS (G) · TE-GOLDCHAR (C++, live) | ✔ |
 | P | TE-SWEEP (live) | ✔ |
 
@@ -109,6 +109,7 @@ day), makes DPS picks reach their hit and expertise caps and stop at a haste cap
 regenerate after it. Two fixes followed it: BIS-caps-hit (hit talents on spells) and BIS-caps-race (each racial
 finalist's gear meets the caps on its own traits).
 M to P are the test-enrichment effort, after L lands (the user's call, 2026-10-01): richer goldens and live e2e.
+PAR-FU-3 and PERF-FU join N, the user's call too (the same day): wave L's and M's follow-ups.
 
 **Where the specs are:**
 
@@ -124,13 +125,12 @@ M to P are the test-enrichment effort, after L lands (the user's call, 2026-10-0
 
 ## Current wave
 
-- Wave: M, landed (master fast-forwarded to this close-out); L landed as `23e9e9e79`, prod rebuilt from it.
-  Next: N (TE-GUARD, TE-DAMAGE).
+- Wave: N, running. M landed as `545d92227`, L as `23e9e9e79` (prod rebuilt from it).
 - Carried (the user's call, 2026-10-01): rerun every DPS preset on the final HEAD, since BIS-caps-race changes
   every racial search and `ff0920a96` the 16 builds `mage_*`, `rogue_*`, `warlock_*`, `warrior_arms`,
   `warrior_fury`, `protection_warrior`, `shadow_priest`, `smite_priest`, `dk_blood`, `elemental_shaman`.
-- M's base SHA: `33da5ca34`, the onboarding commit its WIs branched from. RunId `wf_8ab862a5-d37`.
-- Workflow runIds: L's `wf_34052b28-d62`, `wf_1a26dbdb-51c`, `wf_ac1129b6-8d7`, `wf_a59f095c-4b7`, `wf_f5be2bcf-e23`,
+- N's base SHA: the commit adding PAR-FU-3's and PERF-FU's specs. RunId pending.
+- Workflow runIds: M's `wf_8ab862a5-d37` (base `33da5ca34`); L's `wf_34052b28-d62`, `wf_1a26dbdb-51c`, `wf_ac1129b6-8d7`, `wf_a59f095c-4b7`, `wf_f5be2bcf-e23`,
   `wf_42fc0b7c-42a`; args `wave<X>*-args.json` in `G:\DevStuff\GitHub\.wave-loop`, transcripts in
   `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\<runId>`.
 - J2's full-roster batch ran 2026-09-28 in 52 min at Quick, output in

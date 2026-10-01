@@ -216,6 +216,30 @@ Every roll also looks up the map, and reseeding hashes each label again.
   16-50× the option table estimated). 37 goldens byte-identical, simval 508/508, `go vet` and `gofmt` clean.
   `BenchmarkSimulate` (`IsTest` off, so untouched by the change) held within noise, interleaved.
 
+### PERF-FU: the racial search and the harness's length (wave N)
+
+Two follow-ups from wave L, file-disjoint.
+
+**Per-race search.** BIS-caps-race runs one gear search per racial finalist (`searchRaces`, `racial.go`;
+[as built](../bis-optimizer/bis-optimizer.PLAN.md#as-built-racial-traits-under-the-caps)). Idle P2 Normal jobs
+went from 28 to 48 s for Stormweaver (elemental, 6 finalists, 34% more sims) and from 76 to 120 s for Mighty
+(arms), whose base may have read fast (119 s under load on `6c79a6a62`). Profile it and cut what doesn't change
+picks: race-independent work each search repeats, and `racialBounds`, which widens every weapon's prune bounds
+by the most a specialization can win or lose, so pruning under an Orc, Human or Dwarf expertise floor is loose.
+Picks stay identical; where tighter pruning moves the search's path, every floor is still met and J holds within
+noise, reported per slow-suite line.
+
+**Full baseline.** The harness's full run takes over 2 h since the raid25 scenarios joined (raid DPS Quick 39 min
+at one proc; [README](../../tools/perf/README.md#full-baseline)). Bring it to about an hour, keeping the widest
+points the comparison reads, e.g. fewer procs for the raid25 scenarios. Update the README's defaults and estimate.
+
+- Verify: the optimizer's tests and the slow suite. Both jobs before and after, on your own sim server through
+  the [acbis driver](../../tools/database/acbis/driver/README.md): `--stage 1 --phases 2 --effort Normal
+  --raiders Mighty,Stormweaver --sources raid25,raid25-heroic,vendor,crafted,quest,reputation,achievement,prospecting,world-drop`,
+  roster `C:\Users\boss2\AppData\Local\Temp\claude\g--DevStuff-GitHub-wowsimwotlk\bis-caps-evidence\raid.json`,
+  interleaved if the machine is busy. The harness's new full-run time.
+- Owns: `sim/optimizer/**` except `types.go`, `tools/perf/**`, its INVESTIGATION section.
+
 ## Order
 
 The user put the pass before wave J, whose BIS-e2e-perf times the optimizer with PERF-TOOLS' harness
@@ -224,3 +248,4 @@ The user put the pass before wave J, whose BIS-e2e-perf times the optimizer with
 - **I3 (done):** PERF-OPT and PERF-HOT, file-disjoint, once I2's baseline sets their targets.
 - **I6 (done):** PERF-MISSILE, the user's call (2026-09-26), before J times the optimizer.
 - **J2 (done):** PERF-RNG, the user's call (2026-09-27), with the optimizer fixes wave J's speed audit found.
+- **N:** PERF-FU, the user's call (2026-10-01), with wave L's and M's other follow-ups.
