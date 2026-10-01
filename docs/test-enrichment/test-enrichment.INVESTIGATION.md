@@ -270,9 +270,12 @@ The decisions, the item split and the waves are in the [PLAN](test-enrichment.PL
 
 - `Average` tests store `ability_results` (`proto/test.proto`, field 5; `casts_results` removed, 4 reserved).
   `abilityResults` in `sim/core/test_suite.go` fills it from the run `TestDPS` already did.
-- `hits` is landed hits: the metric's `Hits` + `Crits` + `Blocks`. The sim's `Hits` excludes crits on most
-  outcome paths, so a raw `crits / hits` went past 100 % (a hunter pet's Claw showed 205 %).
-  `crit_pct = crits / landed`, `amount_per_hit = (damage + healing + shielding) / landed`.
+- `hits` is landed hits, as the UI's `landedHits`: the metric's `Hits` + `Crits` + `Blocks` + `Glances` +
+  `Crushes`. The sim's `Hits` excludes crits on most outcome paths, so a raw `crits / hits` went past 100 % (a
+  hunter pet's Claw showed 205 %). `crit_pct = crits / landed`, `amount_per_hit = amount / landed`.
+- `amount` (damage + healing + shielding per iteration) is stored too: some dots' ticks count no hit (Smite's
+  Shadow Word: Pain, 14 % of its damage), and one Disc trinket heals with no cast or hit at all. With it, a
+  suite's action amounts add up to its DPS + HPS within 0.3 %.
 - Every `Average` test of the 37 suites gains a block, 38 to 105 entries each. The three healer suites
   with empty APLs hold only cooldown casts. No DPS, HPS, TPS or DTPS moved.
 - Until promoted, every Average test fails on "Unexpected abilities": the old goldens have no block.

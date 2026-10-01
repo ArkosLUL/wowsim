@@ -251,10 +251,13 @@ func TestCheckSpellRollsARangedClassSpellWithoutAWeaponAtLevelSkill(t *testing.T
 	if check := namedCheck(t, checks, "yellow miss"); !check.Passed {
 		t.Errorf("yellow miss: %s", check.Detail)
 	}
-	for _, check := range checks {
-		if check.Name == "table attack type" {
-			t.Errorf("table attack type: %s", check.Detail)
-		}
+	if check := namedCheck(t, checks, "table attack type"); !check.Passed {
+		t.Errorf("table attack type: %s", check.Detail)
+	}
+
+	rec.Spell.DmgClass = 2
+	if check := namedCheck(t, CheckRecord(rec), "table attack type"); check.Passed {
+		t.Errorf("a melee class spell the server rolled as ranged passed: %s", check.Detail)
 	}
 }
 

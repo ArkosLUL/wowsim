@@ -61,7 +61,7 @@ A committed `.results` baseline that a sim test compares against.
 _Avoid_: snapshot, fixture
 
 **Ability result**:
-The per-ability block (casts, hits, crit, amount per hit, uptime) a golden stores for each `Average` row.
+The per-ability block (casts, hits, crit, amount per hit, amount, uptime) a golden stores for each `Average` row.
 
 **Promote**:
 Copying a suite's reviewed `.results.tmp` over its golden.

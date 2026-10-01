@@ -19,13 +19,15 @@ message DpsTestResult {
 	double tmi = 5;
 }
 
-// Per iteration, summed over the targets. hits counts landed hits, crits and blocks included.
+// Per iteration, summed over the targets. hits counts landed hits: crits, blocks, glances and crushes too.
 message AbilityTestResult {
 	double casts = 1;
 	double hits = 2;
 	double crit_pct = 3;
 	double amount_per_hit = 4;
 	double uptime_s = 5;
+	// damage + healing + shielding
+	double amount = 6;
 }
 
 message AbilitiesTestResult {

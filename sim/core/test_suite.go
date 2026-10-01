@@ -100,7 +100,8 @@ func abilityResults(result *proto.RaidSimResult, iterations int32) *proto.Abilit
 				s := sumsFor(unit, "action", action.Id)
 				for _, target := range action.Targets {
 					s.casts += float64(target.Casts)
-					s.hits += float64(target.Hits + target.Crits + target.Blocks)
+					// landed, as the UI counts it: glances and crushes land too
+					s.hits += float64(target.Hits + target.Crits + target.Blocks + target.Glances + target.Crushes)
 					s.crits += float64(target.Crits)
 					s.amount += target.Damage + target.Healing + target.Shielding
 				}
@@ -124,13 +125,15 @@ func abilityResults(result *proto.RaidSimResult, iterations int32) *proto.Abilit
 	entries := make(map[string]*proto.AbilityTestResult, len(sums))
 	for key, s := range sums {
 		isAction := strings.Contains(key, "|action|")
-		if isAction && s.casts == 0 && s.hits == 0 || !isAction && s.uptime == 0 {
+		if isAction && s.casts == 0 && s.hits == 0 && s.amount == 0 || !isAction && s.uptime == 0 {
 			continue
 		}
+		// amount on its own, since a dot whose ticks don't count as hits has no amount per hit
 		entry := &proto.AbilityTestResult{
 			Casts:   toFixed(s.casts/iters, storagePrecision),
 			Hits:    toFixed(s.hits/iters, storagePrecision),
 			UptimeS: toFixed(s.uptime, storagePrecision),
+			Amount:  toFixed(s.amount/iters, storagePrecision),
 		}
 		if s.hits > 0 {
 			entry.CritPct = toFixed(s.crits/s.hits*100, storagePrecision)
@@ -155,7 +158,8 @@ func compareAbilities(t *testing.T, expected, actual *proto.AbilitiesTestResult)
 			continue
 		}
 		if !within(got.Casts, want.Casts) || !within(got.Hits, want.Hits) || !within(got.CritPct, want.CritPct) ||
-			!within(got.AmountPerHit, want.AmountPerHit) || !within(got.UptimeS, want.UptimeS) {
+			!within(got.AmountPerHit, want.AmountPerHit) || !within(got.UptimeS, want.UptimeS) ||
+			!within(got.Amount, want.Amount) {
 			t.Logf("Ability %s expected %v but was %v", key, want, got)
 			t.Fail()
 		}

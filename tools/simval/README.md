@@ -27,7 +27,8 @@ Commands covered: `melee`, `taken`, `yellow`, `spell`, `armor`, `info`, `procs`.
 
 `yellow` and `spell` follow the server's own rules:
 - The hit table's attack type comes from the spell's `dmgClass` (ranged, else main hand), so Judgement of
-  Wisdom rolls ranged with level*5 skill and no ranged weapon.
+  Wisdom rolls ranged with level*5 skill and no ranged weapon. It must match the server's
+  `derived.yellow.attackType`, except under `ALWAYS_HIT`, where the server never picks one.
 - Crit suppression is expected only from crit-capable spells (`critcap.go`: a damage or heal effect in
   `sim/core/serverdata`, no `CANT_CRIT`); a spell that can't crit has none. An id missing from serverdata
   is assumed capable and gets a row in the fixture README.

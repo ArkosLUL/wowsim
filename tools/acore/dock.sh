@@ -103,7 +103,7 @@ result_metrics() {
 		/^ability_results: \{/ { inab = 1; key = ""; akey = ""; next }
 		inab && /^ key: / { key = $0; sub(/^ key: "/, "", key); sub(/"$/, "", key); next }
 		inab && /^   key: / { akey = $0; sub(/^   key: "/, "", akey); sub(/"$/, "", akey); next }
-		inab && /^    (casts|hits|crit_pct|amount_per_hit|uptime_s): / { if (key != "") print key "\tab:" substr($1, 1, length($1) - 1) "\t" $2 "\t" akey; next }
+		inab && /^    (casts|hits|crit_pct|amount_per_hit|uptime_s|amount): / { if (key != "") print key "\tab:" substr($1, 1, length($1) - 1) "\t" $2 "\t" akey; next }
 		inab && /^\}/ { inab = 0 }
 	' "$1"
 }
@@ -124,13 +124,20 @@ metric_changes() {
 	awk -F'\t' '
 		BEGIN {
 			nm = split("dps hps tps dtps", metrics, " ")
-			naf = split("casts hits crit_pct amount_per_hit uptime_s", afields, " ")
+			naf = split("casts hits crit_pct amount_per_hit amount uptime_s", afields, " ")
 		}
 		function fabs(x) { return x < 0 ? -x : x }
-		function total(arr, t, a) { return arr[t, a, "hits"] * arr[t, a, "amount_per_hit"] }
+		# a golden from before the amount field still ranks by hits times amount per hit
+		function total(arr, t, a,    v) {
+			v = arr[t, a, "amount"]
+			if (v != "") return v + 0
+			return arr[t, a, "hits"] * arr[t, a, "amount_per_hit"]
+		}
 		FILENAME == ARGV[1] {
 			if ($2 ~ /^ab:/) {
 				f = substr($2, 4)
+				# a test with all-zero metrics has no dps_results rows, only these
+				if (!($1 in oldkey)) { oldkey[$1] = 1; oldorder[++no] = $1 }
 				if (!(($1, $4) in oldabseen)) { oldabseen[$1, $4] = 1; oldab[$1, ++oldabn[$1]] = $4 }
 				oldv[$1, $4, f] = $3
 				next

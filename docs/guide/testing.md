@@ -64,10 +64,10 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
     first. Diff the two files for stats and stat weights.
 - `Average` tests also store `ability_results`: one entry per `<unit>|action|<id>` and `<unit>|aura|<id>`,
   `<unit>` being `player`, `pet:<name>` or `target<i>` (target auras only).
-  - Fields, per iteration and summed over targets: `casts`, `hits`, `crit_pct`, `amount_per_hit`
-    (damage + healing + shielding) and, for auras, `uptime_s`. `hits` counts landed hits: the sim's hits,
-    crits and blocks.
-  - Only actions with casts or hits, and auras with uptime. Same-named pets and repeated ids add up.
+  - Fields, per iteration and summed over targets: `casts`, `hits`, `crit_pct`, `amount_per_hit`, `amount`
+    (damage + healing + shielding) and, for auras, `uptime_s`. `hits` counts landed hits as the UI does:
+    hits, crits, blocks, glances and crushes. Some dots' ticks aren't hits, so only `amount` shows them.
+  - Only actions with casts, hits or amount, and auras with uptime. Same-named pets and repeated ids add up.
   - The comparison runs both ways: a key on one side only fails the test.
   - Against a golden without the block, `delta` prints one `abilities new (N entries)` line per test.
 - A `.results` that shows as modified with an empty `git diff` is CRLF noise: leave it out of commits.

@@ -46,6 +46,14 @@ func checkMultiplier(name string, got, want float64) Check {
 	return fail(name, detail)
 }
 
+func checkSame(name, got, want string) Check {
+	detail := fmt.Sprintf("%s, server %s", got, want)
+	if got == want {
+		return pass(name, detail)
+	}
+	return fail(name, detail)
+}
+
 // checkRate is a two-sided binomial test of a rolled count against the threshold
 // the server rolled it with.
 func checkRate(name string, count, iterations float64, chanceBP int32) Check {
@@ -190,6 +198,11 @@ func checkSpell(rec record) []Check {
 			BlockedInTable:  server.Yellow.CanBlock,
 			NoDodge:         !server.Yellow.CanDodge,
 			NoParry:         !server.Yellow.CanParry,
+		}
+
+		// ALWAYS_HIT returns before the server picks an attack type, so its main hand is just a default
+		if !server.Yellow.AlwaysHit {
+			checks = append(checks, checkSame("table attack type", rec.tableAttackType(), server.Yellow.AttackType))
 		}
 
 		table := core.YellowMeleeTableBP(in, opts)
