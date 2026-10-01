@@ -116,7 +116,7 @@ var FrostUHDefaultGlyphs = &proto.Glyphs{
 	// No interesting minor glyphs.
 }
 
-var UnholyTalents = "-320043500002-2300303050032152000150013133051"
+var UnholyTalents = "-320033500002-2300303050032152000150013133151"
 var UnholyDefaultGlyphs = &proto.Glyphs{
 	Major1: int32(proto.DeathknightMajorGlyph_GlyphOfTheGhoul),
 	Major2: int32(proto.DeathknightMajorGlyph_GlyphOfDarkDeath),

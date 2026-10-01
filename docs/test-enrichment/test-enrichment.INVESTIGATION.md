@@ -326,3 +326,53 @@ newly failed on the old fixture; on the new capture one record failed.
 - Dropped: the unarmed warrior's `melee` record. The server rolls 51 normal, 102 crit, 35 glancing, 10 blocked
   against the model's 49, 98, 34, 8, with the same attack power (568) as the armed warrior. It's the same +2 as the
   armed one, so it's warrior-specific. A fixture README row records it and it's a follow-up, not a sim change.
+
+## TE-GUARD as built
+
+Measured on `7f4174efb`.
+
+**Finding 2 re-measured.** The guard, run before any fix, failed the same nine suites on the same spells, plus one
+the table filed under "other classes' buffs": shaman rotations name the raid buff's Bloodlust (2825, tag -1),
+which a shaman's NoBuffs tests don't have, and 2825 is the shaman's own family.
+
+**Guard.**
+- `GetAPLSpell` and `GetTargetAPLSpell` append each miss to `APLRotation.UnknownSpells()`.
+- `RunTestSuite` collects every test's raid (stat weights requests become one), dedupes players on their
+  deterministic marshal, then a `RotationGuard` subtest builds each on a clone with `NewEnvironment`. It
+  fails on an unknown spell id missing from serverdata or of `serverdata.ClassFamily(class)`
+  (`sim/core/serverdata/families.go`, moved from `sim/serverdata_test.go`), unless allowlisted. Tag -1 ids
+  are skipped: buffs.go registers them only when the raid buffs bring them, so they say nothing about the
+  build. Each id reports once per suite, with the first test that drops it.
+- An allowlist entry without a reason, or that no player drops, fails as stale.
+- About 150 players per suite, mostly AllItems: 0.1 to 0.5 s per suite.
+- Allowlists: `DroppedSpells` on `SpecOptionsCombo` and `RotationCombo`. `DroppedSpellsGenerator` is the
+  optional interface: `SettingsCombos` decodes a test's spec options and rotation; the other subgenerators
+  of `FullCharacterTestSuiteGenerator` get the default player's; `CombinedTestGenerator` and
+  `JoinTestGenerators` forward it.
+- Negative check: Chimera Shot (53209) added to TestBM's rotation failed the guard, and passed once
+  allowlisted; reverted.
+
+**Fixes.**
+
+| Suite | Change | Effect on `Average-Default` |
+|---|---|---|
+| Unholy | `UnholyTalents` `-320033500002-2300303050032152000150013133151`: Black Ice 4→3, Scourge Strike 0→1. The DK parity tests pass on it, so no own variable | +14.9% DPS: Scourge Strike new (55271 tags 1 and 2), more Death Coil, Icy Touch and Ghoul Frenzy. Every row moves: `uh_2h_ss` +11 to +19%, `uh_dnd_aoe` −0.2 to +7%, `unholy_dw_ss` +2.7 to +5.7% |
+| BM | `BMTalents` `51200201515012233110531351-005305001-4`: Improved Tracking 5→4, Aimed Shot 0→1 | −0.32% DPS: Aimed Shot (49050) replaces Multi-Shot (49048) at about the same damage, Improved Tracking's 1% less lowers every hit; −4.7 to −7.1% on the 20-target rows |
+| Blood Tank | `blood_aggro` leaves `OtherRotations` (12 `Settings-…-blood_aggro-…` rows gone) for `TestBloodTank-BloodAggro`: the default player's setup on talents `0355220530303303201020131301--0052003050032`, glyphs Dancing Rune Weapon, Rune Strike, Dark Command, one 300 s target, 20 iterations | new row, 4001.9 DPS; no other row moves |
+| Enhancement | `enhShamWFWF` takes Lightning Shield and the FT options' totems (`standardTotems`, Fire Elemental on) | only the 36 `WF` Settings rows: single target +6 to +28%, 20 targets −0.3 to −9% |
+| Frost Mage | `frost_aoe.apl.json` casts Blizzard 42940, the rank the sim registers, not 42939 | only the 6 `frost_aoe` rows: Blizzard now casts, +176% to +2330% |
+
+**Allowlists.**
+
+| Suite | Combo | Ids | Reason |
+|---|---|---|---|
+| Elemental | spec options `Adaptive` | 2894 | BasicTotems leave Fire Elemental off; EleFireElemental covers it |
+| Subtlety | rotation `combat_expose` | 13750, 13877, 51690 | Combat talents: there's no Subtlety APL |
+| Assassination | its four rotations | 13877 | the mutilate APLs cast Blade Flurry, a Combat talent, under Slice and Dice |
+| Combat | rotation `fan_aoe` | 14177 | Cold Blood, an Assassination talent, in the AoE APL both specs share |
+
+`serverDataPresets` takes the Unholy and BM talents and a `BloodAggro` preset; `TestServerDataConflicts`
+stays green. The healer suites and Subtlety carry a one-line note (also in testing.md Goldens).
+
+**Bloodlust is intended.** Every shaman APL casts the raid buff's Bloodlust (2825 tag -1) before its own (2825,
+tagged with the shaman's raid index: 0 here), so NoBuffs tests dropping the first is expected, not a bug.

@@ -34,6 +34,17 @@ type APLRotation struct {
 	curWarnings          []string
 	prepullWarnings      [][]string
 	priorityListWarnings [][]string
+
+	unknownSpells []ActionID
+}
+
+// UnknownSpells lists every action id the rotation looked up and found no spell for, on its unit or a
+// target's, repeats included. The rotation runs on without them, with only a validation warning.
+func (rot *APLRotation) UnknownSpells() []ActionID {
+	if rot == nil {
+		return nil
+	}
+	return rot.unknownSpells
 }
 
 func (rot *APLRotation) ValidationWarning(message string, vals ...interface{}) {

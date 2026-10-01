@@ -3,6 +3,6 @@
     "prepullActions": [],
     "priorityList": [
         {"action":{"autocastOtherCooldowns":{}}},
-        {"action":{"castSpell":{"spellId":{"spellId":42939}}}}
+        {"action":{"castSpell":{"spellId":{"spellId":42940}}}}
     ]
 }

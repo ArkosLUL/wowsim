@@ -2,6 +2,7 @@ package core
 
 import (
 	"fmt"
+	"maps"
 	"slices"
 	"strings"
 
@@ -57,11 +58,40 @@ type TalentsCombo struct {
 type SpecOptionsCombo struct {
 	Label       string
 	SpecOptions interface{}
+
+	// DroppedSpells allowlists the class spells the rotations name that these options leave the
+	// character unable to cast, id to reason. RunTestSuite fails on any other.
+	DroppedSpells map[int32]string
 }
 type RotationCombo struct {
 	Label    string
 	Rotation *proto.APLRotation
+
+	// DroppedSpells allowlists the class spells this rotation names that the suite's character can't
+	// cast, id to reason. RunTestSuite fails on any other.
+	DroppedSpells map[int32]string
 }
+
+// DroppedSpellsGenerator is a TestGenerator whose characters may drop some of their rotation's class
+// spells on purpose. RunTestSuite asks it for each test's allowlist.
+type DroppedSpellsGenerator interface {
+	TestGenerator
+
+	// DroppedSpells is the allowlist of test testIdx's character, spell id to reason.
+	DroppedSpells(testIdx int) map[int32]string
+}
+
+func mergeDroppedSpells(lists ...map[int32]string) map[int32]string {
+	var merged map[int32]string
+	for _, list := range lists {
+		if len(list) > 0 && merged == nil {
+			merged = map[int32]string{}
+		}
+		maps.Copy(merged, list)
+	}
+	return merged
+}
+
 type BuffsCombo struct {
 	Label    string
 	Raid     *proto.RaidBuffs
@@ -161,6 +191,17 @@ func (combos *SettingsCombos) GetTest(testIdx int) (string, *proto.ComputeStatsR
 	}
 
 	return strings.Join(testNameParts, "-"), nil, nil, rsr
+}
+
+// DroppedSpells decodes testIdx in GetTest's order: race, gear set, talents, spec options, rotation.
+func (combos *SettingsCombos) DroppedSpells(testIdx int) map[int32]string {
+	testIdx /= len(combos.Races) * len(combos.GearSets) * len(combos.TalentSets)
+	specOptions := combos.SpecOptions[testIdx%len(combos.SpecOptions)]
+	var rotation RotationCombo
+	if len(combos.Rotations) > 0 {
+		rotation = combos.Rotations[testIdx/len(combos.SpecOptions)%len(combos.Rotations)]
+	}
+	return mergeDroppedSpells(specOptions.DroppedSpells, rotation.DroppedSpells)
 }
 
 // Returns all items that meet the given conditions.
@@ -389,13 +430,45 @@ func (g joinedTestGenerators) GetTest(testIdx int) (string, *proto.ComputeStatsR
 	panic("invalid testIdx")
 }
 
+func (g joinedTestGenerators) DroppedSpells(testIdx int) map[int32]string {
+	for _, gen := range g {
+		if n := gen.NumTests(); testIdx >= n {
+			testIdx -= n
+			continue
+		}
+		if dropping, ok := gen.(DroppedSpellsGenerator); ok {
+			return dropping.DroppedSpells(testIdx)
+		}
+		return nil
+	}
+	panic("invalid testIdx")
+}
+
 type SubGenerator struct {
 	name      string
 	generator TestGenerator
+
+	// for a generator that isn't a DroppedSpellsGenerator
+	droppedSpells map[int32]string
 }
 
 type CombinedTestGenerator struct {
 	subgenerators []SubGenerator
+}
+
+func (generator *CombinedTestGenerator) DroppedSpells(testIdx int) map[int32]string {
+	remaining := testIdx
+	for _, child := range generator.subgenerators {
+		numTests := child.generator.NumTests()
+		if remaining < numTests {
+			if dropping, ok := child.generator.(DroppedSpellsGenerator); ok {
+				return dropping.DroppedSpells(remaining)
+			}
+			return child.droppedSpells
+		}
+		remaining -= numTests
+	}
+	panic("Invalid testIdx")
 }
 
 func (generator *CombinedTestGenerator) NumTests() int {
@@ -592,6 +665,12 @@ func FullCharacterTestSuiteGenerator(config CharacterSuiteConfig) TestGenerator 
 			},
 		},
 	})
+
+	// Settings has its own; every other subgenerator runs the default player
+	defaultDropped := mergeDroppedSpells(config.SpecOptions.DroppedSpells, config.Rotation.DroppedSpells)
+	for i := range generator.subgenerators {
+		generator.subgenerators[i].droppedSpells = defaultDropped
+	}
 
 	return generator
 }

@@ -126,13 +126,13 @@ var (
 	priestHealer = &proto.HealingPriest_Options{UseInnerFire: true, UseShadowfiend: true, RapturesPerMinute: 5}
 )
 
-// One per golden suite, copied from the class tests.
+// One per golden suite build, copied from the class tests.
 var serverDataPresets = []serverDataPreset{
 	{"Blood", proto.Class_ClassDeathknight, proto.Race_RaceOrc, "deathknight", "p3_blood", "blood_dps",
 		"2305120530003303231023001351--230220305003", glyphs(int32(proto.DeathknightMajorGlyph_GlyphOfDancingRuneWeapon),
 			int32(proto.DeathknightMajorGlyph_GlyphOfDeathStrike), int32(proto.DeathknightMajorGlyph_GlyphOfDisease)), dkOptions, false},
 	{"Unholy", proto.Class_ClassDeathknight, proto.Race_RaceOrc, "deathknight", "p3_uh_dw", "uh_2h_ss",
-		"-320043500002-2300303050032152000150013133051", glyphs(int32(proto.DeathknightMajorGlyph_GlyphOfTheGhoul),
+		"-320033500002-2300303050032152000150013133151", glyphs(int32(proto.DeathknightMajorGlyph_GlyphOfTheGhoul),
 			int32(proto.DeathknightMajorGlyph_GlyphOfDarkDeath), int32(proto.DeathknightMajorGlyph_GlyphOfDeathAndDecay)), dkOptions, false},
 	{"Frost", proto.Class_ClassDeathknight, proto.Race_RaceOrc, "deathknight", "p3_frost", "frost_bl_pesti",
 		"23050005-32005350352203012300033101351", glyphs(int32(proto.DeathknightMajorGlyph_GlyphOfFrostStrike),
@@ -143,6 +143,10 @@ var serverDataPresets = []serverDataPreset{
 	{"BloodTank", proto.Class_ClassDeathknight, proto.Race_RaceOrc, "tank_deathknight", "p1_blood", "blood_icy_touch",
 		"005510153330330220102013-3050505100023101-002", glyphs(int32(proto.DeathknightMajorGlyph_GlyphOfDarkCommand),
 			int32(proto.DeathknightMajorGlyph_GlyphOfObliterate), int32(proto.DeathknightMajorGlyph_GlyphOfVampiricBlood)),
+		&proto.Player_TankDeathknight{TankDeathknight: &proto.TankDeathknight{Options: &proto.TankDeathknight_Options{}}}, true},
+	{"BloodAggro", proto.Class_ClassDeathknight, proto.Race_RaceOrc, "tank_deathknight", "p1_blood", "blood_aggro",
+		"0355220530303303201020131301--0052003050032", glyphs(int32(proto.DeathknightMajorGlyph_GlyphOfDancingRuneWeapon),
+			int32(proto.DeathknightMajorGlyph_GlyphOfRuneStrike), int32(proto.DeathknightMajorGlyph_GlyphOfDarkCommand)),
 		&proto.Player_TankDeathknight{TankDeathknight: &proto.TankDeathknight{Options: &proto.TankDeathknight_Options{}}}, true},
 
 	{"Balance", proto.Class_ClassDruid, proto.Race_RaceTauren, "balance_druid", "p1", "basic_p3",
@@ -172,7 +176,7 @@ var serverDataPresets = []serverDataPreset{
 			InnervateTarget: &proto.UnitReference{}, StartingRage: 20}}}, true},
 
 	{"BM", proto.Class_ClassHunter, proto.Race_RaceOrc, "hunter", "p1_sv", "bm",
-		"51200201515012233110531351-005305-5", glyphs(int32(proto.HunterMajorGlyph_GlyphOfBestialWrath),
+		"51200201515012233110531351-005305001-4", glyphs(int32(proto.HunterMajorGlyph_GlyphOfBestialWrath),
 			int32(proto.HunterMajorGlyph_GlyphOfSteadyShot), int32(proto.HunterMajorGlyph_GlyphOfSerpentSting)), hunterOptions, false},
 	{"MM", proto.Class_ClassHunter, proto.Race_RaceOrc, "hunter", "p1_mm", "mm",
 		"502-035335131030013233035031051-5000002", glyphs(int32(proto.HunterMajorGlyph_GlyphOfSerpentSting),
@@ -414,13 +418,6 @@ var undeclaredSpells = map[proto.Class][]int32{
 	proto.Class_ClassWarrior:     warrior.UndeclaredSpells,
 }
 
-// SpellFamilyName of each class's own spells
-var classFamilies = map[proto.Class]int32{
-	proto.Class_ClassMage: 3, proto.Class_ClassWarrior: 4, proto.Class_ClassWarlock: 5, proto.Class_ClassPriest: 6,
-	proto.Class_ClassDruid: 7, proto.Class_ClassRogue: 8, proto.Class_ClassHunter: 9, proto.Class_ClassPaladin: 10,
-	proto.Class_ClassShaman: 11, proto.Class_ClassDeathknight: 15,
-}
-
 // SpellEffects and AuraType values that hand the damage to the spell they trigger: Summon Infernal,
 // Blizzard, Volley
 const (
@@ -518,7 +515,7 @@ func (c *declarationCoverage) verify(t *testing.T) {
 			continue
 		}
 		for u, s := range units {
-			if !u.pet && s.Family != classFamilies[u.class] {
+			if !u.pet && s.Family != serverdata.ClassFamily(u.class) {
 				continue
 			}
 			if _, ok := undeclared[u.class][s.ID]; ok {

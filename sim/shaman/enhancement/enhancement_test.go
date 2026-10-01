@@ -97,11 +97,14 @@ var PlayerOptionsFTFT = &proto.Player_EnhancementShaman{
 	},
 }
 
+// every rotation of the suite casts Lightning Shield and checks for Fire Elemental Totem, so both options
+// bring them
 var enhShamWFWF = &proto.EnhancementShaman_Options{
-	Shield:   proto.ShamanShield_WaterShield,
+	Shield:   proto.ShamanShield_LightningShield,
 	SyncType: proto.ShamanSyncType_DelayOffhandSwings,
 	ImbueMh:  proto.ShamanImbue_WindfuryWeapon,
 	ImbueOh:  proto.ShamanImbue_WindfuryWeapon,
+	Totems:   standardTotems,
 }
 
 var enhShamFTFT = &proto.EnhancementShaman_Options{
@@ -109,13 +112,15 @@ var enhShamFTFT = &proto.EnhancementShaman_Options{
 	SyncType: proto.ShamanSyncType_Auto,
 	ImbueMh:  proto.ShamanImbue_FlametongueWeaponDownrank,
 	ImbueOh:  proto.ShamanImbue_FlametongueWeapon,
-	Totems: &proto.ShamanTotems{
-		Earth:            proto.EarthTotem_StrengthOfEarthTotem,
-		Air:              proto.AirTotem_WindfuryTotem,
-		Water:            proto.WaterTotem_ManaSpringTotem,
-		Fire:             proto.FireTotem_MagmaTotem,
-		UseFireElemental: true,
-	},
+	Totems:   standardTotems,
+}
+
+var standardTotems = &proto.ShamanTotems{
+	Earth:            proto.EarthTotem_StrengthOfEarthTotem,
+	Air:              proto.AirTotem_WindfuryTotem,
+	Water:            proto.WaterTotem_ManaSpringTotem,
+	Fire:             proto.FireTotem_MagmaTotem,
+	UseFireElemental: true,
 }
 
 var enhShamWFFT = &proto.EnhancementShaman_Options{

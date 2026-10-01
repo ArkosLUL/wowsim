@@ -26,9 +26,6 @@ func TestBloodTank(t *testing.T) {
 			Consumes:    FullConsumes,
 			SpecOptions: core.SpecOptionsCombo{Label: "Basic", SpecOptions: PlayerOptionsBloodTank},
 			Rotation:    core.GetAplRotation("../../../ui/tank_deathknight/apls", "blood_icy_touch"),
-			OtherRotations: []core.RotationCombo{
-				core.GetAplRotation("../../../ui/tank_deathknight/apls", "blood_aggro"),
-			},
 
 			IsTank:          true,
 			InFrontOfTarget: true,
@@ -44,7 +41,39 @@ func TestBloodTank(t *testing.T) {
 			},
 		}),
 		&core.SingleDpsTestGenerator{Name: "GenericBoss", Request: genericBossRequest()},
+		&core.SingleDpsTestGenerator{Name: "BloodAggro", Request: bloodAggroRequest()},
 	))
+}
+
+// blood_aggro casts Dancing Rune Weapon and Heart Strike, which BloodTankTalents doesn't take, so it runs
+// on the UI's Blood Aggro build, otherwise as the suite's default player
+func bloodAggroRequest() *proto.RaidSimRequest {
+	rsr := &proto.RaidSimRequest{
+		Raid: core.SinglePlayerRaidProto(
+			&proto.Player{
+				Race:               proto.Race_RaceOrc,
+				Class:              proto.Class_ClassDeathknight,
+				Equipment:          core.GetGearSet("../../../ui/tank_deathknight/gear_sets", "p1_blood").GearSet,
+				Consumes:           FullConsumes,
+				Spec:               PlayerOptionsBloodTank,
+				Buffs:              core.FullIndividualBuffs,
+				Rotation:           core.GetAplRotation("../../../ui/tank_deathknight/apls", "blood_aggro").Rotation,
+				TalentsString:      BloodAggroTalents,
+				Glyphs:             BloodAggroGlyphs,
+				Profession1:        proto.Profession_Engineering,
+				InFrontOfTarget:    true,
+				DistanceFromTarget: 30,
+				ReactionTimeMs:     150,
+				ChannelClipDelayMs: 50,
+			},
+			core.FullPartyBuffs,
+			core.FullRaidBuffs,
+			core.FullDebuffs),
+		Encounter:  core.MakeSingleTargetEncounter(0),
+		SimOptions: core.DefaultSimTestOptions,
+	}
+	rsr.Raid.Tanks = []*proto.UnitReference{{Type: proto.UnitReference_Player, Index: 0}}
+	return rsr
 }
 
 // The generic AzerothCore boss, on the same gear and rotation as TestBloodTank's default, alongside
@@ -82,6 +111,13 @@ var Glyphs = &proto.Glyphs{
 	Major1: int32(proto.DeathknightMajorGlyph_GlyphOfDarkCommand),
 	Major2: int32(proto.DeathknightMajorGlyph_GlyphOfObliterate),
 	Major3: int32(proto.DeathknightMajorGlyph_GlyphOfVampiricBlood),
+}
+
+var BloodAggroTalents = "0355220530303303201020131301--0052003050032"
+var BloodAggroGlyphs = &proto.Glyphs{
+	Major1: int32(proto.DeathknightMajorGlyph_GlyphOfDancingRuneWeapon),
+	Major2: int32(proto.DeathknightMajorGlyph_GlyphOfRuneStrike),
+	Major3: int32(proto.DeathknightMajorGlyph_GlyphOfDarkCommand),
 }
 
 var PlayerOptionsBloodTank = &proto.Player_TankDeathknight{

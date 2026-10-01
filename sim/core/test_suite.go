@@ -3,14 +3,18 @@ package core
 import (
 	"errors"
 	"fmt"
+	"maps"
 	"math"
 	"os"
+	"slices"
 	"strings"
 	"testing"
 
 	"github.com/wowsims/wotlk/sim/core/proto"
+	"github.com/wowsims/wotlk/sim/core/serverdata"
 	"github.com/wowsims/wotlk/sim/core/stats"
 	"google.golang.org/protobuf/encoding/prototext"
+	googleProto "google.golang.org/protobuf/proto"
 )
 
 // Precise enough to detect very small changes to test results, but truncated
@@ -224,9 +228,112 @@ type TestGenerator interface {
 	GetTest(testIdx int) (string, *proto.ComputeStatsRequest, *proto.StatWeightsRequest, *proto.RaidSimRequest)
 }
 
+// guardedPlayer is a distinct player a suite runs, in the raid of the first test that runs it.
+type guardedPlayer struct {
+	test        string
+	raid        *proto.Raid
+	encounter   *proto.Encounter
+	party, slot int
+	dropped     map[int32]string
+}
+
+// rotationGuard fails a suite whose rotations name class spells its characters can't cast, which the
+// sim would otherwise skip with nothing but a validation warning.
+type rotationGuard struct {
+	seen    map[string]bool
+	players []guardedPlayer
+}
+
+func (g *rotationGuard) add(test string, raid *proto.Raid, encounter *proto.Encounter, dropped map[int32]string) {
+	if encounter == nil {
+		encounter = MakeSingleTargetEncounter(0)
+	}
+	numParties := len(raid.Parties)
+	if raid.NumActiveParties > 0 {
+		numParties = min(numParties, int(raid.NumActiveParties))
+	}
+	for p, party := range raid.Parties[:numParties] {
+		for s, player := range party.GetPlayers() {
+			if player == nil || player.Class == proto.Class_ClassUnknown {
+				continue
+			}
+			key, err := googleProto.MarshalOptions{Deterministic: true}.Marshal(player)
+			if err != nil {
+				panic(err)
+			}
+			if g.seen[string(key)] {
+				continue
+			}
+			g.seen[string(key)] = true
+			g.players = append(g.players, guardedPlayer{test, raid, encounter, p, s, dropped})
+		}
+	}
+}
+
+// check builds each player and fails on every spell its rotation names but it doesn't know, unless the
+// test allowlists it or the server gives it another family than the class's (racials, other classes'
+// buffs). An allowlist entry no player needs, or one without a reason, fails too.
+func (g *rotationGuard) check(t *testing.T) {
+	allowlisted, noReason, used := map[int32]bool{}, map[int32]bool{}, map[int32]bool{}
+	reported := map[ActionID]bool{}
+	for _, p := range g.players {
+		for id, reason := range p.dropped {
+			allowlisted[id] = true
+			noReason[id] = noReason[id] || strings.TrimSpace(reason) == ""
+		}
+		// a clone, since constructing some agents writes to their options (NewShaman)
+		env, _, _ := NewEnvironment(googleProto.Clone(p.raid).(*proto.Raid), p.encounter, false)
+		var character *Character
+		for _, party := range env.Raid.Parties {
+			for _, agent := range party.Players {
+				// NewRaid skips nil parties, so match on the proto's indices, not the slice's
+				if c := agent.GetCharacter(); party.Index == p.party && c.PartyIndex == p.slot {
+					character = c
+				}
+			}
+		}
+		for _, id := range character.Rotation.UnknownSpells() {
+			// tag -1 is a cooldown the raid buffs hand over (buffs.go), so the buffs decide, not the build:
+			// a shaman's NoBuffs tests drop the raid's Bloodlust
+			if id.SpellID == 0 || id.Tag == -1 {
+				continue
+			}
+			what := "a spell missing from the server data"
+			if s := serverdata.SpellByID(id.SpellID); s != nil {
+				if s.Family != serverdata.ClassFamily(character.Class) {
+					continue
+				}
+				what = "a " + strings.TrimPrefix(character.Class.String(), "Class") + " spell"
+			}
+			if _, ok := p.dropped[id.SpellID]; ok {
+				used[id.SpellID] = true
+				continue
+			}
+			if !reported[id] {
+				reported[id] = true
+				t.Errorf("%s: the rotation names %s, %s the character doesn't know, so the sim drops it. Fix the "+
+					"talents, options or rotation, or allowlist it with a reason in DroppedSpells.", p.test, id, what)
+			}
+		}
+	}
+	for _, id := range slices.Sorted(maps.Keys(allowlisted)) {
+		if noReason[id] {
+			t.Errorf("DroppedSpells: %d needs a reason", id)
+		}
+		if !used[id] {
+			t.Errorf("DroppedSpells allowlists %d, but no character of the suite drops it now, so the entry is stale", id)
+		}
+	}
+}
+
 func RunTestSuite(t *testing.T, suiteName string, generator TestGenerator) {
 	testSuite := NewIndividualTestSuite(suiteName)
 	var currentTestName string
+	guard := &rotationGuard{seen: map[string]bool{}}
+	droppedSpells := func(int) map[int32]string { return nil }
+	if dropping, ok := generator.(DroppedSpellsGenerator); ok {
+		droppedSpells = dropping.DroppedSpells
+	}
 
 	defer func() {
 		if p := recover(); p != nil {
@@ -243,6 +350,16 @@ func RunTestSuite(t *testing.T, suiteName string, generator TestGenerator) {
 	numTests := generator.NumTests()
 	for i := 0; i < numTests; i++ {
 		testName, csr, swr, rsr := generator.GetTest(i)
+		switch fullTestName := suiteName + "-" + testName; {
+		case csr != nil:
+			guard.add(fullTestName, csr.Raid, csr.Encounter, droppedSpells(i))
+		case swr != nil:
+			raid := SinglePlayerRaidProto(swr.Player, swr.PartyBuffs, swr.RaidBuffs, swr.Debuffs)
+			raid.Tanks = swr.Tanks
+			guard.add(fullTestName, raid, swr.Encounter, droppedSpells(i))
+		case rsr != nil:
+			guard.add(fullTestName, rsr.Raid, rsr.Encounter, droppedSpells(i))
+		}
 		if strings.Contains(testName, "Average") && testing.Short() {
 			continue
 		}
@@ -346,6 +463,8 @@ func RunTestSuite(t *testing.T, suiteName string, generator TestGenerator) {
 	if t.Failed() {
 		t.Log("One or more tests failed! If the changes are intentional, update the expected results with 'make test && make update-tests'. Otherwise go fix your bugs!")
 	}
+
+	t.Run("RotationGuard", guard.check)
 }
 
 func round(num float64) int {
