@@ -250,8 +250,7 @@ func (p *Pool) checkPlacement(items [NumSlots]*core.Item) error {
 	if oh == nil {
 		return nil
 	}
-	if mh == nil && (oh.HandType == proto.HandType_HandTypeOneHand || oh.HandType == proto.HandType_HandTypeTwoHand) &&
-		oh.WeaponType != proto.WeaponType_WeaponTypeShield {
+	if mh == nil && movesToMainHand(oh) {
 		return ruleErr(RuleSlot, proto.ItemSlot_ItemSlotOffHand, oh.ID, "with the main hand empty, core would move it there")
 	}
 	switch {
@@ -262,6 +261,12 @@ func (p *Pool) checkPlacement(items [NumSlots]*core.Item) error {
 		return ruleErr(RuleWeapons, proto.ItemSlot_ItemSlotOffHand, oh.ID, "nothing goes in the off hand with a two-hander without Titan's Grip")
 	}
 	return nil
+}
+
+// movesToMainHand says whether core equips oh in the main hand when that's empty.
+func movesToMainHand(oh *core.Item) bool {
+	return (oh.HandType == proto.HandType_HandTypeOneHand || oh.HandType == proto.HandType_HandTypeTwoHand) &&
+		oh.WeaponType != proto.WeaponType_WeaponTypeShield
 }
 
 type socketedGem struct {

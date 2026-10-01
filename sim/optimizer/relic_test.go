@@ -199,7 +199,7 @@ func TestOnlyRelicsSkipTheBudgetCut(t *testing.T) {
 			}
 			s := newSurrogate(pool, r.Seed, Response{})
 			rn := &run{asked: r, r: r, pool: pool}
-			v := s.slopes(s.seedStats)
+			v := s.slopes(s.seedStats, 0)
 			fx := &effects{raw: map[effectKey]Estimate{}, missing: map[effectKey]bool{}, pairBase: map[proto.ItemSlot]Loadout{}}
 			families := rn.effectFamilies(s, v, s.newGemPlan(v), fx)
 			i := slices.IndexFunc(families, func(f *effectFamily) bool { return f.name == proto.ItemSlot_ItemSlotRanged.String()+" items" })

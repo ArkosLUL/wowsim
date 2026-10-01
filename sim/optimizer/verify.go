@@ -26,7 +26,7 @@ const (
 // pairing), until one stands out or the race's share runs out. The best replaces the seed only when it
 // beats it (see beatsSeed). The result is sorted best first; loadouts that break a rule, stat floors
 // included, aren't simmed.
-func (r *run) verify(s *surrogate, candidates []Loadout) ([]*verifiedLoadout, error) {
+func (r *run) verify(candidates []Loadout) ([]*verifiedLoadout, error) {
 	var picks []Loadout
 	for _, l := range candidates {
 		if l == r.r.Seed || r.pool.Check(l) != nil {
@@ -103,7 +103,8 @@ func (r *run) verify(s *surrogate, candidates []Loadout) ([]*verifiedLoadout, er
 
 	for i, v := range verified {
 		d := r.obj.Delta(r.seedEval, v.eval)
-		r.trace("verified %d: surrogate %+.1f, sim %+.1f ± %.1f over %d iterations", i, s.value(v.loadout)-s.value(r.r.Seed), d.Mean, d.SE, v.eval.Iterations)
+		s := r.surrogates[v.loadout.RacialTraits]
+		r.trace("verified %d, %s: surrogate %+.1f, sim %+.1f ± %.1f over %d iterations", i, v.loadout.RacialTraits, s.value(v.loadout)-s.value(r.r.Seed), d.Mean, d.SE, v.eval.Iterations)
 		if traceHook != nil {
 			for slot, c := range v.loadout.Items {
 				old := r.r.Seed.Items[slot]
