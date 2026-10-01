@@ -3,20 +3,20 @@ package main
 import (
 	"fmt"
 	"math"
+	"slices"
 
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/stats"
 )
 
 // checkWhiteDamage compares the mean damage the server rolled for each white swing outcome of a naked
-// player with what the sim's formulas give: its attack power, armor mitigation, glancing and crit
-// multipliers and block value, over the server's integer rolls (Unit::CalculateDamage truncates the
-// range, CalcArmorReducedDamage rounds up).
+// player, bare-handed or holding a main-hand weapon, with what the sim's formulas give: its attack
+// power, armor mitigation after armor penetration, glancing and crit multipliers and block value, over
+// the server's integer rolls (Unit::CalculateDamage truncates the range, CalcArmorReducedDamage rounds up).
 func checkWhiteDamage(rec record) []Check {
 	attacker := rec.Attacker
 	attack := attacker.attack("mainhand")
-	armorPen, _ := attacker.rating("armorPenetration")
-	if rec.attackType() != "mainhand" || !attacker.naked() || armorPen > 0 ||
+	if rec.attackType() != "mainhand" || !nakedButMainHand(attacker) ||
 		attack.UnhastedMs == 0 || attack.HastedMs != attack.UnhastedMs {
 		return nil
 	}
@@ -36,7 +36,19 @@ func checkWhiteDamage(rec record) []Check {
 		return nil
 	}
 
-	return whiteDamageChecks(rec, character.GetStats()[stats.AttackPower], character.DefaultMeleeCritMultiplier())
+	attackPower := character.GetStats()[stats.AttackPower]
+	// a weapon with stats on it puts the server's attack power above the bare character's
+	if attack.Weapon != nil && math.Floor(attackPower+1e-6) != attack.AttackPower {
+		return nil
+	}
+	return whiteDamageChecks(rec, attackPower, character.DefaultMeleeCritMultiplier())
+}
+
+// nakedButMainHand is naked() with a main-hand weapon allowed, since the record carries its damage range
+// and speed.
+func nakedButMainHand(u unitSnapshot) bool {
+	u.Attacks = slices.DeleteFunc(slices.Clone(u.Attacks), func(a attackSnapshot) bool { return a.Type == "mainhand" })
+	return u.naked()
 }
 
 // whiteDamageChecks is the comparison for one attack power and crit multiplier, so a test can feed it
@@ -51,7 +63,7 @@ func whiteDamageChecks(rec record, attackPower, critMultiplier float64) []Check 
 		return nil
 	}
 
-	armor := float32(core.ArmorMultiplier(rec.Target.Resistances[0], attacker.Level))
+	armor := float32(armorMultiplier(rec, rec.Target.Resistances[0]))
 	glance := float32(core.GlancingMultiplier(attacker.Level, rec.Target.Level))
 	crit := uint32(critMultiplier)
 	var blockValue uint32
