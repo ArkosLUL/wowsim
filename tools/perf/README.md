@@ -120,7 +120,8 @@ cp tmp/perf/bench-<time>/report.json tools/perf/baseline.json
 ```
 
 Its numbers fill the [INVESTIGATION](../../docs/sim-performance/sim-performance.INVESTIGATION.md)'s baseline
-tables. About 30 min on the idle 7800X3D: the optimizer at Normal 9, Quick's sweep 17, the rest 4. The
+tables. Over 2 h on the idle 7800X3D since the raid25 scenarios joined (raid DPS Quick alone 39 min at one
+proc); before them about 30 min: the optimizer at Normal 9, Quick's sweep 17, the rest 4. The
 defaults and why:
 - `-procs 1,2,4,8,12,16` for everything but Normal: each scenario's full curve, 8 being the core count.
 - `-reps 3` at the widest point, `-sweep-reps 1` elsewhere: the comparison's noise comes from the widest

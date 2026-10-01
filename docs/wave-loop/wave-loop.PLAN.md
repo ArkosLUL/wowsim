@@ -63,7 +63,7 @@ G = changes goldens. FS = runs all 37 suites.
 | J | PAR-P7-PRI (G) · PAR-P7-TANK (G) · BIS-e2e-perf · AC-3 | ✔ |
 | J2 | BIS-stage2 · BIS-adopt · PERF-RNG (FS) · BIS-stage2b | ✔ |
 | K | PAR-P8 (G, FS) · BIS-tank-boss · BIS-presets | ✔ |
-| L | PAR-FU-1 (G) · PAR-FU-2 (G) · UI-FIX3 · BIS-relic · BIS-oh-unique · BIS-caps | ✔ |
+| L | PAR-FU-1 (G) · PAR-FU-2 (G) · UI-FIX3 · BIS-relic · BIS-oh-unique · BIS-caps · BIS-caps-hit · BIS-caps-race | ✔ |
 
 F2 is an inserted wave, not a fifth item in F: the core swing and cast fixes of PAR-P7-0c have to land
 before the class items in G, a class item can't build on a core fix merging in its own wave, and F already
@@ -102,7 +102,8 @@ that does nothing, so the druid builds join the preset rerun. So did BIS-oh-uniq
 cap (the user's call, the same day): a unique one-hander worn in the main hand could never go in the off
 hand, so the dual-wield builds' presets rerun after it merges. BIS-caps, a sixth (the user's call, the same
 day), makes DPS picks reach their hit and expertise caps and stop at a haste cap, so all 28 builds' presets
-regenerate after it.
+regenerate after it. Two fixes followed it: BIS-caps-hit (hit talents on spells) and BIS-caps-race (each racial
+finalist's gear meets the caps on its own traits).
 
 **Where the specs are:**
 
@@ -117,21 +118,12 @@ regenerate after it.
 
 ## Current wave
 
-- Wave: L, running. All six items are merged (BIS-caps last, `a1d0a9079`), then master (`fc3b96070`),
-  BIS-caps-hit (`6c79a6a62`), all 28 presets at Normal (`f67242686`) and the second cross-review's fixes
-  (`ff0920a96`: wands and physical ranged weapons took the relic path; the unreachable-cap fallback
-  replaced seeds that met every floor).
-- Left, from 2026-10-01 (the user's call), in order:
-  0. Find why meeting a cap floor on `ff0920a96` cost two raid-batch raiders 10-13% (Mighty, arms: -12.6%
-     for 30 expertise rating; Stormweaver, elemental: -10.4% for 12 spell hit, on Draenei racials his own
-     screen dropped): search quality under floors, or the party Heroic Presence check. The BiS tooltip
-     session holds its import until then.
-  1. Re-baselines on an idle machine: the slow suite, BenchmarkSimulate ×3, the `tools/perf` full baseline.
-  2. Rerun presets on a preset server at the final HEAD for the 16 builds `ff0920a96` changes: `mage_arcane`,
-     `mage_fire`, `mage_frost`, `rogue_assassination`, `rogue_combat`, `rogue_subtlety`,
-     `warlock_affliction`, `warlock_demonology`, `warlock_destruction`, `warrior_arms`, `warrior_fury`,
-     `protection_warrior`, `shadow_priest`, `smite_priest`, `dk_blood`, `elemental_shaman`.
-  3. Landing, then the one prod rebuild the user OKed once L lands (prod runs K).
+- Wave: L, landed (master fast-forwarded to this close-out), prod rebuilt from it. Its 6 items, BIS-caps-hit,
+  BIS-caps-race, both cross-reviews and all 28 presets at Normal (`f67242686`) are in.
+- Carried (the user's call, 2026-10-01): rerun every DPS preset on the final HEAD, since BIS-caps-race changes
+  every racial search and `ff0920a96` the 16 builds `mage_*`, `rogue_*`, `warlock_*`, `warrior_arms`,
+  `warrior_fury`, `protection_warrior`, `shadow_priest`, `smite_priest`, `dk_blood`, `elemental_shaman`.
+- Next: wave M, test-enrichment; start with its PLAN's "Orchestrator onboarding (wave M start)".
 - Base SHA: `1fc3f7c3d`; the WIs branch from its spec commit `773610faf`.
 - Workflow runIds: `wf_34052b28-d62`, `wf_1a26dbdb-51c`, `wf_ac1129b6-8d7`, `wf_a59f095c-4b7`, `wf_f5be2bcf-e23`; args
   `waveL*-args.json` in `G:\DevStuff\GitHub\.wave-loop`, transcripts in
@@ -164,6 +156,7 @@ Reckoning that way), but J isn't DPS: see below.
 | J | 8860.8, +282 / +286 | 10728.5, +624 / +926 | 5064.6, +43 / +63 | 12963.5, +229 / +228 | -97067.0, +3376 / +3759 | -1644.5, +727 / +821 |
 | J2 | 8725.6, +253 / +297 | 10728.7, +674 / +799 | 5064.5, +40 / +47 | 12964.3, +213 / +231 | -96051.1, +3590 / +3707 | -1642.4, +740 / +804 |
 | K | 8725.1, +237 / +284 | 10730.8, +675 / +807 | 5064.5, +40 / +47 | 12963.8, +186 / +212 | -17821.9, +4813 / +4831 | -1056.8, +850 / +894 |
+| L | 8725.1, +224 / +284 | 10730.8, +734 / +777 | 5066.6, +41 / +48 | 12963.8, +175 / +232 | -17821.9, +4836 / +4799 | -1056.8, +913 / +900 |
 
 Quick / Normal. Ret P4 ran at Quick only in wave D, after the glyph fix; its wave C numbers
 (12821.9, +54 / +73) came from a seed that wore the glyph. The two tanks arrive with
@@ -209,6 +202,10 @@ In K both tanks fight BIS-tank-boss's generic boss, at the damage the cross-revi
 `dps_preset` rose from 269.3 on Anub'arak's scripted fight to 4489.9, Feral Tank's fell 2.3% (4183.3). The DPS
 rows moved with their goldens (Fury +0.22%, Combat Rogue +0.48%, Fire Mage and Ret flat); Ret's gains fell to
 +186 / +212, the path dependence again.
+In L the DPS picks meet their hit and expertise floors and haste ceilings (BIS-caps). Fire Mage's
+`dps_preset` rose 0.16% (11290.9) with PAR-FU-1's Fire goldens; the gains moved within earlier rows' range, the
+tanks' with BIS-relic pricing every libram and idol. Idle, Ret's Normal run took 40% longer than K's (64.9 s),
+the rest within 8% or faster.
 
 ## Sim throughput
 
@@ -232,6 +229,7 @@ From G the benches run their suites' default players with rotations, at 1 and 10
 | J | 1.087 / 77.1 | 0.527 / 28.7 | 0.755 / 43.2 | 0.480 / 17.2 | 5.213 / 262.6 |
 | J2 | 1.043 / 77.5 | 0.561 / 28.7 | 0.759 / 44.3 | 0.493 / 16.9 | 5.300 / 272.8 |
 | K | 1.146 / 78.7 | 0.527 / 29.7 | 0.729 / 47.1 | 0.542 / 16.9 | 5.328 / 275.6 |
+| L | 1.069 / 77.6 | 0.559 / 29.7 | 0.782 / 45.5 | 0.555 / 16.9 | 5.460 / 268.1 |
 
 H2 ran with the live worldserver using half a core, which moved whole runs by up to 2×
 and cost a few percent here (Ret, which H2 barely touched, +4%). An interleaved A/B against the base
@@ -284,6 +282,10 @@ run with `IsTest` off, where rolls take the old path.
 K's row ran idle (the worldserver, database and prod container stopped). At 100 iterations Hunter is 6% over
 J2's, likely PAR-P8's pet AI no longer pooling focus, so the pet casts more; Ret +3.5%, the rest within 2%.
 No A/B.
+
+L's row ran idle (the worldserver, authserver and database stopped): within 4% of K's at 100 iterations, 7% at
+one. The `tools/perf` full baseline wasn't retaken: K's raid25 scenarios push it past 2 h (raid DPS Quick alone
+39 min at one proc), so it was cut off; its partial report sits in [int]'s `tmp/perf/bench-20261001-072308`.
 
 E to F2 ran the old requests: one iteration, and no rotation for Ret, Hunter and Elemental.
 
@@ -397,6 +399,18 @@ crashed before F2, so its column starts there.
 | Tiny Abomination fix | | `215fb2882` | the preset run crashed Assassination P5: a rogue's off-hand strike with no off-hand weapon made the trinket fire an off-hand attack it never registered (also at the wave base) |
 | rogue weapon fixes | | `01af4a0d8`, `1e0bc463a` | every Assassination preset held a mace off hand, which can't Mutilate on the server: Mutilate now needs two daggers and off-hand strikes an off-hand weapon; Mutilate and Fan of Knives multiply their bonuses, Tiny Abomination picks its hand 50/50. 8 goldens; TestAssassination sweeps daggers only |
 | BiS presets at Normal | | `ef5f48d20`, `f010ed638` | 140 runs in 3.9 h on `b415c0f48`; Assassination rerun on `1e0bc463a`. Perf harness tank requests in `60b063229` |
+
+| PAR-FU-2 | merged | `256d3add8` | goldens promoted in `8084619b4`: Assassination -0.07% (Mutilate's hand order, poison check), Scourgeborne rows +0.5% to +1.2% (Death Strike's set bonus), a few multi-target Balance and mage rows (stacking trinkets' target) |
+| UI-FIX3 | merged | `4c4ac0bca` | the spec pages default to an Alliance race; the blacksmithing socket test stayed `fixme` until the cross-review |
+| PAR-FU-1 | merged | `53b88c7bf` | goldens promoted in `8ada676f6`: Elemental -2.7%, Enhancement -1.0% (percent mods multiply), mage +0.2% to +0.6% (Mirror Image takes the mage's mods), Demonology -2.9%, Destruction -3.6%. Live: no level-80 shaman or warlock knows 75461 or 75445 |
+| wave L cross-review | | `73df60295`, `bbd3d8929` | Frostbolt now gets Winter's Chill's crit; Mirror Image drops the mage's meta gem and Critical Mass; several mage bonuses still added; Fire and Brimstone checks the target it hits; the blacksmithing test runs again |
+| BIS-relic | merged | `12c47a866` | goldens unchanged. Every relic candidate gets a screening sim: relics carry no stats, so the budget cut kept a few by pool order |
+| BIS-oh-unique | merged | `fff0ac1ec` | goldens unchanged. A unique main hand can go in the off hand |
+| BIS-caps | merged | `a1d0a9079` | goldens unchanged. Sent back: default-on caps put every DPS search on the slow full-rescore path (`capGain` fixed it) |
+| BIS-caps-hit | merged | `6c79a6a62` | goldens unchanged. Hit floors count per-spell hit talents (Shadow Focus, Arcane Focus, Elemental Precision); the review added Serpent Sting |
+| BiS presets at Normal | | `f67242686` | 140 runs in 4.7 h on `fc3b96070`, then the 15 arcane, elemental and shadow runs on `6c79a6a62`; 21 runs warn a cap 1 to 23 short |
+| wave L cross-review 2 | | `ff0920a96` | 2 bugs: wands and physical ranged weapons took the relic path; the unreachable-cap fallback replaced seeds that met every floor |
+| BIS-caps-race | merged | `202558043` | goldens unchanged. One gear search per racial finalist, its floors priced on its own traits. P2 Normal batch: Mighty Troll 12065, Stormweaver Troll 5853, every floor met (were Orc 10422, Draenei 5219); idle job wall 76 → 120 s and 28 → 48 s |
 
 Later WIs are added as their wave starts.
 

@@ -40,6 +40,11 @@ UI-FIX2 merged: the Batch tab builds its item sources with the BiS tab's `source
 (`optimizer_tab.ts`), and a batch saved without them restores with every source on. The Raid page computes
 character stats once its saved raid has loaded. PAR-P7-0f fixed the Might bug, so the 7 tests that skipped on it run.
 
+## Done in wave L
+
+UI-FIX3 merged: a fresh spec page defaults to the first Alliance race. The wave L cross-review gave the
+blacksmithing socket test a gem that changes stats, so it runs again.
+
 ## Follow-ups
 
 **Sim, for a sim item:**
@@ -115,7 +120,7 @@ Golden-neutral.
 **Owns:** `ui/raid/optimizer_batch.ts`, `ui/raid/raid_sim_ui.ts`, `updateCharacterStats` in `ui/core/sim.ts`,
 and those tests.
 
-### UI-FIX3 (wave L)
+### UI-FIX3 (wave L, done)
 
 1. A fresh spec page takes the first race in `specToEligibleRaces` (`ui/core/individual_sim_ui.ts`), Horde for most
    specs, while its default gear is an Alliance-built BiS preset and the user's roster is all Alliance. Take the

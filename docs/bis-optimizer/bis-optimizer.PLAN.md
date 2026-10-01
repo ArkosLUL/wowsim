@@ -424,9 +424,9 @@ regenerates at integration, and no golden wears it.
   `objectiveWeights` reads it only when `metric_weights` is all zero, so the UI's weights win.
 - Stage "Racial screen", after Objective: `screenRacials` scores the seed under all 10 races at
   screening iterations and keeps the top 3 plus anything within 2 se of the 3rd, capped at 6: several
-  races are worth nothing to a spec and would otherwise tie exactly. The search runs once, since
-  the surrogate prices gear only; `withRacialTraits` then pairs every gear set with every finalist, and
-  verification sims them paired and picks the race. `Top` keys on gear *and* traits.
+  races are worth nothing to a spec and would otherwise tie exactly. Each finalist gets its own gear search
+  (`searchRaces`, see BIS-caps-race below), and verification sims them paired and picks the race. `Top`
+  keys on gear *and* traits.
 - `run.pinHealingModel` reruns `Character.GetPresimOptions` once at Setup, 100 iterations at seed 1
   with healing off and then 1.5x DTPS, and writes the Hps into `Base`. Without it, a healing model with
   Hps 0 and a cadence (or an encounter ending at a health threshold) makes every shard rerun core's
@@ -1108,7 +1108,7 @@ factor, so every tank boss hit at half the server's rate; it's doubled now, movi
   `pool_builder.ts`'s source text and fails if it drifts from the Go mirror, the way raidctx's
   `TestProvidersMirrorRaidStats` checks `raid_stats.ts`.
 
-### BIS-relic (wave L)
+### BIS-relic (wave L, done)
 
 A BiS batch run (sim `1fc3f7c3d`, phase 2, Quick, 25-man sources) swapped a Feral Tank's Idol of the Corruptor
 (45509, +153 Agility for 12 s off each Mangle, `sim/druid/items.go`) for Idol of the Crying Wind (45270), which
@@ -1148,8 +1148,9 @@ The relic-slot family also inherited `weapons: true` from the ranged slot's hunt
 (BIS-hunter-ranged), though `dominatedWeapons` and the weapon probes both no-op on it already, since
 no relic has weapon damage.
 
-Fix: `weapons` on that family is now `ranged && hunter`, true only for an actual ranged weapon. A
-new `full` field on `effectFamily`, set for the non-hunter ranged/relic family, exempts it from
+Fix: that family's `full` (new on `effectFamily`) is set when the slot's pool holds a relic (`isRelic`,
+by `RangedWeaponType`), and `weapons` only when it doesn't, so wands and physical ranged weapons keep the
+weapon path (cross-review 2). `full` exempts it from
 `trimToBudget`'s cut, the same way a family of 3 or fewer keys already is: every relic candidate
 gets a real screening sim regardless of budget pressure. Relic pools are small enough (single digits
 to a few dozen per class per phase) that this costs little.
@@ -1167,7 +1168,7 @@ bear) above 0 and five idols that only boost spells a bear never casts at 0, non
 the Feral Tank P2 realistic pool. `TestOptimizeFeralTankFindsAHelpfulRelic` seeds an idol that does
 nothing and checks the optimizer still finds and keeps one that helps.
 
-### BIS-oh-unique (wave L)
+### BIS-oh-unique (wave L, done)
 
 A unique-equipped one-hander in the seed's main hand can never go in the off hand. `effectFamilies`' off-hand
 family keeps the seed's main hand in its base, marks that same item `missing` for the off hand (one unique item
@@ -1212,7 +1213,7 @@ search couldn't reach it (one-hander: 4229.0 vs. the true 4371.5; two-hander: of
 4674.0 vs. 5129.0). `TestOffHandPricesTheSeedsUniqueWeaponForTheOtherHand` pins the residual
 directly, both directions.
 
-### BIS-caps (wave L)
+### BIS-caps (wave L, done)
 
 The user's call (2026-09-29): picks may sit under a hit or expertise cap, which beats capping in the sim's
 fight from behind, but a raid can't always attack from behind. In the phase 2 batch a DPS death knight had 112
@@ -1251,7 +1252,7 @@ added the way `critImmunityFloor` adds Defense (one floor per stat, raised rathe
   each cap the way `requiredDefense` bisects D* (`bisectCapBonus`, the same shape) and raises
   `StatMinimums`, so the pool, the surrogate's penalty and `checkFloors` see them unchanged. The haste
   ceiling is new and soft instead: `StatMaximum`s (beside `StatMinimum` in the proto) steer the
-  surrogate only (`ceilingTerm`, `setCeilings`, mirroring `floorTerm`/`setFloors` through `score`,
+  surrogate only (`ceilingTerm`, built beside `floorTerm` by `setFloorsAndCeilings`, through `score`,
   `slopes`, `regime`, `slopeBox`) and never fail `Pool.Check` — going over already costs DPS the curve
   prices, so nothing needs rejecting. `disable_stat_caps` is phrased negatively so proto3's unset
   default (false) matches the UI's (caps on).
@@ -1266,10 +1267,10 @@ added the way `critImmunityFloor` adds Defense (one floor per stat, raised rathe
   read. It resets the environment itself now and never cleans up; `FinalStats` and
   `MeleeCritTakenChance` are unaffected, since `FillPlayerStats` already ran inside `NewEnvironment` and
   neither depended on the debuff-driven `PseudoStats` this uncovered.
-- The unreachable-cap fallback: `verify` used to give up to the unmodified seed once nothing passed
-  `Check`. `closestToCapFloors` now picks, among the search's own candidates, the one with the least
-  total shortfall against just `run.capFloors` (never a floor outside the caps), through a new
-  `Pool.checkFloorsExcept`; the result warns by stat and margin instead of going quiet.
+- The unreachable-cap fallback, only when the seed breaks a rule (a seed that keeps them reaches every
+  floor): `closestToCapFloors` picks, among the candidates and the seed, the one with the least total
+  shortfall against just `run.capFloors`, each relaxed back to its pre-cap value (`Pool.checkFloorsRelaxed`),
+  so a user floor stays enforced; the result warns by stat and margin.
 - Heroic Presence, the plan's example, can't demonstrate "the floor follows the buffs": it adds rating
   to the same stat a floor bisects, so it moves the seed's own reading, never the fixed sheet total the
   miss chance zeroes out at. `TestTheFloorFollowsTargetDebuffs` uses Improved Faerie Fire and Misery
@@ -1342,9 +1343,9 @@ from `floorTerm`/`ceilingTerm` carrying their gradient as a `[stats.Len]float64`
 `for _, f := range s.floors` copied the whole struct per floor per call, and a cap's gradient is
 almost always nonzero in one stat (its own rating), so scanning all of `stats.Len` for it was mostly
 wasted work. Both `floorTerm` and `ceilingTerm` now carry a `sparse []gradEntry` (built once in
-`setFloors`/`setCeilings`) alongside the dense `gradient`; every hot read (`capGain`, `floorShortfall`,
+`setFloorsAndCeilings`) alongside the dense `gradient`; every hot read (`capGain`, `floorShortfall`,
 `ceilingOverage`, `slopes`, `regime`, `slopeBox`) uses `sparse` and indexes `s.floors`/`s.ceilings` by
-pointer instead of copying. A literal `floorTerm`/`ceilingTerm` built outside `setFloors`/`setCeilings`
+pointer instead of copying. A literal `floorTerm`/`ceilingTerm` built outside `setFloorsAndCeilings`
 (`TestSlopeBoxFloors`, `TestCeilingPenalizesOverage`) must set `sparse` too, via `sparseGradient`.
 
 Same isolated A/B after the fix: fury_p1 1.25x, the Marksmanship hunter 1.88x, and the phase 1-5 pool
@@ -1453,8 +1454,7 @@ verify dropped it. P2 Normal batch: Mighty (arms, Orc, axe 45165) fell from Trol
 Draenei) from Troll 5827 to Draenei 5219.
 
 Fix:
-- `searchRaces` (`racial.go`) replaces `withRacialTraits`, so the "Racial screen" bullet's single
-  search is out of date: one search per race the run pairs gear with (the finalists, else the seed's
+- `searchRaces` (`racial.go`) replaces `withRacialTraits`: one search per race the run pairs gear with (the finalists, else the seed's
   traits), each race's candidates verified under it alone, merged by rank (`byRank`). The searches run
   concurrently; with several races each gets an RNG seeded from the run's in race order, so scheduling
   can't move results, and a lone race keeps the run's RNG.

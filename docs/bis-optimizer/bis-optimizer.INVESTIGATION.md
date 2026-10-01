@@ -173,7 +173,8 @@ from the code, the timing run's reports and the batch's rows above.
     half round doesn't adopt. 64 of the batch's 105 stage 1 runs list a one-slot alternative more than
     4 SE over the pick (median +0.8% J).
   - At Quick the raid racial screen keeps 6 finalists in 11 of 13 stage 2 runs, and `withRacialTraits`
-    pairs each gear set with each finalist, so verify covers about 3 gear sets.
+    paired each gear set with each finalist, so verify covered about 3 gear sets (since BIS-caps-race each
+    finalist gets its own search).
 - **Stage 2 loses to stage 1.** A paired raid A/B of phase 1's 19 DPS raiders (4,000 iterations, everyone
   else in their stage 1 pick; `G:\DevStuff\GitHub\.wave-loop\ab-p1\`) put the stage 2 gear under the
   stage 1 pick for 15, by up to 1,004 raid DPS (Angry), and over it for 3 (Hellflame, Druidica,
