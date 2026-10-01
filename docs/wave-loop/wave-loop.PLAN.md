@@ -127,8 +127,7 @@ PAR-FU-3 and PERF-FU join N, the user's call too (the same day): wave L's and M'
 
 - Wave: N, landed (master fast-forwarded to this close-out). Next: O (TE-TALENTS, TE-GOLDCHAR). Prod runs L's
   `23e9e9e79`.
-- Left from N: its throughput row and the `tools/perf` full baseline, both idle once Deathsong is offline (online
-  at the close-out).
+- Left from N: the `tools/perf` full baseline on an idle machine; its 2026-10-01 run overlapped a game on the host.
 - Carried (the user's call, 2026-10-01): rerun every DPS preset on the final HEAD, since BIS-caps-race changes
   every racial search and `ff0920a96` the 16 builds `mage_*`, `rogue_*`, `warlock_*`, `warrior_arms`,
   `warrior_fury`, `protection_warrior`, `shadow_priest`, `smite_priest`, `dk_blood`, `elemental_shaman`.
@@ -243,6 +242,7 @@ From G the benches run their suites' default players with rotations, at 1 and 10
 | K | 1.146 / 78.7 | 0.527 / 29.7 | 0.729 / 47.1 | 0.542 / 16.9 | 5.328 / 275.6 |
 | L | 1.069 / 77.6 | 0.559 / 29.7 | 0.782 / 45.5 | 0.555 / 16.9 | 5.460 / 268.1 |
 | M | 1.082 / 78.9 | 0.528 / 29.4 | 0.808 / 45.9 | 0.511 / 17.4 | 5.348 / 267.7 |
+| N | 1.095 / 77.1 | 0.581 / 29.5 | 0.865 / 46.5 | 0.486 / 18.4 | 5.479 / 288.3 |
 
 H2 ran with the live worldserver using half a core, which moved whole runs by up to 2×
 and cost a few percent here (Ret, which H2 barely touched, +4%). An interleaved A/B against the base
@@ -300,6 +300,11 @@ L's row ran idle (the worldserver, authserver and database stopped): within 4% o
 one. The `tools/perf` full baseline wasn't retaken: K's raid25 scenarios push it past 2 h (raid DPS Quick alone
 39 min at one proc), so it was cut off; its partial report sits in [int]'s `tmp/perf/bench-20261001-072308`. M's row ran idle the same way: within 3% of L's at 100
 iterations, 8% at one.
+
+N's row ran idle the same way, before a game started on the host. At 100 iterations it's within 2% of M's but
+Elemental +6% and the raid +8%, whose three runs spread 273 to 367. No N change reaches the sim's hot paths
+(TE-GUARD's list fills only on a miss at rotation setup): noise. The `tools/perf` full run took 54 min with
+PERF-FU's defaults, but beside that game (about 2.3 cores), so `baseline.json` stays I3's.
 
 E to F2 ran the old requests: one iteration, and no rotation for Ret, Hunter and Elemental.
 
