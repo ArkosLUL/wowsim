@@ -31,7 +31,9 @@ func TestCombat(t *testing.T) {
 		OtherRotations: []core.RotationCombo{
 			core.GetAplRotation("../../ui/rogue/apls", "combat_cleave_snd"),
 			core.GetAplRotation("../../ui/rogue/apls", "combat_cleave_snd_expose"),
-			core.GetAplRotation("../../ui/rogue/apls", "fan_aoe"),
+			dropping(core.GetAplRotation("../../ui/rogue/apls", "fan_aoe"), map[int32]string{
+				14177: "Cold Blood: an Assassination talent the Combat build lacks, in an AoE rotation both specs share",
+			}),
 		},
 		ItemFilter: core.ItemFilter{
 			ArmorType: proto.ArmorType_ArmorTypeLeather,
@@ -59,11 +61,11 @@ func TestAssassination(t *testing.T) {
 			{Label: "MH Instant OH Instant", SpecOptions: PlayerOptionsAssassinationII},
 			{Label: "MH Deadly OH Deadly", SpecOptions: PlayerOptionsAssassinationDD},
 		},
-		Rotation: core.GetAplRotation("../../ui/rogue/apls", "rupture_mutilate_expose"),
+		Rotation: dropping(core.GetAplRotation("../../ui/rogue/apls", "rupture_mutilate_expose"), noBladeFlurry),
 		OtherRotations: []core.RotationCombo{
-			core.GetAplRotation("../../ui/rogue/apls", "rupture_mutilate"),
-			core.GetAplRotation("../../ui/rogue/apls", "mutilate"),
-			core.GetAplRotation("../../ui/rogue/apls", "mutilate_expose"),
+			dropping(core.GetAplRotation("../../ui/rogue/apls", "rupture_mutilate"), noBladeFlurry),
+			dropping(core.GetAplRotation("../../ui/rogue/apls", "mutilate"), noBladeFlurry),
+			dropping(core.GetAplRotation("../../ui/rogue/apls", "mutilate_expose"), noBladeFlurry),
 		},
 
 		ItemFilter: core.ItemFilter{
@@ -80,6 +82,7 @@ func TestAssassination(t *testing.T) {
 	}))
 }
 
+// Runs a Combat APL, as there's no Subtlety one, so Subtlety's own abilities never cast.
 func TestSubtlety(t *testing.T) {
 	core.RunTestSuite(t, t.Name(), core.FullCharacterTestSuiteGenerator(core.CharacterSuiteConfig{
 		Class:       proto.Class_ClassRogue,
@@ -90,7 +93,11 @@ func TestSubtlety(t *testing.T) {
 		Glyphs:      SubtletyGlyphs,
 		Consumes:    FullConsumes,
 		SpecOptions: core.SpecOptionsCombo{Label: "Subtlety", SpecOptions: PlayerOptionsSubtletyID},
-		Rotation:    core.GetAplRotation("../../ui/rogue/apls", "combat_expose"),
+		Rotation: dropping(core.GetAplRotation("../../ui/rogue/apls", "combat_expose"), map[int32]string{
+			13750: "Adrenaline Rush: a Combat talent, and the suite runs a Combat rotation",
+			13877: "Blade Flurry: a Combat talent, and the suite runs a Combat rotation",
+			51690: "Killing Spree: a Combat talent, and the suite runs a Combat rotation",
+		}),
 		ItemFilter: core.ItemFilter{
 			ArmorType: proto.ArmorType_ArmorTypeLeather,
 			RangedWeaponTypes: []proto.RangedWeaponType{
@@ -104,6 +111,14 @@ func TestSubtlety(t *testing.T) {
 			},
 		},
 	}))
+}
+
+// The mutilate rotations cast Blade Flurry, a Combat talent, while Slice and Dice is up.
+var noBladeFlurry = map[int32]string{13877: "Blade Flurry: a Combat talent the Assassination build lacks"}
+
+func dropping(rotation core.RotationCombo, spells map[int32]string) core.RotationCombo {
+	rotation.DroppedSpells = spells
+	return rotation
 }
 
 type AttackType int

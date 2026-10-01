@@ -70,6 +70,17 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
   - Only actions with casts, hits or amount, and auras with uptime. Same-named pets and repeated ids add up.
   - The comparison runs both ways: a key on one side only fails the test.
   - Against a golden without the block, `delta` prints one `abilities new (N entries)` line per test.
+- Each suite ends with a `RotationGuard` subtest. It builds every distinct player the suite runs and fails
+  on a spell its rotation names but the character doesn't know (`APLRotation.UnknownSpells`), when the spell
+  is missing from serverdata or carries the class's family (`serverdata.ClassFamily`).
+  - Skipped: other families (racials, other classes' buffs) and tag -1 ids, the raid buffs' cooldowns (a
+    shaman's NoBuffs tests drop the raid's Bloodlust).
+  - Allowlist: `DroppedSpells` (id → reason) on a `SpecOptionsCombo` or `RotationCombo`, applying to the
+    tests that use that combo. An entry without a reason, or one no player drops, fails.
+  - A generator outside `FullCharacterTestSuiteGenerator` passes its own allowlist by implementing
+    `core.DroppedSpellsGenerator`; `JoinTestGenerators` forwards it.
+- Not real coverage of their spec: the three healer suites (Resto Shaman, Holy Paladin, Resto Druid)
+  only autocast cooldowns, so they check stats and item heals only; Subtlety runs a Combat APL.
 - A `.results` that shows as modified with an empty `git diff` is CRLF noise: leave it out of commits.
 - `sim/optimizer/raidctx/testdata/raid25.derived.json` is a golden too. Rewrite it with
   `go test --tags=with_db ./sim/optimizer/raidctx -run TestDeriveFixtureGolden -update`.

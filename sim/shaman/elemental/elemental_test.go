@@ -18,11 +18,13 @@ func TestElemental(t *testing.T) {
 		Race:       proto.Race_RaceTroll,
 		OtherRaces: []proto.Race{proto.Race_RaceOrc},
 
-		GearSet:     core.GetGearSet("../../../ui/elemental_shaman/gear_sets", "p1"),
-		Talents:     StandardTalents,
-		Glyphs:      StandardGlyphs,
-		Consumes:    FullConsumes,
-		SpecOptions: core.SpecOptionsCombo{Label: "Adaptive", SpecOptions: PlayerOptionsAdaptive},
+		GearSet:  core.GetGearSet("../../../ui/elemental_shaman/gear_sets", "p1"),
+		Talents:  StandardTalents,
+		Glyphs:   StandardGlyphs,
+		Consumes: FullConsumes,
+		SpecOptions: core.SpecOptionsCombo{Label: "Adaptive", SpecOptions: PlayerOptionsAdaptive, DroppedSpells: map[int32]string{
+			2894: "Fire Elemental Totem: BasicTotems leave UseFireElemental off, EleFireElemental covers it",
+		}},
 		OtherSpecOptions: []core.SpecOptionsCombo{
 			{Label: "EleFireElemental", SpecOptions: PlayerOptionsAdaptiveFireElemental},
 		},

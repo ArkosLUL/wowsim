@@ -12,6 +12,7 @@ func init() {
 	RegisterRestorationShaman()
 }
 
+// The APL only autocasts cooldowns and never heals, so the suite checks stats and item heals only.
 func TestRestoration(t *testing.T) {
 	core.RunTestSuite(t, t.Name(), core.FullCharacterTestSuiteGenerator(core.CharacterSuiteConfig{
 		Class: proto.Class_ClassShaman,

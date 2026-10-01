@@ -181,6 +181,7 @@ func (rot *APLRotation) GetAPLSpell(spellId *proto.ActionID) *Spell {
 
 	if spell == nil {
 		rot.ValidationWarning("%s does not know spell %s", rot.unit.Label, actionID)
+		rot.unknownSpells = append(rot.unknownSpells, actionID)
 	}
 	return spell
 }
@@ -192,6 +193,7 @@ func (rot *APLRotation) GetTargetAPLSpell(spellId *proto.ActionID, targetUnit Un
 
 	if spell == nil {
 		rot.ValidationWarning("%s does not know spell %s", target.Label, actionID)
+		rot.unknownSpells = append(rot.unknownSpells, actionID)
 	}
 	return spell
 }

@@ -210,7 +210,7 @@ var FullConsumes = &proto.Consumes{
 	PetFood:         proto.PetFood_PetFoodKiblersBits,
 }
 
-var BMTalents = "51200201515012233110531351-005305-5"
+var BMTalents = "51200201515012233110531351-005305001-4"
 var MMTalents = "502-035335131030013233035031051-5000002"
 var SVTalents = "-015305101-5000032500033330532135301311"
 var BMGlyphs = &proto.Glyphs{
