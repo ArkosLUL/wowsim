@@ -25,9 +25,29 @@ computed chance, |z| ≤ 5 on a rolled rate, ±0.1% on a multiplier. It exits no
 
 Commands covered: `melee`, `taken`, `yellow`, `spell`, `armor`, `info`, `procs`.
 
-`spell` doesn't model `SPELL_ATTR3_ALWAYS_HIT`, a positive spell cast at the dummies (their faction 7
-isn't hostile, and `Unit::SpellHitResult` lets a positive spell miss only a hostile target), or a binary
-spell's lack of partial resists, so records of those fail it.
+`yellow` and `spell` follow the server's own rules:
+- The hit table's attack type comes from the spell's `dmgClass` (ranged, else main hand), so Judgement of
+  Wisdom rolls ranged with level*5 skill and no ranged weapon.
+- Crit suppression is expected only from crit-capable spells (`critcap.go`: a damage or heal effect in
+  `sim/core/serverdata`, no `CANT_CRIT`); a spell that can't crit has none. An id missing from serverdata
+  is assumed capable and gets a row in the fixture README.
+- Partial block is expected for every weapon class spell without `NO_ACTIVE_DEFENSE` or
+  `ALWAYS_HIT`, from the front, whatever its school; only physical spells roll it.
+- A positive spell at the dummies (faction 7, not hostile, so `Unit::SpellHitResult` never rolls it) has its
+  miss threshold checked, but not a rolled miss rate.
+- `SPELL_ATTR3_ALWAYS_HIT` and a binary spell's lack of partial resists are modeled.
+
+`info` and the white damage check only rebuild a `naked()` player: no weapon, no rating beyond defense, dodge,
+parry and armor penetration, and no timed aura besides the base stats test's rating auras and raid buffs. A
+passive aura added by hand, such as a talent, isn't detected.
+
+`melee` of a naked player also compares `meanDamage` per outcome (normal, crit, glancing, block) with the sim's
+attack power, armor, glancing, crit and block value, over the server's integer rolls (the range truncates,
+armor rounds up), within |z| ≤ 5. Armed swings are skipped: the sim can't be handed an arbitrary weapon.
+`taken` isn't compared.
+
+`TestFixtureHasEveryE2ERecord` fails when the fixture lacks a record a full e2e run produces, unless the record
+is dropped with a row in the fixture README.
 
 `procs` checks the generated `spell_proc` rows field for field against the live entry, then checks
 `core.ServerProcFor` and the PPM basis against the chance the server computed per attack type. Auras
