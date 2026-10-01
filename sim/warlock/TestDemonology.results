@@ -794,9 +794,10 @@ ability_results: {
    key: "pet:Felguard|action|{OtherID: 3, Tag: 1}"
    value: {
     casts: 198.177
-    hits: 142.119
-    crit_pct: 31.19076
-    amount_per_hit: 2882.88112
+    hits: 191.801
+    crit_pct: 23.11145
+    amount_per_hit: 2136.13162
+    amount: 409712.18128
    }
   }
   entries: {
@@ -806,6 +807,7 @@ ability_results: {
     hits: 48.8225
     crit_pct: 22.55722
     amount_per_hit: 2405.2438
+    amount: 117430.01548
    }
   }
   entries: {
@@ -947,6 +949,7 @@ ability_results: {
     hits: 76.7255
     crit_pct: 62.51572
     amount_per_hit: 16228.21254
+    amount: 1.24511772142e+06
    }
   }
   entries: {
@@ -956,6 +959,7 @@ ability_results: {
     hits: 105.741
     crit_pct: 57.3576
     amount_per_hit: 3423.94416
+    amount: 362051.27953
    }
   }
   entries: {
@@ -964,6 +968,7 @@ ability_results: {
     casts: 24.421
     hits: 143.494
     amount_per_hit: 2075.62055
+    amount: 297839.09463
    }
   }
   entries: {
@@ -973,6 +978,7 @@ ability_results: {
     hits: 50.0465
     crit_pct: 66.4562
     amount_per_hit: 21962.50335
+    amount: 1.09914642408e+06
    }
   }
   entries: {
@@ -982,6 +988,7 @@ ability_results: {
     hits: 29.4175
     crit_pct: 62.16538
     amount_per_hit: 14972.00958
+    amount: 440439.09181
    }
   }
   entries: {
@@ -990,6 +997,7 @@ ability_results: {
     casts: 1.8105
     hits: 21.6835
     amount_per_hit: 1104.57322
+    amount: 23951.01333
    }
   }
   entries: {
@@ -998,6 +1006,7 @@ ability_results: {
     casts: 4.0965
     hits: 4.0965
     amount_per_hit: 28137.88323
+    amount: 115266.83866
    }
   }
   entries: {
@@ -1006,6 +1015,7 @@ ability_results: {
     casts: 3
     hits: 44.998
     amount_per_hit: 2253.46375
+    amount: 101401.36185
    }
   }
   entries: {

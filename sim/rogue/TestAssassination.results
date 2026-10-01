@@ -2138,18 +2138,20 @@ ability_results: {
    key: "player|action|{OtherID: 3, Tag: 1}"
    value: {
     casts: 395.2125
-    hits: 246.573
-    crit_pct: 83.25689
-    amount_per_hit: 1468.4458
+    hits: 345.12
+    crit_pct: 59.48337
+    amount_per_hit: 1049.13968
+    amount: 362079.08576
    }
   }
   entries: {
    key: "player|action|{OtherID: 3, Tag: 2}"
    value: {
     casts: 292.1515
-    hits: 182.252
-    crit_pct: 83.24573
-    amount_per_hit: 1450.83269
+    hits: 255.194
+    crit_pct: 59.45163
+    amount_per_hit: 1036.14176
+    amount: 264417.15905
    }
   }
   entries: {
@@ -2171,6 +2173,7 @@ ability_results: {
     hits: 66.5185
     crit_pct: 66.91522
     amount_per_hit: 2189.69331
+    amount: 145655.11467
    }
   }
   entries: {
@@ -2180,6 +2183,7 @@ ability_results: {
     hits: 66.5185
     crit_pct: 67.38727
     amount_per_hit: 2712.39129
+    amount: 180424.19974
    }
   }
   entries: {
@@ -2196,6 +2200,7 @@ ability_results: {
     hits: 63.2765
     crit_pct: 45.5572
     amount_per_hit: 880.82653
+    amount: 55735.61971
    }
   }
   entries: {
@@ -2205,6 +2210,7 @@ ability_results: {
     hits: 65.1835
     crit_pct: 45.90119
     amount_per_hit: 974.29026
+    amount: 63507.64905
    }
   }
   entries: {
@@ -2232,6 +2238,7 @@ ability_results: {
     hits: 281.3315
     crit_pct: 30.35298
     amount_per_hit: 1708.23956
+    amount: 480581.59812
    }
   }
   entries: {
@@ -2241,6 +2248,7 @@ ability_results: {
     hits: 140.302
     crit_pct: 30.30071
     amount_per_hit: 1706.03078
+    amount: 239359.53075
    }
   }
   entries: {
@@ -2250,6 +2258,7 @@ ability_results: {
     hits: 482.0465
     crit_pct: 12.33978
     amount_per_hit: 926.3059
+    amount: 446522.51891
    }
   }
   entries: {
@@ -2259,6 +2268,7 @@ ability_results: {
     hits: 12.2025
     crit_pct: 51.97705
     amount_per_hit: 7991.65531
+    amount: 97518.17396
    }
   }
   entries: {
@@ -2268,6 +2278,7 @@ ability_results: {
     hits: 3.5605
     crit_pct: 60.38478
     amount_per_hit: 10521.92532
+    amount: 37463.31511
    }
   }
   entries: {

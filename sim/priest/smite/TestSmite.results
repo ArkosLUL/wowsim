@@ -923,12 +923,14 @@ ability_results: {
     hits: 118.583
     crit_pct: 31.42482
     amount_per_hit: 5454.47773
+    amount: 646808.33228
    }
   }
   entries: {
    key: "player|action|{SpellID: 48125}"
    value: {
     casts: 9.3695
+    amount: 67996.18168
    }
   }
   entries: {
@@ -938,12 +940,14 @@ ability_results: {
     hits: 24.9155
     crit_pct: 35.88529
     amount_per_hit: 6640.94758
+    amount: 165462.52949
    }
   }
   entries: {
    key: "player|action|{SpellID: 48300}"
    value: {
     casts: 6.264
+    amount: 69293.35058
    }
   }
   entries: {

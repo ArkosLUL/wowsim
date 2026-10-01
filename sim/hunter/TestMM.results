@@ -1069,9 +1069,10 @@ ability_results: {
    key: "pet:Wolf|action|{OtherID: 3, Tag: 1}"
    value: {
     casts: 327.185
-    hits: 245.0925
-    crit_pct: 28.5278
-    amount_per_hit: 1229.62311
+    hits: 327.185
+    crit_pct: 21.37002
+    amount_per_hit: 921.10397
+    amount: 301371.40223
    }
   }
   entries: {
@@ -1081,6 +1082,7 @@ ability_results: {
     hits: 180.3055
     crit_pct: 23.52202
     amount_per_hit: 560.09149
+    amount: 100987.57553
    }
   }
   entries: {
@@ -1168,6 +1170,7 @@ ability_results: {
     hits: 30.532
     crit_pct: 36.07363
     amount_per_hit: 58.74851
+    amount: 1793.70949
    }
   }
   entries: {
@@ -1189,6 +1192,7 @@ ability_results: {
     hits: 160.806
     crit_pct: 55.16336
     amount_per_hit: 3151.15978
+    amount: 506725.40023
    }
   }
   entries: {
@@ -1228,12 +1232,14 @@ ability_results: {
     hits: 15.5705
     crit_pct: 54.67711
     amount_per_hit: 1738.1767
+    amount: 27064.28033
    }
   }
   entries: {
    key: "player|action|{SpellID: 49001}"
    value: {
     casts: 1
+    amount: 85893.35758
    }
   }
   entries: {
@@ -1243,6 +1249,7 @@ ability_results: {
     hits: 28.5825
     crit_pct: 67.37689
     amount_per_hit: 5126.89967
+    amount: 146539.60983
    }
   }
   entries: {
@@ -1252,6 +1259,7 @@ ability_results: {
     hits: 120.5905
     crit_pct: 59.15101
     amount_per_hit: 3066.27205
+    amount: 369763.27911
    }
   }
   entries: {
@@ -1261,6 +1269,7 @@ ability_results: {
     hits: 114.3175
     crit_pct: 3.41942
     amount_per_hit: 1061.94025
+    amount: 121398.35416
    }
   }
   entries: {
@@ -1270,6 +1279,7 @@ ability_results: {
     hits: 32.564
     crit_pct: 55.2512
     amount_per_hit: 6863.23879
+    amount: 223494.50808
    }
   }
   entries: {
@@ -1278,6 +1288,7 @@ ability_results: {
     casts: 108.222
     hits: 108.222
     amount_per_hit: 2023.69309
+    amount: 219008.11339
    }
   }
   entries: {
@@ -1287,6 +1298,7 @@ ability_results: {
     hits: 19.32
     crit_pct: 55.91097
     amount_per_hit: 3949.53298
+    amount: 76304.97717
    }
   }
   entries: {
@@ -1296,6 +1308,7 @@ ability_results: {
     hits: 32.5045
     crit_pct: 55.47386
     amount_per_hit: 4720.499
+    amount: 153437.45975
    }
   }
   entries: {
@@ -1323,6 +1336,7 @@ ability_results: {
     hits: 4.004
     crit_pct: 55.26973
     amount_per_hit: 12765.85909
+    amount: 51114.49981
    }
   }
   entries: {

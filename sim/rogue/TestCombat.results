@@ -2222,18 +2222,20 @@ ability_results: {
    key: "player|action|{OtherID: 3, Tag: 1}"
    value: {
     casts: 239.0445
-    hits: 145.461
-    crit_pct: 85.67864
-    amount_per_hit: 3127.88028
+    hits: 205.0785
+    crit_pct: 60.77136
+    amount_per_hit: 2218.58748
+    amount: 454984.59296
    }
   }
   entries: {
    key: "player|action|{OtherID: 3, Tag: 2}"
    value: {
     casts: 444.983
-    hits: 270.6395
-    crit_pct: 85.79531
-    amount_per_hit: 1245.95237
+    hits: 381.5205
+    crit_pct: 60.86069
+    amount_per_hit: 883.84223
+    amount: 337203.92771
    }
   }
   entries: {
@@ -2255,6 +2257,7 @@ ability_results: {
     hits: 100.472
     crit_pct: 51.95627
     amount_per_hit: 3549.44843
+    amount: 356620.18232
    }
   }
   entries: {
@@ -2264,6 +2267,7 @@ ability_results: {
     hits: 0.6285
     crit_pct: 49.56245
     amount_per_hit: 5153.27418
+    amount: 3238.83282
    }
   }
   entries: {
@@ -2273,6 +2277,7 @@ ability_results: {
     hits: 0.1835
     crit_pct: 50.13624
     amount_per_hit: 6361.80082
+    amount: 1167.39045
    }
   }
   entries: {
@@ -2282,6 +2287,7 @@ ability_results: {
     hits: 36.652
     crit_pct: 50.6398
     amount_per_hit: 1226.87918
+    amount: 44967.5756
    }
   }
   entries: {
@@ -2291,6 +2297,7 @@ ability_results: {
     hits: 175.273
     crit_pct: 49.71644
     amount_per_hit: 1303.00602
+    amount: 228381.77338
    }
   }
   entries: {
@@ -2312,6 +2319,7 @@ ability_results: {
     hits: 20
     crit_pct: 52.5225
     amount_per_hit: 2488.91082
+    amount: 49778.2165
    }
   }
   entries: {
@@ -2321,6 +2329,7 @@ ability_results: {
     hits: 20
     crit_pct: 52.78
     amount_per_hit: 1219.44707
+    amount: 24388.94138
    }
   }
   entries: {
@@ -2336,6 +2345,7 @@ ability_results: {
     hits: 141.3215
     crit_pct: 28.7366
     amount_per_hit: 1655.34548
+    amount: 233935.90691
    }
   }
   entries: {
@@ -2345,6 +2355,7 @@ ability_results: {
     hits: 103.7875
     crit_pct: 28.66241
     amount_per_hit: 1659.98006
+    amount: 172285.18025
    }
   }
   entries: {
@@ -2353,6 +2364,7 @@ ability_results: {
     casts: 147.247
     hits: 147.247
     amount_per_hit: 1183.87826
+    amount: 174322.52215
    }
   }
   entries: {

@@ -1153,9 +1153,10 @@ ability_results: {
    key: "pet:Wolf|action|{OtherID: 3, Tag: 1}"
    value: {
     casts: 274.4865
-    hits: 205.849
-    crit_pct: 28.36764
-    amount_per_hit: 1340.34542
+    hits: 274.4865
+    crit_pct: 21.27409
+    amount_per_hit: 1005.18154
+    amount: 275908.76345
    }
   }
   entries: {
@@ -1165,6 +1166,7 @@ ability_results: {
     hits: 180.3995
     crit_pct: 21.2836
     amount_per_hit: 551.89469
+    amount: 99561.52574
    }
   }
   entries: {
@@ -1252,6 +1254,7 @@ ability_results: {
     hits: 23.3685
     crit_pct: 37.4992
     amount_per_hit: 59.69565
+    amount: 1394.99773
    }
   }
   entries: {
@@ -1273,6 +1276,7 @@ ability_results: {
     hits: 142.6825
     crit_pct: 63.57332
     amount_per_hit: 3336.25514
+    amount: 476025.2241
    }
   }
   entries: {
@@ -1303,6 +1307,7 @@ ability_results: {
    key: "player|action|{SpellID: 49001}"
    value: {
     casts: 12.779
+    amount: 64078.26591
    }
   }
   entries: {
@@ -1312,6 +1317,7 @@ ability_results: {
     hits: 24.4975
     crit_pct: 63.86774
     amount_per_hit: 4453.27748
+    amount: 109094.16509
    }
   }
   entries: {
@@ -1321,6 +1327,7 @@ ability_results: {
     hits: 81.2095
     crit_pct: 67.39298
     amount_per_hit: 2925.78956
+    amount: 237601.90762
    }
   }
   entries: {
@@ -1330,6 +1337,7 @@ ability_results: {
     hits: 130.7805
     crit_pct: 3.41641
     amount_per_hit: 1638.23154
+    amount: 214248.73994
    }
   }
   entries: {
@@ -1357,6 +1365,7 @@ ability_results: {
     hits: 27.7525
     crit_pct: 72.37186
     amount_per_hit: 4830.56624
+    amount: 134060.28957
    }
   }
   entries: {
@@ -1366,6 +1375,7 @@ ability_results: {
     hits: 154.049
     crit_pct: 71.89953
     amount_per_hit: 5007.62784
+    amount: 771420.0608
    }
   }
   entries: {
@@ -1375,6 +1385,7 @@ ability_results: {
     hits: 6.9955
     crit_pct: 78.10735
     amount_per_hit: 14481.4251
+    amount: 101304.80928
    }
   }
   entries: {

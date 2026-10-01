@@ -791,9 +791,10 @@ ability_results: {
    key: "pet:Felhunter|action|{OtherID: 3, Tag: 1}"
    value: {
     casts: 149.164
-    hits: 107.102
-    crit_pct: 17.16635
-    amount_per_hit: 932.18564
+    hits: 144.411
+    crit_pct: 12.73137
+    amount_per_hit: 691.35278
+    amount: 99838.94692
    }
   }
   entries: {
@@ -803,6 +804,7 @@ ability_results: {
     hits: 120.6765
     crit_pct: 23.40969
     amount_per_hit: 1634.09062
+    amount: 197196.33686
    }
   }
   entries: {
@@ -872,6 +874,7 @@ ability_results: {
     hits: 33.654
     crit_pct: 12.92714
     amount_per_hit: 2791.45089
+    amount: 93943.48816
    }
   }
   entries: {
@@ -929,6 +932,7 @@ ability_results: {
     hits: 1
     crit_pct: 56.6
     amount_per_hit: 8250.72449
+    amount: 8250.72449
    }
   }
   entries: {
@@ -944,6 +948,7 @@ ability_results: {
     hits: 114.456
     crit_pct: 58.33595
     amount_per_hit: 12948.99223
+    amount: 1.48208985447e+06
    }
   }
   entries: {
@@ -953,6 +958,7 @@ ability_results: {
     hits: 167.1595
     crit_pct: 68.65299
     amount_per_hit: 7924.0832
+    amount: 1.32458578555e+06
    }
   }
   entries: {
@@ -962,6 +968,7 @@ ability_results: {
     hits: 91.5425
     crit_pct: 62.5977
     amount_per_hit: 5410.77344
+    amount: 495315.72745
    }
   }
   entries: {
@@ -970,6 +977,7 @@ ability_results: {
     casts: 15.9265
     hits: 30.0335
     amount_per_hit: 21541.7609
+    amount: 646974.47605
    }
   }
   entries: {
@@ -978,6 +986,7 @@ ability_results: {
     casts: 11.47
     hits: 137.4565
     amount_per_hit: 1496.25132
+    amount: 205669.46965
    }
   }
   entries: {
@@ -999,6 +1008,7 @@ ability_results: {
     hits: 28.3845
     crit_pct: 53.47285
     amount_per_hit: 6515.12609
+    amount: 184928.59643
    }
   }
   entries: {

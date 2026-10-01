@@ -1009,6 +1009,7 @@ ability_results: {
     hits: 224.5255
     crit_pct: 13.45682
     amount_per_hit: 270.54661
+    amount: 60744.61398
    }
   }
   entries: {
@@ -1042,6 +1043,7 @@ ability_results: {
     hits: 271.2685
     crit_pct: 12.46532
     amount_per_hit: 270.82938
+    amount: 73467.47852
    }
   }
   entries: {
@@ -1075,6 +1077,7 @@ ability_results: {
     hits: 115.995
     crit_pct: 13.50748
     amount_per_hit: 1057.28128
+    amount: 122639.34226
    }
   }
   entries: {
@@ -1084,6 +1087,7 @@ ability_results: {
     hits: 12.6225
     crit_pct: 12.64013
     amount_per_hit: 1504.15806
+    amount: 18986.23515
    }
   }
   entries: {
@@ -1117,6 +1121,7 @@ ability_results: {
     hits: 35.8505
     crit_pct: 51.38422
     amount_per_hit: 3885.93902
+    amount: 139312.85693
    }
   }
   entries: {
@@ -1126,6 +1131,7 @@ ability_results: {
     hits: 10.729
     crit_pct: 46.47218
     amount_per_hit: 3082.31211
+    amount: 33070.12665
    }
   }
   entries: {
@@ -1135,6 +1141,7 @@ ability_results: {
     hits: 3.743
     crit_pct: 46.08603
     amount_per_hit: 1725.85263
+    amount: 6459.86639
    }
   }
   entries: {
@@ -1144,6 +1151,7 @@ ability_results: {
     hits: 3.5615
     crit_pct: 57.08269
     amount_per_hit: 2423.42099
+    amount: 8631.01386
    }
   }
   entries: {
@@ -1153,6 +1161,7 @@ ability_results: {
     hits: 5.678
     crit_pct: 55.98802
     amount_per_hit: 5980.97594
+    amount: 33959.98138
    }
   }
   entries: {
@@ -1169,6 +1178,7 @@ ability_results: {
     hits: 26.2915
     crit_pct: 51.60603
     amount_per_hit: 1275.26681
+    amount: 33528.67735
    }
   }
   entries: {
@@ -1177,6 +1187,7 @@ ability_results: {
     casts: 3.743
     hits: 26.309
     amount_per_hit: 835.25704
+    amount: 21974.77738
    }
   }
   entries: {
@@ -1186,6 +1197,7 @@ ability_results: {
     hits: 24.2315
     crit_pct: 60.87118
     amount_per_hit: 4850.77912
+    amount: 117541.65434
    }
   }
   entries: {
@@ -1222,9 +1234,10 @@ ability_results: {
    key: "player|action|{OtherID: 3, Tag: 1}"
    value: {
     casts: 118.094
-    hits: 88.433
-    crit_pct: 62.33024
-    amount_per_hit: 8801.37913
+    hits: 118.094
+    crit_pct: 46.67511
+    amount_per_hit: 6590.78667
+    amount: 778332.36102
    }
   }
   entries: {
@@ -1264,6 +1277,7 @@ ability_results: {
     hits: 54.9455
     crit_pct: 41.02429
     amount_per_hit: 4484.36582
+    amount: 246395.72221
    }
   }
   entries: {
@@ -1310,6 +1324,7 @@ ability_results: {
     hits: 4.818
     crit_pct: 41.00249
     amount_per_hit: 2706.37384
+    amount: 13039.30918
    }
   }
   entries: {
@@ -1319,6 +1334,7 @@ ability_results: {
     hits: 4.6355
     crit_pct: 52.56175
     amount_per_hit: 4521.74712
+    amount: 20960.55878
    }
   }
   entries: {
@@ -1328,6 +1344,7 @@ ability_results: {
     hits: 29.0835
     crit_pct: 53.18651
     amount_per_hit: 10202.90579
+    amount: 296736.21045
    }
   }
   entries: {
@@ -1344,6 +1361,7 @@ ability_results: {
     casts: 35.417
     hits: 35.417
     amount_per_hit: 2802.09557
+    amount: 99241.81888
    }
   }
   entries: {
@@ -1359,6 +1377,7 @@ ability_results: {
     casts: 118.094
     hits: 118.094
     amount_per_hit: 1270.47601
+    amount: 150035.594
    }
   }
   entries: {
@@ -1374,6 +1393,7 @@ ability_results: {
     hits: 190.437
     crit_pct: 46.85355
     amount_per_hit: 2137.66898
+    amount: 407091.26813
    }
   }
   entries: {
@@ -1382,6 +1402,7 @@ ability_results: {
     casts: 4.818
     hits: 189.5565
     amount_per_hit: 1403.26567
+    amount: 265998.12905
    }
   }
   entries: {
@@ -1391,6 +1412,7 @@ ability_results: {
     hits: 102.9145
     crit_pct: 55.52765
     amount_per_hit: 8493.3226
+    amount: 874086.04826
    }
   }
   entries: {
