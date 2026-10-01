@@ -265,3 +265,47 @@ The decisions, the item split and the waves are in the [PLAN](test-enrichment.PL
   one work item per wave changes the module's C++, and new e2e tests go in per-item files.
 - **Tooling.** Probes that prove useful move out of scratch, next to the code they test, with a run command in a
   README. G1 and G3's guards make this investigation's probe permanent.
+
+## TE-REPLAY as built
+
+Code stage measured on `33da5ca34`, then the live recapture.
+
+**Findings re-measured.**
+- Finding 8: the fixture still holds 82 records (warrior, hunter, base stats), replaying 508 checks. The
+  server code confirms three of the four traced failures; the fourth is untested:
+  - `MeleeSpellHitResult` and `DeriveYellowTable` pick the attack type from `dmgClass` (ranged), and a ranged
+    class spell without a ranged weapon rolls with level*5 skill.
+  - `SpellDoneCritChance` and `SpellTakenCritChance` return 0 for `CANT_CRIT` and for a spell without a damage or
+    heal effect (`ComputeIsCritCapable`), so the sim expected suppression the server never reports.
+  - `SpellHitResult` returns no miss for a positive spell on a non-hostile target; `DeriveMagicTable` ignores that,
+    so only the rolled rate disagrees.
+  - Reforge and DK `info` records couldn't be traced offline, since both tests start armed.
+- Finding 11: `run.sh`'s default `-run TestSimval` matches 24 tests now (19 before; 4 renamed tank tests and
+  `TestSimvalWhiteDamage`).
+
+**Replay.**
+- Attack type, crit suppression, partial block and the positive-spell miss follow the server (see the tools/simval
+  README). `derived.yellow.attackType` is cross-checked against `dmgClass`.
+- `naked()` also needs no rating beyond defense, dodge, parry and armor penetration, and no timed aura beyond the base
+  stats test's. The fixture's 508 checks are unchanged.
+- White damage (`whitedamage.go`) models the server's integer arithmetic over the sim's attack power, armor
+  multiplier, glancing multiplier, crit multiplier and creature block value. A hand-checked unit test pins it. It had
+  no real naked `melee` record to match until the recapture: on the committed armed warrior (weapon 1-3, 1.9 s, 568
+  AP) the server rolls about 1.7 more per normal hit than the model, equal to the roll range shifted up by 3 before
+  armor, and the level 80 dummy's armor multiplier reads slightly high. Cause not found; the armed warrior isn't
+  compared.
+- `TestSimvalWhiteDamage` records four stripped characters for it. `fixture_test.go` holds the records a full run must
+  produce, enforced now that the fixture is a full capture.
+
+**Housekeeping.** `TestSimvalP7Tank*` renamed, the account prefix registry, the stray `e2e;C` directory removed.
+
+**Live recapture.** One `run.sh` (24 tests, all passed): 286-288 s wall, so about 5 min. The stream captured 142 records
+after the start filter and dedupe (the fixture held 82), replaying 1060 checks (508 before). No check the code stage
+newly failed on the old fixture; on the new capture one record failed.
+- Records per command, before to after: armor 21 to 21, info 45 to 51, melee 5 to 8, procs 2 to 7, spell 3 to 27,
+  taken 1 to 10, yellow 5 to 18.
+- Judgement of Wisdom (53408) and Death Coil cast (49895) pass. The reforge, DK and tank `info` records pass the
+  `naked()` rules; the paladin, hunter and rogue unarmed melee records pass the white damage model.
+- Dropped: the unarmed warrior's `melee` record. The server rolls 51 normal, 102 crit, 35 glancing, 10 blocked
+  against the model's 49, 98, 34, 8, with the same attack power (568) as the armed warrior. It's the same +2 as the
+  armed one, so it's warrior-specific. A fixture README row records it and it's a follow-up, not a sim change.

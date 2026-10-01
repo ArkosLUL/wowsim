@@ -8,6 +8,9 @@ import "encoding/json"
 type attackSnapshot struct {
 	Type               string  `json:"type"` // mainhand, offhand, ranged
 	UnhastedMs         int32   `json:"unhastedMs"`
+	HastedMs           int32   `json:"hastedMs"`
+	DamageMin          float64 `json:"damageMin"` // the weapon's own range, before attack power
+	DamageMax          float64 `json:"damageMax"`
 	MissChanceTaken    float64 `json:"missChanceTaken"`
 	ExpertiseReduction float64 `json:"expertiseReduction"`
 	WeaponSkillVsOther int32   `json:"weaponSkillVsOther"`
@@ -20,6 +23,7 @@ type attackSnapshot struct {
 
 type unitSnapshot struct {
 	Name             string  `json:"name"`
+	Entry            uint32  `json:"entry"`
 	Level            int32   `json:"level"`
 	IsPlayer         bool    `json:"isPlayer"`
 	IsPet            bool    `json:"isPet"`
@@ -95,10 +99,35 @@ func (u unitSnapshot) rating(name string) (rating, bonus float64) {
 	return 0, 0
 }
 
-// naked is a player with no weapon in any hand, which the base stats checks need.
+// bareRatings are the only ratings a character the sim can build bare may carry: the base stats test
+// grants defense, dodge and armor penetration through auras, and a death knight's parry comes from
+// strength.
+var bareRatings = map[string]bool{"defenseSkill": true, "dodge": true, "parry": true, "armorPenetration": true}
+
+// bareBuffAuras are the timed auras the base stats test puts on its characters: the rating auras and
+// the raid buffs the sim gives each class. Any other timed aura is a buff the bare sim character
+// lacks. Passive auras are left alone, since racial and class passives sit on every character.
+var bareBuffAuras = map[int32]bool{
+	24774: true, 24775: true, 15804: true, 67694: true, // defense and dodge rating
+	71557: true, 71403: true, 42976: true, // armor penetration rating
+	48161: true, 48073: true, 48169: true, 57623: true, 42995: true, 48469: true, // raid buffs
+}
+
+// naked is a player the sim's bare character can stand in for: no weapon in any hand, no rating beyond
+// bareRatings and no timed aura beyond bareBuffAuras.
 func (u unitSnapshot) naked() bool {
 	for _, a := range u.Attacks {
 		if a.Weapon != nil {
+			return false
+		}
+	}
+	for _, r := range u.Ratings {
+		if r.Rating != 0 && !bareRatings[r.Name] {
+			return false
+		}
+	}
+	for _, a := range u.Auras {
+		if a.DurationMs > 0 && !bareBuffAuras[a.ID] {
 			return false
 		}
 	}
@@ -145,6 +174,7 @@ type yellowTable struct {
 	CanDodge           bool    `json:"canDodge"`
 	CanParry           bool    `json:"canParry"`
 	CanBlock           bool    `json:"canBlock"`
+	AttackType         string  `json:"attackType"`
 	DodgeBp            int32   `json:"dodgeBp"`
 	ParryBp            int32   `json:"parryBp"`
 	BlockBp            int32   `json:"blockBp"`
@@ -167,7 +197,9 @@ type spellDerived struct {
 }
 
 type counted struct {
-	Count float64 `json:"count"`
+	Count       float64 `json:"count"`
+	MeanDamage  float64 `json:"meanDamage"`
+	MeanBlocked float64 `json:"meanBlocked"`
 }
 
 type record struct {
@@ -184,6 +216,8 @@ type record struct {
 		ID         int32  `json:"id"`
 		Name       string `json:"name"`
 		SchoolMask uint32 `json:"schoolMask"`
+		DmgClass   uint8  `json:"dmgClass"`
+		Positive   bool   `json:"positive"`
 		Binary     bool   `json:"binary"`
 		AttackType string `json:"attackType"`
 	} `json:"spell"`
@@ -270,6 +304,23 @@ func (r record) attackType() string {
 	}
 	return r.Spell.AttackType
 }
+
+// SPELL_DAMAGE_CLASS_RANGED. The server picks the hit table's attack type from it, not from the weapon
+// the spell uses: a judgement is ranged, with no ranged weapon in sight.
+const dmgClassRanged = 3
+
+// tableAttackType is the attack the yellow table was rolled for.
+func (r record) tableAttackType() string {
+	if r.Spell.DmgClass == dmgClassRanged {
+		return "ranged"
+	}
+	return "mainhand"
+}
+
+// The dummies' entries; they all share faction 7.
+func isDummy(entry uint32) bool { return entry >= 999000 && entry <= 999003 }
+
+func (r record) positiveAtDummy() bool { return r.Spell.Positive && isDummy(r.Target.Entry) }
 
 func (r record) label() string {
 	name := r.Command

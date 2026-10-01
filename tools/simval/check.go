@@ -108,7 +108,7 @@ func hitMod(unit unitSnapshot, attackType string) float64 {
 // CheckRecord runs every comparison a record supports.
 func CheckRecord(rec record) []Check {
 	switch rec.Command {
-	case "melee", "taken":
+	case "taken":
 		return checkWhite(rec)
 	case "yellow", "spell":
 		return checkSpell(rec)
@@ -118,6 +118,8 @@ func CheckRecord(rec record) []Check {
 		return checkProcs(rec)
 	case "info":
 		return checkInfo(rec)
+	case "melee":
+		return append(checkWhite(rec), checkWhiteDamage(rec)...)
 	default:
 		return nil
 	}
@@ -175,9 +177,15 @@ func checkSpell(rec record) []Check {
 	var checks []Check
 
 	if server.Yellow != nil {
-		in := meleeInput(rec, rec.Attacker.attack(rec.attackType()))
+		attack := rec.Attacker.attack(rec.tableAttackType())
+		// A ranged class spell without a ranged weapon (a judgement) rolls with level*5 skill, which
+		// is also what the sim gives every player.
+		if rec.Spell.DmgClass == dmgClassRanged && attack.Weapon == nil {
+			attack.WeaponSkillVsOther = core.MaxSkill(rec.Attacker.Level)
+		}
+		in := meleeInput(rec, attack)
 		opts := core.YellowOptions{
-			Ranged:          rec.attackType() == "ranged",
+			Ranged:          rec.tableAttackType() == "ranged",
 			NoActiveDefense: server.Yellow.NoActiveDefense,
 			BlockedInTable:  server.Yellow.CanBlock,
 			NoDodge:         !server.Yellow.CanDodge,
@@ -197,10 +205,11 @@ func checkSpell(rec record) []Check {
 			checkBP("yellow block", table.Block, server.Yellow.BlockBp),
 		)
 
-		// isSpellBlocked is only rolled for physical damage, and only from the
-		// front.
+		// The server derives the chance for every weapon class spell that can be actively defended
+		// against, whatever its school, and only from the front. Physical ones are the only ones it
+		// rolls (see the rolled partial block check below).
 		var partial int32
-		if rec.physical() && rec.Target.OtherInFront && !server.Yellow.AlwaysHit {
+		if rec.Target.OtherInFront && rec.Target.canBlock() && !server.Yellow.AlwaysHit && !server.Yellow.NoActiveDefense {
 			partial = core.PartialBlockBP(
 				float32(rec.Target.Defense.Block),
 				core.MaxSkill(rec.Attacker.Level),
@@ -213,8 +222,11 @@ func checkSpell(rec record) []Check {
 
 		// critDone is the sheet crit, critTaken what the skill difference leaves
 		// of it. Magic damage class spells get no suppression at all, which is why
-		// this only runs on the weapon branch.
+		// this only runs on the weapon branch. A spell that can't crit has neither.
 		suppression := core.MeleeCritSuppressionPct(rec.Attacker.MaxSkillForOther, rec.Target.DefenseSkill)
+		if capable, _ := critCapable(rec.Spell.ID); !capable {
+			suppression = 0
+		}
 		checks = append(checks, checkMultiplier("crit suppression", suppression, server.CritDone-server.CritTaken))
 	}
 
@@ -226,7 +238,9 @@ func checkSpell(rec record) []Check {
 		}
 		checks = append(checks, checkBP("spell miss threshold", miss, server.Magic.MissThreshold))
 
-		if counts, ok := rec.HitResults["miss"]; ok && miss > 0 {
+		// A positive spell never rolls the table against a target that isn't hostile, which the dummies
+		// (faction 7) aren't, so nothing was rolled to count.
+		if counts, ok := rec.HitResults["miss"]; ok && miss > 0 && !rec.positiveAtDummy() {
 			checks = append(checks, checkRate("rolled spell miss", counts.Count, rec.Iterations, miss))
 		}
 	}

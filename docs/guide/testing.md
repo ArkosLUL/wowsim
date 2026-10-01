@@ -92,14 +92,22 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
 
 ## Against the server
 
-- `tools/simval` replays simval records captured on the server, and rebuilds naked `info` characters in
-  the sim:
+- `tools/simval` replays simval records captured on the server, and rebuilds naked `info` characters and
+  unarmed white swings in the sim:
   `dock.sh run ./tools/simval -records /wotlk/sim/core/testdata/simval/simval.jsonl`.
-- Live e2e, which needs the user's OK: `cd [ac]/modules/mod-sim-validation && ./e2e/run.sh [TestName]`,
-  about 2 min. The module's `README.md` covers its commands, env vars and orphan cleanup.
-  - The suite deletes its own records, and the host side of the log mount is stale. To keep a fixture,
-    stream it from inside the container while the suite runs, then dedupe:
-    `docker exec ac-worldserver tail -F -n +1 /azerothcore/env/dist/logs/simval/simval.jsonl > stream.jsonl &`
+  - `sim/core/testdata/simval/simval.jsonl` is the committed capture of the whole e2e suite; its README lists
+    dropped records. `TestFixtureHasEveryE2ERecord` keys it on (command, spell id, class, dummy entry).
+- Live e2e, which needs the user's OK: `cd [ac]/modules/mod-sim-validation && ./e2e/run.sh [TestName]`
+  (default `-run TestSimval`, about 5 min). The module's `README.md` covers its commands, env vars and orphan cleanup.
+  - Recapture the fixture, never append: the suite deletes its own records and the host side of the log
+    mount is stale, so stream from inside the container, started before the run:
+    1. `MSYS_NO_PATHCONV=1 docker exec ac-worldserver tail -F -n +1 /azerothcore/env/dist/logs/simval/simval.jsonl > tmp/stream.jsonl &`,
+       note the PID and the start time in ms.
+    2. `e2e/run.sh`, then stop the tail by PID (and its `tail` process in the container, which outlives it).
+    3. Keep lines whose `unixMs` is at or after the start, dedupe by line (`awk '!seen[$0]++'`).
+    4. `dock.sh run ./tools/simval -records /wotlk/tmp/<capture> -fixture` replaces the fixture. Every
+       failing record is a sim/server mismatch: remove it, add a row to the fixture README, and open a
+       follow-up. Never fix the sim here.
 - Spell data: `tools/acore/spellids` lists the spell ids the sim needs and checks them against the committed
   capture. Its README's [Capturing](../../tools/acore/spellids/README.md#capturing) section recaptures
   missing ones live.
