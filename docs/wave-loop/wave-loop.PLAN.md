@@ -64,6 +64,10 @@ G = changes goldens. FS = runs all 37 suites.
 | J2 | BIS-stage2 · BIS-adopt · PERF-RNG (FS) · BIS-stage2b | ✔ |
 | K | PAR-P8 (G, FS) · BIS-tank-boss · BIS-presets | ✔ |
 | L | PAR-FU-1 (G) · PAR-FU-2 (G) · UI-FIX3 · BIS-relic · BIS-oh-unique · BIS-caps · BIS-caps-hit · BIS-caps-race | ✔ |
+| M | TE-ABILITY (G, FS) · TE-REPLAY (live) | ✔ |
+| N | TE-GUARD (G) · TE-DAMAGE (C++, live) | ✔ |
+| O | TE-TALENTS (G) · TE-GOLDCHAR (C++, live) | ✔ |
+| P | TE-SWEEP (live) | ✔ |
 
 F2 is an inserted wave, not a fifth item in F: the core swing and cast fixes of PAR-P7-0c have to land
 before the class items in G, a class item can't build on a core fix merging in its own wave, and F already
@@ -104,6 +108,7 @@ hand, so the dual-wield builds' presets rerun after it merges. BIS-caps, a sixth
 day), makes DPS picks reach their hit and expertise caps and stop at a haste cap, so all 28 builds' presets
 regenerate after it. Two fixes followed it: BIS-caps-hit (hit talents on spells) and BIS-caps-race (each racial
 finalist's gear meets the caps on its own traits).
+M to P are the test-enrichment effort, after L lands (the user's call, 2026-10-01): richer goldens and live e2e.
 
 **Where the specs are:**
 
@@ -115,18 +120,17 @@ finalist's gear meets the caps on its own traits).
 | `BIS-` | [bis-optimizer PLAN, "Work items"](../bis-optimizer/bis-optimizer.PLAN.md) |
 | `PERF-` | [sim-performance PLAN, "Work items"](../sim-performance/sim-performance.PLAN.md) |
 | `UI-` | [ui-tests PLAN, "Work items"](../ui-tests/ui-tests.PLAN.md) |
+| `TE-` | [test-enrichment PLAN, "Work items"](../test-enrichment/test-enrichment.PLAN.md) |
 
 ## Current wave
 
-- Wave: L, landed (master fast-forwarded to this close-out), prod rebuilt from it. Its 6 items, BIS-caps-hit,
-  BIS-caps-race, both cross-reviews and all 28 presets at Normal (`f67242686`) are in.
+- Wave: M, running. L landed as `23e9e9e79`, prod rebuilt from it.
 - Carried (the user's call, 2026-10-01): rerun every DPS preset on the final HEAD, since BIS-caps-race changes
   every racial search and `ff0920a96` the 16 builds `mage_*`, `rogue_*`, `warlock_*`, `warrior_arms`,
   `warrior_fury`, `protection_warrior`, `shadow_priest`, `smite_priest`, `dk_blood`, `elemental_shaman`.
-- Next: wave M, test-enrichment; start with its PLAN's "Orchestrator onboarding (wave M start)".
-- Base SHA: `1fc3f7c3d`; the WIs branch from its spec commit `773610faf`.
-- Workflow runIds: `wf_34052b28-d62`, `wf_1a26dbdb-51c`, `wf_ac1129b6-8d7`, `wf_a59f095c-4b7`, `wf_f5be2bcf-e23`; args
-  `waveL*-args.json` in `G:\DevStuff\GitHub\.wave-loop`, transcripts in
+- Base SHA: `23e9e9e79`; the WIs branch from this onboarding commit.
+- Workflow runIds: L's `wf_34052b28-d62`, `wf_1a26dbdb-51c`, `wf_ac1129b6-8d7`, `wf_a59f095c-4b7`, `wf_f5be2bcf-e23`,
+  `wf_42fc0b7c-42a`; args `wave<X>*-args.json` in `G:\DevStuff\GitHub\.wave-loop`, transcripts in
   `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\<runId>`.
 - J2's full-roster batch ran 2026-09-28 in 52 min at Quick, output in
   `G:\DevStuff\GitHub\.wave-loop\bis-j2-full`; its times are the INVESTIGATION's batch rows.
