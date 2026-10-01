@@ -53,6 +53,7 @@ func TestProtectionWarrior(t *testing.T) {
 			},
 		}),
 		&core.SingleDpsTestGenerator{Name: "GenericBoss", Request: genericBossRequest()},
+		&core.SingleDpsTestGenerator{Name: "Talents-FocusedRage-Average", Request: focusedRageTalentsRequest()},
 	))
 }
 
@@ -138,3 +139,39 @@ var FullConsumes = &proto.Consumes{
 	BattleElixir:   proto.BattleElixir_ElixirOfMastery,
 	GuardianElixir: proto.GuardianElixir_GiftOfArthas,
 }
+
+// Puncture, Improved Disciplines, Focused Rage, Booming Voice and Improved Demoralizing Shout, which no other
+// build takes, on TestProtectionWarrior's default player
+func focusedRageTalentsRequest() *proto.RaidSimRequest {
+	rsr := &proto.RaidSimRequest{
+		Raid: core.SinglePlayerRaidProto(
+			&proto.Player{
+				Race:               proto.Race_RaceOrc,
+				Class:              proto.Class_ClassWarrior,
+				Equipment:          core.GetGearSet("../../../ui/protection_warrior/gear_sets", "p1_balanced").GearSet,
+				Consumes:           FullConsumes,
+				Spec:               PlayerOptionsBasic,
+				Buffs:              core.FullIndividualBuffs,
+				Rotation:           core.GetAplRotation("../../../ui/protection_warrior/apls", "default").Rotation,
+				TalentsString:      FocusedRageTalents,
+				Glyphs:             DefaultGlyphs,
+				Profession1:        proto.Profession_Engineering,
+				InFrontOfTarget:    true,
+				DistanceFromTarget: 30,
+				ReactionTimeMs:     150,
+				ChannelClipDelayMs: 50,
+			},
+			core.FullPartyBuffs,
+			core.FullRaidBuffs,
+			core.FullDebuffs),
+		Encounter:  core.MakeSingleTargetEncounter(5),
+		SimOptions: core.AverageDefaultSimTestOptions,
+	}
+	rsr.Raid.Tanks = []*proto.UnitReference{{Type: proto.UnitReference_Player, Index: 0}}
+	return rsr
+}
+
+// DefaultTalents with Improved Heroic Strike, Tactical Mastery, Impale, Deep Wounds, a point of Deflection,
+// Cruelty, and Warbringer and Vigilance, which the sim doesn't read, in Puncture, Improved Disciplines,
+// Focused Rage, Booming Voice and Improved Demoralizing Shout
+var FocusedRageTalents = "04-3205-053351225003212520330013321"

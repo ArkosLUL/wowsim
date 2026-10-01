@@ -13,50 +13,53 @@ func init() {
 }
 
 func TestElemental(t *testing.T) {
-	core.RunTestSuite(t, t.Name(), core.FullCharacterTestSuiteGenerator(core.CharacterSuiteConfig{
-		Class:      proto.Class_ClassShaman,
-		Race:       proto.Race_RaceTroll,
-		OtherRaces: []proto.Race{proto.Race_RaceOrc},
+	core.RunTestSuite(t, t.Name(), core.JoinTestGenerators(
+		core.FullCharacterTestSuiteGenerator(core.CharacterSuiteConfig{
+			Class:      proto.Class_ClassShaman,
+			Race:       proto.Race_RaceTroll,
+			OtherRaces: []proto.Race{proto.Race_RaceOrc},
 
-		GearSet:  core.GetGearSet("../../../ui/elemental_shaman/gear_sets", "p1"),
-		Talents:  StandardTalents,
-		Glyphs:   StandardGlyphs,
-		Consumes: FullConsumes,
-		SpecOptions: core.SpecOptionsCombo{Label: "Adaptive", SpecOptions: PlayerOptionsAdaptive, DroppedSpells: map[int32]string{
-			2894: "Fire Elemental Totem: BasicTotems leave UseFireElemental off, EleFireElemental covers it",
-		}},
-		OtherSpecOptions: []core.SpecOptionsCombo{
-			{Label: "EleFireElemental", SpecOptions: PlayerOptionsAdaptiveFireElemental},
-		},
-		Rotation: core.GetAplRotation("../../../ui/elemental_shaman/apls", "default"),
-		OtherRotations: []core.RotationCombo{
-			core.GetAplRotation("../../../ui/elemental_shaman/apls", "advanced"),
-		},
-
-		ItemFilter: core.ItemFilter{
-			WeaponTypes: []proto.WeaponType{
-				proto.WeaponType_WeaponTypeAxe,
-				proto.WeaponType_WeaponTypeDagger,
-				proto.WeaponType_WeaponTypeFist,
-				proto.WeaponType_WeaponTypeMace,
-				proto.WeaponType_WeaponTypeOffHand,
-				proto.WeaponType_WeaponTypeShield,
-				proto.WeaponType_WeaponTypeStaff,
+			GearSet:  core.GetGearSet("../../../ui/elemental_shaman/gear_sets", "p1"),
+			Talents:  StandardTalents,
+			Glyphs:   StandardGlyphs,
+			Consumes: FullConsumes,
+			SpecOptions: core.SpecOptionsCombo{Label: "Adaptive", SpecOptions: PlayerOptionsAdaptive, DroppedSpells: map[int32]string{
+				2894: "Fire Elemental Totem: BasicTotems leave UseFireElemental off, EleFireElemental covers it",
+			}},
+			OtherSpecOptions: []core.SpecOptionsCombo{
+				{Label: "EleFireElemental", SpecOptions: PlayerOptionsAdaptiveFireElemental},
 			},
-			ArmorType: proto.ArmorType_ArmorTypeMail,
-			RangedWeaponTypes: []proto.RangedWeaponType{
-				proto.RangedWeaponType_RangedWeaponTypeTotem,
+			Rotation: core.GetAplRotation("../../../ui/elemental_shaman/apls", "default"),
+			OtherRotations: []core.RotationCombo{
+				core.GetAplRotation("../../../ui/elemental_shaman/apls", "advanced"),
 			},
-		},
 
-		EPReferenceStat: proto.Stat_StatSpellPower,
-		StatsToWeigh: []proto.Stat{
-			proto.Stat_StatIntellect,
-			proto.Stat_StatSpellPower,
-			proto.Stat_StatSpellHit,
-			proto.Stat_StatSpellCrit,
-		},
-	}))
+			ItemFilter: core.ItemFilter{
+				WeaponTypes: []proto.WeaponType{
+					proto.WeaponType_WeaponTypeAxe,
+					proto.WeaponType_WeaponTypeDagger,
+					proto.WeaponType_WeaponTypeFist,
+					proto.WeaponType_WeaponTypeMace,
+					proto.WeaponType_WeaponTypeOffHand,
+					proto.WeaponType_WeaponTypeShield,
+					proto.WeaponType_WeaponTypeStaff,
+				},
+				ArmorType: proto.ArmorType_ArmorTypeMail,
+				RangedWeaponTypes: []proto.RangedWeaponType{
+					proto.RangedWeaponType_RangedWeaponTypeTotem,
+				},
+			},
+
+			EPReferenceStat: proto.Stat_StatSpellPower,
+			StatsToWeigh: []proto.Stat{
+				proto.Stat_StatIntellect,
+				proto.Stat_StatSpellPower,
+				proto.Stat_StatSpellHit,
+				proto.Stat_StatSpellCrit,
+			},
+		}),
+		&core.SingleDpsTestGenerator{Name: "Talents-Convection-Average", Request: convectionTalentsRequest()},
+	))
 }
 
 // TestElemental's default player, as its FullBuffs LongSingleTarget test runs it
@@ -135,3 +138,35 @@ var FullConsumes = &proto.Consumes{
 	PrepopPotion:    proto.Potions_DestructionPotion,
 	DefaultConjured: proto.Conjured_ConjuredDarkRune,
 }
+
+// talentsAverageRequest runs player the way Average-Default runs a suite's default player
+func talentsAverageRequest(player *proto.Player) *proto.RaidSimRequest {
+	return &proto.RaidSimRequest{
+		Raid:       core.SinglePlayerRaidProto(player, core.FullPartyBuffs, core.FullRaidBuffs, core.FullDebuffs),
+		Encounter:  core.MakeSingleTargetEncounter(5),
+		SimOptions: core.AverageDefaultSimTestOptions,
+	}
+}
+
+// Convection, which no other build takes, on TestElemental's default player. It runs the Fire Elemental
+// options, since the default APL casts Fire Elemental Totem.
+func convectionTalentsRequest() *proto.RaidSimRequest {
+	return talentsAverageRequest(&proto.Player{
+		Race:               proto.Race_RaceTroll,
+		Class:              proto.Class_ClassShaman,
+		Equipment:          core.GetGearSet("../../../ui/elemental_shaman/gear_sets", "p1").GearSet,
+		Consumes:           FullConsumes,
+		Spec:               PlayerOptionsAdaptiveFireElemental,
+		Buffs:              core.FullIndividualBuffs,
+		Rotation:           core.GetAplRotation("../../../ui/elemental_shaman/apls", "default").Rotation,
+		TalentsString:      ConvectionTalents,
+		Glyphs:             StandardGlyphs,
+		Profession1:        proto.Profession_Engineering,
+		DistanceFromTarget: 30,
+		ReactionTimeMs:     150,
+		ChannelClipDelayMs: 50,
+	})
+}
+
+// StandardTalents with Eye of the Storm and Elemental Warding, which the sim doesn't read, in Convection
+var ConvectionTalents = "5530001520212351322301351-005052031"

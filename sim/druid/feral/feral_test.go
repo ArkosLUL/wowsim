@@ -27,23 +27,57 @@ var FeralItemFilter = core.ItemFilter{
 }
 
 func TestFeral(t *testing.T) {
-	core.RunTestSuite(t, t.Name(), core.FullCharacterTestSuiteGenerator(core.CharacterSuiteConfig{
-		Class: proto.Class_ClassDruid,
-		Race:  proto.Race_RaceTauren,
+	core.RunTestSuite(t, t.Name(), core.JoinTestGenerators(
+		core.FullCharacterTestSuiteGenerator(core.CharacterSuiteConfig{
+			Class: proto.Class_ClassDruid,
+			Race:  proto.Race_RaceTauren,
 
-		GearSet:     core.GetGearSet("../../../ui/feral_druid/gear_sets", "p1"),
-		Talents:     StandardTalents,
-		Glyphs:      StandardGlyphs,
-		Consumes:    FullConsumes,
-		SpecOptions: core.SpecOptionsCombo{Label: "Default", SpecOptions: PlayerOptionsMonoCat},
-		OtherSpecOptions: []core.SpecOptionsCombo{
-			{Label: "Default-NoBleed", SpecOptions: PlayerOptionsMonoCatNoBleed},
-			{Label: "Flower-Aoe", SpecOptions: PlayerOptionsFlowerCatAoe},
-		},
-		Rotation:   core.GetAplRotation("../../../ui/feral_druid/apls", "default"),
-		ItemFilter: FeralItemFilter,
-	}))
+			GearSet:     core.GetGearSet("../../../ui/feral_druid/gear_sets", "p1"),
+			Talents:     StandardTalents,
+			Glyphs:      StandardGlyphs,
+			Consumes:    FullConsumes,
+			SpecOptions: core.SpecOptionsCombo{Label: "Default", SpecOptions: PlayerOptionsMonoCat},
+			OtherSpecOptions: []core.SpecOptionsCombo{
+				{Label: "Default-NoBleed", SpecOptions: PlayerOptionsMonoCatNoBleed},
+				{Label: "Flower-Aoe", SpecOptions: PlayerOptionsFlowerCatAoe},
+			},
+			Rotation:   core.GetAplRotation("../../../ui/feral_druid/apls", "default"),
+			ItemFilter: FeralItemFilter,
+		}),
+		&core.SingleDpsTestGenerator{Name: "Talents-FeralAggression-Average", Request: feralAggressionTalentsRequest()},
+	))
 }
+
+// Feral Aggression (Ferocious Bite) and Infected Wounds (Shred and Mangle), which no other build takes, on
+// TestFeral's default player. The default APL already bites, shreds and mangles.
+func feralAggressionTalentsRequest() *proto.RaidSimRequest {
+	return &proto.RaidSimRequest{
+		Raid: core.SinglePlayerRaidProto(
+			&proto.Player{
+				Race:               proto.Race_RaceTauren,
+				Class:              proto.Class_ClassDruid,
+				Equipment:          core.GetGearSet("../../../ui/feral_druid/gear_sets", "p1").GearSet,
+				Consumes:           FullConsumes,
+				Spec:               PlayerOptionsMonoCat,
+				Buffs:              core.FullIndividualBuffs,
+				Rotation:           core.GetAplRotation("../../../ui/feral_druid/apls", "default").Rotation,
+				TalentsString:      FeralAggressionTalents,
+				Glyphs:             StandardGlyphs,
+				Profession1:        proto.Profession_Engineering,
+				DistanceFromTarget: 30,
+				ReactionTimeMs:     150,
+				ChannelClipDelayMs: 50,
+			},
+			core.FullPartyBuffs,
+			core.FullRaidBuffs,
+			core.FullDebuffs),
+		Encounter:  core.MakeSingleTargetEncounter(5),
+		SimOptions: core.AverageDefaultSimTestOptions,
+	}
+}
+
+// StandardTalents' points in bear and utility talents moved to Feral Aggression and Infected Wounds
+var FeralAggressionTalents = "-553202032322000053100033310511-005503012"
 
 func TestFeralApl(t *testing.T) {
 	core.RunTestSuite(t, t.Name(), core.FullCharacterTestSuiteGenerator(core.CharacterSuiteConfig{

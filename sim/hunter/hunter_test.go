@@ -14,40 +14,122 @@ func init() {
 }
 
 func TestBM(t *testing.T) {
-	core.RunTestSuite(t, t.Name(), core.FullCharacterTestSuiteGenerator(core.CharacterSuiteConfig{
-		Class:      proto.Class_ClassHunter,
-		Race:       proto.Race_RaceOrc,
-		OtherRaces: []proto.Race{proto.Race_RaceDwarf},
+	core.RunTestSuite(t, t.Name(), core.JoinTestGenerators(
+		core.FullCharacterTestSuiteGenerator(core.CharacterSuiteConfig{
+			Class:      proto.Class_ClassHunter,
+			Race:       proto.Race_RaceOrc,
+			OtherRaces: []proto.Race{proto.Race_RaceDwarf},
 
-		GearSet:     core.GetGearSet("../../ui/hunter/gear_sets", "p1_sv"),
-		Talents:     BMTalents,
-		Glyphs:      BMGlyphs,
-		Consumes:    FullConsumes,
-		SpecOptions: core.SpecOptionsCombo{Label: "Basic", SpecOptions: PlayerOptionsBasic},
-		Rotation:    core.GetAplRotation("../../ui/hunter/apls", "bm"),
+			GearSet:     core.GetGearSet("../../ui/hunter/gear_sets", "p1_sv"),
+			Talents:     BMTalents,
+			Glyphs:      BMGlyphs,
+			Consumes:    FullConsumes,
+			SpecOptions: core.SpecOptionsCombo{Label: "Basic", SpecOptions: PlayerOptionsBasic},
+			Rotation:    core.GetAplRotation("../../ui/hunter/apls", "bm"),
 
-		ItemFilter: ItemFilter,
-	}))
+			ItemFilter: ItemFilter,
+		}),
+		&core.SingleDpsTestGenerator{Name: "Talents-SpiritBond-Average", Request: spiritBondTalentsRequest()},
+	))
 }
 
 func TestMM(t *testing.T) {
-	core.RunTestSuite(t, t.Name(), core.FullCharacterTestSuiteGenerator(core.CharacterSuiteConfig{
-		Class:      proto.Class_ClassHunter,
-		Race:       proto.Race_RaceOrc,
-		OtherRaces: []proto.Race{proto.Race_RaceDwarf},
+	core.RunTestSuite(t, t.Name(), core.JoinTestGenerators(
+		core.FullCharacterTestSuiteGenerator(core.CharacterSuiteConfig{
+			Class:      proto.Class_ClassHunter,
+			Race:       proto.Race_RaceOrc,
+			OtherRaces: []proto.Race{proto.Race_RaceDwarf},
 
-		GearSet:     core.GetGearSet("../../ui/hunter/gear_sets", "p1_mm"),
-		Talents:     MMTalents,
-		Glyphs:      MMGlyphs,
-		Consumes:    FullConsumes,
-		SpecOptions: core.SpecOptionsCombo{Label: "Basic", SpecOptions: PlayerOptionsBasic},
-		Rotation:    core.GetAplRotation("../../ui/hunter/apls", "mm"),
-		OtherRotations: []core.RotationCombo{
-			core.GetAplRotation("../../ui/hunter/apls", "mm_advanced"),
-		},
+			GearSet:     core.GetGearSet("../../ui/hunter/gear_sets", "p1_mm"),
+			Talents:     MMTalents,
+			Glyphs:      MMGlyphs,
+			Consumes:    FullConsumes,
+			SpecOptions: core.SpecOptionsCombo{Label: "Basic", SpecOptions: PlayerOptionsBasic},
+			Rotation:    core.GetAplRotation("../../ui/hunter/apls", "mm"),
+			OtherRotations: []core.RotationCombo{
+				core.GetAplRotation("../../ui/hunter/apls", "mm_advanced"),
+			},
 
-		ItemFilter: ItemFilter,
-	}))
+			ItemFilter: ItemFilter,
+		}),
+		&core.SingleDpsTestGenerator{Name: "Talents-TrueshotAura-Average", Request: trueshotAuraTalentsRequest()},
+	))
+}
+
+// talentsAverageRequest runs player the way Average-Default runs a suite's default player
+func talentsAverageRequest(player *proto.Player) *proto.RaidSimRequest {
+	return &proto.RaidSimRequest{
+		Raid:       core.SinglePlayerRaidProto(player, core.FullPartyBuffs, core.FullRaidBuffs, core.FullDebuffs),
+		Encounter:  core.MakeSingleTargetEncounter(5),
+		SimOptions: core.AverageDefaultSimTestOptions,
+	}
+}
+
+// Spirit Bond, Invigoration and Savage Strikes, which no other build takes, on TestBM's default player.
+// Raptor Strike is in the rotation for Savage Strikes.
+func spiritBondTalentsRequest() *proto.RaidSimRequest {
+	return talentsAverageRequest(&proto.Player{
+		Race:               proto.Race_RaceOrc,
+		Class:              proto.Class_ClassHunter,
+		Equipment:          core.GetGearSet("../../ui/hunter/gear_sets", "p1_sv").GearSet,
+		Consumes:           FullConsumes,
+		Spec:               PlayerOptionsBasic,
+		Buffs:              core.FullIndividualBuffs,
+		Rotation:           core.APLRotationFromJsonString(spiritBondTalentsAPL),
+		TalentsString:      SpiritBondTalents,
+		Glyphs:             BMGlyphs,
+		Profession1:        proto.Profession_Engineering,
+		DistanceFromTarget: 30,
+		ReactionTimeMs:     150,
+		ChannelClipDelayMs: 50,
+	})
+}
+
+// Rapid Killing, Efficiency, Trueshot Aura with its glyph, Rapid Recuperation and Improved Steady Shot,
+// which no other build takes, on TestMM's default player
+func trueshotAuraTalentsRequest() *proto.RaidSimRequest {
+	return talentsAverageRequest(&proto.Player{
+		Race:               proto.Race_RaceOrc,
+		Class:              proto.Class_ClassHunter,
+		Equipment:          core.GetGearSet("../../ui/hunter/gear_sets", "p1_mm").GearSet,
+		Consumes:           FullConsumes,
+		Spec:               PlayerOptionsBasic,
+		Buffs:              core.FullIndividualBuffs,
+		Rotation:           core.GetAplRotation("../../ui/hunter/apls", "mm").Rotation,
+		TalentsString:      TrueshotAuraTalents,
+		Glyphs:             TrueshotAuraGlyphs,
+		Profession1:        proto.Profession_Engineering,
+		DistanceFromTarget: 30,
+		ReactionTimeMs:     150,
+		ChannelClipDelayMs: 50,
+	})
+}
+
+var SpiritBondTalents = "51200201505212233102531351-005305001-002"
+
+// bm with Raptor Strike, which has no global cooldown
+const spiritBondTalentsAPL = `{"type":"TypeAPL",
+"prepullActions":[
+	{"action":{"castSpell":{"spellId":{"otherId":"OtherActionPotion"}}},"doAtValue":{"const":{"val":"-1s"}}}
+],
+"priorityList":[
+	{"action":{"condition":{"cmp":{"op":"OpGt","lhs":{"currentTime":{}},"rhs":{"const":{"val":"10s"}}}},"autocastOtherCooldowns":{}}},
+	{"action":{"condition":{"and":{"vals":[{"not":{"val":{"auraIsActive":{"auraId":{"spellId":34074}}}}},{"cmp":{"op":"OpLt","lhs":{"currentManaPercent":{}},"rhs":{"const":{"val":"10%"}}}}]}},"castSpell":{"spellId":{"spellId":34074}}}},
+	{"action":{"condition":{"and":{"vals":[{"not":{"val":{"auraIsActive":{"auraId":{"spellId":61847}}}}},{"cmp":{"op":"OpGt","lhs":{"currentManaPercent":{}},"rhs":{"const":{"val":"30%"}}}}]}},"castSpell":{"spellId":{"spellId":61847}}}},
+	{"action":{"castSpell":{"spellId":{"spellId":48996}}}},
+	{"action":{"castSpell":{"spellId":{"spellId":61006}}}},
+	{"action":{"condition":{"not":{"val":{"dotIsActive":{"spellId":{"spellId":49067}}}}},"castSpell":{"spellId":{"tag":1,"spellId":49067}}}},
+	{"action":{"condition":{"and":{"vals":[{"not":{"val":{"dotIsActive":{"spellId":{"spellId":49001}}}}},{"cmp":{"op":"OpGt","lhs":{"remainingTime":{}},"rhs":{"const":{"val":"6s"}}}}]}},"castSpell":{"spellId":{"spellId":49001}}}},
+	{"action":{"castSpell":{"spellId":{"spellId":49050}}}},
+	{"action":{"castSpell":{"spellId":{"spellId":49048}}}},
+	{"action":{"castSpell":{"spellId":{"spellId":49052}}}}
+]}`
+
+var TrueshotAuraTalents = "5-035335001235013033105231351-5"
+var TrueshotAuraGlyphs = &proto.Glyphs{
+	Major1: int32(proto.HunterMajorGlyph_GlyphOfTrueshotAura),
+	Major2: int32(proto.HunterMajorGlyph_GlyphOfSteadyShot),
+	Major3: int32(proto.HunterMajorGlyph_GlyphOfChimeraShot),
 }
 
 func TestSV(t *testing.T) {
