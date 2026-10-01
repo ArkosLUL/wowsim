@@ -26,9 +26,12 @@ computed chance, |z| ≤ 5 on a rolled rate, ±0.1% on a multiplier. It exits no
 Commands covered: `melee`, `taken`, `yellow`, `spell`, `armor`, `info`, `procs`; `damage` has its own test ([Damage probe](#damage-probe)).
 
 `yellow` and `spell` follow the server's own rules:
-- The hit table's attack type comes from the spell's `dmgClass` (ranged, else main hand), so Judgement of
-  Wisdom rolls ranged with level*5 skill and no ranged weapon. It must match the server's
-  `derived.yellow.attackType`, except under `ALWAYS_HIT`, where the server never picks one.
+- The hit table's attack type comes from the spell's `dmgClass` (ranged, else main hand). It must match the
+  server's `derived.yellow.attackType`, except under `ALWAYS_HIT`, where the server never picks one.
+- A ranged class spell that isn't a ranged weapon spell (Judgement of Wisdom) rolls with level*5 skill
+  whatever's equipped (`Unit::MeleeSpellHitResult`). `rangedWeaponSpell` reads `SpellInfo::IsRangedWeaponSpell`
+  off serverdata, minus the equipped item mask serverdata lacks; `TestRangedWeaponSpellMatchesTheSpelldump`
+  checks it against the spelldump. An id missing from serverdata counts as a ranged weapon spell.
 - Crit suppression is expected only from crit-capable spells (`critcap.go`: a damage or heal effect in
   `sim/core/serverdata`, no `CANT_CRIT`); a spell that can't crit has none. An id missing from serverdata
   is assumed capable and gets a row in the fixture README.
@@ -38,14 +41,16 @@ Commands covered: `melee`, `taken`, `yellow`, `spell`, `armor`, `info`, `procs`;
   miss threshold checked, but not a rolled miss rate.
 - `SPELL_ATTR3_ALWAYS_HIT` and a binary spell's lack of partial resists are modeled.
 
-`info` and the white damage check only rebuild a `naked()` player: no weapon, no rating beyond defense, dodge,
-parry and armor penetration, and no timed aura besides the base stats test's rating auras and raid buffs. A
-passive aura added by hand, such as a talent, isn't detected.
+`info` only rebuilds a `naked()` player: no weapon, no rating beyond defense, dodge, parry and armor
+penetration, and no timed aura besides the base stats test's rating auras and raid buffs. A passive aura
+added by hand, such as a talent, isn't detected.
 
-`melee` of a naked player also compares `meanDamage` per outcome (normal, crit, glancing, block) with the sim's
-attack power, armor, glancing, crit and block value, over the server's integer rolls (the range truncates,
-armor rounds up), within |z| ≤ 5. Armed swings are skipped: the sim can't be handed an arbitrary weapon.
-`taken` isn't compared.
+`melee` of a naked player, bare-handed or with only a main-hand weapon, also compares `meanDamage` per outcome
+(normal, crit, glancing, block) with the sim's attack power, armor after the attacker's armor penetration
+(rating plus auras such as Battle Stance's 10%, as in `armor`), glancing, crit and block value, over the
+server's integer rolls (the range truncates, armor rounds up), within |z| ≤ 5. The record carries the weapon's
+range and speed; an armed swing whose attack power differs from the bare sim character's (a weapon with stats)
+is skipped. A weapon enchant's flat damage isn't in the record. `taken` isn't compared.
 
 `TestFixtureHasEveryE2ERecord` fails when the fixture lacks a record a full e2e run produces, unless the record
 is dropped with a row in the fixture README.

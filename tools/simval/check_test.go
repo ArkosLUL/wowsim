@@ -9,6 +9,8 @@ import (
 	"testing"
 
 	"github.com/wowsims/wotlk/sim/core"
+	"github.com/wowsims/wotlk/sim/core/serverdata"
+	"github.com/wowsims/wotlk/tools/acore/spellids/spellset"
 )
 
 // The combat tables against the server's own numbers, from a recording of
@@ -77,6 +79,74 @@ func TestWhiteDamageModelOnHandCheckedRolls(t *testing.T) {
 	}
 	if failed != 1 {
 		t.Errorf("a normal mean of 12 should fail only the normal check, %d failed", failed)
+	}
+}
+
+// A bare-handed human warrior's swings at the boss dummy, as the server rolled them: 568 attack power
+// at 2 s rolls 82 or 83, which Battle Stance's 10% armor penetration leaves at 51 after armor. Without
+// it they'd be 49.
+func TestWhiteDamageModelTakesArmorPenetrationAuras(t *testing.T) {
+	swings := func(armorPenPct float64) record {
+		return spellRecord(t, fmt.Sprintf(`{
+			"command": "melee",
+			"attacker": {"level": 80, "class": 1, "isPlayer": true, "armorPenetrationAuraPct": %v,
+				"attacks": [{"type": "mainhand", "unhastedMs": 2000, "hastedMs": 2000, "damageMin": 1, "damageMax": 2}]},
+			"target": {"level": 83, "resistances": [10643]},
+			"outcomes": {
+				"normal": {"count": 1000, "meanDamage": 51},
+				"crit": {"count": 1000, "meanDamage": 102},
+				"glancing": {"count": 1000, "meanDamage": 35},
+				"block": {"count": 1000, "meanDamage": 10}
+			}
+		}`, armorPenPct))
+	}
+
+	checks := whiteDamageChecks(swings(10), 568, 2)
+	if len(checks) != 4 {
+		t.Fatalf("%d checks, want one per outcome", len(checks))
+	}
+	for _, check := range checks {
+		if !check.Passed {
+			t.Errorf("%s: %s", check.Name, check.Detail)
+		}
+	}
+	for _, check := range whiteDamageChecks(swings(0), 568, 2) {
+		if check.Passed {
+			t.Errorf("%s passed without the armor penetration: %s", check.Name, check.Detail)
+		}
+	}
+}
+
+// The fixture's armed warrior swings a bare weapon, which only brings its damage range and speed, so its
+// damage is compared like a bare-handed swing's. Both share one recordKey, so TestFixtureHasEveryE2ERecord
+// can't tell a lost bare-handed record from the armed one: this test needs both.
+func TestWhiteDamageComparesTheWarrior(t *testing.T) {
+	path := filepath.Join("..", "..", fixtureDir, "simval.jsonl")
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		t.Skipf("no recording at %s", path)
+	}
+	records, err := readRecords(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var armed, bare int
+	for _, rec := range records {
+		if rec.Command != "melee" || rec.Attacker.Class != warrior {
+			continue
+		}
+		if rec.Attacker.attack("mainhand").Weapon != nil {
+			armed++
+		} else {
+			bare++
+		}
+		check := namedCheck(t, CheckRecord(rec), "white damage normal")
+		if !check.Passed {
+			t.Errorf("%s: %s", rec.label(), check.Detail)
+		}
+	}
+	if armed == 0 || bare == 0 {
+		t.Fatalf("the fixture holds %d armed and %d bare-handed warrior swings, want both", armed, bare)
 	}
 }
 
@@ -258,6 +328,76 @@ func TestCheckSpellRollsARangedClassSpellWithoutAWeaponAtLevelSkill(t *testing.T
 	rec.Spell.DmgClass = 2
 	if check := namedCheck(t, CheckRecord(rec), "table attack type"); check.Passed {
 		t.Errorf("a melee class spell the server rolled as ranged passed: %s", check.Detail)
+	}
+}
+
+// The spell picks level*5 skill, not what's equipped: a judgement rolls at 400 even next to a ranged
+// weapon at 350, and Steady Shot rolls the ranged weapon's own skill, 0 without one.
+func TestCheckSpellPicksTheRangedSkillByTheSpell(t *testing.T) {
+	const body = `{
+		"command": "spell",
+		"iterations": 300000,
+		"attacker": {"level": 80, "levelForOther": 80, "maxSkillForOther": 400, "isPlayer": true,
+			"attacks": [{"type": "ranged", %s}]},
+		"target": {"level": 83, "levelForOther": 83, "maxSkillForOther": 415, "defenseSkillVsOther": 415,
+			"attacks": [{"type": "ranged", "missChanceTaken": 5}]},
+		"spell": {"id": %d, "schoolMask": 1, "dmgClass": 3, "attackType": "ranged"},
+		"derived": {"yellow": {"attackType": "ranged", "missBp": %d}}
+	}`
+	opts := core.YellowOptions{Ranged: true, NoDodge: true, NoParry: true}
+
+	for _, c := range []struct {
+		name         string
+		spell        int32
+		weapon       string
+		skill, wrong int32
+	}{
+		{"judgement next to a ranged weapon", 53408, `"weapon": {"itemId": 2504}, "weaponSkillVsOther": 350`, 400, 350},
+		{"Steady Shot without a ranged weapon", 49052, `"weaponSkillVsOther": 0`, 0, 400},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			rec := spellRecord(t, fmt.Sprintf(body, c.weapon, c.spell, 0))
+			missAt := func(skill int32) int32 {
+				attack := rec.Attacker.attack("ranged")
+				attack.WeaponSkillVsOther = skill
+				return core.YellowMeleeTableBP(meleeInput(rec, attack), opts).Miss
+			}
+			if missAt(c.skill) == missAt(c.wrong) {
+				t.Fatal("the weapon skill doesn't move the miss chance, so this test can't tell the two apart")
+			}
+
+			rec = spellRecord(t, fmt.Sprintf(body, c.weapon, c.spell, missAt(c.skill)))
+			if check := namedCheck(t, CheckRecord(rec), "yellow miss"); !check.Passed {
+				t.Errorf("yellow miss: %s", check.Detail)
+			}
+		})
+	}
+}
+
+// serverdata has no equipped item mask, so the replay's IsRangedWeaponSpell has to agree with the
+// server's own answer in the spelldump without it.
+func TestRangedWeaponSpellMatchesTheSpelldump(t *testing.T) {
+	dump, err := spellset.ReadDump(filepath.Join("..", "..", spellset.DefaultDumpPath))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(dump) == 0 {
+		t.Skip("no spelldump")
+	}
+
+	var compared int
+	for _, spell := range serverdata.Spells() {
+		server := dump[spell.ID]
+		if spell.DmgClass != serverdata.DmgClassRanged || server == nil {
+			continue
+		}
+		compared++
+		if got := rangedWeaponSpell(spell.ID); got != server.RangedWeaponSpell {
+			t.Errorf("spell %d (%s): ranged weapon spell %v, server %v", spell.ID, server.Name, got, server.RangedWeaponSpell)
+		}
+	}
+	if compared == 0 {
+		t.Fatal("no ranged class spell in serverdata")
 	}
 }
 

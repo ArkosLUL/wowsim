@@ -94,7 +94,7 @@ var expectedRecords = func() []recordKey {
 }()
 
 // droppedRecords are expected records that disagree with the sim and were removed from the fixture.
-var droppedRecords = []recordKey{{"melee", 0, warrior, boss}}
+var droppedRecords []recordKey
 
 func TestFixtureHasEveryE2ERecord(t *testing.T) {
 	records, err := readRecords(filepath.Join("..", "..", fixtureDir, "simval.jsonl"))

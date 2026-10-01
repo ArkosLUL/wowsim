@@ -711,6 +711,18 @@ Roll details the tables above don't show:
   completing proc actually hit, not the wearer's persistent current target, and those differ once there's
   more than one enemy. Neither class is this item's to fix; noted here since the cause is a file this item
   owns.
+- White damage gap (PAR-FU-3; the unarmed warrior record TE-REPLAY dropped from the fixture): the sim
+  was right, the replay's model (`tools/simval/whitedamage.go`) wrong. Battle Stance (2457) carries
+  `SPELL_AURA_MOD_ARMOR_PENETRATION_PCT` 10, which `Unit::CalcArmorReducedDamage` applies to every physical
+  hit, white swings included, capped by the victim's level; `sim/warrior/stances.go` already gives it. The
+  model read armor without armor penetration. With it, the boss dummy's 10643 armor leaves 0.6101 instead of
+  0.5887 (×1.036, the "+3 roll range"), and the same 10%, capped at level 80, is the level 80 dummy's "armor reads high". The
+  roll range in `Player::CalculateMinMaxDamage` already matched. Paladin, hunter and rogue passed because a
+  bare character of theirs has no armor penetration aura (`armorPenetrationAuraPct` 0). Fix: the model shares
+  `armor`'s multiplier (`armorMultiplier`), and compares a swing holding only a main-hand weapon when its
+  attack power is the bare character's. The 5 armed warrior records add 18 white damage checks. A live rerun of
+  `TestSimvalWhiteDamage` restored the unarmed warrior record (51 normal, 102 crit, 35 glancing, 10 blocked,
+  matching the model); the replay passes all 1114 checks. No golden moves.
 
 **Retribution Paladin** (`TestSimvalRetribution`, code)
 - Seal DoT via strikes was already right: `spell_pal_seal_of_vengeance_aura::HandleApplyDoT`

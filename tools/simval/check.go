@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/wowsims/wotlk/sim/core"
+	"github.com/wowsims/wotlk/sim/core/serverdata"
 )
 
 // Tolerances: a computed chance has to land on the server's basis point, a rolled
@@ -186,9 +187,9 @@ func checkSpell(rec record) []Check {
 
 	if server.Yellow != nil {
 		attack := rec.Attacker.attack(rec.tableAttackType())
-		// A ranged class spell without a ranged weapon (a judgement) rolls with level*5 skill, which
-		// is also what the sim gives every player.
-		if rec.Spell.DmgClass == dmgClassRanged && attack.Weapon == nil {
+		// A ranged class spell that isn't a ranged weapon spell (a judgement) rolls with level*5 skill
+		// whatever's equipped (Unit::MeleeSpellHitResult), which is also what the sim gives every player.
+		if rec.Spell.DmgClass == dmgClassRanged && !rangedWeaponSpell(rec.Spell.ID) {
 			attack.WeaponSkillVsOther = core.MaxSkill(rec.Attacker.Level)
 		}
 		in := meleeInput(rec, attack)
@@ -306,8 +307,19 @@ func checkResists(rec record, server spellDerived) []Check {
 }
 
 func checkArmor(rec record) []Check {
-	// Battle Stance and the like add to what the rating gives, all of it capped by
-	// the victim's level rather than the attacker's.
+	var checks []Check
+	for i, scenario := range rec.Scenarios {
+		checks = append(checks, checkMultiplier(
+			fmt.Sprintf("armor scenario %d (%.0f armor)", i+1, scenario.Armor),
+			armorMultiplier(rec, scenario.Armor), scenario.Multiplier))
+	}
+	return checks
+}
+
+// armorMultiplier is what the target's armor leaves of the attacker's physical damage
+// (Unit::CalcArmorReducedDamage). Battle Stance and the like add to what the rating gives, all of it
+// capped by the victim's level rather than the attacker's.
+func armorMultiplier(rec record, armor float64) float64 {
 	var attacker core.Unit
 	attacker.PseudoStats.BonusArmorPenPct = rec.Attacker.ArmorPenAuraPct
 	attacker.PseudoStats.ArmorPenRatingPerPercent = core.CombatRatingBase[core.CRArmorPenetration]
@@ -316,13 +328,24 @@ func checkArmor(rec record) []Check {
 	}
 	armorPen, _ := rec.Attacker.rating("armorPenetration")
 
-	var checks []Check
-	for i, scenario := range rec.Scenarios {
-		reducible := core.ArmorPenetrationCap(scenario.Armor, rec.Target.Level)
-		effective := scenario.Armor - reducible*attacker.ArmorPenetrationPercentage(armorPen)
-		got := core.ArmorMultiplier(effective, rec.Attacker.Level)
-		checks = append(checks, checkMultiplier(
-			fmt.Sprintf("armor scenario %d (%.0f armor)", i+1, scenario.Armor), got, scenario.Multiplier))
+	reducible := core.ArmorPenetrationCap(armor, rec.Target.Level)
+	return core.ArmorMultiplier(armor-reducible*attacker.ArmorPenetrationPercentage(armorPen), rec.Attacker.Level)
+}
+
+const (
+	spellFamilyHunter = 9
+	// FamilyFlags[1] bit of the hunter pets' own abilities (Growl, Claw, Cower)
+	hunterFlagPetAbility = 0x10000000
+)
+
+// rangedWeaponSpell is SpellInfo::IsRangedWeaponSpell without its equipped item mask, which serverdata
+// lacks and which never decides it alone for a ranged class spell in the spelldump. An id serverdata
+// lacks (Auto Shot) counts as one, so it keeps the weapon's own skill.
+func rangedWeaponSpell(spellID int32) bool {
+	spell := serverdata.SpellByID(spellID)
+	if spell == nil {
+		return true
 	}
-	return checks
+	return spell.Family == spellFamilyHunter && spell.FamilyFlags[1]&hunterFlagPetAbility == 0 ||
+		spell.Flags&serverdata.FlagUsesRangedSlot != 0
 }

@@ -10,13 +10,11 @@ the sim isn't changed.
 
 ## Dropped records
 
-| Record (command, spell, class, dummy) | Disagreement |
-|---|---|
-| melee, unarmed warrior, boss dummy (the armed warrior's record under the same key stays) | the server rolls 51 normal, 102 crit, 35 glancing, 10 blocked; the model 49, 98, 34, 8, at equal attack power |
+None.
 
 ## Spells missing from serverdata
 
-`critCapable` can't read their crit capability, so it assumes they crit.
+`critCapable` assumes they crit, and `rangedWeaponSpell` that they're ranged weapon spells.
 
 | Spell | Why |
 |---|---|
