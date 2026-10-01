@@ -127,7 +127,7 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
     3. Keep lines whose `unixMs` is at or after the start, dedupe by line (`awk '!seen[$0]++'`).
     4. `dock.sh run ./tools/simval -records /wotlk/tmp/<capture> -fixture` replaces the fixture. Every
        failing record is a sim/server mismatch: remove it, add a row to the fixture README, and open a
-       follow-up. Never fix the sim here.
+       follow-up. Never fix the sim here. Move the `damage` lines to `damage.jsonl`.
 - Spell data: `tools/acore/spellids` lists the spell ids the sim needs and checks them against the committed
   capture. Its README's [Capturing](../../tools/acore/spellids/README.md#capturing) section recaptures
   missing ones live.

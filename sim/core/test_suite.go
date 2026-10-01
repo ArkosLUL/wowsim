@@ -461,7 +461,9 @@ func RunTestSuite(t *testing.T, suiteName string, generator TestGenerator) {
 	testSuite.Done(t)
 
 	if t.Failed() {
-		t.Log("One or more tests failed! If the changes are intentional, update the expected results with 'make test && make update-tests'. Otherwise go fix your bugs!")
+		t.Log("One or more tests failed! If the changes are intentional, read each suite's delta with 'tools/acore/dock.sh delta', " +
+			"then promote only that suite's directory with 'tools/acore/dock.sh promote <dir>' (docs/guide/testing.md, Goldens). " +
+			"Never 'make update-tests': it deletes every golden. Otherwise go fix your bugs!")
 	}
 
 	t.Run("RotationGuard", guard.check)

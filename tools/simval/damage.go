@@ -638,8 +638,8 @@ func (d *damageSim) unmatchedAuras() (text string) {
 		strings.Join(simOnly, " "), strings.Join(others, " "))
 }
 
-// amountTolerance is how far below and above the server's amount the sim may land: the spec's 0.1% or
-// 1 point, widened only above. SpellDamageBonusDone and SpellHealingBonusDone truncate each power bonus
+// amountTolerance is how far below and above the server's amount the sim may land: 0.1% or 1 point,
+// widened only above. SpellDamageBonusDone and SpellHealingBonusDone truncate each power bonus
 // (spell power or attack power times its coefficient) before the done multiplier, so each one can cost
 // the server up to the multiplier, never add to it.
 func amountTolerance(server, multiplier float64, powerBonuses int) (below, above float64) {

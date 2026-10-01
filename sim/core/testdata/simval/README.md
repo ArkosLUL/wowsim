@@ -5,8 +5,11 @@ replays it through `CheckRecord` on every `go test`, and `int-check.sh` runs it 
 (never append) per [testing](../../../../docs/guide/testing.md#against-the-server);
 `TestFixtureHasEveryE2ERecord` lists what a full run records.
 
-A record that disagrees with the sim is a real mismatch: it's dropped from the file and listed here, and
-the sim isn't changed.
+`damage.jsonl` holds `TestSimvalDamage`'s `damage` records, which `TestDamageRecords` replays
+([tools/simval](../../../../tools/simval/README.md#damage-probe)).
+
+A record of either file that disagrees with the sim is a real mismatch: it's dropped from the file and
+listed here, and the sim isn't changed.
 
 ## Dropped records
 
