@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math"
 	"slices"
-	"sort"
 	"sync"
 
 	"github.com/wowsims/wotlk/sim/core"
@@ -110,9 +109,15 @@ func newCurve(c *ResponseCurve) *curve {
 	return out
 }
 
-// segment is how many knots lie below offset: the index of its slope.
+// segment is how many knots lie below offset: the index of its slope. A curve has a handful of
+// knots, which a scan reads faster than a binary search.
 func (c *curve) segment(offset float64) int {
-	return sort.SearchFloat64s(c.x, offset)
+	for i, x := range c.x {
+		if x >= offset {
+			return i
+		}
+	}
+	return len(c.x)
 }
 
 func (c *curve) value(offset float64) float64 {
@@ -291,10 +296,12 @@ func (s *surrogate) choiceStats(slot proto.ItemSlot, c ItemChoice) stats.Stats {
 	}
 	total := cand.Item.Stats
 	if c.Enchant != 0 {
-		total = total.Add(cand.enchantStats(c.Enchant))
+		enchant := cand.enchantStats(c.Enchant)
+		total.AddInplace(&enchant)
 	}
 	if c.ReforgeFrom != 0 || c.ReforgeTo != 0 {
-		total = total.Add(cand.reforgeStats(c.ReforgeFrom, c.ReforgeTo))
+		reforge := cand.reforgeStats(c.ReforgeFrom, c.ReforgeTo)
+		total.AddInplace(&reforge)
 	}
 	own := cand.Item.GemSockets
 	matched := len(own) > 0
@@ -305,33 +312,35 @@ func (s *surrogate) choiceStats(slot proto.ItemSlot, c ItemChoice) stats.Stats {
 			}
 			continue
 		}
-		gem := s.pool.gem(id)
-		total = total.Add(gem.Stats)
+		var gem *core.Gem
+		if g := s.pool.gems[id]; g != nil {
+			gem = &g.Gem
+		} else {
+			lookedUp, _ := core.LookupGem(id)
+			gem = &lookedUp
+		}
+		total.AddInplace(&gem.Stats)
 		if i < len(own) && !core.ColorIntersects(own[i], gem.Color) {
 			matched = false
 		}
 	}
 	if matched {
-		total = total.Add(cand.Item.SocketBonus)
+		total.AddInplace(&cand.Item.SocketBonus)
 	}
 	return total
 }
 
 func (c *Candidate) enchantStats(id int32) stats.Stats {
-	for _, e := range c.Enchants {
-		if e.ID == id {
-			return e.Stats
-		}
+	if e := c.enchant(id); e != nil {
+		return e.Stats
 	}
 	enchant, _ := core.LookupEnchant(id)
 	return enchant.Stats
 }
 
 func (c *Candidate) reforgeStats(from, to int32) stats.Stats {
-	for _, r := range c.Reforges {
-		if r.From == from && r.To == to {
-			return r.Stats
-		}
+	if r := c.reforge(from, to); r != nil {
+		return r.Stats
 	}
 	return core.ReforgeStats(&c.Item, &proto.ItemReforge{FromStatType: from, ToStatType: to}, c.reforging)
 }
@@ -513,30 +522,75 @@ func (s *surrogate) curveValue(offset stats.Stats) float64 {
 	return v
 }
 
-// statsGain is what the curves make of total's stats moving by to minus from.
-func (s *surrogate) statsGain(total, from, to *stats.Stats) float64 {
+// gainAt keeps, for one configure pass at a fixed total, each curve's value and each floor's and
+// ceiling's reading there, which statsGain and capGain would otherwise redo for every option.
+type gainAt struct {
+	curve [stats.Len]float64
+	known [stats.Len]bool
+	// The floors' readings, then the ceilings'.
+	caps []float64
+}
+
+// gainAt readies g for swaps at total and racial.
+func (s *surrogate) gainAt(g *gainAt, total *stats.Stats, racial float64) {
+	g.known = [stats.Len]bool{}
+	n := len(s.floors) + len(s.ceilings)
+	if cap(g.caps) < n {
+		g.caps = make([]float64, n)
+	}
+	g.caps = g.caps[:n]
+	for i := range s.floors {
+		g.caps[i] = s.floors[i].at(total, &s.seedStats, racial)
+	}
+	for i := range s.ceilings {
+		g.caps[len(s.floors)+i] = s.ceilings[i].at(total, &s.seedStats, racial)
+	}
+}
+
+// statsGain is what the curves make of total's stats moving by to minus from, g being ready at
+// total. fromNZ and toNZ are their nonzero stats (see nonzero), merged here in stat order, which
+// adds the same terms in the same order as a pass over every curve.
+func (s *surrogate) statsGain(g *gainAt, total, from *stats.Stats, fromNZ []stats.Stat, to *stats.Stats, toNZ []stats.Stat) float64 {
 	gain := 0.0
-	for _, st := range s.curved {
+	i, j := 0, 0
+	for i < len(fromNZ) || j < len(toNZ) {
+		var st stats.Stat
+		switch {
+		case j == len(toNZ) || i < len(fromNZ) && fromNZ[i] < toNZ[j]:
+			st = fromNZ[i]
+			i++
+		case i == len(fromNZ) || toNZ[j] < fromNZ[i]:
+			st = toNZ[j]
+			j++
+		default:
+			st = fromNZ[i]
+			i++
+			j++
+		}
+		c := s.curves[st]
+		if c == nil {
+			continue
+		}
 		if d := to[st] - from[st]; d != 0 {
-			c, x := s.curves[st], total[st]-s.seedStats[st]
-			gain += c.value(x+d) - c.value(x)
+			x := total[st] - s.seedStats[st]
+			if !g.known[st] {
+				g.curve[st], g.known[st] = c.value(x), true
+			}
+			gain += c.value(x+d) - g.curve[st]
 		}
 	}
 	return gain
 }
 
 // capGain is statsGain's counterpart for the floor and ceiling penalty terms: what score's penalty
-// gains from total's stats moving by (to minus from), racial staying put. Both terms are already
+// gains from g's total's stats moving by (to minus from), racial staying put. Both terms are already
 // linear in gear stats (see floorShortfall, ceilingOverage), so the gain is exact without rescoring
 // the whole loadout.
-func (s *surrogate) capGain(total, from, to *stats.Stats, racial float64) float64 {
-	if len(s.floors) == 0 && len(s.ceilings) == 0 {
-		return 0
-	}
+func (s *surrogate) capGain(g *gainAt, from, to *stats.Stats) float64 {
 	gain := 0.0
 	for i := range s.floors {
 		f := &s.floors[i]
-		before := f.at(total, &s.seedStats, racial)
+		before := g.caps[i]
 		after := before
 		for _, e := range f.sparse {
 			after += e.g * (to[e.stat] - from[e.stat])
@@ -545,7 +599,7 @@ func (s *surrogate) capGain(total, from, to *stats.Stats, racial float64) float6
 	}
 	for i := range s.ceilings {
 		c := &s.ceilings[i]
-		before := c.at(total, &s.seedStats, racial)
+		before := g.caps[len(s.floors)+i]
 		after := before
 		for _, e := range c.sparse {
 			after += e.g * (to[e.stat] - from[e.stat])
@@ -653,6 +707,17 @@ func dot(v, x stats.Stats) float64 {
 	return total
 }
 
+// dotNZ is dot(v, x) for an x whose nonzero stats are nz (see nonzero), to the last bit.
+func dotNZ(v, x *stats.Stats, nz []stats.Stat) float64 {
+	total := 0.0
+	for _, i := range nz {
+		if v[i] != 0 {
+			total += v[i] * x[i]
+		}
+	}
+	return total
+}
+
 // boxLow and boxHigh bound dot(v, x) over every v in the box [lo, hi].
 func boxLow(lo, hi, x stats.Stats) float64 {
 	total := 0.0
@@ -700,7 +765,7 @@ type gemChoice struct {
 var socketColors = []proto.GemColor{proto.GemColor_GemColorRed, proto.GemColor_GemColorYellow, proto.GemColor_GemColorBlue, proto.GemColor_GemColorPrismatic}
 
 func (s *surrogate) gemValue(g *GemCandidate, v stats.Stats) float64 {
-	return dot(v, g.Gem.Stats) + s.gems[g.Gem.ID].Mean
+	return dotNZ(&v, &g.Gem.Stats, g.nz) + s.gems[g.Gem.ID].Mean
 }
 
 // freeGem is a gem any number of sockets can hold.
@@ -808,17 +873,19 @@ func (gp *gemPlan) fill(s *surrogate, cand *Candidate, v stats.Stats, meta int32
 func (s *surrogate) quickChoice(slot proto.ItemSlot, cand *Candidate, v stats.Stats, gp *gemPlan, meta int32) ItemChoice {
 	c := ItemChoice{ItemID: cand.Item.ID}
 	best := 0.0
-	for _, e := range cand.Enchants {
+	for i := range cand.Enchants {
+		e := &cand.Enchants[i]
 		if s.unpricedEnchants[slot][e.ID] {
 			continue
 		}
-		if val := dot(v, e.Stats) + s.enchants[slot][e.ID].Mean; val > best {
+		if val := dotNZ(&v, &e.Stats, e.nz) + s.enchants[slot][e.ID].Mean; val > best {
 			best, c.Enchant = val, e.ID
 		}
 	}
 	best = 0
-	for _, r := range cand.Reforges {
-		if val := dot(v, r.Stats); val > best {
+	for i := range cand.Reforges {
+		r := &cand.Reforges[i]
+		if val := dotNZ(&v, &r.Stats, r.nz); val > best {
 			best, c.ReforgeFrom, c.ReforgeTo = val, r.From, r.To
 		}
 	}
@@ -1107,6 +1174,70 @@ func (s *surrogate) setFloorsAndCeilings(floors []*proto.StatMinimum, ceilings [
 		s.seedRacial = s.racialExpertise(&seed)
 	}
 	return nil
+}
+
+// moves is how far x moves the floor's reading.
+func (f *floorTerm) moves(x *stats.Stats) float64 {
+	v := 0.0
+	for _, e := range f.sparse {
+		v += e.g * x[e.stat]
+	}
+	return v
+}
+
+// gemFloorGains is, per floor, the most one gem adds to its reading: of every priced gem but metas,
+// and of every priced meta.
+func (s *surrogate) gemFloorGains() (gem, meta []float64) {
+	gem, meta = make([]float64, len(s.floors)), make([]float64, len(s.floors))
+	for _, g := range s.pool.Gems {
+		if s.unpricedGems[g.Gem.ID] {
+			continue
+		}
+		for i := range s.floors {
+			v := s.floors[i].moves(&g.Gem.Stats)
+			if g.Gem.Color == proto.GemColor_GemColorMeta {
+				meta[i] = max(meta[i], v)
+			} else {
+				gem[i] = max(gem[i], v)
+			}
+		}
+	}
+	return gem, meta
+}
+
+// floorGains is, per floor, the most cand in slot can add to its reading: its own stats, then the
+// best of its priced enchants, of its reforges and of the gems (gemFloorGains) for each socket, and
+// its socket bonus, each counting from none.
+func (s *surrogate) floorGains(slot proto.ItemSlot, cand *Candidate, gem, meta []float64) []float64 {
+	out := make([]float64, len(s.floors))
+	for i := range s.floors {
+		f := &s.floors[i]
+		v := f.moves(&cand.Item.Stats)
+		best := 0.0
+		for j := range cand.Enchants {
+			if e := &cand.Enchants[j]; !s.unpricedEnchants[slot][e.ID] {
+				best = max(best, f.moves(&e.Stats))
+			}
+		}
+		v += best
+		best = 0
+		for j := range cand.Reforges {
+			best = max(best, f.moves(&cand.Reforges[j].Stats))
+		}
+		v += best
+		for j, color := range cand.Sockets {
+			if j >= MaxGems {
+				break
+			}
+			if color == proto.GemColor_GemColorMeta {
+				v += meta[i]
+			} else {
+				v += gem[i]
+			}
+		}
+		out[i] = v + max(0, f.moves(&cand.Item.SocketBonus))
+	}
+	return out
 }
 
 // forRace is s with its floors and ceilings priced around the seed worn with race's traits instead.

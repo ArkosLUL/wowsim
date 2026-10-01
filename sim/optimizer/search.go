@@ -35,6 +35,17 @@ type searcher struct {
 	rng    *rand.Rand
 	// The most any ring or trinket pair adds beyond its items, which candBounds leaves out.
 	pairSlack float64
+	// Scratch for configureFast.
+	gain gainAt
+
+	// The off hand's largest cub and per-floor gains, and one item of each kind it holds, for
+	// moveBound on a main hand that brings a partner.
+	ohBest  *option
+	ohKinds []*core.Item
+	// Scratch for bestItem and bestPartner's bounds.
+	itemGaps, partnerGaps []float64
+	partnerUB             []float64
+	partnerOrder          []int
 }
 
 // fork is a copy that shares the read-only parts, for another goroutine.
@@ -42,6 +53,8 @@ func (se *searcher) fork(seed int64) *searcher {
 	out := *se
 	out.plans = map[uint64]*gemPlan{}
 	out.counts = make([]int8, len(se.s.sets))
+	out.gain = gainAt{}
+	out.itemGaps, out.partnerGaps, out.partnerUB, out.partnerOrder = nil, nil, nil, nil
 	out.rng = rand.New(rand.NewSource(seed))
 	return &out
 }
@@ -96,6 +109,11 @@ func runParallel(n, workers int, job func(i int)) {
 type option struct {
 	cand   *Candidate
 	lb, ub float64
+	// ub over the curves alone, and per floor the most any configuration adds to its reading.
+	// moveBound adds the move's own state: under a hit or expertise floor, reforges and gems into
+	// the floor's stat make ub infinite.
+	cub   float64
+	gains []float64
 }
 
 // Pruning keeps every option that could be among a slot's best k, whatever the rest of the gear:
@@ -112,6 +130,9 @@ func newSearcher(s *surrogate, r *run) *searcher {
 	for _, corr := range s.pairs {
 		se.pairSlack = max(se.pairSlack, corr)
 	}
+	clo, chi := s.curveBox()
+	cgb := s.newGemBounds(clo, chi)
+	gem, meta := s.gemFloorGains()
 	for slot := range se.pool.Slots {
 		for _, cand := range se.pool.Slots[slot] {
 			lb, ub, ok := s.candBounds(proto.ItemSlot(slot), cand, se.lo, se.hi, se.gb)
@@ -120,7 +141,8 @@ func newSearcher(s *surrogate, r *run) *searcher {
 				lb, ub = lb+rlb, ub+rub
 			}
 			if ok || se.pool.Locked[slot] {
-				se.all[slot] = append(se.all[slot], &option{cand, lb, ub})
+				_, cub, _ := s.candBounds(proto.ItemSlot(slot), cand, clo, chi, cgb)
+				se.all[slot] = append(se.all[slot], &option{cand: cand, lb: lb, ub: ub, cub: cub, gains: s.floorGains(proto.ItemSlot(slot), cand, gem, meta)})
 			}
 		}
 	}
@@ -131,7 +153,25 @@ func newSearcher(s *surrogate, r *run) *searcher {
 			}
 		}
 	}
+	se.ohBest = &option{cub: math.Inf(-1), gains: make([]float64, len(s.floors))}
+	for i := range se.ohBest.gains {
+		se.ohBest.gains[i] = math.Inf(-1)
+	}
+	for _, o := range se.opts[proto.ItemSlot_ItemSlotOffHand] {
+		se.ohBest.cub = max(se.ohBest.cub, o.cub)
+		for i, g := range o.gains {
+			se.ohBest.gains[i] = max(se.ohBest.gains[i], g)
+		}
+		if !slices.ContainsFunc(se.ohKinds, func(k *core.Item) bool { return sameHandKind(k, &o.cand.Item) }) {
+			se.ohKinds = append(se.ohKinds, &o.cand.Item)
+		}
+	}
 	return se
+}
+
+// sameHandKind: the weapon specialization can't tell a and b apart in a hand.
+func sameHandKind(a, b *core.Item) bool {
+	return a.WeaponType == b.WeaponType && (a.ID == 0) == (b.ID == 0)
 }
 
 // pruneGroup is a set of options competing for one slot, and the k-th best lower bound among them.
@@ -479,18 +519,20 @@ func (se *searcher) configureFast(st *state, slot proto.ItemSlot, cand *Candidat
 		}
 	}
 
-	cur, curRes := &none, 0.0
+	g := &se.gain
+	se.s.gainAt(g, &total, racial)
+	cur, curNZ, curRes := &none, []stats.Stat(nil), 0.0
 	if e := cand.enchant(c.Enchant); e != nil {
-		cur, curRes = &e.Stats, se.s.enchants[slot][e.ID].Mean
+		cur, curNZ, curRes = &e.Stats, e.nz, se.s.enchants[slot][e.ID].Mean
 	}
 	best, pick = 0, -2
 	if c.Enchant != 0 {
-		try(-1, se.s.statsGain(&total, cur, &none)+se.s.capGain(&total, cur, &none, racial)-curRes)
+		try(-1, se.s.statsGain(g, &total, cur, curNZ, &none, nil)+se.s.capGain(g, cur, &none)-curRes)
 	}
 	for i := range cand.Enchants {
 		e := &cand.Enchants[i]
 		if e.ID != c.Enchant && !se.s.unpricedEnchants[slot][e.ID] {
-			try(i, se.s.statsGain(&total, cur, &e.Stats)+se.s.capGain(&total, cur, &e.Stats, racial)+se.s.enchants[slot][e.ID].Mean-curRes)
+			try(i, se.s.statsGain(g, &total, cur, curNZ, &e.Stats, e.nz)+se.s.capGain(g, cur, &e.Stats)+se.s.enchants[slot][e.ID].Mean-curRes)
 		}
 	}
 	switch {
@@ -500,17 +542,18 @@ func (se *searcher) configureFast(st *state, slot proto.ItemSlot, cand *Candidat
 		total, c.Enchant = total.Subtract(*cur).Add(cand.Enchants[pick].Stats), cand.Enchants[pick].ID
 	}
 
-	cur = &none
+	se.s.gainAt(g, &total, racial)
+	cur, curNZ = &none, nil
 	if r := cand.reforge(c.ReforgeFrom, c.ReforgeTo); r != nil {
-		cur = &r.Stats
+		cur, curNZ = &r.Stats, r.nz
 	}
 	best, pick = 0, -2
 	if c.ReforgeFrom != 0 || c.ReforgeTo != 0 {
-		try(-1, se.s.statsGain(&total, cur, &none)+se.s.capGain(&total, cur, &none, racial))
+		try(-1, se.s.statsGain(g, &total, cur, curNZ, &none, nil)+se.s.capGain(g, cur, &none))
 	}
 	for i := range cand.Reforges {
 		if r := &cand.Reforges[i]; r.From != c.ReforgeFrom || r.To != c.ReforgeTo {
-			try(i, se.s.statsGain(&total, cur, &r.Stats)+se.s.capGain(&total, cur, &r.Stats, racial))
+			try(i, se.s.statsGain(g, &total, cur, curNZ, &r.Stats, r.nz)+se.s.capGain(g, cur, &r.Stats))
 		}
 	}
 	switch {
@@ -565,8 +608,13 @@ func (se *searcher) bestItem(st *state, slot proto.ItemSlot) bool {
 	if prune {
 		emptied = se.trial(st, change{slot, ItemChoice{}}) + se.pairSlack
 	}
+	// moveBound skips the same way, weapons included: it prices the other hand's change too
+	bounds := se.moveBounds(st, slot)
 	for _, o := range se.opts[slot] {
 		if prune && emptied+o.ub <= st.value+improvement {
+			continue
+		}
+		if bounds.of(o) <= st.value+improvement {
 			continue
 		}
 		var extra []change
@@ -602,18 +650,159 @@ func (se *searcher) bestItem(st *state, slot proto.ItemSlot) bool {
 	return false
 }
 
-// bestPartner is the best off hand for a new main-hand choice, with the off hand empty now.
+// bestPartner is the best off hand for a new main-hand choice, with the off hand empty now: the first
+// in option order of those that score the most.
+//
+// It tries them by moveBound, highest first, and stops at one whose bound falls short of the best
+// score so far, which none of the rest can beat either.
 func (se *searcher) bestPartner(st *state, mhChoice ItemChoice) (change, bool) {
 	mh, oh := proto.ItemSlot_ItemSlotMainHand, proto.ItemSlot_ItemSlotOffHand
-	best, found := math.Inf(-1), false
+	opts := se.opts[oh]
+	bare, gaps := se.moveBase(st, &se.partnerGaps, change{mh, mhChoice})
+	mhItem := se.s.handItem(mh, mhChoice.ItemID)
+	se.partnerUB, se.partnerOrder = se.partnerUB[:0], se.partnerOrder[:0]
+	for i, o := range opts {
+		se.partnerUB = append(se.partnerUB, se.moveBound(bare, gaps, se.racialWith(mhItem, &o.cand.Item), o))
+		se.partnerOrder = append(se.partnerOrder, i)
+	}
+	ub := se.partnerUB
+	slices.SortStableFunc(se.partnerOrder, func(a, b int) int {
+		switch {
+		case ub[a] > ub[b]:
+			return -1
+		case ub[a] < ub[b]:
+			return 1
+		}
+		return 0
+	})
+	best, bestIndex, found := math.Inf(-1), 0, false
 	var out change
-	for _, o := range se.opts[oh] {
-		c := se.configure(st, oh, o.cand, change{mh, mhChoice})
-		if val := se.trial(st, change{mh, mhChoice}, change{oh, c}); val > best {
-			best, out, found = val, change{oh, c}, true
+	for _, i := range se.partnerOrder {
+		if ub[i] < best {
+			break
+		}
+		c := se.configure(st, oh, opts[i].cand, change{mh, mhChoice})
+		if val := se.trial(st, change{mh, mhChoice}, change{oh, c}); val > best || val == best && i < bestIndex {
+			best, bestIndex, out, found = val, i, change{oh, c}, true
 		}
 	}
 	return out, found
+}
+
+// moveBase is st with changes made, as moveBound reads it: the score before its floor and ceiling
+// penalties, and per floor how far the reading sits under it, the weapon specialization's term left
+// out. gaps reuses *buf.
+func (se *searcher) moveBase(st *state, buf *[]float64, changes ...change) (bare float64, gaps []float64) {
+	total, res := st.total, st.resSum
+	copy(se.counts, st.counts)
+	l := st.l
+	for _, ch := range changes {
+		old := st.l.Items[ch.slot]
+		if i, ok := se.s.setOf[old.ItemID]; ok && old.ItemID != 0 {
+			se.counts[i]--
+		}
+		if i, ok := se.s.setOf[ch.choice.ItemID]; ok && ch.choice.ItemID != 0 {
+			se.counts[i]++
+		}
+		total = total.Subtract(st.stats[ch.slot]).Add(se.s.choiceStats(ch.slot, ch.choice))
+		res += se.s.choiceResidual(ch.slot, ch.choice) - st.res[ch.slot]
+		l.Items[ch.slot] = ch.choice
+	}
+	bare = res + se.s.pairCorrection(&l) + se.s.curveValue(total.Subtract(se.s.seedStats))
+	for i, n := range se.counts {
+		if n >= 2 {
+			bare += se.s.sets[i].value(int(n))
+		}
+	}
+	gaps = (*buf)[:0]
+	for i := range se.s.floors {
+		f := &se.s.floors[i]
+		gaps = append(gaps, f.min-have(f.seed, f.sparse, &total, &se.s.seedStats))
+	}
+	*buf = gaps
+	return bare, gaps
+}
+
+// moveBound bounds the score of moveBase's state with adds in their empty slots, however they're
+// configured: its bare score plus their cubs, less the floor penalty left after each adds all it can
+// and the weapon specialization's term reaches racial. Ceilings count as met. The slack on top keeps
+// rounding from pruning a move whose bound is tight.
+func (se *searcher) moveBound(bare float64, gaps []float64, racial float64, adds ...*option) float64 {
+	ub, scale := bare, 1+abs(bare)
+	for _, o := range adds {
+		ub += o.cub
+		scale += abs(o.cub)
+	}
+	for i := range se.s.floors {
+		f := &se.s.floors[i]
+		short := gaps[i] - f.racial*racial
+		for _, o := range adds {
+			short -= o.gains[i]
+		}
+		if short > 0 {
+			ub -= se.s.floorWeight * short
+		}
+		scale += se.s.floorWeight * abs(gaps[i])
+	}
+	return ub + 1e-9*scale
+}
+
+// racialWith is the weapon specialization's term (see racialDelta) with mh and oh in the hands.
+func (se *searcher) racialWith(mh, oh *core.Item) float64 {
+	if se.s.weaponSpec == nil {
+		return 0
+	}
+	return se.s.weaponSpec.StatBonus(mh, oh) - se.s.seedRacial
+}
+
+// moveBounds prices bestItem's moves in one slot with moveBound, from st with the move's slots emptied.
+type moveBounds struct {
+	se             *searcher
+	st             *state
+	slot           proto.ItemSlot
+	bare, bareBoth float64
+	gaps, gapsBoth []float64
+	ohItem         *core.Item
+}
+
+func (se *searcher) moveBounds(st *state, slot proto.ItemSlot) moveBounds {
+	mh, oh := proto.ItemSlot_ItemSlotMainHand, proto.ItemSlot_ItemSlotOffHand
+	b := moveBounds{se: se, st: st, slot: slot, ohItem: se.s.handItem(oh, st.l.Items[oh].ItemID)}
+	b.bare, b.gaps = se.moveBase(st, &se.itemGaps, change{slot, ItemChoice{}})
+	if slices.Contains(pairSlots, familySlot(slot)) {
+		b.bare += se.pairSlack
+	}
+	b.bareBoth, b.gapsBoth = b.bare, b.gaps
+	// a main hand that fills both hands empties the off hand too
+	if slot == mh && st.l.Items[oh].ItemID != 0 {
+		var buf []float64
+		b.bareBoth, b.gapsBoth = se.moveBase(st, &buf, change{mh, ItemChoice{}}, change{oh, ItemChoice{}})
+	}
+	return b
+}
+
+// of bounds o's move, the one bestItem makes, extra hands included.
+func (b *moveBounds) of(o *option) float64 {
+	se, st := b.se, b.st
+	mh, oh := proto.ItemSlot_ItemSlotMainHand, proto.ItemSlot_ItemSlotOffHand
+	switch {
+	case b.slot == oh:
+		return se.moveBound(b.bare, b.gaps, se.racialWith(se.s.handItem(mh, st.l.Items[mh].ItemID), &o.cand.Item), o)
+	case b.slot != mh:
+		return se.moveBound(b.bare, b.gaps, st.racial, o)
+	case se.pool.fillsHands(&o.cand.Item):
+		return se.moveBound(b.bareBoth, b.gapsBoth, se.racialWith(&o.cand.Item, &noItem), o)
+	case st.l.Items[oh].ItemID != 0:
+		return se.moveBound(b.bare, b.gaps, se.racialWith(&o.cand.Item, b.ohItem), o)
+	case len(se.opts[oh]) > 0:
+		// bestPartner adds an off hand, whichever one it picks
+		racial := se.racialWith(&o.cand.Item, &noItem)
+		for _, kind := range se.ohKinds {
+			racial = max(racial, se.racialWith(&o.cand.Item, kind))
+		}
+		return se.moveBound(b.bare, b.gaps, racial, o, se.ohBest)
+	}
+	return se.moveBound(b.bare, b.gaps, se.racialWith(&o.cand.Item, &noItem), o)
 }
 
 // gemSweep tries every gem the DP would consider in every socket, one socket at a time, and keeps the

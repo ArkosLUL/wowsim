@@ -633,3 +633,86 @@ handful of seeds before wiring it in.
   this WI's owned paths.
 - Per-unit maps only exist for units the option actually touches: a raid the optimizer never asks about it (the
   default, everywhere but `SimEvaluator.request`) never allocates one.
+
+## PERF-FU (wave N)
+
+Base `7f4174efb`, on a machine shared with three other work items and the worldserver: no timing here
+needs an idle one.
+
+### Per-race search
+
+**Profile.** A server capture over the two P2 Normal jobs on the acbis driver, and `wowsimcli optimize
+--cpuprofile --trace` on three requests over a P2 pool with `OptimizerRacialSearch`: an Orc arms preset (3
+finalists), a Draenei elemental one (6) and the fury preset (3).
+- The Search stage took 98 s of Mighty's 176 and 24 s of Stormweaver's 62; on the CLI, 194 s of arms' 255,
+  12.7 of elemental's 35 and 21.8 of fury's 130.
+- Nearly all of it is `polish` → `bestItem` → `configure`. In arms, 70% of all CPU is `bestPartner`: with
+  a 2H in the main hand, `bestItem` tries every one-hander there and configures every off hand for each.
+- Nothing was pruned. Under any hit or expertise floor `slopeBox` gives the floor's stat +Inf, so every
+  option that can reforge or socket into it gets ub +Inf: arms kept all 229 heads, all 85 main hands and
+  all 96 off hands that survived (the 28 pruned had a finite ub). `racialBounds` only widens finite
+  bounds, so its looseness cost nothing here. `bestItem` never pruned weapons at all.
+- Race-independent work (`forRace`, `newSearcher`, `starts`) is under 1% of the search: not shared.
+
+**Cuts.** Each leaves the whole `OptimizerResult` bit-identical to the base's: the three requests at Quick
+and Normal, and the two jobs' requests captured from the driver (fixed seed).
+1. Kernel (`search.go`, `surrogate.go`, `pool.go`, `rules.go`): enchants, reforges and gems carry their
+   nonzero stats, so `quickChoice`, `gemValue` and `statsGain` skip the zeros in the same order;
+   `configureFast` reads each curve's value and floor reading once per pass (`gainAt`), not per option;
+   `curve.segment` scans its few knots; option lookups go by pointer, not by copying `EnchantOption`s and
+   `ReforgeOption`s (`enchantStats`, `CheckGear`).
+2. `moveBound` (`search.go`): a bound per move from the state it starts from. `bestItem` skips any option,
+   weapons included, whose move can't beat the current score; `bestPartner` tries off hands highest
+   bound first and stops below the best score so far, ties still going to the first in option order.
+   The bound is the state with the move's slots emptied, scored without penalties, plus each option's ub
+   over the curves alone (`option.cub`), less the floor penalty left even if each option adds all it can
+   to the floor (`floorGains`), the weapon specialization at the move's own hands. `TestMoveBoundsHold`
+   checks it against every move from random gear, floors met or missed, partners included.
+3. Gems (`gems.go`): `CompilePool` sorts the gems into kinds once (`groupGems`) instead of every
+   `gemOptions` call; the gem DP's state keys reuse one buffer.
+
+Tried: skipping a polish step whose state hadn't changed since it last found nothing. It saved nothing,
+since the gem sweep that ends each round nearly always moves something; reverted.
+
+**Search CPU, s** (CLI, Normal, one run each):
+
+| | base | kernel | + `moveBound` |
+|---|---|---|---|
+| arms | 2014 | 1249 | 26 |
+| elemental | 142 | 88 | 49 |
+| fury | 172 | 108 | 48 |
+
+The gem cut took Stormweaver's captured request from 137 to 116 s. Search stage wall on the captured
+requests (15 workers): Mighty 78.8 → 2.5 s (whole run 136 → 56), Stormweaver 20.0 → 8.5 s (52 → 40).
+
+**Driver A/B**, server seconds, base and new interleaved on own servers, the machine at 97-100% CPU during
+Mighty (new rounds 1-2 predate the gem cut):
+
+| | base | new |
+|---|---|---|
+| Mighty | 176, 154, 211, 143, 148 | 69, 73, 62, 59 |
+| Stormweaver | 62, 58, 73, 55, 52 | 46, 52, 44, 40 |
+
+The UI seeds each run at random, so picks differ between base runs too (2-7 slots). Every run met every
+floor; Mighty Troll in all but one base run (Orc), 9048-9115 DPS and +1423 to +1514 base, 9009-9097 and
++1364 to +1537 new; Stormweaver 10089-10213, +1315 to +1390 base, 10081-10213, +1312 to +1389 new.
+
+**Harness**, the raid25 scenarios (both search racial finalists) at 16 procs, interleaved, two runs a side:
+the Search stage of raid DPS at Quick went 7.0, 7.2 → 1.0, 1.3 s, of the tank at Normal 4.4, 5.5 → 1.2,
+1.3 s, same sims. Whole runs moved within the load's noise.
+
+**Slow suite:** all 12 lines match wave M's [row](../wave-loop/wave-loop.PLAN.md#bis-baseline) to its
+precision, `J_preset` and both deltas: Fury 8725.1, +224.4 / +284.2; Combat Rogue 10730.8, +733.8 / +777.1;
+Fire Mage 5066.6, +40.5 / +48.1; Ret 12963.8, +174.6 / +231.9; Prot Pal -17821.9, +4835.9 / +4799.2; Feral
+Tank -1056.8, +912.9 / +900.1.
+
+**Left:** Stormweaver's search still takes 8.5 s loaded, spread over the gem DP's meta repairs, the gem
+sweep and `configure`, none over a third of it.
+
+### Full baseline
+
+New `bench` defaults ([README](../../tools/perf/README.md#full-baseline)): `-raid-procs 8,16` sweeps the
+raid25 scenarios at Quick (raid DPS's full curve took 97 min), and `-skip` leaves out raid DPS at Normal
+(56 min alone in wave J). Estimated from per-point times, L's cut-off run and I3's baseline: about 50 min.
+The optimizer at Normal 9 (the six slow-suite requests 6.6 at I3, the tank 1.5), Quick's sweep 13, the
+raid25 scenarios at Quick 22 (raid DPS 377 s at 8 procs, 3 × 291 s at 16), the rest 4.

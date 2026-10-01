@@ -20,13 +20,20 @@ import (
 // The scenarios NormalProcs and NormalReps apply to, the longest ones.
 const normalPrefix = "optimizer/normal/"
 
+// The scenarios RaidProcs applies to: the optimizer at Quick on a 25-player raid, whose sims each
+// cost a whole raid's.
+const raidPrefix = "optimizer/quick/raid25_"
+
 // Config is what to run.
 type Config struct {
 	Iterations int32
 	// Scenarios whose name matches; nil runs them all.
 	Match *regexp.Regexp
-	// The GOMAXPROCS sweep, and the optimizer at Normal's.
-	Procs, NormalProcs []int
+	// Scenarios left out whatever Match says; nil leaves none out.
+	Skip *regexp.Regexp
+	// The GOMAXPROCS sweep, the optimizer at Normal's, and the raid25 scenarios' at Quick (empty takes
+	// Procs).
+	Procs, NormalProcs, RaidProcs []int
 	// Timed runs at a scenario's widest point, where the comparison needs the spread most (the
 	// optimizer at Normal's), and at every other point.
 	Reps, NormalReps, SweepReps int
@@ -52,14 +59,31 @@ func Selected(cfg Config) ([]*Scenario, error) {
 	}
 	var out []*Scenario
 	for _, s := range all {
-		if cfg.Match == nil || cfg.Match.MatchString(s.Name) {
+		if (cfg.Match == nil || cfg.Match.MatchString(s.Name)) && (cfg.Skip == nil || !cfg.Skip.MatchString(s.Name)) {
 			out = append(out, s)
 		}
 	}
 	if len(out) == 0 {
-		return nil, fmt.Errorf("no scenario matches %q", cfg.Match)
+		switch {
+		case cfg.Skip == nil:
+			return nil, fmt.Errorf("no scenario matches %q", cfg.Match)
+		case cfg.Match == nil:
+			return nil, fmt.Errorf("every scenario matches the skip %q", cfg.Skip)
+		}
+		return nil, fmt.Errorf("no scenario matches %q but not %q", cfg.Match, cfg.Skip)
 	}
 	return out, nil
+}
+
+// sweep is the GOMAXPROCS sweep a scenario runs, and how many runs its widest point gets.
+func (cfg *Config) sweep(name string) (procs []int, widestReps int) {
+	switch {
+	case strings.HasPrefix(name, normalPrefix):
+		return cfg.NormalProcs, cfg.NormalReps
+	case strings.HasPrefix(name, raidPrefix) && len(cfg.RaidProcs) > 0:
+		return cfg.RaidProcs, cfg.Reps
+	}
+	return cfg.Procs, cfg.Reps
 }
 
 // Run times the selected scenarios and writes report.json and report.txt to cfg.Dir, the JSON after
@@ -89,10 +113,7 @@ func Run(ctx context.Context, cfg Config) (*Report, error) {
 	defer runtime.GOMAXPROCS(runtime.GOMAXPROCS(0))
 
 	for _, s := range scenarios {
-		sweep, widestReps := cfg.Procs, cfg.Reps
-		if strings.HasPrefix(s.Name, normalPrefix) {
-			sweep, widestReps = cfg.NormalProcs, cfg.NormalReps
-		}
+		sweep, widestReps := cfg.sweep(s.Name)
 		widest := slices.Max(sweep)
 		runtime.GOMAXPROCS(widest)
 		if err := simRaid(s.warmup); err != nil {
