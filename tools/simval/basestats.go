@@ -14,22 +14,23 @@ import (
 )
 
 // The server's class and race ids. Each class is built as one of its specs, named by the Player.spec
-// field.
+// field: spec for the base stats, then otherSpecs for a spell spec doesn't register (Rake, Flash Heal).
 var (
 	classes = map[uint8]struct {
-		class proto.Class
-		spec  protoreflect.Name
+		class      proto.Class
+		spec       protoreflect.Name
+		otherSpecs []protoreflect.Name
 	}{
-		1:  {proto.Class_ClassWarrior, "warrior"},
-		2:  {proto.Class_ClassPaladin, "retribution_paladin"},
-		3:  {proto.Class_ClassHunter, "hunter"},
-		4:  {proto.Class_ClassRogue, "rogue"},
-		5:  {proto.Class_ClassPriest, "shadow_priest"},
-		6:  {proto.Class_ClassDeathknight, "deathknight"},
-		7:  {proto.Class_ClassShaman, "elemental_shaman"},
-		8:  {proto.Class_ClassMage, "mage"},
-		9:  {proto.Class_ClassWarlock, "warlock"},
-		11: {proto.Class_ClassDruid, "balance_druid"},
+		1:  {proto.Class_ClassWarrior, "warrior", nil},
+		2:  {proto.Class_ClassPaladin, "retribution_paladin", nil},
+		3:  {proto.Class_ClassHunter, "hunter", nil},
+		4:  {proto.Class_ClassRogue, "rogue", nil},
+		5:  {proto.Class_ClassPriest, "shadow_priest", []protoreflect.Name{"healing_priest"}},
+		6:  {proto.Class_ClassDeathknight, "deathknight", nil},
+		7:  {proto.Class_ClassShaman, "elemental_shaman", []protoreflect.Name{"enhancement_shaman"}},
+		8:  {proto.Class_ClassMage, "mage", nil},
+		9:  {proto.Class_ClassWarlock, "warlock", nil},
+		11: {proto.Class_ClassDruid, "balance_druid", []protoreflect.Name{"feral_druid"}},
 	}
 	races = map[uint8]proto.Race{
 		1:  proto.Race_RaceHuman,

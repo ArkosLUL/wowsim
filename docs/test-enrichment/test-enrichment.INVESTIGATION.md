@@ -326,3 +326,39 @@ newly failed on the old fixture; on the new capture one record failed.
 - Dropped: the unarmed warrior's `melee` record. The server rolls 51 normal, 102 crit, 35 glancing, 10 blocked
   against the model's 49, 98, 34, 8, with the same attack power (568) as the armed warrior. It's the same +2 as the
   armed one, so it's warrior-specific. A fixture README row records it and it's a follow-up, not a sim change.
+
+## TE-DAMAGE as built
+
+**C++ and e2e stage** (golden-neutral).
+- `.simval damage <spellId> [pet]` (`SimValidationCommands.cpp`, help row in `simval_commands.sql`) writes one
+  `damage` record; the module README has its fields and shaped rules. Its keys fit `tools/simval`'s `record`, so a
+  full `simval.jsonl` recapture holding them still parses; `CheckRecord` skips the command.
+- Re-measured on `7f4174efb`: the module still calls no bonus function, and the spec's shaped list needed two fixes.
+  - Rend and Rupture are shaped by scripts (`spell_warr_rend`, `spell_rog_rupture`); `AuraEffect::CalculateAmount`
+    has no per-family code left. Garrote has neither, so it's compared.
+  - mod-spell-tweaks binds tick-period-only scripts to the DK diseases, Deadly Poison, Rupture, Rend and the balance
+    dots. They don't shape amounts and are allowlisted; any other script shapes.
+- `TestSimvalDamage` (`e2e/damage_test.go`): one bot per class, 3 or 4 spells, a bare pass and a pass with the
+  talents and glyphs as `.aura`; six expected-shaped spells cover the script, `EffectSchoolDMG` and target state rules.
+
+**Sim stage** (golden-neutral; see the tools/simval README's Damage probe).
+- The spec's `CalcDamage(base + coef·SP)` alone would miss terms the sim keeps in handler code (Impurity's AP
+  coefficient, Moonfire's and Immolate's dot-only multipliers, Black Arrow dividing out its own debuff). So the
+  replay runs the sim's own `ApplyEffects` (direct) or `Dot.Apply` plus one snapshot tick, with the record's base
+  pinned, the outcome forced to a plain hit and resists off.
+- The ±0.1%-or-1-point tolerance is widened upward only, by one multiplier per SP or AP bonus: the server truncates
+  each before the done multipliers, which matters on small ticks.
+- Death Coil: the probe reads 47632's own 600 base; a real cast hands it the 443 the sim declares from 49895. Only
+  the base check is skipped.
+- `basestats.go` gains `otherSpecs` (healing priest for Flash Heal, enhancement, feral for Rake); the base stats
+  checks still build `spec`.
+- In the sim, every compared spell rises with its class's second-pass auras, by each talent's tooltip amount.
+
+**Live stage.** One `run.sh TestSimvalDamage` on the rebuilt server: all 10 classes passed, about 105 s wall on a
+loaded machine. `damage.jsonl` holds its 78 records, bare and talented for each of the 39 probes, the six shaped
+spells included.
+- `TestDamageRecords`: 346 checks over 66 compared records, all passing; nothing dropped. The two over the first
+  run's 344 are Shadow Word: Pain's and Devouring Plague's tick crits in Shadowform: a tick crits unless `CANT_CRIT`,
+  crit capable or not.
+- All 148 amounts sit at or above the server's, as its truncation predicts. The closest to tolerance is Lava
+  Burst's max, 2.01 over against +2.11.
