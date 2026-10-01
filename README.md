@@ -104,8 +104,7 @@ make setup
 # Run all the tests. Currently only the backend sim has tests.
 make test
 
-# Update the expected test results. This will need to be run after adding/removing any tests, and also if test results change due to code changes.
-make update-tests
+# Never run make update-tests: it deletes every golden. Promote changed results suite by suite (docs/guide/testing.md).
 
 # Host a local version of the UI at http://localhost:8080. Visit it by pointing a browser to
 # http://localhost:8080/wotlk/YOUR_SPEC_HERE, where YOUR_SPEC_HERE is the directory under ui/ with your custom code.

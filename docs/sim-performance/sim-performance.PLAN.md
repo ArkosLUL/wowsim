@@ -216,7 +216,7 @@ Every roll also looks up the map, and reseeding hashes each label again.
   16-50× the option table estimated). 37 goldens byte-identical, simval 508/508, `go vet` and `gofmt` clean.
   `BenchmarkSimulate` (`IsTest` off, so untouched by the change) held within noise, interleaved.
 
-### PERF-FU: the racial search and the harness's length (wave N)
+### PERF-FU: the racial search and the harness's length (wave N, done)
 
 Two follow-ups from wave L, file-disjoint.
 
@@ -240,6 +240,13 @@ points the comparison reads, e.g. fewer procs for the raid25 scenarios. Update t
   interleaved if the machine is busy. The harness's new full-run time.
 - Owns: `sim/optimizer/**` except `types.go`, `tools/perf/**`, its INVESTIGATION section.
 
+**As built** ([INVESTIGATION](sim-performance.INVESTIGATION.md#perf-fu-wave-n)): static pruning never fired under a
+floor (`slopeBox` gives the floor's stat ub +Inf), so `racialBounds` cost nothing and stays. Three cuts, every
+`OptimizerResult` bit-identical: the surrogate kernel skips zero stats and reads each curve once per pass; a
+state-aware `moveBound` lets `bestItem` and `bestPartner` skip moves that can't win (arms search CPU 2014 → 26 s);
+gem kinds group once per pool. Captured P2 Normal jobs: Mighty 136 → 56 s, Stormweaver 52 → 40 s. The harness
+runs raid25 Quick at `-raid-procs 8,16` and skips raid DPS at Normal (55 min) by default: about 50 min in all.
+
 ## Order
 
 The user put the pass before wave J, whose BIS-e2e-perf times the optimizer with PERF-TOOLS' harness
@@ -248,4 +255,4 @@ The user put the pass before wave J, whose BIS-e2e-perf times the optimizer with
 - **I3 (done):** PERF-OPT and PERF-HOT, file-disjoint, once I2's baseline sets their targets.
 - **I6 (done):** PERF-MISSILE, the user's call (2026-09-26), before J times the optimizer.
 - **J2 (done):** PERF-RNG, the user's call (2026-09-27), with the optimizer fixes wave J's speed audit found.
-- **N:** PERF-FU, the user's call (2026-10-01), with wave L's and M's other follow-ups.
+- **N (done):** PERF-FU, the user's call (2026-10-01), with wave L's and M's other follow-ups.

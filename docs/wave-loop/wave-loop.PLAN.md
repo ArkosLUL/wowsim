@@ -125,7 +125,10 @@ PAR-FU-3 and PERF-FU join N, the user's call too (the same day): wave L's and M'
 
 ## Current wave
 
-- Wave: N, running. M landed as `545d92227`, L as `23e9e9e79` (prod rebuilt from it).
+- Wave: N, landed (master fast-forwarded to this close-out). Next: O (TE-TALENTS, TE-GOLDCHAR). Prod runs L's
+  `23e9e9e79`.
+- Left from N: its throughput row and the `tools/perf` full baseline, both idle once Deathsong is offline (online
+  at the close-out).
 - Carried (the user's call, 2026-10-01): rerun every DPS preset on the final HEAD, since BIS-caps-race changes
   every racial search and `ff0920a96` the 16 builds `mage_*`, `rogue_*`, `warlock_*`, `warrior_arms`,
   `warrior_fury`, `protection_warrior`, `shadow_priest`, `smite_priest`, `dk_blood`, `elemental_shaman`.
@@ -163,6 +166,7 @@ Reckoning that way), but J isn't DPS: see below.
 | K | 8725.1, +237 / +284 | 10730.8, +675 / +807 | 5064.5, +40 / +47 | 12963.8, +186 / +212 | -17821.9, +4813 / +4831 | -1056.8, +850 / +894 |
 | L | 8725.1, +224 / +284 | 10730.8, +734 / +777 | 5066.6, +41 / +48 | 12963.8, +175 / +232 | -17821.9, +4836 / +4799 | -1056.8, +913 / +900 |
 | M | 8725.1, +224 / +284 | 10730.8, +734 / +777 | 5066.6, +41 / +48 | 12963.8, +175 / +232 | -17821.9, +4836 / +4799 | -1056.8, +913 / +900 |
+| N | 8725.1, +224 / +284 | 10730.8, +734 / +777 | 5066.6, +41 / +48 | 12963.8, +175 / +232 | -17821.9, +4836 / +4799 | -1056.8, +913 / +900 |
 
 Quick / Normal. Ret P4 ran at Quick only in wave D, after the glyph fix; its wave C numbers
 (12821.9, +54 / +73) came from a seed that wore the glyph. The two tanks arrive with
@@ -212,7 +216,8 @@ In L the DPS picks meet their hit and expertise floors and haste ceilings (BIS-c
 `dps_preset` rose 0.16% (11290.9) with PAR-FU-1's Fire goldens; the gains moved within earlier rows' range, the
 tanks' with BIS-relic pricing every libram and idol. Idle, Ret's Normal run took 40% longer than K's (64.9 s),
 the rest within 8% or faster.
-In M nothing moved: TE-ABILITY and TE-REPLAY change tests only.
+In M nothing moved: TE-ABILITY and TE-REPLAY change tests only. Nor in N: PERF-FU keeps every result bit-identical,
+and the suite's Search stage already took 2 s or less.
 
 ## Sim throughput
 
@@ -424,6 +429,12 @@ crashed before F2, so its column starts there.
 | TE-ABILITY | merged | `ea9f1a150` | 37 suites' ability blocks promoted in `5b61e0488`, no metric moved; contract changes `c4c568cde` |
 | TE-REPLAY | merged | `a4515aecb` | goldens unchanged; fixture recaptured, simval 508 → 1060 checks; module `c5d0adc`. The unarmed warrior's white swings run 2 over the sim's, record dropped (follow-up) |
 | wave M cross-review | | `89d8dde7d`, `345c883aa` | 2 bugs: white swings didn't count glances as landed hits (Fury's main hand read 98% crits); dot ticks that aren't hits left their damage out of the block (Smite 14%), now an `amount` field. Also the replay's attack-type check, 1078 checks |
+
+| TE-GUARD | merged | `fb2338fda` | 5 goldens promoted in `a117b44fb`: Unholy +14.9% (Scourge Strike taken), Frost mage's AoE rows (Blizzard 42939 → 42940), Enhancement's Windfury rows, BM -0.3% (Aimed Shot), Blood Tank's Blood Aggro as its own row; `db.json` regenerated, unchanged |
+| TE-DAMAGE | merged | `7b15c738c` | goldens unchanged; module `dcf2591`, server rebuilt 17:30-17:37; 344 checks over 66 live records, no mismatch. Review fixed dot crits never compared and a tolerance widened both ways |
+| PAR-FU-3 | merged | `472ad8b4c` | goldens unchanged: the warrior's +2 is Battle Stance's 10% armor penetration, which the sim has and the replay model lacked; the unarmed warrior's record is back, simval 1114 checks |
+| PERF-FU | merged | `e025c1fe8` | results bit-identical; captured P2 Normal jobs: Mighty 136 → 56 s, Stormweaver 52 → 40 s; the harness's full run about 50 min, raid DPS at Normal skipped by default |
+| wave N cross-review | | `887e9152a` | no bugs: the golden-mismatch hint said `make update-tests`; docs on where `damage` records go; module long lines (`9dfacf6`) |
 
 Later WIs are added as their wave starts.
 

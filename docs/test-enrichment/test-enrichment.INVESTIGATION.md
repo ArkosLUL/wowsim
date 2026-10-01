@@ -326,6 +326,7 @@ newly failed on the old fixture; on the new capture one record failed.
 - Dropped: the unarmed warrior's `melee` record. The server rolls 51 normal, 102 crit, 35 glancing, 10 blocked
   against the model's 49, 98, 34, 8, with the same attack power (568) as the armed warrior. It's the same +2 as the
   armed one, so it's warrior-specific. A fixture README row records it and it's a follow-up, not a sim change.
+  PAR-FU-3 (N) restored it: the +2 is Battle Stance's 10% armor penetration, which the model left out.
 
 ## TE-GUARD as built
 

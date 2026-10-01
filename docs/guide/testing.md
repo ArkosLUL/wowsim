@@ -113,12 +113,12 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
 ## Against the server
 
 - `tools/simval` replays simval records captured on the server, and rebuilds naked `info` characters and
-  unarmed white swings in the sim:
+  white swings (unarmed or main hand only) in the sim:
   `dock.sh run ./tools/simval -records /wotlk/sim/core/testdata/simval/simval.jsonl`.
   - `sim/core/testdata/simval/simval.jsonl` is the committed capture of the whole e2e suite; its README lists
     dropped records. `TestFixtureHasEveryE2ERecord` keys it on (command, spell id, class, dummy entry).
 - Live e2e, which needs the user's OK: `cd [ac]/modules/mod-sim-validation && ./e2e/run.sh [TestName]`
-  (default `-run TestSimval`, about 5 min). The module's `README.md` covers its commands, env vars and orphan cleanup.
+  (default `-run TestSimval`, about 7 min). The module's `README.md` covers its commands, env vars and orphan cleanup.
   - Recapture the fixture, never append: the suite deletes its own records and the host side of the log
     mount is stale, so stream from inside the container, started before the run:
     1. `MSYS_NO_PATHCONV=1 docker exec ac-worldserver tail -F -n +1 /azerothcore/env/dist/logs/simval/simval.jsonl > tmp/stream.jsonl &`,

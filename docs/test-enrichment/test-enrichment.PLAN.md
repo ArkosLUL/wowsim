@@ -96,7 +96,7 @@ run's start, dedupe by line, and replace `simval.jsonl` (a recapture never appen
 **Owns:** `tools/simval/**` except rrsim and chronicle, `simval.jsonl` and the fixture README; module
 `e2e/p7_tank_test.go`, `e2e/simval_test.go`, `README.md`; `testing.md` "Against the server".
 
-### TE-GUARD (N; goldens)
+### TE-GUARD (N, done; goldens)
 
 - `GetAPLSpell`/`GetTargetAPLSpell` (`apl_helpers.go`) record unknown `ActionID`s on `APLRotation` (accessor);
   no warning-string parsing.
@@ -127,7 +127,7 @@ run's start, dedupe by line, and replace `simval.jsonl` (a recapture never appen
   serverdata family map, the fixed and healer suites' `*_test.go`, `sim/deathknight/dps/parity_test.go` if
   needed, `frost_aoe.apl.json`, `sim/serverdata_test.go`, `testing.md` Goldens.
 
-### TE-DAMAGE (N; golden-neutral; C++; stages: C++ and e2e, sim, live)
+### TE-DAMAGE (N, done; golden-neutral; C++; stages: C++ and e2e, sim, live)
 
 - `.simval damage <spellId> [pet]` in `SimValidationCommands.cpp`, wired like `HandleYellowCommand`, with a
   help row in `simval_commands.sql`. Deterministic; per effect it records type, base min and max, then
