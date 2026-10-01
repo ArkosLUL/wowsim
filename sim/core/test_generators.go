@@ -45,34 +45,6 @@ func (generator *SingleDpsTestGenerator) GetTest(_ int) (string, *proto.ComputeS
 	return generator.Name, nil, nil, generator.Request
 }
 
-type RotationCastsTestGenerator struct {
-	SpecOptions []SpecOptionsCombo
-	PartyBuffs  *proto.PartyBuffs
-	RaidBuffs   *proto.RaidBuffs
-	Debuffs     *proto.Debuffs
-	Player      *proto.Player
-	Encounter   *proto.Encounter
-	SimOptions  *proto.SimOptions
-}
-
-func (generator *RotationCastsTestGenerator) NumTests() int {
-	return len(generator.SpecOptions)
-}
-
-func (generator *RotationCastsTestGenerator) GetTest(testIdx int) (string, *proto.ComputeStatsRequest, *proto.StatWeightsRequest, *proto.RaidSimRequest) {
-	rsr := &proto.RaidSimRequest{
-		Raid: SinglePlayerRaidProto(
-			WithSpec(generator.Player, generator.SpecOptions[testIdx].SpecOptions),
-			generator.PartyBuffs,
-			generator.RaidBuffs,
-			generator.Debuffs,
-		),
-		Encounter:  generator.Encounter,
-		SimOptions: generator.SimOptions,
-	}
-	return generator.SpecOptions[testIdx].Label, nil, nil, rsr
-}
-
 type GearSetCombo struct {
 	Label   string
 	GearSet *proto.EquipmentSpec

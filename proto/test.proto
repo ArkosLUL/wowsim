@@ -19,8 +19,18 @@ message DpsTestResult {
 	double tmi = 5;
 }
 
-message CastsTestResult {
-	map<string, double> casts = 1;
+// Per iteration, summed over the targets. hits counts landed hits, crits and blocks included.
+message AbilityTestResult {
+	double casts = 1;
+	double hits = 2;
+	double crit_pct = 3;
+	double amount_per_hit = 4;
+	double uptime_s = 5;
+}
+
+message AbilitiesTestResult {
+	// Keyed "<unit>|action|<id>" or "<unit>|aura|<id>".
+	map<string, AbilityTestResult> entries = 1;
 }
 
 message TestSuiteResult {
@@ -33,5 +43,8 @@ message TestSuiteResult {
 	// Maps test names to their results.
 	map<string, DpsTestResult> dps_results = 1;
 
-	map<string, CastsTestResult> casts_results = 4;
+	// Maps test names to their results. Only Average tests have one.
+	map<string, AbilitiesTestResult> ability_results = 5;
+
+	reserved 4;
 }

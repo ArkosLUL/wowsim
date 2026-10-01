@@ -72,34 +72,100 @@ func (testSuite *IndividualTestSuite) TestDPS(testName string, rsr *proto.RaidSi
 		Dtps: toFixed(result.RaidMetrics.Parties[0].Players[0].Dtps.Avg, storagePrecision),
 		Hps:  toFixed(result.RaidMetrics.Parties[0].Players[0].Hps.Avg, storagePrecision),
 	}
+	if strings.Contains(testName, "Average") {
+		testSuite.testResults.AbilityResults[testName] = abilityResults(result, rsr.SimOptions.Iterations)
+	}
 }
 
-func (testSuite *IndividualTestSuite) TestCasts(testName string, rsr *proto.RaidSimRequest) {
-	testSuite.testNames = append(testSuite.testNames, testName)
-	result := RunRaidSim(rsr)
-	if result.Logs != "" {
-		fmt.Printf("LOGS: %s\n", result.Logs)
+type abilitySums struct {
+	casts, hits, crits, amount, uptime float64
+}
+
+// abilityResults reads the player's and its pets' actions and auras, and the targets' auras, off
+// one run. Same-named pets and repeated ids add up, so a pet-count change shows as one row moving.
+func abilityResults(result *proto.RaidSimResult, iterations int32) *proto.AbilitiesTestResult {
+	sums := make(map[string]*abilitySums)
+	sumsFor := func(unit, kind string, id *proto.ActionID) *abilitySums {
+		key := unit + "|" + kind + "|" + ProtoToActionID(id).String()
+		s, ok := sums[key]
+		if !ok {
+			s = &abilitySums{}
+			sums[key] = s
+		}
+		return s
 	}
-	if result.ErrorResult != "" {
-		panic("simulation failed to run: " + result.ErrorResult)
-	}
-	castsByAction := make(map[string]float64, 0)
-	for _, metric := range result.RaidMetrics.Parties[0].Players[0].Actions {
-		name := metric.Id.String()
-		name = strings.ReplaceAll(name, "  ", " ")
-		for _, targetMetrics := range metric.Targets {
-			if val, ok := castsByAction[name]; ok {
-				castsByAction[name] = val + float64(targetMetrics.Casts)
-			} else {
-				castsByAction[name] = float64(targetMetrics.Casts)
+	addUnit := func(unit string, metrics *proto.UnitMetrics, withActions bool) {
+		if withActions {
+			for _, action := range metrics.Actions {
+				s := sumsFor(unit, "action", action.Id)
+				for _, target := range action.Targets {
+					s.casts += float64(target.Casts)
+					s.hits += float64(target.Hits + target.Crits + target.Blocks)
+					s.crits += float64(target.Crits)
+					s.amount += target.Damage + target.Healing + target.Shielding
+				}
 			}
 		}
-		castsByAction[name] /= float64(rsr.SimOptions.Iterations)
-		castsByAction[name] *= 10
-		castsByAction[name] = math.Round(castsByAction[name]) / 10.0
+		for _, aura := range metrics.Auras {
+			sumsFor(unit, "aura", aura.Id).uptime += aura.UptimeSecondsAvg
+		}
 	}
-	casts := &proto.CastsTestResult{Casts: castsByAction}
-	testSuite.testResults.CastsResults[testName] = casts
+
+	player := result.RaidMetrics.Parties[0].Players[0]
+	addUnit("player", player, true)
+	for _, pet := range player.Pets {
+		addUnit("pet:"+pet.Name, pet, true)
+	}
+	for i, target := range result.EncounterMetrics.Targets {
+		addUnit(fmt.Sprintf("target%d", i), target, false)
+	}
+
+	iters := float64(iterations)
+	entries := make(map[string]*proto.AbilityTestResult, len(sums))
+	for key, s := range sums {
+		isAction := strings.Contains(key, "|action|")
+		if isAction && s.casts == 0 && s.hits == 0 || !isAction && s.uptime == 0 {
+			continue
+		}
+		entry := &proto.AbilityTestResult{
+			Casts:   toFixed(s.casts/iters, storagePrecision),
+			Hits:    toFixed(s.hits/iters, storagePrecision),
+			UptimeS: toFixed(s.uptime, storagePrecision),
+		}
+		if s.hits > 0 {
+			entry.CritPct = toFixed(s.crits/s.hits*100, storagePrecision)
+			entry.AmountPerHit = toFixed(s.amount/s.hits, storagePrecision)
+		}
+		entries[key] = entry
+	}
+	return &proto.AbilitiesTestResult{Entries: entries}
+}
+
+func within(a, b float64) bool {
+	return math.Abs(a-b) <= tolerance
+}
+
+// compareAbilities fails t for every key either side has alone, and every field that differs.
+func compareAbilities(t *testing.T, expected, actual *proto.AbilitiesTestResult) {
+	for key, got := range actual.Entries {
+		want, ok := expected.Entries[key]
+		if !ok {
+			t.Logf("Unexpected ability %s: %v", key, got)
+			t.Fail()
+			continue
+		}
+		if !within(got.Casts, want.Casts) || !within(got.Hits, want.Hits) || !within(got.CritPct, want.CritPct) ||
+			!within(got.AmountPerHit, want.AmountPerHit) || !within(got.UptimeS, want.UptimeS) {
+			t.Logf("Ability %s expected %v but was %v", key, want, got)
+			t.Fail()
+		}
+	}
+	for key, want := range expected.Entries {
+		if _, ok := actual.Entries[key]; !ok {
+			t.Logf("Missing ability %s: %v", key, want)
+			t.Fail()
+		}
+	}
 }
 
 func (testSuite *IndividualTestSuite) Done(t *testing.T) {
@@ -142,7 +208,7 @@ func newTestSuiteResult() *proto.TestSuiteResult {
 		CharacterStatsResults: make(map[string]*proto.CharacterStatsTestResult),
 		StatWeightsResults:    make(map[string]*proto.StatWeightsTestResult),
 		DpsResults:            make(map[string]*proto.DpsTestResult),
-		CastsResults:          make(map[string]*proto.CastsTestResult),
+		AbilityResults:        make(map[string]*proto.AbilitiesTestResult),
 	}
 }
 
@@ -216,7 +282,7 @@ func RunTestSuite(t *testing.T, suiteName string, generator TestGenerator) {
 					t.Logf("Missing Result for test %s", fullTestName)
 					t.Fail()
 				}
-			} else if rsr != nil && !strings.Contains(testName, "Casts") {
+			} else if rsr != nil {
 				testSuite.TestDPS(fullTestName, rsr)
 				if actualDpsResult, ok := testSuite.testResults.DpsResults[fullTestName]; ok {
 					if expectedDpsResult, ok := expectedResults.DpsResults[fullTestName]; ok {
@@ -246,26 +312,19 @@ func RunTestSuite(t *testing.T, suiteName string, generator TestGenerator) {
 							t.Logf("DTPS expected %0.03f but was %0.03f!.", expectedDpsResult.Dtps, actualDpsResult.Dtps)
 							t.Fail()
 						}
-					} else {
-						t.Logf("Unexpected test %s with %0.03f DPS!", fullTestName, actualDpsResult.Dps)
-						t.Fail()
-					}
-				} else if !ok {
-					t.Logf("Missing Result for test %s", fullTestName)
-					t.Fail()
-				}
-			} else if rsr != nil && strings.Contains(testName, "Casts") {
-				testSuite.TestCasts(fullTestName, rsr)
-				if actualCastsResult, ok := testSuite.testResults.CastsResults[fullTestName]; ok {
-					if expectedCastsResult, ok := expectedResults.CastsResults[fullTestName]; ok {
-						for action, casts := range actualCastsResult.Casts {
-							if casts < expectedCastsResult.Casts[action]-tolerance || casts > expectedCastsResult.Casts[action]+tolerance {
-								t.Logf("Expected %0.03f casts of %s but was %0.03f!.", expectedCastsResult.Casts[action], action, casts)
+						if actualAbilities, ok := testSuite.testResults.AbilityResults[fullTestName]; ok {
+							if expectedAbilities, ok := expectedResults.AbilityResults[fullTestName]; ok {
+								compareAbilities(t, expectedAbilities, actualAbilities)
+							} else {
+								t.Logf("Unexpected abilities for test %s", fullTestName)
 								t.Fail()
 							}
+						} else if expectedAbilities, ok := expectedResults.AbilityResults[fullTestName]; ok {
+							t.Logf("Missing abilities for test %s: %d entries expected", fullTestName, len(expectedAbilities.Entries))
+							t.Fail()
 						}
 					} else {
-						t.Logf("Unexpected test %s", fullTestName)
+						t.Logf("Unexpected test %s with %0.03f DPS!", fullTestName, actualDpsResult.Dps)
 						t.Fail()
 					}
 				} else if !ok {

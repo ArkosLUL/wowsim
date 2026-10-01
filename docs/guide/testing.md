@@ -59,8 +59,17 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
     (`dock.sh delta`, then `dock.sh promote <dir>`).
   - Without `dock.sh`, promote by hand:
     `for f in <dir>/*.results.tmp; do cp "$f" "${f%.tmp}"; done`.
-  - `delta` compares dps, hps, tps and dtps per test, and lists tests that appear or disappear. Diff the
-    two files for stats, casts and stat weights.
+  - `delta` compares dps, hps, tps and dtps per test, and lists tests that appear or disappear. Under each
+    Average test it lists the moved abilities (below), four-space indented, largest damage or healing change
+    first. Diff the two files for stats and stat weights.
+- `Average` tests also store `ability_results`: one entry per `<unit>|action|<id>` and `<unit>|aura|<id>`,
+  `<unit>` being `player`, `pet:<name>` or `target<i>` (target auras only).
+  - Fields, per iteration and summed over targets: `casts`, `hits`, `crit_pct`, `amount_per_hit`
+    (damage + healing + shielding) and, for auras, `uptime_s`. `hits` counts landed hits: the sim's hits,
+    crits and blocks.
+  - Only actions with casts or hits, and auras with uptime. Same-named pets and repeated ids add up.
+  - The comparison runs both ways: a key on one side only fails the test.
+  - Against a golden without the block, `delta` prints one `abilities new (N entries)` line per test.
 - A `.results` that shows as modified with an empty `git diff` is CRLF noise: leave it out of commits.
 - `sim/optimizer/raidctx/testdata/raid25.derived.json` is a golden too. Rewrite it with
   `go test --tags=with_db ./sim/optimizer/raidctx -run TestDeriveFixtureGolden -update`.
