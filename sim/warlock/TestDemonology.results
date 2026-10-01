@@ -781,3 +781,538 @@ dps_results: {
   tps: 12298.58337
  }
 }
+ability_results: {
+ key: "TestDemonology-Average-Default"
+ value: {
+  entries: {
+   key: "pet:Felguard|action|{OtherID: 10}"
+   value: {
+    casts: 129.776
+   }
+  }
+  entries: {
+   key: "pet:Felguard|action|{OtherID: 3, Tag: 1}"
+   value: {
+    casts: 198.177
+    hits: 142.119
+    crit_pct: 31.19076
+    amount_per_hit: 2882.88112
+   }
+  }
+  entries: {
+   key: "pet:Felguard|action|{SpellID: 47994}"
+   value: {
+    casts: 50.4795
+    hits: 48.8225
+    crit_pct: 22.55722
+    amount_per_hit: 2405.2438
+   }
+  }
+  entries: {
+   key: "pet:Felguard|aura|{SpellID: 25899}"
+   value: {
+    uptime_s: 299.9236
+   }
+  }
+  entries: {
+   key: "pet:Felguard|aura|{SpellID: 2825, Tag: -1}"
+   value: {
+    uptime_s: 40.04968
+   }
+  }
+  entries: {
+   key: "pet:Felguard|aura|{SpellID: 32851}"
+   value: {
+    uptime_s: 299.92125
+   }
+  }
+  entries: {
+   key: "pet:Felguard|aura|{SpellID: 35706}"
+   value: {
+    uptime_s: 299.9236
+   }
+  }
+  entries: {
+   key: "pet:Felguard|aura|{SpellID: 47193}"
+   value: {
+    uptime_s: 106.90711
+   }
+  }
+  entries: {
+   key: "pet:Felguard|aura|{SpellID: 47240}"
+   value: {
+    uptime_s: 299.9236
+   }
+  }
+  entries: {
+   key: "pet:Felguard|aura|{SpellID: 47436}"
+   value: {
+    uptime_s: 299.9236
+   }
+  }
+  entries: {
+   key: "pet:Felguard|aura|{SpellID: 48932}"
+   value: {
+    uptime_s: 299.9236
+   }
+  }
+  entries: {
+   key: "pet:Felguard|aura|{SpellID: 53307}"
+   value: {
+    uptime_s: 299.9236
+   }
+  }
+  entries: {
+   key: "pet:Felguard|aura|{SpellID: 57669}"
+   value: {
+    uptime_s: 299.9236
+   }
+  }
+  entries: {
+   key: "pet:Felguard|aura|{SpellID: 57722}"
+   value: {
+    uptime_s: 299.9236
+   }
+  }
+  entries: {
+   key: "pet:Felguard|aura|{SpellID: 57724}"
+   value: {
+    uptime_s: 299.9236
+   }
+  }
+  entries: {
+   key: "pet:Felguard|aura|{SpellID: 70840}"
+   value: {
+    uptime_s: 116.37668
+   }
+  }
+  entries: {
+   key: "pet:Infernal|aura|{SpellID: 47240}"
+   value: {
+    uptime_s: 299.9236
+   }
+  }
+  entries: {
+   key: "pet:Infernal|aura|{SpellID: 47436}"
+   value: {
+    uptime_s: 299.9236
+   }
+  }
+  entries: {
+   key: "pet:Infernal|aura|{SpellID: 57669}"
+   value: {
+    uptime_s: 299.9236
+   }
+  }
+  entries: {
+   key: "pet:Infernal|aura|{SpellID: 57722}"
+   value: {
+    uptime_s: 299.9236
+   }
+  }
+  entries: {
+   key: "player|action|{ItemID: 40212}"
+   value: {
+    casts: 2
+   }
+  }
+  entries: {
+   key: "player|action|{OtherID: 10}"
+   value: {
+    casts: 144.9755
+   }
+  }
+  entries: {
+   key: "player|action|{SpellID: 33697}"
+   value: {
+    casts: 3
+   }
+  }
+  entries: {
+   key: "player|action|{SpellID: 47193}"
+   value: {
+    casts: 7.561
+   }
+  }
+  entries: {
+   key: "player|action|{SpellID: 47241}"
+   value: {
+    casts: 3
+   }
+  }
+  entries: {
+   key: "player|action|{SpellID: 47809}"
+   value: {
+    casts: 76.7255
+    hits: 76.7255
+    crit_pct: 62.51572
+    amount_per_hit: 16228.21254
+   }
+  }
+  entries: {
+   key: "player|action|{SpellID: 47811}"
+   value: {
+    casts: 11.963
+    hits: 105.741
+    crit_pct: 57.3576
+    amount_per_hit: 3423.94416
+   }
+  }
+  entries: {
+   key: "player|action|{SpellID: 47813}"
+   value: {
+    casts: 24.421
+    hits: 143.494
+    amount_per_hit: 2075.62055
+   }
+  }
+  entries: {
+   key: "player|action|{SpellID: 47825}"
+   value: {
+    casts: 50.0465
+    hits: 50.0465
+    crit_pct: 66.4562
+    amount_per_hit: 21962.50335
+   }
+  }
+  entries: {
+   key: "player|action|{SpellID: 47838}"
+   value: {
+    casts: 29.4175
+    hits: 29.4175
+    crit_pct: 62.16538
+    amount_per_hit: 14972.00958
+   }
+  }
+  entries: {
+   key: "player|action|{SpellID: 47864}"
+   value: {
+    casts: 1.8105
+    hits: 21.6835
+    amount_per_hit: 1104.57322
+   }
+  }
+  entries: {
+   key: "player|action|{SpellID: 47867}"
+   value: {
+    casts: 4.0965
+    hits: 4.0965
+    amount_per_hit: 28137.88323
+   }
+  }
+  entries: {
+   key: "player|action|{SpellID: 50589}"
+   value: {
+    casts: 3
+    hits: 44.998
+    amount_per_hit: 2253.46375
+   }
+  }
+  entries: {
+   key: "player|action|{SpellID: 54758}"
+   value: {
+    casts: 5.1
+   }
+  }
+  entries: {
+   key: "player|action|{SpellID: 57946}"
+   value: {
+    casts: 9.61
+   }
+  }
+  entries: {
+   key: "player|aura|{ItemID: 40212}"
+   value: {
+    uptime_s: 27.54972
+   }
+  }
+  entries: {
+   key: "player|aura|{ItemID: 50348}"
+   value: {
+    uptime_s: 105.05388
+   }
+  }
+  entries: {
+   key: "player|aura|{SpellID: 16190, Tag: -1}"
+   value: {
+    uptime_s: 12
+   }
+  }
+  entries: {
+   key: "player|aura|{SpellID: 25899}"
+   value: {
+    uptime_s: 299.9236
+   }
+  }
+  entries: {
+   key: "player|aura|{SpellID: 2825, Tag: -1}"
+   value: {
+    uptime_s: 40.04968
+   }
+  }
+  entries: {
+   key: "player|aura|{SpellID: 33697}"
+   value: {
+    uptime_s: 45.07242
+   }
+  }
+  entries: {
+   key: "player|aura|{SpellID: 35706}"
+   value: {
+    uptime_s: 299.9236
+   }
+  }
+  entries: {
+   key: "player|aura|{SpellID: 47240}"
+   value: {
+    uptime_s: 299.9236
+   }
+  }
+  entries: {
+   key: "player|aura|{SpellID: 47241}"
+   value: {
+    uptime_s: 90.04968
+   }
+  }
+  entries: {
+   key: "player|aura|{SpellID: 47436}"
+   value: {
+    uptime_s: 299.9236
+   }
+  }
+  entries: {
+   key: "player|aura|{SpellID: 48932}"
+   value: {
+    uptime_s: 299.9236
+   }
+  }
+  entries: {
+   key: "player|aura|{SpellID: 50589}"
+   value: {
+    uptime_s: 26.55451
+   }
+  }
+  entries: {
+   key: "player|aura|{SpellID: 53307}"
+   value: {
+    uptime_s: 299.9236
+   }
+  }
+  entries: {
+   key: "player|aura|{SpellID: 54758}"
+   value: {
+    uptime_s: 60.15795
+   }
+  }
+  entries: {
+   key: "player|aura|{SpellID: 55637}"
+   value: {
+    uptime_s: 75.04029
+   }
+  }
+  entries: {
+   key: "player|aura|{SpellID: 57669}"
+   value: {
+    uptime_s: 299.9236
+   }
+  }
+  entries: {
+   key: "player|aura|{SpellID: 57722}"
+   value: {
+    uptime_s: 299.9236
+   }
+  }
+  entries: {
+   key: "player|aura|{SpellID: 57724}"
+   value: {
+    uptime_s: 299.9236
+   }
+  }
+  entries: {
+   key: "player|aura|{SpellID: 63167}"
+   value: {
+    uptime_s: 103.903
+   }
+  }
+  entries: {
+   key: "player|aura|{SpellID: 63321}"
+   value: {
+    uptime_s: 299.27628
+   }
+  }
+  entries: {
+   key: "player|aura|{SpellID: 70840}"
+   value: {
+    uptime_s: 116.37668
+   }
+  }
+  entries: {
+   key: "player|aura|{SpellID: 71165}"
+   value: {
+    uptime_s: 74.52138
+   }
+  }
+  entries: {
+   key: "player|aura|{SpellID: 71636}"
+   value: {
+    uptime_s: 60
+   }
+  }
+  entries: {
+   key: "player|aura|{SpellID: 72416}"
+   value: {
+    uptime_s: 41.31245
+   }
+  }
+  entries: {
+   key: "target0|aura|{SpellID: 11374}"
+   value: {
+    uptime_s: 299.9236
+   }
+  }
+  entries: {
+   key: "target0|aura|{SpellID: 12873}"
+   value: {
+    uptime_s: 0.75048
+   }
+  }
+  entries: {
+   key: "target0|aura|{SpellID: 17800}"
+   value: {
+    uptime_s: 299.17313
+   }
+  }
+  entries: {
+   key: "target0|aura|{SpellID: 20271}"
+   value: {
+    uptime_s: 299.9236
+   }
+  }
+  entries: {
+   key: "target0|aura|{SpellID: 20337}"
+   value: {
+    uptime_s: 299.9236
+   }
+  }
+  entries: {
+   key: "target0|aura|{SpellID: 26016}"
+   value: {
+    uptime_s: 299.9236
+   }
+  }
+  entries: {
+   key: "target0|aura|{SpellID: 27013}"
+   value: {
+    uptime_s: 299.9236
+   }
+  }
+  entries: {
+   key: "target0|aura|{SpellID: 29859}"
+   value: {
+    uptime_s: 299.9236
+   }
+  }
+  entries: {
+   key: "target0|aura|{SpellID: 3043}"
+   value: {
+    uptime_s: 299.9236
+   }
+  }
+  entries: {
+   key: "target0|aura|{SpellID: 30708}"
+   value: {
+    uptime_s: 299.9236
+   }
+  }
+  entries: {
+   key: "target0|aura|{SpellID: 33198}"
+   value: {
+    uptime_s: 299.9236
+   }
+  }
+  entries: {
+   key: "target0|aura|{SpellID: 47467}"
+   value: {
+    uptime_s: 3
+   }
+  }
+  entries: {
+   key: "target0|aura|{SpellID: 47502}"
+   value: {
+    uptime_s: 299.9236
+   }
+  }
+  entries: {
+   key: "target0|aura|{SpellID: 47811}"
+   value: {
+    uptime_s: 282.59576
+   }
+  }
+  entries: {
+   key: "target0|aura|{SpellID: 47813}"
+   value: {
+    uptime_s: 278.80886
+   }
+  }
+  entries: {
+   key: "target0|aura|{SpellID: 47864}"
+   value: {
+    uptime_s: 43.38367
+   }
+  }
+  entries: {
+   key: "target0|aura|{SpellID: 47865}"
+   value: {
+    uptime_s: 299.9236
+   }
+  }
+  entries: {
+   key: "target0|aura|{SpellID: 47867}"
+   value: {
+    uptime_s: 245.84689
+   }
+  }
+  entries: {
+   key: "target0|aura|{SpellID: 48511}"
+   value: {
+    uptime_s: 299.9236
+   }
+  }
+  entries: {
+   key: "target0|aura|{SpellID: 48566}"
+   value: {
+    uptime_s: 299.9236
+   }
+  }
+  entries: {
+   key: "target0|aura|{SpellID: 50511}"
+   value: {
+    uptime_s: 299.9236
+   }
+  }
+  entries: {
+   key: "target0|aura|{SpellID: 51161}"
+   value: {
+    uptime_s: 299.9236
+   }
+  }
+  entries: {
+   key: "target0|aura|{SpellID: 53408}"
+   value: {
+    uptime_s: 299.9236
+   }
+  }
+  entries: {
+   key: "target0|aura|{SpellID: 770}"
+   value: {
+    uptime_s: 299.9236
+   }
+  }
+  entries: {
+   key: "target0|aura|{SpellID: 8647}"
+   value: {
+    uptime_s: 296.9236
+   }
+  }
+ }
+}
