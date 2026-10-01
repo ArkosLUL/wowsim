@@ -40,6 +40,7 @@ type Pool struct {
 	targetIndex int
 	reforging   *core.Reforging
 	sheets      sheetMemo
+	gemKinds    []gemKind
 }
 
 // Candidate is one item one slot can hold.
@@ -71,6 +72,8 @@ type EnchantOption struct {
 	Stats stats.Stats
 	// It has an effect beyond its stats.
 	NeedsSim bool
+
+	nz []stats.Stat
 }
 
 // ReforgeOption is one reforge and the stat change it makes on its item.
@@ -79,6 +82,8 @@ type ReforgeOption struct {
 	From, To int32
 	// Minus the moved amount on From, plus it on To.
 	Stats stats.Stats
+
+	nz []stats.Stat
 }
 
 type GemCandidate struct {
@@ -87,6 +92,20 @@ type GemCandidate struct {
 	NeedsSim bool
 	// nil when the pool has no catalog row for it.
 	Catalog *proto.CatalogItem
+
+	nz []stats.Stat
+}
+
+// nonzero is x's nonzero stats in stat order. The search's inner loops price an enchant, reforge or
+// gem over these alone, which adds the same terms in the same order as a pass over every stat.
+func nonzero(x *stats.Stats) []stats.Stat {
+	var out []stats.Stat
+	for st, v := range x {
+		if v != 0 {
+			out = append(out, stats.Stat(st))
+		}
+	}
+	return out
 }
 
 // playerRules is what the equip rules need to know about the target.
@@ -160,14 +179,14 @@ func CompilePool(r *Request) (*Pool, error) {
 			}
 			c := p.newCandidate(item)
 			for _, enchantID := range enchants[id] {
-				if enchantID == 0 || slices.ContainsFunc(c.Enchants, func(e EnchantOption) bool { return e.ID == enchantID }) {
+				if enchantID == 0 || c.enchant(enchantID) != nil {
 					continue
 				}
 				enchant, ok := core.LookupEnchant(enchantID)
 				if !ok {
 					return nil, fmt.Errorf("pool slot %s: enchant %d for item %d isn't in the database", slot, enchantID, id)
 				}
-				c.Enchants = append(c.Enchants, EnchantOption{ID: enchantID, Stats: enchant.Stats, NeedsSim: EnchantHasEffect(enchantID)})
+				c.Enchants = append(c.Enchants, EnchantOption{ID: enchantID, Stats: enchant.Stats, NeedsSim: EnchantHasEffect(enchantID), nz: nonzero(&enchant.Stats)})
 			}
 			p.Slots[slot] = append(p.Slots[slot], c)
 			p.index[slot][id] = c
@@ -187,7 +206,7 @@ func CompilePool(r *Request) (*Pool, error) {
 		c.Reforges = slices.DeleteFunc(c.Reforges, func(o ReforgeOption) bool { return o.From != choice.ReforgeFrom || o.To != choice.ReforgeTo })
 		if choice.Enchant != 0 {
 			enchant, _ := core.LookupEnchant(choice.Enchant)
-			c.Enchants = []EnchantOption{{ID: choice.Enchant, Stats: enchant.Stats, NeedsSim: EnchantHasEffect(choice.Enchant)}}
+			c.Enchants = []EnchantOption{{ID: choice.Enchant, Stats: enchant.Stats, NeedsSim: EnchantHasEffect(choice.Enchant), nz: nonzero(&enchant.Stats)}}
 		}
 		p.Slots[slot] = []*Candidate{c}
 		p.index[slot][choice.ItemID] = c
@@ -201,10 +220,11 @@ func CompilePool(r *Request) (*Pool, error) {
 		if !ok {
 			return nil, fmt.Errorf("pool gem %d isn't in the database", id)
 		}
-		g := &GemCandidate{Gem: gem, NeedsSim: ItemHasEffect(id), Catalog: p.catalog[id]}
+		g := &GemCandidate{Gem: gem, NeedsSim: ItemHasEffect(id), Catalog: p.catalog[id], nz: nonzero(&gem.Stats)}
 		p.Gems = append(p.Gems, g)
 		p.gems[id] = g
 	}
+	p.groupGems()
 	return p, nil
 }
 
@@ -287,7 +307,7 @@ func reforgeOptions(item core.Item, reforging *core.Reforging) []ReforgeOption {
 			if delta == (stats.Stats{}) {
 				continue
 			}
-			out = append(out, ReforgeOption{From: from, To: to, Stats: delta})
+			out = append(out, ReforgeOption{From: from, To: to, Stats: delta, nz: nonzero(&delta)})
 		}
 	}
 	return out

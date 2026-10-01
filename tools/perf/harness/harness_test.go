@@ -41,6 +41,46 @@ func TestScenarios(t *testing.T) {
 	}
 }
 
+func TestSelectedSkips(t *testing.T) {
+	scenarios, err := Selected(Config{Iterations: 3000, Match: regexp.MustCompile(`raid25`), Skip: regexp.MustCompile(`^optimizer/normal/raid25_raiddps_p1$`)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var names []string
+	for _, s := range scenarios {
+		names = append(names, s.Name)
+	}
+	want := []string{"optimizer/quick/raid25_raiddps_p1", "optimizer/quick/raid25_tank_p1", "optimizer/normal/raid25_tank_p1"}
+	if !slices.Equal(names, want) {
+		t.Errorf("selected %q, want %q", names, want)
+	}
+	if _, err := Selected(Config{Iterations: 3000, Skip: regexp.MustCompile(`.`)}); err == nil || strings.Contains(err.Error(), "nil") {
+		t.Errorf("a skip that leaves nothing gives %v", err)
+	}
+}
+
+func TestSweep(t *testing.T) {
+	cfg := Config{Procs: []int{1, 16}, NormalProcs: []int{16}, RaidProcs: []int{8, 16}, Reps: 3, NormalReps: 1}
+	for _, c := range []struct {
+		name  string
+		procs []int
+		reps  int
+	}{
+		{"sim/rogue", cfg.Procs, 3},
+		{"optimizer/quick/fury_p1", cfg.Procs, 3},
+		{"optimizer/quick/raid25_raiddps_p1", cfg.RaidProcs, 3},
+		{"optimizer/normal/raid25_tank_p1", cfg.NormalProcs, 1},
+	} {
+		if procs, reps := cfg.sweep(c.name); !slices.Equal(procs, c.procs) || reps != c.reps {
+			t.Errorf("%s sweeps %v with %d runs at the widest, want %v with %d", c.name, procs, reps, c.procs, c.reps)
+		}
+	}
+	cfg.RaidProcs = nil
+	if procs, _ := cfg.sweep("optimizer/quick/raid25_tank_p1"); !slices.Equal(procs, cfg.Procs) {
+		t.Errorf("without RaidProcs the raid25 scenarios sweep %v, want Procs", procs)
+	}
+}
+
 func report(points ...Point) *Report {
 	return &Report{Iterations: 3000, NumCPU: 16, Points: points}
 }

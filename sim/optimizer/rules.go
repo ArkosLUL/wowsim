@@ -160,11 +160,11 @@ func (p *Pool) checkSlot(l Loadout, slot proto.ItemSlot) (*core.Item, error) {
 	case cand == nil:
 		return nil, ruleErr(RulePool, slot, c.ItemID, "the pool doesn't offer the item in this slot")
 	}
-	if c.Enchant != 0 && !slices.ContainsFunc(cand.Enchants, func(e EnchantOption) bool { return e.ID == c.Enchant }) {
+	if c.Enchant != 0 && cand.enchant(c.Enchant) == nil {
 		return nil, ruleErr(RuleEnchant, slot, c.Enchant, "the pool doesn't offer enchant %d for item %d here", c.Enchant, c.ItemID)
 	}
 	if (c.ReforgeFrom != 0 || c.ReforgeTo != 0) &&
-		!slices.ContainsFunc(cand.Reforges, func(r ReforgeOption) bool { return r.From == c.ReforgeFrom && r.To == c.ReforgeTo }) {
+		cand.reforge(c.ReforgeFrom, c.ReforgeTo) == nil {
 		return nil, ruleErr(RuleReforge, slot, c.ItemID, "the server doesn't allow reforging %d into %d on this item", c.ReforgeFrom, c.ReforgeTo)
 	}
 	for i, id := range c.Gems {

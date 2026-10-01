@@ -214,35 +214,69 @@ func gemColor(p *Pool, id int32) proto.GemColor {
 	return gem.Color
 }
 
-// gemOptions keeps the gems that can matter. Gems with the same colors, limit group and
-// uniqueness only differ by value: of a reusable kind the best is enough, of a unique kind the
-// best one per socket. A limited gem no better than a free one of the same colors never helps.
-func (p *Pool) gemOptions(value func(stats.Stats) float64, sockets int) []gemOption {
-	type kind struct {
-		colors   [3]int32
-		category int32
-		unique   bool
-	}
-	byKind := map[kind][]gemOption{}
-	var kinds []kind
+// gemKind is the gems gemOptions weighs against each other: one set of colors, limit group and
+// uniqueness, in pool order.
+type gemKind struct {
+	gemKindKey
+	gems []*GemCandidate
+	// The kind with the same colors and neither limit, or -1.
+	free int
+}
+
+type gemKindKey struct {
+	colors   [3]int32
+	category int32
+	unique   bool
+}
+
+// groupGems sorts the pool's gems but metas into kinds, in the order each kind first shows up.
+func (p *Pool) groupGems() {
+	p.gemKinds = nil
+	index := map[gemKindKey]int{}
 	for _, g := range p.Gems {
 		if g.Gem.Color == proto.GemColor_GemColorMeta {
 			continue
 		}
 		row := p.catalog[g.Gem.ID]
-		k := kind{colors: gemColors(g.Gem.Color), unique: row.GetUniqueEquipped()}
+		k := gemKindKey{colors: gemColors(g.Gem.Color), unique: row.GetUniqueEquipped()}
 		if category := row.GetLimitCategory(); p.limitGroups[category] != nil {
 			k.category = category
 		}
-		if byKind[k] == nil {
-			kinds = append(kinds, k)
+		i, ok := index[k]
+		if !ok {
+			i = len(p.gemKinds)
+			index[k] = i
+			p.gemKinds = append(p.gemKinds, gemKind{gemKindKey: k})
 		}
-		byKind[k] = append(byKind[k], gemOption{id: g.Gem.ID, value: value(g.Gem.Stats), color: g.Gem.Color, colors: k.colors})
+		p.gemKinds[i].gems = append(p.gemKinds[i].gems, g)
+	}
+	for i := range p.gemKinds {
+		k := &p.gemKinds[i]
+		k.free = -1
+		if j, ok := index[gemKindKey{colors: k.colors}]; ok {
+			k.free = j
+		}
+	}
+}
+
+// gemOptions keeps the gems that can matter. Gems with the same colors, limit group and
+// uniqueness only differ by value: of a reusable kind the best is enough, of a unique kind the
+// best one per socket. A limited gem no better than a free one of the same colors never helps.
+func (p *Pool) gemOptions(value func(stats.Stats) float64, sockets int) []gemOption {
+	byKind := make([][]gemOption, len(p.gemKinds))
+	for i := range p.gemKinds {
+		k := &p.gemKinds[i]
+		options := make([]gemOption, len(k.gems))
+		for j, g := range k.gems {
+			options[j] = gemOption{id: g.Gem.ID, value: value(g.Gem.Stats), color: g.Gem.Color, colors: k.colors}
+		}
+		byKind[i] = options
 	}
 
 	var out []gemOption
-	for _, k := range kinds {
-		options := byKind[k]
+	for i := range p.gemKinds {
+		k := &p.gemKinds[i]
+		options := byKind[i]
 		// stable, so ties keep pool order
 		slices.SortStableFunc(options, func(a, b gemOption) int {
 			switch {
@@ -258,14 +292,13 @@ func (p *Pool) gemOptions(value func(stats.Stats) float64, sockets int) []gemOpt
 			keep = sockets
 		}
 		options = options[:min(keep, len(options))]
-		if k.unique || k.category != 0 {
-			if free := byKind[kind{colors: k.colors}]; len(free) > 0 {
-				best := free[0].value
-				for _, o := range free {
-					best = max(best, o.value)
-				}
-				options = slices.DeleteFunc(options, func(o gemOption) bool { return o.value <= best })
+		if (k.unique || k.category != 0) && k.free >= 0 {
+			free := byKind[k.free]
+			best := free[0].value
+			for _, o := range free {
+				best = max(best, o.value)
 			}
+			options = slices.DeleteFunc(options, func(o gemOption) bool { return o.value <= best })
 		}
 		out = append(out, options...)
 	}
@@ -304,6 +337,7 @@ func (dp *gemDP) solve() (gemSolution, error) {
 	nc, ng := len(dp.constraints), len(dp.groupMax)
 	flag := len(dp.start) - 1
 	layers := [][]dpEntry{{{state: dp.start, prev: -1}}}
+	key := make([]byte, len(dp.start))
 	for _, step := range dp.steps {
 		prev := layers[len(layers)-1]
 		var next []dpEntry
@@ -316,14 +350,17 @@ func (dp *gemDP) solve() (gemSolution, error) {
 				// bonus settled, so clear the flag: states that only differ there merge
 				state[flag] = 0
 			}
-			key := string(uint8Slice(state))
-			if i, ok := index[key]; ok {
+			for i, v := range state {
+				key[i] = byte(v)
+			}
+			// a lookup by string(key) doesn't copy it; only a new entry's key does
+			if i, ok := index[string(key)]; ok {
 				if value > next[i].value {
 					next[i] = dpEntry{state, value, from, gem}
 				}
 				return
 			}
-			index[key] = len(next)
+			index[string(key)] = len(next)
 			next = append(next, dpEntry{state, value, from, gem})
 		}
 		for from, entry := range prev {
@@ -403,12 +440,4 @@ func boolInt8(b bool) int8 {
 		return 1
 	}
 	return 0
-}
-
-func uint8Slice(s []int8) []byte {
-	out := make([]byte, len(s))
-	for i, v := range s {
-		out[i] = byte(v)
-	}
-	return out
 }

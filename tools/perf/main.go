@@ -79,12 +79,14 @@ func traceMain(args []string) error {
 func benchMain(args []string) error {
 	fs := flag.NewFlagSet("bench", flag.ExitOnError)
 	run := fs.String("run", "", "only the scenarios whose name matches this regexp")
+	skip := fs.String("skip", defaultSkip, "leave out the scenarios whose name matches this regexp, whatever -run says; empty leaves none out")
 	list := fs.Bool("list", false, "list the scenarios -run picks and stop")
 	procs := fs.String("procs", "1,2,4,8,12,16", "the GOMAXPROCS sweep")
 	reps := fs.Int("reps", 3, "timed runs at each scenario's widest point")
 	sweepReps := fs.Int("sweep-reps", 1, "timed runs at the sweep's other points")
 	normalProcs := fs.String("normal-procs", "16", "the sweep for the optimizer at Normal, the longest scenarios")
 	normalReps := fs.Int("normal-reps", 1, "timed runs at the optimizer at Normal's widest point")
+	raidProcs := fs.String("raid-procs", "8,16", "the sweep for the optimizer at Quick on the 25-player raid, whose sims each cost a whole raid's")
 	workers := fs.Int("workers", 0, "the optimizer's workers; 0 is GOMAXPROCS at each point, the CLI's default (the web server runs one fewer)")
 	iterations := fs.Int("iterations", 3000, "iterations for the sims, stat weights and the bulk sim; the UI's default is 3000")
 	dir := fs.String("o", "", "where the report and the profiles go (default tmp/perf/bench-<time>)")
@@ -120,10 +122,18 @@ func benchMain(args []string) error {
 			return err
 		}
 	}
+	if *skip != "" {
+		if cfg.Skip, err = regexp.Compile(*skip); err != nil {
+			return err
+		}
+	}
 	if cfg.Procs, err = parseProcs(*procs); err != nil {
 		return err
 	}
 	if cfg.NormalProcs, err = parseProcs(*normalProcs); err != nil {
+		return err
+	}
+	if cfg.RaidProcs, err = parseProcs(*raidProcs); err != nil {
 		return err
 	}
 	if *list {
@@ -168,6 +178,9 @@ func benchMain(args []string) error {
 	fmt.Printf("\nagainst %s:\n", *baseline)
 	return compare(base, rep, *floor)
 }
+
+// defaultSkip leaves out raid DPS at Normal: one run takes about as long as everything else together.
+const defaultSkip = `^optimizer/normal/raid25_raiddps_p1$`
 
 func parseProcs(s string) ([]int, error) {
 	var out []int
