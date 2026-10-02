@@ -123,6 +123,8 @@ mod-individual-progression stores a character's tier as rewarded quest `66000 + 
 - `PSendSysMessage` prints nothing to a console session. Use `SendSysMessage` + `SetSentErrorMessage`.
 - Relog after `.maxskill`, or crit isn't recomputed.
 - Characters leveled by GM command never learn trainer spells, Parry (3127) included: `.learn` them.
+- A triggered `.cast` never summons a totem: cast it from the client (a raw `CMSG_CAST_SPELL`).
+- The e2e client never sees passive auras, so `HasAura` on one is always false.
 - `.cast <id> triggered` skips spell effects (`TRIGGERED_IGNORE_EFFECTS`): the aura's effects and a form's passives
   go on at its next map update, about 500 ms later. Wait before recording.
 - Form, stance and presence bonuses and improved raid buffs take a newly learned talent only on a new cast.

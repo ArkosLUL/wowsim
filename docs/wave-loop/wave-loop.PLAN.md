@@ -128,12 +128,17 @@ Shadow priest DoT haste. The DPS preset rerun follows Q, only on the user's go-a
 
 ## Current wave
 
-- Wave: Q (PAR-FU-4..7), running from base `fdbc3df49`. Prod runs O's `24f581bf9`.
-- Open: the talent sweep's unseen talents (test-enrichment INVESTIGATION, TE-SWEEP as built).
+- Wave: Q, landed (master fast-forwarded to this close-out). Next: the DPS preset rerun below, on the user's
+  go-ahead. Prod runs O's `24f581bf9`; Q changes sim code and the server settings picker.
+- Open: the talent sweep's unseen talents (test-enrichment INVESTIGATION, TE-SWEEP as built); from Q (parity
+  INVESTIGATION, PAR-FU-4..7 as built): Ranged Weapon Specialization on Explosive Trap and magic procs, Glyph of
+  Totem of Wrath's 84 spell power unverified live, aura-163 crit damage adds on the server for specials (the sim
+  multiplies), a shaman's block value lacks strength/2, and 72-point Fury and Balance strings in the optimizer's
+  test inputs and `gen_db`.
 - Carried (the user's call, 2026-10-01; after Q, only on the user's go-ahead): rerun every DPS preset on the final HEAD, since BIS-caps-race changes
   every racial search and `ff0920a96` the 16 builds `mage_*`, `rogue_*`, `warlock_*`, `warrior_arms`,
   `warrior_fury`, `protection_warrior`, `shadow_priest`, `smite_priest`, `dk_blood`, `elemental_shaman`.
-- Workflow runIds: Q's `wf_47a2be77-20d` (base `fdbc3df49`); P's `wf_9c73b1de-ff3` (base `c678de53e`); O's `wf_cd004c46-c80` (base `b069c688b`); N's `wf_4b37e171-123` (base `7f4174efb`); M's `wf_8ab862a5-d37` (base `33da5ca34`); L's `wf_34052b28-d62`, `wf_1a26dbdb-51c`, `wf_ac1129b6-8d7`, `wf_a59f095c-4b7`, `wf_f5be2bcf-e23`,
+- Workflow runIds: Q's `wf_47a2be77-20d` and `wf_6f439290-bf9` (PAR-FU-5 and 6's live stages; base `fdbc3df49`); P's `wf_9c73b1de-ff3` (base `c678de53e`); O's `wf_cd004c46-c80` (base `b069c688b`); N's `wf_4b37e171-123` (base `7f4174efb`); M's `wf_8ab862a5-d37` (base `33da5ca34`); L's `wf_34052b28-d62`, `wf_1a26dbdb-51c`, `wf_ac1129b6-8d7`, `wf_a59f095c-4b7`, `wf_f5be2bcf-e23`,
   `wf_42fc0b7c-42a`; args `wave<X>*-args.json` in `G:\DevStuff\GitHub\.wave-loop`, transcripts in
   `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\<runId>`.
 - J2's full-roster batch ran 2026-09-28 in 52 min at Quick, output in
@@ -169,6 +174,7 @@ Reckoning that way), but J isn't DPS: see below.
 | N | 8725.1, +224 / +284 | 10730.8, +734 / +777 | 5066.6, +41 / +48 | 12963.8, +175 / +232 | -17821.9, +4836 / +4799 | -1056.8, +913 / +900 |
 | O | 8725.1, +224 / +284 | 10730.8, +734 / +777 | 5066.6, +41 / +48 | 12963.8, +175 / +232 | -17821.9, +4836 / +4799 | -1056.8, +913 / +900 |
 | P | 8725.1, +224 / +284 | 10730.8, +734 / +777 | 5066.6, +41 / +48 | 12963.8, +175 / +232 | -17821.9, +4836 / +4799 | -1056.8, +913 / +900 |
+| Q | 8715.9, +195 / +276 | 10730.8, +734 / +777 | 5066.6, +41 / +48 | 12963.8, +175 / +232 | -17856.7, +4842 / +4804 | -1056.8, +913 / +900 |
 
 Quick / Normal. Ret P4 ran at Quick only in wave D, after the glyph fix; its wave C numbers
 (12821.9, +54 / +73) came from a seed that wore the glyph. The two tanks arrive with
@@ -220,6 +226,8 @@ tanks' with BIS-relic pricing every libram and idol. Idle, Ret's Normal run took
 the rest within 8% or faster.
 In M nothing moved: TE-ABILITY and TE-REPLAY change tests only. Nor in N: PERF-FU keeps every result bit-identical,
 and the suite's Search stage already took 2 s or less. Nor in O: tests, tools and the UI's talent trees only. Nor in P: tests and tools only.
+In Q Fury's `J_preset` fell 0.1% (Execute without Two-Handed Weapon Specialization) and Prot Pal's 0.2%
+(block value takes the server's 10 off); the gains moved within earlier rows' range.
 
 ## Sim throughput
 
@@ -247,6 +255,7 @@ From G the benches run their suites' default players with rotations, at 1 and 10
 | M | 1.082 / 78.9 | 0.528 / 29.4 | 0.808 / 45.9 | 0.511 / 17.4 | 5.348 / 267.7 |
 | N | 1.095 / 77.1 | 0.581 / 29.5 | 0.865 / 46.5 | 0.486 / 18.4 | 5.479 / 288.3 |
 | O | 1.090 / 79.8 | 0.652 / 30.0 | 0.808 / 46.7 | 0.537 / 18.9 | 5.500 / 297.6 |
+| Q | 1.059 / 81.2 | 0.589 / 29.5 | 0.830 / 47.8 | 0.533 / 18.4 | 5.669 / 275.1 |
 
 H2 ran with the live worldserver using half a core, which moved whole runs by up to 2×
 and cost a few percent here (Ret, which H2 barely touched, +4%). An interleaved A/B against the base
@@ -315,6 +324,9 @@ O changes no sim code: noise.
 
 P has no row: it changes no sim code, and a game held 40–58% of the host's CPU (outside Docker, so `docker stats`
 misses it); loaded, it read up to 14% over O (Hunter at 100).
+
+Q's row ran idle, the host at 12% outside Docker: within 3% of O's at 100 iterations except the raid (-7.5%); at one,
+Ret -10%. Q's sim changes are class-local: noise.
 
 E to F2 ran the old requests: one iteration, and no rotation for Ret, Hunter and Elemental.
 
@@ -455,6 +467,11 @@ crashed before F2, so its column starts there.
 | wave O cross-review | | `07f1aa576` | 2 bugs: the talent export's rank spells were the trees' compressed lists; 4 trees had wrong rank spells (Sudden Death's 2 and 3 swapped, so WarriorArms ran 2/3 on the server; re-recorded live), now held to the spelldump |
 | TE-SWEEP | merged | `b9930fa63` | goldens unchanged; module `fbb859e` (`maxPower`), server rebuilt 12:53-13:00 (2026-10-02); 685 steps on 30 paths: 111 agree, 560 move no field, 14 dropped (fixture README) |
 | wave P cross-review | | `3d3b6be3c` | no bugs: three drop reasons corrected; the trim now keeps the old fixture's records of paths a rerun skips |
+| PAR-FU-4 | merged | `c4ddff0de` | TestShadow +5.5% (Average-Default); module `06f0cb5`; live e2e ticks match the sim |
+| PAR-FU-5 | merged | `0d49cc58c` | Arms -0.56%, Fury -0.17%, Prot Warrior -0.12%, Prot Pal -0.06%, Assassination's Turn the Tables row -1.3%; WarriorFury and Arms re-recorded (Fury's legal 71 points) |
+| PAR-FU-6 | merged | `40eb38ce9` | MM +0.18%, SV -0.001%, Affliction -0.24%; the three hunters re-recorded; Affliction's optimizer hit floor 368 to 289 |
+| PAR-FU-7 | merged | `a6c814732` | Resto Shaman HPS -4.4%, Elemental -0.009%, feral suites' ranged AP stat only; ShamanElemental and DruidBalance re-recorded |
+| wave Q cross-review | | `b595e8c0c` | no bugs past the e2e's always-passing 71167 check (module `d0699fa`); every golden-character and sweep drop is gone |
 
 Later WIs are added as their wave starts.
 
