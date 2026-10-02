@@ -2418,3 +2418,27 @@ of Elemental's. `NewEnvironment` there: Rogue 13%, Hunter 19%, raid 19%, Ret 25%
   shared 2000 permanently. They're now on `RaidBenchmarkIterations`, the same `iterations=1`/`iterations=100` pair as
   the rest, which builds its own `SimOptions` per case instead of touching the caller's. The five duplicate
   `benchmarkIterations` copies (hunter, retribution paladin, raid, rogue, elemental) now call it too.
+
+## PAR-FU-4 as built
+
+Shadow priest DoTs as mod-spell-tweaks `338d826` changed them (`docs/priest/ShadowDotHaste.md`). Code stage:
+
+- **Toggle:** `SpellTweaksSettings.shadow_dot_haste` (`SpellTweaks.ShadowDotHaste.Enable`, on live) through
+  `gen_server_defaults`, `core.SpellTweaks.ShadowDotHaste` (gated by `SpellTweaks.Enable`, as the module's scripts
+  are) and the server settings picker. Off is stock.
+- **Dots:** `sim/priest/shadow_dot_haste.go`. With the toggle and the Shadowform talent, SW:P, VT and DP use
+  `core.SpellHasteAddsTicks`: tick period `min(3 s / cast speed, 3 s)` in whole ms, duration fixed (18, 15, 24 s,
+  longer with the set bonus ticks). Off, VT and DP keep the stock passive 71167 haste (`SpellHasteScalesBoth`) and SW:P
+  none. The sim's Shadowform is the talent, so the out-of-form 3 s tick is only checked live. Pain and Suffering's
+  `Rollover` re-reads haste, which matches `RefreshTimersWithMods`.
+- **Improved Devouring Plague:** the instant hit is 10% per talent point × the dot's total ticks × the tick
+  (`DpInitMultiplier` is now per tick); the ticks come from the haste a cast now gets, 10 at 30% haste instead of 8.
+- **APL:** the Shadow APLs only gate on `dotIsActive` (SW:P, DP) and `dotRemainingTime` against the cast time (VT), so
+  the longer VT and DP durations need no change. SW:P is never refreshed by cast.
+- **Goldens:** only TestShadow moves: Average-Default +5.52% (SW:P 98 to 134 ticks per fight, VT casts 25.7 to 19.5,
+  DP 18.4 to 14.2, Mind Flay casts up 117 to 121, DP uptime 290.7 to 292.9 s), in line with the module's +5% estimate.
+- **Live e2e:** `TestSimvalPriestShadowDotHaste` (mod-sim-validation `e2e/pfu4_test.go`) passes, matching the sim at
+  30% haste. In the form: SW:P 7 ticks, VT 6, DP 10, 2300 ms apart. Out of it: 6, 5, 8 ticks, 3000 ms apart. The
+  fixed duration holds. DP ticks arrive as `SMSG_SPELLNONMELEEDAMAGELOG` (leech aura), not `SMSG_PERIODICAURALOG`.
+  The client never sees passives, so the 71167-absent check is weak; the ticks prove the haste. The sim's table
+  needed no change. Records nothing in `simval.jsonl`.

@@ -772,6 +772,10 @@ message SpellTweaksSettings {
 	// SpellTweaks.OmenClarityFaerieFire.Enable: FF (Feral) on an NPC always procs Clearcasting with
 	// Omen.
 	optional bool omen_clarity_faerie_fire = 13;
+
+	// SpellTweaks.ShadowDotHaste.Enable: in Shadowform, spell haste speeds up SW:P, VT and DP ticks
+	// over a fixed duration.
+	optional bool shadow_dot_haste = 14;
 }
 
 // mod-dungeon-scale's full raid stat modifiers, keys DungeonScale.StatModifier<set>[.Boss].<stat>.

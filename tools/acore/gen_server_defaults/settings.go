@@ -38,6 +38,7 @@ var spellTweakToggles = []struct {
 	{"balance_dot_scaling", "SpellTweaks.BalanceDotScaling.Enable", spellTweaksSrc},
 	{"titans_grip_no_damage_penalty", "SpellTweaks.TitansGrip.NoDamagePenalty.Enable", spellTweaksSrc},
 	{"omen_clarity_faerie_fire", "SpellTweaks.OmenClarityFaerieFire.Enable", spellTweaksSrc},
+	{"shadow_dot_haste", "SpellTweaks.ShadowDotHaste.Enable", spellTweaksSrc},
 }
 
 const (

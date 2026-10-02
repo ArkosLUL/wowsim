@@ -8,6 +8,7 @@ import (
 
 func (priest *Priest) registerVampiricTouchSpell() {
 	shadowFocus := 0.02 * float64(priest.Talents.ShadowFocus)
+	addsTicks := priest.shadowDotAddsTicks()
 
 	priest.VampiricTouch = priest.RegisterSpell(core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: 48160},
@@ -39,6 +40,7 @@ func (priest *Priest) registerVampiricTouchSpell() {
 			NumberOfTicks:       5 + core.TernaryInt32(priest.HasSetBonus(ItemSetZabras, 2), 2, 0),
 			TickLength:          time.Second * 3,
 			AffectedByCastSpeed: priest.Talents.Shadowform,
+			TickHaste:           shadowDotTickHaste(addsTicks),
 			// Shadowform (49868) grants CanPeriodicTickCrit to Vampiric Touch's dot.
 			TicksCanCrit: priest.Talents.Shadowform,
 			Tick:         core.SpellEffect{Effect: 1, Min: 170, Max: 170, SP: 0.4},

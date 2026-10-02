@@ -68,6 +68,11 @@ const SPELL_TWEAK_SWITCHES: Array<SpellTweakInput> = [
 		label: 'Omen from Faerie Fire',
 		tooltip: 'SpellTweaks.OmenClarityFaerieFire.Enable: Faerie Fire (Feral) on an NPC always procs Clearcasting with Omen of Clarity.',
 	},
+	{
+		key: 'shadowDotHaste',
+		label: 'Shadow DoT haste',
+		tooltip: 'SpellTweaks.ShadowDotHaste.Enable: in Shadowform, spell haste speeds up Shadow Word: Pain, Vampiric Touch and Devouring Plague ticks over a fixed duration.',
+	},
 ];
 
 type ScaleSet = keyof DungeonScaleSettings;
