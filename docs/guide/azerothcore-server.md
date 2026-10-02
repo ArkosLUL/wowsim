@@ -123,6 +123,9 @@ mod-individual-progression stores a character's tier as rewarded quest `66000 + 
 - `PSendSysMessage` prints nothing to a console session. Use `SendSysMessage` + `SetSentErrorMessage`.
 - Relog after `.maxskill`, or crit isn't recomputed.
 - Characters leveled by GM command never learn trainer spells, Parry (3127) included: `.learn` them.
+- `.cast <id> triggered` skips spell effects (`TRIGGERED_IGNORE_EFFECTS`): the aura's effects and a form's passives
+  go on at its next map update, about 500 ms later. Wait before recording.
+- Form, stance and presence bonuses and improved raid buffs take a newly learned talent only on a new cast.
 - `.learn` never fills `m_talents`, so a `Player::HasTalent` check fails for a talent learned that way:
   a character (or recorded-run bot) given its talents by `.learn` misses every talent-gated server effect.
 - mod-individual-progression refuses death knights (`CHAR_CREATE_DISABLED`) until a character on the

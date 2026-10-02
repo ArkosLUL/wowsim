@@ -580,7 +580,7 @@ learned Sudden Death at 2/3 (`warrior.json`); re-recorded at 3/3, same counts.
   (`sim/warlock/darkpact.go` reads `warlock.Pet`), so it's Affliction's last step. Paladins need Seal of Vengeance,
   Protection also Righteous Fury, among the auras.
 - C++: the snapshot gains `maxPower` (max of the power type), for Vigor, Fel Vitality and Runic Power Mastery,
-  which current power can't show; compile-checked with `-fsyntax-only`, rebuild pending.
+  which current power can't show; compile-checked with `-fsyntax-only`; the live stage rebuilt.
 - `checkInfo` skips naked records carrying a talent rank's aura; the replay's 1114 checks are unchanged.
 
 **Sim stage** (golden-neutral; no live run; trim, replay and tolerances in the tools/simval README's Talent sweep).
@@ -621,3 +621,7 @@ the replay has 111 steps agree, 560 move no field (514 talents, 46 fillers), 14 
 - Watched sim moves that agree: Improved Icy Talons' melee haste, Blood Frenzy, Improved Moonkin Form, Furor,
   Improved Mark of the Wild and Survival of the Fittest outside ranged AP.
 - `droppedSweep` is passed into the replay, so `TestTalentSweepReplaysAFullRun` holds only the unbuildable Dark Pact.
+- Cross-review: the trim keeps the old fixture's records of paths a run didn't record, so one path reruns alone.
+- Never seen, so moving no field: armor-from-items talents (DK Toughness, both Thick Hides, Survival of the
+  Fittest's armor; the setups carry weapons only) and buff talents whose buff no path casts (Swift Retribution,
+  Improved Devotion Aura, Commanding Presence, Improved Inner Fire, Improved Imp, Enhancing Totems).

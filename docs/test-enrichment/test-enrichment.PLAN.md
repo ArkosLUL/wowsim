@@ -174,7 +174,7 @@ run's start, dedupe by line, and replace `simval.jsonl` (a recapture never appen
 - **Owns:** module `src/SimValidationCommands.cpp`, `simval_commands.sql`, `e2e/goldchar_test.go`, `README.md`;
   `tools/simval/goldchar.go`, `records.go`, `goldchar.jsonl`, `tools/simval/README.md`.
 
-### TE-SWEEP (P; golden-neutral; live)
+### TE-SWEEP (P, done; golden-neutral; live)
 
 - Per class, several learn paths over TE-TALENTS' list (`implemented_talents.json`, its `rankSpells` one per rank) (71 points can't hold them all), reset between paths,
   filler points per tier, via `.simval talent`. Stance, form and presence match on both sides.

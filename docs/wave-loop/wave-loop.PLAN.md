@@ -125,7 +125,9 @@ PAR-FU-3 and PERF-FU join N, the user's call too (the same day): wave L's and M'
 
 ## Current wave
 
-- Wave: P (TE-SWEEP), running from base `c678de53e`. Prod runs O's `24f581bf9`.
+- Wave: P, landed (master fast-forwarded to this close-out); test enrichment (M–P) is done, nothing queued. Prod
+  runs O's `24f581bf9` (P changes no sim or UI code).
+- Open for the user to schedule: the sim/server mismatches TE items dropped (fixture README's dropped rows).
 - Carried (the user's call, 2026-10-01): rerun every DPS preset on the final HEAD, since BIS-caps-race changes
   every racial search and `ff0920a96` the 16 builds `mage_*`, `rogue_*`, `warlock_*`, `warrior_arms`,
   `warrior_fury`, `protection_warrior`, `shadow_priest`, `smite_priest`, `dk_blood`, `elemental_shaman`.
@@ -164,6 +166,7 @@ Reckoning that way), but J isn't DPS: see below.
 | M | 8725.1, +224 / +284 | 10730.8, +734 / +777 | 5066.6, +41 / +48 | 12963.8, +175 / +232 | -17821.9, +4836 / +4799 | -1056.8, +913 / +900 |
 | N | 8725.1, +224 / +284 | 10730.8, +734 / +777 | 5066.6, +41 / +48 | 12963.8, +175 / +232 | -17821.9, +4836 / +4799 | -1056.8, +913 / +900 |
 | O | 8725.1, +224 / +284 | 10730.8, +734 / +777 | 5066.6, +41 / +48 | 12963.8, +175 / +232 | -17821.9, +4836 / +4799 | -1056.8, +913 / +900 |
+| P | 8725.1, +224 / +284 | 10730.8, +734 / +777 | 5066.6, +41 / +48 | 12963.8, +175 / +232 | -17821.9, +4836 / +4799 | -1056.8, +913 / +900 |
 
 Quick / Normal. Ret P4 ran at Quick only in wave D, after the glyph fix; its wave C numbers
 (12821.9, +54 / +73) came from a seed that wore the glyph. The two tanks arrive with
@@ -214,7 +217,7 @@ In L the DPS picks meet their hit and expertise floors and haste ceilings (BIS-c
 tanks' with BIS-relic pricing every libram and idol. Idle, Ret's Normal run took 40% longer than K's (64.9 s),
 the rest within 8% or faster.
 In M nothing moved: TE-ABILITY and TE-REPLAY change tests only. Nor in N: PERF-FU keeps every result bit-identical,
-and the suite's Search stage already took 2 s or less. Nor in O: tests, tools and the UI's talent trees only.
+and the suite's Search stage already took 2 s or less. Nor in O: tests, tools and the UI's talent trees only. Nor in P: tests and tools only.
 
 ## Sim throughput
 
@@ -307,6 +310,9 @@ PERF-FU's defaults, but beside that game (about 2.3 cores), so `baseline.json` s
 
 O's row ran idle the same way: within 4% of N's at 100 iterations; at one, Ret +12%, Elemental +10%, Hunter -7%.
 O changes no sim code: noise.
+
+P has no row: it changes no sim code, and a game held 40–58% of the host's CPU (outside Docker, so `docker stats`
+misses it); loaded, it read up to 14% over O (Hunter at 100).
 
 E to F2 ran the old requests: one iteration, and no rotation for Ret, Hunter and Elemental.
 
@@ -445,7 +451,8 @@ crashed before F2, so its column starts there.
 | TE-TALENTS | merged | `8ceb8e61a` | 21 Talents-* rows in 20 suites promoted in `9d300299a`, no existing row moved; guard over 615 implemented talents, 12 allowlisted |
 | TE-GOLDCHAR | merged | `675b0f90a` | goldens unchanged; module `ab68bfd`, server rebuilt 23:44-23:49 (2026-10-01); 32 setups live, 9 mismatches dropped (fixture README) |
 | wave O cross-review | | `07f1aa576` | 2 bugs: the talent export's rank spells were the trees' compressed lists; 4 trees had wrong rank spells (Sudden Death's 2 and 3 swapped, so WarriorArms ran 2/3 on the server; re-recorded live), now held to the spelldump |
-| TE-SWEEP | running | | |
+| TE-SWEEP | merged | `b9930fa63` | goldens unchanged; module `fbb859e` (`maxPower`), server rebuilt 12:53-13:00 (2026-10-02); 685 steps on 30 paths: 111 agree, 560 move no field, 14 dropped (fixture README) |
+| wave P cross-review | | `3d3b6be3c` | no bugs: three drop reasons corrected; the trim now keeps the old fixture's records of paths a rerun skips |
 
 Later WIs are added as their wave starts.
 
