@@ -9,7 +9,6 @@ import (
 
 func (hunter *Hunter) registerSerpentStingSpell() {
 	canCrit := hunter.HasSetBonus(ItemSetWindrunnersPursuit, 2)
-	noxiousStingsMultiplier := 1 + 0.01*float64(hunter.Talents.NoxiousStings)
 
 	hunter.SerpentSting = hunter.RegisterSpell(core.SpellConfig{
 		ActionID:     core.ActionID{SpellID: 49001},
@@ -36,6 +35,7 @@ func (hunter *Hunter) registerSerpentStingSpell() {
 			0.1*float64(hunter.Talents.ImprovedStings),
 			core.TernaryFloat64(hunter.HasSetBonus(ItemSetScourgestalkerBattlegear, 2), .1, 0),
 		),
+		DamageMultiplier: hunter.rangedWeaponSpecializationMultiplier(),
 		CritMultiplier:   hunter.critMultiplier(true, false),
 		ThreatMultiplier: 1,
 
@@ -43,12 +43,6 @@ func (hunter *Hunter) registerSerpentStingSpell() {
 			Aura: core.Aura{
 				Label: "SerpentSting",
 				Tag:   "SerpentSting",
-				OnGain: func(aura *core.Aura, sim *core.Simulation) {
-					hunter.AttackTables[aura.Unit.UnitIndex].DamageTakenMultiplier *= noxiousStingsMultiplier
-				},
-				OnExpire: func(aura *core.Aura, sim *core.Simulation) {
-					hunter.AttackTables[aura.Unit.UnitIndex].DamageTakenMultiplier /= noxiousStingsMultiplier
-				},
 			},
 			NumberOfTicks: 5 + core.TernaryInt32(hunter.HasMajorGlyph(proto.HunterMajorGlyph_GlyphOfSerpentSting), 2, 0),
 			TickLength:    time.Second * 3,

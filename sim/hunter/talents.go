@@ -30,6 +30,10 @@ func (hunter *Hunter) ApplyTalents() {
 	hunter.AddStat(stats.MeleeHit, core.MeleeHitRatingPerHitChance*1*float64(hunter.Talents.FocusedAim))
 	hunter.AddStat(stats.MeleeCrit, core.CritRatingPerCritChance*1*float64(hunter.Talents.KillerInstinct))
 	hunter.AddStat(stats.MeleeCrit, core.CritRatingPerCritChance*1*float64(hunter.Talents.MasterMarksman))
+	if hunter.Talents.TheBeastWithin {
+		// the talent's passive (34692) is a permanent 10%, pet or not
+		hunter.PseudoStats.DamageDealtMultiplier *= 1.1
+	}
 	hunter.PseudoStats.BaseParry += 0.01 * float64(hunter.Talents.Deflection)
 	hunter.PseudoStats.BaseDodge += 0.01 * float64(hunter.Talents.CatlikeReflexes)
 	hunter.PseudoStats.RangedSpeedMultiplier *= 1 + 0.04*float64(hunter.Talents.SerpentsSwiftness)
@@ -40,7 +44,7 @@ func (hunter *Hunter) ApplyTalents() {
 		hunter.AddBonusRangedCritRating(1 * float64(hunter.Talents.LethalShots) * core.CritRatingPerCritChance)
 	}
 	if hunter.Talents.RangedWeaponSpecialization > 0 {
-		mult := 1 + []float64{0, .01, .03, .05}[hunter.Talents.RangedWeaponSpecialization]
+		mult := hunter.rangedWeaponSpecializationMultiplier()
 		hunter.OnSpellRegistered(func(spell *core.Spell) {
 			if spell.ProcMask.Matches(core.ProcMaskRanged) {
 				spell.DamageMultiplier *= mult
@@ -115,6 +119,12 @@ func (hunter *Hunter) ApplyTalents() {
 	hunter.applyHuntingParty()
 
 	hunter.registerReadinessCD()
+}
+
+// the aura only needs a bow, gun or crossbow equipped, not a ranged spell (Unit::SpellPctDamageModsDone),
+// so Serpent Sting gets it too despite its empty proc mask
+func (hunter *Hunter) rangedWeaponSpecializationMultiplier() float64 {
+	return 1 + []float64{0, .01, .03, .05}[hunter.Talents.RangedWeaponSpecialization]
 }
 
 // critMultiplier follows Unit::SpellCriticalDamageBonus: +100% for melee and ranged damage class, then
@@ -417,10 +427,6 @@ func (hunter *Hunter) registerBestialWrathCD() {
 	if !hunter.Talents.BestialWrath {
 		return
 	}
-	if hunter.Talents.TheBeastWithin {
-		hunter.PseudoStats.DamageDealtMultiplier *= 1.1
-	}
-
 	actionID := core.ActionID{SpellID: 19574}
 
 	bestialWrathPetAura := hunter.pet.RegisterAura(core.Aura{

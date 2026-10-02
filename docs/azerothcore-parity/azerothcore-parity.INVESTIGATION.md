@@ -2418,3 +2418,51 @@ of Elemental's. `NewEnvironment` there: Rogue 13%, Hunter 19%, raid 19%, Ret 25%
   shared 2000 permanently. They're now on `RaidBenchmarkIterations`, the same `iterations=1`/`iterations=100` pair as
   the rest, which builds its own `SimOptions` per case instead of touching the caller's. The five duplicate
   `benchmarkIterations` copies (hunter, retribution paladin, raid, rogue, elemental) now call it too.
+
+## PAR-FU-6 as built
+
+Hunter and warlock mismatches the TE items dropped (wave Q).
+
+**Sim**
+- Warlock Suppression: its hit (aura 199, mask 36) goes on each fire and shadow spell's `BonusHitRating`, not on the
+  sheet's spell hit. Pets inherit only the owner's aura 55 and rating hit (`Unit::MagicSpellHitResult`), so the
+  Felhunter's falls. Affliction's optimizer hit floor drops 368 → 289 (as Elemental Precision's does):
+  `TestHitFloorsWithoutPerSpellHitStayAsTheSheetGives` lost its Affliction case,
+  `TestHitTalentsOnSpellsLowerTheSpellHitFloor` gained it (`sim/optimizer`, outside the item's paths). Presets not
+  regenerated.
+- Dark Pact without a pet no longer panics; it can't be cast without one.
+- The Beast Within's passive (34692) is a permanent 10% for any hunter with the talent, pet or not; its 10% during
+  Bestial Wrath (34471) is unchanged.
+- Ranged Weapon Specialization (19509), aura 79 with misc 127, needs only a bow, gun or crossbow equipped
+  (`Unit::SpellPctDamageModsDone`), so it reaches Serpent Sting (empty proc mask). **Open:** by the same rule it
+  should reach every non-physical spell the hunter deals, Explosive Trap (49065) and magic item procs included; the
+  sim still gives it only to ranged-mask spells and Serpent Sting.
+- Aspect of the Dragonhawk's dodge (18% + Improved Aspect of the Monkey) goes to `PseudoStats.BaseDodge`, out of
+  diminishing returns, as the server's aura dodge is.
+- Noxious Stings and Black Arrow's 6% are aura 271 on the target: only the hunter's own spells whose class flags the
+  effect's mask covers (`AuraEffect::IsAffectedOnSpell`). `sim/hunter/sting_debuffs.go` models that as a target
+  damage-taken hook, with masks and spell flags from `serverdata`, replacing the attack-table multiplier that hit
+  everything the hunter dealt and made Black Arrow divide its own 6% out. Noxious covers Auto Shot, Arcane,
+  Multi-Shot, Volley, Serpent Sting, Aimed, Explosive Shot, Black Arrow, Kill Shot, Steady, Chimera, Wild Quiver and
+  Raptor Strike, and Explosive Trap through its effect (49065), not its cast (49067); not Scorpid, Silencing,
+  Chimera's sting damage (53353), Piercing Shots, melee swings or pets. Black Arrow's mask is the same minus Black
+  Arrow, the traps and Raptor Strike. Chimera Shot and either debuff can't share a talent build.
+
+**Test-model errors** (the replay, not the sim)
+- Serpent Sting: `.simval damage` works the tick out on a target without the sting, so without Noxious Stings; the
+  replay now cancels the dot after its snapshot for `probedBeforeOwnAura` dots.
+- Black Arrow: the server bot stood still, so it had Sniper Training's buff (64420: +6% on Black Arrow ticks,
+  SPELLMOD_DOT); the sim only registers it for an uptime above 0. The goldchar replay sets uptime 1 and mirrors aura
+  53304 when the record has 64420. With it the sim's tick is 6% up (the "5.5% below").
+
+**Sweep and goldchar**
+- Removed: `droppedSweep`'s Suppression, Dark Pact (`unbuildableSweep`, `TestTalentSweepUnbuildableStep`) and the
+  four hunter dodge entries; `droppedGoldchar`'s WarlockAffliction spell hit. `last` still puts Dark Pact at the
+  path's end, where the capture has it. All agree.
+- HunterBM, HunterMM and HunterSV re-recorded live (`SIMVAL_GOLDCHAR_ONLY`), their lines replaced in `goldchar.jsonl`:
+  BM Arcane Shot and Serpent Sting, MM and SV Serpent Sting and SV Black Arrow now agree (sim 0.75–1.75 above the
+  server, inside the truncation band), so their `droppedGoldchar` entries and README rows are gone. The SV bot
+  carries 64420.
+
+**Goldens** (`dock.sh delta`): TestMM +0.18% (Serpent Sting +5%), TestAffliction -0.24% (Felhunter's and Infernal's
+hit), TestSV -0.001% (the rotation barely uses what the debuffs now skip), TestBM unchanged.

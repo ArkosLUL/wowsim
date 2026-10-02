@@ -80,7 +80,7 @@ type sweepClass struct {
 	after map[string]string
 	// auras the sim puts up by itself once a talent is in, which the server only gets from a cast
 	stepAuras map[string][]int32
-	// talents learned at the very end of their path, since the sim can't build the character with them
+	// talents learned at the very end of their path, where the capture has them
 	last []string
 }
 
@@ -150,7 +150,7 @@ var sweepClasses = []sweepClass{
 		{"WarlockAffliction", 0, "warlock", nil, nil},
 		{"WarlockDemonology", 1, "warlock", nil, nil},
 		{"WarlockDestruction", 2, "warlock", nil, nil},
-	}, last: []string{"darkPact"}}, // the sim's Dark Pact reads the pet, which a sweep warlock goes without
+	}, last: []string{"darkPact"}},
 	{class: 11, race: 4, setups: []sweepSetup{
 		{"DruidBalance", 0, "balance_druid", nil, []int32{48469}},
 		{"DruidFeralCat", 1, "feral_druid", armed(40388, 0), []int32{768, 48469}},

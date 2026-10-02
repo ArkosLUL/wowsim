@@ -134,6 +134,7 @@ func (hunter *Hunter) Initialize() {
 
 	hunter.registerKillCommandCD()
 	hunter.registerRapidFireCD()
+	hunter.applyStingDebuffs()
 
 	if hunter.Options.UseHuntersMark {
 		hunter.RegisterPrepullAction(0, func(sim *core.Simulation) {

@@ -41,19 +41,11 @@ func (hunter *Hunter) registerBlackArrowSpell(timer *core.Timer) {
 			.10*float64(hunter.Talents.TrapMastery),
 			.02*float64(hunter.Talents.TNT),
 		),
-		DamageMultiplier: 1 *
-			(1.0 / 1.06), // Black Arrow is not affected by its own 1.06 aura.
 		ThreatMultiplier: 1,
 
 		Dot: core.DotConfig{
 			Aura: core.Aura{
 				Label: "BlackArrow",
-				OnGain: func(aura *core.Aura, sim *core.Simulation) {
-					hunter.AttackTables[aura.Unit.UnitIndex].DamageTakenMultiplier *= 1.06
-				},
-				OnExpire: func(aura *core.Aura, sim *core.Simulation) {
-					hunter.AttackTables[aura.Unit.UnitIndex].DamageTakenMultiplier /= 1.06
-				},
 			},
 			NumberOfTicks: 5,
 			TickLength:    time.Second * 3,

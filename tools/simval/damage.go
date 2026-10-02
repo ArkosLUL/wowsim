@@ -569,8 +569,12 @@ func (d *damageSim) amount(decl simDecl, e damageEffect, base float64) (amount f
 	return d.direct(decl.spell, e.heal(), victim, base, spellPower)
 }
 
-// tick applies the dot with its tick base pinned, then works out one tick. Ticking with the dot's own
-// aura up is how the sim always meets them: Black Arrow divides its own debuff back out.
+// probedBeforeOwnAura are dots whose own aura raises their tick, which the probe never sees: it works the tick
+// out before the aura is on the target. Serpent Sting's aura adds Noxious Stings to its own ticks.
+var probedBeforeOwnAura = map[int32]bool{49001: true}
+
+// tick applies the dot with its tick base pinned, then works out one tick. The dot's own aura stays up, as
+// the sim always meets it, except for probedBeforeOwnAura.
 func (d *damageSim) tick(dot *core.Dot, heal bool, victim *core.Unit, base, spellPower float64) float64 {
 	tick, flags := dot.Tick, dot.Spell.Flags
 	defer func() { dot.Tick, dot.Spell.Flags = tick, flags }()
@@ -583,6 +587,9 @@ func (d *damageSim) tick(dot *core.Dot, heal bool, victim *core.Unit, base, spel
 	if dot.MaxStacks > 0 && dot.GetStacks() == 0 {
 		dot.SetStacks(d.sim, 1)
 		dot.TakeSnapshot(d.sim, true)
+	}
+	if probedBeforeOwnAura[dot.Spell.ActionID.SpellID] {
+		dot.Cancel(d.sim)
 	}
 	var result *core.SpellResult
 	if heal {

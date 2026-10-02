@@ -29,8 +29,14 @@ func (warlock *Warlock) ApplyTalents() {
 
 	warlock.setupDemonicPact()
 
-	// Suppression (Add 1% hit per point)
-	warlock.AddStat(stats.SpellHit, float64(warlock.Talents.Suppression)*core.SpellHitRatingPerHitChance)
+	// Suppression's hit is per spell and only reaches fire and shadow, not the sheet's spell hit
+	if hit := float64(warlock.Talents.Suppression) * core.SpellHitRatingPerHitChance; hit > 0 {
+		warlock.OnSpellRegistered(func(spell *core.Spell) {
+			if spell.SpellSchool.Matches(core.SpellSchoolFire | core.SpellSchoolShadow) {
+				spell.BonusHitRating += hit
+			}
+		})
+	}
 
 	// Backlash (Add 1% crit per point)
 	warlock.AddStat(stats.SpellCrit, float64(warlock.Talents.Backlash)*core.CritRatingPerCritChance)

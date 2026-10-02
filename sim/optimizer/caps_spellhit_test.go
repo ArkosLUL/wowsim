@@ -11,6 +11,7 @@ import (
 	"github.com/wowsims/wotlk/sim/mage"
 	"github.com/wowsims/wotlk/sim/priest"
 	"github.com/wowsims/wotlk/sim/shaman"
+	"github.com/wowsims/wotlk/sim/warlock"
 	goproto "google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
@@ -163,7 +164,7 @@ func rangedMissBP(t *testing.T, r *Request, id core.ActionID, bonus float64) int
 }
 
 // A talent that adds hit to each spell rather than to the sheet (Shadow Focus, Arcane Focus,
-// Elemental Precision) lowers the spell hit floor by exactly that hit: the spell the rotation leans
+// Elemental Precision, Suppression) lowers the spell hit floor by exactly that hit: the spell the rotation leans
 // on stops missing right at the floor, and still misses one rating under it.
 func TestHitTalentsOnSpellsLowerTheSpellHitFloor(t *testing.T) {
 	for _, tc := range []struct {
@@ -179,6 +180,8 @@ func TestHitTalentsOnSpellsLowerTheSpellHitFloor(t *testing.T) {
 			talentField(&proto.MageTalents{}, "arcane_focus"), core.ActionID{SpellID: 42897}},
 		{"elemental shaman", func(testing.TB) *proto.Player { return elementalShamanPlayer() }, shaman.TalentTreeSizes,
 			talentField(&proto.ShamanTalents{}, "elemental_precision"), core.ActionID{SpellID: 49238}},
+		{"affliction warlock", func(testing.TB) *proto.Player { return afflictionWarlockPlayer() }, warlock.TalentTreeSizes,
+			talentField(&proto.WarlockTalents{}, "suppression"), core.ActionID{SpellID: 59164}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			player := tc.player(t)
@@ -226,7 +229,6 @@ func TestHitFloorsWithoutPerSpellHitStayAsTheSheetGives(t *testing.T) {
 		ok     func(core.PlayerSheet) bool
 	}{
 		{"fire mage", func(testing.TB) *proto.Player { return fireMagePlayer("p3_fire_horde") }, stats.SpellHit, spellMissOK},
-		{"affliction warlock", func(testing.TB) *proto.Player { return afflictionWarlockPlayer() }, stats.SpellHit, spellMissOK},
 		{"fury warrior", func(tb testing.TB) *proto.Player { return presetPlayer(tb, "fury_p1", "Fury") }, stats.MeleeHit, meleeMissOK},
 		{"marksmanship hunter", func(testing.TB) *proto.Player { return mmHunter() }, stats.MeleeHit, meleeMissOK},
 	} {

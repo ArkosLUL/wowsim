@@ -16,7 +16,10 @@ func (warlock *Warlock) registerDarkPactSpell() {
 	actionID := core.ActionID{SpellID: 59092}
 	baseRestore := 1200.0
 	manaMetrics := warlock.NewManaMetrics(actionID)
-	petManaMetrics := warlock.Pet.NewManaMetrics(actionID)
+	var petManaMetrics *core.ResourceMetrics
+	if warlock.Pet != nil {
+		petManaMetrics = warlock.Pet.NewManaMetrics(actionID)
+	}
 	hasGlyph := warlock.HasMajorGlyph(proto.WarlockMajorGlyph_GlyphOfLifeTap)
 
 	warlock.DarkPact = warlock.RegisterSpell(core.SpellConfig{
@@ -29,6 +32,10 @@ func (warlock *Warlock) registerDarkPactSpell() {
 			DefaultCast: core.Cast{
 				GCD: core.GCDDefault,
 			},
+		},
+
+		ExtraCastCondition: func(sim *core.Simulation, target *core.Unit) bool {
+			return warlock.Pet != nil
 		},
 
 		ThreatMultiplier: 1 - 0.1*float64(warlock.Talents.ImprovedDrainSoul),

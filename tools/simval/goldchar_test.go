@@ -222,13 +222,7 @@ type goldcharDrop struct {
 }
 
 var droppedGoldchar = []goldcharDrop{
-	{"HunterBM", 49045, ""},
-	{"HunterBM", 49001, ""},
-	{"HunterMM", 49001, ""},
-	{"HunterSV", 49001, ""},
-	{"HunterSV", 63672, ""},
 	{"ShamanElemental", 0, "spell power"},
-	{"WarlockAffliction", 0, "spell hit %"},
 	{"WarriorFury", 47502, ""},
 	{"WarriorArms", 47502, ""},
 }
