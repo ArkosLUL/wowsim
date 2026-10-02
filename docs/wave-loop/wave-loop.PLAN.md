@@ -68,6 +68,7 @@ G = changes goldens. FS = runs all 37 suites.
 | N | TE-GUARD (G) · TE-DAMAGE (C++, live) · PAR-FU-3 (G, live) · PERF-FU | ✔ |
 | O | TE-TALENTS (G) · TE-GOLDCHAR (C++, live) | ✔ |
 | P | TE-SWEEP (live) | ✔ |
+| Q | PAR-FU-4 (G, FS, live) · PAR-FU-5 (G, FS) · PAR-FU-6 (G) · PAR-FU-7 (G, live) | ✔ |
 
 F2 is an inserted wave, not a fifth item in F: the core swing and cast fixes of PAR-P7-0c have to land
 before the class items in G, a class item can't build on a core fix merging in its own wave, and F already
@@ -110,6 +111,8 @@ regenerate after it. Two fixes followed it: BIS-caps-hit (hit talents on spells)
 finalist's gear meets the caps on its own traits).
 M to P are the test-enrichment effort, after L lands (the user's call, 2026-10-01): richer goldens and live e2e.
 PAR-FU-3 and PERF-FU join N, the user's call too (the same day): wave L's and M's follow-ups.
+Q is the user's call (2026-10-02): the sim/server mismatches waves O and P dropped, and mod-spell-tweaks'
+Shadow priest DoT haste. The DPS preset rerun follows Q, only on the user's go-ahead.
 
 **Where the specs are:**
 
@@ -125,10 +128,9 @@ PAR-FU-3 and PERF-FU join N, the user's call too (the same day): wave L's and M'
 
 ## Current wave
 
-- Wave: P, landed (master fast-forwarded to this close-out); test enrichment (M–P) is done, nothing queued. Prod
-  runs O's `24f581bf9` (P changes no sim or UI code).
-- Open for the user to schedule: the sim/server mismatches TE items dropped (fixture README's dropped rows).
-- Carried (the user's call, 2026-10-01): rerun every DPS preset on the final HEAD, since BIS-caps-race changes
+- Wave: Q, planned. Prod runs O's `24f581bf9`.
+- Open: the talent sweep's unseen talents (test-enrichment INVESTIGATION, TE-SWEEP as built).
+- Carried (the user's call, 2026-10-01; after Q, only on the user's go-ahead): rerun every DPS preset on the final HEAD, since BIS-caps-race changes
   every racial search and `ff0920a96` the 16 builds `mage_*`, `rogue_*`, `warlock_*`, `warrior_arms`,
   `warrior_fury`, `protection_warrior`, `shadow_priest`, `smite_priest`, `dk_blood`, `elemental_shaman`.
 - Workflow runIds: P's `wf_9c73b1de-ff3` (base `c678de53e`); O's `wf_cd004c46-c80` (base `b069c688b`); N's `wf_4b37e171-123` (base `7f4174efb`); M's `wf_8ab862a5-d37` (base `33da5ca34`); L's `wf_34052b28-d62`, `wf_1a26dbdb-51c`, `wf_ac1129b6-8d7`, `wf_a59f095c-4b7`, `wf_f5be2bcf-e23`,
