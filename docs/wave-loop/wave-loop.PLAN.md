@@ -125,13 +125,14 @@ PAR-FU-3 and PERF-FU join N, the user's call too (the same day): wave L's and M'
 
 ## Current wave
 
-- Wave: O, running. N landed as `b069c688b`; prod runs L's `23e9e9e79`.
+- Wave: O, landed (master fast-forwarded to this close-out). Next: P (TE-SWEEP). Prod runs L's `23e9e9e79`.
 - Left from N: the `tools/perf` full baseline on an idle machine; its 2026-10-01 run overlapped a game on the host.
+- Left from O: re-record WarriorArms' golden character live (fixture README); the permission check blocked reading
+  the server's simval log.
 - Carried (the user's call, 2026-10-01): rerun every DPS preset on the final HEAD, since BIS-caps-race changes
   every racial search and `ff0920a96` the 16 builds `mage_*`, `rogue_*`, `warlock_*`, `warrior_arms`,
   `warrior_fury`, `protection_warrior`, `shadow_priest`, `smite_priest`, `dk_blood`, `elemental_shaman`.
-- O's base SHA: `b069c688b`. RunId `wf_cd004c46-c80`.
-- Workflow runIds: N's `wf_4b37e171-123` (base `7f4174efb`); M's `wf_8ab862a5-d37` (base `33da5ca34`); L's `wf_34052b28-d62`, `wf_1a26dbdb-51c`, `wf_ac1129b6-8d7`, `wf_a59f095c-4b7`, `wf_f5be2bcf-e23`,
+- Workflow runIds: O's `wf_cd004c46-c80` (base `b069c688b`); N's `wf_4b37e171-123` (base `7f4174efb`); M's `wf_8ab862a5-d37` (base `33da5ca34`); L's `wf_34052b28-d62`, `wf_1a26dbdb-51c`, `wf_ac1129b6-8d7`, `wf_a59f095c-4b7`, `wf_f5be2bcf-e23`,
   `wf_42fc0b7c-42a`; args `wave<X>*-args.json` in `G:\DevStuff\GitHub\.wave-loop`, transcripts in
   `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\<runId>`.
 - J2's full-roster batch ran 2026-09-28 in 52 min at Quick, output in
@@ -165,6 +166,7 @@ Reckoning that way), but J isn't DPS: see below.
 | L | 8725.1, +224 / +284 | 10730.8, +734 / +777 | 5066.6, +41 / +48 | 12963.8, +175 / +232 | -17821.9, +4836 / +4799 | -1056.8, +913 / +900 |
 | M | 8725.1, +224 / +284 | 10730.8, +734 / +777 | 5066.6, +41 / +48 | 12963.8, +175 / +232 | -17821.9, +4836 / +4799 | -1056.8, +913 / +900 |
 | N | 8725.1, +224 / +284 | 10730.8, +734 / +777 | 5066.6, +41 / +48 | 12963.8, +175 / +232 | -17821.9, +4836 / +4799 | -1056.8, +913 / +900 |
+| O | 8725.1, +224 / +284 | 10730.8, +734 / +777 | 5066.6, +41 / +48 | 12963.8, +175 / +232 | -17821.9, +4836 / +4799 | -1056.8, +913 / +900 |
 
 Quick / Normal. Ret P4 ran at Quick only in wave D, after the glyph fix; its wave C numbers
 (12821.9, +54 / +73) came from a seed that wore the glyph. The two tanks arrive with
@@ -215,7 +217,7 @@ In L the DPS picks meet their hit and expertise floors and haste ceilings (BIS-c
 tanks' with BIS-relic pricing every libram and idol. Idle, Ret's Normal run took 40% longer than K's (64.9 s),
 the rest within 8% or faster.
 In M nothing moved: TE-ABILITY and TE-REPLAY change tests only. Nor in N: PERF-FU keeps every result bit-identical,
-and the suite's Search stage already took 2 s or less.
+and the suite's Search stage already took 2 s or less. Nor in O: tests, tools and the UI's talent trees only.
 
 ## Sim throughput
 
@@ -242,6 +244,7 @@ From G the benches run their suites' default players with rotations, at 1 and 10
 | L | 1.069 / 77.6 | 0.559 / 29.7 | 0.782 / 45.5 | 0.555 / 16.9 | 5.460 / 268.1 |
 | M | 1.082 / 78.9 | 0.528 / 29.4 | 0.808 / 45.9 | 0.511 / 17.4 | 5.348 / 267.7 |
 | N | 1.095 / 77.1 | 0.581 / 29.5 | 0.865 / 46.5 | 0.486 / 18.4 | 5.479 / 288.3 |
+| O | 1.090 / 79.8 | 0.652 / 30.0 | 0.808 / 46.7 | 0.537 / 18.9 | 5.500 / 297.6 |
 
 H2 ran with the live worldserver using half a core, which moved whole runs by up to 2×
 and cost a few percent here (Ret, which H2 barely touched, +4%). An interleaved A/B against the base
@@ -304,6 +307,9 @@ N's row ran idle the same way, before a game started on the host. At 100 iterati
 Elemental +6% and the raid +8%, whose three runs spread 273 to 367. No N change reaches the sim's hot paths
 (TE-GUARD's list fills only on a miss at rotation setup): noise. The `tools/perf` full run took 54 min with
 PERF-FU's defaults, but beside that game (about 2.3 cores), so `baseline.json` stays I3's.
+
+O's row ran idle the same way: within 4% of N's at 100 iterations; at one, Ret +12%, Elemental +10%, Hunter -7%.
+O changes no sim code: noise.
 
 E to F2 ran the old requests: one iteration, and no rotation for Ret, Hunter and Elemental.
 
@@ -439,6 +445,9 @@ crashed before F2, so its column starts there.
 | PAR-FU-3 | merged | `472ad8b4c` | goldens unchanged: the warrior's +2 is Battle Stance's 10% armor penetration, which the sim has and the replay model lacked; the unarmed warrior's record is back, simval 1114 checks |
 | PERF-FU | merged | `e025c1fe8` | results bit-identical; captured P2 Normal jobs: Mighty 136 → 56 s, Stormweaver 52 → 40 s; the harness's full run about 50 min, raid DPS at Normal skipped by default |
 | wave N cross-review | | `887e9152a` | no bugs: the golden-mismatch hint said `make update-tests`; docs on where `damage` records go; module long lines (`9dfacf6`) |
+| TE-TALENTS | merged | `8ceb8e61a` | 21 Talents-* rows in 20 suites promoted in `9d300299a`, no existing row moved; guard over 615 implemented talents, 12 allowlisted |
+| TE-GOLDCHAR | merged | `675b0f90a` | goldens unchanged; module `ab68bfd`, server rebuilt 23:44-23:49 (2026-10-01); 32 setups live, 9 mismatches dropped (fixture README) |
+| wave O cross-review | | `07f1aa576` | 2 bugs: the talent export's rank spells were the trees' compressed lists; 4 trees had wrong rank spells (Sudden Death's 2 and 3 swapped, so WarriorArms ran 2/3 on the server and is dropped until re-recorded), now held to the spelldump |
 
 Later WIs are added as their wave starts.
 

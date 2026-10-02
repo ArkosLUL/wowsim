@@ -148,7 +148,7 @@ run's start, dedupe by line, and replace `simval.jsonl` (a recapture never appen
 - **Owns:** module `src/SimValidationCommands.cpp`, `simval_commands.sql`, `e2e/damage_test.go`, `README.md`;
   `tools/simval/damage.go`, `basestats.go`'s spec map, `damage.jsonl`, `tools/simval/README.md`.
 
-### TE-TALENTS (O; goldens)
+### TE-TALENTS (O, done; goldens)
 
 - Guard test in package `sim`: "implemented" is a `Talents` field read in `sim/<class>` non-test code (via
   `go/ast`, following variables bound from `.Talents`, excluding pet talents), mapped to the tree's
@@ -161,7 +161,7 @@ run's start, dedupe by line, and replace `simval.jsonl` (a recapture never appen
   an inline APL casting the build's active talents. Existing rows don't move.
 - **Owns:** the suites' `*_test.go`, `sim/serverdata_test.go`, the guard test, the exported JSON.
 
-### TE-GOLDCHAR (O; golden-neutral; C++; stages: C++ and e2e, sim, live)
+### TE-GOLDCHAR (O, done; golden-neutral; C++; stages: C++ and e2e, sim, live)
 
 - C++: `.simval glyph <slot> <glyphPropertiesId>`, and `.simval talent <spellId>` via `GetTalentSpellPos` and
   `Player::LearnTalent` (fills `m_talents`, unlike `.learn`).
@@ -176,7 +176,7 @@ run's start, dedupe by line, and replace `simval.jsonl` (a recapture never appen
 
 ### TE-SWEEP (P; golden-neutral; live)
 
-- Per class, several learn paths over TE-TALENTS' list (71 points can't hold them all), reset between paths,
+- Per class, several learn paths over TE-TALENTS' list (`implemented_talents.json`, its `rankSpells` one per rank) (71 points can't hold them all), reset between paths,
   filler points per tier, via `.simval talent`. Stance, form and presence match on both sides.
 - `.simval info` after each implemented talent; fixture `talents.jsonl` is a trimmed attacker-sheet
   projection decoded by `talents.go`'s own struct.

@@ -426,7 +426,7 @@ Unholy); the grep's Divine Guardian is only a comment, and Permafrost is read th
   bound from `x.Talents` in the same declaration. The hunter pet's `Talents()` is a call, so it never counts.
   Go name to the tree's `fieldName` through the struct tag and `JSONName`.
 - Talent string position n is proto field n (`core.FillTalentsProto`); a tree `fieldName` differing from that
-  field fails only when implemented (shaman.json's unread `ancestralUealing` is only logged).
+  field fails only when implemented, else is logged (the cross-review fixed shaman.json's `ancestralUealing`).
 - Taken: a rank in any suite build. Builds come from go/ast, not `serverDataPresets`: from each `Test*` calling
   `RunTestSuite`, through the package-level funcs, vars and consts it names, every `TalentsString` and every
   `Talents` of a `CharacterSuiteConfig` or `TalentsCombo`, resolved to a string constant. 37 suites, 57
@@ -434,7 +434,7 @@ Unholy); the grep's Divine Guardian is only a comment, and Permafrost is read th
 - Allowlist `untakenTalents` (class → fieldName → reason): an empty reason, an entry a build takes, or one the
   class no longer reads fails.
 - `sim/core/testdata/simval/implemented_talents.json`: every implemented talent with class, tree, `fieldName`,
-  row, max points and rank spell ids, one per line. Stale fails; rewrite with
+  row, max points and `rankSpells` (one per rank; the cross-review filled the trees' compressed lists), one per line. Stale fails; rewrite with
   `go test ./sim -run TestTalentCoverage -update`.
 - Negative check: Judgements of the Just zeroed in the Prot Paladin build failed naming it; allowlisted it
   passed; a blank reason and the restored build with the entry kept both failed; reverted.
@@ -545,7 +545,8 @@ class naming it; allowlisted, each passed; reverted.
 - Lacerate's dot is replayed for one stack, as the probe works it out.
 
 **Live stage** (golden-neutral). Module rebuilt; `goldchar.jsonl` is one full run (all 32 setups pass the e2e,
-124 records after drops), and `TestGoldenCharacters` passes 628 checks.
+124 records after drops), and `TestGoldenCharacters` passes 628 checks; 613 over 122 after the cross-review dropped
+WarriorArms (Sudden Death learned at 2/3).
 - Fixed in the e2e: profession skill and reputation for gated items (`.setskill`, `.modify reputation`); hunters'
   starting 10% quiver swapped for a 15% one; full health before recording (bots sat at 35–50%, which turned off
   Blood Gorged); Elemental's Flametongue Weapon cast on the main hand through a raw CMSG_CAST_SPELL.
