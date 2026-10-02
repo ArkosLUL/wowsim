@@ -104,6 +104,7 @@ The UI owns candidate pools and settings. Go owns every equip rule and the searc
 - A pool is `player.getItems(slot)`, filtered by:
   - source
   - the catalog: tier ≤ 12+phase, faction, no PvP
+  - outclassed gear, except what the target wears ([BIS-outclassed](#bis-outclassed-wave-r-done))
   - `enchantAppliesToItem` and `canEquipEnchant`
 - `getMetaGemCondition` becomes linear color constraints.
 - The request goes to `/optimizeGearAsync` or `wowsimcli optimize`, then into `sim/optimizer`, which imports
@@ -664,10 +665,8 @@ move; only the neighborhood sims and reports 5. **Owns:** `search.go`'s `runners
   measured 5 to 6 KB a job on the fixture roster.
 - Quick runs took 4 to 21 s per spec in wave D against the 3 to 6 s target, Combat Rogue slowest. Trim
   Quick or move the target.
-- The pool builder prunes nothing, so a Retribution request carries 2.6k to 4.6k candidates and 1.6 to
-  2.9 MB of JSON, which `worker_pool.optimizeGearAsync` also logs in full on every run. Drop that log,
-  and prune in the pool builder if size or search time hurts (items every other candidate beats, or TBC
-  items by default).
+- Done: request size (the log and dominance pruning in the As built below, outclassed gear in
+  [BIS-outclassed](#bis-outclassed-wave-r-done)).
 - When the trimmer empties a weapon slot, the normalizers still come from the trimmed seed, which sizes the
   score's points about 12% larger (BIS-seed's DK check). Measuring them on the gear as equipped changes the
   objective.
@@ -1494,7 +1493,7 @@ Results:
 Open: the sheet ignores per-spell `BonusExpertiseRating`, so a specialization covering one of two
 weapons counts toward no floor.
 
-### BIS-outclassed (wave R)
+### BIS-outclassed (wave R, done)
 
 Every pool holds tiers 0 to 12 + phase, so vanilla, TBC and Northrend leveling gear are always in it (Ret P1:
 1,274 of 2,615 candidates are plain items under ilvl 187, ~460 are pre-Northrend). Under the default hit and

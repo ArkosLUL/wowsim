@@ -96,7 +96,10 @@ Quirk: `UnitLevelFloat64` in `utils.go` treats every level outside 80–82 as +3
 - `ui/core/optimizer/` and `ui/core/components/individual_sim_ui/optimizer_tab.ts`: the BiS Optimizer
   tab, shown for DPS and tank specs. `pool_builder.ts` builds the request (its `filterItemsByFilters` is the gear
   picker's own filter; it trims the seed to what the pool offers, where the search starts, and sends the gear
-  as equipped too, which the gains are measured against),
+  as equipped too, which the gains are measured against). It leaves out outclassed gear: under item level 187
+  (`OUTCLASSED_ITEM_LEVEL`) and either plain (no set, no catalog effect) or from catalog tier 12 or below. An
+  item the target wears stays, in its own slot's pool only. Holiday loot is all 200 and up, so it stays;
+  `item.expansion` would misfile it as vanilla or TBC.
   `catalog.ts` reads `server_catalog.json`, and `fixture_driver.ts` writes the replay fixtures under
   Node ([README](../../ui/core/optimizer/README.md)).
 - `ui/core/encounter.ts` sets the default target and holds the raid difficulty and server settings. `ui/core/constants/mechanics.ts` holds the UI copies

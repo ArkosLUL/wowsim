@@ -142,6 +142,11 @@ _Avoid_: item phases, loot list
 The items, gems and enchants one optimization may choose from.
 _Avoid_: item list
 
+**Outclassed gear**:
+Gear below item level 187 that has no set bonus or effect, or comes from before Northrend. It stays
+out of a candidate pool unless the character wears it.
+_Avoid_: TBC gear, which also tags holiday loot that isn't outclassed
+
 **Raid contribution**:
 A raider's effect on the raid's total DPS: their own damage plus what they give others.
 _Avoid_: utility, raid value

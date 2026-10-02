@@ -88,7 +88,8 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
   (`sim/optimizer/testdata/replay/*.json.gz`, written by the driver in
   [ui/core/optimizer](../../ui/core/optimizer/README.md)). An exported request drops in as is.
   `TestReplayEquippedGear` checks every fixture's owned items; it needs `equipped` on the driver's `.json.gz`
-  files and skips an export without it.
+  files and skips an export without it. `outclassed_test.go` checks the fixtures' pools leave out outclassed
+  gear except where it's worn.
 - Two sessions testing in one worktree mix each other's changes and overwrite each other's `.tmp` files.
   Promote only when both are done.
 - To commit one phase out of a worktree that holds two, rebuild its tree in scratch from `git archive HEAD`,

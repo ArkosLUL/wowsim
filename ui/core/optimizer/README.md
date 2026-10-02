@@ -1,7 +1,8 @@
 # ui/core/optimizer
 
 Request building for the BiS optimizer tab ([PLAN](../../../docs/bis-optimizer/bis-optimizer.PLAN.md#bis-ui-tab-wave-d)):
-- `pool_builder.ts`: `buildOptimizeRequest`. Pure (no DOM, no Player), so it runs under Node.
+- `pool_builder.ts`: `buildOptimizeRequest`, which leaves out outclassed gear
+  ([sim-architecture](../../../docs/guide/sim-architecture.md#ui)). Pure (no DOM, no Player), so it runs under Node.
 - `catalog.ts`: loads `server_catalog.json` and decides what a phase, faction and source set allow.
 - `item_filters.ts`: the gear picker's filters, shared with `Player.filterItemData`.
 
@@ -15,7 +16,9 @@ Retribution presets, writing `sim/optimizer/testdata/replay/*.json.gz` for `Test
 tools/acore/dock.sh exec bash -c 'npx esbuild ui/core/optimizer/fixture_driver.ts --bundle --platform=node --format=esm --target=node18 --outfile=tmp/optimizer/fixture_driver.mjs && node tmp/optimizer/fixture_driver.mjs write sim/optimizer/testdata/replay'
 ```
 
-It prints each pool's size and what each seed lost to fit its pool. The tab's "Export request" button
+It prints each pool's size and what each seed lost to fit its pool. Its `lookupEquipmentSpec` re-slots
+items, so a fixture can't hold a lone second ring or trinket: `ret_p1_worn_outclassed` fills Trinket 1 with
+an item the pool leaves out instead. The tab's "Export request" button
 downloads the same request as plain JSON, which the test takes as is.
 
 `post` sends a fixture (`.json` or `.json.gz`) to a running sim server the way `net_worker.js` does, then

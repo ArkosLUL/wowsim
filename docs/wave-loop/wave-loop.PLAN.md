@@ -131,15 +131,23 @@ then covers all 28 builds, tanks included, since the cut changes prot paladin an
 
 ## Current wave
 
-- Wave: R, running; base `9f1f2f94f`. BIS-outclassed: implementing. Prod runs Q's `225191f1f`.
+- Wave: R, running; base `9f1f2f94f`. BIS-outclassed merged; cross-review next, then the idle re-time and
+  re-baseline. Prod runs Q's `225191f1f`.
 - Open: the talent sweep's unseen talents (test-enrichment INVESTIGATION, TE-SWEEP as built); from Q (parity
   INVESTIGATION, PAR-FU-4..7 as built): Ranged Weapon Specialization on Explosive Trap and magic procs, Glyph of
   Totem of Wrath's 84 spell power unverified live, aura-163 crit damage adds on the server for specials (the sim
   multiplies), a shaman's block value lacks strength/2, and 72-point Fury and Balance strings in the optimizer's
   test inputs and `gen_db`.
-- Deferred (the user's call, 2026-10-02; only on the user's go-ahead): rerun every DPS preset on the final HEAD, since BIS-caps-race changes
-  every racial search and `ff0920a96` the 16 builds `mage_*`, `rogue_*`, `warlock_*`, `warrior_arms`,
-  `warrior_fury`, `protection_warrior`, `shadow_priest`, `smite_priest`, `dk_blood`, `elemental_shaman`.
+- Deferred (the user's call, 2026-10-02; each only on the user's go-ahead):
+  - Rerun all 28 presets, tanks included, on the final HEAD: BIS-caps-race changes every racial search,
+    `ff0920a96` the 16 builds `mage_*`, `rogue_*`, `warlock_*`, `warrior_arms`, `warrior_fury`,
+    `protection_warrior`, `shadow_priest`, `smite_priest`, `dk_blood`, `elemental_shaman`, and BIS-outclassed
+    every build's old picks. A fresh `--out`, from P1: later phases seed from the earlier pick, and the worn
+    exemption would carry an old pick down. Check prot paladin and feral tank P1 for crit-immunity warnings
+    (Ring of Hardened Resolve gave Defense).
+  - Then the BiS tooltip dataset (acbis driver, both stages, fresh `--out`, then `acbis`; the import needs
+    the OK), the changed builds' stat weights, and the perf harness's `opt_*` scenarios (`update.sh`, a new
+    baseline; the raid25 dumps in `_dump/optimizer_dump_test.go` still build uncut pools).
 - Workflow runIds: R's `wf_445767f0-4a1` (base `9f1f2f94f`); Q's `wf_47a2be77-20d` and `wf_6f439290-bf9` (PAR-FU-5 and 6's live stages; base `fdbc3df49`); P's `wf_9c73b1de-ff3` (base `c678de53e`); O's `wf_cd004c46-c80` (base `b069c688b`); N's `wf_4b37e171-123` (base `7f4174efb`); M's `wf_8ab862a5-d37` (base `33da5ca34`); L's `wf_34052b28-d62`, `wf_1a26dbdb-51c`, `wf_ac1129b6-8d7`, `wf_a59f095c-4b7`, `wf_f5be2bcf-e23`,
   `wf_42fc0b7c-42a`; args `wave<X>*-args.json` in `G:\DevStuff\GitHub\.wave-loop`, transcripts in
   `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\<runId>`.
@@ -474,6 +482,7 @@ crashed before F2, so its column starts there.
 | PAR-FU-6 | merged | `40eb38ce9` | MM +0.18%, SV -0.001%, Affliction -0.24%; the three hunters re-recorded; Affliction's optimizer hit floor 368 to 289 |
 | PAR-FU-7 | merged | `a6c814732` | Resto Shaman HPS -4.4%, Elemental -0.009%, feral suites' ranged AP stat only; ShamanElemental and DruidBalance re-recorded |
 | wave Q cross-review | | `b595e8c0c` | no bugs past the e2e's always-passing 71167 check (module `d0699fa`); every golden-character and sweep drop is gone |
+| BIS-outclassed | merged | `9df3b9044` | goldens unchanged. Ret pools 2.6k–4.6k to 1.2k–3.2k candidates; slow-suite gains move both ways, Fury P1 Normal −45 |
 
 Later WIs are added as their wave starts.
 

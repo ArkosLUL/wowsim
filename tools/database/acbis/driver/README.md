@@ -60,7 +60,8 @@ better one for them or a Heroic Presence check switched their racial traits.
 
   Never excluded: the item a raider already wears in that slot, gems, enchants, and a source the
   catalog couldn't classify (a handful of TBC and holiday-event drops, no raid or dungeon loot). PvP
-  gear never counts. Give both passes the same list: a settled job stays as it ran, so a rerun with
+  gear never counts, nor does outclassed gear the raider doesn't wear
+  ([sim-architecture](../../../../docs/guide/sim-architecture.md#ui)). Give both passes the same list: a settled job stays as it ran, so a rerun with
   another doesn't redo it, and the export's log line names what its entries really ran with, flagged
   when that isn't this pass's list.
 - A rerun skips what's settled and resumes a cut-off job. **A failed job counts as settled**, so a
