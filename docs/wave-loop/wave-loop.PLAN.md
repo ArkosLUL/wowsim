@@ -131,7 +131,8 @@ then covers all 28 builds, tanks included, since the cut changes prot paladin an
 
 ## Current wave
 
-- Wave: R, running; base `c27854a8d`. BIS-outclassed: started. Prod runs Q's `225191f1f`.
+- Wave: R, running; base `9f1f2f94f`. BIS-outclassed: implementing. Prod runs Q's `225191f1f`. Master's `80eee8d02`
+  isn't merged in: the permission check refused the wave-start merge, so it waits for the user.
 - Open: the talent sweep's unseen talents (test-enrichment INVESTIGATION, TE-SWEEP as built); from Q (parity
   INVESTIGATION, PAR-FU-4..7 as built): Ranged Weapon Specialization on Explosive Trap and magic procs, Glyph of
   Totem of Wrath's 84 spell power unverified live, aura-163 crit damage adds on the server for specials (the sim
@@ -140,7 +141,7 @@ then covers all 28 builds, tanks included, since the cut changes prot paladin an
 - Deferred (the user's call, 2026-10-02; only on the user's go-ahead): rerun every DPS preset on the final HEAD, since BIS-caps-race changes
   every racial search and `ff0920a96` the 16 builds `mage_*`, `rogue_*`, `warlock_*`, `warrior_arms`,
   `warrior_fury`, `protection_warrior`, `shadow_priest`, `smite_priest`, `dk_blood`, `elemental_shaman`.
-- Workflow runIds: Q's `wf_47a2be77-20d` and `wf_6f439290-bf9` (PAR-FU-5 and 6's live stages; base `fdbc3df49`); P's `wf_9c73b1de-ff3` (base `c678de53e`); O's `wf_cd004c46-c80` (base `b069c688b`); N's `wf_4b37e171-123` (base `7f4174efb`); M's `wf_8ab862a5-d37` (base `33da5ca34`); L's `wf_34052b28-d62`, `wf_1a26dbdb-51c`, `wf_ac1129b6-8d7`, `wf_a59f095c-4b7`, `wf_f5be2bcf-e23`,
+- Workflow runIds: R's `wf_445767f0-4a1` (base `9f1f2f94f`); Q's `wf_47a2be77-20d` and `wf_6f439290-bf9` (PAR-FU-5 and 6's live stages; base `fdbc3df49`); P's `wf_9c73b1de-ff3` (base `c678de53e`); O's `wf_cd004c46-c80` (base `b069c688b`); N's `wf_4b37e171-123` (base `7f4174efb`); M's `wf_8ab862a5-d37` (base `33da5ca34`); L's `wf_34052b28-d62`, `wf_1a26dbdb-51c`, `wf_ac1129b6-8d7`, `wf_a59f095c-4b7`, `wf_f5be2bcf-e23`,
   `wf_42fc0b7c-42a`; args `wave<X>*-args.json` in `G:\DevStuff\GitHub\.wave-loop`, transcripts in
   `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\<runId>`.
 - J2's full-roster batch ran 2026-09-28 in 52 min at Quick, output in
