@@ -14,10 +14,13 @@
 // `rrsim` builds that sim for a recorded hunter run out of the .setup.txt next to its log, and
 // prints the DPS to hand to `chronicle -sim`.
 //
+// `talents` cuts a talent sweep run's raw records down to the fixture TestTalentSweepRecords replays.
+//
 //	tools/acore/dock.sh run ./tools/simval
 //	tools/acore/dock.sh run ./tools/simval -fixture
 //	tools/acore/dock.sh run ./tools/simval chronicle -sim 8123 <log>
 //	tools/acore/dock.sh run --tags=with_db ./tools/simval rrsim -seconds 300.8 <setup>
+//	tools/acore/dock.sh run ./tools/simval talents -records /wotlk/tmp/sweep.jsonl
 package main
 
 import (
@@ -43,6 +46,8 @@ func main() {
 			os.Exit(runChronicle(os.Args[2:]))
 		case "rrsim":
 			os.Exit(runRecordedSim(os.Args[2:]))
+		case "talents":
+			os.Exit(runTalentTrim(os.Args[2:]))
 		}
 	}
 	os.Exit(runReplay(os.Args[1:]))

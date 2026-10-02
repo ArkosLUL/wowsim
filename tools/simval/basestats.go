@@ -113,6 +113,11 @@ func checkInfo(rec record) []Check {
 	if !unit.naked() || armorPen > 0 {
 		return checks
 	}
+	if talented, err := hasTalentAura(unit); err != nil {
+		return append(checks, fail("talents", err.Error()))
+	} else if talented {
+		return checks
+	}
 
 	race, ok := races[unit.Race]
 	if !ok {
@@ -167,6 +172,23 @@ func checkInfo(rec record) []Check {
 		checks = append(checks, whole("mana", unit.Power, s[stats.Mana]))
 	}
 	return checks
+}
+
+// hasTalentAura is whether the unit has an aura of one of its class's talent ranks, which the bare sim
+// character goes without: naked() doesn't look at passives.
+func hasTalentAura(unit unitSnapshot) (bool, error) {
+	data, err := loadDamageData()
+	if err != nil {
+		return false, err
+	}
+	talents := data.talents[unit.Class]
+	if talents == nil {
+		return false, nil
+	}
+	return slices.ContainsFunc(unit.Auras, func(a aura) bool {
+		_, ok := talents.ranks[a.ID]
+		return ok
+	}), nil
 }
 
 func checkNear(name string, got, want, tolerance float64) Check {
