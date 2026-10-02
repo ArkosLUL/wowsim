@@ -2442,3 +2442,15 @@ Shadow priest DoTs as mod-spell-tweaks `338d826` changed them (`docs/priest/Shad
   fixed duration holds. DP ticks arrive as `SMSG_SPELLNONMELEEDAMAGELOG` (leech aura), not `SMSG_PERIODICAURALOG`.
   The client never sees passives, so the 71167-absent check is weak; the ticks prove the haste. The sim's table
   needed no change. Records nothing in `simval.jsonl`.
+
+## PAR-FU-7 as built
+
+Code stage (druid, shaman, mage). Each fix removed its `droppedSweep` entry and README row; `TestTalentSweepRecords` passes with the field compared.
+- **Cat/Bear ranged AP** (`sim/druid/forms.go`): both forms add a dynamic Agility to ranged AP of -1, and `GetFormShiftStats` gives +10 to cancel the class's -10 base, so the sheet reads 0 as on the server (`Player::UpdateAttackPowerAndDamage`). The feral suites' `final_stats` ranged AP drops by ~1.5k; DPS is unchanged.
+- **Balance `StandardTalents`** spent 72 points: Nature's Reach (unimplemented) 1 to 0, now 71. The string also lives in `sim/serverdata_test.go`'s Balance preset and the DruidBalance setup (`talents`, `talentSpells` without 16819). DruidBalance was re-recorded live.
+- **Nature's Blessing** (`sim/shaman/talents.go`): aura 175 is healing only, and the spelldump gives 5% of intellect per rank (basePoints 4/9/14), not the 10% the sim had. `healingPower` adds it to the shaman's healing spells only. Restoration's HPS in the HealingGrace test drops 4.4%, from both the narrower scope and the halved rate.
+- **Glyph of Totem of Wrath** (`sim/shaman/totems.go`): aura 63283 ("Glyph of Totem of Wrath", 300 s, +84 spell power) is activated by the totem's cast and by the pre-pull totem in `Reset`. Elemental DPS drops 0.002 to 0.02%: the aura lapses at 300 s and no longer counts in `final_stats` (-84).
+- **Magic Absorption** (`sim/mage/talents.go`): 0.5 resistance per level per rank (`realPointsPerLevel` of 29441 and 29444), +80 at 2/2. No mage golden moves.
+- **ShamanElemental setup**: `auras` is empty. A triggered `.cast` of Totem of Wrath (57722) never summons the totem, so the glyph script (`spell_sha_totem_of_wrath`) finds none, and 63283's own cast only gives the raw 30 spell power, not the sim's 84. Neither is cast: the server sheet reads 1869 spell power (no glyph aura), as does the sim, whose golden character has no totem. A real cast needs the e2e's raw CMSG_CAST_SPELL path (`imbueMainHand`) and a pause.
+
+Live stage (server lock, `SIMVAL_GOLDCHAR_ONLY=ShamanElemental,DruidBalance`, 59 s, no restart or config change): both setups re-recorded and swapped into `goldchar.jsonl`. `TestGoldenCharacters` passes with spell power compared and no new drop.

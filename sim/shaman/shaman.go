@@ -122,6 +122,8 @@ type Shaman struct {
 
 	MaelstromWeaponAura *core.Aura
 
+	glyphOfTotemOfWrathAura *core.Aura
+
 	// Healing Spells
 	tidalWaveProc          *core.Aura
 	ancestralHealingAmount float64

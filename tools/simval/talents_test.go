@@ -32,15 +32,6 @@ var droppedSweep = append(slices.Clone(unbuildableSweep), []sweepDrop{
 	{"HunterSurvival", "lightningReflexes", "dodge %"},
 	{"HunterSurvival", "huntingParty", "dodge %"},
 	{"DeathknightFrost", "improvedIcyTalons", "ranged haste"},
-	{"ShamanRestoration", "naturesBlessing", "spell power"},
-	{"MageArcane", "magicAbsorption", "fire resistance"},
-	{"MageArcane", "magicAbsorption", "nature resistance"},
-	{"MageArcane", "magicAbsorption", "frost resistance"},
-	{"MageArcane", "magicAbsorption", "shadow resistance"},
-	{"MageArcane", "magicAbsorption", "arcane resistance"},
-	{"DruidFeralCat", "improvedMarkOfTheWild", "ranged attack power"},
-	{"DruidFeralBear", "survivalOfTheFittest", "ranged attack power"},
-	{"DruidFeralBear", "improvedMarkOfTheWild", "ranged attack power"},
 }...)
 
 // TestTalentSweepRecords replays a live TestSimvalTalentSweep run, trimmed by `simval talents`: each

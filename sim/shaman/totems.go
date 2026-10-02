@@ -5,6 +5,7 @@ import (
 
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
+	"github.com/wowsims/wotlk/sim/core/stats"
 )
 
 func (shaman *Shaman) newTotemSpellConfig(baseCost float64, spellID int32) core.SpellConfig {
@@ -62,7 +63,7 @@ func (shaman *Shaman) registerHealingStreamTotemSpell() {
 		// 52042's coefficient
 		Direct: core.SpellEffect{Effect: 0, SP: 0.0827},
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			healing := shaman.HealingStreamTotem.Hot(target).Tick.Roll(sim) + spell.Direct.SP*spell.HealingPower(target)
+			healing := shaman.HealingStreamTotem.Hot(target).Tick.Roll(sim) + spell.Direct.SP*shaman.healingPower(spell, target)
 			spell.CalcAndDealHealing(sim, target, healing, spell.OutcomeHealing)
 		},
 	})
@@ -90,6 +91,11 @@ func (shaman *Shaman) registerHealingStreamTotemSpell() {
 
 func (shaman *Shaman) registerTotemOfWrathSpell() {
 	config := shaman.newTotemSpellConfig(0.05, 57722)
+	// The glyph's aura (63283) comes with the cast: 30% of the totem's 280 spell power
+	if shaman.HasMajorGlyph(proto.ShamanMajorGlyph_GlyphOfTotemOfWrath) {
+		shaman.glyphOfTotemOfWrathAura = shaman.NewTemporaryStatsAura("Glyph of Totem of Wrath",
+			core.ActionID{SpellID: 63283}, stats.Stats{stats.SpellPower: 84}, time.Second*300)
+	}
 	config.ApplyEffects = func(sim *core.Simulation, _ *core.Unit, _ *core.Spell) {
 		shaman.TotemExpirations[FireTotem] = sim.CurrentTime + time.Second*300
 		shaman.applyToWDebuff(sim)
@@ -101,6 +107,9 @@ func (shaman *Shaman) applyToWDebuff(sim *core.Simulation) {
 	for _, target := range sim.Encounter.TargetUnits {
 		auraDef := core.TotemOfWrathDebuff(target)
 		auraDef.Activate(sim)
+	}
+	if shaman.glyphOfTotemOfWrathAura != nil {
+		shaman.glyphOfTotemOfWrathAura.Activate(sim)
 	}
 }
 
