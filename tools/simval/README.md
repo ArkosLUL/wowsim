@@ -162,8 +162,8 @@ Form, Shadowform, Bone Shield, Trueshot Aura). The generator, per class:
   talents first; a prerequisite goes first at max rank.
 
 Rewrite it with `tools/acore/dock.sh test ./tools/simval -run TestTalentPathsFile -update`; a changed path's
-`talents.jsonl` records then match nothing, so rerun it (`SIMVAL_TALENT_ONLY`) and trim the new stream appended to
-the old. Tests:
+`talents.jsonl` records then match nothing, so rerun it (`SIMVAL_TALENT_ONLY`) and trim its stream: paths it has no
+bot for keep their records from the fixture. Tests:
 `TestTalentPathsFile` (stale), `TestTalentPathsAreLegal` (points, rows, prerequisites, ranks, every implemented
 talent covered in a setup that shows it, on the committed file), `TestTalentPathsCoverTheSimsStart` (after each
 step, what the sim has up that isn't passive is in the auras), `TestTalentPathsItemClasses`.
@@ -178,7 +178,8 @@ an e2e log's `RECORD` lines, keeps the `Svtlead…` bots' info records and write
 `sim/core/testdata/simval/talents.jsonl` (`-out` to change): per record its `path`, `step` (talents learned), bot,
 character and the compared sheet fields. Bots go by name; a bot's records must all fit one path (class, race, items,
 talents a start of its steps). A bot fitting none or several is left out with a note, a path's later bot replaces an
-earlier one (a rerun), a step recorded twice or a record without `maxPower` fails. It prints the steps still missing.
+earlier one (a rerun), the old fixture's paths the stream lacks are kept, a step recorded twice or a record without
+`maxPower` fails. It prints the steps still missing.
 
 **Replay** (`TestTalentSweepRecords`, skips without the fixture): per step, the server's change between the records
 before and after it against the sim's change between `path.goldcharSetup(n-1)` and `(n)` (stats after a reset, with
@@ -196,12 +197,12 @@ RAP, times 3). A step passes a field when the two changes differ by at most the 
 1e-3.
 
 Each step is logged on a `SWEEPSIM` line as `agrees`, `moves no field` (nothing past 1e-3 on either side: a proc or
-spell mod talent) or `disagrees`; the end lists the no-field steps. A sim that can't build the character fails as
-`sim character`. Drops: `droppedSweep` (path, talent, field), each with a fixture README row; an empty field drops the
-step. Records stay, since the next step starts from them; a dropped step or field is only logged, and one that agrees
-or matches nothing fails. Hand-built tests: `TestTalentSweepAgreesWithTheSim` and `TestTalentSweepReplaysAFullRun`
-(every path, server sheets made from the sim, through the trim), `TestTalentSweepCatchesMismatches`,
-`TestTalentTrim`.
+spell mod talent, or one needing gear or a buff the path lacks: item armor, Devotion Aura) or `disagrees`; the end
+lists the no-field steps. A sim that can't build the character fails as `sim character`. Drops: `droppedSweep` (path,
+talent, field), each with a fixture README row; an empty field drops the step. Records stay, since the next step
+starts from them; a dropped step or field is only logged, and one that agrees or matches nothing fails. Hand-built
+tests: `TestTalentSweepAgreesWithTheSim` and `TestTalentSweepReplaysAFullRun` (every path, server sheets made from the
+sim, through the trim), `TestTalentSweepCatchesMismatches`, `TestTalentTrim`.
 
 ## chronicle
 

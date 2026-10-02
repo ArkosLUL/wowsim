@@ -528,6 +528,21 @@ func TestTalentTrim(t *testing.T) {
 		t.Errorf("a talent off the path: %d records, notes %q, %v", len(recs), notes, err)
 	}
 
+	// a rerun of some paths keeps the old fixture's other paths, and drops a path the file no longer has
+	stale := sweepBotRecords(t, arcane, "Svtleadfffff", 1)
+	removed := stale[0]
+	removed.Path = "MageArcane9"
+	old := append(append(slices.Clone(firstTry), stale...), removed)
+	merged, notes := keepOtherPaths(got[:len(rerun)], old, paths)
+	if want := append(slices.Clone(got[:len(rerun)]), stale...); len(merged) != len(want) ||
+		!slices.EqualFunc(merged, want, func(a, b talentRecord) bool { return a.Bot == b.Bot && a.Step == b.Step }) {
+		t.Errorf("merged %+v", merged)
+	}
+	if joined := strings.Join(notes, "\n"); !strings.Contains(joined, "records of MageArcane (2)\n") ||
+		!strings.Contains(joined, "MageArcane9 left out") || strings.Contains(joined, "RogueCombat") {
+		t.Errorf("merge notes %q", notes)
+	}
+
 	for name, text := range map[string]string{
 		"no maxPower":            strings.Replace(rawTalentLine(t, firstTry[1]), `"maxPower":`, `"maxPowerOld":`, 1),
 		"a step recorded twice":  rawTalentLine(t, firstTry[1]) + "\n" + rawTalentLine(t, firstTry[1]),

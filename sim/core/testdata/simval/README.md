@@ -44,12 +44,12 @@ or field is only logged.
 |---|---|---|---|
 | WarlockAffliction | darkPact | all | the sim panics building a warlock with Dark Pact and no pet (`sim/warlock/darkpact.go` reads `warlock.Pet`) |
 | WarlockAffliction | suppression | spell hit % | the sim gives the 3% to every school; the server only to fire and shadow (as in `goldchar.jsonl`) |
-| WarriorProtection, PaladinProtection | shieldMastery, redoubt | block value | server +105, sim +108: the server takes block value's -10 before the % multiplier (`Player::GetShieldBlockValue`), the sim after |
+| WarriorProtection, PaladinProtection | shieldMastery, redoubt | block value | server +105, sim +108: the server takes 10 off block value before the % multiplier (`Player::GetShieldBlockValue`); the sim never does |
 | HunterBeastMastery, HunterMarksmanship, HunterSurvival | improvedAspectOfTheMonkey, combatExperience, lightningReflexes, huntingParty | dodge % | the server keeps aura dodge % (aspect, Improved Aspect of the Monkey) out of diminishing returns; the sim diminishes it (IAotM +6 vs +4.6; agility's dodge ~20% higher on the server) |
 | DeathknightFrost | improvedIcyTalons | ranged haste | the server's 5% haste is melee and ranged; the sim's melee only |
 | ShamanRestoration | naturesBlessing | spell power | healing only on the server (`MOD_SPELL_HEALING_OF_STAT_PERCENT`); the sim adds 30% of intellect to spell power |
-| MageArcane | magicAbsorption | each resistance | server +80 at 2/2 (1 per level per rank), sim +4 |
-| DruidFeralCat, DruidFeralBear | improvedMarkOfTheWild, survivalOfTheFittest | ranged attack power | the server gives druids no ranged AP from agility; the sim does |
+| MageArcane | magicAbsorption | each resistance | server +80 at 2/2 (1 per level), sim +4 |
+| DruidFeralCat, DruidFeralBear | improvedMarkOfTheWild, survivalOfTheFittest | ranged attack power | the server gives druids in Cat or Bear Form no ranged AP from agility; the sim does |
 
 ## Spells missing from serverdata
 

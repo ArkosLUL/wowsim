@@ -5,9 +5,12 @@ import (
 	"bytes"
 	"cmp"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
+	"io/fs"
+	"maps"
 	"math"
 	"os"
 	"path/filepath"
@@ -306,6 +309,42 @@ func trimTalentRecords(r io.Reader, paths []talentPath) (records []talentRecord,
 	return records, notes, nil
 }
 
+// keepOtherPaths adds the old fixture's records for the paths the new run has none for, so a rerun of
+// some paths keeps the rest. A path either run left out is gone from the paths file.
+func keepOtherPaths(fresh, old []talentRecord, paths []talentPath) (records []talentRecord, notes []string) {
+	byPath, rerun := map[string][]talentRecord{}, map[string]bool{}
+	for _, rec := range fresh {
+		byPath[rec.Path] = append(byPath[rec.Path], rec)
+		rerun[rec.Path] = true
+	}
+	kept, gone := map[string]int{}, map[string]bool{}
+	for _, rec := range old {
+		switch {
+		case !slices.ContainsFunc(paths, func(p talentPath) bool { return p.Name == rec.Path }):
+			gone[rec.Path] = true
+		case !rerun[rec.Path]:
+			byPath[rec.Path] = append(byPath[rec.Path], rec)
+			kept[rec.Path]++
+		}
+	}
+	var keptPaths []string
+	for _, path := range paths {
+		recs := byPath[path.Name]
+		slices.SortFunc(recs, func(a, b talentRecord) int { return cmp.Compare(a.Step, b.Step) })
+		records = append(records, recs...)
+		if n := kept[path.Name]; n > 0 {
+			keptPaths = append(keptPaths, fmt.Sprintf("%s (%d)", path.Name, n))
+		}
+	}
+	if len(keptPaths) > 0 {
+		notes = append(notes, "kept the old fixture's records of "+strings.Join(keptPaths, ", "))
+	}
+	for _, name := range slices.Sorted(maps.Keys(gone)) {
+		notes = append(notes, fmt.Sprintf("%s left out of the old fixture: no such path now", name))
+	}
+	return records, notes
+}
+
 func marshalTalentRecords(records []talentRecord) ([]byte, error) {
 	var b bytes.Buffer
 	for _, rec := range records {
@@ -319,7 +358,8 @@ func marshalTalentRecords(records []talentRecord) ([]byte, error) {
 	return b.Bytes(), nil
 }
 
-// runTalentTrim is `simval talents`: it writes the trimmed records and says which steps lack one.
+// runTalentTrim is `simval talents`: it writes the trimmed records, the old fixture's for paths the run
+// didn't record, and says which steps lack one.
 func runTalentTrim(args []string) int {
 	flags := flag.NewFlagSet("simval talents", flag.ExitOnError)
 	// no default: the e2e deletes its bots' records from the worldserver's simval.jsonl when they finish
@@ -355,12 +395,21 @@ func runTalentTrim(args []string) int {
 		fmt.Fprintf(os.Stderr, "%s: %v\n", *recordsPath, err)
 		return 1
 	}
-	for _, note := range notes {
-		fmt.Println(note)
-	}
 	if len(records) == 0 {
+		for _, note := range notes {
+			fmt.Println(note)
+		}
 		fmt.Fprintf(os.Stderr, "%s has no sweep bot's info records; %s is left as it was\n", *recordsPath, *out)
 		return 1
+	}
+	old, err := readJSONLines[talentRecord](*out)
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	records, keptNotes := keepOtherPaths(records, old, paths)
+	for _, note := range append(notes, keptNotes...) {
+		fmt.Println(note)
 	}
 	data, err := marshalTalentRecords(records)
 	if err != nil {
