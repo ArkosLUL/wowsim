@@ -2117,7 +2117,9 @@ func (r *run) effectFamilies(s *surrogate, v stats.Stats, gp *gemPlan, fx *effec
 			return dps
 		}
 		_, ub := s.candStatBounds(slot, cand, rankLo, rankHi, rankGB)
-		return float64(cand.Catalog.GetProgressionTier())*1e6 + ub
+		// holiday loot reads tier 0 at item level 200 (Brewfest's trinkets), so anything before Naxx
+		// ranks as Naxx, not last
+		return float64(max(cand.Catalog.GetProgressionTier(), 13))*1e6 + ub
 	}
 	quick := func(slot proto.ItemSlot, cand *Candidate, base Loadout) ItemChoice {
 		return s.quickChoice(slot, cand, v, gp, s.keepMeta(base))

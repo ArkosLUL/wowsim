@@ -1544,3 +1544,54 @@ priced trinkets).
 
 Golden-neutral. **Owns:** `ui/core/optimizer/**`, `sim/optimizer/**`, `optimizer_tab.ts`,
 `sim/optimizer/testdata/replay/`, `tools/uitest/tests/settings/optimizer_tab.spec.ts`, `ui/core/optimizer/README.md`.
+
+#### As built
+
+Built as specified, with three departures:
+- **The pricing test** checks 49074, 49076, 49078 and 49080, not 49116 and 49118: the sim has no effect for
+  Bitter Balebrew or Bubbling Brightbrew Charm, so they never get a residual sim and price on stats alone.
+  With the clamp a Ret P1 Quick run sims all four; without it, none.
+- **`ret_p1_worn_outclassed`** holds Comet's Trail (a P2 trinket) in Trinket 1, not an empty slot.
+  `lookupEquipmentSpec` would move a lone Trinket 2 up before the trimmer; Comet's Trail is left out instead,
+  so Dragonspine moves up with its pool entry. Its Back is Embrace of Sorrow 38614 (plain, 183, tier 13). It
+  also carries a warm start with Brann's Lost Mining Helmet 35670 on Head, which the builder blanks.
+- **Extra Go checks:** every fixture's warm-start items sit in a pool, the seed or the equipped gear.
+
+The committed fixtures were stale against the base (catalog moved since a37ab8041), so "before" is the base
+code's fresh output. Machine loaded throughout: every time below is loaded; the idle re-time is the
+orchestrator's. Requests, outputs, traces, binaries and `commands.txt` are in `tmp/optimizer`.
+
+| Fixture | Candidates | Request bytes |
+|---|---|---|
+| `ret_p1` | 2,599 → 1,226 | 1,876,511 → 950,052 |
+| `ret_p1_from_p2` | 2,599 → 1,226 | 1,880,822 → 954,363 |
+| `ret_p2` | 3,102 → 1,729 | 2,232,814 → 1,306,355 |
+| `ret_p2_owned` | 2,241 → 1,202 | 1,759,426 → 999,117 |
+| `ret_p3` | 3,663 → 2,290 | 2,671,749 → 1,745,290 |
+| `ret_p4` | 4,132 → 2,801 | 3,191,834 → 2,275,973 |
+| `ret_p5` | 4,575 → 3,202 | 3,342,105 → 2,415,646 |
+| `ret_p1_worn_outclassed` (new) | 1,161 | 951,644 |
+
+`wowsimcli optimize --trace --workers 8` at Quick (stage times from `tools/perf trace -window 0`):
+
+| Fixture | Sims | Score Δ | Search | Effects | Wall | Pick change |
+|---|---|---|---|---|---|---|
+| `ret_p1` | 143,000 → 152,000 | +143.8 ± 8.8 → +192.4 ± 12.7 | 1.58 → 1.32 s | 2.90 → 2.00 s | 8.9 → 7.8 s | trinkets Loatheb's Shadow + Greatness → Greatness + Fury of the Five Flights |
+| `ret_p4` | 140,750 → 141,250 | +299.2 ± 11.3 → +329.9 ± 11.4 | 3.26 → 3.18 s | 3.21 → 3.17 s | 10.9 → 11.0 s | Wrist Toskk's Maximized Wristguards → Scourge Hunter's Vambraces |
+
+Slow suite with `-decisions`, both passing (391 → 425 s); Δ is J over the preset as equipped, Trinket 1
+residuals are priced/unpriced:
+
+| Case | Candidates | Δ Quick | Δ Normal | Sims Q / N | Wall Q / N | Trinkets Q / N |
+|---|---|---|---|---|---|---|
+| fury p1 | 3,068 → 1,417 | +194.6 → +235.9 | +275.5 → +230.3 | 146.0k → 141.8k / 1,659k → 1,393k | 7.0 → 8.0 / 70.4 → 71.6 s | 22/64 → 35/34 / 86/0 → 69/0 |
+| combat rogue p3 | 2,755 → 1,729 | +733.8 → +707.5 | +777.1 → +902.9 | 178.0k → 174.8k / 1,684k → 1,416k | 13.1 → 15.4 / 110.9 → 109.5 s | 31/102 → 40/75 / 132/1 → 115/0 |
+| fire mage p3 | 1,941 → 1,287 | +40.5 → +40.5 | +48.1 → +51.3 | 140.3k → 138.3k / 869k → 808k | 3.0 → 3.7 / 17.3 → 19.3 s | 52/77 → 63/48 / 129/0 → 111/0 |
+| ret p4 | 4,574 → 3,176 | +174.6 → +148.0 | +231.9 → +225.2 | 137.5k → 139.0k / 1,514k → 1,364k | 5.6 → 6.3 / 49.1 → 49.6 s | 46/119 → 53/94 / 165/0 → 147/0 |
+| prot paladin p3 | 3,725 → 2,327 | +4841.7 → +4794.6 | +4803.8 → +4847.0 | 142.3k → 145.5k / 1,570k → 1,524k | 4.1 → 5.0 / 41.6 → 58.0 s | 26/104 → 30/82 / 130/0 → 112/0 |
+| feral tank p2 | 2,166 → 1,253 | +912.9 → +917.2 | +900.1 → +888.4 | 132.3k → 131.3k / 1,413k → 1,235k | 4.4 → 5.3 / 43.2 → 48.5 s | 30/73 → 39/46 / 103/0 → 85/0 |
+
+Fury p1 Normal's −45 isn't a lost item: rerun on the new code over the uncut pool it reproduces +274.5, and
+every item of that pick is still in the cut pool. The stat curves are measured across the pool's stat range,
+so the cut moves them (ArP breakpoint 111.6 → 69.9, Dreadnaught 4pc 105.3 → 94.0) and the search lands on
+another set. The ±2–3 se gains elsewhere move both ways for the same reason.

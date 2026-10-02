@@ -155,6 +155,7 @@ interface Fixture {
 	gear: EquipmentSpec;
 	contentPhase: number;
 	change?: (settings: OptimizerTabSettings, gear: EquipmentSpec) => void;
+	warmStarts?: Array<EquipmentSpec>;
 }
 
 const FIXTURES: Array<Fixture> = [
@@ -191,6 +192,24 @@ const FIXTURES: Array<Fixture> = [
 			settings.lockedSlots = [ItemSlot.ItemSlotFinger2];
 		},
 	},
+	// worn outclassed gear stays only in its own slot: the cloak keeps its slot, the locked ring is in no
+	// ring's pool, and Dragonspine Trophy moves up with its pool entry once Comet's Trail (not out yet)
+	// leaves trinket 1. Trinket 1 can't start empty, lookupEquipmentSpec would move it up first. The warm
+	// start's helmet is outclassed and not worn, so it comes out
+	{
+		name: 'ret_p1_worn_outclassed',
+		gear: withItems(Presets.P1_PRESET.gear, [
+			[ItemSlot.ItemSlotBack, ItemSpec.create({ id: 38614, enchant: Presets.P1_PRESET.gear.items[ItemSlot.ItemSlotBack].enchant })],
+			[ItemSlot.ItemSlotFinger2, ItemSpec.create({ id: 34213 })],
+			[ItemSlot.ItemSlotTrinket1, Presets.P2_PRESET.gear.items[ItemSlot.ItemSlotTrinket1]],
+			[ItemSlot.ItemSlotTrinket2, ItemSpec.create({ id: 28830 })],
+		]),
+		contentPhase: 1,
+		change: settings => {
+			settings.lockedSlots = [ItemSlot.ItemSlotFinger2];
+		},
+		warmStarts: [withItems(Presets.P1_PRESET.gear, [[ItemSlot.ItemSlotHead, ItemSpec.create({ id: 35670 })]])],
+	},
 ];
 
 function withItems(gear: EquipmentSpec, items: Array<[ItemSlot, ItemSpec]>): EquipmentSpec {
@@ -215,6 +234,7 @@ async function writeFixtures(outDir: string) {
 			getItems: (slot: ItemSlot) => db.getItems(slot).filter((item: UIItem) => canEquipItem(item, SPEC, slot)),
 			getEnchants: (slot: ItemSlot) => db.getEnchants(slot).filter((enchant: UIEnchant) => canEquipEnchant(enchant, SPEC)),
 			db,
+			warmStarts: fixture.warmStarts,
 		});
 		const file = path.join(outDir, `${fixture.name}.json.gz`);
 		const gz = gzipSync(OptimizeGearRequest.toJsonString(request) + '\n', { level: 9 });

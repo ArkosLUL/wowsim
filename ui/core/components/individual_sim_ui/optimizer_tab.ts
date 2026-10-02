@@ -8,6 +8,7 @@ import {
 	BuiltRequest,
 	defaultTabSettings,
 	OptimizerTabSettings,
+	OUTCLASSED_ITEM_LEVEL,
 	tankEncounter,
 	tankMetricWeights,
 } from '../../optimizer/pool_builder';
@@ -204,7 +205,9 @@ export function checkbox(label: string, checked: boolean, onChange: (checked: bo
 	return wrapper;
 }
 
-export const SOURCES_HINT = 'Gems count from every source. PvP gear never does.';
+export const SOURCES_HINT =
+	'Gems count from every source. PvP gear never does. Below item level ' +
+	`${OUTCLASSED_ITEM_LEVEL}, gear with no set or effect, and any from before Northrend, only counts where it's worn.`;
 
 export const STAT_CAPS_HINT =
 	'DPS specs: floors hit, expertise and spell hit at their caps and stops haste at the cast-speed floor. Off searches for raw DPS instead.';

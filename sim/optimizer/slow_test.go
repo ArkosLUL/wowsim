@@ -137,7 +137,7 @@ var slowCases = []slowCase{
 }
 
 // slowRequest is the case's player alone in a raid with full buffs, against the default encounter,
-// over its realistic pool.
+// over its realistic pool less outclassed gear.
 func slowRequest(tb testing.TB, c slowCase, effort proto.OptimizerEffort) *proto.OptimizeGearRequest {
 	player := c.player(tb)
 	req := presetOptimizeRequest(tb, "fury_p1")
@@ -154,7 +154,7 @@ func slowRequest(tb testing.TB, c slowCase, effort proto.OptimizerEffort) *proto
 		req.Settings.TankSurvival = 0.7
 		req.Settings.RequireCritImmunity = true
 	}
-	req.Pool = realisticPool(tb, player, c.phase, nil)
+	req.Pool = realisticPool(tb, player, c.phase, keepUnlessOutclassed(tb, player))
 	req.Equipped = goproto.Clone(player.Equipment).(*proto.EquipmentSpec)
 	trimSeedToPool(tb, player, req.Pool)
 	return req
