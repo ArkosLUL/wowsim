@@ -68,7 +68,8 @@ func (mage *Mage) ApplyTalents() {
 	mage.PseudoStats.SchoolDamageDealtMultiplier[stats.SchoolIndexFrost] *= 1 + .01*float64(mage.Talents.ArcticWinds)
 	mage.PseudoStats.CostMultiplier *= 1 - .04*float64(mage.Talents.FrostChanneling)
 
-	magicAbsorptionBonus := 2 * float64(mage.Talents.MagicAbsorption)
+	// 0.5 resistance per level per rank (realPointsPerLevel of 29441 and 29444)
+	magicAbsorptionBonus := 0.5 * float64(mage.Talents.MagicAbsorption) * float64(mage.Level)
 	mage.AddStat(stats.ArcaneResistance, magicAbsorptionBonus)
 	mage.AddStat(stats.FireResistance, magicAbsorptionBonus)
 	mage.AddStat(stats.FrostResistance, magicAbsorptionBonus)

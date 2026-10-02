@@ -158,7 +158,7 @@ var serverDataPresets = []serverDataPreset{
 		&proto.Player_TankDeathknight{TankDeathknight: &proto.TankDeathknight{Options: &proto.TankDeathknight_Options{}}}, true},
 
 	{"Balance", proto.Class_ClassDruid, proto.Race_RaceTauren, "balance_druid", "p1", "basic_p3",
-		"5012203115331303213315311231--205003012", glyphs(int32(proto.DruidMajorGlyph_GlyphOfStarfire),
+		"5012203105331303213315311231--205003012", glyphs(int32(proto.DruidMajorGlyph_GlyphOfStarfire),
 			int32(proto.DruidMajorGlyph_GlyphOfInsectSwarm), int32(proto.DruidMajorGlyph_GlyphOfStarfall), int32(proto.DruidMinorGlyph_GlyphOfTyphoon)),
 		&proto.Player_BalanceDruid{BalanceDruid: &proto.BalanceDruid{Options: &proto.BalanceDruid_Options{OkfUptime: 0.2}}}, false},
 	{"BalancePhase3", proto.Class_ClassDruid, proto.Race_RaceTauren, "balance_druid", "p3_alliance", "basic_p3",

@@ -117,8 +117,7 @@ func TestBalancePhase3(t *testing.T) {
 	}))
 }
 
-// Extra point in Owlkin Frenzy for testing
-var StandardTalents = "5012203115331303213315311231--205003012"
+var StandardTalents = "5012203105331303213315311231--205003012"
 var StandardGlyphs = &proto.Glyphs{
 	Major1: int32(proto.DruidMajorGlyph_GlyphOfStarfire),
 	Major2: int32(proto.DruidMajorGlyph_GlyphOfInsectSwarm),

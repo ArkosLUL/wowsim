@@ -72,6 +72,8 @@ func (druid *Druid) GetFormShiftStats() stats.Stats {
 	s := stats.Stats{
 		stats.AttackPower: float64(druid.Talents.PredatoryStrikes) * 0.5 * float64(druid.Level),
 		stats.MeleeCrit:   float64(druid.Talents.SharpenedClaws) * 2 * core.CritRatingPerCritChance,
+		// ranged AP is 0 in both forms, not agility - 10
+		stats.RangedAttackPower: 10,
 	}
 
 	if weapon := druid.GetMHWeapon(); weapon != nil {
@@ -112,6 +114,7 @@ func (druid *Druid) registerCatFormSpell() {
 	})
 
 	agiApDep := druid.NewDynamicStatDependency(stats.Agility, stats.AttackPower, 1)
+	agiRapDep := druid.NewDynamicStatDependency(stats.Agility, stats.RangedAttackPower, -1)
 
 	var hotwDep *stats.StatDependency
 	if druid.Talents.HeartOfTheWild > 0 {
@@ -144,6 +147,7 @@ func (druid *Druid) registerCatFormSpell() {
 			druid.AddStatsDynamic(sim, predBonus)
 			druid.AddStatsDynamic(sim, statBonus)
 			druid.EnableDynamicStatDep(sim, agiApDep)
+			druid.EnableDynamicStatDep(sim, agiRapDep)
 			if hotwDep != nil {
 				druid.EnableDynamicStatDep(sim, hotwDep)
 			}
@@ -176,6 +180,7 @@ func (druid *Druid) registerCatFormSpell() {
 			druid.AddStatsDynamic(sim, predBonus.Invert())
 			druid.AddStatsDynamic(sim, statBonus.Invert())
 			druid.DisableDynamicStatDep(sim, agiApDep)
+			druid.DisableDynamicStatDep(sim, agiRapDep)
 			if hotwDep != nil {
 				druid.DisableDynamicStatDep(sim, hotwDep)
 			}
@@ -239,6 +244,7 @@ func (druid *Druid) registerBearFormSpell() {
 	})
 
 	stamDep := druid.NewDynamicMultiplyStat(stats.Stamina, 1.25)
+	agiRapDep := druid.NewDynamicStatDependency(stats.Agility, stats.RangedAttackPower, -1)
 
 	var potpDep *stats.StatDependency
 	if druid.Talents.ProtectorOfThePack > 0 {
@@ -285,6 +291,7 @@ func (druid *Druid) registerBearFormSpell() {
 
 			// Preserve fraction of max health when shifting
 			healthFrac := druid.CurrentHealth() / druid.MaxHealth()
+			druid.EnableDynamicStatDep(sim, agiRapDep)
 			druid.EnableDynamicStatDep(sim, stamDep)
 			if hotwDep != nil {
 				druid.EnableDynamicStatDep(sim, hotwDep)
@@ -317,6 +324,7 @@ func (druid *Druid) registerBearFormSpell() {
 			}
 
 			healthFrac := druid.CurrentHealth() / druid.MaxHealth()
+			druid.DisableDynamicStatDep(sim, agiRapDep)
 			druid.DisableDynamicStatDep(sim, stamDep)
 			if hotwDep != nil {
 				druid.DisableDynamicStatDep(sim, hotwDep)

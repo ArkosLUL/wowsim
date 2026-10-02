@@ -19,11 +19,6 @@ func spellModDamage(bonuses ...float64) float64 {
 }
 
 func (shaman *Shaman) ApplyTalents() {
-	// We are going to treat this like a snapshot if you have the glyph.
-	if shaman.HasMajorGlyph(proto.ShamanMajorGlyph_GlyphOfTotemOfWrath) {
-		shaman.AddStat(stats.SpellPower, 280*0.3)
-	}
-
 	shaman.AddStat(stats.MeleeCrit, core.CritRatingPerCritChance*1*float64(shaman.Talents.ThunderingStrikes))
 	shaman.AddStat(stats.SpellCrit, core.CritRatingPerCritChance*1*float64(shaman.Talents.ThunderingStrikes))
 	shaman.PseudoStats.BaseDodge += 0.01 * float64(shaman.Talents.Anticipation)
@@ -51,9 +46,6 @@ func (shaman *Shaman) ApplyTalents() {
 	if shaman.Talents.MentalDexterity > 0 {
 		shaman.AddStatDependency(stats.Intellect, stats.AttackPower, []float64{0, 0.33, 0.66, 1}[shaman.Talents.MentalDexterity])
 	}
-	if shaman.Talents.NaturesBlessing > 0 {
-		shaman.AddStatDependency(stats.Intellect, stats.SpellPower, 0.1*float64(shaman.Talents.NaturesBlessing))
-	}
 
 	if shaman.Talents.SpiritWeapons {
 		shaman.PseudoStats.ThreatMultiplier *= 0.7
@@ -68,6 +60,13 @@ func (shaman *Shaman) ApplyTalents() {
 	shaman.registerNaturesSwiftnessCD()
 	shaman.registerShamanisticRageCD()
 	shaman.registerManaTideTotemCD()
+}
+
+// healingPower adds Nature's Blessing's share of intellect to the spell's healing power. The server
+// gives it to healing only (aura 175), 5% of intellect per rank, so it stays off spell power.
+func (shaman *Shaman) healingPower(spell *core.Spell, target *core.Unit) float64 {
+	return spell.HealingPower(target) +
+		0.05*float64(shaman.Talents.NaturesBlessing)*shaman.GetStat(stats.Intellect)
 }
 
 func (shaman *Shaman) spellThreatMultiplier() float64 {
