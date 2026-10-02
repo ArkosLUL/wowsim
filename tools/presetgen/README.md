@@ -99,8 +99,10 @@ so a full `Normal` pass should take about 4-5 h.
 
 ## Rerun on the merged tree
 
-Once PAR-P8 and BIS-tank-boss merge (both change what the optimizer picks), the orchestrator reruns
-every build at Normal on `integration`, rebuilds the bundle as above, and commits what it wrote:
+When a change moves what the optimizer picks (PAR-P8, BIS-tank-boss, BIS-outclassed), the orchestrator
+reruns every build at Normal on `integration`, rebuilds the bundle as above, and commits what it wrote.
+Use a fresh `--out` and start from phase 1: a later phase seeds from the earlier phase's pick, and the pool
+keeps worn gear even when outclassed, so an older run's picks would carry over:
 
 ```sh
 python tools/presetgen/gen.py run --out "$SCRATCH/presets-final" --effort Normal

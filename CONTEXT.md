@@ -143,8 +143,8 @@ The items, gems and enchants one optimization may choose from.
 _Avoid_: item list
 
 **Outclassed gear**:
-Gear below item level 187 that has no set bonus or effect, or comes from before Northrend. It stays
-out of a candidate pool unless the character wears it.
+Gear below item level 187 that either has no set bonus and no effect, or comes from before Northrend. It
+stays out of a candidate pool unless the character wears it.
 _Avoid_: TBC gear, which also tags holiday loot that isn't outclassed
 
 **Raid contribution**:

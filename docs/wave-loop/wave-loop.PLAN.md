@@ -131,13 +131,17 @@ then covers all 28 builds, tanks included, since the cut changes prot paladin an
 
 ## Current wave
 
-- Wave: R, running; base `9f1f2f94f`. BIS-outclassed merged; cross-review next, then the idle re-time and
-  re-baseline. Prod runs Q's `225191f1f`.
+- Wave: R, landed (master fast-forwarded to this close-out). Nothing queued: other sessions plan what follows.
+  Prod runs Q's `225191f1f`; R changes the optimizer's pool and the BiS tabs' hint.
+- Pending: BIS-outclassed's idle re-time, once the host is idle (a game held 13–16% of its CPU at close-out).
+  With the AC containers stopped, run `bash G:/DevStuff/GitHub/.wave-loop/rebase-r-idle.sh` (artifacts in
+  `.wave-loop/outclassed-tmp`, logs in `.wave-loop/logs/r-idle`) and add its times to BIS-outclassed's As built.
 - Open: the talent sweep's unseen talents (test-enrichment INVESTIGATION, TE-SWEEP as built); from Q (parity
   INVESTIGATION, PAR-FU-4..7 as built): Ranged Weapon Specialization on Explosive Trap and magic procs, Glyph of
   Totem of Wrath's 84 spell power unverified live, aura-163 crit damage adds on the server for specials (the sim
   multiplies), a shaman's block value lacks strength/2, and 72-point Fury and Balance strings in the optimizer's
-  test inputs and `gen_db`.
+  test inputs and `gen_db`; from R (BIS-outclassed as built): the response curves span the pool's stat range,
+  so the cut moved Fury P1's Normal pick 45 J below the uncut pool's, every item of which it still holds.
 - Deferred (the user's call, 2026-10-02; each only on the user's go-ahead):
   - Rerun all 28 presets, tanks included, on the final HEAD: BIS-caps-race changes every racial search,
     `ff0920a96` the 16 builds `mage_*`, `rogue_*`, `warlock_*`, `warrior_arms`, `warrior_fury`,
@@ -185,6 +189,7 @@ Reckoning that way), but J isn't DPS: see below.
 | O | 8725.1, +224 / +284 | 10730.8, +734 / +777 | 5066.6, +41 / +48 | 12963.8, +175 / +232 | -17821.9, +4836 / +4799 | -1056.8, +913 / +900 |
 | P | 8725.1, +224 / +284 | 10730.8, +734 / +777 | 5066.6, +41 / +48 | 12963.8, +175 / +232 | -17821.9, +4836 / +4799 | -1056.8, +913 / +900 |
 | Q | 8715.9, +195 / +276 | 10730.8, +734 / +777 | 5066.6, +41 / +48 | 12963.8, +175 / +232 | -17856.7, +4842 / +4804 | -1056.8, +913 / +900 |
+| R | 8715.9, +236 / +230 | 10730.8, +708 / +903 | 5066.6, +41 / +51 | 12963.8, +148 / +225 | -17856.7, +4795 / +4847 | -1056.8, +917 / +888 |
 
 Quick / Normal. Ret P4 ran at Quick only in wave D, after the glyph fix; its wave C numbers
 (12821.9, +54 / +73) came from a seed that wore the glyph. The two tanks arrive with
@@ -238,6 +243,9 @@ In M nothing moved: TE-ABILITY and TE-REPLAY change tests only. Nor in N: PERF-F
 and the suite's Search stage already took 2 s or less. Nor in O: tests, tools and the UI's talent trees only. Nor in P: tests and tools only.
 In Q Fury's `J_preset` fell 0.1% (Execute without Two-Handed Weapon Specialization) and Prot Pal's 0.2%
 (block value takes the server's 10 off); the gains moved within earlier rows' range.
+In R BIS-outclassed cut each case's pool by 31–54%: no `J_preset` moved, and the gains moved both ways, a
+one-time shift from response curves measured over the smaller pools (Fury's Normal gain fell below its Quick;
+Combat Rogue's Normal rose 126).
 
 ## Sim throughput
 
@@ -337,6 +345,8 @@ misses it); loaded, it read up to 14% over O (Hunter at 100).
 
 Q's row ran idle, the host at 12% outside Docker: within 3% of O's at 100 iterations except the raid (-7.5%); at one,
 Ret -10%. Q's sim changes are class-local: noise.
+
+R has no row: it changes no sim code, and a game held 13–16% of the host's CPU.
 
 E to F2 ran the old requests: one iteration, and no rotation for Ret, Hunter and Elemental.
 
@@ -483,6 +493,7 @@ crashed before F2, so its column starts there.
 | PAR-FU-7 | merged | `a6c814732` | Resto Shaman HPS -4.4%, Elemental -0.009%, feral suites' ranged AP stat only; ShamanElemental and DruidBalance re-recorded |
 | wave Q cross-review | | `b595e8c0c` | no bugs past the e2e's always-passing 71167 check (module `d0699fa`); every golden-character and sweep drop is gone |
 | BIS-outclassed | merged | `9df3b9044` | goldens unchanged. Ret pools 2.6k–4.6k to 1.2k–3.2k candidates; slow-suite gains move both ways, Fury P1 Normal −45 |
+| wave R cross-review | | | no bugs, nothing changed; the glossary's "Outclassed gear" reworded at close-out |
 
 Later WIs are added as their wave starts.
 
