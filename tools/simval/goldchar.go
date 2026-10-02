@@ -805,7 +805,14 @@ func newGoldcharSim(rec damageRecord, s goldcharSetup) (*damageSim, error) {
 	if err != nil {
 		return nil, err
 	}
-	return newDamageSim(rec, player, s.Auras)
+	mirror := s.Auras
+	// the server's bot stood still, so it had the buff Sniper Training gives (64420); the sim only
+	// registers the aura (53304) for an uptime above 0
+	if hunter := player.GetHunter(); hunter != nil && slices.ContainsFunc(rec.Attacker.Auras, func(a aura) bool { return a.ID == 64420 }) {
+		hunter.Options.SniperTrainingUptime = 1
+		mirror = append(slices.Clone(mirror), 53304)
+	}
+	return newDamageSim(rec, player, mirror)
 }
 
 // checkGoldcharDamage holds a probe's damage record to the shaped reason the list expects, then compares

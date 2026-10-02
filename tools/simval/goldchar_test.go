@@ -221,14 +221,7 @@ type goldcharDrop struct {
 	check string
 }
 
-var droppedGoldchar = []goldcharDrop{
-	{"HunterBM", 49045, ""},
-	{"HunterBM", 49001, ""},
-	{"HunterMM", 49001, ""},
-	{"HunterSV", 49001, ""},
-	{"HunterSV", 63672, ""},
-	{"WarlockAffliction", 0, "spell hit %"},
-}
+var droppedGoldchar = []goldcharDrop{}
 
 // goldcharReport reports a record's checks, holding them to droppedGoldchar.
 type goldcharReport struct {

@@ -84,7 +84,8 @@ Per unshaped record (`damage.go`):
 - Each probed effect matches the sim's `Direct` or dot `Tick` by effect index and spell id (its own or
   `FromSpellID`). The sim's own code runs with that base pinned to the record's: `ApplyEffects` with a forced
   hit, no crit and no resists, read at calculation through the target's damage taken hook; a dot is applied,
-  then one snapshot tick computed.
+  then one snapshot tick computed. A `probedBeforeOwnAura` dot (Serpent Sting) is cancelled before its tick: the
+  server works it out before the dot's own aura, and with it Noxious Stings, is on the target.
 - Checks: declared base (skipped when it comes from another spell, e.g. Death Coil's), SP coefficient (±5e-4),
   `taken` at both roll ends, and the crit multiplier where both sides crit (server: a crit-capable spell, or a
   tick unless `CANT_CRIT`; sim: dots only with ticks that crit). The sim may sit 0.1% or 1 point below the
@@ -125,7 +126,8 @@ Edit the list by hand. Four tests keep it honest:
 needs `-tags=with_db`). Records group by bot name; the info record's `character` (class, race, talents, glyphs,
 items) picks exactly one setup, and the bot's `damage` records belong to it. The sim character is `goldchar.go`'s
 `goldcharPlayer`: the setup's spec, race, items, talent string and server-known glyphs, empty buffs, consumes and
-spec options, plus `auras` it registers by id. Per setup:
+spec options, plus `auras` it registers by id. A hunter whose record carries Sniper Training's buff (64420, a bot
+that stood still) also gets `SniperTrainingUptime` 1 and its aura 53304. Per setup:
 - `info`, against the sim's stats after a reset:
   - spell power, spell crit: the lowest magic school (school bonuses only add); spell power may sit up to 0.1% or 1
     below and one more above (truncated stat bonuses), crit within the dropped stat fraction.
@@ -155,7 +157,7 @@ Form, Shadowform, Bone Shield, Trueshot Aura). The generator, per class:
   characters' weapons where talents need them. A talent shows its sheet change only in setups whose items fit its
   rank spell's equipped item requirement when that spell has a sheet aura (spelldump), and in the setups `needs`
   names (stance, form, shield, dual wield, a melee weapon for parry). `after` puts Furor behind Moonkin Form; `last` puts Dark Pact at the end,
-  since the sim can't build a warlock with it and no pet.
+  where the capture has it.
 - Each setup gets a path over the uncovered implemented talents at max rank: its own tree first, trimmed to 71
   points from the lowest row up, then other trees' from the lowest row while points last. Then, while any are left,
   the path covering the most. Rows open at 5 points per row in the tree; the gaps take fillers, unimplemented

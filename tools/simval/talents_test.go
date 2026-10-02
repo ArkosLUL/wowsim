@@ -20,16 +20,7 @@ type sweepDrop struct {
 	path, talent, field string
 }
 
-// the step the sim panics building, which a run as the sim would record can't replay either
-var unbuildableSweep = []sweepDrop{{"WarlockAffliction", "darkPact", ""}}
-
-var droppedSweep = append(slices.Clone(unbuildableSweep), []sweepDrop{
-	{"WarlockAffliction", "suppression", "spell hit %"},
-	{"HunterBeastMastery", "improvedAspectOfTheMonkey", "dodge %"},
-	{"HunterMarksmanship", "combatExperience", "dodge %"},
-	{"HunterSurvival", "lightningReflexes", "dodge %"},
-	{"HunterSurvival", "huntingParty", "dodge %"},
-}...)
+var droppedSweep = []sweepDrop{}
 
 // TestTalentSweepRecords replays a live TestSimvalTalentSweep run, trimmed by `simval talents`: each
 // step's sheet change against the sim's change from the same talent. Skips without the capture, like
@@ -155,27 +146,17 @@ func replayTalentSweep(t *testing.T, paths []talentPath, records []talentRecord,
 }
 
 // A whole run as a server agreeing with the sim would record it, raw lines through the trim, replays
-// clean: the step the sim can't build is the dropped one.
+// clean.
 func TestTalentSweepReplaysAFullRun(t *testing.T) {
 	needsItemDB(t)
 	paths := allTalentPaths(t)
 	var raw []string
 	for i, path := range paths {
-		c, _, _ := pathSetup(path)
 		bot := fmt.Sprintf("Svtlead%c%c", 'a'+i/26, 'a'+i%26)
-		var prev talentRecord
 		for n := 0; n <= len(path.Steps); n++ {
-			var rec talentRecord
-			if n > 0 && slices.Contains(c.last, path.Steps[n-1].Talent) {
-				rec = prev
-				rec.Step, rec.Talents = n, append(slices.Clone(prev.Talents), path.Steps[n-1].Spell)
-				slices.Sort(rec.Talents)
-			} else {
-				rec = talentRecordFrom(t, path, n, path.sweepSim(n))
-			}
+			rec := talentRecordFrom(t, path, n, path.sweepSim(n))
 			rec.Bot = bot
 			raw = append(raw, rawTalentLine(t, rec))
-			prev = rec
 		}
 	}
 	records, notes, err := trimTalentRecords(strings.NewReader(strings.Join(raw, "\n")), paths)
@@ -185,7 +166,7 @@ func TestTalentSweepReplaysAFullRun(t *testing.T) {
 	if want := len(raw); len(records) != want {
 		t.Fatalf("%d records, want %d", len(records), want)
 	}
-	replayTalentSweep(t, paths, records, unbuildableSweep)
+	replayTalentSweep(t, paths, records, nil)
 }
 
 func allTalentPaths(t *testing.T) []talentPath {
@@ -265,23 +246,16 @@ func talentRecordFrom(t *testing.T, path talentPath, n int, sim sweepSim) talent
 	return rec
 }
 
-// A server that agrees with the sim, whole numbers truncated, agrees on every step of every path, apart
-// from the steps the sim can't build. Checks the fields' units and the truncation bounds.
+// A server that agrees with the sim, whole numbers truncated, agrees on every step of every path.
+// Checks the fields' units and the truncation bounds.
 func TestTalentSweepAgreesWithTheSim(t *testing.T) {
 	needsItemDB(t)
 	counts := map[string]int{}
 	for _, path := range allTalentPaths(t) {
-		c, _, _ := pathSetup(path)
 		prev := path.sweepSim(0)
 		for k := 1; k <= len(path.Steps); k++ {
 			step := path.Steps[k-1]
 			cur := path.sweepSim(k)
-			if slices.Contains(c.last, step.Talent) {
-				if cur.err == nil {
-					t.Errorf("%s: the sim builds the character with %s now; learn it in order", path.Name, step.Talent)
-				}
-				break
-			}
 			result := compareSweepStep(talentRecordFrom(t, path, k-1, prev), talentRecordFrom(t, path, k, cur), prev, cur)
 			counts[result.class]++
 			switch {
@@ -364,21 +338,6 @@ func TestTalentSweepCatchesMismatches(t *testing.T) {
 				t.Errorf("moved %v, want %s among them", result.moved, c.moved)
 			}
 		})
-	}
-}
-
-// A step the sim can't build disagrees, naming why.
-func TestTalentSweepUnbuildableStep(t *testing.T) {
-	needsItemDB(t)
-	path := talentPathNamed(t, "WarlockAffliction")
-	k := stepNamed(t, path, "darkPact")
-	simBefore := path.sweepSim(k - 1)
-	before := talentRecordFrom(t, path, k-1, simBefore)
-	after := before
-	after.Step, after.Talents = k, append(slices.Clone(before.Talents), path.Steps[k-1].Spell)
-	result := compareSweepStep(before, after, simBefore, path.sweepSim(k))
-	if result.class != sweepDisagrees || len(result.checks) != 1 || result.checks[0].Name != "sim character" {
-		t.Errorf("%s %+v, want a failing sim character check", result.class, result.checks)
 	}
 }
 
