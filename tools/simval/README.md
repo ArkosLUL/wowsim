@@ -93,6 +93,56 @@ Per unshaped record (`damage.go`):
 
 Pets and non-80 characters fail. Shaped records give no checks.
 
+## Golden characters
+
+`sim/core/testdata/simval/goldchar_setups.json` lists each non-healer golden suite's default player (suites
+sharing one share an entry), which mod-sim-validation's `TestSimvalGoldenCharacters` builds on the server
+(`goldchar.go`). Per setup:
+- From the suites: spec field, server class and race, gear set and its items by server equipment slot (no gems or
+  enchants), talent string and its rank spells in learn order (tree file order, a prerequisite first: Dual Wield
+  sits after Dual Wield Specialization), glyphs with server slot (majors 0, 3, 5; minors 1, 2, 4), sim item and
+  aura spell (`db.json`).
+- The list's own: each glyph's GlyphProperties id (from the live GlyphProperties.dbc; 0 for a sim glyph the server
+  lacks, allowlisted in `serverlessGlyphs`), `auras`, `imbue` and `probes` (spells for `.simval damage`, with the
+  `shaped` reason the server gave).
+- `auras`: what the sim starts the spec with, cast on the server before recording: stance, form, presence, seal,
+  aspect, Bone Shield, Track Giants for hunters (the sim always counts Improved Tracking; the dummy is a giant),
+  and the raid buffs the class gives itself (`AddRaidBuffs`: Horn of Winter, Mark of the Wild, Arcane Intellect, the
+  priest buffs, Trueshot Aura), which the sim adds as stats. DKs list Blood Presence, which the server character
+  always has and the sim only gets from its rotation (`serverStartingAuras`).
+- `imbue`: the temporary enchant the sim always puts on the main hand (Elemental's Flametongue Weapon, 58790).
+
+Edit the list by hand. Three tests keep it honest:
+- `TestGoldcharSetupsFollowTheSuites` parses every `CharacterSuiteConfig` in a `sim/**` Test function with
+  `go/ast` and fails, printing the expected entry, when the list drifts from the suites.
+- `TestGoldcharAurasCoverTheSimsStart` fails on an aura the sim has up after a reset, or a raid buff the class gives
+  itself, that isn't in `auras`; passives (serverdata), glyphs and `unlistedStartingAuras` (Thorns) are exempt. It
+  also holds `imbue` to the sim's main hand enchant (`imbueSpells`).
+- `TestGoldcharTalentsLearnPrerequisitesFirst` checks the learn order on every tree file.
+
+`TestGoldenCharacters` replays `sim/core/testdata/simval/goldchar.jsonl`, a capture of that e2e (skips without it;
+needs `-tags=with_db`). Records group by bot name; the info record's `character` (class, race, talents, glyphs,
+items) picks exactly one setup, and the bot's `damage` records belong to it. The sim character is `goldchar.go`'s
+`goldcharPlayer`: the setup's spec, race, items, talent string and server-known glyphs, empty buffs, consumes and
+spec options, plus `auras` it registers by id. Per setup:
+- `info`, against the sim's stats after a reset:
+  - spell power, spell crit: the lowest magic school (school bonuses only add); spell power may sit up to 0.1% or 1
+    below and one more above (truncated stat bonuses), crit within the dropped stat fraction.
+  - spell hit: the sheet plus the school hit (`SPELL_AURA_MOD_INCREASES_SPELL_PCT_TO_HIT`, read from
+    `assets/db_inputs/acore/spelldump.jsonl`) every magic school gets; the sheet leaves it out.
+  - per hand the sim swings (main hand, dual-wield off hand, hunter ranged): unhasted and hasted ms (server
+    truncates), the item's weapon damage (also in a feral form, which swings the form's), crit, hit (main hand and
+    ranged) and expertise, from the auto attack spell's bonuses.
+- `damage`: the record's `shaped` must contain the probe's; unshaped records replay like `TestDamageRecords`
+  (`replayDamage`) on this character. A stacking dot is worked out for one stack.
+
+A failing check lists the sim-only auras. Drops: `droppedGoldchar` (setup, spell, check), each with a fixture README
+row. Spell 0 is the info record; an empty check drops the whole record (removed from the capture), a named one is
+only logged. A stale drop fails.
+
+A full `simval.jsonl` recapture can hold these records: `info` gets only `CheckRecord`'s armor penetration check
+(`TestGoldcharInfoRecordInTheReplayFixture`), `damage` none.
+
 ## chronicle
 
 Reads a mod-chronicle raw log (`<unix_ms>  EVENT,field,…`, gzipped or not) and reports one player's
