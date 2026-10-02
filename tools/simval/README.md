@@ -112,13 +112,14 @@ sharing one share an entry), which mod-sim-validation's `TestSimvalGoldenCharact
   always has and the sim only gets from its rotation (`serverStartingAuras`).
 - `imbue`: the temporary enchant the sim always puts on the main hand (Elemental's Flametongue Weapon, 58790).
 
-Edit the list by hand. Three tests keep it honest:
+Edit the list by hand. Four tests keep it honest:
 - `TestGoldcharSetupsFollowTheSuites` parses every `CharacterSuiteConfig` in a `sim/**` Test function with
   `go/ast` and fails, printing the expected entry, when the list drifts from the suites.
 - `TestGoldcharAurasCoverTheSimsStart` fails on an aura the sim has up after a reset, or a raid buff the class gives
   itself, that isn't in `auras`; passives (serverdata), glyphs and `unlistedStartingAuras` (Thorns) are exempt. It
   also holds `imbue` to the sim's main hand enchant (`imbueSpells`).
 - `TestGoldcharTalentsLearnPrerequisitesFirst` checks the learn order on every tree file.
+- `TestTalentTreeRankSpellsAreTheServers` holds every tree file's rank spells to the spelldump's ranks.
 
 `TestGoldenCharacters` replays `sim/core/testdata/simval/goldchar.jsonl`, a capture of that e2e (skips without it;
 needs `-tags=with_db`). Records group by bot name; the info record's `character` (class, race, talents, glyphs,

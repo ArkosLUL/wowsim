@@ -16,6 +16,7 @@ import (
 	"github.com/wowsims/wotlk/sim/core/proto"
 	"github.com/wowsims/wotlk/sim/core/serverdata"
 	"github.com/wowsims/wotlk/sim/core/stats"
+	"github.com/wowsims/wotlk/tools/acore/spellids/spellset"
 )
 
 // serverlessGlyphs are sim glyphs with no GlyphProperties row on the server. The list gives them glyph 0
@@ -147,6 +148,46 @@ func TestGoldcharTalentsLearnPrerequisitesFirst(t *testing.T) {
 	}
 }
 
+// `.simval talent` learns the rank its spell is on the server, so the tree files' rank spells have to
+// be the server's, rank for rank. They don't always follow id order: Sudden Death's rank 2 is 29725.
+func TestTalentTreeRankSpellsAreTheServers(t *testing.T) {
+	root, err := checkoutRoot()
+	if err != nil {
+		t.Fatal(err)
+	}
+	dump, err := spellset.ReadDump(filepath.Join(root, spellset.DefaultDumpPath))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(dump) == 0 {
+		t.Skip("no spelldump")
+	}
+	files, err := filepath.Glob(filepath.Join(root, talentTreesDir, "*.json"))
+	if err != nil || len(files) == 0 {
+		t.Fatalf("no tree files: %v", err)
+	}
+	for _, path := range files {
+		trees, err := readTalentTreeFile(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, tree := range trees {
+			for _, talent := range tree.Talents {
+				spells := rankSpells(talent.SpellIds, talent.MaxPoints)
+				for i, id := range spells {
+					s := dump[id]
+					if s == nil {
+						t.Errorf("%s %s: rank %d's spell %d isn't in the spelldump", filepath.Base(path), talent.FieldName, i+1, id)
+					} else if s.FirstRankID != int64(spells[0]) || s.RankIndex != int64(i+1) {
+						t.Errorf("%s %s: rank %d's spell %d is rank %d of %d on the server", filepath.Base(path),
+							talent.FieldName, i+1, id, s.RankIndex, s.FirstRankID)
+					}
+				}
+			}
+		}
+	}
+}
+
 // A full simval.jsonl recapture would hold TestSimvalGoldenCharacters' records too, if
 // SIMVAL_GOLDCHAR_SETUPS were set for it. A geared info record gets nothing from CheckRecord but the armor
 // penetration conversion, and its damage records nothing (TestDamageRecordInTheReplayFixture).
@@ -189,7 +230,7 @@ var droppedGoldchar = []goldcharDrop{
 	{"ShamanElemental", 0, "spell power"},
 	{"WarlockAffliction", 0, "spell hit %"},
 	{"WarriorFury", 47502, ""},
-	{"WarriorArms", 47502, ""},
+	{"WarriorArms", 0, ""},
 }
 
 // goldcharReport reports a record's checks, holding them to droppedGoldchar.

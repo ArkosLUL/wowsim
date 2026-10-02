@@ -798,14 +798,15 @@
              "maxPoints":1
           },
           {
-            "fieldName":"ancestralUealing",
+            "fieldName":"ancestralHealing",
              "location":{
                 "rowIdx":2,
                 "colIdx":3
              },
              "spellIds":[
                 16176,
-                16235
+                16235,
+                16240
              ],
              "maxPoints":3
           },

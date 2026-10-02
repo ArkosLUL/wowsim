@@ -88,12 +88,22 @@ type treeTalent struct {
 
 // implementedTalent is one entry of implemented_talents.json.
 type implementedTalent struct {
-	Class     string  `json:"class"`
-	Tree      string  `json:"tree"`
-	FieldName string  `json:"fieldName"`
-	Row       int     `json:"row"`
-	MaxPoints int     `json:"maxPoints"`
-	SpellIDs  []int32 `json:"spellIds"`
+	Class      string  `json:"class"`
+	Tree       string  `json:"tree"`
+	FieldName  string  `json:"fieldName"`
+	Row        int     `json:"row"`
+	MaxPoints  int     `json:"maxPoints"`
+	RankSpells []int32 `json:"rankSpells"` // one per rank
+}
+
+// rankSpells is the talent's spell for each rank. Tree files can stop listing them early, the rest
+// following on from the last one listed.
+func (talent treeTalent) rankSpells() []int32 {
+	spells := slices.Clone(talent.SpellIDs)
+	for len(spells) < talent.MaxPoints {
+		spells = append(spells, spells[len(spells)-1]+1)
+	}
+	return spells
 }
 
 // suiteBuild is a talent string a golden suite runs.
@@ -140,7 +150,7 @@ func TestTalentCoverage(t *testing.T) {
 					t.Logf("%s.json names %s %q, the proto field at its position is %q; the sim doesn't read it", classDir(class), tree.Name, talent.FieldName, talent.protoName)
 				case read:
 					r.implemented = append(r.implemented, implementedTalent{Class: classDir(class), Tree: tree.Name,
-						FieldName: talent.FieldName, Row: talent.Location.RowIdx, MaxPoints: talent.MaxPoints, SpellIDs: talent.SpellIDs})
+						FieldName: talent.FieldName, Row: talent.Location.RowIdx, MaxPoints: talent.MaxPoints, RankSpells: talent.rankSpells()})
 				}
 			}
 		}
