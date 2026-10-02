@@ -1,0 +1,244 @@
+# E2e coverage: more live checks of the sim
+
+The live e2e and the replays leave timing, costs, threat, pets, gear and buffs unchecked
+([INVESTIGATION](e2e-coverage.INVESTIGATION.md)). This effort closes those gaps in wave-loop work items; the
+[RUNBOOK](../wave-loop/wave-loop.RUNBOOK.md) agent rules apply to each.
+
+## Decisions (settled with the user, 2026-10-02)
+
+- Every option: A1–A4, B1–B7, C1–C3, as waves S–X after wave R lands.
+- Threat: the probe first (EC-THREAT); EC-THREAT-FIX then fixes only what the probe confirms.
+- The new creature-type dummies stand in Naxxramas like the others: the user OKs adding them to mod-dungeon-scale's
+  disabled list.
+- Carried from test-enrichment: a real sim/server mismatch becomes a follow-up item; the item that finds it drops
+  the record (with a fixture README row) and never fixes the sim. EC-THREAT-FIX is the one fix item.
+
+## Rules for every EC item
+
+- Re-measure your finding on your own base first: the INVESTIGATION measured `master` at `c27854a8d`.
+- Every replay stays all-PASS.
+- Each item's fixture is its own file in `sim/core/testdata/simval/`, replayed by its own `tools/simval` test
+  with its own record struct. `records.go`, `check.go` and `simval.jsonl` stay as they are.
+- e2e: each item's tests go in its own files, and its new identifiers carry its prefix (the e2e is one Go package).
+  Shared helpers (`simval_test.go`, `records_test.go`, other items' files) are read-only unless your Owns lists
+  them; ask for a change through `contractChangeRequests`, as for `e2e/run.sh` and `docs/wave-loop/*`.
+- The module README, `tools/simval/README.md`, the fixture README and `testing.md` "Against the server": edit only
+  your item's section or rows.
+- Never edit `ui/<spec>/gear_sets/*`.
+- C++: compile-check with `acore/ac-wotlk-build:master -fsyntax-only`, then rebuild only while Deathsong is offline,
+  else the stage returns `waiting-server`, and a later wave's live stage that needs the command carries forward
+  too. `simval_commands.sql` starts with a `DELETE … IN (…)` and an `INSERT`: a new command extends both.
+- Not needed by any item: the harness's cooldown and power-update parsing, combat-log packet parsing.
+
+## Waves
+
+| Wave | Items | Why |
+|---|---|---|
+| S | EC-SWEEP2 (live) · EC-STACK · EC-TIMING (C++, live) | Cheap checks first; the timing probe EC-SPELLMOD needs |
+| T | EC-SHEET · EC-SPELLMOD (live) · EC-THREAT (C++, live) · EC-AOE | SHEET builds on SWEEP2's sheet code; SPELLMOD needs `.simval timing` |
+| V | EC-THREAT-FIX (G, FS) · EC-STRIKES (C++, live) · EC-BUFFS (live) | The fix needs T's probe |
+| W | EC-GEAR (C++, live) · EC-MOBS (module SQL and config, live) | One rebuild for both |
+| X | EC-FIGHT (live) | Fights wear GEAR's full gear, enchant procs included |
+
+U is taken (the UI wave). Versus the INVESTIGATION's order, B7, A3 and A4 moved forward (cheap, independent) and
+C1 moved last (after B6).
+
+**Backlog:** golden rows against other mob types (test-enrichment's G4), once EC-MOBS lands; execute-range damage;
+haste stacking beyond EC-BUFFS' pairs.
+
+## Work items
+
+### EC-SWEEP2 (S; golden-neutral; stages: code, live)
+
+- `rawTalentInfo.project` and `talentRecord` keep ArP% (`armorPenetrationAuraPct`) and each attack's
+  `missChanceTaken` (Frigid Dreadplate, Arctic Winds); `sheet`, `sweepSheet` and `compareSweepSheets` compare them
+  and each school's spell crit (Holy Specialization, Critical Mass). A field the record lacks is skipped, not failed.
+- Live: rerun only the paths holding Mace Specialization, Serrated Blades, Blood-Gorged, Frigid Dreadplate and
+  Arctic Winds (`SIMVAL_TALENT_ONLY`); the trim keeps the other paths' records. Per-school crit needs no rerun.
+- **Owns:** `tools/simval/talents.go`, `talents_test.go`, `talents.jsonl`, the simval README's Talent sweep, its
+  fixture README rows.
+
+### EC-STACK (S; golden-neutral; offline)
+
+- Export `acore_world.spell_group` and `spell_group_stack_rules` (SELECT) to
+  `sim/core/testdata/simval/spell_groups.json`; the query goes in the test's doc comment.
+- `sim/spell_groups_test.go` builds a raid with `FullBuffs` and a target with `FullDebuffs` and reads each aura's
+  `ExclusiveEffects` (`GetAuras()`). Sim categories are effect types (`PercentDamageModifier`, `SpellPowerBonus`,
+  …), so it maps auras by spell id: `ActionID.SpellID` only, ranks folded through spelldump's `firstRankId`; an
+  item, tag or `OtherID` aura is skipped with a reason.
+- It fails when two auras share a sim category but no server rule makes them exclusive, or a server rule makes two
+  registered auras exclusive and the sim keeps them apart. Rule types: `EXCLUSIVE` and `EXCLUSIVE_HIGHEST` (one
+  stays) ↔ `SingleAura`; `EXCLUSIVE_SAME_EFFECT` (both stay, the strongest amount counts) ↔ the highest `Priority`
+  counting; `EXCLUSIVE_FROM_SAME_CASTER` doesn't apply across raid members. A pair differing only in that form is
+  logged, not failed.
+- Spell-specific exclusivity lives in code (`SpellInfo::IsAuraExclusiveBySpecificWith`): allowlist it, and every
+  mismatch, as id pair → reason; a mismatch is a follow-up.
+- **Owns:** the test, the export, a `testing.md` "Against the server" line.
+
+### EC-TIMING (S; golden-neutral; C++; stages: C++ and e2e, sim, live)
+
+- `.simval timing <spellId> [pet]` records:
+  - cast time: `SpellInfo::CalcCastTime(caster, &probe)`, with a stack `Spell probe(player, info, TRIGGERED_NONE)`
+    so percent mods count and no charge is used; check on the first live run that its destructor's checks hold
+    (`m_appliedMods`, `m_spellModTakingSpell`). Which haste applied;
+  - GCD: `Spell::TriggerGlobalCooldown`'s arithmetic, copied (it writes state), with its haste rule (category 133,
+    1500 ms, dmgClass neither melee nor ranged, no ranged-slot or ability attribute) and `CHEAT_COOLDOWN` exit;
+  - cooldown: `rec` and `catrec` per `Player::AddSpellAndCategoryCooldowns`' arithmetic, copied (it sends packets);
+  - duration, amplitude, tick count: `player->AddAura` (the player is the caster, so `Aura::CalcMaxDuration` applies
+    combo points and `SPELLMOD_DURATION`), read `GetMaxDuration`, `GetAmplitude`, `GetTotalTicks`, remove it. Copy
+    `Unit::ModSpellDuration` (diminishing returns, mechanic and dispel mods, the periodic haste rule), which only
+    `Spell::DoSpellHitOnUnit` calls. Beneficial auras go on the player; an immune dummy (`AddAura` returns null)
+    records `immune`;
+  - cost: `SpellInfo::CalcPowerCost`; rune cost per type after `SPELLMOD_COST`; runic power gain.
+- The unit snapshot gains the regen fields: each power's `UNIT_FIELD_POWER_REGEN_FLAT_MODIFIER` and
+  `_INTERRUPTED_FLAT_MODIFIER`, and `PLAYER_RUNE_REGEN_1..4`.
+- e2e `e2e/timing_test.go` `TestSimvalTiming`: per class, a bot like `TestSimvalDamage`'s, 4–6 spells covering a cast,
+  a channel, a cooldown, a dot, a cost and (DK) runes; bare, with the cast-time, cooldown, cost and duration talents
+  as `.aura`, and under Bloodlust (2825); plus one `info` per bot for regen.
+- Sim (`tools/simval/timing.go`, `TestTimingRecords`, `timing.jsonl`): the character as `damage.go` builds it
+  (`newDamageSim`); compare cast time, GCD, cooldown, shared cooldown, duration, ticks and cost exactly after the
+  server's integer truncation, and mana, energy and rune regen within ±0.1%. Regen is compared on these bots only;
+  EC-GEAR's recapture carries it for the golden characters.
+- **Owns:** module `src/SimValidationCommands.cpp`, `src/SimValidationSnapshot.cpp`, `simval_commands.sql`,
+  `e2e/timing_test.go`, the module README's Commands row and timing paragraph; `tools/simval/timing.go`,
+  `timing_test.go`, `timing.jsonl`, its fixture README rows, the simval README's Timing probe.
+
+### EC-SHEET (T; golden-neutral; offline)
+
+- `checkGoldcharInfo` (`tools/simval/goldchar.go`) also compares each `info` record's stats, max health, max power,
+  armor, resistances, AP, RAP, dodge, parry, block, block value, ArP%, and each school's spell power and crit, not
+  only the lowest school's.
+- Reuse the talent sweep's `(*damageSim).sweepSheet` and `sweepSim`'s sim-derived bounds (after EC-SWEEP2); refactor
+  `sweepSim` to take a `goldcharSetup`. Extra record fields parse in `goldcharRecord.UnmarshalJSON`.
+- On the committed `goldchar.jsonl`; no live run. EC-GEAR's recapture (W) must keep these checks passing.
+- **Owns:** `goldchar.go`'s info checks, `talents.go`'s `sweepSim`, `tools/simval/goldchar_test.go`
+  (`droppedGoldchar`), its fixture README rows, the simval README's Golden characters.
+
+### EC-SPELLMOD (T; golden-neutral; stages: spells, live)
+
+- Spells: for each implemented talent with spell mods (auras 107/108 in its rank spell; 276 at `c27854a8d`), the
+  spells it changes by the server's rule, `SpellInfo::IsAffectedBySpellMod`: same `family`, `familyFlags` against
+  the effect's `classMask`, the spell affected by spell mods at all, and `Player::IsAffectedBySpellmod`'s skip of
+  duration mods on infinite-duration spells. Script hooks (`OnIsAffectedBySpellModCheck`) are listed exceptions.
+  Keep spells the sim names (`tools/acore/spellids`); write `sim/core/testdata/simval/spellmod_spells.json` from
+  `implemented_talents.json` and `assets/db_inputs/acore/spelldump.jsonl`.
+- e2e `e2e/spellmod_sweep_test.go`: walk `talent_paths.json` as `TestSimvalTalentSweep` does (a golden character
+  can't learn more: its 71 points are spent); before and after each spell-mod talent, `.simval timing`,
+  `.simval damage` and the derived crit of `.simval yellow`/`spell` (`n` 1: the derived table is deterministic)
+  for each of its spells.
+- Sim (`tools/simval/spellmods.go`, `TestSpellModRecords`, `spellmods.jsonl`): each talent's server change per spell
+  and field against the sim's, with and without the talent; a talent moving nothing on either side is logged.
+- **Owns:** the spell list and its generator, `e2e/spellmod_sweep_test.go`, `e2e/run.sh` (the list's mount),
+  `tools/simval/spellmods.go`, its test and fixture, the simval README's Spell-mod sweep.
+
+### EC-THREAT (T; golden-neutral; C++; stages: C++ and e2e, sim, live)
+
+- `.simval threat <spellId> [amount]` records:
+  - the `spell_threat` row, `SPELLMOD_THREAT`, the school multiplier
+    (`GetTotalAuraMultiplierByMiscMask(SPELL_AURA_MOD_THREAT, …)`);
+  - threat for `amount` damage: `ThreatManager::CalculateModifiedThreat`'s arithmetic, copied (static and
+    private), `pctMod` included;
+  - the bonus as `Spell::HandleThreatSpells` adds it: nothing under `SPELL_ATTR1_NO_THREAT` or
+    `SPELL_ATTR3_SUPPRESS_TARGET_PROCS`; flat + AP part, unmodified; `SpellLevel` with no entry unless
+    `SPELL_ATTR0_CU_NO_INITIAL_THREAT`; split across targets; zero on a miss.
+  - Live: `AddThreat`/`GetThreat` on the dummy, then `ResetThreat`, after `.gm off`; check it lands before
+    relying on it (`CanHaveThreatList`, redirects).
+- e2e `e2e/threat_test.go`: Defensive Stance warrior, Righteous Fury paladin, Bear Form druid, Frost Presence DK, and
+  a DPS of each with a threat multiplier; their abilities with `FlatThreatBonus` in the sim, plus a few without.
+- Sim (`tools/simval/threat.go`, `TestThreatRecords`, `threat.jsonl`): `ThreatFromDamage` and the flat bonus per
+  spell against the record. Each mismatch is dropped and listed for EC-THREAT-FIX.
+- **Owns:** module `src/SimValidationCommands.cpp`, `simval_commands.sql`, `e2e/threat_test.go`, its module README
+  rows; `tools/simval/threat.go`, its test and fixture, its fixture README rows, the simval README's Threat probe.
+
+### EC-AOE (T; golden-neutral; offline)
+
+- `TestAOECapMultiplier` already covers the cap's formula; this checks which spells get it, and chain values.
+  Class code hand-codes chain jumps (`sim/shaman/chain_lightning.go`), so the test keeps a list: spell id → jumps,
+  per-jump multiplier, max targets, capped or not. It checks each against spelldump's `chainTarget`,
+  `damageMultiplier`, `maxAffectedTargets` and `serverdata`'s `ChainTargets`, and the cap rule (× 10 / targets past
+  10, a player caster's area or non-magic chain damage).
+- It fails on a spell the sim names (`tools/acore/spellids`) with `chainTarget` > 1 or `maxAffectedTargets` > 0 that
+  the list lacks; allowlist id → reason.
+- **Owns:** the test, a `testing.md` "Against the server" line.
+
+### EC-THREAT-FIX (V; changes goldens, full suite)
+
+- Fix what EC-THREAT dropped, nothing more: likely the flat bonus outside `PseudoStats.ThreatMultiplier`, the
+  `spell_threat` values, `SpellLevel` threat, the split across targets. Restore the dropped records.
+- **Goldens:** every suite whose TPS moves (tanks, warriors, ferals at least); report each.
+- **Owns:** `sim/core/spell_result.go`'s threat, the class files EC-THREAT names, `tools/simval/threat_test.go`'s
+  drops.
+
+### EC-STRIKES (V; golden-neutral; C++; stages: C++ and e2e, sim, live)
+
+- Weapon strikes in `.simval damage`: `Spell::EffectWeaponDmg`'s fixed bonus, percent, spell bonus and total
+  percent, at both ends of `CalculateMinMaxDamage` (normalized via `GetAPMultiplier`), then
+  `MeleeDamageBonusDone`/`Taken`. A `WeaponFamilyCode` marks its per-class branches shaped (Devastate,
+  dagger bonuses, Mutilate, Divine Storm, Lava Lash, Kill Shot, disease-scaled DK strikes, Rune Strike); the melee
+  state overrides join `StateBonuses`.
+- Pets and guardians: `pet <n>` reaches every unit in `m_Controlled`, not only `GetGuardianPet()`; `info pet`
+  records each scaling aura's amount (`PetDefines.h` ids) and the owner's inputs.
+- e2e `e2e/strikes_test.go`: each melee class's strikes, bare and talented; one pet or guardian per pet class
+  (hunter pet, demons, ghoul, gargoyle, wolves, Water Elemental, treants, Shadowfiend), `info` and `damage`.
+- Sim: `damage.go`'s replay accepts weapon strikes and pets. Leads: hunter pet focus (24 every 4 s), Water
+  Elemental base stats, the Infernal's raid buffs, Ghoul Frenzy's cadence.
+- **Owns:** module `src/SimValidationCommands.cpp`, `simval_commands.sql`, `e2e/strikes_test.go`, its module README
+  rows; `tools/simval/damage.go`, `damage_test.go`, `strikes.jsonl`, its fixture README rows, the simval README's
+  Damage probe.
+
+### EC-BUFFS (V; golden-neutral; stages: code, live)
+
+- e2e `e2e/buffs_test.go`: on a golden setup's character, each `FullBuffs` buff alone, then pairs in each exclusive
+  category, with `info` after each; on the boss dummy, each `FullDebuffs` debuff with `armor`, a `damage` probe and
+  the derived crit of `yellow`/`spell`. Talent-improved buffs come from a second bot with the talent casting them.
+- Sim (`tools/simval/buffs.go`, `TestBuffRecords`, `buffs.jsonl`): the sheet change per buff and the armor, taken and
+  crit change per debuff against the sim's.
+- **Owns:** `e2e/buffs_test.go`, `tools/simval/buffs.go`, its test and fixture, its fixture README rows, the simval
+  README's Buffs.
+
+### EC-GEAR (W; golden-neutral; C++; stages: C++ and e2e, sim, live)
+
+- `.simval enchant <slot> <enchantId>` (`ApplyEnchantment` off, `SetEnchantment`, on) and
+  `.simval gem <slot> <socket> <gemItemId>` (`HandleSocketOpcode`'s steps: socket enchant, socket bonus, meta toggle;
+  reference: playerbots' `PlayerbotFactory::ApplyEnchantAndGemsNew`).
+- `goldchar_setups.json` gains the gear set's gems and enchants; `TestSimvalGoldenCharacters` applies them;
+  `goldchar.jsonl` is recaptured, with the regen fields, and `TestGoldenCharacters` builds the full gear and
+  compares regen. EC-SHEET's checks must still pass.
+- **Owns:** module `src/SimValidationCommands.cpp`, `simval_commands.sql`, `e2e/goldchar_test.go`, its module README
+  rows; `goldchar_setups.json`, `goldchar.jsonl`, `goldchar.go`'s setup building, `tools/simval/goldchar_test.go`,
+  its fixture README rows, the simval README's Golden characters.
+
+### EC-MOBS (W; golden-neutral; module SQL and config; stages: SQL and e2e, sim, live)
+
+- Undead, demon, elemental, dragonkin and mechanical dummies 999004–999008: extend
+  `data/sql/db-world/base/simval_dummies.sql`'s `DELETE` list and rows, same script. Add them to
+  `AC_DUNGEON_SCALE_DISABLED_ID` in `[ac]/configurationOverrides/DungeonScale.env` (the user's OK, 2026-10-02); the
+  rebuild's `docker compose up -d` applies both.
+- e2e `e2e/mobs_test.go`, in Naxxramas like the others: melee and spell `damage` and crit against each type, with the
+  creature-type auras the sim implements (Exorcism, Improved Tracking, slayer items, …).
+- Sim (`tools/simval/mobs.go`, its test and fixture): the type modifiers against the sim's.
+- **Owns:** module `data/sql/db-world/base/simval_dummies.sql`, `e2e/mobs_test.go`, the module README's dummy table
+  and Requirements line; `[ac]/configurationOverrides/DungeonScale.env`; `docs/guide/azerothcore-server.md`'s dummy
+  ids; `tools/simval/mobs.go`, its test and fixture, its fixture README rows.
+
+### EC-FIGHT (X; golden-neutral; stages: sim tooling, e2e, live)
+
+- e2e `e2e/fight_test.go`: per golden setup, a 1–2 min fight on the boss dummy in Naxxramas under Chronicle; the bot
+  runs a fixed cycle that never reacts to procs. Save the log and setup name like `TestRecordedRun`.
+- Sim replay, no APL (`waitUntil` re-polls only every 50 ms and not during channels): build the setup's character
+  with an empty rotation and schedule each logged cast with `sim.AddPendingAction` at its start, the logged
+  `SPELL_CAST_SUCCESS` minus the sim's own hasted cast time (a channel's success is its start); `spell.Cast`. A
+  cast the sim refuses counts as a miss, never retried. Auto attack starts at the log's first swing.
+- Compare per ability (with `chronicle`'s per-outcome stats): casts the sim lands within a map tick (100 ms) of the
+  log, crit %, mean non-crit and crit, ticks per application and spacing, proc counts, aura uptime, energize totals.
+- Committed fights in `sim/core/testdata/fights/`, replayed under `go test` (no DBCs: the setup comes from the sim).
+- Limits: the dummy's health never drops and it never attacks; swings carry no hand flag; a refresh counts as an
+  application.
+- **Owns:** `e2e/fight_test.go`, `e2e/run.sh` (Chronicle and output mounts), `tools/simval/fight.go` and its test,
+  `sim/core/testdata/fights/`, the simval README's Fights; `chronicle.go` read-only.
+
+## Orchestrator onboarding (wave S start)
+
+- Add waves S–X to the registry and an `EC-` row to "Where the specs are".
+- The RUNBOOK's "files workstreams hands test-enrichment take master's side" now names e2e-coverage.
+- Apply items' `contractChangeRequests`.

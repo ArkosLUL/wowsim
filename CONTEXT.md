@@ -76,6 +76,14 @@ Simval's export of server spell data.
 **Damage probe**:
 `.simval damage`: the server's damage and heal bonuses for one spell, recorded for replay against the sim.
 
+**Spell-mod sweep**:
+Learning each spell-mod talent on a golden character and probing the spells it changes before and after, for
+replay against the sim.
+
+**Fight replay**:
+A short golden-character fight on the server, logged by mod-chronicle, whose cast times the sim replays to compare
+per ability.
+
 **Effect declaration**:
 A spell's numbers for one server effect, as the sim states them: base roll, coefficients and weapon
 percent, checked against the server's data.
