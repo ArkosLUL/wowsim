@@ -6,7 +6,7 @@ character_stats_results: {
   final_stats: 1383.8
   final_stats: 1229.8
   final_stats: 324.5
-  final_stats: 3158.94
+  final_stats: 2790
   final_stats: 468
   final_stats: 0
   final_stats: 1385.45399
@@ -619,7 +619,7 @@ dps_results: {
  key: "TestRestoration-Talents-HealingGrace-Average"
  value: {
   tps: 130.70951
-  hps: 8859.57324
+  hps: 8473.75975
  }
 }
 ability_results: {
@@ -971,8 +971,8 @@ ability_results: {
    value: {
     casts: 111.219
     hits: 111.219
-    amount_per_hit: 814.0461
-    amount: 90537.39304
+    amount_per_hit: 778.61279
+    amount: 86596.53608
    }
   }
   entries: {
@@ -980,8 +980,8 @@ ability_results: {
    value: {
     casts: 30.184
     hits: 30.184
-    amount_per_hit: 474.45397
-    amount: 14320.91875
+    amount_per_hit: 450.12118
+    amount: 13586.45775
    }
   }
   entries: {
@@ -989,8 +989,8 @@ ability_results: {
    value: {
     casts: 15.439
     hits: 15.439
-    amount_per_hit: 1620.41308
-    amount: 25017.55753
+    amount_per_hit: 1580.03463
+    amount: 24394.15458
    }
   }
   entries: {
@@ -999,8 +999,8 @@ ability_results: {
     casts: 134.015
     hits: 402.045
     crit_pct: 35.29791
-    amount_per_hit: 5798.37541
-    amount: 2.33120784086e+06
+    amount_per_hit: 5536.73389
+    amount: 2.22601617657e+06
    }
   }
   entries: {
@@ -1015,8 +1015,8 @@ ability_results: {
     casts: 43.518
     hits: 43.518
     crit_pct: 35.47727
-    amount_per_hit: 4506.08267
-    amount: 196095.70549
+    amount_per_hit: 4386.05168
+    amount: 190872.1968
    }
   }
   entries: {
