@@ -9,7 +9,7 @@ import (
 )
 
 // each spec's talents and glyphs from its golden suite, copied since test packages can't import each other
-var balanceTalents = "5012203115331303213315311231--205003012"
+var balanceTalents = "5012203105331303213315311231--205003012"
 var balanceGlyphs = &proto.Glyphs{
 	Major1: int32(proto.DruidMajorGlyph_GlyphOfStarfire),
 	Major2: int32(proto.DruidMajorGlyph_GlyphOfInsectSwarm),

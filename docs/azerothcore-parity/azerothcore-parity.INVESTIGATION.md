@@ -463,6 +463,7 @@ Roll details the tables above don't show:
     - Rupture with Weapon Expertise
     - Rend with Trauma
     - Moonfire/Insect Swarm with Eclipse (spell haste; the others use melee haste)
+    - SW:P, VT and DP in Shadowform (spell haste, snapshotted; blocks Shadowform's stock VT/DP haste 71167)
   - **DoT ticks can crit:**
     - Moonfire/IS (Earth and Moon)
     - Blood Plague (Crypt Fever)
@@ -2440,7 +2441,8 @@ Shadow priest DoTs as mod-spell-tweaks `338d826` changed them (`docs/priest/Shad
 - **Live e2e:** `TestSimvalPriestShadowDotHaste` (mod-sim-validation `e2e/pfu4_test.go`) passes, matching the sim at
   30% haste. In the form: SW:P 7 ticks, VT 6, DP 10, 2300 ms apart. Out of it: 6, 5, 8 ticks, 3000 ms apart. The
   fixed duration holds. DP ticks arrive as `SMSG_SPELLNONMELEEDAMAGELOG` (leech aura), not `SMSG_PERIODICAURALOG`.
-  The client never sees passives, so the 71167-absent check is weak; the ticks prove the haste. The sim's table
+  The client never sees passives, so VT's and DP's ticks prove 71167 blocked (alone: 5 and 8; stacked on the tweak:
+  ~1775 ms apart); the cross-review dropped the e2e's `HasAura(71167)` check, which couldn't fail. The sim's table
   needed no change. Records nothing in `simval.jsonl`.
 
 ## PAR-FU-5 as built
