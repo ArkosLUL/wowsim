@@ -545,8 +545,8 @@ class naming it; allowlisted, each passed; reverted.
 - Lacerate's dot is replayed for one stack, as the probe works it out.
 
 **Live stage** (golden-neutral). Module rebuilt; `goldchar.jsonl` is one full run (all 32 setups pass the e2e,
-124 records after drops), and `TestGoldenCharacters` passes 628 checks; 613 over 122 after the cross-review dropped
-WarriorArms (Sudden Death learned at 2/3).
+124 records after drops), and `TestGoldenCharacters` passes 628 checks. The cross-review found WarriorArms
+learned Sudden Death at 2/3 (`warrior.json`); re-recorded at 3/3, same counts.
 - Fixed in the e2e: profession skill and reputation for gated items (`.setskill`, `.modify reputation`); hunters'
   starting 10% quiver swapped for a 15% one; full health before recording (bots sat at 35–50%, which turned off
   Blood Gorged); Elemental's Flametongue Weapon cast on the main hand through a raw CMSG_CAST_SPELL.

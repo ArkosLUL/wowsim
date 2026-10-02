@@ -31,8 +31,7 @@ and is only logged; the others are removed.
 | HunterSV | 63672 Black Arrow | all | sim 5.5% below the server |
 | ShamanElemental | info | spell power | sim 84 above the server: it always adds Glyph of Totem of Wrath's 30% of 280; the server gives it only as aura 63283 after a Totem of Wrath cast, which the e2e doesn't make |
 | WarlockAffliction | info | spell hit % | the sim gives Suppression's 3% to every school; the server only to fire and shadow (aura 199) |
-| WarriorFury | 47502 Thunder Clap | all | sim ×1.06: Two-Handed Weapon Specialization (12712) only counts for weapon spells on the server |
-| WarriorArms | all | all | recorded with Sudden Death 2/3: `warrior.json` had its rank 2 and 3 spells swapped. Re-record; its Thunder Clap then fails like Fury's, and Arms' crit multiplier is 2.2 in the sim, 2.32 on the server |
+| WarriorFury, WarriorArms | 47502 Thunder Clap | all | sim ×1.06: Two-Handed Weapon Specialization (12712) only counts for weapon spells on the server; Arms' Thunder Clap also crits for 2.2 in the sim, 2.32 on the server |
 
 ## Spells missing from serverdata
 

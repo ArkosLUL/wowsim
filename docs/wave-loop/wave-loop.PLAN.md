@@ -127,8 +127,6 @@ PAR-FU-3 and PERF-FU join N, the user's call too (the same day): wave L's and M'
 
 - Wave: O, landed (master fast-forwarded to this close-out). Next: P (TE-SWEEP). Prod runs L's `23e9e9e79`.
 - Left from N: the `tools/perf` full baseline on an idle machine; its 2026-10-01 run overlapped a game on the host.
-- Left from O: re-record WarriorArms' golden character live (fixture README); the permission check blocked reading
-  the server's simval log.
 - Carried (the user's call, 2026-10-01): rerun every DPS preset on the final HEAD, since BIS-caps-race changes
   every racial search and `ff0920a96` the 16 builds `mage_*`, `rogue_*`, `warlock_*`, `warrior_arms`,
   `warrior_fury`, `protection_warrior`, `shadow_priest`, `smite_priest`, `dk_blood`, `elemental_shaman`.
@@ -447,7 +445,7 @@ crashed before F2, so its column starts there.
 | wave N cross-review | | `887e9152a` | no bugs: the golden-mismatch hint said `make update-tests`; docs on where `damage` records go; module long lines (`9dfacf6`) |
 | TE-TALENTS | merged | `8ceb8e61a` | 21 Talents-* rows in 20 suites promoted in `9d300299a`, no existing row moved; guard over 615 implemented talents, 12 allowlisted |
 | TE-GOLDCHAR | merged | `675b0f90a` | goldens unchanged; module `ab68bfd`, server rebuilt 23:44-23:49 (2026-10-01); 32 setups live, 9 mismatches dropped (fixture README) |
-| wave O cross-review | | `07f1aa576` | 2 bugs: the talent export's rank spells were the trees' compressed lists; 4 trees had wrong rank spells (Sudden Death's 2 and 3 swapped, so WarriorArms ran 2/3 on the server and is dropped until re-recorded), now held to the spelldump |
+| wave O cross-review | | `07f1aa576` | 2 bugs: the talent export's rank spells were the trees' compressed lists; 4 trees had wrong rank spells (Sudden Death's 2 and 3 swapped, so WarriorArms ran 2/3 on the server; re-recorded live), now held to the spelldump |
 
 Later WIs are added as their wave starts.
 
