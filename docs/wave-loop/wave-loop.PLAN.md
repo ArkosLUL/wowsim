@@ -125,11 +125,11 @@ PAR-FU-3 and PERF-FU join N, the user's call too (the same day): wave L's and M'
 
 ## Current wave
 
-- Wave: O, landed (master fast-forwarded to this close-out). Next: P (TE-SWEEP). Prod runs O's `24f581bf9`.
+- Wave: P (TE-SWEEP), running from base `c678de53e`. Prod runs O's `24f581bf9`.
 - Carried (the user's call, 2026-10-01): rerun every DPS preset on the final HEAD, since BIS-caps-race changes
   every racial search and `ff0920a96` the 16 builds `mage_*`, `rogue_*`, `warlock_*`, `warrior_arms`,
   `warrior_fury`, `protection_warrior`, `shadow_priest`, `smite_priest`, `dk_blood`, `elemental_shaman`.
-- Workflow runIds: O's `wf_cd004c46-c80` (base `b069c688b`); N's `wf_4b37e171-123` (base `7f4174efb`); M's `wf_8ab862a5-d37` (base `33da5ca34`); L's `wf_34052b28-d62`, `wf_1a26dbdb-51c`, `wf_ac1129b6-8d7`, `wf_a59f095c-4b7`, `wf_f5be2bcf-e23`,
+- Workflow runIds: P's `wf_9c73b1de-ff3` (base `c678de53e`); O's `wf_cd004c46-c80` (base `b069c688b`); N's `wf_4b37e171-123` (base `7f4174efb`); M's `wf_8ab862a5-d37` (base `33da5ca34`); L's `wf_34052b28-d62`, `wf_1a26dbdb-51c`, `wf_ac1129b6-8d7`, `wf_a59f095c-4b7`, `wf_f5be2bcf-e23`,
   `wf_42fc0b7c-42a`; args `wave<X>*-args.json` in `G:\DevStuff\GitHub\.wave-loop`, transcripts in
   `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\<runId>`.
 - J2's full-roster batch ran 2026-09-28 in 52 min at Quick, output in
@@ -445,6 +445,7 @@ crashed before F2, so its column starts there.
 | TE-TALENTS | merged | `8ceb8e61a` | 21 Talents-* rows in 20 suites promoted in `9d300299a`, no existing row moved; guard over 615 implemented talents, 12 allowlisted |
 | TE-GOLDCHAR | merged | `675b0f90a` | goldens unchanged; module `ab68bfd`, server rebuilt 23:44-23:49 (2026-10-01); 32 setups live, 9 mismatches dropped (fixture README) |
 | wave O cross-review | | `07f1aa576` | 2 bugs: the talent export's rank spells were the trees' compressed lists; 4 trees had wrong rank spells (Sudden Death's 2 and 3 swapped, so WarriorArms ran 2/3 on the server; re-recorded live), now held to the spelldump |
+| TE-SWEEP | running | | |
 
 Later WIs are added as their wave starts.
 
