@@ -144,6 +144,65 @@ only logged. A stale drop fails.
 A full `simval.jsonl` recapture can hold these records: `info` gets only `CheckRecord`'s armor penetration check
 (`TestGoldcharInfoRecordInTheReplayFixture`), `damage` none.
 
+## Talent sweep
+
+`sim/core/testdata/simval/talent_paths.json` holds the paths mod-sim-validation's `TestSimvalTalentSweep` walks
+(`talentpaths.go`): per path a server class and race, the sim `spec`, `items` by server slot, `auras` (stance, form,
+presence, aspect, the class's own raid buffs; recast after every step) and `steps` (`talent` fieldName, `rank`,
+rank `spell`, `filler` for a talent the sim doesn't implement, step `auras` the sim puts up once it's in: Moonkin
+Form, Shadowform, Bone Shield, Trueshot Aura). The generator, per class:
+- Setups are hand-listed in `sweepClasses`: one per tree (two feral: Cat, Bear), the base stats test's race, the golden
+  characters' weapons where talents need them. A talent shows its sheet change only in setups whose items fit its
+  rank spell's equipped item requirement when that spell has a sheet aura (spelldump), and in the setups `needs`
+  names (stance, form, shield, dual wield, a melee weapon for parry). `after` puts Furor behind Moonkin Form; `last` puts Dark Pact at the end,
+  since the sim can't build a warlock with it and no pet.
+- Each setup gets a path over the uncovered implemented talents at max rank: its own tree first, trimmed to 71
+  points from the lowest row up, then other trees' from the lowest row while points last. Then, while any are left,
+  the path covering the most. Rows open at 5 points per row in the tree; the gaps take fillers, unimplemented
+  talents first; a prerequisite goes first at max rank.
+
+Rewrite it with `tools/acore/dock.sh test ./tools/simval -run TestTalentPathsFile -update`; a changed path's
+`talents.jsonl` records then match nothing, so rerun it (`SIMVAL_TALENT_ONLY`) and trim the new stream appended to
+the old. Tests:
+`TestTalentPathsFile` (stale), `TestTalentPathsAreLegal` (points, rows, prerequisites, ranks, every implemented
+talent covered in a setup that shows it, on the committed file), `TestTalentPathsCoverTheSimsStart` (after each
+step, what the sim has up that isn't passive is in the auras), `TestTalentPathsItemClasses`.
+
+`checkInfo` skips a naked record carrying a talent rank's aura, so a `simval.jsonl` recapture with the sweep's records
+stays green; a sweep character before its first talent gets the base stats checks
+(`TestTalentSweepInfoRecordInTheReplayFixture`).
+
+**Trim** (`talents.go`): `tools/acore/dock.sh run ./tools/simval talents -records /wotlk/tmp/<raw>.jsonl` reads a
+`simval.jsonl` streamed during the run (required: the e2e deletes its bots' records from the worldserver's file) or
+an e2e log's `RECORD` lines, keeps the `Svtlead…` bots' info records and writes
+`sim/core/testdata/simval/talents.jsonl` (`-out` to change): per record its `path`, `step` (talents learned), bot,
+character and the compared sheet fields. Bots go by name; a bot's records must all fit one path (class, race, items,
+talents a start of its steps). A bot fitting none or several is left out with a note, a path's later bot replaces an
+earlier one (a rerun), a step recorded twice or a record without `maxPower` fails. It prints the steps still missing.
+
+**Replay** (`TestTalentSweepRecords`, skips without the fixture): per step, the server's change between the records
+before and after it against the sim's change between `path.goldcharSetup(n-1)` and `(n)` (stats after a reset, with
+the path's and steps' auras). Fields: primary stats, max health, max mana/rage/energy/runic power (the server's power
+type), armor, fire to arcane resistance, AP, RAP, spell power and spell crit (lowest magic school), spell hit (plus
+every school's school hit, as in Golden characters), crit, hit and expertise per hand the sim swings (main hand crit
+and melee hit always), melee, ranged and spell haste (server: 1 / speed multiplier), dodge and parry after diminishing
+returns (parry with a weapon), block chance and value (with a shield).
+
+Tolerance: the server truncates primary stats, health, power, armor, resistances, block value, each stat or AP based
+spell power bonus, a rating from a stat, and AP's base and mods before its multiplier; the sim doesn't. Each sim sheet
+gets a bound per field: its own truncation (1; spell power 3; a resistance 2; parry one parry rating) plus the sim's
+change per truncated unit of each source (+1 of a primary stat, per point of the stat's sheet value; +1 raw AP or
+RAP, times 3). A step passes a field when the two changes differ by at most the larger bound of its two sheets plus
+1e-3.
+
+Each step is logged on a `SWEEPSIM` line as `agrees`, `moves no field` (nothing past 1e-3 on either side: a proc or
+spell mod talent) or `disagrees`; the end lists the no-field steps. A sim that can't build the character fails as
+`sim character`. Drops: `droppedSweep` (path, talent, field), each with a fixture README row; an empty field drops the
+step. Records stay, since the next step starts from them; a dropped step or field is only logged, and one that agrees
+or matches nothing fails. Hand-built tests: `TestTalentSweepAgreesWithTheSim` and `TestTalentSweepReplaysAFullRun`
+(every path, server sheets made from the sim, through the trim), `TestTalentSweepCatchesMismatches`,
+`TestTalentTrim`.
+
 ## chronicle
 
 Reads a mod-chronicle raw log (`<unix_ms>  EVENT,field,…`, gzipped or not) and reports one player's

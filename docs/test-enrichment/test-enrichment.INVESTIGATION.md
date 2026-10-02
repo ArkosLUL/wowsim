@@ -561,3 +561,63 @@ learned Sudden Death at 2/3 (`warrior.json`); re-recorded at 3/3, same counts.
   Arrow, Elemental's spell power (+84), Affliction's spell hit (Suppression), Fury's and Arms' Thunder Clap
   (Two-Handed Weapon Specialization; Arms' crit multiplier).
 - Priest Shadow's 48125 and 48300 compared live, so the shadow dot tick-period allowlist holds.
+
+## TE-SWEEP as built
+
+**Paths and e2e stage** (golden-neutral; no live run). Measured on `c678de53e`.
+- Paths (`sim/core/testdata/simval/talent_paths.json`, `tools/simval/talentpaths.go`; format and rules in the
+  tools/simval README's Talent sweep): 30 paths, 685 steps, 3 per class except paladin (2: Holy's 10 points fit in
+  Protection's) and druid (4: Balance, Cat, Bear, Restoration). Balance and Blood hold 72 implemented points, one
+  past a character's 71; the lowest-row talent left over goes into another path.
+- Setups: weapons only where a talent's sheet change needs them, so priests, mages, warlocks, Elemental, Restoration
+  and Balance are naked and the replay fixture's base stats checks still get their first record. Feral paths carry a
+  staff to stay out of those checks (and for Predatory Strikes' weapon part).
+- Server learning gotcha: form, stance and presence bonuses (Heart of the Wild, Improved Frost Presence) and
+  improved raid buffs (Improved Mark of the Wild, Improved Power Word: Fortitude) go on only with a new cast, so the
+  e2e recasts every aura after every step.
+- Sim gotchas for the replay: a DPS warrior picks its stance from its primary tree, Battle Stance with no talents; the
+  path's stance is exclusive and replaces it once mirrored. Dark Pact with no pet panics building the warlock
+  (`sim/warlock/darkpact.go` reads `warlock.Pet`), so it's Affliction's last step. Paladins need Seal of Vengeance,
+  Protection also Righteous Fury, among the auras.
+- C++: the snapshot gains `maxPower` (max of the power type), for Vigor, Fel Vitality and Runic Power Mastery,
+  which current power can't show; compile-checked with `-fsyntax-only`, rebuild pending.
+- `checkInfo` skips naked records carrying a talent rank's aura; the replay's 1114 checks are unchanged.
+
+**Sim stage** (golden-neutral; no live run; trim, replay and tolerances in the tools/simval README's Talent sweep).
+- `tools/simval/talents.go`: `simval talents` trims raw records into `talents.jsonl` (`talentRecord`: path, step,
+  character, compared sheet fields); `TestTalentSweepRecords` compares each step's server change with the sim's
+  between `goldcharSetup(n-1)` and `(n)`. The sheet comes from `GetStats` after a reset plus `DodgeChance`,
+  `ParryChance`, `Armor`, `BlockValue`, swing and cast speed and the auto attacks' bonuses, as `checkGoldcharInfo`
+  reads them; the energy and runic power bars' maximums are unexported, read through reflection.
+- Tolerances come from the sim itself: per field, its change from +1 of each truncated source, so health per stamina,
+  Bladed Armor's AP per armor and Mental Quickness' spell power per AP need no hand-kept rates. 715 sim builds take
+  under a second.
+- Fields beyond the spec's list: fire to arcane resistance (Magic Absorption would otherwise read as moving nothing)
+  and max rage, energy and runic power (Vigor, Runic Power Mastery).
+- On sim-made server sheets, 123 steps move a field and 561 none; Dark Pact's step can't build, so it's dropped up
+  front.
+- Sim moves worth watching live: Improved Icy Talons +26% melee haste (the sim always has the raid buff; the server
+  only from Icy Talons procs), Blood Frenzy +10% melee haste, Magic Absorption +4 per resistance, Improved Moonkin Form
+  3% haste, Improved Mark of the Wild through the recast Mark.
+
+**Live stage** (golden-neutral; worldserver rebuilt for `maxPower`). `talents.jsonl`: 715 records, 30 of 30 paths;
+the replay has 111 steps agree, 560 move no field (514 talents, 46 fillers), 14 disagree, all dropped.
+- Sweep bugs found and fixed in the e2e first:
+  - `.cast <id> triggered` passes `TRIGGERED_FULL_DEBUG_MASK`, which holds `TRIGGERED_IGNORE_EFFECTS`: the aura goes
+    on without its effects, which only apply at its next target map update, 500 ms later. A record right after the
+    recast lost Fortitude's stamina, a stance's passive (7381) and Dragonhawk's 61848, so the recast now waits 1 s.
+    Setup casts were never affected: the dummy spawn takes longer.
+  - GM-levelled characters lack the trainer spell Parry (3127); a parry talent then unlocks parry and adds the base
+    5%. The e2e learns it for the classes `TestSimvalBaseStats` gives it.
+  - The e2e now fails a step that takes an aura off, the check that caught the first bug.
+- No filler moves the server's sheet. Talents moving no compared field that move another server field (from the
+  `SWEEP` lines): Mace Specialization, Serrated Blades, Blood-Gorged (armor penetration %), Holy Specialization and
+  Critical Mass (one school's spell crit), Frigid Dreadplate and Arctic Winds (miss chance taken).
+- Review: the server's parry chance is 0 without a melee weapon, so Survival's Deflection moved no compared field.
+  HunterSurvival now carries the 2H axe 40384 (`needs`); rerun live, Deflection agrees (+3 parry).
+- Dropped, each with a fixture README row: Suppression's spell hit, Shield Mastery and Redoubt's block value (the
+  server's -10 before the multiplier), hunter aura dodge kept out of diminishing returns, Improved Icy Talons'
+  ranged haste, Nature's Blessing (healing only), Magic Absorption (+80, sim +4), feral druid ranged AP from agility.
+- Watched sim moves that agree: Improved Icy Talons' melee haste, Blood Frenzy, Improved Moonkin Form, Furor,
+  Improved Mark of the Wild and Survival of the Fittest outside ranged AP.
+- `droppedSweep` is passed into the replay, so `TestTalentSweepReplaysAFullRun` holds only the unbuildable Dark Pact.
