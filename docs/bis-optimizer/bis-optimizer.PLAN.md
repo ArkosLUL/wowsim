@@ -1493,3 +1493,54 @@ Results:
 
 Open: the sheet ignores per-spell `BonusExpertiseRating`, so a specialization covering one of two
 weapons counts toward no floor.
+
+### BIS-outclassed (wave R)
+
+Every pool holds tiers 0 to 12 + phase, so vanilla, TBC and Northrend leveling gear are always in it (Ret P1:
+1,274 of 2,615 candidates are plain items under ilvl 187, ~460 are pre-Northrend). Under the default hit and
+expertise floors `slopeBox` can't prune any item with hit, expertise or a socket ([search slowdown](#as-built-review-fix-the-search-slowdown)):
+Ret Quick keeps 322 of 322 heads, and junk-heavy weapon families take trinkets' effect sims (46 priced against 55).
+
+**The rule** (the user's call, 2026-10-02): drop an item under ilvl 187 that is plain (no `setName`, no catalog
+`hasEffect`) or pre-Northrend (tier ≤ `PHASE_TIER_OFFSET`, even with an effect or set). The worn item stays.
+Always on. Expected: Ret P1 to ~1,234, P5 4,606 to ~3,225; today's 10 old P1 preset picks go (Thori'dal, Idol of
+the Raven Goddess, Gnomeregan Auto-Blocker 600, Rod of the Sun King, Slayer's Belt and Boots, Ring of Hardened
+Resolve, Gloves of the Forest Drifter, Wand of Cleansing Light).
+- Holiday loot must stay: Ahune's cloaks 54801–54805 (ilvl 232, tier 8), Coren Direbrew's trinkets and the
+  Horseman's rings 49074–49124 (200, tier 0), Love is in the Air's 51804–51808 (226, tier 0). Never key on
+  `item.expansion` or the picker's Vanilla/TBC filters: AtlasLoot tags these vanilla or TBC.
+- Accepted leaks: 16 fallback-tier items read tier 13 (Kael'thas legendaries, Thunderfury, 8 "Blessed … of
+  Undead Slaying"), and 15 heirlooms (ilvl 1, effects).
+
+**Changes:**
+- `pool_builder.ts`: `OUTCLASSED_ITEM_LEVEL = 187`, a shared `isPlain(item, row)` and exported
+  `isOutclassed(item, row)`. In `buildOptimizeRequest`'s per-slot filter, only the first branch cuts, so a worn
+  outclassed item falls to `ownedOnly` (its own slot's pool, never a pair); `SeedTrimmer` needs nothing.
+  `pruneDominatedItems` skips by `isPlain`. Blank any warm-start item in neither the pool, the trimmed seed
+  nor the equipped gear: `checkLoadout` rejects items the request's database lacks, and a stored batch's
+  earlier pick can hold a cut item.
+- `surrogate.go` `effectFamilies`' `prior`: `max(tier, 13)*1e6 + ub`, so tier-0 Brewfest trinkets stop going
+  unpriced first at Quick.
+- `realpool_test.go`: the same rule as `outclassed()`, applied through a keep-filter (anything worn stays)
+  from `slowRequest` only; the relic, caps and hunter-ranged tests and `TestSearchTestdata` keep their pools.
+  `TestOutclassedMirrorsUI` reads the TS constant as `TestTankBossesMirrorUI` does.
+- `fixture_driver.ts`: new fixture `ret_p1_worn_outclassed`, P1 preset with Trinket 1 empty and Dragonspine
+  Trophy 28830 in Trinket 2 (moves up with its pool entry), Ring of Hardened Resolve 34213 locked in Finger 2,
+  a plain tier-13 cloak under 187 on Back. Regenerate every replay fixture.
+- `optimizer_tab.ts` `SOURCES_HINT`: say the cut, and that worn gear is exempt.
+
+**Tests:** `outclassed_test.go` over the fixtures: the 19 holiday ids in the `ret_p1` and `ret_p5` pools;
+35670 (plain, 183, tier 13) and 28830 in none of `ret_p1`'s; 38763 (effect, tier 13) and 43069 (set, tier 13)
+kept; any outclassed item left is worn and in no more pools than it's worn (28830 in Trinket 1 only, 34213 in no
+ring pool); table-driven `outclassed()`; a Ret P1 Quick run prices 49116 and 49118. Playwright in
+`tools/uitest/tests/settings/optimizer_tab.spec.ts`: stub `**/optimizeGearAsync`, assert 28830 out and 49118 in,
+then equip 28830 and assert it's only in its own slot's pool.
+
+**Measure** (in As built): before editing, write the fixtures to `tmp/optimizer/before` and build the slow suite
+there (`go test -c --tags=with_db,optimizer_slow`). After: candidates and request bytes per fixture; `ret_p1` and
+`ret_p4` before and after through `wowsimcli optimize --trace` at Quick on an idle machine (sims, score Δ ± se,
+the pick, Search and Effects times via `tools/perf trace`); the slow suite with `-decisions` (J, sims, wall,
+priced trinkets).
+
+Golden-neutral. **Owns:** `ui/core/optimizer/**`, `sim/optimizer/**`, `optimizer_tab.ts`,
+`sim/optimizer/testdata/replay/`, `tools/uitest/tests/settings/optimizer_tab.spec.ts`, `ui/core/optimizer/README.md`.

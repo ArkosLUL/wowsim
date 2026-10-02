@@ -69,6 +69,7 @@ G = changes goldens. FS = runs all 37 suites.
 | O | TE-TALENTS (G) · TE-GOLDCHAR (C++, live) | ✔ |
 | P | TE-SWEEP (live) | ✔ |
 | Q | PAR-FU-4 (G, FS, live) · PAR-FU-5 (G, FS) · PAR-FU-6 (G) · PAR-FU-7 (G, live) | ✔ |
+| R | BIS-outclassed | ✔ |
 
 F2 is an inserted wave, not a fifth item in F: the core swing and cast fixes of PAR-P7-0c have to land
 before the class items in G, a class item can't build on a core fix merging in its own wave, and F already
@@ -113,6 +114,8 @@ M to P are the test-enrichment effort, after L lands (the user's call, 2026-10-0
 PAR-FU-3 and PERF-FU join N, the user's call too (the same day): wave L's and M's follow-ups.
 Q is the user's call (2026-10-02): the sim/server mismatches waves O and P dropped, and mod-spell-tweaks'
 Shadow priest DoT haste. The DPS preset rerun follows Q, only on the user's go-ahead.
+R is the user's call (2026-10-02): leave outclassed gear out of the optimizer's pool. The deferred preset rerun
+then covers all 28 builds, tanks included, since the cut changes prot paladin and feral tank picks.
 
 **Where the specs are:**
 
@@ -128,8 +131,7 @@ Shadow priest DoT haste. The DPS preset rerun follows Q, only on the user's go-a
 
 ## Current wave
 
-- Wave: Q, landed (master fast-forwarded to this close-out). Nothing queued: other sessions plan what follows (the
-  user's call, 2026-10-02). Prod runs Q's `225191f1f`.
+- Wave: R, running; base `c27854a8d`. BIS-outclassed: started. Prod runs Q's `225191f1f`.
 - Open: the talent sweep's unseen talents (test-enrichment INVESTIGATION, TE-SWEEP as built); from Q (parity
   INVESTIGATION, PAR-FU-4..7 as built): Ranged Weapon Specialization on Explosive Trap and magic procs, Glyph of
   Totem of Wrath's 84 spell power unverified live, aura-163 crit damage adds on the server for specials (the sim
