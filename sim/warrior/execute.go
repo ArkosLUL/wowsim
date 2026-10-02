@@ -41,8 +41,8 @@ func (warrior *Warrior) registerExecuteSpell() {
 			return sim.IsExecutePhase20() || warrior.IsSuddenDeathActive()
 		},
 
-		DamageMultiplier: 1,
-		CritMultiplier:   warrior.critMultiplier(mh),
+		DamageMultiplier: 1 / warrior.twoHandedWeaponSpecialization(),
+		CritMultiplier:   warrior.critMultiplier(),
 		ThreatMultiplier: 1.25,
 
 		// spell_warr_execute hands 20647 the dummy effect's value plus 20% of attack power and the extra

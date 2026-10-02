@@ -27,7 +27,7 @@ func (warrior *Warrior) registerSlamSpell() {
 			0.02*float64(warrior.Talents.UnendingFury),
 			core.TernaryFloat64(warrior.HasSetBonus(ItemSetDreadnaughtBattlegear, 2), 0.1, 0),
 		),
-		CritMultiplier:   warrior.critMultiplier(mh),
+		CritMultiplier:   warrior.critMultiplier(),
 		ThreatMultiplier: 1,
 		FlatThreatBonus:  140,
 

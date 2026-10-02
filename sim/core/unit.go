@@ -1,6 +1,7 @@
 package core
 
 import (
+	"math"
 	"time"
 
 	"github.com/wowsims/wotlk/sim/core/proto"
@@ -364,8 +365,14 @@ func (unit *Unit) Armor() float64 {
 	return unit.PseudoStats.ArmorMultiplier * unit.stats[stats.Armor]
 }
 
+// BlockValue of a player is Player::GetShieldBlockValue: the 10 comes off before the multiplier, and
+// the result is truncated to a whole point. An enemy's is Creature::GetShieldBlockValue, already in the stat.
 func (unit *Unit) BlockValue() float64 {
-	return unit.PseudoStats.BlockValueMultiplier * unit.stats[stats.BlockValue]
+	value := unit.stats[stats.BlockValue]
+	if unit.Type != EnemyUnit {
+		value = max(value-10, 0)
+	}
+	return math.Floor(unit.PseudoStats.BlockValueMultiplier * value)
 }
 
 // ArmorPenetrationPercentage is how much of the armor penetration cap this unit ignores. The rating

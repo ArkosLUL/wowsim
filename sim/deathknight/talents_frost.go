@@ -244,8 +244,10 @@ func (dk *Deathknight) applyDeathchill() {
 		Duration: time.Second * 30,
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
 			dk.IcyTouch.BonusCritRating += 100 * core.CritRatingPerCritChance
-			dk.FrostStrikeMhHit.BonusCritRating += 100 * core.CritRatingPerCritChance
-			dk.FrostStrikeOhHit.BonusCritRating += 100 * core.CritRatingPerCritChance
+			if dk.FrostStrikeMhHit != nil {
+				dk.FrostStrikeMhHit.BonusCritRating += 100 * core.CritRatingPerCritChance
+				dk.FrostStrikeOhHit.BonusCritRating += 100 * core.CritRatingPerCritChance
+			}
 			dk.ObliterateMhHit.BonusCritRating += 100 * core.CritRatingPerCritChance
 			dk.ObliterateOhHit.BonusCritRating += 100 * core.CritRatingPerCritChance
 			if dk.HowlingBlast != nil {
@@ -254,8 +256,10 @@ func (dk *Deathknight) applyDeathchill() {
 		},
 		OnExpire: func(aura *core.Aura, sim *core.Simulation) {
 			dk.IcyTouch.BonusCritRating -= 100 * core.CritRatingPerCritChance
-			dk.FrostStrikeMhHit.BonusCritRating -= 100 * core.CritRatingPerCritChance
-			dk.FrostStrikeOhHit.BonusCritRating -= 100 * core.CritRatingPerCritChance
+			if dk.FrostStrikeMhHit != nil {
+				dk.FrostStrikeMhHit.BonusCritRating -= 100 * core.CritRatingPerCritChance
+				dk.FrostStrikeOhHit.BonusCritRating -= 100 * core.CritRatingPerCritChance
+			}
 			dk.ObliterateMhHit.BonusCritRating -= 100 * core.CritRatingPerCritChance
 			dk.ObliterateOhHit.BonusCritRating -= 100 * core.CritRatingPerCritChance
 			if dk.HowlingBlast != nil {
@@ -282,6 +286,7 @@ func (dk *Deathknight) applyIcyTalons() {
 	// Improved Icy Talons
 	if dk.Talents.ImprovedIcyTalons {
 		dk.PseudoStats.MeleeSpeedMultiplier *= 1.05
+		dk.PseudoStats.RangedSpeedMultiplier *= 1.05
 	}
 
 	icyTalonsCoeff := 1 + 0.04*float64(dk.Talents.IcyTalons)

@@ -40,8 +40,8 @@ func (warrior *Warrior) registerThunderClapSpell() {
 
 		// Cruelty doesn't apply to Thunder Clap
 		BonusCritRating:  (float64(warrior.Talents.Incite)*5 - float64(warrior.Talents.Cruelty)*1) * core.CritRatingPerCritChance,
-		DamageMultiplier: []float64{1.0, 1.1, 1.2, 1.3}[warrior.Talents.ImprovedThunderClap],
-		CritMultiplier:   warrior.critMultiplier(none),
+		DamageMultiplier: []float64{1.0, 1.1, 1.2, 1.3}[warrior.Talents.ImprovedThunderClap] / warrior.twoHandedWeaponSpecialization(),
+		CritMultiplier:   warrior.critMultiplier(),
 		ThreatMultiplier: 1.85,
 
 		Direct: core.SpellEffect{Effect: 0, Min: 300, Max: 300, AP: 0.12},

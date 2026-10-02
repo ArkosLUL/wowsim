@@ -42,7 +42,7 @@ func (warrior *Warrior) RegisterShatteringThrowCD() {
 		},
 
 		DamageMultiplier: 1,
-		CritMultiplier:   warrior.critMultiplier(mh),
+		CritMultiplier:   warrior.critMultiplier(),
 		ThreatMultiplier: 1,
 
 		Direct: core.SpellEffect{Effect: 0, Min: 12, Max: 12, AP: 0.5},

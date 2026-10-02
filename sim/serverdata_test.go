@@ -370,7 +370,7 @@ var serverDataPresets = []serverDataPreset{
 		warlockOptions(proto.Warlock_Options_Imp, proto.Warlock_Options_GrandFirestone), false},
 
 	{"Fury", proto.Class_ClassWarrior, proto.Race_RaceOrc, "warrior", "p1_fury", "fury",
-		"302023102331-305053000520310053120500351", glyphs(int32(proto.WarriorMajorGlyph_GlyphOfWhirlwind),
+		"302023102331-305052000520310053120500351", glyphs(int32(proto.WarriorMajorGlyph_GlyphOfWhirlwind),
 			int32(proto.WarriorMajorGlyph_GlyphOfHeroicStrike), int32(proto.WarriorMajorGlyph_GlyphOfRending)),
 		warriorOptions, false},
 	{"Arms", proto.Class_ClassWarrior, proto.Race_RaceOrc, "warrior", "p1_arms", "arms",

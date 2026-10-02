@@ -98,7 +98,7 @@ func BenchmarkSimulate(b *testing.B) {
 	core.RaidBenchmarkIterations(b, rsr, 1, 100)
 }
 
-var FuryTalents = "302023102331-305053000520310053120500351"
+var FuryTalents = "302023102331-305052000520310053120500351"
 var FuryGlyphs = &proto.Glyphs{
 	Major1: int32(proto.WarriorMajorGlyph_GlyphOfWhirlwind),
 	Major2: int32(proto.WarriorMajorGlyph_GlyphOfHeroicStrike),

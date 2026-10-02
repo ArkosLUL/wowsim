@@ -33,8 +33,8 @@ func (warrior *Warrior) registerShockwaveSpell() {
 			},
 		},
 
-		DamageMultiplier: 1 + core.TernaryFloat64(warrior.HasSetBonus(ItemSetYmirjarLordsPlate, 2), .20, 0),
-		CritMultiplier:   warrior.critMultiplier(none),
+		DamageMultiplier: (1 + core.TernaryFloat64(warrior.HasSetBonus(ItemSetYmirjarLordsPlate, 2), .20, 0)) / warrior.twoHandedWeaponSpecialization(),
+		CritMultiplier:   warrior.critMultiplier(),
 		ThreatMultiplier: 1,
 
 		// Spell::EffectSchoolDMG adds the third effect's 75 as a percent of attack power to the second's 0

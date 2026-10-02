@@ -67,7 +67,7 @@ func (warrior *Warrior) registerOverpowerSpell(cdTimer *core.Timer) {
 
 		BonusCritRating:  25 * core.CritRatingPerCritChance * float64(warrior.Talents.ImprovedOverpower),
 		DamageMultiplier: 1 + 0.1*float64(warrior.Talents.UnrelentingAssault),
-		CritMultiplier:   warrior.critMultiplier(mh),
+		CritMultiplier:   warrior.critMultiplier(),
 		ThreatMultiplier: 0.75,
 
 		Direct: core.SpellEffect{Effect: 0, WeaponPct: 1},

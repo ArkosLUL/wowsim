@@ -47,7 +47,7 @@ func (warrior *Warrior) RegisterRendSpell() {
 		},
 
 		DamageMultiplier: 1,
-		CritMultiplier:   warrior.critMultiplier(mh),
+		CritMultiplier:   warrior.critMultiplier(),
 		ThreatMultiplier: 1,
 
 		Mods: []core.SpellMod{{Op: core.SpellModEffect1, Pct: improvedRendPct}},

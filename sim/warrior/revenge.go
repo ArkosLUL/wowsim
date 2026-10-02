@@ -89,7 +89,7 @@ func (warrior *Warrior) registerRevengeSpell(cdTimer *core.Timer) {
 			0.1*float64(warrior.Talents.UnrelentingAssault),
 			0.3*float64(warrior.Talents.ImprovedRevenge),
 		),
-		CritMultiplier:   warrior.critMultiplier(mh),
+		CritMultiplier:   warrior.critMultiplier(),
 		ThreatMultiplier: 1,
 		FlatThreatBonus:  121,
 

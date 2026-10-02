@@ -24,7 +24,6 @@ func (rogue *Rogue) newMutilateHitSpell(isMH bool) *core.Spell {
 		Flags:       core.SpellFlagMeleeMetrics | SpellFlagBuilder | SpellFlagColdBlooded,
 
 		BonusCritRating: core.TernaryFloat64(rogue.HasSetBonus(Tier9, 4), 5*core.CritRatingPerCritChance, 0) +
-			[]float64{0, 2, 4, 6}[rogue.Talents.TurnTheTables]*core.CritRatingPerCritChance +
 			5*core.CritRatingPerCritChance*float64(rogue.Talents.PuncturingWounds),
 
 		// all three classMasks reach both hands' family flags (48665 [0,2,0], 48664 [0,4,0])

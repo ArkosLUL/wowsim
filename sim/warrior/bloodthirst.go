@@ -38,7 +38,7 @@ func (warrior *Warrior) registerBloodthirstSpell(cdTimer *core.Timer) {
 			0.02*float64(warrior.Talents.UnendingFury),
 			core.TernaryFloat64(warrior.HasSetBonus(ItemSetOnslaughtBattlegear, 4), 0.05, 0),
 		),
-		CritMultiplier:   warrior.critMultiplier(mh),
+		CritMultiplier:   warrior.critMultiplier(),
 		ThreatMultiplier: 1,
 
 		// spell_warr_bloodthirst reads the 50 as a percent of attack power

@@ -6,6 +6,7 @@ import (
 	_ "github.com/wowsims/wotlk/sim/common" // imported to get item effects included.
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
+	googleProto "google.golang.org/protobuf/proto"
 )
 
 func init() {
@@ -179,6 +180,28 @@ func turnTheTablesTalentsRequest() *proto.RaidSimRequest {
 		ReactionTimeMs:     150,
 		ChannelClipDelayMs: 50,
 	})
+}
+
+// The boss only attacks the first rogue, and the second gets Turn the Tables from the first one's dodges
+// and parries.
+func TestTurnTheTablesFromAPartyMember(t *testing.T) {
+	rsr := turnTheTablesTalentsRequest()
+	tank := rsr.Raid.Parties[0].Players[0]
+	other := googleProto.Clone(tank).(*proto.Player)
+	rsr.Raid.Parties[0].Players = append(rsr.Raid.Parties[0].Players, other)
+	rsr.Raid.Tanks = []*proto.UnitReference{{Type: proto.UnitReference_Player, Index: 0}}
+	rsr.SimOptions = &proto.SimOptions{Iterations: 1, IsTest: true, RandomSeed: 101}
+
+	result := core.RunRaidSim(rsr)
+	if result.ErrorResult != "" {
+		t.Fatal(result.ErrorResult)
+	}
+	for _, aura := range result.RaidMetrics.Parties[0].Players[1].Auras {
+		if aura.Id.GetSpellId() == 52910 && aura.UptimeSecondsAvg > 0 {
+			return
+		}
+	}
+	t.Error("the rogue nobody attacks never got Turn the Tables")
 }
 
 // Ghostly Strike and Shadow Dance, and Vigor and Improved Expose Armor in the 20 Assassination points,
