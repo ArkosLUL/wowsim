@@ -76,8 +76,7 @@ func (rogue *Rogue) registerHemorrhageSpell() {
 			IgnoreHaste: true,
 		},
 
-		BonusCritRating: core.TernaryFloat64(rogue.HasSetBonus(Tier9, 4), 5*core.CritRatingPerCritChance, 0) +
-			[]float64{0, 2, 4, 6}[rogue.Talents.TurnTheTables]*core.CritRatingPerCritChance,
+		BonusCritRating: core.TernaryFloat64(rogue.HasSetBonus(Tier9, 4), 5*core.CritRatingPerCritChance, 0),
 
 		// Surprise Attacks' classMask reaches Hemorrhage too (Player::ApplySpellMod), same as Backstab
 		// and Sinister Strike.

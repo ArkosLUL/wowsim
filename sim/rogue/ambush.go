@@ -27,8 +27,7 @@ func (rogue *Rogue) registerAmbushSpell() {
 			return !rogue.PseudoStats.InFrontOfTarget && rogue.HasDagger(core.MainHand) && rogue.IsStealthed()
 		},
 
-		BonusCritRating: []float64{0, 2, 4, 6}[rogue.Talents.TurnTheTables]*core.CritRatingPerCritChance +
-			25*core.CritRatingPerCritChance*float64(rogue.Talents.ImprovedAmbush),
+		BonusCritRating: 25 * core.CritRatingPerCritChance * float64(rogue.Talents.ImprovedAmbush),
 		// Find Weakness and Opportunity are each their own SPELLMOD_DAMAGE (Player::ApplySpellMod
 		// multiplies them, it doesn't add them).
 		DamageMultiplier: spellModDamage(

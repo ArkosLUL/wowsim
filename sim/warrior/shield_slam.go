@@ -56,7 +56,7 @@ func (warrior *Warrior) registerShieldSlamSpell() {
 			core.TernaryFloat64(warrior.HasSetBonus(ItemSetDreadnaughtPlate, 2), .10, 0),
 			core.TernaryFloat64(warrior.HasSetBonus(ItemSetYmirjarLordsPlate, 2), .20, 0),
 		),
-		CritMultiplier:   warrior.critMultiplier(mh),
+		CritMultiplier:   warrior.critMultiplier(),
 		ThreatMultiplier: 1.3,
 		FlatThreatBonus:  770,
 

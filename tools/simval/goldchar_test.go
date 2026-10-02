@@ -229,8 +229,6 @@ var droppedGoldchar = []goldcharDrop{
 	{"HunterSV", 63672, ""},
 	{"ShamanElemental", 0, "spell power"},
 	{"WarlockAffliction", 0, "spell hit %"},
-	{"WarriorFury", 47502, ""},
-	{"WarriorArms", 47502, ""},
 }
 
 // goldcharReport reports a record's checks, holding them to droppedGoldchar.

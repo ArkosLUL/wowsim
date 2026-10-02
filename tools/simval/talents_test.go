@@ -25,13 +25,10 @@ var unbuildableSweep = []sweepDrop{{"WarlockAffliction", "darkPact", ""}}
 
 var droppedSweep = append(slices.Clone(unbuildableSweep), []sweepDrop{
 	{"WarlockAffliction", "suppression", "spell hit %"},
-	{"WarriorProtection", "shieldMastery", "block value"},
-	{"PaladinProtection", "redoubt", "block value"},
 	{"HunterBeastMastery", "improvedAspectOfTheMonkey", "dodge %"},
 	{"HunterMarksmanship", "combatExperience", "dodge %"},
 	{"HunterSurvival", "lightningReflexes", "dodge %"},
 	{"HunterSurvival", "huntingParty", "dodge %"},
-	{"DeathknightFrost", "improvedIcyTalons", "ranged haste"},
 	{"ShamanRestoration", "naturesBlessing", "spell power"},
 	{"MageArcane", "magicAbsorption", "fire resistance"},
 	{"MageArcane", "magicAbsorption", "nature resistance"},

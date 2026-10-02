@@ -25,7 +25,7 @@ func (warrior *Warrior) registerHeroicStrikeSpell() {
 
 		BonusCritRating:  (5*float64(warrior.Talents.Incite) + core.TernaryFloat64(warrior.HasSetBonus(ItemSetWrynnsBattlegear, 4), 5, 0)) * core.CritRatingPerCritChance,
 		DamageMultiplier: 1,
-		CritMultiplier:   warrior.critMultiplier(mh),
+		CritMultiplier:   warrior.critMultiplier(),
 		ThreatMultiplier: 1,
 		FlatThreatBonus:  259,
 
@@ -70,7 +70,7 @@ func (warrior *Warrior) registerCleaveSpell() {
 
 		BonusCritRating:  float64(warrior.Talents.Incite) * 5 * core.CritRatingPerCritChance,
 		DamageMultiplier: 1,
-		CritMultiplier:   warrior.critMultiplier(mh),
+		CritMultiplier:   warrior.critMultiplier(),
 		ThreatMultiplier: 1,
 		FlatThreatBonus:  225,
 

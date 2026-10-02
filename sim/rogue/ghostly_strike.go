@@ -39,8 +39,6 @@ func (rogue *Rogue) registerGhostlyStrikeSpell() {
 			IgnoreHaste: true,
 		},
 
-		BonusCritRating: []float64{0, 2, 4, 6}[rogue.Talents.TurnTheTables] * core.CritRatingPerCritChance,
-
 		DamageMultiplier: 1 + 0.02*float64(rogue.Talents.FindWeakness),
 		CritMultiplier:   rogue.MeleeCritMultiplier(true),
 		ThreatMultiplier: 1,

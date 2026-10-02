@@ -106,8 +106,8 @@ func (warrior *Warrior) AddPartyBuffs(_ *proto.PartyBuffs) {
 }
 
 func (warrior *Warrior) Initialize() {
-	warrior.AutoAttacks.MHConfig().CritMultiplier = warrior.autoCritMultiplier(mh)
-	warrior.AutoAttacks.OHConfig().CritMultiplier = warrior.autoCritMultiplier(oh)
+	warrior.AutoAttacks.MHConfig().CritMultiplier = warrior.autoCritMultiplier()
+	warrior.AutoAttacks.OHConfig().CritMultiplier = warrior.autoCritMultiplier()
 
 	primaryTimer := warrior.NewTimer()
 	overpowerRevengeTimer := warrior.NewTimer()
@@ -163,23 +163,15 @@ func NewWarrior(character *core.Character, talents string, inputs WarriorInputs)
 	return warrior
 }
 
-type hand int8
-
-const (
-	none hand = 0
-	mh   hand = 1
-	oh   hand = 2
-)
-
-func (warrior *Warrior) autoCritMultiplier(hand hand) float64 {
-	return warrior.MeleeCritMultiplier(primary(warrior, hand), 0)
+func (warrior *Warrior) autoCritMultiplier() float64 {
+	return warrior.MeleeCritMultiplier(warrior.poleaxeCritDamage(), 0)
 }
 
-func primary(warrior *Warrior, hand hand) float64 {
-	if warrior.Talents.PoleaxeSpecialization > 0 {
-		if (hand == mh && isPoleaxe(warrior.MainHand())) || (hand == oh && isPoleaxe(warrior.OffHand())) {
-			return 1 + 0.01*float64(warrior.Talents.PoleaxeSpecialization)
-		}
+// Poleaxe Specialization's crit damage is an aura the server keeps on while any weapon slot holds an axe or
+// polearm, and it counts for every physical crit, whichever hand swings, Thunder Clap included.
+func (warrior *Warrior) poleaxeCritDamage() float64 {
+	if warrior.Talents.PoleaxeSpecialization > 0 && (isPoleaxe(warrior.MainHand()) || isPoleaxe(warrior.OffHand())) {
+		return 1 + 0.01*float64(warrior.Talents.PoleaxeSpecialization)
 	}
 	return 1
 }
@@ -188,8 +180,8 @@ func isPoleaxe(weapon *core.Item) bool {
 	return weapon.WeaponType == proto.WeaponType_WeaponTypeAxe || weapon.WeaponType == proto.WeaponType_WeaponTypePolearm
 }
 
-func (warrior *Warrior) critMultiplier(hand hand) float64 {
-	return warrior.MeleeCritMultiplier(primary(warrior, hand), 0.1*float64(warrior.Talents.Impale))
+func (warrior *Warrior) critMultiplier() float64 {
+	return warrior.MeleeCritMultiplier(warrior.poleaxeCritDamage(), 0.1*float64(warrior.Talents.Impale))
 }
 
 func (warrior *Warrior) HasMajorGlyph(glyph proto.WarriorMajorGlyph) bool {

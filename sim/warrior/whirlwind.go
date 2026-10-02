@@ -26,7 +26,7 @@ func (warrior *Warrior) registerWhirlwindSpell() {
 				0.02*float64(warrior.Talents.UnendingFury),
 				0.1*float64(warrior.Talents.ImprovedWhirlwind),
 			) * (1 + 0.05*float64(warrior.Talents.DualWieldSpecialization)),
-			CritMultiplier:   warrior.critMultiplier(oh),
+			CritMultiplier:   warrior.critMultiplier(),
 			ThreatMultiplier: 1.25,
 
 			Direct: core.SpellEffect{Effect: 0, FromSpellID: 44949, WeaponPct: 1},
@@ -60,7 +60,7 @@ func (warrior *Warrior) registerWhirlwindSpell() {
 			0.02*float64(warrior.Talents.UnendingFury),
 			0.1*float64(warrior.Talents.ImprovedWhirlwind),
 		),
-		CritMultiplier:   warrior.critMultiplier(mh),
+		CritMultiplier:   warrior.critMultiplier(),
 		ThreatMultiplier: 1.25,
 
 		Direct: core.SpellEffect{Effect: 0, WeaponPct: 1},

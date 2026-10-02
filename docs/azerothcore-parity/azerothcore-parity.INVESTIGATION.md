@@ -2418,3 +2418,17 @@ of Elemental's. `NewEnvironment` there: Rogue 13%, Hunter 19%, raid 19%, Ret 25%
   shared 2000 permanently. They're now on `RaidBenchmarkIterations`, the same `iterations=1`/`iterations=100` pair as
   the rest, which builds its own `SimOptions` per case instead of touching the caller's. The five duplicate
   `benchmarkIterations` copies (hunter, retribution paladin, raid, rogue, elemental) now call it too.
+
+## PAR-FU-5 as built
+
+Melee mismatches the TE items dropped, re-measured on `fdbc3df49`.
+
+- **Block value** (`Unit.BlockValue`): a player's is `max(stat − 10, 0) × multiplier`, truncated (`Player::GetShieldBlockValue`); an enemy's stays as is (`CreatureBlockValue`). Shield of Righteousness and the shield tanks' block damage drop ~0.3%. Removed the `shieldMastery` and `redoubt` sweep drops.
+- **Deathchill without Frost Strike**: `applyDeathchill` skips the nil Frost Strike hit spells (`TestDeathchillWithoutFrostStrike`).
+- **Improved Icy Talons**: its own 5% (aura 192) multiplies melee and ranged speed; the raid 20% stays melee only. Removed the `improvedIcyTalons` drop. No DK golden moves, since no DK suite has a ranged swing.
+- **Turn the Tables**: the talent is a party area aura (effect 65) whose proc (`spell_proc` row -51627: taken melee, hit mask dodge, parry, block) gives the rogue the 8 s crit (52914, 52915, 52910) on the strikes in its class mask, Shiv included. The sim puts a trigger on every party member and pet in place of the permanent crit (`TestTurnTheTablesFromAPartyMember`). An individual sim's rogue is never attacked, so Assassination's Turn the Tables test loses its 6% Mutilate crit.
+- **Two-Handed Weapon Specialization**: the server skips a weapon-restricted physical aura without `SPELL_ATTR5_AURA_AFFECTS_NOT_JUST_REQ_EQUIPPED_ITEM` for spells with no equipped item class (`Unit::SpellPctDamageModsDone`). Thunder Clap, Shockwave and Execute (its damage spell 20647) divide the talent out. One-Handed Weapon Specialization has the attribute, so it stays on them. Victory Rush (34428) has the same rule but no sim spell; weapon damage spells take the talent through the weapon. Arms drops 0.5 to 0.7% and Fury 0.2%, mostly from Execute.
+- **Poleaxe Specialization's crit damage** (aura 163): the server keeps it on while any weapon slot holds an axe or polearm (`Player::HasItemFitToSpellRequirements`) and adds it to every physical crit, either hand or none (`Unit::CalculateSpellDamageTaken`). The sim gave it per hand and never to Thunder Clap or Shockwave, so Arms' Thunder Clap crit 2.2 vs the server's 2.32. `poleaxeCritDamage` in `sim/warrior/warrior.go` now applies it to every warrior crit. Arms' AllItems rows with an off-hand Heartpierce or Last Word move as the 2H axe's bonus reaches their off-hand crits.
+- **`FuryTalents`** spent 72 points: Improved Cleave 3 → 2 (`302023102331-305052000520310053120500351`), mirrored in `goldchar_setups.json` and `sim/serverdata_test.go`'s Fury preset (`TestTalentCoverage`). Iron Will 2 → 1 would leave 9 Arms points under row 3, which needs 10. Fury casts Cleave only on several targets, where it drops another 0.5%.
+
+**Live recapture**: `TestSimvalGoldenCharacters` with `SIMVAL_GOLDCHAR_ONLY` replaced both bots' records in `goldchar.jsonl`, now with Thunder Clap. Removed both `droppedGoldchar` 47502 entries and their README row; `TestGoldenCharacters` compares them, crit included.

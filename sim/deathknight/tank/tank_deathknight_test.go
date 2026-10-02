@@ -47,6 +47,25 @@ func TestBloodTank(t *testing.T) {
 	))
 }
 
+// Deathchill also buffs Frost Strike's hits, which a DK without the talent never registers.
+func TestDeathchillWithoutFrostStrike(t *testing.T) {
+	rsr := frostPresenceTalentsRequest()
+	player := rsr.Raid.Parties[0].Players[0]
+	player.TalentsString = "005500153330131-30505051002033112300203100" // FrostPresenceTalents without Frost Strike
+	rsr.SimOptions = &proto.SimOptions{Iterations: 1, IsTest: true, RandomSeed: 101}
+
+	result := core.RunRaidSim(rsr)
+	if result.ErrorResult != "" {
+		t.Fatal(result.ErrorResult)
+	}
+	for _, action := range result.RaidMetrics.Parties[0].Players[0].Actions {
+		if action.Id.GetSpellId() == 49796 {
+			return
+		}
+	}
+	t.Error("Deathchill never cast")
+}
+
 // talentsAverageRequest runs player the way Average-Default runs the suite's default player
 func talentsAverageRequest(player *proto.Player) *proto.RaidSimRequest {
 	rsr := &proto.RaidSimRequest{
@@ -174,7 +193,6 @@ var BloodAggroGlyphs = &proto.Glyphs{
 	Major3: int32(proto.DeathknightMajorGlyph_GlyphOfDarkCommand),
 }
 
-// keep Frost Strike, the sim panics on Deathchill without it
 var FrostPresenceTalents = "005500153330131-30505051002033112300203101"
 var FrostPresenceGlyphs = &proto.Glyphs{
 	Major1: int32(proto.DeathknightMajorGlyph_GlyphOfDarkCommand),

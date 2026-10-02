@@ -371,15 +371,18 @@ func (warrior *Warrior) applyTitansGrip() {
 	warrior.PseudoStats.SchoolDamageDealtMultiplier[stats.SchoolIndexPhysical] *= 1 - 0.1
 }
 
-func (warrior *Warrior) applyTwoHandedWeaponSpecialization() {
-	if warrior.Talents.TwoHandedWeaponSpecialization == 0 {
-		return
-	}
+// twoHandedWeaponSpecialization is the physical damage multiplier of the talent. The server skips it
+// for spells with no equipped item class (Unit::SpellPctDamageModsDone): Thunder Clap, Shockwave and
+// Execute's damage spell 20647 divide it back out.
+func (warrior *Warrior) twoHandedWeaponSpecialization() float64 {
 	if warrior.MainHand().HandType != proto.HandType_HandTypeTwoHand {
-		return
+		return 1
 	}
+	return 1 + 0.02*float64(warrior.Talents.TwoHandedWeaponSpecialization)
+}
 
-	warrior.PseudoStats.SchoolDamageDealtMultiplier[stats.SchoolIndexPhysical] *= 1 + 0.02*float64(warrior.Talents.TwoHandedWeaponSpecialization)
+func (warrior *Warrior) applyTwoHandedWeaponSpecialization() {
+	warrior.PseudoStats.SchoolDamageDealtMultiplier[stats.SchoolIndexPhysical] *= warrior.twoHandedWeaponSpecialization()
 }
 
 func (warrior *Warrior) applyOneHandedWeaponSpecialization() {
@@ -804,7 +807,7 @@ func (warrior *Warrior) RegisterBladestormCD() {
 			Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagIncludeTargetBonusDamage,
 
 			DamageMultiplier: 1 + 0.05*float64(warrior.Talents.DualWieldSpecialization),
-			CritMultiplier:   warrior.critMultiplier(oh),
+			CritMultiplier:   warrior.critMultiplier(),
 			ThreatMultiplier: 1.25,
 
 			// each Bladestorm tick's 50622 triggers the off-hand Whirlwind
@@ -833,7 +836,7 @@ func (warrior *Warrior) RegisterBladestormCD() {
 		},
 
 		DamageMultiplier: 1,
-		CritMultiplier:   warrior.critMultiplier(mh),
+		CritMultiplier:   warrior.critMultiplier(),
 		ThreatMultiplier: 1.25,
 
 		Dot: core.DotConfig{

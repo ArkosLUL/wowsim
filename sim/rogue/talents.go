@@ -17,6 +17,7 @@ func (rogue *Rogue) ApplyTalents() {
 	rogue.applyCombatPotency()
 	rogue.applyFocusedAttacks()
 	rogue.applyInitiative()
+	rogue.applyTurnTheTables()
 
 	rogue.PseudoStats.BaseDodge += 0.02 * float64(rogue.Talents.LightningReflexes)
 	rogue.PseudoStats.MeleeSpeedMultiplier *= []float64{1, 1.03, 1.06, 1.10}[rogue.Talents.LightningReflexes]
@@ -651,4 +652,48 @@ func (rogue *Rogue) registerHonorAmongThieves() {
 			}
 		},
 	})
+}
+
+// Turn the Tables: a party aura, so any party member's dodge, parry or block of a melee attack, pets
+// included, gives the rogue the crit for 8s. strikes are the rogue's spells in the proc's class mask.
+func (rogue *Rogue) applyTurnTheTables() {
+	if rogue.Talents.TurnTheTables == 0 {
+		return
+	}
+
+	crit := []float64{0, 2, 4, 6}[rogue.Talents.TurnTheTables] * core.CritRatingPerCritChance
+	strikes := func() []*core.Spell {
+		return []*core.Spell{rogue.Ambush, rogue.Backstab, rogue.GhostlyStrike, rogue.Hemorrhage, rogue.MutilateMH, rogue.MutilateOH, rogue.Shiv, rogue.SinisterStrike}
+	}
+	proc := rogue.RegisterAura(core.Aura{
+		Label:    "Turn the Tables",
+		ActionID: core.ActionID{SpellID: []int32{0, 52914, 52915, 52910}[rogue.Talents.TurnTheTables]},
+		Duration: time.Second * 8,
+		OnGain: func(aura *core.Aura, sim *core.Simulation) {
+			for _, spell := range strikes() {
+				if spell != nil {
+					spell.BonusCritRating += crit
+				}
+			}
+		},
+		OnExpire: func(aura *core.Aura, sim *core.Simulation) {
+			for _, spell := range strikes() {
+				if spell != nil {
+					spell.BonusCritRating -= crit
+				}
+			}
+		},
+	})
+
+	for _, member := range rogue.Party.PlayersAndPets {
+		core.MakeProcTriggerAura(&member.GetCharacter().Unit, core.ProcTrigger{
+			Name:     "Turn the Tables Trigger " + rogue.Label,
+			Callback: core.CallbackOnSpellHitTaken,
+			ProcMask: core.ProcMaskMelee,
+			Outcome:  core.OutcomeBlock | core.OutcomeDodge | core.OutcomeParry,
+			Handler: func(sim *core.Simulation, _ *core.Spell, _ *core.SpellResult) {
+				proc.Activate(sim)
+			},
+		})
+	}
 }
