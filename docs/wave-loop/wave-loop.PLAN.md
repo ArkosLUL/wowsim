@@ -131,8 +131,7 @@ then covers all 28 builds, tanks included, since the cut changes prot paladin an
 
 ## Current wave
 
-- Wave: R, running; base `9f1f2f94f`. BIS-outclassed: implementing. Prod runs Q's `225191f1f`. Master's `80eee8d02`
-  isn't merged in: the permission check refused the wave-start merge, so it waits for the user.
+- Wave: R, running; base `9f1f2f94f`. BIS-outclassed: implementing. Prod runs Q's `225191f1f`.
 - Open: the talent sweep's unseen talents (test-enrichment INVESTIGATION, TE-SWEEP as built); from Q (parity
   INVESTIGATION, PAR-FU-4..7 as built): Ranged Weapon Specialization on Explosive Trap and magic procs, Glyph of
   Totem of Wrath's 84 spell power unverified live, aura-163 crit damage adds on the server for specials (the sim
