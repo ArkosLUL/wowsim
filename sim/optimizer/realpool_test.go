@@ -253,6 +253,37 @@ func enchantFits(e *proto.UIEnchant, item *proto.UIItem, slot proto.ItemSlot, cl
 	return e.RequiredProfession == proto.Profession_ProfessionUnknown || slices.Contains(professions, e.RequiredProfession)
 }
 
+// outclassedItemLevel, phaseTierOffset and outclassed mirror OUTCLASSED_ITEM_LEVEL, PHASE_TIER_OFFSET
+// and isOutclassed in ui/core/optimizer. TestOutclassedMirrorsUI checks the constants.
+const (
+	outclassedItemLevel = 187
+	phaseTierOffset     = 12
+)
+
+func outclassed(item *proto.UIItem, row *proto.CatalogItem) bool {
+	plain := item.SetName == "" && !row.GetHasEffect()
+	return item.Ilvl < outclassedItemLevel && (plain || row.GetProgressionTier() <= phaseTierOffset)
+}
+
+// keepUnlessOutclassed is a realisticPool keep that leaves outclassed items out, like the pool
+// builder, except what the player wears. Unlike the pool builder, a worn one stays in every slot
+// it fits.
+func keepUnlessOutclassed(tb testing.TB, player *proto.Player) func(*proto.UIItem) bool {
+	tb.Helper()
+	_, catalog := loadRealData(tb)
+	rows := make(map[int32]*proto.CatalogItem, len(catalog.Items))
+	for _, row := range catalog.Items {
+		rows[row.Id] = row
+	}
+	worn := map[int32]bool{}
+	for _, spec := range player.GetEquipment().GetItems() {
+		worn[spec.GetId()] = true
+	}
+	return func(item *proto.UIItem) bool {
+		return worn[item.Id] || !outclassed(item, rows[item.Id])
+	}
+}
+
 // realisticPool builds the pool the UI's pool builder would for the player at a content phase: the
 // class's usable items per slot at catalog tier <= 12 + phase, PvE only, for its faction or either,
 // with the enchants and gems that fit the same way. Item data stays in core's database, so the pool

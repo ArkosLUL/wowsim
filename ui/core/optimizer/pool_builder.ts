@@ -48,7 +48,7 @@ import { isValidReforge, Reforging, reforgingFor } from '../proto_utils/reforgin
 import { Stats } from '../proto_utils/stats.js';
 import { enchantAppliesToItem, isTankSpec, playerProtoProfessions, playerToSpec, raceToFaction } from '../proto_utils/utils.js';
 import { distinct, getEnumValues } from '../utils.js';
-import { ALL_SOURCE_KINDS, Availability, CatalogIndex, isAvailable, MAX_CONTENT_PHASE, MIN_CONTENT_PHASE } from './catalog.js';
+import { ALL_SOURCE_KINDS, Availability, CatalogIndex, isAvailable, MAX_CONTENT_PHASE, MIN_CONTENT_PHASE, PHASE_TIER_OFFSET } from './catalog.js';
 import { filterItemsByFilters } from './item_filters.js';
 
 // Everything the tab lets the user set.
@@ -112,7 +112,8 @@ export interface PoolBuilderInput {
 	db: Database;
 	// Extra starting points for the search, e.g. the raider's BiS from the phase before. The search
 	// drops what the pool doesn't offer, but Go rejects the whole request over an item or gem it has no
-	// data for, and the web server only knows what the pool and the players' gear carry.
+	// data for, and the web server only knows what the pool and the players' gear carry. So an item in
+	// neither the pool nor the target's gear comes out here.
 	warmStarts?: Array<EquipmentSpec>;
 	// OptimizerObjectiveOwnMetrics when unset. The raid batch's stage 2 sends OptimizerObjectiveRaidDps
 	// for its DPS raiders, which scores against the whole raid in `base` instead of the target alone.
@@ -313,13 +314,27 @@ function serverSockets(item: Item, blacksmith: boolean): Array<GemColor> {
 }
 
 // Below this many candidates, pruning isn't worth the risk of trimming a real spec's test fixture:
-// only Retribution-sized pools (the search's testdata holds 2.6k-4.6k) need the smaller request.
+// only Retribution-sized pools (the replay fixtures hold 1.2k-3.2k) need the smaller request.
 const PRUNE_CANDIDATES_THRESHOLD = 500;
 
-// pruneDominatedItems drops a plain item (no set bonus, no on-equip effect: nothing a stat
-// comparison would miss) when another candidate in its slot beats it on every stat with an
-// identical socket layout, so no reforge or gem choice could ever give it a use the other item
-// doesn't already cover. It never touches the equipped item, which the seed still needs even
+// isOutclassed's item level cut. sim/optimizer's TestOutclassedMirrorsUI reads this line, so keep it
+// in this shape.
+export const OUTCLASSED_ITEM_LEVEL = 187;
+
+// No set bonus and no on-equip effect: nothing a stat comparison would miss.
+function isPlain(item: Item, row: CatalogItem | undefined): boolean {
+	return !item.setName && !row?.hasEffect;
+}
+
+// Plain gear under OUTCLASSED_ITEM_LEVEL, or any under it from before Northrend by catalog tier.
+// Holiday loot reads tier 0 or 8 but is all 200 and up, so it stays.
+export function isOutclassed(item: Item, row: CatalogItem | undefined): boolean {
+	return item.ilvl < OUTCLASSED_ITEM_LEVEL && (isPlain(item, row) || (row?.progressionTier ?? 0) <= PHASE_TIER_OFFSET);
+}
+
+// pruneDominatedItems drops a plain item when another candidate in its slot beats it on every stat
+// with an identical socket layout, so no reforge or gem choice could ever give it a use the other
+// item doesn't already cover. It never touches the equipped item, which the seed still needs even
 // where the pool has moved past it.
 function pruneDominatedItems(offers: SlotOffers, catalog: CatalogIndex, equipped: EquipmentSpec) {
 	const total = [...offers.values()].reduce((sum, slot) => sum + slot.size, 0);
@@ -335,7 +350,7 @@ function pruneDominatedItems(offers: SlotOffers, catalog: CatalogIndex, equipped
 		const worn = equipped.items[slot]?.id || 0;
 		const items = [...slotOffers.values()].map(offer => offer.item);
 		for (const b of items) {
-			if (b.id == worn || b.setName || catalog.item(b.id)?.hasEffect) {
+			if (b.id == worn || !isPlain(b, catalog.item(b.id))) {
 				continue;
 			}
 			if (items.some(a => a.id != b.id && dominates(a, b))) {
@@ -411,10 +426,10 @@ function toSimItem(item: Item): SimItem {
 // under Node.
 //
 // Per slot, the pool is the target's usable items, through the gear picker's filters, then the server
-// catalog (tier, faction, sources, no PvP) and professions. The item the target wears in a slot skips
-// the filters and the sources there, since the target owns it, but not the rest. Only there: one owned
-// copy in both rings' or both hands' pools could come back as a pair. Enchants follow
-// enchantAppliesToItem. Excluded items and gems stay out.
+// catalog (tier, faction, sources, no PvP) and professions, less outclassed gear. The item the target
+// wears in a slot skips the filters, the sources and the outclassed cut there, since the target owns
+// it, but not the rest. Only there: one owned copy in both rings' or both hands' pools could come back
+// as a pair. Enchants follow enchantAppliesToItem. Excluded items and gems stay out.
 //
 // The seed has to pass the optimizer's equip rules, so it's trimmed to what the pool offers: that
 // way a phase's result can't keep gear from a later phase. Locked slots keep the seed's choice, but a
@@ -448,7 +463,7 @@ export function buildOptimizeRequest(input: PoolBuilderInput): BuiltRequest {
 		const shown = new Set(filterItemsByFilters(all, item => item, slot, input.filters).map(item => item.id));
 		const worn = equipped.items[slot]?.id || 0;
 		const items = all.filter(item => {
-			if (shown.has(item.id) && usable(item.id, item.requiredProfession, itemAvailability)) {
+			if (shown.has(item.id) && usable(item.id, item.requiredProfession, itemAvailability) && !isOutclassed(item, catalog.item(item.id))) {
 				return true;
 			}
 			if (item.id == worn && usable(item.id, item.requiredProfession, anySource)) {
@@ -522,6 +537,12 @@ export function buildOptimizeRequest(input: PoolBuilderInput): BuiltRequest {
 		}
 	}
 
+	// a stored batch's earlier pick can hold an item this pool has since cut, and Go has no data for it
+	const known = new Set([...poolItems.keys(), ...seed.itemIds(), ...equipped.items.map(spec => spec.id)]);
+	const warmStarts = (input.warmStarts || []).map(es =>
+		EquipmentSpec.create({ items: es.items.map(spec => (known.has(spec.id) ? ItemSpec.clone(spec) : ItemSpec.create())) }),
+	);
+
 	// the equipped gear's rows too, for its unmodeled effects in the result
 	const equippedIds = equipped.items.flatMap(spec => [spec.id, ...spec.gems]).filter(id => id != 0);
 	const catalogIds = distinct([...poolItems.keys(), ...poolGems.keys(), ...seed.itemIds(), ...seed.gemIds(), ...equippedIds]);
@@ -566,7 +587,7 @@ export function buildOptimizeRequest(input: PoolBuilderInput): BuiltRequest {
 			sources: settings.sources.slice(),
 			lockedSlots: ALL_SLOTS.filter(slot => locked.has(slot)),
 			excludedItemIds: settings.excludedItemIds.slice(),
-			warmStarts: (input.warmStarts || []).map(es => EquipmentSpec.clone(es)),
+			warmStarts,
 		}),
 		pool: CandidatePool.create({
 			slots: slotPools,
