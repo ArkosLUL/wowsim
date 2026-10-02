@@ -142,7 +142,7 @@ func TestSpellTweaksEnableGatesScriptedTweaks(t *testing.T) {
 		Enable: on, ExoticPetDamagePct: googleProto.Float64(10), HunterPetHaste: on, HunterPetArmorPen: on,
 		DkGhoulArmorPen: on, FeralSpiritHaste: on, DiseaseHaste: on, DeadlyPoisonMurder: on,
 		RuptureWeaponExpertise: on, RendTrauma: on, BalanceDotScaling: on, TitansGripNoDamagePenalty: on,
-		OmenClarityFaerieFire: on,
+		OmenClarityFaerieFire: on, ShadowDotHaste: on,
 	}
 
 	got := NewServerSettings(&proto.ServerSettings{SpellTweaks: allOn}).SpellTweaks

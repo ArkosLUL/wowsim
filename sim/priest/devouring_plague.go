@@ -14,7 +14,8 @@ func (priest *Priest) registerDevouringPlagueSpell() {
 	actionID := core.ActionID{SpellID: 48300}
 	mentalAgility := []float64{0, .04, .07, .10}[priest.Talents.MentalAgility]
 	shadowFocus := 0.02 * float64(priest.Talents.ShadowFocus)
-	priest.DpInitMultiplier = 8 * 0.1 * float64(priest.Talents.ImprovedDevouringPlague)
+	priest.DpInitMultiplier = 0.1 * float64(priest.Talents.ImprovedDevouringPlague)
+	addsTicks := priest.shadowDotAddsTicks()
 	hasGlyphOfShadow := priest.HasGlyph(int32(proto.PriestMajorGlyph_GlyphOfShadow))
 
 	// Darkness, Twin Disciplines and Improved Devouring Plague are all SPELLMOD_DOT on the server, so
@@ -46,7 +47,7 @@ func (priest *Priest) registerDevouringPlagueSpell() {
 			Direct: core.SpellEffect{Effect: 0, Min: 1, Max: 1},
 
 			ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-				baseDamage := (devouringPlagueTickBase + devouringPlagueTickSP*spell.SpellPower()) * priest.DpInitMultiplier
+				baseDamage := (devouringPlagueTickBase + devouringPlagueTickSP*spell.SpellPower()) * priest.DpInitMultiplier * float64(priest.devouringPlagueTotalTicks(target))
 				result := spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 
 				if result.DidCrit() && hasGlyphOfShadow {
@@ -88,6 +89,7 @@ func (priest *Priest) registerDevouringPlagueSpell() {
 			NumberOfTicks:       8,
 			TickLength:          time.Second * 3,
 			AffectedByCastSpeed: priest.Talents.Shadowform,
+			TickHaste:           shadowDotTickHaste(addsTicks),
 			// Shadowform (49868) grants CanPeriodicTickCrit to Devouring Plague's dot.
 			TicksCanCrit: priest.Talents.Shadowform,
 			Tick:         core.SpellEffect{Effect: 0, Min: devouringPlagueTickBase, Max: devouringPlagueTickBase, SP: devouringPlagueTickSP},

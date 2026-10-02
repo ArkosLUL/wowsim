@@ -11,6 +11,7 @@ func (priest *Priest) registerShadowWordPainSpell() {
 	twistedFaithMultiplier := 1 + 0.02*float64(priest.Talents.TwistedFaith)
 	mentalAgility := []float64{0, .04, .07, .10}[priest.Talents.MentalAgility]
 	shadowFocus := 0.02 * float64(priest.Talents.ShadowFocus)
+	addsTicks := priest.shadowDotAddsTicks()
 	mindFlayMod := twistedFaithMultiplier +
 		core.TernaryFloat64(priest.HasGlyph(int32(proto.PriestMajorGlyph_GlyphOfMindFlay)), 0.1, 0)
 
@@ -60,7 +61,9 @@ func (priest *Priest) registerShadowWordPainSpell() {
 
 			NumberOfTicks: 6 +
 				core.TernaryInt32(priest.HasSetBonus(ItemSetAbsolution, 2), 1, 0),
-			TickLength: time.Second * 3,
+			TickLength:          time.Second * 3,
+			AffectedByCastSpeed: addsTicks,
+			TickHaste:           core.SpellHasteAddsTicks,
 			// Shadowform (49868) grants CanPeriodicTickCrit to SW:P's dot.
 			TicksCanCrit: priest.Talents.Shadowform,
 			Tick:         core.SpellEffect{Effect: 0, Min: 230, Max: 230, SP: 0.1833},

@@ -41,6 +41,7 @@ type SpellTweaks struct {
 	BalanceDotScaling         bool
 	TitansGripNoDamagePenalty bool
 	OmenClarityFaerieFire     bool
+	ShadowDotHaste            bool
 }
 
 // DungeonScaleModifiers is one mod-dungeon-scale key group, e.g. StatModifierRaid25M.Boss.
@@ -129,6 +130,7 @@ func newSpellTweaks(settings, live *proto.SpellTweaksSettings) SpellTweaks {
 	tweaks.BalanceDotScaling = pick(settings.BalanceDotScaling, live.BalanceDotScaling)
 	tweaks.TitansGripNoDamagePenalty = pick(settings.TitansGripNoDamagePenalty, live.TitansGripNoDamagePenalty)
 	tweaks.OmenClarityFaerieFire = pick(settings.OmenClarityFaerieFire, live.OmenClarityFaerieFire)
+	tweaks.ShadowDotHaste = pick(settings.ShadowDotHaste, live.ShadowDotHaste)
 	return tweaks
 }
 
