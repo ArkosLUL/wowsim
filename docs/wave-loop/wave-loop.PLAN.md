@@ -128,14 +128,14 @@ Shadow priest DoT haste. The DPS preset rerun follows Q, only on the user's go-a
 
 ## Current wave
 
-- Wave: Q, landed (master fast-forwarded to this close-out). Next: the DPS preset rerun below, on the user's
-  go-ahead. Prod runs O's `24f581bf9`; Q changes sim code and the server settings picker.
+- Wave: Q, landed (master fast-forwarded to this close-out). Nothing queued: other sessions plan what follows (the
+  user's call, 2026-10-02). Prod runs Q's `225191f1f`.
 - Open: the talent sweep's unseen talents (test-enrichment INVESTIGATION, TE-SWEEP as built); from Q (parity
   INVESTIGATION, PAR-FU-4..7 as built): Ranged Weapon Specialization on Explosive Trap and magic procs, Glyph of
   Totem of Wrath's 84 spell power unverified live, aura-163 crit damage adds on the server for specials (the sim
   multiplies), a shaman's block value lacks strength/2, and 72-point Fury and Balance strings in the optimizer's
   test inputs and `gen_db`.
-- Carried (the user's call, 2026-10-01; after Q, only on the user's go-ahead): rerun every DPS preset on the final HEAD, since BIS-caps-race changes
+- Deferred (the user's call, 2026-10-02; only on the user's go-ahead): rerun every DPS preset on the final HEAD, since BIS-caps-race changes
   every racial search and `ff0920a96` the 16 builds `mage_*`, `rogue_*`, `warlock_*`, `warrior_arms`,
   `warrior_fury`, `protection_warrior`, `shadow_priest`, `smite_priest`, `dk_blood`, `elemental_shaman`.
 - Workflow runIds: Q's `wf_47a2be77-20d` and `wf_6f439290-bf9` (PAR-FU-5 and 6's live stages; base `fdbc3df49`); P's `wf_9c73b1de-ff3` (base `c678de53e`); O's `wf_cd004c46-c80` (base `b069c688b`); N's `wf_4b37e171-123` (base `7f4174efb`); M's `wf_8ab862a5-d37` (base `33da5ca34`); L's `wf_34052b28-d62`, `wf_1a26dbdb-51c`, `wf_ac1129b6-8d7`, `wf_a59f095c-4b7`, `wf_f5be2bcf-e23`,
