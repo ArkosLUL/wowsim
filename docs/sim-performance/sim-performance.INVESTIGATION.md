@@ -716,3 +716,40 @@ raid25 scenarios at Quick (raid DPS's full curve took 97 min), and `-skip` leave
 (56 min alone in wave J). Estimated from per-point times, L's cut-off run and I3's baseline: about 50 min.
 The optimizer at Normal 9 (the six slow-suite requests 6.6 at I3, the tank 1.5), Quick's sweep 13, the
 raid25 scenarios at Quick 22 (raid DPS 377 s at 8 procs, 3 × 291 s at 16), the rest 4.
+
+## Re-timing after wave O (integration, idle machine)
+
+The [full baseline](../../tools/perf/README.md#full-baseline) at `24f581bf9`, with the worldserver, authserver and
+database stopped (Chronicle under 1%): 46 min. The worldserver crash-looped on the stopped database through the
+last scenario (Ret at Normal). Its report replaced `tools/perf/baseline.json`. Against I3's, 72 points ran better
+past the noise and 180 worse.
+
+At GOMAXPROCS 16, I3 → O (util, busy):
+
+| Scenario | Wall | Util | Busy |
+|---|---|---|---|
+| sim/hunter | 0.14 → 0.17 s | | |
+| sim/shaman_elemental | 0.05 → 0.07 s | | |
+| sim/raid | 0.85 → 0.97 s | | |
+| optimizer/quick/combat_rogue_p3 | 10.20 → 13.91 s | 92 → 94% | 84 → 90% |
+| optimizer/quick/feral_tank_p2 | 8.52 → 4.47 s | 84 → 91% | 63 → 90% |
+| optimizer/quick/fire_mage_p3 | 2.83 → 2.93 s | 87 → 88% | 89 → 90% |
+| optimizer/quick/fury_p1 | 6.21 → 6.38 s | 92 → 93% | 87 → 89% |
+| optimizer/quick/prot_paladin_p3 | 7.53 → 3.95 s | 87 → 89% | 56 → 83% |
+| optimizer/quick/retribution_p4 | 5.48 → 7.43 s | 88 → 71% | 70 → 79% |
+| optimizer/normal/combat_rogue_p3 | 120.3 → 117.4 s | 99 → 90% | 98 → 97% |
+| optimizer/normal/feral_tank_p2 | 70.7 → 91.6 s | 98 → 46% | 98 → 96% |
+| optimizer/normal/fire_mage_p3 | 21.6 → 23.9 s | 93 → 64% | 97 → 96% |
+| optimizer/normal/fury_p1 | 66.7 → 72.0 s | 97 → 88% | 97 → 98% |
+| optimizer/normal/prot_paladin_p3 | 65.9 → 40.1 s | 96 → 89% | 88 → 94% |
+| optimizer/normal/retribution_p4 | 48.6 → 46.2 s | 97 → 96% | 94 → 94% |
+
+- Sims: 2 to 9% slower at one thread across I4 to O's parity work, Hunter +19%, Elemental +47% (allocations ×3);
+  the throughput rows in [wave-loop PLAN](../wave-loop/wave-loop.PLAN.md#sim-throughput) show the same drift.
+- Both tanks' Quick runs about 47% faster, Prot Pal's Normal 39%: likely K's generic boss replacing the scripted
+  fights (not traced).
+- Combat Rogue's and Ret's Quick runs 36% slower: likely L's one gear search per racial finalist (BIS-caps-race).
+- Normal's Feral Tank (+30% wall, CPU -39%) and Fire Mage (+11%, CPU -23%) ran at 46 and 64% util with busy
+  workers: not traced.
+- New since I3, raid25 at Quick: raid DPS 366 s at 8, 292 s at 16 (reps 280 to 364 s); tank 15.0 s at 8, 10.9 s
+  at 16. Tank at Normal: 74.1 s.

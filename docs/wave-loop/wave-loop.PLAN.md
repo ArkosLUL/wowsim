@@ -125,8 +125,7 @@ PAR-FU-3 and PERF-FU join N, the user's call too (the same day): wave L's and M'
 
 ## Current wave
 
-- Wave: O, landed (master fast-forwarded to this close-out). Next: P (TE-SWEEP). Prod runs L's `23e9e9e79`.
-- Left from N: the `tools/perf` full baseline on an idle machine; its 2026-10-01 run overlapped a game on the host.
+- Wave: O, landed (master fast-forwarded to this close-out). Next: P (TE-SWEEP). Prod runs O's `24f581bf9`.
 - Carried (the user's call, 2026-10-01): rerun every DPS preset on the final HEAD, since BIS-caps-race changes
   every racial search and `ff0920a96` the 16 builds `mage_*`, `rogue_*`, `warlock_*`, `warrior_arms`,
   `warrior_fury`, `protection_warrior`, `shadow_priest`, `smite_priest`, `dk_blood`, `elemental_shaman`.

@@ -245,7 +245,7 @@ floor (`slopeBox` gives the floor's stat ub +Inf), so `racialBounds` cost nothin
 `OptimizerResult` bit-identical: the surrogate kernel skips zero stats and reads each curve once per pass; a
 state-aware `moveBound` lets `bestItem` and `bestPartner` skip moves that can't win (arms search CPU 2014 → 26 s);
 gem kinds group once per pool. Captured P2 Normal jobs: Mighty 136 → 56 s, Stormweaver 52 → 40 s. The harness
-runs raid25 Quick at `-raid-procs 8,16` and skips raid DPS at Normal (55 min) by default: about 50 min in all.
+runs raid25 Quick at `-raid-procs 8,16` and skips raid DPS at Normal (55 min) by default, kept by the user (2026-10-02): 46 min idle at O.
 
 ## Order
 
