@@ -25,7 +25,8 @@ records, which `TestStrikesRecords` replays ([tools/simval](../../../../tools/si
 (`tools/simval/buffs_test.go`) with a row here; its line stays.
 
 A record of any of these files that disagrees with the sim is a real mismatch: it's dropped from the file and
-listed here, and the sim isn't changed.
+listed here, and the sim isn't changed. The exceptions keep the line: `buffs.jsonl` (a dropped state or check is
+only logged) and a known mismatch of `strikes.jsonl`.
 
 `implemented_talents.json` is the talent guard's export (`TestTalentCoverage`, `sim/talent_coverage_test.go`):
 every talent `sim/<class>` reads, with class, tree, `fieldName`, row, max points and its spell per rank. The

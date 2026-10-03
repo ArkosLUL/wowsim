@@ -86,7 +86,26 @@ class by simval.
   Within), truncated, at least 0. Percents add, never multiply; rage is in tenths. `DefaultCast.Cost` is the
   base; `StaticCost()` has the never-changing talents (options' `Multiplier`, `FlatMod`) and is what rotations
   read. Dynamic mods: `Spell.CostMultiplier`/`CostFlat`, `PseudoStats.CostMultiplier`/`CostFlat`,
-  `Unit.AddSchoolCostMultiplier`/`AddSchoolCostFlat`.
+  `Unit.AddSchoolCostMultiplier`/`AddSchoolCostFlat`. `ApplyCostModifiers` caches per spell, comparing every
+  input (`costCache`): a new input joins that key.
+- **Threat** (`sim/core/threat.go`; `ThreatManager::CalculateModifiedThreat`, `Spell::HandleThreatSpells`):
+  - A hit's threat is its damage or healing × `spell_threat` pctMod × `Spell.ThreatMultiplier`
+    (`SPELLMOD_THREAT`) × the school multiplier: `PseudoStats.ThreatMultiplier` times each
+    `AddThreatSchoolMultiplier` aura covering the spell, once per aura. `ThreatMultiplier` 0 means no threat at
+    all, bonus included.
+  - The cast's bonus is the row's flatMod + apPctMod × main hand AP, else the spell's level (none under
+    `NO_INITIAL_THREAT`, `ATTR1_NO_THREAT` or `ATTR3_SUPPRESS_TARGET_PROCS`). Stance, form and presence
+    multipliers never touch it. It's split over the distinct enemies the cast reached (misses count) plus the
+    caster when an effect lands on it; ticks get none, nor does anything before the pull. A positive spell's
+    bonus is modified and shared as assist threat.
+  - The rows are `sim/core/serverdata/threat_auto_gen.go` (gen_serverdata), so class code carries no flats or
+    percents and `FlatThreatBonus` panics. `SpellConfig.ThreatSpellID` names the server spell a sim spell
+    stands for, `NoThreatBonus` marks damage the server deals through an aura (damage shields, proc trigger
+    damage), `Spell.LandThreatBonus` counts an enemy a cast selects without a hit (Consecration).
+  - Dire Bear Form is ×1.45 × 1.43; Blood and Unholy Presence −20% with Subversion's flat added to that same
+    effect (−45% at 3 points); Shadowform ×0.7 in every school; Fanaticism −10% a point, kept under Righteous
+    Fury. Arcane Subtlety, Burning Soul and Frost Channeling are school auras, so Frostfire Bolt gets two.
+  - Thunderfury is one cast of 21992; its slow (27648) is `ATTR1_NO_THREAT`.
 - **Stat sheet:** armor on jewelry, weapons and `ArmorDamageModifier` is bonus armor for every class
   (`Player::_ApplyItemBonuses`); block value is half a point a strength for every player. Moonkin Form ×4.7
   item armor (24905) and the weapon's feral AP.

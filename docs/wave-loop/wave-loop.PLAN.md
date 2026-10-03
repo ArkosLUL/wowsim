@@ -145,7 +145,7 @@ PERF-COST joins V (the user's call, the same day): T2's cost arithmetic slowed C
 ## Current wave
 
 - Wave: V, running; base `16bdd941c`, runId `wf_ea73babf-e53`. EC-THREAT-FIX, EC-STRIKES (live stage pending), EC-BUFFS,
-PERF-COST merged; cross-review next. Next: W.
+  PERF-COST merged; cross-review next. Next: W.
   Prod runs Q's `225191f1f`; R changes the optimizer's pool and the BiS tabs' hint.
 - Open: the talent sweep's unseen talents (test-enrichment INVESTIGATION, TE-SWEEP as built); from Q (parity
   INVESTIGATION, PAR-FU-4..7 as built): Ranged Weapon Specialization on Explosive Trap and magic procs, Glyph of Totem
