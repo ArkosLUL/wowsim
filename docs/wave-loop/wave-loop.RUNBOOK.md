@@ -81,7 +81,8 @@ loop" re-affirms them.
       - `dock.sh promote` only its suites. Diff stats, abilities and weights.
       - Commit "Promote goldens for <WI>".
    5. If APLs, encounters or item data changed, regenerate `db.json` once per wave, here.
-   6. Commit its mod-sim-validation changes, if any.
+   6. Commit its mod-sim-validation changes, if any. Where another item's changes share a file, stage this item's
+      hunks with `git apply --cached` of a patch holding only them.
    7. Remove the worktree and branch. Update the WI's status in the PLAN and its effort PLAN. Commit.
 
    A red, blocked or `waiting-server` WI stays unmerged and carries forward. A server stage left

@@ -74,7 +74,7 @@ G = changes goldens. FS = runs all 37 suites.
 | T | EC-SHEET · EC-SPELLMOD (live) · EC-THREAT (C++, live) · EC-AOE | ✔ |
 | T2 | EC-COST-FIX (G, FS) · EC-TIMING-FIX (G, FS) · EC-SHEET-FIX (G) · EC-STACK-FIX (G) | ✔ |
 | V | EC-THREAT-FIX (G, FS) · EC-STRIKES (C++, live) · EC-BUFFS (live) · PERF-COST | ✔ |
-| W | EC-GEAR (C++, live) · EC-MOBS (live) | ✔ |
+| W | EC-GEAR (C++, live) · EC-MOBS (live) · EC-STRIKES' live stage (from V) | ✔ |
 | X | EC-FIGHT (live) | ✔ |
 
 F2 is an inserted wave, not a fifth item in F: the core swing and cast fixes of PAR-P7-0c have to land
@@ -144,8 +144,9 @@ PERF-COST joins V (the user's call, the same day): T2's cost arithmetic slowed C
 
 ## Current wave
 
-- Wave: V, running; base `16bdd941c`, runId `wf_ea73babf-e53`. EC-THREAT-FIX, EC-STRIKES (live stage pending), EC-BUFFS,
-  PERF-COST merged; cross-review next. Next: W.
+- Wave: V, landed (master fast-forwarded to this close-out). Next: W (EC-GEAR, EC-MOBS) and EC-STRIKES' live stage,
+  carried since Deathsong stayed online; W's rebuild covers its C++, its notes are in
+  `G:\DevStuff\GitHub\.wave-loop\ec-strikes-tmp`. V's throughput row waits for an idle machine.
   Prod runs Q's `225191f1f`; R changes the optimizer's pool and the BiS tabs' hint.
 - Open: the talent sweep's unseen talents (test-enrichment INVESTIGATION, TE-SWEEP as built); from Q (parity
   INVESTIGATION, PAR-FU-4..7 as built): Ranged Weapon Specialization on Explosive Trap and magic procs, Glyph of Totem
@@ -156,15 +157,24 @@ PERF-COST joins V (the user's call, the same day): T2's cost arithmetic slowed C
   items' As built): no per-school crit sheet in the sim (3 fire-crit drops, EC-SHEET's spell-specific crit);
   Blood-Gorged, Mace Specialization and Holy Specialization dropped as sheet artifacts; Rupture and Slice and Dice
   untested with combo points (backlog); from T (e2e-coverage PLAN, EC-SHEET, EC-SPELLMOD, EC-THREAT and EC-AOE as
-  built): EC-THREAT's mismatches for EC-THREAT-FIX, EC-SHEET's capture faults for EC-GEAR; `.simval threat`'s help row
-  until the next ac-db-import; the sweeps' shared `sweepPrepare` (module `25d88f9`) not yet run live; `.simval
-  threat`'s live assist threat assumes the dummy is the only creature in combat with the target; from T2: the Balance
-  APL spends Nature's Swiftness on Starfire, which no longer takes it (−0.44%); Improved Healing Wave missing (a new
-  path step and a re-record); RogueCombat's new Endurance sweep step dropped until a `SIMVAL_TALENT_ONLY=RogueCombat`
-  rerun; Thrill of the Hunt on the modified cost (the server's base); rune and runic power costs on the old multiply
-  path; Frost Channeling's mask 84 unverified live; Endurance's Sprint and Evasion cooldowns; Thunderfury's bounce
-  threat (EC-THREAT-FIX); Explosive Decoy's blast lands at once, not on its creature's death; Combat Rogue's
-  throughput (PERF-COST, wave V).
+  built): EC-SHEET's capture faults for EC-GEAR; `.simval threat`'s help row until the next ac-db-import; the sweeps'
+  shared `sweepPrepare` (module `25d88f9`) not yet run live; `.simval threat`'s live assist threat assumes the dummy
+  is the only creature in combat with the target; from T2: the Balance APL spends Nature's Swiftness on Starfire,
+  which no longer takes it (−0.44%); Improved Healing Wave missing (a new path step and a re-record); RogueCombat's
+  new Endurance sweep step dropped until a `SIMVAL_TALENT_ONLY=RogueCombat` rerun; Thrill of the Hunt on the modified
+  cost (the server's base); rune and runic power costs on the old multiply path; Frost Channeling's mask 84 unverified
+  live; Endurance's Sprint and Evasion cooldowns; Explosive Decoy's blast lands at once, not on its creature's death;
+  from V (e2e-coverage PLAN, the V items' As built): EC-STRIKES' offline leads (cat and bear form damage, Ghoul
+  Frenzy's cadence, the Imp's Firebolt crit, Force of Nature's treant); EC-BUFFS' dropped pairs (Curse of Weakness +
+  Vindication: the server removes the whole curse; Insect Swarm + Scorpid Sting stack to −6% hit), Gift of Arthas on
+  every school, Expose Armor unprobed, the pair list kept twice (e2e and replay); threat: Heart Strike's second target
+  adds the bonus twice (the server splits one), per-tick bonuses of aura ticks the server casts (Bladestorm 50622, the
+  Infernal's 20153, Volley), `ATTR1_NO_THREAT` spells still making threat (Healing Stream Totem), Auto Shot's +1,
+  Devastate's Sunder Armor 58567, Feint, positive self buffs' assist, Elemental Precision and Righteous Fury as school
+  auras, heal threat's ×0.5, records 25742, 59092 and 60103 awaiting a `TestSimvalThreat` recapture; a full
+  gen_serverdata run adds The Beast Within, Turn the Tables and Totem of Wrath and three threat rows the hunter and
+  rogue code reference (its own item: goldens may move); Combat Rogue's throughput unconfirmed idle (PERF-COST's
+  loaded A/B −10%).
 - Deferred until X lands (the user's calls, 2026-10-02 and 10-03; each only on the user's go-ahead):
   - Rerun all 28 presets, tanks included, on the final HEAD: BIS-caps-race changes every racial search,
     `ff0920a96` the 16 builds `mage_*`, `rogue_*`, `warlock_*`, `warrior_arms`, `warrior_fury`,
@@ -216,6 +226,7 @@ Reckoning that way), but J isn't DPS: see below.
 | S | 8715.9, +236 / +230 | 10730.8, +708 / +903 | 5066.6, +41 / +51 | 12963.8, +148 / +225 | -17856.7, +4795 / +4847 | -1056.8, +917 / +888 |
 | T | 8715.9, +236 / +230 | 10730.8, +708 / +903 | 5066.6, +41 / +51 | 12963.8, +148 / +225 | -17856.7, +4795 / +4847 | -1056.8, +917 / +888 |
 | T2 | 8690.7, +273 / +273 | 10730.8, +708 / +903 | 5066.6, +41 / +51 | 12963.8, +148 / +225 | -17856.9, +4795 / +4847 | -1056.8, +917 / +888 |
+| V | 8690.7, +273 / +273 | 10730.8, +708 / +903 | 5066.6, +41 / +51 | 12963.8, +148 / +225 | -17672.3, +4831 / +4777 | -1211.2, +892 / +891 |
 
 Quick / Normal. Ret P4 ran at Quick only in wave D, after the glyph fix; its wave C numbers
 (12821.9, +54 / +73) came from a seed that wore the glyph. The two tanks arrive with
@@ -275,6 +286,9 @@ Combat Rogue's Normal rose 126).
 In T2 Fury's `J_preset` fell 0.3% (8690.7) while its `dps_preset` rose 0.006%: the normalizer. Every other row
 matches T's; the cost and timing fixes reach no slow case's DPS. It ran idle, so walls fell 10–30%, but Combat
 Rogue's only 2% (see Sim throughput).
+In V EC-THREAT-FIX moved the tanks: Prot Pal's `J_preset` rose 1.0% (TPS +2.7%), Feral Tank's fell 14.6% (Dire Bear
+Form and unmodified Maul and Lacerate cut its TPS 5.6%); the DPS rows match T2's. It ran beside the user's game: walls
+rose 40–46% over T2's idle run, Combat Rogue's only 21–22% (PERF-COST).
 
 ## Sim throughput
 
@@ -385,6 +399,9 @@ Combat Rogue is 25% over Q's (32% at one), Elemental 6% under, the rest within 4
 rogue's time in the APL's energy check (`aplCostBlocked` → `ApplyCostModifiers` → `costFor`): EC-COST-FIX's server
 cost arithmetic runs on every readiness check of every energy action. Caching the computed cost until an input
 changes would win it back.
+
+V has no row yet: Deathsong was online and the user's game held a quarter of the host. PERF-COST's loaded A/B
+against the wave base: Combat Rogue −10% at one iteration, −11% at 100; the raid −2.8% at 100; Hunter and Elemental flat.
 
 E to F2 ran the old requests: one iteration, and no rotation for Ret, Hunter and Elemental.
 
@@ -550,6 +567,7 @@ crashed before F2, so its column starts there.
 | EC-STRIKES | merged, live stage pending | `13508d09b` | module `c7abf1f`; not rebuilt (Deathsong online), so `strikes.jsonl` is uncaptured and `TestStrikesRecords` skips; offline leads: cat and bear form damage, Ghoul Frenzy's cadence, the Imp's Firebolt crit, Force of Nature's treant |
 | EC-BUFFS | merged | `d989f3d83` | module `1e2fdcd`; 65 states agree; 2 pairs dropped as sim gaps: Curse of Weakness + Vindication, Insect Swarm + Scorpid Sting |
 | PERF-COST | merged | `e1187f470` | goldens byte-identical; loaded A/B: Combat Rogue −10 to −11%, the raid −2.8% at 100 iterations |
+| wave V cross-review | | `36ec0d8a8` | no bugs; stale docs fixed (the default e2e run's skips, the fixture README's drop rule); server-parity gained the threat rules |
 
 Later WIs are added as their wave starts.
 
