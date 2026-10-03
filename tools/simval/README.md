@@ -94,6 +94,36 @@ Per unshaped record (`damage.go`):
 
 Pets and non-80 characters fail. Shaped records give no checks.
 
+## Timing probe
+
+`TestTimingRecords` replays `sim/core/testdata/simval/timing.jsonl`, a capture of mod-sim-validation's
+`TestSimvalTiming` (`.simval timing`, plus each bot's two `info` records for regen), on every `go test`; it skips
+without the file. `TestTimingFixtureHasEveryProbe` fails when a probe's bare, talent or Bloodlust record is missing
+and not in `droppedTimingRecords`. `CheckRecord` ignores `timing` records, so a `simval.jsonl` recapture holding
+them still passes; move them (and the timing bots' `info` lines) to `timing.jsonl`, running only
+`run.sh TestSimvalTiming` ([testing](../../docs/guide/testing.md#against-the-server)).
+
+Per record (`timing.go`):
+- The character is `damage.go`'s (class, race, talent and glyph auras), plus Bloodlust registered when the record
+  has it: its aura carries a tag, so auras are matched by spell id alone. The spec is found as for `damage`, then
+  `timingExtraSpecs`, with `timingTaughtSpells` (Mortal Strike, Aimed Shot, Mind Flay...) teaching the spell.
+- Exact, in whole ms: cast time before haste (`DefaultCast.CastTime`) and after (`Spell.CastTime`), GCD (the spell's
+  effective time with the cast time zeroed), own cooldown (`CD.Duration`) and category cooldown (`SharedCD`),
+  `channelMs` and aura duration, amplitude and tick count of the sim's dot or hot (re-run for the haste on the
+  character), cost (`ApplyCostModifiers`; rage and runic power in tenths, truncated), rune costs and runic power gain
+  (x10; the server lists runes as blood, unholy, frost). Cast speed and ranged speed within 1e-4.
+- Not compared, passed with the reason: a GCD outside category 133 (the sim has no GCD there), a cooldown the server
+  starts on an event, a category cooldown the sim has no shared timer for, a cast made instant, an aura the sim
+  has no dot or aura for, an immune or skipped aura.
+- Regen, within 0.1%: mana per second with and without the five second rule, energy per second, and each rune's
+  cooldown from `baseCooldownMs` (a timing record) and from `1000 / PLAYER_RUNE_REGEN` (an `info` record). Only
+  these bots carry the regen fields.
+
+Pets and non-80 characters fail. A spell no spec registers fails as `sim character`.
+
+`knownTimingMismatches` (class, spell, check) lets a real sim/server difference through, each with a row in the
+fixture README; the check still runs and logs.
+
 ## Golden characters
 
 `sim/core/testdata/simval/goldchar_setups.json` lists each non-healer golden suite's default player (suites
