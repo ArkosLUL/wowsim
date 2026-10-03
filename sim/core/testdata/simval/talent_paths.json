@@ -241,7 +241,8 @@
   {"talent":"savageCombat","rank":2,"spell":58413},
   {"talent":"preyOnTheWeak","rank":5,"spell":51689},
   {"talent":"killingSpree","rank":1,"spell":51690},
-  {"talent":"relentlessStrikes","rank":5,"spell":58425}
+  {"talent":"relentlessStrikes","rank":5,"spell":58425},
+  {"talent":"endurance","rank":2,"spell":13872}
 ]},
 {"name":"RogueSubtlety","class":4,"race":1,"spec":"rogue","items":[{"slot":15,"id":39714},{"slot":16,"id":40386}],"auras":[],"steps": [
   {"talent":"relentlessStrikes","rank":5,"spell":58425},
@@ -266,7 +267,7 @@
   {"talent":"slaughterFromTheShadows","rank":5,"spell":51712},
   {"talent":"shadowDance","rank":1,"spell":51713}
 ]},
-{"name":"PriestDiscipline","class":5,"race":5,"spec":"shadow_priest","items":[],"auras":[48161,48073,48169],"steps": [
+{"name":"PriestDiscipline","class":5,"race":5,"spec":"healing_priest","items":[],"auras":[48161,48073,48169],"steps": [
   {"talent":"twinDisciplines","rank":5,"spell":52803},
   {"talent":"silentResolve","rank":3,"spell":14785},
   {"talent":"improvedInnerFire","rank":3,"spell":14771},

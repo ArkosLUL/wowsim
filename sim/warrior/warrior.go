@@ -5,7 +5,6 @@ import (
 
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
-	"github.com/wowsims/wotlk/sim/core/stats"
 )
 
 var TalentTreeSizes = [3]int{31, 27, 27}
@@ -156,9 +155,6 @@ func NewWarrior(character *core.Character, talents string, inputs WarriorInputs)
 	core.FillTalentsProto(warrior.Talents.ProtoReflect(), talents, TalentTreeSizes)
 
 	warrior.PseudoStats.CanParry = true
-
-	warrior.AddStatDependency(stats.Strength, stats.BlockValue, .5) // 50% block from str
-	warrior.AddStatDependency(stats.BonusArmor, stats.Armor, 1)
 
 	return warrior
 }

@@ -248,6 +248,10 @@ func (character *Character) addUniversalStatDependencies() {
 	character.AddStat(stats.Health, 20-10*20)
 	character.AddStatDependency(stats.Stamina, stats.Health, 10)
 	character.AddStatDependency(stats.Agility, stats.Armor, 2)
+	// armor on jewelry, weapons and ArmorDamageModifier is TOTAL_VALUE armor for every class
+	character.AddStatDependency(stats.BonusArmor, stats.Armor, 1)
+	// Player::GetShieldBlockValue gives every class half a point per strength
+	character.AddStatDependency(stats.Strength, stats.BlockValue, .5)
 }
 
 // Returns a partially-filled PlayerStats proto for use in the CharacterStats api call.

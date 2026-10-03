@@ -5,7 +5,6 @@ import (
 
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
-	"github.com/wowsims/wotlk/sim/core/stats"
 )
 
 const (
@@ -271,8 +270,6 @@ func New(char *core.Character, form DruidForm, selfBuffs SelfBuffs, talents stri
 	}
 	core.FillTalentsProto(druid.Talents.ProtoReflect(), talents, TalentTreeSizes)
 	druid.EnableManaBar()
-
-	druid.AddStatDependency(stats.BonusArmor, stats.Armor, 1)
 
 	if druid.Talents.ForceOfNature {
 		druid.Treant1 = druid.NewTreant()

@@ -669,6 +669,9 @@ func (d *damageSim) sweepSheet() sweepSheet {
 	miss := 5 + (c.DefenseMissChance()+c.PseudoStats.ReducedPhysicalHitTakenChance)*100
 	for _, attack := range sweepAttacks {
 		v[attack+" miss taken %"] = miss
+		if attack != "ranged" {
+			v[attack+" miss taken %"] += c.PseudoStats.ReducedMeleeHitTakenChance * 100
+		}
 	}
 	for i, school := range magicSchools {
 		if bonus, ok := d.schoolCritBonus(sweepSchools[i]); ok {

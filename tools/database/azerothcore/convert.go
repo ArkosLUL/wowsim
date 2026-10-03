@@ -1,6 +1,7 @@
 package azerothcore
 
 import (
+	"math"
 	"slices"
 	"strings"
 
@@ -262,20 +263,21 @@ func computeHeirloomStats(row *ItemRow, dbc *DBC) (heirloomItemStats, bool) {
 	return result, true
 }
 
-// splitArmor follows the tooltip parser: armor slots and shields keep base armor separate from bonus
-// armor, while armor on jewelry, trinkets and weapons counts entirely as bonus armor.
+// splitArmor follows Player::_ApplyItemBonuses: armor slots and shields keep base armor separate from bonus
+// armor, while armor on jewelry, trinkets and weapons counts entirely as bonus armor. ArmorDamageModifier is
+// bonus armor too, on top of the row's armor minus its whole part, and on an item without armor as well
+// (ranged weapons such as Envoy of Mortality).
 func splitArmor(row *ItemRow) (armor, bonusArmor float64) {
 	total := float64(row.Armor)
-	bonus := row.ArmorDamageModifier
-	if total == 0 {
-		// Ranged weapons and a few odd rows set ArmorDamageModifier without any armor; tooltips show no armor for them.
-		return 0, 0
+	bonus := max(row.ArmorDamageModifier, 0)
+	if total > 0 {
+		total -= math.Trunc(bonus)
 	}
 	switch row.InventoryType {
 	case 2, 11, 12, 13, 17, 21, 22, 23: // neck, finger, trinket, weapons and held off-hands
-		return 0, total
+		return 0, total + bonus
 	}
-	return total - bonus, bonus
+	return total, bonus
 }
 
 // ConvertGem returns nil when the item isn't a gem.

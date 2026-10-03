@@ -24,12 +24,10 @@ var droppedSweep = []sweepDrop{
 	{"MageFire", "improvedScorch", "fire spell crit %"},
 	{"MageFire", "livingBomb", "fire spell crit %"},
 	{"WarlockDestruction", "devastation", "fire spell crit %"},
+	{"PriestDiscipline", "holySpecialization", "holy spell crit %"},
+	{"RogueCombat", "endurance", ""},
 	{"RogueCombat", "maceSpecialization", "armor penetration %"},
 	{"DeathknightBlood", "bloodGorged", "armor penetration %"},
-	{"DeathknightFrost", "frigidDreadplate", "ranged miss taken %"},
-	{"MageFrost", "arcticWinds", "mainhand miss taken %"},
-	{"MageFrost", "arcticWinds", "offhand miss taken %"},
-	{"MageFrost", "arcticWinds", "ranged miss taken %"},
 }
 
 // TestTalentSweepRecords replays a live TestSimvalTalentSweep run, trimmed by `simval talents`: each

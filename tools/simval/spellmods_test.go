@@ -19,13 +19,6 @@ import (
 // with a row in the fixture README. The lines stay, since a spell's after probes are the next talent's
 // before probes.
 var droppedSpellMods = slices.Concat(
-	// crit the sim leaves out, adds where the server's mask doesn't (Inner Focus on Circle of Healing), or
-	// adds as 0.1% instead of 10% (Improved Searing Pain)
-	spellModDrops("DeathknightFrost", "annihilation", "crit chance", 55271),
-	spellModDrops("DeathknightFrost", "viciousStrikes", "crit chance", 49924),
-	spellModDrops("ShamanRestoration", "tidalMastery", "crit chance", 59159),
-	spellModDrops("WarlockDestruction", "improvedSearingPain", "crit chance", 47815),
-	spellModDrops("PriestDiscipline", "innerFocus", "crit chance", 48089),
 	// the sim has no Improved Healing Wave (a filler step of the path), so Healing Wave's 2600 ms is 3000 there
 	spellModDrops("ShamanRestoration", "naturesSwiftness", "cast time", 49273),
 	spellModDrops("ShamanRestoration", "naturesSwiftness", "cast time before haste", 49273),

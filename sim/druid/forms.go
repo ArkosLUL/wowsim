@@ -67,6 +67,12 @@ func (druid *Druid) GetBearWeapon() core.Weapon {
 	}
 }
 
+// weaponFeralAP is the attack power the server's druids get from a weapon's dps in cat, bear and moonkin form.
+func (druid *Druid) weaponFeralAP(weapon *core.Item) float64 {
+	dps := (weapon.WeaponDamageMax+weapon.WeaponDamageMin)/2.0/weapon.SwingSpeed + druid.PseudoStats.BonusMHDps
+	return math.Floor((dps - 54.8) * 14)
+}
+
 // Bonus stats for both cat and bear.
 func (druid *Druid) GetFormShiftStats() stats.Stats {
 	s := stats.Stats{
@@ -77,9 +83,8 @@ func (druid *Druid) GetFormShiftStats() stats.Stats {
 	}
 
 	if weapon := druid.GetMHWeapon(); weapon != nil {
-		dps := (weapon.WeaponDamageMax+weapon.WeaponDamageMin)/2.0/weapon.SwingSpeed + druid.PseudoStats.BonusMHDps
 		weapAp := weapon.Stats[stats.AttackPower] + weapon.Enchant.Stats[stats.AttackPower]
-		fap := math.Floor((dps - 54.8) * 14)
+		fap := druid.weaponFeralAP(weapon)
 
 		s[stats.AttackPower] += fap
 		s[stats.AttackPower] += (fap + weapAp) * ((0.2 / 3) * float64(druid.Talents.PredatoryStrikes))
@@ -403,6 +408,11 @@ func (druid *Druid) applyMoonkinForm() {
 	}
 
 	druid.MultiplyStat(stats.Intellect, 1+(0.02*float64(druid.Talents.Furor)))
+	// the form's passive (24905) adds 370% armor from items, and the server gives it the weapon's feral attack power
+	druid.ApplyEquipScaling(stats.Armor, 4.7)
+	if weapon := druid.GetMHWeapon(); weapon != nil {
+		druid.AddStat(stats.AttackPower, druid.weaponFeralAP(weapon))
+	}
 	druid.PseudoStats.DamageDealtMultiplier *= 1 + (float64(druid.Talents.MasterShapeshifter) * 0.02)
 	if druid.Talents.ImprovedMoonkinForm > 0 {
 		druid.AddStatDependency(stats.Spirit, stats.SpellPower, 0.1*float64(druid.Talents.ImprovedMoonkinForm))

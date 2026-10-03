@@ -89,6 +89,24 @@ func TestConvertItemServerStats(t *testing.T) {
 	}
 }
 
+func TestSplitArmor(t *testing.T) {
+	for _, c := range []struct {
+		name            string
+		row             ItemRow
+		armor, bonusArm float64
+	}{
+		{"chest keeps base and bonus apart", ItemRow{Armor: 1000, ArmorDamageModifier: 21.5, InventoryType: 5}, 979, 21.5},
+		{"jewelry is all bonus", ItemRow{Armor: 100, ArmorDamageModifier: 20, InventoryType: 2}, 0, 100},
+		{"a weapon without armor still adds the modifier", ItemRow{ArmorDamageModifier: 21.5, InventoryType: 26}, 0, 21.5},
+		{"no modifier", ItemRow{Armor: 500, InventoryType: 7}, 500, 0},
+	} {
+		armor, bonus := splitArmor(&c.row)
+		if armor != c.armor || bonus != c.bonusArm {
+			t.Errorf("%s: got armor %v bonus %v, want %v and %v", c.name, armor, bonus, c.armor, c.bonusArm)
+		}
+	}
+}
+
 func TestConvertItemHeirloomStats(t *testing.T) {
 	dbc := &DBC{
 		ScalingStatDistributions: map[int32]*ScalingStatDistributionEntry{

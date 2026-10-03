@@ -44,16 +44,12 @@ and is only logged; the others are removed.
 
 | Setup | Record | Check | Why |
 |---|---|---|---|
-| DeathknightBlood | info | armor penetration % | Blood-Gorged: the sim keeps it as a health-gated aura, not in its armor penetration |
-| DruidBalance, DruidBalancePhase3 | info | armor, attack power | the sim's Moonkin Form lacks the server's armor from cloth and leather (its passive 24905) and feral attack power (`StatSystem.cpp` `FORM_MOONKIN`) |
+| DeathknightBlood | info | armor penetration % | the sheet field is the aura's raw sum; the server applies Blood-Gorged to white swings and five strikes by its class mask, and the sim does the same per spell (`applyBloodGorged`), so nothing reaches `BonusArmorPenPct` |
 | DruidBalance, DruidBalancePhase3 | info | arcane spell crit % | spell specific crit in the sim (Improved Moonfire; Nature's Majesty and Dreamwalker 4pc on Starfire), spell mods on the server |
 | DruidBalance, DruidBalancePhase3, DruidFeral, DruidFeralApl, DruidFeralTank, PriestShadow, PriestSmite | info | max health | the e2e's `.modify hp` pinned max health to the client's value from before a stamina buff or form (Mark of the Wild, Power Word: Fortitude, Dire Bear Form); the record's own stamina gives the sim's number |
-| HunterBM, HunterMM, HunterSV, RogueCombat, RogueAssassination, WarriorFury, WarriorArms | info | armor | Envoy of Mortality's `ArmorDamageModifier` (21.5): the server adds it as armor, the sim's item converter drops it on an item with no armor |
 | HunterBM, HunterMM, HunterSV, PaladinRetribution, RogueCombat, RogueAssassination, RogueSubtlety, WarriorFury, WarriorArms | info | parry % | the e2e never teaches Parry (3127), a trainer spell, so the server can't parry; the sim's character can |
 | HunterMM | info | attack power, ranged attack power | the setup's auras cast Trueshot Aura (19506), which its talents don't take, so the sim has no 10% |
 | MageFire, MageFrostFire | info | arcane spell crit % | spell specific crit in the sim (Khadgar's Regalia 4pc, World in Flames), spell mods on the server |
-| RogueCombat | info | stamina, max health | the sim doesn't implement Endurance (2% stamina per rank) |
-| ShamanElemental | info | block value | the sim adds half a point of block value per strength for warriors and paladins only; the server for every class (`Player::GetShieldBlockValue`) |
 | WarlockDestruction | info | fire spell crit % | Devastation: spell specific crit in the sim, a spell mod on the server |
 
 `talents.jsonl`, each in `droppedSweep` (`tools/simval/talents_test.go`). Records stay; a dropped step (empty field)
@@ -64,10 +60,10 @@ or field is only logged.
 | MageFire | improvedScorch | fire spell crit % | the sim gives Fireball and Frostfire Bolt the crit per spell; the server sheet shows school auras only |
 | MageFire | livingBomb | fire spell crit % | the sim's school crit is its lowest fire spell's bonus, and the new Living Bomb spell has a lower one |
 | WarlockDestruction | devastation | fire spell crit % | spell specific crit in the sim, a spell mod on the server |
-| RogueCombat | maceSpecialization | armor penetration % | the server counts the aura without a mace, and the path carries two daggers; the sim adds it only with a mace in the proc mask |
-| DeathknightBlood | bloodGorged | armor penetration % | the sim keeps it as a health-gated aura, not in its armor penetration |
-| DeathknightFrost | frigidDreadplate | ranged miss taken % | the server aura is melee only; the sim lowers all three attacks |
-| MageFrost | arcticWinds | mainhand, offhand and ranged miss taken % | the sim models only the frost damage, not the hit taken |
+| PriestDiscipline | holySpecialization | holy spell crit % | the sheet field is the aura's raw sum; Penance is holy but outside its class mask, so the sim's lowest holy spell stays at 0 |
+| RogueCombat | endurance | the whole step | the path learns it last since the sim implements it; the live capture predates the step, so rerun the path (`SIMVAL_TALENT_ONLY=RogueCombat`) and remove this row |
+| RogueCombat | maceSpecialization | armor penetration % | the sheet field counts the aura without a mace; the server's damage applies it only with one (`HasItemFitToSpellRequirements`), as the sim does, and the path carries two daggers |
+| DeathknightBlood | bloodGorged | armor penetration % | the sheet field is the aura's raw sum; the sim applies it per spell by the server's class mask (white swings, Plague, Blood, Heart and Death Strike, Rune Strike) |
 
 `spellmods.jsonl`, each in `droppedSpellMods` (`tools/simval/spellmods_test.go`). Lines stay; a dropped step (spell 0),
 spell (empty check) or check is only logged.
@@ -75,10 +71,6 @@ spell (empty check) or check is only logged.
 | Path | Talent | Spell | Check | Why |
 |---|---|---|---|---|
 | DruidFeralCat | berserk | 48564 Mangle (Bear) | cooldown | not a sim gap: under Berserk the sim resets the cooldown after each cast instead of zeroing it |
-| DeathknightFrost | annihilation, viciousStrikes | 55271 Scourge Strike; 49924 Death Strike | crit chance | the sim leaves the talent's crit out |
-| ShamanRestoration | tidalMastery | 59159 Thunderstorm | crit chance | the sim leaves Tidal Mastery's crit out |
-| WarlockDestruction | improvedSearingPain | 47815 Searing Pain | crit chance | the sim adds 0.1% instead of 10% (a factor of 100 short) |
-| PriestDiscipline | innerFocus | 48089 Circle of Healing | crit chance | the sim adds Inner Focus's crit; the server's crit mask leaves Circle of Healing out |
 | ShamanRestoration | naturesSwiftness | 49273 Healing Wave | cast time, cast time before haste | the sim has no Improved Healing Wave (a filler step of the path, so a fix needs a re-record): 3000 ms, the server's 2600 ms before the aura |
 | PriestShadow | shadowFocus | 47585 Dispersion | miss | not a sim gap: Dispersion, a self buff, never rolls to hit; the sim's Shadow Focus hit leaves it out |
 

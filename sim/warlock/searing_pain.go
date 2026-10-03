@@ -26,7 +26,7 @@ func (warlock *Warlock) registerSearingPainSpell() {
 		},
 		BonusCritRating: 0 +
 			core.TernaryFloat64(warlock.Talents.Devastation, 5*core.CritRatingPerCritChance, 0) +
-			[]float64{0, .04, .07, .10}[warlock.Talents.ImprovedSearingPain]*core.CritRatingPerCritChance,
+			[]float64{0, 4, 7, 10}[warlock.Talents.ImprovedSearingPain]*core.CritRatingPerCritChance,
 		DamageMultiplier: spellModDamage(
 			warlock.GrandFirestoneBonus(),
 			0.03*float64(warlock.Talents.Emberstorm),

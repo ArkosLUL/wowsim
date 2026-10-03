@@ -36,6 +36,10 @@ func (rogue *Rogue) ApplyTalents() {
 		rogue.MultiplyStat(stats.AttackPower, 1.0+0.02*float64(rogue.Talents.SavageCombat))
 	}
 
+	if rogue.Talents.Endurance > 0 {
+		rogue.MultiplyStat(stats.Stamina, 1.0+0.02*float64(rogue.Talents.Endurance))
+	}
+
 	if rogue.Talents.SinisterCalling > 0 {
 		rogue.MultiplyStat(stats.Agility, 1.0+0.03*float64(rogue.Talents.SinisterCalling))
 	}

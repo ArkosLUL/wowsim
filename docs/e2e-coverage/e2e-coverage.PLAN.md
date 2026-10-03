@@ -531,6 +531,30 @@ fixture README rows of the fixed ones are gone, so the replays compare them.
   `assets/database/*`, `tools/simval/talents.go`'s path specs.
 - **Goldens:** the suites its classes and items move; report each.
 
+#### As built
+
+Fixed (entry and README row gone, replay compares it):
+- Annihilation on Scourge Strike and Vicious Strikes on Death Strike (`sim/deathknight`); Tidal Mastery on Thunderstorm; Improved Searing Pain 4/7/10 (was 0.04/0.07/0.10); Inner Focus's +25 crit off Circle of Healing.
+- Frigid Dreadplate melee only: new `PseudoStats.ReducedMeleeHitTakenChance` (`ReducedPhysicalHitTakenChance` stays melee and ranged: Night Elf, Arctic Winds). The enemy table, `basestats.go` and the sweep's sheet add both; Arctic Winds now adds its 1% per rank.
+- Rogue Endurance: 2% stamina per rank.
+- Moonkin Form (`applyMoonkinForm`): items' armor ×4.7 (passive 24905) and the main hand's feral AP (`weaponFeralAP`, shared with cat and bear).
+- Block value: Strength × 0.5 for every class, in `addUniversalStatDependencies`; the warrior's and paladin's own dependencies are gone.
+- Converter `splitArmor` follows `Player::_ApplyItemBonuses`: base armor minus the modifier's whole part, the modifier as bonus armor (also without armor: Envoy of Mortality). `BonusArmor` → `Armor` moved from five class files into `addUniversalStatDependencies`: hunters and rogues lacked it.
+- `db.json` regenerated (`make items`, live DBCs): 58 `db.json` and 5 `leftover_db.json` items changed, each only in `BonusArmor` (ranged weapons, one pre-Wrath mace). `spellIcons` also differs (Ancestral Fortitude out, Ancestral Healing and Anticipation in): drift of the inputs, the old converter regenerates it too.
+- `talent_paths.json` rebuilt (PriestDiscipline as `healing_priest`; RogueCombat learns Endurance last), `implemented_talents.json` (Endurance). The live capture lacks that step, so it is dropped with a README row until `SIMVAL_TALENT_ONLY=RogueCombat` reruns.
+
+Kept dropped, reason corrected (sheet artifacts; the sim matches the server's combat):
+- Blood-Gorged: the sheet is the aura's raw sum, the sim applies it per spell by the server's class mask, ungated.
+- Mace Specialization: the server's damage needs a mace too.
+- Holy Specialization: PriestDiscipline now builds as the healing priest and every other check compares; the sheet's holy crit stays dropped, since Penance is holy and outside the aura's mask, so the sim's lowest holy spell stays 0.
+
+Goldens (`dock.sh delta`; no DPS moves above the print threshold elsewhere):
+- Every suite whose `CharacterStats` shows block value, armor or stamina fails on stats alone.
+- TestBlood +0.1 to +0.7% (Death Strike crit 53 to 59% from Vicious Strikes), TestBloodTank +0.3%.
+- TestDestruction Shadowburn +0.15% (Searing Pain crit 67 to 75%).
+- TestCombat one gem row hps +1.3% (heal scales with Endurance's stamina).
+- TestArms and TestFury ±0.01% on the default rows, one Fury multi-target row −1.1%: less damage taken from armor changes rage.
+
 ### EC-STACK-FIX (T2; changes goldens; stages: stacking, AoE)
 
 - Stacking (`spellGroupAllowances`): Power Infusion exclusive with Arcane Power; Bestial Wrath and Enrage stack with

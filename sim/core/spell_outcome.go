@@ -429,7 +429,8 @@ func (spell *Spell) enemyTableInput(attackTable *AttackTable, defender *Unit) Me
 
 	in.MissPct = attackTable.BaseMissPct + float32((spell.Unit.PseudoStats.IncreasedMissChance+
 		defender.DefenseMissChance()+
-		defender.PseudoStats.ReducedPhysicalHitTakenChance)*100)
+		defender.PseudoStats.ReducedPhysicalHitTakenChance+
+		defender.PseudoStats.ReducedMeleeHitTakenChance)*100)
 	in.DodgePct = float32(defender.DodgeChance() * 100)
 	in.ParryPct = float32(defender.ParryChance() * 100)
 	in.BlockPct = defender.blockChancePct()

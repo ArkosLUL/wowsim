@@ -69,6 +69,7 @@ func (mage *Mage) ApplyTalents() {
 
 	mage.PseudoStats.SchoolDamageDealtMultiplier[stats.SchoolIndexFrost] *= 1 + .02*float64(mage.Talents.PiercingIce)
 	mage.PseudoStats.SchoolDamageDealtMultiplier[stats.SchoolIndexFrost] *= 1 + .01*float64(mage.Talents.ArcticWinds)
+	mage.PseudoStats.ReducedPhysicalHitTakenChance += .01 * float64(mage.Talents.ArcticWinds)
 	mage.AddSchoolCostMultiplier(core.SpellSchoolArcane|core.SpellSchoolFire|core.SpellSchoolFrost,
 		-[]float64{0, .04, .07, .10}[mage.Talents.FrostChanneling])
 
