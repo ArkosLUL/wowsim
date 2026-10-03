@@ -17,6 +17,10 @@ replays it through `CheckRecord` on every `go test`, and `int-check.sh` runs it 
 `goldchar.jsonl` holds `TestSimvalGoldenCharacters`' `info` and `damage` records, which `TestGoldenCharacters`
 replays against `goldchar_setups.json` ([tools/simval](../../../../tools/simval/README.md#golden-characters)).
 
+`buffs.jsonl` holds `TestSimvalBuffs`' `BUFFS` lines, which `TestBuffRecords` replays
+([tools/simval](../../../../tools/simval/README.md#buffs)). A disagreeing state or check goes in `droppedBuffs`
+(`tools/simval/buffs_test.go`) with a row here; its line stays.
+
 A record of any of these files that disagrees with the sim is a real mismatch: it's dropped from the file and
 listed here, and the sim isn't changed.
 
@@ -94,6 +98,14 @@ capture is one run's records with the Rogue's from a rerun. A `recapture` row re
 | ProtPaladin | 25742 Seal of Righteousness | recapture: dropped while the sim character had no weapon |
 | Warlock | 59092 Dark Pact | recapture: dropped while the sim character had no pet |
 | ElementalShaman | 60103 Lava Lash | recapture: dropped while the sim character had no off hand weapon |
+
+`buffs.jsonl`, each in `droppedBuffs` (`tools/simval/buffs_test.go`). Lines stay; a dropped state or check is only
+logged.
+
+| Setup | State | Check | Why |
+|---|---|---|---|
+| RogueAssassination | debuff.curse_of_weakness+debuff.vindication | dummy armor, armor multiplier | AP Debuffs (spell_group 1062) is exclusive highest per aura: Vindication's -574 AP removes the whole Curse of Weakness (-573), its 5% armor too; the sim keeps the armor |
+| RogueAssassination | debuff.insect_swarm+debuff.scorpid_sting | dummy melee hit % | -6% on the server: `HandleModHitChance` adds each to a creature's `m_modMeleeHitChance`, which the miss roll reads raw, so Hit Chance Debuffs' same-effect rule (1060) never applies; the sim keeps -3% |
 
 ## Spells missing from serverdata
 

@@ -718,6 +718,45 @@ and FrostFire −0.2%; healers' few TPS +53 to +83% (assist threat). All other c
 - **Owns:** `e2e/buffs_test.go`, `tools/simval/buffs.go`, its test and fixture, its fixture README rows, the simval
   README's Buffs.
 
+#### As built
+
+Stage code (no live run yet):
+- Character: RogueAssassination (magic and bleed probes, no own raid buffs; mp5 still shows in its regen while casting).
+  One warrior caster bot in its party applies everything: talent rank spells and area auras by `.aura` on itself, so the
+  character only gets the raid-member part (Unleashed Rage's expertise stays on the caster).
+- States: 46 single switches (9 in `unprobedBuffs`: Demonic Pact, Thorns, Mana Tide, both Replenishments, both
+  Judgements, Shadow Embrace, Expose Armor) and 21 pairs, between two bare states. Run about 5 min.
+- Sim: `newBuffSim` puts the keys' full values in the request; `buffHeldAuras` keep Bloodlust and Sunder up.
+  Lines made from the sim agree on all but Gift of Arthas, which moves nothing (Garrote lacks
+  `SpellFlagIncludeTargetBonusDamage`).
+
+Stage live (6 runs; `buffs.jsonl` is the last, passing, 69 lines). Probe fixes the runs forced:
+- The caster joins from outside Naxxramas: the server refuses an invite across two instances of one map
+  (`ERR_TARGET_NOT_IN_INSTANCE_S`), and a member without a permanent bind then enters its leader's instance.
+- `.unaura all` on the caster clears Totem of Wrath's 30708, an area aura on enemies the caster owns but never has;
+  per-id `.unaura` left it on the dummy for every later state.
+- Sunder's stacks by repeated `.aura` (`.aura stack` added none); Blessing of Sanctuary also wants its marker 68066;
+  Kings by `.aura` on the character, since Blessings (spell_group 1010) don't stack from one caster.
+- `buffsSelect` waits for `.guid` to report the selection (map thread) before the next GM command (world thread);
+  after a talent `.aura`, a wait for the next update, which applies its spell mods (Strength of Earth and Devotion Aura
+  came in unimproved without it).
+- Expose Armor moved to `unprobedBuffs`, with the Sunder+Expose pair: its duration is its caster's combo points, and
+  neither the caster's cast after Combo Point (34071) nor `.aura` after the dummy's own kept it on.
+- Sim side: the dummy's resistances stop at 0 like the server's field, so Curse of the Elements' -165 shows on neither;
+  the resist roll clamps the same on both.
+
+Verdicts: 65 states agree, the closing bare line moves nothing, 2 pairs disagree, dropped with fixture README rows:
+- Curse of Weakness + Vindication: exclusive-highest AP Debuffs (1062) removes the whole Curse, its 5% armor too.
+- Insect Swarm + Scorpid Sting: -6% hit on the server, since a creature's `m_modMeleeHitChance` sums both and the
+  same-effect rule (1060) never reaches it.
+
+Leads: Improved Curse of Weakness's armor agrees at 5%; Moonkin Aura and Leader of the Pack land without a form. Gift of
+Arthas (+8 taken, all schools) adds +3 per poison hit and +1 per Garrote tick on the server and nothing in the sim,
+inside the 1-point truncation tolerance, so it agrees.
+
+Review: `buffsSelect` (was unprefixed `selectUnit`); a pair's `off` takes only its own wanted auras, so a missing
+baseline aura stays `missing` (the captured run's lines are unchanged by it).
+
 ### EC-GEAR (W; golden-neutral; C++; stages: C++ and e2e, sim, live)
 
 - `.simval enchant <slot> <enchantId>` (`ApplyEnchantment` off, `SetEnchantment`, on) and

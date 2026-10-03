@@ -162,6 +162,44 @@ Pet casters and non-80 characters fail. A spell no spec registers fails as `sim 
 in the fixture README; an entry no record fails fails the test. `TestThreatReplayOnHandCheckedRecords` tests the
 comparison without it.
 
+## Buffs
+
+mod-sim-validation's `TestSimvalBuffs` gives `buffsSetup`'s golden character (RogueAssassination) each switch of
+`core.FullRaidBuffs`, `FullPartyBuffs`, `FullIndividualBuffs` and `FullDebuffs` alone, then `buffPairs`, between two
+bare states, and logs a `BUFFS` line per state, the fixture `buffs.jsonl`. Capture:
+
+```bash
+SIMVAL_GOLDCHAR_SETUPS=<sim>/sim/core/testdata/simval/goldchar_setups.json \
+  modules/mod-sim-validation/e2e/run.sh TestSimvalBuffs > <sim>/tmp/buffs-e2e.log
+grep -o 'BUFFS {.*' <sim>/tmp/buffs-e2e.log | cut -c7- > <sim>/sim/core/testdata/simval/buffs.jsonl
+```
+
+A line (`buffs.go`'s `buffLine`): `setup`, `bot`, `state` (`keys` joined by `+`, or `bare`), `keys` such as
+`raid.battle_shout` or `debuff.sunder_armor` (message prefix, proto field), the state's wanted auras not on
+(`missing`) and unwanted ones on (`extra`), the `info` record whole, `damage` of each unshaped setup probe (spell,
+shaped, spell and attack power, bonus, effects); a debuff or bare state adds `yellow <id> 1`'s derived table per probe
+and `armor`'s scenarios.
+- `unprobedBuffs` lists each full switch left out, with why. `buffPairs` are two switches of one sim exclusive
+  category (ExclusiveEffect, or an either/or branch of `applyBuffEffects`); the e2e's `buffsPairs` is the same list.
+- The sim character is `newBuffSim`: the golden character in a raid with the keys' switches at their full values.
+  `buffHeldAuras` (Bloodlust, Sunder Armor) are kept up at full stacks from the start.
+
+**Replay** (`TestBuffRecords`, skips without the fixture): per bot, each state against its first bare line, the
+server's change against the sim's from no switches to the state's. Checks:
+- the talent sweep's sheet fields (`compareSweepSheets`), and `mp5` (5 × mana regen while casting);
+- the dummy's armor, attack power, melee haste (1 / attack time multiplier), melee hit and resistances, from the info
+  record's target; the sim's resistances stop at 0 like the server's field (`Object::SetStatInt32Value`);
+- each probed effect's amount as a state/bare ratio (`amountTolerance`), the crit chance taken (within 0.02) and miss
+  (1 bp) of each derived table against the sim spell declaring the probe, and `armor`'s first-scenario multiplier;
+- `missing` or `extra` fails as `server auras`.
+
+A later bare line is a state with no switches, so drift shows. Each state is logged on a `BUFFSIM` line as `agrees`,
+`moves nothing` or `disagrees`. Drops: `droppedBuffs` (setup, state, check), each with a fixture README row; an empty
+check drops the state. A dropped failure is logged; a drop failing nothing, a state missing undropped or one not in
+`buffStates` fails. Tests: `TestBuffStatesCoverTheFullBuffs`, `TestBuffPairsAreExclusiveInTheSim`,
+`TestBuffReplayAgreesWithTheSim` (every state from the sim), `TestBuffReplayCatchesMismatches`, `TestBuffReplayDrops`,
+`TestBuffLineShape`.
+
 ## Golden characters
 
 `sim/core/testdata/simval/goldchar_setups.json` lists each non-healer golden suite's default player (suites
