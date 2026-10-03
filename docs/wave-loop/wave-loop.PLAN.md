@@ -73,7 +73,7 @@ G = changes goldens. FS = runs all 37 suites.
 | S | EC-SWEEP2 (live) · EC-STACK · EC-TIMING (C++, live) | ✔ |
 | T | EC-SHEET · EC-SPELLMOD (live) · EC-THREAT (C++, live) · EC-AOE | ✔ |
 | T2 | EC-COST-FIX (G, FS) · EC-TIMING-FIX (G, FS) · EC-SHEET-FIX (G) · EC-STACK-FIX (G) | ✔ |
-| V | EC-THREAT-FIX (G, FS) · EC-STRIKES (C++, live) · EC-BUFFS (live) | ✔ |
+| V | EC-THREAT-FIX (G, FS) · EC-STRIKES (C++, live) · EC-BUFFS (live) · PERF-COST | ✔ |
 | W | EC-GEAR (C++, live) · EC-MOBS (live) | ✔ |
 | X | EC-FIGHT (live) | ✔ |
 
@@ -127,6 +127,7 @@ never compared with the server. The deferred BiS chain waits until X lands (the 
 T2 is the user's call too (the same day): it fixes the sim/server mismatches S and T drop or allowlist, after T
 so EC-SPELLMOD's and EC-SHEET's finds join S's and each is fixed once. Each item re-measures its mismatches
 first: some may be server quirks, not sim bugs.
+PERF-COST joins V (the user's call, the same day): T2's cost arithmetic slowed Combat Rogue sims by a quarter.
 
 **Where the specs are:**
 
@@ -143,7 +144,7 @@ first: some may be server quirks, not sim bugs.
 
 ## Current wave
 
-- Wave: T2, landed (master fast-forwarded to this close-out). Next: V (EC-THREAT-FIX, EC-STRIKES, EC-BUFFS).
+- Wave: T2, landed (master fast-forwarded to this close-out). Next: V (EC-THREAT-FIX, EC-STRIKES, EC-BUFFS, PERF-COST).
   Prod runs Q's `225191f1f`; R changes the optimizer's pool and the BiS tabs' hint.
 - Open: the talent sweep's unseen talents (test-enrichment INVESTIGATION, TE-SWEEP as built); from Q (parity
   INVESTIGATION, PAR-FU-4..7 as built): Ranged Weapon Specialization on Explosive Trap and magic procs, Glyph of Totem
@@ -162,7 +163,7 @@ first: some may be server quirks, not sim bugs.
   rerun; Thrill of the Hunt on the modified cost (the server's base); rune and runic power costs on the old multiply
   path; Frost Channeling's mask 84 unverified live; Endurance's Sprint and Evasion cooldowns; Thunderfury's bounce
   threat (EC-THREAT-FIX); Explosive Decoy's blast lands at once, not on its creature's death; Combat Rogue's
-  throughput (Sim throughput).
+  throughput (PERF-COST, wave V).
 - Deferred until X lands (the user's calls, 2026-10-02 and 10-03; each only on the user's go-ahead):
   - Rerun all 28 presets, tanks included, on the final HEAD: BIS-caps-race changes every racial search,
     `ff0920a96` the 16 builds `mage_*`, `rogue_*`, `warlock_*`, `warrior_arms`, `warrior_fury`,
