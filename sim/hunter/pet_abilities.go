@@ -164,8 +164,10 @@ type PetSpecialAbilityConfig struct {
 	// SPELL_ATTR2_CANT_CRIT, or magic class with a physical school, which Unit::SpellDoneCritChance
 	// gives no crit chance
 	CantCrit bool
-	GCD      time.Duration
-	CD       time.Duration
+	// the ability chains to every target in front of the pet
+	AllTargets bool
+	GCD        time.Duration
+	CD         time.Duration
 	// yards per second, 0 for a melee ability
 	MissileSpeed float64
 	// SP only counts for a magic school: the pet's spell damage reaches no other
@@ -199,7 +201,7 @@ func (hp *HunterPet) newSpecialAbility(config PetSpecialAbilityConfig) *core.Spe
 			onSpellHitDealt(sim, spell, result)
 		}
 	}
-	applyEffects := func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+	hit := func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 		baseDamage := spell.Direct.Roll(sim) + spell.Direct.AP*spell.MeleeAttackPower()
 		if magicSchool {
 			baseDamage += spell.Direct.SP * spell.SpellPower()
@@ -222,6 +224,15 @@ func (hp *HunterPet) newSpecialAbility(config PetSpecialAbilityConfig) *core.Spe
 		spell.WaitTravelTime(sim, func(sim *core.Simulation) {
 			land(sim, spell, result)
 		})
+	}
+	applyEffects := func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+		if !config.AllTargets {
+			hit(sim, target, spell)
+			return
+		}
+		for _, aoeTarget := range sim.Encounter.TargetUnits {
+			hit(sim, aoeTarget, spell)
+		}
 	}
 
 	return hp.RegisterSpell(core.SpellConfig{
@@ -898,16 +909,15 @@ func (hp *HunterPet) newSting() *core.Spell {
 }
 
 func (hp *HunterPet) newSwipe() *core.Spell {
-	// TODO: This is frontal cone, but might be more realistic as single-target
-	// since pets are hard to control.
 	return hp.newSpecialAbility(PetSpecialAbilityConfig{
-		Type:    Swipe,
-		Cost:    20,
-		GCD:     core.GCDDefault,
-		CD:      time.Second * 5,
-		SpellID: 53533,
-		School:  core.SpellSchoolPhysical,
-		Damage:  core.SpellEffect{Effect: 0, Min: 90, Max: 126, SP: 0.119658, AP: 0.07},
+		Type:       Swipe,
+		Cost:       20,
+		GCD:        core.GCDDefault,
+		CD:         time.Second * 5,
+		SpellID:    53533,
+		School:     core.SpellSchoolPhysical,
+		AllTargets: true,
+		Damage:     core.SpellEffect{Effect: 0, Min: 90, Max: 126, SP: 0.119658, AP: 0.07},
 	})
 }
 

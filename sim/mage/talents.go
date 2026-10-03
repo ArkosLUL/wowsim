@@ -390,6 +390,7 @@ func (mage *Mage) registerArcanePowerCD() {
 		},
 	})
 	core.RegisterPercentDamageModifierEffect(mage.ArcanePowerAura, 1.2)
+	core.RegisterPowerInfusionArcanePowerEffect(mage.ArcanePowerAura)
 
 	spell := mage.RegisterSpell(core.SpellConfig{
 		ActionID: actionID,

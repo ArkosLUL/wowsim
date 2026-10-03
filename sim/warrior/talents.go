@@ -580,7 +580,6 @@ func (warrior *Warrior) applyWreckingCrew() {
 			procAura.Activate(sim)
 		},
 	})
-	core.RegisterPercentDamageModifierEffect(procAura, bonus)
 }
 
 func (warrior *Warrior) IsSuddenDeathActive() bool {

@@ -995,8 +995,15 @@ func (character *Character) newBasicExplosiveSpellConfig(sharedTimer *Timer, act
 		ThreatMultiplier: 1,
 
 		ApplyEffects: func(sim *Simulation, target *Unit, spell *Spell) {
+			// sapper hits the caster too, so it counts one more. decoy's blast is cast by a creature, uncapped.
+			capMultiplier := sim.Encounter.AOECapMultiplier()
+			if dealSelfDamage {
+				capMultiplier = AOECapMultiplierFor(len(sim.Encounter.Targets) + 1)
+			} else if actionID.SameAction(ExplosiveDecoyActionID) {
+				capMultiplier = 1
+			}
 			for _, aoeTarget := range sim.Encounter.TargetUnits {
-				baseDamage := sim.Roll(minDamage, maxDamage) * sim.Encounter.AOECapMultiplier()
+				baseDamage := sim.Roll(minDamage, maxDamage) * capMultiplier
 				spell.CalcAndDealDamage(sim, aoeTarget, baseDamage, spell.OutcomeMagicHitAndCrit)
 			}
 

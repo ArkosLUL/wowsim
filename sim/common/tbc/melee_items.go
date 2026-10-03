@@ -77,7 +77,7 @@ func init() {
 				for hitIndex := int32(0); hitIndex < numHits; hitIndex++ {
 					result := spell.CalcDamage(sim, curTarget, 0, spell.OutcomeMagicHit)
 					if result.Landed() {
-						debuffAuras[target.Index].Activate(sim)
+						debuffAuras[curTarget.Index].Activate(sim)
 					}
 					spell.DealDamage(sim, result)
 					curTarget = sim.Environment.NextTargetUnit(curTarget)

@@ -703,7 +703,22 @@ func PowerInfusionAura(character *Unit, actionTag int32) *Aura {
 		},
 	})
 	multiplyCastSpeedEffect(aura, 1.2)
+	RegisterPowerInfusionArcanePowerEffect(aura)
 	return aura
+}
+
+// Power Infusion and Arcane Power share spell group 1123. They carry no common aura type, so the server
+// doesn't compare strength: the one cast last removes the other.
+func RegisterPowerInfusionArcanePowerEffect(aura *Aura) *ExclusiveEffect {
+	return aura.NewExclusiveEffect("PowerInfusionArcanePower", false, ExclusiveEffect{
+		OnGain: func(ee *ExclusiveEffect, sim *Simulation) {
+			for _, other := range ee.Category.effects {
+				if other != ee && other.isEnabled {
+					other.Aura.Deactivate(sim)
+				}
+			}
+		},
+	})
 }
 
 func multiplyCastSpeedEffect(aura *Aura, multiplier float64) *ExclusiveEffect {

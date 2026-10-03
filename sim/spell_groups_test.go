@@ -256,8 +256,8 @@ var simAuraSpells = map[int32]int32{
 	47467: 58567, // Sunder Armor
 }
 
-// spellGroupAllowances are the pairs on which the sim and the server differ, with the reason. The mismatches
-// are follow-ups; the rest are spell-specific rules the tables lack, where the sim already matches.
+// spellGroupAllowances are the pairs on which the sim and the server differ, with the reason. Each is a
+// spell-specific rule the tables lack or a tie that never changes a value, so the sim matches the server.
 var spellGroupAllowances = map[spellPair]string{
 	{71, 2457}:     stanceReason,
 	{71, 2458}:     stanceReason,
@@ -267,11 +267,6 @@ var spellGroupAllowances = map[spellPair]string{
 	{2818, 30708}:  poisonReason,
 	{13218, 21183}: poisonReason,
 	{13218, 30708}: poisonReason,
-	{10060, 12042}: "server: group 1123 keeps only the stronger of Power Infusion and Arcane Power; the sim applies both (MultiplyCastSpeed and PercentDamageModifier are separate categories). Follow-up: sim mismatch.",
-	{19574, 49016}: bestialWrathReason,
-	{19574, 57933}: bestialWrathReason,
-	{49016, 57518}: enrageReason,
-	{57518, 57933}: enrageReason,
 	{34074, 61846}: "server: SpellInfo::IsAuraExclusiveBySpecificPerCasterWith makes a caster's aspects exclusive, not a group row. The sim's Aspect category matches that.",
 	{48263, 48265}: presenceReason,
 	{48263, 48266}: presenceReason,
@@ -279,11 +274,9 @@ var spellGroupAllowances = map[spellPair]string{
 }
 
 const (
-	stanceReason       = "server: a shapeshift form replaces the previous one (Unit::SetShapeshiftForm), not a group row. The sim's Stance category matches that."
-	presenceReason     = "server: SpellInfo::IsAuraExclusiveBySpecificWith makes presences exclusive (SPELL_SPECIFIC_PRESENCE), not a group row. The sim's Presence category matches that."
-	poisonReason       = "server: group 1058 holds the poisons and the crit-taken debuffs under one aura type (197), so only the strongest counts. The sim's poison auras carry no crit effect, and its Master Poisoner is a caster aura (58410) that stacks with Heart of the Crusader and Totem of Wrath. Follow-up: sim mismatch."
-	bestialWrathReason = "server: Bestial Wrath (19574) is in no group; group 1107 holds The Beast Within (34471) instead, so it stacks with Hysteria and Tricks of the Trade. The sim puts it in PercentDamageModifier with them. Follow-up: sim mismatch."
-	enrageReason       = "server: Enrage (57518) is only in group 1104 (warrior enrages), not in 1107, so it stacks with Hysteria and Tricks of the Trade. The sim puts it in PercentDamageModifier with them. Follow-up: sim mismatch."
+	stanceReason   = "server: a shapeshift form replaces the previous one (Unit::SetShapeshiftForm), not a group row. The sim's Stance category matches that."
+	presenceReason = "server: SpellInfo::IsAuraExclusiveBySpecificWith makes presences exclusive (SPELL_SPECIFIC_PRESENCE), not a group row. The sim's Presence category matches that."
+	poisonReason   = "server: group 1058 ties the poisons to the crit-taken debuffs, but every poison rank's aura-197 effect is 0 and Master Poisoner's crit is the caster aura 45176 (type 308, outside the group), so the tie never moves a total. The sim stacks them, which is the same result."
 )
 
 // everyOn turns every switch of a buff, debuff or party message on: bools, counts and tristates.

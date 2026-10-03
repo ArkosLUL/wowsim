@@ -442,8 +442,8 @@ func (hunter *Hunter) registerBestialWrathCD() {
 	})
 
 	bestialWrathAura := hunter.RegisterAura(core.Aura{
-		Label:    "Bestial Wrath",
-		ActionID: actionID,
+		Label:    "The Beast Within",
+		ActionID: core.ActionID{SpellID: 34471},
 		Duration: time.Second * 10,
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
 			aura.Unit.PseudoStats.DamageDealtMultiplier *= 1.1
