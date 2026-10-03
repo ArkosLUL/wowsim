@@ -144,7 +144,8 @@ PERF-COST joins V (the user's call, the same day): T2's cost arithmetic slowed C
 
 ## Current wave
 
-- Wave: T2, landed (master fast-forwarded to this close-out). Next: V (EC-THREAT-FIX, EC-STRIKES, EC-BUFFS, PERF-COST).
+- Wave: V, running; base `16bdd941c`, runId `wf_ea73babf-e53`. EC-THREAT-FIX, EC-STRIKES (live stage pending), EC-BUFFS,
+PERF-COST merged; cross-review next. Next: W.
   Prod runs Q's `225191f1f`; R changes the optimizer's pool and the BiS tabs' hint.
 - Open: the talent sweep's unseen talents (test-enrichment INVESTIGATION, TE-SWEEP as built); from Q (parity
   INVESTIGATION, PAR-FU-4..7 as built): Ranged Weapon Specialization on Explosive Trap and magic procs, Glyph of Totem
@@ -174,7 +175,7 @@ PERF-COST joins V (the user's call, the same day): T2's cost arithmetic slowed C
   - Then the BiS tooltip dataset (acbis driver, both stages, fresh `--out`, then `acbis`; the import needs
     the OK), the changed builds' stat weights, and the perf harness's `opt_*` scenarios (`update.sh`, a new
     baseline; the raid25 dumps in `_dump/optimizer_dump_test.go` still build uncut pools).
-- Workflow runIds: T2's `wf_5af2b99d-6d0`; T's `wf_8a59e202-2f8`, `wf_59a7bdbf-cbc` and `wf_beaacdaa-bbc` (the live reruns; journals in the session's `subagents/workflows/<runId>`); S's `wf_ae61e19e-2c1`; R's `wf_445767f0-4a1` (base `9f1f2f94f`); Q's `wf_47a2be77-20d` and `wf_6f439290-bf9` (PAR-FU-5 and 6's live stages; base `fdbc3df49`); P's `wf_9c73b1de-ff3` (base `c678de53e`); O's `wf_cd004c46-c80` (base `b069c688b`); N's `wf_4b37e171-123` (base `7f4174efb`); M's `wf_8ab862a5-d37` (base `33da5ca34`); L's `wf_34052b28-d62`, `wf_1a26dbdb-51c`, `wf_ac1129b6-8d7`, `wf_a59f095c-4b7`, `wf_f5be2bcf-e23`,
+- Workflow runIds: V's `wf_ea73babf-e53`; T2's `wf_5af2b99d-6d0`; T's `wf_8a59e202-2f8`, `wf_59a7bdbf-cbc` and `wf_beaacdaa-bbc` (the live reruns; journals in the session's `subagents/workflows/<runId>`); S's `wf_ae61e19e-2c1`; R's `wf_445767f0-4a1` (base `9f1f2f94f`); Q's `wf_47a2be77-20d` and `wf_6f439290-bf9` (PAR-FU-5 and 6's live stages; base `fdbc3df49`); P's `wf_9c73b1de-ff3` (base `c678de53e`); O's `wf_cd004c46-c80` (base `b069c688b`); N's `wf_4b37e171-123` (base `7f4174efb`); M's `wf_8ab862a5-d37` (base `33da5ca34`); L's `wf_34052b28-d62`, `wf_1a26dbdb-51c`, `wf_ac1129b6-8d7`, `wf_a59f095c-4b7`, `wf_f5be2bcf-e23`,
   `wf_42fc0b7c-42a`; args `wave<X>*-args.json` in `G:\DevStuff\GitHub\.wave-loop`, transcripts in
   `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\<runId>`.
 - J2's full-roster batch ran 2026-09-28 in 52 min at Quick, output in
@@ -545,6 +546,10 @@ crashed before F2, so its column starts there.
 | EC-SHEET-FIX | merged | `81e87739d` | 33 goldens promoted in `f68a104d5`, most in character stats only; Blood +0.4%; `db.json` regenerated (63 items' bonus armor); Blood-Gorged, Mace Specialization and Holy Specialization's sheet crit stay dropped as sheet artifacts; RogueCombat's new Endurance step dropped until a live rerun |
 | EC-STACK-FIX | merged | `6fa25a10f` | 5 goldens promoted in `a3753780e`: Balance −1.75% (Starfall's splash skips the star's target), Feral Tank multi-target +4% (Berserk Mangle), Ret multi-target −0.04% (Holy Wrath capped), BM's aura key; Master Poisoner's pairs not a sim gap |
 | wave T2 cross-review | | `f6b05f9c6` | 1 bug: spells the sim registers without a school (Rapid Fire, Icy Veins, Water Elemental) lost their school cost auras; pets got the player-only block value and bonus armor; Permafrost at 1–2 points; hunter and mage goldens promoted with it; server-parity gained T2's facts |
+| EC-THREAT-FIX | merged | `b3ba8bd08` | 35 goldens promoted in `46c5c82da`, TPS only: Retribution −28% (Fanaticism), Shadow −30% (Shadowform), Protection Warrior −10.8%, Feral Tank −5.6%, DKs −1 to −7.7%, DPS classes +0.3 to +3.7% (each cast's level bonus); `knownThreatMismatches` empty, the `spell_threat` rows generated |
+| EC-STRIKES | merged, live stage pending | `13508d09b` | module `c7abf1f`; not rebuilt (Deathsong online), so `strikes.jsonl` is uncaptured and `TestStrikesRecords` skips; offline leads: cat and bear form damage, Ghoul Frenzy's cadence, the Imp's Firebolt crit, Force of Nature's treant |
+| EC-BUFFS | merged | `d989f3d83` | module `1e2fdcd`; 65 states agree; 2 pairs dropped as sim gaps: Curse of Weakness + Vindication, Insect Swarm + Scorpid Sting |
+| PERF-COST | merged | `e1187f470` | goldens byte-identical; loaded A/B: Combat Rogue −10 to −11%, the raid −2.8% at 100 iterations |
 
 Later WIs are added as their wave starts.
 

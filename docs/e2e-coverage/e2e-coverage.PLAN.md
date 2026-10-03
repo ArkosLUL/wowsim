@@ -633,7 +633,7 @@ AoE stage:
 - All replays, `TestSimSpellGroups`, `TestSimAOESpells`, simval records (1114 of 1114) and `go vet` pass. The only
   failing tests are the four golden suites above.
 
-### EC-THREAT-FIX (V; changes goldens, full suite)
+### EC-THREAT-FIX (V, done; changes goldens, full suite)
 
 - Fix what EC-THREAT dropped, nothing more: likely the flat bonus outside `PseudoStats.ThreatMultiplier`, the
   `spell_threat` values, `SpellLevel` threat, the split across targets. Restore the dropped records.
@@ -691,7 +691,7 @@ to +3.7%, hunters, warlocks, shamans, Balance, Arcane and Frost mage +0.3 to +1.
 and FrostFire −0.2%; healers' few TPS +53 to +83% (assist threat). All other checks pass: replays,
 `TestSimSpellGroups`, `TestSimAOESpells`, simval records (1114 of 1114), `go vet`.
 
-### EC-STRIKES (V; golden-neutral; C++; stages: C++ and e2e, sim, live)
+### EC-STRIKES (V, merged, live stage pending; golden-neutral; C++; stages: C++ and e2e, sim, live)
 
 - Weapon strikes in `.simval damage`: `Spell::EffectWeaponDmg`'s fixed bonus, percent, spell bonus and total
   percent, at both ends of `CalculateMinMaxDamage` (normalized via `GetAPMultiplier`), then
@@ -733,7 +733,7 @@ and FrostFire −0.2%; healers' few TPS +53 to +83% (assist threat). All other c
   weapons (43–66, 109–165) aren't the server's form damage (`min(level, 60)` × 0.85–1.25 × the form's speed:
   51–75, 127.5–187.5). Live notes: `tmp/ec-strikes-sim.md`.
 
-### EC-BUFFS (V; golden-neutral; stages: code, live)
+### EC-BUFFS (V, done; golden-neutral; stages: code, live)
 
 - e2e `e2e/buffs_test.go`: on a golden setup's character, each `FullBuffs` buff alone, then pairs in each exclusive
   category, with `info` after each; on the boss dummy, each `FullDebuffs` debuff with `armor`, a `damage` probe and

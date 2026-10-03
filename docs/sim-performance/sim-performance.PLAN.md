@@ -247,7 +247,7 @@ state-aware `moveBound` lets `bestItem` and `bestPartner` skip moves that can't 
 gem kinds group once per pool. Captured P2 Normal jobs: Mighty 136 → 56 s, Stormweaver 52 → 40 s. The harness
 runs raid25 Quick at `-raid-procs 8,16` and skips raid DPS at Normal (55 min) by default, kept by the user (2026-10-02): 46 min idle at O.
 
-### PERF-COST: the cost check off the hot path (wave V)
+### PERF-COST: the cost check off the hot path (wave V, done)
 
 EC-COST-FIX (wave T2) runs the server's cost arithmetic (`costFor`, `sim/core/cost.go`: three truncations and a
 school lookup) on every `ApplyCostModifiers` call, and the APL calls that for each energy action on every
@@ -293,4 +293,4 @@ The user put the pass before wave J, whose BIS-e2e-perf times the optimizer with
 - **I6 (done):** PERF-MISSILE, the user's call (2026-09-26), before J times the optimizer.
 - **J2 (done):** PERF-RNG, the user's call (2026-09-27), with the optimizer fixes wave J's speed audit found.
 - **N (done):** PERF-FU, the user's call (2026-10-01), with wave L's and M's other follow-ups.
-- **V:** PERF-COST, the user's call (2026-10-03), after wave T2's cost arithmetic slowed Combat Rogue.
+- **V (done):** PERF-COST, the user's call (2026-10-03), after wave T2's cost arithmetic slowed Combat Rogue.

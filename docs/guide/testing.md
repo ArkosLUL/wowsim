@@ -129,10 +129,11 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
     4. `dock.sh run ./tools/simval -records /wotlk/tmp/<capture> -fixture` replaces the fixture. Every
        failing record is a sim/server mismatch: remove it, add a row to the fixture README, and open a
        follow-up. Never fix the sim here. Move the `damage` lines to `damage.jsonl`.
-- `damage.jsonl`, `timing.jsonl`, `threat.jsonl`, `goldchar.jsonl`, `talents.jsonl` and `spellmods.jsonl` in the same
-  folder each have their own replay test and live capture (`timing.jsonl` and `threat.jsonl`: `run.sh TestSimvalTiming`
-  or `TestSimvalThreat`, streamed as above): the [simval README](../../tools/simval/README.md)'s Damage probe, Timing
-  probe, Threat probe, Golden characters, Talent sweep and Spell-mod sweep.
+- `damage.jsonl`, `timing.jsonl`, `threat.jsonl`, `strikes.jsonl`, `buffs.jsonl`, `goldchar.jsonl`, `talents.jsonl` and
+  `spellmods.jsonl` in the same folder each have their own replay test and live capture (`timing.jsonl`, `threat.jsonl`,
+  `strikes.jsonl` and `buffs.jsonl`: `run.sh TestSimvalTiming`, `TestSimvalThreat`, `TestSimvalStrikes` or
+  `TestSimvalBuffs` with `SIMVAL_GOLDCHAR_SETUPS`, streamed as above): the [simval README](../../tools/simval/README.md)'s
+  Damage probe, Timing probe, Threat probe, Buffs, Golden characters, Talent sweep and Spell-mod sweep.
 - `TestSimSpellGroups` (`sim/spell_groups_test.go`, offline) checks the sim's exclusive-effect categories against
   the server's `spell_group` rules in `sim/core/testdata/simval/spell_groups.json`; the export query is in its
   doc comment. A pair the two disagree on needs a reason in `spellGroupAllowances`, and a stale entry fails.
