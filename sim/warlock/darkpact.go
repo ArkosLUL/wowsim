@@ -39,7 +39,6 @@ func (warlock *Warlock) registerDarkPactSpell() {
 		},
 
 		ThreatMultiplier: 1 - 0.1*float64(warlock.Talents.ImprovedDrainSoul),
-		FlatThreatBonus:  80,
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			// Glyph activates and applies SP before coeff calculations are done.

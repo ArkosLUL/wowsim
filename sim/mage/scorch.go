@@ -41,7 +41,7 @@ func (mage *Mage) registerScorchSpell() {
 			core.TernaryFloat64(mage.HasMajorGlyph(proto.MageMajorGlyph_GlyphOfScorch), 0.2, 0),
 		),
 		CritMultiplier:   mage.SpellCritMultiplier(1, mage.bonusCritDamage),
-		ThreatMultiplier: 1 - 0.1*float64(mage.Talents.BurningSoul),
+		ThreatMultiplier: 1,
 
 		Direct: core.SpellEffect{Effect: 0, Min: 382, Max: 450, SP: 0.4286},
 

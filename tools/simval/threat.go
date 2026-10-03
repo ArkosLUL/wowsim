@@ -9,6 +9,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/wowsims/wotlk/sim/core"
+	"github.com/wowsims/wotlk/sim/core/proto"
 	"github.com/wowsims/wotlk/sim/core/serverdata"
 	"github.com/wowsims/wotlk/sim/core/stats"
 )
@@ -185,6 +186,40 @@ var threatExtraSpecs = map[uint8][]protoreflect.Name{
 	11: {"feral_tank_druid"},
 }
 
+// threatLoadouts give the sim character what a probe's spell reads and the damage replay's naked one
+// lacks. Any weapon or pet does: the replay compares threat per point of damage and the bonus.
+var threatLoadouts = map[int32]func(*proto.Player){
+	25742: withThreatWeapons(proto.ItemSlot_ItemSlotMainHand),                                 // Seal of Righteousness: the main hand's speed
+	60103: withThreatWeapons(proto.ItemSlot_ItemSlotMainHand, proto.ItemSlot_ItemSlotOffHand), // Lava Lash: the off hand
+	59092: withThreatPet,                                                                      // Dark Pact drains the pet's mana
+}
+
+// threatLoadoutSpecs are tried first for a loadout's spell: elemental has no off hand attack to read
+// without Feral Spirit.
+var threatLoadoutSpecs = map[int32]protoreflect.Name{60103: "enhancement_shaman"}
+
+// a plain one-hand mace, no effects
+const threatWeaponID = 6360
+
+func withThreatWeapons(slots ...proto.ItemSlot) func(*proto.Player) {
+	return func(player *proto.Player) {
+		items := make([]*proto.ItemSpec, len(proto.ItemSlot_name))
+		for i := range items {
+			items[i] = &proto.ItemSpec{}
+		}
+		for _, slot := range slots {
+			items[slot].Id = threatWeaponID
+		}
+		player.Equipment = &proto.EquipmentSpec{Items: items}
+	}
+}
+
+func withThreatPet(player *proto.Player) {
+	if w := player.GetWarlock(); w != nil && w.Options != nil {
+		w.Options.Summon = proto.Warlock_Options_Imp
+	}
+}
+
 // threatSim is the record's character with the sim spells the probe compares: every tag of the id, the
 // lowest first.
 type threatSim struct {
@@ -223,7 +258,7 @@ func buildThreatSim(rec threatRecord) (*threatSim, error) {
 	class := classes[rec.Attacker.Class]
 	form := rec.form()
 	var specs []protoreflect.Name
-	for _, spec := range slices.Concat([]protoreflect.Name{threatForms[form], class.spec}, class.otherSpecs,
+	for _, spec := range slices.Concat([]protoreflect.Name{threatForms[form], threatLoadoutSpecs[rec.Spell.ID], class.spec}, class.otherSpecs,
 		threatExtraSpecs[rec.Attacker.Class]) {
 		if spec != "" && !slices.Contains(specs, spec) {
 			specs = append(specs, spec)
@@ -236,6 +271,9 @@ func buildThreatSim(rec threatRecord) (*threatSim, error) {
 			player, err := damagePlayer(dr, setup, spec)
 			if err != nil {
 				return nil, err
+			}
+			if load := threatLoadouts[rec.Spell.ID]; load != nil {
+				load(player)
 			}
 			d, err := newDamageSim(dr, player, setup.others, rec.enemies())
 			if err != nil {
@@ -262,12 +300,12 @@ func buildThreatSim(rec threatRecord) (*threatSim, error) {
 // from one tick of the dot it leaves there, over every tag of the spell id.
 type threatCast struct {
 	// threat per point of damage, of the tag that dealt the most
-	slope, spellMultiplier float64
-	bonus, damage          float64
-	ticked                 bool
-	tickBonus, tickDamage  float64
-	note                   string
-	failed                 error
+	slope, spellMultiplier, schoolMultiplier float64
+	bonus, damage                            float64
+	ticked                                   bool
+	tickBonus, tickDamage                    float64
+	note                                     string
+	failed                                   error
 }
 
 type threatMetrics struct {
@@ -356,8 +394,10 @@ func (ts *threatSim) castOnce(rec threatRecord, spell *core.Spell) (c threatCast
 	}
 	pick := slices.Index(ts.spells, spell)
 	c.slope, c.spellMultiplier = slopes[pick], multipliers[pick]
+	c.schoolMultiplier = ts.char.ThreatSchoolMultiplier(ts.spells[pick].SpellSchool)
 
-	spell.ApplyEffects(ts.sim, ts.target, spell)
+	// a cast, so it hands out its threat bonus
+	spell.SkipCastAndApplyEffects(ts.sim, ts.target)
 	ts.settle()
 	after := ts.metrics()
 	var dealt []float64
@@ -394,7 +434,8 @@ func (ts *threatSim) castOnce(rec threatRecord, spell *core.Spell) (c threatCast
 		}
 	}
 	c.slope, c.spellMultiplier = slopes[pick], multipliers[pick]
-	// Lava Lash without an off hand weapon
+	c.schoolMultiplier = ts.char.ThreatSchoolMultiplier(ts.spells[pick].SpellSchool)
+	// a strike reading a weapon the character doesn't carry
 	if math.IsNaN(c.bonus + c.damage + c.tickBonus + c.tickDamage) {
 		c.failed = fmt.Errorf("its damage is NaN, bonus %v damage %v", c.bonus, c.damage)
 	}
@@ -478,8 +519,8 @@ func replayThreatChecks(rec threatRecord, build func(threatRecord) (*threatSim, 
 	d := rec.Damage
 	if c.damage > 0 || c.tickDamage > 0 || threatServerDamage(rec.Spell.ID) {
 		checks = append(checks, checkThreatNear("damage threat", c.slope*d.Amount, d.Threat, fmt.Sprintf(
-			"sim x%.4f (spell %.4f, unit %.4f), server x%.4f (spell_threat %.4f, after spell mods %.2f, school %.4f)",
-			c.slope, c.spellMultiplier, ts.char.PseudoStats.ThreatMultiplier, d.Threat/d.Amount, d.PctMod,
+			"sim x%.4f (spell %.4f, school %.4f), server x%.4f (spell_threat %.4f, after spell mods %.2f, school %.4f)",
+			c.slope, c.spellMultiplier, c.schoolMultiplier, d.Threat/d.Amount, d.PctMod,
 			d.AfterSpellMods, d.SchoolMultiplier)))
 	} else {
 		checks = append(checks, notCompared("damage threat", "neither the sim's cast nor the server spell deals damage"))
@@ -544,88 +585,4 @@ func threatMismatchOf(rec threatRecord, check string) threatMismatch {
 // knownThreatMismatches are checks where the sim and the server really differ, each with its reason and a
 // row in the fixture README. The check still runs; only its failure is let through. An entry no record
 // needs fails TestThreatRecords.
-var knownThreatMismatches = func() map[threatMismatch]string {
-	const (
-		level     = "the server adds the spell's level per cast when spell_threat has no row for it, the sim nothing"
-		levelHalf = "the server adds the spell's level split between the dummy and the caster an effect also hits, the sim nothing"
-		scaled    = "the sim multiplies the spell_threat bonus by the unit's threat multiplier, the server adds it unmodified"
-		simFlat   = "the sim adds a flat bonus the server has no spell_threat row for, so the server adds the spell's level"
-		simPct    = "the sim multiplies this spell's threat, the server has no spell_threat percent for it"
-		bear      = "Dire Bear Form is x2.1021 in the sim, x2.0735 on the server"
-		unholy    = "the server's Unholy Presence takes 20% off threat besides Subversion's 25% (x0.55), the sim only Subversion's (x0.75)"
-		shadow    = "Shadowform takes 30% off threat on the server and nothing in the sim, and Shadow Affinity takes 25% there, 24% in the sim"
-	)
-	m := map[threatMismatch]string{}
-	add := func(reason string, class uint8, form int32, check string, spells ...int32) {
-		for _, spell := range spells {
-			m[threatMismatch{class, form, spell, 0, check}] = reason
-		}
-	}
-
-	add(level, 1, 71, "bonus", 12809, 47471)
-	add(level, 1, 2458, "bonus", 23881, 1680, 47471, 47486, 7384, 47465)
-	add(level, 2, 25780, "bonus", 48827, 53595, 61411, 20187, 48801, 48819, 35395)
-	add(level, 2, 0, "bonus", 35395, 48801, 20187, 48806, 48819)
-	add(level, 11, 9634, "bonus", 48564)
-	add(level, 11, 768, "bonus", 48572, 48566, 48574, 49800, 48577, 62078)
-	add(level, 6, 48263, "bonus", 49909, 55262, 49924, 49941, 47632)
-	add(level, 6, 48265, "bonus", 49930, 51425, 47632, 49909, 55262)
-	add(level, 4, 0, "bonus", 48638, 48657, 51723, 57965, 48660)
-	add(level, 8, 0, "bonus", 44781, 42833, 42926, 42842, 47610, 42914, 55360, 42859)
-	add(level, 5, 0, "bonus", 48127, 48125, 48160, 48300, 48158, 48123)
-	add(level, 9, 0, "bonus", 47809, 47838, 47811, 47813, 59172, 47864, 47865, 47867, 50511)
-	add(level, 7, 0, "bonus", 49238, 49271, 60043, 49231, 49233, 61654)
-	add(levelHalf, 2, 0, "bonus", 53385)
-	add(levelHalf, 4, 0, "bonus", 48668, 48672, 57993)
-	add(levelHalf, 8, 0, "bonus", 42897)
-	add(levelHalf, 5, 0, "bonus", 48156)
-
-	add(scaled, 1, 71, "bonus", 47450, 57823, 47488)
-	add(scaled, 1, 2458, "bonus", 47450)
-	const cleave = "the sim's Cleave bonus is 225 times the unit's threat multiplier, spell_threat's is 112 unmodified"
-	add(cleave, 1, 71, "bonus", 47520)
-	add(cleave, 1, 2458, "bonus", 47520)
-	m[threatMismatch{1, 71, 47520, 2, "bonus"}] = cleave + " and split over the targets hit"
-	add("the sim's Maul bonus is 424 times Dire Bear Form's multiplier, spell_threat's is 422 unmodified", 11, 9634, "bonus", 48480)
-	add("the sim's Lacerate bonus is 515.5 times Dire Bear Form's multiplier, spell_threat's is 515 unmodified", 11, 9634, "bonus", 48568)
-	add("the sim's Devastate adds 315 and 5% of attack power, times the unit's threat multiplier; "+
-		"spell_threat has the 5% alone, unmodified", 1, 71, "bonus", 47498)
-	const slam = "the sim puts Slam's 140 on its damage spell, which the server gives its level of 1; the server's row " +
-		"is on the cast, whose bonus SPELL_ATTR3_SUPPRESS_TARGET_PROCS drops"
-	add(slam, 1, 71, "bonus", 50783)
-	add(slam, 1, 2458, "bonus", 50783)
-	add("the server's Sunder Armor row (7386) isn't in this rank's chain, so it adds the spell's level; the sim adds "+
-		"360 and 5% of attack power, times the unit's threat multiplier", 1, 71, "bonus", 47467)
-	add(simFlat, 1, 71, "bonus", 47437)
-	add(simFlat, 11, 9634, "bonus", 48560)
-	const fffCast = "the sim puts Faerie Fire (Feral)'s flat on the cast, the server's 638 is on the damage spell 60089 and the cast adds its level"
-	add(fffCast, 11, 9634, "bonus", 16857)
-	add(fffCast, 11, 768, "bonus", 16857)
-	add("the server's 638 for Faerie Fire (Feral) is on this damage spell, the sim puts its flat on the cast 16857",
-		11, 9634, "bonus", 60089)
-	const scourge = "spell_threat gives Scourge Strike 120, the sim nothing"
-	add(scourge, 6, 48263, "bonus", 55271)
-	add(scourge, 6, 48265, "bonus", 55271)
-	add("the server's bonus for this positive spell reaches the dummy as assist threat, its level x0.7; the sim adds nothing",
-		7, 0, "bonus", 61657)
-	add("the sim adds Curse of Doom's 160 to each tick, the server adds no bonus to ticks", 9, 0, "tick bonus", 47867)
-
-	add(simPct, 1, 71, "damage threat", 47488, 12809, 47471)
-	add(simPct, 1, 2458, "damage threat", 1680, 47471, 7384)
-	add("the sim never applies Fanaticism's 30% threat reduction (applyFanaticism is never called)", 2, 0, "damage threat",
-		35395, 53385, 48801, 20187, 48806, 48819, 20424)
-	add(bear, 11, 9634, "damage threat", 48480, 48568, 48564, 60089)
-	const swipe = "spell_threat gives Swipe (Bear) x1.5, the sim nothing; " + bear
-	add(swipe, 11, 9634, "damage threat", 48562)
-	m[threatMismatch{11, 9634, 48562, 3, "damage threat"}] = swipe
-	add(unholy, 6, 48265, "damage threat", 55271, 49930, 51425, 47632, 49909, 55262, 52212)
-	add("the sim's Flamestrike takes 5% per Burning Soul point, the server 10%", 8, 0, "damage threat", 42926)
-	add("the server multiplies Burning Soul's and Frost Channeling's school multipliers (x0.72), the sim adds them (x0.68)",
-		8, 0, "damage threat", 47610)
-	add(shadow, 5, 0, "damage threat", 48127, 58381, 48125, 48160, 48158)
-	add("Shadowform takes 30% off threat on the server and nothing in the sim, and the sim's Devouring Plague takes "+
-		"only 15% for Shadow Affinity", 5, 0, "damage threat", 48300)
-	add("Shadowform takes 30% off threat in every school on the server, nothing in the sim", 5, 0, "damage threat", 48123)
-	add("spell_threat gives Searing Pain x2, the sim nothing", 9, 0, "damage threat", 47815)
-	return m
-}()
+var knownThreatMismatches = map[threatMismatch]string{}

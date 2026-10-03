@@ -43,7 +43,7 @@ func (warrior *Warrior) registerExecuteSpell() {
 
 		DamageMultiplier: 1 / warrior.twoHandedWeaponSpecialization(),
 		CritMultiplier:   warrior.critMultiplier(),
-		ThreatMultiplier: 1.25,
+		ThreatMultiplier: 1,
 
 		// spell_warr_execute hands 20647 the dummy effect's value plus 20% of attack power and the extra
 		// rage's damage, in whole points

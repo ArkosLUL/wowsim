@@ -40,7 +40,7 @@ func (mage *Mage) registerFrostboltSpell() {
 			core.TernaryFloat64(mage.HasSetBonus(ItemSetTempestRegalia, 4), .05, 0),
 		),
 		CritMultiplier:   mage.SpellCritMultiplier(1, mage.bonusCritDamage+float64(mage.Talents.IceShards)/3),
-		ThreatMultiplier: 1 - (0.1/3)*float64(mage.Talents.FrostChanneling),
+		ThreatMultiplier: 1,
 
 		Direct: core.SpellEffect{Effect: 1, Min: 803, Max: 865, SP: 0.857},
 		Mods: []core.SpellMod{

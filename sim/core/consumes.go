@@ -283,7 +283,6 @@ func applyConsumeEffects(agent Agent) {
 				ProcMask:    ProcMaskEmpty,
 
 				ThreatMultiplier: 1,
-				FlatThreatBonus:  90,
 
 				ApplyEffects: func(sim *Simulation, target *Unit, spell *Spell) {
 					debuffAuras.Get(target).Activate(sim)

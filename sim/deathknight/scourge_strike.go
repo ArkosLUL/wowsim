@@ -26,6 +26,7 @@ func (dk *Deathknight) registerScourgeStrikeShadowDamageSpell() *core.Spell {
 
 		DamageMultiplier: 1,
 		ThreatMultiplier: 1,
+		ThreatSpellID:    70890,
 
 		// spell_dk_scourge_strike reads the strike's third effect as the percent per disease
 		Direct: core.SpellEffect{Effect: 2, Min: 12, Max: 12},

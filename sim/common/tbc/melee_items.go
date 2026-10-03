@@ -30,20 +30,6 @@ func init() {
 
 		procActionID := core.ActionID{SpellID: 21992}
 
-		singleTargetSpell := character.RegisterSpell(core.SpellConfig{
-			ActionID:    procActionID.WithTag(1),
-			SpellSchool: core.SpellSchoolNature,
-			ProcMask:    core.ProcMaskEmpty,
-
-			DamageMultiplier: 1,
-			CritMultiplier:   character.DefaultSpellCritMultiplier(),
-			ThreatMultiplier: 0.5,
-
-			ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-				spell.CalcAndDealDamage(sim, target, 300, spell.OutcomeMagicHitAndCrit)
-			},
-		})
-
 		makeDebuffAura := func(target *core.Unit) *core.Aura {
 			return target.GetOrRegisterAura(core.Aura{
 				Label:    "Thunderfury",
@@ -64,18 +50,26 @@ func init() {
 			debuffAuras[i] = makeDebuffAura(target)
 		}
 
-		bounceSpell := character.RegisterSpell(core.SpellConfig{
-			ActionID:    procActionID.WithTag(2),
+		// one cast: the damage on the first target, the debuff there and on the jumps. The slow it
+		// triggers (27648) is SPELL_ATTR1_NO_THREAT, so the cast's level, split between them, is all its bonus.
+		procSpell := character.RegisterSpell(core.SpellConfig{
+			ActionID:    procActionID,
 			SpellSchool: core.SpellSchoolNature,
 			ProcMask:    core.ProcMaskEmpty,
 
+			DamageMultiplier: 1,
+			CritMultiplier:   character.DefaultSpellCritMultiplier(),
 			ThreatMultiplier: 1,
-			FlatThreatBonus:  63,
 
 			ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 				curTarget := target
 				for hitIndex := int32(0); hitIndex < numHits; hitIndex++ {
-					result := spell.CalcDamage(sim, curTarget, 0, spell.OutcomeMagicHit)
+					var result *core.SpellResult
+					if hitIndex == 0 {
+						result = spell.CalcDamage(sim, curTarget, 300, spell.OutcomeMagicHitAndCrit)
+					} else {
+						result = spell.CalcOutcome(sim, curTarget, spell.OutcomeMagicHit)
+					}
 					if result.Landed() {
 						debuffAuras[curTarget.Index].Activate(sim)
 					}
@@ -97,8 +91,7 @@ func init() {
 				}
 
 				if ppmm.Proc(sim, spell.ProcMask, "Thunderfury") {
-					singleTargetSpell.Cast(sim, result.Target)
-					bounceSpell.Cast(sim, result.Target)
+					procSpell.Cast(sim, result.Target)
 				}
 			},
 		})

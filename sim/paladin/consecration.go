@@ -65,6 +65,10 @@ func (paladin *Paladin) registerConsecrationSpell() {
 		},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+			// the cast selects every enemy in the area, so they split its bonus
+			for _, aoeTarget := range sim.Encounter.TargetUnits {
+				spell.LandThreatBonus(sim, aoeTarget)
+			}
 			spell.AOEDot().Apply(sim)
 		},
 	})

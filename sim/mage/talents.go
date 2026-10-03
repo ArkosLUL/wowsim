@@ -73,6 +73,20 @@ func (mage *Mage) ApplyTalents() {
 	mage.AddSchoolCostMultiplier(core.SpellSchoolArcane|core.SpellSchoolFire|core.SpellSchoolFrost,
 		-[]float64{0, .04, .07, .10}[mage.Talents.FrostChanneling])
 
+	// threat auras, one school each, so Frostfire Bolt gets Burning Soul times Frost Channeling
+	for _, t := range []struct {
+		school core.SpellSchool
+		cut    float64
+	}{
+		{core.SpellSchoolArcane, []float64{0, .2, .4}[mage.Talents.ArcaneSubtlety]},
+		{core.SpellSchoolFire, []float64{0, .1, .2}[mage.Talents.BurningSoul]},
+		{core.SpellSchoolFrost, []float64{0, .04, .07, .10}[mage.Talents.FrostChanneling]},
+	} {
+		if t.cut > 0 {
+			mage.AddThreatSchoolMultiplier(t.school, 1-t.cut)
+		}
+	}
+
 	// 0.5 resistance per level per rank (realPointsPerLevel of 29441 and 29444)
 	magicAbsorptionBonus := 0.5 * float64(mage.Talents.MagicAbsorption) * float64(mage.Level)
 	mage.AddStat(stats.ArcaneResistance, magicAbsorptionBonus)

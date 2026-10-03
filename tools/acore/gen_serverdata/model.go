@@ -32,6 +32,7 @@ type model struct {
 	spells       []namedSpell
 	procs        []serverdata.Proc
 	bonuses      []serverdata.Bonus
+	threats      []serverdata.Threat
 	enchantProcs []serverdata.EnchantProc
 }
 
@@ -388,6 +389,57 @@ func resolveBonus(d *spellset.DumpSpell, rows map[int32]serverdata.Bonus) (*serv
 	return &b, nil
 }
 
+func loadThreatRows(db *sql.DB) (map[int32]serverdata.Threat, error) {
+	rows, err := db.Query("SELECT entry, flatMod, pctMod, apPctMod FROM spell_threat")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := map[int32]serverdata.Threat{}
+	for rows.Next() {
+		var t serverdata.Threat
+		var flat int32
+		if err := rows.Scan(&t.Row, &flat, &t.PctMod, &t.APPctMod); err != nil {
+			return nil, err
+		}
+		t.FlatMod = float32(flat)
+		out[t.Row] = t
+	}
+	return out, rows.Err()
+}
+
+// Implicit target types (SharedDefines.h Targets) that put the caster, or every enemy around a point or in
+// a cone, in a cast's unit targets.
+const targetUnitCaster = 1
+
+var enemyAreaTargets = []int64{15, 16, 24, 54, 104}
+
+// resolveThreat mirrors SpellMgr::GetSpellThreatEntry: the spell's own row, else its first rank's. It
+// adds the targets past one enemy, and leaves out a spell with neither.
+func resolveThreat(d *spellset.DumpSpell, rows map[int32]serverdata.Threat) *serverdata.Threat {
+	t, ok := rows[int32(d.ID)]
+	if !ok {
+		t = rows[int32(d.FirstRankID)]
+	}
+	t.SpellID = int32(d.ID)
+	for _, e := range d.Effects {
+		if e.Effect == 0 {
+			continue
+		}
+		if e.TargetA == targetUnitCaster || e.TargetB == targetUnitCaster {
+			t.Targets |= serverdata.ThreatTargetsCaster
+		}
+		if slices.Contains(enemyAreaTargets, e.TargetA) || slices.Contains(enemyAreaTargets, e.TargetB) {
+			t.Targets |= serverdata.ThreatTargetsEnemyArea
+		}
+	}
+	if t.Row == 0 && t.Targets == 0 {
+		return nil
+	}
+	return &t
+}
+
 func loadEnchantProcs(db *sql.DB) ([]serverdata.EnchantProc, error) {
 	rows, err := db.Query("SELECT entry, customChance, PPMChance, procEx, attributeMask FROM spell_enchant_proc_data ORDER BY entry")
 	if err != nil {
@@ -418,6 +470,10 @@ func buildModel(dump spellset.Dump, ids []int32, db *sql.DB) (*model, []error, e
 	if err != nil {
 		return nil, nil, fmt.Errorf("spell_bonus_data: %w", err)
 	}
+	threatRows, err := loadThreatRows(db)
+	if err != nil {
+		return nil, nil, fmt.Errorf("spell_threat: %w", err)
+	}
 
 	m := &model{}
 	if m.enchantProcs, err = loadEnchantProcs(db); err != nil {
@@ -442,6 +498,9 @@ func buildModel(dump spellset.Dump, ids []int32, db *sql.DB) (*model, []error, e
 			mismatches = append(mismatches, err)
 		} else if b != nil {
 			m.bonuses = append(m.bonuses, *b)
+		}
+		if t := resolveThreat(d, threatRows); t != nil {
+			m.threats = append(m.threats, *t)
 		}
 	}
 	return m, mismatches, nil

@@ -24,7 +24,7 @@ func (mage *Mage) registerLivingBombSpell() {
 		DamageMultiplierAdditive: 1 +
 			.02*float64(mage.Talents.FirePower),
 		CritMultiplier:   mage.SpellCritMultiplier(1, mage.bonusCritDamage),
-		ThreatMultiplier: 1 - 0.1*float64(mage.Talents.BurningSoul),
+		ThreatMultiplier: 1,
 
 		Direct: core.SpellEffect{Effect: 0, Min: 690, Max: 690, SP: 0.4},
 
@@ -67,7 +67,7 @@ func (mage *Mage) registerLivingBombSpell() {
 		DamageMultiplierAdditive: 1 +
 			.02*float64(mage.Talents.FirePower),
 		CritMultiplier:   mage.SpellCritMultiplier(1, mage.bonusCritDamage),
-		ThreatMultiplier: 1 - 0.1*float64(mage.Talents.BurningSoul),
+		ThreatMultiplier: 1,
 
 		Dot: core.DotConfig{
 			Aura: core.Aura{

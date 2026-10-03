@@ -69,6 +69,7 @@ func (dk *Deathknight) newFrostStrikeHitSpell(isMH bool) *core.Spell {
 		conf.Cast = core.CastConfig{}
 		// Threat of Thassarian's off-hand strike
 		conf.Direct = core.SpellEffect{Effect: 0, FromSpellID: 66962, Min: 125, Max: 125, WeaponPct: 0.55}
+		conf.ThreatSpellID = 66962
 	} else {
 		conf.Flags |= core.SpellFlagAPL
 		conf.Direct = core.SpellEffect{Effect: 0, Min: 250, Max: 250, WeaponPct: 0.55}

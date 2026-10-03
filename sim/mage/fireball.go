@@ -45,7 +45,7 @@ func (mage *Mage) registerFireballSpell() {
 			core.TernaryFloat64(mage.HasSetBonus(ItemSetTempestRegalia, 4), .05, 0),
 		),
 		CritMultiplier:   mage.SpellCritMultiplier(1, mage.bonusCritDamage),
-		ThreatMultiplier: 1 - 0.1*float64(mage.Talents.BurningSoul),
+		ThreatMultiplier: 1,
 
 		Direct: core.SpellEffect{Effect: 0, Min: 898, Max: 1142, SP: 1},
 		Mods: []core.SpellMod{

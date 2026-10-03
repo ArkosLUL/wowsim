@@ -32,7 +32,7 @@ func (mage *Mage) registerDeepFreezeSpell() {
 
 		DamageMultiplier: 1,
 		CritMultiplier:   mage.SpellCritMultiplier(1, mage.bonusCritDamage+float64(mage.Talents.IceShards)/3),
-		ThreatMultiplier: 1 - (0.1/3)*float64(mage.Talents.FrostChanneling),
+		ThreatMultiplier: 1,
 
 		// the damage is 71757's, which Deep Freeze Immunity State (71761) casts on a stun immune target
 		Direct: core.SpellEffect{Effect: 0, FromSpellID: 71757, Min: 2369, Max: 2641, SP: 2.143},

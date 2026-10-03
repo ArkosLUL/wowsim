@@ -19,6 +19,8 @@ func (warrior *Warrior) applyDeepWounds() {
 
 		DamageMultiplier: 1,
 		ThreatMultiplier: 1,
+		// the talent's aura casts the bleed, 12721
+		ThreatSpellID: 12721,
 
 		Dot: core.DotConfig{
 			Aura: core.Aura{

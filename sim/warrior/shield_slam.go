@@ -57,8 +57,7 @@ func (warrior *Warrior) registerShieldSlamSpell() {
 			core.TernaryFloat64(warrior.HasSetBonus(ItemSetYmirjarLordsPlate, 2), .20, 0),
 		),
 		CritMultiplier:   warrior.critMultiplier(),
-		ThreatMultiplier: 1.3,
-		FlatThreatBonus:  770,
+		ThreatMultiplier: 1,
 
 		Direct: core.SpellEffect{Effect: 1, Min: 990, Max: 1040, SP: 1},
 		Mods:   []core.SpellMod{{Op: core.SpellModEffect2, Pct: gagOrderPct}},

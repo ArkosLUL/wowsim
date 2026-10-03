@@ -24,7 +24,7 @@ func (priest *Priest) getMindFlayTickSpell(numTicks int32, basePoints *float64) 
 			0.01*float64(priest.Talents.TwinDisciplines),
 		),
 		CritMultiplier:   priest.SpellCritMultiplier(1, float64(priest.Talents.ShadowPower)/5),
-		ThreatMultiplier: 1 - 0.08*float64(priest.Talents.ShadowAffinity),
+		ThreatMultiplier: priest.shadowAffinityThreatMultiplier(),
 		// rolls 0 on its own, the channel's amount replaces its base points
 		Direct: core.SpellEffect{Effect: 0, Min: 0, Max: 0, SP: 0.257},
 		Mods: []core.SpellMod{
@@ -104,6 +104,8 @@ func (priest *Priest) newMindFlaySpell(numTicksIdx int32) *core.Spell {
 			0.01*float64(priest.Talents.TwinDisciplines),
 		),
 		CritMultiplier: priest.SpellCritMultiplier(1, float64(priest.Talents.ShadowPower)/5),
+		// the ticks' damage is 58381's; this is for the channel's own threat bonus
+		ThreatMultiplier: 1,
 		Dot: core.DotConfig{
 			Aura: core.Aura{
 				Label: "MindFlay-" + strconv.Itoa(int(numTicksIdx)),

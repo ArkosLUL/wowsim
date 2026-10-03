@@ -52,7 +52,7 @@ func (mage *Mage) registerArcaneBlastSpell() {
 		DamageMultiplierAdditive: 1 +
 			.02*float64(mage.Talents.SpellImpact),
 		CritMultiplier:   mage.SpellCritMultiplier(1, mage.bonusCritDamage),
-		ThreatMultiplier: 1 - 0.2*float64(mage.Talents.ArcaneSubtlety),
+		ThreatMultiplier: 1,
 
 		Direct: core.SpellEffect{Effect: 0, Min: 1185, Max: 1377, SP: 0.714},
 		Mods: []core.SpellMod{

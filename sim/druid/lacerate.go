@@ -37,8 +37,7 @@ func (druid *Druid) registerLacerateSpell() {
 
 		DamageMultiplier: initialDamageMul,
 		CritMultiplier:   druid.MeleeCritMultiplier(Bear),
-		ThreatMultiplier: 0.5,
-		// FlatThreatBonus:  515.5, // Handled below
+		ThreatMultiplier: 1,
 
 		Dot: core.DotConfig{
 			Aura: druid.applyRendAndTear(core.Aura{
@@ -82,11 +81,8 @@ func (druid *Druid) registerLacerateSpell() {
 				baseDamage *= 1.3
 			}
 
-			// Hack so that FlatThreatBonus only applies to the initial portion.
-			spell.FlatThreatBonus = 515.5
 			spell.DamageMultiplier = initialDamageMul
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
-			spell.FlatThreatBonus = 0
 
 			if result.Landed() {
 				dot := spell.Dot(target)

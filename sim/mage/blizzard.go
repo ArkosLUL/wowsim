@@ -34,7 +34,7 @@ func (mage *Mage) registerBlizzardSpell() {
 		BonusCritRating:  float64(mage.Talents.WorldInFlames) * 2 * core.CritRatingPerCritChance,
 		CritMultiplier:   mage.SpellCritMultiplier(1, mage.bonusCritDamage+float64(mage.Talents.IceShards)/3),
 		DamageMultiplier: 1,
-		ThreatMultiplier: 1 - (0.1/3)*float64(mage.Talents.FrostChanneling),
+		ThreatMultiplier: 1,
 
 		Direct: core.SpellEffect{Effect: 0, Min: 426, Max: 426, SP: 0.1429},
 

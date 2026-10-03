@@ -41,6 +41,8 @@ func (priest *Priest) ApplyTalents() {
 
 	if priest.Talents.Shadowform {
 		priest.PseudoStats.SchoolDamageDealtMultiplier[stats.SchoolIndexShadow] *= 1.15
+		// the form's passive 49868: -30% threat in every school
+		priest.PseudoStats.ThreatMultiplier *= 0.7
 	}
 
 	if priest.Talents.SpiritualGuidance > 0 {
@@ -71,6 +73,11 @@ func (priest *Priest) ApplyTalents() {
 	if priest.Talents.TwistedFaith > 0 {
 		priest.AddStatDependency(stats.Spirit, stats.SpellPower, 0.04*float64(priest.Talents.TwistedFaith))
 	}
+}
+
+// Shadow Affinity's threat spell mod, for the spells its class mask covers. Rank 3 is 25, not 24
+func (priest *Priest) shadowAffinityThreatMultiplier() float64 {
+	return 1 - []float64{0, .08, .16, .25}[priest.Talents.ShadowAffinity]
 }
 
 func (priest *Priest) applyDivineAegis() {

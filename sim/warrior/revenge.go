@@ -93,7 +93,6 @@ func (warrior *Warrior) registerRevengeSpell(cdTimer *core.Timer) {
 		),
 		CritMultiplier:   warrior.critMultiplier(),
 		ThreatMultiplier: 1,
-		FlatThreatBonus:  121,
 
 		Direct: core.SpellEffect{Effect: 0, Min: 1636, Max: 1998, AP: 0.31},
 

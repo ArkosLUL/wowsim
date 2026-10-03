@@ -18,7 +18,7 @@ func (priest *Priest) getMindSearBaseConfig() core.SpellConfig {
 			0.02*float64(priest.Talents.Darkness),
 			0.01*float64(priest.Talents.TwinDisciplines),
 		),
-		ThreatMultiplier: 1 - 0.08*float64(priest.Talents.ShadowAffinity),
+		ThreatMultiplier: priest.shadowAffinityThreatMultiplier(),
 		CritMultiplier:   priest.DefaultSpellCritMultiplier(),
 	}
 }

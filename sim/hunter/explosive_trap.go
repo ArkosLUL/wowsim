@@ -38,6 +38,8 @@ func (hunter *Hunter) registerExplosiveTrapSpell(timer *core.Timer) {
 		// crits off the hunter's spell crit for +50%
 		CritMultiplier:   hunter.DefaultSpellCritMultiplier(),
 		ThreatMultiplier: 1,
+		// laying the trap selects no unit, so only the explosion's 49065 adds a bonus
+		ThreatSpellID: 49065,
 
 		Direct: core.SpellEffect{Effect: 0, FromSpellID: 49065, Min: 532, Max: 680, AP: 0.1},
 

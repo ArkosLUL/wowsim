@@ -35,6 +35,8 @@ var ItemSetFistsOfFury = core.NewItemSet(core.ItemSet{
 				DamageMultiplier: 1,
 				CritMultiplier:   character.DefaultSpellCritMultiplier(),
 				ThreatMultiplier: 1,
+				// the set's aura casts 41990 for the damage
+				ThreatSpellID: 41990,
 
 				ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 					spell.CalcAndDealDamage(sim, target, sim.Roll(100, 150), spell.OutcomeMagicHitAndCrit)

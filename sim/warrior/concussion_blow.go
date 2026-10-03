@@ -37,7 +37,7 @@ func (warrior *Warrior) registerConcussionBlowSpell() {
 
 		DamageMultiplier: 1,
 		CritMultiplier:   warrior.critMultiplier(),
-		ThreatMultiplier: 2,
+		ThreatMultiplier: 1,
 
 		// spell_warr_concussion_blow deals the dummy effect's 38 as a percent of attack power
 		Direct: core.SpellEffect{Effect: 2, Min: 38, Max: 38},

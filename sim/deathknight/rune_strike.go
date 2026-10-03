@@ -44,7 +44,7 @@ func (dk *Deathknight) newRuneStrikeSpell(isMH bool) *core.Spell {
 		DamageMultiplier: core.TernaryFloat64(isMH, 1, dk.nervesOfColdSteelBonus()) *
 			dk.darkrunedPlateRuneStrikeDamageBonus(),
 		CritMultiplier:   dk.DefaultMeleeCritMultiplier(),
-		ThreatMultiplier: 1.75,
+		ThreatMultiplier: 1,
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			var baseDamage = 0.0
@@ -87,6 +87,7 @@ func (dk *Deathknight) newRuneStrikeSpell(isMH bool) *core.Spell {
 		conf.ExtraCastCondition = nil
 		// Threat of Thassarian's off-hand strike
 		conf.Direct.FromSpellID = 66217
+		conf.ThreatSpellID = 66217
 	}
 
 	return dk.RegisterSpell(conf)
@@ -136,7 +137,7 @@ func (dk *Deathknight) registerDrwRuneStrikeSpell() {
 		BonusCritRating:  (dk.annihilationCritBonus() + runeStrikeGlyphCritBonus) * core.CritRatingPerCritChance,
 		DamageMultiplier: dk.darkrunedPlateRuneStrikeDamageBonus(),
 		CritMultiplier:   dk.DefaultMeleeCritMultiplier(),
-		ThreatMultiplier: 1.75,
+		ThreatMultiplier: 1,
 
 		Direct: runeStrikeEffect,
 

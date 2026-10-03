@@ -27,7 +27,6 @@ func (warrior *Warrior) registerHeroicStrikeSpell() {
 		DamageMultiplier: 1,
 		CritMultiplier:   warrior.critMultiplier(),
 		ThreatMultiplier: 1,
-		FlatThreatBonus:  259,
 
 		Direct: core.SpellEffect{Effect: 0, Min: 495, Max: 495, WeaponPct: 1},
 
@@ -72,7 +71,6 @@ func (warrior *Warrior) registerCleaveSpell() {
 		DamageMultiplier: 1,
 		CritMultiplier:   warrior.critMultiplier(),
 		ThreatMultiplier: 1,
-		FlatThreatBonus:  225,
 
 		Direct: core.SpellEffect{Effect: 0, Min: 222, Max: 222, WeaponPct: 1},
 		Mods:   []core.SpellMod{{Op: core.SpellModAllEffects, Pct: 40 * int32(warrior.Talents.ImprovedCleave)}},

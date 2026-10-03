@@ -25,7 +25,7 @@ func (mage *Mage) registerArcaneMissilesSpell() {
 		DamageMultiplierAdditive: 1 +
 			core.TernaryFloat64(mage.HasSetBonus(ItemSetTempestRegalia, 4), .05, 0),
 		CritMultiplier:   mage.SpellCritMultiplier(1, mage.bonusCritDamage+core.TernaryFloat64(mage.HasMajorGlyph(proto.MageMajorGlyph_GlyphOfArcaneMissiles), .25, 0)),
-		ThreatMultiplier: 1 - 0.2*float64(mage.Talents.ArcaneSubtlety),
+		ThreatMultiplier: 1,
 
 		Direct: core.SpellEffect{Effect: 0, Min: 361, Max: 361, SP: 0.2857},
 		Mods: []core.SpellMod{

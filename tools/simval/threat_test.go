@@ -65,14 +65,20 @@ func (r threatRecord) key() threatKey {
 	return threatKey{r.Attacker.Class, r.form(), r.Spell.ID, r.override()}
 }
 
-// droppedThreatRecords can't be replayed and were removed from the capture, each with a row in the
-// fixture README.
-var droppedThreatRecords = map[threatKey]string{
-	{deathKnight, 48263, 45524, 0}: "the sim has no Chains of Ice",
-	{deathKnight, 48263, 49576, 0}: "the sim has no Death Grip",
-	{paladin, 25780, 25742, 0}:     "the sim's Seal of Righteousness reads the main hand's speed, and the sim character has no weapon",
-	{warlock, 0, 59092, 0}:         "the sim's Dark Pact drains the pet's mana, and the sim character has no pet",
-	{shaman, 0, 60103, 0}:          "the sim's Lava Lash deals NaN damage without an off hand weapon",
+// threatDrop is why a probe has no record in the capture, with a row in the fixture README: the replay
+// can't build it, or it can now (recapture) but the capture lost the record, which the next
+// TestSimvalThreat run brings back.
+type threatDrop struct {
+	reason    string
+	recapture bool
+}
+
+var droppedThreatRecords = map[threatKey]threatDrop{
+	{deathKnight, 48263, 45524, 0}: {reason: "the sim has no Chains of Ice"},
+	{deathKnight, 48263, 49576, 0}: {reason: "the sim has no Death Grip"},
+	{paladin, 25780, 25742, 0}:     {"dropped while the sim character had no weapon", true},
+	{warlock, 0, 59092, 0}:         {"dropped while the sim character had no pet", true},
+	{shaman, 0, 60103, 0}:          {"dropped while the sim character had no off hand weapon", true},
 }
 
 // threatBot is one TestSimvalThreat character: its class, race, the auras its casts leave on it (talents,
@@ -202,6 +208,12 @@ func threatLandedBonus(source string, base float64, targets int, threat float64)
 		"assist": false, "reachesDummy": true, "threat": %v`, source, base, targets, base/float64(targets), threat)
 }
 
+// threatAPBonus is a spell_threat row with nothing but an attack power part, read at that attack power.
+func threatAPBonus(ap, threat float64) string {
+	return fmt.Sprintf(`"source": "entry", "attackPower": %v, "base": %v, "targets": 1, "perTarget": %v,
+		"assist": false, "reachesDummy": true, "threat": %v`, ap, threat, threat, threat)
+}
+
 // Every probe but the dropped ones builds its sim character and casts, whatever the server's numbers.
 func TestThreatProbesReplay(t *testing.T) {
 	for _, bot := range threatBots {
@@ -217,11 +229,11 @@ func TestThreatProbesReplay(t *testing.T) {
 					broken = append(broken, c.Name+": "+c.Detail)
 				}
 			}
-			_, dropped := droppedThreatRecords[key]
+			drop, dropped := droppedThreatRecords[key]
 			switch {
-			case dropped && len(broken) == 0:
+			case dropped && !drop.recapture && len(broken) == 0:
 				t.Errorf("%s %+v replays, so it needn't be dropped", bot.name, key)
-			case !dropped && len(broken) > 0:
+			case (!dropped || drop.recapture) && len(broken) > 0:
 				t.Errorf("%s %+v: %v", bot.name, key, broken)
 			case !dropped && len(checks) == 0:
 				t.Errorf("%s %+v: no checks", bot.name, key)
@@ -238,7 +250,8 @@ func TestThreatReplayOnHandCheckedRecords(t *testing.T) {
 		frostDK     = []int32{48263, 57340, 61261}
 		warlockTal  = []int32{18372, 17918}
 	)
-	// Defensive Stance: x2.0735 on all threat in the sim, flat bonus included
+	// Defensive Stance, Dire Bear Form and Frost Presence, each +45% with the tank passive's +43%: damage
+	// threat only, never the bonus
 	const def = 2.0735
 
 	for _, c := range []struct {
@@ -248,15 +261,15 @@ func TestThreatReplayOnHandCheckedRecords(t *testing.T) {
 		failed []string
 	}{
 		{
-			name: "Heroic Strike, the sim's numbers",
-			rec: handThreat(t, warrior, 1, 47450, protWarrior, 3000,
-				threatBody(def, 1, threatLandedBonus("entry", 259, 1, 259*def))),
-			checks: []string{"damage threat", "bonus"},
-		},
-		{
 			name: "Heroic Strike, the bonus unmodified",
 			rec: handThreat(t, warrior, 1, 47450, protWarrior, 3000,
 				threatBody(def, 1, threatLandedBonus("entry", 259, 1, 259))),
+			checks: []string{"damage threat", "bonus"},
+		},
+		{
+			name: "Heroic Strike, the bonus times the stance",
+			rec: handThreat(t, warrior, 1, 47450, protWarrior, 3000,
+				threatBody(def, 1, threatLandedBonus("entry", 259, 1, 259*def))),
 			checks: []string{"damage threat", "bonus"},
 			failed: []string{"bonus"},
 		},
@@ -264,58 +277,63 @@ func TestThreatReplayOnHandCheckedRecords(t *testing.T) {
 			// the sim's Improved Berserker Stance takes 0.1 off the stance's 0.8
 			name: "Heroic Strike in Berserker Stance, the talent multiplying",
 			rec: handThreat(t, warrior, 1, 47450, furyWarrior, 3000,
-				threatBody(0.72, 1, threatLandedBonus("entry", 259, 1, 259*0.7))),
+				threatBody(0.72, 1, threatLandedBonus("entry", 259, 1, 259))),
 			checks: []string{"damage threat", "bonus"},
 			failed: []string{"damage threat"},
 		},
 		{
-			name: "Cleave split over two targets, per target in the sim",
-			rec: handThreat(t, warrior, 1, 47520, protWarrior, 3000,
-				threatBody(def, 1, threatLandedBonus("entry", 450, 2, 225*def))),
-			checks: []string{"damage threat", "bonus"},
-		},
-		{
-			name: "Cleave split over two targets, split on the server",
+			name: "Cleave on two targets, split between them",
 			rec: handThreat(t, warrior, 1, 47520, protWarrior, 3000,
 				threatBody(def, 1, threatLandedBonus("entry", 112, 2, 56))),
 			checks: []string{"damage threat", "bonus"},
+		},
+		{
+			name: "Cleave on two targets, the whole bonus on each",
+			rec: handThreat(t, warrior, 1, 47520, protWarrior, 3000,
+				threatBody(def, 1, threatLandedBonus("entry", 112, 2, 112))),
+			checks: []string{"damage threat", "bonus"},
 			failed: []string{"bonus"},
 		},
 		{
-			// the sim sets Lacerate's 515.5 only while the cast's hit is worked out, so its ticks get none
-			name: "Lacerate, the sim's numbers",
+			// the bonus goes on the cast's hit only, never its ticks
+			name: "Lacerate, the row's percent and bonus",
 			rec: handThreat(t, druid, 4, 48568, bear, 3000,
-				threatBody(0.5*2.1021, 1, threatLandedBonus("entry", 515.5, 1, 515.5*2.1021))),
+				threatBody(0.5*def, 1, threatLandedBonus("entry", 515, 1, 515))),
 			checks: []string{"damage threat", "bonus", "tick bonus"},
 		},
 		{
-			name: "Lacerate, the server's row unmodified",
+			name: "Lacerate without the row's percent",
 			rec: handThreat(t, druid, 4, 48568, bear, 3000,
-				threatBody(0.5*2.0735, 1, threatLandedBonus("entry", 515, 1, 515))),
+				threatBody(def, 1, threatLandedBonus("entry", 515, 1, 515))),
 			checks: []string{"damage threat", "bonus", "tick bonus"},
-			failed: []string{"damage threat", "bonus"},
+			failed: []string{"damage threat"},
 		},
 		{
-			// Sunder Armor's 5% of attack power is the sim's own, read at the record's attack power
-			name: "Sunder Armor at 3000 attack power",
+			// the attack power part, read at the record's attack power
+			name: "Devastate at 3000 attack power",
+			rec: handThreat(t, warrior, 1, 47498, protWarrior, 3000,
+				threatBody(def, 1, threatAPBonus(3000, 0.05*3000))),
+			checks: []string{"damage threat", "bonus"},
+		},
+		{
+			name: "Devastate at 4000 attack power",
+			rec: handThreat(t, warrior, 1, 47498, protWarrior, 4000,
+				threatBody(def, 1, threatAPBonus(4000, 0.05*3000))),
+			checks: []string{"damage threat", "bonus"},
+			failed: []string{"bonus"},
+		},
+		{
+			// no spell_threat row: the spell's level
+			name: "Sunder Armor",
 			rec: handThreat(t, warrior, 1, 47467, protWarrior, 3000,
-				threatBody(def, 1, threatLandedBonus("spellLevel", 80, 1, (360+0.05*3000)*def))),
+				threatBody(def, 1, threatLandedBonus("spellLevel", 77, 1, 77))),
 			checks: []string{"damage threat (not compared)", "bonus"},
 		},
 		{
-			name: "Sunder Armor at 4000 attack power",
-			rec: handThreat(t, warrior, 1, 47467, protWarrior, 4000,
-				threatBody(def, 1, threatLandedBonus("spellLevel", 80, 1, (360+0.05*3000)*def))),
-			checks: []string{"damage threat (not compared)", "bonus"},
-			failed: []string{"bonus"},
-		},
-		{
-			// the sim's Curse of Doom adds its 160 to the tick, the server only to the cast's hit
 			name: "Curse of Doom",
 			rec: handThreat(t, warlock, 1, 47867, warlockTal, 0,
-				threatBody(0.8, 1, threatLandedBonus("spellLevel", 0, 1, 0))),
+				threatBody(0.8, 1, threatLandedBonus("spellLevel", 80, 1, 80))),
 			checks: []string{"damage threat", "bonus", "tick bonus"},
-			failed: []string{"tick bonus"},
 		},
 		{
 			name: "Death and Decay's damage, a tick of the sim's dot",
@@ -354,10 +372,24 @@ func TestThreatReplayOnHandCheckedRecords(t *testing.T) {
 			failed: []string{"sim character"},
 		},
 		{
-			name:   "Dark Pact without a pet",
+			// the replay gives the paladin a weapon; Righteous Fury's holy +80% on the tank passive
+			name: "Seal of Righteousness, the bonus of its damage spell",
+			rec: handThreat(t, paladin, 1, 25742, []int32{25780, 57340}, 3000,
+				threatBody(1.8*1.43, 1, threatLandedBonus("spellLevel", 1, 1, 1))),
+			checks: []string{"damage threat", "bonus"},
+		},
+		{
+			// the replay gives the shaman two weapons; Elemental Precision takes 30% off fire
+			name: "Lava Lash",
+			rec: handThreat(t, shaman, 11, 60103, []int32{30674}, 3000,
+				threatBody(0.7, 1, threatLandedBonus("spellLevel", 41, 1, 41))),
+			checks: []string{"damage threat", "bonus"},
+		},
+		{
+			// the replay gives the warlock a pet to drain; no damage and no bonus
+			name:   "Dark Pact",
 			rec:    handThreat(t, warlock, 1, 59092, warlockTal, 0, threatBody(1, 1, threatLandedBonus("none", 0, 1, 0))),
-			checks: []string{"sim cast"},
-			failed: []string{"sim cast"},
+			checks: []string{"damage threat (not compared)", "bonus"},
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
@@ -381,10 +413,10 @@ func TestThreatReplayOnHandCheckedRecords(t *testing.T) {
 }
 
 func TestThreatKnownMismatchPasses(t *testing.T) {
-	rec := handThreat(t, warrior, 1, 47450, []int32{71}, 3000, threatBody(2.0735, 1, threatLandedBonus("entry", 259, 1, 259)))
+	rec := handThreat(t, warrior, 1, 47450, []int32{71}, 3000, threatBody(2.0735, 1, threatLandedBonus("entry", 259, 1, 259*2.0735)))
 	key := threatMismatch{warrior, 71, 47450, 0, "bonus"}
 	old, had := knownThreatMismatches[key]
-	knownThreatMismatches[key] = "the server's bonus is unmodified"
+	knownThreatMismatches[key] = "the server's bonus is modified"
 	defer func() {
 		if had {
 			knownThreatMismatches[key] = old

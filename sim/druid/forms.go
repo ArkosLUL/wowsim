@@ -262,6 +262,8 @@ func (druid *Druid) registerBearFormSpell() {
 	}
 
 	potpdtm := 1 - 0.04*float64(druid.Talents.ProtectorOfThePack)
+	// Bear Form (Passive2) 21178's +45% and Tank Class Passive Threat 57339's +43%
+	const bearThreat = 1.45 * 1.43
 
 	clawWeapon := druid.GetBearWeapon()
 	predBonus := stats.Stats{}
@@ -280,7 +282,7 @@ func (druid *Druid) registerBearFormSpell() {
 
 			druid.AutoAttacks.SetMH(clawWeapon)
 
-			druid.PseudoStats.ThreatMultiplier *= 2.1021
+			druid.PseudoStats.ThreatMultiplier *= bearThreat
 			druid.PseudoStats.SchoolDamageDealtMultiplier[stats.SchoolIndexPhysical] *= 1.0 + 0.02*float64(druid.Talents.MasterShapeshifter)
 			druid.PseudoStats.DamageTakenMultiplier *= potpdtm
 			druid.PseudoStats.SpiritRegenMultiplier *= AnimalSpiritRegenSuppression
@@ -315,7 +317,7 @@ func (druid *Druid) registerBearFormSpell() {
 			druid.form = Humanoid
 			druid.AutoAttacks.SetMH(druid.WeaponFromMainHand(druid.MeleeCritMultiplier(Humanoid)))
 
-			druid.PseudoStats.ThreatMultiplier /= 2.1021
+			druid.PseudoStats.ThreatMultiplier /= bearThreat
 			druid.PseudoStats.SchoolDamageDealtMultiplier[stats.SchoolIndexPhysical] /= 1.0 + 0.02*float64(druid.Talents.MasterShapeshifter)
 			druid.PseudoStats.DamageTakenMultiplier /= potpdtm
 			druid.PseudoStats.SpiritRegenMultiplier /= AnimalSpiritRegenSuppression

@@ -18,6 +18,7 @@ func (paladin *Paladin) registerHolyShieldSpell() {
 
 		DamageMultiplier: 1,
 		ThreatMultiplier: 1,
+		NoThreatBonus:    true,
 
 		// the aura's SPELL_AURA_PROC_TRIGGER_DAMAGE effect, dealt through 48952's own spell_bonus_data row
 		Direct: core.SpellEffect{Effect: 1, Min: 274, Max: 274, SP: 0.09, AP: 0.056},

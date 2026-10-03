@@ -268,6 +268,48 @@ func renderBonuses(bonuses []serverdata.Bonus, names map[int32]string) ([]byte, 
 	return format.Source(b.Bytes())
 }
 
+var threatTargetNames = []struct {
+	targets serverdata.ThreatTargets
+	name    string
+}{
+	{serverdata.ThreatTargetsCaster, "ThreatTargetsCaster"},
+	{serverdata.ThreatTargetsEnemyArea, "ThreatTargetsEnemyArea"},
+}
+
+func renderThreats(threats []serverdata.Threat, names map[int32]string) ([]byte, error) {
+	var b bytes.Buffer
+	b.WriteString(header)
+	b.WriteString("var threats = []Threat{\n")
+	for _, t := range threats {
+		var f fields
+		f.int("SpellID", t.SpellID)
+		f.int("Row", t.Row)
+		if t.Row != 0 {
+			// written out even at 0: a row's pctMod of 0 means no threat from damage
+			f.add("FlatMod", float(t.FlatMod))
+			f.add("PctMod", float(t.PctMod))
+		}
+		f.float("APPctMod", t.APPctMod)
+		var targets []string
+		rest := t.Targets
+		for _, n := range threatTargetNames {
+			if rest&n.targets != 0 {
+				targets = append(targets, n.name)
+				rest &^= n.targets
+			}
+		}
+		if rest != 0 {
+			return nil, fmt.Errorf("spell %d: targets %#x have no name in threatTargetNames", t.SpellID, uint8(rest))
+		}
+		if len(targets) > 0 {
+			f.add("Targets", strings.Join(targets, " | "))
+		}
+		fmt.Fprintf(&b, "\t{%s}, // %s\n", f, comment(names[t.SpellID]))
+	}
+	b.WriteString("}\n")
+	return format.Source(b.Bytes())
+}
+
 func renderEnchantProcs(procs []serverdata.EnchantProc) ([]byte, error) {
 	var b bytes.Buffer
 	b.WriteString(header)

@@ -56,7 +56,7 @@ func (priest *Priest) registerMindBlastSpell() {
 			(1 + 0.02*float64(priest.Talents.Darkness)) *
 			core.TernaryFloat64(priest.HasSetBonus(ItemSetAbsolution, 4), 1.1, 1),
 		CritMultiplier:   priest.SpellCritMultiplier(1, float64(priest.Talents.ShadowPower)/5),
-		ThreatMultiplier: 1 - 0.08*float64(priest.Talents.ShadowAffinity),
+		ThreatMultiplier: priest.shadowAffinityThreatMultiplier(),
 
 		Direct: core.SpellEffect{Effect: 0, Min: 997, Max: 1053, SP: 0.4286},
 		Mods: []core.SpellMod{

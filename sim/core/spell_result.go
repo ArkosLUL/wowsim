@@ -100,14 +100,6 @@ func (result *SpellResult) HealingString() string {
 	return fmt.Sprintf("%s for %0.3f healing", result.Outcome.String(), result.Damage)
 }
 
-func (spell *Spell) ThreatFromDamage(outcome HitOutcome, damage float64) float64 {
-	if outcome.Matches(OutcomeLanded) {
-		return (damage*spell.ThreatMultiplier + spell.FlatThreatBonus) * spell.Unit.PseudoStats.ThreatMultiplier
-	} else {
-		return 0
-	}
-}
-
 func (spell *Spell) MeleeAttackPower() float64 {
 	return spell.Unit.stats[stats.AttackPower] + spell.Unit.PseudoStats.MobTypeAttackPower
 }
@@ -251,7 +243,7 @@ func (spell *Spell) CalcOutcome(sim *Simulation, target *Unit, outcomeApplier Ou
 	result := spell.NewResult(target)
 
 	outcomeApplier(sim, result, attackTable)
-	result.Threat = spell.ThreatFromDamage(result.Outcome, result.Damage)
+	result.Threat = spell.ThreatFromDamage(result.Outcome, result.Damage) + spell.threatBonus(result)
 	return result
 }
 
@@ -286,6 +278,9 @@ func (spell *Spell) calcDamageInternal(sim *Simulation, target *Unit, baseDamage
 	}
 
 	result.Threat = spell.ThreatFromDamage(result.Outcome, result.Damage)
+	if !isPeriodic {
+		result.Threat += spell.threatBonus(result)
+	}
 
 	return result
 }

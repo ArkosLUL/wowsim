@@ -33,7 +33,7 @@ func (mage *Mage) registerBlastWaveSpell() {
 			.02*float64(mage.Talents.FirePower),
 		),
 		CritMultiplier:   mage.SpellCritMultiplier(1, mage.bonusCritDamage),
-		ThreatMultiplier: 1 - 0.1*float64(mage.Talents.BurningSoul),
+		ThreatMultiplier: 1,
 
 		Direct: core.SpellEffect{Effect: 0, Min: 1047, Max: 1233, SP: 0.193},
 

@@ -117,6 +117,10 @@ type Unit struct {
 
 	PseudoStats stats.PseudoStats
 
+	// SPELL_AURA_MOD_THREAT auras on some schools; the all-school ones are in PseudoStats.ThreatMultiplier
+	threatSchoolMods        []threatSchoolMod
+	initialThreatSchoolMods []threatSchoolMod
+
 	// Only players have one; see avoid_dr.go.
 	playerAvoidance *playerAvoidance
 
@@ -465,6 +469,7 @@ func (unit *Unit) finalize() {
 	// All stats added up to this point are part of the 'initial' stats.
 	unit.initialStatsWithoutDeps = unit.stats
 	unit.initialPseudoStats = unit.PseudoStats
+	unit.initialThreatSchoolMods = append([]threatSchoolMod(nil), unit.threatSchoolMods...)
 	unit.initialCastSpeed = unit.CastSpeed
 	unit.initialMeleeSwingSpeed = unit.SwingSpeed()
 	unit.initialRangedSwingSpeed = unit.RangedSwingSpeed()
@@ -491,6 +496,7 @@ func (unit *Unit) reset(sim *Simulation, _ Agent) {
 	unit.statsWithoutDeps = unit.initialStatsWithoutDeps
 	unit.stats = unit.initialStats
 	unit.PseudoStats = unit.initialPseudoStats
+	unit.threatSchoolMods = append(unit.threatSchoolMods[:0], unit.initialThreatSchoolMods...)
 	unit.auraTracker.reset(sim)
 	// Spellbook needs to be reset AFTER auras.
 	for _, spell := range unit.Spellbook {

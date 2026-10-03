@@ -11,8 +11,6 @@ func (warrior *Warrior) registerDevastateSpell() {
 	}
 
 	hasGlyph := warrior.HasMajorGlyph(proto.WarriorMajorGlyph_GlyphOfDevastate)
-	flatThreatBonus := core.TernaryFloat64(hasGlyph, 630, 315)
-	dynaThreatBonus := core.TernaryFloat64(hasGlyph, 0.1, 0.05)
 	sunderStacks := core.TernaryInt32(hasGlyph, 2, 1)
 
 	overallMulti := core.TernaryFloat64(warrior.HasSetBonus(ItemSetWrynnsPlate, 2), 1.05, 1.00)
@@ -43,7 +41,6 @@ func (warrior *Warrior) registerDevastateSpell() {
 		DamageMultiplier: overallMulti,
 		CritMultiplier:   warrior.critMultiplier(),
 		ThreatMultiplier: 1,
-		FlatThreatBonus:  flatThreatBonus,
 
 		// the percent effect comes before the flat one, so it leaves the flat alone
 		Direct: core.SpellEffect{Effect: 2, Min: 242, Max: 242, WeaponPct: 1.2},
@@ -57,7 +54,6 @@ func (warrior *Warrior) registerDevastateSpell() {
 				spell.Direct.Roll(sim)*float64(stacks)
 
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
-			result.Threat = spell.ThreatFromDamage(result.Outcome, result.Damage+dynaThreatBonus*spell.MeleeAttackPower())
 			spell.DealDamage(sim, result)
 
 			if result.Landed() {

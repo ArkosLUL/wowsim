@@ -125,6 +125,52 @@ func TestResolveBonus(t *testing.T) {
 	}
 }
 
+func TestResolveThreat(t *testing.T) {
+	rows := map[int32]serverdata.Threat{
+		779:   {Row: 779, PctMod: 1.5},
+		48568: {Row: 48568, FlatMod: 515, PctMod: 0.5},
+	}
+	// Swipe (Bear): its first rank's row, and every enemy around the caster
+	swipe := &spellset.DumpSpell{ID: 48562, FirstRankID: 779, Effects: []spellset.DumpEffect{{Effect: 2, TargetA: 22, TargetB: 15}}}
+	if th := resolveThreat(swipe, rows); th == nil || th.SpellID != 48562 || th.Row != 779 || th.PctMod != 1.5 ||
+		th.Targets != serverdata.ThreatTargetsEnemyArea {
+		t.Errorf("Swipe: %+v", th)
+	}
+	// its own row beats the first rank's
+	lacerate := &spellset.DumpSpell{ID: 48568, FirstRankID: 33745, Effects: []spellset.DumpEffect{{Effect: 2, TargetA: 6}}}
+	if th := resolveThreat(lacerate, rows); th == nil || th.Row != 48568 || th.FlatMod != 515 || th.Targets != 0 {
+		t.Errorf("Lacerate: %+v", th)
+	}
+	// no row, but an effect lands on the caster; an unused slot's targets don't count
+	evis := &spellset.DumpSpell{ID: 48668, FirstRankID: 2098, Effects: []spellset.DumpEffect{
+		{Effect: 2, TargetA: 6}, {Effect: 3, TargetA: 1}, {Effect: 0, TargetA: 15}}}
+	if th := resolveThreat(evis, rows); th == nil || th.Row != 0 || th.Targets != serverdata.ThreatTargetsCaster || th.Pct() != 1 {
+		t.Errorf("Eviscerate: %+v", th)
+	}
+	if th := resolveThreat(&spellset.DumpSpell{ID: 9, FirstRankID: 9, Effects: []spellset.DumpEffect{{Effect: 2, TargetA: 6}}}, rows); th != nil {
+		t.Errorf("one enemy and no row: %+v", th)
+	}
+}
+
+func TestRenderThreats(t *testing.T) {
+	src, err := renderThreats([]serverdata.Threat{
+		{SpellID: 498, Row: 498, Targets: serverdata.ThreatTargetsCaster},
+		{SpellID: 47498, Row: 20243, PctMod: 1, APPctMod: 0.05},
+	}, map[int32]string{498: "Divine Protection", 47498: "Devastate (Rank 5)"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{
+		// a row's pctMod of 0 stays in the table
+		"{SpellID: 498, Row: 498, FlatMod: 0, PctMod: 0, Targets: ThreatTargetsCaster}, // Divine Protection",
+		"{SpellID: 47498, Row: 20243, FlatMod: 0, PctMod: 1, APPctMod: 0.05},",
+	} {
+		if !strings.Contains(string(src), want) {
+			t.Errorf("missing %q in %s", want, src)
+		}
+	}
+}
+
 func TestRenderSpells(t *testing.T) {
 	src, err := renderSpells([]namedSpell{buildSpell(magicSpell())})
 	if err != nil {

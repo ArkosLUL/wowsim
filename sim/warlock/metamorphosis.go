@@ -79,6 +79,8 @@ func (warlock *Warlock) registerMetamorphosisSpell() {
 
 		DamageMultiplier: 1,
 		ThreatMultiplier: 1,
+		// each tick is a cast of 50590 at the enemies around, which split its bonus
+		ThreatSpellID: 50590,
 
 		Dot: core.DotConfig{
 			IsAOE: true,

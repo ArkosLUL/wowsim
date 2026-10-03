@@ -31,7 +31,7 @@ func (priest *Priest) registerVampiricTouchSpell() {
 		BonusCritRating:  float64(priest.Talents.MindMelt)*3*core.CritRatingPerCritChance + core.TernaryFloat64(priest.HasSetBonus(ItemSetCrimsonAcolyte, 2), 5, 0)*core.CritRatingPerCritChance,
 		DamageMultiplier: 1 + float64(priest.Talents.Darkness)*0.02,
 		CritMultiplier:   priest.SpellCritMultiplier(1, 1),
-		ThreatMultiplier: 1 - 0.08*float64(priest.Talents.ShadowAffinity),
+		ThreatMultiplier: priest.shadowAffinityThreatMultiplier(),
 
 		Dot: core.DotConfig{
 			Aura: core.Aura{

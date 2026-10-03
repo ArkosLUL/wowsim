@@ -28,7 +28,6 @@ func (druid *Druid) registerDemoralizingRoarSpell() {
 		},
 
 		ThreatMultiplier: 1,
-		FlatThreatBonus:  62 * 2,
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			for _, aoeTarget := range sim.Encounter.TargetUnits {

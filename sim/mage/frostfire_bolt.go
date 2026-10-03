@@ -45,7 +45,7 @@ func (mage *Mage) registerFrostfireBoltSpell() {
 			glyphOfFrostfireBonus,
 		),
 		CritMultiplier:   mage.SpellCritMultiplier(1, mage.bonusCritDamage+float64(mage.Talents.IceShards)/3),
-		ThreatMultiplier: 1 - 0.1*float64(mage.Talents.BurningSoul) - .04*float64(mage.Talents.FrostChanneling),
+		ThreatMultiplier: 1,
 
 		Direct: core.SpellEffect{Effect: 1, Min: 722, Max: 838, SP: 0.857},
 		Mods: []core.SpellMod{
