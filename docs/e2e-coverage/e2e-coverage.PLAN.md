@@ -244,6 +244,74 @@ streamed into `tmp/`, tail stopped by PID; no restart, config or DB change):
 - **Owns:** the spell list and its generator, `e2e/spellmod_sweep_test.go`, `e2e/run.sh` (the list's mount),
   `tools/simval/spellmods.go`, its test and fixture, the simval README's Spell-mod sweep.
 
+#### As built
+
+Spells stage:
+- `tools/acore/spellmods` writes `spellmod_spells.json` (rule and format in its README). 277 talents: the
+  INVESTIGATION's 276 (op counts match) plus Improved Demonic Tactics, whose mods a script builds on dummy effects.
+- Groups: ranks sharing mods, values aside; 11 talents' ranks differ in the DBC (Convection, Genesis, Twin
+  Disciplines, Unrelenting Assault, …), so a path step is looked up by its rank spell.
+- 352 spells, 1203 group-spell pairs; the paths hold 294 such steps, 1171 step-spell probes. Excluded by the server:
+  3 (`SPELL_ATTR3_IGNORE_CASTER_MODIFIERS`). Left out: 4 spells another class's code names (Felguard Cleave, Fire
+  Elemental Fire Blast, Waterbolt).
+- No server code hooks `OnIsAffectedBySpellModCheck`; of the `DoEffectCalcSpellMod` scripts only Improved Demonic
+  Tactics sits on a rank spell (Killing Machine's is on its proc aura).
+- For the live stage: 31 talents change no spell the sim names (pet passives, totems, raid buffs); 18 change only
+  ops no probe shows (threat, range, pushback, dispel resist, proc chance, charges); 11 are casts (`passive:
+  false`) whose mods need the aura up; Blade Twisting needs a weapon; 36 listed spells are pet casts (32 hunter pet
+  abilities via Longevity, imp, succubus and felhunter spells, Demonic Frenzy), probed with `pet`.
+
+E2e and sim stage (vetted and replayed offline; no live run):
+- `TestSimvalSpellModSweep` (module README): the talent sweep's setup per path; per state the auras recast and an
+  `info` baseline; per spell `timing`, `damage`, `yellow <id> 1`, a drifted state put right and the damage probe
+  redone. Cast talents are cast for the after probes. One `SPELLMOD` line per spell and state; a talent's before
+  reuses the last one's after. `run.sh` mounts `SIMVAL_SPELLMOD_SPELLS`, passes `SIMVAL_SPELLMOD_ONLY`, and without a
+  name skips `TestSimvalTiming|TestSimvalThreat`.
+- Pets aren't summoned: pet spells are probed as the player and the replay doesn't compare them.
+- `tools/simval/spellmods.go` (`TestSpellModRecords`, simval README's Spell-mod sweep) compares each number's change
+  across the step with the sim's. On lines made from the sim: 638 spell steps agree, 288 move nothing, 245 aren't
+  compared (no sim spell on the character: pets, Mirror Image, off-hand strikes, spells some option registers).
+- Live run: 506 states, 2251 spell probes (6753 probe commands), 685 talents; estimate 45 to 75 min.
+
+Live stage, unfinished (lock 12:42 to 12:54; trials on DruidRestoration, MageArcane, RogueAssassination, DeathknightFrost,
+then the full sweep stopped after 13 of 30 paths in about 7 min, so about 20 min for all; no restart, config or DB change):
+`spellmods.jsonl` isn't written. The trials' replay fixed three comparison bugs: crit is read off the spell that hits,
+both sides cap crit at 100, and a cast talent without a sim aura (Presence of Mind) isn't compared.
+
+Review (replaying the trial and partial lines offline):
+- Fixed: a line failed to parse on a health cost's unsigned power type (Bloodrage); the timing of a sim spell the sim
+  only procs or triggers (Slam's hit 50783, Seal of Righteousness' 20154) was compared with the server's cast; a
+  finisher's duration (Improved Slice and Dice) was compared at the server's 0 combo points against the sim's 5.
+- Disagreements left for the live stage to drop: Annihilation crit on Scourge Strike, Vicious Strikes crit on Death
+  Strike, Inner Focus crit on Circle of Healing (sim only); Focused Rage on Bloodthirst and Mortal Strike, Benediction
+  on Avenging Wrath and Holy Shield, Efficiency on Volley (server only); Divine Protection costs nothing in the sim;
+  Scorpid Sting's base cost; % cost mods 1 mana above the server (it truncates the base cost first); Intensify Rage
+  cooldowns 1 ms above (the server truncates `60000 * 0.67f`).
+
+Live rerun (lock 13:21 to 13:40; full sweep 13:22 to 13:40, 18 min, all 30 paths pass; no restart, config or DB
+change): `spellmods.jsonl` is 2251 lines (3.6 MB). `TestSpellModRecords`: 445 spell steps agree, 380 move nothing, 93
+disagree, 253 aren't compared. 102 failing checks are dropped (fixture README rows), each a real sim gap but Berserk's
+Mangle (Bear) cooldown, which the sim resets per cast:
+- Cost: the sim 1 above (base cost not truncated first) on 51 spells; Benediction, Efficiency, Focused Rage, Mental
+  Quickness and Shadow Focus missing on 14; Scorpid Sting's base 9% vs 11%, and bases already apart (Healing Wave,
+  Earth Shield, Mind Sear); percent cost mods multiplied, not added onto the base (Natural Shapeshifter with King of the Jungle, Berserk's energy cut).
+- Crit: Annihilation, Vicious Strikes, Tidal Mastery (Thunderstorm) missing; Improved Searing Pain 0.1% not 10%; Inner
+  Focus on Circle of Healing in the sim only.
+- Timing: Nature's Swiftness misses heals and Rebirth; Permafrost's +3 s on Frostfire Bolt missing; Intensify Rage 1 ms;
+  hasted ticks truncated (Celestial Focus, Icy Veins); Improved Earth Shield's charges stretch the sim aura.
+- Shadow Focus hit doesn't reach Dispersion.
+
+"Moves nothing" includes steps whose only server change sits in a skipped part, mostly a shaped damage record (Impale's
+crit damage).
+
+Live review: the replay read `critDone` 0 as a spell the server never crits, so Deathchill's +100 and Rime's +15 on Icy
+Touch and Howling Blast (a death knight's 0 base) went unchecked; 0 on one side is now a real 0, and all three agree
+(448 agree, 377 move nothing, 93 disagree, 253 not compared). A number the server moved without a sim counterpart is now
+noted on its line, not dropped silently: category cooldowns the sim keeps as its own, Booming Voice on Demoralizing
+Shout (the sim's aura is 47437, not the cast's 25203), Permafrost on Frostbolt's slow, dot crit multipliers one side
+never crits. Two drops aren't sim gaps (Berserk's Mangle (Bear) cooldown, Dispersion's miss); Healing Wave's base cost
+is 15% of base mana in the sim, 25% on the server.
+
 ### EC-THREAT (T; golden-neutral; C++; stages: C++ and e2e, sim, live)
 
 - `.simval threat <spellId> [amount]` records:

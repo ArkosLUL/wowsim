@@ -1,0 +1,2602 @@
+{"talents": [
+{"class":"druid","tree":"Balance","talent":"starlightWrath","passive":true,"groups": [
+ {"ranks":[16814,16815,16816,16817,16818],"mods":[{"effect":0,"type":"flat","op":"CASTING_TIME","classMask":[5,0,0]}],
+  "spells": [
+    {"id":48461,"name":"Wrath","ops":["CASTING_TIME"]},
+    {"id":48465,"name":"Starfire","ops":["CASTING_TIME"]}
+  ]}
+]},
+{"class":"druid","tree":"Balance","talent":"genesis","passive":true,"groups": [
+ {"ranks":[57810,57812,57813,57814],"mods":[{"effect":0,"type":"pct","op":"DOT","classMask":[2097746,67108880,0]},{"effect":1,"type":"pct","op":"DAMAGE","classMask":[4194432,0,0]}],
+  "spells": [
+    {"id":26982,"name":"Rejuvenation","ops":["DOT"]},
+    {"id":27013,"name":"Insect Swarm","ops":["DOT"]},
+    {"id":48463,"name":"Moonfire","ops":["DOT"]},
+    {"id":48466,"name":"Hurricane","ops":["DAMAGE"]},
+    {"id":48467,"name":"Hurricane","ops":["DAMAGE"]},
+    {"id":48468,"name":"Insect Swarm","ops":["DOT"]},
+    {"id":53251,"name":"Wild Growth","ops":["DOT"]}
+  ]},
+ {"ranks":[57811],"mods":[{"effect":0,"type":"pct","op":"DOT","classMask":[6292178,67108880,0]},{"effect":1,"type":"pct","op":"DAMAGE","classMask":[4194432,0,0]}],
+  "spells": [
+    {"id":26982,"name":"Rejuvenation","ops":["DOT"]},
+    {"id":27013,"name":"Insect Swarm","ops":["DOT"]},
+    {"id":48463,"name":"Moonfire","ops":["DOT"]},
+    {"id":48466,"name":"Hurricane","ops":["DAMAGE","DOT"]},
+    {"id":48467,"name":"Hurricane","ops":["DAMAGE","DOT"]},
+    {"id":48468,"name":"Insect Swarm","ops":["DOT"]},
+    {"id":53251,"name":"Wild Growth","ops":["DOT"]}
+  ]}
+]},
+{"class":"druid","tree":"Balance","talent":"moonglow","passive":true,"groups": [
+ {"ranks":[16845,16846,16847],"mods":[{"effect":0,"type":"pct","op":"COST","classMask":[119,41943040,0]}],
+  "spells": [
+    {"id":26982,"name":"Rejuvenation","ops":["COST"]},
+    {"id":48461,"name":"Wrath","ops":["COST"]},
+    {"id":48463,"name":"Moonfire","ops":["COST"]},
+    {"id":48465,"name":"Starfire","ops":["COST"]},
+    {"id":53190,"name":"Starfall","ops":["COST"]},
+    {"id":53195,"name":"Starfall","ops":["COST"]},
+    {"id":53201,"name":"Starfall","ops":["COST"]}
+  ]}
+]},
+{"class":"druid","tree":"Balance","talent":"naturesMajesty","passive":true,"groups": [
+ {"ranks":[35363,35364],"mods":[{"effect":0,"type":"flat","op":"CRITICAL_CHANCE","classMask":[37,41943040,0]}],
+  "spells": [
+    {"id":48461,"name":"Wrath","ops":["CRITICAL_CHANCE"]},
+    {"id":48465,"name":"Starfire","ops":["CRITICAL_CHANCE"]},
+    {"id":53190,"name":"Starfall","ops":["CRITICAL_CHANCE"]},
+    {"id":53195,"name":"Starfall","ops":["CRITICAL_CHANCE"]},
+    {"id":53201,"name":"Starfall","ops":["CRITICAL_CHANCE"]}
+  ]}
+]},
+{"class":"druid","tree":"Balance","talent":"improvedMoonfire","passive":true,"groups": [
+ {"ranks":[16821,16822],"mods":[{"effect":0,"type":"flat","op":"CRITICAL_CHANCE","classMask":[2,0,0]},{"effect":1,"type":"pct","op":"DAMAGE","classMask":[2,0,0]},{"effect":2,"type":"pct","op":"DOT","classMask":[2,0,0]}],
+  "spells": [
+    {"id":48463,"name":"Moonfire","ops":["DAMAGE","CRITICAL_CHANCE","DOT"]}
+  ]}
+]},
+{"class":"druid","tree":"Balance","talent":"brambles","passive":true,"groups": [
+ {"ranks":[16836,16839,16840],"mods":[{"effect":1,"type":"pct","op":"DOT","classMask":[512,0,0]},{"effect":2,"type":"flat","op":"CHANCE_OF_SUCCESS","classMask":[0,262144,0]}],
+  "spells": [
+    {"id":22812,"name":"Barkskin","ops":["CHANCE_OF_SUCCESS"]}
+  ]}
+]},
+{"class":"druid","tree":"Balance","talent":"naturesSplendor","passive":true,"groups": [
+ {"ranks":[57865],"mods":[{"effect":0,"type":"flat","op":"DURATION","classMask":[18,0,0]},{"effect":1,"type":"flat","op":"DURATION","classMask":[64,0,0]},{"effect":2,"type":"flat","op":"DURATION","classMask":[2097152,16,0]}],
+  "spells": [
+    {"id":26982,"name":"Rejuvenation","ops":["DURATION"]},
+    {"id":27013,"name":"Insect Swarm","ops":["DURATION"]},
+    {"id":48463,"name":"Moonfire","ops":["DURATION"]},
+    {"id":48468,"name":"Insect Swarm","ops":["DURATION"]}
+  ]}
+]},
+{"class":"druid","tree":"Balance","talent":"vengeance","passive":true,"groups": [
+ {"ranks":[16909,16910,16911,16912,16913],"mods":[{"effect":0,"type":"pct","op":"CRIT_DAMAGE_BONUS","classMask":[7,8388608,0]}],
+  "spells": [
+    {"id":48461,"name":"Wrath","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":48463,"name":"Moonfire","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":48465,"name":"Starfire","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":53190,"name":"Starfall","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":53195,"name":"Starfall","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":53201,"name":"Starfall","ops":["CRIT_DAMAGE_BONUS"]}
+  ]}
+]},
+{"class":"druid","tree":"Balance","talent":"celestialFocus","passive":true,"groups": [
+ {"ranks":[16850,16923,16924],"mods":[{"effect":0,"type":"pct","op":"NOT_LOSE_CASTING_TIME","classMask":[4194308,131072,0]}],
+  "spells": [
+    {"id":48465,"name":"Starfire","ops":["NOT_LOSE_CASTING_TIME"]},
+    {"id":48466,"name":"Hurricane","ops":["NOT_LOSE_CASTING_TIME"]},
+    {"id":48467,"name":"Hurricane","ops":["NOT_LOSE_CASTING_TIME"]}
+  ]}
+]},
+{"class":"druid","tree":"Balance","talent":"moonfury","passive":true,"groups": [
+ {"ranks":[16896,16897,16899],"mods":[{"effect":0,"type":"pct","op":"DAMAGE","classMask":[7,0,0]},{"effect":1,"type":"pct","op":"DOT","classMask":[2,0,0]}],
+  "spells": [
+    {"id":48461,"name":"Wrath","ops":["DAMAGE"]},
+    {"id":48463,"name":"Moonfire","ops":["DAMAGE","DOT"]},
+    {"id":48465,"name":"Starfire","ops":["DAMAGE"]}
+  ]}
+]},
+{"class":"druid","tree":"Balance","talent":"improvedFaerieFire","passive":true,"groups": [
+ {"ranks":[33600,33601,33602],"mods":[{"effect":1,"type":"flat","op":"EFFECT3","classMask":[1024,0,0]}],
+  "spells": [
+    {"id":770,"name":"Faerie Fire","ops":["EFFECT3"]},
+    {"id":16857,"name":"Faerie Fire (Feral)","ops":["EFFECT3"]}
+  ]}
+]},
+{"class":"druid","tree":"Balance","talent":"wrathOfCenarius","passive":true,"groups": [
+ {"ranks":[33603,33604,33605,33606,33607],"mods":[{"effect":0,"type":"flat","op":"BONUS_MULTIPLIER","classMask":[4,0,0]},{"effect":1,"type":"flat","op":"BONUS_MULTIPLIER","classMask":[1,0,0]}],
+  "spells": [
+    {"id":48461,"name":"Wrath","ops":["BONUS_MULTIPLIER"]},
+    {"id":48465,"name":"Starfire","ops":["BONUS_MULTIPLIER"]}
+  ]}
+]},
+{"class":"druid","tree":"Balance","talent":"galeWinds","passive":true,"groups": [
+ {"ranks":[48488,48514],"mods":[{"effect":0,"type":"pct","op":"DAMAGE","classMask":[4194304,16777216,0]},{"effect":1,"type":"flat","op":"RANGE","classMask":[0,32,0]}],
+  "spells": [
+    {"id":48466,"name":"Hurricane","ops":["DAMAGE"]},
+    {"id":48467,"name":"Hurricane","ops":["DAMAGE"]},
+    {"id":53227,"name":"Typhoon","ops":["DAMAGE"]},
+    {"id":61384,"name":"Typhoon","ops":["DAMAGE"]}
+  ]}
+]},
+{"class":"druid","tree":"Feral Combat","talent":"ferocity","passive":true,"groups": [
+ {"ranks":[16934,16935,16936,16937,16938],"mods":[{"effect":0,"type":"flat","op":"COST","classMask":[2048,1048640,0]},{"effect":1,"type":"flat","op":"COST","classMask":[4096,1024,263168]}],
+  "spells": [
+    {"id":48480,"name":"Maul","ops":["COST"]},
+    {"id":48562,"name":"Swipe (Bear)","ops":["COST"]},
+    {"id":48564,"name":"Mangle (Bear)","ops":["COST"]},
+    {"id":48566,"name":"Mangle (Cat)","ops":["COST"]},
+    {"id":48574,"name":"Rake","ops":["COST"]},
+    {"id":62078,"name":"Swipe (Cat)","ops":["COST"]}
+  ]}
+]},
+{"class":"druid","tree":"Feral Combat","talent":"feralAggression","passive":true,"groups": [
+ {"ranks":[16858,16859,16860,16861,16862],"mods":[{"effect":0,"type":"pct","op":"ALL_EFFECTS","classMask":[8,0,0]},{"effect":1,"type":"pct","op":"DAMAGE","classMask":[8388608,0,0]}],
+  "spells": [
+    {"id":48560,"name":"Demoralizing Roar","ops":["ALL_EFFECTS"]},
+    {"id":48577,"name":"Ferocious Bite","ops":["DAMAGE"]},
+    {"id":49800,"name":"Rip","ops":["DAMAGE"]}
+  ]}
+]},
+{"class":"druid","tree":"Feral Combat","talent":"feralInstinct","passive":true,"groups": [
+ {"ranks":[16947,16948,16949],"mods":[{"effect":1,"type":"pct","op":"DAMAGE","classMask":[0,1048576,1024]}],
+  "spells": [
+    {"id":48562,"name":"Swipe (Bear)","ops":["DAMAGE"]},
+    {"id":62078,"name":"Swipe (Cat)","ops":["DAMAGE"]}
+  ]}
+]},
+{"class":"druid","tree":"Feral Combat","talent":"savageFury","passive":true,"groups": [
+ {"ranks":[16998,16999],"mods":[{"effect":0,"type":"pct","op":"DAMAGE","classMask":[6144,0,262144]},{"effect":1,"type":"pct","op":"DOT","classMask":[4096,0,0]},{"effect":2,"type":"pct","op":"EFFECT3","classMask":[0,1088,0]}],
+  "spells": [
+    {"id":48480,"name":"Maul","ops":["DAMAGE"]},
+    {"id":48564,"name":"Mangle (Bear)","ops":["EFFECT3"]},
+    {"id":48566,"name":"Mangle (Cat)","ops":["EFFECT3"]},
+    {"id":48574,"name":"Rake","ops":["DAMAGE","DOT"]}
+  ]}
+]},
+{"class":"druid","tree":"Feral Combat","talent":"shreddingAttacks","passive":true,"groups": [
+ {"ranks":[16966,16968],"mods":[{"effect":0,"type":"flat","op":"COST","classMask":[32768,0,0]},{"effect":1,"type":"flat","op":"COST","classMask":[0,256,0]}],
+  "spells": [
+    {"id":48568,"name":"Lacerate","ops":["COST"]},
+    {"id":48572,"name":"Shred","ops":["COST"]}
+  ]}
+]},
+{"class":"druid","tree":"Feral Combat","talent":"primalPrecision","passive":true,"groups": [
+ {"ranks":[48409,48410],"mods":[{"effect":1,"type":"pct","op":"SPELL_COST_REFUND_ON_FAIL","classMask":[8388608,268435584,0]}],
+  "spells": [
+    {"id":48577,"name":"Ferocious Bite","ops":["SPELL_COST_REFUND_ON_FAIL"]},
+    {"id":49800,"name":"Rip","ops":["SPELL_COST_REFUND_ON_FAIL"]},
+    {"id":52610,"name":"Savage Roar","ops":["SPELL_COST_REFUND_ON_FAIL"]}
+  ]}
+]},
+{"class":"druid","tree":"Feral Combat","talent":"improvedLeaderOfThePack","passive":true,"groups": [
+ {"ranks":[34297,34300],"mods":[{"effect":0,"type":"flat","op":"EFFECT2","classMask":[0,2048,0]}],
+  "spells": []}
+]},
+{"class":"druid","tree":"Feral Combat","talent":"kingOfTheJungle","passive":true,"groups": [
+ {"ranks":[48492,48494,48495],"mods":[{"effect":2,"type":"pct","op":"COST","classMask":[3221225472,0,0]}],
+  "spells": [
+    {"id":768,"name":"Cat Form","ops":["COST"]},
+    {"id":9634,"name":"Dire Bear Form","ops":["COST"]}
+  ]}
+]},
+{"class":"druid","tree":"Feral Combat","talent":"improvedMangle","passive":true,"groups": [
+ {"ranks":[48532,48489,48491],"mods":[{"effect":0,"type":"flat","op":"COOLDOWN","classMask":[0,64,0]},{"effect":1,"type":"flat","op":"COST","classMask":[0,1024,0]}],
+  "spells": [
+    {"id":48564,"name":"Mangle (Bear)","ops":["COOLDOWN"]},
+    {"id":48566,"name":"Mangle (Cat)","ops":["COST"]}
+  ]}
+]},
+{"class":"druid","tree":"Feral Combat","talent":"berserk","passive":false,"groups": [
+ {"ranks":[50334],"mods":[{"effect":0,"type":"pct","op":"COST","classMask":[8622080,805307520,263200]},{"effect":1,"type":"flat","op":"COOLDOWN","classMask":[0,64,0]}],
+  "spells": [
+    {"id":48564,"name":"Mangle (Bear)","ops":["COOLDOWN"]},
+    {"id":48566,"name":"Mangle (Cat)","ops":["COST"]},
+    {"id":48572,"name":"Shred","ops":["COST"]},
+    {"id":48574,"name":"Rake","ops":["COST"]},
+    {"id":48577,"name":"Ferocious Bite","ops":["COST"]},
+    {"id":49800,"name":"Rip","ops":["COST"]},
+    {"id":52610,"name":"Savage Roar","ops":["COST"]},
+    {"id":62078,"name":"Swipe (Cat)","ops":["COST"]}
+  ]}
+]},
+{"class":"druid","tree":"Restoration","talent":"improvedMarkOfTheWild","passive":true,"groups": [
+ {"ranks":[17050,17051],"mods":[{"effect":0,"type":"pct","op":"ALL_EFFECTS","classMask":[262144,0,0]}],
+  "spells": [
+    {"id":48470,"name":"Gift of the Wild","ops":["ALL_EFFECTS"]}
+  ]}
+]},
+{"class":"druid","tree":"Restoration","talent":"furor","passive":true,"groups": [
+ {"ranks":[17056,17058,17059,17060,17061],"mods":[{"effect":1,"type":"flat","op":"EFFECT2","classMask":[0,0,4]}],
+  "spells": []}
+]},
+{"class":"druid","tree":"Restoration","talent":"naturalist","passive":true,"groups": [
+ {"ranks":[17069,17070,17071,17072,17073],"mods":[{"effect":0,"type":"flat","op":"CASTING_TIME","classMask":[32,0,0]}],
+  "spells": []}
+]},
+{"class":"druid","tree":"Restoration","talent":"naturalShapeshifter","passive":true,"groups": [
+ {"ranks":[16833,16834,16835],"mods":[{"effect":0,"type":"pct","op":"COST","classMask":[3758096384,122880,0]}],
+  "spells": [
+    {"id":768,"name":"Cat Form","ops":["COST"]},
+    {"id":9634,"name":"Dire Bear Form","ops":["COST"]},
+    {"id":24858,"name":"Moonkin Form","ops":["COST"]}
+  ]}
+]},
+{"class":"druid","tree":"Restoration","talent":"naturesSwiftness","passive":false,"groups": [
+ {"ranks":[17116],"mods":[{"effect":0,"type":"pct","op":"CASTING_TIME","classMask":[268436065,33554464,32768]}],
+  "spells": [
+    {"id":48461,"name":"Wrath","ops":["CASTING_TIME"]},
+    {"id":48477,"name":"Rebirth","ops":["CASTING_TIME"]}
+  ]}
+]},
+{"class":"hunter","tree":"Beast Mastery","talent":"improvedAspectOfTheHawk","passive":true,"groups": [
+ {"ranks":[19552,19553,19554,19555,19556],"mods":[{"effect":0,"type":"flat","op":"CHANCE_OF_SUCCESS","classMask":[1048576,0,4096]},{"effect":1,"type":"flat","op":"ALL_EFFECTS","classMask":[0,512,0]}],
+  "spells": [
+    {"id":61847,"name":"Aspect of the Dragonhawk","ops":["CHANCE_OF_SUCCESS"]}
+  ]}
+]},
+{"class":"hunter","tree":"Beast Mastery","talent":"enduranceTraining","passive":true,"groups": [
+ {"ranks":[19583,19584,19585,19586,19587],"mods":[{"effect":0,"type":"flat","op":"ALL_EFFECTS","classMask":[134217728,0,0]}],
+  "spells": []}
+]},
+{"class":"hunter","tree":"Beast Mastery","talent":"improvedAspectOfTheMonkey","passive":true,"groups": [
+ {"ranks":[19549,19550,19551],"mods":[{"effect":0,"type":"flat","op":"EFFECT1","classMask":[524288,0,8192]}],
+  "spells": []}
+]},
+{"class":"hunter","tree":"Beast Mastery","talent":"thickHide","passive":true,"groups": [
+ {"ranks":[19609,19610,19612],"mods":[{"effect":0,"type":"flat","op":"ALL_EFFECTS","classMask":[67108864,0,0]}],
+  "spells": []}
+]},
+{"class":"hunter","tree":"Beast Mastery","talent":"aspectMastery","passive":true,"groups": [
+ {"ranks":[53265],"mods":[{"effect":0,"type":"flat","op":"EFFECT2","classMask":[0,262144,0]},{"effect":1,"type":"flat","op":"EFFECT2","classMask":[524288,0,8192]},{"effect":2,"type":"pct","op":"EFFECT1","classMask":[1048576,0,4096]}],
+  "spells": [
+    {"id":34074,"name":"Aspect of the Viper","ops":["EFFECT2"]},
+    {"id":61847,"name":"Aspect of the Dragonhawk","ops":["EFFECT1"]}
+  ]}
+]},
+{"class":"hunter","tree":"Beast Mastery","talent":"unleashedFury","passive":true,"groups": [
+ {"ranks":[19616,19617,19618,19619,19620],"mods":[{"effect":0,"type":"flat","op":"ALL_EFFECTS","classMask":[33554432,0,0]}],
+  "spells": []}
+]},
+{"class":"hunter","tree":"Beast Mastery","talent":"ferocity","passive":true,"groups": [
+ {"ranks":[19598,19599,19600,19601,19602],"mods":[{"effect":0,"type":"flat","op":"ALL_EFFECTS","classMask":[1073741824,0,0]}],
+  "spells": []}
+]},
+{"class":"hunter","tree":"Beast Mastery","talent":"bestialDiscipline","passive":true,"groups": [
+ {"ranks":[19590,19592],"mods":[{"effect":0,"type":"flat","op":"ALL_EFFECTS","classMask":[536870912,0,0]}],
+  "spells": []}
+]},
+{"class":"hunter","tree":"Beast Mastery","talent":"animalHandler","passive":true,"groups": [
+ {"ranks":[34453,34454],"mods":[{"effect":0,"type":"flat","op":"DURATION","classMask":[0,0,524288]}],
+  "spells": []}
+]},
+{"class":"hunter","tree":"Beast Mastery","talent":"frenzy","passive":true,"groups": [
+ {"ranks":[19621,19622,19623,19624,19625],"mods":[{"effect":0,"type":"flat","op":"CHANCE_OF_SUCCESS","classMask":[2147483648,0,0]}],
+  "spells": []}
+]},
+{"class":"hunter","tree":"Beast Mastery","talent":"ferociousInspiration","passive":true,"groups": [
+ {"ranks":[34455,34459,34460],"mods":[{"effect":2,"type":"pct","op":"DAMAGE","classMask":[2048,1,0]}],
+  "spells": [
+    {"id":49045,"name":"Arcane Shot","ops":["DAMAGE"]},
+    {"id":49052,"name":"Steady Shot","ops":["DAMAGE"]}
+  ]}
+]},
+{"class":"hunter","tree":"Beast Mastery","talent":"catlikeReflexes","passive":true,"groups": [
+ {"ranks":[34462,34464,34465],"mods":[{"effect":1,"type":"flat","op":"ALL_EFFECTS","classMask":[0,8,0]},{"effect":2,"type":"flat","op":"COOLDOWN","classMask":[0,2048,0]}],
+  "spells": [
+    {"id":34026,"name":"Kill Command","ops":["COOLDOWN"]}
+  ]}
+]},
+{"class":"hunter","tree":"Beast Mastery","talent":"serpentsSwiftness","passive":true,"groups": [
+ {"ranks":[34466,34467,34468,34469,34470],"mods":[{"effect":1,"type":"flat","op":"ALL_EFFECTS","classMask":[0,16,0]}],
+  "spells": []}
+]},
+{"class":"hunter","tree":"Beast Mastery","talent":"longevity","passive":true,"groups": [
+ {"ranks":[53262,53263,53264],"mods":[{"effect":0,"type":"pct","op":"COOLDOWN","classMask":[0,301989888,8]}],
+  "spells": [
+    {"id":19574,"name":"Bestial Wrath","ops":["COOLDOWN"]},
+    {"id":25012,"name":"Lightning Breath","ops":["COOLDOWN"]},
+    {"id":35295,"name":"Gore","ops":["COOLDOWN"]},
+    {"id":52472,"name":"Claw","ops":["COOLDOWN"]},
+    {"id":52474,"name":"Bite","ops":["COOLDOWN"]},
+    {"id":52476,"name":"Smack","ops":["COOLDOWN"]},
+    {"id":53401,"name":"Rabid","ops":["COOLDOWN"]},
+    {"id":53434,"name":"Call of the Wild","ops":["COOLDOWN"]},
+    {"id":53508,"name":"Wolverine Bite","ops":["COOLDOWN"]},
+    {"id":53517,"name":"Roar of Recovery","ops":["COOLDOWN"]},
+    {"id":53533,"name":"Swipe","ops":["COOLDOWN"]},
+    {"id":53543,"name":"Snatch","ops":["COOLDOWN"]},
+    {"id":53548,"name":"Pin","ops":["COOLDOWN"]},
+    {"id":53562,"name":"Ravage","ops":["COOLDOWN"]},
+    {"id":53568,"name":"Sonic Blast","ops":["COOLDOWN"]},
+    {"id":53575,"name":"Tendon Rip","ops":["COOLDOWN"]},
+    {"id":53582,"name":"Savage Rend","ops":["COOLDOWN"]},
+    {"id":53589,"name":"Nether Shock","ops":["COOLDOWN"]},
+    {"id":53598,"name":"Spore Cloud","ops":["COOLDOWN"]},
+    {"id":55485,"name":"Fire Breath","ops":["COOLDOWN"]},
+    {"id":55487,"name":"Demoralizing Screech","ops":["COOLDOWN"]},
+    {"id":55492,"name":"Froststorm Breath","ops":["COOLDOWN"]},
+    {"id":55499,"name":"Monstrous Bite","ops":["COOLDOWN"]},
+    {"id":55509,"name":"Venom Web Spray","ops":["COOLDOWN"]},
+    {"id":55557,"name":"Poison Spit","ops":["COOLDOWN"]},
+    {"id":55728,"name":"Scorpid Poison","ops":["COOLDOWN"]},
+    {"id":55754,"name":"Acid Spit","ops":["COOLDOWN"]},
+    {"id":56631,"name":"Sting","ops":["COOLDOWN"]},
+    {"id":57393,"name":"Stampede","ops":["COOLDOWN"]},
+    {"id":58611,"name":"Lava Breath","ops":["COOLDOWN"]},
+    {"id":59886,"name":"Rake","ops":["COOLDOWN"]},
+    {"id":61198,"name":"Spirit Strike","ops":["COOLDOWN"]},
+    {"id":64495,"name":"Furious Howl","ops":["COOLDOWN"]}
+  ]}
+]},
+{"class":"hunter","tree":"Marksmanship","talent":"focusedAim","passive":true,"groups": [
+ {"ranks":[53620,53621,53622],"mods":[{"effect":0,"type":"pct","op":"NOT_LOSE_CASTING_TIME","classMask":[131072,1,0]}],
+  "spells": [
+    {"id":49050,"name":"Aimed Shot","ops":["NOT_LOSE_CASTING_TIME"]},
+    {"id":49052,"name":"Steady Shot","ops":["NOT_LOSE_CASTING_TIME"]}
+  ]}
+]},
+{"class":"hunter","tree":"Marksmanship","talent":"improvedHuntersMark","passive":true,"groups": [
+ {"ranks":[19421,19422,19423],"mods":[{"effect":0,"type":"pct","op":"EFFECT2","classMask":[1024,0,0]},{"effect":1,"type":"pct","op":"COST","classMask":[1024,0,0]}],
+  "spells": [
+    {"id":53338,"name":"Hunter's Mark","ops":["EFFECT2","COST"]}
+  ]}
+]},
+{"class":"hunter","tree":"Marksmanship","talent":"mortalShots","passive":true,"groups": [
+ {"ranks":[19485,19487,19488,19489,19490],"mods":[{"effect":0,"type":"pct","op":"CRIT_DAMAGE_BONUS","classMask":[424448,2155872257,2625]},{"effect":1,"type":"pct","op":"CRIT_DAMAGE_BONUS","classMask":[16384,0,0]}],
+  "spells": [
+    {"id":34490,"name":"Silencing Shot","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":49001,"name":"Serpent Sting","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":49045,"name":"Arcane Shot","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":49048,"name":"Multi-Shot","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":49050,"name":"Aimed Shot","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":49052,"name":"Steady Shot","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":53209,"name":"Chimera Shot","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":53352,"name":"Explosive Shot","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":58433,"name":"Volley","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":58434,"name":"Volley","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":60052,"name":"Explosive Shot","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":60053,"name":"Explosive Shot","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":61006,"name":"Kill Shot","ops":["CRIT_DAMAGE_BONUS"]}
+  ],
+  "excluded": [
+    {"id":53353,"name":"Chimera Shot - Serpent","op":"CRIT_DAMAGE_BONUS","reason":"SPELL_ATTR3_IGNORE_CASTER_MODIFIERS"}
+  ]}
+]},
+{"class":"hunter","tree":"Marksmanship","talent":"improvedArcaneShot","passive":true,"groups": [
+ {"ranks":[19454,19455,19456],"mods":[{"effect":0,"type":"pct","op":"DAMAGE","classMask":[2048,0,0]}],
+  "spells": [
+    {"id":49045,"name":"Arcane Shot","ops":["DAMAGE"]}
+  ]}
+]},
+{"class":"hunter","tree":"Marksmanship","talent":"rapidKilling","passive":true,"groups": [
+ {"ranks":[34948,34949],"mods":[{"effect":1,"type":"flat","op":"COOLDOWN","classMask":[32,0,0]}],
+  "spells": [
+    {"id":3045,"name":"Rapid Fire","ops":["COOLDOWN"]}
+  ]}
+]},
+{"class":"hunter","tree":"Marksmanship","talent":"improvedStings","passive":true,"groups": [
+ {"ranks":[19464,19465,19466],"mods":[{"effect":0,"type":"pct","op":"DOT","classMask":[16384,256,0]},{"effect":1,"type":"pct","op":"ALL_EFFECTS","classMask":[0,128,0]},{"effect":2,"type":"flat","op":"RESIST_DISPEL_CHANCE","classMask":[16384,256,0]}],
+  "spells": [
+    {"id":49001,"name":"Serpent Sting","ops":["DOT","RESIST_DISPEL_CHANCE"]}
+  ]}
+]},
+{"class":"hunter","tree":"Marksmanship","talent":"efficiency","passive":true,"groups": [
+ {"ranks":[19416,19417,19418,19419,19420],"mods":[{"effect":0,"type":"pct","op":"COST","classMask":[522752,2290094209,1]}],
+  "spells": [
+    {"id":3043,"name":"Scorpid Sting","ops":["COST"]},
+    {"id":34490,"name":"Silencing Shot","ops":["COST"]},
+    {"id":49001,"name":"Serpent Sting","ops":["COST"]},
+    {"id":49045,"name":"Arcane Shot","ops":["COST"]},
+    {"id":49048,"name":"Multi-Shot","ops":["COST"]},
+    {"id":49050,"name":"Aimed Shot","ops":["COST"]},
+    {"id":49052,"name":"Steady Shot","ops":["COST"]},
+    {"id":53209,"name":"Chimera Shot","ops":["COST"]},
+    {"id":53517,"name":"Roar of Recovery","ops":["COST"]},
+    {"id":58433,"name":"Volley","ops":["COST"]},
+    {"id":58434,"name":"Volley","ops":["COST"]},
+    {"id":60052,"name":"Explosive Shot","ops":["COST"]},
+    {"id":60053,"name":"Explosive Shot","ops":["COST"]},
+    {"id":61006,"name":"Kill Shot","ops":["COST"]},
+    {"id":63672,"name":"Black Arrow","ops":["COST"]}
+  ]}
+]},
+{"class":"hunter","tree":"Marksmanship","talent":"barrage","passive":true,"groups": [
+ {"ranks":[19461,19462,24691],"mods":[{"effect":0,"type":"pct","op":"DAMAGE","classMask":[143360,0,0]},{"effect":1,"type":"pct","op":"DOT","classMask":[8192,0,0]}],
+  "spells": [
+    {"id":49048,"name":"Multi-Shot","ops":["DAMAGE"]},
+    {"id":49050,"name":"Aimed Shot","ops":["DAMAGE"]},
+    {"id":58433,"name":"Volley","ops":["DAMAGE","DOT"]},
+    {"id":58434,"name":"Volley","ops":["DAMAGE","DOT"]}
+  ]}
+]},
+{"class":"hunter","tree":"Marksmanship","talent":"improvedBarrage","passive":true,"groups": [
+ {"ranks":[35104,35110,35111],"mods":[{"effect":0,"type":"flat","op":"CRITICAL_CHANCE","classMask":[135168,0,0]},{"effect":1,"type":"pct","op":"NOT_LOSE_CASTING_TIME","classMask":[8192,0,0]}],
+  "spells": [
+    {"id":49048,"name":"Multi-Shot","ops":["CRITICAL_CHANCE"]},
+    {"id":49050,"name":"Aimed Shot","ops":["CRITICAL_CHANCE"]},
+    {"id":58433,"name":"Volley","ops":["NOT_LOSE_CASTING_TIME"]},
+    {"id":58434,"name":"Volley","ops":["NOT_LOSE_CASTING_TIME"]}
+  ]}
+]},
+{"class":"hunter","tree":"Marksmanship","talent":"masterMarksman","passive":true,"groups": [
+ {"ranks":[34485,34486,34487,34488,34489],"mods":[{"effect":1,"type":"pct","op":"COST","classMask":[131072,1,1]}],
+  "spells": [
+    {"id":49050,"name":"Aimed Shot","ops":["COST"]},
+    {"id":49052,"name":"Steady Shot","ops":["COST"]},
+    {"id":53209,"name":"Chimera Shot","ops":["COST"]}
+  ]}
+]},
+{"class":"hunter","tree":"Marksmanship","talent":"markedForDeath","passive":true,"groups": [
+ {"ranks":[53241,53243,53244,53245,53246],"mods":[{"effect":1,"type":"pct","op":"CRIT_DAMAGE_BONUS","classMask":[133120,8388609,1]}],
+  "spells": [
+    {"id":49045,"name":"Arcane Shot","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":49050,"name":"Aimed Shot","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":49052,"name":"Steady Shot","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":53209,"name":"Chimera Shot","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":61006,"name":"Kill Shot","ops":["CRIT_DAMAGE_BONUS"]}
+  ]}
+]},
+{"class":"hunter","tree":"Survival","talent":"improvedTracking","passive":true,"groups": [
+ {"ranks":[52783,52785,52786,52787,52788],"mods":[{"effect":0,"type":"flat","op":"EFFECT2","classMask":[0,0,2]}],
+  "spells": []}
+]},
+{"class":"hunter","tree":"Survival","talent":"savageStrikes","passive":true,"groups": [
+ {"ranks":[19159,19160],"mods":[{"effect":0,"type":"flat","op":"CRITICAL_CHANCE","classMask":[2,524288,0]}],
+  "spells": [
+    {"id":48996,"name":"Raptor Strike","ops":["CRITICAL_CHANCE"]}
+  ]}
+]},
+{"class":"hunter","tree":"Survival","talent":"trapMastery","passive":true,"groups": [
+ {"ranks":[19376,63457,63458],"mods":[{"effect":0,"type":"pct","op":"DURATION","classMask":[24,0,0]},{"effect":1,"type":"pct","op":"DOT","classMask":[4,134217728,131072]},{"effect":2,"type":"flat","op":"ALL_EFFECTS","classMask":[0,8192,0]}],
+  "spells": [
+    {"id":49065,"name":"Explosive Trap Effect","ops":["DOT"]},
+    {"id":63672,"name":"Black Arrow","ops":["DOT"]}
+  ]}
+]},
+{"class":"hunter","tree":"Survival","talent":"survivalInstincts","passive":true,"groups": [
+ {"ranks":[34494,34496],"mods":[{"effect":1,"type":"flat","op":"CRITICAL_CHANCE","classMask":[2048,2147483649,576]}],
+  "spells": [
+    {"id":49045,"name":"Arcane Shot","ops":["CRITICAL_CHANCE"]},
+    {"id":49052,"name":"Steady Shot","ops":["CRITICAL_CHANCE"]},
+    {"id":53352,"name":"Explosive Shot","ops":["CRITICAL_CHANCE"]},
+    {"id":60052,"name":"Explosive Shot","ops":["CRITICAL_CHANCE"]},
+    {"id":60053,"name":"Explosive Shot","ops":["CRITICAL_CHANCE"]}
+  ]}
+]},
+{"class":"hunter","tree":"Survival","talent":"tNT","passive":true,"groups": [
+ {"ranks":[56333,56336],"mods":[{"effect":1,"type":"pct","op":"DAMAGE","classMask":[4,2147483648,576]},{"effect":2,"type":"pct","op":"DOT","classMask":[4,134217728,131072]}],
+  "spells": [
+    {"id":49065,"name":"Explosive Trap Effect","ops":["DAMAGE","DOT"]},
+    {"id":53352,"name":"Explosive Shot","ops":["DAMAGE"]},
+    {"id":60052,"name":"Explosive Shot","ops":["DAMAGE"]},
+    {"id":60053,"name":"Explosive Shot","ops":["DAMAGE"]},
+    {"id":63672,"name":"Black Arrow","ops":["DOT"]}
+  ]},
+ {"ranks":[56337],"mods":[{"effect":1,"type":"pct","op":"DAMAGE","classMask":[4,2281701376,576]},{"effect":2,"type":"pct","op":"DOT","classMask":[4,134217728,131072]}],
+  "spells": [
+    {"id":49065,"name":"Explosive Trap Effect","ops":["DAMAGE","DOT"]},
+    {"id":53352,"name":"Explosive Shot","ops":["DAMAGE"]},
+    {"id":60052,"name":"Explosive Shot","ops":["DAMAGE"]},
+    {"id":60053,"name":"Explosive Shot","ops":["DAMAGE"]},
+    {"id":63672,"name":"Black Arrow","ops":["DAMAGE","DOT"]}
+  ]}
+]},
+{"class":"hunter","tree":"Survival","talent":"resourcefulness","passive":true,"groups": [
+ {"ranks":[34491,34492,34493],"mods":[{"effect":0,"type":"pct","op":"COST","classMask":[222,540672,0]},{"effect":1,"type":"flat","op":"COOLDOWN","classMask":[128,0,0]}],
+  "spells": [
+    {"id":48996,"name":"Raptor Strike","ops":["COST"]},
+    {"id":49065,"name":"Explosive Trap Effect","ops":["COST"]},
+    {"id":49067,"name":"Explosive Trap","ops":["COOLDOWN","COST"]},
+    {"id":63672,"name":"Black Arrow","ops":["COOLDOWN","COST"]}
+  ]}
+]},
+{"class":"hunter","tree":"Survival","talent":"noxiousStings","passive":true,"groups": [
+ {"ranks":[53295,53296,53297],"mods":[{"effect":0,"type":"flat","op":"EFFECT2","classMask":[16384,0,0]}],
+  "spells": [
+    {"id":49001,"name":"Serpent Sting","ops":["EFFECT2"]}
+  ]}
+]},
+{"class":"hunter","tree":"Survival","talent":"sniperTraining","passive":true,"groups": [
+ {"ranks":[53302,53303,53304],"mods":[{"effect":1,"type":"flat","op":"CRITICAL_CHANCE","classMask":[0,8388608,0]}],
+  "spells": [
+    {"id":61006,"name":"Kill Shot","ops":["CRITICAL_CHANCE"]}
+  ]}
+]},
+{"class":"mage","tree":"Arcane","talent":"arcaneSubtlety","passive":true,"groups": [
+ {"ranks":[11210,12592],"mods":[{"effect":1,"type":"flat","op":"RESIST_DISPEL_CHANCE","classMask":[0,0,8]}],
+  "spells": [
+    {"id":11129,"name":"Combustion","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":12042,"name":"Arcane Power","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":12043,"name":"Presence of Mind","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":12051,"name":"Evocation","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":12472,"name":"Icy Veins","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":12536,"name":"Clearcasting","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":12654,"name":"Ignite","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":36032,"name":"Arcane Blast","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":42833,"name":"Fireball","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":42891,"name":"Pyroblast","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":44401,"name":"Missile Barrage","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":47610,"name":"Frostfire Bolt","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":54648,"name":"Focus Magic","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":55360,"name":"Living Bomb","ops":["RESIST_DISPEL_CHANCE"]}
+  ]}
+]},
+{"class":"mage","tree":"Arcane","talent":"arcaneFocus","passive":true,"groups": [
+ {"ranks":[11222,12839,12840],"mods":[{"effect":0,"type":"flat","op":"RESIST_MISS_CHANCE","classMask":[2703249408,32784,0]}],
+  "spells": [
+    {"id":42845,"name":"Arcane Missiles","ops":["RESIST_MISS_CHANCE"]},
+    {"id":42897,"name":"Arcane Blast","ops":["RESIST_MISS_CHANCE"]},
+    {"id":42921,"name":"Arcane Explosion","ops":["RESIST_MISS_CHANCE"]},
+    {"id":44781,"name":"Arcane Barrage","ops":["RESIST_MISS_CHANCE"]},
+    {"id":54648,"name":"Focus Magic","ops":["RESIST_MISS_CHANCE"]}
+  ]}
+]},
+{"class":"mage","tree":"Arcane","talent":"spellImpact","passive":true,"groups": [
+ {"ranks":[11242,12467,12469],"mods":[{"effect":0,"type":"pct","op":"DAMAGE","classMask":[537006611,64,0]}],
+  "spells": [
+    {"id":42833,"name":"Fireball","ops":["DAMAGE"]},
+    {"id":42859,"name":"Scorch","ops":["DAMAGE"]},
+    {"id":42873,"name":"Fire Blast","ops":["DAMAGE"]},
+    {"id":42897,"name":"Arcane Blast","ops":["DAMAGE"]},
+    {"id":42914,"name":"Ice Lance","ops":["DAMAGE"]},
+    {"id":42921,"name":"Arcane Explosion","ops":["DAMAGE"]},
+    {"id":42945,"name":"Blast Wave","ops":["DAMAGE"]},
+    {"id":59637,"name":"Fire Blast","ops":["DAMAGE"]}
+  ]}
+]},
+{"class":"mage","tree":"Arcane","talent":"presenceOfMind","passive":false,"groups": [
+ {"ranks":[12043],"mods":[{"effect":0,"type":"pct","op":"CASTING_TIME","classMask":[1631584309,4096,0]}],
+  "spells": [
+    {"id":42833,"name":"Fireball","ops":["CASTING_TIME"]},
+    {"id":42842,"name":"Frostbolt","ops":["CASTING_TIME"]},
+    {"id":42859,"name":"Scorch","ops":["CASTING_TIME"]},
+    {"id":42891,"name":"Pyroblast","ops":["CASTING_TIME"]},
+    {"id":42897,"name":"Arcane Blast","ops":["CASTING_TIME"]},
+    {"id":42925,"name":"Flamestrike","ops":["CASTING_TIME"]},
+    {"id":42926,"name":"Flamestrike","ops":["CASTING_TIME"]},
+    {"id":47610,"name":"Frostfire Bolt","ops":["CASTING_TIME"]},
+    {"id":59638,"name":"Frostbolt","ops":["CASTING_TIME"]}
+  ]}
+]},
+{"class":"mage","tree":"Arcane","talent":"arcaneEmpowerment","passive":true,"groups": [
+ {"ranks":[31579,31582,31583],"mods":[{"effect":0,"type":"flat","op":"BONUS_MULTIPLIER","classMask":[538968064,0,0]}],
+  "spells": [
+    {"id":42845,"name":"Arcane Missiles","ops":["BONUS_MULTIPLIER"]},
+    {"id":42897,"name":"Arcane Blast","ops":["BONUS_MULTIPLIER"]}
+  ]}
+]},
+{"class":"mage","tree":"Arcane","talent":"arcanePower","passive":false,"groups": [
+ {"ranks":[12042],"mods":[{"effect":0,"type":"pct","op":"DAMAGE","classMask":[685904631,102472,0]},{"effect":1,"type":"pct","op":"COST","classMask":[549591799,168000,0]},{"effect":2,"type":"pct","op":"DOT","classMask":[4194437,4096,0]}],
+  "spells": [
+    {"id":12654,"name":"Ignite","ops":["DAMAGE"]},
+    {"id":42833,"name":"Fireball","ops":["DAMAGE","COST","DOT"]},
+    {"id":42842,"name":"Frostbolt","ops":["DAMAGE","COST"]},
+    {"id":42845,"name":"Arcane Missiles","ops":["DAMAGE"]},
+    {"id":42846,"name":"Arcane Missiles","ops":["COST"]},
+    {"id":42859,"name":"Scorch","ops":["DAMAGE","COST"]},
+    {"id":42873,"name":"Fire Blast","ops":["DAMAGE","COST"]},
+    {"id":42891,"name":"Pyroblast","ops":["DAMAGE","COST","DOT"]},
+    {"id":42897,"name":"Arcane Blast","ops":["DAMAGE","COST"]},
+    {"id":42914,"name":"Ice Lance","ops":["DAMAGE","COST"]},
+    {"id":42921,"name":"Arcane Explosion","ops":["DAMAGE","COST"]},
+    {"id":42925,"name":"Flamestrike","ops":["DAMAGE","COST","DOT"]},
+    {"id":42926,"name":"Flamestrike","ops":["DAMAGE","COST","DOT"]},
+    {"id":42938,"name":"Blizzard","ops":["DAMAGE","COST","DOT"]},
+    {"id":42940,"name":"Blizzard","ops":["DAMAGE","COST","DOT"]},
+    {"id":42945,"name":"Blast Wave","ops":["DAMAGE","COST"]},
+    {"id":42950,"name":"Dragon's Breath","ops":["DAMAGE","COST"]},
+    {"id":44781,"name":"Arcane Barrage","ops":["DAMAGE","COST"]},
+    {"id":47610,"name":"Frostfire Bolt","ops":["DAMAGE","COST","DOT"]},
+    {"id":55360,"name":"Living Bomb","ops":["COST"]},
+    {"id":55362,"name":"Living Bomb","ops":["DAMAGE"]},
+    {"id":59637,"name":"Fire Blast","ops":["DAMAGE","COST"]},
+    {"id":59638,"name":"Frostbolt","ops":["DAMAGE","COST"]}
+  ]}
+]},
+{"class":"mage","tree":"Arcane","talent":"arcaneFlows","passive":true,"groups": [
+ {"ranks":[44378,44379],"mods":[{"effect":0,"type":"pct","op":"COOLDOWN","classMask":[0,786464,0]},{"effect":1,"type":"flat","op":"COOLDOWN","classMask":[67108864,0,0]}],
+  "spells": [
+    {"id":12042,"name":"Arcane Power","ops":["COOLDOWN"]},
+    {"id":12043,"name":"Presence of Mind","ops":["COOLDOWN"]},
+    {"id":12051,"name":"Evocation","ops":["COOLDOWN"]}
+  ]}
+]},
+{"class":"mage","tree":"Arcane","talent":"spellPower","passive":true,"groups": [
+ {"ranks":[35578,35581],"mods":[{"effect":0,"type":"pct","op":"CRIT_DAMAGE_BONUS","classMask":[551686903,102472,0]}],
+  "spells": [
+    {"id":42833,"name":"Fireball","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":42842,"name":"Frostbolt","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":42845,"name":"Arcane Missiles","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":42859,"name":"Scorch","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":42873,"name":"Fire Blast","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":42891,"name":"Pyroblast","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":42897,"name":"Arcane Blast","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":42914,"name":"Ice Lance","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":42921,"name":"Arcane Explosion","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":42925,"name":"Flamestrike","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":42926,"name":"Flamestrike","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":42938,"name":"Blizzard","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":42940,"name":"Blizzard","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":42945,"name":"Blast Wave","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":42950,"name":"Dragon's Breath","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":44781,"name":"Arcane Barrage","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":47610,"name":"Frostfire Bolt","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":55362,"name":"Living Bomb","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":59637,"name":"Fire Blast","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":59638,"name":"Frostbolt","ops":["CRIT_DAMAGE_BONUS"]}
+  ]}
+]},
+{"class":"mage","tree":"Fire","talent":"improvedFireBlast","passive":true,"groups": [
+ {"ranks":[11078,11080],"mods":[{"effect":0,"type":"flat","op":"COOLDOWN","classMask":[2,0,0]}],
+  "spells": [
+    {"id":42873,"name":"Fire Blast","ops":["COOLDOWN"]},
+    {"id":59637,"name":"Fire Blast","ops":["COOLDOWN"]}
+  ]}
+]},
+{"class":"mage","tree":"Fire","talent":"incineration","passive":true,"groups": [
+ {"ranks":[18459,18460,54734],"mods":[{"effect":0,"type":"flat","op":"CRITICAL_CHANCE","classMask":[536871442,0,0]}],
+  "spells": [
+    {"id":42859,"name":"Scorch","ops":["CRITICAL_CHANCE"]},
+    {"id":42873,"name":"Fire Blast","ops":["CRITICAL_CHANCE"]},
+    {"id":42897,"name":"Arcane Blast","ops":["CRITICAL_CHANCE"]},
+    {"id":59637,"name":"Fire Blast","ops":["CRITICAL_CHANCE"]}
+  ]}
+]},
+{"class":"mage","tree":"Fire","talent":"improvedFireball","passive":true,"groups": [
+ {"ranks":[11069,12338,12339,12340,12341],"mods":[{"effect":0,"type":"flat","op":"CASTING_TIME","classMask":[1,0,0]}],
+  "spells": [
+    {"id":42833,"name":"Fireball","ops":["CASTING_TIME"]}
+  ]}
+]},
+{"class":"mage","tree":"Fire","talent":"worldInFlames","passive":true,"groups": [
+ {"ranks":[11108,12349,12350],"mods":[{"effect":0,"type":"flat","op":"CRITICAL_CHANCE","classMask":[12587140,65600,0]}],
+  "spells": [
+    {"id":42891,"name":"Pyroblast","ops":["CRITICAL_CHANCE"]},
+    {"id":42921,"name":"Arcane Explosion","ops":["CRITICAL_CHANCE"]},
+    {"id":42925,"name":"Flamestrike","ops":["CRITICAL_CHANCE"]},
+    {"id":42926,"name":"Flamestrike","ops":["CRITICAL_CHANCE"]},
+    {"id":42938,"name":"Blizzard","ops":["CRITICAL_CHANCE"]},
+    {"id":42940,"name":"Blizzard","ops":["CRITICAL_CHANCE"]},
+    {"id":42945,"name":"Blast Wave","ops":["CRITICAL_CHANCE"]},
+    {"id":42950,"name":"Dragon's Breath","ops":["CRITICAL_CHANCE"]},
+    {"id":55362,"name":"Living Bomb","ops":["CRITICAL_CHANCE"]}
+  ]}
+]},
+{"class":"mage","tree":"Fire","talent":"burningSoul","passive":true,"groups": [
+ {"ranks":[11083,12351],"mods":[{"effect":0,"type":"pct","op":"NOT_LOSE_CASTING_TIME","classMask":[4194325,4096,0]}],
+  "spells": [
+    {"id":42833,"name":"Fireball","ops":["NOT_LOSE_CASTING_TIME"]},
+    {"id":42859,"name":"Scorch","ops":["NOT_LOSE_CASTING_TIME"]},
+    {"id":42891,"name":"Pyroblast","ops":["NOT_LOSE_CASTING_TIME"]},
+    {"id":42925,"name":"Flamestrike","ops":["NOT_LOSE_CASTING_TIME"]},
+    {"id":42926,"name":"Flamestrike","ops":["NOT_LOSE_CASTING_TIME"]},
+    {"id":47610,"name":"Frostfire Bolt","ops":["NOT_LOSE_CASTING_TIME"]}
+  ]}
+]},
+{"class":"mage","tree":"Fire","talent":"improvedScorch","passive":true,"groups": [
+ {"ranks":[11095,12872,12873],"mods":[{"effect":1,"type":"flat","op":"CRITICAL_CHANCE","classMask":[17,4096,0]}],
+  "spells": [
+    {"id":42833,"name":"Fireball","ops":["CRITICAL_CHANCE"]},
+    {"id":42859,"name":"Scorch","ops":["CRITICAL_CHANCE"]},
+    {"id":47610,"name":"Frostfire Bolt","ops":["CRITICAL_CHANCE"]}
+  ]}
+]},
+{"class":"mage","tree":"Fire","talent":"firePower","passive":true,"groups": [
+ {"ranks":[11124,12378,12398,12399,12400],"mods":[{"effect":0,"type":"pct","op":"DAMAGE","classMask":[12845079,69704,0]},{"effect":1,"type":"pct","op":"DOT","classMask":[4194309,135168,0]}],
+  "spells": [
+    {"id":42833,"name":"Fireball","ops":["DAMAGE","DOT"]},
+    {"id":42859,"name":"Scorch","ops":["DAMAGE"]},
+    {"id":42873,"name":"Fire Blast","ops":["DAMAGE"]},
+    {"id":42891,"name":"Pyroblast","ops":["DAMAGE","DOT"]},
+    {"id":42925,"name":"Flamestrike","ops":["DAMAGE","DOT"]},
+    {"id":42926,"name":"Flamestrike","ops":["DAMAGE","DOT"]},
+    {"id":42945,"name":"Blast Wave","ops":["DAMAGE"]},
+    {"id":42950,"name":"Dragon's Breath","ops":["DAMAGE"]},
+    {"id":47610,"name":"Frostfire Bolt","ops":["DAMAGE","DOT"]},
+    {"id":55360,"name":"Living Bomb","ops":["DOT"]},
+    {"id":55362,"name":"Living Bomb","ops":["DAMAGE"]},
+    {"id":59637,"name":"Fire Blast","ops":["DAMAGE"]}
+  ]}
+]},
+{"class":"mage","tree":"Fire","talent":"combustion","passive":false,"groups": [
+ {"ranks":[11129],"mods":[{"effect":0,"type":"pct","op":"CRIT_DAMAGE_BONUS","classMask":[146800663,200776,0]}],
+  "spells": [
+    {"id":12654,"name":"Ignite","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":42833,"name":"Fireball","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":42859,"name":"Scorch","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":42873,"name":"Fire Blast","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":42891,"name":"Pyroblast","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":42925,"name":"Flamestrike","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":42926,"name":"Flamestrike","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":42945,"name":"Blast Wave","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":42950,"name":"Dragon's Breath","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":47610,"name":"Frostfire Bolt","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":55360,"name":"Living Bomb","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":55362,"name":"Living Bomb","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":59637,"name":"Fire Blast","ops":["CRIT_DAMAGE_BONUS"]}
+  ]}
+]},
+{"class":"mage","tree":"Fire","talent":"empoweredFire","passive":true,"groups": [
+ {"ranks":[31656,31657,31658],"mods":[{"effect":0,"type":"flat","op":"BONUS_MULTIPLIER","classMask":[4194305,4096,0]}],
+  "spells": [
+    {"id":42833,"name":"Fireball","ops":["BONUS_MULTIPLIER"]},
+    {"id":42891,"name":"Pyroblast","ops":["BONUS_MULTIPLIER"]},
+    {"id":47610,"name":"Frostfire Bolt","ops":["BONUS_MULTIPLIER"]}
+  ]}
+]},
+{"class":"mage","tree":"Fire","talent":"burnout","passive":true,"groups": [
+ {"ranks":[44449,44469,44470,44471,44472],"mods":[{"effect":0,"type":"pct","op":"CRIT_DAMAGE_BONUS","classMask":[551686903,233544,0]}],
+  "spells": [
+    {"id":42833,"name":"Fireball","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":42842,"name":"Frostbolt","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":42845,"name":"Arcane Missiles","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":42859,"name":"Scorch","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":42873,"name":"Fire Blast","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":42891,"name":"Pyroblast","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":42897,"name":"Arcane Blast","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":42914,"name":"Ice Lance","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":42921,"name":"Arcane Explosion","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":42925,"name":"Flamestrike","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":42926,"name":"Flamestrike","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":42938,"name":"Blizzard","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":42940,"name":"Blizzard","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":42945,"name":"Blast Wave","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":42950,"name":"Dragon's Breath","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":44781,"name":"Arcane Barrage","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":47610,"name":"Frostfire Bolt","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":55360,"name":"Living Bomb","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":55362,"name":"Living Bomb","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":59637,"name":"Fire Blast","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":59638,"name":"Frostbolt","ops":["CRIT_DAMAGE_BONUS"]}
+  ]}
+]},
+{"class":"mage","tree":"Frost","talent":"improvedFrostbolt","passive":true,"groups": [
+ {"ranks":[11070,12473,16763,16765,16766],"mods":[{"effect":0,"type":"flat","op":"CASTING_TIME","classMask":[32,0,0]}],
+  "spells": [
+    {"id":42842,"name":"Frostbolt","ops":["CASTING_TIME"]},
+    {"id":59638,"name":"Frostbolt","ops":["CASTING_TIME"]}
+  ]}
+]},
+{"class":"mage","tree":"Frost","talent":"iceFloes","passive":true,"groups": [
+ {"ranks":[31670,31672,55094],"mods":[{"effect":0,"type":"pct","op":"COOLDOWN","classMask":[576,16512,0]}],
+  "spells": [
+    {"id":12472,"name":"Icy Veins","ops":["COOLDOWN"]}
+  ]}
+]},
+{"class":"mage","tree":"Frost","talent":"iceShards","passive":true,"groups": [
+ {"ranks":[11207,12672,15047],"mods":[{"effect":0,"type":"pct","op":"CRIT_DAMAGE_BONUS","classMask":[131808,1052672,32]}],
+  "spells": [
+    {"id":42842,"name":"Frostbolt","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":42914,"name":"Ice Lance","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":42938,"name":"Blizzard","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":42940,"name":"Blizzard","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":44572,"name":"Deep Freeze","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":47610,"name":"Frostfire Bolt","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":59637,"name":"Fire Blast","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":59638,"name":"Frostbolt","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":71757,"name":"Deep Freeze","ops":["CRIT_DAMAGE_BONUS"]}
+  ]}
+]},
+{"class":"mage","tree":"Frost","talent":"permafrost","passive":true,"groups": [
+ {"ranks":[11175,12569,12571],"mods":[{"effect":0,"type":"flat","op":"DURATION","classMask":[1049120,4096,0]},{"effect":1,"type":"flat","op":"EFFECT1","classMask":[1049120,4096,0]},{"effect":2,"type":"flat","op":"EFFECT3","classMask":[1049120,0,16]}],
+  "spells": [
+    {"id":42842,"name":"Frostbolt","ops":["DURATION","EFFECT1","EFFECT3"]},
+    {"id":47610,"name":"Frostfire Bolt","ops":["DURATION","EFFECT1"]},
+    {"id":59638,"name":"Frostbolt","ops":["DURATION","EFFECT1","EFFECT3"]}
+  ]}
+]},
+{"class":"mage","tree":"Frost","talent":"icyVeins","passive":false,"groups": [
+ {"ranks":[12472],"mods":[{"effect":1,"type":"pct","op":"NOT_LOSE_CASTING_TIME","classMask":[1698695349,528640,0]}],
+  "spells": [
+    {"id":12042,"name":"Arcane Power","ops":["NOT_LOSE_CASTING_TIME"]},
+    {"id":12051,"name":"Evocation","ops":["NOT_LOSE_CASTING_TIME"]},
+    {"id":42833,"name":"Fireball","ops":["NOT_LOSE_CASTING_TIME"]},
+    {"id":42842,"name":"Frostbolt","ops":["NOT_LOSE_CASTING_TIME"]},
+    {"id":42846,"name":"Arcane Missiles","ops":["NOT_LOSE_CASTING_TIME"]},
+    {"id":42859,"name":"Scorch","ops":["NOT_LOSE_CASTING_TIME"]},
+    {"id":42891,"name":"Pyroblast","ops":["NOT_LOSE_CASTING_TIME"]},
+    {"id":42897,"name":"Arcane Blast","ops":["NOT_LOSE_CASTING_TIME"]},
+    {"id":42925,"name":"Flamestrike","ops":["NOT_LOSE_CASTING_TIME"]},
+    {"id":42926,"name":"Flamestrike","ops":["NOT_LOSE_CASTING_TIME"]},
+    {"id":42938,"name":"Blizzard","ops":["NOT_LOSE_CASTING_TIME"]},
+    {"id":42940,"name":"Blizzard","ops":["NOT_LOSE_CASTING_TIME"]},
+    {"id":47610,"name":"Frostfire Bolt","ops":["NOT_LOSE_CASTING_TIME"]},
+    {"id":59638,"name":"Frostbolt","ops":["NOT_LOSE_CASTING_TIME"]}
+  ]}
+]},
+{"class":"mage","tree":"Frost","talent":"coldAsIce","passive":true,"groups": [
+ {"ranks":[55091,55092],"mods":[{"effect":0,"type":"pct","op":"COOLDOWN","classMask":[0,2053,0]}],
+  "spells": [
+    {"id":11958,"name":"Cold Snap","ops":["COOLDOWN"]},
+    {"id":31687,"name":"Summon Water Elemental","ops":["COOLDOWN"]}
+  ]}
+]},
+{"class":"mage","tree":"Frost","talent":"wintersChill","passive":true,"groups": [
+ {"ranks":[11180,28592,28593],"mods":[{"effect":1,"type":"flat","op":"CRITICAL_CHANCE","classMask":[32,0,0]}],
+  "spells": [
+    {"id":42842,"name":"Frostbolt","ops":["CRITICAL_CHANCE"]},
+    {"id":59638,"name":"Frostbolt","ops":["CRITICAL_CHANCE"]}
+  ]}
+]},
+{"class":"mage","tree":"Frost","talent":"empoweredFrostbolt","passive":true,"groups": [
+ {"ranks":[31682,31683],"mods":[{"effect":0,"type":"flat","op":"BONUS_MULTIPLIER","classMask":[32,0,0]},{"effect":1,"type":"flat","op":"CASTING_TIME","classMask":[32,0,0]}],
+  "spells": [
+    {"id":42842,"name":"Frostbolt","ops":["CASTING_TIME","BONUS_MULTIPLIER"]},
+    {"id":59638,"name":"Frostbolt","ops":["CASTING_TIME","BONUS_MULTIPLIER"]}
+  ]}
+]},
+{"class":"mage","tree":"Frost","talent":"enduringWinter","passive":true,"groups": [
+ {"ranks":[44557,44560,44561],"mods":[{"effect":0,"type":"flat","op":"DURATION","classMask":[0,2048,0]}],
+  "spells": [
+    {"id":31687,"name":"Summon Water Elemental","ops":["DURATION"]}
+  ]}
+]},
+{"class":"mage","tree":"Frost","talent":"chilledToTheBone","passive":true,"groups": [
+ {"ranks":[44566,44567,44568,44570,44571],"mods":[{"effect":0,"type":"pct","op":"DAMAGE","classMask":[131104,4096,0]},{"effect":1,"type":"flat","op":"EFFECT1","classMask":[1049120,4096,0]}],
+  "spells": [
+    {"id":42842,"name":"Frostbolt","ops":["DAMAGE","EFFECT1"]},
+    {"id":42914,"name":"Ice Lance","ops":["DAMAGE"]},
+    {"id":47610,"name":"Frostfire Bolt","ops":["DAMAGE","EFFECT1"]},
+    {"id":59637,"name":"Fire Blast","ops":["DAMAGE"]},
+    {"id":59638,"name":"Frostbolt","ops":["DAMAGE","EFFECT1"]}
+  ]}
+]},
+{"class":"paladin","tree":"Holy","talent":"sealsOfThePure","passive":true,"groups": [
+ {"ranks":[20224,20225,20330,20331,20332],"mods":[{"effect":0,"type":"pct","op":"DAMAGE","classMask":[1024,541067264,0]},{"effect":1,"type":"pct","op":"DOT","classMask":[0,2048,0]}],
+  "spells": [
+    {"id":20154,"name":"Seal of Righteousness","ops":["DAMAGE"]},
+    {"id":20187,"name":"Judgement of Righteousness","ops":["DAMAGE"]},
+    {"id":21084,"name":"Seal of Righteousness","ops":["DAMAGE"]},
+    {"id":31801,"name":"Seal of Vengeance","ops":["DAMAGE","DOT"]},
+    {"id":31803,"name":"Holy Vengeance","ops":["DAMAGE","DOT"]},
+    {"id":31804,"name":"Judgement of Vengeance","ops":["DAMAGE"]},
+    {"id":42463,"name":"Seal of Vengeance","ops":["DAMAGE","DOT"]}
+  ]}
+]},
+{"class":"paladin","tree":"Protection","talent":"improvedRighteousFury","passive":true,"groups": [
+ {"ranks":[20468,20469,20470],"mods":[{"effect":1,"type":"flat","op":"EFFECT2","classMask":[1,0,0]}],
+  "spells": [
+    {"id":25780,"name":"Righteous Fury","ops":["EFFECT2"]}
+  ]}
+]},
+{"class":"paladin","tree":"Protection","talent":"improvedDevotionAura","passive":true,"groups": [
+ {"ranks":[20138,20139,20140],"mods":[{"effect":0,"type":"pct","op":"EFFECT1","classMask":[64,0,0]},{"effect":1,"type":"flat","op":"EFFECT2","classMask":[0,0,33554432]}],
+  "spells": []}
+]},
+{"class":"paladin","tree":"Protection","talent":"sacredDuty","passive":true,"groups": [
+ {"ranks":[31848,31849],"mods":[{"effect":0,"type":"flat","op":"COOLDOWN","classMask":[4194304,0,0]}],
+  "spells": [
+    {"id":498,"name":"Divine Protection","ops":["COOLDOWN"]}
+  ]}
+]},
+{"class":"paladin","tree":"Protection","talent":"guardedByTheLight","passive":true,"groups": [
+ {"ranks":[53583,53585],"mods":[{"effect":0,"type":"flat","op":"RESIST_DISPEL_CHANCE","classMask":[0,0,1]}],
+  "spells": [
+    {"id":54428,"name":"Divine Plea","ops":["RESIST_DISPEL_CHANCE"]}
+  ]}
+]},
+{"class":"paladin","tree":"Protection","talent":"judgementsOfTheJust","passive":true,"groups": [
+ {"ranks":[53695,53696],"mods":[{"effect":0,"type":"flat","op":"EFFECT2","classMask":[0,0,64]},{"effect":1,"type":"flat","op":"COOLDOWN","classMask":[2048,0,0]},{"effect":2,"type":"flat","op":"DURATION","classMask":[512,0,0]}],
+  "spells": [
+    {"id":68055,"name":"Judgements of the Just","ops":["EFFECT2"]}
+  ]}
+]},
+{"class":"paladin","tree":"Retribution","talent":"benediction","passive":true,"groups": [
+ {"ranks":[20101,20102,20103,20104,20105],"mods":[{"effect":0,"type":"pct","op":"COST","classMask":[469335991,1199550414,8]}],
+  "spells": [
+    {"id":498,"name":"Divine Protection","ops":["COST"]},
+    {"id":6940,"name":"Hand of Sacrifice","ops":["COST"]},
+    {"id":20154,"name":"Seal of Righteousness","ops":["COST"]},
+    {"id":20186,"name":"Judgement of Wisdom","ops":["COST"]},
+    {"id":20187,"name":"Judgement of Righteousness","ops":["COST"]},
+    {"id":20271,"name":"Judgement of Light","ops":["COST"]},
+    {"id":20375,"name":"Seal of Command","ops":["COST"]},
+    {"id":20424,"name":"Seal of Command","ops":["COST"]},
+    {"id":20467,"name":"Judgement of Command","ops":["COST"]},
+    {"id":21084,"name":"Seal of Righteousness","ops":["COST"]},
+    {"id":25780,"name":"Righteous Fury","ops":["COST"]},
+    {"id":25899,"name":"Greater Blessing of Sanctuary","ops":["COST"]},
+    {"id":31801,"name":"Seal of Vengeance","ops":["COST"]},
+    {"id":31803,"name":"Holy Vengeance","ops":["COST"]},
+    {"id":31804,"name":"Judgement of Vengeance","ops":["COST"]},
+    {"id":31884,"name":"Avenging Wrath","ops":["COST"]},
+    {"id":35395,"name":"Crusader Strike","ops":["COST"]},
+    {"id":42463,"name":"Seal of Vengeance","ops":["COST"]},
+    {"id":48801,"name":"Exorcism","ops":["COST"]},
+    {"id":48806,"name":"Hammer of Wrath","ops":["COST"]},
+    {"id":48817,"name":"Holy Wrath","ops":["COST"]},
+    {"id":48819,"name":"Consecration","ops":["COST"]},
+    {"id":48827,"name":"Avenger's Shield","ops":["COST"]},
+    {"id":48932,"name":"Blessing of Might","ops":["COST"]},
+    {"id":48952,"name":"Holy Shield","ops":["COST"]},
+    {"id":53385,"name":"Divine Storm","ops":["COST"]},
+    {"id":53408,"name":"Judgement of Wisdom","ops":["COST"]},
+    {"id":53595,"name":"Hammer of the Righteous","ops":["COST"]},
+    {"id":61411,"name":"Shield of Righteousness","ops":["COST"]},
+    {"id":68055,"name":"Judgements of the Just","ops":["COST"]}
+  ]}
+]},
+{"class":"paladin","tree":"Retribution","talent":"improvedJudgements","passive":true,"groups": [
+ {"ranks":[25956,25957],"mods":[{"effect":0,"type":"flat","op":"COOLDOWN","classMask":[8388608,0,8]}],
+  "spells": [
+    {"id":20187,"name":"Judgement of Righteousness","ops":["COOLDOWN"]},
+    {"id":20271,"name":"Judgement of Light","ops":["COOLDOWN"]},
+    {"id":20467,"name":"Judgement of Command","ops":["COOLDOWN"]},
+    {"id":31804,"name":"Judgement of Vengeance","ops":["COOLDOWN"]},
+    {"id":53408,"name":"Judgement of Wisdom","ops":["COOLDOWN"]}
+  ]}
+]},
+{"class":"paladin","tree":"Retribution","talent":"sanctityOfBattle","passive":true,"groups": [
+ {"ranks":[32043,35396,35397],"mods":[{"effect":1,"type":"pct","op":"DAMAGE","classMask":[0,32770,0]}],
+  "spells": [
+    {"id":35395,"name":"Crusader Strike","ops":["DAMAGE"]},
+    {"id":48801,"name":"Exorcism","ops":["DAMAGE"]}
+  ]}
+]},
+{"class":"paladin","tree":"Retribution","talent":"sanctifiedRetribution","passive":true,"groups": [
+ {"ranks":[31869],"mods":[{"effect":0,"type":"flat","op":"EFFECT2","classMask":[0,0,134217728]},{"effect":1,"type":"pct","op":"EFFECT1","classMask":[8,0,0]}],
+  "spells": [
+    {"id":54043,"name":"Retribution Aura","ops":["EFFECT1"]}
+  ]}
+]},
+{"class":"paladin","tree":"Retribution","talent":"theArtOfWar","passive":true,"groups": [
+ {"ranks":[53486,53488],"mods":[{"effect":0,"type":"pct","op":"DAMAGE","classMask":[8388608,163840,8]}],
+  "spells": [
+    {"id":20187,"name":"Judgement of Righteousness","ops":["DAMAGE"]},
+    {"id":20271,"name":"Judgement of Light","ops":["DAMAGE"]},
+    {"id":20467,"name":"Judgement of Command","ops":["DAMAGE"]},
+    {"id":31804,"name":"Judgement of Vengeance","ops":["DAMAGE"]},
+    {"id":35395,"name":"Crusader Strike","ops":["DAMAGE"]},
+    {"id":53385,"name":"Divine Storm","ops":["DAMAGE"]},
+    {"id":53408,"name":"Judgement of Wisdom","ops":["DAMAGE"]}
+  ]}
+]},
+{"class":"paladin","tree":"Retribution","talent":"fanaticism","passive":true,"groups": [
+ {"ranks":[31879,31880,31881],"mods":[{"effect":0,"type":"flat","op":"CRITICAL_CHANCE","classMask":[8388608,0,8]}],
+  "spells": [
+    {"id":20187,"name":"Judgement of Righteousness","ops":["CRITICAL_CHANCE"]},
+    {"id":20271,"name":"Judgement of Light","ops":["CRITICAL_CHANCE"]},
+    {"id":20467,"name":"Judgement of Command","ops":["CRITICAL_CHANCE"]},
+    {"id":31804,"name":"Judgement of Vengeance","ops":["CRITICAL_CHANCE"]},
+    {"id":53408,"name":"Judgement of Wisdom","ops":["CRITICAL_CHANCE"]}
+  ]}
+]},
+{"class":"paladin","tree":"Retribution","talent":"sanctifiedWrath","passive":true,"groups": [
+ {"ranks":[53375,53376],"mods":[{"effect":0,"type":"flat","op":"COOLDOWN","classMask":[0,8192,0]},{"effect":1,"type":"flat","op":"CRITICAL_CHANCE","classMask":[0,128,0]}],
+  "spells": [
+    {"id":31884,"name":"Avenging Wrath","ops":["COOLDOWN"]},
+    {"id":48806,"name":"Hammer of Wrath","ops":["CRITICAL_CHANCE"]}
+  ]}
+]},
+{"class":"paladin","tree":"Retribution","talent":"swiftRetribution","passive":true,"groups": [
+ {"ranks":[53379,53484,53648],"mods":[{"effect":0,"type":"flat","op":"EFFECT3","classMask":[0,0,134217728]}],
+  "spells": []}
+]},
+{"class":"priest","tree":"Discipline","talent":"twinDisciplines","passive":true,"groups": [
+ {"ranks":[47586,47587,47588,52802],"mods":[{"effect":0,"type":"pct","op":"DAMAGE","classMask":[2581594112,622642,0]},{"effect":1,"type":"pct","op":"DOT","classMask":[35684416,0,0]}],
+  "spells": [
+    {"id":10060,"name":"Power Infusion","ops":["DAMAGE"]},
+    {"id":33206,"name":"Pain Suppression","ops":["DAMAGE"]},
+    {"id":47788,"name":"Guardian Spirit","ops":["DAMAGE"]},
+    {"id":48068,"name":"Renew","ops":["DOT"]},
+    {"id":48089,"name":"Circle of Healing","ops":["DAMAGE"]},
+    {"id":48113,"name":"Prayer of Mending","ops":["DAMAGE"]},
+    {"id":48125,"name":"Shadow Word: Pain","ops":["DOT"]},
+    {"id":48158,"name":"Shadow Word: Death","ops":["DAMAGE"]},
+    {"id":48300,"name":"Devouring Plague","ops":["DOT"]},
+    {"id":48301,"name":"Mind Trauma","ops":["DAMAGE"]},
+    {"id":53022,"name":"Mind Sear","ops":["DAMAGE"]},
+    {"id":58381,"name":"Mind Flay","ops":["DAMAGE"]}
+  ]},
+ {"ranks":[52803],"mods":[{"effect":0,"type":"pct","op":"DAMAGE","classMask":[2581594112,1146930,0]},{"effect":1,"type":"pct","op":"DOT","classMask":[35684416,0,0]}],
+  "spells": [
+    {"id":10060,"name":"Power Infusion","ops":["DAMAGE"]},
+    {"id":33206,"name":"Pain Suppression","ops":["DAMAGE"]},
+    {"id":47788,"name":"Guardian Spirit","ops":["DAMAGE"]},
+    {"id":48068,"name":"Renew","ops":["DOT"]},
+    {"id":48089,"name":"Circle of Healing","ops":["DAMAGE"]},
+    {"id":48113,"name":"Prayer of Mending","ops":["DAMAGE"]},
+    {"id":48125,"name":"Shadow Word: Pain","ops":["DOT"]},
+    {"id":48158,"name":"Shadow Word: Death","ops":["DAMAGE"]},
+    {"id":48300,"name":"Devouring Plague","ops":["DOT"]},
+    {"id":48301,"name":"Mind Trauma","ops":["DAMAGE"]},
+    {"id":53023,"name":"Mind Sear","ops":["DAMAGE"]},
+    {"id":58381,"name":"Mind Flay","ops":["DAMAGE"]}
+  ]}
+]},
+{"class":"priest","tree":"Discipline","talent":"silentResolve","passive":true,"groups": [
+ {"ranks":[14523,14784,14785],"mods":[{"effect":1,"type":"flat","op":"RESIST_DISPEL_CHANCE","classMask":[0,0,1024]},{"effect":2,"type":"pct","op":"THREAT","classMask":[16,0,0]}],
+  "spells": [
+    {"id":10060,"name":"Power Infusion","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":14751,"name":"Inner Focus","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":15258,"name":"Shadow Weaving","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":33206,"name":"Pain Suppression","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":34917,"name":"Vampiric Touch","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":47585,"name":"Dispersion","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":47788,"name":"Guardian Spirit","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":48066,"name":"Power Word: Shield","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":48068,"name":"Renew","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":48113,"name":"Prayer of Mending","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":48125,"name":"Shadow Word: Pain","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":48135,"name":"Holy Fire","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":48160,"name":"Vampiric Touch","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":48300,"name":"Devouring Plague","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":59000,"name":"Improved Spirit Tap","ops":["RESIST_DISPEL_CHANCE"]}
+  ]}
+]},
+{"class":"priest","tree":"Discipline","talent":"improvedInnerFire","passive":true,"groups": [
+ {"ranks":[14747,14770,14771],"mods":[{"effect":0,"type":"pct","op":"ALL_EFFECTS","classMask":[2,0,0]},{"effect":2,"type":"flat","op":"CHARGES","classMask":[2,0,0]}],
+  "spells": []}
+]},
+{"class":"priest","tree":"Discipline","talent":"improvedPowerWordFortitude","passive":true,"groups": [
+ {"ranks":[14749,14767],"mods":[{"effect":0,"type":"pct","op":"ALL_EFFECTS","classMask":[8,0,0]}],
+  "spells": []}
+]},
+{"class":"priest","tree":"Discipline","talent":"innerFocus","passive":false,"groups": [
+ {"ranks":[14751],"mods":[{"effect":0,"type":"pct","op":"COST","classMask":[3612868607,13997559,8256]},{"effect":1,"type":"flat","op":"CRITICAL_CHANCE","classMask":[3386130064,13205558,64]}],
+  "spells": [
+    {"id":10060,"name":"Power Infusion","ops":["CRITICAL_CHANCE","COST"]},
+    {"id":14751,"name":"Inner Focus","ops":["COST"]},
+    {"id":33206,"name":"Pain Suppression","ops":["CRITICAL_CHANCE","COST"]},
+    {"id":34433,"name":"Shadowfiend","ops":["CRITICAL_CHANCE","COST"]},
+    {"id":34917,"name":"Vampiric Touch","ops":["COST"]},
+    {"id":47585,"name":"Dispersion","ops":["COST"]},
+    {"id":47788,"name":"Guardian Spirit","ops":["CRITICAL_CHANCE","COST"]},
+    {"id":48063,"name":"Greater Heal","ops":["CRITICAL_CHANCE","COST"]},
+    {"id":48066,"name":"Power Word: Shield","ops":["COST"]},
+    {"id":48068,"name":"Renew","ops":["COST"]},
+    {"id":48071,"name":"Flash Heal","ops":["CRITICAL_CHANCE","COST"]},
+    {"id":48072,"name":"Prayer of Healing","ops":["CRITICAL_CHANCE","COST"]},
+    {"id":48089,"name":"Circle of Healing","ops":["COST"]},
+    {"id":48113,"name":"Prayer of Mending","ops":["CRITICAL_CHANCE","COST"]},
+    {"id":48120,"name":"Binding Heal","ops":["CRITICAL_CHANCE","COST"]},
+    {"id":48123,"name":"Smite","ops":["CRITICAL_CHANCE","COST"]},
+    {"id":48125,"name":"Shadow Word: Pain","ops":["COST"]},
+    {"id":48127,"name":"Mind Blast","ops":["CRITICAL_CHANCE","COST"]},
+    {"id":48135,"name":"Holy Fire","ops":["CRITICAL_CHANCE","COST"]},
+    {"id":48156,"name":"Mind Flay","ops":["CRITICAL_CHANCE","COST"]},
+    {"id":48158,"name":"Shadow Word: Death","ops":["CRITICAL_CHANCE","COST"]},
+    {"id":48160,"name":"Vampiric Touch","ops":["COST"]},
+    {"id":48300,"name":"Devouring Plague","ops":["COST"]},
+    {"id":48301,"name":"Mind Trauma","ops":["CRITICAL_CHANCE","COST"]},
+    {"id":53007,"name":"Penance","ops":["CRITICAL_CHANCE","COST"]},
+    {"id":53022,"name":"Mind Sear","ops":["CRITICAL_CHANCE"]},
+    {"id":53023,"name":"Mind Sear","ops":["COST"]},
+    {"id":58381,"name":"Mind Flay","ops":["CRITICAL_CHANCE"]},
+    {"id":59000,"name":"Improved Spirit Tap","ops":["COST"]}
+  ]}
+]},
+{"class":"priest","tree":"Discipline","talent":"improvedPowerWordShield","passive":true,"groups": [
+ {"ranks":[14748,14768,14769],"mods":[{"effect":0,"type":"pct","op":"ALL_EFFECTS","classMask":[1,0,0]}],
+  "spells": [
+    {"id":48066,"name":"Power Word: Shield","ops":["ALL_EFFECTS"]}
+  ]}
+]},
+{"class":"priest","tree":"Discipline","talent":"mentalAgility","passive":true,"groups": [
+ {"ranks":[14520,14780,14781],"mods":[{"effect":0,"type":"pct","op":"COST","classMask":[2470560111,371,8192]}],
+  "spells": [
+    {"id":10060,"name":"Power Infusion","ops":["COST"]},
+    {"id":33206,"name":"Pain Suppression","ops":["COST"]},
+    {"id":34433,"name":"Shadowfiend","ops":["COST"]},
+    {"id":47788,"name":"Guardian Spirit","ops":["COST"]},
+    {"id":48066,"name":"Power Word: Shield","ops":["COST"]},
+    {"id":48068,"name":"Renew","ops":["COST"]},
+    {"id":48089,"name":"Circle of Healing","ops":["COST"]},
+    {"id":48113,"name":"Prayer of Mending","ops":["COST"]},
+    {"id":48125,"name":"Shadow Word: Pain","ops":["COST"]},
+    {"id":48158,"name":"Shadow Word: Death","ops":["COST"]},
+    {"id":48300,"name":"Devouring Plague","ops":["COST"]},
+    {"id":48301,"name":"Mind Trauma","ops":["COST"]}
+  ]}
+]},
+{"class":"priest","tree":"Discipline","talent":"soulWarding","passive":true,"groups": [
+ {"ranks":[63574],"mods":[{"effect":0,"type":"flat","op":"COOLDOWN","classMask":[1,0,0]},{"effect":1,"type":"pct","op":"COST","classMask":[1,0,0]}],
+  "spells": [
+    {"id":48066,"name":"Power Word: Shield","ops":["COOLDOWN","COST"]}
+  ]}
+]},
+{"class":"priest","tree":"Discipline","talent":"focusedPower","passive":true,"groups": [
+ {"ranks":[33186,33190],"mods":[{"effect":0,"type":"flat","op":"CASTING_TIME","classMask":[0,128,0]}],
+  "spells": []}
+]},
+{"class":"priest","tree":"Discipline","talent":"improvedFlashHeal","passive":true,"groups": [
+ {"ranks":[63504,63505,63506],"mods":[{"effect":1,"type":"pct","op":"COST","classMask":[2048,0,0]}],
+  "spells": [
+    {"id":48071,"name":"Flash Heal","ops":["COST"]}
+  ]}
+]},
+{"class":"priest","tree":"Discipline","talent":"aspiration","passive":true,"groups": [
+ {"ranks":[47507,47508],"mods":[{"effect":0,"type":"pct","op":"COOLDOWN","classMask":[0,1887436800,0]}],
+  "spells": [
+    {"id":10060,"name":"Power Infusion","ops":["COOLDOWN"]},
+    {"id":14751,"name":"Inner Focus","ops":["COOLDOWN"]},
+    {"id":33206,"name":"Pain Suppression","ops":["COOLDOWN"]},
+    {"id":53007,"name":"Penance","ops":["COOLDOWN"]}
+  ]}
+]},
+{"class":"priest","tree":"Holy","talent":"improvedRenew","passive":true,"groups": [
+ {"ranks":[14908,15020,17191],"mods":[{"effect":0,"type":"pct","op":"DOT","classMask":[64,0,0]}],
+  "spells": [
+    {"id":48068,"name":"Renew","ops":["DOT"]}
+  ]}
+]},
+{"class":"priest","tree":"Holy","talent":"divineFury","passive":true,"groups": [
+ {"ranks":[18530,18531,18533,18534,18535],"mods":[{"effect":0,"type":"flat","op":"CASTING_TIME","classMask":[1053824,0,0]}],
+  "spells": [
+    {"id":48063,"name":"Greater Heal","ops":["CASTING_TIME"]},
+    {"id":48123,"name":"Smite","ops":["CASTING_TIME"]},
+    {"id":48135,"name":"Holy Fire","ops":["CASTING_TIME"]}
+  ]}
+]},
+{"class":"priest","tree":"Holy","talent":"improvedHealing","passive":true,"groups": [
+ {"ranks":[14912,15013,15014],"mods":[{"effect":0,"type":"pct","op":"COST","classMask":[267264,12582912,0]}],
+  "spells": [
+    {"id":48063,"name":"Greater Heal","ops":["COST"]},
+    {"id":53007,"name":"Penance","ops":["COST"]}
+  ]}
+]},
+{"class":"priest","tree":"Holy","talent":"searingLight","passive":true,"groups": [
+ {"ranks":[14909,15017],"mods":[{"effect":0,"type":"pct","op":"DAMAGE","classMask":[5243008,32768,0]},{"effect":1,"type":"pct","op":"DOT","classMask":[1048576,0,0]}],
+  "spells": [
+    {"id":48123,"name":"Smite","ops":["DAMAGE"]},
+    {"id":48135,"name":"Holy Fire","ops":["DAMAGE","DOT"]}
+  ]}
+]},
+{"class":"priest","tree":"Holy","talent":"healingPrayers","passive":true,"groups": [
+ {"ranks":[14911,15018],"mods":[{"effect":0,"type":"pct","op":"COST","classMask":[512,32,0]}],
+  "spells": [
+    {"id":48072,"name":"Prayer of Healing","ops":["COST"]},
+    {"id":48113,"name":"Prayer of Mending","ops":["COST"]}
+  ]}
+]},
+{"class":"priest","tree":"Holy","talent":"spiritualHealing","passive":true,"groups": [
+ {"ranks":[14898,15349,15354,15355,15356],"mods":[{"effect":0,"type":"pct","op":"DAMAGE","classMask":[419700288,134283300,4]},{"effect":1,"type":"pct","op":"DOT","classMask":[419700288,134283268,4]}],
+  "spells": [
+    {"id":48063,"name":"Greater Heal","ops":["DAMAGE","DOT"]},
+    {"id":48068,"name":"Renew","ops":["DAMAGE","DOT"]},
+    {"id":48071,"name":"Flash Heal","ops":["DAMAGE","DOT"]},
+    {"id":48072,"name":"Prayer of Healing","ops":["DAMAGE","DOT"]},
+    {"id":48089,"name":"Circle of Healing","ops":["DAMAGE","DOT"]},
+    {"id":48113,"name":"Prayer of Mending","ops":["DAMAGE"]},
+    {"id":48120,"name":"Binding Heal","ops":["DAMAGE","DOT"]}
+  ]}
+]},
+{"class":"priest","tree":"Holy","talent":"empoweredHealing","passive":true,"groups": [
+ {"ranks":[33158,33159,33160,33161,33162],"mods":[{"effect":0,"type":"flat","op":"BONUS_MULTIPLIER","classMask":[4096,0,0]},{"effect":1,"type":"flat","op":"BONUS_MULTIPLIER","classMask":[2048,4,0]}],
+  "spells": [
+    {"id":48063,"name":"Greater Heal","ops":["BONUS_MULTIPLIER"]},
+    {"id":48071,"name":"Flash Heal","ops":["BONUS_MULTIPLIER"]},
+    {"id":48120,"name":"Binding Heal","ops":["BONUS_MULTIPLIER"]}
+  ]}
+]},
+{"class":"priest","tree":"Holy","talent":"empoweredRenew","passive":true,"groups": [
+ {"ranks":[63534,63542,63543],"mods":[{"effect":0,"type":"pct","op":"BONUS_MULTIPLIER","classMask":[64,0,0]}],
+  "spells": [
+    {"id":48068,"name":"Renew","ops":["BONUS_MULTIPLIER"]}
+  ]}
+]},
+{"class":"priest","tree":"Holy","talent":"divineProvidence","passive":true,"groups": [
+ {"ranks":[47562,47564,47565,47566,47567],"mods":[{"effect":0,"type":"pct","op":"DAMAGE","classMask":[402653696,36,4]},{"effect":1,"type":"pct","op":"DOT","classMask":[0,0,4]},{"effect":2,"type":"pct","op":"COOLDOWN","classMask":[0,32,0]}],
+  "spells": [
+    {"id":48072,"name":"Prayer of Healing","ops":["DAMAGE"]},
+    {"id":48089,"name":"Circle of Healing","ops":["DAMAGE"]},
+    {"id":48113,"name":"Prayer of Mending","ops":["DAMAGE","COOLDOWN"]},
+    {"id":48120,"name":"Binding Heal","ops":["DAMAGE"]}
+  ]}
+]},
+{"class":"priest","tree":"Shadow","talent":"darkness","passive":true,"groups": [
+ {"ranks":[15259,15307,15308,15309,15310],"mods":[{"effect":0,"type":"pct","op":"DAMAGE","classMask":[41951232,524290,0]},{"effect":1,"type":"pct","op":"DOT","classMask":[33587200,1024,0]},{"effect":2,"type":"pct","op":"DAMAGE","classMask":[524288,0,0]}],
+  "spells": [
+    {"id":34917,"name":"Vampiric Touch","ops":["DOT"]},
+    {"id":48125,"name":"Shadow Word: Pain","ops":["DOT"]},
+    {"id":48127,"name":"Mind Blast","ops":["DAMAGE"]},
+    {"id":48158,"name":"Shadow Word: Death","ops":["DAMAGE"]},
+    {"id":48160,"name":"Vampiric Touch","ops":["DOT"]},
+    {"id":48300,"name":"Devouring Plague","ops":["DAMAGE","DOT"]},
+    {"id":53022,"name":"Mind Sear","ops":["DAMAGE"]},
+    {"id":58381,"name":"Mind Flay","ops":["DAMAGE"]}
+  ]}
+]},
+{"class":"priest","tree":"Shadow","talent":"shadowAffinity","passive":true,"groups": [
+ {"ranks":[15318,15272,15320],"mods":[{"effect":0,"type":"pct","op":"THREAT","classMask":[109814020,787530,8256]}],
+  "spells": [
+    {"id":15258,"name":"Shadow Weaving","ops":["THREAT"]},
+    {"id":34917,"name":"Vampiric Touch","ops":["THREAT"]},
+    {"id":47585,"name":"Dispersion","ops":["THREAT"]},
+    {"id":48125,"name":"Shadow Word: Pain","ops":["THREAT"]},
+    {"id":48127,"name":"Mind Blast","ops":["THREAT"]},
+    {"id":48156,"name":"Mind Flay","ops":["THREAT"]},
+    {"id":48158,"name":"Shadow Word: Death","ops":["THREAT"]},
+    {"id":48160,"name":"Vampiric Touch","ops":["THREAT"]},
+    {"id":48300,"name":"Devouring Plague","ops":["THREAT"]},
+    {"id":48301,"name":"Mind Trauma","ops":["THREAT"]},
+    {"id":53022,"name":"Mind Sear","ops":["THREAT"]},
+    {"id":58381,"name":"Mind Flay","ops":["THREAT"]}
+  ]}
+]},
+{"class":"priest","tree":"Shadow","talent":"improvedShadowWordPain","passive":true,"groups": [
+ {"ranks":[15275,15317],"mods":[{"effect":0,"type":"pct","op":"DOT","classMask":[32768,0,0]}],
+  "spells": [
+    {"id":48125,"name":"Shadow Word: Pain","ops":["DOT"]}
+  ]}
+]},
+{"class":"priest","tree":"Shadow","talent":"shadowFocus","passive":true,"groups": [
+ {"ranks":[15260,15327,15328],"mods":[{"effect":0,"type":"flat","op":"RESIST_MISS_CHANCE","classMask":[109814020,3933258,8520]},{"effect":1,"type":"pct","op":"COST","classMask":[42197252,2150894914,8256]}],
+  "spells": [
+    {"id":15258,"name":"Shadow Weaving","ops":["RESIST_MISS_CHANCE"]},
+    {"id":34433,"name":"Shadowfiend","ops":["COST"]},
+    {"id":34917,"name":"Vampiric Touch","ops":["COST","RESIST_MISS_CHANCE"]},
+    {"id":47585,"name":"Dispersion","ops":["COST","RESIST_MISS_CHANCE"]},
+    {"id":48125,"name":"Shadow Word: Pain","ops":["COST","RESIST_MISS_CHANCE"]},
+    {"id":48127,"name":"Mind Blast","ops":["COST","RESIST_MISS_CHANCE"]},
+    {"id":48156,"name":"Mind Flay","ops":["COST","RESIST_MISS_CHANCE"]},
+    {"id":48158,"name":"Shadow Word: Death","ops":["COST","RESIST_MISS_CHANCE"]},
+    {"id":48160,"name":"Vampiric Touch","ops":["COST","RESIST_MISS_CHANCE"]},
+    {"id":48300,"name":"Devouring Plague","ops":["COST","RESIST_MISS_CHANCE"]},
+    {"id":48301,"name":"Mind Trauma","ops":["RESIST_MISS_CHANCE"]},
+    {"id":53022,"name":"Mind Sear","ops":["RESIST_MISS_CHANCE"]},
+    {"id":53023,"name":"Mind Sear","ops":["COST","RESIST_MISS_CHANCE"]},
+    {"id":58381,"name":"Mind Flay","ops":["COST","RESIST_MISS_CHANCE"]}
+  ],
+  "excluded": [
+    {"id":63675,"name":"Improved Devouring Plague","op":"RESIST_MISS_CHANCE","reason":"SPELL_ATTR3_IGNORE_CASTER_MODIFIERS"}
+  ]}
+]},
+{"class":"priest","tree":"Shadow","talent":"improvedMindBlast","passive":true,"groups": [
+ {"ranks":[15273,15312,15313,15314,15316],"mods":[{"effect":0,"type":"flat","op":"COOLDOWN","classMask":[8192,0,0]}],
+  "spells": [
+    {"id":48127,"name":"Mind Blast","ops":["COOLDOWN"]}
+  ]}
+]},
+{"class":"priest","tree":"Shadow","talent":"veiledShadows","passive":true,"groups": [
+ {"ranks":[15274,15311],"mods":[{"effect":0,"type":"flat","op":"COOLDOWN","classMask":[16384,0,0]},{"effect":1,"type":"flat","op":"COOLDOWN","classMask":[0,256,0]}],
+  "spells": [
+    {"id":34433,"name":"Shadowfiend","ops":["COOLDOWN"]}
+  ]}
+]},
+{"class":"priest","tree":"Shadow","talent":"focusedMind","passive":true,"groups": [
+ {"ranks":[33213,33214,33215],"mods":[{"effect":0,"type":"pct","op":"COST","classMask":[139264,1048576,64]}],
+  "spells": [
+    {"id":48127,"name":"Mind Blast","ops":["COST"]},
+    {"id":48156,"name":"Mind Flay","ops":["COST"]},
+    {"id":53023,"name":"Mind Sear","ops":["COST"]}
+  ]}
+]},
+{"class":"priest","tree":"Shadow","talent":"mindMelt","passive":true,"groups": [
+ {"ranks":[14910,33371],"mods":[{"effect":0,"type":"flat","op":"CRITICAL_CHANCE","classMask":[8396800,524288,0]},{"effect":1,"type":"flat","op":"CRITICAL_CHANCE","classMask":[33587200,1024,0]}],
+  "spells": [
+    {"id":34917,"name":"Vampiric Touch","ops":["CRITICAL_CHANCE"]},
+    {"id":48125,"name":"Shadow Word: Pain","ops":["CRITICAL_CHANCE"]},
+    {"id":48127,"name":"Mind Blast","ops":["CRITICAL_CHANCE"]},
+    {"id":48160,"name":"Vampiric Touch","ops":["CRITICAL_CHANCE"]},
+    {"id":48300,"name":"Devouring Plague","ops":["CRITICAL_CHANCE"]},
+    {"id":53022,"name":"Mind Sear","ops":["CRITICAL_CHANCE"]},
+    {"id":58381,"name":"Mind Flay","ops":["CRITICAL_CHANCE"]}
+  ]}
+]},
+{"class":"priest","tree":"Shadow","talent":"improvedDevouringPlague","passive":true,"groups": [
+ {"ranks":[63625,63626,63627],"mods":[{"effect":0,"type":"pct","op":"DOT","classMask":[33554432,0,0]}],
+  "spells": [
+    {"id":48300,"name":"Devouring Plague","ops":["DOT"]}
+  ]}
+]},
+{"class":"priest","tree":"Shadow","talent":"shadowPower","passive":true,"groups": [
+ {"ranks":[33221,33222,33223,33224,33225],"mods":[{"effect":1,"type":"pct","op":"CRIT_DAMAGE_BONUS","classMask":[8396800,2,0]}],
+  "spells": [
+    {"id":48127,"name":"Mind Blast","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":48158,"name":"Shadow Word: Death","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":58381,"name":"Mind Flay","ops":["CRIT_DAMAGE_BONUS"]}
+  ]}
+]},
+{"class":"priest","tree":"Shadow","talent":"misery","passive":true,"groups": [
+ {"ranks":[33191,33192,33193],"mods":[{"effect":2,"type":"pct","op":"BONUS_MULTIPLIER","classMask":[8396800,524288,0]}],
+  "spells": [
+    {"id":48127,"name":"Mind Blast","ops":["BONUS_MULTIPLIER"]},
+    {"id":53022,"name":"Mind Sear","ops":["BONUS_MULTIPLIER"]},
+    {"id":58381,"name":"Mind Flay","ops":["BONUS_MULTIPLIER"]}
+  ]}
+]},
+{"class":"rogue","tree":"Assassination","talent":"improvedEviscerate","passive":true,"groups": [
+ {"ranks":[14162,14163,14164],"mods":[{"effect":0,"type":"pct","op":"DAMAGE","classMask":[131072,0,0]}],
+  "spells": [
+    {"id":48668,"name":"Eviscerate","ops":["DAMAGE"]}
+  ]}
+]},
+{"class":"rogue","tree":"Assassination","talent":"bloodSpatter","passive":true,"groups": [
+ {"ranks":[51632,51633],"mods":[{"effect":0,"type":"pct","op":"DOT","classMask":[1048832,0,0]}],
+  "spells": [
+    {"id":48672,"name":"Rupture","ops":["DOT"]},
+    {"id":48676,"name":"Garrote","ops":["DOT"]}
+  ]}
+]},
+{"class":"rogue","tree":"Assassination","talent":"puncturingWounds","passive":true,"groups": [
+ {"ranks":[13733,13865,13866],"mods":[{"effect":0,"type":"flat","op":"CRITICAL_CHANCE","classMask":[4,0,0]},{"effect":1,"type":"flat","op":"CRITICAL_CHANCE","classMask":[0,6,0]}],
+  "spells": [
+    {"id":48657,"name":"Backstab","ops":["CRITICAL_CHANCE"]},
+    {"id":48664,"name":"Mutilate","ops":["CRITICAL_CHANCE"]},
+    {"id":48665,"name":"Mutilate","ops":["CRITICAL_CHANCE"]}
+  ]}
+]},
+{"class":"rogue","tree":"Assassination","talent":"improvedExposeArmor","passive":true,"groups": [
+ {"ranks":[14168,14169],"mods":[{"effect":0,"type":"flat","op":"COST","classMask":[524288,0,0]}],
+  "spells": [
+    {"id":8647,"name":"Expose Armor","ops":["COST"]}
+  ]}
+]},
+{"class":"rogue","tree":"Assassination","talent":"lethality","passive":true,"groups": [
+ {"ranks":[14128,14132,14135,14136,14137],"mods":[{"effect":0,"type":"pct","op":"CRIT_DAMAGE_BONUS","classMask":[637534222,262,0]}],
+  "spells": [
+    {"id":5938,"name":"Shiv","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":5940,"name":"Shiv","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":14278,"name":"Ghostly Strike","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":48638,"name":"Sinister Strike","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":48657,"name":"Backstab","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":48660,"name":"Hemorrhage","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":48664,"name":"Mutilate","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":48665,"name":"Mutilate","ops":["CRIT_DAMAGE_BONUS"]}
+  ]}
+]},
+{"class":"rogue","tree":"Assassination","talent":"vilePoisons","passive":true,"groups": [
+ {"ranks":[16513,16514,16515],"mods":[{"effect":0,"type":"pct","op":"DAMAGE","classMask":[268443648,24,0]},{"effect":1,"type":"pct","op":"DOT","classMask":[65536,0,0]},{"effect":2,"type":"flat","op":"RESIST_DISPEL_CHANCE","classMask":[65536,0,0]}],
+  "spells": [
+    {"id":57965,"name":"Instant Poison IX","ops":["DAMAGE"]},
+    {"id":57970,"name":"Deadly Poison IX","ops":["DOT","RESIST_DISPEL_CHANCE"]},
+    {"id":57975,"name":"Wound Poison VII","ops":["DAMAGE"]},
+    {"id":57993,"name":"Envenom","ops":["DAMAGE"]}
+  ]}
+]},
+{"class":"rogue","tree":"Assassination","talent":"improvedPoisons","passive":true,"groups": [
+ {"ranks":[14113,14114,14115,14116,14117],"mods":[{"effect":0,"type":"flat","op":"CHANCE_OF_SUCCESS","classMask":[65536,0,0]},{"effect":1,"type":"pct","op":"PROC_PER_MINUTE","classMask":[8192,0,0]}],
+  "spells": [
+    {"id":57965,"name":"Instant Poison IX","ops":["PROC_PER_MINUTE"]},
+    {"id":57970,"name":"Deadly Poison IX","ops":["CHANCE_OF_SUCCESS"]}
+  ]}
+]},
+{"class":"rogue","tree":"Assassination","talent":"coldBlood","passive":false,"groups": [
+ {"ranks":[14177],"mods":[{"effect":0,"type":"flat","op":"CRITICAL_CHANCE","classMask":[100794886,262415,0]}],
+  "spells": [
+    {"id":14278,"name":"Ghostly Strike","ops":["CRITICAL_CHANCE"]},
+    {"id":48638,"name":"Sinister Strike","ops":["CRITICAL_CHANCE"]},
+    {"id":48657,"name":"Backstab","ops":["CRITICAL_CHANCE"]},
+    {"id":48660,"name":"Hemorrhage","ops":["CRITICAL_CHANCE"]},
+    {"id":48664,"name":"Mutilate","ops":["CRITICAL_CHANCE"]},
+    {"id":48665,"name":"Mutilate","ops":["CRITICAL_CHANCE"]},
+    {"id":48668,"name":"Eviscerate","ops":["CRITICAL_CHANCE"]},
+    {"id":48691,"name":"Ambush","ops":["CRITICAL_CHANCE"]},
+    {"id":51723,"name":"Fan of Knives","ops":["CRITICAL_CHANCE"]},
+    {"id":52874,"name":"Fan of Knives","ops":["CRITICAL_CHANCE"]},
+    {"id":57993,"name":"Envenom","ops":["CRITICAL_CHANCE"]}
+  ]}
+]},
+{"class":"rogue","tree":"Assassination","talent":"findWeakness","passive":true,"groups": [
+ {"ranks":[31234,31235,31236],"mods":[{"effect":0,"type":"pct","op":"DAMAGE","classMask":[637665822,262415,0]},{"effect":1,"type":"pct","op":"DOT","classMask":[1048832,0,0]}],
+  "spells": [
+    {"id":5938,"name":"Shiv","ops":["DAMAGE"]},
+    {"id":5940,"name":"Shiv","ops":["DAMAGE"]},
+    {"id":14278,"name":"Ghostly Strike","ops":["DAMAGE"]},
+    {"id":48638,"name":"Sinister Strike","ops":["DAMAGE"]},
+    {"id":48657,"name":"Backstab","ops":["DAMAGE"]},
+    {"id":48660,"name":"Hemorrhage","ops":["DAMAGE"]},
+    {"id":48664,"name":"Mutilate","ops":["DAMAGE"]},
+    {"id":48665,"name":"Mutilate","ops":["DAMAGE"]},
+    {"id":48668,"name":"Eviscerate","ops":["DAMAGE"]},
+    {"id":48672,"name":"Rupture","ops":["DOT"]},
+    {"id":48676,"name":"Garrote","ops":["DOT"]},
+    {"id":48691,"name":"Ambush","ops":["DAMAGE"]},
+    {"id":51723,"name":"Fan of Knives","ops":["DAMAGE"]},
+    {"id":52874,"name":"Fan of Knives","ops":["DAMAGE"]},
+    {"id":57993,"name":"Envenom","ops":["DAMAGE"]}
+  ]}
+]},
+{"class":"rogue","tree":"Combat","talent":"improvedSinisterStrike","passive":true,"groups": [
+ {"ranks":[13732,13863],"mods":[{"effect":0,"type":"flat","op":"COST","classMask":[2,0,0]}],
+  "spells": [
+    {"id":48638,"name":"Sinister Strike","ops":["COST"]}
+  ]}
+]},
+{"class":"rogue","tree":"Combat","talent":"improvedSliceAndDice","passive":true,"groups": [
+ {"ranks":[14165,14166],"mods":[{"effect":0,"type":"pct","op":"DURATION","classMask":[262144,0,0]}],
+  "spells": [
+    {"id":6774,"name":"Slice and Dice","ops":["DURATION"]}
+  ]}
+]},
+{"class":"rogue","tree":"Combat","talent":"aggression","passive":true,"groups": [
+ {"ranks":[18427,18428,18429,61330,61331],"mods":[{"effect":0,"type":"pct","op":"DAMAGE","classMask":[131078,0,0]}],
+  "spells": [
+    {"id":48638,"name":"Sinister Strike","ops":["DAMAGE"]},
+    {"id":48657,"name":"Backstab","ops":["DAMAGE"]},
+    {"id":48668,"name":"Eviscerate","ops":["DAMAGE"]}
+  ]}
+]},
+{"class":"rogue","tree":"Combat","talent":"bladeTwisting","passive":true,"equipped":{"class":2,"subClassMask":173555},"groups": [
+ {"ranks":[31124,31126],"mods":[{"effect":1,"type":"pct","op":"DAMAGE","classMask":[6,0,0]}],
+  "spells": [
+    {"id":48638,"name":"Sinister Strike","ops":["DAMAGE"]},
+    {"id":48657,"name":"Backstab","ops":["DAMAGE"]}
+  ]}
+]},
+{"class":"rogue","tree":"Combat","talent":"surpriseAttacks","passive":true,"groups": [
+ {"ranks":[32601],"mods":[{"effect":1,"type":"pct","op":"DAMAGE","classMask":[570425358,0,0]}],
+  "spells": [
+    {"id":5938,"name":"Shiv","ops":["DAMAGE"]},
+    {"id":5940,"name":"Shiv","ops":["DAMAGE"]},
+    {"id":48638,"name":"Sinister Strike","ops":["DAMAGE"]},
+    {"id":48657,"name":"Backstab","ops":["DAMAGE"]},
+    {"id":48660,"name":"Hemorrhage","ops":["DAMAGE"]}
+  ]}
+]},
+{"class":"rogue","tree":"Subtlety","talent":"opportunity","passive":true,"groups": [
+ {"ranks":[14057,14072],"mods":[{"effect":0,"type":"pct","op":"DAMAGE","classMask":[516,6,0]},{"effect":1,"type":"pct","op":"DOT","classMask":[256,0,0]}],
+  "spells": [
+    {"id":48657,"name":"Backstab","ops":["DAMAGE"]},
+    {"id":48664,"name":"Mutilate","ops":["DAMAGE"]},
+    {"id":48665,"name":"Mutilate","ops":["DAMAGE"]},
+    {"id":48676,"name":"Garrote","ops":["DOT"]},
+    {"id":48691,"name":"Ambush","ops":["DAMAGE"]}
+  ]}
+]},
+{"class":"rogue","tree":"Subtlety","talent":"elusiveness","passive":true,"groups": [
+ {"ranks":[13981,14066],"mods":[{"effect":0,"type":"flat","op":"COOLDOWN","classMask":[16779264,0,0]},{"effect":1,"type":"flat","op":"COOLDOWN","classMask":[0,65536,0]}],
+  "spells": [
+    {"id":26889,"name":"Vanish","ops":["COOLDOWN"]}
+  ]}
+]},
+{"class":"rogue","tree":"Subtlety","talent":"serratedBlades","passive":true,"groups": [
+ {"ranks":[14171,14172,14173],"mods":[{"effect":0,"type":"pct","op":"DOT","classMask":[1048576,0,0]}],
+  "spells": [
+    {"id":48672,"name":"Rupture","ops":["DOT"]}
+  ]}
+]},
+{"class":"rogue","tree":"Subtlety","talent":"improvedAmbush","passive":true,"groups": [
+ {"ranks":[14079,14080],"mods":[{"effect":0,"type":"flat","op":"CRITICAL_CHANCE","classMask":[512,0,0]}],
+  "spells": [
+    {"id":48691,"name":"Ambush","ops":["CRITICAL_CHANCE"]}
+  ]}
+]},
+{"class":"rogue","tree":"Subtlety","talent":"dirtyDeeds","passive":true,"groups": [
+ {"ranks":[14082,14083],"mods":[{"effect":0,"type":"flat","op":"COST","classMask":[1280,0,0]}],
+  "spells": [
+    {"id":48676,"name":"Garrote","ops":["COST"]}
+  ]}
+]},
+{"class":"rogue","tree":"Subtlety","talent":"sinisterCalling","passive":true,"groups": [
+ {"ranks":[31216,31217,31218,31219,31220],"mods":[{"effect":1,"type":"pct","op":"EFFECT2","classMask":[33554436,0,0]}],
+  "spells": [
+    {"id":48657,"name":"Backstab","ops":["EFFECT2"]},
+    {"id":48660,"name":"Hemorrhage","ops":["EFFECT2"]}
+  ]}
+]},
+{"class":"rogue","tree":"Subtlety","talent":"filthyTricks","passive":true,"groups": [
+ {"ranks":[58414,58415],"mods":[{"effect":0,"type":"flat","op":"COOLDOWN","classMask":[4096,131584,0]},{"effect":1,"type":"flat","op":"COOLDOWN","classMask":[0,4096,0]},{"effect":2,"type":"flat","op":"COST","classMask":[4096,131584,0]}],
+  "spells": [
+    {"id":14185,"name":"Preparation","ops":["COOLDOWN"]},
+    {"id":36554,"name":"Shadowstep","ops":["COOLDOWN","COST"]},
+    {"id":57934,"name":"Tricks of the Trade","ops":["COOLDOWN","COST"]}
+  ]}
+]},
+{"class":"rogue","tree":"Subtlety","talent":"slaughterFromTheShadows","passive":true,"groups": [
+ {"ranks":[51708,51709,51710,51711,51712],"mods":[{"effect":0,"type":"flat","op":"COST","classMask":[516,0,0]},{"effect":1,"type":"flat","op":"COST","classMask":[33554432,0,0]}],
+  "spells": [
+    {"id":48657,"name":"Backstab","ops":["COST"]},
+    {"id":48660,"name":"Hemorrhage","ops":["COST"]},
+    {"id":48691,"name":"Ambush","ops":["COST"]}
+  ]}
+]},
+{"class":"shaman","tree":"Elemental","talent":"convection","passive":true,"groups": [
+ {"ranks":[16039,16110,16111,16112],"mods":[{"effect":0,"type":"pct","op":"COST","classMask":[2416967683,134221824,0]}],
+  "spells": [
+    {"id":49231,"name":"Earth Shock","ops":["COST"]},
+    {"id":49233,"name":"Flame Shock","ops":["COST"]},
+    {"id":49236,"name":"Frost Shock","ops":["COST"]},
+    {"id":49238,"name":"Lightning Bolt","ops":["COST"]},
+    {"id":49271,"name":"Chain Lightning","ops":["COST"]},
+    {"id":60043,"name":"Lava Burst","ops":["COST"]}
+  ]},
+ {"ranks":[16109],"mods":[{"effect":0,"type":"pct","op":"COST","classMask":[2416967683,134230016,0]}],
+  "spells": [
+    {"id":49231,"name":"Earth Shock","ops":["COST"]},
+    {"id":49233,"name":"Flame Shock","ops":["COST"]},
+    {"id":49236,"name":"Frost Shock","ops":["COST"]},
+    {"id":49238,"name":"Lightning Bolt","ops":["COST"]},
+    {"id":49271,"name":"Chain Lightning","ops":["COST"]},
+    {"id":59159,"name":"Thunderstorm","ops":["COST"]},
+    {"id":60043,"name":"Lava Burst","ops":["COST"]}
+  ]}
+]},
+{"class":"shaman","tree":"Elemental","talent":"concussion","passive":true,"groups": [
+ {"ranks":[16035,16105,16106,16107,16108],"mods":[{"effect":0,"type":"pct","op":"DAMAGE","classMask":[2416967683,12288,0]},{"effect":1,"type":"pct","op":"DOT","classMask":[268435456,0,0]}],
+  "spells": [
+    {"id":49231,"name":"Earth Shock","ops":["DAMAGE"]},
+    {"id":49233,"name":"Flame Shock","ops":["DAMAGE","DOT"]},
+    {"id":49236,"name":"Frost Shock","ops":["DAMAGE"]},
+    {"id":49238,"name":"Lightning Bolt","ops":["DAMAGE"]},
+    {"id":49271,"name":"Chain Lightning","ops":["DAMAGE"]},
+    {"id":59159,"name":"Thunderstorm","ops":["DAMAGE"]},
+    {"id":60043,"name":"Lava Burst","ops":["DAMAGE"]}
+  ]}
+]},
+{"class":"shaman","tree":"Elemental","talent":"callOfFlame","passive":true,"groups": [
+ {"ranks":[16038,16160,16161],"mods":[{"effect":0,"type":"pct","op":"DAMAGE","classMask":[1073741824,262144,0]},{"effect":1,"type":"pct","op":"DAMAGE","classMask":[0,4096,0]}],
+  "spells": [
+    {"id":58702,"name":"Attack","ops":["DAMAGE"]},
+    {"id":58735,"name":"Magma Totem","ops":["DAMAGE"]},
+    {"id":60043,"name":"Lava Burst","ops":["DAMAGE"]},
+    {"id":61654,"name":"Fire Nova","ops":["DAMAGE"]}
+  ]}
+]},
+{"class":"shaman","tree":"Elemental","talent":"reverberation","passive":true,"groups": [
+ {"ranks":[16040,16113,16114,16115,16116],"mods":[{"effect":0,"type":"flat","op":"COOLDOWN","classMask":[2416967680,134217728,0]}],
+  "spells": [
+    {"id":49231,"name":"Earth Shock","ops":["COOLDOWN"]},
+    {"id":49233,"name":"Flame Shock","ops":["COOLDOWN"]},
+    {"id":49236,"name":"Frost Shock","ops":["COOLDOWN"]}
+  ]}
+]},
+{"class":"shaman","tree":"Elemental","talent":"elementalFury","passive":true,"groups": [
+ {"ranks":[16089,60184,60185,60187,60188],"mods":[{"effect":0,"type":"pct","op":"CRIT_DAMAGE_BONUS","classMask":[3509583875,274432,0]}],
+  "spells": [
+    {"id":10444,"name":"Flametongue Attack","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":49231,"name":"Earth Shock","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":49233,"name":"Flame Shock","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":49236,"name":"Frost Shock","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":49238,"name":"Lightning Bolt","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":49271,"name":"Chain Lightning","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":58702,"name":"Attack","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":58735,"name":"Magma Totem","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":58799,"name":"Frostbrand Attack","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":59159,"name":"Thunderstorm","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":60043,"name":"Lava Burst","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":61654,"name":"Fire Nova","ops":["CRIT_DAMAGE_BONUS"]}
+  ]}
+]},
+{"class":"shaman","tree":"Elemental","talent":"improvedFireNova","passive":true,"groups": [
+ {"ranks":[16086,16544],"mods":[{"effect":0,"type":"pct","op":"DAMAGE","classMask":[0,2147483648,0]},{"effect":1,"type":"flat","op":"COOLDOWN","classMask":[134217728,0,0]}],
+  "spells": [
+    {"id":61654,"name":"Fire Nova","ops":["DAMAGE"]},
+    {"id":61657,"name":"Fire Nova","ops":["COOLDOWN"]}
+  ]}
+]},
+{"class":"shaman","tree":"Elemental","talent":"callOfThunder","passive":true,"groups": [
+ {"ranks":[16041],"mods":[{"effect":0,"type":"flat","op":"CRITICAL_CHANCE","classMask":[3,8192,0]}],
+  "spells": [
+    {"id":49238,"name":"Lightning Bolt","ops":["CRITICAL_CHANCE"]},
+    {"id":49271,"name":"Chain Lightning","ops":["CRITICAL_CHANCE"]},
+    {"id":59159,"name":"Thunderstorm","ops":["CRITICAL_CHANCE"]}
+  ]}
+]},
+{"class":"shaman","tree":"Elemental","talent":"lightningMastery","passive":true,"groups": [
+ {"ranks":[16578,16579,16580,16581,16582],"mods":[{"effect":0,"type":"flat","op":"CASTING_TIME","classMask":[3,4096,0]}],
+  "spells": [
+    {"id":49238,"name":"Lightning Bolt","ops":["CASTING_TIME"]},
+    {"id":49271,"name":"Chain Lightning","ops":["CASTING_TIME"]},
+    {"id":60043,"name":"Lava Burst","ops":["CASTING_TIME"]}
+  ]}
+]},
+{"class":"shaman","tree":"Elemental","talent":"elementalMastery","passive":false,"groups": [
+ {"ranks":[16166],"mods":[{"effect":0,"type":"pct","op":"CASTING_TIME","classMask":[3,4096,0]}],
+  "spells": [
+    {"id":49238,"name":"Lightning Bolt","ops":["CASTING_TIME"]},
+    {"id":49271,"name":"Chain Lightning","ops":["CASTING_TIME"]},
+    {"id":60043,"name":"Lava Burst","ops":["CASTING_TIME"]}
+  ]}
+]},
+{"class":"shaman","tree":"Elemental","talent":"stormEarthAndFire","passive":true,"groups": [
+ {"ranks":[51483,51485,51486],"mods":[{"effect":0,"type":"flat","op":"COOLDOWN","classMask":[2,0,0]},{"effect":2,"type":"pct","op":"DOT","classMask":[268435456,0,0]}],
+  "spells": [
+    {"id":49233,"name":"Flame Shock","ops":["DOT"]},
+    {"id":49271,"name":"Chain Lightning","ops":["COOLDOWN"]}
+  ]}
+]},
+{"class":"shaman","tree":"Elemental","talent":"boomingEchoes","passive":true,"groups": [
+ {"ranks":[63370,63372],"mods":[{"effect":0,"type":"flat","op":"COOLDOWN","classMask":[2415919104,0,0]},{"effect":1,"type":"pct","op":"DAMAGE","classMask":[2415919104,0,0]}],
+  "spells": [
+    {"id":49233,"name":"Flame Shock","ops":["DAMAGE","COOLDOWN"]},
+    {"id":49236,"name":"Frost Shock","ops":["DAMAGE","COOLDOWN"]}
+  ]}
+]},
+{"class":"shaman","tree":"Elemental","talent":"elementalOath","passive":true,"groups": [
+ {"ranks":[51466,51470],"mods":[{"effect":1,"type":"flat","op":"EFFECT2","classMask":[0,16384,0]}],
+  "spells": [
+    {"id":16166,"name":"Elemental Mastery","ops":["EFFECT2"]},
+    {"id":16246,"name":"Clearcasting","ops":["EFFECT2"]}
+  ]}
+]},
+{"class":"shaman","tree":"Elemental","talent":"lavaFlows","passive":true,"groups": [
+ {"ranks":[51480,51481,51482],"mods":[{"effect":1,"type":"pct","op":"CRIT_DAMAGE_BONUS","classMask":[0,4096,0]}],
+  "spells": [
+    {"id":60043,"name":"Lava Burst","ops":["CRIT_DAMAGE_BONUS"]}
+  ]}
+]},
+{"class":"shaman","tree":"Elemental","talent":"shamanism","passive":true,"groups": [
+ {"ranks":[62097,62098,62099,62100,62101],"mods":[{"effect":0,"type":"flat","op":"BONUS_MULTIPLIER","classMask":[1,0,0]},{"effect":1,"type":"flat","op":"BONUS_MULTIPLIER","classMask":[0,4096,0]},{"effect":2,"type":"flat","op":"BONUS_MULTIPLIER","classMask":[2,0,0]}],
+  "spells": [
+    {"id":49238,"name":"Lightning Bolt","ops":["BONUS_MULTIPLIER"]},
+    {"id":49271,"name":"Chain Lightning","ops":["BONUS_MULTIPLIER"]},
+    {"id":60043,"name":"Lava Burst","ops":["BONUS_MULTIPLIER"]}
+  ]}
+]},
+{"class":"shaman","tree":"Enhancement","talent":"enhancingTotems","passive":true,"groups": [
+ {"ranks":[16259],"mods":[{"effect":0,"type":"pct","op":"ALL_EFFECTS","classMask":[65536,0,0]},{"effect":1,"type":"pct","op":"ALL_EFFECTS","classMask":[33554432,0,0]}],
+  "spells": []},
+ {"ranks":[16295],"mods":[{"effect":0,"type":"pct","op":"ALL_EFFECTS","classMask":[33619968,0,0]}],
+  "spells": []},
+ {"ranks":[52456],"mods":[{"effect":0,"type":"pct","op":"ALL_EFFECTS","classMask":[33619968,0,0]},{"effect":1,"type":"pct","op":"ALL_EFFECTS","classMask":[131072,0,0]}],
+  "spells": []}
+]},
+{"class":"shaman","tree":"Enhancement","talent":"guardianTotems","passive":true,"groups": [
+ {"ranks":[16258,16293],"mods":[{"effect":0,"type":"pct","op":"ALL_EFFECTS","classMask":[32768,0,0]},{"effect":1,"type":"flat","op":"COOLDOWN","classMask":[262144,0,0]}],
+  "spells": []}
+]},
+{"class":"shaman","tree":"Enhancement","talent":"improvedShields","passive":true,"groups": [
+ {"ranks":[16261,16290,51881],"mods":[{"effect":0,"type":"pct","op":"DAMAGE","classMask":[1024,0,0]},{"effect":1,"type":"pct","op":"EFFECT1","classMask":[0,1056,0]}],
+  "spells": [
+    {"id":49279,"name":"Lightning Shield","ops":["DAMAGE"]},
+    {"id":49281,"name":"Lightning Shield","ops":["DAMAGE"]},
+    {"id":49284,"name":"Earth Shield","ops":["EFFECT1"]},
+    {"id":57960,"name":"Water Shield","ops":["EFFECT1"]}
+  ]}
+]},
+{"class":"shaman","tree":"Enhancement","talent":"elementalWeapons","passive":true,"groups": [
+ {"ranks":[16266,29079,29080],"mods":[{"effect":0,"type":"pct","op":"EFFECT2","classMask":[0,1048576,0]},{"effect":1,"type":"pct","op":"EFFECT2","classMask":[2097152,0,0]},{"effect":2,"type":"pct","op":"DAMAGE","classMask":[8388608,0,0]}],
+  "spells": [
+    {"id":10444,"name":"Flametongue Attack","ops":["EFFECT2"]}
+  ]}
+]},
+{"class":"shaman","tree":"Enhancement","talent":"shamanisticFocus","passive":true,"groups": [
+ {"ranks":[43338],"mods":[{"effect":0,"type":"pct","op":"COST","classMask":[2416967680,0,0]}],
+  "spells": [
+    {"id":49231,"name":"Earth Shock","ops":["COST"]},
+    {"id":49233,"name":"Flame Shock","ops":["COST"]},
+    {"id":49236,"name":"Frost Shock","ops":["COST"]}
+  ]}
+]},
+{"class":"shaman","tree":"Enhancement","talent":"improvedWindfuryTotem","passive":true,"groups": [
+ {"ranks":[29192,29193],"mods":[{"effect":0,"type":"flat","op":"EFFECT1","classMask":[0,2097152,0]}],
+  "spells": []}
+]},
+{"class":"shaman","tree":"Enhancement","talent":"frozenPower","passive":true,"groups": [
+ {"ranks":[63373,63374],"mods":[{"effect":0,"type":"flat","op":"EFFECT3","classMask":[16777216,0,0]}],
+  "spells": [
+    {"id":58799,"name":"Frostbrand Attack","ops":["EFFECT3"]}
+  ]}
+]},
+{"class":"shaman","tree":"Enhancement","talent":"staticShock","passive":true,"groups": [
+ {"ranks":[51525,51526,51527],"mods":[{"effect":1,"type":"flat","op":"CHARGES","classMask":[1024,0,0]}],
+  "spells": [
+    {"id":49279,"name":"Lightning Shield","ops":["CHARGES"]},
+    {"id":49281,"name":"Lightning Shield","ops":["CHARGES"]}
+  ]}
+]},
+{"class":"shaman","tree":"Enhancement","talent":"mentalQuickness","passive":true,"groups": [
+ {"ranks":[30812,30813,30814],"mods":[{"effect":0,"type":"pct","op":"COST","classMask":[3092780056,68728,28]}],
+  "spells": [
+    {"id":2825,"name":"Bloodlust","ops":["COST"]},
+    {"id":2894,"name":"Fire Elemental Totem","ops":["COST"]},
+    {"id":3738,"name":"Wrath of Air Totem","ops":["COST"]},
+    {"id":8143,"name":"Tremor Totem","ops":["COST"]},
+    {"id":8512,"name":"Windfury Totem","ops":["COST"]},
+    {"id":16190,"name":"Mana Tide Totem","ops":["COST"]},
+    {"id":17364,"name":"Stormstrike","ops":["COST"]},
+    {"id":32175,"name":"Stormstrike","ops":["COST"]},
+    {"id":32176,"name":"Stormstrike","ops":["COST"]},
+    {"id":49231,"name":"Earth Shock","ops":["COST"]},
+    {"id":49233,"name":"Flame Shock","ops":["COST"]},
+    {"id":49236,"name":"Frost Shock","ops":["COST"]},
+    {"id":49279,"name":"Lightning Shield","ops":["COST"]},
+    {"id":49281,"name":"Lightning Shield","ops":["COST"]},
+    {"id":49284,"name":"Earth Shield","ops":["COST"]},
+    {"id":51533,"name":"Feral Spirit","ops":["COST"]},
+    {"id":51994,"name":"Earthliving Weapon","ops":["COST"]},
+    {"id":57722,"name":"Totem of Wrath","ops":["COST"]},
+    {"id":57960,"name":"Water Shield","ops":["COST"]},
+    {"id":58643,"name":"Strength of Earth Totem","ops":["COST"]},
+    {"id":58656,"name":"Flametongue Totem","ops":["COST"]},
+    {"id":58704,"name":"Searing Totem","ops":["COST"]},
+    {"id":58734,"name":"Magma Totem","ops":["COST"]},
+    {"id":58753,"name":"Stoneskin Totem","ops":["COST"]},
+    {"id":58757,"name":"Healing Stream Totem","ops":["COST"]},
+    {"id":58774,"name":"Mana Spring Totem","ops":["COST"]},
+    {"id":58804,"name":"Windfury Weapon","ops":["COST"]},
+    {"id":60103,"name":"Lava Lash","ops":["COST"]},
+    {"id":61301,"name":"Riptide","ops":["COST"]},
+    {"id":61657,"name":"Fire Nova","ops":["COST"]}
+  ]}
+]},
+{"class":"shaman","tree":"Restoration","talent":"totemicFocus","passive":true,"groups": [
+ {"ranks":[16173,16222,16223,16224,16225],"mods":[{"effect":0,"type":"pct","op":"COST","classMask":[537399320,0,0]}],
+  "spells": [
+    {"id":2894,"name":"Fire Elemental Totem","ops":["COST"]},
+    {"id":3738,"name":"Wrath of Air Totem","ops":["COST"]},
+    {"id":8143,"name":"Tremor Totem","ops":["COST"]},
+    {"id":8512,"name":"Windfury Totem","ops":["COST"]},
+    {"id":16190,"name":"Mana Tide Totem","ops":["COST"]},
+    {"id":57722,"name":"Totem of Wrath","ops":["COST"]},
+    {"id":58643,"name":"Strength of Earth Totem","ops":["COST"]},
+    {"id":58656,"name":"Flametongue Totem","ops":["COST"]},
+    {"id":58704,"name":"Searing Totem","ops":["COST"]},
+    {"id":58734,"name":"Magma Totem","ops":["COST"]},
+    {"id":58753,"name":"Stoneskin Totem","ops":["COST"]},
+    {"id":58757,"name":"Healing Stream Totem","ops":["COST"]},
+    {"id":58774,"name":"Mana Spring Totem","ops":["COST"]}
+  ]}
+]},
+{"class":"shaman","tree":"Restoration","talent":"healingGrace","passive":true,"groups": [
+ {"ranks":[29187,29189,29191],"mods":[{"effect":0,"type":"pct","op":"THREAT","classMask":[448,524288,16]},{"effect":1,"type":"flat","op":"RESIST_DISPEL_CHANCE","classMask":[268438528,67636452,17]}],
+  "spells": [
+    {"id":2825,"name":"Bloodlust","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":16188,"name":"Nature's Swiftness","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":49233,"name":"Flame Shock","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":49273,"name":"Healing Wave","ops":["THREAT"]},
+    {"id":49276,"name":"Lesser Healing Wave","ops":["THREAT"]},
+    {"id":49279,"name":"Lightning Shield","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":49281,"name":"Lightning Shield","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":49284,"name":"Earth Shield","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":51994,"name":"Earthliving Weapon","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":52000,"name":"Earthliving","ops":["THREAT","RESIST_DISPEL_CHANCE"]},
+    {"id":53390,"name":"Tidal Waves","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":55459,"name":"Chain Heal","ops":["THREAT"]},
+    {"id":57960,"name":"Water Shield","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":58804,"name":"Windfury Weapon","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":61301,"name":"Riptide","ops":["THREAT","RESIST_DISPEL_CHANCE"]}
+  ]}
+]},
+{"class":"shaman","tree":"Restoration","talent":"tidalFocus","passive":true,"groups": [
+ {"ranks":[16179,16214,16215,16216,16217],"mods":[{"effect":0,"type":"pct","op":"COST","classMask":[448,1024,16]}],
+  "spells": [
+    {"id":49273,"name":"Healing Wave","ops":["COST"]},
+    {"id":49276,"name":"Lesser Healing Wave","ops":["COST"]},
+    {"id":49284,"name":"Earth Shield","ops":["COST"]},
+    {"id":55459,"name":"Chain Heal","ops":["COST"]},
+    {"id":61301,"name":"Riptide","ops":["COST"]}
+  ]}
+]},
+{"class":"shaman","tree":"Restoration","talent":"restorativeTotems","passive":true,"groups": [
+ {"ranks":[16187,16205,16206],"mods":[{"effect":0,"type":"pct","op":"ALL_EFFECTS","classMask":[16384,0,0]}],
+  "spells": []}
+]},
+{"class":"shaman","tree":"Restoration","talent":"tidalMastery","passive":true,"groups": [
+ {"ranks":[16194,16218,16219],"mods":[{"effect":0,"type":"flat","op":"CRITICAL_CHANCE","classMask":[1475,8192,16]}],
+  "spells": [
+    {"id":49238,"name":"Lightning Bolt","ops":["CRITICAL_CHANCE"]},
+    {"id":49271,"name":"Chain Lightning","ops":["CRITICAL_CHANCE"]},
+    {"id":49273,"name":"Healing Wave","ops":["CRITICAL_CHANCE"]},
+    {"id":49276,"name":"Lesser Healing Wave","ops":["CRITICAL_CHANCE"]},
+    {"id":49279,"name":"Lightning Shield","ops":["CRITICAL_CHANCE"]},
+    {"id":49281,"name":"Lightning Shield","ops":["CRITICAL_CHANCE"]},
+    {"id":55459,"name":"Chain Heal","ops":["CRITICAL_CHANCE"]},
+    {"id":59159,"name":"Thunderstorm","ops":["CRITICAL_CHANCE"]},
+    {"id":61301,"name":"Riptide","ops":["CRITICAL_CHANCE"]}
+  ]},
+ {"ranks":[16220,16221],"mods":[{"effect":0,"type":"flat","op":"CRITICAL_CHANCE","classMask":[1475,8192,80]}],
+  "spells": [
+    {"id":49238,"name":"Lightning Bolt","ops":["CRITICAL_CHANCE"]},
+    {"id":49271,"name":"Chain Lightning","ops":["CRITICAL_CHANCE"]},
+    {"id":49273,"name":"Healing Wave","ops":["CRITICAL_CHANCE"]},
+    {"id":49276,"name":"Lesser Healing Wave","ops":["CRITICAL_CHANCE"]},
+    {"id":49279,"name":"Lightning Shield","ops":["CRITICAL_CHANCE"]},
+    {"id":49281,"name":"Lightning Shield","ops":["CRITICAL_CHANCE"]},
+    {"id":55459,"name":"Chain Heal","ops":["CRITICAL_CHANCE"]},
+    {"id":59159,"name":"Thunderstorm","ops":["CRITICAL_CHANCE"]},
+    {"id":61301,"name":"Riptide","ops":["CRITICAL_CHANCE"]}
+  ],
+  "excluded": [
+    {"id":379,"name":"Earth Shield","op":"CRITICAL_CHANCE","reason":"SPELL_ATTR3_IGNORE_CASTER_MODIFIERS"}
+  ]}
+]},
+{"class":"shaman","tree":"Restoration","talent":"naturesSwiftness","passive":false,"groups": [
+ {"ranks":[16188],"mods":[{"effect":0,"type":"pct","op":"CASTING_TIME","classMask":[2499,32768,0]}],
+  "spells": [
+    {"id":49238,"name":"Lightning Bolt","ops":["CASTING_TIME"]},
+    {"id":49271,"name":"Chain Lightning","ops":["CASTING_TIME"]},
+    {"id":49273,"name":"Healing Wave","ops":["CASTING_TIME"]},
+    {"id":49276,"name":"Lesser Healing Wave","ops":["CASTING_TIME"]},
+    {"id":55459,"name":"Chain Heal","ops":["CASTING_TIME"]}
+  ]}
+]},
+{"class":"shaman","tree":"Restoration","talent":"improvedChainHeal","passive":true,"groups": [
+ {"ranks":[30872,30873],"mods":[{"effect":0,"type":"pct","op":"DAMAGE","classMask":[256,0,0]}],
+  "spells": [
+    {"id":55459,"name":"Chain Heal","ops":["DAMAGE"]}
+  ]}
+]},
+{"class":"shaman","tree":"Restoration","talent":"improvedEarthShield","passive":true,"groups": [
+ {"ranks":[51560,51561],"mods":[{"effect":0,"type":"flat","op":"CHARGES","classMask":[0,1024,0]},{"effect":1,"type":"pct","op":"DAMAGE","classMask":[0,1024,0]}],
+  "spells": [
+    {"id":49284,"name":"Earth Shield","ops":["DAMAGE","CHARGES"]}
+  ]}
+]},
+{"class":"shaman","tree":"Restoration","talent":"tidalWaves","passive":true,"groups": [
+ {"ranks":[51562,51563,51564,51565,51566],"mods":[{"effect":1,"type":"flat","op":"BONUS_MULTIPLIER","classMask":[64,0,0]},{"effect":2,"type":"flat","op":"BONUS_MULTIPLIER","classMask":[128,0,0]}],
+  "spells": [
+    {"id":49273,"name":"Healing Wave","ops":["BONUS_MULTIPLIER"]},
+    {"id":49276,"name":"Lesser Healing Wave","ops":["BONUS_MULTIPLIER"]}
+  ]}
+]},
+{"class":"warlock","tree":"Affliction","talent":"improvedCurseOfAgony","passive":true,"groups": [
+ {"ranks":[18827,18829],"mods":[{"effect":0,"type":"pct","op":"DOT","classMask":[1024,0,0]}],
+  "spells": [
+    {"id":47864,"name":"Curse of Agony","ops":["DOT"]}
+  ]}
+]},
+{"class":"warlock","tree":"Affliction","talent":"suppression","passive":true,"groups": [
+ {"ranks":[18174,18176],"mods":[{"effect":1,"type":"pct","op":"COST","classMask":[2169291802,2395931,0]}],
+  "spells": [
+    {"id":11719,"name":"Curse of Tongues","ops":["COST"]},
+    {"id":32391,"name":"Shadow Embrace","ops":["COST"]},
+    {"id":47813,"name":"Corruption","ops":["COST"]},
+    {"id":47834,"name":"Seed of Corruption","ops":["COST"]},
+    {"id":47836,"name":"Seed of Corruption","ops":["COST"]},
+    {"id":47843,"name":"Unstable Affliction","ops":["COST"]},
+    {"id":47855,"name":"Drain Soul","ops":["COST"]},
+    {"id":47864,"name":"Curse of Agony","ops":["COST"]},
+    {"id":47865,"name":"Curse of the Elements","ops":["COST"]},
+    {"id":47867,"name":"Curse of Doom","ops":["COST"]},
+    {"id":50511,"name":"Curse of Weakness","ops":["COST"]},
+    {"id":57946,"name":"Life Tap","ops":["COST"]},
+    {"id":59092,"name":"Dark Pact","ops":["COST"]},
+    {"id":59164,"name":"Haunt","ops":["COST"]}
+  ]},
+ {"ranks":[18175],"mods":[{"effect":1,"type":"pct","op":"COST","classMask":[2165097498,2395931,0]}],
+  "spells": [
+    {"id":11719,"name":"Curse of Tongues","ops":["COST"]},
+    {"id":32391,"name":"Shadow Embrace","ops":["COST"]},
+    {"id":47813,"name":"Corruption","ops":["COST"]},
+    {"id":47834,"name":"Seed of Corruption","ops":["COST"]},
+    {"id":47836,"name":"Seed of Corruption","ops":["COST"]},
+    {"id":47843,"name":"Unstable Affliction","ops":["COST"]},
+    {"id":47855,"name":"Drain Soul","ops":["COST"]},
+    {"id":47864,"name":"Curse of Agony","ops":["COST"]},
+    {"id":47865,"name":"Curse of the Elements","ops":["COST"]},
+    {"id":47867,"name":"Curse of Doom","ops":["COST"]},
+    {"id":50511,"name":"Curse of Weakness","ops":["COST"]},
+    {"id":57946,"name":"Life Tap","ops":["COST"]},
+    {"id":59092,"name":"Dark Pact","ops":["COST"]},
+    {"id":59164,"name":"Haunt","ops":["COST"]}
+  ]}
+]},
+{"class":"warlock","tree":"Affliction","talent":"improvedCorruption","passive":true,"groups": [
+ {"ranks":[17810,17811,17812,17813,17814],"mods":[{"effect":0,"type":"pct","op":"DOT","classMask":[2,0,0]},{"effect":1,"type":"flat","op":"CRITICAL_CHANCE","classMask":[0,32768,0]}],
+  "spells": [
+    {"id":47813,"name":"Corruption","ops":["DOT"]},
+    {"id":47834,"name":"Seed of Corruption","ops":["CRITICAL_CHANCE"]}
+  ]}
+]},
+{"class":"warlock","tree":"Affliction","talent":"improvedCurseOfWeakness","passive":true,"groups": [
+ {"ranks":[18179,18180],"mods":[{"effect":0,"type":"pct","op":"EFFECT1","classMask":[32768,0,0]}],
+  "spells": [
+    {"id":50511,"name":"Curse of Weakness","ops":["EFFECT1"]}
+  ]}
+]},
+{"class":"warlock","tree":"Affliction","talent":"improvedDrainSoul","passive":true,"groups": [
+ {"ranks":[18213,18372],"mods":[{"effect":1,"type":"pct","op":"THREAT","classMask":[2152252442,266011,256]}],
+  "spells": [
+    {"id":11719,"name":"Curse of Tongues","ops":["THREAT"]},
+    {"id":32391,"name":"Shadow Embrace","ops":["THREAT"]},
+    {"id":47813,"name":"Corruption","ops":["THREAT"]},
+    {"id":47834,"name":"Seed of Corruption","ops":["THREAT"]},
+    {"id":47836,"name":"Seed of Corruption","ops":["THREAT"]},
+    {"id":47843,"name":"Unstable Affliction","ops":["THREAT"]},
+    {"id":47855,"name":"Drain Soul","ops":["THREAT"]},
+    {"id":47864,"name":"Curse of Agony","ops":["THREAT"]},
+    {"id":47865,"name":"Curse of the Elements","ops":["THREAT"]},
+    {"id":47867,"name":"Curse of Doom","ops":["THREAT"]},
+    {"id":50511,"name":"Curse of Weakness","ops":["THREAT"]},
+    {"id":59092,"name":"Dark Pact","ops":["THREAT"]},
+    {"id":59164,"name":"Haunt","ops":["THREAT"]}
+  ]}
+]},
+{"class":"warlock","tree":"Affliction","talent":"amplifyCurse","passive":true,"groups": [
+ {"ranks":[18288],"mods":[{"effect":1,"type":"flat","op":"GLOBAL_COOLDOWN","classMask":[4228096,2097666,2048]}],
+  "spells": [
+    {"id":11719,"name":"Curse of Tongues","ops":["GLOBAL_COOLDOWN"]},
+    {"id":47864,"name":"Curse of Agony","ops":["GLOBAL_COOLDOWN"]},
+    {"id":47865,"name":"Curse of the Elements","ops":["GLOBAL_COOLDOWN"]},
+    {"id":47867,"name":"Curse of Doom","ops":["GLOBAL_COOLDOWN"]},
+    {"id":50511,"name":"Curse of Weakness","ops":["GLOBAL_COOLDOWN"]}
+  ]}
+]},
+{"class":"warlock","tree":"Affliction","talent":"empoweredCorruption","passive":true,"groups": [
+ {"ranks":[32381,32382,32383],"mods":[{"effect":0,"type":"flat","op":"BONUS_MULTIPLIER","classMask":[2,0,0]}],
+  "spells": [
+    {"id":47813,"name":"Corruption","ops":["BONUS_MULTIPLIER"]}
+  ]}
+]},
+{"class":"warlock","tree":"Affliction","talent":"siphonLife","passive":true,"groups": [
+ {"ranks":[63108],"mods":[{"effect":1,"type":"pct","op":"DOT","classMask":[2,272,0]}],
+  "spells": [
+    {"id":47813,"name":"Corruption","ops":["DOT"]},
+    {"id":47834,"name":"Seed of Corruption","ops":["DOT"]},
+    {"id":47836,"name":"Seed of Corruption","ops":["DOT"]},
+    {"id":47843,"name":"Unstable Affliction","ops":["DOT"]}
+  ]}
+]},
+{"class":"warlock","tree":"Affliction","talent":"improvedFelhunter","passive":true,"groups": [
+ {"ranks":[54037,54038],"mods":[{"effect":0,"type":"flat","op":"COOLDOWN","classMask":[0,4194304,0]},{"effect":1,"type":"pct","op":"EFFECT1","classMask":[0,33554432,0]},{"effect":2,"type":"pct","op":"EFFECT2","classMask":[0,33554432,0]}],
+  "spells": [
+    {"id":54053,"name":"Shadow Bite","ops":["COOLDOWN"]}
+  ]}
+]},
+{"class":"warlock","tree":"Affliction","talent":"shadowMastery","passive":true,"groups": [
+ {"ranks":[18271,18272,18273,18274,18275],"mods":[{"effect":0,"type":"pct","op":"DAMAGE","classMask":[524433,4528400,0]},{"effect":1,"type":"pct","op":"DOT","classMask":[17418,275,0]}],
+  "spells": [
+    {"id":47809,"name":"Shadow Bolt","ops":["DAMAGE"]},
+    {"id":47813,"name":"Corruption","ops":["DOT"]},
+    {"id":47827,"name":"Shadowburn","ops":["DAMAGE"]},
+    {"id":47834,"name":"Seed of Corruption","ops":["DAMAGE","DOT"]},
+    {"id":47836,"name":"Seed of Corruption","ops":["DAMAGE","DOT"]},
+    {"id":47843,"name":"Unstable Affliction","ops":["DAMAGE","DOT"]},
+    {"id":47855,"name":"Drain Soul","ops":["DOT"]},
+    {"id":47864,"name":"Curse of Agony","ops":["DOT"]},
+    {"id":47867,"name":"Curse of Doom","ops":["DOT"]},
+    {"id":54053,"name":"Shadow Bite","ops":["DAMAGE"]},
+    {"id":59164,"name":"Haunt","ops":["DAMAGE"]}
+  ]}
+]},
+{"class":"warlock","tree":"Affliction","talent":"contagion","passive":true,"groups": [
+ {"ranks":[30060,30061,30062,30063,30064],"mods":[{"effect":0,"type":"pct","op":"DOT","classMask":[1026,16,0]},{"effect":1,"type":"pct","op":"DAMAGE","classMask":[0,16,0]},{"effect":2,"type":"flat","op":"RESIST_DISPEL_CHANCE","classMask":[17418,275,0]}],
+  "spells": [
+    {"id":47813,"name":"Corruption","ops":["DOT","RESIST_DISPEL_CHANCE"]},
+    {"id":47834,"name":"Seed of Corruption","ops":["DAMAGE","DOT","RESIST_DISPEL_CHANCE"]},
+    {"id":47836,"name":"Seed of Corruption","ops":["DAMAGE","DOT","RESIST_DISPEL_CHANCE"]},
+    {"id":47843,"name":"Unstable Affliction","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":47855,"name":"Drain Soul","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":47864,"name":"Curse of Agony","ops":["DOT","RESIST_DISPEL_CHANCE"]},
+    {"id":47867,"name":"Curse of Doom","ops":["RESIST_DISPEL_CHANCE"]}
+  ]}
+]},
+{"class":"warlock","tree":"Affliction","talent":"malediction","passive":true,"groups": [
+ {"ranks":[32477,32483,32484],"mods":[{"effect":0,"type":"flat","op":"CRITICAL_CHANCE","classMask":[2,256,0]}],
+  "spells": [
+    {"id":47813,"name":"Corruption","ops":["CRITICAL_CHANCE"]},
+    {"id":47843,"name":"Unstable Affliction","ops":["CRITICAL_CHANCE"]}
+  ]}
+]},
+{"class":"warlock","tree":"Affliction","talent":"pandemic","passive":true,"groups": [
+ {"ranks":[58435],"mods":[{"effect":1,"type":"pct","op":"CRIT_DAMAGE_BONUS","classMask":[2,262400,0]}],
+  "spells": [
+    {"id":47813,"name":"Corruption","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":47843,"name":"Unstable Affliction","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":59164,"name":"Haunt","ops":["CRIT_DAMAGE_BONUS"]}
+  ]}
+]},
+{"class":"warlock","tree":"Affliction","talent":"everlastingAffliction","passive":true,"groups": [
+ {"ranks":[47201],"mods":[{"effect":1,"type":"flat","op":"BONUS_MULTIPLIER","classMask":[2,273,0]}],
+  "spells": [
+    {"id":47813,"name":"Corruption","ops":["BONUS_MULTIPLIER"]},
+    {"id":47834,"name":"Seed of Corruption","ops":["BONUS_MULTIPLIER"]},
+    {"id":47836,"name":"Seed of Corruption","ops":["BONUS_MULTIPLIER"]},
+    {"id":47843,"name":"Unstable Affliction","ops":["BONUS_MULTIPLIER"]}
+  ]},
+ {"ranks":[47202,47203,47204,47205],"mods":[{"effect":1,"type":"flat","op":"BONUS_MULTIPLIER","classMask":[2,257,0]}],
+  "spells": [
+    {"id":47813,"name":"Corruption","ops":["BONUS_MULTIPLIER"]},
+    {"id":47843,"name":"Unstable Affliction","ops":["BONUS_MULTIPLIER"]}
+  ]}
+]},
+{"class":"warlock","tree":"Demonology","talent":"improvedImp","passive":true,"groups": [
+ {"ranks":[18694,18695,18696],"mods":[{"effect":0,"type":"pct","op":"ALL_EFFECTS","classMask":[8392704,0,0]}],
+  "spells": [
+    {"id":47964,"name":"Firebolt","ops":["ALL_EFFECTS"]},
+    {"id":47982,"name":"Blood Pact","ops":["ALL_EFFECTS"]}
+  ]}
+]},
+{"class":"warlock","tree":"Demonology","talent":"demonicBrutality","passive":true,"groups": [
+ {"ranks":[18705,18706,18707],"mods":[{"effect":0,"type":"pct","op":"ALL_EFFECTS","classMask":[33554432,0,0]},{"effect":1,"type":"flat","op":"EFFECT1","classMask":[0,0,8]}],
+  "spells": [
+    {"id":32851,"name":"Demonic Frenzy","ops":["EFFECT1"]}
+  ]}
+]},
+{"class":"warlock","tree":"Demonology","talent":"felVitality","passive":true,"groups": [
+ {"ranks":[18731,18743,18744],"mods":[{"effect":0,"type":"flat","op":"ALL_EFFECTS","classMask":[402653184,0,0]}],
+  "spells": []}
+]},
+{"class":"warlock","tree":"Demonology","talent":"demonicAegis","passive":true,"groups": [
+ {"ranks":[30143,30144,30145],"mods":[{"effect":0,"type":"pct","op":"ALL_EFFECTS","classMask":[0,536870944,0]}],
+  "spells": []}
+]},
+{"class":"warlock","tree":"Demonology","talent":"unholyPower","passive":true,"groups": [
+ {"ranks":[18769,18770,18771,18772,18773],"mods":[{"effect":0,"type":"flat","op":"ALL_EFFECTS","classMask":[67108864,0,0]}],
+  "spells": []}
+]},
+{"class":"warlock","tree":"Demonology","talent":"manaFeed","passive":true,"groups": [
+ {"ranks":[30326],"mods":[{"effect":0,"type":"flat","op":"EFFECT2","classMask":[16,0,0]}],
+  "spells": []}
+]},
+{"class":"warlock","tree":"Demonology","talent":"masterConjuror","passive":true,"groups": [
+ {"ranks":[18767,18768],"mods":[{"effect":0,"type":"pct","op":"EFFECT3","classMask":[2097152,0,0]},{"effect":1,"type":"pct","op":"EFFECT3","classMask":[131072,0,0]}],
+  "spells": []}
+]},
+{"class":"warlock","tree":"Demonology","talent":"moltenCore","passive":true,"groups": [
+ {"ranks":[47245,47246,47247],"mods":[{"effect":1,"type":"flat","op":"DURATION","classMask":[4,0,0]}],
+  "spells": [
+    {"id":47811,"name":"Immolate","ops":["DURATION"]}
+  ]}
+]},
+{"class":"warlock","tree":"Demonology","talent":"demonicTactics","passive":true,"groups": [
+ {"ranks":[30242,30245,30246,30247,30248],"mods":[{"effect":0,"type":"flat","op":"ALL_EFFECTS","classMask":[0,8192,0]}],
+  "spells": []}
+]},
+{"class":"warlock","tree":"Demonology","talent":"improvedDemonicTactics","passive":true,"groups": [
+ {"ranks":[54347,54348,54349],"mods":[{"effect":0,"type":"flat","op":"EFFECT1","classMask":[0,8192,0],"script":"spell_warl_improved_demonic_tactics"},{"effect":1,"type":"flat","op":"EFFECT2","classMask":[0,8192,0],"script":"spell_warl_improved_demonic_tactics"}],
+  "spells": []}
+]},
+{"class":"warlock","tree":"Demonology","talent":"nemesis","passive":true,"groups": [
+ {"ranks":[63117,63121,63123],"mods":[{"effect":0,"type":"pct","op":"COOLDOWN","classMask":[0,0,12416]}],
+  "spells": [
+    {"id":47193,"name":"Demonic Empowerment","ops":["COOLDOWN"]},
+    {"id":47241,"name":"Metamorphosis","ops":["COOLDOWN"]}
+  ]}
+]},
+{"class":"warlock","tree":"Demonology","talent":"demonicPact","passive":true,"groups": [
+ {"ranks":[47236,47237,47238,47239,47240],"mods":[{"effect":1,"type":"flat","op":"CHANCE_OF_SUCCESS","classMask":[0,1048576,0]}],
+  "spells": []}
+]},
+{"class":"warlock","tree":"Destruction","talent":"improvedShadowBolt","passive":true,"groups": [
+ {"ranks":[17793,17796,17801,17802,17803],"mods":[{"effect":1,"type":"pct","op":"DAMAGE","classMask":[1,0,0]}],
+  "spells": [
+    {"id":47809,"name":"Shadow Bolt","ops":["DAMAGE"]}
+  ]}
+]},
+{"class":"warlock","tree":"Destruction","talent":"bane","passive":true,"groups": [
+ {"ranks":[17788,17789,17790,17791,17792],"mods":[{"effect":0,"type":"flat","op":"CASTING_TIME","classMask":[5,131072,0]},{"effect":1,"type":"flat","op":"CASTING_TIME","classMask":[0,128,0]}],
+  "spells": [
+    {"id":47809,"name":"Shadow Bolt","ops":["CASTING_TIME"]},
+    {"id":47811,"name":"Immolate","ops":["CASTING_TIME"]},
+    {"id":47825,"name":"Soul Fire","ops":["CASTING_TIME"]},
+    {"id":59172,"name":"Chaos Bolt","ops":["CASTING_TIME"]}
+  ]}
+]},
+{"class":"warlock","tree":"Destruction","talent":"aftermath","passive":true,"groups": [
+ {"ranks":[18119,18120],"mods":[{"effect":1,"type":"pct","op":"DOT","classMask":[4,0,0]}],
+  "spells": [
+    {"id":47811,"name":"Immolate","ops":["DOT"]}
+  ]}
+]},
+{"class":"warlock","tree":"Destruction","talent":"cataclysm","passive":true,"groups": [
+ {"ranks":[17778,17779,17780],"mods":[{"effect":0,"type":"pct","op":"COST","classMask":[997,8589504,0]}],
+  "spells": [
+    {"id":17962,"name":"Conflagrate","ops":["COST"]},
+    {"id":47809,"name":"Shadow Bolt","ops":["COST"]},
+    {"id":47811,"name":"Immolate","ops":["COST"]},
+    {"id":47815,"name":"Searing Pain","ops":["COST"]},
+    {"id":47825,"name":"Soul Fire","ops":["COST"]},
+    {"id":47827,"name":"Shadowburn","ops":["COST"]},
+    {"id":47838,"name":"Incinerate","ops":["COST"]},
+    {"id":59172,"name":"Chaos Bolt","ops":["COST"]}
+  ]}
+]},
+{"class":"warlock","tree":"Destruction","talent":"demonicPower","passive":true,"groups": [
+ {"ranks":[18126,18127],"mods":[{"effect":0,"type":"flat","op":"CASTING_TIME","classMask":[4096,0,0]},{"effect":1,"type":"flat","op":"COOLDOWN","classMask":[8192,0,0]}],
+  "spells": [
+    {"id":47964,"name":"Firebolt","ops":["CASTING_TIME"]},
+    {"id":47992,"name":"Lash of Pain","ops":["COOLDOWN"]}
+  ]}
+]},
+{"class":"warlock","tree":"Destruction","talent":"ruin","passive":true,"groups": [
+ {"ranks":[17959,59738,59739,59740,59741],"mods":[{"effect":0,"type":"pct","op":"CRIT_DAMAGE_BONUS","classMask":[5093,12783808,0]}],
+  "spells": [
+    {"id":17962,"name":"Conflagrate","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":47809,"name":"Shadow Bolt","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":47811,"name":"Immolate","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":47815,"name":"Searing Pain","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":47825,"name":"Soul Fire","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":47827,"name":"Shadowburn","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":47838,"name":"Incinerate","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":47964,"name":"Firebolt","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":54053,"name":"Shadow Bite","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":59172,"name":"Chaos Bolt","ops":["CRIT_DAMAGE_BONUS"]}
+  ]}
+]},
+{"class":"warlock","tree":"Destruction","talent":"destructiveReach","passive":true,"groups": [
+ {"ranks":[17917],"mods":[{"effect":0,"type":"pct","op":"RANGE","classMask":[5029,8589504,0]},{"effect":1,"type":"pct","op":"THREAT","classMask":[997,8589504,2]}],
+  "spells": [
+    {"id":17962,"name":"Conflagrate","ops":["THREAT","RANGE"]},
+    {"id":47809,"name":"Shadow Bolt","ops":["THREAT","RANGE"]},
+    {"id":47811,"name":"Immolate","ops":["THREAT","RANGE"]},
+    {"id":47815,"name":"Searing Pain","ops":["THREAT","RANGE"]},
+    {"id":47825,"name":"Soul Fire","ops":["THREAT","RANGE"]},
+    {"id":47827,"name":"Shadowburn","ops":["THREAT","RANGE"]},
+    {"id":47838,"name":"Incinerate","ops":["THREAT","RANGE"]},
+    {"id":47964,"name":"Firebolt","ops":["RANGE"]},
+    {"id":59172,"name":"Chaos Bolt","ops":["THREAT","RANGE"]}
+  ]},
+ {"ranks":[17918],"mods":[{"effect":0,"type":"pct","op":"RANGE","classMask":[5029,8523968,0]},{"effect":1,"type":"pct","op":"THREAT","classMask":[997,8589504,2]}],
+  "spells": [
+    {"id":17962,"name":"Conflagrate","ops":["THREAT","RANGE"]},
+    {"id":47809,"name":"Shadow Bolt","ops":["THREAT","RANGE"]},
+    {"id":47811,"name":"Immolate","ops":["THREAT","RANGE"]},
+    {"id":47815,"name":"Searing Pain","ops":["THREAT","RANGE"]},
+    {"id":47825,"name":"Soul Fire","ops":["THREAT","RANGE"]},
+    {"id":47827,"name":"Shadowburn","ops":["THREAT","RANGE"]},
+    {"id":47838,"name":"Incinerate","ops":["THREAT","RANGE"]},
+    {"id":47964,"name":"Firebolt","ops":["RANGE"]},
+    {"id":59172,"name":"Chaos Bolt","ops":["THREAT","RANGE"]}
+  ]}
+]},
+{"class":"warlock","tree":"Destruction","talent":"improvedSearingPain","passive":true,"groups": [
+ {"ranks":[17927,17929,17930],"mods":[{"effect":0,"type":"flat","op":"CRITICAL_CHANCE","classMask":[256,0,0]}],
+  "spells": [
+    {"id":47815,"name":"Searing Pain","ops":["CRITICAL_CHANCE"]}
+  ]}
+]},
+{"class":"warlock","tree":"Destruction","talent":"improvedImmolate","passive":true,"groups": [
+ {"ranks":[17815,17833,17834],"mods":[{"effect":0,"type":"pct","op":"DAMAGE","classMask":[4,0,0]},{"effect":1,"type":"pct","op":"DOT","classMask":[4,0,0]}],
+  "spells": [
+    {"id":47811,"name":"Immolate","ops":["DAMAGE","DOT"]}
+  ]}
+]},
+{"class":"warlock","tree":"Destruction","talent":"devastation","passive":true,"groups": [
+ {"ranks":[18130],"mods":[{"effect":0,"type":"flat","op":"CRITICAL_CHANCE","classMask":[997,8589504,0]}],
+  "spells": [
+    {"id":17962,"name":"Conflagrate","ops":["CRITICAL_CHANCE"]},
+    {"id":47809,"name":"Shadow Bolt","ops":["CRITICAL_CHANCE"]},
+    {"id":47811,"name":"Immolate","ops":["CRITICAL_CHANCE"]},
+    {"id":47815,"name":"Searing Pain","ops":["CRITICAL_CHANCE"]},
+    {"id":47825,"name":"Soul Fire","ops":["CRITICAL_CHANCE"]},
+    {"id":47827,"name":"Shadowburn","ops":["CRITICAL_CHANCE"]},
+    {"id":47838,"name":"Incinerate","ops":["CRITICAL_CHANCE"]},
+    {"id":59172,"name":"Chaos Bolt","ops":["CRITICAL_CHANCE"]}
+  ]}
+]},
+{"class":"warlock","tree":"Destruction","talent":"emberstorm","passive":true,"groups": [
+ {"ranks":[17954,17955,17956,17957,17958],"mods":[{"effect":0,"type":"pct","op":"DAMAGE","classMask":[868,8519872,0]},{"effect":1,"type":"pct","op":"DOT","classMask":[100,8388608,2]},{"effect":2,"type":"flat","op":"CASTING_TIME","classMask":[0,64,0]}],
+  "spells": [
+    {"id":17962,"name":"Conflagrate","ops":["DAMAGE","DOT"]},
+    {"id":47811,"name":"Immolate","ops":["DAMAGE","DOT"]},
+    {"id":47815,"name":"Searing Pain","ops":["DAMAGE"]},
+    {"id":47825,"name":"Soul Fire","ops":["DAMAGE"]},
+    {"id":47838,"name":"Incinerate","ops":["DAMAGE","CASTING_TIME"]},
+    {"id":59172,"name":"Chaos Bolt","ops":["DAMAGE"]}
+  ]}
+]},
+{"class":"warlock","tree":"Destruction","talent":"shadowAndFlame","passive":true,"groups": [
+ {"ranks":[30288,30289,30290,30291,30292],"mods":[{"effect":0,"type":"pct","op":"BONUS_MULTIPLIER","classMask":[129,131136,0]}],
+  "spells": [
+    {"id":47809,"name":"Shadow Bolt","ops":["BONUS_MULTIPLIER"]},
+    {"id":47827,"name":"Shadowburn","ops":["BONUS_MULTIPLIER"]},
+    {"id":47838,"name":"Incinerate","ops":["BONUS_MULTIPLIER"]},
+    {"id":59172,"name":"Chaos Bolt","ops":["BONUS_MULTIPLIER"]}
+  ]}
+]},
+{"class":"warlock","tree":"Destruction","talent":"empoweredImp","passive":true,"groups": [
+ {"ranks":[47220,47221,47223],"mods":[{"effect":0,"type":"pct","op":"DAMAGE","classMask":[4096,0,0]},{"effect":1,"type":"flat","op":"CHANCE_OF_SUCCESS","classMask":[0,16777216,0]}],
+  "spells": [
+    {"id":47964,"name":"Firebolt","ops":["DAMAGE"]}
+  ]}
+]},
+{"class":"warlock","tree":"Destruction","talent":"fireAndBrimstone","passive":true,"groups": [
+ {"ranks":[47266,47267,47268,47269,47270],"mods":[{"effect":1,"type":"flat","op":"CRITICAL_CHANCE","classMask":[0,8388608,0]}],
+  "spells": [
+    {"id":17962,"name":"Conflagrate","ops":["CRITICAL_CHANCE"]}
+  ]}
+]},
+{"class":"warrior","tree":"Arms","talent":"improvedHeroicStrike","passive":true,"groups": [
+ {"ranks":[12282,12663,12664],"mods":[{"effect":0,"type":"flat","op":"COST","classMask":[64,0,0]}],
+  "spells": [
+    {"id":47450,"name":"Heroic Strike","ops":["COST"]}
+  ]}
+]},
+{"class":"warrior","tree":"Arms","talent":"improvedRend","passive":true,"groups": [
+ {"ranks":[12286,12658],"mods":[{"effect":0,"type":"pct","op":"EFFECT1","classMask":[32,0,0]}],
+  "spells": [
+    {"id":47465,"name":"Rend","ops":["EFFECT1"]}
+  ]}
+]},
+{"class":"warrior","tree":"Arms","talent":"tacticalMastery","passive":true,"groups": [
+ {"ranks":[12295,12676,12677],"mods":[{"effect":1,"type":"pct","op":"THREAT","classMask":[33554432,0,0]},{"effect":2,"type":"pct","op":"THREAT","classMask":[0,1024,0]}],
+  "spells": [
+    {"id":23881,"name":"Bloodthirst","ops":["THREAT"]},
+    {"id":47486,"name":"Mortal Strike","ops":["THREAT"]}
+  ]}
+]},
+{"class":"warrior","tree":"Arms","talent":"improvedOverpower","passive":true,"groups": [
+ {"ranks":[12290,12963],"mods":[{"effect":0,"type":"flat","op":"CRITICAL_CHANCE","classMask":[4,0,0]}],
+  "spells": [
+    {"id":7384,"name":"Overpower","ops":["CRITICAL_CHANCE"]}
+  ]}
+]},
+{"class":"warrior","tree":"Arms","talent":"impale","passive":true,"groups": [
+ {"ranks":[16493,16494],"mods":[{"effect":0,"type":"pct","op":"CRIT_DAMAGE_BONUS","classMask":[3999288558,51013,0]}],
+  "spells": [
+    {"id":1680,"name":"Whirlwind","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":7384,"name":"Overpower","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":12809,"name":"Concussion Blow","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":23881,"name":"Bloodthirst","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":44949,"name":"Whirlwind","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":46924,"name":"Bladestorm","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":46968,"name":"Shockwave","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":47450,"name":"Heroic Strike","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":47465,"name":"Rend","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":47467,"name":"Sunder Armor","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":47471,"name":"Execute","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":47475,"name":"Slam","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":47486,"name":"Mortal Strike","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":47488,"name":"Shield Slam","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":47498,"name":"Devastate","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":47502,"name":"Thunder Clap","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":47520,"name":"Cleave","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":50622,"name":"Whirlwind","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":50783,"name":"Slam","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":57755,"name":"Heroic Throw","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":57823,"name":"Revenge","ops":["CRIT_DAMAGE_BONUS"]}
+  ]}
+]},
+{"class":"warrior","tree":"Arms","talent":"improvedSlam","passive":true,"groups": [
+ {"ranks":[12862,12330],"mods":[{"effect":0,"type":"flat","op":"CASTING_TIME","classMask":[2097152,0,0]}],
+  "spells": [
+    {"id":47475,"name":"Slam","ops":["CASTING_TIME"]},
+    {"id":50783,"name":"Slam","ops":["CASTING_TIME"]}
+  ]}
+]},
+{"class":"warrior","tree":"Arms","talent":"improvedMortalStrike","passive":true,"groups": [
+ {"ranks":[35446,35448,35449],"mods":[{"effect":0,"type":"pct","op":"DAMAGE","classMask":[33554432,0,0]},{"effect":1,"type":"flat","op":"COOLDOWN","classMask":[33554432,0,0]}],
+  "spells": [
+    {"id":47486,"name":"Mortal Strike","ops":["DAMAGE","COOLDOWN"]}
+  ]}
+]},
+{"class":"warrior","tree":"Arms","talent":"unrelentingAssault","passive":true,"groups": [
+ {"ranks":[46859],"mods":[{"effect":0,"type":"flat","op":"COOLDOWN","classMask":[1028,0,0]},{"effect":1,"type":"pct","op":"DAMAGE","classMask":[1028,0,0]}],
+  "spells": [
+    {"id":7384,"name":"Overpower","ops":["DAMAGE","COOLDOWN"]},
+    {"id":57823,"name":"Revenge","ops":["DAMAGE","COOLDOWN"]}
+  ]},
+ {"ranks":[46860],"mods":[{"effect":0,"type":"flat","op":"COOLDOWN","classMask":[1028,0,0]},{"effect":1,"type":"flat","op":"GLOBAL_COOLDOWN","classMask":[1028,0,0]},{"effect":2,"type":"pct","op":"DAMAGE","classMask":[1028,0,0]}],
+  "spells": [
+    {"id":7384,"name":"Overpower","ops":["DAMAGE","COOLDOWN","GLOBAL_COOLDOWN"]},
+    {"id":57823,"name":"Revenge","ops":["DAMAGE","COOLDOWN","GLOBAL_COOLDOWN"]}
+  ]}
+]},
+{"class":"warrior","tree":"Fury","talent":"boomingVoice","passive":true,"groups": [
+ {"ranks":[12321,12835],"mods":[{"effect":0,"type":"pct","op":"DURATION","classMask":[196608,128,0]},{"effect":1,"type":"pct","op":"RADIUS","classMask":[196608,128,0]}],
+  "spells": [
+    {"id":25203,"name":"Demoralizing Shout","ops":["DURATION","RADIUS"]},
+    {"id":47436,"name":"Battle Shout","ops":["DURATION","RADIUS"]},
+    {"id":47437,"name":"Demoralizing Shout","ops":["DURATION","RADIUS"]},
+    {"id":47440,"name":"Commanding Shout","ops":["DURATION","RADIUS"]}
+  ]}
+]},
+{"class":"warrior","tree":"Fury","talent":"improvedDemoralizingShout","passive":true,"groups": [
+ {"ranks":[12324,12876,12877,12878,12879],"mods":[{"effect":0,"type":"pct","op":"ALL_EFFECTS","classMask":[131072,0,0]}],
+  "spells": [
+    {"id":25203,"name":"Demoralizing Shout","ops":["ALL_EFFECTS"]},
+    {"id":47437,"name":"Demoralizing Shout","ops":["ALL_EFFECTS"]}
+  ]}
+]},
+{"class":"warrior","tree":"Fury","talent":"improvedCleave","passive":true,"groups": [
+ {"ranks":[12329,12950,20496],"mods":[{"effect":0,"type":"pct","op":"ALL_EFFECTS","classMask":[4194304,0,0]}],
+  "spells": [
+    {"id":47520,"name":"Cleave","ops":["ALL_EFFECTS"]}
+  ]}
+]},
+{"class":"warrior","tree":"Fury","talent":"commandingPresence","passive":true,"groups": [
+ {"ranks":[12318,12857,12858,12860,12861],"mods":[{"effect":0,"type":"pct","op":"ALL_EFFECTS","classMask":[65536,128,0]}],
+  "spells": [
+    {"id":47436,"name":"Battle Shout","ops":["ALL_EFFECTS"]},
+    {"id":47440,"name":"Commanding Shout","ops":["ALL_EFFECTS"]}
+  ]}
+]},
+{"class":"warrior","tree":"Fury","talent":"improvedExecute","passive":true,"groups": [
+ {"ranks":[20502,20503],"mods":[{"effect":0,"type":"flat","op":"COST","classMask":[536870912,0,0]}],
+  "spells": [
+    {"id":47471,"name":"Execute","ops":["COST"]}
+  ]}
+]},
+{"class":"warrior","tree":"Fury","talent":"intensifyRage","passive":true,"groups": [
+ {"ranks":[46908,46909,56924],"mods":[{"effect":0,"type":"pct","op":"COOLDOWN","classMask":[269484304,0,0]}],
+  "spells": [
+    {"id":1719,"name":"Recklessness","ops":["COOLDOWN"]},
+    {"id":2687,"name":"Bloodrage","ops":["COOLDOWN"]},
+    {"id":12292,"name":"Death Wish","ops":["COOLDOWN"]},
+    {"id":18499,"name":"Berserker Rage","ops":["COOLDOWN"]}
+  ]}
+]},
+{"class":"warrior","tree":"Fury","talent":"improvedWhirlwind","passive":true,"groups": [
+ {"ranks":[29721,29776],"mods":[{"effect":0,"type":"pct","op":"DAMAGE","classMask":[0,4,0]}],
+  "spells": [
+    {"id":1680,"name":"Whirlwind","ops":["DAMAGE"]},
+    {"id":44949,"name":"Whirlwind","ops":["DAMAGE"]},
+    {"id":50622,"name":"Whirlwind","ops":["DAMAGE"]}
+  ]}
+]},
+{"class":"warrior","tree":"Fury","talent":"improvedBerserkerStance","passive":true,"groups": [
+ {"ranks":[29759,29760,29761,29762,29763],"mods":[{"effect":1,"type":"flat","op":"EFFECT3","classMask":[0,2048,0]}],
+  "spells": []}
+]},
+{"class":"warrior","tree":"Fury","talent":"unendingFury","passive":true,"groups": [
+ {"ranks":[56927,56929,56930,56931,56932],"mods":[{"effect":1,"type":"pct","op":"DAMAGE","classMask":[2097152,1028,0]}],
+  "spells": [
+    {"id":1680,"name":"Whirlwind","ops":["DAMAGE"]},
+    {"id":23881,"name":"Bloodthirst","ops":["DAMAGE"]},
+    {"id":44949,"name":"Whirlwind","ops":["DAMAGE"]},
+    {"id":47475,"name":"Slam","ops":["DAMAGE"]},
+    {"id":50622,"name":"Whirlwind","ops":["DAMAGE"]},
+    {"id":50783,"name":"Slam","ops":["DAMAGE"]}
+  ]}
+]},
+{"class":"warrior","tree":"Protection","talent":"improvedBloodrage","passive":true,"groups": [
+ {"ranks":[12301,12818],"mods":[{"effect":0,"type":"pct","op":"EFFECT1","classMask":[256,0,0]}],
+  "spells": [
+    {"id":2687,"name":"Bloodrage","ops":["EFFECT1"]}
+  ]}
+]},
+{"class":"warrior","tree":"Protection","talent":"improvedThunderClap","passive":true,"groups": [
+ {"ranks":[12287,12665,12666],"mods":[{"effect":0,"type":"flat","op":"COST","classMask":[128,0,0]},{"effect":1,"type":"pct","op":"DAMAGE","classMask":[128,0,0]},{"effect":2,"type":"pct","op":"EFFECT2","classMask":[128,0,0]}],
+  "spells": [
+    {"id":47502,"name":"Thunder Clap","ops":["DAMAGE","EFFECT2","COST"]}
+  ]}
+]},
+{"class":"warrior","tree":"Protection","talent":"incite","passive":true,"groups": [
+ {"ranks":[50685,50686,50687],"mods":[{"effect":0,"type":"flat","op":"CRITICAL_CHANCE","classMask":[4194496,0,0]}],
+  "spells": [
+    {"id":47450,"name":"Heroic Strike","ops":["CRITICAL_CHANCE"]},
+    {"id":47502,"name":"Thunder Clap","ops":["CRITICAL_CHANCE"]},
+    {"id":47520,"name":"Cleave","ops":["CRITICAL_CHANCE"]}
+  ]}
+]},
+{"class":"warrior","tree":"Protection","talent":"improvedRevenge","passive":true,"groups": [
+ {"ranks":[12797],"mods":[{"effect":0,"type":"flat","op":"JUMP_TARGETS","classMask":[1024,0,0]},{"effect":1,"type":"pct","op":"DAMAGE","classMask":[1024,0,0]},{"effect":2,"type":"pct","op":"DAMAGE_MULTIPLIER","classMask":[1024,0,0]}],
+  "spells": [
+    {"id":57823,"name":"Revenge","ops":["DAMAGE","JUMP_TARGETS","DAMAGE_MULTIPLIER"]}
+  ]},
+ {"ranks":[12799],"mods":[{"effect":0,"type":"flat","op":"JUMP_TARGETS","classMask":[1024,0,0]},{"effect":1,"type":"pct","op":"DAMAGE","classMask":[1024,0,0]}],
+  "spells": [
+    {"id":57823,"name":"Revenge","ops":["DAMAGE","JUMP_TARGETS"]}
+  ]}
+]},
+{"class":"warrior","tree":"Protection","talent":"shieldMastery","passive":true,"groups": [
+ {"ranks":[29598,29599],"mods":[{"effect":1,"type":"flat","op":"COOLDOWN","classMask":[4096,0,0]}],
+  "spells": [
+    {"id":2565,"name":"Shield Block","ops":["COOLDOWN"]}
+  ]}
+]},
+{"class":"warrior","tree":"Protection","talent":"puncture","passive":true,"groups": [
+ {"ranks":[12308,12810,12811],"mods":[{"effect":0,"type":"flat","op":"COST","classMask":[16384,64,0]}],
+  "spells": [
+    {"id":47467,"name":"Sunder Armor","ops":["COST"]},
+    {"id":47498,"name":"Devastate","ops":["COST"]}
+  ]}
+]},
+{"class":"warrior","tree":"Protection","talent":"improvedDisciplines","passive":true,"groups": [
+ {"ranks":[12312,12803],"mods":[{"effect":0,"type":"flat","op":"COOLDOWN","classMask":[8208,8,0]}],
+  "spells": [
+    {"id":871,"name":"Shield Wall","ops":["COOLDOWN"]},
+    {"id":1719,"name":"Recklessness","ops":["COOLDOWN"]}
+  ]}
+]},
+{"class":"warrior","tree":"Protection","talent":"gagOrder","passive":true,"groups": [
+ {"ranks":[12311,12958],"mods":[{"effect":1,"type":"pct","op":"EFFECT2","classMask":[0,512,0]}],
+  "spells": [
+    {"id":47488,"name":"Shield Slam","ops":["EFFECT2"]}
+  ]}
+]},
+{"class":"warrior","tree":"Protection","talent":"focusedRage","passive":true,"groups": [
+ {"ranks":[29787,29790,29792],"mods":[{"effect":0,"type":"flat","op":"COST","classMask":[1852722926,4253284,0]}],
+  "spells": [
+    {"id":1680,"name":"Whirlwind","ops":["COST"]},
+    {"id":7384,"name":"Overpower","ops":["COST"]},
+    {"id":12809,"name":"Concussion Blow","ops":["COST"]},
+    {"id":23881,"name":"Bloodthirst","ops":["COST"]},
+    {"id":25203,"name":"Demoralizing Shout","ops":["COST"]},
+    {"id":44949,"name":"Whirlwind","ops":["COST"]},
+    {"id":46924,"name":"Bladestorm","ops":["COST"]},
+    {"id":46968,"name":"Shockwave","ops":["COST"]},
+    {"id":47437,"name":"Demoralizing Shout","ops":["COST"]},
+    {"id":47450,"name":"Heroic Strike","ops":["COST"]},
+    {"id":47465,"name":"Rend","ops":["COST"]},
+    {"id":47467,"name":"Sunder Armor","ops":["COST"]},
+    {"id":47471,"name":"Execute","ops":["COST"]},
+    {"id":47475,"name":"Slam","ops":["COST"]},
+    {"id":47486,"name":"Mortal Strike","ops":["COST"]},
+    {"id":47488,"name":"Shield Slam","ops":["COST"]},
+    {"id":47498,"name":"Devastate","ops":["COST"]},
+    {"id":47502,"name":"Thunder Clap","ops":["COST"]},
+    {"id":47520,"name":"Cleave","ops":["COST"]},
+    {"id":50622,"name":"Whirlwind","ops":["COST"]},
+    {"id":50783,"name":"Slam","ops":["COST"]},
+    {"id":57823,"name":"Revenge","ops":["COST"]},
+    {"id":64382,"name":"Shattering Throw","ops":["COST"]}
+  ]}
+]},
+{"class":"warrior","tree":"Protection","talent":"criticalBlock","passive":true,"groups": [
+ {"ranks":[47294,47295,47296],"mods":[{"effect":1,"type":"flat","op":"CRITICAL_CHANCE","classMask":[0,512,0]}],
+  "spells": [
+    {"id":47488,"name":"Shield Slam","ops":["CRITICAL_CHANCE"]}
+  ]}
+]},
+{"class":"warrior","tree":"Protection","talent":"swordAndBoard","passive":true,"groups": [
+ {"ranks":[46951,46952,46953],"mods":[{"effect":1,"type":"flat","op":"CRITICAL_CHANCE","classMask":[0,64,0]}],
+  "spells": [
+    {"id":47498,"name":"Devastate","ops":["CRITICAL_CHANCE"]}
+  ]}
+]},
+{"class":"deathknight","tree":"Blood","talent":"subversion","passive":true,"groups": [
+ {"ranks":[48997,49490,49491],"mods":[{"effect":0,"type":"flat","op":"EFFECT3","classMask":[8454144,0,0]},{"effect":1,"type":"flat","op":"CRITICAL_CHANCE","classMask":[20971520,134348800,128]}],
+  "spells": [
+    {"id":48265,"name":"Unholy Presence","ops":["EFFECT3"]},
+    {"id":48266,"name":"Blood Presence","ops":["EFFECT3"]},
+    {"id":49930,"name":"Blood Strike","ops":["CRITICAL_CHANCE"]},
+    {"id":51425,"name":"Obliterate","ops":["CRITICAL_CHANCE"]},
+    {"id":55262,"name":"Heart Strike","ops":["CRITICAL_CHANCE"]},
+    {"id":55271,"name":"Scourge Strike","ops":["CRITICAL_CHANCE"]},
+    {"id":66974,"name":"Obliterate","ops":["CRITICAL_CHANCE"]},
+    {"id":66979,"name":"Blood Strike","ops":["CRITICAL_CHANCE"]}
+  ]}
+]},
+{"class":"deathknight","tree":"Blood","talent":"improvedRuneTap","passive":true,"groups": [
+ {"ranks":[48985,49488,49489],"mods":[{"effect":0,"type":"pct","op":"DAMAGE","classMask":[134217728,0,0]},{"effect":1,"type":"flat","op":"COOLDOWN","classMask":[134217728,0,0]}],
+  "spells": [
+    {"id":48982,"name":"Rune Tap","ops":["DAMAGE","COOLDOWN"]}
+  ]}
+]},
+{"class":"deathknight","tree":"Blood","talent":"bloodyStrikes","passive":true,"groups": [
+ {"ranks":[48977,49394,49395],"mods":[{"effect":0,"type":"pct","op":"DAMAGE","classMask":[16777216,0,0]},{"effect":1,"type":"pct","op":"DAMAGE","classMask":[4194304,0,0]},{"effect":2,"type":"pct","op":"DAMAGE","classMask":[262144,0,0]}],
+  "spells": [
+    {"id":49930,"name":"Blood Strike","ops":["DAMAGE"]},
+    {"id":49941,"name":"Blood Boil","ops":["DAMAGE"]},
+    {"id":55262,"name":"Heart Strike","ops":["DAMAGE"]},
+    {"id":66979,"name":"Blood Strike","ops":["DAMAGE"]}
+  ]}
+]},
+{"class":"deathknight","tree":"Blood","talent":"improvedBloodPresence","passive":true,"groups": [
+ {"ranks":[50365,50371],"mods":[{"effect":1,"type":"flat","op":"EFFECT2","classMask":[8388608,0,0]}],
+  "spells": [
+    {"id":48266,"name":"Blood Presence","ops":["EFFECT2"]}
+  ]}
+]},
+{"class":"deathknight","tree":"Blood","talent":"improvedDeathStrike","passive":true,"groups": [
+ {"ranks":[62905,62908],"mods":[{"effect":0,"type":"pct","op":"DAMAGE","classMask":[16,0,0]},{"effect":1,"type":"flat","op":"CRITICAL_CHANCE","classMask":[16,0,0]}],
+  "spells": [
+    {"id":49924,"name":"Death Strike","ops":["DAMAGE","CRITICAL_CHANCE"]},
+    {"id":66953,"name":"Death Strike","ops":["DAMAGE","CRITICAL_CHANCE"]}
+  ]}
+]},
+{"class":"deathknight","tree":"Blood","talent":"mightOfMograine","passive":true,"groups": [
+ {"ranks":[49023,49533,49534],"mods":[{"effect":0,"type":"pct","op":"CRIT_DAMAGE_BONUS","classMask":[21233680,0,0]}],
+  "spells": [
+    {"id":49924,"name":"Death Strike","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":49930,"name":"Blood Strike","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":49941,"name":"Blood Boil","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":55262,"name":"Heart Strike","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":66953,"name":"Death Strike","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":66979,"name":"Blood Strike","ops":["CRIT_DAMAGE_BONUS"]}
+  ]}
+]},
+{"class":"deathknight","tree":"Frost","talent":"improvedIcyTouch","passive":true,"groups": [
+ {"ranks":[49175,50031,51456],"mods":[{"effect":1,"type":"flat","op":"EFFECT2","classMask":[0,67108864,0]},{"effect":2,"type":"flat","op":"EFFECT3","classMask":[0,67108864,0]}],
+  "spells": [
+    {"id":55095,"name":"Frost Fever","ops":["EFFECT2","EFFECT3"]}
+  ]}
+]},
+{"class":"deathknight","tree":"Frost","talent":"annihilation","passive":true,"groups": [
+ {"ranks":[51468,51472,51473],"mods":[{"effect":1,"type":"flat","op":"CRITICAL_CHANCE","classMask":[20971793,671219716,0]}],
+  "spells": [
+    {"id":49921,"name":"Plague Strike","ops":["CRITICAL_CHANCE"]},
+    {"id":49924,"name":"Death Strike","ops":["CRITICAL_CHANCE"]},
+    {"id":49930,"name":"Blood Strike","ops":["CRITICAL_CHANCE"]},
+    {"id":51425,"name":"Obliterate","ops":["CRITICAL_CHANCE"]},
+    {"id":55262,"name":"Heart Strike","ops":["CRITICAL_CHANCE"]},
+    {"id":55268,"name":"Frost Strike","ops":["CRITICAL_CHANCE"]},
+    {"id":55271,"name":"Scourge Strike","ops":["CRITICAL_CHANCE"]},
+    {"id":56815,"name":"Rune Strike","ops":["CRITICAL_CHANCE"]},
+    {"id":66217,"name":"Rune Strike","ops":["CRITICAL_CHANCE"]},
+    {"id":66953,"name":"Death Strike","ops":["CRITICAL_CHANCE"]},
+    {"id":66962,"name":"Frost Strike","ops":["CRITICAL_CHANCE"]},
+    {"id":66974,"name":"Obliterate","ops":["CRITICAL_CHANCE"]},
+    {"id":66979,"name":"Blood Strike","ops":["CRITICAL_CHANCE"]},
+    {"id":66992,"name":"Plague Strike","ops":["CRITICAL_CHANCE"]}
+  ]}
+]},
+{"class":"deathknight","tree":"Frost","talent":"endlessWinter","passive":true,"groups": [
+ {"ranks":[49137,49657],"mods":[{"effect":1,"type":"flat","op":"COST","classMask":[1024,0,0]}],
+  "spells": [
+    {"id":47528,"name":"Mind Freeze","ops":["COST"]}
+  ]}
+]},
+{"class":"deathknight","tree":"Frost","talent":"deathchill","passive":false,"groups": [
+ {"ranks":[49796],"mods":[{"effect":0,"type":"flat","op":"CRITICAL_CHANCE","classMask":[2,131078,0]}],
+  "spells": [
+    {"id":49909,"name":"Icy Touch","ops":["CRITICAL_CHANCE"]},
+    {"id":50887,"name":"Icy Talons","ops":["CRITICAL_CHANCE"]},
+    {"id":51411,"name":"Howling Blast","ops":["CRITICAL_CHANCE"]},
+    {"id":51425,"name":"Obliterate","ops":["CRITICAL_CHANCE"]},
+    {"id":52789,"name":"Visual Dummy","ops":["CRITICAL_CHANCE"]},
+    {"id":55268,"name":"Frost Strike","ops":["CRITICAL_CHANCE"]},
+    {"id":66962,"name":"Frost Strike","ops":["CRITICAL_CHANCE"]},
+    {"id":66974,"name":"Obliterate","ops":["CRITICAL_CHANCE"]}
+  ]}
+]},
+{"class":"deathknight","tree":"Frost","talent":"rime","passive":true,"groups": [
+ {"ranks":[49188,56822,59057],"mods":[{"effect":0,"type":"flat","op":"CRITICAL_CHANCE","classMask":[2,131072,0]}],
+  "spells": [
+    {"id":49909,"name":"Icy Touch","ops":["CRITICAL_CHANCE"]},
+    {"id":50887,"name":"Icy Talons","ops":["CRITICAL_CHANCE"]},
+    {"id":51425,"name":"Obliterate","ops":["CRITICAL_CHANCE"]},
+    {"id":52789,"name":"Visual Dummy","ops":["CRITICAL_CHANCE"]},
+    {"id":66974,"name":"Obliterate","ops":["CRITICAL_CHANCE"]}
+  ]}
+]},
+{"class":"deathknight","tree":"Frost","talent":"improvedFrostPresence","passive":true,"groups": [
+ {"ranks":[50384,50385],"mods":[{"effect":1,"type":"flat","op":"EFFECT3","classMask":[32768,0,0]}],
+  "spells": [
+    {"id":48263,"name":"Frost Presence","ops":["EFFECT3"]}
+  ]}
+]},
+{"class":"deathknight","tree":"Frost","talent":"bloodOfTheNorth","passive":true,"groups": [
+ {"ranks":[54639,54638,54637],"mods":[{"effect":1,"type":"pct","op":"DAMAGE","classMask":[4194304,4,0]}],
+  "spells": [
+    {"id":49930,"name":"Blood Strike","ops":["DAMAGE"]},
+    {"id":55268,"name":"Frost Strike","ops":["DAMAGE"]},
+    {"id":66962,"name":"Frost Strike","ops":["DAMAGE"]},
+    {"id":66979,"name":"Blood Strike","ops":["DAMAGE"]}
+  ]}
+]},
+{"class":"deathknight","tree":"Frost","talent":"guileOfGorefiend","passive":true,"groups": [
+ {"ranks":[50187,50190,50191],"mods":[{"effect":0,"type":"pct","op":"CRIT_DAMAGE_BONUS","classMask":[4194304,131078,0]},{"effect":1,"type":"flat","op":"DURATION","classMask":[1048576,0,0]}],
+  "spells": [
+    {"id":48792,"name":"Icebound Fortitude","ops":["DURATION"]},
+    {"id":49930,"name":"Blood Strike","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":51411,"name":"Howling Blast","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":51425,"name":"Obliterate","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":55268,"name":"Frost Strike","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":66962,"name":"Frost Strike","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":66974,"name":"Obliterate","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":66979,"name":"Blood Strike","ops":["CRIT_DAMAGE_BONUS"]}
+  ]}
+]},
+{"class":"deathknight","tree":"Unholy","talent":"viciousStrikes","passive":true,"groups": [
+ {"ranks":[51745,51746],"mods":[{"effect":0,"type":"pct","op":"CRIT_DAMAGE_BONUS","classMask":[1,134217728,128]},{"effect":1,"type":"flat","op":"CRITICAL_CHANCE","classMask":[17,134217728,128]}],
+  "spells": [
+    {"id":49921,"name":"Plague Strike","ops":["CRITICAL_CHANCE","CRIT_DAMAGE_BONUS"]},
+    {"id":49924,"name":"Death Strike","ops":["CRITICAL_CHANCE"]},
+    {"id":55271,"name":"Scourge Strike","ops":["CRITICAL_CHANCE","CRIT_DAMAGE_BONUS"]},
+    {"id":66953,"name":"Death Strike","ops":["CRITICAL_CHANCE"]},
+    {"id":66992,"name":"Plague Strike","ops":["CRITICAL_CHANCE","CRIT_DAMAGE_BONUS"]}
+  ]}
+]},
+{"class":"deathknight","tree":"Unholy","talent":"virulence","passive":true,"groups": [
+ {"ranks":[48962,49567,49568],"mods":[{"effect":1,"type":"flat","op":"RESIST_DISPEL_CHANCE","classMask":[0,0,2]}],
+  "spells": [
+    {"id":55078,"name":"Blood Plague","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":55095,"name":"Frost Fever","ops":["RESIST_DISPEL_CHANCE"]}
+  ]}
+]},
+{"class":"deathknight","tree":"Unholy","talent":"epidemic","passive":true,"groups": [
+ {"ranks":[49036,49562],"mods":[{"effect":0,"type":"flat","op":"DURATION","classMask":[0,100663296,16]}],
+  "spells": [
+    {"id":55078,"name":"Blood Plague","ops":["DURATION"]},
+    {"id":55095,"name":"Frost Fever","ops":["DURATION"]}
+  ]}
+]},
+{"class":"deathknight","tree":"Unholy","talent":"morbidity","passive":true,"groups": [
+ {"ranks":[48963,49564,49565],"mods":[{"effect":0,"type":"pct","op":"DAMAGE","classMask":[8192,0,0]},{"effect":1,"type":"flat","op":"COOLDOWN","classMask":[32,0,0]}],
+  "spells": [
+    {"id":47632,"name":"Death Coil","ops":["DAMAGE"]},
+    {"id":49895,"name":"Death Coil","ops":["DAMAGE"]},
+    {"id":49938,"name":"Death and Decay","ops":["COOLDOWN"]}
+  ]}
+]},
+{"class":"deathknight","tree":"Unholy","talent":"outbreak","passive":true,"groups": [
+ {"ranks":[49013,55236,55237],"mods":[{"effect":0,"type":"pct","op":"DAMAGE","classMask":[1,0,0]},{"effect":1,"type":"pct","op":"DAMAGE","classMask":[0,134217728,0]}],
+  "spells": [
+    {"id":49921,"name":"Plague Strike","ops":["DAMAGE"]},
+    {"id":55271,"name":"Scourge Strike","ops":["DAMAGE"]},
+    {"id":66992,"name":"Plague Strike","ops":["DAMAGE"]}
+  ]}
+]},
+{"class":"deathknight","tree":"Unholy","talent":"nightOfTheDead","passive":true,"groups": [
+ {"ranks":[55620,55623],"mods":[{"effect":0,"type":"flat","op":"COOLDOWN","classMask":[4096,0,0]},{"effect":1,"type":"flat","op":"COOLDOWN","classMask":[2048,0,0]}],
+  "spells": [
+    {"id":42650,"name":"Army of the Dead","ops":["COOLDOWN"]},
+    {"id":46584,"name":"Raise Dead","ops":["COOLDOWN"]}
+  ]}
+]},
+{"class":"deathknight","tree":"Unholy","talent":"masterOfGhouls","passive":true,"groups": [
+ {"ranks":[52143],"mods":[{"effect":0,"type":"flat","op":"COOLDOWN","classMask":[4096,0,0]}],
+  "spells": [
+    {"id":46584,"name":"Raise Dead","ops":["COOLDOWN"]}
+  ]}
+]}
+]}
