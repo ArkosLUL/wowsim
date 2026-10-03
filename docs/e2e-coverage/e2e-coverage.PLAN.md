@@ -58,6 +58,42 @@ haste stacking beyond EC-BUFFS' pairs.
 - **Owns:** `tools/simval/talents.go`, `talents_test.go`, `talents.jsonl`, the simval README's Talent sweep, its
   fixture README rows.
 
+#### As built
+
+Code stage:
+- `talentRecord` gained `armorPenetrationAuraPct` (pointer) and `missChanceTaken` (mainhand, offhand, ranged); a
+  record without them skips those fields. The record's per-school `spellCrit` is now compared per school.
+- New `sweepFields`, all with slack 0 (both sides are whole percents or the same ratings; intellect truncation comes in
+  through `sweepSources`): `armor penetration %`, `<attack> miss taken %`, `<school> spell crit %`.
+- Sim side: ArP% is `PseudoStats.BonusArmorPenPct`; miss taken is `5 + (DefenseMissChance +
+  ReducedPhysicalHitTakenChance) * 100`, one value for all three attacks. School crit has no sim sheet: it is the stat
+  plus the lowest `BonusCritRating` among the character's crit-capable damage or healing spells of only that school.
+  A school with no such spell is skipped.
+- School crit limits: talents that add crit to named spells (Improved Scorch, Devastation) or a new spell with a lower
+  bonus (Living Bomb) move that minimum while the server sheet doesn't, so those three steps are dropped (fixture
+  README). PriestDiscipline's sim spec is `shadow_priest` and has no holy spell, so Holy Specialization's +5 holy crit
+  on the server is skipped, not compared.
+- The committed `talents.jsonl` agrees: Critical Mass compares (+6 fire both sides); its records lack ArP% and miss
+  taken, so those are skipped until the rerun. Server sheets built from the sim agree on every path.
+- Expected from the live rerun (paths WarriorArms, RogueCombat, RogueSubtlety, DeathknightBlood, DeathknightFrost,
+  MageFrost): Blood-Gorged (sim keeps it as a health-gated aura, not in `BonusArmorPenPct`) and Arctic Winds (the sim
+  only models its frost damage, no hit taken) will likely disagree; Frigid Dreadplate on the ranged attack may too
+  (the server aura is melee only, the sim lowers every physical hit).
+
+Live stage (2026-10-03; server lock 10:18 to 10:25; sweep of the six paths 10:18 to 10:23, 312 s; simval.jsonl
+streamed into `tmp/`, tail stopped by PID; no restart, config or DB change):
+- The six paths' 146 records replaced theirs in `talents.jsonl`; the other 24 paths kept theirs (715 records). The
+  replay now compares ArP%, miss taken and per-school crit on every path.
+- Agree: Mace Specialization on WarriorArms (+15 ArP), Serrated Blades (+9 ArP), Frigid Dreadplate's melee miss taken
+  (+3).
+- Dropped (fixture README rows) after ruling out a sweep bug (server side is the raw aura sums, sim side the path's own
+  setup):
+  - RogueCombat Mace Specialization: server +15 ArP, sim +0. The path carries two daggers; the server sums the aura
+    without a mace, the sim adds it only with one.
+  - Blood-Gorged: server +10 ArP, sim +0 (health-gated aura in the sim).
+  - Frigid Dreadplate ranged miss taken: server +0, sim +3 (the server aura is melee only).
+  - Arctic Winds miss taken, all three attacks: server +5, sim +0 (the sim models only the frost damage).
+
 ### EC-STACK (S; golden-neutral; offline)
 
 - Export `acore_world.spell_group` and `spell_group_stack_rules` (SELECT) to

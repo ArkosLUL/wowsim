@@ -78,7 +78,11 @@ type talentRecord struct {
 	Parry      float64 `json:"parry"`
 	Block      float64 `json:"block"`
 	BlockValue float64 `json:"blockValue"`
-	Auras      []int32 `json:"auras"`
+	// percent armor penetration the auras give; nil in a record from before the trim kept it
+	ArmorPenPct *float64 `json:"armorPenetrationAuraPct,omitempty"`
+	// percent chance to be missed by a mainhand, offhand and ranged attack; empty in an older record
+	MissTaken []float64 `json:"missChanceTaken,omitempty"`
+	Auras     []int32   `json:"auras"`
 }
 
 // rawTalentInfo is what the trim reads of the module's info record.
@@ -105,8 +109,9 @@ type rawTalentInfo struct {
 			Ranged float64 `json:"ranged"`
 			Spell  float64 `json:"spell"`
 		} `json:"hitMods"`
-		CastSpeedMultiplier float64 `json:"castSpeedMultiplier"`
-		Defense             struct {
+		CastSpeedMultiplier     float64  `json:"castSpeedMultiplier"`
+		ArmorPenetrationAuraPct *float64 `json:"armorPenetrationAuraPct"`
+		Defense                 struct {
 			Dodge float64 `json:"dodge"`
 			Parry float64 `json:"parry"`
 			Block float64 `json:"block"`
@@ -119,10 +124,11 @@ type rawTalentInfo struct {
 			ShieldBlock  float64   `json:"shieldBlock"`
 		} `json:"sheet"`
 		Attacks []struct {
-			Type               string  `json:"type"`
-			AttackPower        float64 `json:"attackPower"`
-			SpeedMultiplier    float64 `json:"speedMultiplier"`
-			ExpertiseReduction float64 `json:"expertiseReduction"`
+			Type               string   `json:"type"`
+			AttackPower        float64  `json:"attackPower"`
+			SpeedMultiplier    float64  `json:"speedMultiplier"`
+			ExpertiseReduction float64  `json:"expertiseReduction"`
+			MissChanceTaken    *float64 `json:"missChanceTaken"`
 		} `json:"attacks"`
 		Auras []struct {
 			ID int32 `json:"id"`
@@ -166,9 +172,12 @@ func (raw rawTalentInfo) project() (talentRecord, error) {
 		}
 		rec.SpellPower = append(rec.SpellPower, power)
 	}
+	rec.ArmorPenPct = a.ArmorPenetrationAuraPct
 	seen := map[string]bool{}
+	miss := map[string]*float64{}
 	for _, attack := range a.Attacks {
 		seen[attack.Type] = true
+		miss[attack.Type] = attack.MissChanceTaken
 		switch attack.Type {
 		case "mainhand":
 			rec.AttackPower, rec.SpeedMainhand, rec.ExpertiseMainhand = attack.AttackPower, attack.SpeedMultiplier, attack.ExpertiseReduction
@@ -180,6 +189,9 @@ func (raw rawTalentInfo) project() (talentRecord, error) {
 	}
 	if !seen["mainhand"] || !seen["offhand"] || !seen["ranged"] {
 		return talentRecord{}, fmt.Errorf("%s: attacks %v, want mainhand, offhand and ranged", a.Name, seen)
+	}
+	if miss["mainhand"] != nil && miss["offhand"] != nil && miss["ranged"] != nil {
+		rec.MissTaken = []float64{*miss["mainhand"], *miss["offhand"], *miss["ranged"]}
 	}
 	for _, aura := range a.Auras {
 		rec.Auras = append(rec.Auras, aura.ID)
@@ -450,7 +462,9 @@ func runTalentTrim(args []string) int {
 // own truncation can take off it: primary stats, health, power, armor, resistances (one more for a
 // resistance from a stat) and block value are stored whole, each stat or attack power based spell power
 // bonus is truncated before they're added up, and a rating from a stat (a death knight's parry from
-// strength) is a whole rating point. The rest of a field's bound comes from what it's computed from
+// strength) is a whole rating point. Armor penetration from auras is a whole percent per rank on both
+// sides, school crit and the chance to be missed come from the same ratings on both sides, so those
+// take nothing off. The rest of a field's bound comes from what it's computed from
 // (sweepSources).
 var sweepFields = []struct {
 	name  string
@@ -462,10 +476,13 @@ var sweepFields = []struct {
 	{"shadow resistance", 2}, {"arcane resistance", 2},
 	{"attack power", 0}, {"ranged attack power", 0}, {"spell power", 3},
 	{"mainhand crit %", 0}, {"offhand crit %", 0}, {"ranged crit %", 0}, {"spell crit %", 0},
+	{"holy spell crit %", 0}, {"fire spell crit %", 0}, {"nature spell crit %", 0}, {"frost spell crit %", 0},
+	{"shadow spell crit %", 0}, {"arcane spell crit %", 0},
 	{"melee hit %", 0}, {"ranged hit %", 0}, {"spell hit %", 0},
 	{"mainhand expertise %", 0}, {"offhand expertise %", 0},
 	{"melee haste", 0}, {"ranged haste", 0}, {"spell haste", 0},
 	{"dodge %", 0}, {"parry %", 1 / core.ParryRatingPerParryChance}, {"block %", 0}, {"block value", 1},
+	{"armor penetration %", 0}, {"mainhand miss taken %", 0}, {"offhand miss taken %", 0}, {"ranged miss taken %", 0},
 }
 
 // sweepSources are the numbers the server truncates that sheet fields are computed from: primary
@@ -487,6 +504,9 @@ var sweepSources = []struct {
 // moved.
 const sweepEpsilon = 1e-3
 
+// sweepAttacks are the attacks whose chance to be missed the record has, in its order.
+var sweepAttacks = []string{"mainhand", "offhand", "ranged"}
+
 var sweepResistances = []string{"fire resistance", "nature resistance", "frost resistance", "shadow resistance", "arcane resistance"}
 
 // sweepPowerFields name the max power of each server power type, with the server's units per point.
@@ -500,9 +520,9 @@ var sweepPowerFields = map[uint32]struct {
 // sweepSheet is a sheet's numbers by sweepFields name.
 type sweepSheet map[string]float64
 
-// sheet is the record's numbers in the sim's units. Spell power and crit are the lowest school's, what
-// every spell gets, and spell hit adds the school hit every magic school gets, which the server's
-// sheet leaves out.
+// sheet is the record's numbers in the sim's units. Spell power and "spell crit %" are the lowest school's,
+// what every spell gets, while each "<school> spell crit %" is that school's own. Spell hit adds the
+// school hit every magic school gets, which the server's sheet leaves out.
 func (r talentRecord) sheet() (sweepSheet, error) {
 	if len(r.Resistances) != len(magicSchools)+1 || len(r.SpellPower) != len(magicSchools) ||
 		len(r.SpellCrit) != len(magicSchools) {
@@ -530,6 +550,17 @@ func (r talentRecord) sheet() (sweepSheet, error) {
 	// the server's resistances go holy, fire, nature, frost, shadow, arcane after armor; the sim has no holy
 	for i, name := range sweepResistances {
 		v[name] = r.Resistances[2+i]
+	}
+	for i, school := range magicSchools {
+		v[school+" spell crit %"] = r.SpellCrit[i]
+	}
+	if r.ArmorPenPct != nil {
+		v["armor penetration %"] = *r.ArmorPenPct
+	}
+	if len(r.MissTaken) == len(sweepAttacks) {
+		for i, attack := range sweepAttacks {
+			v[attack+" miss taken %"] = r.MissTaken[i]
+		}
 	}
 	for name, speed := range map[string]float64{"melee haste": r.SpeedMainhand, "ranged haste": r.SpeedRanged, "spell haste": r.CastSpeed} {
 		if speed > 0 {
@@ -620,7 +651,18 @@ func (d *damageSim) sweepSheet() sweepSheet {
 		"mainhand crit %": s[stats.MeleeCrit] / core.CritRatingPerCritChance,
 		"melee hit %":     s[stats.MeleeHit] / core.MeleeHitRatingPerHitChance,
 		"melee haste":     c.SwingSpeed(), "ranged haste": c.RangedSwingSpeed(), "spell haste": 1 / c.CastSpeed,
-		"dodge %": c.DodgeChance() * 100,
+		"dodge %":             c.DodgeChance() * 100,
+		"armor penetration %": c.PseudoStats.BonusArmorPenPct,
+	}
+	// the server's 5 base, then what defense and auras take off an attacker's hit
+	miss := 5 + (c.DefenseMissChance()+c.PseudoStats.ReducedPhysicalHitTakenChance)*100
+	for _, attack := range sweepAttacks {
+		v[attack+" miss taken %"] = miss
+	}
+	for i, school := range magicSchools {
+		if bonus, ok := d.schoolCritBonus(sweepSchools[i]); ok {
+			v[school+" spell crit %"] = (s[stats.SpellCrit] + bonus) / core.CritRatingPerCritChance
+		}
 	}
 	for _, hand := range d.sheetHands() {
 		crit := (s[stats.MeleeCrit] + hand.spell.BonusCritRating) / core.CritRatingPerCritChance
@@ -657,6 +699,24 @@ func (d *damageSim) sweepSheet() sweepSheet {
 		v["max runic power"] = top
 	}
 	return v
+}
+
+// sweepSchools are magicSchools' sim schools.
+var sweepSchools = []core.SpellSchool{core.SpellSchoolHoly, core.SpellSchoolFire, core.SpellSchoolNature,
+	core.SpellSchoolFrost, core.SpellSchoolShadow, core.SpellSchoolArcane}
+
+// schoolCritBonus is the crit rating every damage or healing spell of just this school gets on top of
+// the stat. The sim keeps school crit talents on each spell, so the lowest of them stands for the
+// school. False when the character has no such spell.
+func (d *damageSim) schoolCritBonus(school core.SpellSchool) (float64, bool) {
+	found, lowest := false, math.Inf(1)
+	for _, spell := range d.char.Spellbook {
+		if spell.SpellSchool == school && spell.CritMultiplier > 0 &&
+			spell.ProcMask.Matches(core.ProcMaskSpellDamage|core.ProcMaskSpellHealing) {
+			found, lowest = true, min(lowest, spell.BonusCritRating)
+		}
+	}
+	return lowest, found
 }
 
 // barMaximum reads a power bar's maximum, which the sim keeps unexported.

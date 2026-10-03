@@ -186,7 +186,9 @@ earlier one (a rerun), the old fixture's paths the stream lacks are kept, a step
 **Replay** (`TestTalentSweepRecords`, skips without the fixture): per step, the server's change between the records
 before and after it against the sim's change between `path.goldcharSetup(n-1)` and `(n)` (stats after a reset, with
 the path's and steps' auras). Fields: primary stats, max health, max mana/rage/energy/runic power (the server's power
-type), armor, fire to arcane resistance, AP, RAP, spell power and spell crit (lowest magic school), spell hit (plus
+type), armor, fire to arcane resistance, AP, RAP, spell power and spell crit (lowest magic school, and each school's: the
+stat plus the lowest bonus among the sim's crit-capable spells of only that school, skipped without one), armor
+penetration % from auras and the chance to be missed per attack (both skipped in a record without them), spell hit (plus
 every school's school hit, as in Golden characters), crit, hit and expertise per hand the sim swings (main hand crit
 and melee hit always), melee, ranged and spell haste (server: 1 / speed multiplier), dodge and parry after diminishing
 returns (parry with a weapon), block chance and value (with a shield).

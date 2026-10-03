@@ -20,7 +20,17 @@ type sweepDrop struct {
 	path, talent, field string
 }
 
-var droppedSweep = []sweepDrop{}
+var droppedSweep = []sweepDrop{
+	{"MageFire", "improvedScorch", "fire spell crit %"},
+	{"MageFire", "livingBomb", "fire spell crit %"},
+	{"WarlockDestruction", "devastation", "fire spell crit %"},
+	{"RogueCombat", "maceSpecialization", "armor penetration %"},
+	{"DeathknightBlood", "bloodGorged", "armor penetration %"},
+	{"DeathknightFrost", "frigidDreadplate", "ranged miss taken %"},
+	{"MageFrost", "arcticWinds", "mainhand miss taken %"},
+	{"MageFrost", "arcticWinds", "offhand miss taken %"},
+	{"MageFrost", "arcticWinds", "ranged miss taken %"},
+}
 
 // TestTalentSweepRecords replays a live TestSimvalTalentSweep run, trimmed by `simval talents`: each
 // step's sheet change against the sim's change from the same talent. Skips without the capture, like
@@ -231,9 +241,18 @@ func talentRecordFrom(t *testing.T, path talentPath, n int, sim sweepSim) talent
 		Dodge: v["dodge %"], Parry: v["parry %"], Block: v["block %"], BlockValue: whole("block value"),
 		Auras: []int32{},
 	}
-	for range magicSchools {
+	for _, school := range magicSchools {
+		crit, ok := v[school+" spell crit %"]
+		if !ok {
+			crit = v["spell crit %"]
+		}
 		rec.SpellPower = append(rec.SpellPower, whole("spell power"))
-		rec.SpellCrit = append(rec.SpellCrit, v["spell crit %"])
+		rec.SpellCrit = append(rec.SpellCrit, crit)
+	}
+	armorPen := v["armor penetration %"]
+	rec.ArmorPenPct = &armorPen
+	for _, attack := range sweepAttacks {
+		rec.MissTaken = append(rec.MissTaken, v[attack+" miss taken %"])
 	}
 	// a druid in Cat or Bear Form has mana too, but the server shows the form's power
 	for _, powerType := range []uint32{6, 3, 1, 0} {
@@ -318,6 +337,20 @@ func TestTalentSweepCatchesMismatches(t *testing.T) {
 			r.Intellect -= 38
 			r.Spirit += 38
 		}, sweepDisagrees, []string{"intellect", "spirit"}, "intellect"},
+		{"Serrated Blades as the sim has it", "RogueSubtlety", "serratedBlades", nil, sweepAgrees, nil, "armor penetration %"},
+		{"Serrated Blades without the armor penetration", "RogueSubtlety", "serratedBlades", func(r *talentRecord) {
+			*r.ArmorPenPct -= 3
+		}, sweepDisagrees, []string{"armor penetration %"}, "armor penetration %"},
+		{"Frigid Dreadplate as the sim has it", "DeathknightFrost", "frigidDreadplate", nil, sweepAgrees, nil, "mainhand miss taken %"},
+		{"Frigid Dreadplate without the lower hit chance", "DeathknightFrost", "frigidDreadplate", func(r *talentRecord) {
+			r.MissTaken[0]--
+		}, sweepDisagrees, []string{"mainhand miss taken %"}, "mainhand miss taken %"},
+		{"Critical Mass on the fire sheet", "MageFire", "criticalMass", nil, sweepAgrees, nil, "fire spell crit %"},
+		{"Critical Mass without the fire crit", "MageFire", "criticalMass", func(r *talentRecord) { r.SpellCrit[1] -= 2 },
+			sweepDisagrees, []string{"fire spell crit %"}, "fire spell crit %"},
+		{"a record from before ArP and miss taken", "RogueSubtlety", "serratedBlades", func(r *talentRecord) {
+			r.ArmorPenPct, r.MissTaken = nil, nil
+		}, sweepNoField, nil, ""},
 		{"Lethal Shots on the ranged sheet", "HunterMarksmanship", "lethalShots", func(r *talentRecord) { r.CritRanged -= 5 },
 			sweepDisagrees, []string{"ranged crit %"}, "ranged crit %"},
 	} {
@@ -357,10 +390,16 @@ func rawTalentLine(t *testing.T, rec talentRecord) string {
 	for _, item := range rec.Equipment {
 		equipment = append(equipment, map[string]any{"slot": item.Slot, "itemId": item.ID})
 	}
-	attack := func(kind string, ap, speed, expertise float64) map[string]any {
+	missTaken := func(i int) float64 {
+		if len(rec.MissTaken) == 0 {
+			return 5
+		}
+		return rec.MissTaken[i]
+	}
+	attack := func(kind string, i int, ap, speed, expertise float64) map[string]any {
 		return map[string]any{"type": kind, "canUse": true, "hasWeapon": false, "unhastedMs": 2000,
 			"speedMultiplier": speed, "hastedMs": int(2000 * speed), "damageMin": 1, "damageMax": 2, "attackPower": ap,
-			"missChanceTaken": 5, "expertiseReduction": expertise, "weaponSkillVsOther": 400, "critVsOther": 5}
+			"missChanceTaken": missTaken(i), "expertiseReduction": expertise, "weaponSkillVsOther": 400, "critVsOther": 5}
 	}
 	body := map[string]any{
 		"schema": 1, "command": "info", "unixMs": 1790891101445,
@@ -371,12 +410,12 @@ func rawTalentLine(t *testing.T, rec talentRecord) string {
 				"intellect": rec.Intellect, "spirit": rec.Spirit},
 			"resistances":   rec.Resistances,
 			"hitMods":       map[string]float64{"melee": rec.HitMelee, "ranged": rec.HitRanged, "spell": rec.HitSpell},
-			"auraExpertise": 0, "castSpeedMultiplier": rec.CastSpeed, "spellPower": spellPower,
+			"auraExpertise": 0, "armorPenetrationAuraPct": rec.ArmorPenPct, "castSpeedMultiplier": rec.CastSpeed, "spellPower": spellPower,
 			"defense": map[string]any{"dodge": rec.Dodge, "parry": rec.Parry, "block": rec.Block, "blockValue": rec.BlockValue},
 			"attacks": []map[string]any{
-				attack("mainhand", rec.AttackPower, rec.SpeedMainhand, rec.ExpertiseMainhand),
-				attack("offhand", rec.AttackPower, rec.SpeedMainhand, rec.ExpertiseOffhand),
-				attack("ranged", rec.RangedAttackPower, rec.SpeedRanged, 0),
+				attack("mainhand", 0, rec.AttackPower, rec.SpeedMainhand, rec.ExpertiseMainhand),
+				attack("offhand", 1, rec.AttackPower, rec.SpeedMainhand, rec.ExpertiseOffhand),
+				attack("ranged", 2, rec.RangedAttackPower, rec.SpeedRanged, 0),
 			},
 			"ratings": []any{},
 			"sheet": map[string]any{"critMainhand": rec.CritMainhand, "critOffhand": rec.CritOffhand, "critRanged": rec.CritRanged,
