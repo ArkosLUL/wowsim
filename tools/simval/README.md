@@ -239,6 +239,55 @@ starts from them; a dropped step or field is only logged, and one that agrees or
 tests: `TestTalentSweepAgreesWithTheSim` and `TestTalentSweepReplaysAFullRun` (every path, server sheets made from the
 sim, through the trim), `TestTalentSweepCatchesMismatches`, `TestTalentTrim`.
 
+## Spell-mod sweep
+
+mod-sim-validation's `TestSimvalSpellModSweep` walks the talent sweep's paths and probes each spell
+`spellmod_spells.json` lists for a step's rank spell ([spellmods](../acore/spellmods/README.md)) before and after the
+step: `timing`, `damage`, `yellow <id> 1`. Run it streamed as in [testing](../../docs/guide/testing.md#against-the-server):
+
+```bash
+SIMVAL_SPELLMOD_SPELLS=<sim>/sim/core/testdata/simval/spellmod_spells.json \
+SIMVAL_TALENT_PATHS=<sim>/sim/core/testdata/simval/talent_paths.json E2E_TIMEOUT=60m \
+  modules/mod-sim-validation/e2e/run.sh TestSimvalSpellModSweep > <sim>/tmp/spellmod-e2e.log
+grep -o 'SPELLMOD {.*' <sim>/tmp/spellmod-e2e.log | cut -c10- > <sim>/sim/core/testdata/simval/spellmods.jsonl
+```
+
+`SIMVAL_SPELLMOD_ONLY` reruns some paths; concatenate the lines, and `latestSpellModLines` keeps each path's last
+bot. A line (`spellmods.go`'s `spellModLine`) is one spell after `steps` steps, `cast` set for a cast talent's after
+probes (its aura up): `timing`'s cast, gcd, cooldown, cost, channelMs and aura; `damage`'s shaped, comboPoints,
+spellPower, attackPower, bonus, effects and `attacker.attacks` attack power; `yellow`'s derived table. A health
+cost's power type (Bloodrage) comes unsigned, 4294967294, and reads as -2.
+
+**Replay** (`TestSpellModRecords`, skips without the fixture): per listed spell of each step, the server's change
+from the line before (`steps` k-1, no cast) to after (k, the talent's cast if not passive) against the sim's between
+`goldcharSetup(k-1)` and `(k)`, the cast aura mirrored. The sim's spell comes from the path's spec, else the class's
+other specs, else with a point in the talent whose rank spell is its first rank (Mortal Strike, Living Bomb); none
+(a pet's or Mirror Image's spell, an off-hand strike) is `not compared`, as is a cast talent the sim has no aura for
+(Presence of Mind). Checks, on numbers all four sides have:
+- Exact: cast time before haste (`DefaultCast.CastTime` × `CastTimeMultiplier`) and after, GCD (category 133), own
+  and category cooldown, cost (or rune costs, runic power gain and cost), channel, aura duration, each periodic
+  effect's amplitude and ticks; per probed effect its declared base (when the declaration is the spell's own).
+- Coefficient within 5e-4, crit multiplier within 0.001 (both sides crit), crit chance within 0.02, miss (magic
+  threshold, or yellow miss against the sim's hit chance) within 1 bp. Crit chance is `critDone` (skipped when 0 on
+  both sides; 0 on one is a real 0, a death knight's Icy Touch before Rime) against the crit stat plus
+  `BonusCritRating` of the sim spell that hits: the one declaring the first probed effect, else the spell, else its
+  lowest tag with a direct effect (Fan of Knives, Rune Strike). Both sides cap at
+  100: `Player::ApplySpellMod` stops adding flat crit mods there (Cold Blood with Puncturing Wounds).
+- Amounts as after/before ratios, within the sum of each state's `amountTolerance` relative to its amount.
+- Skipped, with the reason on the line: a shaped damage record, an effect the sim declares nothing for, or whose
+  amount it can't work out or rolls (weapon damage); cast time, GCD, cost and cooldowns of a sim spell with none of
+  them, one the sim only procs or triggers (Slam's hit 50783, Seal of Righteousness' 20154); a finisher's
+  combo-point-scaled duration and ticks, since the probe has no combo points and the sim's aura holds its own; a
+  number the server moved that the sim lacks (a category cooldown it keeps as its own, an aura under another id:
+  Demoralizing Shout's 47437) or has on one side only; a crit multiplier one side never crits.
+
+Each spell step is logged on a `SPELLMODSIM` line as `agrees`, `moves nothing`, `disagrees` or `not compared`, with
+the sim's spec or taught talent when not the path's own; the end lists the counts and the spells moving nothing.
+Drops: `droppedSpellMods` (path, talent, spell, check), each with a fixture README row; spell 0 drops the step, an
+empty check the spell. Lines stay, a dropped failure is logged, and a drop failing nothing or matching no step fails.
+Hand-built tests: `TestSpellModAgreesWithTheSim` (every path, lines made from the sim), `TestSpellModCatchesMismatches`,
+`TestSpellModReplay`, `TestSpellModLineShape` (live Frostbolt records), `TestSpellModLatestLines`.
+
 ## chronicle
 
 Reads a mod-chronicle raw log (`<unix_ms>  EVENT,field,…`, gzipped or not) and reports one player's
