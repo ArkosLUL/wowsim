@@ -138,7 +138,7 @@ func spellModWeapon(spellID int32) bool {
 }
 
 // serverPowerType is the server's power type of the sim character's bar a spell costs.
-func serverPowerType(ts *timingSim) int32 {
+func serverPowerType(ts *timingSim) uint32 {
 	switch {
 	case ts.char.HasRunicPowerBar():
 		return 6
@@ -388,7 +388,7 @@ func TestSpellModLineShape(t *testing.T) {
 	if err := json.Unmarshal([]byte(health), &bloodrage); err != nil {
 		t.Fatal(err)
 	}
-	if c := bloodrage.Timing.Cost; c.PowerType != -2 || c.Amount != 359 || bloodrage.Spell != 42842 || len(bloodrage.Damage.Effects) != 3 {
+	if c := bloodrage.Timing.Cost; c.PowerType != 4294967294 || c.Amount != 359 || bloodrage.Spell != 42842 || len(bloodrage.Damage.Effects) != 3 {
 		t.Errorf("health cost read as %+v, spell %d, %d effects", c, bloodrage.Spell, len(bloodrage.Damage.Effects))
 	}
 }

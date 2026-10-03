@@ -8,9 +8,7 @@ import (
 
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	simpkg "github.com/wowsims/wotlk/sim"
 	"github.com/wowsims/wotlk/sim/core"
-	"github.com/wowsims/wotlk/sim/core/proto"
 	"github.com/wowsims/wotlk/sim/core/serverdata"
 	"github.com/wowsims/wotlk/sim/core/stats"
 )
@@ -195,46 +193,6 @@ type threatSim struct {
 	comboPoints *core.ResourceMetrics
 }
 
-// newThreatSim is newDamageSim against as many copies of the dummy as the cast needs.
-func newThreatSim(rec damageRecord, player *proto.Player, mirror []int32, enemies int) (d *damageSim, err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			err = fmt.Errorf("building the sim character: %v", r)
-		}
-	}()
-	simpkg.RegisterAll()
-
-	var targetStats stats.Stats
-	if len(rec.Target.Resistances) > 0 {
-		targetStats[stats.Armor] = rec.Target.Resistances[0]
-	}
-	worldBoss := rec.Target.WorldBoss
-	targets := make([]*proto.Target, enemies)
-	for i := range targets {
-		targets[i] = &proto.Target{
-			Level:     rec.Target.Level,
-			MobType:   mobTypes[rec.Target.CreatureType],
-			Stats:     targetStats.ToFloatArray(),
-			WorldBoss: &worldBoss,
-		}
-	}
-	s := core.NewSim(&proto.RaidSimRequest{
-		Raid:       &proto.Raid{Parties: []*proto.Party{{Players: []*proto.Player{player}}}},
-		Encounter:  &proto.Encounter{Duration: 180, Targets: targets},
-		SimOptions: &proto.SimOptions{RandomSeed: 1, Iterations: 1},
-	})
-
-	d = &damageSim{rec: rec, sim: s, char: s.Raid.Parties[0].Players[0].GetCharacter(), target: s.Encounter.TargetUnits[0]}
-	for _, id := range mirror {
-		if aura := auraBySpell(d.char.GetAuras(), id); aura != nil {
-			d.mirrored = append(d.mirrored, aura)
-		} else {
-			d.others = append(d.others, id)
-		}
-	}
-	return d, nil
-}
-
 // threatSpellsByID are the unit's spells of that id, every tag, lowest first.
 func threatSpellsByID(unit *core.Unit, id int32) []*core.Spell {
 	var found []*core.Spell
@@ -279,7 +237,7 @@ func buildThreatSim(rec threatRecord) (*threatSim, error) {
 			if err != nil {
 				return nil, err
 			}
-			d, err := newThreatSim(dr, player, setup.others, rec.enemies())
+			d, err := newDamageSim(dr, player, setup.others, rec.enemies())
 			if err != nil {
 				return nil, err
 			}

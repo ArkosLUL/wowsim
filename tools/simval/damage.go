@@ -373,9 +373,15 @@ func setSpec(player *proto.Player, spec protoreflect.Name) error {
 	return nil
 }
 
-// newDamageSim puts the player in a sim against the record's dummy. Of the server auras in mirror, the
-// ones the sim registers by id go on at every start.
-func newDamageSim(rec damageRecord, player *proto.Player, mirror []int32) (d *damageSim, err error) {
+// newDamageSim puts the player in a sim against `targets` copies of the record's dummy. Of the server
+// auras in mirror, the ones the sim registers by spell id go on at every start.
+func newDamageSim(rec damageRecord, player *proto.Player, mirror []int32, targets int) (*damageSim, error) {
+	return newSimWith(rec, player, mirror, targets, nil)
+}
+
+// newSimWith is newDamageSim with raid buffs, for a record taken under one. A buff's aura carries a tag,
+// so the mirrored auras are found by spell id alone.
+func newSimWith(rec damageRecord, player *proto.Player, mirror []int32, targets int, buffs *proto.RaidBuffs) (d *damageSim, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			err = fmt.Errorf("building the sim character: %v", r)
@@ -388,20 +394,24 @@ func newDamageSim(rec damageRecord, player *proto.Player, mirror []int32) (d *da
 		targetStats[stats.Armor] = rec.Target.Resistances[0]
 	}
 	worldBoss := rec.Target.WorldBoss
-	s := core.NewSim(&proto.RaidSimRequest{
-		Raid: &proto.Raid{Parties: []*proto.Party{{Players: []*proto.Player{player}}}},
-		Encounter: &proto.Encounter{Duration: 180, Targets: []*proto.Target{{
+	dummies := make([]*proto.Target, max(1, targets))
+	for i := range dummies {
+		dummies[i] = &proto.Target{
 			Level:     rec.Target.Level,
 			MobType:   mobTypes[rec.Target.CreatureType],
 			Stats:     targetStats.ToFloatArray(),
 			WorldBoss: &worldBoss,
-		}}},
+		}
+	}
+	s := core.NewSim(&proto.RaidSimRequest{
+		Raid:       &proto.Raid{Parties: []*proto.Party{{Players: []*proto.Player{player}}}, Buffs: buffs},
+		Encounter:  &proto.Encounter{Duration: 180, Targets: dummies},
 		SimOptions: &proto.SimOptions{RandomSeed: 1, Iterations: 1},
 	})
 
 	d = &damageSim{rec: rec, sim: s, char: s.Raid.Parties[0].Players[0].GetCharacter(), target: s.Encounter.TargetUnits[0]}
 	for _, id := range mirror {
-		if aura := d.char.GetAuraByID(core.ActionID{SpellID: id}); aura != nil {
+		if aura := auraBySpell(d.char.GetAuras(), id); aura != nil {
 			d.mirrored = append(d.mirrored, aura)
 		} else {
 			d.others = append(d.others, id)
@@ -432,7 +442,7 @@ func buildDamageSim(rec damageRecord) (*damageSim, error) {
 			if err != nil {
 				return nil, err
 			}
-			d, err := newDamageSim(rec, player, setup.others)
+			d, err := newDamageSim(rec, player, setup.others, 1)
 			if err != nil {
 				return nil, err
 			}

@@ -23,7 +23,7 @@ computed chance, |z| ≤ 5 on a rolled rate, ±0.1% on a multiplier. It exits no
 | `-fixture` | also copy the records to `sim/core/testdata/simval/` |
 | `-v` | print passing checks too |
 
-Commands covered: `melee`, `taken`, `yellow`, `spell`, `armor`, `info`, `procs`; `damage` has its own test ([Damage probe](#damage-probe)).
+Commands covered: `melee`, `taken`, `yellow`, `spell`, `armor`, `info`, `procs`; `damage`, `timing` and `threat` have their own tests ([Damage probe](#damage-probe), [Timing probe](#timing-probe), [Threat probe](#threat-probe)).
 
 `yellow` and `spell` follow the server's own rules:
 - The hit table's attack type comes from the spell's `dmgClass` (ranged, else main hand). It must match the
@@ -297,7 +297,7 @@ grep -o 'SPELLMOD {.*' <sim>/tmp/spellmod-e2e.log | cut -c10- > <sim>/sim/core/t
 bot. A line (`spellmods.go`'s `spellModLine`) is one spell after `steps` steps, `cast` set for a cast talent's after
 probes (its aura up): `timing`'s cast, gcd, cooldown, cost, channelMs and aura; `damage`'s shaped, comboPoints,
 spellPower, attackPower, bonus, effects and `attacker.attacks` attack power; `yellow`'s derived table. A health
-cost's power type (Bloodrage) comes unsigned, 4294967294, and reads as -2.
+cost's power type (Bloodrage, -2) is written unsigned, 4294967294, so `timingRecord` reads it as `uint32`.
 
 **Replay** (`TestSpellModRecords`, skips without the fixture): per listed spell of each step, the server's change
 from the line before (`steps` k-1, no cast) to after (k, the talent's cast if not passive) against the sim's between

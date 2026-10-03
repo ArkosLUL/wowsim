@@ -94,40 +94,6 @@ type spellModLine struct {
 	} `json:"yellow"`
 }
 
-// UnmarshalJSON reads the timing record's power type as the module writes it, unsigned: a health cost
-// (Bloodrage) is POWER_HEALTH, -2, written as 4294967294.
-func (l *spellModLine) UnmarshalJSON(data []byte) error {
-	type plain spellModLine
-	var line struct {
-		plain
-		Timing map[string]json.RawMessage `json:"timing"`
-	}
-	if err := json.Unmarshal(data, &line); err != nil {
-		return err
-	}
-	*l = spellModLine(line.plain)
-	if cost, ok := line.Timing["cost"]; ok {
-		var fields map[string]json.RawMessage
-		if err := json.Unmarshal(cost, &fields); err != nil {
-			return fmt.Errorf("timing cost: %w", err)
-		}
-		var powerType uint32
-		if json.Unmarshal(fields["powerType"], &powerType) == nil {
-			fields["powerType"] = json.RawMessage(fmt.Sprint(int32(powerType)))
-			fixed, err := json.Marshal(fields)
-			if err != nil {
-				return err
-			}
-			line.Timing["cost"] = fixed
-		}
-	}
-	timing, err := json.Marshal(line.Timing)
-	if err != nil {
-		return err
-	}
-	return json.Unmarshal(timing, &l.Timing)
-}
-
 type spellModKey struct {
 	path  string
 	steps int

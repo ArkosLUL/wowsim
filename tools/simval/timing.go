@@ -8,7 +8,6 @@ import (
 
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	simpkg "github.com/wowsims/wotlk/sim"
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
 	"github.com/wowsims/wotlk/sim/core/stats"
@@ -73,7 +72,8 @@ type timingRecord struct {
 		CategoryMs    int32 `json:"categoryMs"`
 	} `json:"cooldown"`
 	Cost struct {
-		PowerType int32 `json:"powerType"`
+		// a health cost is POWER_HEALTH, -2, which the module writes unsigned
+		PowerType uint32 `json:"powerType"`
 		Amount    int32 `json:"amount"`
 		Runes     *struct {
 			Cost           []int32 `json:"cost"`
@@ -149,44 +149,9 @@ type timingSim struct {
 	spell *core.Spell
 }
 
-// newTimingSim is newDamageSim with Bloodlust registered for a record taken under it. Its aura carries a
-// tag, so the mirrored auras are found by spell id alone.
-func newTimingSim(rec damageRecord, player *proto.Player, mirror []int32) (d *damageSim, err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			err = fmt.Errorf("building the sim character: %v", r)
-		}
-	}()
-	simpkg.RegisterAll()
-
-	var targetStats stats.Stats
-	if len(rec.Target.Resistances) > 0 {
-		targetStats[stats.Armor] = rec.Target.Resistances[0]
-	}
-	worldBoss := rec.Target.WorldBoss
-	s := core.NewSim(&proto.RaidSimRequest{
-		Raid: &proto.Raid{
-			Parties: []*proto.Party{{Players: []*proto.Player{player}}},
-			Buffs:   &proto.RaidBuffs{Bloodlust: slices.Contains(mirror, bloodlustSpell)},
-		},
-		Encounter: &proto.Encounter{Duration: 180, Targets: []*proto.Target{{
-			Level:     rec.Target.Level,
-			MobType:   mobTypes[rec.Target.CreatureType],
-			Stats:     targetStats.ToFloatArray(),
-			WorldBoss: &worldBoss,
-		}}},
-		SimOptions: &proto.SimOptions{RandomSeed: 1, Iterations: 1},
-	})
-
-	d = &damageSim{rec: rec, sim: s, char: s.Raid.Parties[0].Players[0].GetCharacter(), target: s.Encounter.TargetUnits[0]}
-	for _, id := range mirror {
-		if aura := auraBySpell(d.char.GetAuras(), id); aura != nil {
-			d.mirrored = append(d.mirrored, aura)
-		} else {
-			d.others = append(d.others, id)
-		}
-	}
-	return d, nil
+// newTimingSim is newDamageSim with Bloodlust registered for a record taken under it.
+func newTimingSim(rec damageRecord, player *proto.Player, mirror []int32) (*damageSim, error) {
+	return newSimWith(rec, player, mirror, 1, &proto.RaidBuffs{Bloodlust: slices.Contains(mirror, bloodlustSpell)})
 }
 
 // auraBySpell is the aura of a spell id, the lowest tag of several.
@@ -382,7 +347,7 @@ func (ts *timingSim) checkCooldown(rec timingRecord) []Check {
 }
 
 // The server counts rage and runic power in tenths.
-func powerScale(powerType int32) float64 {
+func powerScale(powerType uint32) float64 {
 	if powerType == 1 || powerType == 6 {
 		return 10
 	}

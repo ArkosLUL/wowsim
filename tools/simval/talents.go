@@ -599,11 +599,16 @@ func (path talentPath) sweepSim(n int) sweepSim {
 }
 
 // newSweepSim is the sheet of the setup's character against the record's dummy.
-func newSweepSim(rec damageRecord, s goldcharSetup) (out sweepSim) {
+func newSweepSim(rec damageRecord, s goldcharSetup) sweepSim {
 	d, err := newGoldcharSim(rec, s)
 	if err != nil {
 		return sweepSim{err: err}
 	}
+	return d.sweepSim()
+}
+
+// sweepSim is the built character's sheet with its bounds, after a start.
+func (d *damageSim) sweepSim() (out sweepSim) {
 	defer func() {
 		if r := recover(); r != nil {
 			out = sweepSim{err: fmt.Errorf("sim panic: %v", r)}

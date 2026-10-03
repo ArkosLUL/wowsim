@@ -829,7 +829,7 @@ func newGoldcharSim(rec damageRecord, s goldcharSetup) (*damageSim, error) {
 		hunter.Options.SniperTrainingUptime = 1
 		mirror = append(slices.Clone(mirror), 53304)
 	}
-	return newDamageSim(rec, player, mirror)
+	return newDamageSim(rec, player, mirror, 1)
 }
 
 // checkGoldcharDamage holds a probe's damage record to the shaped reason the list expects, then compares
@@ -948,7 +948,7 @@ func checkGoldcharInfo(rec goldcharRecord, s goldcharSetup) (checks []Check) {
 			checks = append(checks, fail("sim sheet", fmt.Sprintf("sim panic: %v", r)))
 		}
 	}()
-	checks = append(checkGoldcharSheet(rec, newSweepSim(rec.damageRecord, s)), d.sheetChecks(rec)...)
+	checks = append(checkGoldcharSheet(rec, d.sweepSim()), d.sheetChecks(rec)...)
 
 	var auras string
 	for i, check := range checks {
