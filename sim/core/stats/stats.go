@@ -375,7 +375,8 @@ type PseudoStats struct {
 
 	ArmorMultiplier float64 // Major/minor/special multiplicative armor modifiers
 
-	ReducedPhysicalHitTakenChance float64
+	ReducedPhysicalHitTakenChance float64 // melee and ranged
+	ReducedMeleeHitTakenChance    float64 // melee only
 	ReducedArcaneHitTakenChance   float64
 	ReducedFireHitTakenChance     float64
 	ReducedFrostHitTakenChance    float64

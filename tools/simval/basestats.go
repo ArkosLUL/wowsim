@@ -160,7 +160,8 @@ func checkInfo(rec record) []Check {
 			truncation(stats.Intellect, 100*core.SpellCritPerIntellect)),
 		checkNear("dodge %", character.DodgeChance()*100, unit.Sheet.RealDodge,
 			truncation(stats.Agility, critPerAgility*scaling.CritToDodge)),
-		checkNear("miss taken %", 5+(character.DefenseMissChance()+character.PseudoStats.ReducedPhysicalHitTakenChance)*100,
+		checkNear("miss taken %", 5+(character.DefenseMissChance()+character.PseudoStats.ReducedPhysicalHitTakenChance+
+			character.PseudoStats.ReducedMeleeHitTakenChance)*100,
 			unit.attack("mainhand").MissChanceTaken, 1e-3),
 	)
 	// The sheet's parry is before diminishing returns, which is only the same thing without any.

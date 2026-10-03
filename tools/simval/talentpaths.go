@@ -125,9 +125,9 @@ var sweepClasses = []sweepClass{
 		{"RogueAssassination", 0, "rogue", armed(39714, 40386), nil},
 		{"RogueCombat", 1, "rogue", armed(39714, 40386), nil},
 		{"RogueSubtlety", 2, "rogue", armed(39714, 40386), nil},
-	}},
+	}, needs: map[string][]string{"endurance": {"RogueCombat"}}, last: []string{"endurance"}},
 	{class: 5, race: 5, setups: []sweepSetup{
-		{"PriestDiscipline", 0, "shadow_priest", nil, []int32{48161, 48073, 48169}},
+		{"PriestDiscipline", 0, "healing_priest", nil, []int32{48161, 48073, 48169}},
 		{"PriestHoly", 1, "shadow_priest", nil, []int32{48161, 48073, 48169}},
 		{"PriestShadow", 2, "shadow_priest", nil, []int32{48161, 48073, 48169}},
 	}, stepAuras: map[string][]int32{"shadowform": {15473}}},

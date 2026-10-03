@@ -47,13 +47,6 @@ var droppedSpellMods = slices.Concat(
 	// the server adds percent cost mods up and puts them on the base cost, the sim multiplies them onto the cost
 	spellModDrops("DruidFeralCat", "naturalShapeshifter", "cost", 768, 9634),
 	spellModDrops("DruidFeralCat", "berserk", "cost", 48566, 48572),
-	// crit the sim leaves out, adds where the server's mask doesn't (Inner Focus on Circle of Healing), or
-	// adds as 0.1% instead of 10% (Improved Searing Pain)
-	spellModDrops("DeathknightFrost", "annihilation", "crit chance", 55271),
-	spellModDrops("DeathknightFrost", "viciousStrikes", "crit chance", 49924),
-	spellModDrops("ShamanRestoration", "tidalMastery", "crit chance", 59159),
-	spellModDrops("WarlockDestruction", "improvedSearingPain", "crit chance", 47815),
-	spellModDrops("PriestDiscipline", "innerFocus", "crit chance", 48089),
 	// the sim's Nature's Swiftness only makes its damage spells instant
 	spellModDrops("ShamanRestoration", "naturesSwiftness", "cast time", 49273, 49276, 55459),
 	spellModDrops("ShamanRestoration", "naturesSwiftness", "cast time before haste", 49273, 49276, 55459),

@@ -377,7 +377,6 @@ func NewDeathknight(character *core.Character, inputs DeathknightInputs, talents
 	)
 
 	dk.AddStatDependency(stats.Strength, stats.Parry, 0.25)
-	dk.AddStatDependency(stats.BonusArmor, stats.Armor, 1)
 
 	dk.PseudoStats.CanParry = true
 

@@ -66,6 +66,7 @@ func (mage *Mage) ApplyTalents() {
 
 	mage.PseudoStats.SchoolDamageDealtMultiplier[stats.SchoolIndexFrost] *= 1 + .02*float64(mage.Talents.PiercingIce)
 	mage.PseudoStats.SchoolDamageDealtMultiplier[stats.SchoolIndexFrost] *= 1 + .01*float64(mage.Talents.ArcticWinds)
+	mage.PseudoStats.ReducedPhysicalHitTakenChance += .01 * float64(mage.Talents.ArcticWinds)
 	mage.PseudoStats.CostMultiplier *= 1 - .04*float64(mage.Talents.FrostChanneling)
 
 	// 0.5 resistance per level per rank (realPointsPerLevel of 29441 and 29444)

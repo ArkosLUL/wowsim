@@ -37,8 +37,6 @@ func NewShaman(character *core.Character, talents string, totems *proto.ShamanTo
 		shaman.Totems.Fire = proto.FireTotem_FlametongueTotem
 	}
 
-	shaman.AddStatDependency(stats.BonusArmor, stats.Armor, 1)
-
 	if selfBuffs.Shield == proto.ShamanShield_WaterShield {
 		shaman.AddStat(stats.MP5, 100)
 	}

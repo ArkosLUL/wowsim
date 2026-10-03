@@ -312,6 +312,7 @@
   {"class":"rogue","tree":"Combat","fieldName":"improvedSliceAndDice","row":1,"maxPoints":2,"rankSpells":[14165,14166]},
   {"class":"rogue","tree":"Combat","fieldName":"deflection","row":1,"maxPoints":3,"rankSpells":[13713,13853,13854]},
   {"class":"rogue","tree":"Combat","fieldName":"precision","row":1,"maxPoints":5,"rankSpells":[13705,13832,13843,13844,13845]},
+  {"class":"rogue","tree":"Combat","fieldName":"endurance","row":2,"maxPoints":2,"rankSpells":[13742,13872]},
   {"class":"rogue","tree":"Combat","fieldName":"closeQuartersCombat","row":2,"maxPoints":5,"rankSpells":[13706,13804,13805,13806,13807]},
   {"class":"rogue","tree":"Combat","fieldName":"lightningReflexes","row":3,"maxPoints":3,"rankSpells":[13712,13788,13789]},
   {"class":"rogue","tree":"Combat","fieldName":"aggression","row":3,"maxPoints":5,"rankSpells":[18427,18428,18429,61330,61331]},
