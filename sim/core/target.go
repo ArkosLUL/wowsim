@@ -92,7 +92,7 @@ func (encounter *Encounter) AOECapMultiplier() float64 {
 // does damage*10/count past 10 targets. Only for a player caster, and only on the launch damage, so
 // a pet's or totem's area hit and a periodic tick aren't capped.
 func (encounter *Encounter) updateAOECapMultiplier() {
-	encounter.aoeCapMultiplier = min(10/float64(len(encounter.Targets)), 1)
+	encounter.aoeCapMultiplier = AOECapMultiplierFor(len(encounter.Targets))
 }
 
 func (encounter *Encounter) doneIteration(sim *Simulation) {
@@ -347,4 +347,10 @@ func (at *AttackTable) meleeTableInput() MeleeTableInput {
 
 		EnemyDodgeMultiplier: 1,
 	}
+}
+
+// AOECapMultiplierFor is the cap for a hit that reaches this many units. The server counts every unit
+// an effect hits, so a spell that also hits its caster passes one more than the enemy count.
+func AOECapMultiplierFor(units int) float64 {
+	return min(10/float64(max(units, 1)), 1)
 }

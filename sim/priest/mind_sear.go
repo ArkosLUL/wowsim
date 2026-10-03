@@ -34,6 +34,7 @@ func (priest *Priest) getMindSearTickSpell(numTicks int32) *core.Spell {
 	}
 	config.ApplyEffects = func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 		damage := spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()
+		damage *= core.AOECapMultiplierFor(len(sim.Encounter.Targets) - 1)
 		result := spell.CalcAndDealDamage(sim, target, damage, spell.OutcomeMagicHitAndCrit)
 
 		if result.Landed() {
@@ -77,9 +78,11 @@ func (priest *Priest) newMindSearSpell(numTicksIdx int32) *core.Spell {
 		TicksCanCrit:        false,
 		AffectedByCastSpeed: true,
 		OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
-			// Ticks every target in range, the channeled one included: Spell::SelectImplicitAreaTargets
-			// has no special case for the caster's own current target.
+			// spell_pri_mind_sear drops the channeled target from the tick's targets
 			for _, aoeTarget := range sim.Encounter.TargetUnits {
+				if aoeTarget == target {
+					continue
+				}
 				mindSearTickSpell.Cast(sim, aoeTarget)
 				mindSearTickSpell.SpellMetrics[aoeTarget.UnitIndex].Casts -= 1
 			}

@@ -155,7 +155,7 @@ func (infernal *InfernalPet) Initialize() {
 			Tick: core.SpellEffect{Effect: 0, Min: 40, Max: 40, SP: 1.35},
 
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
-				baseDmg := (dot.Tick.Roll(sim) + dot.Tick.SP*dot.Spell.SpellPower()) * sim.Encounter.AOECapMultiplier()
+				baseDmg := dot.Tick.Roll(sim) + dot.Tick.SP*dot.Spell.SpellPower()
 
 				for _, aoeTarget := range sim.Encounter.TargetUnits {
 					dot.Spell.CalcAndDealDamage(sim, aoeTarget, baseDmg, dot.Spell.OutcomeMagicHit)

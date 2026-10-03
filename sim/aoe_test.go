@@ -77,7 +77,7 @@ func (s aoeSpell) with(mod aoeValues) aoeValues {
 var aoeSpells = map[aoeKey]aoeSpell{
 	{1680, byPlayer}:  {maxTargets: 4}, // Whirlwind
 	{12470, byPet}:    {},              // Fire Nova, the Fire Elemental's
-	{20153, byPet}:    {capped: true},  // Immolation, the Infernal's
+	{20153, byPet}:    {},              // Immolation, the Infernal's
 	{20424, byPlayer}: {chain: 3},      // Seal of Command
 	{21992, byPlayer}: {chain: 5},      // Thunderfury
 	{22703, byPlayer}: {capped: true},  // Inferno Effect
@@ -97,29 +97,29 @@ var aoeSpells = map[aoeKey]aoeSpell{
 	{48466, byPlayer}: {capped: true}, // Hurricane
 	// Maul, Glyph of Maul
 	{48480, byPlayer}: {mods: map[int32]aoeValues{54811: {chain: 2}}},
-	{48562, byPlayer}: {capped: true}, // Swipe (Bear)
-	{48564, byPlayer}: {},             // Mangle (Bear)
-	{48817, byPlayer}: {},             // Holy Wrath
+	{48562, byPlayer}: {capped: true},                                 // Swipe (Bear)
+	{48564, byPlayer}: {mods: map[int32]aoeValues{58923: {chain: 3}}}, // Mangle (Bear), Berserk
+	{48817, byPlayer}: {capped: true},                                 // Holy Wrath
 	// Avenger's Shield, its glyph
 	{48827, byPlayer}: {chain: 3, mods: map[int32]aoeValues{54930: {chain: 1}}},
 	{49048, byPlayer}: {chain: 3}, // Multi-Shot
 	{49065, byTrap}:   {},         // Explosive Trap Effect
 	// Chain Lightning, Glyph of Chain Lightning, Tidefury Raiment's 2 pieces
-	{49271, byPlayer}: {chain: 3, perJump: 0.7, mods: map[int32]aoeValues{55449: {chain: 4}, 37207: {perJump: 0.83}}},
+	{49271, byPlayer}: {chain: 3, perJump: 0.7, mods: map[int32]aoeValues{55449: {chain: 4}, 37207: {perJump: 0.833}}},
 	{49273, byPlayer}: {},              // Healing Wave
 	{49941, byPlayer}: {capped: true},  // Blood Boil
-	{49941, byPet}:    {capped: true},  // Blood Boil, the rune weapon's
+	{49941, byPet}:    {},              // Blood Boil, the rune weapon's
 	{50526, byPlayer}: {capped: true},  // Wandering Plague
 	{50590, byPlayer}: {capped: true},  // Immolation Aura's tick
 	{50622, byPlayer}: {maxTargets: 4}, // Bladestorm's Whirlwind
 	{51411, byPlayer}: {capped: true},  // Howling Blast
 	{51723, byPlayer}: {capped: true},  // Fan of Knives
 	{52874, byPlayer}: {capped: true},  // Fan of Knives' off-hand
-	{53022, byPlayer}: {},              // Mind Sear's tick
+	{53022, byPlayer}: {capped: true},  // Mind Sear's tick
 	{53190, byPlayer}: {capped: true},  // Starfall's splash
 	{53227, byPlayer}: {capped: true},  // Typhoon
 	{53385, byPlayer}: {maxTargets: 4}, // Divine Storm
-	{53533, byPet}:    {},              // Swipe, the hunter pet's
+	{53533, byPet}:    {chain: 1000},   // Swipe, the hunter pet's
 	// Hammer of the Righteous, its glyph
 	{53595, byPlayer}: {chain: 3, mods: map[int32]aoeValues{63219: {chain: 4}}},
 	{55262, byPlayer}: {chain: 2, perJump: 0.5}, // Heart Strike
@@ -127,8 +127,8 @@ var aoeSpells = map[aoeKey]aoeSpell{
 	{55362, byPlayer}: {capped: true},           // Living Bomb's explosion
 	// Chain Heal, its glyph
 	{55459, byPlayer}: {chain: 3, perJump: 0.6, mods: map[int32]aoeValues{55437: {chain: 4}}},
-	// Revenge, Improved Revenge's two ranks: the sim rolls 50% a rank for a full second hit
-	{57823, byPlayer}: {mods: map[int32]aoeValues{12797: {chain: 2}, 12799: {chain: 2}}},
+	// Revenge, Improved Revenge's two ranks
+	{57823, byPlayer}: {mods: map[int32]aoeValues{12797: {chain: 2, perJump: 0.5}, 12799: {chain: 2}}},
 	{57842, byPlayer}: {maxTargets: 1},             // Killing Spree's strike
 	{58433, byPlayer}: {capped: true},              // Volley's tick
 	{58735, byTotem}:  {},                          // Magma Totem
@@ -139,7 +139,7 @@ var aoeSpells = map[aoeKey]aoeSpell{
 	{65108, byNPC}:    {},                          // Black Hole Explosion
 	{66330, byNPC}:    {},                          // Staggering Stomp
 	{69649, byNPC}:    {},                          // Frost Breath
-	{71904, byPlayer}: {},                          // Chaos Bane
+	{71904, byPlayer}: {capped: true},              // Chaos Bane
 	{73061, byNPC}:    {},                          // Frost Breath
 	{56350, byPlayer}: {capped: true, item: 41119}, // Saronite Bomb
 	{56488, byPlayer}: {capped: true, item: 42641}, // Global Thermal Sapper Charge
@@ -157,19 +157,10 @@ type aoeDiff struct {
 // aoeAllowances are the values the sim and the server disagree on, with the reason. Each sim mismatch
 // is a follow-up.
 var aoeAllowances = map[aoeDiff]string{
-	{aoeKey{20153, byPet}, 0, "capped"}:          "server: the Infernal casts its Immolation, and only a player's damage is capped. The sim caps it. Follow-up: sim mismatch.",
-	{aoeKey{49941, byPet}, 0, "capped"}:          "server: the rune weapon casts its own Blood Boil (spell_dk_dancing_rune_weapon), so it isn't capped. The sim caps it. Follow-up: sim mismatch.",
-	{aoeKey{48817, byPlayer}, 0, "capped"}:       "server: an area hit from the paladin, capped past ten targets. The sim never caps it. Follow-up: sim mismatch.",
-	{aoeKey{53022, byPlayer}, 0, "capped"}:       "server: the priest casts each tick (SpellInfo::NeedsToBeTriggeredByCaster), an area hit capped past ten targets. The sim doesn't cap it. Follow-up: sim mismatch.",
-	{aoeKey{71904, byPlayer}, 0, "capped"}:       "server: caps the split damage too, past ten targets. The sim only splits it. Follow-up: sim mismatch.",
-	{aoeKey{53533, byPet}, 0, "chain"}:           "server: chains to every target in front of the pet (ChainTarget 1000). The sim hits the pet's target only. Follow-up: sim mismatch.",
-	{aoeKey{48564, byPlayer}, 58923, "mod"}:      "server: Berserk adds 3 jump targets, so Mangle (Bear) hits 3. The sim hits one. Follow-up: sim mismatch.",
-	{aoeKey{57823, byPlayer}, 12797, "per jump"}: "server: rank 1 always hits a second target for half damage. The sim hits it for full damage half the time, the same on average. Follow-up: sim mismatch.",
-	{aoeKey{49271, byPlayer}, 37207, "per jump"}: "server: +19% on the 0.7 multiplier keeps 0.833 a jump. The sim keeps the tooltip's 0.83. Follow-up: sim mismatch.",
-	{aoeKey{47994, byPet}, 58366, "mod"}:         "Glyph of Cleaving is a warrior glyph: a pet's spell mods come from its owner (Unit::GetSpellModOwner), and no warlock has it.",
-	{aoeKey{49271, byPlayer}, 26123, "mod"}:      "Gift of the Gathering Storm's 3 pieces: the sim doesn't model the set. Follow-up: sim mismatch.",
-	{aoeKey{55459, byPlayer}, 21899, "mod"}:      "The Ten Storms' 3 pieces: the sim doesn't model the set. Follow-up: sim mismatch.",
-	{aoeKey{49273, byPlayer}, 23573, "mod"}:      "The Earthfury's 8 pieces: the sim doesn't model the set. Follow-up: sim mismatch.",
+	{aoeKey{47994, byPet}, 58366, "mod"}:    "Glyph of Cleaving is a warrior glyph: a pet's spell mods come from its owner (Unit::GetSpellModOwner), and no warlock has it.",
+	{aoeKey{49271, byPlayer}, 26123, "mod"}: "Gift of the Gathering Storm's 3 pieces: the sim doesn't model the set. Follow-up: sim mismatch.",
+	{aoeKey{55459, byPlayer}, 21899, "mod"}: "The Ten Storms' 3 pieces: the sim doesn't model the set. Follow-up: sim mismatch.",
+	{aoeKey{49273, byPlayer}, 23573, "mod"}: "The Earthfury's 8 pieces: the sim doesn't model the set. Follow-up: sim mismatch.",
 }
 
 // SpellImplicitTargetInfo::_data's targets in TARGET_SELECT_CATEGORY_AREA or _CONE.

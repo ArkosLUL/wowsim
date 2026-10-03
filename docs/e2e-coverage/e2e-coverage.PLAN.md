@@ -485,6 +485,24 @@ is 15% of base mana in the sim, 25% on the server.
   `sim/spell_groups_test.go`, `sim/aoe_test.go`.
 - **Goldens:** the AoE suites and those carrying these buffs; report each.
 
+#### As built
+
+Stacking stage:
+- Power Infusion with Arcane Power: fixed. The server's group 1123 (EXCLUSIVE_HIGHEST) compares only a shared aura type, and they share none, so the one cast last removes the other (`Unit::_AddAura`). `core.RegisterPowerInfusionArcanePowerEffect` makes a category whose OnGain deactivates the other aura.
+- Bestial Wrath with Hysteria and Tricks of the Trade: fixed. The hunter's self aura is The Beast Within (34471, group 1107), so the sim aura now carries that id and label; the pet's aura keeps 19574, in no group.
+- Enrage with Hysteria and Tricks of the Trade: fixed. Wrecking Crew's Enrage (57518) is only in group 1104, so it left `PercentDamageModifier`.
+- Master Poisoner with Heart of the Crusader and Totem of Wrath: not a sim gap, entries kept with the reason corrected. Every poison rank's aura-197 effect is 0 and Master Poisoner's crit is the caster aura 45176 (type 308, outside group 1058), so the tie never changes a total.
+- `spellGroupAllowances` lost its Power Infusion, Bestial Wrath and Enrage entries; `TestSimSpellGroups` compares them.
+- Goldens: only `sim/hunter/TestBM.results` moves, the aura key 19574 to 34471 on Average-Default and Talents-SpiritBond-Average, same uptime. Mage and warrior suites don't change.
+- All replays, `TestSimSpellGroups`, `TestSimAOESpells`, simval records (1114 of 1114) and `go vet` pass.
+
+AoE stage:
+- Cap: `core.AOECapMultiplierFor(units)` counts the units a hit reaches. The Infernal's Immolation and the rune weapon's Blood Boil lost the cap (guardian casters); Holy Wrath and Chaos Bane gained it; Mind Sear's tick and Starfall's splash use enemies minus 1 (the dropped target); Thunderstorm and the Thermal Sapper use enemies plus 1 (the caster); Explosive Decoy is uncapped (its creature casts the blast).
+- Targets: the hunter pet's Swipe (`AllTargets` on `PetSpecialAbilityConfig`) hits every target; Mangle (Bear) under Berserk hits 2 more, refreshing Mangle's debuff on each; Improved Revenge's second target is always hit, at 0.5 a rank; Mind Sear's tick and Starfall's splash skip the channeled or star target (`spell_pri_mind_sear`, `spell_dru_starfall_aoe`); Thunderfury's debuff goes on each target its jump lands on, not only the first (effect 0 chains, the damage effect doesn't); Tidefury 2 pieces jump at 0.7 x 1.19.
+- `aoeAllowances` keeps only Glyph of Cleaving and the three pre-WotLK sets. `TestSimAOESpells` compares the rest; its table gained the fixed values.
+- Goldens (`dock.sh delta`, 32 of 37 suites unchanged): `TestBalance` and `TestBalancePhase3` lose about 1.4 to 1.8% DPS on single-target rows (Starfall's splash 53190 now hits nothing there; multi-target rows move by -0.4% to +5.2%, rotation reshuffled); `TestFeralTank` multi-target rows gain about 4% (Mangle under Berserk); `TestRetribution` multi-target rows lose 0.03 to 0.04% (Holy Wrath capped). `TestBM`'s aura key rename is the stacking stage's.
+- All replays, `TestSimSpellGroups`, `TestSimAOESpells`, simval records (1114 of 1114) and `go vet` pass. The only failing tests are the four golden suites above.
+
 ### EC-THREAT-FIX (V; changes goldens, full suite)
 
 - Fix what EC-THREAT dropped, nothing more: likely the flat bonus outside `PseudoStats.ThreatMultiplier`, the

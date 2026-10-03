@@ -36,7 +36,7 @@ func init() {
 			ThreatMultiplier: 1,
 
 			ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-				baseDamage := sim.Roll(1900, 2100) / float64(sim.GetNumTargets())
+				baseDamage := sim.Roll(1900, 2100) / float64(sim.GetNumTargets()) * sim.Encounter.AOECapMultiplier()
 				for _, target := range sim.Encounter.TargetUnits {
 					spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMagicHit) // probably has a very low crit rate
 				}

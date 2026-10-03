@@ -58,6 +58,16 @@ func (druid *Druid) registerMangleBearSpell() {
 			}
 
 			if druid.BerserkAura.IsActive() {
+				// Berserk adds 2 jump targets
+				for i, extra := 0, target; i < 2; i++ {
+					extra = sim.Environment.NextTargetUnit(extra)
+					if extra == target {
+						break
+					}
+					if spell.CalcAndDealDamage(sim, extra, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit).Landed() {
+						mangleAuras.Get(extra).Activate(sim)
+					}
+				}
 				spell.CD.Reset()
 			}
 		},

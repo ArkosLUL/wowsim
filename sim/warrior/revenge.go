@@ -60,6 +60,8 @@ func (warrior *Warrior) registerRevengeSpell(cdTimer *core.Timer) {
 	}
 
 	extraHit := warrior.Talents.ImprovedRevenge > 0 && warrior.Env.GetNumTargets() > 1
+	// rank 1 hits the second target for half, rank 2 for full
+	extraHitMultiplier := 0.5 * float64(warrior.Talents.ImprovedRevenge)
 
 	warrior.Revenge = warrior.RegisterSpell(core.SpellConfig{
 		ActionID:    actionID,
@@ -103,11 +105,9 @@ func (warrior *Warrior) registerRevengeSpell(cdTimer *core.Timer) {
 			}
 
 			if extraHit {
-				if sim.RandomFloat("Revenge Target Roll") <= 0.5*float64(warrior.Talents.ImprovedRevenge) {
-					otherTarget := sim.Environment.NextTargetUnit(target)
-					baseDamage := spell.Direct.Roll(sim) + spell.Direct.AP*spell.MeleeAttackPower()
-					spell.CalcAndDealDamage(sim, otherTarget, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
-				}
+				otherTarget := sim.Environment.NextTargetUnit(target)
+				baseDamage := (spell.Direct.Roll(sim) + spell.Direct.AP*spell.MeleeAttackPower()) * extraHitMultiplier
+				spell.CalcAndDealDamage(sim, otherTarget, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 			}
 
 			warrior.revengeProcAura.Deactivate(sim)
