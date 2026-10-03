@@ -23,7 +23,7 @@ loop" re-affirms them.
   it into `integration`; `git worktree remove` it; `git branch -d` it.
 - Commit golden promotions and status updates on `integration`.
 - `git merge master` into `integration` at wave start, and whenever the wave-end fast-forward fails.
-  Conflicts in parity-owned files, and in those [workstreams](../guide/workstreams.md) hands test-enrichment,
+  Conflicts in parity-owned files, and in those [workstreams](../guide/workstreams.md) hands e2e-coverage,
   take master's side.
 - After a green wave, `git -C [sim] merge --ff-only integration`, with [sim] checked to be on `master`.
 - Commit a WI's mod-sim-validation changes on that repo's current branch after the WI merges.

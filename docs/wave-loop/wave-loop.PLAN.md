@@ -70,6 +70,11 @@ G = changes goldens. FS = runs all 37 suites.
 | P | TE-SWEEP (live) | ✔ |
 | Q | PAR-FU-4 (G, FS, live) · PAR-FU-5 (G, FS) · PAR-FU-6 (G) · PAR-FU-7 (G, live) | ✔ |
 | R | BIS-outclassed | ✔ |
+| S | EC-SWEEP2 (live) · EC-STACK · EC-TIMING (C++, live) | ✔ |
+| T | EC-SHEET · EC-SPELLMOD (live) · EC-THREAT (C++, live) · EC-AOE | ✔ |
+| V | EC-THREAT-FIX (G, FS) · EC-STRIKES (C++, live) · EC-BUFFS (live) | ✔ |
+| W | EC-GEAR (C++, live) · EC-MOBS (live) | ✔ |
+| X | EC-FIGHT (live) | ✔ |
 
 F2 is an inserted wave, not a fifth item in F: the core swing and cast fixes of PAR-P7-0c have to land
 before the class items in G, a class item can't build on a core fix merging in its own wave, and F already
@@ -116,6 +121,8 @@ Q is the user's call (2026-10-02): the sim/server mismatches waves O and P dropp
 Shadow priest DoT haste. The DPS preset rerun follows Q, only on the user's go-ahead.
 R is the user's call (2026-10-02): leave outclassed gear out of the optimizer's pool. The deferred preset rerun
 then covers all 28 builds, tanks included, since the cut changes prot paladin and feral tank picks.
+S to X are the e2e-coverage effort, after R lands (the user's call, 2026-10-02): live checks of what the sim
+never compared with the server. The deferred BiS chain waits until X lands (the user's call, 2026-10-03).
 
 **Where the specs are:**
 
@@ -128,10 +135,11 @@ then covers all 28 builds, tanks included, since the cut changes prot paladin an
 | `PERF-` | [sim-performance PLAN, "Work items"](../sim-performance/sim-performance.PLAN.md) |
 | `UI-` | [ui-tests PLAN, "Work items"](../ui-tests/ui-tests.PLAN.md) |
 | `TE-` | [test-enrichment PLAN, "Work items"](../test-enrichment/test-enrichment.PLAN.md) |
+| `EC-` | [e2e-coverage PLAN, "Work items"](../e2e-coverage/e2e-coverage.PLAN.md) |
 
 ## Current wave
 
-- Wave: R, landed (master fast-forwarded to this close-out). Nothing queued: other sessions plan what follows.
+- Wave: S, running; base: the commit adding this line. EC-SWEEP2, EC-STACK, EC-TIMING: implementing.
   Prod runs Q's `225191f1f`; R changes the optimizer's pool and the BiS tabs' hint.
 - Open: the talent sweep's unseen talents (test-enrichment INVESTIGATION, TE-SWEEP as built); from Q (parity
   INVESTIGATION, PAR-FU-4..7 as built): Ranged Weapon Specialization on Explosive Trap and magic procs, Glyph of
@@ -139,7 +147,7 @@ then covers all 28 builds, tanks included, since the cut changes prot paladin an
   multiplies), a shaman's block value lacks strength/2, and 72-point Fury and Balance strings in the optimizer's
   test inputs and `gen_db`; from R (BIS-outclassed as built): the response curves span the pool's stat range,
   so the cut moved Fury P1's Normal pick 45 J below the uncut pool's, every item of which it still holds.
-- Deferred (the user's call, 2026-10-02; each only on the user's go-ahead):
+- Deferred until X lands (the user's calls, 2026-10-02 and 10-03; each only on the user's go-ahead):
   - Rerun all 28 presets, tanks included, on the final HEAD: BIS-caps-race changes every racial search,
     `ff0920a96` the 16 builds `mage_*`, `rogue_*`, `warlock_*`, `warrior_arms`, `warrior_fury`,
     `protection_warrior`, `shadow_priest`, `smite_priest`, `dk_blood`, `elemental_shaman`, and BIS-outclassed
