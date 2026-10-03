@@ -72,7 +72,7 @@ G = changes goldens. FS = runs all 37 suites.
 | R | BIS-outclassed | ✔ |
 | S | EC-SWEEP2 (live) · EC-STACK · EC-TIMING (C++, live) | ✔ |
 | T | EC-SHEET · EC-SPELLMOD (live) · EC-THREAT (C++, live) · EC-AOE | ✔ |
-| T2 | fixes for S's and T's mismatches (G), specced once T lands | ✔ |
+| T2 | EC-COST-FIX (G, FS) · EC-TIMING-FIX (G, FS) · EC-SHEET-FIX (G) · EC-STACK-FIX (G) | ✔ |
 | V | EC-THREAT-FIX (G, FS) · EC-STRIKES (C++, live) · EC-BUFFS (live) | ✔ |
 | W | EC-GEAR (C++, live) · EC-MOBS (live) | ✔ |
 | X | EC-FIGHT (live) | ✔ |
@@ -143,7 +143,7 @@ first: some may be server quirks, not sim bugs.
 
 ## Current wave
 
-- Wave: T, landed (master fast-forwarded to this close-out). Next: T2, specced first.
+- Wave: T2, running; base `80ef5f632`. EC-COST-FIX, EC-TIMING-FIX, EC-SHEET-FIX, EC-STACK-FIX: implementing. Next: V.
   Prod runs Q's `225191f1f`; R changes the optimizer's pool and the BiS tabs' hint.
 - Open: the talent sweep's unseen talents (test-enrichment INVESTIGATION, TE-SWEEP as built); from Q (parity
   INVESTIGATION, PAR-FU-4..7 as built): Ranged Weapon Specialization on Explosive Trap and magic procs, Glyph of

@@ -30,6 +30,10 @@ The live e2e and the replays leave timing, costs, threat, pets, gear and buffs u
   else the stage returns `waiting-server`, and a later wave's live stage that needs the command carries forward
   too. `simval_commands.sql` starts with a `DELETE … IN (…)` and an `INSERT`: a new command extends both.
 - Not needed by any item: the harness's cooldown and power-update parsing, combat-log packet parsing.
+- T2 items fix the sim: re-measure each mismatch at your base against the server source first. A sim gap is fixed
+  and its drop or allowance entry and fixture README row go, so the replay compares it; one that never reaches
+  combat on the server (a sheet or probe artifact) keeps its entry with the reason corrected. Class files, drop
+  lists, allowances and the fixture README are shared across T2: edit only your own mismatches' code and entries.
 
 ## Waves
 
@@ -37,7 +41,7 @@ The live e2e and the replays leave timing, costs, threat, pets, gear and buffs u
 |---|---|---|
 | S | EC-SWEEP2 (live) · EC-STACK · EC-TIMING (C++, live) | Cheap checks first; the timing probe EC-SPELLMOD needs |
 | T | EC-SHEET · EC-SPELLMOD (live) · EC-THREAT (C++, live) · EC-AOE | SHEET builds on SWEEP2's sheet code; SPELLMOD needs `.simval timing` |
-| T2 | fixes (G), specced once T lands | S's and T's mismatches, each fixed once with the full set known |
+| T2 | EC-COST-FIX (G, FS) · EC-TIMING-FIX (G, FS) · EC-SHEET-FIX (G) · EC-STACK-FIX (G) | S's and T's mismatches, each fixed once with the full set known |
 | V | EC-THREAT-FIX (G, FS) · EC-STRIKES (C++, live) · EC-BUFFS (live) | The fix needs T's probe |
 | W | EC-GEAR (C++, live) · EC-MOBS (module SQL and config, live) | One rebuild for both |
 | X | EC-FIGHT (live) | Fights wear GEAR's full gear, enchant procs included |
@@ -46,7 +50,8 @@ U is taken (the UI wave). Versus the INVESTIGATION's order, B7, A3 and A4 moved 
 C1 moved last (after B6).
 
 **Backlog:** golden rows against other mob types (test-enrichment's G4), once EC-MOBS lands; execute-range damage;
-haste stacking beyond EC-BUFFS' pairs.
+haste stacking beyond EC-BUFFS' pairs; Rupture and Slice and Dice durations with combo points (`.simval timing` probes
+none).
 
 ## Work items
 
@@ -416,6 +421,69 @@ is 15% of base mana in the sim, 25% on the server.
   53273 (uncaptured) on death, uncapped.
 - Negative checks: removing Arcane Explosion's entry fails naming it as missing; removing Holy Wrath's
   allowance fails naming it. No live run.
+
+### EC-COST-FIX (T2; changes goldens, full suite; stages: core, mods)
+
+- The server's cost (`SpellInfo::CalcPowerCost`, `Player::ApplySpellMod`): the base truncated (`ManaCostPercentage` of
+  create mana) plus the school's flat aura (`UNIT_FIELD_POWER_COST_MODIFIER`, Spark of Hope); then × (1 + the sum of
+  every `SPELLMOD_COST` percent) + the flat spell mods, truncated; then × (1 + the first school's
+  `UNIT_FIELD_POWER_COST_MULTIPLIER`), truncated, floored at 0. The sim multiplies its percents
+  (`ManaCostOptions.Multiplier`, `Spell.CostMultiplier`, `PseudoStats.CostMultiplier`) onto an untruncated base.
+- Core: that arithmetic for every resource; every class's cost talents and cost auras (Arcane Power, Clearcasting, …)
+  move onto it, each mod by its server kind.
+- Mods, from the fixture README's spell-mod and timing cost rows: Benediction, Efficiency, Focused Rage, Mental
+  Quickness and Shadow Focus missing; Scorpid Sting, Healing Wave, Earth Shield, Mind Sear, Divine Protection and
+  Avenging Wrath bases or discounts; Natural Shapeshifter with King of the Jungle, Berserk.
+- **Owns:** the cost code in `sim/core/{mana,cast,spell,energy,rage,focus,runic_power}.go` and its tests; each class's
+  cost options and cost talents.
+- **Goldens:** every suite whose resource spend moves; report each.
+
+### EC-TIMING-FIX (T2; changes goldens, full suite)
+
+- Hasted dot and channel durations: the server truncates the duration and the tick period each on its own
+  (`int32(x * UNIT_MOD_CAST_SPEED)` in `Spell.cpp` and `AuraEffect::CalculatePeriodic`); the sim's aura is the
+  truncated period × ticks, 1 to 4 ms short (the Bloodlust rows, Celestial Focus, Icy Veins).
+- Class: Intensify Rage's cooldown (the server's float `60000 * 0.67f`, 1 ms lower); Nature's Swiftness on heals and
+  Rebirth; Permafrost's +3 s on Frostfire Bolt (its dot ticks more); Improved Earth Shield adds charges, not ticks.
+- Re-measure the bare server hunter's 10% ranged haste: likely the bot's quiver, which the replay's character lacks
+  (`quiverHaste`, `sim/hunter/hunter.go`), so a replay fix.
+- **Owns:** `sim/core/dot.go`, `periodic_action.go` and their tests; the class code above; `tools/simval/timing.go`'s
+  character setup.
+- **Goldens:** every suite with a hasted dot or channel; report each.
+
+### EC-SHEET-FIX (T2; changes goldens)
+
+- Talents: Annihilation and Vicious Strikes crit (Scourge Strike, Death Strike), Blood-Gorged's ArP outside its health
+  gate, Frigid Dreadplate on melee only, Arctic Winds' 5% hit taken, Rogue Endurance's stamina, Tidal Mastery on
+  Thunderstorm, Improved Searing Pain's 10% (the sim adds 0.1%), Inner Focus off Circle of Healing.
+- Re-measure Mace Specialization without a mace: the server's damage checks the weapon (`Unit::CalcArmorReducedDamage`,
+  `HasItemFitToSpellRequirements`), so likely a sheet artifact.
+- Moonkin Form's armor from cloth and leather (24905) and feral AP (`StatSystem.cpp`); block value from strength for
+  every class (`Player::GetShieldBlockValue`).
+- Items: `ArmorDamageModifier` as armor (Envoy of Mortality) in the item converter; regenerate `db.json` (no other T2
+  item touches it).
+- Holy Specialization: build the PriestDiscipline path as the healing priest if its other checks still pass, so holy
+  crit compares; else keep the skip.
+- **Owns:** the class code above, `sim/core`'s block value, `tools/database/azerothcore/convert.go`,
+  `assets/database/*`, `tools/simval/talents.go`'s path specs.
+- **Goldens:** the suites its classes and items move; report each.
+
+### EC-STACK-FIX (T2; changes goldens; stages: stacking, AoE)
+
+- Stacking (`spellGroupAllowances`): Power Infusion exclusive with Arcane Power; Bestial Wrath and Enrage stack with
+  Hysteria and Tricks of the Trade; Master Poisoner exclusive with Heart of the Crusader and Totem of Wrath's debuff.
+- AoE (`aoeAllowances` and EC-AOE's follow-ups):
+  - cap: never for guardian casters (Infernal's Immolation, rune weapon's Blood Boil); Holy Wrath, Mind Sear's tick and
+    Chaos Bane capped; the count includes a caster an effect hits (Thunderstorm, Global Thermal Sapper Charge);
+  - targets: the hunter pet's Swipe hits every target in front; Mangle (Bear) hits 3 under Berserk; Improved Revenge
+    rank 1's second target always, at 0.5; Mind Sear's tick and Starfall's splash skip the target the server's scripts
+    drop; Thunderfury's debuff lands on the first target only; Explosive Decoy casts 53273 on its death, uncapped;
+  - Tidefury 2 pieces: 0.833 per jump.
+- Stay allowlisted: the pre-WotLK sets (Gift of the Gathering Storm, The Ten Storms, The Earthfury), not worth
+  modeling; Glyph of Cleaving.
+- **Owns:** `sim/core`'s exclusive categories and AoE cap (`target.go`), the class and `sim/common` code above,
+  `sim/spell_groups_test.go`, `sim/aoe_test.go`.
+- **Goldens:** the AoE suites and those carrying these buffs; report each.
 
 ### EC-THREAT-FIX (V; changes goldens, full suite)
 
