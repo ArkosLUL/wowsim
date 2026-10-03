@@ -1,0 +1,129 @@
+package core
+
+import (
+	"math"
+
+	"github.com/wowsims/wotlk/sim/core/stats"
+)
+
+// The server's cost arithmetic (SpellInfo::CalcPowerCost, Player::ApplySpellMod), in the resource's server
+// units (rage in tenths), truncating where the server stores an int:
+//
+//	base   = trunc(base) + the first school's UNIT_FIELD_POWER_COST_MODIFIER
+//	cost   = trunc(base * (1 + sum of SPELLMOD_COST percents) + sum of SPELLMOD_COST flats)
+//	cost   = trunc(cost * (1 + the first school's UNIT_FIELD_POWER_COST_MULTIPLIER)), at least 0
+//
+// Percent mods add up, they never multiply. Where each kind lives:
+//   - spell mod percent: Spell.CostMultiplier or PseudoStats.CostMultiplier (1 plus the sum, so `-= 0.1` is
+//     -10%), or the options' Multiplier for a talent that never changes
+//   - spell mod flat: Spell.CostFlat or PseudoStats.CostFlat, or the options' FlatMod
+//   - school aura flat and percent: PseudoStats.SchoolCostFlat and SchoolCostMultiplier
+
+// absorbs float error, so 450 computed as 449.99999999 still truncates to 450
+const costEpsilon = 1e-6
+
+// serverFirstSchool is GetFirstSchoolInMask: the lowest bit of the server's mask, which orders
+// physical, holy, fire, nature, frost, shadow, arcane.
+func serverFirstSchool(school SpellSchool) stats.SchoolIndex {
+	switch {
+	case school.Matches(SpellSchoolPhysical):
+		return stats.SchoolIndexPhysical
+	case school.Matches(SpellSchoolHoly):
+		return stats.SchoolIndexHoly
+	case school.Matches(SpellSchoolFire):
+		return stats.SchoolIndexFire
+	case school.Matches(SpellSchoolNature):
+		return stats.SchoolIndexNature
+	case school.Matches(SpellSchoolFrost):
+		return stats.SchoolIndexFrost
+	case school.Matches(SpellSchoolShadow):
+		return stats.SchoolIndexShadow
+	case school.Matches(SpellSchoolArcane):
+		return stats.SchoolIndexArcane
+	}
+	return stats.SchoolIndexNone
+}
+
+func truncCost(x float64) float64 {
+	return math.Floor(x + costEpsilon)
+}
+
+func (spell *Spell) costUnits() float64 {
+	if spell.costScale == 0 {
+		return 1
+	}
+	return spell.costScale
+}
+
+// costFor runs the server's arithmetic on the base cost. pct and flat are the dynamic spell mods on top of the
+// spell's static ones, schoolFlat and schoolMult the first school's auras.
+func (spell *Spell) costFor(base, pct, flat, schoolFlat, schoolMult float64) float64 {
+	scale := spell.costUnits()
+	cost := truncCost(base*scale) + schoolFlat
+	if cost > 0 {
+		cost = truncCost(cost*(1+spell.costStaticPct+pct) + (spell.costStaticFlat+flat)*scale)
+	}
+	if schoolMult != 0 {
+		cost = truncCost(cost * (1 + schoolMult))
+	}
+	return max(0, cost) / scale
+}
+
+// ApplyCostModifiers returns the cost to pay for a spell whose base cost is the given (DefaultCast.Cost).
+func (spell *Spell) ApplyCostModifiers(base float64) float64 {
+	ps := &spell.Unit.PseudoStats
+	school := serverFirstSchool(spell.SpellSchool)
+	return spell.costFor(base,
+		(spell.CostMultiplier-1)+(ps.CostMultiplier-1),
+		spell.CostFlat+ps.CostFlat,
+		ps.SchoolCostFlat[school], ps.SchoolCostMultiplier[school])
+}
+
+// StaticCost is the cost with only the talents that never change (the options' Multiplier and FlatMod): what
+// rotations that plan ahead compare energy and rage against.
+func (spell *Spell) StaticCost() float64 {
+	return spell.costFor(spell.DefaultCast.Cost, 0, 0, 0, 0)
+}
+
+// StaticCostWithPercent is StaticCost with one more percent spell mod, such as Berserk's -0.5.
+func (spell *Spell) StaticCostWithPercent(pct float64) float64 {
+	return spell.costFor(spell.DefaultCast.Cost, pct, 0, 0, 0)
+}
+
+// AddSchoolCostMultiplier adds a UNIT_FIELD_POWER_COST_MULTIPLIER aura (-0.2 for -20%) to every school of the mask.
+func (unit *Unit) AddSchoolCostMultiplier(schools SpellSchool, delta float64) {
+	for _, school := range allSpellSchools {
+		if schools.Matches(school) {
+			unit.PseudoStats.SchoolCostMultiplier[schoolIndex(school)] += delta
+		}
+	}
+}
+
+// AddSchoolCostFlat adds a UNIT_FIELD_POWER_COST_MODIFIER aura, in the server's units.
+func (unit *Unit) AddSchoolCostFlat(schools SpellSchool, delta float64) {
+	for _, school := range allSpellSchools {
+		if schools.Matches(school) {
+			unit.PseudoStats.SchoolCostFlat[schoolIndex(school)] += delta
+		}
+	}
+}
+
+var allSpellSchools = [...]SpellSchool{SpellSchoolPhysical, SpellSchoolArcane, SpellSchoolFire, SpellSchoolFrost,
+	SpellSchoolHoly, SpellSchoolNature, SpellSchoolShadow}
+
+// applySparkOfHope is the trinket's aura 65010, which takes 42 off every non-physical cost. It's here, not an
+// item effect, so it adds no AllItems golden row to every suite.
+func (character *Character) applySparkOfHope() {
+	if character.HasTrinketEquipped(45703) {
+		character.AddSchoolCostFlat(SpellSchoolMagic, -42)
+	}
+}
+
+// setStaticCost records the options' static talent mods; a multiplier of 0 means none.
+func (spell *Spell) setStaticCost(multiplier, flatMod, scale float64) {
+	if multiplier != 0 {
+		spell.costStaticPct = multiplier - 1
+	}
+	spell.costStaticFlat = flatMod
+	spell.costScale = scale
+}

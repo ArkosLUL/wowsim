@@ -122,7 +122,8 @@ type Spell struct {
 	BonusExpertiseRating     float64
 	BonusArmorPenRating      float64
 	CastTimeMultiplier       float64
-	CostMultiplier           float64
+	CostMultiplier           float64 // 1 plus the summed SPELLMOD_COST percents of this spell
+	CostFlat                 float64 // summed SPELLMOD_COST flat mods, in the spell's resource units
 	DamageMultiplier         float64
 	DamageMultiplierAdditive float64
 	CritMultiplier           float64
@@ -158,6 +159,12 @@ type Spell struct {
 	serverSpell     *serverdata.Spell
 	serverConflicts []ServerConflict
 	timing          castTiming
+
+	// set by the cost constructors: the static talent percent and flat mods, and the server's units per sim unit
+	// of the resource (rage is stored in tenths)
+	costStaticPct  float64
+	costStaticFlat float64
+	costScale      float64
 
 	// SpellConfig.Direct, with the server's values where RegisterSpell found a conflict, then its Mods
 	Direct SpellEffect
@@ -405,8 +412,8 @@ func (spell *Spell) finalize() {
 	if spell.CastTimeMultiplier != 1 {
 		panic(spell.ActionID.String() + " has non-default CastTimeMultiplier during finalize!")
 	}
-	if spell.CostMultiplier != 1 {
-		panic(spell.ActionID.String() + " has non-default CostMultiplier during finalize!")
+	if spell.CostMultiplier != 1 || spell.CostFlat != 0 {
+		panic(spell.ActionID.String() + " has non-default CostMultiplier or CostFlat during finalize!")
 	}
 	spell.initialBonusHitRating = spell.BonusHitRating
 	spell.initialBonusCritRating = spell.BonusCritRating
@@ -438,6 +445,7 @@ func (spell *Spell) reset(_ *Simulation) {
 	spell.BonusSpellPower = spell.initialBonusSpellPower
 	spell.CastTimeMultiplier = 1
 	spell.CostMultiplier = 1
+	spell.CostFlat = 0
 	spell.DamageMultiplier = spell.initialDamageMultiplier
 	spell.DamageMultiplierAdditive = spell.initialDamageMultiplierAdditive
 	spell.CritMultiplier = spell.initialCritMultiplier

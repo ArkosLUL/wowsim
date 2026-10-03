@@ -21,7 +21,8 @@ func (shaman *Shaman) registerFeralSpirit() {
 		ActionID: core.ActionID{SpellID: 51533},
 
 		ManaCost: core.ManaCostOptions{
-			BaseCost: 0.12,
+			BaseCost:   0.12,
+			Multiplier: 1 - 0.02*float64(shaman.Talents.MentalQuickness),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{

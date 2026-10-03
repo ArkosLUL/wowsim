@@ -47,8 +47,7 @@ func (mage *Mage) registerArcaneMissilesSpell() {
 		Flags:          SpellFlagMage | core.SpellFlagChanneled | core.SpellFlagAPL,
 		BonusHitRating: float64(mage.Talents.ArcaneFocus) * core.SpellHitRatingPerHitChance,
 		ManaCost: core.ManaCostOptions{
-			BaseCost:   0.31,
-			Multiplier: 1 - .01*float64(mage.Talents.ArcaneFocus),
+			BaseCost: 0.31,
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{

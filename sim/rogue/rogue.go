@@ -104,7 +104,6 @@ type Rogue struct {
 
 	QuickRecoveryMetrics *core.ResourceMetrics
 
-	costModifier               func(float64) float64
 	finishingMoveEffectApplier func(sim *core.Simulation, numPoints int32)
 }
 
@@ -150,8 +149,6 @@ func (rogue *Rogue) Initialize() {
 	if rogue.Talents.QuickRecovery > 0 {
 		rogue.QuickRecoveryMetrics = rogue.NewEnergyMetrics(core.ActionID{SpellID: 31245})
 	}
-
-	rogue.costModifier = rogue.makeCostModifier()
 
 	rogue.registerStealthAura()
 	rogue.registerBackstabSpell()

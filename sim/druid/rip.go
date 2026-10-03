@@ -26,7 +26,8 @@ func (druid *Druid) registerRipSpell() {
 		Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagAPL,
 
 		EnergyCost: core.EnergyCostOptions{
-			Cost:          30 - core.TernaryFloat64(druid.HasSetBonus(ItemSetLasherweaveBattlegear, 2), 10, 0),
+			Cost:          30,
+			FlatMod:       -core.TernaryFloat64(druid.HasSetBonus(ItemSetLasherweaveBattlegear, 2), 10, 0),
 			Refund:        0.4 * float64(druid.Talents.PrimalPrecision),
 			RefundMetrics: druid.PrimalPrecisionRecoveryMetrics,
 		},

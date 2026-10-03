@@ -62,7 +62,7 @@ func (eb *energyBar) setupEnergyThresholds() {
 	for _, action := range eb.unit.Rotation.allAPLActions() {
 		for _, spell := range action.GetAllSpells() {
 			if _, ok := spell.Cost.(*EnergyCost); ok {
-				energyThresholds = append(energyThresholds, int(math.Ceil(spell.DefaultCast.Cost)))
+				energyThresholds = append(energyThresholds, int(math.Ceil(spell.StaticCost())))
 			}
 		}
 	}
@@ -255,6 +255,9 @@ func (eb *energyBar) disable(sim *Simulation) {
 type EnergyCostOptions struct {
 	Cost float64
 
+	Multiplier float64 // see ManaCostOptions
+	FlatMod    float64
+
 	Refund        float64
 	RefundMetrics *ResourceMetrics // Optional, will default to unit.EnergyRefundMetrics if not supplied.
 }
@@ -267,6 +270,7 @@ type EnergyCost struct {
 
 func newEnergyCost(spell *Spell, options EnergyCostOptions) *EnergyCost {
 	spell.DefaultCast.Cost = options.Cost
+	spell.setStaticCost(options.Multiplier, options.FlatMod, 1)
 	if options.Refund > 0 && options.RefundMetrics == nil {
 		options.RefundMetrics = spell.Unit.EnergyRefundMetrics
 	}

@@ -61,7 +61,8 @@ func (paladin *Paladin) registerHolyShieldSpell() {
 		Flags:       core.SpellFlagAPL,
 
 		ManaCost: core.ManaCostOptions{
-			BaseCost: 0.10,
+			BaseCost:   0.10,
+			Multiplier: 1 - 0.02*float64(paladin.Talents.Benediction),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{

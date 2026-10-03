@@ -42,9 +42,8 @@ func (shaman *Shaman) registerLesserHealingWaveSpell() {
 		Flags:       core.SpellFlagHelpful | core.SpellFlagAPL,
 
 		ManaCost: core.ManaCostOptions{
-			BaseCost: 0.15,
-			Multiplier: 1 *
-				(1 - .01*float64(shaman.Talents.TidalFocus)),
+			BaseCost:   0.15,
+			Multiplier: 1 - .01*float64(shaman.Talents.TidalFocus),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
@@ -106,8 +105,8 @@ func (shaman *Shaman) registerRiptideSpell() {
 
 		ManaCost: core.ManaCostOptions{
 			BaseCost: 0.18,
-			Multiplier: 1 *
-				(1 - .01*float64(shaman.Talents.TidalFocus)),
+			Multiplier: 1 - .01*float64(shaman.Talents.TidalFocus) -
+				0.02*float64(shaman.Talents.MentalQuickness),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
@@ -186,9 +185,8 @@ func (shaman *Shaman) registerHealingWaveSpell() {
 		Flags:       core.SpellFlagHelpful | core.SpellFlagAPL,
 
 		ManaCost: core.ManaCostOptions{
-			BaseCost: 0.15,
-			Multiplier: 1 *
-				(1 - .01*float64(shaman.Talents.TidalFocus)),
+			BaseCost:   0.25,
+			Multiplier: 1 - .01*float64(shaman.Talents.TidalFocus),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
@@ -252,6 +250,12 @@ func (shaman *Shaman) registerEarthShieldSpell() {
 		ProcMask:    core.ProcMaskEmpty,
 		Flags:       core.SpellFlagHelpful | core.SpellFlagAPL,
 
+		ManaCost: core.ManaCostOptions{
+			BaseCost: 0.15,
+			Multiplier: 1 -
+				.01*float64(shaman.Talents.TidalFocus) -
+				0.02*float64(shaman.Talents.MentalQuickness),
+		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
 				GCD: core.GCDDefault,
@@ -326,9 +330,8 @@ func (shaman *Shaman) registerChainHealSpell() {
 		Flags:       core.SpellFlagHelpful | core.SpellFlagAPL,
 
 		ManaCost: core.ManaCostOptions{
-			FlatCost: 0.19*shaman.BaseMana - manaDiscount,
-			Multiplier: 1 *
-				(1 - .01*float64(shaman.Talents.TidalFocus)),
+			FlatCost:   0.19*shaman.BaseMana - manaDiscount,
+			Multiplier: 1 - .01*float64(shaman.Talents.TidalFocus),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{

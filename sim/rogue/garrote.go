@@ -23,8 +23,10 @@ func (rogue *Rogue) registerGarrote() {
 		Flags:       core.SpellFlagMeleeMetrics | SpellFlagBuilder | core.SpellFlagAPL,
 
 		EnergyCost: core.EnergyCostOptions{
-			Cost:   rogue.costModifier(50 - 10*float64(rogue.Talents.DirtyDeeds)),
-			Refund: 0.8,
+			Cost:       50,
+			FlatMod:    -10 * float64(rogue.Talents.DirtyDeeds),
+			Multiplier: rogue.cheaperComboMoves(),
+			Refund:     0.8,
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{

@@ -438,6 +438,44 @@ is 15% of base mana in the sim, 25% on the server.
   cost options and cost talents.
 - **Goldens:** every suite whose resource spend moves; report each.
 
+#### As built
+
+Stage 1, core (`sim/core/cost.go`, `cost_test.go`):
+
+- `ApplyCostModifiers` runs the server's arithmetic in server units (rage in tenths): truncated base plus the first
+  school's flat aura, then `1 + Σ percent` and `+ Σ flat`, truncated, then the school multiplier, truncated, at least 0.
+  The first school is the server's lowest bit, not the sim's `schoolIndex` order.
+- Kinds: `Spell.CostMultiplier` / `PseudoStats.CostMultiplier` (1 + Σ spell mod percents), the options' `Multiplier` for
+  static talents (a sum, never a product), `Spell.CostFlat` / `PseudoStats.CostFlat` / options' `FlatMod` (flats,
+  replacing `CostReduction`), `Unit.AddSchoolCostMultiplier` / `AddSchoolCostFlat` (auras 72 and 73).
+- `DefaultCast.Cost` is the server base. `StaticCost()` and `StaticCostWithPercent(pct)` are what rotations, energy
+  thresholds, rage refunds and mana sums read.
+- Moved: Power Infusion, Beast Within, Owl's Focus, Precision, Frost Channeling (4/7/10% on arcane, fire and frost, the
+  DBC's mask 84) and Arcane Focus to school auras; Spark of Hope to a flat school aura set in `applySparkOfHope`; rogue
+  and feral flat talents to `FlatMod`; the rogue T7 4 piece to a 5% percent; every percent product (Natural
+  Shapeshifter with King of the Jungle, glyphs, Greater Heal, Mind Blast, Penance, Prayer of Mending, Tidal Focus) to a sum.
+- Verdicts: fixed and removed from the drop lists, rows and `knownTimingMismatches`: the 51 "1 above" costs, Natural
+  Shapeshifter with King of the Jungle and Berserk's energy cut. Open for stage 2: the missing talents above, Scorpid
+  Sting, Healing Wave, Earth Shield, Divine Protection, Avenging Wrath, Volley; Mind Blast's `focusedMind` drop is the
+  Shadow Focus gap.
+- Goldens: 25 of 37 suites move, all by truncation, sums or the new school auras (feral +1.9%, elemental +1.4%, arcane
+  -0.8%, rest under 0.7%). DK, warrior, Assassination, resto druid, feral tank and holy paladin are unchanged.
+
+Stage 2, mods:
+
+- Added: Benediction on Avenging Wrath, Holy Shield and Divine Protection (which had no cost; 3% of base mana);
+  Efficiency on Volley (summed with its glyph); Focused Rage on Bloodthirst and Mortal Strike; Mental Quickness on
+  Stormstrike, Lava Lash, Fire Nova, Feral Spirit, Riptide, Earth Shield and Fire Elemental Totem (with Totemic
+  Focus); Shadow Focus on Mind Blast and Mind Sear; Earth Shield's own cost (15% of base mana, with Tidal Focus and
+  Mental Quickness).
+- Bases: Scorpid Sting 11% (was 9%), Healing Wave 25% (was 15%).
+- Verdicts: all fixed. Removed the cost entries from `droppedSpellMods` and `knownTimingMismatches` (Avenging Wrath,
+  Healing Wave), with their README rows; both replays pass with them compared.
+- Goldens: on top of stage 1, paladin Holy gains mana-gain threat (Divine Protection now spends mana, so regen has
+  room: tps 0 to 0.22), Enhancement dps +0.151% and tps -0.277%, Feral Spirit/Fire Nova/Lava Lash/Stormstrike cost
+  less; Restoration, Hunter and the rest move only by fractions of a cast. Warrior suites don't move (no Focused
+  Rage in their talents).
+
 ### EC-TIMING-FIX (T2; changes goldens, full suite)
 
 - Hasted dot and channel durations: the server truncates the duration and the tick period each on its own

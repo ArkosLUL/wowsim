@@ -34,8 +34,7 @@ func (mage *Mage) registerArcaneBlastSpell() {
 		Flags:       SpellFlagMage | BarrageSpells | core.SpellFlagAPL,
 
 		ManaCost: core.ManaCostOptions{
-			BaseCost:   0.07,
-			Multiplier: 1 - .01*float64(mage.Talents.ArcaneFocus),
+			BaseCost: 0.07,
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{

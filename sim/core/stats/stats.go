@@ -291,8 +291,13 @@ type PseudoStats struct {
 	// Effects that apply when this unit is the attacker.
 	///////////////////////////////////////////////////
 
-	CostMultiplier float64 // Multiplies spell cost.
-	CostReduction  float64 // Reduces spell cost.
+	// SPELLMOD_COST on every spell of the unit. CostMultiplier is 1 plus the summed percents; the server adds them.
+	CostMultiplier float64
+	CostFlat       float64 // summed flat spell mods, in the spell's own resource units
+	// The school auras, by the spell's first school: UNIT_FIELD_POWER_COST_MODIFIER (flat, in server units, added to
+	// the base) and UNIT_FIELD_POWER_COST_MULTIPLIER (summed percents, applied last).
+	SchoolCostFlat       [SchoolLen]float64
+	SchoolCostMultiplier [SchoolLen]float64
 
 	CastSpeedMultiplier   float64
 	MeleeSpeedMultiplier  float64

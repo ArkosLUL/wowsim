@@ -17,8 +17,10 @@ func (rogue *Rogue) registerBackstabSpell() {
 		Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagIncludeTargetBonusDamage | SpellFlagBuilder | SpellFlagColdBlooded | core.SpellFlagAPL,
 
 		EnergyCost: core.EnergyCostOptions{
-			Cost:   rogue.costModifier(60 - 4*float64(rogue.Talents.SlaughterFromTheShadows)),
-			Refund: 0.8,
+			Cost:       60,
+			FlatMod:    -4 * float64(rogue.Talents.SlaughterFromTheShadows),
+			Multiplier: rogue.cheaperComboMoves(),
+			Refund:     0.8,
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{

@@ -27,6 +27,9 @@ func (shaman *Shaman) registerFireElementalTotem() {
 
 		ManaCost: core.ManaCostOptions{
 			BaseCost: 0.23,
+			Multiplier: 1 -
+				0.05*float64(shaman.Talents.TotemicFocus) -
+				0.02*float64(shaman.Talents.MentalQuickness),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{

@@ -65,8 +65,10 @@ func (rogue *Rogue) registerMutilateSpell() {
 		Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagAPL,
 
 		EnergyCost: core.EnergyCostOptions{
-			Cost:   rogue.costModifier(60 - core.TernaryFloat64(rogue.HasMajorGlyph(proto.RogueMajorGlyph_GlyphOfMutilate), 5, 0)),
-			Refund: 0.8,
+			Cost:       60,
+			FlatMod:    -core.TernaryFloat64(rogue.HasMajorGlyph(proto.RogueMajorGlyph_GlyphOfMutilate), 5, 0),
+			Multiplier: rogue.cheaperComboMoves(),
+			Refund:     0.8,
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{

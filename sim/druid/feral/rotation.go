@@ -127,7 +127,7 @@ func (cat *FeralDruid) calcBuilderDpe(sim *core.Simulation) (float64, float64) {
 	shredDpc := cat.Shred.ExpectedInitialDamage(sim, cat.CurrentTarget)
 	potentialRakeTicks := min(cat.Rake.CurDot().NumberOfTicks, int32(sim.GetRemainingDuration()/time.Second*3))
 	rakeDpc := cat.Rake.ExpectedInitialDamage(sim, cat.CurrentTarget) + cat.Rake.ExpectedTickDamage(sim, cat.CurrentTarget)*float64(potentialRakeTicks)
-	return rakeDpc / cat.Rake.DefaultCast.Cost, shredDpc / cat.Shred.DefaultCast.Cost
+	return rakeDpc / cat.Rake.StaticCost(), shredDpc / cat.Shred.StaticCost()
 }
 
 func (cat *FeralDruid) clipRoar(sim *core.Simulation) bool {
@@ -251,7 +251,7 @@ func (cat *FeralDruid) doRotation(sim *core.Simulation) (bool, time.Duration) {
 	curCp := cat.ComboPoints()
 	isClearcast := cat.ClearcastingAura.IsActive()
 	simTimeRemain := sim.GetRemainingDuration()
-	shiftCost := cat.CatForm.DefaultCast.Cost
+	shiftCost := cat.CatForm.StaticCost()
 	rakeDot := cat.Rake.CurDot()
 	ripDot := cat.Rip.CurDot()
 	lacerateDot := cat.Lacerate.CurDot()
@@ -305,7 +305,7 @@ func (cat *FeralDruid) doRotation(sim *core.Simulation) (bool, time.Duration) {
 		maxRipDur := time.Duration(cat.maxRipTicks) * ripDot.TickLength
 		remainingExt := cat.maxRipTicks - ripDot.NumberOfTicks
 		energyForShreds := curEnergy - cat.CurrentRakeCost() - 30 + float64((ripDot.StartedAt()+maxRipDur-sim.CurrentTime)/core.EnergyTickDuration) + core.Ternary(cat.tfExpectedBefore(sim, ripDot.StartedAt()+maxRipDur), 60.0, 0.0)
-		maxShredsPossible := min(energyForShreds/cat.Shred.DefaultCast.Cost, (ripDot.ExpiresAt() - (sim.CurrentTime + time.Second)).Seconds())
+		maxShredsPossible := min(energyForShreds/cat.Shred.StaticCost(), (ripDot.ExpiresAt() - (sim.CurrentTime + time.Second)).Seconds())
 		rakeNow = remainingExt == 0 || (maxShredsPossible > float64(remainingExt))
 	}
 
@@ -349,7 +349,7 @@ func (cat *FeralDruid) doRotation(sim *core.Simulation) (bool, time.Duration) {
 	// 1 second per 42 Energy that we have after that Clearcast Shred.
 	if ffNow {
 		simTimeSecs := sim.GetRemainingDuration().Seconds()
-		maxShredsWithoutFF := (int)((curEnergy + simTimeSecs*10) / cat.Shred.DefaultCast.Cost)
+		maxShredsWithoutFF := (int)((curEnergy + simTimeSecs*10) / cat.Shred.StaticCost())
 		numShredsWithoutFF := min(maxShredsWithoutFF, int(simTimeSecs)+1)
 		numShredsWithFF := min(maxShredsWithoutFF+1, int(simTimeSecs))
 		ffNow = numShredsWithFF > numShredsWithoutFF
@@ -366,20 +366,20 @@ func (cat *FeralDruid) doRotation(sim *core.Simulation) (bool, time.Duration) {
 	pendingPool.create(4)
 
 	if ripDot.IsActive() && (ripDot.RemainingDuration(sim) < simTimeRemain-endThresh) && curCp == 5 {
-		ripCost := core.Ternary(cat.berserkExpectedAt(sim, ripDot.ExpiresAt()), cat.Rip.DefaultCast.Cost*0.5, cat.Rip.DefaultCast.Cost)
+		ripCost := cat.Rip.StaticCostWithPercent(core.Ternary(cat.berserkExpectedAt(sim, ripDot.ExpiresAt()), -0.5, 0.0))
 		pendingPool.addAction(ripDot.ExpiresAt(), ripCost)
 		cat.ripRefreshPending = true
 	}
 	if poolForRake && rakeDot.IsActive() && (rakeDot.RemainingDuration(sim) < simTimeRemain-rakeDot.Duration) {
-		rakeCost := core.Ternary(cat.berserkExpectedAt(sim, rakeDot.ExpiresAt()), cat.Rake.DefaultCast.Cost*0.5, cat.Rake.DefaultCast.Cost)
+		rakeCost := cat.Rake.StaticCostWithPercent(core.Ternary(cat.berserkExpectedAt(sim, rakeDot.ExpiresAt()), -0.5, 0.0))
 		pendingPool.addAction(rakeDot.ExpiresAt(), rakeCost)
 	}
 	if cat.MangleCat != nil && mangleRefreshPending {
-		mangleCost := core.Ternary(cat.berserkExpectedAt(sim, cat.bleedAura.ExpiresAt()), cat.MangleCat.DefaultCast.Cost*0.5, cat.MangleCat.DefaultCast.Cost)
+		mangleCost := cat.MangleCat.StaticCostWithPercent(core.Ternary(cat.berserkExpectedAt(sim, cat.bleedAura.ExpiresAt()), -0.5, 0.0))
 		pendingPool.addAction(cat.bleedAura.ExpiresAt(), mangleCost)
 	}
 	if cat.SavageRoarAura.IsActive() {
-		roarCost := core.Ternary(cat.berserkExpectedAt(sim, cat.SavageRoarAura.ExpiresAt()), cat.SavageRoar.DefaultCast.Cost*0.5, cat.SavageRoar.DefaultCast.Cost)
+		roarCost := cat.SavageRoar.StaticCostWithPercent(core.Ternary(cat.berserkExpectedAt(sim, cat.SavageRoarAura.ExpiresAt()), -0.5, 0.0))
 		pendingPool.addAction(cat.SavageRoarAura.ExpiresAt(), roarCost)
 	}
 
@@ -444,7 +444,7 @@ func (cat *FeralDruid) doRotation(sim *core.Simulation) (bool, time.Duration) {
 
 	if flowershiftNow {
 		// if we cant cast and get back then abandon flowershift
-		if cat.CurrentMana() <= shiftCost+cat.GiftOfTheWild.DefaultCast.Cost {
+		if cat.CurrentMana() <= shiftCost+cat.GiftOfTheWild.StaticCost() {
 			flowershiftNow = false
 			cat.Metrics.MarkOOM(sim)
 

@@ -119,6 +119,9 @@ func (fb *focusBar) RunTask(sim *Simulation) time.Duration {
 type FocusCostOptions struct {
 	Cost float64
 
+	Multiplier float64 // see ManaCostOptions
+	FlatMod    float64
+
 	Refund        float64
 	RefundMetrics *ResourceMetrics // Optional, will default to unit.FocusRefundMetrics if not supplied
 }
@@ -130,6 +133,7 @@ type FocusCost struct {
 
 func newFocusCost(spell *Spell, options FocusCostOptions) *FocusCost {
 	spell.DefaultCast.Cost = options.Cost
+	spell.setStaticCost(options.Multiplier, options.FlatMod, 1)
 	if options.Refund > 0 && options.RefundMetrics == nil {
 		options.RefundMetrics = spell.Unit.refundMetrics
 	}
@@ -141,7 +145,7 @@ func newFocusCost(spell *Spell, options FocusCostOptions) *FocusCost {
 }
 
 func (fc *FocusCost) MeetsRequirement(_ *Simulation, spell *Spell) bool {
-	spell.CurCast.Cost = max(0, spell.CurCast.Cost*spell.Unit.PseudoStats.CostMultiplier)
+	spell.CurCast.Cost = spell.ApplyCostModifiers(spell.CurCast.Cost)
 	return spell.Unit.CurrentFocus() >= spell.CurCast.Cost
 }
 func (fc *FocusCost) CostFailureReason(_ *Simulation, spell *Spell) string {
