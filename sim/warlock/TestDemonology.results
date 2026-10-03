@@ -434,8 +434,8 @@ dps_results: {
 dps_results: {
  key: "TestDemonology-AllItems-MaleficRaiment"
  value: {
-  dps: 8420.30422
-  tps: 7173.16444
+  dps: 8420.45413
+  tps: 7173.31435
  }
 }
 dps_results: {
@@ -700,8 +700,8 @@ dps_results: {
 dps_results: {
  key: "TestDemonology-AllItems-TomeofArcanePhenomena-36972"
  value: {
-  dps: 13421.76677
-  tps: 11817.29742
+  dps: 13425.55027
+  tps: 11821.08092
  }
 }
 dps_results: {
@@ -728,8 +728,8 @@ dps_results: {
 dps_results: {
  key: "TestDemonology-Average-Default"
  value: {
-  dps: 14046.44899
-  tps: 12393.50877
+  dps: 14046.6495
+  tps: 12393.70928
  }
 }
 dps_results: {
@@ -763,8 +763,8 @@ dps_results: {
 dps_results: {
  key: "TestDemonology-Settings-Orc-p4_demo-Demonology Warlock-demo-NoBuffs-LongSingleTarget"
  value: {
-  dps: 8297.81653
-  tps: 7680.44288
+  dps: 8299.77587
+  tps: 7682.64733
  }
 }
 dps_results: {
@@ -777,15 +777,15 @@ dps_results: {
 dps_results: {
  key: "TestDemonology-SwitchInFrontOfTarget-Default"
  value: {
-  dps: 13784.89766
-  tps: 12288.75748
+  dps: 13784.71409
+  tps: 12288.57391
  }
 }
 dps_results: {
  key: "TestDemonology-Talents-ImprovedDemonicTactics-Average"
  value: {
-  dps: 13951.72849
-  tps: 12103.63822
+  dps: 13951.716
+  tps: 12103.62573
  }
 }
 ability_results: {
@@ -955,8 +955,8 @@ ability_results: {
     casts: 76.7355
     hits: 76.7355
     crit_pct: 62.5193
-    amount_per_hit: 16228.24022
-    amount: 1.24528212707e+06
+    amount_per_hit: 16228.35999
+    amount: 1.24529131795e+06
    }
   }
   entries: {
@@ -965,8 +965,8 @@ ability_results: {
     casts: 11.9675
     hits: 105.7715
     crit_pct: 57.35761
-    amount_per_hit: 3422.81976
-    amount: 362036.78046
+    amount_per_hit: 3422.82871
+    amount: 362037.72698
    }
   }
   entries: {
@@ -974,8 +974,8 @@ ability_results: {
    value: {
     casts: 24.422
     hits: 143.5205
-    amount_per_hit: 2075.79256
-    amount: 297918.7859
+    amount_per_hit: 2075.72571
+    amount: 297909.19214
    }
   }
   entries: {
@@ -984,8 +984,8 @@ ability_results: {
     casts: 50.039
     hits: 50.039
     crit_pct: 66.45916
-    amount_per_hit: 21969.41283
-    amount: 1.09932744873e+06
+    amount_per_hit: 21969.85927
+    amount: 1.09934978783e+06
    }
   }
   entries: {
@@ -994,8 +994,8 @@ ability_results: {
     casts: 29.4175
     hits: 29.4175
     crit_pct: 62.16028
-    amount_per_hit: 14972.16777
-    amount: 440443.7453
+    amount_per_hit: 14970.38586
+    amount: 440391.32611
    }
   }
   entries: {
@@ -1003,8 +1003,8 @@ ability_results: {
    value: {
     casts: 1.818
     hits: 21.735
-    amount_per_hit: 1104.28615
-    amount: 24001.65937
+    amount_per_hit: 1104.35107
+    amount: 24003.07057
    }
   }
   entries: {
@@ -1012,17 +1012,17 @@ ability_results: {
    value: {
     casts: 4.0945
     hits: 4.0945
-    amount_per_hit: 28140.24321
-    amount: 115220.22583
+    amount_per_hit: 28144.95402
+    amount: 115239.51423
    }
   }
   entries: {
    key: "player|action|{SpellID: 50589}"
    value: {
     casts: 3
-    hits: 44.997
-    amount_per_hit: 2253.73156
-    amount: 101411.15914
+    hits: 45.0245
+    amount_per_hit: 2253.90251
+    amount: 101480.83372
    }
   }
   entries: {
@@ -1106,7 +1106,7 @@ ability_results: {
   entries: {
    key: "player|aura|{SpellID: 50589}"
    value: {
-    uptime_s: 26.54419
+    uptime_s: 26.55324
    }
   }
   entries: {
@@ -1268,7 +1268,7 @@ ability_results: {
   entries: {
    key: "target0|aura|{SpellID: 47813}"
    value: {
-    uptime_s: 278.85426
+    uptime_s: 278.85921
    }
   }
   entries: {
@@ -1500,8 +1500,8 @@ ability_results: {
     casts: 76.665
     hits: 76.665
     crit_pct: 62.51223
-    amount_per_hit: 15845.71984
-    amount: 1.21481211139e+06
+    amount_per_hit: 15846.04802
+    amount: 1.21483727116e+06
    }
   }
   entries: {
@@ -1510,8 +1510,8 @@ ability_results: {
     casts: 11.9585
     hits: 105.745
     crit_pct: 57.38522
-    amount_per_hit: 3343.57296
-    amount: 353566.12258
+    amount_per_hit: 3343.56977
+    amount: 353565.78569
    }
   }
   entries: {
@@ -1519,8 +1519,8 @@ ability_results: {
    value: {
     casts: 24.407
     hits: 143.454
-    amount_per_hit: 2026.30077
-    amount: 290680.95108
+    amount_per_hit: 2026.3347
+    amount: 290685.81845
    }
   }
   entries: {
@@ -1529,8 +1529,8 @@ ability_results: {
     casts: 50
     hits: 50
     crit_pct: 66.406
-    amount_per_hit: 21458.08705
-    amount: 1.07290435271e+06
+    amount_per_hit: 21457.13323
+    amount: 1.07285666161e+06
    }
   }
   entries: {
@@ -1539,8 +1539,8 @@ ability_results: {
     casts: 29.42
     hits: 29.42
     crit_pct: 62.17199
-    amount_per_hit: 14629.67275
-    amount: 430404.97241
+    amount_per_hit: 14627.44232
+    amount: 430339.35318
    }
   }
   entries: {
@@ -1548,8 +1548,8 @@ ability_results: {
    value: {
     casts: 1.813
     hits: 21.718
-    amount_per_hit: 1079.55016
-    amount: 23445.67035
+    amount_per_hit: 1079.56958
+    amount: 23446.09213
    }
   }
   entries: {
@@ -1557,17 +1557,17 @@ ability_results: {
    value: {
     casts: 4.095
     hits: 4.095
-    amount_per_hit: 27663.73861
-    amount: 113283.00961
+    amount_per_hit: 27667.83428
+    amount: 113299.78136
    }
   }
   entries: {
    key: "player|action|{SpellID: 50589}"
    value: {
     casts: 3
-    hits: 44.9965
-    amount_per_hit: 2210.6796
-    amount: 99472.84451
+    hits: 45.024
+    amount_per_hit: 2210.71825
+    amount: 99535.37832
    }
   }
   entries: {
@@ -1651,7 +1651,7 @@ ability_results: {
   entries: {
    key: "player|aura|{SpellID: 50589}"
    value: {
-    uptime_s: 26.68437
+    uptime_s: 26.69302
    }
   }
   entries: {
@@ -1813,7 +1813,7 @@ ability_results: {
   entries: {
    key: "target0|aura|{SpellID: 47813}"
    value: {
-    uptime_s: 278.74457
+    uptime_s: 278.74952
    }
   }
   entries: {

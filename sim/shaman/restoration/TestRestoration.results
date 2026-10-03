@@ -618,8 +618,8 @@ dps_results: {
 dps_results: {
  key: "TestRestoration-Talents-HealingGrace-Average"
  value: {
-  tps: 130.67116
-  hps: 8473.84936
+  tps: 132.51156
+  hps: 8534.29419
  }
 }
 ability_results: {
@@ -945,13 +945,13 @@ ability_results: {
   entries: {
    key: "player|action|{OtherID: 10}"
    value: {
-    casts: 146.3975
+    casts: 147.3915
    }
   }
   entries: {
    key: "player|action|{SpellID: 16188}"
    value: {
-    casts: 3
+    casts: 2.999
    }
   }
   entries: {
@@ -969,10 +969,10 @@ ability_results: {
   entries: {
    key: "player|action|{SpellID: 51994}"
    value: {
-    casts: 111.2195
-    hits: 111.2195
-    amount_per_hit: 778.62123
-    amount: 86597.86395
+    casts: 112.096
+    hits: 112.096
+    amount_per_hit: 773.16383
+    amount: 86668.57282
    }
   }
   entries: {
@@ -987,20 +987,20 @@ ability_results: {
   entries: {
    key: "player|action|{SpellID: 52752}"
    value: {
-    casts: 15.44
-    hits: 15.44
-    amount_per_hit: 1580.03581
-    amount: 24395.75296
+    casts: 15.505
+    hits: 15.505
+    amount_per_hit: 1579.98421
+    amount: 24497.65517
    }
   }
   entries: {
    key: "player|action|{SpellID: 55459}"
    value: {
-    casts: 134.0165
-    hits: 402.0495
-    crit_pct: 35.29777
-    amount_per_hit: 5536.72696
-    amount: 2.22603830599e+06
+    casts: 135.117
+    hits: 405.351
+    crit_pct: 35.30496
+    amount_per_hit: 5536.53743
+    amount: 2.24424098408e+06
    }
   }
   entries: {
@@ -1012,11 +1012,11 @@ ability_results: {
   entries: {
    key: "player|action|{SpellID: 61301}"
    value: {
-    casts: 43.518
-    hits: 43.518
-    crit_pct: 35.47957
-    amount_per_hit: 4386.09117
-    amount: 190873.91539
+    casts: 43.774
+    hits: 43.774
+    crit_pct: 35.42057
+    amount_per_hit: 4354.77201
+    amount: 190625.78975
    }
   }
   entries: {
@@ -1028,13 +1028,13 @@ ability_results: {
   entries: {
    key: "player|aura|{SpellID: 16188}"
    value: {
-    uptime_s: 259.12918
+    uptime_s: 1.24178
    }
   }
   entries: {
    key: "player|aura|{SpellID: 16190, Tag: -1}"
    value: {
-    uptime_s: 24.00034
+    uptime_s: 24
    }
   }
   entries: {
@@ -1052,7 +1052,7 @@ ability_results: {
   entries: {
    key: "player|aura|{SpellID: 26297}"
    value: {
-    uptime_s: 20.04968
+    uptime_s: 20.05599
    }
   }
   entries: {
@@ -1082,7 +1082,7 @@ ability_results: {
   entries: {
    key: "player|aura|{SpellID: 52000}"
    value: {
-    uptime_s: 230.81306
+    uptime_s: 231.52674
    }
   }
   entries: {
@@ -1130,7 +1130,7 @@ ability_results: {
   entries: {
    key: "player|aura|{SpellID: 60062}"
    value: {
-    uptime_s: 63.38315
+    uptime_s: 63.26035
    }
   }
   entries: {

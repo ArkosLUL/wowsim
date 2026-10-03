@@ -494,8 +494,8 @@ dps_results: {
 dps_results: {
  key: "TestAffliction-AllItems-PlagueheartGarb"
  value: {
-  dps: 11348.4338
-  tps: 10339.52006
+  dps: 11348.39987
+  tps: 10339.48613
  }
 }
 dps_results: {
@@ -606,8 +606,8 @@ dps_results: {
 dps_results: {
  key: "TestAffliction-AllItems-SparkofLife-37657"
  value: {
-  dps: 14782.71448
-  tps: 13639.0555
+  dps: 14783.55665
+  tps: 13639.89767
  }
 }
 dps_results: {

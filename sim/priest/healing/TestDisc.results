@@ -847,15 +847,15 @@ dps_results: {
 dps_results: {
  key: "TestDisc-AllItems-Zabra'sRegalia"
  value: {
-  tps: 14.89263
-  hps: 3488.63314
+  tps: 14.14384
+  hps: 3317.19917
  }
 }
 dps_results: {
  key: "TestDisc-Average-Default"
  value: {
   tps: 16.12706
-  hps: 3858.22851
+  hps: 3858.2671
  }
 }
 dps_results: {
@@ -965,8 +965,8 @@ ability_results: {
    key: "player|action|{SpellID: 47515}"
    value: {
     hits: 33.0325
-    amount_per_hit: 2607.37679
-    amount: 86128.17378
+    amount_per_hit: 2607.54303
+    amount: 86133.66514
    }
   }
   entries: {
@@ -993,9 +993,9 @@ ability_results: {
    value: {
     casts: 10.272
     hits: 63.541
-    crit_pct: 27.73642
-    amount_per_hit: 4671.0289
-    amount: 296801.84739
+    crit_pct: 27.73091
+    amount_per_hit: 4670.9213
+    amount: 296795.01035
    }
   }
   entries: {
@@ -1003,9 +1003,9 @@ ability_results: {
    value: {
     casts: 20.427
     hits: 40.6265
-    crit_pct: 34.45165
-    amount_per_hit: 12451.16436
-    amount: 505847.22884
+    crit_pct: 34.46027
+    amount_per_hit: 12451.48284
+    amount: 505860.1674
    }
   }
   entries: {
@@ -1023,7 +1023,7 @@ ability_results: {
   entries: {
    key: "player|aura|{SpellID: 15363}"
    value: {
-    uptime_s: 287.80358
+    uptime_s: 287.80218
    }
   }
   entries: {
@@ -1059,7 +1059,7 @@ ability_results: {
   entries: {
    key: "player|aura|{SpellID: 47515}"
    value: {
-    uptime_s: 92.7202
+    uptime_s: 92.68003
    }
   }
   entries: {
@@ -1083,7 +1083,7 @@ ability_results: {
   entries: {
    key: "player|aura|{SpellID: 52800}"
    value: {
-    uptime_s: 100.3583
+    uptime_s: 100.3611
    }
   }
   entries: {
