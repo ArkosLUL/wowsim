@@ -1,6 +1,7 @@
 package shaman
 
 import (
+	"slices"
 	"time"
 
 	"github.com/wowsims/wotlk/sim/core"
@@ -288,22 +289,25 @@ func (shaman *Shaman) registerNaturesSwiftnessCD() {
 	cdTimer := shaman.NewTimer()
 	cd := time.Minute * 2
 
+	// every spell with a cast time the server's aura covers, heals included
+	var instant []*core.Spell
 	nsAura := shaman.RegisterAura(core.Aura{
 		Label:    "Natures Swiftness",
 		ActionID: actionID,
 		Duration: core.NeverExpires,
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
-			shaman.ChainLightning.CastTimeMultiplier -= 1
-			shaman.LavaBurst.CastTimeMultiplier -= 1
-			shaman.LightningBolt.CastTimeMultiplier -= 1
+			instant = shaman.NaturesSwiftnessSpells(actionID.SpellID)
+			for _, spell := range instant {
+				spell.CastTimeMultiplier -= 1
+			}
 		},
 		OnExpire: func(aura *core.Aura, sim *core.Simulation) {
-			shaman.ChainLightning.CastTimeMultiplier += 1
-			shaman.LavaBurst.CastTimeMultiplier += 1
-			shaman.LightningBolt.CastTimeMultiplier += 1
+			for _, spell := range instant {
+				spell.CastTimeMultiplier += 1
+			}
 		},
 		OnCastComplete: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell) {
-			if spell != shaman.LightningBolt && spell != shaman.ChainLightning && spell != shaman.LavaBurst {
+			if !slices.Contains(instant, spell) {
 				return
 			}
 

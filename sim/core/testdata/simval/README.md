@@ -94,11 +94,7 @@ spell (empty check) or check is only logged.
 | ShamanRestoration | tidalMastery | 59159 Thunderstorm | crit chance | the sim leaves Tidal Mastery's crit out |
 | WarlockDestruction | improvedSearingPain | 47815 Searing Pain | crit chance | the sim adds 0.1% instead of 10% (a factor of 100 short) |
 | PriestDiscipline | innerFocus | 48089 Circle of Healing | crit chance | the sim adds Inner Focus's crit; the server's crit mask leaves Circle of Healing out |
-| ShamanRestoration, DruidFeralBear | naturesSwiftness | 49273, 49276, 55459; 48477 | cast time, cast time before haste | the sim's Nature's Swiftness makes only its damage spells instant, not heals or Rebirth |
-| WarriorFury | intensifyRage | 2687, 12292, 18499 | cooldown | the server's float math truncates 1 ms lower |
-| DruidBalance, MageFire | celestialFocus, icyVeins | 48467; 12051, 42846, 42940 | aura duration, channel | the sim truncates the hasted tick period to whole ms |
-| MageFire | permafrost | 47610 Frostfire Bolt | aura duration, e2 ticks | the sim leaves Permafrost's +3 s out |
-| ShamanRestoration | improvedEarthShield | 49284 Earth Shield | aura duration | the sim models charges as ticks, so its aura grows; the server adds charges |
+| ShamanRestoration | naturesSwiftness | 49273 Healing Wave | cast time, cast time before haste | the sim has no Improved Healing Wave (a filler step of the path, so a fix needs a re-record): 3000 ms, the server's 2600 ms before the aura |
 | PriestShadow | shadowFocus | 47585 Dispersion | miss | not a sim gap: Dispersion, a self buff, never rolls to hit; the sim's Shadow Focus hit leaves it out |
 
 `timing.jsonl`, each in `knownTimingMismatches` (`tools/simval/timing.go`, keyed by class, spell, pass and check name;
@@ -110,9 +106,7 @@ passes named, and an entry no record fails is stale. `droppedTimingRecords` is e
 | Paladin | 31884 Avenging Wrath | cost | talents, Bloodlust | the sim costs 351, the server 315: the sim misses a discount |
 | Paladin, Priest, Druid, Hunter, Shaman | 48801, 48819, 48066, 48071, 48463, 48465, 49001, 49050, 49231, 49271 | cost | talents, Bloodlust | the sim's cost is 1 above the server's |
 | Shaman | 49273 Healing Wave | cost | all | the sim applies a discount of about 40% (659) the server doesn't (1099) |
-| Mage, Warlock, Druid, Shaman | 42846 Arcane Missiles, 47855 Drain Soul, 48467 Hurricane, 49233 Flame Shock | channel, aura duration | Bloodlust | the sim truncates the tick period to whole ms, so 1 to 4 ms short |
 | Rogue | 48672 Rupture, 6774 Slice and Dice | aura duration, e0 ticks | all | the probe has no combo points; the sim's finisher has no duration (Rupture) or its 5-point one (Slice and Dice) |
-| Hunter | 49001, 49050, 49052, 63672 | ranged speed (and Steady Shot's cast time) | all | the bare server hunter has 10% ranged haste (0.9091) the sim hunter lacks |
 
 `threat.jsonl`, each in `droppedThreatRecords` (`tools/simval/threat_test.go`), removed from the file; real
 mismatches go in `knownThreatMismatches` (`tools/simval/threat.go`), and the record stays.

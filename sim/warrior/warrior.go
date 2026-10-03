@@ -193,8 +193,9 @@ func (warrior *Warrior) HasMinorGlyph(glyph proto.WarriorMinorGlyph) bool {
 }
 
 func (warrior *Warrior) intensifyRageCooldown(baseCd time.Duration) time.Duration {
-	baseCd /= 100
-	return []time.Duration{baseCd * 100, baseCd * 89, baseCd * 78, baseCd * 67}[warrior.Talents.IntensifyRage]
+	// float32 like the server's spell mod math, so it lands 1 ms under the exact percent
+	mul := 1 + float32(-11*warrior.Talents.IntensifyRage)/100
+	return time.Duration(int64(float32(baseCd.Milliseconds())*mul)) * time.Millisecond
 }
 
 // spellModDamage stacks percent damage bonuses from talents and set pieces the server's way:
