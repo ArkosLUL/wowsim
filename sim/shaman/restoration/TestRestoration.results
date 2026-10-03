@@ -618,7 +618,7 @@ dps_results: {
 dps_results: {
  key: "TestRestoration-Talents-HealingGrace-Average"
  value: {
-  tps: 132.51156
+  tps: 203.01469
   hps: 8534.29419
  }
 }
