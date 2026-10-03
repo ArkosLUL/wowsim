@@ -92,7 +92,25 @@ Per unshaped record (`damage.go`):
   server, and above it max(0.1%, 1 + bonuses × multiplier): the server truncates each SP or AP bonus before the
   multipliers. A failing amount lists sim-only auras and server auras the sim lacks.
 
-Pets and non-80 characters fail. Shaped records give no checks.
+Pets (the strikes replay takes them) and non-80 characters fail. Shaped records give no checks.
+
+`TestStrikesRecords` replays `strikes.jsonl`, `TestSimvalStrikes`' capture (run by name, keep all its lines);
+`TestStrikesFixtureHasEveryProbe` fails when a probe is missing and not in `droppedStrikesRecords`. A failing
+check in `knownStrikesMismatches` is let through; an entry nothing fails is stale. Per record (`damage.go`):
+- Strike (`weapon` part, unshaped): the character as above, wearing the record's weapons, retried with the
+  teaching talent (`strikeTaughtSpells`) and the tank specs; a spec whose weapons can't swing is skipped. The
+  sim spell is the one whose `Direct` sits on a weapon effect, by id or `FromSpellID`. Each weapon is pinned
+  to one end of its range, `Direct`'s fixed bonus and `WeaponPct` to the record's, the hand's attack power to
+  `weapon.attackPower`, then `ApplyEffects` with a forced hit, read at calculation. `strikeProbeStates` sets
+  what the probe assumes (Seal of Vengeance at 5 stacks). Checks: `fixed`, `percent` (`percent max` when the
+  ends differ), `min` and `max` (`taken` at each end, above by up to `strikeTolerance`: the server truncates weapon
+  damage, fixed bonus, percent, done and taken), `crit` when the spell is crit capable.
+- Pet or guardian (`owner`): the owner's class in `simPets`' spec (with the talent or options giving the pet),
+  its stats pinned to the `owner` snapshot, then the pet summoned and its auras put on. `damage` compares as
+  above with the pet's power pinned, or as a strike; a direct effect the sim deals from its aura's ticks (the
+  Infernal's Immolation) is one forced tick. `info`: base stats vs `createStats`, stats, attack and spell
+  power, armor, one regen tick (focus off core's unexported rate; mana at the record's intellect and spirit).
+- `timing` (Ghoul Frenzy): the timing replay, with `strikesTimingTaught`'s talent.
 
 ## Timing probe
 

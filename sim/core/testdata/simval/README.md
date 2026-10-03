@@ -17,6 +17,9 @@ replays it through `CheckRecord` on every `go test`, and `int-check.sh` runs it 
 `goldchar.jsonl` holds `TestSimvalGoldenCharacters`' `info` and `damage` records, which `TestGoldenCharacters`
 replays against `goldchar_setups.json` ([tools/simval](../../../../tools/simval/README.md#golden-characters)).
 
+`strikes.jsonl` holds `TestSimvalStrikes`' weapon strike and pet `damage`, pet `info` and Ghoul Frenzy `timing`
+records, which `TestStrikesRecords` replays ([tools/simval](../../../../tools/simval/README.md#damage-probe)).
+
 A record of any of these files that disagrees with the sim is a real mismatch: it's dropped from the file and
 listed here, and the sim isn't changed.
 
@@ -118,6 +121,12 @@ run's records with the Rogue's from a rerun.
 | damage threat | 42926 Flamestrike x0.9 vs x0.8; 47610 Frostfire Bolt x0.68 vs x0.72 | Burning Soul at 5% a point; the server multiplies the two talents, the sim adds them |
 | damage threat | ShadowPriest 48127, 58381, 48125, 48160, 48158 x0.76 vs x0.525; 48300 x0.85; 48123 Smite x1 vs x0.7 | Shadowform's 30% is missing in the sim; Shadow Affinity is 24% there (15% on Devouring Plague), 25% on the server |
 | damage threat | 47815 Searing Pain x0.8 vs x1.6 | a `spell_threat` x2 the sim lacks |
+
+`strikes.jsonl`: dropped records in `droppedStrikesRecords`, known mismatches in `knownStrikesMismatches` (both
+`tools/simval/damage_test.go`, keyed by probe and check; the record stays and only the failure is let through).
+
+| Probe | Check | Dropped or known | Why |
+|---|---|---|---|
 
 ## Spells missing from serverdata
 

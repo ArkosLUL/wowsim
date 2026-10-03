@@ -658,6 +658,31 @@ AoE stage:
   rows; `tools/simval/damage.go`, `damage_test.go`, `strikes.jsonl`, its fixture README rows, the simval README's
   Damage probe.
 
+#### As built
+
+- C++ and e2e (compile-checked with `-fsyntax-only -Werror`, e2e vetted; not rebuilt):
+  - `.simval damage` adds `weapon` for a spell with weapon effects: `EffectWeaponDmg`'s generic steps at both
+    ends, then `MeleeDamageBonusDone`/`Taken`; record format in the module README. Weapon effects keep their
+    `unprobed` entry (plus `base`) and the record's `shaped` is unchanged, so existing replays skip strikes as
+    before; `weapon.shaped` is the strike's own (family branches gated like the server, melee state bonuses
+    in `StateBonuses`, scripts that never touch the damage exempt).
+  - `pet:<n>` picks the nth `m_Controlled` unit by GUID (plain `pet` unchanged: `pet <n>` would clash with
+    `threat`'s and `armor`'s numbers). A pet's record adds `owner`; `info` for one adds `pet` (scaling aura
+    amounts, base stats, white damage, `Creature::Regenerate`'s regen).
+  - `TestSimvalStrikes` (`run.sh` without a name skips it and EC-BUFFS' `TestSimvalBuffs`): 8 melee bots on
+    golden-setup weapons, bare and talented; 7 pet bots (tamed wolf, Imp, Felguard, Infernal, ghoul, Gargoyle,
+    Spirit Wolves, Water Elemental, Treants, Shadowfiend), `info` and `damage`, and Ghoul Frenzy's `timing`.
+    Bots, strikes and leads: `tmp/ec-strikes-cpp.md`.
+- Sim (`damage.go`; no live capture yet, so `TestStrikesRecords` skips): strikes compare on the sim's strike
+  with each weapon pinned to a range end and fixed bonus, percent and hand attack power pinned to the record's;
+  pets on the sim pet with the owner pinned to its snapshot (`simPets`); Ghoul Frenzy through the timing replay
+  with its talent. Method in the simval README's Damage probe. Unit tests run every e2e strike, pet and spell
+  through it, with hand-checked server arithmetic for Mortal Strike, Seal of Command, off-hand Mutilate and
+  Aimed Shot. Leads seen offline, for the live run: the sim's Ghoul Frenzy heals every 6 s ×5, the server's
+  aura every 3 s ×10; the sim's Imp Firebolt crits ×2, the server's magic spells ×1.5; the sim's cat and bear
+  weapons (43–66, 109–165) aren't the server's form damage (`min(level, 60)` × 0.85–1.25 × the form's speed:
+  51–75, 127.5–187.5). Live notes: `tmp/ec-strikes-sim.md`.
+
 ### EC-BUFFS (V; golden-neutral; stages: code, live)
 
 - e2e `e2e/buffs_test.go`: on a golden setup's character, each `FullBuffs` buff alone, then pairs in each exclusive
