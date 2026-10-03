@@ -143,26 +143,26 @@ first: some may be server quirks, not sim bugs.
 
 ## Current wave
 
-- Wave: T2, running; base `977a27a66`, runId `wf_5af2b99d-6d0`. EC-COST-FIX, EC-TIMING-FIX, EC-SHEET-FIX, EC-STACK-FIX merged; cross-review next. Next: V.
+- Wave: T2, landed (master fast-forwarded to this close-out). Next: V (EC-THREAT-FIX, EC-STRIKES, EC-BUFFS).
   Prod runs Q's `225191f1f`; R changes the optimizer's pool and the BiS tabs' hint.
 - Open: the talent sweep's unseen talents (test-enrichment INVESTIGATION, TE-SWEEP as built); from Q (parity
-  INVESTIGATION, PAR-FU-4..7 as built): Ranged Weapon Specialization on Explosive Trap and magic procs, Glyph of
-  Totem of Wrath's 84 spell power unverified live, aura-163 crit damage adds on the server for specials (the sim
-  multiplies), a shaman's block value lacks strength/2, and 72-point Fury and Balance strings in the optimizer's
-  test inputs and `gen_db`; from R (BIS-outclassed as built): the response curves span the pool's stat range,
-  so the cut moved Fury P1's Normal pick 45 J below the uncut pool's, every item of which it still holds; from S
-  (e2e-coverage PLAN, EC-SWEEP2, EC-STACK and EC-TIMING as built), each dropped or allowlisted: on the server
-  Mace Specialization adds 15 ArP without a mace, Blood-Gorged 10 ArP, Arctic Winds 5% miss taken, and Frigid
-  Dreadplate lowers melee misses only; Holy Specialization uncompared (the Discipline path builds a Shadow
-  priest); the sim has no per-school crit sheet (3 fire-crit drops); Power Infusion and Arcane Power don't stack
-  on the server, Bestial Wrath and Enrage stack with Hysteria and Tricks, and Master Poisoner stacks with Heart
-  of the Crusader and Totem of Wrath only in the sim; Avenging Wrath and Healing Wave cost differently, 10
-  talented spells cost 1 more in the sim, Bloodlust ticks run 1–4 ms short, the server hunter has 10% ranged
-  haste the sim's lacks; Rupture and Slice and Dice untested with combo points; from T (e2e-coverage PLAN, EC-SHEET,
-  EC-SPELLMOD, EC-THREAT and EC-AOE as built): the sim mismatches each lists, for T2, EC-THREAT's for EC-THREAT-FIX,
-  EC-SHEET's capture faults for EC-GEAR; `.simval threat`'s help row until the next ac-db-import; the sweeps'
-  shared `sweepPrepare` (module `25d88f9`) not yet run live; `.simval threat`'s live assist threat assumes the dummy
-  is the only creature in combat with the target.
+  INVESTIGATION, PAR-FU-4..7 as built): Ranged Weapon Specialization on Explosive Trap and magic procs, Glyph of Totem
+  of Wrath's 84 spell power unverified live, aura-163 crit damage adds on the server for specials (the sim
+  multiplies), and 72-point Fury and Balance strings in the optimizer's test inputs and `gen_db`; from R
+  (BIS-outclassed as built): the response curves span the pool's stat range, so the cut moved Fury P1's Normal pick 45
+  J below the uncut pool's, every item of which it still holds; from S and T, what T2 left (e2e-coverage PLAN, the T2
+  items' As built): no per-school crit sheet in the sim (3 fire-crit drops, EC-SHEET's spell-specific crit);
+  Blood-Gorged, Mace Specialization and Holy Specialization dropped as sheet artifacts; Rupture and Slice and Dice
+  untested with combo points (backlog); from T (e2e-coverage PLAN, EC-SHEET, EC-SPELLMOD, EC-THREAT and EC-AOE as
+  built): EC-THREAT's mismatches for EC-THREAT-FIX, EC-SHEET's capture faults for EC-GEAR; `.simval threat`'s help row
+  until the next ac-db-import; the sweeps' shared `sweepPrepare` (module `25d88f9`) not yet run live; `.simval
+  threat`'s live assist threat assumes the dummy is the only creature in combat with the target; from T2: the Balance
+  APL spends Nature's Swiftness on Starfire, which no longer takes it (−0.44%); Improved Healing Wave missing (a new
+  path step and a re-record); RogueCombat's new Endurance sweep step dropped until a `SIMVAL_TALENT_ONLY=RogueCombat`
+  rerun; Thrill of the Hunt on the modified cost (the server's base); rune and runic power costs on the old multiply
+  path; Frost Channeling's mask 84 unverified live; Endurance's Sprint and Evasion cooldowns; Thunderfury's bounce
+  threat (EC-THREAT-FIX); Explosive Decoy's blast lands at once, not on its creature's death; Combat Rogue's
+  throughput (Sim throughput).
 - Deferred until X lands (the user's calls, 2026-10-02 and 10-03; each only on the user's go-ahead):
   - Rerun all 28 presets, tanks included, on the final HEAD: BIS-caps-race changes every racial search,
     `ff0920a96` the 16 builds `mage_*`, `rogue_*`, `warlock_*`, `warrior_arms`, `warrior_fury`,
@@ -213,6 +213,7 @@ Reckoning that way), but J isn't DPS: see below.
 | R | 8715.9, +236 / +230 | 10730.8, +708 / +903 | 5066.6, +41 / +51 | 12963.8, +148 / +225 | -17856.7, +4795 / +4847 | -1056.8, +917 / +888 |
 | S | 8715.9, +236 / +230 | 10730.8, +708 / +903 | 5066.6, +41 / +51 | 12963.8, +148 / +225 | -17856.7, +4795 / +4847 | -1056.8, +917 / +888 |
 | T | 8715.9, +236 / +230 | 10730.8, +708 / +903 | 5066.6, +41 / +51 | 12963.8, +148 / +225 | -17856.7, +4795 / +4847 | -1056.8, +917 / +888 |
+| T2 | 8690.7, +273 / +273 | 10730.8, +708 / +903 | 5066.6, +41 / +51 | 12963.8, +148 / +225 | -17856.9, +4795 / +4847 | -1056.8, +917 / +888 |
 
 Quick / Normal. Ret P4 ran at Quick only in wave D, after the glyph fix; its wave C numbers
 (12821.9, +54 / +73) came from a seed that wore the glyph. The two tanks arrive with
@@ -269,6 +270,9 @@ In Q Fury's `J_preset` fell 0.1% (Execute without Two-Handed Weapon Specializati
 In R BIS-outclassed cut each case's pool by 31–54%: no `J_preset` moved, and the gains moved both ways, a
 one-time shift from response curves measured over the smaller pools (Fury's Normal gain fell below its Quick;
 Combat Rogue's Normal rose 126).
+In T2 Fury's `J_preset` fell 0.3% (8690.7) while its `dps_preset` rose 0.006%: the normalizer. Every other row
+matches T's; the cost and timing fixes reach no slow case's DPS. It ran idle, so walls fell 10–30%, but Combat
+Rogue's only 2% (see Sim throughput).
 
 ## Sim throughput
 
@@ -297,6 +301,7 @@ From G the benches run their suites' default players with rotations, at 1 and 10
 | N | 1.095 / 77.1 | 0.581 / 29.5 | 0.865 / 46.5 | 0.486 / 18.4 | 5.479 / 288.3 |
 | O | 1.090 / 79.8 | 0.652 / 30.0 | 0.808 / 46.7 | 0.537 / 18.9 | 5.500 / 297.6 |
 | Q | 1.059 / 81.2 | 0.589 / 29.5 | 0.830 / 47.8 | 0.533 / 18.4 | 5.669 / 275.1 |
+| T2 | 1.394 / 101.4 | 0.573 / 29.5 | 0.808 / 45.9 | 0.531 / 17.2 | 5.445 / 276.7 |
 
 H2 ran with the live worldserver using half a core, which moved whole runs by up to 2×
 and cost a few percent here (Ret, which H2 barely touched, +4%). An interleaved A/B against the base
@@ -372,6 +377,12 @@ Ret -10%. Q's sim changes are class-local: noise.
 R has no row: it changes no sim code, and a game held 13–16% of the host's CPU.
 
 S and T have no row: they change no sim code.
+
+T2's row ran idle (the worldserver, authserver and database stopped; the host at 5–8% before): at 100 iterations
+Combat Rogue is 25% over Q's (32% at one), Elemental 6% under, the rest within 4%. A CPU profile puts 42% of the
+rogue's time in the APL's energy check (`aplCostBlocked` → `ApplyCostModifiers` → `costFor`): EC-COST-FIX's server
+cost arithmetic runs on every readiness check of every energy action. Caching the computed cost until an input
+changes would win it back.
 
 E to F2 ran the old requests: one iteration, and no rotation for Ret, Hunter and Elemental.
 
@@ -532,6 +543,7 @@ crashed before F2, so its column starts there.
 | EC-TIMING-FIX | merged | `b0bb26462` | 12 goldens promoted in `5c5510b26`, each under 0.7% but Balance's Dreamstate row (−0.44%, its APL wastes Nature's Swiftness on Starfire) and one Disc item row (−4.9%, noise); the hunter's haste was the bot's quiver; Healing Wave's Nature's Swiftness drop stays (Improved Healing Wave) |
 | EC-SHEET-FIX | merged | `81e87739d` | 33 goldens promoted in `f68a104d5`, most in character stats only; Blood +0.4%; `db.json` regenerated (63 items' bonus armor); Blood-Gorged, Mace Specialization and Holy Specialization's sheet crit stay dropped as sheet artifacts; RogueCombat's new Endurance step dropped until a live rerun |
 | EC-STACK-FIX | merged | `6fa25a10f` | 5 goldens promoted in `a3753780e`: Balance −1.75% (Starfall's splash skips the star's target), Feral Tank multi-target +4% (Berserk Mangle), Ret multi-target −0.04% (Holy Wrath capped), BM's aura key; Master Poisoner's pairs not a sim gap |
+| wave T2 cross-review | | `f6b05f9c6` | 1 bug: spells the sim registers without a school (Rapid Fire, Icy Veins, Water Elemental) lost their school cost auras; pets got the player-only block value and bonus armor; Permafrost at 1–2 points; hunter and mage goldens promoted with it; server-parity gained T2's facts |
 
 Later WIs are added as their wave starts.
 
