@@ -135,6 +135,9 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
 - `TestSimSpellGroups` (`sim/spell_groups_test.go`, offline) checks the sim's exclusive-effect categories against
   the server's `spell_group` rules in `sim/core/testdata/simval/spell_groups.json`; the export query is in its
   doc comment. A pair the two disagree on needs a reason in `spellGroupAllowances`, and a stale entry fails.
+- `TestSimAOESpells` (`sim/aoe_test.go`, offline) checks the class code's chain targets, per-jump multipliers,
+  max targets and ten-target caps against the spell capture. A sim-named spell that chains, picks targets or
+  gets the cap needs an `aoeSpells` entry, a disagreement a reason in `aoeAllowances`; stale ones fail.
 - Spell data: `tools/acore/spellids` lists the spell ids the sim needs and checks them against the committed
   capture. Its README's [Capturing](../../tools/acore/spellids/README.md#capturing) section recaptures
   missing ones live.
