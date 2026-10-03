@@ -143,7 +143,7 @@ first: some may be server quirks, not sim bugs.
 
 ## Current wave
 
-- Wave: T, running; base `866de1e3d`. EC-SHEET, EC-AOE, EC-SPELLMOD, EC-THREAT merged; cross-review next. Then T2.
+- Wave: T, landed (master fast-forwarded to this close-out). Next: T2, specced first.
   Prod runs Q's `225191f1f`; R changes the optimizer's pool and the BiS tabs' hint.
 - Open: the talent sweep's unseen talents (test-enrichment INVESTIGATION, TE-SWEEP as built); from Q (parity
   INVESTIGATION, PAR-FU-4..7 as built): Ranged Weapon Specialization on Explosive Trap and magic procs, Glyph of
@@ -158,7 +158,13 @@ first: some may be server quirks, not sim bugs.
   on the server, Bestial Wrath and Enrage stack with Hysteria and Tricks, and Master Poisoner stacks with Heart
   of the Crusader and Totem of Wrath only in the sim; Avenging Wrath and Healing Wave cost differently, 10
   talented spells cost 1 more in the sim, Bloodlust ticks run 1–4 ms short, the server hunter has 10% ranged
-  haste the sim's lacks; Rupture and Slice and Dice untested with combo points.
+  haste the sim's lacks; Rupture and Slice and Dice untested with combo points; from T (e2e-coverage PLAN, EC-SHEET,
+  EC-SPELLMOD, EC-THREAT and EC-AOE as built): the sim mismatches each lists, for T2, EC-THREAT's for EC-THREAT-FIX,
+  EC-SHEET's capture faults for EC-GEAR; orphan bot Svtleadhrneb (guid 540540, account 54595) from the 17:02 crash,
+  whose cleanup (`SIMVAL_ORPHANS=540540:1:1:54595 run.sh TestCleanupOrphans`) writes the DB, so it waits for the
+  user; `.simval threat`'s help row until the next ac-db-import; the sweeps' shared `sweepPrepare` (module
+  `25d88f9`) not yet run live; `.simval threat`'s live assist threat assumes the dummy is the only creature in
+  combat with the target.
 - Deferred until X lands (the user's calls, 2026-10-02 and 10-03; each only on the user's go-ahead):
   - Rerun all 28 presets, tanks included, on the final HEAD: BIS-caps-race changes every racial search,
     `ff0920a96` the 16 builds `mage_*`, `rogue_*`, `warlock_*`, `warrior_arms`, `warrior_fury`,
@@ -208,6 +214,7 @@ Reckoning that way), but J isn't DPS: see below.
 | Q | 8715.9, +195 / +276 | 10730.8, +734 / +777 | 5066.6, +41 / +48 | 12963.8, +175 / +232 | -17856.7, +4842 / +4804 | -1056.8, +913 / +900 |
 | R | 8715.9, +236 / +230 | 10730.8, +708 / +903 | 5066.6, +41 / +51 | 12963.8, +148 / +225 | -17856.7, +4795 / +4847 | -1056.8, +917 / +888 |
 | S | 8715.9, +236 / +230 | 10730.8, +708 / +903 | 5066.6, +41 / +51 | 12963.8, +148 / +225 | -17856.7, +4795 / +4847 | -1056.8, +917 / +888 |
+| T | 8715.9, +236 / +230 | 10730.8, +708 / +903 | 5066.6, +41 / +51 | 12963.8, +148 / +225 | -17856.7, +4795 / +4847 | -1056.8, +917 / +888 |
 
 Quick / Normal. Ret P4 ran at Quick only in wave D, after the glyph fix; its wave C numbers
 (12821.9, +54 / +73) came from a seed that wore the glyph. The two tanks arrive with
@@ -366,7 +373,7 @@ Ret -10%. Q's sim changes are class-local: noise.
 
 R has no row: it changes no sim code, and a game held 13–16% of the host's CPU.
 
-S has no row: it changes no sim code.
+S and T have no row: they change no sim code.
 
 E to F2 ran the old requests: one iteration, and no rotation for Ret, Hunter and Elemental.
 
@@ -522,6 +529,7 @@ crashed before F2, so its column starts there.
 | EC-AOE | merged | `beafed015` | goldens unchanged; `TestSimAOESpells`, 62 spells, 13 allowlisted, e.g. Holy Wrath and Mind Sear uncapped, guardian casts capped, the hunter pet's Swipe and Berserk Mangle single-target |
 | EC-SPELLMOD | merged | `6764063ac` | goldens unchanged; module `5309b16`; sweep live 13:22–13:40, 2251 probes over 30 paths: 448 steps agree, 377 move nothing, 253 not compared, 93 disagree (102 checks dropped, fixture README): % cost mods 1 high, cost talents missing (Benediction, Efficiency, Focused Rage, Mental Quickness, Shadow Focus), crit talents missing (Annihilation, Vicious Strikes, Tidal Mastery) or ×0.01 (Improved Searing Pain), Nature's Swiftness skipping heals |
 | EC-THREAT | merged | `689d8c91e` | goldens unchanged; module `3cd16f5`; the worldserver the user rebuilt at 16:18 (the permission check refused the agent's rebuild; ac-db-import not rerun, so `.simval threat` lacks its help row); live 16:55–17:05, 114 records, 135 mismatches allowlisted for EC-THREAT-FIX (fixture README): `SpellLevel` bonus, unmodified and split flats, missing `spell_threat` rows, Dire Bear, Unholy Presence, Shadowform, Fanaticism never applied; a core `ServerMailReward` crash at 17:02 (bot relog) restarted the worldserver and left orphan bot Svtleadhrneb (guid 540540) |
+| wave T cross-review | | `9b134ed60` | no bugs; a health-cost timing record (Bloodrage) parses; the damage, timing and threat replays share one sim setup and aura lookup; the golden-character check builds its sim once; the sweeps share `sweepPrepare` (module `25d88f9`) |
 
 Later WIs are added as their wave starts.
 

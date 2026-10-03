@@ -37,7 +37,8 @@ loop" re-affirms them.
 - Rebuild or restart (`cd [ac] && docker compose build ac-db-import ac-worldserver && docker compose up -d`,
   ready at "World Initialized") only when Deathsong, the one character the user plays, is offline (online
   playerbots don't block it): `SELECT name FROM acore_characters.characters WHERE name = 'Deathsong' AND online = 1`
-  returns no rows. Otherwise the WI returns `waiting-server`.
+  returns no rows. Otherwise the WI returns `waiting-server`. If Claude Code's permission check refuses the
+  rebuild, the stage returns `blocked` and the orchestrator asks the user, who may run it themselves.
 - Server config changes still need the user's OK. None is expected: simval is enabled live.
 
 **Docs:** changes are drafted with `/compact-docs-writer` and applied without the user's approval (waived

@@ -141,3 +141,5 @@ mod-individual-progression stores a character's tier as rewarded quest `66000 + 
 - AzerothGhost, the e2e client, needs the Warden OS FourCC patch, plus `E2E_WORLD_ADDR` because the
   realmlist gives the public address.
 - GM command loops freeze the world thread, so cap their iterations (simval's `MaxIterations`).
+- A bot relogging right after a level-up can crash the worldserver: core's `ServerMailReward::OnPlayerLogin` query
+  callback runs on a null player. Docker restarts it, disconnecting everyone online.
