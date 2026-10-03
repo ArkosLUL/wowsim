@@ -312,7 +312,7 @@ Shout (the sim's aura is 47437, not the cast's 25203), Permafrost on Frostbolt's
 never crits. Two drops aren't sim gaps (Berserk's Mangle (Bear) cooldown, Dispersion's miss); Healing Wave's base cost
 is 15% of base mana in the sim, 25% on the server.
 
-### EC-THREAT (T; golden-neutral; C++; stages: C++ and e2e, sim, live)
+### EC-THREAT (T, done; golden-neutral; C++; stages: C++ and e2e, sim, live)
 
 - `.simval threat <spellId> [amount]` records:
   - the `spell_threat` row, `SPELLMOD_THREAT`, the school multiplier

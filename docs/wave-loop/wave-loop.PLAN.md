@@ -143,8 +143,7 @@ first: some may be server quirks, not sim bugs.
 
 ## Current wave
 
-- Wave: T, running; base `866de1e3d`. EC-SHEET, EC-AOE, EC-SPELLMOD merged; EC-THREAT's live stage reruns in
-  `wf_beaacdaa-bbc` on the worldserver the user rebuilt. Next: T2.
+- Wave: T, running; base `866de1e3d`. EC-SHEET, EC-AOE, EC-SPELLMOD, EC-THREAT merged; cross-review next. Then T2.
   Prod runs Q's `225191f1f`; R changes the optimizer's pool and the BiS tabs' hint.
 - Open: the talent sweep's unseen talents (test-enrichment INVESTIGATION, TE-SWEEP as built); from Q (parity
   INVESTIGATION, PAR-FU-4..7 as built): Ranged Weapon Specialization on Explosive Trap and magic procs, Glyph of
@@ -522,6 +521,7 @@ crashed before F2, so its column starts there.
 | EC-SHEET | merged | `1d217be59` | goldens unchanged; 1565 checks over 131 records of 32 bots; 38 drops (fixture README): ArmorDamageModifier armor, Rogue Endurance, block value from strength, Moonkin armor and AP, Blood-Gorged ArP, parry without the Parry spell, `.modify hp`'s stale max health, HunterMM's Trueshot Aura |
 | EC-AOE | merged | `beafed015` | goldens unchanged; `TestSimAOESpells`, 62 spells, 13 allowlisted, e.g. Holy Wrath and Mind Sear uncapped, guardian casts capped, the hunter pet's Swipe and Berserk Mangle single-target |
 | EC-SPELLMOD | merged | `6764063ac` | goldens unchanged; module `5309b16`; sweep live 13:22–13:40, 2251 probes over 30 paths: 448 steps agree, 377 move nothing, 253 not compared, 93 disagree (102 checks dropped, fixture README): % cost mods 1 high, cost talents missing (Benediction, Efficiency, Focused Rage, Mental Quickness, Shadow Focus), crit talents missing (Annihilation, Vicious Strikes, Tidal Mastery) or ×0.01 (Improved Searing Pain), Nature's Swiftness skipping heals |
+| EC-THREAT | merged | `689d8c91e` | goldens unchanged; module `3cd16f5`; the worldserver the user rebuilt at 16:18 (the permission check refused the agent's rebuild; ac-db-import not rerun, so `.simval threat` lacks its help row); live 16:55–17:05, 114 records, 135 mismatches allowlisted for EC-THREAT-FIX (fixture README): `SpellLevel` bonus, unmodified and split flats, missing `spell_threat` rows, Dire Bear, Unholy Presence, Shadowform, Fanaticism never applied; a core `ServerMailReward` crash at 17:02 (bot relog) restarted the worldserver and left orphan bot Svtleadhrneb (guid 540540) |
 
 Later WIs are added as their wave starts.
 
