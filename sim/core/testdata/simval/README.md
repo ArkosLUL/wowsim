@@ -11,6 +11,9 @@ replays it through `CheckRecord` on every `go test`, and `int-check.sh` runs it 
 `timing.jsonl` holds `TestSimvalTiming`'s `timing` records and its bots' `info` records (regen), which
 `TestTimingRecords` replays ([tools/simval](../../../../tools/simval/README.md#timing-probe)).
 
+`threat.jsonl` holds `TestSimvalThreat`'s `threat` records, which `TestThreatRecords` replays
+([tools/simval](../../../../tools/simval/README.md#threat-probe)).
+
 `goldchar.jsonl` holds `TestSimvalGoldenCharacters`' `info` and `damage` records, which `TestGoldenCharacters`
 replays against `goldchar_setups.json` ([tools/simval](../../../../tools/simval/README.md#golden-characters)).
 
@@ -110,6 +113,43 @@ passes named, and an entry no record fails is stale. `droppedTimingRecords` is e
 | Mage, Warlock, Druid, Shaman | 42846 Arcane Missiles, 47855 Drain Soul, 48467 Hurricane, 49233 Flame Shock | channel, aura duration | Bloodlust | the sim truncates the tick period to whole ms, so 1 to 4 ms short |
 | Rogue | 48672 Rupture, 6774 Slice and Dice | aura duration, e0 ticks | all | the probe has no combo points; the sim's finisher has no duration (Rupture) or its 5-point one (Slice and Dice) |
 | Hunter | 49001, 49050, 49052, 63672 | ranged speed (and Steady Shot's cast time) | all | the bare server hunter has 10% ranged haste (0.9091) the sim hunter lacks |
+
+`threat.jsonl`, each in `droppedThreatRecords` (`tools/simval/threat_test.go`), removed from the file; real
+mismatches go in `knownThreatMismatches` (`tools/simval/threat.go`), and the record stays.
+
+| Bot | Spell | Why |
+|---|---|---|
+| FrostDeathKnight | 45524 Chains of Ice | the sim has no Chains of Ice |
+| FrostDeathKnight | 49576 Death Grip | the sim has no Death Grip |
+| ProtPaladin | 25742 Seal of Righteousness | the sim's proc reads the main hand's speed; the sim character has no weapon |
+| Warlock | 59092 Dark Pact | the sim's Dark Pact drains the pet's mana; the sim character has no pet |
+| ElementalShaman | 60103 Lava Lash | the sim's damage is NaN without an off hand weapon |
+
+`threat.jsonl`'s known mismatches (`knownThreatMismatches`), for EC-THREAT-FIX, sim vs server. The capture is one
+run's records with the Rogue's from a rerun.
+
+| Check | Probes | Why |
+|---|---|---|
+| bonus | 71 probes of every bot: sim 0, server the spell's level (1 to 80) | the server adds `SpellLevel` per cast without a `spell_threat` row, unmodified |
+| bonus | 53385 Divine Storm 30, 48668 Eviscerate 39.5, 48672 Rupture 39.5, 57993 Envenom 40, 42897 Arcane Blast 40, 48156 Mind Flay 40; sim 0 | the same, split over the dummy and the caster an effect also hits |
+| bonus | Defensive Stance 47450 Heroic Strike 537.04 vs 259, 57823 Revenge 250.89 vs 121, 47488 Shield Slam 1596.60 vs 770; Berserker 47450 181.30 vs 259 | the sim multiplies the flat by the unit's threat multiplier |
+| bonus | 47520 Cleave 466.54 (Defensive), 157.50 (Berserker) vs 112; on 2 targets 466.54 vs 56 | the sim's flat is 225 and multiplied; the server's 112 is unmodified and split |
+| bonus | 48480 Maul 891.29 vs 422, 48568 Lacerate 1083.63 vs 515 | the sim's 424 and 515.5 times Dire Bear Form; the server's rows unmodified |
+| bonus | 47498 Devastate 712.04 vs 28.40 | the sim adds 315 and 5% of AP and multiplies; the server's row is the 5% alone |
+| bonus | 50783 Slam 290.29 (Defensive), 98 (Berserker) vs 1 | the sim puts Slam's 140 on the damage spell; the server's row is on the cast 47475, whose bonus `SPELL_ATTR3_SUPPRESS_TARGET_PROCS` drops |
+| bonus | 47467 Sunder Armor 805.35 vs 77 | the server's 7386 row isn't in this rank's chain, so it adds the level |
+| bonus | 47437 Demoralizing Shout 131.05 vs 79, 48560 Demoralizing Roar 260.66 vs 77 | the sim has a flat the server has no row for |
+| bonus | 16857 Faerie Fire (Feral) 1328.53 (Bear), 448.72 (Cat) vs 18; 60089 its damage 0 vs 638 | the sim's flat is on the cast, the server's on the damage spell |
+| bonus | 55271 Scourge Strike 0 vs 120 (both DKs) | a `spell_threat` row the sim lacks |
+| bonus | 61657 Fire Nova 0 vs 56 | a positive spell: the server's level reaches the dummy as assist threat, x0.7 |
+| tick bonus | 47867 Curse of Doom 160 vs 0 | the sim adds its 160 to each tick, the server its level (80) to the cast |
+| damage threat | Defensive 47488 Shield Slam x2.6955, 12809 Concussion Blow x4.1470, 47471 Execute x2.5919 vs x2.0735; Berserker 1680 Whirlwind, 47471 x0.875, 7384 Overpower x0.525 vs x0.7 | the sim's spell multipliers (1.3, 2, 1.25, 0.75) have no `spell_threat` percent |
+| damage threat | RetPaladin's 7 probes x1 vs x0.7 | the sim never calls `applyFanaticism` |
+| damage threat | Bear 48480, 48564, 60089 x2.1021 vs x2.0735, 48568 x1.0511 vs x1.0368; 48562 Swipe (Bear) x2.1021 vs x3.1103 (also on 3 targets) | Dire Bear Form's multiplier; Swipe's `spell_threat` x1.5 |
+| damage threat | Unholy Presence's 7 probes x0.75 vs x0.55 (52212 x1.425 vs x1.045) | the server's presence takes 20% besides Subversion's 25% |
+| damage threat | 42926 Flamestrike x0.9 vs x0.8; 47610 Frostfire Bolt x0.68 vs x0.72 | Burning Soul at 5% a point; the server multiplies the two talents, the sim adds them |
+| damage threat | ShadowPriest 48127, 58381, 48125, 48160, 48158 x0.76 vs x0.525; 48300 x0.85; 48123 Smite x1 vs x0.7 | Shadowform's 30% is missing in the sim; Shadow Affinity is 24% there (15% on Devouring Plague), 25% on the server |
+| damage threat | 47815 Searing Pain x0.8 vs x1.6 | a `spell_threat` x2 the sim lacks |
 
 ## Spells missing from serverdata
 

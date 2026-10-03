@@ -331,6 +331,50 @@ is 15% of base mana in the sim, 25% on the server.
 - **Owns:** module `src/SimValidationCommands.cpp`, `simval_commands.sql`, `e2e/threat_test.go`, its module README
   rows; `tools/simval/threat.go`, its test and fixture, its fixture README rows, the simval README's Threat probe.
 
+#### As built
+
+- C++ and e2e (compile-checked with `-fsyntax-only -Werror`, e2e vetted):
+  - `.simval threat <spellId> [amount] [targets:<n>] [pet]`, record format in the module README. Needs the sim
+    dummy. `CalculateModifiedThreat` is copied; `damage.threat` is 0 under `SPELL_ATTR1_NO_THREAT`.
+  - The bonus split counts the units a cast at the dummy hits, from the server's own `SelectSpellTargets` on a
+    never-cast `Spell` (no spell scripts): the caster counts when an effect lands on it (Eviscerate, Envenom,
+    Arcane Blast, Divine Storm). `targets:<n>` overrides. Positive spells' bonus is modified and reaches the dummy
+    through the caster.
+  - The dummy's AI never engages, so live `AddThreat` drops a `SPELL_ATTR3_SUPPRESS_TARGET_PROCS` spell's damage
+    threat (Slam); `live.engaged` says so and the e2e expects 0 there.
+  - `TestSimvalThreat`: 13 bots, 119 probes: Defensive Stance warrior, Righteous Fury paladin, Dire Bear druid,
+    Frost Presence DK; Berserker warrior (Improved Berserker Stance), Fanaticism paladin, Cat druid, Unholy
+    Presence DK (Subversion), rogue, mage (Arcane Subtlety, Burning Soul, Frost Channeling), Shadowform priest
+    (Shadow Affinity), warlock (Improved Drain Soul, Destructive Reach), shaman (Elemental Precision). Talents go
+    on as `.aura` before `.cast <id> triggered` (Improved Berserker Stance after it: the server strips a passive
+    stance-bound aura on any stance change, and the stance lands on the bot's next update), and each record must
+    carry the form's passives (7376, 57339, 57340, 61261, 21178, 3025, 7381, 49868). It checks each record's
+    arithmetic, the live threat list and `acore_world.spell_threat`, and that tanks raise and DPS lower some probe's
+    threat (not the rogue). 50783 (Slam's damage, both warriors) and 61654 (Fire Nova's damage) are probed beside
+    their casts, since the sim splits them off.
+- Sim (`tools/simval/threat.go`, `TestThreatRecords`; checks in the simval README's Threat probe): the record's
+  character in its form casts the spell at the dummy with a forced hit, and the threat beyond its damage is the
+  bonus, so Lacerate's in-cast flat and Sunder Armor's attack power part count. Hand-built records test the
+  comparison; `TestThreatProbesReplay` builds and casts every probe. Five probes can't be replayed and are dropped
+  (fixture README): Chains of Ice, Death Grip (not in the sim), Seal of Righteousness, Dark Pact, Lava Lash (the sim
+  character has no weapon or pet).
+- Live (worldserver rebuilt by the user at 16:18; `TestSimvalThreat` 16:55 to 16:57, the Rogue
+  rerun at 17:05): `AddThreat` lands on the dummy and matches every record; no assert. `threat.jsonl` holds 114
+  records. ac-db-import wasn't rerun, so `acore_world.command` lacks the `simval threat` row: only its help text
+  is missing until the next ac-db-import (the command registers at `SEC_GAMEMASTER`).
+  - Fixed in the e2e on the way: the priest is Human (from an Undead bot at the e2e's Naxxramas spot the dummy is
+    out of VMAP line of sight, so nothing is selected); Execute and Hammer of Wrath are probed at `.simval hp 19`
+    (`TargetAuraState` 20%, strictly below); Envenom needs the rogue's own Deadly Poison (57970) on the dummy, whose
+    aura shows seconds late and can drop off for a moment, so the probe repeats until its record has it.
+  - 248 checks; the 135 that differ are in `knownThreatMismatches` and the fixture README, as predicted from source:
+    the server's `SpellLevel` bonus, its unmodified and split flats, the caster in the split, `spell_threat` rows and
+    percents the sim lacks or moves, Dire Bear Form, Unholy Presence, Shadowform, Fanaticism (never applied in the
+    sim), Burning Soul and Frost Channeling. The sim wasn't changed.
+  - A worldserver crash at 17:02 during a run: `ServerMailReward::OnPlayerLogin`'s query callback ran after a bot's
+    relog and read a null player (core's `server_mail` script, not the probe); Docker restarted it. It left the bot
+    Svtleadhrneb (guid 540540) in `acore_characters`; its cleanup (`run.sh TestCleanupOrphans`) writes to the DB, so
+    it's left to the orchestrator.
+
 ### EC-AOE (T, done; golden-neutral; offline)
 
 - `TestAOECapMultiplier` already covers the cap's formula; this checks which spells get it, and chain values.

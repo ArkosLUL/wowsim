@@ -125,6 +125,41 @@ Pets and non-80 characters fail. A spell no spec registers fails as `sim charact
 `knownTimingMismatches` (class, spell, pass, check) lets a real sim/server difference through, each with a row in the
 fixture README; the check still runs and logs, and an entry no record fails fails the test.
 
+## Threat probe
+
+`TestThreatRecords` replays `sim/core/testdata/simval/threat.jsonl`, a capture of mod-sim-validation's
+`TestSimvalThreat` (`.simval threat`), on every `go test`; it skips without the file. `TestThreatFixtureHasEveryProbe`
+fails when a probe's record is missing and not in `droppedThreatRecords`, or a dropped one is there.
+`TestThreatProbesReplay` builds and casts every probe without the server, so a sim change that breaks one shows
+before a recapture. Capture by running only `run.sh TestSimvalThreat`, streamed as for `simval.jsonl`
+([testing](../../docs/guide/testing.md#against-the-server)); `CheckRecord` ignores `threat` records. Keep that run's
+`"command":"threat"` lines, remove the `droppedThreatRecords` keys, and keep only the last record of a repeated probe
+(the e2e repeats Envenom until the dummy shows the poison); the fixture test fails on a key twice.
+
+Per record (`threat.go`):
+- The character is `damage.go`'s, in the record's stance, form, presence or Righteous Fury (`threatForms`, which
+  also names the spec tried first; a spec without that aura is skipped), plus `threatExtraSpecs` and
+  `threatTaughtSpells`. `threatSimSpells` maps probes the sim declares under another id. The encounter has as many
+  dummies as the server split the bonus over, minus the caster when it was hit.
+- The spell is cast at the dummy with a forced hit and no crit, attack power pinned to the server's, missiles landing
+  at once, then the sim runs until just before anything later. Every tag of the id is measured; a tag landing nothing
+  (Rune Strike's queue) gives way to the next. One tick of the dot it leaves is then run.
+- `damage threat`: the sim's threat per damage point (`ThreatFromDamage`, of the tag dealing most) times `amount`,
+  against `damage.threat`. Not compared when neither the sim's cast nor the server spell deals damage.
+- `bonus`: the cast's threat on the dummy beyond its damage's, against `bonus.threat`. This reads what the sim's code
+  really adds (Lacerate's in-cast flat, Sunder Armor's 5% of attack power), not just `FlatThreatBonus`.
+- `tick bonus`: the same for one tick, against 0 (aura ticks run no `HandleThreatSpells`), or against the record's
+  bonus for a `threatTickSpells` probe, a server spell cast once per tick (Death and Decay's 52212), which gets no
+  `bonus` check.
+- Within 0.01 or 1e-4 relative. A cast that panics or deals NaN fails as `sim cast`; one that misses every try (Holy
+  Wrath on a giant) is compared with a note.
+
+Pets and non-80 characters fail. A spell no spec registers fails as `sim character`.
+
+`knownThreatMismatches` (class, form, spell, target override, check) lets a real difference through, each with a row
+in the fixture README; an entry no record fails fails the test. `TestThreatReplayOnHandCheckedRecords` tests the
+comparison without it.
+
 ## Golden characters
 
 `sim/core/testdata/simval/goldchar_setups.json` lists each non-healer golden suite's default player (suites
