@@ -143,8 +143,8 @@ first: some may be server quirks, not sim bugs.
 
 ## Current wave
 
-- Wave: T, running; base `866de1e3d`. EC-SHEET, EC-AOE merged; EC-SPELLMOD's and EC-THREAT's live stages rerun in
-  `wf_59a7bdbf-cbc`, EC-THREAT's rebuild waiting for Deathsong to go offline. Next: T2.
+- Wave: T, running; base `866de1e3d`. EC-SHEET, EC-AOE, EC-SPELLMOD merged; EC-THREAT's live stage reruns in
+  `wf_beaacdaa-bbc` on the worldserver the user rebuilt. Next: T2.
   Prod runs Q's `225191f1f`; R changes the optimizer's pool and the BiS tabs' hint.
 - Open: the talent sweep's unseen talents (test-enrichment INVESTIGATION, TE-SWEEP as built); from Q (parity
   INVESTIGATION, PAR-FU-4..7 as built): Ranged Weapon Specialization on Explosive Trap and magic procs, Glyph of
@@ -170,7 +170,7 @@ first: some may be server quirks, not sim bugs.
   - Then the BiS tooltip dataset (acbis driver, both stages, fresh `--out`, then `acbis`; the import needs
     the OK), the changed builds' stat weights, and the perf harness's `opt_*` scenarios (`update.sh`, a new
     baseline; the raid25 dumps in `_dump/optimizer_dump_test.go` still build uncut pools).
-- Workflow runIds: T's `wf_8a59e202-2f8` and `wf_59a7bdbf-cbc` (the live reruns; journals in the session's `subagents/workflows/<runId>`); S's `wf_ae61e19e-2c1`; R's `wf_445767f0-4a1` (base `9f1f2f94f`); Q's `wf_47a2be77-20d` and `wf_6f439290-bf9` (PAR-FU-5 and 6's live stages; base `fdbc3df49`); P's `wf_9c73b1de-ff3` (base `c678de53e`); O's `wf_cd004c46-c80` (base `b069c688b`); N's `wf_4b37e171-123` (base `7f4174efb`); M's `wf_8ab862a5-d37` (base `33da5ca34`); L's `wf_34052b28-d62`, `wf_1a26dbdb-51c`, `wf_ac1129b6-8d7`, `wf_a59f095c-4b7`, `wf_f5be2bcf-e23`,
+- Workflow runIds: T's `wf_8a59e202-2f8`, `wf_59a7bdbf-cbc` and `wf_beaacdaa-bbc` (the live reruns; journals in the session's `subagents/workflows/<runId>`); S's `wf_ae61e19e-2c1`; R's `wf_445767f0-4a1` (base `9f1f2f94f`); Q's `wf_47a2be77-20d` and `wf_6f439290-bf9` (PAR-FU-5 and 6's live stages; base `fdbc3df49`); P's `wf_9c73b1de-ff3` (base `c678de53e`); O's `wf_cd004c46-c80` (base `b069c688b`); N's `wf_4b37e171-123` (base `7f4174efb`); M's `wf_8ab862a5-d37` (base `33da5ca34`); L's `wf_34052b28-d62`, `wf_1a26dbdb-51c`, `wf_ac1129b6-8d7`, `wf_a59f095c-4b7`, `wf_f5be2bcf-e23`,
   `wf_42fc0b7c-42a`; args `wave<X>*-args.json` in `G:\DevStuff\GitHub\.wave-loop`, transcripts in
   `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\<runId>`.
 - J2's full-roster batch ran 2026-09-28 in 52 min at Quick, output in
@@ -521,6 +521,7 @@ crashed before F2, so its column starts there.
 | wave S cross-review | | `b9af4a09f` | 3 bugs fixed: known timing mismatches now name their passes (an unneeded one fails); the bare mana regen ones were the replay's own raid buff; the default `run.sh` skips TestSimvalTiming (module `dc14202`) |
 | EC-SHEET | merged | `1d217be59` | goldens unchanged; 1565 checks over 131 records of 32 bots; 38 drops (fixture README): ArmorDamageModifier armor, Rogue Endurance, block value from strength, Moonkin armor and AP, Blood-Gorged ArP, parry without the Parry spell, `.modify hp`'s stale max health, HunterMM's Trueshot Aura |
 | EC-AOE | merged | `beafed015` | goldens unchanged; `TestSimAOESpells`, 62 spells, 13 allowlisted, e.g. Holy Wrath and Mind Sear uncapped, guardian casts capped, the hunter pet's Swipe and Berserk Mangle single-target |
+| EC-SPELLMOD | merged | `6764063ac` | goldens unchanged; module `5309b16`; sweep live 13:22–13:40, 2251 probes over 30 paths: 448 steps agree, 377 move nothing, 253 not compared, 93 disagree (102 checks dropped, fixture README): % cost mods 1 high, cost talents missing (Benediction, Efficiency, Focused Rage, Mental Quickness, Shadow Focus), crit talents missing (Annihilation, Vicious Strikes, Tidal Mastery) or ×0.01 (Improved Searing Pain), Nature's Swiftness skipping heals |
 
 Later WIs are added as their wave starts.
 

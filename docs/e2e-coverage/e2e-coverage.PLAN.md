@@ -227,7 +227,7 @@ streamed into `tmp/`, tail stopped by PID; no restart, config or DB change):
     DruidBalancePhase3 arcane, MageFire and MageFrostFire arcane, WarlockDestruction fire).
 - Golden-neutral; no live run.
 
-### EC-SPELLMOD (T; golden-neutral; stages: spells, live)
+### EC-SPELLMOD (T, done; golden-neutral; stages: spells, live)
 
 - Spells: for each implemented talent with spell mods (auras 107/108 in its rank spell; 276 at `c27854a8d`), the
   spells it changes by the server's rule, `SpellInfo::IsAffectedBySpellMod`: same `family`, `familyFlags` against
