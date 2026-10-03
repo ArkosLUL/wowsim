@@ -373,7 +373,7 @@ is 15% of base mana in the sim, 25% on the server.
   - A worldserver crash at 17:02 during a run: `ServerMailReward::OnPlayerLogin`'s query callback ran after a bot's
     relog and read a null player (core's `server_mail` script, not the probe); Docker restarted it. It left the bot
     Svtleadhrneb (guid 540540) in `acore_characters`; its cleanup (`run.sh TestCleanupOrphans`) writes to the DB, so
-    it's left to the orchestrator.
+    it ran with the user's OK (18:06).
 
 ### EC-AOE (T, done; golden-neutral; offline)
 

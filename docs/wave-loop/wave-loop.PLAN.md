@@ -160,11 +160,9 @@ first: some may be server quirks, not sim bugs.
   talented spells cost 1 more in the sim, Bloodlust ticks run 1–4 ms short, the server hunter has 10% ranged
   haste the sim's lacks; Rupture and Slice and Dice untested with combo points; from T (e2e-coverage PLAN, EC-SHEET,
   EC-SPELLMOD, EC-THREAT and EC-AOE as built): the sim mismatches each lists, for T2, EC-THREAT's for EC-THREAT-FIX,
-  EC-SHEET's capture faults for EC-GEAR; orphan bot Svtleadhrneb (guid 540540, account 54595) from the 17:02 crash,
-  whose cleanup (`SIMVAL_ORPHANS=540540:1:1:54595 run.sh TestCleanupOrphans`) writes the DB, so it waits for the
-  user; `.simval threat`'s help row until the next ac-db-import; the sweeps' shared `sweepPrepare` (module
-  `25d88f9`) not yet run live; `.simval threat`'s live assist threat assumes the dummy is the only creature in
-  combat with the target.
+  EC-SHEET's capture faults for EC-GEAR; `.simval threat`'s help row until the next ac-db-import; the sweeps'
+  shared `sweepPrepare` (module `25d88f9`) not yet run live; `.simval threat`'s live assist threat assumes the dummy
+  is the only creature in combat with the target.
 - Deferred until X lands (the user's calls, 2026-10-02 and 10-03; each only on the user's go-ahead):
   - Rerun all 28 presets, tanks included, on the final HEAD: BIS-caps-race changes every racial search,
     `ff0920a96` the 16 builds `mage_*`, `rogue_*`, `warlock_*`, `warrior_arms`, `warrior_fury`,
@@ -528,7 +526,7 @@ crashed before F2, so its column starts there.
 | EC-SHEET | merged | `1d217be59` | goldens unchanged; 1565 checks over 131 records of 32 bots; 38 drops (fixture README): ArmorDamageModifier armor, Rogue Endurance, block value from strength, Moonkin armor and AP, Blood-Gorged ArP, parry without the Parry spell, `.modify hp`'s stale max health, HunterMM's Trueshot Aura |
 | EC-AOE | merged | `beafed015` | goldens unchanged; `TestSimAOESpells`, 62 spells, 13 allowlisted, e.g. Holy Wrath and Mind Sear uncapped, guardian casts capped, the hunter pet's Swipe and Berserk Mangle single-target |
 | EC-SPELLMOD | merged | `6764063ac` | goldens unchanged; module `5309b16`; sweep live 13:22–13:40, 2251 probes over 30 paths: 448 steps agree, 377 move nothing, 253 not compared, 93 disagree (102 checks dropped, fixture README): % cost mods 1 high, cost talents missing (Benediction, Efficiency, Focused Rage, Mental Quickness, Shadow Focus), crit talents missing (Annihilation, Vicious Strikes, Tidal Mastery) or ×0.01 (Improved Searing Pain), Nature's Swiftness skipping heals |
-| EC-THREAT | merged | `689d8c91e` | goldens unchanged; module `3cd16f5`; the worldserver the user rebuilt at 16:18 (the permission check refused the agent's rebuild; ac-db-import not rerun, so `.simval threat` lacks its help row); live 16:55–17:05, 114 records, 135 mismatches allowlisted for EC-THREAT-FIX (fixture README): `SpellLevel` bonus, unmodified and split flats, missing `spell_threat` rows, Dire Bear, Unholy Presence, Shadowform, Fanaticism never applied; a core `ServerMailReward` crash at 17:02 (bot relog) restarted the worldserver and left orphan bot Svtleadhrneb (guid 540540) |
+| EC-THREAT | merged | `689d8c91e` | goldens unchanged; module `3cd16f5`; the worldserver the user rebuilt at 16:18 (the permission check refused the agent's rebuild; ac-db-import not rerun, so `.simval threat` lacks its help row); live 16:55–17:05, 114 records, 135 mismatches allowlisted for EC-THREAT-FIX (fixture README): `SpellLevel` bonus, unmodified and split flats, missing `spell_threat` rows, Dire Bear, Unholy Presence, Shadowform, Fanaticism never applied; a core `ServerMailReward` crash at 17:02 (bot relog) restarted the worldserver and left orphan bot Svtleadhrneb (guid 540540; removed 18:06, the user's OK) |
 | wave T cross-review | | `9b134ed60` | no bugs; a health-cost timing record (Bloodrage) parses; the damage, timing and threat replays share one sim setup and aura lookup; the golden-character check builds its sim once; the sweeps share `sweepPrepare` (module `25d88f9`) |
 
 Later WIs are added as their wave starts.
