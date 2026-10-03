@@ -44,6 +44,17 @@ func serverFirstSchool(school SpellSchool) stats.SchoolIndex {
 	return stats.SchoolIndexNone
 }
 
+// costCache holds a spell's last ApplyCostModifiers result and the inputs it came from. Class code
+// changes those inputs by hand, so a read compares them all instead of waiting for an invalidation.
+type costCache struct {
+	base, spellMult, spellFlat, unitMult, unitFlat, schoolFlat, schoolMult float64
+	cost                                                                   float64
+
+	school   stats.SchoolIndex
+	schoolOf SpellSchool // the SpellSchool school was resolved from
+	valid    bool
+}
+
 // costSchool is the school the cost auras read: the spell's own, or the server's for a spell the sim
 // declares none for (Rapid Fire, Water Elemental).
 func (spell *Spell) costSchool() stats.SchoolIndex {
@@ -68,6 +79,8 @@ func (spell *Spell) costUnits() float64 {
 
 // costFor runs the server's arithmetic on the base cost. pct and flat are the dynamic spell mods on top of the
 // spell's static ones, schoolFlat and schoolMult the first school's auras.
+// important: ApplyCostModifiers caches the result, so a new input goes into costCache's key, or into
+// setStaticCost's reset if only that sets it.
 func (spell *Spell) costFor(base, pct, flat, schoolFlat, schoolMult float64) float64 {
 	scale := spell.costUnits()
 	cost := truncCost(base*scale) + schoolFlat
@@ -82,12 +95,31 @@ func (spell *Spell) costFor(base, pct, flat, schoolFlat, schoolMult float64) flo
 
 // ApplyCostModifiers returns the cost to pay for a spell whose base cost is the given (DefaultCast.Cost).
 func (spell *Spell) ApplyCostModifiers(base float64) float64 {
+	c := &spell.costCache
 	ps := &spell.Unit.PseudoStats
-	school := spell.costSchool()
-	return spell.costFor(base,
-		(spell.CostMultiplier-1)+(ps.CostMultiplier-1),
-		spell.CostFlat+ps.CostFlat,
-		ps.SchoolCostFlat[school], ps.SchoolCostMultiplier[school])
+	// -0 and +0 compare equal, fine since costFor gives both the same cost
+	if !c.valid || c.schoolOf != spell.SpellSchool || base != c.base ||
+		spell.CostMultiplier != c.spellMult || spell.CostFlat != c.spellFlat ||
+		ps.CostMultiplier != c.unitMult || ps.CostFlat != c.unitFlat ||
+		ps.SchoolCostFlat[c.school] != c.schoolFlat || ps.SchoolCostMultiplier[c.school] != c.schoolMult {
+		spell.updateCost(base)
+	}
+	return c.cost
+}
+
+func (spell *Spell) updateCost(base float64) {
+	c := &spell.costCache
+	// RegisterSpell sets a schoolless spell's server data before any cost read, so only a SpellSchool
+	// change needs the school resolved again
+	if !c.valid || c.schoolOf != spell.SpellSchool {
+		c.school, c.schoolOf = spell.costSchool(), spell.SpellSchool
+	}
+	ps := &spell.Unit.PseudoStats
+	c.base, c.spellMult, c.spellFlat = base, spell.CostMultiplier, spell.CostFlat
+	c.unitMult, c.unitFlat = ps.CostMultiplier, ps.CostFlat
+	c.schoolFlat, c.schoolMult = ps.SchoolCostFlat[c.school], ps.SchoolCostMultiplier[c.school]
+	c.cost = spell.costFor(base, (c.spellMult-1)+(c.unitMult-1), c.spellFlat+c.unitFlat, c.schoolFlat, c.schoolMult)
+	c.valid = true
 }
 
 // StaticCost is the cost with only the talents that never change (the options' Multiplier and FlatMod): what
@@ -137,4 +169,5 @@ func (spell *Spell) setStaticCost(multiplier, flatMod, scale float64) {
 	}
 	spell.costStaticFlat = flatMod
 	spell.costScale = scale
+	spell.costCache = costCache{}
 }
