@@ -197,7 +197,7 @@ streamed into `tmp/`, tail stopped by PID; no restart, config or DB change):
     talents, tick period truncation under Bloodlust, finishers probed without combo points, and 10% ranged haste on
     the bare server hunter. The sim wasn't changed.
 
-### EC-SHEET (T; golden-neutral; offline)
+### EC-SHEET (T, done; golden-neutral; offline)
 
 - `checkGoldcharInfo` (`tools/simval/goldchar.go`) also compares each `info` record's stats, max health, max power,
   armor, resistances, AP, RAP, dodge, parry, block, block value, ArP%, and each school's spell power and crit, not
@@ -263,7 +263,7 @@ streamed into `tmp/`, tail stopped by PID; no restart, config or DB change):
 - **Owns:** module `src/SimValidationCommands.cpp`, `simval_commands.sql`, `e2e/threat_test.go`, its module README
   rows; `tools/simval/threat.go`, its test and fixture, its fixture README rows, the simval README's Threat probe.
 
-### EC-AOE (T; golden-neutral; offline)
+### EC-AOE (T, done; golden-neutral; offline)
 
 - `TestAOECapMultiplier` already covers the cap's formula; this checks which spells get it, and chain values.
   Class code hand-codes chain jumps (`sim/shaman/chain_lightning.go`), so the test keeps a list: spell id → jumps,
