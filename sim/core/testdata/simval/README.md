@@ -17,6 +17,10 @@ replays it through `CheckRecord` on every `go test`, and `int-check.sh` runs it 
 `goldchar.jsonl` holds `TestSimvalGoldenCharacters`' `info` and `damage` records, which `TestGoldenCharacters`
 replays against `goldchar_setups.json` ([tools/simval](../../../../tools/simval/README.md#golden-characters)).
 
+`buffs.jsonl` holds `TestSimvalBuffs`' `BUFFS` lines, which `TestBuffRecords` replays
+([tools/simval](../../../../tools/simval/README.md#buffs)). A disagreeing state or check goes in `droppedBuffs`
+(`tools/simval/buffs_test.go`) with a row here; its line stays.
+
 A record of any of these files that disagrees with the sim is a real mismatch: it's dropped from the file and
 listed here, and the sim isn't changed.
 
@@ -118,6 +122,14 @@ run's records with the Rogue's from a rerun.
 | damage threat | 42926 Flamestrike x0.9 vs x0.8; 47610 Frostfire Bolt x0.68 vs x0.72 | Burning Soul at 5% a point; the server multiplies the two talents, the sim adds them |
 | damage threat | ShadowPriest 48127, 58381, 48125, 48160, 48158 x0.76 vs x0.525; 48300 x0.85; 48123 Smite x1 vs x0.7 | Shadowform's 30% is missing in the sim; Shadow Affinity is 24% there (15% on Devouring Plague), 25% on the server |
 | damage threat | 47815 Searing Pain x0.8 vs x1.6 | a `spell_threat` x2 the sim lacks |
+
+`buffs.jsonl`, each in `droppedBuffs` (`tools/simval/buffs_test.go`). Lines stay; a dropped state or check is only
+logged.
+
+| Setup | State | Check | Why |
+|---|---|---|---|
+| RogueAssassination | debuff.curse_of_weakness+debuff.vindication | dummy armor, armor multiplier | AP Debuffs (spell_group 1062) is exclusive highest per aura: Vindication's -574 AP removes the whole Curse of Weakness (-573), its 5% armor too; the sim keeps the armor |
+| RogueAssassination | debuff.insect_swarm+debuff.scorpid_sting | dummy melee hit % | -6% on the server: `HandleModHitChance` adds each to a creature's `m_modMeleeHitChance`, which the miss roll reads raw, so Hit Chance Debuffs' same-effect rule (1060) never applies; the sim keeps -3% |
 
 ## Spells missing from serverdata
 
