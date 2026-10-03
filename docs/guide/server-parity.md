@@ -80,6 +80,25 @@ class by simval.
   `spellModDamage`. A holy spell dealing weapon damage (seal procs, judgements)
   skips physical percent mods such as Two-Handed Weapon Specialization: `Spell::EffectWeaponDmg` and
   `Unit::MeleeDamageBonusDone` match auras by school.
+- **Spell costs** (`sim/core/cost.go`; `SpellInfo::CalcPowerCost`, `Player::ApplySpellMod`): truncated base
+  plus the first school's flat aura (Spark of Hope), then × (1 + Σ `SPELLMOD_COST` percents) + Σ flats,
+  truncated, then × (1 + the first school's cost-multiplier aura, e.g. Power Infusion, Precision, Beast
+  Within), truncated, at least 0. Percents add, never multiply; rage is in tenths. `DefaultCast.Cost` is the
+  base; `StaticCost()` has the never-changing talents (options' `Multiplier`, `FlatMod`) and is what rotations
+  read. Dynamic mods: `Spell.CostMultiplier`/`CostFlat`, `PseudoStats.CostMultiplier`/`CostFlat`,
+  `Unit.AddSchoolCostMultiplier`/`AddSchoolCostFlat`.
+- **Stat sheet:** armor on jewelry, weapons and `ArmorDamageModifier` is bonus armor for every class
+  (`Player::_ApplyItemBonuses`); block value is half a point a strength for every player. Moonkin Form ×4.7
+  item armor (24905) and the weapon's feral AP.
+- **Nature's Swiftness** makes instant what its aura's class mask covers (`Spell.AffectedByAuraEffect`): heals
+  and Rebirth, not Starfire.
+- **Hasted channels:** the server truncates the duration and the tick period each (`int32(x × cast speed)`),
+  so the aura can outlast period × ticks by a few ms.
+- **AoE cap** counts every unit the effect hits (`AOECapMultiplierFor`): the caster of Thunderstorm and the
+  Thermal Sapper, not the target a script drops (Mind Sear tick, Starfall splash). Guardians' casts and
+  Explosive Decoy's blast are uncapped.
+- **Power Infusion and Arcane Power** share group 1123 with no common aura type: the one cast last removes the
+  other.
 - **Armor debuffs:** Sunder ×5 (debuff 58567, not ability 47467) and Expose Armor don't stack. Faerie
   Fire multiplies.
 - **Timing and procs** (the rest is under [Spell data and timing](#spell-data-and-timing)):

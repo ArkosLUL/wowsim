@@ -4,6 +4,7 @@ import (
 	"math"
 	"testing"
 
+	"github.com/wowsims/wotlk/sim/core/serverdata"
 	"github.com/wowsims/wotlk/sim/core/stats"
 )
 
@@ -132,5 +133,17 @@ func TestStaticCostIgnoresDynamicMods(t *testing.T) {
 	}
 	if got := spell.StaticCostWithPercent(-0.5); got != 21 {
 		t.Errorf("static cost under Berserk = %v, want 21", got)
+	}
+}
+
+func TestCostSchoollessSpellUsesServerSchool(t *testing.T) {
+	spell := costTestSpell(SpellSchoolNone, 100, 1)
+	spell.Unit.AddSchoolCostMultiplier(SpellSchoolPhysical, -0.5)
+	if got := spell.ApplyCostModifiers(100); got != 100 {
+		t.Errorf("no server data = %v, want 100", got)
+	}
+	spell.serverSpell = &serverdata.Spell{SchoolMask: 1}
+	if got := spell.ApplyCostModifiers(100); got != 50 {
+		t.Errorf("server school physical = %v, want 50", got)
 	}
 }

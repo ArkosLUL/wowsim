@@ -44,6 +44,17 @@ func serverFirstSchool(school SpellSchool) stats.SchoolIndex {
 	return stats.SchoolIndexNone
 }
 
+// costSchool is the school the cost auras read: the spell's own, or the server's for a spell the sim
+// declares none for (Rapid Fire, Water Elemental).
+func (spell *Spell) costSchool() stats.SchoolIndex {
+	if spell.SpellSchool == SpellSchoolNone {
+		if sd := spell.ServerSpell(); sd != nil {
+			return serverFirstSchool(SpellSchoolFromServerMask(sd.SchoolMask))
+		}
+	}
+	return serverFirstSchool(spell.SpellSchool)
+}
+
 func truncCost(x float64) float64 {
 	return math.Floor(x + costEpsilon)
 }
@@ -72,7 +83,7 @@ func (spell *Spell) costFor(base, pct, flat, schoolFlat, schoolMult float64) flo
 // ApplyCostModifiers returns the cost to pay for a spell whose base cost is the given (DefaultCast.Cost).
 func (spell *Spell) ApplyCostModifiers(base float64) float64 {
 	ps := &spell.Unit.PseudoStats
-	school := serverFirstSchool(spell.SpellSchool)
+	school := spell.costSchool()
 	return spell.costFor(base,
 		(spell.CostMultiplier-1)+(ps.CostMultiplier-1),
 		spell.CostFlat+ps.CostFlat,

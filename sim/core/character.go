@@ -156,6 +156,7 @@ func NewCharacter(party *Party, partyIndex int, player *proto.Player) Character 
 
 	character.AddStats(character.baseStats)
 	character.addUniversalStatDependencies()
+	character.addPlayerStatDependencies()
 	character.addClassStatDependencies()
 	character.PseudoStats.MeleeHasteRatingPerHastePercent = RatingPerPercent(character.Class, CRHasteMelee)
 	character.PseudoStats.ArmorPenRatingPerPercent = RatingPerPercent(character.Class, CRArmorPenetration)
@@ -248,6 +249,10 @@ func (character *Character) addUniversalStatDependencies() {
 	character.AddStat(stats.Health, 20-10*20)
 	character.AddStatDependency(stats.Stamina, stats.Health, 10)
 	character.AddStatDependency(stats.Agility, stats.Armor, 2)
+}
+
+// addPlayerStatDependencies are the ones pets and guardians don't get.
+func (character *Character) addPlayerStatDependencies() {
 	// armor on jewelry, weapons and ArmorDamageModifier is TOTAL_VALUE armor for every class
 	character.AddStatDependency(stats.BonusArmor, stats.Armor, 1)
 	// Player::GetShieldBlockValue gives every class half a point per strength
