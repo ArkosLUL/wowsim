@@ -128,9 +128,11 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
     3. Keep lines whose `unixMs` is at or after the start, dedupe by line (`awk '!seen[$0]++'`).
     4. `dock.sh run ./tools/simval -records /wotlk/tmp/<capture> -fixture` replaces the fixture. Every
        failing record is a sim/server mismatch: remove it, add a row to the fixture README, and open a
-       follow-up. Never fix the sim here. Move the `damage` lines to `damage.jsonl`.
-- `damage.jsonl`, `goldchar.jsonl` and `talents.jsonl` in the same folder each have their own replay test and live
-  capture: the [simval README](../../tools/simval/README.md)'s Damage probe, Golden characters and Talent sweep.
+       follow-up. Never fix the sim here. Move the `damage` lines to `damage.jsonl`, and the `timing` lines with
+       the timing bots' `info` lines to `timing.jsonl`.
+- `damage.jsonl`, `timing.jsonl`, `goldchar.jsonl` and `talents.jsonl` in the same folder each have their own replay
+  test and live capture: the [simval README](../../tools/simval/README.md)'s Damage probe, Timing probe, Golden
+  characters and Talent sweep.
 - `TestSimSpellGroups` (`sim/spell_groups_test.go`, offline) checks the sim's exclusive-effect categories against
   the server's `spell_group` rules in `sim/core/testdata/simval/spell_groups.json`; the export query is in its
   doc comment. A pair the two disagree on needs a reason in `spellGroupAllowances`, and a stale entry fails.

@@ -139,7 +139,7 @@ never compared with the server. The deferred BiS chain waits until X lands (the 
 
 ## Current wave
 
-- Wave: S, running; base `f34e77392`. EC-SWEEP2, EC-STACK, EC-TIMING: implementing.
+- Wave: S, running; base `f34e77392`. EC-SWEEP2, EC-STACK, EC-TIMING merged; cross-review next.
   Prod runs Q's `225191f1f`; R changes the optimizer's pool and the BiS tabs' hint.
 - Open: the talent sweep's unseen talents (test-enrichment INVESTIGATION, TE-SWEEP as built); from Q (parity
   INVESTIGATION, PAR-FU-4..7 as built): Ranged Weapon Specialization on Explosive Trap and magic procs, Glyph of
@@ -499,6 +499,9 @@ crashed before F2, so its column starts there.
 | wave Q cross-review | | `b595e8c0c` | no bugs past the e2e's always-passing 71167 check (module `d0699fa`); every golden-character and sweep drop is gone |
 | BIS-outclassed | merged | `9df3b9044` | goldens unchanged. Ret pools 2.6k–4.6k to 1.2k–3.2k candidates; slow-suite gains move both ways, Fury P1 Normal −45 |
 | wave R cross-review | | | no bugs, nothing changed; the glossary's "Outclassed gear" reworded at close-out |
+| EC-SWEEP2 | merged | `053eed5e8` | goldens unchanged; 6 talent paths rerun live 10:18–10:23 (146 records); 7 steps dropped (fixture README): Mace Specialization on daggers, Blood-Gorged, Frigid Dreadplate's ranged, Arctic Winds, 3 fire-crit |
+| EC-STACK | merged | `6fa263419` | goldens unchanged; 113 server spell groups; 14 real mismatches allowlisted, e.g. Power Infusion with Arcane Power, Bestial Wrath and Enrage with Hysteria, poisons with the crit debuffs |
+| EC-TIMING | merged | `015036135` | goldens unchanged; module `9557bed`, server rebuilt 10:41–10:46; 1513 checks over 192 live records; known mismatches (fixture README): bare mana regen, some costs, Bloodlust tick rounding, the hunter's 10% ranged haste |
 
 Later WIs are added as their wave starts.
 

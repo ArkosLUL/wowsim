@@ -48,7 +48,7 @@ haste stacking beyond EC-BUFFS' pairs.
 
 ## Work items
 
-### EC-SWEEP2 (S; golden-neutral; stages: code, live)
+### EC-SWEEP2 (S, done; golden-neutral; stages: code, live)
 
 - `rawTalentInfo.project` and `talentRecord` keep ArP% (`armorPenetrationAuraPct`) and each attack's
   `missChanceTaken` (Frigid Dreadplate, Arctic Winds); `sheet`, `sweepSheet` and `compareSweepSheets` compare them
@@ -94,7 +94,7 @@ streamed into `tmp/`, tail stopped by PID; no restart, config or DB change):
   - Frigid Dreadplate ranged miss taken: server +0, sim +3 (the server aura is melee only).
   - Arctic Winds miss taken, all three attacks: server +5, sim +0 (the sim models only the frost damage).
 
-### EC-STACK (S; golden-neutral; offline)
+### EC-STACK (S, done; golden-neutral; offline)
 
 - Export `acore_world.spell_group` and `spell_group_stack_rules` (SELECT) to
   `sim/core/testdata/simval/spell_groups.json`; the query goes in the test's doc comment.
@@ -136,7 +136,7 @@ streamed into `tmp/`, tail stopped by PID; no restart, config or DB change):
 - Negative check: removing the Power Infusion and Arcane Power entry fails the test naming that pair. No live
   run.
 
-### EC-TIMING (S; golden-neutral; C++; stages: C++ and e2e, sim, live)
+### EC-TIMING (S, done; golden-neutral; C++; stages: C++ and e2e, sim, live)
 
 - `.simval timing <spellId> [pet]` records:
   - cast time: `SpellInfo::CalcCastTime(caster, &probe)`, with a stack `Spell probe(player, info, TRIGGERED_NONE)`
