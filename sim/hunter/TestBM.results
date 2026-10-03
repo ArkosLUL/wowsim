@@ -1262,12 +1262,6 @@ ability_results: {
    }
   }
   entries: {
-   key: "player|aura|{SpellID: 19574}"
-   value: {
-    uptime_s: 46.79491
-   }
-  }
-  entries: {
    key: "player|aura|{SpellID: 25899}"
    value: {
     uptime_s: 299.9236
@@ -1295,6 +1289,12 @@ ability_results: {
    key: "player|aura|{SpellID: 34074}"
    value: {
     uptime_s: 15.18488
+   }
+  }
+  entries: {
+   key: "player|aura|{SpellID: 34471}"
+   value: {
+    uptime_s: 46.79491
    }
   }
   entries: {
@@ -1808,12 +1808,6 @@ ability_results: {
    }
   }
   entries: {
-   key: "player|aura|{SpellID: 19574}"
-   value: {
-    uptime_s: 46.79491
-   }
-  }
-  entries: {
    key: "player|aura|{SpellID: 25899}"
    value: {
     uptime_s: 299.9236
@@ -1841,6 +1835,12 @@ ability_results: {
    key: "player|aura|{SpellID: 34074}"
    value: {
     uptime_s: 6.5867
+   }
+  }
+  entries: {
+   key: "player|aura|{SpellID: 34471}"
+   value: {
+    uptime_s: 46.79491
    }
   }
   entries: {
