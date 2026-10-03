@@ -8,6 +8,9 @@ replays it through `CheckRecord` on every `go test`, and `int-check.sh` runs it 
 `damage.jsonl` holds `TestSimvalDamage`'s `damage` records, which `TestDamageRecords` replays
 ([tools/simval](../../../../tools/simval/README.md#damage-probe)).
 
+`timing.jsonl` holds `TestSimvalTiming`'s `timing` records and its bots' `info` records (regen), which
+`TestTimingRecords` replays ([tools/simval](../../../../tools/simval/README.md#timing-probe)).
+
 `goldchar.jsonl` holds `TestSimvalGoldenCharacters`' `info` and `damage` records, which `TestGoldenCharacters`
 replays against `goldchar_setups.json` ([tools/simval](../../../../tools/simval/README.md#golden-characters)).
 
@@ -46,6 +49,19 @@ or field is only logged.
 | DeathknightBlood | bloodGorged | armor penetration % | the sim keeps it as a health-gated aura, not in its armor penetration |
 | DeathknightFrost | frigidDreadplate | ranged miss taken % | the server aura is melee only; the sim lowers all three attacks |
 | MageFrost | arcticWinds | mainhand, offhand and ranged miss taken % | the sim models only the frost damage, not the hit taken |
+
+`timing.jsonl`, each in `knownTimingMismatches` (`tools/simval/timing.go`, keyed by class, spell and check name). The
+record stays and the check still runs; its failure is let through. `droppedTimingRecords` is empty.
+
+| Class | Spell | Check | Why |
+|---|---|---|---|
+| Paladin, Priest, Druid, Warlock, Mage | 0 (the bot's `info`) | mana regen | the sim's bare mana regen is 0.2% (paladin), 0.6% (warlock), 15% (mage), 38% (priest, druid) off the server's; cause not found |
+| Paladin | 31884 Avenging Wrath | cost | the sim costs 351, the server 315 with the talents on: the sim misses a discount |
+| Paladin, Priest, Druid, Hunter, Shaman | 48801, 48819, 48066, 48071, 48463, 48465, 49001, 49050, 49231, 49271 | cost | with talents the sim's cost is 1 above the server's |
+| Shaman | 49273 Healing Wave | cost | the sim applies a discount of about 40% (659) the server doesn't (1099) |
+| Mage, Warlock, Druid, Shaman | 42846 Arcane Missiles, 47855 Drain Soul, 48467 Hurricane, 49233 Flame Shock | channel, aura duration | under Bloodlust the sim truncates the tick period to whole ms, so 1 to 4 ms short |
+| Rogue | 48672 Rupture, 6774 Slice and Dice | aura duration, e0 ticks | the probe has no combo points; the sim's finisher has no duration (Rupture) or its 5-point one (Slice and Dice) |
+| Hunter | 49001, 49050, 49052, 63672 | ranged speed, cast time | the bare server hunter has 10% ranged haste (0.9091) the sim hunter lacks |
 
 ## Spells missing from serverdata
 

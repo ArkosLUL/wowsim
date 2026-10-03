@@ -164,6 +164,36 @@ streamed into `tmp/`, tail stopped by PID; no restart, config or DB change):
   `e2e/timing_test.go`, the module README's Commands row and timing paragraph; `tools/simval/timing.go`,
   `timing_test.go`, `timing.jsonl`, its fixture README rows, the simval README's Timing probe.
 
+#### As built
+
+- C++ and e2e (compile-checked with `-fsyntax-only -Werror`, e2e vetted):
+  - `.simval timing <spellId> [pet]`, record format in the module README. Where the spec says copy, the arithmetic is
+    copied (GCD, cooldown); `Unit::ModSpellDuration` and `ApplyDiminishingToDuration` are public, so they're called.
+    `cast` also gives the haste kind and the cast time before haste. `channelMs` and the death knight's
+    `baseCooldownMs` are extras.
+  - The probe skips persistent area auras (Consecration): `aura.applies` is false for it. Hurricane has its own.
+  - Player snapshots gain `regen` (flat and interrupted per power, rune regen, mana and energy rates).
+  - `TestSimvalTiming`: 5 or 6 spells and 2 to 5 talent auras per class, three passes (bare, talents, Bloodlust on
+    top), a bare and a Bloodlust `info` per bot.
+  - A full recapture of `simval.jsonl` brings `timing` lines (move them to `timing.jsonl`) and the bots' `info`
+    lines; the replays ignore fields they don't read.
+- Sim (`tools/simval/timing.go`, `TestTimingRecords`): replays `timing.jsonl` and the bots' `info` regen against the
+  sim's spell, dot, aura and cost; checks in the simval README's Timing probe. Hand-built records test the comparison.
+- Probes the sim has no spell for were swapped in the e2e: Death Coil is 49895 (47541 is rank 1), Holy Light, Healing
+  Touch, Smite, Frost Nova, Immolation Trap, Cloak of Shadows and Sprint became Divine Storm, Wrath, Devouring Plague,
+  Arcane Blast, Explosive Trap and Eviscerate (the rogue has 5 spells).
+- Live (rebuilt with `docker compose build ac-db-import ac-worldserver && up -d` at 10:41 to 10:46 with Deathsong
+  offline; `TestSimvalTiming` ran 10:46 to 10:55, three times, the last one clean): no assert or crash in the
+  worldserver log, no aura left behind, mana regen above 0 on every mana class. `timing.jsonl` is that last run's 174
+  `timing` and 20 bot `info` lines.
+  - Fixed on the way: the e2e expected Hurricane to have no aura, but its effect 2 is a periodic aura; the replay took
+    the server's rune costs as blood, frost, unholy (they are blood, unholy, frost) and compared a negative cast time
+    (hunter spells, -999500) before the server clamps it.
+  - 1513 checks over 192 compared records pass; the differences left are in `knownTimingMismatches` and the fixture
+    README: mana regen of five classes' bare characters, Avenging Wrath and Healing Wave costs, cost off by 1 with
+    talents, tick period truncation under Bloodlust, finishers probed without combo points, and 10% ranged haste on
+    the bare server hunter. The sim wasn't changed.
+
 ### EC-SHEET (T; golden-neutral; offline)
 
 - `checkGoldcharInfo` (`tools/simval/goldchar.go`) also compares each `info` record's stats, max health, max power,
