@@ -139,14 +139,22 @@ never compared with the server. The deferred BiS chain waits until X lands (the 
 
 ## Current wave
 
-- Wave: S, running; base `f34e77392`. EC-SWEEP2, EC-STACK, EC-TIMING merged; cross-review next.
+- Wave: S, landed (master fast-forwarded to this close-out). Next: T (EC-SHEET, EC-SPELLMOD, EC-THREAT, EC-AOE).
   Prod runs Q's `225191f1f`; R changes the optimizer's pool and the BiS tabs' hint.
 - Open: the talent sweep's unseen talents (test-enrichment INVESTIGATION, TE-SWEEP as built); from Q (parity
   INVESTIGATION, PAR-FU-4..7 as built): Ranged Weapon Specialization on Explosive Trap and magic procs, Glyph of
   Totem of Wrath's 84 spell power unverified live, aura-163 crit damage adds on the server for specials (the sim
   multiplies), a shaman's block value lacks strength/2, and 72-point Fury and Balance strings in the optimizer's
   test inputs and `gen_db`; from R (BIS-outclassed as built): the response curves span the pool's stat range,
-  so the cut moved Fury P1's Normal pick 45 J below the uncut pool's, every item of which it still holds.
+  so the cut moved Fury P1's Normal pick 45 J below the uncut pool's, every item of which it still holds; from S
+  (e2e-coverage PLAN, EC-SWEEP2, EC-STACK and EC-TIMING as built), each dropped or allowlisted: on the server
+  Mace Specialization adds 15 ArP without a mace, Blood-Gorged 10 ArP, Arctic Winds 5% miss taken, and Frigid
+  Dreadplate lowers melee misses only; Holy Specialization uncompared (the Discipline path builds a Shadow
+  priest); the sim has no per-school crit sheet (3 fire-crit drops); Power Infusion and Arcane Power don't stack
+  on the server, Bestial Wrath and Enrage stack with Hysteria and Tricks, and Master Poisoner stacks with Heart
+  of the Crusader and Totem of Wrath only in the sim; Avenging Wrath and Healing Wave cost differently, 10
+  talented spells cost 1 more in the sim, Bloodlust ticks run 1–4 ms short, the server hunter has 10% ranged
+  haste the sim's lacks; Rupture and Slice and Dice untested with combo points.
 - Deferred until X lands (the user's calls, 2026-10-02 and 10-03; each only on the user's go-ahead):
   - Rerun all 28 presets, tanks included, on the final HEAD: BIS-caps-race changes every racial search,
     `ff0920a96` the 16 builds `mage_*`, `rogue_*`, `warlock_*`, `warrior_arms`, `warrior_fury`,
@@ -195,6 +203,7 @@ Reckoning that way), but J isn't DPS: see below.
 | P | 8725.1, +224 / +284 | 10730.8, +734 / +777 | 5066.6, +41 / +48 | 12963.8, +175 / +232 | -17821.9, +4836 / +4799 | -1056.8, +913 / +900 |
 | Q | 8715.9, +195 / +276 | 10730.8, +734 / +777 | 5066.6, +41 / +48 | 12963.8, +175 / +232 | -17856.7, +4842 / +4804 | -1056.8, +913 / +900 |
 | R | 8715.9, +236 / +230 | 10730.8, +708 / +903 | 5066.6, +41 / +51 | 12963.8, +148 / +225 | -17856.7, +4795 / +4847 | -1056.8, +917 / +888 |
+| S | 8715.9, +236 / +230 | 10730.8, +708 / +903 | 5066.6, +41 / +51 | 12963.8, +148 / +225 | -17856.7, +4795 / +4847 | -1056.8, +917 / +888 |
 
 Quick / Normal. Ret P4 ran at Quick only in wave D, after the glyph fix; its wave C numbers
 (12821.9, +54 / +73) came from a seed that wore the glyph. The two tanks arrive with
@@ -353,6 +362,8 @@ Ret -10%. Q's sim changes are class-local: noise.
 
 R has no row: it changes no sim code, and a game held 13–16% of the host's CPU.
 
+S has no row: it changes no sim code.
+
 E to F2 ran the old requests: one iteration, and no rotation for Ret, Hunter and Elemental.
 
 | Wave | Combat Rogue | Ret Paladin | Hunter | Elemental | Raid |
@@ -502,6 +513,7 @@ crashed before F2, so its column starts there.
 | EC-SWEEP2 | merged | `053eed5e8` | goldens unchanged; 6 talent paths rerun live 10:18–10:23 (146 records); 7 steps dropped (fixture README): Mace Specialization on daggers, Blood-Gorged, Frigid Dreadplate's ranged, Arctic Winds, 3 fire-crit |
 | EC-STACK | merged | `6fa263419` | goldens unchanged; 113 server spell groups; 14 real mismatches allowlisted, e.g. Power Infusion with Arcane Power, Bestial Wrath and Enrage with Hysteria, poisons with the crit debuffs |
 | EC-TIMING | merged | `015036135` | goldens unchanged; module `9557bed`, server rebuilt 10:41–10:46; 1513 checks over 192 live records; known mismatches (fixture README): some costs, Bloodlust tick rounding, the hunter's 10% ranged haste |
+| wave S cross-review | | `b9af4a09f` | 3 bugs fixed: known timing mismatches now name their passes (an unneeded one fails); the bare mana regen ones were the replay's own raid buff; the default `run.sh` skips TestSimvalTiming (module `dc14202`) |
 
 Later WIs are added as their wave starts.
 
