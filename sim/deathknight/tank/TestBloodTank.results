@@ -25,7 +25,7 @@ character_stats_results: {
   final_stats: 1304.93
   final_stats: 669.96245
   final_stats: 0
-  final_stats: 0
+  final_stats: 803.36187
   final_stats: 293
   final_stats: 679.68094
   final_stats: 15
@@ -1042,8 +1042,8 @@ dps_results: {
 dps_results: {
  key: "TestBloodTank-Talents-UnholyPresence-Average"
  value: {
-  dps: 2684.82019
-  tps: 2819.47647
+  dps: 2692.64865
+  tps: 2827.30493
   dtps: 363.81229
  }
 }
@@ -2245,9 +2245,9 @@ ability_results: {
    value: {
     casts: 30.541
     hits: 27.744
-    crit_pct: 24.01961
-    amount_per_hit: 1714.53793
-    amount: 47568.14047
+    crit_pct: 30.13264
+    amount_per_hit: 1799.17519
+    amount: 49916.31637
    }
   }
   entries: {

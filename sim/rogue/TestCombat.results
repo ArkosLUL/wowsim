@@ -3,7 +3,7 @@ character_stats_results: {
  value: {
   final_stats: 393.8
   final_stats: 1493.8
-  final_stats: 1463
+  final_stats: 1492.26
   final_stats: 187
   final_stats: 242.462
   final_stats: 500
@@ -21,21 +21,21 @@ character_stats_results: {
   final_stats: 0
   final_stats: 0
   final_stats: 0
-  final_stats: 9358.6
+  final_stats: 9380.1
   final_stats: 5255.58
   final_stats: 0
   final_stats: 0
+  final_stats: 196.9
   final_stats: 0
   final_stats: 0
   final_stats: 0
-  final_stats: 0
-  final_stats: 22054
+  final_stats: 22346.6
   final_stats: 75
   final_stats: 75
   final_stats: 75
   final_stats: 75
   final_stats: 130
-  final_stats: 0
+  final_stats: 21.5
   final_stats: 0
   final_stats: 0
   final_stats: 0
@@ -450,7 +450,7 @@ dps_results: {
  value: {
   dps: 6767.8543
   tps: 4805.17655
-  hps: 11.24754
+  hps: 11.39677
  }
 }
 dps_results: {
