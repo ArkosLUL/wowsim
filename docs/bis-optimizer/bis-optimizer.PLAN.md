@@ -1557,8 +1557,8 @@ Built as specified, with three departures:
 - **Extra Go checks:** every fixture's warm-start items sit in a pool, the seed or the equipped gear.
 
 The committed fixtures were stale against the base (catalog moved since a37ab8041), so "before" is the base
-code's fresh output. Machine loaded throughout: every time below is loaded; the idle re-time is the
-orchestrator's. Requests, outputs, traces, binaries and `commands.txt` are in `tmp/optimizer`.
+code's fresh output. The next two tables ran loaded; the idle re-time follows them. Requests, outputs,
+traces, binaries and `commands.txt` are in `G:/DevStuff/GitHub/.wave-loop/outclassed-tmp/optimizer`.
 
 | Fixture | Candidates | Request bytes |
 |---|---|---|
@@ -1594,3 +1594,25 @@ Fury p1 Normal's −45 isn't a lost item: rerun on the new code over the uncut p
 every item of that pick is still in the cut pool. The stat curves are measured across the pool's stat range,
 so the cut moves them (ArP breakpoint 111.6 → 69.9, Dreadnaught 4pc 105.3 → 94.0) and the search lands on
 another set. The ±2–3 se gains elsewhere move both ways for the same reason.
+
+Idle re-time at `3ace3c2ad` (AC containers stopped, host 6–13% CPU) by `.wave-loop/rebase-r-idle.sh`, logs in
+`.wave-loop/logs/r-idle`. Sims, Δ and picks match the loaded runs. CLI, median of three interleaved rounds:
+
+| Fixture | Search | Effects | Wall |
+|---|---|---|---|
+| `ret_p1` | 1.12 → 0.97 s | 1.77 → 1.55 s | 5.69 → 5.73 s |
+| `ret_p4` | 2.43 → 2.26 s | 2.58 → 2.40 s | 8.48 → 8.34 s |
+
+Slow suite, one run a side: 374 → 338 s. Optimizer wall per case:
+
+| Case | Quick | Normal |
+|---|---|---|
+| fury p1 | 6.4 → 6.0 s | 65.4 → 56.1 s |
+| combat rogue p3 | 13.4 → 12.1 s | 107.8 → 88.6 s |
+| fire mage p3 | 2.9 → 2.8 s | 16.0 → 15.2 s |
+| ret p4 | 5.3 → 5.2 s | 47.2 → 42.3 s |
+| prot paladin p3 | 3.9 → 4.0 s | 39.3 → 43.4 s |
+| feral tank p2 | 4.2 → 4.2 s | 41.1 → 37.6 s |
+
+Search and Effects drop 7–13%; `ret_p1`'s wall holds because it sims 6% more. Normal saves 5–18%, except
+Prot Paladin's +10% on 3% fewer sims, slower in the loaded run too.

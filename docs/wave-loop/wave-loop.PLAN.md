@@ -133,9 +133,6 @@ then covers all 28 builds, tanks included, since the cut changes prot paladin an
 
 - Wave: R, landed (master fast-forwarded to this close-out). Nothing queued: other sessions plan what follows.
   Prod runs Q's `225191f1f`; R changes the optimizer's pool and the BiS tabs' hint.
-- Pending: BIS-outclassed's idle re-time, once the host is idle (a game held 13–16% of its CPU at close-out).
-  With the AC containers stopped, run `bash G:/DevStuff/GitHub/.wave-loop/rebase-r-idle.sh` (artifacts in
-  `.wave-loop/outclassed-tmp`, logs in `.wave-loop/logs/r-idle`) and add its times to BIS-outclassed's As built.
 - Open: the talent sweep's unseen talents (test-enrichment INVESTIGATION, TE-SWEEP as built); from Q (parity
   INVESTIGATION, PAR-FU-4..7 as built): Ranged Weapon Specialization on Explosive Trap and magic procs, Glyph of
   Totem of Wrath's 84 spell power unverified live, aura-163 crit damage adds on the server for specials (the sim
