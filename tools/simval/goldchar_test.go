@@ -221,12 +221,53 @@ type goldcharDrop struct {
 	check string
 }
 
-var droppedGoldchar = []goldcharDrop{}
+var droppedGoldchar = []goldcharDrop{
+	{"DeathknightBlood", 0, "armor penetration %"},
+	{"DruidBalance", 0, "max health"},
+	{"DruidBalance", 0, "armor"},
+	{"DruidBalance", 0, "attack power"},
+	{"DruidBalance", 0, "arcane spell crit %"},
+	{"DruidBalancePhase3", 0, "max health"},
+	{"DruidBalancePhase3", 0, "armor"},
+	{"DruidBalancePhase3", 0, "attack power"},
+	{"DruidBalancePhase3", 0, "arcane spell crit %"},
+	{"DruidFeral", 0, "max health"},
+	{"DruidFeralApl", 0, "max health"},
+	{"DruidFeralTank", 0, "max health"},
+	{"HunterBM", 0, "armor"},
+	{"HunterBM", 0, "parry %"},
+	{"HunterMM", 0, "armor"},
+	{"HunterMM", 0, "attack power"},
+	{"HunterMM", 0, "ranged attack power"},
+	{"HunterMM", 0, "parry %"},
+	{"HunterSV", 0, "armor"},
+	{"HunterSV", 0, "parry %"},
+	{"MageFire", 0, "arcane spell crit %"},
+	{"MageFrostFire", 0, "arcane spell crit %"},
+	{"PaladinRetribution", 0, "parry %"},
+	{"PriestShadow", 0, "max health"},
+	{"PriestSmite", 0, "max health"},
+	{"RogueCombat", 0, "stamina"},
+	{"RogueCombat", 0, "max health"},
+	{"RogueCombat", 0, "armor"},
+	{"RogueCombat", 0, "parry %"},
+	{"RogueAssassination", 0, "armor"},
+	{"RogueAssassination", 0, "parry %"},
+	{"RogueSubtlety", 0, "parry %"},
+	{"ShamanElemental", 0, "block value"},
+	{"WarlockDestruction", 0, "fire spell crit %"},
+	{"WarriorFury", 0, "armor"},
+	{"WarriorFury", 0, "parry %"},
+	{"WarriorArms", 0, "armor"},
+	{"WarriorArms", 0, "parry %"},
+}
 
 // goldcharReport reports a record's checks, holding them to droppedGoldchar.
 type goldcharReport struct {
 	used    map[goldcharDrop]bool
 	checked int
+	// info records from before the module wrote maxPower
+	noMaxPower int
 }
 
 func (r *goldcharReport) dropped(drop goldcharDrop) bool {
@@ -306,6 +347,10 @@ func TestGoldenCharacters(t *testing.T) {
 				return
 			}
 			report.checks(t, s.Name, 0, bot.info.label(), checkGoldcharInfo(*bot.info, s))
+			if bot.info.raw.Attacker.MaxPower == nil {
+				report.noMaxPower++
+				t.Logf("%s: no maxPower, so max power isn't compared", bot.info.label())
+			}
 
 			for _, p := range s.Probes {
 				var recs []damageRecord
@@ -341,7 +386,8 @@ func TestGoldenCharacters(t *testing.T) {
 	if report.checked == 0 {
 		t.Fatalf("%s has %d records but nothing to check", path, len(records))
 	}
-	t.Logf("%d checks over %d records of %d bots", report.checked, len(records), len(bots))
+	t.Logf("%d checks over %d records of %d bots; %d info records have no max power", report.checked,
+		len(records), len(bots), report.noMaxPower)
 }
 
 func allGoldcharSetups(t *testing.T) []goldcharSetup {
@@ -390,9 +436,15 @@ type serverSheet struct {
 	// schools above spellPower
 	schoolPower         map[string]float64
 	spellCrit, spellHit float64
+	// schools whose crit isn't spellCrit
+	schoolCrit          map[string]float64
 	hitMelee, hitRanged float64
 	attacks             map[string]*serverAttack
 	auras               []int32
+	// the talent sweep's sheet fields besides spell power and crit, in the sim's units; 0 when missing
+	fields     sweepSheet
+	powerType  uint32
+	noMaxPower bool
 }
 
 type serverAttack struct {
@@ -412,13 +464,18 @@ func goldcharInfo(t *testing.T, s goldcharSetup, sheet serverSheet) goldcharReco
 		schools[school] = power
 	}
 	spellCrit := []float64{0}
-	for range magicSchools {
-		spellCrit = append(spellCrit, sheet.spellCrit)
+	for _, school := range magicSchools {
+		crit, ok := sheet.schoolCrit[school]
+		if !ok {
+			crit = sheet.spellCrit
+		}
+		spellCrit = append(spellCrit, crit)
 	}
 	auras := []map[string]any{}
 	for _, id := range sheet.auras {
 		auras = append(auras, map[string]any{"id": id, "stacks": 1, "durationMs": -1, "fromSelf": true})
 	}
+	v := sheet.fields
 	var attacks []map[string]any
 	crit := map[string]float64{}
 	for _, kind := range []string{"mainhand", "offhand", "ranged"} {
@@ -427,20 +484,37 @@ func goldcharInfo(t *testing.T, s goldcharSetup, sheet serverSheet) goldcharReco
 			a = &serverAttack{unhastedMs: 2000, hastedMs: 2000}
 		}
 		crit[kind] = a.crit
+		ap := v["attack power"]
+		if kind == "ranged" {
+			ap = v["ranged attack power"]
+		}
 		attacks = append(attacks, map[string]any{"type": kind, "unhastedMs": a.unhastedMs, "hastedMs": a.hastedMs,
-			"damageMin": a.damageMin, "damageMax": a.damageMax, "attackPower": 1000, "expertiseReduction": a.expertise})
+			"damageMin": a.damageMin, "damageMax": a.damageMax, "attackPower": ap, "missChanceTaken": 5,
+			"expertiseReduction": a.expertise})
+	}
+	attacker := map[string]any{
+		"name": "SvGchBot", "level": 80, "isPlayer": true, "class": s.Class, "race": s.Race,
+		"maxHealth": v["max health"], "powerType": sheet.powerType,
+		"stats": map[string]float64{"strength": v["strength"], "agility": v["agility"], "stamina": v["stamina"],
+			"intellect": v["intellect"], "spirit": v["spirit"]},
+		"resistances": []float64{v["armor"], 0, v["fire resistance"], v["nature resistance"], v["frost resistance"],
+			v["shadow resistance"], v["arcane resistance"]},
+		"spellPower":              schools,
+		"hitMods":                 map[string]float64{"melee": sheet.hitMelee, "ranged": sheet.hitRanged, "spell": sheet.spellHit},
+		"armorPenetrationAuraPct": v["armor penetration %"],
+		"defense":                 map[string]float64{"dodge": v["dodge %"], "parry": v["parry %"], "block": v["block %"]},
+		"attacks":                 attacks,
+		"sheet": map[string]any{"critMainhand": crit["mainhand"], "critOffhand": crit["offhand"],
+			"critRanged": crit["ranged"], "spellCrit": spellCrit, "shieldBlock": v["block value"]},
+		"auras": auras,
+	}
+	if !sheet.noMaxPower {
+		power := sweepPowerFields[sheet.powerType]
+		attacker["maxPower"] = v[power.name] * power.scale
 	}
 	body := map[string]any{
 		"schema": 1, "command": "info",
-		"attacker": map[string]any{
-			"name": "SvGchBot", "level": 80, "isPlayer": true, "class": s.Class, "race": s.Race,
-			"spellPower": schools,
-			"hitMods":    map[string]float64{"melee": sheet.hitMelee, "ranged": sheet.hitRanged, "spell": sheet.spellHit},
-			"attacks":    attacks,
-			"sheet": map[string]any{"critMainhand": crit["mainhand"], "critOffhand": crit["offhand"],
-				"critRanged": crit["ranged"], "spellCrit": spellCrit},
-			"auras": auras,
-		},
+		"attacker": attacker,
 		"target": map[string]any{"name": "Dummy", "entry": boss, "level": 83, "worldBoss": true, "creatureType": 5,
 			"resistances": []float64{10643, 0, 0, 0, 0, 0, 0}, "auras": []any{}},
 		"character": goldcharCharacterJSON(s),
@@ -460,7 +534,12 @@ func goldcharInfo(t *testing.T, s goldcharSetup, sheet serverSheet) goldcharReco
 // truncated the way the module's are.
 func simSheet(t *testing.T, s goldcharSetup) serverSheet {
 	t.Helper()
-	d, err := newGoldcharSim(goldcharInfo(t, s, serverSheet{}).damageRecord, s)
+	target := goldcharInfo(t, s, serverSheet{}).damageRecord
+	sim := newSweepSim(target, s)
+	if sim.err != nil {
+		t.Fatal(sim.err)
+	}
+	d, err := newGoldcharSim(target, s)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -470,7 +549,30 @@ func simSheet(t *testing.T, s goldcharSetup) serverSheet {
 		spellPower: math.Floor(st[stats.SpellPower]),
 		spellCrit:  st[stats.SpellCrit] / core.CritRatingPerCritChance,
 		spellHit:   st[stats.SpellHit] / core.SpellHitRatingPerHitChance,
+		schoolCrit: map[string]float64{},
 		attacks:    map[string]*serverAttack{},
+		fields:     sweepSheet{},
+	}
+	for name, value := range sim.values {
+		switch name {
+		case "dodge %", "parry %", "block %", "armor penetration %":
+			sheet.fields[name] = value
+		default:
+			sheet.fields[name] = math.Floor(value + 1e-6)
+		}
+	}
+	for _, school := range magicSchools {
+		if crit, ok := sim.values[school+" spell crit %"]; ok {
+			sheet.schoolCrit[school] = crit
+		}
+	}
+	// a druid in Cat or Bear Form has mana too, but the server shows the form's power
+	for _, powerType := range []uint32{6, 3, 1, 0} {
+		power := sweepPowerFields[powerType]
+		if value, ok := sim.values[power.name]; ok {
+			sheet.powerType, sheet.fields[power.name] = powerType, math.Floor(value*power.scale+1e-6)/power.scale
+			break
+		}
 	}
 	for _, hand := range d.sheetHands() {
 		unhasted := hand.weapon.SwingSpeed * 1000
@@ -492,6 +594,15 @@ func simSheet(t *testing.T, s goldcharSetup) serverSheet {
 		}
 	}
 	return sheet
+}
+
+// everySchool is a check name for each magic school, e.g. "holy spell power" for " spell power".
+func everySchool(suffix string) []string {
+	var names []string
+	for _, school := range magicSchools {
+		names = append(names, school+suffix)
+	}
+	return names
 }
 
 func checkNames(checks []Check) (names, failed []string) {
@@ -591,12 +702,38 @@ func TestGoldcharInfoCatchesMismatches(t *testing.T) {
 			[]string{"mainhand weapon damage max"}},
 		{"truncated spell power", "MageFrost", func(s *serverSheet) { s.spellPower-- }, nil},
 		{"spell power a stat bonus higher", "MageFrost", func(s *serverSheet) { s.spellPower += 40 },
-			[]string{"spell power"}},
+			everySchool(" spell power")},
 		{"one school above the rest", "WarlockAffliction",
-			func(s *serverSheet) { s.schoolPower = map[string]float64{"shadow": s.spellPower + 100} }, nil},
-		{"spell crit from a talent the sim lacks", "DruidBalance", func(s *serverSheet) { s.spellCrit += 3 },
-			[]string{"spell crit %"}},
+			func(s *serverSheet) { s.schoolPower = map[string]float64{"shadow": s.spellPower + 100} },
+			[]string{"shadow spell power"}},
+		{"school crit from a talent the sim lacks", "DruidBalance", func(s *serverSheet) { s.schoolCrit["nature"] += 3 },
+			[]string{"nature spell crit %"}},
+		{"Critical Mass off the fire sheet", "MageFire", func(s *serverSheet) { s.schoolCrit["fire"] -= 6 },
+			[]string{"fire spell crit %"}},
+		// no holy spell in the sim's fury warrior, so its holy crit is the stat's
+		{"crit in a school the sim casts nothing of", "WarriorFury", func(s *serverSheet) { s.schoolCrit["holy"] = s.spellCrit + 1 },
+			[]string{"holy spell crit %"}},
 		{"spell hit short", "PriestShadow", func(s *serverSheet) { s.spellHit-- }, []string{"spell hit %"}},
+		{"a stamina talent the sim lacks", "RogueCombat", func(s *serverSheet) {
+			s.fields["stamina"] += 20
+			s.fields["max health"] += 200
+		}, []string{"stamina", "max health"}},
+		{"bonus armor on a ranged weapon", "HunterBM", func(s *serverSheet) { s.fields["armor"] += 21 }, []string{"armor"}},
+		{"a truncated agility's armor", "HunterBM", func(s *serverSheet) { s.fields["armor"] -= 2 }, nil},
+		{"Parry never learned", "WarriorFury", func(s *serverSheet) { s.fields["parry %"] = 0 }, []string{"parry %"}},
+		{"dodge above the sim's", "RogueCombat", func(s *serverSheet) { s.fields["dodge %"] += 0.01 }, []string{"dodge %"}},
+		{"block value from strength", "ShamanElemental", func(s *serverSheet) { s.fields["block value"] += 60 },
+			[]string{"block value"}},
+		{"block value without a shield", "DeathknightBlood", func(s *serverSheet) { s.fields["block value"] = 955 }, nil},
+		{"block without a shield", "DeathknightBlood", func(s *serverSheet) { s.fields["block %"] = 5 }, []string{"block %"}},
+		{"Blood-Gorged's armor penetration", "DeathknightBlood", func(s *serverSheet) { s.fields["armor penetration %"] = 10 },
+			[]string{"armor penetration %"}},
+		{"max mana short", "MageArcane", func(s *serverSheet) { s.fields["max mana"] -= 500 }, []string{"max mana"}},
+		{"max mana in a record from before maxPower", "MageArcane", func(s *serverSheet) {
+			s.fields["max mana"] -= 500
+			s.noMaxPower = true
+		}, nil},
+		{"max energy in Cat Form", "DruidFeral", func(s *serverSheet) { s.fields["max energy"] += 10 }, []string{"max energy"}},
 		// Balance of Power 2/2 is 4% school hit for every magic school, which the sheet leaves out
 		{"Balance of Power off the sheet", "DruidBalance", func(s *serverSheet) {
 			s.spellHit -= 4

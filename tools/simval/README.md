@@ -160,8 +160,14 @@ items) picks exactly one setup, and the bot's `damage` records belong to it. The
 spec options, plus `auras` it registers by id. A hunter whose record carries Sniper Training's buff (64420, a bot
 that stood still) also gets `SniperTrainingUptime` 1 and its aura 53304. Per setup:
 - `info`, against the sim's stats after a reset:
-  - spell power, spell crit: the lowest magic school (school bonuses only add); spell power may sit up to 0.1% or 1
-    below and one more above (truncated stat bonuses), crit within the dropped stat fraction.
+  - the talent sweep's sheet (`checkGoldcharSheet`): primary stats, max health, max power (only in a record with
+    `maxPower`; the test logs those without), armor, resistances, AP, RAP, dodge, parry, block, block value,
+    ArP%, and each magic school's spell power and crit. The sim side is `newSweepSim`, also behind the sweep's
+    `talentPath.sweepSim`: the server may sit up to that field's sweepSim bound below the sim (truncations only
+    lower it) and 0.001 above. A field the sim leaves out counts as 0 (no parry, block or bar), except block value,
+    skipped without a shield. Every school gets the sim's one spell power; its crit is that of the sim's spells of
+    the school (lowest `BonusCritRating`), or the stat's without one, so crit the sim gives every spell of a school
+    individually (a spell mod on the server) reads above the server's school crit.
   - spell hit: the sheet plus the school hit (`SPELL_AURA_MOD_INCREASES_SPELL_PCT_TO_HIT`, read from
     `assets/db_inputs/acore/spelldump.jsonl`) every magic school gets; the sheet leaves it out.
   - per hand the sim swings (main hand, dual-wield off hand, hunter ranged): unhasted and hasted ms (server
