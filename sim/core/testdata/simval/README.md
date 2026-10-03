@@ -35,6 +35,13 @@ or field is only logged.
 
 | Path | Talent | Field | Why |
 |---|---|---|---|
+| MageFire | improvedScorch | fire spell crit % | the sim gives Fireball and Frostfire Bolt the crit per spell; the server sheet shows school auras only |
+| MageFire | livingBomb | fire spell crit % | the sim's school crit is its lowest fire spell's bonus, and the new Living Bomb spell has a lower one |
+| WarlockDestruction | devastation | fire spell crit % | spell specific crit in the sim, a spell mod on the server |
+| RogueCombat | maceSpecialization | armor penetration % | the server counts the aura without a mace, and the path carries two daggers; the sim adds it only with a mace in the proc mask |
+| DeathknightBlood | bloodGorged | armor penetration % | the sim keeps it as a health-gated aura, not in its armor penetration |
+| DeathknightFrost | frigidDreadplate | ranged miss taken % | the server aura is melee only; the sim lowers all three attacks |
+| MageFrost | arcticWinds | mainhand, offhand and ranged miss taken % | the sim models only the frost damage, not the hit taken |
 
 ## Spells missing from serverdata
 
