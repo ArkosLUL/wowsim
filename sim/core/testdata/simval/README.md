@@ -22,6 +22,10 @@ guard fails when it's stale; rewrite it with `go test ./sim -run TestTalentCover
 ([talent sweep](../../../../tools/simval/README.md#talent-sweep)). `talents.jsonl` holds a `TestSimvalTalentSweep`
 run trimmed by `simval talents`, which `TestTalentSweepRecords` replays.
 
+`spell_groups.json` is a SELECT export of `acore_world.spell_group` and `spell_group_stack_rules`, which
+`TestSimSpellGroups` (`sim/spell_groups_test.go`) compares with the sim's exclusive effects. Re-export it with the
+query in that test's doc comment when the server's rules change.
+
 ## Dropped records
 
 `goldchar.jsonl`, each in `droppedGoldchar` (`tools/simval/goldchar_test.go`). A named check keeps its record

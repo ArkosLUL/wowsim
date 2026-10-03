@@ -75,6 +75,31 @@ haste stacking beyond EC-BUFFS' pairs.
   mismatch, as id pair → reason; a mismatch is a follow-up.
 - **Owns:** the test, the export, a `testing.md` "Against the server" line.
 
+#### As built
+
+- `TestSimSpellGroups` builds one raid per `serverDataPresets` entry with every raid, party, player and debuff
+  switch on, plus a one-preset-per-class sweep of every item (as the
+  conflicts test does) and consumes variants n = 1.. on three casters. It checks every spell-id pair of each
+  unit's registered auras, not only those with an exclusive effect (4.6M pairs, about 4 s).
+- Rule lookup copies `SpellMgr::CheckSpellGroupStackRules`: nested groups expand, and a shared group is skipped
+  when a nested group holds both spells. A same-effect group counts only its guessed aura type
+  (`LoadSpellGroupStackRules`' most-common-type rule, ties to the lowest id); two spells lacking it don't
+  interact, so group 1058 (poisons, with crit-taken debuffs) only ties spells that carry aura 197.
+- `simAuraSpells` maps the sim's registered id to the server's aura where they differ (talent or cast spell vs the
+  triggered aura): Vindication, Earth and Moon, Ebon Plaguebringer, Infected Wounds, Judgements of the Just,
+  Improved Scorch, Winter's Chill, Savage Combat, Blood Frenzy, Trauma, Heart of the Crusader, Totem of Wrath,
+  Flametongue, Demonic Pact, Sunder Armor.
+- Skipped: item and `OtherID` auras, spell id 0, and any tag but 0 and -1 (-1 marks an external cooldown, one
+  aura per spell). Form-only differences (sim single aura vs same-effect, or the reverse) are logged with `-v`.
+- Allowlisted, with reasons in `spellGroupAllowances`:
+  - Not in the tables, so the sim matches the server: stances, aspects, presences.
+  - Real sim/server mismatches, each a follow-up: Power Infusion with Arcane Power (server keeps the stronger);
+    Bestial Wrath and Enrage with Hysteria and Tricks of the Trade (the sim shares `PercentDamageModifier`, the
+    server's group 1107 holds neither); poisons with Heart of the Crusader and Totem of Wrath's debuff (the
+    sim's Master Poisoner stacks with them).
+- Negative check: removing the Power Infusion and Arcane Power entry fails the test naming that pair. No live
+  run.
+
 ### EC-TIMING (S; golden-neutral; C++; stages: C++ and e2e, sim, live)
 
 - `.simval timing <spellId> [pet]` records:
