@@ -76,6 +76,7 @@ func (dk *Deathknight) newObliterateHitSpell(isMH bool) *core.Spell {
 		conf.Cast = core.CastConfig{}
 		// Threat of Thassarian's off-hand strike
 		conf.Direct = core.SpellEffect{Effect: 0, FromSpellID: 66974, Min: 292, Max: 292, WeaponPct: 0.8}
+		conf.ThreatSpellID = 66974
 	} else {
 		conf.Flags |= core.SpellFlagAPL
 	}

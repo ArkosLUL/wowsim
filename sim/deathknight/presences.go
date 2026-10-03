@@ -49,8 +49,7 @@ func (dk *Deathknight) ChangePresence(sim *core.Simulation, newPresence Presence
 }
 
 func (dk *Deathknight) registerBloodPresenceAura(timer *core.Timer) {
-	threatMult := 0.8
-	threatMultSubversion := 1.0 - dk.subversionThreatBonus()
+	threatMult := dk.presenceThreatMultiplier()
 	//TODO: Include hps bonus
 	damageBonusCoeff := 0.15
 	staminaMult := 1.0 + 0.04*float64(dk.Talents.ImprovedFrostPresence)
@@ -84,7 +83,6 @@ func (dk *Deathknight) registerBloodPresenceAura(timer *core.Timer) {
 		Duration: core.NeverExpires,
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
 			aura.Unit.PseudoStats.ThreatMultiplier *= threatMult
-			aura.Unit.PseudoStats.ThreatMultiplier *= threatMultSubversion
 			aura.Unit.PseudoStats.DamageTakenMultiplier *= damageTakenMult
 
 			dk.ModifyDamageModifier(damageBonusCoeff)
@@ -92,7 +90,6 @@ func (dk *Deathknight) registerBloodPresenceAura(timer *core.Timer) {
 		},
 		OnExpire: func(aura *core.Aura, sim *core.Simulation) {
 			aura.Unit.PseudoStats.ThreatMultiplier /= threatMult
-			aura.Unit.PseudoStats.ThreatMultiplier /= threatMultSubversion
 			aura.Unit.PseudoStats.DamageTakenMultiplier /= damageTakenMult
 
 			dk.ModifyDamageModifier(-damageBonusCoeff)
@@ -174,7 +171,7 @@ func (dk *Deathknight) registerFrostPresenceAura(timer *core.Timer) {
 }
 
 func (dk *Deathknight) registerUnholyPresenceAura(timer *core.Timer) {
-	threatMultSubversion := 1.0 - dk.subversionThreatBonus()
+	threatMult := dk.presenceThreatMultiplier()
 
 	dk.UnholyPresence = dk.RegisterSpell(core.SpellConfig{
 		ActionID: core.ActionID{SpellID: 48265},
@@ -235,7 +232,7 @@ func (dk *Deathknight) registerUnholyPresenceAura(timer *core.Timer) {
 			if dk.Talents.ImprovedUnholyPresence > 0 {
 				aura.Unit.SetRuneCd(runeCd - impUp)
 			}
-			aura.Unit.PseudoStats.ThreatMultiplier *= threatMultSubversion
+			aura.Unit.PseudoStats.ThreatMultiplier *= threatMult
 			aura.Unit.EnableDynamicStatDep(sim, stamDep)
 			dk.MultiplyMeleeSpeed(sim, 1.15)
 		},
@@ -246,7 +243,7 @@ func (dk *Deathknight) registerUnholyPresenceAura(timer *core.Timer) {
 			if dk.Talents.ImprovedUnholyPresence > 0 {
 				aura.Unit.SetRuneCd(runeCd)
 			}
-			aura.Unit.PseudoStats.ThreatMultiplier /= threatMultSubversion
+			aura.Unit.PseudoStats.ThreatMultiplier /= threatMult
 			aura.Unit.DisableDynamicStatDep(sim, stamDep)
 			dk.MultiplyMeleeSpeed(sim, 1/1.15)
 		},
@@ -263,6 +260,12 @@ func (dk *Deathknight) registerUnholyPresenceAura(timer *core.Timer) {
 			}
 		}
 	}
+}
+
+// Blood and Unholy Presence's -20% threat. Subversion adds its flat -8, -16 or -25 to that same aura
+// effect, so at 3 points it's -45%, not 0.8 x 0.75
+func (dk *Deathknight) presenceThreatMultiplier() float64 {
+	return 0.8 - dk.subversionThreatBonus()
 }
 
 func (dk *Deathknight) registerPresences() {

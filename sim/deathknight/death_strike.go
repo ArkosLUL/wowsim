@@ -78,6 +78,7 @@ func (dk *Deathknight) newDeathStrikeSpell(isMH bool) *core.Spell {
 		conf.Cast = core.CastConfig{}
 		// Threat of Thassarian's off-hand strike
 		conf.Direct = core.SpellEffect{Effect: 0, FromSpellID: 66953, Min: 148, Max: 148, WeaponPct: 0.75}
+		conf.ThreatSpellID = 66953
 	} else {
 		conf.Flags |= core.SpellFlagAPL
 	}

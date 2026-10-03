@@ -57,6 +57,8 @@ func (shaman *Shaman) newWindfuryImbueSpell(isMH bool) *core.Spell {
 		DamageMultiplier: []float64{1, 1.13, 1.27, 1.4}[shaman.Talents.ElementalWeapons],
 		CritMultiplier:   shaman.DefaultMeleeCritMultiplier(),
 		ThreatMultiplier: 1,
+		// spell_sha_windfury_weapon casts Windfury Attack twice, its own spell for each hand
+		ThreatSpellID: core.TernaryInt32(isMH, 25504, 33750),
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			constBaseDamage := spell.BonusWeaponDamage()

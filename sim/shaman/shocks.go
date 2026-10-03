@@ -124,7 +124,6 @@ func (shaman *Shaman) registerFrostShockSpell(shockTimer *core.Timer) {
 	config := shaman.newShockSpellConfig(49236, core.SpellSchoolFrost, 0.18, shockTimer)
 	config.Cast.CD.Duration -= time.Duration(shaman.Talents.BoomingEchoes) * time.Second
 	config.DamageMultiplier *= spellModDamage(0.1 * float64(shaman.Talents.BoomingEchoes))
-	config.ThreatMultiplier *= 2
 	config.Direct = core.SpellEffect{Effect: 1, Min: 812, Max: 858, SP: 0.3858}
 	config.ApplyEffects = func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 		baseDamage := spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()

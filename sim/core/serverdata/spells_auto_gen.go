@@ -579,6 +579,16 @@ var spells = []Spell{
 			{Effect: 6, Aura: 4, BasePoints: -1, DieSides: 1, DamageMultiplier: 1},
 		},
 	},
+	// Deep Wounds
+	{
+		ID: 12721, Family: 4, FamilyFlags: [3]uint32{0, 0x10}, SchoolMask: 1,
+		Attributes: [8]uint32{0x10, 0, 0x4, 0, 0x100, 0, 0x20000000}, AttributesCu: 0x1000,
+		DurationMs: 6000, MaxDurationMs: 6000,
+		ProcChance: 101, SpellLevel: 1,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 3, AmplitudeMs: 1000, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1},
+		},
+	},
 	// Sweeping Strikes (Rank 1)
 	{
 		ID: 12723, SchoolMask: 1,
@@ -1617,6 +1627,24 @@ var spells = []Spell{
 			{Effect: 6, Aura: 99, BasePoints: -301, DieSides: 1, PointsPerLevel: -1, DamageMultiplier: 1},
 		},
 	},
+	// Windfury Attack
+	{
+		ID: 25504, Family: 11, FamilyFlags: [3]uint32{0x800000}, SchoolMask: 1, DmgClass: DmgClassMelee,
+		Attributes: [8]uint32{0, 0, 0, 0x40000600}, AttributesCu: 0x1100,
+		ProcChance: 101,
+		Effects: [3]Effect{
+			{Effect: 58, DamageMultiplier: 1},
+		},
+	},
+	// Seal of Righteousness
+	{
+		ID: 25742, Family: 10, FamilyFlags: [3]uint32{0, 0x20000000}, SchoolMask: 2, DmgClass: DmgClassMelee, Flags: FlagNoActiveDefense | FlagAlwaysHit,
+		Attributes: [8]uint32{0x240000, 0, 0x20000004, 0x40000, 0x800000}, AttributesCu: 0x1100,
+		ProcChance: 101, SpellLevel: 1,
+		Effects: [3]Effect{
+			{Effect: 2, DieSides: 1, DamageMultiplier: 1},
+		},
+	},
 	// Forbearance
 	{
 		ID: 25771, Family: 10, FamilyFlags: [3]uint32{0, 0, 0x80}, SchoolMask: 2,
@@ -2182,6 +2210,15 @@ var spells = []Spell{
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 99, BasePoints: 5, DieSides: 1, PointsPerLevel: 4, DamageMultiplier: 1},
 			{Effect: 6, Aura: 13, BasePoints: 4, DieSides: 1, PointsPerLevel: 2, DamageMultiplier: 1, MiscValue: 126},
+		},
+	},
+	// Windfury Attack
+	{
+		ID: 33750, Family: 11, FamilyFlags: [3]uint32{0x800000}, SchoolMask: 1, DmgClass: DmgClassMelee,
+		Attributes: [8]uint32{0, 0, 0, 0x41000200}, AttributesCu: 0x1100,
+		ProcChance: 101,
+		Effects: [3]Effect{
+			{Effect: 58, DamageMultiplier: 1},
 		},
 	},
 	// Spiritual Attunement (Rank 2)
@@ -7287,6 +7324,15 @@ var spells = []Spell{
 			{Effect: 6, Aura: 33, BasePoints: -51, DieSides: 1, DamageMultiplier: 1},
 		},
 	},
+	// Damage Shield
+	{
+		ID: 59653, Family: 4, SchoolMask: 1, DmgClass: DmgClassMagic, Flags: FlagAlwaysHit,
+		Attributes: [8]uint32{0x50010, 0x200, 0, 0x70000}, AttributesCu: 0x1100,
+		ProcChance: 101, PowerType: 1, BaseLevel: 1,
+		Effects: [3]Effect{
+			{Effect: 2, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1},
+		},
+	},
 	// Rake (Rank 6)
 	{
 		ID: 59886, Family: 9, FamilyFlags: [3]uint32{0, 0x10000000}, SchoolMask: 1, DmgClass: DmgClassMelee, Flags: FlagCompletelyBlocked,
@@ -9707,6 +9753,15 @@ var spells = []Spell{
 		ProcChance: 101, SpellLevel: 1, BaseLevel: 1,
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 166, BasePoints: 15, DieSides: 1, DamageMultiplier: 1, MiscValue: 127},
+		},
+	},
+	// Scourge Strike
+	{
+		ID: 70890, Family: 15, FamilyFlags: [3]uint32{0, 0, 0x80}, SchoolMask: 32, DmgClass: DmgClassMelee, Flags: FlagAlwaysHit,
+		Attributes: [8]uint32{0x10000, 0, 0x20000000, 0x50000, 0x800100, 0, 0x20000000}, AttributesCu: 0x1100,
+		ProcChance: 101, SpellLevel: 80, BaseLevel: 80,
+		Effects: [3]Effect{
+			{Effect: 2, DieSides: 1, ValueMultiplier: 1, DamageMultiplier: 1},
 		},
 	},
 	// Culling the Herd

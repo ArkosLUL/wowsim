@@ -1,6 +1,6 @@
 // gen_serverdata writes sim/core/serverdata's tables from the committed spell capture and the live world
-// DB: SpellInfo, proc entries and spell_bonus_data for the spells the sim names by id plus the spells those
-// trigger, and all of spell_enchant_proc_data.
+// DB: SpellInfo, proc entries, spell_bonus_data and spell_threat for the spells the sim names by id plus the
+// spells those trigger, and all of spell_enchant_proc_data.
 //
 //	tools/acore/dock.sh run ./tools/acore/gen_serverdata
 package main
@@ -79,6 +79,7 @@ func main() {
 		{"spells_auto_gen.go", func() ([]byte, error) { return renderSpells(m.spells) }, len(m.spells)},
 		{"procs_auto_gen.go", func() ([]byte, error) { return renderProcs(m.procs, names) }, len(m.procs)},
 		{"bonus_auto_gen.go", func() ([]byte, error) { return renderBonuses(m.bonuses, names) }, len(m.bonuses)},
+		{"threat_auto_gen.go", func() ([]byte, error) { return renderThreats(m.threats, names) }, len(m.threats)},
 		{"enchant_procs_auto_gen.go", func() ([]byte, error) { return renderEnchantProcs(m.enchantProcs) }, len(m.enchantProcs)},
 	}
 	rendered := make([][]byte, len(outputs))

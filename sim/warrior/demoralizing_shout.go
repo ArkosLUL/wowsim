@@ -26,7 +26,8 @@ func (warrior *Warrior) registerDemoralizingShoutSpell() {
 		},
 
 		ThreatMultiplier: 1,
-		FlatThreatBonus:  63.2,
+		// the server casts rank 8 at level 80, the APLs name rank 7
+		ThreatSpellID: 47437,
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			for _, aoeTarget := range sim.Encounter.TargetUnits {

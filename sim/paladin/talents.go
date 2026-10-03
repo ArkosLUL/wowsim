@@ -74,6 +74,7 @@ func (paladin *Paladin) ApplyTalents() {
 	paladin.applyRighteousVengeance()
 	paladin.applyMinorGlyphOfSenseUndead()
 	paladin.applyGuardedByTheLight()
+	paladin.applyFanaticism()
 }
 
 func (paladin *Paladin) getTalentSealsOfThePureBonus() float64 {
@@ -683,9 +684,8 @@ func (paladin *Paladin) applyRighteousVengeance() {
 	})
 }
 
-//nolint:unused
+// -10% threat a point in every school. Unlike the tooltip, the server keeps it under Righteous Fury
 func (paladin *Paladin) applyFanaticism() {
-	// TODO: Possibly implement as aura.
 	if paladin.Talents.Fanaticism == 0 {
 		return
 	}

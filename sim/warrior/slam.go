@@ -29,7 +29,6 @@ func (warrior *Warrior) registerSlamSpell() {
 		),
 		CritMultiplier:   warrior.critMultiplier(),
 		ThreatMultiplier: 1,
-		FlatThreatBonus:  140,
 
 		// spell_warr_slam hands 50783 the cast's 250, which is 50783's own value too
 		Direct: core.SpellEffect{Effect: 0, Min: 250, Max: 250, WeaponPct: 1},

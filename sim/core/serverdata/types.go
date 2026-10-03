@@ -1,5 +1,5 @@
 // Package serverdata holds spell data taken from the live AzerothCore server: SpellInfo from the committed
-// `.simval spelldump` capture, plus spell_proc, spell_bonus_data and spell_enchant_proc_data. The
+// `.simval spelldump` capture, plus spell_proc, spell_bonus_data, spell_threat and spell_enchant_proc_data. The
 // *_auto_gen.go tables come from tools/acore/gen_serverdata and cover the spells the sim names by id plus
 // the spells those trigger.
 //
@@ -254,6 +254,40 @@ type Bonus struct {
 	APDot  float32 // ap_dot_bonus
 }
 
+// Threat is what Spell::HandleThreatSpells and ThreatManager::CalculateModifiedThreat read of a spell
+// besides its level and attributes: SpellMgr::GetSpellThreatEntry (the spell's spell_threat row, else its
+// first rank's) and which units its cast selects. A spell with no row, aimed at one enemy and not at the
+// caster, has no entry.
+type Threat struct {
+	SpellID int32
+	Row     int32 // the row's entry: the spell or its first rank, 0 without one
+
+	FlatMod  float32
+	PctMod   float32
+	APPctMod float32 // of the caster's main hand attack power
+
+	Targets ThreatTargets
+}
+
+// Pct is the row's pctMod, 1 for a spell without a row.
+func (t *Threat) Pct() float32 {
+	if t == nil || t.Row == 0 {
+		return 1
+	}
+	return t.PctMod
+}
+
+// ThreatTargets are the units past a single enemy that a cast puts in m_UniqueTargetInfo, which
+// HandleThreatSpells splits the bonus over.
+type ThreatTargets uint8
+
+const (
+	// an effect lands on the caster (TARGET_UNIT_CASTER)
+	ThreatTargetsCaster ThreatTargets = 1 << iota
+	// an effect takes every enemy in an area or cone, up to the spell's MaxTargets
+	ThreatTargetsEnemyArea
+)
+
 // EnchantProc is a spell_enchant_proc_data row, which overrides the proc chance of a weapon enchant's
 // combat spell (Player::CastItemCombatSpell).
 type EnchantProc struct {
@@ -293,6 +327,13 @@ func Bonuses() []Bonus { return bonuses }
 
 func BonusBySpellID(spellID int32) *Bonus {
 	return find(bonuses, spellID, func(b *Bonus) int32 { return b.SpellID })
+}
+
+// Threats lists every generated threat entry, sorted by SpellID.
+func Threats() []Threat { return threats }
+
+func ThreatBySpellID(spellID int32) *Threat {
+	return find(threats, spellID, func(t *Threat) int32 { return t.SpellID })
 }
 
 // EnchantProcs lists every spell_enchant_proc_data row, sorted by EnchantID.

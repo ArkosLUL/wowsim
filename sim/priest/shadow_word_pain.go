@@ -44,7 +44,7 @@ func (priest *Priest) registerShadowWordPainSpell() {
 			0.03*float64(priest.Talents.ImprovedShadowWordPain),
 		),
 		CritMultiplier:   priest.SpellCritMultiplier(1, 1),
-		ThreatMultiplier: 1 - 0.08*float64(priest.Talents.ShadowAffinity),
+		ThreatMultiplier: priest.shadowAffinityThreatMultiplier(),
 
 		Dot: core.DotConfig{
 			Aura: core.Aura{

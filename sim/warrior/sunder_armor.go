@@ -31,7 +31,6 @@ func (warrior *Warrior) newSunderArmorSpell(isDevastateEffect bool) *core.Spell 
 		},
 
 		ThreatMultiplier: 1,
-		FlatThreatBonus:  360,
 
 		RelatedAuras: []core.AuraArray{warrior.SunderArmorAuras},
 	}
@@ -44,7 +43,6 @@ func (warrior *Warrior) newSunderArmorSpell(isDevastateEffect bool) *core.Spell 
 
 		// In wrath sunder from devastate generates no threat
 		config.ThreatMultiplier = 0
-		config.FlatThreatBonus = 0
 	} else {
 		config.Flags |= core.SpellFlagAPL
 	}
@@ -55,7 +53,6 @@ func (warrior *Warrior) newSunderArmorSpell(isDevastateEffect bool) *core.Spell 
 			result = spell.CalcOutcome(sim, target, spell.OutcomeAlwaysHit)
 		} else {
 			result = spell.CalcOutcome(sim, target, spell.OutcomeMeleeSpecialHit)
-			result.Threat = spell.ThreatFromDamage(result.Outcome, 0.05*spell.MeleeAttackPower())
 		}
 
 		if result.Landed() {

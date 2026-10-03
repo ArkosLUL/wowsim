@@ -52,6 +52,9 @@ func (shaman *Shaman) registerFireNovaSpell() {
 		ProcMask:    core.ProcMaskEmpty,
 		Flags:       SpellFlagFocusable | core.SpellFlagAPL,
 
+		// a positive spell: its bonus reaches the enemies as assist threat
+		ThreatMultiplier: shaman.spellThreatMultiplier(),
+
 		ManaCost: core.ManaCostOptions{
 			BaseCost:   0.22,
 			Multiplier: 1 - 0.02*float64(shaman.Talents.MentalQuickness),

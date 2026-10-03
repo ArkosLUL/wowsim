@@ -105,6 +105,7 @@ func (warrior *Warrior) applyDamageShield() {
 
 		DamageMultiplier: 1,
 		ThreatMultiplier: 1,
+		ThreatSpellID:    59653,
 
 		// spell_warr_damage_shield deals the rank's percent of the block value, in whole points, as 59653
 		Direct: core.SpellEffect{Effect: 0, Min: blockPct, Max: blockPct},
@@ -807,7 +808,7 @@ func (warrior *Warrior) RegisterBladestormCD() {
 
 			DamageMultiplier: 1 + 0.05*float64(warrior.Talents.DualWieldSpecialization),
 			CritMultiplier:   warrior.critMultiplier(),
-			ThreatMultiplier: 1.25,
+			ThreatMultiplier: 1,
 
 			// each Bladestorm tick's 50622 triggers the off-hand Whirlwind
 			Direct: core.SpellEffect{Effect: 0, FromSpellID: 44949, WeaponPct: 1},
@@ -836,7 +837,7 @@ func (warrior *Warrior) RegisterBladestormCD() {
 
 		DamageMultiplier: 1,
 		CritMultiplier:   warrior.critMultiplier(),
-		ThreatMultiplier: 1.25,
+		ThreatMultiplier: 1,
 
 		Dot: core.DotConfig{
 			IsAOE: true,

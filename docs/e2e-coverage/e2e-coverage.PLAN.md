@@ -641,6 +641,56 @@ AoE stage:
 - **Owns:** `sim/core/spell_result.go`'s threat, the class files EC-THREAT names, `tools/simval/threat_test.go`'s
   drops.
 
+#### As built
+
+Core stage:
+- `sim/core/threat.go` holds the server's arithmetic. Hit threat is amount × `spell_threat` pctMod ×
+  `Spell.ThreatMultiplier` (`SPELLMOD_THREAT`) × the school multiplier: `PseudoStats.ThreatMultiplier` times each
+  `AddThreatSchoolMultiplier` aura covering the spell, once per aura (`GetTotalAuraMultiplierByMiscMask`).
+- The cast bonus is `Spell::HandleThreatSpells`: the row's flat + apPctMod × AP, else `SpellLevel` (none under
+  `NO_INITIAL_THREAT`, `ATTR1_NO_THREAT`, `ATTR3_SUPPRESS_TARGET_PROCS`), unmodified, split over the distinct enemies
+  the cast reached plus the caster when an effect lands on it; a hit outside a cast splits by the server data.
+  A positive spell's bonus is modified and shared as assist threat. Nothing before the pull; `ThreatMultiplier` 0
+  means no threat at all.
+- `SpellConfig.ThreatSpellID` reads another server spell's data (Death and Decay 52212, Demoralizing Shout 47437,
+  Seal of Righteousness' damage 25742); `Spell.LandThreatBonus` counts a cast landing without a hit (Consecration).
+  `FlatThreatBonus` panics if set.
+- The rows are one generated table, `serverdata/threat_auto_gen.go` (gen_serverdata). Class flats and percents
+  moved onto it: warrior, druid, DK, warlock, shaman, priest, paladin, Gift of Arthas.
+- Thunderfury: one cast of 21992, damage threat ×1 on the first target, its level 63 split over the targets reached.
+  27648, the slow, is `SPELL_ATTR1_NO_THREAT`, so it adds nothing (`TestThunderfuryThreat`).
+- The replay casts through `SkipCastAndApplyEffects`; 106 of 135 mismatches went.
+
+Classes stage (all re-measured against the record's `modifiers` and spelldump):
+- Dire Bear Form ×2.0735 (21178's +45%, 57339's +43%), was ×2.1021.
+- Blood and Unholy Presence: −20% plus Subversion's flat −8/−16/−25 on that effect, ×0.55 at 3 points.
+- Shadowform's 49868 ×0.7 on every school; Shadow Affinity 8/16/25% on its class mask, Improved Devouring Plague
+  outside it.
+- Fanaticism −10% a point, always on: the server has no Righteous Fury exception.
+- Arcane Subtlety, Burning Soul (10% a point) and Frost Channeling (4/7/10%) are school auras, so Frostfire Bolt
+  multiplies them (×0.72).
+- `knownThreatMismatches` is empty; `TestThreatRecords` compares all 248 checks over 114 records.
+- Dropped records: the server log no longer holds them. `threatLoadouts` give Seal of Righteousness a main hand,
+  Lava Lash two weapons (enhancement spec), Dark Pact a pet, so they replay; they stay dropped as `recapture`
+  until the next `TestSimvalThreat` run. Chains of Ice and Death Grip stay dropped.
+
+Review: sim spells standing for another server spell took that spell's bonus, so:
+- `SpellConfig.NoThreatBonus` marks damage the server deals through an aura, casting nothing: Thorns and
+  Retribution Aura (damage shields), Holy Shield's proc.
+- `ThreatSpellID` names the spell the server casts: Windfury Attack 25504/33750, the DK off-hand strikes
+  (66217 also drops Rune Strike's ×1.75 row), Scourge Strike's shadow part 70890, Deep Wounds 12721, Damage Shield
+  59653, Fists of Fury 41990, Explosive Trap's explosion 49065, Immolation Aura's ticks 50590. The five new ids'
+  rows are hand-copied from a gen_serverdata run.
+
+Goldens (`dock.sh delta`, all of it): TPS moves in 35 of 37 suites, DPS and abilities in none (no suite wears
+Thunderfury); `paladin/holy` and `druid/restoration` don't move. Average-Default: Retribution −28% (Fanaticism),
+Shadow −30% (Shadowform), Protection Warrior −10.8% and Fury −2% (unmodified flats, the rows' percents gone), Blood
+DK −7.2% and Frost DK −7.7% (Blood Presence ×0.55; off-hand strikes add no bonus), Feral Tank −5.6% (Dire Bear Form,
+unmodified Maul and Lacerate), Unholy −1.3%, FrostUH −1.1%; Protection paladin +2.7%, Blood Tank +0.4%, rogues +2.7
+to +3.7%, hunters, warlocks, shamans, Balance, Arcane and Frost mage +0.3 to +1.7% (each cast's level bonus); Fire
+and FrostFire −0.2%; healers' few TPS +53 to +83% (assist threat). All other checks pass: replays,
+`TestSimSpellGroups`, `TestSimAOESpells`, simval records (1114 of 1114), `go vet`.
+
 ### EC-STRIKES (V; golden-neutral; C++; stages: C++ and e2e, sim, live)
 
 - Weapon strikes in `.simval damage`: `Spell::EffectWeaponDmg`'s fixed bonus, percent, spell bonus and total

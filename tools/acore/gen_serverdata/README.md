@@ -13,6 +13,7 @@ tools/acore/dock.sh run ./tools/acore/gen_serverdata
 | `spells_auto_gen.go` | `Spell`: SpellInfo from the capture, plus `Flags` worked out as the server reads the attributes, and the bounds that passive `ADD_FLAT/PCT_MODIFIER` spells (one rank per talent, plus glyphs, set bonuses and items) put on cast time, GCD and cooldown (`CastMods`, `GCDMods`, `CooldownMods`) |
 | `procs_auto_gen.go` | `Proc`: `spell_proc` resolved like `SpellMgr::LoadSpellProcs` (a negative SpellId covers its rank chain and beats a rank's own row; Spell.dbc fills unset ProcFlags, Charges and Chance), or the entry the server builds for a proc aura without a row, which only the capture has |
 | `bonus_auto_gen.go` | `Bonus`: `spell_bonus_data`, the spell's row else its first rank's |
+| `threat_auto_gen.go` | `Threat`: `spell_threat`, the spell's row else its first rank's, plus whether the cast's targets include the caster or an area of enemies; a spell with neither has no entry |
 | `enchant_procs_auto_gen.go` | `EnchantProc`: every `spell_enchant_proc_data` row |
 
 The spells, procs and bonuses cover what `tools/acore/spellids` counts as sim literals plus the spells

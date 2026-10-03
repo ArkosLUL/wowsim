@@ -33,7 +33,6 @@ func (druid *Druid) registerMaulSpell() {
 		DamageMultiplier: 1 + 0.1*float64(druid.Talents.SavageFury),
 		CritMultiplier:   druid.MeleeCritMultiplier(Bear),
 		ThreatMultiplier: 1,
-		FlatThreatBonus:  424,
 
 		Direct: core.SpellEffect{Effect: 0, Min: 578, Max: 578, WeaponPct: 1},
 		Mods: []core.SpellMod{

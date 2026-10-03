@@ -59,6 +59,8 @@ func (paladin *Paladin) registerSealOfRighteousnessSpellAndAura() {
 
 		DamageMultiplier: spellModDamage(paladin.getItemSetLightswornBattlegearBonus4(), paladin.getItemSetAegisPlateBonus2(), paladin.getTalentSealsOfThePureBonus(), paladin.getMajorGlyphSealOfRighteousnessBonus()),
 		ThreatMultiplier: 1,
+		// the damage is 25742's, a harmful spell; 20154 is the seal, a buff
+		ThreatSpellID: 25742,
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			// spell_pal_seal_of_righteousness hands 25742 int(weapon speed x (2.2% AP + 4.4% whole spell power))

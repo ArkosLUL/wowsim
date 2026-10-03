@@ -27,7 +27,6 @@ func (warlock *Warlock) registerCurseOfElementsSpell() {
 		},
 
 		ThreatMultiplier: 1 - 0.1*float64(warlock.Talents.ImprovedDrainSoul),
-		FlatThreatBonus:  156,
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			result := spell.CalcOutcome(sim, target, spell.OutcomeMagicHit)
@@ -62,7 +61,6 @@ func (warlock *Warlock) registerCurseOfWeaknessSpell() {
 		},
 
 		ThreatMultiplier: 1 - 0.1*float64(warlock.Talents.ImprovedDrainSoul),
-		FlatThreatBonus:  142,
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			result := spell.CalcOutcome(sim, target, spell.OutcomeMagicHit)
@@ -104,7 +102,6 @@ func (warlock *Warlock) registerCurseOfTonguesSpell() {
 		},
 
 		ThreatMultiplier: 1 - 0.1*float64(warlock.Talents.ImprovedDrainSoul),
-		FlatThreatBonus:  100,
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			result := spell.CalcOutcome(sim, target, spell.OutcomeMagicHit)
@@ -142,7 +139,6 @@ func (warlock *Warlock) registerCurseOfAgonySpell() {
 			0.05*float64(warlock.Talents.ImprovedCurseOfAgony),
 		),
 		ThreatMultiplier: 1 - 0.1*float64(warlock.Talents.ImprovedDrainSoul),
-		FlatThreatBonus:  0,
 
 		Dot: core.DotConfig{
 			Aura: core.Aura{
@@ -204,7 +200,6 @@ func (warlock *Warlock) registerCurseOfDoomSpell() {
 		DamageMultiplierAdditive: 1 +
 			0.03*float64(warlock.Talents.ShadowMastery),
 		ThreatMultiplier: 1 - 0.1*float64(warlock.Talents.ImprovedDrainSoul),
-		FlatThreatBonus:  160,
 
 		Dot: core.DotConfig{
 			Aura: core.Aura{

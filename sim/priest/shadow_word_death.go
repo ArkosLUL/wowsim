@@ -49,7 +49,7 @@ func (priest *Priest) registerShadowWordDeathSpell() {
 			0.01*float64(priest.Talents.TwinDisciplines),
 		),
 		CritMultiplier:   priest.SpellCritMultiplier(1, float64(priest.Talents.ShadowPower)/5),
-		ThreatMultiplier: 1 - 0.08*float64(priest.Talents.ShadowAffinity),
+		ThreatMultiplier: priest.shadowAffinityThreatMultiplier(),
 
 		Direct: core.SpellEffect{Effect: 0, Min: 750, Max: 870, SP: 0.4286},
 

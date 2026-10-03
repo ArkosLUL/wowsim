@@ -41,7 +41,8 @@ func (priest *Priest) registerDevouringPlagueSpell() {
 				core.TernaryFloat64(priest.HasSetBonus(ItemSetCrimsonAcolyte, 2), 5, 0)*core.CritRatingPerCritChance,
 			DamageMultiplier: dpDamageMultiplier,
 			CritMultiplier:   priest.DefaultSpellCritMultiplier(),
-			ThreatMultiplier: 1 - 0.05*float64(priest.Talents.ShadowAffinity),
+			// outside Shadow Affinity's class mask
+			ThreatMultiplier: 1,
 
 			// Server value (1) unused: instantly deals a share of the dot's own tick instead.
 			Direct: core.SpellEffect{Effect: 0, Min: 1, Max: 1},
@@ -79,7 +80,7 @@ func (priest *Priest) registerDevouringPlagueSpell() {
 			core.TernaryFloat64(priest.HasSetBonus(ItemSetCrimsonAcolyte, 2), 5, 0)*core.CritRatingPerCritChance,
 		DamageMultiplier: dpDamageMultiplier,
 		CritMultiplier:   priest.SpellCritMultiplier(1, 1),
-		ThreatMultiplier: 1 - 0.05*float64(priest.Talents.ShadowAffinity),
+		ThreatMultiplier: priest.shadowAffinityThreatMultiplier(),
 
 		Dot: core.DotConfig{
 			Aura: core.Aura{

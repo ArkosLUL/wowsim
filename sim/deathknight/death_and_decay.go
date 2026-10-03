@@ -34,7 +34,8 @@ func (dk *Deathknight) registerDeathAndDecaySpell() {
 
 		// spell_dk_death_and_decay adds the glyph's 20% to each tick's damage, on top of its spell mod
 		DamageMultiplier: core.TernaryFloat64(hasGlyph, 1.2, 1),
-		ThreatMultiplier: 1.9,
+		ThreatMultiplier: 1,
+		ThreatSpellID:    52212,
 		CritMultiplier:   dk.DefaultMeleeCritMultiplier(),
 
 		// each tick casts 52212 with the aura's amount as its base points (spell_dk_death_and_decay_aura),

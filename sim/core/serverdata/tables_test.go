@@ -24,6 +24,8 @@ func TestTablesSortedAndFound(t *testing.T) {
 		func(id int32) bool { return ProcBySpellID(id) != nil && ProcBySpellID(id).SpellID == id })
 	check("bonuses", len(bonuses), func(i int) int32 { return bonuses[i].SpellID },
 		func(id int32) bool { return BonusBySpellID(id) != nil && BonusBySpellID(id).SpellID == id })
+	check("threats", len(threats), func(i int) int32 { return threats[i].SpellID },
+		func(id int32) bool { return ThreatBySpellID(id) != nil && ThreatBySpellID(id).SpellID == id })
 	check("enchantProcs", len(enchantProcs), func(i int) int32 { return enchantProcs[i].EnchantID },
 		func(id int32) bool { return EnchantProcByID(id) != nil && EnchantProcByID(id).EnchantID == id })
 
@@ -35,6 +37,11 @@ func TestTablesSortedAndFound(t *testing.T) {
 	for _, b := range bonuses {
 		if SpellByID(b.SpellID) == nil {
 			t.Errorf("bonus entry for %d, which isn't in spells", b.SpellID)
+		}
+	}
+	for _, th := range threats {
+		if SpellByID(th.SpellID) == nil {
+			t.Errorf("threat entry for %d, which isn't in spells", th.SpellID)
 		}
 	}
 	if SpellByID(1) != nil || SpellByID(-5) != nil || ProcBySpellID(0) != nil {
