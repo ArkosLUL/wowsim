@@ -255,6 +255,37 @@ streamed into `tmp/`, tail stopped by PID; no restart, config or DB change):
   the list lacks; allowlist id → reason.
 - **Owns:** the test, a `testing.md` "Against the server" line.
 
+#### As built
+
+- `TestSimAOESpells` (`sim/aoe_test.go`) lists 62 entries keyed by spell id and server caster (player, pet,
+  totem, trap, boss): chain targets (the first included), per-jump multiplier, max targets, capped, and per
+  modifier spell id the values with it on. The 3 explosives also hold the item the sim names.
+- Sim-named spells come from `spellset.ScanSim` (about 7 s). The list must also hold every one a jump,
+  per-jump or max-target modifier moves (Maul, Revenge, Mangle, Healing Wave) or whose launch damage the cap
+  rule covers (area or non-magic chain): stricter than the spec, so the cap check reaches the spells it bites.
+- Server side, read from [ac]: cap in `Spell::DoAllEffectOnLaunchTarget`, effective only past 10 reachable
+  targets (every effect's, the caster included) and only for a player caster; chain (only from an effect on
+  the explicit or a nearby target) and per jump from `SelectImplicitChainTargets` and
+  `CalcDamageMultiplier`; max targets from `SelectImplicitAreaTargets`; modifiers matched as
+  `SpellInfo::IsAffectedBySpellMod`. Also checks serverdata's chain, multiplier and max targets against the
+  capture, and fails stale entries, mods and allowances.
+- Allowlisted (`aoeAllowances`, keyed by spell, caster, modifier and field), all follow-ups but the Felguard's:
+  - cap: the sim caps the Infernal's Immolation and the rune weapon's Blood Boil (guardian casters, never
+    capped), and doesn't cap Holy Wrath, Mind Sear's tick or Chaos Bane;
+  - chain: the hunter pet's Swipe hits one target, the server every target in front (ChainTarget 1000);
+  - Berserk: Mangle (Bear) hits 3 on the server, 1 in the sim;
+  - Improved Revenge rank 1: server always hits a second target at 0.5, the sim at full damage half the time;
+  - Tidefury 2 pieces: 0.83 per jump in the sim, 0.833 on the server;
+  - unmodeled pre-WotLK set bonuses: Gift of the Gathering Storm, The Ten Storms, The Earthfury;
+  - not a mismatch: Glyph of Cleaving matches the Felguard's Cleave by family mask, but a warlock can't have it.
+- Follow-ups the test can't see: Mind Sear's tick and Starfall's splash hit the target the server's script
+  drops (`spell_pri_mind_sear`, `spell_dru_starfall_aoe`); Thunderstorm and the Global Thermal Sapper Charge
+  also hit the caster, so the server caps them from 10 enemies; Thunderfury's debuff only lands on the
+  first target; the sim's Explosive Decoy hits at once and capped, but on the server its creature casts
+  53273 (uncaptured) on death, uncapped.
+- Negative checks: removing Arcane Explosion's entry fails naming it as missing; removing Holy Wrath's
+  allowance fails naming it. No live run.
+
 ### EC-THREAT-FIX (V; changes goldens, full suite)
 
 - Fix what EC-THREAT dropped, nothing more: likely the flat bonus outside `PseudoStats.ThreatMultiplier`, the
