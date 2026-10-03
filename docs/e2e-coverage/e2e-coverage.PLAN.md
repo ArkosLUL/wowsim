@@ -422,7 +422,7 @@ is 15% of base mana in the sim, 25% on the server.
 - Negative checks: removing Arcane Explosion's entry fails naming it as missing; removing Holy Wrath's
   allowance fails naming it. No live run.
 
-### EC-COST-FIX (T2; changes goldens, full suite; stages: core, mods)
+### EC-COST-FIX (T2, done; changes goldens, full suite; stages: core, mods)
 
 - The server's cost (`SpellInfo::CalcPowerCost`, `Player::ApplySpellMod`): the base truncated (`ManaCostPercentage` of
   create mana) plus the school's flat aura (`UNIT_FIELD_POWER_COST_MODIFIER`, Spark of Hope); then × (1 + the sum of
@@ -443,17 +443,22 @@ is 15% of base mana in the sim, 25% on the server.
 Stage 1, core (`sim/core/cost.go`, `cost_test.go`):
 
 - `ApplyCostModifiers` runs the server's arithmetic in server units (rage in tenths): truncated base plus the first
-  school's flat aura, then `1 + Σ percent` and `+ Σ flat`, truncated, then the school multiplier, truncated, at least 0.
+  school's flat aura, then `1 + Σ percent` and `+ Σ flat`, truncated, then the school multiplier, truncated, at least
+  0.
   The first school is the server's lowest bit, not the sim's `schoolIndex` order.
-- Kinds: `Spell.CostMultiplier` / `PseudoStats.CostMultiplier` (1 + Σ spell mod percents), the options' `Multiplier` for
+- Kinds: `Spell.CostMultiplier` / `PseudoStats.CostMultiplier` (1 + Σ spell mod percents), the options' `Multiplier`
+  for
   static talents (a sum, never a product), `Spell.CostFlat` / `PseudoStats.CostFlat` / options' `FlatMod` (flats,
   replacing `CostReduction`), `Unit.AddSchoolCostMultiplier` / `AddSchoolCostFlat` (auras 72 and 73).
 - `DefaultCast.Cost` is the server base. `StaticCost()` and `StaticCostWithPercent(pct)` are what rotations, energy
   thresholds, rage refunds and mana sums read.
-- Moved: Power Infusion, Beast Within, Owl's Focus, Precision, Frost Channeling (4/7/10% on arcane, fire and frost, the
-  DBC's mask 84) and Arcane Focus to school auras; Spark of Hope to a flat school aura set in `applySparkOfHope`; rogue
+- Moved: Power Infusion, Beast Within, Owl's Focus, Precision, Frost Channeling (4/7/10% on arcane, fire and frost,
+  the
+  DBC's mask 84) and Arcane Focus to school auras; Spark of Hope to a flat school aura set in `applySparkOfHope`;
+  rogue
   and feral flat talents to `FlatMod`; the rogue T7 4 piece to a 5% percent; every percent product (Natural
-  Shapeshifter with King of the Jungle, glyphs, Greater Heal, Mind Blast, Penance, Prayer of Mending, Tidal Focus) to a sum.
+  Shapeshifter with King of the Jungle, glyphs, Greater Heal, Mind Blast, Penance, Prayer of Mending, Tidal Focus) to
+  a sum.
 - Verdicts: fixed and removed from the drop lists, rows and `knownTimingMismatches`: the 51 "1 above" costs, Natural
   Shapeshifter with King of the Jungle and Berserk's energy cut. Open for stage 2: the missing talents above, Scorpid
   Sting, Healing Wave, Earth Shield, Divine Protection, Avenging Wrath, Volley; Mind Blast's `focusedMind` drop is the
@@ -476,7 +481,7 @@ Stage 2, mods:
   less; Restoration, Hunter and the rest move only by fractions of a cast. Warrior suites don't move (no Focused
   Rage in their talents).
 
-### EC-TIMING-FIX (T2; changes goldens, full suite)
+### EC-TIMING-FIX (T2, done; changes goldens, full suite)
 
 - Hasted dot and channel durations: the server truncates the duration and the tick period each on its own
   (`int32(x * UNIT_MOD_CAST_SPEED)` in `Spell.cpp` and `AuraEffect::CalculatePeriodic`); the sim's aura is the
@@ -491,7 +496,8 @@ Stage 2, mods:
 
 #### As built
 
-Each mismatch fixed except Healing Wave's base cast time (below); the drop and allowance entries (`droppedSpellMods`, `knownTimingMismatches`) and
+Each mismatch fixed except Healing Wave's base cast time (below); the drop and allowance entries (`droppedSpellMods`,
+`knownTimingMismatches`) and
 fixture README rows of the fixed ones are gone, so the replays compare them.
 
 - Hasted channels (`sim/core/dot.go`): a `SpellHasteScalesBoth` aura's duration is base × cast speed truncated to
@@ -501,7 +507,9 @@ fixture README rows of the fixed ones are gone, so the replays compare them.
   aura's class mask covers (`Spell.AffectedByAuraEffect`, `Unit.NaturesSwiftnessSpells`, new
   `sim/core/spell_class_mask.go`), consumed by any of them. Heals and Rebirth now qualify; the druid's
   Starfire no longer does (arcane, outside the mask).
-- Improved Healing Wave (found by the NS probe): the sim lacks its 0.1 s a point off Healing Wave. Left a drop (49273, NS cast time checks): the path takes the talent as a filler, so implementing it needs a new path step and a live re-record.
+- Improved Healing Wave (found by the NS probe): the sim lacks its 0.1 s a point off Healing Wave. Left a drop (49273,
+  NS cast time checks): the path takes the talent as a filler, so implementing it needs a new path step and a live
+  re-record.
 - Permafrost: Frostfire Bolt's dot has `(9 + points) / 3` ticks (12 s, 4 ticks at 3 points; at 1 or 2 points the
   server's aura lasts 10 or 11 s with 3 ticks, which the sim's ticks × length can't show).
 - Improved Earth Shield: new `DotConfig.AuraDuration` pins the aura to 10 min while the extra charges stay ticks.
@@ -514,12 +522,13 @@ fixture README rows of the fixed ones are gone, so the replays compare them.
   Fire; all other rows within ±0.7%.
 - Follow-up: the druid APL still casts NS before Starfire, which now wastes it; only Wrath uses it.
 
-### EC-SHEET-FIX (T2; changes goldens)
+### EC-SHEET-FIX (T2, done; changes goldens)
 
 - Talents: Annihilation and Vicious Strikes crit (Scourge Strike, Death Strike), Blood-Gorged's ArP outside its health
   gate, Frigid Dreadplate on melee only, Arctic Winds' 5% hit taken, Rogue Endurance's stamina, Tidal Mastery on
   Thunderstorm, Improved Searing Pain's 10% (the sim adds 0.1%), Inner Focus off Circle of Healing.
-- Re-measure Mace Specialization without a mace: the server's damage checks the weapon (`Unit::CalcArmorReducedDamage`,
+- Re-measure Mace Specialization without a mace: the server's damage checks the weapon
+  (`Unit::CalcArmorReducedDamage`,
   `HasItemFitToSpellRequirements`), so likely a sheet artifact.
 - Moonkin Form's armor from cloth and leather (24905) and feral AP (`StatSystem.cpp`); block value from strength for
   every class (`Player::GetShieldBlockValue`).
@@ -534,33 +543,47 @@ fixture README rows of the fixed ones are gone, so the replays compare them.
 #### As built
 
 Fixed (entry and README row gone, replay compares it):
-- Annihilation on Scourge Strike and Vicious Strikes on Death Strike (`sim/deathknight`); Tidal Mastery on Thunderstorm; Improved Searing Pain 4/7/10 (was 0.04/0.07/0.10); Inner Focus's +25 crit off Circle of Healing.
-- Frigid Dreadplate melee only: new `PseudoStats.ReducedMeleeHitTakenChance` (`ReducedPhysicalHitTakenChance` stays melee and ranged: Night Elf, Arctic Winds). The enemy table, `basestats.go` and the sweep's sheet add both; Arctic Winds now adds its 1% per rank.
+- Annihilation on Scourge Strike and Vicious Strikes on Death Strike (`sim/deathknight`); Tidal Mastery on
+  Thunderstorm; Improved Searing Pain 4/7/10 (was 0.04/0.07/0.10); Inner Focus's +25 crit off Circle of Healing.
+- Frigid Dreadplate melee only: new `PseudoStats.ReducedMeleeHitTakenChance` (`ReducedPhysicalHitTakenChance` stays
+  melee and ranged: Night Elf, Arctic Winds). The enemy table, `basestats.go` and the sweep's sheet add both; Arctic
+  Winds now adds its 1% per rank.
 - Rogue Endurance: 2% stamina per rank.
-- Moonkin Form (`applyMoonkinForm`): items' armor ×4.7 (passive 24905) and the main hand's feral AP (`weaponFeralAP`, shared with cat and bear).
-- Block value: Strength × 0.5 for every class, in `addUniversalStatDependencies`; the warrior's and paladin's own dependencies are gone.
-- Converter `splitArmor` follows `Player::_ApplyItemBonuses`: base armor minus the modifier's whole part, the modifier as bonus armor (also without armor: Envoy of Mortality). `BonusArmor` → `Armor` moved from five class files into `addUniversalStatDependencies`: hunters and rogues lacked it.
-- `db.json` regenerated (`make items`, live DBCs): 58 `db.json` and 5 `leftover_db.json` items changed, each only in `BonusArmor` (ranged weapons, one pre-Wrath mace). `spellIcons` also differs (Ancestral Fortitude out, Ancestral Healing and Anticipation in): drift of the inputs, the old converter regenerates it too.
-- `talent_paths.json` rebuilt (PriestDiscipline as `healing_priest`; RogueCombat learns Endurance last), `implemented_talents.json` (Endurance). The live capture lacks that step, so it is dropped with a README row until `SIMVAL_TALENT_ONLY=RogueCombat` reruns.
+- Moonkin Form (`applyMoonkinForm`): items' armor ×4.7 (passive 24905) and the main hand's feral AP (`weaponFeralAP`,
+  shared with cat and bear).
+- Block value: Strength × 0.5 for every class, in `addUniversalStatDependencies`; the warrior's and paladin's own
+  dependencies are gone.
+- Converter `splitArmor` follows `Player::_ApplyItemBonuses`: base armor minus the modifier's whole part, the modifier
+  as bonus armor (also without armor: Envoy of Mortality). `BonusArmor` → `Armor` moved from five class files into
+  `addUniversalStatDependencies`: hunters and rogues lacked it.
+- `db.json` regenerated (`make items`, live DBCs): 58 `db.json` and 5 `leftover_db.json` items changed, each only in
+  `BonusArmor` (ranged weapons, one pre-Wrath mace). `spellIcons` also differs (Ancestral Fortitude out, Ancestral
+  Healing and Anticipation in): drift of the inputs, the old converter regenerates it too.
+- `talent_paths.json` rebuilt (PriestDiscipline as `healing_priest`; RogueCombat learns Endurance last),
+  `implemented_talents.json` (Endurance). The live capture lacks that step, so it is dropped with a README row until
+  `SIMVAL_TALENT_ONLY=RogueCombat` reruns.
 
 Kept dropped, reason corrected (sheet artifacts; the sim matches the server's combat):
 - Blood-Gorged: the sheet is the aura's raw sum, the sim applies it per spell by the server's class mask, ungated.
 - Mace Specialization: the server's damage needs a mace too.
-- Holy Specialization: PriestDiscipline now builds as the healing priest and every other check compares; the sheet's holy crit stays dropped, since Penance is holy and outside the aura's mask, so the sim's lowest holy spell stays 0.
+- Holy Specialization: PriestDiscipline now builds as the healing priest and every other check compares; the sheet's
+  holy crit stays dropped, since Penance is holy and outside the aura's mask, so the sim's lowest holy spell stays 0.
 
 Goldens (`dock.sh delta`; no DPS moves above the print threshold elsewhere):
 - Every suite whose `CharacterStats` shows block value, armor or stamina fails on stats alone.
 - TestBlood +0.1 to +0.7% (Death Strike crit 53 to 59% from Vicious Strikes), TestBloodTank +0.3%.
 - TestDestruction Shadowburn +0.15% (Searing Pain crit 67 to 75%).
 - TestCombat one gem row hps +1.3% (heal scales with Endurance's stamina).
-- TestArms and TestFury ±0.01% on the default rows, one Fury multi-target row −1.1%: less damage taken from armor changes rage.
+- TestArms and TestFury ±0.01% on the default rows, one Fury multi-target row −1.1%: less damage taken from armor
+  changes rage.
 
-### EC-STACK-FIX (T2; changes goldens; stages: stacking, AoE)
+### EC-STACK-FIX (T2, done; changes goldens; stages: stacking, AoE)
 
 - Stacking (`spellGroupAllowances`): Power Infusion exclusive with Arcane Power; Bestial Wrath and Enrage stack with
   Hysteria and Tricks of the Trade; Master Poisoner exclusive with Heart of the Crusader and Totem of Wrath's debuff.
 - AoE (`aoeAllowances` and EC-AOE's follow-ups):
-  - cap: never for guardian casters (Infernal's Immolation, rune weapon's Blood Boil); Holy Wrath, Mind Sear's tick and
+  - cap: never for guardian casters (Infernal's Immolation, rune weapon's Blood Boil); Holy Wrath, Mind Sear's tick
+    and
     Chaos Bane capped; the count includes a caster an effect hits (Thunderstorm, Global Thermal Sapper Charge);
   - targets: the hunter pet's Swipe hits every target in front; Mangle (Bear) hits 3 under Berserk; Improved Revenge
     rank 1's second target always, at 0.5; Mind Sear's tick and Starfall's splash skip the target the server's scripts
@@ -575,20 +598,40 @@ Goldens (`dock.sh delta`; no DPS moves above the print threshold elsewhere):
 #### As built
 
 Stacking stage:
-- Power Infusion with Arcane Power: fixed. The server's group 1123 (EXCLUSIVE_HIGHEST) compares only a shared aura type, and they share none, so the one cast last removes the other (`Unit::_AddAura`). `core.RegisterPowerInfusionArcanePowerEffect` makes a category whose OnGain deactivates the other aura.
-- Bestial Wrath with Hysteria and Tricks of the Trade: fixed. The hunter's self aura is The Beast Within (34471, group 1107), so the sim aura now carries that id and label; the pet's aura keeps 19574, in no group.
-- Enrage with Hysteria and Tricks of the Trade: fixed. Wrecking Crew's Enrage (57518) is only in group 1104, so it left `PercentDamageModifier`.
-- Master Poisoner with Heart of the Crusader and Totem of Wrath: not a sim gap, entries kept with the reason corrected. Every poison rank's aura-197 effect is 0 and Master Poisoner's crit is the caster aura 45176 (type 308, outside group 1058), so the tie never changes a total.
-- `spellGroupAllowances` lost its Power Infusion, Bestial Wrath and Enrage entries; `TestSimSpellGroups` compares them.
-- Goldens: only `sim/hunter/TestBM.results` moves, the aura key 19574 to 34471 on Average-Default and Talents-SpiritBond-Average, same uptime. Mage and warrior suites don't change.
+- Power Infusion with Arcane Power: fixed. The server's group 1123 (EXCLUSIVE_HIGHEST) compares only a shared aura
+  type, and they share none, so the one cast last removes the other (`Unit::_AddAura`).
+  `core.RegisterPowerInfusionArcanePowerEffect` makes a category whose OnGain deactivates the other aura.
+- Bestial Wrath with Hysteria and Tricks of the Trade: fixed. The hunter's self aura is The Beast Within (34471, group
+  1107), so the sim aura now carries that id and label; the pet's aura keeps 19574, in no group.
+- Enrage with Hysteria and Tricks of the Trade: fixed. Wrecking Crew's Enrage (57518) is only in group 1104, so it
+  left `PercentDamageModifier`.
+- Master Poisoner with Heart of the Crusader and Totem of Wrath: not a sim gap, entries kept with the reason
+  corrected. Every poison rank's aura-197 effect is 0 and Master Poisoner's crit is the caster aura 45176 (type 308,
+  outside group 1058), so the tie never changes a total.
+- `spellGroupAllowances` lost its Power Infusion, Bestial Wrath and Enrage entries; `TestSimSpellGroups` compares
+  them.
+- Goldens: only `sim/hunter/TestBM.results` moves, the aura key 19574 to 34471 on Average-Default and
+  Talents-SpiritBond-Average, same uptime. Mage and warrior suites don't change.
 - All replays, `TestSimSpellGroups`, `TestSimAOESpells`, simval records (1114 of 1114) and `go vet` pass.
 
 AoE stage:
-- Cap: `core.AOECapMultiplierFor(units)` counts the units a hit reaches. The Infernal's Immolation and the rune weapon's Blood Boil lost the cap (guardian casters); Holy Wrath and Chaos Bane gained it; Mind Sear's tick and Starfall's splash use enemies minus 1 (the dropped target); Thunderstorm and the Thermal Sapper use enemies plus 1 (the caster); Explosive Decoy is uncapped (its creature casts the blast).
-- Targets: the hunter pet's Swipe (`AllTargets` on `PetSpecialAbilityConfig`) hits every target; Mangle (Bear) under Berserk hits 2 more, refreshing Mangle's debuff on each; Improved Revenge's second target is always hit, at 0.5 a rank; Mind Sear's tick and Starfall's splash skip the channeled or star target (`spell_pri_mind_sear`, `spell_dru_starfall_aoe`); Thunderfury's debuff goes on each target its jump lands on, not only the first (effect 0 chains, the damage effect doesn't); Tidefury 2 pieces jump at 0.7 x 1.19.
-- `aoeAllowances` keeps only Glyph of Cleaving and the three pre-WotLK sets. `TestSimAOESpells` compares the rest; its table gained the fixed values.
-- Goldens (`dock.sh delta`, 32 of 37 suites unchanged): `TestBalance` and `TestBalancePhase3` lose about 1.4 to 1.8% DPS on single-target rows (Starfall's splash 53190 now hits nothing there; multi-target rows move by -0.4% to +5.2%, rotation reshuffled); `TestFeralTank` multi-target rows gain about 4% (Mangle under Berserk); `TestRetribution` multi-target rows lose 0.03 to 0.04% (Holy Wrath capped). `TestBM`'s aura key rename is the stacking stage's.
-- All replays, `TestSimSpellGroups`, `TestSimAOESpells`, simval records (1114 of 1114) and `go vet` pass. The only failing tests are the four golden suites above.
+- Cap: `core.AOECapMultiplierFor(units)` counts the units a hit reaches. The Infernal's Immolation and the rune
+  weapon's Blood Boil lost the cap (guardian casters); Holy Wrath and Chaos Bane gained it; Mind Sear's tick and
+  Starfall's splash use enemies minus 1 (the dropped target); Thunderstorm and the Thermal Sapper use enemies plus 1
+  (the caster); Explosive Decoy is uncapped (its creature casts the blast).
+- Targets: the hunter pet's Swipe (`AllTargets` on `PetSpecialAbilityConfig`) hits every target; Mangle (Bear) under
+  Berserk hits 2 more, refreshing Mangle's debuff on each; Improved Revenge's second target is always hit, at 0.5 a
+  rank; Mind Sear's tick and Starfall's splash skip the channeled or star target (`spell_pri_mind_sear`,
+  `spell_dru_starfall_aoe`); Thunderfury's debuff goes on each target its jump lands on, not only the first (effect 0
+  chains, the damage effect doesn't); Tidefury 2 pieces jump at 0.7 x 1.19.
+- `aoeAllowances` keeps only Glyph of Cleaving and the three pre-WotLK sets. `TestSimAOESpells` compares the rest; its
+  table gained the fixed values.
+- Goldens (`dock.sh delta`, 32 of 37 suites unchanged): `TestBalance` and `TestBalancePhase3` lose about 1.4 to 1.8%
+  DPS on single-target rows (Starfall's splash 53190 now hits nothing there; multi-target rows move by -0.4% to +5.2%,
+  rotation reshuffled); `TestFeralTank` multi-target rows gain about 4% (Mangle under Berserk); `TestRetribution`
+  multi-target rows lose 0.03 to 0.04% (Holy Wrath capped). `TestBM`'s aura key rename is the stacking stage's.
+- All replays, `TestSimSpellGroups`, `TestSimAOESpells`, simval records (1114 of 1114) and `go vet` pass. The only
+  failing tests are the four golden suites above.
 
 ### EC-THREAT-FIX (V; changes goldens, full suite)
 

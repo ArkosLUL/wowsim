@@ -16,7 +16,7 @@ var hardCodedItemIDs = map[int32]bool{
 	34220: true, 32409: true, 41285: true, 41398: true, 41376: true,
 	// core/character.go: party buffs from Atiesh and the TBC jewelcrafting necks
 	22589: true, 22630: true, 24114: true, 24121: true, 24116: true,
-	// core/consumes.go: alchemist stones; core/mana.go: Spark of Hope
+	// core/consumes.go: alchemist stones; core/cost.go: Spark of Hope
 	44322: true, 44323: true, 44324: true, 45703: true,
 	// mage/mana_gems.go: Serpent-Coil Braid
 	30720: true,

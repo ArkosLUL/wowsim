@@ -143,7 +143,7 @@ first: some may be server quirks, not sim bugs.
 
 ## Current wave
 
-- Wave: T2, running; base `80ef5f632`. EC-COST-FIX, EC-TIMING-FIX, EC-SHEET-FIX, EC-STACK-FIX: implementing. Next: V.
+- Wave: T2, running; base `977a27a66`, runId `wf_5af2b99d-6d0`. EC-COST-FIX, EC-TIMING-FIX, EC-SHEET-FIX, EC-STACK-FIX merged; cross-review next. Next: V.
   Prod runs Q's `225191f1f`; R changes the optimizer's pool and the BiS tabs' hint.
 - Open: the talent sweep's unseen talents (test-enrichment INVESTIGATION, TE-SWEEP as built); from Q (parity
   INVESTIGATION, PAR-FU-4..7 as built): Ranged Weapon Specialization on Explosive Trap and magic procs, Glyph of
@@ -173,7 +173,7 @@ first: some may be server quirks, not sim bugs.
   - Then the BiS tooltip dataset (acbis driver, both stages, fresh `--out`, then `acbis`; the import needs
     the OK), the changed builds' stat weights, and the perf harness's `opt_*` scenarios (`update.sh`, a new
     baseline; the raid25 dumps in `_dump/optimizer_dump_test.go` still build uncut pools).
-- Workflow runIds: T's `wf_8a59e202-2f8`, `wf_59a7bdbf-cbc` and `wf_beaacdaa-bbc` (the live reruns; journals in the session's `subagents/workflows/<runId>`); S's `wf_ae61e19e-2c1`; R's `wf_445767f0-4a1` (base `9f1f2f94f`); Q's `wf_47a2be77-20d` and `wf_6f439290-bf9` (PAR-FU-5 and 6's live stages; base `fdbc3df49`); P's `wf_9c73b1de-ff3` (base `c678de53e`); O's `wf_cd004c46-c80` (base `b069c688b`); N's `wf_4b37e171-123` (base `7f4174efb`); M's `wf_8ab862a5-d37` (base `33da5ca34`); L's `wf_34052b28-d62`, `wf_1a26dbdb-51c`, `wf_ac1129b6-8d7`, `wf_a59f095c-4b7`, `wf_f5be2bcf-e23`,
+- Workflow runIds: T2's `wf_5af2b99d-6d0`; T's `wf_8a59e202-2f8`, `wf_59a7bdbf-cbc` and `wf_beaacdaa-bbc` (the live reruns; journals in the session's `subagents/workflows/<runId>`); S's `wf_ae61e19e-2c1`; R's `wf_445767f0-4a1` (base `9f1f2f94f`); Q's `wf_47a2be77-20d` and `wf_6f439290-bf9` (PAR-FU-5 and 6's live stages; base `fdbc3df49`); P's `wf_9c73b1de-ff3` (base `c678de53e`); O's `wf_cd004c46-c80` (base `b069c688b`); N's `wf_4b37e171-123` (base `7f4174efb`); M's `wf_8ab862a5-d37` (base `33da5ca34`); L's `wf_34052b28-d62`, `wf_1a26dbdb-51c`, `wf_ac1129b6-8d7`, `wf_a59f095c-4b7`, `wf_f5be2bcf-e23`,
   `wf_42fc0b7c-42a`; args `wave<X>*-args.json` in `G:\DevStuff\GitHub\.wave-loop`, transcripts in
   `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\<runId>`.
 - J2's full-roster batch ran 2026-09-28 in 52 min at Quick, output in
@@ -528,6 +528,10 @@ crashed before F2, so its column starts there.
 | EC-SPELLMOD | merged | `6764063ac` | goldens unchanged; module `5309b16`; sweep live 13:22–13:40, 2251 probes over 30 paths: 448 steps agree, 377 move nothing, 253 not compared, 93 disagree (102 checks dropped, fixture README): % cost mods 1 high, cost talents missing (Benediction, Efficiency, Focused Rage, Mental Quickness, Shadow Focus), crit talents missing (Annihilation, Vicious Strikes, Tidal Mastery) or ×0.01 (Improved Searing Pain), Nature's Swiftness skipping heals |
 | EC-THREAT | merged | `689d8c91e` | goldens unchanged; module `3cd16f5`; the worldserver the user rebuilt at 16:18 (the permission check refused the agent's rebuild; ac-db-import not rerun, so `.simval threat` lacks its help row); live 16:55–17:05, 114 records, 135 mismatches allowlisted for EC-THREAT-FIX (fixture README): `SpellLevel` bonus, unmodified and split flats, missing `spell_threat` rows, Dire Bear, Unholy Presence, Shadowform, Fanaticism never applied; a core `ServerMailReward` crash at 17:02 (bot relog) restarted the worldserver and left orphan bot Svtleadhrneb (guid 540540; removed 18:06, the user's OK) |
 | wave T cross-review | | `9b134ed60` | no bugs; a health-cost timing record (Bloodrage) parses; the damage, timing and threat replays share one sim setup and aura lookup; the golden-character check builds its sim once; the sweeps share `sweepPrepare` (module `25d88f9`) |
+| EC-COST-FIX | merged | `e382cdcda` | 26 goldens promoted in `41b854121` (Feral +1.9%, Elemental +1.4%, Arcane −0.8% on the default rows; up to 8% on mana-starved NoBuffs rows); the server's cost arithmetic in `sim/core/cost.go`, the missing cost talents and bases; every cost drop gone |
+| EC-TIMING-FIX | merged | `b0bb26462` | 12 goldens promoted in `5c5510b26`, each under 0.7% but Balance's Dreamstate row (−0.44%, its APL wastes Nature's Swiftness on Starfire) and one Disc item row (−4.9%, noise); the hunter's haste was the bot's quiver; Healing Wave's Nature's Swiftness drop stays (Improved Healing Wave) |
+| EC-SHEET-FIX | merged | `81e87739d` | 33 goldens promoted in `f68a104d5`, most in character stats only; Blood +0.4%; `db.json` regenerated (63 items' bonus armor); Blood-Gorged, Mace Specialization and Holy Specialization's sheet crit stay dropped as sheet artifacts; RogueCombat's new Endurance step dropped until a live rerun |
+| EC-STACK-FIX | merged | `6fa25a10f` | 5 goldens promoted in `a3753780e`: Balance −1.75% (Starfall's splash skips the star's target), Feral Tank multi-target +4% (Berserk Mangle), Ret multi-target −0.04% (Holy Wrath capped), BM's aura key; Master Poisoner's pairs not a sim gap |
 
 Later WIs are added as their wave starts.
 
