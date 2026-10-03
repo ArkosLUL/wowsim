@@ -17,6 +17,9 @@ replays it through `CheckRecord` on every `go test`, and `int-check.sh` runs it 
 `goldchar.jsonl` holds `TestSimvalGoldenCharacters`' `info` and `damage` records, which `TestGoldenCharacters`
 replays against `goldchar_setups.json` ([tools/simval](../../../../tools/simval/README.md#golden-characters)).
 
+`strikes.jsonl` holds `TestSimvalStrikes`' weapon strike and pet `damage`, pet `info` and Ghoul Frenzy `timing`
+records, which `TestStrikesRecords` replays ([tools/simval](../../../../tools/simval/README.md#damage-probe)).
+
 `buffs.jsonl` holds `TestSimvalBuffs`' `BUFFS` lines, which `TestBuffRecords` replays
 ([tools/simval](../../../../tools/simval/README.md#buffs)). A disagreeing state or check goes in `droppedBuffs`
 (`tools/simval/buffs_test.go`) with a row here; its line stays.
@@ -106,6 +109,12 @@ logged.
 |---|---|---|---|
 | RogueAssassination | debuff.curse_of_weakness+debuff.vindication | dummy armor, armor multiplier | AP Debuffs (spell_group 1062) is exclusive highest per aura: Vindication's -574 AP removes the whole Curse of Weakness (-573), its 5% armor too; the sim keeps the armor |
 | RogueAssassination | debuff.insect_swarm+debuff.scorpid_sting | dummy melee hit % | -6% on the server: `HandleModHitChance` adds each to a creature's `m_modMeleeHitChance`, which the miss roll reads raw, so Hit Chance Debuffs' same-effect rule (1060) never applies; the sim keeps -3% |
+
+`strikes.jsonl`: dropped records in `droppedStrikesRecords`, known mismatches in `knownStrikesMismatches` (both
+`tools/simval/damage_test.go`, keyed by probe and check; the record stays and only the failure is let through).
+
+| Probe | Check | Dropped or known | Why |
+|---|---|---|---|
 
 ## Spells missing from serverdata
 

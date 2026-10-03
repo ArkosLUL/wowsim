@@ -454,3 +454,702 @@ func TestDamageModsRaiseEveryProbe(t *testing.T) {
 		}
 	}
 }
+
+// TestStrikesRecords replays a live TestSimvalStrikes capture: each unshaped strike's weapon part, each
+// pet's stats and spells, and the Ghoul Frenzy timing. Skips without the fixture.
+func TestStrikesRecords(t *testing.T) {
+	path := filepath.Join("..", "..", fixtureDir, strikesFixture)
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		t.Skipf("no capture at %s; record one with mod-sim-validation's TestSimvalStrikes", path)
+	}
+	records, err := readStrikesRecords(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var compared, checked int
+	used := map[strikesMismatch]bool{}
+	for _, rec := range records {
+		key, err := rec.key()
+		if err != nil {
+			t.Errorf("%s: %v", rec.label(), err)
+			continue
+		}
+		if slices.Contains(droppedStrikesRecords, key) {
+			t.Errorf("%s is dropped, but %s still holds it", key, path)
+		}
+		checks := checkStrikesRecord(rec)
+		if len(checks) > 0 {
+			compared++
+		}
+		for _, check := range checks {
+			checked++
+			mismatch := strikesMismatch{key, check.Name}
+			reason, known := knownStrikesMismatches[mismatch]
+			switch {
+			case !check.Passed && known:
+				used[mismatch] = true
+				t.Logf("%s: %s: known mismatch, %s: %s", rec.label(), check.Name, reason, check.Detail)
+			case !check.Passed:
+				t.Errorf("%s: %s: %s", rec.label(), check.Name, check.Detail)
+			default:
+				t.Logf("%s: %s: %s", rec.label(), check.Name, check.Detail)
+			}
+		}
+	}
+	if compared == 0 {
+		t.Fatalf("%s has %d records but none to compare", path, len(records))
+	}
+	for m := range knownStrikesMismatches {
+		if !used[m] {
+			t.Errorf("%s %q is a known mismatch, but no record of the capture fails it", m.key, m.check)
+		}
+	}
+	t.Logf("%d checks over %d compared records of %d", checked, compared, len(records))
+}
+
+// strikesMismatch is one check of one strikes.jsonl probe.
+type strikesMismatch struct {
+	key   strikesKey
+	check string
+}
+
+// knownStrikesMismatches are checks where the sim and the server really differ, each with its reason and a row
+// in the fixture README. The check still runs and only its failure is let through; an entry no record fails is
+// stale.
+var knownStrikesMismatches = map[strikesMismatch]string{}
+
+// droppedStrikesRecords disagree with the sim and were removed from strikes.jsonl, each with a row in the
+// fixture README.
+var droppedStrikesRecords = []strikesKey{}
+
+type strikeHand struct {
+	kind string // the snapshot's attack type
+	item int32
+}
+
+// strikesCharacters are TestSimvalStrikes' melee bots: the weapons, the form cast with the auras, the strikes the
+// sim compares, those the server gives shaped, and the talent auras of the second pass.
+var strikesCharacters = []struct {
+	class, race      uint8
+	hands            []strikeHand
+	form             int32
+	compared, shaped []int32
+	talents          []int32
+}{
+	{warrior, 1, []strikeHand{{"mainhand", 40384}}, 0,
+		[]int32{47450, 47520, 47486, 50783, 7384, 1680}, []int32{47498}, []int32{12712, 35449, 16494, 20496, 46860}},
+	{paladin, 1, []strikeHand{{"mainhand", 40384}}, 0,
+		[]int32{35395, 20424, 42463}, []int32{53385, 20467}, []int32{20113, 31868, 35397, 53488}},
+	{rogue, 1, []strikeHand{{"mainhand", 40383}, {"offhand", 39714}}, 0,
+		[]int32{48638, 48657, 48660, 48665, 48664, 14278, 5940}, nil, []int32{61331, 32601, 14137, 14072, 14159, 13852}},
+	{deathKnight, 1, []strikeHand{{"mainhand", 47446}}, 0,
+		[]int32{49921, 49930, 55262, 51425, 49924, 55268, 55271, 50463}, []int32{56815},
+		[]int32{55108, 49395, 49534, 55237, 49664, 54637}},
+	{shaman, 11, []strikeHand{{"mainhand", 39763}, {"offhand", 39468}}, 0,
+		[]int32{32175, 32176}, []int32{60103}, []int32{29086}},
+	{hunter, 4, []strikeHand{{"mainhand", 40388}, {"ranged", 40385}}, 0,
+		[]int32{49050, 49048, 34490, 48996}, []int32{61006, 53209}, []int32{19509, 19490, 24691}},
+	{druid, 4, []strikeHand{{"mainhand", 40388}}, 768,
+		[]int32{48566, 48572, 62078}, nil, []int32{16999, 17073, 33867, 16949}},
+	{druid, 4, []strikeHand{{"mainhand", 40388}}, 9634,
+		[]int32{48480, 48564}, nil, []int32{16999, 17073}},
+}
+
+// strikesPets are TestSimvalStrikes' pets and guardians: the owner's class and race, the creature, and the spells
+// it records `damage` for besides its `info`.
+var strikesPets = []struct {
+	class, race uint8
+	entry       uint32
+	spells      []int32
+}{
+	{hunter, 4, 26672, []int32{52474}},
+	{warlock, 1, 416, []int32{47964}},
+	{warlock, 1, 17252, []int32{47994}},
+	{warlock, 1, 89, []int32{20153}},
+	{deathKnight, 1, 26125, []int32{47468}},
+	{deathKnight, 1, 27829, []int32{51963}},
+	{shaman, 11, 29264, nil},
+	{mage, 1, 510, []int32{31707}},
+	{druid, 4, 1964, nil},
+	{priest, 1, 19668, nil},
+}
+
+// strikesTimings are the `timing` probes of TestSimvalStrikes' pet owners, by class.
+var strikesTimings = map[uint8][]int32{deathKnight: {63560}}
+
+func expectedStrikesKeys() []strikesKey {
+	var keys []strikesKey
+	for _, c := range strikesCharacters {
+		for _, spell := range slices.Concat(c.compared, c.shaped) {
+			for _, modded := range []bool{false, true} {
+				keys = append(keys, strikesKey{"damage", spell, c.class, 0, modded})
+			}
+		}
+	}
+	for _, p := range strikesPets {
+		keys = append(keys, strikesKey{"info", 0, p.class, p.entry, false})
+		for _, spell := range p.spells {
+			keys = append(keys, strikesKey{"damage", spell, p.class, p.entry, false})
+		}
+	}
+	for class, spells := range strikesTimings {
+		for _, spell := range spells {
+			keys = append(keys, strikesKey{"timing", spell, class, 0, false})
+		}
+	}
+	return keys
+}
+
+func TestStrikesFixtureHasEveryProbe(t *testing.T) {
+	path := filepath.Join("..", "..", fixtureDir, strikesFixture)
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		t.Skipf("no capture at %s", path)
+	}
+	records, err := readStrikesRecords(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	have := map[strikesKey]bool{}
+	for _, rec := range records {
+		key, err := rec.key()
+		if err != nil {
+			t.Fatalf("%s: %v", rec.label(), err)
+		}
+		have[key] = true
+	}
+	for _, key := range expectedStrikesKeys() {
+		if !have[key] && !slices.Contains(droppedStrikesRecords, key) {
+			t.Errorf("no record for %s", key)
+		}
+	}
+}
+
+func rng(lo, hi float64) damageRange { return damageRange{lo, hi} }
+
+// handWeapon is a weapon part with no done or taken modifier: base, done and taken all the same. The attack power
+// is the hand's in handStrike.
+func handWeapon(attackType string, physical, normalized bool, apMultiplier, totalPct float64, weapon, fixed damageRange,
+	percent float64, base damageRange, crit float64) weaponStrike {
+	w := weaponStrike{AttackType: attackType, Physical: physical, Normalized: normalized, APMultiplier: apMultiplier,
+		AttackPower: 1000, TotalPct: totalPct, WeaponDamage: weapon, Fixed: fixed, Percent: rng(percent, percent),
+		Base: base, Done: base, Taken: base}
+	if attackType == "ranged" {
+		w.AttackPower = 900
+	}
+	w.Crit.Amount, w.Crit.Result = 10000, crit
+	return w
+}
+
+// handStrike is a strike record the way the module writes one: a level 80 character of the class and race wearing
+// the weapons, with 520 spell power and 1000 melee and 900 ranged attack power, at the level 83 boss dummy. The
+// effects are the spell's own from serverdata, the weapon part as given.
+func handStrike(t *testing.T, class, race uint8, spellID int32, auras []int32, hands []strikeHand, w weaponStrike) damageRecord {
+	t.Helper()
+	s := serverdata.SpellByID(spellID)
+	if s == nil {
+		t.Fatalf("spell %d isn't in serverdata", spellID)
+	}
+	attackPower := map[string]int{"mainhand": 1000, "offhand": 1000, "ranged": 900}
+	var attacks []string
+	worn := map[string]bool{}
+	for _, h := range hands {
+		attacks = append(attacks, fmt.Sprintf(`{"type": %q, "attackPower": %d, "weapon": {"itemId": %d}}`,
+			h.kind, attackPower[h.kind], h.item))
+		worn[h.kind] = true
+	}
+	for _, kind := range []string{"mainhand", "ranged"} {
+		if !worn[kind] {
+			attacks = append(attacks, fmt.Sprintf(`{"type": %q, "attackPower": %d}`, kind, attackPower[kind]))
+		}
+	}
+	var auraJSON []string
+	for _, id := range append([]int32{54192, 54161, 47436}, auras...) {
+		auraJSON = append(auraJSON, fmt.Sprintf(`{"id": %d, "durationMs": -1}`, id))
+	}
+	var effects []string
+	for i, e := range s.Effects {
+		switch {
+		case e.Effect == 0:
+		case strikeWeaponEffects[e.Effect]:
+			lo, hi := s.EffectRange(i)
+			effects = append(effects, fmt.Sprintf(`{"index": %d, "effect": %d, "kind": "unprobed", "shaped": "weapon damage",
+				"base": {"min": %d, "max": %d}}`, i, e.Effect, lo, hi))
+		default:
+			effects = append(effects, fmt.Sprintf(`{"index": %d, "effect": %d, "kind": "other"}`, i, e.Effect))
+		}
+	}
+	apType := "mainhand"
+	if w.AttackType == "ranged" {
+		apType = "ranged"
+	}
+	weapon, err := json.Marshal(w)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return damageRec(t, fmt.Sprintf(`{
+		"schema": 1, "command": "damage",
+		"spell": {"id": %d, "name": "spell %d"},
+		"shaped": "no direct, periodic or heal effect to probe",
+		"attacker": {"name": "Bot", "level": 80, "isPlayer": true, "class": %d, "race": %d,
+			"spellPower": {"holy": 520, "fire": 520}, "attacks": [%s], "auras": [%s]},
+		"target": {"name": "Dummy", "entry": 999000, "level": 83, "worldBoss": true, "creatureType": 5,
+			"health": 1000000, "maxHealth": 1000000, "resistances": [10643, 0, 0, 0, 0, 0, 0], "auras": []},
+		"spellPower": {"damage": 520, "healing": 520},
+		"attackPower": {"type": %q, "value": %d},
+		"effects": [%s],
+		"weapon": %s
+	}`, spellID, spellID, class, race, strings.Join(attacks, ","), strings.Join(auraJSON, ","), apType, attackPower[apType],
+		strings.Join(effects, ","), weapon))
+}
+
+func failedCheckNames(checks []Check) []string {
+	_, failed := checkNames(checks)
+	return failed
+}
+
+// The server numbers below follow Spell::EffectWeaponDmg by hand for a bare character, which has no done or taken
+// modifier: the weapon's range plus attack power / 14 times the normalized speed or the weapon's own, times the
+// hand's percent and truncated; the fixed bonus times the hand's percent, truncated; then the weapon percent,
+// truncated.
+func TestStrikeReplayOnHandCheckedRecords(t *testing.T) {
+	axe := []strikeHand{{"mainhand", 40384}}
+	// 606 and 910 plus int(1000 / 14 × 3.3 = 235.71), then 380
+	mortalStrike := handWeapon("mainhand", true, true, 3.3, 1, rng(841, 1145), rng(380, 380), 100, rng(1221, 1525), 20000)
+	with := func(w weaponStrike, change func(*weaponStrike)) weaponStrike {
+		change(&w)
+		return w
+	}
+	for _, c := range []struct {
+		name   string
+		rec    damageRecord
+		failed []string
+	}{
+		{name: "Mortal Strike bare", rec: handStrike(t, warrior, 1, 47486, nil, axe, mortalStrike)},
+		{
+			name:   "Mortal Strike 2% high at the top",
+			rec:    handStrike(t, warrior, 1, 47486, nil, axe, with(mortalStrike, func(w *weaponStrike) { w.Taken.Max = 1556 })),
+			failed: []string{"max"},
+		},
+		{
+			// truncation only lowers the server's number, so the sim under it gets 0.1% or 1 point
+			name:   "Mortal Strike under the server at the bottom",
+			rec:    handStrike(t, warrior, 1, 47486, nil, axe, with(mortalStrike, func(w *weaponStrike) { w.Taken.Min = 1224 })),
+			failed: []string{"min"},
+		},
+		{
+			// the amounts follow the record's own fixed bonus, so only the declaration fails
+			name: "Mortal Strike with another fixed bonus",
+			rec: handStrike(t, warrior, 1, 47486, nil, axe, with(mortalStrike, func(w *weaponStrike) {
+				w.Fixed = rng(390, 390)
+				w.Taken = rng(1231, 1535)
+			})),
+			failed: []string{"fixed"},
+		},
+		{
+			name:   "Mortal Strike with a bigger crit",
+			rec:    handStrike(t, warrior, 1, 47486, nil, axe, with(mortalStrike, func(w *weaponStrike) { w.Crit.Result = 23000 })),
+			failed: []string{"crit"},
+		},
+		{
+			// holy, so neither normalized nor the hand's percent: 606 and 910 plus int(1000 / 14 × 3.4 = 242.86),
+			// int(848 × 0.36) and int(1152 × 0.36)
+			name: "Seal of Command",
+			rec: handStrike(t, paladin, 1, 20424, nil, axe,
+				handWeapon("mainhand", false, false, 3.4, 1, rng(848, 1152), rng(0, 0), 36, rng(305, 414), 20000)),
+		},
+		{
+			// the off hand's percent is 0.5: int((153 + 1000 / 14 × 1.7) × 0.5) = 137, and 285 gives 203; then
+			// int(181 × 0.5) = 90
+			name: "off-hand Mutilate",
+			rec: handStrike(t, rogue, 1, 48664, nil, []strikeHand{{"mainhand", 40383}, {"offhand", 39714}},
+				handWeapon("offhand", true, true, 1.7, 0.5, rng(137, 203), rng(181, 181), 100, rng(227, 293), 20000)),
+		},
+		{
+			// 376 and 646 plus 900 / 14 × 2.8 = 180, then 408
+			name: "Aimed Shot",
+			rec: handStrike(t, hunter, 4, 49050, nil, []strikeHand{{"mainhand", 40388}, {"ranged", 40385}},
+				handWeapon("ranged", true, true, 2.8, 1, rng(556, 826), rng(408, 408), 100, rng(964, 1234), 20000)),
+		},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			checks := checkStrike(c.rec)
+			if len(checks) == 0 {
+				t.Fatal("no checks")
+			}
+			if failed := failedCheckNames(checks); !slices.Equal(failed, c.failed) {
+				t.Errorf("failed %v, want %v: %s", failed, c.failed, strings.Join(failedChecks(checks), "; "))
+			}
+		})
+	}
+}
+
+func TestShapedOrWeaponlessStrike(t *testing.T) {
+	w := handWeapon("mainhand", true, true, 3.3, 1, rng(841, 1145), rng(242, 242), 120, rng(1300, 1600), 20000)
+	w.Shaped = "EffectWeaponDmg: Devastate"
+	if checks := checkStrike(handStrike(t, warrior, 1, 47498, nil, []strikeHand{{"mainhand", 40384}}, w)); len(checks) != 0 {
+		t.Errorf("a shaped strike gave %d checks", len(checks))
+	}
+	rec := handStrike(t, warrior, 1, 47486, nil, nil, w)
+	rec.Weapon = nil
+	if failed := failedCheckNames(checkStrike(rec)); !slices.Equal(failed, []string{"weapon"}) {
+		t.Errorf("a record without a weapon part failed %v", failed)
+	}
+}
+
+// strikeProbe is a strike record for the character's weapons: its fixed bonus and percent from serverdata, the
+// amounts a rough guess. Mutilate's, Stormstrike's and Shiv's second hits are the off hand's.
+func strikeProbe(t *testing.T, class, race uint8, hands []strikeHand, spellID int32, auras []int32) damageRecord {
+	t.Helper()
+	s := serverdata.SpellByID(spellID)
+	if s == nil {
+		t.Fatalf("spell %d isn't in serverdata", spellID)
+	}
+	attackType := "mainhand"
+	switch {
+	case s.DmgClass == serverdata.DmgClassRanged:
+		attackType = "ranged"
+	case spellID == 48664 || spellID == 32176 || spellID == 5940:
+		attackType = "offhand"
+	}
+	fixed, percent, normalized := 0.0, 100.0, false
+	for i, e := range s.Effects {
+		lo, _ := s.EffectRange(i)
+		switch e.Effect {
+		case 31:
+			percent = percent * float64(lo) / 100
+		case 17, 58, 121:
+			fixed += float64(lo)
+			normalized = normalized || e.Effect == 121
+		}
+	}
+	guess := rng(1000, 1500)
+	return handStrike(t, class, race, spellID, auras, hands,
+		handWeapon(attackType, s.SchoolMask == 1, normalized, 2.4, 1, guess, rng(fixed, fixed), percent, guess, 20000))
+}
+
+// Every strike TestSimvalStrikes compares has a sim declaration, and the sim's strike runs with the roll pinned
+// to either end.
+func TestStrikeReplayCoversTheE2EProbes(t *testing.T) {
+	for _, c := range strikesCharacters {
+		var auras []int32
+		if c.form != 0 {
+			auras = []int32{c.form}
+		}
+		for _, id := range c.compared {
+			rec := strikeProbe(t, c.class, c.race, c.hands, id, auras)
+			d, spell, err := buildStrikeSim(rec)
+			if err != nil {
+				t.Errorf("%d: %v", id, err)
+				continue
+			}
+			lo, errLo := d.strikeAmount(spell, rec.Weapon, 0)
+			hi, errHi := d.strikeAmount(spell, rec.Weapon, 1)
+			if err := firstErr(errLo, errHi); err != nil || lo <= 0 || hi <= lo {
+				t.Errorf("%d (%s): %.2f to %.2f, %v", id, spell.ActionID, lo, hi, err)
+				continue
+			}
+			for _, check := range checkStrike(rec) {
+				if !check.Passed && (check.Name == "fixed" || check.Name == "percent") {
+					t.Errorf("%d (%s): %s: %s", id, spell.ActionID, check.Name, check.Detail)
+				}
+			}
+			t.Logf("%d (%s): %.2f to %.2f", id, spell.ActionID, lo, hi)
+		}
+	}
+}
+
+// The second pass's auras reach the sim as talents: an aura it can't place would leave the sim's strike without
+// the talent the server's has.
+func TestStrikeTalentAurasAreSimTalents(t *testing.T) {
+	for _, c := range strikesCharacters {
+		rec := strikeProbe(t, c.class, c.race, c.hands, c.compared[0], c.talents)
+		setup, err := damageSetupFor(rec)
+		if err != nil || !setup.modded || len(setup.others) != 0 {
+			t.Errorf("class %d: talents %s, auras the sim has no talent for %v, %v", c.class, setup.talentsString(), setup.others, err)
+		}
+	}
+}
+
+// handPet is a pet's record the way the module writes one: the creature at level 80 with 300 attack power and 500
+// spell power, owned by a level 80 character of the class and race, at the boss dummy. body adds the command's
+// own fields.
+func handPet(t *testing.T, class, race uint8, entry uint32, command, body string) strikesRecord {
+	t.Helper()
+	text := fmt.Sprintf(`{
+		"schema": 1, "command": %q,
+		"attacker": {"name": "Pet", "entry": %d, "level": 80, "isPlayer": false,
+			"stats": {"strength": 100, "agility": 100, "stamina": 100, "intellect": 100, "spirit": 100},
+			"resistances": [1000, 0, 0, 0, 0, 0, 0],
+			"spellPower": {"holy": 500, "fire": 500, "nature": 500, "frost": 500, "shadow": 500, "arcane": 500},
+			"attacks": [{"type": "mainhand", "attackPower": 300}], "auras": []},
+		"owner": {"name": "Bot", "level": 80, "isPlayer": true, "class": %d, "race": %d,
+			"stats": {"strength": 200, "agility": 200, "stamina": 1000, "intellect": 800, "spirit": 300},
+			"resistances": [2000, 0, 0, 0, 0, 0, 0],
+			"spellPower": {"holy": 600, "fire": 600, "nature": 600, "frost": 600, "shadow": 600, "arcane": 600},
+			"attacks": [{"type": "mainhand", "attackPower": 1000}, {"type": "ranged", "attackPower": 900}],
+			"auras": [{"id": 54192, "durationMs": -1}, {"id": 54161, "durationMs": -1}, {"id": 47436, "durationMs": -1}]},
+		"target": {"name": "Dummy", "entry": 999000, "level": 83, "worldBoss": true, "creatureType": 5,
+			"health": 1000000, "maxHealth": 1000000, "resistances": [10643, 0, 0, 0, 0, 0, 0], "auras": []},
+		%s
+	}`, command, entry, class, race, body)
+	var rec strikesRecord
+	if err := json.Unmarshal([]byte(text), &rec); err != nil {
+		t.Fatalf("%v in %s", err, text)
+	}
+	return rec
+}
+
+// petSpell is a pet's damage record body for the spell with its base, amounts and crit result.
+func petSpell(id int32, kind string, coefficient float64, base, taken damageRange, crit float64) string {
+	return fmt.Sprintf(`"spell": {"id": %d, "name": "spell %d"}, "shaped": "",
+		"spellPower": {"damage": 500, "healing": 500}, "attackPower": {"type": "mainhand", "value": 300},
+		"effects": [{"index": 0, "effect": 2, "kind": %q, "coefficient": %g, "base": {"min": %.0f, "max": %.0f},
+			"taken": {"min": %.0f, "max": %.0f}, "crit": {"amount": 10000, "result": %.0f}}]`,
+		id, id, kind, coefficient, base.Min, base.Max, taken.Min, taken.Max, crit)
+}
+
+// A pet's spells compare on the sim's pet with its own spell power pinned. The numbers, crit included, are what
+// the sim works out, so they show the pet is the one casting; the live capture holds the server's.
+func TestPetSpellReplay(t *testing.T) {
+	for _, c := range []struct {
+		name   string
+		rec    strikesRecord
+		failed []string
+	}{
+		{
+			// 203 + int(0.714 × 500 = 357)
+			name: "Imp's Firebolt",
+			rec:  handPet(t, warlock, 1, 416, "damage", petSpell(47964, "damage", 0.714, rng(203, 227), rng(560, 584), 20000)),
+		},
+		{
+			name:   "Imp's Firebolt off the owner's spell power",
+			rec:    handPet(t, warlock, 1, 416, "damage", petSpell(47964, "damage", 0.714, rng(203, 227), rng(631, 655), 20000)),
+			failed: []string{"e0 damage min", "e0 damage max"},
+		},
+		{
+			// the sim deals Immolation's damage from its aura's ticks: 40 + 1.35 × 500
+			name: "Infernal's Immolation",
+			rec:  handPet(t, warlock, 1, 89, "damage", petSpell(20153, "damage", 1.35, rng(40, 40), rng(715, 715), 15000)),
+		},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			checks := checkStrikesRecord(c.rec)
+			if len(checks) == 0 {
+				t.Fatal("no checks")
+			}
+			if failed := failedCheckNames(checks); !slices.Equal(failed, c.failed) {
+				t.Errorf("failed %v, want %v: %s", failed, c.failed, strings.Join(failedChecks(checks), "; "))
+			}
+		})
+	}
+}
+
+// A pet's strike pins the pet's weapon and attack power: the Felguard's Cleave at the bottom is its weapon's 88.8
+// plus 2000 / 14 × 2 s and the 124 fixed, before its multipliers.
+func TestPetStrikeReplay(t *testing.T) {
+	w := handWeapon("mainhand", true, false, 2, 1, rng(374, 419), rng(124, 124), 100, rng(498, 543), 20000)
+	w.AttackPower = 2000
+	weapon, err := json.Marshal(w)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rec := handPet(t, warlock, 1, 17252, "damage", fmt.Sprintf(`"spell": {"id": 47994, "name": "Cleave"},
+		"shaped": "no direct, periodic or heal effect to probe",
+		"spellPower": {"damage": 500, "healing": 500}, "attackPower": {"type": "mainhand", "value": 300},
+		"effects": [{"index": 0, "effect": 58, "kind": "unprobed", "base": {"min": 124, "max": 124}}],
+		"weapon": %s`, weapon))
+	d, spell, err := buildStrikeSim(rec.damageRecord)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if d.pet == nil || d.pet.pet.Name != "Felguard" {
+		t.Fatalf("the strike's caster is %s", d.casterChar().Name)
+	}
+	lo, err := d.strikeAmount(spell, rec.Weapon, 0)
+	if want := 88.8 + 2000.0/14*2 + 124; err != nil || lo < want || lo > want*1.5 {
+		t.Errorf("%.2f, want %.2f before multipliers: %v", lo, want, err)
+	}
+	if failed := failedCheckNames(checkStrike(rec.damageRecord)); slices.Contains(failed, "fixed") || slices.Contains(failed, "percent") {
+		t.Errorf("failed %v", failed)
+	}
+}
+
+// petInfoBody is an info record's pet part.
+func petInfoBody(createStats [5]float64, regen string) string {
+	return fmt.Sprintf(`"pet": {"index": 1, "createStats": [%g, %g, %g, %g, %g],
+		"scaling": [{"id": 35657, "name": "Mage Pet Scaling 01", "effects": [{"index": 0, "aura": 29, "miscValue": 2, "amount": 300}]}],
+		%s}`, createStats[0], createStats[1], createStats[2], createStats[3], createStats[4], regen)
+}
+
+// Every pet and guardian TestSimvalStrikes records has a sim pet the replay compares it on, and each of its spells
+// a declaration: a strike's weapon part or the spell's effect.
+func TestPetReplayCoversTheE2EPets(t *testing.T) {
+	for _, p := range strikesPets {
+		info := handPet(t, p.class, p.race, p.entry, "info", petInfoBody([5]float64{}, `"regen": null`))
+		for _, check := range checkPetInfo(info) {
+			if !check.Passed && (check.Name == "sim pet" || check.Name == "base stats") {
+				t.Errorf("pet %d: %s: %s", p.entry, check.Name, check.Detail)
+			}
+			if detail, _, _ := strings.Cut(check.Detail, ";"); !strings.HasPrefix(check.Name, "base ") {
+				t.Logf("pet %d: %s: %s", p.entry, check.Name, detail)
+			}
+		}
+		for _, id := range p.spells {
+			rec := handPet(t, p.class, p.race, p.entry, "damage", petSpell(id, "damage", 0, rng(1, 1), rng(1, 1), 15000))
+			rec.Effects = nil
+			s := serverdata.SpellByID(id)
+			for i, e := range s.Effects {
+				if e.Effect != 0 {
+					rec.Effects = append(rec.Effects, damageEffect{Index: int32(i), Effect: e.Effect, Kind: "damage"})
+				}
+			}
+			d, err := buildPetSim(rec.damageRecord)
+			if err != nil {
+				t.Errorf("pet %d spell %d: %v", p.entry, id, err)
+				continue
+			}
+			if strike := d.strikeDeclaration(); strike != nil {
+				t.Logf("pet %d spell %d: strike %s", p.entry, id, strike.ActionID)
+				continue
+			}
+			if decl := d.petDeclaration(rec.Effects[0]); decl == nil {
+				t.Errorf("pet %d spell %d: no sim declaration", p.entry, id)
+			}
+		}
+	}
+}
+
+// Base stats are the sim pet's own; the regen tick is the server's: the hunter pet's 24 focus every 4 s.
+func TestPetInfoReplay(t *testing.T) {
+	waterElemental := func(change float64) strikesRecord {
+		rec := handPet(t, mage, 1, 510, "info", petInfoBody([5]float64{}, `"regen": null`))
+		d, err := buildPetSim(rec.damageRecord)
+		if err != nil {
+			t.Fatal(err)
+		}
+		base := d.pet.pet.GetBaseStats()
+		create := [5]float64{base[stats.Strength], base[stats.Agility], base[stats.Stamina], base[stats.Intellect], base[stats.Spirit] + change}
+		return handPet(t, mage, 1, 510, "info", petInfoBody(create, `"regen": null`))
+	}
+	baseFailures := func(checks []Check) []string {
+		var failed []string
+		for _, name := range failedCheckNames(checks) {
+			if strings.HasPrefix(name, "base ") {
+				failed = append(failed, name)
+			}
+		}
+		return failed
+	}
+	if failed := baseFailures(checkPetInfo(waterElemental(0))); len(failed) != 0 {
+		t.Errorf("the sim's own base stats failed %v", failed)
+	}
+	if failed := baseFailures(checkPetInfo(waterElemental(10))); len(failed) != 1 {
+		t.Errorf("10 more spirit failed %v", failed)
+	}
+
+	focus := func(perTick int) []Check {
+		var regen []Check
+		body := petInfoBody([5]float64{}, fmt.Sprintf(`"regen": {"power": 2, "intervalMs": 4000, "perTick": %d, "lastManaUse": false}`, perTick))
+		for _, check := range checkPetInfo(handPet(t, hunter, 4, 26672, "info", body)) {
+			if check.Name == "regen per tick" {
+				regen = append(regen, check)
+			}
+		}
+		return regen
+	}
+	if checks := focus(24); len(checks) != 1 || !checks[0].Passed {
+		t.Errorf("24 focus every 4 s: %+v", checks)
+	}
+	if checks := focus(20); len(checks) != 1 || checks[0].Passed {
+		t.Errorf("20 focus every 4 s: %+v", checks)
+	}
+}
+
+// Ghoul Frenzy's aura goes on the death knight the probe puts it on, and the replay reads the sim's heal over time
+// from the talent's spell: a heal every 6 s, 5 of them.
+func TestGhoulFrenzyTiming(t *testing.T) {
+	ghoulFrenzy := func(amplitudeMs, ticks int) map[string]Check {
+		rec := handTiming(t, deathKnight, 1, 63560, []int32{54192, 54161, 47436}, fmt.Sprintf(`
+			"aura": {"applies": true, "onCaster": true, "baseMs": 30000, "ms": 30000,
+				"effects": [{"index": 0, "periodic": true, "amplitudeMs": %d, "ticks": %d}]}`, amplitudeMs, ticks))
+		checks := map[string]Check{}
+		for _, check := range replayTiming(rec, buildStrikesTimingSim) {
+			checks[check.Name] = check
+		}
+		return checks
+	}
+	sim := ghoulFrenzy(6000, 5)
+	for _, name := range []string{"aura duration", "e0 amplitude", "e0 ticks"} {
+		if check, ok := sim[name]; !ok || !check.Passed {
+			t.Errorf("%s at the sim's numbers: %+v", name, check)
+		}
+	}
+	server := ghoulFrenzy(3000, 10)
+	for _, name := range []string{"e0 amplitude", "e0 ticks"} {
+		if check, ok := server[name]; !ok || check.Passed {
+			t.Errorf("%s at 3 s and 10 ticks: %+v", name, check)
+		}
+	}
+}
+
+// A strikes.jsonl line parses with its weapon, owner, pet or timing parts, and keys by what it probed.
+func TestStrikesRecordParses(t *testing.T) {
+	lines := []string{
+		`{"schema":1,"command":"damage","spell":{"id":47486,"name":"Mortal Strike"},"shaped":"no direct, periodic or heal effect to probe",` +
+			`"attacker":{"name":"SvStkA","level":80,"isPlayer":true,"class":1,"race":1,"auras":[{"id":12712,"durationMs":-1}]},` +
+			`"target":{"name":"Dummy","entry":999000},"effects":[{"index":1,"effect":121,"aura":0,"kind":"unprobed","shaped":"weapon damage","base":{"min":380,"max":380}}],` +
+			`"weapon":{"index":1,"shaped":"","attackType":"mainhand","schoolMask":1,"physical":true,"normalized":true,"apMultiplier":3.3,` +
+			`"attackPower":1000,"totalPct":1.06,"weaponDamage":{"min":892,"max":1214},"fixed":{"min":380,"max":380},"percent":{"min":100,"max":100},` +
+			`"base":{"min":1294,"max":1616},"done":{"min":1294,"max":1616},"taken":{"min":1294,"max":1616},"crit":{"amount":10000,"result":20000}}}`,
+		`{"schema":1,"command":"info","attacker":{"name":"Water Elemental","entry":510,"level":80,"isPlayer":false},` +
+			`"target":{"name":"Dummy","entry":999000},"owner":{"name":"SvStkB","level":80,"isPlayer":true,"class":8,"race":1},` +
+			`"pet":{"index":1,"controlled":[{"index":1,"entry":510,"name":"Water Elemental","isPet":false,"isTotem":false}],` +
+			`"createStats":[1,2,3,4,5],"damage":[{"type":"mainhand","min":1,"max":2}],` +
+			`"scaling":[{"id":35657,"name":"Mage Pet Scaling 01","effects":[{"index":0,"aura":29,"miscValue":2,"amount":300}]}],` +
+			`"regen":{"power":0,"intervalMs":2000,"perTick":40,"regeneratePowerFlag":true,"lastManaUse":false}}}`,
+	}
+	// plus a real server timing line, like the Ghoul Frenzy one the capture holds
+	timing, err := os.ReadFile(filepath.Join("..", "..", fixtureDir, timingFixture))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, line := range strings.Split(string(timing), "\n") {
+		if strings.Contains(line, `"command":"timing"`) {
+			lines = append(lines, strings.TrimSpace(line))
+			break
+		}
+	}
+	if len(lines) != 3 {
+		t.Fatalf("no timing line in %s", timingFixture)
+	}
+	path := filepath.Join(t.TempDir(), strikesFixture)
+	if err := os.WriteFile(path, []byte(strings.Join(lines, "\n")+"\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	records, err := readStrikesRecords(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	strike, info := records[0], records[1]
+	if w := strike.Weapon; w == nil || w.TotalPct != 1.06 || w.Taken.Max != 1616 || strike.Effects[0].Effect != 121 {
+		t.Errorf("strike %+v", strike.Weapon)
+	}
+	if key, err := strike.key(); err != nil || key != (strikesKey{"damage", 47486, warrior, 0, true}) {
+		t.Errorf("strike key %v, %v", key, err)
+	}
+	if info.Pet == nil || info.Pet.Regen == nil || info.Pet.Regen.PerTick != 40 || info.Pet.Scaling[0].Effects[0].Amount != 300 ||
+		info.Pet.CreateStats[4] != 5 {
+		t.Errorf("pet %+v", info.Pet)
+	}
+	if key, err := info.key(); err != nil || key != (strikesKey{"info", 0, mage, 510, false}) {
+		t.Errorf("info key %v, %v", key, err)
+	}
+	rec := records[2]
+	if rec.timing == nil || rec.Spell.ID == 0 || rec.timing.Spell.ID != rec.Spell.ID {
+		t.Errorf("timing %+v", rec.timing)
+	}
+	if key, err := rec.key(); err != nil || key.command != "timing" || key.spell != rec.Spell.ID || key.entry != 0 {
+		t.Errorf("timing key %v, %v", key, err)
+	}
+}
