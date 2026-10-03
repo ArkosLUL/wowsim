@@ -582,19 +582,25 @@ func sweepTarget(path talentPath) damageRecord {
 	return rec
 }
 
-// sweepSim is the sim's sheet for a path's first steps, with each field's bound: how far below the sim's
-// number the server's truncations can put its own.
+// sweepSim is the sim's sheet for a character, with each field's bound: how far below the sim's number
+// the server's truncations can put its own.
 type sweepSim struct {
 	values, bounds sweepSheet
 	err            error
 }
 
-func (path talentPath) sweepSim(n int) (out sweepSim) {
+// sweepSim is the sheet of the path's character after its first n steps, at the sweep's dummy.
+func (path talentPath) sweepSim(n int) sweepSim {
 	s, err := path.goldcharSetup(n)
 	if err != nil {
 		return sweepSim{err: err}
 	}
-	d, err := newGoldcharSim(sweepTarget(path), s)
+	return newSweepSim(sweepTarget(path), s)
+}
+
+// newSweepSim is the sheet of the setup's character against the record's dummy.
+func newSweepSim(rec damageRecord, s goldcharSetup) (out sweepSim) {
+	d, err := newGoldcharSim(rec, s)
 	if err != nil {
 		return sweepSim{err: err}
 	}

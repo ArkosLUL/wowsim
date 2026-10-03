@@ -36,6 +36,17 @@ and is only logged; the others are removed.
 
 | Setup | Record | Check | Why |
 |---|---|---|---|
+| DeathknightBlood | info | armor penetration % | Blood-Gorged: the sim keeps it as a health-gated aura, not in its armor penetration |
+| DruidBalance, DruidBalancePhase3 | info | armor, attack power | the sim's Moonkin Form lacks the server's armor from cloth and leather (its passive 24905) and feral attack power (`StatSystem.cpp` `FORM_MOONKIN`) |
+| DruidBalance, DruidBalancePhase3 | info | arcane spell crit % | spell specific crit in the sim (Improved Moonfire; Nature's Majesty and Dreamwalker 4pc on Starfire), spell mods on the server |
+| DruidBalance, DruidBalancePhase3, DruidFeral, DruidFeralApl, DruidFeralTank, PriestShadow, PriestSmite | info | max health | the e2e's `.modify hp` pinned max health to the client's value from before a stamina buff or form (Mark of the Wild, Power Word: Fortitude, Dire Bear Form); the record's own stamina gives the sim's number |
+| HunterBM, HunterMM, HunterSV, RogueCombat, RogueAssassination, WarriorFury, WarriorArms | info | armor | Envoy of Mortality's `ArmorDamageModifier` (21.5): the server adds it as armor, the sim's item converter drops it on an item with no armor |
+| HunterBM, HunterMM, HunterSV, PaladinRetribution, RogueCombat, RogueAssassination, RogueSubtlety, WarriorFury, WarriorArms | info | parry % | the e2e never teaches Parry (3127), a trainer spell, so the server can't parry; the sim's character can |
+| HunterMM | info | attack power, ranged attack power | the setup's auras cast Trueshot Aura (19506), which its talents don't take, so the sim has no 10% |
+| MageFire, MageFrostFire | info | arcane spell crit % | spell specific crit in the sim (Khadgar's Regalia 4pc, World in Flames), spell mods on the server |
+| RogueCombat | info | stamina, max health | the sim doesn't implement Endurance (2% stamina per rank) |
+| ShamanElemental | info | block value | the sim adds half a point of block value per strength for warriors and paladins only; the server for every class (`Player::GetShieldBlockValue`) |
+| WarlockDestruction | info | fire spell crit % | Devastation: spell specific crit in the sim, a spell mod on the server |
 
 `talents.jsonl`, each in `droppedSweep` (`tools/simval/talents_test.go`). Records stay; a dropped step (empty field)
 or field is only logged.

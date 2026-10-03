@@ -208,6 +208,25 @@ streamed into `tmp/`, tail stopped by PID; no restart, config or DB change):
 - **Owns:** `goldchar.go`'s info checks, `talents.go`'s `sweepSim`, `tools/simval/goldchar_test.go`
   (`droppedGoldchar`), its fixture README rows, the simval README's Golden characters.
 
+#### As built
+
+- `newSweepSim(rec, goldcharSetup)` holds `sweepSim`'s body; `talentPath.sweepSim(n)` wraps it, so the sweep's call
+  sites are unchanged. `goldcharRecord.UnmarshalJSON` also parses the record as `rawTalentInfo`; its `sheet()` reuses
+  `project` and `talentRecord.sheet`, without max power when the record lacks `maxPower`.
+- `checkGoldcharSheet` compares the spec's fields on every info record: server in [sim − sweepSim bound, sim + 0.001]
+  (no passing check had the server above). Missing sim field = 0, except block value (skipped without a shield).
+  Per-school spell power and crit replace the old lowest-school checks (and `checkSpellPower`); a school the sim casts
+  nothing of gets the stat's crit. Max power is compared on the 7 records with `maxPower`; 25 predate it (logged).
+- Result: 1565 checks over 131 records pass; 38 info checks dropped (fixture README), after ruling out the comparison
+  (each checked against the server source or DB):
+  - Real sim mismatches (follow-ups): Envoy of Mortality's `ArmorDamageModifier` armor (7 setups), Rogue Endurance's
+    stamina, shaman block value from strength, Moonkin Form armor and feral AP, Blood-Gorged ArP (as in EC-SWEEP2).
+  - e2e capture faults (EC-GEAR's recapture): Parry (3127) never learned (9 setups), `.modify hp` pinning a stale max
+    health (7 setups), HunterMM's `auras` casting Trueshot Aura its talents lack.
+  - Comparison limit, as EC-SWEEP2's: spell-specific crit on every spell of a school (DruidBalance and
+    DruidBalancePhase3 arcane, MageFire and MageFrostFire arcane, WarlockDestruction fire).
+- Golden-neutral; no live run.
+
 ### EC-SPELLMOD (T; golden-neutral; stages: spells, live)
 
 - Spells: for each implemented talent with spell mods (auras 107/108 in its rank spell; 276 at `c27854a8d`), the

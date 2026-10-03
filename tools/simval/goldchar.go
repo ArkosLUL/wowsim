@@ -615,6 +615,8 @@ type goldcharRecord struct {
 	Character *goldcharCharacter `json:"character"`
 	// the attacker's sheet crit for the hands unitSnapshot leaves out
 	critOffhand, critRanged float64
+	// the record as the talent sweep's trim reads an info record
+	raw rawTalentInfo
 }
 
 func (r *goldcharRecord) UnmarshalJSON(data []byte) error {
@@ -622,17 +624,32 @@ func (r *goldcharRecord) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, (*fields)(r)); err != nil {
 		return err
 	}
-	var hands struct {
-		Attacker struct {
-			Sheet struct {
-				CritOffhand float64 `json:"critOffhand"`
-				CritRanged  float64 `json:"critRanged"`
-			} `json:"sheet"`
-		} `json:"attacker"`
+	if err := json.Unmarshal(data, &r.raw); err != nil {
+		return err
 	}
-	err := json.Unmarshal(data, &hands)
-	r.critOffhand, r.critRanged = hands.Attacker.Sheet.CritOffhand, hands.Attacker.Sheet.CritRanged
-	return err
+	if sheet := r.raw.Attacker.Sheet; sheet != nil {
+		r.critOffhand, r.critRanged = sheet.CritOffhand, sheet.CritRanged
+	}
+	return nil
+}
+
+// sheet is the info record's sheet the way the talent sweep reads one, without max power when the
+// record predates the module's maxPower.
+func (r goldcharRecord) sheet() (sweepSheet, error) {
+	raw := r.raw
+	noMaxPower := raw.Attacker.MaxPower == nil
+	if noMaxPower {
+		raw.Attacker.MaxPower = new(float64)
+	}
+	rec, err := raw.project()
+	if err != nil {
+		return nil, err
+	}
+	sheet, err := rec.sheet()
+	if err == nil && noMaxPower {
+		delete(sheet, sweepPowerFields[rec.PowerType].name)
+	}
+	return sheet, err
 }
 
 // goldcharCharacter is what the server character has on.
@@ -914,8 +931,8 @@ func spellHitEverySchool(unit unitSnapshot) (float64, error) {
 }
 
 // checkGoldcharInfo compares the info record's sheet with the setup's character in the sim, with its
-// starting auras: spell power, spell crit and hit, and for each hand the sim swings, its attack speed,
-// weapon damage, crit, hit and expertise.
+// starting auras: the talent sweep's sheet fields (checkGoldcharSheet), spell hit, and for each hand the
+// sim swings, its attack speed, weapon damage, crit, hit and expertise.
 func checkGoldcharInfo(rec goldcharRecord, s goldcharSetup) (checks []Check) {
 	unit := rec.Attacker
 	if !unit.IsPlayer || unit.Level != core.CharacterLevel || unit.Sheet == nil {
@@ -931,7 +948,7 @@ func checkGoldcharInfo(rec goldcharRecord, s goldcharSetup) (checks []Check) {
 			checks = append(checks, fail("sim sheet", fmt.Sprintf("sim panic: %v", r)))
 		}
 	}()
-	checks = d.sheetChecks(rec)
+	checks = append(checkGoldcharSheet(rec, newSweepSim(rec.damageRecord, s)), d.sheetChecks(rec)...)
 
 	var auras string
 	for i, check := range checks {
@@ -942,6 +959,65 @@ func checkGoldcharInfo(rec goldcharRecord, s goldcharSetup) (checks []Check) {
 			auras = d.unmatchedAuras()
 		}
 		checks[i].Detail += "; " + auras
+	}
+	return checks
+}
+
+// goldcharSheetFields are the talent sweep's sheet fields an info record is held to, besides each
+// school's spell power and crit.
+var goldcharSheetFields = []string{
+	"strength", "agility", "stamina", "intellect", "spirit",
+	"max health", "max mana", "max rage", "max energy", "max runic power",
+	"armor", "fire resistance", "nature resistance", "frost resistance", "shadow resistance", "arcane resistance",
+	"attack power", "ranged attack power", "dodge %", "parry %", "block %", "block value", "armor penetration %",
+}
+
+// checkGoldcharSheet holds the info record's sheet to the sim's: each field can sit as far below the
+// sim's as its sweepSim bound, and no further above than float noise. A field the sim leaves out is 0
+// there (no parry, block or bar), except block value, which the server reports without a shield too.
+// Every school gets the sim's one spell power, and the crit of the sim's spells of that school, or the
+// stat's when it has none.
+func checkGoldcharSheet(rec goldcharRecord, sim sweepSim) []Check {
+	if sim.err != nil {
+		return []Check{fail("sim sheet", sim.err.Error())}
+	}
+	server, err := rec.sheet()
+	if err != nil {
+		return []Check{fail("server sheet", err.Error())}
+	}
+	type field struct{ name, sim string }
+	var fields []field
+	for _, name := range goldcharSheetFields {
+		fields = append(fields, field{name, name})
+	}
+	for _, school := range magicSchools {
+		power, crit := school+" spell power", school+" spell crit %"
+		server[power] = rec.Attacker.SpellPower[school]
+		fields = append(fields, field{power, "spell power"})
+		if _, ok := sim.values[crit]; ok {
+			fields = append(fields, field{crit, crit})
+		} else {
+			fields = append(fields, field{crit, "spell crit %"})
+		}
+	}
+
+	var checks []Check
+	for _, f := range fields {
+		got, ok := server[f.name]
+		if !ok {
+			continue // another power type's bar, or one the record predates
+		}
+		want, ok := sim.values[f.sim]
+		if !ok && f.name == "block value" {
+			continue
+		}
+		bound := sim.bounds[f.sim]
+		detail := fmt.Sprintf("sim %.4f, server %.4f (up to %.3g below)", want, got, bound)
+		if diff := want - got; diff >= -sweepEpsilon && diff <= bound+sweepEpsilon {
+			checks = append(checks, pass(f.name, detail))
+		} else {
+			checks = append(checks, fail(f.name, detail))
+		}
 	}
 	return checks
 }
@@ -984,15 +1060,6 @@ func (d *damageSim) sheetChecks(rec goldcharRecord) []Check {
 	}
 	critPerAgility := 100 * core.ClassStatScaling[class].MeleeCritPerAgility
 
-	if len(unit.SpellPower) == 0 || len(unit.Sheet.SpellCrit) <= len(magicSchools) {
-		return []Check{fail("snapshot", "no spellPower or spellCrit per school")}
-	}
-	// school bonuses only add, so the lowest school holds what every spell gets
-	var spellPower, spellCrit []float64
-	for i, school := range magicSchools {
-		spellPower = append(spellPower, unit.SpellPower[school])
-		spellCrit = append(spellCrit, unit.Sheet.SpellCrit[i+1])
-	}
 	spellHit := checkNear("spell hit %", s[stats.SpellHit]/core.SpellHitRatingPerHitChance, unit.HitMods.Spell, 1e-3)
 	if schoolHit, err := spellHitEverySchool(unit.unitSnapshot); err != nil {
 		spellHit = fail(spellHit.Name, err.Error())
@@ -1000,12 +1067,7 @@ func (d *damageSim) sheetChecks(rec goldcharRecord) []Check {
 		spellHit = checkNear("spell hit %", s[stats.SpellHit]/core.SpellHitRatingPerHitChance, unit.HitMods.Spell+schoolHit, 1e-3)
 		spellHit.Detail += fmt.Sprintf(" (%.0f of it school hit)", schoolHit)
 	}
-	checks := []Check{
-		checkSpellPower(s[stats.SpellPower], slices.Min(spellPower), slices.Max(spellPower)),
-		checkNear("spell crit %", s[stats.SpellCrit]/core.CritRatingPerCritChance, slices.Min(spellCrit),
-			truncation(stats.Intellect, 100*core.SpellCritPerIntellect)),
-		spellHit,
-	}
+	checks := []Check{spellHit}
 
 	for _, hand := range d.sheetHands() {
 		attack := unit.attack(hand.attack)
@@ -1044,20 +1106,6 @@ func (d *damageSim) sheetChecks(rec goldcharRecord) []Check {
 		}
 	}
 	return checks
-}
-
-// checkSpellPower allows for the server truncating each spell power bonus it works out from a stat or
-// attack power, which only ever lowers its number.
-func checkSpellPower(sim, server, serverMax float64) Check {
-	detail := fmt.Sprintf("sim %.2f, server %.0f", sim, server)
-	if serverMax > server {
-		detail += fmt.Sprintf(" (%.0f in its best school)", serverMax)
-	}
-	below := max(server*0.001, 1)
-	if diff := sim - server; diff >= -below && diff <= below+1 {
-		return pass("spell power", detail)
-	}
-	return fail("spell power", detail)
 }
 
 // checkTruncated passes when the server's whole number is the sim's value cut down by less than slack,
