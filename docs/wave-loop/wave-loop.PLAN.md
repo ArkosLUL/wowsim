@@ -72,6 +72,7 @@ G = changes goldens. FS = runs all 37 suites.
 | R | BIS-outclassed | ✔ |
 | S | EC-SWEEP2 (live) · EC-STACK · EC-TIMING (C++, live) | ✔ |
 | T | EC-SHEET · EC-SPELLMOD (live) · EC-THREAT (C++, live) · EC-AOE | ✔ |
+| T2 | fixes for S's and T's mismatches (G), specced once T lands | ✔ |
 | V | EC-THREAT-FIX (G, FS) · EC-STRIKES (C++, live) · EC-BUFFS (live) | ✔ |
 | W | EC-GEAR (C++, live) · EC-MOBS (live) | ✔ |
 | X | EC-FIGHT (live) | ✔ |
@@ -123,6 +124,9 @@ R is the user's call (2026-10-02): leave outclassed gear out of the optimizer's 
 then covers all 28 builds, tanks included, since the cut changes prot paladin and feral tank picks.
 S to X are the e2e-coverage effort, after R lands (the user's call, 2026-10-02): live checks of what the sim
 never compared with the server. The deferred BiS chain waits until X lands (the user's call, 2026-10-03).
+T2 is the user's call too (the same day): it fixes the sim/server mismatches S and T drop or allowlist, after T
+so EC-SPELLMOD's and EC-SHEET's finds join S's and each is fixed once. Each item re-measures its mismatches
+first: some may be server quirks, not sim bugs.
 
 **Where the specs are:**
 
@@ -139,7 +143,7 @@ never compared with the server. The deferred BiS chain waits until X lands (the 
 
 ## Current wave
 
-- Wave: S, landed (master fast-forwarded to this close-out). Next: T (EC-SHEET, EC-SPELLMOD, EC-THREAT, EC-AOE).
+- Wave: S, landed (master fast-forwarded to this close-out). Next: T (EC-SHEET, EC-SPELLMOD, EC-THREAT, EC-AOE), then T2.
   Prod runs Q's `225191f1f`; R changes the optimizer's pool and the BiS tabs' hint.
 - Open: the talent sweep's unseen talents (test-enrichment INVESTIGATION, TE-SWEEP as built); from Q (parity
   INVESTIGATION, PAR-FU-4..7 as built): Ranged Weapon Specialization on Explosive Trap and magic procs, Glyph of

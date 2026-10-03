@@ -11,7 +11,8 @@ The live e2e and the replays leave timing, costs, threat, pets, gear and buffs u
 - The new creature-type dummies stand in Naxxramas like the others: the user OKs adding them to mod-dungeon-scale's
   disabled list.
 - Carried from test-enrichment: a real sim/server mismatch becomes a follow-up item; the item that finds it drops
-  the record (with a fixture README row) and never fixes the sim. EC-THREAT-FIX is the one fix item.
+  the record (with a fixture README row) and never fixes the sim. EC-THREAT-FIX fixes threat; wave T2 (the
+  user's call, 2026-10-03) fixes what S and T dropped or allowlisted, specced once T lands.
 
 ## Rules for every EC item
 
@@ -36,6 +37,7 @@ The live e2e and the replays leave timing, costs, threat, pets, gear and buffs u
 |---|---|---|
 | S | EC-SWEEP2 (live) · EC-STACK · EC-TIMING (C++, live) | Cheap checks first; the timing probe EC-SPELLMOD needs |
 | T | EC-SHEET · EC-SPELLMOD (live) · EC-THREAT (C++, live) · EC-AOE | SHEET builds on SWEEP2's sheet code; SPELLMOD needs `.simval timing` |
+| T2 | fixes (G), specced once T lands | S's and T's mismatches, each fixed once with the full set known |
 | V | EC-THREAT-FIX (G, FS) · EC-STRIKES (C++, live) · EC-BUFFS (live) | The fix needs T's probe |
 | W | EC-GEAR (C++, live) · EC-MOBS (module SQL and config, live) | One rebuild for both |
 | X | EC-FIGHT (live) | Fights wear GEAR's full gear, enchant procs included |
