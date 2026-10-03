@@ -15,7 +15,7 @@ func (cat *FeralDruid) doAoeRotation(sim *core.Simulation) (bool, time.Duration)
 	isClearcast := cat.ClearcastingAura.IsActive()
 	simTimeRemain := sim.GetRemainingDuration()
 	latencySecs := cat.latency.Seconds()
-	shiftCost := cat.CatForm.DefaultCast.Cost
+	shiftCost := cat.CatForm.StaticCost()
 
 	waitForTf := cat.Talents.Berserk && (cat.TigersFury.ReadyAt() <= cat.BerserkAura.Duration) && (cat.TigersFury.ReadyAt()+time.Second < simTimeRemain-cat.BerserkAura.Duration)
 	berserkNow := cat.Berserk.IsReady(sim) && !waitForTf && !isClearcast
@@ -33,7 +33,7 @@ func (cat *FeralDruid) doAoeRotation(sim *core.Simulation) (bool, time.Duration)
 
 	if ffNow {
 		simTimeSecs := sim.GetRemainingDuration().Seconds()
-		maxSwipesWithoutFF := (int)((curEnergy + simTimeSecs*10) / cat.SwipeCat.DefaultCast.Cost)
+		maxSwipesWithoutFF := (int)((curEnergy + simTimeSecs*10) / cat.SwipeCat.StaticCost())
 		numSwipesWithoutFF := min(maxSwipesWithoutFF, int(simTimeSecs)+1)
 		numSwipesWithFF := min(maxSwipesWithoutFF+1, int(simTimeSecs))
 		ffNow = numSwipesWithFF > numSwipesWithoutFF
@@ -53,7 +53,7 @@ func (cat *FeralDruid) doAoeRotation(sim *core.Simulation) (bool, time.Duration)
 
 	if flowershiftNow {
 		// if we cant cast and get back then abandon flowershift
-		if cat.CurrentMana() <= shiftCost+cat.GiftOfTheWild.DefaultCast.Cost {
+		if cat.CurrentMana() <= shiftCost+cat.GiftOfTheWild.StaticCost() {
 			flowershiftNow = false
 			cat.Metrics.MarkOOM(sim)
 		}
@@ -67,15 +67,15 @@ func (cat *FeralDruid) doAoeRotation(sim *core.Simulation) (bool, time.Duration)
 	pendingPool := PoolingActions{}
 
 	if cat.SavageRoarAura.IsActive() {
-		roarCost := core.Ternary(cat.berserkExpectedAt(sim, cat.SavageRoarAura.ExpiresAt()), cat.SavageRoar.DefaultCast.Cost*0.5, cat.SavageRoar.DefaultCast.Cost)
+		roarCost := cat.SavageRoar.StaticCostWithPercent(core.Ternary(cat.berserkExpectedAt(sim, cat.SavageRoarAura.ExpiresAt()), -0.5, 0.0))
 		pendingPool.addAction(cat.SavageRoarAura.ExpiresAt(), roarCost)
 
 		if curCp == 0 && cat.SavageRoarAura.RemainingDuration(sim) > time.Second {
 			expireTime := cat.SavageRoarAura.ExpiresAt() - time.Second
 			if cat.FaerieFire.TimeToReady(sim) > expireTime-sim.CurrentTime {
-				builderCost := cat.Rake.DefaultCast.Cost
+				builderCost := cat.Rake.StaticCost()
 				if rotation.AoeMangleBuilder && cat.MangleCat != nil {
-					builderCost = cat.MangleCat.DefaultCast.Cost
+					builderCost = cat.MangleCat.StaticCost()
 				}
 				builderCost = core.Ternary(cat.berserkExpectedAt(sim, expireTime), builderCost*0.5, builderCost)
 				pendingPool.addAction(expireTime, builderCost)

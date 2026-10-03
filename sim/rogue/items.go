@@ -49,10 +49,10 @@ var Tier9 = core.NewItemSet(core.ItemSet{
 				ActionID: core.ActionID{SpellID: 67209},
 				Duration: time.Second * 15,
 				OnGain: func(aura *core.Aura, sim *core.Simulation) {
-					rogue.PseudoStats.CostReduction += 40
+					rogue.PseudoStats.CostFlat -= 40
 				},
 				OnExpire: func(aura *core.Aura, sim *core.Simulation) {
-					rogue.PseudoStats.CostReduction -= 40
+					rogue.PseudoStats.CostFlat += 40
 				},
 				OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, _ *core.SpellResult) {
 					if !spell.ProcMask.Matches(core.ProcMaskMeleeSpecial) {
@@ -60,7 +60,7 @@ var Tier9 = core.NewItemSet(core.ItemSet{
 					}
 
 					// doesn't handle multiple dynamic cost reductions at once, or 0-cost default casts
-					if actualGain := spell.DefaultCast.Cost - spell.CurCast.Cost; actualGain > 0 {
+					if actualGain := spell.StaticCost() - spell.CurCast.Cost; actualGain > 0 {
 						energyMetrics.AddEvent(40, actualGain)
 						aura.Deactivate(sim)
 					}

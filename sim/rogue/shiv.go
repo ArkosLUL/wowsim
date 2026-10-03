@@ -11,7 +11,7 @@ func (rogue *Rogue) registerShivSpell() {
 	baseCost := 20.0
 	ohWeapon := rogue.GetOHWeapon()
 	if ohWeapon != nil {
-		baseCost = rogue.costModifier(20 + 10*ohWeapon.SwingSpeed)
+		baseCost = 20 + 10*ohWeapon.SwingSpeed
 	}
 
 	rogue.Shiv = rogue.RegisterSpell(core.SpellConfig{
@@ -21,7 +21,8 @@ func (rogue *Rogue) registerShivSpell() {
 		Flags:       core.SpellFlagMeleeMetrics | SpellFlagBuilder | core.SpellFlagAPL,
 
 		EnergyCost: core.EnergyCostOptions{
-			Cost: baseCost,
+			Cost:       baseCost,
+			Multiplier: rogue.cheaperComboMoves(),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{

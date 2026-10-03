@@ -109,7 +109,8 @@ func (shaman *Shaman) registerStormstrikeSpell() {
 		Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagAPL | core.SpellFlagIncludeTargetBonusDamage,
 
 		ManaCost: core.ManaCostOptions{
-			BaseCost: 0.08,
+			BaseCost:   0.08,
+			Multiplier: 1 - 0.02*float64(shaman.Talents.MentalQuickness),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{

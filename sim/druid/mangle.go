@@ -23,8 +23,9 @@ func (druid *Druid) registerMangleBearSpell() {
 		Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagIncludeTargetBonusDamage | core.SpellFlagAPL,
 
 		RageCost: core.RageCostOptions{
-			Cost:   20 - float64(druid.Talents.Ferocity),
-			Refund: 0.8,
+			Cost:    20,
+			FlatMod: -float64(druid.Talents.Ferocity),
+			Refund:  0.8,
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
@@ -81,8 +82,9 @@ func (druid *Druid) registerMangleCatSpell() {
 		Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagIncludeTargetBonusDamage | core.SpellFlagAPL,
 
 		EnergyCost: core.EnergyCostOptions{
-			Cost:   45.0 - 2*float64(druid.Talents.ImprovedMangle) - float64(druid.Talents.Ferocity) - core.TernaryFloat64(druid.HasSetBonus(ItemSetThunderheartHarness, 2), 5, 0),
-			Refund: 0.8,
+			Cost:    45,
+			FlatMod: -2*float64(druid.Talents.ImprovedMangle) - float64(druid.Talents.Ferocity) - core.TernaryFloat64(druid.HasSetBonus(ItemSetThunderheartHarness, 2), 5, 0),
+			Refund:  0.8,
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{

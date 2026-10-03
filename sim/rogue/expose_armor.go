@@ -29,7 +29,8 @@ func (rogue *Rogue) registerExposeArmorSpell() {
 		MetricSplits: 6,
 
 		EnergyCost: core.EnergyCostOptions{
-			Cost:          25.0 - 5*float64(rogue.Talents.ImprovedExposeArmor),
+			Cost:          25,
+			FlatMod:       -5 * float64(rogue.Talents.ImprovedExposeArmor),
 			Refund:        0.4 * float64(rogue.Talents.QuickRecovery),
 			RefundMetrics: rogue.QuickRecoveryMetrics,
 		},

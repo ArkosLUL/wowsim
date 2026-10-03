@@ -38,20 +38,20 @@ func (value *APLValueCatExcessEnergy) GetFloat(sim *core.Simulation) float64 {
 
 	simTimeRemain := sim.GetRemainingDuration()
 	if ripDot := cat.Rip.CurDot(); ripDot.IsActive() && ripDot.RemainingDuration(sim) < simTimeRemain-time.Second*10 && cat.ComboPoints() == 5 {
-		ripCost := core.Ternary(cat.berserkExpectedAt(sim, ripDot.ExpiresAt()), cat.Rip.DefaultCast.Cost*0.5, cat.Rip.DefaultCast.Cost)
+		ripCost := cat.Rip.StaticCostWithPercent(core.Ternary(cat.berserkExpectedAt(sim, ripDot.ExpiresAt()), -0.5, 0.0))
 		pendingPool.addAction(ripDot.ExpiresAt(), ripCost)
 		cat.ripRefreshPending = true
 	}
 	if rakeDot := cat.Rake.CurDot(); rakeDot.IsActive() && rakeDot.RemainingDuration(sim) < simTimeRemain-rakeDot.Duration {
-		rakeCost := core.Ternary(cat.berserkExpectedAt(sim, rakeDot.ExpiresAt()), cat.Rake.DefaultCast.Cost*0.5, cat.Rake.DefaultCast.Cost)
+		rakeCost := cat.Rake.StaticCostWithPercent(core.Ternary(cat.berserkExpectedAt(sim, rakeDot.ExpiresAt()), -0.5, 0.0))
 		pendingPool.addAction(rakeDot.ExpiresAt(), rakeCost)
 	}
 	if cat.MangleCat != nil && cat.bleedAura.IsActive() && cat.bleedAura.RemainingDuration(sim) < simTimeRemain-time.Second {
-		mangleCost := core.Ternary(cat.berserkExpectedAt(sim, cat.bleedAura.ExpiresAt()), cat.MangleCat.DefaultCast.Cost*0.5, cat.MangleCat.DefaultCast.Cost)
+		mangleCost := cat.MangleCat.StaticCostWithPercent(core.Ternary(cat.berserkExpectedAt(sim, cat.bleedAura.ExpiresAt()), -0.5, 0.0))
 		pendingPool.addAction(cat.bleedAura.ExpiresAt(), mangleCost)
 	}
 	if cat.SavageRoarAura.IsActive() {
-		roarCost := core.Ternary(cat.berserkExpectedAt(sim, cat.SavageRoarAura.ExpiresAt()), cat.SavageRoar.DefaultCast.Cost*0.5, cat.SavageRoar.DefaultCast.Cost)
+		roarCost := cat.SavageRoar.StaticCostWithPercent(core.Ternary(cat.berserkExpectedAt(sim, cat.SavageRoarAura.ExpiresAt()), -0.5, 0.0))
 		pendingPool.addAction(cat.SavageRoarAura.ExpiresAt(), roarCost)
 	}
 

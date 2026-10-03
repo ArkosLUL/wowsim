@@ -25,7 +25,7 @@ func (druid *Druid) registerInnervateCD() {
 			if druid.StartingForm.Matches(Cat) {
 				// double shift + innervate cost.
 				// Prevents not having enough mana to shift back into form if more powershift are executed
-				innervateManaThreshold = druid.CatForm.DefaultCast.Cost*2 + innervateSpell.DefaultCast.Cost
+				innervateManaThreshold = druid.CatForm.StaticCost()*2 + innervateSpell.StaticCost()
 			} else {
 				// Threshold can be lower when casting on self because its never mid-cast.
 				innervateManaThreshold = 500

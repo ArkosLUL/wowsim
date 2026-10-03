@@ -60,9 +60,9 @@ func (priest *Priest) registerPrayerOfMendingSpell() {
 
 		ManaCost: core.ManaCostOptions{
 			BaseCost: 0.15,
-			Multiplier: 1 *
-				(1 - .1*float64(priest.Talents.HealingPrayers)) *
-				(1 - []float64{0, .04, .07, .10}[priest.Talents.MentalAgility]),
+			Multiplier: 1 -
+				.1*float64(priest.Talents.HealingPrayers) -
+				[]float64{0, .04, .07, .10}[priest.Talents.MentalAgility],
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{

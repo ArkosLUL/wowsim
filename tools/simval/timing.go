@@ -74,7 +74,7 @@ type timingRecord struct {
 	Cost struct {
 		// a health cost is POWER_HEALTH, -2, which the module writes unsigned
 		PowerType uint32 `json:"powerType"`
-		Amount    int32 `json:"amount"`
+		Amount    int32  `json:"amount"`
 		Runes     *struct {
 			Cost           []int32 `json:"cost"`
 			RunicPowerGain int32   `json:"runicPowerGain"`
@@ -527,7 +527,6 @@ type timingMismatch struct {
 // An entry no record needs fails TestTimingRecords.
 var knownTimingMismatches = func() map[timingMismatch]string {
 	const (
-		costRound = "the sim's discounted cost is 1 above the server's"
 		tickRound = "the sim truncates the hasted tick period to whole ms"
 		comboless = "the probe has no combo points, so the sim's finisher has no duration"
 		hunterRng = "the server hunter has a 10% ranged haste the sim hunter lacks"
@@ -540,18 +539,6 @@ var knownTimingMismatches = func() map[timingMismatch]string {
 			}
 		}
 	}
-	add("the sim's Avenging Wrath cost misses the server's talent discount", 2, 31884, talentPass, "cost")
-	add(costRound, 2, 48801, talentPass, "cost")
-	add(costRound, 2, 48819, talentPass, "cost")
-	add(costRound, 5, 48066, talentPass, "cost")
-	add(costRound, 5, 48071, talentPass, "cost")
-	add(costRound, 11, 48463, talentPass, "cost")
-	add(costRound, 11, 48465, talentPass, "cost")
-	add(costRound, 3, 49001, talentPass, "cost")
-	add(costRound, 3, 49050, talentPass, "cost")
-	add(costRound, 7, 49231, talentPass, "cost")
-	add(costRound, 7, 49271, talentPass, "cost")
-	add("the sim's Healing Wave cost has a talent discount (about 40%) the server doesn't", 7, 49273, allPasses, "cost")
 	add(tickRound, 8, 42846, bloodlustOn, "channel", "aura duration")
 	add(tickRound, 9, 47855, bloodlustOn, "channel", "aura duration")
 	add(tickRound, 11, 48467, bloodlustOn, "channel", "aura duration")

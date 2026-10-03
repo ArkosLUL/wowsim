@@ -53,7 +53,8 @@ func (shaman *Shaman) registerFireNovaSpell() {
 		Flags:       SpellFlagFocusable | core.SpellFlagAPL,
 
 		ManaCost: core.ManaCostOptions{
-			BaseCost: 0.22,
+			BaseCost:   0.22,
+			Multiplier: 1 - 0.02*float64(shaman.Talents.MentalQuickness),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{

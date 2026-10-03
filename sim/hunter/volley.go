@@ -16,8 +16,10 @@ func (hunter *Hunter) registerVolleySpell() {
 		MissileSpeed: 30,
 
 		ManaCost: core.ManaCostOptions{
-			BaseCost:   0.17,
-			Multiplier: core.TernaryFloat64(hunter.HasMajorGlyph(proto.HunterMajorGlyph_GlyphOfVolley), 0.8, 1),
+			BaseCost: 0.17,
+			Multiplier: 1 -
+				core.TernaryFloat64(hunter.HasMajorGlyph(proto.HunterMajorGlyph_GlyphOfVolley), 0.2, 0) -
+				0.03*float64(hunter.Talents.Efficiency),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{

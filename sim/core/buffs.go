@@ -693,12 +693,12 @@ func PowerInfusionAura(character *Unit, actionTag int32) *Aura {
 		Duration: PowerInfusionDuration,
 		OnGain: func(aura *Aura, sim *Simulation) {
 			if character.HasManaBar() {
-				character.PseudoStats.CostMultiplier -= 0.2
+				character.AddSchoolCostMultiplier(SpellSchoolMagic, -0.2)
 			}
 		},
 		OnExpire: func(aura *Aura, sim *Simulation) {
 			if character.HasManaBar() {
-				character.PseudoStats.CostMultiplier += 0.2
+				character.AddSchoolCostMultiplier(SpellSchoolMagic, 0.2)
 			}
 		},
 	})

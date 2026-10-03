@@ -25,7 +25,8 @@ func (druid *Druid) registerSwipeBearSpell() {
 		Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagIncludeTargetBonusDamage | core.SpellFlagAPL,
 
 		RageCost: core.RageCostOptions{
-			Cost: 20 - float64(druid.Talents.Ferocity),
+			Cost:    20,
+			FlatMod: -float64(druid.Talents.Ferocity),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
@@ -63,7 +64,8 @@ func (druid *Druid) registerSwipeCatSpell() {
 		Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagIncludeTargetBonusDamage | core.SpellFlagAPL,
 
 		EnergyCost: core.EnergyCostOptions{
-			Cost: 50 - float64(druid.Talents.Ferocity),
+			Cost:    50,
+			FlatMod: -float64(druid.Talents.Ferocity),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{

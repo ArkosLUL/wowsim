@@ -34,7 +34,8 @@ func (paladin *Paladin) RegisterAvengingWrathCD() {
 		Flags:    core.SpellFlagNoOnCastComplete | core.SpellFlagAPL,
 
 		ManaCost: core.ManaCostOptions{
-			BaseCost: 0.08,
+			BaseCost:   0.08,
+			Multiplier: 1 - 0.02*float64(paladin.Talents.Benediction),
 		},
 		Cast: core.CastConfig{
 			CD: core.Cooldown{

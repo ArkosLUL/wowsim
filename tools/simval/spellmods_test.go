@@ -19,34 +19,6 @@ import (
 // with a row in the fixture README. The lines stay, since a spell's after probes are the next talent's
 // before probes.
 var droppedSpellMods = slices.Concat(
-	// the sim's cost is 1 above: the server truncates the base cost before the percent mods (Arcane Blast 2)
-	spellModDrops("MageArcane", "arcaneFocus", "cost", 42921),
-	spellModDrops("MageArcane", "arcanePower", "cost", 42833, 42842, 42846, 42891, 42897, 42945, 42950, 44781, 47610, 55360),
-	spellModDrops("PaladinProtection", "benediction", "cost", 48801, 48819, 48827, 53595, 61411),
-	spellModDrops("WarlockDemonology", "cataclysm", "cost", 17962, 47827),
-	spellModDrops("ShamanElemental", "convection", "cost", 49231, 49236, 49271),
-	spellModDrops("HunterMarksmanship", "efficiency", "cost", 34490, 49001, 49048, 49050, 63672),
-	spellModDrops("PriestDiscipline", "improvedFlashHeal", "cost", 48071),
-	spellModDrops("PriestDiscipline", "mentalAgility", "cost", 48068, 48089, 48158, 48300),
-	spellModDrops("ShamanEnhancement", "mentalQuickness", "cost", 2825, 8143, 49233, 57722, 58643, 58704, 58734, 58753, 58774),
-	spellModDrops("DruidBalance", "moonglow", "cost", 48463, 48465, 53201),
-	spellModDrops("HunterSurvival", "resourcefulness", "cost", 63672),
-	spellModDrops("ShamanEnhancement", "shamanisticFocus", "cost", 49233),
-	spellModDrops("WarlockAffliction", "suppression", "cost", 47813, 47855, 47864, 47865, 50511),
-	spellModDrops("ShamanRestoration", "totemicFocus", "cost", 58734),
-	// the sim leaves the talent's cost cut out, or has no cost at all
-	spellModDrops("PaladinProtection", "benediction", "cost", 498, 31884, 48952),
-	spellModDrops("HunterMarksmanship", "efficiency", "cost", 58434),
-	spellModDrops("WarriorProtection", "focusedRage", "cost", 23881, 47486),
-	spellModDrops("ShamanEnhancement", "mentalQuickness", "cost", 17364, 49284, 51533, 60103, 61301, 61657),
-	spellModDrops("PriestShadow", "shadowFocus", "cost", 48127, 53023),
-	// a different base cost in the sim
-	spellModDrops("HunterMarksmanship", "efficiency", "cost", 3043),
-	spellModDrops("ShamanRestoration", "tidalFocus", "cost", 49273, 49284),
-	spellModDrops("PriestShadow", "focusedMind", "cost", 53023),
-	// the server adds percent cost mods up and puts them on the base cost, the sim multiplies them onto the cost
-	spellModDrops("DruidFeralCat", "naturalShapeshifter", "cost", 768, 9634),
-	spellModDrops("DruidFeralCat", "berserk", "cost", 48566, 48572),
 	// crit the sim leaves out, adds where the server's mask doesn't (Inner Focus on Circle of Healing), or
 	// adds as 0.1% instead of 10% (Improved Searing Pain)
 	spellModDrops("DeathknightFrost", "annihilation", "crit chance", 55271),

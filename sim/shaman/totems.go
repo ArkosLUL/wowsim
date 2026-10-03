@@ -154,19 +154,19 @@ func (shaman *Shaman) registerCallOfTheElements() {
 	totalManaCost := 0.0
 	anyTotems := false
 	if airTotem != nil {
-		totalManaCost += airTotem.DefaultCast.Cost
+		totalManaCost += airTotem.StaticCost()
 		anyTotems = true
 	}
 	if earthTotem != nil {
-		totalManaCost += earthTotem.DefaultCast.Cost
+		totalManaCost += earthTotem.StaticCost()
 		anyTotems = true
 	}
 	if fireTotem != nil {
-		totalManaCost += fireTotem.DefaultCast.Cost
+		totalManaCost += fireTotem.StaticCost()
 		anyTotems = true
 	}
 	if waterTotem != nil {
-		totalManaCost += waterTotem.DefaultCast.Cost
+		totalManaCost += waterTotem.StaticCost()
 		anyTotems = true
 	}
 

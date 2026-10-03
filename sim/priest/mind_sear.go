@@ -60,8 +60,10 @@ func (priest *Priest) newMindSearSpell(numTicksIdx int32) *core.Spell {
 	config.ActionID = core.ActionID{SpellID: 53023}.WithTag(numTicksIdx)
 	config.Flags = flags
 	config.ManaCost = core.ManaCostOptions{
-		BaseCost:   0.28,
-		Multiplier: 1 - 0.05*float64(priest.Talents.FocusedMind),
+		BaseCost: 0.28,
+		Multiplier: 1 -
+			0.02*float64(priest.Talents.ShadowFocus) -
+			0.05*float64(priest.Talents.FocusedMind),
 	}
 	config.Cast = core.CastConfig{
 		DefaultCast: core.Cast{

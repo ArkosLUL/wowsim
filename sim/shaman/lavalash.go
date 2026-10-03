@@ -56,7 +56,8 @@ func (shaman *Shaman) registerLavaLashSpell() {
 		Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagAPL,
 
 		ManaCost: core.ManaCostOptions{
-			BaseCost: 0.04,
+			BaseCost:   0.04,
+			Multiplier: 1 - 0.02*float64(shaman.Talents.MentalQuickness),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{

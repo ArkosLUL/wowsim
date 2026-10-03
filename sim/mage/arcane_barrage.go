@@ -20,10 +20,8 @@ func (mage *Mage) registerArcaneBarrageSpell() {
 		MissileSpeed: 24,
 
 		ManaCost: core.ManaCostOptions{
-			BaseCost: 0.18,
-			Multiplier: 1 *
-				(1 - .01*float64(mage.Talents.ArcaneFocus)) *
-				core.TernaryFloat64(mage.HasMajorGlyph(proto.MageMajorGlyph_GlyphOfArcaneBarrage), .8, 1),
+			BaseCost:   0.18,
+			Multiplier: 1 - core.TernaryFloat64(mage.HasMajorGlyph(proto.MageMajorGlyph_GlyphOfArcaneBarrage), .2, 0),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{

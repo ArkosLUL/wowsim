@@ -134,10 +134,10 @@ var ItemSetDreadnaughtBattlegear = core.NewItemSet(core.ItemSet{
 				ActionID: core.ActionID{SpellID: 61571},
 				Duration: time.Second * 30,
 				OnGain: func(_ *core.Aura, sim *core.Simulation) {
-					warrior.PseudoStats.CostReduction += 5
+					warrior.PseudoStats.CostFlat -= 5
 				},
 				OnExpire: func(_ *core.Aura, sim *core.Simulation) {
-					warrior.PseudoStats.CostReduction -= 5
+					warrior.PseudoStats.CostFlat += 5
 				},
 				OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, _ *core.SpellResult) {
 					if !spell.ProcMask.Matches(core.ProcMaskMeleeSpecial) {
@@ -149,7 +149,7 @@ var ItemSetDreadnaughtBattlegear = core.NewItemSet(core.ItemSet{
 					//  or happen to often (e.g. internal 0-cost casts like Mutilate, or multiple Whirlwind hits, in case of OnSpellHit)
 
 					// doesn't handle multiple dynamic cost reductions at once, or 0-cost default casts
-					if actualGain := spell.DefaultCast.Cost - spell.CurCast.Cost; actualGain > 0 {
+					if actualGain := spell.StaticCost() - spell.CurCast.Cost; actualGain > 0 {
 						rageMetrics.AddEvent(5, actualGain)
 						aura.Deactivate(sim)
 					}

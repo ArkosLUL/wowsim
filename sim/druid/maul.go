@@ -25,8 +25,9 @@ func (druid *Druid) registerMaulSpell() {
 		Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagIncludeTargetBonusDamage | core.SpellFlagNoOnCastComplete,
 
 		RageCost: core.RageCostOptions{
-			Cost:   15 - float64(druid.Talents.Ferocity),
-			Refund: 0.8,
+			Cost:    15,
+			FlatMod: -float64(druid.Talents.Ferocity),
+			Refund:  0.8,
 		},
 
 		DamageMultiplier: 1 + 0.1*float64(druid.Talents.SavageFury),
@@ -87,7 +88,7 @@ func (druid *Druid) registerMaulSpell() {
 
 		ExtraCastCondition: func(sim *core.Simulation, target *core.Unit) bool {
 			return !druid.MaulQueueAura.IsActive() &&
-				druid.CurrentRage() >= druid.Maul.DefaultCast.Cost &&
+				druid.CurrentRage() >= druid.Maul.StaticCost() &&
 				sim.CurrentTime >= druid.Hardcast.Expires
 		},
 

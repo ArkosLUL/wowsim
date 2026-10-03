@@ -213,7 +213,7 @@ func (druid *Druid) registerCatFormSpell() {
 
 		ManaCost: core.ManaCostOptions{
 			BaseCost:   0.35,
-			Multiplier: (1 - 0.2*float64(druid.Talents.KingOfTheJungle)) * (1 - 0.1*float64(druid.Talents.NaturalShapeshifter)),
+			Multiplier: 1 - 0.2*float64(druid.Talents.KingOfTheJungle) - 0.1*float64(druid.Talents.NaturalShapeshifter),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
@@ -353,7 +353,7 @@ func (druid *Druid) registerBearFormSpell() {
 
 		ManaCost: core.ManaCostOptions{
 			BaseCost:   0.35,
-			Multiplier: (1 - 0.2*float64(druid.Talents.KingOfTheJungle)) * (1 - 0.1*float64(druid.Talents.NaturalShapeshifter)),
+			Multiplier: 1 - 0.2*float64(druid.Talents.KingOfTheJungle) - 0.1*float64(druid.Talents.NaturalShapeshifter),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{

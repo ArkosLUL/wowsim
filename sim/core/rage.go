@@ -210,6 +210,9 @@ func (rb *rageBar) doneIteration() {
 type RageCostOptions struct {
 	Cost float64
 
+	Multiplier float64 // see ManaCostOptions
+	FlatMod    float64
+
 	Refund        float64
 	RefundMetrics *ResourceMetrics // Optional, will default to unit.RageRefundMetrics if not supplied.
 }
@@ -221,12 +224,13 @@ type RageCost struct {
 
 func newRageCost(spell *Spell, options RageCostOptions) *RageCost {
 	spell.DefaultCast.Cost = options.Cost
+	spell.setStaticCost(options.Multiplier, options.FlatMod, 10)
 	if options.Refund > 0 && options.RefundMetrics == nil {
 		options.RefundMetrics = spell.Unit.RageRefundMetrics
 	}
 
 	return &RageCost{
-		Refund:          options.Refund * options.Cost,
+		Refund:          options.Refund,
 		RefundMetrics:   options.RefundMetrics,
 		ResourceMetrics: spell.Unit.NewRageMetrics(spell.ActionID),
 	}
@@ -246,6 +250,6 @@ func (rc *RageCost) SpendCost(sim *Simulation, spell *Spell) {
 }
 func (rc *RageCost) IssueRefund(sim *Simulation, spell *Spell) {
 	if rc.Refund > 0 {
-		spell.Unit.AddRage(sim, rc.Refund, rc.RefundMetrics)
+		spell.Unit.AddRage(sim, rc.Refund*spell.StaticCost(), rc.RefundMetrics)
 	}
 }

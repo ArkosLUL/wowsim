@@ -15,7 +15,7 @@ func (hunter *Hunter) registerScorpidStingSpell() {
 		MissileSpeed: 40,
 
 		ManaCost: core.ManaCostOptions{
-			BaseCost:   0.09,
+			BaseCost:   0.11,
 			Multiplier: 1 - 0.03*float64(hunter.Talents.Efficiency),
 		},
 		Cast: core.CastConfig{

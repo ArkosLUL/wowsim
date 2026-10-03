@@ -74,21 +74,6 @@ spell (empty check) or check is only logged.
 
 | Path | Talent | Spell | Check | Why |
 |---|---|---|---|---|
-| MageArcane | arcaneFocus, arcanePower | 42921; 42833, 42842, 42846, 42891, 42897, 42945, 42950, 44781, 47610, 55360 | cost | the sim's cost is 1 above (Arcane Blast 2): the server truncates the base cost before the percent mods |
-| PaladinProtection | benediction | 48801, 48819, 48827, 53595, 61411 | cost | the same 1 above |
-| WarlockDemonology, WarlockAffliction | cataclysm, suppression | 17962, 47827; 47813, 47855, 47864, 47865, 50511 | cost | the same 1 above |
-| ShamanElemental, ShamanEnhancement, ShamanRestoration | convection, mentalQuickness, shamanisticFocus, totemicFocus | 49231, 49236, 49271; 2825, 8143, 49233, 57722, 58643, 58704, 58734, 58753, 58774; 49233; 58734 | cost | the same 1 above |
-| HunterMarksmanship, HunterSurvival | efficiency, resourcefulness | 34490, 49001, 49048, 49050, 63672; 63672 | cost | the same 1 above |
-| PriestDiscipline, DruidBalance | improvedFlashHeal, mentalAgility, moonglow | 48071; 48068, 48089, 48158, 48300; 48463, 48465, 53201 | cost | the same 1 above |
-| PaladinProtection | benediction | 498 Divine Protection, 31884 Avenging Wrath, 48952 Holy Shield | cost | the sim leaves Benediction out; Divine Protection costs nothing in the sim |
-| HunterMarksmanship | efficiency | 58434 Volley | cost | the sim leaves Efficiency out |
-| WarriorProtection | focusedRage | 23881 Bloodthirst, 47486 Mortal Strike | cost | the sim leaves Focused Rage out |
-| ShamanEnhancement | mentalQuickness | 17364, 49284, 51533, 60103, 61301, 61657 | cost | the sim leaves Mental Quickness out; Earth Shield costs nothing in the sim |
-| PriestShadow | shadowFocus | 48127 Mind Blast, 53023 Mind Sear | cost | the sim leaves Shadow Focus's cost cut out |
-| HunterMarksmanship | efficiency | 3043 Scorpid Sting | cost | base cost 9% of base mana in the sim, 11% on the server |
-| ShamanRestoration | tidalFocus | 49273 Healing Wave, 49284 Earth Shield | cost | Healing Wave's base cost is 15% of base mana in the sim, 25% on the server; Earth Shield costs nothing in the sim |
-| PriestShadow | focusedMind | 53023 Mind Sear | cost | its base differs after the Shadow Focus row |
-| DruidFeralCat | naturalShapeshifter, berserk | 768, 9634; 48566, 48572 | cost | the server adds percent cost mods and puts them on the base cost before flat ones; the sim multiplies them onto the reduced cost |
 | DruidFeralCat | berserk | 48564 Mangle (Bear) | cooldown | not a sim gap: under Berserk the sim resets the cooldown after each cast instead of zeroing it |
 | DeathknightFrost | annihilation, viciousStrikes | 55271 Scourge Strike; 49924 Death Strike | crit chance | the sim leaves the talent's crit out |
 | ShamanRestoration | tidalMastery | 59159 Thunderstorm | crit chance | the sim leaves Tidal Mastery's crit out |
@@ -107,9 +92,6 @@ passes named, and an entry no record fails is stale. `droppedTimingRecords` is e
 
 | Class | Spell | Check | Passes | Why |
 |---|---|---|---|---|
-| Paladin | 31884 Avenging Wrath | cost | talents, Bloodlust | the sim costs 351, the server 315: the sim misses a discount |
-| Paladin, Priest, Druid, Hunter, Shaman | 48801, 48819, 48066, 48071, 48463, 48465, 49001, 49050, 49231, 49271 | cost | talents, Bloodlust | the sim's cost is 1 above the server's |
-| Shaman | 49273 Healing Wave | cost | all | the sim applies a discount of about 40% (659) the server doesn't (1099) |
 | Mage, Warlock, Druid, Shaman | 42846 Arcane Missiles, 47855 Drain Soul, 48467 Hurricane, 49233 Flame Shock | channel, aura duration | Bloodlust | the sim truncates the tick period to whole ms, so 1 to 4 ms short |
 | Rogue | 48672 Rupture, 6774 Slice and Dice | aura duration, e0 ticks | all | the probe has no combo points; the sim's finisher has no duration (Rupture) or its 5-point one (Slice and Dice) |
 | Hunter | 49001, 49050, 49052, 63672 | ranged speed (and Steady Shot's cast time) | all | the bare server hunter has 10% ranged haste (0.9091) the sim hunter lacks |

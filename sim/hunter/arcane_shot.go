@@ -55,7 +55,7 @@ func (hunter *Hunter) registerArcaneShotSpell(timer *core.Timer) {
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeRangedHitAndCrit)
 			spell.WaitTravelTime(sim, func(sim *core.Simulation) {
 				if hasGlyph && result.Landed() && (hunter.SerpentSting.Dot(target).IsActive() || hunter.ScorpidStingAuras.Get(target).IsActive()) {
-					hunter.AddMana(sim, 0.2*hunter.ArcaneShot.DefaultCast.Cost, manaMetrics)
+					hunter.AddMana(sim, 0.2*hunter.ArcaneShot.StaticCost(), manaMetrics)
 				}
 				spell.DealDamage(sim, result)
 			})

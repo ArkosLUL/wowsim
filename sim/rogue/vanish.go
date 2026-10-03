@@ -79,7 +79,7 @@ func checkGarrote(sim *core.Simulation, rogue *Rogue) (bool, int32) {
 		return false, 0
 	}
 
-	if !rogue.GCD.IsReady(sim) || rogue.CurrentEnergy() < rogue.Garrote.DefaultCast.Cost {
+	if !rogue.GCD.IsReady(sim) || rogue.CurrentEnergy() < rogue.Garrote.StaticCost() {
 		return false, 0
 	}
 

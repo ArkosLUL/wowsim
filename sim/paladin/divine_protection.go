@@ -30,6 +30,10 @@ func (paladin *Paladin) registerDivineProtectionSpell() {
 		ActionID: actionID,
 		Flags:    core.SpellFlagAPL,
 
+		ManaCost: core.ManaCostOptions{
+			BaseCost:   0.03,
+			Multiplier: 1 - 0.02*float64(paladin.Talents.Benediction),
+		},
 		Cast: core.CastConfig{
 			CD: core.Cooldown{
 				Timer:    paladin.NewTimer(),

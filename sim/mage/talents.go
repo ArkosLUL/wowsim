@@ -62,11 +62,15 @@ func (mage *Mage) ApplyTalents() {
 	mage.PseudoStats.SpiritRegenRateCasting += float64(mage.Talents.Pyromaniac) / 6
 
 	mage.AddStat(stats.SpellHit, float64(mage.Talents.Precision)*core.SpellHitRatingPerHitChance)
-	mage.PseudoStats.CostMultiplier *= 1 - .01*float64(mage.Talents.Precision)
+	// all school auras (UNIT_FIELD_POWER_COST_MULTIPLIER): Precision on every magic school, Frost Channeling on the
+	// three of its mask (fire, frost, arcane), Arcane Focus on arcane
+	mage.AddSchoolCostMultiplier(core.SpellSchoolMagic, -.01*float64(mage.Talents.Precision))
+	mage.AddSchoolCostMultiplier(core.SpellSchoolArcane, -.01*float64(mage.Talents.ArcaneFocus))
 
 	mage.PseudoStats.SchoolDamageDealtMultiplier[stats.SchoolIndexFrost] *= 1 + .02*float64(mage.Talents.PiercingIce)
 	mage.PseudoStats.SchoolDamageDealtMultiplier[stats.SchoolIndexFrost] *= 1 + .01*float64(mage.Talents.ArcticWinds)
-	mage.PseudoStats.CostMultiplier *= 1 - .04*float64(mage.Talents.FrostChanneling)
+	mage.AddSchoolCostMultiplier(core.SpellSchoolArcane|core.SpellSchoolFire|core.SpellSchoolFrost,
+		-[]float64{0, .04, .07, .10}[mage.Talents.FrostChanneling])
 
 	// 0.5 resistance per level per rank (realPointsPerLevel of 29441 and 29444)
 	magicAbsorptionBonus := 0.5 * float64(mage.Talents.MagicAbsorption) * float64(mage.Level)
@@ -332,12 +336,7 @@ func (mage *Mage) registerPresenceOfMindCD() {
 				return false
 			}
 
-			manaCost := spellToUse.DefaultCast.Cost * mage.PseudoStats.CostMultiplier
-			if spellToUse == mage.ArcaneBlast {
-				manaCost *= float64(mage.ArcaneBlastAura.GetStacks()) * 1.75
-			}
-
-			return mage.CurrentMana() >= manaCost
+			return mage.CurrentMana() >= spellToUse.ApplyCostModifiers(spellToUse.DefaultCast.Cost)
 		},
 		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, _ *core.Spell) {
 			if mage.ArcanePotencyAura != nil {

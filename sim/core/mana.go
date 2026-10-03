@@ -285,24 +285,20 @@ func (mb *manaBar) EndOOMEvent(sim *Simulation) {
 }
 
 type ManaCostOptions struct {
-	BaseCost   float64
-	FlatCost   float64 // Alternative to BaseCost for giving a flat value.
-	Multiplier float64 // It's OK to leave this at 0, will default to 1.
+	BaseCost float64 // Fraction of the unit's base mana, truncated to a whole number like the server's.
+	FlatCost float64 // Alternative to BaseCost for giving a flat value.
+	// 1 plus the summed percent spell mods of talents that never change, 1 - 0.03 * ranks for a 3% cut.
+	// It's OK to leave this at 0, will default to 1.
+	Multiplier float64
+	FlatMod    float64 // Summed flat spell mods of talents that never change.
 }
 type ManaCost struct {
 	ResourceMetrics *ResourceMetrics
 }
 
 func newManaCost(spell *Spell, options ManaCostOptions) *ManaCost {
-	baseCost := TernaryFloat64(options.FlatCost > 0, options.FlatCost, options.BaseCost*spell.Unit.BaseMana)
-	if player := spell.Unit.Env.Raid.GetPlayerFromUnit(spell.Unit); player != nil {
-		// Spark of Hope (65010): school mask 126, so nothing whose first school is physical
-		if !spell.SpellSchool.Matches(SpellSchoolPhysical) && player.GetCharacter().HasTrinketEquipped(45703) {
-			baseCost = max(0, baseCost-42)
-		}
-	}
-
-	spell.DefaultCast.Cost = baseCost * TernaryFloat64(options.Multiplier == 0, 1, options.Multiplier)
+	spell.DefaultCast.Cost = truncCost(TernaryFloat64(options.FlatCost > 0, options.FlatCost, options.BaseCost*spell.Unit.BaseMana))
+	spell.setStaticCost(options.Multiplier, options.FlatMod, 1)
 
 	return &ManaCost{
 		ResourceMetrics: spell.Unit.NewManaMetrics(spell.ActionID),
