@@ -379,7 +379,7 @@ type unitAuras struct {
 	single     map[string]bool           // category -> SingleAura
 }
 
-func collectUnitAuras(env *core.Environment, names *spellNames, skipped skippedAuras) []*unitAuras {
+func collectUnitAuras(env *core.Environment, names *spellNames, skipped skippedAuras, aliased map[int32]bool) []*unitAuras {
 	var units []*unitAuras
 	for _, unit := range env.AllUnits {
 		u := &unitAuras{label: unit.Label, spells: map[int32]bool{}, categories: map[int32]map[string]bool{}, single: map[string]bool{}}
@@ -402,6 +402,7 @@ func collectUnitAuras(env *core.Environment, names *spellNames, skipped skippedA
 			}
 			spell := names.firstRank(id.SpellID)
 			if server, ok := simAuraSpells[spell]; ok {
+				aliased[spell] = true
 				spell = server
 			}
 			u.spells[spell] = true
@@ -427,13 +428,14 @@ func TestSimSpellGroups(t *testing.T) {
 	names := loadSpellNames(t)
 	groups := loadSpellGroups(t, names)
 	skipped := skippedAuras{}
+	aliased := map[int32]bool{}
 
 	failures := map[spellPair]pairFinding{} // sim and server disagree
 	formDiffers := map[spellPair]string{}   // both keep them apart, but not the same way
 	checked := 0
 
 	check := func(label string, env *core.Environment) {
-		for _, u := range collectUnitAuras(env, names, skipped) {
+		for _, u := range collectUnitAuras(env, names, skipped, aliased) {
 			spells := slices.Sorted(maps.Keys(u.spells))
 			for i, a := range spells {
 				for _, b := range spells[i+1:] {
@@ -484,6 +486,11 @@ func TestSimSpellGroups(t *testing.T) {
 		}
 		if !used[pair] {
 			t.Errorf("%s and %s: no longer differs, so its allowance is stale", names.label(pair[0]), names.label(pair[1]))
+		}
+	}
+	for _, spell := range slices.Sorted(maps.Keys(simAuraSpells)) {
+		if !aliased[spell] {
+			t.Errorf("%s is in simAuraSpells, but no sim aura of the scenarios is registered under it", names.label(spell))
 		}
 	}
 	for _, pair := range slices.SortedFunc(maps.Keys(formDiffers), func(x, y spellPair) int { return slices.Compare(x[:], y[:]) }) {

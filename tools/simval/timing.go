@@ -279,12 +279,19 @@ func checkTiming(rec timingRecord) []Check {
 func replayTiming(rec timingRecord, build func(timingRecord) (*timingSim, error)) []Check {
 	checks := replayTimingChecks(rec, build)
 	for i, c := range checks {
-		key := timingMismatch{rec.Attacker.Class, rec.Spell.ID, c.Name}
-		if reason, ok := knownTimingMismatches[key]; ok && !c.Passed {
-			checks[i] = pass(c.Name+" (known mismatch)", reason+"; "+c.Detail)
+		if reason, ok := knownTimingMismatches[timingMismatchOf(rec, c.Name)]; ok && !c.Passed {
+			checks[i] = pass(c.Name+knownMismatchSuffix, reason+"; "+c.Detail)
 		}
 	}
 	return checks
+}
+
+const knownMismatchSuffix = " (known mismatch)"
+
+// timingMismatchOf is the knownTimingMismatches key of a check on the record.
+func timingMismatchOf(rec timingRecord, check string) timingMismatch {
+	passName, _ := rec.pass()
+	return timingMismatch{rec.Attacker.Class, rec.Spell.ID, passName, check}
 }
 
 func replayTimingChecks(rec timingRecord, build func(timingRecord) (*timingSim, error)) (checks []Check) {
@@ -513,6 +520,12 @@ func (ts *timingSim) checkRegen(rec timingRecord) []Check {
 	}
 	var checks []Check
 	if rec.Attacker.PowerType == 0 && unit.HasManaBar() {
+		// the sim's mage, priest and druid carry their own class's raid buff (Arcane Brilliance, Divine
+		// Spirit, Gift of the Wild) and its stats aren't truncated, so regen is read at the server's
+		if st := rec.Attacker.Stats; st.Intellect > 0 && st.Spirit > 0 {
+			setStat(ts.sim, unit, stats.Intellect, st.Intellect)
+			setStat(ts.sim, unit, stats.Spirit, st.Spirit)
+		}
 		checks = append(checks,
 			checkRelative("mana regen", unit.ManaRegenPerSecondWhileNotCasting(), regen.Flat[0]*regen.ManaRate),
 			checkRelative("mana regen while casting", unit.ManaRegenPerSecondWhileCasting(), regen.Interrupted[0]*regen.ManaRate))
@@ -529,55 +542,60 @@ func (ts *timingSim) checkRegen(rec timingRecord) []Check {
 	return checks
 }
 
-// timingMismatch names a check of one spell for one server class id.
+// The three passes of TestSimvalTiming, as timingRecord.pass names them.
+var (
+	allPasses   = []string{"bare", "talents", "bloodlust"}
+	talentPass  = []string{"talents", "bloodlust"}
+	bloodlustOn = []string{"bloodlust"}
+)
+
+// timingMismatch names a check of one spell for one server class id in one pass.
 type timingMismatch struct {
 	class uint8
 	spell int32
+	pass  string
 	check string
 }
 
 // knownTimingMismatches are checks where the sim and the server really differ, each with its reason and a
-// row in the fixture README. The check still runs; only its failure is let through.
+// row in the fixture README. The check still runs; only its failure is let through, in the passes named.
+// An entry no record needs fails TestTimingRecords.
 var knownTimingMismatches = func() map[timingMismatch]string {
 	const (
 		costRound = "the sim's discounted cost is 1 above the server's"
 		tickRound = "the sim truncates the hasted tick period to whole ms"
 		comboless = "the probe has no combo points, so the sim's finisher has no duration"
 		hunterRng = "the server hunter has a 10% ranged haste the sim hunter lacks"
-		regenGap  = "the sim's bare mana regen differs from the server's"
 	)
 	m := map[timingMismatch]string{}
-	add := func(reason string, class uint8, spell int32, checks ...string) {
-		for _, c := range checks {
-			m[timingMismatch{class, spell, c}] = reason
+	add := func(reason string, class uint8, spell int32, passes []string, checks ...string) {
+		for _, p := range passes {
+			for _, c := range checks {
+				m[timingMismatch{class, spell, p, c}] = reason
+			}
 		}
 	}
-	add(regenGap, 11, 0, "mana regen")
-	add(regenGap, 2, 0, "mana regen")
-	add(regenGap, 5, 0, "mana regen")
-	add(regenGap, 8, 0, "mana regen")
-	add(regenGap, 9, 0, "mana regen")
-	add("the sim's Avenging Wrath cost misses the server's talent discount", 2, 31884, "cost")
-	add(costRound, 2, 48801, "cost")
-	add(costRound, 2, 48819, "cost")
-	add(costRound, 5, 48066, "cost")
-	add(costRound, 5, 48071, "cost")
-	add(costRound, 11, 48463, "cost")
-	add(costRound, 11, 48465, "cost")
-	add(costRound, 3, 49001, "cost")
-	add(costRound, 3, 49050, "cost")
-	add(costRound, 7, 49231, "cost")
-	add(costRound, 7, 49271, "cost")
-	add("the sim's Healing Wave cost has a talent discount (about 40%) the server doesn't", 7, 49273, "cost")
-	add(tickRound, 8, 42846, "channel", "aura duration")
-	add(tickRound, 9, 47855, "channel", "aura duration")
-	add(tickRound, 11, 48467, "channel", "aura duration")
-	add(tickRound, 7, 49233, "aura duration")
-	add(comboless, 4, 48672, "aura duration", "e0 ticks")
-	add(comboless, 4, 6774, "aura duration")
+	add("the sim's Avenging Wrath cost misses the server's talent discount", 2, 31884, talentPass, "cost")
+	add(costRound, 2, 48801, talentPass, "cost")
+	add(costRound, 2, 48819, talentPass, "cost")
+	add(costRound, 5, 48066, talentPass, "cost")
+	add(costRound, 5, 48071, talentPass, "cost")
+	add(costRound, 11, 48463, talentPass, "cost")
+	add(costRound, 11, 48465, talentPass, "cost")
+	add(costRound, 3, 49001, talentPass, "cost")
+	add(costRound, 3, 49050, talentPass, "cost")
+	add(costRound, 7, 49231, talentPass, "cost")
+	add(costRound, 7, 49271, talentPass, "cost")
+	add("the sim's Healing Wave cost has a talent discount (about 40%) the server doesn't", 7, 49273, allPasses, "cost")
+	add(tickRound, 8, 42846, bloodlustOn, "channel", "aura duration")
+	add(tickRound, 9, 47855, bloodlustOn, "channel", "aura duration")
+	add(tickRound, 11, 48467, bloodlustOn, "channel", "aura duration")
+	add(tickRound, 7, 49233, bloodlustOn, "aura duration")
+	add(comboless, 4, 48672, allPasses, "aura duration", "e0 ticks")
+	add(comboless, 4, 6774, allPasses, "aura duration")
 	for _, spell := range []int32{49001, 49050, 49052, 63672} {
-		add(hunterRng, 3, spell, "ranged speed")
+		add(hunterRng, 3, spell, allPasses, "ranged speed")
 	}
-	add(hunterRng, 3, 49052, "cast time")
+	add(hunterRng, 3, 49052, allPasses, "cast time")
 	return m
 }()

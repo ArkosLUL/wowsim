@@ -23,6 +23,7 @@ func TestTimingRecords(t *testing.T) {
 	}
 
 	var compared, checked int
+	used := map[timingMismatch]bool{}
 	for _, rec := range records {
 		if rec.Command != "timing" && rec.Command != "info" {
 			t.Errorf("%s holds a %q record", path, rec.Command)
@@ -34,6 +35,9 @@ func TestTimingRecords(t *testing.T) {
 		}
 		for _, check := range checks {
 			checked++
+			if name, ok := strings.CutSuffix(check.Name, knownMismatchSuffix); ok {
+				used[timingMismatchOf(rec, name)] = true
+			}
 			if !check.Passed {
 				t.Errorf("%s: %s: %s (class %d)", rec.label(), check.Name, check.Detail, rec.Attacker.Class)
 			} else {
@@ -43,6 +47,11 @@ func TestTimingRecords(t *testing.T) {
 	}
 	if compared == 0 {
 		t.Fatalf("%s has %d records but none to compare", path, len(records))
+	}
+	for key := range knownTimingMismatches {
+		if !used[key] {
+			t.Errorf("%+v is a known mismatch, but no record of the capture fails it", key)
+		}
 	}
 	t.Logf("%d checks over %d compared records of %d", checked, compared, len(records))
 }

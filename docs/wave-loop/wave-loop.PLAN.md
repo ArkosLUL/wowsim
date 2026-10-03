@@ -501,7 +501,7 @@ crashed before F2, so its column starts there.
 | wave R cross-review | | | no bugs, nothing changed; the glossary's "Outclassed gear" reworded at close-out |
 | EC-SWEEP2 | merged | `053eed5e8` | goldens unchanged; 6 talent paths rerun live 10:18–10:23 (146 records); 7 steps dropped (fixture README): Mace Specialization on daggers, Blood-Gorged, Frigid Dreadplate's ranged, Arctic Winds, 3 fire-crit |
 | EC-STACK | merged | `6fa263419` | goldens unchanged; 113 server spell groups; 14 real mismatches allowlisted, e.g. Power Infusion with Arcane Power, Bestial Wrath and Enrage with Hysteria, poisons with the crit debuffs |
-| EC-TIMING | merged | `015036135` | goldens unchanged; module `9557bed`, server rebuilt 10:41–10:46; 1513 checks over 192 live records; known mismatches (fixture README): bare mana regen, some costs, Bloodlust tick rounding, the hunter's 10% ranged haste |
+| EC-TIMING | merged | `015036135` | goldens unchanged; module `9557bed`, server rebuilt 10:41–10:46; 1513 checks over 192 live records; known mismatches (fixture README): some costs, Bloodlust tick rounding, the hunter's 10% ranged haste |
 
 Later WIs are added as their wave starts.
 

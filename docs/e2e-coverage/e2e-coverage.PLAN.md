@@ -175,10 +175,11 @@ streamed into `tmp/`, tail stopped by PID; no restart, config or DB change):
   - Player snapshots gain `regen` (flat and interrupted per power, rune regen, mana and energy rates).
   - `TestSimvalTiming`: 5 or 6 spells and 2 to 5 talent auras per class, three passes (bare, talents, Bloodlust on
     top), a bare and a Bloodlust `info` per bot.
-  - A full recapture of `simval.jsonl` brings `timing` lines (move them to `timing.jsonl`) and the bots' `info`
-    lines; the replays ignore fields they don't read.
+  - `run.sh` without a name skips `TestSimvalTiming`, so a `simval.jsonl` recapture holds none of its records
+    (the bots' `info` lines can't be told from the base stats bots'); the replays ignore fields they don't read.
 - Sim (`tools/simval/timing.go`, `TestTimingRecords`): replays `timing.jsonl` and the bots' `info` regen against the
-  sim's spell, dot, aura and cost; checks in the simval README's Timing probe. Hand-built records test the comparison.
+  sim's spell, dot, aura and cost; checks in the simval README's Timing probe. Mana regen is read at the server's
+  intellect and spirit, since the sim character carries its class's raid buff. Hand-built records test the comparison.
 - Probes the sim has no spell for were swapped in the e2e: Death Coil is 49895 (47541 is rank 1), Holy Light, Healing
   Touch, Smite, Frost Nova, Immolation Trap, Cloak of Shadows and Sprint became Divine Storm, Wrath, Devouring Plague,
   Arcane Blast, Explosive Trap and Eviscerate (the rogue has 5 spells).
@@ -190,7 +191,7 @@ streamed into `tmp/`, tail stopped by PID; no restart, config or DB change):
     the server's rune costs as blood, frost, unholy (they are blood, unholy, frost) and compared a negative cast time
     (hunter spells, -999500) before the server clamps it.
   - 1513 checks over 192 compared records pass; the differences left are in `knownTimingMismatches` and the fixture
-    README: mana regen of five classes' bare characters, Avenging Wrath and Healing Wave costs, cost off by 1 with
+    README: Avenging Wrath and Healing Wave costs, cost off by 1 with
     talents, tick period truncation under Bloodlust, finishers probed without combo points, and 10% ranged haste on
     the bare server hunter. The sim wasn't changed.
 

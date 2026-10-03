@@ -99,9 +99,9 @@ Pets and non-80 characters fail. Shaped records give no checks.
 `TestTimingRecords` replays `sim/core/testdata/simval/timing.jsonl`, a capture of mod-sim-validation's
 `TestSimvalTiming` (`.simval timing`, plus each bot's two `info` records for regen), on every `go test`; it skips
 without the file. `TestTimingFixtureHasEveryProbe` fails when a probe's bare, talent or Bloodlust record is missing
-and not in `droppedTimingRecords`. `CheckRecord` ignores `timing` records, so a `simval.jsonl` recapture holding
-them still passes; move them (and the timing bots' `info` lines) to `timing.jsonl`, running only
-`run.sh TestSimvalTiming` ([testing](../../docs/guide/testing.md#against-the-server)).
+and not in `droppedTimingRecords`. Capture it by running only `run.sh TestSimvalTiming`, which the default run
+leaves out ([testing](../../docs/guide/testing.md#against-the-server)). `CheckRecord` ignores `timing` records
+anyway, but the bots' `info` lines look like the base stats bots'.
 
 Per record (`timing.go`):
 - The character is `damage.go`'s (class, race, talent and glyph auras), plus Bloodlust registered when the record
@@ -117,12 +117,13 @@ Per record (`timing.go`):
   has no dot or aura for, an immune or skipped aura.
 - Regen, within 0.1%: mana per second with and without the five second rule, energy per second, and each rune's
   cooldown from `baseCooldownMs` (a timing record) and from `1000 / PLAYER_RUNE_REGEN` (an `info` record). Only
-  these bots carry the regen fields.
+  these bots carry the regen fields. Mana regen is read at the server's intellect and spirit: the sim character
+  carries its own class's raid buff (Arcane Brilliance, Divine Spirit, Gift of the Wild) and doesn't truncate stats.
 
 Pets and non-80 characters fail. A spell no spec registers fails as `sim character`.
 
-`knownTimingMismatches` (class, spell, check) lets a real sim/server difference through, each with a row in the
-fixture README; the check still runs and logs.
+`knownTimingMismatches` (class, spell, pass, check) lets a real sim/server difference through, each with a row in the
+fixture README; the check still runs and logs, and an entry no record fails fails the test.
 
 ## Golden characters
 
