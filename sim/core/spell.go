@@ -171,6 +171,7 @@ type Spell struct {
 	costStaticPct  float64
 	costStaticFlat float64
 	costScale      float64
+	costCache      costCache
 
 	// SpellConfig.Direct, with the server's values where RegisterSpell found a conflict, then its Mods
 	Direct SpellEffect

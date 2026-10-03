@@ -2,8 +2,10 @@ package core
 
 import (
 	"math"
+	"math/rand"
 	"testing"
 
+	"github.com/wowsims/wotlk/sim/core/proto"
 	"github.com/wowsims/wotlk/sim/core/serverdata"
 	"github.com/wowsims/wotlk/sim/core/stats"
 )
@@ -142,8 +144,109 @@ func TestCostSchoollessSpellUsesServerSchool(t *testing.T) {
 	if got := spell.ApplyCostModifiers(100); got != 100 {
 		t.Errorf("no server data = %v, want 100", got)
 	}
-	spell.serverSpell = &serverdata.Spell{SchoolMask: 1}
-	if got := spell.ApplyCostModifiers(100); got != 50 {
+	// RegisterSpell sets the server data before anything reads the cost
+	withServer := costTestSpell(SpellSchoolNone, 100, 1)
+	withServer.serverSpell = &serverdata.Spell{SchoolMask: 1}
+	withServer.Unit.AddSchoolCostMultiplier(SpellSchoolPhysical, -0.5)
+	if got := withServer.ApplyCostModifiers(100); got != 50 {
 		t.Errorf("server school physical = %v, want 50", got)
+	}
+}
+
+// ApplyCostModifiers without its cache
+func uncachedCost(spell *Spell, base float64) float64 {
+	ps := &spell.Unit.PseudoStats
+	school := spell.costSchool()
+	return spell.costFor(base, (spell.CostMultiplier-1)+(ps.CostMultiplier-1), spell.CostFlat+ps.CostFlat,
+		ps.SchoolCostFlat[school], ps.SchoolCostMultiplier[school])
+}
+
+// each input changed after a read cached the cost, which the next read has to see
+func TestCostCacheSeesEveryInput(t *testing.T) {
+	cases := []struct {
+		name   string
+		setup  func(c *Character, spell *Spell)
+		change func(c *Character, spell *Spell)
+		want   float64
+	}{
+		{name: "base", change: func(_ *Character, s *Spell) { s.DefaultCast.Cost = 500 }, want: 500},
+		{name: "spell percent", change: func(_ *Character, s *Spell) { s.CostMultiplier -= 0.2 }, want: 800},
+		{name: "spell flat", change: func(_ *Character, s *Spell) { s.CostFlat -= 30 }, want: 970},
+		{name: "unit percent", change: func(c *Character, _ *Spell) { c.PseudoStats.CostMultiplier -= 0.1 }, want: 900},
+		{name: "unit flat", change: func(c *Character, _ *Spell) { c.PseudoStats.CostFlat -= 40 }, want: 960},
+		{name: "school flat", change: func(c *Character, _ *Spell) { c.AddSchoolCostFlat(SpellSchoolFire, -100) }, want: 900},
+		{name: "school multiplier", change: func(c *Character, _ *Spell) { c.AddSchoolCostMultiplier(SpellSchoolFire, -0.25) }, want: 750},
+		{name: "spark of hope", change: func(c *Character, _ *Spell) {
+			c.Equipment[proto.ItemSlot_ItemSlotTrinket1] = Item{ID: 45703}
+			c.applySparkOfHope()
+		}, want: 958},
+		{name: "static mods", change: func(_ *Character, s *Spell) { s.setStaticCost(0.9, -10, 1) }, want: 890},
+		// the unit has a frost aura from the start, see below
+		{name: "school", change: func(_ *Character, s *Spell) { s.SpellSchool = SpellSchoolFrost }, want: 500},
+		{name: "iteration reset",
+			setup:  func(c *Character, _ *Spell) { c.initialPseudoStats = c.PseudoStats; c.PseudoStats.CostFlat -= 40 },
+			change: func(c *Character, _ *Spell) { c.PseudoStats = c.initialPseudoStats },
+			want:   1000},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			character := &Character{}
+			character.PseudoStats = stats.NewPseudoStats()
+			character.AddSchoolCostMultiplier(SpellSchoolFrost, -0.5)
+			spell := &Spell{Unit: &character.Unit, SpellSchool: SpellSchoolFire, CostMultiplier: 1}
+			spell.DefaultCast.Cost = 1000
+			spell.setStaticCost(0, 0, 1)
+			if tc.setup != nil {
+				tc.setup(character, spell)
+			}
+			before := spell.ApplyCostModifiers(spell.DefaultCast.Cost)
+			tc.change(character, spell)
+			got := spell.ApplyCostModifiers(spell.DefaultCast.Cost)
+			if got != tc.want || got == before {
+				t.Errorf("cost %v before the change, %v after, want %v", before, got, tc.want)
+			}
+			if want := uncachedCost(spell, spell.DefaultCast.Cost); got != want {
+				t.Errorf("cached %v, uncached %v", got, want)
+			}
+		})
+	}
+}
+
+// a random walk over every input, signed zeros included, against the uncached cost at each step
+func TestCostCacheMatchesUncached(t *testing.T) {
+	rng := rand.New(rand.NewSource(1))
+	spell := costTestSpell(SpellSchoolArcane, 400, 1)
+	ps := &spell.Unit.PseudoStats
+	zero, negZero := 0.0, math.Copysign(0, -1)
+	values := []float64{zero, negZero, -0.5, -0.1, 0.25, 1, -1, 3, -42, 17.5}
+	for i := 0; i < 20000; i++ {
+		v := values[rng.Intn(len(values))]
+		base := spell.DefaultCast.Cost
+		switch rng.Intn(10) {
+		case 0:
+			base = math.Abs(v) * 400
+		case 1:
+			spell.CostMultiplier = 1 + v
+		case 2:
+			spell.CostFlat = v
+		case 3:
+			ps.CostMultiplier = 1 + v
+		case 4:
+			ps.CostFlat = v
+		case 5:
+			ps.SchoolCostFlat[stats.SchoolIndexArcane] = v
+		case 6:
+			ps.SchoolCostMultiplier[stats.SchoolIndexArcane] = v
+		case 7:
+			ps.SchoolCostMultiplier[stats.SchoolIndexFire] = v
+		case 8:
+			spell.SpellSchool = []SpellSchool{SpellSchoolArcane, SpellSchoolFire, SpellSchoolArcane | SpellSchoolFire}[rng.Intn(3)]
+		case 9:
+			spell.setStaticCost(1+v, v, []float64{1, 10}[rng.Intn(2)])
+		}
+		got, want := spell.ApplyCostModifiers(base), uncachedCost(spell, base)
+		if math.Float64bits(got) != math.Float64bits(want) {
+			t.Fatalf("step %d: cached %v, uncached %v", i, got, want)
+		}
 	}
 }

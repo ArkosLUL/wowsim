@@ -264,6 +264,26 @@ Fix it in core, e.g. resolve each spell's cost school once and cache its compute
   profile of Feral (energy) too.
 - Owns: `sim/core/cost.go`, `cost_test.go`, `apl_action.go`'s cost checks, `spell.go`'s cost fields.
 
+#### As built
+
+- `Spell.costCache` (`sim/core/cost.go`) keeps the last `ApplyCostModifiers` result with every input it read: the
+  base, the spell's and unit's `CostMultiplier`/`CostFlat`, the school's flat and multiplier, and the `SpellSchool`
+  its school was resolved from. Class code writes those fields directly, so no hook can bump a version; each read
+  compares them instead, and a hit runs no call. Spark of Hope and the per-iteration `PseudoStats` copy are covered
+  the same way. `setStaticCost` clears it. A miss resolves the school (server data for schoolless spells) only when
+  `SpellSchool` changed, then reruns `costFor`. `costFor` treats -0 and +0 alike, so the memo is exact.
+- No call site changed: `MeetsRequirement`, `aplCostBlocked` and `CurrentCost` all go through `ApplyCostModifiers`.
+  `StaticCost`/`StaticCostWithPercent` stay uncached: 0.9% of Feral's profile.
+- Tests (`cost_test.go`): each input changed after a cached read, and a 20,000-step random walk (signed zeros,
+  school and static changes) bit-equal to the uncached cost; dropping any compare fails them.
+- 37 goldens byte-identical, simval 1114/1114, `go vet` and `gofmt` clean.
+- Interleaved A/B against `16bdd941c`, 12 rounds, `BenchmarkSimulate` (benchstat medians, loaded machine): Rogue
+  -10.1% at 1 iteration, -11.0% at 100; the raid -2.8% at 100, flat at 1; Hunter and Elemental flat. Allocations
+  unchanged.
+- Profiles, `tools/perf bench` at 3000 iterations, one proc, base → new: Rogue's cost path (`aplCostBlocked`
+  cumulative) 34.3% → 9.2%, `costFor` 21.0% → 0; Feral's `ApplyCostModifiers` 2.1% → under the 0.45% sample floor,
+  `costFor` left at 1.35%, two thirds from `StaticCost` callers.
+
 ## Order
 
 The user put the pass before wave J, whose BIS-e2e-perf times the optimizer with PERF-TOOLS' harness
