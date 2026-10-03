@@ -288,6 +288,7 @@ func (shaman *Shaman) registerEarthShieldSpell() {
 			},
 			NumberOfTicks: 6 + shaman.Talents.ImprovedEarthShield,
 			TickLength:    time.Minute*10 + 1, // tick length longer than expire time.
+			AuraDuration:  time.Minute * 10,   // charges are ticks here; the server's aura stays 10 min
 			TicksCanCrit:  false,
 			Tick:          core.SpellEffect{Effect: 0, Min: 337, Max: 337, SP: 0.5371},
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {

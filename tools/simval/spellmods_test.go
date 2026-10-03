@@ -26,23 +26,9 @@ var droppedSpellMods = slices.Concat(
 	spellModDrops("ShamanRestoration", "tidalMastery", "crit chance", 59159),
 	spellModDrops("WarlockDestruction", "improvedSearingPain", "crit chance", 47815),
 	spellModDrops("PriestDiscipline", "innerFocus", "crit chance", 48089),
-	// the sim's Nature's Swiftness only makes its damage spells instant
-	spellModDrops("ShamanRestoration", "naturesSwiftness", "cast time", 49273, 49276, 55459),
-	spellModDrops("ShamanRestoration", "naturesSwiftness", "cast time before haste", 49273, 49276, 55459),
-	spellModDrops("DruidFeralBear", "naturesSwiftness", "cast time", 48477),
-	spellModDrops("DruidFeralBear", "naturesSwiftness", "cast time before haste", 48477),
-	// the server's float math lands 1 ms lower
-	spellModDrops("WarriorFury", "intensifyRage", "cooldown", 2687, 12292, 18499),
-	// the sim truncates the hasted tick period to whole ms
-	spellModDrops("DruidBalance", "celestialFocus", "aura duration", 48467),
-	spellModDrops("DruidBalance", "celestialFocus", "channel", 48467),
-	spellModDrops("MageFire", "icyVeins", "aura duration", 12051, 42846, 42940),
-	spellModDrops("MageFire", "icyVeins", "channel", 12051, 42846, 42940),
-	// Permafrost's +3 s on Frostfire Bolt, a 4th tick on the server, is missing in the sim
-	spellModDrops("MageFire", "permafrost", "aura duration", 47610),
-	spellModDrops("MageFire", "permafrost", "e2 ticks", 47610),
-	// the sim's Earth Shield charges are 10 min ticks, so a charge more stretches its aura
-	spellModDrops("ShamanRestoration", "improvedEarthShield", "aura duration", 49284),
+	// the sim has no Improved Healing Wave (a filler step of the path), so Healing Wave's 2600 ms is 3000 there
+	spellModDrops("ShamanRestoration", "naturesSwiftness", "cast time", 49273),
+	spellModDrops("ShamanRestoration", "naturesSwiftness", "cast time before haste", 49273),
 	// not sim gaps: under Berserk the sim resets Mangle (Bear)'s cooldown after each cast, and Dispersion
 	// never rolls to hit, so the sim's Shadow Focus hit leaves it out
 	spellModDrops("DruidFeralCat", "berserk", "cooldown", 48564),

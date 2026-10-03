@@ -146,13 +146,26 @@ var timingExtraSpecs = map[uint8][]protoreflect.Name{7: {"restoration_shaman"}}
 // timingSim is the record's character with the spell the record is about.
 type timingSim struct {
 	*damageSim
-	spell *core.Spell
+	spell  *core.Spell
+	quiver bool
+}
+
+// start is damageSim.start with the quiver's haste on, which a reset takes off again.
+func (ts *timingSim) start() {
+	ts.damageSim.start()
+	if ts.quiver {
+		ts.char.MultiplyRangedSpeed(ts.sim, 1.1)
+	}
 }
 
 // newTimingSim is newDamageSim with Bloodlust registered for a record taken under it.
 func newTimingSim(rec damageRecord, player *proto.Player, mirror []int32) (*damageSim, error) {
 	return newSimWith(rec, player, mirror, 1, &proto.RaidBuffs{Bloodlust: slices.Contains(mirror, bloodlustSpell)})
 }
+
+// smallQuiverHaste is the +10% ranged speed aura of the quivers the server's bare bot carries (Light Quiver
+// and its kin). The replay character has no bag, and the sim's quiver option is the 15% one only.
+const smallQuiverHaste = 29418
 
 // auraBySpell is the aura of a spell id, the lowest tag of several.
 func auraBySpell(auras []*core.Aura, id int32) *core.Aura {
@@ -209,11 +222,12 @@ func buildTimingSim(rec timingRecord) (*timingSim, error) {
 			if err != nil {
 				return nil, err
 			}
+			quiver := rec.hasAura(smallQuiverHaste)
 			if rec.Spell.ID == 0 {
-				return &timingSim{damageSim: d}, nil
+				return &timingSim{damageSim: d, quiver: quiver}, nil
 			}
 			if spell := spellBySpell(&d.char.Unit, rec.Spell.ID); spell != nil {
-				return &timingSim{damageSim: d, spell: spell}, nil
+				return &timingSim{damageSim: d, spell: spell, quiver: quiver}, nil
 			}
 		}
 	}
@@ -508,11 +522,7 @@ func (ts *timingSim) checkRegen(rec timingRecord) []Check {
 }
 
 // The three passes of TestSimvalTiming, as timingRecord.pass names them.
-var (
-	allPasses   = []string{"bare", "talents", "bloodlust"}
-	talentPass  = []string{"talents", "bloodlust"}
-	bloodlustOn = []string{"bloodlust"}
-)
+var allPasses = []string{"bare", "talents", "bloodlust"}
 
 // timingMismatch names a check of one spell for one server class id in one pass.
 type timingMismatch struct {
@@ -527,9 +537,7 @@ type timingMismatch struct {
 // An entry no record needs fails TestTimingRecords.
 var knownTimingMismatches = func() map[timingMismatch]string {
 	const (
-		tickRound = "the sim truncates the hasted tick period to whole ms"
 		comboless = "the probe has no combo points, so the sim's finisher has no duration"
-		hunterRng = "the server hunter has a 10% ranged haste the sim hunter lacks"
 	)
 	m := map[timingMismatch]string{}
 	add := func(reason string, class uint8, spell int32, passes []string, checks ...string) {
@@ -539,15 +547,7 @@ var knownTimingMismatches = func() map[timingMismatch]string {
 			}
 		}
 	}
-	add(tickRound, 8, 42846, bloodlustOn, "channel", "aura duration")
-	add(tickRound, 9, 47855, bloodlustOn, "channel", "aura duration")
-	add(tickRound, 11, 48467, bloodlustOn, "channel", "aura duration")
-	add(tickRound, 7, 49233, bloodlustOn, "aura duration")
 	add(comboless, 4, 48672, allPasses, "aura duration", "e0 ticks")
 	add(comboless, 4, 6774, allPasses, "aura duration")
-	for _, spell := range []int32{49001, 49050, 49052, 63672} {
-		add(hunterRng, 3, spell, allPasses, "ranged speed")
-	}
-	add(hunterRng, 3, 49052, allPasses, "cast time")
 	return m
 }()

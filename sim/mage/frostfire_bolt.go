@@ -56,7 +56,8 @@ func (mage *Mage) registerFrostfireBoltSpell() {
 			Aura: core.Aura{
 				Label: "FrostfireBolt",
 			},
-			NumberOfTicks: 3,
+			// Permafrost adds a second a rank to the 9 s, and a whole 3 s tick fits from the third
+			NumberOfTicks: (9 + mage.Talents.Permafrost) / 3,
 			TickLength:    time.Second * 3,
 			// No SPELL_AURA_ABILITY_PERIODIC_CRIT aura covers this dot, so its ticks never crit.
 			TicksCanCrit: false,

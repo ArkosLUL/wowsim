@@ -489,6 +489,31 @@ Stage 2, mods:
   character setup.
 - **Goldens:** every suite with a hasted dot or channel; report each.
 
+#### As built
+
+Each mismatch fixed except Healing Wave's base cast time (below); the drop and allowance entries (`droppedSpellMods`, `knownTimingMismatches`) and
+fixture README rows of the fixed ones are gone, so the replays compare them.
+
+- Hasted channels (`sim/core/dot.go`): a `SpellHasteScalesBoth` aura's duration is base × cast speed truncated to
+  ms, no longer truncated period × ticks (Bloodlust rows, Celestial Focus, Icy Veins).
+- Intensify Rage (`sim/warrior`): float32 mod math (`1 + -33/100f`), 1 ms under the exact percent.
+- Nature's Swiftness (shaman and druid): the aura makes instant every spell with a cast time that the server
+  aura's class mask covers (`Spell.AffectedByAuraEffect`, `Unit.NaturesSwiftnessSpells`, new
+  `sim/core/spell_class_mask.go`), consumed by any of them. Heals and Rebirth now qualify; the druid's
+  Starfire no longer does (arcane, outside the mask).
+- Improved Healing Wave (found by the NS probe): the sim lacks its 0.1 s a point off Healing Wave. Left a drop (49273, NS cast time checks): the path takes the talent as a filler, so implementing it needs a new path step and a live re-record.
+- Permafrost: Frostfire Bolt's dot has `(9 + points) / 3` ticks (12 s, 4 ticks at 3 points; at 1 or 2 points the
+  server's aura lasts 10 or 11 s with 3 ticks, which the sim's ticks × length can't show).
+- Improved Earth Shield: new `DotConfig.AuraDuration` pins the aura to 10 min while the extra charges stay ticks.
+- Hunter ranged haste: not a sim gap. The bare bot carries a Light Quiver-class bag (aura 29418, +10% ranged
+  speed, in the record's auras), which the replay character lacks; `timingSim.start` applies it from the record.
+- Goldens move in 12 suites: balance (Starfire no longer instant under NS: the APL's NS now lingers, aura uptime
+  1.5 s to 247 s, -0.44% DPS), restoration shaman (NS consumed by heals: +0.7% HPS), Disc
+  (Penance's duration, one AllItems row -4.9%), shadow priest, mage Arcane and Frost (Arcane Missiles, Blizzard),
+  elemental and enhancement shaman (Flame Shock), warlock (Drain Soul, Metamorphosis), Fury (cooldown 1 ms) and
+  Fire; all other rows within ±0.7%.
+- Follow-up: the druid APL still casts NS before Starfire, which now wastes it; only Wrath uses it.
+
 ### EC-SHEET-FIX (T2; changes goldens)
 
 - Talents: Annihilation and Vicious Strikes crit (Scourge Strike, Death Strike), Blood-Gorged's ArP outside its health

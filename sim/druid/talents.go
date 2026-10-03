@@ -2,6 +2,7 @@ package druid
 
 import (
 	"math"
+	"slices"
 	"time"
 
 	"github.com/wowsims/wotlk/sim/core"
@@ -136,6 +137,8 @@ func (druid *Druid) registerNaturesSwiftnessCD() {
 	actionID := core.ActionID{SpellID: 17116}
 
 	var nsAura *core.Aura
+	// every spell with a cast time the server's aura covers, heals and Rebirth included
+	var instant []*core.Spell
 	nsSpell := druid.RegisterSpell(Humanoid|Moonkin|Tree, core.SpellConfig{
 		ActionID: actionID,
 		Flags:    core.SpellFlagNoOnCastComplete,
@@ -155,23 +158,18 @@ func (druid *Druid) registerNaturesSwiftnessCD() {
 		ActionID: actionID,
 		Duration: core.NeverExpires,
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
-			if druid.Starfire != nil {
-				druid.Starfire.CastTimeMultiplier -= 1
-			}
-			if druid.Wrath != nil {
-				druid.Wrath.CastTimeMultiplier -= 1
+			instant = druid.NaturesSwiftnessSpells(actionID.SpellID)
+			for _, spell := range instant {
+				spell.CastTimeMultiplier -= 1
 			}
 		},
 		OnExpire: func(aura *core.Aura, sim *core.Simulation) {
-			if druid.Starfire != nil {
-				druid.Starfire.CastTimeMultiplier += 1
-			}
-			if druid.Wrath != nil {
-				druid.Wrath.CastTimeMultiplier += 1
+			for _, spell := range instant {
+				spell.CastTimeMultiplier += 1
 			}
 		},
 		OnCastComplete: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell) {
-			if !druid.Wrath.IsEqual(spell) && !druid.Starfire.IsEqual(spell) {
+			if !slices.Contains(instant, spell) {
 				return
 			}
 

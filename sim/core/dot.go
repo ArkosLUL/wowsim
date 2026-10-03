@@ -42,6 +42,9 @@ type DotConfig struct {
 	NumberOfTicks int32         // number of ticks over the whole duration
 	TickLength    time.Duration // time between each tick
 
+	// The aura's duration where it isn't ticks times length: a dot whose ticks are charges (Earth Shield).
+	AuraDuration time.Duration
+
 	// If true, tick length will be shortened based on casting speed.
 	AffectedByCastSpeed bool
 
@@ -67,6 +70,7 @@ type Dot struct {
 
 	NumberOfTicks int32         // number of ticks over the whole duration
 	TickLength    time.Duration // time between each tick
+	AuraDuration  time.Duration // see DotConfig.AuraDuration
 
 	// If true, tick length will be shortened based on casting speed.
 	AffectedByCastSpeed bool
@@ -259,10 +263,18 @@ func (dot *Dot) RecomputeAuraDuration() {
 	}
 
 	if dot.TickHaste == SpellHasteScalesBoth {
-		dot.Aura.Duration = dot.tickPeriod * time.Duration(dot.NumberOfTicks)
+		// the server truncates the duration and the period each on its own, so the aura can run a
+		// few ms longer than period times ticks
+		dot.Aura.Duration = dot.TickLength * time.Duration(dot.NumberOfTicks)
+		if dot.AffectedByCastSpeed {
+			dot.Aura.Duration = dot.Spell.Unit.ApplyCastSpeedForSpell(dot.Aura.Duration, dot.Spell).Truncate(time.Millisecond)
+		}
 	} else {
 		// haste buys ticks instead of shortening the dot
 		dot.Aura.Duration = dot.TickLength * time.Duration(dot.NumberOfTicks)
+	}
+	if dot.AuraDuration != 0 {
+		dot.Aura.Duration = dot.AuraDuration
 	}
 }
 
@@ -365,6 +377,9 @@ func newDot(config Dot) *Dot {
 
 	dot.tickPeriod = dot.TickLength
 	dot.Aura.Duration = dot.TickLength * time.Duration(dot.NumberOfTicks)
+	if dot.AuraDuration != 0 {
+		dot.Aura.Duration = dot.AuraDuration
+	}
 
 	dot.Aura.ApplyOnGain(func(aura *Aura, sim *Simulation) {
 		dot.lastTickTime = sim.CurrentTime
@@ -407,6 +422,7 @@ func (spell *Spell) createDots(config DotConfig, isHot bool) {
 
 		NumberOfTicks:       config.NumberOfTicks,
 		TickLength:          config.TickLength,
+		AuraDuration:        config.AuraDuration,
 		AffectedByCastSpeed: config.AffectedByCastSpeed,
 		TickHaste:           config.TickHaste,
 		TicksCanCrit:        config.TicksCanCrit,
