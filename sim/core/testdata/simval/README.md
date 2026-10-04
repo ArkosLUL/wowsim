@@ -24,9 +24,13 @@ records, which `TestStrikesRecords` replays ([tools/simval](../../../../tools/si
 ([tools/simval](../../../../tools/simval/README.md#buffs)). A disagreeing state or check goes in `droppedBuffs`
 (`tools/simval/buffs_test.go`) with a row here; its line stays.
 
+`mobs.jsonl` holds `TestSimvalMobs`' `MOBS` lines, which `TestMobRecords` replays
+([tools/simval](../../../../tools/simval/README.md#mob-types)). A disagreeing line or check goes in `droppedMobs`
+(`tools/simval/mobs_test.go`) with a row here; its line stays.
+
 A record of any of these files that disagrees with the sim is a real mismatch: it's dropped from the file and
 listed here, and the sim isn't changed. The exceptions keep the line: `buffs.jsonl` (a dropped state or check is
-only logged) and a known mismatch of `strikes.jsonl`.
+only logged), `mobs.jsonl` (the same) and a known mismatch of `strikes.jsonl`.
 
 `implemented_talents.json` is the talent guard's export (`TestTalentCoverage`, `sim/talent_coverage_test.go`):
 every talent `sim/<class>` reads, with class, tree, `fieldName`, row, max points and its spell per rank. The
@@ -110,6 +114,16 @@ logged.
 |---|---|---|---|
 | RogueAssassination | debuff.curse_of_weakness+debuff.vindication | dummy armor, armor multiplier | AP Debuffs (spell_group 1062) is exclusive highest per aura: Vindication's -574 AP removes the whole Curse of Weakness (-573), its 5% armor too; the sim keeps the armor |
 | RogueAssassination | debuff.insect_swarm+debuff.scorpid_sting | dummy melee hit % | -6% on the server: `HandleModHitChance` adds each to a creature's `m_modMeleeHitChance`, which the miss roll reads raw, so Hit Chance Debuffs' same-effect rule (1060) never applies; the sim keeps -3% |
+
+`mobs.jsonl`, each in `droppedMobs` (`tools/simval/mobs_test.go`). Lines stay; a dropped line or check is only logged.
+
+| Bot | State | Dummy | Check | Why |
+|---|---|---|---|---|
+| HumanWarrior | elixirOfDemonslaying | 999005 | 47450 and 47486 weapon min, max; white normal damage | the server's 11406 gives +105 attack power against demons (Heroic Strike +25 = int(105 / 14 × 3.4)); the sim's Elixir of Demonslaying gives 265 |
+| HumanWarrior | undeadSlaying3 | 999004 | 47450 and 47486 weapon min, max | the server keeps each set bonus as its own aura (57943 +1%, 29068 +2%) and multiplies them: ×1.0302; the sim's `makeUndeadSet` gives 2% in all |
+| HumanWarrior | undeadSlaying4 | 999004 | 47450 and 47486 weapon min, max; white normal damage | the same plus 57944 +3%: ×1.0611 on the server, ×1.03 in the sim |
+| HumanPaladin | scourgebane | 999004 | 48801 e0 and 48817 e0 damage min, max; 35395 weapon min, max | versus attack power only reaches `MeleeDamageBonusDone` on the server, added once after the weapon percent: Exorcism and Holy Wrath don't move (sim +21, +10 through their AP coefficients); Crusader Strike +33 = int(140 / 14 × 3.3) (sim 75% of it) |
+| NightElfDruid | scourgebane | 999004 | attack power | the server's Predatory Strikes reads only the weapon's template, never its enchant: +0 form attack power (sim +28, 20% of 140) |
 
 `strikes.jsonl`: dropped records in `droppedStrikesRecords`, known mismatches in `knownStrikesMismatches` (both
 `tools/simval/damage_test.go`, keyed by probe and check; the record stays and only the failure is let through).

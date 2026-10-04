@@ -218,6 +218,51 @@ check drops the state. A dropped failure is logged; a drop failing nothing, a st
 `TestBuffReplayAgreesWithTheSim` (every state from the sim), `TestBuffReplayCatchesMismatches`, `TestBuffReplayDrops`,
 `TestBuffLineShape`.
 
+## Mob types
+
+mod-sim-validation's `TestSimvalMobs` puts four bots (`mobBots`: human warrior, human paladin, troll hunter, night elf
+druid in cat form) through states of the creature-type effects the sim implements, on one dummy per type
+(999001–999008, the giant the level 80 999003), and logs a `MOBS` line per state and dummy, the fixture
+`mobs.jsonl`. Capture:
+
+```bash
+modules/mod-sim-validation/e2e/run.sh TestSimvalMobs > <sim>/tmp/mobs-e2e.log
+grep -o 'MOBS {.*' <sim>/tmp/mobs-e2e.log | cut -c6- > <sim>/sim/core/testdata/simval/mobs.jsonl
+```
+
+A line (`mobs.go`'s `mobLine`): `bot`, `dummy`, `creatureType`, `state`, worn set `items`, `missing` and `extra` auras,
+the `info` record whole, each probe's `damage` (spell, shaped, powers, effects, `weapon`), `yellow <id> 1`'s derived
+table, `melee`'s white table and outcomes; bare adds `spell`'s derived crit and `threat`'s target selection.
+
+The sim character is `buildMobSim`: the damage replay's (class, race, talent and glyph auras), the line's weapons
+(`mobBots`' main hand where a druid form hides it from `info`) and items, an empty rotation (a white swing's rage asks
+for one), plus `mobMirrors`' state: Scourgebane as the main hand's enchant 3247, Demon Slaying as +200
+`MobTypeAttackPower` on a demon (the sim's Twin Blades bonus needs both glaives in hand), Elixir of Demonslaying as the
+battle elixir. Specs and teaching talents are tried as the damage and strike
+replays try them; white swings and attack power read the line's first strike's character.
+
+**Replay** (`TestMobRecords`, skips without the fixture): each line against the same bot's line in the same state on
+the mechanical dummy (`mobReference`), the server's change against the sim's between targets of those two types.
+`mobTypedProbes` take another reference: Holy Wrath's undead line against its demon line, its other types left out.
+Checks:
+- each probed effect's and each strike's `taken` as a ratio (`amountTolerance`, `strikeTolerance`);
+- crit chance taken of each `yellow` and `spell` probe: the reference's moved by the sim's change, both capped at 0
+  and 100, within 0.02; the sim's is read while the spell's own effects run, so Exorcism's +100% on undead counts;
+- main hand and ranged attack power, the sim's unpinned (within 1);
+- white parry from the front at the server's expertise (1 bp), and a plain swing's mean after armor as a ratio
+  (5 standard errors plus 2 points; a server change inside that is noise, not a move); skipped for a sim character
+  that never swings its main hand (the hunter);
+- bare: `threat`'s selection against whether the sim lands the spell (`mobSelections`: Holy Wrath's cast, Giant
+  Slayer's proc over 200 swings);
+- `missing` or `extra` fails as `server auras`.
+
+Each line is logged on a `MOBSIM` line as `agrees`, `moves nothing`, `disagrees` or `reference`. Drops: `droppedMobs`
+(bot, state, dummy, check), each with a fixture README row; an empty check drops the line. A dropped failure is logged;
+a drop failing nothing, a line missing undropped, twice, or off its dummy's type fails. Tests:
+`TestMobReplayAgreesWithTheSim` (every line from the sim), `TestMobReplayCatchesMismatches` (with hand-checked server
+arithmetic for versus attack power), `TestMobSelectionsFollowTheServerTypes`, `TestMobWhiteNoiseMovesNothing`,
+`TestMobReplayDrops`, `TestMobLineShape`, `TestMobBotsAreTheTestBots` (`mobBots` against the tests' bots).
+
 ## Golden characters
 
 `sim/core/testdata/simval/goldchar_setups.json` lists each non-healer golden suite's default player (suites

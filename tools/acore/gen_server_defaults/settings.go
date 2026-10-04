@@ -146,7 +146,7 @@ var wotlkRaidMaps = []int{249, 533, 603, 615, 616, 624, 631, 649, 724}
 // NPCs, no raid boss) and the mod-sim-validation dummies, which keep their template stats.
 var knownDisabledCreatures = []int{
 	26499, 27692, 27755, 27756, 33062, 33060, 33109, 30161, 30248, 35644, 36558, 36838, 36839,
-	999000, 999001, 999002, 999003,
+	999000, 999001, 999002, 999003, 999004, 999005, 999006, 999007, 999008,
 }
 
 type floors struct {
