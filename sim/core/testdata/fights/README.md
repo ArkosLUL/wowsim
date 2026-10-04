@@ -48,6 +48,8 @@ pull, Sniper Training included). The 32 were fought on 2026-10-04 against the wo
 Representation gaps, not mismatches, each with its reason in `tools/simval/fight.go`, which the replay prints:
 - `fightAurasLeftOut`: server auras the sim has as no aura (a healing cut, a second aura of one spell, a channel's
   aura on the caster), by id, and where when only there.
+- `fightSimAurasLeftOut`: sim auras the server has as no aura (Hot Streak's crit counter), by sim action; left in,
+  one would count as the server aura sharing its id.
 - `fightMissesLeftOut`: logged misses that decide nothing the sim models or repeat another spell's.
 - `fightRefreshesLeftOut`: auras whose refreshes the server does its own way; uptime is still compared.
 - `fightEnergizeLeftOut`, and runic power: gains the sim gives some way the comparison doesn't read, or the server
@@ -59,18 +61,23 @@ Real sim mismatches, each a follow-up, in `droppedFightChecks` (`tools/simval/fi
 subject (`47809`, `melee`, `Bloodworm melee`, `aura 17800 on target`, `energize 57946 mana`) and name. Why, by the
 table's cause:
 - **world tick**: the server moves a player every 10 ms world tick, so a swing lands at most that late; the sim's
-  waits for the 100 ms map update and loses the overshoot, a few swings a fight.
+  waits for the 100 ms map update and loses the overshoot, a few swings a fight; its last swing comes early, and
+  with it the end of a swing-stacked buff (Fury of the Five Flights).
 - **early ticks**: the dummy's dots tick up to a map update before each period ends (its first aura update counts a
   whole update); the sim's tick the update after, so a recast four periods on drops the sim's last tick.
-- **Bloodworms**: the sim's have the setup's Horn of Winter (+155 Str); the server's, summoned after it went on,
-  don't.
+- **Bloodworms**: the sim's have the setup's Horn of Winter (+155 Str); the server's never get it, as a party or raid
+  buff skips an uncontrollable guardian (`Spell.cpp` `TARGET_CHECK_RAID`).
 - **Frost Vulnerability**: rolls spell hit on the server and missed; the sim's always lands.
 - **Vengeance**: the sim's Insect Swarm ticks crit for Vengeance's doubled bonus, the server's for the plain 1.5 with
   the meta gem.
 - **Eclipse**: the sim's Eclipse (Solar) procs on any landed Starfire, the server's on a crit only (spell_proc -48516
   HitMask 2).
 - **dot procs**: Illustration of the Dragon Soul's stacks, DMC: Greatness and Dying Curse proc on dot ticks too on the
-  server (procFlags DONE_PERIODIC), not in the sim.
+  server (procFlags DONE_PERIODIC), so they stay up past the last cast; the sim's Illustration and Dying Curse proc on
+  casts only, and its Greatness never on Serpent Sting's ticks (`ProcMaskEmpty`).
+- **Master of Elements**: the sim refunds 25% of a crit spell's base cost (30% less Burnout's 5%, which the server
+  burns apart, unlogged) and nothing for a crit without a cost of its own (Living Bomb's explosion, 215 on the
+  server) or a clearcast one; the server refunds 30% of each (`spell_mage_master_of_elements`).
 - **Rake**: its first hit is about 0.65 of the sim's in every feral fight, the boss armor's cut, which the sim leaves
   out as for a bleed.
 - **Torment the Weak**: the sim always adds its 12%; the server only against a snared or slowed target, and the boss
@@ -105,16 +112,21 @@ table's cause:
 | DruidFeral | 48574 | hit mean | Rake |
 | DruidFeralApl | melee | count | world tick |
 | HunterSV | aura 60233 on self | uptime | dot procs |
+| MageFire | energize 29076 mana | gain sizes | Master of Elements |
 | MageFrost | aura 57669 on self | applications | Enduring Winter |
 | MageFrostFire | 47610 | crit mean | Torment the Weak |
 | MageFrostFire | 47610 | hit mean | Torment the Weak |
 | MageFrostFire | 47610 | tick hit mean | Torment the Weak |
+| MageFrostFire | energize 29076 mana | gain sizes | Master of Elements |
 | PaladinProtection | aura 26016 on target | applications | Vindication |
 | PaladinProtection | aura 26016 on target | uptime | Vindication |
 | PaladinRetribution | aura 53408 on target | applications | Crusader Strike |
+| PaladinRetribution | aura 60314 on self | uptime | world tick |
 | PriestShadow | aura 60486 on self | applications | dot procs |
+| PriestShadow | aura 60486 on self | uptime | dot procs |
 | PriestShadow | aura 60494 on self | uptime | dot procs |
 | PriestSmite | aura 60486 on self | applications | dot procs |
+| PriestSmite | aura 60486 on self | uptime | dot procs |
 | RogueAssassination | melee | count | world tick |
 | RogueCombat | aura 58670 on self | applications | Prey on the Weak |
 | RogueCombat | aura 58670 on self | uptime | Prey on the Weak |

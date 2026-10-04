@@ -201,16 +201,21 @@ var droppedFightChecks = []fightDrop{
 	{"DruidFeral", "48574", "hit mean"},
 	{"DruidFeralApl", "melee", "count"},
 	{"HunterSV", "aura 60233 on self", "uptime"},
+	{"MageFire", "energize 29076 mana", "gain sizes"},
 	{"MageFrost", "aura 57669 on self", "applications"},
 	{"MageFrostFire", "47610", "crit mean"},
 	{"MageFrostFire", "47610", "hit mean"},
 	{"MageFrostFire", "47610", "tick hit mean"},
+	{"MageFrostFire", "energize 29076 mana", "gain sizes"},
 	{"PaladinProtection", "aura 26016 on target", "applications"},
 	{"PaladinProtection", "aura 26016 on target", "uptime"},
 	{"PaladinRetribution", "aura 53408 on target", "applications"},
+	{"PaladinRetribution", "aura 60314 on self", "uptime"},
 	{"PriestShadow", "aura 60486 on self", "applications"},
+	{"PriestShadow", "aura 60486 on self", "uptime"},
 	{"PriestShadow", "aura 60494 on self", "uptime"},
 	{"PriestSmite", "aura 60486 on self", "applications"},
+	{"PriestSmite", "aura 60486 on self", "uptime"},
 	{"RogueAssassination", "melee", "count"},
 	{"RogueCombat", "aura 58670 on self", "applications"},
 	{"RogueCombat", "aura 58670 on self", "uptime"},
@@ -266,6 +271,12 @@ var fightAurasLeftOut = map[fightLeftOut]string{
 	{Spell: 47486}:             "Mortal Strike's healing cut: the sim doesn't heal",
 	{Spell: 67544}:             "Lock and Load's cooldown marker: the sim keeps the cooldown with no aura",
 	{Spell: 69369}:             "Predator's Swiftness, an instant Nature spell: the sim doesn't model it, and no cycle casts one",
+}
+
+// fightSimAurasLeftOut are sim auras the server has no aura for, by the sim's action. Left in, one would count
+// as part of the server aura its id shares.
+var fightSimAurasLeftOut = map[core.ActionID]string{
+	{SpellID: 44448, Tag: 1}: "Hot Streak's count of crits in a row, which the server keeps inside the talent's script",
 }
 
 type fightCycles struct {
@@ -587,7 +598,9 @@ func logAction(spell int32) (int32, int32) {
 
 type auraSample struct {
 	applied int
-	uptime  time.Duration
+	// the log's: how often it went on while off, refreshes and stack changes aside
+	gained int
+	uptime time.Duration
 }
 
 // castsAfterTheEnd is the reason of a cast the replay never got to: it would have come after the sim's fight
@@ -619,23 +632,23 @@ type fightSample struct {
 	ticks            map[fightKey][]int64 // ms from the start
 	auras            map[fightAuraKey]*auraSample
 	energize         map[fightEnergizeKey]float64
-	// the log's largest single gain of each
-	energizeMost map[fightEnergizeKey]float64
-	damage       float64
+	// each single gain's size: all of the log's, and the sim's it gave alone in its first gainSizeIterations
+	gains  map[fightEnergizeKey][]float64
+	damage float64
 	// the log's fightAurasLeftOut that went on
 	leftOut map[fightLeftOut]bool
 }
 
 func newFightSample(casts int) *fightSample {
 	return &fightSample{
-		casts:        make([]castResult, casts),
-		direct:       map[fightKey]*outcomeBreakdown{},
-		periodic:     map[fightKey]*outcomeBreakdown{},
-		ticks:        map[fightKey][]int64{},
-		auras:        map[fightAuraKey]*auraSample{},
-		energize:     map[fightEnergizeKey]float64{},
-		energizeMost: map[fightEnergizeKey]float64{},
-		leftOut:      map[fightLeftOut]bool{},
+		casts:    make([]castResult, casts),
+		direct:   map[fightKey]*outcomeBreakdown{},
+		periodic: map[fightKey]*outcomeBreakdown{},
+		ticks:    map[fightKey][]int64{},
+		auras:    map[fightAuraKey]*auraSample{},
+		energize: map[fightEnergizeKey]float64{},
+		gains:    map[fightEnergizeKey][]float64{},
+		leftOut:  map[fightLeftOut]bool{},
 	}
 }
 
@@ -663,6 +676,8 @@ func (s *fightSample) aura(key fightAuraKey) *auraSample {
 // fightTally is one side of the comparison: the log's one fight, or the sim's iterations.
 type fightTally struct {
 	samples []*fightSample
+	// the sim's fightSimAurasLeftOut its character has
+	leftOut []core.ActionID
 }
 
 func newFightTally() *fightTally { return &fightTally{} }
@@ -748,12 +763,14 @@ func (fl *fightLog) tally() *fightTally {
 				}
 				if !st.open {
 					st.open, st.openedAt = true, e.TimeMs
+					if inWindow {
+						a.gained++
+					}
 				}
-			} else {
-				if st.open {
-					a.uptime += clip(st.openedAt, e.TimeMs)
-					st.open = false
-				}
+			} else if st.open {
+				// only after a logged gain: Chronicle logs some auras only coming off (Crusader Strike's)
+				a.uptime += clip(st.openedAt, e.TimeMs)
+				st.open = false
 				st.changed = st.changed || inWindow
 			}
 
@@ -790,7 +807,7 @@ func (fl *fightLog) tally() *fightTally {
 			ek := fightEnergizeKey{Spell: spell, Item: item, Power: power}
 			amount := float64(parseInt(arg(e.Args, 0))) / powerScale(uint32(powerType))
 			s.energize[ek] += amount
-			s.energizeMost[ek] = max(s.energizeMost[ek], amount)
+			s.gains[ek] = append(s.gains[ek], amount)
 		}
 	}
 
@@ -842,6 +859,8 @@ type fightSim struct {
 	on    []string
 	// what each spell or item had given in power after the last iteration
 	gainTotals map[fightEnergizeKey]float64
+	// in the first gainSizeIterations, what each had given, and how often, at the last hit or miss
+	gainsAt map[fightEnergizeKey]gainCount
 	// a spell's auras with several tags are one aura on the server, up from the first to the last: how many of
 	// each key's are up, since when, and whether one went on or off in the fight
 	auraUp      map[fightAuraKey]int
@@ -880,6 +899,10 @@ func (f *fightSim) watchAuras() {
 		for _, aura := range unit.GetAuras() {
 			id := aura.ActionID
 			if id.IsEmptyAction() || id.OtherID != 0 || aura.Duration == core.NeverExpires && timed[id] {
+				continue
+			}
+			if _, ok := fightSimAurasLeftOut[id]; ok {
+				f.tally.leftOut = append(f.tally.leftOut, id)
 				continue
 			}
 			key := fightAuraKey{Spell: id.SpellID, Item: id.ItemID, On: f.on[i]}
@@ -1185,6 +1208,9 @@ func (f *fightSim) metricsOnlyDamage(sim *core.Simulation) {
 }
 
 func (f *fightSim) addOutcome(sim *core.Simulation, key fightKey, periodic bool, result *core.SpellResult) {
+	if f.gainsAt != nil {
+		f.noteGainSizes()
+	}
 	s := f.sample
 	// a tick that misses is only a spell's miss in the log, which can't tell it from the cast's
 	if periodic && !result.Landed() {
@@ -1241,6 +1267,10 @@ func (f *fightSim) runIteration(seed int64, schedule func(sim *core.Simulation))
 		}
 	}
 	f.sample = newFightSample(len(f.fight.casts))
+	f.gainsAt = nil
+	if len(f.tally.samples) < gainSizeIterations {
+		f.gainsAt = f.powerGainCounts()
+	}
 	f.gcdUntil = 0
 	f.auraChanged, f.auraEverUp = map[fightAuraKey]bool{}, map[fightAuraKey]bool{}
 	sim.PrePull()
@@ -1471,20 +1501,54 @@ func (f *fightSim) readMetrics() {
 	}
 }
 
-// powerGains is what each spell or item has given the character and its pets, over every iteration so far. A
-// spell's cost shares its id and power with what it gives, but a cost's metrics only count down.
+// powerGains is what each spell or item has given the character and its pets, over every iteration so far.
 func (f *fightSim) powerGains() map[fightEnergizeKey]float64 {
 	gains := map[fightEnergizeKey]float64{}
+	for key, g := range f.powerGainCounts() {
+		gains[key] = g.amount
+	}
+	return gains
+}
+
+type gainCount struct {
+	amount float64
+	events int32
+}
+
+// powerGainCounts is powerGains with how many gains made each. A spell's cost shares its id and power with
+// what it gives, but a cost's metrics only count down.
+func (f *fightSim) powerGainCounts() map[fightEnergizeKey]gainCount {
+	gains := map[fightEnergizeKey]gainCount{}
 	for _, unit := range f.units {
 		for _, r := range unit.Metrics.ToProto().Resources {
 			power, ok := simPowers[r.Type]
 			id := core.ProtoToActionID(r.Id)
 			if ok && id.OtherID == 0 && r.Gain > 0 {
-				gains[fightEnergizeKey{Spell: id.SpellID, Item: id.ItemID, Power: power}] += r.Gain
+				key := fightEnergizeKey{Spell: id.SpellID, Item: id.ItemID, Power: power}
+				g := gains[key]
+				gains[key] = gainCount{amount: g.amount + r.Gain, events: g.events + r.Events}
 			}
 		}
 	}
 	return gains
+}
+
+// gainSizeIterations is how many iterations note each power gain's size: reading the metrics at every hit
+// costs too much for all of them.
+const gainSizeIterations = 100
+
+// noteGainSizes notes each power gain since the last hit or miss that came alone. The metrics only add gains
+// up; a proc's gain comes with the hit that procs it, and a tick's between two hits. A gain of nothing (Thrill
+// of the Hunt for a free shot) is no gain in the log.
+func (f *fightSim) noteGainSizes() {
+	now := f.powerGainCounts()
+	for key, g := range now {
+		was := f.gainsAt[key]
+		if size := g.amount - was.amount; g.events-was.events == 1 && size > 0 {
+			f.sample.gains[key] = append(f.sample.gains[key], size)
+		}
+	}
+	f.gainsAt = now
 }
 
 // fightCheck is one comparison of a fight: Subject names what it's about by id, for drops.
@@ -1601,6 +1665,9 @@ func compareFight(fl *fightLog, logTally, simTally *fightTally) *fightComparison
 	}) {
 		c.add("aura "+k.subject(), fmt.Sprintf("aura %s (%s)", c.spellName(k.Spell, 0), k.subject()),
 			notCompared("applications", fightAurasLeftOut[k]))
+	}
+	for _, id := range simTally.leftOut {
+		c.add("sim aura "+id.String(), "sim aura "+id.String(), notCompared("applications", fightSimAurasLeftOut[id]))
 	}
 	return c
 }
@@ -1914,9 +1981,10 @@ func (c *fightComparison) compareAura(k fightAuraKey) {
 	if why, ok := fightRefreshesLeftOut[k.Spell]; ok && k.Item == 0 {
 		applications = notCompared("applications", why)
 	}
-	// each application can end a map update apart: the sim's on its own map updates, a cast's on the log's time
+	// each time it's up can start and end a map update apart: the sim's on its own map updates, a cast's on the
+	// log's time. A refresh only moves the end, so it's no more slack.
 	c.add(k.subject(), label, applications,
-		checkRange("uptime", logA.uptime.Seconds(), uptime, mapTick.Seconds()*max(1, float64(logA.applied))/2, "s"))
+		checkRange("uptime", logA.uptime.Seconds(), uptime, mapTick.Seconds()*float64(1+logA.gained)/2, "s"))
 }
 
 func (c *fightComparison) compareEnergize(k fightEnergizeKey) {
@@ -1929,9 +1997,47 @@ func (c *fightComparison) compareEnergize(k fightEnergizeKey) {
 		amounts = append(amounts, s.energize[k])
 	}
 	logAmount := c.log.samples[0].energize[k]
+	logGains := c.log.samples[0].gains[k]
+	most := 0.0
+	if len(logGains) > 0 {
+		most = slices.Max(logGains)
+	}
 	// the server truncates each gain, and one ticking on can land either side of the fight's end
-	floor := max(1, 0.005*math.Abs(mean(amounts))+c.log.samples[0].energizeMost[k]/2)
+	floor := max(1, 0.005*math.Abs(mean(amounts))+most/2)
 	c.add(k.subject(), label, checkRange("amount", logAmount, amounts, floor, ""))
+	if len(logGains) > 0 {
+		var simGains []float64
+		for _, s := range c.sim.samples {
+			simGains = append(simGains, s.gains[k]...)
+		}
+		c.add(k.subject(), label, checkGainSizes(logGains, simGains))
+	}
+}
+
+// checkGainSizes wants each of the log's gains within the sizes the sim gave one at a time, give or take a
+// point or 1%: the server truncates, and a gain that scales with a stat moves with its procs. The amount alone
+// spreads with how often a proc goes off, which hides a kind of gain the sim never gives (Master of Elements
+// for a spell the sim refunds nothing for).
+func checkGainSizes(log, sim []float64) Check {
+	const name = "gain sizes"
+	if len(sim) == 0 {
+		return notCompared(name, "the sim never gave one alone")
+	}
+	lo, hi := slices.Min(sim), slices.Max(sim)
+	detail := fmt.Sprintf("log %.4g to %.4g over %d gains, sim %.4g to %.4g", slices.Min(log), slices.Max(log),
+		len(log), lo, hi)
+	var outside []string
+	seen := map[float64]bool{}
+	for _, g := range log {
+		if slack := max(1, 0.01*g); !seen[g] && (g < lo-slack || g > hi+slack) {
+			outside = append(outside, fmt.Sprintf("%.4g", g))
+		}
+		seen[g] = true
+	}
+	if len(outside) > 0 {
+		return fail(name, detail+"; outside: "+strings.Join(outside, ", "))
+	}
+	return pass(name, detail)
 }
 
 func sum(values []float64) float64 {

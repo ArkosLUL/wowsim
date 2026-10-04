@@ -169,16 +169,22 @@ func botFight(t *testing.T, s goldcharSetup, c fightCycle, seed int64) string {
 		b.pets[pet.Name] = fmt.Sprintf("0xF1400000000000%02X", i+16)
 	}
 
-	// power goes in the log when something else happens, a little late but inside the fight
-	given := map[fightEnergizeKey]float64{}
+	// power goes in the log when something else happens, a little late but inside the fight, a line per gain:
+	// gains since the last line share what they gave
+	given := map[fightEnergizeKey]gainCount{}
 	energize := func(at time.Duration) {
-		for key, total := range f.powerGains() {
-			if amount := total - given[key]; amount > 0.5 {
-				given[key] = total
-				power := logPowerTypes[key.Power]
-				spell := botSpell(key.Spell, key.Item)
+		for key, total := range f.powerGainCounts() {
+			was := given[key]
+			amount, n := total.amount-was.amount, total.events-was.events
+			if amount <= 0.5 || n <= 0 {
+				continue
+			}
+			given[key] = total
+			power := logPowerTypes[key.Power]
+			spell := botSpell(key.Spell, key.Item)
+			for range n {
 				b.add(at, `SPELL_ENERGIZE,%s,%s,%d,"S%d",0x1,%d,%d`, botPlayer, botPlayer, spell, spell,
-					int64(math.Round(amount*powerScale(power))), power)
+					int64(math.Round(amount/float64(n)*powerScale(power))), power)
 			}
 		}
 	}
@@ -504,10 +510,10 @@ func TestFightLogTally(t *testing.T) {
 	}
 	for key, want := range map[fightAuraKey]auraSample{
 		// applied before the fight, off 6 s in
-		{Spell: 53365, On: "self"}:   {0, 6 * time.Second},
-		{Spell: 47813, On: "target"}: {1, 5990 * time.Millisecond},
+		{Spell: 53365, On: "self"}:   {uptime: 6 * time.Second},
+		{Spell: 47813, On: "target"}: {applied: 1, gained: 1, uptime: 5990 * time.Millisecond},
 		// still up at the end
-		{Spell: 17941, On: "self"}: {1, 4500 * time.Millisecond},
+		{Spell: 17941, On: "self"}: {applied: 1, gained: 1, uptime: 4500 * time.Millisecond},
 	} {
 		if got := s.auras[key]; got == nil || *got != want {
 			t.Errorf("%s: %+v, want %+v", key.subject(), got, want)

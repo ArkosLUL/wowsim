@@ -501,9 +501,10 @@ logged swing or shot; they stop after the last.
   server sends the client, each a `SPELL_AURA_APPLIED`: a first gain, a later expiry, another stack or charge
   count, at most one per update of the unit (the player every 10 ms world tick, others every map update).
   Uptime is the union. A permanent trigger sharing its proc's id is skipped; an aura up all fight that never
-  changed is the setup's state, left out on both sides.
+  changed is the setup's state, left out on both sides, as is a logged removal with no logged gain before it.
 - Power gains from the units' resource metrics, positive only (a cost shares the id), rage and runic power in
-  whole points.
+  whole points. The first 100 iterations also read the metrics at every hit or miss, noting each gain that came
+  alone (nonzero) as one gain's size.
 
 **Checks** (`compareFight`), each against the sim's iterations (`checkRange`): inside their range widened by two
 standard deviations, taken as at least a floor. That's about |z| 5, and a rare event the iterations saw passes.
@@ -515,11 +516,13 @@ A value on one side only is 0 on the other.
 - Per ability: `count` (floor 0.5), `crits`, each avoidance count, `hit`/`crit`/`glance mean` (floor half a
   point or 0.05%). Per dot: `ticks`, tick crits and means, `tick spacing` (median, floor 50 ms), and for the
   cycle's own dots `ticks per application` (floor one tick over all applications).
-- Per aura: `applications` (floor 0.5), `uptime` (floor half a map update per application). Per power gain:
-  `amount` (floor 1, or 0.5% plus half the log's largest single gain: the server truncates each, and one
-  ticking on can land either side of the end).
-- Left out with the reason the replay prints (fights README): `fightAurasLeftOut`, `fightMissesLeftOut`,
-  `fightRefreshesLeftOut`, `fightEnergizeLeftOut`, runic power.
+- Per aura: `applications` (floor 0.5), `uptime` (floor half a map update per time it came up in the log, plus
+  one; a refresh only moves the end). Per power gain: `amount` (floor 1, or 0.5% plus half the log's largest
+  single gain: the server truncates each, and one ticking on can land either side of the end), and `gain sizes`:
+  each logged gain within the sim's smallest to largest single gain, give or take a point or 1%. The amount
+  spreads with proc counts, which hides a kind of gain the sim never gives.
+- Left out with the reason the replay prints (fights README): `fightAurasLeftOut`, `fightSimAurasLeftOut`,
+  `fightMissesLeftOut`, `fightRefreshesLeftOut`, `fightEnergizeLeftOut`, runic power.
 
 Tests: `TestFightCycles`; `TestFightReplays` (one committed fight per setup; a drop must fail something and have
 its README row); `TestFightReplaysTheBotsOwnFight` (each cycle run by a sim bot the way the e2e runs it, written as
