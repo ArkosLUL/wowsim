@@ -144,8 +144,8 @@ PERF-COST joins V (the user's call, the same day): T2's cost arithmetic slowed C
 
 ## Current wave
 
-- Wave: W, landed (master fast-forwarded to this close-out). Next: X (EC-FIGHT). W's items' notes are in
-  `G:\DevStuff\GitHub\.wave-loop\ec-{gear,mobs,strikes-live}-tmp`.
+- Wave: X, landed (master fast-forwarded to this close-out); the e2e-coverage effort (S–X) is done. No wave is
+  scheduled. Item notes: `G:\DevStuff\GitHub\.wave-loop\ec-{gear,mobs,strikes-live,fight}-tmp`.
   Prod runs Q's `225191f1f`; R changes the optimizer's pool and the BiS tabs' hint.
 - Open: the talent sweep's unseen talents (test-enrichment INVESTIGATION, TE-SWEEP as built); from Q (parity
   INVESTIGATION, PAR-FU-4..7 as built): Ranged Weapon Specialization on Explosive Trap and magic procs, Glyph of Totem
@@ -180,9 +180,19 @@ PERF-COST joins V (the user's call, the same day): T2's cost arithmetic slowed C
   Shred gap passes inside the strike tolerance), Predatory Strikes taking weapon enchants, cat and bear form weapon
   damage, Felguard weapon damage, the Imp's Firebolt crit, Ghoul Frenzy's cadence, pet base stats and regen, Force of
   Nature's treant; DruidFeralTank's gear set naming 5 enchants by spell or item id, which the sim drops; meta gem
-  color conditions unchecked in the sim; the Infernal's raid buffs unprobed; test character Svsleadhldgf (account
-  SVSMD00988CC095, 2026-10-03) left over, its cleanup awaiting the user's OK.
-- Deferred until X lands (the user's calls, 2026-10-02 and 10-03; each only on the user's go-ahead):
+  color conditions unchecked in the sim; the Infernal's raid buffs unprobed; from X (e2e-coverage PLAN, EC-FIGHT as
+  built), the fight replay's drops: players act every 10 ms world tick but the sim puts their swings, hardcasts and
+  own auras on the 100 ms map update (a core timing item; goldens will move), the dummy's dots ticking early on their
+  first update, Bloodworms given party buffs, Frost Vulnerability never missing, Vindication on every hit (server 3
+  PPM), Insect Swarm crits with Vengeance, Eclipse on any hit (server: crits), dot ticks not proccing Dragon Soul,
+  Dying Curse and Greatness (Serpent Sting), Rake's first hit skipping armor, Torment the Weak on a snare-immune
+  target, Enduring Winter's 6 s cooldown, Crusader Strike refreshing judgements, Prey on the Weak's lapses,
+  Hemorrhage's debuff solo, Lava Lash halved, Rend 3–11% high, Master of Elements netting Burnout and skipping
+  no-cost crits; leads: Flurry spending charges on misses, Frost mage crit, Elemental's Lightning Bolt 13–18% over,
+  Howling Blast with death runes, Honor Among Thieves' combo points; cycles whose once-a-cycle finisher can miss a
+  fight (Feral APL Savage Roar, Subtlety Eviscerate); a shared golden-build helper in the e2e; fixtures captured
+  before the server's `15282384e` merge may move.
+- Deferred until X landed (the user's calls, 2026-10-02 and 10-03), now each awaiting the user's go-ahead:
   - Rerun all 28 presets, tanks included, on the final HEAD: BIS-caps-race changes every racial search,
     `ff0920a96` the 16 builds `mage_*`, `rogue_*`, `warlock_*`, `warrior_arms`, `warrior_fury`,
     `protection_warrior`, `shadow_priest`, `smite_priest`, `dk_blood`, `elemental_shaman`, and BIS-outclassed
@@ -192,7 +202,7 @@ PERF-COST joins V (the user's call, the same day): T2's cost arithmetic slowed C
   - Then the BiS tooltip dataset (acbis driver, both stages, fresh `--out`, then `acbis`; the import needs
     the OK), the changed builds' stat weights, and the perf harness's `opt_*` scenarios (`update.sh`, a new
     baseline; the raid25 dumps in `_dump/optimizer_dump_test.go` still build uncut pools).
-- Workflow runIds: W's `wf_aa1b462c-590` (code stages) and `wf_894cf391-8a3` (live stages); V's `wf_ea73babf-e53`; T2's `wf_5af2b99d-6d0`; T's `wf_8a59e202-2f8`, `wf_59a7bdbf-cbc` and `wf_beaacdaa-bbc` (the live reruns; journals in the session's `subagents/workflows/<runId>`); S's `wf_ae61e19e-2c1`; R's `wf_445767f0-4a1` (base `9f1f2f94f`); Q's `wf_47a2be77-20d` and `wf_6f439290-bf9` (PAR-FU-5 and 6's live stages; base `fdbc3df49`); P's `wf_9c73b1de-ff3` (base `c678de53e`); O's `wf_cd004c46-c80` (base `b069c688b`); N's `wf_4b37e171-123` (base `7f4174efb`); M's `wf_8ab862a5-d37` (base `33da5ca34`); L's `wf_34052b28-d62`, `wf_1a26dbdb-51c`, `wf_ac1129b6-8d7`, `wf_a59f095c-4b7`, `wf_f5be2bcf-e23`,
+- Workflow runIds: X's `wf_a31ea7ec-8e3`; W's `wf_aa1b462c-590` (code stages) and `wf_894cf391-8a3` (live stages); V's `wf_ea73babf-e53`; T2's `wf_5af2b99d-6d0`; T's `wf_8a59e202-2f8`, `wf_59a7bdbf-cbc` and `wf_beaacdaa-bbc` (the live reruns; journals in the session's `subagents/workflows/<runId>`); S's `wf_ae61e19e-2c1`; R's `wf_445767f0-4a1` (base `9f1f2f94f`); Q's `wf_47a2be77-20d` and `wf_6f439290-bf9` (PAR-FU-5 and 6's live stages; base `fdbc3df49`); P's `wf_9c73b1de-ff3` (base `c678de53e`); O's `wf_cd004c46-c80` (base `b069c688b`); N's `wf_4b37e171-123` (base `7f4174efb`); M's `wf_8ab862a5-d37` (base `33da5ca34`); L's `wf_34052b28-d62`, `wf_1a26dbdb-51c`, `wf_ac1129b6-8d7`, `wf_a59f095c-4b7`, `wf_f5be2bcf-e23`,
   `wf_42fc0b7c-42a`; args `wave<X>*-args.json` in `G:\DevStuff\GitHub\.wave-loop`, transcripts in
   `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\<runId>`.
 - J2's full-roster batch ran 2026-09-28 in 52 min at Quick, output in
@@ -235,6 +245,7 @@ Reckoning that way), but J isn't DPS: see below.
 | T2 | 8690.7, +273 / +273 | 10730.8, +708 / +903 | 5066.6, +41 / +51 | 12963.8, +148 / +225 | -17856.9, +4795 / +4847 | -1056.8, +917 / +888 |
 | V | 8690.7, +273 / +273 | 10730.8, +708 / +903 | 5066.6, +41 / +51 | 12963.8, +148 / +225 | -17672.3, +4831 / +4777 | -1211.2, +892 / +891 |
 | W | 8690.7, +273 / +273 | 10730.8, +708 / +903 | 5066.6, +41 / +51 | 12963.8, +148 / +225 | -17672.3, +4831 / +4777 | -1211.2, +892 / +891 |
+| X | 8690.7, +273 / +273 | 10730.8, +708 / +903 | 5066.6, +41 / +51 | 12963.8, +148 / +225 | -17672.3, +4831 / +4777 | -1211.2, +892 / +891 |
 
 Quick / Normal. Ret P4 ran at Quick only in wave D, after the glyph fix; its wave C numbers
 (12821.9, +54 / +73) came from a seed that wore the glyph. The two tanks arrive with
@@ -415,7 +426,7 @@ is 14% under T2's at one iteration and 12% at 100 (PERF-COST); at 100 Ret is 8% 
 +3.7%, the raid flat; one iteration within noise. Elemental's profile puts EC-THREAT-FIX's per-cast threat bookkeeping
 (`closeThreatCast`, `openThreatCast`, `addAssistThreat`) at about 5% of its time.
 
-W has no row: it changes no sim code.
+W and X have no row: they change no sim code.
 
 E to F2 ran the old requests: one iteration, and no rotation for Ret, Hunter and Elemental.
 
@@ -585,6 +596,8 @@ crashed before F2, so its column starts there.
 | PERF-COST | merged | `e1187f470` | goldens byte-identical; loaded A/B: Combat Rogue −10 to −11%, the raid −2.8% at 100 iterations |
 | wave V cross-review | | `36ec0d8a8` | no bugs; stale docs fixed (the default e2e run's skips, the fixture README's drop rule); server-parity gained the threat rules |
 | wave W cross-review | | `6b235e3a4` | 1 bug: the strike and tick replays lost their forced hit and crit after the first attempt (no capture affected), so EC-MOBS' no-crit workaround went; testing.md and the fixture READMEs caught up with EC-MOBS |
+| EC-FIGHT | merged | `9178fe553` | module `2138637`; 32 golden-setup fights (90 s, live 2026-10-04 on the worldserver rebuilt at 20:33, rev 15282384e), 106 KB, replayed by `TestFightReplays`: 2047 checks, 45 dropped as sim gaps (see Current wave); CRLF fix `c3257777a` |
+| wave X cross-review | | `687228a1a` | 3 bugs: power gain totals hid wrong gain sizes (Master of Elements), Hot Streak's sim-only counter merged into Hot Streak, refreshes widened uptime slack; module comment `c0d3ef9`; the world-tick claim confirmed in source, `spell-data-and-timing.md` corrected |
 
 Later WIs are added as their wave starts.
 

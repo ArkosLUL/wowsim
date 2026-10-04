@@ -41,12 +41,15 @@ spell is only as right as its id.
   where the closure calls `spell.WaitTravelTime`, or `spell.DealDamageAfterTravel` for a landing that only
   deals the result, over `DistanceFromTarget`, which is 0 for a pet: its missiles wait the 5 yd floor.
 
-The server only acts on its map update, 100 ms live (`ServerSettings.MapUpdateInterval`; 0 means exact,
-which is what unit tests want).
+The server updates players every world tick (`MinWorldUpdateTime`, 10 ms live), and creatures, pets and
+guardians, with the auras they carry, only on the map update, 100 ms live (`Map::Update`). A creature aura's
+first update counts a whole map update, so the dummy's dots tick and expire up to one update early. The sim
+puts every unit on the map update (`ServerSettings.MapUpdateInterval`; 0 means exact, which is what unit tests
+want).
 
 - Swings, hardcast completions and aura expiry land on the next tick, with a phase rolled per iteration.
-  A swing restarts its timer from the tick it landed on, so the overshoot is lost, which costs a fast
-  dual wielder several percent.
+  A swing restarts its timer from the tick it landed on, losing the overshoot: up to one map update in the
+  sim, which costs a fast dual wielder several percent, but up to one world tick for a player on the server.
 - A landed swing pushes the other hand to at least 200 ms. A melee swing restarts the ranged timer, and
   every Auto Shot restarts both melee timers (`Unit::_UpdateAutoRepeatSpell`).
 - At the pull, and when auto attacks restart (breaking stealth), a ready off hand starts half the main hand's

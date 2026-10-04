@@ -119,7 +119,7 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
   - `sim/core/testdata/simval/simval.jsonl` is the committed capture of the whole e2e suite; its README lists
     dropped records. `TestFixtureHasEveryE2ERecord` keys it on (command, spell id, class, dummy entry).
 - Live e2e, which needs the user's OK: `cd [ac]/modules/mod-sim-validation && ./e2e/run.sh [TestName]`
-  (default `-run TestSimval` minus `TestSimvalTiming`, `TestSimvalThreat`, `TestSimvalStrikes`, `TestSimvalBuffs` and `TestSimvalMobs`, about 7 min). The module's `README.md` covers its commands, env vars and orphan cleanup.
+  (default `-run TestSimval` minus `TestSimvalTiming`, `TestSimvalThreat`, `TestSimvalStrikes`, `TestSimvalBuffs`, `TestSimvalMobs` and `TestSimvalFight`, about 7 min). The module's `README.md` covers its commands, env vars and orphan cleanup.
   - Recapture the fixture, never append: the suite deletes its own records and the host side of the log
     mount is stale, so stream from inside the container, started before the run:
     1. `MSYS_NO_PATHCONV=1 docker exec ac-worldserver tail -F -n +1 /azerothcore/env/dist/logs/simval/simval.jsonl > tmp/stream.jsonl &`,
@@ -135,8 +135,11 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
   `TestSimvalBuffs`, which needs `SIMVAL_GOLDCHAR_SETUPS`; streamed as above. `mobs.jsonl`: `run.sh TestSimvalMobs`'s
   `MOBS` log lines): the [simval README](../../tools/simval/README.md)'s Damage probe, Timing probe, Threat probe, Buffs,
   Mob types, Golden characters, Talent sweep and Spell-mod sweep.
+- `sim/core/testdata/fights/` holds a Chronicle-logged fight per golden setup, replayed by `TestFightReplays` (the
+  simval README's Fights); recaptured with `run.sh TestSimvalFight` (the module README).
 - e2e gotchas: armor can't be equipped or removed in combat (equip error 60), and `.simval threat` engages the
-  dummy, so `.combatstop` first; in a druid form, `.simval info` shows no main-hand weapon.
+  dummy, so `.combatstop` first; in a druid form, `.simval info` shows no main-hand weapon; 4 yards north of the boss dummy has no line of
+  sight to it; equipping starts item proc cooldowns (`Player::ApplyEquipCooldown`), so equip under `.cheat cooldown`.
 - `TestSimSpellGroups` (`sim/spell_groups_test.go`, offline) checks the sim's exclusive-effect categories against
   the server's `spell_group` rules in `sim/core/testdata/simval/spell_groups.json`; the export query is in its
   doc comment. A pair the two disagree on needs a reason in `spellGroupAllowances`, and a stale entry fails.

@@ -917,7 +917,7 @@ Stage live (server build of 2026-10-04 13:50):
   Review: a white mean moving inside its sampling bounds no longer counts as a move (49 lines had agreed on noise
   alone); generic test names got the `mob` prefix.
 
-### EC-FIGHT (X; golden-neutral; stages: sim tooling, e2e, live)
+### EC-FIGHT (X, done; golden-neutral; stages: sim tooling, e2e, live)
 
 - e2e `e2e/fight_test.go`: per golden setup, a 1–2 min fight on the boss dummy in Naxxramas under Chronicle; the bot
   runs a fixed cycle that never reacts to procs. Save the log and setup name like `TestRecordedRun`.
@@ -977,8 +977,9 @@ someone else rebuilt and restarted mid-stage; 106 KB):
   aura applications count stack and charge updates, the player's per 10 ms world tick; permanent triggers sharing a
   proc's id skipped; pre-fight procs start the sim's internal cooldown; a gain gets one tick of slack at the edges;
   72 server-to-sim id pairs and 30 representation gaps (`fightAurasLeftOut` and kin) with printed reasons.
-- Verdicts (after review): 2021 checks over 32 fights; 40 fail on real mismatches, dropped with fights README rows by
-  cause (follow-ups): world tick swings, early dummy ticks, Bloodworms' Horn of Winter, Frost Vulnerability's misses,
+- Verdicts (after both reviews): 2047 checks over 32 fights; 45 fail on real mismatches, dropped with fights README rows by
+  cause (follow-ups): world tick swings, early dummy ticks, Bloodworms without party buffs (the server never buffs an uncontrollable
+  guardian), Master of Elements' gain sizes (Burnout netted in, no refund on no-cost crits), Frost Vulnerability's misses,
   Vindication's proc rate, Insect Swarm's Vengeance crits, Eclipse on any hit, dot-tick procs
   (Dragon Soul, Greatness, Dying Curse), Rake's armor, Torment the Weak, Enduring Winter's cooldown, Crusader Strike
   refreshing judgements, Prey on the Weak's 10 s lapses, Hemorrhage's debuff, Lava Lash's off-hand halving, Rend's
@@ -991,6 +992,12 @@ Protection. A persistent area aura's missed tick, left out on purpose, came back
 miss (Consecration: about 3 a fight against the log's 0, passing only as 0 was in range). `TestFightReplays` now
 wants one fight per setup. 256 bot fights (seeds 2 to 9) had no false check failure; twice a finisher cast once a
 cycle never landed (Feral APL's Savage Roar, Subtlety's Eviscerate), which would fail the e2e (follow-up).
+
+Cross-review: power gains are also checked gain by gain (`gain sizes`), since totals hid Master of Elements'
+wrong sizes; Hot Streak's sim-only crit counter no longer counts as Hot Streak (`fightSimAurasLeftOut`); uptime
+slack grows with gains from off, not every refresh, exposing 60486 (Shadow, Smite) and Ret's 60314; auras logged
+only as removed make no checks. Confirmed in source: players update every world tick (`Map::Update`), creatures
+on the map update.
 
 ## Orchestrator onboarding (wave S start)
 
