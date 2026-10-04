@@ -94,7 +94,8 @@ Per unshaped record (`damage.go`):
 
 Pets (the strikes replay takes them) and non-80 characters fail. Shaped records give no checks.
 
-`TestStrikesRecords` replays `strikes.jsonl`, `TestSimvalStrikes`' capture (run by name, keep all its lines);
+`TestStrikesRecords` replays `strikes.jsonl`, `TestSimvalStrikes`' capture (run by name, keep all its lines: the
+test log's `RECORD` lines, since the run removes them from `simval.jsonl` at cleanup);
 `TestStrikesFixtureHasEveryProbe` fails when a probe is missing and not in `droppedStrikesRecords`. A failing
 check in `knownStrikesMismatches` is let through; an entry nothing fails is stale. Per record (`damage.go`):
 - Strike (`weapon` part, unshaped): the character as above, wearing the record's weapons, retried with the

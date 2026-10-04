@@ -517,7 +517,93 @@ type strikesMismatch struct {
 // knownStrikesMismatches are checks where the sim and the server really differ, each with its reason and a row
 // in the fixture README. The check still runs and only its failure is let through; an entry no record fails is
 // stale.
-var knownStrikesMismatches = map[strikesMismatch]string{}
+var knownStrikesMismatches = expandStrikesMismatches([]knownStrikes{
+	{strikesBothPasses(druid, 48566, 48572, 62078, 48480, 48564), []string{"min", "max"},
+		"form weapon: the sim's cat and bear swing 43-66 and 109-165, the server's form damage is min(level, 60) x " +
+			"0.85-1.25 x the form's speed (Player::CalculateMinMaxDamage), 51-75 and 127.5-187.5"},
+	{[]strikesKey{{"damage", 47994, warlock, 17252, false}}, []string{"min", "max"},
+		"the sim's Felguard swings 88.8-133.3, the server's 329-495 (pet_levelstats at 80)"},
+	{[]strikesKey{{"damage", 47964, warlock, 416, false}}, []string{"e0 damage crit"},
+		"the sim's Imp Firebolt crits x2, the server's SpellCriticalDamageBonus gives a pet's magic spell x1.5"},
+	{[]strikesKey{{"timing", 63560, deathKnight, 0, false}}, []string{"e0 amplitude", "e0 ticks"},
+		"the sim's Ghoul Frenzy heals every 6 s, 5 times, the server's aura every 3 s, 10 times"},
+
+	{[]strikesKey{infernalInfo, gargoyleInfo, spiritWolfInfo, treantInfo, shadowfiendInfo},
+		petStatChecks(allPetStats, allPetStats), petStatsReason},
+	{[]strikesKey{tamedWolfInfo}, petStatChecks("Stamina Intellect Spirit", "Stamina Intellect Spirit"), petStatsReason},
+	{[]strikesKey{ghoulInfo}, petStatChecks("Intellect Spirit", "Strength Agility Intellect Spirit"), petStatsReason},
+	{[]strikesKey{waterElementalInfo},
+		petStatChecks("Strength Agility Stamina Spirit", "Strength Agility Stamina Spirit"), petStatsReason},
+	{[]strikesKey{tamedWolfInfo, impInfo, felguardInfo, infernalInfo, ghoulInfo, gargoyleInfo, spiritWolfInfo,
+		waterElementalInfo, treantInfo, shadowfiendInfo}, []string{"armor"},
+		"pet armor: the server's is pet_levelstats' armor, or level x 50 without a row, plus the scaling auras' share " +
+			"of the owner's; the sim pet's comes from its own constants and owner coefficients"},
+	{[]strikesKey{impInfo, infernalInfo, ghoulInfo, gargoyleInfo, spiritWolfInfo, waterElementalInfo, treantInfo,
+		shadowfiendInfo}, []string{"attack power"}, petPowerReason},
+	{[]strikesKey{spiritWolfInfo, treantInfo, shadowfiendInfo}, []string{"spell power"}, petPowerReason},
+	{[]strikesKey{impInfo, felguardInfo, waterElementalInfo}, []string{"regen per tick"},
+		"pet mana: Creature::Regenerate gives a controlled creature spirit/5 + 17 a tick, the sim pet the player formula"},
+})
+
+// The info records of TestSimvalStrikes' pets.
+var (
+	tamedWolfInfo      = strikesKey{"info", 0, hunter, 37294, false}
+	impInfo            = strikesKey{"info", 0, warlock, 416, false}
+	felguardInfo       = strikesKey{"info", 0, warlock, 17252, false}
+	infernalInfo       = strikesKey{"info", 0, warlock, 89, false}
+	ghoulInfo          = strikesKey{"info", 0, deathKnight, 26125, false}
+	gargoyleInfo       = strikesKey{"info", 0, deathKnight, 27829, false}
+	spiritWolfInfo     = strikesKey{"info", 0, shaman, 29264, false}
+	waterElementalInfo = strikesKey{"info", 0, mage, 510, false}
+	treantInfo         = strikesKey{"info", 0, druid, 1964, false}
+	shadowfiendInfo    = strikesKey{"info", 0, priest, 19668, false}
+)
+
+const (
+	allPetStats    = "Strength Agility Stamina Intellect Spirit"
+	petStatsReason = "pet stats: the server's create stats are pet_levelstats' row, or Guardian::InitStatsForLevel's " +
+		"22/22/25/28/27 without one, plus the PetDefines.h scaling auras' share of the owner's; the sim pet has its " +
+		"own constants and owner coefficients"
+	petPowerReason = "pet power: the server's follows from the pet's stats and the PetDefines.h scaling auras, the " +
+		"sim pet's from its own owner coefficients"
+)
+
+// knownStrikes is one reason for each of the checks on each of the probes.
+type knownStrikes struct {
+	keys   []strikesKey
+	checks []string
+	reason string
+}
+
+func expandStrikesMismatches(known []knownStrikes) map[strikesMismatch]string {
+	out := map[strikesMismatch]string{}
+	for _, k := range known {
+		for _, key := range k.keys {
+			for _, check := range k.checks {
+				out[strikesMismatch{key, check}] = k.reason
+			}
+		}
+	}
+	return out
+}
+
+// strikesBothPasses keys the spells' strikes, bare and with talents.
+func strikesBothPasses(class uint8, spells ...int32) []strikesKey {
+	var keys []strikesKey
+	for _, spell := range spells {
+		keys = append(keys, strikesKey{"damage", spell, class, 0, false}, strikesKey{"damage", spell, class, 0, true})
+	}
+	return keys
+}
+
+// petStatChecks names a pet info record's checks of these create ("base ") and total stats.
+func petStatChecks(base, totals string) []string {
+	var checks []string
+	for _, s := range strings.Fields(base) {
+		checks = append(checks, "base "+s)
+	}
+	return append(checks, strings.Fields(totals)...)
+}
 
 // droppedStrikesRecords disagree with the sim and were removed from strikes.jsonl, each with a row in the
 // fixture README.
@@ -563,7 +649,7 @@ var strikesPets = []struct {
 	entry       uint32
 	spells      []int32
 }{
-	{hunter, 4, 26672, []int32{52474}},
+	{hunter, 4, 37294, []int32{52474}},
 	{warlock, 1, 416, []int32{47964}},
 	{warlock, 1, 17252, []int32{47994}},
 	{warlock, 1, 89, []int32{20153}},
@@ -1051,7 +1137,7 @@ func TestPetInfoReplay(t *testing.T) {
 	focus := func(perTick int) []Check {
 		var regen []Check
 		body := petInfoBody([5]float64{}, fmt.Sprintf(`"regen": {"power": 2, "intervalMs": 4000, "perTick": %d, "lastManaUse": false}`, perTick))
-		for _, check := range checkPetInfo(handPet(t, hunter, 4, 26672, "info", body)) {
+		for _, check := range checkPetInfo(handPet(t, hunter, 4, 37294, "info", body)) {
 			if check.Name == "regen per tick" {
 				regen = append(regen, check)
 			}
