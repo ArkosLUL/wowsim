@@ -851,6 +851,49 @@ Stage live (server build of 2026-10-04 13:50):
   and Requirements line; `[ac]/configurationOverrides/DungeonScale.env`; `docs/guide/azerothcore-server.md`'s dummy
   ids; `tools/simval/mobs.go`, its test and fixture, its fixture README rows.
 
+#### As built
+
+- SQL and e2e (e2e vetted; no rebuild yet, so no live run):
+  - Dummies 999004–999008 are 999001's rows with only type, name and subname changed; all in
+    `AC_DUNGEON_SCALE_DISABLED_ID`. Giant is probed on 999003 (level 80): the boss adds world boss rules.
+  - `TestSimvalMobs` (`run.sh` without a name skips it): human warrior, human paladin and troll hunter, armed and
+    stripped, through per-effect states on each of 8 dummies; a `MOBS` line per state and dummy. Asserts dummy
+    type and health, parry by type, Exorcism's crit, Holy Wrath's and Tendon Rip's target selection, and each
+    state's check probe moving most on its types. Bots, states, line shape and live command:
+    `tmp/ec-mobs-sql.md`.
+  - Leads from server source, for the live run: Elixir of Demonslaying is +105 AP (sim 265); the Blessed Undead
+    Slaying set's three auras multiply (3pc ×1.0302, 4pc ×1.0611; sim 1.02, 1.03); versus attack power reaches
+    only weapon damage (`MeleeDamageBonusDone`), never a spell's AP coefficient, which the sim's
+    `MeleeAttackPower()` gives it; Predatory Strikes ignores weapon enchants, so Scourgebane adds no feral AP
+    (not probeable before `.simval enchant`). Holy Wrath, Giant Slayer, Exorcism, Crusade, Improved Tracking
+    (with a tracking up), Sense Undead's glyph (with Sense Undead up) and Beast Slaying agree with the sim.
+- Sim (`tools/simval/mobs.go`, `TestMobRecords`; no capture yet, so it skips): each line against the same state on the
+  mechanical dummy, the server's change against the sim's between those two types (Holy Wrath's undead against its
+  demon); probe amounts as ratios, crit taken, attack power, white parry and plain swing mean, bare target selections.
+  Method in the simval README's Mob types. `gen_server_defaults` knows 999004–999008. The e2e adds a night elf druid
+  in cat form with Predatory Strikes, bare and with Scourgebane's enchant by `.simval enchant`, for the last lead.
+  Leads the hand-checked tests confirm in the sim's own code, for the live run: Crusader Strike gets 75% of a versus
+  bonus the server adds after the weapon percent (by the code, Mangle and Shred too, at 200% and 225%); Holy Wrath's AP
+  part takes Scourgebane's; the druid's form gains 28 AP from Scourgebane on undead. Live notes: `tmp/ec-mobs-sim.md`.
+- Live (2 runs; `mobs.jsonl` is the second, passing, 128 lines; replay: 49 agree, 58 move nothing (the same lines as a
+  sim-made run), 16 references, 5 disagree, their failing checks dropped with fixture README rows). Probe fixes the
+  runs forced:
+  - Armor can't go on or off in combat (`EQUIP_ERR_NOT_IN_COMBAT`, equip error 60), and bare's `threat` engages the
+    dummy: `.combatstop` before the set items.
+  - In a druid form `info` shows no main hand, so the sim druid had no weapon or enchant: `mobBots` gives each bot's
+    main hand for that case.
+
+  Verdicts, all four leads confirmed: Elixir of Demonslaying +105 AP on the server (sim 265); the Blessed set's 3pc
+  and 4pc multiply (×1.0302, ×1.0611; sim 1.02, 1.03; 2pc agrees); Scourgebane leaves Exorcism and Holy Wrath
+  unchanged on the server and adds +33 to Crusader Strike after its 75% (sim 24.75); the druid's form AP ignores the
+  enchant (sim +28). Mangle and Shred with Scourgebane get +10 on the server and about +20 and +22.5 in the sim
+  (scaled by 200% and 225%), but that passes inside `strikeTolerance`. Everything else agrees: Scourgebane and Demon
+  Slaying on 100% strikes and white, Crusade, Sense Undead's glyph, Improved Tracking, Beast Slaying, Exorcism's crit,
+  Holy Wrath's and Tendon Rip's selections, parry only on humanoids.
+
+  Review: a white mean moving inside its sampling bounds no longer counts as a move (49 lines had agreed on noise
+  alone); generic test names got the `mob` prefix.
+
 ### EC-FIGHT (X; golden-neutral; stages: sim tooling, e2e, live)
 
 - e2e `e2e/fight_test.go`: per golden setup, a 1–2 min fight on the boss dummy in Naxxramas under Chronicle; the bot

@@ -36,7 +36,7 @@ raid:
 - a raid player-count curve other than floor 0, ceiling 1, or a player-count offset;
 - a per-instance override or disable naming a raid map;
 - a per-creature override: any `StatModifier.PerCreature` or `ForcedID` entry, or a `DisabledID`
-  creature beyond the module's stock list and the mod-sim-validation dummies (999000-999003).
+  creature beyond the module's stock list and the mod-sim-validation dummies (999000-999008).
 
 `TestCodeDefaultsMatchServerSource` checks its keys and code defaults against the server source, and
 `TestGeneratedFilesMatchLiveConfig` the committed output against the live config.
