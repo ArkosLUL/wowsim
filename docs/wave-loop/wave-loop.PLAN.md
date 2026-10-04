@@ -76,6 +76,7 @@ G = changes goldens. FS = runs all 37 suites.
 | V | EC-THREAT-FIX (G, FS) · EC-STRIKES (C++, live) · EC-BUFFS (live) · PERF-COST | ✔ |
 | W | EC-GEAR (C++, live) · EC-MOBS (live) · EC-STRIKES' live stage (from V) | ✔ |
 | X | EC-FIGHT (live) | ✔ |
+| X2 | EC-RECHECK (live) · EC-COVER (live) · EC-PROBES (C++, live) | |
 | Y | EC-TICK-FIX (G, FS) · EC-CORE-FIX (G, FS) · EC-PET-FIX (G) · PERF-THREAT | ✔ |
 | Z | EC-THREAT-FIX2 (G, FS, live) · EC-MELEE-FIX (G, live) · EC-NATURE-FIX (G, live) · EC-ARCANE-FIX (G, live) | ✔ |
 
@@ -131,7 +132,8 @@ so EC-SPELLMOD's and EC-SHEET's finds join S's and each is fixed once. Each item
 first: some may be server quirks, not sim bugs.
 PERF-COST joins V (the user's call, the same day): T2's cost arithmetic slowed Combat Rogue sims by a quarter.
 Y and Z are the user's call (2026-10-05): fix the sim gaps the loop found, EC-FIGHT's 10 ms player tick included,
-core in Y and class in Z, plus PERF-THREAT for V's threat cost.
+core in Y and class in Z, plus PERF-THREAT for V's threat cost. X2 goes first (the user's call, the same day): the
+fixes then work on records from the current server build, and take whatever X2's new probes find.
 
 **Where the specs are:**
 
@@ -148,20 +150,11 @@ core in Y and class in Z, plus PERF-THREAT for V's threat cost.
 
 ## Current wave
 
-- Wave: X, landed (master fast-forwarded to this close-out); the e2e-coverage effort (S–X) is done. Next: Y.
+- Wave: X, landed (master fast-forwarded to this close-out); the e2e-coverage effort (S–X) is done. Next: X2.
   Item notes: `G:\DevStuff\GitHub\.wave-loop\ec-{gear,mobs,strikes-live,fight}-tmp`.
   Prod runs X's `25cb9dddc` (no `rollback-q` image: its layers were gone).
-- Open: the talent sweep's unseen talents (test-enrichment INVESTIGATION, TE-SWEEP as built); 72-point Fury and
-  Balance strings in the optimizer's test inputs and `gen_db` (from Q); the response curves span the pool's stat
-  range, so BIS-outclassed's cut moved Fury P1's Normal pick 45 J below the uncut pool's, every item of which it still
-  holds; sheet artifacts the sim can't show (no per-school crit sheet: 3 fire-crit drops; Blood-Gorged, Mace
-  Specialization, Holy Specialization); Rupture and Slice and Dice untested with combo points (backlog); the sweeps'
-  shared `sweepPrepare` (module `25d88f9`) not yet run live; `.simval threat`'s live assist threat assumes the dummy
-  is the only creature in combat with the target; Expose Armor and the Infernal's raid buffs unprobed; EC-BUFFS' pair
-  list kept twice (e2e and replay); DruidFeralTank's gear set naming 5 enchants by spell or item id, which the sim
-  drops; from X: cycles whose once-a-cycle finisher can miss a fight (Feral APL Savage Roar, Subtlety Eviscerate), a
-  shared golden-build helper in the e2e, fixtures captured before the server's `15282384e` merge may move. Every other
-  sim gap the loop found is a Y or Z item.
+- Open: none outside X2's, Y's and Z's items and the deferred BiS chain. Closed as not sim gaps: the sheet fields the
+  server shows raw (per-school crit, Blood-Gorged, Mace and Holy Specialization), which the fixture README explains.
 - Deferred (the user's calls, 2026-10-02, 10-03 and 10-05), each only on the user's go-ahead:
   - Rerun all 28 presets, tanks included, on the final HEAD: BIS-caps-race changes every racial search,
     `ff0920a96` the 16 builds `mage_*`, `rogue_*`, `warlock_*`, `warrior_arms`, `warrior_fury`,
@@ -172,6 +165,8 @@ core in Y and class in Z, plus PERF-THREAT for V's threat cost.
   - Then the BiS tooltip dataset (acbis driver, both stages, fresh `--out`, then `acbis`; the import needs
     the OK), the changed builds' stat weights, and the perf harness's `opt_*` scenarios (`update.sh`, a new
     baseline; the raid25 dumps in `_dump/optimizer_dump_test.go` still build uncut pools).
+  - Before the preset rerun: the response curves span the pool's stat range, so BIS-outclassed's cut moved Fury
+    P1's Normal pick 45 J below the uncut pool's, every item of which it still holds.
 - Workflow runIds: X's `wf_a31ea7ec-8e3`; W's `wf_aa1b462c-590` (code stages) and `wf_894cf391-8a3` (live stages); V's `wf_ea73babf-e53`; T2's `wf_5af2b99d-6d0`; T's `wf_8a59e202-2f8`, `wf_59a7bdbf-cbc` and `wf_beaacdaa-bbc` (the live reruns; journals in the session's `subagents/workflows/<runId>`); S's `wf_ae61e19e-2c1`; R's `wf_445767f0-4a1` (base `9f1f2f94f`); Q's `wf_47a2be77-20d` and `wf_6f439290-bf9` (PAR-FU-5 and 6's live stages; base `fdbc3df49`); P's `wf_9c73b1de-ff3` (base `c678de53e`); O's `wf_cd004c46-c80` (base `b069c688b`); N's `wf_4b37e171-123` (base `7f4174efb`); M's `wf_8ab862a5-d37` (base `33da5ca34`); L's `wf_34052b28-d62`, `wf_1a26dbdb-51c`, `wf_ac1129b6-8d7`, `wf_a59f095c-4b7`, `wf_f5be2bcf-e23`,
   `wf_42fc0b7c-42a`; args `wave<X>*-args.json` in `G:\DevStuff\GitHub\.wave-loop`, transcripts in
   `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\<runId>`.

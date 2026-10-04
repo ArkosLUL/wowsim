@@ -45,6 +45,7 @@ The live e2e and the replays leave timing, costs, threat, pets, gear and buffs u
 | V | EC-THREAT-FIX (G, FS) · EC-STRIKES (C++, live) · EC-BUFFS (live) | The fix needs T's probe |
 | W | EC-GEAR (C++, live) · EC-MOBS (module SQL and config, live) | One rebuild for both |
 | X | EC-FIGHT (live) | Fights wear GEAR's full gear, enchant procs included |
+| X2 | EC-RECHECK (live) · EC-COVER (live) · EC-PROBES (C++, live) | Fresh records and fewer holes before the fixes |
 | Y | EC-TICK-FIX (G, FS) · EC-CORE-FIX (G, FS) · EC-PET-FIX (G) · PERF-THREAT | The sim gaps the loop found, core first |
 | Z | EC-THREAT-FIX2 (G, FS, live) · EC-MELEE-FIX (G, live) · EC-NATURE-FIX (G, live) · EC-ARCANE-FIX (G, live) | The class gaps, on Y's core |
 
@@ -1001,6 +1002,37 @@ slack grows with gains from off, not every refresh, exposing 60486 (Shadow, Smit
 only as removed make no checks. Confirmed in source: players update every world tick (`Map::Update`), creatures
 on the map update.
 
+### EC-RECHECK (X2; golden-neutral; stages: code, live)
+
+- Every fixture predates the server's `15282384e` merge (2026-10-04). Re-record on the current build, each with its
+  own capture ([testing](../guide/testing.md#against-the-server)): `simval.jsonl` (the default run), `damage.jsonl`,
+  `mobs.jsonl`, `goldchar.jsonl`, `buffs.jsonl` and the fights.
+- Expose Armor joins the buffs sweep (`buffsEntries`, `buffsPairs`), its pair list kept in one place for the e2e and
+  the replay; the golden build becomes one e2e helper `goldchar_test.go`, `buffs_test.go` and `fight_test.go` share.
+- A record that moved: name the server change behind it, keep the new record, and drop what the sim now gets wrong
+  (a README row; report it for Y or Z by area).
+- **Owns:** those fixtures, their replays' drop lists and README rows; e2e `goldchar_test.go`, `buffs_test.go`,
+  `fight_test.go`, `damage_test.go`, `mobs_test.go`; `tools/simval/buffs.go`.
+
+### EC-COVER (X2; golden-neutral; stages: code, live)
+
+- The talent sweep's never-seen talents (test-enrichment INVESTIGATION, TE-SWEEP as built): armor talents (DK
+  Toughness, both Thick Hides, Survival of the Fittest's armor) on a path character wearing armor; buff talents with
+  their buff cast (Swift Retribution, Improved Devotion Aura, Commanding Presence, Improved Inner Fire, Improved Imp,
+  Enhancing Totems). Then re-record `talents.jsonl` and `spellmods.jsonl`, which runs `sweepPrepare` live.
+- The Infernal's raid buffs in the strikes probe; re-record `strikes.jsonl`.
+- New mismatches as in EC-RECHECK.
+- **Owns:** `talent_paths.json`, `talents.jsonl`, `spellmods.jsonl`, `strikes.jsonl`, their replays' drops and README
+  rows; e2e `talent_sweep_test.go`, `spellmod_sweep_test.go`, `strikes_test.go`.
+
+### EC-PROBES (X2; golden-neutral; C++; stages: C++ and e2e, live)
+
+- `.simval timing` with combo points (Rupture, Slice and Dice; the timing README row goes); `.simval threat`'s assist
+  threat with other creatures in combat with the target. Re-record `timing.jsonl` and `threat.jsonl`.
+- The rebuild is the user's, once, after X2's code stages; every live stage runs on that build.
+- **Owns:** the module's C++ and `simval_commands.sql`, e2e `timing_test.go`, `threat_test.go`, `tools/simval/timing*.go`
+  and `threat*.go`, both fixtures and their README rows.
+
 ### EC-TICK-FIX (Y; changes goldens, full suite)
 
 - The server updates players every world tick (`MinWorldUpdateTime`, 10 ms live) and creatures, pets and guardians
@@ -1062,6 +1094,8 @@ on the map update.
 - Paladin: Vindication at 3 PPM (spell_proc -9452); Crusader Strike refreshes no judgement.
 - Rogue: Prey on the Weak's 10 s aura, re-added by its 2 s check only once gone; Hemorrhage's debuff solo; Endurance's
   Sprint and Evasion cooldowns; Honor Among Thieves' combo points from the rogue's own crits only (a lead).
+- The Subtlety fight cycle's Eviscerate gets a second step; Fury's 72-point strings in the optimizer's test inputs and
+  `gen_db`.
 - Live: a `SIMVAL_TALENT_ONLY=RogueCombat` sweep rerun restores Endurance's step (the talents row).
 - **Owns:** `sim/{deathknight,warrior,paladin,rogue}/` and the shaman's Flurry, but pet, threat and EC-CORE-FIX's code;
   their drop entries and README rows.
@@ -1074,6 +1108,9 @@ on the map update.
   Starfire.
 - Shaman: Lava Lash's off-hand percent (`EffectWeaponDmg` skips it for a non-physical spell); Elemental's Lightning
   Bolt 13–18% over the sim's (a lead).
+- DruidFeralTank's gear set names 5 enchants by spell or item id, which the sim drops; the Feral APL fight cycle's
+  Savage Roar gets a second step (once a cycle, it can miss a fight); Balance's 72-point strings in the optimizer's
+  test inputs and `gen_db`.
 - Live: Improved Healing Wave (a re-record of the ShamanRestoration spell-mod path); Glyph of Totem of Wrath's 84
   spell power.
 - **Owns:** `sim/{druid,shaman}/` but pet, threat and Flurry code; `ui/balance_druid/apls/`; their drop entries and
