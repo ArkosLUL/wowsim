@@ -1,0 +1,408 @@
+{
+  "fights": [
+    {
+      "setup": "DeathknightBlood", "seconds": 90, "yards": 4, "behind": true,
+      "cycle": [
+        {"spell": 49909, "name": "Icy Touch", "waitMs": 1500},
+        {"spell": 49921, "name": "Plague Strike", "waitMs": 1500},
+        {"spell": 55262, "name": "Heart Strike", "waitMs": 1500},
+        {"spell": 55262, "name": "Heart Strike", "waitMs": 1500},
+        {"spell": 49924, "name": "Death Strike", "waitMs": 1500},
+        {"spell": 49895, "name": "Death Coil", "waitMs": 1500},
+        {"spell": 57623, "name": "Horn of Winter", "waitMs": 1500},
+        {"spell": 49895, "name": "Death Coil", "waitMs": 1500}
+      ]
+    },
+    {
+      "setup": "DeathknightUnholy", "seconds": 90, "yards": 4, "behind": true,
+      "cycle": [
+        {"spell": 49909, "name": "Icy Touch", "waitMs": 1500},
+        {"spell": 49921, "name": "Plague Strike", "waitMs": 1500},
+        {"spell": 55271, "name": "Scourge Strike", "waitMs": 1500},
+        {"spell": 49930, "name": "Blood Strike", "waitMs": 1500},
+        {"spell": 49930, "name": "Blood Strike", "waitMs": 1500},
+        {"spell": 49895, "name": "Death Coil", "waitMs": 1500},
+        {"spell": 57623, "name": "Horn of Winter", "waitMs": 1500},
+        {"spell": 55271, "name": "Scourge Strike", "waitMs": 1500}
+      ]
+    },
+    {
+      "setup": "DeathknightFrost", "seconds": 90, "yards": 4, "behind": true,
+      "cycle": [
+        {"spell": 49909, "name": "Icy Touch", "waitMs": 1500},
+        {"spell": 49921, "name": "Plague Strike", "waitMs": 1500},
+        {"spell": 51425, "name": "Obliterate", "waitMs": 1500},
+        {"spell": 55268, "name": "Frost Strike", "waitMs": 1500},
+        {"spell": 49930, "name": "Blood Strike", "waitMs": 1500},
+        {"spell": 49930, "name": "Blood Strike", "waitMs": 1500},
+        {"spell": 51411, "name": "Howling Blast", "waitMs": 1500},
+        {"spell": 55268, "name": "Frost Strike", "waitMs": 1500},
+        {"spell": 57623, "name": "Horn of Winter", "waitMs": 1500}
+      ]
+    },
+    {
+      "setup": "DeathknightFrostUH", "seconds": 90, "yards": 4, "behind": true,
+      "cycle": [
+        {"spell": 49909, "name": "Icy Touch", "waitMs": 1500},
+        {"spell": 49921, "name": "Plague Strike", "waitMs": 1500},
+        {"spell": 51425, "name": "Obliterate", "waitMs": 1500},
+        {"spell": 55268, "name": "Frost Strike", "waitMs": 1500},
+        {"spell": 49930, "name": "Blood Strike", "waitMs": 1500},
+        {"spell": 49930, "name": "Blood Strike", "waitMs": 1500},
+        {"spell": 55268, "name": "Frost Strike", "waitMs": 1500},
+        {"spell": 57623, "name": "Horn of Winter", "waitMs": 1500}
+      ]
+    },
+    {
+      "setup": "DeathknightBloodTank", "seconds": 90, "yards": 4,
+      "cycle": [
+        {"spell": 49909, "name": "Icy Touch", "waitMs": 1500},
+        {"spell": 49921, "name": "Plague Strike", "waitMs": 2000},
+        {"spell": 49930, "name": "Blood Strike", "waitMs": 1500},
+        {"spell": 49924, "name": "Death Strike", "waitMs": 1500},
+        {"spell": 49941, "name": "Blood Boil", "waitMs": 1500},
+        {"spell": 49895, "name": "Death Coil", "waitMs": 1500},
+        {"spell": 57623, "name": "Horn of Winter", "waitMs": 1500}
+      ]
+    },
+    {
+      "setup": "DruidBalance", "seconds": 90, "yards": 18,
+      "cycle": [
+        {"spell": 48463, "name": "Moonfire", "waitMs": 1500},
+        {"spell": 48468, "name": "Insect Swarm", "waitMs": 1500},
+        {"spell": 770, "name": "Faerie Fire", "waitMs": 2000},
+        {"spell": 48465, "name": "Starfire", "waitMs": 4000},
+        {"spell": 48465, "name": "Starfire", "waitMs": 4000},
+        {"spell": 48461, "name": "Wrath", "waitMs": 2500},
+        {"spell": 48461, "name": "Wrath", "waitMs": 2500},
+        {"spell": 48461, "name": "Wrath", "waitMs": 2500}
+      ]
+    },
+    {
+      "setup": "DruidBalancePhase3", "seconds": 90, "yards": 18,
+      "cycle": [
+        {"spell": 48463, "name": "Moonfire", "waitMs": 1500},
+        {"spell": 48468, "name": "Insect Swarm", "waitMs": 1500},
+        {"spell": 770, "name": "Faerie Fire", "waitMs": 2000},
+        {"spell": 48465, "name": "Starfire", "waitMs": 4000},
+        {"spell": 48465, "name": "Starfire", "waitMs": 4000},
+        {"spell": 48461, "name": "Wrath", "waitMs": 2500},
+        {"spell": 48461, "name": "Wrath", "waitMs": 2500},
+        {"spell": 48461, "name": "Wrath", "waitMs": 2500}
+      ]
+    },
+    {
+      "setup": "DruidFeral", "seconds": 90, "yards": 4, "behind": true,
+      "cycle": [
+        {"spell": 48566, "name": "Mangle (Cat)", "waitMs": 1500},
+        {"spell": 48574, "name": "Rake", "waitMs": 1500},
+        {"spell": 48572, "name": "Shred", "waitMs": 1500},
+        {"spell": 48572, "name": "Shred", "waitMs": 1500},
+        {"spell": 49800, "name": "Rip", "waitMs": 1500},
+        {"spell": 48572, "name": "Shred", "waitMs": 1500},
+        {"spell": 52610, "name": "Savage Roar", "waitMs": 1500},
+        {"spell": 16857, "name": "Faerie Fire (Feral)", "waitMs": 1500},
+        {"spell": 48572, "name": "Shred", "waitMs": 1500},
+        {"spell": 48577, "name": "Ferocious Bite", "waitMs": 1500},
+        {"spell": 50213, "name": "Tiger's Fury", "waitMs": 200}
+      ]
+    },
+    {
+      "setup": "DruidFeralApl", "seconds": 90, "yards": 4, "behind": true,
+      "cycle": [
+        {"spell": 48566, "name": "Mangle (Cat)", "waitMs": 1500},
+        {"spell": 48574, "name": "Rake", "waitMs": 1500},
+        {"spell": 48572, "name": "Shred", "waitMs": 1500},
+        {"spell": 48572, "name": "Shred", "waitMs": 1500},
+        {"spell": 49800, "name": "Rip", "waitMs": 1500},
+        {"spell": 48572, "name": "Shred", "waitMs": 1500},
+        {"spell": 52610, "name": "Savage Roar", "waitMs": 1500},
+        {"spell": 16857, "name": "Faerie Fire (Feral)", "waitMs": 1500},
+        {"spell": 48572, "name": "Shred", "waitMs": 1500},
+        {"spell": 48577, "name": "Ferocious Bite", "waitMs": 1500},
+        {"spell": 50213, "name": "Tiger's Fury", "waitMs": 200}
+      ]
+    },
+    {
+      "setup": "DruidFeralTank", "seconds": 90, "yards": 4, "learn": [62600],
+      "cycle": [
+        {"spell": 5229, "name": "Enrage", "waitMs": 200},
+        {"spell": 48564, "name": "Mangle (Bear)", "waitMs": 1500},
+        {"spell": 48568, "name": "Lacerate", "waitMs": 1500},
+        {"spell": 16857, "name": "Faerie Fire (Feral)", "waitMs": 1500},
+        {"spell": 48562, "name": "Swipe (Bear)", "waitMs": 1500},
+        {"spell": 48568, "name": "Lacerate", "waitMs": 1500},
+        {"spell": 48560, "name": "Demoralizing Roar", "waitMs": 1500}
+      ]
+    },
+    {
+      "setup": "HunterBM", "seconds": 90, "yards": 18, "ammo": 52020,
+      "before": [
+        {"spell": 75, "name": "Auto Shot", "waitMs": 200}
+      ],
+      "cycle": [
+        {"spell": 49001, "name": "Serpent Sting", "waitMs": 1500},
+        {"spell": 49045, "name": "Arcane Shot", "waitMs": 2000},
+        {"spell": 49052, "name": "Steady Shot", "waitMs": 2500},
+        {"spell": 49050, "name": "Aimed Shot", "waitMs": 2000},
+        {"spell": 49052, "name": "Steady Shot", "waitMs": 2500},
+        {"spell": 49052, "name": "Steady Shot", "waitMs": 2500}
+      ]
+    },
+    {
+      "setup": "HunterMM", "seconds": 90, "yards": 18, "ammo": 52020,
+      "before": [
+        {"spell": 75, "name": "Auto Shot", "waitMs": 200}
+      ],
+      "cycle": [
+        {"spell": 49001, "name": "Serpent Sting", "waitMs": 1500},
+        {"spell": 53209, "name": "Chimera Shot", "waitMs": 2000},
+        {"spell": 49052, "name": "Steady Shot", "waitMs": 2500},
+        {"spell": 49050, "name": "Aimed Shot", "waitMs": 1500},
+        {"spell": 49045, "name": "Arcane Shot", "waitMs": 2000},
+        {"spell": 49052, "name": "Steady Shot", "waitMs": 2500}
+      ]
+    },
+    {
+      "setup": "HunterSV", "seconds": 90, "yards": 18, "ammo": 52020,
+      "before": [
+        {"spell": 75, "name": "Auto Shot", "waitMs": 200}
+      ],
+      "cycle": [
+        {"spell": 49001, "name": "Serpent Sting", "waitMs": 1500},
+        {"spell": 60053, "name": "Explosive Shot", "waitMs": 1500},
+        {"spell": 63672, "name": "Black Arrow", "waitMs": 2000},
+        {"spell": 49052, "name": "Steady Shot", "waitMs": 2500},
+        {"spell": 49050, "name": "Aimed Shot", "waitMs": 2000},
+        {"spell": 49052, "name": "Steady Shot", "waitMs": 2500}
+      ]
+    },
+    {
+      "setup": "MageArcane", "seconds": 90, "yards": 18,
+      "cycle": [
+        {"spell": 42897, "name": "Arcane Blast", "waitMs": 3000},
+        {"spell": 42897, "name": "Arcane Blast", "waitMs": 3000},
+        {"spell": 42897, "name": "Arcane Blast", "waitMs": 3000},
+        {"spell": 42846, "name": "Arcane Missiles", "waitMs": 5700}
+      ]
+    },
+    {
+      "setup": "MageFire", "seconds": 90, "yards": 18,
+      "cycle": [
+        {"spell": 42833, "name": "Fireball", "waitMs": 4000},
+        {"spell": 42833, "name": "Fireball", "waitMs": 4000},
+        {"spell": 42859, "name": "Scorch", "waitMs": 2000},
+        {"spell": 42873, "name": "Fire Blast", "waitMs": 1500},
+        {"spell": 55360, "name": "Living Bomb", "waitMs": 2000},
+        {"spell": 42833, "name": "Fireball", "waitMs": 4000}
+      ]
+    },
+    {
+      "setup": "MageFrostFire", "seconds": 90, "yards": 18,
+      "cycle": [
+        {"spell": 47610, "name": "Frostfire Bolt", "waitMs": 3500},
+        {"spell": 47610, "name": "Frostfire Bolt", "waitMs": 3500},
+        {"spell": 55360, "name": "Living Bomb", "waitMs": 2000},
+        {"spell": 42859, "name": "Scorch", "waitMs": 2000},
+        {"spell": 47610, "name": "Frostfire Bolt", "waitMs": 3500},
+        {"spell": 42873, "name": "Fire Blast", "waitMs": 2000}
+      ]
+    },
+    {
+      "setup": "MageFrost", "seconds": 90, "yards": 18,
+      "cycle": [
+        {"spell": 42842, "name": "Frostbolt", "waitMs": 3500},
+        {"spell": 42842, "name": "Frostbolt", "waitMs": 3500},
+        {"spell": 42842, "name": "Frostbolt", "waitMs": 3500},
+        {"spell": 42914, "name": "Ice Lance", "waitMs": 1500},
+        {"spell": 42873, "name": "Fire Blast", "waitMs": 2000}
+      ]
+    },
+    {
+      "setup": "PaladinProtection", "seconds": 90, "yards": 4,
+      "cycle": [
+        {"spell": 61411, "name": "Shield of Righteousness", "waitMs": 1500},
+        {"spell": 53595, "name": "Hammer of the Righteous", "waitMs": 1500},
+        {"spell": 48952, "name": "Holy Shield", "waitMs": 1500},
+        {"spell": 48819, "name": "Consecration", "waitMs": 1500},
+        {"spell": 53408, "name": "Judgement of Wisdom", "waitMs": 1500},
+        {"spell": 48827, "name": "Avenger's Shield", "waitMs": 1500},
+        {"spell": 54428, "name": "Divine Plea", "waitMs": 1500}
+      ]
+    },
+    {
+      "setup": "PaladinRetribution", "seconds": 90, "yards": 4, "behind": true,
+      "cycle": [
+        {"spell": 35395, "name": "Crusader Strike", "waitMs": 1500},
+        {"spell": 53408, "name": "Judgement of Wisdom", "waitMs": 1500},
+        {"spell": 53385, "name": "Divine Storm", "waitMs": 1500},
+        {"spell": 48819, "name": "Consecration", "waitMs": 1500},
+        {"spell": 35395, "name": "Crusader Strike", "waitMs": 1500},
+        {"spell": 54428, "name": "Divine Plea", "waitMs": 1500}
+      ]
+    },
+    {
+      "setup": "PriestShadow", "seconds": 90, "yards": 18,
+      "cycle": [
+        {"spell": 48160, "name": "Vampiric Touch", "waitMs": 2000},
+        {"spell": 48300, "name": "Devouring Plague", "waitMs": 1500},
+        {"spell": 48125, "name": "Shadow Word: Pain", "waitMs": 2000},
+        {"spell": 48127, "name": "Mind Blast", "waitMs": 2000},
+        {"spell": 48156, "name": "Mind Flay", "waitMs": 3200},
+        {"spell": 48156, "name": "Mind Flay", "waitMs": 3200},
+        {"spell": 48158, "name": "Shadow Word: Death", "waitMs": 2000}
+      ]
+    },
+    {
+      "setup": "PriestSmite", "seconds": 90, "yards": 18,
+      "cycle": [
+        {"spell": 48125, "name": "Shadow Word: Pain", "waitMs": 2000},
+        {"spell": 48135, "name": "Holy Fire", "waitMs": 2500},
+        {"spell": 48123, "name": "Smite", "waitMs": 3000},
+        {"spell": 48123, "name": "Smite", "waitMs": 3000},
+        {"spell": 48127, "name": "Mind Blast", "waitMs": 2000},
+        {"spell": 48300, "name": "Devouring Plague", "waitMs": 2000},
+        {"spell": 48123, "name": "Smite", "waitMs": 3000}
+      ]
+    },
+    {
+      "setup": "RogueCombat", "seconds": 90, "yards": 4, "behind": true,
+      "cycle": [
+        {"spell": 48638, "name": "Sinister Strike", "waitMs": 2000},
+        {"spell": 48638, "name": "Sinister Strike", "waitMs": 2000},
+        {"spell": 6774, "name": "Slice and Dice", "waitMs": 2000},
+        {"spell": 48638, "name": "Sinister Strike", "waitMs": 2000},
+        {"spell": 48638, "name": "Sinister Strike", "waitMs": 2000},
+        {"spell": 48638, "name": "Sinister Strike", "waitMs": 2000},
+        {"spell": 48672, "name": "Rupture", "waitMs": 2000},
+        {"spell": 48638, "name": "Sinister Strike", "waitMs": 2000},
+        {"spell": 48638, "name": "Sinister Strike", "waitMs": 2000},
+        {"spell": 48638, "name": "Sinister Strike", "waitMs": 2000},
+        {"spell": 48668, "name": "Eviscerate", "waitMs": 2000}
+      ]
+    },
+    {
+      "setup": "RogueAssassination", "seconds": 90, "yards": 4, "behind": true,
+      "cycle": [
+        {"spell": 48666, "name": "Mutilate", "waitMs": 2000},
+        {"spell": 6774, "name": "Slice and Dice", "waitMs": 2000},
+        {"spell": 48666, "name": "Mutilate", "waitMs": 2000},
+        {"spell": 48672, "name": "Rupture", "waitMs": 2000},
+        {"spell": 51662, "name": "Hunger For Blood", "waitMs": 2000},
+        {"spell": 48666, "name": "Mutilate", "waitMs": 2000},
+        {"spell": 48668, "name": "Eviscerate", "waitMs": 2000},
+        {"spell": 48666, "name": "Mutilate", "waitMs": 2000},
+        {"spell": 48668, "name": "Eviscerate", "waitMs": 2000}
+      ]
+    },
+    {
+      "setup": "RogueSubtlety", "seconds": 90, "yards": 4, "behind": true,
+      "cycle": [
+        {"spell": 48660, "name": "Hemorrhage", "waitMs": 2000},
+        {"spell": 6774, "name": "Slice and Dice", "waitMs": 2000},
+        {"spell": 48660, "name": "Hemorrhage", "waitMs": 2000},
+        {"spell": 48660, "name": "Hemorrhage", "waitMs": 2000},
+        {"spell": 48672, "name": "Rupture", "waitMs": 2000},
+        {"spell": 48660, "name": "Hemorrhage", "waitMs": 2000},
+        {"spell": 48660, "name": "Hemorrhage", "waitMs": 2000},
+        {"spell": 48668, "name": "Eviscerate", "waitMs": 2000}
+      ]
+    },
+    {
+      "setup": "ShamanElemental", "seconds": 90, "yards": 18,
+      "cycle": [
+        {"spell": 49233, "name": "Flame Shock", "waitMs": 2000},
+        {"spell": 60043, "name": "Lava Burst", "waitMs": 2500},
+        {"spell": 49238, "name": "Lightning Bolt", "waitMs": 3000},
+        {"spell": 49238, "name": "Lightning Bolt", "waitMs": 3000},
+        {"spell": 49271, "name": "Chain Lightning", "waitMs": 2500},
+        {"spell": 49238, "name": "Lightning Bolt", "waitMs": 3000}
+      ]
+    },
+    {
+      "setup": "ShamanEnhancement", "seconds": 90, "yards": 4, "behind": true,
+      "cycle": [
+        {"spell": 17364, "name": "Stormstrike", "waitMs": 1500},
+        {"spell": 49233, "name": "Flame Shock", "waitMs": 1500},
+        {"spell": 60103, "name": "Lava Lash", "waitMs": 1500},
+        {"spell": 30823, "name": "Shamanistic Rage", "waitMs": 4000},
+        {"spell": 49231, "name": "Earth Shock", "waitMs": 1500},
+        {"spell": 60103, "name": "Lava Lash", "waitMs": 4000}
+      ]
+    },
+    {
+      "setup": "WarlockAffliction", "seconds": 90, "yards": 18,
+      "cycle": [
+        {"spell": 47813, "name": "Corruption", "waitMs": 1500},
+        {"spell": 47864, "name": "Curse of Agony", "waitMs": 2000},
+        {"spell": 47843, "name": "Unstable Affliction", "waitMs": 2000},
+        {"spell": 59164, "name": "Haunt", "waitMs": 2000},
+        {"spell": 47809, "name": "Shadow Bolt", "waitMs": 3500},
+        {"spell": 47809, "name": "Shadow Bolt", "waitMs": 3500},
+        {"spell": 57946, "name": "Life Tap", "waitMs": 2000},
+        {"spell": 47809, "name": "Shadow Bolt", "waitMs": 3500}
+      ]
+    },
+    {
+      "setup": "WarlockDemonology", "seconds": 90, "yards": 18,
+      "cycle": [
+        {"spell": 47813, "name": "Corruption", "waitMs": 2000},
+        {"spell": 47811, "name": "Immolate", "waitMs": 2500},
+        {"spell": 47809, "name": "Shadow Bolt", "waitMs": 3500},
+        {"spell": 47809, "name": "Shadow Bolt", "waitMs": 3500},
+        {"spell": 47867, "name": "Curse of Doom", "waitMs": 2000},
+        {"spell": 47809, "name": "Shadow Bolt", "waitMs": 3500},
+        {"spell": 57946, "name": "Life Tap", "waitMs": 1500}
+      ]
+    },
+    {
+      "setup": "WarlockDestruction", "seconds": 90, "yards": 18,
+      "cycle": [
+        {"spell": 47811, "name": "Immolate", "waitMs": 2500},
+        {"spell": 17962, "name": "Conflagrate", "waitMs": 2000},
+        {"spell": 59172, "name": "Chaos Bolt", "waitMs": 3000},
+        {"spell": 47838, "name": "Incinerate", "waitMs": 3000},
+        {"spell": 47838, "name": "Incinerate", "waitMs": 3000},
+        {"spell": 47864, "name": "Curse of Agony", "waitMs": 1500},
+        {"spell": 57946, "name": "Life Tap", "waitMs": 2000},
+        {"spell": 47838, "name": "Incinerate", "waitMs": 3000}
+      ]
+    },
+    {
+      "setup": "WarriorFury", "seconds": 90, "yards": 4, "behind": true,
+      "cycle": [
+        {"spell": 23881, "name": "Bloodthirst", "waitMs": 1500},
+        {"spell": 1680, "name": "Whirlwind", "waitMs": 1500},
+        {"spell": 7386, "name": "Sunder Armor", "waitMs": 1500},
+        {"spell": 23881, "name": "Bloodthirst", "waitMs": 1500},
+        {"spell": 2687, "name": "Bloodrage", "waitMs": 200},
+        {"spell": 7386, "name": "Sunder Armor", "waitMs": 1500}
+      ]
+    },
+    {
+      "setup": "WarriorArms", "seconds": 90, "yards": 4, "behind": true,
+      "cycle": [
+        {"spell": 47465, "name": "Rend", "waitMs": 1500},
+        {"spell": 47486, "name": "Mortal Strike", "waitMs": 2000},
+        {"spell": 47475, "name": "Slam", "waitMs": 2000},
+        {"spell": 7384, "name": "Overpower", "waitMs": 1500},
+        {"spell": 47486, "name": "Mortal Strike", "waitMs": 2000},
+        {"spell": 47475, "name": "Slam", "waitMs": 2000},
+        {"spell": 7386, "name": "Sunder Armor", "waitMs": 1500},
+        {"spell": 2687, "name": "Bloodrage", "waitMs": 200}
+      ]
+    },
+    {
+      "setup": "WarriorProtectionWarrior", "seconds": 90, "yards": 4,
+      "cycle": [
+        {"spell": 47488, "name": "Shield Slam", "waitMs": 2000},
+        {"spell": 47498, "name": "Devastate", "waitMs": 2000},
+        {"spell": 47502, "name": "Thunder Clap", "waitMs": 2000},
+        {"spell": 2687, "name": "Bloodrage", "waitMs": 200},
+        {"spell": 47465, "name": "Rend", "waitMs": 2000},
+        {"spell": 46968, "name": "Shockwave", "waitMs": 2000},
+        {"spell": 12809, "name": "Concussion Blow", "waitMs": 2000}
+      ]
+    }
+  ]
+}

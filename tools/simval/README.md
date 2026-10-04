@@ -446,6 +446,89 @@ empty check the spell. Lines stay, a dropped failure is logged, and a drop faili
 Hand-built tests: `TestSpellModAgreesWithTheSim` (every path, lines made from the sim), `TestSpellModCatchesMismatches`,
 `TestSpellModReplay`, `TestSpellModLineShape` (live Frostbolt records), `TestSpellModLatestLines`.
 
+## Fights
+
+`fight.go` replays a golden setup's whole-character fight on the boss dummy (mod-sim-validation's fight e2e)
+against the sim; cycles, committed fights and drops are in
+[`sim/core/testdata/fights/`](../../sim/core/testdata/fights/README.md).
+
+```bash
+tools/acore/dock.sh run --tags=with_db ./tools/simval fight -trim /wotlk/sim/core/testdata/fights <setup>_<player>_<unix>.log
+tools/acore/dock.sh run --tags=with_db ./tools/simval fight [-v] [-iterations 1000] sim/core/testdata/fights/<setup>.log.gz
+```
+
+The setup comes from the file name, the player from it or the log's only damaging player (`-source`). The e2e
+(`TestSimvalFight`, module README) writes `<unix>` as the fight's first second on the log's clock; the player's casts
+and swings before it (the golden build's, e.g. Horn of Winter) are left out, and the trim drops them.
+
+**The log** (`fightLog`): the player's `SPELL_CAST_SUCCESS` of the cycle's spells (not triggered casts, not
+Auto Shot), first and last swing or Auto Shot, Sniper Training. The fight runs from the first swing, shot or
+cast (a hardcast's start taken as its base cast time before it lands) to the last damage or miss by the player
+or its minions on the dummy, the unit they hit most; what they do to anything else (Shadow Word: Death's
+backlash, a critter in Thunder Clap) is left out. A self aura that last went on before the fight starts its
+proc's internal cooldown in the sim then (the golden build procs Lightweave).
+
+**Ids**, matched both ways, minion names through `fightMinionNames`:
+- `fightSimActions`: a server id the sim books under another (talent buffs, Life Tap's 31818, an item's proc
+  under the item, Sunder Armor's 7386).
+- `fightLogIDs`: a tagged sim action, or a second sim aura, under the server's id (off-hand strikes, Lightning
+  Overload, Insect Swarm's hit debuff).
+- `fightAurasByCast`: a sim aura several casts share, under the cycle's (Faerie Fire (Feral), Mangle (Bear));
+  `fightSimAurasOn` moves one to where the server has it (Consecration's, to the target).
+- `fightLogTicks`: a dot's ticks the log has as direct damage (Explosive Shot's 53352, Devouring Plague's leech).
+
+**The sim** (`fightSim`): `goldcharPlayer`, geared, with the setup's `auras`, an empty APL, the cycle's
+distance and facing, a hunter's ammo, Sniper Training when the log has it, against `bossDummy` (held to
+`goldchar.jsonl`'s), for the fight's length, 1000 iterations. The dummy's max health goes on the encounter after
+each reset, so the target's health percent (Rend's +35% above 75%) follows damage dealt, as on the barely scratched
+dummy, not time left. At the pull it disables pets the log has no minion for and holds the autos until the first
+logged swing or shot; they stop after the last.
+- Each logged cast starts at its landing minus the sim's own `CastTime()`, planned from its base cast time
+  before; an instant, a channel or a proc-made instant goes at the landing.
+- A block (cast, GCD, cooldown) ending within a map update holds it once; one within 2 s holds it and it lands
+  late. Anything else the sim refuses (cost, a condition) is a miss, never retried. On time: within a map
+  update of the log, two after a hold.
+- The empty APL re-polls every 50 ms and holds the GCD timer that long; `cast` clears that once the last cast's
+  own GCD is over. Casts run after a same-time hardcast landing, which would otherwise lose its effects.
+- An event every map update makes auras expire on it, as on the server.
+- Spells that skip the damage callbacks are read from their metrics each map update: a dot's damage as one tick
+  (Unholy Blight), anything else as hits at their mean (Necrosis). So are a cast spell's misses its outcomes
+  never showed (Corruption's).
+- Per ability, direct and periodic apart: attempts, crits, avoidance counts, hit, crit and glance means, tick
+  times. Both hands' swings are Melee (Chronicle has no hand flag). A missed tick counts as the spell's miss,
+  except a persistent area aura's, which Chronicle doesn't log.
+- Auras by spell and where (self, target, minion), all of one id as one aura: applications are the updates the
+  server sends the client, each a `SPELL_AURA_APPLIED`: a first gain, a later expiry, another stack or charge
+  count, at most one per update of the unit (the player every 10 ms world tick, others every map update).
+  Uptime is the union. A permanent trigger sharing its proc's id is skipped; an aura up all fight that never
+  changed is the setup's state, left out on both sides.
+- Power gains from the units' resource metrics, positive only (a cost shares the id), rage and runic power in
+  whole points.
+
+**Checks** (`compareFight`), each against the sim's iterations (`checkRange`): inside their range widened by two
+standard deviations, taken as at least a floor. That's about |z| 5, and a rare event the iterations saw passes.
+A value on one side only is 0 on the other.
+- `casts` per spell: misses (refused or off time) at most half the logged casts, or 2, per iteration. The
+  sim's procs and power go their own way, so a proc-sped or power-gated cast isn't always the sim's; a GCD,
+  cooldown or cost the sim gets wrong misses them all. Casts after the sim's fight ended aren't counted. The
+  start follows the sim's own cast time, so a wrong cast time shows only through what it blocks.
+- Per ability: `count` (floor 0.5), `crits`, each avoidance count, `hit`/`crit`/`glance mean` (floor half a
+  point or 0.05%). Per dot: `ticks`, tick crits and means, `tick spacing` (median, floor 50 ms), and for the
+  cycle's own dots `ticks per application` (floor one tick over all applications).
+- Per aura: `applications` (floor 0.5), `uptime` (floor half a map update per application). Per power gain:
+  `amount` (floor 1, or 0.5% plus half the log's largest single gain: the server truncates each, and one
+  ticking on can land either side of the end).
+- Left out with the reason the replay prints (fights README): `fightAurasLeftOut`, `fightMissesLeftOut`,
+  `fightRefreshesLeftOut`, `fightEnergizeLeftOut`, runic power.
+
+Tests: `TestFightCycles`; `TestFightReplays` (one committed fight per setup; a drop must fail something and have
+its README row); `TestFightReplaysTheBotsOwnFight` (each cycle run by a sim bot the way the e2e runs it, written as
+a Chronicle log and replayed: all agree and the bot lands every cycle spell; over seeds 2 to 9, 256 such fights
+had no false check failure, but twice the bot never landed a finisher cast once a cycle: Feral APL's Savage Roar,
+Subtlety's Eviscerate);
+`TestFightCatchesMismatches` (harder Shadow Bolts, casts moved into a GCD, an aura never applied, doubled mana,
+swings that never crit); hand-built logs for the window, the tally and the trim.
+
 ## chronicle
 
 Reads a mod-chronicle raw log (`<unix_ms>  EVENT,field,…`, gzipped or not) and reports one player's
