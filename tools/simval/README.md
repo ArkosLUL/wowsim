@@ -102,7 +102,7 @@ check in `knownStrikesMismatches` is let through; an entry nothing fails is stal
   teaching talent (`strikeTaughtSpells`) and the tank specs; a spec whose weapons can't swing is skipped. The
   sim spell is the one whose `Direct` sits on a weapon effect, by id or `FromSpellID`. Each weapon is pinned
   to one end of its range, `Direct`'s fixed bonus and `WeaponPct` to the record's, the hand's attack power to
-  `weapon.attackPower`, then `ApplyEffects` with a forced hit, read at calculation. `strikeProbeStates` sets
+  `weapon.attackPower`, then `ApplyEffects` with a forced hit and no crit, read at calculation. `strikeProbeStates` sets
   what the probe assumes (Seal of Vengeance at 5 stacks). Checks: `fixed`, `percent` (`percent max` when the
   ends differ), `min` and `max` (`taken` at each end, above by up to `strikeTolerance`: the server truncates weapon
   damage, fixed bonus, percent, done and taken), `crit` when the spell is crit capable.

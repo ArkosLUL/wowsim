@@ -28,9 +28,8 @@ records, which `TestStrikesRecords` replays ([tools/simval](../../../../tools/si
 ([tools/simval](../../../../tools/simval/README.md#mob-types)). A disagreeing line or check goes in `droppedMobs`
 (`tools/simval/mobs_test.go`) with a row here; its line stays.
 
-A record of any of these files that disagrees with the sim is a real mismatch: it's dropped from the file and
-listed here, and the sim isn't changed. The exceptions keep the line: `buffs.jsonl` (a dropped state or check is
-only logged), `mobs.jsonl` (the same) and a known mismatch of `strikes.jsonl`.
+A record of any of these files that disagrees with the sim is a real mismatch: it's listed here, and the sim isn't
+changed. Each file's section below says whether the record is removed or stays with only its failure let through.
 
 `implemented_talents.json` is the talent guard's export (`TestTalentCoverage`, `sim/talent_coverage_test.go`):
 every talent `sim/<class>` reads, with class, tree, `fieldName`, row, max points and its spell per rank. The
@@ -139,7 +138,7 @@ logged.
 | Imp 47964 Firebolt | e0 damage crit | known | the sim crits ×2; `SpellCriticalDamageBonus` gives a pet's magic spell ×1.5 |
 | Death knight 63560 Ghoul Frenzy (timing) | e0 amplitude, e0 ticks | known | the sim heals every 6 s, 5 times; the server's aura every 3 s, 10 times |
 | `info` of every pet but the Imp and Felguard | base and total stats (per pet in `knownStrikesMismatches`) | known | the server's create stats are the `pet_levelstats` row, or `Guardian::InitStatsForLevel`'s 22/22/25/28/27 without one, plus the `PetDefines.h` scaling auras' share of the owner's; the sim pets have their own constants and owner coefficients |
-| `info` of every pet | armor | known | the server's is `pet_levelstats`' armor, or level × 50 without a row, plus the scaling share; the sim's comes from its own constants |
+| `info` of every pet | armor | known | the server's is `pet_levelstats`' armor, or level × 50 without one (Shadowfiend's row has 0), plus the scaling share; the sim's comes from its own constants |
 | `info` of every pet but the wolf and Felguard | attack power; spell power (Spirit Wolf, Treant, Shadowfiend) | known | the server's follows from the pet's stats and scaling auras, the sim's from its own owner coefficients |
 | `info` of Imp, Felguard, Water Elemental | regen per tick | known | `Creature::Regenerate` gives a controlled creature spirit/5 + 17 mana a tick; the sim pet uses the player formula |
 

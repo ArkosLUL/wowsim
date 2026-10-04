@@ -201,8 +201,6 @@ type mobBuilt struct {
 	d      *damageSim
 	strike *core.Spell
 	err    error
-	// takes every crit off the dummy at each reset while set
-	noCrit *bool
 }
 
 type mobSimKey struct {
@@ -236,14 +234,7 @@ func (m *mobReplay) simWith(l mobLine, probe damageRecord, name string, extra fu
 		return b
 	}
 	d, strike, err := buildMobSim(l, probe, extra)
-	b := mobBuilt{d: d, strike: strike, err: err, noCrit: new(bool)}
-	if err == nil {
-		d.target.RegisterResetEffect(func(*core.Simulation) {
-			if *b.noCrit {
-				d.target.PseudoStats.BonusCritRatingTaken -= forcedCritRating
-			}
-		})
-	}
+	b := mobBuilt{d: d, strike: strike, err: err}
 	m.sims[k] = b
 	return b
 }
@@ -419,10 +410,6 @@ func (m *mobReplay) compareDamage(r *spellModResult, l mobLine) {
 
 // strikeAmounts is the sim's strike at both ends of the roll and how far the server's may sit from each.
 func (b mobBuilt) strikeAmounts(w *weaponStrike) (lo, hi, boundLo, boundHi float64, err error) {
-	// strikeAmount takes the crit off the spell before its attempts, and each attempt's reset puts it back, so a
-	// crit would pass for the plain hit
-	*b.noCrit = true
-	defer func() { *b.noCrit = false }()
 	lo, errLo := b.d.strikeAmount(b.strike, w, 0)
 	hi, errHi := b.d.strikeAmount(b.strike, w, 1)
 	if err := firstErr(errLo, errHi); err != nil {

@@ -1218,8 +1218,6 @@ func (d *damageSim) strikeAmount(spell *core.Spell, w *weaponStrike, end int) (a
 	spell.Direct.Min, spell.Direct.Max = w.Fixed.at(end), w.Fixed.at(end)
 	spell.Direct.WeaponPct = w.Percent.at(end) / 100
 	spell.Flags |= core.SpellFlagIgnoreResists | core.SpellFlagAlwaysHit
-	spell.BonusHitRating += forcedHitRating
-	spell.BonusCritRating -= forcedCritRating
 
 	landed := false
 	d.target.DynamicDamageTakenModifiers = append(slices.Clip(hooks), func(_ *core.Simulation, s *core.Spell, result *core.SpellResult) {
@@ -1234,6 +1232,9 @@ func (d *damageSim) strikeAmount(spell *core.Spell, w *weaponStrike, end int) (a
 		if state := strikeProbeStates[d.rec.Spell.ID]; state != nil {
 			state(d)
 		}
+		// after prepare, since its reset puts back the spell's own hit and crit
+		spell.BonusHitRating += forcedHitRating
+		spell.BonusCritRating -= forcedCritRating
 		restore := pinWeapons(unit, end)
 		spell.ApplyEffects(d.sim, d.target, spell)
 		restore()
@@ -1517,8 +1518,6 @@ func (d *damageSim) triggeredTick(dot *core.Dot, base, spellPower float64) (amou
 	}()
 	dot.Tick.Min, dot.Tick.Max = base, base
 	spell.Flags |= core.SpellFlagIgnoreResists | core.SpellFlagAlwaysHit
-	spell.BonusHitRating += forcedHitRating
-	spell.BonusCritRating -= forcedCritRating
 
 	landed := false
 	d.target.DynamicDamageTakenModifiers = append(slices.Clip(hooks), func(_ *core.Simulation, s *core.Spell, result *core.SpellResult) {
@@ -1528,6 +1527,8 @@ func (d *damageSim) triggeredTick(dot *core.Dot, base, spellPower float64) (amou
 	})
 	for range maxHitAttempts {
 		d.prepare(spellPower)
+		spell.BonusHitRating += forcedHitRating
+		spell.BonusCritRating -= forcedCritRating
 		dot.Apply(d.sim)
 		dot.TickOnce(d.sim)
 		if landed {

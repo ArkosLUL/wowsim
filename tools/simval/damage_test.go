@@ -536,7 +536,7 @@ var knownStrikesMismatches = expandStrikesMismatches([]knownStrikes{
 		petStatChecks("Strength Agility Stamina Spirit", "Strength Agility Stamina Spirit"), petStatsReason},
 	{[]strikesKey{tamedWolfInfo, impInfo, felguardInfo, infernalInfo, ghoulInfo, gargoyleInfo, spiritWolfInfo,
 		waterElementalInfo, treantInfo, shadowfiendInfo}, []string{"armor"},
-		"pet armor: the server's is pet_levelstats' armor, or level x 50 without a row, plus the scaling auras' share " +
+		"pet armor: the server's is pet_levelstats' armor, or level x 50 without one, plus the scaling auras' share " +
 			"of the owner's; the sim pet's comes from its own constants and owner coefficients"},
 	{[]strikesKey{impInfo, infernalInfo, ghoulInfo, gargoyleInfo, spiritWolfInfo, waterElementalInfo, treantInfo,
 		shadowfiendInfo}, []string{"attack power"}, petPowerReason},
