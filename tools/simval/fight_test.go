@@ -872,8 +872,9 @@ func TestFightDropsHaveReadmeRows(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, drop := range droppedFightChecks {
+		// \r?: a checkout with core.autocrlf has CRLF line ends
 		row := regexp.MustCompile(`(?m)^\| ` + regexp.QuoteMeta(drop.Setup) + ` \| ` + regexp.QuoteMeta(drop.Subject) +
-			` \| ` + regexp.QuoteMeta(drop.Check) + ` \| .+ \|$`)
+			` \| ` + regexp.QuoteMeta(drop.Check) + ` \| .+ \|\r?$`)
 		if !row.Match(readme) {
 			t.Errorf("no README row for %+v", drop)
 		}
