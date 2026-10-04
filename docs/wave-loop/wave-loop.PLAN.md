@@ -76,6 +76,8 @@ G = changes goldens. FS = runs all 37 suites.
 | V | EC-THREAT-FIX (G, FS) · EC-STRIKES (C++, live) · EC-BUFFS (live) · PERF-COST | ✔ |
 | W | EC-GEAR (C++, live) · EC-MOBS (live) · EC-STRIKES' live stage (from V) | ✔ |
 | X | EC-FIGHT (live) | ✔ |
+| Y | EC-TICK-FIX (G, FS) · EC-CORE-FIX (G, FS) · EC-PET-FIX (G) · PERF-THREAT | ✔ |
+| Z | EC-THREAT-FIX2 (G, FS, live) · EC-MELEE-FIX (G, live) · EC-NATURE-FIX (G, live) · EC-ARCANE-FIX (G, live) | ✔ |
 
 F2 is an inserted wave, not a fifth item in F: the core swing and cast fixes of PAR-P7-0c have to land
 before the class items in G, a class item can't build on a core fix merging in its own wave, and F already
@@ -128,6 +130,8 @@ T2 is the user's call too (the same day): it fixes the sim/server mismatches S a
 so EC-SPELLMOD's and EC-SHEET's finds join S's and each is fixed once. Each item re-measures its mismatches
 first: some may be server quirks, not sim bugs.
 PERF-COST joins V (the user's call, the same day): T2's cost arithmetic slowed Combat Rogue sims by a quarter.
+Y and Z are the user's call (2026-10-05): fix the sim gaps the loop found, EC-FIGHT's 10 ms player tick included,
+core in Y and class in Z, plus PERF-THREAT for V's threat cost.
 
 **Where the specs are:**
 
@@ -144,55 +148,21 @@ PERF-COST joins V (the user's call, the same day): T2's cost arithmetic slowed C
 
 ## Current wave
 
-- Wave: X, landed (master fast-forwarded to this close-out); the e2e-coverage effort (S–X) is done. No wave is
-  scheduled. Item notes: `G:\DevStuff\GitHub\.wave-loop\ec-{gear,mobs,strikes-live,fight}-tmp`.
-  Prod runs Q's `225191f1f`; R changes the optimizer's pool and the BiS tabs' hint.
-- Open: the talent sweep's unseen talents (test-enrichment INVESTIGATION, TE-SWEEP as built); from Q (parity
-  INVESTIGATION, PAR-FU-4..7 as built): Ranged Weapon Specialization on Explosive Trap and magic procs, Glyph of Totem
-  of Wrath's 84 spell power unverified live, aura-163 crit damage adds on the server for specials (the sim
-  multiplies), and 72-point Fury and Balance strings in the optimizer's test inputs and `gen_db`; from R
-  (BIS-outclassed as built): the response curves span the pool's stat range, so the cut moved Fury P1's Normal pick 45
-  J below the uncut pool's, every item of which it still holds; from S and T, what T2 left (e2e-coverage PLAN, the T2
-  items' As built): no per-school crit sheet in the sim (3 fire-crit drops, EC-SHEET's spell-specific crit);
-  Blood-Gorged, Mace Specialization and Holy Specialization dropped as sheet artifacts; Rupture and Slice and Dice
-  untested with combo points (backlog); from T (e2e-coverage PLAN, EC-SHEET, EC-SPELLMOD, EC-THREAT and EC-AOE as
-  built): the sweeps'
+- Wave: X, landed (master fast-forwarded to this close-out); the e2e-coverage effort (S–X) is done. Next: Y.
+  Item notes: `G:\DevStuff\GitHub\.wave-loop\ec-{gear,mobs,strikes-live,fight}-tmp`.
+  Prod runs X's `25cb9dddc` (no `rollback-q` image: its layers were gone).
+- Open: the talent sweep's unseen talents (test-enrichment INVESTIGATION, TE-SWEEP as built); 72-point Fury and
+  Balance strings in the optimizer's test inputs and `gen_db` (from Q); the response curves span the pool's stat
+  range, so BIS-outclassed's cut moved Fury P1's Normal pick 45 J below the uncut pool's, every item of which it still
+  holds; sheet artifacts the sim can't show (no per-school crit sheet: 3 fire-crit drops; Blood-Gorged, Mace
+  Specialization, Holy Specialization); Rupture and Slice and Dice untested with combo points (backlog); the sweeps'
   shared `sweepPrepare` (module `25d88f9`) not yet run live; `.simval threat`'s live assist threat assumes the dummy
-  is the only creature in combat with the target; from T2: the Balance APL spends Nature's Swiftness on Starfire,
-  which no longer takes it (−0.44%); Improved Healing Wave missing (a new path step and a re-record); RogueCombat's
-  new Endurance sweep step dropped until a `SIMVAL_TALENT_ONLY=RogueCombat` rerun; Thrill of the Hunt on the modified
-  cost (the server's base); rune and runic power costs on the old multiply path; Frost Channeling's mask 84 unverified
-  live; Endurance's Sprint and Evasion cooldowns; Explosive Decoy's blast lands at once, not on its creature's death;
-  from V (e2e-coverage PLAN, the V items' As built): EC-BUFFS' dropped pairs (Curse of Weakness +
-  Vindication: the server removes the whole curse; Insect Swarm + Scorpid Sting stack to −6% hit), Gift of Arthas on
-  every school, Expose Armor unprobed, the pair list kept twice (e2e and replay); threat: Heart Strike's second target
-  adds the bonus twice (the server splits one), per-tick bonuses of aura ticks the server casts (Bladestorm 50622, the
-  Infernal's 20153, Volley), `ATTR1_NO_THREAT` spells still making threat (Healing Stream Totem), Auto Shot's +1,
-  Devastate's Sunder Armor 58567, Feint, positive self buffs' assist, Elemental Precision and Righteous Fury as school
-  auras, heal threat's ×0.5, records 25742, 59092 and 60103 awaiting a `TestSimvalThreat` recapture; a full
-  gen_serverdata run adds The Beast Within, Turn the Tables and Totem of Wrath and three threat rows the hunter and
-  rogue code reference (its own item: goldens may move); EC-THREAT-FIX's per-cast threat bookkeeping costs Elemental
-  7%, Ret 6% and Hunter 4% at 100 iterations (a PERF item is the user's call); from W (e2e-coverage PLAN, the W
-  items' As built), sim gaps the replays drop or allowlist: Lightweave's +1 spirit, druid weapon feral AP 1 short,
-  Stoneskin Gargoyle's defense as rating, crit damage bonuses (aura 163) multiplied where the server sums them for
-  spells, DK magic spells' 1.5 crit base, Elixir of Demonslaying (+105 AP, sim 265), the Undead Slaying set's
-  multiplying bonuses, versus AP reaching spells and scaled by the weapon percent (Scourgebane's 10-point Mangle and
-  Shred gap passes inside the strike tolerance), Predatory Strikes taking weapon enchants, cat and bear form weapon
-  damage, Felguard weapon damage, the Imp's Firebolt crit, Ghoul Frenzy's cadence, pet base stats and regen, Force of
-  Nature's treant; DruidFeralTank's gear set naming 5 enchants by spell or item id, which the sim drops; meta gem
-  color conditions unchecked in the sim; the Infernal's raid buffs unprobed; from X (e2e-coverage PLAN, EC-FIGHT as
-  built), the fight replay's drops: players act every 10 ms world tick but the sim puts their swings, hardcasts and
-  own auras on the 100 ms map update (a core timing item; goldens will move), the dummy's dots ticking early on their
-  first update, Bloodworms given party buffs, Frost Vulnerability never missing, Vindication on every hit (server 3
-  PPM), Insect Swarm crits with Vengeance, Eclipse on any hit (server: crits), dot ticks not proccing Dragon Soul,
-  Dying Curse and Greatness (Serpent Sting), Rake's first hit skipping armor, Torment the Weak on a snare-immune
-  target, Enduring Winter's 6 s cooldown, Crusader Strike refreshing judgements, Prey on the Weak's lapses,
-  Hemorrhage's debuff solo, Lava Lash halved, Rend 3–11% high, Master of Elements netting Burnout and skipping
-  no-cost crits; leads: Flurry spending charges on misses, Frost mage crit, Elemental's Lightning Bolt 13–18% over,
-  Howling Blast with death runes, Honor Among Thieves' combo points; cycles whose once-a-cycle finisher can miss a
-  fight (Feral APL Savage Roar, Subtlety Eviscerate); a shared golden-build helper in the e2e; fixtures captured
-  before the server's `15282384e` merge may move.
-- Deferred until X landed (the user's calls, 2026-10-02 and 10-03), now each awaiting the user's go-ahead:
+  is the only creature in combat with the target; Expose Armor and the Infernal's raid buffs unprobed; EC-BUFFS' pair
+  list kept twice (e2e and replay); DruidFeralTank's gear set naming 5 enchants by spell or item id, which the sim
+  drops; from X: cycles whose once-a-cycle finisher can miss a fight (Feral APL Savage Roar, Subtlety Eviscerate), a
+  shared golden-build helper in the e2e, fixtures captured before the server's `15282384e` merge may move. Every other
+  sim gap the loop found is a Y or Z item.
+- Deferred (the user's calls, 2026-10-02, 10-03 and 10-05), each only on the user's go-ahead:
   - Rerun all 28 presets, tanks included, on the final HEAD: BIS-caps-race changes every racial search,
     `ff0920a96` the 16 builds `mage_*`, `rogue_*`, `warlock_*`, `warrior_arms`, `warrior_fury`,
     `protection_warrior`, `shadow_priest`, `smite_priest`, `dk_blood`, `elemental_shaman`, and BIS-outclassed
