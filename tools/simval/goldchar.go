@@ -45,9 +45,13 @@ type goldcharSetup struct {
 	Class   uint8  `json:"class"` // the server's ids
 	Race    uint8  `json:"race"`
 	GearSet string `json:"gearSet"`
-	// the gear set's items by server equipment slot, gems and enchants left out
-	Items   []goldcharItem `json:"items"`
-	Talents string         `json:"talents"`
+	// the gear set's items by server equipment slot
+	Items []goldcharItem `json:"items"`
+	// The gear set's enchants and gems, which only the golden characters wear: buffs.go's and the sweeps'
+	// characters go without, as the server characters behind their captures did.
+	Enchants []goldcharEnchant `json:"enchants,omitempty"`
+	Gems     []goldcharGem     `json:"gems,omitempty"`
+	Talents  string            `json:"talents"`
 	// the talents' rank spells in the order the server can learn them
 	TalentSpells []int32         `json:"talentSpells"`
 	Glyphs       []goldcharGlyph `json:"glyphs"`
@@ -58,12 +62,72 @@ type goldcharSetup struct {
 	// server's weapon
 	Imbue  int32           `json:"imbue,omitempty"`
 	Probes []goldcharProbe `json:"probes"`
+	// set by wornBy for a capture whose character wears Enchants and Gems, so the sim's does too
+	geared bool
 }
 
 type goldcharItem struct {
 	Slot uint8 `json:"slot"` // EQUIPMENT_SLOT_*
 	ID   int32 `json:"id"`
 }
+
+// goldcharEnchant is a SpellItemEnchantment id for `.simval enchant`: one the sim knows from the gear set,
+// or one that adds the socket a gem past the item's sockets needs.
+type goldcharEnchant struct {
+	Slot    uint8 `json:"slot"`
+	Enchant int32 `json:"enchant"`
+}
+
+// goldcharGem is a gem for `.simval gem`, by the socket's index in the gear set's list.
+type goldcharGem struct {
+	Slot   uint8 `json:"slot"`
+	Socket uint8 `json:"socket"`
+	Gem    int32 `json:"gem"`
+}
+
+// socketEnchants add a socket to the item in a server slot: Eternal Belt Buckle, and Blacksmithing's
+// Socket Bracer and Socket Gloves. The sim takes a gem past an item's sockets as if it had one.
+var socketEnchants = map[uint8]int32{5: 3729, 8: 3717, 9: 3723}
+
+// MAX_GEM_SOCKETS, an added socket included
+const maxGemSockets = 3
+
+// goldcharGearData is what db.json says about the gear sets' gems and enchants.
+type goldcharGearData struct {
+	sockets  map[int32]int // per item
+	enchants map[int32]bool
+}
+
+var loadGoldcharGearData = sync.OnceValues(func() (*goldcharGearData, error) {
+	root, err := checkoutRoot()
+	if err != nil {
+		return nil, err
+	}
+	raw, err := os.ReadFile(filepath.Join(root, simDBJSON))
+	if err != nil {
+		return nil, err
+	}
+	var db struct {
+		Items []struct {
+			ID         int32   `json:"id"`
+			GemSockets []int32 `json:"gemSockets"`
+		} `json:"items"`
+		Enchants []struct {
+			EffectID int32 `json:"effectId"`
+		} `json:"enchants"`
+	}
+	if err := json.Unmarshal(raw, &db); err != nil {
+		return nil, fmt.Errorf("%s: %w", simDBJSON, err)
+	}
+	data := &goldcharGearData{sockets: map[int32]int{}, enchants: map[int32]bool{}}
+	for _, item := range db.Items {
+		data.sockets[item.ID] = len(item.GemSockets)
+	}
+	for _, enchant := range db.Enchants {
+		data.enchants[enchant.EffectID] = true
+	}
+	return data, nil
+})
 
 type goldcharGlyph struct {
 	Slot  uint8 `json:"slot"`  // the server's glyph slot
@@ -481,7 +545,9 @@ func (s suiteSetup) goldchar(root string, glyphSpells map[int32]int32) (goldchar
 	}
 	var gear struct {
 		Items []struct {
-			ID int32 `json:"id"`
+			ID      int32   `json:"id"`
+			Enchant int32   `json:"enchant"`
+			Gems    []int32 `json:"gems"`
 		} `json:"items"`
 	}
 	if err := json.Unmarshal(raw, &gear); err != nil {
@@ -490,9 +556,32 @@ func (s suiteSetup) goldchar(root string, glyphSpells map[int32]int32) (goldchar
 	if len(gear.Items) > len(serverEquipSlots) {
 		return setup, fmt.Errorf("%s has %d items", s.gearSet, len(gear.Items))
 	}
+	gearData, err := loadGoldcharGearData()
+	if err != nil {
+		return setup, err
+	}
 	for i, item := range gear.Items {
-		if item.ID != 0 {
-			setup.Items = append(setup.Items, goldcharItem{Slot: serverEquipSlots[i], ID: item.ID})
+		if item.ID == 0 {
+			continue
+		}
+		slot := serverEquipSlots[i]
+		setup.Items = append(setup.Items, goldcharItem{Slot: slot, ID: item.ID})
+		// the sim drops an enchant id it doesn't know, like the spell and item ids in feral tank's gear set
+		if gearData.enchants[item.Enchant] {
+			setup.Enchants = append(setup.Enchants, goldcharEnchant{Slot: slot, Enchant: item.Enchant})
+		}
+		sockets := gearData.sockets[item.ID]
+		for socket, gem := range item.Gems {
+			switch {
+			case gem == 0:
+				continue
+			case socket > sockets || socket == sockets && socketEnchants[slot] == 0 || socket >= maxGemSockets:
+				return setup, fmt.Errorf("%s: item %d has %d sockets and no way to add one, but a gem in socket %d",
+					s.gearSet, item.ID, sockets, socket)
+			case socket == sockets:
+				setup.Enchants = append(setup.Enchants, goldcharEnchant{Slot: slot, Enchant: socketEnchants[slot]})
+			}
+			setup.Gems = append(setup.Gems, goldcharGem{Slot: slot, Socket: uint8(socket), Gem: gem})
 		}
 	}
 
@@ -617,6 +706,8 @@ type goldcharRecord struct {
 	critOffhand, critRanged float64
 	// the record as the talent sweep's trim reads an info record
 	raw rawTalentInfo
+	// nil in a record from before the module wrote a player's regen
+	regen *timingRegen
 }
 
 func (r *goldcharRecord) UnmarshalJSON(data []byte) error {
@@ -630,6 +721,15 @@ func (r *goldcharRecord) UnmarshalJSON(data []byte) error {
 	if sheet := r.raw.Attacker.Sheet; sheet != nil {
 		r.critOffhand, r.critRanged = sheet.CritOffhand, sheet.CritRanged
 	}
+	var regen struct {
+		Attacker struct {
+			Regen *timingRegen `json:"regen"`
+		} `json:"attacker"`
+	}
+	if err := json.Unmarshal(data, &regen); err != nil {
+		return err
+	}
+	r.regen = regen.Attacker.Regen
 	return nil
 }
 
@@ -656,11 +756,28 @@ func (r goldcharRecord) sheet() (sweepSheet, error) {
 type goldcharCharacter struct {
 	Talents []int32 `json:"talents"` // rank spells, sorted
 	// the GlyphProperties id in each slot, 0 when empty
-	Glyphs    []int32 `json:"glyphs"`
-	Equipment []struct {
-		Slot   uint8 `json:"slot"`
-		ItemID int32 `json:"itemId"`
-	} `json:"equipment"`
+	Glyphs    []int32            `json:"glyphs"`
+	Equipment []goldcharEquipped `json:"equipment"`
+}
+
+// goldcharEquipped is an item the server character has on, with its enchantments by SpellItemEnchantment
+// id and its gems by item id.
+type goldcharEquipped struct {
+	Slot   uint8 `json:"slot"`
+	ItemID int32 `json:"itemId"`
+	// one per socket, 0 when empty; nil in a record from before the module wrote enchantments
+	Gems        []int32 `json:"gems"`
+	Enchant     int32   `json:"enchant"`
+	Prismatic   int32   `json:"prismatic"`
+	SocketBonus int32   `json:"socketBonus"`
+	// what Player::ApplyEnchantment would skip now
+	Inactive []goldcharInactive `json:"inactive"`
+}
+
+type goldcharInactive struct {
+	Enchant int32 `json:"enchant"`
+	// "condition" for a meta gem whose colors the gear doesn't meet
+	Reason string `json:"reason"`
 }
 
 func (r goldcharRecord) label() string {
@@ -740,6 +857,52 @@ func (s goldcharSetup) builds(class, race uint8, c *goldcharCharacter) bool {
 	return true
 }
 
+// wornBy is the setup geared when the character wears exactly its enchants and gems, as
+// TestSimvalGoldenCharacters checks them, and as it is when the record predates the module writing them.
+// Other enchants or gems, none included, are an error.
+func (s goldcharSetup) wornBy(c *goldcharCharacter) (goldcharSetup, error) {
+	if !slices.ContainsFunc(c.Equipment, func(e goldcharEquipped) bool { return e.Gems != nil }) {
+		return s, nil
+	}
+	enchants := map[uint8][]int32{}
+	for _, e := range s.Enchants {
+		enchants[e.Slot] = append(enchants[e.Slot], e.Enchant)
+	}
+	gems := map[uint8][maxGemSockets]int32{}
+	for _, g := range s.Gems {
+		if int(g.Socket) >= maxGemSockets {
+			return s, fmt.Errorf("%s: gem %d in socket %d", s.Name, g.Gem, g.Socket)
+		}
+		socketed := gems[g.Slot]
+		socketed[g.Socket] = g.Gem
+		gems[g.Slot] = socketed
+	}
+
+	var wrong []string
+	for _, e := range c.Equipment {
+		var have []int32
+		for _, id := range []int32{e.Enchant, e.Prismatic} {
+			if id != 0 {
+				have = append(have, id)
+			}
+		}
+		want := slices.Sorted(slices.Values(enchants[e.Slot]))
+		if slices.Sort(have); !slices.Equal(have, want) {
+			wrong = append(wrong, fmt.Sprintf("slot %d enchants %v, want %v", e.Slot, have, want))
+		}
+		var socketed [maxGemSockets]int32
+		copy(socketed[:], e.Gems)
+		if socketed != gems[e.Slot] {
+			wrong = append(wrong, fmt.Sprintf("slot %d gems %v, want %v", e.Slot, socketed, gems[e.Slot]))
+		}
+	}
+	if len(wrong) > 0 {
+		return s, fmt.Errorf("%s's character doesn't wear its enchants and gems: %s", s.Name, strings.Join(wrong, "; "))
+	}
+	s.geared = true
+	return s, nil
+}
+
 func matchGoldcharSetup(setups []goldcharSetup, info *goldcharRecord) (goldcharSetup, error) {
 	var names []string
 	var found goldcharSetup
@@ -760,9 +923,9 @@ func matchGoldcharSetup(setups []goldcharSetup, info *goldcharRecord) (goldcharS
 	}
 }
 
-// goldcharPlayer is the setup's character the way the golden suites build it, minus the gems, enchants,
-// buffs, consumes and spec options the server character doesn't get. Glyphs the server lacks are left
-// off too.
+// goldcharPlayer is the setup's character the way the golden suites build it, minus the buffs, consumes
+// and spec options the server character doesn't get, and minus the gems and enchants unless the setup is
+// geared. Glyphs the server lacks are left off too.
 func goldcharPlayer(s goldcharSetup) (*proto.Player, error) {
 	class, ok := classes[s.Class]
 	if !ok {
@@ -783,6 +946,11 @@ func goldcharPlayer(s goldcharSetup) (*proto.Player, error) {
 			return nil, fmt.Errorf("item %d in server slot %d, which the sim has no slot for", item.ID, item.Slot)
 		}
 		items[i].Id = item.ID
+	}
+	if s.geared {
+		if err := s.gearItems(items); err != nil {
+			return nil, err
+		}
 	}
 
 	glyphs := &proto.Glyphs{}
@@ -812,6 +980,42 @@ func goldcharPlayer(s goldcharSetup) (*proto.Player, error) {
 		Glyphs:        glyphs,
 	}
 	return player, setSpec(player, protoreflect.Name(s.Spec))
+}
+
+// gearItems puts the setup's enchants and gems on the sim's items, indexed by proto.ItemSlot. The sim
+// has no socket-adding enchants: it takes a gem past the item's sockets as one more socket.
+func (s goldcharSetup) gearItems(items []*proto.ItemSpec) error {
+	item := func(slot uint8) (*proto.ItemSpec, error) {
+		i := slices.Index(serverEquipSlots[:], slot)
+		if i < 0 || items[i].Id == 0 {
+			return nil, fmt.Errorf("an enchant or gem for server slot %d, which has no item", slot)
+		}
+		return items[i], nil
+	}
+	for _, e := range s.Enchants {
+		if socketEnchants[e.Slot] == e.Enchant {
+			continue
+		}
+		spec, err := item(e.Slot)
+		if err != nil {
+			return err
+		}
+		if spec.Enchant != 0 {
+			return fmt.Errorf("enchants %d and %d for server slot %d", spec.Enchant, e.Enchant, e.Slot)
+		}
+		spec.Enchant = e.Enchant
+	}
+	for _, g := range s.Gems {
+		spec, err := item(g.Slot)
+		if err != nil {
+			return err
+		}
+		for len(spec.Gems) <= int(g.Socket) {
+			spec.Gems = append(spec.Gems, 0)
+		}
+		spec.Gems[g.Socket] = g.Gem
+	}
+	return nil
 }
 
 // newGoldcharSim is the setup's character against the record's dummy, with the setup's auras. The sim
@@ -931,8 +1135,9 @@ func spellHitEverySchool(unit unitSnapshot) (float64, error) {
 }
 
 // checkGoldcharInfo compares the info record's sheet with the setup's character in the sim, with its
-// starting auras: the talent sweep's sheet fields (checkGoldcharSheet), spell hit, and for each hand the
-// sim swings, its attack speed, weapon damage, crit, hit and expertise.
+// starting auras: the talent sweep's sheet fields (checkGoldcharSheet), spell hit, for each hand the
+// sim swings its attack speed, weapon damage, crit, hit and expertise, a geared character's socket
+// bonuses and enchantments (gearChecks), and the regen when the record has it.
 func checkGoldcharInfo(rec goldcharRecord, s goldcharSetup) (checks []Check) {
 	unit := rec.Attacker
 	if !unit.IsPlayer || unit.Level != core.CharacterLevel || unit.Sheet == nil {
@@ -949,6 +1154,12 @@ func checkGoldcharInfo(rec goldcharRecord, s goldcharSetup) (checks []Check) {
 		}
 	}()
 	checks = append(checkGoldcharSheet(rec, d.sweepSim()), d.sheetChecks(rec)...)
+	if s.geared && rec.Character != nil {
+		checks = append(checks, d.gearChecks(rec.Character)...)
+	}
+	if rec.regen != nil {
+		checks = append(checks, d.goldcharRegen(rec)...)
+	}
 
 	var auras string
 	for i, check := range checks {
@@ -961,6 +1172,73 @@ func checkGoldcharInfo(rec goldcharRecord, s goldcharSetup) (checks []Check) {
 		checks[i].Detail += "; " + auras
 	}
 	return checks
+}
+
+// gearChecks hold each item's socket bonus and enchantments on the server to the sim's: the sim gives the
+// bonus when every socket's gem matches its color, and always counts every enchant and meta gem.
+func (d *damageSim) gearChecks(c *goldcharCharacter) []Check {
+	var checks []Check
+	for _, e := range c.Equipment {
+		name := fmt.Sprintf("slot %d ", e.Slot)
+		i := slices.Index(serverEquipSlots[:], e.Slot)
+		if i < 0 {
+			checks = append(checks, fail(name+"item", "the sim has no slot for it"))
+			continue
+		}
+		item := d.char.Equipment[i]
+		if on, ok := simSocketBonus(&item); ok {
+			checks = append(checks, checkOn(name+"socket bonus", on, e.SocketBonus != 0))
+		}
+
+		meta := slices.ContainsFunc(item.Gems, func(g core.Gem) bool { return g.Color == proto.GemColor_GemColorMeta })
+		metaOff := false
+		for _, off := range e.Inactive {
+			if off.Reason == "condition" {
+				metaOff = true
+				continue
+			}
+			checks = append(checks, fail(fmt.Sprintf("%senchant %d", name, off.Enchant),
+				fmt.Sprintf("the server skips it (%s), the sim doesn't", off.Reason)))
+		}
+		if meta || metaOff {
+			checks = append(checks, checkOn(name+"meta gem", meta, !metaOff))
+		}
+	}
+	return checks
+}
+
+// simSocketBonus is whether the sim gives the item its socket bonus, read off its total stats. False
+// for an item without sockets or a bonus.
+func simSocketBonus(item *core.Item) (on, ok bool) {
+	if len(item.GemSockets) == 0 || item.SocketBonus == (stats.Stats{}) {
+		return false, false
+	}
+	without := item.Stats
+	without.AddInplace(&item.Enchant.Stats)
+	for i := range item.Gems {
+		without.AddInplace(&item.Gems[i].Stats)
+	}
+	return item.TotalStats() != without, true
+}
+
+func checkOn(name string, sim, server bool) Check {
+	state := map[bool]string{true: "on", false: "off"}
+	detail := fmt.Sprintf("sim %s, server %s", state[sim], state[server])
+	if sim == server {
+		return pass(name, detail)
+	}
+	return fail(name, detail)
+}
+
+// goldcharRegen holds the record's regen to the sim the way the timing replay does a bot's info record.
+// That pins intellect and spirit to the record's, so it starts the sim over first.
+func (d *damageSim) goldcharRegen(rec goldcharRecord) []Check {
+	ts := &timingSim{damageSim: d}
+	ts.start()
+	var info timingRecord
+	info.Command = "info"
+	info.Attacker = timingUnit{damageUnit: rec.Attacker, Regen: rec.regen}
+	return ts.checkRegen(info)
 }
 
 // goldcharSheetFields are the talent sweep's sheet fields an info record is held to, besides each

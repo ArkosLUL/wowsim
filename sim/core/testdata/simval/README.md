@@ -53,12 +53,16 @@ and is only logged; the others are removed.
 | Setup | Record | Check | Why |
 |---|---|---|---|
 | DeathknightBlood | info | armor penetration % | the sheet field is the aura's raw sum; the server applies Blood-Gorged to white swings and five strikes by its class mask, and the sim does the same per spell (`applyBloodGorged`), so nothing reaches `BonusArmorPenPct` |
+| DeathknightBlood | 49909 Icy Touch, 47632 Death Coil | e0 damage crit | magic class on the server: the meta gem's 3% goes on the spell base 1.5 (1.545), then Runic Focus doubles the bonus (2.09); the sim gives them the melee base 2.0 times 1.03 (2.06) |
+| DeathknightBloodTank | info | dodge %, parry % | Rune of the Stoneskin Gargoyle's +25 defense is skill on the server, which dodge and parry take undiminished; the sim adds it as defense rating, which diminishes |
 | DruidBalance, DruidBalancePhase3 | info | arcane spell crit % | spell specific crit in the sim (Improved Moonfire; Nature's Majesty and Dreamwalker 4pc on Starfire), spell mods on the server |
-| DruidBalance, DruidBalancePhase3, DruidFeral, DruidFeralApl, DruidFeralTank, PriestShadow, PriestSmite | info | max health | the e2e's `.modify hp` pinned max health to the client's value from before a stamina buff or form (Mark of the Wild, Power Word: Fortitude, Dire Bear Form); the record's own stamina gives the sim's number |
-| HunterBM, HunterMM, HunterSV, PaladinRetribution, RogueCombat, RogueAssassination, RogueSubtlety, WarriorFury, WarriorArms | info | parry % | the e2e never teaches Parry (3127), a trainer spell, so the server can't parry; the sim's character can |
-| HunterMM | info | attack power, ranged attack power | the setup's auras cast Trueshot Aura (19506), which its talents don't take, so the sim has no 10% |
+| DruidBalancePhase3, DruidFeralApl | info | attack power | weapon feral AP: the server truncates dps × 14, then takes 767 off (983, 3175); the sim floors (dps − 54.8) × 14 (982, 3174) |
+| DruidBalancePhase3, MageArcane, MageFire, MageFrostFire, MageFrost, PriestShadow, ShamanElemental, WarlockAffliction, WarlockDemonology, WarlockDestruction | info | spirit | Lightweave Embroidery (3722) also gives 1 spirit on the server; the sim's enchant has no stats |
+| DruidFeral, DruidFeralApl | 48574 Rake | e0 damage crit | the server adds up the crit damage auras (meta gem 3%, Predatory Instincts 10%: 2.26); the sim multiplies them (2.266) |
 | MageFire, MageFrostFire | info | arcane spell crit % | spell specific crit in the sim (Khadgar's Regalia 4pc, World in Flames), spell mods on the server |
+| RogueCombat | 57965 Instant Poison IX, 57975 Wound Poison VII | e0, e1 damage crit | as Rake's, with Prey on the Weak's 20% (1.845 against the sim's 1.854) |
 | WarlockDestruction | info | fire spell crit % | Devastation: spell specific crit in the sim, a spell mod on the server |
+| WarriorArms | 47502 Thunder Clap, 57755 Heroic Throw | e0 damage crit | as Rake's, with Poleaxe Specialization's 5%, before Impale (2.392 against the sim's 2.3956) |
 
 `talents.jsonl`, each in `droppedSweep` (`tools/simval/talents_test.go`). Records stay; a dropped step (empty field)
 or field is only logged.

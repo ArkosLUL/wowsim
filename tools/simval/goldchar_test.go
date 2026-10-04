@@ -9,6 +9,7 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	"google.golang.org/protobuf/reflect/protoreflect"
 
@@ -200,7 +201,8 @@ func TestGoldcharInfoRecordInTheReplayFixture(t *testing.T) {
 			"ratings": [{"name": "armorPenetration", "rating": %d, "bonus": %f}],
 			"sheet": {"critMainhand": 30, "spellCrit": [0, 5]}, "auras": [{"id": 58370, "durationMs": -1}]},
 		"target": {"name": "Dummy", "entry": 999000, "level": 83},
-		"character": {"talents": [12320], "glyphs": [0, 0, 0, 0, 0, 0], "equipment": [{"slot": 15, "itemId": 51227}]}}`,
+		"character": {"talents": [12320], "glyphs": [0, 0, 0, 0, 0, 0], "equipment": [{"slot": 15, "itemId": 51227,
+			"enchant": 3789, "temp": 0, "gems": [40117, 0, 0], "socketBonus": 0, "prismatic": 0, "inactive": []}]}}`,
 		rating, bonus))
 
 	checks := CheckRecord(rec)
@@ -223,37 +225,41 @@ type goldcharDrop struct {
 
 var droppedGoldchar = []goldcharDrop{
 	{"DeathknightBlood", 0, "armor penetration %"},
-	{"DruidBalance", 0, "max health"},
+	{"DeathknightBlood", 49909, "e0 damage crit"},
+	{"DeathknightBlood", 47632, "e0 damage crit"},
+	{"DeathknightBloodTank", 0, "dodge %"},
+	{"DeathknightBloodTank", 0, "parry %"},
 	{"DruidBalance", 0, "arcane spell crit %"},
-	{"DruidBalancePhase3", 0, "max health"},
 	{"DruidBalancePhase3", 0, "arcane spell crit %"},
-	{"DruidFeral", 0, "max health"},
-	{"DruidFeralApl", 0, "max health"},
-	{"DruidFeralTank", 0, "max health"},
-	{"HunterBM", 0, "parry %"},
-	{"HunterMM", 0, "attack power"},
-	{"HunterMM", 0, "ranged attack power"},
-	{"HunterMM", 0, "parry %"},
-	{"HunterSV", 0, "parry %"},
+	{"DruidBalancePhase3", 0, "attack power"},
+	{"DruidBalancePhase3", 0, "spirit"},
+	{"DruidFeral", 48574, "e0 damage crit"},
+	{"DruidFeralApl", 0, "attack power"},
+	{"DruidFeralApl", 48574, "e0 damage crit"},
+	{"MageArcane", 0, "spirit"},
 	{"MageFire", 0, "arcane spell crit %"},
+	{"MageFire", 0, "spirit"},
 	{"MageFrostFire", 0, "arcane spell crit %"},
-	{"PaladinRetribution", 0, "parry %"},
-	{"PriestShadow", 0, "max health"},
-	{"PriestSmite", 0, "max health"},
-	{"RogueCombat", 0, "parry %"},
-	{"RogueAssassination", 0, "parry %"},
-	{"RogueSubtlety", 0, "parry %"},
+	{"MageFrostFire", 0, "spirit"},
+	{"MageFrost", 0, "spirit"},
+	{"PriestShadow", 0, "spirit"},
+	{"RogueCombat", 57965, "e0 damage crit"},
+	{"RogueCombat", 57975, "e1 damage crit"},
+	{"ShamanElemental", 0, "spirit"},
+	{"WarlockAffliction", 0, "spirit"},
+	{"WarlockDemonology", 0, "spirit"},
 	{"WarlockDestruction", 0, "fire spell crit %"},
-	{"WarriorFury", 0, "parry %"},
-	{"WarriorArms", 0, "parry %"},
+	{"WarlockDestruction", 0, "spirit"},
+	{"WarriorArms", 47502, "e0 damage crit"},
+	{"WarriorArms", 57755, "e0 damage crit"},
 }
 
 // goldcharReport reports a record's checks, holding them to droppedGoldchar.
 type goldcharReport struct {
 	used    map[goldcharDrop]bool
 	checked int
-	// info records from before the module wrote maxPower
-	noMaxPower int
+	// info records from before the module wrote maxPower, and a player's regen
+	noMaxPower, noRegen int
 }
 
 func (r *goldcharReport) dropped(drop goldcharDrop) bool {
@@ -307,8 +313,13 @@ func TestGoldenCharacters(t *testing.T) {
 	}
 
 	bySetup := map[string]*goldcharBot{}
+	worn := map[string]goldcharSetup{}
+	bare := 0
 	for _, bot := range bots {
 		s, err := matchGoldcharSetup(setups, bot.info)
+		if err == nil {
+			s, err = s.wornBy(bot.info.Character)
+		}
 		if err != nil {
 			t.Error(err)
 			continue
@@ -317,7 +328,10 @@ func TestGoldenCharacters(t *testing.T) {
 			t.Errorf("%s and %s both play %s", other.name, bot.name, s.Name)
 			continue
 		}
-		bySetup[s.Name] = bot
+		bySetup[s.Name], worn[s.Name] = bot, s
+		if !s.geared {
+			bare++
+		}
 	}
 
 	report := &goldcharReport{used: map[goldcharDrop]bool{}}
@@ -332,7 +346,11 @@ func TestGoldenCharacters(t *testing.T) {
 				}
 				return
 			}
+			s := worn[s.Name]
 			report.checks(t, s.Name, 0, bot.info.label(), checkGoldcharInfo(*bot.info, s))
+			if bot.info.regen == nil {
+				report.noRegen++
+			}
 			if bot.info.raw.Attacker.MaxPower == nil {
 				report.noMaxPower++
 				t.Logf("%s: no maxPower, so max power isn't compared", bot.info.label())
@@ -372,8 +390,9 @@ func TestGoldenCharacters(t *testing.T) {
 	if report.checked == 0 {
 		t.Fatalf("%s has %d records but nothing to check", path, len(records))
 	}
-	t.Logf("%d checks over %d records of %d bots; %d info records have no max power", report.checked,
-		len(records), len(bots), report.noMaxPower)
+	t.Logf("%d checks over %d records of %d bots; %d info records have no max power, %d no regen, and %d bots "+
+		"predate the enchantments in the record, so they replay without enchants and gems", report.checked,
+		len(records), len(bots), report.noMaxPower, report.noRegen, bare)
 }
 
 func allGoldcharSetups(t *testing.T) []goldcharSetup {
@@ -431,6 +450,50 @@ type serverSheet struct {
 	fields     sweepSheet
 	powerType  uint32
 	noMaxPower bool
+	// nil for a record from before the module wrote it
+	regen *timingRegen
+	// a geared setup's socket bonuses by server slot, and the enchantments the server skips
+	socketBonus map[uint8]bool
+	inactive    map[uint8][]goldcharInactive
+}
+
+func goldcharGeared(s goldcharSetup) goldcharSetup {
+	s.geared = true
+	return s
+}
+
+// goldcharGearJSON adds a geared setup's enchants and gems to the character block's items as the module
+// writes them, with the sheet's socket bonuses and skipped enchantments.
+func goldcharGearJSON(character map[string]any, s goldcharSetup, sheet serverSheet) {
+	for _, item := range character["equipment"].([]map[string]any) {
+		slot := item["slot"].(uint8)
+		var enchant, prismatic, bonus int32
+		for _, e := range s.Enchants {
+			switch {
+			case e.Slot != slot:
+			case socketEnchants[slot] == e.Enchant:
+				prismatic = e.Enchant
+			default:
+				enchant = e.Enchant
+			}
+		}
+		gems := make([]int32, maxGemSockets)
+		for _, g := range s.Gems {
+			if g.Slot == slot {
+				gems[g.Socket] = g.Gem
+			}
+		}
+		// the bonus's SpellItemEnchantment id; the replay only reads whether there is one
+		if sheet.socketBonus[slot] {
+			bonus = 1
+		}
+		inactive := sheet.inactive[slot]
+		if inactive == nil {
+			inactive = []goldcharInactive{}
+		}
+		item["enchant"], item["temp"], item["gems"], item["socketBonus"], item["prismatic"], item["inactive"] =
+			enchant, 0, gems, bonus, prismatic, inactive
+	}
 }
 
 type serverAttack struct {
@@ -498,12 +561,19 @@ func goldcharInfo(t *testing.T, s goldcharSetup, sheet serverSheet) goldcharReco
 		power := sweepPowerFields[sheet.powerType]
 		attacker["maxPower"] = v[power.name] * power.scale
 	}
+	if sheet.regen != nil {
+		attacker["regen"] = sheet.regen
+	}
+	character := goldcharCharacterJSON(s)
+	if s.geared {
+		goldcharGearJSON(character, s, sheet)
+	}
 	body := map[string]any{
 		"schema": 1, "command": "info",
 		"attacker": attacker,
 		"target": map[string]any{"name": "Dummy", "entry": boss, "level": 83, "worldBoss": true, "creatureType": 5,
 			"resistances": []float64{10643, 0, 0, 0, 0, 0, 0}, "auras": []any{}},
-		"character": goldcharCharacterJSON(s),
+		"character": character,
 	}
 	text, err := json.Marshal(body)
 	if err != nil {
@@ -579,7 +649,40 @@ func simSheet(t *testing.T, s goldcharSetup) serverSheet {
 			sheet.hitRanged = hit
 		}
 	}
+	if s.geared {
+		sheet.socketBonus = map[uint8]bool{}
+		for i, slot := range serverEquipSlots {
+			if on, ok := simSocketBonus(&d.char.Equipment[i]); ok {
+				sheet.socketBonus[slot] = on
+			}
+		}
+	}
+	sheet.regen = simRegen(d, sheet.fields)
 	return sheet
+}
+
+// simRegen is the regen a server agreeing with the sim would record, read at the sheet's whole intellect
+// and spirit the way checkRegen reads it.
+func simRegen(d *damageSim, fields sweepSheet) *timingRegen {
+	d.start()
+	unit := &d.char.Unit
+	regen := &timingRegen{Flat: make([]float64, 7), Interrupted: make([]float64, 7), Rune: make([]float64, 4),
+		ManaRate: 1, EnergyRate: 1}
+	if unit.HasManaBar() {
+		setStat(d.sim, unit, stats.Intellect, fields["intellect"])
+		setStat(d.sim, unit, stats.Spirit, fields["spirit"])
+		regen.Flat[0], regen.Interrupted[0] = unit.ManaRegenPerSecondWhileNotCasting(), unit.ManaRegenPerSecondWhileCasting()
+	}
+	if unit.HasEnergyBar() {
+		regen.Flat[3] = core.EnergyPerTick*unit.EnergyTickMultiplier*float64(time.Second/core.EnergyTickDuration) - 10
+	}
+	if unit.HasRunicPowerBar() {
+		cooldown := float64((&timingSim{damageSim: d}).runeCooldown())
+		for i := range regen.Rune {
+			regen.Rune[i] = 1000 / cooldown
+		}
+	}
+	return regen
 }
 
 // everySchool is a check name for each magic school, e.g. "holy spell power" for " spell power".
@@ -601,30 +704,169 @@ func checkNames(checks []Check) (names, failed []string) {
 	return names, failed
 }
 
-// Every setup's character builds in the sim and checks out against a sheet that agrees with it, with
-// checks for each hand the sim swings.
+// Every setup's character builds in the sim, bare and geared, and checks out against a sheet that
+// agrees with it, with checks for each hand the sim swings, the regen of its power bar, and when geared
+// each socket bonus and the meta gem.
 func TestGoldcharInfoAgreeingSheet(t *testing.T) {
 	needsItemDB(t)
 	wantHands := map[string][]string{
 		"WarriorFury": {"mainhand", "offhand"}, "WarriorArms": {"mainhand"}, "RogueCombat": {"mainhand", "offhand"},
 		"HunterBM": {"ranged"}, "DruidFeral": {"mainhand"}, "MageFrost": nil, "PriestShadow": nil,
 	}
-	for _, s := range allGoldcharSetups(t) {
-		checks := checkGoldcharInfo(goldcharInfo(t, s, simSheet(t, s)), s)
-		names, failed := checkNames(checks)
-		if len(failed) > 0 {
-			t.Errorf("%s: failed %v: %s", s.Name, failed, strings.Join(failedChecks(checks), "; "))
-		}
-		var hands []string
-		for _, name := range names {
-			if hand, ok := strings.CutSuffix(name, " speed ms"); ok && !strings.HasSuffix(hand, " hasted") {
-				hands = append(hands, hand)
+	wantRegen := map[string][]string{
+		"MageFrost": {"mana regen", "mana regen while casting"}, "RogueCombat": {"energy regen"},
+		"DruidFeral": {"energy regen"}, "DeathknightBlood": {"rune 0 cooldown", "rune 1 cooldown", "rune 2 cooldown"},
+		"WarriorFury": nil,
+	}
+	for _, setup := range allGoldcharSetups(t) {
+		for _, s := range []goldcharSetup{setup, goldcharGeared(setup)} {
+			label := fmt.Sprintf("%s geared=%v", s.Name, s.geared)
+			checks := checkGoldcharInfo(goldcharInfo(t, s, simSheet(t, s)), s)
+			names, failed := checkNames(checks)
+			if len(failed) > 0 {
+				t.Errorf("%s: failed %v: %s", label, failed, strings.Join(failedChecks(checks), "; "))
+			}
+			var hands, regen []string
+			bonuses := 0
+			for _, name := range names {
+				if hand, ok := strings.CutSuffix(name, " speed ms"); ok && !strings.HasSuffix(hand, " hasted") {
+					hands = append(hands, hand)
+				}
+				if strings.Contains(name, " regen") || strings.HasPrefix(name, "rune ") {
+					regen = append(regen, name)
+				}
+				if strings.HasSuffix(name, " socket bonus") {
+					bonuses++
+				}
+			}
+			t.Logf("%s: %d checks, hands %v, regen %v, %d socket bonuses", label, len(checks), hands, regen, bonuses)
+			if want, ok := wantHands[s.Name]; ok && !slices.Equal(hands, want) {
+				t.Errorf("%s: hands %v, want %v", label, hands, want)
+			}
+			if want, ok := wantRegen[s.Name]; ok && !slices.Equal(regen, want) {
+				t.Errorf("%s: regen checks %v, want %v", label, regen, want)
+			}
+			if s.geared != (bonuses > 0) || s.geared != slices.Contains(names, "slot 0 meta gem") {
+				t.Errorf("%s: %d socket bonus checks, meta gem checked: %v", label, bonuses, slices.Contains(names, "slot 0 meta gem"))
 			}
 		}
-		t.Logf("%s: %d checks, hands %v", s.Name, len(checks), hands)
-		if want, ok := wantHands[s.Name]; ok && !slices.Equal(hands, want) {
-			t.Errorf("%s: hands %v, want %v", s.Name, hands, want)
+	}
+}
+
+// The replay builds a geared record's character with the setup's enchants and gems, and a bare one's
+// without: each fails the other's sheet.
+func TestGoldcharReplayWearsTheGear(t *testing.T) {
+	needsItemDB(t)
+	for _, bare := range allGoldcharSetups(t) {
+		geared := goldcharGeared(bare)
+		bareSheet, gearedSheet := simSheet(t, bare), simSheet(t, geared)
+		bareSheet.socketBonus = gearedSheet.socketBonus
+		if _, failed := checkNames(checkGoldcharInfo(goldcharInfo(t, geared, bareSheet), geared)); len(failed) == 0 {
+			t.Errorf("%s: a geared record with the bare character's sheet passes", bare.Name)
 		}
+		if _, failed := checkNames(checkGoldcharInfo(goldcharInfo(t, bare, gearedSheet), bare)); len(failed) == 0 {
+			t.Errorf("%s: a bare record with the geared character's sheet passes", bare.Name)
+		}
+	}
+}
+
+// A record's character wears the setup's enchants and gems, or predates the module writing them; nothing
+// in between replays.
+func TestGoldcharWornBy(t *testing.T) {
+	s := goldcharSetupNamed(t, "PaladinProtection")
+	worn := func(change func(c *goldcharCharacter)) (bool, error) {
+		info := goldcharInfo(t, goldcharGeared(s), serverSheet{})
+		change(info.Character)
+		got, err := s.wornBy(info.Character)
+		return got.geared, err
+	}
+	slot := func(c *goldcharCharacter, slot uint8) *goldcharEquipped {
+		i := slices.IndexFunc(c.Equipment, func(e goldcharEquipped) bool { return e.Slot == slot })
+		if i < 0 {
+			t.Fatalf("no slot %d", slot)
+		}
+		return &c.Equipment[i]
+	}
+
+	if geared, err := worn(func(*goldcharCharacter) {}); !geared || err != nil {
+		t.Errorf("the setup's gear: geared %v, %v", geared, err)
+	}
+	if geared, err := worn(func(c *goldcharCharacter) {
+		for i := range c.Equipment {
+			c.Equipment[i] = goldcharEquipped{Slot: c.Equipment[i].Slot, ItemID: c.Equipment[i].ItemID}
+		}
+	}); geared || err != nil {
+		t.Errorf("a record from before the enchantments: geared %v, %v", geared, err)
+	}
+	for name, change := range map[string]func(c *goldcharCharacter){
+		"nothing on": func(c *goldcharCharacter) {
+			for i := range c.Equipment {
+				e := &c.Equipment[i]
+				e.Enchant, e.Prismatic, e.Gems = 0, 0, make([]int32, maxGemSockets)
+			}
+		},
+		"no belt buckle":         func(c *goldcharCharacter) { slot(c, 5).Prismatic = 0 },
+		"the buckle as enchant":  func(c *goldcharCharacter) { e := slot(c, 5); e.Enchant, e.Prismatic = e.Prismatic, 0 },
+		"a gem in the next slot": func(c *goldcharCharacter) { e := slot(c, 5); e.Gems[1], e.Gems[2] = 0, e.Gems[1] },
+		"another chest enchant":  func(c *goldcharCharacter) { slot(c, 4).Enchant++ },
+	} {
+		if geared, err := worn(change); err == nil {
+			t.Errorf("%s: geared %v and no error", name, geared)
+		}
+	}
+}
+
+// gearChecks hold the server's socket bonuses and skipped enchantments to the sim's geared items.
+func TestGoldcharGearChecks(t *testing.T) {
+	needsItemDB(t)
+	s := goldcharGeared(goldcharSetupNamed(t, "PaladinProtection"))
+	agreeing := simSheet(t, s)
+	var bonusSlot uint8
+	for _, slot := range serverEquipSlots {
+		if agreeing.socketBonus[slot] {
+			bonusSlot = slot
+			break
+		}
+	}
+	if !agreeing.socketBonus[bonusSlot] {
+		t.Fatalf("no item gets its socket bonus: %v", agreeing.socketBonus)
+	}
+	var waistEnchant int32
+	for _, e := range s.Enchants {
+		if e.Slot == 5 && e.Enchant != socketEnchants[5] {
+			waistEnchant = e.Enchant
+		}
+	}
+
+	for _, c := range []struct {
+		name   string
+		change func(*serverSheet)
+		failed []string
+	}{
+		{"a socket bonus the server leaves off", func(sh *serverSheet) { sh.socketBonus[bonusSlot] = false },
+			[]string{fmt.Sprintf("slot %d socket bonus", bonusSlot)}},
+		{"a meta gem whose colors the gear doesn't meet", func(sh *serverSheet) {
+			sh.inactive = map[uint8][]goldcharInactive{0: {{Enchant: 1, Reason: "condition"}}}
+		}, []string{"slot 0 meta gem"}},
+		{"an enchant the server's skill check skips", func(sh *serverSheet) {
+			sh.inactive = map[uint8][]goldcharInactive{5: {{Enchant: waistEnchant, Reason: "skill"}}}
+		}, []string{fmt.Sprintf("slot 5 enchant %d", waistEnchant)}},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			sheet := simSheet(t, s)
+			c.change(&sheet)
+			checks := checkGoldcharInfo(goldcharInfo(t, s, sheet), s)
+			if _, failed := checkNames(checks); !slices.Equal(failed, c.failed) {
+				t.Errorf("failed %v, want %v: %s", failed, c.failed, strings.Join(failedChecks(checks), "; "))
+			}
+		})
+	}
+
+	// the bonus is the sim's own call: an empty socket takes it off
+	emptied := s
+	emptied.Gems = slices.DeleteFunc(slices.Clone(s.Gems), func(g goldcharGem) bool { return g.Slot == bonusSlot && g.Socket == 0 })
+	if on := simSheet(t, emptied).socketBonus[bonusSlot]; on {
+		t.Errorf("slot %d keeps its socket bonus with socket 0 empty", bonusSlot)
 	}
 }
 
@@ -732,6 +974,17 @@ func TestGoldcharInfoCatchesMismatches(t *testing.T) {
 			s.spellHit -= 3
 			s.auras = append(s.auras, 18176)
 		}, []string{"spell hit %"}},
+		{"mana regen a percent above", "MageFrost", func(s *serverSheet) { s.regen.Flat[0] *= 1.01 }, []string{"mana regen"}},
+		{"mana regen while casting a percent above", "MageArcane", func(s *serverSheet) { s.regen.Interrupted[0] *= 1.01 },
+			[]string{"mana regen while casting"}},
+		{"a record from before regen", "MageFrost", func(s *serverSheet) {
+			s.regen.Flat[0] *= 1.01
+			s.regen = nil
+		}, nil},
+		{"an energy regen talent the sim lacks", "RogueCombat", func(s *serverSheet) { s.regen.Flat[3]++ },
+			[]string{"energy regen"}},
+		{"a slower blood rune", "DeathknightBlood", func(s *serverSheet) { s.regen.Rune[0] *= 0.9 },
+			[]string{"rune 0 cooldown"}},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			s := goldcharSetupNamed(t, c.setup)
@@ -776,9 +1029,11 @@ func TestGoldcharRecordsGroupByBot(t *testing.T) {
 func TestGoldcharInfoMatchesOneSetup(t *testing.T) {
 	setups := allGoldcharSetups(t)
 	for _, s := range setups {
-		info := goldcharInfo(t, s, serverSheet{})
-		if got, err := matchGoldcharSetup(setups, &info); err != nil || got.Name != s.Name {
-			t.Errorf("%s matched %s, %v", s.Name, got.Name, err)
+		for _, s := range []goldcharSetup{s, goldcharGeared(s)} {
+			info := goldcharInfo(t, s, serverSheet{})
+			if got, err := matchGoldcharSetup(setups, &info); err != nil || got.Name != s.Name {
+				t.Errorf("%s geared=%v matched %s, %v", s.Name, s.geared, got.Name, err)
+			}
 		}
 	}
 
@@ -855,14 +1110,22 @@ var classRaidBuffs = map[protoreflect.Name]int32{
 // The server character has to start the way the sim starts the spec, so each setup lists the auras
 // the e2e casts for that: whatever aura with a spell id the sim has up after a reset that isn't a glyph
 // or passive (Bone Shield is a talent, but only up once cast), and the raid buffs the class gives
-// itself, which the sim adds as stats.
+// itself, which the sim adds as stats. That holds bare and geared; an aura only the geared character
+// starts with comes with an enchant or gem (Rune of Razorice's Razor Frost), which the server character
+// wears too.
 func TestGoldcharAurasCoverTheSimsStart(t *testing.T) {
 	needsItemDB(t)
 	listed := func(s goldcharSetup, id int32) bool {
 		_, unlisted := unlistedStartingAuras[id]
 		return unlisted || slices.Contains(s.Auras, id)
 	}
+	var setups []goldcharSetup
 	for _, s := range allGoldcharSetups(t) {
+		setups = append(setups, s, goldcharGeared(s))
+	}
+	bareStart := map[string][]int32{}
+	for _, s := range setups {
+		name := fmt.Sprintf("%s geared=%v", s.Name, s.geared)
 		d, err := newGoldcharSim(goldcharInfo(t, s, serverSheet{}).damageRecord, s)
 		if err != nil {
 			t.Fatal(err)
@@ -871,7 +1134,13 @@ func TestGoldcharAurasCoverTheSimsStart(t *testing.T) {
 		d.sim.Reset()
 		for _, aura := range d.char.GetAuras() {
 			id := aura.ActionID.SpellID
-			if !aura.IsActive() || id == 0 || listed(s, id) ||
+			if !aura.IsActive() || id == 0 {
+				continue
+			}
+			if !s.geared {
+				bareStart[s.Name] = append(bareStart[s.Name], id)
+			}
+			if listed(s, id) || s.geared && !slices.Contains(bareStart[s.Name], id) ||
 				slices.ContainsFunc(s.Glyphs, func(g goldcharGlyph) bool { return g.Spell == id }) {
 				continue
 			}
@@ -879,14 +1148,14 @@ func TestGoldcharAurasCoverTheSimsStart(t *testing.T) {
 			if spell := serverdata.SpellByID(id); spell != nil && spell.Flags&serverdata.FlagPassive != 0 {
 				continue
 			}
-			t.Errorf("%s starts with %d (%s), which isn't in its auras", s.Name, id, aura.Label)
+			t.Errorf("%s starts with %d (%s), which isn't in its auras", name, id, aura.Label)
 		}
 		for _, id := range s.Auras {
 			if _, ok := serverStartingAuras[id]; ok {
 				continue
 			}
 			if aura := d.char.GetAuraByID(core.ActionID{SpellID: id}); aura != nil && !aura.IsActive() {
-				t.Errorf("%s: the sim has aura %d (%s) but doesn't start with it", s.Name, id, aura.Label)
+				t.Errorf("%s: the sim has aura %d (%s) but doesn't start with it", name, id, aura.Label)
 			}
 		}
 
@@ -894,11 +1163,11 @@ func TestGoldcharAurasCoverTheSimsStart(t *testing.T) {
 		if enchant := d.char.Equipment[proto.ItemSlot_ItemSlotMainHand].TempEnchant; enchant != 0 {
 			var ok bool
 			if imbue, ok = imbueSpells[enchant]; !ok {
-				t.Errorf("%s: the sim imbues the main hand with enchant %d, which imbueSpells doesn't know", s.Name, enchant)
+				t.Errorf("%s: the sim imbues the main hand with enchant %d, which imbueSpells doesn't know", name, enchant)
 			}
 		}
 		if s.Imbue != imbue {
-			t.Errorf("%s: imbue %d, want %d for the sim's main hand", s.Name, s.Imbue, imbue)
+			t.Errorf("%s: imbue %d, want %d for the sim's main hand", name, s.Imbue, imbue)
 		}
 
 		buffs := &proto.RaidBuffs{}
@@ -906,9 +1175,9 @@ func TestGoldcharAurasCoverTheSimsStart(t *testing.T) {
 		buffs.ProtoReflect().Range(func(fd protoreflect.FieldDescriptor, _ protoreflect.Value) bool {
 			switch id, ok := classRaidBuffs[fd.Name()]; {
 			case !ok:
-				t.Errorf("%s gives itself %s, which classRaidBuffs doesn't know", s.Name, fd.Name())
+				t.Errorf("%s gives itself %s, which classRaidBuffs doesn't know", name, fd.Name())
 			case id != 0 && !listed(s, id):
-				t.Errorf("%s gives itself %s, so its auras need %d", s.Name, fd.Name(), id)
+				t.Errorf("%s gives itself %s, so its auras need %d", name, fd.Name(), id)
 			}
 			return true
 		})
@@ -924,10 +1193,14 @@ func needsItemDB(t *testing.T) {
 
 // Every spell a setup expects compared has a sim declaration for each probed effect on the setup's
 // character, and the sim's code deals something for it with the base pinned. Less than the base can be
-// right: Glyph of Moonfire takes 90% off Moonfire's direct damage.
+// right: Glyph of Moonfire takes 90% off Moonfire's direct damage. Bare and geared.
 func TestGoldcharReplayCoversTheProbes(t *testing.T) {
 	needsItemDB(t)
+	var setups []goldcharSetup
 	for _, s := range allGoldcharSetups(t) {
+		setups = append(setups, s, goldcharGeared(s))
+	}
+	for _, s := range setups {
 		for _, p := range s.Probes {
 			if p.Shaped != "" {
 				continue
@@ -959,24 +1232,29 @@ func TestGoldcharReplayCoversTheProbes(t *testing.T) {
 }
 
 // The talents reach the sim from the talent string, not from auras: MageFrost's Spell Impact 3/3 adds
-// 6% to Scorch, so (382 + int(0.429 * 520)) * 1.06 = 641 at the bottom and 713 at the top.
+// 6% to Scorch, so (382 + int(0.429 * 520)) * 1.06 = 641 at the bottom and 713 at the top. Geared, its
+// Chaotic Skyflare Diamond (SPELL_AURA_MOD_CRIT_DAMAGE_BONUS 3) makes a crit 1.5 * 1.03.
 func TestGoldcharDamageOnHandCheckedRecords(t *testing.T) {
 	needsItemDB(t)
-	scorch := func(lo, hi float64) damageRecord {
+	scorch := func(lo, hi, crit float64) damageRecord {
 		return handRecord(t, mage, 8, 42859, nil, "", fmt.Sprintf(`
 			{"index": 0, "kind": "damage", "coefficient": 0.429, "base": {"min": 382, "max": 450},
-				"taken": {"min": %.0f, "max": %.0f}, "crit": {"amount": 10000, "result": 15000}}`, lo, hi))
+				"taken": {"min": %.0f, "max": %.0f}, "crit": {"amount": 10000, "result": %.0f}}`, lo, hi, crit))
 	}
 	s := goldcharSetupNamed(t, "MageFrost")
 	for _, c := range []struct {
 		name   string
 		rec    damageRecord
+		s      goldcharSetup
 		failed []string
 	}{
-		{"with Spell Impact", scorch(641, 713), nil},
-		{"without it", scorch(605, 673), []string{"e0 damage min", "e0 damage max"}},
+		{"with Spell Impact", scorch(641, 713, 15000), s, nil},
+		{"without it", scorch(605, 673, 15000), s, []string{"e0 damage min", "e0 damage max"}},
+		{"geared", scorch(641, 713, 15450), goldcharGeared(s), nil},
+		{"geared without the meta gem's crit", scorch(641, 713, 15000), goldcharGeared(s), []string{"e0 damage crit"}},
+		{"bare with it", scorch(641, 713, 15450), s, []string{"e0 damage crit"}},
 	} {
-		checks := checkGoldcharDamage(c.rec, s)
+		checks := checkGoldcharDamage(c.rec, c.s)
 		if _, failed := checkNames(checks); len(checks) == 0 || !slices.Equal(failed, c.failed) {
 			t.Errorf("%s: failed %v, want %v: %s", c.name, failed, c.failed, strings.Join(failedChecks(checks), "; "))
 		}
