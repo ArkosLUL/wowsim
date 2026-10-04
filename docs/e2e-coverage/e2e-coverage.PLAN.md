@@ -805,7 +805,7 @@ inside the 1-point truncation tolerance, so it agrees.
 Review: `buffsSelect` (was unprefixed `selectUnit`); a pair's `off` takes only its own wanted auras, so a missing
 baseline aura stays `missing` (the captured run's lines are unchanged by it).
 
-### EC-GEAR (W; golden-neutral; C++; stages: C++ and e2e, sim, live)
+### EC-GEAR (W, done; golden-neutral; C++; stages: C++ and e2e, sim, live)
 
 - `.simval enchant <slot> <enchantId>` (`ApplyEnchantment` off, `SetEnchantment`, on) and
   `.simval gem <slot> <socket> <gemItemId>` (`HandleSocketOpcode`'s steps: socket enchant, socket bonus, meta toggle;
@@ -861,7 +861,7 @@ Stage live (server build of 2026-10-04 13:50):
   - DK Icy Touch and Death Coil are magic class on the server: 1.5 base with the meta, doubled by Runic Focus (2.09);
     the sim uses the melee 2.0 base (2.06).
 
-### EC-MOBS (W; golden-neutral; module SQL and config; stages: SQL and e2e, sim, live)
+### EC-MOBS (W, done; golden-neutral; module SQL and config; stages: SQL and e2e, sim, live)
 
 - Undead, demon, elemental, dragonkin and mechanical dummies 999004–999008: extend
   `data/sql/db-world/base/simval_dummies.sql`'s `DELETE` list and rows, same script. Add them to
