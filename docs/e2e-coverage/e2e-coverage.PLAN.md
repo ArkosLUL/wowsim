@@ -691,7 +691,7 @@ to +3.7%, hunters, warlocks, shamans, Balance, Arcane and Frost mage +0.3 to +1.
 and FrostFire −0.2%; healers' few TPS +53 to +83% (assist threat). All other checks pass: replays,
 `TestSimSpellGroups`, `TestSimAOESpells`, simval records (1114 of 1114), `go vet`.
 
-### EC-STRIKES (V, merged, live stage pending; golden-neutral; C++; stages: C++ and e2e, sim, live)
+### EC-STRIKES (V, done; golden-neutral; C++; stages: C++ and e2e, sim, live)
 
 - Weapon strikes in `.simval damage`: `Spell::EffectWeaponDmg`'s fixed bonus, percent, spell bonus and total
   percent, at both ends of `CalculateMinMaxDamage` (normalized via `GetAPMultiplier`), then
@@ -732,6 +732,29 @@ and FrostFire −0.2%; healers' few TPS +53 to +83% (assist threat). All other c
   aura every 3 s ×10; the sim's Imp Firebolt crits ×2, the server's magic spells ×1.5; the sim's cat and bear
   weapons (43–66, 109–165) aren't the server's form damage (`min(level, 60)` × 0.85–1.25 × the form's speed:
   51–75, 127.5–187.5). Live notes: `tmp/ec-strikes-sim.md`.
+- Live (W, 8 runs; `strikes.jsonl` is the last, all 15 subtests passing, 102 records, 87 compared). Probe fixes
+  the runs forced, all in `strikes_test.go`:
+  - Inferno and Force of Nature failed `SPELL_FAILED_LINE_OF_SIGHT` even 3 yards beyond the bot (the east wing's
+    entry): their owner now moves 16 yards past the dummy into the hall and casts at its feet (`away`), clear of
+    Inferno's 10-yard stun and Immolation's 8 yards plus the dummy's 2.5 reach. A failed summon now names its
+    cast error.
+  - Summon Gargoyle leaves its own periodic dummy aura on the dummy; the pet precondition allows it.
+  - `.pet create` on the level 79 wolf kept level 79 create stats under a level 80 label (`Player::CreatePet`):
+    the hunter tames Alterac Valley's level 80 Frostwolf (37294); `simPets` follows.
+  - `.pet create` casts Hunter Pet Scaling 01–03 before the pet has an owner, so they read 0 until their first
+    2 s refresh: the probe waits 2.5 s and requires an attack power share. The wolf's attack and spell power
+    (22% and 12.87% of ranged AP) then agree.
+  - The cat's form recast sometimes stripped `.aura`'d Predatory Instincts and Feral Instinct (passives needing
+    the form; the recast restores only learned ones): the talent pass puts its auras on again after a recast.
+
+  Verdicts: every warrior, paladin, rogue, death knight, shaman and hunter strike agrees, bare and talented, and
+  Bite, Firebolt's amounts, Cleave's bonus and crit, Immolation, Claw, Waterbolt and hunter pet focus (24 per 4 s).
+  Known mismatches (`knownStrikesMismatches`, fixture README rows; nothing dropped): cat and bear form weapons;
+  the Felguard's weapon (88.8–133.3 vs `pet_levelstats`' 329–495); Imp Firebolt crit (×2 vs ×1.5); Ghoul Frenzy
+  (6 s ×5 vs 3 s ×10); pet `info` base and total stats, armor, attack and spell power (not the wolf's), and Imp, Felguard and
+  Water Elemental mana regen (the sim's pet constants and owner coefficients vs `pet_levelstats`, guardian
+  defaults and the scaling auras). Not checkable: the Infernal's raid buffs (the e2e gives no party buffs). Force
+  of Nature: the talent's 33831 summons Treant 1964, the sim casts 65861 (Treant 36070).
 
 ### EC-BUFFS (V, done; golden-neutral; stages: code, live)
 

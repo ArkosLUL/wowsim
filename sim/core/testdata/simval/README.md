@@ -116,6 +116,14 @@ logged.
 
 | Probe | Check | Dropped or known | Why |
 |---|---|---|---|
+| Cat 48566 Mangle, 48572 Shred, 62078 Swipe; bear 48480 Maul, 48564 Mangle; both passes | min, max | known | the sim's form weapons are 43–66 (cat) and 109–165 (bear); the server's form damage is `min(level, 60)` × 0.85–1.25 × the form's speed (`Player::CalculateMinMaxDamage`): 51–75 and 127.5–187.5 |
+| Felguard 47994 Cleave | min, max | known | the sim's Felguard swings 88.8–133.3, the server's 329–495 (`pet_levelstats` at 80) |
+| Imp 47964 Firebolt | e0 damage crit | known | the sim crits ×2; `SpellCriticalDamageBonus` gives a pet's magic spell ×1.5 |
+| Death knight 63560 Ghoul Frenzy (timing) | e0 amplitude, e0 ticks | known | the sim heals every 6 s, 5 times; the server's aura every 3 s, 10 times |
+| `info` of every pet but the Imp and Felguard | base and total stats (per pet in `knownStrikesMismatches`) | known | the server's create stats are the `pet_levelstats` row, or `Guardian::InitStatsForLevel`'s 22/22/25/28/27 without one, plus the `PetDefines.h` scaling auras' share of the owner's; the sim pets have their own constants and owner coefficients |
+| `info` of every pet | armor | known | the server's is `pet_levelstats`' armor, or level × 50 without a row, plus the scaling share; the sim's comes from its own constants |
+| `info` of every pet but the wolf and Felguard | attack power; spell power (Spirit Wolf, Treant, Shadowfiend) | known | the server's follows from the pet's stats and scaling auras, the sim's from its own owner coefficients |
+| `info` of Imp, Felguard, Water Elemental | regen per tick | known | `Creature::Regenerate` gives a controlled creature spirit/5 + 17 mana a tick; the sim pet uses the player formula |
 
 ## Spells missing from serverdata
 

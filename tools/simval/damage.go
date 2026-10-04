@@ -1353,7 +1353,7 @@ func warlockSummon(summon proto.Warlock_Options_Summon) func(*proto.Player) {
 // simPets are the sim pets of the server's pet and guardian entries. The tamed wolf keeps its creature
 // entry; Force of Nature's talent rank summons Treant 1964.
 var simPets = map[uint32]simPet{
-	26672: {3, "hunter", "Wolf", "", func(p *proto.Player) {
+	37294: {3, "hunter", "Wolf", "", func(p *proto.Player) {
 		o := p.GetHunter().Options
 		o.PetType, o.PetUptime = proto.Hunter_Options_Wolf, 1
 	}},
