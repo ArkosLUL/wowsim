@@ -223,8 +223,8 @@ check drops the state. A dropped failure is logged; a drop failing nothing, a st
 `sim/core/testdata/simval/goldchar_setups.json` lists each non-healer golden suite's default player (suites
 sharing one share an entry), which mod-sim-validation's `TestSimvalGoldenCharacters` builds on the server
 (`goldchar.go`). Per setup:
-- From the suites: spec field, server class and race, gear set and its items by server equipment slot (no gems or
-  enchants), talent string and its rank spells in learn order (tree file order, a prerequisite first: Dual Wield
+- From the suites: spec field, server class and race, gear set and its items by server equipment slot, its
+  `enchants` and `gems` (below), talent string and its rank spells in learn order (tree file order, a prerequisite first: Dual Wield
   sits after Dual Wield Specialization), glyphs with server slot (majors 0, 3, 5; minors 1, 2, 4), sim item and
   aura spell (`db.json`).
 - The list's own: each glyph's GlyphProperties id (from the live GlyphProperties.dbc; 0 for a sim glyph the server
@@ -236,21 +236,30 @@ sharing one share an entry), which mod-sim-validation's `TestSimvalGoldenCharact
   priest buffs, Trueshot Aura), which the sim adds as stats. DKs list Blood Presence, which the server character
   always has and the sim only gets from its rotation (`serverStartingAuras`).
 - `imbue`: the temporary enchant the sim always puts on the main hand (Elemental's Flametongue Weapon, 58790).
+- `enchants` (slot, SpellItemEnchantment id) and `gems` (slot, socket index in the gear set's list, gem item id), for
+  `.simval enchant` and `.simval gem`: only enchants `db.json` knows (the sim drops the rest, like the spell and item
+  ids in feral tank's gear set), and for a gem past an item's sockets the socket-adding enchant (`socketEnchants`:
+  belt buckle 3729, socket bracer 3717, socket gloves 3723). Only a geared setup's `goldcharPlayer` wears them
+  (below), so buffs.go and the sweeps build without, as their captures' characters went without.
 
 Edit the list by hand. Four tests keep it honest:
 - `TestGoldcharSetupsFollowTheSuites` parses every `CharacterSuiteConfig` in a `sim/**` Test function with
   `go/ast` and fails, printing the expected entry, when the list drifts from the suites.
 - `TestGoldcharAurasCoverTheSimsStart` fails on an aura the sim has up after a reset, or a raid buff the class gives
   itself, that isn't in `auras`; passives (serverdata), glyphs and `unlistedStartingAuras` (Thorns) are exempt. It
-  also holds `imbue` to the sim's main hand enchant (`imbueSpells`).
+  also holds `imbue` to the sim's main hand enchant (`imbueSpells`). Bare and geared; an aura only the geared
+  character starts with comes with its gear (Razor Frost).
 - `TestGoldcharTalentsLearnPrerequisitesFirst` checks the learn order on every tree file.
 - `TestTalentTreeRankSpellsAreTheServers` holds every tree file's rank spells to the spelldump's ranks.
 
 `TestGoldenCharacters` replays `sim/core/testdata/simval/goldchar.jsonl`, a capture of that e2e (skips without it;
 needs `-tags=with_db`). Records group by bot name; the info record's `character` (class, race, talents, glyphs,
-items) picks exactly one setup, and the bot's `damage` records belong to it. The sim character is `goldchar.go`'s
-`goldcharPlayer`: the setup's spec, race, items, talent string and server-known glyphs, empty buffs, consumes and
-spec options, plus `auras` it registers by id. A hunter whose record carries Sniper Training's buff (64420, a bot
+items) picks exactly one setup, and the bot's `damage` records belong to it. `wornBy` then makes the setup geared
+when each item's `enchant` and `prismatic`, and `gems`, are exactly its own; a record without those fields replays
+bare (logged), anything else fails. The sim character is `goldchar.go`'s `goldcharPlayer`: the setup's spec, race,
+items, talent string and server-known glyphs, empty buffs, consumes and spec options, plus `auras` it registers by
+id; geared, also its enchants and gems (`gearItems`, skipping socket-adding enchants: the sim takes a gem past an
+item's sockets as one more socket). A hunter whose record carries Sniper Training's buff (64420, a bot
 that stood still) also gets `SniperTrainingUptime` 1 and its aura 53304. Per setup:
 - `info`, against the sim's stats after a reset:
   - the talent sweep's sheet (`checkGoldcharSheet`): primary stats, max health, max power (only in a record with
@@ -266,6 +275,10 @@ that stood still) also gets `SniperTrainingUptime` 1 and its aura 53304. Per set
   - per hand the sim swings (main hand, dual-wield off hand, hunter ranged): unhasted and hasted ms (server
     truncates), the item's weapon damage (also in a feral form, which swings the form's), crit, hit (main hand and
     ranged) and expertise, from the auto attack spell's bonuses.
+  - geared (`gearChecks`), per item: `socket bonus`, the sim's call read off `TotalStats` against the record's
+    `socketBonus`; `meta gem`, which the sim always counts, failing on a `condition` in `inactive`; any other
+    `inactive` enchantment fails.
+  - with `regen`: the timing replay's `checkRegen` (mana, energy, rune cooldowns) on a fresh start.
 - `damage`: the record's `shaped` must contain the probe's; unshaped records replay like `TestDamageRecords`
   (`replayDamage`) on this character. A stacking dot is worked out for one stack.
 

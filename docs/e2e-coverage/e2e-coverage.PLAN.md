@@ -794,6 +794,50 @@ baseline aura stays `missing` (the captured run's lines are unchanged by it).
   rows; `goldchar_setups.json`, `goldchar.jsonl`, `goldchar.go`'s setup building, `tools/simval/goldchar_test.go`,
   its fixture README rows, the simval README's Golden characters.
 
+#### As built
+
+Stage C++ and e2e (compile-checked with `-fsyntax-only -Werror`, e2e vetted; not rebuilt, no live run):
+- `.simval enchant` takes the enchant only if some spell enchanting with it passes `Spell::CheckItems`' item checks;
+  a socket-adding enchant (belt buckle 3729, socket bracer 3717, gloves 3723) goes in the prismatic slot. `.simval
+  gem` is `HandleSocketOpcode` for one socket. Both refuse an enchant the character's skill or level keeps inactive
+  (`needs skill <id> at <value>`), which `ApplyEnchantment` would skip silently. `.simval hp` with yourself selected
+  sets your health without `.modify hp`'s max health pin. `info`'s equipment adds each item's enchantments, gems and
+  `inactive` ones; record format in the module README.
+- `goldchar_setups.json` gains `enchants` and `gems` from the gear set (`goldchar.go`'s setup building; only enchants
+  `db.json` knows, as the sim drops the rest), a socket-adding enchant per gem past an item's sockets; HunterMM's auras
+  lose Trueshot Aura. `goldcharPlayer` stays gemless, so buffs and the sweeps build what they did.
+- `TestSimvalGoldenCharacters` learns Parry, applies enchants then gems (`.setskill <id> 450 450` and a retry on a
+  `needs skill` refusal), sets full health with `.simval hp 100` 2 s after the auras, and holds the record's gear
+  to the setup. Plan for the sim and live stages: `tmp/ec-gear-cpp.md`.
+- Offline from the live DBCs: every enchant has a spell that takes its item, every meta gem's colors are met.
+  DruidFeralTank's gear set names 5 enchants by spell or item id, which the sim drops (follow-up).
+
+Stage sim (offline; live stage plan in `tmp/ec-gear-sim.md`):
+- `TestGoldenCharacters` replays a record wearing exactly the setup's enchants and gems geared (`wornBy`,
+  `gearItems`), one from before those fields bare; buffs.go and the sweeps stay bare.
+- Geared info adds `gearChecks` (socket bonus, meta gem, skipped enchantments); a record with `regen` gets the timing
+  replay's `checkRegen`. Tested on hand-built records in the new format, bare and geared for every setup.
+- The committed capture still passes unchanged: 1565 checks, all 32 bots bare, no regen. The Parry, max health and
+  HunterMM AP/RAP drops stay until the recapture.
+
+Review: `.simval hp` acts on you only with yourself selected (nothing selected refuses again, as other tests rely on);
+`.simval enchant` refuses an enchant no spell puts on.
+
+Stage live (server build of 2026-10-04 13:50):
+- First full run: PriestShadow's info record carried Lightweave's proc (55637, +295 spell power) from the self buff
+  casts. The e2e now `.unaura`s it before recording and fails if it's still on. The rerun's 131 records (32 setups,
+  1080 s; the module README says about 18 minutes) are `goldchar.jsonl`.
+- `TestGoldenCharacters`: 1996 checks, every bot geared and with regen. The capture faults' 18 drops (Parry, max
+  health, HunterMM AP/RAP) pass and are gone.
+- Real sim mismatches, dropped with fixture README rows (follow-ups):
+  - Lightweave Embroidery's +1 spirit, missing from the sim's enchant (10 setups).
+  - Weapon feral AP rounding: 1 AP short in DruidBalancePhase3 and DruidFeralApl.
+  - Rune of the Stoneskin Gargoyle's defense: the server takes it as skill, undiminished (DK tank dodge, parry).
+  - Crit damage auras: the server adds the meta gem's 3% to Predatory Instincts, Prey on the Weak and Poleaxe
+    Specialization; the sim multiplies (Rake, poisons, Thunder Clap, Heroic Throw).
+  - DK Icy Touch and Death Coil are magic class on the server: 1.5 base with the meta, doubled by Runic Focus (2.09);
+    the sim uses the melee 2.0 base (2.06).
+
 ### EC-MOBS (W; golden-neutral; module SQL and config; stages: SQL and e2e, sim, live)
 
 - Undead, demon, elemental, dragonkin and mechanical dummies 999004–999008: extend
