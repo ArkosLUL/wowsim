@@ -933,6 +933,65 @@ Stage live (server build of 2026-10-04 13:50):
 - **Owns:** `e2e/fight_test.go`, `e2e/run.sh` (Chronicle and output mounts), `tools/simval/fight.go` and its test,
   `sim/core/testdata/fights/`, the simval README's Fights; `chronicle.go` read-only.
 
+#### As built
+
+Stage sim (offline; e2e and live plan in `tmp/ec-fight-sim.md`):
+- `sim/core/testdata/fights/cycles.json`: a proc-blind cycle per golden setup (90 s, distance, facing, hunter
+  ammo, Auto Shot as a hunter's `before`), held by `TestFightCycles`. Left out: on-next-swing spells, spells
+  whose cast time a proc changes (Fury Slam, Ret Exorcism, Fire Pyroblast, Enhancement Lightning Bolt), repeats
+  inside their cooldown. Slack before hardcasts, slower rogue, cat and Protection warrior steps.
+- `tools/simval/fight.go`, `simval fight` (replay, `-trim`): method in the simval README's Fights. Departures from
+  the spec, each forced by a bot-driven self-test: per-fight range checks over 1000 iterations instead of pooled
+  z (crits, means and auras correlate within a fight; rare events have long tails); a cast blocked by the sim's
+  own cast, GCD or cooldown up to 2 s waits and lands late (still a miss) so the rest of the fight stays aligned;
+  `casts` allows half the logged casts, or 2, to miss (proc and power divergence); applications count expiry
+  extensions (rollovers and in-place refreshes aren't Activate calls); an event every map update (the sim only
+  expires auras on events); the empty APL's 50 ms GCD hold is cleared before a cast.
+- `TestFightReplaysTheBotsOwnFight`: every cycle run by a sim bot, written as a Chronicle log and replayed, all
+  agree; 512 such fights over 16 seeds had no false failure. `TestFightCatchesMismatches` catches five kinds of
+  disagreement. No capture fits a golden setup; a scratch replay of the Affliction, Ret and Prot captures with
+  their own characters ran end to end (failures: ids the sim books differently, the captures' own gear) and seeded `fightSimActions` (Life Tap, paladin judgements and talents).
+
+Stage e2e (vetted, no live run; run command in `tmp/ec-fight-e2e.md`):
+- `TestSimvalFight` (module `e2e/fight_test.go`, method in the module README): golden build without probes, `.learn`
+  of the cycle's spells, hunter ammo, mana filled by `.modify mana <maxPower>`, the cycle's spot (a ranged bot in
+  front turns the dummy, as north is behind it), no pet on either side, so pet abilities are left out; guardians a
+  proc summons (Bloodworms) are compared as they come. A spell that never went off fails the setup.
+- The build's own casts land in the log (Chronicle logs every spell go, triggered too), and DKs cast Horn of Winter,
+  a cycle spell, as an aura. The e2e names the log after the fight's first second on the log's clock (its clock
+  drifts from the container's), and `fightStartFloor` makes the replay and trim ignore earlier casts and swings.
+- `run.sh`: `SIMVAL_FIGHT_CYCLES`, `SIMVAL_CHRONICLE_LOGS`, `SIMVAL_FIGHT_OUT` mounts, `SIMVAL_FIGHT_ONLY`, and
+  `TestSimvalFight` in the default `-skip`. About 3 min per setup.
+
+Stage live (2026-10-04; the 32 committed fights are from the worldserver build of 20:33, rev 15282384e, which
+someone else rebuilt and restarted mid-stage; 106 KB):
+- e2e fixes the runs forced: 4 yards north of the dummy has no line of sight to it (Bloodthirst refused
+  `LINE_OF_SIGHT`, no swing landed), so melee stays south and a `behind` cycle turns the dummy away; equipping starts
+  item proc cooldowns (`Player::ApplyEquipCooldown`, trinkets first proccing 30 s in), so the gear goes on under
+  `.cheat cooldown`; a `learn` cycle field teaches passives the sim assumes (Savage Defense 62600, a trainer spell).
+- Cycle fixes: Sunder Armor 7386, as rank 47467 is a flat-armor Sunder on the server (Fury ran 32% over the sim);
+  spells that never went off (rune-starved Howling Blast and Death Strike, Multi-Shot under Aimed Shot's cooldown,
+  Earth Shock under Flame Shock's) dropped or re-timed, and the bot self-test now fails such a spell.
+- Replay fixes, each a false failure: only damage on the dummy counts (a Naxxramas critter took a Thunder Clap,
+  Shadow Word: Death's backlash); metrics-only damage (Necrosis, Unholy Blight) and silent misses (Corruption);
+  aura applications count stack and charge updates, the player's per 10 ms world tick; permanent triggers sharing a
+  proc's id skipped; pre-fight procs start the sim's internal cooldown; a gain gets one tick of slack at the edges;
+  72 server-to-sim id pairs and 30 representation gaps (`fightAurasLeftOut` and kin) with printed reasons.
+- Verdicts (after review): 2021 checks over 32 fights; 40 fail on real mismatches, dropped with fights README rows by
+  cause (follow-ups): world tick swings, early dummy ticks, Bloodworms' Horn of Winter, Frost Vulnerability's misses,
+  Vindication's proc rate, Insect Swarm's Vengeance crits, Eclipse on any hit, dot-tick procs
+  (Dragon Soul, Greatness, Dying Curse), Rake's armor, Torment the Weak, Enduring Winter's cooldown, Crusader Strike
+  refreshing judgements, Prey on the Weak's 10 s lapses, Hemorrhage's debuff, Lava Lash's off-hand halving, Rend's
+  ticks 3 to 11% high.
+
+Review: the sim's target health percent was the time left, so its Rend lost the +35% above 75% health after the
+first quarter while the server's barely scratched dummy kept it; the replay now puts the dummy's max health on the
+encounter. That hid a real Rend gap (Arms passed only as the two errors cancelled), now dropped for Arms and
+Protection. A persistent area aura's missed tick, left out on purpose, came back through `silentMisses` as a direct
+miss (Consecration: about 3 a fight against the log's 0, passing only as 0 was in range). `TestFightReplays` now
+wants one fight per setup. 256 bot fights (seeds 2 to 9) had no false check failure; twice a finisher cast once a
+cycle never landed (Feral APL's Savage Roar, Subtlety's Eviscerate), which would fail the e2e (follow-up).
+
 ## Orchestrator onboarding (wave S start)
 
 - Add waves S–X to the registry and an `EC-` row to "Where the specs are".

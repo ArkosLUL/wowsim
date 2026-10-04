@@ -16,11 +16,15 @@
 //
 // `talents` cuts a talent sweep run's raw records down to the fixture TestTalentSweepRecords replays.
 //
+// `fight` replays a golden setup's fight on the boss dummy ability by ability, or with -trim cuts the e2e's
+// log down to the committed fight.
+//
 //	tools/acore/dock.sh run ./tools/simval
 //	tools/acore/dock.sh run ./tools/simval -fixture
 //	tools/acore/dock.sh run ./tools/simval chronicle -sim 8123 <log>
 //	tools/acore/dock.sh run --tags=with_db ./tools/simval rrsim -seconds 300.8 <setup>
 //	tools/acore/dock.sh run ./tools/simval talents -records /wotlk/tmp/sweep.jsonl
+//	tools/acore/dock.sh run --tags=with_db ./tools/simval fight sim/core/testdata/fights/WarriorFury.log.gz
 package main
 
 import (
@@ -48,6 +52,8 @@ func main() {
 			os.Exit(runRecordedSim(os.Args[2:]))
 		case "talents":
 			os.Exit(runTalentTrim(os.Args[2:]))
+		case "fight":
+			os.Exit(runFight(os.Args[2:]))
 		}
 	}
 	os.Exit(runReplay(os.Args[1:]))
