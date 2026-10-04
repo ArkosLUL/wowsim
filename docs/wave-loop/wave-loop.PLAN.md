@@ -144,9 +144,8 @@ PERF-COST joins V (the user's call, the same day): T2's cost arithmetic slowed C
 
 ## Current wave
 
-- Wave: V, landed (master fast-forwarded to this close-out). Next: W (EC-GEAR, EC-MOBS) and EC-STRIKES' live stage,
-  carried since Deathsong stayed online; W's rebuild covers its C++, its notes are in
-  `G:\DevStuff\GitHub\.wave-loop\ec-strikes-tmp`. V's throughput row waits for an idle machine.
+- Wave: W, landed (master fast-forwarded to this close-out). Next: X (EC-FIGHT). W's items' notes are in
+  `G:\DevStuff\GitHub\.wave-loop\ec-{gear,mobs,strikes-live}-tmp`.
   Prod runs Q's `225191f1f`; R changes the optimizer's pool and the BiS tabs' hint.
 - Open: the talent sweep's unseen talents (test-enrichment INVESTIGATION, TE-SWEEP as built); from Q (parity
   INVESTIGATION, PAR-FU-4..7 as built): Ranged Weapon Specialization on Explosive Trap and magic procs, Glyph of Totem
@@ -157,15 +156,14 @@ PERF-COST joins V (the user's call, the same day): T2's cost arithmetic slowed C
   items' As built): no per-school crit sheet in the sim (3 fire-crit drops, EC-SHEET's spell-specific crit);
   Blood-Gorged, Mace Specialization and Holy Specialization dropped as sheet artifacts; Rupture and Slice and Dice
   untested with combo points (backlog); from T (e2e-coverage PLAN, EC-SHEET, EC-SPELLMOD, EC-THREAT and EC-AOE as
-  built): EC-SHEET's capture faults for EC-GEAR; `.simval threat`'s help row until the next ac-db-import; the sweeps'
+  built): the sweeps'
   shared `sweepPrepare` (module `25d88f9`) not yet run live; `.simval threat`'s live assist threat assumes the dummy
   is the only creature in combat with the target; from T2: the Balance APL spends Nature's Swiftness on Starfire,
   which no longer takes it (−0.44%); Improved Healing Wave missing (a new path step and a re-record); RogueCombat's
   new Endurance sweep step dropped until a `SIMVAL_TALENT_ONLY=RogueCombat` rerun; Thrill of the Hunt on the modified
   cost (the server's base); rune and runic power costs on the old multiply path; Frost Channeling's mask 84 unverified
   live; Endurance's Sprint and Evasion cooldowns; Explosive Decoy's blast lands at once, not on its creature's death;
-  from V (e2e-coverage PLAN, the V items' As built): EC-STRIKES' offline leads (cat and bear form damage, Ghoul
-  Frenzy's cadence, the Imp's Firebolt crit, Force of Nature's treant); EC-BUFFS' dropped pairs (Curse of Weakness +
+  from V (e2e-coverage PLAN, the V items' As built): EC-BUFFS' dropped pairs (Curse of Weakness +
   Vindication: the server removes the whole curse; Insect Swarm + Scorpid Sting stack to −6% hit), Gift of Arthas on
   every school, Expose Armor unprobed, the pair list kept twice (e2e and replay); threat: Heart Strike's second target
   adds the bonus twice (the server splits one), per-tick bonuses of aura ticks the server casts (Bladestorm 50622, the
@@ -173,8 +171,17 @@ PERF-COST joins V (the user's call, the same day): T2's cost arithmetic slowed C
   Devastate's Sunder Armor 58567, Feint, positive self buffs' assist, Elemental Precision and Righteous Fury as school
   auras, heal threat's ×0.5, records 25742, 59092 and 60103 awaiting a `TestSimvalThreat` recapture; a full
   gen_serverdata run adds The Beast Within, Turn the Tables and Totem of Wrath and three threat rows the hunter and
-  rogue code reference (its own item: goldens may move); Combat Rogue's throughput unconfirmed idle (PERF-COST's
-  loaded A/B −10%).
+  rogue code reference (its own item: goldens may move); EC-THREAT-FIX's per-cast threat bookkeeping costs Elemental
+  7%, Ret 6% and Hunter 4% at 100 iterations (a PERF item is the user's call); from W (e2e-coverage PLAN, the W
+  items' As built), sim gaps the replays drop or allowlist: Lightweave's +1 spirit, druid weapon feral AP 1 short,
+  Stoneskin Gargoyle's defense as rating, crit damage bonuses (aura 163) multiplied where the server sums them for
+  spells, DK magic spells' 1.5 crit base, Elixir of Demonslaying (+105 AP, sim 265), the Undead Slaying set's
+  multiplying bonuses, versus AP reaching spells and scaled by the weapon percent (Scourgebane's 10-point Mangle and
+  Shred gap passes inside the strike tolerance), Predatory Strikes taking weapon enchants, cat and bear form weapon
+  damage, Felguard weapon damage, the Imp's Firebolt crit, Ghoul Frenzy's cadence, pet base stats and regen, Force of
+  Nature's treant; DruidFeralTank's gear set naming 5 enchants by spell or item id, which the sim drops; meta gem
+  color conditions unchecked in the sim; the Infernal's raid buffs unprobed; test character Svsleadhldgf (account
+  SVSMD00988CC095, 2026-10-03) left over, its cleanup awaiting the user's OK.
 - Deferred until X lands (the user's calls, 2026-10-02 and 10-03; each only on the user's go-ahead):
   - Rerun all 28 presets, tanks included, on the final HEAD: BIS-caps-race changes every racial search,
     `ff0920a96` the 16 builds `mage_*`, `rogue_*`, `warlock_*`, `warrior_arms`, `warrior_fury`,
@@ -185,7 +192,7 @@ PERF-COST joins V (the user's call, the same day): T2's cost arithmetic slowed C
   - Then the BiS tooltip dataset (acbis driver, both stages, fresh `--out`, then `acbis`; the import needs
     the OK), the changed builds' stat weights, and the perf harness's `opt_*` scenarios (`update.sh`, a new
     baseline; the raid25 dumps in `_dump/optimizer_dump_test.go` still build uncut pools).
-- Workflow runIds: V's `wf_ea73babf-e53`; T2's `wf_5af2b99d-6d0`; T's `wf_8a59e202-2f8`, `wf_59a7bdbf-cbc` and `wf_beaacdaa-bbc` (the live reruns; journals in the session's `subagents/workflows/<runId>`); S's `wf_ae61e19e-2c1`; R's `wf_445767f0-4a1` (base `9f1f2f94f`); Q's `wf_47a2be77-20d` and `wf_6f439290-bf9` (PAR-FU-5 and 6's live stages; base `fdbc3df49`); P's `wf_9c73b1de-ff3` (base `c678de53e`); O's `wf_cd004c46-c80` (base `b069c688b`); N's `wf_4b37e171-123` (base `7f4174efb`); M's `wf_8ab862a5-d37` (base `33da5ca34`); L's `wf_34052b28-d62`, `wf_1a26dbdb-51c`, `wf_ac1129b6-8d7`, `wf_a59f095c-4b7`, `wf_f5be2bcf-e23`,
+- Workflow runIds: W's `wf_aa1b462c-590` (code stages) and `wf_894cf391-8a3` (live stages); V's `wf_ea73babf-e53`; T2's `wf_5af2b99d-6d0`; T's `wf_8a59e202-2f8`, `wf_59a7bdbf-cbc` and `wf_beaacdaa-bbc` (the live reruns; journals in the session's `subagents/workflows/<runId>`); S's `wf_ae61e19e-2c1`; R's `wf_445767f0-4a1` (base `9f1f2f94f`); Q's `wf_47a2be77-20d` and `wf_6f439290-bf9` (PAR-FU-5 and 6's live stages; base `fdbc3df49`); P's `wf_9c73b1de-ff3` (base `c678de53e`); O's `wf_cd004c46-c80` (base `b069c688b`); N's `wf_4b37e171-123` (base `7f4174efb`); M's `wf_8ab862a5-d37` (base `33da5ca34`); L's `wf_34052b28-d62`, `wf_1a26dbdb-51c`, `wf_ac1129b6-8d7`, `wf_a59f095c-4b7`, `wf_f5be2bcf-e23`,
   `wf_42fc0b7c-42a`; args `wave<X>*-args.json` in `G:\DevStuff\GitHub\.wave-loop`, transcripts in
   `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\<runId>`.
 - J2's full-roster batch ran 2026-09-28 in 52 min at Quick, output in
@@ -227,6 +234,7 @@ Reckoning that way), but J isn't DPS: see below.
 | T | 8715.9, +236 / +230 | 10730.8, +708 / +903 | 5066.6, +41 / +51 | 12963.8, +148 / +225 | -17856.7, +4795 / +4847 | -1056.8, +917 / +888 |
 | T2 | 8690.7, +273 / +273 | 10730.8, +708 / +903 | 5066.6, +41 / +51 | 12963.8, +148 / +225 | -17856.9, +4795 / +4847 | -1056.8, +917 / +888 |
 | V | 8690.7, +273 / +273 | 10730.8, +708 / +903 | 5066.6, +41 / +51 | 12963.8, +148 / +225 | -17672.3, +4831 / +4777 | -1211.2, +892 / +891 |
+| W | 8690.7, +273 / +273 | 10730.8, +708 / +903 | 5066.6, +41 / +51 | 12963.8, +148 / +225 | -17672.3, +4831 / +4777 | -1211.2, +892 / +891 |
 
 Quick / Normal. Ret P4 ran at Quick only in wave D, after the glyph fix; its wave C numbers
 (12821.9, +54 / +73) came from a seed that wore the glyph. The two tanks arrive with
@@ -318,6 +326,7 @@ From G the benches run their suites' default players with rotations, at 1 and 10
 | O | 1.090 / 79.8 | 0.652 / 30.0 | 0.808 / 46.7 | 0.537 / 18.9 | 5.500 / 297.6 |
 | Q | 1.059 / 81.2 | 0.589 / 29.5 | 0.830 / 47.8 | 0.533 / 18.4 | 5.669 / 275.1 |
 | T2 | 1.394 / 101.4 | 0.573 / 29.5 | 0.808 / 45.9 | 0.531 / 17.2 | 5.445 / 276.7 |
+| V | 1.196 / 89.0 | 0.589 / 31.9 | 0.847 / 48.2 | 0.457 / 18.2 | 5.489 / 285.3 |
 
 H2 ran with the live worldserver using half a core, which moved whole runs by up to 2×
 and cost a few percent here (Ret, which H2 barely touched, +4%). An interleaved A/B against the base
@@ -400,8 +409,13 @@ rogue's time in the APL's energy check (`aplCostBlocked` → `ApplyCostModifiers
 cost arithmetic runs on every readiness check of every energy action. Caching the computed cost until an input
 changes would win it back.
 
-V has no row yet: Deathsong was online and the user's game held a quarter of the host. PERF-COST's loaded A/B
-against the wave base: Combat Rogue −10% at one iteration, −11% at 100; the raid −2.8% at 100; Hunter and Elemental flat.
+V's row ran idle the next morning (the worldserver, authserver and database stopped; the host at 10%). Combat Rogue
+is 14% under T2's at one iteration and 12% at 100 (PERF-COST); at 100 Ret is 8% over, Elemental 6%, Hunter 5%, the raid
+3%. An interleaved A/B against the wave base, idle, at 100 iterations: Rogue −9.8%, Elemental +7.1%, Ret +6.2%, Hunter
++3.7%, the raid flat; one iteration within noise. Elemental's profile puts EC-THREAT-FIX's per-cast threat bookkeeping
+(`closeThreatCast`, `openThreatCast`, `addAssistThreat`) at about 5% of its time.
+
+W has no row: it changes no sim code.
 
 E to F2 ran the old requests: one iteration, and no rotation for Ret, Hunter and Elemental.
 
@@ -570,6 +584,7 @@ crashed before F2, so its column starts there.
 | EC-BUFFS | merged | `d989f3d83` | module `1e2fdcd`; 65 states agree; 2 pairs dropped as sim gaps: Curse of Weakness + Vindication, Insect Swarm + Scorpid Sting |
 | PERF-COST | merged | `e1187f470` | goldens byte-identical; loaded A/B: Combat Rogue −10 to −11%, the raid −2.8% at 100 iterations |
 | wave V cross-review | | `36ec0d8a8` | no bugs; stale docs fixed (the default e2e run's skips, the fixture README's drop rule); server-parity gained the threat rules |
+| wave W cross-review | | `6b235e3a4` | 1 bug: the strike and tick replays lost their forced hit and crit after the first attempt (no capture affected), so EC-MOBS' no-crit workaround went; testing.md and the fixture READMEs caught up with EC-MOBS |
 
 Later WIs are added as their wave starts.
 

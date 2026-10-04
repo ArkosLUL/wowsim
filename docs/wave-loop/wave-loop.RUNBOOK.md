@@ -158,6 +158,8 @@ implementers each reached ~900k tokens):
 - A class item gets a live stage last (`.simval` checks, recorded run), after one or two code stages.
 - A server stage that returns `waiting-server` doesn't stop the item: it goes to review, and the result
   lists the stage in `pending`.
+- Items sharing one rebuild: run their code stages first (live stages left out), rebuild, then run the live
+  stages with the code stages as `priorReport`.
 
 Each item is a pipeline:
 1. **Implement** (skipped for review-only), per stage if staged.

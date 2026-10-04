@@ -29,6 +29,8 @@ The live server: where it runs, how to reach it, what's installed. For table and
 - Rebuild, only with the user's OK: `cd [ac] && docker compose build ac-db-import ac-worldserver &&
   docker compose up -d`. It's ready when "World Initialized" appears in `docker logs ac-worldserver`.
   Build both: only `ac-db-import` applies module SQL, and a worldserver missing a module's table crash-loops.
+  `ac-db-import` reads `[ac]/modules` live, so even a plain `up -d` applies changed module SQL: check the modules'
+  working trees for unfinished edits before any restart.
 - To compile-check C++ without a rebuild, use image `acore/ac-wotlk-build:master`: mount [ac]'s `src/` over its
   `/azerothcore/src` and run a module file's command from its `/azerothcore/build/compile_commands.json` with
   `-fsyntax-only`. mod-bis-tooltip's `test/syntax-check.sh` does this.

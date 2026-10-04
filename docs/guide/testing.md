@@ -135,6 +135,8 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
   `TestSimvalBuffs`, which needs `SIMVAL_GOLDCHAR_SETUPS`; streamed as above. `mobs.jsonl`: `run.sh TestSimvalMobs`'s
   `MOBS` log lines): the [simval README](../../tools/simval/README.md)'s Damage probe, Timing probe, Threat probe, Buffs,
   Mob types, Golden characters, Talent sweep and Spell-mod sweep.
+- e2e gotchas: armor can't be equipped or removed in combat (equip error 60), and `.simval threat` engages the
+  dummy, so `.combatstop` first; in a druid form, `.simval info` shows no main-hand weapon.
 - `TestSimSpellGroups` (`sim/spell_groups_test.go`, offline) checks the sim's exclusive-effect categories against
   the server's `spell_group` rules in `sim/core/testdata/simval/spell_groups.json`; the export query is in its
   doc comment. A pair the two disagree on needs a reason in `spellGroupAllowances`, and a stale entry fails.
