@@ -68,7 +68,8 @@ and is only logged; the others are removed.
 | WarriorArms | 47502 Thunder Clap, 57755 Heroic Throw | e0 damage crit | as Rake's, with Poleaxe Specialization's 5%, before Impale (2.392 against the sim's 2.3956) |
 
 `talents.jsonl`, each in `droppedSweep` (`tools/simval/talents_test.go`). Records stay; a dropped step (empty field)
-or field is only logged.
+or field is only logged. A path in `sweepRerecord` changed its items or auras after the capture and replays as its
+records stood until a rerun replaces them.
 
 | Path | Talent | Field | Why |
 |---|---|---|---|
@@ -76,9 +77,11 @@ or field is only logged.
 | MageFire | livingBomb | fire spell crit % | the sim's school crit is its lowest fire spell's bonus, and the new Living Bomb spell has a lower one |
 | WarlockDestruction | devastation | fire spell crit % | spell specific crit in the sim, a spell mod on the server |
 | PriestDiscipline | holySpecialization | holy spell crit % | the sheet field is the aura's raw sum; Penance is holy but outside its class mask, so the sim's lowest holy spell stays at 0 |
-| RogueCombat | endurance | the whole step | the path learns it last since the sim implements it; the live capture predates the step, so rerun the path (`SIMVAL_TALENT_ONLY=RogueCombat`) and remove this row |
 | RogueCombat | maceSpecialization | armor penetration % | the sheet field counts the aura without a mace; the server's damage applies it only with one (`HasItemFitToSpellRequirements`), as the sim does, and the path carries two daggers |
 | DeathknightBlood | bloodGorged | armor penetration % | the sheet field is the aura's raw sum; the sim applies it per spell by the server's class mask (white swings, Plague, Blood, Heart and Death Strike, Rune Strike) |
+| PaladinProtection | improvedDevotionAura | armor | server +602 (Devotion Aura's armor +50%); the sim improves it only at `ImprovedDevotionAura == 5`, the talent has 3 ranks (`paladin.go`) |
+| WarlockAffliction | improvedImp | max health | server +398 (Blood Pact +30%); the sim improves it only at `ImprovedImp == 2`, the talent has 3 ranks (`warlock.go`) |
+| ShamanEnhancement | enhancingTotems | spell power | server +21 (Flametongue Totem's 58655 +15%); the sim's `FlametongueTotemAura` is a fixed 144 |
 
 `spellmods.jsonl`, each in `droppedSpellMods` (`tools/simval/spellmods_test.go`). Lines stay; a dropped step (spell 0),
 spell (empty check) or check is only logged.
@@ -88,6 +91,7 @@ spell (empty check) or check is only logged.
 | DruidFeralCat | berserk | 48564 Mangle (Bear) | cooldown | not a sim gap: under Berserk the sim resets the cooldown after each cast instead of zeroing it |
 | ShamanRestoration | naturesSwiftness | 49273 Healing Wave | cast time, cast time before haste | the sim has no Improved Healing Wave (a filler step of the path, so a fix needs a re-record): 3000 ms, the server's 2600 ms before the aura |
 | PriestShadow | shadowFocus | 47585 Dispersion | miss | not a sim gap: Dispersion, a self buff, never rolls to hit; the sim's Shadow Focus hit leaves it out |
+| DruidFeralCat | berserk | 48566 Mangle (Cat), 48572 Shred | cost | the server's `Player::ApplySpellMod` takes a cost's percent mods after its flat ones, (base + flat) × percent: 19 and 21; the sim's `costFor` before them: 16 and 12 |
 
 `timing.jsonl`, each in `knownTimingMismatches` (`tools/simval/timing.go`, keyed by class, spell, pass and check name;
 passes are bare, talents and Bloodlust). The record stays and the check still runs; its failure is let through in the
@@ -141,6 +145,7 @@ logged.
 | `info` of every pet | armor | known | the server's is `pet_levelstats`' armor, or level × 50 without one (Shadowfiend's row has 0), plus the scaling share; the sim's comes from its own constants |
 | `info` of every pet but the wolf and Felguard | attack power; spell power (Spirit Wolf, Treant, Shadowfiend) | known | the server's follows from the pet's stats and scaling auras, the sim's from its own owner coefficients |
 | `info` of Imp, Felguard, Water Elemental | regen per tick | known | `Creature::Regenerate` gives a controlled creature spirit/5 + 17 mana a tick; the sim pet uses the player formula |
+| Infernal's buffed `info` | strength, agility, attack power, spell power, armor from buffs | known | `spell_warl_infernal_scaling` makes the Infernal immune to its scaling auras' types, so Strength of Earth, Devotion Aura, Flametongue Totem and Battle Shout add nothing on the server; the sim's `applyPetBuffEffects` gives them (+155 strength and agility, +860 AP, +144 SP, +1515 armor) |
 
 ## Spells missing from serverdata
 

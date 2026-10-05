@@ -111,6 +111,11 @@ check in `knownStrikesMismatches` is let through; an entry nothing fails is stal
   above with the pet's power pinned, or as a strike; a direct effect the sim deals from its aura's ticks (the
   Infernal's Immolation) is one forced tick. `info`: base stats vs `createStats`, stats, attack and spell
   power, armor, one regen tick (focus off core's unexported rate; mana at the record's intellect and spirit).
+- Buffed pet `info` (its owner carries the pet's `strikesPetBuffs`; the Infernal's: Strength of Earth, Devotion Aura,
+  Flametongue Totem, Battle Shout): what they added since the pet's last bare `info` against what the same raid buffs
+  add to the sim pet, within 2 per stat. Both sim pets scale off the bare record's owner: the Infernal's scaling auras
+  take the owner's stats once, at the summon. `strikesUnrecorded` lists probes the fixture predates;
+  `TestStrikesFixtureHasEveryProbe` lets them be missing and fails once one is recorded.
 - `timing` (Ghoul Frenzy): the timing replay, with `strikesTimingTaught`'s talent.
 
 ## Timing probe
@@ -339,13 +344,17 @@ A full `simval.jsonl` recapture can hold these records: `info` gets only `CheckR
 
 `sim/core/testdata/simval/talent_paths.json` holds the paths mod-sim-validation's `TestSimvalTalentSweep` walks
 (`talentpaths.go`): per path a server class and race, the sim `spec`, `items` by server slot, `auras` (stance, form,
-presence, aspect, the class's own raid buffs; recast after every step) and `steps` (`talent` fieldName, `rank`,
-rank `spell`, `filler` for a talent the sim doesn't implement, step `auras` the sim puts up once it's in: Moonkin
-Form, Shadowform, Bone Shield, Trueshot Aura). The generator, per class:
+presence, aspect, the class's own raid buffs, buffs its talents improve; recast after every step) and `steps`
+(`talent` fieldName, `rank`, rank `spell`, `filler` for a talent the sim doesn't implement, step `auras` the sim puts
+up once it's in: Moonkin Form, Shadowform, Bone Shield, Trueshot Aura). The generator, per class:
 - Setups are hand-listed in `sweepClasses`: one per tree (two feral: Cat, Bear), the base stats test's race, the golden
-  characters' weapons where talents need them. A talent shows its sheet change only in setups whose items fit its
-  rank spell's equipped item requirement when that spell has a sheet aura (spelldump), and in the setups `needs`
-  names (stance, form, shield, dual wield, a melee weapon for parry). `after` puts Furor behind Moonkin Form; `last` puts Dark Pact at the end,
+  characters' weapons where talents need them, and a stamina and frost resistance chest for the armor-from-items
+  talents (DK Toughness, both Thick Hides, Survival of the Fittest). Improved buffs (Battle Shout, Devotion and
+  Retribution Aura, Inner Fire, Blood Pact, the Strength of Earth and Flametongue Totem auras) are the character's own
+  casts, so the server applies the character's spell mods; the sim gets each through `sweepBuffOptions`' spec option
+  (`newPathSim`). A talent shows its sheet change only in setups whose items fit its rank spell's equipped item
+  requirement when that spell has a sheet aura (spelldump), and in the setups `needs` names (stance, form, shield,
+  dual wield, a melee weapon for parry). `after` puts Furor behind Moonkin Form; `last` puts Dark Pact at the end,
   where the capture has it.
 - Each setup gets a path over the uncovered implemented talents at max rank: its own tree first, trimmed to 71
   points from the lowest row up, then other trees' from the lowest row while points last. Then, while any are left,
@@ -354,10 +363,12 @@ Form, Shadowform, Bone Shield, Trueshot Aura). The generator, per class:
 
 Rewrite it with `tools/acore/dock.sh test ./tools/simval -run TestTalentPathsFile -update`; a changed path's
 `talents.jsonl` records then match nothing, so rerun it (`SIMVAL_TALENT_ONLY`) and trim its stream: paths it has no
-bot for keep their records from the fixture. Tests:
-`TestTalentPathsFile` (stale), `TestTalentPathsAreLegal` (points, rows, prerequisites, ranks, every implemented
-talent covered in a setup that shows it, on the committed file), `TestTalentPathsCoverTheSimsStart` (after each
-step, what the sim has up that isn't passive is in the auras), `TestTalentPathsItemClasses`.
+bot for keep their records from the fixture. Until that rerun, list the path in `sweepRerecord` (`talents_test.go`):
+the replay builds it as its records stood (`asRecorded`: their items, the path's auras they had), and a listed path
+whose records stand as the path fails. Tests: `TestTalentPathsFile` (stale), `TestTalentPathsAreLegal` (points,
+rows, prerequisites, ranks, every implemented talent covered in a setup that shows it, on the committed file),
+`TestTalentPathsCoverTheSimsStart` (after each step, what the sim has up that isn't passive is in the auras; buff
+option raid buffs in `sweepRaidBuffs`), `TestTalentPathsItemClasses`.
 
 `checkInfo` skips a naked record carrying a talent rank's aura, so a `simval.jsonl` recapture with the sweep's records
 stays green; a sweep character before its first talent gets the base stats checks
@@ -372,15 +383,16 @@ talents a start of its steps). A bot fitting none or several is left out with a 
 earlier one (a rerun), the old fixture's paths the stream lacks are kept, a step recorded twice or a record without
 `maxPower` fails. It prints the steps still missing.
 
-**Replay** (`TestTalentSweepRecords`, skips without the fixture): per step, the server's change between the records
-before and after it against the sim's change between `path.goldcharSetup(n-1)` and `(n)` (stats after a reset, with
-the path's and steps' auras). Fields: primary stats, max health, max mana/rage/energy/runic power (the server's power
-type), armor, fire to arcane resistance, AP, RAP, spell power and spell crit (lowest magic school, and each school's: the
-stat plus the lowest bonus among the sim's crit-capable spells of only that school, skipped without one), armor
-penetration % from auras and the chance to be missed per attack (both skipped in a record without them), spell hit (plus
-every school's school hit, as in Golden characters), crit, hit and expertise per hand the sim swings (main hand crit
-and melee hit always), melee, ranged and spell haste (server: 1 / speed multiplier), dodge and parry after diminishing
-returns (parry with a weapon), block chance and value (with a shield).
+**Replay** (`TestTalentSweepRecords`, skips without the fixture): each record must carry the path's auras and its steps'
+so far; per step, the server's change between the records before and after it against the sim's change between
+`path.goldcharSetup(n-1)` and `(n)` (stats after a reset, with the path's and steps' auras). Fields: primary stats, max
+health, max mana/rage/energy/runic power (the server's power type), armor, fire to arcane resistance, AP, RAP, spell
+power and spell crit (lowest magic school, and each school's: the stat plus the lowest bonus among the sim's
+crit-capable spells of only that school, skipped without one), armor penetration % from auras and the chance to be
+missed per attack (both skipped in a record without them), spell hit (plus every school's school hit, as in Golden
+characters), crit, hit and expertise per hand the sim swings (main hand crit and melee hit always), melee, ranged and
+spell haste (server: 1 / speed multiplier), dodge and parry after diminishing returns (parry with a weapon), block
+chance and value (with a shield).
 
 Tolerance: the server truncates primary stats, health, power, armor, resistances, block value, each stat or AP based
 spell power bonus, a rating from a stat, and AP's base and mods before its multiplier; the sim doesn't. Each sim sheet
@@ -390,7 +402,7 @@ RAP, times 3). A step passes a field when the two changes differ by at most the 
 1e-3.
 
 Each step is logged on a `SWEEPSIM` line as `agrees`, `moves no field` (nothing past 1e-3 on either side: a proc or
-spell mod talent, or one needing gear or a buff the path lacks: item armor, Devotion Aura) or `disagrees`; the end
+spell mod talent, or one needing gear or a buff the path lacks) or `disagrees`; the end
 lists the no-field steps. A sim that can't build the character fails as `sim character`. Drops: `droppedSweep` (path,
 talent, field), each with a fixture README row; an empty field drops the step. Records stay, since the next step
 starts from them; a dropped step or field is only logged, and one that agrees or matches nothing fails. Hand-built
@@ -416,12 +428,12 @@ probes (its aura up): `timing`'s cast, gcd, cooldown, cost, channelMs and aura; 
 spellPower, attackPower, bonus, effects and `attacker.attacks` attack power; `yellow`'s derived table. A health
 cost's power type (Bloodrage, -2) is written unsigned, 4294967294, so `timingRecord` reads it as `uint32`.
 
-**Replay** (`TestSpellModRecords`, skips without the fixture): per listed spell of each step, the server's change
-from the line before (`steps` k-1, no cast) to after (k, the talent's cast if not passive) against the sim's between
-`goldcharSetup(k-1)` and `(k)`, the cast aura mirrored. The sim's spell comes from the path's spec, else the class's
-other specs, else with a point in the talent whose rank spell is its first rank (Mortal Strike, Living Bomb); none
-(a pet's or Mirror Image's spell, an off-hand strike) is `not compared`, as is a cast talent the sim has no aura for
-(Presence of Mind). Checks, on numbers all four sides have:
+**Replay** (`TestSpellModRecords`, skips without the fixture): per listed spell of each step, the server's change from
+the line before (`steps` k-1, no cast) to after (k, the talent's cast if not passive) against the sim's between
+`goldcharSetup(k-1)` and `(k)` (`newPathSim`), the cast aura mirrored. The sim's spell comes from the path's spec, else
+the class's other specs, else with a point in the talent whose rank spell is its first rank (Mortal Strike, Living
+Bomb); none (a pet's or Mirror Image's spell, an off-hand strike) is `not compared`, as is a cast talent the sim has no
+aura for (Presence of Mind). Checks, on numbers all four sides have:
 - Exact: cast time before haste (`DefaultCast.CastTime` × `CastTimeMultiplier`) and after, GCD (category 133), own
   and category cooldown, cost (or rune costs, runic power gain and cost), channel, aura duration, each periodic
   effect's amplitude and ticks; per probed effect its declared base (when the declaration is the spell's own).

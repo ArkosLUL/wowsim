@@ -1025,6 +1025,43 @@ on the map update.
 - **Owns:** `talent_paths.json`, `talents.jsonl`, `spellmods.jsonl`, `strikes.jsonl`, their replays' drops and README
   rows; e2e `talent_sweep_test.go`, `spellmod_sweep_test.go`, `strikes_test.go`.
 
+#### As built
+
+Code stage (golden-neutral, no live run; notes and live plan in `tmp/ec-cover-code.md`):
+- Paths (`talentpaths.go`, steps unchanged): DeathknightFrost, HunterBeastMastery and DruidFeralBear wear a stamina
+  and frost resistance chest (43586, 43593, 43590; crit or hit moved old spell-mod lines); WarriorFury, both paladins,
+  PriestDiscipline, WarlockAffliction and ShamanEnhancement cast the buff their talent improves themselves. The sim
+  gets each through a spec option (`sweepBuffOptions`, `newPathSim`).
+- Server (source): effect spell mods come from the caster's mod owner (`SpellEffectInfo::CalcValue`), so a self-cast
+  buff equals the pet's or totem's; Swift Retribution is 63531's EFFECT3, kept only under the paladin's own aura.
+  Every listed talent has a route.
+- Committed fixtures keep passing: `sweepRerecord` replays the 9 changed paths as their records stood; the replay now
+  also holds each record to the path's auras. Old spell-mod lines pass unchanged.
+- Infernal: a controllable guardian (SummonProperties 711), so area auras and raid casts target it, but its scaling
+  auras make it immune to their aura types (stats, armor, AP, spell damage; `spell_warl_infernal_scaling`). The e2e
+  records a second `info` under Strength of Earth, Devotion Aura, Flametongue Totem and Battle Shout; the replay
+  compares what they added with the sim pet's raid buffs (`checkPetBuffs`), pending in `strikesUnrecorded`.
+- Predicted live mismatches, from source: Improved Devotion Aura (sim needs 5 of 3 ranks), Improved Imp (sim
+  improves Blood Pact at 2/3 only), Enhancing Totems on Flametongue (sim fixed 144), the Infernal's raid buffs (sim
+  gives them; also the treant, Water Elemental, Shadowfiend and Spirit Wolf scaling scripts' immunity).
+
+Live stage (server `56ee3ed2b`; notes in `tmp/ec-cover-live.md`): `talents.jsonl` (716 records, 30 paths),
+`spellmods.jsonl` (2251 lines) and `strikes.jsonl` (103) re-recorded; `sweepRerecord` and `strikesUnrecorded` emptied.
+- All 10 never-seen talents now move a field. Agree: DK Toughness, both Thick Hides, Survival of the
+  Fittest's armor, Swift Retribution, Commanding Presence, Improved Inner Fire, Enhancing Totems' Strength of Earth.
+- Confirmed and dropped (fixture README rows): Improved Devotion Aura armor (+602, sim 0), Improved Imp max health
+  (+398, sim 0), Enhancing Totems' Flametongue spell power (+21, sim 0); the Infernal's buffed `info` adds nothing on
+  the server, the sim +155 str/agi, +860 AP, +144 SP, +1515 armor (`knownStrikesMismatches`).
+- RogueCombat's Endurance step is recorded and agrees: its drop is gone.
+- Server change: `27e096204` (SPELLMOD_COST as (base + flat) × percent) moved Berserk's Mangle (Cat) and Shred costs,
+  dropped; it also clamps a cost at 0, so Endless Winter's Mind Freeze frost rune cost went -199 to 0 (not compared:
+  the sim has no Mind Freeze). No talent record moved on an unchanged path.
+- Not a server change: the Water Elemental's melee damage (86–101 to 85–100). Its template levels are 60–70, so
+  `Creature::SelectLevel` rolls its base damage from a random level's `creature_classlevelstats` row (64, then 63),
+  which its summon keeps.
+- Probe fix: the recast waits 1.5 s, since 63514 and 63531 need the paladin's aura and drop off for a target map
+  update after each recast (the talent sweep's Swift Retribution haste landed two steps late).
+
 ### EC-PROBES (X2; golden-neutral; C++; stages: C++ and e2e, live)
 
 - `.simval timing` with combo points (Rupture, Slice and Dice; the timing README row goes); `.simval threat`'s assist

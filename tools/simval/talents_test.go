@@ -25,10 +25,17 @@ var droppedSweep = []sweepDrop{
 	{"MageFire", "livingBomb", "fire spell crit %"},
 	{"WarlockDestruction", "devastation", "fire spell crit %"},
 	{"PriestDiscipline", "holySpecialization", "holy spell crit %"},
-	{"RogueCombat", "endurance", ""},
 	{"RogueCombat", "maceSpecialization", "armor penetration %"},
 	{"DeathknightBlood", "bloodGorged", "armor penetration %"},
+	{"PaladinProtection", "improvedDevotionAura", "armor"},
+	{"WarlockAffliction", "improvedImp", "max health"},
+	{"ShamanEnhancement", "enhancingTotems", "spell power"},
 }
+
+// sweepRerecord are paths whose items or auras changed after talentsFixture was recorded. Until a rerun
+// replaces their records, the replay builds their sim characters as the records stood (asRecorded). A
+// listed path whose records stand as the path fails, so the entry goes with the rerun.
+var sweepRerecord = []string{}
 
 // TestTalentSweepRecords replays a live TestSimvalTalentSweep run, trimmed by `simval talents`: each
 // step's sheet change against the sim's change from the same talent. Skips without the capture, like
@@ -47,12 +54,14 @@ func TestTalentSweepRecords(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	replayTalentSweep(t, allTalentPaths(t), records, droppedSweep)
+	replayTalentSweep(t, allTalentPaths(t), records, droppedSweep, sweepRerecord)
 }
 
-// replayTalentSweep compares every step of every path, holding the records to drops.
-func replayTalentSweep(t *testing.T, paths []talentPath, records []talentRecord, drops []sweepDrop) {
+// replayTalentSweep compares every step of every path, holding the records to drops. Rerecord paths are
+// compared as their records stood.
+func replayTalentSweep(t *testing.T, paths []talentPath, records []talentRecord, drops []sweepDrop, rerecord []string) {
 	t.Helper()
+	paths = recordedPaths(t, paths, records, rerecord)
 	byPath := map[string]map[int]talentRecord{}
 	for _, rec := range records {
 		i := slices.IndexFunc(paths, func(p talentPath) bool { return p.Name == rec.Path })
@@ -63,6 +72,9 @@ func replayTalentSweep(t *testing.T, paths []talentPath, records []talentRecord,
 		case !paths[i].fits(rec) || paths[i].stepOf(rec.Talents) != rec.Step:
 			t.Errorf("%s: class, race, items or talents aren't %s's after step %d", rec.Bot, rec.Path, rec.Step)
 			continue
+		}
+		if missing := paths[i].missingAuras(rec); len(missing) > 0 {
+			t.Errorf("%s: %s's auras %v aren't on it after step %d", rec.Bot, rec.Path, missing, rec.Step)
 		}
 		if byPath[rec.Path] == nil {
 			byPath[rec.Path] = map[int]talentRecord{}
@@ -174,7 +186,38 @@ func TestTalentSweepReplaysAFullRun(t *testing.T) {
 	if want := len(raw); len(records) != want {
 		t.Fatalf("%d records, want %d", len(records), want)
 	}
-	replayTalentSweep(t, paths, records, nil)
+	replayTalentSweep(t, paths, records, nil, nil)
+}
+
+// recordedPaths swaps each rerecord path for the path as its records stood, and fails a listed path whose
+// records all stand as the path.
+func recordedPaths(t *testing.T, paths []talentPath, records []talentRecord, rerecord []string) []talentPath {
+	t.Helper()
+	paths = slices.Clone(paths)
+	for _, name := range rerecord {
+		i := slices.IndexFunc(paths, func(p talentPath) bool { return p.Name == name })
+		if i < 0 {
+			t.Errorf("rerecord lists %s, which isn't a path", name)
+			continue
+		}
+		path := paths[i]
+		var recs []talentRecord
+		for _, rec := range records {
+			if rec.Path == name {
+				recs = append(recs, rec)
+			}
+		}
+		stale := slices.ContainsFunc(recs, func(rec talentRecord) bool {
+			return !path.wears(rec.Equipment) || len(path.missingAuras(rec)) > 0
+		})
+		if !stale {
+			t.Errorf("%s: its %d records stand as the path, so take it off the rerecord list", name, len(recs))
+			continue
+		}
+		paths[i] = path.asRecorded(recs[0])
+		t.Logf("%s: compared as its records stood, items %v and auras %v", name, paths[i].Items, paths[i].Auras)
+	}
+	return paths
 }
 
 func allTalentPaths(t *testing.T) []talentPath {
@@ -237,7 +280,10 @@ func talentRecordFrom(t *testing.T, path talentPath, n int, sim sweepSim) talent
 		ExpertiseMainhand: v["mainhand expertise %"], ExpertiseOffhand: v["offhand expertise %"],
 		SpeedMainhand: 1 / v["melee haste"], SpeedRanged: 1 / v["ranged haste"], CastSpeed: 1 / v["spell haste"],
 		Dodge: v["dodge %"], Parry: v["parry %"], Block: v["block %"], BlockValue: whole("block value"),
-		Auras: []int32{},
+		Auras: slices.Clone(path.Auras),
+	}
+	for _, step := range path.Steps[:n] {
+		rec.Auras = append(rec.Auras, step.Auras...)
 	}
 	for _, school := range magicSchools {
 		crit, ok := v[school+" spell crit %"]
@@ -438,7 +484,7 @@ func sweepBotRecords(t *testing.T, path talentPath, bot string, steps int) []tal
 	var recs []talentRecord
 	for n := 0; n <= steps; n++ {
 		rec := talentRecordFrom(t, path, n, path.sweepSim(n))
-		rec.Bot, rec.Auras = bot, append(rec.Auras, path.Auras...)
+		rec.Bot = bot
 		recs = append(recs, rec)
 	}
 	return recs

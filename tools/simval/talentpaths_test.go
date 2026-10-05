@@ -216,10 +216,13 @@ func TestTalentPathsCoverTheSimsStart(t *testing.T) {
 				t.Fatal(err)
 			}
 			listed := func(id int32) bool {
+				if server, ok := sweepServerAuras[id]; ok {
+					id = server
+				}
 				_, unlisted := unlistedStartingAuras[id]
 				return unlisted || slices.Contains(s.Auras, id)
 			}
-			d, err := newGoldcharSim(goldcharInfo(t, s, serverSheet{}).damageRecord, s)
+			d, err := newPathSim(goldcharInfo(t, s, serverSheet{}).damageRecord, s)
 			if err != nil {
 				report("%s after %d steps: %v", path.Name, n, err)
 				break
@@ -241,7 +244,11 @@ func TestTalentPathsCoverTheSimsStart(t *testing.T) {
 			buffs := &proto.RaidBuffs{}
 			d.sim.Raid.Parties[0].Players[0].AddRaidBuffs(buffs)
 			buffs.ProtoReflect().Range(func(fd protoreflect.FieldDescriptor, _ protoreflect.Value) bool {
-				switch id, ok := classRaidBuffs[fd.Name()]; {
+				id, ok := classRaidBuffs[fd.Name()]
+				if !ok {
+					id, ok = sweepRaidBuffs[fd.Name()]
+				}
+				switch {
 				case !ok:
 					report("%s gives itself %s, which classRaidBuffs doesn't know", path.Name, fd.Name())
 				case id != 0 && !listed(id):
@@ -252,6 +259,18 @@ func TestTalentPathsCoverTheSimsStart(t *testing.T) {
 		}
 	}
 }
+
+// sweepRaidBuffs are the raid buffs sweepBuffOptions make a class give itself, past classRaidBuffs, with
+// the aura the path casts for each. 0 is one a talent puts up on the server: Sanctified and Swift
+// Retribution's shared 63531.
+var sweepRaidBuffs = map[protoreflect.Name]int32{
+	"devotion_aura": 48942, "retribution_aura": 54043, "sanctified_retribution": 0, "swift_retribution": 0,
+	"blood_pact": 47982, "strength_of_earth_totem": 58646, "flametongue_totem": 58655,
+}
+
+// sweepServerAuras are sim aura ids standing for another server aura: the sim keeps Flametongue Totem's
+// buff (58655) under the totem's summon spell.
+var sweepServerAuras = map[int32]int32{58656: 58655}
 
 // A full simval.jsonl recapture would hold TestSimvalTalentSweep's records too, if SIMVAL_TALENT_PATHS
 // were set for it. Most are naked, and a talent's aura keeps them from the base stats checks; the
@@ -292,7 +311,7 @@ func TestTalentPathsItemClasses(t *testing.T) {
 					t.Errorf("%s: item %d isn't in the sim's database", s.name, item.ID)
 					continue
 				}
-				want := serverItemClassOf(simItem.WeaponType, simItem.HandType, simItem.RangedWeaponType)
+				want := serverItemClassOf(simItem.WeaponType, simItem.HandType, simItem.RangedWeaponType, simItem.ArmorType)
 				if classes[item.ID] != want {
 					t.Errorf("%s: item %d is %+v in db.json, %+v in the sim", s.name, item.ID, classes[item.ID], want)
 				}

@@ -181,7 +181,7 @@ func (s *spellModSims) get(steps int, cast int32, spec, teach string) *spellModS
 			sim.d, sim.err = nil, fmt.Errorf("sim panic: %v", r)
 		}
 	}()
-	sim.d, sim.err = newGoldcharSim(sweepTarget(path), setup)
+	sim.d, sim.err = newPathSim(sweepTarget(path), setup)
 	if sim.err != nil {
 		return sim
 	}
