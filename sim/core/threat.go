@@ -36,7 +36,7 @@ type spellThreat struct {
 }
 
 type threatHit struct {
-	target *Unit
+	target int32 // the enemy's UnitIndex: no pointer, so appending a hit skips the GC write barrier
 	landed bool
 }
 
@@ -124,12 +124,20 @@ func (spell *Spell) hasEnemyThreatBonus() bool {
 
 // threatBonus is the bonus a hit that isn't a periodic tick adds to its own threat. A hit inside a cast
 // adds nothing yet: the cast hands out its bonus at the end, once it knows how many enemies it reached.
+// Kept small enough to inline, so a spell without an enemy bonus pays no call.
 func (spell *Spell) threatBonus(result *SpellResult) float64 {
-	if !spell.hasEnemyThreatBonus() || result.Target.Type != EnemyUnit {
+	if spell.threat.noBonus || spell.threat.assist {
+		return 0
+	}
+	return spell.enemyThreatBonus(result)
+}
+
+func (spell *Spell) enemyThreatBonus(result *SpellResult) float64 {
+	if spell.ThreatMultiplier == 0 || result.Target.Type != EnemyUnit {
 		return 0
 	}
 	if spell.threat.openCasts > 0 {
-		spell.threat.hits = append(spell.threat.hits, threatHit{result.Target, result.Landed()})
+		spell.threat.hits = append(spell.threat.hits, threatHit{result.Target.UnitIndex, result.Landed()})
 		return 0
 	}
 	if !result.Landed() {
@@ -145,29 +153,35 @@ func (spell *Spell) LandThreatBonus(sim *Simulation, target *Unit) {
 		return
 	}
 	if spell.threat.openCasts > 0 {
-		spell.threat.hits = append(spell.threat.hits, threatHit{target, true})
+		spell.threat.hits = append(spell.threat.hits, threatHit{target.UnitIndex, true})
 	} else if sim.CurrentTime >= 0 {
 		spell.SpellMetrics[target.UnitIndex].TotalThreat += spell.threatBonusBase() / spell.threat.split
 	}
 }
 
-// openThreatCast starts collecting the cast's hits, and adds a positive spell's bonus.
+// openThreatCast starts collecting the cast's hits, and adds a positive spell's bonus. It and
+// closeThreatCast run on every cast: keep both inlinable.
 func (spell *Spell) openThreatCast(sim *Simulation) int {
-	spell.addAssistThreat(sim)
+	if spell.threat.assist && !spell.threat.noBonus {
+		spell.addAssistThreat(sim)
+	}
 	spell.threat.openCasts++
 	return len(spell.threat.hits)
 }
 
-// closeThreatCast splits the bonus between the enemies the cast reached and the caster if an effect lands
-// on it. An enemy it missed every time gets no share, but still counts.
 func (spell *Spell) closeThreatCast(sim *Simulation, start int) {
-	t := &spell.threat
-	t.openCasts--
-	hits := t.hits[start:]
-	if len(hits) == 0 {
-		return
+	spell.threat.openCasts--
+	if len(spell.threat.hits) > start {
+		spell.shareThreatBonus(sim, start)
 	}
-	defer func() { t.hits = t.hits[:start] }()
+}
+
+// shareThreatBonus splits the bonus between the enemies the cast reached and the caster if an effect
+// lands on it. An enemy it missed every time gets no share, but still counts.
+func (spell *Spell) shareThreatBonus(sim *Simulation, start int) {
+	t := &spell.threat
+	hits := t.hits[start:]
+	t.hits = t.hits[:start]
 	if sim.CurrentTime < 0 {
 		return
 	}
@@ -176,22 +190,41 @@ func (spell *Spell) closeThreatCast(sim *Simulation, start int) {
 	if t.casterShare {
 		units++
 	}
-	for i, hit := range hits {
-		if !slices.ContainsFunc(hits[:i], func(h threatHit) bool { return h.target == hit.target }) {
+	for i := range hits {
+		if !threatHitSeen(hits, i) {
 			units++
 		}
 	}
 	share := spell.threatBonusBase() / float64(units)
 	for i, hit := range hits {
-		first := !slices.ContainsFunc(hits[:i], func(h threatHit) bool { return h.target == hit.target })
-		landed := slices.ContainsFunc(hits[i:], func(h threatHit) bool { return h.target == hit.target && h.landed })
-		if first && landed {
-			spell.SpellMetrics[hit.target.UnitIndex].TotalThreat += share
-			if sim.Log != nil {
-				spell.Unit.Log(sim, "%s %s threat bonus %0.3f, 1 of %d units", hit.target.LogLabel(), spell.ActionID, share, units)
-			}
+		if threatHitSeen(hits, i) || !threatHitLands(hits[i:], hit.target) {
+			continue
+		}
+		spell.SpellMetrics[hit.target].TotalThreat += share
+		if sim.Log != nil {
+			// UnitIndex is the unit's place in AllUnits
+			spell.Unit.Log(sim, "%s %s threat bonus %0.3f, 1 of %d units", sim.AllUnits[hit.target].LogLabel(), spell.ActionID, share, units)
 		}
 	}
+}
+
+// threatHitSeen says whether a hit before hits[i] has its enemy.
+func threatHitSeen(hits []threatHit, i int) bool {
+	for _, h := range hits[:i] {
+		if h.target == hits[i].target {
+			return true
+		}
+	}
+	return false
+}
+
+func threatHitLands(hits []threatHit, target int32) bool {
+	for _, h := range hits {
+		if h.target == target && h.landed {
+			return true
+		}
+	}
+	return false
 }
 
 // addAssistThreat hands a positive spell's bonus, modified, to the enemies in even shares

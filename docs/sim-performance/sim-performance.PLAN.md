@@ -294,6 +294,23 @@ take about 5% of Elemental's profile ([throughput](../wave-loop/wave-loop.PLAN.m
   Elemental, Ret, Hunter and the raid against the wave base; a profile of Elemental.
 - Owns: `sim/core/threat.go`'s bookkeeping and its tests.
 
+#### As built
+
+- `openThreatCast`, `closeThreatCast` and `threatBonus` inline (costs 79, 73, 71 of 80): open calls
+  `addAssistThreat` only for a positive spell with a bonus; close calls `shareThreatBonus` only when the cast
+  recorded hits, which splits the bonus with plain loops, no closures or `defer`. `threatHit` keeps the
+  enemy's `UnitIndex`, not a `*Unit`, so a recorded hit skips the GC write barrier; the log finds the unit
+  through `sim.AllUnits`. No call site changed.
+- `TestThreatBookkeepingWalk` (`threat_test.go`): 20,000 random steps (nested casts, hits and landings, the
+  threat multiplier, pull time, attack power, logging) bit-equal to a copy of the old bookkeeping, log lines
+  included; dropping or moving the truncation, or misreading the hits, fails it.
+- 37 goldens byte-identical, simval 1114/1114, `go vet` and `gofmt` clean.
+- Interleaved A/B against `bb4ffd124`, 12 rounds, `BenchmarkSimulate` (benchstat medians, machine loaded to
+  ±70–120%): Elemental, Ret, Hunter and the raid all flat (no p < 0.05); allocations unchanged.
+- Profile, `tools/perf bench` Elemental at 60,000 iterations, one proc, base (via `-overlay`) → new in one
+  window: the bookkeeping (open, close, share, assist, `threatBonus`) 2.71% → 1.49%; close and share 1.98% →
+  1.01%. `ThreatFromDamage` (about 0.3%) is untouched: caching it would reorder float multiplications.
+
 ## Order
 
 The user put the pass before wave J, whose BIS-e2e-perf times the optimizer with PERF-TOOLS' harness
