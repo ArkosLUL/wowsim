@@ -60,9 +60,10 @@ Representation gaps, not mismatches, each with its reason in `tools/simval/fight
 Real sim mismatches, each a follow-up, in `droppedFightChecks` (`tools/simval/fight.go`); a check is named by its
 subject (`47809`, `melee`, `Bloodworm melee`, `aura 17800 on target`, `energize 57946 mana`) and name. Why, by the
 table's cause:
-- **world tick**: the server moves a player every 10 ms world tick, so a swing lands at most that late; the sim's
-  waits for the 100 ms map update and loses the overshoot, a few swings a fight; its last swing comes early, and
-  with it the end of a swing-stacked buff (Fury of the Five Flights).
+- **map update length**: the live map update runs about 104 ms (world ticks of about 10.4 ms, sleeping past
+  `MinWorldUpdateTime`), the sim's exactly 100. A whole-second dot's tick lands anywhere in a live update, but right
+  on the sim's: Serpent Sting's 4th tick beats the next cast's landing about half the cycles on the server, every
+  cycle in the sim.
 - **Bloodworms**: the sim's have the setup's Horn of Winter (+155 Str); the server's never get it, as a party or raid
   buff skips an uncontrollable guardian (`Spell.cpp` `TARGET_CHECK_RAID`).
 - **Frost Vulnerability**: rolls spell hit on the server and missed; the sim's always lands.
@@ -101,15 +102,12 @@ table's cause:
 | DeathknightFrost | 51714 | count | Frost Vulnerability |
 | DeathknightFrost | 51714 | misses | Frost Vulnerability |
 | DeathknightFrostUH | 51714 | misses | Frost Vulnerability |
-| DeathknightFrostUH | melee | count | world tick |
-| DeathknightUnholy | melee | count | world tick |
 | DruidBalance | 48468 | tick crit mean | Vengeance |
 | DruidBalance | aura 48517 on self | uptime | Eclipse |
 | DruidBalance | aura 60486 on self | applications | dot procs |
 | DruidBalancePhase3 | 48468 | tick crit mean | Vengeance |
-| DruidFeral | 48574 | crit mean | Rake |
 | DruidFeral | 48574 | hit mean | Rake |
-| DruidFeralApl | melee | count | world tick |
+| HunterMM | 49001 | ticks | map update length |
 | MageFire | energize 29076 mana | gain sizes | Master of Elements |
 | MageFrost | aura 44549 on self | applications | Brain Freeze |
 | MageFrost | aura 57669 on self | applications | Enduring Winter |
@@ -120,18 +118,14 @@ table's cause:
 | PaladinProtection | aura 26016 on target | applications | Vindication |
 | PaladinProtection | aura 26016 on target | uptime | Vindication |
 | PaladinRetribution | aura 53408 on target | applications | Crusader Strike |
-| PaladinRetribution | aura 60314 on self | uptime | world tick |
 | PriestShadow | aura 60486 on self | applications | dot procs |
 | PriestShadow | aura 60486 on self | uptime | dot procs |
 | PriestSmite | aura 60486 on self | applications | dot procs |
 | PriestSmite | aura 60486 on self | uptime | dot procs |
-| RogueAssassination | melee | count | world tick |
 | RogueCombat | aura 58670 on self | applications | Prey on the Weak |
 | RogueCombat | aura 58670 on self | uptime | Prey on the Weak |
-| RogueCombat | melee | count | world tick |
 | RogueSubtlety | aura 48660 on target | applications | Hemorrhage |
 | RogueSubtlety | aura 48660 on target | uptime | Hemorrhage |
-| RogueSubtlety | melee | count | world tick |
 | ShamanElemental | aura 60486 on self | applications | dot procs |
 | ShamanEnhancement | 60103 | crit mean | Lava Lash |
 | ShamanEnhancement | 60103 | hit mean | Lava Lash |

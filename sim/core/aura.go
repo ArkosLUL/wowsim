@@ -59,6 +59,13 @@ type Aura struct {
 	// The unit this aura is attached to.
 	Unit *Unit
 
+	// Whose update counts the aura down, when it isn't Unit's: a channel's caster, or the dynamic
+	// object, totem or trap of an area dot, which update on the map update.
+	countdownBy     *Unit
+	countsOnMapGrid bool
+	// a trap's or a pet's area dot: its dynamic object is made in that object's own map update
+	madeInMapUpdate bool
+
 	active                     bool
 	activeIndex                int32 // Position of this aura's index in the activeAuras array.
 	onCastCompleteIndex        int32 // Position of this aura's index in the onCastCompleteAuras array.
@@ -157,12 +164,51 @@ func (aura *Aura) IsActive() bool {
 	return aura.active
 }
 
+func (aura *Aura) countdownUnit() *Unit {
+	if aura.countdownBy != nil {
+		return aura.countdownBy
+	}
+	return aura.Unit
+}
+
+// onWorldTicks is whether a player's update counts the aura down, every world tick.
+func (aura *Aura) onWorldTicks() bool {
+	return !aura.countsOnMapGrid && aura.countdownUnit().Type == PlayerUnit
+}
+
+// nextUpdate is the first update at or after t of whatever counts the aura down.
+func (aura *Aura) nextUpdate(sim *Simulation, t time.Duration) time.Duration {
+	if aura.onWorldTicks() {
+		return sim.NextWorldTick(t)
+	}
+	return sim.NextServerTick(t)
+}
+
+// countdownStart is when an aura put on or refreshed now starts counting down. A creature's first
+// update after that takes off the whole map update (Unit::_UpdateSpells hands Aura::UpdateOwner
+// Map::Update's diff), so it counts from the map update before. Not when the creature puts it on
+// itself in its own swing, AI cast, dot tick or aura expiry: _UpdateSpells has already listed the
+// auras to update by then.
+func (aura *Aura) countdownStart(sim *Simulation) time.Duration {
+	switch {
+	case aura.onWorldTicks() || sim.serverTickInterval <= 0:
+		return sim.CurrentTime
+	case aura.madeInMapUpdate:
+		// a dynamic object made during UpdateNonPlayerObjects only joins the update list on the next
+		// map update, so it counts from the last one at or before now
+		return sim.NextServerTick(sim.CurrentTime+time.Nanosecond) - sim.serverTickInterval
+	case !aura.countsOnMapGrid && sim.updating == aura.countdownUnit():
+		return sim.CurrentTime
+	}
+	return sim.NextServerTick(sim.CurrentTime) - sim.serverTickInterval
+}
+
 func (aura *Aura) Refresh(sim *Simulation) {
 	if aura.Duration == NeverExpires {
 		aura.expires = NeverExpires
 	} else {
-		// Aura::Update counts the duration down once per server tick
-		aura.expires = sim.NextServerTick(sim.CurrentTime + aura.Duration)
+		// Aura::Update counts the duration down once per update, and can't end it before the next one
+		aura.expires = aura.nextUpdate(sim, max(aura.countdownStart(sim)+aura.Duration, sim.CurrentTime))
 		if aura.expires < aura.Unit.minExpires {
 			aura.Unit.minExpires = aura.expires
 			sim.rescheduleTracker(aura.expires)
@@ -492,7 +538,10 @@ restart:
 	at.minExpires = NeverExpires
 	for _, aura := range at.activeAuras {
 		if aura.expires <= sim.CurrentTime {
+			outer := sim.updating
+			sim.updating = aura.countdownUnit()
 			aura.Deactivate(sim)
+			sim.updating = outer
 			goto restart // activeAuras have changed
 		}
 		at.minExpires = min(at.minExpires, aura.expires)

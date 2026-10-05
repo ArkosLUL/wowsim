@@ -52,6 +52,7 @@ func TestCodeDefaultsMatchServerSource(t *testing.T) {
 	}
 	checkNumber(t, exoticPetDamagePctKey, sourceDefault(t, readAC(t, spellTweaksSrc), exoticPetDamagePctKey), exoticPetDamagePctDef)
 	checkNumber(t, mapUpdateIntervalKey, sourceDefault(t, readAC(t, worldConfigSrc), mapUpdateIntervalKey), mapUpdateIntervalDef)
+	checkNumber(t, minWorldUpdateKey, sourceDefault(t, readAC(t, worldMainSrc), minWorldUpdateKey), minWorldUpdateDef)
 
 	dungeonScale := readAC(t, dungeonScaleSrc)
 	checkNumber(t, minHPModifierKey, sourceDefault(t, dungeonScale, minHPModifierKey), minHPModifierDef)

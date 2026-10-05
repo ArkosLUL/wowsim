@@ -149,17 +149,19 @@ function withSpellTweak<K extends keyof SpellTweaksSettings>(settings: ServerSet
 	return next;
 }
 
-function mapUpdateIntervalMs(settings: ServerSettings): number {
-	return settings.mapUpdateIntervalMs ?? LIVE_SERVER_DEFAULTS.mapUpdateIntervalMs ?? 0;
+type IntervalField = 'mapUpdateIntervalMs' | 'worldUpdateIntervalMs';
+
+function intervalMs(settings: ServerSettings, field: IntervalField): number {
+	return settings[field] ?? LIVE_SERVER_DEFAULTS[field] ?? 0;
 }
 
 // The live value clears the field, like withSpellTweak.
-function withMapUpdateIntervalMs(settings: ServerSettings, value: number): ServerSettings {
+function withIntervalMs(settings: ServerSettings, field: IntervalField, value: number): ServerSettings {
 	const next = ServerSettings.clone(settings);
-	if (value === LIVE_SERVER_DEFAULTS.mapUpdateIntervalMs) {
-		delete next.mapUpdateIntervalMs;
+	if (value === LIVE_SERVER_DEFAULTS[field]) {
+		delete next[field];
 	} else {
-		next.mapUpdateIntervalMs = value;
+		next[field] = value;
 	}
 	return next;
 }
@@ -254,14 +256,29 @@ export class ServerSettingsPicker extends Component {
 		new NumberPicker<Encounter>(this.rootElem, encounter, {
 			label: 'Map update interval (ms)',
 			labelTooltip:
-				'MapUpdateInterval, the server tick. Swings, finished casts and expiring buffs wait for the next tick. ' +
-				'0 is exact timing, which no real server has.',
+				'MapUpdateInterval. Targets, pets and guardians update on it: their swings, finished casts, dot ticks and ' +
+				'expiring auras wait for the next one, and an aura put on one counts down from the one before. ' +
+				'0 is exact timing for everyone, which no real server has.',
 			inline: true,
 			positive: true,
 			changedEvent: encounter => encounter.serverSettingsChangeEmitter,
-			getValue: encounter => mapUpdateIntervalMs(encounter.getServerSettings()),
+			getValue: encounter => intervalMs(encounter.getServerSettings(), 'mapUpdateIntervalMs'),
 			setValue: (eventID: EventID, encounter: Encounter, newValue: number) =>
-				encounter.setServerSettings(eventID, withMapUpdateIntervalMs(encounter.getServerSettings(), newValue)),
+				encounter.setServerSettings(eventID, withIntervalMs(encounter.getServerSettings(), 'mapUpdateIntervalMs', newValue)),
+		});
+
+		new NumberPicker<Encounter>(this.rootElem, encounter, {
+			label: 'World update interval (ms)',
+			labelTooltip:
+				'MinWorldUpdateTime, the world tick. Players update on every one: their swings, finished casts and expiring ' +
+				'buffs wait for the next tick. A map update falls on the first tick its interval is up by, at least three ' +
+				'ticks apart. 0 is exact timing for players.',
+			inline: true,
+			positive: true,
+			changedEvent: encounter => encounter.serverSettingsChangeEmitter,
+			getValue: encounter => intervalMs(encounter.getServerSettings(), 'worldUpdateIntervalMs'),
+			setValue: (eventID: EventID, encounter: Encounter, newValue: number) =>
+				encounter.setServerSettings(eventID, withIntervalMs(encounter.getServerSettings(), 'worldUpdateIntervalMs', newValue)),
 		});
 
 		new EnumPicker<Encounter>(this.rootElem, encounter, {

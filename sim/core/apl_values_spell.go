@@ -97,11 +97,11 @@ func (value *APLValueSpellCastTime) Type() proto.APLValueType {
 	return proto.APLValueType_ValueTypeDuration
 }
 
-// Rounds to the next server tick, same as makeCastFunc (cast.go): a hardcast always lands there.
+// Rounds to the caster's next update, same as makeCastFunc (cast.go): a hardcast always lands there.
 func (value *APLValueSpellCastTime) GetDuration(sim *Simulation) time.Duration {
 	castTime := value.spell.CastTime()
 	if castTime > 0 {
-		castTime = sim.NextServerTick(sim.CurrentTime+castTime) - sim.CurrentTime
+		castTime = sim.nextUpdate(value.spell.Unit, sim.CurrentTime+castTime) - sim.CurrentTime
 	}
 	return castTime
 }

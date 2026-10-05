@@ -8,6 +8,8 @@ import (
 	googleProto "google.golang.org/protobuf/proto"
 
 	"github.com/wowsims/wotlk/sim/core/proto"
+	"github.com/wowsims/wotlk/sim/core/serverdata"
+	"github.com/wowsims/wotlk/sim/core/stats"
 )
 
 func init() {
@@ -52,9 +54,16 @@ func testWeapon(swingSpeed float64) Weapon {
 	return Weapon{BaseDamageMin: 1, BaseDamageMax: 1, SwingSpeed: swingSpeed, CritMultiplier: 2}
 }
 
-// newTimingTestSim builds a single player against one target with the given map update interval,
-// resets it and queues the pull. Step it with runUntil.
-func newTimingTestSim(t *testing.T, mapUpdateMs int32, setup func(*timingTestAgent)) (*Simulation, *timingTestAgent) {
+// newTimingTestSim builds a single player against one target, the player updating every tickMs and
+// the target every map update, three ticks apart. It resets the sim and queues the pull. Step it with
+// runUntil.
+func newTimingTestSim(t *testing.T, tickMs int32, setup func(*timingTestAgent)) (*Simulation, *timingTestAgent) {
+	t.Helper()
+	return newTickTestSim(t, tickMs, tickMs, setup)
+}
+
+// newTickTestSim is newTimingTestSim with MapUpdateInterval and MinWorldUpdateTime as given.
+func newTickTestSim(t *testing.T, mapUpdateMs, worldTickMs int32, setup func(*timingTestAgent)) (*Simulation, *timingTestAgent) {
 	t.Helper()
 	timingTestSetup = setup
 	defer func() { timingTestSetup = nil }()
@@ -75,9 +84,12 @@ func newTimingTestSim(t *testing.T, mapUpdateMs int32, setup func(*timingTestAge
 			}},
 		},
 		Encounter: &proto.Encounter{
-			Targets:        []*proto.Target{{Name: "target", Level: 83, MobType: proto.MobType_MobTypeDemon}},
-			Duration:       60,
-			ServerSettings: &proto.ServerSettings{MapUpdateIntervalMs: googleProto.Int32(mapUpdateMs)},
+			Targets:  []*proto.Target{{Name: "target", Level: 83, MobType: proto.MobType_MobTypeDemon}},
+			Duration: 60,
+			ServerSettings: &proto.ServerSettings{
+				MapUpdateIntervalMs:   googleProto.Int32(mapUpdateMs),
+				WorldUpdateIntervalMs: googleProto.Int32(worldTickMs),
+			},
 		},
 	})
 	sim.reset()
@@ -135,14 +147,55 @@ func TestNextServerTick(t *testing.T) {
 	}
 }
 
+func TestPlayersUpdateOnWorldTicksTheRestOnMapUpdates(t *testing.T) {
+	sim := &Simulation{serverTickInterval: ms(100), serverTickPhase: ms(30), worldTickInterval: ms(10)}
+	for _, tc := range []struct {
+		unit *Unit
+		want time.Duration
+	}{
+		{&Unit{Type: PlayerUnit}, ms(240)},
+		{&Unit{Type: PetUnit}, ms(330)},
+		{&Unit{Type: EnemyUnit}, ms(330)},
+	} {
+		if got := sim.nextUpdate(tc.unit, ms(231)); got != tc.want {
+			t.Errorf("unit type %d: next update after 231ms at %v, want %v", tc.unit.Type, got, tc.want)
+		}
+	}
+}
+
+func TestUpdateGrids(t *testing.T) {
+	for _, tc := range []struct {
+		mapMs, worldMs        int32
+		wantWorld, wantMapUpd time.Duration
+	}{
+		{100, 10, ms(10), ms(100)}, // live
+		{100, 30, ms(30), ms(120)}, // the first tick the interval is up by
+		{10, 10, ms(10), ms(30)},   // never closer than three ticks
+		{100, 0, 0, ms(100)},
+		{0, 10, 0, 0}, // exact for every unit
+	} {
+		world, mapUpdate := NewServerSettings(&proto.ServerSettings{
+			MapUpdateIntervalMs:   googleProto.Int32(tc.mapMs),
+			WorldUpdateIntervalMs: googleProto.Int32(tc.worldMs),
+		}).updateGrids()
+		if world != tc.wantWorld || mapUpdate != tc.wantMapUpd {
+			t.Errorf("map %d ms, world %d ms: world tick %v, map update %v; want %v, %v",
+				tc.mapMs, tc.worldMs, world, mapUpdate, tc.wantWorld, tc.wantMapUpd)
+		}
+	}
+}
+
 func TestServerTickPhaseIsRolledPerIteration(t *testing.T) {
-	sim, _ := newTimingTestSim(t, 100, nil)
+	sim, _ := newTickTestSim(t, 100, 10, nil)
 	phases := map[time.Duration]bool{}
 	for i := int64(0); i < 20; i++ {
 		sim.reseedRands(i)
 		sim.reset()
 		if sim.serverTickPhase < 0 || sim.serverTickPhase >= ms(100) {
 			t.Fatalf("phase %v outside [0, 100ms)", sim.serverTickPhase)
+		}
+		if sim.NextWorldTick(sim.serverTickPhase) != sim.serverTickPhase {
+			t.Fatalf("map update at %v isn't a world tick (world phase %v)", sim.serverTickPhase, sim.worldTickPhase)
 		}
 		phases[sim.serverTickPhase] = true
 	}
@@ -153,13 +206,13 @@ func TestServerTickPhaseIsRolledPerIteration(t *testing.T) {
 
 func TestSwingsLandOnServerTicks(t *testing.T) {
 	for _, tc := range []struct {
-		mapUpdateMs int32
-		interval    time.Duration
+		tickMs   int32
+		interval time.Duration
 	}{
 		{100, ms(2600)}, // 2.55 s rounds up to the next tick every swing
 		{0, ms(2550)},
 	} {
-		sim, a := newTimingTestSim(t, tc.mapUpdateMs, func(a *timingTestAgent) {
+		sim, a := newTimingTestSim(t, tc.tickMs, func(a *timingTestAgent) {
 			a.EnableAutoAttacks(a, AutoAttackOptions{MainHand: testWeapon(2.55), AutoSwingMelee: true})
 		})
 		swings := recordCasts(a.AutoAttacks.MHAuto())
@@ -167,18 +220,86 @@ func TestSwingsLandOnServerTicks(t *testing.T) {
 		runUntil(sim, 30*time.Second)
 
 		if len(*swings) < 10 {
-			t.Fatalf("%d ms: only %d swings", tc.mapUpdateMs, len(*swings))
+			t.Fatalf("%d ms: only %d swings", tc.tickMs, len(*swings))
 		}
-		if first := (*swings)[0]; first != sim.NextServerTick(0) {
-			t.Errorf("%d ms: first swing at %v, want %v", tc.mapUpdateMs, first, sim.NextServerTick(0))
+		if first := (*swings)[0]; first != sim.NextWorldTick(0) {
+			t.Errorf("%d ms: first swing at %v, want %v", tc.tickMs, first, sim.NextWorldTick(0))
 		}
 		for i, swing := range *swings {
-			if sim.NextServerTick(swing) != swing {
-				t.Errorf("%d ms: swing at %v is off the server tick", tc.mapUpdateMs, swing)
+			if sim.NextWorldTick(swing) != swing {
+				t.Errorf("%d ms: swing at %v is off the world tick", tc.tickMs, swing)
 			}
 			if i > 0 && swing-(*swings)[i-1] != tc.interval {
-				t.Errorf("%d ms: swing interval %v, want %v", tc.mapUpdateMs, swing-(*swings)[i-1], tc.interval)
+				t.Errorf("%d ms: swing interval %v, want %v", tc.tickMs, swing-(*swings)[i-1], tc.interval)
 			}
+		}
+	}
+}
+
+type tickTestPet struct{ *Pet }
+
+func (p *tickTestPet) GetPet() *Pet                        { return p.Pet }
+func (p *tickTestPet) Initialize()                         {}
+func (p *tickTestPet) Reset(_ *Simulation)                 {}
+func (p *tickTestPet) ExecuteCustomRotation(_ *Simulation) {}
+
+// live timing: the player swings on its world ticks, the pet on the map update
+func TestPlayerSwingsOnWorldTicksPetOnMapUpdates(t *testing.T) {
+	var pet *tickTestPet
+	timingTestConstruct = func(a *timingTestAgent) {
+		pet = &tickTestPet{Pet: NewPet("Pet", &a.Character, stats.Stats{}, func(stats.Stats) stats.Stats { return stats.Stats{} }, true, false)}
+		pet.EnableAutoAttacks(pet, AutoAttackOptions{MainHand: testWeapon(2.55), AutoSwingMelee: true})
+		a.AddPet(pet)
+	}
+	sim, a := newTickTestSim(t, 100, 10, func(a *timingTestAgent) {
+		a.EnableAutoAttacks(a, AutoAttackOptions{MainHand: testWeapon(2.55), AutoSwingMelee: true})
+	})
+	timingTestConstruct = nil
+	swings, petSwings := recordCasts(a.AutoAttacks.MHAuto()), recordCasts(pet.AutoAttacks.MHAuto())
+	sim.PrePull()
+	runUntil(sim, 30*time.Second)
+
+	for _, tc := range []struct {
+		name     string
+		swings   []time.Duration
+		next     func(time.Duration) time.Duration
+		interval time.Duration
+	}{
+		{"player", *swings, sim.NextWorldTick, ms(2550)},
+		{"pet", *petSwings, sim.NextServerTick, ms(2600)},
+	} {
+		if len(tc.swings) < 10 {
+			t.Fatalf("%s: only %d swings", tc.name, len(tc.swings))
+		}
+		for i, swing := range tc.swings {
+			if tc.next(swing) != swing {
+				t.Errorf("%s: swing at %v is off its unit's updates", tc.name, swing)
+			}
+			if i > 0 && swing-tc.swings[i-1] != tc.interval {
+				t.Errorf("%s: swing interval %v, want %v", tc.name, swing-tc.swings[i-1], tc.interval)
+			}
+		}
+	}
+}
+
+// Auto Shot is the player's too: a 2.608 s bow shoots every 2.61 s on 10 ms world ticks.
+func TestAutoShotOnWorldTicks(t *testing.T) {
+	sim, a := newTickTestSim(t, 100, 10, func(a *timingTestAgent) {
+		a.EnableAutoAttacks(a, AutoAttackOptions{Ranged: testWeapon(2.608), AutoSwingRanged: true})
+	})
+	shots := recordCasts(a.AutoAttacks.RangedAuto())
+	sim.PrePull()
+	runUntil(sim, 20*time.Second)
+
+	if len(*shots) < 5 {
+		t.Fatalf("only %d shots", len(*shots))
+	}
+	for i, shot := range *shots {
+		if sim.NextWorldTick(shot) != shot {
+			t.Errorf("shot at %v is off the world tick", shot)
+		}
+		if i > 0 && shot-(*shots)[i-1] != ms(2610) {
+			t.Errorf("shot interval %v, want 2.61s", shot-(*shots)[i-1])
 		}
 	}
 }
@@ -188,7 +309,7 @@ func TestHasteRescalesTheSwingTimerNotTheTick(t *testing.T) {
 		a.EnableAutoAttacks(a, AutoAttackOptions{MainHand: testWeapon(2), AutoSwingMelee: true})
 	})
 	swings := recordCasts(a.AutoAttacks.MHAuto())
-	phase := sim.serverTickPhase
+	phase := sim.worldTickPhase
 	sim.PrePull()
 	// halfway to the second swing, which is 1 s of timer away: doubling the speed leaves 0.5 s
 	at(sim, phase+time.Second, func(sim *Simulation) { a.MultiplyMeleeSpeed(sim, 2) })
@@ -351,39 +472,199 @@ func TestOffHandStartsHalfAMainHandSwingBehind(t *testing.T) {
 	}
 }
 
-func TestAuraExpiresOnServerTick(t *testing.T) {
-	for _, mapUpdateMs := range []int32{100, 0} {
+// A player's aura runs out on the first world tick its duration is up by. A creature's counts from the
+// map update before it went on, as the creature's next update takes off a whole one; so does an area
+// dot's, whose dynamic object is a creature in that respect.
+func TestAuraExpiresOnItsUpdate(t *testing.T) {
+	for _, tc := range []struct {
+		name           string
+		mapMs, worldMs int32
+		onTarget       bool
+		onMapGrid      bool
+		want           time.Duration // past the map update before it went on, 480 ms in
+	}{
+		{"player", 100, 10, false, false, ms(1530)},
+		{"target", 100, 10, true, false, ms(1500)},
+		{"area dot's", 100, 10, false, true, ms(1500)},
+		{"exact player", 0, 0, false, false, ms(1530)},
+		{"exact target", 0, 0, true, false, ms(1530)},
+	} {
 		var aura *Aura
-		sim, _ := newTimingTestSim(t, mapUpdateMs, func(a *timingTestAgent) {
-			aura = a.RegisterAura(Aura{Label: "timed", Duration: ms(1050)})
+		sim, _ := newTickTestSim(t, tc.mapMs, tc.worldMs, func(a *timingTestAgent) {
+			unit := &a.Unit
+			if tc.onTarget {
+				unit = a.Env.Encounter.TargetUnits[0]
+			}
+			aura = unit.RegisterAura(Aura{Label: "timed", Duration: ms(1050)})
+			aura.countsOnMapGrid = tc.onMapGrid
 		})
 		sim.PrePull()
-		start := ms(420)
-		want := sim.NextServerTick(start + ms(1050))
-		at(sim, start, func(sim *Simulation) {
+		phase := sim.serverTickPhase
+		want := phase + tc.want
+		at(sim, phase+ms(480), func(sim *Simulation) {
 			aura.Activate(sim)
 			if aura.ExpiresAt() != want {
-				t.Errorf("%d ms: expires at %v, want %v", mapUpdateMs, aura.ExpiresAt(), want)
+				t.Errorf("%s: expires at %v, want %v", tc.name, aura.ExpiresAt(), want)
 			}
 		})
 		at(sim, want-1, func(sim *Simulation) {
 			if !aura.IsActive() {
-				t.Errorf("%d ms: gone before its server tick %v", mapUpdateMs, want)
+				t.Errorf("%s: gone before its update %v", tc.name, want)
 			}
 		})
 		at(sim, want, func(sim *Simulation) {
 			if aura.IsActive() {
-				t.Errorf("%d ms: still active at %v", mapUpdateMs, want)
+				t.Errorf("%s: still active at %v", tc.name, want)
 			}
 		})
 		runUntil(sim, want+ms(1))
 	}
 }
 
-func TestHardcastLandsOnServerTick(t *testing.T) {
-	for _, mapUpdateMs := range []int32{100, 0} {
+func TestAreaDotsFromWorldObjectsTickOnTheMapUpdate(t *testing.T) {
+	for id, want := range map[int32]bool{
+		48819: true,  // Consecration, a persistent area aura
+		58734: true,  // Magma Totem
+		49067: true,  // Explosive Trap
+		50589: false, // Immolation Aura, which ticks from the warlock
+	} {
+		if got := ticksFromWorldObject(serverdata.SpellByID(id)); got != want {
+			t.Errorf("%d: ticks from a world object = %v, want %v", id, got, want)
+		}
+	}
+}
+
+// AuraEffect::Update hands a creature's aura the whole map update the first time, except one the
+// creature put on itself in its own update, which only gets updated on the next one.
+func TestCreatureAuraFromItsOwnUpdateCountsFromThere(t *testing.T) {
+	var spell *Spell
+	var own, players *Aura
+	sim, _ := newTickTestSim(t, 100, 10, func(a *timingTestAgent) {
+		target := a.Env.Encounter.TargetUnits[0]
+		own = target.RegisterAura(Aura{Label: "own", Duration: ms(1050)})
+		players = target.RegisterAura(Aura{Label: "players", Duration: ms(1050)})
+		spell, _ = dotSpell(a, SpellFlagNone, DotConfig{
+			Aura:          Aura{Label: "dot"},
+			NumberOfTicks: 1,
+			TickLength:    ms(1450),
+			TicksCanCrit:  false,
+			OnTick: func(sim *Simulation, _ *Unit, _ *Dot) {
+				own.Activate(sim)
+			},
+		})
+	})
+	sim.PrePull()
+	phase := sim.serverTickPhase
+	tick := phase + ms(1900)
+	at(sim, phase+ms(480), func(sim *Simulation) { spell.Dot(sim.Encounter.TargetUnits[0]).Apply(sim) })
+	at(sim, tick, func(sim *Simulation) { players.Activate(sim) })
+	runUntil(sim, tick+ms(1))
+
+	if got, want := own.ExpiresAt(), tick+ms(1100); got != want {
+		t.Errorf("aura from the target's own dot tick expires at %v, want %v", got, want)
+	}
+	if got, want := players.ExpiresAt(), tick+ms(1000); got != want {
+		t.Errorf("aura from the player expires at %v, want %v", got, want)
+	}
+}
+
+// A pet casts its instants from its AI, after _UpdateSpells, so an aura it puts on itself then counts
+// from that update. A hardcast lands in the event pass before it, so that aura takes the whole update.
+func TestPetSelfAuraCountsFromItsInstantNotItsHardcast(t *testing.T) {
+	var pet *tickTestPet
+	timingTestConstruct = func(a *timingTestAgent) {
+		pet = &tickTestPet{Pet: NewPet("Pet", &a.Character, stats.Stats{}, func(stats.Stats) stats.Stats { return stats.Stats{} }, true, false)}
+		a.AddPet(pet)
+	}
+	var instant, hardcast *Spell
+	expires := map[string]time.Duration{}
+	sim, _ := newTickTestSim(t, 100, 10, func(a *timingTestAgent) {
+		selfAura := func(label string) ApplySpellResults {
+			aura := pet.RegisterAura(Aura{Label: label, Duration: ms(1050)})
+			return func(sim *Simulation, _ *Unit, _ *Spell) {
+				aura.Activate(sim)
+				expires[label] = aura.ExpiresAt()
+			}
+		}
+		// a GCD, as an ability of its own: one without goes off as a proc, in whatever update triggered it
+		instant = pet.RegisterSpell(SpellConfig{
+			ActionID:     ActionID{SpellID: testSpellNoServerData},
+			Cast:         CastConfig{DefaultCast: Cast{GCD: GCDDefault}},
+			ApplyEffects: selfAura("instant"),
+		})
+		hardcast = pet.RegisterSpell(SpellConfig{
+			ActionID:     ActionID{SpellID: testSpellNoServerData, Tag: 1},
+			Cast:         CastConfig{DefaultCast: Cast{CastTime: ms(500)}},
+			ApplyEffects: selfAura("hardcast"),
+		})
+	})
+	timingTestConstruct = nil
+	sim.PrePull()
+	phase := sim.serverTickPhase
+	// both on map updates. The idle pet keeps its GCD busy, so clear it.
+	at(sim, phase+ms(700), func(sim *Simulation) {
+		pet.GCD.Reset()
+		instant.Cast(sim, nil)
+	})
+	at(sim, phase+ms(2300), func(sim *Simulation) { hardcast.Cast(sim, nil) })
+	runUntil(sim, phase+ms(2801))
+
+	if got, want := expires["instant"], phase+ms(1800); got != want {
+		t.Errorf("aura from the instant expires at %v, want %v", got, want)
+	}
+	// lands at 2800, counts from 2700
+	if got, want := expires["hardcast"], phase+ms(3800); got != want {
+		t.Errorf("aura from the hardcast expires at %v, want %v", got, want)
+	}
+}
+
+// A trap goes off in its own map update and a pet casts from its AI, so a dynamic object either one
+// makes only joins the map's update list on the next one: its dot counts from that update. A player's
+// counts from the one before, like any creature aura.
+func TestAreaDotMadeInAMapUpdateCountsFromIt(t *testing.T) {
+	player, pet := &Unit{Type: PlayerUnit}, &Unit{Type: PetUnit}
+	for _, tc := range []struct {
+		caster *Unit
+		id     int32
+		want   bool
+	}{
+		{player, 49067, true},  // Explosive Trap
+		{player, 48819, false}, // Consecration
+		{pet, 50274, true},     // Spore Cloud
+	} {
+		if got := areaDotMadeInMapUpdate(tc.caster, serverdata.SpellByID(tc.id)); got != tc.want {
+			t.Errorf("%d: made in a map update = %v, want %v", tc.id, got, tc.want)
+		}
+	}
+
+	for _, tc := range []struct {
+		name            string
+		madeInMapUpdate bool
+		want            time.Duration // past the map update it went on in
+	}{
+		{"player's", false, ms(1000)},
+		{"trap's", true, ms(1100)},
+	} {
+		var aura *Aura
+		sim, _ := newTickTestSim(t, 100, 10, func(a *timingTestAgent) {
+			aura = a.RegisterAura(Aura{Label: "area dot", Duration: ms(1050)})
+			aura.countsOnMapGrid, aura.madeInMapUpdate = true, tc.madeInMapUpdate
+		})
+		sim.PrePull()
+		start := sim.serverTickPhase + ms(500)
+		at(sim, start, func(sim *Simulation) { aura.Activate(sim) })
+		runUntil(sim, start+ms(1))
+
+		if got, want := aura.ExpiresAt(), start+tc.want; got != want {
+			t.Errorf("%s: expires at %v, want %v", tc.name, got, want)
+		}
+	}
+}
+
+func TestHardcastLandsOnTheCastersUpdate(t *testing.T) {
+	for _, tc := range []struct{ mapMs, worldMs int32 }{{100, 10}, {0, 0}} {
 		var spell *Spell
-		sim, _ := newTimingTestSim(t, mapUpdateMs, func(a *timingTestAgent) {
+		sim, _ := newTickTestSim(t, tc.mapMs, tc.worldMs, func(a *timingTestAgent) {
 			spell = a.RegisterSpell(SpellConfig{
 				ActionID: ActionID{SpellID: testSpellNoServerData},
 				Cast: CastConfig{
@@ -394,15 +675,17 @@ func TestHardcastLandsOnServerTick(t *testing.T) {
 		})
 		casts := recordCasts(spell)
 		sim.PrePull()
-		at(sim, ms(510), func(sim *Simulation) { spell.Cast(sim, nil) })
-		runUntil(sim, 3*time.Second)
+		phase := sim.serverTickPhase
+		at(sim, phase+ms(510), func(sim *Simulation) { spell.Cast(sim, nil) })
+		runUntil(sim, phase+3*time.Second)
 
-		want := sim.NextServerTick(ms(1760))
+		// a world tick, not the map update after it
+		want := phase + ms(1760)
 		if !slices.Equal(*casts, []time.Duration{want}) {
-			t.Errorf("%d ms: cast landed at %v, want %v", mapUpdateMs, *casts, want)
+			t.Errorf("%d ms: cast landed at %v, want %v", tc.mapMs, *casts, want)
 		}
 		if got := spell.CD.ReadyAt(); got != want+10*time.Second {
-			t.Errorf("%d ms: CD ready at %v, want %v: it starts when the cast lands", mapUpdateMs, got, want+10*time.Second)
+			t.Errorf("%d ms: CD ready at %v, want %v: it starts when the cast lands", tc.mapMs, got, want+10*time.Second)
 		}
 	}
 }
@@ -426,13 +709,20 @@ func dotSpell(a *timingTestAgent, flags SpellFlag, config DotConfig) (*Spell, *[
 	return spell, &ticks
 }
 
-func TestDotTicksLandOnServerTicks(t *testing.T) {
-	// 1.45 s doesn't divide the tick interval, so a dot that restarted its timer at every tick would
-	// drift: the nominal times stay on their own lattice and only the tick they land on moves.
-	for _, mapUpdateMs := range []int32{100, 0} {
+// A target's dot ticks on the map update, counting from the one before it went on. 1.45 s doesn't
+// divide the map update, so a dot that restarted its timer at every tick would drift: the nominal
+// times stay on their own lattice and only the update they land on moves.
+func TestTargetDotTicksOnTheMapUpdate(t *testing.T) {
+	for _, tc := range []struct {
+		mapMs, worldMs int32
+		want           []time.Duration // past the map update before it went on, 480 ms in
+	}{
+		{100, 10, []time.Duration{ms(1900), ms(3300), ms(4800), ms(6200)}},
+		{0, 0, []time.Duration{ms(1930), ms(3380), ms(4830), ms(6280)}},
+	} {
 		var spell *Spell
 		var ticks *[]time.Duration
-		sim, _ := newTimingTestSim(t, mapUpdateMs, func(a *timingTestAgent) {
+		sim, _ := newTickTestSim(t, tc.mapMs, tc.worldMs, func(a *timingTestAgent) {
 			spell, ticks = dotSpell(a, SpellFlagNone, DotConfig{
 				Aura:          Aura{Label: "dot"},
 				NumberOfTicks: 4,
@@ -441,27 +731,29 @@ func TestDotTicksLandOnServerTicks(t *testing.T) {
 			})
 		})
 		sim.PrePull()
-		start := ms(420)
-		at(sim, start, func(sim *Simulation) { spell.Dot(sim.Encounter.TargetUnits[0]).Apply(sim) })
-		runUntil(sim, 10*time.Second)
+		phase := sim.serverTickPhase
+		at(sim, phase+ms(480), func(sim *Simulation) { spell.Dot(sim.Encounter.TargetUnits[0]).Apply(sim) })
+		runUntil(sim, phase+10*time.Second)
 
-		want := make([]time.Duration, 0, 4)
-		for i := 1; i <= 4; i++ {
-			want = append(want, sim.NextServerTick(start+time.Duration(i)*ms(1450)))
+		want := make([]time.Duration, 0, len(tc.want))
+		for _, tick := range tc.want {
+			want = append(want, phase+tick)
 		}
 		if !slices.Equal(*ticks, want) {
-			t.Errorf("%d ms: ticks at %v, want %v", mapUpdateMs, *ticks, want)
+			t.Errorf("%d ms: ticks at %v, want %v", tc.mapMs, *ticks, want)
 		}
 	}
 }
 
+// Spell::update runs a channel on the caster's update, so a player's ticks and ends on world ticks,
+// wherever its aura sits.
 func TestChannelEndsWithItsLastTick(t *testing.T) {
 	// the dot aura is what holds the rotation during a channel, so an expiry past the last tick
-	// would idle the player for a whole server tick
+	// would idle the player for a whole update
 	var spell *Spell
 	var ticks *[]time.Duration
 	var expiresAt time.Duration
-	sim, a := newTimingTestSim(t, 100, func(a *timingTestAgent) {
+	sim, a := newTickTestSim(t, 100, 10, func(a *timingTestAgent) {
 		spell, ticks = dotSpell(a, SpellFlagChanneled, DotConfig{
 			Aura:          Aura{Label: "channel"},
 			NumberOfTicks: 3,
@@ -471,17 +763,18 @@ func TestChannelEndsWithItsLastTick(t *testing.T) {
 	})
 	a.Rotation = &APLRotation{unit: &a.Unit} // a channel asks it whether to keep going
 	sim.PrePull()
-	at(sim, ms(370), func(sim *Simulation) {
+	start := sim.serverTickPhase + ms(370)
+	at(sim, start, func(sim *Simulation) {
 		dot := spell.Dot(sim.Encounter.TargetUnits[0])
 		dot.Apply(sim)
 		expiresAt = dot.ExpiresAt()
 	})
-	runUntil(sim, 5*time.Second)
+	runUntil(sim, start+5*time.Second)
 
-	if len(*ticks) != 3 {
-		t.Fatalf("ticks at %v, want 3 of them", *ticks)
+	if want := []time.Duration{start + time.Second, start + 2*time.Second, start + 3*time.Second}; !slices.Equal(*ticks, want) {
+		t.Fatalf("ticks at %v, want %v", *ticks, want)
 	}
 	if last := (*ticks)[2]; last != expiresAt {
-		t.Errorf("last tick at %v, channel aura expires at %v: they have to be the same server tick", last, expiresAt)
+		t.Errorf("last tick at %v, channel aura expires at %v: they have to be the same update", last, expiresAt)
 	}
 }

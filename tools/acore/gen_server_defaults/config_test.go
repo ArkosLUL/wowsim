@@ -14,6 +14,7 @@ func TestEnvVarName(t *testing.T) {
 		"LogDB.Opt.ClearTime": "AC_LOG_DB_OPT_CLEAR_TIME",
 		// names the live override files use
 		"MapUpdateInterval":                             "AC_MAP_UPDATE_INTERVAL",
+		"MinWorldUpdateTime":                            "AC_MIN_WORLD_UPDATE_TIME",
 		"SpellTweaks.ExoticPetDamage.Pct":               "AC_SPELL_TWEAKS_EXOTIC_PET_DAMAGE_PCT",
 		"DungeonScale.StatModifierRaid.Boss.Health":     "AC_DUNGEON_SCALE_STAT_MODIFIER_RAID_BOSS_HEALTH",
 		"DungeonScale.StatModifierRaidHeroic.Boss.Mana": "AC_DUNGEON_SCALE_STAT_MODIFIER_RAID_HEROIC_BOSS_MANA",
@@ -91,6 +92,7 @@ func TestLookupOrder(t *testing.T) {
 // liveLikeConf is the part of the conf.dist files build reads, at their stock values.
 const liveLikeConf = `
 MapUpdateInterval = 10
+MinWorldUpdateTime = 1
 SpellTweaks.Enable = 1
 SpellTweaks.ExoticPetDamage.Pct = 10
 DungeonScale.StatModifierRaid.Global=1.0
@@ -126,6 +128,7 @@ func liveReforgeLimits(t *testing.T) reforgeLimits {
 func TestBuild(t *testing.T) {
 	c := buildFrom(t, liveLikeConf+"DungeonScale.rate.armor = 0.8\n", `
       AC_MAP_UPDATE_INTERVAL: "100"
+      AC_MIN_WORLD_UPDATE_TIME: "10"
       AC_SPELL_TWEAKS_EXOTIC_PET_DAMAGE_PCT: "-4"
       AC_SPELL_TWEAKS_RUPTURE_WEAPON_EXPERTISE_ENABLE: "0"
       AC_DUNGEON_SCALE_STAT_MODIFIER_RAID_BOSS_HEALTH: "1.2"
@@ -139,6 +142,9 @@ func TestBuild(t *testing.T) {
 
 	if got := settings.GetMapUpdateIntervalMs(); got != 100 {
 		t.Errorf("map update interval = %d, want the override's 100", got)
+	}
+	if got := settings.GetWorldUpdateIntervalMs(); got != 10 {
+		t.Errorf("world update interval = %d, want the override's 10", got)
 	}
 	tweaks := settings.SpellTweaks
 	if tweaks.GetExoticPetDamagePct() != 0 || tweaks.GetRuptureWeaponExpertise() || !tweaks.GetRendTrauma() {

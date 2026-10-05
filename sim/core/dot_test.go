@@ -220,14 +220,16 @@ func TestDotRefreshResetsTheTickTimerOnlyBelowTwoStacks(t *testing.T) {
 		sim.CurrentTime = time.Second
 		dot.Apply(sim)
 
+		// the target counts both down from the map update before the reapplication
+		start := sim.NextServerTick(sim.CurrentTime) - sim.serverTickInterval
 		want := firstTick
 		if tc.resets {
-			want = sim.NextServerTick(sim.CurrentTime + dot.TickPeriod())
+			want = sim.NextServerTick(start + dot.TickPeriod())
 		}
 		if got := dot.NextTickAt(); got != want {
 			t.Errorf("%s: next tick at %v after reapplying, want %v", tc.name, got, want)
 		}
-		if got, want := dot.ExpiresAt(), sim.NextServerTick(sim.CurrentTime+dot.Aura.Duration); got != want {
+		if got, want := dot.ExpiresAt(), sim.NextServerTick(start+dot.Aura.Duration); got != want {
 			t.Errorf("%s: expires at %v, want %v: a refresh always renews the duration", tc.name, got, want)
 		}
 	}
