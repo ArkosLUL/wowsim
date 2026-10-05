@@ -586,6 +586,15 @@ func goldcharInfo(t *testing.T, s goldcharSetup, sheet serverSheet) goldcharReco
 	return rec
 }
 
+// newSweepSim is the sheet of the setup's character against the record's dummy.
+func newSweepSim(rec damageRecord, s goldcharSetup) sweepSim {
+	d, err := newGoldcharSim(rec, s)
+	if err != nil {
+		return sweepSim{err: err}
+	}
+	return d.sweepSim()
+}
+
 // simSheet is the sheet a server agreeing with the sim would record for the setup, its whole numbers
 // truncated the way the module's are.
 func simSheet(t *testing.T, s goldcharSetup) serverSheet {

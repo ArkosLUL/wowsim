@@ -326,7 +326,7 @@ that stood still) also gets `SniperTrainingUptime` 1 and its aura 53304. Per set
 - `info`, against the sim's stats after a reset:
   - the talent sweep's sheet (`checkGoldcharSheet`): primary stats, max health, max power (only in a record with
     `maxPower`; the test logs those without), armor, resistances, AP, RAP, dodge, parry, block, block value,
-    ArP%, and each magic school's spell power and crit. The sim side is `newSweepSim`, also behind the sweep's
+    ArP%, and each magic school's spell power and crit. The sim side is `damageSim.sweepSim`, also behind the sweep's
     `talentPath.sweepSim`: the server may sit up to that field's sweepSim bound below the sim (truncations only
     lower it) and 0.001 above. A field the sim leaves out counts as 0 (no parry, block or bar), except block value,
     skipped without a shield. Every school gets the sim's one spell power; its crit is that of the sim's spells of
