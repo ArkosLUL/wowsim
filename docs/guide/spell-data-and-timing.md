@@ -42,14 +42,20 @@ spell is only as right as its id.
   deals the result, over `DistanceFromTarget`, which is 0 for a pet: its missiles wait the 5 yd floor.
 
 The server updates players every world tick (`MinWorldUpdateTime`, 10 ms live), and creatures, pets and
-guardians, with the auras they carry, only on the map update, 100 ms live (`Map::Update`). A creature aura's
-first update counts a whole map update, so the dummy's dots tick and expire up to one update early. The sim
-puts every unit on the map update (`ServerSettings.MapUpdateInterval`; 0 means exact, which is what unit tests
-want).
+guardians, with the auras they carry, only on the map update, 100 ms live (`Map::Update`): the first world
+tick its interval is up by, at least 3 ticks apart (`MapMgr::Update`). The sim runs both grids
+(`ServerSettings.WorldUpdateInterval`, `MapUpdateInterval`; a map interval of 0 makes every unit exact, which is
+what unit tests want), with one phase rolled per iteration.
 
-- Swings, hardcast completions and aura expiry land on the next tick, with a phase rolled per iteration.
-  A swing restarts its timer from the tick it landed on, losing the overshoot: up to one map update in the
-  sim, which costs a fast dual wielder several percent, but up to one world tick for a player on the server.
+- Swings, Auto Shot and hardcast landings land on the caster's next tick. A swing restarts its timer from the
+  tick it landed on, losing the overshoot: up to a world tick for a player, a map update for a pet.
+- Auras and dots tick and expire on the grid of what counts them down: the unit they sit on, a channel's
+  caster, or the map update for an area dot from a dynamic object, totem or trap (effects 27, 28, 105).
+- A creature aura put on outside the creature's own update counts down from the map update before
+  (`Map::Update` hands `_UpdateSpells` the whole update's diff), so the dummy's dots tick and expire up to one
+  update early (`Aura.countdownStart`). One the creature puts on itself in its own update (swing, AI instant,
+  dot tick, expiry) counts from that update, and so does an area dot's object made in a map update.
+- The live map update runs about 104 ms (world ticks of about 10.4 ms); the sim's grid is exact.
 - A landed swing pushes the other hand to at least 200 ms. A melee swing restarts the ranged timer, and
   every Auto Shot restarts both melee timers (`Unit::_UpdateAutoRepeatSpell`).
 - At the pull, and when auto attacks restart (breaking stealth), a ready off hand starts half the main hand's

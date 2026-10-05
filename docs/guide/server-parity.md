@@ -81,9 +81,11 @@ class by simval.
   skips physical percent mods such as Two-Handed Weapon Specialization: `Spell::EffectWeaponDmg` and
   `Unit::MeleeDamageBonusDone` match auras by school.
 - **Spell costs** (`sim/core/cost.go`; `SpellInfo::CalcPowerCost`, `Player::ApplySpellMod`): truncated base
-  plus the first school's flat aura (Spark of Hope), then × (1 + Σ `SPELLMOD_COST` percents) + Σ flats,
-  truncated, then × (1 + the first school's cost-multiplier aura, e.g. Power Infusion, Precision, Beast
-  Within), truncated, at least 0. Percents add, never multiply; rage is in tenths. `DefaultCast.Cost` is the
+  plus the first school's flat aura (Spark of Hope), then (that + Σ `SPELLMOD_COST` flats) × (1 + Σ percents),
+  0 once the flats reach it, truncated, then × (1 + the first school's cost-multiplier aura, e.g. Power Infusion,
+  Precision, Beast Within), truncated, at least 0. Percents add, never multiply; rage and runic power are in
+  tenths. A rune count takes the spell mods only (`runeCountFor`), and a rune spell's runic power gain needs no
+  cost left to pay (`Spell::TakeRunePower`). `DefaultCast.Cost` is the
   base; `StaticCost()` has the never-changing talents (options' `Multiplier`, `FlatMod`) and is what rotations
   read. Dynamic mods: `Spell.CostMultiplier`/`CostFlat`, `PseudoStats.CostMultiplier`/`CostFlat`,
   `Unit.AddSchoolCostMultiplier`/`AddSchoolCostFlat`. `ApplyCostModifiers` caches per spell, comparing every
@@ -120,25 +122,48 @@ class by simval.
 - **Power Infusion and Arcane Power** share group 1123 with no common aura type: the one cast last removes the
   other.
 - **Armor debuffs:** Sunder ×5 (debuff 58567, not ability 47467) and Expose Armor don't stack. Faerie
-  Fire multiplies.
+  Fire multiplies. Curse of Weakness' armor holds only while its AP is the AP debuff that counts (group 1062,
+  highest per aura).
+- **Hit debuffs** on a creature add up (`HandleModHitChance`): Insect Swarm and Scorpid Sting stack.
+- **Crit damage:** spells and specials add up the aura 163 bonuses (meta gem, Predatory Instincts, Prey on the
+  Weak, Poleaxe) before `SPELLMOD_CRIT_DAMAGE_BONUS` scales the part over 1; white swings multiply them
+  (`Character.WhiteCritMultiplier`). Magic-class spells crit from 1.5, the DK's Icy Touch, Death Coil, Blood Boil,
+  Howling Blast and Death and Decay too.
+- **Creature-type attack power** (Elixir of Demonslaying, Scourgebane) reaches only weapon damage: a white swing or
+  a spell with a weapon effect adds `int32(AP / 14 × speed)` after its weapon percent (`versusAttackPowerBonus`).
+- **Meta gems** work only with their `SpellItemEnchantmentCondition` met (`sim/core/meta_gems.go`); an inactive
+  one gives nothing.
 - **Timing and procs** (the rest is in [spell data and timing](spell-data-and-timing.md)):
   - The rage hit factor is truncated to `uint32`.
   - Spell-proc PPM uses max(cast time, 1500 ms).
   - `REDUCE_PROC_60` applies.
   - A DoT refresh resets the tick timer only when StackAmount < 2.
+  - Any dot or hot tick procs a `DONE_PERIODIC` aura, whatever its mask (`ProcTrigger.AnyPeriodic`). A tick the
+    server deals as a triggered cast (auras 23, 226, 227) procs only an aura with
+    `SPELL_ATTR3_CAN_PROC_FROM_PROCS` (`ProcTrigger.CanProcFromProcs`: Greatness, Dying Curse), as a hit of its
+    damage class.
   - Periodic ticks crit only with an aura 286 covering the spell, which can be a passive a skill teaches
     (SkillLineAbility AcquireMethod 2: Flame Shock's 75461, Immolate's 75445). Every sim dot declares it
     as `TicksCanCrit` (`sim/dotconfig_declared_test.go`).
   - A munched periodic (Deep Wounds, Unholy Blight, Piercing Shots, Righteous Vengeance, Ignite, Languish) applies
     on the next 400 ms step of the caster's event clock, up to 400 ms late (`CalculateQueueTime`,
-    `MunchingBlizzlike.Enabled`), ahead of a swing or tick due on the same server tick. The sim does this for the
-    first four (`core.DelayedPeriodicApplier`, a phase per caster per iteration).
+    `MunchingBlizzlike.Enabled`), ahead of a swing or tick due on the same server tick. The sim does this with
+    `core.DelayedPeriodicApplier`, a phase per caster per iteration. A player's instant cast draws the step off a
+    clock one world tick stale (the session pass runs before `Player::Update`), so it can land that update.
 - **Pets:** pet hit is floored to a whole percent. Pet scaling comes from the server's scripts.
-  - A pet crits 5% plus crit auras, none from agility; the sim does this for the DK's summons but the
-    rune weapon, and the hunter pet, so far.
+  - Create stats are the `pet_levelstats` row, else `Guardian::InitStatsForLevel`'s 22/22/25/28/27 and 50 armor
+    a level; the scaling auras add a truncated percent of the owner's (`PetScalingPct`). Real pets rescale every
+    2 s, Spirit Wolves every 1 s, other guardians once at the summon. A controlled creature regains
+    trunc(spirit/5 + 17) mana every 2 s (`Creature::Regenerate`).
+  - Summons with a scaling script (Infernal, treants, Shadowfiend, Spirit Wolves, Fire Elemental, Water
+    Elemental guardian, Mirror Image) are immune to their scaling aura types, so buffs of those types add nothing;
+    the DK's ghoul, gargoyle and army only to stats and AP (`Pet.BuffImmunity`).
+  - A pet crits 5% plus crit auras, none from agility; magic spells crit ×1.5. The sim still gives pets with
+    mana spell crit from intellect.
   - The DK's summons carry scaling aura 67561, not 61017: no melee hit. Risen ghouls, not the army, take the
     owner's ArP (`Pet.HitScaling`, `Pet.RisenGhoul`).
-  - Guardians take party and raid auras like pets (`AnyGroupedUnitInObjectRangeCheck`).
+  - Guardians take party and raid auras like pets (`AnyGroupedUnitInObjectRangeCheck`), but an uncontrollable
+    one (Bloodworms) never gets a party or raid cast (`TARGET_CHECK_PARTY`/`RAID`).
   - Haste carriers (the hunter pet, the DK's ghouls and gargoyle; `Unit.HasteCarrier`) ignore direct haste
     and slows, Bloodlust included, and take the owner's attack speed (`Pet.OwnerHasteSource`): every 2 s
     for a pet, once at the summon for a guardian.

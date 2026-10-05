@@ -150,14 +150,13 @@ fixes then work on records from the current server build, and take whatever X2's
 
 ## Current wave
 
-- Wave: X2, landed (master fast-forwarded to this close-out). Next: Y.
-  Item notes: `G:\DevStuff\GitHub\.wave-loop\ec-{recheck,cover,probes}-tmp`.
-  Prod runs X's `25cb9dddc` (no `rollback-q` image: its layers were gone); X2 changed no sim code.
-- Open: none outside Y's and Z's items and the deferred BiS chain, plus two server chores, the user's: the next
-  `ac-db-import` run adds the `command` rows (help text only) of `.simval combopoints` and `.simval engage`; the orphan
-  bot `Svsleadggekf` (`SIMVAL_ORPHANS=540437:7:8:54913 run.sh TestCleanupOrphans`, a DB write). Closed as not sim gaps:
-  the sheet fields the server shows raw (per-school crit, Blood-Gorged, Mace and Holy Specialization), which the fixture
-  README explains.
+- Wave: Y, landed (master fast-forwarded to this close-out). Next: Z.
+  Item notes: `G:\DevStuff\GitHub\.wave-loop\{ec-tick-fix,ec-core-fix,ec-pet-fix,perf-threat}-tmp`.
+  Prod runs X's `25cb9dddc` (no `rollback-q` image: its layers were gone), without Y's sim changes.
+- Open: none outside Z's items and the deferred BiS chain, plus one server chore, the user's: the next
+  `ac-db-import` run adds the `command` rows (help text only) of `.simval combopoints` and `.simval engage`.
+  Closed as not sim gaps: the sheet fields the server shows raw (per-school crit, Blood-Gorged, Mace and Holy
+  Specialization), which the fixture README explains.
 - Deferred (the user's calls, 2026-10-02, 10-03 and 10-05), each only on the user's go-ahead:
   - Rerun all 28 presets, tanks included, on the final HEAD: BIS-caps-race changes every racial search,
     `ff0920a96` the 16 builds `mage_*`, `rogue_*`, `warlock_*`, `warrior_arms`, `warrior_fury`,
@@ -170,8 +169,9 @@ fixes then work on records from the current server build, and take whatever X2's
     baseline; the raid25 dumps in `_dump/optimizer_dump_test.go` still build uncut pools).
   - Before the preset rerun: the response curves span the pool's stat range, so BIS-outclassed's cut moved Fury
     P1's Normal pick 45 J below the uncut pool's, every item of which it still holds.
-- Workflow runIds: X2's `wf_b555c578-f46` (code stages), `wf_a0107f34-c7b` (live stages) and `wf_b00ecbe0-79a`
-  (EC-RECHECK's live stages again, after an API error); X's `wf_a31ea7ec-8e3`; W's `wf_aa1b462c-590` (code stages) and
+- Workflow runIds: Y's `wf_e58e8b14-102` (all four), `wf_d290cc37-ee6` and `wf_fe29d895-a35` (EC-TICK-FIX's rest and
+  review); X2's `wf_b555c578-f46` (code stages), `wf_a0107f34-c7b` (live stages) and `wf_b00ecbe0-79a` (EC-RECHECK's
+  live stages again, after an API error); X's `wf_a31ea7ec-8e3`; W's `wf_aa1b462c-590` (code stages) and
   `wf_894cf391-8a3` (live stages); V's `wf_ea73babf-e53`; T2's `wf_5af2b99d-6d0`; T's `wf_8a59e202-2f8`,
   `wf_59a7bdbf-cbc` and `wf_beaacdaa-bbc` (the live reruns; journals in the session's `subagents/workflows/<runId>`);
   S's `wf_ae61e19e-2c1`; R's `wf_445767f0-4a1` (base `9f1f2f94f`); Q's `wf_47a2be77-20d` and `wf_6f439290-bf9` (PAR-FU-5
@@ -222,6 +222,7 @@ Reckoning that way), but J isn't DPS: see below.
 | W | 8690.7, +273 / +273 | 10730.8, +708 / +903 | 5066.6, +41 / +51 | 12963.8, +148 / +225 | -17672.3, +4831 / +4777 | -1211.2, +892 / +891 |
 | X | 8690.7, +273 / +273 | 10730.8, +708 / +903 | 5066.6, +41 / +51 | 12963.8, +148 / +225 | -17672.3, +4831 / +4777 | -1211.2, +892 / +891 |
 | X2 | 8690.7, +273 / +273 | 10730.8, +708 / +903 | 5066.6, +41 / +51 | 12963.8, +148 / +225 | -17672.3, +4831 / +4777 | -1211.2, +892 / +891 |
+| Y | 8646.8, +205 / +221 | 10774.4, +567 / +539 | 5048.0, +80 / +103 | 12979.9, +174 / +258 | -16943.2, +5205 / +5188 | -1181.2, +978 / +982 |
 
 Quick / Normal. Ret P4 ran at Quick only in wave D, after the glyph fix; its wave C numbers
 (12821.9, +54 / +73) came from a seed that wore the glyph. The two tanks arrive with
@@ -284,6 +285,10 @@ Rogue's only 2% (see Sim throughput).
 In V EC-THREAT-FIX moved the tanks: Prot Pal's `J_preset` rose 1.0% (TPS +2.7%), Feral Tank's fell 14.6% (Dire Bear
 Form and unmodified Maul and Lacerate cut its TPS 5.6%); the DPS rows match T2's. It ran beside the user's game: walls
 rose 40–46% over T2's idle run, Combat Rogue's only 21–22% (PERF-COST).
+In Y the DPS presets rose with their goldens (`dps_preset` Fury +2.0%, Combat Rogue +4.2%, Fire Mage +6.0%,
+Ret +1.7%); Fury's `J_preset` fell 0.5% and Fire Mage's 0.4%, the normalizer. Combat Rogue's gains fell to
++567 / +539 and the tanks' rose. Normal's walls rose 20–36% over X2's, both beside the live server: the
+sim's own cost (see Sim throughput).
 
 ## Sim throughput
 
@@ -402,7 +407,7 @@ is 14% under T2's at one iteration and 12% at 100 (PERF-COST); at 100 Ret is 8% 
 +3.7%, the raid flat; one iteration within noise. Elemental's profile puts EC-THREAT-FIX's per-cast threat bookkeeping
 (`closeThreatCast`, `openThreatCast`, `addAssistThreat`) at about 5% of its time.
 
-W and X have no row: they change no sim code.
+W, X and X2 have no row: they change no sim code.
 
 E to F2 ran the old requests: one iteration, and no rotation for Ret, Hunter and Elemental.
 
@@ -578,6 +583,11 @@ crashed before F2, so its column starts there.
 | EC-COVER | merged | `aaec6476c` | module `ee32ca5`; the 10 never-seen talents all show; dropped: Improved Devotion Aura, Improved Imp, Enhancing Totems' Flametongue, Berserk's costs (server `27e096204`); the Infernal's raid buffs allowlisted |
 | EC-PROBES | merged | `62371bfc0` | module `0676faa`; `.simval combopoints` and `.simval engage`; Rupture and Slice and Dice at 1 to 5 points and assist threat over three creatures agree; the five threat `recapture` drops are back |
 | wave X2 cross-review | | `e7902de96` | no bugs; a stale README line, and `newSweepSim` moved next to its only caller, a test |
+| EC-TICK-FIX | merged | `36ed3bdb3` | players on the 10 ms world tick, creatures, pets and area dots on the map update with a creature aura's early first tick; the 7 `world tick` drops gone, a new `map update length` one; Ignite's and Righteous Vengeance's instant-cast delay off a world-tick-stale clock; all 37 suites move (Fire +7.6%, Subtlety +4.1%) |
+| EC-CORE-FIX | merged | `2c609daa4` | X2's spelldump; summed crit damage, DK magic crit base, procs on ticks, cost order and rune costs, debuffs, gear and versus-creature AP, Gift of Arthas, meta activation; 34 suites move (Feral -2%, tanks' DTPS -7 to -13%) |
+| EC-PET-FIX | merged | `b1bf58d68` | create stats, scaling, regen and buff immunity from the server; per-pet weapons, the Imp's crit, Ghoul Frenzy, Improved Imp at every rank; 24 pet suites move (Blood Tank -5.9%, Demonology +2.0%) |
+| PERF-THREAT | merged | `1616f7ab9` | goldens byte-identical; Elemental's bookkeeping 2.7% → 1.5% of its profile |
+| wave Y cross-review | | `91bc1a112` | the rune weapon's strikes lost the DK's meta crit (TestBlood -0.1%); Rend's tick crit drop back; the Fire cap test made robust |
 
 Later WIs are added as their wave starts.
 

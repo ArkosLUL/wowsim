@@ -53,7 +53,18 @@ U is taken (the UI wave). Versus the INVESTIGATION's order, B7, A3 and A4 moved 
 C1 moved last (after B6).
 
 **Backlog:** golden rows against other mob types (test-enrichment's G4), once EC-MOBS lands; execute-range damage;
-haste stacking beyond EC-BUFFS' pairs.
+haste stacking beyond EC-BUFFS' pairs. From Y:
+- Timing: the live map update's measured ~104 ms (the fights' `map update length` drop); a hardcast started in the
+  session pass lands up to a world tick sooner, and a player aura put on there or by a hardcast runs up to one short;
+  Drain Soul and Mind Sear tick from a target aura, so on the map update, not the caster's grid; a pet's aura on the
+  dummy is assumed early (`_updatableObjectList`'s order unconfirmed).
+- Pets: their 2 s scaling and mana regen timers (and the older hit and haste refreshes) count from the summon, not
+  the map update (moves every pet suite); spell crit from intellect (`EnableManaBarWithModifier`; a creature's is a
+  flat 5% plus auras); the Fire Elemental's and Mirror Image's stats are estimates; RaidStats shows Blood Pact
+  unimproved at 1–2 points of Improved Imp.
+- Core: item swaps don't re-check meta activation; heal Penance misses the Illustration stack its 53007 hit gives;
+  goldchar could check meta activation (`HasMetaGemEquipped`).
+- Tooling: a fight mean check's range ends at one iteration's tail (a 1.4x Shadow Bolt passed).
 
 ## Work items
 
@@ -1125,7 +1136,7 @@ replays pass, so `timingRecapture` and the five threat `recapture` drops went, w
 to each creature, as the sim does. No compared value moved since the old capture; only new fields (EC-GEAR's
 equipment, `live.assist`) and pre-cast state (cat energy, the rogue's poison stacks) differ. No new mismatch.
 
-### EC-TICK-FIX (Y; changes goldens, full suite)
+### EC-TICK-FIX (Y, done; changes goldens, full suite)
 
 - The server updates players every world tick (`MinWorldUpdateTime`, 10 ms live) and creatures, pets and guardians
   only on the map update (`Map::Update`, `MapMgr::Update`). An aura updates with the unit it sits on
@@ -1184,7 +1195,7 @@ equipment, `live.assist`) and pre-cast state (cat energy, the rogue's poison sta
   of its 368 floor either side as the sim moves, so the precondition now asks only that some of the
   unconstrained top loadouts fall short.
 
-### EC-CORE-FIX (Y; changes goldens, full suite; stages: crit and procs, gear and debuffs)
+### EC-CORE-FIX (Y, done; changes goldens, full suite; stages: crit and procs, gear and debuffs)
 
 - First EC-RECHECK's spelldump recapture (`G:\DevStuff\GitHub\.wave-loop\ec-recheck-tmp\capture\spelldump.jsonl`, 32
   spells moved: 64869's chance, two Heroic Strike levels, Backstab rank 1's behind flag, the Shadow scripts) replaces
@@ -1253,7 +1264,7 @@ Stage gear and debuffs:
   meta fall to the no-meta value (Chaotic Skyflare on Frost DK, Relentless on Balance), as do set rows that pull gemmed
   pieces.
 
-### EC-PET-FIX (Y; changes goldens)
+### EC-PET-FIX (Y, done; changes goldens)
 
 - The strikes README's pet rows: create stats from `pet_levelstats` or `Guardian::InitStatsForLevel`, armor, attack
   and spell power from the scaling auras, a controlled creature's regen (`Creature::Regenerate`), the Imp's Firebolt
@@ -1337,9 +1348,10 @@ Stage 2 (pets), re-measured on `bb4ffd124`:
 
 - Death knight: Rune of the Stoneskin Gargoyle's defense as skill (goldchar row); Frost Vulnerability (51714) rolls
   spell hit; Howling Blast with death runes (a fights lead: DeathknightFrost's cycle can starve it of runes for a
-  whole fight, failing the e2e at random).
-- Warrior: Rend's ticks 3–11% high (cause not found); Flurry spends no charge on a miss (spell_proc -12966's HitMask),
-  the shaman's too.
+  whole fight, failing the e2e at random); the rune weapon's strikes take creature-type AP at half through the DK
+  (`MeleeDamageBonusDone` for 27893; a lead); refundable spells gain runic power on a miss (a lead).
+- Warrior: Rend's ticks and tick crits 3–13% high (cause not found); Flurry spends no charge on a miss (spell_proc
+  -12966's HitMask), the shaman's too.
 - Paladin: Vindication at 3 PPM (spell_proc -9452), its 26017 rolling spell hit (no `SPELL_ATTR3_ALWAYS_HIT`);
   Improved Devotion Aura at its 3 ranks (the sim checks 5; the talents row); Crusader Strike refreshes no judgement.
 - Rogue: Prey on the Weak's 10 s aura, re-added by its 2 s check only once gone; Hemorrhage's debuff solo; Endurance's
@@ -1352,9 +1364,11 @@ Stage 2 (pets), re-measured on `bb4ffd124`:
 ### EC-NATURE-FIX (Z; changes goldens; stages: fixes, live)
 
 - Druid: Eclipse (Solar and Lunar) on crits only (spell_proc -48516 HitMask 2); Insect Swarm's crit without Vengeance;
-  Rake's first hit takes armor (its crit mean too); Predatory Strikes ignores the weapon's enchant; cat and bear form
+  Rake's first hit takes armor; Predatory Strikes ignores the weapon's enchant; cat and bear form
   weapon damage (the strikes row); the server's weapon feral AP truncation (goldchar row); the Balance APL's Nature's
-  Swiftness on Starfire.
+  Swiftness on Starfire; Starfall's stars (53195, `SPELL_ATTR3_NOT_A_PROC`) proc Illustration of the Dragon Soul on
+  the server, never in the sim; Force of Nature casts 65861, not the talent's 33831 (Omen of Clarity); normalized
+  form attacks' creature-type AP at 2.4 speed (a lead).
 - Shaman: Enhancing Totems on Flametongue Totem's spell power (the sim's is a fixed 144; the talents row); Lava
   Lash's off-hand percent (`EffectWeaponDmg` skips it for a non-physical spell); Elemental's Lightning
   Bolt 13–18% over the sim's (a lead).
@@ -1370,9 +1384,12 @@ Stage 2 (pets), re-measured on `bb4ffd124`:
 
 - Mage: Torment the Weak only on a snared or slowed target; T8 4-piece's 20% since `e9517efd2` (64869, the sim's 10%);
   Brain Freeze's Fireball! (57761) lasts 15 s; Enduring Winter's 6 s proc cooldown; Master of Elements
-  refunds 30%, on no-cost and clearcast crits too, with Burnout burned apart; Frost's crit over the sim's (a lead).
+  refunds 30%, on no-cost and clearcast crits too, with Burnout burned apart; Frost's crit over the sim's (a lead);
+  MageFire's fire crits deal 45% over its log (21 to 16, Fireball's crit mean +16%), the fight 23% (Ignite pays its
+  share); Blizzard's 42938 procs Illustration in the sim, not on the server.
 - Hunter: Ranged Weapon Specialization on Explosive Trap and magic procs; Thrill of the Hunt on the base cost;
-  Explosive Decoy's blast on its creature's death.
+  Explosive Decoy's blast on its creature's death; Thrill of the Hunt's mana off a free Lock and Load shot; Hunter's
+  Mark reaching a weapon hit only as flat AP after the weapon percent (a lead).
 - Live: Frost Channeling's mask 84.
 - **Owns:** `sim/{mage,hunter}/` but pet, threat and EC-CORE-FIX's code; their drop entries and README rows.
 

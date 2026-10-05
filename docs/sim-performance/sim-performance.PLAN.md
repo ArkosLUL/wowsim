@@ -284,7 +284,7 @@ Fix it in core, e.g. resolve each spell's cost school once and cache its compute
   cumulative) 34.3% → 9.2%, `costFor` 21.0% → 0; Feral's `ApplyCostModifiers` 2.1% → under the 0.45% sample floor,
   `costFor` left at 1.35%, two thirds from `StaticCost` callers.
 
-### PERF-THREAT: per-cast threat bookkeeping off the hot path (wave Y)
+### PERF-THREAT: per-cast threat bookkeeping off the hot path (wave Y, done)
 
 EC-THREAT-FIX (wave V) keeps a threat record per cast (`openThreatCast`, `closeThreatCast`, `addAssistThreat`,
 `sim/core/threat.go`). Idle at 100 iterations, Elemental runs 7.1%, Ret 6.2% and Hunter 3.7% over V's base; the three
@@ -321,4 +321,4 @@ The user put the pass before wave J, whose BIS-e2e-perf times the optimizer with
 - **J2 (done):** PERF-RNG, the user's call (2026-09-27), with the optimizer fixes wave J's speed audit found.
 - **N (done):** PERF-FU, the user's call (2026-10-01), with wave L's and M's other follow-ups.
 - **V (done):** PERF-COST, the user's call (2026-10-03), after wave T2's cost arithmetic slowed Combat Rogue.
-- **Y:** PERF-THREAT, the user's call (2026-10-05), after wave V's threat bookkeeping slowed the casters.
+- **Y (done):** PERF-THREAT, the user's call (2026-10-05), after wave V's threat bookkeeping slowed the casters.
