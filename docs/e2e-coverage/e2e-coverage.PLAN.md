@@ -1140,6 +1140,49 @@ equipment, `live.assist`) and pre-cast state (cat energy, the rogue's poison sta
   `proto/common.proto`'s `ServerSettings`, `tools/acore/gen_server_defaults/`, the server settings UI.
 - **Goldens:** all 37; report each.
 
+#### As built
+
+- `ServerSettings.world_update_interval_ms` (`MinWorldUpdateTime`, code default 1, live 10), read by
+  `gen_server_defaults` from `Main.cpp`'s key; a UI picker beside the map update's.
+- Grids (`ServerSettings.updateGrids`, `sim.go`): players on the world tick (`NextWorldTick`), everything else on the
+  map update (`NextServerTick`), which falls on the first world tick its interval is up by, at least 3 ticks apart
+  (`MapMgr::Update`'s four steps). One phase draw per iteration as before; the world phase is the map phase modulo the
+  tick. Map interval 0 makes every unit exact.
+- Per unit (`nextUpdate`): swings, Auto Shot and hardcast landings (also `APLValueSpellCastTime`) on the caster's grid;
+  auras and dots on the grid of what counts them down: the unit they sit on, a channel's caster (`Spell::update`; most
+  channels tick from a caster aura), or the map update for an area dot from a dynamic object, totem or trap (effects
+  27, 28, 105).
+- Early first tick, confirmed in source (`Map::Update` hands `Unit::_UpdateSpells` the whole map update's diff) and in
+  the fights: 127 first ticks of the dummy's dots land on average 10 ms before cast + amplitude (median -14), against
+  +52 if counted from the cast. A creature aura put on or refreshed outside its own update counts down from the map
+  update before (`Aura.countdownStart`); one it puts on itself in its own swing, AI instant cast (a GCD or cost),
+  dot tick or expiry (`sim.updating`) counts from that update, as `_UpdateSpells` has listed its auras by then. Its
+  hardcast lands in the event pass before that, so counts early. An area dot's dynamic object made in a trap's or
+  pet's own map update joins the update list only on the next one, so counts from its own (`Aura.madeInMapUpdate`).
+- Verdicts: all 7 `world tick` drops fixed and removed (melee counts within range, Fury of the Five Flights' uptime).
+  New drop `HunterMM 49001 ticks` (cause `map update length`): the live map update measures 104.4 ms (world ticks
+  ~10.4 ms), so a whole-second dot's tick on the sim's exact grid always beats the next Serpent Sting's landing, on the
+  server about half the time. Removed `DruidFeral 48574 crit mean` (Rake): it passes on the new random stream (one
+  logged crit); the hit-mean drop stays.
+- `DelayFromInstantCast` reads the world tick: `Map::Update`'s session pass casts a `CMSG_CAST_SPELL` just before
+  that tick's `Player::Update`, so the caster's clock is a world tick stale. In the fights it barely moves Ignite's and
+  Righteous Vengeance's totals over their logs (base, world tick, this fix): MageFire +22%, +33%, +34%; MageFrostFire
+  +1%, +6%, +6%; Ret +19%, +20%, +20%. Not the tick model: Ignite pays out 0.96 (Fire) and 0.95 (FrostFire) of 40% of
+  the fire crits feeding it, the logs 1.04 and 0.97, base 0.88 and 0.89. The excess is those crits: Fire's crit damage
+  is 45% over its log (21 crits to 16, Fireball's crit mean +16%).
+- Goldens: all 37 move, mostly up: fast and dual-wield melee keep the swing overshoot (Feral +3.4%, Subtlety +4.1%,
+  Combat +2.7%, Blood +2.9%), hardcasts land up to 90 ms sooner, dots tick a map update earlier (Fire +7.5%,
+  FrostFire +6.6%, both through Ignite's +28 to 33%, Ret +1.3%: the instant-cast delay is longer); Unholy Blight -15%;
+  healers move only aura uptimes.
+- Tests: `TestFightReplaysTheBotsOwnFight`'s bot log split a real gain over earlier gains of nothing (Thrill of the Hunt
+  off a free Lock and Load shot, 48 logged as four 12s), not a capped one; it now uses them up, and all 32 setups pass
+  seeds 1 to 4. `TestFightCatchesMismatches` injects Shadow Bolt at 2x: 1.4x fell inside the hit mean's range, whose
+  top is one iteration's tail. `TestRetP1QuickPricesBrewfestTrinkets` checks the screening order on Ret's pool with set
+  slopes (each Coren trinket ranks at or above every Naxx-or-older trinket with no better stats), and Quick still
+  prices the two crit trinkets; the Ancient Pickled Egg ties The Egg of Mortal Essence at Quick's cut.
+- Left: `TestCasterCapFloorReachesTheCap` (`sim/optimizer/caps_test.go`) flips on the fix: Fire's unconstrained spell
+  hit reaches its 368 floor (367 before), so the test's precondition fails.
+
 ### EC-CORE-FIX (Y; changes goldens, full suite; stages: crit and procs, gear and debuffs)
 
 - First EC-RECHECK's spelldump recapture (`G:\DevStuff\GitHub\.wave-loop\ec-recheck-tmp\capture\spelldump.jsonl`, 32

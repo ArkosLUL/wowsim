@@ -8,7 +8,7 @@ import (
 func newDelayedPeriodicTestSim(seed int64) *Simulation {
 	sim := newOutcomeSim()
 	sim.rand.Seed(seed)
-	sim.serverTickInterval = 0
+	sim.serverTickInterval, sim.worldTickInterval = 0, 0
 	sim.resetPendingActions()
 	return sim
 }
@@ -91,15 +91,16 @@ func TestDelayedPeriodicApplierIgnoresServerTickInterval(t *testing.T) {
 	}
 }
 
-// DelayFromInstantCast draws its boundary off the caster's clock as of one server tick ago, so its
-// range sits one tick short of Delay's own (0, 400 ms].
+// DelayFromInstantCast draws its boundary off the caster's clock as of one world tick ago (the
+// player's last update, not the map's), so its range sits one world tick short of Delay's (0, 400 ms].
 func TestDelayedPeriodicApplierDelayFromInstantCastRange(t *testing.T) {
 	sim := newDelayedPeriodicTestSim(11)
 	sim.serverTickInterval = 100 * time.Millisecond
-	sim.serverTickPhase = 0
+	sim.worldTickInterval = 10 * time.Millisecond
+	sim.serverTickPhase, sim.worldTickPhase = 0, 0
 	dpa := NewDelayedPeriodicApplier(&Unit{Label: "Caster"})
 
-	want := delayedPeriodicWindow - sim.serverTickInterval
+	want := delayedPeriodicWindow - sim.worldTickInterval
 	min, max := delayedPeriodicWindow, time.Duration(0)
 	for ms := 0; ms < int(2*delayedPeriodicWindow/time.Millisecond); ms++ {
 		sim.CurrentTime = time.Duration(ms) * time.Millisecond
@@ -157,7 +158,8 @@ func TestDelayedPeriodicApplierBeatsATickDueThen(t *testing.T) {
 func TestDelayedPeriodicApplierFromInstantCastBeatsATickDueThen(t *testing.T) {
 	sim := newDelayedPeriodicTestSim(5)
 	sim.serverTickInterval = 100 * time.Millisecond
-	sim.serverTickPhase = 0
+	sim.worldTickInterval = 10 * time.Millisecond
+	sim.serverTickPhase, sim.worldTickPhase = 0, 0
 	dpa := NewDelayedPeriodicApplier(&Unit{Label: "Caster"})
 
 	sim.CurrentTime = 1000 * time.Millisecond

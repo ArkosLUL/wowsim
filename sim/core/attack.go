@@ -207,7 +207,7 @@ func (aa *AutoAttacks) OffhandSwingAt() time.Duration {
 	return aa.oh.swingAt
 }
 
-// SetOffhandSwingAt has no sim to round to a server tick with, so swing() does that.
+// SetOffhandSwingAt has no sim to round to the unit's update with, so swing() does that.
 func (aa *AutoAttacks) SetOffhandSwingAt(offhandSwingAt time.Duration) {
 	aa.oh.timerAt = offhandSwingAt
 	aa.oh.swingAt = offhandSwingAt
@@ -241,7 +241,7 @@ type WeaponAttack struct {
 
 	replaceSwing ReplaceMHSwing
 
-	// timerAt is when the swing timer (m_attackTimer) runs out, swingAt the server tick the swing
+	// timerAt is when the swing timer (m_attackTimer) runs out, swingAt the unit's update the swing
 	// lands on. Haste and the other timer changes work on timerAt.
 	timerAt time.Duration
 	swingAt time.Duration
@@ -265,7 +265,7 @@ func (wa *WeaponAttack) getWeapon() *Weapon {
 // setTimer doesn't reschedule: callers that move a running swing earlier call rescheduleWeaponAttack.
 func (wa *WeaponAttack) setTimer(sim *Simulation, timerAt time.Duration) {
 	wa.timerAt = timerAt
-	wa.swingAt = sim.NextServerTick(timerAt)
+	wa.swingAt = sim.nextUpdate(wa.unit, timerAt)
 	wa.held = false
 }
 
@@ -300,11 +300,13 @@ func (wa *WeaponAttack) trySwing(sim *Simulation, releasingHold bool) time.Durat
 }
 
 func (wa *WeaponAttack) swing(sim *Simulation, releasingHold bool) time.Duration {
-	// SetOffhandSwingAt can leave a swing between server ticks
-	if at := sim.NextServerTick(wa.swingAt); at > sim.CurrentTime {
+	// SetOffhandSwingAt can leave a swing between the unit's updates
+	if at := sim.nextUpdate(wa.unit, wa.swingAt); at > sim.CurrentTime {
 		wa.swingAt = at
 		return at
 	}
+	defer func(outer *Unit) { sim.updating = outer }(sim.updating)
+	sim.updating = wa.unit
 
 	aa := &wa.unit.AutoAttacks
 	if until, held := wa.castHold(sim); held {
@@ -360,9 +362,9 @@ func (wa *WeaponAttack) swing(sim *Simulation, releasingHold bool) time.Duration
 
 	// Update swing timer BEFORE the cast, so that APL checks for TimeToNextAuto behave correctly
 	// if the attack causes APL evaluations (e.g. from rage gain).
-	// Restarts from this tick, so whatever the timer overshot is lost.
+	// Restarts from this update, so whatever the timer overshot is lost.
 	// Auto Shot fires in _UpdateSpells, one update after its timer runs out, but it also restarts the
-	// timer before that update's decrement, so it still lands on NextServerTick(timerAt) like melee.
+	// timer before that update's decrement, so it still lands on the first update past timerAt like melee.
 	wa.setTimer(sim, sim.CurrentTime+wa.curSwingDuration)
 	if wa.suspended {
 		wa.park(sim.CurrentTime)
@@ -785,7 +787,7 @@ func (aa *AutoAttacks) suspendMelee(sim *Simulation) {
 	if !aa.AutoSwingMelee {
 		return
 	}
-	from := sim.NextServerTick(sim.CurrentTime)
+	from := sim.nextUpdate(aa.mh.unit, sim.CurrentTime)
 	for _, wa := range []*WeaponAttack{&aa.mh, &aa.oh} {
 		if wa == &aa.oh && !aa.IsDualWielding {
 			continue
@@ -847,7 +849,7 @@ func (aa *AutoAttacks) SuspendRangedTimer(sim *Simulation) {
 		return
 	}
 	wa.suspended = true
-	if from := sim.NextServerTick(sim.CurrentTime); wa.swingAt > from && wa.timerAt != NeverExpires {
+	if from := sim.nextUpdate(wa.unit, sim.CurrentTime); wa.swingAt > from && wa.timerAt != NeverExpires {
 		wa.park(from)
 	}
 }

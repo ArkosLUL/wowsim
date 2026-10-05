@@ -1,8 +1,11 @@
 package core
 
 import (
+	"slices"
 	"strconv"
 	"time"
+
+	"github.com/wowsims/wotlk/sim/core/serverdata"
 )
 
 type OnSnapshot func(sim *Simulation, target *Unit, dot *Dot, isRollover bool)
@@ -29,6 +32,35 @@ const (
 	auraTypePeriodicDamage        = 3
 	auraTypePeriodicDamagePercent = 89
 )
+
+// SPELL_EFFECT_PERSISTENT_AREA_AURA, SPELL_EFFECT_SUMMON (a totem) and SPELL_EFFECT_TRANS_DOOR (a
+// trap): an area dot from one of these ticks from a dynamic object, totem or trap, all of which
+// update on the map update.
+const effectTransDoor = 105
+
+var worldObjectEffects = []int32{27, 28, effectTransDoor}
+
+func ticksFromWorldObject(sd *serverdata.Spell) bool {
+	return serverSpellHasEffect(sd, worldObjectEffects...)
+}
+
+func serverSpellHasEffect(sd *serverdata.Spell, effects ...int32) bool {
+	if sd == nil {
+		return false
+	}
+	for _, e := range sd.Effects {
+		if slices.Contains(effects, e.Effect) {
+			return true
+		}
+	}
+	return false
+}
+
+// areaDotMadeInMapUpdate: the area dot's dynamic object is made in a map object's own update, a
+// trap going off in GameObject::Update or a pet casting from its AI.
+func areaDotMadeInMapUpdate(caster *Unit, sd *serverdata.Spell) bool {
+	return caster.Type != PlayerUnit || serverSpellHasEffect(sd, effectTransDoor)
+}
 
 type DotConfig struct {
 	IsAOE    bool // Set to true for AOE dots (Blizzard, Hurricane, Consecrate, etc)
@@ -208,7 +240,7 @@ func (dot *Dot) ApplyOrReset(sim *Simulation) {
 	dot.tickAction = nil      // prevent tickAction.CleanUp() from adding an extra tick
 	oldTickAction.Cancel(sim) // remove old PA ticker
 
-	dot.startTickAction(sim, sim.CurrentTime+dot.tickPeriod)
+	dot.startTickAction(sim, dot.Aura.countdownStart(sim)+dot.tickPeriod)
 }
 
 // refreshResetsTicks is Spell::DoSpellHitOnUnit's refreshPeriodic: reapplying a dot restarts its
@@ -330,12 +362,12 @@ func (dot *Dot) ManualTick(sim *Simulation) {
 }
 
 // startTickAction schedules the next tick for the nominal time given, and every tick after it one
-// period further along that same lattice. Each one goes off on the first server tick at or after
-// its nominal time, so the rounding never piles up: that is AuraEffect::Update carrying what is
-// left of m_periodicTimer into the next tick.
+// period further along that same lattice. Each one goes off on the first update at or after its
+// nominal time of whatever counts the dot down, so the rounding never piles up: that is
+// AuraEffect::Update carrying what is left of m_periodicTimer into the next tick.
 func (dot *Dot) startTickAction(sim *Simulation, nominal time.Duration) {
 	dot.nextTickNominal = nominal
-	dot.nextTickAt = sim.NextServerTick(nominal)
+	dot.nextTickAt = dot.Aura.nextUpdate(sim, nominal)
 
 	pa := &PendingAction{
 		NextActionAt: dot.nextTickAt,
@@ -345,16 +377,22 @@ func (dot *Dot) startTickAction(sim *Simulation, nominal time.Duration) {
 			// different orders, so we might need to apply the last tick.
 			if dot.tickAction != nil && dot.tickAction.NextActionAt == sim.CurrentTime {
 				if dot.lastTickTime != sim.CurrentTime {
+					outer := sim.updating
+					sim.updating = dot.Aura.countdownUnit()
 					dot.TickCount++
 					dot.TickOnce(sim)
+					sim.updating = outer
 				}
 			}
 		},
 	}
 	pa.OnAction = func(sim *Simulation) {
 		if dot.lastTickTime != sim.CurrentTime {
+			outer := sim.updating
+			sim.updating = dot.Aura.countdownUnit()
 			dot.TickCount++
 			dot.TickOnce(sim)
+			sim.updating = outer
 		}
 
 		// a tick can refresh or end the dot, and that schedules its own ticks
@@ -362,7 +400,7 @@ func (dot *Dot) startTickAction(sim *Simulation, nominal time.Duration) {
 			return
 		}
 		dot.nextTickNominal += dot.tickPeriod
-		dot.nextTickAt = sim.NextServerTick(dot.nextTickNominal)
+		dot.nextTickAt = dot.Aura.nextUpdate(sim, dot.nextTickNominal)
 		pa.NextActionAt = dot.nextTickAt
 		sim.AddPendingAction(pa)
 	}
@@ -380,10 +418,14 @@ func newDot(config Dot) *Dot {
 	if dot.AuraDuration != 0 {
 		dot.Aura.Duration = dot.AuraDuration
 	}
+	// Spell::update runs a channel on the caster's update, and most tick from an aura on the caster
+	if dot.isChanneled {
+		dot.Aura.countdownBy = dot.Spell.Unit
+	}
 
 	dot.Aura.ApplyOnGain(func(aura *Aura, sim *Simulation) {
 		dot.lastTickTime = sim.CurrentTime
-		dot.startTickAction(sim, sim.CurrentTime+dot.tickPeriod)
+		dot.startTickAction(sim, aura.countdownStart(sim)+dot.tickPeriod)
 		if dot.isChanneled {
 			dot.Spell.Unit.ChanneledDot = dot
 		}
@@ -442,6 +484,10 @@ func (spell *Spell) createDots(config DotConfig, isHot bool) {
 	caster := dot.Spell.Unit
 	if config.IsAOE || config.SelfOnly {
 		dot.Aura = caster.GetOrRegisterAura(auraConfig)
+		if sd := dot.Spell.ServerSpell(); config.IsAOE && !dot.isChanneled && ticksFromWorldObject(sd) {
+			dot.Aura.countsOnMapGrid = true
+			dot.Aura.madeInMapUpdate = areaDotMadeInMapUpdate(caster, sd)
+		}
 		spell.aoeDot = newDot(dot)
 	} else {
 		auraConfig.Label += "-" + strconv.Itoa(int(caster.UnitIndex))

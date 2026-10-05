@@ -2,6 +2,7 @@ package optimizer
 
 import (
 	"context"
+	"math"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -11,6 +12,7 @@ import (
 	"time"
 
 	"github.com/wowsims/wotlk/sim/core/proto"
+	"github.com/wowsims/wotlk/sim/core/stats"
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
@@ -210,8 +212,14 @@ func TestReplayOutclassedCut(t *testing.T) {
 // so they price on their stats alone.
 var corenDirebrewTrinkets = []int32{49074, 49076, 49078, 49080}
 
+// Coren's Chromium Coaster and Mithril Pocketwatch: crit rating, which ranks them with Ret's better
+// Naxx trinkets, well inside Quick's screening cut
+var corenDirebrewCritTrinkets = []int32{49074, 49076}
+
 // Coren Direbrew's trinkets read tier 0, which the effects budget's prior used to rank last, so
-// Quick never priced them in Ret's P1 pool.
+// Quick never priced them in Ret's P1 pool. They rank by their stats like Naxx loot now, so Quick's
+// cut takes them only where it takes Naxx trinkets with the same stats: the Ancient Pickled Egg's
+// 98 spell power can land right at the cut, tied with The Egg of Mortal Essence.
 func TestRetP1QuickPricesBrewfestTrinkets(t *testing.T) {
 	r, err := PrepareRequest(loadReplay(t, "ret_p1"))
 	if err != nil {
@@ -220,6 +228,64 @@ func TestRetP1QuickPricesBrewfestTrinkets(t *testing.T) {
 	if r.Settings.GetEffort() != proto.OptimizerEffort_OptimizerEffortQuick {
 		t.Fatalf("ret_p1 runs at %s, want Quick", r.Settings.GetEffort())
 	}
+
+	t.Run("ranked by stats", func(t *testing.T) {
+		pool, err := CompilePool(r)
+		if err != nil {
+			t.Fatal(err)
+		}
+		// set slopes, so the order doesn't move with the sim's own
+		s := newSurrogate(pool, r.Seed, Response{
+			stats.Strength:         {Stat: stats.Strength, SlopeBelow: 2.5, SlopeAbove: 2.5},
+			stats.AttackPower:      {Stat: stats.AttackPower, SlopeBelow: 1, SlopeAbove: 1},
+			stats.MeleeHit:         {Stat: stats.MeleeHit, SlopeBelow: 3.5, SlopeAbove: 0},
+			stats.MeleeCrit:        {Stat: stats.MeleeCrit, SlopeBelow: 2, SlopeAbove: 2},
+			stats.MeleeHaste:       {Stat: stats.MeleeHaste, SlopeBelow: 1.5, SlopeAbove: 1.5},
+			stats.Expertise:        {Stat: stats.Expertise, SlopeBelow: 3, SlopeAbove: 3},
+			stats.ArmorPenetration: {Stat: stats.ArmorPenetration, SlopeBelow: 2, SlopeAbove: 2},
+			stats.SpellPower:       {Stat: stats.SpellPower, SlopeBelow: 0.3, SlopeAbove: 0.3},
+		})
+		rn := &run{asked: r, r: r, pool: pool}
+		v := s.slopes(s.seedStats, 0)
+		fx := &effects{raw: map[effectKey]Estimate{}, missing: map[effectKey]bool{}, pairBase: map[proto.ItemSlot]Loadout{}}
+		families := rn.effectFamilies(s, v, s.newGemPlan(v), fx)
+		i := slices.IndexFunc(families, func(f *effectFamily) bool { return f.name == proto.ItemSlot_ItemSlotTrinket1.String()+" pair" })
+		if i < 0 {
+			t.Fatal("no trinket family")
+		}
+		prior := map[int32]float64{}
+		for j, k := range families[i].keys {
+			prior[k.id] = families[i].prior[j]
+		}
+
+		lo, hi := s.curveBox()
+		gb := s.newGemBounds(lo, hi)
+		statBound, naxxOrOlder := map[int32]float64{}, map[int32]bool{}
+		for _, slot := range []proto.ItemSlot{proto.ItemSlot_ItemSlotTrinket1, proto.ItemSlot_ItemSlotTrinket2} {
+			for _, cand := range pool.Slots[slot] {
+				_, statBound[cand.Item.ID] = s.candStatBounds(slot, cand, lo, hi, gb)
+				naxxOrOlder[cand.Item.ID] = cand.Catalog.GetProgressionTier() <= 13
+			}
+		}
+
+		for _, id := range corenDirebrewTrinkets {
+			p, ok := prior[id]
+			if !ok {
+				t.Errorf("trinket %d isn't in the effects screening", id)
+				continue
+			}
+			for other, q := range prior {
+				if slices.Contains(corenDirebrewTrinkets, other) || !naxxOrOlder[other] || math.IsInf(q, 1) {
+					continue
+				}
+				if statBound[other] <= statBound[id] && q > p {
+					t.Errorf("trinket %d (stats up to %.1f) ranks below %d (stats up to %.1f)", id, statBound[id], other, statBound[other])
+					break
+				}
+			}
+		}
+	})
+
 	metrics, err := WeightedMetrics(r.Settings)
 	if err != nil {
 		t.Fatal(err)
@@ -243,7 +309,7 @@ func TestRetP1QuickPricesBrewfestTrinkets(t *testing.T) {
 	if !searched {
 		t.Fatalf("the run stopped at %s, before the search", rec.stage)
 	}
-	for _, id := range corenDirebrewTrinkets {
+	for _, id := range corenDirebrewCritTrinkets {
 		if !rec.seen[id] {
 			t.Errorf("the Effects stage never simmed trinket %d", id)
 		}

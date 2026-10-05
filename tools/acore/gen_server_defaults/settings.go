@@ -17,6 +17,7 @@ import (
 // defaults against it.
 const (
 	worldConfigSrc  = "src/server/game/World/WorldConfig.cpp"
+	worldMainSrc    = "src/server/apps/worldserver/Main.cpp"
 	spellTweaksSrc  = "modules/mod-spell-tweaks/src/SpellTweaks.cpp"
 	dungeonScaleSrc = "modules/mod-dungeon-scale/src/DungeonScale.cpp"
 	reforgingSrc    = "modules/mod-reforging/src/mod_reforging_worldscript.cpp"
@@ -44,6 +45,8 @@ var spellTweakToggles = []struct {
 const (
 	mapUpdateIntervalKey  = "MapUpdateInterval"
 	mapUpdateIntervalDef  = 10
+	minWorldUpdateKey     = "MinWorldUpdateTime"
+	minWorldUpdateDef     = 1
 	exoticPetDamagePctKey = "SpellTweaks.ExoticPetDamage.Pct"
 	exoticPetDamagePctDef = 10
 	minHPModifierKey      = "DungeonScale.MinHPModifier"
@@ -162,6 +165,11 @@ func build(c *config, limits reforgeLimits) (*proto.ServerSettings, floors, erro
 	if interval > math.MaxInt32 {
 		return nil, floors{}, fmt.Errorf("%s = %d doesn't fit the proto's int32", mapUpdateIntervalKey, interval)
 	}
+	// Main.cpp reads it as an int32, so a bigger value doesn't parse and takes the default
+	worldTick := c.uint32(minWorldUpdateKey, minWorldUpdateDef)
+	if worldTick > math.MaxInt32 {
+		worldTick = minWorldUpdateDef
+	}
 
 	tweaks := &proto.SpellTweaksSettings{
 		ExoticPetDamagePct: googleProto.Float64(f64(max(0, c.float(exoticPetDamagePctKey, exoticPetDamagePctDef)))),
@@ -199,10 +207,11 @@ func build(c *config, limits reforgeLimits) (*proto.ServerSettings, floors, erro
 	}
 
 	settings := &proto.ServerSettings{
-		MapUpdateIntervalMs: googleProto.Int32(int32(interval)),
-		SpellTweaks:         tweaks,
-		DungeonScale:        scale,
-		Reforge:             reforge,
+		MapUpdateIntervalMs:   googleProto.Int32(int32(interval)),
+		SpellTweaks:           tweaks,
+		DungeonScale:          scale,
+		Reforge:               reforge,
+		WorldUpdateIntervalMs: googleProto.Int32(int32(worldTick)),
 	}
 	return settings, floors{
 		minHealth: c.float(minHPModifierKey, minHPModifierDef),

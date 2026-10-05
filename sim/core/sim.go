@@ -68,10 +68,17 @@ type Simulation struct {
 	minTaskTime time.Duration
 	tasks       []Task
 
-	// Map::Update ticks at phase + k*interval. Swings, cast completion and aura expiry wait for
-	// the first tick at or after their timer runs out. Interval 0 means exact timing.
+	// The map update, at phase + k*interval: creatures, pets and guardians update on it, players on
+	// every world tick, and a unit's swings, cast landings and auras wait for its next update.
+	// Interval 0 means exact timing. Every map update is a world tick.
 	serverTickInterval time.Duration
 	serverTickPhase    time.Duration
+	worldTickInterval  time.Duration
+	worldTickPhase     time.Duration
+
+	// the unit whose own update is running, while its swing, AI instant cast, dot tick or aura expiry
+	// does: an aura it puts on itself then counts from this update, not the one before
+	updating *Unit
 
 	// Spell.ResistanceMultiplier's last thresholds. A resist that got here is above 0, so the zero
 	// value never matches.
@@ -216,6 +223,7 @@ func newSimWithEnv(env *Environment, simOptions *proto.SimOptions) *Simulation {
 		rseed = time.Now().UnixNano()
 	}
 
+	world, mapUpdate := env.serverSettings().updateGrids()
 	return &Simulation{
 		Environment: env,
 		Options:     simOptions,
@@ -226,7 +234,8 @@ func newSimWithEnv(env *Environment, simOptions *proto.SimOptions) *Simulation {
 		isTest:    simOptions.IsTest,
 		testRands: make(map[string]*testRandStream),
 
-		serverTickInterval: env.serverSettings().MapUpdateInterval,
+		serverTickInterval: mapUpdate,
+		worldTickInterval:  world,
 	}
 }
 
@@ -238,15 +247,31 @@ func (env *Environment) serverSettings() *ServerSettings {
 	return env.Raid.Server
 }
 
-// NextServerTick is the first server tick at or after t: when a timer that runs out at t fires on
-// the server. Returns t unchanged with exact timing.
+// NextServerTick is the first map update at or after t: when a creature's, pet's or guardian's timer
+// that runs out at t fires on the server. Returns t unchanged with exact timing.
 func (sim *Simulation) NextServerTick(t time.Duration) time.Duration {
-	interval := sim.serverTickInterval
+	return nextTick(t, sim.serverTickInterval, sim.serverTickPhase)
+}
+
+// NextWorldTick is NextServerTick for a player: the first world tick at or after t.
+func (sim *Simulation) NextWorldTick(t time.Duration) time.Duration {
+	return nextTick(t, sim.worldTickInterval, sim.worldTickPhase)
+}
+
+// nextUpdate is the unit's first update at or after t.
+func (sim *Simulation) nextUpdate(unit *Unit, t time.Duration) time.Duration {
+	if unit.Type == PlayerUnit {
+		return sim.NextWorldTick(t)
+	}
+	return sim.NextServerTick(t)
+}
+
+func nextTick(t, interval, phase time.Duration) time.Duration {
 	if interval <= 0 || t > NeverExpires-interval {
 		return t
 	}
 	// Go's % keeps the dividend's sign, so a time before the phase needs its own branch
-	offset := (t - sim.serverTickPhase) % interval
+	offset := (t - phase) % interval
 	switch {
 	case offset > 0:
 		return t + interval - offset
@@ -510,11 +535,18 @@ func (sim *Simulation) reset() {
 		sim.Duration += time.Duration(sim.RandomFloat("sim duration")*float64(variation)) - sim.DurationVariation
 	}
 
-	// the pull lands anywhere between two server ticks
-	sim.serverTickPhase = 0
-	if sim.serverTickInterval > 0 {
-		sim.serverTickPhase = time.Duration(sim.RandomFloat("Server Tick Phase") * float64(sim.serverTickInterval))
+	// the pull lands anywhere between two map updates, and the world ticks line up with them
+	sim.serverTickPhase, sim.worldTickPhase = 0, 0
+	if period := max(sim.serverTickInterval, sim.worldTickInterval); period > 0 {
+		phase := time.Duration(sim.RandomFloat("Server Tick Phase") * float64(period))
+		if sim.serverTickInterval > 0 {
+			sim.serverTickPhase = phase
+		}
+		if sim.worldTickInterval > 0 {
+			sim.worldTickPhase = phase % sim.worldTickInterval
+		}
 	}
+	sim.updating = nil
 
 	sim.resetPendingActions()
 

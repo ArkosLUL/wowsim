@@ -270,8 +270,8 @@ func (spell *Spell) makeCastFunc(config CastConfig) CastSuccessFunc {
 		spell.CurCast.GCD = spell.timing.gcd(spell.Unit, spell.CurCast.GCD)
 		spell.CurCast.CastTime = spell.timing.castTime(spell.Unit, spell.CurCast.CastTime, spell)
 		if spell.CurCast.CastTime > 0 {
-			// the cast lands on a server tick, and its CD starts then too
-			spell.CurCast.CastTime = sim.NextServerTick(sim.CurrentTime+spell.CurCast.CastTime) - sim.CurrentTime
+			// the cast lands on the caster's update, and its CD starts then too
+			spell.CurCast.CastTime = sim.nextUpdate(spell.Unit, sim.CurrentTime+spell.CurCast.CastTime) - sim.CurrentTime
 		}
 
 		if config.CD.Timer != nil {
@@ -366,6 +366,12 @@ func (spell *Spell) makeCastFunc(config CastConfig) CastSuccessFunc {
 			spell.Cost.SpendCost(sim, spell)
 		}
 
+		// a creature casts its instants from its AI, after _UpdateSpells, so an aura it puts on itself
+		// here counts from this update. Its hardcasts land in the event pass before that, so they don't.
+		if spell.Unit.Type != PlayerUnit {
+			defer func(outer *Unit) { sim.updating = outer }(sim.updating)
+			sim.updating = spell.Unit
+		}
 		spell.applyEffects(sim, target)
 		if resetsSwing {
 			spell.Unit.AutoAttacks.resetSwingTimers(sim, sim.CurrentTime)

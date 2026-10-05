@@ -31,10 +31,9 @@ const (
 	fightsDir       = "sim/core/testdata/fights"
 	fightCyclesFile = "cycles.json"
 
-	// the server updates the dummy, its auras included, every map update, and the player, its swings, casts
-	// and auras, every world tick (MapUpdateInterval and MinWorldUpdateTime live)
-	mapTick   = 100 * time.Millisecond
-	worldTick = 10 * time.Millisecond
+	// the server updates the dummy, its auras included, every map update (MapUpdateInterval live), and the
+	// player every world tick, as the sim does
+	mapTick = 100 * time.Millisecond
 	// up to here the bot swings too, as TestRecordedRun decides it
 	meleeYards = 5
 
@@ -187,14 +186,11 @@ var droppedFightChecks = []fightDrop{
 	{"DeathknightFrost", "51714", "count"},
 	{"DeathknightFrost", "51714", "misses"},
 	{"DeathknightFrostUH", "51714", "misses"},
-	{"DeathknightFrostUH", "melee", "count"},
-	{"DeathknightUnholy", "melee", "count"},
 	{"DruidBalance", "48468", "tick crit mean"},
 	{"DruidBalance", "aura 48517 on self", "uptime"},
 	{"DruidBalancePhase3", "48468", "tick crit mean"},
-	{"DruidFeral", "48574", "crit mean"},
 	{"DruidFeral", "48574", "hit mean"},
-	{"DruidFeralApl", "melee", "count"},
+	{"HunterMM", "49001", "ticks"},
 	{"MageFire", "energize 29076 mana", "gain sizes"},
 	{"MageFrost", "aura 44549 on self", "applications"},
 	{"MageFrost", "aura 57669 on self", "applications"},
@@ -205,14 +201,10 @@ var droppedFightChecks = []fightDrop{
 	{"PaladinProtection", "aura 26016 on target", "applications"},
 	{"PaladinProtection", "aura 26016 on target", "uptime"},
 	{"PaladinRetribution", "aura 53408 on target", "applications"},
-	{"PaladinRetribution", "aura 60314 on self", "uptime"},
-	{"RogueAssassination", "melee", "count"},
 	{"RogueCombat", "aura 58670 on self", "applications"},
 	{"RogueCombat", "aura 58670 on self", "uptime"},
-	{"RogueCombat", "melee", "count"},
 	{"RogueSubtlety", "aura 48660 on target", "applications"},
 	{"RogueSubtlety", "aura 48660 on target", "uptime"},
-	{"RogueSubtlety", "melee", "count"},
 	{"ShamanEnhancement", "60103", "crit mean"},
 	{"ShamanEnhancement", "60103", "hit mean"},
 	{"WarriorArms", "47465", "tick hit mean"},
@@ -1269,7 +1261,7 @@ func (f *fightSim) runIteration(seed int64, schedule func(sim *core.Simulation))
 	}
 	f.missesCounted, f.missesSeen = map[*core.Spell]int32{}, map[*core.Spell]int32{}
 	// the sim only looks at what expired when something else happens, and the replay can go a while without
-	// anything, so every map update gets an event: auras run out on them, as on the server
+	// anything, so every map update and world tick gets an event: auras run out on them, as on the server
 	var mapUpdate func(sim *core.Simulation)
 	mapUpdate = func(sim *core.Simulation) {
 		f.refreshes(sim, false)
@@ -1281,9 +1273,9 @@ func (f *fightSim) runIteration(seed int64, schedule func(sim *core.Simulation))
 	var playerUpdate func(sim *core.Simulation)
 	playerUpdate = func(sim *core.Simulation) {
 		f.refreshes(sim, true)
-		addAction(sim, sim.CurrentTime+worldTick, core.ActionPriorityLow, playerUpdate)
+		addAction(sim, sim.NextWorldTick(sim.CurrentTime+time.Nanosecond), core.ActionPriorityLow, playerUpdate)
 	}
-	addAction(sim, 0, core.ActionPriorityLow, playerUpdate)
+	addAction(sim, sim.NextWorldTick(0), core.ActionPriorityLow, playerUpdate)
 	f.scheduleAutos(sim)
 	schedule(sim)
 	for !sim.Step() {

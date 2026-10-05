@@ -479,7 +479,7 @@ func TestSlamPausesMeleeTimersForTheUpdatesItSpans(t *testing.T) {
 	})
 	aa := &a.AutoAttacks
 	events := logEffects(map[string]*Spell{"mh": aa.MHAuto(), "slam": slam})
-	p := sim.serverTickPhase
+	p := sim.worldTickPhase
 	// 70 ms short of the tick after the cast
 	aa.mh.setTimer(sim, p+ms(830))
 	sim.PrePull()

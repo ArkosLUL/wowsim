@@ -12,12 +12,32 @@ import (
 // with every field it leaves unset taken from LiveServerDefaults. Shared by the whole raid, so
 // read only. Characters get it from Server().
 type ServerSettings struct {
-	// MapUpdateInterval is the server tick. Zero means exact timing.
+	// MapUpdateInterval as configured: creatures, pets and guardians update on it. Zero means exact
+	// timing for every unit.
 	MapUpdateInterval time.Duration
+
+	// WorldUpdateInterval is MinWorldUpdateTime, the world tick players update on. Zero means exact
+	// timing for players.
+	WorldUpdateInterval time.Duration
 
 	SpellTweaks  SpellTweaks
 	DungeonScale DungeonScale
 	Reforging    Reforging
+}
+
+// updateGrids is how far apart the world ticks and the map updates the sim runs on are. Every map
+// update falls on a world tick: MapMgr::Update runs a map's full update on the first tick its
+// interval is up by, and its four steps (continents, battlegrounds, instances, wait) keep two of them
+// at least three ticks apart.
+func (s *ServerSettings) updateGrids() (world, mapUpdate time.Duration) {
+	if s.MapUpdateInterval <= 0 {
+		return 0, 0
+	}
+	if s.WorldUpdateInterval <= 0 {
+		return 0, s.MapUpdateInterval
+	}
+	ticks := max(3, (s.MapUpdateInterval+s.WorldUpdateInterval-1)/s.WorldUpdateInterval)
+	return s.WorldUpdateInterval, ticks * s.WorldUpdateInterval
 }
 
 // SpellTweaks is mod-spell-tweaks with SpellTweaks.Enable already folded in: each field says whether
@@ -96,10 +116,11 @@ var LiveReforging = sync.OnceValue(func() *Reforging {
 func resolveServerSettings(settings, live *proto.ServerSettings) *ServerSettings {
 	settings, live = orEmpty(settings), orEmpty(live)
 	return &ServerSettings{
-		MapUpdateInterval: time.Duration(max(0, firstSet(0, settings.MapUpdateIntervalMs, live.MapUpdateIntervalMs))) * time.Millisecond,
-		SpellTweaks:       newSpellTweaks(orEmpty(settings.SpellTweaks), orEmpty(live.SpellTweaks)),
-		DungeonScale:      newDungeonScale(settings.DungeonScale, live.DungeonScale),
-		Reforging:         newReforging(orEmpty(settings.Reforge), orEmpty(live.Reforge)),
+		MapUpdateInterval:   time.Duration(max(0, firstSet(0, settings.MapUpdateIntervalMs, live.MapUpdateIntervalMs))) * time.Millisecond,
+		WorldUpdateInterval: time.Duration(max(0, firstSet(0, settings.WorldUpdateIntervalMs, live.WorldUpdateIntervalMs))) * time.Millisecond,
+		SpellTweaks:         newSpellTweaks(orEmpty(settings.SpellTweaks), orEmpty(live.SpellTweaks)),
+		DungeonScale:        newDungeonScale(settings.DungeonScale, live.DungeonScale),
+		Reforging:           newReforging(orEmpty(settings.Reforge), orEmpty(live.Reforge)),
 	}
 }
 

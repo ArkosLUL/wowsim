@@ -50,17 +50,17 @@ func (dpa *DelayedPeriodicApplier) Delay(sim *Simulation) time.Duration {
 	return dpa.window(sim, sim.CurrentTime)
 }
 
-// DelayFromInstantCast is Delay for a proc fed by a human player's instant cast. CMSG_CAST_SPELL is
-// PROCESS_THREADSAFE, handled in Map::Update's session pass, one pass before this same update's
+// DelayFromInstantCast is Delay for a proc fed by a player's instant cast. CMSG_CAST_SPELL is
+// PROCESS_THREADSAFE, so Map::Update's session pass casts it on a world tick just before that tick's
 // Player::Update advances the caster's clock (WorldObject::Update, called from Unit::Update). The
-// boundary is drawn off that stale clock, so it can already be behind by the time this update's
-// advance catches up: it lands sooner than Delay's, in the same update at the earliest.
+// boundary is drawn off the clock as of the tick before, so it can already be behind by the time
+// this tick's advance catches up: it lands sooner than Delay's, in the same update at the earliest.
 func (dpa *DelayedPeriodicApplier) DelayFromInstantCast(sim *Simulation) time.Duration {
-	stale := sim.CurrentTime - sim.serverTickInterval
+	stale := sim.CurrentTime - sim.worldTickInterval
 	if stale < 0 {
 		stale = 0
 	}
-	if d := dpa.window(sim, stale) - sim.serverTickInterval; d > time.Nanosecond {
+	if d := dpa.window(sim, stale) - sim.worldTickInterval; d > time.Nanosecond {
 		return d
 	}
 	return 2 * time.Nanosecond

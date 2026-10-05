@@ -6,12 +6,12 @@ import (
 	"time"
 )
 
-func newRangedTimingSim(t *testing.T, mapUpdateMs int32, swingSpeed float64) (*Simulation, *AutoAttacks, *[]time.Duration) {
+func newRangedTimingSim(t *testing.T, tickMs int32, swingSpeed float64) (*Simulation, *AutoAttacks, *[]time.Duration) {
 	t.Helper()
-	sim, a := newTimingTestSim(t, mapUpdateMs, func(a *timingTestAgent) {
+	sim, a := newTimingTestSim(t, tickMs, func(a *timingTestAgent) {
 		a.EnableAutoAttacks(a, AutoAttackOptions{Ranged: testWeapon(swingSpeed), AutoSwingRanged: true})
 	})
-	sim.serverTickPhase = 0
+	sim.serverTickPhase, sim.worldTickPhase = 0, 0
 	aa := &a.AutoAttacks
 	shots := recordCasts(aa.RangedAuto())
 	aa.ranged.setTimer(sim, 0)
@@ -20,7 +20,7 @@ func newRangedTimingSim(t *testing.T, mapUpdateMs int32, swingSpeed float64) (*S
 
 // Auto Shot fires in _UpdateSpells, before Unit::Update decrements the ranged timer, so one update
 // after the timer runs out. It restarts the timer before that update's decrement too, which cancels
-// out: shots land every NextServerTick of the attack time, like melee swings.
+// out: shots land on the first update past each attack time, like melee swings.
 func TestAutoShotCadenceOnServerTicks(t *testing.T) {
 	sim, _, shots := newRangedTimingSim(t, 100, 2.608)
 	sim.PrePull()
