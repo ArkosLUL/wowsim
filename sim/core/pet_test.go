@@ -232,3 +232,82 @@ func TestBloodlustSkipsAPetThatInheritsHaste(t *testing.T) {
 		})
 	}
 }
+
+// CalculatePct on a truncated owner value, the result truncated too.
+func TestPetScalingPct(t *testing.T) {
+	for _, tc := range []struct {
+		owner, pct, want float64
+	}{
+		{520.9, 57, 296},
+		{520, 300, 1560},
+		{134, 30, 40},
+		{1103, 12.87, 141},
+		{-5, 30, 0},
+	} {
+		if got := PetScalingPct(tc.owner, tc.pct); got != tc.want {
+			t.Errorf("%v at %v%%: got %v, want %v", tc.owner, tc.pct, got, tc.want)
+		}
+	}
+}
+
+// Creature::Regenerate: spirit/5 + 17 a tick, under the five second rule spirit/8 + 17 for the Imp
+// and the Water Elemental and nothing for the rest.
+func TestCreatureManaRegen(t *testing.T) {
+	for _, tc := range []struct {
+		whileCasting, underFSR bool
+		want                   float64
+	}{
+		{false, false, 90},
+		{true, false, 90},
+		{true, true, 62},
+		{false, true, 0},
+	} {
+		pet := newTestPet(newTestOwner(proto.Class_ClassWarlock, ManaBar, stats.Stats{}))
+		pet.stats[stats.Spirit] = 367.6
+		pet.regensWhileCasting = tc.whileCasting
+		if got := pet.CreatureManaRegen(tc.underFSR); got != tc.want {
+			t.Errorf("while casting %v, under the rule %v: got %v, want %v", tc.whileCasting, tc.underFSR, got, tc.want)
+		}
+	}
+}
+
+// A scaling script's immunities drop the buffs of those aura types. An uncontrollable guardian only
+// loses the party and raid casts, not the area auras.
+func TestPetDropsBuffsItCannotTake(t *testing.T) {
+	buffs := func() (*proto.RaidBuffs, *proto.PartyBuffs, *proto.IndividualBuffs) {
+		return &proto.RaidBuffs{
+				HornOfWinter:         true,
+				StrengthOfEarthTotem: proto.TristateEffect_TristateEffectRegular,
+				BattleShout:          proto.TristateEffect_TristateEffectRegular,
+				TrueshotAura:         true,
+				FlametongueTotem:     true,
+				DevotionAura:         proto.TristateEffect_TristateEffectRegular,
+				LeaderOfThePack:      proto.TristateEffect_TristateEffectRegular,
+			}, &proto.PartyBuffs{}, &proto.IndividualBuffs{
+				BlessingOfKings: true,
+			}
+	}
+	pet := newTestPet(newTestOwner(proto.Class_ClassWarlock, ManaBar, stats.Stats{}))
+
+	pet.BuffImmunity = PetImmuneToScaling
+	raid, party, individual := buffs()
+	pet.dropBuffsItCannotTake(raid, party, individual)
+	if raid.HornOfWinter || raid.StrengthOfEarthTotem != 0 || raid.BattleShout != 0 || raid.TrueshotAura ||
+		raid.FlametongueTotem || raid.DevotionAura != 0 || individual.BlessingOfKings {
+		t.Errorf("immune to its scaling's types, kept %v %v", raid, individual)
+	}
+	if raid.LeaderOfThePack == 0 {
+		t.Error("immune to its scaling's types, lost Leader of the Pack")
+	}
+
+	pet.BuffImmunity = 0
+	pet.Uncontrollable = true
+	raid, party, individual = buffs()
+	pet.dropBuffsItCannotTake(raid, party, individual)
+	if raid.HornOfWinter || raid.BattleShout != 0 || individual.BlessingOfKings {
+		t.Errorf("uncontrollable, kept a party or raid cast: %v %v", raid, individual)
+	}
+	if raid.StrengthOfEarthTotem == 0 || !raid.TrueshotAura || !raid.FlametongueTotem || raid.DevotionAura == 0 {
+		t.Errorf("uncontrollable, lost an area aura: %v", raid)
+	}
+}

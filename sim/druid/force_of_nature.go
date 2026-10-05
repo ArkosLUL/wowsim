@@ -12,6 +12,8 @@ func (druid *Druid) registerForceOfNatureCD() {
 		return
 	}
 
+	// 65861 has the talent's 33831 cost, cooldown and flags but summons another creature. The treants
+	// below are 33831's 1964.
 	forceOfNatureAura := druid.RegisterAura(core.Aura{
 		Label:    "Force of Nature",
 		ActionID: core.ActionID{SpellID: 65861},
@@ -56,32 +58,27 @@ func (druid *Druid) registerForceOfNatureCD() {
 type TreantPet struct {
 	*core.Pet
 	druidOwner *Druid
-
-	snapshotStat stats.Stats
 }
 
 func (druid *Druid) NewTreant() *TreantPet {
 	treant := &TreantPet{
-		Pet: core.NewPet("Treant", &druid.Character, treantBaseStats, func(ownerStats stats.Stats) stats.Stats {
-			return stats.Stats{}
-		}, false, true),
+		Pet:        core.NewPet("Treant", &druid.Character, treantBaseStats, druid.treantStatInheritance(), false, true),
 		druidOwner: druid,
 	}
+	treant.BuffImmunity = core.PetImmuneToScaling
 	treant.AddStatDependency(stats.Strength, stats.AttackPower, 2)
-	treant.AddStatDependency(stats.Agility, stats.MeleeCrit, core.CritRatingPerCritChance/83.3)
 
+	// InitStatsForLevel's NPC_TREANT case, and 1964's template attack time. A white crit is the plain
+	// x2 (Unit::CalculateMeleeDamage): the owner's crit damage auras never reach a creature's swing.
 	treant.EnableAutoAttacks(treant, core.AutoAttackOptions{
 		MainHand: core.Weapon{
-			BaseDamageMin:  252,
-			BaseDamageMax:  357,
-			SwingSpeed:     2,
-			CritMultiplier: druid.BalanceCritMultiplier(),
+			BaseDamageMin:  120,
+			BaseDamageMax:  280,
+			SwingSpeed:     1.574,
+			CritMultiplier: 2,
 		},
 		AutoSwingMelee: true,
 	})
-
-	treant.Pet.OnPetEnable = treant.enable
-	treant.Pet.OnPetDisable = treant.disable
 
 	druid.AddPet(treant)
 	return treant
@@ -91,23 +88,21 @@ func (treant *TreantPet) GetPet() *core.Pet {
 	return treant.Pet
 }
 
-// spell_dru_treant_scaling (spell_druid.cpp:389-424): 30% of the owner's Intellect and Stamina,
-// attack power at 105% of the owner's spell power, and Brambles adds its own percent to that AP
-// conversion rather than a flat treant damage bonus.
-func (treant *TreantPet) enable(sim *core.Simulation) {
-	spellPower := treant.druidOwner.GetStat(stats.SpellPower)
-	attackPower := spellPower * 1.05 * (1 + 0.05*float64(treant.druidOwner.Talents.Brambles))
-
-	treant.snapshotStat = stats.Stats{
-		stats.Intellect:   treant.druidOwner.GetStat(stats.Intellect) * 0.3,
-		stats.Stamina:     treant.druidOwner.GetStat(stats.Stamina) * 0.3,
-		stats.AttackPower: attackPower,
+// treantStatInheritance is spell_dru_treant_scaling: 30% of the owner's stamina and intellect, 35% of
+// his armor, 105% of his nature spell power as attack power, Brambles adding 5% a rank to that, and
+// 15% as spell power.
+func (druid *Druid) treantStatInheritance() core.PetStatInheritance {
+	brambles := float64(5 * druid.Talents.Brambles)
+	return func(ownerStats stats.Stats) stats.Stats {
+		attackPower := core.PetScalingPct(ownerStats[stats.SpellPower], 105)
+		return stats.Stats{
+			stats.Stamina:     core.PetScalingPct(ownerStats[stats.Stamina], 30),
+			stats.Intellect:   core.PetScalingPct(ownerStats[stats.Intellect], 30),
+			stats.Armor:       core.PetScalingPct(ownerStats[stats.Armor], 35),
+			stats.AttackPower: attackPower + core.PetScalingPct(attackPower, brambles),
+			stats.SpellPower:  core.PetScalingPct(ownerStats[stats.SpellPower], 15),
+		}
 	}
-	treant.AddStatsDynamic(sim, treant.snapshotStat)
-}
-
-func (treant *TreantPet) disable(sim *core.Simulation) {
-	treant.AddStatsDynamic(sim, treant.snapshotStat.Invert())
 }
 
 func (treant *TreantPet) Initialize() {
@@ -119,14 +114,9 @@ func (treant *TreantPet) Reset(_ *core.Simulation) {
 func (treant *TreantPet) ExecuteCustomRotation(_ *core.Simulation) {
 }
 
-// TODO : fix miss/dodge
-var treantBaseStats = stats.Stats{
-	stats.Strength:  331,
-	stats.Agility:   113,
-	stats.Stamina:   598,
-	stats.Intellect: 281,
-	stats.Spirit:    109,
-	stats.MeleeCrit: 5 * core.CritRatingPerCritChance,
-	stats.MeleeHit:  5 * core.MeleeHitRatingPerHitChance,
-	stats.Expertise: 120,
-}
+// No pet_levelstats row for 1964, so InitStatsForLevel's fallback stats, and a creature's 5% crit, nothing
+// from agility (Unit::GetUnitCriticalChance). Its only hit and expertise are 61017's share of the owner's.
+var treantBaseStats = core.GuardianCreateStats.Add(stats.Stats{
+	stats.AttackPower: -20,
+	stats.MeleeCrit:   5 * core.CritRatingPerCritChance,
+})

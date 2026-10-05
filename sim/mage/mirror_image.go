@@ -72,6 +72,7 @@ func (mage *Mage) NewMirrorImage() *MirrorImage {
 		Pet:       core.NewPet("Mirror Image", &mage.Character, mirrorImageBaseStats, createMirrorImageInheritance(mage), false, true),
 		mageOwner: mage,
 	}
+	mirrorImage.BuffImmunity = core.PetImmuneToScaling
 	mirrorImage.EnableManaBar()
 
 	mage.AddPet(mirrorImage)

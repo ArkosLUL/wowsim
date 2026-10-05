@@ -100,6 +100,7 @@ func spellModDamage(bonuses ...float64) float64 {
 }
 
 func (warlock *Warlock) Initialize() {
+	warlock.improveBloodPact()
 	warlock.registerIncinerateSpell()
 	warlock.registerShadowBoltSpell()
 	warlock.registerImmolateSpell()
@@ -156,13 +157,31 @@ func (warlock *Warlock) Initialize() {
 func (warlock *Warlock) AddRaidBuffs(raidBuffs *proto.RaidBuffs) {
 	raidBuffs.BloodPact = max(raidBuffs.BloodPact, core.MakeTristateValue(
 		warlock.Options.Summon == proto.Warlock_Options_Imp,
-		warlock.Talents.ImprovedImp == 2,
+		warlock.Talents.ImprovedImp == 3,
 	))
 
 	raidBuffs.FelIntelligence = max(raidBuffs.FelIntelligence, core.MakeTristateValue(
 		warlock.Options.Summon == proto.Warlock_Options_Felhunter,
 		warlock.Talents.ImprovedFelhunter == 2,
 	))
+}
+
+// improveBloodPact gives the raid's Blood Pact Improved Imp's 10% a point at 1 or 2 points, which the raid
+// buff can't carry: it only knows none or all 3. The warlock's spell mods reach the Imp's Blood Pact
+// (Unit::ApplyEffectModifiers).
+func (warlock *Warlock) improveBloodPact() {
+	points := warlock.Talents.ImprovedImp
+	if warlock.Options.Summon != proto.Warlock_Options_Imp || points == 0 || points == 3 {
+		return
+	}
+	health := 1330 * (1 + 0.1*float64(points))
+	for _, unit := range warlock.Env.Raid.AllUnits {
+		if aura := unit.GetAuraByID(core.ActionID{SpellID: 47982}); aura != nil {
+			for _, effect := range aura.ExclusiveEffects {
+				effect.Priority = max(effect.Priority, health)
+			}
+		}
+	}
 }
 
 func (warlock *Warlock) Reset(sim *core.Simulation) {

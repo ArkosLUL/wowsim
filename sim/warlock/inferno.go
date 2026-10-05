@@ -1,7 +1,6 @@
 package warlock
 
 import (
-	"math"
 	"time"
 
 	"github.com/wowsims/wotlk/sim/core"
@@ -68,37 +67,26 @@ type InfernalPet struct {
 }
 
 func (warlock *Warlock) NewInfernal() *InfernalPet {
+	// spell_warl_infernal_scaling. 36186's immunities keep the later scaling auras' intellect and
+	// resistances off too: unlike the other guardians' scaling, its auras aren't passive.
 	statInheritance := func(ownerStats stats.Stats) stats.Stats {
-		ownerHitChance := math.Floor(ownerStats[stats.SpellHit] / core.SpellHitRatingPerHitChance)
-
 		// TODO: account for fire spell damage
 		return stats.Stats{
-			stats.Stamina:   ownerStats[stats.Stamina] * 0.75,
-			stats.Intellect: ownerStats[stats.Intellect] * 0.3,
-			stats.Armor:     ownerStats[stats.Armor] * 0.35,
-			// spell_warl_infernal_scaling::CalculateAPAmount/CalculateSPAmount floor these server-side.
-			stats.AttackPower:      math.Floor(ownerStats[stats.SpellPower] * 0.57),
-			stats.SpellPower:       math.Floor(ownerStats[stats.SpellPower] * 0.15),
+			stats.Stamina:          core.PetScalingPct(ownerStats[stats.Stamina], 75),
+			stats.Armor:            core.PetScalingPct(ownerStats[stats.Armor], 35),
+			stats.AttackPower:      core.PetScalingPct(ownerStats[stats.SpellPower], 57),
+			stats.SpellPower:       core.PetScalingPct(ownerStats[stats.SpellPower], 15),
 			stats.SpellPenetration: ownerStats[stats.SpellPenetration],
-			stats.MeleeHit:         ownerHitChance * core.MeleeHitRatingPerHitChance,
-			stats.SpellHit:         ownerHitChance * core.SpellHitRatingPerHitChance,
-			stats.Expertise: (ownerStats[stats.SpellHit] / core.SpellHitRatingPerHitChance) *
-				PetExpertiseScale * core.ExpertisePerQuarterPercentReduction,
 		}
 	}
 
 	infernal := &InfernalPet{
-		Pet: core.NewPet("Infernal", &warlock.Character, stats.Stats{
-			stats.Strength:  331,
-			stats.Agility:   113,
-			stats.Stamina:   361,
-			stats.Intellect: 65,
-			stats.Spirit:    109,
-			stats.Mana:      0,
+		Pet: core.NewPet("Infernal", &warlock.Character, core.PetCreateStats(314, 90, 328, 150, 209, 16148).Add(stats.Stats{
 			stats.MeleeCrit: 5 * core.CritRatingPerCritChance,
-		}, statInheritance, false, false),
+		}), statInheritance, false, true),
 		owner: warlock,
 	}
+	infernal.BuffImmunity = core.PetImmuneToScaling
 
 	infernal.AddStatDependency(stats.Strength, stats.AttackPower, 2)
 	infernal.AddStat(stats.AttackPower, -20)
@@ -108,18 +96,16 @@ func (warlock *Warlock) NewInfernal() *InfernalPet {
 		infernal.PseudoStats.DamageDealtMultiplier /= 1.05
 	}
 
+	// InitStatsForLevel's NPC_INFERNAL case: pet_levelstats' weapon range
 	infernal.EnableAutoAttacks(infernal, core.AutoAttackOptions{
 		MainHand: core.Weapon{
-			BaseDamageMin:  330,
-			BaseDamageMax:  494.9,
+			BaseDamageMin:  1263,
+			BaseDamageMax:  1768,
 			SwingSpeed:     2,
 			CritMultiplier: 2,
 		},
 		AutoSwingMelee: true,
 	})
-	infernal.AutoAttacks.MHConfig().DamageMultiplier *= 3.2
-
-	core.ApplyPetConsumeEffects(&infernal.Character, warlock.Consumes)
 
 	warlock.AddPet(infernal)
 

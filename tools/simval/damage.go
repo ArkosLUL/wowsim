@@ -66,7 +66,8 @@ func (e damageEffect) heal() bool     { return e.Kind == "heal" || e.Kind == "ho
 
 type damageUnit struct {
 	unitSnapshot
-	CreatureType uint32 `json:"creatureType"`
+	CreatureType  uint32  `json:"creatureType"`
+	AuraExpertise float64 `json:"auraExpertise"`
 }
 
 // damageRecord is one `.simval damage` line. A non-empty Shaped means the server adds something the
@@ -1407,11 +1408,13 @@ type damagePet struct {
 }
 
 // start brings the owner's stats to its snapshot's, then summons the pet, a guardian only now, so it scales
-// off them, and puts its auras on.
+// off them, and puts its auras on. A real pet, up since the start, gets its scaling auras' next ticks.
 func (p *damagePet) start(d *damageSim) {
 	d.pinOwner()
 	if !p.pet.IsEnabled() {
 		p.pet.Enable(d.sim, p.agent)
+	} else {
+		p.pet.ResyncScaling(d.sim)
 	}
 	for _, aura := range p.mirrored {
 		if !aura.IsActive() {
@@ -1509,6 +1512,13 @@ func (d *damageSim) pinOwner() {
 	if power := magicSpellPower(o.SpellPower); power > 0 {
 		setStat(d.sim, unit, stats.SpellPower, power)
 	}
+	// the pet's hit scaling reads these; the sim keeps a hunter's ranged hit in MeleeHit
+	meleeHit := o.HitMods.Melee
+	if o.Class == 3 { // hunter
+		meleeHit = o.HitMods.Ranged
+	}
+	setStat(d.sim, unit, stats.MeleeHit, meleeHit*core.MeleeHitRatingPerHitChance)
+	setStat(d.sim, unit, stats.SpellHit, o.HitMods.Spell*core.SpellHitRatingPerHitChance)
 }
 
 // magicSpellPower is a snapshot's highest magic school spell power, the one the sim's single stat stands for.
@@ -1627,6 +1637,7 @@ func checkPetInfo(rec strikesRecord) (checks []Check) {
 	if len(server.Resistances) > 0 {
 		checks = append(checks, checkPetStat("armor", s[stats.Armor], server.Resistances[0]))
 	}
+	checks = append(checks, d.petMelee(rec)...)
 	checks = append(checks, d.petRegen(rec)...)
 
 	var inputs string
@@ -1760,6 +1771,42 @@ func checkPetStat(name string, sim, server float64) Check {
 	return fail(name, detail)
 }
 
+// petMelee compares the pet's hit and expertise, and its main hand before attack power: the weapon range
+// InitStatsForLevel or pet_levelstats sets, and the template's attack time.
+func (d *damageSim) petMelee(rec strikesRecord) []Check {
+	pet, server := d.pet.pet, rec.Attacker
+	s := pet.GetStats()
+	checks := []Check{
+		checkNear("melee hit %", s[stats.MeleeHit]/core.MeleeHitRatingPerHitChance, server.HitMods.Melee, 1e-3),
+		checkNear("spell hit %", s[stats.SpellHit]/core.SpellHitRatingPerHitChance, server.HitMods.Spell, 1e-3),
+		checkNear("expertise", s[stats.Expertise]/core.ExpertisePerQuarterPercentReduction, server.AuraExpertise, 1e-3),
+	}
+	a := server.attack("mainhand")
+	switch {
+	case a.Type == "":
+		return checks
+	case !pet.AutoAttacks.AutoSwingMelee:
+		why, ok := petsThatNeverSwing[server.Entry]
+		if !ok {
+			return append(checks, fail("weapon", fmt.Sprintf("the server's swings %.2f-%.2f, the sim's never swings", a.DamageMin, a.DamageMax)))
+		}
+		return append(checks, notCompared("weapon", why))
+	}
+	w := pet.AutoAttacks.MH()
+	return append(checks,
+		checkNear("weapon min", w.BaseDamageMin, a.DamageMin, 0.01),
+		checkNear("weapon max", w.BaseDamageMax, a.DamageMax, 0.01),
+		checkNear("attack time", w.SwingSpeed*1000, float64(a.UnhastedMs), 0.5))
+}
+
+// petsThatNeverSwing are the pets the sim gives no white swing, with why the server's never swing either.
+var petsThatNeverSwing = map[uint32]string{
+	416: "PetAI::_canMeleeAttack keeps the Imp at Firebolt range, and out of mana it doesn't melee at all",
+	510: "PetAI::_canMeleeAttack keeps the Water Elemental at Waterbolt range, and out of mana it doesn't melee " +
+		"at all; its weapon is what Creature::SelectLevel rolled from a random level 60-70 creature_classlevelstats row",
+	27829: "npc_pet_dk_ebon_gargoyle only casts Gargoyle Strike",
+}
+
 // scalingSummary lists the record's scaling auras as id: aura/misc value=amount.
 func (r strikesRecord) scalingSummary() string {
 	var parts []string
@@ -1802,6 +1849,11 @@ func (d *damageSim) petRegen(rec strikesRecord) []Check {
 		perSecond = unit.ManaRegenPerSecondWhileNotCasting()
 		if regen.LastManaUse {
 			perSecond = unit.ManaRegenPerSecondWhileCasting()
+		}
+		if pet := d.pet.pet; pet.HasCreatureManaRegen() {
+			// core's own tick still adds the MP5
+			perTick := pet.CreatureManaRegen(regen.LastManaUse) + perSecond*regen.IntervalMs/1000
+			return []Check{checkNear("regen per tick", perTick, regen.PerTick, 1)}
 		}
 	case regen.Power == powerEnergy && unit.HasEnergyBar():
 		perSecond = core.EnergyPerTick * unit.EnergyTickMultiplier * float64(time.Second/core.EnergyTickDuration)

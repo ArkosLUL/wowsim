@@ -42,8 +42,8 @@ func (dk *Deathknight) registerGhoulFrenzySpell() {
 			Aura: core.Aura{
 				Label: "Ghoul Frenzy Hot",
 			},
-			NumberOfTicks: 5,
-			TickLength:    time.Second * 6,
+			NumberOfTicks: 10,
+			TickLength:    time.Second * 3,
 			TicksCanCrit:  false,
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
 				dot.SnapshotBaseDamage = 0.06 * dk.Ghoul.MaxHealth()

@@ -66,6 +66,25 @@ type Pet struct {
 	ownerHasteAmount  float64
 	ownerHasteRefresh *PendingAction
 
+	// How often the scaling auras rework what the owner hands over (their HandlePeriodic). 0 for a
+	// summon that only gets it at the summon, like most guardians. A non-guardian left at 0 follows
+	// every owner stat change instead.
+	ScalingPeriod  time.Duration
+	scalingRefresh *PendingAction
+
+	// The aura types the summon's scaling script makes it immune to, so the owner's buffs of those
+	// types never land on it (dropBuffsItCannotTake). Pet food and pet scrolls are stat auras too: a
+	// summon immune to stats skips ApplyPetConsumeEffects.
+	BuffImmunity PetBuffImmunity
+	// A guardian without a pet bar. The party and raid casts skip it (Spell.cpp's TARGET_CHECK_PARTY
+	// and TARGET_CHECK_RAID), so it only gets the area auras.
+	Uncontrollable bool
+
+	// Mana regen is Creature::Regenerate's (creatureManaTick), set by EnableCreatureManaBar.
+	creatureManaRegen   bool
+	regensWhileCasting  bool
+	creatureManaRefresh *PendingAction
+
 	isReset bool
 
 	// Some pets expire after a certain duration. This is the pending action that disables
@@ -122,6 +141,170 @@ func (pet *Pet) Finalize() {
 	pet.inheritOwnerArmorPen()
 }
 
+// PetCreateStats is a summon's five create stats and its base armor (Guardian::InitStatsForLevel):
+// its pet_levelstats row, or 22/22/25/28/27 and 50 armor a level without one (GuardianCreateStats).
+// Guardian::UpdateArmor only counts the agility over the create value, twice, where the universal
+// agility dependency counts all of it, so the create agility comes off the armor here.
+func PetCreateStats(strength, agility, stamina, intellect, spirit, armor float64) stats.Stats {
+	return stats.Stats{
+		stats.Strength:  strength,
+		stats.Agility:   agility,
+		stats.Stamina:   stamina,
+		stats.Intellect: intellect,
+		stats.Spirit:    spirit,
+		stats.Armor:     armor - 2*agility,
+	}
+}
+
+// GuardianCreateStats are InitStatsForLevel's create stats for a summon without a pet_levelstats row.
+var GuardianCreateStats = PetCreateStats(22, 22, 25, 28, 27, 50*CharacterLevel)
+
+// PetScalingPct is a scaling aura's CalculatePct(std::max<int32>(0, ownerValue), pct): the owner's
+// value truncated, the percent worked in float32, the amount truncated again.
+func PetScalingPct(ownerValue float64, pct float64) float64 {
+	product := float32(float32(math.Trunc(max(0, ownerValue))) * float32(pct))
+	return math.Trunc(float64(float32(product / 100)))
+}
+
+// PetBuffImmunity is the positive aura types a summon is immune to (Unit::ApplySpellImmune).
+type PetBuffImmunity uint8
+
+const (
+	// SPELL_AURA_MOD_STAT and SPELL_AURA_MOD_TOTAL_STAT_PERCENTAGE
+	PetImmuneStats PetBuffImmunity = 1 << iota
+	// SPELL_AURA_MOD_ATTACK_POWER and SPELL_AURA_MOD_ATTACK_POWER_PCT
+	PetImmuneAttackPower
+	// SPELL_AURA_MOD_DAMAGE_DONE
+	PetImmuneSpellPower
+	// SPELL_AURA_MOD_RESISTANCE
+	PetImmuneArmor
+)
+
+// PetImmuneToScaling is a guardian scaling script that makes the summon immune to every type its
+// scaling auras carry: the Infernal's, the treants', the Shadowfiend's, the Spirit Wolves', the
+// Fire Elemental's, and the mage's for anything but a pet.
+const PetImmuneToScaling = PetImmuneStats | PetImmuneAttackPower | PetImmuneSpellPower | PetImmuneArmor
+
+// dropBuffsItCannotTake clears the owner's buffs that never land on this pet on the server. A buff
+// with an effect of each kind (Gift of the Wild's stats and armor) goes as a whole.
+func (pet *Pet) dropBuffsItCannotTake(raid *proto.RaidBuffs, party *proto.PartyBuffs, individual *proto.IndividualBuffs) {
+	if pet.Uncontrollable {
+		raid.GiftOfTheWild = 0
+		raid.DrumsOfTheWild = false
+		raid.PowerWordFortitude = 0
+		raid.CommandingShout = 0
+		raid.HornOfWinter = false
+		raid.ArcaneBrilliance = false
+		raid.DivineSpirit = false
+		raid.BattleShout = 0
+		raid.ShadowProtection = false
+		raid.Thorns = 0
+		raid.DrumsOfForgottenKings = false
+		raid.ScrollOfProtection = false
+		raid.ScrollOfStamina = false
+		raid.ScrollOfStrength = false
+		raid.ScrollOfAgility = false
+		raid.ScrollOfIntellect = false
+		raid.ScrollOfSpirit = false
+		individual.BlessingOfKings = false
+		individual.BlessingOfWisdom = 0
+		individual.BlessingOfMight = 0
+		individual.BlessingOfSanctuary = false
+		individual.Vigilance = false
+		individual.RenewedHope = false
+	}
+	if pet.BuffImmunity&PetImmuneStats != 0 {
+		raid.GiftOfTheWild = 0
+		raid.DrumsOfTheWild = false
+		raid.PowerWordFortitude = 0
+		raid.HornOfWinter = false
+		raid.StrengthOfEarthTotem = 0
+		raid.ArcaneBrilliance = false
+		raid.FelIntelligence = 0
+		raid.DivineSpirit = false
+		raid.DrumsOfForgottenKings = false
+		raid.ScrollOfStamina = false
+		raid.ScrollOfStrength = false
+		raid.ScrollOfAgility = false
+		raid.ScrollOfIntellect = false
+		raid.ScrollOfSpirit = false
+		individual.BlessingOfKings = false
+		individual.BlessingOfSanctuary = false
+	}
+	if pet.BuffImmunity&PetImmuneAttackPower != 0 {
+		raid.BattleShout = 0
+		raid.TrueshotAura = false
+		raid.UnleashedRage = false
+		raid.AbominationsMight = false
+		individual.BlessingOfMight = 0
+	}
+	if pet.BuffImmunity&PetImmuneSpellPower != 0 {
+		raid.FlametongueTotem = false
+		raid.TotemOfWrath = false
+		raid.DemonicPactSp = 0
+		party.AtieshWarlock = 0
+		party.EyeOfTheNight = false
+	}
+	if pet.BuffImmunity&PetImmuneArmor != 0 {
+		raid.DevotionAura = 0
+		raid.StoneskinTotem = 0
+		raid.ScrollOfProtection = false
+	}
+	// Every pet's hit scaling aura makes it immune to the hit auras it carries itself. The DK's 67561
+	// has no melee hit, so Heroic Presence's 1% melee hit still lands there, its spell hit never does.
+	if party.HeroicPresence {
+		party.HeroicPresence = false
+		if pet.HitScaling == PetHitScalingMasterSpell06 {
+			pet.AddStat(stats.MeleeHit, MeleeHitRatingPerHitChance)
+		}
+	}
+}
+
+// EnableCreatureManaBar is a creature's mana (Guardian::UpdateMaxPower): its create mana plus
+// manaPerIntellect a point of intellect over the create value, and spell costs off the create mana.
+// It regenerates the creature's way (creatureManaTick), not off spirit like a player.
+func (pet *Pet) EnableCreatureManaBar(createMana, createIntellect, manaPerIntellect float64, regensWhileCasting bool) {
+	pet.EnableManaBarWithModifier(manaPerIntellect / 15)
+	pet.AddStat(stats.Mana, createMana-manaPerIntellect*createIntellect-(20-20*manaPerIntellect))
+	pet.BaseMana = createMana
+	pet.PseudoStats.SpiritRegenMultiplier = 0
+	pet.creatureManaRegen = true
+	pet.regensWhileCasting = regensWhileCasting
+}
+
+// HasCreatureManaRegen is whether the pet's mana regen is creatureManaTick's.
+func (pet *Pet) HasCreatureManaRegen() bool {
+	return pet.creatureManaRegen
+}
+
+// CreatureManaRegen is Creature::Regenerate's mana for a unit a player owns, a tick every 2 s:
+// spirit/5 + 17, truncated. Under the five second rule the Imp and the Water Elemental still get
+// spirit/8 + 17 (regensWhileCasting), any other creature nothing. MP5 comes on top, through core's
+// regular mana tick.
+func (pet *Pet) CreatureManaRegen(underFiveSecondRule bool) float64 {
+	spirit := math.Trunc(pet.GetStat(stats.Spirit))
+	switch {
+	case !underFiveSecondRule:
+		return math.Trunc(spirit/5 + 17)
+	case pet.regensWhileCasting:
+		return math.Trunc(spirit/8 + 17)
+	}
+	return 0
+}
+
+func (pet *Pet) creatureManaTick(sim *Simulation) {
+	casting := sim.CurrentTime < pet.PseudoStats.FiveSecondRuleRefreshTime
+	amount := pet.CreatureManaRegen(casting)
+	if amount <= 0 {
+		return
+	}
+	metrics := pet.manaNotCastingMetrics
+	if casting {
+		metrics = pet.manaCastingMetrics
+	}
+	pet.AddMana(sim, amount, metrics)
+}
+
 // PetHitScaling is the serverside aura that hands a pet its owner's hit (Guardian::InitStatsForLevel,
 // or the pet's AI): the owner's hit chance rescaled to each stat's own cap and truncated to a whole
 // point, so a pet needs 8% owner hit for the full 8% hit, 17% spell hit and 26 expertise.
@@ -149,6 +332,9 @@ const (
 	// The haste carrier's own recalculation cadence (spell_dk_pet_scaling's and mod-spell-tweaks'
 	// CalcPeriodic), also real-pet only.
 	petOwnerHasteRefreshInterval = 2 * time.Second
+
+	// CREATURE_REGEN_INTERVAL
+	creatureRegenInterval = 2 * time.Second
 )
 
 // ownerHitScaling is what the scaling aura is worth right now. Which of the owner's hit chances 61017
@@ -270,6 +456,35 @@ func (pet *Pet) refreshOwnerHaste(sim *Simulation) {
 	pet.ownerHasteAmount = amount
 }
 
+// ownerScaling is what the scaling auras hand over right now: the class's share of the owner's
+// stats, with the hit scaling aura's hit and expertise in place of whatever the class gives.
+func (pet *Pet) ownerScaling() stats.Stats {
+	scaling := pet.statInheritance(pet.Owner.GetStats())
+	scaling[stats.MeleeHit] = 0
+	scaling[stats.SpellHit] = 0
+	scaling[stats.Expertise] = 0
+	return scaling.Add(pet.ownerHit)
+}
+
+// refreshScaling is the scaling auras' periodic tick: rework the amounts off the owner's stats now,
+// and move the pet by the difference.
+func (pet *Pet) refreshScaling(sim *Simulation) {
+	scaling := pet.ownerScaling()
+	change := scaling.Subtract(pet.inheritedStats)
+	if change.Equals(stats.Stats{}) {
+		return
+	}
+	pet.inheritedStats = scaling
+	pet.AddStatsDynamic(sim, change)
+}
+
+// ResyncScaling catches a summoned pet up with its owner's stats now, hit included, as the next tick
+// of each of its scaling auras would.
+func (pet *Pet) ResyncScaling(sim *Simulation) {
+	pet.refreshOwnerHitScaling(sim)
+	pet.refreshScaling(sim)
+}
+
 // Updates the stats for this pet in response to a stat change on the owner.
 // addedStats is the amount of stats added to the owner (will be negative if the
 // owner lost stats).
@@ -324,12 +539,8 @@ func (pet *Pet) Enable(sim *Simulation, petAgent PetAgent) {
 		pet.reset(sim, petAgent)
 	}
 
-	pet.inheritedStats = pet.statInheritance(pet.Owner.GetStats())
-	pet.inheritedStats[stats.MeleeHit] = 0
-	pet.inheritedStats[stats.SpellHit] = 0
-	pet.inheritedStats[stats.Expertise] = 0
 	pet.ownerHit = pet.ownerHitScaling()
-	pet.inheritedStats.AddInplace(&pet.ownerHit)
+	pet.inheritedStats = pet.ownerScaling()
 	pet.AddStatsDynamic(sim, pet.inheritedStats)
 
 	// A guardian's scaling aura never ticks, so what it got at summon is what it keeps.
@@ -354,13 +565,25 @@ func (pet *Pet) Enable(sim *Simulation, petAgent PetAgent) {
 		}
 	}
 
-	if !pet.isGuardian {
+	switch {
+	case pet.ScalingPeriod > 0:
+		pet.scalingRefresh = StartPeriodicAction(sim, PeriodicActionOptions{
+			Period:   pet.ScalingPeriod,
+			OnAction: pet.refreshScaling,
+		})
+	case !pet.isGuardian:
 		pet.Owner.DynamicStatsPets = append(pet.Owner.DynamicStatsPets, pet)
 		pet.dynamicStatInheritance = pet.statInheritance
 	}
 
 	//reset current mana after applying stats
 	pet.manaBar.reset()
+	if pet.creatureManaRegen {
+		pet.creatureManaRefresh = StartPeriodicAction(sim, PeriodicActionOptions{
+			Period:   creatureRegenInterval,
+			OnAction: pet.creatureManaTick,
+		})
+	}
 
 	// Call onEnable callbacks before enabling auto swing
 	// to not have to reorder PAs multiple times
@@ -425,6 +648,16 @@ func (pet *Pet) Disable(sim *Simulation) {
 	if pet.ownerHitRefresh != nil {
 		pet.ownerHitRefresh.Cancel(sim)
 		pet.ownerHitRefresh = nil
+	}
+
+	if pet.scalingRefresh != nil {
+		pet.scalingRefresh.Cancel(sim)
+		pet.scalingRefresh = nil
+	}
+
+	if pet.creatureManaRefresh != nil {
+		pet.creatureManaRefresh.Cancel(sim)
+		pet.creatureManaRefresh = nil
 	}
 
 	if pet.ownerHasteRefresh != nil {

@@ -38,13 +38,10 @@ const ghoulPetAutocastEnergy = 75
 func (dk *Deathknight) NewArmyGhoulPet(_ int) *GhoulPet {
 	// No pet_levelstats row for 24207, so InitStatsForLevel's fallback stats, and 2 * Str - 20 AP
 	// (Guardian::UpdateAttackPowerAndDamage) on top of Army of the Dead Passive's 6.5% of the owner's.
-	armyGhoulPetBaseStats := stats.Stats{
-		stats.Stamina:     25,
-		stats.Agility:     22,
-		stats.Strength:    22,
+	armyGhoulPetBaseStats := core.GuardianCreateStats.Add(stats.Stats{
 		stats.AttackPower: -20,
 		stats.MeleeCrit:   creatureCritChance,
-	}
+	})
 
 	ghoulPet := &GhoulPet{
 		Pet:     core.NewPet("Army of the Dead", &dk.Character, armyGhoulPetBaseStats, dk.armyGhoulStatInheritance(), false, true),
@@ -52,6 +49,7 @@ func (dk *Deathknight) NewArmyGhoulPet(_ int) *GhoulPet {
 		isArmy:  true,
 	}
 	ghoulPet.HitScaling = core.PetHitScalingMasterSpell06
+	ghoulPet.BuffImmunity = dkGuardianImmunity
 
 	ghoulPet.PseudoStats.DamageTakenMultiplier *= 0.1
 	ghoulPet.PseudoStats.MeleeHasteRatingPerHastePercent = dk.PseudoStats.MeleeHasteRatingPerHastePercent
@@ -82,16 +80,13 @@ func (dk *Deathknight) NewArmyGhoulPet(_ int) *GhoulPet {
 
 func (dk *Deathknight) NewGhoulPet(permanent bool) *GhoulPet {
 	// pet_levelstats for 26125 at 80, and IsPetGhoul's AP: 589 + Str + Agi
-	ghoulPetBaseStats := stats.Stats{
+	ghoulPetBaseStats := core.PetCreateStats(331, 247, 361, 103, 90, 6993).Add(stats.Stats{
 		// Guardian::UpdateMaxHealth: 4665 plus 10 a point of stamina over 361. The universal
 		// stamina dependency (10 a point, -180) adds the rest
 		stats.Health:      4665 - 10*361 + 180,
-		stats.Stamina:     361,
-		stats.Agility:     247,
-		stats.Strength:    331,
 		stats.AttackPower: 589,
 		stats.MeleeCrit:   creatureCritChance,
-	}
+	})
 
 	ghoulPet := &GhoulPet{
 		Pet:     core.NewPet("Ghoul", &dk.Character, ghoulPetBaseStats, dk.ghoulStatInheritance(), permanent, !permanent),
@@ -99,6 +94,12 @@ func (dk *Deathknight) NewGhoulPet(permanent bool) *GhoulPet {
 	}
 	// Master of Ghouls summons a real pet; plain Raise Dead only a guardian.
 	ghoulPet.SummonedAsPet = permanent
+	if permanent {
+		// spell_dk_pet_scaling's HandlePeriodic, a pet's only
+		ghoulPet.ScalingPeriod = 2 * time.Second
+	} else {
+		ghoulPet.BuffImmunity = dkGuardianImmunity
+	}
 	ghoulPet.HitScaling = core.PetHitScalingMasterSpell06
 	ghoulPet.RisenGhoul = true
 
@@ -125,7 +126,11 @@ func (dk *Deathknight) NewGhoulPet(permanent bool) *GhoulPet {
 	})
 
 	ghoulPet.AddStatDependency(stats.Strength, stats.AttackPower, 1)
-	ghoulPet.AddStatDependency(stats.Agility, stats.AttackPower, 1)
+	// UpdateAllStats works the AP out with strength, before agility is set, and nothing moves the
+	// guardian's strength after: its AP never gets the agility
+	if permanent {
+		ghoulPet.AddStatDependency(stats.Agility, stats.AttackPower, 1)
+	}
 
 	if permanent {
 		core.ApplyPetConsumeEffects(&ghoulPet.Character, dk.Consumes)
@@ -234,35 +239,30 @@ func dkPetHaste(ownerSwingSpeed float64) float64 {
 	return 1 + float64(int32((1/modSpeed-1)*100))/100
 }
 
+// dkGuardianImmunity is spell_dk_pet_scaling's on anything with 51996 but a pet: the risen ghoul
+// guardian, the gargoyle, the army.
+const dkGuardianImmunity = core.PetImmuneStats | core.PetImmuneAttackPower
+
 // ghoulStatInheritance is spell_dk_pet_scaling's CalculateStatAmount: 70% of the owner's strength and
 // 30% of his stamina, Ravenous Dead adding 20% a rank to each and Glyph of the Ghoul a flat 40, all
-// whole percent.
+// whole percent. Pet Scaling - Master Spell 03 (67557) adds 30% of his intellect and spirit.
 func (dk *Deathknight) ghoulStatInheritance() core.PetStatInheritance {
 	glyphPct := int64(0)
 	if dk.HasMajorGlyph(proto.DeathknightMajorGlyph_GlyphOfTheGhoul) {
 		glyphPct = 40
 	}
 	ravenousDead := int64(dk.Talents.RavenousDead)
-	strengthPct := 70 + 70*20*ravenousDead/100 + glyphPct
-	staminaPct := 30 + 30*20*ravenousDead/100 + glyphPct
+	strengthPct := float64(70 + 70*20*ravenousDead/100 + glyphPct)
+	staminaPct := float64(30 + 30*20*ravenousDead/100 + glyphPct)
 
-	if !dk.Talents.MasterOfGhouls {
-		// The guardian's amounts are worked out once, at the summon, off whole stats. The pet's move
-		// with every change of the owner's instead, so they stay continuous.
-		return func(ownerStats stats.Stats) stats.Stats {
-			return stats.Stats{
-				stats.Stamina:  calculatePct(ownerStats[stats.Stamina], staminaPct),
-				stats.Strength: calculatePct(ownerStats[stats.Strength], strengthPct),
-			}
-		}
-	}
-
+	// The owner's melee haste rating isn't inherited here: it reaches the ghoul through the 51996
+	// carrier's 2 s resnapshot instead (SetupGhoul's OwnerHasteSource).
 	return func(ownerStats stats.Stats) stats.Stats {
-		// The owner's melee haste rating isn't inherited here: it reaches the ghoul through the 51996
-		// carrier's 2 s resnapshot instead (SetupGhoul's OwnerHasteSource), same as the guardian.
 		return stats.Stats{
-			stats.Stamina:  ownerStats[stats.Stamina] * float64(staminaPct) / 100,
-			stats.Strength: ownerStats[stats.Strength] * float64(strengthPct) / 100,
+			stats.Stamina:   core.PetScalingPct(ownerStats[stats.Stamina], staminaPct),
+			stats.Strength:  core.PetScalingPct(ownerStats[stats.Strength], strengthPct),
+			stats.Intellect: core.PetScalingPct(ownerStats[stats.Intellect], 30),
+			stats.Spirit:    core.PetScalingPct(ownerStats[stats.Spirit], 30),
 		}
 	}
 }

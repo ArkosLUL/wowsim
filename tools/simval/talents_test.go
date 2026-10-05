@@ -28,7 +28,6 @@ var droppedSweep = []sweepDrop{
 	{"RogueCombat", "maceSpecialization", "armor penetration %"},
 	{"DeathknightBlood", "bloodGorged", "armor penetration %"},
 	{"PaladinProtection", "improvedDevotionAura", "armor"},
-	{"WarlockAffliction", "improvedImp", "max health"},
 	{"ShamanEnhancement", "enhancingTotems", "spell power"},
 }
 

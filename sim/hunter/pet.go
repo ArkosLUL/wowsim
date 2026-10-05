@@ -1,6 +1,9 @@
 package hunter
 
 import (
+	"math"
+	"time"
+
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
 	"github.com/wowsims/wotlk/sim/core/stats"
@@ -37,6 +40,8 @@ func (hunter *Hunter) NewHunterPet() *HunterPet {
 		hunterOwner: hunter,
 	}
 	hp.SummonedAsPet = true
+	// spell_hun_generic_scaling's HandlePeriodic
+	hp.ScalingPeriod = 2 * time.Second
 
 	// mod-spell-tweaks' 425790: immune to direct haste and slows, Bloodlust included; its own melee
 	// swing speed tracks the owner's ranged speed instead (hunters carry their haste there).
@@ -162,17 +167,15 @@ func (hp *HunterPet) killCommandMult() float64 {
 	return 1 + 0.2*float64(hp.KillCommandAura.GetStacks())
 }
 
-var hunterPetBaseStats = stats.Stats{
-	// pet_levelstats, creature_entry 1 at level 80
-	stats.Agility:     158,
-	stats.Strength:    192,
+// pet_levelstats' creature_entry 1 at 80, with Tamed Pet Passive's (17223) +5% base armor
+var hunterPetBaseStats = core.PetCreateStats(192, 158, 356, 70, 115, 9784*1.05).Add(stats.Stats{
 	stats.AttackPower: -20, // Apparently pets and warriors have a AP penalty.
 
 	// a creature crits 5% plus auras, melee and magic alike, and agility adds nothing
 	// (Unit::GetUnitCriticalChance, Unit::SpellDoneCritChance)
 	stats.MeleeCrit: 5 * core.CritRatingPerCritChance,
 	stats.SpellCrit: 5 * core.CritRatingPerCritChance,
-}
+})
 
 // makeStatInheritance is spell_hun_generic_scaling on 34902: 45% of the owner's stamina, 22% of their
 // ranged AP as AP and 12.87% as spell damage for the magic schools (126), plus 35% of their armor. Wild
@@ -180,7 +183,7 @@ var hunterPetBaseStats = stats.Stats{
 // but not the float spell one. Hunter vs. Wild's share of stamina goes on top of the owner's ranged AP,
 // which already counts it once. Hit and expertise come from core's scaling aura, not from here.
 func (hunter *Hunter) makeStatInheritance() core.PetStatInheritance {
-	hvw := hunter.Talents.HunterVsWild
+	hvw := float64(hunter.Talents.HunterVsWild)
 
 	petTalents := hunter.Options.PetTalents
 	var wildHunt int32
@@ -190,16 +193,17 @@ func (hunter *Hunter) makeStatInheritance() core.PetStatInheritance {
 	// Wild Hunt (62758, 62762): +20% stamina and +15% AP and spell damage a rank
 	staminaPct := float64(45 + 45*20*wildHunt/100)
 	apPct := float64(22 + 22*15*wildHunt/100)
-	spellPct := 12.87 * (1 + 0.15*float64(wildHunt))
+	spellPct := float32(12.87)
+	spellPct += spellPct * float32(15*wildHunt) / 100
 
 	return func(ownerStats stats.Stats) stats.Stats {
-		ownerAP := ownerStats[stats.RangedAttackPower] + ownerStats[stats.Stamina]*0.1*float64(hvw)
+		ownerAP := ownerStats[stats.RangedAttackPower] + math.Trunc(ownerStats[stats.Stamina])*10*hvw/100
 
 		return stats.Stats{
-			stats.Stamina:     ownerStats[stats.Stamina] * staminaPct / 100,
-			stats.Armor:       ownerStats[stats.Armor] * 0.35,
-			stats.AttackPower: ownerAP * apPct / 100,
-			stats.SpellPower:  ownerStats[stats.RangedAttackPower] * spellPct / 100,
+			stats.Stamina:     core.PetScalingPct(ownerStats[stats.Stamina], staminaPct),
+			stats.Armor:       core.PetScalingPct(ownerStats[stats.Armor], 35),
+			stats.AttackPower: core.PetScalingPct(ownerAP, apPct),
+			stats.SpellPower:  core.PetScalingPct(ownerStats[stats.RangedAttackPower], float64(spellPct)),
 		}
 	}
 }

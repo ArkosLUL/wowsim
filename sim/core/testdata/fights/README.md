@@ -63,8 +63,6 @@ table's cause:
 - **world tick**: the server moves a player every 10 ms world tick, so a swing lands at most that late; the sim's
   waits for the 100 ms map update and loses the overshoot, a few swings a fight; its last swing comes early, and
   with it the end of a swing-stacked buff (Fury of the Five Flights).
-- **Bloodworms**: the sim's have the setup's Horn of Winter (+155 Str); the server's never get it, as a party or raid
-  buff skips an uncontrollable guardian (`Spell.cpp` `TARGET_CHECK_RAID`).
 - **Frost Vulnerability**: rolls spell hit on the server and missed; the sim's always lands.
 - **Vengeance**: the sim's Insect Swarm ticks crit for Vengeance's doubled bonus, the server's for the plain 1.5 with
   the meta gem.
@@ -96,8 +94,6 @@ table's cause:
 
 | Setup | Subject | Check | Why |
 |---|---|---|---|
-| DeathknightBlood | Bloodworm melee | crit mean | Bloodworms |
-| DeathknightBlood | Bloodworm melee | hit mean | Bloodworms |
 | DeathknightFrost | 51714 | count | Frost Vulnerability |
 | DeathknightFrost | 51714 | misses | Frost Vulnerability |
 | DeathknightFrostUH | 51714 | misses | Frost Vulnerability |

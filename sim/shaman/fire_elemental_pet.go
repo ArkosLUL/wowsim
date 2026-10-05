@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/wowsims/wotlk/sim/core"
-	"github.com/wowsims/wotlk/sim/core/proto"
 	"github.com/wowsims/wotlk/sim/core/stats"
 )
 
@@ -32,6 +31,7 @@ func (shaman *Shaman) NewFireElemental(bonusSpellPower float64) *FireElemental {
 		Pet:         core.NewPet("Greater Fire Elemental", &shaman.Character, fireElementalPetBaseStats, shaman.fireElementalStatInheritance(), false, true),
 		shamanOwner: shaman,
 	}
+	fireElemental.BuffImmunity = core.PetImmuneToScaling
 	fireElemental.EnableManaBar()
 	fireElemental.EnableAutoAttacks(fireElemental, core.AutoAttackOptions{
 		MainHand: core.Weapon{
@@ -47,14 +47,6 @@ func (shaman *Shaman) NewFireElemental(bonusSpellPower float64) *FireElemental {
 	if bonusSpellPower > 0 {
 		fireElemental.AddStat(stats.SpellPower, float64(bonusSpellPower)*0.5218)
 		fireElemental.AddStat(stats.AttackPower, float64(bonusSpellPower)*4.45)
-	}
-
-	if shaman.hasHeroicPresence || shaman.RacialTraits == proto.Race_RaceDraenei {
-		fireElemental.AddStats(stats.Stats{
-			stats.MeleeHit:  -core.MeleeHitRatingPerHitChance,
-			stats.SpellHit:  -core.SpellHitRatingPerHitChance,
-			stats.Expertise: math.Floor(-core.SpellHitRatingPerHitChance * 0.79),
-		})
 	}
 
 	fireElemental.OnPetEnable = fireElemental.enable

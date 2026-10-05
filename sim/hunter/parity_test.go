@@ -40,13 +40,13 @@ func TestPetStatInheritance(t *testing.T) {
 		hvw, wildHunt           int32
 		stamina, ap, spellPower float64
 	}{
-		{0, 0, 900, 1320, 772.2},
+		{0, 0, 900, 1320, 772},
 		// 2000 stamina x 30% goes on top of the 6000: 6600 x 22%
-		{3, 0, 900, 1452, 772.2},
-		// 45 + trunc(45 x 20%) = 54, 22 + trunc(3.3) = 25, 12.87 x 1.15
-		{0, 1, 1080, 1500, 888.03},
+		{3, 0, 900, 1452, 772},
+		// 45 + trunc(45 x 20%) = 54, 22 + trunc(3.3) = 25, 12.87 x 1.15, each amount truncated
+		{0, 1, 1080, 1500, 888},
 		// 63, 28, 12.87 x 1.3
-		{3, 2, 1260, 1848, 1003.86},
+		{3, 2, 1260, 1848, 1003},
 	} {
 		hunter := &Hunter{
 			Talents: &proto.HunterTalents{HunterVsWild: tc.hvw},
