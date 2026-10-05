@@ -3,7 +3,10 @@ package core
 import (
 	"fmt"
 	"math"
+	"math/rand/v2"
+	"slices"
 	"testing"
+	"time"
 
 	"github.com/wowsims/wotlk/sim/core/serverdata"
 	"github.com/wowsims/wotlk/sim/core/stats"
@@ -269,5 +272,206 @@ func TestThreatAssist(t *testing.T) {
 		if got := spell.SpellMetrics[enemy.UnitIndex].TotalThreat; !threatNear(got, 80*0.7/2) {
 			t.Errorf("%s: assist threat %v, want %v", enemy.Label, got, 80*0.7/2)
 		}
+	}
+}
+
+// threatRef is the cast bonus bookkeeping done the plain way, hits kept by unit pointer and searched
+// with slices.ContainsFunc. TestThreatBookkeepingWalk holds the real one to it.
+type threatRef struct {
+	openCasts int
+	hits      []threatRefHit
+	threat    []float64 // by UnitIndex
+}
+
+type threatRefHit struct {
+	target *Unit
+	landed bool
+}
+
+func (r *threatRef) bonus(spell *Spell, result *SpellResult) float64 {
+	if !spell.hasEnemyThreatBonus() || result.Target.Type != EnemyUnit {
+		return 0
+	}
+	if r.openCasts > 0 {
+		r.hits = append(r.hits, threatRefHit{result.Target, result.Landed()})
+		return 0
+	}
+	if !result.Landed() {
+		return 0
+	}
+	return spell.threatBonusBase() / spell.threat.split
+}
+
+func (r *threatRef) land(sim *Simulation, spell *Spell, target *Unit) {
+	if !spell.hasEnemyThreatBonus() || target.Type != EnemyUnit {
+		return
+	}
+	if r.openCasts > 0 {
+		r.hits = append(r.hits, threatRefHit{target, true})
+	} else if sim.CurrentTime >= 0 {
+		r.threat[target.UnitIndex] += spell.threatBonusBase() / spell.threat.split
+	}
+}
+
+func (r *threatRef) open(sim *Simulation, spell *Spell) int {
+	t := &spell.threat
+	if !t.noBonus && t.assist && spell.ThreatMultiplier != 0 && sim.CurrentTime >= 0 {
+		enemies := sim.Encounter.TargetUnits
+		threat := spell.modifiedThreat(spell.threatBonusBase()) / float64(len(enemies))
+		for _, enemy := range enemies {
+			r.threat[enemy.UnitIndex] += threat
+		}
+		if sim.Log != nil {
+			spell.Unit.Log(sim, "%s assist threat %0.3f on each of %d enemies", spell.ActionID, threat, len(enemies))
+		}
+	}
+	r.openCasts++
+	return len(r.hits)
+}
+
+func (r *threatRef) close(sim *Simulation, spell *Spell, start int) {
+	r.openCasts--
+	hits := r.hits[start:]
+	if len(hits) == 0 {
+		return
+	}
+	defer func() { r.hits = r.hits[:start] }()
+	if sim.CurrentTime < 0 {
+		return
+	}
+
+	units := 0
+	if spell.threat.casterShare {
+		units++
+	}
+	for i, hit := range hits {
+		if !slices.ContainsFunc(hits[:i], func(h threatRefHit) bool { return h.target == hit.target }) {
+			units++
+		}
+	}
+	share := spell.threatBonusBase() / float64(units)
+	for i, hit := range hits {
+		first := !slices.ContainsFunc(hits[:i], func(h threatRefHit) bool { return h.target == hit.target })
+		landed := slices.ContainsFunc(hits[i:], func(h threatRefHit) bool { return h.target == hit.target && h.landed })
+		if first && landed {
+			r.threat[hit.target.UnitIndex] += share
+			if sim.Log != nil {
+				spell.Unit.Log(sim, "%s %s threat bonus %0.3f, 1 of %d units", hit.target.LogLabel(), spell.ActionID, share, units)
+			}
+		}
+	}
+}
+
+// Random casts, nested up to four deep, hits and landings in and out of them, and the threat
+// mods, the pull and the log switching under them: every bonus, total and log line must be
+// bit-equal to threatRef's.
+func TestThreatBookkeepingWalk(t *testing.T) {
+	sim := threatTestSim(3)
+	enemies := sim.Encounter.TargetUnits
+	var spells []*Spell
+	var refs []*threatRef
+	// single target, chain, caster share, area landing, assist, attack power, a row with no bonus,
+	// a positive aura's damage
+	for _, id := range []int32{47450, 47520, 48668, 48819, 61657, 47498, 47502, 48952} {
+		spell := threatTestSpell(t, sim, id, SpellSchoolFire)
+		spell.Unit.stats[stats.AttackPower] = 2000
+		spells = append(spells, spell)
+		refs = append(refs, &threatRef{threat: make([]float64, len(spell.SpellMetrics))})
+	}
+	sim.AllUnits = append(slices.Clone(enemies), spells[0].Unit)
+
+	var gotLog, wantLog []string
+	logging, logged := false, 0
+	logTo := func(out *[]string) {
+		sim.Log = nil
+		if logging {
+			sim.Log = func(f string, v ...interface{}) { *out = append(*out, fmt.Sprintf(f, v...)) }
+		}
+	}
+	outcomes := []HitOutcome{OutcomeHit, OutcomeCrit, OutcomeMiss, OutcomeDodge, OutcomeHit | OutcomeBlock}
+	type openCast struct{ spell, start, refStart int }
+	var casts []openCast
+	closeCast := func() {
+		c := casts[len(casts)-1]
+		casts = casts[:len(casts)-1]
+		logTo(&gotLog)
+		spells[c.spell].closeThreatCast(sim, c.start)
+		logTo(&wantLog)
+		refs[c.spell].close(sim, spells[c.spell], c.refStart)
+	}
+
+	rng := rand.New(rand.NewPCG(1, 2))
+	for step := range 20000 {
+		i := rng.IntN(len(spells))
+		if len(casts) > 0 && rng.IntN(3) > 0 {
+			i = casts[len(casts)-1].spell
+		}
+		spell, ref := spells[i], refs[i]
+		target := enemies[rng.IntN(len(enemies))]
+		if rng.IntN(10) == 0 {
+			target = spell.Unit
+		}
+
+		switch op := rng.IntN(20); {
+		case op < 4 && len(casts) < 4:
+			logTo(&gotLog)
+			start := spell.openThreatCast(sim)
+			logTo(&wantLog)
+			casts = append(casts, openCast{i, start, ref.open(sim, spell)})
+		case op < 8 && len(casts) > 0:
+			closeCast()
+		case op < 14:
+			result := &SpellResult{Target: target, Outcome: outcomes[rng.IntN(len(outcomes))]}
+			got, want := spell.threatBonus(result), ref.bonus(spell, result)
+			if math.Float64bits(got) != math.Float64bits(want) {
+				t.Fatalf("step %d: %s's bonus %v, want %v", step, spell.ActionID, got, want)
+			}
+			spell.SpellMetrics[target.UnitIndex].TotalThreat += got
+			ref.threat[target.UnitIndex] += want
+		case op < 16:
+			spell.LandThreatBonus(sim, target)
+			ref.land(sim, spell, target)
+		case op == 16:
+			spell.ThreatMultiplier = []float64{0, 1, 1.3}[rng.IntN(3)]
+		case op == 17:
+			sim.CurrentTime = []time.Duration{-time.Second, 0, time.Second}[rng.IntN(3)]
+		case op == 18:
+			spell.Unit.stats[stats.AttackPower] = float64(rng.IntN(5000))
+		default:
+			logging = !logging
+		}
+
+		for j, spell := range spells {
+			for u, m := range spell.SpellMetrics {
+				if math.Float64bits(m.TotalThreat) != math.Float64bits(refs[j].threat[u]) {
+					t.Fatalf("step %d: %s's threat on unit %d is %v, want %v", step, spell.ActionID, u, m.TotalThreat, refs[j].threat[u])
+				}
+			}
+		}
+		if !slices.Equal(gotLog, wantLog) {
+			t.Fatalf("step %d: log\n%q\nwant\n%q", step, gotLog, wantLog)
+		}
+		logged += len(wantLog)
+		gotLog, wantLog = gotLog[:0], wantLog[:0]
+	}
+
+	for len(casts) > 0 {
+		closeCast()
+	}
+	for j, spell := range spells {
+		if spell.threat.openCasts != 0 || len(spell.threat.hits) != 0 {
+			t.Errorf("%s: %d casts and %d hits left open", spell.ActionID, spell.threat.openCasts, len(spell.threat.hits))
+		}
+		for u, m := range spell.SpellMetrics {
+			if math.Float64bits(m.TotalThreat) != math.Float64bits(refs[j].threat[u]) {
+				t.Errorf("%s's threat on unit %d is %v, want %v", spell.ActionID, u, m.TotalThreat, refs[j].threat[u])
+			}
+		}
+	}
+	if !slices.Equal(gotLog, wantLog) {
+		t.Errorf("log\n%q\nwant\n%q", gotLog, wantLog)
+	}
+	if logged == 0 {
+		t.Error("the walk logged nothing")
 	}
 }
