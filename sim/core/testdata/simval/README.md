@@ -22,7 +22,7 @@ records, which `TestStrikesRecords` replays ([tools/simval](../../../../tools/si
 
 `buffs.jsonl` holds `TestSimvalBuffs`' `BUFFS` lines, which `TestBuffRecords` replays
 ([tools/simval](../../../../tools/simval/README.md#buffs)). A disagreeing state or check goes in `droppedBuffs`
-(`tools/simval/buffs_test.go`) with a row here; its line stays.
+(`tools/simval/buffs_test.go`) with a row here; its line stays. `buffs_pairs.json` lists the pairs both read.
 
 `mobs.jsonl` holds `TestSimvalMobs`' `MOBS` lines, which `TestMobRecords` replays
 ([tools/simval](../../../../tools/simval/README.md#mob-types)). A disagreeing line or check goes in `droppedMobs`

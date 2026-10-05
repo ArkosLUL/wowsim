@@ -1,0 +1,26 @@
+{
+  "pairs": [
+    ["raid.trueshot_aura", "raid.abominations_might"],
+    ["raid.trueshot_aura", "raid.unleashed_rage"],
+    ["raid.unleashed_rage", "raid.abominations_might"],
+    ["raid.moonkin_aura", "raid.elemental_oath"],
+    ["raid.moonkin_aura", "raid.swift_retribution"],
+    ["raid.ferocious_inspiration", "raid.sanctified_retribution"],
+    ["raid.ferocious_inspiration", "raid.arcane_empowerment"],
+    ["raid.sanctified_retribution", "raid.arcane_empowerment"],
+    ["raid.icy_talons", "raid.windfury_totem"],
+    ["raid.battle_shout", "individual.blessing_of_might"],
+    ["raid.mana_spring_totem", "individual.blessing_of_wisdom"],
+    ["individual.blessing_of_kings", "individual.blessing_of_sanctuary"],
+    ["debuff.faerie_fire", "debuff.curse_of_weakness"],
+    ["debuff.curse_of_elements", "debuff.earth_and_moon"],
+    ["debuff.curse_of_elements", "debuff.ebon_plaguebringer"],
+    ["debuff.earth_and_moon", "debuff.ebon_plaguebringer"],
+    ["debuff.improved_scorch", "debuff.shadow_mastery"],
+    ["debuff.misery", "debuff.faerie_fire"],
+    ["debuff.totem_of_wrath", "debuff.heart_of_the_crusader"],
+    ["debuff.curse_of_weakness", "debuff.vindication"],
+    ["debuff.insect_swarm", "debuff.scorpid_sting"],
+    ["debuff.sunder_armor", "debuff.expose_armor"]
+  ]
+}
