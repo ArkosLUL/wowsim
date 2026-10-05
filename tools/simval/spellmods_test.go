@@ -26,6 +26,8 @@ var droppedSpellMods = slices.Concat(
 	// never rolls to hit, so the sim's Shadow Focus hit leaves it out
 	spellModDrops("DruidFeralCat", "berserk", "cooldown", 48564),
 	spellModDrops("PriestShadow", "shadowFocus", "miss", 47585),
+	// the server takes a percent cost mod off the cost after the flat ones, the sim before them
+	spellModDrops("DruidFeralCat", "berserk", "cost", 48566, 48572),
 )
 
 func spellModDrops(path, talent, check string, spells ...int32) []spellModDrop {

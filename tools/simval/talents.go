@@ -228,6 +228,23 @@ func (path talentPath) fits(rec talentRecord) bool {
 	return rec.Class == path.Class && rec.Race == path.Race && path.wears(rec.Equipment) && path.stepOf(rec.Talents) >= 0
 }
 
+// missingAuras are the path's auras and those of its steps so far that the record after its step lacks.
+func (path talentPath) missingAuras(rec talentRecord) []int32 {
+	want := slices.Clone(path.Auras)
+	for _, step := range path.Steps[:min(max(rec.Step, 0), len(path.Steps))] {
+		want = append(want, step.Auras...)
+	}
+	return slices.DeleteFunc(want, func(id int32) bool { return slices.Contains(rec.Auras, id) })
+}
+
+// asRecorded is the path as a record from before a change to its setup stood: the items it wore, and the
+// path's auras it had on.
+func (path talentPath) asRecorded(rec talentRecord) talentPath {
+	path.Items = slices.Clone(rec.Equipment)
+	path.Auras = slices.DeleteFunc(slices.Clone(path.Auras), func(id int32) bool { return !slices.Contains(rec.Auras, id) })
+	return path
+}
+
 // trimTalentRecords picks the sweep bots' info records out of raw simval lines, the worldserver's
 // simval.jsonl as streamed or an e2e log's RECORD lines, and puts each on its path and step. A bot is
 // left out when its records fit no path (the e2e stopped it on a wrong talent) or more than one (it
@@ -595,7 +612,11 @@ func (path talentPath) sweepSim(n int) sweepSim {
 	if err != nil {
 		return sweepSim{err: err}
 	}
-	return newSweepSim(sweepTarget(path), s)
+	d, err := newPathSim(sweepTarget(path), s)
+	if err != nil {
+		return sweepSim{err: err}
+	}
+	return d.sweepSim()
 }
 
 // newSweepSim is the sheet of the setup's character against the record's dummy.

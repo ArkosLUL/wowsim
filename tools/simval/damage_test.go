@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"math"
 	"os"
 	"path/filepath"
@@ -11,6 +12,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/wowsims/wotlk/sim/core/proto"
 	"github.com/wowsims/wotlk/sim/core/serverdata"
 	"github.com/wowsims/wotlk/sim/core/stats"
 )
@@ -543,6 +545,10 @@ var knownStrikesMismatches = expandStrikesMismatches([]knownStrikes{
 	{[]strikesKey{spiritWolfInfo, treantInfo, shadowfiendInfo}, []string{"spell power"}, petPowerReason},
 	{[]strikesKey{impInfo, felguardInfo, waterElementalInfo}, []string{"regen per tick"},
 		"pet mana: Creature::Regenerate gives a controlled creature spirit/5 + 17 a tick, the sim pet the player formula"},
+	{[]strikesKey{infernalBuffedInfo},
+		[]string{"Strength from buffs", "Agility from buffs", "attack power from buffs", "spell power from buffs", "armor from buffs"},
+		"guardian raid buffs: spell_warl_infernal_scaling makes the Infernal immune to its scaling auras' types (stats, " +
+			"armor, attack and spell power), so the buffs add nothing on the server; the sim's applyPetBuffEffects gives them"},
 })
 
 // The info records of TestSimvalStrikes' pets.
@@ -557,7 +563,12 @@ var (
 	waterElementalInfo = strikesKey{"info", 0, mage, 510, false}
 	treantInfo         = strikesKey{"info", 0, druid, 1964, false}
 	shadowfiendInfo    = strikesKey{"info", 0, priest, 19668, false}
+	infernalBuffedInfo = strikesKey{"info", 0, warlock, 89, true}
 )
+
+// strikesUnrecorded are probes TestSimvalStrikes takes that strikes.jsonl predates. The fixture test lets
+// them be missing and fails once the fixture has one, so the entry goes with the re-record.
+var strikesUnrecorded = []strikesKey{}
 
 const (
 	allPetStats    = "Strength Agility Stamina Intellect Spirit"
@@ -675,6 +686,9 @@ func expectedStrikesKeys() []strikesKey {
 	}
 	for _, p := range strikesPets {
 		keys = append(keys, strikesKey{"info", 0, p.class, p.entry, false})
+		if len(strikesPetBuffs[p.entry]) > 0 {
+			keys = append(keys, strikesKey{"info", 0, p.class, p.entry, true})
+		}
 		for _, spell := range p.spells {
 			keys = append(keys, strikesKey{"damage", spell, p.class, p.entry, false})
 		}
@@ -705,7 +719,11 @@ func TestStrikesFixtureHasEveryProbe(t *testing.T) {
 		have[key] = true
 	}
 	for _, key := range expectedStrikesKeys() {
-		if !have[key] && !slices.Contains(droppedStrikesRecords, key) {
+		unrecorded := slices.Contains(strikesUnrecorded, key)
+		switch {
+		case have[key] && unrecorded:
+			t.Errorf("%s is recorded now, so take it off strikesUnrecorded", key)
+		case !have[key] && !unrecorded && !slices.Contains(droppedStrikesRecords, key):
 			t.Errorf("no record for %s", key)
 		}
 	}
@@ -1103,6 +1121,87 @@ func TestPetReplayCoversTheE2EPets(t *testing.T) {
 				t.Errorf("pet %d spell %d: no sim declaration", p.entry, id)
 			}
 		}
+	}
+}
+
+// The Infernal's buffed info compares what its owner's buffs added since the bare info, both sim pets scaled
+// off the bare owner. The sim hands its pet all four: 155 strength and agility, 550 attack power plus 2 per
+// strength, 144 spell power, 1205 armor plus 2 per agility.
+func TestPetBuffReplay(t *testing.T) {
+	infos := func() []strikesRecord {
+		bare := handPet(t, warlock, 1, 89, "info", petInfoBody([5]float64{}, `"regen": null`))
+		buffed := handPet(t, warlock, 1, 89, "info", petInfoBody([5]float64{}, `"regen": null`))
+		for _, b := range strikesPetBuffs[89] {
+			buffed.Owner.Auras = append(buffed.Owner.Auras, aura{ID: b.aura, DurationMs: -1})
+			buffed.Attacker.Auras = append(buffed.Attacker.Auras, aura{ID: b.aura, DurationMs: -1})
+		}
+		// the owner's own Devotion Aura and Flametongue Totem, which the Infernal's scaling never takes
+		buffed.Owner.Resistances[0] += 1205
+		for school := range buffed.Owner.SpellPower {
+			buffed.Owner.SpellPower[school] += 144
+		}
+		records := []strikesRecord{bare, buffed}
+		pairBuffedPetInfos(records)
+		return records
+	}
+	records := infos()
+	if key, err := records[1].key(); err != nil || key != infernalBuffedInfo || records[0].buffedPetInfo() {
+		t.Fatalf("buffed key %v, %v; bare buffed %v", key, err, records[0].buffedPetInfo())
+	}
+
+	buffs := &proto.RaidBuffs{}
+	for _, b := range strikesPetBuffs[89] {
+		b.give(buffs)
+	}
+	before, err := petSimStats(records[0].damageRecord, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	after, err := petSimStats(records[0].damageRecord, buffs)
+	if err != nil {
+		t.Fatal(err)
+	}
+	added := map[string]float64{}
+	for _, name := range petStatNames {
+		added[name] = after[name] - before[name]
+	}
+	want := map[string]float64{"Strength": 155, "Agility": 155, "Stamina": 0, "Intellect": 0, "Spirit": 0,
+		"attack power": 550 + 2*155, "spell power": 144, "armor": 1205 + 2*155}
+	for name, w := range want {
+		if math.Abs(added[name]-w) > 1e-6 {
+			t.Errorf("the sim's buffs add %.2f %s, want %.0f", added[name], name, w)
+		}
+	}
+
+	// the server's buffed pet with the stats the buffs added
+	server := func(add map[string]float64) []Check {
+		records := infos()
+		u := &records[1].Attacker
+		u.Stats.Strength += add["Strength"]
+		u.Stats.Agility += add["Agility"]
+		u.Attacks[0].AttackPower += add["attack power"]
+		for school := range u.SpellPower {
+			u.SpellPower[school] += add["spell power"]
+		}
+		u.Resistances[0] += add["armor"]
+		return checkStrikesRecord(records[1])
+	}
+	if failed := failedCheckNames(server(added)); len(failed) != 0 {
+		t.Errorf("as the sim has it: failed %v", failed)
+	}
+	noDevotion := maps.Clone(added)
+	noDevotion["armor"] -= 1205
+	if failed := failedCheckNames(server(noDevotion)); !slices.Equal(failed, []string{"armor from buffs"}) {
+		t.Errorf("no Devotion Aura: failed %v", failed)
+	}
+	if failed := failedCheckNames(server(nil)); !slices.Equal(failed, []string{"Strength from buffs",
+		"Agility from buffs", "attack power from buffs", "spell power from buffs", "armor from buffs"}) {
+		t.Errorf("no buff reaching it: failed %v", failed)
+	}
+	lone := infos()[1]
+	lone.bare = nil
+	if failed := failedCheckNames(checkStrikesRecord(lone)); !slices.Equal(failed, []string{"bare info"}) {
+		t.Errorf("no bare info: failed %v", failed)
 	}
 }
 

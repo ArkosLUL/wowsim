@@ -932,6 +932,8 @@ type strikesRecord struct {
 	Pet *petInfo `json:"pet"`
 	// the same line as a timing record, for a `timing`
 	timing *timingRecord
+	// for a buffed pet's info, the same pet's last info before the buffs
+	bare *strikesRecord
 }
 
 func readStrikesRecords(path string) ([]strikesRecord, error) {
@@ -951,7 +953,26 @@ func readStrikesRecords(path string) ([]strikesRecord, error) {
 			}
 		}
 	}
+	pairBuffedPetInfos(records)
 	return records, nil
+}
+
+// pairBuffedPetInfos points each buffed pet info at its owner's last info of that pet without the buffs.
+func pairBuffedPetInfos(records []strikesRecord) {
+	for i := range records {
+		rec := &records[i]
+		if !rec.buffedPetInfo() {
+			continue
+		}
+		for j := i - 1; j >= 0; j-- {
+			o := &records[j]
+			if o.Command == "info" && o.isPet() && !o.buffedPetInfo() && o.Owner.Name == rec.Owner.Name &&
+				o.Attacker.Entry == rec.Attacker.Entry {
+				rec.bare = o
+				break
+			}
+		}
+	}
 }
 
 func (r strikesRecord) label() string {
@@ -960,6 +981,9 @@ func (r strikesRecord) label() string {
 		who = fmt.Sprintf("%s's %s (%d)", r.Owner.Name, r.Attacker.Name, r.Attacker.Entry)
 	}
 	if r.Command == "info" {
+		if r.buffedPetInfo() {
+			return "buffed info: " + who
+		}
 		return "info: " + who
 	}
 	return fmt.Sprintf("%s %d (%s): %s", r.Command, r.Spell.ID, r.Spell.Name, who)
@@ -967,7 +991,7 @@ func (r strikesRecord) label() string {
 
 // strikesKey names a strikes.jsonl record by what it probed: the command and spell, the player's class (the
 // owner's for a pet), the pet's entry (0 for the character's own record), and whether the character carried
-// its talents.
+// its talents, or for a pet's info its owner's buffs.
 type strikesKey struct {
 	command string
 	spell   int32
@@ -982,6 +1006,9 @@ func (k strikesKey) String() string {
 		pass = "with talents"
 	}
 	if k.entry != 0 {
+		if k.modded {
+			return fmt.Sprintf("%s spell %d of class %d's pet %d, buffed", k.command, k.spell, k.class, k.entry)
+		}
 		return fmt.Sprintf("%s spell %d of class %d's pet %d", k.command, k.spell, k.class, k.entry)
 	}
 	return fmt.Sprintf("%s spell %d class %d, %s", k.command, k.spell, k.class, pass)
@@ -990,7 +1017,7 @@ func (k strikesKey) String() string {
 func (r strikesRecord) key() (strikesKey, error) {
 	k := strikesKey{command: r.Command, spell: r.Spell.ID, class: r.Attacker.Class}
 	if r.isPet() {
-		k.class, k.entry = r.Owner.Class, r.Attacker.Entry
+		k.class, k.entry, k.modded = r.Owner.Class, r.Attacker.Entry, r.buffedPetInfo()
 		return k, nil
 	}
 	setup, err := damageSetupFor(r.damageRecord)
@@ -1003,6 +1030,8 @@ func checkStrikesRecord(rec strikesRecord) []Check {
 	switch {
 	case rec.Command == "timing" && rec.timing != nil:
 		return replayTiming(*rec.timing, buildStrikesTimingSim)
+	case rec.buffedPetInfo():
+		return checkPetBuffs(rec)
 	case rec.Command == "info" && rec.Pet != nil && rec.isPet():
 		return checkPetInfo(rec)
 	case rec.Command == "damage" && rec.Weapon != nil:
@@ -1394,6 +1423,12 @@ func (p *damagePet) start(d *damageSim) {
 // buildPetSim builds the record's owner with the pet: its class in the pet's spec, the owner's talents and
 // glyphs, and the pet's mirrored auras.
 func buildPetSim(rec damageRecord) (d *damageSim, err error) {
+	return buildPetSimWith(rec, nil)
+}
+
+// buildPetSimWith is buildPetSim in a raid with the buffs, which the sim hands the pet as well
+// (applyPetBuffEffects).
+func buildPetSimWith(rec damageRecord, buffs *proto.RaidBuffs) (d *damageSim, err error) {
 	if !rec.isPet() {
 		return nil, fmt.Errorf("%s is no player's pet", rec.Attacker.Name)
 	}
@@ -1422,7 +1457,7 @@ func buildPetSim(rec damageRecord) (d *damageSim, err error) {
 	if def.setup != nil {
 		def.setup(player)
 	}
-	if d, err = newSimWith(rec, player, setup.others, 1, nil); err != nil {
+	if d, err = newSimWith(rec, player, setup.others, 1, buffs); err != nil {
 		return nil, err
 	}
 
@@ -1605,6 +1640,114 @@ func checkPetInfo(rec strikesRecord) (checks []Check) {
 		checks[i].Detail += "; " + inputs
 	}
 	return checks
+}
+
+// petBuff is a buff a pet's owner casts for the pet's buffed info: its aura, and the raid buff giving it in
+// the sim.
+type petBuff struct {
+	aura int32
+	give func(*proto.RaidBuffs)
+}
+
+// strikesPetBuffs are TestSimvalStrikes' buffs per pet entry: area auras and raid-wide casts, which target
+// a controllable guardian like a party member. The castable ones a pet summoned mid-fight misses stay off
+// (applyPetBuffEffects).
+var strikesPetBuffs = map[uint32][]petBuff{
+	89: {
+		{58646, func(b *proto.RaidBuffs) { b.StrengthOfEarthTotem = proto.TristateEffect_TristateEffectRegular }},
+		{48942, func(b *proto.RaidBuffs) { b.DevotionAura = proto.TristateEffect_TristateEffectRegular }},
+		{58655, func(b *proto.RaidBuffs) { b.FlametongueTotem = true }},
+		{47436, func(b *proto.RaidBuffs) { b.BattleShout = proto.TristateEffect_TristateEffectRegular }},
+	},
+}
+
+// buffedPetInfo is whether the record is a pet's info taken with every buff strikesPetBuffs lists for it on
+// its owner.
+func (r strikesRecord) buffedPetInfo() bool {
+	buffs := strikesPetBuffs[r.Attacker.Entry]
+	return r.Command == "info" && r.Pet != nil && r.isPet() && len(buffs) > 0 &&
+		!slices.ContainsFunc(buffs, func(b petBuff) bool { return !hasAuraID(r.Owner.Auras, b.aura) })
+}
+
+func hasAuraID(auras []aura, id int32) bool {
+	return slices.ContainsFunc(auras, func(a aura) bool { return a.ID == id })
+}
+
+// checkPetBuffs holds what the owner's buffs added to a pet, from its bare info to its buffed one, to what
+// the same raid buffs add to the sim's pet, so the pet models' own differences stay out. Both sim pets scale
+// off the bare record's owner: the Infernal's scaling auras take the owner's stats once, at the summon
+// (spell_warl_infernal_scaling), so the owner's own buffs never reach it that way.
+func checkPetBuffs(rec strikesRecord) (checks []Check) {
+	if rec.bare == nil {
+		return []Check{fail("bare info", "no info of the pet before its owner's buffs")}
+	}
+	buffs := &proto.RaidBuffs{}
+	for _, b := range strikesPetBuffs[rec.Attacker.Entry] {
+		b.give(buffs)
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			checks = append(checks, fail("sim pet", fmt.Sprintf("panic: %v", r)))
+		}
+	}()
+	before, err := petSimStats(rec.bare.damageRecord, nil)
+	if err != nil {
+		return []Check{fail("sim pet", err.Error())}
+	}
+	after, err := petSimStats(rec.bare.damageRecord, buffs)
+	if err != nil {
+		return []Check{fail("sim pet", err.Error())}
+	}
+	serverBefore, serverAfter := petServerStats(rec.bare.Attacker), petServerStats(rec.Attacker)
+	for _, name := range petStatNames {
+		sb, ok1 := serverBefore[name]
+		sa, ok2 := serverAfter[name]
+		if !ok1 || !ok2 {
+			continue
+		}
+		sim, server := after[name]-before[name], sa-sb
+		detail := fmt.Sprintf("sim %+.2f, server %+.0f", sim, server)
+		// each side's numbers are truncated on the server, a point each
+		if math.Abs(sim-server) <= 2 {
+			checks = append(checks, pass(name+" from buffs", detail))
+		} else {
+			checks = append(checks, fail(name+" from buffs", detail))
+		}
+	}
+	return checks
+}
+
+// petStatNames are the pet stats checkPetInfo compares, by its check names.
+var petStatNames = []string{"Strength", "Agility", "Stamina", "Intellect", "Spirit", "attack power", "spell power", "armor"}
+
+// petSimStats are the sim pet's petStatNames after a start, with the owner pinned to the record's.
+func petSimStats(rec damageRecord, buffs *proto.RaidBuffs) (map[string]float64, error) {
+	d, err := buildPetSimWith(rec, buffs)
+	if err != nil {
+		return nil, err
+	}
+	d.start()
+	s := d.pet.pet.GetStats()
+	return map[string]float64{
+		"Strength": s[stats.Strength], "Agility": s[stats.Agility], "Stamina": s[stats.Stamina],
+		"Intellect": s[stats.Intellect], "Spirit": s[stats.Spirit], "attack power": s[stats.AttackPower],
+		"spell power": s[stats.SpellPower], "armor": s[stats.Armor],
+	}, nil
+}
+
+// petServerStats are a pet snapshot's petStatNames, without attack power or armor when it has none.
+func petServerStats(u damageUnit) map[string]float64 {
+	out := map[string]float64{
+		"Strength": u.Stats.Strength, "Agility": u.Stats.Agility, "Stamina": u.Stats.Stamina,
+		"Intellect": u.Stats.Intellect, "Spirit": u.Stats.Spirit, "spell power": magicSpellPower(u.SpellPower),
+	}
+	if a := u.attack("mainhand"); a.Type != "" {
+		out["attack power"] = a.AttackPower
+	}
+	if len(u.Resistances) > 0 {
+		out["armor"] = u.Resistances[0]
+	}
+	return out
 }
 
 // checkPetStat holds a pet stat to the server's: each scaling aura's amount is a truncated whole number, so

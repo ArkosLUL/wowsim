@@ -28,7 +28,7 @@
   {"talent":"bladestorm","rank":1,"spell":46924},
   {"talent":"boomingVoice","rank":2,"spell":12835}
 ]},
-{"name":"WarriorFury","class":1,"race":6,"spec":"warrior","items":[{"slot":15,"id":40402},{"slot":16,"id":40402}],"auras":[2458],"steps": [
+{"name":"WarriorFury","class":1,"race":6,"spec":"warrior","items":[{"slot":15,"id":40402},{"slot":16,"id":40402}],"auras":[2458,47436],"steps": [
   {"talent":"armoredToTheTeeth","rank":3,"spell":61222},
   {"talent":"cruelty","rank":5,"spell":12856},
   {"talent":"improvedDemoralizingShout","rank":5,"spell":12879},
@@ -74,7 +74,7 @@
   {"talent":"damageShield","rank":2,"spell":58874},
   {"talent":"shockwave","rank":1,"spell":46968}
 ]},
-{"name":"PaladinProtection","class":2,"race":11,"spec":"protection_paladin","items":[{"slot":15,"id":40345},{"slot":16,"id":40400}],"auras":[31801,25780],"steps": [
+{"name":"PaladinProtection","class":2,"race":11,"spec":"protection_paladin","items":[{"slot":15,"id":40345},{"slot":16,"id":40400}],"auras":[31801,25780,48942],"steps": [
   {"talent":"divineStrength","rank":5,"spell":20266},
   {"talent":"anticipation","rank":5,"spell":20100},
   {"talent":"improvedRighteousFury","rank":3,"spell":20470},
@@ -98,7 +98,7 @@
   {"talent":"deflection","rank":5,"spell":20064},
   {"talent":"benediction","rank":5,"spell":20105}
 ]},
-{"name":"PaladinRetribution","class":2,"race":11,"spec":"retribution_paladin","items":[{"slot":15,"id":40384}],"auras":[31801],"steps": [
+{"name":"PaladinRetribution","class":2,"race":11,"spec":"retribution_paladin","items":[{"slot":15,"id":40384}],"auras":[31801,54043],"steps": [
   {"talent":"deflection","rank":5,"spell":20064},
   {"talent":"improvedJudgements","rank":2,"spell":25957},
   {"talent":"heartOfTheCrusader","rank":3,"spell":20337},
@@ -120,7 +120,7 @@
   {"talent":"spiritualFocus","rank":5,"spell":20208,"filler":true},
   {"talent":"divineIntellect","rank":5,"spell":20261}
 ]},
-{"name":"HunterBeastMastery","class":3,"race":3,"spec":"hunter","items":[{"slot":17,"id":40385}],"auras":[61847],"steps": [
+{"name":"HunterBeastMastery","class":3,"race":3,"spec":"hunter","items":[{"slot":17,"id":40385},{"slot":4,"id":43593}],"auras":[61847],"steps": [
   {"talent":"improvedAspectOfTheHawk","rank":5,"spell":19556},
   {"talent":"enduranceTraining","rank":5,"spell":19587},
   {"talent":"focusedFire","rank":2,"spell":35030},
@@ -267,7 +267,7 @@
   {"talent":"slaughterFromTheShadows","rank":5,"spell":51712},
   {"talent":"shadowDance","rank":1,"spell":51713}
 ]},
-{"name":"PriestDiscipline","class":5,"race":5,"spec":"healing_priest","items":[],"auras":[48161,48073,48169],"steps": [
+{"name":"PriestDiscipline","class":5,"race":5,"spec":"healing_priest","items":[],"auras":[48161,48073,48169,48168],"steps": [
   {"talent":"twinDisciplines","rank":5,"spell":52803},
   {"talent":"silentResolve","rank":3,"spell":14785},
   {"talent":"improvedInnerFire","rank":3,"spell":14771},
@@ -368,7 +368,7 @@
   {"talent":"bloodGorged","rank":5,"spell":61158},
   {"talent":"dancingRuneWeapon","rank":1,"spell":49028}
 ]},
-{"name":"DeathknightFrost","class":6,"race":2,"spec":"deathknight","items":[{"slot":15,"id":40402},{"slot":16,"id":40402}],"auras":[48266,57623],"steps": [
+{"name":"DeathknightFrost","class":6,"race":2,"spec":"deathknight","items":[{"slot":15,"id":40402},{"slot":16,"id":40402},{"slot":4,"id":43586}],"auras":[48266,57623],"steps": [
   {"talent":"improvedIcyTouch","rank":3,"spell":51456},
   {"talent":"runicPowerMastery","rank":2,"spell":50147},
   {"talent":"toughness","rank":5,"spell":49789},
@@ -447,7 +447,7 @@
   {"talent":"enhancingTotems","rank":3,"spell":52456},
   {"talent":"ancestralKnowledge","rank":5,"spell":17489}
 ]},
-{"name":"ShamanEnhancement","class":7,"race":8,"spec":"enhancement_shaman","items":[{"slot":15,"id":39763},{"slot":16,"id":39468}],"auras":[],"steps": [
+{"name":"ShamanEnhancement","class":7,"race":8,"spec":"enhancement_shaman","items":[{"slot":15,"id":39763},{"slot":16,"id":39468}],"auras":[58646,58655],"steps": [
   {"talent":"enhancingTotems","rank":3,"spell":52456},
   {"talent":"earthsGrasp","rank":2,"spell":16130,"filler":true},
   {"talent":"guardianTotems","rank":2,"spell":16293},
@@ -571,7 +571,7 @@
   {"talent":"chilledToTheBone","rank":5,"spell":44571},
   {"talent":"deepFreeze","rank":1,"spell":44572}
 ]},
-{"name":"WarlockAffliction","class":9,"race":10,"spec":"warlock","items":[],"auras":[],"steps": [
+{"name":"WarlockAffliction","class":9,"race":10,"spec":"warlock","items":[],"auras":[47982],"steps": [
   {"talent":"improvedCurseOfAgony","rank":2,"spell":18829},
   {"talent":"suppression","rank":3,"spell":18176},
   {"talent":"improvedCorruption","rank":5,"spell":17814},
@@ -706,7 +706,7 @@
   {"talent":"naturalShapeshifter","rank":3,"spell":16835},
   {"talent":"masterShapeshifter","rank":2,"spell":48412}
 ]},
-{"name":"DruidFeralBear","class":11,"race":4,"spec":"feral_tank_druid","items":[{"slot":15,"id":40388}],"auras":[9634,48469],"steps": [
+{"name":"DruidFeralBear","class":11,"race":4,"spec":"feral_tank_druid","items":[{"slot":15,"id":40388},{"slot":4,"id":43590}],"auras":[9634,48469],"steps": [
   {"talent":"ferocity","rank":5,"spell":16938},
   {"talent":"feralAggression","rank":5,"spell":16862},
   {"talent":"feralInstinct","rank":3,"spell":16949},

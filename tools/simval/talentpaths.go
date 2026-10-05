@@ -85,6 +85,7 @@ type sweepClass struct {
 }
 
 const (
+	equipSlotChest    = 4
 	equipSlotMainHand = 15
 	equipSlotOffHand  = 16
 	equipSlotRanged   = 17
@@ -98,13 +99,22 @@ func armed(mainHand, offHand int32) []goldcharItem {
 	return items
 }
 
+func withChest(items []goldcharItem, chest int32) []goldcharItem {
+	return append(items, goldcharItem{Slot: equipSlotChest, ID: chest})
+}
+
 // Weapons from the golden characters' gear sets, known to equip on the live server. Two-handed: 40384 axe,
 // 40406 mace, 40388 staff. One-handed: 40402 axe, 40345 sword, 39714 and 40386 daggers, 39763 and 39468
-// fists. 40400 shield, 40385 gun.
+// fists. 40400 shield, 40385 gun. Chests for the armor-from-items talents, stamina and frost resistance
+// only so no crit or hit moves under the other talents: 43586 plate, 43593 mail, 43590 leather.
+//
+// Auras also hold the buffs the path's talents improve, cast by the character itself so its own spell mods
+// apply: Battle Shout, Devotion and Retribution Aura, Inner Fire, Blood Pact, the Strength of Earth and
+// Flametongue Totem auras. The sim gets them through sweepBuffOptions.
 var sweepClasses = []sweepClass{
 	{class: 1, race: 6, setups: []sweepSetup{
 		{"WarriorArms", 0, "warrior", armed(40384, 0), []int32{2457}},
-		{"WarriorFury", 1, "warrior", armed(40402, 40402), []int32{2458}},
+		{"WarriorFury", 1, "warrior", armed(40402, 40402), []int32{2458, 47436}},
 		{"WarriorProtection", 2, "protection_warrior", armed(40402, 40400), []int32{71}},
 	}, needs: map[string][]string{
 		"improvedBerserkerStance": {"WarriorFury"},
@@ -112,11 +122,11 @@ var sweepClasses = []sweepClass{
 		"shieldMastery":           {"WarriorProtection"},
 	}},
 	{class: 2, race: 11, setups: []sweepSetup{
-		{"PaladinProtection", 1, "protection_paladin", armed(40345, 40400), []int32{31801, 25780}},
-		{"PaladinRetribution", 2, "retribution_paladin", armed(40384, 0), []int32{31801}},
+		{"PaladinProtection", 1, "protection_paladin", armed(40345, 40400), []int32{31801, 25780, 48942}},
+		{"PaladinRetribution", 2, "retribution_paladin", armed(40384, 0), []int32{31801, 54043}},
 	}},
 	{class: 3, race: 3, setups: []sweepSetup{
-		{"HunterBeastMastery", 0, "hunter", []goldcharItem{{Slot: equipSlotRanged, ID: 40385}}, []int32{61847}},
+		{"HunterBeastMastery", 0, "hunter", withChest([]goldcharItem{{Slot: equipSlotRanged, ID: 40385}}, 43593), []int32{61847}},
 		{"HunterMarksmanship", 1, "hunter", []goldcharItem{{Slot: equipSlotRanged, ID: 40385}}, []int32{61847}},
 		{"HunterSurvival", 2, "hunter", append(armed(40384, 0), goldcharItem{Slot: equipSlotRanged, ID: 40385}), []int32{61847}},
 	}, needs: map[string][]string{"deflection": {"HunterSurvival"}},
@@ -127,18 +137,18 @@ var sweepClasses = []sweepClass{
 		{"RogueSubtlety", 2, "rogue", armed(39714, 40386), nil},
 	}, needs: map[string][]string{"endurance": {"RogueCombat"}}, last: []string{"endurance"}},
 	{class: 5, race: 5, setups: []sweepSetup{
-		{"PriestDiscipline", 0, "healing_priest", nil, []int32{48161, 48073, 48169}},
+		{"PriestDiscipline", 0, "healing_priest", nil, []int32{48161, 48073, 48169, 48168}},
 		{"PriestHoly", 1, "shadow_priest", nil, []int32{48161, 48073, 48169}},
 		{"PriestShadow", 2, "shadow_priest", nil, []int32{48161, 48073, 48169}},
 	}, stepAuras: map[string][]int32{"shadowform": {15473}}},
 	{class: 6, race: 2, setups: []sweepSetup{
 		{"DeathknightBlood", 0, "deathknight", armed(40406, 0), []int32{48266, 57623}},
-		{"DeathknightFrost", 1, "deathknight", armed(40402, 40402), []int32{48266, 57623}},
+		{"DeathknightFrost", 1, "deathknight", withChest(armed(40402, 40402), 43586), []int32{48266, 57623}},
 		{"DeathknightUnholy", 2, "deathknight", armed(40406, 0), []int32{48266, 57623}},
 	}, stepAuras: map[string][]int32{"boneShield": {49222}}},
 	{class: 7, race: 8, setups: []sweepSetup{
 		{"ShamanElemental", 0, "elemental_shaman", nil, nil},
-		{"ShamanEnhancement", 1, "enhancement_shaman", armed(39763, 39468), nil},
+		{"ShamanEnhancement", 1, "enhancement_shaman", armed(39763, 39468), []int32{58646, 58655}},
 		{"ShamanRestoration", 2, "elemental_shaman", nil, nil},
 	}, needs: map[string][]string{"dualWieldSpecialization": {"ShamanEnhancement"}}},
 	{class: 8, race: 7, setups: []sweepSetup{
@@ -147,14 +157,14 @@ var sweepClasses = []sweepClass{
 		{"MageFrost", 2, "mage", nil, []int32{42995}},
 	}},
 	{class: 9, race: 10, setups: []sweepSetup{
-		{"WarlockAffliction", 0, "warlock", nil, nil},
+		{"WarlockAffliction", 0, "warlock", nil, []int32{47982}},
 		{"WarlockDemonology", 1, "warlock", nil, nil},
 		{"WarlockDestruction", 2, "warlock", nil, nil},
 	}, last: []string{"darkPact"}},
 	{class: 11, race: 4, setups: []sweepSetup{
 		{"DruidBalance", 0, "balance_druid", nil, []int32{48469}},
 		{"DruidFeralCat", 1, "feral_druid", armed(40388, 0), []int32{768, 48469}},
-		{"DruidFeralBear", 1, "feral_tank_druid", armed(40388, 0), []int32{9634, 48469}},
+		{"DruidFeralBear", 1, "feral_tank_druid", withChest(armed(40388, 0), 43590), []int32{9634, 48469}},
 		{"DruidRestoration", 2, "balance_druid", nil, []int32{48469}},
 	}, needs: map[string][]string{
 		"sharpenedClaws":          {"DruidFeralCat", "DruidFeralBear"},
@@ -220,8 +230,8 @@ const (
 	itemSubclassUnknown = -1
 )
 
-// loadItemClasses reads the item_template class and subclass of each db.json weapon and shield off the
-// sim's own weapon, hand and ranged types.
+// loadItemClasses reads the item_template class and subclass of each db.json weapon, shield and armor
+// piece off the sim's own weapon, hand, ranged and armor types.
 var loadItemClasses = sync.OnceValues(func() (map[int32]serverItemClass, error) {
 	root, err := checkoutRoot()
 	if err != nil {
@@ -237,6 +247,7 @@ var loadItemClasses = sync.OnceValues(func() (map[int32]serverItemClass, error) 
 			WeaponType       proto.WeaponType       `json:"weaponType"`
 			HandType         proto.HandType         `json:"handType"`
 			RangedWeaponType proto.RangedWeaponType `json:"rangedWeaponType"`
+			ArmorType        proto.ArmorType        `json:"armorType"`
 		} `json:"items"`
 	}
 	if err := json.Unmarshal(raw, &db); err != nil {
@@ -244,7 +255,7 @@ var loadItemClasses = sync.OnceValues(func() (map[int32]serverItemClass, error) 
 	}
 	classes := map[int32]serverItemClass{}
 	for _, item := range db.Items {
-		if c := serverItemClassOf(item.WeaponType, item.HandType, item.RangedWeaponType); c.subclass != itemSubclassUnknown {
+		if c := serverItemClassOf(item.WeaponType, item.HandType, item.RangedWeaponType, item.ArmorType); c.subclass != itemSubclassUnknown {
 			classes[item.ID] = c
 		}
 	}
@@ -265,8 +276,9 @@ var rangedSubclasses = map[proto.RangedWeaponType]int64{
 	proto.RangedWeaponType_RangedWeaponTypeWand: 19,
 }
 
-// serverItemClassOf is a sim weapon's or shield's item_template class and subclass.
-func serverItemClassOf(weaponType proto.WeaponType, handType proto.HandType, rangedType proto.RangedWeaponType) serverItemClass {
+// serverItemClassOf is a sim weapon's, shield's or armor piece's item_template class and subclass.
+func serverItemClassOf(weaponType proto.WeaponType, handType proto.HandType, rangedType proto.RangedWeaponType,
+	armorType proto.ArmorType) serverItemClass {
 	if weaponType == proto.WeaponType_WeaponTypeShield {
 		return serverItemClass{itemClassArmor, itemSubclassShield}
 	}
@@ -278,6 +290,10 @@ func serverItemClassOf(weaponType proto.WeaponType, handType proto.HandType, ran
 	}
 	if subclass, ok := rangedSubclasses[rangedType]; ok {
 		return serverItemClass{itemClassWeapon, subclass}
+	}
+	// item_template's cloth to plate subclasses are 1 to 4, as proto.ArmorType's
+	if armorType != proto.ArmorType_ArmorTypeUnknown {
+		return serverItemClass{itemClassArmor, int64(armorType)}
 	}
 	return serverItemClass{itemClassWeapon, itemSubclassUnknown}
 }
@@ -810,7 +826,7 @@ func talentPathsFromData(root string) ([]talentPath, error) {
 		for _, s := range c.setups {
 			for _, item := range s.items {
 				if _, ok := itemClasses[item.ID]; !ok {
-					return nil, fmt.Errorf("%s: item %d isn't a weapon or shield in %s", s.name, item.ID, simDBJSON)
+					return nil, fmt.Errorf("%s: item %d isn't a weapon, shield or armor in %s", s.name, item.ID, simDBJSON)
 				}
 			}
 		}
@@ -917,4 +933,73 @@ func (path talentPath) goldcharSetup(n int) (goldcharSetup, error) {
 		s.TalentSpells = append(s.TalentSpells, step.Spell)
 	}
 	return s, nil
+}
+
+// sweepBuffOptions are the spec options that make the sim character put up a buff a path casts, so the
+// talents improving it work through the class's own code. Battle Shout needs none: the warrior registers
+// its aura, which the path's auras put on.
+var sweepBuffOptions = map[int32]func(*proto.Player){
+	48942: sweepPaladinAura(proto.PaladinAura_DevotionAura),
+	54043: sweepPaladinAura(proto.PaladinAura_RetributionAura),
+	48168: sweepInnerFire,
+	47982: warlockSummon(proto.Warlock_Options_Imp),
+	58646: sweepTotems(func(t *proto.ShamanTotems) { t.Earth = proto.EarthTotem_StrengthOfEarthTotem }),
+	58655: sweepTotems(func(t *proto.ShamanTotems) { t.Fire = proto.FireTotem_FlametongueTotem }),
+}
+
+func sweepPaladinAura(aura proto.PaladinAura) func(*proto.Player) {
+	return func(p *proto.Player) {
+		switch spec := p.Spec.(type) {
+		case *proto.Player_RetributionPaladin:
+			spec.RetributionPaladin.Options.Aura = aura
+		case *proto.Player_ProtectionPaladin:
+			spec.ProtectionPaladin.Options.Aura = aura
+		case *proto.Player_HolyPaladin:
+			spec.HolyPaladin.Options.Aura = aura
+		}
+	}
+}
+
+func sweepInnerFire(p *proto.Player) {
+	switch spec := p.Spec.(type) {
+	case *proto.Player_HealingPriest:
+		spec.HealingPriest.Options.UseInnerFire = true
+	case *proto.Player_ShadowPriest:
+		spec.ShadowPriest.Options.Armor = proto.ShadowPriest_Options_InnerFire
+	}
+}
+
+func sweepTotems(set func(*proto.ShamanTotems)) func(*proto.Player) {
+	return func(p *proto.Player) {
+		var totems **proto.ShamanTotems
+		switch spec := p.Spec.(type) {
+		case *proto.Player_ElementalShaman:
+			totems = &spec.ElementalShaman.Options.Totems
+		case *proto.Player_EnhancementShaman:
+			totems = &spec.EnhancementShaman.Options.Totems
+		case *proto.Player_RestorationShaman:
+			totems = &spec.RestorationShaman.Options.Totems
+		default:
+			return
+		}
+		if *totems == nil {
+			*totems = &proto.ShamanTotems{}
+		}
+		set(*totems)
+	}
+}
+
+// newPathSim builds a sweep path's character like newGoldcharSim, plus sweepBuffOptions for the setup's
+// auras. It skips newGoldcharSim's Sniper Training check: a sweep record has no attacker auras.
+func newPathSim(rec damageRecord, s goldcharSetup) (*damageSim, error) {
+	player, err := goldcharPlayer(s)
+	if err != nil {
+		return nil, err
+	}
+	for _, id := range s.Auras {
+		if give := sweepBuffOptions[id]; give != nil {
+			give(player)
+		}
+	}
+	return newDamageSim(rec, player, s.Auras, 1)
 }
