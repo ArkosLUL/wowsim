@@ -10,6 +10,9 @@ func (dk *Deathknight) newHeartStrikeSpell(isMainTarget bool, isDrw bool) *core.
 	diseaseMulti := dk.dkDiseaseMultiplier(0.1)
 
 	critMultiplier := dk.bonusCritMultiplier(dk.Talents.MightOfMograine)
+	if isDrw {
+		critMultiplier = dk.drwBonusCritMultiplier(dk.Talents.MightOfMograine)
+	}
 
 	conf := core.SpellConfig{
 		ActionID:    HeartStrikeActionID.WithTag(core.TernaryInt32(isMainTarget, 1, 2)),

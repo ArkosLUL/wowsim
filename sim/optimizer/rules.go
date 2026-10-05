@@ -41,8 +41,8 @@ const (
 	RuleUnique
 	// More items and gems of one ItemLimitCategory than it allows, e.g. 4 jewelcrafter gems.
 	RuleLimitGroup
-	// A socketed meta gem's colors aren't met, so the server wouldn't activate it. The sim applies
-	// metas regardless.
+	// A socketed meta gem's colors aren't met, so it gives nothing, on the server and in the sim
+	// (core's meta_gems.go).
 	RuleMeta
 	// A final stat is under its floor.
 	RuleFloor

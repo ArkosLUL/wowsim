@@ -116,5 +116,6 @@ table's cause:
 | RogueSubtlety | aura 48660 on target | uptime | Hemorrhage |
 | ShamanEnhancement | 60103 | crit mean | Lava Lash |
 | ShamanEnhancement | 60103 | hit mean | Lava Lash |
+| WarriorArms | 47465 | tick crit mean | Rend |
 | WarriorArms | 47465 | tick hit mean | Rend |
 | WarriorProtectionWarrior | 47465 | tick hit mean | Rend |

@@ -136,7 +136,7 @@ func (dk *Deathknight) registerDrwRuneStrikeSpell() {
 
 		BonusCritRating:  (dk.annihilationCritBonus() + runeStrikeGlyphCritBonus) * core.CritRatingPerCritChance,
 		DamageMultiplier: dk.darkrunedPlateRuneStrikeDamageBonus(),
-		CritMultiplier:   dk.DefaultMeleeCritMultiplier(),
+		CritMultiplier:   dk.drwBonusCritMultiplier(0),
 		ThreatMultiplier: 1,
 
 		Direct: runeStrikeEffect,

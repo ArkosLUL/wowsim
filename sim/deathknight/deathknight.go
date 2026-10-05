@@ -426,6 +426,13 @@ func (dk *Deathknight) bonusCritMultiplier(bonusTalentPoints int32) float64 {
 	return dk.MeleeCritMultiplier(1, 0.15*float64(bonusTalentPoints))
 }
 
+// drwBonusCritMultiplier is bonusCritMultiplier for the rune weapon's copy of a strike: the DK's spell mods,
+// not his meta gem. Its white hits keep his, since spell_dk_dancing_rune_weapon deals them as his own
+// melee damage, halved.
+func (dk *Deathknight) drwBonusCritMultiplier(bonusTalentPoints int32) float64 {
+	return dk.RuneWeapon.MeleeCritMultiplier(1, 0.15*float64(bonusTalentPoints))
+}
+
 // magicCritMultiplier is for the magic damage class spells (Icy Touch, Death Coil, Blood Boil, Howling Blast,
 // Death and Decay): the spell base 1.5, then the Runic Focus passive (61455) doubles the bonus, plus 15% a point.
 func (dk *Deathknight) magicCritMultiplier(bonusTalentPoints int32) float64 {

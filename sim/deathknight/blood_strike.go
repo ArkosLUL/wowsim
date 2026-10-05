@@ -97,7 +97,7 @@ func (dk *Deathknight) registerDrwBloodStrikeSpell() {
 		DamageMultiplier: dk.bloodOfTheNorthCoeff() *
 			dk.thassariansPlateDamageBonus() *
 			dk.bloodyStrikesBonus(BloodyStrikesBS),
-		CritMultiplier:   dk.bonusCritMultiplier(dk.Talents.MightOfMograine + dk.Talents.GuileOfGorefiend),
+		CritMultiplier:   dk.drwBonusCritMultiplier(dk.Talents.MightOfMograine + dk.Talents.GuileOfGorefiend),
 		ThreatMultiplier: 1,
 
 		Direct: direct,

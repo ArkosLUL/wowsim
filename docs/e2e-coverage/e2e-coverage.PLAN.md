@@ -1180,8 +1180,9 @@ equipment, `live.assist`) and pre-cast state (cat energy, the rogue's poison sta
   top is one iteration's tail. `TestRetP1QuickPricesBrewfestTrinkets` checks the screening order on Ret's pool with set
   slopes (each Coren trinket ranks at or above every Naxx-or-older trinket with no better stats), and Quick still
   prices the two crit trinkets; the Ancient Pickled Egg ties The Egg of Mortal Essence at Quick's cut.
-- Left: `TestCasterCapFloorReachesTheCap` (`sim/optimizer/caps_test.go`) flips on the fix: Fire's unconstrained spell
-  hit reaches its 368 floor (367 before), so the test's precondition fails.
+- `TestCasterCapFloorReachesTheCap` (`sim/optimizer/caps_test.go`): Fire's unconstrained pick lands within a gem
+  of its 368 floor either side as the sim moves, so the precondition now asks only that some of the
+  unconstrained top loadouts fall short.
 
 ### EC-CORE-FIX (Y; changes goldens, full suite; stages: crit and procs, gear and debuffs)
 
@@ -1212,8 +1213,8 @@ Stage crit and procs (notes in `tmp/ec-core-crit.md`):
 - Crit damage: spells and specials sum the aura 163 bonuses (meta gem, Predatory Instincts, Prey on the Weak,
   Poleaxe) before `SPELLMOD_CRIT_DAMAGE_BONUS` scales the part over 1; white swings multiply them
   (`Character.WhiteCritMultiplier`). DK magic spells (Icy Touch, Death Coil, Blood Boil, Howling Blast, Death and
-  Decay) crit from 1.5 with Runic Focus' +100% and Might of Mograine / Guile of Gorefiend; the rune weapon gets the
-  DK's mods, not the meta.
+  Decay) crit from 1.5 with Runic Focus' +100% and Might of Mograine / Guile of Gorefiend; the rune weapon's spell
+  and strike copies get the DK's mods, not the meta (its white hits, the DK's own halved, keep it).
 - `ProcTrigger.AnyPeriodic` is `DONE_PERIODIC`: any dot or hot tick procs whatever its mask. A tick the server deals
   as a triggered cast (aura 23, 226, 227) only procs a `CanProcFromProcs` aura (`SPELL_ATTR3_CAN_PROC_FROM_PROCS`:
   Greatness, Dying Curse), as a hit of its damage class. Illustration of the Dragon Soul and Dying Curse proc on landed
@@ -1222,7 +1223,7 @@ Stage crit and procs (notes in `tmp/ec-core-crit.md`):
   Poison (1.845), Thunder Clap, Heroic Throw (2.392); the fights' 6 `dot procs`. Serpent Sting keeps
   `ProcMaskEmpty`: a ranged mask would fire the sim's landed-only ranged procs on its no-damage hit, which the
   server's damage-only entries (spellTypeMask 1) skip. WarriorArms' Rend `tick crit mean` drop went stale under the
-  new RNG (ticks still ~13% high, EC-MELEE-FIX's).
+  new RNG and failed again once merged, so it stays (ticks still ~13% high, EC-MELEE-FIX's).
 
 Stage gear and debuffs:
 - Costs (`cost.go`): `(base + flats) × (1 + Σ percents)`, 0 once the flats reach it (`spellModCost`). A DK's runic

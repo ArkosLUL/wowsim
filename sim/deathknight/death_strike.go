@@ -104,7 +104,7 @@ func (dk *Deathknight) registerDrwDeathStrikeSpell() {
 
 		BonusCritRating:  (dk.annihilationCritBonus() + dk.viciousStrikesCritChanceBonus() + dk.improvedDeathStrikeCritBonus() + dk.scourgeborneBattlegearCritBonus()) * core.CritRatingPerCritChance,
 		DamageMultiplier: dk.improvedDeathStrikeDamageBonus(),
-		CritMultiplier:   dk.bonusCritMultiplier(dk.Talents.MightOfMograine),
+		CritMultiplier:   dk.drwBonusCritMultiplier(dk.Talents.MightOfMograine),
 		ThreatMultiplier: 1,
 
 		Direct: direct,

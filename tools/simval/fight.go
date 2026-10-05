@@ -207,6 +207,7 @@ var droppedFightChecks = []fightDrop{
 	{"RogueSubtlety", "aura 48660 on target", "uptime"},
 	{"ShamanEnhancement", "60103", "crit mean"},
 	{"ShamanEnhancement", "60103", "hit mean"},
+	{"WarriorArms", "47465", "tick crit mean"},
 	{"WarriorArms", "47465", "tick hit mean"},
 	{"WarriorProtectionWarrior", "47465", "tick hit mean"},
 }

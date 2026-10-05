@@ -81,7 +81,7 @@ func (dk *Deathknight) registerDrwPlagueStrikeSpell() {
 
 		BonusCritRating:  (dk.annihilationCritBonus() + dk.scourgebornePlateCritBonus() + dk.viciousStrikesCritChanceBonus()) * core.CritRatingPerCritChance,
 		DamageMultiplier: 1.0 + 0.1*float64(dk.Talents.Outbreak),
-		CritMultiplier:   dk.bonusCritMultiplier(dk.Talents.ViciousStrikes),
+		CritMultiplier:   dk.drwBonusCritMultiplier(dk.Talents.ViciousStrikes),
 		ThreatMultiplier: 1,
 
 		Direct: plagueStrikeEffect,

@@ -434,21 +434,55 @@ func capMargins(settings *proto.OptimizerSettings, sheet core.PlayerSheet) strin
 	return strings.Join(parts, " ")
 }
 
-// A caster's search reaches the spell hit floor.
+// A caster's search reaches the spell hit floor, where hit's own worth leaves some of the unconstrained
+// search's top loadouts short of it.
 func TestCasterCapFloorReachesTheCap(t *testing.T) {
-	without, _ := optimizedSheet(t, playerRealCapRequest(t, fireMagePlayer("p1_fire"), 1, false))
+	free := playerRealCapRequest(t, fireMagePlayer("p1_fire"), 1, false)
+	without, freeResult := optimizedSheet(t, free)
 	with, result := optimizedSheet(t, playerRealCapRequest(t, fireMagePlayer("p1_fire"), 1, true))
 	floor := floorOf(result.Settings, stats.SpellHit)
 	if floor == 0 {
 		t.Fatalf("no spell hit floor in the result's settings: %v", result.Settings.GetStatMinimums())
 	}
-	if without[stats.SpellHit] >= floor {
-		t.Fatalf("unconstrained spell hit is %.1f, want it under the floor of %.1f for this test to mean anything", without[stats.SpellHit], floor)
+	// the free pick alone lands within a gem of the floor, either side, so check its whole top list
+	freeHits := loadoutStat(t, free, freeResult.Top, stats.SpellHit)
+	short := 0
+	for _, hit := range freeHits {
+		if hit < floor {
+			short++
+		}
+	}
+	if short == 0 {
+		t.Fatalf("unconstrained, all %d top loadouts reach the floor of %.1f (spell hit %v), want some short of it for this test to mean anything",
+			len(freeHits), floor, freeHits)
 	}
 	if got := with[stats.SpellHit]; got < floor-0.5 {
 		t.Errorf("spell hit is %.1f, under its floor of %.1f", got, floor)
 	}
-	t.Logf("fire p1: spell hit %.1f unconstrained, %.1f with the caps on, floor %.1f", without[stats.SpellHit], with[stats.SpellHit], floor)
+	t.Logf("fire p1: spell hit %.1f unconstrained (%d of its %d top loadouts under the floor), %.1f with the caps on, floor %.1f",
+		without[stats.SpellHit], short, len(freeHits), with[stats.SpellHit], floor)
+}
+
+// loadoutStat reads st off the sheet of each of req's result loadouts.
+func loadoutStat(t *testing.T, req *proto.OptimizeGearRequest, loadouts []*proto.OptimizerLoadoutResult, st stats.Stat) []float64 {
+	t.Helper()
+	r, err := PrepareRequest(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	values := make([]float64, 0, len(loadouts))
+	for _, lr := range loadouts {
+		l, err := LoadoutFromProto(lr.GetEquipment(), lr.GetRacialTraits())
+		if err != nil {
+			t.Fatal(err)
+		}
+		sheet, err := playerSheet(r.Base, r.TargetIndex, l, stats.Stats{})
+		if err != nil {
+			t.Fatal(err)
+		}
+		values = append(values, sheet.FinalStats[st])
+	}
+	return values
 }
 
 // A caster's unconstrained search, over a late enough pool, stacks SpellHaste past the ceiling; with
