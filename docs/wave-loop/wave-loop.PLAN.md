@@ -76,9 +76,9 @@ G = changes goldens. FS = runs all 37 suites.
 | V | EC-THREAT-FIX (G, FS) · EC-STRIKES (C++, live) · EC-BUFFS (live) · PERF-COST | ✔ |
 | W | EC-GEAR (C++, live) · EC-MOBS (live) · EC-STRIKES' live stage (from V) | ✔ |
 | X | EC-FIGHT (live) | ✔ |
-| X2 | EC-RECHECK (live) · EC-COVER (live) · EC-PROBES (C++, live) | |
+| X2 | EC-RECHECK (live) · EC-COVER (live) · EC-PROBES (C++, live) | ✔ |
 | Y | EC-TICK-FIX (G, FS) · EC-CORE-FIX (G, FS) · EC-PET-FIX (G) · PERF-THREAT | ✔ |
-| Z | EC-THREAT-FIX2 (G, FS, live) · EC-MELEE-FIX (G, live) · EC-NATURE-FIX (G, live) · EC-ARCANE-FIX (G, live) | ✔ |
+| Z | EC-THREAT-FIX2 (G, FS, live) · EC-MELEE-FIX (G) · EC-NATURE-FIX (G, live) · EC-ARCANE-FIX (G, live) | ✔ |
 
 F2 is an inserted wave, not a fifth item in F: the core swing and cast fixes of PAR-P7-0c have to land
 before the class items in G, a class item can't build on a core fix merging in its own wave, and F already
@@ -150,11 +150,14 @@ fixes then work on records from the current server build, and take whatever X2's
 
 ## Current wave
 
-- Wave: X, landed (master fast-forwarded to this close-out); the e2e-coverage effort (S–X) is done. Next: X2.
-  Item notes: `G:\DevStuff\GitHub\.wave-loop\ec-{gear,mobs,strikes-live,fight}-tmp`.
-  Prod runs X's `25cb9dddc` (no `rollback-q` image: its layers were gone).
-- Open: none outside X2's, Y's and Z's items and the deferred BiS chain. Closed as not sim gaps: the sheet fields the
-  server shows raw (per-school crit, Blood-Gorged, Mace and Holy Specialization), which the fixture README explains.
+- Wave: X2, landed (master fast-forwarded to this close-out). Next: Y.
+  Item notes: `G:\DevStuff\GitHub\.wave-loop\ec-{recheck,cover,probes}-tmp`.
+  Prod runs X's `25cb9dddc` (no `rollback-q` image: its layers were gone); X2 changed no sim code.
+- Open: none outside Y's and Z's items and the deferred BiS chain, plus two server chores, the user's: the next
+  `ac-db-import` run adds the `command` rows (help text only) of `.simval combopoints` and `.simval engage`; the orphan
+  bot `Svsleadggekf` (`SIMVAL_ORPHANS=540437:7:8:54913 run.sh TestCleanupOrphans`, a DB write). Closed as not sim gaps:
+  the sheet fields the server shows raw (per-school crit, Blood-Gorged, Mace and Holy Specialization), which the fixture
+  README explains.
 - Deferred (the user's calls, 2026-10-02, 10-03 and 10-05), each only on the user's go-ahead:
   - Rerun all 28 presets, tanks included, on the final HEAD: BIS-caps-race changes every racial search,
     `ff0920a96` the 16 builds `mage_*`, `rogue_*`, `warlock_*`, `warrior_arms`, `warrior_fury`,
@@ -167,8 +170,15 @@ fixes then work on records from the current server build, and take whatever X2's
     baseline; the raid25 dumps in `_dump/optimizer_dump_test.go` still build uncut pools).
   - Before the preset rerun: the response curves span the pool's stat range, so BIS-outclassed's cut moved Fury
     P1's Normal pick 45 J below the uncut pool's, every item of which it still holds.
-- Workflow runIds: X's `wf_a31ea7ec-8e3`; W's `wf_aa1b462c-590` (code stages) and `wf_894cf391-8a3` (live stages); V's `wf_ea73babf-e53`; T2's `wf_5af2b99d-6d0`; T's `wf_8a59e202-2f8`, `wf_59a7bdbf-cbc` and `wf_beaacdaa-bbc` (the live reruns; journals in the session's `subagents/workflows/<runId>`); S's `wf_ae61e19e-2c1`; R's `wf_445767f0-4a1` (base `9f1f2f94f`); Q's `wf_47a2be77-20d` and `wf_6f439290-bf9` (PAR-FU-5 and 6's live stages; base `fdbc3df49`); P's `wf_9c73b1de-ff3` (base `c678de53e`); O's `wf_cd004c46-c80` (base `b069c688b`); N's `wf_4b37e171-123` (base `7f4174efb`); M's `wf_8ab862a5-d37` (base `33da5ca34`); L's `wf_34052b28-d62`, `wf_1a26dbdb-51c`, `wf_ac1129b6-8d7`, `wf_a59f095c-4b7`, `wf_f5be2bcf-e23`,
-  `wf_42fc0b7c-42a`; args `wave<X>*-args.json` in `G:\DevStuff\GitHub\.wave-loop`, transcripts in
+- Workflow runIds: X2's `wf_b555c578-f46` (code stages), `wf_a0107f34-c7b` (live stages) and `wf_b00ecbe0-79a`
+  (EC-RECHECK's live stages again, after an API error); X's `wf_a31ea7ec-8e3`; W's `wf_aa1b462c-590` (code stages) and
+  `wf_894cf391-8a3` (live stages); V's `wf_ea73babf-e53`; T2's `wf_5af2b99d-6d0`; T's `wf_8a59e202-2f8`,
+  `wf_59a7bdbf-cbc` and `wf_beaacdaa-bbc` (the live reruns; journals in the session's `subagents/workflows/<runId>`);
+  S's `wf_ae61e19e-2c1`; R's `wf_445767f0-4a1` (base `9f1f2f94f`); Q's `wf_47a2be77-20d` and `wf_6f439290-bf9` (PAR-FU-5
+  and 6's live stages; base `fdbc3df49`); P's `wf_9c73b1de-ff3` (base `c678de53e`); O's `wf_cd004c46-c80` (base
+  `b069c688b`); N's `wf_4b37e171-123` (base `7f4174efb`); M's `wf_8ab862a5-d37` (base `33da5ca34`); L's
+  `wf_34052b28-d62`, `wf_1a26dbdb-51c`, `wf_ac1129b6-8d7`, `wf_a59f095c-4b7`, `wf_f5be2bcf-e23`, `wf_42fc0b7c-42a`; args
+  `wave<X>*-args.json` in `G:\DevStuff\GitHub\.wave-loop`, transcripts in
   `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\<runId>`.
 - J2's full-roster batch ran 2026-09-28 in 52 min at Quick, output in
   `G:\DevStuff\GitHub\.wave-loop\bis-j2-full`; its times are the INVESTIGATION's batch rows.
@@ -211,6 +221,7 @@ Reckoning that way), but J isn't DPS: see below.
 | V | 8690.7, +273 / +273 | 10730.8, +708 / +903 | 5066.6, +41 / +51 | 12963.8, +148 / +225 | -17672.3, +4831 / +4777 | -1211.2, +892 / +891 |
 | W | 8690.7, +273 / +273 | 10730.8, +708 / +903 | 5066.6, +41 / +51 | 12963.8, +148 / +225 | -17672.3, +4831 / +4777 | -1211.2, +892 / +891 |
 | X | 8690.7, +273 / +273 | 10730.8, +708 / +903 | 5066.6, +41 / +51 | 12963.8, +148 / +225 | -17672.3, +4831 / +4777 | -1211.2, +892 / +891 |
+| X2 | 8690.7, +273 / +273 | 10730.8, +708 / +903 | 5066.6, +41 / +51 | 12963.8, +148 / +225 | -17672.3, +4831 / +4777 | -1211.2, +892 / +891 |
 
 Quick / Normal. Ret P4 ran at Quick only in wave D, after the glyph fix; its wave C numbers
 (12821.9, +54 / +73) came from a seed that wore the glyph. The two tanks arrive with
@@ -563,6 +574,10 @@ crashed before F2, so its column starts there.
 | wave W cross-review | | `6b235e3a4` | 1 bug: the strike and tick replays lost their forced hit and crit after the first attempt (no capture affected), so EC-MOBS' no-crit workaround went; testing.md and the fixture READMEs caught up with EC-MOBS |
 | EC-FIGHT | merged | `9178fe553` | module `2138637`; 32 golden-setup fights (90 s, live 2026-10-04 on the worldserver rebuilt at 20:33, rev 15282384e), 106 KB, replayed by `TestFightReplays`: 2047 checks, 45 dropped as sim gaps (see Current wave); CRLF fix `c3257777a` |
 | wave X cross-review | | `687228a1a` | 3 bugs: power gain totals hid wrong gain sizes (Master of Elements), Hot Streak's sim-only counter merged into Hot Streak, refreshes widened uptime slack; module comment `c0d3ef9`; the world-tick claim confirmed in source, `spell-data-and-timing.md` corrected |
+| EC-RECHECK | merged | `512eeaeb0` | module `f72dbf7`; simval, damage, goldchar, buffs (Expose Armor added) and mobs records and all 32 fights recorded again on X2's build: nothing compared moved; fights 2049 checks, 42 dropped (3 new: Rake's crit mean, Brain Freeze, Vindication's misses; 6 gone); a spelldump recapture, report only: 32 spells moved, one sim gap (T8 4-piece) |
+| EC-COVER | merged | `aaec6476c` | module `ee32ca5`; the 10 never-seen talents all show; dropped: Improved Devotion Aura, Improved Imp, Enhancing Totems' Flametongue, Berserk's costs (server `27e096204`); the Infernal's raid buffs allowlisted |
+| EC-PROBES | merged | `62371bfc0` | module `0676faa`; `.simval combopoints` and `.simval engage`; Rupture and Slice and Dice at 1 to 5 points and assist threat over three creatures agree; the five threat `recapture` drops are back |
+| wave X2 cross-review | | `e7902de96` | no bugs; a stale README line, and `newSweepSim` moved next to its only caller, a test |
 
 Later WIs are added as their wave starts.
 

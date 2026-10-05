@@ -97,7 +97,8 @@ class by simval.
     `NO_INITIAL_THREAT`, `ATTR1_NO_THREAT` or `ATTR3_SUPPRESS_TARGET_PROCS`). Stance, form and presence
     multipliers never touch it. It's split over the distinct enemies the cast reached (misses count) plus the
     caster when an effect lands on it; ticks get none, nor does anything before the pull. A positive spell's
-    bonus is modified and shared as assist threat.
+    bonus is modified and shared as assist threat, evenly over the creatures fighting its target, none to one under
+    crowd control (`ThreatManager::ForwardThreatForAssistingMe`).
   - The rows are `sim/core/serverdata/threat_auto_gen.go` (gen_serverdata), so class code carries no flats or
     percents and `FlatThreatBonus` panics. `SpellConfig.ThreatSpellID` names the server spell a sim spell
     stands for, `NoThreatBonus` marks damage the server deals through an aura (damage shields, proc trigger

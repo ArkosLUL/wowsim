@@ -47,14 +47,13 @@ The live e2e and the replays leave timing, costs, threat, pets, gear and buffs u
 | X | EC-FIGHT (live) | Fights wear GEAR's full gear, enchant procs included |
 | X2 | EC-RECHECK (live) · EC-COVER (live) · EC-PROBES (C++, live) | Fresh records and fewer holes before the fixes |
 | Y | EC-TICK-FIX (G, FS) · EC-CORE-FIX (G, FS) · EC-PET-FIX (G) · PERF-THREAT | The sim gaps the loop found, core first |
-| Z | EC-THREAT-FIX2 (G, FS, live) · EC-MELEE-FIX (G, live) · EC-NATURE-FIX (G, live) · EC-ARCANE-FIX (G, live) | The class gaps, on Y's core |
+| Z | EC-THREAT-FIX2 (G, FS, live) · EC-MELEE-FIX (G) · EC-NATURE-FIX (G, live) · EC-ARCANE-FIX (G, live) | The class gaps, on Y's core |
 
 U is taken (the UI wave). Versus the INVESTIGATION's order, B7, A3 and A4 moved forward (cheap, independent) and
 C1 moved last (after B6).
 
 **Backlog:** golden rows against other mob types (test-enrichment's G4), once EC-MOBS lands; execute-range damage;
-haste stacking beyond EC-BUFFS' pairs; Rupture and Slice and Dice durations with combo points (`.simval timing` probes
-none).
+haste stacking beyond EC-BUFFS' pairs.
 
 ## Work items
 
@@ -1002,7 +1001,7 @@ slack grows with gains from off, not every refresh, exposing 60486 (Shadow, Smit
 only as removed make no checks. Confirmed in source: players update every world tick (`Map::Update`), creatures
 on the map update.
 
-### EC-RECHECK (X2; golden-neutral; stages: code, live)
+### EC-RECHECK (X2, done; golden-neutral; stages: code, live)
 
 - Every fixture predates the server's `15282384e` merge (2026-10-04). Re-record on the current build, each with its
   own capture ([testing](../guide/testing.md#against-the-server)): `simval.jsonl` (the default run), `damage.jsonl`,
@@ -1046,7 +1045,7 @@ no combat change since the old build, so what moved is roll spread.
   hit).
 - Six drops whose checks passed this capture went with their rows, the `early ticks` cause with them.
 
-### EC-COVER (X2; golden-neutral; stages: code, live)
+### EC-COVER (X2, done; golden-neutral; stages: code, live)
 
 - The talent sweep's never-seen talents (test-enrichment INVESTIGATION, TE-SWEEP as built): armor talents (DK
   Toughness, both Thick Hides, Survival of the Fittest's armor) on a path character wearing armor; buff talents with
@@ -1094,7 +1093,7 @@ Live stage (server `56ee3ed2b`; notes in `tmp/ec-cover-live.md`): `talents.jsonl
 - Probe fix: the recast waits 1.5 s, since 63514 and 63531 need the paladin's aura and drop off for a target map
   update after each recast (the talent sweep's Swift Retribution haste landed two steps late).
 
-### EC-PROBES (X2; golden-neutral; C++; stages: C++ and e2e, live)
+### EC-PROBES (X2, done; golden-neutral; C++; stages: C++ and e2e, live)
 
 - `.simval timing` with combo points (Rupture, Slice and Dice; the timing README row goes); `.simval threat`'s assist
   threat with other creatures in combat with the target. Re-record `timing.jsonl` and `threat.jsonl`.
@@ -1135,15 +1134,18 @@ equipment, `live.assist`) and pre-cast state (cat energy, the rogue's poison sta
 - Fix: a world-tick grid (a new `ServerSettings` world update interval, 10 ms live, from the config) for a player's
   swings, Auto Shot, hardcast landings and the auras on it; target auras and dots, pets and guardians stay on the map
   update, with the early first tick.
-- Done when the fights README's `world tick` and `early ticks` drops go.
+- Done when the fights README's `world tick` drops go. X2's capture left no `early ticks` drop (its ticks fell inside
+  the sim's spread): check the first tick against `AuraEffect::Update` instead.
 - **Owns:** `sim/core/{sim,attack,cast,aura,dot,periodic_action,server_settings}.go` and their tests,
   `proto/common.proto`'s `ServerSettings`, `tools/acore/gen_server_defaults/`, the server settings UI.
 - **Goldens:** all 37; report each.
 
 ### EC-CORE-FIX (Y; changes goldens, full suite; stages: crit and procs, gear and debuffs)
 
-- First a full `gen_serverdata` run: The Beast Within, Turn the Tables, Totem of Wrath and three threat rows the
-  hunter and rogue code reference.
+- First EC-RECHECK's spelldump recapture (`G:\DevStuff\GitHub\.wave-loop\ec-recheck-tmp\capture\spelldump.jsonl`, 32
+  spells moved: 64869's chance, two Heroic Strike levels, Backstab rank 1's behind flag, the Shadow scripts) replaces
+  the committed one; then a full `gen_serverdata` run: The Beast Within, Turn the Tables, Totem of Wrath and three
+  threat rows the hunter and rogue code reference.
 - Crit: the server sums crit damage bonuses (aura 163: meta gem, Predatory Instincts, Prey on the Weak, Poleaxe) for
   spells and specials, which the sim multiplies; DK magic spells crit from the spell base 1.5 (the fixture README's
   goldchar rows).
@@ -1154,7 +1156,8 @@ equipment, `live.assist`) and pre-cast state (cat energy, the rogue's poison sta
   Gift of Arthas on every school; meta gem color conditions.
 - Debuffs (the buffs rows): an exclusive AP debuff removes a weaker one whole (Curse of Weakness + Vindication);
   Insect Swarm's and Scorpid Sting's hit debuffs stack.
-- Rune and runic power costs on T2's cost arithmetic (`sim/core/cost.go`).
+- Rune and runic power costs on T2's cost arithmetic (`sim/core/cost.go`); cost mods as the server applies them since
+  `27e096204`: (base + flat) × percent, clamped at 0 (Berserk's Mangle (Cat) and Shred, the spell-mod rows).
 - **Owns:** `sim/core/` but EC-TICK-FIX's and PERF-THREAT's files and `pet.go`; `sim/common/`; `sim/core/serverdata/`;
   the DK crit base, rune costs and Serpent Sting's proc mask; the drop entries and README rows it fixes.
 - **Goldens:** every suite that moves; report each.
@@ -1164,8 +1167,13 @@ equipment, `live.assist`) and pre-cast state (cat energy, the rogue's poison sta
 - The strikes README's pet rows: create stats from `pet_levelstats` or `Guardian::InitStatsForLevel`, armor, attack
   and spell power from the scaling auras, a controlled creature's regen (`Creature::Regenerate`), the Imp's Firebolt
   crit ×1.5, the Felguard's weapon damage, Ghoul Frenzy every 3 s ×10, Force of Nature's treant.
-- Bloodworms never get a party or raid buff (the fights README's `Bloodworms`).
-- **Owns:** `sim/core/pet.go` and each class's pet and guardian files; their drop entries and README rows.
+- Bloodworms never get a party or raid buff (the fights README's `Bloodworms`). Guardians with a scaling script (the
+  Infernal, treants, Water Elemental, Shadowfiend, Spirit Wolves, Fire Elemental) are immune to their scaling aura
+  types, so raid buffs add nothing (the strikes row); the Water Elemental's base damage comes from a random level 60–70
+  `creature_classlevelstats` row per summon.
+- Improved Imp improves Blood Pact at every rank (the talents row; `warlock.go` checks 2 of 3).
+- **Owns:** `sim/core/pet.go` and each class's pet and guardian files, `warlock.go`'s Blood Pact; their drop entries
+  and README rows.
 - **Goldens:** the pet suites; report each.
 
 ### EC-THREAT-FIX2 (Z; changes goldens, full suite; stages: threat, live)
@@ -1174,32 +1182,34 @@ equipment, `live.assist`) and pre-cast state (cat energy, the rogue's poison sta
   server splits one); per-tick bonuses on aura ticks the server casts (Bladestorm 50622, the Infernal's 20153, Volley);
   `SPELL_ATTR1_NO_THREAT` spells making threat (Healing Stream Totem); Auto Shot's +1; Devastate's Sunder Armor 58567;
   Feint; positive self buffs' assist threat; Elemental Precision and Righteous Fury as school auras; heal threat ×0.5.
-- Live: `TestSimvalThreat` restores the threat README's `recapture` rows.
+- Live: the fixed self buffs join EC-PROBES' `threatAssistProbes`; `TestSimvalThreat` re-records `threat.jsonl`.
 - **Owns:** `sim/core/threat.go` and the class threat code above; `tools/simval/threat*.go`'s drops; `threat.jsonl`.
 - **Goldens:** every suite whose TPS moves; report each.
 
-### EC-MELEE-FIX (Z; changes goldens; stages: fixes, live)
+### EC-MELEE-FIX (Z; changes goldens)
 
 - Death knight: Rune of the Stoneskin Gargoyle's defense as skill (goldchar row); Frost Vulnerability (51714) rolls
-  spell hit; Howling Blast with death runes (a fights lead).
+  spell hit; Howling Blast with death runes (a fights lead: DeathknightFrost's cycle can starve it of runes for a
+  whole fight, failing the e2e at random).
 - Warrior: Rend's ticks 3–11% high (cause not found); Flurry spends no charge on a miss (spell_proc -12966's HitMask),
   the shaman's too.
-- Paladin: Vindication at 3 PPM (spell_proc -9452); Crusader Strike refreshes no judgement.
+- Paladin: Vindication at 3 PPM (spell_proc -9452), its 26017 rolling spell hit (no `SPELL_ATTR3_ALWAYS_HIT`);
+  Improved Devotion Aura at its 3 ranks (the sim checks 5; the talents row); Crusader Strike refreshes no judgement.
 - Rogue: Prey on the Weak's 10 s aura, re-added by its 2 s check only once gone; Hemorrhage's debuff solo; Endurance's
   Sprint and Evasion cooldowns; Honor Among Thieves' combo points from the rogue's own crits only (a lead).
 - The Subtlety fight cycle's Eviscerate gets a second step; Fury's 72-point strings in the optimizer's test inputs and
   `gen_db`.
-- Live: a `SIMVAL_TALENT_ONLY=RogueCombat` sweep rerun restores Endurance's step (the talents row).
 - **Owns:** `sim/{deathknight,warrior,paladin,rogue}/` and the shaman's Flurry, but pet, threat and EC-CORE-FIX's code;
   their drop entries and README rows.
 
 ### EC-NATURE-FIX (Z; changes goldens; stages: fixes, live)
 
 - Druid: Eclipse (Solar and Lunar) on crits only (spell_proc -48516 HitMask 2); Insect Swarm's crit without Vengeance;
-  Rake's first hit takes armor; Predatory Strikes ignores the weapon's enchant; cat and bear form weapon damage (the
-  strikes row); the server's weapon feral AP truncation (goldchar row); the Balance APL's Nature's Swiftness on
-  Starfire.
-- Shaman: Lava Lash's off-hand percent (`EffectWeaponDmg` skips it for a non-physical spell); Elemental's Lightning
+  Rake's first hit takes armor (its crit mean too); Predatory Strikes ignores the weapon's enchant; cat and bear form
+  weapon damage (the strikes row); the server's weapon feral AP truncation (goldchar row); the Balance APL's Nature's
+  Swiftness on Starfire.
+- Shaman: Enhancing Totems on Flametongue Totem's spell power (the sim's is a fixed 144; the talents row); Lava
+  Lash's off-hand percent (`EffectWeaponDmg` skips it for a non-physical spell); Elemental's Lightning
   Bolt 13–18% over the sim's (a lead).
 - DruidFeralTank's gear set names 5 enchants by spell or item id, which the sim drops; the Feral APL fight cycle's
   Savage Roar gets a second step (once a cycle, it can miss a fight); Balance's 72-point strings in the optimizer's
@@ -1211,7 +1221,8 @@ equipment, `live.assist`) and pre-cast state (cat energy, the rogue's poison sta
 
 ### EC-ARCANE-FIX (Z; changes goldens; stages: fixes, live)
 
-- Mage: Torment the Weak only on a snared or slowed target; Enduring Winter's 6 s proc cooldown; Master of Elements
+- Mage: Torment the Weak only on a snared or slowed target; T8 4-piece's 20% since `e9517efd2` (64869, the sim's 10%);
+  Brain Freeze's Fireball! (57761) lasts 15 s; Enduring Winter's 6 s proc cooldown; Master of Elements
   refunds 30%, on no-cost and clearcast crits too, with Burnout burned apart; Frost's crit over the sim's (a lead).
 - Hunter: Ranged Weapon Specialization on Explosive Trap and magic procs; Thrill of the Hunt on the base cost;
   Explosive Decoy's blast on its creature's death.

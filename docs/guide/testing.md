@@ -130,16 +130,20 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
        failing record is a sim/server mismatch: remove it, add a row to the fixture README, and open a
        follow-up. Never fix the sim here. Move the `damage` lines to `damage.jsonl`.
 - `damage.jsonl`, `timing.jsonl`, `threat.jsonl`, `strikes.jsonl`, `buffs.jsonl`, `mobs.jsonl`, `goldchar.jsonl`,
-  `talents.jsonl` and `spellmods.jsonl` in the same folder each have their own replay test and live capture (`timing.jsonl`,
-  `threat.jsonl`, `strikes.jsonl` and `buffs.jsonl`: `run.sh TestSimvalTiming`, `TestSimvalThreat`, `TestSimvalStrikes` or
-  `TestSimvalBuffs`, which needs `SIMVAL_GOLDCHAR_SETUPS`; streamed as above. `mobs.jsonl`: `run.sh TestSimvalMobs`'s
-  `MOBS` log lines): the [simval README](../../tools/simval/README.md)'s Damage probe, Timing probe, Threat probe, Buffs,
-  Mob types, Golden characters, Talent sweep and Spell-mod sweep.
+  `talents.jsonl` and `spellmods.jsonl` in the same folder each have their own replay test and live capture
+  (`timing.jsonl`, `threat.jsonl` and `strikes.jsonl`: `run.sh TestSimvalTiming`, `TestSimvalThreat` or
+  `TestSimvalStrikes`, streamed as above. `buffs.jsonl` and `mobs.jsonl`: the `BUFFS` or `MOBS` log lines of `run.sh
+  TestSimvalBuffs`, which needs `SIMVAL_GOLDCHAR_SETUPS` and `SIMVAL_BUFFS_PAIRS`, or `TestSimvalMobs`): the [simval
+  README](../../tools/simval/README.md)'s Damage probe, Timing probe, Threat probe, Buffs, Mob types, Golden characters,
+  Talent sweep and Spell-mod sweep.
 - `sim/core/testdata/fights/` holds a Chronicle-logged fight per golden setup, replayed by `TestFightReplays` (the
   simval README's Fights); recaptured with `run.sh TestSimvalFight` (the module README).
-- e2e gotchas: armor can't be equipped or removed in combat (equip error 60), and `.simval threat` engages the
-  dummy, so `.combatstop` first; in a druid form, `.simval info` shows no main-hand weapon; 4 yards north of the boss dummy has no line of
-  sight to it; equipping starts item proc cooldowns (`Player::ApplyEquipCooldown`), so equip under `.cheat cooldown`.
+- e2e gotchas: armor can't be equipped or removed in combat (equip error 60), and `.simval threat` engages the dummy, so
+  `.combatstop` first; in a druid form, `.simval info` shows no main-hand weapon; 4 yards north of the boss dummy has no
+  line of sight to it; equipping starts item proc cooldowns (`Player::ApplyEquipCooldown`), so equip under `.cheat
+  cooldown`. The default run's Mind Flay can land in the server's 100% resist bucket (`Unit::CalcAbsorbResist`, when
+  `float(rand_norm())` rounds to 1.0f: about one full capture in six), which the replay can't absorb: rerun
+  `TestSimvalPriest` alone.
 - `TestSimSpellGroups` (`sim/spell_groups_test.go`, offline) checks the sim's exclusive-effect categories against
   the server's `spell_group` rules in `sim/core/testdata/simval/spell_groups.json`; the export query is in its
   doc comment. A pair the two disagree on needs a reason in `spellGroupAllowances`, and a stale entry fails.
