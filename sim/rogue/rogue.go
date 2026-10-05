@@ -143,8 +143,8 @@ func (rogue *Rogue) HasMinorGlyph(glyph proto.RogueMinorGlyph) bool {
 
 func (rogue *Rogue) Initialize() {
 	// Update auto crit multipliers now that we have the targets.
-	rogue.AutoAttacks.MHConfig().CritMultiplier = rogue.MeleeCritMultiplier(false)
-	rogue.AutoAttacks.OHConfig().CritMultiplier = rogue.MeleeCritMultiplier(false)
+	rogue.AutoAttacks.MHConfig().CritMultiplier = rogue.WhiteCritMultiplier(rogue.preyOnTheWeakMultiplier(rogue.CurrentTarget))
+	rogue.AutoAttacks.OHConfig().CritMultiplier = rogue.WhiteCritMultiplier(rogue.preyOnTheWeakMultiplier(rogue.CurrentTarget))
 
 	if rogue.Talents.QuickRecovery > 0 {
 		rogue.QuickRecoveryMetrics = rogue.NewEnergyMetrics(core.ActionID{SpellID: 31245})

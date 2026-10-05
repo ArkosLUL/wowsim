@@ -10,6 +10,7 @@ var threats = []Threat{
 	{SpellID: 768, Targets: ThreatTargetsCaster},                                           // Cat Form (Shapeshift)
 	{SpellID: 871, Targets: ThreatTargetsCaster},                                           // Shield Wall
 	{SpellID: 1122, Targets: ThreatTargetsEnemyArea},                                       // Inferno (Summon)
+	{SpellID: 1206, Targets: ThreatTargetsCaster},                                          // Dummy Proc
 	{SpellID: 1680, Targets: ThreatTargetsEnemyArea},                                       // Whirlwind
 	{SpellID: 1719, Targets: ThreatTargetsCaster},                                          // Recklessness
 	{SpellID: 1787, Targets: ThreatTargetsCaster},                                          // Stealth (Rank 4)
@@ -145,6 +146,7 @@ var threats = []Threat{
 	{SpellID: 34074, Targets: ThreatTargetsCaster},                                         // Aspect of the Viper
 	{SpellID: 34300, Targets: ThreatTargetsCaster},                                         // Improved Leader of the Pack (Rank 2)
 	{SpellID: 34433, Targets: ThreatTargetsCaster},                                         // Shadowfiend
+	{SpellID: 34471, Targets: ThreatTargetsCaster},                                         // The Beast Within
 	{SpellID: 34499, Targets: ThreatTargetsCaster},                                         // Thrill of the Hunt (Rank 3)
 	{SpellID: 34501, Targets: ThreatTargetsCaster},                                         // Expose Weakness
 	{SpellID: 34503, Targets: ThreatTargetsCaster},                                         // Expose Weakness (Rank 3)
@@ -470,6 +472,7 @@ var threats = []Threat{
 	{SpellID: 63167, Targets: ThreatTargetsCaster},                                         // Decimation
 	{SpellID: 63244, Targets: ThreatTargetsCaster},                                         // Pyroclasm
 	{SpellID: 63250, Targets: ThreatTargetsCaster},                                         // Jouster's Fury
+	{SpellID: 63283, Targets: ThreatTargetsCaster},                                         // Totem of Wrath
 	{SpellID: 63321, Targets: ThreatTargetsCaster},                                         // Life Tap
 	{SpellID: 63375, Targets: ThreatTargetsCaster},                                         // Improved Stormstrike
 	{SpellID: 63512, Targets: ThreatTargetsCaster},                                         // Frozen Blows

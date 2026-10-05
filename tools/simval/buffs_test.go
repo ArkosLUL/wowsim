@@ -17,11 +17,7 @@ import (
 
 // droppedBuffs are states of buffsFixture, or checks of them, that disagree with the sim, each with a row
 // in the fixture README.
-var droppedBuffs = []buffDrop{
-	{buffsSetup, "debuff.curse_of_weakness+debuff.vindication", "dummy armor"},
-	{buffsSetup, "debuff.curse_of_weakness+debuff.vindication", "armor multiplier"},
-	{buffsSetup, "debuff.insect_swarm+debuff.scorpid_sting", "dummy melee hit %"},
-}
+var droppedBuffs = []buffDrop{}
 
 // allBuffPairs are buffPairsFile's pairs.
 func allBuffPairs(t *testing.T) [][2]string {
@@ -149,8 +145,12 @@ func buffFingerprint(t *testing.T, s goldcharSetup, keys []string) map[string]fl
 	return v
 }
 
-// Each pair is exclusive in the sim: on some number both move, the pair moves it as far as one of them
-// alone does.
+// stackingBuffPairs are pairs the server stacks, so the sim must too: Insect Swarm's and Scorpid Sting's hit
+// debuffs both reach a creature's m_modMeleeHitChance.
+var stackingBuffPairs = [][2]string{{"debuff.insect_swarm", "debuff.scorpid_sting"}}
+
+// Each pair but stackingBuffPairs is exclusive in the sim: on some number both move, the pair moves it as
+// far as one of them alone does.
 func TestBuffPairsAreExclusiveInTheSim(t *testing.T) {
 	needsItemDB(t)
 	s := goldcharSetupNamed(t, buffsSetup)
@@ -171,9 +171,14 @@ func TestBuffPairsAreExclusiveInTheSim(t *testing.T) {
 				shared = append(shared, name)
 			}
 		}
-		if len(shared) == 0 {
+		switch stacks := slices.Contains(stackingBuffPairs, pair); {
+		case stacks && len(shared) > 0:
+			t.Errorf("%s and %s: one wins on %s, but the server stacks them", pair[0], pair[1], strings.Join(shared, ", "))
+		case stacks:
+			t.Logf("%s and %s stack", pair[0], pair[1])
+		case len(shared) == 0:
 			t.Errorf("%s and %s stack on everything they both move", pair[0], pair[1])
-		} else {
+		default:
 			t.Logf("%s and %s: one wins on %s", pair[0], pair[1], strings.Join(shared, ", "))
 		}
 	}

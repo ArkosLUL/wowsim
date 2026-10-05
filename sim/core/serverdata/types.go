@@ -48,6 +48,9 @@ const (
 	FlagPassive
 	// SpellInfo::IsPositive
 	FlagPositive
+	// SpellEffectInfo::IsTargetingArea on an effect: an area or cone target, for which
+	// Unit::GetCastingTimeForBonus halves the default coefficient
+	FlagTargetsArea
 )
 
 // Spell is one spell's SpellInfo as the server holds it after Spell.dbc, spell_dbc and its corrections.

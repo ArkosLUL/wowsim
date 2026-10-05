@@ -129,7 +129,7 @@ func (dk *Deathknight) applyRime() {
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
 			if dk.HowlingBlast != nil {
 				dk.HowlingBlast.CD.Reset()
-				// No rune cost AND no runic power regen.
+				// a cost mod, so no runes but still the runic power gain (Spell::TakeRunePower)
 				dk.HowlingBlast.CostMultiplier -= 1
 			}
 		},

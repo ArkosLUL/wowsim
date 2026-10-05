@@ -21,6 +21,9 @@ const (
 	bloodDrainingSpellID = 64571
 )
 
+// The tailoring embroideries' second enchant effect (SpellItemEnchantment type 5, stat 6): +1 spirit.
+const embroiderySpirit = 1
+
 func init() {
 	// Keep these in order by item ID.
 
@@ -357,6 +360,7 @@ func init() {
 	lightweave := core.ServerProcFor(lightweaveSpellID)
 	core.NewEnchantEffect(3722, func(agent core.Agent) {
 		character := agent.GetCharacter()
+		character.AddStat(stats.Spirit, embroiderySpirit)
 
 		procAura := character.NewTemporaryStatsAura("Lightweave Embroidery Proc", core.ActionID{SpellID: 55637}, stats.Stats{stats.SpellPower: 295}, time.Second*15)
 		icd := core.Cooldown{
@@ -391,6 +395,7 @@ func init() {
 	darkglow := core.ServerProcFor(darkglowSpellID)
 	core.NewEnchantEffect(3728, func(agent core.Agent) {
 		character := agent.GetCharacter()
+		character.AddStat(stats.Spirit, embroiderySpirit)
 		if !character.HasManaBar() {
 			return
 		}
@@ -428,6 +433,7 @@ func init() {
 	swordguard := core.ServerProcFor(swordguardSpellID)
 	core.NewEnchantEffect(3730, func(agent core.Agent) {
 		character := agent.GetCharacter()
+		character.AddStat(stats.Spirit, embroiderySpirit)
 
 		procAura := character.NewTemporaryStatsAura("Swordguard Embroidery Proc", core.ActionID{SpellID: 55775}, stats.Stats{stats.AttackPower: 400, stats.RangedAttackPower: 400}, time.Second*15)
 		icd := core.Cooldown{

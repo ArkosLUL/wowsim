@@ -70,9 +70,6 @@ table's cause:
   the meta gem.
 - **Eclipse**: the sim's Eclipse (Solar) procs on any landed Starfire, the server's on a crit only (spell_proc -48516
   HitMask 2).
-- **dot procs**: Illustration of the Dragon Soul's stacks, DMC: Greatness and Dying Curse proc on dot ticks too on the
-  server (procFlags DONE_PERIODIC), so they stay up past the last cast; the sim's Illustration and Dying Curse proc on
-  casts only, and its Greatness never on Serpent Sting's ticks (`ProcMaskEmpty`).
 - **Master of Elements**: the sim refunds 25% of a crit spell's base cost (30% less Burnout's 5%, which the server
   burns apart, unlogged) and nothing for a crit without a cost of its own (Living Bomb's explosion, 215 on the
   server) or a clearcast one; the server refunds 30% of each (`spell_mage_master_of_elements`).
@@ -105,7 +102,6 @@ table's cause:
 | DeathknightUnholy | melee | count | world tick |
 | DruidBalance | 48468 | tick crit mean | Vengeance |
 | DruidBalance | aura 48517 on self | uptime | Eclipse |
-| DruidBalance | aura 60486 on self | applications | dot procs |
 | DruidBalancePhase3 | 48468 | tick crit mean | Vengeance |
 | DruidFeral | 48574 | crit mean | Rake |
 | DruidFeral | 48574 | hit mean | Rake |
@@ -121,10 +117,6 @@ table's cause:
 | PaladinProtection | aura 26016 on target | uptime | Vindication |
 | PaladinRetribution | aura 53408 on target | applications | Crusader Strike |
 | PaladinRetribution | aura 60314 on self | uptime | world tick |
-| PriestShadow | aura 60486 on self | applications | dot procs |
-| PriestShadow | aura 60486 on self | uptime | dot procs |
-| PriestSmite | aura 60486 on self | applications | dot procs |
-| PriestSmite | aura 60486 on self | uptime | dot procs |
 | RogueAssassination | melee | count | world tick |
 | RogueCombat | aura 58670 on self | applications | Prey on the Weak |
 | RogueCombat | aura 58670 on self | uptime | Prey on the Weak |
@@ -132,9 +124,7 @@ table's cause:
 | RogueSubtlety | aura 48660 on target | applications | Hemorrhage |
 | RogueSubtlety | aura 48660 on target | uptime | Hemorrhage |
 | RogueSubtlety | melee | count | world tick |
-| ShamanElemental | aura 60486 on self | applications | dot procs |
 | ShamanEnhancement | 60103 | crit mean | Lava Lash |
 | ShamanEnhancement | 60103 | hit mean | Lava Lash |
-| WarriorArms | 47465 | tick crit mean | Rend |
 | WarriorArms | 47465 | tick hit mean | Rend |
 | WarriorProtectionWarrior | 47465 | tick hit mean | Rend |

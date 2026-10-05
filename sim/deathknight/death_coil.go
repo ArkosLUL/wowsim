@@ -27,7 +27,7 @@ func (dk *Deathknight) registerDeathCoilSpell() {
 			float64(dk.Talents.Morbidity)*0.05,
 			core.TernaryFloat64(dk.HasMajorGlyph(proto.DeathknightMajorGlyph_GlyphOfDarkDeath), 0.15, 0.0),
 		),
-		CritMultiplier:   dk.DefaultMeleeCritMultiplier(),
+		CritMultiplier:   dk.magicCritMultiplier(0),
 		ThreatMultiplier: 1.0,
 
 		// the dummy's 443 goes to the damage spell as its base points, under the damage spell's 0.15 AP
@@ -96,7 +96,7 @@ func (dk *Deathknight) registerDrwDeathCoilSpell() {
 			float64(dk.Talents.Morbidity)*0.05,
 			core.TernaryFloat64(dk.HasMajorGlyph(proto.DeathknightMajorGlyph_GlyphOfDarkDeath), 0.15, 0.0),
 		),
-		CritMultiplier:   dk.RuneWeapon.DefaultMeleeCritMultiplier(),
+		CritMultiplier:   dk.drwMagicCritMultiplier(0),
 		ThreatMultiplier: 1.0,
 
 		Direct: core.SpellEffect{Effect: 0, Min: 600, Max: 600, AP: 0.15},

@@ -5,7 +5,8 @@ import (
 	"time"
 )
 
-// RuneCost's bit layout is: <16r.4d.4u.4f.4b>. Each part is just a count now (0..15 for runes).
+// RuneCost's bit layout is: <16r.4d.4u.4f.4b>. Each part is just a count now (0..15 for runes), runic power
+// in tenths as the server counts it.
 type RuneCost int32
 
 func NewRuneCost(rp int16, blood, frost, unholy, death int8) RuneCost {
@@ -17,7 +18,7 @@ func NewRuneCost(rp int16, blood, frost, unholy, death int8) RuneCost {
 }
 
 func (rc RuneCost) String() string {
-	return fmt.Sprintf("RP: %d, Blood: %d, Frost: %d, Unholy: %d, Death: %d", rc.RunicPower(), rc.Blood(), rc.Frost(), rc.Unholy(), rc.Death())
+	return fmt.Sprintf("RP: %g, Blood: %d, Frost: %d, Unholy: %d, Death: %d", float64(rc.RunicPower())/10, rc.Blood(), rc.Frost(), rc.Unholy(), rc.Death())
 }
 
 // HasRune returns if this cost includes a rune portion.

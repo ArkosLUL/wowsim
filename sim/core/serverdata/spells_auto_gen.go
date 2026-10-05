@@ -82,7 +82,7 @@ var spells = []Spell{
 	},
 	// Inferno (Summon)
 	{
-		ID: 1122, SchoolMask: 32, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagResetsAutoAttack | FlagHasteGCD,
+		ID: 1122, SchoolMask: 32, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagResetsAutoAttack | FlagHasteGCD | FlagTargetsArea,
 		Attributes: [8]uint32{0x10000, 0x20001, 0x80000, 0, 0x10000}, AttributesCu: 0x103000,
 		CastMs: 1500, BaseCastMs: 1500, GCDMs: 1500, GCDCategory: 133, CategoryCooldownMs: 600000, Category: 731, DurationMs: 60000, MaxDurationMs: 60000,
 		ProcChance: 101, ManaCostPct: 80, SpellLevel: 50, BaseLevel: 50,
@@ -112,7 +112,7 @@ var spells = []Spell{
 	},
 	// Whirlwind
 	{
-		ID: 1680, Family: 4, FamilyFlags: [3]uint32{0, 0x4}, SchoolMask: 1, DmgClass: DmgClassMelee,
+		ID: 1680, Family: 4, FamilyFlags: [3]uint32{0, 0x4}, SchoolMask: 1, DmgClass: DmgClassMelee, Flags: FlagTargetsArea,
 		Attributes: [8]uint32{0x50010, 0x10, 0, 0x400, 0, 0x8000}, AttributesCu: 0x3100,
 		GCDMs: 1500, GCDCategory: 133, CategoryCooldownMs: 10000, Category: 891,
 		PowerType: 1, ManaCost: 250, MaxTargets: 4, SpellLevel: 36, BaseLevel: 36,
@@ -195,7 +195,7 @@ var spells = []Spell{
 	},
 	// Bloodlust
 	{
-		ID: 2825, Family: 11, FamilyFlags: [3]uint32{0, 0x40}, SchoolMask: 8, Flags: FlagBinary | FlagHasteGCD | FlagPositive,
+		ID: 2825, Family: 11, FamilyFlags: [3]uint32{0, 0x40}, SchoolMask: 8, Flags: FlagBinary | FlagHasteGCD | FlagPositive | FlagTargetsArea,
 		Attributes: [8]uint32{0x50000, 0x20000, 0x4, 0, 0, 0, 0x4000000, 0x100}, AttributesCu: 0x100000,
 		GCDMs: 1500, GCDCategory: 133, CooldownMs: 300000, DurationMs: 40000, MaxDurationMs: 40000,
 		ProcChance: 101, ManaCostPct: 26, SpellLevel: 70, BaseLevel: 70,
@@ -518,7 +518,7 @@ var spells = []Spell{
 	},
 	// Fire Nova
 	{
-		ID: 12470, SchoolMask: 4, DmgClass: DmgClassMagic, Flags: FlagResetsAutoAttack,
+		ID: 12470, SchoolMask: 4, DmgClass: DmgClassMagic, Flags: FlagResetsAutoAttack | FlagTargetsArea,
 		Attributes: [8]uint32{0x90000, 0x88}, AttributesCu: 0x1100,
 		CastMs: 2000, BaseCastMs: 2000, CooldownMs: 9500, CategoryCooldownMs: 14000,
 		ProcChance: 101, ManaCost: 30, SpellLevel: 20, BaseLevel: 20,
@@ -1291,7 +1291,7 @@ var spells = []Spell{
 	},
 	// Immolation (Rank 1)
 	{
-		ID: 20153, SchoolMask: 4, DmgClass: DmgClassMagic,
+		ID: 20153, SchoolMask: 4, DmgClass: DmgClassMagic, Flags: FlagTargetsArea,
 		Attributes: [8]uint32{0x50010, 0x88, 0x20000000}, AttributesCu: 0x1100,
 		ProcChance: 101, SpellLevel: 50, BaseLevel: 50,
 		Effects: [3]Effect{
@@ -1458,7 +1458,7 @@ var spells = []Spell{
 	},
 	// Inferno Effect
 	{
-		ID: 22703, Family: 5, FamilyFlags: [3]uint32{0, 0, 0x1}, SchoolMask: 4, DmgClass: DmgClassMagic, Flags: FlagBinary,
+		ID: 22703, Family: 5, FamilyFlags: [3]uint32{0, 0, 0x1}, SchoolMask: 4, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagTargetsArea,
 		Attributes: [8]uint32{0, 0x88}, AttributesCu: 0x103120,
 		DurationMs: 2000, MaxDurationMs: 2000,
 		SpellLevel: 50, BaseLevel: 50,
@@ -1608,7 +1608,7 @@ var spells = []Spell{
 	},
 	// Arcane Torrent (Racial)
 	{
-		ID: 25046, SchoolMask: 64, DmgClass: DmgClassMagic, Flags: FlagBinary,
+		ID: 25046, SchoolMask: 64, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagTargetsArea,
 		Attributes: [8]uint32{0, 0x88, 0, 0, 0, 0, 0, 0x800}, AttributesCu: 0x101010,
 		CooldownMs: 120000, DurationMs: 2000, MaxDurationMs: 2000,
 		ProcChance: 101,
@@ -1619,7 +1619,7 @@ var spells = []Spell{
 	},
 	// Demoralizing Shout (Rank 7)
 	{
-		ID: 25203, Family: 4, FamilyFlags: [3]uint32{0x20000}, SchoolMask: 1, DmgClass: DmgClassMagic, Flags: FlagBinary,
+		ID: 25203, Family: 4, FamilyFlags: [3]uint32{0x20000}, SchoolMask: 1, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagTargetsArea,
 		Attributes: [8]uint32{0x50010, 0, 0, 0, 0, 0, 0x800000}, AttributesCu: 0x101020,
 		GCDMs: 1500, GCDCategory: 133, DurationMs: 30000, MaxDurationMs: 30000,
 		ProcChance: 101, PowerType: 1, ManaCost: 100, SpellLevel: 70, BaseLevel: 70, MaxLevel: 78,
@@ -1668,7 +1668,7 @@ var spells = []Spell{
 	},
 	// Greater Blessing of Sanctuary
 	{
-		ID: 25899, Family: 10, FamilyFlags: [3]uint32{0x10000000}, SchoolMask: 2, DmgClass: DmgClassMagic, Flags: FlagHasteGCD | FlagPositive,
+		ID: 25899, Family: 10, FamilyFlags: [3]uint32{0x10000000}, SchoolMask: 2, DmgClass: DmgClassMagic, Flags: FlagHasteGCD | FlagPositive | FlagTargetsArea,
 		Attributes: [8]uint32{0x50000, 0, 0, 0, 0, 0, 0x4000000, 0x10000000},
 		GCDMs:      1500, GCDCategory: 133, DurationMs: 1800000, MaxDurationMs: 1800000,
 		ProcFlags: 0x28, ProcChance: 100, ManaCostPct: 14, SpellLevel: 60, BaseLevel: 60,
@@ -1847,7 +1847,7 @@ var spells = []Spell{
 	},
 	// Arcane Torrent (Racial)
 	{
-		ID: 28730, SchoolMask: 64, DmgClass: DmgClassMagic, Flags: FlagBinary,
+		ID: 28730, SchoolMask: 64, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagTargetsArea,
 		Attributes: [8]uint32{0, 0x88, 0, 0, 0, 0, 0, 0x800}, AttributesCu: 0x101010,
 		CooldownMs: 120000, DurationMs: 2000, MaxDurationMs: 2000,
 		ProcChance: 101,
@@ -2273,6 +2273,18 @@ var spells = []Spell{
 		Effects: [3]Effect{
 			{Effect: 28, DamageMultiplier: 1, MiscValue: 19668, MiscValueB: 1561},
 			{Effect: 64, DamageMultiplier: 1, TriggerSpell: 41967},
+		},
+	},
+	// The Beast Within
+	{
+		ID: 34471, Family: 9, SchoolMask: 1, Flags: FlagBinary | FlagPositive,
+		Attributes: [8]uint32{0x10000, 0x28400, 0x4000000}, AttributesCu: 0x100000,
+		GCDCategory: 133, DurationMs: 10000, MaxDurationMs: 10000,
+		ProcChance: 101, SpellLevel: 50, BaseLevel: 50,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 72, BasePoints: -51, DieSides: 1, DamageMultiplier: 1, MiscValue: 127, MiscValueB: 1},
+			{Effect: 6, Aura: 79, BasePoints: 9, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, MiscValue: 127},
+			{Effect: 6, Aura: 77, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, MiscValue: 12},
 		},
 	},
 	// Silencing Shot
@@ -2844,7 +2856,7 @@ var spells = []Spell{
 	},
 	// Arcane Explosion (Rank 10)
 	{
-		ID: 42921, Family: 3, FamilyFlags: [3]uint32{0x1000}, SchoolMask: 64, DmgClass: DmgClassMagic, Flags: FlagResetsAutoAttack | FlagHasteGCD,
+		ID: 42921, Family: 3, FamilyFlags: [3]uint32{0x1000}, SchoolMask: 64, DmgClass: DmgClassMagic, Flags: FlagResetsAutoAttack | FlagHasteGCD | FlagTargetsArea,
 		Attributes: [8]uint32{0x10000, 0x80}, AttributesCu: 0x1100,
 		GCDMs: 1500, GCDCategory: 133,
 		ProcChance: 101, ManaCostPct: 22, SpellLevel: 80, BaseLevel: 80, MaxLevel: 84,
@@ -2854,7 +2866,7 @@ var spells = []Spell{
 	},
 	// Flamestrike (Rank 8)
 	{
-		ID: 42925, Family: 3, FamilyFlags: [3]uint32{0x4}, SchoolMask: 4, DmgClass: DmgClassMagic, Flags: FlagResetsAutoAttack | FlagHasteGCD,
+		ID: 42925, Family: 3, FamilyFlags: [3]uint32{0x4}, SchoolMask: 4, DmgClass: DmgClassMagic, Flags: FlagResetsAutoAttack | FlagHasteGCD | FlagTargetsArea,
 		Attributes: [8]uint32{0x10000, 0x10000088}, AttributesCu: 0x3100,
 		CastMs: 2000, BaseCastMs: 2000, GCDMs: 1500, GCDCategory: 133, DurationMs: 8000, MaxDurationMs: 8000,
 		ProcChance: 101, ManaCostPct: 30, SpellLevel: 72, BaseLevel: 72, MaxLevel: 76,
@@ -2866,7 +2878,7 @@ var spells = []Spell{
 	},
 	// Flamestrike (Rank 9)
 	{
-		ID: 42926, Family: 3, FamilyFlags: [3]uint32{0x4}, SchoolMask: 4, DmgClass: DmgClassMagic, Flags: FlagResetsAutoAttack | FlagHasteGCD,
+		ID: 42926, Family: 3, FamilyFlags: [3]uint32{0x4}, SchoolMask: 4, DmgClass: DmgClassMagic, Flags: FlagResetsAutoAttack | FlagHasteGCD | FlagTargetsArea,
 		Attributes: [8]uint32{0x10000, 0x10000088}, AttributesCu: 0x3100,
 		CastMs: 2000, BaseCastMs: 2000, GCDMs: 1500, GCDCategory: 133, DurationMs: 8000, MaxDurationMs: 8000,
 		ProcChance: 101, ManaCostPct: 30, SpellLevel: 79, BaseLevel: 79, MaxLevel: 83,
@@ -2878,7 +2890,7 @@ var spells = []Spell{
 	},
 	// Blizzard (Rank 9)
 	{
-		ID: 42938, Family: 3, FamilyFlags: [3]uint32{0x80080}, SchoolMask: 16, DmgClass: DmgClassMagic,
+		ID: 42938, Family: 3, FamilyFlags: [3]uint32{0x80080}, SchoolMask: 16, DmgClass: DmgClassMagic, Flags: FlagTargetsArea,
 		Attributes: [8]uint32{0, 0x88, 0x40000000, 0x40000000}, AttributesCu: 0x1100,
 		GCDCategory: 133,
 		ProcChance:  101, SpellLevel: 80, BaseLevel: 80, MaxLevel: 84,
@@ -2899,7 +2911,7 @@ var spells = []Spell{
 	},
 	// Blast Wave (Rank 9)
 	{
-		ID: 42945, Family: 3, FamilyFlags: [3]uint32{0, 0x40}, SchoolMask: 4, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagHasteGCD,
+		ID: 42945, Family: 3, FamilyFlags: [3]uint32{0, 0x40}, SchoolMask: 4, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagHasteGCD | FlagTargetsArea,
 		Attributes: [8]uint32{0x10000, 0x80}, AttributesCu: 0x107100,
 		GCDMs: 1500, GCDCategory: 133, CategoryCooldownMs: 30000, Category: 250, DurationMs: 6000, MaxDurationMs: 6000,
 		ProcChance: 101, ManaCostPct: 7, SpellLevel: 80, BaseLevel: 80, MaxLevel: 84,
@@ -2912,7 +2924,7 @@ var spells = []Spell{
 	},
 	// Dragon's Breath (Rank 6)
 	{
-		ID: 42950, Family: 3, FamilyFlags: [3]uint32{0x800000}, SchoolMask: 4, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagHasteGCD,
+		ID: 42950, Family: 3, FamilyFlags: [3]uint32{0x800000}, SchoolMask: 4, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagHasteGCD | FlagTargetsArea,
 		Attributes: [8]uint32{0x110000, 0x88}, AttributesCu: 0x107120,
 		GCDMs: 1500, GCDCategory: 133, CategoryCooldownMs: 20000, Category: 1215, DurationMs: 5000, MaxDurationMs: 5000,
 		ProcFlags: 0x222a8, ProcChance: 100, ProcCharges: 1, ManaCostPct: 7, SpellLevel: 80, BaseLevel: 80, MaxLevel: 84,
@@ -3075,7 +3087,7 @@ var spells = []Spell{
 	},
 	// Whirlwind
 	{
-		ID: 44949, Family: 4, FamilyFlags: [3]uint32{0, 0x4}, SchoolMask: 1, DmgClass: DmgClassMelee,
+		ID: 44949, Family: 4, FamilyFlags: [3]uint32{0, 0x4}, SchoolMask: 1, DmgClass: DmgClassMelee, Flags: FlagTargetsArea,
 		Attributes: [8]uint32{0x50010, 0x10, 0, 0x1000000, 0x80, 0x8000}, AttributesCu: 0x1100,
 		PowerType: 1, MaxTargets: 4, SpellLevel: 36, BaseLevel: 36,
 		CooldownMods: ModBounds{FlatMin: -2000},
@@ -3117,7 +3129,7 @@ var spells = []Spell{
 	},
 	// Raise Dead
 	{
-		ID: 46584, Family: 15, FamilyFlags: [3]uint32{0x1000}, SchoolMask: 1, DmgClass: DmgClassMagic, Flags: FlagAlwaysHit | FlagHasteGCD | FlagPositive,
+		ID: 46584, Family: 15, FamilyFlags: [3]uint32{0x1000}, SchoolMask: 1, DmgClass: DmgClassMagic, Flags: FlagAlwaysHit | FlagHasteGCD | FlagPositive | FlagTargetsArea,
 		Attributes: [8]uint32{0x82000000, 0x20400, 0x1, 0x40000, 0, 0x200000, 0x20},
 		GCDMs:      1500, GCDCategory: 133, CategoryCooldownMs: 180000, Category: 1245,
 		ProcChance: 101, PowerType: 5, RuneCostID: 341, SpellLevel: 56, BaseLevel: 56,
@@ -3232,7 +3244,7 @@ var spells = []Spell{
 	},
 	// Shockwave
 	{
-		ID: 46968, Family: 4, FamilyFlags: [3]uint32{0, 0x8000}, SchoolMask: 1, DmgClass: DmgClassRanged, Flags: FlagBinary,
+		ID: 46968, Family: 4, FamilyFlags: [3]uint32{0, 0x8000}, SchoolMask: 1, DmgClass: DmgClassRanged, Flags: FlagBinary | FlagTargetsArea,
 		Attributes: [8]uint32{0x50010}, AttributesCu: 0x103120,
 		GCDMs: 1500, GCDCategory: 133, CategoryCooldownMs: 20000, Category: 1201, DurationMs: 4000, MaxDurationMs: 4000,
 		ProcChance: 101, PowerType: 1, ManaCost: 150, SpellLevel: 60, BaseLevel: 60,
@@ -3300,7 +3312,7 @@ var spells = []Spell{
 	},
 	// Battle Shout (Rank 9)
 	{
-		ID: 47436, Family: 4, FamilyFlags: [3]uint32{0x10000}, SchoolMask: 1, Flags: FlagBinary | FlagPositive,
+		ID: 47436, Family: 4, FamilyFlags: [3]uint32{0x10000}, SchoolMask: 1, Flags: FlagBinary | FlagPositive | FlagTargetsArea,
 		Attributes: [8]uint32{0x50010, 0, 0x4, 0, 0, 0, 0x4000000, 0x10000000}, AttributesCu: 0x100000,
 		GCDMs: 1500, GCDCategory: 133, DurationMs: 120000, MaxDurationMs: 120000,
 		ProcChance: 101, PowerType: 1, ManaCost: 100, SpellLevel: 78, BaseLevel: 78, MaxLevel: 85,
@@ -3311,7 +3323,7 @@ var spells = []Spell{
 	},
 	// Demoralizing Shout (Rank 8)
 	{
-		ID: 47437, Family: 4, FamilyFlags: [3]uint32{0x20000}, SchoolMask: 1, DmgClass: DmgClassMagic, Flags: FlagBinary,
+		ID: 47437, Family: 4, FamilyFlags: [3]uint32{0x20000}, SchoolMask: 1, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagTargetsArea,
 		Attributes: [8]uint32{0x50010, 0, 0, 0, 0, 0, 0x800000}, AttributesCu: 0x101020,
 		GCDMs: 1500, GCDCategory: 133, DurationMs: 30000, MaxDurationMs: 30000,
 		ProcChance: 101, PowerType: 1, ManaCost: 100, SpellLevel: 79, BaseLevel: 79, MaxLevel: 87,
@@ -3321,7 +3333,7 @@ var spells = []Spell{
 	},
 	// Commanding Shout (Rank 3)
 	{
-		ID: 47440, Family: 4, FamilyFlags: [3]uint32{0, 0x80}, SchoolMask: 1, Flags: FlagBinary | FlagPositive,
+		ID: 47440, Family: 4, FamilyFlags: [3]uint32{0, 0x80}, SchoolMask: 1, Flags: FlagBinary | FlagPositive | FlagTargetsArea,
 		Attributes: [8]uint32{0x10, 0, 0x4, 0, 0, 0, 0x4000000, 0x10000000}, AttributesCu: 0x100000,
 		GCDMs: 1500, GCDCategory: 133, DurationMs: 120000, MaxDurationMs: 120000,
 		ProcChance: 101, PowerType: 1, ManaCost: 100, SpellLevel: 80, BaseLevel: 80,
@@ -3426,7 +3438,7 @@ var spells = []Spell{
 	},
 	// Thunder Clap (Rank 9)
 	{
-		ID: 47502, Family: 4, FamilyFlags: [3]uint32{0x80}, SchoolMask: 1, DmgClass: DmgClassRanged, Flags: FlagBinary,
+		ID: 47502, Family: 4, FamilyFlags: [3]uint32{0x80}, SchoolMask: 1, DmgClass: DmgClassRanged, Flags: FlagBinary | FlagTargetsArea,
 		Attributes: [8]uint32{0x50010, 0x80, 0, 0, 0, 0x8000}, AttributesCu: 0x103100,
 		GCDMs: 1500, GCDCategory: 133, CategoryCooldownMs: 6000, Category: 49, DurationMs: 30000, MaxDurationMs: 30000,
 		PowerType: 1, ManaCost: 200, SpellLevel: 78, BaseLevel: 78,
@@ -3608,7 +3620,7 @@ var spells = []Spell{
 	},
 	// Seed of Corruption (Rank 3)
 	{
-		ID: 47834, Family: 5, FamilyFlags: [3]uint32{0, 0x8010}, SchoolMask: 32, DmgClass: DmgClassMagic,
+		ID: 47834, Family: 5, FamilyFlags: [3]uint32{0, 0x8010}, SchoolMask: 32, DmgClass: DmgClassMagic, Flags: FlagTargetsArea,
 		Attributes: [8]uint32{0x800000, 0x80, 0x4, 0x1, 0, 0x4000000}, AttributesCu: 0x1100,
 		ProcChance: 101, SpellLevel: 80, BaseLevel: 80,
 		Effects: [3]Effect{
@@ -3802,7 +3814,7 @@ var spells = []Spell{
 	},
 	// Prayer of Healing (Rank 7)
 	{
-		ID: 48072, Family: 6, FamilyFlags: [3]uint32{0x200}, SchoolMask: 2, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagResetsAutoAttack | FlagHasteGCD | FlagPositive,
+		ID: 48072, Family: 6, FamilyFlags: [3]uint32{0x200}, SchoolMask: 2, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagResetsAutoAttack | FlagHasteGCD | FlagPositive | FlagTargetsArea,
 		Attributes: [8]uint32{0x10000, 0, 0x80000}, AttributesCu: 0x100100,
 		CastMs: 3000, BaseCastMs: 3000, GCDMs: 1500, GCDCategory: 133,
 		ProcChance: 101, ManaCostPct: 48, SpellLevel: 76, BaseLevel: 76, MaxLevel: 82,
@@ -3812,7 +3824,7 @@ var spells = []Spell{
 	},
 	// Circle of Healing (Rank 7)
 	{
-		ID: 48089, Family: 6, FamilyFlags: [3]uint32{0x10000000}, SchoolMask: 2, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagResetsAutoAttack | FlagHasteGCD | FlagPositive,
+		ID: 48089, Family: 6, FamilyFlags: [3]uint32{0x10000000}, SchoolMask: 2, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagResetsAutoAttack | FlagHasteGCD | FlagPositive | FlagTargetsArea,
 		Attributes: [8]uint32{0x10000, 0, 0x80000, 0x80, 0, 0x400000, 0x4000000}, AttributesCu: 0x100100,
 		GCDMs: 1500, GCDCategory: 133, CategoryCooldownMs: 6000, Category: 1204,
 		ProcChance: 101, ManaCostPct: 21, SpellLevel: 80, BaseLevel: 80, MaxLevel: 84,
@@ -4054,7 +4066,7 @@ var spells = []Spell{
 	},
 	// Hurricane (Rank 5)
 	{
-		ID: 48466, Family: 7, FamilyFlags: [3]uint32{0x400000}, SchoolMask: 8, DmgClass: DmgClassMagic,
+		ID: 48466, Family: 7, FamilyFlags: [3]uint32{0x400000}, SchoolMask: 8, DmgClass: DmgClassMagic, Flags: FlagTargetsArea,
 		Attributes: [8]uint32{0, 0x88, 0x40000000, 0x40000000, 0, 0x400}, AttributesCu: 0x1100,
 		GCDCategory: 133,
 		ProcChance:  101, SpellLevel: 80, BaseLevel: 80, MaxLevel: 86,
@@ -4087,7 +4099,7 @@ var spells = []Spell{
 	},
 	// Gift of the Wild (Rank 4)
 	{
-		ID: 48470, Family: 7, FamilyFlags: [3]uint32{0x40000}, SchoolMask: 8, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagResetsAutoAttack | FlagHasteGCD | FlagPositive,
+		ID: 48470, Family: 7, FamilyFlags: [3]uint32{0x40000}, SchoolMask: 8, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagResetsAutoAttack | FlagHasteGCD | FlagPositive | FlagTargetsArea,
 		Attributes: [8]uint32{0x10000, 0x20000, 0x4, 0, 0, 0, 0x4000000, 0x10000000}, AttributesCu: 0x100000,
 		GCDMs: 1500, GCDCategory: 133, DurationMs: 3600000, MaxDurationMs: 3600000,
 		ProcChance: 101, ManaCostPct: 64, SpellLevel: 80, BaseLevel: 80,
@@ -4168,7 +4180,7 @@ var spells = []Spell{
 	},
 	// Demoralizing Roar (Rank 8)
 	{
-		ID: 48560, Family: 7, FamilyFlags: [3]uint32{0x8}, SchoolMask: 1, DmgClass: DmgClassMagic, Flags: FlagBinary,
+		ID: 48560, Family: 7, FamilyFlags: [3]uint32{0x8}, SchoolMask: 1, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagTargetsArea,
 		Attributes: [8]uint32{0x40010, 0, 0, 0, 0, 0, 0x800000}, AttributesCu: 0x101020,
 		GCDMs: 1500, GCDCategory: 133, DurationMs: 30000, MaxDurationMs: 30000,
 		ProcChance: 101, PowerType: 1, ManaCost: 100, SpellLevel: 77, BaseLevel: 77, MaxLevel: 81,
@@ -4178,7 +4190,7 @@ var spells = []Spell{
 	},
 	// Swipe (Bear) (Rank 8)
 	{
-		ID: 48562, Family: 7, FamilyFlags: [3]uint32{0, 0x100000}, SchoolMask: 1, DmgClass: DmgClassMelee,
+		ID: 48562, Family: 7, FamilyFlags: [3]uint32{0, 0x100000}, SchoolMask: 1, DmgClass: DmgClassMelee, Flags: FlagTargetsArea,
 		Attributes: [8]uint32{0x40010, 0x200, 0, 0, 0, 0x8000}, AttributesCu: 0x1100,
 		GCDMs: 1500, GCDCategory: 133, Category: 85,
 		ProcChance: 101, PowerType: 1, ManaCost: 200, SpellLevel: 77, BaseLevel: 77,
@@ -4391,7 +4403,7 @@ var spells = []Spell{
 	},
 	// Death Pact
 	{
-		ID: 48743, Family: 15, FamilyFlags: [3]uint32{0x80000}, SchoolMask: 32, Flags: FlagBinary | FlagHasteGCD | FlagPositive,
+		ID: 48743, Family: 15, FamilyFlags: [3]uint32{0x80000}, SchoolMask: 32, Flags: FlagBinary | FlagHasteGCD | FlagPositive | FlagTargetsArea,
 		Attributes: [8]uint32{0, 0x20400, 0x20000004, 0x100000, 0x10, 0x200000}, AttributesCu: 0x100100,
 		GCDMs: 1500, GCDCategory: 133, CooldownMs: 120000,
 		ProcChance: 101, PowerType: 6, ManaCost: 400, RuneCostID: 541, SpellLevel: 66, BaseLevel: 66,
@@ -4436,7 +4448,7 @@ var spells = []Spell{
 	},
 	// Holy Wrath (Rank 5)
 	{
-		ID: 48817, Family: 10, FamilyFlags: [3]uint32{0, 0x200000}, SchoolMask: 2, DmgClass: DmgClassMagic, Flags: FlagHasteGCD,
+		ID: 48817, Family: 10, FamilyFlags: [3]uint32{0, 0x200000}, SchoolMask: 2, DmgClass: DmgClassMagic, Flags: FlagHasteGCD | FlagTargetsArea,
 		Attributes: [8]uint32{0x10000, 0x80}, AttributesCu: 0x3120,
 		GCDMs: 1500, GCDCategory: 133, CategoryCooldownMs: 30000, Category: 35, DurationMs: 3000, MaxDurationMs: 3000,
 		ProcChance: 101, ManaCostPct: 20, Speed: 20, SpellLevel: 78, BaseLevel: 78, MaxLevel: 82,
@@ -4448,7 +4460,7 @@ var spells = []Spell{
 	},
 	// Consecration (Rank 8)
 	{
-		ID: 48819, Family: 10, FamilyFlags: [3]uint32{0x20}, SchoolMask: 2, DmgClass: DmgClassMagic, Flags: FlagHasteGCD,
+		ID: 48819, Family: 10, FamilyFlags: [3]uint32{0x20}, SchoolMask: 2, DmgClass: DmgClassMagic, Flags: FlagHasteGCD | FlagTargetsArea,
 		Attributes: [8]uint32{0x10000, 0x10000080}, AttributesCu: 0x1000,
 		GCDMs: 1500, GCDCategory: 133, CategoryCooldownMs: 8000, Category: 932, DurationMs: 8000, MaxDurationMs: 8000,
 		ProcChance: 101, ManaCostPct: 22, SpellLevel: 80, BaseLevel: 80, MaxLevel: 84,
@@ -4620,7 +4632,7 @@ var spells = []Spell{
 	},
 	// Explosive Trap Effect (Rank 6)
 	{
-		ID: 49065, Family: 9, FamilyFlags: [3]uint32{0x4, 0, 0x4000}, SchoolMask: 4, DmgClass: DmgClassMagic, Flags: FlagAlwaysHit,
+		ID: 49065, Family: 9, FamilyFlags: [3]uint32{0x4, 0, 0x4000}, SchoolMask: 4, DmgClass: DmgClassMagic, Flags: FlagAlwaysHit | FlagTargetsArea,
 		Attributes: [8]uint32{0, 0x88, 0, 0x40240}, AttributesCu: 0x3100,
 		DurationMs: 20000, MaxDurationMs: 20000,
 		ProcChance: 101, SpellLevel: 77, BaseLevel: 77, MaxLevel: 81,
@@ -4921,7 +4933,7 @@ var spells = []Spell{
 	},
 	// Blood Boil (Rank 4)
 	{
-		ID: 49941, Family: 15, FamilyFlags: [3]uint32{0x40000}, SchoolMask: 32, DmgClass: DmgClassMagic, Flags: FlagHasteGCD,
+		ID: 49941, Family: 15, FamilyFlags: [3]uint32{0x40000}, SchoolMask: 32, DmgClass: DmgClassMagic, Flags: FlagHasteGCD | FlagTargetsArea,
 		Attributes: [8]uint32{0x40000}, AttributesCu: 0x7100,
 		GCDMs: 1500, GCDCategory: 133,
 		ProcChance: 101, PowerType: 5, RuneCostID: 796, SpellLevel: 78, BaseLevel: 78,
@@ -5073,7 +5085,7 @@ var spells = []Spell{
 	},
 	// Runic Power Feed
 	{
-		ID: 50524, Family: 15, SchoolMask: 32, Flags: FlagPositive,
+		ID: 50524, Family: 15, SchoolMask: 32, Flags: FlagPositive | FlagTargetsArea,
 		Attributes: [8]uint32{0x9000180, 0x20, 0x4004, 0, 0x20080, 0x20008, 0x1000},
 		ProcChance: 101, PowerType: 6, RuneCostID: 829,
 		Effects: [3]Effect{
@@ -5082,7 +5094,7 @@ var spells = []Spell{
 	},
 	// Wandering Plague
 	{
-		ID: 50526, SchoolMask: 32, Flags: FlagAlwaysHit,
+		ID: 50526, SchoolMask: 32, Flags: FlagAlwaysHit | FlagTargetsArea,
 		Attributes: [8]uint32{0x40010, 0, 0x20000004, 0x20160000, 0, 0x4000000}, AttributesCu: 0x201100,
 		ProcChance: 101, BaseLevel: 1,
 		Effects: [3]Effect{
@@ -5113,7 +5125,7 @@ var spells = []Spell{
 	},
 	// Immolation (Rank 1)
 	{
-		ID: 50590, Family: 5, SchoolMask: 4, DmgClass: DmgClassMagic,
+		ID: 50590, Family: 5, SchoolMask: 4, DmgClass: DmgClassMagic, Flags: FlagTargetsArea,
 		Attributes: [8]uint32{0, 0x80, 0x20400000, 0x2000000}, AttributesCu: 0x1100,
 		ProcChance: 101, SpellLevel: 60, BaseLevel: 60,
 		Effects: [3]Effect{
@@ -5122,7 +5134,7 @@ var spells = []Spell{
 	},
 	// Arcane Torrent (Racial)
 	{
-		ID: 50613, SchoolMask: 64, DmgClass: DmgClassMagic, Flags: FlagBinary,
+		ID: 50613, SchoolMask: 64, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagTargetsArea,
 		Attributes: [8]uint32{0, 0x88, 0, 0, 0, 0, 0, 0x800}, AttributesCu: 0x101010,
 		CooldownMs: 120000, DurationMs: 2000, MaxDurationMs: 2000,
 		ProcChance: 101,
@@ -5133,7 +5145,7 @@ var spells = []Spell{
 	},
 	// Whirlwind
 	{
-		ID: 50622, Family: 4, FamilyFlags: [3]uint32{0, 0x4}, SchoolMask: 1, DmgClass: DmgClassMelee,
+		ID: 50622, Family: 4, FamilyFlags: [3]uint32{0, 0x4}, SchoolMask: 1, DmgClass: DmgClassMelee, Flags: FlagTargetsArea,
 		Attributes: [8]uint32{0x50010, 0x10, 0, 0x600, 0x80, 0x8000}, AttributesCu: 0x3100,
 		PowerType: 1, MaxTargets: 4, SpellLevel: 36, BaseLevel: 36,
 		CooldownMods: ModBounds{FlatMin: -2000},
@@ -5155,7 +5167,7 @@ var spells = []Spell{
 	},
 	// Pestilence
 	{
-		ID: 50842, Family: 15, FamilyFlags: [3]uint32{0, 0x10000}, SchoolMask: 32, DmgClass: DmgClassMagic, Flags: FlagHasteGCD,
+		ID: 50842, Family: 15, FamilyFlags: [3]uint32{0, 0x10000}, SchoolMask: 32, DmgClass: DmgClassMagic, Flags: FlagHasteGCD | FlagTargetsArea,
 		Attributes: [8]uint32{0, 0x8000000, 0, 0, 0, 0x1000}, AttributesCu: 0x5000,
 		GCDMs: 1500, GCDCategory: 133,
 		ProcChance: 101, PowerType: 5, RuneCostID: 844, SpellLevel: 56, BaseLevel: 56,
@@ -5219,7 +5231,7 @@ var spells = []Spell{
 	},
 	// Howling Blast (Rank 4)
 	{
-		ID: 51411, Family: 15, FamilyFlags: [3]uint32{0, 0x2}, SchoolMask: 16, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagHasteGCD,
+		ID: 51411, Family: 15, FamilyFlags: [3]uint32{0, 0x2}, SchoolMask: 16, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagHasteGCD | FlagTargetsArea,
 		Attributes: [8]uint32{0, 0x18000088, 0, 0, 0, 0, 0x400}, AttributesCu: 0x107100,
 		GCDMs: 1500, GCDCategory: 133, CooldownMs: 8000, CategoryCooldownMs: 8000, Category: 1248,
 		ProcChance: 101, PowerType: 5, RuneCostID: 869, SpellLevel: 80, BaseLevel: 80,
@@ -5289,7 +5301,7 @@ var spells = []Spell{
 	},
 	// Killing Spree
 	{
-		ID: 51690, Family: 8, FamilyFlags: [3]uint32{0, 0x800000}, SchoolMask: 1,
+		ID: 51690, Family: 8, FamilyFlags: [3]uint32{0, 0x800000}, SchoolMask: 1, Flags: FlagTargetsArea,
 		Attributes: [8]uint32{0x10010, 0x420, 0x10000000, 0x30401, 0, 0x200}, AttributesCu: 0x2000,
 		GCDMs: 1000, GCDCategory: 133, CooldownMs: 120000, DurationMs: 2000, MaxDurationMs: 2000,
 		ProcChance: 101, PowerType: 3,
@@ -5334,7 +5346,7 @@ var spells = []Spell{
 	},
 	// Fan of Knives
 	{
-		ID: 51723, Family: 8, FamilyFlags: [3]uint32{0, 0x40000}, SchoolMask: 1, DmgClass: DmgClassMelee,
+		ID: 51723, Family: 8, FamilyFlags: [3]uint32{0, 0x40000}, SchoolMask: 1, DmgClass: DmgClassMelee, Flags: FlagTargetsArea,
 		Attributes: [8]uint32{0x10010, 0x10, 0, 0x400}, AttributesCu: 0x1100,
 		GCDMs: 1000, GCDCategory: 133,
 		ProcChance: 101, PowerType: 3, ManaCost: 50, Speed: 18, SpellLevel: 80, BaseLevel: 80,
@@ -5494,16 +5506,46 @@ var spells = []Spell{
 	},
 	// Fan of Knives
 	{
-		ID: 52874, Family: 8, FamilyFlags: [3]uint32{0, 0x40000}, SchoolMask: 1, DmgClass: DmgClassMelee,
+		ID: 52874, Family: 8, FamilyFlags: [3]uint32{0, 0x40000}, SchoolMask: 1, DmgClass: DmgClassMelee, Flags: FlagTargetsArea,
 		Attributes: [8]uint32{0x10010, 0x10, 0, 0x1000000}, AttributesCu: 0x1100,
 		ProcChance: 101, PowerType: 3, Speed: 18, SpellLevel: 80, BaseLevel: 80,
 		Effects: [3]Effect{
 			{Effect: 31, BasePoints: 69, DieSides: 1, DamageMultiplier: 1},
 		},
 	},
+	// Turn the Tables
+	{
+		ID: 52910, Family: 8, FamilyFlags: [3]uint32{0, 0x200000}, SchoolMask: 8, DmgClass: DmgClassMelee, Flags: FlagBinary | FlagPositive | FlagTargetsArea,
+		Attributes: [8]uint32{0x40000, 0x400, 0x4, 0, 0x80}, AttributesCu: 0x100000,
+		DurationMs: 8000, MaxDurationMs: 8000,
+		ProcChance: 101, SpellLevel: 10, BaseLevel: 10,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 107, BasePoints: 5, DieSides: 1, DamageMultiplier: 1, MiscValue: 7, ClassMask: [3]uint32{0x2600070e, 0x7900106}},
+		},
+	},
+	// Turn the Tables
+	{
+		ID: 52914, Family: 8, FamilyFlags: [3]uint32{0, 0x200000}, SchoolMask: 8, DmgClass: DmgClassMelee, Flags: FlagBinary | FlagPositive | FlagTargetsArea,
+		Attributes: [8]uint32{0x40000, 0x400, 0x4, 0, 0x80}, AttributesCu: 0x100000,
+		DurationMs: 8000, MaxDurationMs: 8000,
+		ProcChance: 101, SpellLevel: 10, BaseLevel: 10,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 107, BasePoints: 1, DieSides: 1, DamageMultiplier: 1, MiscValue: 7, ClassMask: [3]uint32{0x2600070e, 0x7900106}},
+		},
+	},
+	// Turn the Tables
+	{
+		ID: 52915, Family: 8, FamilyFlags: [3]uint32{0, 0x200000}, SchoolMask: 8, DmgClass: DmgClassMelee, Flags: FlagBinary | FlagPositive | FlagTargetsArea,
+		Attributes: [8]uint32{0x40000, 0x400, 0x4, 0, 0x80}, AttributesCu: 0x100000,
+		DurationMs: 8000, MaxDurationMs: 8000,
+		ProcChance: 101, SpellLevel: 10, BaseLevel: 10,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 107, BasePoints: 3, DieSides: 1, DamageMultiplier: 1, MiscValue: 7, ClassMask: [3]uint32{0x2600070e, 0x7900106}},
+		},
+	},
 	// Honor Among Thieves
 	{
-		ID: 52916, Family: 8, FamilyFlags: [3]uint32{0, 0x200000}, SchoolMask: 8, DmgClass: DmgClassMelee, Flags: FlagPositive,
+		ID: 52916, Family: 8, FamilyFlags: [3]uint32{0, 0x200000}, SchoolMask: 8, DmgClass: DmgClassMelee, Flags: FlagPositive | FlagTargetsArea,
 		Attributes: [8]uint32{0x8040180, 0, 0x4, 0, 0x80, 0x40},
 		DurationMs: 8000, MaxDurationMs: 8000,
 		ProcChance: 101, SpellLevel: 10, BaseLevel: 10,
@@ -5524,7 +5566,7 @@ var spells = []Spell{
 	},
 	// Mind Sear (Rank 2)
 	{
-		ID: 53022, Family: 6, FamilyFlags: [3]uint32{0, 0x80000}, SchoolMask: 32, DmgClass: DmgClassMagic,
+		ID: 53022, Family: 6, FamilyFlags: [3]uint32{0, 0x80000}, SchoolMask: 32, DmgClass: DmgClassMagic, Flags: FlagTargetsArea,
 		Attributes: [8]uint32{0, 0x88, 0x400000}, AttributesCu: 0x1100,
 		ProcChance: 101, SpellLevel: 80, BaseLevel: 80, MaxLevel: 84,
 		Effects: [3]Effect{
@@ -5543,7 +5585,7 @@ var spells = []Spell{
 	},
 	// Starfall (Rank 4)
 	{
-		ID: 53190, Family: 7, FamilyFlags: [3]uint32{0, 0x800000}, SchoolMask: 64, DmgClass: DmgClassMagic, Flags: FlagResetsAutoAttack,
+		ID: 53190, Family: 7, FamilyFlags: [3]uint32{0, 0x800000}, SchoolMask: 64, DmgClass: DmgClassMagic, Flags: FlagResetsAutoAttack | FlagTargetsArea,
 		Attributes: [8]uint32{0x50000, 0x88}, AttributesCu: 0x1100,
 		GCDCategory: 133,
 		ProcChance:  101, SpellLevel: 80, BaseLevel: 80, MaxLevel: 84,
@@ -5565,7 +5607,7 @@ var spells = []Spell{
 	},
 	// Starfall (Rank 4)
 	{
-		ID: 53198, Family: 7, FamilyFlags: [3]uint32{0, 0, 0x100}, SchoolMask: 64, Flags: FlagBinary,
+		ID: 53198, Family: 7, FamilyFlags: [3]uint32{0, 0, 0x100}, SchoolMask: 64, Flags: FlagBinary | FlagTargetsArea,
 		Attributes: [8]uint32{0x180, 0x80488, 0, 0x30000, 0x80}, AttributesCu: 0x101000,
 		GCDMs:      1500,
 		ProcChance: 101, SpellLevel: 80, BaseLevel: 80, MaxLevel: 84,
@@ -5610,7 +5652,7 @@ var spells = []Spell{
 	},
 	// Typhoon (Rank 5)
 	{
-		ID: 53227, Family: 7, FamilyFlags: [3]uint32{0, 0x1000000}, SchoolMask: 8, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagResetsAutoAttack,
+		ID: 53227, Family: 7, FamilyFlags: [3]uint32{0, 0x1000000}, SchoolMask: 8, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagResetsAutoAttack | FlagTargetsArea,
 		Attributes: [8]uint32{0x10000, 0x80, 0x80000, 0x200}, AttributesCu: 0x107100,
 		DurationMs: 6000, MaxDurationMs: 6000,
 		ProcChance: 101, Speed: 30, SpellLevel: 80, BaseLevel: 80, MaxLevel: 84,
@@ -5642,7 +5684,7 @@ var spells = []Spell{
 	},
 	// Wild Growth (Rank 4)
 	{
-		ID: 53251, Family: 7, FamilyFlags: [3]uint32{0, 0x4000000}, SchoolMask: 8, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagResetsAutoAttack | FlagHasteGCD | FlagPositive,
+		ID: 53251, Family: 7, FamilyFlags: [3]uint32{0, 0x4000000}, SchoolMask: 8, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagResetsAutoAttack | FlagHasteGCD | FlagPositive | FlagTargetsArea,
 		Attributes: [8]uint32{0x10000, 0, 0x80000, 0x80, 0x100000, 0x400000, 0x4000000}, AttributesCu: 0x100000,
 		GCDMs: 1500, GCDCategory: 133, CategoryCooldownMs: 6000, Category: 1237, DurationMs: 7000, MaxDurationMs: 7000,
 		ProcChance: 101, ManaCostPct: 23, SpellLevel: 80, BaseLevel: 80, MaxLevel: 84,
@@ -5762,7 +5804,7 @@ var spells = []Spell{
 	},
 	// Divine Storm
 	{
-		ID: 53385, Family: 10, FamilyFlags: [3]uint32{0, 0x20000}, SchoolMask: 1, DmgClass: DmgClassMelee, Flags: FlagBinary,
+		ID: 53385, Family: 10, FamilyFlags: [3]uint32{0, 0x20000}, SchoolMask: 1, DmgClass: DmgClassMelee, Flags: FlagBinary | FlagTargetsArea,
 		Attributes: [8]uint32{0x50000, 0x10, 0, 0, 0, 0x8000}, AttributesCu: 0x104100,
 		GCDMs: 1500, GCDCategory: 133, CooldownMs: 10000,
 		ProcChance: 101, ManaCostPct: 12, MaxTargets: 4, SpellLevel: 60, BaseLevel: 60,
@@ -5827,7 +5869,7 @@ var spells = []Spell{
 	},
 	// Call of the Wild
 	{
-		ID: 53434, Family: 9, FamilyFlags: [3]uint32{0, 0x10000000}, SchoolMask: 1, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagPositive,
+		ID: 53434, Family: 9, FamilyFlags: [3]uint32{0, 0x10000000}, SchoolMask: 1, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagPositive | FlagTargetsArea,
 		Attributes: [8]uint32{0x50010, 0, 0x4}, AttributesCu: 0x100000,
 		CooldownMs: 300000, DurationMs: 20000, MaxDurationMs: 20000,
 		ProcChance: 101, PowerType: 2,
@@ -5998,7 +6040,7 @@ var spells = []Spell{
 	},
 	// Spore Cloud (Rank 6)
 	{
-		ID: 53598, Family: 9, FamilyFlags: [3]uint32{0, 0x10000000}, SchoolMask: 8, DmgClass: DmgClassMagic, Flags: FlagAlwaysHit | FlagResetsAutoAttack,
+		ID: 53598, Family: 9, FamilyFlags: [3]uint32{0, 0x10000000}, SchoolMask: 8, DmgClass: DmgClassMagic, Flags: FlagAlwaysHit | FlagResetsAutoAttack | FlagTargetsArea,
 		Attributes: [8]uint32{0x10, 0x200, 0, 0x40000}, AttributesCu: 0x3000,
 		GCDMs: 1500, GCDCategory: 133, CooldownMs: 10000, DurationMs: 9000, MaxDurationMs: 9000,
 		ProcChance: 101, PowerType: 2, ManaCost: 20, SpellLevel: 80, BaseLevel: 80,
@@ -6321,7 +6363,7 @@ var spells = []Spell{
 	},
 	// Living Bomb (Rank 3)
 	{
-		ID: 55362, Family: 3, FamilyFlags: [3]uint32{0, 0x10000}, SchoolMask: 4, DmgClass: DmgClassMagic,
+		ID: 55362, Family: 3, FamilyFlags: [3]uint32{0, 0x10000}, SchoolMask: 4, DmgClass: DmgClassMagic, Flags: FlagTargetsArea,
 		Attributes: [8]uint32{0x9850000, 0x80, 0x40000000, 0x20000, 0x4000, 0x4000000}, AttributesCu: 0x1100,
 		ProcChance: 101, SpellLevel: 80, BaseLevel: 80, MaxLevel: 86,
 		Effects: [3]Effect{
@@ -6372,7 +6414,7 @@ var spells = []Spell{
 	},
 	// Demoralizing Screech (Rank 6)
 	{
-		ID: 55487, Family: 9, FamilyFlags: [3]uint32{0, 0x10000000}, SchoolMask: 1, DmgClass: DmgClassMagic, Flags: FlagBinary,
+		ID: 55487, Family: 9, FamilyFlags: [3]uint32{0, 0x10000000}, SchoolMask: 1, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagTargetsArea,
 		Attributes: [8]uint32{0x4050010, 0x200}, AttributesCu: 0x107100,
 		GCDMs: 1500, GCDCategory: 133, CategoryCooldownMs: 10000, Category: 36, DurationMs: 10000, MaxDurationMs: 10000,
 		ProcChance: 101, PowerType: 2, ManaCost: 20, SpellLevel: 80, BaseLevel: 80,
@@ -6634,7 +6676,7 @@ var spells = []Spell{
 	},
 	// Horn of Winter (Rank 2)
 	{
-		ID: 57623, Family: 15, FamilyFlags: [3]uint32{0, 0x40000000}, SchoolMask: 1, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagPositive,
+		ID: 57623, Family: 15, FamilyFlags: [3]uint32{0, 0x40000000}, SchoolMask: 1, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagPositive | FlagTargetsArea,
 		Attributes: [8]uint32{0x50010, 0, 0x4, 0, 0, 0, 0x4000000, 0x10000000}, AttributesCu: 0x100000,
 		GCDMs: 1500, GCDCategory: 133, CategoryCooldownMs: 20000, Category: 1253, DurationMs: 120000, MaxDurationMs: 120000,
 		ProcChance: 101, PowerType: 5, RuneCostID: 1705, SpellLevel: 75, BaseLevel: 75,
@@ -6645,7 +6687,7 @@ var spells = []Spell{
 	},
 	// Replenishment
 	{
-		ID: 57669, SchoolMask: 8, Flags: FlagBinary | FlagPositive,
+		ID: 57669, SchoolMask: 8, Flags: FlagBinary | FlagPositive | FlagTargetsArea,
 		Attributes: [8]uint32{0x8000008, 0, 0x84, 0x2000000, 0x100040, 0, 0x400, 0x10000000}, AttributesCu: 0x100000,
 		DurationMs: 15000, MaxDurationMs: 15000,
 		ProcChance: 101, SpellLevel: 1, BaseLevel: 1,
@@ -6903,7 +6945,7 @@ var spells = []Spell{
 	},
 	// Volley (Rank 6)
 	{
-		ID: 58433, Family: 9, FamilyFlags: [3]uint32{0x2000}, SchoolMask: 64, DmgClass: DmgClassRanged, Flags: FlagUsesRangedSlot,
+		ID: 58433, Family: 9, FamilyFlags: [3]uint32{0x2000}, SchoolMask: 64, DmgClass: DmgClassRanged, Flags: FlagUsesRangedSlot | FlagTargetsArea,
 		Attributes: [8]uint32{0x2, 0x88, 0x40000000, 0x20, 0, 0x4000000}, AttributesCu: 0x1100,
 		CastMs: 500, GCDCategory: 133,
 		ProcChance: 101, SpellLevel: 80, BaseLevel: 80,
@@ -7017,7 +7059,7 @@ var spells = []Spell{
 	},
 	// Magma Totem (Rank 7)
 	{
-		ID: 58735, Family: 11, FamilyFlags: [3]uint32{0x40000004}, SchoolMask: 4, DmgClass: DmgClassMagic,
+		ID: 58735, Family: 11, FamilyFlags: [3]uint32{0x40000004}, SchoolMask: 4, DmgClass: DmgClassMagic, Flags: FlagTargetsArea,
 		Attributes: [8]uint32{0, 0x80, 0x40000000, 0x2000040}, AttributesCu: 0x1100,
 		ProcChance: 101, SpellLevel: 78, BaseLevel: 78, MaxLevel: 82,
 		Effects: [3]Effect{
@@ -7046,7 +7088,7 @@ var spells = []Spell{
 	},
 	// Healing Stream Totem
 	{
-		ID: 58761, Family: 11, FamilyFlags: [3]uint32{0x4002000}, SchoolMask: 32, Flags: FlagBinary | FlagPositive,
+		ID: 58761, Family: 11, FamilyFlags: [3]uint32{0x4002000}, SchoolMask: 32, Flags: FlagBinary | FlagPositive | FlagTargetsArea,
 		Attributes: [8]uint32{0x8000180, 0, 0x10000004}, AttributesCu: 0x100000,
 		ProcChance: 101, SpellLevel: 1, BaseLevel: 1,
 		Effects: [3]Effect{
@@ -7128,7 +7170,7 @@ var spells = []Spell{
 	},
 	// Initialize Images
 	{
-		ID: 58836, SchoolMask: 1, Flags: FlagPositive,
+		ID: 58836, SchoolMask: 1, Flags: FlagPositive | FlagTargetsArea,
 		Attributes: [8]uint32{0x180, 0x80000, 0x4},
 		DurationMs: 30000, MaxDurationMs: 30000,
 		ProcChance: 101,
@@ -7207,7 +7249,7 @@ var spells = []Spell{
 	},
 	// Thunderstorm (Rank 4)
 	{
-		ID: 59159, Family: 11, FamilyFlags: [3]uint32{0, 0x2000}, SchoolMask: 8, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagResetsAutoAttack | FlagHasteGCD,
+		ID: 59159, Family: 11, FamilyFlags: [3]uint32{0, 0x2000}, SchoolMask: 8, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagResetsAutoAttack | FlagHasteGCD | FlagTargetsArea,
 		Attributes: [8]uint32{0x10000, 0, 0, 0, 0, 0x8}, AttributesCu: 0x105110,
 		GCDMs: 1500, GCDCategory: 133, CategoryCooldownMs: 45000, Category: 1223,
 		ProcChance: 101, SpellLevel: 80, BaseLevel: 80, MaxLevel: 85,
@@ -8062,7 +8104,7 @@ var spells = []Spell{
 	},
 	// Fire Nova (Rank 9)
 	{
-		ID: 61654, Family: 11, FamilyFlags: [3]uint32{0, 0x80040000}, SchoolMask: 4, DmgClass: DmgClassMagic,
+		ID: 61654, Family: 11, FamilyFlags: [3]uint32{0, 0x80040000}, SchoolMask: 4, DmgClass: DmgClassMagic, Flags: FlagTargetsArea,
 		Attributes: [8]uint32{0x10000, 0x88, 0x40000000, 0x40000000, 0, 0x4000000}, AttributesCu: 0x1100,
 		ProcChance: 100, SpellLevel: 80, BaseLevel: 80, MaxLevel: 85,
 		Effects: [3]Effect{
@@ -8135,7 +8177,7 @@ var spells = []Spell{
 	},
 	// Flash Freeze
 	{
-		ID: 61968, SchoolMask: 16, Flags: FlagAlwaysHit | FlagResetsAutoAttack,
+		ID: 61968, SchoolMask: 16, Flags: FlagAlwaysHit | FlagResetsAutoAttack | FlagTargetsArea,
 		Attributes: [8]uint32{0, 0x10040088, 0x4, 0x40000, 0, 0x100, 0x400}, AttributesCu: 0x3020,
 		CastMs: 9000, BaseCastMs: 9000, CategoryCooldownMs: 5000, Category: 1152, DurationMs: 2000, MaxDurationMs: 2000,
 		ProcChance: 101, SpellLevel: 70, BaseLevel: 70,
@@ -8200,7 +8242,7 @@ var spells = []Spell{
 	},
 	// Starlight
 	{
-		ID: 62807, SchoolMask: 1, Flags: FlagBinary | FlagPositive,
+		ID: 62807, SchoolMask: 1, Flags: FlagBinary | FlagPositive | FlagTargetsArea,
 		Attributes: [8]uint32{0x800100, 0, 0, 0, 0x1000}, AttributesCu: 0x20100000,
 		DurationMs: 60000, MaxDurationMs: 60000,
 		ProcChance: 101,
@@ -8257,6 +8299,17 @@ var spells = []Spell{
 		ProcChance: 101,
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 189, BasePoints: 327, DieSides: 1, DamageMultiplier: 1, MiscValue: 1792},
+		},
+	},
+	// Totem of Wrath
+	{
+		ID: 63283, Family: 11, FamilyFlags: [3]uint32{0x4000000, 0x2000000}, SchoolMask: 4, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagPositive,
+		AttributesCu: 0x100000,
+		DurationMs:   300000, MaxDurationMs: 300000,
+		ProcChance: 101, SpellLevel: 1, BaseLevel: 1,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 13, BasePoints: 29, DieSides: 1, DamageMultiplier: 1, MiscValue: 126},
+			{Effect: 6, Aura: 135, BasePoints: -1, DieSides: 1, DamageMultiplier: 1},
 		},
 	},
 	// Life Tap
@@ -8356,7 +8409,7 @@ var spells = []Spell{
 	},
 	// Storm Power
 	{
-		ID: 63711, SchoolMask: 8, Flags: FlagAlwaysHit | FlagPositive,
+		ID: 63711, SchoolMask: 8, Flags: FlagAlwaysHit | FlagPositive | FlagTargetsArea,
 		Attributes: [8]uint32{0x8000000, 0x80088, 0, 0x20040100, 0, 0x8},
 		DurationMs: 30000, MaxDurationMs: 30000,
 		ProcChance: 101, SpellLevel: 80, BaseLevel: 80,
@@ -8466,7 +8519,7 @@ var spells = []Spell{
 	},
 	// Furious Howl (Rank 6)
 	{
-		ID: 64495, Family: 9, FamilyFlags: [3]uint32{0, 0x10000000}, SchoolMask: 1, DmgClass: DmgClassMelee, Flags: FlagBinary | FlagPositive,
+		ID: 64495, Family: 9, FamilyFlags: [3]uint32{0, 0x10000000}, SchoolMask: 1, DmgClass: DmgClassMelee, Flags: FlagBinary | FlagPositive | FlagTargetsArea,
 		Attributes: [8]uint32{0x50010, 0x200}, AttributesCu: 0x100000,
 		CooldownMs: 40000, DurationMs: 20000, MaxDurationMs: 20000,
 		ProcChance: 101, PowerType: 2, ManaCost: 20, SpellLevel: 80, BaseLevel: 80,
@@ -8478,7 +8531,7 @@ var spells = []Spell{
 	},
 	// Frozen Blows
 	{
-		ID: 64544, SchoolMask: 16, DmgClass: DmgClassMagic,
+		ID: 64544, SchoolMask: 16, DmgClass: DmgClassMagic, Flags: FlagTargetsArea,
 		Attributes: [8]uint32{0x40000, 0x88, 0, 0x2000100}, AttributesCu: 0x1100,
 		ProcChance: 101, SpellLevel: 20, BaseLevel: 20,
 		Effects: [3]Effect{
@@ -8487,7 +8540,7 @@ var spells = []Spell{
 	},
 	// Frozen Blows
 	{
-		ID: 64545, SchoolMask: 16, DmgClass: DmgClassMagic,
+		ID: 64545, SchoolMask: 16, DmgClass: DmgClassMagic, Flags: FlagTargetsArea,
 		Attributes: [8]uint32{0x40000, 0x88, 0, 0x2000100}, AttributesCu: 0x1100,
 		ProcChance: 101, SpellLevel: 20, BaseLevel: 20,
 		Effects: [3]Effect{
@@ -8533,8 +8586,8 @@ var spells = []Spell{
 	},
 	// Cosmic Smash
 	{
-		ID: 64596, SchoolMask: 4, Flags: FlagBinary,
-		Attributes: [8]uint32{0, 0x80, 0x4, 0x100, 0x2000}, AttributesCu: 0x103100,
+		ID: 64596, SchoolMask: 4, Flags: FlagTargetsArea,
+		Attributes: [8]uint32{0, 0x80, 0x4, 0x100, 0x2000}, AttributesCu: 0x3100,
 		ProcChance: 101,
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 53624, DieSides: 2751, DamageMultiplier: 1},
@@ -8725,7 +8778,7 @@ var spells = []Spell{
 	},
 	// Hymn of Hope
 	{
-		ID: 64904, Family: 6, FamilyFlags: [3]uint32{0, 0, 0x10}, SchoolMask: 2, Flags: FlagBinary | FlagPositive,
+		ID: 64904, Family: 6, FamilyFlags: [3]uint32{0, 0, 0x10}, SchoolMask: 2, Flags: FlagBinary | FlagPositive | FlagTargetsArea,
 		Attributes: [8]uint32{0, 0x88, 0x40000004, 0, 0x80}, AttributesCu: 0xc100010,
 		DurationMs: 8000, MaxDurationMs: 8000,
 		ProcChance: 101, SpellLevel: 80, BaseLevel: 80, MaxLevel: 84,
@@ -8933,7 +8986,7 @@ var spells = []Spell{
 	},
 	// Black Hole Explosion
 	{
-		ID: 65108, SchoolMask: 32, DmgClass: DmgClassMagic,
+		ID: 65108, SchoolMask: 32, DmgClass: DmgClassMagic, Flags: FlagTargetsArea,
 		Attributes: [8]uint32{0, 0x88, 0, 0x140}, AttributesCu: 0x1100,
 		ProcChance: 101,
 		Effects: [3]Effect{
@@ -8963,7 +9016,7 @@ var spells = []Spell{
 	},
 	// Force of Nature
 	{
-		ID: 65861, SchoolMask: 8, Flags: FlagBinary | FlagResetsAutoAttack | FlagHasteGCD,
+		ID: 65861, SchoolMask: 8, Flags: FlagBinary | FlagResetsAutoAttack | FlagHasteGCD | FlagTargetsArea,
 		Attributes: [8]uint32{0x10000, 0x10000400, 0x80000, 0x20000, 0, 0, 0x400}, AttributesCu: 0x102000,
 		GCDMs: 1500, GCDCategory: 133, CooldownMs: 180000, DurationMs: 30000, MaxDurationMs: 30000,
 		ProcChance: 101, ManaCostPct: 12, SpellLevel: 50, BaseLevel: 50,
@@ -9025,7 +9078,7 @@ var spells = []Spell{
 	},
 	// Staggering Stomp
 	{
-		ID: 66330, SchoolMask: 1, Flags: FlagNoActiveDefense | FlagAlwaysHit | FlagResetsAutoAttack,
+		ID: 66330, SchoolMask: 1, Flags: FlagNoActiveDefense | FlagAlwaysHit | FlagResetsAutoAttack | FlagTargetsArea,
 		Attributes: [8]uint32{0x240000, 0x88, 0x4, 0x40000}, AttributesCu: 0x3100,
 		CastMs: 500, BaseCastMs: 500, DurationMs: 8000, MaxDurationMs: 8000,
 		ProcChance: 101,
@@ -9516,7 +9569,7 @@ var spells = []Spell{
 	},
 	// Frost Breath
 	{
-		ID: 69649, SchoolMask: 16, DmgClass: DmgClassMagic, Flags: FlagResetsAutoAttack,
+		ID: 69649, SchoolMask: 16, DmgClass: DmgClassMagic, Flags: FlagResetsAutoAttack | FlagTargetsArea,
 		Attributes: [8]uint32{0x40010, 0x88}, AttributesCu: 0x7100,
 		CastMs: 1500, BaseCastMs: 1500, DurationMs: 90000, MaxDurationMs: 90000, StackAmount: 6,
 		ProcChance: 101,
@@ -9586,7 +9639,7 @@ var spells = []Spell{
 	},
 	// Mystic Buffet
 	{
-		ID: 70127, SchoolMask: 64, Flags: FlagBinary,
+		ID: 70127, SchoolMask: 64, Flags: FlagBinary | FlagTargetsArea,
 		Attributes: [8]uint32{0x20000000, 0, 0x4}, AttributesCu: 0x101000,
 		DurationMs: 8000, MaxDurationMs: 8000, StackAmount: 99,
 		ProcChance: 101,
@@ -10295,7 +10348,7 @@ var spells = []Spell{
 	},
 	// Chaos Bane
 	{
-		ID: 71904, SchoolMask: 32,
+		ID: 71904, SchoolMask: 32, Flags: FlagTargetsArea,
 		AttributesCu: 0x1108,
 		ProcChance:   101, Speed: 10,
 		Effects: [3]Effect{
@@ -10364,7 +10417,7 @@ var spells = []Spell{
 	},
 	// Frost Breath
 	{
-		ID: 73061, SchoolMask: 16, DmgClass: DmgClassMagic, Flags: FlagResetsAutoAttack,
+		ID: 73061, SchoolMask: 16, DmgClass: DmgClassMagic, Flags: FlagResetsAutoAttack | FlagTargetsArea,
 		Attributes: [8]uint32{0x40010, 0x88}, AttributesCu: 0x3100,
 		CastMs: 1500, BaseCastMs: 1500, DurationMs: 10000, MaxDurationMs: 10000, StackAmount: 6,
 		ProcChance: 101,

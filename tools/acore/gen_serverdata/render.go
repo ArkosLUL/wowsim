@@ -40,6 +40,7 @@ var flagNames = []struct {
 	{serverdata.FlagAutoRepeat, "FlagAutoRepeat"},
 	{serverdata.FlagPassive, "FlagPassive"},
 	{serverdata.FlagPositive, "FlagPositive"},
+	{serverdata.FlagTargetsArea, "FlagTargetsArea"},
 }
 
 // fields builds a keyed composite literal body, leaving out zero values.

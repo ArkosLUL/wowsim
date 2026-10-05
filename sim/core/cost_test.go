@@ -30,18 +30,24 @@ func TestCostPercentModsAddUp(t *testing.T) {
 	}
 }
 
-func TestCostFlatModsComeAfterPercent(t *testing.T) {
+// Berserk's Shred on the server since 27e096204: (60 - 18) * 0.5 = 21, not 60 * 0.5 - 18 = 12
+func TestCostFlatModsComeBeforePercent(t *testing.T) {
 	spell := costTestSpell(SpellSchoolPhysical, 60, 1)
 	spell.CostMultiplier -= 0.5
 	spell.CostFlat -= 9
 	spell.Unit.PseudoStats.CostFlat -= 1
-	// 60 * 0.5 - 10, not (60 - 10) * 0.5
-	if got := spell.ApplyCostModifiers(60); got != 20 {
-		t.Errorf("cost = %v, want 20", got)
+	// (60 - 10) * 0.5
+	if got := spell.ApplyCostModifiers(60); got != 25 {
+		t.Errorf("cost = %v, want 25", got)
 	}
-	spell.setStaticCost(0, -4, 1)
-	if got := spell.ApplyCostModifiers(60); got != 16 {
-		t.Errorf("with a static flat mod: cost = %v, want 16", got)
+	spell.setStaticCost(0, -5, 1)
+	// (60 - 15) * 0.5 = 22.5
+	if got := spell.ApplyCostModifiers(60); got != 22 {
+		t.Errorf("with a static flat mod: cost = %v, want 22", got)
+	}
+	spell.CostFlat -= 50
+	if got := spell.ApplyCostModifiers(60); got != 0 {
+		t.Errorf("flats past the base: cost = %v, want 0", got)
 	}
 }
 
@@ -102,14 +108,19 @@ func TestCostFreeSpellStaysFree(t *testing.T) {
 	spell := costTestSpell(SpellSchoolFire, 500, 1)
 	spell.CostMultiplier -= 1
 	spell.CostFlat += 20
-	if got := spell.ApplyCostModifiers(500); got != 20 {
-		// the flat mod still applies: only the percent zeroes the base
-		t.Errorf("cost = %v, want 20", got)
+	// the percent scales the flat too: (500 + 20) * 0
+	if got := spell.ApplyCostModifiers(500); got != 0 {
+		t.Errorf("cost = %v, want 0", got)
 	}
 	spell.CostMultiplier -= 100
 	spell.CostFlat = 0
 	if got := spell.ApplyCostModifiers(500); got != 0 {
 		t.Errorf("a cost cut below zero = %v, want 0", got)
+	}
+	free := costTestSpell(SpellSchoolFire, 0, 1)
+	free.CostFlat += 20
+	if got := free.ApplyCostModifiers(0); got != 0 {
+		t.Errorf("a flat mod on a free spell = %v, want 0", got)
 	}
 }
 
@@ -120,9 +131,9 @@ func TestCostRageTruncatesToTenths(t *testing.T) {
 	if got := spell.ApplyCostModifiers(15); math.Abs(got-12.7) > 1e-9 {
 		t.Errorf("cost = %v, want 12.7", got)
 	}
-	spell.CostFlat -= 5 // -50 tenths
-	if got := spell.ApplyCostModifiers(15); math.Abs(got-7.7) > 1e-9 {
-		t.Errorf("with a flat mod = %v, want 7.7", got)
+	spell.CostFlat -= 5 // (150 - 50) * 0.85 = 85
+	if got := spell.ApplyCostModifiers(15); math.Abs(got-8.5) > 1e-9 {
+		t.Errorf("with a flat mod = %v, want 8.5", got)
 	}
 }
 
@@ -133,8 +144,9 @@ func TestStaticCostIgnoresDynamicMods(t *testing.T) {
 	if got := spell.StaticCost(); got != 51 {
 		t.Errorf("static cost = %v, want 51", got)
 	}
-	if got := spell.StaticCostWithPercent(-0.5); got != 21 {
-		t.Errorf("static cost under Berserk = %v, want 21", got)
+	// (60 - 9) * 0.5 = 25.5
+	if got := spell.StaticCostWithPercent(-0.5); got != 25 {
+		t.Errorf("static cost under Berserk = %v, want 25", got)
 	}
 }
 
@@ -180,7 +192,7 @@ func TestCostCacheSeesEveryInput(t *testing.T) {
 			c.Equipment[proto.ItemSlot_ItemSlotTrinket1] = Item{ID: 45703}
 			c.applySparkOfHope()
 		}, want: 958},
-		{name: "static mods", change: func(_ *Character, s *Spell) { s.setStaticCost(0.9, -10, 1) }, want: 890},
+		{name: "static mods", change: func(_ *Character, s *Spell) { s.setStaticCost(0.9, -10, 1) }, want: 891},
 		// the unit has a frost aura from the start, see below
 		{name: "school", change: func(_ *Character, s *Spell) { s.SpellSchool = SpellSchoolFrost }, want: 500},
 		{name: "iteration reset",
@@ -248,5 +260,48 @@ func TestCostCacheMatchesUncached(t *testing.T) {
 		if math.Float64bits(got) != math.Float64bits(want) {
 			t.Fatalf("step %d: cached %v, uncached %v", i, got, want)
 		}
+	}
+}
+
+func runeCostTestSpell(options RuneCostOptions) (*Spell, *RuneCostImpl) {
+	unit := &Unit{}
+	unit.PseudoStats = stats.NewPseudoStats()
+	spell := &Spell{Unit: unit, SpellSchool: SpellSchoolShadow, CostMultiplier: 1}
+	// newRuneCost without its metrics
+	cost := NewRuneCost(int16(math.Round(options.RunicPowerCost*10)), options.BloodRuneCost, options.FrostRuneCost, options.UnholyRuneCost, 0)
+	spell.DefaultCast.Cost = float64(cost)
+	spell.setStaticCost(0, 0, 10)
+	return spell, &RuneCostImpl{}
+}
+
+func TestRuneCostMods(t *testing.T) {
+	// Howling Blast under Freezing Fog's percent: no runes left
+	hb, rc := runeCostTestSpell(RuneCostOptions{FrostRuneCost: 1, UnholyRuneCost: 1, RunicPowerGain: 15})
+	hb.CostMultiplier -= 1
+	if got := rc.applyCostMods(hb, RuneCost(hb.DefaultCast.Cost)); got != 0 {
+		t.Errorf("Howling Blast under Freezing Fog = %v, want no cost", got)
+	}
+
+	// a runic power flat reaches the rune counts in server units, as Endless Winter's -200 on Mind Freeze
+	mf, rc := runeCostTestSpell(RuneCostOptions{FrostRuneCost: 1, RunicPowerCost: 20})
+	mf.CostFlat -= 20
+	if got := rc.applyCostMods(mf, RuneCost(mf.DefaultCast.Cost)); got != 0 {
+		t.Errorf("Mind Freeze under Endless Winter = %v, want no cost", got)
+	}
+
+	// Death Coil: the school flat on the base, then the spell mods, then the school percent, in tenths
+	dc, rc := runeCostTestSpell(RuneCostOptions{RunicPowerCost: 40})
+	dc.Unit.AddSchoolCostFlat(SpellSchoolMagic, -42)
+	dc.CostFlat -= 8
+	dc.Unit.AddSchoolCostMultiplier(SpellSchoolShadow, -0.2)
+	// (400 - 42 - 80) * 0.8 = 222.4
+	got := rc.applyCostMods(dc, RuneCost(dc.DefaultCast.Cost))
+	if got.RunicPower() != 222 || got.HasRune() {
+		t.Errorf("Death Coil = %v, want 22.2 runic power", got)
+	}
+
+	plain, rc := runeCostTestSpell(RuneCostOptions{BloodRuneCost: 1, FrostRuneCost: 1, UnholyRuneCost: 1})
+	if got := rc.applyCostMods(plain, RuneCost(plain.DefaultCast.Cost)); got != RuneCost(plain.DefaultCast.Cost) {
+		t.Errorf("no mods = %v, want the base %v", got, RuneCost(plain.DefaultCast.Cost))
 	}
 }

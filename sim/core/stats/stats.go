@@ -369,7 +369,8 @@ type PseudoStats struct {
 	BonusMeleeHitRatingTaken    float64 // Formerly Imp FF and SW Radiance;
 	BonusSpellHitRatingTaken    float64 // Imp FF
 
-	BonusPhysicalDamageTaken float64 // Hemo, Gift of Arthas, etc
+	BonusPhysicalDamageTaken float64 // Hemo, etc
+	BonusDamageTaken         float64 // SPELL_AURA_MOD_DAMAGE_TAKEN on every school: Gift of Arthas
 	BonusHealingTaken        float64 // Talisman of Troll Divinity
 
 	DamageTakenMultiplier       float64            // All damage

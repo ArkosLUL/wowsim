@@ -20,6 +20,8 @@ type StackingStatBonusEffect struct {
 	Outcome    core.HitOutcome
 	Harmful    bool
 	ProcChance float64
+
+	AnyPeriodic bool
 }
 
 func newStackingStatBonusEffect(config StackingStatBonusEffect) {
@@ -41,14 +43,15 @@ func newStackingStatBonusEffect(config StackingStatBonusEffect) {
 		})
 
 		core.MakeProcTriggerAura(&character.Unit, core.ProcTrigger{
-			ActionID:   core.ActionID{ItemID: config.ID},
-			Name:       config.Name,
-			Callback:   config.Callback,
-			ProcMask:   config.ProcMask,
-			SpellFlags: config.SpellFlags,
-			Outcome:    config.Outcome,
-			Harmful:    config.Harmful,
-			ProcChance: config.ProcChance,
+			ActionID:    core.ActionID{ItemID: config.ID},
+			Name:        config.Name,
+			Callback:    config.Callback,
+			ProcMask:    config.ProcMask,
+			SpellFlags:  config.SpellFlags,
+			Outcome:     config.Outcome,
+			Harmful:     config.Harmful,
+			ProcChance:  config.ProcChance,
+			AnyPeriodic: config.AnyPeriodic,
 			Handler: func(sim *core.Simulation, _ *core.Spell, _ *core.SpellResult) {
 				procAura.Activate(sim)
 				procAura.AddStack(sim)
@@ -200,8 +203,12 @@ func init() {
 		Duration:  time.Second * 10,
 		MaxStacks: 10,
 		Bonus:     stats.Stats{stats.SpellPower: 20},
-		Callback:  core.CallbackOnCastComplete,
-		ProcMask:  core.ProcMaskSpellHealing | core.ProcMaskSpellDamage,
+		// 60485: every landed magic spell, damage or not, and every tick; a triggered hit only with
+		// SPELL_ATTR3_NOT_A_PROC (Arcane Missiles' missiles)
+		Callback:    core.CallbackOnSpellHitDealt | core.CallbackOnHealDealt | core.CallbackOnPeriodicDamageDealt | core.CallbackOnPeriodicHealDealt,
+		ProcMask:    core.ProcMaskSpellHealing | core.ProcMaskSpellDamage,
+		Outcome:     core.OutcomeLanded,
+		AnyPeriodic: true,
 	})
 	newStackingStatBonusEffect(StackingStatBonusEffect{
 		Name:       "DMC Berserker",

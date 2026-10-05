@@ -263,6 +263,7 @@ var spellGroupAllowances = map[spellPair]string{
 	{71, 2458}:     stanceReason,
 	{2457, 2458}:   stanceReason,
 	{2818, 13218}:  poisonReason,
+	{3043, 5570}:   "server: group 1060's same-effect rule never reaches a creature, whose HandleModHitChance adds each debuff to m_modMeleeHitChance and the miss roll reads it raw. The sim stacks them, as the buffs capture shows (-6%).",
 	{2818, 21183}:  poisonReason,
 	{2818, 30708}:  poisonReason,
 	{13218, 21183}: poisonReason,

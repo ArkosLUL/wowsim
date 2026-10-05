@@ -10,10 +10,11 @@ import (
 // units (rage in tenths), truncating where the server stores an int:
 //
 //	base   = trunc(base) + the first school's UNIT_FIELD_POWER_COST_MODIFIER
-//	cost   = trunc(base * (1 + sum of SPELLMOD_COST percents) + sum of SPELLMOD_COST flats)
+//	cost   = trunc((base + sum of SPELLMOD_COST flats) * (1 + sum of SPELLMOD_COST percents)), 0 if base + flats <= 0
 //	cost   = trunc(cost * (1 + the first school's UNIT_FIELD_POWER_COST_MULTIPLIER)), at least 0
 //
-// Percent mods add up, they never multiply. Where each kind lives:
+// Percent mods add up, they never multiply. A death knight's runic power cost takes all three steps, each
+// rune count only the spell mods (runeCountFor). Where each kind lives:
 //   - spell mod percent: Spell.CostMultiplier or PseudoStats.CostMultiplier (1 plus the sum, so `-= 0.1` is
 //     -10%), or the options' Multiplier for a talent that never changes
 //   - spell mod flat: Spell.CostFlat or PseudoStats.CostFlat, or the options' FlatMod
@@ -83,14 +84,29 @@ func (spell *Spell) costUnits() float64 {
 // setStaticCost's reset if only that sets it.
 func (spell *Spell) costFor(base, pct, flat, schoolFlat, schoolMult float64) float64 {
 	scale := spell.costUnits()
-	cost := truncCost(base*scale) + schoolFlat
-	if cost > 0 {
-		cost = truncCost(cost*(1+spell.costStaticPct+pct) + (spell.costStaticFlat+flat)*scale)
-	}
+	cost := spellModCost(truncCost(base*scale)+schoolFlat, spell.costStaticPct+pct, (spell.costStaticFlat+flat)*scale)
 	if schoolMult != 0 {
 		cost = truncCost(cost * (1 + schoolMult))
 	}
 	return max(0, cost) / scale
+}
+
+// spellModCost is Player::ApplySpellMod's SPELLMOD_COST on a value in server units: flats first, then
+// percents, and 0 once the flats reach 0. A value already at 0 or below skips every mod.
+func spellModCost(value, pct, flat float64) float64 {
+	if value <= 0 {
+		return 0
+	}
+	if value += flat; value <= 0 {
+		return 0
+	}
+	return truncCost(value * (1 + pct))
+}
+
+// runeCountFor is one rune type's count after the spell's cost mods (Spell::CheckRuneCost): spell mods
+// only, flats in the server's units (a runic power flat hits the runes too), no school auras.
+func runeCountFor(count int8, pct, flat float64) int8 {
+	return int8(max(0, spellModCost(float64(count), pct, flat)))
 }
 
 // ApplyCostModifiers returns the cost to pay for a spell whose base cost is the given (DefaultCast.Cost).

@@ -40,7 +40,7 @@ func (dk *Deathknight) registerHowlingBlastSpell() {
 		},
 
 		DamageMultiplier: 1,
-		CritMultiplier:   dk.bonusCritMultiplier(dk.Talents.GuileOfGorefiend),
+		CritMultiplier:   dk.magicCritMultiplier(dk.Talents.GuileOfGorefiend),
 		ThreatMultiplier: 1,
 
 		Direct: core.SpellEffect{Effect: 1, Min: 518, Max: 562, AP: 0.2},

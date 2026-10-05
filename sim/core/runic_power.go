@@ -2,6 +2,7 @@ package core
 
 import (
 	"fmt"
+	"math"
 	"strings"
 	"time"
 
@@ -566,7 +567,7 @@ func (rp *runicPowerBar) OptimalRuneCost(cost RuneCost) RuneCost {
 func (rp *runicPowerBar) spendRuneCost(sim *Simulation, spell *Spell, cost RuneCost) (RuneChangeType, []int8) {
 	if !cost.HasRune() {
 		if rpc := cost.RunicPower(); rpc > 0 {
-			rp.spendRunicPower(sim, float64(cost.RunicPower()), spell.RunicPowerMetrics())
+			rp.spendRunicPower(sim, float64(rpc)/10, spell.RunicPowerMetrics())
 		}
 		return None, nil
 	}
@@ -583,7 +584,7 @@ func (rp *runicPowerBar) spendRuneCost(sim *Simulation, spell *Spell, cost RuneC
 		slots = append(slots, rp.spendRune(sim, 4, spell.UnholyRuneMetrics()))
 	}
 	if d > 0 {
-		defaultCost := RuneCost(spell.DefaultCast.Cost)
+		defaultCost := spell.Cost.(*RuneCostImpl).modified
 		for i, mu := int8(0), defaultCost.Unholy()-u; i < mu; i++ {
 			slots = append(slots, rp.spendDeathRune(sim, []int8{4, 5, 2, 3, 0, 1}, spell.DeathRuneMetrics()))
 		}
@@ -596,7 +597,7 @@ func (rp *runicPowerBar) spendRuneCost(sim *Simulation, spell *Spell, cost RuneC
 	}
 
 	if rpc := cost.RunicPower(); rpc > 0 {
-		rp.AddRunicPower(sim, float64(rpc), spell.RunicPowerMetrics())
+		rp.AddRunicPower(sim, float64(rpc)/10, spell.RunicPowerMetrics())
 	}
 
 	return SpendRune, slots
@@ -808,12 +809,15 @@ type RuneCostImpl struct {
 	frostRuneMetrics  *ResourceMetrics
 	unholyRuneMetrics *ResourceMetrics
 	deathRuneMetrics  *ResourceMetrics
+
+	modified RuneCost // this cast's cost after the cost mods, before death runes stand in
 }
 
 func newRuneCost(spell *Spell, options RuneCostOptions) *RuneCostImpl {
-	baseCost := float64(NewRuneCost(int16(options.RunicPowerCost), options.BloodRuneCost, options.FrostRuneCost, options.UnholyRuneCost, 0))
+	baseCost := float64(NewRuneCost(int16(math.Round(options.RunicPowerCost*10)), options.BloodRuneCost, options.FrostRuneCost, options.UnholyRuneCost, 0))
 	spell.DefaultCast.Cost = baseCost
 	spell.CurCast.Cost = baseCost
+	spell.setStaticCost(0, 0, 10)
 
 	return &RuneCostImpl{
 		BloodRuneCost:  options.BloodRuneCost,
@@ -831,16 +835,36 @@ func newRuneCost(spell *Spell, options RuneCostOptions) *RuneCostImpl {
 	}
 }
 
-func (rc *RuneCostImpl) MeetsRequirement(_ *Simulation, spell *Spell) bool {
-	spell.CurCast.Cost *= spell.CostMultiplier // TODO this looks fishy - multiplying and rune costs don't go well together
+// applyCostMods is the base cost (runic power in tenths) after the cost mods: the runic power through
+// SpellInfo::CalcPowerCost like any other power, each rune count through the spell mods alone.
+func (rc *RuneCostImpl) applyCostMods(spell *Spell, base RuneCost) RuneCost {
+	if base == 0 {
+		return 0
+	}
+	var rp int16
+	if base.RunicPower() > 0 {
+		rp = int16(math.Round(spell.ApplyCostModifiers(float64(base.RunicPower())/10) * 10))
+	}
+	if !base.HasRune() {
+		return NewRuneCost(rp, 0, 0, 0, 0)
+	}
+	ps := &spell.Unit.PseudoStats
+	pct := spell.costStaticPct + (spell.CostMultiplier - 1) + (ps.CostMultiplier - 1)
+	flat := (spell.costStaticFlat + spell.CostFlat + ps.CostFlat) * spell.costUnits()
+	return NewRuneCost(rp, runeCountFor(base.Blood(), pct, flat), runeCountFor(base.Frost(), pct, flat),
+		runeCountFor(base.Unholy(), pct, flat), base.Death())
+}
 
-	cost := RuneCost(spell.CurCast.Cost)
+func (rc *RuneCostImpl) MeetsRequirement(_ *Simulation, spell *Spell) bool {
+	cost := rc.applyCostMods(spell, RuneCost(spell.CurCast.Cost))
+	rc.modified = cost
+	spell.CurCast.Cost = float64(cost)
 	if cost == 0 {
 		return true
 	}
 
 	if !cost.HasRune() {
-		if float64(cost.RunicPower()) > spell.Unit.CurrentRunicPower() {
+		if float64(cost.RunicPower())/10 > spell.Unit.CurrentRunicPower() {
 			return false
 		}
 	}
@@ -863,7 +887,8 @@ func (rc *RuneCostImpl) SpendCost(sim *Simulation, spell *Spell) {
 		changeType, _ := spell.Unit.spendRuneCost(sim, spell, RuneCost(spell.CurCast.Cost))
 		spell.Unit.maybeFireChange(sim, changeType)
 	}
-	if rc.RunicPowerGain > 0 && spell.CurCast.Cost > 0 {
+	// Spell::TakeRunePower gives the gain even when cost mods leave no runes to pay (Freezing Fog)
+	if rc.RunicPowerGain > 0 && spell.DefaultCast.Cost > 0 {
 		spell.Unit.AddRunicPower(sim, rc.RunicPowerGain, spell.RunicPowerMetrics())
 	}
 }

@@ -135,8 +135,17 @@ func flags(d *spellset.DumpSpell, s *serverdata.Spell) serverdata.Flags {
 	set(serverdata.FlagAutoRepeat, d.AutoRepeatRanged)
 	set(serverdata.FlagPassive, d.Passive)
 	set(serverdata.FlagPositive, d.Positive)
+	set(serverdata.FlagTargetsArea, slices.ContainsFunc(d.Effects, func(e spellset.DumpEffect) bool {
+		return areaTargets[e.TargetA] || areaTargets[e.TargetB]
+	}))
 	return f
 }
+
+// areaTargets are the implicit targets whose selection category is area or cone (SpellInfo.cpp's
+// SpellImplicitTargetInfo table), the ones SpellImplicitTargetInfo::IsArea accepts.
+var areaTargets = map[int64]bool{7: true, 8: true, 15: true, 16: true, 20: true, 24: true, 30: true, 31: true,
+	33: true, 34: true, 37: true, 51: true, 52: true, 54: true, 56: true, 59: true, 60: true, 61: true, 93: true,
+	104: true, 108: true}
 
 // Spell modifiers (SpellAuraDefines.h, SpellDefines.h SpellModOp).
 const (

@@ -384,6 +384,10 @@ func (equipment *Equipment) Stats() stats.Stats {
 		itemStats := equipment[i].TotalStats()
 		equipStats.AddInplace(&itemStats)
 	}
+	// item stats are whole numbers, so taking the meta's back off is exact
+	if meta := equipment.inactiveMetaGem(); meta != nil {
+		equipStats = equipStats.Subtract(meta.Stats)
+	}
 	return equipStats
 }
 

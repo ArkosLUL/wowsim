@@ -26,6 +26,9 @@ type ProcStatBonusEffect struct {
 
 	// For ignoring a hardcoded spell.
 	IgnoreSpellID int32
+
+	AnyPeriodic      bool
+	CanProcFromProcs bool
 }
 
 func newProcStatBonusEffect(config ProcStatBonusEffect) {
@@ -57,17 +60,19 @@ func newProcStatBonusEffect(config ProcStatBonusEffect) {
 		}
 
 		triggerAura := core.MakeProcTriggerAura(&character.Unit, core.ProcTrigger{
-			ActionID:    core.ActionID{ItemID: config.ID},
-			Name:        config.Name,
-			Callback:    config.Callback,
-			ProcMask:    config.ProcMask,
-			Outcome:     config.Outcome,
-			Harmful:     config.Harmful,
-			ProcChance:  config.ProcChance,
-			PPM:         config.PPM,
-			ICD:         config.ICD,
-			ProcSpellID: config.ProcSpellID,
-			Handler:     handler,
+			ActionID:         core.ActionID{ItemID: config.ID},
+			Name:             config.Name,
+			Callback:         config.Callback,
+			ProcMask:         config.ProcMask,
+			Outcome:          config.Outcome,
+			Harmful:          config.Harmful,
+			ProcChance:       config.ProcChance,
+			PPM:              config.PPM,
+			ICD:              config.ICD,
+			ProcSpellID:      config.ProcSpellID,
+			AnyPeriodic:      config.AnyPeriodic,
+			CanProcFromProcs: config.CanProcFromProcs,
+			Handler:          handler,
 		})
 		procAura.Icd = triggerAura.Icd
 	})
@@ -156,15 +161,19 @@ func init() {
 		ICD:        time.Second * 45,
 	})
 	newProcStatBonusEffect(ProcStatBonusEffect{
-		Name:       "Dying Curse",
-		ID:         40255,
-		AuraID:     60494,
-		Bonus:      stats.Stats{stats.SpellPower: 765},
-		Duration:   time.Second * 10,
-		Callback:   core.CallbackOnCastComplete,
-		ProcMask:   core.ProcMaskSpellOrProc,
-		ProcChance: 0.15,
-		ICD:        time.Second * 45,
+		Name:     "Dying Curse",
+		ID:       40255,
+		AuraID:   60494,
+		Bonus:    stats.Stats{stats.SpellPower: 765},
+		Duration: time.Second * 10,
+		// 60493: a magic spell's damage or heal, triggered ones too, and every tick
+		Callback:         core.CallbackOnSpellHitDealt | core.CallbackOnHealDealt | core.CallbackOnPeriodicDamageDealt | core.CallbackOnPeriodicHealDealt,
+		ProcMask:         core.ProcMaskSpellOrProc | core.ProcMaskWeaponProc | core.ProcMaskSuppressedProc | core.ProcMaskSpellHealing,
+		Harmful:          true,
+		ProcChance:       0.15,
+		ICD:              time.Second * 45,
+		AnyPeriodic:      true,
+		CanProcFromProcs: true,
 	})
 	newProcStatBonusEffect(ProcStatBonusEffect{
 		Name:       "Grim Toll",

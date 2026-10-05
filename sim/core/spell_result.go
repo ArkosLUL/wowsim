@@ -100,22 +100,47 @@ func (result *SpellResult) HealingString() string {
 	return fmt.Sprintf("%s for %0.3f healing", result.Outcome.String(), result.Damage)
 }
 
+// MeleeAttackPower leaves out the creature-type attack power: a weapon hit gets it after its weapon
+// percent (versusAttackPowerBonus), a spell's attack power coefficient never.
 func (spell *Spell) MeleeAttackPower() float64 {
-	return spell.Unit.stats[stats.AttackPower] + spell.Unit.PseudoStats.MobTypeAttackPower
+	return spell.Unit.stats[stats.AttackPower]
 }
 
 func (spell *Spell) RangedAttackPower(target *Unit) float64 {
-	return spell.Unit.stats[stats.RangedAttackPower] +
-		spell.Unit.PseudoStats.MobTypeAttackPower +
-		target.PseudoStats.BonusRangedAttackPowerTaken
+	return spell.Unit.stats[stats.RangedAttackPower] + target.PseudoStats.BonusRangedAttackPowerTaken
 }
 
 // RangedAttackPowerSpellBonus is a spell_bonus_data row's own ap_bonus/ap_dot_bonus source
-// (Unit::GetTotalAttackPowerValue): Hunter's Mark included, but not a creature-type bonus, which only
-// Unit::MeleeDamageBonusDone's weapon-damage path reads (SPELL_AURA_MOD_RANGED_ATTACK_POWER_VERSUS). Use
-// this for a declared AP coefficient outside a WeaponPct multiplier; RangedAttackPower for the weapon part.
+// (Unit::GetTotalAttackPowerValue), Hunter's Mark included. The same as RangedAttackPower, which the
+// weapon part reads.
 func (spell *Spell) RangedAttackPowerSpellBonus(target *Unit) float64 {
-	return spell.Unit.stats[stats.RangedAttackPower] + target.PseudoStats.BonusRangedAttackPowerTaken
+	return spell.RangedAttackPower(target)
+}
+
+// versusAttackPowerBonus is Unit::MeleeDamageBonusDone's creature-type attack power
+// (SPELL_AURA_MOD_*_ATTACK_POWER_VERSUS) on a weapon hit: int32(AP / 14 × the weapon's speed, normalized or
+// not), added after the weapon percent.
+func (spell *Spell) versusAttackPowerBonus() float64 {
+	ap := spell.Unit.PseudoStats.MobTypeAttackPower
+	if ap == 0 || spell.Flags.Matches(SpellFlagIgnoreAttackerModifiers) {
+		return 0
+	}
+	weaponHit, normalized := spell.dealsWeaponDamage()
+	if !weaponHit {
+		return 0
+	}
+	weapon := spell.Unit.AutoAttacks.MH()
+	switch {
+	case spell.ProcMask.Matches(ProcMaskMeleeOH):
+		weapon = spell.Unit.AutoAttacks.OH()
+	case spell.ProcMask.Matches(ProcMaskRanged):
+		weapon = spell.Unit.AutoAttacks.Ranged()
+	}
+	speed := weapon.SwingSpeed
+	if normalized {
+		speed = weapon.NormalizedSwingSpeed
+	}
+	return math.Trunc(ap / DefaultAttackPowerPerDPS * speed)
 }
 
 func (spell *Spell) BonusWeaponDamage() float64 {
@@ -252,6 +277,9 @@ func (spell *Spell) calcDamageInternal(sim *Simulation, target *Unit, baseDamage
 
 	result := spell.NewResult(target)
 	result.Damage = baseDamage
+	if !isPeriodic && baseDamage > 0 {
+		result.Damage += spell.versusAttackPowerBonus()
+	}
 
 	if sim.Log == nil {
 		result.Damage *= attackerMultiplier
@@ -262,10 +290,10 @@ func (spell *Spell) calcDamageInternal(sim *Simulation, target *Unit, baseDamage
 	} else {
 		result.Damage *= attackerMultiplier
 		afterAttackMods := result.Damage
-		result.applyResistances(sim, spell, isPeriodic, attackTable)
-		afterResistances := result.Damage
 		result.applyTargetModifiers(spell, attackTable, isPeriodic)
 		afterTargetMods := result.Damage
+		result.applyResistances(sim, spell, isPeriodic, attackTable)
+		afterResistances := result.Damage
 		outcomeApplier(sim, result, attackTable)
 		afterOutcome := result.Damage
 		spell.ApplyPostOutcomeDamageModifiers(sim, result)
@@ -273,8 +301,8 @@ func (spell *Spell) calcDamageInternal(sim *Simulation, target *Unit, baseDamage
 
 		spell.Unit.Log(
 			sim,
-			"%s %s [DEBUG] MAP: %0.01f, RAP: %0.01f, SP: %0.01f, BaseDamage:%0.01f, AfterAttackerMods:%0.01f, AfterResistances:%0.01f, AfterTargetMods:%0.01f, AfterOutcome:%0.01f, AfterPostOutcome:%0.01f",
-			target.LogLabel(), spell.ActionID, spell.Unit.GetStat(stats.AttackPower), spell.Unit.GetStat(stats.RangedAttackPower), spell.Unit.GetStat(stats.SpellPower), baseDamage, afterAttackMods, afterResistances, afterTargetMods, afterOutcome, afterPostOutcome)
+			"%s %s [DEBUG] MAP: %0.01f, RAP: %0.01f, SP: %0.01f, BaseDamage:%0.01f, AfterAttackerMods:%0.01f, AfterTargetMods:%0.01f, AfterResistances:%0.01f, AfterOutcome:%0.01f, AfterPostOutcome:%0.01f",
+			target.LogLabel(), spell.ActionID, spell.Unit.GetStat(stats.AttackPower), spell.Unit.GetStat(stats.RangedAttackPower), spell.Unit.GetStat(stats.SpellPower), baseDamage, afterAttackMods, afterTargetMods, afterResistances, afterOutcome, afterPostOutcome)
 	}
 
 	result.Threat = spell.ThreatFromDamage(result.Outcome, result.Damage)
@@ -480,6 +508,9 @@ func (result *SpellResult) applyTargetModifiers(spell *Spell, attackTable *Attac
 
 	if spell.SpellSchool.Matches(SpellSchoolPhysical) && spell.Flags.Matches(SpellFlagIncludeTargetBonusDamage) {
 		result.Damage += attackTable.Defender.PseudoStats.BonusPhysicalDamageTaken
+	}
+	if taken := attackTable.Defender.PseudoStats.BonusDamageTaken; taken != 0 {
+		result.Damage += spell.flatDamageTaken(taken, attackTable.Defender, isPeriodic)
 	}
 
 	result.Damage *= spell.TargetDamageMultiplier(attackTable, isPeriodic)

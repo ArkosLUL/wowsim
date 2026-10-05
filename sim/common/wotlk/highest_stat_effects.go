@@ -81,7 +81,10 @@ func init() {
 				Harmful:    true,
 				ProcChance: 0.35,
 				ICD:        time.Second * 45,
-				ActionID:   core.ActionID{ItemID: itemID},
+				// 57345's DONE_PERIODIC: Serpent Sting's ticks too, though its proc mask is empty
+				AnyPeriodic:      true,
+				CanProcFromProcs: true,
+				ActionID:         core.ActionID{ItemID: itemID},
 				Handler: func(sim *core.Simulation, _ *core.Spell, _ *core.SpellResult) {
 					hsa.Get(character).Activate(sim)
 				},
