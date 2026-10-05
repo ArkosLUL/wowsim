@@ -10,6 +10,7 @@ import (
 
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
+	"github.com/wowsims/wotlk/sim/core/serverdata"
 	"github.com/wowsims/wotlk/sim/core/stats"
 )
 
@@ -83,13 +84,14 @@ type timingRecord struct {
 	} `json:"cost"`
 	ChannelMs *int32 `json:"channelMs"`
 	Aura      struct {
-		Applies  bool           `json:"applies"`
-		OnCaster bool           `json:"onCaster"`
-		BaseMs   int32          `json:"baseMs"`
-		Skipped  string         `json:"skipped"`
-		Immune   bool           `json:"immune"`
-		Ms       int32          `json:"ms"`
-		Effects  []timingEffect `json:"effects"`
+		Applies     bool           `json:"applies"`
+		OnCaster    bool           `json:"onCaster"`
+		BaseMs      int32          `json:"baseMs"`
+		ComboPoints int32          `json:"comboPoints"`
+		Skipped     string         `json:"skipped"`
+		Immune      bool           `json:"immune"`
+		Ms          int32          `json:"ms"`
+		Effects     []timingEffect `json:"effects"`
 	} `json:"aura"`
 }
 
@@ -97,7 +99,11 @@ func (r timingRecord) label() string {
 	if r.Command == "info" {
 		return "regen: " + r.Attacker.Name
 	}
-	return fmt.Sprintf("timing %d (%s): %s", r.Spell.ID, r.Spell.Name, r.Attacker.Name)
+	label := fmt.Sprintf("timing %d (%s)", r.Spell.ID, r.Spell.Name)
+	if r.Aura.ComboPoints > 0 {
+		label += fmt.Sprintf(" at %d combo points", r.Aura.ComboPoints)
+	}
+	return label + ": " + r.Attacker.Name
 }
 
 // damageRecord is the part of the record the damage replay's character builders read.
@@ -459,6 +465,12 @@ func (ts *timingSim) checkDuration(rec timingRecord) []Check {
 		return checks
 	case a.Immune || a.Skipped != "":
 		return append(checks, notCompared("aura", fmt.Sprintf("immune %v, skipped %q", a.Immune, a.Skipped)))
+	case needsComboPoints(rec.Spell.ID) && a.ComboPoints == 0:
+		return append(checks, notCompared("aura", "a finisher at no combo points, which Spell::CheckCast refuses"))
+	case needsComboPoints(rec.Spell.ID):
+		if err := ts.castFinisher(a.ComboPoints); err != nil {
+			return append(checks, fail("finisher cast", err.Error()))
+		}
 	}
 
 	if dot == nil {
@@ -487,6 +499,28 @@ func (ts *timingSim) checkDuration(rec timingRecord) []Check {
 			checkInt(name+" ticks", int64(dot.TotalTicks()), int64(e.Ticks)))
 	}
 	return checks
+}
+
+// needsComboPoints is SpellInfo::NeedsComboPoints: a finisher, whose aura WorldObject::CalcSpellDuration
+// lengthens per combo point.
+func needsComboPoints(spellID int32) bool {
+	s := serverdata.SpellByID(spellID)
+	return s != nil && s.Attributes[1]&attr1FinishingMove != 0
+}
+
+// castFinisher casts the spell at the dummy with that many combo points and a forced hit, so its aura or dot
+// takes the duration the points give it.
+func (ts *timingSim) castFinisher(points int32) error {
+	char, spell := ts.char, ts.spell
+	if !char.HasEnergyBar() {
+		return fmt.Errorf("the sim character has no combo points for %d", points)
+	}
+	char.AddComboPoints(ts.sim, points-char.ComboPoints(), char.NewComboPointMetrics(spell.ActionID))
+	flags := spell.Flags
+	spell.Flags |= core.SpellFlagAlwaysHit
+	defer func() { spell.Flags = flags }()
+	spell.SkipCastAndApplyEffects(ts.sim, ts.target)
+	return nil
 }
 
 // checkRegen compares mana and energy regen per second and the runes' cooldowns. The server keeps mana
@@ -535,19 +569,4 @@ type timingMismatch struct {
 // knownTimingMismatches are checks where the sim and the server really differ, each with its reason and a
 // row in the fixture README. The check still runs; only its failure is let through, in the passes named.
 // An entry no record needs fails TestTimingRecords.
-var knownTimingMismatches = func() map[timingMismatch]string {
-	const (
-		comboless = "the probe has no combo points, so the sim's finisher has no duration"
-	)
-	m := map[timingMismatch]string{}
-	add := func(reason string, class uint8, spell int32, passes []string, checks ...string) {
-		for _, p := range passes {
-			for _, c := range checks {
-				m[timingMismatch{class, spell, p, c}] = reason
-			}
-		}
-	}
-	add(comboless, 4, 48672, allPasses, "aura duration", "e0 ticks")
-	add(comboless, 4, 6774, allPasses, "aura duration")
-	return m
-}()
+var knownTimingMismatches = map[timingMismatch]string{}

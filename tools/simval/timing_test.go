@@ -56,12 +56,13 @@ func TestTimingRecords(t *testing.T) {
 	t.Logf("%d checks over %d compared records of %d", checked, compared, len(records))
 }
 
-// timingKey names a capture's record by what it probed: the spell (0 for an info), the player's class and
-// the pass.
+// timingKey names a capture's record by what it probed: the spell (0 for an info), the player's class, the
+// pass and the combo points.
 type timingKey struct {
-	spell int32
-	class uint8
-	pass  string
+	spell       int32
+	class       uint8
+	pass        string
+	comboPoints int32
 }
 
 // droppedTimingRecords disagree with the sim and were removed from the capture, each with a row in the
@@ -82,6 +83,13 @@ var timingProbes = map[uint8][]int32{
 	druid:       {48465, 48463, 48467, 48461, 48574},
 }
 
+// timingFinishers are the probes TestSimvalTiming takes at 1 to 5 combo points instead of none.
+var timingFinishers = map[int32]bool{48672: true, 6774: true}
+
+// timingRecapture are finishers the capture has no combo point records of yet, with a row in the fixture
+// README. The next TestSimvalTiming run records them; then remove the entry and the row.
+var timingRecapture = map[int32]bool{}
+
 func TestTimingFixtureHasEveryProbe(t *testing.T) {
 	path := filepath.Join("..", "..", fixtureDir, timingFixture)
 	if _, err := os.Stat(path); os.IsNotExist(err) {
@@ -97,18 +105,27 @@ func TestTimingFixtureHasEveryProbe(t *testing.T) {
 		if err != nil {
 			t.Fatalf("%s: %v", rec.label(), err)
 		}
-		have[timingKey{rec.Spell.ID, rec.Attacker.Class, pass}] = true
+		have[timingKey{rec.Spell.ID, rec.Attacker.Class, pass, rec.Aura.ComboPoints}] = true
 	}
 	for class, spells := range timingProbes {
-		for _, pass := range []string{"bare", "talents", "bloodlust"} {
+		for _, pass := range allPasses {
 			for _, spell := range append([]int32{0}, spells...) {
 				// a bot's two info records are its bare one and its Bloodlust one
 				if spell == 0 && pass == "talents" {
 					continue
 				}
-				key := timingKey{spell, class, pass}
-				if !have[key] && !slices.Contains(droppedTimingRecords, key) {
-					t.Errorf("no record for spell %d class %d, %s", spell, class, pass)
+				points := []int32{0}
+				if timingFinishers[spell] {
+					points = []int32{1, 2, 3, 4, 5}
+				}
+				for _, p := range points {
+					key := timingKey{spell, class, pass, p}
+					switch {
+					case timingRecapture[spell] && have[key]:
+						t.Errorf("%+v is in the capture now: remove spell %d from timingRecapture", key, spell)
+					case !have[key] && !timingRecapture[spell] && !slices.Contains(droppedTimingRecords, key):
+						t.Errorf("no record for %+v", key)
+					}
 				}
 			}
 		}
@@ -178,6 +195,25 @@ func TestTimingReplayOnHandCheckedRecords(t *testing.T) {
 			"cost": {"powerType": 0, "percent": 11, "amount": 0},
 			"aura": {"applies": true, "onCaster": false, "baseMs": 9000, "skipped": "no"}`, cast, speed, gcd)
 	}
+	// WorldObject::CalcSpellDuration: Rupture 6 s + 2 s and Slice and Dice 6 s + 3 s a combo point, every 2 s a tick
+	rupture := func(points, ms, ticks int) string {
+		return fmt.Sprintf(`
+			"cast": {"afterSpellModsMs": 0, "ms": 0, "haste": "none", %s},
+			"gcd": {"category": 133, "ms": 1000},
+			"cooldown": {"startsOnEvent": false, "ms": 0, "categoryMs": 0},
+			"cost": {"powerType": 3, "base": 25, "amount": 25},
+			"aura": {"applies": true, "onCaster": false, "baseMs": 6000, "comboPoints": %d, "ms": %d,
+				"effects": [{"index": 0, "periodic": true, "amplitudeMs": 2000, "ticks": %d}]}`, noHaste, points, ms, ticks)
+	}
+	sliceAndDice := func(points, ms int) string {
+		return fmt.Sprintf(`
+			"cast": {"afterSpellModsMs": 0, "ms": 0, "haste": "none", %s},
+			"gcd": {"category": 133, "ms": 1000},
+			"cooldown": {"startsOnEvent": false, "ms": 0, "categoryMs": 0},
+			"cost": {"powerType": 3, "base": 25, "amount": 25},
+			"aura": {"applies": true, "onCaster": true, "baseMs": 6000, "comboPoints": %d, "ms": %d,
+				"effects": [{"index": 1, "periodic": false, "amplitudeMs": 0, "ticks": 1}]}`, noHaste, points, ms)
+	}
 	deathCoil := func(cost int) string {
 		return fmt.Sprintf(`
 			"cast": {"afterSpellModsMs": 0, "ms": 0, "haste": "none", %s},
@@ -238,6 +274,24 @@ func TestTimingReplayOnHandCheckedRecords(t *testing.T) {
 				withCost(frostbolt(lustSpeed, 3000, 1500))),
 			failed: []string{"cast time", "gcd"},
 		},
+		{name: "Rupture at 3 combo points", rec: handTiming(t, rogue, 1, 48672, nil, rupture(3, 12000, 6))},
+		{name: "Rupture at 5 combo points", rec: handTiming(t, rogue, 1, 48672, nil, rupture(5, 16000, 8))},
+		{
+			name:   "Rupture at 3 combo points, timed like 2",
+			rec:    handTiming(t, rogue, 1, 48672, nil, rupture(3, 10000, 5)),
+			failed: []string{"aura duration", "e0 ticks"},
+		},
+		// the server can't cast it, so there's nothing to hold the sim to
+		{name: "Rupture at no combo points", rec: handTiming(t, rogue, 1, 48672, nil, rupture(0, 6000, 3))},
+		{name: "Slice and Dice at 1 combo point", rec: handTiming(t, rogue, 1, 6774, nil, sliceAndDice(1, 9000))},
+		{
+			name:   "Slice and Dice at 1 combo point, timed like 5",
+			rec:    handTiming(t, rogue, 1, 6774, nil, sliceAndDice(1, 21000)),
+			failed: []string{"aura duration"},
+		},
+		// Improved Slice and Dice 2/2: +50%
+		{name: "Slice and Dice at 2 combo points, talented", rec: handTiming(t, rogue, 1, 6774, []int32{14166},
+			sliceAndDice(2, 18000))},
 		{name: "Death Coil bare", rec: handTiming(t, deathKnight, 1, 49895, nil, deathCoil(400))},
 		{
 			name:   "Death Coil at 30 runic power",

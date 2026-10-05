@@ -53,16 +53,17 @@ func TestThreatRecords(t *testing.T) {
 }
 
 // threatKey names a capture's record by what it probed: the player's class, its stance, form, presence or
-// Righteous Fury, the spell and the target count the probe was given.
+// Righteous Fury, the spell, the target count the probe was given and the creatures fighting the caster.
 type threatKey struct {
-	class    uint8
-	form     int32
-	spell    int32
-	override int32
+	class     uint8
+	form      int32
+	spell     int32
+	override  int32
+	creatures int32
 }
 
 func (r threatRecord) key() threatKey {
-	return threatKey{r.Attacker.Class, r.form(), r.Spell.ID, r.override()}
+	return threatKey{r.Attacker.Class, r.form(), r.Spell.ID, r.override(), r.creatures()}
 }
 
 // threatDrop is why a probe has no record in the capture, with a row in the fixture README: the replay
@@ -74,11 +75,8 @@ type threatDrop struct {
 }
 
 var droppedThreatRecords = map[threatKey]threatDrop{
-	{deathKnight, 48263, 45524, 0}: {reason: "the sim has no Chains of Ice"},
-	{deathKnight, 48263, 49576, 0}: {reason: "the sim has no Death Grip"},
-	{paladin, 25780, 25742, 0}:     {"dropped while the sim character had no weapon", true},
-	{warlock, 0, 59092, 0}:         {"dropped while the sim character had no pet", true},
-	{shaman, 0, 60103, 0}:          {"dropped while the sim character had no off hand weapon", true},
+	{deathKnight, 48263, 45524, 0, 0}: {reason: "the sim has no Chains of Ice"},
+	{deathKnight, 48263, 49576, 0, 0}: {reason: "the sim has no Death Grip"},
 }
 
 // threatBot is one TestSimvalThreat character: its class, race, the auras its casts leave on it (talents,
@@ -90,10 +88,14 @@ type threatBot struct {
 	probes      []threatProbe
 }
 
-// threatProbe is a probed spell and the target count the probe was given, 0 for the cast's own.
+// threatProbe is a probed spell, the target count the probe was given (0 for the cast's own) and the creatures
+// fighting the caster (0 for the dummy alone).
 type threatProbe struct {
-	spell, override int32
+	spell, override, creatures int32
 }
+
+// threatAssistCreatures are the boss dummy and the two TestSimvalThreat's threatAssist puts in combat beside it.
+const threatAssistCreatures = 3
 
 func threatProbesOf(spells ...int32) []threatProbe {
 	out := make([]threatProbe, len(spells))
@@ -105,14 +107,15 @@ func threatProbesOf(spells ...int32) []threatProbe {
 
 // threatBots are TestSimvalThreat's characters and probes.
 var threatBots = []threatBot{
-	{"ProtWarrior", warrior, 1, []int32{71, 7376, 57339}, slices.Concat(threatProbesOf(47450, 47520), []threatProbe{{47520, 2}},
+	{"ProtWarrior", warrior, 1, []int32{71, 7376, 57339}, slices.Concat(threatProbesOf(47450, 47520), []threatProbe{{47520, 2, 0}},
 		threatProbesOf(57823, 47488, 47475, 50783, 47467, 47498, 47437, 47502, 12809, 57755, 47471))},
 	{"FuryWarrior", warrior, 1, []int32{29763, 2458, 7381},
 		threatProbesOf(47450, 47520, 47475, 50783, 23881, 1680, 47471, 47486, 7384, 47465)},
-	{"ProtPaladin", paladin, 1, []int32{25780, 57340}, threatProbesOf(48827, 53595, 61411, 20187, 48801, 48817, 48819, 25742, 35395)},
+	{"ProtPaladin", paladin, 1, []int32{25780, 57340}, slices.Concat(threatProbesOf(48827, 53595, 61411, 20187, 48801, 48817,
+		48819, 25742, 35395), []threatProbe{{20375, 0, threatAssistCreatures}})},
 	{"RetPaladin", paladin, 1, []int32{31881}, threatProbesOf(35395, 53385, 48801, 20187, 48806, 48819, 20424)},
 	{"BearDruid", druid, 4, []int32{9634, 9635, 21178, 57339}, slices.Concat(threatProbesOf(48480, 48568, 48564, 48562),
-		[]threatProbe{{48562, 3}}, threatProbesOf(48560, 60089, 16857))},
+		[]threatProbe{{48562, 3, 0}}, threatProbesOf(48560, 60089, 16857))},
 	{"CatDruid", druid, 4, []int32{768, 3025}, threatProbesOf(48572, 48566, 48574, 49800, 48577, 62078, 16857)},
 	{"FrostDeathKnight", deathKnight, 1, []int32{48263, 57340, 61261},
 		threatProbesOf(56815, 52212, 49909, 55262, 49924, 49941, 55271, 45524, 49576, 49895, 47632)},
@@ -122,7 +125,8 @@ var threatBots = []threatBot{
 	{"ShadowPriest", priest, 1, []int32{15320, 15473, 49868}, threatProbesOf(48127, 48156, 58381, 48125, 48160, 48300, 48158, 48123)},
 	{"Warlock", warlock, 1, []int32{18372, 17918},
 		threatProbesOf(47809, 47838, 47811, 47813, 59172, 47815, 47864, 47865, 47867, 50511, 59092)},
-	{"ElementalShaman", shaman, 11, []int32{30674}, threatProbesOf(49238, 49271, 60043, 49231, 49233, 49236, 60103, 61657, 61654)},
+	{"ElementalShaman", shaman, 11, []int32{30674}, slices.Concat(threatProbesOf(49238, 49271, 60043, 49231, 49233, 49236,
+		60103, 61657, 61654), []threatProbe{{61657, 0, threatAssistCreatures}})},
 }
 
 func threatFormOf(auras []int32) int32 {
@@ -152,7 +156,7 @@ func TestThreatFixtureHasEveryProbe(t *testing.T) {
 	}
 	for _, bot := range threatBots {
 		for _, p := range bot.probes {
-			key := threatKey{bot.class, threatFormOf(bot.auras), p.spell, p.override}
+			key := threatKey{bot.class, threatFormOf(bot.auras), p.spell, p.override, p.creatures}
 			_, dropped := droppedThreatRecords[key]
 			switch {
 			case !have[key] && !dropped:
@@ -214,14 +218,49 @@ func threatAPBonus(ap, threat float64) string {
 		"assist": false, "reachesDummy": true, "threat": %v`, ap, threat, threat, threat)
 }
 
+// threatAssistBody is a positive spell's record cast on the caster: no damage, the bonus modified by that
+// multiplier for one creature.
+func threatAssistBody(base, multiplier float64) string {
+	return fmt.Sprintf(`"damage": {"amount": 10000, "pctMod": 1, "afterPctMod": 10000, "afterSpellMods": 10000,
+			"schoolMultiplier": %v, "threat": %v},
+		"bonus": {"selected": {"count": 1, "dummy": false, "caster": true}, "source": "spellLevel", "base": %v,
+			"targets": 1, "perTarget": %v, "assist": true, "reachesDummy": true,
+			"modified": {"pctMod": 1, "afterPctMod": %v, "afterSpellMods": %v, "schoolMultiplier": %v}, "threat": %v}`,
+		multiplier, 10000*multiplier, base, base, base, base, multiplier, base*multiplier)
+}
+
+// threatShares are the creatures fighting the caster with those shares: the boss dummy first, then the
+// dummies TestSimvalThreat's threatAssist adds.
+func threatShares(shares ...float64) []threatShare {
+	entries := []int32{999000, 999001, 999003}
+	out := make([]threatShare, len(shares))
+	for i, threat := range shares {
+		out[i] = threatShare{Entry: entries[i%len(entries)], Dummy: i == 0, Threat: threat}
+	}
+	return out
+}
+
+func withShares(rec threatRecord, shares ...float64) threatRecord {
+	rec.Live.Assist = threatShares(shares...)
+	return rec
+}
+
 // Every probe but the dropped ones builds its sim character and casts, whatever the server's numbers.
 func TestThreatProbesReplay(t *testing.T) {
 	for _, bot := range threatBots {
 		for _, p := range bot.probes {
-			key := threatKey{bot.class, threatFormOf(bot.auras), p.spell, p.override}
+			key := threatKey{bot.class, threatFormOf(bot.auras), p.spell, p.override, p.creatures}
 			targets := max(1, int(p.override))
 			rec := handThreat(t, bot.class, bot.race, p.spell, bot.auras, 3000,
 				threatBody(1, 1, threatLandedBonus("spellLevel", 80, targets, 80)))
+			shares := make([]float64, p.creatures)
+			for i := range shares {
+				shares[i] = 80 / float64(p.creatures)
+			}
+			rec.Live.Assist = threatShares(shares...)
+			if rec.key() != key {
+				t.Errorf("%s: the hand-built record keys as %+v", bot.name, rec.key())
+			}
 			checks := checkThreat(rec)
 			var broken []string
 			for _, c := range checks {
@@ -249,10 +288,13 @@ func TestThreatReplayOnHandCheckedRecords(t *testing.T) {
 		bear        = []int32{9634, 9635, 21178, 57339}
 		frostDK     = []int32{48263, 57340, 61261}
 		warlockTal  = []int32{18372, 17918}
+		protPaladin = []int32{25780, 57340}
 	)
 	// Defensive Stance, Dire Bear Form and Frost Presence, each +45% with the tank passive's +43%: damage
 	// threat only, never the bonus
 	const def = 2.0735
+	// Righteous Fury's holy +80% with the tank passive's +43%, assist threat included
+	const rfHoly = 1.8 * 1.43
 
 	for _, c := range []struct {
 		name   string
@@ -391,6 +433,43 @@ func TestThreatReplayOnHandCheckedRecords(t *testing.T) {
 			rec:    handThreat(t, warlock, 1, 59092, warlockTal, 0, threatBody(1, 1, threatLandedBonus("none", 0, 1, 0))),
 			checks: []string{"damage threat (not compared)", "bonus"},
 		},
+		{
+			// Righteous Fury's holy +80% on the tank passive, the level 20 bonus all on the dummy fighting alone
+			name:   "Seal of Command, the dummy alone fighting",
+			rec:    withShares(handThreat(t, paladin, 1, 20375, protPaladin, 3000, threatAssistBody(20, rfHoly)), 20*rfHoly),
+			checks: []string{"damage threat (not compared)", "bonus"},
+		},
+		{
+			name: "Seal of Command shared by three creatures",
+			rec: withShares(handThreat(t, paladin, 1, 20375, protPaladin, 3000, threatAssistBody(20, rfHoly)),
+				20*rfHoly/3, 20*rfHoly/3, 20*rfHoly/3),
+			checks: []string{"damage threat (not compared)", "bonus", "assist shares"},
+		},
+		{
+			name: "Seal of Command whole on each of three creatures",
+			rec: withShares(handThreat(t, paladin, 1, 20375, protPaladin, 3000, threatAssistBody(20, rfHoly)),
+				20*rfHoly, 20*rfHoly, 20*rfHoly),
+			checks: []string{"damage threat (not compared)", "bonus", "assist shares"},
+			failed: []string{"bonus", "assist shares"},
+		},
+		{
+			// one under crowd control gets none and isn't counted: the sim has a target for each of the others
+			name: "Seal of Command with one of three creatures stunned",
+			rec: func() threatRecord {
+				rec := withShares(handThreat(t, paladin, 1, 20375, protPaladin, 3000, threatAssistBody(20, rfHoly)),
+					20*rfHoly/2, 0, 20*rfHoly/2)
+				rec.Live.Assist[1].Controlled = true
+				return rec
+			}(),
+			checks: []string{"damage threat (not compared)", "bonus", "assist shares"},
+		},
+		{
+			// Elemental Precision takes 30% off fire, the level 80 bonus too; 61654 deals the damage
+			name: "Fire Nova shared by three creatures",
+			rec: withShares(handThreat(t, shaman, 11, 61657, []int32{30674}, 3000, threatAssistBody(80, 0.7)),
+				56.0/3, 56.0/3, 56.0/3),
+			checks: []string{"damage threat (not compared)", "bonus", "assist shares"},
+		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			// the comparison alone, without knownThreatMismatches
@@ -414,7 +493,7 @@ func TestThreatReplayOnHandCheckedRecords(t *testing.T) {
 
 func TestThreatKnownMismatchPasses(t *testing.T) {
 	rec := handThreat(t, warrior, 1, 47450, []int32{71}, 3000, threatBody(2.0735, 1, threatLandedBonus("entry", 259, 1, 259*2.0735)))
-	key := threatMismatch{warrior, 71, 47450, 0, "bonus"}
+	key := threatMismatch{warrior, 71, 47450, 0, 0, "bonus"}
 	old, had := knownThreatMismatches[key]
 	knownThreatMismatches[key] = "the server's bonus is modified"
 	defer func() {
@@ -440,20 +519,34 @@ func TestThreatRecordTargets(t *testing.T) {
 		count, targets    int32
 		caster            bool
 		override, enemies int32
+		// the creatures fighting the caster, each true when under crowd control
+		fighting  []bool
+		creatures int32
 	}{
 		{name: "the dummy alone", count: 1, targets: 1, enemies: 1},
 		{name: "two given", count: 1, targets: 2, override: 2, enemies: 2},
 		{name: "the dummy and the caster", count: 2, targets: 2, caster: true, enemies: 1},
 		{name: "three given, the caster hit too", count: 2, targets: 3, caster: true, override: 3, enemies: 3},
 		{name: "skipped", count: 1, enemies: 1},
+		{name: "a self buff, the dummy alone fighting", count: 1, targets: 1, caster: true, fighting: []bool{false}, enemies: 1},
+		{name: "a self buff, three fighting", count: 1, targets: 1, caster: true, fighting: []bool{false, false, false},
+			enemies: 3, creatures: 3},
+		{name: "a self buff, three fighting, one stunned", count: 1, targets: 1, caster: true,
+			fighting: []bool{false, true, false}, enemies: 2, creatures: 3},
 	} {
 		var rec threatRecord
 		rec.Bonus.Selected.Count, rec.Bonus.Selected.Caster, rec.Bonus.Targets = c.count, c.caster, c.targets
+		for i, controlled := range c.fighting {
+			rec.Live.Assist = append(rec.Live.Assist, threatShare{Dummy: i == 0, Controlled: controlled})
+		}
 		if got := rec.override(); got != c.override {
 			t.Errorf("%s: override %d, want %d", c.name, got, c.override)
 		}
 		if got := rec.enemies(); got != int(c.enemies) {
 			t.Errorf("%s: %d enemies, want %d", c.name, got, c.enemies)
+		}
+		if got := rec.creatures(); got != c.creatures {
+			t.Errorf("%s: %d creatures, want %d", c.name, got, c.creatures)
 		}
 	}
 }
