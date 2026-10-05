@@ -626,31 +626,7 @@ ability_results: {
  key: "TestRestoration-Average-Default"
  value: {
   entries: {
-   key: "pet:Greater Fire Elemental|aura|{SpellID: 47240}"
-   value: {
-    uptime_s: 299.9236
-   }
-  }
-  entries: {
-   key: "pet:Greater Fire Elemental|aura|{SpellID: 47436}"
-   value: {
-    uptime_s: 299.9236
-   }
-  }
-  entries: {
    key: "pet:Greater Fire Elemental|aura|{SpellID: 57669}"
-   value: {
-    uptime_s: 299.9236
-   }
-  }
-  entries: {
-   key: "pet:Greater Fire Elemental|aura|{SpellID: 57722}"
-   value: {
-    uptime_s: 299.9236
-   }
-  }
-  entries: {
-   key: "pet:Greater Fire Elemental|aura|{SpellID: 58656}"
    value: {
     uptime_s: 299.9236
    }
@@ -895,31 +871,7 @@ ability_results: {
  key: "TestRestoration-Talents-HealingGrace-Average"
  value: {
   entries: {
-   key: "pet:Greater Fire Elemental|aura|{SpellID: 47240}"
-   value: {
-    uptime_s: 299.9236
-   }
-  }
-  entries: {
-   key: "pet:Greater Fire Elemental|aura|{SpellID: 47436}"
-   value: {
-    uptime_s: 299.9236
-   }
-  }
-  entries: {
    key: "pet:Greater Fire Elemental|aura|{SpellID: 57669}"
-   value: {
-    uptime_s: 299.9236
-   }
-  }
-  entries: {
-   key: "pet:Greater Fire Elemental|aura|{SpellID: 57722}"
-   value: {
-    uptime_s: 299.9236
-   }
-  }
-  entries: {
-   key: "pet:Greater Fire Elemental|aura|{SpellID: 58656}"
    value: {
     uptime_s: 299.9236
    }

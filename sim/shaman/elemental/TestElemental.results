@@ -1113,84 +1113,84 @@ dps_results: {
 dps_results: {
  key: "TestElemental-Settings-Orc-p1-EleFireElemental-advanced-FullBuffs-LongMultiTarget"
  value: {
-  dps: 10213.72717
+  dps: 9821.32776
   tps: 5066.20442
  }
 }
 dps_results: {
  key: "TestElemental-Settings-Orc-p1-EleFireElemental-advanced-FullBuffs-LongSingleTarget"
  value: {
-  dps: 7644.88416
+  dps: 7564.82303
   tps: 4347.13266
  }
 }
 dps_results: {
  key: "TestElemental-Settings-Orc-p1-EleFireElemental-advanced-FullBuffs-ShortSingleTarget"
  value: {
-  dps: 9168.44587
+  dps: 8994.96286
   tps: 5062.44845
  }
 }
 dps_results: {
  key: "TestElemental-Settings-Orc-p1-EleFireElemental-advanced-NoBuffs-LongMultiTarget"
  value: {
-  dps: 5764.25961
+  dps: 5605.23097
   tps: 2668.7142
  }
 }
 dps_results: {
  key: "TestElemental-Settings-Orc-p1-EleFireElemental-advanced-NoBuffs-LongSingleTarget"
  value: {
-  dps: 3896.2747
+  dps: 3885.5112
   tps: 2193.5632
  }
 }
 dps_results: {
  key: "TestElemental-Settings-Orc-p1-EleFireElemental-advanced-NoBuffs-ShortSingleTarget"
  value: {
-  dps: 6169.97885
+  dps: 6137.56682
   tps: 3519.30089
  }
 }
 dps_results: {
  key: "TestElemental-Settings-Orc-p1-EleFireElemental-default-FullBuffs-LongMultiTarget"
  value: {
-  dps: 9570.90013
+  dps: 9174.7834
   tps: 4533.45483
  }
 }
 dps_results: {
  key: "TestElemental-Settings-Orc-p1-EleFireElemental-default-FullBuffs-LongSingleTarget"
  value: {
-  dps: 7593.13563
+  dps: 7511.35602
   tps: 4297.46943
  }
 }
 dps_results: {
  key: "TestElemental-Settings-Orc-p1-EleFireElemental-default-FullBuffs-ShortSingleTarget"
  value: {
-  dps: 9025.0302
+  dps: 8848.09913
   tps: 4893.7003
  }
 }
 dps_results: {
  key: "TestElemental-Settings-Orc-p1-EleFireElemental-default-NoBuffs-LongMultiTarget"
  value: {
-  dps: 4868.20056
+  dps: 4709.63081
   tps: 1846.8738
  }
 }
 dps_results: {
  key: "TestElemental-Settings-Orc-p1-EleFireElemental-default-NoBuffs-LongSingleTarget"
  value: {
-  dps: 3359.51012
+  dps: 3348.92233
   tps: 1850.52241
  }
 }
 dps_results: {
  key: "TestElemental-Settings-Orc-p1-EleFireElemental-default-NoBuffs-ShortSingleTarget"
  value: {
-  dps: 6211.26425
+  dps: 6179.23075
   tps: 3501.02649
  }
 }
@@ -1281,84 +1281,84 @@ dps_results: {
 dps_results: {
  key: "TestElemental-Settings-Troll-p1-EleFireElemental-advanced-FullBuffs-LongMultiTarget"
  value: {
-  dps: 10072.95567
+  dps: 9700.81731
   tps: 5103.54016
  }
 }
 dps_results: {
  key: "TestElemental-Settings-Troll-p1-EleFireElemental-advanced-FullBuffs-LongSingleTarget"
  value: {
-  dps: 7587.34934
+  dps: 7512.15392
   tps: 4341.79075
  }
 }
 dps_results: {
  key: "TestElemental-Settings-Troll-p1-EleFireElemental-advanced-FullBuffs-ShortSingleTarget"
  value: {
-  dps: 8747.72269
+  dps: 8583.48274
   tps: 4823.33975
  }
 }
 dps_results: {
  key: "TestElemental-Settings-Troll-p1-EleFireElemental-advanced-NoBuffs-LongMultiTarget"
  value: {
-  dps: 5535.43172
+  dps: 5383.87135
   tps: 2621.43746
  }
 }
 dps_results: {
  key: "TestElemental-Settings-Troll-p1-EleFireElemental-advanced-NoBuffs-LongSingleTarget"
  value: {
-  dps: 3893.57851
+  dps: 3883.21676
   tps: 2213.79756
  }
 }
 dps_results: {
  key: "TestElemental-Settings-Troll-p1-EleFireElemental-advanced-NoBuffs-ShortSingleTarget"
  value: {
-  dps: 6135.34769
+  dps: 6104.46293
   tps: 3506.39567
  }
 }
 dps_results: {
  key: "TestElemental-Settings-Troll-p1-EleFireElemental-default-FullBuffs-LongMultiTarget"
  value: {
-  dps: 9404.08851
+  dps: 9026.87606
   tps: 4543.23933
  }
 }
 dps_results: {
  key: "TestElemental-Settings-Troll-p1-EleFireElemental-default-FullBuffs-LongSingleTarget"
  value: {
-  dps: 7541.22976
+  dps: 7466.64771
   tps: 4303.6538
  }
 }
 dps_results: {
  key: "TestElemental-Settings-Troll-p1-EleFireElemental-default-FullBuffs-ShortSingleTarget"
  value: {
-  dps: 9037.43441
+  dps: 8872.78172
   tps: 4987.55289
  }
 }
 dps_results: {
  key: "TestElemental-Settings-Troll-p1-EleFireElemental-default-NoBuffs-LongMultiTarget"
  value: {
-  dps: 4717.95314
+  dps: 4566.90746
   tps: 1848.4908
  }
 }
 dps_results: {
  key: "TestElemental-Settings-Troll-p1-EleFireElemental-default-NoBuffs-LongSingleTarget"
  value: {
-  dps: 3322.30709
+  dps: 3312.26471
   tps: 1842.45793
  }
 }
 dps_results: {
  key: "TestElemental-Settings-Troll-p1-EleFireElemental-default-NoBuffs-ShortSingleTarget"
  value: {
-  dps: 6071.17156
+  dps: 6040.91581
   tps: 3456.07238
  }
 }
@@ -1372,7 +1372,7 @@ dps_results: {
 dps_results: {
  key: "TestElemental-Talents-Convection-Average"
  value: {
-  dps: 7681.66487
+  dps: 7605.28385
   tps: 4374.10762
  }
 }
@@ -1380,25 +1380,7 @@ ability_results: {
  key: "TestElemental-Average-Default"
  value: {
   entries: {
-   key: "pet:Greater Fire Elemental|aura|{SpellID: 47240}"
-   value: {
-    uptime_s: 299.9236
-   }
-  }
-  entries: {
-   key: "pet:Greater Fire Elemental|aura|{SpellID: 47436}"
-   value: {
-    uptime_s: 299.9236
-   }
-  }
-  entries: {
    key: "pet:Greater Fire Elemental|aura|{SpellID: 57669}"
-   value: {
-    uptime_s: 299.9236
-   }
-  }
-  entries: {
-   key: "pet:Greater Fire Elemental|aura|{SpellID: 57722}"
    value: {
     uptime_s: 299.9236
    }
@@ -1763,8 +1745,8 @@ ability_results: {
     casts: 36.968
     hits: 35.087
     crit_pct: 12.90934
-    amount_per_hit: 3757.14987
-    amount: 131827.11752
+    amount_per_hit: 3293.60715
+    amount: 115562.79402
    }
   }
   entries: {
@@ -1773,8 +1755,8 @@ ability_results: {
     casts: 14.9215
     hits: 14.458
     crit_pct: 20.71172
-    amount_per_hit: 1729.40484
-    amount: 25003.73516
+    amount_per_hit: 1419.84894
+    amount: 20528.17594
    }
   }
   entries: {
@@ -1783,8 +1765,8 @@ ability_results: {
     casts: 15
     hits: 14.538
     crit_pct: 21.16866
-    amount_per_hit: 770.69245
-    amount: 11204.32679
+    amount_per_hit: 646.64459
+    amount: 9400.91902
    }
   }
   entries: {
@@ -1792,8 +1774,8 @@ ability_results: {
    value: {
     hits: 39
     crit_pct: 21.2
-    amount_per_hit: 163.80347
-    amount: 6388.33544
+    amount_per_hit: 154.49723
+    amount: 6025.39178
    }
   }
   entries: {
@@ -1815,25 +1797,7 @@ ability_results: {
    }
   }
   entries: {
-   key: "pet:Greater Fire Elemental|aura|{SpellID: 47240}"
-   value: {
-    uptime_s: 299.9236
-   }
-  }
-  entries: {
-   key: "pet:Greater Fire Elemental|aura|{SpellID: 47436}"
-   value: {
-    uptime_s: 299.9236
-   }
-  }
-  entries: {
    key: "pet:Greater Fire Elemental|aura|{SpellID: 57669}"
-   value: {
-    uptime_s: 299.9236
-   }
-  }
-  entries: {
-   key: "pet:Greater Fire Elemental|aura|{SpellID: 57722}"
    value: {
     uptime_s: 299.9236
    }
