@@ -162,7 +162,7 @@ dps_results: {
  key: "TestDisc-AllItems-ChaoticSkyflareDiamond"
  value: {
   tps: 22.55777
-  hps: 3803.78025
+  hps: 3793.99056
  }
 }
 dps_results: {
@@ -358,14 +358,14 @@ dps_results: {
  key: "TestDisc-AllItems-ForlornSkyflareDiamond"
  value: {
   tps: 22.55777
-  hps: 3811.45547
+  hps: 3793.99056
  }
 }
 dps_results: {
  key: "TestDisc-AllItems-ForlornStarflareDiamond"
  value: {
   tps: 22.55777
-  hps: 3807.96249
+  hps: 3793.99056
  }
 }
 dps_results: {
@@ -442,7 +442,7 @@ dps_results: {
  key: "TestDisc-AllItems-IllustrationoftheDragonSoul-40432"
  value: {
   tps: 25.38097
-  hps: 3698.15649
+  hps: 3778.52403
  }
 }
 dps_results: {
@@ -456,7 +456,7 @@ dps_results: {
  key: "TestDisc-AllItems-ImpassiveStarflareDiamond"
  value: {
   tps: 22.55777
-  hps: 3803.10598
+  hps: 3793.99056
  }
 }
 dps_results: {
