@@ -66,6 +66,10 @@ func TestFlags(t *testing.T) {
 		{"always hit", func(d *spellset.DumpSpell) { d.Attributes[3] = attr3AlwaysHit }, serverdata.FlagAlwaysHit, true},
 		{"completely blocked", func(d *spellset.DumpSpell) { d.Attributes[3] = attr3CompletelyBlocked }, serverdata.FlagCompletelyBlocked, true},
 		{"haste affects periodic", func(d *spellset.DumpSpell) { d.Attributes[5] = attr5SpellHasteAffectsPeriodic }, serverdata.FlagHasteAffectsPeriodic, true},
+		{"single target", func(*spellset.DumpSpell) {}, serverdata.FlagTargetsArea, false},
+		{"an area around the caster", func(d *spellset.DumpSpell) { d.Effects[2].TargetA = 22; d.Effects[2].TargetB = 15 }, serverdata.FlagTargetsArea, true},
+		{"a cone", func(d *spellset.DumpSpell) { d.Effects[0].TargetA = 24 }, serverdata.FlagTargetsArea, true},
+		{"a dynamic object isn't an area", func(d *spellset.DumpSpell) { d.Effects[0].TargetA = 28 }, serverdata.FlagTargetsArea, false},
 	} {
 		d := magicSpell()
 		tc.edit(d)

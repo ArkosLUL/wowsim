@@ -36,7 +36,7 @@ func (dk *Deathknight) registerDeathAndDecaySpell() {
 		DamageMultiplier: core.TernaryFloat64(hasGlyph, 1.2, 1),
 		ThreatMultiplier: 1,
 		ThreatSpellID:    52212,
-		CritMultiplier:   dk.DefaultMeleeCritMultiplier(),
+		CritMultiplier:   dk.magicCritMultiplier(0),
 
 		// each tick casts 52212 with the aura's amount as its base points (spell_dk_death_and_decay_aura),
 		// adding 52212's AP

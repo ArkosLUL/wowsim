@@ -426,6 +426,18 @@ func (dk *Deathknight) bonusCritMultiplier(bonusTalentPoints int32) float64 {
 	return dk.MeleeCritMultiplier(1, 0.15*float64(bonusTalentPoints))
 }
 
+// magicCritMultiplier is for the magic damage class spells (Icy Touch, Death Coil, Blood Boil, Howling Blast,
+// Death and Decay): the spell base 1.5, then the Runic Focus passive (61455) doubles the bonus, plus 15% a point.
+func (dk *Deathknight) magicCritMultiplier(bonusTalentPoints int32) float64 {
+	return dk.SpellCritMultiplier(1, 1+0.15*float64(bonusTalentPoints))
+}
+
+// drwMagicCritMultiplier is the same for the rune weapon's copy: the DK's spell mods reach a guardian's
+// spells, the meta gem doesn't.
+func (dk *Deathknight) drwMagicCritMultiplier(bonusTalentPoints int32) float64 {
+	return dk.RuneWeapon.SpellCritMultiplier(1, 1+0.15*float64(bonusTalentPoints))
+}
+
 // spellModDamage stacks percent damage bonuses from talents, glyphs and set pieces the server's way:
 // Player::ApplySpellMod multiplies SPELLMOD_DAMAGE and SPELLMOD_DOT percentages, it doesn't add them.
 func spellModDamage(bonuses ...float64) float64 {

@@ -160,7 +160,7 @@ func NewWarrior(character *core.Character, talents string, inputs WarriorInputs)
 }
 
 func (warrior *Warrior) autoCritMultiplier() float64 {
-	return warrior.MeleeCritMultiplier(warrior.poleaxeCritDamage(), 0)
+	return warrior.WhiteCritMultiplier(warrior.poleaxeCritDamage())
 }
 
 // Poleaxe Specialization's crit damage is an aura the server keeps on while any weapon slot holds an axe or

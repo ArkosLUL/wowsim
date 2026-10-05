@@ -182,7 +182,7 @@ func applyConsumeEffects(agent Agent) {
 			})
 		case proto.BattleElixir_ElixirOfDemonslaying:
 			if character.CurrentTarget.MobType == proto.MobType_MobTypeDemon {
-				character.PseudoStats.MobTypeAttackPower += 265
+				character.PseudoStats.MobTypeAttackPower += 105
 			}
 		case proto.BattleElixir_ElixirOfMajorAgility:
 			character.AddStats(stats.Stats{

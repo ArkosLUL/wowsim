@@ -1,6 +1,7 @@
 package core
 
 import (
+	"math"
 	"strconv"
 	"time"
 
@@ -400,10 +401,10 @@ func GiftOfArthasAura(target *Unit) *Aura {
 		ActionID: ActionID{SpellID: 11374},
 		Duration: time.Minute * 3,
 		OnGain: func(aura *Aura, sim *Simulation) {
-			aura.Unit.PseudoStats.BonusPhysicalDamageTaken += 8
+			aura.Unit.PseudoStats.BonusDamageTaken += 8
 		},
 		OnExpire: func(aura *Aura, sim *Simulation) {
-			aura.Unit.PseudoStats.BonusPhysicalDamageTaken -= 8
+			aura.Unit.PseudoStats.BonusDamageTaken -= 8
 		},
 	})
 }
@@ -620,14 +621,36 @@ func ExposeArmorAura(target *Unit, hasGlyph bool) *Aura {
 	return aura
 }
 
+// AP Debuffs (spell_group 1062) is exclusive highest per aura, so a stronger AP debuff takes the whole
+// curse off, its armor too. Its armor is on only while its attack power is the one that counts.
 func CurseOfWeaknessAura(target *Unit, points int32) *Aura {
-	aura := target.GetOrRegisterAura(Aura{
-		Label:    "Curse of Weakness" + strconv.Itoa(int(points)),
+	label := "Curse of Weakness" + strconv.Itoa(int(points))
+	if aura := target.GetAura(label); aura != nil {
+		return aura
+	}
+	var ap, armor *ExclusiveEffect
+	aura := target.RegisterAura(Aura{
+		Label:    label,
 		ActionID: ActionID{SpellID: 50511},
 		Duration: time.Minute * 2,
+		OnGain: func(_ *Aura, sim *Simulation) {
+			if !ap.IsActive() {
+				armor.Deactivate(sim)
+			}
+		},
 	})
-	minorArmorReductionEffect(aura, 0.05)
-	apReductionEffect(aura, addPct(478, 10*float64(points)))
+	// Improved Curse of Weakness is an int32 spell mod on -478: -573 at 2 points
+	ap = apReductionEffect(aura, math.Trunc(addPct(478, 10*float64(points))))
+	armor = minorArmorReductionEffect(aura, 0.05)
+	gain, expire := ap.OnGain, ap.OnExpire
+	ap.OnGain = func(ee *ExclusiveEffect, sim *Simulation) {
+		gain(ee, sim)
+		armor.Activate(sim)
+	}
+	ap.OnExpire = func(ee *ExclusiveEffect, sim *Simulation) {
+		expire(ee, sim)
+		armor.Deactivate(sim)
+	}
 	return aura
 }
 
@@ -874,35 +897,31 @@ func RuneOfRazoriceVulnerabilityAura(target *Unit, caster *Unit) *Aura {
 }
 
 func InsectSwarmAura(target *Unit) *Aura {
-	aura := target.GetOrRegisterAura(Aura{
+	return target.GetOrRegisterAura(increasedMissAura(Aura{
 		Label:    "InsectSwarmMiss",
 		ActionID: ActionID{SpellID: 27013},
 		Duration: time.Second * 12,
-	})
-	increasedMissEffect(aura, 0.03)
-	return aura
+	}, 0.03))
 }
 
 func ScorpidStingAura(target *Unit) *Aura {
-	aura := target.GetOrRegisterAura(Aura{
+	return target.GetOrRegisterAura(increasedMissAura(Aura{
 		Label:    "Scorpid Sting",
 		ActionID: ActionID{SpellID: 3043},
 		Duration: time.Second * 20,
-	})
-	increasedMissEffect(aura, 0.03)
-	return aura
+	}, 0.03))
 }
 
-func increasedMissEffect(aura *Aura, increasedMissChance float64) *ExclusiveEffect {
-	return aura.NewExclusiveEffect("IncreasedMiss", false, ExclusiveEffect{
-		Priority: increasedMissChance,
-		OnGain: func(ee *ExclusiveEffect, sim *Simulation) {
-			ee.Aura.Unit.PseudoStats.IncreasedMissChance += increasedMissChance
-		},
-		OnExpire: func(ee *ExclusiveEffect, sim *Simulation) {
-			ee.Aura.Unit.PseudoStats.IncreasedMissChance -= increasedMissChance
-		},
-	})
+// Insect Swarm and Scorpid Sting stack on a creature: HandleModHitChance adds each to m_modMeleeHitChance,
+// which the miss roll reads raw, so Hit Chance Debuffs' same-effect rule (spell_group 1060) never applies.
+func increasedMissAura(config Aura, increasedMissChance float64) Aura {
+	config.OnGain = func(aura *Aura, sim *Simulation) {
+		aura.Unit.PseudoStats.IncreasedMissChance += increasedMissChance
+	}
+	config.OnExpire = func(aura *Aura, sim *Simulation) {
+		aura.Unit.PseudoStats.IncreasedMissChance -= increasedMissChance
+	}
+	return config
 }
 
 func TotemOfWrathDebuff(target *Unit) *Aura {

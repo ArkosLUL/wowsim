@@ -313,9 +313,9 @@ func GenerateCriticalDamageMultiplierTestCase(
 	case Poison:
 		actualMultiplier = rog.SpellCritMultiplier()
 	case MHAuto:
-		actualMultiplier = rog.MeleeCritMultiplier(false)
+		actualMultiplier = rog.AutoAttacks.MHConfig().CritMultiplier
 	case OHAuto:
-		actualMultiplier = rog.MeleeCritMultiplier(false)
+		actualMultiplier = rog.AutoAttacks.OHConfig().CritMultiplier
 	case Builder:
 		actualMultiplier = rog.MeleeCritMultiplier(true)
 	case Finisher:
@@ -330,15 +330,15 @@ func GenerateCriticalDamageMultiplierTestCase(
 
 }
 
-// Verifies the critical damage multipliers conform to
-// https://github.com/where-fore/rogue-wotlk/issues/31
+// The server adds the crit damage auras (meta gem, Prey on the Weak) up for poisons, builders and finishers
+// (Unit::SpellCriticalDamageBonus) and multiplies them for white swings (Unit::CalculateMeleeDamage).
 func TestCritDamageMultipliers(t *testing.T) {
 	// Poison, no RED
 	GenerateCriticalDamageMultiplierTestCase(t, "Poison", GearWithoutRED, CombatNoPotWTalents, PlayerOptionsNoPotW, Poison, 1.5)
 	// Poison, with RED
 	GenerateCriticalDamageMultiplierTestCase(t, "PoisonRED", GearWithRED, CombatNoPotWTalents, PlayerOptionsNoPotW, Poison, 1.545000)
 	// Poison, with RED & PotW
-	GenerateCriticalDamageMultiplierTestCase(t, "PoisonREDPotW", GearWithRED, CombatTalents, PlayerOptionsCombatDI, Poison, 1.854000)
+	GenerateCriticalDamageMultiplierTestCase(t, "PoisonREDPotW", GearWithRED, CombatTalents, PlayerOptionsCombatDI, Poison, 1.845)
 	// Auto, no RED, no Lethality, no PotW
 	GenerateCriticalDamageMultiplierTestCase(t, "Auto", GearWithoutRED, CombatNoLethalityNoPotWTalents, PlayerOptionsNoLethalityNoPotW, MHAuto, 2.0)
 	// Auto, RED, no Lethality, no PotW
@@ -352,11 +352,11 @@ func TestCritDamageMultipliers(t *testing.T) {
 	// Builder, no RED, Lethality, PotW
 	GenerateCriticalDamageMultiplierTestCase(t, "BuilderLethalityPotW", GearWithoutRED, CombatTalents, PlayerOptionsCombatDI, Builder, 2.820000)
 	// Builder, RED, Lethality, PotW
-	GenerateCriticalDamageMultiplierTestCase(t, "BuilderREDLethalityPotW", GearWithRED, CombatTalents, PlayerOptionsCombatDI, Builder, 2.913600)
+	GenerateCriticalDamageMultiplierTestCase(t, "BuilderREDLethalityPotW", GearWithRED, CombatTalents, PlayerOptionsCombatDI, Builder, 2.898)
 	// Finisher, no RED, Lethality, PotW
 	GenerateCriticalDamageMultiplierTestCase(t, "FinisherLethalityPotW", GearWithoutRED, CombatTalents, PlayerOptionsCombatDI, Finisher, 2.4)
 	// Finisher, no RED, Lethality, PotW
-	GenerateCriticalDamageMultiplierTestCase(t, "FinisherREDLethalityPotW", GearWithRED, CombatTalents, PlayerOptionsCombatDI, Finisher, 2.472)
+	GenerateCriticalDamageMultiplierTestCase(t, "FinisherREDLethalityPotW", GearWithRED, CombatTalents, PlayerOptionsCombatDI, Finisher, 2.46)
 }
 
 // TestCombat's default player, as its FullBuffs LongSingleTarget test runs it

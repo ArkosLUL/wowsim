@@ -5,6 +5,7 @@ import (
 	"math"
 	"time"
 
+	"github.com/wowsims/wotlk/sim/core/serverdata"
 	"github.com/wowsims/wotlk/sim/core/stats"
 )
 
@@ -45,6 +46,55 @@ type ProcTrigger struct {
 	// ProcSpellID is the item, enchant or talent aura that procs. When set, its generated spell_proc
 	// entry gives ProcChance, PPM and ICD instead of the three fields above.
 	ProcSpellID int32
+
+	// AnyPeriodic lets every periodic tick past ProcMask, which then only filters direct hits and heals: the
+	// server's DONE_PERIODIC proc flag takes any dot or hot tick, whatever its spell's damage class. Ticks the
+	// server deals as casts of another spell (ticksAsCasts) stay out unless CanProcFromProcs.
+	AnyPeriodic bool
+
+	// CanProcFromProcs is the proc aura's SPELL_ATTR3_CAN_PROC_FROM_PROCS: triggered spells proc it too. With
+	// AnyPeriodic, a ticksAsCasts tick then counts as a direct hit of its spell's damage class.
+	CanProcFromProcs bool
+}
+
+const (
+	auraTypePeriodicTriggerSpell          = 23
+	auraTypePeriodicDummy                 = 226
+	auraTypePeriodicTriggerSpellWithValue = 227
+)
+
+// ticksAsCasts is whether the server deals this sim dot's ticks as triggered casts of another spell, from a
+// periodic trigger or dummy aura (Death and Decay, Blizzard, Volley, Explosive Shot). Those raise no
+// DONE_PERIODIC, only the triggered spell's own hit, which an aura without SPELL_ATTR3_CAN_PROC_FROM_PROCS
+// ignores (none of these tick spells has SPELL_ATTR3_NOT_A_PROC).
+func (spell *Spell) ticksAsCasts() bool {
+	s := spell.ServerSpell()
+	if s == nil {
+		return false
+	}
+	triggers := false
+	for _, e := range s.Effects {
+		switch e.Aura {
+		case auraTypePeriodicDamage, auraTypePeriodicDamagePercent, auraTypePeriodicHeal, auraTypePeriodicLeech:
+			return false
+		case auraTypePeriodicTriggerSpell, auraTypePeriodicDummy, auraTypePeriodicTriggerSpellWithValue:
+			triggers = true
+		}
+	}
+	return triggers
+}
+
+// tickCastMask is the proc mask of the hit a ticksAsCasts tick is on the server, by its damage class.
+func (spell *Spell) tickCastMask() ProcMask {
+	switch spell.ServerSpell().DmgClass {
+	case serverdata.DmgClassMagic:
+		return ProcMaskSpellDamage
+	case serverdata.DmgClassMelee:
+		return ProcMaskMeleeSpecial
+	case serverdata.DmgClassRanged:
+		return ProcMaskRangedSpecial
+	}
+	return ProcMaskEmpty
 }
 
 func ApplyProcTriggerCallback(unit *Unit, aura *Aura, config ProcTrigger) {
@@ -72,35 +122,47 @@ func ApplyProcTriggerCallback(unit *Unit, aura *Aura, config ProcTrigger) {
 	}
 
 	handler := config.Handler
-	callback := func(aura *Aura, sim *Simulation, spell *Spell, result *SpellResult) {
-		if config.SpellFlags != SpellFlagNone && !spell.Flags.Matches(config.SpellFlags) {
-			return
-		}
-		if config.ProcMaskExclude != ProcMaskUnknown && spell.ProcMask.Matches(config.ProcMaskExclude) {
-			return
-		}
-		if config.ProcMask != ProcMaskUnknown && !spell.ProcMask.Matches(config.ProcMask) {
-			return
-		}
-		if config.Outcome != OutcomeEmpty && !result.Outcome.Matches(config.Outcome) {
-			return
-		}
-		if config.Harmful && result.Damage == 0 {
-			return
-		}
-		if icd.Duration != 0 && !icd.IsReady(sim) {
-			return
-		}
-		if config.ProcChance != 1 && sim.UnitRandomFloat(unit, config.Name) > config.ProcChance {
-			return
-		} else if config.PPM != 0 && !ppmm.Proc(sim, spell.ProcMask, config.Name) {
-			return
-		}
+	callbackFor := func(anyPeriodic bool) func(aura *Aura, sim *Simulation, spell *Spell, result *SpellResult) {
+		return func(aura *Aura, sim *Simulation, spell *Spell, result *SpellResult) {
+			if config.SpellFlags != SpellFlagNone && !spell.Flags.Matches(config.SpellFlags) {
+				return
+			}
+			if config.ProcMaskExclude != ProcMaskUnknown && spell.ProcMask.Matches(config.ProcMaskExclude) {
+				return
+			}
+			if anyPeriodic {
+				if spell.ticksAsCasts() && !(config.CanProcFromProcs &&
+					(config.ProcMask == ProcMaskUnknown || spell.tickCastMask().Matches(config.ProcMask))) {
+					return
+				}
+			} else if config.ProcMask != ProcMaskUnknown && !spell.ProcMask.Matches(config.ProcMask) {
+				return
+			}
+			if config.Outcome != OutcomeEmpty && !result.Outcome.Matches(config.Outcome) {
+				return
+			}
+			if config.Harmful && result.Damage == 0 {
+				return
+			}
+			if icd.Duration != 0 && !icd.IsReady(sim) {
+				return
+			}
+			if config.ProcChance != 1 && sim.UnitRandomFloat(unit, config.Name) > config.ProcChance {
+				return
+			} else if config.PPM != 0 && !ppmm.Proc(sim, spell.ProcMask, config.Name) {
+				return
+			}
 
-		if icd.Duration != 0 {
-			icd.Use(sim)
+			if icd.Duration != 0 {
+				icd.Use(sim)
+			}
+			handler(sim, spell, result)
 		}
-		handler(sim, spell, result)
+	}
+	callback := callbackFor(false)
+	periodicCallback := callback
+	if config.AnyPeriodic {
+		periodicCallback = callbackFor(true)
 	}
 
 	if config.ProcChance == 0 {
@@ -114,13 +176,13 @@ func ApplyProcTriggerCallback(unit *Unit, aura *Aura, config ProcTrigger) {
 		aura.OnSpellHitTaken = callback
 	}
 	if config.Callback.Matches(CallbackOnPeriodicDamageDealt) {
-		aura.OnPeriodicDamageDealt = callback
+		aura.OnPeriodicDamageDealt = periodicCallback
 	}
 	if config.Callback.Matches(CallbackOnHealDealt) {
 		aura.OnHealDealt = callback
 	}
 	if config.Callback.Matches(CallbackOnPeriodicHealDealt) {
-		aura.OnPeriodicHealDealt = callback
+		aura.OnPeriodicHealDealt = periodicCallback
 	}
 	if config.Callback.Matches(CallbackOnCastComplete) {
 		aura.OnCastComplete = func(aura *Aura, sim *Simulation, spell *Spell) {

@@ -38,7 +38,7 @@ func (dk *Deathknight) registerBloodBoilSpell() {
 		},
 
 		DamageMultiplier: dk.bloodyStrikesBonus(BloodyStrikesBB),
-		CritMultiplier:   dk.bonusCritMultiplier(dk.Talents.MightOfMograine),
+		CritMultiplier:   dk.magicCritMultiplier(dk.Talents.MightOfMograine),
 		ThreatMultiplier: 1.0,
 
 		Direct: bloodBoilEffect,
@@ -65,7 +65,7 @@ func (dk *Deathknight) registerDrwBloodBoilSpell() {
 		ProcMask:    core.ProcMaskSpellDamage,
 
 		DamageMultiplier: dk.bloodyStrikesBonus(BloodyStrikesBB),
-		CritMultiplier:   dk.bonusCritMultiplier(dk.Talents.MightOfMograine),
+		CritMultiplier:   dk.drwMagicCritMultiplier(dk.Talents.MightOfMograine),
 		ThreatMultiplier: 1,
 
 		Direct: bloodBoilEffect,

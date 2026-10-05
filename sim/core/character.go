@@ -337,13 +337,15 @@ func (character *Character) clearBuildPhaseAuras(phase CharacterBuildPhase) {
 // Apply effects from all equipped core.
 func (character *Character) applyItemEffects(agent Agent) {
 	character.applySparkOfHope()
+	inactiveMeta := character.Equipment.inactiveMetaGem()
 	for slot, eq := range character.Equipment {
 		if applyItemEffect, ok := itemEffects[eq.ID]; ok {
 			applyItemEffect(agent)
 		}
 
-		for _, g := range eq.Gems {
-			if applyGemEffect, ok := itemEffects[g.ID]; ok {
+		for i := range eq.Gems {
+			g := &eq.Gems[i]
+			if applyGemEffect, ok := itemEffects[g.ID]; ok && g != inactiveMeta {
 				applyGemEffect(agent)
 			}
 		}
@@ -384,18 +386,28 @@ func (character *Character) GetBaseStats() stats.Stats {
 	return character.baseStats
 }
 
-// Returns the crit multiplier for a spell.
-// https://web.archive.org/web/20081014064638/http://elitistjerks.com/f31/t12595-relentless_earthstorm_diamond_-_melee_only/p4/
-// https://github.com/TheGroxEmpire/TBC_DPS_Warrior_Sim/issues/30
-// TODO "primaryModifiers" could be modelled as a PseudoStat, since they're unit-specific. "secondaryModifiers" apply to a specific set of spells.
-func (character *Character) calculateCritMultiplier(normalCritDamage float64, primaryModifiers float64, secondaryModifiers float64) float64 {
+// metaCritDamageBonus is the crit damage meta gems' SPELL_AURA_MOD_CRIT_DAMAGE_BONUS (163), 3% on every school.
+func (character *Character) metaCritDamageBonus() float64 {
 	if character.HasMetaGemEquipped(34220) ||
 		character.HasMetaGemEquipped(32409) ||
 		character.HasMetaGemEquipped(41285) ||
 		character.HasMetaGemEquipped(41398) {
-		primaryModifiers *= 1.03
+		return 0.03
 	}
-	return 1.0 + (normalCritDamage*primaryModifiers-1.0)*(1.0+secondaryModifiers)
+	return 0
+}
+
+// Unit::SpellCriticalDamageBonus, for spells and specials: the base crit takes the 163 auras added up (the meta
+// gem's 3% and whatever primaryModifiers holds over 1), then the summed SPELLMOD_CRIT_DAMAGE_BONUS talents
+// (secondaryModifiers) scale what's above 1.
+func (character *Character) calculateCritMultiplier(normalCritDamage float64, primaryModifiers float64, secondaryModifiers float64) float64 {
+	return 1.0 + (normalCritDamage*(primaryModifiers+character.metaCritDamageBonus())-1.0)*(1.0+secondaryModifiers)
+}
+
+// WhiteCritMultiplier is a white melee swing's. Unit::CalculateMeleeDamage multiplies the 163 auras into its 2x
+// one by one instead of adding them up, so primaryModifiers and the meta gem's 3% multiply here.
+func (character *Character) WhiteCritMultiplier(primaryModifiers float64) float64 {
+	return 2.0 * primaryModifiers * (1 + character.metaCritDamageBonus())
 }
 func (character *Character) calculateHealingCritMultiplier(normalCritDamage float64, primaryModifiers float64, secondaryModifiers float64) float64 {
 	if character.HasMetaGemEquipped(41376) {
@@ -403,6 +415,9 @@ func (character *Character) calculateHealingCritMultiplier(normalCritDamage floa
 	}
 	return 1.0 + (normalCritDamage*primaryModifiers-1.0)*(1.0+secondaryModifiers)
 }
+
+// SpellCritMultiplier and MeleeCritMultiplier are by damage class: 1.5 for magic, 2 for melee and ranged.
+// primaryModifiers is 1 plus the 163 auras but the meta gem's (1.1 for Predatory Instincts).
 func (character *Character) SpellCritMultiplier(primaryModifiers float64, secondaryModifiers float64) float64 {
 	return character.calculateCritMultiplier(1.5, primaryModifiers, secondaryModifiers)
 }
@@ -559,10 +574,12 @@ func (character *Character) HasRingEquipped(itemID int32) bool {
 	return character.Finger1().ID == itemID || character.Finger2().ID == itemID
 }
 
+// HasMetaGemEquipped is whether the head holds the meta gem with its condition met.
 func (character *Character) HasMetaGemEquipped(gemID int32) bool {
 	for _, gem := range character.Head().Gems {
 		if gem.ID == gemID {
-			return true
+			inactive := character.Equipment.inactiveMetaGem()
+			return inactive == nil || inactive.ID != gemID
 		}
 	}
 	return false

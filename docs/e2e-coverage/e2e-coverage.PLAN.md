@@ -1162,6 +1162,53 @@ equipment, `live.assist`) and pre-cast state (cat energy, the rogue's poison sta
   the DK crit base, rune costs and Serpent Sting's proc mask; the drop entries and README rows it fixes.
 - **Goldens:** every suite that moves; report each.
 
+#### As built
+
+Stage crit and procs (notes in `tmp/ec-core-crit.md`):
+- EC-RECHECK's spelldump is committed; `gen_serverdata` found no DB/capture disagreement and moved nothing.
+- Crit damage: spells and specials sum the aura 163 bonuses (meta gem, Predatory Instincts, Prey on the Weak,
+  Poleaxe) before `SPELLMOD_CRIT_DAMAGE_BONUS` scales the part over 1; white swings multiply them
+  (`Character.WhiteCritMultiplier`). DK magic spells (Icy Touch, Death Coil, Blood Boil, Howling Blast, Death and
+  Decay) crit from 1.5 with Runic Focus' +100% and Might of Mograine / Guile of Gorefiend; the rune weapon gets the
+  DK's mods, not the meta.
+- `ProcTrigger.AnyPeriodic` is `DONE_PERIODIC`: any dot or hot tick procs whatever its mask. A tick the server deals
+  as a triggered cast (aura 23, 226, 227) only procs a `CanProcFromProcs` aura (`SPELL_ATTR3_CAN_PROC_FROM_PROCS`:
+  Greatness, Dying Curse), as a hit of its damage class. Illustration of the Dragon Soul and Dying Curse proc on landed
+  hits, heals and ticks, Dying Curse on triggered magic hits too; Greatness on ticks too.
+- Verdicts, all fixed, entries and rows gone: goldchar Icy Touch, Death Coil (2.09), Rake (2.26), Instant and Wound
+  Poison (1.845), Thunder Clap, Heroic Throw (2.392); the fights' 6 `dot procs`. Serpent Sting keeps
+  `ProcMaskEmpty`: a ranged mask would fire the sim's landed-only ranged procs on its no-damage hit, which the
+  server's damage-only entries (spellTypeMask 1) skip. WarriorArms' Rend `tick crit mean` drop went stale under the
+  new RNG (ticks still ~13% high, EC-MELEE-FIX's).
+
+Stage gear and debuffs:
+- Costs (`cost.go`): `(base + flats) × (1 + Σ percents)`, 0 once the flats reach it (`spellModCost`). A DK's runic
+  power cost (now tenths in `RuneCost`) takes the whole arithmetic, each rune count the spell mods only
+  (`runeCountFor`), replacing `CurCast.Cost *= CostMultiplier`. A rune spell's runic power gain no longer needs a
+  cost left to pay (`Spell::TakeRunePower`): Freezing Fog's Howling Blast gains its 15.
+- Debuffs: Curse of Weakness' armor is on only while its AP (−573, truncated) is the AP debuff that counts; Insect
+  Swarm and Scorpid Sting stack (`spellGroupAllowances` and `stackingBuffPairs` carry the server's reason).
+- Gear: the three tailoring embroideries' +1 spirit; Elixir of Demonslaying +105; the Blessed undead sets ×1.01,
+  ×1.02, ×1.03 multiplied. Creature-type AP leaves `MeleeAttackPower`/`RangedAttackPower`; a white swing or a spell
+  with a weapon effect adds `int32(AP / 14 × speed)` after its weapon percent (`versusAttackPowerBonus`).
+- Gift of Arthas is `PseudoStats.BonusDamageTaken`, every school: whole on a weapon hit, else
+  `int32(8 × coefficient × stacks)` (`Unit::SpellDamageBonusTaken`: the `spell_bonus_data` value, else
+  `CalculateDefaultCoefficient`, which counts a dot's stacks twice and halves for an area target; new serverdata
+  `FlagTargetsArea`). Instant Poison +3, Garrote +1, Deadly Poison +38 a tick at 5 stacks.
+- Meta gems activate only with their `SpellItemEnchantmentCondition` met (`meta_gems.go`, the live DBC's 47 rows);
+  an inactive one gives no stats, no effect and fails `HasMetaGemEquipped`.
+- Verdicts, all fixed, entries and rows gone: spell-mod Berserk Mangle (Cat) and Shred cost; buffs CoW + Vindication
+  armor, IS + Scorpid hit; goldchar spirit (10 setups); mobs Demonslaying, Blessed 3pc and 4pc, Scourgebane on
+  Exorcism, Holy Wrath and Crusader Strike (`TestMobReplayCatchesMismatches` now holds them as agreements). Kept:
+  the NightElfDruid row (EC-NATURE-FIX's Predatory Strikes).
+- Goldens, both stages (`dock.sh delta`): 34 of 37 suites move; resto druid and shaman, holy paladin don't.
+  Average-Default: Feral −1.9%, FeralApl −2.1% (Berserk costs); Frost DK +0.7%, FrostUH +0.65% (Rime's runic
+  power); Assassination +0.55%, Subtlety +0.29%, Combat +0.10% (Deadly Poison +2%/hit); Smite +0.66%, Elemental
+  +0.46%, Balance +0.45%, Shadow +0.43% (stage 1's procs); casters +0.07 to +0.12% (Gift of Arthas); hunters −0.05 to
+  0% (pet Bite takes the spell path); tank dtps −6.8% to −13% (Insect Swarm + Scorpid). AllItems rows with an unmet
+  meta fall to the no-meta value (Chaotic Skyflare on Frost DK, Relentless on Balance), as do set rows that pull gemmed
+  pieces.
+
 ### EC-PET-FIX (Y; changes goldens)
 
 - The strikes README's pet rows: create stats from `pet_levelstats` or `Guardian::InitStatsForLevel`, armor, attack

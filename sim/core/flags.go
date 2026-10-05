@@ -185,7 +185,7 @@ const (
 	SpellFlagNoActiveDefense                                // SPELL_ATTR0_NO_ACTIVE_DEFENSE: can miss, nothing else
 	SpellFlagCompletelyBlocked                              // SPELL_ATTR3_COMPLETELY_BLOCKED on a spell with no direct damage: a block in the table stops it outright
 	SpellFlagAlwaysHit                                      // SPELL_ATTR3_ALWAYS_HIT: no miss, dodge, parry or block of any kind
-	SpellFlagIncludeTargetBonusDamage                       // Spell benefits from Gift of Arthas and Hemorrhage.
+	SpellFlagIncludeTargetBonusDamage                       // Spell benefits from Hemorrhage; without server data, it's also a weapon hit (dealsWeaponDamage).
 	SpellFlagBinary                                         // Does not do partial resists and could need a different hit roll.
 	SpellFlagChanneled                                      // Spell is channeled
 	SpellFlagDisease                                        // Spell is categorized as disease

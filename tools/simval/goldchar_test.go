@@ -225,33 +225,15 @@ type goldcharDrop struct {
 
 var droppedGoldchar = []goldcharDrop{
 	{"DeathknightBlood", 0, "armor penetration %"},
-	{"DeathknightBlood", 49909, "e0 damage crit"},
-	{"DeathknightBlood", 47632, "e0 damage crit"},
 	{"DeathknightBloodTank", 0, "dodge %"},
 	{"DeathknightBloodTank", 0, "parry %"},
 	{"DruidBalance", 0, "arcane spell crit %"},
 	{"DruidBalancePhase3", 0, "arcane spell crit %"},
 	{"DruidBalancePhase3", 0, "attack power"},
-	{"DruidBalancePhase3", 0, "spirit"},
-	{"DruidFeral", 48574, "e0 damage crit"},
 	{"DruidFeralApl", 0, "attack power"},
-	{"DruidFeralApl", 48574, "e0 damage crit"},
-	{"MageArcane", 0, "spirit"},
 	{"MageFire", 0, "arcane spell crit %"},
-	{"MageFire", 0, "spirit"},
 	{"MageFrostFire", 0, "arcane spell crit %"},
-	{"MageFrostFire", 0, "spirit"},
-	{"MageFrost", 0, "spirit"},
-	{"PriestShadow", 0, "spirit"},
-	{"RogueCombat", 57965, "e0 damage crit"},
-	{"RogueCombat", 57975, "e1 damage crit"},
-	{"ShamanElemental", 0, "spirit"},
-	{"WarlockAffliction", 0, "spirit"},
-	{"WarlockDemonology", 0, "spirit"},
 	{"WarlockDestruction", 0, "fire spell crit %"},
-	{"WarlockDestruction", 0, "spirit"},
-	{"WarriorArms", 47502, "e0 damage crit"},
-	{"WarriorArms", 57755, "e0 damage crit"},
 }
 
 // goldcharReport reports a record's checks, holding them to droppedGoldchar.

@@ -19,15 +19,6 @@ import (
 // droppedMobs are lines of mobsFixture, or checks of them, that disagree with the sim, each with a row in the
 // fixture README.
 var droppedMobs = slices.Concat(
-	// the server's Elixir of Demonslaying gives +105, the sim's 265
-	mobDrops("HumanWarrior", "elixirOfDemonslaying", 999005,
-		append(mobMinMax("47450 weapon", "47486 weapon"), "white normal damage")...),
-	// the server multiplies the set's three auras
-	mobDrops("HumanWarrior", "undeadSlaying3", 999004, mobMinMax("47450 weapon", "47486 weapon")...),
-	mobDrops("HumanWarrior", "undeadSlaying4", 999004,
-		append(mobMinMax("47450 weapon", "47486 weapon"), "white normal damage")...),
-	// versus attack power only reaches weapon damage on the server, once, after the weapon percent
-	mobDrops("HumanPaladin", "scourgebane", 999004, mobMinMax("48801 e0 damage", "48817 e0 damage", "35395 weapon")...),
 	// the server's Predatory Strikes ignores weapon enchants
 	mobDrops("NightElfDruid", "scourgebane", 999004, "attack power"),
 )
@@ -537,28 +528,28 @@ func TestMobReplayCatchesMismatches(t *testing.T) {
 			l, ref := pair("HumanWarrior", "elixirOfDemonslaying", demon)
 			mobTaken(t, &l, &ref, 47450, plus(25))
 			return []mobLine{l, ref}
-		}, failed: []string{"47450 weapon max", "47450 weapon min"}},
+		}},
 		{name: "the Blessed set's three auras multiplied", line: func() []mobLine {
 			l, ref := pair("HumanWarrior", "undeadSlaying4", undead)
 			mobTaken(t, &l, &ref, 47450, func(v float64) float64 { return math.Floor(v * 1.01 * 1.02 * 1.03) })
 			return []mobLine{l, ref}
-		}, failed: []string{"47450 weapon max", "47450 weapon min"}},
+		}},
 		{name: "Crusader Strike's Scourgebane after its 75%", line: func() []mobLine {
 			l, ref := pair("HumanPaladin", "scourgebane", undead)
 			mobTaken(t, &l, &ref, 35395, plus(33))
 			return []mobLine{l, ref}
-		}, failed: []string{"35395 weapon max", "35395 weapon min"}},
+		}},
 		{name: "Exorcism without the versus attack power", line: func() []mobLine {
 			l, ref := pair("HumanPaladin", "scourgebane", undead)
 			mobTaken(t, &l, &ref, 48801, plus(0))
 			return []mobLine{l, ref}
-		}, failed: []string{"48801 e0 damage max", "48801 e0 damage min"}},
+		}},
 		{name: "Holy Wrath without the versus attack power, held to the demon's", line: func() []mobLine {
 			l := mobTestLine(t, "HumanPaladin", "scourgebane", undead)
 			ref := mobTestLine(t, "HumanPaladin", "scourgebane", demon)
 			mobTaken(t, &l, &ref, 48817, plus(0))
 			return []mobLine{l, ref, mobTestLine(t, "HumanPaladin", "scourgebane", mechanical)}
-		}, failed: []string{"48817 e0 damage max", "48817 e0 damage min"}},
+		}},
 		{name: "Predatory Strikes ignoring the enchant", line: func() []mobLine {
 			l, ref := pair("NightElfDruid", "scourgebane", undead)
 			for i, a := range l.Info.Attacker.Attacks {

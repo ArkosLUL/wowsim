@@ -56,16 +56,11 @@ and is only logged; the others are removed.
 | Setup | Record | Check | Why |
 |---|---|---|---|
 | DeathknightBlood | info | armor penetration % | the sheet field is the aura's raw sum; the server applies Blood-Gorged to white swings and five strikes by its class mask, and the sim does the same per spell (`applyBloodGorged`), so nothing reaches `BonusArmorPenPct` |
-| DeathknightBlood | 49909 Icy Touch, 47632 Death Coil | e0 damage crit | magic class on the server: the meta gem's 3% goes on the spell base 1.5 (1.545), then Runic Focus doubles the bonus (2.09); the sim gives them the melee base 2.0 times 1.03 (2.06) |
 | DeathknightBloodTank | info | dodge %, parry % | Rune of the Stoneskin Gargoyle's +25 defense is skill on the server, which dodge and parry take undiminished; the sim adds it as defense rating, which diminishes |
 | DruidBalance, DruidBalancePhase3 | info | arcane spell crit % | spell specific crit in the sim (Improved Moonfire; Nature's Majesty and Dreamwalker 4pc on Starfire), spell mods on the server |
 | DruidBalancePhase3, DruidFeralApl | info | attack power | weapon feral AP: the server truncates dps × 14, then takes 767 off (983, 3175); the sim floors (dps − 54.8) × 14 (982, 3174) |
-| DruidBalancePhase3, MageArcane, MageFire, MageFrostFire, MageFrost, PriestShadow, ShamanElemental, WarlockAffliction, WarlockDemonology, WarlockDestruction | info | spirit | Lightweave Embroidery (3722) also gives 1 spirit on the server; the sim's enchant has no stats |
-| DruidFeral, DruidFeralApl | 48574 Rake | e0 damage crit | the server adds up the crit damage auras (meta gem 3%, Predatory Instincts 10%: 2.26); the sim multiplies them (2.266) |
 | MageFire, MageFrostFire | info | arcane spell crit % | spell specific crit in the sim (Khadgar's Regalia 4pc, World in Flames), spell mods on the server |
-| RogueCombat | 57965 Instant Poison IX, 57975 Wound Poison VII | e0, e1 damage crit | as Rake's, with Prey on the Weak's 20% (1.845 against the sim's 1.854) |
 | WarlockDestruction | info | fire spell crit % | Devastation: spell specific crit in the sim, a spell mod on the server |
-| WarriorArms | 47502 Thunder Clap, 57755 Heroic Throw | e0 damage crit | as Rake's, with Poleaxe Specialization's 5%, before Impale (2.392 against the sim's 2.3956) |
 
 `talents.jsonl`, each in `droppedSweep` (`tools/simval/talents_test.go`). Records stay; a dropped step (empty field)
 or field is only logged. A path in `sweepRerecord` changed its items or auras after the capture and replays as its
@@ -91,7 +86,6 @@ spell (empty check) or check is only logged.
 | DruidFeralCat | berserk | 48564 Mangle (Bear) | cooldown | not a sim gap: under Berserk the sim resets the cooldown after each cast instead of zeroing it |
 | ShamanRestoration | naturesSwiftness | 49273 Healing Wave | cast time, cast time before haste | the sim has no Improved Healing Wave (a filler step of the path, so a fix needs a re-record): 3000 ms, the server's 2600 ms before the aura |
 | PriestShadow | shadowFocus | 47585 Dispersion | miss | not a sim gap: Dispersion, a self buff, never rolls to hit; the sim's Shadow Focus hit leaves it out |
-| DruidFeralCat | berserk | 48566 Mangle (Cat), 48572 Shred | cost | the server's `Player::ApplySpellMod` takes a cost's percent mods after its flat ones, (base + flat) × percent: 19 and 21; the sim's `costFor` before them: 16 and 12 |
 
 `timing.jsonl`, each in `knownTimingMismatches` (`tools/simval/timing.go`, keyed by class, spell, pass and check name;
 passes are bare, talents and Bloodlust). The record stays and the check still runs; its failure is let through in the
@@ -109,21 +103,12 @@ then remove the row and the entry.
 | FrostDeathKnight | 49576 Death Grip | the sim has no Death Grip |
 
 `buffs.jsonl`, each in `droppedBuffs` (`tools/simval/buffs_test.go`). Lines stay; a dropped state or check is only
-logged.
-
-| Setup | State | Check | Why |
-|---|---|---|---|
-| RogueAssassination | debuff.curse_of_weakness+debuff.vindication | dummy armor, armor multiplier | AP Debuffs (spell_group 1062) is exclusive highest per aura: Vindication's -574 AP removes the whole Curse of Weakness (-573), its 5% armor too; the sim keeps the armor |
-| RogueAssassination | debuff.insect_swarm+debuff.scorpid_sting | dummy melee hit % | -6% on the server: `HandleModHitChance` adds each to a creature's `m_modMeleeHitChance`, which the miss roll reads raw, so Hit Chance Debuffs' same-effect rule (1060) never applies; the sim keeps -3% |
+logged. None now.
 
 `mobs.jsonl`, each in `droppedMobs` (`tools/simval/mobs_test.go`). Lines stay; a dropped line or check is only logged.
 
 | Bot | State | Dummy | Check | Why |
 |---|---|---|---|---|
-| HumanWarrior | elixirOfDemonslaying | 999005 | 47450 and 47486 weapon min, max; white normal damage | the server's 11406 gives +105 attack power against demons (Heroic Strike +25 = int(105 / 14 × 3.4)); the sim's Elixir of Demonslaying gives 265 |
-| HumanWarrior | undeadSlaying3 | 999004 | 47450 and 47486 weapon min, max | the server keeps each set bonus as its own aura (57943 +1%, 29068 +2%) and multiplies them: ×1.0302; the sim's `makeUndeadSet` gives 2% in all |
-| HumanWarrior | undeadSlaying4 | 999004 | 47450 and 47486 weapon min, max; white normal damage | the same plus 57944 +3%: ×1.0611 on the server, ×1.03 in the sim |
-| HumanPaladin | scourgebane | 999004 | 48801 e0 and 48817 e0 damage min, max; 35395 weapon min, max | versus attack power only reaches `MeleeDamageBonusDone` on the server, added once after the weapon percent: Exorcism and Holy Wrath don't move (sim +21, +10 through their AP coefficients); Crusader Strike +33 = int(140 / 14 × 3.3) (sim 75% of it) |
 | NightElfDruid | scourgebane | 999004 | attack power | the server's Predatory Strikes reads only the weapon's template, never its enchant: +0 form attack power (sim +28, 20% of 140) |
 
 `strikes.jsonl`: dropped records in `droppedStrikesRecords`, known mismatches in `knownStrikesMismatches` (both

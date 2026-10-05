@@ -143,12 +143,19 @@ func (druid *Druid) BalanceCritMultiplier() float64 {
 }
 
 func (druid *Druid) MeleeCritMultiplier(castedForm DruidForm) float64 {
-	// Assumes that Predatory Instincts is a primary rather than secondary modifier for now, but this needs to confirmed!
-	primaryModifier := 1.0
+	return druid.Character.MeleeCritMultiplier(druid.predatoryInstinctsCritDamage(castedForm), 0)
+}
+
+// Predatory Instincts is a crit damage aura (163), so a white swing multiplies it in where specials add it.
+func (druid *Druid) whiteCritMultiplier(castedForm DruidForm) float64 {
+	return druid.WhiteCritMultiplier(druid.predatoryInstinctsCritDamage(castedForm))
+}
+
+func (druid *Druid) predatoryInstinctsCritDamage(castedForm DruidForm) float64 {
 	if castedForm.Matches(Cat) {
-		primaryModifier = []float64{1, 1.03, 1.07, 1.10}[druid.Talents.PredatoryInstincts]
+		return []float64{1, 1.03, 1.07, 1.10}[druid.Talents.PredatoryInstincts]
 	}
-	return druid.Character.MeleeCritMultiplier(primaryModifier, 0)
+	return 1
 }
 
 func (druid *Druid) HasMajorGlyph(glyph proto.DruidMajorGlyph) bool {
