@@ -95,24 +95,18 @@ spell (empty check) or check is only logged.
 
 `timing.jsonl`, each in `knownTimingMismatches` (`tools/simval/timing.go`, keyed by class, spell, pass and check name;
 passes are bare, talents and Bloodlust). The record stays and the check still runs; its failure is let through in the
-passes named, and an entry no record fails is stale. `droppedTimingRecords` is empty.
-
-| Class | Spell | Check | Passes | Why |
-|---|---|---|---|---|
-| Rogue | 48672 Rupture, 6774 Slice and Dice | aura duration, e0 ticks | all | the probe has no combo points; the sim's finisher has no duration (Rupture) or its 5-point one (Slice and Dice) |
+passes named, and an entry no record fails is stale. It, `droppedTimingRecords` and `timingRecapture` (finishers
+without combo point records yet, `tools/simval/timing_test.go`) are empty.
 
 `threat.jsonl`, each in `droppedThreatRecords` (`tools/simval/threat_test.go`), removed from the file; real
 mismatches would go in `knownThreatMismatches` (`tools/simval/threat.go`), with the record kept: none now. The
-capture is one run's records with the Rogue's from a rerun. A `recapture` row replays now; the next
-`TestSimvalThreat` run restores its record, then remove the row and the entry.
+capture is one run's records. A `recapture` row replays now; the next `TestSimvalThreat` run restores its record,
+then remove the row and the entry.
 
 | Bot | Spell | Why |
 |---|---|---|
 | FrostDeathKnight | 45524 Chains of Ice | the sim has no Chains of Ice |
 | FrostDeathKnight | 49576 Death Grip | the sim has no Death Grip |
-| ProtPaladin | 25742 Seal of Righteousness | recapture: dropped while the sim character had no weapon |
-| Warlock | 59092 Dark Pact | recapture: dropped while the sim character had no pet |
-| ElementalShaman | 60103 Lava Lash | recapture: dropped while the sim character had no off hand weapon |
 
 `buffs.jsonl`, each in `droppedBuffs` (`tools/simval/buffs_test.go`). Lines stay; a dropped state or check is only
 logged.

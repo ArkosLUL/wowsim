@@ -1070,6 +1070,30 @@ Live stage (server `56ee3ed2b`; notes in `tmp/ec-cover-live.md`): `talents.jsonl
 - **Owns:** the module's C++ and `simval_commands.sql`, e2e `timing_test.go`, `threat_test.go`, `tools/simval/timing*.go`
   and `threat*.go`, both fixtures and their README rows.
 
+#### As built
+
+C++ and e2e (`-Werror -fsyntax-only` clean, e2e vetted; notes in `tmp/ec-probes-cpp.md`):
+- `.simval combopoints <1-5>` sets exactly that many on the selected unit (`Unit::AddComboPoints`). `.simval engage`
+  puts the selected dummy in combat with you, restarting its combat timeout.
+- `.simval timing … combo:<1-5>` gives the caster those points for the probe, its own back after;
+  `aura.comboPoints` records them (`WorldObject::CalcSpellDuration` reads them on any target).
+- `.simval threat`: an assist bonus goes through the real `ForwardThreatForAssistingMe` on the caster;
+  `live.assist` lists each creature fighting it with its share, `live.bonus` is the dummy's.
+- `TestSimvalTiming` probes Rupture and Slice and Dice at 1 to 5 points per pass. `TestSimvalThreat` probes Seal of
+  Command (ProtPaladin) and Fire Nova with two more dummies engaged: each of three gets a third.
+
+Sim: a finisher record is replayed by casting it with the record's points (none: not compared, `Spell::CheckCast`
+refuses it); the timing README row and `comboless` entries went. The threat replay builds a target per sharing
+creature, checks the dummy's share as `bonus` and the rest as `assist shares`. New probes waited as recapture
+entries (`timingRecapture`, `droppedThreatRecords`) until the live stage recorded them. Holy Shield was dropped
+as an assist probe: the sim's cast makes no threat at all (EC-THREAT-FIX2's self buffs).
+
+Live (2026-10-05, build of 16:25): `timing.jsonl` (198 timing, 20 info) and `threat.jsonl` (119) re-recorded; all
+replays pass, so `timingRecapture` and the five threat `recapture` drops went, with their rows. Rupture is
+6000 + 2000 ms per point, Slice and Dice 6000 + 3000 (+50% talented); Seal of Command and Fire Nova split a third
+to each creature, as the sim does. No compared value moved since the old capture; only new fields (EC-GEAR's
+equipment, `live.assist`) and pre-cast state (cat energy, the rogue's poison stacks) differ. No new mismatch.
+
 ### EC-TICK-FIX (Y; changes goldens, full suite)
 
 - The server updates players every world tick (`MinWorldUpdateTime`, 10 ms live) and creatures, pets and guardians

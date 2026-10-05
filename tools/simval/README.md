@@ -122,10 +122,11 @@ check in `knownStrikesMismatches` is let through; an entry nothing fails is stal
 
 `TestTimingRecords` replays `sim/core/testdata/simval/timing.jsonl`, a capture of mod-sim-validation's
 `TestSimvalTiming` (`.simval timing`, plus each bot's two `info` records for regen), on every `go test`; it skips
-without the file. `TestTimingFixtureHasEveryProbe` fails when a probe's bare, talent or Bloodlust record is missing
-and not in `droppedTimingRecords`. Capture it by running only `run.sh TestSimvalTiming`, which the default run
-leaves out ([testing](../../docs/guide/testing.md#against-the-server)). `CheckRecord` ignores `timing` records
-anyway, but the bots' `info` lines look like the base stats bots'.
+without the file. `TestTimingFixtureHasEveryProbe` fails when a probe's bare, talent or Bloodlust record (a
+`timingFinishers` one's at each of 1 to 5 combo points) is missing and in neither `droppedTimingRecords` nor
+`timingRecapture`, or `timingRecapture` lists a finisher the capture has. Capture it by running only
+`run.sh TestSimvalTiming`, which the default run leaves out ([testing](../../docs/guide/testing.md#against-the-server)).
+`CheckRecord` ignores `timing` records anyway, but the bots' `info` lines look like the base stats bots'.
 
 Per record (`timing.go`):
 - The character is `damage.go`'s (class, race, talent and glyph auras), plus Bloodlust registered when the record
@@ -136,9 +137,12 @@ Per record (`timing.go`):
   `channelMs` and aura duration, amplitude and tick count of the sim's dot or hot (re-run for the haste on the
   character), cost (`ApplyCostModifiers`; rage and runic power in tenths, truncated), rune costs and runic power gain
   (x10; the server lists runes as blood, unholy, frost). Cast speed and ranged speed within 1e-4.
+- A finisher (`SpellInfo::NeedsComboPoints` in the server data) is cast at the dummy first, forced to hit, with the
+  record's `aura.comboPoints`, so its dot or aura carries that duration.
 - Not compared, passed with the reason: a GCD outside category 133 (the sim has no GCD there), a cooldown the server
   starts on an event, a category cooldown the sim has no shared timer for, a cast made instant, an aura the sim
-  has no dot or aura for, an immune or skipped aura.
+  has no dot or aura for, an immune or skipped aura, a finisher's aura at no combo points (`Spell::CheckCast`
+  refuses that cast).
 - Regen, within 0.1%: mana per second with and without the five second rule, energy per second, and each rune's
   cooldown from `baseCooldownMs` (a timing record) and from `1000 / PLAYER_RUNE_REGEN` (an `info` record). Only
   these bots carry the regen fields. Mana regen is read at the server's intellect and spirit: the sim character
@@ -155,25 +159,30 @@ fixture README; the check still runs and logs, and an entry no record fails fail
 `TestSimvalThreat` (`.simval threat`), on every `go test`; it skips without the file. `TestThreatFixtureHasEveryProbe`
 fails when a probe's record is missing and not in `droppedThreatRecords`, or a dropped one is there.
 `TestThreatProbesReplay` builds and casts every probe without the server, so a sim change that breaks one shows
-before a recapture; a dropped probe must fail to build unless marked `recapture` (its record was lost, the next run
-restores it: then remove the entry). Capture by running only `run.sh TestSimvalThreat`, streamed as for `simval.jsonl`
-([testing](../../docs/guide/testing.md#against-the-server)); `CheckRecord` ignores `threat` records. Keep that run's
-`"command":"threat"` lines, remove the `droppedThreatRecords` keys, and keep only the last record of a repeated probe
-(the e2e repeats Envenom until the dummy shows the poison); the fixture test fails on a key twice.
+before a recapture; a dropped probe must fail to build unless marked `recapture` (the capture lacks its record,
+the next run brings it: then remove the entry). A probe's key includes the creatures fighting the caster when a
+positive spell's bonus was shared out (3 for `threatAssistCreatures`, 0 for the dummy alone). Capture by running only
+`run.sh TestSimvalThreat`, streamed as for `simval.jsonl` ([testing](../../docs/guide/testing.md#against-the-server));
+`CheckRecord` ignores `threat` records. Keep that run's `"command":"threat"` lines, remove the `droppedThreatRecords`
+keys, and keep only the last record of a repeated probe (the e2e repeats Envenom until the dummy shows the poison);
+the fixture test fails on a key twice.
 
 Per record (`threat.go`):
 - The character is `damage.go`'s, in the record's stance, form, presence or Righteous Fury (`threatForms`, which
   also names the spec tried first; a spec without that aura is skipped), plus `threatExtraSpecs` and
   `threatTaughtSpells`. `threatLoadouts` add what a spell reads (a weapon, an off hand, a pet), with
   `threatLoadoutSpecs` tried first. `threatSimSpells` maps probes the sim declares under another id. The
-  encounter has as many dummies as the server split the bonus over, minus the caster when it was hit.
+  encounter has as many dummies as the server split the bonus over, minus the caster when it was hit, or as many
+  as `live.assist` has creatures sharing a positive spell's bonus (not under crowd control), if more.
 - The spell is cast at the dummy (`SkipCastAndApplyEffects`, so the cast hands out its threat bonus) with a
   forced hit and no crit, attack power pinned to the server's, missiles landing at once, then the sim runs until
   just before anything later. Every tag of the id is measured; a tag landing nothing (Rune Strike's queue) gives
   way to the next. One tick of the dot it leaves is then run.
 - `damage threat`: the sim's threat per damage point (`ThreatFromDamage`, of the tag dealing most) times `amount`,
   against `damage.threat`. Not compared when neither the sim's cast nor the server spell deals damage.
-- `bonus`: the cast's threat on the dummy beyond its damage's, against `bonus.threat`.
+- `bonus`: the cast's threat on the dummy beyond its damage's, against `bonus.threat`, or the dummy's `live.assist`
+  share when more creatures fought.
+- `assist shares` (more creatures fought): the same on the sim's other dummies, against the other sharing creatures'.
 - `tick bonus`: the same for one tick, against 0 (aura ticks run no `HandleThreatSpells`), or against the record's
   bonus for a `threatTickSpells` probe, a server spell cast once per tick (Death and Decay's 52212), which gets no
   `bonus` check.
@@ -182,9 +191,9 @@ Per record (`threat.go`):
 
 Pet casters and non-80 characters fail. A spell no spec registers fails as `sim character`.
 
-`knownThreatMismatches` (class, form, spell, target override, check) lets a real difference through, each with a row
-in the fixture README; an entry no record fails fails the test. `TestThreatReplayOnHandCheckedRecords` tests the
-comparison without it.
+`knownThreatMismatches` (class, form, spell, target override, creatures, check) lets a real difference through, each
+with a row in the fixture README; an entry no record fails fails the test. `TestThreatReplayOnHandCheckedRecords`
+tests the comparison without it.
 
 ## Buffs
 

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"slices"
+	"strings"
 	"time"
 
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -76,6 +77,18 @@ type threatRecord struct {
 		Modified     *threatModified `json:"modified"`
 		Threat       float64         `json:"threat"`
 	} `json:"bonus"`
+	Live struct {
+		Assist []threatShare `json:"assist"`
+	} `json:"live"`
+}
+
+// threatShare is one creature's share of a positive spell's bonus as ThreatManager::ForwardThreatForAssistingMe
+// hands it out: an even part to each creature fighting the caster, none to one under crowd control.
+type threatShare struct {
+	Entry      int32   `json:"entry"`
+	Dummy      bool    `json:"dummy"`
+	Controlled bool    `json:"controlled"`
+	Threat     float64 `json:"threat"`
 }
 
 func readThreatRecords(path string) ([]threatRecord, error) {
@@ -87,7 +100,35 @@ func (r threatRecord) label() string {
 	if n := r.override(); n > 0 {
 		label += fmt.Sprintf(" on %d targets", n)
 	}
+	if n := r.creatures(); n > 0 {
+		label += fmt.Sprintf(" with %d creatures fighting", n)
+	}
 	return label
+}
+
+// creatures is how many creatures were fighting the caster when a positive spell's bonus was shared out, 0
+// for the dummy alone or a spell with no assist threat.
+func (r threatRecord) creatures() int32 {
+	if n := int32(len(r.Live.Assist)); n > 1 {
+		return n
+	}
+	return 0
+}
+
+// sharing are the shares that count, the ones of creatures not under crowd control: the dummy's first, then the
+// others in the record's order.
+func (r threatRecord) sharing() []threatShare {
+	var out []threatShare
+	for _, s := range r.Live.Assist {
+		switch {
+		case s.Controlled:
+		case s.Dummy:
+			out = slices.Insert(out, 0, s)
+		default:
+			out = append(out, s)
+		}
+	}
+	return out
 }
 
 // damageRecord is the part of the record the damage replay's character builders read.
@@ -126,8 +167,9 @@ func (r threatRecord) override() int32 {
 	return 0
 }
 
-// enemies is how many targets the sim's encounter needs for the cast the server split its bonus over.
-// The caster is one of the server's when an effect lands on it, which the sim has no target for.
+// enemies is how many targets the sim's encounter needs for the cast the server split its bonus over, or for
+// the creatures that shared a positive spell's bonus. The caster is one of the server's targets when an effect
+// lands on it, which the sim has no target for.
 func (r threatRecord) enemies() int {
 	n := r.Bonus.Targets
 	if n == 0 {
@@ -136,7 +178,7 @@ func (r threatRecord) enemies() int {
 	if r.override() == 0 && r.Bonus.Selected.Caster {
 		n--
 	}
-	return max(1, int(n))
+	return max(1, int(n), len(r.sharing()))
 }
 
 // attackPower is what the server read for the bonus, else the snapshot's main hand attack power.
@@ -304,8 +346,10 @@ type threatCast struct {
 	bonus, damage                            float64
 	ticked                                   bool
 	tickBonus, tickDamage                    float64
-	note                                     string
-	failed                                   error
+	// the cast's bonus on each target of the encounter, the dummy's first
+	shares []float64
+	note   string
+	failed error
 }
 
 type threatMetrics struct {
@@ -313,10 +357,10 @@ type threatMetrics struct {
 	outcomes, avoided int32
 }
 
-func (ts *threatSim) metrics() []threatMetrics {
+func (ts *threatSim) metrics(target *core.Unit) []threatMetrics {
 	out := make([]threatMetrics, len(ts.spells))
 	for i, s := range ts.spells {
-		m := s.SpellMetrics[ts.target.UnitIndex]
+		m := s.SpellMetrics[target.UnitIndex]
 		out[i] = threatMetrics{
 			threat:   m.TotalThreat,
 			damage:   m.TotalDamage,
@@ -399,7 +443,7 @@ func (ts *threatSim) castOnce(rec threatRecord, spell *core.Spell) (c threatCast
 	// a cast, so it hands out its threat bonus
 	spell.SkipCastAndApplyEffects(ts.sim, ts.target)
 	ts.settle()
-	after := ts.metrics()
+	after := ts.metrics(ts.target)
 	var dealt []float64
 	for i, m := range after {
 		landed = landed || m.outcomes > 0 || m.threat != 0 || m.damage != 0
@@ -411,6 +455,13 @@ func (ts *threatSim) castOnce(rec threatRecord, spell *core.Spell) (c threatCast
 	if avoided {
 		return c, landed, true
 	}
+	for _, target := range ts.sim.Encounter.TargetUnits {
+		share := 0.0
+		for i, m := range ts.metrics(target) {
+			share += m.threat - slopes[i]*m.damage
+		}
+		c.shares = append(c.shares, share)
+	}
 
 	dot := dotOn(spell, ts.target)
 	if dot == nil || !dot.IsActive() {
@@ -420,7 +471,7 @@ func (ts *threatSim) castOnce(rec threatRecord, spell *core.Spell) (c threatCast
 		dot.OnTick(ts.sim, dot.Unit, dot)
 		ts.settle()
 		c.ticked = true
-		for i, m := range ts.metrics() {
+		for i, m := range ts.metrics(ts.target) {
 			threat, damage := m.threat-after[i].threat, m.damage-after[i].damage
 			c.tickBonus += threat - slopes[i]*damage
 			c.tickDamage += damage
@@ -532,12 +583,51 @@ func replayThreatChecks(rec threatRecord, build func(threatRecord) (*threatSim, 
 		}
 		return append(checks, checkThreatNear("tick bonus", c.tickBonus, rec.Bonus.Threat, rec.serverBonus()))
 	}
-	checks = append(checks, checkThreatNear("bonus", c.bonus, rec.Bonus.Threat, threatJoinDetail(rec.serverBonus(), c.note)))
+	server := rec.Bonus.Threat
+	if shares := rec.sharing(); rec.creatures() > 0 && len(shares) > 0 && shares[0].Dummy {
+		server = shares[0].Threat
+	}
+	checks = append(checks, checkThreatNear("bonus", c.bonus, server, threatJoinDetail(rec.serverBonus(), c.note)))
+	if rec.creatures() > 0 {
+		checks = append(checks, checkThreatShares(rec, c.shares))
+	}
 	if c.ticked {
 		// an aura's periodic damage never runs HandleThreatSpells
 		checks = append(checks, checkThreatNear("tick bonus", c.tickBonus, 0, "server ticks add no bonus"))
 	}
 	return checks
+}
+
+// checkThreatShares holds the cast's bonus on the sim's other targets to the shares of the server's other
+// creatures. The sim has a target for each creature that shared, and all of them fight the caster.
+func checkThreatShares(rec threatRecord, sim []float64) Check {
+	var server []float64
+	for _, s := range rec.sharing() {
+		if !s.Dummy {
+			server = append(server, s.Threat)
+		}
+	}
+	if len(sim) > 0 {
+		sim = sim[1:]
+	}
+	detail := fmt.Sprintf("sim %s, server %s", threatList(sim), threatList(server))
+	if len(sim) != len(server) {
+		return fail("assist shares", detail)
+	}
+	for i := range sim {
+		if math.Abs(sim[i]-server[i]) > max(threatAbsTolerance, threatTolerance*math.Abs(server[i])) {
+			return fail("assist shares", detail)
+		}
+	}
+	return pass("assist shares", detail)
+}
+
+func threatList(values []float64) string {
+	parts := make([]string, len(values))
+	for i, v := range values {
+		parts[i] = fmt.Sprintf("%.2f", v)
+	}
+	return "[" + strings.Join(parts, " ") + "]"
 }
 
 func threatJoinDetail(a, b string) string {
@@ -565,21 +655,25 @@ func (r threatRecord) serverBonus() string {
 	} else {
 		text += ", unmodified"
 	}
+	if n := r.creatures(); n > 0 {
+		text += fmt.Sprintf(", shared by %d of %d creatures", len(r.sharing()), n)
+	}
 	return text
 }
 
 // threatMismatch names a check of one spell for one server class in one form, split over a target count
-// the probe was given (0 for the cast's own).
+// the probe was given (0 for the cast's own), with that many creatures fighting (0 for the dummy alone).
 type threatMismatch struct {
-	class    uint8
-	form     int32
-	spell    int32
-	override int32
-	check    string
+	class     uint8
+	form      int32
+	spell     int32
+	override  int32
+	creatures int32
+	check     string
 }
 
 func threatMismatchOf(rec threatRecord, check string) threatMismatch {
-	return threatMismatch{rec.Attacker.Class, rec.form(), rec.Spell.ID, rec.override(), check}
+	return threatMismatch{rec.Attacker.Class, rec.form(), rec.Spell.ID, rec.override(), rec.creatures(), check}
 }
 
 // knownThreatMismatches are checks where the sim and the server really differ, each with its reason and a
