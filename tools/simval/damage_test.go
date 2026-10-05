@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"maps"
 	"math"
 	"os"
 	"path/filepath"
@@ -523,61 +522,14 @@ var knownStrikesMismatches = expandStrikesMismatches([]knownStrikes{
 	{strikesBothPasses(druid, 48566, 48572, 62078, 48480, 48564), []string{"min", "max"},
 		"form weapon: the sim's cat and bear swing 43-66 and 109-165, the server's form damage is min(level, 60) x " +
 			"0.85-1.25 x the form's speed (Player::CalculateMinMaxDamage), 51-75 and 127.5-187.5"},
-	{[]strikesKey{{"damage", 47994, warlock, 17252, false}}, []string{"min", "max"},
-		"the sim's Felguard swings 88.8-133.3, the server's 329-495 (pet_levelstats at 80)"},
-	{[]strikesKey{{"damage", 47964, warlock, 416, false}}, []string{"e0 damage crit"},
-		"the sim's Imp Firebolt crits x2, the server's SpellCriticalDamageBonus gives a pet's magic spell x1.5"},
-	{[]strikesKey{{"timing", 63560, deathKnight, 0, false}}, []string{"e0 amplitude", "e0 ticks"},
-		"the sim's Ghoul Frenzy heals every 6 s, 5 times, the server's aura every 3 s, 10 times"},
-
-	{[]strikesKey{infernalInfo, gargoyleInfo, spiritWolfInfo, treantInfo, shadowfiendInfo},
-		petStatChecks(allPetStats, allPetStats), petStatsReason},
-	{[]strikesKey{tamedWolfInfo}, petStatChecks("Stamina Intellect Spirit", "Stamina Intellect Spirit"), petStatsReason},
-	{[]strikesKey{ghoulInfo}, petStatChecks("Intellect Spirit", "Strength Agility Intellect Spirit"), petStatsReason},
-	{[]strikesKey{waterElementalInfo},
-		petStatChecks("Strength Agility Stamina Spirit", "Strength Agility Stamina Spirit"), petStatsReason},
-	{[]strikesKey{tamedWolfInfo, impInfo, felguardInfo, infernalInfo, ghoulInfo, gargoyleInfo, spiritWolfInfo,
-		waterElementalInfo, treantInfo, shadowfiendInfo}, []string{"armor"},
-		"pet armor: the server's is pet_levelstats' armor, or level x 50 without one, plus the scaling auras' share " +
-			"of the owner's; the sim pet's comes from its own constants and owner coefficients"},
-	{[]strikesKey{impInfo, infernalInfo, ghoulInfo, gargoyleInfo, spiritWolfInfo, waterElementalInfo, treantInfo,
-		shadowfiendInfo}, []string{"attack power"}, petPowerReason},
-	{[]strikesKey{spiritWolfInfo, treantInfo, shadowfiendInfo}, []string{"spell power"}, petPowerReason},
-	{[]strikesKey{impInfo, felguardInfo, waterElementalInfo}, []string{"regen per tick"},
-		"pet mana: Creature::Regenerate gives a controlled creature spirit/5 + 17 a tick, the sim pet the player formula"},
-	{[]strikesKey{infernalBuffedInfo},
-		[]string{"Strength from buffs", "Agility from buffs", "attack power from buffs", "spell power from buffs", "armor from buffs"},
-		"guardian raid buffs: spell_warl_infernal_scaling makes the Infernal immune to its scaling auras' types (stats, " +
-			"armor, attack and spell power), so the buffs add nothing on the server; the sim's applyPetBuffEffects gives them"},
 })
 
-// The info records of TestSimvalStrikes' pets.
-var (
-	tamedWolfInfo      = strikesKey{"info", 0, hunter, 37294, false}
-	impInfo            = strikesKey{"info", 0, warlock, 416, false}
-	felguardInfo       = strikesKey{"info", 0, warlock, 17252, false}
-	infernalInfo       = strikesKey{"info", 0, warlock, 89, false}
-	ghoulInfo          = strikesKey{"info", 0, deathKnight, 26125, false}
-	gargoyleInfo       = strikesKey{"info", 0, deathKnight, 27829, false}
-	spiritWolfInfo     = strikesKey{"info", 0, shaman, 29264, false}
-	waterElementalInfo = strikesKey{"info", 0, mage, 510, false}
-	treantInfo         = strikesKey{"info", 0, druid, 1964, false}
-	shadowfiendInfo    = strikesKey{"info", 0, priest, 19668, false}
-	infernalBuffedInfo = strikesKey{"info", 0, warlock, 89, true}
-)
+// The Infernal's info with its owner's buffs on.
+var infernalBuffedInfo = strikesKey{"info", 0, warlock, 89, true}
 
 // strikesUnrecorded are probes TestSimvalStrikes takes that strikes.jsonl predates. The fixture test lets
 // them be missing and fails once the fixture has one, so the entry goes with the re-record.
 var strikesUnrecorded = []strikesKey{}
-
-const (
-	allPetStats    = "Strength Agility Stamina Intellect Spirit"
-	petStatsReason = "pet stats: the server's create stats are pet_levelstats' row, or Guardian::InitStatsForLevel's " +
-		"22/22/25/28/27 without one, plus the PetDefines.h scaling auras' share of the owner's; the sim pet has its " +
-		"own constants and owner coefficients"
-	petPowerReason = "pet power: the server's follows from the pet's stats and the PetDefines.h scaling auras, the " +
-		"sim pet's from its own owner coefficients"
-)
 
 // knownStrikes is one reason for each of the checks on each of the probes.
 type knownStrikes struct {
@@ -605,15 +557,6 @@ func strikesBothPasses(class uint8, spells ...int32) []strikesKey {
 		keys = append(keys, strikesKey{"damage", spell, class, 0, false}, strikesKey{"damage", spell, class, 0, true})
 	}
 	return keys
-}
-
-// petStatChecks names a pet info record's checks of these create ("base ") and total stats.
-func petStatChecks(base, totals string) []string {
-	var checks []string
-	for _, s := range strings.Fields(base) {
-		checks = append(checks, "base "+s)
-	}
-	return append(checks, strings.Fields(totals)...)
 }
 
 // droppedStrikesRecords disagree with the sim and were removed from strikes.jsonl, each with a row in the
@@ -1024,11 +967,11 @@ func TestPetSpellReplay(t *testing.T) {
 		{
 			// 203 + int(0.714 × 500 = 357)
 			name: "Imp's Firebolt",
-			rec:  handPet(t, warlock, 1, 416, "damage", petSpell(47964, "damage", 0.714, rng(203, 227), rng(560, 584), 20000)),
+			rec:  handPet(t, warlock, 1, 416, "damage", petSpell(47964, "damage", 0.714, rng(203, 227), rng(560, 584), 15000)),
 		},
 		{
 			name:   "Imp's Firebolt off the owner's spell power",
-			rec:    handPet(t, warlock, 1, 416, "damage", petSpell(47964, "damage", 0.714, rng(203, 227), rng(631, 655), 20000)),
+			rec:    handPet(t, warlock, 1, 416, "damage", petSpell(47964, "damage", 0.714, rng(203, 227), rng(631, 655), 15000)),
 			failed: []string{"e0 damage min", "e0 damage max"},
 		},
 		{
@@ -1049,7 +992,7 @@ func TestPetSpellReplay(t *testing.T) {
 	}
 }
 
-// A pet's strike pins the pet's weapon and attack power: the Felguard's Cleave at the bottom is its weapon's 88.8
+// A pet's strike pins the pet's weapon and attack power: the Felguard's Cleave at the bottom is its weapon's 329
 // plus 2000 / 14 × 2 s and the 124 fixed, before its multipliers.
 func TestPetStrikeReplay(t *testing.T) {
 	w := handWeapon("mainhand", true, false, 2, 1, rng(374, 419), rng(124, 124), 100, rng(498, 543), 20000)
@@ -1071,7 +1014,7 @@ func TestPetStrikeReplay(t *testing.T) {
 		t.Fatalf("the strike's caster is %s", d.casterChar().Name)
 	}
 	lo, err := d.strikeAmount(spell, rec.Weapon, 0)
-	if want := 88.8 + 2000.0/14*2 + 124; err != nil || lo < want || lo > want*1.5 {
+	if want := 329 + 2000.0/14*2 + 124; err != nil || lo < want || lo > want*1.5 {
 		t.Errorf("%.2f, want %.2f before multipliers: %v", lo, want, err)
 	}
 	if failed := failedCheckNames(checkStrike(rec.damageRecord)); slices.Contains(failed, "fixed") || slices.Contains(failed, "percent") {
@@ -1125,8 +1068,7 @@ func TestPetReplayCoversTheE2EPets(t *testing.T) {
 }
 
 // The Infernal's buffed info compares what its owner's buffs added since the bare info, both sim pets scaled
-// off the bare owner. The sim hands its pet all four: 155 strength and agility, 550 attack power plus 2 per
-// strength, 144 spell power, 1205 armor plus 2 per agility.
+// off the bare owner. Its scaling's immunities keep all four off the sim's pet too.
 func TestPetBuffReplay(t *testing.T) {
 	infos := func() []strikesRecord {
 		bare := handPet(t, warlock, 1, 89, "info", petInfoBody([5]float64{}, `"regen": null`))
@@ -1165,11 +1107,9 @@ func TestPetBuffReplay(t *testing.T) {
 	for _, name := range petStatNames {
 		added[name] = after[name] - before[name]
 	}
-	want := map[string]float64{"Strength": 155, "Agility": 155, "Stamina": 0, "Intellect": 0, "Spirit": 0,
-		"attack power": 550 + 2*155, "spell power": 144, "armor": 1205 + 2*155}
-	for name, w := range want {
-		if math.Abs(added[name]-w) > 1e-6 {
-			t.Errorf("the sim's buffs add %.2f %s, want %.0f", added[name], name, w)
+	for _, name := range petStatNames {
+		if added[name] != 0 {
+			t.Errorf("the sim's buffs add %.2f %s, want none", added[name], name)
 		}
 	}
 
@@ -1189,14 +1129,11 @@ func TestPetBuffReplay(t *testing.T) {
 	if failed := failedCheckNames(server(added)); len(failed) != 0 {
 		t.Errorf("as the sim has it: failed %v", failed)
 	}
-	noDevotion := maps.Clone(added)
-	noDevotion["armor"] -= 1205
-	if failed := failedCheckNames(server(noDevotion)); !slices.Equal(failed, []string{"armor from buffs"}) {
-		t.Errorf("no Devotion Aura: failed %v", failed)
-	}
-	if failed := failedCheckNames(server(nil)); !slices.Equal(failed, []string{"Strength from buffs",
+	reaching := map[string]float64{"Strength": 155, "Agility": 155, "attack power": 550 + 2*155, "spell power": 144,
+		"armor": 1205 + 2*155}
+	if failed := failedCheckNames(server(reaching)); !slices.Equal(failed, []string{"Strength from buffs",
 		"Agility from buffs", "attack power from buffs", "spell power from buffs", "armor from buffs"}) {
-		t.Errorf("no buff reaching it: failed %v", failed)
+		t.Errorf("every buff reaching it: failed %v", failed)
 	}
 	lone := infos()[1]
 	lone.bare = nil
@@ -1252,7 +1189,7 @@ func TestPetInfoReplay(t *testing.T) {
 }
 
 // Ghoul Frenzy's aura goes on the death knight the probe puts it on, and the replay reads the sim's heal over time
-// from the talent's spell: a heal every 6 s, 5 of them.
+// from the talent's spell: a heal every 3 s, 10 of them.
 func TestGhoulFrenzyTiming(t *testing.T) {
 	ghoulFrenzy := func(amplitudeMs, ticks int) map[string]Check {
 		rec := handTiming(t, deathKnight, 1, 63560, []int32{54192, 54161, 47436}, fmt.Sprintf(`
@@ -1264,16 +1201,16 @@ func TestGhoulFrenzyTiming(t *testing.T) {
 		}
 		return checks
 	}
-	sim := ghoulFrenzy(6000, 5)
+	server := ghoulFrenzy(3000, 10)
 	for _, name := range []string{"aura duration", "e0 amplitude", "e0 ticks"} {
-		if check, ok := sim[name]; !ok || !check.Passed {
-			t.Errorf("%s at the sim's numbers: %+v", name, check)
+		if check, ok := server[name]; !ok || !check.Passed {
+			t.Errorf("%s at the server's numbers: %+v", name, check)
 		}
 	}
-	server := ghoulFrenzy(3000, 10)
+	old := ghoulFrenzy(6000, 5)
 	for _, name := range []string{"e0 amplitude", "e0 ticks"} {
-		if check, ok := server[name]; !ok || check.Passed {
-			t.Errorf("%s at 3 s and 10 ticks: %+v", name, check)
+		if check, ok := old[name]; !ok || check.Passed {
+			t.Errorf("%s at 6 s and 5 ticks: %+v", name, check)
 		}
 	}
 }

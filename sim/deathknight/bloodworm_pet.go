@@ -16,15 +16,13 @@ type BloodwormPet struct {
 // AP, with 61017 for hit and no DK pet scaling at all: no stats, haste or armor pen from its owner.
 func (dk *Deathknight) NewBloodwormPet(_ int) *BloodwormPet {
 	bloodworm := &BloodwormPet{
-		Pet: core.NewPet("Bloodworm", &dk.Character, stats.Stats{
-			stats.Stamina:     25,
-			stats.Agility:     22,
-			stats.Strength:    22,
+		Pet: core.NewPet("Bloodworm", &dk.Character, core.GuardianCreateStats.Add(stats.Stats{
 			stats.AttackPower: -20,
 			stats.MeleeCrit:   creatureCritChance,
-		}, func(stats.Stats) stats.Stats { return stats.Stats{} }, false, true),
+		}), func(stats.Stats) stats.Stats { return stats.Stats{} }, false, true),
 		dkOwner: dk,
 	}
+	bloodworm.Uncontrollable = true
 
 	bloodworm.EnableAutoAttacks(bloodworm, core.AutoAttackOptions{
 		MainHand: core.Weapon{

@@ -65,11 +65,20 @@ type WaterElemental struct {
 }
 
 func (mage *Mage) NewWaterElemental(disobeyChance float64) *WaterElemental {
+	// Glyph of Eternal Water summons a real pet: its scaling ticks, and only a guardian is immune to it
+	permanent := mage.HasMajorGlyph(proto.MageMajorGlyph_GlyphOfEternalWater)
 	waterElemental := &WaterElemental{
-		Pet:           core.NewPet("Water Elemental", &mage.Character, waterElementalBaseStats, waterElementalStatInheritance, mage.HasMajorGlyph(proto.MageMajorGlyph_GlyphOfEternalWater), true),
+		Pet:           core.NewPet("Water Elemental", &mage.Character, waterElementalBaseStats, waterElementalStatInheritance, permanent, true),
 		disobeyChance: disobeyChance,
 	}
-	waterElemental.EnableManaBarWithModifier(0.333)
+	if permanent {
+		waterElemental.SummonedAsPet = true
+		waterElemental.ScalingPeriod = 2 * time.Second
+	} else {
+		waterElemental.BuffImmunity = core.PetImmuneToScaling
+	}
+	waterElemental.EnableCreatureManaBar(2908, waterElementalBaseStats[stats.Intellect], 4.95, true)
+	waterElemental.AddStatDependency(stats.Strength, stats.AttackPower, 2)
 
 	mage.AddPet(waterElemental)
 
@@ -100,23 +109,23 @@ func (we *WaterElemental) ExecuteCustomRotation(sim *core.Simulation) {
 	spell.Cast(sim, we.CurrentTarget)
 }
 
-// Base mana and intellect are rough guesses based on looking at some logs.
-var waterElementalBaseStats = stats.Stats{
-	stats.Mana:      1082,
-	stats.Intellect: 369,
+// pet_levelstats for 510 at 80, the same as the glyph's 37994, and 2 * Str - 20 attack power
+var waterElementalBaseStats = core.PetCreateStats(203, 159, 118, 369, 240, 7782).Add(stats.Stats{
+	stats.AttackPower: -20,
 	// spell_mage_pet_scaling never sets an amount for a pet's crit, so it keeps the creature default
 	// (Unit::GetUnitCriticalChance): a flat 5%, nothing from agility.
 	stats.SpellCrit: 5 * core.CritRatingPerCritChance,
-}
+})
 
 // spell_mage_pet_scaling::CalculateStatAmount/CalculateSPAmount (spell_mage.cpp:266-296): 30% of the
 // owner's stamina and intellect, 33% of the owner's frost spell power (the sim's one spell power
-// stat, in practice).
+// stat, in practice), 35% of his armor.
 var waterElementalStatInheritance = func(ownerStats stats.Stats) stats.Stats {
 	return stats.Stats{
-		stats.Stamina:    ownerStats[stats.Stamina] * 0.3,
-		stats.Intellect:  ownerStats[stats.Intellect] * 0.3,
-		stats.SpellPower: ownerStats[stats.SpellPower] * 0.33,
+		stats.Stamina:    core.PetScalingPct(ownerStats[stats.Stamina], 30),
+		stats.Intellect:  core.PetScalingPct(ownerStats[stats.Intellect], 30),
+		stats.SpellPower: core.PetScalingPct(ownerStats[stats.SpellPower], 33),
+		stats.Armor:      core.PetScalingPct(ownerStats[stats.Armor], 35),
 	}
 }
 

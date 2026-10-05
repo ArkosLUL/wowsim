@@ -75,7 +75,6 @@ records stood until a rerun replaces them.
 | RogueCombat | maceSpecialization | armor penetration % | the sheet field counts the aura without a mace; the server's damage applies it only with one (`HasItemFitToSpellRequirements`), as the sim does, and the path carries two daggers |
 | DeathknightBlood | bloodGorged | armor penetration % | the sheet field is the aura's raw sum; the sim applies it per spell by the server's class mask (white swings, Plague, Blood, Heart and Death Strike, Rune Strike) |
 | PaladinProtection | improvedDevotionAura | armor | server +602 (Devotion Aura's armor +50%); the sim improves it only at `ImprovedDevotionAura == 5`, the talent has 3 ranks (`paladin.go`) |
-| WarlockAffliction | improvedImp | max health | server +398 (Blood Pact +30%); the sim improves it only at `ImprovedImp == 2`, the talent has 3 ranks (`warlock.go`) |
 | ShamanEnhancement | enhancingTotems | spell power | server +21 (Flametongue Totem's 58655 +15%); the sim's `FlametongueTotemAura` is a fixed 144 |
 
 `spellmods.jsonl`, each in `droppedSpellMods` (`tools/simval/spellmods_test.go`). Lines stay; a dropped step (spell 0),
@@ -117,14 +116,6 @@ logged. None now.
 | Probe | Check | Dropped or known | Why |
 |---|---|---|---|
 | Cat 48566 Mangle, 48572 Shred, 62078 Swipe; bear 48480 Maul, 48564 Mangle; both passes | min, max | known | the sim's form weapons are 43–66 (cat) and 109–165 (bear); the server's form damage is `min(level, 60)` × 0.85–1.25 × the form's speed (`Player::CalculateMinMaxDamage`): 51–75 and 127.5–187.5 |
-| Felguard 47994 Cleave | min, max | known | the sim's Felguard swings 88.8–133.3, the server's 329–495 (`pet_levelstats` at 80) |
-| Imp 47964 Firebolt | e0 damage crit | known | the sim crits ×2; `SpellCriticalDamageBonus` gives a pet's magic spell ×1.5 |
-| Death knight 63560 Ghoul Frenzy (timing) | e0 amplitude, e0 ticks | known | the sim heals every 6 s, 5 times; the server's aura every 3 s, 10 times |
-| `info` of every pet but the Imp and Felguard | base and total stats (per pet in `knownStrikesMismatches`) | known | the server's create stats are the `pet_levelstats` row, or `Guardian::InitStatsForLevel`'s 22/22/25/28/27 without one, plus the `PetDefines.h` scaling auras' share of the owner's; the sim pets have their own constants and owner coefficients |
-| `info` of every pet | armor | known | the server's is `pet_levelstats`' armor, or level × 50 without one (Shadowfiend's row has 0), plus the scaling share; the sim's comes from its own constants |
-| `info` of every pet but the wolf and Felguard | attack power; spell power (Spirit Wolf, Treant, Shadowfiend) | known | the server's follows from the pet's stats and scaling auras, the sim's from its own owner coefficients |
-| `info` of Imp, Felguard, Water Elemental | regen per tick | known | `Creature::Regenerate` gives a controlled creature spirit/5 + 17 mana a tick; the sim pet uses the player formula |
-| Infernal's buffed `info` | strength, agility, attack power, spell power, armor from buffs | known | `spell_warl_infernal_scaling` makes the Infernal immune to its scaling auras' types, so Strength of Earth, Devotion Aura, Flametongue Totem and Battle Shout add nothing on the server; the sim's `applyPetBuffEffects` gives them (+155 strength and agility, +860 AP, +144 SP, +1515 armor) |
 
 ## Spells missing from serverdata
 

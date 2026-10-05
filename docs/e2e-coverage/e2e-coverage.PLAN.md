@@ -1223,6 +1223,62 @@ Stage gear and debuffs:
   and README rows.
 - **Goldens:** the pet suites; report each.
 
+#### As built
+
+Stage 1 (stats), re-measured on `bb4ffd124`:
+- `sim/core/pet.go`: `PetCreateStats` (pet_levelstats row, armor less 2 × create agility, as `Guardian::UpdateArmor`
+  counts only agility over create) and `GuardianCreateStats` (22/22/25/28/27, 50 armor a level); `PetScalingPct`
+  (`CalculatePct` on the truncated owner value, float32, truncated); `ScalingPeriod` (real pets rework their scaling
+  every 2 s, Spirit Wolves every 1 s, others snapshot at the summon; `refreshScaling` is the tick);
+  `EnableCreatureManaBar` (create mana plus 4.95 or 11.5 a point of intellect over create, percent costs off create
+  mana, `Creature::Regenerate`'s trunc(spirit/5 + 17) every 2 s, under the five second rule spirit/8 + 17 for the Imp
+  and Water Elemental, else 0; MP5 through core's tick).
+- `BuffImmunity` and `Uncontrollable`, applied by `dropBuffsItCannotTake` from a one-line hook in `applyPetBuffEffects`
+  (`sim/core/buffs.go`, EC-CORE-FIX's: contract request). Full scaling immunity: Infernal, treants, Shadowfiend,
+  Spirit Wolves, Fire Elemental, guardian Water Elemental, Mirror Image; stats and AP only (`spell_dk_pet_scaling`,
+  non-pets): Raise Dead's ghoul, gargoyle, army. Bloodworms lose the party and raid casts, keep area auras. A buff
+  mixing types (Gift of the Wild's stats and armor) goes whole. Stat-immune summons (Infernal, Spirit Wolves,
+  Shadowfiend) skip `ApplyPetConsumeEffects`: pet food and scrolls are stat auras.
+- Per pet: create rows for hunter pet (+5% base armor, 17223), Imp, Felguard, Succubus, Felhunter, Infernal, ghoul,
+  Water Elemental, Shadowfiend; fallback for gargoyle, Spirit Wolf, treant, army, Bloodworm. AP: Imp Str − 10, ghoul
+  589 + Str (+ Agi for the pet only: `UpdateAllStats` sets strength before agility, and nothing moves a guardian's
+  strength after), else 2 × Str − 20. Scaling per script, truncated; the Infernal gets no intellect (36186's
+  immunities block 36188's, its auras aren't passive); Shadowfiend AP 300% of shadow SP, Twisted Faith's included;
+  Spirit Wolf armor 0 (35676 unscripted). Spirit Wolves and the Infernal are guardians now. Treant and Spirit Wolf
+  agility crit gone (creature crit). Cleave 10% and Shadow Bite 3% of create mana.
+- Verdicts: every pet `info` row (create and total stats, armor, AP, SP, regen, the Infernal's buffed info) fixed,
+  its `knownStrikesMismatches` entries and README rows gone; fights `Bloodworms` fixed, drops and rows gone.
+- Goldens: the pet suites drop where guardians lose raid buffs (DK −1.8 to −5.9%, Enhancement −2.6%, Balance −1.0 to
+  −1.3%, mages −0.4 to −0.6%, Shadow −0.6%, Affliction and Destruction −0.3%); hunters, Demonology ±0.1%; healer
+  suites and Restoration lose only metrics entries.
+
+Stage 2 (pets), re-measured on `bb4ffd124`:
+- Replay: pet `info` now also compares melee and spell hit, expertise (`auraExpertise`), and the main hand's weapon
+  range and attack time; `pinOwner` pins the owner's hit too, and a real pet already up catches up through
+  `ResyncScaling` (hit and stat scaling). `petsThatNeverSwing` (Imp, Water Elemental,
+  gargoyle) leave the weapon `not compared`.
+- Imp Firebolt crit 1.5 + 0.1 × Ruin (`SpellCriticalDamageBonus`: magic class, Ruin's mask matches); fixed.
+- Weapons from `InitStatsForLevel`/`pet_levelstats`: Felguard 329–495 (fixed, Cleave compared), Succubus 350–524,
+  Felhunter 246–379, Infernal 1263–1768 (its ×3.2 gone), Spirit Wolf 240–400, Shadowfiend 120–280, treant 120–280
+  at 1574 ms with a plain ×2 white crit.
+- Hit: every pet's 61013/61017 makes it immune to Heroic Presence; the DK's 67561 lets its melee hit through
+  (`dropBuffsItCannotTake`; the Fire Elemental's own counter-hack went). Treant's extra 5% hit and 120 expertise
+  gone; Shadowfiend gets Mana Leech's (28305) 9% hit and 56 expertise.
+- Ghoul Frenzy heals 6% every 3 s, 10 times; fixed.
+- Force of Nature: the sim keeps 65861 (33831's cost, cooldown, flags; changing it touches APLs, serverdata, db.json);
+  the treants model 33831's 1964.
+- Water Elemental's level roll: never reaches combat (`PetAI::_canMeleeAttack` keeps it at Waterbolt range, and it
+  doesn't melee out of mana); a `petsThatNeverSwing` reason.
+- Improved Imp: the raid buff is Improved at 3 points; at 1–2, `improveBloodPact` raises every raid unit's Blood Pact
+  by 10% a point (`TestImprovedImpBloodPactEveryRank`). The sweep row agrees; drop and README row gone.
+- Goldens (Average-Default, both stages against `bb4ffd124`): Demonology +2.0% (Felguard 2136 → 2483 a swing),
+  Destruction −0.9% and Affliction −0.3% (Infernal 2825 → 1602 a swing without the ×3.2; Felhunter swings +24%),
+  Balance −1.5% (treant 931 → 479 a swing, more swings), Shadow −0.4% (Shadowfiend's swings up from stage 1's),
+  Enhancement −2.5%, Unholy HPS ×2 (Ghoul Frenzy); other pet suites as stage 1.
+- Left: the Fire Elemental's stats, AP and weapon (200–360 on the server) are still estimates no record covers;
+  Mirror Image's crit and mana; pets' spell crit from intellect (`EnableManaBarWithModifier`; a creature's is a flat
+  5% plus auras), no record checks it.
+
 ### EC-THREAT-FIX2 (Z; changes goldens, full suite; stages: threat, live)
 
 - V's leftovers, each re-measured with `.simval threat` first: Heart Strike's second target adds the bonus twice (the

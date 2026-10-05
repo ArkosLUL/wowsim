@@ -16,8 +16,9 @@ func (wp *WarlockPet) registerCleaveSpell() {
 		ProcMask:    core.ProcMaskMeleeMHSpecial,
 		Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagIncludeTargetBonusDamage,
 
+		// a share of the create mana, pet_levelstats' (SpellInfo::CalcPowerCost)
 		ManaCost: core.ManaCostOptions{
-			FlatCost: 439,
+			BaseCost: 0.10,
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
@@ -101,9 +102,9 @@ func (wp *WarlockPet) registerShadowBiteSpell() {
 		SpellSchool: core.SpellSchoolShadow,
 		ProcMask:    core.ProcMaskSpellDamage,
 
+		// a share of the create mana, pet_levelstats' (SpellInfo::CalcPowerCost)
 		ManaCost: core.ManaCostOptions{
-			// TODO: should be 3% of BaseMana, but it's unclear what that actually refers to with pets
-			FlatCost: 131,
+			BaseCost: 0.03,
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
@@ -173,7 +174,8 @@ func (wp *WarlockPet) registerFireboltSpell() {
 		},
 
 		DamageMultiplier: 1 + 0.2*core.TernaryFloat64(wp.owner.HasMajorGlyph(proto.WarlockMajorGlyph_GlyphOfImp), 1, 0),
-		CritMultiplier:   2,
+		// a magic spell's 1.5 (Unit::SpellCriticalDamageBonus), the bonus raised by the warlock's Ruin
+		CritMultiplier:   1.5 + 0.1*float64(wp.owner.Talents.Ruin),
 		ThreatMultiplier: 1,
 
 		Direct: core.SpellEffect{Effect: 0, Min: 203, Max: 227, SP: 0.714},

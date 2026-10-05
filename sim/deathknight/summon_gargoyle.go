@@ -81,22 +81,28 @@ func (dk *Deathknight) NewGargoyle() *GargoylePet {
 	// Impurity raises the 75% spell_dk_pet_scaling hands over, in whole percent
 	spellPowerPct := int64(75 + 75*4*dk.Talents.Impurity/100)
 
+	// No pet_levelstats row for 27829. spell_dk_pet_scaling hands it 30% of the owner's stamina and his
+	// attack power as spell damage, 67557 30% of his intellect and spirit.
 	gargoyle := &GargoylePet{
-		Pet: core.NewPet("Gargoyle", &dk.Character, stats.Stats{
-			stats.Stamina: 1000,
+		Pet: core.NewPet("Gargoyle", &dk.Character, core.GuardianCreateStats.Add(stats.Stats{
+			stats.AttackPower: -20,
 			// m_baseSpellCritChance, the only spell crit a creature has
 			stats.SpellCrit: 5 * core.CritRatingPerCritChance,
-		}, func(ownerStats stats.Stats) stats.Stats {
-			// CalculateSPAmount: the owner's attack power as spell damage
+		}), func(ownerStats stats.Stats) stats.Stats {
 			return stats.Stats{
+				stats.Stamina:    calculatePct(ownerStats[stats.Stamina], 30),
+				stats.Intellect:  calculatePct(ownerStats[stats.Intellect], 30),
+				stats.Spirit:     calculatePct(ownerStats[stats.Spirit], 30),
 				stats.SpellPower: calculatePct(ownerStats[stats.AttackPower], spellPowerPct),
 			}
 		}, false, true),
 		dkOwner: dk,
 	}
 	gargoyle.HitScaling = core.PetHitScalingMasterSpell06
+	gargoyle.BuffImmunity = dkGuardianImmunity
 	// 51996 (Death Knight Pet Scaling 02): immune to direct haste and slows, Bloodlust included.
 	gargoyle.HasteCarrier = true
+	gargoyle.AddStatDependency(stats.Strength, stats.AttackPower, 2)
 
 	// NightOfTheDead
 	gargoyle.PseudoStats.DamageTakenMultiplier *= 1.0 - float64(dk.Talents.NightOfTheDead)*0.45

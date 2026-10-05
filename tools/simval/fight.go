@@ -184,8 +184,6 @@ type fightDrop struct {
 }
 
 var droppedFightChecks = []fightDrop{
-	{"DeathknightBlood", "Bloodworm melee", "crit mean"},
-	{"DeathknightBlood", "Bloodworm melee", "hit mean"},
 	{"DeathknightFrost", "51714", "count"},
 	{"DeathknightFrost", "51714", "misses"},
 	{"DeathknightFrostUH", "51714", "misses"},

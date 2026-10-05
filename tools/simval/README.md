@@ -107,10 +107,11 @@ check in `knownStrikesMismatches` is let through; an entry nothing fails is stal
   ends differ), `min` and `max` (`taken` at each end, above by up to `strikeTolerance`: the server truncates weapon
   damage, fixed bonus, percent, done and taken), `crit` when the spell is crit capable.
 - Pet or guardian (`owner`): the owner's class in `simPets`' spec (with the talent or options giving the pet),
-  its stats pinned to the `owner` snapshot, then the pet summoned and its auras put on. `damage` compares as
-  above with the pet's power pinned, or as a strike; a direct effect the sim deals from its aura's ticks (the
+  its stats and hit pinned to the `owner` snapshot, then the pet summoned and its auras put on. `damage` compares
+  as above with the pet's power pinned, or as a strike; a direct effect the sim deals from its aura's ticks (the
   Infernal's Immolation) is one forced tick. `info`: base stats vs `createStats`, stats, attack and spell
-  power, armor, one regen tick (focus off core's unexported rate; mana at the record's intellect and spirit).
+  power, armor, melee and spell hit, expertise, the main hand's weapon range and attack time (`not compared` for
+  `petsThatNeverSwing`), one regen tick (focus off core's unexported rate; mana at the record's intellect and spirit).
 - Buffed pet `info` (its owner carries the pet's `strikesPetBuffs`; the Infernal's: Strength of Earth, Devotion Aura,
   Flametongue Totem, Battle Shout): what they added since the pet's last bare `info` against what the same raid buffs
   add to the sim pet, within 2 per stat. Both sim pets scale off the bare record's owner: the Infernal's scaling auras

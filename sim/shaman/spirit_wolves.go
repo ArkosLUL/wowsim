@@ -1,7 +1,6 @@
 package shaman
 
 import (
-	"math"
 	"strconv"
 	"time"
 
@@ -31,26 +30,21 @@ func (SpiritWolves *SpiritWolves) CancelGCDTimer(sim *core.Simulation) {
 	SpiritWolves.SpiritWolf2.CancelGCDTimer(sim)
 }
 
-var spiritWolfBaseStats = stats.Stats{
-	stats.Stamina:   361,
-	stats.Spirit:    109,
-	stats.Intellect: 65,
-	stats.Armor:     9616,
-
-	stats.Agility:     113,
-	stats.Strength:    331,
+// No pet_levelstats row for 29264, so InitStatsForLevel's fallback stats, and a creature's 5% crit, nothing
+// from agility (Unit::GetUnitCriticalChance)
+var spiritWolfBaseStats = core.GuardianCreateStats.Add(stats.Stats{
 	stats.AttackPower: -20,
-
-	// Unit::GetUnitCriticalChance gives every non-player unit a flat 5% base; a scripted aura adds the
-	// agility scaling below on top of it, the wolves keeping it where the DK's and hunter's summons lost it.
-	stats.MeleeCrit: 5 * core.CritRatingPerCritChance,
-}
+	stats.MeleeCrit:   5 * core.CritRatingPerCritChance,
+})
 
 func (shaman *Shaman) NewSpiritWolf(index int) *SpiritWolf {
 	spiritWolf := &SpiritWolf{
-		Pet:         core.NewPet("Spirit Wolf "+strconv.Itoa(index), &shaman.Character, spiritWolfBaseStats, shaman.makeStatInheritance(), false, false),
+		Pet:         core.NewPet("Spirit Wolf "+strconv.Itoa(index), &shaman.Character, spiritWolfBaseStats, shaman.makeStatInheritance(), false, true),
 		shamanOwner: shaman,
 	}
+	// spell_sha_feral_spirit_scaling ticks every second, guardian or not
+	spiritWolf.ScalingPeriod = time.Second
+	spiritWolf.BuffImmunity = core.PetImmuneToScaling
 
 	// mod-spell-tweaks' 425792: immune to direct haste and slows, Bloodlust included; its own melee
 	// swing speed tracks the shaman's melee speed instead (Windfury Totem and Improved Icy Talons
@@ -61,10 +55,11 @@ func (shaman *Shaman) NewSpiritWolf(index int) *SpiritWolf {
 		spiritWolf.OwnerHasteCoversMeleeHasteAuras = true
 	}
 
+	// InitStatsForLevel's NPC_FERAL_SPIRIT case
 	spiritWolf.EnableAutoAttacks(spiritWolf, core.AutoAttackOptions{
 		MainHand: core.Weapon{
-			BaseDamageMin:  246,
-			BaseDamageMax:  372,
+			BaseDamageMin:  240,
+			BaseDamageMax:  400,
 			SwingSpeed:     1.5,
 			CritMultiplier: 2,
 		},
@@ -72,28 +67,22 @@ func (shaman *Shaman) NewSpiritWolf(index int) *SpiritWolf {
 	})
 
 	spiritWolf.AddStatDependency(stats.Strength, stats.AttackPower, 2)
-	spiritWolf.AddStatDependency(stats.Agility, stats.MeleeCrit, core.CritRatingPerCritChance/83.3)
-	core.ApplyPetConsumeEffects(&spiritWolf.Character, shaman.Consumes)
 
 	shaman.AddPet(spiritWolf)
 
 	return spiritWolf
 }
 
-const PetExpertiseScale = 3.25
-
+// makeStatInheritance is spell_sha_feral_spirit_scaling: 30% of the owner's stamina, and 30% of his
+// attack power as attack power and as spell damage, 60% with Glyph of Feral Spirit. 35676's armor
+// has no script, so it stays at its 0.
 func (shaman *Shaman) makeStatInheritance() core.PetStatInheritance {
+	apPct := core.TernaryFloat64(shaman.HasMajorGlyph(proto.ShamanMajorGlyph_GlyphOfFeralSpirit), 60, 30)
 	return func(ownerStats stats.Stats) stats.Stats {
-		ownerHitChance := ownerStats[stats.MeleeHit] / core.MeleeHitRatingPerHitChance
-		hitRatingFromOwner := math.Floor(ownerHitChance) * core.MeleeHitRatingPerHitChance
-
 		return stats.Stats{
-			stats.Stamina:     ownerStats[stats.Stamina] * 0.3,
-			stats.Armor:       ownerStats[stats.Armor] * 0.35,
-			stats.AttackPower: ownerStats[stats.AttackPower] * (core.TernaryFloat64(shaman.HasMajorGlyph(proto.ShamanMajorGlyph_GlyphOfFeralSpirit), 0.60, 0.30)),
-
-			stats.MeleeHit:  hitRatingFromOwner,
-			stats.Expertise: math.Floor(math.Floor(ownerHitChance)*PetExpertiseScale) * core.ExpertisePerQuarterPercentReduction,
+			stats.Stamina:     core.PetScalingPct(ownerStats[stats.Stamina], 30),
+			stats.AttackPower: core.PetScalingPct(ownerStats[stats.AttackPower], apPct),
+			stats.SpellPower:  core.PetScalingPct(ownerStats[stats.AttackPower], apPct),
 		}
 	}
 }

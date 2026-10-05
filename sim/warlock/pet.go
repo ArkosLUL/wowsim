@@ -1,7 +1,6 @@
 package warlock
 
 import (
-	"math"
 	"time"
 
 	"github.com/wowsims/wotlk/sim/core"
@@ -20,34 +19,30 @@ type WarlockPet struct {
 	DemonicEmpowermentAura *core.Aura
 }
 
-const PetExpertiseScale = 1.53
-
 func (warlock *Warlock) NewWarlockPet() *WarlockPet {
+	// pet_levelstats at 80, its weapon range included. Guardian::UpdateMaxPower gives a demon 11.5 mana a
+	// point of intellect over the create value, the Imp 4.95
 	var cfg struct {
-		Name          string
-		PowerModifier float64
-		Stats         stats.Stats
-		AutoAttacks   core.AutoAttackOptions
+		Name             string
+		Stats            stats.Stats
+		CreateMana       float64
+		ManaPerIntellect float64
+		AutoAttacks      core.AutoAttackOptions
+	}
+	creatureCrit := stats.Stats{
+		stats.MeleeCrit: 5 * core.CritRatingPerCritChance,
+		stats.SpellCrit: 5 * core.CritRatingPerCritChance,
 	}
 
 	switch warlock.Options.Summon {
 	case proto.Warlock_Options_Felguard:
 		cfg.Name = "Felguard"
-		cfg.PowerModifier = 0.77 // GetUnitPowerModifier("pet")
-		cfg.Stats = stats.Stats{
-			stats.Strength:  314,
-			stats.Agility:   90,
-			stats.Stamina:   328,
-			stats.Intellect: 150,
-			stats.Spirit:    209,
-			stats.Mana:      1559,
-			stats.MeleeCrit: 5 * core.CritRatingPerCritChance,
-			stats.SpellCrit: 5 * core.CritRatingPerCritChance,
-		}
+		cfg.Stats = core.PetCreateStats(314, 90, 328, 150, 209, 14033)
+		cfg.CreateMana, cfg.ManaPerIntellect = 3077, 11.5
 		cfg.AutoAttacks = core.AutoAttackOptions{
 			MainHand: core.Weapon{
-				BaseDamageMin:  88.8,
-				BaseDamageMax:  133.3,
+				BaseDamageMin:  329,
+				BaseDamageMax:  495,
 				SwingSpeed:     2,
 				CritMultiplier: 2,
 			},
@@ -55,35 +50,16 @@ func (warlock *Warlock) NewWarlockPet() *WarlockPet {
 		}
 	case proto.Warlock_Options_Imp:
 		cfg.Name = "Imp"
-		cfg.PowerModifier = 0.33 // GetUnitPowerModifier("pet")
-		cfg.Stats = stats.Stats{
-			stats.Strength:  297,
-			stats.Agility:   79,
-			stats.Stamina:   118,
-			stats.Intellect: 369,
-			stats.Spirit:    367,
-			stats.Mana:      1174,
-			stats.MP5:       270, // rough guess, unclear if it's affected by other stats
-			stats.MeleeCrit: 5 * core.CritRatingPerCritChance,
-			stats.SpellCrit: 5 * core.CritRatingPerCritChance,
-		}
+		cfg.Stats = core.PetCreateStats(297, 79, 118, 369, 367, 6273)
+		cfg.CreateMana, cfg.ManaPerIntellect = 2908, 4.95
 	case proto.Warlock_Options_Succubus:
 		cfg.Name = "Succubus"
-		cfg.PowerModifier = 0.77 // GetUnitPowerModifier("pet")
-		cfg.Stats = stats.Stats{
-			stats.Strength:  314,
-			stats.Agility:   90,
-			stats.Stamina:   328,
-			stats.Intellect: 150,
-			stats.Spirit:    209,
-			stats.Mana:      1559,
-			stats.MeleeCrit: 5 * core.CritRatingPerCritChance,
-			stats.SpellCrit: 5 * core.CritRatingPerCritChance,
-		}
+		cfg.Stats = core.PetCreateStats(314, 90, 328, 150, 209, 9706)
+		cfg.CreateMana, cfg.ManaPerIntellect = 3077, 11.5
 		cfg.AutoAttacks = core.AutoAttackOptions{
 			MainHand: core.Weapon{
-				BaseDamageMin:  98,
-				BaseDamageMax:  147,
+				BaseDamageMin:  350,
+				BaseDamageMax:  524,
 				SwingSpeed:     2,
 				CritMultiplier: 2,
 			},
@@ -91,38 +67,38 @@ func (warlock *Warlock) NewWarlockPet() *WarlockPet {
 		}
 	case proto.Warlock_Options_Felhunter:
 		cfg.Name = "Felhunter"
-		cfg.PowerModifier = 0.77 // GetUnitPowerModifier("pet")
-		cfg.Stats = stats.Stats{
-			stats.Strength:  314,
-			stats.Agility:   90,
-			stats.Stamina:   328,
-			stats.Intellect: 150,
-			stats.Spirit:    209,
-			stats.Mana:      1559,
-			stats.MeleeCrit: 5 * core.CritRatingPerCritChance,
-			stats.SpellCrit: 5 * core.CritRatingPerCritChance,
-		}
+		cfg.Stats = core.PetCreateStats(314, 90, 328, 150, 209, 7782)
+		cfg.CreateMana, cfg.ManaPerIntellect = 3077, 11.5
 		cfg.AutoAttacks = core.AutoAttackOptions{
 			MainHand: core.Weapon{
-				BaseDamageMin:  88.8,
-				BaseDamageMax:  133.3,
+				BaseDamageMin:  246,
+				BaseDamageMax:  379,
 				SwingSpeed:     2,
 				CritMultiplier: 2,
 			},
 			AutoSwingMelee: true,
 		}
 	}
+	isImp := warlock.Options.Summon == proto.Warlock_Options_Imp
 
 	wp := &WarlockPet{
-		Pet:   core.NewPet(cfg.Name, &warlock.Character, cfg.Stats, warlock.makeStatInheritance(), true, false),
+		Pet:   core.NewPet(cfg.Name, &warlock.Character, cfg.Stats.Add(creatureCrit), warlock.makeStatInheritance(), true, false),
 		owner: warlock,
 	}
 	wp.SummonedAsPet = true
+	// spell_warl_generic_scaling's HandlePeriodic
+	wp.ScalingPeriod = 2 * time.Second
 
-	wp.EnableManaBarWithModifier(cfg.PowerModifier)
+	wp.EnableCreatureManaBar(cfg.CreateMana, cfg.Stats[stats.Intellect], cfg.ManaPerIntellect, isImp)
 
-	wp.AddStatDependency(stats.Strength, stats.AttackPower, 2)
-	wp.AddStat(stats.AttackPower, -20)
+	// Guardian::UpdateAttackPowerAndDamage: the Imp's is strength - 10
+	if isImp {
+		wp.AddStatDependency(stats.Strength, stats.AttackPower, 1)
+		wp.AddStat(stats.AttackPower, -10)
+	} else {
+		wp.AddStatDependency(stats.Strength, stats.AttackPower, 2)
+		wp.AddStat(stats.AttackPower, -20)
+	}
 
 	wp.AddStats(stats.Stats{
 		stats.MeleeCrit: float64(warlock.Talents.DemonicTactics) * 2 * core.CritRatingPerCritChance,
@@ -293,26 +269,24 @@ func (wp *WarlockPet) ExecuteCustomRotation(sim *core.Simulation) {
 	wp.primaryAbility.Cast(sim, wp.CurrentTarget)
 }
 
+// makeStatInheritance is spell_warl_generic_scaling: 75% of the owner's stamina, 30% of his intellect,
+// 35% of his armor, and 57% and 15% of his spell power as attack and spell power.
 func (warlock *Warlock) makeStatInheritance() core.PetStatInheritance {
 	improvedDemonicTactics := float64(warlock.Talents.ImprovedDemonicTactics)
 
 	return func(ownerStats stats.Stats) stats.Stats {
 		// TODO: Account for sunfire/soulfrost
 		return stats.Stats{
-			stats.Stamina:   ownerStats[stats.Stamina] * 0.75,
-			stats.Intellect: ownerStats[stats.Intellect] * 0.3,
-			stats.Armor:     ownerStats[stats.Armor] * 0.35,
-			// spell_warl_generic_scaling::CalculateAPAmount/CalculateSPAmount compute these as
-			// server-side int32 percentages of the owner's spell power (CalculatePct), so they floor.
-			stats.AttackPower:      math.Floor(ownerStats[stats.SpellPower] * 0.57),
-			stats.SpellPower:       math.Floor(ownerStats[stats.SpellPower] * 0.15),
+			stats.Stamina:          core.PetScalingPct(ownerStats[stats.Stamina], 75),
+			stats.Intellect:        core.PetScalingPct(ownerStats[stats.Intellect], 30),
+			stats.Armor:            core.PetScalingPct(ownerStats[stats.Armor], 35),
+			stats.AttackPower:      core.PetScalingPct(ownerStats[stats.SpellPower], 57),
+			stats.SpellPower:       core.PetScalingPct(ownerStats[stats.SpellPower], 15),
 			stats.SpellPenetration: ownerStats[stats.SpellPenetration],
 			stats.SpellCrit:        improvedDemonicTactics * 0.1 * ownerStats[stats.SpellCrit],
 			stats.MeleeCrit:        improvedDemonicTactics * 0.1 * ownerStats[stats.SpellCrit],
 			// not MeleeHit/SpellHit/Expertise: pet.ownerHitScaling owns those and overwrites
 			// whatever this returns for them (spell_pet_hit_expertise_scalling)
-
-			// Resists, 40%
 		}
 	}
 }

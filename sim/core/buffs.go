@@ -378,6 +378,7 @@ func applyPetBuffEffects(petAgent PetAgent, raidBuffs *proto.RaidBuffs, partyBuf
 	// For some reason pets don't benefit from buffs that are ratings, e.g. crit rating or haste rating.
 	partyBuffs.BraidedEterniumChain = false
 
+	petAgent.GetPet().dropBuffsItCannotTake(raidBuffs, partyBuffs, individualBuffs)
 	applyBuffEffects(petAgent, raidBuffs, partyBuffs, individualBuffs)
 }
 
