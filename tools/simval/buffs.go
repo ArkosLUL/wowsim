@@ -5,8 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"maps"
+	"os"
+	"path/filepath"
 	"slices"
 	"strings"
+	"sync"
 
 	googleProto "google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -50,41 +53,46 @@ var unprobedBuffs = map[string]string{
 	"debuff.judgement_of_light":  "heals the attacker on a hit (20185): no sheet, damage or crit change",
 	"debuff.judgement_of_wisdom": "gives the attacker mana on a hit (20186): no sheet, damage or crit change",
 	"debuff.shadow_embrace":      "applyDebuffEffects never reads it, only the warlock's own code applies Shadow Embrace",
-	"debuff.expose_armor": "Expose Armor (8647) lasts only as long as its caster's combo points make it, 0 s without, and " +
-		"no GM route the e2e tried kept it on; TestSimvalWarrior's `.simval armor 58567:5 770 8647` checks its armor " +
-		"and its stacking with Sunder Armor",
 }
 
-// buffPairs are the pairs the e2e puts on together, from the sim's exclusive categories with two full
+// buffPairsFile lists the pairs the e2e puts on together, from the sim's exclusive categories with two full
 // switches in them: ExclusiveEffect categories and the either/or branches of applyBuffEffects. The e2e's
-// buffsPairs is the same list.
-var buffPairs = [][2]string{
-	{"raid.trueshot_aura", "raid.abominations_might"},
-	{"raid.trueshot_aura", "raid.unleashed_rage"},
-	{"raid.unleashed_rage", "raid.abominations_might"},
-	{"raid.moonkin_aura", "raid.elemental_oath"},
-	{"raid.moonkin_aura", "raid.swift_retribution"},
-	{"raid.ferocious_inspiration", "raid.sanctified_retribution"},
-	{"raid.ferocious_inspiration", "raid.arcane_empowerment"},
-	{"raid.sanctified_retribution", "raid.arcane_empowerment"},
-	{"raid.icy_talons", "raid.windfury_totem"},
-	{"raid.battle_shout", "individual.blessing_of_might"},
-	{"raid.mana_spring_totem", "individual.blessing_of_wisdom"},
-	{"individual.blessing_of_kings", "individual.blessing_of_sanctuary"},
-	{"debuff.faerie_fire", "debuff.curse_of_weakness"},
-	{"debuff.curse_of_elements", "debuff.earth_and_moon"},
-	{"debuff.curse_of_elements", "debuff.ebon_plaguebringer"},
-	{"debuff.earth_and_moon", "debuff.ebon_plaguebringer"},
-	{"debuff.improved_scorch", "debuff.shadow_mastery"},
-	{"debuff.misery", "debuff.faerie_fire"},
-	{"debuff.totem_of_wrath", "debuff.heart_of_the_crusader"},
-	{"debuff.curse_of_weakness", "debuff.vindication"},
-	{"debuff.insect_swarm", "debuff.scorpid_sting"},
+// TestSimvalBuffs reads the same file.
+const buffPairsFile = "buffs_pairs.json"
+
+var loadBuffPairs = sync.OnceValues(func() ([][2]string, error) {
+	root, err := checkoutRoot()
+	if err != nil {
+		return nil, err
+	}
+	return readBuffPairs(filepath.Join(root, fixtureDir, buffPairsFile))
+})
+
+func readBuffPairs(path string) ([][2]string, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	var file struct {
+		Pairs [][]string `json:"pairs"`
+	}
+	if err := json.Unmarshal(data, &file); err != nil {
+		return nil, fmt.Errorf("%s: %w", path, err)
+	}
+	pairs := make([][2]string, len(file.Pairs))
+	for i, pair := range file.Pairs {
+		if len(pair) != 2 {
+			return nil, fmt.Errorf("%s: pair %v isn't two keys", path, pair)
+		}
+		pairs[i] = [2]string{pair[0], pair[1]}
+	}
+	return pairs, nil
 }
 
 // buffHeldAuras are sim auras a key needs up from the start at full stacks, as the server's probes see
-// them: the sim casts Bloodlust as a cooldown, and puts Sunder Armor up over the fight's first seconds.
-var buffHeldAuras = map[string]int32{"raid.bloodlust": 2825, "debuff.sunder_armor": 47467}
+// them: the sim casts Bloodlust as a cooldown, puts Sunder Armor up over the fight's first seconds and
+// Expose Armor 3 s in.
+var buffHeldAuras = map[string]int32{"raid.bloodlust": 2825, "debuff.sunder_armor": 47467, "debuff.expose_armor": 8647}
 
 // buffField is the full message's field a key names, which has to be on there.
 func buffField(key string) (protoreflect.FieldDescriptor, error) {
@@ -137,15 +145,15 @@ func stateName(keys []string) string {
 	return strings.Join(keys, "+")
 }
 
-// buffStates are every full switch alone, unprobedBuffs left out, then buffPairs.
-func buffStates() []buffState {
+// buffStates are every full switch alone, unprobedBuffs left out, then the pairs.
+func buffStates(pairs [][2]string) []buffState {
 	var states []buffState
 	for _, key := range fullBuffKeys() {
 		if _, ok := unprobedBuffs[key]; !ok {
 			states = append(states, newBuffState(key))
 		}
 	}
-	for _, pair := range buffPairs {
+	for _, pair := range pairs {
 		states = append(states, newBuffState(pair[0], pair[1]))
 	}
 	return states
@@ -573,7 +581,7 @@ type buffDrop struct {
 // and holds the bot to every state of buffStates. A later bare line is compared too, as a state with no
 // buffs, so it catches a drift. A dropped state or check only logs its failures, and one that fails
 // nothing fails the replay.
-func replayBuffs(lines []buffLine, setups []goldcharSetup, drops []buffDrop) spellModReport {
+func replayBuffs(lines []buffLine, setups []goldcharSetup, pairs [][2]string, drops []buffDrop) spellModReport {
 	report := spellModReport{counts: map[string]int{}}
 	used := map[buffDrop]bool{}
 	dropped := func(d buffDrop) bool {
@@ -583,7 +591,7 @@ func replayBuffs(lines []buffLine, setups []goldcharSetup, drops []buffDrop) spe
 		}
 		return false
 	}
-	expected := buffStates()
+	expected := buffStates(pairs)
 	var bots []string
 	byBot := map[string][]buffLine{}
 	for _, l := range lines {

@@ -184,11 +184,12 @@ comparison without it.
 ## Buffs
 
 mod-sim-validation's `TestSimvalBuffs` gives `buffsSetup`'s golden character (RogueAssassination) each switch of
-`core.FullRaidBuffs`, `FullPartyBuffs`, `FullIndividualBuffs` and `FullDebuffs` alone, then `buffPairs`, between two
+`core.FullRaidBuffs`, `FullPartyBuffs`, `FullIndividualBuffs` and `FullDebuffs` alone, then the pairs, between two
 bare states, and logs a `BUFFS` line per state, the fixture `buffs.jsonl`. Capture:
 
 ```bash
 SIMVAL_GOLDCHAR_SETUPS=<sim>/sim/core/testdata/simval/goldchar_setups.json \
+SIMVAL_BUFFS_PAIRS=<sim>/sim/core/testdata/simval/buffs_pairs.json \
   modules/mod-sim-validation/e2e/run.sh TestSimvalBuffs > <sim>/tmp/buffs-e2e.log
 grep -o 'BUFFS {.*' <sim>/tmp/buffs-e2e.log | cut -c7- > <sim>/sim/core/testdata/simval/buffs.jsonl
 ```
@@ -198,10 +199,11 @@ A line (`buffs.go`'s `buffLine`): `setup`, `bot`, `state` (`keys` joined by `+`,
 (`missing`) and unwanted ones on (`extra`), the `info` record whole, `damage` of each unshaped setup probe (spell,
 shaped, spell and attack power, bonus, effects); a debuff or bare state adds `yellow <id> 1`'s derived table per probe
 and `armor`'s scenarios.
-- `unprobedBuffs` lists each full switch left out, with why. `buffPairs` are two switches of one sim exclusive
-  category (ExclusiveEffect, or an either/or branch of `applyBuffEffects`); the e2e's `buffsPairs` is the same list.
+- `unprobedBuffs` lists each full switch left out, with why. The pairs, two switches of one sim exclusive category
+  (ExclusiveEffect, or an either/or branch of `applyBuffEffects`), are `buffPairsFile`
+  (`sim/core/testdata/simval/buffs_pairs.json`), which the e2e reads too.
 - The sim character is `newBuffSim`: the golden character in a raid with the keys' switches at their full values.
-  `buffHeldAuras` (Bloodlust, Sunder Armor) are kept up at full stacks from the start.
+  `buffHeldAuras` (Bloodlust, Sunder Armor, Expose Armor) are kept up at full stacks from the start.
 
 **Replay** (`TestBuffRecords`, skips without the fixture): per bot, each state against its first bare line, the
 server's change against the sim's from no switches to the state's. Checks:

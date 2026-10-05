@@ -23,6 +23,16 @@ var droppedBuffs = []buffDrop{
 	{buffsSetup, "debuff.insect_swarm+debuff.scorpid_sting", "dummy melee hit %"},
 }
 
+// allBuffPairs are buffPairsFile's pairs.
+func allBuffPairs(t *testing.T) [][2]string {
+	t.Helper()
+	pairs, err := loadBuffPairs()
+	if err != nil {
+		t.Fatal(err)
+	}
+	return pairs
+}
+
 // TestBuffRecords replays a live TestSimvalBuffs run, its BUFFS lines: each state's change from the bare
 // character against the sim's. Skips without the capture. Every state is logged on a BUFFSIM line.
 func TestBuffRecords(t *testing.T) {
@@ -39,7 +49,7 @@ func TestBuffRecords(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	report := replayBuffs(lines, allGoldcharSetups(t), droppedBuffs)
+	report := replayBuffs(lines, allGoldcharSetups(t), allBuffPairs(t), droppedBuffs)
 	for _, line := range report.logs {
 		t.Log(line)
 	}
@@ -52,6 +62,7 @@ func TestBuffRecords(t *testing.T) {
 // overlap.
 func TestBuffStatesCoverTheFullBuffs(t *testing.T) {
 	full := fullBuffKeys()
+	pairs := allBuffPairs(t)
 	for key, why := range unprobedBuffs {
 		if _, err := buffField(key); err != nil {
 			t.Errorf("unprobed: %v", err)
@@ -65,7 +76,7 @@ func TestBuffStatesCoverTheFullBuffs(t *testing.T) {
 		return slices.Contains(full, key) && !unprobed
 	}
 	seen := map[[2]string]bool{}
-	for _, pair := range buffPairs {
+	for _, pair := range pairs {
 		if !probed(pair[0]) || !probed(pair[1]) || pair[0] == pair[1] {
 			t.Errorf("pair %v needs two different probed switches", pair)
 		}
@@ -80,7 +91,7 @@ func TestBuffStatesCoverTheFullBuffs(t *testing.T) {
 		}
 	}
 
-	states := buffStates()
+	states := buffStates(pairs)
 	names := map[string]bool{}
 	for _, s := range states {
 		if names[s.name] {
@@ -88,7 +99,7 @@ func TestBuffStatesCoverTheFullBuffs(t *testing.T) {
 		}
 		names[s.name] = true
 	}
-	if want := len(full) - len(unprobedBuffs) + len(buffPairs); len(states) != want {
+	if want := len(full) - len(unprobedBuffs) + len(pairs); len(states) != want {
 		t.Errorf("%d states, want %d", len(states), want)
 	}
 }
@@ -152,7 +163,7 @@ func TestBuffPairsAreExclusiveInTheSim(t *testing.T) {
 		return v
 	}
 	near := func(a, b float64) bool { return math.Abs(a-b) <= 1e-6 }
-	for _, pair := range buffPairs {
+	for _, pair := range allBuffPairs(t) {
 		a, b, both := delta(pair[0]), delta(pair[1]), delta(pair[0], pair[1])
 		var shared []string
 		for _, name := range slices.Sorted(maps.Keys(both)) {
@@ -330,7 +341,7 @@ func buffLineFrom(t *testing.T, s goldcharSetup, keys []string) buffLine {
 func buffLinesFrom(t *testing.T, s goldcharSetup) []buffLine {
 	t.Helper()
 	lines := []buffLine{buffLineFrom(t, s, nil)}
-	for _, state := range buffStates() {
+	for _, state := range buffStates(allBuffPairs(t)) {
 		lines = append(lines, buffLineFrom(t, s, state.keys))
 	}
 	return append(lines, buffLineFrom(t, s, nil))
@@ -341,14 +352,15 @@ func buffLinesFrom(t *testing.T, s goldcharSetup) []buffLine {
 func TestBuffReplayAgreesWithTheSim(t *testing.T) {
 	needsItemDB(t)
 	s := goldcharSetupNamed(t, buffsSetup)
-	report := replayBuffs(buffLinesFrom(t, s), []goldcharSetup{s}, nil)
+	pairs := allBuffPairs(t)
+	report := replayBuffs(buffLinesFrom(t, s), []goldcharSetup{s}, pairs, nil)
 	for _, line := range report.logs {
 		t.Log(line)
 	}
 	for _, e := range report.errors {
 		t.Error(e)
 	}
-	if report.counts[spellModDisagrees] > 0 || report.counts[spellModAgrees] < len(buffStates())/2 {
+	if report.counts[spellModDisagrees] > 0 || report.counts[spellModAgrees] < len(buffStates(pairs))/2 {
 		t.Errorf("classes %v; want most states to agree and none to disagree", report.counts)
 	}
 }
@@ -476,6 +488,7 @@ func TestBuffReplayCatchesMismatches(t *testing.T) {
 func TestBuffReplayDrops(t *testing.T) {
 	needsItemDB(t)
 	s := goldcharSetupNamed(t, buffsSetup)
+	pairs := allBuffPairs(t)
 	const state = "raid.battle_shout"
 	lines := []buffLine{buffLineFrom(t, s, nil)}
 	agreeing := buffLineFrom(t, s, []string{state})
@@ -483,13 +496,13 @@ func TestBuffReplayDrops(t *testing.T) {
 	wrong.Missing = []int32{47436}
 	// every other state dropped, so only the one under test counts
 	var others []buffDrop
-	for _, st := range buffStates() {
+	for _, st := range buffStates(pairs) {
 		if st.name != state {
 			others = append(others, buffDrop{s.Name, st.name, ""})
 		}
 	}
 	replay := func(state buffLine, drops ...buffDrop) spellModReport {
-		return replayBuffs(append(slices.Clone(lines), state), []goldcharSetup{s}, append(slices.Clone(others), drops...))
+		return replayBuffs(append(slices.Clone(lines), state), []goldcharSetup{s}, pairs, append(slices.Clone(others), drops...))
 	}
 
 	if r := replay(agreeing); len(r.errors) > 0 {
@@ -513,7 +526,7 @@ func TestBuffReplayDrops(t *testing.T) {
 	if r := replay(agreeing, buffDrop{s.Name, "no.such_state", ""}); len(r.errors) != 1 || !strings.Contains(r.errors[0], "no state") {
 		t.Errorf("stale drop: %v", r.errors)
 	}
-	r := replayBuffs(lines, []goldcharSetup{s}, others)
+	r := replayBuffs(lines, []goldcharSetup{s}, pairs, others)
 	if len(r.errors) != 1 || !strings.Contains(r.errors[0], "no line for") {
 		t.Errorf("missing state: %v", r.errors)
 	}

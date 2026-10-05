@@ -1014,6 +1014,38 @@ on the map update.
 - **Owns:** those fixtures, their replays' drop lists and README rows; e2e `goldchar_test.go`, `buffs_test.go`,
   `fight_test.go`, `damage_test.go`, `mobs_test.go`; `tools/simval/buffs.go`.
 
+#### As built
+
+Stage code (e2e vetted; no live run; live plan in `tmp/ec-recheck-code.md`):
+- Expose Armor: `buffsEntries` gains it (`comboPoints: 5`: `.simval combopoints 5` on the dummy, then `.cast 8647
+  triggered`); `.cast triggered` skips the points check (`TRIGGERED_IGNORE_COMBO_POINTS`) but the duration still reads
+  the caster's points (`WorldObject::CalcSpellDuration`, 30 s at 5), and none of the caster's other casts has a duration
+  range. It leaves `unprobedBuffs`; `buffHeldAuras` holds 8647, which the sim schedules 3 s in. Pair: Sunder Armor +
+  Expose Armor (major armor, one wins in the sim).
+- Pairs live in `sim/core/testdata/simval/buffs_pairs.json`: `loadBuffPairs` (sim) and `SIMVAL_BUFFS_PAIRS` (e2e, which
+  now skips without it; `run.sh` mounts it).
+- `goldcharBuild` (`goldchar_test.go`) is the one golden build: `goldcharOptions` `bare` (buffs: no trainer spells,
+  enchants, gems, health top-up), `learn`, `noEquipCooldowns` and `geared` (fight: cycle spells, `.cheat cooldown`,
+  ammo). Each caller sends the same commands in the same order as before.
+
+Stage live-records (notes in `tmp/ec-recheck-live.md`): `simval.jsonl`, `damage.jsonl`, `goldchar.jsonl`,
+`buffs.jsonl` and `mobs.jsonl` re-recorded on the X2 build; no deterministic field moved, no new drop, every old drop
+still fails as its row says.
+- Default run: two tests reran alone (a tank warrior's `.cast` raced its homebind transfer; Mind Flay hit its 100%
+  resist bucket, reachable only when `float(rand_norm())` rounds to 1.0f).
+- Buffs: the e2e puts a state on again up to 3 times (`buffsRetries`), since a cast at the dummy rolls hit. Expose
+  Armor is -20%, and with Sunder Armor still -20% (spell_group 1015): exclusive, as in the sim.
+- Spelldump recapture (report only, `tmp/ec-recheck-spelldump.md`): 32 spells moved; one sim gap, Mage T8 4P at 20%
+  (e9517efd2), for EC-ARCANE-FIX.
+
+Stage live-fights (notes in `tmp/ec-recheck-fights.md`): all 32 fights re-recorded on the 16:52 build (rev 3d89793c7);
+no combat change since the old build, so what moved is roll spread.
+- Reruns: DeathknightFrost (Howling Blast never had its runes), ShamanElemental (login timeouts).
+- New drops, each a known mechanism: DruidFeral's Rake crit mean; MageFrost's Brain Freeze applications (the sim's
+  Fireball! never expires, the server's 57761 lasts 15 s); PaladinProtection's Vindication misses (26017 rolls spell
+  hit).
+- Six drops whose checks passed this capture went with their rows, the `early ticks` cause with them.
+
 ### EC-COVER (X2; golden-neutral; stages: code, live)
 
 - The talent sweep's never-seen talents (test-enrichment INVESTIGATION, TE-SWEEP as built): armor talents (DK

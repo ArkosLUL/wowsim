@@ -40,8 +40,8 @@ Rules, held by `TestFightCycles`:
 cut by `simval fight -trim`. Kept: the header and zone lines, the player's and its minions' unit lines, what they
 did from the fight's start to its end to themselves or the dummy but a spell's plain `HIT` target result, a heal, a
 summon or a cast other than the bot's, and before the start only their auras going on and off (what was up at the
-pull, Sniper Training included). The 32 were fought on 2026-10-04 against the worldserver build of 20:33 (rev
-15282384e): 106 KB.
+pull, Sniper Training included). The 32 were fought on 2026-10-05 against the worldserver build of 16:52 (rev
+3d89793c7): 106 KB.
 
 ## Left out
 
@@ -63,8 +63,6 @@ table's cause:
 - **world tick**: the server moves a player every 10 ms world tick, so a swing lands at most that late; the sim's
   waits for the 100 ms map update and loses the overshoot, a few swings a fight; its last swing comes early, and
   with it the end of a swing-stacked buff (Fury of the Five Flights).
-- **early ticks**: the dummy's dots tick up to a map update before each period ends (its first aura update counts a
-  whole update); the sim's tick the update after, so a recast four periods on drops the sim's last tick.
 - **Bloodworms**: the sim's have the setup's Horn of Winter (+155 Str); the server's never get it, as a party or raid
   buff skips an uncontrollable guardian (`Spell.cpp` `TARGET_CHECK_RAID`).
 - **Frost Vulnerability**: rolls spell hit on the server and missed; the sim's always lands.
@@ -82,9 +80,12 @@ table's cause:
   out as for a bleed.
 - **Torment the Weak**: the sim always adds its 12%; the server only against a snared or slowed target, and the boss
   dummy is immune to snares (creature_immunities -361).
+- **Brain Freeze**: the sim's Fireball! never expires; the server's (57761) lasts 15 s, so a later proc puts it on
+  again.
 - **Enduring Winter**: the sim's refreshes Replenishment on every Frostbolt; the server's has a 6 s proc cooldown
   (spell_proc -44557).
-- **Vindication**: the sim's goes on with every landed hit; the server's procs at 3 a minute (spell_proc -9452).
+- **Vindication**: the sim's goes on with every landed hit; the server's procs at 3 a minute (spell_proc -9452), and
+  its 26017 rolls spell hit, so it can miss.
 - **Crusader Strike**: the sim's refreshes Judgement of Wisdom; the server's doesn't.
 - **Prey on the Weak**: the sim keeps its crit bonus up; the server's 58670 lasts 10 s and the talent's 2 s check puts it
   back only once gone (and only while the rogue's health percent is above the target's), so it's down about 2 s in 12.
@@ -99,32 +100,29 @@ table's cause:
 | DeathknightBlood | Bloodworm melee | hit mean | Bloodworms |
 | DeathknightFrost | 51714 | count | Frost Vulnerability |
 | DeathknightFrost | 51714 | misses | Frost Vulnerability |
-| DeathknightFrostUH | 51714 | count | Frost Vulnerability |
 | DeathknightFrostUH | 51714 | misses | Frost Vulnerability |
 | DeathknightFrostUH | melee | count | world tick |
-| DeathknightUnholy | 55078 | ticks | early ticks |
 | DeathknightUnholy | melee | count | world tick |
 | DruidBalance | 48468 | tick crit mean | Vengeance |
 | DruidBalance | aura 48517 on self | uptime | Eclipse |
 | DruidBalance | aura 60486 on self | applications | dot procs |
 | DruidBalancePhase3 | 48468 | tick crit mean | Vengeance |
-| DruidBalancePhase3 | aura 48517 on self | uptime | Eclipse |
+| DruidFeral | 48574 | crit mean | Rake |
 | DruidFeral | 48574 | hit mean | Rake |
 | DruidFeralApl | melee | count | world tick |
-| HunterSV | aura 60233 on self | uptime | dot procs |
 | MageFire | energize 29076 mana | gain sizes | Master of Elements |
+| MageFrost | aura 44549 on self | applications | Brain Freeze |
 | MageFrost | aura 57669 on self | applications | Enduring Winter |
 | MageFrostFire | 47610 | crit mean | Torment the Weak |
-| MageFrostFire | 47610 | hit mean | Torment the Weak |
 | MageFrostFire | 47610 | tick hit mean | Torment the Weak |
 | MageFrostFire | energize 29076 mana | gain sizes | Master of Elements |
+| PaladinProtection | 26016 | misses | Vindication |
 | PaladinProtection | aura 26016 on target | applications | Vindication |
 | PaladinProtection | aura 26016 on target | uptime | Vindication |
 | PaladinRetribution | aura 53408 on target | applications | Crusader Strike |
 | PaladinRetribution | aura 60314 on self | uptime | world tick |
 | PriestShadow | aura 60486 on self | applications | dot procs |
 | PriestShadow | aura 60486 on self | uptime | dot procs |
-| PriestShadow | aura 60494 on self | uptime | dot procs |
 | PriestSmite | aura 60486 on self | applications | dot procs |
 | PriestSmite | aura 60486 on self | uptime | dot procs |
 | RogueAssassination | melee | count | world tick |
