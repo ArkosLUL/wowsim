@@ -1719,6 +1719,40 @@ Goldens: the live stage adds no golden move; `dock.sh delta` is stage 1's.
   (`huntersMarkBonus`, Kill Shot); `sim/deathknight/items.go`'s 3847; the audit CSV; their drops and rows.
 - **Goldens:** every suite whose damage truncates; report each.
 
+#### As built
+
+Re-measured on `0ccf8aa60` against [ac] `3d89793c7` and the committed records. Verdicts:
+- Damage truncation (fixed, core): every step after the base is whole on the server. `SpellDamageBonusDone`,
+  `MeleeDamageBonusDone` (done, a dot's amount at application), `SpellDamageBonusTaken`, `MeleeDamageBonusTaken`
+  truncate; `CalcArmorReducedDamage` rounds up; a partial resist takes `damage × i / 10` in integers; crit, glancing
+  and absorbs stay whole. The sim truncates after the attacker multiplier (`doneDamage`) and the target's, rounds up
+  after armor or resist, and truncates after the outcome and post-outcome mods
+  (`ApplyPostOutcomeDamageModifiers`). MageFrostFire's
+  47610 tick: sim 33.99 → 33, the log's 33. Left: each SP/AP bonus's own `int32` (class code computes it inline), a
+  stacked dot's per-stack truncation, magic crit before resist (≤1 point), heals (`SpellHealingBonusDone` truncates
+  too).
+- Hunter's Mark and creature-type AP (fixed, core): `weaponAttackPowerBonus` sums the mark (ranged hits) and
+  `MobTypeAttackPower`, then one `int32(sum / 14 × speed)`; a physical hit's bonus skips the aura 79 share
+  (`weaponBonusMultiplier`: `DamageDealtMultiplier`, the physical school's, `Spell.TotalPctMultiplier`, which
+  Ranged Weapon Specialization sets on ranged physical spells). `huntersMarkBonus` is gone. No record covers it
+  (the fights carry no mark); source-confirmed. DONE_VERSUS (aura 168) scales the bonus too: Troll Beast Slaying
+  (20557) moved from `DamageDealtMultiplier` to the per-target attack table multiplier (golden-neutral, the goldens
+  fight a demon); the undead sets (57943, 29068) still sit in `DamageDealtMultiplier`.
+- Kill Shot (fixed): effect 17's weapon part reads the weapon's own speed (`RangedWeaponDamage`). No record (no
+  fight reaches 20%).
+- Rune of the Stoneskin Gargoyle (fixed): 62157's +25 is `PseudoStats.BonusDefenseSkill`; dodge, parry and miss
+  take it undiminished, `Unit.DefenseSkill()` gives the table, crit taken and block the full skill. Goldchar
+  BloodTank dodge 20.4424 → 20.6844 (server 20.6844), parry 18.9400 → 19.4142 (19.4128); both drops and the README
+  row gone.
+- Tooling: `spells_audit.csv` regenerated (33831, not 65861; Auto Shot listed); `rangedWeaponSpell`'s comment no
+  longer names Auto Shot. `TestPetStrikeReplay` (`tools/simval/damage_test.go`) expects the truncated amount.
+- Replays all pass (`simval.jsonl` 1114/1114).
+- Goldens (`dock.sh delta`), 35 of 37 move (not the priest healers), Average-Default: BM −0.20%, MM −0.21%
+  (Auto Shot −0.7%/−0.6%, Aimed −0.6%, Silencing −1.2%: the mark without TBW, RWS, raid aura 79s; Kill Shot
+  +1.1%), SV −0.04%; BloodTank dps +0.1%, dtps −2.9% (Stoneskin); every other suite −0.01 to −0.1% (truncation:
+  dot ticks, Razorice −1.2%, Thorns −0.8%); the other healers move only the Gnomish Lightning Generator row. Twin Blades of Azzinoth rows −0.14% (Combat) to
+  −0.99% (Fury) for melee (its +200 AP on the demon dummy loses the aura 79s).
+
 ### EC-CLASS-FIX (Z2; changes goldens; stages: melee, casters, live)
 
 - Death knight: death runes from Blood of the North, Reaping and Death Rune Mastery revert 30 s after the talent last

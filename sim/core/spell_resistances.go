@@ -2,6 +2,7 @@ package core
 
 import (
 	"fmt"
+	"math"
 	"strings"
 
 	"github.com/wowsims/wotlk/sim/core/stats"
@@ -10,7 +11,11 @@ import (
 func (result *SpellResult) applyResistances(sim *Simulation, spell *Spell, isPeriodic bool, attackTable *AttackTable) {
 	// TODO check why result.Outcome isn't updated with resists anymore
 	resistanceMultiplier := spell.ResistanceMultiplier(sim, isPeriodic, attackTable)
-	result.Damage *= resistanceMultiplier
+	if resistanceMultiplier != 1 {
+		// CalcArmorReducedDamage rounds up, and a partial resist takes off its share of the whole damage
+		// rounded down. The epsilon keeps float noise on an exact product from rounding it up a point.
+		result.Damage = math.Ceil(result.Damage*resistanceMultiplier - 1e-6)
+	}
 
 	result.ResistanceMultiplier = resistanceMultiplier
 	result.PreOutcomeDamage = result.Damage

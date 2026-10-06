@@ -232,10 +232,9 @@ func init() {
 
 					// Quick Shot (71834): 50% weapon damage, not normalized
 					ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-						baseDamage := (hunter.RangedWeaponDamage(sim, hunter.rangedWeaponAP())+
-							hunter.AmmoDamageBonus+
-							spell.BonusWeaponDamage())*0.5 +
-							hunter.huntersMarkBonus(target, false)
+						baseDamage := (hunter.RangedWeaponDamage(sim, hunter.rangedWeaponAP()) +
+							hunter.AmmoDamageBonus +
+							spell.BonusWeaponDamage()) * 0.5
 
 						spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeRangedHitAndCrit)
 					},

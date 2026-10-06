@@ -39,17 +39,31 @@ func (unit *Unit) defenseRatingAvoidancePct() float64 {
 	return float64(DefenseSkillFromRating(unit.stats[stats.Defense])) * PercentPerSkillPoint
 }
 
+// defenseSkillAvoidancePct is what defense skill above the cap gives each avoidance without diminishing: the
+// server's (GetSkillValue(SKILL_DEFENSE) - GetMaxSkillValueForLevel()) * 0.04, where the skill holds
+// SPELL_AURA_MOD_SKILL bonuses but not rating.
+func (unit *Unit) defenseSkillAvoidancePct() float64 {
+	return float64(unit.PseudoStats.BonusDefenseSkill) * PercentPerSkillPoint
+}
+
+// DefenseSkill is the defense skill above the defender's level cap the attack table and crit taken read
+// (Unit::GetDefenseSkillValue): rating and skill bonuses alike.
+func (unit *Unit) DefenseSkill() int32 {
+	return DefenseSkillFromRating(unit.stats[stats.Defense]) + unit.PseudoStats.BonusDefenseSkill
+}
+
 // DodgeChance is the dodge chance creatures roll against.
 func (unit *Unit) DodgeChance() float64 {
 	fromRating := unit.stats[stats.Dodge]/DodgeRatingPerDodgeChance + unit.defenseRatingAvoidancePct()
 	a := unit.playerAvoidance
 	if a == nil {
-		return unit.PseudoStats.BaseDodge + fromRating/100
+		return unit.PseudoStats.BaseDodge + (fromRating+unit.defenseSkillAvoidancePct())/100
 	}
 
 	// Only agility above the character's base diminishes.
 	dodgePerAgility := 100 * a.MeleeCritPerAgility * a.CritToDodge
-	nondiminishing := 100*(a.DodgeBase+unit.PseudoStats.BaseDodge) + a.baseAgility*dodgePerAgility
+	nondiminishing := 100*(a.DodgeBase+unit.PseudoStats.BaseDodge) + a.baseAgility*dodgePerAgility +
+		unit.defenseSkillAvoidancePct()
 	diminishing := fromRating + (unit.stats[stats.Agility]-a.baseAgility)*dodgePerAgility
 	return max(0, diminish(nondiminishing, diminishing, a.DodgeCap, a.DiminishingK)) / 100
 }
@@ -59,13 +73,13 @@ func (unit *Unit) ParryChance() float64 {
 	fromRating := unit.stats[stats.Parry]/ParryRatingPerParryChance + unit.defenseRatingAvoidancePct()
 	a := unit.playerAvoidance
 	if a == nil {
-		return unit.PseudoStats.BaseParry + fromRating/100
+		return unit.PseudoStats.BaseParry + (fromRating+unit.defenseSkillAvoidancePct())/100
 	}
 	if !unit.PseudoStats.CanParry || a.ParryCap == 0 {
 		return 0
 	}
 
-	nondiminishing := 5 + 100*unit.PseudoStats.BaseParry
+	nondiminishing := 5 + 100*unit.PseudoStats.BaseParry + unit.defenseSkillAvoidancePct()
 	return max(0, diminish(nondiminishing, fromRating, a.ParryCap, a.DiminishingK)) / 100
 }
 
@@ -74,7 +88,7 @@ func (unit *Unit) DefenseMissChance() float64 {
 	fromRating := unit.defenseRatingAvoidancePct()
 	a := unit.playerAvoidance
 	if a == nil {
-		return fromRating / 100
+		return (fromRating + unit.defenseSkillAvoidancePct()) / 100
 	}
-	return diminish(0, fromRating, a.MissCap, a.DiminishingK) / 100
+	return diminish(unit.defenseSkillAvoidancePct(), fromRating, a.MissCap, a.DiminishingK) / 100
 }

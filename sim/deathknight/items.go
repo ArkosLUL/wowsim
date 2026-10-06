@@ -509,7 +509,8 @@ func init() {
 	addEnchantEffect(3847, func(agent core.Agent) {
 		character := agent.GetCharacter()
 
-		character.AddStat(stats.Defense, 25*core.DefenseRatingPerDefense)
+		// 62157's +25 defense is SPELL_AURA_MOD_SKILL, so it doesn't diminish like defense rating
+		character.PseudoStats.BonusDefenseSkill += 25
 		character.MultiplyStat(stats.Stamina, 1.02)
 	})
 

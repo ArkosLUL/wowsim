@@ -361,7 +361,7 @@ func (at *AttackTable) partialBlockBP() int32 {
 // blockChancePct is a player's sheet block chance. Unlike dodge and parry, it
 // takes every point of defense skill and none of it diminishes.
 func (unit *Unit) blockChancePct() float32 {
-	defenseSkill := DefenseSkillFromRating(unit.stats[stats.Defense])
+	defenseSkill := unit.DefenseSkill()
 	return 5 + float32(unit.stats[stats.Block]/BlockRatingPerBlockChance) + float32(defenseSkill)*PercentPerSkillPoint
 }
 
@@ -420,7 +420,7 @@ func (spell *Spell) YellowTableInput(attackTable *AttackTable) MeleeTableInput {
 func (spell *Spell) enemyTableInput(attackTable *AttackTable, defender *Unit) MeleeTableInput {
 	in := attackTable.meleeTableInput()
 	in.InFront = true
-	in.DefenderSkill = attackTable.DefenderMaxSkill + DefenseSkillFromRating(defender.stats[stats.Defense])
+	in.DefenderSkill = attackTable.DefenderMaxSkill + defender.DefenseSkill()
 
 	stunned := defender.PseudoStats.Stunned
 	in.CanDodge = !stunned
@@ -443,7 +443,7 @@ func (spell *Spell) enemyTableInput(attackTable *AttackTable, defender *Unit) Me
 // term with the player's full defense skill.
 func (spell *Spell) enemyCritChance(attackTable *AttackTable) float64 {
 	defender := attackTable.Defender
-	defenseSkill := attackTable.DefenderMaxSkill + DefenseSkillFromRating(defender.stats[stats.Defense])
+	defenseSkill := attackTable.DefenderMaxSkill + defender.DefenseSkill()
 	critChance := (spell.Unit.stats[stats.MeleeCrit]+spell.BonusCritRating)/(CritRatingPerCritChance*100) -
 		defender.stats[stats.Resilience]/ResilienceRatingPerCritReductionChance/100 -
 		defender.PseudoStats.ReducedCritTakenChance -

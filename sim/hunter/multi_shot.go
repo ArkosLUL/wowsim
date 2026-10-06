@@ -55,8 +55,7 @@ func (hunter *Hunter) registerMultiShotSpell(timer *core.Timer) {
 			curTarget := target
 			for hitIndex := range results {
 				// the weapon's AP part, normalized: RAP / 14 × 2.8 s
-				baseDamage := (sharedDmg+0.2*hunter.rangedWeaponAP())*spell.Direct.WeaponPct +
-					hunter.huntersMarkBonus(curTarget, true)
+				baseDamage := (sharedDmg + 0.2*hunter.rangedWeaponAP()) * spell.Direct.WeaponPct
 				results[hitIndex] = spell.CalcDamage(sim, curTarget, baseDamage, spell.OutcomeRangedHitAndCrit)
 
 				curTarget = sim.Environment.NextTargetUnit(curTarget)
