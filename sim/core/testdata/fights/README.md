@@ -57,9 +57,9 @@ Representation gaps, not mismatches, each with its reason in `tools/simval/fight
 
 ## Dropped checks
 
-Real sim mismatches, each a follow-up, in `droppedFightChecks` (`tools/simval/fight.go`); a check is named by its
-subject (`47809`, `melee`, `Bloodworm melee`, `aura 17800 on target`, `energize 57946 mana`) and name. Why, by the
-table's cause:
+Real sim or cycle mismatches, each a follow-up, in `droppedFightChecks` (`tools/simval/fight.go`); a check is named
+by its subject (`47809`, `melee`, `Bloodworm melee`, `aura 17800 on target`, `energize 57946 mana`) and name. Why,
+by the table's cause:
 - **map update length**: the live map update runs about 104 ms (world ticks of about 10.4 ms, sleeping past
   `MinWorldUpdateTime`), the sim's exactly 100. A whole-second dot's tick lands anywhere in a live update, but right
   on the sim's: Serpent Sting's 4th tick beats the next cast's landing about half the cycles on the server, every

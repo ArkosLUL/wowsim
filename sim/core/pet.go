@@ -21,6 +21,8 @@ type PetAgent interface {
 type OnPetEnable func(sim *Simulation)
 type OnPetDisable func(sim *Simulation)
 
+// PetStatInheritance must read nothing but ownerStats: refreshScaling skips a tick that finds them as the last
+// one did.
 type PetStatInheritance func(ownerStats stats.Stats) stats.Stats
 
 // Pet is an extension of Character, for any entity created by a player that can
@@ -71,6 +73,7 @@ type Pet struct {
 	// every owner stat change instead.
 	ScalingPeriod  time.Duration
 	scalingRefresh *PendingAction
+	scalingTick    petScalingTick
 
 	// The aura types the summon's scaling script makes it immune to, so the owner's buffs of those
 	// types never land on it (dropBuffsItCannotTake). Pet food and pet scrolls are stat auras too: a
@@ -341,35 +344,41 @@ const (
 // reads depends on the owner: ranged for a hunter, spell for anyone casting off mana, else melee.
 // 67561 always reads melee.
 func (pet *Pet) ownerHitScaling() stats.Stats {
+	hit, spellHit, expertise := pet.ownerHitAmounts()
+	return stats.Stats{stats.MeleeHit: hit, stats.SpellHit: spellHit, stats.Expertise: expertise}
+}
+
+// ownerHitAmounts is ownerHitScaling's three stats, the only ones it sets.
+func (pet *Pet) ownerHitAmounts() (hit, spellHit, expertise float64) {
 	owner := pet.Owner
 	hitPct, hitCap := owner.stats[stats.MeleeHit]/MeleeHitRatingPerHitChance, petOwnerHitCap
 	if pet.HitScaling == PetHitScalingMasterSpell06 {
-		return stats.Stats{
-			stats.SpellHit:  math.Trunc(hitPct/hitCap*petSpellHitAmount) * SpellHitRatingPerHitChance,
-			stats.Expertise: math.Trunc(hitPct/hitCap*petExpertiseAmount) * ExpertisePerQuarterPercentReduction,
-		}
+		return 0, math.Trunc(hitPct/hitCap*petSpellHitAmount) * SpellHitRatingPerHitChance,
+			math.Trunc(hitPct/hitCap*petExpertiseAmount) * ExpertisePerQuarterPercentReduction
 	}
 	if owner.Class != proto.Class_ClassHunter && owner.GetCurrentPowerBar() == ManaBar {
 		hitPct, hitCap = owner.stats[stats.SpellHit]/SpellHitRatingPerHitChance, petOwnerSpellHitCap
 	}
 
-	return stats.Stats{
-		stats.MeleeHit:  math.Trunc(hitPct/hitCap*petHitAmount) * MeleeHitRatingPerHitChance,
-		stats.SpellHit:  math.Trunc(hitPct/hitCap*petSpellHitAmount) * SpellHitRatingPerHitChance,
-		stats.Expertise: math.Trunc(hitPct/hitCap*petExpertiseAmount) * ExpertisePerQuarterPercentReduction,
-	}
+	return math.Trunc(hitPct/hitCap*petHitAmount) * MeleeHitRatingPerHitChance,
+		math.Trunc(hitPct/hitCap*petSpellHitAmount) * SpellHitRatingPerHitChance,
+		math.Trunc(hitPct/hitCap*petExpertiseAmount) * ExpertisePerQuarterPercentReduction
 }
 
 // refreshOwnerHitScaling is the aura's 3 s tick: recalculate, and move the pet by the difference.
 func (pet *Pet) refreshOwnerHitScaling(sim *Simulation) {
-	scaling := pet.ownerHitScaling()
-	change := scaling.Subtract(pet.ownerHit)
-	if change.Equals(stats.Stats{}) {
+	hit, spellHit, expertise := pet.ownerHitAmounts()
+	// ownerHit holds nothing but these three, so the rest of the difference is always 0
+	if hit-pet.ownerHit[stats.MeleeHit] == 0 && spellHit-pet.ownerHit[stats.SpellHit] == 0 &&
+		expertise-pet.ownerHit[stats.Expertise] == 0 {
 		return
 	}
 
+	scaling := stats.Stats{stats.MeleeHit: hit, stats.SpellHit: spellHit, stats.Expertise: expertise}
+	change := scaling.Subtract(pet.ownerHit)
 	pet.ownerHit = scaling
 	pet.inheritedStats.AddInplace(&change)
+	pet.scalingTick.fresh = false
 	pet.AddStatsDynamic(sim, change)
 }
 
@@ -459,23 +468,49 @@ func (pet *Pet) refreshOwnerHaste(sim *Simulation) {
 // ownerScaling is what the scaling auras hand over right now: the class's share of the owner's
 // stats, with the hit scaling aura's hit and expertise in place of whatever the class gives.
 func (pet *Pet) ownerScaling() stats.Stats {
-	scaling := pet.statInheritance(pet.Owner.GetStats())
+	var scaling stats.Stats
+	pet.ownerScalingInto(&scaling)
+	return scaling
+}
+
+func (pet *Pet) ownerScalingInto(scaling *stats.Stats) {
+	*scaling = pet.statInheritance(pet.Owner.stats)
 	scaling[stats.MeleeHit] = 0
 	scaling[stats.SpellHit] = 0
 	scaling[stats.Expertise] = 0
-	return scaling.Add(pet.ownerHit)
+	scaling.AddInplace(&pet.ownerHit)
 }
 
 // refreshScaling is the scaling auras' periodic tick: rework the amounts off the owner's stats now,
-// and move the pet by the difference.
+// and move the pet by the difference. Hot enough that it skips out when nothing it reads has moved and
+// otherwise works in pet-held scratch, not Stats copies.
 func (pet *Pet) refreshScaling(sim *Simulation) {
-	scaling := pet.ownerScaling()
-	change := scaling.Subtract(pet.inheritedStats)
-	if change.Equals(stats.Stats{}) {
+	tick := &pet.scalingTick
+	if tick.fresh && tick.owner == pet.Owner.stats {
 		return
 	}
-	pet.inheritedStats = scaling
-	pet.AddStatsDynamic(sim, change)
+	tick.owner, tick.fresh = pet.Owner.stats, true
+
+	pet.ownerScalingInto(&tick.scaling)
+	changed := false
+	for i := range tick.change {
+		tick.change[i] = tick.scaling[i] - pet.inheritedStats[i]
+		changed = changed || tick.change[i] != 0
+	}
+	if changed {
+		pet.inheritedStats = tick.scaling
+		pet.AddStatsDynamic(sim, tick.change)
+	}
+}
+
+// petScalingTick is refreshScaling's state between ticks.
+type petScalingTick struct {
+	// the owner's stats the last tick read, and whether ownerHit and inheritedStats are as it left them:
+	// every other write to either clears fresh
+	owner stats.Stats
+	fresh bool
+
+	scaling, change stats.Stats
 }
 
 // ResyncScaling catches a summoned pet up with its owner's stats now, hit included, as the next tick
@@ -496,6 +531,7 @@ func (pet *Pet) addOwnerStats(sim *Simulation, addedStats stats.Stats) {
 	inheritedChange[stats.Expertise] = 0
 
 	pet.inheritedStats.AddInplace(&inheritedChange)
+	pet.scalingTick.fresh = false
 	pet.AddStatsDynamic(sim, inheritedChange)
 }
 
@@ -541,6 +577,7 @@ func (pet *Pet) Enable(sim *Simulation, petAgent PetAgent) {
 
 	pet.ownerHit = pet.ownerHitScaling()
 	pet.inheritedStats = pet.ownerScaling()
+	pet.scalingTick.fresh = false
 	pet.AddStatsDynamic(sim, pet.inheritedStats)
 	// summons start at full health, owner's stamina included (Guardian::InitStatsForLevel)
 	pet.healthBar.reset(sim)
@@ -676,6 +713,7 @@ func (pet *Pet) Disable(sim *Simulation) {
 		pet.AddStatsDynamic(sim, pet.inheritedStats.Invert())
 		pet.inheritedStats = stats.Stats{}
 		pet.ownerHit = stats.Stats{}
+		pet.scalingTick.fresh = false
 	}
 
 	if pet.dynamicStatInheritance != nil {

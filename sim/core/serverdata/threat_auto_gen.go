@@ -200,6 +200,7 @@ var threats = []Threat{
 	{SpellID: 44373, Targets: ThreatTargetsCaster},                                         // Shadowstep
 	{SpellID: 44401, Targets: ThreatTargetsCaster},                                         // Missile Barrage
 	{SpellID: 44448, Targets: ThreatTargetsCaster},                                         // Hot Streak (Rank 3)
+	{SpellID: 44472, Targets: ThreatTargetsCaster},                                         // Burnout (Rank 5)
 	{SpellID: 44544, Targets: ThreatTargetsCaster},                                         // Fingers of Frost
 	{SpellID: 44545, Targets: ThreatTargetsCaster},                                         // Fingers of Frost (Rank 2)
 	{SpellID: 44549, Targets: ThreatTargetsCaster},                                         // Brain Freeze (Rank 3)

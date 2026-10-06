@@ -1,6 +1,8 @@
 package core
 
 import (
+	"math"
+	"math/rand/v2"
 	"testing"
 
 	"github.com/wowsims/wotlk/sim/core/proto"
@@ -251,6 +253,128 @@ func TestPetSummonsAtFullHealth(t *testing.T) {
 	}
 	if pet.MaxHealth() <= 1000 || pet.CurrentHealth() != pet.MaxHealth() {
 		t.Errorf("health %v of %v, want full with the inherited 500 in it", pet.CurrentHealth(), pet.MaxHealth())
+	}
+}
+
+// both scaling ticks without their shortcuts
+func refRefreshScaling(pet *Pet, sim *Simulation) {
+	scaling := pet.statInheritance(pet.Owner.GetStats())
+	scaling[stats.MeleeHit] = 0
+	scaling[stats.SpellHit] = 0
+	scaling[stats.Expertise] = 0
+	scaling = scaling.Add(pet.ownerHit)
+	change := scaling.Subtract(pet.inheritedStats)
+	if change.Equals(stats.Stats{}) {
+		return
+	}
+	pet.inheritedStats = scaling
+	pet.AddStatsDynamic(sim, change)
+}
+
+func refRefreshOwnerHitScaling(pet *Pet, sim *Simulation) {
+	scaling := pet.ownerHitScaling()
+	change := scaling.Subtract(pet.ownerHit)
+	if change.Equals(stats.Stats{}) {
+		return
+	}
+	pet.ownerHit = scaling
+	pet.inheritedStats.AddInplace(&change)
+	pet.AddStatsDynamic(sim, change)
+}
+
+// Twin pets of one owner, one ticking as the sim does and one through the plain ticks above, stay bit-equal
+// while the owner's stats move, back and forth too, and the pets get dismissed and summoned again.
+func TestPetScalingTickWalk(t *testing.T) {
+	inheritance := func(owner stats.Stats) stats.Stats {
+		return stats.Stats{
+			stats.Stamina:     PetScalingPct(owner[stats.Stamina], 45),
+			stats.AttackPower: PetScalingPct(owner[stats.RangedAttackPower]+owner[stats.Stamina]*0.3, 22),
+			stats.SpellPower:  PetScalingPct(owner[stats.RangedAttackPower], 12.87),
+			// not truncated, so a change and its undo can leave a residue
+			stats.Armor: owner[stats.Armor] * 0.35,
+			// the hit scaling's, so it's dropped
+			stats.MeleeHit: owner[stats.MeleeHit],
+		}
+	}
+	var pets [2]*timingTestPet
+	timingTestConstruct = func(a *timingTestAgent) {
+		for i := range pets {
+			pets[i] = &timingTestPet{Pet: NewPet("Pet "+string(rune('A'+i)), &a.Character, stats.Stats{stats.Health: 1000},
+				inheritance, true, true)}
+			a.AddPet(pets[i])
+		}
+	}
+	sim, owner := newTimingTestSim(t, 0, nil)
+	timingTestConstruct = nil
+	sim.PrePull()
+	cached, ref := pets[0].Pet, pets[1].Pet
+	if !cached.IsEnabled() || !ref.IsEnabled() {
+		t.Fatal("the pets aren't summoned")
+	}
+
+	same := func(a, b stats.Stats) bool {
+		for i := range a {
+			if math.Float64bits(a[i]) != math.Float64bits(b[i]) {
+				return false
+			}
+		}
+		return true
+	}
+	// melee hit, which the owner's hit scaling reads, often enough that a hit tick lands between two
+	// scaling ticks: undoing its change in float leaves a residue the next scaling tick has to hand over
+	ownerStats := []stats.Stat{stats.Stamina, stats.RangedAttackPower, stats.Armor, stats.MeleeHit, stats.MeleeHit,
+		stats.MeleeHit, stats.SpellHit, stats.MeleeHaste}
+	amounts := []float64{1, -1, 0.1, 0.3, 37.5, -37.5, 400, MeleeHitRatingPerHitChance, -2 * MeleeHitRatingPerHitChance}
+	var applied []stats.Stats
+	rng := rand.New(rand.NewPCG(5, 6))
+	still, moved := 0, 0
+	for step := range 50000 {
+		switch op := rng.IntN(16); {
+		case op < 4:
+			var change stats.Stats
+			change[ownerStats[rng.IntN(len(ownerStats))]] = amounts[rng.IntN(len(amounts))]
+			owner.AddStatsDynamic(sim, change)
+			applied = append(applied, change)
+		case op < 8:
+			if n := len(applied); n > 0 {
+				owner.AddStatsDynamic(sim, applied[n-1].Invert())
+				applied = applied[:n-1]
+			}
+		case op < 11:
+			cached.refreshOwnerHitScaling(sim)
+			refRefreshOwnerHitScaling(ref, sim)
+		case op < 15:
+			before := cached.inheritedStats
+			cached.refreshScaling(sim)
+			refRefreshScaling(ref, sim)
+			if before == cached.inheritedStats {
+				still++
+			} else {
+				moved++
+			}
+		default:
+			for _, pet := range pets {
+				pet.Disable(sim)
+				pet.Enable(sim, pet)
+			}
+		}
+
+		for _, got := range []struct {
+			name             string
+			cached, expected stats.Stats
+		}{
+			{"stats", cached.stats, ref.stats},
+			{"stats without deps", cached.statsWithoutDeps, ref.statsWithoutDeps},
+			{"inherited", cached.inheritedStats, ref.inheritedStats},
+			{"owner hit", cached.ownerHit, ref.ownerHit},
+		} {
+			if !same(got.cached, got.expected) {
+				t.Fatalf("step %d: %s %v, want %v", step, got.name, got.cached, got.expected)
+			}
+		}
+	}
+	if still == 0 || moved == 0 {
+		t.Errorf("%d ticks moved the pet, %d didn't: the walk misses a path", moved, still)
 	}
 }
 

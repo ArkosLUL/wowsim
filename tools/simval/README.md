@@ -321,8 +321,8 @@ needs `-tags=with_db`). Records group by bot name; the info record's `character`
 items) picks exactly one setup, and the bot's `damage` records belong to it. `wornBy` then makes the setup geared
 when each item's `enchant` and `prismatic`, and `gems`, are exactly its own; a record without those fields replays
 bare (logged), anything else fails, except for a setup in `goldcharRerecord` (enchants changed since the
-capture), which takes its record's enchants until a rerun; one its record already wears fails. The sim character is `goldchar.go`'s `goldcharPlayer`: the setup's spec, race,
-items, talent string and server-known glyphs, empty buffs, consumes and spec options, plus `auras` it registers by
+capture), which takes its record's enchants until a rerun; one its record already wears fails. The sim character
+is `goldchar.go`'s `goldcharPlayer`: the setup's spec, race, items, talent string and server-known glyphs, empty buffs, consumes and spec options, plus `auras` it registers by
 id; geared, also its enchants and gems (`gearItems`, skipping socket-adding enchants: the sim takes a gem past an
 item's sockets as one more socket). A hunter whose record carries Sniper Training's buff (64420, a bot
 that stood still) also gets `SniperTrainingUptime` 1 and its aura 53304. Per setup:
@@ -378,9 +378,8 @@ up once it's in: Moonkin Form, Shadowform, Bone Shield, Trueshot Aura). The gene
 Rewrite it with `tools/acore/dock.sh test ./tools/simval -run TestTalentPathsFile -update`; a changed path's
 `talents.jsonl` records then match nothing, so rerun it (`SIMVAL_TALENT_ONLY`) and trim its stream: paths it has no
 bot for keep their records from the fixture. Until that rerun, list the path in `sweepRerecord` (`talents_test.go`):
-the replay builds it as its records stood (`asRecorded`: their items, the path's auras they had,
-each step's talent at the rank they learned), and a listed path
-whose records stand as the path fails. Tests: `TestTalentPathsFile` (stale), `TestTalentPathsAreLegal` (points,
+the replay builds it as its records stood (`asRecorded`: their items, the path's auras they had, each step's
+talent at the rank they learned), and a listed path whose records stand as the path fails. Tests: `TestTalentPathsFile` (stale), `TestTalentPathsAreLegal` (points,
 rows, prerequisites, ranks, every implemented talent covered in a setup that shows it, on the committed file),
 `TestTalentPathsCoverTheSimsStart` (after each step, what the sim has up that isn't passive is in the auras; buff
 option raid buffs in `sweepRaidBuffs`), `TestTalentPathsItemClasses`.

@@ -14,6 +14,16 @@ var spells = []Spell{
 			{Effect: 2, BasePoints: 999, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1},
 		},
 	},
+	// Vindication (Rank 1)
+	{
+		ID: 67, Family: 10, FamilyFlags: [3]uint32{0, 0x4000}, SchoolMask: 2, DmgClass: DmgClassMagic, Flags: FlagBinary,
+		Attributes: [8]uint32{0, 0x88, 0x4, 0x20000, 0, 0, 0x4000000}, AttributesCu: 0x101000,
+		DurationMs: 10000, MaxDurationMs: 10000,
+		ProcChance: 101, SpellLevel: 20, BaseLevel: 20, MaxLevel: 80,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 99, BasePoints: -24, DieSides: 1, PointsPerLevel: -4.4, DamageMultiplier: 1},
+		},
+	},
 	// Defensive Stance
 	{
 		ID: 71, Family: 4, FamilyFlags: [3]uint32{0x800000}, SchoolMask: 1, Flags: FlagPositive,
@@ -3026,6 +3036,16 @@ var spells = []Spell{
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 4, BasePoints: 99, DieSides: 1, DamageMultiplier: 1, ClassMask: [3]uint32{0, 0x8}},
 			{Effect: 6, Aura: 4, BasePoints: 24, DieSides: 1, DamageMultiplier: 1},
+		},
+	},
+	// Burnout (Rank 5)
+	{
+		ID: 44472, Family: 3, SchoolMask: 4, Flags: FlagBinary | FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0x400d0, 0, 0, 0x4080000}, AttributesCu: 0x100000,
+		ProcFlags: 0x50000, ProcChance: 100, SpellLevel: 1,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 108, BasePoints: 49, DieSides: 1, DamageMultiplier: 1, MiscValue: 15, ClassMask: [3]uint32{0x20e212f7, 0x39048}},
+			{Effect: 6, Aura: 4, BasePoints: 4, DieSides: 1, DamageMultiplier: 1},
 		},
 	},
 	// Icebreaker

@@ -1360,7 +1360,7 @@ Threat stage (offline; each lead re-measured against [ac] 3d89793c7 and the spel
 - Classes: Righteous Fury (holy ×1.8) and Elemental Precision (fire, frost, nature) are school auras. Devastate's
   Sunder reads 58567 (+10, also when the aura can't apply); Auto Shot reads 75 (+1). 41 positive self buffs get
   `ThreatMultiplier` 1, and a school and `ProcMaskEmpty` where missing; spells with no unit target (totems, traps,
-  Water Elemental) and externally cast buffs stay at 0. 75 and 58567 are hand-copied into `serverdata`.
+  Water Elemental) and externally cast buffs stay at 0. gen_serverdata emits 75 and 58567 (`ThreatSpellID` literals).
 - Not changed: the Infernal's 20153 already matches, and pet threat never reaches the owner's TPS.
 - Replay: the bonus check leaves out `SPELL_EFFECT_THREAT`, which `.simval threat` doesn't record.
 

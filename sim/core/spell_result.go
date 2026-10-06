@@ -111,8 +111,8 @@ func (spell *Spell) RangedAttackPower(target *Unit) float64 {
 }
 
 // RangedAttackPowerSpellBonus is a spell_bonus_data row's own ap_bonus/ap_dot_bonus source
-// (Unit::GetTotalAttackPowerValue), Hunter's Mark included. The same as RangedAttackPower, which the
-// weapon part reads.
+// (Unit::GetTotalAttackPowerValue), Hunter's Mark included. A hunter's weapon part reads the bare ranged
+// attack power and gets the mark after the weapon percent instead (Unit::MeleeDamageBonusDone).
 func (spell *Spell) RangedAttackPowerSpellBonus(target *Unit) float64 {
 	return spell.RangedAttackPower(target)
 }
