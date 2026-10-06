@@ -101,7 +101,7 @@ func (result *SpellResult) HealingString() string {
 }
 
 // MeleeAttackPower leaves out the creature-type attack power: a weapon hit gets it after its weapon
-// percent (versusAttackPowerBonus), a spell's attack power coefficient never.
+// percent (weaponAttackPowerBonus), a spell's attack power coefficient never.
 func (spell *Spell) MeleeAttackPower() float64 {
 	return spell.Unit.stats[stats.AttackPower]
 }
@@ -111,18 +111,25 @@ func (spell *Spell) RangedAttackPower(target *Unit) float64 {
 }
 
 // RangedAttackPowerSpellBonus is a spell_bonus_data row's own ap_bonus/ap_dot_bonus source
-// (Unit::GetTotalAttackPowerValue), Hunter's Mark included. A hunter's weapon part reads the bare ranged
-// attack power and gets the mark after the weapon percent instead (Unit::MeleeDamageBonusDone).
+// (Unit::GetTotalAttackPowerValue), Hunter's Mark included. A weapon hit's weapon part reads the bare ranged
+// attack power and gets the mark after the weapon percent instead (weaponAttackPowerBonus).
 func (spell *Spell) RangedAttackPowerSpellBonus(target *Unit) float64 {
 	return spell.RangedAttackPower(target)
 }
 
-// versusAttackPowerBonus is Unit::MeleeDamageBonusDone's creature-type attack power
-// (SPELL_AURA_MOD_*_ATTACK_POWER_VERSUS) on a weapon hit: int32(AP / 14 × the weapon's speed, normalized or
-// not), added after the weapon percent.
-func (spell *Spell) versusAttackPowerBonus() float64 {
+// weaponAttackPowerBonus is Unit::MeleeDamageBonusDone's flat bonus on a weapon hit: the target's Hunter's
+// Mark on a ranged one plus the creature-type attack power (SPELL_AURA_MOD_*_ATTACK_POWER_VERSUS), summed
+// first, then int32(sum / 14 × the weapon's speed, normalized or not), added after the weapon percent.
+func (spell *Spell) weaponAttackPowerBonus(target *Unit) float64 {
+	if spell.Flags.Matches(SpellFlagIgnoreAttackerModifiers) {
+		return 0
+	}
 	ap := spell.Unit.PseudoStats.MobTypeAttackPower
-	if ap == 0 || spell.Flags.Matches(SpellFlagIgnoreAttackerModifiers) {
+	ranged := spell.ProcMask.Matches(ProcMaskRanged)
+	if ranged {
+		ap += target.PseudoStats.BonusRangedAttackPowerTaken
+	}
+	if ap == 0 {
 		return 0
 	}
 	weaponHit, normalized := spell.dealsWeaponDamage()
@@ -133,7 +140,7 @@ func (spell *Spell) versusAttackPowerBonus() float64 {
 	switch {
 	case spell.ProcMask.Matches(ProcMaskMeleeOH):
 		weapon = spell.Unit.AutoAttacks.OH()
-	case spell.ProcMask.Matches(ProcMaskRanged):
+	case ranged:
 		weapon = spell.Unit.AutoAttacks.Ranged()
 	}
 	speed := weapon.SwingSpeed
@@ -141,6 +148,34 @@ func (spell *Spell) versusAttackPowerBonus() float64 {
 		speed = weapon.NormalizedSwingSpeed
 	}
 	return math.Trunc(ap / DefaultAttackPowerPerDPS * speed)
+}
+
+// weaponBonusMultiplier is the share of the attacker multiplier weaponAttackPowerBonus takes. A physical hit's
+// weapon damage already carries its hand's TOTAL_PCT, the aura 79 percents (DamageDealtMultiplier, the
+// physical school's, TotalPctMultiplier), and Unit::MeleeDamageBonusDone skips aura 79 for physical damage.
+func (spell *Spell) weaponBonusMultiplier(attackerMultiplier float64) float64 {
+	if !spell.SpellSchool.Matches(SpellSchoolPhysical) {
+		return attackerMultiplier
+	}
+	totalPct := spell.Unit.PseudoStats.DamageDealtMultiplier *
+		spell.Unit.PseudoStats.SchoolDamageDealtMultiplier[stats.SchoolIndexPhysical] *
+		spell.TotalPctMultiplier
+	if totalPct == 0 {
+		return 0
+	}
+	return attackerMultiplier / totalPct
+}
+
+// doneDamage is SpellDamageBonusDone's or MeleeDamageBonusDone's result, a whole number: the server
+// truncates it, a dot's amount at application, and keeps every later step whole too.
+func (spell *Spell) doneDamage(target *Unit, baseDamage float64, attackerMultiplier float64, isPeriodic bool) float64 {
+	damage := baseDamage * attackerMultiplier
+	if !isPeriodic && baseDamage > 0 {
+		if bonus := spell.weaponAttackPowerBonus(target); bonus != 0 {
+			damage += bonus * spell.weaponBonusMultiplier(attackerMultiplier)
+		}
+	}
+	return math.Trunc(damage)
 }
 
 func (spell *Spell) BonusWeaponDamage() float64 {
@@ -255,11 +290,12 @@ func (spell *Spell) HealingCritCheck(sim *Simulation) bool {
 	return sim.UnitRandomFloat(spell.Unit, "Healing Crit Roll") < critChance
 }
 
+// ApplyPostOutcomeDamageModifiers leaves the damage whole, as the server's crit, glancing and absorb math does.
 func (spell *Spell) ApplyPostOutcomeDamageModifiers(sim *Simulation, result *SpellResult) {
 	for i := range result.Target.DynamicDamageTakenModifiers {
 		result.Target.DynamicDamageTakenModifiers[i](sim, spell, result)
 	}
-	result.Damage = max(0, result.Damage)
+	result.Damage = max(0, math.Trunc(result.Damage))
 }
 
 // For spells that do no damage but still have a hit/miss check.
@@ -276,19 +312,14 @@ func (spell *Spell) calcDamageInternal(sim *Simulation, target *Unit, baseDamage
 	attackTable := spell.Unit.AttackTables[target.UnitIndex]
 
 	result := spell.NewResult(target)
-	result.Damage = baseDamage
-	if !isPeriodic && baseDamage > 0 {
-		result.Damage += spell.versusAttackPowerBonus()
-	}
+	result.Damage = spell.doneDamage(target, baseDamage, attackerMultiplier, isPeriodic)
 
 	if sim.Log == nil {
-		result.Damage *= attackerMultiplier
 		result.applyTargetModifiers(spell, attackTable, isPeriodic)
 		result.applyResistances(sim, spell, isPeriodic, attackTable)
 		outcomeApplier(sim, result, attackTable)
 		spell.ApplyPostOutcomeDamageModifiers(sim, result)
 	} else {
-		result.Damage *= attackerMultiplier
 		afterAttackMods := result.Damage
 		result.applyTargetModifiers(spell, attackTable, isPeriodic)
 		afterTargetMods := result.Damage
@@ -515,7 +546,8 @@ func (result *SpellResult) applyTargetModifiers(spell *Spell, attackTable *Attac
 		result.Damage += spell.flatDamageTaken(taken, attackTable.Defender, isPeriodic)
 	}
 
-	result.Damage *= spell.TargetDamageMultiplier(attackTable, isPeriodic)
+	// SpellDamageBonusTaken and MeleeDamageBonusTaken truncate too
+	result.Damage = math.Trunc(result.Damage * spell.TargetDamageMultiplier(attackTable, isPeriodic))
 }
 func (spell *Spell) TargetDamageMultiplier(attackTable *AttackTable, isPeriodic bool) float64 {
 	if spell.Flags.Matches(SpellFlagIgnoreTargetModifiers) {

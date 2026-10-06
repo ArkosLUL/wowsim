@@ -170,10 +170,20 @@ func applyRaceEffects(agent Agent) {
 			character.AddBonusRangedCritRating(1 * CritRatingPerCritChance)
 		}
 
-		// Beast Slaying (+5% damage to beasts)
-		if character.CurrentTarget.MobType == proto.MobType_MobTypeBeast {
-			character.PseudoStats.DamageDealtMultiplier *= 1.05
-		}
+		// Beast Slaying (20557) is DONE_VERSUS, not aura 79: per target, and a weapon hit's flat attack
+		// power bonus takes it too
+		var beastSlayingApplied bool
+		character.RegisterResetEffect(func(_ *Simulation) {
+			if beastSlayingApplied {
+				return
+			}
+			beastSlayingApplied = true
+			for _, target := range character.Env.Encounter.TargetUnits {
+				if target.MobType == proto.MobType_MobTypeBeast {
+					character.AttackTables[target.UnitIndex].DamageDealtMultiplier *= 1.05
+				}
+			}
+		})
 
 		// Berserking
 		actionID := ActionID{SpellID: 26297}

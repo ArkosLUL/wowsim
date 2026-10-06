@@ -94,6 +94,13 @@ func TestRangedWeaponSpecializationSchools(t *testing.T) {
 	if got := with.RaptorStrike.DamageMultiplier / without.RaptorStrike.DamageMultiplier; !near(got, 1) {
 		t.Errorf("Raptor Strike x%v, want x1", got)
 	}
+	// the ranged weapon's TOTAL_PCT, which Hunter's Mark's flat bonus on a weapon hit leaves out
+	if got := with.SteadyShot.TotalPctMultiplier; !near(got, 1.05) {
+		t.Errorf("Steady Shot's TOTAL_PCT x%v, want x1.05", got)
+	}
+	if got := with.RaptorStrike.TotalPctMultiplier; !near(got, 1) {
+		t.Errorf("Raptor Strike's TOTAL_PCT x%v, want x1", got)
+	}
 	if got := with.SerpentSting.DamageMultiplier / without.SerpentSting.DamageMultiplier; !near(got, 1) {
 		t.Errorf("Serpent Sting's own multiplier x%v, want x1: its school carries the talent", got)
 	}

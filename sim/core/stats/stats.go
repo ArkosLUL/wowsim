@@ -361,6 +361,10 @@ type PseudoStats struct {
 	BaseParry float64
 	//BaseMiss is not needed, this is always 5%
 
+	// Defense skill from SPELL_AURA_MOD_SKILL (Rune of the Stoneskin Gargoyle), not rating: avoidance takes it
+	// undiminished, and the attack table, crit taken and block read it with the rest of the skill.
+	BonusDefenseSkill int32
+
 	ReducedCritTakenChance float64 // Reduces chance to be crit.
 
 	BonusRangedAttackPowerTaken float64 // Hunters mark

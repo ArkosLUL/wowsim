@@ -340,7 +340,7 @@ const (
 
 // rangedWeaponSpell is SpellInfo::IsRangedWeaponSpell without its equipped item mask, which serverdata
 // lacks and which never decides it alone for a ranged class spell in the spelldump. An id serverdata
-// lacks (Auto Shot) counts as one, so it keeps the weapon's own skill.
+// lacks counts as one, so it keeps the weapon's own skill.
 func rangedWeaponSpell(spellID int32) bool {
 	spell := serverdata.SpellByID(spellID)
 	if spell == nil {

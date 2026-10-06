@@ -225,8 +225,6 @@ type goldcharDrop struct {
 
 var droppedGoldchar = []goldcharDrop{
 	{"DeathknightBlood", 0, "armor penetration %"},
-	{"DeathknightBloodTank", 0, "dodge %"},
-	{"DeathknightBloodTank", 0, "parry %"},
 	{"DruidBalance", 0, "arcane spell crit %"},
 	{"DruidBalancePhase3", 0, "arcane spell crit %"},
 	{"MageFire", 0, "arcane spell crit %"},

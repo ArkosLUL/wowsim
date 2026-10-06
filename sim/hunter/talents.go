@@ -133,6 +133,7 @@ func (hunter *Hunter) applyRangedWeaponSpecialization() {
 	hunter.OnSpellRegistered(func(spell *core.Spell) {
 		if spell.ProcMask.Matches(core.ProcMaskRanged) && spell.SpellSchool == core.SpellSchoolPhysical {
 			spell.DamageMultiplier *= mult
+			spell.TotalPctMultiplier *= mult
 		}
 	})
 	for school := stats.SchoolIndexArcane; school < stats.SchoolLen; school++ {
@@ -365,7 +366,6 @@ func (hunter *Hunter) applyWildQuiver() {
 			baseDamage := (spell.Unit.RangedWeaponDamage(sim, hunter.rangedWeaponAP()) +
 				hunter.AmmoDamageBonus +
 				spell.BonusWeaponDamage()) * spell.Direct.WeaponPct
-			baseDamage += hunter.huntersMarkBonus(target, false)
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeRangedHitAndCrit)
 			spell.DealDamageAfterTravel(sim, result)
 		},

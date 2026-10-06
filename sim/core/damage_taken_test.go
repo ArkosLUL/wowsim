@@ -175,25 +175,63 @@ func TestServerDerivedWalk(t *testing.T) {
 	}
 }
 
-func TestVersusAttackPower(t *testing.T) {
+func TestWeaponAttackPowerBonus(t *testing.T) {
 	unit := &Unit{Type: PlayerUnit}
 	unit.PseudoStats = stats.NewPseudoStats()
 	unit.PseudoStats.MobTypeAttackPower = 105
 	unit.AutoAttacks.mh.Weapon = Weapon{SwingSpeed: 3.4, NormalizedSwingSpeed: 3.3}
+	unit.AutoAttacks.ranged.Weapon = Weapon{SwingSpeed: 2.9, NormalizedSwingSpeed: 2.8}
+	target := &Unit{Type: EnemyUnit}
+	target.PseudoStats = stats.NewPseudoStats()
+	target.PseudoStats.BonusRangedAttackPowerTaken = 650
 	for _, tc := range []struct {
 		name  string
 		spell *Spell
 		want  float64
 	}{
-		// the mobs probe's Elixir of Demonslaying: int(105 / 14 * 3.4)
+		// the mobs probe's Elixir of Demonslaying: int(105 / 14 * 3.4), Hunter's Mark only on ranged hits
 		{"white swing", &Spell{Unit: unit, ProcMask: ProcMaskMeleeMHAuto}, 25},
 		{"Heroic Strike", serverDataSpell(t, unit, 47450, ProcMaskMeleeMHSpecial), 25},
 		{"Mortal Strike, normalized", serverDataSpell(t, unit, 47486, ProcMaskMeleeMHSpecial), 24},
 		{"Exorcism, a spell", serverDataSpell(t, unit, 48801, ProcMaskSpellDamage), 0},
+		// one int((650 + 105) / 14 * 2.9), where truncating each apart gives 134 + 21
+		{"Auto Shot", &Spell{Unit: unit, ProcMask: ProcMaskRangedAuto}, 156},
+		{"Steady Shot, a spell", serverDataSpell(t, unit, 49052, ProcMaskRangedSpecial), 0},
 	} {
-		if got := tc.spell.versusAttackPowerBonus(); got != tc.want {
+		if got := tc.spell.weaponAttackPowerBonus(target); got != tc.want {
 			t.Errorf("%s: %v, want %v", tc.name, got, tc.want)
 		}
+	}
+}
+
+// A physical weapon hit's flat bonus skips the aura 79 percents its weapon damage takes as TOTAL_PCT: The Beast
+// Within (DamageDealtMultiplier) and Ranged Weapon Specialization (TotalPctMultiplier), not Marked for Death.
+func TestWeaponAttackPowerBonusSkipsTotalPct(t *testing.T) {
+	unit := &Unit{Type: PlayerUnit}
+	unit.PseudoStats = stats.NewPseudoStats()
+	unit.PseudoStats.DamageDealtMultiplier = 1.1
+	unit.AutoAttacks.ranged.Weapon = Weapon{SwingSpeed: 2.9, NormalizedSwingSpeed: 2.8}
+	target := &Unit{Type: EnemyUnit}
+	target.PseudoStats = stats.NewPseudoStats()
+	target.PseudoStats.BonusRangedAttackPowerTaken = 650
+	attackerMultiplier := 1.1 * 1.05 * 1.03
+
+	autoShot := &Spell{Unit: unit, ProcMask: ProcMaskRangedAuto, SpellSchool: SpellSchoolPhysical, TotalPctMultiplier: 1.05}
+	if got := autoShot.weaponBonusMultiplier(attackerMultiplier); math.Abs(got-1.03) > 1e-9 {
+		t.Errorf("Auto Shot's bonus multiplier %v, want 1.03", got)
+	}
+	// 1000 * 1.18965 + int(650 / 14 * 2.9) * 1.03, truncated
+	if got := autoShot.doneDamage(target, 1000, attackerMultiplier, false); got != 1327 {
+		t.Errorf("Auto Shot's done damage %v, want 1327", got)
+	}
+	if got := autoShot.doneDamage(target, 1000, attackerMultiplier, true); got != 1189 {
+		t.Errorf("a tick's done damage %v, want 1189", got)
+	}
+
+	// a nature weapon hit's weapon damage leaves TOTAL_PCT out, so MeleeDamageBonusDone's aura 79 takes all of it
+	wildQuiver := &Spell{Unit: unit, ProcMask: ProcMaskRangedAuto, SpellSchool: SpellSchoolNature, TotalPctMultiplier: 1}
+	if got := wildQuiver.weaponBonusMultiplier(attackerMultiplier); got != attackerMultiplier {
+		t.Errorf("Wild Quiver's bonus multiplier %v, want %v", got, attackerMultiplier)
 	}
 }
 

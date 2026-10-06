@@ -57,7 +57,6 @@ and replays with those its record wears until a rerun replaces it.
 | Setup | Record | Check | Why |
 |---|---|---|---|
 | DeathknightBlood | info | armor penetration % | the sheet field is the aura's raw sum; the server applies Blood-Gorged to white swings and five strikes by its class mask, and the sim does the same per spell (`applyBloodGorged`), so nothing reaches `BonusArmorPenPct` |
-| DeathknightBloodTank | info | dodge %, parry % | Rune of the Stoneskin Gargoyle's +25 defense is skill on the server, which dodge and parry take undiminished; the sim adds it as defense rating, which diminishes |
 | DruidBalance, DruidBalancePhase3 | info | arcane spell crit % | spell specific crit in the sim (Improved Moonfire; Nature's Majesty and Dreamwalker 4pc on Starfire), spell mods on the server |
 | MageFire, MageFrostFire | info | arcane spell crit % | spell specific crit in the sim (Khadgar's Regalia 4pc, World in Flames), spell mods on the server |
 | WarlockDestruction | info | fire spell crit % | Devastation: spell specific crit in the sim, a spell mod on the server |

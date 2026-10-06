@@ -989,7 +989,7 @@ func TestPetSpellReplay(t *testing.T) {
 }
 
 // A pet's strike pins the pet's weapon and attack power: the Felguard's Cleave at the bottom is its weapon's 329
-// plus 2000 / 14 × 2 s and the 124 fixed, before its multipliers.
+// plus 2000 / 14 × 2 s and the 124 fixed, before its multipliers, truncated as the server's done damage is.
 func TestPetStrikeReplay(t *testing.T) {
 	w := handWeapon("mainhand", true, false, 2, 1, rng(374, 419), rng(124, 124), 100, rng(498, 543), 20000)
 	w.AttackPower = 2000
@@ -1010,7 +1010,7 @@ func TestPetStrikeReplay(t *testing.T) {
 		t.Fatalf("the strike's caster is %s", d.casterChar().Name)
 	}
 	lo, err := d.strikeAmount(spell, rec.Weapon, 0)
-	if want := 329 + 2000.0/14*2 + 124; err != nil || lo < want || lo > want*1.5 {
+	if want := math.Trunc(329 + 2000.0/14*2 + 124); err != nil || lo < want || lo > want*1.5 {
 		t.Errorf("%.2f, want %.2f before multipliers: %v", lo, want, err)
 	}
 	if failed := failedCheckNames(checkStrike(rec.damageRecord)); slices.Contains(failed, "fixed") || slices.Contains(failed, "percent") {
