@@ -9,7 +9,7 @@ import (
 
 func (druid *Druid) registerFrenziedRegenerationCD() {
 	actionID := core.ActionID{SpellID: 22842}
-	healthMetrics := druid.NewHealthMetrics(actionID)
+	healthMetrics := druid.HealThreat(druid.NewHealthMetrics(actionID), 22845)
 	rageMetrics := druid.NewRageMetrics(actionID)
 
 	cdTimer := druid.NewTimer()

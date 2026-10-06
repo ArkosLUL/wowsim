@@ -194,7 +194,8 @@ func (hunter *Hunter) applyInvigoration() {
 	}
 
 	procChance := 0.5 * float64(hunter.Talents.Invigoration)
-	manaMetrics := hunter.NewManaMetrics(core.ActionID{SpellID: 53253})
+	// the hunter casts 53398 on itself
+	manaMetrics := hunter.NewManaMetrics(core.ActionID{SpellID: 53253}).EnergizeThreat(core.EnergizeBySpell)
 
 	hunter.pet.RegisterAura(core.Aura{
 		Label:    "Invigoration",
@@ -637,7 +638,7 @@ func (hunter *Hunter) applyThrillOfTheHunt() {
 	}
 
 	procChance := []float64{0, .33, .66, 1}[hunter.Talents.ThrillOfTheHunt]
-	manaMetrics := hunter.NewManaMetrics(core.ActionID{SpellID: 34499})
+	manaMetrics := hunter.NewManaMetrics(core.ActionID{SpellID: 34499}).EnergizeThreat(core.EnergizeBySpell)
 
 	// spell_hun_thrill_of_the_hunt gives back 40% of the shot's base cost, whatever the cast paid (a free Lock and
 	// Load shot too), each step truncated

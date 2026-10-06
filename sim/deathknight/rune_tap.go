@@ -20,7 +20,7 @@ func (dk *Deathknight) registerRuneTapSpell() {
 	actionID := core.ActionID{SpellID: 48982}
 	cdTimer := dk.NewTimer()
 	cd := time.Minute - (time.Second * 10 * time.Duration(dk.Talents.ImprovedRuneTap))
-	healthMetrics := dk.NewHealthMetrics(actionID)
+	healthMetrics := dk.HealThreat(dk.NewHealthMetrics(actionID), 48982)
 
 	dk.bonusCoeffs.runeTapHealing = []float64{1.0, 1.33, 1.66, 2.0}[dk.Talents.ImprovedRuneTap] *
 		core.TernaryFloat64(dk.HasMajorGlyph(proto.DeathknightMajorGlyph_GlyphOfRuneTap), 0.11, 0.10)

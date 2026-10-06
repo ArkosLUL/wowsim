@@ -1615,6 +1615,92 @@ Stage live (2026-10-06, server 3d89793c7, mod-sim-validation f72dbf7):
   `e2e/threat_test.go`.
 - **Goldens:** TPS in nearly every suite (energize threat); report each.
 
+#### As built
+
+Threat stage (offline; each lead re-measured against [ac] 3d89793c7, the spelldump and the live DBCs):
+- Gain threat (`sim/core/threat.go`, hooked into the `Add*` power functions and `GainHealth`): a `ResourceMetrics`
+  can carry the server's threat for its gains, added at each gain (none before the pull) and put under the gain's
+  action, shared evenly over the enemies, at iteration end. Feint's floor counts it.
+  - `EnergizeThreat(kind)`: half, unmodified, rage and runic power in tenths. `EnergizeBySpell` takes the amount
+    asked for (the cap's cut too), `EnergizeByTick` (periodic energize, `OBS_MOD_POWER`) the gain, both only for
+    the unit's current power; `EnergizeByPotion` (`SPELLFAMILY_POTION`) for any power it has.
+    `AddEnergizeThreat` books an energize the sim gains inside another gain: Chill of the Grave and Dirge, per
+    landed strike in their class masks.
+  - `HealThreat(metrics, spellID)`: half the health gained (a quarter for paladins), plus the cast's bonus when
+    each gain is a cast, modified like a hit of that spell.
+  - The upstream mana (×0.5) and rage (×5) gain threat and its `OtherActionManaGain`/`RageGain` holders went: it
+    took every non-regen gain, actual amount only, whole on each target.
+- Each energize site is marked after checking its server spell for `ATTR1_NO_THREAT` and its caster. None for
+  Anger Management and Butchery's tick (`MOD_POWER_REGEN`), Horn of Winter, Empower Rune Weapon and Blood Tap (rune
+  cost runic power), Sudden Death (`SetPower`), refunds and cost mods, `NO_THREAT` energizes (Life Tap, Soul Leech,
+  Furor, Spiritual Attunement, Viper, Judgement of Wisdom, Sanctuary, Go for the Throat), other units' energizes.
+  Heals: Death Strike 45470, (Improved) Blood Presence 50475 (+40 each), Rune Tap 48982, healing potions,
+  healthstone, Lifeblood's ticks, Blood Reserve.
+- Sunder Armor reads 7386 (`ThreatSpellID`: 345 + 5% AP) and adds 58567's 10 on landing; its ActionID stays 47467.
+- Penance's ticks are casts of 52985 and 53000 (level 80): `ThreatSpellID`, `NoThreatBonus` and a `ThreatTick` per
+  tick. `ThreatTick` takes positive tick spells, as assist threat.
+- serverdata regenerated: 7386's row and nine spells (34917 dropped).
+- Replay: the 47467 Sunder record's bonus is a known mismatch (a probe artifact, fixture README row);
+  `threatSimSpells` maps 7386 to the sim's Sunder.
+
+Verdicts: Sunder, energize threat, the heals and Penance confirmed and fixed, except: Anger Management and Horn of
+Winter aren't energizes; Death Pact (48743) is `ATTR1_NO_THREAT`; Frenzied Regeneration's 22845 and Lifeward's
+44578 heal but aren't in the spelldump, so the live stage captures them.
+
+Goldens (`dock.sh delta`): TPS moves in all 37 suites, nothing else; the OtherID 10/11 holder abilities are gone.
+Average-Default: Disc +192% (Penance), Holy paladin 0.22 → 8.6 (energizes at full mana count), Blood Tank +0.14%,
+Frost DK +0.09%, FrostUH and Unholy +0.07%, rogues +0.04 to +0.06%, ferals up to +0.03%, Blood +0.001%; Fury
+−0.007%, Arms −0.03%, casters and healers −0.08 to −0.93%, Enhancement −1.0%, hunters −0.5 to −1.4% (Viper,
+Judgement of Wisdom), warlocks −0.7 to −1.1% (Life Tap), Ret −0.35%, Prot paladin −0.55%; Prot warrior, Resto druid
+and Resto shaman unchanged. LongMultiTarget settings fall most, to −31%: the old threat was whole on each target.
+
+C++ and e2e stage (`-Werror -fsyntax-only` clean, e2e vetted; not rebuilt, no live run; notes and live plan in
+`tmp/ec-threat-fix3-code.md`):
+- `.simval threat` records `threatEffect` (each `SPELL_EFFECT_THREAT` effect's value, its sum on the dummy) and,
+  for a healing spell, `heal` (threat for `amount` healed: half, a quarter for a paladin, modified); live adds
+  both, heal threat through `ForwardThreatForAssistingMe` (`healAssist`). An ally-only spell (Power Infusion) is
+  probed cast on the caster, a channel's tick spell (Volley's 58433) as if channeled at the dummy. Command syntax
+  and `simval_commands.sql` unchanged.
+- `TestSimvalThreat`: Sunder Armor probed as 7386 (was 47467), plus 58567, Bladestorm's 50622 and 44949, Heart
+  Strike on 2 targets, heals 45470, 48982 and 50475, Demonic Empowerment, a Night Elf hunter (Auto Shot 75, Volley
+  58433); `threatAssistProbes` gain Shield Wall, Recklessness, Berserker Rage, Tiger's Fury, Power Infusion. Each
+  record is held to its `threatEffect` and `heal` arithmetic and their live shares.
+- Replay (`tools/simval/threat.go`): `effect threat` and `heal threat` checks when the record has the fields (the
+  bonus no longer leaves the effect out); a heal with no sim spell but a `Unit.HealThreat` (45470, 50475) replays
+  without a cast; a mapped probe measures only the spells reading its server spell (`Spell.ThreatServerSpellID`,
+  a hit's or tick's `FromSpellID`): 7386 without 58567's 10, 58567 alone, each Bladestorm Whirlwind; a tick probe
+  casts the spell carrying the dot; `threatSimActions` maps Auto Shot to the sim's Shoot. Core gained the read-only
+  `Spell.ThreatServerSpellID`, `Spell.ThreatFromHealing` and `Unit.HealThreatOf`.
+- Self buffs: Shield Wall (a shield), Recklessness (`UseRecklessness`), Berserker Rage and Tiger's Fury (an empty
+  rotation for the gain to ask), Power Infusion (the talent, `PowerInfusionTarget` self) replay; Demonic
+  Empowerment is dropped: cast on the pet, its bonus goes to the creatures fighting the pet, and the probe's
+  warlock has none. Every new probe is a `recapture` drop until the live run; the committed 147 records still
+  replay all-PASS (345 checks).
+
+Goldens: this stage adds no golden move; `dock.sh delta` is stage 1's.
+
+Live stage (server on [ac] 3d89793c7 plus the module tree, 2026-10-06):
+- Spelldump: 22845 (Frenzied Regeneration's heal: physical, level 0, not `NO_THREAT`) captured; 44578 (Lifeward) was
+  already in. gen_serverdata regenerated; Frenzied Regeneration and Lifeward take `HealThreat` (22845, 44578). No
+  golden moves: no suite casts either.
+- `TestSimvalThreat` re-recorded `threat.jsonl` (161 records; Envenom's last of 7 kept; 45524, 49576 and 47193 are
+  dropped probes, so their records stay out). Every `recapture` drop and the 47467 known mismatch with their README
+  rows went; `knownThreatMismatches` is empty. The whole run passed except ProtPaladin's cleanup (a character
+  delete that lagged: guid 540381 was gone by the next SELECT), its records all written.
+- Every new check passes against the server: Sunder 7386 (373.40 = 345 + 5% AP) and 58567 (10, effect threat 0);
+  Faerie Fire (Feral) 60089's 638 `effect threat`; heal threat of 45470, 48982 and 50475 (half the heal times Frost
+  Presence, bonus included, 0 for Rune Tap); Volley's 58433 ticks (80), Auto Shot (1), each Bladestorm Whirlwind
+  (36), Heart Strike on 2 targets (40 each); Shield Wall, Recklessness, Berserker Rage, Tiger's Fury and Power
+  Infusion bonuses and per-creature shares (Power Infusion selected the dummy: the `CheckExplicitTarget` fallback
+  took); Mind Flay 58381 selects the dummy, bonus 0. Evocation 12051 and Devouring Plague 48300 carry a `heal`,
+  "not compared" (the sim doesn't heal with them).
+- Replay fix: `checkHealThreat` restarted a sim a cast had left running, which panicked on Evocation's channel;
+  it now starts only a heal-only probe.
+- Still unsettled by a record: energize threat (the probe has no energize field), and 22845 and 44578's heal
+  threat (no probe casts them).
+
+Goldens: the live stage adds no golden move; `dock.sh delta` is stage 1's.
+
 ### EC-CORE-FIX2 (Z2; changes goldens, full suite)
 
 - Damage truncation: the server truncates `SpellDamageBonusDone`'s result, a dot's amount at application and a

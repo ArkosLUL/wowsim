@@ -146,7 +146,8 @@ func (rogue *Rogue) Initialize() {
 	rogue.AutoAttacks.OHConfig().CritMultiplier = rogue.WhiteCritMultiplier(1)
 
 	if rogue.Talents.QuickRecovery > 0 {
-		rogue.QuickRecoveryMetrics = rogue.NewEnergyMetrics(core.ActionID{SpellID: 31245})
+		// the refunds are casts of 31663
+		rogue.QuickRecoveryMetrics = rogue.NewEnergyMetrics(core.ActionID{SpellID: 31245}).EnergizeThreat(core.EnergizeBySpell)
 	}
 
 	rogue.registerStealthAura()

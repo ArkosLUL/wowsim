@@ -171,23 +171,31 @@ the fixture test fails on a key twice.
 Per record (`threat.go`):
 - The character is `damage.go`'s, in the record's stance, form, presence or Righteous Fury (`threatForms`, which
   also names the spec tried first; a spec without that aura is skipped), plus `threatExtraSpecs` and
-  `threatTaughtSpells`. `threatLoadouts` add what a spell reads (a weapon, an off hand, a pet), with
-  `threatLoadoutSpecs` tried first. `threatSimSpells` maps probes the sim declares under another id. The
+  `threatTaughtSpells`. `threatLoadouts` add what a spell reads (a weapon, a shield, a bow, a pet, a spec option,
+  an empty rotation for a power gain or channel to ask), with `threatLoadoutSpecs` tried first. `threatSimSpells`
+  maps probes the sim declares under another id, `threatSimActions` under an action (Auto Shot); of that id's
+  spells only those taking their threat or a hit from the probe's spell are measured, if any do (Sunder Armor's
+  7386 without the 58567 it casts, Bladestorm's two Whirlwinds). A probe with no sim spell that the sim heals with
+  through `Unit.HealThreat` (Death Strike's 45470) is compared without a cast: its bonus and `heal threat`. The
   encounter has as many dummies as the server split the bonus over, minus the caster when it was hit, or as many
   as `live.assist` has creatures sharing a positive spell's bonus (not under crowd control), if more.
 - The spell is cast at the dummy (`SkipCastAndApplyEffects`, so the cast hands out its threat bonus) with a
   forced hit and no crit, attack power pinned to the server's, missiles landing at once, then the sim runs until
-  just before anything later. Every tag of the id is measured; a tag landing nothing (Rune Strike's queue) gives
-  way to the next. One tick of the dot it leaves is then run.
+  just before anything later. Every measured tag of the id counts; a tag landing nothing (Rune Strike's queue)
+  gives way to the next. One tick of the dot it leaves is then run.
 - `damage threat`: the sim's threat per damage point (`ThreatFromDamage`, of the tag dealing most) times `amount`,
   against `damage.threat`. Not compared when neither the sim's cast nor the server spell deals damage.
-- `bonus`: the cast's threat on the dummy beyond its damage's, against `bonus.threat`, or the dummy's `live.assist`
-  share when more creatures fought. It leaves out the sim's `SPELL_EFFECT_THREAT` (Faerie Fire (Feral)'s 638), which
-  the record doesn't hold.
+- `bonus`: the cast's threat on the dummy beyond its damage's and its `SPELL_EFFECT_THREAT`, against
+  `bonus.threat`, or the dummy's `live.assist` share when more creatures fought.
 - `assist shares` (more creatures fought): the same on the sim's other dummies, against the other sharing creatures'.
+- `effect threat`: the sim's `SPELL_EFFECT_THREAT` (Faerie Fire (Feral)'s 638) on the dummy against
+  `threatEffect.threat`, when either has one. A capture without `threatEffect` gets none.
 - `tick bonus`: the same for one tick, against 0 (aura ticks run no `HandleThreatSpells`), or against the record's
   bonus for a `threatTickSpells` probe, a server spell cast once per tick (Death and Decay's 52212), which gets no
-  `bonus` check.
+  `bonus` check; that probe casts the spell carrying the dot.
+- `heal threat` (records with `heal`): the sim's threat for `heal.amount` healed, through `Unit.HealThreat` of the
+  probe's spell, else a measured spell's healing (`ProcMaskSpellHealing`), against `heal.threat`. Not compared
+  when the sim doesn't heal with it.
 - Within 0.01 or 1e-4 relative. A cast that panics or deals NaN fails as `sim cast`; one that misses every try (Holy
   Wrath on a giant) is compared with a note.
 

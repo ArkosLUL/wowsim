@@ -221,7 +221,7 @@ func init() {
 		procMask := character.GetProcMaskForEnchant(3241)
 		ppmm := character.AutoAttacks.NewPPMManager(lifewardPPM, procMask)
 
-		healthMetrics := character.NewHealthMetrics(core.ActionID{ItemID: 44494})
+		healthMetrics := character.HealThreat(character.NewHealthMetrics(core.ActionID{ItemID: 44494}), 44578)
 
 		aura := character.GetOrRegisterAura(core.Aura{
 			Label:    "Lifeward",
@@ -400,7 +400,7 @@ func init() {
 			return
 		}
 
-		manaMetrics := character.NewManaMetrics(core.ActionID{SpellID: 55767})
+		manaMetrics := character.NewManaMetrics(core.ActionID{SpellID: 55767}).EnergizeThreat(core.EnergizeBySpell)
 		icd := core.Cooldown{
 			Timer:    character.NewTimer(),
 			Duration: darkglow.ICD,
@@ -464,7 +464,7 @@ func init() {
 	bloodDraining := core.ServerProcFor(bloodDrainingSpellID)
 	core.NewEnchantEffect(3870, func(agent core.Agent) {
 		character := agent.GetCharacter()
-		healthMetrics := character.NewHealthMetrics(core.ActionID{SpellID: 64569})
+		healthMetrics := character.HealThreat(character.NewHealthMetrics(core.ActionID{SpellID: 64569}), 64569)
 
 		bloodReserveAura := character.GetOrRegisterAura(core.Aura{
 			Label:     "Blood Reserve",

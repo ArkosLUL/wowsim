@@ -11,7 +11,7 @@ func (hunter *Hunter) registerArcaneShotSpell(timer *core.Timer) {
 	hasGlyph := hunter.HasMajorGlyph(proto.HunterMajorGlyph_GlyphOfArcaneShot)
 	var manaMetrics *core.ResourceMetrics
 	if hasGlyph {
-		manaMetrics = hunter.NewManaMetrics(core.ActionID{ItemID: 42898})
+		manaMetrics = hunter.NewManaMetrics(core.ActionID{ItemID: 42898}).EnergizeThreat(core.EnergizeBySpell)
 	}
 
 	hunter.ArcaneShot = hunter.RegisterSpell(core.SpellConfig{

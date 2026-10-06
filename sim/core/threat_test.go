@@ -369,13 +369,141 @@ func TestThreatTick(t *testing.T) {
 	if len(tick.threat.hits) != 0 {
 		t.Errorf("%d hits left after the tick", len(tick.threat.hits))
 	}
+}
 
+// Penance's heal ticks each cast 52985, a positive spell of level 80: assist threat, modified
+func TestThreatTickPositive(t *testing.T) {
+	sim := threatTestSim(3)
+	spell := threatTestSpell(t, sim, 53007, SpellSchoolHoly)
+	spell.ThreatMultiplier = 0.9
+	spell.Unit.PseudoStats.ThreatMultiplier = 0.8
+	tick := spell.NewThreatTick(52985)
+	enemies := sim.Encounter.TargetUnits
+	tick.Hit(&SpellResult{Target: enemies[0], Outcome: OutcomeHit})
+	if len(tick.threat.hits) != 0 {
+		t.Errorf("a positive tick spell counted %d hits", len(tick.threat.hits))
+	}
+	tick.Done(sim)
+	for i, enemy := range enemies {
+		if got, want := spell.SpellMetrics[enemy.UnitIndex].TotalThreat, 80*0.9*0.8/3; !threatNear(got, want) {
+			t.Errorf("enemy %d: bonus %v, want %v", i, got, want)
+		}
+	}
+}
+
+// threatTestGainUnit is a player fighting the sim's enemies, with metrics to take gain threat.
+func threatTestGainUnit(sim *Simulation) *Unit {
+	unit := &Unit{Type: PlayerUnit, UnitIndex: int32(len(sim.Encounter.TargetUnits)), Env: sim.Environment, Label: "player",
+		Metrics: NewUnitMetrics()}
+	unit.PseudoStats = stats.NewPseudoStats()
+	for _, u := range append(slices.Clone(sim.Encounter.TargetUnits), unit) {
+		unit.AttackTables = append(unit.AttackTables, &AttackTable{Defender: u})
+	}
+	return unit
+}
+
+func TestEnergizeThreat(t *testing.T) {
+	for _, c := range []struct {
+		name          string
+		metrics       func(*Unit, ActionID) *ResourceMetrics
+		kind          EnergizeKind
+		amount, gain  float64
+		want          float64
+		beforeThePull bool
+		// the unit's power bar, else the metrics' power
+		catForm bool
+	}{
+		// half the amount asked for, the part the cap cuts off too
+		{name: "mana by spell", metrics: (*Unit).NewManaMetrics, kind: EnergizeBySpell, amount: 1000, gain: 400, want: 500},
+		{name: "mana by tick", metrics: (*Unit).NewManaMetrics, kind: EnergizeByTick, amount: 1000, gain: 400, want: 200},
+		// rage and runic power in tenths
+		{name: "rage by spell", metrics: (*Unit).NewRageMetrics, kind: EnergizeBySpell, amount: 10, gain: 2, want: 50},
+		{name: "rage by tick", metrics: (*Unit).NewRageMetrics, kind: EnergizeByTick, amount: 1, gain: 0.5, want: 2.5},
+		{name: "runic power by spell", metrics: (*Unit).NewRunicPowerMetrics, kind: EnergizeBySpell, amount: 10, gain: 10, want: 50},
+		{name: "energy by tick", metrics: (*Unit).NewEnergyMetrics, kind: EnergizeByTick, amount: 20, gain: 20, want: 10},
+		// the bar was above a max an expired buff cut
+		{name: "a tick past the max", metrics: (*Unit).NewManaMetrics, kind: EnergizeByTick, amount: 100, gain: -100},
+		{name: "before the pull", metrics: (*Unit).NewManaMetrics, kind: EnergizeBySpell, amount: 1000, gain: 1000,
+			beforeThePull: true},
+		{name: "mana in cat form", metrics: (*Unit).NewManaMetrics, kind: EnergizeBySpell, amount: 1000, gain: 1000,
+			catForm: true},
+		{name: "a mana potion in cat form", metrics: (*Unit).NewManaMetrics, kind: EnergizeByPotion, amount: 1000,
+			gain: 1000, want: 500, catForm: true},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			sim := threatTestSim(2)
+			if c.beforeThePull {
+				sim.CurrentTime = -time.Second
+			}
+			unit := threatTestGainUnit(sim)
+			// none of it is modified
+			unit.PseudoStats.ThreatMultiplier = 2
+			metrics := c.metrics(unit, ActionID{SpellID: 1}).EnergizeThreat(c.kind)
+			unit.currentPowerBar = metrics.gainThreat.bar
+			if c.catForm {
+				unit.manaBar.unit = unit
+				unit.stats[stats.Mana] = 10000
+				unit.currentPowerBar = EnergyBar
+			}
+			unit.addGainThreat(sim, metrics, c.amount, c.gain)
+			unit.doneGainThreat(sim)
+			if got := unit.Metrics.threat.Total; !threatNear(got, c.want) {
+				t.Errorf("threat %v, want %v", got, c.want)
+			}
+			if c.want == 0 {
+				return
+			}
+			action := unit.Metrics.actions[ActionID{SpellID: 1}]
+			for _, enemy := range sim.Encounter.TargetUnits {
+				if got := action.Targets[enemy.UnitIndex].Threat; !threatNear(got, c.want/2) {
+					t.Errorf("%s: %v, want %v", enemy.Label, got, c.want/2)
+				}
+			}
+		})
+	}
+
+	sim := threatTestSim(1)
+	unit := threatTestGainUnit(sim)
+	unit.currentPowerBar = RunicPower
+	metrics := unit.NewRunicPowerMetrics(ActionID{SpellID: 50480}).EnergizeThreat(EnergizeBySpell)
+	unit.AddEnergizeThreat(sim, metrics, 5)
+	if got := metrics.threat; !threatNear(got, 25) {
+		t.Errorf("an energize booked with another gain: %v, want 25", got)
+	}
 	defer func() {
 		if recover() == nil {
-			t.Error("a positive tick spell didn't panic")
+			t.Error("energize threat on health metrics didn't panic")
 		}
 	}()
-	spell.NewThreatTick(61657)
+	unit.NewHealthMetrics(ActionID{SpellID: 1}).EnergizeThreat(EnergizeBySpell)
+}
+
+func TestHealThreatOfGains(t *testing.T) {
+	for _, c := range []struct {
+		name    string
+		spellID int32
+		want    float64
+	}{
+		// half the health gained plus the cast's level 1, both modified
+		{"Death Strike's 45470", 45470, (500 + 1) * 2},
+		// SPELL_EFFECT_HEAL_PCT: SPELL_ATTR0_CU_NO_INITIAL_THREAT, shadow
+		{"Rune Tap", 48982, 500 * 2 * 0.5},
+		// each gain is a tick of the periodic heal, no cast
+		{"Lifeblood", 55503, 500 * 2},
+		{"Death Pact's SPELL_ATTR1_NO_THREAT", 48743, 0},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			sim := threatTestSim(2)
+			unit := threatTestGainUnit(sim)
+			unit.PseudoStats.ThreatMultiplier = 2
+			unit.AddThreatSchoolMultiplier(SpellSchoolShadow, 0.5)
+			metrics := unit.HealThreat(unit.NewHealthMetrics(ActionID{SpellID: c.spellID}), c.spellID)
+			unit.addGainThreat(sim, metrics, 1500, 1000)
+			if got := metrics.threat; !threatNear(got, c.want) {
+				t.Errorf("threat %v, want %v", got, c.want)
+			}
+		})
+	}
 }
 
 type threatTestAgent struct {

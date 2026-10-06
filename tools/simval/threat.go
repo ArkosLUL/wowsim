@@ -77,6 +77,22 @@ type threatRecord struct {
 		Modified     *threatModified `json:"modified"`
 		Threat       float64         `json:"threat"`
 	} `json:"bonus"`
+	// SPELL_EFFECT_THREAT, nil in a capture from before the probe recorded it
+	ThreatEffect *struct {
+		Effects []struct {
+			Index int32   `json:"index"`
+			Value float64 `json:"value"`
+			Dummy bool    `json:"dummy"`
+		} `json:"effects"`
+		Threat float64 `json:"threat"`
+	} `json:"threatEffect"`
+	// the threat of `amount` health the spell heals, nil for a spell that doesn't heal
+	Heal *struct {
+		Amount float64 `json:"amount"`
+		Base   float64 `json:"base"`
+		threatModified
+		Threat float64 `json:"threat"`
+	} `json:"heal"`
 	Live struct {
 		Assist []threatShare `json:"assist"`
 	} `json:"live"`
@@ -190,16 +206,27 @@ func (r threatRecord) attackPower() float64 {
 }
 
 // threatSimSpells are probes the sim declares under another id: a lower rank, the proc's other id, or
-// the cast whose aura the server's spell ticks for.
+// the cast whose aura the server's spell ticks for. Of that id's spells, the replay reads only those taking
+// their threat or a hit from the probe's spell, if any do.
 var threatSimSpells = map[int32]int32{
+	7386:  47467, // Sunder Armor, the rank the server's warriors know
+	58567: 47467, // Sunder Armor's debuff, which 7386 and Devastate cast
 	47437: 25203, // Demoralizing Shout
 	25742: 20154, // Seal of Righteousness, the damage
 	52212: 49938, // Death and Decay, each second's damage
+	50622: 46924, // Bladestorm, each tick's main hand Whirlwind
+	44949: 46924, // Bladestorm, each tick's off hand Whirlwind
+	58433: 58434, // Volley, each tick's arrows
+}
+
+// threatSimActions are probes the sim declares as an action with no spell id.
+var threatSimActions = map[int32]core.ActionID{
+	75: {OtherID: proto.OtherAction_OtherActionShoot}, // Auto Shot
 }
 
 // threatTickSpells are server spells that deal one tick of the sim spell's dot each cast, so each tick
 // gets their bonus.
-var threatTickSpells = map[int32]bool{52212: true}
+var threatTickSpells = map[int32]bool{52212: true, 50622: true, 44949: true, 58433: true}
 
 func threatSimSpell(id int32) int32 {
 	if sim, ok := threatSimSpells[id]; ok {
@@ -220,6 +247,7 @@ var threatTaughtSpells = map[int32]string{
 	12292: "deathWish", 12975: "lastStand", 48952: "holyShield", 61336: "survivalInstincts", 50334: "berserk",
 	13877: "bladeFlurry", 12472: "icyVeins", 12042: "arcanePower", 11129: "combustion", 12043: "presenceOfMind",
 	11958: "coldSnap", 16166: "elementalMastery", 30823: "shamanisticRage",
+	50622: "bladestorm", 44949: "bladestorm", 48982: "runeTap", 10060: "powerInfusion",
 }
 
 // threatExtraSpecs are the specs past the damage replay's that register a probed spell or form.
@@ -236,24 +264,56 @@ var threatExtraSpecs = map[uint8][]protoreflect.Name{
 var threatLoadouts = map[int32]func(*proto.Player){
 	25742: withThreatWeapons(proto.ItemSlot_ItemSlotMainHand),                                 // Seal of Righteousness: the main hand's speed
 	60103: withThreatWeapons(proto.ItemSlot_ItemSlotMainHand, proto.ItemSlot_ItemSlotOffHand), // Lava Lash: the off hand
-	59092: withThreatPet,                                                                      // Dark Pact drains the pet's mana
+	// Bladestorm reads the main hand and the off hand, and its channel asks the rotation whether to go on
+	50622: withThreat(withThreatWeapons(proto.ItemSlot_ItemSlotMainHand), withThreatRotation),
+	44949: withThreat(withThreatWeapons(proto.ItemSlot_ItemSlotMainHand, proto.ItemSlot_ItemSlotOffHand), withThreatRotation),
+	59092: withThreatPet, // Dark Pact drains the pet's mana
+	871:   withThreatItems(map[proto.ItemSlot]int32{proto.ItemSlot_ItemSlotOffHand: threatShieldID}),
+	75:    withThreatItems(map[proto.ItemSlot]int32{proto.ItemSlot_ItemSlotRanged: threatBowID}),
+	58433: withThreatItems(map[proto.ItemSlot]int32{proto.ItemSlot_ItemSlotRanged: threatBowID}),
+	// a rage or energy gain asks the rotation for the next action
+	18499: withThreatRotation,
+	50213: withThreatRotation,
+	1719: func(player *proto.Player) {
+		if w := player.GetWarrior(); w != nil {
+			w.Options.UseRecklessness = true
+		}
+	},
+	// the server's probe casts it on the priest
+	10060: func(player *proto.Player) {
+		if p := player.GetShadowPriest(); p != nil {
+			p.Options.PowerInfusionTarget = &proto.UnitReference{Type: proto.UnitReference_Self}
+		}
+	},
 }
 
 // threatLoadoutSpecs are tried first for a loadout's spell: elemental has no off hand attack to read
 // without Feral Spirit.
 var threatLoadoutSpecs = map[int32]protoreflect.Name{60103: "enhancement_shaman"}
 
-// a plain one-hand mace, no effects
-const threatWeaponID = 6360
+// plain items with no effects: a one-hand mace, a shield and a bow
+const (
+	threatWeaponID = 6360
+	threatShieldID = 30314
+	threatBowID    = 30105
+)
 
 func withThreatWeapons(slots ...proto.ItemSlot) func(*proto.Player) {
+	items := map[proto.ItemSlot]int32{}
+	for _, slot := range slots {
+		items[slot] = threatWeaponID
+	}
+	return withThreatItems(items)
+}
+
+func withThreatItems(bySlot map[proto.ItemSlot]int32) func(*proto.Player) {
 	return func(player *proto.Player) {
 		items := make([]*proto.ItemSpec, len(proto.ItemSlot_name))
 		for i := range items {
 			items[i] = &proto.ItemSpec{}
 		}
-		for _, slot := range slots {
-			items[slot].Id = threatWeaponID
+		for slot, id := range bySlot {
+			items[slot].Id = id
 		}
 		player.Equipment = &proto.EquipmentSpec{Items: items}
 	}
@@ -265,11 +325,24 @@ func withThreatPet(player *proto.Player) {
 	}
 }
 
-// threatSim is the record's character with the sim spells the probe compares: every tag of the id, the
-// lowest first.
+func withThreatRotation(player *proto.Player) {
+	player.Rotation = &proto.APLRotation{}
+}
+
+func withThreat(loads ...func(*proto.Player)) func(*proto.Player) {
+	return func(player *proto.Player) {
+		for _, load := range loads {
+			load(player)
+		}
+	}
+}
+
+// threatSim is the record's character with the sim spells the probe casts, every tag of the id, the lowest
+// first, and which of them it reads. With no spells it's a heal the sim gives through Unit.HealThreat.
 type threatSim struct {
 	*damageSim
 	spells      []*core.Spell
+	measured    []bool
 	comboPoints *core.ResourceMetrics
 }
 
@@ -281,8 +354,71 @@ func threatSpellsByID(unit *core.Unit, id int32) []*core.Spell {
 			found = append(found, s)
 		}
 	}
-	slices.SortFunc(found, func(a, b *core.Spell) int { return int(a.ActionID.Tag - b.ActionID.Tag) })
+	slices.SortStableFunc(found, func(a, b *core.Spell) int { return int(a.ActionID.Tag - b.ActionID.Tag) })
 	return found
+}
+
+// threatSpellsFor are the unit's spells a probe casts.
+func threatSpellsFor(unit *core.Unit, probe int32) []*core.Spell {
+	action, ok := threatSimActions[probe]
+	if !ok {
+		return threatSpellsByID(unit, threatSimSpell(probe))
+	}
+	var found []*core.Spell
+	for _, s := range unit.Spellbook {
+		if s.ActionID.SpellID == action.SpellID && s.ActionID.OtherID == action.OtherID && s.ActionID.ItemID == 0 {
+			found = append(found, s)
+		}
+	}
+	return found
+}
+
+// threatMeasured marks the spells the replay reads: all of them, unless the sim declares the probe under
+// another id and some take their threat or a hit from the probe's spell (Sunder Armor's 7386 apart from the
+// 58567 it casts, Bladestorm's two Whirlwinds).
+func threatMeasured(spells []*core.Spell, probe int32, target *core.Unit) []bool {
+	measured := make([]bool, len(spells))
+	reads := false
+	if _, mapped := threatSimSpells[probe]; mapped {
+		for i, s := range spells {
+			measured[i] = threatReads(s, probe, target)
+			reads = reads || measured[i]
+		}
+	}
+	if !reads {
+		for i := range measured {
+			measured[i] = true
+		}
+	}
+	return measured
+}
+
+// threatReads is whether the spell takes its threat or a hit from the server spell.
+func threatReads(spell *core.Spell, id int32, target *core.Unit) bool {
+	if spell.ThreatServerSpellID() == id || spell.Direct.FromSpellID == id {
+		return true
+	}
+	for _, dot := range threatDots(spell, target) {
+		if dot.Tick.FromSpellID == id {
+			return true
+		}
+	}
+	return false
+}
+
+// threatDots are the spell's dot on the target and its area dot, those it has.
+func threatDots(spell *core.Spell, target *core.Unit) []*core.Dot {
+	var dots []*core.Dot
+	for _, dot := range []*core.Dot{dotOn(spell, target), spell.AOEDot()} {
+		if dot != nil {
+			dots = append(dots, dot)
+		}
+	}
+	return dots
+}
+
+func threatDotCount(spell *core.Spell, target *core.Unit) int {
+	return len(threatDots(spell, target))
 }
 
 // buildThreatSim tries the specs, its form's first, until one registers the spell and wears the form,
@@ -324,11 +460,23 @@ func buildThreatSim(rec threatRecord) (*threatSim, error) {
 			if err != nil {
 				return nil, err
 			}
-			spells := threatSpellsByID(&d.char.Unit, simID)
-			if len(spells) == 0 || form != 0 && slices.Contains(d.others, form) {
+			if form != 0 && slices.Contains(d.others, form) {
 				continue
 			}
-			ts := &threatSim{damageSim: d, spells: spells}
+			spells := threatSpellsFor(&d.char.Unit, rec.Spell.ID)
+			if len(spells) == 0 {
+				if _, _, heals := d.char.HealThreatOf(rec.Spell.ID, 0); heals {
+					return &threatSim{damageSim: d}, nil
+				}
+				continue
+			}
+			if threatTickSpells[rec.Spell.ID] {
+				// cast the spell whose dot ticks, not one its ticks deal (Bladestorm's off hand)
+				slices.SortStableFunc(spells, func(a, b *core.Spell) int {
+					return threatDotCount(b, d.target) - threatDotCount(a, d.target)
+				})
+			}
+			ts := &threatSim{damageSim: d, spells: spells, measured: threatMeasured(spells, rec.Spell.ID, d.target)}
 			if d.char.HasEnergyBar() {
 				ts.comboPoints = d.char.NewComboPointMetrics(core.ActionID{SpellID: simID})
 			}
@@ -442,6 +590,9 @@ func (ts *threatSim) castOnce(rec threatRecord, spell *core.Spell) (c threatCast
 		multipliers[i] = s.ThreatMultiplier
 	}
 	pick := slices.Index(ts.spells, spell)
+	if !ts.measured[pick] {
+		pick = slices.Index(ts.measured, true)
+	}
 	c.slope, c.spellMultiplier = slopes[pick], multipliers[pick]
 	c.schoolMultiplier = ts.char.ThreatSchoolMultiplier(ts.spells[pick].SpellSchool)
 
@@ -449,14 +600,17 @@ func (ts *threatSim) castOnce(rec threatRecord, spell *core.Spell) (c threatCast
 	spell.SkipCastAndApplyEffects(ts.sim, ts.target)
 	ts.settle()
 	after := ts.metrics(ts.target)
-	var dealt []float64
+	dealt := make([]float64, len(after))
 	for i, m := range after {
+		if !ts.measured[i] {
+			continue
+		}
 		landed = landed || m.outcomes > 0 || m.threat != 0 || m.damage != 0
 		avoided = avoided || m.avoided > 0
 		c.effect += ts.spells[i].ThreatEffect() * float64(m.outcomes-m.avoided)
 		c.bonus += m.threat - slopes[i]*m.damage
 		c.damage += m.damage
-		dealt = append(dealt, m.damage)
+		dealt[i] = m.damage
 	}
 	c.bonus -= c.effect
 	if avoided {
@@ -465,7 +619,9 @@ func (ts *threatSim) castOnce(rec threatRecord, spell *core.Spell) (c threatCast
 	for _, target := range ts.sim.Encounter.TargetUnits {
 		share := 0.0
 		for i, m := range ts.metrics(target) {
-			share += m.threat - slopes[i]*m.damage
+			if ts.measured[i] {
+				share += m.threat - slopes[i]*m.damage
+			}
 		}
 		c.shares = append(c.shares, share)
 	}
@@ -479,6 +635,9 @@ func (ts *threatSim) castOnce(rec threatRecord, spell *core.Spell) (c threatCast
 		ts.settle()
 		c.ticked = true
 		for i, m := range ts.metrics(ts.target) {
+			if !ts.measured[i] {
+				continue
+			}
 			threat, damage := m.threat-after[i].threat, m.damage-after[i].damage
 			c.tickBonus += threat - slopes[i]*damage
 			c.tickDamage += damage
@@ -568,6 +727,9 @@ func replayThreatChecks(rec threatRecord, build func(threatRecord) (*threatSim, 
 	if err != nil {
 		return []Check{fail("sim character", err.Error())}
 	}
+	if len(ts.spells) == 0 {
+		return ts.healChecks(rec)
+	}
 	c := ts.cast(rec)
 	if c.failed != nil {
 		return []Check{fail("sim cast", fmt.Sprintf("spell %v: %v", ts.spells[0].ActionID, c.failed))}
@@ -590,23 +752,100 @@ func replayThreatChecks(rec threatRecord, build func(threatRecord) (*threatSim, 
 		}
 		return append(checks, checkThreatNear("tick bonus", c.tickBonus, rec.Bonus.Threat, rec.serverBonus()))
 	}
-	server := rec.Bonus.Threat
-	if shares := rec.sharing(); rec.creatures() > 0 && len(shares) > 0 && shares[0].Dummy {
-		server = shares[0].Threat
-	}
 	note := c.note
-	if c.effect != 0 {
+	if c.effect != 0 && rec.ThreatEffect == nil {
 		note = threatJoinDetail(fmt.Sprintf("the sim's %.2f SPELL_EFFECT_THREAT left out, the record has none", c.effect), note)
 	}
-	checks = append(checks, checkThreatNear("bonus", c.bonus, server, threatJoinDetail(rec.serverBonus(), note)))
+	checks = append(checks, checkThreatNear("bonus", c.bonus, rec.dummyBonus(), threatJoinDetail(rec.serverBonus(), note)))
 	if rec.creatures() > 0 {
 		checks = append(checks, checkThreatShares(rec, c.shares))
+	}
+	if e := rec.ThreatEffect; e != nil && (len(e.Effects) > 0 || c.effect != 0) {
+		checks = append(checks, checkThreatNear("effect threat", c.effect, e.Threat, rec.serverEffect()))
 	}
 	if c.ticked {
 		// an aura's periodic damage never runs HandleThreatSpells
 		checks = append(checks, checkThreatNear("tick bonus", c.tickBonus, 0, "server ticks add no bonus"))
 	}
+	if rec.Heal != nil {
+		checks = append(checks, ts.checkHealThreat(rec))
+	}
 	return checks
+}
+
+// dummyBonus is the server's bonus on the dummy: its share when more creatures shared a positive spell's.
+func (r threatRecord) dummyBonus() float64 {
+	if shares := r.sharing(); r.creatures() > 0 && len(shares) > 0 && shares[0].Dummy {
+		return shares[0].Threat
+	}
+	return r.Bonus.Threat
+}
+
+// healChecks compares a heal the sim gives through Unit.HealThreat with no spell of its own: the cast's bonus,
+// each gain being a cast, and the heal's threat.
+func (ts *threatSim) healChecks(rec threatRecord) []Check {
+	ts.start()
+	setStat(ts.sim, &ts.char.Unit, stats.AttackPower, rec.attackPower())
+	_, bonus, _ := ts.char.HealThreatOf(rec.Spell.ID, 0)
+
+	var checks []Check
+	if threatServerDamage(rec.Spell.ID) {
+		checks = append(checks, fail("damage threat", "the server spell deals damage, the sim only heals with it"))
+	} else {
+		checks = append(checks, notCompared("damage threat", "neither the sim's heal nor the server spell deals damage"))
+	}
+	// the sim shares a heal's threat evenly over the enemies
+	enemies := len(ts.sim.Encounter.TargetUnits)
+	checks = append(checks, checkThreatNear("bonus", bonus/float64(enemies), rec.dummyBonus(), rec.serverBonus()))
+	if rec.creatures() > 0 {
+		shares := make([]float64, enemies)
+		for i := range shares {
+			shares[i] = bonus / float64(enemies)
+		}
+		checks = append(checks, checkThreatShares(rec, shares))
+	}
+	if rec.Heal != nil {
+		checks = append(checks, ts.checkHealThreat(rec))
+	}
+	return checks
+}
+
+// checkHealThreat holds the sim's threat for the record's amount of healing to the server's: a heal through
+// Unit.HealThreat of the probe's spell, else a heal of the measured spell that heals.
+func (ts *threatSim) checkHealThreat(rec threatRecord) Check {
+	h := rec.Heal
+	server := fmt.Sprintf("server %.0f healed x%.2f (spell_threat %.4f, after spell mods %.2f, school %.4f)",
+		h.Amount, h.Base/h.Amount, h.PctMod, h.AfterSpellMods, h.SchoolMultiplier)
+	// a heal-only probe starts here; after a cast the run is still up (a channel can't be ended without its rotation)
+	if !ts.ran {
+		ts.start()
+		setStat(ts.sim, &ts.char.Unit, stats.AttackPower, rec.attackPower())
+	}
+	if heal, _, ok := ts.char.HealThreatOf(rec.Spell.ID, h.Amount); ok {
+		return checkThreatNear("heal threat", heal, h.Threat, server)
+	}
+	for i, s := range ts.spells {
+		if ts.measured[i] && s.ProcMask.Matches(core.ProcMaskSpellHealing) {
+			return checkThreatNear("heal threat", s.ThreatFromHealing(h.Amount), h.Threat, server)
+		}
+	}
+	return notCompared("heal threat", "the sim doesn't heal with it; "+server)
+}
+
+// serverEffect says what the server's SPELL_EFFECT_THREAT is made of.
+func (r threatRecord) serverEffect() string {
+	var parts []string
+	for _, e := range r.ThreatEffect.Effects {
+		part := fmt.Sprintf("effect %d %.0f", e.Index, e.Value)
+		if !e.Dummy {
+			part += " off the dummy"
+		}
+		parts = append(parts, part)
+	}
+	if len(parts) == 0 {
+		return "server has no SPELL_EFFECT_THREAT"
+	}
+	return "server " + strings.Join(parts, ", ")
 }
 
 // checkThreatShares holds the cast's bonus on the sim's other targets to the shares of the server's other

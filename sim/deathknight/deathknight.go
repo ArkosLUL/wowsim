@@ -241,6 +241,7 @@ func (dk *Deathknight) ApplyTalents() {
 	dk.ApplyBloodTalents()
 	dk.ApplyFrostTalents()
 	dk.ApplyUnholyTalents()
+	dk.applyRunicPowerProcThreat()
 }
 
 func (dk *Deathknight) Initialize() {

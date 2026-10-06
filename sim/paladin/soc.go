@@ -112,7 +112,7 @@ func (paladin *Paladin) registerSealOfCommandSpellAndAura() {
 	var glyphManaMetrics *core.ResourceMetrics
 	glyphManaGain := .08 * paladin.BaseMana
 	if paladin.HasMajorGlyph(proto.PaladinMajorGlyph_GlyphOfSealOfCommand) {
-		glyphManaMetrics = paladin.NewManaMetrics(core.ActionID{ItemID: 41094})
+		glyphManaMetrics = paladin.NewManaMetrics(core.ActionID{ItemID: 41094}).EnergizeThreat(core.EnergizeBySpell)
 	}
 
 	// Seal of Command aura.

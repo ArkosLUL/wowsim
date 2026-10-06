@@ -8,7 +8,6 @@ import (
 )
 
 const MaxRage = 100.0
-const ThreatPerRageGained = 5
 
 // RageFactor is Unit::RewardRage's rageconversion at CharacterLevel, computed in float32 like the
 // server. Classic hardcodes 453.3.
@@ -113,11 +112,6 @@ func (unit *Unit) EnableRageBar(options RageBarOptions) {
 		},
 	})
 
-	// Not a real spell, just holds metrics from rage gain threat.
-	unit.RegisterSpell(SpellConfig{
-		ActionID: ActionID{OtherID: proto.OtherAction_OtherActionRageGain},
-	})
-
 	unit.rageBar = rageBar{
 		unit:              unit,
 		startingRage:      max(0, min(options.StartingRage, MaxRage)),
@@ -143,6 +137,9 @@ func (rb *rageBar) AddRage(sim *Simulation, amount float64, metrics *ResourceMet
 
 	if sim.Log != nil {
 		rb.unit.Log(sim, "Gained %0.3f rage from %s (%0.3f --> %0.3f).", amount, metrics.ActionID, rb.currentRage, newRage)
+	}
+	if metrics.gainThreat != nil {
+		rb.unit.addGainThreat(sim, metrics, amount, newRage-rb.currentRage)
 	}
 
 	rb.currentRage = newRage
@@ -172,39 +169,6 @@ func (rb *rageBar) reset(_ *Simulation) {
 	}
 
 	rb.currentRage = rb.startingRage
-}
-
-func (rb *rageBar) doneIteration() {
-	if rb.unit == nil {
-		return
-	}
-
-	rageGainSpell := rb.unit.GetSpell(ActionID{OtherID: proto.OtherAction_OtherActionRageGain})
-
-	for _, resourceMetrics := range rb.unit.Metrics.resources {
-		if resourceMetrics.Type != proto.ResourceType_ResourceTypeRage {
-			continue
-		}
-		if resourceMetrics.ActionID.SameActionIgnoreTag(ActionID{OtherID: proto.OtherAction_OtherActionDamageTaken}) {
-			continue
-		}
-		if resourceMetrics.ActionID.SameActionIgnoreTag(ActionID{OtherID: proto.OtherAction_OtherActionRefund}) {
-			continue
-		}
-		if resourceMetrics.ActualGain <= 0 {
-			continue
-		}
-
-		// Need to exclude rage gained from white hits. Rather than have a manual list of all IDs that would
-		// apply here (autos, WF attack, sword spec procs, etc), just check if the effect caused any damage.
-		sourceSpell := rb.unit.GetSpell(resourceMetrics.ActionID)
-		if sourceSpell != nil && sourceSpell.SpellMetrics[0].TotalDamage > 0 {
-			continue
-		}
-
-		rageGainSpell.SpellMetrics[0].Casts += resourceMetrics.EventsForCurrentIteration()
-		rageGainSpell.ApplyAOEThreatIgnoreMultipliers(resourceMetrics.ActualGainForCurrentIteration() * ThreatPerRageGained)
-	}
 }
 
 type RageCostOptions struct {

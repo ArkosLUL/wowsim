@@ -16,7 +16,7 @@ func (shaman *Shaman) registerShamanisticRageCD() {
 
 	actionID := core.ActionID{SpellID: 30823}
 	ppmm := shaman.AutoAttacks.NewPPMManager(18, core.ProcMaskMelee)
-	manaMetrics := shaman.NewManaMetrics(actionID)
+	manaMetrics := shaman.NewManaMetrics(actionID).EnergizeThreat(core.EnergizeBySpell)
 	srAura := shaman.RegisterAura(core.Aura{
 		Label:    "Shamanistic Rage",
 		ActionID: actionID,

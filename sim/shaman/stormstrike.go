@@ -97,7 +97,7 @@ func (shaman *Shaman) registerStormstrikeSpell() {
 			stats.Stats{stats.MeleeHaste: 60, stats.SpellHaste: 60, stats.AttackPower: 120}, time.Second*6)
 	}
 
-	manaMetrics := shaman.NewManaMetrics(core.ActionID{SpellID: 51522})
+	manaMetrics := shaman.NewManaMetrics(core.ActionID{SpellID: 51522}).EnergizeThreat(core.EnergizeBySpell)
 
 	cooldownTime := time.Duration(core.TernaryFloat64(shaman.HasSetBonus(ItemSetGladiatorsEarthshaker, 4), 6, 8))
 	impSSChance := 0.5 * float64(shaman.Talents.ImprovedStormstrike)

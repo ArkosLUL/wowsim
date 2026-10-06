@@ -12,7 +12,8 @@ func (hunter *Hunter) registerRapidFireCD() {
 
 	var manaMetrics *core.ResourceMetrics
 	if hunter.Talents.RapidRecuperation > 0 {
-		manaMetrics = hunter.NewManaMetrics(core.ActionID{SpellID: 53232})
+		// each tick a cast of 64180 or 64181
+		manaMetrics = hunter.NewManaMetrics(core.ActionID{SpellID: 53232}).EnergizeThreat(core.EnergizeBySpell)
 	}
 
 	hasteMultiplier := 1.4 + core.TernaryFloat64(hunter.HasMajorGlyph(proto.HunterMajorGlyph_GlyphOfRapidFire), 0.08, 0)

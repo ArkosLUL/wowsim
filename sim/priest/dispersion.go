@@ -12,7 +12,8 @@ func (priest *Priest) registerDispersionSpell() {
 		return
 	}
 
-	manaMetric := priest.NewManaMetrics(core.ActionID{SpellID: 47585})
+	// 60069's OBS_MOD_POWER ticks
+	manaMetric := priest.NewManaMetrics(core.ActionID{SpellID: 47585}).EnergizeThreat(core.EnergizeByTick)
 	glyphReduction := 0
 	if priest.HasGlyph(int32(proto.PriestMajorGlyph_GlyphOfDispersion)) {
 		glyphReduction = 45

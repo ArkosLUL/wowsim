@@ -26,7 +26,8 @@ const (
 // spellThreat is what the spell's server data says about its threat, set at registration, and the
 // enemies its open casts have hit so far.
 type spellThreat struct {
-	pct float64 // spell_threat's pctMod, 0 under SPELL_ATTR1_NO_THREAT
+	serverID int32   // the server spell all this is read from, 0 for none
+	pct      float64 // spell_threat's pctMod, 0 under SPELL_ATTR1_NO_THREAT
 
 	noBonus     bool    // neither a bonus nor an effect's flat threat
 	flat, ap    float64 // the bonus: flatMod and apPctMod, else the spell's level
@@ -65,6 +66,7 @@ func serverThreat(unit *Unit, s *serverdata.Spell, noBonus bool) spellThreat {
 	if s == nil {
 		return threat
 	}
+	threat.serverID = s.ID
 	// ThreatManager::AddThreat and ForwardThreatForAssistingMe drop all of it: damage, healing, bonus
 	if s.Attributes[1]&attr1NoThreat != 0 {
 		threat.pct = 0
@@ -142,6 +144,16 @@ func (spell *Spell) ThreatFromDamage(outcome HitOutcome, damage float64) float64
 	return spell.modifiedThreat(damage)
 }
 
+// ThreatFromHealing is the threat the spell's heals make of gain health, before it's shared over the enemies.
+func (spell *Spell) ThreatFromHealing(gain float64) float64 {
+	return spell.modifiedThreat(gain * healThreatScale(spell.Unit))
+}
+
+// ThreatServerSpellID is the server spell the spell's threat is read from: its own, its ThreatSpellID, or 0.
+func (spell *Spell) ThreatServerSpellID() int32 {
+	return spell.threat.serverID
+}
+
 // modifiedThreat is spell_threat's pctMod, then the spell's threat mods, then the unit's school auras.
 func (spell *Spell) modifiedThreat(amount float64) float64 {
 	return amount * spell.threat.pct * spell.ThreatMultiplier * spell.Unit.ThreatSchoolMultiplier(spell.SpellSchool)
@@ -208,13 +220,16 @@ func (spell *Spell) threatEffectOn(target int32, t *spellThreat, pending float64
 	return max(t.effect, -(spell.Unit.threatOn(target) + pending))
 }
 
-// threatOn is the threat the unit's spells made on the target so far this iteration.
+// threatOn is the threat the unit's spells and gains made on the target so far this iteration.
 func (unit *Unit) threatOn(target int32) float64 {
 	threat := 0.0
 	for _, s := range unit.Spellbook {
 		for _, metrics := range s.splitSpellMetrics {
 			threat += metrics[target].TotalThreat
 		}
+	}
+	for _, rm := range unit.Metrics.resources {
+		threat += rm.threat / float64(len(unit.Env.Encounter.TargetUnits))
 	}
 	return threat
 }
@@ -316,12 +331,17 @@ func threatHitLands(hits []threatHit, target int32) bool {
 // addAssistThreat hands a positive spell's bonus, modified, to the enemies in even shares
 // (ThreatManager::ForwardThreatForAssistingMe). Nothing's fighting the unit before the pull.
 func (spell *Spell) addAssistThreat(sim *Simulation) {
-	t := &spell.threat
+	spell.addAssistThreatOf(sim, &spell.threat)
+}
+
+// addAssistThreatOf is addAssistThreat for t, the threat of the server spell the spell casts.
+func (spell *Spell) addAssistThreatOf(sim *Simulation, t *spellThreat) {
 	if t.noBonus || !t.assist || spell.ThreatMultiplier == 0 || sim.CurrentTime < 0 {
 		return
 	}
 	enemies := sim.Encounter.TargetUnits
-	threat := spell.modifiedThreat(spell.threatBonusBase()) / float64(len(enemies))
+	threat := t.bonusBase(spell.Unit) * t.pct * spell.ThreatMultiplier * spell.Unit.ThreatSchoolMultiplier(spell.SpellSchool) /
+		float64(len(enemies))
 	for _, enemy := range enemies {
 		spell.SpellMetrics[enemy.UnitIndex].TotalThreat += threat
 	}
@@ -338,13 +358,7 @@ func (spell *Spell) healThreat(sim *Simulation, gain float64) float64 {
 		return 0
 	}
 	if spell.threat.healScale == 0 {
-		spell.threat.healScale = 0.5
-		if spell.Unit.Env != nil && spell.Unit.Env.Raid != nil {
-			if agent := spell.Unit.Env.Raid.GetPlayerFromUnit(spell.Unit); agent != nil &&
-				agent.GetCharacter().Class == proto.Class_ClassPaladin {
-				spell.threat.healScale = 0.25
-			}
-		}
+		spell.threat.healScale = healThreatScale(spell.Unit)
 	}
 	enemies := sim.Encounter.TargetUnits
 	threat := spell.modifiedThreat(gain * spell.threat.healScale)
@@ -354,37 +368,236 @@ func (spell *Spell) healThreat(sim *Simulation, gain float64) float64 {
 	return threat
 }
 
+// healThreatScale is the part of the health a heal restores that the server makes threat of: half, a
+// quarter for a paladin.
+func healThreatScale(unit *Unit) float64 {
+	if unit.Env != nil && unit.Env.Raid != nil {
+		if agent := unit.Env.Raid.GetPlayerFromUnit(unit); agent != nil &&
+			agent.GetCharacter().Class == proto.Class_ClassPaladin {
+			return 0.25
+		}
+	}
+	return 0.5
+}
+
+// EnergizeKind is how the server works out an energize's threat: half of it, unmodified, shared over the
+// enemies fighting the unit as assist threat (ThreatManager::ForwardThreatForAssistingMe).
+type EnergizeKind uint8
+
+const (
+	// Unit::EnergizeBySpell, from SPELL_EFFECT_ENERGIZE, ENERGIZE_PCT and POWER_DRAIN's gain: half the
+	// amount asked for, what the power cap cuts off included
+	EnergizeBySpell EnergizeKind = iota + 1
+	// a PERIODIC_ENERGIZE or OBS_MOD_POWER tick: half the power gained
+	EnergizeByTick
+	// EnergizeBySpell of a SPELLFAMILY_POTION spell, which also energizes a power the unit isn't using
+	// (a mana potion in cat form)
+	EnergizeByPotion
+)
+
+// gainThreat is the threat the server makes of the gains through one ResourceMetrics, an energize's or a
+// heal's.
+type gainThreat struct {
+	perPoint  float64 // energize: the threat per point of the sim's power
+	requested bool    // energize: on the amount asked for, not the amount gained
+	// energize: Spell::EffectEnergize and the periodic ticks skip a player's power other than its current
+	// one, potions excepted
+	bar      PowerBarType
+	anyPower bool
+
+	heal *serverdata.Spell // the heal's server spell, read at the first heal
+	// what heal makes of a cast by the unit; healScale stays 0 until then
+	healThreat  spellThreat
+	healSchool  SpellSchool
+	healScale   float64
+	castPerGain bool // each gain is a cast of heal, so it adds the cast's bonus too
+}
+
+// EnergizeThreat makes each power gain through the metrics an energize the unit casts on itself. Only for
+// energizes without SPELL_ATTR1_NO_THREAT: a gain the server makes through ModifyPower or SetPower (regen,
+// rage from damage, a rune spell's runic power, refunds) makes no threat, and one another unit casts makes
+// that unit's.
+func (metrics *ResourceMetrics) EnergizeThreat(kind EnergizeKind) *ResourceMetrics {
+	perPoint := 0.5
+	var bar PowerBarType
+	switch metrics.Type {
+	case proto.ResourceType_ResourceTypeMana:
+		bar = ManaBar
+	case proto.ResourceType_ResourceTypeEnergy:
+		bar = EnergyBar
+	case proto.ResourceType_ResourceTypeRage:
+		// the server counts rage and runic power in tenths
+		bar, perPoint = RageBar, 5
+	case proto.ResourceType_ResourceTypeRunicPower:
+		bar, perPoint = RunicPower, 5
+	default:
+		panic(fmt.Sprintf("energize threat on %v metrics of %s", metrics.Type, metrics.ActionID))
+	}
+	metrics.gainThreat = &gainThreat{perPoint: perPoint, requested: kind != EnergizeByTick, bar: bar,
+		anyPower: kind == EnergizeByPotion}
+	return metrics
+}
+
+// AddEnergizeThreat makes an energize's threat the sim books as part of another gain, like Chill of the
+// Grave's runic power in the strike's own: amount is what the server's energize asks for.
+func (unit *Unit) AddEnergizeThreat(sim *Simulation, metrics *ResourceMetrics, amount float64) {
+	if metrics.gainThreat == nil || !metrics.gainThreat.requested {
+		panic(fmt.Sprintf("%s isn't an EnergizeBySpell's metrics", metrics.ActionID))
+	}
+	unit.addGainThreat(sim, metrics, amount, 0)
+}
+
+// HealThreat makes each health gain through the metrics a heal of the server spell spellID the unit casts
+// on itself: half the health gained (a quarter for a paladin), plus the cast's bonus when each gain is its
+// own cast, both modified like a hit of that spell and shared over the enemies as assist threat.
+func (unit *Unit) HealThreat(metrics *ResourceMetrics, spellID int32) *ResourceMetrics {
+	if metrics.Type != proto.ResourceType_ResourceTypeHealth {
+		panic(fmt.Sprintf("heal threat on %v metrics of %s", metrics.Type, metrics.ActionID))
+	}
+	s := serverdata.SpellByID(spellID)
+	if s == nil {
+		panic(fmt.Sprintf("heal spell %d of %s isn't in the server data", spellID, metrics.ActionID))
+	}
+	metrics.gainThreat = &gainThreat{heal: s}
+	return metrics
+}
+
+// SPELL_EFFECT_HEAL, HEAL_MAX_HEALTH and HEAL_PCT: one cast, one heal
+var castHealEffects = []int32{10, 67, 136}
+
+// addGainThreat makes the threat of a gain of amount, gain of it landing, through the metrics. Nothing's
+// fighting the unit before the pull.
+func (unit *Unit) addGainThreat(sim *Simulation, metrics *ResourceMetrics, amount, gain float64) {
+	if sim.CurrentTime < 0 {
+		return
+	}
+	// a gain past a max cut by an expired buff comes out below 0, which the server's capped bars never have
+	gain = max(gain, 0)
+	g := metrics.gainThreat
+	var threat float64
+	if g.heal == nil {
+		if g.anyPower && !unit.hasPower(g.bar) || !g.anyPower && unit.currentPowerBar != g.bar {
+			return
+		}
+		if g.requested {
+			threat = amount * g.perPoint
+		} else {
+			threat = gain * g.perPoint
+		}
+	} else {
+		threat = g.healThreatOf(unit, gain)
+	}
+	if threat == 0 {
+		return
+	}
+	metrics.threat += threat
+	if sim.Log != nil {
+		unit.Log(sim, "%s assist threat %0.3f over %d enemies", metrics.ActionID, threat, len(sim.Encounter.TargetUnits))
+	}
+}
+
+func (unit *Unit) hasPower(bar PowerBarType) bool {
+	switch bar {
+	case ManaBar:
+		return unit.HasManaBar() && unit.MaxMana() > 0
+	case EnergyBar:
+		return unit.HasEnergyBar()
+	case RageBar:
+		return unit.HasRageBar()
+	default:
+		return unit.HasRunicPowerBar()
+	}
+}
+
+func (g *gainThreat) healThreatOf(unit *Unit, gain float64) float64 {
+	if g.healScale == 0 {
+		g.healThreat = serverThreat(unit, g.heal, false)
+		g.healSchool = SpellSchoolFromServerMask(g.heal.SchoolMask)
+		g.healScale = healThreatScale(unit)
+		for _, e := range g.heal.Effects {
+			g.castPerGain = g.castPerGain || slices.Contains(castHealEffects, e.Effect)
+		}
+	}
+	t := &g.healThreat
+	threat := gain * g.healScale
+	if g.castPerGain && !t.noBonus {
+		threat += t.bonusBase(unit)
+	}
+	return threat * t.pct * unit.ThreatSchoolMultiplier(g.healSchool)
+}
+
+// HealThreatOf splits the threat a gain of health through a HealThreat of server spell spellID makes into the
+// heal's part and the cast's bonus; ok is false when the unit has no such heal.
+func (unit *Unit) HealThreatOf(spellID int32, gain float64) (heal, bonus float64, ok bool) {
+	for _, rm := range unit.Metrics.resources {
+		// spellID first: TestHardCodedItemIDsCoverTheSim reads `.ID == x` as an item id check
+		if g := rm.gainThreat; g != nil && g.heal != nil && spellID == g.heal.ID {
+			bonus = g.healThreatOf(unit, 0)
+			return g.healThreatOf(unit, gain) - bonus, bonus, true
+		}
+	}
+	return 0, 0, false
+}
+
+// doneGainThreat puts this iteration's gain threat in the unit's metrics, each under its gain's action and
+// shared evenly over the enemies.
+func (unit *Unit) doneGainThreat(sim *Simulation) {
+	enemies := sim.Encounter.TargetUnits
+	for _, rm := range unit.Metrics.resources {
+		if rm.threat == 0 {
+			continue
+		}
+		action := unit.Metrics.actions[rm.ActionID]
+		if action == nil {
+			action = &ActionMetrics{}
+			unit.Metrics.actions[rm.ActionID] = action
+		}
+		if len(action.Targets) == 0 {
+			action.Targets = make([]TargetedActionMetrics, len(unit.AttackTables))
+			for i := range action.Targets {
+				action.Targets[i].UnitIndex = unit.AttackTables[i].Defender.UnitIndex
+			}
+		}
+		for _, enemy := range enemies {
+			action.Targets[enemy.UnitIndex].Threat += rm.threat / float64(len(enemies))
+		}
+		unit.Metrics.threat.Total += rm.threat
+		rm.threat = 0
+	}
+}
+
 // ThreatTick is a server spell an aura casts on each tick, which adds its own bonus split over the enemies
-// that tick reaches (HandleThreatSpells runs for every cast): Bladestorm's Whirlwind, Volley's arrows. The
-// tick's damage stays the aura spell's, so the bonus goes on that spell too.
+// that tick reaches (HandleThreatSpells runs for every cast): Bladestorm's Whirlwind, Volley's arrows, or
+// as assist threat for a positive one: Penance's heals. The tick's damage or healing stays the aura
+// spell's, so the bonus goes on that spell too.
 type ThreatTick struct {
 	spell  *Spell
 	threat spellThreat
 }
 
-// NewThreatTick reads the server spell an aura of the spell casts each tick, a negative one.
+// NewThreatTick reads the server spell an aura of the spell casts each tick.
 func (spell *Spell) NewThreatTick(serverSpellID int32) *ThreatTick {
 	s := serverdata.SpellByID(serverSpellID)
 	if s == nil {
 		panic(fmt.Sprintf("tick spell %d of %s isn't in the server data", serverSpellID, spell.ActionID))
 	}
-	tick := &ThreatTick{spell: spell, threat: serverThreat(spell.Unit, s, false)}
-	if tick.threat.assist {
-		panic(fmt.Sprintf("tick spell %d of %s is positive, so its bonus would be assist threat", serverSpellID, spell.ActionID))
-	}
-	return tick
+	return &ThreatTick{spell: spell, threat: serverThreat(spell.Unit, s, false)}
 }
 
-// Hit counts an enemy the tick reached, missed or not.
+// Hit counts an enemy the tick reached, missed or not. A positive tick spell's needs none.
 func (tick *ThreatTick) Hit(result *SpellResult) {
-	if tick.threat.noBonus || tick.spell.ThreatMultiplier == 0 || result.Target.Type != EnemyUnit {
+	if tick.threat.noBonus || tick.threat.assist || tick.spell.ThreatMultiplier == 0 || result.Target.Type != EnemyUnit {
 		return
 	}
 	tick.threat.hits = append(tick.threat.hits, threatHit{result.Target.UnitIndex, result.Landed()})
 }
 
-// Done hands out the tick's bonus to the enemies it hit.
+// Done hands out the tick's bonus to the enemies it hit, or a positive tick spell's as assist threat.
 func (tick *ThreatTick) Done(sim *Simulation) {
+	if tick.threat.assist {
+		tick.spell.addAssistThreatOf(sim, &tick.threat)
+		return
+	}
 	if len(tick.threat.hits) == 0 {
 		return
 	}

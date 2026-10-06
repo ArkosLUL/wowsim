@@ -9,7 +9,7 @@ import (
 
 func (rogue *Rogue) registerTricksOfTheTradeSpell() {
 	actionID := core.ActionID{SpellID: 57934}
-	energyMetrics := rogue.NewEnergyMetrics(actionID)
+	energyMetrics := rogue.NewEnergyMetrics(actionID).EnergizeThreat(core.EnergizeBySpell)
 	hasShadowblades := rogue.HasSetBonus(Tier10, 2)
 	energyCost := 15 - 5*float64(rogue.Talents.FilthyTricks)
 

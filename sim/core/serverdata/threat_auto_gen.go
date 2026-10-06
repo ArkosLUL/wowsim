@@ -22,6 +22,7 @@ var threats = []Threat{
 	{SpellID: 5229, Targets: ThreatTargetsCaster},                                          // Enrage
 	{SpellID: 6150, Targets: ThreatTargetsCaster},                                          // Quick Shots
 	{SpellID: 6774, Targets: ThreatTargetsCaster},                                          // Slice and Dice (Rank 2)
+	{SpellID: 7386, Row: 7386, FlatMod: 345, PctMod: 1, APPctMod: 0.05},                    // Sunder Armor
 	{SpellID: 8647, Targets: ThreatTargetsCaster},                                          // Expose Armor
 	{SpellID: 9634, Targets: ThreatTargetsCaster},                                          // Dire Bear Form (Shapeshift)
 	{SpellID: 11129, Targets: ThreatTargetsCaster},                                         // Combustion
@@ -97,6 +98,7 @@ var threats = []Threat{
 	{SpellID: 22703, Targets: ThreatTargetsEnemyArea},                                      // Inferno Effect
 	{SpellID: 22812, Targets: ThreatTargetsCaster},                                         // Barkskin
 	{SpellID: 22842, Targets: ThreatTargetsCaster},                                         // Frenzied Regeneration
+	{SpellID: 22845, Targets: ThreatTargetsCaster},                                         // Frenzied Regeneration
 	{SpellID: 23602, Targets: ThreatTargetsCaster},                                         // Shield Specialization (Rank 1)
 	{SpellID: 23863, Targets: ThreatTargetsCaster},                                         // Revitalize
 	{SpellID: 23864, Targets: ThreatTargetsCaster},                                         // Revitalize
@@ -194,6 +196,7 @@ var threats = []Threat{
 	{SpellID: 42945, Targets: ThreatTargetsEnemyArea},                                      // Blast Wave (Rank 9)
 	{SpellID: 42950, Targets: ThreatTargetsEnemyArea},                                      // Dragon's Breath (Rank 6)
 	{SpellID: 42976, Targets: ThreatTargetsCaster},                                         // Executioner
+	{SpellID: 43185, Targets: ThreatTargetsCaster},                                         // Healing Potion
 	{SpellID: 43740, Targets: ThreatTargetsCaster},                                         // Lunar Grace
 	{SpellID: 43749, Targets: ThreatTargetsCaster},                                         // Elemental Strength
 	{SpellID: 43751, Targets: ThreatTargetsCaster},                                         // Energized
@@ -205,7 +208,9 @@ var threats = []Threat{
 	{SpellID: 44545, Targets: ThreatTargetsCaster},                                         // Fingers of Frost (Rank 2)
 	{SpellID: 44549, Targets: ThreatTargetsCaster},                                         // Brain Freeze (Rank 3)
 	{SpellID: 44561, Targets: ThreatTargetsCaster},                                         // Enduring Winter (Rank 3)
+	{SpellID: 44578, Targets: ThreatTargetsCaster},                                         // Lifeward
 	{SpellID: 44949, Targets: ThreatTargetsEnemyArea},                                      // Whirlwind
+	{SpellID: 45470, Targets: ThreatTargetsCaster},                                         // Death Strike
 	{SpellID: 45529, Targets: ThreatTargetsCaster},                                         // Blood Tap
 	{SpellID: 46584, Targets: ThreatTargetsCaster},                                         // Raise Dead
 	{SpellID: 46662, Targets: ThreatTargetsCaster},                                         // Deathfrost
@@ -234,6 +239,7 @@ var threats = []Threat{
 	{SpellID: 47815, Row: 5676, FlatMod: 0, PctMod: 2},                                     // Searing Pain (Rank 10)
 	{SpellID: 47834, Targets: ThreatTargetsEnemyArea},                                      // Seed of Corruption (Rank 3)
 	{SpellID: 47855, Targets: ThreatTargetsCaster},                                         // Drain Soul (Rank 6)
+	{SpellID: 47875, Targets: ThreatTargetsCaster},                                         // Master Healthstone
 	{SpellID: 47982, Targets: ThreatTargetsCaster},                                         // Blood Pact (Rank 7)
 	{SpellID: 48120, Row: 32546, FlatMod: 0, PctMod: 0.5, Targets: ThreatTargetsCaster},    // Binding Heal (Rank 3)
 	{SpellID: 48156, Targets: ThreatTargetsCaster},                                         // Mind Flay (Rank 9)
@@ -288,6 +294,7 @@ var threats = []Threat{
 	{SpellID: 50421, Targets: ThreatTargetsCaster},                                         // Scent of Blood
 	{SpellID: 50449, Targets: ThreatTargetsCaster},                                         // Bloody Vengeance
 	{SpellID: 50475, Targets: ThreatTargetsCaster},                                         // Blood Presence
+	{SpellID: 50480, Targets: ThreatTargetsCaster},                                         // Chill of the Grave
 	{SpellID: 50514, Targets: ThreatTargetsCaster},                                         // Summon Gargoyle
 	{SpellID: 50526, Targets: ThreatTargetsEnemyArea},                                      // Wandering Plague
 	{SpellID: 50589, Targets: ThreatTargetsCaster},                                         // Immolation Aura (Demon)
@@ -299,6 +306,7 @@ var threats = []Threat{
 	{SpellID: 51124, Targets: ThreatTargetsCaster},                                         // Killing Machine
 	{SpellID: 51130, Targets: ThreatTargetsCaster},                                         // Killing Machine (Rank 5)
 	{SpellID: 51161, Targets: ThreatTargetsCaster},                                         // Ebon Plaguebringer (Rank 3)
+	{SpellID: 51206, Targets: ThreatTargetsCaster},                                         // Dirge
 	{SpellID: 51271, Targets: ThreatTargetsCaster},                                         // Unbreakable Armor
 	{SpellID: 51411, Targets: ThreatTargetsEnemyArea},                                      // Howling Blast (Rank 4)
 	{SpellID: 51522, Targets: ThreatTargetsCaster},                                         // Improved Stormstrike (Rank 2)
@@ -550,6 +558,7 @@ var threats = []Threat{
 	{SpellID: 67383, Targets: ThreatTargetsCaster},                                         // Unholy Force (Rank 1)
 	{SpellID: 67385, Targets: ThreatTargetsCaster},                                         // Energized
 	{SpellID: 67391, Targets: ThreatTargetsCaster},                                         // Volcanic Fury
+	{SpellID: 67489, Targets: ThreatTargetsCaster},                                         // Runic Healing Injector
 	{SpellID: 67545, Targets: ThreatTargetsCaster},                                         // Empowered Fire
 	{SpellID: 67631, Targets: ThreatTargetsCaster},                                         // Aegis
 	{SpellID: 67666, Targets: ThreatTargetsCaster},                                         // Mana Mana

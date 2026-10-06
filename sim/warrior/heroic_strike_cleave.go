@@ -9,7 +9,7 @@ func (warrior *Warrior) registerHeroicStrikeSpell() {
 	hasGlyph := warrior.HasMajorGlyph(proto.WarriorMajorGlyph_GlyphOfHeroicStrike)
 	var rageMetrics *core.ResourceMetrics
 	if hasGlyph {
-		rageMetrics = warrior.NewRageMetrics(core.ActionID{ItemID: 43418})
+		rageMetrics = warrior.NewRageMetrics(core.ActionID{ItemID: 43418}).EnergizeThreat(core.EnergizeBySpell)
 	}
 
 	warrior.HeroicStrike = warrior.RegisterSpell(core.SpellConfig{

@@ -9,8 +9,6 @@ import (
 	"github.com/wowsims/wotlk/sim/core/stats"
 )
 
-const ThreatPerManaGained = 0.5
-
 type manaBar struct {
 	unit     *Unit
 	BaseMana float64
@@ -47,11 +45,6 @@ func (character *Character) EnableManaBarWithModifier(modifier float64) {
 
 	character.AddStatDependency(stats.Intellect, stats.SpellCrit, 100*SpellCritPerIntellect*CritRatingPerCritChance)
 
-	// Not a real spell, just holds metrics from mana gain threat.
-	character.RegisterSpell(SpellConfig{
-		ActionID: ActionID{OtherID: proto.OtherAction_OtherActionManaGain},
-	})
-
 	character.manaCastingMetrics = character.NewManaMetrics(ActionID{OtherID: proto.OtherAction_OtherActionManaRegen, Tag: 1})
 	character.manaNotCastingMetrics = character.NewManaMetrics(ActionID{OtherID: proto.OtherAction_OtherActionManaRegen, Tag: 2})
 
@@ -86,6 +79,9 @@ func (unit *Unit) AddMana(sim *Simulation, amount float64, metrics *ResourceMetr
 	if sim.Log != nil {
 		unit.Log(sim, "Gained %0.3f mana from %s (%0.3f --> %0.3f).", amount, metrics.ActionID, oldMana, newMana)
 	}
+	if metrics.gainThreat != nil {
+		unit.addGainThreat(sim, metrics, amount, newMana-oldMana)
+	}
 
 	unit.currentMana = newMana
 	unit.Metrics.ManaGained += newMana - oldMana
@@ -114,27 +110,6 @@ func (mb *manaBar) doneIteration(sim *Simulation) {
 
 	if mb.waitingForMana != 0 {
 		mb.unit.Metrics.AddOOMTime(sim, sim.CurrentTime-mb.waitingForManaStartTime)
-	}
-
-	manaGainSpell := mb.unit.GetSpell(ActionID{OtherID: proto.OtherAction_OtherActionManaGain})
-
-	for _, resourceMetrics := range mb.unit.Metrics.resources {
-		if resourceMetrics.Type != proto.ResourceType_ResourceTypeMana {
-			continue
-		}
-		if resourceMetrics.ActionID.SameActionIgnoreTag(ActionID{OtherID: proto.OtherAction_OtherActionManaRegen}) {
-			continue
-		}
-		if resourceMetrics.ActionID.SameActionIgnoreTag(ActionID{SpellID: 34917}) {
-			// Vampiric Touch mana threat goes to the priest, so it's handled in the priest code.
-			continue
-		}
-		if resourceMetrics.ActualGain <= 0 {
-			continue
-		}
-
-		manaGainSpell.SpellMetrics[0].Casts += resourceMetrics.EventsForCurrentIteration()
-		manaGainSpell.ApplyAOEThreatIgnoreMultipliers(resourceMetrics.ActualGainForCurrentIteration() * ThreatPerManaGained)
 	}
 }
 

@@ -410,7 +410,7 @@ func (druid *Druid) applyMoonkinForm() {
 		druid.AddStatDependency(stats.Spirit, stats.SpellPower, 0.1*float64(druid.Talents.ImprovedMoonkinForm))
 	}
 
-	manaMetrics := druid.NewManaMetrics(core.ActionID{SpellID: 24858})
+	manaMetrics := druid.NewManaMetrics(core.ActionID{SpellID: 24858}).EnergizeThreat(core.EnergizeBySpell)
 	druid.RegisterAura(core.Aura{
 		Label:    "Moonkin Form",
 		Duration: core.NeverExpires,

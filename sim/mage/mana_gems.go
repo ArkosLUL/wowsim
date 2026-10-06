@@ -11,7 +11,7 @@ import (
 func (mage *Mage) registerManaGemsCD() {
 
 	actionID := core.ActionID{ItemID: 33312}
-	manaMetrics := mage.NewManaMetrics(actionID)
+	manaMetrics := mage.NewManaMetrics(actionID).EnergizeThreat(core.EnergizeBySpell)
 	hasT7_2pc := mage.HasSetBonus(ItemSetFrostfireGarb, 2)
 	var gemAura *core.Aura
 	if hasT7_2pc {

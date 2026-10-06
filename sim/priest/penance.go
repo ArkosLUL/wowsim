@@ -22,14 +22,19 @@ func (priest *Priest) makePenanceSpell(isHeal bool) *core.Spell {
 
 	var procMask core.ProcMask
 	flags := core.SpellFlagChanneled | core.SpellFlagAPL
+	// 53007 and its channel make no threat; each tick is a cast of its own
+	var tickSpellID int32
 	if isHeal {
 		flags |= core.SpellFlagHelpful
 		procMask = core.ProcMaskSpellHealing
+		tickSpellID = 52985
 	} else {
 		procMask = core.ProcMaskSpellDamage
+		tickSpellID = 53000
 	}
+	var tickThreat *core.ThreatTick
 
-	return priest.RegisterSpell(core.SpellConfig{
+	spell := priest.RegisterSpell(core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: 53007},
 		SpellSchool: core.SpellSchoolHoly,
 		ProcMask:    procMask,
@@ -60,7 +65,9 @@ func (priest *Priest) makePenanceSpell(isHeal bool) *core.Spell {
 				.05*float64(priest.Talents.SearingLight)) +
 			.01*float64(priest.Talents.TwinDisciplines),
 		CritMultiplier:   core.TernaryFloat64(isHeal, priest.DefaultHealingCritMultiplier(), priest.DefaultSpellCritMultiplier()),
-		ThreatMultiplier: 0,
+		ThreatMultiplier: 1 - []float64{0, .07, .14, .20}[priest.Talents.SilentResolve],
+		ThreatSpellID:    tickSpellID,
+		NoThreatBonus:    true,
 
 		Dot: core.Ternary(!isHeal, core.DotConfig{
 			Aura: core.Aura{
@@ -73,7 +80,9 @@ func (priest *Priest) makePenanceSpell(isHeal bool) *core.Spell {
 
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 				baseDamage := 375 + 0.2290*dot.Spell.SpellPower()
-				dot.Spell.CalcAndDealPeriodicDamage(sim, target, baseDamage, dot.Spell.OutcomeMagicHitAndCrit)
+				result := dot.Spell.CalcAndDealPeriodicDamage(sim, target, baseDamage, dot.Spell.OutcomeMagicHitAndCrit)
+				tickThreat.Hit(result)
+				tickThreat.Done(sim)
 			},
 		}, core.DotConfig{}),
 		Hot: core.Ternary(isHeal, core.DotConfig{
@@ -88,6 +97,7 @@ func (priest *Priest) makePenanceSpell(isHeal bool) *core.Spell {
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 				baseHealing := sim.Roll(1484, 1676) + 0.5362*dot.Spell.HealingPower(target)
 				dot.Spell.CalcAndDealPeriodicHealing(sim, target, baseHealing, dot.Spell.OutcomeHealingCrit)
+				tickThreat.Done(sim)
 			},
 		}, core.DotConfig{}),
 
@@ -111,4 +121,6 @@ func (priest *Priest) makePenanceSpell(isHeal bool) *core.Spell {
 			}
 		},
 	})
+	tickThreat = spell.NewThreatTick(tickSpellID)
+	return spell
 }

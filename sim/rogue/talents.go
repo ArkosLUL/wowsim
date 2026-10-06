@@ -80,7 +80,8 @@ func getRelentlessStrikesSpellID(talentPoints int32) int32 {
 
 func (rogue *Rogue) makeFinishingMoveEffectApplier() func(sim *core.Simulation, numPoints int32) {
 	ruthlessnessMetrics := rogue.NewComboPointMetrics(core.ActionID{SpellID: 14161})
-	relentlessStrikesMetrics := rogue.NewEnergyMetrics(core.ActionID{SpellID: getRelentlessStrikesSpellID(rogue.Talents.RelentlessStrikes)})
+	relentlessStrikesMetrics := rogue.NewEnergyMetrics(core.ActionID{SpellID: getRelentlessStrikesSpellID(rogue.Talents.RelentlessStrikes)}).
+		EnergizeThreat(core.EnergizeBySpell)
 	var mayhemMetrics *core.ResourceMetrics
 	if rogue.HasSetBonus(Tier10, 4) {
 		mayhemMetrics = rogue.NewComboPointMetrics(core.ActionID{SpellID: 70802})
@@ -454,7 +455,7 @@ func (rogue *Rogue) applyCombatPotency() {
 
 	const procChance = 0.2
 	energyBonus := 3.0 * float64(rogue.Talents.CombatPotency)
-	energyMetrics := rogue.NewEnergyMetrics(core.ActionID{SpellID: 35553})
+	energyMetrics := rogue.NewEnergyMetrics(core.ActionID{SpellID: 35553}).EnergizeThreat(core.EnergizeBySpell)
 
 	rogue.RegisterAura(core.Aura{
 		Label:    "Combat Potency",
@@ -481,7 +482,7 @@ func (rogue *Rogue) applyFocusedAttacks() {
 	}
 
 	procChance := []float64{0, 0.33, 0.66, 1}[rogue.Talents.FocusedAttacks]
-	energyMetrics := rogue.NewEnergyMetrics(core.ActionID{SpellID: 51637})
+	energyMetrics := rogue.NewEnergyMetrics(core.ActionID{SpellID: 51637}).EnergizeThreat(core.EnergizeBySpell)
 
 	rogue.RegisterAura(core.Aura{
 		Label:    "Focused Attacks",

@@ -53,7 +53,7 @@ func init() {
 			Timer:    character.NewTimer(),
 			Duration: insightful.ICD,
 		}
-		manaMetrics := character.NewManaMetrics(core.ActionID{ItemID: 25901})
+		manaMetrics := character.NewManaMetrics(core.ActionID{ItemID: 25901}).EnergizeThreat(core.EnergizeBySpell)
 
 		character.RegisterAura(core.Aura{
 			Label:    "Insightful Earthstorm Diamond",

@@ -19,7 +19,7 @@ func (dk *Deathknight) newDeathStrikeSpell(isMH bool) *core.Spell {
 
 	var healthMetrics *core.ResourceMetrics
 	if isMH {
-		healthMetrics = dk.NewHealthMetrics(DeathStrikeActionID)
+		healthMetrics = dk.HealThreat(dk.NewHealthMetrics(DeathStrikeActionID), 45470)
 	}
 
 	conf := core.SpellConfig{

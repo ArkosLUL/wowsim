@@ -29,7 +29,7 @@ func NewShaman(character *core.Character, talents string, totems *proto.ShamanTo
 		SelfBuffs:           selfBuffs,
 		thunderstormInRange: thunderstormRange,
 	}
-	shaman.waterShieldManaMetrics = shaman.NewManaMetrics(core.ActionID{SpellID: 57960})
+	shaman.waterShieldManaMetrics = shaman.NewManaMetrics(core.ActionID{SpellID: 57960}).EnergizeThreat(core.EnergizeBySpell)
 
 	core.FillTalentsProto(shaman.Talents.ProtoReflect(), talents, TalentTreeSizes)
 	shaman.EnableManaBar()

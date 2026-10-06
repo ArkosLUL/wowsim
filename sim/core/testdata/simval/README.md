@@ -88,8 +88,8 @@ passes are bare, talents and Bloodlust). The record stays and the check still ru
 passes named, and an entry no record fails is stale. It, `droppedTimingRecords` and `timingRecapture` (finishers
 without combo point records yet, `tools/simval/timing_test.go`) are empty.
 
-`threat.jsonl`, each in `droppedThreatRecords` (`tools/simval/threat_test.go`), removed from the file; real
-mismatches would go in `knownThreatMismatches` (`tools/simval/threat.go`), with the record kept: none now. The
+`threat.jsonl`, each in `droppedThreatRecords` (`tools/simval/threat_test.go`), removed from the file, or in
+`knownThreatMismatches` (`tools/simval/threat.go`), the record kept and only that check's failure let through. The
 capture is one run's records. A `recapture` row replays now; the next `TestSimvalThreat` run restores its record,
 then remove the row and the entry.
 
@@ -97,6 +97,7 @@ then remove the row and the entry.
 |---|---|---|
 | FrostDeathKnight | 45524 Chains of Ice | the sim has no Chains of Ice |
 | FrostDeathKnight | 49576 Death Grip | the sim has no Death Grip |
+| Warlock | 47193 Demonic Empowerment | cast on the pet, so the server hands its bonus to the creatures fighting the pet; the probe's warlock has no pet in a fight |
 
 `buffs.jsonl`, each in `droppedBuffs` (`tools/simval/buffs_test.go`). Lines stay; a dropped state or check is only
 logged. None now.

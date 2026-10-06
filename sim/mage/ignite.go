@@ -108,7 +108,7 @@ func (mage *Mage) applyEmpoweredFire() {
 	}
 
 	procChance := []float64{0, .33, .67, 1}[mage.Talents.EmpoweredFire]
-	manaMetrics := mage.NewManaMetrics(core.ActionID{SpellID: 67545})
+	manaMetrics := mage.NewManaMetrics(core.ActionID{SpellID: 67545}).EnergizeThreat(core.EnergizeBySpell)
 
 	mage.RegisterAura(core.Aura{
 		Label:    "Empowered Fire",

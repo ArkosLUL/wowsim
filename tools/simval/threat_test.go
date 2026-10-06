@@ -77,6 +77,8 @@ type threatDrop struct {
 var droppedThreatRecords = map[threatKey]threatDrop{
 	{deathKnight, 48263, 45524, 0, 0}: {reason: "the sim has no Chains of Ice"},
 	{deathKnight, 48263, 49576, 0, 0}: {reason: "the sim has no Death Grip"},
+	{warlock, 0, 47193, 0, 0}: {reason: "cast on the pet, so the server hands its bonus to the creatures fighting the " +
+		"pet; the probe's warlock has no pet in a fight, the replay's no Demonic Empowerment"},
 }
 
 // threatBot is one TestSimvalThreat character: its class, race, the auras its casts leave on it (talents,
@@ -117,11 +119,11 @@ func threatAssistProbesOf(spells ...int32) []threatProbe {
 // threatBots are TestSimvalThreat's characters and probes.
 var threatBots = []threatBot{
 	{"ProtWarrior", warrior, 1, []int32{71, 7376, 57339}, slices.Concat(threatProbesOf(47450, 47520), []threatProbe{{47520, 2, 0}},
-		threatProbesOf(57823, 47488, 47475, 50783, 47467, 47498, 47437, 47502, 12809, 57755, 47471),
-		threatAssistProbesOf(2565, 12975, 47440, 47436))},
+		threatProbesOf(57823, 47488, 47475, 50783, 7386, 58567, 47498, 47437, 47502, 12809, 57755, 47471),
+		threatAssistProbesOf(2565, 12975, 47440, 47436, 871))},
 	{"FuryWarrior", warrior, 1, []int32{29763, 2458, 7381}, slices.Concat(
-		threatProbesOf(47450, 47520, 47475, 50783, 23881, 1680, 47471, 47486, 7384, 47465),
-		threatAssistProbesOf(12292))},
+		threatProbesOf(47450, 47520, 47475, 50783, 23881, 1680, 47471, 47486, 7384, 47465, 50622, 44949),
+		threatAssistProbesOf(12292, 1719, 18499))},
 	{"ProtPaladin", paladin, 1, []int32{25780, 57340}, slices.Concat(threatProbesOf(48827, 53595, 61411, 20187, 48801, 48817,
 		48819, 25742, 35395), threatAssistProbesOf(20375, 48952, 54428))},
 	{"RetPaladin", paladin, 1, []int32{31881}, slices.Concat(threatProbesOf(35395, 53385, 48801, 20187, 48806, 48819, 20424),
@@ -129,9 +131,10 @@ var threatBots = []threatBot{
 	{"BearDruid", druid, 4, []int32{9634, 9635, 21178, 57339}, slices.Concat(threatProbesOf(48480, 48568, 48564, 48562),
 		[]threatProbe{{48562, 3, 0}}, threatProbesOf(48560, 60089, 16857), threatAssistProbesOf(22812, 22842, 61336, 50334))},
 	{"CatDruid", druid, 4, []int32{768, 3025}, slices.Concat(threatProbesOf(48572, 48566, 48574, 49800, 48577, 62078, 16857),
-		threatAssistProbesOf(768))},
+		threatAssistProbesOf(768, 50213))},
 	{"FrostDeathKnight", deathKnight, 1, []int32{48263, 57340, 61261}, slices.Concat(
-		threatProbesOf(56815, 52212, 49909, 55262, 49924, 49941, 55271, 45524, 49576, 49895, 47632),
+		threatProbesOf(56815, 52212, 49909, 55262), []threatProbe{{55262, 2, 0}},
+		threatProbesOf(49924, 45470, 48982, 50475, 49941, 55271, 45524, 49576, 49895, 47632),
 		threatAssistProbesOf(57623, 48792, 48707))},
 	{"UnholyDeathKnight", deathKnight, 1, []int32{49491, 48265}, threatProbesOf(55271, 49930, 51425, 49895, 47632, 49909, 55262, 52212)},
 	{"Rogue", rogue, 1, nil, slices.Concat(threatProbesOf(48638, 48668, 48657, 48672, 57993, 51723, 57965, 48660),
@@ -140,11 +143,12 @@ var threatBots = []threatBot{
 		threatProbesOf(42897, 44781, 42833, 42926, 42842, 47610, 42914, 55360, 42859),
 		threatAssistProbesOf(12472, 12042, 11129, 12043, 11958, 12051, 55342))},
 	{"ShadowPriest", priest, 1, []int32{15320, 15473, 49868}, slices.Concat(
-		threatProbesOf(48127, 48156, 58381, 48125, 48160, 48300, 48158, 48123), threatAssistProbesOf(64901))},
+		threatProbesOf(48127, 48156, 58381, 48125, 48160, 48300, 48158, 48123), threatAssistProbesOf(64901, 10060))},
 	{"Warlock", warlock, 1, []int32{18372, 17918},
-		threatProbesOf(47809, 47838, 47811, 47813, 59172, 47815, 47864, 47865, 47867, 50511, 59092)},
+		threatProbesOf(47809, 47838, 47811, 47813, 59172, 47815, 47864, 47865, 47867, 50511, 59092, 47193)},
 	{"ElementalShaman", shaman, 11, []int32{30674}, slices.Concat(threatProbesOf(49238, 49271, 60043, 49231, 49233, 49236,
 		60103, 61657, 61654), threatAssistProbesOf(61657, 16166, 2825, 30823))},
+	{"Hunter", hunter, 4, nil, threatProbesOf(75, 58433)},
 }
 
 func threatFormOf(auras []int32) int32 {
@@ -247,6 +251,27 @@ func threatAssistBody(base, multiplier float64) string {
 		multiplier, 10000*multiplier, base, base, base, base, multiplier, base*multiplier)
 }
 
+// threatNoBonusBody is a positive spell's record cast on the caster, with no bonus at all.
+func threatNoBonusBody(multiplier float64) string {
+	return fmt.Sprintf(`"damage": {"amount": 10000, "pctMod": 1, "afterPctMod": 10000, "afterSpellMods": 10000,
+			"schoolMultiplier": %v, "threat": %v},
+		"bonus": {"selected": {"count": 1, "dummy": false, "caster": true}, "source": "none", "base": 0, "targets": 1,
+			"perTarget": 0, "assist": true, "reachesDummy": true, "threat": 0}`, multiplier, 10000*multiplier)
+}
+
+// threatEffectJSON is a record's SPELL_EFFECT_THREAT: one effect of that value landing on the dummy.
+func threatEffectJSON(index int, value float64) string {
+	return fmt.Sprintf(`"threatEffect": {"effects": [{"index": %d, "value": %v, "dummy": true}], "threat": %v}`,
+		index, value, value)
+}
+
+// threatHealJSON is a record's threat for 10000 healed: that part of it, times the multiplier.
+func threatHealJSON(part, multiplier float64) string {
+	base := 10000 * part
+	return fmt.Sprintf(`"heal": {"amount": 10000, "base": %v, "pctMod": 1, "afterPctMod": %v, "afterSpellMods": %v,
+			"schoolMultiplier": %v, "threat": %v}`, base, base, base, multiplier, base*multiplier)
+}
+
 // threatShares are the creatures fighting the caster with those shares: the boss dummy first, then the
 // dummies TestSimvalThreat's threatAssist adds.
 func threatShares(shares ...float64) []threatShare {
@@ -307,7 +332,13 @@ func TestThreatReplayOnHandCheckedRecords(t *testing.T) {
 		frostDK     = []int32{48263, 57340, 61261}
 		warlockTal  = []int32{18372, 17918}
 		protPaladin = []int32{25780, 57340}
+		cat         = []int32{768, 3025}
+		shadow      = []int32{15320, 15473, 49868}
 	)
+	// three creatures sharing a self buff's level times the multiplier
+	thirds := func(level, multiplier float64) []float64 {
+		return []float64{level * multiplier / 3, level * multiplier / 3, level * multiplier / 3}
+	}
 	// Defensive Stance, Dire Bear Form and Frost Presence, each +45% with the tank passive's +43%: damage
 	// threat only, never the bonus
 	const def = 2.0735
@@ -383,11 +414,12 @@ func TestThreatReplayOnHandCheckedRecords(t *testing.T) {
 			failed: []string{"bonus"},
 		},
 		{
-			// no spell_threat row: the spell's level
-			name: "Sunder Armor",
+			// the rank's level; the sim's Sunder Armor is 7386: 345 + 5% attack power, then 58567's 10
+			name: "Sunder Armor's rank 7",
 			rec: handThreat(t, warrior, 1, 47467, protWarrior, 3000,
 				threatBody(def, 1, threatLandedBonus("spellLevel", 77, 1, 77))),
 			checks: []string{"damage threat (not compared)", "bonus"},
+			failed: []string{"bonus"},
 		},
 		{
 			name: "Curse of Doom",
@@ -500,6 +532,124 @@ func TestThreatReplayOnHandCheckedRecords(t *testing.T) {
 			name: "Fire Nova shared by three creatures",
 			rec: withShares(handThreat(t, shaman, 11, 61657, []int32{30674}, 3000, threatAssistBody(80, 0.7)),
 				56.0/3, 56.0/3, 56.0/3),
+			checks: []string{"damage threat (not compared)", "bonus", "assist shares"},
+		},
+		{
+			// 345 + 5% attack power
+			name: "Sunder Armor, 7386's row",
+			rec: handThreat(t, warrior, 1, 7386, protWarrior, 3000,
+				threatBody(def, 1, threatLandedBonus("entry", 495, 1, 495))),
+			checks: []string{"damage threat (not compared)", "bonus"},
+		},
+		{
+			// the 58567 it casts has a record of its own
+			name: "Sunder Armor with its debuff's level in the bonus",
+			rec: handThreat(t, warrior, 1, 7386, protWarrior, 3000,
+				threatBody(def, 1, threatLandedBonus("entry", 505, 1, 505))),
+			checks: []string{"damage threat (not compared)", "bonus"},
+			failed: []string{"bonus"},
+		},
+		{
+			name: "Sunder Armor's debuff, its level and an effect threat of 0",
+			rec: handThreat(t, warrior, 1, 58567, protWarrior, 3000,
+				threatBody(def, 1, threatLandedBonus("spellLevel", 10, 1, 10))+", "+threatEffectJSON(1, 0)),
+			checks: []string{"damage threat (not compared)", "bonus", "effect threat"},
+		},
+		{
+			name: "Faerie Fire (Feral)'s damage with its effect's threat in the record",
+			rec: handThreat(t, druid, 4, 60089, bear, 3000,
+				threatBody(def, 1, threatLandedBonus("entry", 638, 1, 638))+", "+threatEffectJSON(0, 638)),
+			checks: []string{"damage threat", "bonus", "effect threat"},
+		},
+		{
+			name: "Faerie Fire (Feral)'s damage with no effect threat on the dummy",
+			rec: handThreat(t, druid, 4, 60089, bear, 3000,
+				threatBody(def, 1, threatLandedBonus("entry", 638, 1, 638))+", "+threatEffectJSON(0, 0)),
+			checks: []string{"damage threat", "bonus", "effect threat"},
+			failed: []string{"effect threat"},
+		},
+		{
+			name:   "Heart Strike on two targets, split between them",
+			rec:    handThreat(t, deathKnight, 1, 55262, frostDK, 3000, threatBody(def, 1, threatLandedBonus("spellLevel", 80, 2, 40))),
+			checks: []string{"damage threat", "bonus"},
+		},
+		{
+			name:   "Heart Strike on two targets, the whole bonus on each",
+			rec:    handThreat(t, deathKnight, 1, 55262, frostDK, 3000, threatBody(def, 1, threatLandedBonus("spellLevel", 80, 2, 80))),
+			checks: []string{"damage threat", "bonus"},
+			failed: []string{"bonus"},
+		},
+		{
+			name:   "Bladestorm's main hand Whirlwind, one tick",
+			rec:    handThreat(t, warrior, 1, 50622, furyWarrior, 3000, threatBody(0.7, 1, threatLandedBonus("spellLevel", 36, 1, 36))),
+			checks: []string{"damage threat", "tick bonus"},
+		},
+		{
+			// the off hand's own, not the main hand's too
+			name:   "Bladestorm's off hand Whirlwind, one tick",
+			rec:    handThreat(t, warrior, 1, 44949, furyWarrior, 3000, threatBody(0.7, 1, threatLandedBonus("spellLevel", 36, 1, 36))),
+			checks: []string{"damage threat", "tick bonus"},
+		},
+		{
+			name:   "Volley's arrows, one tick",
+			rec:    handThreat(t, hunter, 4, 58433, nil, 3000, threatBody(1, 1, threatLandedBonus("spellLevel", 80, 1, 80))),
+			checks: []string{"damage threat", "tick bonus"},
+		},
+		{
+			name:   "Auto Shot",
+			rec:    handThreat(t, hunter, 4, 75, nil, 3000, threatBody(1, 1, threatLandedBonus("spellLevel", 1, 1, 1))),
+			checks: []string{"damage threat", "bonus"},
+		},
+		{
+			// half the health, the level 1 bonus, both times Frost Presence
+			name: "Death Strike's heal",
+			rec: handThreat(t, deathKnight, 1, 45470, frostDK, 3000,
+				threatAssistBody(1, def)+", "+threatHealJSON(0.5, def)),
+			checks: []string{"damage threat (not compared)", "bonus", "heal threat"},
+		},
+		{
+			name: "Death Strike's heal at a paladin's quarter",
+			rec: handThreat(t, deathKnight, 1, 45470, frostDK, 3000,
+				threatAssistBody(1, def)+", "+threatHealJSON(0.25, def)),
+			checks: []string{"damage threat (not compared)", "bonus", "heal threat"},
+			failed: []string{"heal threat"},
+		},
+		{
+			name:   "Rune Tap's heal, no bonus",
+			rec:    handThreat(t, deathKnight, 1, 48982, frostDK, 3000, threatNoBonusBody(def)+", "+threatHealJSON(0.5, def)),
+			checks: []string{"damage threat (not compared)", "bonus", "heal threat"},
+		},
+		{
+			name: "Blood Presence's heal and its level 40",
+			rec: handThreat(t, deathKnight, 1, 50475, frostDK, 3000,
+				threatAssistBody(40, def)+", "+threatHealJSON(0.5, def)),
+			checks: []string{"damage threat (not compared)", "bonus", "heal threat"},
+		},
+		{
+			// the replay gives the warrior a shield
+			name:   "Shield Wall shared by three creatures",
+			rec:    withShares(handThreat(t, warrior, 1, 871, protWarrior, 3000, threatAssistBody(28, def)), thirds(28, def)...),
+			checks: []string{"damage threat (not compared)", "bonus", "assist shares"},
+		},
+		{
+			name:   "Recklessness shared by three creatures",
+			rec:    withShares(handThreat(t, warrior, 1, 1719, furyWarrior, 3000, threatAssistBody(50, 0.7)), thirds(50, 0.7)...),
+			checks: []string{"damage threat (not compared)", "bonus", "assist shares"},
+		},
+		{
+			name:   "Berserker Rage shared by three creatures",
+			rec:    withShares(handThreat(t, warrior, 1, 18499, furyWarrior, 3000, threatAssistBody(32, 0.7)), thirds(32, 0.7)...),
+			checks: []string{"damage threat (not compared)", "bonus", "assist shares"},
+		},
+		{
+			name:   "Tiger's Fury shared by three creatures",
+			rec:    withShares(handThreat(t, druid, 4, 50213, cat, 3000, threatAssistBody(79, 0.71)), thirds(79, 0.71)...),
+			checks: []string{"damage threat (not compared)", "bonus", "assist shares"},
+		},
+		{
+			// cast on the priest; Shadowform takes 30% off every school
+			name:   "Power Infusion shared by three creatures",
+			rec:    withShares(handThreat(t, priest, 1, 10060, shadow, 3000, threatAssistBody(40, 0.7)), thirds(40, 0.7)...),
 			checks: []string{"damage threat (not compared)", "bonus", "assist shares"},
 		},
 	} {

@@ -105,7 +105,7 @@ var ItemSetStormshroud = core.NewItemSet(core.ItemSet{
 			if !char.HasEnergyBar() {
 				return
 			}
-			metrics := char.NewEnergyMetrics(core.ActionID{SpellID: 23863})
+			metrics := char.NewEnergyMetrics(core.ActionID{SpellID: 23863}).EnergizeThreat(core.EnergizeBySpell)
 			proc := char.RegisterSpell(core.SpellConfig{
 				ActionID:    core.ActionID{SpellID: 23864},
 				SpellSchool: core.SpellSchoolNature,
