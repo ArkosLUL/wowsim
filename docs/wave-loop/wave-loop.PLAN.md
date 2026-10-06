@@ -78,7 +78,7 @@ G = changes goldens. FS = runs all 37 suites.
 | X | EC-FIGHT (live) | ✔ |
 | X2 | EC-RECHECK (live) · EC-COVER (live) · EC-PROBES (C++, live) | ✔ |
 | Y | EC-TICK-FIX (G, FS) · EC-CORE-FIX (G, FS) · EC-PET-FIX (G) · PERF-THREAT | ✔ |
-| Z | EC-THREAT-FIX2 (G, FS, live) · EC-MELEE-FIX (G) · EC-NATURE-FIX (G, live) · EC-ARCANE-FIX (G, live) | ✔ |
+| Z | EC-THREAT-FIX2 (G, FS, live) · EC-MELEE-FIX (G) · EC-NATURE-FIX (G, live) · EC-ARCANE-FIX (G, live) · PERF-Y | ✔ |
 
 F2 is an inserted wave, not a fifth item in F: the core swing and cast fixes of PAR-P7-0c have to land
 before the class items in G, a class item can't build on a core fix merging in its own wave, and F already
@@ -134,6 +134,7 @@ PERF-COST joins V (the user's call, the same day): T2's cost arithmetic slowed C
 Y and Z are the user's call (2026-10-05): fix the sim gaps the loop found, EC-FIGHT's 10 ms player tick included,
 core in Y and class in Z, plus PERF-THREAT for V's threat cost. X2 goes first (the user's call, the same day): the
 fixes then work on records from the current server build, and take whatever X2's new probes find.
+PERF-Y joins Z as a fifth item (the user's call, 2026-10-06): wave Y slowed every bench, Elemental 16%.
 
 **Where the specs are:**
 
