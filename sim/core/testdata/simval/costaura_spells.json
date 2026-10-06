@@ -70,7 +70,6 @@
   "spells": [
     {"id":10060,"name":"Power Infusion","ops":["COST"]},
     {"id":33206,"name":"Pain Suppression","ops":["COST"]},
-    {"id":34917,"name":"Vampiric Touch","ops":["COST"]},
     {"id":47788,"name":"Guardian Spirit","ops":["COST"]},
     {"id":48063,"name":"Greater Heal","ops":["COST"]},
     {"id":48066,"name":"Power Word: Shield","ops":["COST"]},
