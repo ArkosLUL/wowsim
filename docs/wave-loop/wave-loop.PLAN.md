@@ -157,8 +157,8 @@ code stages run first and the live stages after it.
 - Wave: Z2, landed (master fast-forwarded to this close-out). Next: none planned.
   Item notes: `G:\DevStuff\GitHub\.wave-loop\{ec-threat-fix3,ec-core-fix2,ec-class-fix,perf-z,bis-alts}-tmp`.
   Prod runs X's `25cb9dddc` (no `rollback-q` image: its layers were gone), without Y's and Z's sim changes.
-- Open: Z2's follow-ups (the e2e-coverage, sim-performance and bis-optimizer backlogs) and the deferred BiS chain;
-  the user's OK for `run.sh TestCleanupOrphans` (character 540400 left by a run). Timing a 25-player raid with healers and tanks (perf's
+- Open: Z2's follow-ups (the e2e-coverage, sim-performance and bis-optimizer backlogs) and the deferred BiS chain.
+  Timing a 25-player raid with healers and tanks (perf's
   `optimizer/quick/raid25_raiddps_p1`, `0ccf8aa60` against an older commit): `BenchmarkSimulate`'s raid has
   neither, and a BiS batch took 107 min against about 60 (contended); the user's call: 2026-10-07, with Z2's idle
   throughput row.
