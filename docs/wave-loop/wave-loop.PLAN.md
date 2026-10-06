@@ -319,6 +319,7 @@ From G the benches run their suites' default players with rotations, at 1 and 10
 | Q | 1.059 / 81.2 | 0.589 / 29.5 | 0.830 / 47.8 | 0.533 / 18.4 | 5.669 / 275.1 |
 | T2 | 1.394 / 101.4 | 0.573 / 29.5 | 0.808 / 45.9 | 0.531 / 17.2 | 5.445 / 276.7 |
 | V | 1.196 / 89.0 | 0.589 / 31.9 | 0.847 / 48.2 | 0.457 / 18.2 | 5.489 / 285.3 |
+| Y | 1.367 / 96.2 | 0.616 / 34.5 | 0.926 / 54.5 | 0.502 / 21.2 | 5.636 / 295.5 |
 
 H2 ran with the live worldserver using half a core, which moved whole runs by up to 2×
 and cost a few percent here (Ret, which H2 barely touched, +4%). An interleaved A/B against the base
@@ -408,6 +409,11 @@ is 14% under T2's at one iteration and 12% at 100 (PERF-COST); at 100 Ret is 8% 
 (`closeThreatCast`, `openThreatCast`, `addAssistThreat`) at about 5% of its time.
 
 W, X and X2 have no row: they change no sim code.
+
+Y's row ran idle (the AC containers and Chronicle stopped; the host at 2–7%). At 100 iterations Elemental is 16% over
+V's, Hunter 13%, Rogue and Ret 8%, the raid 4%, with PERF-THREAT's saving in. Profiles put 5–7% of Elemental's and
+Hunter's time in Gift of Arthas' flat damage taken (`Spell.flatDamageTaken`: `dealsWeaponDamage` and the coefficient
+lookup on every hit, both fixed per spell); the rest isn't attributed to an item (no A/B).
 
 E to F2 ran the old requests: one iteration, and no rotation for Ret, Hunter and Elemental.
 
