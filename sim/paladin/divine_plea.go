@@ -51,6 +51,8 @@ func (paladin *Paladin) registerDivinePleaSpell() {
 			},
 		},
 
+		ProcMask:         core.ProcMaskEmpty,
+		ThreatMultiplier: 1,
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			paladin.DivinePleaAura.Activate(sim)
 		},

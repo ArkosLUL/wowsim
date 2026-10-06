@@ -146,6 +146,9 @@ func applyRaceEffects(agent Agent) {
 					Duration: time.Minute * 2,
 				},
 			},
+			SpellSchool:      SpellSchoolPhysical,
+			ProcMask:         ProcMaskEmpty,
+			ThreatMultiplier: 1,
 			ApplyEffects: func(sim *Simulation, _ *Unit, _ *Spell) {
 				bloodFuryAura.Activate(sim)
 			},

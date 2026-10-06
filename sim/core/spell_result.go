@@ -413,8 +413,6 @@ func (spell *Spell) calcHealingInternal(sim *Simulation, target *Unit, baseHeali
 			target.LogLabel(), spell.ActionID, spell.HealingPower(target), baseHealing, afterCasterMods, afterTargetMods, afterOutcome)
 	}
 
-	result.Threat = spell.ThreatFromDamage(result.Outcome, result.Damage)
-
 	return result
 }
 func (spell *Spell) CalcHealing(sim *Simulation, target *Unit, baseHealing float64, outcomeApplier OutcomeApplier) *SpellResult {
@@ -427,10 +425,14 @@ func (dot *Dot) CalcSnapshotHealing(sim *Simulation, target *Unit, outcomeApplie
 // Applies the fully computed spell result to the sim.
 func (spell *Spell) dealHealingInternal(sim *Simulation, isPeriodic bool, result *SpellResult) {
 	spell.SpellMetrics[result.Target.UnitIndex].TotalHealing += result.Damage
-	spell.SpellMetrics[result.Target.UnitIndex].TotalThreat += result.Threat
+	// the threat is the health gained, so none from overhealing
+	gain := result.Damage
 	if result.Target.HasHealthBar() {
+		before := result.Target.CurrentHealth()
 		result.Target.GainHealth(sim, result.Damage, spell.HealthMetrics(result.Target))
+		gain = result.Target.CurrentHealth() - before
 	}
+	result.Threat = spell.healThreat(sim, gain)
 
 	if sim.Log != nil {
 		if isPeriodic {

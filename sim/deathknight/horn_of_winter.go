@@ -23,6 +23,9 @@ func (dk *Deathknight) registerHornOfWinterSpell() {
 			},
 			IgnoreHaste: true,
 		},
+		SpellSchool:      core.SpellSchoolPhysical,
+		ProcMask:         core.ProcMaskEmpty,
+		ThreatMultiplier: 1,
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			dk.AddRunicPower(sim, 10, rpMetrics)
 		},

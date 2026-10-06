@@ -275,7 +275,8 @@ func (paladin *Paladin) applyArdentDefender() {
 		SpellSchool:      core.SpellSchoolHoly,
 		ProcMask:         core.ProcMaskSpellHealing,
 		CritMultiplier:   1, // Assuming this can't really crit?
-		ThreatMultiplier: 0.25,
+		ThreatMultiplier: 1,
+		ThreatSpellID:    66235,
 		DamageMultiplier: 1,
 		// the server heals as 66235, whose base points spell_pal_ardent_defender replaces with its own amount
 		Direct: core.SpellEffect{Effect: 0, FromSpellID: 66235, Min: 30, Max: 30},

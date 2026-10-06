@@ -105,28 +105,46 @@ func threatProbesOf(spells ...int32) []threatProbe {
 	return out
 }
 
+// threatAssistProbesOf are positive spells probed with threatAssistCreatures fighting the caster.
+func threatAssistProbesOf(spells ...int32) []threatProbe {
+	out := make([]threatProbe, len(spells))
+	for i, s := range spells {
+		out[i] = threatProbe{spell: s, creatures: threatAssistCreatures}
+	}
+	return out
+}
+
 // threatBots are TestSimvalThreat's characters and probes.
 var threatBots = []threatBot{
 	{"ProtWarrior", warrior, 1, []int32{71, 7376, 57339}, slices.Concat(threatProbesOf(47450, 47520), []threatProbe{{47520, 2, 0}},
-		threatProbesOf(57823, 47488, 47475, 50783, 47467, 47498, 47437, 47502, 12809, 57755, 47471))},
-	{"FuryWarrior", warrior, 1, []int32{29763, 2458, 7381},
-		threatProbesOf(47450, 47520, 47475, 50783, 23881, 1680, 47471, 47486, 7384, 47465)},
+		threatProbesOf(57823, 47488, 47475, 50783, 47467, 47498, 47437, 47502, 12809, 57755, 47471),
+		threatAssistProbesOf(2565, 12975, 47440, 47436))},
+	{"FuryWarrior", warrior, 1, []int32{29763, 2458, 7381}, slices.Concat(
+		threatProbesOf(47450, 47520, 47475, 50783, 23881, 1680, 47471, 47486, 7384, 47465),
+		threatAssistProbesOf(12292))},
 	{"ProtPaladin", paladin, 1, []int32{25780, 57340}, slices.Concat(threatProbesOf(48827, 53595, 61411, 20187, 48801, 48817,
-		48819, 25742, 35395), []threatProbe{{20375, 0, threatAssistCreatures}})},
-	{"RetPaladin", paladin, 1, []int32{31881}, threatProbesOf(35395, 53385, 48801, 20187, 48806, 48819, 20424)},
+		48819, 25742, 35395), threatAssistProbesOf(20375, 48952, 54428))},
+	{"RetPaladin", paladin, 1, []int32{31881}, slices.Concat(threatProbesOf(35395, 53385, 48801, 20187, 48806, 48819, 20424),
+		threatAssistProbesOf(31884))},
 	{"BearDruid", druid, 4, []int32{9634, 9635, 21178, 57339}, slices.Concat(threatProbesOf(48480, 48568, 48564, 48562),
-		[]threatProbe{{48562, 3, 0}}, threatProbesOf(48560, 60089, 16857))},
-	{"CatDruid", druid, 4, []int32{768, 3025}, threatProbesOf(48572, 48566, 48574, 49800, 48577, 62078, 16857)},
-	{"FrostDeathKnight", deathKnight, 1, []int32{48263, 57340, 61261},
-		threatProbesOf(56815, 52212, 49909, 55262, 49924, 49941, 55271, 45524, 49576, 49895, 47632)},
+		[]threatProbe{{48562, 3, 0}}, threatProbesOf(48560, 60089, 16857), threatAssistProbesOf(22812, 22842, 61336, 50334))},
+	{"CatDruid", druid, 4, []int32{768, 3025}, slices.Concat(threatProbesOf(48572, 48566, 48574, 49800, 48577, 62078, 16857),
+		threatAssistProbesOf(768))},
+	{"FrostDeathKnight", deathKnight, 1, []int32{48263, 57340, 61261}, slices.Concat(
+		threatProbesOf(56815, 52212, 49909, 55262, 49924, 49941, 55271, 45524, 49576, 49895, 47632),
+		threatAssistProbesOf(57623, 48792, 48707))},
 	{"UnholyDeathKnight", deathKnight, 1, []int32{49491, 48265}, threatProbesOf(55271, 49930, 51425, 49895, 47632, 49909, 55262, 52212)},
-	{"Rogue", rogue, 1, nil, threatProbesOf(48638, 48668, 48657, 48672, 57993, 51723, 57965, 48660)},
-	{"Mage", mage, 1, []int32{12592, 12351, 12519}, threatProbesOf(42897, 44781, 42833, 42926, 42842, 47610, 42914, 55360, 42859)},
-	{"ShadowPriest", priest, 1, []int32{15320, 15473, 49868}, threatProbesOf(48127, 48156, 58381, 48125, 48160, 48300, 48158, 48123)},
+	{"Rogue", rogue, 1, nil, slices.Concat(threatProbesOf(48638, 48668, 48657, 48672, 57993, 51723, 57965, 48660),
+		threatAssistProbesOf(13877))},
+	{"Mage", mage, 1, []int32{12592, 12351, 12519}, slices.Concat(
+		threatProbesOf(42897, 44781, 42833, 42926, 42842, 47610, 42914, 55360, 42859),
+		threatAssistProbesOf(12472, 12042, 11129, 12043, 11958, 12051, 55342))},
+	{"ShadowPriest", priest, 1, []int32{15320, 15473, 49868}, slices.Concat(
+		threatProbesOf(48127, 48156, 58381, 48125, 48160, 48300, 48158, 48123), threatAssistProbesOf(64901))},
 	{"Warlock", warlock, 1, []int32{18372, 17918},
 		threatProbesOf(47809, 47838, 47811, 47813, 59172, 47815, 47864, 47865, 47867, 50511, 59092)},
 	{"ElementalShaman", shaman, 11, []int32{30674}, slices.Concat(threatProbesOf(49238, 49271, 60043, 49231, 49233, 49236,
-		60103, 61657, 61654), []threatProbe{{61657, 0, threatAssistCreatures}})},
+		60103, 61657, 61654), threatAssistProbesOf(61657, 16166, 2825, 30823))},
 }
 
 func threatFormOf(auras []int32) int32 {
@@ -376,6 +394,20 @@ func TestThreatReplayOnHandCheckedRecords(t *testing.T) {
 			rec: handThreat(t, warlock, 1, 47867, warlockTal, 0,
 				threatBody(0.8, 1, threatLandedBonus("spellLevel", 80, 1, 80))),
 			checks: []string{"damage threat", "bonus", "tick bonus"},
+		},
+		{
+			// the record has the row's 638, not Spell::EffectThreat's 638 on top
+			name: "Faerie Fire (Feral)'s damage, its effect's threat left out",
+			rec: handThreat(t, druid, 4, 60089, bear, 3000,
+				threatBody(def, 1, threatLandedBonus("entry", 638, 1, 638))),
+			checks: []string{"damage threat", "bonus"},
+		},
+		{
+			name: "Faerie Fire (Feral)'s damage with the effect's threat in the record",
+			rec: handThreat(t, druid, 4, 60089, bear, 3000,
+				threatBody(def, 1, threatLandedBonus("entry", 638, 1, 2*638))),
+			checks: []string{"damage threat", "bonus"},
+			failed: []string{"bonus"},
 		},
 		{
 			name: "Death and Decay's damage, a tick of the sim's dot",

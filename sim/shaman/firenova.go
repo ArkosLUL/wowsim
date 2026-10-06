@@ -25,7 +25,7 @@ func (shaman *Shaman) registerFireNovaAttackSpell() *core.Spell {
 			float64(shaman.Talents.ImprovedFireNova)*0.1,
 		),
 		CritMultiplier:   shaman.ElementalCritMultiplier(0),
-		ThreatMultiplier: shaman.spellThreatMultiplier(),
+		ThreatMultiplier: 1,
 
 		Direct: core.SpellEffect{Effect: 0, Min: 893, Max: 997, SP: 0.214},
 
@@ -53,7 +53,7 @@ func (shaman *Shaman) registerFireNovaSpell() {
 		Flags:       SpellFlagFocusable | core.SpellFlagAPL,
 
 		// a positive spell: its bonus reaches the enemies as assist threat
-		ThreatMultiplier: shaman.spellThreatMultiplier(),
+		ThreatMultiplier: 1,
 
 		ManaCost: core.ManaCostOptions{
 			BaseCost:   0.22,

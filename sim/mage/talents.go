@@ -353,6 +353,9 @@ func (mage *Mage) registerPresenceOfMindCD() {
 
 			return mage.CurrentMana() >= spellToUse.ApplyCostModifiers(spellToUse.DefaultCast.Cost)
 		},
+		SpellSchool:      core.SpellSchoolPhysical,
+		ProcMask:         core.ProcMaskEmpty,
+		ThreatMultiplier: 1,
 		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, _ *core.Spell) {
 			if mage.ArcanePotencyAura != nil {
 				mage.ArcanePotencyAura.Activate(sim)
@@ -415,6 +418,9 @@ func (mage *Mage) registerArcanePowerCD() {
 				Duration: time.Second * time.Duration(120*(1-(.15*float64(mage.Talents.ArcaneFlows)))),
 			},
 		},
+		SpellSchool:      core.SpellSchoolArcane,
+		ProcMask:         core.ProcMaskEmpty,
+		ThreatMultiplier: 1,
 		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, _ *core.Spell) {
 			mage.ArcanePowerAura.Activate(sim)
 		},
@@ -554,6 +560,9 @@ func (mage *Mage) registerCombustionCD() {
 		ExtraCastCondition: func(sim *core.Simulation, target *core.Unit) bool {
 			return !mage.CombustionAura.IsActive()
 		},
+		SpellSchool:      core.SpellSchoolFire,
+		ProcMask:         core.ProcMaskEmpty,
+		ThreatMultiplier: 1,
 		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, _ *core.Spell) {
 			mage.CombustionAura.Activate(sim)
 			mage.CombustionAura.AddStack(sim)
@@ -602,6 +611,9 @@ func (mage *Mage) registerIcyVeinsCD() {
 			// Need to check for icy veins already active in case Cold Snap is used right after.
 			return !icyVeinsAura.IsActive()
 		},
+		SpellSchool:      core.SpellSchoolFrost,
+		ProcMask:         core.ProcMaskEmpty,
+		ThreatMultiplier: 1,
 		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, _ *core.Spell) {
 			icyVeinsAura.Activate(sim)
 		},
@@ -636,6 +648,9 @@ func (mage *Mage) registerColdSnapCD() {
 			return (mage.IcyVeins != nil && !mage.IcyVeins.IsReady(sim)) ||
 				(mage.SummonWaterElemental != nil && !mage.SummonWaterElemental.IsReady(sim))
 		},
+		SpellSchool:      core.SpellSchoolFrost,
+		ProcMask:         core.ProcMaskEmpty,
+		ThreatMultiplier: 1,
 		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, _ *core.Spell) {
 			if mage.IcyVeins != nil {
 				mage.IcyVeins.CD.Reset()

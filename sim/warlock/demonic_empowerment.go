@@ -64,6 +64,9 @@ func (warlock *Warlock) registerDemonicEmpowermentSpell() {
 				Duration: time.Duration(60-6*warlock.Talents.Nemesis) * time.Second,
 			},
 		},
+		SpellSchool:      core.SpellSchoolShadow,
+		ProcMask:         core.ProcMaskEmpty,
+		ThreatMultiplier: 1,
 		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, _ *core.Spell) {
 			warlock.Pet.DemonicEmpowermentAura.Activate(sim)
 		},

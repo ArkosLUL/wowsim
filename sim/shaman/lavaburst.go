@@ -73,7 +73,7 @@ func (shaman *Shaman) registerLavaBurstSpell() {
 			0.02*float64(shaman.Talents.CallOfFlame),
 		),
 		CritMultiplier:   shaman.ElementalCritMultiplier([]float64{0, 0.06, 0.12, 0.24}[shaman.Talents.LavaFlows] + core.TernaryFloat64(shaman.HasSetBonus(ItemSetEarthShatterGarb, 4), 0.1, 0)),
-		ThreatMultiplier: shaman.spellThreatMultiplier(),
+		ThreatMultiplier: 1,
 
 		MissileSpeed: 24,
 		Direct:       core.SpellEffect{Effect: 0, Min: 1192, Max: 1518, SP: 0.571},

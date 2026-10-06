@@ -33,6 +33,9 @@ func (priest *Priest) registerPowerInfusionCD() {
 			},
 		},
 
+		SpellSchool:      core.SpellSchoolHoly,
+		ProcMask:         core.ProcMaskEmpty,
+		ThreatMultiplier: 1,
 		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, _ *core.Spell) {
 			powerInfusionAura.Activate(sim)
 		},

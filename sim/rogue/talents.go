@@ -502,6 +502,9 @@ func (rogue *Rogue) registerBladeFlurryCD() {
 			},
 		},
 
+		SpellSchool:      core.SpellSchoolPhysical,
+		ProcMask:         core.ProcMaskEmpty,
+		ThreatMultiplier: 1,
 		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, spell *core.Spell) {
 			rogue.BreakStealth(sim)
 			rogue.BladeFlurryAura.Activate(sim)

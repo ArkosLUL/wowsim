@@ -62,6 +62,7 @@ func (druid *Druid) registerStarfallSpell() {
 			},
 		},
 
+		ThreatMultiplier: 1,
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			result := spell.CalcAndDealOutcome(sim, target, spell.OutcomeMagicHit)
 			if result.Landed() {

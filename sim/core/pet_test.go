@@ -233,6 +233,27 @@ func TestBloodlustSkipsAPetThatInheritsHaste(t *testing.T) {
 	}
 }
 
+// a heal on an undamaged summon gains nothing, so it makes no heal threat
+func TestPetSummonsAtFullHealth(t *testing.T) {
+	var pet *timingTestPet
+	timingTestConstruct = func(a *timingTestAgent) {
+		pet = &timingTestPet{Pet: NewPet("Pet", &a.Character, stats.Stats{stats.Health: 1000},
+			func(stats.Stats) stats.Stats { return stats.Stats{stats.Health: 500} }, true, false)}
+		a.AddPet(pet)
+	}
+	sim, _ := newTimingTestSim(t, 0, nil)
+	timingTestConstruct = nil
+	sim.PrePull()
+	runUntil(sim, ms(100))
+
+	if !pet.HasHealthBar() || !pet.IsEnabled() {
+		t.Fatalf("health bar %v, enabled %v", pet.HasHealthBar(), pet.IsEnabled())
+	}
+	if pet.MaxHealth() <= 1000 || pet.CurrentHealth() != pet.MaxHealth() {
+		t.Errorf("health %v of %v, want full with the inherited 500 in it", pet.CurrentHealth(), pet.MaxHealth())
+	}
+}
+
 // CalculatePct on a truncated owner value, the result truncated too.
 func TestPetScalingPct(t *testing.T) {
 	for _, tc := range []struct {

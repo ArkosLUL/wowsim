@@ -52,6 +52,11 @@ func (shaman *Shaman) ApplyTalents() {
 		shaman.PseudoStats.ThreatMultiplier *= 0.7
 		shaman.PseudoStats.CanParry = true
 	}
+	// a threat aura on fire, frost and nature (MiscValue 28), so it reaches every spell of those schools
+	if shaman.Talents.ElementalPrecision > 0 {
+		shaman.AddThreatSchoolMultiplier(core.SpellSchoolFire|core.SpellSchoolFrost|core.SpellSchoolNature,
+			1-0.1*float64(shaman.Talents.ElementalPrecision))
+	}
 
 	shaman.applyElementalFocus()
 	shaman.applyElementalDevastation()
@@ -68,10 +73,6 @@ func (shaman *Shaman) ApplyTalents() {
 func (shaman *Shaman) healingPower(spell *core.Spell, target *core.Unit) float64 {
 	return spell.HealingPower(target) +
 		0.05*float64(shaman.Talents.NaturesBlessing)*shaman.GetStat(stats.Intellect)
-}
-
-func (shaman *Shaman) spellThreatMultiplier() float64 {
-	return []float64{1, 0.9, 0.8, 0.7}[shaman.Talents.ElementalPrecision]
 }
 
 func (shaman *Shaman) applyElementalFocus() {
@@ -253,6 +254,9 @@ func (shaman *Shaman) registerElementalMasteryCD() {
 				Duration: cd,
 			},
 		},
+		SpellSchool:      core.SpellSchoolNature,
+		ProcMask:         core.ProcMaskEmpty,
+		ThreatMultiplier: 1,
 		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, _ *core.Spell) {
 			buffAura.Activate(sim)
 			emAura.Activate(sim)
@@ -332,6 +336,9 @@ func (shaman *Shaman) registerNaturesSwiftnessCD() {
 			// the only spell shamans have with a cast longer than GCD.
 			return !shaman.HasTemporarySpellCastSpeedIncrease()
 		},
+		SpellSchool:      core.SpellSchoolPhysical,
+		ProcMask:         core.ProcMaskEmpty,
+		ThreatMultiplier: 1,
 		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, _ *core.Spell) {
 			nsAura.Activate(sim)
 		},

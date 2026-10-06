@@ -43,6 +43,9 @@ func (mage *Mage) registerMirrorImageCD() {
 			},
 		},
 
+		SpellSchool:      core.SpellSchoolArcane,
+		ProcMask:         core.ProcMaskEmpty,
+		ThreatMultiplier: 1,
 		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, _ *core.Spell) {
 			mage.mirrorImage.EnableWithTimeout(sim, mage.mirrorImage, time.Second*30)
 			if t10Aura != nil {

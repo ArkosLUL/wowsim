@@ -51,6 +51,9 @@ func (warrior *Warrior) RegisterShieldWallCD() {
 			return warrior.StanceMatches(DefensiveStance)
 		},
 
+		SpellSchool:      core.SpellSchoolPhysical,
+		ProcMask:         core.ProcMaskEmpty,
+		ThreatMultiplier: 1,
 		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, spell *core.Spell) {
 			swAura.Activate(sim)
 		},

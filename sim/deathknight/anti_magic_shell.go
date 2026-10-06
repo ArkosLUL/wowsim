@@ -25,6 +25,9 @@ func (dk *Deathknight) registerAntiMagicShellSpell() {
 			},
 			IgnoreHaste: true,
 		},
+		SpellSchool:      core.SpellSchoolShadow,
+		ProcMask:         core.ProcMaskEmpty,
+		ThreatMultiplier: 1,
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			dk.AntiMagicShellAura.Activate(sim)
 		},

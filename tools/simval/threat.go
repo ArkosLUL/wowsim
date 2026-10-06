@@ -217,6 +217,9 @@ var threatTaughtSpells = map[int32]string{
 	44781: "arcaneBarrage", 55360: "livingBomb",
 	59172: "chaosBolt", 59092: "darkPact",
 	60103: "lavaLash",
+	12292: "deathWish", 12975: "lastStand", 48952: "holyShield", 61336: "survivalInstincts", 50334: "berserk",
+	13877: "bladeFlurry", 12472: "icyVeins", 12042: "arcanePower", 11129: "combustion", 12043: "presenceOfMind",
+	11958: "coldSnap", 16166: "elementalMastery", 30823: "shamanisticRage",
 }
 
 // threatExtraSpecs are the specs past the damage replay's that register a probed spell or form.
@@ -344,8 +347,10 @@ type threatCast struct {
 	// threat per point of damage, of the tag that dealt the most
 	slope, spellMultiplier, schoolMultiplier float64
 	bonus, damage                            float64
-	ticked                                   bool
-	tickBonus, tickDamage                    float64
+	// SPELL_EFFECT_THREAT the cast added on the dummy, which `.simval threat` doesn't record, so it's out of bonus
+	effect                float64
+	ticked                bool
+	tickBonus, tickDamage float64
 	// the cast's bonus on each target of the encounter, the dummy's first
 	shares []float64
 	note   string
@@ -448,10 +453,12 @@ func (ts *threatSim) castOnce(rec threatRecord, spell *core.Spell) (c threatCast
 	for i, m := range after {
 		landed = landed || m.outcomes > 0 || m.threat != 0 || m.damage != 0
 		avoided = avoided || m.avoided > 0
+		c.effect += ts.spells[i].ThreatEffect() * float64(m.outcomes-m.avoided)
 		c.bonus += m.threat - slopes[i]*m.damage
 		c.damage += m.damage
 		dealt = append(dealt, m.damage)
 	}
+	c.bonus -= c.effect
 	if avoided {
 		return c, landed, true
 	}
@@ -587,7 +594,11 @@ func replayThreatChecks(rec threatRecord, build func(threatRecord) (*threatSim, 
 	if shares := rec.sharing(); rec.creatures() > 0 && len(shares) > 0 && shares[0].Dummy {
 		server = shares[0].Threat
 	}
-	checks = append(checks, checkThreatNear("bonus", c.bonus, server, threatJoinDetail(rec.serverBonus(), c.note)))
+	note := c.note
+	if c.effect != 0 {
+		note = threatJoinDetail(fmt.Sprintf("the sim's %.2f SPELL_EFFECT_THREAT left out, the record has none", c.effect), note)
+	}
+	checks = append(checks, checkThreatNear("bonus", c.bonus, server, threatJoinDetail(rec.serverBonus(), note)))
 	if rec.creatures() > 0 {
 		checks = append(checks, checkThreatShares(rec, c.shares))
 	}

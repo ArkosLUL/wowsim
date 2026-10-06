@@ -1344,6 +1344,52 @@ Stage 2 (pets), re-measured on `bb4ffd124`:
 - **Owns:** `sim/core/threat.go` and the class threat code above; `tools/simval/threat*.go`'s drops; `threat.jsonl`.
 - **Goldens:** every suite whose TPS moves; report each.
 
+#### As built
+
+Threat stage (offline; each lead re-measured against [ac] 3d89793c7 and the spelldump):
+- `sim/core/threat.go`:
+  - `SPELL_ATTR1_NO_THREAT` spells make no threat at all (Healing Stream Totem's 52042).
+  - `SPELL_EFFECT_THREAT`: a flat, unmodified amount on each enemy hit; a cut never takes the unit's threat there
+    below 0 (Feint's −2164). Faerie Fire (Feral) 60089 adds 638 on top of its `spell_threat` row.
+  - `SetThreatCastOf` puts a second spell's hits in the main spell's cast: Heart Strike's chain hit and the rune
+    weapon's copy split one bonus.
+  - `ThreatTick`: the bonus of a spell an aura casts each tick, Bladestorm's 50622 (44949 with an off hand) and
+    Volley's 58433.
+  - Heal threat is half the health gained (a quarter for paladins), modified like a hit and shared over the enemies
+    as assist threat, no longer kept on the ally (`spell_result.go`'s heal deal measures the gain).
+- Classes: Righteous Fury (holy ×1.8) and Elemental Precision (fire, frost, nature) are school auras. Devastate's
+  Sunder reads 58567 (+10, also when the aura can't apply); Auto Shot reads 75 (+1). 41 positive self buffs get
+  `ThreatMultiplier` 1, and a school and `ProcMaskEmpty` where missing; spells with no unit target (totems, traps,
+  Water Elemental) and externally cast buffs stay at 0. 75 and 58567 are hand-copied into `serverdata`.
+- Not changed: the Infernal's 20153 already matches, and pet threat never reaches the owner's TPS.
+- Replay: the bonus check leaves out `SPELL_EFFECT_THREAT`, which `.simval threat` doesn't record.
+
+Live stage (`TestSimvalThreat` 13:13 to 13:17, all PASS, no orphan bots):
+- `threatAssistProbes` gained 28 self buffs, Shield Block to Bloodlust, each with three creatures fighting.
+  `threat.jsonl` re-recorded: 147 records, 345 checks, all pass; the self buffs' recapture drops and README row went.
+  Each record's bonus is its `SpellLevel`, modified by the caster's school multiplier, a third to each creature, as
+  in the sim.
+- Not probed: Shield Wall and Recklessness (the replay's specs don't register them), Berserker Rage and Tiger's
+  Fury (the replay's cast hits a nil APL on a resource gain), Power Infusion and Demonic Empowerment (cast on
+  another unit). `SPELL_EFFECT_THREAT`, heal threat, Volley and Auto Shot (no hunter bot), Heart Strike's split,
+  58567 and Bladestorm's ticks rest on the source only.
+
+Review:
+- A summon starts at full health, its owner's stamina in (`Guardian::InitStatsForLevel`; `sim/core/pet.go`).
+  It used to start short of that, so Ghoul Frenzy's heals gained health and made heal threat the server's
+  undamaged ghoul doesn't.
+- Ardent Defender's heal reads 66235, the server's heal spell, not `SPELL_ATTR1_NO_THREAT` 66233, and drops its
+  ×0.25 stand-in for the paladin factor. It never procs in the suites.
+
+Goldens (`dock.sh delta`): TPS moves in 34 of 37 suites; `druid/restoration`, `paladin/holy` and `priest/shadow`
+don't. Average-Default: Disc +1659% and Holy +2180% (heal threat), Feral Tank +1.4% (heal threat, Faerie Fire's
+638), Protection paladin +0.23%, Arms +0.06%, Protection warrior +0.05%, the rest under +0.04%,
+Unholy +0.03% (self-buff assist threat). Extremes: SV aoe +6.6% (Volley's ticks), Elemental −1.5% with Reign of the Dead
+(Elemental Precision on fire procs), Blood −0.3% multi-target (Heart Strike's split), Restoration shaman 0 →
+0.01 (its default APL overheals). DPS moves only with Insightful Earthsiege Diamond (Arcane +0.017%, Demonology
++0.082%, Protection paladin −0.164%, Fire and FrostFire ≤0.002%) and Holy's HPS by ±0.1%: the diamond's
+on-cast proc now counts the self buffs' casts (`ProcMaskEmpty`), as 55381's `DONE_SPELL_NONE_DMG_CLASS_POS` does.
+
 ### EC-MELEE-FIX (Z; changes goldens)
 
 - Death knight: Rune of the Stoneskin Gargoyle's defense as skill (goldchar row); Frost Vulnerability (51714) rolls

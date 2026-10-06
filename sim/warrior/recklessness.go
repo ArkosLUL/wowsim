@@ -70,6 +70,9 @@ func (warrior *Warrior) RegisterRecklessnessCD() {
 			return warrior.StanceMatches(BerserkerStance) || warrior.BerserkerStance.IsReady(sim)
 		},
 
+		SpellSchool:      core.SpellSchoolPhysical,
+		ProcMask:         core.ProcMaskEmpty,
+		ThreatMultiplier: 1,
 		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, spell *core.Spell) {
 			if !warrior.StanceMatches(BerserkerStance) {
 				warrior.BerserkerStance.Cast(sim, nil)

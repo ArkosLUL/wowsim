@@ -48,6 +48,9 @@ func (shaman *Shaman) registerBloodlustCD() {
 			return false
 		},
 
+		SpellSchool:      core.SpellSchoolNature,
+		ProcMask:         core.ProcMaskEmpty,
+		ThreatMultiplier: 1,
 		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, _ *core.Spell) {
 			for _, blAura := range blAuras {
 				target := blAura.Unit

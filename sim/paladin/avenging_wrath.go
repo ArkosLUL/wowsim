@@ -47,6 +47,9 @@ func (paladin *Paladin) RegisterAvengingWrathCD() {
 				Duration: 30 * time.Second,
 			},
 		},
+		SpellSchool:      core.SpellSchoolHoly,
+		ProcMask:         core.ProcMaskEmpty,
+		ThreatMultiplier: 1,
 		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, _ *core.Spell) {
 			paladin.AvengingWrathAura.Activate(sim)
 		},

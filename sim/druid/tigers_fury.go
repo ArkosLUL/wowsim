@@ -41,6 +41,9 @@ func (druid *Druid) registerTigersFurySpell() {
 			return !druid.BerserkAura.IsActive()
 		},
 
+		SpellSchool:      core.SpellSchoolPhysical,
+		ProcMask:         core.ProcMaskEmpty,
+		ThreatMultiplier: 1,
 		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, _ *core.Spell) {
 			druid.AddEnergy(sim, instantEnergy, energyMetrics)
 

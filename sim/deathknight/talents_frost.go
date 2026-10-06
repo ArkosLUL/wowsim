@@ -233,6 +233,9 @@ func (dk *Deathknight) applyDeathchill() {
 				Duration: 2 * time.Minute,
 			},
 		},
+		SpellSchool:      core.SpellSchoolFrost,
+		ProcMask:         core.ProcMaskEmpty,
+		ThreatMultiplier: 1,
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			dk.DeathchillAura.Activate(sim)
 		},
