@@ -41,6 +41,8 @@ func (warrior *Warrior) RegisterShieldBlockCD() {
 			return warrior.PseudoStats.CanBlock && warrior.StanceMatches(DefensiveStance)
 		},
 
+		ProcMask:         core.ProcMaskEmpty,
+		ThreatMultiplier: 1,
 		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, _ *core.Spell) {
 			warrior.ShieldBlockAura.Activate(sim)
 		},

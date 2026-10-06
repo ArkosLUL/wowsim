@@ -26,6 +26,9 @@ func (warrior *Warrior) registerBerserkerRageSpell() {
 			},
 		},
 
+		SpellSchool:      core.SpellSchoolPhysical,
+		ProcMask:         core.ProcMaskEmpty,
+		ThreatMultiplier: 1,
 		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, _ *core.Spell) {
 			warrior.AddRage(sim, rageBonus, rageMetrics)
 		},

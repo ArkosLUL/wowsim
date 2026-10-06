@@ -227,6 +227,9 @@ func (druid *Druid) registerCatFormSpell() {
 			IgnoreHaste: true,
 		},
 
+		SpellSchool:      core.SpellSchoolPhysical,
+		ProcMask:         core.ProcMaskEmpty,
+		ThreatMultiplier: 1,
 		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, spell *core.Spell) {
 			maxShiftEnergy := float64(20 * druid.Talents.Furor)
 
@@ -369,6 +372,9 @@ func (druid *Druid) registerBearFormSpell() {
 			IgnoreHaste: true,
 		},
 
+		SpellSchool:      core.SpellSchoolPhysical,
+		ProcMask:         core.ProcMaskEmpty,
+		ThreatMultiplier: 1,
 		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, spell *core.Spell) {
 			rageDelta := 0 - druid.CurrentRage()
 			if sim.Proc(furorProcChance, "Furor") {

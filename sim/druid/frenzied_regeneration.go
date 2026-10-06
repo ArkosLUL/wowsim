@@ -41,6 +41,9 @@ func (druid *Druid) registerFrenziedRegenerationCD() {
 			},
 			IgnoreHaste: true,
 		},
+		SpellSchool:      core.SpellSchoolPhysical,
+		ProcMask:         core.ProcMaskEmpty,
+		ThreatMultiplier: 1,
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			core.StartPeriodicAction(sim, core.PeriodicActionOptions{
 				NumTicks: 10,

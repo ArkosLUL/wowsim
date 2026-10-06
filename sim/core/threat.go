@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/wowsims/wotlk/sim/core/proto"
 	"github.com/wowsims/wotlk/sim/core/serverdata"
 	"github.com/wowsims/wotlk/sim/core/stats"
 )
 
 // The server's threat arithmetic: ThreatManager::CalculateModifiedThreat on each hit's damage or healing,
-// plus the bonus Spell::HandleThreatSpells adds once per cast. A spell whose ThreatMultiplier is 0 makes
-// no threat at all, bonus included.
+// plus the bonus Spell::HandleThreatSpells adds once per cast and Spell::EffectThreat's flat amount. A spell
+// whose ThreatMultiplier is 0 makes no threat at all, bonus included.
 
 // Attribute bits the bonus reads (SharedDefines.h, SpellInfo.h).
 const (
@@ -18,18 +19,26 @@ const (
 	attr3SuppressTargetProcs = 0x00020000
 	attrCuNoInitialThreat    = 0x00000010
 	attrCuNegativeEffects    = 0x00007000
+
+	effectThreat = 63 // SPELL_EFFECT_THREAT
 )
 
 // spellThreat is what the spell's server data says about its threat, set at registration, and the
 // enemies its open casts have hit so far.
 type spellThreat struct {
-	pct float64 // spell_threat's pctMod
+	pct float64 // spell_threat's pctMod, 0 under SPELL_ATTR1_NO_THREAT
 
-	noBonus     bool
+	noBonus     bool    // neither a bonus nor an effect's flat threat
 	flat, ap    float64 // the bonus: flatMod and apPctMod, else the spell's level
 	assist      bool    // a positive spell's bonus is assist threat
 	casterShare bool    // the caster is one of the units the bonus is divided between
 	split       float64 // those units for a hit outside a cast, from the server data alone
+	effect      float64 // SPELL_EFFECT_THREAT on each enemy hit, unmodified
+
+	healScale float64 // heal threat per point healed before the mods, 0 until the first heal
+
+	// the spell whose open cast takes this one's hits, when the server deals both in one cast
+	castOf *Spell
 
 	openCasts int
 	hits      []threatHit
@@ -41,35 +50,60 @@ type threatHit struct {
 }
 
 func (spell *Spell) setThreatFromServer(threatSpellID int32, noBonus bool) {
-	spell.threat = spellThreat{pct: 1, noBonus: true, split: 1}
 	s := spell.serverSpell
 	if threatSpellID != 0 {
 		if s = serverdata.SpellByID(threatSpellID); s == nil {
 			panic(fmt.Sprintf("ThreatSpellID %d of spell %s isn't in the server data", threatSpellID, spell.ActionID))
 		}
 	}
+	spell.threat = serverThreat(spell.Unit, s, noBonus)
+}
+
+// serverThreat is what the server spell s makes of a cast by unit.
+func serverThreat(unit *Unit, s *serverdata.Spell, noBonus bool) spellThreat {
+	threat := spellThreat{pct: 1, noBonus: true, split: 1}
 	if s == nil {
-		return
+		return threat
+	}
+	// ThreatManager::AddThreat and ForwardThreatForAssistingMe drop all of it: damage, healing, bonus
+	if s.Attributes[1]&attr1NoThreat != 0 {
+		threat.pct = 0
+		return threat
 	}
 	t := serverdata.ThreatBySpellID(s.ID)
-	spell.threat.pct = float64(t.Pct())
-	if noBonus || spell.Unit.Type == EnemyUnit || spell.Unit.Env == nil ||
-		s.Attributes[1]&attr1NoThreat != 0 || s.Attributes[3]&attr3SuppressTargetProcs != 0 {
-		return
+	threat.pct = float64(t.Pct())
+	if noBonus || unit.Type == EnemyUnit || unit.Env == nil {
+		return threat
 	}
-
-	switch {
-	case t != nil && t.Row != 0:
-		spell.threat.flat, spell.threat.ap = float64(t.FlatMod), float64(t.APPctMod)
-	case s.AttributesCu&attrCuNoInitialThreat == 0:
-		spell.threat.flat = float64(s.SpellLevel)
+	threat.effect = serverThreatEffect(s)
+	if s.Attributes[3]&attr3SuppressTargetProcs == 0 {
+		switch {
+		case t != nil && t.Row != 0:
+			threat.flat, threat.ap = float64(t.FlatMod), float64(t.APPctMod)
+		case s.AttributesCu&attrCuNoInitialThreat == 0:
+			threat.flat = float64(s.SpellLevel)
+		}
 	}
-	spell.threat.noBonus = spell.threat.flat == 0 && spell.threat.ap == 0
+	threat.noBonus = threat.flat == 0 && threat.ap == 0 && threat.effect == 0
 	// the NEGATIVE_EFFn bits are _IsPositiveSpell's answer per effect; unlike IsPositive they ignore
 	// spell_custom_attr's POSITIVE_EFFn (Envenom)
-	spell.threat.assist = s.AttributesCu&attrCuNegativeEffects == 0
-	spell.threat.casterShare = t != nil && t.Targets&serverdata.ThreatTargetsCaster != 0
-	spell.threat.split = float64(threatSplit(s, t, spell.Unit.Env.GetNumTargets()))
+	threat.assist = s.AttributesCu&attrCuNegativeEffects == 0
+	threat.casterShare = t != nil && t.Targets&serverdata.ThreatTargetsCaster != 0
+	threat.split = float64(threatSplit(s, t, unit.Env.GetNumTargets()))
+	return threat
+}
+
+// serverThreatEffect is SPELL_EFFECT_THREAT's amount at a level 80 caster, the mean of its roll: Feint's
+// is a cut. Spell::EffectThreat adds it to each enemy hit, unmodified.
+func serverThreatEffect(s *serverdata.Spell) float64 {
+	amount := 0.0
+	for i, e := range s.Effects {
+		if e.Effect == effectThreat {
+			lo, hi := s.EffectRange(i)
+			amount += float64(lo+hi) / 2
+		}
+	}
+	return amount
 }
 
 // threatSplit is how many units a cast selects with every enemy in range, by the server data: the enemies
@@ -115,7 +149,11 @@ func (spell *Spell) modifiedThreat(amount float64) float64 {
 
 // main hand attack power without the creature type bonus (Unit::GetTotalAttackPowerValue)
 func (spell *Spell) threatBonusBase() float64 {
-	return spell.threat.flat + spell.threat.ap*spell.Unit.stats[stats.AttackPower]
+	return spell.threat.bonusBase(spell.Unit)
+}
+
+func (t *spellThreat) bonusBase(unit *Unit) float64 {
+	return t.flat + t.ap*unit.stats[stats.AttackPower]
 }
 
 func (spell *Spell) hasEnemyThreatBonus() bool {
@@ -136,6 +174,10 @@ func (spell *Spell) enemyThreatBonus(result *SpellResult) float64 {
 	if spell.ThreatMultiplier == 0 || result.Target.Type != EnemyUnit {
 		return 0
 	}
+	if c := spell.threat.castOf; c != nil && c.threat.openCasts > 0 {
+		c.threat.hits = append(c.threat.hits, threatHit{result.Target.UnitIndex, result.Landed()})
+		return 0
+	}
 	if spell.threat.openCasts > 0 {
 		spell.threat.hits = append(spell.threat.hits, threatHit{result.Target.UnitIndex, result.Landed()})
 		return 0
@@ -143,7 +185,38 @@ func (spell *Spell) enemyThreatBonus(result *SpellResult) float64 {
 	if !result.Landed() {
 		return 0
 	}
-	return spell.threatBonusBase() / spell.threat.split
+	bonus := spell.threatBonusBase() / spell.threat.split
+	if spell.threat.effect != 0 {
+		// HandleThreatSpells runs before the effects
+		bonus += spell.threatEffectOn(result.Target.UnitIndex, &spell.threat, bonus)
+	}
+	return bonus
+}
+
+// SetThreatCastOf puts the spell's hits in main's open cast, so main's bonus is split over the enemies
+// both reach: the server deals them in one cast (Heart Strike's second target).
+func (spell *Spell) SetThreatCastOf(main *Spell) {
+	spell.threat.castOf = main
+}
+
+// threatEffectOn is t's SPELL_EFFECT_THREAT on the target, pending being threat not dealt yet. A cut leaves
+// the unit's threat there at 0 at the least (ThreatReference::AddThreat).
+func (spell *Spell) threatEffectOn(target int32, t *spellThreat, pending float64) float64 {
+	if t.effect >= 0 {
+		return t.effect
+	}
+	return max(t.effect, -(spell.Unit.threatOn(target) + pending))
+}
+
+// threatOn is the threat the unit's spells made on the target so far this iteration.
+func (unit *Unit) threatOn(target int32) float64 {
+	threat := 0.0
+	for _, s := range unit.Spellbook {
+		for _, metrics := range s.splitSpellMetrics {
+			threat += metrics[target].TotalThreat
+		}
+	}
+	return threat
 }
 
 // LandThreatBonus counts a cast landing on an enemy without a hit of its own, like the enemies a
@@ -182,6 +255,12 @@ func (spell *Spell) shareThreatBonus(sim *Simulation, start int) {
 	t := &spell.threat
 	hits := t.hits[start:]
 	t.hits = t.hits[:start]
+	spell.shareThreat(sim, t, hits)
+}
+
+// shareThreat hands out the bonus of one cast of t's server spell, which reached these enemies, onto the
+// spell's metrics, then each landed enemy's SPELL_EFFECT_THREAT.
+func (spell *Spell) shareThreat(sim *Simulation, t *spellThreat, hits []threatHit) {
 	if sim.CurrentTime < 0 {
 		return
 	}
@@ -195,7 +274,7 @@ func (spell *Spell) shareThreatBonus(sim *Simulation, start int) {
 			units++
 		}
 	}
-	share := spell.threatBonusBase() / float64(units)
+	share := t.bonusBase(spell.Unit) / float64(units)
 	for i, hit := range hits {
 		if threatHitSeen(hits, i) || !threatHitLands(hits[i:], hit.target) {
 			continue
@@ -204,6 +283,13 @@ func (spell *Spell) shareThreatBonus(sim *Simulation, start int) {
 		if sim.Log != nil {
 			// UnitIndex is the unit's place in AllUnits
 			spell.Unit.Log(sim, "%s %s threat bonus %0.3f, 1 of %d units", sim.AllUnits[hit.target].LogLabel(), spell.ActionID, share, units)
+		}
+		if t.effect != 0 {
+			effect := spell.threatEffectOn(hit.target, t, 0)
+			spell.SpellMetrics[hit.target].TotalThreat += effect
+			if sim.Log != nil {
+				spell.Unit.Log(sim, "%s %s threat effect %0.3f", sim.AllUnits[hit.target].LogLabel(), spell.ActionID, effect)
+			}
 		}
 	}
 }
@@ -242,6 +328,74 @@ func (spell *Spell) addAssistThreat(sim *Simulation) {
 	if sim.Log != nil {
 		spell.Unit.Log(sim, "%s assist threat %0.3f on each of %d enemies", spell.ActionID, threat, len(enemies))
 	}
+}
+
+// healThreat adds a heal's threat and returns it: half the health it restored, half again for a paladin,
+// modified like a hit, shared out over the enemies like assist threat (Spell::DoAllEffectOnTarget,
+// AuraEffect::HandlePeriodicHealAurasTick). None before the pull.
+func (spell *Spell) healThreat(sim *Simulation, gain float64) float64 {
+	if gain <= 0 || spell.ThreatMultiplier == 0 || spell.threat.pct == 0 || sim.CurrentTime < 0 {
+		return 0
+	}
+	if spell.threat.healScale == 0 {
+		spell.threat.healScale = 0.5
+		if spell.Unit.Env != nil && spell.Unit.Env.Raid != nil {
+			if agent := spell.Unit.Env.Raid.GetPlayerFromUnit(spell.Unit); agent != nil &&
+				agent.GetCharacter().Class == proto.Class_ClassPaladin {
+				spell.threat.healScale = 0.25
+			}
+		}
+	}
+	enemies := sim.Encounter.TargetUnits
+	threat := spell.modifiedThreat(gain * spell.threat.healScale)
+	for _, enemy := range enemies {
+		spell.SpellMetrics[enemy.UnitIndex].TotalThreat += threat / float64(len(enemies))
+	}
+	return threat
+}
+
+// ThreatTick is a server spell an aura casts on each tick, which adds its own bonus split over the enemies
+// that tick reaches (HandleThreatSpells runs for every cast): Bladestorm's Whirlwind, Volley's arrows. The
+// tick's damage stays the aura spell's, so the bonus goes on that spell too.
+type ThreatTick struct {
+	spell  *Spell
+	threat spellThreat
+}
+
+// NewThreatTick reads the server spell an aura of the spell casts each tick, a negative one.
+func (spell *Spell) NewThreatTick(serverSpellID int32) *ThreatTick {
+	s := serverdata.SpellByID(serverSpellID)
+	if s == nil {
+		panic(fmt.Sprintf("tick spell %d of %s isn't in the server data", serverSpellID, spell.ActionID))
+	}
+	tick := &ThreatTick{spell: spell, threat: serverThreat(spell.Unit, s, false)}
+	if tick.threat.assist {
+		panic(fmt.Sprintf("tick spell %d of %s is positive, so its bonus would be assist threat", serverSpellID, spell.ActionID))
+	}
+	return tick
+}
+
+// Hit counts an enemy the tick reached, missed or not.
+func (tick *ThreatTick) Hit(result *SpellResult) {
+	if tick.threat.noBonus || tick.spell.ThreatMultiplier == 0 || result.Target.Type != EnemyUnit {
+		return
+	}
+	tick.threat.hits = append(tick.threat.hits, threatHit{result.Target.UnitIndex, result.Landed()})
+}
+
+// Done hands out the tick's bonus to the enemies it hit.
+func (tick *ThreatTick) Done(sim *Simulation) {
+	if len(tick.threat.hits) == 0 {
+		return
+	}
+	tick.spell.shareThreat(sim, &tick.threat, tick.threat.hits)
+	tick.threat.hits = tick.threat.hits[:0]
+}
+
+// ThreatEffect is the spell's SPELL_EFFECT_THREAT on each enemy it hits, before a cut is held to the
+// threat there.
+func (spell *Spell) ThreatEffect() float64 {
+	return spell.threat.effect
 }
 
 // threatSchoolMod is a SPELL_AURA_MOD_THREAT aura on some schools only.

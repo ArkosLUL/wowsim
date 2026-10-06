@@ -58,6 +58,9 @@ func (shaman *Shaman) registerShamanisticRageCD() {
 				Duration: time.Minute * 1,
 			},
 		},
+		SpellSchool:      core.SpellSchoolPhysical,
+		ProcMask:         core.ProcMaskEmpty,
+		ThreatMultiplier: 1,
 		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, _ *core.Spell) {
 			srAura.Activate(sim)
 		},

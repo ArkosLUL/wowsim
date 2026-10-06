@@ -119,8 +119,4 @@ logged. None now.
 
 ## Spells missing from serverdata
 
-`critCapable` assumes they crit, and `rangedWeaponSpell` that they're ranged weapon spells.
-
-| Spell | Why |
-|---|---|
-| 75 Auto Shot | not in `sim/core/serverdata` |
+`critCapable` assumes they crit, and `rangedWeaponSpell` that they're ranged weapon spells. None now.

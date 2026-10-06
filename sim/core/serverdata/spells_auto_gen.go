@@ -24,6 +24,16 @@ var spells = []Spell{
 			{Effect: 6, Aura: 36, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, MiscValue: 18},
 		},
 	},
+	// Auto Shot
+	{
+		ID: 75, Family: 9, FamilyFlags: [3]uint32{0x1}, SchoolMask: 1, DmgClass: DmgClassRanged, Flags: FlagUsesRangedSlot | FlagAutoRepeat,
+		Attributes: [8]uint32{0x50012, 0, 0x20, 0x8000, 0x1000001}, AttributesCu: 0x1100,
+		CooldownMs: 3000, CategoryCooldownMs: 3000,
+		ProcChance: 101, Speed: 40, SpellLevel: 1, BaseLevel: 1,
+		Effects: [3]Effect{
+			{Effect: 58, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1},
+		},
+	},
 	// Earth Shield
 	{
 		ID: 379, Family: 11, FamilyFlags: [3]uint32{0, 0, 0x40}, SchoolMask: 8, DmgClass: DmgClassMagic, Flags: FlagPositive,
@@ -6962,6 +6972,17 @@ var spells = []Spell{
 		Effects: [3]Effect{
 			{Effect: 27, Aura: 4, BasePoints: 104, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 0.143},
 			{Effect: 6, Aura: 23, AmplitudeMs: 1000, DamageMultiplier: 1, TriggerSpell: 58433},
+		},
+	},
+	// Sunder Armor (Rank 1)
+	{
+		ID: 58567, Family: 4, FamilyFlags: [3]uint32{0x4000}, SchoolMask: 1, DmgClass: DmgClassMelee, Flags: FlagNoActiveDefense | FlagAlwaysHit,
+		Attributes: [8]uint32{0x250010, 0x8000200, 0x1000, 0x40400}, AttributesCu: 0x403000,
+		GCDMs: 1500, GCDCategory: 133, DurationMs: 30000, MaxDurationMs: 30000, StackAmount: 5,
+		ProcChance: 101, PowerType: 1, SpellLevel: 10, BaseLevel: 10,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 101, BasePoints: -5, DieSides: 1, DamageMultiplier: 1, MiscValue: 1},
+			{Effect: 63, DamageMultiplier: 1},
 		},
 	},
 	// Icy Talons

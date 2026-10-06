@@ -182,7 +182,8 @@ Per record (`threat.go`):
 - `damage threat`: the sim's threat per damage point (`ThreatFromDamage`, of the tag dealing most) times `amount`,
   against `damage.threat`. Not compared when neither the sim's cast nor the server spell deals damage.
 - `bonus`: the cast's threat on the dummy beyond its damage's, against `bonus.threat`, or the dummy's `live.assist`
-  share when more creatures fought.
+  share when more creatures fought. It leaves out the sim's `SPELL_EFFECT_THREAT` (Faerie Fire (Feral)'s 638), which
+  the record doesn't hold.
 - `assist shares` (more creatures fought): the same on the sim's other dummies, against the other sharing creatures'.
 - `tick bonus`: the same for one tick, against 0 (aura ticks run no `HandleThreatSpells`), or against the record's
   bonus for a `threatTickSpells` probe, a server spell cast once per tick (Death and Decay's 52212), which gets no

@@ -95,6 +95,8 @@ func (dk *Deathknight) registerHeartStrikeSpell() {
 
 	dk.HeartStrike = dk.newHeartStrikeSpell(true, false)
 	dk.HeartStrikeOffHit = dk.newHeartStrikeSpell(false, false)
+	// one cast on the server, its chain to the second target included
+	dk.HeartStrikeOffHit.SetThreatCastOf(dk.HeartStrike)
 }
 
 func (dk *Deathknight) registerDrwHeartStrikeSpell() {
@@ -104,4 +106,5 @@ func (dk *Deathknight) registerDrwHeartStrikeSpell() {
 
 	dk.RuneWeapon.HeartStrike = dk.newHeartStrikeSpell(true, true)
 	dk.RuneWeapon.HeartStrikeOffHit = dk.newHeartStrikeSpell(false, true)
+	dk.RuneWeapon.HeartStrikeOffHit.SetThreatCastOf(dk.RuneWeapon.HeartStrike)
 }

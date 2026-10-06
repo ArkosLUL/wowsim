@@ -45,6 +45,9 @@ func (druid *Druid) registerBarkskinCD() {
 				Duration: (time.Second * 60.0) - cdSetBonus,
 			},
 		},
+		SpellSchool:      core.SpellSchoolNature,
+		ProcMask:         core.ProcMaskEmpty,
+		ThreatMultiplier: 1,
 		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, _ *core.Spell) {
 			druid.BarkskinAura.Activate(sim)
 			druid.AutoAttacks.StopMeleeUntil(sim, sim.CurrentTime, false)

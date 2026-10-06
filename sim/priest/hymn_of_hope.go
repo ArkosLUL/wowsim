@@ -28,6 +28,9 @@ func (priest *Priest) RegisterHymnOfHopeCD() {
 			},
 		},
 
+		SpellSchool:      core.SpellSchoolHoly,
+		ProcMask:         core.ProcMaskEmpty,
+		ThreatMultiplier: 1,
 		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, spell *core.Spell) {
 			core.StartPeriodicAction(sim, core.PeriodicActionOptions{
 				Period:   spell.Unit.ApplyCastSpeedForSpell(time.Second*2, spell),

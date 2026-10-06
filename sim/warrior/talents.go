@@ -731,6 +731,9 @@ func (warrior *Warrior) registerDeathWishCD() {
 			},
 		},
 
+		SpellSchool:      core.SpellSchoolPhysical,
+		ProcMask:         core.ProcMaskEmpty,
+		ThreatMultiplier: 1,
 		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, spell *core.Spell) {
 			deathWishAura.Activate(sim)
 			warrior.WaitUntil(sim, sim.CurrentTime+core.GCDDefault)
@@ -779,6 +782,9 @@ func (warrior *Warrior) registerLastStandCD() {
 			return warrior.StanceMatches(DefensiveStance)
 		},
 
+		SpellSchool:      core.SpellSchoolPhysical,
+		ProcMask:         core.ProcMaskEmpty,
+		ThreatMultiplier: 1,
 		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, spell *core.Spell) {
 			lastStandAura.Activate(sim)
 		},
@@ -798,6 +804,7 @@ func (warrior *Warrior) RegisterBladestormCD() {
 	actionID := core.ActionID{SpellID: 46924}
 	numHits := min(4, warrior.Env.GetNumTargets())
 	results := make([]*core.SpellResult, numHits)
+	var tickThreat, ohTickThreat *core.ThreatTick
 
 	if warrior.AutoAttacks.IsDualWielding {
 		warrior.BladestormOH = warrior.RegisterSpell(core.SpellConfig{
@@ -862,9 +869,11 @@ func (warrior *Warrior) RegisterBladestormCD() {
 
 				curTarget = target
 				for hitIndex := int32(0); hitIndex < numHits; hitIndex++ {
+					tickThreat.Hit(results[hitIndex])
 					spell.DealDamage(sim, results[hitIndex])
 					curTarget = sim.Environment.NextTargetUnit(curTarget)
 				}
+				tickThreat.Done(sim)
 
 				if warrior.BladestormOH != nil {
 					curTarget = target
@@ -877,9 +886,11 @@ func (warrior *Warrior) RegisterBladestormCD() {
 
 					curTarget = target
 					for hitIndex := int32(0); hitIndex < numHits; hitIndex++ {
+						ohTickThreat.Hit(results[hitIndex])
 						warrior.BladestormOH.DealDamage(sim, results[hitIndex])
 						curTarget = sim.Environment.NextTargetUnit(curTarget)
 					}
+					ohTickThreat.Done(sim)
 				}
 			},
 		},
@@ -890,6 +901,12 @@ func (warrior *Warrior) RegisterBladestormCD() {
 			dot.TickOnce(sim)
 		},
 	})
+
+	// each tick casts 50622, which casts 44949 with an off hand: both add their own bonus
+	tickThreat = warrior.Bladestorm.NewThreatTick(50622)
+	if warrior.BladestormOH != nil {
+		ohTickThreat = warrior.BladestormOH.NewThreatTick(44949)
+	}
 
 	warrior.AddMajorCooldown(core.MajorCooldown{
 		Spell: warrior.Bladestorm,

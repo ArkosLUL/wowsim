@@ -75,6 +75,8 @@ func (paladin *Paladin) registerHolyShieldSpell() {
 			},
 		},
 
+		ProcMask:         core.ProcMaskEmpty,
+		ThreatMultiplier: 1,
 		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, _ *core.Spell) {
 			if paladin.HolyShieldAura.IsActive() {
 				paladin.HolyShieldAura.SetStacks(sim, numCharges)

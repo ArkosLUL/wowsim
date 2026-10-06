@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/wowsims/wotlk/sim/core/proto"
 	"github.com/wowsims/wotlk/sim/core/serverdata"
 	"github.com/wowsims/wotlk/sim/core/stats"
 )
@@ -273,6 +274,166 @@ func TestThreatAssist(t *testing.T) {
 			t.Errorf("%s: assist threat %v, want %v", enemy.Label, got, 80*0.7/2)
 		}
 	}
+}
+
+// Healing Stream Totem's heal, the Death Coil cast: AddThreat returns before anything lands
+func TestThreatNoneUnderNoThreat(t *testing.T) {
+	for _, id := range []int32{52042, 49895} {
+		sim := threatTestSim(1)
+		spell := threatTestSpell(t, sim, id, SpellSchoolNature)
+		if got := spell.ThreatFromDamage(OutcomeHit, 1000); got != 0 {
+			t.Errorf("%d: damage threat %v", id, got)
+		}
+		if got := spell.healThreat(sim, 1000); got != 0 {
+			t.Errorf("%d: heal threat %v", id, got)
+		}
+	}
+}
+
+func TestThreatEffect(t *testing.T) {
+	t.Run("Faerie Fire (Feral), its row's flat and the effect's", func(t *testing.T) {
+		sim := threatTestSim(1)
+		spell := threatTestSpell(t, sim, 60089, SpellSchoolNature)
+		spell.Unit.PseudoStats.ThreatMultiplier = 2.0735
+		enemy := sim.Encounter.TargetUnits[0]
+		threatTestCast(sim, spell, func() { threatTestHit(spell, enemy, OutcomeHit, 0) })
+		if got := spell.SpellMetrics[enemy.UnitIndex].TotalThreat; !threatNear(got, 638+638) {
+			t.Errorf("threat %v, want %v", got, 638+638)
+		}
+	})
+
+	// Feint at level 80: -2163 - 2 + 1, after its level 78 bonus split with the caster
+	feint := func(t *testing.T, before float64, missed bool) float64 {
+		sim := threatTestSim(1)
+		spell := threatTestSpell(t, sim, 48659, SpellSchoolPhysical)
+		other := threatTestSpell(t, sim, 47450, SpellSchoolPhysical)
+		other.Unit = spell.Unit
+		spell.Unit.Spellbook = []*Spell{spell, other}
+		other.splitSpellMetrics = [][]SpellMetrics{other.SpellMetrics}
+		spell.splitSpellMetrics = [][]SpellMetrics{spell.SpellMetrics}
+		enemy := sim.Encounter.TargetUnits[0]
+		other.SpellMetrics[enemy.UnitIndex].TotalThreat = before
+		outcome := OutcomeHit
+		if missed {
+			outcome = OutcomeMiss
+		}
+		threatTestCast(sim, spell, func() { threatTestHit(spell, enemy, outcome, 0) })
+		return spell.Unit.threatOn(enemy.UnitIndex)
+	}
+	if got := feint(t, 5000, false); !threatNear(got, 5000+39-2164) {
+		t.Errorf("Feint at 5000 threat leaves %v, want %v", got, 5000+39-2164)
+	}
+	if got := feint(t, 1000, false); got != 0 {
+		t.Errorf("Feint at 1000 threat leaves %v, want 0", got)
+	}
+	if got := feint(t, 5000, true); got != 5000 {
+		t.Errorf("a missed Feint leaves %v, want 5000", got)
+	}
+}
+
+// Heart Strike's chain to a second target is one cast on the server, so the two share its level 80
+func TestThreatCastOf(t *testing.T) {
+	sim := threatTestSim(2)
+	main := threatTestSpell(t, sim, 55262, SpellSchoolPhysical)
+	offHit := threatTestSpell(t, sim, 55262, SpellSchoolPhysical)
+	offHit.Unit = main.Unit
+	offHit.SetThreatCastOf(main)
+	enemies := sim.Encounter.TargetUnits
+	threatTestCast(sim, main, func() {
+		threatTestHit(main, enemies[0], OutcomeHit, 0)
+		threatTestCast(sim, offHit, func() { threatTestHit(offHit, enemies[1], OutcomeHit, 0) })
+	})
+	for i, enemy := range enemies {
+		if got := main.SpellMetrics[enemy.UnitIndex].TotalThreat + offHit.SpellMetrics[enemy.UnitIndex].TotalThreat; !threatNear(got, 40) {
+			t.Errorf("enemy %d: bonus %v, want 40", i, got)
+		}
+	}
+}
+
+// Bladestorm's ticks each cast 50622, level 36, up to 4 enemies
+func TestThreatTick(t *testing.T) {
+	sim := threatTestSim(3)
+	spell := threatTestSpell(t, sim, 46924, SpellSchoolPhysical)
+	spell.Unit.PseudoStats.ThreatMultiplier = 0.8
+	tick := spell.NewThreatTick(50622)
+	enemies := sim.Encounter.TargetUnits
+	for _, outcome := range []HitOutcome{OutcomeHit, OutcomeDodge, OutcomeCrit} {
+		tick.Hit(&SpellResult{Target: enemies[len(tick.threat.hits)], Outcome: outcome})
+	}
+	tick.Done(sim)
+	for i, want := range []float64{12, 0, 12} {
+		if got := spell.SpellMetrics[enemies[i].UnitIndex].TotalThreat; !threatNear(got, want) {
+			t.Errorf("enemy %d: bonus %v, want %v", i, got, want)
+		}
+	}
+	if len(tick.threat.hits) != 0 {
+		t.Errorf("%d hits left after the tick", len(tick.threat.hits))
+	}
+
+	defer func() {
+		if recover() == nil {
+			t.Error("a positive tick spell didn't panic")
+		}
+	}()
+	spell.NewThreatTick(61657)
+}
+
+type threatTestAgent struct {
+	Agent
+	character *Character
+}
+
+func (a threatTestAgent) GetCharacter() *Character { return a.character }
+
+func TestThreatFromHealing(t *testing.T) {
+	heal := func(t *testing.T, class proto.Class, current float64) (perEnemy []float64) {
+		sim := threatTestSim(2)
+		character := &Character{Class: class}
+		spell := threatTestSpell(t, sim, 48063, SpellSchoolHoly) // Greater Heal
+		character.Unit = *spell.Unit
+		spell.Unit = &character.Unit
+		sim.Raid = &Raid{Parties: []*Party{{PlayersAndPets: []Agent{threatTestAgent{character: character}}}}}
+		spell.ThreatMultiplier = 0.9
+		spell.Unit.PseudoStats.ThreatMultiplier = 1.5
+
+		unit := spell.Unit
+		unit.Metrics = NewUnitMetrics()
+		unit.AttackTables = make([]*AttackTable, len(spell.SpellMetrics))
+		unit.stats[stats.Health] = 10000
+		unit.EnableHealthBar()
+		unit.healthBar.currentHealth = current
+		result := spell.NewResult(unit)
+		result.Damage = 2000
+		spell.dealHealingInternal(sim, false, result)
+		for _, enemy := range sim.Encounter.TargetUnits {
+			perEnemy = append(perEnemy, spell.SpellMetrics[enemy.UnitIndex].TotalThreat)
+		}
+		return perEnemy
+	}
+
+	t.Run("half of what it healed, modified, shared over the enemies", func(t *testing.T) {
+		got := heal(t, proto.Class_ClassPriest, 9000)
+		want := 1000 * 0.5 * 0.9 * 1.5 / 2
+		for i, threat := range got {
+			if !threatNear(threat, want) {
+				t.Errorf("enemy %d: %v, want %v", i, threat, want)
+			}
+		}
+	})
+	t.Run("a paladin's halved again", func(t *testing.T) {
+		got := heal(t, proto.Class_ClassPaladin, 9000)
+		want := 1000 * 0.25 * 0.9 * 1.5 / 2
+		for i, threat := range got {
+			if !threatNear(threat, want) {
+				t.Errorf("enemy %d: %v, want %v", i, threat, want)
+			}
+		}
+	})
+	t.Run("none from overhealing", func(t *testing.T) {
+		if got := heal(t, proto.Class_ClassPriest, 10000); got[0] != 0 || got[1] != 0 {
+			t.Errorf("threat %v at full health", got)
+		}
+	})
 }
 
 // threatRef is the cast bonus bookkeeping done the plain way, hits kept by unit pointer and searched

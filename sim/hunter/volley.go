@@ -8,6 +8,8 @@ import (
 )
 
 func (hunter *Hunter) registerVolleySpell() {
+	// each tick is a cast of 58433, which adds its own bonus
+	var tickThreat *core.ThreatTick
 	hunter.Volley = hunter.RegisterSpell(core.SpellConfig{
 		ActionID:     core.ActionID{SpellID: 58434},
 		SpellSchool:  core.SpellSchoolArcane,
@@ -62,8 +64,9 @@ func (hunter *Hunter) registerVolleySpell() {
 			},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 				for _, aoeTarget := range sim.Encounter.TargetUnits {
-					dot.CalcAndDealPeriodicSnapshotDamage(sim, aoeTarget, dot.OutcomeRangedHitAndCritSnapshot)
+					tickThreat.Hit(dot.CalcAndDealPeriodicSnapshotDamage(sim, aoeTarget, dot.OutcomeRangedHitAndCritSnapshot))
 				}
+				tickThreat.Done(sim)
 			},
 		},
 
@@ -71,4 +74,5 @@ func (hunter *Hunter) registerVolleySpell() {
 			spell.AOEDot().Apply(sim)
 		},
 	})
+	tickThreat = hunter.Volley.NewThreatTick(58433)
 }

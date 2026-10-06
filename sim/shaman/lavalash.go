@@ -73,7 +73,7 @@ func (shaman *Shaman) registerLavaLashSpell() {
 		DamageMultiplier: imbueMultiplier *
 			core.TernaryFloat64(shaman.HasSetBonus(ItemSetWorldbreakerBattlegear, 2), 1.2, 1),
 		CritMultiplier:   shaman.ElementalCritMultiplier(0),
-		ThreatMultiplier: shaman.spellThreatMultiplier(),
+		ThreatMultiplier: 1,
 
 		Direct: core.SpellEffect{Effect: 0, WeaponPct: 1},
 

@@ -59,6 +59,9 @@ func (druid *Druid) registerInnervateCD() {
 			return innervateTarget.HasActiveAuraWithTag(core.InnervateAuraTag)
 		},
 
+		SpellSchool:      core.SpellSchoolNature,
+		ProcMask:         core.ProcMaskEmpty,
+		ThreatMultiplier: 1,
 		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, _ *core.Spell) {
 			innervateAura.Activate(sim)
 		},

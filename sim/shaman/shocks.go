@@ -45,7 +45,7 @@ func (shaman *Shaman) newShockSpellConfig(spellID int32, spellSchool core.SpellS
 			core.TernaryFloat64(shaman.HasSetBonus(ItemSetThrallsBattlegear, 4), 0.25, 0),
 		),
 		CritMultiplier:   shaman.ElementalCritMultiplier(0),
-		ThreatMultiplier: shaman.spellThreatMultiplier(),
+		ThreatMultiplier: 1,
 	}
 }
 

@@ -41,7 +41,7 @@ func (shaman *Shaman) registerThunderstormSpell() {
 			core.TernaryFloat64(shaman.Talents.CallOfThunder, 5, 0)) * core.CritRatingPerCritChance,
 		DamageMultiplier: 1 + 0.01*float64(shaman.Talents.Concussion),
 		CritMultiplier:   shaman.ElementalCritMultiplier(0),
-		ThreatMultiplier: shaman.spellThreatMultiplier(),
+		ThreatMultiplier: 1,
 
 		Direct: core.SpellEffect{Effect: 0, Min: 1450, Max: 1656, SP: 0.172},
 

@@ -542,6 +542,8 @@ func (pet *Pet) Enable(sim *Simulation, petAgent PetAgent) {
 	pet.ownerHit = pet.ownerHitScaling()
 	pet.inheritedStats = pet.ownerScaling()
 	pet.AddStatsDynamic(sim, pet.inheritedStats)
+	// summons start at full health, owner's stamina included (Guardian::InitStatsForLevel)
+	pet.healthBar.reset(sim)
 
 	// A guardian's scaling aura never ticks, so what it got at summon is what it keeps.
 	if pet.SummonedAsPet {

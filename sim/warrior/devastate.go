@@ -59,6 +59,9 @@ func (warrior *Warrior) registerDevastateSpell() {
 			if result.Landed() {
 				if warrior.CanApplySunderAura(target) {
 					warrior.SunderArmorDevastate.Cast(sim, target)
+				} else {
+					// 58567 is cast and lands either way, so it adds its bonus
+					warrior.SunderArmorDevastate.LandThreatBonus(sim, target)
 				}
 			} else {
 				spell.IssueRefund(sim)

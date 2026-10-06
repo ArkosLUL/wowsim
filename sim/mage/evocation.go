@@ -41,6 +41,9 @@ func (mage *Mage) registerEvocation() {
 			},
 		},
 
+		SpellSchool:      core.SpellSchoolArcane,
+		ProcMask:         core.ProcMaskEmpty,
+		ThreatMultiplier: 1,
 		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, spell *core.Spell) {
 			manaPerTick = mage.MaxMana() * 0.15
 			spell.SelfHot().Apply(sim)

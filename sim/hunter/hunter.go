@@ -203,6 +203,8 @@ func NewHunter(character *core.Character, options *proto.Player) *Hunter {
 	})
 	// Auto Shot (75) travels at 40 yd/s. Its action id has no server data, so nothing checks the speed
 	hunter.AutoAttacks.RangedConfig().MissileSpeed = 40
+	// each shot is a cast of 75, so it adds the level 1 bonus
+	hunter.AutoAttacks.RangedConfig().ThreatSpellID = 75
 	hunter.AutoAttacks.RangedConfig().ApplyEffects = func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 		baseDamage := hunter.RangedWeaponDamage(sim, spell.RangedAttackPower(target)) +
 			hunter.AmmoDamageBonus +

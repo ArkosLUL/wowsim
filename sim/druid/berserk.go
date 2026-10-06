@@ -57,6 +57,9 @@ func (druid *Druid) registerBerserkCD() {
 			},
 			IgnoreHaste: true,
 		},
+		SpellSchool:      core.SpellSchoolPhysical,
+		ProcMask:         core.ProcMaskEmpty,
+		ThreatMultiplier: 1,
 		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, _ *core.Spell) {
 			// spell_dru_berserk::HandleAfterCast (spell_druid.cpp): Berserk drops an active Tiger's
 			// Fury and clears Mangle (Bear)'s cooldown.

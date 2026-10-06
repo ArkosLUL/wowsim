@@ -41,8 +41,8 @@ func (warrior *Warrior) newSunderArmorSpell(isDevastateEffect bool) *core.Spell 
 		config.Cast.DefaultCast.GCD = 0
 		config.ExtraCastCondition = nil
 
-		// In wrath sunder from devastate generates no threat
-		config.ThreatMultiplier = 0
+		// Spell::EffectWeaponDmg casts 58567, whose only threat is its level 10 bonus
+		config.ThreatSpellID = 58567
 	} else {
 		config.Flags |= core.SpellFlagAPL
 	}
