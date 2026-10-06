@@ -97,29 +97,29 @@ dps_results: {
 dps_results: {
  key: "TestBlood-AllItems-Beast-tamer'sShoulders-30892"
  value: {
-  dps: 11249.8165
-  tps: 5284.48086
+  dps: 11242.78017
+  tps: 5280.81556
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-BlessedBattlegearofUndeadSlaying"
  value: {
-  dps: 8615.17483
-  tps: 4055.45813
+  dps: 8634.23017
+  tps: 4059.3542
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-BlessedGarboftheUndeadSlayer"
  value: {
-  dps: 8494.19133
-  tps: 4010.74333
+  dps: 8478.0475
+  tps: 4002.66848
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-BlessedRegaliaofUndeadCleansing"
  value: {
-  dps: 8230.05983
-  tps: 3871.62103
+  dps: 8223.6835
+  tps: 3865.26313
  }
 }
 dps_results: {
@@ -196,15 +196,15 @@ dps_results: {
 dps_results: {
  key: "TestBlood-AllItems-DarkrunedBattlegear"
  value: {
-  dps: 9664.615
-  tps: 4546.85525
+  dps: 9667.045
+  tps: 4551.12693
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-DarkrunedPlate"
  value: {
-  dps: 8657.96967
-  tps: 4068.05703
+  dps: 8646.92617
+  tps: 4072.92433
  }
 }
 dps_results: {
@@ -610,29 +610,29 @@ dps_results: {
 dps_results: {
  key: "TestBlood-AllItems-ScourgeborneBattlegear"
  value: {
-  dps: 9428.081
-  tps: 4433.78093
+  dps: 9404.988
+  tps: 4430.3256
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-ScourgebornePlate"
  value: {
-  dps: 8664.763
-  tps: 4066.98365
+  dps: 8696.7315
+  tps: 4081.24624
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-Scourgelord'sBattlegear"
  value: {
-  dps: 11499.02783
-  tps: 5460.89122
+  dps: 11535.98867
+  tps: 5477.95877
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-Scourgelord'sPlate"
  value: {
-  dps: 9469.88317
-  tps: 4447.16261
+  dps: 9504.046
+  tps: 4463.42591
  }
 }
 dps_results: {
@@ -750,8 +750,8 @@ dps_results: {
 dps_results: {
  key: "TestBlood-AllItems-StormshroudArmor"
  value: {
-  dps: 8226.76167
-  tps: 3883.84565
+  dps: 8256.75433
+  tps: 3893.81359
  }
 }
 dps_results: {
@@ -792,15 +792,15 @@ dps_results: {
 dps_results: {
  key: "TestBlood-AllItems-Thassarian'sBattlegear"
  value: {
-  dps: 10069.56067
-  tps: 4738.77273
+  dps: 10074.54267
+  tps: 4749.23959
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-Thassarian'sPlate"
  value: {
-  dps: 8905.14067
-  tps: 4174.40602
+  dps: 8883.76667
+  tps: 4172.67743
  }
 }
 dps_results: {
@@ -813,7 +813,7 @@ dps_results: {
 dps_results: {
  key: "TestBlood-AllItems-TheTwinBladesofAzzinoth"
  value: {
-  dps: 10160.9405
+  dps: 10170.38967
   tps: 4799.51678
  }
 }
@@ -876,8 +876,8 @@ dps_results: {
 dps_results: {
  key: "TestBlood-AllItems-UndeadSlayer'sBlessedArmor"
  value: {
-  dps: 8497.20767
-  tps: 4002.78883
+  dps: 8495.54267
+  tps: 3997.04603
  }
 }
 dps_results: {
@@ -932,22 +932,22 @@ dps_results: {
 dps_results: {
  key: "TestBlood-Settings-Human-p3_blood-Basic-blood_dps-NoBuffs-LongMultiTarget"
  value: {
-  dps: 16031.65467
-  tps: 8307.68438
+  dps: 16044.33767
+  tps: 8315.28519
  }
 }
 dps_results: {
  key: "TestBlood-Settings-Human-p3_blood-Basic-blood_dps-NoBuffs-LongSingleTarget"
  value: {
-  dps: 6465.28333
-  tps: 3137.81257
+  dps: 6473.98183
+  tps: 3142.03278
  }
 }
 dps_results: {
  key: "TestBlood-Settings-Human-p3_blood-Basic-blood_dps-NoBuffs-ShortSingleTarget"
  value: {
-  dps: 7384.51917
-  tps: 3334.33479
+  dps: 7390.88083
+  tps: 3337.84517
  }
 }
 dps_results: {
@@ -974,22 +974,22 @@ dps_results: {
 dps_results: {
  key: "TestBlood-Settings-Orc-p3_blood-Basic-blood_dps-NoBuffs-LongMultiTarget"
  value: {
-  dps: 16099.01867
-  tps: 8333.76043
+  dps: 16111.7485
+  tps: 8341.39415
  }
 }
 dps_results: {
  key: "TestBlood-Settings-Orc-p3_blood-Basic-blood_dps-NoBuffs-LongSingleTarget"
  value: {
-  dps: 6516.681
-  tps: 3156.83963
+  dps: 6525.26417
+  tps: 3161.01319
  }
 }
 dps_results: {
  key: "TestBlood-Settings-Orc-p3_blood-Basic-blood_dps-NoBuffs-ShortSingleTarget"
  value: {
-  dps: 7488.09833
-  tps: 3369.79283
+  dps: 7494.46333
+  tps: 3373.30504
  }
 }
 dps_results: {
