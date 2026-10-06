@@ -48,6 +48,7 @@ The live e2e and the replays leave timing, costs, threat, pets, gear and buffs u
 | X2 | EC-RECHECK (live) · EC-COVER (live) · EC-PROBES (C++, live) | Fresh records and fewer holes before the fixes |
 | Y | EC-TICK-FIX (G, FS) · EC-CORE-FIX (G, FS) · EC-PET-FIX (G) · PERF-THREAT | The sim gaps the loop found, core first |
 | Z | EC-THREAT-FIX2 (G, FS, live) · EC-MELEE-FIX (G) · EC-NATURE-FIX (G, live) · EC-ARCANE-FIX (G, live) · PERF-Y | The class gaps, on Y's core |
+| Z2 | EC-THREAT-FIX3 (G, FS, C++, live) · EC-CORE-FIX2 (G, FS) · EC-CLASS-FIX (G, live) · PERF-Z | Z's follow-ups |
 
 U is taken (the UI wave). Versus the INVESTIGATION's order, B7, A3 and A4 moved forward (cheap, independent) and
 C1 moved last (after B6).
@@ -66,31 +67,8 @@ haste stacking beyond EC-BUFFS' pairs. From Y:
   goldchar could check meta activation (`HasMetaGemEquipped`).
 - Tooling: a fight mean check's range ends at one iteration's tail (a 1.4x Shadow Bolt passed).
 
-From Z:
-- Threat: energize threat, half the gain unmodified as assist threat (`Unit::EnergizeBySpell`, periodic
-  energize: Horn of Winter, Divine Plea, Anger Management); heals through `GainHealth` make none (Death Strike,
-  Rune Tap, Death Pact, Frenzied Regeneration, Blood Presence); the server's warriors know Sunder Armor 7386
-  (spell_threat 345 + 5% AP, plus 58567), the sim and the e2e use 47467 (a large Protection warrior TPS gap);
-  Penance's ticks make none (a lead). `.simval threat` records no `SPELL_EFFECT_THREAT` or heal threat (C++), and
-  the probe lacks a hunter bot, Heart Strike's split, 58567, Bladestorm's ticks, and six self buffs the replay
-  can't cast.
-- Death knight: Rune of the Stoneskin Gargoyle's +25 defense as skill (a core defense-skill bonus); the rune
-  weapon's creature-type AP at half through the DK (pet file); death runes revert 30 s after their talent last
-  procced; Improved Unholy Presence scales the cooldown after the grace cut; Death Coil and Rune Strike take
-  irand(0, cost / 4) on a miss; DeathknightFrost's cycle starves Howling Blast of runes (the Rime drop; fix and
-  re-record).
-- Paladin and rogue: Improved Devotion Aura at 1–2 points can't ride the tristate; Honor Among Thieves below 3/3
-  rolls once a cast; RogueSubtlety's fight re-record under its two-Eviscerate cycle.
-- Druid: Omen of Clarity from triggered damage (`CAN_PROC_FROM_PROCS`, a lead); Starfall's 53201 rolls spell hit
-  in the sim, a self aura that can't miss on the server.
-- Mage: T10's 2-piece on Hot Streak's and Missile Barrage's timeouts; Fingers of Frost's Shatter scope and
-  cast-time roll; Torment the Weak on a non-boss add a chill slows; the Frost crit lead (a recapture); school cost
-  auras (Frost Channeling) have no permanent replay.
-- Hunter: Kill Shot's weapon part isn't normalized on the server; the mark and creature-type AP truncate once
-  together and skip physical percent mods.
-- Core: the server truncates `SpellDamageBonusDone`'s result, dot amounts and direct hits.
-- Tooling: the 72-point strings in the gzipped perf and UI fixtures; `spells_audit.csv`'s 65861; 58670 isn't
-  in the spell capture.
+From Z, not in Z2: the 72-point Fury and Balance strings in the gzipped perf scenarios and UI fixtures, which
+pin their requests (the BiS chain's `opt_*` regeneration takes the perf ones).
 
 ## Work items
 
@@ -1617,6 +1595,67 @@ Stage live (2026-10-06, server 3d89793c7, mod-sim-validation f72dbf7):
   spells: each cost drops 10%, truncated (Fire Blast 686 to 617, Arcane Blast 228 to 205), and all nine agree with
   the sim's exact cost. Nothing committed: `spellmod_spells.json` (tools/acore/spellmods) lists SPELLMOD talents only.
 - No fixture re-recorded; no goldens moved.
+
+### EC-THREAT-FIX3 (Z2; changes goldens, full suite; C++; stages: threat, C++ and e2e, live)
+
+- Sunder Armor: the server's warriors know 7386 (`character_spell`), whose `spell_threat` row gives 345 + 5% AP, plus
+  58567's level 10 and its `SPELL_EFFECT_THREAT`; the sim and the e2e's ProtWarrior probe use 47467 (its level 77).
+- Energize threat: `Unit::EnergizeBySpell` and the periodic energize tick hand half the gain, unmodified, to the
+  enemies as assist threat (rage and runic power in tenths): Horn of Winter, Divine Plea, Anger Management, Unbridled
+  Wrath, Shield Specialization, mana returns. The sim makes none.
+- Heals through `GainHealth` make no heal threat in the sim: Death Strike, Rune Tap, Death Pact, Frenzied Regeneration,
+  Blood Presence (Improved Leader of the Pack's 34299 is `ATTR1_NO_THREAT`). Penance's 53007 ticks make none (a lead).
+- Probe: `.simval threat` records `SPELL_EFFECT_THREAT` and heal threat (C++); `threatCharacters` gains a hunter bot
+  (Volley, Auto Shot), Heart Strike's split (55262, 2 targets), 58567, Bladestorm's 50622 and 44949, and Sunder 7386;
+  the self buffs the replay can't cast (Shield Wall, Recklessness, Berserker Rage, Tiger's Fury, Power Infusion,
+  Demonic Empowerment) get a replay path or a drop with its reason.
+- Live, after the user's rebuild: `TestSimvalThreat` re-records `threat.jsonl`.
+- **Owns:** `sim/core/threat.go` and the energize and `GainHealth` threat hooks in core; the threat lines of its
+  mismatches in class code; `tools/simval/threat*.go`; `threat.jsonl`; the module's `.simval threat` C++ and
+  `e2e/threat_test.go`.
+- **Goldens:** TPS in nearly every suite (energize threat); report each.
+
+### EC-CORE-FIX2 (Z2; changes goldens, full suite)
+
+- Damage truncation: the server truncates `SpellDamageBonusDone`'s result, a dot's amount at application and a
+  direct hit (Frostfire Bolt's tick: 33 on the server, 33.99 in the sim); re-measure which paths truncate
+  (`MeleeDamageBonusDone` too) and where in the order.
+- Hunter's Mark and creature-type AP: the server adds them as one `int32(bonus / 14 × speed)`, outside the physical
+  percent mods (`MeleeDamageBonusDone` skips aura 79 for school-normal damage); the sim truncates each apart and
+  scales both (The Beast Within, Ranged Weapon Specialization). Kill Shot's weapon part (effect 17) isn't normalized:
+  RAP / 14 × the weapon's own speed, not 2.8.
+- Rune of the Stoneskin Gargoyle (enchant 3847): its +25 defense is skill, not rating, so dodge, parry and miss take it
+  undiminished (`Player::UpdateDodgePercentage`), and so do the attack table, crit and block as the defender's skill:
+  a core defense-skill bonus; DeathknightBloodTank's dodge and parry goldchar drops go.
+- Tooling: `docs/azerothcore-parity/audit/spells_audit.csv` regenerated (`tools/acore/spellaudit`; it still lists
+  65861); `tools/simval/check.go`'s `rangedWeaponSpell` comment (serverdata has Auto Shot).
+- **Owns:** `sim/core/` but `threat.go`, EC-THREAT-FIX3's hooks and PERF-Z's hot paths; the hunter's weapon damage
+  (`huntersMarkBonus`, Kill Shot); `sim/deathknight/items.go`'s 3847; the audit CSV; their drops and rows.
+- **Goldens:** every suite whose damage truncates; report each.
+
+### EC-CLASS-FIX (Z2; changes goldens; stages: melee, casters, live)
+
+- Death knight: death runes from Blood of the North, Reaping and Death Rune Mastery revert 30 s after the talent last
+  procced (`spell_dk_death_rune`'s periodic); Improved Unholy Presence's rune regen scales the cooldown after the grace
+  cut (`Player::GetRuneBaseCooldown`); Death Coil and Rune Strike, not refundable, take irand(0, cost / 4) on a miss; the
+  rune weapon takes the DK's creature-type AP at half (`MeleeDamageBonusDone` for 27893, `dancing_rune_weapon.go`);
+  DeathknightFrost's cycle gives Howling Blast runes, so the Rime drop goes once it's re-recorded.
+- Paladin: Improved Devotion Aura at 1–2 points (+17% or +34% armor), which the raid buff's tristate can't carry: a
+  per-raider hook (as `improveBloodPact`).
+- Rogue: Honor Among Thieves below 3/3 rolls once a cast, at the finish phase, not per hit.
+- Druid: Omen of Clarity (16864: `CAN_PROC_FROM_PROCS` and a CheckProc script) may proc from triggered damage such as
+  Starfall's stars and splash (a lead); Starfall's 53201 is a self aura that can't miss, the sim rolls spell hit.
+- Mage: T10's 2-piece only when Hot Streak or Missile Barrage is used up, never on its timeout (`Aura::
+  HandleAuraSpecificMods`, `spell_mage_gen_extra_effects`); Fingers of Frost rolls at the cast (spell_proc 44545), and
+  its Shatter crit reaches only spells in Shatter's class mask its ignore-aura-state aura covers, not item procs;
+  Torment the Weak against a non-boss add a chill slows; the Frost crit lead (6 Fingers of Frost procs in 20 Frostbolts
+  logged, 3 expected): a recapture says whether it repeats; school cost auras (72, 73: Frost Channeling) get a
+  permanent replay, as the spell-mod sweep covers SPELLMOD talents only.
+- Live: DeathknightFrost's, RogueSubtlety's (two Eviscerate steps) and MageFrost's fights re-recorded; the Omen lead;
+  the cost auras' records; 58670 (Prey on the Weak) captured into the spelldump.
+- **Owns:** `sim/{deathknight,paladin,rogue,druid,mage}/` but EC-THREAT-FIX3's threat lines and 3847; the DK-only
+  hunks of `sim/core/runic_power*.go`; those three setups' cycles and fights; the cost-aura replay's files; their
+  drops and rows.
 
 ## Orchestrator onboarding (wave S start)
 

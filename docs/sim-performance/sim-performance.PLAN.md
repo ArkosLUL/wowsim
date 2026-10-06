@@ -360,6 +360,17 @@ spell's coefficient on every hit, though both are fixed per spell. The rest isn'
 - Left: `makeCastFunc`'s per-hardcast closure (about half of Elemental's allocations), `nextTick`'s 64-bit
   modulo (about 0.9% of the raid).
 
+### PERF-Z: wave Z's leftover hot paths (wave Z2)
+
+PERF-Y's profiles left two costs: `makeCastFunc`'s `OnComplete` closure, one per hardcast (`sim/core/cast.go`,
+about half of Elemental's allocations), and `nextTick`'s 64-bit modulo per call (`sim/core/sim.go`, about 0.9% of
+the raid).
+
+- Take both off the hot path without changing any result.
+- Verify: all 37 goldens byte-identical, every replay and the simval replay; an interleaved benchstat A/B of the five
+  benches against the wave base; an Elemental profile and its allocations.
+- Owns: those two paths in `cast.go` and `sim.go`, in small hunks.
+
 ## Order
 
 The user put the pass before wave J, whose BIS-e2e-perf times the optimizer with PERF-TOOLS' harness
@@ -372,3 +383,4 @@ The user put the pass before wave J, whose BIS-e2e-perf times the optimizer with
 - **V (done):** PERF-COST, the user's call (2026-10-03), after wave T2's cost arithmetic slowed Combat Rogue.
 - **Y (done):** PERF-THREAT, the user's call (2026-10-05), after wave V's threat bookkeeping slowed the casters.
 - **Z (done):** PERF-Y, the user's call (2026-10-06), after wave Y slowed every bench.
+- **Z2:** PERF-Z, with Z's other follow-ups (the user's call, 2026-10-06).

@@ -79,6 +79,7 @@ G = changes goldens. FS = runs all 37 suites.
 | X2 | EC-RECHECK (live) · EC-COVER (live) · EC-PROBES (C++, live) | ✔ |
 | Y | EC-TICK-FIX (G, FS) · EC-CORE-FIX (G, FS) · EC-PET-FIX (G) · PERF-THREAT | ✔ |
 | Z | EC-THREAT-FIX2 (G, FS, live) · EC-MELEE-FIX (G) · EC-NATURE-FIX (G, live) · EC-ARCANE-FIX (G, live) · PERF-Y | ✔ |
+| Z2 | EC-THREAT-FIX3 (G, FS, C++, live) · EC-CORE-FIX2 (G, FS) · EC-CLASS-FIX (G, live) · PERF-Z | ✔ |
 
 F2 is an inserted wave, not a fifth item in F: the core swing and cast fixes of PAR-P7-0c have to land
 before the class items in G, a class item can't build on a core fix merging in its own wave, and F already
@@ -135,6 +136,8 @@ Y and Z are the user's call (2026-10-05): fix the sim gaps the loop found, EC-FI
 core in Y and class in Z, plus PERF-THREAT for V's threat cost. X2 goes first (the user's call, the same day): the
 fixes then work on records from the current server build, and take whatever X2's new probes find.
 PERF-Y joins Z as a fifth item (the user's call, 2026-10-06): wave Y slowed every bench, Elemental 16%.
+Z2 is the user's call too (the same day): Z's follow-ups. EC-THREAT-FIX3's C++ needs one rebuild by the user, so the
+code stages run first and the live stages after it.
 
 **Where the specs are:**
 
@@ -151,10 +154,10 @@ PERF-Y joins Z as a fifth item (the user's call, 2026-10-06): wave Y slowed ever
 
 ## Current wave
 
-- Wave: Z, landed (master fast-forwarded to this close-out). Next: none planned.
+- Wave: Z, landed (master fast-forwarded to this close-out). Next: Z2.
   Item notes: `G:\DevStuff\GitHub\.wave-loop\{ec-threat-fix2,ec-melee-fix,ec-nature-fix,ec-arcane-fix,perf-y}-tmp`.
   Prod runs X's `25cb9dddc` (no `rollback-q` image: its layers were gone), without Y's and Z's sim changes.
-- Open: the deferred BiS chain, and Z's follow-ups in the e2e-coverage and sim-performance backlogs.
+- Open: Z2's items and the deferred BiS chain.
   Closed as not sim gaps: the sheet fields the server shows raw (per-school crit, Blood-Gorged, Mace and Holy
   Specialization), which the fixture README explains.
 - Deferred (the user's calls, 2026-10-02, 10-03 and 10-05), each only on the user's go-ahead:
