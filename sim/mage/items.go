@@ -74,8 +74,8 @@ var ItemSetKirinTorGarb = core.NewItemSet(core.ItemSet{
 	},
 })
 
-// 64869 effect1 (roll_chance_i in Player.cpp): 10%, not the 20% Classic gave it.
-const T84PcProcChance = 0.1
+// 64869's 20% (SpellInfoCorrections), rolled in spell_mage.cpp
+const T84PcProcChance = 0.2
 
 // T9
 var ItemSetKhadgarsRegalia = core.NewItemSet(core.ItemSet{

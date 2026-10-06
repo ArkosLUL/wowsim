@@ -6,6 +6,7 @@ import (
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
 	"github.com/wowsims/wotlk/sim/core/serverdata"
+	"github.com/wowsims/wotlk/sim/core/stats"
 	googleProto "google.golang.org/protobuf/proto"
 )
 
@@ -72,14 +73,28 @@ func TestBeastWithinWithoutPet(t *testing.T) {
 	}
 }
 
-// The talent is an aura limited to spells that need a ranged weapon, which Serpent Sting is.
-func TestRangedWeaponSpecializationReachesSerpentSting(t *testing.T) {
-	hunter := hunterWithTalents(t, MMTalents, proto.Hunter_Options_Wolf)
-	if hunter.Talents.RangedWeaponSpecialization == 0 {
-		t.Fatal("MMTalents has no Ranged Weapon Specialization")
+// With a bow, gun or crossbow the talent's 5% reaches every non-physical spell (Serpent Sting, Explosive Trap,
+// item procs) and, of physical damage, only the ranged attacks.
+func TestRangedWeaponSpecializationSchools(t *testing.T) {
+	with := hunterWithTalents(t, MMTalents, proto.Hunter_Options_Wolf)
+	without := hunterWithTalents(t, "502-035335131030013203035031051-5000002", proto.Hunter_Options_Wolf)
+	if with.Talents.RangedWeaponSpecialization != 3 || without.Talents.RangedWeaponSpecialization != 0 {
+		t.Fatalf("talent strings: %v and %v", with.Talents.RangedWeaponSpecialization, without.Talents.RangedWeaponSpecialization)
 	}
-	want := hunter.rangedWeaponSpecializationMultiplier()
-	if got := hunter.SerpentSting.DamageMultiplier; got != want {
-		t.Errorf("Serpent Sting damage multiplier %v, want %v", got, want)
+	near := func(got, want float64) bool { return got > want-1e-9 && got < want+1e-9 }
+	for school := stats.SchoolIndexPhysical; school < stats.SchoolLen; school++ {
+		want := core.TernaryFloat64(school == stats.SchoolIndexPhysical, 1, 1.05)
+		if got := with.PseudoStats.SchoolDamageDealtMultiplier[school] / without.PseudoStats.SchoolDamageDealtMultiplier[school]; !near(got, want) {
+			t.Errorf("school %d: x%v, want x%v", school, got, want)
+		}
+	}
+	if got := with.SteadyShot.DamageMultiplier / without.SteadyShot.DamageMultiplier; !near(got, 1.05) {
+		t.Errorf("Steady Shot x%v, want x1.05", got)
+	}
+	if got := with.RaptorStrike.DamageMultiplier / without.RaptorStrike.DamageMultiplier; !near(got, 1) {
+		t.Errorf("Raptor Strike x%v, want x1", got)
+	}
+	if got := with.SerpentSting.DamageMultiplier / without.SerpentSting.DamageMultiplier; !near(got, 1) {
+		t.Errorf("Serpent Sting's own multiplier x%v, want x1: its school carries the talent", got)
 	}
 }

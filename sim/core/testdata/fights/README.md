@@ -67,23 +67,8 @@ table's cause:
 - **Rime**: not a sim gap but the cycle's: its Howling Blast step finds no Frost, Unholy or death rune on either side,
   so it goes off only free, on a Freezing Fog proc (all 3 logged did), which the replay can't follow. The cycle needs
   runes left for it, then a re-record.
-- **Master of Elements**: the sim refunds 25% of a crit spell's base cost (30% less Burnout's 5%, which the server
-  burns apart, unlogged) and nothing for a crit without a cost of its own (Living Bomb's explosion, 215 on the
-  server) or a clearcast one; the server refunds 30% of each (`spell_mage_master_of_elements`).
-- **Torment the Weak**: the sim always adds its 12%; the server only against a snared or slowed target, and the boss
-  dummy is immune to snares (creature_immunities -361).
-- **Brain Freeze**: the sim's Fireball! never expires; the server's (57761) lasts 15 s, so a later proc puts it on
-  again.
-- **Enduring Winter**: the sim's refreshes Replenishment on every Frostbolt; the server's has a 6 s proc cooldown
-  (spell_proc -44557).
 
 | Setup | Subject | Check | Why |
 |---|---|---|---|
 | DeathknightFrost | 51411 | casts | Rime |
 | HunterMM | 49001 | ticks | map update length |
-| MageFire | energize 29076 mana | gain sizes | Master of Elements |
-| MageFrost | aura 44549 on self | applications | Brain Freeze |
-| MageFrost | aura 57669 on self | applications | Enduring Winter |
-| MageFrostFire | 47610 | crit mean | Torment the Weak |
-| MageFrostFire | 47610 | tick hit mean | Torment the Weak |
-| MageFrostFire | energize 29076 mana | gain sizes | Master of Elements |

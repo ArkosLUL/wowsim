@@ -1540,6 +1540,58 @@ suite pairs Flametongue Totem with Enhancing Totems; raid25's Totem of Wrath out
 - Live: Frost Channeling's mask 84.
 - **Owns:** `sim/{mage,hunter}/` but pet, threat and EC-CORE-FIX's code; their drop entries and README rows.
 
+#### As built
+
+Stage fixes (offline; notes and live plan in `tmp/ec-arcane-fix-code.md`), re-measured on `d253e096c`:
+- Torment the Weak: fixed. The server adds it only against a snared or attack-slowed target
+  (`Unit::SpellPctDamageModsDone`); raid bosses and the boss dummy are immune to snares, not to `MECHANIC_SLOW_ATTACK`,
+  which every sim attack speed debuff carries. `Mage.tormentTheWeak` reads the target's `AtkSpdReduction` category, on
+  Fireball, Frostfire Bolt, Pyroblast (dots at their snapshot), Arcane Blast, Missiles, Barrage, and Frostbolt
+  (family flag 0x20, which the sim lacked).
+- T8 4-piece: fixed, 20% (`T84PcProcChance`), keeping Missile Barrage, Hot Streak and Fireball! (`spell_mage.cpp`).
+- Brain Freeze: fixed. Fireball! lasts 15 s and is used up at the cast (spell_proc 57761's cast phase), not the landing.
+  T10 2-piece only on that use, never on the timeout (`Aura::HandleAuraSpecificMods`' 57761 case).
+- Enduring Winter: fixed. A landed Frostbolt at 33/66/100%, at most every 6 s (spell_proc -44557).
+- Master of Elements: fixed. 10% a point of the truncated base cost on any fire or frost mage spell crit, whatever the
+  cast paid; Living Bomb's explosion reads the bomb's cost, Deep Freeze (71757's damage) none. Burnout burns 1% a
+  point of the crit spell's cost apart, as unlogged spent mana (44472). Each at most once per 8 ms (spell_proc -29074
+  and -44449), so a spell critting several targets at once refunds and burns once.
+- Blizzard's tick (42938): fixed, `ProcMaskProc`, so only `SPELL_ATTR3_CAN_PROC_FROM_PROCS` procs take it (no
+  Illustration of the Dragon Soul).
+- MageFire's fire crits: Fireball's hit mean was 12% over the log and its crit mean 16%: Torment the Weak (3 points).
+  After the fix the hit mean matches (5434 to 5429) and the crit mean is +4% on 5 logged crits, inside the range; the
+  crit multiplier matches the server's 1 + 0.545 × 1.5. The rest is crit count, 20.1 expected to 15 logged (|z| about
+  1.5) on source-confirmed chances, and Ignite pays 40% of those crits. Fight DPS: +22.7% to +14%.
+- Frost's crit: not confirmed. The MageFrost fight's extra Ice Lance and Fire Blast crits follow 6 Fingers of Frost
+  procs in 20 Frostbolts (spell_proc 44545: 15% at the cast; the sim expects 3, inside its range).
+- Hunter, Thrill of the Hunt: fixed. 40% of the shot's truncated base cost, a free Lock and Load shot too, a third on
+  an Explosive Shot tick (`spell_hun_thrill_of_the_hunt`), only on spell_proc -34497's shots (no Multi-Shot), at
+  33/66/100%.
+- Ranged Weapon Specialization: fixed. With a bow, gun or crossbow it covers every non-physical school (Explosive
+  Trap, Black Arrow, Volley, magic procs) and, of physical, only ranged attacks (`Unit::UpdateDamagePctDoneMods`).
+- Hunter's Mark: confirmed and fixed. A weapon hit's weapon part reads the hunter's own ranged attack power; the mark
+  adds `int32(bonus / 14 × speed)` after the weapon percent (`Unit::MeleeDamageBonusDone`, 2.8 s normalized): Auto
+  Shot, Aimed, Multi, Chimera, Kill, Silencing Shot, Wild Quiver, Zod's Quick Shot (now 50% of the weapon part).
+  Kill Shot's own 0.4 AP reads no mark (`Spell::EffectWeaponDmg`: `GetTotalAttackPowerValue` without a victim).
+- Explosive Decoy: fixed (`sim/core/consumes.go`, its entry). Creature 29134 casts 53273 only from its SmartAI's death
+  event, and a boss fighting the raid never attacks it, so the sim's decoy deals nothing and only takes the
+  explosives' shared cooldown.
+- Drops gone with their fights README rows and causes: MageFire and MageFrostFire `gain sizes` (Master of Elements),
+  MageFrost 44549 and 57669 `applications`, MageFrostFire 47610 crit and tick hit means. The tick's 33 against the
+  sim's 33.99 is the server truncating a dot's amount, inside the check's floor. Kept, sheet artifacts: goldchar
+  MageFire and MageFrostFire arcane crit, talents MageFire improvedScorch and livingBomb.
+- Goldens (`dock.sh delta`, 7 suites move): Frost Average-Default +7.7% (Frostbolt +11.8% a hit under Thunder Clap,
+  fewer Frostfire Bolts); Fire +0.07%, FrostFire 0%, Arcane 0% (Thunder Clap keeps Torment the Weak); NoBuffs rows -3
+  to -10%; Kirin Tor Garb rows +0.4 to +8.9%; MM +0.12% (Explosive Trap +5%, Silencing Shot +5.8%, Chimera -1.2%, Kill
+  Shot down), multi-target up to +2.7%; BM -0.08%, SV -0.13% (Kill Shot).
+
+Stage live (2026-10-06, server 3d89793c7, mod-sim-validation f72dbf7):
+- Frost Channeling's mask 84: confirmed, no change. The talent sweep's records carry no cost, so
+  `TestSimvalSpellModSweep` ran on MageFrost with a scratch list naming only 12519 and nine fire, arcane and frost
+  spells: each cost drops 10%, truncated (Fire Blast 686 to 617, Arcane Blast 228 to 205), and all nine agree with
+  the sim's exact cost. Nothing committed: `spellmod_spells.json` (tools/acore/spellmods) lists SPELLMOD talents only.
+- No fixture re-recorded; no goldens moved.
+
 ## Orchestrator onboarding (wave S start)
 
 - Add waves S–X to the registry and an `EC-` row to "Where the specs are".

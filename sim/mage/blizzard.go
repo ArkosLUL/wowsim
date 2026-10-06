@@ -27,9 +27,11 @@ func (mage *Mage) registerBlizzardSpell() {
 	}
 
 	blizzardTickSpell := mage.RegisterSpell(core.SpellConfig{
-		ActionID:         core.ActionID{SpellID: 42938},
-		SpellSchool:      core.SpellSchoolFrost,
-		ProcMask:         core.ProcMaskSpellDamage,
+		ActionID:    core.ActionID{SpellID: 42938},
+		SpellSchool: core.SpellSchoolFrost,
+		// the channel's aura casts each tick, so only procs with SPELL_ATTR3_CAN_PROC_FROM_PROCS take it
+		// (Dying Curse and Greatness, not Illustration of the Dragon Soul)
+		ProcMask:         core.ProcMaskProc,
 		Flags:            SpellFlagMage,
 		BonusCritRating:  float64(mage.Talents.WorldInFlames) * 2 * core.CritRatingPerCritChance,
 		CritMultiplier:   mage.SpellCritMultiplier(1, mage.bonusCritDamage+float64(mage.Talents.IceShards)/3),

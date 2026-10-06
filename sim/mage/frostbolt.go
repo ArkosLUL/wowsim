@@ -8,10 +8,16 @@ import (
 )
 
 func (mage *Mage) registerFrostboltSpell() {
-	replProcChance := float64(mage.Talents.EnduringWinter) / 3
+	// spell_proc -44557: a landed Frostbolt at its rank's 33, 66 or 100%, at most once every 6 s
+	replProcChance := []float64{0, .33, .66, 1}[mage.Talents.EnduringWinter]
 	var replSrc core.ReplenishmentSource
+	var replICD core.Cooldown
 	if replProcChance > 0 {
 		replSrc = mage.Env.Raid.NewReplenishmentSource(core.ActionID{SpellID: 44561})
+		replICD = core.Cooldown{
+			Timer:    mage.NewTimer(),
+			Duration: time.Second * 6,
+		}
 	}
 
 	mage.Frostbolt = mage.RegisterSpell(core.SpellConfig{
@@ -48,12 +54,14 @@ func (mage *Mage) registerFrostboltSpell() {
 		},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()
+			baseDamage := (spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()) * mage.tormentTheWeak(target)
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 
 			spell.WaitTravelTime(sim, func(sim *core.Simulation) {
 				spell.DealDamage(sim, result)
-				if replProcChance == 1 || sim.RandomFloat("Enduring Winter") < replProcChance {
+				if replProcChance > 0 && result.Landed() && replICD.IsReady(sim) &&
+					(replProcChance == 1 || sim.RandomFloat("Enduring Winter") < replProcChance) {
+					replICD.Use(sim)
 					mage.Env.Raid.ProcReplenishment(sim, replSrc)
 				}
 			})

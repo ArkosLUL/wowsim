@@ -8,20 +8,17 @@ import (
 )
 
 func (mage *Mage) registerArcaneMissilesSpell() {
-	hasT8_4pc := mage.HasSetBonus(ItemSetKirinTorGarb, 4)
-
 	mage.ArcaneMissilesTickSpell = mage.GetOrRegisterSpell(core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: 42845},
 		SpellSchool: core.SpellSchoolArcane,
 		// unlike Mind Flay, this CAN proc JoW. It can also proc trinkets without the "can proc from proc" flag
 		// such as illustration of the dragon soul
 		// however, it cannot proc Nibelung so we add the ProcMaskNotInSpellbook flag
-		ProcMask:         core.ProcMaskSpellDamage | core.ProcMaskNotInSpellbook,
-		Flags:            SpellFlagMage | core.SpellFlagNoLogs,
-		MissileSpeed:     20,
-		BonusHitRating:   float64(mage.Talents.ArcaneFocus) * core.SpellHitRatingPerHitChance,
-		BonusCritRating:  core.TernaryFloat64(mage.HasSetBonus(ItemSetKhadgarsRegalia, 4), 5*core.CritRatingPerCritChance, 0),
-		DamageMultiplier: 1 + .04*float64(mage.Talents.TormentTheWeak),
+		ProcMask:        core.ProcMaskSpellDamage | core.ProcMaskNotInSpellbook,
+		Flags:           SpellFlagMage | core.SpellFlagNoLogs,
+		MissileSpeed:    20,
+		BonusHitRating:  float64(mage.Talents.ArcaneFocus) * core.SpellHitRatingPerHitChance,
+		BonusCritRating: core.TernaryFloat64(mage.HasSetBonus(ItemSetKhadgarsRegalia, 4), 5*core.CritRatingPerCritChance, 0),
 		DamageMultiplierAdditive: 1 +
 			core.TernaryFloat64(mage.HasSetBonus(ItemSetTempestRegalia, 4), .05, 0),
 		CritMultiplier:   mage.SpellCritMultiplier(1, mage.bonusCritDamage+core.TernaryFloat64(mage.HasMajorGlyph(proto.MageMajorGlyph_GlyphOfArcaneMissiles), .25, 0)),
@@ -33,7 +30,7 @@ func (mage *Mage) registerArcaneMissilesSpell() {
 		},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			damage := spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()
+			damage := (spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()) * mage.tormentTheWeak(target)
 			result := spell.CalcDamage(sim, target, damage, spell.OutcomeMagicHitAndCrit)
 
 			spell.DealDamageAfterTravel(sim, result)
@@ -58,10 +55,8 @@ func (mage *Mage) registerArcaneMissilesSpell() {
 			Aura: core.Aura{
 				Label: "ArcaneMissiles",
 				OnExpire: func(aura *core.Aura, sim *core.Simulation) {
-					if mage.MissileBarrageAura.IsActive() {
-						if !hasT8_4pc || sim.RandomFloat("MageT84PC") > T84PcProcChance {
-							mage.MissileBarrageAura.Deactivate(sim)
-						}
+					if mage.MissileBarrageAura.IsActive() && !mage.t84pcKeepsProc(sim) {
+						mage.MissileBarrageAura.Deactivate(sim)
 					}
 
 					// TODO: This check is necessary to ensure the final tick occurs before

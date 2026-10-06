@@ -36,9 +36,10 @@ func (hunter *Hunter) registerSilencingShotSpell() {
 		Direct: core.SpellEffect{Effect: 0, WeaponPct: 0.5},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := (hunter.RangedWeaponDamage(sim, spell.RangedAttackPower(target)) +
+			baseDamage := (hunter.RangedWeaponDamage(sim, hunter.rangedWeaponAP()) +
 				hunter.AmmoDamageBonus +
 				spell.BonusWeaponDamage()) * spell.Direct.WeaponPct
+			baseDamage += hunter.huntersMarkBonus(target, false)
 
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeRangedHitAndCrit)
 

@@ -1,6 +1,7 @@
 package mage
 
 import (
+	"math"
 	"time"
 
 	"github.com/wowsims/wotlk/sim/core"
@@ -435,36 +436,90 @@ func (mage *Mage) registerArcanePowerCD() {
 	})
 }
 
+// tormentTheWeak is Torment the Weak's bonus against target, which the server gives only while the target is
+// snared or its attacks are slowed (Unit::SpellPctDamageModsDone). Raid bosses are immune to snares, so only the
+// attack speed debuffs count.
+func (mage *Mage) tormentTheWeak(target *core.Unit) float64 {
+	if mage.Talents.TormentTheWeak == 0 || !mage.attackSpeedSlows.Get(target).AnyActive() {
+		return 1
+	}
+	return 1 + .04*float64(mage.Talents.TormentTheWeak)
+}
+
+// t84pcKeepsProc is Kirin Tor Garb's 4 pieces keeping the Missile Barrage, Hot Streak or Fireball! a cast would
+// use up (64869's roll in spell_mage.cpp).
+func (mage *Mage) t84pcKeepsProc(sim *core.Simulation) bool {
+	return mage.hasT84pc && sim.RandomFloat("MageT84PC") < T84PcProcChance
+}
+
 func (mage *Mage) applyMasterOfElements() {
-	if mage.Talents.MasterOfElements == 0 && mage.Talents.Burnout == 0 {
-		return
+	if mage.Talents.MasterOfElements > 0 {
+		// spell_mage_master_of_elements: 10% a point of the base cost, whatever the cast paid
+		refundPct := 10 * float64(mage.Talents.MasterOfElements)
+		manaMetrics := mage.NewManaMetrics(core.ActionID{SpellID: 29076})
+		// spell_proc -29074's 8 ms cooldown: one refund for all the targets a spell crits at once
+		icd := core.Cooldown{Timer: mage.NewTimer(), Duration: time.Millisecond * 8}
+
+		mage.RegisterAura(core.Aura{
+			Label:    "Master of Elements",
+			Duration: core.NeverExpires,
+			OnReset: func(aura *core.Aura, sim *core.Simulation) {
+				aura.Activate(sim)
+			},
+			OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
+				// spell_proc -29074: crits of fire and frost mage spells
+				if !result.DidCrit() || !spell.Flags.Matches(SpellFlagMage) ||
+					!spell.SpellSchool.Matches(core.SpellSchoolFire|core.SpellSchoolFrost) || !icd.IsReady(sim) {
+					return
+				}
+				icd.Use(sim)
+				cost := spell.DefaultCast.Cost
+				switch {
+				case spell.ActionID.SpellID == 55362:
+					// the explosion costs nothing, so the script reads the bomb's cost
+					cost = mage.LivingBomb.DefaultCast.Cost
+				case spell == mage.DeepFreeze:
+					// its damage is 71757's, which costs nothing
+					cost = 0
+				}
+				if refund := math.Floor(cost * refundPct / 100); refund > 0 {
+					mage.AddMana(sim, refund, manaMetrics)
+				}
+			},
+		})
 	}
 
-	refundCoeff := 0.1*float64(mage.Talents.MasterOfElements) - .01*float64(mage.Talents.Burnout)
-	manaMetrics := mage.NewManaMetrics(core.ActionID{SpellID: 29076})
+	if mage.Talents.Burnout > 0 {
+		// spell_mage_burnout burns 1% a point of the crit spell's cost, outside the combat log
+		burnPct := float64(mage.Talents.Burnout)
+		burnMetrics := mage.NewManaMetrics(core.ActionID{SpellID: 44472})
+		// spell_proc -44449's 8 ms cooldown, as for Master of Elements
+		icd := core.Cooldown{Timer: mage.NewTimer(), Duration: time.Millisecond * 8}
 
-	mage.RegisterAura(core.Aura{
-		Label:    "Master of Elements",
-		Duration: core.NeverExpires,
-		OnReset: func(aura *core.Aura, sim *core.Simulation) {
-			aura.Activate(sim)
-		},
-		OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
-			if spell.ProcMask.Matches(core.ProcMaskMeleeOrRanged) {
-				return
-			}
-			if spell.CurCast.Cost == 0 {
-				return
-			}
-			if result.DidCrit() {
-				if refundCoeff < 0 {
-					mage.SpendMana(sim, -1*spell.DefaultCast.Cost*refundCoeff, manaMetrics)
-				} else {
-					mage.AddMana(sim, spell.DefaultCast.Cost*refundCoeff, manaMetrics)
+		mage.RegisterAura(core.Aura{
+			Label:    "Burnout",
+			Duration: core.NeverExpires,
+			OnReset: func(aura *core.Aura, sim *core.Simulation) {
+				aura.Activate(sim)
+			},
+			OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
+				// Deep Freeze is outside spell_proc -44449's class mask
+				if !result.DidCrit() || !spell.Flags.Matches(SpellFlagMage) || spell == mage.DeepFreeze || !icd.IsReady(sim) {
+					return
 				}
-			}
-		},
-	})
+				icd.Use(sim)
+				// SpellInfo::CalcPowerCost at the hit, by which a Clearcasting or Firestarter cast has used up its
+				// free cast
+				cost := spell.CurCast.Cost
+				if cost <= 0 {
+					cost = spell.StaticCost()
+				}
+				if burn := min(math.Floor(cost*burnPct/100), mage.CurrentMana()); burn > 0 {
+					mage.SpendMana(sim, burn, burnMetrics)
+				}
+			},
+		})
+	}
 }
 
 func (mage *Mage) registerCombustionCD() {
@@ -759,7 +814,7 @@ func (mage *Mage) applyBrainFreeze() {
 	mage.BrainFreezeAura = mage.RegisterAura(core.Aura{
 		Label:    "Brain Freeze Proc",
 		ActionID: core.ActionID{SpellID: 44549},
-		Duration: core.NeverExpires,
+		Duration: time.Second * 15,
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
 			mage.Fireball.CostMultiplier -= 100
 			mage.Fireball.CastTimeMultiplier -= 1
@@ -771,13 +826,14 @@ func (mage *Mage) applyBrainFreeze() {
 			mage.Fireball.CastTimeMultiplier += 1
 			mage.FrostfireBolt.CostMultiplier += 100
 			mage.FrostfireBolt.CastTimeMultiplier += 1
-			if t10ProcAura != nil {
-				t10ProcAura.Activate(sim)
-			}
 		},
-		OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
-			if spell == mage.FrostfireBolt || spell == mage.Fireball {
+		// spell_proc 57761 uses it up at the cast, not the landing. T10 2pc only on that, never when it times out
+		OnCastComplete: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell) {
+			if (spell == mage.FrostfireBolt || spell == mage.Fireball) && !mage.t84pcKeepsProc(sim) {
 				aura.Deactivate(sim)
+				if t10ProcAura != nil {
+					t10ProcAura.Activate(sim)
+				}
 			}
 		},
 	})
