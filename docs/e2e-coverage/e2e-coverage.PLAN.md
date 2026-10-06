@@ -66,6 +66,32 @@ haste stacking beyond EC-BUFFS' pairs. From Y:
   goldchar could check meta activation (`HasMetaGemEquipped`).
 - Tooling: a fight mean check's range ends at one iteration's tail (a 1.4x Shadow Bolt passed).
 
+From Z:
+- Threat: energize threat, half the gain unmodified as assist threat (`Unit::EnergizeBySpell`, periodic
+  energize: Horn of Winter, Divine Plea, Anger Management); heals through `GainHealth` make none (Death Strike,
+  Rune Tap, Death Pact, Frenzied Regeneration, Blood Presence); the server's warriors know Sunder Armor 7386
+  (spell_threat 345 + 5% AP, plus 58567), the sim and the e2e use 47467 (a large Protection warrior TPS gap);
+  Penance's ticks make none (a lead). `.simval threat` records no `SPELL_EFFECT_THREAT` or heal threat (C++), and
+  the probe lacks a hunter bot, Heart Strike's split, 58567, Bladestorm's ticks, and six self buffs the replay
+  can't cast.
+- Death knight: Rune of the Stoneskin Gargoyle's +25 defense as skill (a core defense-skill bonus); the rune
+  weapon's creature-type AP at half through the DK (pet file); death runes revert 30 s after their talent last
+  procced; Improved Unholy Presence scales the cooldown after the grace cut; Death Coil and Rune Strike take
+  irand(0, cost / 4) on a miss; DeathknightFrost's cycle starves Howling Blast of runes (the Rime drop; fix and
+  re-record).
+- Paladin and rogue: Improved Devotion Aura at 1–2 points can't ride the tristate; Honor Among Thieves below 3/3
+  rolls once a cast; RogueSubtlety's fight re-record under its two-Eviscerate cycle.
+- Druid: Omen of Clarity from triggered damage (`CAN_PROC_FROM_PROCS`, a lead); Starfall's 53201 rolls spell hit
+  in the sim, a self aura that can't miss on the server.
+- Mage: T10's 2-piece on Hot Streak's and Missile Barrage's timeouts; Fingers of Frost's Shatter scope and
+  cast-time roll; Torment the Weak on a non-boss add a chill slows; the Frost crit lead (a recapture); school cost
+  auras (Frost Channeling) have no permanent replay.
+- Hunter: Kill Shot's weapon part isn't normalized on the server; the mark and creature-type AP truncate once
+  together and skip physical percent mods.
+- Core: the server truncates `SpellDamageBonusDone`'s result, dot amounts and direct hits.
+- Tooling: the 72-point strings in the gzipped perf and UI fixtures; `spells_audit.csv`'s 65861; 58670 isn't
+  in the spell capture.
+
 ## Work items
 
 ### EC-SWEEP2 (S, done; golden-neutral; stages: code, live)
@@ -1334,7 +1360,7 @@ Stage 2 (pets), re-measured on `bb4ffd124`:
   Mirror Image's crit and mana; pets' spell crit from intellect (`EnableManaBarWithModifier`; a creature's is a flat
   5% plus auras), no record checks it.
 
-### EC-THREAT-FIX2 (Z; changes goldens, full suite; stages: threat, live)
+### EC-THREAT-FIX2 (Z, done; changes goldens, full suite; stages: threat, live)
 
 - V's leftovers, each re-measured with `.simval threat` first: Heart Strike's second target adds the bonus twice (the
   server splits one); per-tick bonuses on aura ticks the server casts (Bladestorm 50622, the Infernal's 20153, Volley);
@@ -1390,7 +1416,7 @@ Unholy +0.03% (self-buff assist threat). Extremes: SV aoe +6.6% (Volley's ticks)
 +0.082%, Protection paladin −0.164%, Fire and FrostFire ≤0.002%) and Holy's HPS by ±0.1%: the diamond's
 on-cast proc now counts the self buffs' casts (`ProcMaskEmpty`), as 55381's `DONE_SPELL_NONE_DMG_CLASS_POS` does.
 
-### EC-MELEE-FIX (Z; changes goldens)
+### EC-MELEE-FIX (Z, done; changes goldens)
 
 - Death knight: Rune of the Stoneskin Gargoyle's defense as skill (goldchar row); Frost Vulnerability (51714) rolls
   spell hit; Howling Blast with death runes (a fights lead: DeathknightFrost's cycle can starve it of runes for a
@@ -1456,7 +1482,7 @@ Goldens (Average-Default): Blood −3.6%, Frost −1.3%, FrostUH −0.6%, Unholy
 Fury −0.1% (Rend); Enhancement +0.2% (Flurry); Protection paladin ±0.0% (Vindication's misses). `raid25.derived.json`
 moves too (Devotion Aura improved).
 
-### EC-NATURE-FIX (Z; changes goldens; stages: fixes, live)
+### EC-NATURE-FIX (Z, done; changes goldens; stages: fixes, live)
 
 - Druid: Eclipse (Solar and Lunar) on crits only (spell_proc -48516 HitMask 2); Insect Swarm's crit without Vengeance;
   Rake's first hit takes armor; Predatory Strikes ignores the weapon's enchant; cat and bear form
@@ -1527,7 +1553,7 @@ Stage live (2026-10-06, server lock, [ac] `3d89793c7`, no rebuild; notes in `tmp
 Review: Enhancing Totems first reached only the shaman's party; widened to the raid as above. No golden moves (no
 suite pairs Flametongue Totem with Enhancing Totems; raid25's Totem of Wrath outranks it).
 
-### EC-ARCANE-FIX (Z; changes goldens; stages: fixes, live)
+### EC-ARCANE-FIX (Z, done; changes goldens; stages: fixes, live)
 
 - Mage: Torment the Weak only on a snared or slowed target; T8 4-piece's 20% since `e9517efd2` (64869, the sim's 10%);
   Brain Freeze's Fireball! (57761) lasts 15 s; Enduring Winter's 6 s proc cooldown; Master of Elements

@@ -311,7 +311,7 @@ take about 5% of Elemental's profile ([throughput](../wave-loop/wave-loop.PLAN.m
   window: the bookkeeping (open, close, share, assist, `threatBonus`) 2.71% → 1.49%; close and share 1.98% →
   1.01%. `ThreatFromDamage` (about 0.3%) is untouched: caching it would reorder float multiplications.
 
-### PERF-Y: win back wave Y's slowdown (wave Z)
+### PERF-Y: win back wave Y's slowdown (wave Z, done)
 
 Idle at 100 iterations, wave Y runs Elemental 16% over V's, Hunter 13%, Combat Rogue and Ret 8%, the raid 4%
 ([throughput](../wave-loop/wave-loop.PLAN.md#sim-throughput)). 5–7% of Elemental's and Hunter's profiles is
@@ -355,6 +355,10 @@ spell's coefficient on every hit, though both are fixed per spell. The rest isn'
   `dealsWeaponDamage` 1.2% and `ticksAsCasts` 0.7% → under the sample floor.
 - Interleaved A/B against `d253e096c`, 14 rounds, both iteration cases: the machine ran at ±35-100%, so no case
   moved at p < 0.05 (Elemental at 100 −8%, p = 0.11); allocations unchanged. The idle re-baseline is the measure.
+- Cross-review: `Pet.refreshScaling` skips a tick whose owner stats match the last one's and works in pet-held
+  scratch (`TestPetScalingTickWalk`); Hunter's profile 3.4% → 2.1%, `refreshOwnerHitScaling` 1.0% → 0.5%.
+- Left: `makeCastFunc`'s per-hardcast closure (about half of Elemental's allocations), `nextTick`'s 64-bit
+  modulo (about 0.9% of the raid).
 
 ## Order
 
@@ -367,4 +371,4 @@ The user put the pass before wave J, whose BIS-e2e-perf times the optimizer with
 - **N (done):** PERF-FU, the user's call (2026-10-01), with wave L's and M's other follow-ups.
 - **V (done):** PERF-COST, the user's call (2026-10-03), after wave T2's cost arithmetic slowed Combat Rogue.
 - **Y (done):** PERF-THREAT, the user's call (2026-10-05), after wave V's threat bookkeeping slowed the casters.
-- **Z:** PERF-Y, the user's call (2026-10-06), after wave Y slowed every bench.
+- **Z (done):** PERF-Y, the user's call (2026-10-06), after wave Y slowed every bench.

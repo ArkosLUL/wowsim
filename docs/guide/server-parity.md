@@ -3,6 +3,7 @@
 Where the server differs from the Classic behaviour upstream modelled.
 - Why the sim follows the server: [ADRs](../adr/).
 - How each module is handled: [azerothcore-server.md](azerothcore-server.md#modules-that-affect-the-sim).
+- Class spells, talents and procs: [class mechanics](class-mechanics.md).
 - Full evidence and phase status:
   - `docs/azerothcore-parity/azerothcore-parity.{PLAN,INVESTIGATION}.md`.
     The INVESTIGATION also lists every retail deviation and every mod-spell-tweaks change.
@@ -61,16 +62,9 @@ class by simval.
 
 ## Other measured server behaviour
 
-- **Hunter haste:** mod-individual-progression's aura 89507 never changes the speed, so ranged haste is
-  just the quiver's or ammo pouch's, which `Hunter.Options.quiver` picks (×1.15 by default), times
-  Thori'dal's own ×1.15 (44972).
 - **Talent values** are the spelldump's, not the DBC files': mod-spell-tweaks' `spell_dbc` rows change some
   while the live DBC files stay stock. Rage of Rivendare is 2 expertise a point, Virulence and Nerves of Cold
   Steel 2% hit a point.
-- **Glyph of Reckoning** has a server script (mod-spell-tweaks) but no client data, so no player can have it:
-  Hand of Reckoning never deals damage (67485) and the sim registers nothing for it.
-- **Master Poisoner** (`SPELL_AURA_MOD_CRIT_CHANCE_FOR_CASTER`) raises only its rogue's crit against a
-  poisoned target, so the sim gives it to that rogue as a buff, not to the raid as a debuff.
 - **Binary spells** follow the spelldump. Mind Flay isn't binary; Steady Shot and Expose Armor are.
 - **Weapon requirements:** a spell with `SPELL_ATTR3_REQUIRES_MAIN_HAND_WEAPON` or `_OFF_HAND_WEAPON` and
   an item subclass mask fails without that weapon, triggered casts too (`Spell::CheckItems`): Mutilate
@@ -91,15 +85,21 @@ class by simval.
   `Unit.AddSchoolCostMultiplier`/`AddSchoolCostFlat`. `ApplyCostModifiers` caches per spell, comparing every
   input (`costCache`): a new input joins that key.
 - **Threat** (`sim/core/threat.go`; `ThreatManager::CalculateModifiedThreat`, `Spell::HandleThreatSpells`):
-  - A hit's threat is its damage or healing × `spell_threat` pctMod × `Spell.ThreatMultiplier`
+  - A hit's threat is its damage × `spell_threat` pctMod × `Spell.ThreatMultiplier`
     (`SPELLMOD_THREAT`) × the school multiplier: `PseudoStats.ThreatMultiplier` times each
     `AddThreatSchoolMultiplier` aura covering the spell, once per aura. `ThreatMultiplier` 0 means no threat at
-    all, bonus included.
+    all, bonus included, as does `ATTR1_NO_THREAT` (Healing Stream Totem).
+  - A heal's threat is half the health it restores (a quarter for a paladin), modified like a hit and shared as
+    assist threat; overhealing makes none.
+  - `SPELL_EFFECT_THREAT` adds its flat amount, unmodified, on each enemy hit; a cut never takes threat below 0
+    (Feint).
   - The cast's bonus is the row's flatMod + apPctMod × main hand AP, else the spell's level (none under
-    `NO_INITIAL_THREAT`, `ATTR1_NO_THREAT` or `ATTR3_SUPPRESS_TARGET_PROCS`). Stance, form and presence
+    `NO_INITIAL_THREAT` or `ATTR3_SUPPRESS_TARGET_PROCS`). Stance, form and presence
     multipliers never touch it. It's split over the distinct enemies the cast reached (misses count) plus the
-    caster when an effect lands on it; ticks get none, nor does anything before the pull. A positive spell's
-    bonus is modified and shared as assist threat, evenly over the creatures fighting its target, none to one under
+    caster when an effect lands on it; ticks get none, nor does anything before the pull, but a spell an aura
+    casts each tick adds its own (`ThreatTick`: Bladestorm, Volley), and `SetThreatCastOf` splits one bonus over
+    a chain (Heart Strike, the rune weapon's copy). A positive spell's bonus, self buffs' included, is modified
+    and shared as assist threat, evenly over the creatures fighting its target, none to one under
     crowd control (`ThreatManager::ForwardThreatForAssistingMe`).
   - The rows are `sim/core/serverdata/threat_auto_gen.go` (gen_serverdata), so class code carries no flats or
     percents and `FlatThreatBonus` panics. `SpellConfig.ThreatSpellID` names the server spell a sim spell
@@ -107,13 +107,16 @@ class by simval.
     damage), `Spell.LandThreatBonus` counts an enemy a cast selects without a hit (Consecration).
   - Dire Bear Form is ×1.45 × 1.43; Blood and Unholy Presence −20% with Subversion's flat added to that same
     effect (−45% at 3 points); Shadowform ×0.7 in every school; Fanaticism −10% a point, kept under Righteous
-    Fury. Arcane Subtlety, Burning Soul and Frost Channeling are school auras, so Frostfire Bolt gets two.
+    Fury. Arcane Subtlety, Burning Soul, Frost Channeling, Righteous Fury (holy ×1.8) and Elemental Precision
+    (fire, frost, nature) are school auras, so Frostfire Bolt gets two.
   - Thunderfury is one cast of 21992; its slow (27648) is `ATTR1_NO_THREAT`.
 - **Stat sheet:** armor on jewelry, weapons and `ArmorDamageModifier` is bonus armor for every class
   (`Player::_ApplyItemBonuses`); block value is half a point a strength for every player. Moonkin Form ×4.7
   item armor (24905) and the weapon's feral AP.
-- **Nature's Swiftness** makes instant what its aura's class mask covers (`Spell.AffectedByAuraEffect`): heals
-  and Rebirth, not Starfire.
+- **Runes** (`sim/core/runic_power.go`; `Player::GetRuneBaseCooldown`, `Spell::TakePower`): grace cuts the
+  overshoot less 250 ms, at most 2250; death runes go first to a base type owed, then blood, unholy, frost. A
+  refundable spell missing its main target gives no runic power, puts its runes on a 1.5 s cooldown with death
+  runes kept, and a runic power cost takes irand(0, cost / 4).
 - **Hasted channels:** the server truncates the duration and the tick period each (`int32(x × cast speed)`),
   so the aura can outlast period × ticks by a few ms.
 - **AoE cap** counts every unit the effect hits (`AOECapMultiplierFor`): the caster of Thunderstorm and the
@@ -150,7 +153,8 @@ class by simval.
     `MunchingBlizzlike.Enabled`), ahead of a swing or tick due on the same server tick. The sim does this with
     `core.DelayedPeriodicApplier`, a phase per caster per iteration. A player's instant cast draws the step off a
     clock one world tick stale (the session pass runs before `Player::Update`), so it can land that update.
-- **Pets:** pet hit is floored to a whole percent. Pet scaling comes from the server's scripts.
+- **Pets:** pet hit is floored to a whole percent. Pet scaling comes from the server's scripts. A summon starts at
+  full health, its owner's stamina included.
   - Create stats are the `pet_levelstats` row, else `Guardian::InitStatsForLevel`'s 22/22/25/28/27 and 50 armor
     a level; the scaling auras add a truncated percent of the owner's (`PetScalingPct`). Real pets rescale every
     2 s, Spirit Wolves every 1 s, other guardians once at the summon. A controlled creature regains

@@ -151,11 +151,10 @@ PERF-Y joins Z as a fifth item (the user's call, 2026-10-06): wave Y slowed ever
 
 ## Current wave
 
-- Wave: Y, landed (master fast-forwarded to this close-out). Next: Z.
-  Item notes: `G:\DevStuff\GitHub\.wave-loop\{ec-tick-fix,ec-core-fix,ec-pet-fix,perf-threat}-tmp`.
-  Prod runs X's `25cb9dddc` (no `rollback-q` image: its layers were gone), without Y's sim changes.
-- Open: none outside Z's items and the deferred BiS chain, plus one server chore, the user's: the next
-  `ac-db-import` run adds the `command` rows (help text only) of `.simval combopoints` and `.simval engage`.
+- Wave: Z, landed (master fast-forwarded to this close-out). Next: none planned.
+  Item notes: `G:\DevStuff\GitHub\.wave-loop\{ec-threat-fix2,ec-melee-fix,ec-nature-fix,ec-arcane-fix,perf-y}-tmp`.
+  Prod runs X's `25cb9dddc` (no `rollback-q` image: its layers were gone), without Y's and Z's sim changes.
+- Open: the deferred BiS chain, and Z's follow-ups in the e2e-coverage and sim-performance backlogs.
   Closed as not sim gaps: the sheet fields the server shows raw (per-school crit, Blood-Gorged, Mace and Holy
   Specialization), which the fixture README explains.
 - Deferred (the user's calls, 2026-10-02, 10-03 and 10-05), each only on the user's go-ahead:
@@ -170,7 +169,7 @@ PERF-Y joins Z as a fifth item (the user's call, 2026-10-06): wave Y slowed ever
     baseline; the raid25 dumps in `_dump/optimizer_dump_test.go` still build uncut pools).
   - Before the preset rerun: the response curves span the pool's stat range, so BIS-outclassed's cut moved Fury
     P1's Normal pick 45 J below the uncut pool's, every item of which it still holds.
-- Workflow runIds: Y's `wf_e58e8b14-102` (all four), `wf_d290cc37-ee6` and `wf_fe29d895-a35` (EC-TICK-FIX's rest and
+- Workflow runIds: Z's `wf_8821da6d-91f` (all five); Y's `wf_e58e8b14-102` (all four), `wf_d290cc37-ee6` and `wf_fe29d895-a35` (EC-TICK-FIX's rest and
   review); X2's `wf_b555c578-f46` (code stages), `wf_a0107f34-c7b` (live stages) and `wf_b00ecbe0-79a` (EC-RECHECK's
   live stages again, after an API error); X's `wf_a31ea7ec-8e3`; W's `wf_aa1b462c-590` (code stages) and
   `wf_894cf391-8a3` (live stages); V's `wf_ea73babf-e53`; T2's `wf_5af2b99d-6d0`; T's `wf_8a59e202-2f8`,
@@ -224,6 +223,7 @@ Reckoning that way), but J isn't DPS: see below.
 | X | 8690.7, +273 / +273 | 10730.8, +708 / +903 | 5066.6, +41 / +51 | 12963.8, +148 / +225 | -17672.3, +4831 / +4777 | -1211.2, +892 / +891 |
 | X2 | 8690.7, +273 / +273 | 10730.8, +708 / +903 | 5066.6, +41 / +51 | 12963.8, +148 / +225 | -17672.3, +4831 / +4777 | -1211.2, +892 / +891 |
 | Y | 8646.8, +205 / +221 | 10774.4, +567 / +539 | 5048.0, +80 / +103 | 12979.9, +174 / +258 | -16943.2, +5205 / +5188 | -1181.2, +978 / +982 |
+| Z | 8755.4, +203 / +203 | 10772.2, +596 / +647 | 5048.0, +68 / +101 | 12979.9, +174 / +258 | -16924.7, +5282 / +5172 | -1186.3, +710 / +740 |
 
 Quick / Normal. Ret P4 ran at Quick only in wave D, after the glyph fix; its wave C numbers
 (12821.9, +54 / +73) came from a seed that wore the glyph. The two tanks arrive with
@@ -290,6 +290,9 @@ In Y the DPS presets rose with their goldens (`dps_preset` Fury +2.0%, Combat Ro
 Ret +1.7%); Fury's `J_preset` fell 0.5% and Fire Mage's 0.4%, the normalizer. Combat Rogue's gains fell to
 +567 / +539 and the tanks' rose. Normal's walls rose 20–36% over X2's, both beside the live server: the
 sim's own cost (see Sim throughput).
+In Z the presets moved with their goldens: `dps_preset` Combat Rogue -1.9% (Prey on the Weak), Fury -0.2%,
+Feral Tank +1.3% (its enchants load, so its gains fell to +710 / +740); Fury's `J_preset` rose 1.3%, the
+normalizer. Normal's walls fell 7–22% under Y's, both beside the live server (PERF-Y).
 
 ## Sim throughput
 
@@ -433,6 +436,8 @@ crashed before F2, so its column starts there.
 
 ## Status
 
+`direct`: committed straight on `integration`, with no branch to merge; `no change`: nothing to commit.
+
 | WI | Status | Merge commit | Notes |
 |---|---|---|---|
 | PAR-P4R | merged | `21f3881b3` | TestBlood golden promoted in `e43b0540f` |
@@ -459,142 +464,148 @@ crashed before F2, so its column starts there.
 | PAR-P7-0b | merged | `eea3298fc` | 20 pet goldens in `82f9e3a22`, re-promoted in `f3b2d9467` after the cross-review |
 | BIS-tanks-racials | merged | `f688a9246` | `db.json` regenerated for Titanguard in `4c69521ed` |
 | PAR-TOOLS-RR | merged | `e20ac0f21` | e2e `0339692`; 2 of the 4 recorded runs captured |
-| wave F cross-review | | `3e0c922c8` | 3 bugs, each inside one item; the only cross-item finding was a tank run's cost, sent to BIS-batch-ui |
+| wave F cross-review | direct | `3e0c922c8` | 3 bugs, each inside one item; the only cross-item finding was a tank run's cost, sent to BIS-batch-ui |
 | PAR-P7-0c | merged | `922ffc7ab` | 14 goldens promoted in `e52af57b0` |
 | PAR-PERF | merged | `8a963ff77` | goldens unchanged on top of PAR-P7-0c's; what changes results went to PAR-PERF-2 |
 | BIS-picker-switch | merged | `f1c9d4f4d` | the orchestrator kept Save for an equipped improved pick |
-| wave F2 cross-review | | `0fe9b481a` | no code bugs; a held-swing edge case to PAR-P7-WAR; Fury's `J_preset` drop traced to normalizer noise |
+| wave F2 cross-review | direct | `0fe9b481a` | no code bugs; a held-swing edge case to PAR-P7-WAR; Fury's `J_preset` drop traced to normalizer noise |
 | PAR-P7-DK | merged | `cc1f42afa` | 5 DK goldens promoted in `8b87ec76a`; e2e `1c56fe2`; `db.json` regenerated for its spell ids in `d4fa9b3f7` |
 | PAR-P7-HUN | merged | `694a92eb1` | 3 hunter goldens promoted in `68a2a4bfb`; e2e `e5aa956`; the INVESTIGATION's deviation rows renumbered at merge |
 | BIS-batch-ui | merged | `4887ef580` | |
 | PAR-PERF-2 | merged | `956ba4988` | goldens unchanged |
-| wave G cross-review | | `a2b24100d`, `3ac9069fc` | split in two (parity; optimizer and UI); one batch bug (Apply and Save on a roster changed mid-run); the old DK ids now alias in the APL lookup; tooling moved out of scratch in `73e159351` |
+| wave G cross-review | direct | `a2b24100d`, `3ac9069fc` | split in two (parity; optimizer and UI); one batch bug (Apply and Save on a roster changed mid-run); the old DK ids now alias in the APL lookup; tooling moved out of scratch in `73e159351` |
 | PAR-P7-0d | merged | `18b64143b` | 26 goldens promoted in `85c870717`; four stages and a review, 1.86M tokens across the five agents |
-| wave H2 cross-review | | `3b9a3c6e6`, `ec0164745` | fixed the user's DK reforge report: the item cache kept items a stale page sent without server stats, and the DK registered its runeforges and sigils late (mispriced first optimize, a possible crash); its claim that the permanent ghoul lacks 51996 was wrong (a Ghoul family passive) and was reverted |
+| wave H2 cross-review | direct | `3b9a3c6e6`, `ec0164745` | fixed the user's DK reforge report: the item cache kept items a stale page sent without server stats, and the DK registered its runeforges and sigils late (mispriced first optimize, a possible crash); its claim that the permanent ghoul lacks 51996 was wrong (a Ghoul family passive) and was reverted |
 | PAR-P7-ROG | merged | `bfe3ec2f3` | 3 rogue goldens promoted in `1e1cbdc6a`; e2e `55764db` |
 | PAR-P7-WAR | merged | `3b51edc5b` | 3 warrior goldens promoted in `3f29eb79a`; e2e `3f59b6b`; serverdata regenerated for Slam's damage spell |
 | PAR-P7-RET | merged | `74a9a8c60` | 2 paladin goldens promoted in `be8b078a0`; e2e and the recorded run's talent and tier steps `da7028e`; its two deviation rows were module behaviour, dropped by the cross-review |
 | BIS-raid-contrib | merged | `f6da0097a` | goldens unchanged |
-| wave H cross-review | | `2ae1e1906` | 5 bugs: Slam's split left Recklessness and the T8 2pc on the cast, Deadly Poison kept its first haste, Exorcism was limited to undead and demons, the Ret capture's talent reset failed; Assassination +2.2% (goldens `6ca712f26`); module `39e086e`; spell audit refreshed in `ba4252567` |
+| wave H cross-review | direct | `2ae1e1906` | 5 bugs: Slam's split left Recklessness and the T8 2pc on the cast, Deadly Poison kept its first haste, Exorcism was limited to undead and demons, the Ret capture's talent reset failed; Assassination +2.2% (goldens `6ca712f26`); module `39e086e`; spell audit refreshed in `ba4252567` |
 | PAR-P7-0e | merged | `c056bfd24` | 6 goldens promoted in `051d8e6b9` |
 | PAR-P7-RET-RR | merged | `30caa2716` | 2 paladin goldens promoted in `3390bacf0`; e2e `f4060b1`; a repair round redid the first run's per-ability table, which compared melee with glances on one side only and mixed crit rate into hit size |
 | BIS-alt5 | merged | `826e952c4` | goldens unchanged; its reviewer fixed a pick lost on a tight budget |
-| wave H3 cross-review | | `d2bf9e5e9`, `050ec2fac` | 1 bug: a delayed refresh landed after a same-tick swing or dot tick, paying the tick twice (Fury -1.5%, Arms -1.3%, Ret -0.8%); retail deviations for munching and spell mods dropped or moved to unsettled; module `1bd7607` |
+| wave H3 cross-review | direct | `d2bf9e5e9`, `050ec2fac` | 1 bug: a delayed refresh landed after a same-tick swing or dot tick, paying the tick twice (Fury -1.5%, Arms -1.3%, Ret -0.8%); retail deviations for munching and spell mods dropped or moved to unsettled; module `1bd7607` |
 | PAR-P7-MAG | merged | `e01becb6d` | 13 goldens promoted in `de48cfabf`; a live Fire capture closed PAR-P7-0e's delay gap; module `4f2cb34` |
 | PAR-P7-WLK | merged | `727738cf6` | 3 goldens promoted in `eea8954f8`; serverdata regenerated in `733088729`; Affliction recaptured; module `7af08bd`, which also fixed a ranged recorded run losing line of sight |
 | PAR-P7-SHA | merged | `3b624ddf6` | 2 goldens promoted in `18c0e3429`; its live round found the totem-dot split panicking any APL that named the summon's dot; module `987b74e` |
 | PAR-P7-DRU | merged | `b4fff9609` | 5 goldens promoted in `667779e0f`; serverdata regenerated in `8fad1a579`; module `b5d8135` |
-| wave I cross-review | | `38c7b5243`, `4c9fde2d3` | 4 bugs: the spirit wolves took Windfury Totem and Improved Icy Talons twice, the totems' own hits fed the shaman's procs, Fire Nova's crits stopped granting Clearcasting, and Ignite read a cast time a missile had outlived; Elemental and Enhancement re-promoted |
+| wave I cross-review | direct | `38c7b5243`, `4c9fde2d3` | 4 bugs: the spirit wolves took Windfury Totem and Improved Icy Talons twice, the totems' own hits fed the shaman's procs, Fire Nova's crits stopped granting Clearcasting, and Ignite read a cast time a missile had outlived; Elemental and Enhancement re-promoted |
 | UI-RESULTS | merged | `05329a523` | 15 bugs fixed, among them the whole-raid timeline, the target filter and the damage-row pie; the log tab gained search and raider filtering; 3 fixtures |
 | UI-GEAR | merged | `febe74f8b` | 13 bugs fixed, mostly swap and batch enchant lists, the batch setup on reload, and leaked listeners; 1 fixme |
 | UI-RAID | merged | `cafc5b44d` | 11 bugs fixed: tanks and buff targets follow their raider through edits, imports and reloads; 1 fixme; `1851b79d8` settled its clash with UI-SETTINGS's exporter header |
 | UI-SETTINGS | merged | `70247564c` | 22 bugs fixed across the encounter, talents, importers and exporters; 1 fixme |
-| wave U cross-review | | `305acaf57` | 3 bugs: the results page built the whole log with the Log tab closed, slowing every tab; `activateTab` never switched tabs; closed modals kept their window listeners. 3 timing-dependent tests fixed. The gate now lists every eslint file (`68720687a`) and no longer breaks tsc while it lints (`9d73e93b4`) |
+| wave U cross-review | direct | `305acaf57` | 3 bugs: the results page built the whole log with the Log tab closed, slowing every tab; `activateTab` never switched tabs; closed modals kept their window listeners. 3 timing-dependent tests fixed. The gate now lists every eslint file (`68720687a`) and no longer breaks tsc while it lints (`9d73e93b4`) |
 | PERF-TOOLS | merged | `5751dd72b` | profiling flags on the CLI, pprof moved off the sim's port behind `--pprof`, `tools/perf` trace reader and bench harness, benchstat in the toolchain image; baseline taken at `93e62aecd` |
 | PERF-CONC | merged | `891421898` | the Simulate button shards its iterations over GOMAXPROCS-1 goroutines: 7.1 to 8.8× at 16 threads, idle; bulk sim at GOMAXPROCS goroutines |
 | BIS-seed | merged | `d31d32c9e` | equipped items stay in the pool, gains are against the gear as equipped, the score names its stat; 1 bug fixed in review (a locked second ring that moved up left its pool entry behind) |
 | UI-FIX | merged | `b332259d9` | all four fixes, plus Block Value's multiplier; the warrior row is "Stance & Shout"; Might counted twice in the tooltip's snapshots found and left (moves goldens) |
-| wave I2 cross-review | | `93e62aecd` | 2 bugs: a 40-player raid crashed when a raider in groups 6 to 8 had a healing model (presim sized 25), and the batch sim's progress reporter could send on a closed channel; the harness's optimizer requests refreshed for BIS-seed's `equipped`; a test keeps pprof off the sim's port |
+| wave I2 cross-review | direct | `93e62aecd` | 2 bugs: a 40-player raid crashed when a raider in groups 6 to 8 had a healing model (presim sized 25), and the batch sim's progress reporter could send on a closed channel; the harness's optimizer requests refreshed for BIS-seed's `equipped`; a test keeps pprof off the sim's port |
 | PERF-OPT | merged | `8c1ab4802` | Quick 9 to 40% faster idle, evaluator busy 56 to 89% at 16 threads (was 53 to 78%); raid mode screens sets on the raider's own DPS, 4 simmed where 11 were |
 | PERF-HOT | merged | `bb1e35ab4` | goldens byte-identical; sims up to 41% faster idle (Rogue), stat weights 39%, bulk 48%; Protection Warrior +3% CPU at 16 threads in its A/B |
 | PAR-P7-0f | merged | `3abef3a1f` | Enhancement and Retribution goldens promoted in `48fd72cab` (+20.61 Spell Power; the spec expected none) |
 | UI-FIX2 | merged | `49344a96c` | |
-| wave I3 cross-review | | | no findings |
+| wave I3 cross-review | no change | | no findings |
 | PAR-DECL | merged | `accba95f6` | Frost goldens promoted in `812eb7771` (-0.02%, Frostbolt); missile speeds move nothing until I5 adds the travel waits; Elemental bench +2.5% / +3.5%, cause open |
 | RI-4 | merged | `fc052a747` | acbis rejected version 1 rosters, fixed at merge |
 | BIS-hunter-ranged | merged | `4a04a6c4d` | |
-| wave I4 cross-review | | `d1814fae3` | 2 bugs: RI-4's real pets exposed Spore Cloud going to a Bat, not a Spore Bat, in the raid stats and the BiS batch's raid context; a Thori'dal hunter's export cleared their ammo, so every other bow simmed without any. A mistyped `FromSpellID` now panics |
+| wave I4 cross-review | direct | `d1814fae3` | 2 bugs: RI-4's real pets exposed Spore Cloud going to a Bat, not a Spore Bat, in the raid stats and the BiS batch's raid context; a Thori'dal hunter's export cleared their ammo, so every other bow simmed without any. A mistyped `FromSpellID` now panics |
 | PAR-DECL-1 | merged | `26663ada7` | 7 goldens promoted in `8f4752244`: Frost mage +0.38% (Mirror Image takes the mage's Frostbolt talents), Destruction -0.54% (Conflagrate, Imp Firebolt, Chaos Bolt's travel) |
 | PAR-DECL-2 | merged | `facac0b37` | 7 goldens promoted in `b0c156289`: Survival +3.3% (Explosive Shot's 0.16 AP), Enhancement -2.9% (fire elemental), Elemental -1.5% (travel, Clearcasting kept for the next cast, fire elemental; Intellect weight 0.37 to 3.03); review fixed Savage Fury declared flat, not a percent |
 | PAR-DECL-3 | merged | `90a8ea16f` | 13 goldens promoted in `b15974648`: DK Frost +1.9% (off-hand Frost Strike's flat bonus unhalved, Obliterate's halved), Blood Tank -2.7% (Rune Strike), Assassination +1.6% (poisons), Protection Paladin -1.1% (Holy Shield); review fixed Death Coil and Unholy Blight dealing 1 over, and Death Coil rolling at landing |
-| wave I5 cross-review | | | no findings; Improved Earth Shield's percent mod on Earth Shield, which it couldn't confirm from source, checked in the live Spell.dbc |
+| wave I5 cross-review | no change | | no findings; Improved Earth Shield's percent mod on Earth Shield, which it couldn't confirm from source, checked in the live Spell.dbc |
 | PERF-MISSILE | merged | `ffe8b7ea1` | goldens byte-identical; its A/B at 100 iterations: Elemental -12% (allocations -59%), Hunter -4%, the raid -2%. Elemental stays ~29% over I4, from more queued actions, not allocation |
 | PAR-DECL-4 | merged | `97b207b14` | 4 goldens promoted in `57b62de5b`: hunter BM, MM and SV +0.006% to +0.007% (Explosive Trap's burst scales to level 80), Frost mage +0.0004% (Deep Freeze's SP) |
-| wave I6 cross-review | | `148cd9eaf` | 1 bug: Languish read its triggering hit's result after a delay, which PERF-MISSILE's reuse lets another cast overwrite (multi-target only, no golden moves) |
+| wave I6 cross-review | direct | `148cd9eaf` | 1 bug: Languish read its triggering hit's result after a delay, which PERF-MISSILE's reuse lets another cast overwrite (multi-target only, no golden moves) |
 | PAR-P7-PRI | merged | `3812fd681` | 4 goldens promoted in `6679ad909`: Smite +2.3% (Holy Fire's dot), Holy +0.56% (Empowered Renew multiplies), Shadow -0.14%; module `dcecf85`. The orchestrator sent back Mind Flay's tick dropping its 196 base, which the channel hands it (Shadow had read -7.5%) |
 | PAR-P7-TANK | merged | `b9e77cded` | 7 goldens promoted in `32d09f2be`: a GenericBoss case in each tank suite, Protection +0.41% (Holy Shield never misses), Feral Tank DTPS +5.9% (Faerie Fire no longer procs Savage Defense), Blood -0.15% (rune weapon); BM and Combat lose a phantom dodge rating; module `926df4c`. The orchestrator sent back a permanent Savage Defense and Feral Swiftness dropped from bear dodge, and gave the generic boss Patchwerk 25's damage (`fb7dbda45`); `db.json` in `63209f728` |
 | BIS-e2e-perf | merged | `6dc2141b5`, timing run `cc0a1e03a` | goldens unchanged. The timing run moved Quick's target to 3-11 s and the tanks' to 1.6x a DPS run; a roster at Normal takes about 4 days, so the batch's "Normal overnight" waits on the user. The batch took ~8.3 h at Quick, stage 2 for phase 1 only (the user's call) |
 | AC-3 | merged | `b634b26cc` | goldens unchanged; `db.json` regenerated in the merge |
-| wave J cross-review | | `eaafe11bd` | no bugs: Mind Sear under-counted its casts in multi-target fights, and the INVESTIGATION had Leeching Swarm's two ids swapped; spell audit refreshed |
+| wave J cross-review | direct | `eaafe11bd` | no bugs: Mind Sear under-counted its casts in multi-target fights, and the INVESTIGATION had Leeching Swarm's two ids swapped; spell audit refreshed |
 | PERF-RNG | merged | `faeb8c649` | goldens unchanged. With it on, a raid-mode delta's SE fell from ±27.1 to ±4.2 raid DPS (raid25, +100 hit); "Damage Roll" and the PPM procs still share streams |
 | BIS-adopt | merged | `e3ae9d86c` | goldens unchanged. Quick adopts a clearly better swap: 2 of the slow suite's 6 Quick picks gained, none lost |
 | BIS-stage2 | merged | `1686e5c63` | goldens unchanged. Phase 1 on the live roster took 16.5 min against wave J's ~123 (only Fel re-ran, +248 raid DPS). Sent back: its party pass only removes extra Draenei (BIS-stage2b) |
 | BIS-stage2b | merged | `7e057b86c` | goldens unchanged; proto comment `6ded31a1e`. Phase 1: the party checks took 47 s and gave Angry, Assasin and Smartface Draenei (+234 to +254 raid DPS each); every final pick together beat all stage 1 picks by +822 ± 12 |
-| wave J2 cross-review | | `1493175df` | 1 bug: the driver gave up on a pass 2 with nothing left to run. Also: old stage 2 picks still counted for raiders without stage 2, stage 2 texts said "as equipped" for the stage 1 pick, a cancelled party check read as an error |
+| wave J2 cross-review | direct | `1493175df` | 1 bug: the driver gave up on a pass 2 with nothing left to run. Also: old stage 2 picks still counted for raiders without stage 2, stage 2 texts said "as equipped" for the stage 1 pick, a cancelled party check read as an error |
 | PAR-P8 | merged | `174d9a3ed` | 13 goldens promoted in `3052f1985`; module `9eebe97`. Sent back: every shaman learns Flame Shock's crit aura (75461) with Elemental Combat, which wave I and stage 1 missed; Conflagrate's dot now needs Improved Immolate 3/3, the shadow dots Shadowform |
 | BIS-tank-boss | merged | `5354d6a60` | goldens unchanged. Its implementer's `taskkill /IM chrome.exe` closed every Chrome on the machine (a RUNBOOK rule since) |
 | BIS-presets | merged | `444d104ab` | goldens unchanged. Sent back: the generator wrote only at Quick and the tooltips were typed by hand; 43 unused Classic gear files deleted |
-| wave K cross-review | | `61d374f98`, `255b54f4a` | 3 bugs: Conflagrate reads Immolate's boosted amount (Destruction +4.7%, +0.6% net of P8), the generic boss hit for half since wave J (tanks take 2 to 3.4 times the damage), the hunter's runtime percent mods still added; `db.json` in `b415c0f48` |
-| Tiny Abomination fix | | `215fb2882` | the preset run crashed Assassination P5: a rogue's off-hand strike with no off-hand weapon made the trinket fire an off-hand attack it never registered (also at the wave base) |
-| rogue weapon fixes | | `01af4a0d8`, `1e0bc463a` | every Assassination preset held a mace off hand, which can't Mutilate on the server: Mutilate now needs two daggers and off-hand strikes an off-hand weapon; Mutilate and Fan of Knives multiply their bonuses, Tiny Abomination picks its hand 50/50. 8 goldens; TestAssassination sweeps daggers only |
-| BiS presets at Normal | | `ef5f48d20`, `f010ed638` | 140 runs in 3.9 h on `b415c0f48`; Assassination rerun on `1e0bc463a`. Perf harness tank requests in `60b063229` |
+| wave K cross-review | direct | `61d374f98`, `255b54f4a` | 3 bugs: Conflagrate reads Immolate's boosted amount (Destruction +4.7%, +0.6% net of P8), the generic boss hit for half since wave J (tanks take 2 to 3.4 times the damage), the hunter's runtime percent mods still added; `db.json` in `b415c0f48` |
+| Tiny Abomination fix | direct | `215fb2882` | the preset run crashed Assassination P5: a rogue's off-hand strike with no off-hand weapon made the trinket fire an off-hand attack it never registered (also at the wave base) |
+| rogue weapon fixes | direct | `01af4a0d8`, `1e0bc463a` | every Assassination preset held a mace off hand, which can't Mutilate on the server: Mutilate now needs two daggers and off-hand strikes an off-hand weapon; Mutilate and Fan of Knives multiply their bonuses, Tiny Abomination picks its hand 50/50. 8 goldens; TestAssassination sweeps daggers only |
+| BiS presets at Normal | direct | `ef5f48d20`, `f010ed638` | 140 runs in 3.9 h on `b415c0f48`; Assassination rerun on `1e0bc463a`. Perf harness tank requests in `60b063229` |
 
 | PAR-FU-2 | merged | `256d3add8` | goldens promoted in `8084619b4`: Assassination -0.07% (Mutilate's hand order, poison check), Scourgeborne rows +0.5% to +1.2% (Death Strike's set bonus), a few multi-target Balance and mage rows (stacking trinkets' target) |
 | UI-FIX3 | merged | `4c4ac0bca` | the spec pages default to an Alliance race; the blacksmithing socket test stayed `fixme` until the cross-review |
 | PAR-FU-1 | merged | `53b88c7bf` | goldens promoted in `8ada676f6`: Elemental -2.7%, Enhancement -1.0% (percent mods multiply), mage +0.2% to +0.6% (Mirror Image takes the mage's mods), Demonology -2.9%, Destruction -3.6%. Live: no level-80 shaman or warlock knows 75461 or 75445 |
-| wave L cross-review | | `73df60295`, `bbd3d8929` | Frostbolt now gets Winter's Chill's crit; Mirror Image drops the mage's meta gem and Critical Mass; several mage bonuses still added; Fire and Brimstone checks the target it hits; the blacksmithing test runs again |
+| wave L cross-review | direct | `73df60295`, `bbd3d8929` | Frostbolt now gets Winter's Chill's crit; Mirror Image drops the mage's meta gem and Critical Mass; several mage bonuses still added; Fire and Brimstone checks the target it hits; the blacksmithing test runs again |
 | BIS-relic | merged | `12c47a866` | goldens unchanged. Every relic candidate gets a screening sim: relics carry no stats, so the budget cut kept a few by pool order |
 | BIS-oh-unique | merged | `fff0ac1ec` | goldens unchanged. A unique main hand can go in the off hand |
 | BIS-caps | merged | `a1d0a9079` | goldens unchanged. Sent back: default-on caps put every DPS search on the slow full-rescore path (`capGain` fixed it) |
 | BIS-caps-hit | merged | `6c79a6a62` | goldens unchanged. Hit floors count per-spell hit talents (Shadow Focus, Arcane Focus, Elemental Precision); the review added Serpent Sting |
-| BiS presets at Normal | | `f67242686` | 140 runs in 4.7 h on `fc3b96070`, then the 15 arcane, elemental and shadow runs on `6c79a6a62`; 21 runs warn a cap 1 to 23 short |
-| wave L cross-review 2 | | `ff0920a96` | 2 bugs: wands and physical ranged weapons took the relic path; the unreachable-cap fallback replaced seeds that met every floor |
+| BiS presets at Normal | direct | `f67242686` | 140 runs in 4.7 h on `fc3b96070`, then the 15 arcane, elemental and shadow runs on `6c79a6a62`; 21 runs warn a cap 1 to 23 short |
+| wave L cross-review 2 | direct | `ff0920a96` | 2 bugs: wands and physical ranged weapons took the relic path; the unreachable-cap fallback replaced seeds that met every floor |
 | BIS-caps-race | merged | `202558043` | goldens unchanged. One gear search per racial finalist, its floors priced on its own traits. P2 Normal batch: Mighty Troll 12065, Stormweaver Troll 5853, every floor met (were Orc 10422, Draenei 5219); idle job wall 76 → 120 s and 28 → 48 s |
 
 | TE-ABILITY | merged | `ea9f1a150` | 37 suites' ability blocks promoted in `5b61e0488`, no metric moved; contract changes `c4c568cde` |
 | TE-REPLAY | merged | `a4515aecb` | goldens unchanged; fixture recaptured, simval 508 → 1060 checks; module `c5d0adc`. The unarmed warrior's white swings run 2 over the sim's, record dropped (follow-up) |
-| wave M cross-review | | `89d8dde7d`, `345c883aa` | 2 bugs: white swings didn't count glances as landed hits (Fury's main hand read 98% crits); dot ticks that aren't hits left their damage out of the block (Smite 14%), now an `amount` field. Also the replay's attack-type check, 1078 checks |
+| wave M cross-review | direct | `89d8dde7d`, `345c883aa` | 2 bugs: white swings didn't count glances as landed hits (Fury's main hand read 98% crits); dot ticks that aren't hits left their damage out of the block (Smite 14%), now an `amount` field. Also the replay's attack-type check, 1078 checks |
 
 | TE-GUARD | merged | `fb2338fda` | 5 goldens promoted in `a117b44fb`: Unholy +14.9% (Scourge Strike taken), Frost mage's AoE rows (Blizzard 42939 → 42940), Enhancement's Windfury rows, BM -0.3% (Aimed Shot), Blood Tank's Blood Aggro as its own row; `db.json` regenerated, unchanged |
 | TE-DAMAGE | merged | `7b15c738c` | goldens unchanged; module `dcf2591`, server rebuilt 17:30-17:37; 344 checks over 66 live records, no mismatch. Review fixed dot crits never compared and a tolerance widened both ways |
 | PAR-FU-3 | merged | `472ad8b4c` | goldens unchanged: the warrior's +2 is Battle Stance's 10% armor penetration, which the sim has and the replay model lacked; the unarmed warrior's record is back, simval 1114 checks |
 | PERF-FU | merged | `e025c1fe8` | results bit-identical; captured P2 Normal jobs: Mighty 136 → 56 s, Stormweaver 52 → 40 s; the harness's full run about 50 min, raid DPS at Normal skipped by default |
-| wave N cross-review | | `887e9152a` | no bugs: the golden-mismatch hint said `make update-tests`; docs on where `damage` records go; module long lines (`9dfacf6`) |
+| wave N cross-review | direct | `887e9152a` | no bugs: the golden-mismatch hint said `make update-tests`; docs on where `damage` records go; module long lines (`9dfacf6`) |
 | TE-TALENTS | merged | `8ceb8e61a` | 21 Talents-* rows in 20 suites promoted in `9d300299a`, no existing row moved; guard over 615 implemented talents, 12 allowlisted |
 | TE-GOLDCHAR | merged | `675b0f90a` | goldens unchanged; module `ab68bfd`, server rebuilt 23:44-23:49 (2026-10-01); 32 setups live, 9 mismatches dropped (fixture README) |
-| wave O cross-review | | `07f1aa576` | 2 bugs: the talent export's rank spells were the trees' compressed lists; 4 trees had wrong rank spells (Sudden Death's 2 and 3 swapped, so WarriorArms ran 2/3 on the server; re-recorded live), now held to the spelldump |
+| wave O cross-review | direct | `07f1aa576` | 2 bugs: the talent export's rank spells were the trees' compressed lists; 4 trees had wrong rank spells (Sudden Death's 2 and 3 swapped, so WarriorArms ran 2/3 on the server; re-recorded live), now held to the spelldump |
 | TE-SWEEP | merged | `b9930fa63` | goldens unchanged; module `fbb859e` (`maxPower`), server rebuilt 12:53-13:00 (2026-10-02); 685 steps on 30 paths: 111 agree, 560 move no field, 14 dropped (fixture README) |
-| wave P cross-review | | `3d3b6be3c` | no bugs: three drop reasons corrected; the trim now keeps the old fixture's records of paths a rerun skips |
+| wave P cross-review | direct | `3d3b6be3c` | no bugs: three drop reasons corrected; the trim now keeps the old fixture's records of paths a rerun skips |
 | PAR-FU-4 | merged | `c4ddff0de` | TestShadow +5.5% (Average-Default); module `06f0cb5`; live e2e ticks match the sim |
 | PAR-FU-5 | merged | `0d49cc58c` | Arms -0.56%, Fury -0.17%, Prot Warrior -0.12%, Prot Pal -0.06%, Assassination's Turn the Tables row -1.3%; WarriorFury and Arms re-recorded (Fury's legal 71 points) |
 | PAR-FU-6 | merged | `40eb38ce9` | MM +0.18%, SV -0.001%, Affliction -0.24%; the three hunters re-recorded; Affliction's optimizer hit floor 368 to 289 |
 | PAR-FU-7 | merged | `a6c814732` | Resto Shaman HPS -4.4%, Elemental -0.009%, feral suites' ranged AP stat only; ShamanElemental and DruidBalance re-recorded |
-| wave Q cross-review | | `b595e8c0c` | no bugs past the e2e's always-passing 71167 check (module `d0699fa`); every golden-character and sweep drop is gone |
+| wave Q cross-review | direct | `b595e8c0c` | no bugs past the e2e's always-passing 71167 check (module `d0699fa`); every golden-character and sweep drop is gone |
 | BIS-outclassed | merged | `9df3b9044` | goldens unchanged. Ret pools 2.6k–4.6k to 1.2k–3.2k candidates; slow-suite gains move both ways, Fury P1 Normal −45 |
-| wave R cross-review | | | no bugs, nothing changed; the glossary's "Outclassed gear" reworded at close-out |
+| wave R cross-review | no change | | no bugs, nothing changed; the glossary's "Outclassed gear" reworded at close-out |
 | EC-SWEEP2 | merged | `053eed5e8` | goldens unchanged; 6 talent paths rerun live 10:18–10:23 (146 records); 7 steps dropped (fixture README): Mace Specialization on daggers, Blood-Gorged, Frigid Dreadplate's ranged, Arctic Winds, 3 fire-crit |
 | EC-STACK | merged | `6fa263419` | goldens unchanged; 113 server spell groups; 14 real mismatches allowlisted, e.g. Power Infusion with Arcane Power, Bestial Wrath and Enrage with Hysteria, poisons with the crit debuffs |
 | EC-TIMING | merged | `015036135` | goldens unchanged; module `9557bed`, server rebuilt 10:41–10:46; 1513 checks over 192 live records; known mismatches (fixture README): some costs, Bloodlust tick rounding, the hunter's 10% ranged haste |
-| wave S cross-review | | `b9af4a09f` | 3 bugs fixed: known timing mismatches now name their passes (an unneeded one fails); the bare mana regen ones were the replay's own raid buff; the default `run.sh` skips TestSimvalTiming (module `dc14202`) |
+| wave S cross-review | direct | `b9af4a09f` | 3 bugs fixed: known timing mismatches now name their passes (an unneeded one fails); the bare mana regen ones were the replay's own raid buff; the default `run.sh` skips TestSimvalTiming (module `dc14202`) |
 | EC-SHEET | merged | `1d217be59` | goldens unchanged; 1565 checks over 131 records of 32 bots; 38 drops (fixture README): ArmorDamageModifier armor, Rogue Endurance, block value from strength, Moonkin armor and AP, Blood-Gorged ArP, parry without the Parry spell, `.modify hp`'s stale max health, HunterMM's Trueshot Aura |
 | EC-AOE | merged | `beafed015` | goldens unchanged; `TestSimAOESpells`, 62 spells, 13 allowlisted, e.g. Holy Wrath and Mind Sear uncapped, guardian casts capped, the hunter pet's Swipe and Berserk Mangle single-target |
 | EC-SPELLMOD | merged | `6764063ac` | goldens unchanged; module `5309b16`; sweep live 13:22–13:40, 2251 probes over 30 paths: 448 steps agree, 377 move nothing, 253 not compared, 93 disagree (102 checks dropped, fixture README): % cost mods 1 high, cost talents missing (Benediction, Efficiency, Focused Rage, Mental Quickness, Shadow Focus), crit talents missing (Annihilation, Vicious Strikes, Tidal Mastery) or ×0.01 (Improved Searing Pain), Nature's Swiftness skipping heals |
 | EC-THREAT | merged | `689d8c91e` | goldens unchanged; module `3cd16f5`; the worldserver the user rebuilt at 16:18 (the permission check refused the agent's rebuild; ac-db-import not rerun, so `.simval threat` lacks its help row); live 16:55–17:05, 114 records, 135 mismatches allowlisted for EC-THREAT-FIX (fixture README): `SpellLevel` bonus, unmodified and split flats, missing `spell_threat` rows, Dire Bear, Unholy Presence, Shadowform, Fanaticism never applied; a core `ServerMailReward` crash at 17:02 (bot relog) restarted the worldserver and left orphan bot Svtleadhrneb (guid 540540; removed 18:06, the user's OK) |
-| wave T cross-review | | `9b134ed60` | no bugs; a health-cost timing record (Bloodrage) parses; the damage, timing and threat replays share one sim setup and aura lookup; the golden-character check builds its sim once; the sweeps share `sweepPrepare` (module `25d88f9`) |
+| wave T cross-review | direct | `9b134ed60` | no bugs; a health-cost timing record (Bloodrage) parses; the damage, timing and threat replays share one sim setup and aura lookup; the golden-character check builds its sim once; the sweeps share `sweepPrepare` (module `25d88f9`) |
 | EC-COST-FIX | merged | `e382cdcda` | 26 goldens promoted in `41b854121` (Feral +1.9%, Elemental +1.4%, Arcane −0.8% on the default rows; up to 8% on mana-starved NoBuffs rows); the server's cost arithmetic in `sim/core/cost.go`, the missing cost talents and bases; every cost drop gone |
 | EC-TIMING-FIX | merged | `b0bb26462` | 12 goldens promoted in `5c5510b26`, each under 0.7% but Balance's Dreamstate row (−0.44%, its APL wastes Nature's Swiftness on Starfire) and one Disc item row (−4.9%, noise); the hunter's haste was the bot's quiver; Healing Wave's Nature's Swiftness drop stays (Improved Healing Wave) |
 | EC-SHEET-FIX | merged | `81e87739d` | 33 goldens promoted in `f68a104d5`, most in character stats only; Blood +0.4%; `db.json` regenerated (63 items' bonus armor); Blood-Gorged, Mace Specialization and Holy Specialization's sheet crit stay dropped as sheet artifacts; RogueCombat's new Endurance step dropped until a live rerun |
 | EC-STACK-FIX | merged | `6fa25a10f` | 5 goldens promoted in `a3753780e`: Balance −1.75% (Starfall's splash skips the star's target), Feral Tank multi-target +4% (Berserk Mangle), Ret multi-target −0.04% (Holy Wrath capped), BM's aura key; Master Poisoner's pairs not a sim gap |
-| wave T2 cross-review | | `f6b05f9c6` | 1 bug: spells the sim registers without a school (Rapid Fire, Icy Veins, Water Elemental) lost their school cost auras; pets got the player-only block value and bonus armor; Permafrost at 1–2 points; hunter and mage goldens promoted with it; server-parity gained T2's facts |
+| wave T2 cross-review | direct | `f6b05f9c6` | 1 bug: spells the sim registers without a school (Rapid Fire, Icy Veins, Water Elemental) lost their school cost auras; pets got the player-only block value and bonus armor; Permafrost at 1–2 points; hunter and mage goldens promoted with it; server-parity gained T2's facts |
 | EC-THREAT-FIX | merged | `b3ba8bd08` | 35 goldens promoted in `46c5c82da`, TPS only: Retribution −28% (Fanaticism), Shadow −30% (Shadowform), Protection Warrior −10.8%, Feral Tank −5.6%, DKs −1 to −7.7%, DPS classes +0.3 to +3.7% (each cast's level bonus); `knownThreatMismatches` empty, the `spell_threat` rows generated |
 | EC-STRIKES | merged | `13508d09b`, live stage `a4bacf0fa` | module `c7abf1f`, live fixes `c18ce5b`; the server the user rebuilt at 13:50 on 2026-10-04 (the permission check refused the orchestrator's rebuild); `strikes.jsonl` 102 records (live 16:23–16:26 after 7 earlier runs), 534 checks over 87 pass, 119 known mismatches: cat and bear form weapon damage, Felguard weapon damage, the Imp's Firebolt crit ×2 (server ×1.5), Ghoul Frenzy's cadence, pet base stats and regen, Force of Nature's treant; review found the hunter pet probed before its scaling auras fill |
 | EC-GEAR | merged | `42c62739e` | module `df3bf6d` (`.simval enchant`, `.simval gem`); `goldchar.jsonl` recaptured in full gear (live 15:05–15:23, 32 setups, 1996 checks); EC-SHEET's capture faults fixed; new drops, real sim gaps: Lightweave's +1 spirit, druid weapon feral AP 1 short, Stoneskin Gargoyle's defense skill, crit damage bonuses (aura 163) summed for spells, DK magic spells' 1.5 crit base |
 | EC-MOBS | merged | `0942e51c4` | module `448897a`; dummies 999004–999008 and `DungeonScale.env`; `mobs.jsonl` 128 lines (live 15:30–15:37), 49 agree, 58 move nothing, 5 dropped as sim gaps: Elixir of Demonslaying (+105 AP, sim 265), the Undead Slaying set multiplying, versus AP reaching spells and scaled by weapon percent, Predatory Strikes taking weapon enchants |
 | EC-BUFFS | merged | `d989f3d83` | module `1e2fdcd`; 65 states agree; 2 pairs dropped as sim gaps: Curse of Weakness + Vindication, Insect Swarm + Scorpid Sting |
 | PERF-COST | merged | `e1187f470` | goldens byte-identical; loaded A/B: Combat Rogue −10 to −11%, the raid −2.8% at 100 iterations |
-| wave V cross-review | | `36ec0d8a8` | no bugs; stale docs fixed (the default e2e run's skips, the fixture README's drop rule); server-parity gained the threat rules |
-| wave W cross-review | | `6b235e3a4` | 1 bug: the strike and tick replays lost their forced hit and crit after the first attempt (no capture affected), so EC-MOBS' no-crit workaround went; testing.md and the fixture READMEs caught up with EC-MOBS |
+| wave V cross-review | direct | `36ec0d8a8` | no bugs; stale docs fixed (the default e2e run's skips, the fixture README's drop rule); server-parity gained the threat rules |
+| wave W cross-review | direct | `6b235e3a4` | 1 bug: the strike and tick replays lost their forced hit and crit after the first attempt (no capture affected), so EC-MOBS' no-crit workaround went; testing.md and the fixture READMEs caught up with EC-MOBS |
 | EC-FIGHT | merged | `9178fe553` | module `2138637`; 32 golden-setup fights (90 s, live 2026-10-04 on the worldserver rebuilt at 20:33, rev 15282384e), 106 KB, replayed by `TestFightReplays`: 2047 checks, 45 dropped as sim gaps (see Current wave); CRLF fix `c3257777a` |
-| wave X cross-review | | `687228a1a` | 3 bugs: power gain totals hid wrong gain sizes (Master of Elements), Hot Streak's sim-only counter merged into Hot Streak, refreshes widened uptime slack; module comment `c0d3ef9`; the world-tick claim confirmed in source, `spell-data-and-timing.md` corrected |
+| wave X cross-review | direct | `687228a1a` | 3 bugs: power gain totals hid wrong gain sizes (Master of Elements), Hot Streak's sim-only counter merged into Hot Streak, refreshes widened uptime slack; module comment `c0d3ef9`; the world-tick claim confirmed in source, `spell-data-and-timing.md` corrected |
 | EC-RECHECK | merged | `512eeaeb0` | module `f72dbf7`; simval, damage, goldchar, buffs (Expose Armor added) and mobs records and all 32 fights recorded again on X2's build: nothing compared moved; fights 2049 checks, 42 dropped (3 new: Rake's crit mean, Brain Freeze, Vindication's misses; 6 gone); a spelldump recapture, report only: 32 spells moved, one sim gap (T8 4-piece) |
 | EC-COVER | merged | `aaec6476c` | module `ee32ca5`; the 10 never-seen talents all show; dropped: Improved Devotion Aura, Improved Imp, Enhancing Totems' Flametongue, Berserk's costs (server `27e096204`); the Infernal's raid buffs allowlisted |
 | EC-PROBES | merged | `62371bfc0` | module `0676faa`; `.simval combopoints` and `.simval engage`; Rupture and Slice and Dice at 1 to 5 points and assist threat over three creatures agree; the five threat `recapture` drops are back |
-| wave X2 cross-review | | `e7902de96` | no bugs; a stale README line, and `newSweepSim` moved next to its only caller, a test |
+| wave X2 cross-review | direct | `e7902de96` | no bugs; a stale README line, and `newSweepSim` moved next to its only caller, a test |
 | EC-TICK-FIX | merged | `36ed3bdb3` | players on the 10 ms world tick, creatures, pets and area dots on the map update with a creature aura's early first tick; the 7 `world tick` drops gone, a new `map update length` one; Ignite's and Righteous Vengeance's instant-cast delay off a world-tick-stale clock; all 37 suites move (Fire +7.6%, Subtlety +4.1%) |
 | EC-CORE-FIX | merged | `2c609daa4` | X2's spelldump; summed crit damage, DK magic crit base, procs on ticks, cost order and rune costs, debuffs, gear and versus-creature AP, Gift of Arthas, meta activation; 34 suites move (Feral -2%, tanks' DTPS -7 to -13%) |
 | EC-PET-FIX | merged | `b1bf58d68` | create stats, scaling, regen and buff immunity from the server; per-pet weapons, the Imp's crit, Ghoul Frenzy, Improved Imp at every rank; 24 pet suites move (Blood Tank -5.9%, Demonology +2.0%) |
 | PERF-THREAT | merged | `1616f7ab9` | goldens byte-identical; Elemental's bookkeeping 2.7% → 1.5% of its profile |
-| wave Y cross-review | | `91bc1a112` | the rune weapon's strikes lost the DK's meta crit (TestBlood -0.1%); Rend's tick crit drop back; the Fire cap test made robust |
+| wave Y cross-review | direct | `91bc1a112` | the rune weapon's strikes lost the DK's meta crit (TestBlood -0.1%); Rend's tick crit drop back; the Fire cap test made robust |
+| EC-THREAT-FIX2 | merged | `f5ecd941b` | module `77e03b5`; heal threat as assist threat, `ATTR1_NO_THREAT`, `SPELL_EFFECT_THREAT`, per-tick and chain bonuses, school auras, 41 self buffs' assist threat, summons at full health; `threat.jsonl` re-recorded (147 records); TPS moves in 34 suites (Disc +1659%, Holy +2180%, Feral Tank +1.4%) |
+| EC-MELEE-FIX | merged | `0f92334e2` | the rune model, Rend, Flurry, Vindication, Prey on the Weak, Hemorrhage, Honor Among Thieves, Frost Vulnerability, Blade Barrier, Improved Devotion Aura, Fury's 71 points; 11 suites move (Blood -3.6%, Combat -1.9%, Arms -1.7%) |
+| EC-NATURE-FIX | merged | `69af7c189` | module `7e89c62`; Eclipse, Vengeance, Rake, form weapons, feral AP, Lava Lash, Enhancing Totems, Improved Healing Wave, the feral tank's enchants, Force of Nature's 33831, Balance's 71 points; 6 suites move (Balance -3.6%, Enhancement +2.4%, Feral Tank DTPS -6.4%) |
+| EC-ARCANE-FIX | merged | `2e45823ad` | Torment the Weak, T8, Brain Freeze, Enduring Winter, Master of Elements and Burnout, Blizzard, Ranged Weapon Specialization, Hunter's Mark, Thrill of the Hunt, Explosive Decoy; 7 suites move (Frost +7.7%, MM +0.1%) |
+| PERF-Y | merged | `133b6b914` | goldens byte-identical; Gift of Arthas' per-hit lookups cached per spell (Elemental's `flatDamageTaken` 7.1% → 1.4% of its profile) |
+| wave Z cross-review | direct | `54defd5ad` | serverdata as gen_serverdata emits it (Vindication rank 1 and Burnout were missing); the pet scaling tick cheaper (Hunter 3.4% → 2.1%); goldens unchanged |
 
 Later WIs are added as their wave starts.
 
