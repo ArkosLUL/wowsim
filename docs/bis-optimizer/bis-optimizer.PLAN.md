@@ -1616,3 +1616,32 @@ Slow suite, one run a side: 374 → 338 s. Optimizer wall per case:
 
 Search and Effects drop 7–13%; `ret_p1`'s wall holds because it sims 6% more. Normal saves 5–18%, except
 Prot Paladin's +10% on 3% fewer sims, slower in the loaded run too.
+
+### BIS-ALTS (wave Z2)
+
+The user's call (2026-10-06): BiS plus 5 alternatives that are each slot's next best wearable items, since the
+best is often unavailable in a raid. `runnersUp` (`search.go`) ranks only `se.opts[slot]`, the options pruning
+keeps as possibly a slot's best 2 or 3, so a good item that can't win is never reported. In dataset `abc74401`
+(sim `0ccf8aa60`, phase 2, Normal), Agony's (Affliction) main hand reports Bladetwister 45484, Fang of Oblivion
+45607 and Dreambinder 45934, none with spell power, at ranks 3–5, and leaves out six Raid25 caster weapons:
+Soulscribe 45527, The Lifebinder 45479, Runescribed Blade 45437, Rapture 45234 and Intensity 45171 at 550 spell
+power, The Turning Tide 40396 at 520. 231 of the dataset's 1708 alternatives sit over 300 DPS behind their pick; ranks 1
+are sound (an upper bound never prunes the winner). The export:
+`C:\Users\boss2\AppData\Local\Temp\claude\g--DevStuff-GitHub-wowsimwotlk\bis-weaponpair-evidence\batch-stage2-0ccf8aa60.json`.
+
+- The neighborhood's alternatives rank over every priced candidate, `se.all[slot]`. The search's forced
+  runners-up (`forcedRunnersUp`) keep `se.opts`, so picks don't move; report any that do.
+- Unpriced items: `candBounds` keeps an item out of `se.all` when its family is unpriced or it `NeedsSim`
+  without a measured residual, so it can never be an alternative. Measure whether that drops real runners-up
+  (trinkets first); report it, and fix it only if cheap and in scope.
+- Out of scope: the surrogate has no main-hand/off-hand pair correction (`pairSlots` covers rings and trinkets
+  only), so a weapon-type talent covering both hands (Close Quarters Combat, Hack and Slash, the warrior's
+  weapon specializations) is priced per hand. No pick in `abc74401` changed for it.
+
+**Tests:** a fake-`Evaluator` case where the next best item lies outside `se.opts` and is reported; a caster
+pool whose alternatives all carry spell power; no reported alternative beaten, by the surrogate's trial, by an
+unreported priced item. **Measure** (in As built): candidates ranked and sims per slot before and after, and
+the slow suite's picks and wall on a loaded machine.
+
+Golden-neutral. **Owns:** `sim/optimizer/search.go`'s `runnersUp` and its callers, `neighborhood.go`,
+`surrogate.go`'s pricing gate if the unpriced fix is in scope, their tests.

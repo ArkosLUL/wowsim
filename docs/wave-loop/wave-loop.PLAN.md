@@ -79,7 +79,7 @@ G = changes goldens. FS = runs all 37 suites.
 | X2 | EC-RECHECK (live) · EC-COVER (live) · EC-PROBES (C++, live) | ✔ |
 | Y | EC-TICK-FIX (G, FS) · EC-CORE-FIX (G, FS) · EC-PET-FIX (G) · PERF-THREAT | ✔ |
 | Z | EC-THREAT-FIX2 (G, FS, live) · EC-MELEE-FIX (G) · EC-NATURE-FIX (G, live) · EC-ARCANE-FIX (G, live) · PERF-Y | ✔ |
-| Z2 | EC-THREAT-FIX3 (G, FS, C++, live) · EC-CORE-FIX2 (G, FS) · EC-CLASS-FIX (G, live) · PERF-Z | ✔ |
+| Z2 | EC-THREAT-FIX3 (G, FS, C++, live) · EC-CORE-FIX2 (G, FS) · EC-CLASS-FIX (G, live) · PERF-Z · BIS-ALTS | ✔ |
 
 F2 is an inserted wave, not a fifth item in F: the core swing and cast fixes of PAR-P7-0c have to land
 before the class items in G, a class item can't build on a core fix merging in its own wave, and F already
@@ -157,7 +157,9 @@ code stages run first and the live stages after it.
 - Wave: Z, landed (master fast-forwarded to this close-out). Next: Z2.
   Item notes: `G:\DevStuff\GitHub\.wave-loop\{ec-threat-fix2,ec-melee-fix,ec-nature-fix,ec-arcane-fix,perf-y}-tmp`.
   Prod runs X's `25cb9dddc` (no `rollback-q` image: its layers were gone), without Y's and Z's sim changes.
-- Open: Z2's items and the deferred BiS chain.
+- Open: Z2's items and the deferred BiS chain. Timing a 25-player raid with healers and tanks (perf's
+  `optimizer/quick/raid25_raiddps_p1`, `0ccf8aa60` against an older commit): `BenchmarkSimulate`'s raid has
+  neither, and a BiS batch took 107 min against about 60 (contended); the user's call: 2026-10-07.
   Closed as not sim gaps: the sheet fields the server shows raw (per-school crit, Blood-Gorged, Mace and Holy
   Specialization), which the fixture README explains.
 - Deferred (the user's calls, 2026-10-02, 10-03 and 10-05), each only on the user's go-ahead:
