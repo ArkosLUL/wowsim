@@ -434,8 +434,8 @@ dps_results: {
 dps_results: {
  key: "TestArcane-AllItems-KirinTorGarb"
  value: {
-  dps: 8989.37769
-  tps: 5532.22609
+  dps: 9022.76513
+  tps: 5551.13911
  }
 }
 dps_results: {
@@ -791,22 +791,22 @@ dps_results: {
 dps_results: {
  key: "TestArcane-Settings-Troll-p3_arcane_alliance-Arcane-arcane-NoBuffs-LongMultiTarget"
  value: {
-  dps: 5725.81716
-  tps: 4944.9293
+  dps: 5141.42558
+  tps: 4594.29436
  }
 }
 dps_results: {
  key: "TestArcane-Settings-Troll-p3_arcane_alliance-Arcane-arcane-NoBuffs-LongSingleTarget"
  value: {
-  dps: 5725.81716
-  tps: 3553.75084
+  dps: 5141.42558
+  tps: 3203.11589
  }
 }
 dps_results: {
  key: "TestArcane-Settings-Troll-p3_arcane_alliance-Arcane-arcane-NoBuffs-ShortSingleTarget"
  value: {
-  dps: 7351.10757
-  tps: 4402.12488
+  dps: 6611.36254
+  tps: 3958.27786
  }
 }
 dps_results: {
@@ -833,22 +833,22 @@ dps_results: {
 dps_results: {
  key: "TestArcane-Settings-Troll-p3_arcane_alliance-Arcane-arcane_aoe-NoBuffs-LongMultiTarget"
  value: {
-  dps: 20960.10591
-  tps: 13043.32164
+  dps: 20948.59541
+  tps: 13036.41535
  }
 }
 dps_results: {
  key: "TestArcane-Settings-Troll-p3_arcane_alliance-Arcane-arcane_aoe-NoBuffs-LongSingleTarget"
  value: {
-  dps: 1259.40648
-  tps: 844.42009
+  dps: 1248.01201
+  tps: 837.58341
  }
 }
 dps_results: {
  key: "TestArcane-Settings-Troll-p3_arcane_alliance-Arcane-arcane_aoe-NoBuffs-ShortSingleTarget"
  value: {
-  dps: 2336.31658
-  tps: 1413.81793
+  dps: 2320.72382
+  tps: 1404.46228
  }
 }
 dps_results: {
