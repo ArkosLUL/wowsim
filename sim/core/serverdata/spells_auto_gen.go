@@ -2230,6 +2230,17 @@ var spells = []Spell{
 			{Effect: 6, Aura: 4, BasePoints: 9, DieSides: 1, DamageMultiplier: 1},
 		},
 	},
+	// Force of Nature
+	{
+		ID: 33831, Family: 7, FamilyFlags: [3]uint32{0, 0x200}, SchoolMask: 8, Flags: FlagBinary | FlagResetsAutoAttack | FlagHasteGCD | FlagTargetsArea,
+		Attributes: [8]uint32{0x10000, 0x10000400, 0x80000, 0x20000, 0, 0, 0x400}, AttributesCu: 0x102000,
+		GCDMs: 1500, GCDCategory: 133, CooldownMs: 180000, DurationMs: 30000, MaxDurationMs: 30000,
+		ProcChance: 101, ManaCostPct: 12, SpellLevel: 50, BaseLevel: 50,
+		Effects: [3]Effect{
+			{Effect: 28, BasePoints: 2, DieSides: 1, DamageMultiplier: 1, MiscValue: 1964, MiscValueB: 1562},
+			{Effect: 6, Aura: 226, AmplitudeMs: 200, DamageMultiplier: 1},
+		},
+	},
 	// Kill Command
 	{
 		ID: 34026, Family: 9, FamilyFlags: [3]uint32{0, 0x800}, SchoolMask: 1, Flags: FlagPositive,
@@ -9012,17 +9023,6 @@ var spells = []Spell{
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 2999, DieSides: 1, DamageMultiplier: 1},
 			{Effect: 6, Aura: 87, BasePoints: 1, DieSides: 1, DamageMultiplier: 1, MiscValue: 126},
-		},
-	},
-	// Force of Nature
-	{
-		ID: 65861, SchoolMask: 8, Flags: FlagBinary | FlagResetsAutoAttack | FlagHasteGCD | FlagTargetsArea,
-		Attributes: [8]uint32{0x10000, 0x10000400, 0x80000, 0x20000, 0, 0, 0x400}, AttributesCu: 0x102000,
-		GCDMs: 1500, GCDCategory: 133, CooldownMs: 180000, DurationMs: 30000, MaxDurationMs: 30000,
-		ProcChance: 101, ManaCostPct: 12, SpellLevel: 50, BaseLevel: 50,
-		Effects: [3]Effect{
-			{Effect: 28, BasePoints: 2, DieSides: 1, DamageMultiplier: 1, MiscValue: 36070, MiscValueB: 1562},
-			{Effect: 6, Aura: 226, AmplitudeMs: 200, DamageMultiplier: 1},
 		},
 	},
 	// Freezing Slash

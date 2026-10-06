@@ -392,6 +392,7 @@
   {"class":"shaman","tree":"Enhancement","fieldName":"shamanisticRage","row":8,"maxPoints":1,"rankSpells":[30823]},
   {"class":"shaman","tree":"Enhancement","fieldName":"maelstromWeapon","row":9,"maxPoints":5,"rankSpells":[51528,51529,51530,51531,51532]},
   {"class":"shaman","tree":"Enhancement","fieldName":"feralSpirit","row":10,"maxPoints":1,"rankSpells":[51533]},
+  {"class":"shaman","tree":"Restoration","fieldName":"improvedHealingWave","row":0,"maxPoints":5,"rankSpells":[16182,16226,16227,16228,16229]},
   {"class":"shaman","tree":"Restoration","fieldName":"totemicFocus","row":0,"maxPoints":5,"rankSpells":[16173,16222,16223,16224,16225]},
   {"class":"shaman","tree":"Restoration","fieldName":"healingGrace","row":1,"maxPoints":3,"rankSpells":[29187,29189,29191]},
   {"class":"shaman","tree":"Restoration","fieldName":"tidalFocus","row":1,"maxPoints":5,"rankSpells":[16179,16214,16215,16216,16217]},

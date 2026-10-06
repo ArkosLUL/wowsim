@@ -40,8 +40,8 @@ Rules, held by `TestFightCycles`:
 cut by `simval fight -trim`. Kept: the header and zone lines, the player's and its minions' unit lines, what they
 did from the fight's start to its end to themselves or the dummy but a spell's plain `HIT` target result, a heal, a
 summon or a cast other than the bot's, and before the start only their auras going on and off (what was up at the
-pull, Sniper Training included). The 32 were fought on 2026-10-05 against the worldserver build of 16:52 (rev
-3d89793c7): 106 KB.
+pull, Sniper Training included). The 32 were fought against the worldserver build of 16:52 (rev 3d89793c7), on
+2026-10-05; DruidFeralTank again on 2026-10-06, wearing its gear set's five enchants: 106 KB.
 
 ## Left out
 
@@ -65,15 +65,9 @@ table's cause:
   on the sim's: Serpent Sting's 4th tick beats the next cast's landing about half the cycles on the server, every
   cycle in the sim.
 - **Frost Vulnerability**: rolls spell hit on the server and missed; the sim's always lands.
-- **Vengeance**: the sim's Insect Swarm ticks crit for Vengeance's doubled bonus, the server's for the plain 1.5 with
-  the meta gem.
-- **Eclipse**: the sim's Eclipse (Solar) procs on any landed Starfire, the server's on a crit only (spell_proc -48516
-  HitMask 2).
 - **Master of Elements**: the sim refunds 25% of a crit spell's base cost (30% less Burnout's 5%, which the server
   burns apart, unlogged) and nothing for a crit without a cost of its own (Living Bomb's explosion, 215 on the
   server) or a clearcast one; the server refunds 30% of each (`spell_mage_master_of_elements`).
-- **Rake**: its first hit is about 0.65 of the sim's in every feral fight, the boss armor's cut, which the sim leaves
-  out as for a bleed.
 - **Torment the Weak**: the sim always adds its 12%; the server only against a snared or slowed target, and the boss
   dummy is immune to snares (creature_immunities -361).
 - **Brain Freeze**: the sim's Fireball! never expires; the server's (57761) lasts 15 s, so a later proc puts it on
@@ -86,7 +80,6 @@ table's cause:
 - **Prey on the Weak**: the sim keeps its crit bonus up; the server's 58670 lasts 10 s and the talent's 2 s check puts it
   back only once gone (and only while the rogue's health percent is above the target's), so it's down about 2 s in 12.
 - **Hemorrhage**: the sim leaves its debuff out with fewer than two raid members; the server puts it on.
-- **Lava Lash**: the server's hits about twice the sim's, which halves it as an off-hand hit (OHWeaponDamage).
 - **Rend**: with the +35% for a target above 75% health on both sides, the sim's ticks run 3% (Protection: 286 against
   278) to 11% (Arms, crits too) over the server's; cause not found.
 
@@ -95,10 +88,6 @@ table's cause:
 | DeathknightFrost | 51714 | count | Frost Vulnerability |
 | DeathknightFrost | 51714 | misses | Frost Vulnerability |
 | DeathknightFrostUH | 51714 | misses | Frost Vulnerability |
-| DruidBalance | 48468 | tick crit mean | Vengeance |
-| DruidBalance | aura 48517 on self | uptime | Eclipse |
-| DruidBalancePhase3 | 48468 | tick crit mean | Vengeance |
-| DruidFeral | 48574 | hit mean | Rake |
 | HunterMM | 49001 | ticks | map update length |
 | MageFire | energize 29076 mana | gain sizes | Master of Elements |
 | MageFrost | aura 44549 on self | applications | Brain Freeze |
@@ -114,8 +103,6 @@ table's cause:
 | RogueCombat | aura 58670 on self | uptime | Prey on the Weak |
 | RogueSubtlety | aura 48660 on target | applications | Hemorrhage |
 | RogueSubtlety | aura 48660 on target | uptime | Hemorrhage |
-| ShamanEnhancement | 60103 | crit mean | Lava Lash |
-| ShamanEnhancement | 60103 | hit mean | Lava Lash |
 | WarriorArms | 47465 | tick crit mean | Rend |
 | WarriorArms | 47465 | tick hit mean | Rend |
 | WarriorProtectionWarrior | 47465 | tick hit mean | Rend |

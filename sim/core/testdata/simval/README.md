@@ -51,20 +51,20 @@ query in that test's doc comment when the server's rules change.
 ## Dropped records
 
 `goldchar.jsonl`, each in `droppedGoldchar` (`tools/simval/goldchar_test.go`). A named check keeps its record
-and is only logged; the others are removed.
+and is only logged; the others are removed. A setup in `goldcharRerecord` changed its enchants after the capture
+and replays with those its record wears until a rerun replaces it.
 
 | Setup | Record | Check | Why |
 |---|---|---|---|
 | DeathknightBlood | info | armor penetration % | the sheet field is the aura's raw sum; the server applies Blood-Gorged to white swings and five strikes by its class mask, and the sim does the same per spell (`applyBloodGorged`), so nothing reaches `BonusArmorPenPct` |
 | DeathknightBloodTank | info | dodge %, parry % | Rune of the Stoneskin Gargoyle's +25 defense is skill on the server, which dodge and parry take undiminished; the sim adds it as defense rating, which diminishes |
 | DruidBalance, DruidBalancePhase3 | info | arcane spell crit % | spell specific crit in the sim (Improved Moonfire; Nature's Majesty and Dreamwalker 4pc on Starfire), spell mods on the server |
-| DruidBalancePhase3, DruidFeralApl | info | attack power | weapon feral AP: the server truncates dps × 14, then takes 767 off (983, 3175); the sim floors (dps − 54.8) × 14 (982, 3174) |
 | MageFire, MageFrostFire | info | arcane spell crit % | spell specific crit in the sim (Khadgar's Regalia 4pc, World in Flames), spell mods on the server |
 | WarlockDestruction | info | fire spell crit % | Devastation: spell specific crit in the sim, a spell mod on the server |
 
 `talents.jsonl`, each in `droppedSweep` (`tools/simval/talents_test.go`). Records stay; a dropped step (empty field)
-or field is only logged. A path in `sweepRerecord` changed its items or auras after the capture and replays as its
-records stood until a rerun replaces them.
+or field is only logged. A path in `sweepRerecord` changed its items, auras or talent ranks after the capture and
+replays as its records stood until a rerun replaces them.
 
 | Path | Talent | Field | Why |
 |---|---|---|---|
@@ -75,7 +75,6 @@ records stood until a rerun replaces them.
 | RogueCombat | maceSpecialization | armor penetration % | the sheet field counts the aura without a mace; the server's damage applies it only with one (`HasItemFitToSpellRequirements`), as the sim does, and the path carries two daggers |
 | DeathknightBlood | bloodGorged | armor penetration % | the sheet field is the aura's raw sum; the sim applies it per spell by the server's class mask (white swings, Plague, Blood, Heart and Death Strike, Rune Strike) |
 | PaladinProtection | improvedDevotionAura | armor | server +602 (Devotion Aura's armor +50%); the sim improves it only at `ImprovedDevotionAura == 5`, the talent has 3 ranks (`paladin.go`) |
-| ShamanEnhancement | enhancingTotems | spell power | server +21 (Flametongue Totem's 58655 +15%); the sim's `FlametongueTotemAura` is a fixed 144 |
 
 `spellmods.jsonl`, each in `droppedSpellMods` (`tools/simval/spellmods_test.go`). Lines stay; a dropped step (spell 0),
 spell (empty check) or check is only logged.
@@ -83,7 +82,6 @@ spell (empty check) or check is only logged.
 | Path | Talent | Spell | Check | Why |
 |---|---|---|---|---|
 | DruidFeralCat | berserk | 48564 Mangle (Bear) | cooldown | not a sim gap: under Berserk the sim resets the cooldown after each cast instead of zeroing it |
-| ShamanRestoration | naturesSwiftness | 49273 Healing Wave | cast time, cast time before haste | the sim has no Improved Healing Wave (a filler step of the path, so a fix needs a re-record): 3000 ms, the server's 2600 ms before the aura |
 | PriestShadow | shadowFocus | 47585 Dispersion | miss | not a sim gap: Dispersion, a self buff, never rolls to hit; the sim's Shadow Focus hit leaves it out |
 
 `timing.jsonl`, each in `knownTimingMismatches` (`tools/simval/timing.go`, keyed by class, spell, pass and check name;
@@ -105,17 +103,10 @@ then remove the row and the entry.
 logged. None now.
 
 `mobs.jsonl`, each in `droppedMobs` (`tools/simval/mobs_test.go`). Lines stay; a dropped line or check is only logged.
-
-| Bot | State | Dummy | Check | Why |
-|---|---|---|---|---|
-| NightElfDruid | scourgebane | 999004 | attack power | the server's Predatory Strikes reads only the weapon's template, never its enchant: +0 form attack power (sim +28, 20% of 140) |
+None now.
 
 `strikes.jsonl`: dropped records in `droppedStrikesRecords`, known mismatches in `knownStrikesMismatches` (both
-`tools/simval/damage_test.go`, keyed by probe and check; the record stays and only the failure is let through).
-
-| Probe | Check | Dropped or known | Why |
-|---|---|---|---|
-| Cat 48566 Mangle, 48572 Shred, 62078 Swipe; bear 48480 Maul, 48564 Mangle; both passes | min, max | known | the sim's form weapons are 43–66 (cat) and 109–165 (bear); the server's form damage is `min(level, 60)` × 0.85–1.25 × the form's speed (`Player::CalculateMinMaxDamage`): 51–75 and 127.5–187.5 |
+`tools/simval/damage_test.go`, keyed by probe and check; the record stays and only the failure is let through). None now.
 
 ## Spells missing from serverdata
 

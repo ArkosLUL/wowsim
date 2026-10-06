@@ -6,6 +6,7 @@ import (
 	_ "github.com/wowsims/wotlk/sim/common"
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
+	"github.com/wowsims/wotlk/sim/core/stats"
 )
 
 func init() {
@@ -44,6 +45,42 @@ func TestRestoration(t *testing.T) {
 		}),
 		&core.SingleDpsTestGenerator{Name: "Talents-HealingGrace-Average", Request: healingGraceTalentsRequest()},
 	))
+}
+
+// Flametongue Totem's 58655 is a raid area aura, so another party gets Enhancing Totems' 165 too.
+func TestEnhancingTotemsReachTheRaid(t *testing.T) {
+	otherPartySpellPower := func(talents string) float64 {
+		shaman := &proto.Player{
+			Class:         proto.Class_ClassShaman,
+			Race:          proto.Race_RaceTroll,
+			Equipment:     &proto.EquipmentSpec{},
+			Spec:          PlayerOptionsStandard,
+			TalentsString: talents,
+		}
+		other := &proto.Player{
+			Class:     proto.Class_ClassShaman,
+			Race:      proto.Race_RaceTroll,
+			Equipment: &proto.EquipmentSpec{},
+			Spec: &proto.Player_RestorationShaman{RestorationShaman: &proto.RestorationShaman{
+				Options: &proto.RestorationShaman_Options{Totems: &proto.ShamanTotems{}},
+			}},
+		}
+		result := core.ComputeStats(&proto.ComputeStatsRequest{
+			Raid: &proto.Raid{Parties: []*proto.Party{
+				{Players: []*proto.Player{shaman}},
+				{Players: []*proto.Player{other}},
+			}},
+			Encounter: core.MakeSingleTargetEncounter(0),
+		})
+		if result.ErrorResult != "" {
+			t.Fatal(result.ErrorResult)
+		}
+		return result.RaidStats.Parties[1].Players[0].FinalStats.Stats[stats.SpellPower]
+	}
+
+	if got := otherPartySpellPower("-3") - otherPartySpellPower(""); got != 21 {
+		t.Errorf("3 points of Enhancing Totems add %v spell power in the other party, want 21 (165 over 144)", got)
+	}
 }
 
 func BenchmarkSimulate(b *testing.B) {
@@ -143,7 +180,7 @@ func healingGraceTalentsRequest() *proto.RaidSimRequest {
 	return rsr
 }
 
-// StandardTalents with Improved Healing Wave and Healing Focus, which the sim doesn't read, in Totemic Focus
+// StandardTalents with Improved Healing Wave and Healing Focus, which this APL never uses, in Totemic Focus
 // and Healing Grace
 var HealingGraceTalents = "-3020503-05035301335310501122331251"
 

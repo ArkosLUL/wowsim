@@ -566,7 +566,7 @@ func (s suiteSetup) goldchar(root string, glyphSpells map[int32]int32) (goldchar
 		}
 		slot := serverEquipSlots[i]
 		setup.Items = append(setup.Items, goldcharItem{Slot: slot, ID: item.ID})
-		// the sim drops an enchant id it doesn't know, like the spell and item ids in feral tank's gear set
+		// the sim drops an enchant id it doesn't know, like a spell or item id in a gear set
 		if gearData.enchants[item.Enchant] {
 			setup.Enchants = append(setup.Enchants, goldcharEnchant{Slot: slot, Enchant: item.Enchant})
 		}

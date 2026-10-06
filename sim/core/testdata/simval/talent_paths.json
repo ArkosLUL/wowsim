@@ -476,7 +476,7 @@
   {"talent":"feralSpirit","rank":1,"spell":51533}
 ]},
 {"name":"ShamanRestoration","class":7,"race":8,"spec":"elemental_shaman","items":[],"auras":[],"steps": [
-  {"talent":"improvedHealingWave","rank":4,"spell":16228,"filler":true},
+  {"talent":"improvedHealingWave","rank":5,"spell":16229},
   {"talent":"totemicFocus","rank":5,"spell":16225},
   {"talent":"healingGrace","rank":3,"spell":29191},
   {"talent":"tidalFocus","rank":5,"spell":16217},

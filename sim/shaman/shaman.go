@@ -1,6 +1,7 @@
 package shaman
 
 import (
+	"math"
 	"time"
 
 	"github.com/wowsims/wotlk/sim/core"
@@ -156,12 +157,38 @@ func (shaman *Shaman) HasMinorGlyph(glyph proto.ShamanMinorGlyph) bool {
 	return shaman.HasGlyph(int32(glyph))
 }
 
+// improveFlametongueTotem raises the totem's 144 spell power by Enhancing Totems' 5% a point, truncated, as the
+// totem's aura takes its owner's spell mods: 165 at 3 points. 58655 is a raid area aura, so everyone it reaches
+// gets that, pets included.
+func (shaman *Shaman) improveFlametongueTotem() {
+	if shaman.Talents.EnhancingTotems == 0 {
+		return
+	}
+	spellPower := math.Trunc(144 * (1 + 0.05*float64(shaman.Talents.EnhancingTotems)))
+	improve := func(character *core.Character) {
+		ee := core.FlametongueTotemAura(character).ExclusiveEffects[0]
+		ee.Priority = max(ee.Priority, spellPower)
+	}
+	for _, party := range shaman.Party.Raid.Parties {
+		for _, agent := range party.Players {
+			improve(agent.GetCharacter())
+			for _, petAgent := range agent.GetCharacter().PetAgents {
+				// registering the aura turns it on, so skip a pet that never takes it (dropBuffsItCannotTake)
+				if pet := petAgent.GetPet(); pet.BuffImmunity&core.PetImmuneSpellPower == 0 {
+					improve(&pet.Character)
+				}
+			}
+		}
+	}
+}
+
 func (shaman *Shaman) AddRaidBuffs(raidBuffs *proto.RaidBuffs) {
 	switch shaman.Totems.Fire {
 	case proto.FireTotem_TotemOfWrath:
 		raidBuffs.TotemOfWrath = true
 	case proto.FireTotem_FlametongueTotem:
 		raidBuffs.FlametongueTotem = true
+		shaman.improveFlametongueTotem()
 	}
 
 	switch shaman.Totems.Water {

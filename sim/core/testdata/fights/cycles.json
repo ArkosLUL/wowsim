@@ -111,6 +111,7 @@
       "setup": "DruidFeralApl", "seconds": 90, "yards": 4, "behind": true,
       "cycle": [
         {"spell": 48566, "name": "Mangle (Cat)", "waitMs": 1500},
+        {"spell": 52610, "name": "Savage Roar", "waitMs": 1500},
         {"spell": 48574, "name": "Rake", "waitMs": 1500},
         {"spell": 48572, "name": "Shred", "waitMs": 1500},
         {"spell": 48572, "name": "Shred", "waitMs": 1500},

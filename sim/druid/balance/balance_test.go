@@ -70,7 +70,8 @@ var DreamstateGlyphs = &proto.Glyphs{
 	Major3: int32(proto.DruidMajorGlyph_GlyphOfMoonfire),
 }
 
-// basic_p3 without its Eclipse, Starfall and Force of Nature lines, with a Starfire filler
+// basic_p3 without its Eclipse, Starfall and Force of Nature lines, with a Starfire filler. Nature's Swiftness goes
+// on Wrath: its class mask leaves out Starfire.
 const dreamstateTalentsAPL = `{"type":"TypeAPL",
 "prepullActions":[
 	{"action":{"castSpell":{"spellId":{"otherId":"OtherActionPotion"}}},"doAtValue":{"const":{"val":"-1.5s"}}},
@@ -82,6 +83,7 @@ const dreamstateTalentsAPL = `{"type":"TypeAPL",
 	{"action":{"autocastOtherCooldowns":{}}},
 	{"action":{"condition":{"not":{"val":{"dotIsActive":{"spellId":{"spellId":48463}}}}},"castSpell":{"spellId":{"spellId":48463}}}},
 	{"action":{"condition":{"not":{"val":{"dotIsActive":{"spellId":{"spellId":48468}}}}},"castSpell":{"spellId":{"spellId":48468}}}},
+	{"action":{"condition":{"auraIsActive":{"auraId":{"spellId":17116}}},"castSpell":{"spellId":{"spellId":48461}}}},
 	{"action":{"castSpell":{"spellId":{"spellId":48465}}}}
 ]}`
 

@@ -518,11 +518,7 @@ type strikesMismatch struct {
 // knownStrikesMismatches are checks where the sim and the server really differ, each with its reason and a row
 // in the fixture README. The check still runs and only its failure is let through; an entry no record fails is
 // stale.
-var knownStrikesMismatches = expandStrikesMismatches([]knownStrikes{
-	{strikesBothPasses(druid, 48566, 48572, 62078, 48480, 48564), []string{"min", "max"},
-		"form weapon: the sim's cat and bear swing 43-66 and 109-165, the server's form damage is min(level, 60) x " +
-			"0.85-1.25 x the form's speed (Player::CalculateMinMaxDamage), 51-75 and 127.5-187.5"},
-})
+var knownStrikesMismatches = expandStrikesMismatches([]knownStrikes{})
 
 // The Infernal's info with its owner's buffs on.
 var infernalBuffedInfo = strikesKey{"info", 0, warlock, 89, true}

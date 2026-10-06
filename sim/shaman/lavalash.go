@@ -72,14 +72,17 @@ func (shaman *Shaman) registerLavaLashSpell() {
 
 		DamageMultiplier: imbueMultiplier *
 			core.TernaryFloat64(shaman.HasSetBonus(ItemSetWorldbreakerBattlegear, 2), 1.2, 1),
-		CritMultiplier:   shaman.ElementalCritMultiplier(0),
+		// a melee-class spell crits for double (Unit::SpellCriticalDamageBonus); Elemental Fury's class mask misses it
+		CritMultiplier:   shaman.DefaultMeleeCritMultiplier(),
 		ThreatMultiplier: shaman.spellThreatMultiplier(),
 
 		Direct: core.SpellEffect{Effect: 0, WeaponPct: 1},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+			// the whole off hand: Spell::EffectWeaponDmg leaves out TOTAL_PCT mods, the off hand's 50% among
+			// them, for a non-physical spell
 			baseDamage := flatDamageBonus +
-				(spell.Unit.OHWeaponDamage(sim, spell.MeleeAttackPower())+spell.BonusWeaponDamage())*spell.Direct.WeaponPct
+				(spell.Unit.AutoAttacks.OH().CalculateWeaponDamage(sim, spell.MeleeAttackPower())+spell.BonusWeaponDamage())*spell.Direct.WeaponPct
 
 			result := spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 

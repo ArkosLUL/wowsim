@@ -142,6 +142,7 @@ var threats = []Threat{
 	{SpellID: 33154, Targets: ThreatTargetsCaster},                                         // Surge of Light (Rank 2)
 	{SpellID: 33697, Targets: ThreatTargetsCaster},                                         // Blood Fury (Racial)
 	{SpellID: 33776, Targets: ThreatTargetsCaster},                                         // Spiritual Attunement (Rank 2)
+	{SpellID: 33831, Targets: ThreatTargetsEnemyArea},                                      // Force of Nature
 	{SpellID: 34026, Targets: ThreatTargetsCaster},                                         // Kill Command
 	{SpellID: 34074, Targets: ThreatTargetsCaster},                                         // Aspect of the Viper
 	{SpellID: 34300, Targets: ThreatTargetsCaster},                                         // Improved Leader of the Pack (Rank 2)
@@ -530,7 +531,6 @@ var threats = []Threat{
 	{SpellID: 65025, Targets: ThreatTargetsCaster},                                         // Dark Matter
 	{SpellID: 65108, Targets: ThreatTargetsEnemyArea},                                      // Black Hole Explosion
 	{SpellID: 65182, Targets: ThreatTargetsCaster},                                         // Increased Block
-	{SpellID: 65861, Targets: ThreatTargetsEnemyArea},                                      // Force of Nature
 	{SpellID: 66118, Targets: ThreatTargetsCaster},                                         // Leeching Swarm
 	{SpellID: 66233, Targets: ThreatTargetsCaster},                                         // Ardent Defender
 	{SpellID: 66235, Targets: ThreatTargetsCaster},                                         // Ardent Defender

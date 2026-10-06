@@ -191,7 +191,7 @@ func (shaman *Shaman) registerHealingWaveSpell() {
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
 				GCD:      core.GCDDefault,
-				CastTime: time.Millisecond * 3000,
+				CastTime: time.Millisecond * time.Duration(3000-100*shaman.Talents.ImprovedHealingWave),
 			},
 		},
 

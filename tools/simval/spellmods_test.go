@@ -19,9 +19,6 @@ import (
 // with a row in the fixture README. The lines stay, since a spell's after probes are the next talent's
 // before probes.
 var droppedSpellMods = slices.Concat(
-	// the sim has no Improved Healing Wave (a filler step of the path), so Healing Wave's 2600 ms is 3000 there
-	spellModDrops("ShamanRestoration", "naturesSwiftness", "cast time", 49273),
-	spellModDrops("ShamanRestoration", "naturesSwiftness", "cast time before haste", 49273),
 	// not sim gaps: under Berserk the sim resets Mangle (Bear)'s cooldown after each cast, and Dispersion
 	// never rolls to hit, so the sim's Shadow Focus hit leaves it out
 	spellModDrops("DruidFeralCat", "berserk", "cooldown", 48564),

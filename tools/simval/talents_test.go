@@ -10,6 +10,8 @@ import (
 	"slices"
 	"strings"
 	"testing"
+
+	"github.com/wowsims/wotlk/tools/database/azerothcore"
 )
 
 // sweepDrop is a step of talentsFixture, or one field of it, that disagrees with the sim, each with a
@@ -28,10 +30,9 @@ var droppedSweep = []sweepDrop{
 	{"RogueCombat", "maceSpecialization", "armor penetration %"},
 	{"DeathknightBlood", "bloodGorged", "armor penetration %"},
 	{"PaladinProtection", "improvedDevotionAura", "armor"},
-	{"ShamanEnhancement", "enhancingTotems", "spell power"},
 }
 
-// sweepRerecord are paths whose items or auras changed after talentsFixture was recorded. Until a rerun
+// sweepRerecord are paths whose items, auras or talent ranks changed after talentsFixture was recorded. Until a rerun
 // replaces their records, the replay builds their sim characters as the records stood (asRecorded). A
 // listed path whose records stand as the path fails, so the entry goes with the rerun.
 var sweepRerecord = []string{}
@@ -192,6 +193,17 @@ func TestTalentSweepReplaysAFullRun(t *testing.T) {
 // records all stand as the path.
 func recordedPaths(t *testing.T, paths []talentPath, records []talentRecord, rerecord []string) []talentPath {
 	t.Helper()
+	if len(rerecord) == 0 {
+		return paths
+	}
+	root, err := checkoutRoot()
+	if err != nil {
+		t.Fatal(err)
+	}
+	implemented, err := readImplementedTalents(filepath.Join(root, fixtureDir, implementedTalentsFile))
+	if err != nil {
+		t.Fatal(err)
+	}
 	paths = slices.Clone(paths)
 	for _, name := range rerecord {
 		i := slices.IndexFunc(paths, func(p talentPath) bool { return p.Name == name })
@@ -207,14 +219,22 @@ func recordedPaths(t *testing.T, paths []talentPath, records []talentRecord, rer
 			}
 		}
 		stale := slices.ContainsFunc(recs, func(rec talentRecord) bool {
-			return !path.wears(rec.Equipment) || len(path.missingAuras(rec)) > 0
+			return !path.wears(rec.Equipment) || len(path.missingAuras(rec)) > 0 || path.stepOf(rec.Talents) != rec.Step
 		})
 		if !stale {
 			t.Errorf("%s: its %d records stand as the path, so take it off the rerecord list", name, len(recs))
 			continue
 		}
-		paths[i] = path.asRecorded(recs[0])
-		t.Logf("%s: compared as its records stood, items %v and auras %v", name, paths[i].Items, paths[i].Auras)
+		last := slices.MaxFunc(recs, func(a, b talentRecord) int { return a.Step - b.Step })
+		ranks := map[string][]int32{}
+		for _, it := range implemented {
+			if it.Class == azerothcore.ClassNames[int32(path.Class)] {
+				ranks[it.FieldName] = it.RankSpells
+			}
+		}
+		paths[i] = path.asRecorded(recs[0], last.Talents, ranks)
+		t.Logf("%s: compared as its records stood, items %v, auras %v and talents %v", name, paths[i].Items,
+			paths[i].Auras, last.Talents)
 	}
 	return paths
 }
