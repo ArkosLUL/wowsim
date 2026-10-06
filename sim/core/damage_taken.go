@@ -6,10 +6,61 @@ import (
 	"github.com/wowsims/wotlk/sim/core/serverdata"
 )
 
-// dealsWeaponDamage is whether the server deals the hit through Unit::MeleeDamageBonusDone and
+// serverDerived is what the hit and proc paths read off the spell's server data on every hit and tick,
+// worked out once. Class code writes Flags directly and tests build Spells by hand, so it keeps every
+// input it came from and each read compares them. The row is keyed by pointer: never edit one in place.
+type serverDerived struct {
+	serverSpell   *serverdata.Spell
+	flags         SpellFlag // serverDerivedFlags only
+	whiteHit      bool
+	unitType      UnitType
+	summonedAsPet bool
+	valid         bool
+
+	weapon, normalized bool
+	ticksAsCasts       bool
+	// takenCoefficient's, direct then periodic
+	taken         [2]float32
+	takenByStacks [2]bool
+}
+
+const serverDerivedFlags = SpellFlagNoServerData | SpellFlagIncludeTargetBonusDamage
+
+func (spell *Spell) derived() *serverDerived {
+	d := &spell.serverDerived
+	flags, whiteHit := spell.Flags&serverDerivedFlags, spell.ProcMask.Matches(ProcMaskWhiteHit)
+	if d.valid && d.serverSpell == spell.serverSpell && d.flags == flags && d.whiteHit == whiteHit &&
+		d.unitType == spell.Unit.Type && d.summonedAsPet == spell.Unit.SummonedAsPet {
+		return d
+	}
+	*d = serverDerived{
+		serverSpell:   spell.serverSpell,
+		flags:         flags,
+		whiteHit:      whiteHit,
+		unitType:      spell.Unit.Type,
+		summonedAsPet: spell.Unit.SummonedAsPet,
+		valid:         true,
+	}
+	d.weapon, d.normalized = spell.resolveWeaponDamage()
+	sd := spell.ServerSpell()
+	d.ticksAsCasts = ticksAsCastsOn(sd)
+	if sd != nil {
+		for i, isPeriodic := range [2]bool{false, true} {
+			d.taken[i], d.takenByStacks[i] = spell.takenCoefficient(sd, isPeriodic)
+		}
+	}
+	return d
+}
+
+func (spell *Spell) dealsWeaponDamage() (weapon, normalized bool) {
+	d := spell.derived()
+	return d.weapon, d.normalized
+}
+
+// resolveWeaponDamage is whether the server deals the hit through Unit::MeleeDamageBonusDone and
 // MeleeDamageBonusTaken: a white swing or a spell with a weapon damage effect, normalized when one is
 // SPELL_EFFECT_NORMALIZED_WEAPON_DMG. A spell without server data goes by SpellFlagIncludeTargetBonusDamage.
-func (spell *Spell) dealsWeaponDamage() (weapon, normalized bool) {
+func (spell *Spell) resolveWeaponDamage() (weapon, normalized bool) {
 	if spell.ProcMask.Matches(ProcMaskWhiteHit) {
 		return true, false
 	}
@@ -28,11 +79,11 @@ func (spell *Spell) dealsWeaponDamage() (weapon, normalized bool) {
 // (Unit::MeleeDamageBonusTaken), else int32(amount × the taken coefficient × the aura's stacks)
 // (Unit::SpellDamageBonusTaken), which is how Gift of Arthas adds 3 to an Instant Poison hit.
 func (spell *Spell) flatDamageTaken(amount float64, target *Unit, isPeriodic bool) float64 {
-	if weapon, _ := spell.dealsWeaponDamage(); weapon && !isPeriodic {
+	d := spell.derived()
+	if d.weapon && !isPeriodic {
 		return amount
 	}
-	sd := spell.ServerSpell()
-	if sd == nil {
+	if spell.ServerSpell() == nil {
 		return 0
 	}
 	stacks := float32(1)
@@ -41,23 +92,31 @@ func (spell *Spell) flatDamageTaken(amount float64, target *Unit, isPeriodic boo
 			stacks = float32(dot.GetStacks())
 		}
 	}
+	i := 0
+	if isPeriodic {
+		i = 1
+	}
+	coefficient := d.taken[i]
+	if d.takenByStacks[i] {
+		coefficient *= stacks
+	}
 	// float32, as the server multiplies it
-	return math.Trunc(float64(float32(amount) * spell.takenCoefficient(sd, isPeriodic, stacks) * stacks))
+	return math.Trunc(float64(float32(amount) * coefficient * stacks))
 }
 
 // takenCoefficient is the spell's spell_bonus_data direct or dot value, else
-// Unit::CalculateDefaultCoefficient times the stacks (so a stacked dot counts them twice).
-func (spell *Spell) takenCoefficient(sd *serverdata.Spell, isPeriodic bool, stacks float32) float32 {
+// Unit::CalculateDefaultCoefficient, which then takes the stacks (so a stacked dot counts them twice).
+func (spell *Spell) takenCoefficient(sd *serverdata.Spell, isPeriodic bool) (c float32, byStacks bool) {
 	if b := serverdata.BonusBySpellID(sd.ID); b != nil {
 		c := b.Direct
 		if isPeriodic {
 			c = b.Dot
 		}
 		if c > 0 {
-			return c
+			return c, false
 		}
 	}
-	return spell.defaultCoefficient(sd, isPeriodic) * stacks
+	return spell.defaultCoefficient(sd, isPeriodic), true
 }
 
 // SpellEffects and AuraType values the default coefficient reads, besides spell_effect.go's.
