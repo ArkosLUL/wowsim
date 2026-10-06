@@ -232,6 +232,10 @@ type ResourceMetrics struct {
 
 	EventsFromPreviousIterations     int32
 	ActualGainFromPreviousIterations float64
+
+	// the assist threat a gain through these metrics makes, and this iteration's sum of it
+	gainThreat *gainThreat
+	threat     float64
 }
 
 func (resourceMetrics *ResourceMetrics) ToProto() *proto.ResourceMetrics {

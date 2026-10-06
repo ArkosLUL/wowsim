@@ -13,7 +13,7 @@ var ItemSetLightbringerBattlegear = core.NewItemSet(core.ItemSet{
 	Bonuses: map[int32]core.ApplyEffect{
 		2: core.ClassEffect(func(agent PaladinAgent) {
 			paladin := agent.GetPaladin()
-			manaMetrics := paladin.NewManaMetrics(core.ActionID{SpellID: 38428})
+			manaMetrics := paladin.NewManaMetrics(core.ActionID{SpellID: 38428}).EnergizeThreat(core.EnergizeBySpell)
 
 			paladin.RegisterAura(core.Aura{
 				Label:    "Lightbringer Battlegear 2pc",

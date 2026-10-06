@@ -178,10 +178,10 @@ func init() {
 		var resourceMetricsRage *core.ResourceMetrics
 		var resourceMetricsEnergy *core.ResourceMetrics
 		if character.HasRageBar() {
-			resourceMetricsRage = character.NewRageMetrics(actionID)
+			resourceMetricsRage = character.NewRageMetrics(actionID).EnergizeThreat(core.EnergizeBySpell)
 		}
 		if character.HasEnergyBar() {
-			resourceMetricsEnergy = character.NewEnergyMetrics(actionID)
+			resourceMetricsEnergy = character.NewEnergyMetrics(actionID).EnergizeThreat(core.EnergizeBySpell)
 		}
 
 		character.GetOrRegisterAura(core.Aura{

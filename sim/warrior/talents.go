@@ -479,7 +479,7 @@ func (warrior *Warrior) applyUnbridledWrath() {
 
 	ppmm := warrior.AutoAttacks.NewPPMManager(3*float64(warrior.Talents.UnbridledWrath), core.ProcMaskMeleeWhiteHit)
 
-	rageMetrics := warrior.NewRageMetrics(core.ActionID{SpellID: 13002})
+	rageMetrics := warrior.NewRageMetrics(core.ActionID{SpellID: 13002}).EnergizeThreat(core.EnergizeBySpell)
 
 	warrior.RegisterAura(core.Aura{
 		Label:    "Unbridled Wrath",
@@ -677,7 +677,7 @@ func (warrior *Warrior) applyShieldSpecialization() {
 
 	procChance := 0.2 * float64(warrior.Talents.ShieldSpecialization)
 	rageAdded := float64(warrior.Talents.ShieldSpecialization)
-	rageMetrics := warrior.NewRageMetrics(core.ActionID{SpellID: 12727})
+	rageMetrics := warrior.NewRageMetrics(core.ActionID{SpellID: 12727}).EnergizeThreat(core.EnergizeBySpell)
 
 	warrior.RegisterAura(core.Aura{
 		Label:    "Shield Specialization",

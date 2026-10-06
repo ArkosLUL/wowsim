@@ -17,7 +17,7 @@ func (priest *Priest) registerShadowWordPainSpell() {
 
 	var glyphManaMetrics *core.ResourceMetrics
 	if priest.HasGlyph(int32(proto.PriestMajorGlyph_GlyphOfShadowWordPain)) {
-		glyphManaMetrics = priest.NewManaMetrics(core.ActionID{SpellID: 56172})
+		glyphManaMetrics = priest.NewManaMetrics(core.ActionID{SpellID: 56172}).EnergizeThreat(core.EnergizeBySpell)
 	}
 
 	priest.ShadowWordPain = priest.RegisterSpell(core.SpellConfig{

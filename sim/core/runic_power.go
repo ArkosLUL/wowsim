@@ -164,6 +164,9 @@ func (rp *runicPowerBar) addRunicPowerInterval(sim *Simulation, amount float64, 
 	if sim.Log != nil {
 		rp.unit.Log(sim, "Gained %0.3f runic power from %s (%0.3f --> %0.3f).", amount, metrics.ActionID, rp.currentRunicPower, newRunicPower)
 	}
+	if metrics.gainThreat != nil {
+		rp.unit.addGainThreat(sim, metrics, amount, newRunicPower-rp.currentRunicPower)
+	}
 
 	rp.currentRunicPower = newRunicPower
 }

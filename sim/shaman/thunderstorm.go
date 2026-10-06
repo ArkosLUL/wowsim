@@ -13,7 +13,7 @@ func (shaman *Shaman) registerThunderstormSpell() {
 	}
 
 	actionID := core.ActionID{SpellID: 59159}
-	manaMetrics := shaman.NewManaMetrics(actionID)
+	manaMetrics := shaman.NewManaMetrics(actionID).EnergizeThreat(core.EnergizeBySpell)
 
 	manaRestore := 0.08
 	if shaman.HasMinorGlyph(proto.ShamanMinorGlyph_GlyphOfThunderstorm) {

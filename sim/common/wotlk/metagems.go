@@ -98,7 +98,7 @@ func init() {
 
 	core.NewItemEffect(41401, func(agent core.Agent) {
 		character := agent.GetCharacter()
-		manaMetrics := character.NewManaMetrics(core.ActionID{SpellID: 55382})
+		manaMetrics := character.NewManaMetrics(core.ActionID{SpellID: 55382}).EnergizeThreat(core.EnergizeBySpell)
 
 		core.MakeProcTriggerAura(&character.Unit, core.ProcTrigger{
 			Name:       "Insightful Earthsiege Diamond",

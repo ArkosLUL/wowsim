@@ -352,6 +352,16 @@ var spells = []Spell{
 			{Effect: 6, Aura: 4, DamageMultiplier: 1},
 		},
 	},
+	// Sunder Armor
+	{
+		ID: 7386, Family: 4, FamilyFlags: [3]uint32{0x4000}, SchoolMask: 1, DmgClass: DmgClassMelee,
+		Attributes: [8]uint32{0x50010, 0x8000200, 0x1000, 0x400, 0, 0, 0x800000}, AttributesCu: 0x1000,
+		GCDMs: 1500, GCDCategory: 133, StackAmount: 5,
+		ProcChance: 101, PowerType: 1, ManaCost: 150, SpellLevel: 10, BaseLevel: 10,
+		Effects: [3]Effect{
+			{Effect: 64, BasePoints: -5, DieSides: 1, DamageMultiplier: 1, TriggerSpell: 58567},
+		},
+	},
 	// Tremor Totem
 	{
 		ID: 8143, Family: 11, FamilyFlags: [3]uint32{0x20000000}, SchoolMask: 1, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagPositive,
@@ -1512,6 +1522,15 @@ var spells = []Spell{
 			{Effect: 6, Aura: 118, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, MiscValue: 127},
 		},
 	},
+	// Frenzied Regeneration
+	{
+		ID: 22845, SchoolMask: 1, Flags: FlagPositive,
+		Attributes: [8]uint32{0x40010, 0, 0x10000000}, AttributesCu: 0x100,
+		ProcChance: 101,
+		Effects: [3]Effect{
+			{Effect: 10, DamageMultiplier: 1},
+		},
+	},
 	// Improved Scorch
 	{
 		ID: 22959, Family: 3, FamilyFlags: [3]uint32{0, 0x2000}, SchoolMask: 4, Flags: FlagBinary,
@@ -2405,18 +2424,6 @@ var spells = []Spell{
 			{Effect: 6, Aura: 42, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, TriggerSpell: 63725},
 		},
 	},
-	// Vampiric Touch (Rank 3)
-	{
-		ID: 34917, Family: 6, FamilyFlags: [3]uint32{0, 0x400, 0x400}, SchoolMask: 32, DmgClass: DmgClassMagic, Flags: FlagResetsAutoAttack | FlagHasteGCD,
-		Attributes: [8]uint32{0, 0, 0, 0x4000000, 0, 0, 0x800000}, AttributesCu: 0x7000,
-		CastMs: 1500, BaseCastMs: 1500, GCDMs: 1500, GCDCategory: 133, DurationMs: 15000, MaxDurationMs: 15000,
-		ProcFlags: 0x20000, ProcChance: 100, ManaCostPct: 16, SpellLevel: 70, BaseLevel: 70, MaxLevel: 74,
-		Effects: [3]Effect{
-			{Effect: 6, Aura: 4, BasePoints: 1, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1},
-			{Effect: 6, Aura: 3, AmplitudeMs: 3000, BasePoints: 129, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 0.4},
-			{Effect: 6, Aura: 4, BasePoints: -1, DieSides: 1, DamageMultiplier: 1},
-		},
-	},
 	// Go for the Throat (Rank 2)
 	{
 		ID: 34953, SchoolMask: 1, Flags: FlagBinary | FlagPositive,
@@ -2975,6 +2982,16 @@ var spells = []Spell{
 			{Effect: 6, Aura: 189, BasePoints: 119, DieSides: 1, DamageMultiplier: 1, MiscValue: 16777216},
 		},
 	},
+	// Healing Potion
+	{
+		ID: 43185, Family: 13, SchoolMask: 1, Flags: FlagBinary | FlagResetsAutoAttack | FlagPositive,
+		Attributes: [8]uint32{0x28000000}, AttributesCu: 0x100100,
+		CategoryCooldownMs: 10000, Category: 4,
+		ProcChance: 101, SpellLevel: 55,
+		Effects: [3]Effect{
+			{Effect: 10, BasePoints: 2699, DieSides: 1801, ValueMultiplier: 1, DamageMultiplier: 1},
+		},
+	},
 	// Lunar Grace
 	{
 		ID: 43740, SchoolMask: 8, Flags: FlagBinary | FlagResetsAutoAttack | FlagPositive,
@@ -3105,6 +3122,15 @@ var spells = []Spell{
 			{Effect: 6, Aura: 12, BasePoints: -1, DieSides: 1, DamageMultiplier: 1},
 		},
 	},
+	// Lifeward
+	{
+		ID: 44578, SchoolMask: 2, Flags: FlagBinary | FlagPositive,
+		AttributesCu: 0x100101,
+		ProcChance:   101, BaseLevel: 63,
+		Effects: [3]Effect{
+			{Effect: 10, BasePoints: 309, DieSides: 47, DamageMultiplier: 1},
+		},
+	},
 	// Tendon Rip
 	{
 		ID: 44622, SchoolMask: 1, Flags: FlagBinary,
@@ -3144,6 +3170,15 @@ var spells = []Spell{
 		ProcChance: 101,
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 308},
+		},
+	},
+	// Death Strike
+	{
+		ID: 45470, Family: 15, FamilyFlags: [3]uint32{0, 0, 0x4}, SchoolMask: 1, Flags: FlagBinary | FlagPositive,
+		Attributes: [8]uint32{0x8000000, 0, 0x30000000, 0x10000}, AttributesCu: 0x100100,
+		ProcChance: 101, SpellLevel: 1, BaseLevel: 1,
+		Effects: [3]Effect{
+			{Effect: 10, BasePoints: 629, DieSides: 1, DamageMultiplier: 1},
 		},
 	},
 	// Blood Tap
@@ -3746,6 +3781,16 @@ var spells = []Spell{
 		GCDMods: ModBounds{FlatMin: -500},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 3, AmplitudeMs: 60000, BasePoints: 7299, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 2},
+		},
+	},
+	// Master Healthstone
+	{
+		ID: 47875, Family: 5, FamilyFlags: [3]uint32{0x10000}, SchoolMask: 1, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagPositive,
+		AttributesCu: 0x100100,
+		Category:     30,
+		ProcChance:   101, SpellLevel: 79,
+		Effects: [3]Effect{
+			{Effect: 10, BasePoints: 4279, DieSides: 1, DamageMultiplier: 1},
 		},
 	},
 	// Grace
@@ -5102,6 +5147,15 @@ var spells = []Spell{
 			{Effect: 10, BasePoints: 29, DieSides: 1, DamageMultiplier: 1},
 		},
 	},
+	// Chill of the Grave
+	{
+		ID: 50480, Family: 15, SchoolMask: 1, Flags: FlagBinary | FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0x1d0}, AttributesCu: 0x100010,
+		ProcChance: 101,
+		Effects: [3]Effect{
+			{Effect: 30, BasePoints: 49, DieSides: 1, DamageMultiplier: 1, MiscValue: 6, ClassMask: [3]uint32{0x3}},
+		},
+	},
 	// Curse of Weakness (Rank 9)
 	{
 		ID: 50511, Family: 5, FamilyFlags: [3]uint32{0x8000}, SchoolMask: 32, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagResetsAutoAttack | FlagHasteGCD,
@@ -5256,6 +5310,15 @@ var spells = []Spell{
 			{Effect: 6, Aura: 112, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, MiscValue: 7282, ClassMask: [3]uint32{0, 0x800}},
 			{Effect: 6, Aura: 52, BasePoints: 2, DieSides: 1, DamageMultiplier: 1},
 			{Effect: 6, Aura: 57, BasePoints: 2, DieSides: 1, DamageMultiplier: 1},
+		},
+	},
+	// Dirge
+	{
+		ID: 51206, Family: 15, SchoolMask: 1, Flags: FlagBinary | FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0x1d0}, AttributesCu: 0x100010,
+		ProcChance: 101,
+		Effects: [3]Effect{
+			{Effect: 30, BasePoints: 49, DieSides: 1, DamageMultiplier: 1, MiscValue: 6, ClassMask: [3]uint32{0x3}},
 		},
 	},
 	// Unbreakable Armor
@@ -5592,6 +5655,24 @@ var spells = []Spell{
 		ProcChance: 101, SpellLevel: 10, BaseLevel: 10,
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 4, BasePoints: 5, DieSides: 1, DamageMultiplier: 1, MiscValue: 7, ClassMask: [3]uint32{0x2600070e, 0x7900006}},
+		},
+	},
+	// Penance (Rank 4)
+	{
+		ID: 52985, Family: 6, FamilyFlags: [3]uint32{0, 0x10000}, SchoolMask: 2, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagPositive,
+		Attributes: [8]uint32{0x10000, 0, 0x400004, 0x200}, AttributesCu: 0x100100,
+		ProcChance: 101, Speed: 40, SpellLevel: 80, BaseLevel: 80, MaxLevel: 84,
+		Effects: [3]Effect{
+			{Effect: 10, BasePoints: 1483, DieSides: 193, DamageMultiplier: 1, BonusMultiplier: 0.537},
+		},
+	},
+	// Penance (Rank 4)
+	{
+		ID: 53000, Family: 6, FamilyFlags: [3]uint32{0, 0x8000}, SchoolMask: 2, DmgClass: DmgClassMagic,
+		Attributes: [8]uint32{0x10000, 0, 0x4, 0x200}, AttributesCu: 0x1100,
+		ProcChance: 101, Speed: 40, SpellLevel: 80, BaseLevel: 80, MaxLevel: 84,
+		Effects: [3]Effect{
+			{Effect: 2, BasePoints: 374, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 0.229},
 		},
 	},
 	// Penance (Rank 4)
@@ -9351,6 +9432,16 @@ var spells = []Spell{
 		ProcChance: 101, SpellLevel: 80, BaseLevel: 80, MaxLevel: 80,
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 99, BasePoints: 399, DieSides: 1, DamageMultiplier: 1, MiscValue: 917630},
+		},
+	},
+	// Runic Healing Injector
+	{
+		ID: 67489, Family: 13, SchoolMask: 1, Flags: FlagBinary | FlagResetsAutoAttack | FlagPositive,
+		Attributes: [8]uint32{0x28000000}, AttributesCu: 0x100100,
+		CategoryCooldownMs: 10000, Category: 4,
+		ProcChance: 101, SpellLevel: 55,
+		Effects: [3]Effect{
+			{Effect: 10, BasePoints: 2699, DieSides: 1801, ValueMultiplier: 1, DamageMultiplier: 1},
 		},
 	},
 	// Empowered Fire

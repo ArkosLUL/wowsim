@@ -10,7 +10,7 @@ import (
 func (paladin *Paladin) registerDivinePleaSpell() {
 	actionID := core.ActionID{SpellID: 54428}
 	hasGlyph := paladin.HasMajorGlyph(proto.PaladinMajorGlyph_GlyphOfDivinePlea)
-	manaMetrics := paladin.NewManaMetrics(actionID)
+	manaMetrics := paladin.NewManaMetrics(actionID).EnergizeThreat(core.EnergizeByTick)
 	var manaPA *core.PendingAction
 
 	paladin.DivinePleaAura = paladin.RegisterAura(core.Aura{

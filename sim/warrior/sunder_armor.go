@@ -45,6 +45,9 @@ func (warrior *Warrior) newSunderArmorSpell(isDevastateEffect bool) *core.Spell 
 		config.ThreatSpellID = 58567
 	} else {
 		config.Flags |= core.SpellFlagAPL
+		// warriors know 7386 (character_spell), whose spell_threat row gives the bonus; 47467 is a rank
+		// the server's warriors don't learn
+		config.ThreatSpellID = 7386
 	}
 
 	config.ApplyEffects = func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
@@ -63,6 +66,10 @@ func (warrior *Warrior) newSunderArmorSpell(isDevastateEffect bool) *core.Spell 
 				if extraStack {
 					aura.AddStack(sim)
 				}
+			}
+			if !isDevastateEffect {
+				// 7386 applies the debuff by casting 58567, which adds its own bonus
+				warrior.SunderArmorDevastate.LandThreatBonus(sim, target)
 			}
 		} else {
 			spell.IssueRefund(sim)

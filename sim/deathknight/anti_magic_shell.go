@@ -33,7 +33,8 @@ func (dk *Deathknight) registerAntiMagicShellSpell() {
 		},
 	})
 
-	rpMetrics := dk.AntiMagicShell.RunicPowerMetrics()
+	// each absorb energizes through 49088
+	rpMetrics := dk.AntiMagicShell.RunicPowerMetrics().EnergizeThreat(core.EnergizeBySpell)
 
 	physDmgTakenMult := dk.darkrunedPlateAMSBonus()
 	spellDmgTakenMult := 0.25

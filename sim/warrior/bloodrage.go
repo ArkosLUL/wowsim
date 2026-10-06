@@ -8,7 +8,9 @@ import (
 
 func (warrior *Warrior) registerBloodrageCD() {
 	actionID := core.ActionID{SpellID: 2687}
-	rageMetrics := warrior.NewRageMetrics(actionID)
+	rageMetrics := warrior.NewRageMetrics(actionID).EnergizeThreat(core.EnergizeBySpell)
+	// 29131's ticks, booked under 2687 with the instant rage
+	tickMetrics := warrior.NewRageMetrics(actionID).EnergizeThreat(core.EnergizeByTick)
 
 	instantRage := 20.0 * (1.0 + 0.25*float64(warrior.Talents.ImprovedBloodrage))
 	ragePerSec := 1 + 0.25*float64(warrior.Talents.ImprovedBloodrage)
@@ -30,7 +32,7 @@ func (warrior *Warrior) registerBloodrageCD() {
 				NumTicks: 10,
 				Period:   time.Second * 1,
 				OnAction: func(sim *core.Simulation) {
-					warrior.AddRage(sim, ragePerSec, rageMetrics)
+					warrior.AddRage(sim, ragePerSec, tickMetrics)
 				},
 			})
 		},

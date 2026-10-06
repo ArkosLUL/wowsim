@@ -37,7 +37,7 @@ func (character *Character) applyProfessionEffects() {
 
 	if character.HasProfession(proto.Profession_Herbalism) {
 		actionID := ActionID{SpellID: 55503}
-		healthMetrics := character.NewHealthMetrics(actionID)
+		healthMetrics := character.HealThreat(character.NewHealthMetrics(actionID), 55503)
 
 		spell := character.RegisterSpell(SpellConfig{
 			ActionID:    actionID,

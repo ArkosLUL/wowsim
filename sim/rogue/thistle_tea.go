@@ -13,7 +13,7 @@ func (rogue *Rogue) registerThistleTeaCD() {
 	}
 
 	actionID := core.ActionID{ItemID: 7676}
-	energyMetrics := rogue.NewEnergyMetrics(actionID)
+	energyMetrics := rogue.NewEnergyMetrics(actionID).EnergizeThreat(core.EnergizeByPotion)
 
 	const energyRegen = 20.0
 

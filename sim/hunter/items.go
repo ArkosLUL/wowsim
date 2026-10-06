@@ -25,7 +25,7 @@ func init() {
 	core.NewItemEffect(32336, func(agent core.Agent) {
 		character := agent.GetCharacter()
 		const manaGain = 8.0
-		manaMetrics := character.NewManaMetrics(core.ActionID{SpellID: 46939})
+		manaMetrics := character.NewManaMetrics(core.ActionID{SpellID: 46939}).EnergizeThreat(core.EnergizeBySpell)
 
 		character.RegisterAura(core.Aura{
 			Label:    "Black Bow of the Betrayer",

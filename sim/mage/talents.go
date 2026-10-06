@@ -456,7 +456,7 @@ func (mage *Mage) applyMasterOfElements() {
 	if mage.Talents.MasterOfElements > 0 {
 		// spell_mage_master_of_elements: 10% a point of the base cost, whatever the cast paid
 		refundPct := 10 * float64(mage.Talents.MasterOfElements)
-		manaMetrics := mage.NewManaMetrics(core.ActionID{SpellID: 29076})
+		manaMetrics := mage.NewManaMetrics(core.ActionID{SpellID: 29076}).EnergizeThreat(core.EnergizeBySpell)
 		// spell_proc -29074's 8 ms cooldown: one refund for all the targets a spell crits at once
 		icd := core.Cooldown{Timer: mage.NewTimer(), Duration: time.Millisecond * 8}
 

@@ -57,6 +57,9 @@ func (hb *healthBar) GainHealth(sim *Simulation, amount float64, metrics *Resour
 	if sim.Log != nil {
 		hb.unit.Log(sim, "Gained %0.3f health from %s (%0.3f --> %0.3f).", amount, metrics.ActionID, oldHealth, newHealth)
 	}
+	if metrics.gainThreat != nil {
+		hb.unit.addGainThreat(sim, metrics, amount, newHealth-oldHealth)
+	}
 
 	hb.currentHealth = newHealth
 }

@@ -1171,6 +1171,10 @@ func registerInnervateCD(agent Agent, numInnervates int32) {
 func InnervateAura(character *Character, actionTag int32) *Aura {
 	actionID := ActionID{SpellID: 29166, Tag: actionTag}
 	manaMetrics := character.NewManaMetrics(actionID)
+	// only a druid's on itself: an innervate from another unit makes that caster's threat
+	if actionTag == character.Index {
+		manaMetrics.EnergizeThreat(EnergizeByTick)
+	}
 	return character.GetOrRegisterAura(Aura{
 		Label:    "Innervate-" + actionID.String(),
 		Tag:      InnervateAuraTag,

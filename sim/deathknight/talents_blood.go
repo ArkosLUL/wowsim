@@ -139,7 +139,7 @@ func (dk *Deathknight) applyScentOfBlood() {
 	actionID := core.ActionID{SpellID: 49509}
 	procChance := 0.15
 
-	rpMetrics := dk.NewRunicPowerMetrics(actionID)
+	rpMetrics := dk.NewRunicPowerMetrics(actionID).EnergizeThreat(core.EnergizeBySpell)
 
 	dk.ScentOfBloodAura = dk.RegisterAura(core.Aura{
 		Label:     "Scent of Blood Proc",

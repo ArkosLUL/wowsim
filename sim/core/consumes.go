@@ -529,7 +529,8 @@ func makePotionActivationInternal(potionType proto.Potions, character *Character
 			proto.Potions_RunicHealingInjector: 41166,
 		}[potionType]
 		actionID := ActionID{ItemID: itemId}
-		healthMetrics := character.NewHealthMetrics(actionID)
+		healSpellID := map[int32]int32{33447: 43185, 41166: 67489}[itemId]
+		healthMetrics := character.HealThreat(character.NewHealthMetrics(actionID), healSpellID)
 		return MajorCooldown{
 			Type: CooldownTypeSurvival,
 			Spell: character.GetOrRegisterSpell(SpellConfig{
@@ -554,7 +555,7 @@ func makePotionActivationInternal(potionType proto.Potions, character *Character
 			proto.Potions_RunicManaInjector: 42545,
 		}[potionType]
 		actionID := ActionID{ItemID: itemId}
-		manaMetrics := character.NewManaMetrics(actionID)
+		manaMetrics := character.NewManaMetrics(actionID).EnergizeThreat(EnergizeByPotion)
 		return MajorCooldown{
 			Type: CooldownTypeMana,
 			ShouldActivate: func(sim *Simulation, character *Character) bool {
@@ -642,7 +643,7 @@ func makePotionActivationInternal(potionType proto.Potions, character *Character
 	} else if potionType == proto.Potions_SuperManaPotion {
 		alchStoneEquipped := character.HasAlchStone()
 		actionID := ActionID{ItemID: 22832}
-		manaMetrics := character.NewManaMetrics(actionID)
+		manaMetrics := character.NewManaMetrics(actionID).EnergizeThreat(EnergizeByPotion)
 		return MajorCooldown{
 			Type: CooldownTypeMana,
 			ShouldActivate: func(sim *Simulation, character *Character) bool {
@@ -681,7 +682,7 @@ func makePotionActivationInternal(potionType proto.Potions, character *Character
 	} else if potionType == proto.Potions_MightyRagePotion {
 		actionID := ActionID{ItemID: 13442}
 		aura := character.NewTemporaryStatsAura("Mighty Rage Potion", actionID, stats.Stats{stats.Strength: 60}, time.Second*15)
-		rageMetrics := character.NewRageMetrics(actionID)
+		rageMetrics := character.NewRageMetrics(actionID).EnergizeThreat(EnergizeByPotion)
 		return MajorCooldown{
 			Type: CooldownTypeDPS,
 			ShouldActivate: func(sim *Simulation, character *Character) bool {
@@ -790,7 +791,7 @@ func registerConjuredCD(agent Agent, consumes *proto.Consumes) {
 
 	if conjuredType == proto.Conjured_ConjuredDarkRune {
 		actionID := ActionID{ItemID: 20520}
-		manaMetrics := character.NewManaMetrics(actionID)
+		manaMetrics := character.NewManaMetrics(actionID).EnergizeThreat(EnergizeBySpell)
 		// damageTakenManaMetrics := character.NewManaMetrics(ActionID{SpellID: 33776})
 		spell := character.RegisterSpell(SpellConfig{
 			ActionID: actionID,
@@ -894,7 +895,7 @@ func registerConjuredCD(agent Agent, consumes *proto.Consumes) {
 		})
 	} else if conjuredType == proto.Conjured_ConjuredHealthstone {
 		actionID := ActionID{ItemID: 36892}
-		healthMetrics := character.NewHealthMetrics(actionID)
+		healthMetrics := character.HealThreat(character.NewHealthMetrics(actionID), 47875)
 
 		spell := character.RegisterSpell(SpellConfig{
 			ActionID: actionID,

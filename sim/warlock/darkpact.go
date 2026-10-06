@@ -15,7 +15,8 @@ func (warlock *Warlock) registerDarkPactSpell() {
 
 	actionID := core.ActionID{SpellID: 59092}
 	baseRestore := 1200.0
-	manaMetrics := warlock.NewManaMetrics(actionID)
+	// SPELL_EFFECT_POWER_DRAIN energizes the caster with what it drains
+	manaMetrics := warlock.NewManaMetrics(actionID).EnergizeThreat(core.EnergizeBySpell)
 	var petManaMetrics *core.ResourceMetrics
 	if warlock.Pet != nil {
 		petManaMetrics = warlock.Pet.NewManaMetrics(actionID)

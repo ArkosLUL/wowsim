@@ -237,7 +237,7 @@ func (druid *Druid) applyPrimalFury() {
 
 	procChance := []float64{0, 0.5, 1}[druid.Talents.PrimalFury]
 	actionID := core.ActionID{SpellID: 37117}
-	rageMetrics := druid.NewRageMetrics(actionID)
+	rageMetrics := druid.NewRageMetrics(actionID).EnergizeThreat(core.EnergizeBySpell)
 	cpMetrics := druid.NewComboPointMetrics(actionID)
 
 	druid.RegisterAura(core.Aura{
@@ -600,7 +600,7 @@ func (druid *Druid) applyNaturalReaction() {
 	}
 
 	actionID := core.ActionID{SpellID: 59072}
-	rageMetrics := druid.NewRageMetrics(actionID)
+	rageMetrics := druid.NewRageMetrics(actionID).EnergizeThreat(core.EnergizeBySpell)
 	rageAdded := float64(druid.Talents.NaturalReaction)
 
 	core.MakeProcTriggerAura(&druid.Unit, core.ProcTrigger{

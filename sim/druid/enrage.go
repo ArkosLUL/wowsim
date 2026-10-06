@@ -9,7 +9,8 @@ import (
 
 func (druid *Druid) registerEnrageSpell() {
 	actionID := core.ActionID{SpellID: 5229}
-	rageMetrics := druid.NewRageMetrics(actionID)
+	rageMetrics := druid.NewRageMetrics(actionID).EnergizeThreat(core.EnergizeBySpell)
+	tickMetrics := druid.NewRageMetrics(actionID).EnergizeThreat(core.EnergizeByTick)
 
 	instantRage := []float64{20, 24, 27, 30}[druid.Talents.Intensity]
 
@@ -59,7 +60,7 @@ func (druid *Druid) registerEnrageSpell() {
 				Period:   time.Second * 1,
 				OnAction: func(sim *core.Simulation) {
 					if druid.EnrageAura.IsActive() {
-						druid.AddRage(sim, 1, rageMetrics)
+						druid.AddRage(sim, 1, tickMetrics)
 					}
 				},
 			})

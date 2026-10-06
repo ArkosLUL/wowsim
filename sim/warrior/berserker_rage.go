@@ -9,7 +9,7 @@ import (
 func (warrior *Warrior) registerBerserkerRageSpell() {
 	actionID := core.ActionID{SpellID: 18499}
 	rageBonus := 10 * float64(warrior.Talents.ImprovedBerserkerRage)
-	rageMetrics := warrior.NewRageMetrics(actionID)
+	rageMetrics := warrior.NewRageMetrics(actionID).EnergizeThreat(core.EnergizeBySpell)
 
 	warrior.BerserkerRage = warrior.RegisterSpell(core.SpellConfig{
 		ActionID: actionID,

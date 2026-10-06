@@ -10,7 +10,8 @@ import (
 // TODO: This currently only affects the caster, not other raid members.
 func (priest *Priest) RegisterHymnOfHopeCD() {
 	actionID := core.ActionID{SpellID: 64901}
-	manaMetrics := priest.NewManaMetrics(actionID)
+	// each tick a cast of 64904
+	manaMetrics := priest.NewManaMetrics(actionID).EnergizeThreat(core.EnergizeBySpell)
 
 	numTicks := 4 + core.TernaryInt32(priest.HasMajorGlyph(proto.PriestMajorGlyph_GlyphOfHymnOfHope), 1, 0)
 

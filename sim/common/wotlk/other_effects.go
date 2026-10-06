@@ -262,7 +262,7 @@ func init() {
 	core.NewItemEffect(40382, func(agent core.Agent) {
 		character := agent.GetCharacter()
 		actionID := core.ActionID{ItemID: 40382}
-		manaMetrics := character.NewManaMetrics(actionID)
+		manaMetrics := character.NewManaMetrics(actionID).EnergizeThreat(core.EnergizeBySpell)
 
 		core.MakeProcTriggerAura(&character.Unit, core.ProcTrigger{
 			Name:       "Soul of the Dead",
@@ -436,7 +436,7 @@ func init() {
 		core.NewItemEffect(itemID, func(agent core.Agent) {
 			character := agent.GetCharacter()
 			actionID := core.ActionID{ItemID: itemID}
-			manaMetrics := character.NewManaMetrics(actionID)
+			manaMetrics := character.NewManaMetrics(actionID).EnergizeThreat(core.EnergizeBySpell)
 
 			spell := character.RegisterSpell(core.SpellConfig{
 				ActionID: actionID,
@@ -550,7 +550,7 @@ func init() {
 	core.NewItemEffect(42413, func(agent core.Agent) {
 		character := agent.GetCharacter()
 		actionID := core.ActionID{SpellID: 56186}
-		manaMetrics := character.NewManaMetrics(actionID)
+		manaMetrics := character.NewManaMetrics(actionID).EnergizeThreat(core.EnergizeByTick)
 
 		spell := character.RegisterSpell(core.SpellConfig{
 			ActionID: actionID,
@@ -580,7 +580,7 @@ func init() {
 	core.NewItemEffect(47215, func(agent core.Agent) {
 		character := agent.GetCharacter()
 		actionID := core.ActionID{SpellID: 67667}
-		manaMetrics := character.NewManaMetrics(actionID)
+		manaMetrics := character.NewManaMetrics(actionID).EnergizeThreat(core.EnergizeBySpell)
 
 		core.MakeProcTriggerAura(&character.Unit, core.ProcTrigger{
 			Name:       "Tears of the Vanquished Trigger",
@@ -613,13 +613,13 @@ func init() {
 			var resourceMetricsRage *core.ResourceMetrics
 			var resourceMetricsEnergy *core.ResourceMetrics
 			if character.HasManaBar() {
-				resourceMetricsMana = character.NewManaMetrics(actionID)
+				resourceMetricsMana = character.NewManaMetrics(actionID).EnergizeThreat(core.EnergizeByTick)
 			}
 			if character.HasRageBar() {
-				resourceMetricsRage = character.NewRageMetrics(actionID)
+				resourceMetricsRage = character.NewRageMetrics(actionID).EnergizeThreat(core.EnergizeByTick)
 			}
 			if character.HasEnergyBar() {
-				resourceMetricsEnergy = character.NewEnergyMetrics(actionID)
+				resourceMetricsEnergy = character.NewEnergyMetrics(actionID).EnergizeThreat(core.EnergizeByTick)
 			}
 
 			var pa *core.PendingAction
@@ -670,7 +670,7 @@ func init() {
 	core.NewSimpleStatOffensiveTrinketEffectWithOtherEffects(50260, stats.Stats{stats.MeleeHaste: 464, stats.SpellHaste: 464}, time.Second*20, time.Minute*2, func(agent core.Agent) {
 		character := agent.GetCharacter()
 		actionID := core.ActionID{ItemID: 50260}
-		manaMetrics := character.NewManaMetrics(actionID)
+		manaMetrics := character.NewManaMetrics(actionID).EnergizeThreat(core.EnergizeBySpell)
 
 		core.MakeProcTriggerAura(&character.Unit, core.ProcTrigger{
 			Name:     "Ephemeral Snowflake",

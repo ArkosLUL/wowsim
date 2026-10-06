@@ -171,7 +171,7 @@ func (priest *Priest) ApplyRapture(ppm float64) {
 	}
 
 	raptureManaCoeff := []float64{0, .015, .020, .025}[priest.Talents.Rapture]
-	raptureMetrics := priest.NewManaMetrics(core.ActionID{SpellID: 47537})
+	raptureMetrics := priest.NewManaMetrics(core.ActionID{SpellID: 47537}).EnergizeThreat(core.EnergizeBySpell)
 
 	priest.RegisterResetEffect(func(sim *core.Simulation) {
 		core.StartPeriodicAction(sim, core.PeriodicActionOptions{

@@ -83,7 +83,7 @@ func (rogue *Rogue) deadlyPoisonAddsTicks() bool {
 func (rogue *Rogue) registerDeadlyPoisonSpell() {
 	var energyMetrics *core.ResourceMetrics
 	if rogue.HasSetBonus(Tier8, 2) {
-		energyMetrics = rogue.NewEnergyMetrics(core.ActionID{SpellID: 64913})
+		energyMetrics = rogue.NewEnergyMetrics(core.ActionID{SpellID: 64913}).EnergizeThreat(core.EnergizeBySpell)
 	}
 
 	canCrit := rogue.Talents.Murder > 0

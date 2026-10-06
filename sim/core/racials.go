@@ -22,13 +22,13 @@ func applyRaceEffects(agent Agent) {
 		var resourceMetrics *ResourceMetrics
 		if character.HasRunicPowerBar() {
 			actionID = ActionID{SpellID: 50613}
-			resourceMetrics = character.NewRunicPowerMetrics(actionID)
+			resourceMetrics = character.NewRunicPowerMetrics(actionID).EnergizeThreat(EnergizeBySpell)
 		} else if character.HasEnergyBar() {
 			actionID = ActionID{SpellID: 25046}
-			resourceMetrics = character.NewEnergyMetrics(actionID)
+			resourceMetrics = character.NewEnergyMetrics(actionID).EnergizeThreat(EnergizeBySpell)
 		} else if character.HasManaBar() {
 			actionID = ActionID{SpellID: 28730}
-			resourceMetrics = character.NewManaMetrics(actionID)
+			resourceMetrics = character.NewManaMetrics(actionID).EnergizeThreat(EnergizeBySpell)
 		} else if character.Class == proto.Class_ClassWarrior {
 			// mod-racial-trait-swap gives warriors the runic power one, which fills nothing for them
 			actionID = ActionID{SpellID: 50613}

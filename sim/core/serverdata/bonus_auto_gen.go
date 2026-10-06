@@ -15,7 +15,6 @@ var bonuses = []Bonus{
 	{SpellID: 31803, Row: 31803, Dot: 0.013, APDot: 0.025},                               // Holy Vengeance (Rank 1)
 	{SpellID: 31804, Row: 31804, Direct: 0.22, AP: 0.14},                                 // Judgement of Vengeance (Rank 1)
 	{SpellID: 34433, Row: 34433, Direct: 0.65},                                           // Shadowfiend
-	{SpellID: 34917, Row: 34917, Dot: 0.4},                                               // Vampiric Touch (Rank 3)
 	{SpellID: 35295, Row: 35295, Direct: 0.119658, AP: 0.07},                             // Gore (Rank 6)
 	{SpellID: 42833, Row: 42833, Direct: 1},                                              // Fireball (Rank 16)
 	{SpellID: 42842, Row: 42842, Direct: 0.857},                                          // Frostbolt (Rank 16)
@@ -105,6 +104,8 @@ var bonuses = []Bonus{
 	{SpellID: 52472, Row: 52472, Direct: 0.119658, AP: 0.07},                             // Claw (Rank 11)
 	{SpellID: 52474, Row: 52474, Direct: 0.119658, AP: 0.07},                             // Bite (Rank 11)
 	{SpellID: 52476, Row: 52476, Direct: 0.119658, AP: 0.07},                             // Smack (Rank 11)
+	{SpellID: 52985, Row: 52985, Direct: 0.5362},                                         // Penance (Rank 4)
+	{SpellID: 53000, Row: 53000, Direct: 0.1905},                                         // Penance (Rank 4)
 	{SpellID: 53022, Row: 53022, Direct: 0.2857},                                         // Mind Sear (Rank 2)
 	{SpellID: 53190, Row: 53190, Direct: 0.13},                                           // Starfall (Rank 4)
 	{SpellID: 53195, Row: 53195, Direct: 0.3},                                            // Starfall (Rank 4)
