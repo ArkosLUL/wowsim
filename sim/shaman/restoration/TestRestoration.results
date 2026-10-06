@@ -638,13 +638,13 @@ dps_results: {
 dps_results: {
  key: "TestRestoration-AllItems-SliverofPureIce-50339"
  value: {
-  tps: 0.01
+  tps: 8.135
  }
 }
 dps_results: {
  key: "TestRestoration-AllItems-SliverofPureIce-50346"
  value: {
-  tps: 0.01
+  tps: 9.16
  }
 }
 dps_results: {
@@ -896,7 +896,7 @@ dps_results: {
 dps_results: {
  key: "TestRestoration-Talents-HealingGrace-Average"
  value: {
-  tps: 2887.47789
+  tps: 2864.46778
   hps: 8726.9568
  }
 }
@@ -1170,12 +1170,6 @@ ability_results: {
    key: "player|action|{ItemID: 22839}"
    value: {
     casts: 1
-   }
-  }
-  entries: {
-   key: "player|action|{OtherID: 10}"
-   value: {
-    casts: 150.4055
    }
   }
   entries: {

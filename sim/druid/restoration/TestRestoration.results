@@ -454,11 +454,15 @@ dps_results: {
 }
 dps_results: {
  key: "TestRestoration-AllItems-SliverofPureIce-50339"
- value: {}
+ value: {
+  tps: 8.125
+ }
 }
 dps_results: {
  key: "TestRestoration-AllItems-SliverofPureIce-50346"
- value: {}
+ value: {
+  tps: 9.15
+ }
 }
 dps_results: {
  key: "TestRestoration-AllItems-SouloftheDead-40382"

@@ -305,7 +305,7 @@ dps_results: {
  key: "TestProtectionWarrior-AllItems-DreadnaughtBattlegear"
  value: {
   dps: 1554.73794
-  tps: 3409.46414
+  tps: 3407.72247
  }
 }
 dps_results: {
@@ -930,7 +930,7 @@ dps_results: {
  key: "TestProtectionWarrior-GenericBoss"
  value: {
   dps: 3149.40303
-  tps: 6849.98327
+  tps: 6850.35193
   dtps: 1426.61022
  }
 }
@@ -938,7 +938,7 @@ dps_results: {
  key: "TestProtectionWarrior-Settings-Human-p1_balanced-Basic-default-FullBuffs-LongMultiTarget"
  value: {
   dps: 1564.61626
-  tps: 3473.1231
+  tps: 3425.6231
  }
 }
 dps_results: {
@@ -959,7 +959,7 @@ dps_results: {
  key: "TestProtectionWarrior-Settings-Human-p1_balanced-Basic-default-NoBuffs-LongMultiTarget"
  value: {
   dps: 1134.97754
-  tps: 2895.67418
+  tps: 2847.54085
  }
 }
 dps_results: {
@@ -980,7 +980,7 @@ dps_results: {
  key: "TestProtectionWarrior-Settings-Orc-p1_balanced-Basic-default-FullBuffs-LongMultiTarget"
  value: {
   dps: 1568.89679
-  tps: 3482.32449
+  tps: 3434.82449
  }
 }
 dps_results: {
@@ -1001,7 +1001,7 @@ dps_results: {
  key: "TestProtectionWarrior-Settings-Orc-p1_balanced-Basic-default-NoBuffs-LongMultiTarget"
  value: {
   dps: 1156.83043
-  tps: 2938.22886
+  tps: 2890.09552
  }
 }
 dps_results: {
@@ -1047,12 +1047,6 @@ ability_results: {
    key: "player|action|{ItemID: 44063}"
    value: {
     casts: 5
-   }
-  }
-  entries: {
-   key: "player|action|{OtherID: 11}"
-   value: {
-    casts: 144.129
    }
   }
   entries: {
@@ -1450,12 +1444,6 @@ ability_results: {
    key: "player|action|{ItemID: 44063}"
    value: {
     casts: 5
-   }
-  }
-  entries: {
-   key: "player|action|{OtherID: 11}"
-   value: {
-    casts: 143.169
    }
   }
   entries: {
