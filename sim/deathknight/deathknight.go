@@ -46,8 +46,7 @@ type Deathknight struct {
 
 	bonusCoeffs DeathknightCoeffs
 
-	onRuneSpendT10          core.OnRuneChange
-	onRuneSpendBladeBarrier core.OnRuneChange
+	onRuneSpendT10 core.OnRuneChange
 
 	Inputs DeathknightInputs
 
@@ -368,9 +367,6 @@ func NewDeathknight(character *core.Character, inputs DeathknightInputs, talents
 		func(sim *core.Simulation, changeType core.RuneChangeType) {
 			if dk.onRuneSpendT10 != nil {
 				dk.onRuneSpendT10(sim, changeType)
-			}
-			if dk.onRuneSpendBladeBarrier != nil {
-				dk.onRuneSpendBladeBarrier(sim, changeType)
 			}
 		},
 		nil,

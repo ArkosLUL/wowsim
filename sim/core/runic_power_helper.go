@@ -112,12 +112,7 @@ func (p *Predictor) launchRuneRegen(sim *Simulation, slot int8) {
 }
 
 func (p *Predictor) runeGraceAt(slot int8, at time.Duration) time.Duration {
-	lastRegenTime := p.runeMeta[slot].lastRegenTime
-	// pre-pull casts should not get rune-grace
-	if at <= 0 || lastRegenTime <= 0 {
-		return 0
-	}
-	return min(time.Millisecond*2500, at-lastRegenTime)
+	return runeGraceCut(p.runeMeta[slot].lastRegenTime, at)
 }
 
 func (p *Predictor) CurrentBloodRunes() int8 {

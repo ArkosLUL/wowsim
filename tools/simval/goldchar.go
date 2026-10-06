@@ -1033,6 +1033,10 @@ func newGoldcharSim(rec damageRecord, s goldcharSetup) (*damageSim, error) {
 		hunter.Options.SniperTrainingUptime = 1
 		mirror = append(slices.Clone(mirror), 53304)
 	}
+	// Prey on the Weak's buff comes and goes with the health of the rogue and the dummy
+	if slices.ContainsFunc(rec.Attacker.Auras, func(a aura) bool { return a.ID == 58670 }) {
+		mirror = append(slices.Clone(mirror), 58670)
+	}
 	return newDamageSim(rec, player, mirror, 1)
 }
 

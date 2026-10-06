@@ -74,7 +74,6 @@ records stood until a rerun replaces them.
 | PriestDiscipline | holySpecialization | holy spell crit % | the sheet field is the aura's raw sum; Penance is holy but outside its class mask, so the sim's lowest holy spell stays at 0 |
 | RogueCombat | maceSpecialization | armor penetration % | the sheet field counts the aura without a mace; the server's damage applies it only with one (`HasItemFitToSpellRequirements`), as the sim does, and the path carries two daggers |
 | DeathknightBlood | bloodGorged | armor penetration % | the sheet field is the aura's raw sum; the sim applies it per spell by the server's class mask (white swings, Plague, Blood, Heart and Death Strike, Rune Strike) |
-| PaladinProtection | improvedDevotionAura | armor | server +602 (Devotion Aura's armor +50%); the sim improves it only at `ImprovedDevotionAura == 5`, the talent has 3 ranks (`paladin.go`) |
 | ShamanEnhancement | enhancingTotems | spell power | server +21 (Flametongue Totem's 58655 +15%); the sim's `FlametongueTotemAura` is a fixed 144 |
 
 `spellmods.jsonl`, each in `droppedSpellMods` (`tools/simval/spellmods_test.go`). Lines stay; a dropped step (spell 0),

@@ -18,8 +18,7 @@ func bloodBoilBase(sim *core.Simulation, spell *core.Spell, diseased bool, impur
 }
 
 func (dk *Deathknight) registerBloodBoilSpell() {
-	// TODO: Handle blood boil correctly -
-	//  There is no refund and you only get RP on at least one of the effects hitting.
+	// no refund: with no unit target (Spell::InitExplicitTargets drops it), Spell::TakePower counts it a hit
 	dk.BloodBoil = dk.RegisterSpell(core.SpellConfig{
 		ActionID:    BloodBoilActionID,
 		Flags:       core.SpellFlagAPL,
@@ -29,7 +28,6 @@ func (dk *Deathknight) registerBloodBoilSpell() {
 		RuneCost: core.RuneCostOptions{
 			BloodRuneCost:  1,
 			RunicPowerGain: 10,
-			Refundable:     true,
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
@@ -48,11 +46,7 @@ func (dk *Deathknight) registerBloodBoilSpell() {
 				baseDamage := bloodBoilBase(sim, spell, dk.DiseasesAreActive(aoeTarget), dk.getImpurityBonus(spell)) * dk.RoRTSBonus(aoeTarget)
 				baseDamage *= sim.Encounter.AOECapMultiplier()
 
-				result := spell.CalcAndDealDamage(sim, aoeTarget, baseDamage, spell.OutcomeMagicHitAndCrit)
-
-				if aoeTarget == target {
-					spell.SpendRefundableCost(sim, result)
-				}
+				spell.CalcAndDealDamage(sim, aoeTarget, baseDamage, spell.OutcomeMagicHitAndCrit)
 			}
 		},
 	})

@@ -10,6 +10,7 @@ import (
 
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
+	"github.com/wowsims/wotlk/sim/core/serverdata"
 	"github.com/wowsims/wotlk/sim/core/stats"
 )
 
@@ -225,17 +226,31 @@ func (dk *Deathknight) applyBladeBarrier() {
 		OnExpire: func(aura *core.Aura, sim *core.Simulation) {
 			aura.Unit.PseudoStats.DamageTakenMultiplier /= damageTakenMult
 		},
-		OnCastComplete: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell) {
-			if spell.DefaultCast.GCD > 0 {
-				aura.Refresh(sim)
-			}
-		},
 	})
 
-	dk.onRuneSpendBladeBarrier = func(sim *core.Simulation, changeType core.RuneChangeType) {
-		if changeType.Matches(core.SpendRune) && dk.CurrentBloodRunes() == 0 {
-			dk.BladeBarrierAura.Activate(sim)
-		}
+	// spell_dk_blade_barrier: any death knight spell the DK casts puts the buff on, or refreshes it, when it
+	// leaves both blood slots on cooldown, death runes or not (the cast phase comes after Spell::TakePower)
+	family := serverdata.ClassFamily(proto.Class_ClassDeathknight)
+	core.MakePermanent(dk.RegisterAura(core.Aura{
+		Label: "Blade Barrier Talent",
+		OnCastComplete: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell) {
+			if ss := spell.ServerSpell(); ss == nil || ss.Family != family || !spell.Flags.Matches(core.SpellFlagAPL) {
+				return
+			}
+			// checks before its effects ready a rune
+			if spell == dk.BloodTap {
+				return
+			}
+			dk.bladeBarrierCastPhase(sim)
+		},
+	}))
+}
+
+// bladeBarrierCastPhase is Blade Barrier's check in a cast's cast phase, after the cost and before the
+// effects. Casts that skip OnCastComplete, or whose effects ready a rune, call it first thing in ApplyEffects.
+func (dk *Deathknight) bladeBarrierCastPhase(sim *core.Simulation) {
+	if dk.BladeBarrierAura != nil && !dk.RuneIsActive(0) && !dk.RuneIsActive(1) {
+		dk.BladeBarrierAura.Activate(sim)
 	}
 }
 

@@ -359,7 +359,7 @@ func (shaman *Shaman) applyFlurry() {
 	procAura := shaman.RegisterAura(core.Aura{
 		Label:     "Flurry Proc",
 		ActionID:  core.ActionID{SpellID: 16280},
-		Duration:  core.NeverExpires,
+		Duration:  time.Second * 15,
 		MaxStacks: 3,
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
 			shaman.MultiplyMeleeSpeed(sim, bonus)
@@ -385,15 +385,28 @@ func (shaman *Shaman) applyFlurry() {
 				return
 			}
 
+			white := spell.ProcMask.Matches(core.ProcMaskMeleeWhiteHit)
 			if result.Outcome.Matches(core.OutcomeCrit) {
+				// a white crit spends a charge before the talent refreshes the buff, and the refresh keeps
+				// the 500 ms cooldown (spell_proc -16257). From rank 2 the buff's id sorts before the talent's,
+				// so spending its last charge removes it first and the refresh is a new buff with none
+				switch {
+				case !procAura.IsActive():
+					icd.Reset()
+				case white && icd.IsReady(sim):
+					if procAura.GetStacks() == 1 && shaman.Talents.Flurry > 1 {
+						icd.Reset()
+					} else {
+						icd.Use(sim)
+					}
+				}
 				procAura.Activate(sim)
 				procAura.SetStacks(sim, 3)
-				icd.Reset() // the "charge protection" ICD isn't up yet
 				return
 			}
 
-			// Remove a stack.
-			if procAura.IsActive() && spell.ProcMask.Matches(core.ProcMaskMeleeWhiteHit) && icd.IsReady(sim) {
+			// charges go on white hits that land only (the default hit mask)
+			if procAura.IsActive() && white && result.Landed() && icd.IsReady(sim) {
 				icd.Use(sim)
 				procAura.RemoveStack(sim)
 			}

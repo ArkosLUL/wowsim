@@ -142,9 +142,8 @@ func (rogue *Rogue) HasMinorGlyph(glyph proto.RogueMinorGlyph) bool {
 }
 
 func (rogue *Rogue) Initialize() {
-	// Update auto crit multipliers now that we have the targets.
-	rogue.AutoAttacks.MHConfig().CritMultiplier = rogue.WhiteCritMultiplier(rogue.preyOnTheWeakMultiplier(rogue.CurrentTarget))
-	rogue.AutoAttacks.OHConfig().CritMultiplier = rogue.WhiteCritMultiplier(rogue.preyOnTheWeakMultiplier(rogue.CurrentTarget))
+	rogue.AutoAttacks.MHConfig().CritMultiplier = rogue.WhiteCritMultiplier(1)
+	rogue.AutoAttacks.OHConfig().CritMultiplier = rogue.WhiteCritMultiplier(1)
 
 	if rogue.Talents.QuickRecovery > 0 {
 		rogue.QuickRecoveryMetrics = rogue.NewEnergyMetrics(core.ActionID{SpellID: 31245})
@@ -186,8 +185,11 @@ func (rogue *Rogue) Reset(sim *core.Simulation) {
 	}
 }
 
+// MeleeCritMultiplier and SpellCritMultiplier leave out Prey on the Weak, whose buff swaps them while it's up.
 func (rogue *Rogue) MeleeCritMultiplier(applyLethality bool) float64 {
-	primaryModifier := rogue.preyOnTheWeakMultiplier(rogue.CurrentTarget)
+	return rogue.meleeCritMultiplier(applyLethality, 1)
+}
+func (rogue *Rogue) meleeCritMultiplier(applyLethality bool, primaryModifier float64) float64 {
 	var secondaryModifier float64
 	if applyLethality {
 		secondaryModifier += 0.06 * float64(rogue.Talents.Lethality)
@@ -195,8 +197,7 @@ func (rogue *Rogue) MeleeCritMultiplier(applyLethality bool) float64 {
 	return rogue.Character.MeleeCritMultiplier(primaryModifier, secondaryModifier)
 }
 func (rogue *Rogue) SpellCritMultiplier() float64 {
-	primaryModifier := rogue.preyOnTheWeakMultiplier(rogue.CurrentTarget)
-	return rogue.Character.SpellCritMultiplier(primaryModifier, 0)
+	return rogue.Character.SpellCritMultiplier(1, 0)
 }
 
 func NewRogue(character *core.Character, options *proto.Player) *Rogue {

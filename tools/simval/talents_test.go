@@ -27,7 +27,6 @@ var droppedSweep = []sweepDrop{
 	{"PriestDiscipline", "holySpecialization", "holy spell crit %"},
 	{"RogueCombat", "maceSpecialization", "armor penetration %"},
 	{"DeathknightBlood", "bloodGorged", "armor penetration %"},
-	{"PaladinProtection", "improvedDevotionAura", "armor"},
 	{"ShamanEnhancement", "enhancingTotems", "spell power"},
 }
 

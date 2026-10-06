@@ -510,7 +510,7 @@ func (warrior *Warrior) applyFlurry() {
 	procAura := warrior.RegisterAura(core.Aura{
 		Label:     "Flurry Proc",
 		ActionID:  core.ActionID{SpellID: 12974},
-		Duration:  core.NeverExpires,
+		Duration:  time.Second * 15,
 		MaxStacks: 3,
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
 			warrior.MultiplyMeleeSpeed(sim, bonus)
@@ -537,8 +537,8 @@ func (warrior *Warrior) applyFlurry() {
 				return
 			}
 
-			// Remove a stack.
-			if procAura.IsActive() && spell.ProcMask.Matches(core.ProcMaskMeleeWhiteHit) {
+			// the buff's charges go on white hits that land only (spell_proc -12966 keeps the default hit mask)
+			if procAura.IsActive() && spell.ProcMask.Matches(core.ProcMaskMeleeWhiteHit) && result.Landed() {
 				procAura.RemoveStack(sim)
 			}
 		},

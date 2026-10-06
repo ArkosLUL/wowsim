@@ -421,6 +421,24 @@ func init() {
 			},
 		})
 
+		// the enchant's second combat spell, a magic debuff that rolls spell hit
+		frostVulnerability := character.RegisterSpell(core.SpellConfig{
+			ActionID:    core.ActionID{SpellID: frostVulnerabilityID},
+			SpellSchool: core.SpellSchoolFrost,
+			ProcMask:    core.ProcMaskEmpty,
+			Flags:       core.SpellFlagNoOnCastComplete,
+
+			ThreatMultiplier: 1,
+
+			ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+				if spell.CalcAndDealOutcome(sim, target, spell.OutcomeMagicHit).Landed() {
+					vulnAura := vulnAuras.Get(target)
+					vulnAura.Activate(sim)
+					vulnAura.AddStack(sim)
+				}
+			},
+		})
+
 		aura := character.GetOrRegisterAura(core.Aura{
 			Label:    "Razor Frost",
 			ActionID: actionID,
@@ -434,9 +452,7 @@ func init() {
 				}
 
 				razorFrost.Cast(sim, result.Target)
-				vulnAura := vulnAuras.Get(result.Target)
-				vulnAura.Activate(sim)
-				vulnAura.AddStack(sim)
+				frostVulnerability.Cast(sim, result.Target)
 			},
 		})
 

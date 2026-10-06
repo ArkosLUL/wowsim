@@ -22,6 +22,7 @@ func (dk *Deathknight) registerEmpowerRuneWeaponSpell() {
 			},
 		},
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+			dk.bladeBarrierCastPhase(sim)
 			dk.RegenAllRunes(sim)
 			dk.AddRunicPower(sim, 25, rpMetrics)
 		},

@@ -11,9 +11,6 @@ func (paladin *Paladin) registerCrusaderStrikeSpell() {
 	// Libram of Radiance (60821) adds to the fixed bonus, which the weapon percent then scales: 105 x 75%
 	libramFlat := core.TernaryInt32(paladin.Ranged().ID == 40191, 105, 0)
 
-	jowAuras := paladin.NewEnemyAuraArray(core.JudgementOfWisdomAura)
-	jolAuras := paladin.NewEnemyAuraArray(core.JudgementOfLightAura)
-
 	paladin.CrusaderStrike = paladin.RegisterSpell(core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: 35395},
 		SpellSchool: core.SpellSchoolPhysical,
@@ -52,16 +49,6 @@ func (paladin *Paladin) registerCrusaderStrikeSpell() {
 				spell.BonusWeaponDamage()) * spell.Direct.WeaponPct
 
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
-
-			jowAura := jowAuras.Get(target)
-			if jowAura.IsActive() {
-				jowAura.Refresh(sim)
-			}
-
-			jolAura := jolAuras.Get(target)
-			if jolAura.IsActive() {
-				jolAura.Refresh(sim)
-			}
 		},
 	})
 }

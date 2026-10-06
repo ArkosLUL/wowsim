@@ -79,7 +79,6 @@ var fightSimActions = map[int32]core.ActionID{
 	59578: {SpellID: 53488}, // The Art of War
 	20186: {SpellID: 53408}, // Judgement of Wisdom
 	54499: {SpellID: 20337}, // Heart of the Crusader
-	26017: {SpellID: 26016}, // Vindication
 	12970: {SpellID: 12974}, // Flurry
 	12721: {SpellID: 12867}, // Deep Wounds
 	58578: {SpellID: 50887}, // Icy Talons
@@ -126,6 +125,7 @@ var fightSimActions = map[int32]core.ActionID{
 // the log has it as.
 var fightLogIDs = map[core.ActionID]int32{
 	{SpellID: 27013}:         48468, // Insect Swarm's hit debuff
+	{SpellID: 26016}:         26017, // Vindication's debuff, which the sim names by the talent
 	{SpellID: 1680, Tag: 1}:  44949, // Whirlwind's off hand
 	{SpellID: 55271, Tag: 2}: 70890, // Scourge Strike's shadow damage
 	// death knight off hand strikes
@@ -183,9 +183,7 @@ type fightDrop struct {
 }
 
 var droppedFightChecks = []fightDrop{
-	{"DeathknightFrost", "51714", "count"},
-	{"DeathknightFrost", "51714", "misses"},
-	{"DeathknightFrostUH", "51714", "misses"},
+	{"DeathknightFrost", "51411", "casts"},
 	{"DruidBalance", "48468", "tick crit mean"},
 	{"DruidBalance", "aura 48517 on self", "uptime"},
 	{"DruidBalancePhase3", "48468", "tick crit mean"},
@@ -197,19 +195,8 @@ var droppedFightChecks = []fightDrop{
 	{"MageFrostFire", "47610", "crit mean"},
 	{"MageFrostFire", "47610", "tick hit mean"},
 	{"MageFrostFire", "energize 29076 mana", "gain sizes"},
-	{"PaladinProtection", "26016", "misses"},
-	{"PaladinProtection", "aura 26016 on target", "applications"},
-	{"PaladinProtection", "aura 26016 on target", "uptime"},
-	{"PaladinRetribution", "aura 53408 on target", "applications"},
-	{"RogueCombat", "aura 58670 on self", "applications"},
-	{"RogueCombat", "aura 58670 on self", "uptime"},
-	{"RogueSubtlety", "aura 48660 on target", "applications"},
-	{"RogueSubtlety", "aura 48660 on target", "uptime"},
 	{"ShamanEnhancement", "60103", "crit mean"},
 	{"ShamanEnhancement", "60103", "hit mean"},
-	{"WarriorArms", "47465", "tick crit mean"},
-	{"WarriorArms", "47465", "tick hit mean"},
-	{"WarriorProtectionWarrior", "47465", "tick hit mean"},
 }
 
 // fightLeftOut is a server aura by the log's id, where it sits ("self", "target", a minion's name), "" for

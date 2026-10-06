@@ -40,6 +40,7 @@ func (dk *Deathknight) registerBloodTapSpell() {
 			IgnoreHaste: true,
 		},
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+			dk.bladeBarrierCastPhase(sim)
 			dk.BloodTapAura.Activate(sim)
 			// Its interrupt flags make it an auto action reset spell (Spell::IsAutoActionResetSpell), and off
 			// the GCD it goes through a cast path that leaves swings alone, so restart both hands here.

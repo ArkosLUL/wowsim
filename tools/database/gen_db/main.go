@@ -532,7 +532,7 @@ func GetAllRotationSpellIds() map[string][]int32 {
 		{Name: "warrior", Raid: core.SinglePlayerRaidProto(core.WithSpec(&proto.Player{
 			Class:         proto.Class_ClassWarrior,
 			Equipment:     &proto.EquipmentSpec{},
-			TalentsString: "302023102331-305053000520310053120500351",
+			TalentsString: "302023102331-305052000520310053120500351",
 		}, &proto.Player_Warrior{Warrior: &proto.Warrior{Options: &proto.Warrior_Options{}}}), nil, nil, nil)},
 		{Name: "protwarrior", Raid: core.SinglePlayerRaidProto(core.WithSpec(&proto.Player{
 			Class:         proto.Class_ClassWarrior,

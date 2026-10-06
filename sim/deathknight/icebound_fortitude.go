@@ -46,6 +46,7 @@ func (dk *Deathknight) registerIceboundFortitudeSpell() {
 			IgnoreHaste: true,
 		},
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+			dk.bladeBarrierCastPhase(sim)
 			dk.IceboundFortitudeAura.Activate(sim)
 		},
 	})
