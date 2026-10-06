@@ -55,7 +55,7 @@ func (dk *Deathknight) newHeartStrikeSpell(isMainTarget bool, isDrw bool) *core.
 			activeDiseases := core.TernaryFloat64(isDrw, dk.drwCountActiveDiseases(target), dk.dkCountActiveDiseases(target))
 			baseDamage *= 1 + activeDiseases*diseaseMulti
 			if isDrw {
-				baseDamage += dk.drwVersusAttackPowerBonus(true)
+				baseDamage += dk.drwVersusAttackPowerBonus(spell, true)
 			}
 
 			result := spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)

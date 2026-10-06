@@ -5,7 +5,6 @@ import (
 
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
-	"github.com/wowsims/wotlk/sim/core/stats"
 )
 
 func (dk *Deathknight) registerIceboundFortitudeSpell() {
@@ -21,9 +20,15 @@ func (dk *Deathknight) registerIceboundFortitudeSpell() {
 		ActionID: actionID,
 		Duration: time.Second*12 + time.Second*2*time.Duration(float64(dk.Talents.GuileOfGorefiend)) + dk.scourgebornePlateIFDurationBonus(),
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
-			def := dk.IceboundFortitudeAura.Unit.GetStat(stats.Defense)
-			dmgTakenMult = 1.0 - core.TernaryFloat64(hasGlyph, max(0.4, 0.3+0.0015*(def-400)), 0.3+0.0015*(def-400))
-			dk.IceboundFortitudeAura.Unit.PseudoStats.DamageTakenMultiplier *= dmgTakenMult
+			// spell_dk_icebound_fortitude: 30% plus a whole 0.15% per point of full defense skill over 400,
+			// skill bonuses included, and at least 40% with the glyph
+			skill := core.MaxSkill(core.CharacterLevel) + aura.Unit.DefenseSkill()
+			reductionPct := 30 + int32(float64(max(0, skill-400))*0.15)
+			if hasGlyph {
+				reductionPct = max(reductionPct, 40)
+			}
+			dmgTakenMult = 1 - float64(reductionPct)/100
+			aura.Unit.PseudoStats.DamageTakenMultiplier *= dmgTakenMult
 		},
 
 		OnExpire: func(aura *core.Aura, sim *core.Simulation) {

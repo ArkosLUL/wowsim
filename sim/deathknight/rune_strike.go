@@ -41,7 +41,8 @@ func (dk *Deathknight) newRuneStrikeSpell(isMH bool) *core.Spell {
 			return dk.RuneStrikeAura.IsActive()
 		},
 
-		BonusCritRating: (dk.annihilationCritBonus() + runeStrikeGlyphCritBonus) * core.CritRatingPerCritChance,
+		BonusCritRating:    (dk.annihilationCritBonus() + runeStrikeGlyphCritBonus) * core.CritRatingPerCritChance,
+		TotalPctMultiplier: core.TernaryFloat64(isMH, 1, dk.nervesOfColdSteelBonus()),
 		DamageMultiplier: core.TernaryFloat64(isMH, 1, dk.nervesOfColdSteelBonus()) *
 			dk.darkrunedPlateRuneStrikeDamageBonus(),
 		CritMultiplier:   dk.DefaultMeleeCritMultiplier(),
@@ -148,7 +149,7 @@ func (dk *Deathknight) registerDrwRuneStrikeSpell() {
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			baseDamage := (spell.Direct.Roll(sim)+dk.DrwWeaponDamage(sim, spell))*spell.Direct.WeaponPct +
-				spell.Direct.AP*spell.MeleeAttackPower() + dk.drwVersusAttackPowerBonus(false)
+				spell.Direct.AP*spell.MeleeAttackPower() + dk.drwVersusAttackPowerBonus(spell, false)
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialNoBlockDodgeParry)
 		},
 	})

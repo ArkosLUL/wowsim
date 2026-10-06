@@ -34,14 +34,15 @@ func (rogue *Rogue) registerKillingSpreeSpell() {
 		},
 	})
 	ohWeaponSwing = rogue.GetOrRegisterSpell(core.SpellConfig{
-		ActionID:         core.ActionID{SpellID: 57842},
-		SpellSchool:      core.SpellSchoolPhysical,
-		ProcMask:         core.ProcMaskMeleeOHSpecial,
-		Flags:            core.SpellFlagMeleeMetrics | core.SpellFlagIncludeTargetBonusDamage,
-		DamageMultiplier: rogue.dwsMultiplier(),
-		CritMultiplier:   rogue.MeleeCritMultiplier(false),
-		ThreatMultiplier: 1,
-		Direct:           core.SpellEffect{Effect: 0, WeaponPct: 1},
+		ActionID:           core.ActionID{SpellID: 57842},
+		SpellSchool:        core.SpellSchoolPhysical,
+		ProcMask:           core.ProcMaskMeleeOHSpecial,
+		Flags:              core.SpellFlagMeleeMetrics | core.SpellFlagIncludeTargetBonusDamage,
+		DamageMultiplier:   rogue.dwsMultiplier(),
+		TotalPctMultiplier: rogue.dwsMultiplier(),
+		CritMultiplier:     rogue.MeleeCritMultiplier(false),
+		ThreatMultiplier:   1,
+		Direct:             core.SpellEffect{Effect: 0, WeaponPct: 1},
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			baseDamage := normalizedStrike(sim, spell, &spell.Direct, false)
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialNoBlockDodgeParry)

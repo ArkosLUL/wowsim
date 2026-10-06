@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
 )
 
@@ -122,42 +123,79 @@ func TestDeathCoilMissCost(t *testing.T) {
 	}
 }
 
+// runeWeaponHit is a hit's damage debug line: its base damage and its damage after the attacker's multipliers.
+type runeWeaponHit struct{ base, done float64 }
+
+// firstRuneWeaponHits reads the rune weapon's first white swing and first Heart Strike.
+func firstRuneWeaponHits(entries []logEntry) (swing, heartStrike runeWeaponHit) {
+	field := func(text, name string) float64 {
+		_, rest, _ := strings.Cut(text, name+":")
+		value, _ := strconv.ParseFloat(strings.TrimSuffix(strings.Fields(rest)[0], ","), 64)
+		return value
+	}
+	for _, e := range entries {
+		if !strings.Contains(e.unit, "Rune Weapon") || !strings.Contains(e.text, "[DEBUG]") {
+			continue
+		}
+		hit := runeWeaponHit{field(e.text, "BaseDamage"), field(e.text, "AfterAttackerMods")}
+		switch {
+		case swing.base == 0 && strings.Contains(e.text, "{OtherID: 3, Tag: 1}"):
+			swing = hit
+		case heartStrike.base == 0 && strings.Contains(e.text, "{SpellID: 55262, Tag: 1}"):
+			heartStrike = hit
+		}
+	}
+	return swing, heartStrike
+}
+
+const runeWeaponAPL = `{"type": "TypeAPL", "priorityList": [` +
+	`{"action": {"castSpell": {"spellId": {"spellId": 49028}}}}, ` +
+	`{"action": {"castSpell": {"spellId": {"spellId": 55262, "tag": 1}}}}]}`
+
 // Unit::MeleeDamageBonusDone hands the rune weapon's hits to the DK: Elixir of Demonslaying's 105 attack power
 // against the demon dummy adds int32(105 / 14 x speed) off the DK's own main hand, normalized for Heart Strike.
+// It's the DK's flat bonus on a physical hit, so the DK's aura 79 percents skip it: it takes the halving and
+// the spell's own mods only.
 func TestRuneWeaponCreatureTypeAttackPower(t *testing.T) {
-	apl := `{"type": "TypeAPL", "priorityList": [` +
-		`{"action": {"castSpell": {"spellId": {"spellId": 49028}}}}, ` +
-		`{"action": {"castSpell": {"spellId": {"spellId": 55262, "tag": 1}}}}]}`
-	baseDamage := func(elixir bool) (swing, heartStrike float64, speed float64) {
-		player := parityPlayer(BloodTalents, "p3_blood", apl)
-		if elixir {
-			player.Consumes = &proto.Consumes{BattleElixir: proto.BattleElixir_ElixirOfDemonslaying}
-		}
-		speed = parityEnv(t, player, nil).AutoAttacks.MH().SwingSpeed
-		for _, e := range runParity(t, player, 1) {
-			if !strings.Contains(e.unit, "Rune Weapon") || !strings.Contains(e.text, "[DEBUG]") {
-				continue
-			}
-			_, rest, _ := strings.Cut(e.text, "BaseDamage:")
-			value, _ := strconv.ParseFloat(strings.TrimSuffix(strings.Fields(rest)[0], ","), 64)
-			switch {
-			case swing == 0 && strings.Contains(e.text, "{OtherID: 3, Tag: 1}"):
-				swing = value
-			case heartStrike == 0 && strings.Contains(e.text, "{SpellID: 55262, Tag: 1}"):
-				heartStrike = value
-			}
-		}
-		return swing, heartStrike, speed
-	}
-	swing, heartStrike, speed := baseDamage(false)
-	swingElixir, heartStrikeElixir, _ := baseDamage(true)
-	if swing == 0 || heartStrike == 0 {
+	player := parityPlayer(BloodTalents, "p3_blood", runeWeaponAPL)
+	dk := parityEnv(t, player, nil)
+	speed := dk.AutoAttacks.MH().SwingSpeed
+	spellMods := func(spell *core.Spell) float64 { return spell.DamageMultiplier * spell.DamageMultiplierAdditive }
+	swingMods, heartStrikeMods := spellMods(dk.RuneWeapon.AutoAttacks.MHAuto()), spellMods(dk.RuneWeapon.HeartStrike)
+
+	swing, heartStrike := firstRuneWeaponHits(runParity(t, player, 1))
+	player.Consumes = &proto.Consumes{BattleElixir: proto.BattleElixir_ElixirOfDemonslaying}
+	swingElixir, heartStrikeElixir := firstRuneWeaponHits(runParity(t, player, 1))
+	if swing.base == 0 || heartStrike.base == 0 {
 		t.Fatalf("no rune weapon swing (%v) or Heart Strike (%v)", swing, heartStrike)
 	}
-	if got, want := swingElixir-swing, math.Trunc(float64(float32(105)/14*float32(speed))); math.Abs(got-want) > 0.1 {
-		t.Errorf("swing base damage +%.1f, want +%v (speed %v)", got, want, speed)
+	// each done damage is whole, so the difference is within a point of the bonus
+	if got, want := swingElixir.done-swing.done, math.Trunc(float64(float32(105)/14*float32(speed)))*0.5*swingMods; math.Abs(got-want) >= 1 {
+		t.Errorf("swing damage +%v, want +%.2f (speed %v)", got, want, speed)
 	}
-	if got, want := heartStrikeElixir-heartStrike, math.Trunc(float64(float32(105)/14*3.3)); math.Abs(got-want) > 0.1 {
-		t.Errorf("Heart Strike base damage +%.1f, want +%v", got, want)
+	if got, want := heartStrikeElixir.done-heartStrike.done, math.Trunc(float64(float32(105)/14*3.3))*0.5*heartStrikeMods; math.Abs(got-want) >= 1 {
+		t.Errorf("Heart Strike damage +%v, want +%.2f", got, want)
+	}
+}
+
+// A troll's Beast Slaying (DONE_VERSUS) is in the DK's bonus done, so it counts on the rune weapon's hits too.
+func TestRuneWeaponBeastSlaying(t *testing.T) {
+	player := parityPlayer(BloodTalents, "p3_blood", runeWeaponAPL)
+	player.Race = proto.Race_RaceTroll
+	swing, heartStrike := firstRuneWeaponHits(runParityVs(t, player, proto.MobType_MobTypeDemon, 1))
+	swingBeast, heartStrikeBeast := firstRuneWeaponHits(runParityVs(t, player, proto.MobType_MobTypeBeast, 1))
+	for _, c := range []struct {
+		name         string
+		demon, beast runeWeaponHit
+	}{
+		{"swing", swing, swingBeast},
+		{"Heart Strike", heartStrike, heartStrikeBeast},
+	} {
+		if c.demon.base == 0 || c.beast.base != c.demon.base {
+			t.Fatalf("%s: base damage %v against the demon, %v against the beast", c.name, c.demon.base, c.beast.base)
+		}
+		if want := c.demon.done * 1.05; math.Abs(c.beast.done-want) > 1.05 {
+			t.Errorf("%s: %v against the beast, want 5%% over the demon's %v", c.name, c.beast.done, c.demon.done)
+		}
 	}
 }

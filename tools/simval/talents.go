@@ -719,7 +719,7 @@ func (d *damageSim) sweepSheet() sweepSheet {
 		v["parry %"] = c.ParryChance() * 100
 	}
 	if c.PseudoStats.CanBlock {
-		defense := float64(core.DefenseSkillFromRating(s[stats.Defense])) * core.PercentPerSkillPoint
+		defense := float64(c.DefenseSkill()) * core.PercentPerSkillPoint
 		v["block %"] = 5 + s[stats.Block]/core.BlockRatingPerBlockChance + defense
 		v["block value"] = c.BlockValue()
 	}

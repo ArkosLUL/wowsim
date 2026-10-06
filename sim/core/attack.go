@@ -511,9 +511,10 @@ func (unit *Unit) EnableAutoAttacks(agent Agent, options AutoAttackOptions) {
 		ProcMask:    ProcMaskMeleeOHAuto,
 		Flags:       SpellFlagMeleeMetrics | SpellFlagIncludeTargetBonusDamage | SpellFlagNoOnCastComplete,
 
-		DamageMultiplier: 1,
-		CritMultiplier:   options.OffHand.CritMultiplier,
-		ThreatMultiplier: 1,
+		DamageMultiplier:   1,
+		CritMultiplier:     options.OffHand.CritMultiplier,
+		ThreatMultiplier:   1,
+		TotalPctMultiplier: 1,
 
 		ApplyEffects: func(sim *Simulation, target *Unit, spell *Spell) {
 			baseDamage := spell.Unit.OHWeaponDamage(sim, spell.MeleeAttackPower()) +
@@ -534,7 +535,8 @@ func (unit *Unit) EnableAutoAttacks(agent Agent, options AutoAttackOptions) {
 		ThreatMultiplier: 1,
 
 		ApplyEffects: func(sim *Simulation, target *Unit, spell *Spell) {
-			baseDamage := spell.Unit.RangedWeaponDamage(sim, spell.RangedAttackPower(target)) +
+			// Hunter's Mark comes with the flat weapon hit bonus (weaponAttackPowerBonus)
+			baseDamage := spell.Unit.RangedWeaponDamage(sim, spell.Unit.stats[stats.RangedAttackPower]) +
 				spell.BonusWeaponDamage()
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeRangedHitAndCrit)
 		},

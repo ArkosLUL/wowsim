@@ -11,6 +11,7 @@ import (
 	"github.com/wowsims/wotlk/sim/core/proto"
 	"github.com/wowsims/wotlk/sim/core/stats"
 	"github.com/wowsims/wotlk/sim/deathknight"
+	googleProto "google.golang.org/protobuf/proto"
 )
 
 func parityPlayer(talents, gear, apl string) *proto.Player {
@@ -163,12 +164,21 @@ type logEntry struct {
 	text string
 }
 
-// runParity runs one logged iteration and returns its log lines.
+// runParity runs one logged iteration against the demon dummy and returns its log lines.
 func runParity(t *testing.T, player *proto.Player, seed int64) []logEntry {
 	t.Helper()
+	return runParityVs(t, player, proto.MobType_MobTypeDemon, seed)
+}
+
+func runParityVs(t *testing.T, player *proto.Player, mobType proto.MobType, seed int64) []logEntry {
+	t.Helper()
+	encounter := core.MakeSingleTargetEncounter(0)
+	// the default target is shared
+	encounter.Targets[0] = googleProto.Clone(encounter.Targets[0]).(*proto.Target)
+	encounter.Targets[0].MobType = mobType
 	res := core.RunRaidSim(&proto.RaidSimRequest{
 		Raid:       core.SinglePlayerRaidProto(player, nil, nil, nil),
-		Encounter:  core.MakeSingleTargetEncounter(0),
+		Encounter:  encounter,
 		SimOptions: &proto.SimOptions{Iterations: 1, IsTest: true, Debug: true, RandomSeed: seed},
 	})
 	if res.ErrorResult != "" {

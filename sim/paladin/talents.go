@@ -239,7 +239,7 @@ func (paladin *Paladin) applyArdentDefender() {
 	// spell_pal_ardent_defender::Absorb: the heal scales with total defense skill (base + rating)
 	// against level*5+140 (540 at 80), capping at that ratio instead of the rating alone.
 	reqDefenseSkill := float64(core.MaxSkill(core.CharacterLevel)) + 140
-	totalDefenseSkill := float64(core.MaxSkill(core.CharacterLevel) + core.DefenseSkillFromRating(paladin.GetStat(stats.Defense)))
+	totalDefenseSkill := float64(core.MaxSkill(core.CharacterLevel) + paladin.DefenseSkill())
 	ardentHealAmount := min(1.0, totalDefenseSkill/reqDefenseSkill) * 0.10 * float64(paladin.Talents.ArdentDefender)
 
 	// TBD? Buff to mark time spent fully below 35% and attribute absorbs
@@ -324,11 +324,15 @@ func (paladin *Paladin) applyArdentDefender() {
 	})
 }
 
-// Because Crusade modifies unit specific attack tables, it must be applied at start of sim.
+// Crusade's first percent is aura 79 on all damage, its second DONE_VERSUS on four creature types, per target
+// in the attack tables, set at the start of the sim. A weapon hit's flat attack power bonus takes only the second.
 func (paladin *Paladin) applyCrusade() {
 	if paladin.Talents.Crusade == 0 {
 		return
 	}
+
+	crusadeMod := 1.0 + (0.01 * float64(paladin.Talents.Crusade))
+	paladin.PseudoStats.DamageDealtMultiplier *= crusadeMod
 
 	var applied bool
 
@@ -337,11 +341,8 @@ func (paladin *Paladin) applyCrusade() {
 			if !applied {
 				for i := int32(0); i < paladin.Env.GetNumTargets(); i++ {
 					unit := paladin.Env.GetTargetUnit(i)
-					crusadeMod := 1.0 + (0.01 * float64(paladin.Talents.Crusade))
 					switch unit.MobType {
 					case proto.MobType_MobTypeHumanoid, proto.MobType_MobTypeDemon, proto.MobType_MobTypeUndead, proto.MobType_MobTypeElemental:
-						paladin.AttackTables[unit.UnitIndex].DamageDealtMultiplier *= crusadeMod * crusadeMod
-					default:
 						paladin.AttackTables[unit.UnitIndex].DamageDealtMultiplier *= crusadeMod
 					}
 				}

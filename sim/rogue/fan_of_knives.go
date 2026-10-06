@@ -20,12 +20,14 @@ func (rogue *Rogue) makeFanOfKnivesWeaponHitSpell(isMH bool) *core.Spell {
 		core.TernaryFloat64(rogue.HasMajorGlyph(proto.RogueMajorGlyph_GlyphOfFanOfKnives), 0.2, 0.0),
 	)
 	direct := core.SpellEffect{Effect: 0, WeaponPct: 0.7}
+	totalPct := 1.0
 	if isMH {
 		actionID = core.ActionID{SpellID: FanOfKnivesSpellID}.WithTag(1)
 		procMask = core.ProcMaskMeleeMHSpecial
 	} else {
 		actionID = core.ActionID{SpellID: FanOfKnivesSpellID}.WithTag(2)
 		multiplier *= rogue.dwsMultiplier()
+		totalPct = rogue.dwsMultiplier()
 		procMask = core.ProcMaskMeleeOHSpecial
 		direct.FromSpellID = 52874
 	}
@@ -37,9 +39,10 @@ func (rogue *Rogue) makeFanOfKnivesWeaponHitSpell(isMH bool) *core.Spell {
 		Flags:        core.SpellFlagMeleeMetrics | SpellFlagColdBlooded,
 		MissileSpeed: fanOfKnivesMissileSpeed,
 
-		DamageMultiplier: multiplier,
-		CritMultiplier:   rogue.MeleeCritMultiplier(false),
-		ThreatMultiplier: 1,
+		DamageMultiplier:   multiplier,
+		TotalPctMultiplier: totalPct,
+		CritMultiplier:     rogue.MeleeCritMultiplier(false),
+		ThreatMultiplier:   1,
 
 		Direct: direct,
 	})

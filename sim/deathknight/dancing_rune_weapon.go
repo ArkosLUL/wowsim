@@ -87,7 +87,8 @@ func (runeWeapon *RuneWeaponPet) getImpurityBonus(spell *core.Spell) float64 {
 type RuneWeaponPet struct {
 	*core.Pet
 
-	dkOwner *Deathknight
+	dkOwner            *Deathknight
+	ownerTablesApplied bool
 
 	IcyTouch     *core.Spell
 	PlagueStrike *core.Spell
@@ -131,7 +132,10 @@ func (dk *Deathknight) DrwWeaponDamage(sim *core.Simulation, spell *core.Spell) 
 // hands entry 27893's hit to its owner and halves what comes back, so it's the DK's own int32(AP / 14 x speed)
 // off the DK's main hand, in float32 like the server, halved with the rest of the hit. The rune weapon has none
 // of its own.
-func (dk *Deathknight) drwVersusAttackPowerBonus(normalized bool) float64 {
+// The owner skips aura 79 on this physical flat bonus, but the rune weapon's damage multipliers hold the owner's
+// aura 79s and the halving, so it comes back divided by them: the hit then gives it only the halving, the
+// per-target multipliers and the spell's own mods.
+func (dk *Deathknight) drwVersusAttackPowerBonus(spell *core.Spell, normalized bool) float64 {
 	ap := dk.PseudoStats.MobTypeAttackPower
 	if ap == 0 {
 		return 0
@@ -141,7 +145,9 @@ func (dk *Deathknight) drwVersusAttackPowerBonus(normalized bool) float64 {
 	if normalized {
 		speed = weapon.NormalizedSwingSpeed
 	}
-	return math.Trunc(float64(float32(ap) / float32(core.DefaultAttackPowerPerDPS) * float32(speed)))
+	bonus := math.Trunc(float64(float32(ap) / float32(core.DefaultAttackPowerPerDPS) * float32(speed)))
+	ps := &spell.Unit.PseudoStats
+	return bonus * 0.5 / (ps.DamageDealtMultiplier * ps.SchoolDamageDealtMultiplier[stats.SchoolIndexPhysical])
 }
 
 func (dk *Deathknight) NewRuneWeapon() *RuneWeaponPet {
@@ -181,7 +187,7 @@ func (dk *Deathknight) NewRuneWeapon() *RuneWeaponPet {
 	})
 	runeWeapon.AutoAttacks.MHConfig().ApplyEffects = func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 		baseDamage := spell.Unit.MHWeaponDamage(sim, spell.MeleeAttackPower()) + spell.BonusWeaponDamage() +
-			dk.drwVersusAttackPowerBonus(false)
+			dk.drwVersusAttackPowerBonus(spell, false)
 		spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeWhite)
 	}
 
@@ -202,6 +208,14 @@ func (runeWeapon *RuneWeaponPet) GetPet() *core.Pet {
 }
 
 func (runeWeapon *RuneWeaponPet) Reset(_ *core.Simulation) {
+	// its bonus done is the owner's, so the owner's per-target multipliers (DONE_VERSUS, like Troll Beast
+	// Slaying) count on every hit. Attack tables outlive a reset, and the owner sets its own on its first.
+	if !runeWeapon.ownerTablesApplied {
+		runeWeapon.ownerTablesApplied = true
+		for i, at := range runeWeapon.AttackTables {
+			at.DamageDealtMultiplier *= runeWeapon.dkOwner.AttackTables[i].DamageDealtMultiplier
+		}
+	}
 }
 
 func (runeWeapon *RuneWeaponPet) ExecuteCustomRotation(_ *core.Simulation) {

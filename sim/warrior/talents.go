@@ -21,6 +21,7 @@ func (warrior *Warrior) ApplyTalents() {
 	warrior.PseudoStats.BaseParry += 0.01 * float64(warrior.Talents.Deflection)
 	warrior.PseudoStats.DodgeReduction += 0.01 * float64(warrior.Talents.WeaponMastery)
 	warrior.AutoAttacks.OHConfig().DamageMultiplier *= 1 + 0.05*float64(warrior.Talents.DualWieldSpecialization)
+	warrior.AutoAttacks.OHConfig().TotalPctMultiplier *= 1 + 0.05*float64(warrior.Talents.DualWieldSpecialization)
 
 	if warrior.Talents.ArmoredToTheTeeth > 0 {
 		coeff := float64(warrior.Talents.ArmoredToTheTeeth)
@@ -813,9 +814,10 @@ func (warrior *Warrior) RegisterBladestormCD() {
 			ProcMask:    core.ProcMaskMeleeOHSpecial,
 			Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagIncludeTargetBonusDamage,
 
-			DamageMultiplier: 1 + 0.05*float64(warrior.Talents.DualWieldSpecialization),
-			CritMultiplier:   warrior.critMultiplier(),
-			ThreatMultiplier: 1,
+			DamageMultiplier:   1 + 0.05*float64(warrior.Talents.DualWieldSpecialization),
+			TotalPctMultiplier: 1 + 0.05*float64(warrior.Talents.DualWieldSpecialization),
+			CritMultiplier:     warrior.critMultiplier(),
+			ThreatMultiplier:   1,
 
 			// each Bladestorm tick's 50622 triggers the off-hand Whirlwind
 			Direct: core.SpellEffect{Effect: 0, FromSpellID: 44949, WeaponPct: 1},

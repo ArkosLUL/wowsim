@@ -33,7 +33,8 @@ func (dk *Deathknight) newBloodStrikeSpell(isMH bool) *core.Spell {
 			IgnoreHaste: true,
 		},
 
-		BonusCritRating: (dk.subversionCritBonus() + dk.annihilationCritBonus()) * core.CritRatingPerCritChance,
+		BonusCritRating:    (dk.subversionCritBonus() + dk.annihilationCritBonus()) * core.CritRatingPerCritChance,
+		TotalPctMultiplier: core.TernaryFloat64(isMH, 1, dk.nervesOfColdSteelBonus()),
 		DamageMultiplier: core.TernaryFloat64(isMH, 1, dk.nervesOfColdSteelBonus()) *
 			dk.bloodOfTheNorthCoeff() *
 			dk.thassariansPlateDamageBonus() *
@@ -109,7 +110,7 @@ func (dk *Deathknight) registerDrwBloodStrikeSpell() {
 			baseDamage *= dk.RoRTSBonus(target) *
 				(1.0 + dk.drwCountActiveDiseases(target)*diseaseMulti)
 			// Rage of Rivendare and Tundra Stalker come after the flat bonus, the disease bonus before it
-			baseDamage += dk.drwVersusAttackPowerBonus(true) * dk.RoRTSBonus(target)
+			baseDamage += dk.drwVersusAttackPowerBonus(spell, true) * dk.RoRTSBonus(target)
 
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 		},

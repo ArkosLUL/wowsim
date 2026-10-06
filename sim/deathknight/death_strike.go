@@ -41,7 +41,8 @@ func (dk *Deathknight) newDeathStrikeSpell(isMH bool) *core.Spell {
 			IgnoreHaste: true,
 		},
 
-		BonusCritRating: (dk.annihilationCritBonus() + dk.viciousStrikesCritChanceBonus() + dk.improvedDeathStrikeCritBonus() + dk.scourgeborneBattlegearCritBonus()) * core.CritRatingPerCritChance,
+		BonusCritRating:    (dk.annihilationCritBonus() + dk.viciousStrikesCritChanceBonus() + dk.improvedDeathStrikeCritBonus() + dk.scourgeborneBattlegearCritBonus()) * core.CritRatingPerCritChance,
+		TotalPctMultiplier: core.TernaryFloat64(isMH, 1, dk.nervesOfColdSteelBonus()),
 		DamageMultiplier: core.TernaryFloat64(isMH, 1, dk.nervesOfColdSteelBonus()) *
 			dk.improvedDeathStrikeDamageBonus(),
 		CritMultiplier:   dk.bonusCritMultiplier(dk.Talents.MightOfMograine),
@@ -116,7 +117,7 @@ func (dk *Deathknight) registerDrwDeathStrikeSpell() {
 			if hasGlyph {
 				baseDamage *= 1 + 0.01*min(dk.CurrentRunicPower(), 25)
 			}
-			baseDamage += dk.drwVersusAttackPowerBonus(true)
+			baseDamage += dk.drwVersusAttackPowerBonus(spell, true)
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 		},
 	})

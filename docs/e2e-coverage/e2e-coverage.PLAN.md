@@ -1737,13 +1737,16 @@ Re-measured on `0ccf8aa60` against [ac] `3d89793c7` and the committed records. V
   Ranged Weapon Specialization sets on ranged physical spells). `huntersMarkBonus` is gone. No record covers it
   (the fights carry no mark); source-confirmed. DONE_VERSUS (aura 168) scales the bonus too: Troll Beast Slaying
   (20557) moved from `DamageDealtMultiplier` to the per-target attack table multiplier (golden-neutral, the goldens
-  fight a demon); the undead sets (57943, 29068) still sit in `DamageDealtMultiplier`.
+  fight a demon); the undead sets (57943, 29068) still sit in `DamageDealtMultiplier`. Cross-review: the off hand's
+  `MOD_OFFHAND_DAMAGE_PCT` (Dual Wield Specialization, Nerves of Cold Steel) is `TotalPctMultiplier` too
+  (`SpellConfig.TotalPctMultiplier`), and Crusade's aura 79 half went from the attack tables to
+  `DamageDealtMultiplier` (the Thermal Sapper's hit on the paladin takes it now).
 - Kill Shot (fixed): effect 17's weapon part reads the weapon's own speed (`RangedWeaponDamage`). No record (no
   fight reaches 20%).
 - Rune of the Stoneskin Gargoyle (fixed): 62157's +25 is `PseudoStats.BonusDefenseSkill`; dodge, parry and miss
   take it undiminished, `Unit.DefenseSkill()` gives the table, crit taken and block the full skill. Goldchar
   BloodTank dodge 20.4424 → 20.6844 (server 20.6844), parry 18.9400 → 19.4142 (19.4128); both drops and the README
-  row gone.
+  row gone. Cross-review: Icebound Fortitude and Ardent Defender read the full skill too.
 - Tooling: `spells_audit.csv` regenerated (33831, not 65861; Auto Shot listed); `rangedWeaponSpell`'s comment no
   longer names Auto Shot. `TestPetStrikeReplay` (`tools/simval/damage_test.go`) expects the truncated amount.
 - Replays all pass (`simval.jsonl` 1114/1114).
@@ -1789,7 +1792,9 @@ Melee stage, on `0ccf8aa60`. Verdicts:
 - Death Coil and Rune Strike (fixed): refundable, so a miss takes irand(0, cost / 4); Sudden Doom's triggered Death
   Coil pays nothing.
 - Rune weapon creature-type AP (fixed): its hits add the DK's int32(AP / 14 × the DK's main-hand speed, normalized for
-  effect 121), float32 like the server, halved with the hit; white swings through its `MHConfig`.
+  effect 121), float32 like the server, halved with the hit; white swings through its `MHConfig`. Cross-review: it skips
+  the DK's aura 79s the rune weapon's multipliers hold, and the rune weapon copies the DK's per-target multipliers
+  (Troll Beast Slaying).
 - DeathknightFrost cycle (fixed): IT, PS, BS, FS, Ob, BS, FS, HB, HoW at 2000 ms; a model of `Spell::TakeRunePower`
   lands every rune spell from 1700 to 2200 ms, and the sim's bot lands Howling Blast 4 times a fight.
 - Improved Devotion Aura at 1–2 points (fixed): `improveDevotionAura` gives every raider and pet under the best paladin's
@@ -1803,8 +1808,8 @@ Core hunks (DK-only): `sim/core/runic_power.go`, `runic_power_helper.go`. Tests:
 
 Goldens: Death Coil and Rune Strike misses now cost less runic power, so more casts: Blood −0.2 to +0.4% (AllItems, NoBuffs
 only), Unholy −0.2 to +0.4% (same), BloodTank −0.4 to +1.3% (Average-Default +0.4%: Death Coil 12.6 → 14.0 hits). No
-golden has the revert, Improved Unholy Presence, partial ranks or creature-type AP on a DK; Frost, rogue and paladin
-suites don't move.
+golden has the revert, Improved Unholy Presence or partial ranks; creature-type AP on a DK only in the AllItems Twin
+Blades of Azzinoth rows; Frost, rogue and paladin suites don't move.
 
 Follow-ups: Blood Tap's rune pick and its "convert the other blood rune" interplay with the talents; Improved Devotion
 Aura's 63514 healing taken; a Threat of Thassarian off-hand strike rerolling partial Death Rune Mastery; the DK's own

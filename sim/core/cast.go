@@ -241,6 +241,11 @@ func (spell *Spell) castFailureHelper(sim *Simulation, message string, vals ...a
 	return false
 }
 
+// failsQuietly: castFailureHelper does nothing in combat with logs off, so skip it and don't box its args
+func failsQuietly(sim *Simulation) bool {
+	return sim.Log == nil && sim.CurrentTime >= 0
+}
+
 func (spell *Spell) makeCastFunc(config CastConfig) CastSuccessFunc {
 	// built once per spell, since a closure made per hardcast allocates on every cast
 	onComplete := func(resetsSwing bool) func(*Simulation, *Unit) {
@@ -272,8 +277,6 @@ func (spell *Spell) makeCastFunc(config CastConfig) CastSuccessFunc {
 	if spell.timing.resetsAutoAttack {
 		completeCastResettingSwing = onComplete(true)
 	}
-	// castFailureHelper is a no-op in combat with logs off, and boxing its args allocates on every failed cast
-	failsQuietly := func(sim *Simulation) bool { return sim.Log == nil && sim.CurrentTime >= 0 }
 
 	return func(sim *Simulation, target *Unit) bool {
 		spell.CurCast = spell.DefaultCast
@@ -462,6 +465,9 @@ func (spell *Spell) makeCastFuncSimple() CastSuccessFunc {
 		if spell.CD.Timer != nil {
 			// By panicking if spell is on CD, we force each sim to properly check for their own CDs.
 			if !spell.CD.IsReady(sim) {
+				if failsQuietly(sim) {
+					return false
+				}
 				return spell.castFailureHelper(sim, "still on cooldown for %s, curTime = %s", spell.CD.TimeToReady(sim), sim.CurrentTime)
 			}
 
@@ -471,6 +477,9 @@ func (spell *Spell) makeCastFuncSimple() CastSuccessFunc {
 		if spell.SharedCD.Timer != nil {
 			// By panicking if spell is on CD, we force each sim to properly check for their own CDs.
 			if !spell.SharedCD.IsReady(sim) {
+				if failsQuietly(sim) {
+					return false
+				}
 				return spell.castFailureHelper(sim, "still on shared cooldown for %s, curTime = %s", spell.SharedCD.TimeToReady(sim), sim.CurrentTime)
 			}
 

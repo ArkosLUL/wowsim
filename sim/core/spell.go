@@ -43,6 +43,8 @@ type SpellConfig struct {
 	DamageMultiplier         float64
 	DamageMultiplierAdditive float64
 	CritMultiplier           float64
+	// starts Spell.TotalPctMultiplier; 0 means 1
+	TotalPctMultiplier float64
 
 	// the spell's threat mods (SPELLMOD_THREAT); 0 means it makes no threat at all
 	ThreatMultiplier float64
@@ -135,8 +137,9 @@ type Spell struct {
 	DamageMultiplier         float64
 	DamageMultiplierAdditive float64
 	CritMultiplier           float64
-	// the part of DamageMultiplier that's an item-restricted aura 79 in the hand's TOTAL_PCT (Ranged Weapon
-	// Specialization on ranged attacks), which a physical weapon hit's flat attack power bonus doesn't take
+	// the part of DamageMultiplier that's in the hand's TOTAL_PCT, which a physical weapon hit's flat attack power
+	// bonus doesn't take: an item-restricted aura 79 (Ranged Weapon Specialization on ranged attacks) or the off
+	// hand's SPELL_AURA_MOD_OFFHAND_DAMAGE_PCT (Dual Wield Specialization, Nerves of Cold Steel)
 	TotalPctMultiplier float64
 
 	// the spell's threat mods (SPELLMOD_THREAT), on its damage and healing threat; 0 means no threat at all
@@ -279,7 +282,7 @@ func (unit *Unit) RegisterSpell(config SpellConfig) *Spell {
 		DamageMultiplier:         config.DamageMultiplier,
 		DamageMultiplierAdditive: config.DamageMultiplierAdditive,
 		CritMultiplier:           config.CritMultiplier,
-		TotalPctMultiplier:       1,
+		TotalPctMultiplier:       TernaryFloat64(config.TotalPctMultiplier == 0, 1, config.TotalPctMultiplier),
 
 		ThreatMultiplier: config.ThreatMultiplier,
 

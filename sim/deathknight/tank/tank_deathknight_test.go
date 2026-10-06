@@ -1,11 +1,13 @@
 package tank
 
 import (
+	"math"
 	"testing"
 
 	_ "github.com/wowsims/wotlk/sim/common" // imported to get item effects included.
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
+	"github.com/wowsims/wotlk/sim/core/stats"
 	"github.com/wowsims/wotlk/sim/encounters"
 )
 
@@ -64,6 +66,25 @@ func TestDeathchillWithoutFrostStrike(t *testing.T) {
 		}
 	}
 	t.Error("Deathchill never cast")
+}
+
+// spell_dk_icebound_fortitude: 30% less damage taken plus a whole 0.15% per point of the full defense skill over
+// 400, Rune of the Stoneskin Gargoyle's +25 included.
+func TestIceboundFortitudeReadsDefenseSkill(t *testing.T) {
+	sim := core.NewSim(genericBossRequest())
+	sim.Reset()
+	dk := sim.Raid.Parties[0].Players[0].(*TankDeathknight)
+	if dk.PseudoStats.BonusDefenseSkill != 25 {
+		t.Fatalf("defense skill bonus %d, want Rune of the Stoneskin Gargoyle's 25", dk.PseudoStats.BonusDefenseSkill)
+	}
+	overCap := core.DefenseSkillFromRating(dk.GetStat(stats.Defense)) + 25
+	want := 1 - float64(30+overCap*15/100)/100
+
+	before := dk.PseudoStats.DamageTakenMultiplier
+	dk.IceboundFortitudeAura.Activate(sim)
+	if got := dk.PseudoStats.DamageTakenMultiplier / before; math.Abs(got-want) > 1e-9 {
+		t.Errorf("damage taken x%.4f under Icebound Fortitude, want x%.4f (defense skill %d)", got, want, 400+overCap)
+	}
 }
 
 // talentsAverageRequest runs player the way Average-Default runs the suite's default player

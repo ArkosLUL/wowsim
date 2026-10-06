@@ -359,6 +359,43 @@ func TestCritDamageMultipliers(t *testing.T) {
 	GenerateCriticalDamageMultiplierTestCase(t, "FinisherREDLethalityPotW", GearWithRED, CombatTalents, PlayerOptionsCombatDI, Finisher, 2.46)
 }
 
+// Dual Wield Specialization is SPELL_AURA_MOD_OFFHAND_DAMAGE_PCT, in the off hand's TOTAL_PCT: the off-hand
+// weapon hits whose damage multiplier takes it carry it as TotalPctMultiplier too, which their flat attack power
+// bonus (Unit::MeleeDamageBonusDone) skips.
+func TestDualWieldSpecializationIsOffHandTotalPct(t *testing.T) {
+	sim := core.NewSim(talentsAverageRequest(&proto.Player{
+		Race:          proto.Race_RaceHuman,
+		Class:         proto.Class_ClassRogue,
+		Equipment:     core.GetGearSet("../../ui/rogue/gear_sets", "p1_combat").GearSet,
+		Consumes:      &proto.Consumes{},
+		Spec:          PlayerOptionsCombatDI,
+		Rotation:      core.GetAplRotation("../../ui/rogue/apls", "combat_expose").Rotation,
+		TalentsString: CombatTalents,
+	}))
+	rogue := sim.Raid.Parties[0].Players[0].(RogueAgent).GetRogue()
+	if rogue.dwsMultiplier() != 1.5 {
+		t.Fatalf("Dual Wield Specialization x%v, want 5/5", rogue.dwsMultiplier())
+	}
+	for _, c := range []struct {
+		name  string
+		spell *core.Spell
+		want  float64
+	}{
+		{"main-hand swing", rogue.AutoAttacks.MHAuto(), 1},
+		{"off-hand swing", rogue.AutoAttacks.OHAuto(), 1.5},
+		{"Fan of Knives, main hand", rogue.GetSpell(core.ActionID{SpellID: FanOfKnivesSpellID, Tag: 1}), 1},
+		{"Fan of Knives, off hand", rogue.GetSpell(core.ActionID{SpellID: FanOfKnivesSpellID, Tag: 2}), 1.5},
+		{"Killing Spree, off hand", rogue.GetSpell(core.ActionID{SpellID: 57842}), 1.5},
+	} {
+		if c.spell == nil {
+			t.Fatalf("%s: no spell", c.name)
+		}
+		if c.spell.TotalPctMultiplier != c.want {
+			t.Errorf("%s: TotalPctMultiplier %v, want %v", c.name, c.spell.TotalPctMultiplier, c.want)
+		}
+	}
+}
+
 // TestCombat's default player, as its FullBuffs LongSingleTarget test runs it
 func BenchmarkSimulate(b *testing.B) {
 	rsr := &proto.RaidSimRequest{
