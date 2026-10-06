@@ -44,10 +44,15 @@ func (mage *Mage) registerBlizzardSpell() {
 			damage := spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()
 			damage *= sim.Encounter.AOECapMultiplier()
 			for _, aoeTarget := range sim.Encounter.TargetUnits {
-				spell.CalcAndDealDamage(sim, aoeTarget, damage, spell.OutcomeMagicHitAndCrit)
+				result := spell.CalcAndDealDamage(sim, aoeTarget, damage, spell.OutcomeMagicHitAndCrit)
 
-				if improvedBlizzardProcApplication != nil {
+				// spell_mage_imp_blizzard, on each landed tick: Chilled, and its own Fingers of Frost roll
+				if improvedBlizzardProcApplication != nil && result.Landed() {
 					improvedBlizzardProcApplication.Cast(sim, aoeTarget)
+					mage.chill(sim, aoeTarget, time.Millisecond*1500)
+					if mage.procFingersOfFrost != nil {
+						mage.procFingersOfFrost(sim)
+					}
 				}
 			}
 		},

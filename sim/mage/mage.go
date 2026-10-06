@@ -84,8 +84,18 @@ type Mage struct {
 
 	CritDebuffCategories core.ExclusiveCategoryArray
 	attackSpeedSlows     core.ExclusiveCategoryArray
+	// the mage's own chills on a target that takes snares, nil without Torment the Weak
+	chills core.AuraArray
 
 	hasT84pc bool
+	// Bloodmage's Regalia's 2 pieces, nil without them
+	t10Aura *core.Aura
+	// nil without the talent
+	procFingersOfFrost func(sim *core.Simulation)
+	// what Missile Barrage owes the Arcane Missiles channel under way
+	missiles struct {
+		channeling, barrageUsed, t10AtEnd bool
+	}
 }
 
 func (mage *Mage) GetCharacter() *core.Character {
@@ -117,6 +127,7 @@ func (mage *Mage) Initialize() {
 	// every attack speed debuff the sim has (Thunder Clap, Frost Fever, Infected Wounds, Judgements of the Just)
 	// carries MECHANIC_SLOW_ATTACK on the server
 	mage.attackSpeedSlows = mage.GetEnemyExclusiveCategories("AtkSpdReduction")
+	mage.registerChills()
 	mage.hasT84pc = mage.HasSetBonus(ItemSetKirinTorGarb, 4)
 
 	mage.registerArcaneBarrageSpell()
@@ -142,6 +153,7 @@ func (mage *Mage) Initialize() {
 }
 
 func (mage *Mage) Reset(sim *core.Simulation) {
+	mage.missiles.channeling, mage.missiles.barrageUsed, mage.missiles.t10AtEnd = false, false, false
 }
 
 func NewMage(character *core.Character, options *proto.Player) *Mage {

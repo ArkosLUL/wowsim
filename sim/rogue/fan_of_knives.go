@@ -92,12 +92,8 @@ func (rogue *Rogue) registerFanOfKnives() {
 				}
 			}
 			spell.WaitTravelTime(sim, func(sim *core.Simulation) {
-				for _, result := range mhResults {
-					mhSpell.DealDamage(sim, result)
-				}
-				for _, result := range ohResults {
-					ohSpell.DealDamage(sim, result)
-				}
+				rogue.dealCastHits(sim, mhSpell, mhResults)
+				rogue.dealCastHits(sim, ohSpell, ohResults)
 			})
 		},
 	})

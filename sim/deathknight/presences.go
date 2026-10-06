@@ -191,8 +191,8 @@ func (dk *Deathknight) registerUnholyPresenceAura(timer *core.Timer) {
 		},
 	})
 
-	runeCd := 10 * time.Second
-	impUp := 500 * time.Millisecond * time.Duration(dk.Talents.ImprovedUnholyPresence)
+	// 63622's rune regen percent, from the talent's second effect
+	impUp := []int64{0, 5, 10}[dk.Talents.ImprovedUnholyPresence]
 	stamDep := dk.NewDynamicMultiplyStat(stats.Stamina, 1.0+0.04*float64(dk.Talents.ImprovedFrostPresence))
 	var gcdAffectedSpells []*core.Spell
 	dk.UnholyPresenceAura = dk.GetOrRegisterAura(core.Aura{
@@ -229,9 +229,7 @@ func (dk *Deathknight) registerUnholyPresenceAura(timer *core.Timer) {
 			for _, spell := range gcdAffectedSpells {
 				spell.DefaultCast.GCD = time.Second
 			}
-			if dk.Talents.ImprovedUnholyPresence > 0 {
-				aura.Unit.SetRuneCd(runeCd - impUp)
-			}
+			aura.Unit.SetRuneRegenPercent(impUp)
 			aura.Unit.PseudoStats.ThreatMultiplier *= threatMult
 			aura.Unit.EnableDynamicStatDep(sim, stamDep)
 			dk.MultiplyMeleeSpeed(sim, 1.15)
@@ -240,9 +238,7 @@ func (dk *Deathknight) registerUnholyPresenceAura(timer *core.Timer) {
 			for _, spell := range gcdAffectedSpells {
 				spell.DefaultCast.GCD = core.GCDDefault
 			}
-			if dk.Talents.ImprovedUnholyPresence > 0 {
-				aura.Unit.SetRuneCd(runeCd)
-			}
+			aura.Unit.SetRuneRegenPercent(0)
 			aura.Unit.PseudoStats.ThreatMultiplier /= threatMult
 			aura.Unit.DisableDynamicStatDep(sim, stamDep)
 			dk.MultiplyMeleeSpeed(sim, 1/1.15)

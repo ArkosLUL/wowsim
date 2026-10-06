@@ -62,6 +62,7 @@ func (dk *Deathknight) registerDeathCoilSpell() {
 
 		RuneCost: core.RuneCostOptions{
 			RunicPowerCost: 40,
+			Refundable:     true,
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
@@ -71,9 +72,12 @@ func (dk *Deathknight) registerDeathCoilSpell() {
 
 		ThreatMultiplier: 1.0,
 
-		// The cast is a binary dummy: a resist is a miss, and only a hit sends the damage spell.
+		// The cast is a binary dummy: a resist is a miss, and only a hit sends the damage spell. A miss still
+		// takes up to a quarter of the cost (Spell::TakePower).
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			result := spell.CalcAndDealOutcome(sim, target, spell.OutcomeMagicHit)
+			result := spell.CalcOutcome(sim, target, spell.OutcomeMagicHit)
+			spell.SpendRefundableCost(sim, result)
+			spell.DealOutcome(sim, result)
 			if result.Landed() {
 				dk.DeathCoilDamage.Cast(sim, target)
 			}

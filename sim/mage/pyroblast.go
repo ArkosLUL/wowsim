@@ -33,6 +33,7 @@ func (mage *Mage) registerPyroblastSpell() {
 					cast.CastTime = 0
 					if !mage.t84pcKeepsProc(sim) {
 						mage.HotStreakAura.Deactivate(sim)
+						mage.pushingTheLimit(sim)
 					}
 				}
 			},

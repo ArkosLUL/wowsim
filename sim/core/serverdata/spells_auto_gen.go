@@ -7150,6 +7150,16 @@ var spells = []Spell{
 			{Effect: 28, BasePoints: 4, DieSides: 1, DamageMultiplier: 1, MiscValue: 31133, MiscValueB: 63},
 		},
 	},
+	// Prey on the Weak
+	{
+		ID: 58670, SchoolMask: 1, Flags: FlagBinary | FlagPositive,
+		Attributes: [8]uint32{0x190}, AttributesCu: 0x100000,
+		DurationMs: 10000, MaxDurationMs: 10000,
+		ProcChance: 101,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 163, BasePoints: 19, DieSides: 1, DamageMultiplier: 1, MiscValue: 127, ClassMask: [3]uint32{0x400000}},
+		},
+	},
 	// Savage Combat (Rank 2)
 	{
 		ID: 58683, SchoolMask: 1, Flags: FlagBinary,

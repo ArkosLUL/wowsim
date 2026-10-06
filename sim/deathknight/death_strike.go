@@ -15,7 +15,7 @@ func (dk *Deathknight) deathStrikeEffect() (core.SpellEffect, []core.SpellMod) {
 
 func (dk *Deathknight) newDeathStrikeSpell(isMH bool) *core.Spell {
 	hasGlyph := dk.HasMajorGlyph(proto.DeathknightMajorGlyph_GlyphOfDeathStrike)
-	deathConvertChance := float64(dk.Talents.DeathRuneMastery) / 3
+	deathConvertChance := dk.deathRuneMasteryChance()
 
 	var healthMetrics *core.ResourceMetrics
 	if isMH {
@@ -116,6 +116,7 @@ func (dk *Deathknight) registerDrwDeathStrikeSpell() {
 			if hasGlyph {
 				baseDamage *= 1 + 0.01*min(dk.CurrentRunicPower(), 25)
 			}
+			baseDamage += dk.drwVersusAttackPowerBonus(true)
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 		},
 	})

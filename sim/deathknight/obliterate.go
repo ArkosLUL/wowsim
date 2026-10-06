@@ -11,7 +11,7 @@ var ObliterateActionID = core.ActionID{SpellID: 51425}
 func (dk *Deathknight) newObliterateHitSpell(isMH bool) *core.Spell {
 	diseaseMulti := dk.dkDiseaseMultiplier(0.125)
 	diseaseConsumptionChance := []float64{1.0, 0.67, 0.34, 0.0}[dk.Talents.Annihilation]
-	deathConvertChance := float64(dk.Talents.DeathRuneMastery) / 3
+	deathConvertChance := dk.deathRuneMasteryChance()
 
 	conf := core.SpellConfig{
 		ActionID:    ObliterateActionID.WithTag(core.TernaryInt32(isMH, 1, 2)),

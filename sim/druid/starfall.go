@@ -65,12 +65,11 @@ func (druid *Druid) registerStarfallSpell() {
 		},
 
 		ThreatMultiplier: 1,
+		// 53201 is an aura on the druid, so it never misses
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			result := spell.CalcAndDealOutcome(sim, target, spell.OutcomeMagicHit)
-			if result.Landed() {
-				spell.Dot(target).Apply(sim)
-				druid.StarfallSplash.Dot(target).Apply(sim)
-			}
+			spell.CalcAndDealOutcome(sim, target, spell.OutcomeAlwaysHit)
+			spell.Dot(target).Apply(sim)
+			druid.StarfallSplash.Dot(target).Apply(sim)
 		},
 	})
 

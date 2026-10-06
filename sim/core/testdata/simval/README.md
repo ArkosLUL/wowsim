@@ -44,6 +44,11 @@ the spell-mod sweep probes them. Rewrite it with [spellmods](../../../../tools/a
 `spellmods.jsonl` holds a `TestSimvalSpellModSweep` run's `SPELLMOD` lines, which `TestSpellModRecords` replays
 ([spell-mod sweep](../../../../tools/simval/README.md#spell-mod-sweep)).
 
+`costaura_spells.json` is the same list for the school cost aura talents, and `costauras.jsonl` a
+`TestSimvalCostAuraSweep` run's lines, which `TestCostAuraRecords` replays
+([cost-aura sweep](../../../../tools/simval/README.md#cost-aura-sweep)); drops go in `droppedCostAuras`
+(`tools/simval/costauras_test.go`) with a row here, as for `spellmods.jsonl`.
+
 `spell_groups.json` is a SELECT export of `acore_world.spell_group` and `spell_group_stack_rules`, which
 `TestSimSpellGroups` (`sim/spell_groups_test.go`) compares with the sim's exclusive effects. Re-export it with the
 query in that test's doc comment when the server's rules change.
@@ -81,6 +86,13 @@ spell (empty check) or check is only logged.
 |---|---|---|---|---|
 | DruidFeralCat | berserk | 48564 Mangle (Bear) | cooldown | not a sim gap: under Berserk the sim resets the cooldown after each cast instead of zeroing it |
 | PriestShadow | shadowFocus | 47585 Dispersion | miss | not a sim gap: Dispersion, a self buff, never rolls to hit; the sim's Shadow Focus hit leaves it out |
+
+`costauras.jsonl`, each in `droppedCostAuras` (`tools/simval/costauras_test.go`), same rules as `spellmods.jsonl`.
+
+| Path | Talent | Spell | Check | Why |
+|---|---|---|---|---|
+| PriestDiscipline | powerInfusion | 53007 Penance | cost | not a mage gap: the sim's Penance takes Mental Agility's cut, which the server's class mask leaves out (server 618, sim 556 before the aura) |
+| PriestDiscipline | powerInfusion | 53007 Penance | channel | the server's 53007 is a dummy with no channel (the cast triggers it), the sim's cast has one |
 
 `timing.jsonl`, each in `knownTimingMismatches` (`tools/simval/timing.go`, keyed by class, spell, pass and check name;
 passes are bare, talents and Bloodlust). The record stays and the check still runs; its failure is let through in the

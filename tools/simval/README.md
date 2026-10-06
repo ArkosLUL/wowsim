@@ -480,6 +480,29 @@ empty check the spell. Lines stay, a dropped failure is logged, and a drop faili
 Hand-built tests: `TestSpellModAgreesWithTheSim` (every path, lines made from the sim), `TestSpellModCatchesMismatches`,
 `TestSpellModReplay`, `TestSpellModLineShape` (live Frostbolt records), `TestSpellModLatestLines`.
 
+## Cost-aura sweep
+
+The spell-mod sweep for school cost auras (72 pct, 73 flat), which `SpellInfo::CalcPowerCost` applies by the spell's
+first school, not a class mask. `costaura_spells.json` (`costauras.go`) has `spellmod_spells.json`'s shape: per
+implemented talent whose rank spells carry one (Arcane Focus, Precision, Frost Channeling, Power Infusion), the spells
+the sim names for its class (tools/acore/spellmods' rule), of its family, with a cost, first school in the aura's
+mask. `TestCostAuraSpellsFile` fails when it's stale; rewrite it with
+`tools/acore/dock.sh test ./tools/simval -run TestCostAuraSpellsFile -update`.
+
+mod-sim-validation's `TestSimvalCostAuraSweep` walks the paths over it, streamed and trimmed as above:
+
+```bash
+SIMVAL_COSTAURA_SPELLS=<sim>/sim/core/testdata/simval/costaura_spells.json \
+SIMVAL_TALENT_PATHS=<sim>/sim/core/testdata/simval/talent_paths.json \
+  modules/mod-sim-validation/e2e/run.sh TestSimvalCostAuraSweep > <sim>/tmp/costaura-e2e.log
+grep -o 'SPELLMOD {.*' <sim>/tmp/costaura-e2e.log | cut -c10- > <sim>/sim/core/testdata/simval/costauras.jsonl
+```
+
+**Replay** (`TestCostAuraRecords`, skips without the fixture): `replaySpellMods` over these lines and steps, drops in
+`droppedCostAuras`. Power Infusion's after state gets the sim priest's own Power Infusion (`sweepBuffOptions[10060]`,
+set in `costauras.go`). Hand-built: `TestCostAuraAgreesWithTheSim` (each talent's cost moves on some spell),
+`TestCostAuraCatchesMismatches`.
+
 ## Fights
 
 `fight.go` replays a golden setup's whole-character fight on the boss dummy (mod-sim-validation's fight e2e)

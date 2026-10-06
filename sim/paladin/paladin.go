@@ -1,8 +1,11 @@
 package paladin
 
 import (
+	"math"
+
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
+	"github.com/wowsims/wotlk/sim/core/stats"
 )
 
 const (
@@ -67,6 +70,9 @@ type Paladin struct {
 	DemonAndUndeadTargetCount int32
 
 	mutualLockoutDPAW *core.Timer
+
+	// the raid's buffs, final by Initialize
+	raidBuffs *proto.RaidBuffs
 }
 
 // Implemented by each Paladin spec.
@@ -90,6 +96,7 @@ func (paladin *Paladin) GetPaladin() *Paladin {
 }
 
 func (paladin *Paladin) AddRaidBuffs(raidBuffs *proto.RaidBuffs) {
+	paladin.raidBuffs = raidBuffs
 	raidBuffs.DevotionAura = max(raidBuffs.DevotionAura, core.MakeTristateValue(
 		paladin.PaladinAura == proto.PaladinAura_DevotionAura,
 		paladin.Talents.ImprovedDevotionAura == 3))
@@ -117,6 +124,42 @@ func (paladin *Paladin) AddRaidBuffs(raidBuffs *proto.RaidBuffs) {
 }
 
 func (paladin *Paladin) AddPartyBuffs(_ *proto.PartyBuffs) {
+}
+
+// improveDevotionAura gives the raid's Devotion Aura Improved Devotion Aura's 17% a point at 1 or 2 points,
+// which the raid buff can't carry: it only knows none or all 3. The paladin's spell mod scales the aura's
+// armor (Unit::ApplyEffectModifiers), so every raider and pet under it gets that amount.
+func (paladin *Paladin) improveDevotionAura() {
+	points := paladin.Talents.ImprovedDevotionAura
+	if paladin.PaladinAura != proto.PaladinAura_DevotionAura || points == 0 || points == 3 ||
+		paladin.raidBuffs == nil || paladin.raidBuffs.DevotionAura != proto.TristateEffect_TristateEffectRegular {
+		return
+	}
+	// the best Devotion Aura counts, the first of equals adds it
+	for _, agent := range paladin.Env.Raid.GetPlayersOfClass(proto.Class_ClassPaladin) {
+		other := agent.(PaladinAgent).GetPaladin()
+		if other == paladin || other.PaladinAura != proto.PaladinAura_DevotionAura {
+			continue
+		}
+		if p := other.Talents.ImprovedDevotionAura; p > points || p == points && other.Index < paladin.Index {
+			return
+		}
+	}
+	bonus := math.Trunc(1205 * float64(17*points) / 100)
+	for _, party := range paladin.Env.Raid.Parties {
+		for _, player := range party.Players {
+			if _, ok := player.(*core.TargetDummy); ok {
+				continue
+			}
+			character := player.GetCharacter()
+			character.AddStat(stats.Armor, bonus)
+			for _, pet := range character.Pets {
+				if pet.BuffImmunity&core.PetImmuneArmor == 0 {
+					pet.AddStat(stats.Armor, bonus)
+				}
+			}
+		}
+	}
 }
 
 func (paladin *Paladin) Initialize() {
@@ -157,6 +200,8 @@ func (paladin *Paladin) Initialize() {
 			paladin.DemonAndUndeadTargetCount += 1
 		}
 	}
+
+	paladin.improveDevotionAura()
 }
 
 func (paladin *Paladin) Reset(_ *core.Simulation) {

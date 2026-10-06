@@ -1,0 +1,95 @@
+{"talents": [
+{"class":"mage","tree":"Arcane","talent":"arcaneFocus","passive":true,"groups": [
+ {"ranks":[11222,12839,12840],"mods":[{"effect":1,"aura":72,"schoolMask":64}],
+  "spells": [
+    {"id":42846,"name":"Arcane Missiles","ops":["COST"]},
+    {"id":42897,"name":"Arcane Blast","ops":["COST"]},
+    {"id":42921,"name":"Arcane Explosion","ops":["COST"]},
+    {"id":44781,"name":"Arcane Barrage","ops":["COST"]},
+    {"id":55342,"name":"Mirror Image","ops":["COST"]}
+  ]}
+]},
+{"class":"mage","tree":"Frost","talent":"precision","passive":true,"groups": [
+ {"ranks":[29438,29439,29440],"mods":[{"effect":1,"aura":72,"schoolMask":126}],
+  "spells": [
+    {"id":12472,"name":"Icy Veins","ops":["COST"]},
+    {"id":31687,"name":"Summon Water Elemental","ops":["COST"]},
+    {"id":42833,"name":"Fireball","ops":["COST"]},
+    {"id":42842,"name":"Frostbolt","ops":["COST"]},
+    {"id":42846,"name":"Arcane Missiles","ops":["COST"]},
+    {"id":42859,"name":"Scorch","ops":["COST"]},
+    {"id":42873,"name":"Fire Blast","ops":["COST"]},
+    {"id":42891,"name":"Pyroblast","ops":["COST"]},
+    {"id":42897,"name":"Arcane Blast","ops":["COST"]},
+    {"id":42914,"name":"Ice Lance","ops":["COST"]},
+    {"id":42921,"name":"Arcane Explosion","ops":["COST"]},
+    {"id":42925,"name":"Flamestrike","ops":["COST"]},
+    {"id":42926,"name":"Flamestrike","ops":["COST"]},
+    {"id":42940,"name":"Blizzard","ops":["COST"]},
+    {"id":42945,"name":"Blast Wave","ops":["COST"]},
+    {"id":42950,"name":"Dragon's Breath","ops":["COST"]},
+    {"id":44572,"name":"Deep Freeze","ops":["COST"]},
+    {"id":44781,"name":"Arcane Barrage","ops":["COST"]},
+    {"id":47610,"name":"Frostfire Bolt","ops":["COST"]},
+    {"id":55342,"name":"Mirror Image","ops":["COST"]},
+    {"id":55360,"name":"Living Bomb","ops":["COST"]},
+    {"id":59637,"name":"Fire Blast","ops":["COST"]},
+    {"id":59638,"name":"Frostbolt","ops":["COST"]}
+  ]}
+]},
+{"class":"mage","tree":"Frost","talent":"frostChanneling","passive":true,"groups": [
+ {"ranks":[11160,12518,12519],"mods":[{"effect":0,"aura":72,"schoolMask":84}],
+  "spells": [
+    {"id":12472,"name":"Icy Veins","ops":["COST"]},
+    {"id":31687,"name":"Summon Water Elemental","ops":["COST"]},
+    {"id":42833,"name":"Fireball","ops":["COST"]},
+    {"id":42842,"name":"Frostbolt","ops":["COST"]},
+    {"id":42846,"name":"Arcane Missiles","ops":["COST"]},
+    {"id":42859,"name":"Scorch","ops":["COST"]},
+    {"id":42873,"name":"Fire Blast","ops":["COST"]},
+    {"id":42891,"name":"Pyroblast","ops":["COST"]},
+    {"id":42897,"name":"Arcane Blast","ops":["COST"]},
+    {"id":42914,"name":"Ice Lance","ops":["COST"]},
+    {"id":42921,"name":"Arcane Explosion","ops":["COST"]},
+    {"id":42925,"name":"Flamestrike","ops":["COST"]},
+    {"id":42926,"name":"Flamestrike","ops":["COST"]},
+    {"id":42940,"name":"Blizzard","ops":["COST"]},
+    {"id":42945,"name":"Blast Wave","ops":["COST"]},
+    {"id":42950,"name":"Dragon's Breath","ops":["COST"]},
+    {"id":44572,"name":"Deep Freeze","ops":["COST"]},
+    {"id":44781,"name":"Arcane Barrage","ops":["COST"]},
+    {"id":47610,"name":"Frostfire Bolt","ops":["COST"]},
+    {"id":55342,"name":"Mirror Image","ops":["COST"]},
+    {"id":55360,"name":"Living Bomb","ops":["COST"]},
+    {"id":59637,"name":"Fire Blast","ops":["COST"]},
+    {"id":59638,"name":"Frostbolt","ops":["COST"]}
+  ]}
+]},
+{"class":"priest","tree":"Discipline","talent":"powerInfusion","passive":false,"groups": [
+ {"ranks":[10060],"mods":[{"effect":1,"aura":72,"schoolMask":126}],
+  "spells": [
+    {"id":10060,"name":"Power Infusion","ops":["COST"]},
+    {"id":33206,"name":"Pain Suppression","ops":["COST"]},
+    {"id":34917,"name":"Vampiric Touch","ops":["COST"]},
+    {"id":47788,"name":"Guardian Spirit","ops":["COST"]},
+    {"id":48063,"name":"Greater Heal","ops":["COST"]},
+    {"id":48066,"name":"Power Word: Shield","ops":["COST"]},
+    {"id":48068,"name":"Renew","ops":["COST"]},
+    {"id":48071,"name":"Flash Heal","ops":["COST"]},
+    {"id":48072,"name":"Prayer of Healing","ops":["COST"]},
+    {"id":48089,"name":"Circle of Healing","ops":["COST"]},
+    {"id":48113,"name":"Prayer of Mending","ops":["COST"]},
+    {"id":48120,"name":"Binding Heal","ops":["COST"]},
+    {"id":48123,"name":"Smite","ops":["COST"]},
+    {"id":48125,"name":"Shadow Word: Pain","ops":["COST"]},
+    {"id":48127,"name":"Mind Blast","ops":["COST"]},
+    {"id":48135,"name":"Holy Fire","ops":["COST"]},
+    {"id":48156,"name":"Mind Flay","ops":["COST"]},
+    {"id":48158,"name":"Shadow Word: Death","ops":["COST"]},
+    {"id":48160,"name":"Vampiric Touch","ops":["COST"]},
+    {"id":48300,"name":"Devouring Plague","ops":["COST"]},
+    {"id":53007,"name":"Penance","ops":["COST"]},
+    {"id":53023,"name":"Mind Sear","ops":["COST"]}
+  ]}
+]}
+]}

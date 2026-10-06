@@ -1,6 +1,7 @@
 package deathknight
 
 import (
+	"math"
 	"time"
 
 	"github.com/wowsims/wotlk/sim/core"
@@ -126,6 +127,23 @@ func (dk *Deathknight) DrwWeaponDamage(sim *core.Simulation, spell *core.Spell) 
 	return spell.Unit.MHWeaponDamage(sim, spell.MeleeAttackPower()) + spell.BonusWeaponDamage()
 }
 
+// drwVersusAttackPowerBonus is the creature-type attack power on a rune weapon hit: Unit::MeleeDamageBonusDone
+// hands entry 27893's hit to its owner and halves what comes back, so it's the DK's own int32(AP / 14 x speed)
+// off the DK's main hand, in float32 like the server, halved with the rest of the hit. The rune weapon has none
+// of its own.
+func (dk *Deathknight) drwVersusAttackPowerBonus(normalized bool) float64 {
+	ap := dk.PseudoStats.MobTypeAttackPower
+	if ap == 0 {
+		return 0
+	}
+	weapon := dk.AutoAttacks.MH()
+	speed := weapon.SwingSpeed
+	if normalized {
+		speed = weapon.NormalizedSwingSpeed
+	}
+	return math.Trunc(float64(float32(ap) / float32(core.DefaultAttackPowerPerDPS) * float32(speed)))
+}
+
 func (dk *Deathknight) NewRuneWeapon() *RuneWeaponPet {
 	// Its hit and expertise come from the 61017 npc_pet_dk_dancing_rune_weapon gives it. Its
 	// crit chance is the owner's own (Spell.cpp:8466-8478, "totem's inherit owner crit chance
@@ -161,6 +179,11 @@ func (dk *Deathknight) NewRuneWeapon() *RuneWeaponPet {
 		MainHand:       mhWeapon,
 		AutoSwingMelee: true,
 	})
+	runeWeapon.AutoAttacks.MHConfig().ApplyEffects = func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+		baseDamage := spell.Unit.MHWeaponDamage(sim, spell.MeleeAttackPower()) + spell.BonusWeaponDamage() +
+			dk.drwVersusAttackPowerBonus(false)
+		spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeWhite)
+	}
 
 	runeWeapon.PseudoStats.DamageTakenMultiplier = 0
 	// the orc's Command (65221) only goes to risen ghouls and the gargoyle
