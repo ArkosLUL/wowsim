@@ -1657,6 +1657,86 @@ Stage live (2026-10-06, server 3d89793c7, mod-sim-validation f72dbf7):
   hunks of `sim/core/runic_power*.go`; those three setups' cycles and fights; the cost-aura replay's files; their
   drops and rows.
 
+#### As built
+
+Melee stage, on `0ccf8aa60`. Verdicts:
+- Death rune talents (fixed): every `spell_dk_death_rune` proc restarts the talent's 30 s periodic, which then reverts
+  all runes that talent turned, ready or not (`procDeathRuneTalent`, `RuneMeta.talent`); a proc turning none still
+  restarts it. Blood of the North and Reaping share one revert, as the sim rolls them as one. Proc chances are
+  spell_proc's (30/60/100%, 33/66/100%), not points / 3.
+- Improved Unholy Presence (fixed): 63622's regen percent scales the cooldown after the grace cut, in whole ms
+  (`runeCooldown`; `SetRuneCd` became `SetRuneRegenPercent`).
+- Death Coil and Rune Strike (fixed): refundable, so a miss takes irand(0, cost / 4); Sudden Doom's triggered Death
+  Coil pays nothing.
+- Rune weapon creature-type AP (fixed): its hits add the DK's int32(AP / 14 × the DK's main-hand speed, normalized for
+  effect 121), float32 like the server, halved with the hit; white swings through its `MHConfig`.
+- DeathknightFrost cycle (fixed): IT, PS, BS, FS, Ob, BS, FS, HB, HoW at 2000 ms; a model of `Spell::TakeRunePower`
+  lands every rune spell from 1700 to 2200 ms, and the sim's bot lands Howling Blast 4 times a fight.
+- Improved Devotion Aura at 1–2 points (fixed): `improveDevotionAura` gives every raider and pet under the best paladin's
+  aura +204 / +409 armor while the raid buff is Regular; RaidStats stays unimproved, as with Blood Pact.
+- Honor Among Thieves (fixed): one roll a cast at the finish phase; Fan of Knives rolls once per hand (`dealCastHits`).
+  Mutilate's hands, poisons and Killing Spree are triggered casts of their own, which 51698's `CAN_PROC_FROM_PROCS` lets
+  roll each.
+
+Core hunks (DK-only): `sim/core/runic_power.go`, `runic_power_helper.go`. Tests: `sim/deathknight/dps/runes_test.go`,
+`sim/paladin/retribution/devotion_aura_test.go`, `sim/rogue/honor_among_thieves_test.go`.
+
+Goldens: Death Coil and Rune Strike misses now cost less runic power, so more casts: Blood −0.2 to +0.4% (AllItems, NoBuffs
+only), Unholy −0.2 to +0.4% (same), BloodTank −0.4 to +1.3% (Average-Default +0.4%: Death Coil 12.6 → 14.0 hits). No
+golden has the revert, Improved Unholy Presence, partial ranks or creature-type AP on a DK; Frost, rogue and paladin
+suites don't move.
+
+Follow-ups: Blood Tap's rune pick and its "convert the other blood rune" interplay with the talents; Improved Devotion
+Aura's 63514 healing taken; a Threat of Thassarian off-hand strike rerolling partial Death Rune Mastery; the DK's own
+strikes add creature-type AP after Rage of Rivendare and Tundra Stalker.
+
+Casters stage, same base (notes in `tmp/ec-class-fix-code.md`). Verdicts:
+- Starfall (fixed): 53201 is an aura on the druid, never misses.
+- Omen of Clarity lead (not fixed, refuted live): 16864's `CAN_PROC_FROM_PROCS` suggested each star (53195) and splash hit
+  (53190) rolls it, but 14 live Starfalls gave no Clearcasting from them (about 13 expected) and 2 from the casts, the
+  8.75% the sim already rolled at the cast. Stars and splash roll nothing; the live stage reverted the flags.
+- T10 2-piece (fixed): only when Hot Streak or Missile Barrage is used up (`pushingTheLimit`). Missile Barrage goes at
+  Arcane Missiles' finish phase, so T10 at the cast and again at the channel's end (`spell_mage_arcane_missiles`); one
+  timing out mid-channel gives it at the end, otherwise never.
+- Fingers of Frost (fixed): spell_proc 44545 rolls at the cast, hit or miss; Improved Blizzard's script rolls its own on
+  each landed tick (was dead in the sim). Only spells in spell_proc 74396's mask take charges
+  (`spell_mage_fingers_of_frost`): one a cast, none a channel's cast, one a landed hit of a triggered spell (Blizzard's
+  ticks, Arcane Missiles' missiles, Living Bomb's explosion), each before any proc it triggers, so a cast that procs
+  keeps both. Shatter's crit goes to the spells in both Shatter's and 44544's masks (`Unit::SpellTakenCritChance`), not
+  the mage's crit: not item procs, not Blizzard.
+- Torment the Weak (fixed): a landed Frostbolt (not under Glyph of Frostbolt, which zeroes its slow) or Frostfire Bolt
+  (9 s) or Chilled (1.5 s), plus Permafrost, slows a target that isn't a world boss; raid bosses and every simval dummy
+  are snare-immune.
+- Frost crit lead (refuted): 13 Fingers of Frost procs in 80 Frostbolts over four logs (12 expected at 15%), all at a
+  cast; the committed log's 6 in 20 was chance.
+- Cost auras (built, recorded in the live stage): `tools/simval/costauras.go` writes `costaura_spells.json` (Arcane Focus,
+  Precision, Frost Channeling, Power Infusion); `TestCostAuraRecords` replays `costauras.jsonl` as the spell-mod replay
+  does; the module's `TestSimvalCostAuraSweep` records it.
+
+Tests: `sim/mage/procs_test.go`, `sim/druid/balance/starfall_test.go`, `tools/simval/costauras_test.go`.
+
+Follow-ups: Frostbite's and Mirror Image's chills for Torment the Weak; Brain Freeze from Blizzard; `spellmod_spells.json`
+is stale on the base.
+
+Live stage, against the server build of 2026-10-06 19:37 (`3d89793c7` plus the module's working tree); notes in
+`tmp/ec-class-fix-live.md`:
+- Fights re-recorded (19:52 to 20:06, `TestSimvalFight`): DeathknightFrost, RogueSubtlety, MageFrost (three runs, the
+  last one committed). The replay passes on them and Howling Blast went off 5 of 5 (runes left it), so the Rime drop and
+  its README row are gone; the fights README's date line is updated.
+- Omen lead: refuted, see above (a 300 s and a 900 s fight of Starfall alone, `tmp/omen-cycles*.json`, not committed).
+  `starfall.go` keeps only the never-misses fix; its test checks the cast's 8.75%.
+- Cost auras recorded: 146 lines, 63 spell steps compared. Two were sim gaps, fixed: Precision counted twice on
+  Frostfire Bolt (the server takes it once; the old comment was retail's), and Arcane Focus's hit reached the Arcane
+  Missiles channel cast (its class mask covers the missiles, 42845, not 42846). Two Penance rows are dropped with README
+  rows: the sim's Mental Agility cut (the server's mask misses Penance) and a channel the server's dummy 53007 lacks.
+- 58670 (Prey on the Weak) captured into the spelldump, `gen_serverdata` regenerated.
+- Goldens: Frost Average-Default +0.39% (Frostfire Bolt misses once Precision counts once; Fingers of Frost uptime
+  48 → 77 s), rows −0.7 to +0.8%; Arcane Average-Default −0.35% (the channel cast misses more), rows −0.9 to +0.1%;
+  Balance Average-Default 0, rows −3.0 to +3.2% (Starfall's hit roll); BalancePhase3 +0.03%, rows −1.6 to +2.6%; Blood,
+  Unholy and BloodTank as the melee stage.
+- Follow-up: priest Mental Agility on Penance (`sim/priest/penance.go`; mask `0x173` in index 1, Penance is
+  `0x800000`).
+
 ## Orchestrator onboarding (wave S start)
 
 - Add waves S–X to the registry and an `EC-` row to "Where the specs are".

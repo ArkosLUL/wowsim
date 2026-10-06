@@ -32,6 +32,7 @@ func (dk *Deathknight) newRuneStrikeSpell(isMH bool) *core.Spell {
 
 		RuneCost: core.RuneCostOptions{
 			RunicPowerCost: 20,
+			Refundable:     true,
 		},
 		Cast: core.CastConfig{
 			IgnoreHaste: true,
@@ -67,7 +68,11 @@ func (dk *Deathknight) newRuneStrikeSpell(isMH bool) *core.Spell {
 			}
 
 			baseDamage *= dk.RoRTSBonus(target)
-			result := spell.CalcAndDealDamage(sim, target, baseDamage, outcomeApplier)
+			result := spell.CalcDamage(sim, target, baseDamage, outcomeApplier)
+			if isMH {
+				spell.SpendRefundableCost(sim, result)
+			}
+			spell.DealDamage(sim, result)
 
 			if result.Damage > 0 && dk.Talents.Necrosis > 0 {
 				dk.necrosisDamage(result.Damage, sim, target)
@@ -143,7 +148,7 @@ func (dk *Deathknight) registerDrwRuneStrikeSpell() {
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			baseDamage := (spell.Direct.Roll(sim)+dk.DrwWeaponDamage(sim, spell))*spell.Direct.WeaponPct +
-				spell.Direct.AP*spell.MeleeAttackPower()
+				spell.Direct.AP*spell.MeleeAttackPower() + dk.drwVersusAttackPowerBonus(false)
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialNoBlockDodgeParry)
 		},
 	})

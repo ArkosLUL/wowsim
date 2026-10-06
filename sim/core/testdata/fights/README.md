@@ -41,7 +41,9 @@ cut by `simval fight -trim`. Kept: the header and zone lines, the player's and i
 did from the fight's start to its end to themselves or the dummy but a spell's plain `HIT` target result, a heal, a
 summon or a cast other than the bot's, and before the start only their auras going on and off (what was up at the
 pull, Sniper Training included). The 32 were fought against the worldserver build of 16:52 (rev 3d89793c7), on
-2026-10-05; DruidFeralTank again on 2026-10-06, wearing its gear set's five enchants: 106 KB.
+2026-10-05; DruidFeralTank again on 2026-10-06, wearing its gear set's five enchants; DeathknightFrost, MageFrost and
+RogueSubtlety again on 2026-10-06 against the worldserver build of 19:37 (rev 3d89793c7 plus the module's working
+tree): 105 KB.
 
 ## Left out
 
@@ -64,11 +66,7 @@ by the table's cause:
   `MinWorldUpdateTime`), the sim's exactly 100. A whole-second dot's tick lands anywhere in a live update, but right
   on the sim's: Serpent Sting's 4th tick beats the next cast's landing about half the cycles on the server, every
   cycle in the sim.
-- **Rime**: not a sim gap but the cycle's: its Howling Blast step finds no Frost, Unholy or death rune on either side,
-  so it goes off only free, on a Freezing Fog proc (all 3 logged did), which the replay can't follow. The cycle needs
-  runes left for it, then a re-record.
 
 | Setup | Subject | Check | Why |
 |---|---|---|---|
-| DeathknightFrost | 51411 | casts | Rime |
 | HunterMM | 49001 | ticks | map update length |

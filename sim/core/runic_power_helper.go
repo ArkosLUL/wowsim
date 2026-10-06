@@ -108,7 +108,7 @@ func (p *Predictor) findReadyDeathRune() int8 {
 }
 func (p *Predictor) launchRuneRegen(sim *Simulation, slot int8) {
 	runeGracePeriod := p.runeGraceAt(slot, sim.CurrentTime)
-	p.runeMeta[slot].regenAt = sim.CurrentTime + (p.rp.runeCD - runeGracePeriod)
+	p.runeMeta[slot].regenAt = sim.CurrentTime + p.rp.runeCooldown(runeGracePeriod)
 }
 
 func (p *Predictor) runeGraceAt(slot int8, at time.Duration) time.Duration {

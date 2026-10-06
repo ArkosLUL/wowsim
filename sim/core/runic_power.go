@@ -31,7 +31,20 @@ type RuneMeta struct {
 	lastRegenTime time.Duration // last time the rune regenerated.
 
 	revertAt time.Duration // time at which rune will no longer be kind death.
+	talent   deathRuneTalent
 }
+
+// deathRuneTalent is the spell_dk_death_rune talent that turned a rune death. Each has its own 30 s periodic,
+// which every proc restarts, and its runes revert when that runs out.
+type deathRuneTalent int8
+
+const (
+	noDeathRuneTalent deathRuneTalent = iota
+	bloodDeathRuneTalent
+	frostUnholyDeathRuneTalent
+)
+
+const deathRuneTalentPeriod = 30 * time.Second
 
 type runicPowerBar struct {
 	unit *Unit
@@ -39,6 +52,7 @@ type runicPowerBar struct {
 	maxRunicPower     float64
 	currentRunicPower float64
 	runeCD            time.Duration
+	runeRegenPct      int64 // SPELL_AURA_MOD_POWER_REGEN_PERCENT on runes
 
 	// These flags are used to simplify pending action checks
 	// |DS|DS|DS|DS|DS|DS|
@@ -106,6 +120,7 @@ func (rp *runicPowerBar) reset(sim *Simulation) {
 		rp.runeMeta[i].regenAt = NeverExpires
 
 		rp.runeMeta[i].revertAt = NeverExpires
+		rp.runeMeta[i].talent = noDeathRuneTalent
 	}
 
 	rp.runeStates = baseRuneState
@@ -138,8 +153,20 @@ func (unit *Unit) HasRunicPowerBar() bool {
 	return unit.runicPowerBar.unit != nil
 }
 
-func (rp *runicPowerBar) SetRuneCd(runeCd time.Duration) {
-	rp.runeCD = runeCd
+// SetRuneRegenPercent sets the rune regen percent auras' amount (Improved Unholy Presence's 63622), which
+// scales the cooldown of a rune spent from then on.
+func (rp *runicPowerBar) SetRuneRegenPercent(pct int64) {
+	rp.runeRegenPct = pct
+}
+
+// runeCooldown is Player::GetRuneBaseCooldown for a rune spent with the given grace: the grace comes off
+// first, then the regen percent scales what's left, in whole ms.
+func (rp *runicPowerBar) runeCooldown(grace time.Duration) time.Duration {
+	cd := rp.runeCD - grace
+	if rp.runeRegenPct == 0 {
+		return cd
+	}
+	return time.Duration(int64(cd/time.Millisecond)*(100-rp.runeRegenPct)/100) * time.Millisecond
 }
 
 func (rp *runicPowerBar) CurrentRunicPower() float64 {
@@ -307,7 +334,7 @@ func (rp *runicPowerBar) RuneReadyAt(sim *Simulation, slot int8) time.Duration {
 
 func (rp *runicPowerBar) SpendRuneReadyAt(slot int8, spendAt time.Duration) time.Duration {
 	runeGraceDuration := rp.RuneGraceAt(slot, spendAt)
-	return spendAt + (rp.runeCD - runeGraceDuration)
+	return spendAt + rp.runeCooldown(runeGraceDuration)
 }
 
 // BloodRuneReadyAt returns the earliest time a (possibly death-converted) blood rune is ready.
@@ -380,6 +407,7 @@ func (rp *runicPowerBar) AnyRuneReadyAt(sim *Simulation) time.Duration {
 func (rp *runicPowerBar) ConvertFromDeath(sim *Simulation, slot int8) {
 	rp.runeStates ^= isDeaths[slot]
 	rp.runeMeta[slot].revertAt = NeverExpires
+	rp.runeMeta[slot].talent = noDeathRuneTalent
 
 	if rp.runeStates&isSpents[slot] == 0 {
 		metrics := rp.bloodRuneGainMetrics
@@ -393,19 +421,15 @@ func (rp *runicPowerBar) ConvertFromDeath(sim *Simulation, slot int8) {
 	}
 }
 
-// ConvertToDeath converts the given slot to death and sets up the reversion conditions
+// ConvertToDeath converts the given slot to death until revertAt; the Blood Tapped slot keeps the later of
+// the two.
 func (rp *runicPowerBar) ConvertToDeath(sim *Simulation, slot int8, revertAt time.Duration) {
 	rp.runeStates |= isDeaths[slot]
 
-	if rp.btSlot != slot {
-		rp.runeMeta[slot].revertAt = NeverExpires
-	} else {
-		if rp.runeMeta[slot].revertAt != NeverExpires {
-			rp.runeMeta[slot].revertAt = max(rp.runeMeta[slot].revertAt, revertAt)
-		} else {
-			rp.runeMeta[slot].revertAt = revertAt
-		}
+	if rp.btSlot == slot && rp.runeMeta[slot].revertAt != NeverExpires {
+		revertAt = max(rp.runeMeta[slot].revertAt, revertAt)
 	}
+	rp.runeMeta[slot].revertAt = revertAt
 
 	// Note we gained
 	metrics := rp.bloodRuneGainMetrics
@@ -700,7 +724,7 @@ func (rp *runicPowerBar) launchRuneRegen(sim *Simulation, slot int8, missed bool
 	if missed {
 		rp.runeMeta[slot].regenAt = sim.CurrentTime + runeMissCooldown
 	} else {
-		rp.runeMeta[slot].regenAt = sim.CurrentTime + (rp.runeCD - rp.RuneGraceAt(slot, sim.CurrentTime))
+		rp.runeMeta[slot].regenAt = sim.CurrentTime + rp.runeCooldown(rp.RuneGraceAt(slot, sim.CurrentTime))
 	}
 
 	rp.launchPA(sim, rp.runeMeta[slot].regenAt)
@@ -784,7 +808,8 @@ func (rp *runicPowerBar) findReadyRune(slot int8) int8 {
 func (rp *runicPowerBar) spendDeathRune(sim *Simulation, slot int8, metrics *ResourceMetrics, missed bool) int8 {
 	if rp.btSlot != slot && !missed {
 		rp.runeMeta[slot].revertAt = NeverExpires // disable revert at
-		rp.runeStates ^= isDeaths[slot]           // clear death bit to revert.
+		rp.runeMeta[slot].talent = noDeathRuneTalent
+		rp.runeStates ^= isDeaths[slot] // clear death bit to revert.
 	}
 
 	// mark spent bit to spend
@@ -945,27 +970,20 @@ func (spell *Spell) SpendRefundableCost(sim *Simulation, result *SpellResult) {
 }
 
 func (rc *RuneCostImpl) spendRefundableCostAndConvertBloodRune(sim *Simulation, spell *Spell, result *SpellResult, convertChance float64) {
-	free := spell.CurCast.Cost == 0
 	changeType, slots, hit := rc.spendOnResult(sim, spell, result)
-	if free || !hit || !sim.Proc(convertChance, "Blood of The North / Reaping / DRM") {
-		spell.Unit.maybeFireChange(sim, changeType)
-		return
-	}
-
-	for _, slot := range slots {
-		if slot == 0 || slot == 1 {
-			// If the slot to be converted is already blood-tapped, then we convert the other blood rune
-			if spell.Unit.IsBloodTappedRune(slot) {
-				otherRune := (slot + 1) % 2
-				spell.Unit.ConvertToDeath(sim, otherRune, NeverExpires)
-				changeType |= ConvertToDeath
-			} else {
-				spell.Unit.ConvertToDeath(sim, slot, NeverExpires)
-				changeType |= ConvertToDeath
+	if hit && sim.Proc(convertChance, "Blood of The North / Reaping / DRM") {
+		var convert []int8
+		for _, slot := range slots {
+			if slot == 0 || slot == 1 {
+				// If the slot to be converted is already blood-tapped, then we convert the other blood rune
+				if spell.Unit.IsBloodTappedRune(slot) {
+					slot = (slot + 1) % 2
+				}
+				convert = append(convert, slot)
 			}
 		}
+		changeType |= spell.Unit.procDeathRuneTalent(sim, bloodDeathRuneTalent, convert)
 	}
-
 	spell.Unit.maybeFireChange(sim, changeType)
 }
 
@@ -974,25 +992,46 @@ func (spell *Spell) SpendRefundableCostAndConvertBloodRune(sim *Simulation, resu
 }
 
 func (rc *RuneCostImpl) spendRefundableCostAndConvertFrostOrUnholyRune(sim *Simulation, spell *Spell, result *SpellResult, convertChance float64) {
-	free := spell.CurCast.Cost == 0
 	changeType, slots, hit := rc.spendOnResult(sim, spell, result)
-	if free || !hit || !sim.Proc(convertChance, "Blood of The North / Reaping / DRM") {
-		spell.Unit.maybeFireChange(sim, changeType)
-		return
-	}
-
-	for _, slot := range slots {
-		if slot == 2 || slot == 3 || slot == 4 || slot == 5 {
-			spell.Unit.ConvertToDeath(sim, slot, NeverExpires)
-			changeType |= ConvertToDeath
+	if hit && sim.Proc(convertChance, "Blood of The North / Reaping / DRM") {
+		var convert []int8
+		for _, slot := range slots {
+			if slot >= 2 {
+				convert = append(convert, slot)
+			}
 		}
+		changeType |= spell.Unit.procDeathRuneTalent(sim, frostUnholyDeathRuneTalent, convert)
 	}
-
 	spell.Unit.maybeFireChange(sim, changeType)
 }
 
 func (spell *Spell) SpendRefundableCostAndConvertFrostOrUnholyRune(sim *Simulation, result *SpellResult, convertChance float64) {
 	spell.Cost.(*RuneCostImpl).spendRefundableCostAndConvertFrostOrUnholyRune(sim, spell, result, convertChance)
+}
+
+// procDeathRuneTalent is a spell_dk_death_rune proc: it restarts the talent's periodic, which pushes back the
+// revert of every rune the talent has turned, then turns the runes the cast just put on cooldown. A proc that
+// turns none (a Blood Strike paid with a frost death rune) still restarts it.
+func (rp *runicPowerBar) procDeathRuneTalent(sim *Simulation, talent deathRuneTalent, slots []int8) RuneChangeType {
+	// the player's aura update counts the periodic down, so it reverts on a world tick
+	revertAt := sim.NextWorldTick(sim.CurrentTime + deathRuneTalentPeriod)
+	pending := len(slots) > 0
+	for i := range rp.runeMeta {
+		if rp.runeMeta[i].talent == talent {
+			rp.runeMeta[i].revertAt = revertAt
+			pending = true
+		}
+	}
+	changeType := None
+	for _, slot := range slots {
+		rp.ConvertToDeath(sim, slot, revertAt)
+		rp.runeMeta[slot].talent = talent
+		changeType |= ConvertToDeath
+	}
+	if pending {
+		rp.launchPA(sim, revertAt)
+	}
+	return changeType
 }
 
 func (rc *RuneCostImpl) IssueRefund(_ *Simulation, _ *Spell) {

@@ -343,6 +343,8 @@ func (dk *Deathknight) applySuddenDoom() {
 
 			if sim.RandomFloat("Sudden Doom Proc") < procChance {
 				sdAura.Activate(sim)
+				// a triggered cast pays nothing (Spell::TakePower)
+				dk.DeathCoil.CurCast.Cost = 0
 				dk.DeathCoil.SkipCastAndApplyEffects(sim, result.Target)
 				sdAura.Deactivate(sim)
 			}

@@ -389,6 +389,7 @@ var threats = []Threat{
 	{SpellID: 58433, Targets: ThreatTargetsEnemyArea},                                      // Volley (Rank 6)
 	{SpellID: 58434, Targets: ThreatTargetsCaster},                                         // Volley (Rank 6)
 	{SpellID: 58578, Targets: ThreatTargetsCaster},                                         // Icy Talons
+	{SpellID: 58670, Targets: ThreatTargetsCaster},                                         // Prey on the Weak
 	{SpellID: 58735, Row: 8187, FlatMod: 0, PctMod: 0, Targets: ThreatTargetsEnemyArea},    // Magma Totem (Rank 7)
 	{SpellID: 58832, Targets: ThreatTargetsCaster},                                         // Mirror Image
 	{SpellID: 58836, Targets: ThreatTargetsCaster},                                         // Initialize Images

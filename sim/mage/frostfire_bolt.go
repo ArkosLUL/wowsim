@@ -27,8 +27,6 @@ func (mage *Mage) registerFrostfireBoltSpell() {
 			},
 		},
 
-		// FFB double-dips the bonus from Precision, so add it again here.
-		BonusHitRating: float64(mage.Talents.Precision) * core.SpellHitRatingPerHitChance,
 		BonusCritRating: 0 +
 			core.TernaryFloat64(mage.HasSetBonus(ItemSetKhadgarsRegalia, 4), 5*core.CritRatingPerCritChance, 0) +
 			core.TernaryFloat64(mage.HasMajorGlyph(proto.MageMajorGlyph_GlyphOfFrostfire), 2*core.CritRatingPerCritChance, 0) +
@@ -93,6 +91,7 @@ func (mage *Mage) registerFrostfireBoltSpell() {
 			spell.WaitTravelTime(sim, func(sim *core.Simulation) {
 				if result.Landed() {
 					spell.Dot(target).Apply(sim)
+					mage.chill(sim, target, time.Second*9)
 				}
 				spell.DealDamage(sim, result)
 			})

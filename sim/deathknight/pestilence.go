@@ -9,7 +9,7 @@ var PestilenceActionID = core.ActionID{SpellID: 50842}
 
 func (dk *Deathknight) registerPestilenceSpell() {
 	hasGlyphOfDisease := dk.HasMajorGlyph(proto.DeathknightMajorGlyph_GlyphOfDisease)
-	deathConvertChance := float64(dk.Talents.BloodOfTheNorth+dk.Talents.Reaping) / 3
+	deathConvertChance := dk.bloodDeathRuneChance()
 
 	dk.Pestilence = dk.RegisterSpell(core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: 50842},

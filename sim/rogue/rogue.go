@@ -105,6 +105,10 @@ type Rogue struct {
 	QuickRecoveryMetrics *core.ResourceMetrics
 
 	finishingMoveEffectApplier func(sim *core.Simulation, numPoints int32)
+
+	// a cast that hits several targets: its finish phase procs once for all of them (dealCastHits)
+	castHitsSpell                *core.Spell
+	honorAmongThievesFinishPhase func(sim *core.Simulation)
 }
 
 func (rogue *Rogue) GetCharacter() *core.Character {
@@ -124,6 +128,21 @@ func (rogue *Rogue) finisherFlags() core.SpellFlag {
 		flags |= core.SpellFlagCannotBeDodged
 	}
 	return flags
+}
+
+// dealCastHits deals one cast's hits on all its targets, then its finish phase, where Honor Among Thieves rolls
+// once if any of them crit (Spell::_handle_finish_phase).
+func (rogue *Rogue) dealCastHits(sim *core.Simulation, spell *core.Spell, results []*core.SpellResult) {
+	rogue.castHitsSpell = spell
+	crit := false
+	for _, result := range results {
+		spell.DealDamage(sim, result)
+		crit = crit || result.DidCrit()
+	}
+	rogue.castHitsSpell = nil
+	if crit && rogue.honorAmongThievesFinishPhase != nil {
+		rogue.honorAmongThievesFinishPhase(sim)
+	}
 }
 
 // Apply the effect of successfully casting a finisher to combo points

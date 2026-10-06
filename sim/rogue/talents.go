@@ -720,13 +720,16 @@ func (rogue *Rogue) registerHonorAmongThieves() {
 			pa.NextActionAt = sim.CurrentTime + time.Duration(sim.RandomExpFloat("next party crit")*rateToDuration)
 			sim.AddPendingAction(pa)
 		},
-		// spell_proc 51701 procs at a cast's finish phase only, so a crit tick (Rupture's) gives nothing
+		// spell_proc 51701 procs at a cast's finish phase only, so a crit tick (Rupture's) gives nothing, and a
+		// cast on several targets rolls once (dealCastHits)
 		OnSpellHitDealt: func(_ *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
-			if result.DidCrit() && !spell.ProcMask.Matches(core.ProcMaskMeleeMHAuto|core.ProcMaskMeleeOHAuto|core.ProcMaskRangedAuto) {
+			if result.DidCrit() && spell != rogue.castHitsSpell &&
+				!spell.ProcMask.Matches(core.ProcMaskMeleeMHAuto|core.ProcMaskMeleeOHAuto|core.ProcMaskRangedAuto) {
 				maybeProc(sim)
 			}
 		},
 	})
+	rogue.honorAmongThievesFinishPhase = maybeProc
 }
 
 // Turn the Tables: a party aura, so any party member's dodge, parry or block of a melee attack, pets

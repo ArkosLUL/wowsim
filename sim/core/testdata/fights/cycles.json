@@ -29,15 +29,15 @@
     {
       "setup": "DeathknightFrost", "seconds": 90, "yards": 4, "behind": true,
       "cycle": [
-        {"spell": 49909, "name": "Icy Touch", "waitMs": 1500},
-        {"spell": 49921, "name": "Plague Strike", "waitMs": 1500},
-        {"spell": 51425, "name": "Obliterate", "waitMs": 1500},
-        {"spell": 55268, "name": "Frost Strike", "waitMs": 1500},
-        {"spell": 49930, "name": "Blood Strike", "waitMs": 1500},
-        {"spell": 49930, "name": "Blood Strike", "waitMs": 1500},
-        {"spell": 51411, "name": "Howling Blast", "waitMs": 1500},
-        {"spell": 55268, "name": "Frost Strike", "waitMs": 1500},
-        {"spell": 57623, "name": "Horn of Winter", "waitMs": 1500}
+        {"spell": 49909, "name": "Icy Touch", "waitMs": 2000},
+        {"spell": 49921, "name": "Plague Strike", "waitMs": 2000},
+        {"spell": 49930, "name": "Blood Strike", "waitMs": 2000},
+        {"spell": 55268, "name": "Frost Strike", "waitMs": 2000},
+        {"spell": 51425, "name": "Obliterate", "waitMs": 2000},
+        {"spell": 49930, "name": "Blood Strike", "waitMs": 2000},
+        {"spell": 55268, "name": "Frost Strike", "waitMs": 2000},
+        {"spell": 51411, "name": "Howling Blast", "waitMs": 2000},
+        {"spell": 57623, "name": "Horn of Winter", "waitMs": 2000}
       ]
     },
     {

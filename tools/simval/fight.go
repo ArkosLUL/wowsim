@@ -183,7 +183,6 @@ type fightDrop struct {
 }
 
 var droppedFightChecks = []fightDrop{
-	{"DeathknightFrost", "51411", "casts"},
 	{"HunterMM", "49001", "ticks"},
 }
 

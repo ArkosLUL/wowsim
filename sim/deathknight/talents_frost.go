@@ -311,6 +311,18 @@ func (dk *Deathknight) bloodOfTheNorthCoeff() float64 {
 	return []float64{1.0, 1.03, 1.06, 1.10}[dk.Talents.BloodOfTheNorth]
 }
 
+// bloodDeathRuneChance is how likely Blood of the North or Reaping turns a blood rune (spell_proc's chances).
+// With both, either one can, and the two share one revert here.
+func (dk *Deathknight) bloodDeathRuneChance() float64 {
+	bloodOfTheNorth := []float64{0, 0.30, 0.60, 1}[dk.Talents.BloodOfTheNorth]
+	reaping := []float64{0, 0.33, 0.66, 1}[dk.Talents.Reaping]
+	return 1 - (1-bloodOfTheNorth)*(1-reaping)
+}
+
+func (dk *Deathknight) deathRuneMasteryChance() float64 {
+	return []float64{0, 0.33, 0.66, 1}[dk.Talents.DeathRuneMastery]
+}
+
 func (dk *Deathknight) applyThreatOfThassarian() {
 	dk.bonusCoeffs.threatOfThassarianChance = []float64{0.0, 0.3, 0.6, 1.0}[dk.Talents.ThreatOfThassarian]
 }

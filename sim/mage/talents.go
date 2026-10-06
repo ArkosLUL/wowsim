@@ -2,10 +2,12 @@ package mage
 
 import (
 	"math"
+	"slices"
 	"time"
 
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
+	"github.com/wowsims/wotlk/sim/core/serverdata"
 	"github.com/wowsims/wotlk/sim/core/stats"
 )
 
@@ -20,6 +22,8 @@ func spellModDamage(bonuses ...float64) float64 {
 }
 
 func (mage *Mage) ApplyTalents() {
+	mage.t10Aura = mage.BloodmagesRegalia2pcAura()
+
 	mage.applyArcaneConcentration()
 	mage.applyFocusMagic()
 	mage.applyIgnite()
@@ -103,26 +107,12 @@ func (mage *Mage) applyHotStreak() {
 	}
 
 	procChance := float64(mage.Talents.HotStreak) / 3
-	t10ProcAura := mage.BloodmagesRegalia2pcAura()
 
+	// Pyroblast uses it up (pyroblast.go)
 	mage.HotStreakAura = mage.RegisterAura(core.Aura{
 		Label:    "HotStreak",
 		ActionID: core.ActionID{SpellID: 44448},
 		Duration: time.Second * 10,
-		// This is handled in Pyroblast.ModifyCast instead.
-		//OnGain: func(aura *core.Aura, sim *core.Simulation) {
-		//	if mage.Pyroblast != nil {
-		//		mage.Pyroblast.CastTimeMultiplier -= 1
-		//	}
-		//},
-		OnExpire: func(aura *core.Aura, sim *core.Simulation) {
-			//if mage.Pyroblast != nil {
-			//	mage.Pyroblast.CastTimeMultiplier += 1
-			//}
-			if t10ProcAura != nil {
-				t10ProcAura.Activate(sim)
-			}
-		},
 	})
 
 	mage.hotStreakCritAura = mage.RegisterAura(core.Aura{
@@ -269,9 +259,8 @@ func (mage *Mage) applyMissileBarrage() {
 		return
 	}
 
-	t10ProcAura := mage.BloodmagesRegalia2pcAura()
-
 	procChance := float64(mage.Talents.MissileBarrage) * .04
+	// Arcane Missiles uses it up (arcane_missiles.go)
 	mage.MissileBarrageAura = mage.RegisterAura(core.Aura{
 		Label:    "Missile Barrage Proc",
 		ActionID: core.ActionID{SpellID: 44401},
@@ -283,8 +272,9 @@ func (mage *Mage) applyMissileBarrage() {
 		OnExpire: func(aura *core.Aura, sim *core.Simulation) {
 			mage.ArcaneMissiles.CostMultiplier += 100
 			mage.ArcaneMissiles.CastTimeMultiplier *= 2
-			if t10ProcAura != nil {
-				t10ProcAura.Activate(sim)
+			// spell_mage_missile_barrage_proc: timing out mid-channel still gives T10's 2 pieces when the channel ends
+			if mage.missiles.channeling && !mage.missiles.barrageUsed && mage.t10Aura != nil {
+				mage.missiles.t10AtEnd = true
 			}
 		},
 	})
@@ -440,16 +430,62 @@ func (mage *Mage) registerArcanePowerCD() {
 // snared or its attacks are slowed (Unit::SpellPctDamageModsDone). Raid bosses are immune to snares, so only the
 // attack speed debuffs count.
 func (mage *Mage) tormentTheWeak(target *core.Unit) float64 {
-	if mage.Talents.TormentTheWeak == 0 || !mage.attackSpeedSlows.Get(target).AnyActive() {
+	if mage.Talents.TormentTheWeak == 0 {
+		return 1
+	}
+	if !mage.attackSpeedSlows.Get(target).AnyActive() && !mage.chills.Get(target).IsActive() {
 		return 1
 	}
 	return 1 + .04*float64(mage.Talents.TormentTheWeak)
+}
+
+// registerChills gives Torment the Weak the mage's own snares. Raid bosses are immune to snares, so only a
+// target that isn't a world boss takes them.
+func (mage *Mage) registerChills() {
+	if mage.Talents.TormentTheWeak == 0 {
+		return
+	}
+	mage.chills = mage.NewEnemyAuraArray(func(target *core.Unit) *core.Aura {
+		if target.IsWorldBoss {
+			return nil
+		}
+		return target.GetOrRegisterAura(core.Aura{
+			Label:    "Chilled by " + mage.Label,
+			Duration: time.Second,
+		})
+	})
+}
+
+// chill is a landed Frostbolt's, Frostfire Bolt's or Chilled's snare: Permafrost adds a second a point to each
+// (11175's duration mod), and the longest one left counts.
+func (mage *Mage) chill(sim *core.Simulation, target *core.Unit, duration time.Duration) {
+	if mage.chills == nil {
+		return
+	}
+	aura := mage.chills.Get(target)
+	if aura == nil {
+		return
+	}
+	duration += time.Second * time.Duration(mage.Talents.Permafrost)
+	if aura.IsActive() && aura.RemainingDuration(sim) >= duration {
+		return
+	}
+	aura.Duration = duration
+	aura.Activate(sim)
 }
 
 // t84pcKeepsProc is Kirin Tor Garb's 4 pieces keeping the Missile Barrage, Hot Streak or Fireball! a cast would
 // use up (64869's roll in spell_mage.cpp).
 func (mage *Mage) t84pcKeepsProc(sim *core.Simulation) bool {
 	return mage.hasT84pc && sim.RandomFloat("MageT84PC") < T84PcProcChance
+}
+
+// pushingTheLimit is T10's 2 pieces on a Hot Streak, Missile Barrage or Fireball! used up, never one timing out
+// (Aura::HandleAuraSpecificMods).
+func (mage *Mage) pushingTheLimit(sim *core.Simulation) {
+	if mage.t10Aura != nil {
+		mage.t10Aura.Activate(sim)
+	}
 }
 
 func (mage *Mage) applyMasterOfElements() {
@@ -765,51 +801,102 @@ func (mage *Mage) applyFingersOfFrost() {
 	bonusCrit := []float64{0, 17, 34, 50}[mage.Talents.Shatter] * core.CritRatingPerCritChance
 	iceLanceMultiplier := core.TernaryFloat64(mage.HasMajorGlyph(proto.MageMajorGlyph_GlyphOfIceLance), 4, 3)
 
-	var proccedAt time.Duration
+	var shatterSpells, castChargeSpells, hitChargeSpells []*core.Spell
 
 	mage.FingersOfFrostAura = mage.RegisterAura(core.Aura{
 		Label:     "Fingers of Frost Proc",
 		ActionID:  core.ActionID{SpellID: 44545},
 		Duration:  time.Second * 15,
 		MaxStacks: 2,
+		OnInit: func(aura *core.Aura, sim *core.Simulation) {
+			for _, spell := range mage.Spellbook {
+				if inMageMask(spell, fofShatterMask) {
+					shatterSpells = append(shatterSpells, spell)
+				}
+				if !inMageMask(spell, fofChargeMask) || spell.ServerSpell().SchoolMask&fofChargeSchools == 0 {
+					continue
+				}
+				// spell_mage_fingers_of_frost: a cast pays at its cast phase, a channel never, and a triggered
+				// spell (missile, tick, explosion) skips the cast phase and pays per landed hit
+				switch {
+				case !spell.Flags.Matches(core.SpellFlagAPL):
+					hitChargeSpells = append(hitChargeSpells, spell)
+				case !spell.Flags.Matches(core.SpellFlagChanneled):
+					castChargeSpells = append(castChargeSpells, spell)
+				}
+			}
+		},
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
-			mage.AddStatDynamic(sim, stats.SpellCrit, bonusCrit)
+			for _, spell := range shatterSpells {
+				spell.BonusCritRating += bonusCrit
+			}
 			mage.IceLance.DamageMultiplier *= iceLanceMultiplier
 		},
 		OnExpire: func(aura *core.Aura, sim *core.Simulation) {
-			mage.AddStatDynamic(sim, stats.SpellCrit, -bonusCrit)
+			for _, spell := range shatterSpells {
+				spell.BonusCritRating -= bonusCrit
+			}
 			mage.IceLance.DamageMultiplier /= iceLanceMultiplier
 		},
-		OnCastComplete: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell) {
-			if proccedAt != sim.CurrentTime {
+		// a tick's proc from Improved Blizzard comes after this (blizzard.go)
+		OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
+			if result.Landed() && slices.Contains(hitChargeSpells, spell) {
 				aura.RemoveStack(sim)
 			}
 		},
 	})
 
 	procChance := []float64{0, .07, .15}[mage.Talents.FingersOfFrost]
+	mage.procFingersOfFrost = func(sim *core.Simulation) {
+		if sim.RandomFloat("Fingers of Frost") < procChance {
+			mage.FingersOfFrostAura.Activate(sim)
+			mage.FingersOfFrostAura.SetStacks(sim, 2)
+		}
+	}
 	mage.RegisterAura(core.Aura{
 		Label:    "Fingers of Frost Talent",
 		Duration: core.NeverExpires,
 		OnReset: func(aura *core.Aura, sim *core.Simulation) {
 			aura.Activate(sim)
 		},
-		OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
-			if mage.hasChillEffect(spell) && sim.RandomFloat("Fingers of Frost") < procChance {
-				mage.FingersOfFrostAura.Activate(sim)
-				mage.FingersOfFrostAura.SetStacks(sim, 2)
-				proccedAt = sim.CurrentTime
+		// The charge goes before the roll, as the proc system takes charges before it triggers anything, so a
+		// cast that procs keeps both. spell_proc 44545 rolls at the cast, hit or miss (Cone of Cold too, which
+		// the sim lacks); Improved Blizzard rolls its own on each landed tick (blizzard.go).
+		OnCastComplete: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell) {
+			if mage.FingersOfFrostAura.IsActive() && slices.Contains(castChargeSpells, spell) {
+				mage.FingersOfFrostAura.RemoveStack(sim)
+			}
+			if spell == mage.Frostbolt || spell == mage.FrostfireBolt {
+				mage.procFingersOfFrost(sim)
 			}
 		},
 	})
 }
 
+// Shatter's crit needs a frozen target, which Fingers of Frost's 44544 fakes for the spells of its class mask,
+// and goes only to the spells of Shatter's own (Unit::SpellTakenCritChance): both masks (11170, 44544) at once.
+var fofShatterMask = [3]uint32{551686775, 1151040, 32}
+
+// spell_proc 74396: a cast of these, fire, frost or arcane (the server's school mask 84), uses up a charge
+var fofChargeMask = [3]uint32{685904631, 1151048, 0}
+
+const fofChargeSchools = 84
+
+// inMageMask is SpellInfo::IsAffected for a mage aura's class mask, for a harmful magic spell
+// (SPELL_DAMAGE_CLASS_MAGIC, PROC_FLAG_DONE_SPELL_MAGIC_DMG_CLASS_NEG).
+func inMageMask(spell *core.Spell, mask [3]uint32) bool {
+	sd := spell.ServerSpell()
+	return sd != nil && sd.Family == mageFamily && sd.DmgClass == serverdata.DmgClassMagic &&
+		sd.Flags&serverdata.FlagPositive == 0 &&
+		(sd.FamilyFlags[0]&mask[0] != 0 || sd.FamilyFlags[1]&mask[1] != 0 || sd.FamilyFlags[2]&mask[2] != 0)
+}
+
+const mageFamily = 3
+
 func (mage *Mage) applyBrainFreeze() {
 	if mage.Talents.BrainFreeze == 0 {
 		return
 	}
-
-	t10ProcAura := mage.BloodmagesRegalia2pcAura()
 
 	mage.BrainFreezeAura = mage.RegisterAura(core.Aura{
 		Label:    "Brain Freeze Proc",
@@ -831,9 +918,7 @@ func (mage *Mage) applyBrainFreeze() {
 		OnCastComplete: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell) {
 			if (spell == mage.FrostfireBolt || spell == mage.Fireball) && !mage.t84pcKeepsProc(sim) {
 				aura.Deactivate(sim)
-				if t10ProcAura != nil {
-					t10ProcAura.Activate(sim)
-				}
+				mage.pushingTheLimit(sim)
 			}
 		},
 	})

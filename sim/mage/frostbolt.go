@@ -20,6 +20,9 @@ func (mage *Mage) registerFrostboltSpell() {
 		}
 	}
 
+	// Glyph of Frostbolt cuts the slow's duration to 0 as it goes on (Aura::HandleAuraSpecificMods)
+	chills := !mage.HasMajorGlyph(proto.MageMajorGlyph_GlyphOfFrostbolt)
+
 	mage.Frostbolt = mage.RegisterSpell(core.SpellConfig{
 		ActionID:     core.ActionID{SpellID: 42842},
 		SpellSchool:  core.SpellSchoolFrost,
@@ -59,6 +62,9 @@ func (mage *Mage) registerFrostboltSpell() {
 
 			spell.WaitTravelTime(sim, func(sim *core.Simulation) {
 				spell.DealDamage(sim, result)
+				if chills && result.Landed() {
+					mage.chill(sim, target, time.Second*9)
+				}
 				if replProcChance > 0 && result.Landed() && replICD.IsReady(sim) &&
 					(replProcChance == 1 || sim.RandomFloat("Enduring Winter") < replProcChance) {
 					replICD.Use(sim)
