@@ -136,8 +136,9 @@ loop" re-affirms them.
 
 **Code and docs**
 - Comments: invoke `use-conversational-language` before writing any.
-- Docs: edit only your WI's section, with `/compact-docs-writer` and no approval step (waived). The orchestrator
-  owns status lines and guide promotion.
+- Docs: edit only your WI's section, with `/compact-docs-writer` and no approval step (waived); its draft goes
+  in your worktree's `tmp/`, not the session scratchpad, which parallel items share. The orchestrator owns
+  status lines and guide promotion.
 
 ## Workflow contract
 

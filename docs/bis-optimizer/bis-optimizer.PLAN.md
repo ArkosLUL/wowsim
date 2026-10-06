@@ -1617,7 +1617,7 @@ Slow suite, one run a side: 374 → 338 s. Optimizer wall per case:
 Search and Effects drop 7–13%; `ret_p1`'s wall holds because it sims 6% more. Normal saves 5–18%, except
 Prot Paladin's +10% on 3% fewer sims, slower in the loaded run too.
 
-### BIS-ALTS (wave Z2)
+### BIS-ALTS (wave Z2, done)
 
 The user's call (2026-10-06): BiS plus 5 alternatives that are each slot's next best wearable items, since the
 best is often unavailable in a raid. `runnersUp` (`search.go`) ranks only `se.opts[slot]`, the options pruning
@@ -1685,7 +1685,12 @@ Slow suite on a loaded machine, base to after:
 | prot paladin p3 | 1399250 to 1400250 | 126.8 to 99.1 s | 7.4 to 12.9 s |
 | feral tank p2 | 1243000 to 1269500 | 105.8 to 71.0 s | 14.4 to 14.0 s |
 
-Walls swing both ways with the other items' load, so they say nothing about the change. All 12 cases pass.
+Walls swing both ways with the other items' load, so they say nothing about the change. All 12 cases pass. Picks:
+11 of 12 as before; Feral Tank P2 Normal adopts trinket 45609, which pruning had dropped (its sims +2%).
+
+Left: Quick can't list an unpriced trinket or weapon; one-hand alternatives to a two-hand pick rank with the off
+hand empty (`bestItem` pairs them, `runnersUp` doesn't, and the alternative proto holds the main hand only); the
+unpriced gap unmeasured on Agony's request.
 
 Picks: 11 of 12 identical. Feral tank Normal moved a trinket, 45158 to 45609, which pruning had dropped:
 the neighborhood adopted it, J over the preset +739.6 to +753.4 (SE 3.0). Quick's alternatives change too,

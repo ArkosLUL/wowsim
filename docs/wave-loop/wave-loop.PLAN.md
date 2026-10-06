@@ -154,12 +154,14 @@ code stages run first and the live stages after it.
 
 ## Current wave
 
-- Wave: Z, landed (master fast-forwarded to this close-out). Next: Z2.
-  Item notes: `G:\DevStuff\GitHub\.wave-loop\{ec-threat-fix2,ec-melee-fix,ec-nature-fix,ec-arcane-fix,perf-y}-tmp`.
+- Wave: Z2, landed (master fast-forwarded to this close-out). Next: none planned.
+  Item notes: `G:\DevStuff\GitHub\.wave-loop\{ec-threat-fix3,ec-core-fix2,ec-class-fix,perf-z,bis-alts}-tmp`.
   Prod runs X's `25cb9dddc` (no `rollback-q` image: its layers were gone), without Y's and Z's sim changes.
-- Open: Z2's items and the deferred BiS chain. Timing a 25-player raid with healers and tanks (perf's
+- Open: Z2's follow-ups (the e2e-coverage, sim-performance and bis-optimizer backlogs) and the deferred BiS chain;
+  the user's OK for `run.sh TestCleanupOrphans` (character 540400 left by a run). Timing a 25-player raid with healers and tanks (perf's
   `optimizer/quick/raid25_raiddps_p1`, `0ccf8aa60` against an older commit): `BenchmarkSimulate`'s raid has
-  neither, and a BiS batch took 107 min against about 60 (contended); the user's call: 2026-10-07.
+  neither, and a BiS batch took 107 min against about 60 (contended); the user's call: 2026-10-07, with Z2's idle
+  throughput row.
   Closed as not sim gaps: the sheet fields the server shows raw (per-school crit, Blood-Gorged, Mace and Holy
   Specialization), which the fixture README explains.
 - Deferred (the user's calls, 2026-10-02, 10-03 and 10-05), each only on the user's go-ahead:
@@ -174,7 +176,7 @@ code stages run first and the live stages after it.
     baseline; the raid25 dumps in `_dump/optimizer_dump_test.go` still build uncut pools).
   - Before the preset rerun: the response curves span the pool's stat range, so BIS-outclassed's cut moved Fury
     P1's Normal pick 45 J below the uncut pool's, every item of which it still holds.
-- Workflow runIds: Z's `wf_8821da6d-91f` (all five); Y's `wf_e58e8b14-102` (all four), `wf_d290cc37-ee6` and `wf_fe29d895-a35` (EC-TICK-FIX's rest and
+- Workflow runIds: Z2's `wf_7c79ba74-4ca` (code stages) and `wf_7e9c6966-820` (live stages, BIS-ALTS); Z's `wf_8821da6d-91f` (all five); Y's `wf_e58e8b14-102` (all four), `wf_d290cc37-ee6` and `wf_fe29d895-a35` (EC-TICK-FIX's rest and
   review); X2's `wf_b555c578-f46` (code stages), `wf_a0107f34-c7b` (live stages) and `wf_b00ecbe0-79a` (EC-RECHECK's
   live stages again, after an API error); X's `wf_a31ea7ec-8e3`; W's `wf_aa1b462c-590` (code stages) and
   `wf_894cf391-8a3` (live stages); V's `wf_ea73babf-e53`; T2's `wf_5af2b99d-6d0`; T's `wf_8a59e202-2f8`,
@@ -229,6 +231,7 @@ Reckoning that way), but J isn't DPS: see below.
 | X2 | 8690.7, +273 / +273 | 10730.8, +708 / +903 | 5066.6, +41 / +51 | 12963.8, +148 / +225 | -17672.3, +4831 / +4777 | -1211.2, +892 / +891 |
 | Y | 8646.8, +205 / +221 | 10774.4, +567 / +539 | 5048.0, +80 / +103 | 12979.9, +174 / +258 | -16943.2, +5205 / +5188 | -1181.2, +978 / +982 |
 | Z | 8755.4, +203 / +203 | 10772.2, +596 / +647 | 5048.0, +68 / +101 | 12979.9, +174 / +258 | -16924.7, +5282 / +5172 | -1186.3, +710 / +740 |
+| Z2 | 8771.0, +221 / +235 | 10760.6, +527 / +658 | 5044.5, +68 / +101 | 12972.8, +161 / +218 | -17045.6, +5214 / +5178 | -1160.0, +704 / +733 |
 
 Quick / Normal. Ret P4 ran at Quick only in wave D, after the glyph fix; its wave C numbers
 (12821.9, +54 / +73) came from a seed that wore the glyph. The two tanks arrive with
@@ -298,6 +301,10 @@ sim's own cost (see Sim throughput).
 In Z the presets moved with their goldens: `dps_preset` Combat Rogue -1.9% (Prey on the Weak), Fury -0.2%,
 Feral Tank +1.3% (its enchants load, so its gains fell to +710 / +740); Fury's `J_preset` rose 1.3%, the
 normalizer. Normal's walls fell 7–22% under Y's, both beside the live server (PERF-Y).
+In Z2 every `dps_preset` fell 0.02–0.07% (damage truncation); Prot Pal's `J_preset` fell 0.7% (energize threat, its
+TPS −0.55%), Feral Tank's rose 2.2% and Fury's 0.2%, the normalizer. Feral Tank Normal adopts trinket 45609
+(BIS-ALTS). Normal's walls rose 11–22% over Z's, both beside the live server with no player online: the sim's
+per-hit truncation and gain threat, or BIS-ALTS ranking every priced item; the idle bench will tell.
 
 ## Sim throughput
 
@@ -617,6 +624,12 @@ crashed before F2, so its column starts there.
 | EC-ARCANE-FIX | merged | `2e45823ad` | Torment the Weak, T8, Brain Freeze, Enduring Winter, Master of Elements and Burnout, Blizzard, Ranged Weapon Specialization, Hunter's Mark, Thrill of the Hunt, Explosive Decoy; 7 suites move (Frost +7.7%, MM +0.1%) |
 | PERF-Y | merged | `133b6b914` | goldens byte-identical; Gift of Arthas' per-hit lookups cached per spell (Elemental's `flatDamageTaken` 7.1% → 1.4% of its profile) |
 | wave Z cross-review | direct | `54defd5ad` | serverdata as gen_serverdata emits it (Vindication rank 1 and Burnout were missing); the pet scaling tick cheaper (Hunter 3.4% → 2.1%); goldens unchanged |
+| EC-THREAT-FIX3 | merged | `44a550639` | module `968e125` (one rebuild by the user); energize threat, self heals' heal threat, Sunder 7386, Penance's ticks; `threat.jsonl` re-recorded (161 records, every check passes); TPS moves in all 37 suites (Disc +192%, LongMultiTarget down to −31%) |
+| EC-CORE-FIX2 | merged | `d7c6813cd` | damage truncation, Hunter's Mark and creature-type AP as one bonus, Kill Shot's speed, Stoneskin Gargoyle as skill; 35 suites move (MM −0.21%, Blood Tank DTPS −2.9%) |
+| EC-CLASS-FIX | merged | `0361d60ba` | module `408f7b5`; death rune reverts, miss costs, the rune weapon's creature-type AP, Improved Devotion Aura at 1–2, Honor Among Thieves per cast, Starfall, T10, Fingers of Frost, Torment the Weak, Precision and Arcane Focus; three fights re-recorded, Rime drop gone; cost-aura records; 7 suites move (Frost mage +0.39%, Arcane −0.35%); cost-aura list `26b9be5db` |
+| PERF-Z | merged | `cbedeaae8` | goldens byte-identical; no allocation per hardcast or failed cast (raid −50%, Hunter −45%, Elemental −32%) |
+| BIS-ALTS | merged | `5319540e0` | alternatives ranked from every priced item; 11 of 12 slow picks kept, Feral Tank P2 Normal better |
+| wave Z2 cross-review | direct | `4c9ef52d0` | the rune weapon's creature-type AP and Troll Beast Slaying, Icebound Fortitude's defense skill, off-hand aura 122 out of the flat bonus, Crusade split; 8 suites move (Combat Twin Blades −0.28%, Ret DTPS +3.0%) |
 
 Later WIs are added as their wave starts.
 

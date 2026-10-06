@@ -360,7 +360,7 @@ spell's coefficient on every hit, though both are fixed per spell. The rest isn'
 - Left: `makeCastFunc`'s per-hardcast closure (about half of Elemental's allocations), `nextTick`'s 64-bit
   modulo (about 0.9% of the raid).
 
-### PERF-Z: wave Z's leftover hot paths (wave Z2)
+### PERF-Z: wave Z's leftover hot paths (wave Z2, done)
 
 PERF-Y's profiles left two costs: `makeCastFunc`'s `OnComplete` closure, one per hardcast (`sim/core/cast.go`,
 about half of Elemental's allocations), and `nextTick`'s 64-bit modulo per call (`sim/core/sim.go`, about 0.9% of
@@ -398,6 +398,14 @@ the raid).
   3.0 → 2.5 MiB; `mallocgc` 9.1% → 8.3%. Left: Lightning Bolt's per-cast travel closure (55% of allocations) and
   `Dot.startTickAction`'s per-application action and closures (21%).
 
+Cross-review: `makeCastFuncSimple`'s cooldown failures skip the boxing too (`failsQuietly`,
+`TestFailedSimpleCastDoesNotAllocate`).
+Left: `nextTick` closed (its modulo costs nothing on this CPU; half its calls are `Aura.Refresh`'s second, skippable
+for a whole number of map updates); `Dot.startTickAction`'s per-application action and closures (21% of Elemental's
+allocations, 46% of the raid's); Lightning Bolt's per-cast travel closure (55% of Elemental's); the Shadowfiend
+casting Shadowcrawl on cooldown; `makeCastFunc` starts the cooldown before the GCD and hardcast checks (a
+behaviour bug, moves goldens).
+
 ## Order
 
 The user put the pass before wave J, whose BIS-e2e-perf times the optimizer with PERF-TOOLS' harness
@@ -410,4 +418,4 @@ The user put the pass before wave J, whose BIS-e2e-perf times the optimizer with
 - **V (done):** PERF-COST, the user's call (2026-10-03), after wave T2's cost arithmetic slowed Combat Rogue.
 - **Y (done):** PERF-THREAT, the user's call (2026-10-05), after wave V's threat bookkeeping slowed the casters.
 - **Z (done):** PERF-Y, the user's call (2026-10-06), after wave Y slowed every bench.
-- **Z2:** PERF-Z, with Z's other follow-ups (the user's call, 2026-10-06).
+- **Z2 (done):** PERF-Z, with Z's other follow-ups (the user's call, 2026-10-06).

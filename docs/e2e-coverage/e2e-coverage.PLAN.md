@@ -70,6 +70,28 @@ haste stacking beyond EC-BUFFS' pairs. From Y:
 From Z, not in Z2: the 72-point Fury and Balance strings in the gzipped perf scenarios and UI fixtures, which
 pin their requests (the BiS chain's `opt_*` regeneration takes the perf ones).
 
+From Z2:
+- Threat: energize threat has no record (`.simval threat` needs an energize field; Bloodrage's 20 rage should
+  give 100, split); 22845 and 44578's heal threat unprobed; leads: Blood Presence's 50475 heal procs for every
+  DK in it (63611), self Replenishment is 57669 `PERIODIC_ENERGIZE` (the sim's is MP5, no threat), auras the sim
+  applies without a cast skip their level bonus (29131, Invigoration, 55503), Silent Resolve is a holy and
+  shadow school aura plus a spell mod, Chill of the Grave procs per Howling Blast target and Dirge covers
+  Obliterate's runic power.
+- Damage: heals aren't truncated; each SP or AP bonus's own `int32`, a stacked dot's per stack, magic crit
+  before resist; the undead sets' DONE_VERSUS (57943, 29068) still in `DamageDealtMultiplier`; Rage of
+  Rivendare and Tundra Stalker are DoneTotalMod, so they should scale the DK's flat creature-type bonus;
+  Improved Tracking (52783-52788) is a spell mod, the sim's an attack-table multiplier; no live record of
+  Hunter's Mark or Kill Shot.
+- Classes: Blood Tap's rune pick against `spell_dk_death_rune`; Improved Devotion Aura's 63514 healing taken; a
+  Threat of Thassarian off-hand strike rerolls partial Death Rune Mastery; Omen of Clarity from triggered item
+  damage (Starfall's don't roll it live, so recheck 16864); Frostbite's and Mirror Image's chills for Torment the
+  Weak, and Frostbite's Fingers of Frost; Brain Freeze's Blizzard case never fires (the tick is 42938); snare
+  immunity is `IsWorldBoss`; Mental Agility cuts Penance's cost, the server's mask doesn't (618 vs 556), and
+  53000's damage coefficient is 0.1905 against the sim's 0.2290.
+- Tooling: `spellmod_spells.json` stale; spells_audit's procs_audit.csv and spells_missing.csv line refs stale;
+  13376, 13377 and 48332 not in the spelldump; the UI sheet's defense skill leaves out `BonusDefenseSkill`;
+  `druid/innervate.go` adds a `ResourceMetrics` every iteration.
+
 ## Work items
 
 ### EC-SWEEP2 (S, done; golden-neutral; stages: code, live)
@@ -1596,7 +1618,7 @@ Stage live (2026-10-06, server 3d89793c7, mod-sim-validation f72dbf7):
   the sim's exact cost. Nothing committed: `spellmod_spells.json` (tools/acore/spellmods) lists SPELLMOD talents only.
 - No fixture re-recorded; no goldens moved.
 
-### EC-THREAT-FIX3 (Z2; changes goldens, full suite; C++; stages: threat, C++ and e2e, live)
+### EC-THREAT-FIX3 (Z2, done; changes goldens, full suite; C++; stages: threat, C++ and e2e, live)
 
 - Sunder Armor: the server's warriors know 7386 (`character_spell`), whose `spell_threat` row gives 345 + 5% AP, plus
   58567's level 10 and its `SPELL_EFFECT_THREAT`; the sim and the e2e's ProtWarrior probe use 47467 (its level 77).
@@ -1701,7 +1723,7 @@ Live stage (server on [ac] 3d89793c7 plus the module tree, 2026-10-06):
 
 Goldens: the live stage adds no golden move; `dock.sh delta` is stage 1's.
 
-### EC-CORE-FIX2 (Z2; changes goldens, full suite)
+### EC-CORE-FIX2 (Z2, done; changes goldens, full suite)
 
 - Damage truncation: the server truncates `SpellDamageBonusDone`'s result, a dot's amount at application and a
   direct hit (Frostfire Bolt's tick: 33 on the server, 33.99 in the sim); re-measure which paths truncate
@@ -1756,7 +1778,7 @@ Re-measured on `0ccf8aa60` against [ac] `3d89793c7` and the committed records. V
   dot ticks, Razorice −1.2%, Thorns −0.8%); the other healers move only the Gnomish Lightning Generator row. Twin Blades of Azzinoth rows −0.14% (Combat) to
   −0.99% (Fury) for melee (its +200 AP on the demon dummy loses the aura 79s).
 
-### EC-CLASS-FIX (Z2; changes goldens; stages: melee, casters, live)
+### EC-CLASS-FIX (Z2, done; changes goldens; stages: melee, casters, live)
 
 - Death knight: death runes from Blood of the North, Reaping and Death Rune Mastery revert 30 s after the talent last
   procced (`spell_dk_death_rune`'s periodic); Improved Unholy Presence's rune regen scales the cooldown after the grace

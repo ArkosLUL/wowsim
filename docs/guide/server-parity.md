@@ -3,7 +3,7 @@
 Where the server differs from the Classic behaviour upstream modelled.
 - Why the sim follows the server: [ADRs](../adr/).
 - How each module is handled: [azerothcore-server.md](azerothcore-server.md#modules-that-affect-the-sim).
-- Class spells, talents and procs: [class mechanics](class-mechanics.md).
+- Class spells, talents and procs: [class mechanics](class-mechanics.md). Threat: [threat](threat.md).
 - Full evidence and phase status:
   - `docs/azerothcore-parity/azerothcore-parity.{PLAN,INVESTIGATION}.md`.
     The INVESTIGATION also lists every retail deviation and every mod-spell-tweaks change.
@@ -59,6 +59,9 @@ class by simval.
   Blood Gorged's class mask limits it to white swings and Plague, Blood, Heart, Death and Rune Strike.
 - The server truncates primary stats to integers and the sim doesn't, so anything derived can be off by
   one point's worth.
+- Defense skill bonuses (`PseudoStats.BonusDefenseSkill`: Rune of the Stoneskin Gargoyle) add after the
+  rating's truncation, so dodge, parry and miss take them undiminished; `Unit.DefenseSkill()` is the total,
+  for the attack table, crit taken, block and every talent reading defense.
 
 ## Other measured server behaviour
 
@@ -84,32 +87,6 @@ class by simval.
   read. Dynamic mods: `Spell.CostMultiplier`/`CostFlat`, `PseudoStats.CostMultiplier`/`CostFlat`,
   `Unit.AddSchoolCostMultiplier`/`AddSchoolCostFlat`. `ApplyCostModifiers` caches per spell, comparing every
   input (`costCache`): a new input joins that key.
-- **Threat** (`sim/core/threat.go`; `ThreatManager::CalculateModifiedThreat`, `Spell::HandleThreatSpells`):
-  - A hit's threat is its damage × `spell_threat` pctMod × `Spell.ThreatMultiplier`
-    (`SPELLMOD_THREAT`) × the school multiplier: `PseudoStats.ThreatMultiplier` times each
-    `AddThreatSchoolMultiplier` aura covering the spell, once per aura. `ThreatMultiplier` 0 means no threat at
-    all, bonus included, as does `ATTR1_NO_THREAT` (Healing Stream Totem).
-  - A heal's threat is half the health it restores (a quarter for a paladin), modified like a hit and shared as
-    assist threat; overhealing makes none.
-  - `SPELL_EFFECT_THREAT` adds its flat amount, unmodified, on each enemy hit; a cut never takes threat below 0
-    (Feint).
-  - The cast's bonus is the row's flatMod + apPctMod × main hand AP, else the spell's level (none under
-    `NO_INITIAL_THREAT` or `ATTR3_SUPPRESS_TARGET_PROCS`). Stance, form and presence
-    multipliers never touch it. It's split over the distinct enemies the cast reached (misses count) plus the
-    caster when an effect lands on it; ticks get none, nor does anything before the pull, but a spell an aura
-    casts each tick adds its own (`ThreatTick`: Bladestorm, Volley), and `SetThreatCastOf` splits one bonus over
-    a chain (Heart Strike, the rune weapon's copy). A positive spell's bonus, self buffs' included, is modified
-    and shared as assist threat, evenly over the creatures fighting its target, none to one under
-    crowd control (`ThreatManager::ForwardThreatForAssistingMe`).
-  - The rows are `sim/core/serverdata/threat_auto_gen.go` (gen_serverdata), so class code carries no flats or
-    percents and `FlatThreatBonus` panics. `SpellConfig.ThreatSpellID` names the server spell a sim spell
-    stands for, `NoThreatBonus` marks damage the server deals through an aura (damage shields, proc trigger
-    damage), `Spell.LandThreatBonus` counts an enemy a cast selects without a hit (Consecration).
-  - Dire Bear Form is ×1.45 × 1.43; Blood and Unholy Presence −20% with Subversion's flat added to that same
-    effect (−45% at 3 points); Shadowform ×0.7 in every school; Fanaticism −10% a point, kept under Righteous
-    Fury. Arcane Subtlety, Burning Soul, Frost Channeling, Righteous Fury (holy ×1.8) and Elemental Precision
-    (fire, frost, nature) are school auras, so Frostfire Bolt gets two.
-  - Thunderfury is one cast of 21992; its slow (27648) is `ATTR1_NO_THREAT`.
 - **Stat sheet:** armor on jewelry, weapons and `ArmorDamageModifier` is bonus armor for every class
   (`Player::_ApplyItemBonuses`); block value is half a point a strength for every player. Moonkin Form ×4.7
   item armor (24905) and the weapon's feral AP.
@@ -132,8 +109,20 @@ class by simval.
   Weak, Poleaxe) before `SPELLMOD_CRIT_DAMAGE_BONUS` scales the part over 1; white swings multiply them
   (`Character.WhiteCritMultiplier`). Magic-class spells crit from 1.5, the DK's Icy Touch, Death Coil, Blood Boil,
   Howling Blast and Death and Decay too.
-- **Creature-type attack power** (Elixir of Demonslaying, Scourgebane) reaches only weapon damage: a white swing or
-  a spell with a weapon effect adds `int32(AP / 14 × speed)` after its weapon percent (`versusAttackPowerBonus`).
+- **Damage rounding** (`doneDamage`, `ApplyPostOutcomeDamageModifiers`): every step is whole.
+  `SpellDamageBonusDone` and `MeleeDamageBonusDone` (a dot's amount at application) and the `…Taken` steps
+  truncate, `CalcArmorReducedDamage` rounds up, a partial resist takes `damage × i / 10` in integers; crit,
+  glancing and absorbs stay whole. Not modelled: each SP or AP bonus's own `int32`, a stacked dot's per-stack
+  amount, magic crit before resist.
+- **Creature-type attack power** (Elixir of Demonslaying, Scourgebane) and, on a ranged hit, Hunter's Mark reach
+  only weapon damage: a white swing or a spell with a weapon effect adds `int32(sum / 14 × speed)` after its
+  weapon percent (`Spell.weaponAttackPowerBonus`).
+  - A physical hit's bonus skips the hand's TOTAL_PCT (`weaponBonusMultiplier`): `DamageDealtMultiplier`, the
+    physical school's, `Spell.TotalPctMultiplier` (Ranged Weapon Specialization on ranged attacks; the off
+    hand's aura 122, Dual Wield Specialization and Nerves of Cold Steel).
+  - DONE_VERSUS (aura 168: Troll Beast Slaying, Crusade's second percent) sits per target in the attack tables
+    and scales it.
+  - The rune weapon's hits add the DK's bonus, halved, with the DK's per-target multipliers.
 - **Meta gems** work only with their `SpellItemEnchantmentCondition` met (`sim/core/meta_gems.go`); an inactive
   one gives nothing.
 - **Timing and procs** (the rest is in [spell data and timing](spell-data-and-timing.md)):
@@ -175,8 +164,7 @@ class by simval.
   hit.
 - **Dungeon scale** (`NewEncounter`): health and armor become `round(float32(value) × multiplier)`, half
   away from zero. Damage multiplies the target's damage dealt, so swings, spells and DoTs all get it,
-  except spells with `SpellFlagIgnoreAttackerModifiers`. The server truncates each scaled hit; the sim
-  doesn't. Targets with `world_boss` (else level ≥ 83) take the boss set. The placeholder target of an
+  except spells with `SpellFlagIgnoreAttackerModifiers`. Targets with `world_boss` (else level ≥ 83) take the boss set. The placeholder target of an
   encounter without targets is never scaled.
 - **Creature melee** is (weapon damage + AP/14 × variance) × `creature_template.DamageModifier` × attack
   time in seconds (`Creature::CalculateMinMaxDamage`). A target's `MinBaseDamage` scales its AP part too, so
