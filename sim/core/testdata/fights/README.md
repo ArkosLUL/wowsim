@@ -69,17 +69,8 @@ table's cause:
   the meta gem.
 - **Eclipse**: the sim's Eclipse (Solar) procs on any landed Starfire, the server's on a crit only (spell_proc -48516
   HitMask 2).
-- **Master of Elements**: the sim refunds 25% of a crit spell's base cost (30% less Burnout's 5%, which the server
-  burns apart, unlogged) and nothing for a crit without a cost of its own (Living Bomb's explosion, 215 on the
-  server) or a clearcast one; the server refunds 30% of each (`spell_mage_master_of_elements`).
 - **Rake**: its first hit is about 0.65 of the sim's in every feral fight, the boss armor's cut, which the sim leaves
   out as for a bleed.
-- **Torment the Weak**: the sim always adds its 12%; the server only against a snared or slowed target, and the boss
-  dummy is immune to snares (creature_immunities -361).
-- **Brain Freeze**: the sim's Fireball! never expires; the server's (57761) lasts 15 s, so a later proc puts it on
-  again.
-- **Enduring Winter**: the sim's refreshes Replenishment on every Frostbolt; the server's has a 6 s proc cooldown
-  (spell_proc -44557).
 - **Vindication**: the sim's goes on with every landed hit; the server's procs at 3 a minute (spell_proc -9452), and
   its 26017 rolls spell hit, so it can miss.
 - **Crusader Strike**: the sim's refreshes Judgement of Wisdom; the server's doesn't.
@@ -100,12 +91,6 @@ table's cause:
 | DruidBalancePhase3 | 48468 | tick crit mean | Vengeance |
 | DruidFeral | 48574 | hit mean | Rake |
 | HunterMM | 49001 | ticks | map update length |
-| MageFire | energize 29076 mana | gain sizes | Master of Elements |
-| MageFrost | aura 44549 on self | applications | Brain Freeze |
-| MageFrost | aura 57669 on self | applications | Enduring Winter |
-| MageFrostFire | 47610 | crit mean | Torment the Weak |
-| MageFrostFire | 47610 | tick hit mean | Torment the Weak |
-| MageFrostFire | energize 29076 mana | gain sizes | Master of Elements |
 | PaladinProtection | 26016 | misses | Vindication |
 | PaladinProtection | aura 26016 on target | applications | Vindication |
 | PaladinProtection | aura 26016 on target | uptime | Vindication |

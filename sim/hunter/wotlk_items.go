@@ -226,14 +226,16 @@ func init() {
 					ProcMask:    core.ProcMaskRangedAuto,
 					Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagIncludeTargetBonusDamage | core.SpellFlagNoOnCastComplete,
 
-					DamageMultiplier: 0.5,
+					DamageMultiplier: 1,
 					CritMultiplier:   hunter.AutoAttacks.RangedConfig().CritMultiplier,
 					ThreatMultiplier: 1,
 
+					// Quick Shot (71834): 50% weapon damage, not normalized
 					ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-						baseDamage := hunter.RangedWeaponDamage(sim, spell.RangedAttackPower(target)) +
-							hunter.AmmoDamageBonus +
-							spell.BonusWeaponDamage()
+						baseDamage := (hunter.RangedWeaponDamage(sim, hunter.rangedWeaponAP())+
+							hunter.AmmoDamageBonus+
+							spell.BonusWeaponDamage())*0.5 +
+							hunter.huntersMarkBonus(target, false)
 
 						spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeRangedHitAndCrit)
 					},

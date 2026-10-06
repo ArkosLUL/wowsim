@@ -35,7 +35,7 @@ func (hunter *Hunter) registerSerpentStingSpell() {
 			0.1*float64(hunter.Talents.ImprovedStings),
 			core.TernaryFloat64(hunter.HasSetBonus(ItemSetScourgestalkerBattlegear, 2), .1, 0),
 		),
-		DamageMultiplier: hunter.rangedWeaponSpecializationMultiplier(),
+		DamageMultiplier: 1,
 		CritMultiplier:   hunter.critMultiplier(true, false),
 		ThreatMultiplier: 1,
 

@@ -47,8 +47,6 @@ func (mage *Mage) registerArcaneBlastSpell() {
 		BonusCritRating: 0 +
 			float64(mage.Talents.Incineration)*2*core.CritRatingPerCritChance +
 			core.TernaryFloat64(mage.HasSetBonus(ItemSetKhadgarsRegalia, 4), 5*core.CritRatingPerCritChance, 0),
-		DamageMultiplier: 1 *
-			(1 + .04*float64(mage.Talents.TormentTheWeak)),
 		DamageMultiplierAdditive: 1 +
 			.02*float64(mage.Talents.SpellImpact),
 		CritMultiplier:   mage.SpellCritMultiplier(1, mage.bonusCritDamage),
@@ -60,7 +58,7 @@ func (mage *Mage) registerArcaneBlastSpell() {
 		},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()
+			baseDamage := (spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()) * mage.tormentTheWeak(target)
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 			mage.ArcaneBlastAura.Activate(sim)
 			mage.ArcaneBlastAura.AddStack(sim)

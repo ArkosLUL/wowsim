@@ -37,8 +37,6 @@ func (mage *Mage) registerFireballSpell() {
 			2*float64(mage.Talents.CriticalMass)*core.CritRatingPerCritChance +
 			float64(mage.Talents.ImprovedScorch)*core.CritRatingPerCritChance +
 			core.TernaryFloat64(mage.HasSetBonus(ItemSetKhadgarsRegalia, 4), 5*core.CritRatingPerCritChance, 0),
-		DamageMultiplier: 1 *
-			(1 + .04*float64(mage.Talents.TormentTheWeak)),
 		DamageMultiplierAdditive: spellModDamage(
 			spellImpactBonus,
 			.02*float64(mage.Talents.FirePower),
@@ -66,7 +64,8 @@ func (mage *Mage) registerFireballSpell() {
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
 				dot.SnapshotBaseDamage = dot.Tick.Roll(sim)
 				dot.Spell.DamageMultiplierAdditive *= dotOnlyMultiplier
-				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(dot.Spell.Unit.AttackTables[target.UnitIndex])
+				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(dot.Spell.Unit.AttackTables[target.UnitIndex]) *
+					mage.tormentTheWeak(target)
 				dot.Spell.DamageMultiplierAdditive /= dotOnlyMultiplier
 			},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
@@ -75,7 +74,7 @@ func (mage *Mage) registerFireballSpell() {
 		},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()
+			baseDamage := (spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()) * mage.tormentTheWeak(target)
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 			spell.WaitTravelTime(sim, func(sim *core.Simulation) {
 				if result.Landed() && !hasGlyph {

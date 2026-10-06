@@ -31,7 +31,9 @@ func (mage *Mage) registerPyroblastSpell() {
 			ModifyCast: func(sim *core.Simulation, spell *core.Spell, cast *core.Cast) {
 				if mage.HotStreakAura.IsActive() {
 					cast.CastTime = 0
-					mage.HotStreakAura.Deactivate(sim)
+					if !mage.t84pcKeepsProc(sim) {
+						mage.HotStreakAura.Deactivate(sim)
+					}
 				}
 			},
 		},
@@ -39,8 +41,6 @@ func (mage *Mage) registerPyroblastSpell() {
 		BonusCritRating: 0 +
 			2*float64(mage.Talents.CriticalMass)*core.CritRatingPerCritChance +
 			2*float64(mage.Talents.WorldInFlames)*core.CritRatingPerCritChance,
-		DamageMultiplier: 1 *
-			(1 + .04*float64(mage.Talents.TormentTheWeak)),
 		DamageMultiplierAdditive: 1 +
 			.02*float64(mage.Talents.FirePower),
 		CritMultiplier:   mage.SpellCritMultiplier(1, mage.bonusCritDamage),
@@ -64,7 +64,8 @@ func (mage *Mage) registerPyroblastSpell() {
 
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
 				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + dot.Tick.SP*dot.Spell.SpellPower()
-				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(dot.Spell.Unit.AttackTables[target.UnitIndex])
+				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(dot.Spell.Unit.AttackTables[target.UnitIndex]) *
+					mage.tormentTheWeak(target)
 			},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 				dot.CalcAndDealPeriodicSnapshotDamage(sim, target, dot.OutcomeTick)
@@ -72,7 +73,7 @@ func (mage *Mage) registerPyroblastSpell() {
 		},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()
+			baseDamage := (spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()) * mage.tormentTheWeak(target)
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 			spell.WaitTravelTime(sim, func(sim *core.Simulation) {
 				if result.Landed() {

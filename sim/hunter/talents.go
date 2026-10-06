@@ -1,6 +1,7 @@
 package hunter
 
 import (
+	"math"
 	"time"
 
 	"github.com/wowsims/wotlk/sim/core"
@@ -43,14 +44,7 @@ func (hunter *Hunter) ApplyTalents() {
 	if hunter.Talents.LethalShots > 0 {
 		hunter.AddBonusRangedCritRating(1 * float64(hunter.Talents.LethalShots) * core.CritRatingPerCritChance)
 	}
-	if hunter.Talents.RangedWeaponSpecialization > 0 {
-		mult := hunter.rangedWeaponSpecializationMultiplier()
-		hunter.OnSpellRegistered(func(spell *core.Spell) {
-			if spell.ProcMask.Matches(core.ProcMaskRanged) {
-				spell.DamageMultiplier *= mult
-			}
-		})
-	}
+	hunter.applyRangedWeaponSpecialization()
 
 	if hunter.Talents.EnduranceTraining > 0 {
 		healthBonus := 0.01 * float64(hunter.Talents.EnduranceTraining)
@@ -121,10 +115,29 @@ func (hunter *Hunter) ApplyTalents() {
 	hunter.registerReadinessCD()
 }
 
-// the aura only needs a bow, gun or crossbow equipped, not a ranged spell (Unit::SpellPctDamageModsDone),
-// so Serpent Sting gets it too despite its empty proc mask
-func (hunter *Hunter) rangedWeaponSpecializationMultiplier() float64 {
-	return 1 + []float64{0, .01, .03, .05}[hunter.Talents.RangedWeaponSpecialization]
+// applyRangedWeaponSpecialization is 19507-19509's aura 79 on every school, which needs a bow, gun or crossbow.
+// Physical damage takes it only on ranged attacks (Unit::UpdateDamagePctDoneMods), any other school on every
+// spell, procs and Explosive Trap included (Unit::SpellPctDamageModsDone).
+func (hunter *Hunter) applyRangedWeaponSpecialization() {
+	if hunter.Talents.RangedWeaponSpecialization == 0 {
+		return
+	}
+	switch hunter.Ranged().RangedWeaponType {
+	case proto.RangedWeaponType_RangedWeaponTypeBow, proto.RangedWeaponType_RangedWeaponTypeGun,
+		proto.RangedWeaponType_RangedWeaponTypeCrossbow:
+	default:
+		return
+	}
+
+	mult := 1 + []float64{0, .01, .03, .05}[hunter.Talents.RangedWeaponSpecialization]
+	hunter.OnSpellRegistered(func(spell *core.Spell) {
+		if spell.ProcMask.Matches(core.ProcMaskRanged) && spell.SpellSchool == core.SpellSchoolPhysical {
+			spell.DamageMultiplier *= mult
+		}
+	})
+	for school := stats.SchoolIndexArcane; school < stats.SchoolLen; school++ {
+		hunter.PseudoStats.SchoolDamageDealtMultiplier[school] *= mult
+	}
 }
 
 // critMultiplier follows Unit::SpellCriticalDamageBonus: +100% for melee and ranged damage class, then
@@ -349,9 +362,10 @@ func (hunter *Hunter) applyWildQuiver() {
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			// the ranged weapon's damage includes the ammo (Player::CalculateMinMaxDamage)
-			baseDamage := (spell.Unit.RangedWeaponDamage(sim, spell.RangedAttackPower(target)) +
+			baseDamage := (spell.Unit.RangedWeaponDamage(sim, hunter.rangedWeaponAP()) +
 				hunter.AmmoDamageBonus +
 				spell.BonusWeaponDamage()) * spell.Direct.WeaponPct
+			baseDamage += hunter.huntersMarkBonus(target, false)
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeRangedHitAndCrit)
 			spell.DealDamageAfterTravel(sim, result)
 		},
@@ -622,8 +636,16 @@ func (hunter *Hunter) applyThrillOfTheHunt() {
 		return
 	}
 
-	procChance := float64(hunter.Talents.ThrillOfTheHunt) / 3
+	procChance := []float64{0, .33, .66, 1}[hunter.Talents.ThrillOfTheHunt]
 	manaMetrics := hunter.NewManaMetrics(core.ActionID{SpellID: 34499})
+
+	// spell_hun_thrill_of_the_hunt gives back 40% of the shot's base cost, whatever the cast paid (a free Lock and
+	// Load shot too), each step truncated
+	gain := func(sim *core.Simulation, mana float64) {
+		if mana > 0 && sim.Proc(procChance, "ThrillOfTheHunt") {
+			hunter.AddMana(sim, mana, manaMetrics)
+		}
+	}
 
 	hunter.RegisterAura(core.Aura{
 		Label:    "Thrill of the Hunt",
@@ -632,25 +654,21 @@ func (hunter *Hunter) applyThrillOfTheHunt() {
 			aura.Activate(sim)
 		},
 		OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
-			// mask 256
-			if !spell.ProcMask.Matches(core.ProcMaskRangedSpecial) {
+			// spell_proc -34497's class mask, which leaves out Multi-Shot
+			switch spell {
+			case hunter.ArcaneShot, hunter.AimedShot, hunter.SteadyShot, hunter.ChimeraShot, hunter.KillShot,
+				hunter.SilencingShot:
+			default:
 				return
 			}
-
-			if !result.DidCrit() {
-				return
-			}
-
-			if sim.Proc(procChance, "ThrillOfTheHunt") {
-				hunter.AddMana(sim, spell.CurCast.Cost*0.4, manaMetrics)
+			if result.DidCrit() {
+				gain(sim, math.Floor(spell.DefaultCast.Cost*4/10))
 			}
 		},
 		OnPeriodicDamageDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
+			// a tick gives a third of what the shot would
 			if result.DidCrit() && (spell == hunter.ExplosiveShotR4 || spell == hunter.ExplosiveShotR3) {
-				// Explosive shot ticks can proc TotH but with 1/3 the bonus.
-				if sim.Proc(procChance, "ThrillOfTheHunt") {
-					hunter.AddMana(sim, spell.CurCast.Cost*0.4/3, manaMetrics)
-				}
+				gain(sim, math.Floor(math.Floor(spell.DefaultCast.Cost*4/10)/3))
 			}
 		},
 	})

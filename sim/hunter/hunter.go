@@ -1,10 +1,12 @@
 package hunter
 
 import (
+	"math"
 	"time"
 
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
+	"github.com/wowsims/wotlk/sim/core/stats"
 )
 
 var TalentTreeSizes = [3]int{26, 27, 28}
@@ -204,9 +206,10 @@ func NewHunter(character *core.Character, options *proto.Player) *Hunter {
 	// Auto Shot (75) travels at 40 yd/s. Its action id has no server data, so nothing checks the speed
 	hunter.AutoAttacks.RangedConfig().MissileSpeed = 40
 	hunter.AutoAttacks.RangedConfig().ApplyEffects = func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-		baseDamage := hunter.RangedWeaponDamage(sim, spell.RangedAttackPower(target)) +
+		baseDamage := hunter.RangedWeaponDamage(sim, hunter.rangedWeaponAP()) +
 			hunter.AmmoDamageBonus +
-			spell.BonusWeaponDamage()
+			spell.BonusWeaponDamage() +
+			hunter.huntersMarkBonus(target, false)
 		result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeRangedHitAndCrit)
 		spell.DealDamageAfterTravel(sim, result)
 	}
@@ -214,6 +217,27 @@ func NewHunter(character *core.Character, options *proto.Player) *Hunter {
 	hunter.pet = hunter.NewHunterPet()
 
 	return hunter
+}
+
+// rangedWeaponAP is the attack power a ranged weapon hit's weapon part reads: the hunter's own, without
+// Hunter's Mark (huntersMarkBonus).
+func (hunter *Hunter) rangedWeaponAP() float64 {
+	return hunter.GetStat(stats.RangedAttackPower)
+}
+
+// huntersMarkBonus is the target's Hunter's Mark on a ranged weapon hit, which Unit::MeleeDamageBonusDone adds as
+// int32(bonus / 14 × speed) after the weapon percent, at 2.8 s for a normalized hit.
+func (hunter *Hunter) huntersMarkBonus(target *core.Unit, normalized bool) float64 {
+	bonus := target.PseudoStats.BonusRangedAttackPowerTaken
+	if bonus == 0 {
+		return 0
+	}
+	weapon := hunter.AutoAttacks.Ranged()
+	speed := weapon.SwingSpeed
+	if normalized {
+		speed = weapon.NormalizedSwingSpeed
+	}
+	return math.Trunc(bonus / core.DefaultAttackPowerPerDPS * speed)
 }
 
 // quiverHaste is the ranged attack speed the quiver or ammo pouch gives. The core has no hunter haste

@@ -83,6 +83,9 @@ type Mage struct {
 	BrainFreezeAura    *core.Aura
 
 	CritDebuffCategories core.ExclusiveCategoryArray
+	attackSpeedSlows     core.ExclusiveCategoryArray
+
+	hasT84pc bool
 }
 
 func (mage *Mage) GetCharacter() *core.Character {
@@ -111,6 +114,11 @@ func (mage *Mage) AddPartyBuffs(partyBuffs *proto.PartyBuffs) {
 }
 
 func (mage *Mage) Initialize() {
+	// every attack speed debuff the sim has (Thunder Clap, Frost Fever, Infected Wounds, Judgements of the Just)
+	// carries MECHANIC_SLOW_ATTACK on the server
+	mage.attackSpeedSlows = mage.GetEnemyExclusiveCategories("AtkSpdReduction")
+	mage.hasT84pc = mage.HasSetBonus(ItemSetKirinTorGarb, 4)
+
 	mage.registerArcaneBarrageSpell()
 	mage.registerArcaneBlastSpell()
 	mage.registerArcaneExplosionSpell()

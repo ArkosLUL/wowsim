@@ -37,8 +37,7 @@ func (mage *Mage) registerFrostfireBoltSpell() {
 		DamageMultiplier: 1 *
 			// Need to re-apply these frost talents because FFB only inherits the fire multipliers from core.
 			(1 + .02*float64(mage.Talents.PiercingIce)) *
-			(1 + .01*float64(mage.Talents.ArcticWinds)) *
-			(1 + .04*float64(mage.Talents.TormentTheWeak)),
+			(1 + .01*float64(mage.Talents.ArcticWinds)),
 		DamageMultiplierAdditive: spellModDamage(
 			.02*float64(mage.Talents.FirePower),
 			.01*float64(mage.Talents.ChilledToTheBone),
@@ -69,7 +68,8 @@ func (mage *Mage) registerFrostfireBoltSpell() {
 				dot.SnapshotBaseDamage = dot.Tick.Roll(sim)
 				// Glyph of Frostfire boosts the direct hit only, so pull its factor back out here.
 				dot.Spell.DamageMultiplierAdditive /= 1 + glyphOfFrostfireBonus
-				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(dot.Spell.Unit.AttackTables[target.UnitIndex])
+				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(dot.Spell.Unit.AttackTables[target.UnitIndex]) *
+					mage.tormentTheWeak(target)
 				dot.Spell.DamageMultiplierAdditive *= 1 + glyphOfFrostfireBonus
 			},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
@@ -78,7 +78,7 @@ func (mage *Mage) registerFrostfireBoltSpell() {
 		},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()
+			baseDamage := (spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()) * mage.tormentTheWeak(target)
 
 			// FFB also double-dips the bonus from debuff crit modifiers:
 			//  1) Totem of Wrath / Heart of the Crusader / Master Poisoner

@@ -191,12 +191,6 @@ var droppedFightChecks = []fightDrop{
 	{"DruidBalancePhase3", "48468", "tick crit mean"},
 	{"DruidFeral", "48574", "hit mean"},
 	{"HunterMM", "49001", "ticks"},
-	{"MageFire", "energize 29076 mana", "gain sizes"},
-	{"MageFrost", "aura 44549 on self", "applications"},
-	{"MageFrost", "aura 57669 on self", "applications"},
-	{"MageFrostFire", "47610", "crit mean"},
-	{"MageFrostFire", "47610", "tick hit mean"},
-	{"MageFrostFire", "energize 29076 mana", "gain sizes"},
 	{"PaladinProtection", "26016", "misses"},
 	{"PaladinProtection", "aura 26016 on target", "applications"},
 	{"PaladinProtection", "aura 26016 on target", "uptime"},
@@ -1519,8 +1513,8 @@ func (f *fightSim) powerGainCounts() map[fightEnergizeKey]gainCount {
 const gainSizeIterations = 100
 
 // noteGainSizes notes each power gain since the last hit or miss that came alone. The metrics only add gains
-// up; a proc's gain comes with the hit that procs it, and a tick's between two hits. A gain of nothing (Thrill
-// of the Hunt for a free shot) is no gain in the log.
+// up; a proc's gain comes with the hit that procs it, and a tick's between two hits. A gain of nothing is no
+// gain in the log.
 func (f *fightSim) noteGainSizes() {
 	now := f.powerGainCounts()
 	for key, g := range now {

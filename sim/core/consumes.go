@@ -994,12 +994,10 @@ func (character *Character) newBasicExplosiveSpellConfig(sharedTimer *Timer, act
 		ThreatMultiplier: 1,
 
 		ApplyEffects: func(sim *Simulation, target *Unit, spell *Spell) {
-			// sapper hits the caster too, so it counts one more. decoy's blast is cast by a creature, uncapped.
+			// sapper hits the caster too, so it counts one more
 			capMultiplier := sim.Encounter.AOECapMultiplier()
 			if dealSelfDamage {
 				capMultiplier = AOECapMultiplierFor(len(sim.Encounter.Targets) + 1)
-			} else if actionID.SameAction(ExplosiveDecoyActionID) {
-				capMultiplier = 1
 			}
 			for _, aoeTarget := range sim.Encounter.TargetUnits {
 				baseDamage := sim.Roll(minDamage, maxDamage) * capMultiplier
@@ -1017,7 +1015,11 @@ func (character *Character) newThermalSapperSpell(sharedTimer *Timer) *Spell {
 	return character.GetOrRegisterSpell(character.newBasicExplosiveSpellConfig(sharedTimer, ThermalSapperActionID, SpellSchoolFire, 2188, 2812, Cooldown{Timer: character.NewTimer(), Duration: time.Minute * 5}, 2188, 2812))
 }
 func (character *Character) newExplosiveDecoySpell(sharedTimer *Timer) *Spell {
-	return character.GetOrRegisterSpell(character.newBasicExplosiveSpellConfig(sharedTimer, ExplosiveDecoyActionID, SpellSchoolPhysical, 1440, 2160, Cooldown{Timer: character.NewTimer(), Duration: time.Minute * 2}, 0, 0))
+	config := character.newBasicExplosiveSpellConfig(sharedTimer, ExplosiveDecoyActionID, SpellSchoolPhysical, 1440, 2160, Cooldown{Timer: character.NewTimer(), Duration: time.Minute * 2}, 0, 0)
+	// the decoy (creature 29134) casts its blast (53273) only from its SmartAI's death event, and a boss already
+	// fighting the raid never attacks it, so all it does here is take the explosives' shared cooldown
+	config.ApplyEffects = func(*Simulation, *Unit, *Spell) {}
+	return character.GetOrRegisterSpell(config)
 }
 func (character *Character) newSaroniteBombSpell(sharedTimer *Timer) *Spell {
 	return character.GetOrRegisterSpell(character.newBasicExplosiveSpellConfig(sharedTimer, SaroniteBombActionID, SpellSchoolFire, 1150, 1500, Cooldown{}, 0, 0))
