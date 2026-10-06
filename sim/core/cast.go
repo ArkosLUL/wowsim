@@ -242,6 +242,39 @@ func (spell *Spell) castFailureHelper(sim *Simulation, message string, vals ...a
 }
 
 func (spell *Spell) makeCastFunc(config CastConfig) CastSuccessFunc {
+	// built once per spell, since a closure made per hardcast allocates on every cast
+	onComplete := func(resetsSwing bool) func(*Simulation, *Unit) {
+		return func(sim *Simulation, target *Unit) {
+			if sim.Log != nil && !spell.Flags.Matches(SpellFlagNoLogs) {
+				spell.Unit.Log(sim, "Completed cast %s", spell.ActionID)
+			}
+
+			if spell.Cost != nil {
+				spell.Cost.SpendCost(sim, spell)
+			}
+
+			spell.applyEffects(sim, target)
+			if resetsSwing {
+				spell.Unit.AutoAttacks.resetSwingTimers(sim, sim.CurrentTime)
+			}
+
+			if !spell.Flags.Matches(SpellFlagNoOnCastComplete) {
+				spell.Unit.OnCastComplete(sim, spell)
+			}
+
+			spell.Unit.AutoAttacks.resumeMelee(sim)
+			spell.Unit.AutoAttacks.releaseCastHold(sim)
+		}
+	}
+	completeCast := onComplete(false)
+	// resetsSwing is never true without resetsAutoAttack, so most spells skip this one
+	var completeCastResettingSwing func(*Simulation, *Unit)
+	if spell.timing.resetsAutoAttack {
+		completeCastResettingSwing = onComplete(true)
+	}
+	// castFailureHelper is a no-op in combat with logs off, and boxing its args allocates on every failed cast
+	failsQuietly := func(sim *Simulation) bool { return sim.Log == nil && sim.CurrentTime >= 0 }
+
 	return func(sim *Simulation, target *Unit) bool {
 		spell.CurCast = spell.DefaultCast
 
@@ -263,6 +296,9 @@ func (spell *Spell) makeCastFunc(config CastConfig) CastSuccessFunc {
 
 		if spell.Cost != nil {
 			if !spell.Cost.MeetsRequirement(sim, spell) {
+				if failsQuietly(sim) {
+					return false
+				}
 				return spell.castFailureHelper(sim, spell.Cost.CostFailureReason(sim, spell))
 			}
 		}
@@ -277,6 +313,9 @@ func (spell *Spell) makeCastFunc(config CastConfig) CastSuccessFunc {
 		if config.CD.Timer != nil {
 			// By panicking if spell is on CD, we force each sim to properly check for their own CDs.
 			if !spell.CD.IsReady(sim) {
+				if failsQuietly(sim) {
+					return false
+				}
 				return spell.castFailureHelper(sim, "still on cooldown for %s, curTime = %s", spell.CD.TimeToReady(sim), sim.CurrentTime)
 			}
 			spell.CD.Set(sim.CurrentTime + spell.CurCast.CastTime + spell.CD.Duration)
@@ -285,6 +324,9 @@ func (spell *Spell) makeCastFunc(config CastConfig) CastSuccessFunc {
 		if config.SharedCD.Timer != nil {
 			// By panicking if spell is on CD, we force each sim to properly check for their own CDs.
 			if !spell.SharedCD.IsReady(sim) {
+				if failsQuietly(sim) {
+					return false
+				}
 				return spell.castFailureHelper(sim, "still on shared cooldown for %s, curTime = %s", spell.SharedCD.TimeToReady(sim), sim.CurrentTime)
 			}
 			spell.SharedCD.Set(sim.CurrentTime + spell.CurCast.CastTime + spell.SharedCD.Duration)
@@ -292,10 +334,16 @@ func (spell *Spell) makeCastFunc(config CastConfig) CastSuccessFunc {
 
 		// By panicking if spell is on CD, we force each sim to properly check for their own CDs.
 		if spell.CurCast.GCD != 0 && !spell.Unit.GCD.IsReady(sim) {
+			if failsQuietly(sim) {
+				return false
+			}
 			return spell.castFailureHelper(sim, "GCD on cooldown for %s, curTime = %s", spell.Unit.GCD.TimeToReady(sim), sim.CurrentTime)
 		}
 
 		if hc := spell.Unit.Hardcast; hc.Expires > sim.CurrentTime {
+			if failsQuietly(sim) {
+				return false
+			}
 			return spell.castFailureHelper(sim, "casting/channeling %v for %s, curTime = %s", hc.ActionID, hc.Expires-sim.CurrentTime, sim.CurrentTime)
 		}
 
@@ -321,30 +369,14 @@ func (spell *Spell) makeCastFunc(config CastConfig) CastSuccessFunc {
 					spell.ActionID, max(0, spell.CurCast.Cost), spell.CurCast.CastTime, spell.CurCast.EffectiveTime())
 			}
 
+			complete := completeCast
+			if resetsSwing {
+				complete = completeCastResettingSwing
+			}
 			spell.Unit.Hardcast = Hardcast{
-				Expires:  castEnd,
-				ActionID: spell.ActionID,
-				OnComplete: func(sim *Simulation, target *Unit) {
-					if sim.Log != nil && !spell.Flags.Matches(SpellFlagNoLogs) {
-						spell.Unit.Log(sim, "Completed cast %s", spell.ActionID)
-					}
-
-					if spell.Cost != nil {
-						spell.Cost.SpendCost(sim, spell)
-					}
-
-					spell.applyEffects(sim, target)
-					if resetsSwing {
-						spell.Unit.AutoAttacks.resetSwingTimers(sim, sim.CurrentTime)
-					}
-
-					if !spell.Flags.Matches(SpellFlagNoOnCastComplete) {
-						spell.Unit.OnCastComplete(sim, spell)
-					}
-
-					spell.Unit.AutoAttacks.resumeMelee(sim)
-					spell.Unit.AutoAttacks.releaseCastHold(sim)
-				},
+				Expires:           castEnd,
+				ActionID:          spell.ActionID,
+				OnComplete:        complete,
 				Target:            target,
 				keepsCombatTimers: spell.timing.keepsCombatTimers,
 			}
