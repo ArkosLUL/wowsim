@@ -371,6 +371,33 @@ the raid).
   benches against the wave base; an Elemental profile and its allocations.
 - Owns: those two paths in `cast.go` and `sim.go`, in small hunks.
 
+#### As built
+
+- Base profiles (`BenchmarkSimulate` at 100 iterations, one proc) confirm both: `makeCastFunc`'s cast closure makes
+  33% of Elemental's allocations and 43% of the raid's; `nextTick` takes 0.99% and 0.64% of their CPU. Of the raid's
+  43%, the `OnComplete` closure is 17%; the other 25% is `castFailureHelper`'s boxed args on failed casts, mostly
+  the Shadowfiend retrying Shadowcrawl on cooldown from its custom rotation.
+- `makeCastFunc` builds its completion once per spell, not per hardcast: one closure, plus a second that resets the
+  swing only for spells whose server data resets autos (`resetsSwing` is never true otherwise). The cast picks one
+  by `resetsSwing`, so behaviour is unchanged. `TestHardcastDoesNotAllocate` (`cast_alloc_test.go`) pins a hardcast
+  and its landing at 0 allocations (base: 1); swapping the two closures fails `TestCastResetsSwingTimer`.
+- Its five failure checks (cost, CD, shared CD, GCD, casting) return before `castFailureHelper` when that's a no-op
+  (logs off, at or after the pull), so they box nothing. `TestFailedCastDoesNotAllocate` pins each at 0 allocations
+  (base: 1-3), still logging the reason with logs on and warning the rotation before the pull; skipping always,
+  never, or regardless of the pull fails it.
+- `nextTick` is unchanged: its modulo isn't the cost. On the 7800X3D, `IDIV` runs about as fast as a reciprocal
+  multiply: micro-benchmarks of a constant-divisor path, a precomputed 128-bit reciprocal, a divisibility test and a
+  branchless form all came out within ±0.5 ns of it, or slower. Its cost is call volume, about 1,000 calls an
+  Elemental iteration and 13,600 a raid one, 40-73% already on the grid; no memo key hits over 31%. About half come
+  from `Aura.Refresh`, two per map-grid aura, the second skippable when the duration is a whole number of map updates.
+- 37 goldens byte-identical, simval 1114/1114, `go vet` and `gofmt` clean.
+- Interleaved A/B against `0ccf8aa60`, 12 rounds, both iteration cases (benchstat medians, machine loaded to ±50%):
+  no time moved at p < 0.05. Allocations at 100: the raid -50%, Hunter -45%, Elemental -32%; Rogue and Ret +0.1%
+  (the per-spell closures, few hardcasts).
+- Elemental profile, 100 iterations, one proc, base → new in one window: 58,817 → 39,827 allocations an op,
+  3.0 → 2.5 MiB; `mallocgc` 9.1% → 8.3%. Left: Lightning Bolt's per-cast travel closure (55% of allocations) and
+  `Dot.startTickAction`'s per-application action and closures (21%).
+
 ## Order
 
 The user put the pass before wave J, whose BIS-e2e-perf times the optimizer with PERF-TOOLS' harness
