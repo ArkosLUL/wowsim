@@ -1645,3 +1645,48 @@ the slow suite's picks and wall on a loaded machine.
 
 Golden-neutral. **Owns:** `sim/optimizer/search.go`'s `runnersUp` and its callers, `neighborhood.go`,
 `surrogate.go`'s pricing gate if the unpriced fix is in scope, their tests.
+
+#### As built
+
+`runnersUp` takes the option list to rank. The neighborhood passes `se.all[slot]`; the search's
+`forcedRunnersUp` still passes `se.opts[slot]`. Tests (`neighborhood_test.go`): a next best item outside
+`se.opts` is reported, five alternatives all carrying the best stat, and no unreported priced item trials
+above the weakest reported one.
+
+Unpriced items: Normal prices nearly every item, so the gate costs little there; Quick leaves out what it
+didn't sim. Round 0, unpriced items of the pool:
+
+| Case | Normal | Quick |
+|---|---|---|
+| fury p1 | 0 | 169 (trinkets 35 each, main hand 63, off hand 36) |
+| combat rogue p3 | 0 | 338 |
+| fire mage p3 | 0 | 0 |
+| ret p4 | 0 | 353 |
+| prot paladin p3 | 1 (a main hand) | 282 |
+| feral tank p2 | 2 (main hands) | 164 |
+
+So Quick can't list such a trinket or weapon as an alternative. Not fixed: an unpriced item has no value to
+rank by, so the fix is simming it, more than a gate change. Not measured against `abc74401` (Agony's request
+can't be rerun offline).
+
+Candidates ranked per slot, `se.opts` to `se.all`, summed over round 0's slots at Normal: fury 1261 to 1384,
+rogue 1554 to 1723, mage 1105 to 1271, ret 2932 to 3170, prot paladin 1831 to 2310, feral tank 907 to 1226.
+Trinkets gain most (feral tank 20 to 96 each). Sims per slot don't change: still `alternativesPerSlot`
+alternatives, chosen by the surrogate's trial.
+
+Slow suite on a loaded machine, base to after:
+
+| Case | Normal sims | Normal wall | Quick wall |
+|---|---|---|---|
+| fury p1 | 1247750, same | 90.0 to 89.9 s | 12.0 to 11.0 s |
+| combat rogue p3 | 1390500, same | 155 to 162 s | 18.9 to 16.6 s |
+| fire mage p3 | 805500, same | 30.6 to 31.7 s | 4.9 to 4.8 s |
+| ret p4 | 1359000 to 1360000 | 73.8 to 132.5 s | 8.4 to 14.0 s |
+| prot paladin p3 | 1399250 to 1400250 | 126.8 to 99.1 s | 7.4 to 12.9 s |
+| feral tank p2 | 1243000 to 1269500 | 105.8 to 71.0 s | 14.4 to 14.0 s |
+
+Walls swing both ways with the other items' load, so they say nothing about the change. All 12 cases pass.
+
+Picks: 11 of 12 identical. Feral tank Normal moved a trinket, 45158 to 45609, which pruning had dropped:
+the neighborhood adopted it, J over the preset +739.6 to +753.4 (SE 3.0). Quick's alternatives change too,
+as intended.

@@ -22,8 +22,9 @@ const (
 const raceSE = 3
 
 // neighborhood sims the best loadout's alternatives: per slot, the surrogate's top
-// alternativesPerSlot other items, each with the rest of the best unchanged, paired with the best. A
-// round sims each slot's first firstRunnersUp, then the rest only if none of those moved the best.
+// alternativesPerSlot other items out of every priced one, pruned or not, each with the rest of the
+// best unchanged, paired with the best. A round sims each slot's first firstRunnersUp, then the rest
+// only if none of those moved the best.
 // Each batch races its alternatives against the best in DefaultShardIterations shards (race),
 // dropping one once it's decided or can't clear the acceptance bar, so a batch stops as soon as
 // there's nothing left to decide instead of always spending the round's full iterations. A batch's
@@ -127,7 +128,7 @@ rounds:
 			if r.pool.Locked[slot] {
 				continue
 			}
-			for i, changes := range se.runnersUp(st, slot, alternativesPerSlot) {
+			for i, changes := range se.runnersUp(st, slot, alternativesPerSlot, se.all[slot]) {
 				l := r.best
 				for _, ch := range changes {
 					l.Items[ch.slot] = ch.choice

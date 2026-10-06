@@ -2,6 +2,7 @@ package optimizer
 
 import (
 	"context"
+	"math"
 	"math/rand"
 	"sync"
 	"testing"
@@ -16,17 +17,25 @@ const (
 	nbTrinket40 = 9700301
 	nbTrinket30 = 9700302
 	nbTrinket20 = 9700303
+	// plain attack power trinkets for the alternatives pool, 9700304 + i carrying nbPoolAP[i]
+	nbPoolFirst = 9700304
 )
+
+var nbPoolAP = []float64{10, 15, 25, 35, 45, 50, 55, 58}
 
 var nbOnce sync.Once
 
 func nbRegister() {
 	nbOnce.Do(func() {
-		core.AddToDatabase(&proto.SimDatabase{Items: []*proto.SimItem{
+		items := []*proto.SimItem{
 			kaItem(nbTrinket40, proto.ItemType_ItemTypeTrinket, stats.Stats{stats.AttackPower: 40}, ""),
 			kaItem(nbTrinket30, proto.ItemType_ItemTypeTrinket, stats.Stats{stats.AttackPower: 30}, ""),
 			kaItem(nbTrinket20, proto.ItemType_ItemTypeTrinket, stats.Stats{stats.AttackPower: 20}, ""),
-		}})
+		}
+		for i, ap := range nbPoolAP {
+			items = append(items, kaItem(nbPoolFirst+int32(i), proto.ItemType_ItemTypeTrinket, stats.Stats{stats.AttackPower: ap}, ""))
+		}
+		core.AddToDatabase(&proto.SimDatabase{Items: items})
 	})
 }
 
@@ -35,11 +44,17 @@ func nbRegister() {
 // trinket 1's options by rank, whatever they really sim.
 func nbRun(t *testing.T, rank map[int32]float64, budget int64) (*run, *surrogate) {
 	t.Helper()
+	return nbRunWith(t, rank, budget, kaTrinketA, kaTrinketB, kaTrinketAP, kaTrinketAP2, nbTrinket40, nbTrinket30, nbTrinket20)
+}
+
+// nbRunWith is nbRun over the given trinket 1 items.
+func nbRunWith(t *testing.T, rank map[int32]float64, budget int64, trinkets ...int32) (*run, *surrogate) {
+	t.Helper()
 	req := kaRequest(proto.OptimizerEffort_OptimizerEffortNormal)
 	nbRegister()
 	for _, sp := range req.Pool.Slots {
 		if sp.Slot == proto.ItemSlot_ItemSlotTrinket1 {
-			sp.ItemIds = []int32{kaTrinketA, kaTrinketB, kaTrinketAP, kaTrinketAP2, nbTrinket40, nbTrinket30, nbTrinket20}
+			sp.ItemIds = trinkets
 		}
 	}
 	for slot := proto.ItemSlot(0); int(slot) < NumSlots; slot++ {
@@ -192,5 +207,82 @@ func TestNeighborhoodAdoptsOnATightBudget(t *testing.T) {
 	}
 	if rn.bestEval.Iterations < rn.budget.Iterations || rn.seedEval.Iterations < rn.budget.Iterations {
 		t.Errorf("best at %d iterations and seed at %d, want both topped up to at least %d before the pick replaced the seed", rn.bestEval.Iterations, rn.seedEval.Iterations, rn.budget.Iterations)
+	}
+}
+
+// nbAlternativesPool is trinket 1's pool for the alternatives tests: the 60 AP seed and the pool's
+// attack power trinkets.
+func nbAlternativesPool() []int32 {
+	ids := []int32{kaTrinketAP}
+	for i := range nbPoolAP {
+		ids = append(ids, nbPoolFirst+int32(i))
+	}
+	return ids
+}
+
+// nbPoolRank prices each pool trinket at its attack power, wide enough that pruning keeps every option.
+func nbPoolRank() map[int32]float64 {
+	rank := map[int32]float64{}
+	for i, ap := range nbPoolAP {
+		rank[nbPoolFirst+int32(i)] = ap
+	}
+	return rank
+}
+
+// Pruning keeps the three weakest trinkets as options; the alternatives still come from every priced
+// item, so the five reported are the next best by attack power, none of them an option.
+func TestRunnersUpRankEveryPricedItem(t *testing.T) {
+	rn, s := nbRunWith(t, nbPoolRank(), 1_000_000, nbAlternativesPool()...)
+	se := newSearcher(s, rn)
+	slot := proto.ItemSlot_ItemSlotTrinket1
+	if len(se.all[slot]) != len(nbPoolAP)+1 {
+		t.Fatalf("%d priced items in trinket 1, want %d", len(se.all[slot]), len(nbPoolAP)+1)
+	}
+	se.opts[slot] = se.all[slot][1:4]
+	st := se.newState(rn.best)
+
+	inOpts := map[int32]bool{}
+	for _, o := range se.opts[slot] {
+		inOpts[o.cand.Item.ID] = true
+	}
+	for _, changes := range se.runnersUp(st, slot, alternativesPerSlot, se.opts[slot]) {
+		if !inOpts[changes[0].choice.ItemID] {
+			t.Fatalf("item %d is no option", changes[0].choice.ItemID)
+		}
+	}
+
+	got := se.runnersUp(st, slot, alternativesPerSlot, se.all[slot])
+	if len(got) != alternativesPerSlot {
+		t.Fatalf("%d alternatives, want %d", len(got), alternativesPerSlot)
+	}
+	for i, changes := range got {
+		// 58, 55, 50, 45, 35 attack power
+		if want := nbPoolFirst + int32(len(nbPoolAP)-1-i); changes[0].choice.ItemID != want {
+			t.Errorf("alternative %d is item %d, want %d", i, changes[0].choice.ItemID, want)
+		}
+	}
+}
+
+// No reported alternative is beaten, by the surrogate's own trial, by a priced item left unreported.
+func TestRunnersUpBeatEveryUnreportedItem(t *testing.T) {
+	rn, s := nbRunWith(t, nbPoolRank(), 1_000_000, nbAlternativesPool()...)
+	se := newSearcher(s, rn)
+	slot := proto.ItemSlot_ItemSlotTrinket1
+	st := se.newState(rn.best)
+
+	reported := map[int32]bool{rn.best.Items[slot].ItemID: true}
+	worst := math.Inf(1)
+	for _, changes := range se.runnersUp(st, slot, alternativesPerSlot, se.all[slot]) {
+		reported[changes[0].choice.ItemID] = true
+		worst = min(worst, se.trial(st, changes...))
+	}
+	for _, o := range se.all[slot] {
+		if reported[o.cand.Item.ID] {
+			continue
+		}
+		c := se.configure(st, slot, o.cand)
+		if v := se.trial(st, change{slot, c}); v > worst {
+			t.Errorf("unreported item %d trials at %.2f, over the weakest alternative (%.2f)", o.cand.Item.ID, v, worst)
+		}
 	}
 }
