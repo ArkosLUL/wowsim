@@ -64,7 +64,9 @@ table's cause:
   `MinWorldUpdateTime`), the sim's exactly 100. A whole-second dot's tick lands anywhere in a live update, but right
   on the sim's: Serpent Sting's 4th tick beats the next cast's landing about half the cycles on the server, every
   cycle in the sim.
-- **Frost Vulnerability**: rolls spell hit on the server and missed; the sim's always lands.
+- **Rime**: not a sim gap but the cycle's: its Howling Blast step finds no Frost, Unholy or death rune on either side,
+  so it goes off only free, on a Freezing Fog proc (all 3 logged did), which the replay can't follow. The cycle needs
+  runes left for it, then a re-record.
 - **Vengeance**: the sim's Insect Swarm ticks crit for Vengeance's doubled bonus, the server's for the plain 1.5 with
   the meta gem.
 - **Eclipse**: the sim's Eclipse (Solar) procs on any landed Starfire, the server's on a crit only (spell_proc -48516
@@ -80,21 +82,11 @@ table's cause:
   again.
 - **Enduring Winter**: the sim's refreshes Replenishment on every Frostbolt; the server's has a 6 s proc cooldown
   (spell_proc -44557).
-- **Vindication**: the sim's goes on with every landed hit; the server's procs at 3 a minute (spell_proc -9452), and
-  its 26017 rolls spell hit, so it can miss.
-- **Crusader Strike**: the sim's refreshes Judgement of Wisdom; the server's doesn't.
-- **Prey on the Weak**: the sim keeps its crit bonus up; the server's 58670 lasts 10 s and the talent's 2 s check puts it
-  back only once gone (and only while the rogue's health percent is above the target's), so it's down about 2 s in 12.
-- **Hemorrhage**: the sim leaves its debuff out with fewer than two raid members; the server puts it on.
 - **Lava Lash**: the server's hits about twice the sim's, which halves it as an off-hand hit (OHWeaponDamage).
-- **Rend**: with the +35% for a target above 75% health on both sides, the sim's ticks run 3% (Protection: 286 against
-  278) to 11% (Arms, crits too) over the server's; cause not found.
 
 | Setup | Subject | Check | Why |
 |---|---|---|---|
-| DeathknightFrost | 51714 | count | Frost Vulnerability |
-| DeathknightFrost | 51714 | misses | Frost Vulnerability |
-| DeathknightFrostUH | 51714 | misses | Frost Vulnerability |
+| DeathknightFrost | 51411 | casts | Rime |
 | DruidBalance | 48468 | tick crit mean | Vengeance |
 | DruidBalance | aura 48517 on self | uptime | Eclipse |
 | DruidBalancePhase3 | 48468 | tick crit mean | Vengeance |
@@ -106,16 +98,5 @@ table's cause:
 | MageFrostFire | 47610 | crit mean | Torment the Weak |
 | MageFrostFire | 47610 | tick hit mean | Torment the Weak |
 | MageFrostFire | energize 29076 mana | gain sizes | Master of Elements |
-| PaladinProtection | 26016 | misses | Vindication |
-| PaladinProtection | aura 26016 on target | applications | Vindication |
-| PaladinProtection | aura 26016 on target | uptime | Vindication |
-| PaladinRetribution | aura 53408 on target | applications | Crusader Strike |
-| RogueCombat | aura 58670 on self | applications | Prey on the Weak |
-| RogueCombat | aura 58670 on self | uptime | Prey on the Weak |
-| RogueSubtlety | aura 48660 on target | applications | Hemorrhage |
-| RogueSubtlety | aura 48660 on target | uptime | Hemorrhage |
 | ShamanEnhancement | 60103 | crit mean | Lava Lash |
 | ShamanEnhancement | 60103 | hit mean | Lava Lash |
-| WarriorArms | 47465 | tick crit mean | Rend |
-| WarriorArms | 47465 | tick hit mean | Rend |
-| WarriorProtectionWarrior | 47465 | tick hit mean | Rend |

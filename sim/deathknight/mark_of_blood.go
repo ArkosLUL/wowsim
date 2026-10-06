@@ -33,6 +33,7 @@ func (dk *Deathknight) registerMarkOfBloodSpell() {
 			},
 		},
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+			dk.bladeBarrierCastPhase(sim)
 			if markOfBloodAura == nil {
 				markOfBloodAura = core.MarkOfBloodAura(target)
 			}

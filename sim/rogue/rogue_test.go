@@ -308,18 +308,18 @@ func GenerateCriticalDamageMultiplierTestCase(
 	env, _, _ := core.NewEnvironment(raid, encounter, false)
 	agent := env.Raid.Parties[0].Players[0]
 	rog := agent.(RogueAgent).GetRogue()
+	// with Prey on the Weak's buff up
+	prey := 1 + 0.04*float64(rog.Talents.PreyOnTheWeak)
 	actualMultiplier := 0.0
 	switch attackType {
 	case Poison:
-		actualMultiplier = rog.SpellCritMultiplier()
-	case MHAuto:
-		actualMultiplier = rog.AutoAttacks.MHConfig().CritMultiplier
-	case OHAuto:
-		actualMultiplier = rog.AutoAttacks.OHConfig().CritMultiplier
+		actualMultiplier = rog.Character.SpellCritMultiplier(prey, 0)
+	case MHAuto, OHAuto:
+		actualMultiplier = rog.WhiteCritMultiplier(prey)
 	case Builder:
-		actualMultiplier = rog.MeleeCritMultiplier(true)
+		actualMultiplier = rog.meleeCritMultiplier(true, prey)
 	case Finisher:
-		actualMultiplier = rog.MeleeCritMultiplier(false)
+		actualMultiplier = rog.meleeCritMultiplier(false, prey)
 	}
 	t.Run(testName, func(t *testing.T) {
 		if !core.WithinToleranceFloat64(expectedMultiplier, actualMultiplier, 0.0001) {

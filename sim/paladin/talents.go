@@ -457,6 +457,23 @@ func (paladin *Paladin) applyVindication() {
 	vindicationAuras := paladin.NewEnemyAuraArray(func(target *core.Unit) *core.Aura {
 		return core.VindicationAura(target, paladin.Talents.Vindication)
 	})
+	// the talent casts 67 or 26017, a debuff that rolls spell hit
+	debuff := paladin.RegisterSpell(core.SpellConfig{
+		ActionID:    core.ActionID{SpellID: []int32{0, 67, 26017}[paladin.Talents.Vindication]},
+		SpellSchool: core.SpellSchoolHoly,
+		ProcMask:    core.ProcMaskEmpty,
+		Flags:       core.SpellFlagNoOnCastComplete,
+
+		ThreatMultiplier: 1,
+
+		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+			if spell.CalcAndDealOutcome(sim, target, spell.OutcomeMagicHit).Landed() {
+				vindicationAuras.Get(target).Activate(sim)
+			}
+		},
+	})
+
+	ppm := core.ServerProcFor(26016).PPM
 	paladin.RegisterAura(core.Aura{
 		Label:    "Vindication Talent",
 		Duration: core.NeverExpires,
@@ -464,12 +481,33 @@ func (paladin *Paladin) applyVindication() {
 			aura.Activate(sim)
 		},
 		OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
-			// TODO: Replace with actual proc mask / proc chance
-			if result.Landed() && spell.ProcMask.Matches(core.ProcMaskMelee) {
-				vindicationAuras.Get(result.Target).Activate(sim)
+			if procsVindication(spell, result) && sim.RandomFloat("Vindication") < paladin.AuraPPMProcChance(ppm, spell) {
+				debuff.Cast(sim, result.Target)
 			}
 		},
 	})
+}
+
+const (
+	attr3NotAProc            = 0x00000200
+	attr3SuppressCasterProcs = 0x00010000
+)
+
+// procsVindication is spell_proc -9452's filter: a damaging hit that lands, from a swing, a spell the paladin
+// casts, or a triggered spell with SPELL_ATTR3_NOT_A_PROC (judgements, Seal of Command). Periodic ticks
+// never reach OnSpellHitDealt.
+func procsVindication(spell *core.Spell, result *core.SpellResult) bool {
+	if !result.Landed() || result.Damage <= 0 {
+		return false
+	}
+	if spell.ProcMask.Matches(core.ProcMaskWhiteHit) {
+		return true
+	}
+	ss := spell.ServerSpell()
+	if ss != nil && ss.Attributes[3]&attr3SuppressCasterProcs != 0 {
+		return false
+	}
+	return spell.Flags.Matches(core.SpellFlagAPL) || ss != nil && ss.Attributes[3]&attr3NotAProc != 0
 }
 
 func (paladin *Paladin) applyArtOfWar() {

@@ -305,6 +305,7 @@
         {"spell": 48672, "name": "Rupture", "waitMs": 2000},
         {"spell": 48660, "name": "Hemorrhage", "waitMs": 2000},
         {"spell": 48660, "name": "Hemorrhage", "waitMs": 2000},
+        {"spell": 48668, "name": "Eviscerate", "waitMs": 2000},
         {"spell": 48668, "name": "Eviscerate", "waitMs": 2000}
       ]
     },

@@ -58,6 +58,7 @@ func (rogue *Rogue) ApplyTalents() {
 	rogue.registerGhostlyStrikeSpell()
 	rogue.registerDirtyDeeds()
 	rogue.registerHonorAmongThieves()
+	rogue.registerPreyOnTheWeak()
 }
 
 // dwsMultiplier returns the offhand damage multiplier
@@ -164,13 +165,91 @@ func (rogue *Rogue) registerHungerForBlood() {
 	})
 }
 
-func (rogue *Rogue) preyOnTheWeakMultiplier(_ *core.Unit) float64 {
-	// TODO: Use the following predicate if/when health values are modeled,
-	//  but note that this would have to be applied dynamically in that case.
-	//if rogue.CurrentTarget != nil &&
-	//rogue.CurrentTarget.HasHealthBar() &&
-	//rogue.CurrentTarget.CurrentHealthPercent() < rogue.CurrentHealthPercent()
-	return 1 + 0.04*float64(rogue.Talents.PreyOnTheWeak)
+// registerPreyOnTheWeak follows spell_rog_prey_on_the_weak: every 2 s the talent puts the 10 s crit damage
+// buff (58670) on while the rogue's health percent is above the target's, but only once it's gone, and takes
+// it off otherwise. The buff expires on the same update as the fifth check, which still sees it, so it's down
+// one check in six.
+func (rogue *Rogue) registerPreyOnTheWeak() {
+	if rogue.Talents.PreyOnTheWeak == 0 {
+		return
+	}
+
+	prey := 1 + 0.04*float64(rogue.Talents.PreyOnTheWeak)
+	var white, preyWhite float64
+	var withPrey map[float64]float64
+	type swap struct {
+		spell *core.Spell
+		base  float64
+	}
+	var swaps []swap
+
+	buff := rogue.RegisterAura(core.Aura{
+		Label:    "Prey on the Weak",
+		ActionID: core.ActionID{SpellID: 58670},
+		Duration: time.Second * 10,
+		OnInit: func(aura *core.Aura, sim *core.Simulation) {
+			// aura 163 on every school: specials and spells add it up, white swings multiply it in
+			white, preyWhite = rogue.WhiteCritMultiplier(1), rogue.WhiteCritMultiplier(prey)
+			withPrey = map[float64]float64{
+				rogue.MeleeCritMultiplier(true):  rogue.meleeCritMultiplier(true, prey),
+				rogue.MeleeCritMultiplier(false): rogue.meleeCritMultiplier(false, prey),
+				rogue.SpellCritMultiplier():      rogue.Character.SpellCritMultiplier(prey, 0),
+			}
+		},
+		OnGain: func(aura *core.Aura, sim *core.Simulation) {
+			for _, spell := range rogue.Spellbook {
+				up := withPrey[spell.CritMultiplier]
+				if spell.ProcMask.Matches(core.ProcMaskMeleeWhiteHit) {
+					up = core.TernaryFloat64(spell.CritMultiplier == white, preyWhite, 0)
+				}
+				if up != 0 {
+					swaps = append(swaps, swap{spell, spell.CritMultiplier})
+					spell.CritMultiplier = up
+				}
+			}
+		},
+		OnExpire: func(aura *core.Aura, sim *core.Simulation) {
+			for _, s := range swaps {
+				s.spell.CritMultiplier = s.base
+			}
+			swaps = swaps[:0]
+		},
+	})
+
+	rogue.RegisterAura(core.Aura{
+		Label:    "Prey on the Weak Talent",
+		Duration: core.NeverExpires,
+		OnReset: func(aura *core.Aura, sim *core.Simulation) {
+			aura.Activate(sim)
+			var upUntil time.Duration
+			check := func(sim *core.Simulation) {
+				health := 1.0
+				if rogue.HasHealthBar() {
+					health = rogue.CurrentHealthPercent()
+				}
+				// the fight's remaining duration stands in for the target's health
+				if health <= sim.GetRemainingDurationPercent() {
+					buff.Deactivate(sim)
+					upUntil = 0
+				} else if sim.CurrentTime > upUntil {
+					buff.Activate(sim)
+					upUntil = sim.CurrentTime + buff.Duration
+				}
+			}
+			// the talent ticks since it was learnt, so at any point of its period at the pull
+			first := sim.NextWorldTick(sim.CurrentTime + time.Duration(sim.RandomFloat("Prey on the Weak")*float64(2*time.Second)))
+			core.StartDelayedAction(sim, core.DelayedActionOptions{
+				DoAt: first,
+				OnAction: func(sim *core.Simulation) {
+					check(sim)
+					core.StartPeriodicAction(sim, core.PeriodicActionOptions{
+						Period:   2 * time.Second,
+						OnAction: check,
+					})
+				},
+			})
+		},
+	})
 }
 
 func (rogue *Rogue) registerDirtyDeeds() {
@@ -641,13 +720,9 @@ func (rogue *Rogue) registerHonorAmongThieves() {
 			pa.NextActionAt = sim.CurrentTime + time.Duration(sim.RandomExpFloat("next party crit")*rateToDuration)
 			sim.AddPendingAction(pa)
 		},
+		// spell_proc 51701 procs at a cast's finish phase only, so a crit tick (Rupture's) gives nothing
 		OnSpellHitDealt: func(_ *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
 			if result.DidCrit() && !spell.ProcMask.Matches(core.ProcMaskMeleeMHAuto|core.ProcMaskMeleeOHAuto|core.ProcMaskRangedAuto) {
-				maybeProc(sim)
-			}
-		},
-		OnPeriodicDamageDealt: func(_ *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
-			if result.DidCrit() {
 				maybeProc(sim)
 			}
 		},

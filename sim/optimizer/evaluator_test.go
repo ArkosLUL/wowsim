@@ -37,7 +37,7 @@ func presetOptimizeRequest(tb testing.TB, name string) *proto.OptimizeGearReques
 			Class:         proto.Class_ClassWarrior,
 			Equipment:     core.GetGearSet("../../ui/warrior/gear_sets", "p1_fury").GearSet,
 			Rotation:      core.GetAplRotation("../../ui/warrior/apls", "fury").Rotation,
-			TalentsString: "302023102331-305053000520310053120500351",
+			TalentsString: "302023102331-305052000520310053120500351",
 			Glyphs: &proto.Glyphs{
 				Major1: int32(proto.WarriorMajorGlyph_GlyphOfWhirlwind),
 				Major2: int32(proto.WarriorMajorGlyph_GlyphOfHeroicStrike),

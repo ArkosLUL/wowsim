@@ -564,7 +564,9 @@ func (rp *runicPowerBar) OptimalRuneCost(cost RuneCost) RuneCost {
 	return 0
 }
 
-func (rp *runicPowerBar) spendRuneCost(sim *Simulation, spell *Spell, cost RuneCost) (RuneChangeType, []int8) {
+// spendRuneCost takes the cost the way Spell::TakeRunePower does. A missed spell's runes come back after
+// RUNE_MISS_COOLDOWN, and its death runes stay death.
+func (rp *runicPowerBar) spendRuneCost(sim *Simulation, spell *Spell, cost RuneCost, missed bool) (RuneChangeType, []int8) {
 	if !cost.HasRune() {
 		if rpc := cost.RunicPower(); rpc > 0 {
 			rp.spendRunicPower(sim, float64(rpc)/10, spell.RunicPowerMetrics())
@@ -575,24 +577,33 @@ func (rp *runicPowerBar) spendRuneCost(sim *Simulation, spell *Spell, cost RuneC
 	b, f, u, d := cost.Blood(), cost.Frost(), cost.Unholy(), cost.Death()
 	slots := make([]int8, 0, b+f+u+d)
 	for i := int8(0); i < b; i++ {
-		slots = append(slots, rp.spendRune(sim, 0, spell.BloodRuneMetrics()))
+		slots = append(slots, rp.spendRune(sim, 0, spell.BloodRuneMetrics(), missed))
 	}
 	for i := int8(0); i < f; i++ {
-		slots = append(slots, rp.spendRune(sim, 2, spell.FrostRuneMetrics()))
+		slots = append(slots, rp.spendRune(sim, 2, spell.FrostRuneMetrics(), missed))
 	}
 	for i := int8(0); i < u; i++ {
-		slots = append(slots, rp.spendRune(sim, 4, spell.UnholyRuneMetrics()))
+		slots = append(slots, rp.spendRune(sim, 4, spell.UnholyRuneMetrics(), missed))
 	}
 	if d > 0 {
-		defaultCost := spell.Cost.(*RuneCostImpl).modified
-		for i, mu := int8(0), defaultCost.Unholy()-u; i < mu; i++ {
-			slots = append(slots, rp.spendDeathRune(sim, []int8{4, 5, 2, 3, 0, 1}, spell.DeathRuneMetrics()))
-		}
-		for i, mf := int8(0), defaultCost.Frost()-f; i < mf; i++ {
-			slots = append(slots, rp.spendDeathRune(sim, []int8{2, 3, 4, 5, 0, 1}, spell.DeathRuneMetrics()))
-		}
-		for i, mb := int8(0), defaultCost.Blood()-b; i < mb; i++ {
-			slots = append(slots, rp.spendDeathRune(sim, []int8{0, 1, 4, 5, 2, 3}, spell.DeathRuneMetrics()))
+		modified := spell.Cost.(*RuneCostImpl).modified
+		// what the plain runes left owed, by the slot pair's base type: blood, frost, unholy
+		owed := [3]int8{modified.Blood() - b, modified.Frost() - f, modified.Unholy() - u}
+		left := owed[0] + owed[1] + owed[2]
+		// first the death runes whose base type is still owed, then any, both in the server's slot order:
+		// blood, unholy, frost
+		for _, anyBase := range [...]bool{false, true} {
+			for _, slot := range [...]int8{0, 1, 4, 5, 2, 3} {
+				base := slot / 2
+				if left == 0 || rp.runeStates&isSpentDeath[slot] != isDeaths[slot] || !anyBase && owed[base] == 0 {
+					continue
+				}
+				slots = append(slots, rp.spendDeathRune(sim, slot, spell.DeathRuneMetrics(), missed))
+				left--
+				if !anyBase {
+					owed[base]--
+				}
+			}
 		}
 	}
 
@@ -667,18 +678,30 @@ func (rp *runicPowerBar) RegenAllRunes(sim *Simulation) {
 	rp.maybeFireChange(sim, changeType)
 }
 
+// RuneGraceAt is how much sooner a rune spent at `at` comes back.
 func (rp *runicPowerBar) RuneGraceAt(slot int8, at time.Duration) time.Duration {
-	lastRegenTime := rp.runeMeta[slot].lastRegenTime
+	return runeGraceCut(rp.runeMeta[slot].lastRegenTime, at)
+}
+
+// runeGraceCut is Player::GetRuneBaseCooldown's cut for the time a rune sat ready, capped at 2.5 s, of
+// which the first 250 ms count as spent at once.
+func runeGraceCut(lastRegenTime, at time.Duration) time.Duration {
 	// pre-pull casts should not get rune-grace
 	if at <= 0 || lastRegenTime <= 0 {
 		return 0
 	}
-	return min(time.Millisecond*2500, at-lastRegenTime)
+	return max(0, min(time.Millisecond*2500, at-lastRegenTime)-time.Millisecond*250)
 }
 
-func (rp *runicPowerBar) launchRuneRegen(sim *Simulation, slot int8) {
-	runeGracePeriod := rp.RuneGraceAt(slot, sim.CurrentTime)
-	rp.runeMeta[slot].regenAt = sim.CurrentTime + (rp.runeCD - runeGracePeriod)
+// runeMissCooldown is RUNE_MISS_COOLDOWN, what a rune spent on a miss is down for, grace aside.
+const runeMissCooldown = time.Millisecond * 1500
+
+func (rp *runicPowerBar) launchRuneRegen(sim *Simulation, slot int8, missed bool) {
+	if missed {
+		rp.runeMeta[slot].regenAt = sim.CurrentTime + runeMissCooldown
+	} else {
+		rp.runeMeta[slot].regenAt = sim.CurrentTime + (rp.runeCD - rp.RuneGraceAt(slot, sim.CurrentTime))
+	}
 
 	rp.launchPA(sim, rp.runeMeta[slot].regenAt)
 }
@@ -739,12 +762,12 @@ func (rp *runicPowerBar) Advance(sim *Simulation, newTime time.Duration) {
 	rp.maybeFireChange(sim, changeType)
 }
 
-func (rp *runicPowerBar) spendRune(sim *Simulation, firstSlot int8, metrics *ResourceMetrics) int8 {
+func (rp *runicPowerBar) spendRune(sim *Simulation, firstSlot int8, metrics *ResourceMetrics, missed bool) int8 {
 	slot := rp.findReadyRune(firstSlot)
 	rp.runeStates |= isSpents[slot]
 
 	rp.spendRuneMetrics(sim, metrics, 1)
-	rp.launchRuneRegen(sim, slot)
+	rp.launchRuneRegen(sim, slot, missed)
 	return slot
 }
 
@@ -758,9 +781,8 @@ func (rp *runicPowerBar) findReadyRune(slot int8) int8 {
 	panic(fmt.Sprintf("findReadyRune(%d) - no slot found (runeStates = %12b)", slot, rp.runeStates))
 }
 
-func (rp *runicPowerBar) spendDeathRune(sim *Simulation, order []int8, metrics *ResourceMetrics) int8 {
-	slot := rp.findReadyDeathRune(order)
-	if rp.btSlot != slot {
+func (rp *runicPowerBar) spendDeathRune(sim *Simulation, slot int8, metrics *ResourceMetrics, missed bool) int8 {
+	if rp.btSlot != slot && !missed {
 		rp.runeMeta[slot].revertAt = NeverExpires // disable revert at
 		rp.runeStates ^= isDeaths[slot]           // clear death bit to revert.
 	}
@@ -769,18 +791,8 @@ func (rp *runicPowerBar) spendDeathRune(sim *Simulation, order []int8, metrics *
 	rp.runeStates |= isSpents[slot]
 
 	rp.spendRuneMetrics(sim, metrics, 1)
-	rp.launchRuneRegen(sim, slot)
+	rp.launchRuneRegen(sim, slot, missed)
 	return slot
-}
-
-// findReadyDeathRune returns the slot of first available death rune in the order given.
-func (rp *runicPowerBar) findReadyDeathRune(order []int8) int8 {
-	for _, slot := range order {
-		if rp.runeStates&isSpentDeath[slot] == isDeaths[slot] {
-			return slot
-		}
-	}
-	panic(fmt.Sprintf("findReadyDeathRune() - no slot found (runeStates = %12b)", rp.runeStates))
 }
 
 func (rp *runicPowerBar) IsBloodTappedRune(slot int8) bool {
@@ -882,26 +894,50 @@ func (rc *RuneCostImpl) CostFailureReason(_ *Simulation, _ *Spell) string {
 }
 
 func (rc *RuneCostImpl) SpendCost(sim *Simulation, spell *Spell) {
-	// Spend now if there is no way to refund the spell
-	if !rc.Refundable {
-		changeType, _ := spell.Unit.spendRuneCost(sim, spell, RuneCost(spell.CurCast.Cost))
-		spell.Unit.maybeFireChange(sim, changeType)
+	// a refundable spell pays on its main target's result (spendOnResult)
+	if rc.Refundable {
+		return
 	}
-	// Spell::TakeRunePower gives the gain even when cost mods leave no runes to pay (Freezing Fog)
+	changeType, _ := spell.Unit.spendRuneCost(sim, spell, RuneCost(spell.CurCast.Cost), false)
+	spell.Unit.maybeFireChange(sim, changeType)
+	rc.gainRunicPower(sim, spell)
+}
+
+// gainRunicPower is Spell::TakeRunePower's gain, which needs no cost left to pay (Freezing Fog).
+func (rc *RuneCostImpl) gainRunicPower(sim *Simulation, spell *Spell) {
 	if rc.RunicPowerGain > 0 && spell.DefaultCast.Cost > 0 {
 		spell.Unit.AddRunicPower(sim, rc.RunicPowerGain, spell.RunicPowerMetrics())
 	}
 }
 
-func (rc *RuneCostImpl) spendRefundableCost(sim *Simulation, spell *Spell, result *SpellResult) {
+// spendOnResult pays a refundable spell's cost as Spell::TakePower does on its main target's result: a miss,
+// dodge or parry still takes the runes, for RUNE_MISS_COOLDOWN, but gives no runic power, and of a runic
+// power cost it takes only irand(0, cost / 4).
+func (rc *RuneCostImpl) spendOnResult(sim *Simulation, spell *Spell, result *SpellResult) (RuneChangeType, []int8, bool) {
+	// a full block counts as a hit
+	hit := result.Landed() || result.Outcome.Matches(OutcomeBlock)
+	var changeType RuneChangeType
+	var slots []int8
 	cost := RuneCost(spell.CurCast.Cost) // cost was already optimized in RuneSpell.Cast
-	if cost == 0 {
-		return // it was free this time. we don't care
+	switch {
+	case cost == 0:
+	case !hit && !cost.HasRune():
+		// in tenths, like the server's power
+		if spent := int(sim.RandomFloat("Runic Power on a Miss") * float64(cost.RunicPower()/4+1)); spent > 0 {
+			spell.Unit.spendRunicPower(sim, float64(spent)/10, spell.RunicPowerMetrics())
+		}
+	default:
+		changeType, slots = spell.Unit.spendRuneCost(sim, spell, cost, !hit)
 	}
-	if result.Landed() {
-		changeType, _ := spell.Unit.spendRuneCost(sim, spell, cost)
-		spell.Unit.maybeFireChange(sim, changeType)
+	if hit {
+		rc.gainRunicPower(sim, spell)
 	}
+	return changeType, slots, hit
+}
+
+func (rc *RuneCostImpl) spendRefundableCost(sim *Simulation, spell *Spell, result *SpellResult) {
+	changeType, _, _ := rc.spendOnResult(sim, spell, result)
+	spell.Unit.maybeFireChange(sim, changeType)
 }
 
 func (spell *Spell) SpendRefundableCost(sim *Simulation, result *SpellResult) {
@@ -909,17 +945,9 @@ func (spell *Spell) SpendRefundableCost(sim *Simulation, result *SpellResult) {
 }
 
 func (rc *RuneCostImpl) spendRefundableCostAndConvertBloodRune(sim *Simulation, spell *Spell, result *SpellResult, convertChance float64) {
-	cost := RuneCost(spell.CurCast.Cost) // cost was already optimized in RuneSpell.Cast
-	if cost == 0 {
-		return // it was free this time. we don't care
-	}
-	if !result.Landed() {
-		// misses just don't get spent as a way to avoid having to cancel regeneration PAs
-		return
-	}
-
-	changeType, slots := spell.Unit.spendRuneCost(sim, spell, cost)
-	if !sim.Proc(convertChance, "Blood of The North / Reaping / DRM") {
+	free := spell.CurCast.Cost == 0
+	changeType, slots, hit := rc.spendOnResult(sim, spell, result)
+	if free || !hit || !sim.Proc(convertChance, "Blood of The North / Reaping / DRM") {
 		spell.Unit.maybeFireChange(sim, changeType)
 		return
 	}
@@ -946,17 +974,9 @@ func (spell *Spell) SpendRefundableCostAndConvertBloodRune(sim *Simulation, resu
 }
 
 func (rc *RuneCostImpl) spendRefundableCostAndConvertFrostOrUnholyRune(sim *Simulation, spell *Spell, result *SpellResult, convertChance float64) {
-	cost := RuneCost(spell.CurCast.Cost) // cost was already optimized in RuneSpell.Cast
-	if cost == 0 {
-		return // it was free this time. we don't care
-	}
-	if !result.Landed() {
-		// misses just don't get spent as a way to avoid having to cancel regeneration PAs
-		return
-	}
-
-	changeType, slots := spell.Unit.spendRuneCost(sim, spell, cost)
-	if !sim.Proc(convertChance, "Blood of The North / Reaping / DRM") {
+	free := spell.CurCast.Cost == 0
+	changeType, slots, hit := rc.spendOnResult(sim, spell, result)
+	if free || !hit || !sim.Proc(convertChance, "Blood of The North / Reaping / DRM") {
 		spell.Unit.maybeFireChange(sim, changeType)
 		return
 	}
@@ -976,8 +996,7 @@ func (spell *Spell) SpendRefundableCostAndConvertFrostOrUnholyRune(sim *Simulati
 }
 
 func (rc *RuneCostImpl) IssueRefund(_ *Simulation, _ *Spell) {
-	// Instead of issuing refunds we just don't charge the cost of spells which
-	// miss; this is better for perf since we'd have to cancel the regen actions.
+	// nothing to give back: a refundable spell pays on its result (spendOnResult)
 }
 
 func (spell *Spell) RunicPowerMetrics() *ResourceMetrics {

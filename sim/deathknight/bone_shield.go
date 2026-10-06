@@ -68,6 +68,7 @@ func (dk *Deathknight) registerBoneShieldSpell() {
 			},
 		},
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+			dk.bladeBarrierCastPhase(sim)
 			dk.BoneShieldAura.Activate(sim)
 			dk.BoneShieldAura.SetStacks(sim, dk.BoneShieldAura.MaxStacks)
 		},

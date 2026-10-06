@@ -52,6 +52,7 @@ func (dk *Deathknight) registerUnbreakableArmorSpell() {
 			IgnoreHaste: true,
 		},
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+			dk.bladeBarrierCastPhase(sim)
 			dk.UnbreakableArmorAura.Activate(sim)
 		},
 	})

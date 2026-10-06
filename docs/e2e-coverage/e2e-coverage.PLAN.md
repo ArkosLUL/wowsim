@@ -1407,6 +1407,55 @@ on-cast proc now counts the self buffs' casts (`ProcMaskEmpty`), as 55381's `DON
 - **Owns:** `sim/{deathknight,warrior,paladin,rogue}/` and the shaman's Flurry, but pet, threat and EC-CORE-FIX's code;
   their drop entries and README rows.
 
+#### As built
+
+Re-measured on `d253e096c`. Verdicts:
+- Rend (fixed, 3 drops gone): `spell_warr_rend` adds the weapon fifth after `SpellDamageBonusDone`, so only the base
+  takes the done percents; ticks now 278/278 (Protection) and 933/932 (Arms).
+- Flurry, warrior and shaman (fixed): charges go on landed white hits only; the buffs last 15 s; a shaman white crit
+  spends a charge (and starts the 500 ms cooldown) before the talent refreshes, unless it was the last (rank 2+).
+- Vindication (fixed, 3 drops gone): spell_proc -9452 at 3 PPM (`AuraPPMProcChance`) on landed damaging swings, casts
+  and `SPELL_ATTR3_NOT_A_PROC` triggered spells (judgements, Seal of Command); the talent casts 67/26017, which rolls
+  spell hit. The fight map now names the sim's 26016 aura as 26017 (`fightLogIDs`).
+- Crusader Strike (fixed, drop gone): refreshes no judgement. Improved Devotion Aura (fixed, sweep drop gone): improved
+  at 3 points; 1–2 points can't ride the tristate (follow-up).
+- Prey on the Weak (fixed, 2 drops gone): a 2 s check on the world tick, random phase, puts the 10 s 58670 on while the
+  rogue's health % beats the target's (remaining duration stands in) and only once gone; the fifth check still sees it,
+  so it's down one check in six. The buff swaps every spell's crit multiplier (aura 163 on all schools; white swings
+  multiply). Goldchar mirrors 58670 when the record had it.
+- Hemorrhage (fixed, 2 drops gone): the debuff goes on solo; its 10 charges go on any landed hit on the target
+  (swing, cast, NOT_A_PROC trigger), not poisons. Fight: 145.8 applications to the log's 146.
+- Honor Among Thieves (lead, fixed in part): spell_proc 51701 procs at the finish phase, so crit ticks (Rupture) give
+  no combo point; party members' crits do on the server (area aura), so the crit-rate option stays.
+- Endurance's Sprint and Evasion cooldowns: no sim gap, the sim has neither spell.
+- Frost Vulnerability (fixed, 3 drops gone): enchant 3370's second combat spell, 51714, rolls spell hit.
+- Howling Blast (lead, fixed in core): the sim's rune grace was 250 ms too generous (`Player::GetRuneBaseCooldown`
+  cuts grace − 250, at most 2250), and death runes went in the wrong order (server: those whose base type is owed,
+  then any in slot order blood, unholy, frost). The bot now lands Howling Blast 1.3 times a fight (server 1.2, was
+  4.8). The committed fight's 3 casts were all Freezing Fog procs, so the cycle starves it on both sides: new drop
+  `DeathknightFrost 51411 casts` (cause Rime) until its cycle gets runes for it and is re-recorded.
+- Refundable runic power (lead, fixed in core): `Spell::TakePower` on the main target's miss, dodge or parry gives no
+  runic power, puts the runes on `RUNE_MISS_COOLDOWN` (1.5 s) and keeps death runes death (`spendOnResult`); a
+  runic power cost (Frost Strike) takes only `irand(0, cost/4)`. Blood Boil has no unit target, so it always pays.
+- Blade Barrier (found by the replay once runes moved): `spell_dk_blade_barrier` refreshes on any DK cast leaving both
+  blood slots on cooldown, not on every GCD (31.25 applications to the log's 28). The check runs in the cast phase,
+  after the cost, before the effects: Blood Tap, Empower Rune Weapon and the casts that skip `OnCastComplete` (Rune
+  Tap, Vampiric Blood, Mark of Blood, Bone Shield, ...) call `bladeBarrierCastPhase` first in `ApplyEffects`.
+- Stoneskin Gargoyle's defense as skill: confirmed (`Player::UpdateDodgePercentage` takes skill undiminished), needs
+  core avoidance (contract request); drop kept.
+- Rune weapon's creature-type AP: confirmed (`MeleeDamageBonusDone` goes through the owner at half), a pet-file
+  fix (contract request).
+- Subtlety cycle: a second Eviscerate step; the committed fight still replays. Fury's 72-point strings: Improved Cleave
+  3 → 2 in the optimizer inputs and `gen_db` (db.json moves at integration).
+
+Core hunks (DK-only): `sim/core/runic_power.go`, `runic_power_helper.go` (grace, death order, miss). Shared tooling
+hunks: `tools/simval/fight.go` (Vindication's id), `goldchar.go` (58670 mirror).
+
+Goldens (Average-Default): Blood −3.6%, Frost −1.3%, FrostUH −0.6%, Unholy −0.2% (runes); BloodTank dps −1.8%, dtps
++0.5% (Blade Barrier); Combat −1.9% (Prey on the Weak); Subtlety −1.5% (no Rupture-tick combo points); Arms −1.7%,
+Fury −0.1% (Rend); Enhancement +0.2% (Flurry); Protection paladin ±0.0% (Vindication's misses). `raid25.derived.json`
+moves too (Devotion Aura improved).
+
 ### EC-NATURE-FIX (Z; changes goldens; stages: fixes, live)
 
 - Druid: Eclipse (Solar and Lunar) on crits only (spell_proc -48516 HitMask 2); Insect Swarm's crit without Vengeance;

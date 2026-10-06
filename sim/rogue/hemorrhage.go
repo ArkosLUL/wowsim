@@ -14,48 +14,31 @@ func (rogue *Rogue) registerHemorrhageSpell() {
 
 	actionID := core.ActionID{SpellID: 48660}
 
-	var numPlayers int
-	for _, u := range rogue.Env.Raid.AllUnits {
-		if u.Type == core.PlayerUnit {
-			numPlayers++
-		}
+	bonusDamage := 75.0
+	if rogue.HasMajorGlyph(proto.RogueMajorGlyph_GlyphOfHemorrhage) {
+		bonusDamage *= 1.4
 	}
 
-	var hemoAuras core.AuraArray
-
-	// Hemo debuff disabled except in raid sim
-	// in a raid environment each melee will get very little debuffs, which is hard to model
-	if numPlayers >= 2 {
-		bonusDamage := 75.0
-		if rogue.HasMajorGlyph(proto.RogueMajorGlyph_GlyphOfHemorrhage) {
-			bonusDamage *= 1.4
-		}
-
-		hemoAuras = rogue.NewEnemyAuraArray(func(target *core.Unit) *core.Aura {
-			return target.GetOrRegisterAura(core.Aura{
-				Label:     "Hemorrhage",
-				ActionID:  actionID,
-				Duration:  time.Second * 15,
-				MaxStacks: 10,
-				OnGain: func(aura *core.Aura, sim *core.Simulation) {
-					aura.Unit.PseudoStats.BonusPhysicalDamageTaken += bonusDamage
-				},
-				OnExpire: func(aura *core.Aura, sim *core.Simulation) {
-					aura.Unit.PseudoStats.BonusPhysicalDamageTaken -= bonusDamage
-				},
-				OnSpellHitTaken: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
-					if spell.SpellSchool != core.SpellSchoolPhysical {
-						return
-					}
-					if !result.Landed() || result.Damage == 0 {
-						return
-					}
-
+	// the stacks are the debuff's 10 charges
+	hemoAuras := rogue.NewEnemyAuraArray(func(target *core.Unit) *core.Aura {
+		return target.GetOrRegisterAura(core.Aura{
+			Label:     "Hemorrhage",
+			ActionID:  actionID,
+			Duration:  time.Second * 15,
+			MaxStacks: 10,
+			OnGain: func(aura *core.Aura, sim *core.Simulation) {
+				aura.Unit.PseudoStats.BonusPhysicalDamageTaken += bonusDamage
+			},
+			OnExpire: func(aura *core.Aura, sim *core.Simulation) {
+				aura.Unit.PseudoStats.BonusPhysicalDamageTaken -= bonusDamage
+			},
+			OnSpellHitTaken: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
+				if spendsHemorrhageCharge(spell, result) {
 					aura.RemoveStack(sim)
-				},
-			})
+				}
+			},
 		})
-	}
+	})
 
 	daggerPct := rogue.daggerPct(core.MainHand)
 
@@ -101,14 +84,27 @@ func (rogue *Rogue) registerHemorrhageSpell() {
 
 			if result.Landed() {
 				rogue.AddComboPoints(sim, 1, spell.ComboPointMetrics())
-				if len(hemoAuras) > 0 {
-					hemoAura := hemoAuras.Get(target)
-					hemoAura.Activate(sim)
-					hemoAura.SetStacks(sim, 10)
-				}
+				hemoAura := hemoAuras.Get(target)
+				hemoAura.Activate(sim)
+				hemoAura.SetStacks(sim, 10)
 			} else {
 				spell.IssueRefund(sim)
 			}
 		},
 	})
+}
+
+const attr3NotAProc = 0x00000200
+
+// spendsHemorrhageCharge is the debuff's TAKEN proc flags: any hit on the target that lands, damaging or
+// not, from a swing, a cast or a triggered spell with SPELL_ATTR3_NOT_A_PROC. Poisons are triggered without it.
+func spendsHemorrhageCharge(spell *core.Spell, result *core.SpellResult) bool {
+	if !result.Landed() {
+		return false
+	}
+	if spell.ProcMask.Matches(core.ProcMaskWhiteHit) || spell.Flags.Matches(core.SpellFlagAPL) {
+		return true
+	}
+	ss := spell.ServerSpell()
+	return ss != nil && ss.Attributes[3]&attr3NotAProc != 0
 }

@@ -53,6 +53,7 @@ func (dk *Deathknight) registerVampiricBloodSpell() {
 			IgnoreHaste: true,
 		},
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+			dk.bladeBarrierCastPhase(sim)
 			dk.VampiricBloodAura.Activate(sim)
 		},
 	})
