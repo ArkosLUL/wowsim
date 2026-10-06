@@ -68,7 +68,10 @@ const (
 // DONE_PERIODIC, only the triggered spell's own hit, which an aura without SPELL_ATTR3_CAN_PROC_FROM_PROCS
 // ignores (none of these tick spells has SPELL_ATTR3_NOT_A_PROC).
 func (spell *Spell) ticksAsCasts() bool {
-	s := spell.ServerSpell()
+	return spell.derived().ticksAsCasts
+}
+
+func ticksAsCastsOn(s *serverdata.Spell) bool {
 	if s == nil {
 		return false
 	}

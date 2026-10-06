@@ -327,6 +327,35 @@ spell's coefficient on every hit, though both are fixed per spell. The rest isn'
 - Owns: `sim/core/damage_taken.go` and the hot paths the A/B names, in small hunks; Z's class items own `sim/<class>/`
   and EC-THREAT-FIX2 `threat.go`.
 
+#### As built
+
+- Attribution: interleaved A/B of each Y step against its first parent, 12 rounds, `BenchmarkSimulate` at 100
+  iterations, test binaries built from `git archive` trees (benchstat medians, loaded machine):
+  - EC-CORE-FIX: Hunter +9.8%, Ret +9.2%, Rogue +9.1%, Elemental +17.6% (base ±18%), the raid flat. Diff profiles
+    put about 4-6% of it in `flatDamageTaken` and 1% in `ticksAsCasts` (`aura_helpers.go`): both loop over
+    `Effects` by value (`duffcopy`), on every hit or periodic proc check, and `flatDamageTaken` binary-searches the
+    bonus rows too.
+  - EC-TICK-FIX: the raid +5.1%, Ret +5.7%, Elemental +4.1%, allocations +0.6-2.2%. A diffuse diff profile: players
+    land casts on the 10 ms world tick instead of the 100 ms map update, so a fight fits ~3% more hardcasts
+    (Elemental's per-cast `OnComplete` closures +3.4%). That is the behaviour the goldens moved for, not overhead.
+  - EC-PET-FIX, PERF-THREAT and the cross-review: no significant move. EC-PET-FIX's hunter pet `refreshScaling`
+    costs 3.4% of Hunter's profile against the 0.9% of the `addOwnerStats` it replaced: pet code, left to a pet item.
+- `Spell.serverDerived` (`sim/core/damage_taken.go`) caches the weapon and normalized flags, `ticksAsCasts`, and
+  the direct and periodic taken coefficients (whether each takes the dot's stacks). It keeps every input it
+  read: `serverSpell`, the `NoServerData` and `IncludeTargetBonusDamage` flags, whether `ProcMask` is a white hit,
+  the unit's `Type` and `SummonedAsPet`; each read compares them, so runtime `Flags` writes stay exact. The float32
+  products run in the same order, so the result is bit-equal.
+- `TestServerDerivedWalk` (`damage_taken_test.go`): 20,000 random steps over 16 server data spells and a white
+  swing (flags, proc mask, server data, unit kind and dot stacks changed under the cache) bit-equal to the uncached
+  resolvers and a copy of the old `flatDamageTaken`; dropping any key compare, either flag, the stacks multiply or
+  the periodic index fails it. Server data rows are keyed by pointer, so never edited in place.
+- 37 goldens byte-identical, simval 1114/1114, `go vet` and `gofmt` clean.
+- Profiles, `tools/perf bench` at 30,000 iterations, one proc, base → new in one window: Elemental's
+  `flatDamageTaken` 7.1% → 1.4%, `ticksAsCasts` 0.6% → 0; Hunter's `flatDamageTaken` 4.8% → 1.0%,
+  `dealsWeaponDamage` 1.2% and `ticksAsCasts` 0.7% → under the sample floor.
+- Interleaved A/B against `d253e096c`, 14 rounds, both iteration cases: the machine ran at ±35-100%, so no case
+  moved at p < 0.05 (Elemental at 100 −8%, p = 0.11); allocations unchanged. The idle re-baseline is the measure.
+
 ## Order
 
 The user put the pass before wave J, whose BIS-e2e-perf times the optimizer with PERF-TOOLS' harness

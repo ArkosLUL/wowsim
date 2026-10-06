@@ -2,6 +2,7 @@ package core
 
 import (
 	"math"
+	"math/rand/v2"
 	"testing"
 
 	"github.com/wowsims/wotlk/sim/core/proto"
@@ -50,8 +51,127 @@ func TestGiftOfArthasTaken(t *testing.T) {
 func TestTakenCoefficientStacks(t *testing.T) {
 	dp := serverDataSpell(t, &Unit{Type: PlayerUnit}, 57970, ProcMaskEmpty)
 	sd := dp.ServerSpell()
-	if got := dp.takenCoefficient(sd, true, 5) * 5; math.Abs(float64(got)-4.75) > 1e-5 {
+	c, byStacks := dp.takenCoefficient(sd, true)
+	if !byStacks {
+		t.Fatal("Deadly Poison's coefficient doesn't take its stacks")
+	}
+	if got := c * 5 * 5; math.Abs(float64(got)-4.75) > 1e-5 {
 		t.Errorf("5 stacks: %v, want 4.75 (38 a tick from Gift of Arthas)", got)
+	}
+}
+
+// flatDamageTaken and takenCoefficient before the cache
+func refFlatDamageTaken(spell *Spell, amount float64, target *Unit, isPeriodic bool) float64 {
+	if weapon, _ := spell.resolveWeaponDamage(); weapon && !isPeriodic {
+		return amount
+	}
+	sd := spell.ServerSpell()
+	if sd == nil {
+		return 0
+	}
+	stacks := float32(1)
+	if isPeriodic && int(target.UnitIndex) < len(spell.dots) {
+		if dot := spell.dots.Get(target); dot != nil && dot.GetStacks() > 1 {
+			stacks = float32(dot.GetStacks())
+		}
+	}
+	return math.Trunc(float64(float32(amount) * refTakenCoefficient(spell, sd, isPeriodic, stacks) * stacks))
+}
+
+func refTakenCoefficient(spell *Spell, sd *serverdata.Spell, isPeriodic bool, stacks float32) float32 {
+	if b := serverdata.BonusBySpellID(sd.ID); b != nil {
+		c := b.Direct
+		if isPeriodic {
+			c = b.Dot
+		}
+		if c > 0 {
+			return c
+		}
+	}
+	return spell.defaultCoefficient(sd, isPeriodic) * stacks
+}
+
+// The cached server data reads against the uncached ones, while every input they key on changes under them.
+func TestServerDerivedWalk(t *testing.T) {
+	// weapon, normalized, bonus rows, default coefficients (instant, area, periodic, stacking, channeled),
+	// direct plus dot, and ticks dealt as casts
+	ids := []int32{47450, 47486, 42833, 57965, 47502, 48676, 57970, 48156, 48463, 47811, 49233, 47813, 42940,
+		58434, 60053, 49938}
+	var data []*serverdata.Spell
+	for _, id := range ids {
+		sd := serverdata.SpellByID(id)
+		if sd == nil {
+			t.Fatalf("no server data for %d", id)
+		}
+		data = append(data, sd)
+	}
+	kinds := []struct {
+		typ UnitType
+		pet bool
+	}{{PlayerUnit, false}, {PetUnit, false}, {PetUnit, true}}
+	units := []*Unit{{Type: PlayerUnit}, {Type: PetUnit}, {Type: PetUnit, SummonedAsPet: true}}
+	targets := []*Unit{{Type: EnemyUnit, UnitIndex: 0}, {Type: EnemyUnit, UnitIndex: 1}, {Type: EnemyUnit, UnitIndex: 2}}
+	masks := []ProcMask{ProcMaskEmpty, ProcMaskMeleeMHAuto, ProcMaskMeleeOHAuto, ProcMaskRangedAuto,
+		ProcMaskMeleeMHSpecial, ProcMaskRangedSpecial, ProcMaskSpellDamage}
+	flags := []SpellFlag{SpellFlagNoServerData, SpellFlagIncludeTargetBonusDamage, SpellFlagBinary, SpellFlagChanneled}
+	amounts := []float64{8, -8, 0, 3, 1e6, 0.4}
+
+	var spells []*Spell
+	for i, sd := range data {
+		spell := &Spell{Unit: units[i%len(units)], ActionID: ActionID{SpellID: sd.ID}, ProcMask: masks[i%len(masks)],
+			serverSpell: sd}
+		// two targets with a dot, the third past the array
+		spell.dots = DotArray{{Aura: &Aura{}}, {}}
+		spells = append(spells, spell)
+	}
+	spells = append(spells, &Spell{Unit: units[0], ProcMask: ProcMaskMeleeMHAuto})
+
+	rng := rand.New(rand.NewPCG(3, 4))
+	for step := range 20000 {
+		spell := spells[rng.IntN(len(spells))]
+		switch op := rng.IntN(16); {
+		case op < 2:
+			spell.Flags ^= flags[rng.IntN(len(flags))]
+		case op < 4:
+			spell.ProcMask = masks[rng.IntN(len(masks))]
+		case op < 5:
+			spell.serverSpell = nil
+			if rng.IntN(4) > 0 {
+				spell.serverSpell = data[rng.IntN(len(data))]
+			}
+		case op < 6:
+			if rng.IntN(2) == 0 {
+				spell.Unit = units[rng.IntN(len(units))]
+			} else {
+				kind := kinds[rng.IntN(len(kinds))]
+				spell.Unit.Type, spell.Unit.SummonedAsPet = kind.typ, kind.pet
+			}
+		case op < 8:
+			if len(spell.dots) > 0 {
+				spell.dots[0].Aura.stacks = rng.Int32N(6)
+				if rng.IntN(5) == 0 {
+					spell.dots[1] = nil
+				} else if spell.dots[1] == nil || rng.IntN(3) == 0 {
+					spell.dots[1] = &Dot{Aura: &Aura{stacks: rng.Int32N(6)}}
+				}
+			}
+		default:
+			target := targets[rng.IntN(len(targets))]
+			amount := amounts[rng.IntN(len(amounts))]
+			isPeriodic := rng.IntN(2) == 0
+			got, want := spell.flatDamageTaken(amount, target, isPeriodic), refFlatDamageTaken(spell, amount, target, isPeriodic)
+			if math.Float64bits(got) != math.Float64bits(want) {
+				t.Fatalf("step %d: %d's taken %v (periodic %v), want %v", step, spell.ActionID.SpellID, got, isPeriodic, want)
+			}
+			gw, gn := spell.dealsWeaponDamage()
+			ww, wn := spell.resolveWeaponDamage()
+			if gw != ww || gn != wn {
+				t.Fatalf("step %d: %d's weapon damage %v %v, want %v %v", step, spell.ActionID.SpellID, gw, gn, ww, wn)
+			}
+			if got, want := spell.ticksAsCasts(), ticksAsCastsOn(spell.ServerSpell()); got != want {
+				t.Fatalf("step %d: %d's ticks as casts %v, want %v", step, spell.ActionID.SpellID, got, want)
+			}
+		}
 	}
 }
 

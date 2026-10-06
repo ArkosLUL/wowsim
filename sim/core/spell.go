@@ -163,6 +163,7 @@ type Spell struct {
 	RelatedAuras []AuraArray
 
 	serverSpell     *serverdata.Spell
+	serverDerived   serverDerived
 	serverConflicts []ServerConflict
 	timing          castTiming
 
