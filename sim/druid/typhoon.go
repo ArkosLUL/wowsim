@@ -27,7 +27,7 @@ func (druid *Druid) registerTyphoonSpell() {
 		DamageMultiplier: spellModDamage(0.15 * float64(druid.Talents.GaleWinds)),
 		ThreatMultiplier: 1,
 		// critCapable in the spelldump, so a crit pays the full spell multiplier, not 1x
-		CritMultiplier: druid.BalanceCritMultiplier(),
+		CritMultiplier: druid.DefaultSpellCritMultiplier(),
 
 		Direct: core.SpellEffect{Effect: 1, Min: 1190, Max: 1190, SP: 0.193},
 

@@ -2,7 +2,6 @@ package druid
 
 import (
 	"github.com/wowsims/wotlk/sim/core"
-	"github.com/wowsims/wotlk/sim/core/proto"
 	"github.com/wowsims/wotlk/sim/core/stats"
 	"math"
 )
@@ -47,8 +46,8 @@ func (druid *Druid) ClearForm(sim *core.Simulation) {
 
 func (druid *Druid) GetCatWeapon() core.Weapon {
 	return core.Weapon{
-		BaseDamageMin:        43,
-		BaseDamageMax:        66,
+		BaseDamageMin:        druid.formWeaponDamage(0.85, 1.0),
+		BaseDamageMax:        druid.formWeaponDamage(1.25, 1.0),
 		SwingSpeed:           1.0,
 		NormalizedSwingSpeed: 1.0,
 		CritMultiplier:       druid.whiteCritMultiplier(Cat),
@@ -58,8 +57,8 @@ func (druid *Druid) GetCatWeapon() core.Weapon {
 
 func (druid *Druid) GetBearWeapon() core.Weapon {
 	return core.Weapon{
-		BaseDamageMin:        109,
-		BaseDamageMax:        165,
+		BaseDamageMin:        druid.formWeaponDamage(0.85, 2.5),
+		BaseDamageMax:        druid.formWeaponDamage(1.25, 2.5),
 		SwingSpeed:           2.5,
 		NormalizedSwingSpeed: 2.5,
 		CritMultiplier:       druid.whiteCritMultiplier(Bear),
@@ -67,10 +66,18 @@ func (druid *Druid) GetBearWeapon() core.Weapon {
 	}
 }
 
-// weaponFeralAP is the attack power the server's druids get from a weapon's dps in cat, bear and moonkin form.
+// formWeaponDamage is a form's weapon damage end: min(level, 60) x pct x the form's attack speed
+// (Player::CalculateMinMaxDamage, in float32).
+func (druid *Druid) formWeaponDamage(pct float32, speed float32) float64 {
+	return float64(float32(min(druid.Level, 60)) * pct * speed)
+}
+
+// weaponFeralAP is the attack power the server's druids get from a weapon's dps in cat, bear and moonkin form:
+// int32(dps x 14) - 767, at least 0, with getDPS in float32 (ItemTemplate::getFeralBonus).
 func (druid *Druid) weaponFeralAP(weapon *core.Item) float64 {
-	dps := (weapon.WeaponDamageMax+weapon.WeaponDamageMin)/2.0/weapon.SwingSpeed + druid.PseudoStats.BonusMHDps
-	return math.Floor((dps - 54.8) * 14)
+	delayMs := float32(math.Round(weapon.SwingSpeed * 1000))
+	dps := float32(weapon.WeaponDamageMin+weapon.WeaponDamageMax) * 500 / delayMs
+	return float64(max(0, int32((float32(druid.PseudoStats.BonusMHDps)+dps)*14)-767))
 }
 
 // Bonus stats for both cat and bear.
@@ -83,28 +90,14 @@ func (druid *Druid) GetFormShiftStats() stats.Stats {
 	}
 
 	if weapon := druid.GetMHWeapon(); weapon != nil {
-		weapAp := weapon.Stats[stats.AttackPower] + weapon.Enchant.Stats[stats.AttackPower]
 		fap := druid.weaponFeralAP(weapon)
-
 		s[stats.AttackPower] += fap
-		s[stats.AttackPower] += (fap + weapAp) * ((0.2 / 3) * float64(druid.Talents.PredatoryStrikes))
+		// Predatory Strikes' 7/14/20% reads the weapon's template only: its feral AP and attack power, never its
+		// enchant (Player::UpdateAttackPowerAndDamage)
+		predatoryStrikesPct := []float64{0, 0.07, 0.14, 0.20}[druid.Talents.PredatoryStrikes]
+		s[stats.AttackPower] += (fap + weapon.Stats[stats.AttackPower]) * predatoryStrikesPct
 	}
 
-	return s
-}
-
-func (druid *Druid) GetDynamicPredStrikeStats() stats.Stats {
-	// Accounts for ap bonus for 'dynamic' enchants
-	// just scourgebane currently, this is a bit hacky but is needed as the bonus varies based on current target
-	// so has to be 'cached' differently
-	s := stats.Stats{}
-	if weapon := druid.GetMHWeapon(); weapon != nil {
-		bonusAp := 0.0
-		if weapon.Enchant.EffectID == 3247 && druid.CurrentTarget.MobType == proto.MobType_MobTypeUndead {
-			bonusAp += 140
-		}
-		s[stats.AttackPower] += bonusAp * ((0.2 / 3) * float64(druid.Talents.PredatoryStrikes))
-	}
 	return s
 }
 
@@ -128,8 +121,6 @@ func (druid *Druid) registerCatFormSpell() {
 
 	clawWeapon := druid.GetCatWeapon()
 
-	predBonus := stats.Stats{}
-
 	druid.CatFormAura = druid.RegisterAura(core.Aura{
 		Label:      "Cat Form",
 		ActionID:   actionID,
@@ -148,8 +139,6 @@ func (druid *Druid) registerCatFormSpell() {
 			druid.PseudoStats.SpiritRegenMultiplier *= AnimalSpiritRegenSuppression
 			druid.PseudoStats.BaseDodge += 0.02 * float64(druid.Talents.FeralSwiftness)
 
-			predBonus = druid.GetDynamicPredStrikeStats()
-			druid.AddStatsDynamic(sim, predBonus)
 			druid.AddStatsDynamic(sim, statBonus)
 			druid.EnableDynamicStatDep(sim, agiApDep)
 			druid.EnableDynamicStatDep(sim, agiRapDep)
@@ -182,7 +171,6 @@ func (druid *Druid) registerCatFormSpell() {
 			druid.PseudoStats.SpiritRegenMultiplier /= AnimalSpiritRegenSuppression
 			druid.PseudoStats.BaseDodge -= 0.02 * float64(druid.Talents.FeralSwiftness)
 
-			druid.AddStatsDynamic(sim, predBonus.Invert())
 			druid.AddStatsDynamic(sim, statBonus.Invert())
 			druid.DisableDynamicStatDep(sim, agiApDep)
 			druid.DisableDynamicStatDep(sim, agiRapDep)
@@ -269,7 +257,6 @@ func (druid *Druid) registerBearFormSpell() {
 	const bearThreat = 1.45 * 1.43
 
 	clawWeapon := druid.GetBearWeapon()
-	predBonus := stats.Stats{}
 
 	druid.BearFormAura = druid.RegisterAura(core.Aura{
 		Label:      "Bear Form",
@@ -291,8 +278,6 @@ func (druid *Druid) registerBearFormSpell() {
 			druid.PseudoStats.SpiritRegenMultiplier *= AnimalSpiritRegenSuppression
 			druid.PseudoStats.BaseDodge += 0.02 * float64(druid.Talents.FeralSwiftness+druid.Talents.NaturalReaction)
 
-			predBonus = druid.GetDynamicPredStrikeStats()
-			druid.AddStatsDynamic(sim, predBonus)
 			druid.AddStatsDynamic(sim, statBonus)
 			druid.ApplyDynamicEquipScaling(sim, stats.Armor, druid.BearArmorMultiplier())
 			if potpDep != nil {
@@ -326,7 +311,6 @@ func (druid *Druid) registerBearFormSpell() {
 			druid.PseudoStats.SpiritRegenMultiplier /= AnimalSpiritRegenSuppression
 			druid.PseudoStats.BaseDodge -= 0.02 * float64(druid.Talents.FeralSwiftness+druid.Talents.NaturalReaction)
 
-			druid.AddStatsDynamic(sim, predBonus.Invert())
 			druid.AddStatsDynamic(sim, statBonus.Invert())
 			druid.RemoveDynamicEquipScaling(sim, stats.Armor, druid.BearArmorMultiplier())
 			if potpDep != nil {

@@ -40,8 +40,8 @@ Rules, held by `TestFightCycles`:
 cut by `simval fight -trim`. Kept: the header and zone lines, the player's and its minions' unit lines, what they
 did from the fight's start to its end to themselves or the dummy but a spell's plain `HIT` target result, a heal, a
 summon or a cast other than the bot's, and before the start only their auras going on and off (what was up at the
-pull, Sniper Training included). The 32 were fought on 2026-10-05 against the worldserver build of 16:52 (rev
-3d89793c7): 106 KB.
+pull, Sniper Training included). The 32 were fought against the worldserver build of 16:52 (rev 3d89793c7), on
+2026-10-05; DruidFeralTank again on 2026-10-06, wearing its gear set's five enchants: 106 KB.
 
 ## Left out
 
@@ -67,30 +67,19 @@ table's cause:
 - **Rime**: not a sim gap but the cycle's: its Howling Blast step finds no Frost, Unholy or death rune on either side,
   so it goes off only free, on a Freezing Fog proc (all 3 logged did), which the replay can't follow. The cycle needs
   runes left for it, then a re-record.
-- **Vengeance**: the sim's Insect Swarm ticks crit for Vengeance's doubled bonus, the server's for the plain 1.5 with
-  the meta gem.
-- **Eclipse**: the sim's Eclipse (Solar) procs on any landed Starfire, the server's on a crit only (spell_proc -48516
-  HitMask 2).
 - **Master of Elements**: the sim refunds 25% of a crit spell's base cost (30% less Burnout's 5%, which the server
   burns apart, unlogged) and nothing for a crit without a cost of its own (Living Bomb's explosion, 215 on the
   server) or a clearcast one; the server refunds 30% of each (`spell_mage_master_of_elements`).
-- **Rake**: its first hit is about 0.65 of the sim's in every feral fight, the boss armor's cut, which the sim leaves
-  out as for a bleed.
 - **Torment the Weak**: the sim always adds its 12%; the server only against a snared or slowed target, and the boss
   dummy is immune to snares (creature_immunities -361).
 - **Brain Freeze**: the sim's Fireball! never expires; the server's (57761) lasts 15 s, so a later proc puts it on
   again.
 - **Enduring Winter**: the sim's refreshes Replenishment on every Frostbolt; the server's has a 6 s proc cooldown
   (spell_proc -44557).
-- **Lava Lash**: the server's hits about twice the sim's, which halves it as an off-hand hit (OHWeaponDamage).
 
 | Setup | Subject | Check | Why |
 |---|---|---|---|
 | DeathknightFrost | 51411 | casts | Rime |
-| DruidBalance | 48468 | tick crit mean | Vengeance |
-| DruidBalance | aura 48517 on self | uptime | Eclipse |
-| DruidBalancePhase3 | 48468 | tick crit mean | Vengeance |
-| DruidFeral | 48574 | hit mean | Rake |
 | HunterMM | 49001 | ticks | map update length |
 | MageFire | energize 29076 mana | gain sizes | Master of Elements |
 | MageFrost | aura 44549 on self | applications | Brain Freeze |
@@ -98,5 +87,3 @@ table's cause:
 | MageFrostFire | 47610 | crit mean | Torment the Weak |
 | MageFrostFire | 47610 | tick hit mean | Torment the Weak |
 | MageFrostFire | energize 29076 mana | gain sizes | Master of Elements |
-| ShamanEnhancement | 60103 | crit mean | Lava Lash |
-| ShamanEnhancement | 60103 | hit mean | Lava Lash |

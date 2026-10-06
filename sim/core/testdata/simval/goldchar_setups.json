@@ -656,11 +656,16 @@
       {"slot":17,"id":38365}
     ],
     "enchants": [
+      {"slot":0,"enchant":3878},
+      {"slot":2,"enchant":3852},
       {"slot":14,"enchant":3294},
       {"slot":4,"enchant":3832},
       {"slot":8,"enchant":3850},
       {"slot":8,"enchant":3717},
+      {"slot":9,"enchant":3860},
       {"slot":5,"enchant":3729},
+      {"slot":6,"enchant":3822},
+      {"slot":7,"enchant":3606},
       {"slot":15,"enchant":2673}
     ],
     "gems": [

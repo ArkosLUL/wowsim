@@ -18,10 +18,7 @@ import (
 
 // droppedMobs are lines of mobsFixture, or checks of them, that disagree with the sim, each with a row in the
 // fixture README.
-var droppedMobs = slices.Concat(
-	// the server's Predatory Strikes ignores weapon enchants
-	mobDrops("NightElfDruid", "scourgebane", 999004, "attack power"),
-)
+var droppedMobs = []mobDrop{}
 
 func mobDrops(bot, state string, dummy uint32, checks ...string) []mobDrop {
 	drops := make([]mobDrop, len(checks))
@@ -555,6 +552,15 @@ func TestMobReplayCatchesMismatches(t *testing.T) {
 			for i, a := range l.Info.Attacker.Attacks {
 				if a.Type == "mainhand" {
 					l.Info.Attacker.Attacks[i].AttackPower = ref.Info.Attacker.attack("mainhand").AttackPower
+				}
+			}
+			return []mobLine{l, ref}
+		}},
+		{name: "Predatory Strikes taking 20% of Scourgebane's 140", line: func() []mobLine {
+			l, ref := pair("NightElfDruid", "scourgebane", undead)
+			for i, a := range l.Info.Attacker.Attacks {
+				if a.Type == "mainhand" {
+					l.Info.Attacker.Attacks[i].AttackPower = ref.Info.Attacker.attack("mainhand").AttackPower + 28
 				}
 			}
 			return []mobLine{l, ref}

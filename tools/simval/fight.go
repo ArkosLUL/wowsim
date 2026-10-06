@@ -184,10 +184,6 @@ type fightDrop struct {
 
 var droppedFightChecks = []fightDrop{
 	{"DeathknightFrost", "51411", "casts"},
-	{"DruidBalance", "48468", "tick crit mean"},
-	{"DruidBalance", "aura 48517 on self", "uptime"},
-	{"DruidBalancePhase3", "48468", "tick crit mean"},
-	{"DruidFeral", "48574", "hit mean"},
 	{"HunterMM", "49001", "ticks"},
 	{"MageFire", "energize 29076 mana", "gain sizes"},
 	{"MageFrost", "aura 44549 on self", "applications"},
@@ -195,8 +191,6 @@ var droppedFightChecks = []fightDrop{
 	{"MageFrostFire", "47610", "crit mean"},
 	{"MageFrostFire", "47610", "tick hit mean"},
 	{"MageFrostFire", "energize 29076 mana", "gain sizes"},
-	{"ShamanEnhancement", "60103", "crit mean"},
-	{"ShamanEnhancement", "60103", "hit mean"},
 }
 
 // fightLeftOut is a server aura by the log's id, where it sits ("self", "target", a minion's name), "" for

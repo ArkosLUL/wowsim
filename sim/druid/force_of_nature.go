@@ -12,15 +12,15 @@ func (druid *Druid) registerForceOfNatureCD() {
 		return
 	}
 
-	// 65861 has the talent's 33831 cost, cooldown and flags but summons another creature. The treants
-	// below are 33831's 1964.
+	// the talent's own 33831, not 65861 (same cost, cooldown and flags, another creature): only 33831 is a druid
+	// spell, so only it spends Clearcasting
 	forceOfNatureAura := druid.RegisterAura(core.Aura{
 		Label:    "Force of Nature",
-		ActionID: core.ActionID{SpellID: 65861},
+		ActionID: core.ActionID{SpellID: 33831},
 		Duration: time.Second * 30,
 	})
 	druid.ForceOfNature = druid.RegisterSpell(Humanoid|Moonkin, core.SpellConfig{
-		ActionID: core.ActionID{SpellID: 65861},
+		ActionID: core.ActionID{SpellID: 33831},
 		Flags:    core.SpellFlagAPL,
 		ManaCost: core.ManaCostOptions{
 			BaseCost:   0.12,

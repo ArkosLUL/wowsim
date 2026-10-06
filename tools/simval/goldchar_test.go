@@ -229,11 +229,27 @@ var droppedGoldchar = []goldcharDrop{
 	{"DeathknightBloodTank", 0, "parry %"},
 	{"DruidBalance", 0, "arcane spell crit %"},
 	{"DruidBalancePhase3", 0, "arcane spell crit %"},
-	{"DruidBalancePhase3", 0, "attack power"},
-	{"DruidFeralApl", 0, "attack power"},
 	{"MageFire", 0, "arcane spell crit %"},
 	{"MageFrostFire", 0, "arcane spell crit %"},
 	{"WarlockDestruction", 0, "fire spell crit %"},
+}
+
+// goldcharRerecord are setups whose enchants changed after goldcharFixture was recorded. Until a rerun replaces
+// their records, the replay builds them with the enchants their records wear. A listed setup its record
+// already wears fails, so the entry goes with the rerun.
+var goldcharRerecord = []string{}
+
+// withRecordedEnchants is the setup with the enchants the character wears in place of its own.
+func (s goldcharSetup) withRecordedEnchants(c *goldcharCharacter) goldcharSetup {
+	s.Enchants = nil
+	for _, e := range c.Equipment {
+		for _, id := range []int32{e.Enchant, e.Prismatic} {
+			if id != 0 {
+				s.Enchants = append(s.Enchants, goldcharEnchant{Slot: e.Slot, Enchant: id})
+			}
+		}
+	}
+	return s
 }
 
 // goldcharReport reports a record's checks, holding them to droppedGoldchar.
@@ -299,6 +315,14 @@ func TestGoldenCharacters(t *testing.T) {
 	bare := 0
 	for _, bot := range bots {
 		s, err := matchGoldcharSetup(setups, bot.info)
+		if err == nil && slices.Contains(goldcharRerecord, s.Name) {
+			if _, wornErr := s.wornBy(bot.info.Character); wornErr == nil {
+				err = fmt.Errorf("%s's record wears its enchants, so take it off goldcharRerecord", s.Name)
+			} else {
+				s = s.withRecordedEnchants(bot.info.Character)
+				t.Logf("%s: replayed with the enchants its record wears", s.Name)
+			}
+		}
 		if err == nil {
 			s, err = s.wornBy(bot.info.Character)
 		}

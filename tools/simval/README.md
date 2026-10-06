@@ -301,8 +301,8 @@ sharing one share an entry), which mod-sim-validation's `TestSimvalGoldenCharact
   always has and the sim only gets from its rotation (`serverStartingAuras`).
 - `imbue`: the temporary enchant the sim always puts on the main hand (Elemental's Flametongue Weapon, 58790).
 - `enchants` (slot, SpellItemEnchantment id) and `gems` (slot, socket index in the gear set's list, gem item id), for
-  `.simval enchant` and `.simval gem`: only enchants `db.json` knows (the sim drops the rest, like the spell and item
-  ids in feral tank's gear set), and for a gem past an item's sockets the socket-adding enchant (`socketEnchants`:
+  `.simval enchant` and `.simval gem`: only enchants `db.json` knows (the sim drops the rest, like a spell or item id
+  in a gear set), and for a gem past an item's sockets the socket-adding enchant (`socketEnchants`:
   belt buckle 3729, socket bracer 3717, socket gloves 3723). Only a geared setup's `goldcharPlayer` wears them
   (below), so buffs.go and the sweeps build without, as their captures' characters went without.
 
@@ -320,7 +320,8 @@ Edit the list by hand. Four tests keep it honest:
 needs `-tags=with_db`). Records group by bot name; the info record's `character` (class, race, talents, glyphs,
 items) picks exactly one setup, and the bot's `damage` records belong to it. `wornBy` then makes the setup geared
 when each item's `enchant` and `prismatic`, and `gems`, are exactly its own; a record without those fields replays
-bare (logged), anything else fails. The sim character is `goldchar.go`'s `goldcharPlayer`: the setup's spec, race,
+bare (logged), anything else fails, except for a setup in `goldcharRerecord` (enchants changed since the
+capture), which takes its record's enchants until a rerun; one its record already wears fails. The sim character is `goldchar.go`'s `goldcharPlayer`: the setup's spec, race,
 items, talent string and server-known glyphs, empty buffs, consumes and spec options, plus `auras` it registers by
 id; geared, also its enchants and gems (`gearItems`, skipping socket-adding enchants: the sim takes a gem past an
 item's sockets as one more socket). A hunter whose record carries Sniper Training's buff (64420, a bot
@@ -377,7 +378,8 @@ up once it's in: Moonkin Form, Shadowform, Bone Shield, Trueshot Aura). The gene
 Rewrite it with `tools/acore/dock.sh test ./tools/simval -run TestTalentPathsFile -update`; a changed path's
 `talents.jsonl` records then match nothing, so rerun it (`SIMVAL_TALENT_ONLY`) and trim its stream: paths it has no
 bot for keep their records from the fixture. Until that rerun, list the path in `sweepRerecord` (`talents_test.go`):
-the replay builds it as its records stood (`asRecorded`: their items, the path's auras they had), and a listed path
+the replay builds it as its records stood (`asRecorded`: their items, the path's auras they had,
+each step's talent at the rank they learned), and a listed path
 whose records stand as the path fails. Tests: `TestTalentPathsFile` (stale), `TestTalentPathsAreLegal` (points,
 rows, prerequisites, ranks, every implemented talent covered in a setup that shows it, on the committed file),
 `TestTalentPathsCoverTheSimsStart` (after each step, what the sim has up that isn't passive is in the auras; buff

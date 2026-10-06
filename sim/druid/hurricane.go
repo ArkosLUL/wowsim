@@ -14,7 +14,7 @@ func (druid *Druid) registerHurricaneSpell() {
 		ProcMask:    core.ProcMaskProc,
 		Flags:       SpellFlagOmenTrigger,
 		// critCapable in the spelldump, so a crit pays the full spell multiplier, not 1x
-		CritMultiplier: druid.BalanceCritMultiplier(),
+		CritMultiplier: druid.DefaultSpellCritMultiplier(),
 		DamageMultiplier: spellModDamage(
 			0.15*float64(druid.Talents.GaleWinds),
 			0.01*float64(druid.Talents.Genesis),

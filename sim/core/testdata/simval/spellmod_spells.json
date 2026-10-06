@@ -1705,6 +1705,12 @@
     {"id":61657,"name":"Fire Nova","ops":["COST"]}
   ]}
 ]},
+{"class":"shaman","tree":"Restoration","talent":"improvedHealingWave","passive":true,"groups": [
+ {"ranks":[16182,16226,16227,16228,16229],"mods":[{"effect":0,"type":"flat","op":"CASTING_TIME","classMask":[64,0,0]}],
+  "spells": [
+    {"id":49273,"name":"Healing Wave","ops":["CASTING_TIME"]}
+  ]}
+]},
 {"class":"shaman","tree":"Restoration","talent":"totemicFocus","passive":true,"groups": [
  {"ranks":[16173,16222,16223,16224,16225],"mods":[{"effect":0,"type":"pct","op":"COST","classMask":[537399320,0,0]}],
   "spells": [

@@ -138,6 +138,8 @@ func (druid *Druid) AddRaidBuffs(raidBuffs *proto.RaidBuffs) {
 	}
 }
 
+// BalanceCritMultiplier is for Wrath, Moonfire, Starfire and Starfall only, the spells Vengeance's class mask
+// covers. The druid's other spells crit at DefaultSpellCritMultiplier.
 func (druid *Druid) BalanceCritMultiplier() float64 {
 	return druid.SpellCritMultiplier(1, 0.2*float64(druid.Talents.Vengeance))
 }

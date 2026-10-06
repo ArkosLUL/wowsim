@@ -17,9 +17,11 @@ func (druid *Druid) registerStarfallSpell() {
 	tickLength := time.Second
 
 	starfallTickSpell := druid.RegisterSpell(Humanoid|Moonkin, core.SpellConfig{
-		ActionID:         core.ActionID{SpellID: 53195},
-		SpellSchool:      core.SpellSchoolArcane,
-		ProcMask:         core.ProcMaskSuppressedProc,
+		ActionID:    core.ActionID{SpellID: 53195},
+		SpellSchool: core.SpellSchoolArcane,
+		// a star carries SPELL_ATTR3_NOT_A_PROC, so it procs what a cast spell does (Illustration of the Dragon
+		// Soul), like Arcane Missiles' missiles; the splash doesn't
+		ProcMask:         core.ProcMaskSpellDamage | core.ProcMaskNotInSpellbook,
 		Flags:            SpellFlagNaturesGrace,
 		BonusCritRating:  2 * float64(druid.Talents.NaturesMajesty) * core.CritRatingPerCritChance,
 		DamageMultiplier: 1 * (1 + core.TernaryFloat64(druid.HasMajorGlyph(proto.DruidMajorGlyph_GlyphOfFocus), 0.1, 0)),

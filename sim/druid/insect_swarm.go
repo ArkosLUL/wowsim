@@ -61,7 +61,7 @@ func (druid *Druid) registerInsectSwarmSpell() {
 			// Glyph of Hurricane's second effect (54831) is Glyph of Insect Swarm's +30% too
 			core.TernaryFloat64(druid.HasMajorGlyph(proto.DruidMajorGlyph_GlyphOfHurricane), 0.3, 0),
 		),
-		CritMultiplier:   druid.BalanceCritMultiplier(),
+		CritMultiplier:   druid.DefaultSpellCritMultiplier(),
 		ThreatMultiplier: 1,
 
 		Dot: core.DotConfig{

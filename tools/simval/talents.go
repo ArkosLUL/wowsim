@@ -237,11 +237,22 @@ func (path talentPath) missingAuras(rec talentRecord) []int32 {
 	return slices.DeleteFunc(want, func(id int32) bool { return slices.Contains(rec.Auras, id) })
 }
 
-// asRecorded is the path as a record from before a change to its setup stood: the items it wore, and the
-// path's auras it had on.
-func (path talentPath) asRecorded(rec talentRecord) talentPath {
+// asRecorded is the path as a record from before a change to its setup stood: the items it wore, the path's
+// auras it had on, and each step's talent at the rank learned, the rank spell among learned (ranks, by
+// fieldName). A filler the sim has since implemented takes max rank in the new path.
+func (path talentPath) asRecorded(rec talentRecord, learned []int32, ranks map[string][]int32) talentPath {
 	path.Items = slices.Clone(rec.Equipment)
 	path.Auras = slices.DeleteFunc(slices.Clone(path.Auras), func(id int32) bool { return !slices.Contains(rec.Auras, id) })
+	path.Steps = slices.Clone(path.Steps)
+	for i, step := range path.Steps {
+		if slices.Contains(learned, step.Spell) {
+			continue
+		}
+		spells := ranks[step.Talent]
+		if r := slices.IndexFunc(spells, func(id int32) bool { return slices.Contains(learned, id) }); r >= 0 {
+			path.Steps[i].Rank, path.Steps[i].Spell = int32(r+1), spells[r]
+		}
+	}
 	return path
 }
 

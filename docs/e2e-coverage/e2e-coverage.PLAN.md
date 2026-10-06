@@ -1475,6 +1475,58 @@ moves too (Devotion Aura improved).
 - **Owns:** `sim/{druid,shaman}/` but pet, threat and Flurry code; `ui/balance_druid/apls/`; their drop entries and
   README rows.
 
+#### As built
+
+Stage fixes (offline, on `d253e096c`; notes and live plan in `tmp/ec-nature-fix-code.md`). Each mismatch re-measured
+against [ac] `3d89793c7` and the committed fixtures:
+- Eclipse procs on a Wrath or Starfire crit only (spell_proc -48516 HitMask 2), at the rank's chance squared (script
+  and proc system each roll 33/66/100%, Wrath at 60% of it), never while either eclipse is up. Fixed.
+- Vengeance reaches only its class mask (Wrath, Moonfire, Starfire, Starfall): Insect Swarm, Hurricane, Typhoon and
+  Faerie Fire (Feral)'s 60089 crit at the plain 1.5. Fixed.
+- Rake's first hit takes armor (`Unit::IsDamageReducedByArmor` exempts only the bleed tick). Fixed.
+- Form weapons `min(level, 60)` × 0.85–1.25 × form speed (cat 51–75, bear 127.5–187.5); weapon feral AP
+  `int32(dps × 14) − 767`, float32 `getDPS`; Predatory Strikes 7/14/20% of feral AP plus the weapon's template AP,
+  never its enchant (Scourgebane's dynamic part gone). Fixed: strikes known mismatch, goldchar AP rows, mobs row.
+- Balance: the Dreamstate test APL spends Nature's Swiftness on Wrath (17116's mask covers Wrath, not Starfire).
+- Starfall's stars (53195, `NOT_A_PROC`) take `ProcMaskSpellDamage | ProcMaskNotInSpellbook`, as Arcane Missiles'
+  missiles: they proc Illustration of the Dragon Soul; the splash stays suppressed. No record covers it.
+- Force of Nature casts 33831 (serverdata hunk regenerated, 65861 gone; APLs and raid25.json's Balance rotation
+  moved); Clearcasting's mask covers it, so it spends Omen of Clarity. No record covers it.
+- Lava Lash: the whole off hand (`EffectWeaponDmg` skips TOTAL_PCT, the off hand's 50%, for a fire spell) and a melee
+  crit (2.0 plus meta; Elemental Fury's mask misses it). Fixed.
+- Enhancing Totems: Flametongue Totem's aura takes `int32(144 × (1 + 5% a point))`, 165 at 3, for the whole raid and
+  its pets (58655 is `APPLY_AREA_AURA_RAID`; `improveFlametongueTotem`, via the aura's exclusive priority; no proto
+  change; `TestEnhancingTotemsReachTheRaid`). Fixed.
+- Improved Healing Wave: Healing Wave 3000 − 100 ms a point. `implemented_talents.json`, `talent_paths.json`
+  (ShamanRestoration step 1 now rank 5, not a 4-point filler) and `spellmod_spells.json` (its hunk only) follow. Until
+  the live rerun: `sweepRerecord` lists ShamanRestoration (`asRecorded` now also restores learned talent ranks), and
+  its spell-mod drops say rerun pending.
+- Feral tank gear sets: 3878, 3852, 3860, 3822, 3606 for the spell and item ids; `goldchar_setups.json` follows.
+  `goldcharRerecord` (new) replays DruidFeralTank with its record's enchants until the rerun.
+- DruidFeralApl's cycle gets a second Savage Roar after Mangle; raid25.json's Balance string drops Owlkin Frenzy (72 to
+  71 points, Phase 2's preset).
+- Leads not confirmed: no druid spell carries `NORMALIZED_WEAPON_DMG`, so the 2.4 fist speed never reaches a form
+  attack; Elemental's Lightning Bolt agrees in every probe and its fight (hit mean +4%, inside the range).
+- Drops gone: fights Vengeance ×2, Eclipse, Rake, Lava Lash ×2; goldchar AP ×2; sweep enhancingTotems; mobs
+  NightElfDruid; strikes form weapons. All replays pass, the fights with 0 druid or shaman drops.
+- Goldens (`dock.sh delta`, Average-Default): Balance −3.6% (Eclipse, Insect Swarm crits), BalancePhase3 −2.2%,
+  Dreamstate −0.01% (NS on Wrath, a Starfire fewer), Feral +0.14% and FeralApl +0.33% (form weapon, Rake −4%),
+  FeralTank DPS +1.7% and DTPS −6.4% (enchants), Enhancement +2.4% and FrozenPower +2.7% (Lava Lash ×2); 31 of 37
+  unchanged.
+
+Stage live (2026-10-06, server lock, [ac] `3d89793c7`, no rebuild; notes in `tmp/ec-nature-fix-live.md`):
+- ShamanRestoration re-recorded: talent sweep (18 records, trimmed into `talents.jsonl`) and spell-mod sweep (94
+  lines replace the path's 92 in `spellmods.jsonl`). Improved Healing Wave: Healing Wave −500 ms on both sides; Nature's
+  Swiftness −2500. `sweepRerecord` empty; the three rerun-pending drops and their README rows gone.
+- DruidFeralTank re-recorded with the five enchants: golden character (4 records in `goldchar.jsonl`;
+  `goldcharRerecord` empty) and fight (70/70, log 961 DPS, sim 952; the old log 935).
+- Glyph of Totem of Wrath: new `TestNatfixTotemOfWrathGlyph` (mod-sim-validation, run by name) casts the totem for real:
+  +280 from 57663 and +84 from 63283 in every magic school, the sim's 84. No sim change.
+- DruidFeralApl's fight not re-recorded: its log already lands 3 Savage Roars and replays green.
+
+Review: Enhancing Totems first reached only the shaman's party; widened to the raid as above. No golden moves (no
+suite pairs Flametongue Totem with Enhancing Totems; raid25's Totem of Wrath outranks it).
+
 ### EC-ARCANE-FIX (Z; changes goldens; stages: fixes, live)
 
 - Mage: Torment the Weak only on a snared or slowed target; T8 4-piece's 20% since `e9517efd2` (64869, the sim's 10%);

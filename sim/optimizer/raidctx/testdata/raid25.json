@@ -3834,7 +3834,7 @@
       },
       "buffs": {"blessingOfKings": true, "blessingOfWisdom": "TristateEffectImproved", "blessingOfSanctuary": true},
       "balanceDruid": {"options": {"innervateTarget": {"type": "Player", "index": 20}, "okfUptime": 0.2}},
-      "talentsString": "5012203115331303213315311231--205003012",
+      "talentsString": "5012203115331303213305311231--205003012",
       "glyphs": {"major1": 40916, "major2": 40919, "major3": 40921, "minor1": 44922},
       "rotation": {
        "type": "TypeAPL",
@@ -3862,7 +3862,7 @@
         {
          "action": {
           "condition": {"cmp": {"op": "OpGt", "lhs": {"remainingTime": {}}, "rhs": {"const": {"val": "20"}}}},
-          "castSpell": {"spellId": {"spellId": 65861}}
+          "castSpell": {"spellId": {"spellId": 33831}}
          }
         },
         {

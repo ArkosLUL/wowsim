@@ -13,7 +13,8 @@ func (druid *Druid) registerRakeSpell() {
 		ActionID:    core.ActionID{SpellID: 48574},
 		SpellSchool: core.SpellSchoolPhysical,
 		ProcMask:    core.ProcMaskMeleeMHSpecial,
-		Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagIgnoreResists | core.SpellFlagAPL,
+		// armor cuts the first hit (Unit::IsDamageReducedByArmor skips only the bleed's ticks)
+		Flags: core.SpellFlagMeleeMetrics | core.SpellFlagAPL,
 
 		EnergyCost: core.EnergyCostOptions{
 			Cost:    40,
@@ -75,7 +76,7 @@ func (druid *Druid) registerRakeSpell() {
 
 		ExpectedInitialDamage: func(sim *core.Simulation, target *core.Unit, spell *core.Spell, _ bool) *core.SpellResult {
 			baseDamage := spell.Direct.Average() + spell.Direct.AP*spell.MeleeAttackPower()
-			initial := spell.CalcPeriodicDamage(sim, target, baseDamage, spell.OutcomeExpectedMagicAlwaysHit)
+			initial := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeExpectedMagicAlwaysHit)
 
 			attackTable := spell.Unit.AttackTables[target.UnitIndex]
 			critChance := spell.PhysicalCritChance(attackTable)

@@ -184,7 +184,7 @@ func (druid *Druid) registerNaturesSwiftnessCD() {
 		Spell: nsSpell.Spell,
 		Type:  core.CooldownTypeDPS,
 		ShouldActivate: func(sim *core.Simulation, character *core.Character) bool {
-			// Don't use NS unless we're casting a full-length starfire or wrath.
+			// Don't use NS unless we're casting a full-length wrath.
 			return !character.HasTemporarySpellCastSpeedIncrease()
 		},
 	})
@@ -322,6 +322,7 @@ func (druid *Druid) applyOmenOfClarity() {
 		OnInit: func(aura *core.Aura, sim *core.Simulation) {
 			affectedSpells = core.FilterSlice([]*DruidSpell{
 				// Balance
+				druid.ForceOfNature,
 				druid.Hurricane,
 				druid.InsectSwarm,
 				druid.Moonfire,
@@ -428,12 +429,17 @@ func (druid *Druid) applyEclipse() {
 		return
 	}
 
-	// Delay between eclipses
 	eclipseDuration := time.Millisecond * 15000
-	interEclipseDelay := eclipseDuration - time.Millisecond*500
+
+	// spell_dru_eclipse rolls the rank's proc chance (33, 66, 100) on a Wrath or Starfire crit (spell_proc -48516
+	// HitMask 2), Wrath's at 60% of it, and the proc system rolls the same chance again
+	rankChance := []float64{0, 0.33, 0.66, 1}[druid.Talents.Eclipse]
+	eclipseActive := func() bool {
+		return druid.SolarEclipseProcAura.IsActive() || druid.LunarEclipseProcAura.IsActive()
+	}
 
 	// Solar
-	solarProcChance := (1.0 / 3.0) * float64(druid.Talents.Eclipse)
+	solarProcChance := rankChance * rankChance
 	solarProcMultiplier := 1.4 + core.TernaryFloat64(druid.HasSetBonus(ItemSetNightsongGarb, 2), 0.07, 0)
 	druid.SolarICD.Duration = time.Millisecond * 30000
 	druid.SolarEclipseProcAura = druid.RegisterAura(core.Aura{
@@ -456,18 +462,10 @@ func (druid *Druid) applyEclipse() {
 			aura.Activate(sim)
 		},
 		OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
-			// spell_dru_eclipse::CheckProc (spell_druid.cpp:1486-1519) rolls on every landed cast, not
-			// just crits.
-			if !result.Landed() {
+			if !result.DidCrit() || !druid.Starfire.IsEqual(spell) {
 				return
 			}
-			if !druid.Starfire.IsEqual(spell) {
-				return
-			}
-			if !druid.SolarICD.Timer.IsReady(sim) {
-				return
-			}
-			if druid.LunarICD.Timer.TimeToReady(sim) > interEclipseDelay {
+			if !druid.SolarICD.Timer.IsReady(sim) || eclipseActive() {
 				return
 			}
 			if sim.RandomFloat("Eclipse (Solar)") < solarProcChance {
@@ -478,7 +476,7 @@ func (druid *Druid) applyEclipse() {
 	})
 
 	// Lunar
-	lunarProcChance := 0.2 * float64(druid.Talents.Eclipse)
+	lunarProcChance := rankChance * 0.6 * rankChance
 	lunarBonusCrit := (40 + core.TernaryFloat64(druid.HasSetBonus(ItemSetNightsongGarb, 2), 7, 0)) * core.CritRatingPerCritChance
 	druid.LunarICD.Duration = time.Millisecond * 30000
 	druid.LunarEclipseProcAura = druid.RegisterAura(core.Aura{
@@ -500,18 +498,10 @@ func (druid *Druid) applyEclipse() {
 			aura.Activate(sim)
 		},
 		OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
-			// spell_dru_eclipse::CheckProc (spell_druid.cpp:1486-1519) rolls on every landed cast, not
-			// just crits.
-			if !result.Landed() {
+			if !result.DidCrit() || !druid.Wrath.IsEqual(spell) {
 				return
 			}
-			if !druid.Wrath.IsEqual(spell) {
-				return
-			}
-			if !druid.LunarICD.Timer.IsReady(sim) {
-				return
-			}
-			if druid.SolarICD.Timer.TimeToReady(sim) > interEclipseDelay {
+			if !druid.LunarICD.Timer.IsReady(sim) || eclipseActive() {
 				return
 			}
 			if sim.RandomFloat("Eclipse (Lunar)") < lunarProcChance {
