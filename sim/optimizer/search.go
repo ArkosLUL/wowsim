@@ -1177,7 +1177,7 @@ func (se *searcher) search() ([]Loadout, error) {
 		if se.pool.Locked[slot] {
 			continue
 		}
-		for _, changes := range se.runnersUp(best, slot, forcedRunnersUp) {
+		for _, changes := range se.runnersUp(best, slot, forcedRunnersUp, se.opts[slot]) {
 			alts = append(alts, forced{slot, changes})
 		}
 	}
@@ -1230,10 +1230,10 @@ func (se *searcher) search() ([]Loadout, error) {
 // forcedRunnersUp is how many runners-up per slot the search forces into its best set and polishes.
 const forcedRunnersUp = 3
 
-// runnersUp are the best configured moves to another item in slot, from st, best first. Each is a
-// change to that slot alone, plus the off hand when a main hand fills both hands; moves that break
-// a rule are skipped.
-func (se *searcher) runnersUp(st *state, slot proto.ItemSlot, n int) [][]change {
+// runnersUp are the best configured moves to another item among opts (a slot's options), from st,
+// best first. Each is a change to that slot alone, plus the off hand when a main hand fills both
+// hands; moves that break a rule are skipped.
+func (se *searcher) runnersUp(st *state, slot proto.ItemSlot, n int, opts []*option) [][]change {
 	mh, oh := proto.ItemSlot_ItemSlotMainHand, proto.ItemSlot_ItemSlotOffHand
 	type move struct {
 		value   float64
@@ -1241,7 +1241,7 @@ func (se *searcher) runnersUp(st *state, slot proto.ItemSlot, n int) [][]change 
 	}
 	var moves []move
 	current := st.l.Items[slot].ItemID
-	for _, o := range se.opts[slot] {
+	for _, o := range opts {
 		if o.cand.Item.ID == current {
 			continue
 		}
