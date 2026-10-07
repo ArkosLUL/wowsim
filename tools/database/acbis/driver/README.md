@@ -121,3 +121,17 @@ In `--out`:
   toolchain containers); and a line per Heroic Presence check with its party, kind, who switched,
   seconds and each candidate's raid DPS gain.
 - `chrome-profile/` and `storage-snapshot.json`: the batch. Keep both until both passes are done.
+
+## Checking a pass
+
+`check_sources.py` audits an export against the server catalog: every ranked item must be one the server
+hands out by the run's content phase, from a source kind the run kept, or it exits 1. It takes the roster
+because gear a raider already wears is listed apart, not failed. It re-derives
+`ui/core/optimizer/catalog.ts`'s rule instead of calling it, so a pool builder that stopped filtering
+shows up here.
+
+```sh
+python tools/database/acbis/driver/check_sources.py "$SCRATCH/bis/batch-stage2.json" "$SCRATCH/raid.json"
+```
+
+`--catalog` overrides the checkout's.
