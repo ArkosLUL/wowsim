@@ -300,6 +300,8 @@ type state struct {
 	pairs float64
 	// The weapon specialization's expertise against the seed's (see surrogate.racialDelta).
 	racial float64
+	// The weapon talents' terms against the seed's (see surrogate.weaponDelta).
+	weapon float64
 	counts []int8
 	value  float64
 }
@@ -317,7 +319,8 @@ func (se *searcher) newState(l Loadout) *state {
 	}
 	st.pairs = se.s.pairCorrection(&st.l)
 	st.racial = se.s.racialDelta(&st.l)
-	st.value = se.s.score(st.total, st.resSum+st.pairs, st.counts, st.racial)
+	st.weapon = se.s.weaponDelta(&st.l)
+	st.value = se.s.score(st.total, st.resSum+st.pairs+st.weapon, st.counts, st.racial)
 	return st
 }
 
@@ -366,8 +369,9 @@ func (se *searcher) set(st *state, slot proto.ItemSlot, c ItemChoice) {
 	st.pairs = se.s.pairCorrection(&st.l)
 	if isHand(slot) {
 		st.racial = se.s.racialDelta(&st.l)
+		st.weapon = se.s.weaponDelta(&st.l)
 	}
-	st.value = se.s.score(st.total, st.resSum+st.pairs, st.counts, st.racial)
+	st.value = se.s.score(st.total, st.resSum+st.pairs+st.weapon, st.counts, st.racial)
 }
 
 // change is one slot's new choice.
@@ -400,7 +404,7 @@ func (se *searcher) trial(st *state, changes ...change) float64 {
 		}
 		pairs = se.s.pairCorrection(&l)
 	}
-	return se.s.score(total, res+pairs, se.counts, se.racialAfter(st, changes))
+	return se.s.score(total, res+pairs+se.weaponAfter(st, changes), se.counts, se.racialAfter(st, changes))
 }
 
 // apply makes the changes if the result breaks no rule, and says whether it did. A broken gem rule
@@ -708,7 +712,7 @@ func (se *searcher) moveBase(st *state, buf *[]float64, changes ...change) (bare
 		res += se.s.choiceResidual(ch.slot, ch.choice) - st.res[ch.slot]
 		l.Items[ch.slot] = ch.choice
 	}
-	bare = res + se.s.pairCorrection(&l) + se.s.curveValue(total.Subtract(se.s.seedStats))
+	bare = res + se.s.pairCorrection(&l) + se.s.weaponDelta(&l) + se.s.curveValue(total.Subtract(se.s.seedStats))
 	for i, n := range se.counts {
 		if n >= 2 {
 			bare += se.s.sets[i].value(int(n))
