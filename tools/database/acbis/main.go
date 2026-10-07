@@ -10,6 +10,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"slices"
+	"strings"
 	"text/tabwriter"
 	"time"
 
@@ -95,6 +97,34 @@ func lookUpGUIDs(raid *azerothcore.Roster) (map[string]uint32, error) {
 	return azerothcore.CharacterGUIDs(db, names)
 }
 
+// reportBisDeltas names every subject whose blocks carry no per-rank deltas, with the count that
+// carry them, so a gate that starts matching the wrong subjects doesn't pass unnoticed.
+func reportBisDeltas(dataset *azerothcore.BisDataset) {
+	withDeltas := 0
+	for _, subject := range dataset.Subjects {
+		var reasons []string
+		for _, block := range dataset.Blocks {
+			if block.SubjectID != subject.ID || block.NoDeltas == "" {
+				continue
+			}
+			reason := fmt.Sprintf("phase %d: %s", block.ContentPhase, block.NoDeltas)
+			if !slices.Contains(reasons, reason) {
+				reasons = append(reasons, reason)
+			}
+		}
+		if len(reasons) == 0 {
+			withDeltas++
+			continue
+		}
+		name := azerothcore.BisClassNames[subject.ClassID] + " " + subject.SpecName
+		if subject.Kind == azerothcore.BisSubjectRoster {
+			name = fmt.Sprintf("%s (%s)", subject.Name, name)
+		}
+		fmt.Printf("no deltas for %s: %s\n", name, strings.Join(reasons, "; "))
+	}
+	fmt.Printf("%d of %d subjects carry deltas\n", withDeltas, len(dataset.Subjects))
+}
+
 // printSummary includes how long sending every block takes, since that's what a 255-byte wire makes
 // slow.
 func printSummary(dataset *azerothcore.BisDataset) {
@@ -103,6 +133,7 @@ func printSummary(dataset *azerothcore.BisDataset) {
 	}
 	fmt.Printf("dataset %s: sim %s, catalog %s, objective %s, fingerprint %s\n",
 		dataset.Version, dataset.SimCommit, dataset.CatalogDate, dataset.Objective, dataset.Fingerprint)
+	reportBisDeltas(dataset)
 
 	type totals struct{ phases, bytes, frames int }
 	perSubject := map[int]*totals{}

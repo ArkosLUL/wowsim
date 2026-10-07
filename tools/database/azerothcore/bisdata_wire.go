@@ -16,7 +16,7 @@ import (
 // when old addons can't read it.
 const (
 	BisAddonPrefix     = "BIST"
-	BisProtocolVersion = 1
+	BisProtocolVersion = 2
 	// 3.3.5a addon messages carry prefix, tab and message in at most this many bytes
 	BisMaxWireLength = 255
 	// the optimizer's pick plus up to 5 runners-up
@@ -40,20 +40,21 @@ type BisSlot struct {
 	Gems []int32
 	// server ItemModType ids, both 0 for none
 	ReforgeFrom, ReforgeTo int32
-	// rank 1's score over rank 2's, rounded, in J's units: reference-stat points (AP, SP or armor)
-	// for own metrics, raid DPS for the raid objective. Needs a rank 2.
-	Delta    int32
-	HasDelta bool
+	// one value per rank from 2 upward: that rank's loss against rank 1, in tenths of a percent of
+	// rank 1's damage, positive meaning worse. Empty for none; otherwise len(Items)-1 values.
+	Deltas []int32
 }
 
 // EncodeBlock writes a block's payload: its slots joined with ';', each
 //
-//	<slot>:<item>[,<item>...][(<enh>[,<enh>...])][+<delta>]
+//	<slot>:<item>[,<item>...][(<enh>[,<enh>...])][+<delta>[,<delta>...]]
 //
 // slot is the proto ItemSlot number. An enh is e<enchant spell>, g<gem item> or r<from>-<to> for a
-// reforge, in that order, gems in socket order. delta can be negative, as in "+-3". For example
-// "0:51227,50712(e59954,g41398,g40111,r31-37)+142". The result is plain ASCII with no '~', '|' or
-// tab, so it travels inside an addon message as is.
+// reforge, in that order, gems in socket order. The deltas are one per rank from 2 upward, each that
+// rank's loss against rank 1 in tenths of a percent of rank 1's damage, so a slot carries either none
+// or one fewer than it has items. A value can be negative, as in "+-3,5". For example
+// "0:51227,50712,50713(e59954,g41398,g40111,r31-37)+4,21". The result is plain ASCII with no '~', '|'
+// or tab, so it travels inside an addon message as is.
 func EncodeBlock(block BisBlock) (string, error) {
 	if len(block.Slots) == 0 {
 		return "", errors.New("block has no slots")
@@ -80,8 +81,14 @@ func EncodeBlock(block BisBlock) (string, error) {
 		if enhs := slot.enhancements(); len(enhs) > 0 {
 			sb.WriteString("(" + strings.Join(enhs, ",") + ")")
 		}
-		if slot.HasDelta {
-			sb.WriteString("+" + strconv.Itoa(int(slot.Delta)))
+		if len(slot.Deltas) > 0 {
+			sb.WriteByte('+')
+			for j, delta := range slot.Deltas {
+				if j > 0 {
+					sb.WriteByte(',')
+				}
+				sb.WriteString(strconv.Itoa(int(delta)))
+			}
 		}
 	}
 	return sb.String(), nil
@@ -102,11 +109,8 @@ func checkBisSlot(slot BisSlot) error {
 			return fmt.Errorf("slot %d ranks item %d twice", slot.Slot, id)
 		}
 	}
-	if slot.HasDelta && len(slot.Items) < 2 {
-		return fmt.Errorf("slot %d has a delta but no rank 2", slot.Slot)
-	}
-	if !slot.HasDelta && slot.Delta != 0 {
-		return fmt.Errorf("slot %d has delta %d without HasDelta", slot.Slot, slot.Delta)
+	if n := len(slot.Deltas); n > 0 && n != len(slot.Items)-1 {
+		return fmt.Errorf("slot %d has %d deltas for %d items, want %d", slot.Slot, n, len(slot.Items), len(slot.Items)-1)
 	}
 	if slot.Enchant < 0 {
 		return fmt.Errorf("slot %d has enchant %d", slot.Slot, slot.Enchant)
@@ -169,11 +173,13 @@ func decodeBisSlot(text string) (BisSlot, error) {
 	slot.Slot = proto.ItemSlot(slotID)
 
 	if i := strings.IndexByte(rest, '+'); i >= 0 {
-		delta, err := parseBisInt(rest[i+1:])
-		if err != nil {
-			return slot, fmt.Errorf("delta: %w", err)
+		for _, text := range strings.Split(rest[i+1:], ",") {
+			delta, err := parseBisInt(text)
+			if err != nil {
+				return slot, fmt.Errorf("delta: %w", err)
+			}
+			slot.Deltas = append(slot.Deltas, delta)
 		}
-		slot.Delta, slot.HasDelta = delta, true
 		rest = rest[:i]
 	}
 

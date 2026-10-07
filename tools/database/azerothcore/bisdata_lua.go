@@ -20,7 +20,7 @@ import (
 //   - Bistooltip_server_roster: roster subjects by character guid, each with name, class, spec,
 //     raid_index and phases, where phases[phase key] is a list of slots like the above.
 //
-// Slots also get extra = {delta, reforge = {from, to}} when they have either, which leaves the slot
+// Slots also get extra = {deltas, reforge = {from, to}} when they have either, which leaves the slot
 // itself with only the shipped lists' keys: slot_name, enhs and the ranked item ids.
 func WriteBisLua(w io.Writer, dataset *BisDataset) error {
 	subjects := map[int]BisSubject{}
@@ -125,8 +125,12 @@ func luaSlot(slot BisSlot, classID int32) string {
 		`["enhs"] = ` + luaList(enhs),
 	}
 	var extra []string
-	if slot.HasDelta {
-		extra = append(extra, `["delta"] = `+strconv.Itoa(int(slot.Delta)))
+	if len(slot.Deltas) > 0 {
+		values := make([]string, len(slot.Deltas))
+		for i, delta := range slot.Deltas {
+			values[i] = strconv.Itoa(int(delta))
+		}
+		extra = append(extra, `["deltas"] = `+luaList(values))
 	}
 	if slot.ReforgeFrom != 0 {
 		extra = append(extra, fmt.Sprintf(`["reforge"] = { ["from"] = %d, ["to"] = %d }`, slot.ReforgeFrom, slot.ReforgeTo))

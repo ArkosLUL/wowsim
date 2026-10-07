@@ -25,12 +25,14 @@ func bisResult(phase int32, items map[proto.ItemSlot]*proto.ItemSpec, alts ...*p
 	for slot, item := range items {
 		equipment[slot] = item
 	}
+	// a score of 1000 makes each alternative's loss in tenths of a percent its score delta's magnitude
 	return &proto.OptimizerResult{
-		Best:         &proto.OptimizerLoadoutResult{Equipment: &proto.EquipmentSpec{Items: equipment}},
+		Best:         &proto.OptimizerLoadoutResult{Equipment: &proto.EquipmentSpec{Items: equipment}, Score: 1000},
 		Alternatives: alts,
-		Settings:     &proto.OptimizerSettings{ContentPhase: phase},
-		SimCommit:    "0123456789abcdef0123456789abcdef01234567",
-		CatalogDate:  "2026-09-19",
+		Settings: &proto.OptimizerSettings{ContentPhase: phase,
+			MetricWeights: &proto.OptimizerMetrics{Dps: 1}},
+		SimCommit:   "0123456789abcdef0123456789abcdef01234567",
+		CatalogDate: "2026-09-19",
 	}
 }
 
@@ -117,6 +119,8 @@ func TestBuildBisBlock(t *testing.T) {
 		bisAlt(proto.ItemSlot_ItemSlotHead, 51866, -30),
 		bisAlt(proto.ItemSlot_ItemSlotHead, 51001, -50),
 		bisAlt(proto.ItemSlot_ItemSlotMainHand, 50731, -12),
+		// beats the pick and lands on a half: a negative delta, rounded away from zero
+		bisAlt(proto.ItemSlot_ItemSlotMainHand, 50732, 2.5),
 		// alternatives for an empty slot go nowhere
 		bisAlt(proto.ItemSlot_ItemSlotOffHand, 50616, -2),
 	)
@@ -124,9 +128,10 @@ func TestBuildBisBlock(t *testing.T) {
 	block, warnings := BuildBisBlock(result, testEnchants)
 	want := BisBlock{Slots: []BisSlot{
 		{Slot: proto.ItemSlot_ItemSlotHead, Items: []int32{51227, 50712, 50713, 51866, 51000, 51001}, Enchant: 59954,
-			Gems: []int32{41398, 40111}, ReforgeFrom: 31, ReforgeTo: 37, Delta: 6, HasDelta: true},
+			Gems: []int32{41398, 40111}, ReforgeFrom: 31, ReforgeTo: 37, Deltas: []int32{6, 20, 30, 40, 50}},
 		{Slot: proto.ItemSlot_ItemSlotNeck, Items: []int32{50633}},
-		{Slot: proto.ItemSlot_ItemSlotMainHand, Items: []int32{50730, 50731}, Enchant: 59621, Delta: 12, HasDelta: true},
+		{Slot: proto.ItemSlot_ItemSlotMainHand, Items: []int32{50730, 50732, 50731}, Enchant: 59621,
+			Deltas: []int32{-3, 12}},
 	}}
 	if !reflect.DeepEqual(block, want) {
 		t.Errorf("got  %+v\nwant %+v", block, want)
@@ -134,6 +139,60 @@ func TestBuildBisBlock(t *testing.T) {
 	if len(warnings) != 2 || !strings.Contains(warnings[0], "runners-up [51002]") ||
 		!strings.Contains(warnings[1], "enchant effect 9999") {
 		t.Errorf("warnings = %q", warnings)
+	}
+}
+
+// A delta is a share of the subject's own damage, so it only travels when the objective is exactly
+// that. Anything else has to leave the whole group off the slot.
+func TestBuildBisBlockDeltaGate(t *testing.T) {
+	withAlt := func() *proto.OptimizerResult {
+		return bisResult(1, map[proto.ItemSlot]*proto.ItemSpec{proto.ItemSlot_ItemSlotHead: {Id: 51227}},
+			bisAlt(proto.ItemSlot_ItemSlotHead, 50712, -25.4))
+	}
+	// unset weights score DPS alone, and weights win over the slider when both are set
+	noWeights := withAlt()
+	noWeights.Settings.MetricWeights = nil
+	dpsWithSlider := withAlt()
+	dpsWithSlider.Settings.TankSurvival = 0.7
+	for comment, result := range map[string]*proto.OptimizerResult{
+		"own DPS":                 withAlt(),
+		"no weights at all":       noWeights,
+		"DPS weights plus slider": dpsWithSlider,
+	} {
+		block, _ := BuildBisBlock(result, testEnchants)
+		if want := []int32{25}; !reflect.DeepEqual(block.Slots[0].Deltas, want) {
+			t.Errorf("%s: deltas %v, want %v", comment, block.Slots[0].Deltas, want)
+		}
+		if reason := bisNoDeltaReason(result); reason != "" {
+			t.Errorf("%s: %s", comment, reason)
+		}
+	}
+
+	raidDPS := withAlt()
+	raidDPS.Settings.Objective = proto.OptimizerObjective_OptimizerObjectiveRaidDps
+	healer := withAlt()
+	healer.Settings.MetricWeights = &proto.OptimizerMetrics{Hps: 1}
+	mixed := withAlt()
+	mixed.Settings.MetricWeights = &proto.OptimizerMetrics{Dps: 1, Tps: 0.2}
+	slider := withAlt()
+	slider.Settings.MetricWeights, slider.Settings.TankSurvival = nil, 0.7
+	zeroScore := withAlt()
+	zeroScore.Best.Score = 0
+	for comment, result := range map[string]*proto.OptimizerResult{
+		"a tank run":           tankRun(withAlt()),
+		"the raid objective":   raidDPS,
+		"a healer's weights":   healer,
+		"DPS plus threat":      mixed,
+		"the tank slider only": slider,
+		"a zero best score":    zeroScore,
+	} {
+		block, _ := BuildBisBlock(result, testEnchants)
+		if n := len(block.Slots[0].Deltas); n != 0 {
+			t.Errorf("%s: %d deltas", comment, n)
+		}
+		if bisNoDeltaReason(result) == "" {
+			t.Errorf("%s: no reason given", comment)
+		}
 	}
 }
 
@@ -197,6 +256,16 @@ func TestBuildBisDataset(t *testing.T) {
 	}
 	if want := []string{"0:40000", "0:45000", "0:40002", "0:50000", "0:40001", "0:40003"}; !reflect.DeepEqual(payloads, want) {
 		t.Errorf("payloads %v, want %v", payloads, want)
+	}
+	// the exporter names these subjects, so the reason has to reach the block
+	var noDeltas []int
+	for _, block := range dataset.Blocks {
+		if block.NoDeltas != "" {
+			noDeltas = append(noDeltas, block.ID())
+		}
+	}
+	if want := []int{21, 33}; !reflect.DeepEqual(noDeltas, want) {
+		t.Errorf("blocks without deltas %v, want %v (Bear's tank run and Unholy's raid objective)", noDeltas, want)
 	}
 
 	wantFingerprint := CompositionFingerprint([]BisCompositionMember{{6, 1}, {1, 2}, {5, 1}, {11, 1}})
@@ -506,7 +575,7 @@ func testDataset() *BisDataset {
 			{SubjectID: 1, ContentPhase: 1, Payload: "0:51227,50712(e59954,g41398,g40111,r31-37)+142;16:50462", Checksum: "11111111",
 				Block: BisBlock{Slots: []BisSlot{
 					{Slot: proto.ItemSlot_ItemSlotHead, Items: []int32{51227, 50712}, Enchant: 59954, Gems: []int32{41398, 40111},
-						ReforgeFrom: 31, ReforgeTo: 37, Delta: 142, HasDelta: true},
+						ReforgeFrom: 31, ReforgeTo: 37, Deltas: []int32{142}},
 					{Slot: proto.ItemSlot_ItemSlotRanged, Items: []int32{50462}},
 				}}},
 			{SubjectID: 2, ContentPhase: 4, Payload: "1:50633", Checksum: "22222222",
@@ -551,7 +620,7 @@ Bistooltip_server_roster = {
         ["raid_index"] = 0,
         ["phases"] = {
             ["T7"] = {
-                [1] = { ["slot_name"] = "Head", ["enhs"] = { [1] = { ["type"] = "spell", ["id"] = 59954 }, [2] = { ["type"] = "item", ["id"] = 41398 }, [3] = { ["type"] = "none", ["id"] = 0 }, [4] = { ["type"] = "item", ["id"] = 40111 } }, ["extra"] = { ["delta"] = 142, ["reforge"] = { ["from"] = 31, ["to"] = 37 } }, [1] = 51227, [2] = 50712 },
+                [1] = { ["slot_name"] = "Head", ["enhs"] = { [1] = { ["type"] = "spell", ["id"] = 59954 }, [2] = { ["type"] = "item", ["id"] = 41398 }, [3] = { ["type"] = "none", ["id"] = 0 }, [4] = { ["type"] = "item", ["id"] = 40111 } }, ["extra"] = { ["deltas"] = { [1] = 142 }, ["reforge"] = { ["from"] = 31, ["to"] = 37 } }, [1] = 51227, [2] = 50712 },
                 [2] = { ["slot_name"] = "Relic", ["enhs"] = { }, [1] = 50462 },
             },
         },
