@@ -1952,7 +1952,7 @@ Left: Combat Rogue P3 Normal's −85 (its verified picks sit 350–400 under the
 enchant residual is a lead); a cap-prone stat still sims one knot past Max, up to ratio² × Max (+65536 hit at
 Quick).
 
-### BIS-ALTS-MEASURED (wave Z4)
+### BIS-ALTS-MEASURED (wave Z4, done)
 
 A slot's alternatives are the surrogate's top five (`alternativesPerSlot`, `searcher.runnersUp`), picked before
 anything is simmed, so an item whose value isn't in its stats (an idol, a weapon's damage) ranks only if the
@@ -1993,16 +1993,43 @@ Golden-neutral. **Owns:** `sim/optimizer/`; the optimizer requests' seed in `ui/
 
 #### As built
 
-**Lists.** `neighborhood` sims each slot's top 15 by surrogate (`candidatesPerSlot`) and reports the best 5 by measured delta. The race is as before (first 3 per slot, the rest only if none moved the best). `rank` then tops up each slot's best 7 (`rankedPerSlot`) to `budget.Iterations`, not the pick's verify-raced count (that cost 4x), and cuts to 5, so the order doesn't rest on the shards `race` gave an alternative it dropped early; fury Normal still has 29 of 85 adjacent reported pairs inside 2 se (the `-decisions` trace prints the count). Exact ties go to the item with a modeled effect. `priceUnpriced`'s bar is the 15th candidate. The run's budget grows by `alternativesShare` (1.0) of its starting budget before the stage: at 0.5 Quick's stage hit the cap and its lists changed. `OptimizerSlotAlternative` is unchanged.
+**Lists.** `neighborhood` sims each slot's top 15 by surrogate (`candidatesPerSlot`) and reports the best 5 by
+measured delta. The race is as before (first 3 per slot, the rest only if none moved the best). `rank` then tops up
+each slot's best 7 (`rankedPerSlot`) to `budget.Iterations`, not the pick's verify-raced count (that cost 4x), and
+cuts to 5, so the order doesn't rest on the shards `race` gave an alternative it dropped early; fury Normal still
+has 29 of 85 adjacent reported pairs inside 2 se (the `-decisions` trace prints the count). Exact ties go to the
+item with a modeled effect. `priceUnpriced`'s bar is the 15th candidate. The run's budget grows by
+`alternativesShare` (1.0) of its starting budget before the stage: at 0.5 Quick's stage hit the cap and its lists
+changed. `OptimizerSlotAlternative` is unchanged.
 
-**Weapon cause.** `runnersUp` dropped every weapon move that broke a gem rule the changed slots' gems couldn't fix. `moveTo` configures the new weapon without gems, so a socketless weapon replacing the one that carried the head meta's gem failed `apply` ("inactive meta (Head 41285): needs 1*blue >= 2, has 22 red, 1 yellow, 1 blue"), and only weapons with sockets, the one-handers, survived. Angry at Quick: Stormrune, Earthshaper, Worldcarver and Betrayer were priced and first by trial (−677 to −862 against the pick), yet `runnersUp` returned 7 moves, none of them. The prices were right: for Nightwarrior's six top pairings, trial and a fresh 1000-iteration sim agree within 20 (−314.8 / −318.5, −332.4 / −328.3).
-Fix: `runnersUp` applies with `applyWith(wide)`, a second gem DP over all slots that puts each other slot's gems back wherever the loadout still passes (`regemWide`). The move lists those slots' changes (Angry: chest 46146) and `describes` counts them. `search`'s forced runners-up take the same moves. Weapon picks didn't move in the four cases. In the slow suite only combat rogue's picks moved: Quick adopts main hand 46969 (+113.3 ± 6.8), Normal off hand 47001 (+110.3 ± 2.0) and a ring; J +100.1 / +151.4.
-Nightwarrior isn't this bug: one-hander + dagger pairings sim at −3.0 to −3.5% (Normal −403 to −479), and Lotrafen, now among the 15, lands 9th at −3.7%. The surrogate misses one thing there: after round 0 adopts neck 44664, the same pairing sims 168 worse (neck +38 alone, −168 with the off hand) where the surrogate holds −330. The measured ranking absorbs it.
-Ecoterrorist's idols: Corruptor sims to the digit like the dead idols (−380.3 ± 2.5 each), so the 7 Oct gap (−2.50 / −2.63%) was the per-run seed; the probes agree (Corruptor 12858.6, Shooting Star 12860.0). The old list was 5 of the 8 in pool order.
+**Weapon cause.** `runnersUp` dropped every weapon move that broke a gem rule the changed slots' gems couldn't fix.
+`moveTo` configures the new weapon without gems, so a socketless weapon replacing the one that carried the head
+meta's gem failed `apply` ("inactive meta (Head 41285): needs 1*blue >= 2, has 22 red, 1 yellow, 1 blue"), and only
+weapons with sockets, the one-handers, survived. Angry at Quick: Stormrune, Earthshaper, Worldcarver and Betrayer
+were priced and first by trial (−677 to −862 against the pick), yet `runnersUp` returned 7 moves, none of them. The
+prices were right: for Nightwarrior's six top pairings, trial and a fresh 1000-iteration sim agree within 20
+(−314.8 / −318.5, −332.4 / −328.3).
+Fix: `runnersUp` applies with `applyWith(wide)`, a second gem DP over all slots that puts each other slot's gems
+back wherever the loadout still passes (`regemWide`). The move lists those slots' changes (Angry: chest 46146) and
+`describes` counts them. `search`'s forced runners-up take the same moves. Weapon picks didn't move in the four
+cases. In the slow suite only combat rogue's picks moved: Quick adopts main hand 46969 (+113.3 ± 6.8), Normal off
+hand 47001 (+110.3 ± 2.0) and a ring; J +100.1 / +151.4.
+Nightwarrior isn't this bug: one-hander + dagger pairings sim at −3.0 to −3.5% (Normal −403 to −479), and Lotrafen,
+now among the 15, lands 9th at −3.7%. The surrogate misses one thing there: after round 0 adopts neck 44664, the
+same pairing sims 168 worse (neck +38 alone, −168 with the off hand) where the surrogate holds −330. The measured
+ranking absorbs it.
+Ecoterrorist's idols: Corruptor sims to the digit like the dead idols (−380.3 ± 2.5 each), so the 7 Oct gap (−2.50
+/ −2.63%) was the per-run seed; the probes agree (Corruptor 12858.6, Shooting Star 12860.0). The old list was 5 of
+the 8 in pool order.
 
-**Seed.** `pinOptimizerSeed` (`pool_builder.ts`) sets the request's seed to the sim's fixed seed, else `DEFAULT_OPTIMIZER_SEED` (1, Go's `defaultRandomSeed`); the tab and batch pass `getFixedRngSeed()`, and the batch's race-compare request pins too. Best score over seeds 1 / 2 / 3 (Quick, the 7 Oct roster): Angry 10699.9 / 10743.2 / 10750.2 (spread 0.47%), Mighty 11526.9 / 11539.7 / 11458.8 (0.70%). One raider twice through the driver gives the identical result, elapsed aside (all four cases).
+**Seed.** `pinOptimizerSeed` (`pool_builder.ts`) sets the request's seed to the sim's fixed seed, else
+`DEFAULT_OPTIMIZER_SEED` (1, Go's `defaultRandomSeed`); the tab and batch pass `getFixedRngSeed()`, and the batch's
+race-compare request pins too. Best score over seeds 1 / 2 / 3 (Quick, the 7 Oct roster): Angry 10699.9 / 10743.2 /
+10750.2 (spread 0.47%), Mighty 11526.9 / 11539.7 / 11458.8 (0.70%). One raider twice through the driver gives the
+identical result, elapsed aside (all four cases).
 
-**Cases** (Normal, driver, the 7 Oct batch against now; other slots changed with the seed; probes are J against the probe wearing the pick, in Angry's worn gear, so sizes compare loosely):
+**Cases** (Normal, driver, the 7 Oct batch against now; other slots changed with the seed; probes are J against the
+probe wearing the pick, in Angry's worn gear, so sizes compare loosely):
 
 | Slot | Before | After | Probes |
 |---|---|---|---|
@@ -2012,9 +2039,13 @@ Ecoterrorist's idols: Corruptor sims to the digit like the dead idols (−380.3 
 | Nightwarrior main hand | pairings −3.0 to −3.7 | pairings −3.0 to −3.5 | Lotrafen −0.4 |
 | Mighty main hand | Voldrethar −6.2, Dragon + axe −16.5 … | Worldcarver −5.7, Earthshaper −8.8, Jawbone −14.9, Inevitable Defeat −16.2, Dragon + axe −16.7 | none |
 
-Driver cost at Normal: sims 1.57M → 2.05M (Angry), 1.39M → 1.95M, 1.45M → 1.77M, 1.25M → 1.71M (1.22 to 1.40x); wall 95 → 138 s, 89 → 130, 56 → 75, 66 → 91.
+Driver cost at Normal: sims 1.57M → 2.05M (Angry), 1.39M → 1.95M, 1.45M → 1.77M, 1.25M → 1.71M (1.22 to 1.40x);
+wall 95 → 138 s, 89 → 130, 56 → 75, 66 → 91.
 
-**Tests.** `TestAlternativesAreTheMeasuredBest`: a fake statless trinket the surrogate ranks last of nine sims at −1 and comes out first (5 candidates miss it). `TestRunnersUpMoveGemsToKeepTheMetaWhenAWeaponLeaves` (`metaweapon_test.go`). `unpriced_test.go`'s `uqFillers` move the bar to the 15th. `slow_test.go` logs each stage's sims.
+**Tests.** `TestAlternativesAreTheMeasuredBest`: a fake statless trinket the surrogate ranks last of nine sims at
+−1 and comes out first (5 candidates miss it). `TestRunnersUpMoveGemsToKeepTheMetaWhenAWeaponLeaves`
+(`metaweapon_test.go`). `unpriced_test.go`'s `uqFillers` move the bar to the 15th. `slow_test.go` logs each stage's
+sims.
 
 Slow suite (`tmp/slow-after.log`), 12 of 12 pass; base `z3-rebaseline`, walls on a loaded host:
 
@@ -2027,6 +2058,8 @@ Slow suite (`tmp/slow-after.log`), 12 of 12 pass; base `z3-rebaseline`, walls on
 | prot paladin p3 | −11727.8 | −11791.0 | 144k → 222k / 1,427k → 1,893k | 27.3k → 105k / 34.5k → 501k | 0.9 → 4.2 / 1.6 → 19.5 s |
 | feral tank p2 | −425.2 | −427.2 | 156k → 228k / 1,317k → 1,806k | 37.8k → 110k / 66.5k → 556k | 1.4 → 5.2 / 3.0 → 26.1 s |
 
-Whole runs cost 1.5 to 1.7x at Quick and 1.3 to 1.6x at Normal. The ranking top-up is most of Normal's stage (fury: 416k of 486k).
+Whole runs cost 1.5 to 1.7x at Quick and 1.3 to 1.6x at Normal. The ranking top-up is most of Normal's stage (fury:
+416k of 486k).
 
-Left: the surrogate overprices a one-hander's pairing next to some items (Nightwarrior's neck), so a good two-hander can sit below the 15; Corruptor ties with the dead idols.
+Left: the surrogate overprices a one-hander's pairing next to some items (Nightwarrior's neck), so a good
+two-hander can sit below the 15; Corruptor ties with the dead idols.

@@ -161,14 +161,17 @@ pass doesn't repeat.
 
 ## Current wave
 
-- Wave: Z4, planned on this commit, on base `01731f687` (master's `7b29c6b99` merged in): BIS-ALTS-MEASURED alone,
-  offline. Next, Z5: run 1, every item's code stages, and the live stages of EC-CORE-FIX3,
+- Wave: Z4, landed (master fast-forwarded to this close-out). Next, Z5, planned: run 1, every item's code
+  stages, and the live stages of EC-CORE-FIX3,
   EC-PET-FIX2 and EC-CLASS-FIX2, which need no rebuild; then the user rebuilds with EC-THREAT-FIX4's C++; run 2:
   its live stage. Integrate EC-CORE-FIX3, EC-PET-FIX2, EC-CLASS-FIX2, EC-THREAT-FIX4 in that order.
-  Z3 landed. Its item notes: `G:\DevStuff\GitHub\.wave-loop\bis-{oh-pair,quick-alts,weapon-pair,curves}-tmp`.
+  Z4's item notes: `G:\DevStuff\GitHub\.wave-loop\bis-alts-measured-tmp`; the peer's measured data:
+  `G:\DevStuff\GitHub\.wave-loop\bis-measured`.
   Prod runs X's `25cb9dddc` (no `rollback-q` image: its layers were gone), without Y's and Z's sim changes.
 - Open: the e2e-coverage backlog Z5 leaves, sim-performance's Left items, the bis-optimizer backlog (Z3's As
-  builts: the enchant residual, Mutilate's pair, Combat Rogue P3 Normal), then the deferred BiS chain.
+  builts: the enchant residual, Mutilate's pair, Combat Rogue P3 Normal; Z4's: the surrogate overpricing a
+  one-hander's pairing, stage 2 and the Heroic Presence checks not yet run on the new lists, whether
+  Ecoterrorist's rotation casts Mangle (Idol of the Corruptor sims like a dead idol)), then the deferred BiS chain.
   Closed as not sim gaps: the sheet fields the server shows raw (per-school crit, Blood-Gorged, Mace and Holy
   Specialization), which the fixture README explains.
 - Deferred (the user's calls, 2026-10-02, 10-03, 10-05 and 10-07), once the other items are done and only on the
@@ -182,7 +185,7 @@ pass doesn't repeat.
   - Then the BiS tooltip dataset (acbis driver, both stages, fresh `--out`, then `acbis`; the import needs
     the OK), the changed builds' stat weights, and the perf harness's `opt_*` scenarios (`update.sh`, a new
     baseline; the raid25 dumps in `_dump/optimizer_dump_test.go` still build uncut pools).
-- Workflow runIds: Z3's `wf_9aabe6e6-7af` (all four); Z2's `wf_7c79ba74-4ca` (code stages) and `wf_7e9c6966-820` (live stages, BIS-ALTS); Z's `wf_8821da6d-91f` (all five); Y's `wf_e58e8b14-102` (all four), `wf_d290cc37-ee6` and `wf_fe29d895-a35` (EC-TICK-FIX's rest and
+- Workflow runIds: Z4's `wf_e9e036c7-5bd`; Z3's `wf_9aabe6e6-7af` (all four); Z2's `wf_7c79ba74-4ca` (code stages) and `wf_7e9c6966-820` (live stages, BIS-ALTS); Z's `wf_8821da6d-91f` (all five); Y's `wf_e58e8b14-102` (all four), `wf_d290cc37-ee6` and `wf_fe29d895-a35` (EC-TICK-FIX's rest and
   review); X2's `wf_b555c578-f46` (code stages), `wf_a0107f34-c7b` (live stages) and `wf_b00ecbe0-79a` (EC-RECHECK's
   live stages again, after an API error); X's `wf_a31ea7ec-8e3`; W's `wf_aa1b462c-590` (code stages) and
   `wf_894cf391-8a3` (live stages); V's `wf_ea73babf-e53`; T2's `wf_5af2b99d-6d0`; T's `wf_8a59e202-2f8`,
@@ -239,6 +242,7 @@ Reckoning that way), but J isn't DPS: see below.
 | Z | 8755.4, +203 / +203 | 10772.2, +596 / +647 | 5048.0, +68 / +101 | 12979.9, +174 / +258 | -16924.7, +5282 / +5172 | -1186.3, +710 / +740 |
 | Z2 | 8771.0, +221 / +235 | 10760.6, +527 / +658 | 5044.5, +68 / +101 | 12972.8, +161 / +218 | -17045.6, +5214 / +5178 | -1160.0, +704 / +733 |
 | Z3 | 8771.0, +216 / +202 | 10760.6, +665 / +573 | 5044.5, +92 / +102 | 12972.8, +248 / +253 | -17045.6, +5318 / +5255 | -1160.0, +735 / +733 |
+| Z4 | 8771.0, +216 / +202 | 10760.6, +765 / +725 | 5044.5, +92 / +102 | 12972.8, +248 / +253 | -17045.6, +5318 / +5255 | -1160.0, +735 / +733 |
 
 Quick / Normal. Ret P4 ran at Quick only in wave D, after the glyph fix; its wave C numbers
 (12821.9, +54 / +73) came from a seed that wore the glyph. The two tanks arrive with
@@ -316,6 +320,10 @@ In Z3 the presets held; every J move is BIS-CURVES' (the merge adds none). Quick
 (Fury −5); Normal: Fury −33.5, Combat Rogue −85, Ret +35, Prot Pal +77, the rest flat. Quick sims −5% to +13%
 (BIS-QUICK-ALTS' pricing, BIS-WEAPON-PAIR's probes on the rogue), Normal's +2–6%, Fury's +20% (verification racing
 two close picks). Walls ran beside the live server.
+In Z4 only Combat Rogue moved: weapon moves that drop the meta's gem now reach the search's forced runners-up,
+and it adopts main hand 46969 at Quick, off hand 47001 and a ring at Normal. Sims rose 1.5–1.7× at Quick and
+1.3–1.6× at Normal (the alternatives stage, 15 simmed per slot). One item, so no cross-review: its own review
+covered the wave's whole diff.
 
 ## Sim throughput
 
@@ -652,6 +660,7 @@ crashed before F2, so its column starts there.
 | BIS-QUICK-ALTS | merged | `f10a00c08` | Quick sims the unpriced items that could rank, up to 5% of its budget (+4–6% sims); Normal unchanged |
 | BIS-WEAPON-PAIR | merged | `76d96ec07` | rogue and warrior weapon-type talents priced from both hands by twin-weapon probes; only Combat Rogue Quick moves (the probes' budget) |
 | BIS-CURVES | merged | `c05b8fcb2` | curve knots on a lattice around the seed; Fury P1 Normal's cut and uncut pools within 2 se (+201.9 / +194.8); every case's items or gems move |
+| BIS-ALTS-MEASURED | merged | `803b415ac` | alternatives are the measured best 5 of 15 simmed per slot; weapon moves keep the meta active by moving other slots' gems; the optimizer's seed pinned (the sim's fixed seed, else 1); only Combat Rogue's picks move |
 | wave Z3 cross-review | direct | `5b2538301` | late-priced weapons net out the talent term, the screen pairs one-handers, `off_hand` also marks a dropped off hand, alternatives rebuilt on the final best, Defense cap at D*; goldens unchanged |
 
 Later WIs are added as their wave starts.
