@@ -45,6 +45,8 @@ type BisDatasetBlock struct {
 	Block        BisBlock
 	Payload      string
 	Checksum     string
+	// why the block's slots carry no deltas, "" when they do; see bisNoDeltaReason
+	NoDeltas string
 }
 
 // ID is the block's id on the wire. The addon derives it the same way from SUBJ's subject id and
@@ -253,10 +255,45 @@ func enchantFitsSlot(enchant *proto.UIEnchant, slot proto.ItemSlot) bool {
 		slices.ContainsFunc(enchant.ExtraTypes, func(t proto.ItemType) bool { return core.ItemTypeToSlot(t) == slot })
 }
 
+// bisNoDeltaReason says why a result's score deltas can't become percentages of the subject's own
+// damage, or "" when they can. The objective J is a constant multiple of the subject's DPS with no
+// constant term only when it's the subject's own metrics scored on DPS alone; then the constant
+// cancels in score_delta / score. A raid-DPS objective would give a share of the raid's damage
+// instead, and a tank's threat and survival weights aren't damage at all.
+func bisNoDeltaReason(result *proto.OptimizerResult) string {
+	settings := result.GetSettings()
+	if objective := settings.GetObjective(); objective != proto.OptimizerObjective_OptimizerObjectiveOwnMetrics {
+		return fmt.Sprintf("the objective is %s, not the subject's own metrics", bisObjectiveName(objective))
+	}
+	weights := settings.GetMetricWeights()
+	others := []float64{weights.GetHps(), weights.GetTps(), weights.GetDtps(), weights.GetTmi(), weights.GetPDeath()}
+	weighsOthers := slices.ContainsFunc(others, func(r float64) bool { return r != 0 })
+	switch {
+	case weights.GetDps() == 0 && !weighsOthers:
+		// optimizer.objectiveWeights reads an all-zero weight set as unset: tank_survival above 0 then
+		// scores survival and threat, and without it the run scores DPS alone
+		if survival := settings.GetTankSurvival(); survival > 0 {
+			return fmt.Sprintf("the weights are unset, so tank_survival %g scores survival and threat", survival)
+		}
+	case weights.GetDps() == 0:
+		return "the objective puts no weight on DPS"
+	case weighsOthers:
+		return "the objective weighs metrics besides DPS"
+	}
+	if result.GetBest().GetScore() == 0 {
+		return "the best loadout scored 0"
+	}
+	return ""
+}
+
 // BuildBisBlock takes each filled slot's best item and its runners-up, best first, with the best
-// item's enchant, gems and reforge. Anything it has to leave out comes back as a warning.
+// item's enchant, gems and reforge, plus each runner-up's loss against rank 1 where
+// bisNoDeltaReason allows it, and the off hand a runner-up was simmed with where the optimizer says it
+// isn't the best loadout's. Anything it has to leave out comes back as a warning.
 func BuildBisBlock(result *proto.OptimizerResult, enchants EnchantSpells) (BisBlock, []string) {
 	var warnings []string
+	deltas := bisNoDeltaReason(result) == ""
+	bestScore := result.GetBest().GetScore()
 	alternatives := map[proto.ItemSlot][]*proto.OptimizerSlotAlternative{}
 	for _, alt := range result.GetAlternatives() {
 		alternatives[alt.GetSlot()] = append(alternatives[alt.GetSlot()], alt)
@@ -283,10 +320,15 @@ func BuildBisBlock(result *proto.OptimizerResult, enchants EnchantSpells) (BisBl
 				dropped = append(dropped, id)
 				continue
 			}
-			if len(slot.Items) == 1 {
-				slot.Delta, slot.HasDelta = int32(math.Round(-alt.GetScoreDelta())), true
+			if deltas {
+				slot.Deltas = append(slot.Deltas, int32(math.Round(-alt.GetScoreDelta()/bestScore*1000)))
 			}
 			slot.Items = append(slot.Items, id)
+			// set only where the alternative's off hand isn't the best loadout's, and then holding item 0
+			// when it drops the off hand, so presence is the test and not the id
+			if alt.OffHand != nil {
+				slot.Pairings = append(slot.Pairings, BisPairing{Rank: int32(len(slot.Items)), Item: alt.OffHand.GetId()})
+			}
 		}
 		if len(dropped) > 0 {
 			warnings = append(warnings, fmt.Sprintf("slot %d: runners-up %v don't fit the %d ranks, left out", i, dropped, BisMaxRanks))
@@ -459,7 +501,8 @@ func BuildBisDataset(results []BisResult, roster *Roster, guids map[string]uint3
 			return nil, fmt.Errorf("%s: %w", p.result.Source, err)
 		}
 		dataset.Blocks = append(dataset.Blocks, BisDatasetBlock{SubjectID: subject.ID, ContentPhase: p.phase,
-			Block: block, Payload: payload, Checksum: BisChecksum(payload)})
+			Block: block, Payload: payload, Checksum: BisChecksum(payload),
+			NoDeltas: bisNoDeltaReason(p.result.Result)})
 
 		commits[shortSimCommit(p.result.Result.GetSimCommit())]++
 		catalogDates[p.result.Result.GetCatalogDate()]++

@@ -61,7 +61,9 @@ modifier-key refresh) worth keeping.
   *Yebateli Online* (5 members) is the real one. Virtually every account is a bot that will never run
   this addon — which is why the protocol is pull-only.
 - **Optimizer score J is in reference-stat points** (AP, SP, or Armor for survival;
-  `sim/optimizer/objective.go`), so a slot's delta travels as a rounded integer.
+  `sim/optimizer/objective.go`), but for a pure damage spec J is a constant multiple of DPS, so a delta
+  travels as a share of damage instead: `round(-score_delta / best.score * 1000)` tenths of a percent,
+  the constant cancelling. No DPS figure and no extra sims are needed.
 - **Every enchant in the sim DB has a spell id**, 136 of 226 an item id too. The wire carries the spell,
   which the addon shows as a spell link.
 - **acraid's roster has no GUIDs**; acbis looks them up by name (`-dsn`).
@@ -139,17 +141,22 @@ codec, the module and the addon's decoder all implement. Why it looks the way it
 - **Six ranks per slot:** the optimizer's best plus up to 5 `OptimizerSlotAlternative`s — matching the
   source exactly, so there's no truncation policy to regret. acbis warns about any runner-up past rank
   6 and leaves it out.
-- **Only rank 1's delta travels,** so the tooltip can say what the slot is worth over its runner-up.
-  Full per-item deltas wait until wave H, because pre-H deltas are own-metrics and would mislead.
+- **A delta per rank,** so the tooltip prices every alternative rather than only rank 1's lead. Only
+  where the objective is the subject's own damage alone, which leaves tanks and raid-DPS subjects
+  without one; `BuildBisBlock` says which, and acbis prints them.
+- **A weapon runner-up brings its off hand.** Where a main-hand alternative was simmed with a
+  different off hand, the payload names it, so that rank's percentage prices both hands rather than one
+  slot. `off_hand` present means it changed and id 0 that it goes away, so `BuildBisBlock` tests
+  presence, never the id. No other slot carries one.
 - **Only rank 1 carries enhancements.** Gems and enchants reuse the addon's `enhs` icon renderer; the
   reforge becomes a plain text line.
-- **Sizing,** measured on a fury P1 result extended to 5 alternatives per slot (17 filled slots): ~926 B
-  and 5 frames per block. 25 raiders × 5 phases = 125 roster blocks, up to 30 non-healer addon specs × 5
-  = 150 spec blocks: ~275 blocks, ~255 KB. A cold sync fetches them all: ≈ 1,375 frames at 10 per
-  `SendIntervalMs` (100 ms), **~17 s** from HELLO in the addon harness's model of the module; healers
-  have no blocks, so less in practice.
+- **Sizing,** measured on the imported 21-raider phase-2 dataset: 24,441 B and 121 frames over 21
+  blocks, so 1,164 B and 5.8 frames each, the largest 1,253 B over 6 frames, 147 messages for the lot.
+  25 raiders × 5 phases = 125 roster blocks, up to 30 non-healer addon specs × 5 = 150 spec blocks:
+  ~275 blocks, ~320 KB, ≈1,585 frames at 10 per `SendIntervalMs` (100 ms), so a cold sync runs **~20 s**
+  scaled from the harness's measured 17 s at 1,375 frames; healers have no blocks, so less in practice.
 - **No compression in v1.** Plain decimal stays readable on the wire, which makes bugs in a
-  two-language codec far cheaper to find, and a ~17 s sync once per dataset change isn't worth buying
+  two-language codec far cheaper to find, and a ~20 s sync once per dataset change isn't worth buying
   complexity to fix. Two levers if the measured number annoys: base-36 item ids (~20% off) or raw
   deflate with LibDeflate client-side (~55% off, at the cost of a printable-encoding layer and a second
   way for the codecs to disagree).
@@ -199,7 +206,10 @@ machinery would cost more than it buys.
 **The freeze point.** The wire format above is frozen with Phase 1. The module and the addon's decoder
 are written against it; changing it later means touching three repos and bumping the protocol
 version. A change may skip the bump only while the one installed addon updates with it, as raising
-ranks per slot from 4 to 6 did.
+ranks per slot from 4 to 6 did. Per-rank deltas bumped it to 2: an addon on 1 reads every multi-rank
+slot as a bad delta and drops the block, so the mismatch `ERR` says to update instead of leaving the
+lists silently empty. The off-hand pairing bumped it to 3 for the same reason: a build-2 decoder reads
+the first `(` to the last `)` as the enhancement group, and so rejected 9 of 21 real payloads.
 
 **Gates that need the user**, none of which a session may do on its own:
 
@@ -329,8 +339,13 @@ ways. `Enable = 0` is checked in the harness only.
 **Status:** done, in the addon repo.
 
 - `Bistooltip.lua`: a roster section, "BiS for your raid", above the spec section. Each line reads
-  `<spec icon> <Raider> (<spec>)`, then `T8 BIS +142 / T9 alt 2` on the right, the delta being rank 1's.
-  Under it goes a dim sub-line per reforge, named like mod-reforging's `ItemReforge::StatTypeToString`.
+  `<spec icon> <Raider> (<spec>)`, then `T8 BIS +0.4% / T9 alt 2 -2.2%` on the right: rank 1's lead over
+  rank 2, and what taking an alternative costs. A zero reads `0.0%` unsigned, and an alternative that came
+  out ahead keeps its `+`. Tanks and raid-DPS subjects carry no number.
+  Under it goes a dim sub-line per reforge, named like mod-reforging's `ItemReforge::StatTypeToString`,
+  and one per off hand the hovered runner-up was simmed with: `alt N with <item>`, `with a second <item>`
+  where both hands take the same weapon, or `alt N drops the off hand`. A sub-line names its phases
+  where it doesn't cover every phase on the line.
   With the server selected, spec lines from the shipped list are marked with a grey `(Wowhead)`. Hide specs
   and Highlight spec now apply, and Alt shows everything.
 - Phases are shown up to the one after the viewer's: `min(5, max(0, tier - 12) + 1)`, since tier 13 opens
@@ -384,9 +399,16 @@ Changed from the plan: the six ranks, the BoE coins and the row padding weren't 
 `Core.lua`'s owned-item scan now reads raiders' lists too.
 
 **Verified:**
-- `test/run-tests.sh`: 1,550 checks on a six-rank fixture from `gen-fixture.sh`, 4,929 on the live
-  export's. Deliberately broken copies were each caught. `go test ./tools/database/azerothcore/`
-  passes.
+- `test/run-tests.sh`: 1,905 checks on a six-rank fixture from `gen-fixture.sh`. Deliberately broken
+  copies were each caught. `go test ./tools/database/azerothcore/` passes. The two decoders also agreed
+  on every one of 204,726 differential payloads, each accepted one re-encoding to itself. Three caveats
+  since per-rank deltas: the optimizer results behind that fixture are gone, so it was rebuilt from the
+  messages the module sends for it — items are the originals, delta values are derived, and every
+  multi-rank slot has a group, so the fixture never exercises a dataset mixing subjects with and without
+  one. It carries no pairing group at all, so only hand-written cases cover those; the end-to-end leg
+  was checked against a fixture built from a real export instead. And a fixture built from the live
+  export fails 9 checks, because the harness needs at least one spec subject while the export carries
+  roster raiders only; that assumption predates this change.
 - In the client: Deathsong's `UnitGUID` `0x000000000006A9B9` parses to 436665; the reset after the
   rename; "My raid" and the target preference; aligned rows; BoE coins; and Phase 4's offline-member
   warning. Wintergrasp detection is checked in the harness only.
@@ -398,8 +420,8 @@ Known limits:
 
 ### Phase 6 — Real data, zip, docs
 
-**Status:** done for content phase 2, the one the realm is raiding. Live dataset `abc74401` (sim
-`0ccf8aa60`, catalog 2026-09-19), 21 raiders, imported 2026-10-06. Phases 1 and 3–5 are unrun.
+**Status:** done for content phase 2, the one the realm is raiding. Live dataset `cc5cbd49` (sim
+`c463f2d5f`, catalog 2026-09-19), 21 raiders, imported 2026-10-07. Phases 1 and 3–5 are unrun.
 
 - **Per-spec lists are dropped** (the user's call): the dataset carries roster raiders only, and every
   spec keeps the shipped Wowhead lists.
