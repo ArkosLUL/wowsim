@@ -403,7 +403,7 @@ Left: `nextTick` closed (its modulo costs nothing on this CPU; half its calls ar
 for a whole number of map updates); `Dot.startTickAction`'s per-application action and closures (21% of Elemental's
 allocations, 46% of the raid's); Lightning Bolt's per-cast travel closure (55% of Elemental's); the Shadowfiend
 casting Shadowcrawl on cooldown; `makeCastFunc` starts the cooldown before the GCD and hardcast checks (a
-behaviour bug, moves goldens).
+behaviour bug, moves goldens: EC-CORE-FIX3's).
 
 ## Order
 

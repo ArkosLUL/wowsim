@@ -49,6 +49,7 @@ The live e2e and the replays leave timing, costs, threat, pets, gear and buffs u
 | Y | EC-TICK-FIX (G, FS) · EC-CORE-FIX (G, FS) · EC-PET-FIX (G) · PERF-THREAT | The sim gaps the loop found, core first |
 | Z | EC-THREAT-FIX2 (G, FS, live) · EC-MELEE-FIX (G) · EC-NATURE-FIX (G, live) · EC-ARCANE-FIX (G, live) · PERF-Y | The class gaps, on Y's core |
 | Z2 | EC-THREAT-FIX3 (G, FS, C++, live) · EC-CORE-FIX2 (G, FS) · EC-CLASS-FIX (G, live) · PERF-Z · BIS-ALTS | Z's follow-ups |
+| Z4 | EC-CORE-FIX3 (G, FS, live) · EC-PET-FIX2 (G, live) · EC-CLASS-FIX2 (G, live) · EC-THREAT-FIX4 (G, FS, C++, live) | Z2's follow-ups and Y's pets, before the BiS chain |
 
 U is taken (the UI wave). Versus the INVESTIGATION's order, B7, A3 and A4 moved forward (cheap, independent) and
 C1 moved last (after B6).
@@ -59,38 +60,9 @@ haste stacking beyond EC-BUFFS' pairs. From Y:
   session pass lands up to a world tick sooner, and a player aura put on there or by a hardcast runs up to one short;
   Drain Soul and Mind Sear tick from a target aura, so on the map update, not the caster's grid; a pet's aura on the
   dummy is assumed early (`_updatableObjectList`'s order unconfirmed).
-- Pets: their 2 s scaling and mana regen timers (and the older hit and haste refreshes) count from the summon, not
-  the map update (moves every pet suite); spell crit from intellect (`EnableManaBarWithModifier`; a creature's is a
-  flat 5% plus auras); the Fire Elemental's and Mirror Image's stats are estimates; RaidStats shows Blood Pact
-  unimproved at 1–2 points of Improved Imp.
-- Core: item swaps don't re-check meta activation; heal Penance misses the Illustration stack its 53007 hit gives;
-  goldchar could check meta activation (`HasMetaGemEquipped`).
-- Tooling: a fight mean check's range ends at one iteration's tail (a 1.4x Shadow Bolt passed).
 
 From Z, not in Z2: the 72-point Fury and Balance strings in the gzipped perf scenarios and UI fixtures, which
 pin their requests (the BiS chain's `opt_*` regeneration takes the perf ones).
-
-From Z2:
-- Threat: energize threat has no record (`.simval threat` needs an energize field; Bloodrage's 20 rage should
-  give 100, split); 22845 and 44578's heal threat unprobed; leads: Blood Presence's 50475 heal procs for every
-  DK in it (63611), self Replenishment is 57669 `PERIODIC_ENERGIZE` (the sim's is MP5, no threat), auras the sim
-  applies without a cast skip their level bonus (29131, Invigoration, 55503), Silent Resolve is a holy and
-  shadow school aura plus a spell mod, Chill of the Grave procs per Howling Blast target and Dirge covers
-  Obliterate's runic power.
-- Damage: heals aren't truncated; each SP or AP bonus's own `int32`, a stacked dot's per stack, magic crit
-  before resist; the undead sets' DONE_VERSUS (57943, 29068) still in `DamageDealtMultiplier`; Rage of
-  Rivendare and Tundra Stalker are DoneTotalMod, so they should scale the DK's flat creature-type bonus;
-  Improved Tracking (52783-52788) is a spell mod, the sim's an attack-table multiplier; no live record of
-  Hunter's Mark or Kill Shot.
-- Classes: Blood Tap's rune pick against `spell_dk_death_rune`; Improved Devotion Aura's 63514 healing taken; a
-  Threat of Thassarian off-hand strike rerolls partial Death Rune Mastery; Omen of Clarity from triggered item
-  damage (Starfall's don't roll it live, so recheck 16864); Frostbite's and Mirror Image's chills for Torment the
-  Weak, and Frostbite's Fingers of Frost; Brain Freeze's Blizzard case never fires (the tick is 42938); snare
-  immunity is `IsWorldBoss`; Mental Agility cuts Penance's cost, the server's mask doesn't (618 vs 556), and
-  53000's damage coefficient is 0.1905 against the sim's 0.2290.
-- Tooling: `spellmod_spells.json` stale; spells_audit's procs_audit.csv and spells_missing.csv line refs stale;
-  13376, 13377 and 48332 not in the spelldump; the UI sheet's defense skill leaves out `BonusDefenseSkill`;
-  `druid/innervate.go` adds a `ResourceMetrics` every iteration.
 
 ## Work items
 
@@ -1883,6 +1855,82 @@ Live stage, against the server build of 2026-10-06 19:37 (`3d89793c7` plus the m
   Unholy and BloodTank as the melee stage.
 - Follow-up: priest Mental Agility on Penance (`sim/priest/penance.go`; mask `0x173` in index 1, Penance is
   `0x800000`).
+
+### EC-CORE-FIX3 (Z4; changes goldens, full suite; stages: code, live)
+
+- Heals: `SpellHealingBonusDone` and `SpellHealingBonusTaken` return `uint32` on the server, as damage does; the sim
+  doesn't truncate heals (heal threat follows the amount).
+- Damage left from EC-CORE-FIX2: each SP or AP bonus's own `int32` (class code computes it inline), a stacked dot's
+  per-stack amount (Deadly Poison, Lacerate), magic crit before resist.
+- Creature-type bonuses: the undead sets' DONE_VERSUS (57943, 29068; `sim/common/wotlk/item_sets.go`) leave
+  `DamageDealtMultiplier` for the per-target attack table multiplier, as Troll Beast Slaying did; Rage of Rivendare
+  and Tundra Stalker are DoneTotalMod, so they scale the DK's flat creature-type bonus; Improved Tracking
+  (52783–52788) is a spell mod (aura 107), not an attack-table multiplier: check what it scales on a weapon hit.
+- Casting: `makeCastFunc` (`sim/core/cast.go`) starts the cooldown and shared cooldown before the GCD and hardcast
+  checks, so a direct `Cast` failing them still starts the cooldown.
+- Meta gems: an item swap doesn't re-check meta activation; goldchar could check it (`HasMetaGemEquipped`).
+- UI and tooling: the sheet's defense skill (`ui/core/components/character_stats.tsx`) leaves out
+  `BonusDefenseSkill`; `spellmod_spells.json` stale; `procs_audit.csv` and `spells_missing.csv` regenerated after the
+  fixes (`tools/acore/spellaudit`); a fight's mean check ranges to one iteration's tail (a 1.4× Shadow Bolt passed).
+- Live: a hunter fight with Hunter's Mark up into the execute range, so a record covers the mark and Kill Shot;
+  13376, 13377 and 48332 captured into the spelldump.
+- **Owns:** `sim/core/` but `threat.go`, EC-PET-FIX2's pet paths and EC-THREAT-FIX4's hooks; the undead sets; the
+  DK's Rage of Rivendare and Tundra Stalker hunks; the hunter's Improved Tracking; `character_stats.tsx`; the audit
+  CSVs, `spellmod_spells.json` and the fight check; the hunter fight's cycle and log; their drops and rows.
+- **Goldens:** every suite whose damage or heals truncate; report each.
+
+### EC-PET-FIX2 (Z4; changes goldens; stages: code, live)
+
+- Timers: pets' 2 s scaling and mana regen, and the 3 s hit and 2 s haste refreshes (`sim/core/pet.go`), count from
+  the summon in the sim; the server runs them on the map update.
+- Spell crit from intellect (`EnableManaBarWithModifier`); a creature's is a flat 5% plus auras.
+- Estimates no record covers: the Fire Elemental's stats, AP and weapon (200–360 on the server); Mirror Image's
+  crit and mana. Live: measure them, and the intellect crit, then model what the records show.
+- **Owns:** `sim/core/pet.go` and the pets' scaling and regen; the Fire Elemental's and Mirror Image's stats; their
+  drops and rows.
+- **Goldens:** the pet suites; report each.
+
+### EC-CLASS-FIX2 (Z4; changes goldens; stages: melee, casters, live)
+
+- Death knight: Blood Tap's rune pick against `EffectActivateRune` and `spell_dk_death_rune` (the talent takes over
+  the tapped slot); a Threat of Thassarian off-hand strike rerolls partial Death Rune Mastery (`CAN_PROC_FROM_PROCS`,
+  no cooldown); Chill of the Grave procs per Howling Blast target hit; Dirge's class mask covers Obliterate's runic
+  power; Blood Presence's 50475 heal (63611) procs for every DK in it, and with Improved Blood Presence in the
+  others, on direct and periodic damage from non-triggered spells and auto attacks (the sim: tank DKs, direct hits).
+- Paladin: Improved Devotion Aura's 63514 (+2/4/6% healing taken under the paladin's auras).
+- Warrior: Mace Specialization (`sim/warrior/talents.go`) compares its mask to `ProcMaskEmpty`, which
+  `GetProcMaskForTypes` never returns, so it applies whatever the weapons; once fixed, add it to the optimizer's
+  `weaponTalentsOf` (`sim/optimizer/weapon_talents.go`) and flip `TestWarriorMaceSpecializationIgnoresTheWeapons`.
+- Druid: Omen of Clarity from triggered item damage (16864: `CAN_PROC_FROM_PROCS` plus its CheckProc; Starfall's stars
+  don't roll it live, so recheck); `innervate.go` adds a `ResourceMetrics` every iteration.
+- Mage: Frostbite's and Mirror Image's chills count for Torment the Weak; Frostbite's root rolls Fingers of Frost
+  (`spell_mage.cpp`'s 12494 sync); Brain Freeze's Blizzard case never fires (the tick is 42938); snare immunity is
+  `IsWorldBoss` (a target field would be exact; a proto change goes in contractChangeRequests).
+- Priest: Mental Agility's mask leaves out Penance (server cost 618, sim 556); 53000's damage coefficient is 0.1905,
+  the sim's 0.2290; heal Penance's 53007 hit gives an Illustration of the Dragon Soul stack the sim's doesn't.
+- UI: RaidStats shows Devotion Aura and Blood Pact unimproved at 1–2 points of their talents (`ui/raid/raid_stats.ts`).
+- Live: what each verdict needs, at least Omen of Clarity's recheck, Blood Presence's heal on a DPS DK, and
+  Penance's cost and damage.
+- **Owns:** `sim/{deathknight,paladin,warrior,druid,mage,priest}/` but the other Z4 items' hunks; `weaponTalentsOf`
+  and its test; `raid_stats.ts`'s two rows; their cycles, fights, drops and rows.
+- **Goldens:** those classes' suites; report each.
+
+### EC-THREAT-FIX4 (Z4; changes goldens, full suite; C++; stages: threat, C++ and e2e, live)
+
+- Probe: `.simval threat` gains an energize field, so energize threat gets a record (Bloodrage's 20 rage should give
+  100, split); 22845 (Frenzied Regeneration) and 44578 (Lifeward) heal threat probed.
+- Replenishment from the caster's own spells (Vampiric Touch, Hunting Party, Judgements of the Wise, Enduring
+  Winter, Improved Soul Leech) is 57669 `PERIODIC_ENERGIZE`, whose ticks make the caster's threat; the sim's is MP5,
+  with none.
+- Auras the sim applies without a cast skip their spell's level bonus as assist threat: Bloodrage's 29131 (10),
+  Heartpierce's Invigoration (80), Lifeblood's 55503 (55).
+- Silent Resolve is a holy and shadow school `SPELL_AURA_MOD_THREAT` (8/15/21%) plus a `SPELLMOD_THREAT` on one class
+  mask (14523, 14784, 14785); the sim applies 7/14/20% per spell.
+- Live, after the user rebuilds with this item's C++: `threat.jsonl` re-recorded with the new field and probes.
+- **Owns:** `sim/core/threat.go` and the threat hooks in core; Replenishment's mana and threat; Silent Resolve's and
+  the three auras' threat lines; `tools/simval/threat*.go`; `threat.jsonl`; in the module: `src/`, its SQL if a
+  command changes, `e2e/threat_test.go`, the README's Commands rows and threat section.
+- **Goldens:** every suite whose TPS or mana moves; report each.
 
 ## Orchestrator onboarding (wave S start)
 
