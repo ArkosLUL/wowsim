@@ -38,6 +38,9 @@ const raceSE = 3
 // alternatives returned are the last round's, around the final best, best first within each slot;
 // verified gains every best the rounds adopt.
 func (r *run) neighborhood(s *surrogate, verified []*verifiedLoadout) ([]*proto.OptimizerSlotAlternative, []*verifiedLoadout, error) {
+	if err := r.priceUnpriced(s); err != nil {
+		return nil, verified, err
+	}
 	se := newSearcher(s, r)
 	type alternative struct {
 		slot      proto.ItemSlot
