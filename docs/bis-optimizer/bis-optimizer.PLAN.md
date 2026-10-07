@@ -1767,6 +1767,45 @@ wall at Quick before and after, picks.
 Golden-neutral. **Owns:** a new `sim/optimizer/unpriced.go`, its call in `neighborhood.go`, `surrogate.go`'s
 pricing gate (`candBounds`' unpriced check), their tests.
 
+#### As built
+
+`priceUnpriced` (`unpriced.go`) runs first in `neighborhood`, at Quick only. It lays out `measureEffects`'
+families again (`effectFamilies` on `unmeasured()`, the seed race's surrogate without residuals) and, per
+unlocked slot at the best, keeps the unpriced items that could rank: stats-only trial plus the family's highest
+measured residual (+2 se) reaches the slot's 5th priced alternative (all of them when the family has none
+measured or the slot fewer than 5). These sim at `r.screen` against their family base, slots taking turns,
+each best stats first, until `unpricedShare` (5% of the budget) runs out.
+`r.total` grows by their cost, so the race keeps its budget. Their
+residuals go straight into `s.items`, with `applyEffects`' emptied-off-hand correction: applying `fx` whole would
+unprice weapons `fx.flat` priced.
+Tests (`unpriced_test.go`): Quick reports an unpriced effect trinket, prices best stats first and skips one
+that can't rank; Normal leaves them unpriced.
+
+Screen choice: a diagnostic Quick run pricing every unpriced item moved the top 5 only in prot paladin (trinket 2
+44253; main hand 47973, 48714, 45947) and feral tank (trinkets 42987, 44254), at stats ranks 0–7 and 1, 16 among
+the slot's unpriced items. Tier-capped or weapon-DPS residual bounds did no better (the DPS bound dropped all three
+main hands), so the order is by stats and the allowance sets the depth; zero-stat effect trinkets still come last.
+
+Slow suite, loaded: all 12 pass; J, deltas and picks equal the base log's in every case, Normal's sims too.
+Overlap is Quick's alternatives Normal also lists, summed over slots; "before" is a base-code Quick run with the
+alternatives logged, Normal is the after run's.
+
+| Case | Priced / unpriced / could rank | Quick sims | Overlap |
+|---|---|---|---|
+| fury p1 | 16 / 134 / 16 | 143,250 → 147,250 | 54 → 54 of 85 |
+| combat rogue p3 | 25 / 263 / 178 | 145,250 → 151,500 | 71 → 71 of 85 |
+| fire mage p3 | none unpriced | 131,250, same | 68 → 68 of 85 |
+| ret p4 | 25 / 254 / 260 | 138,000 → 144,250 | 66 → 66 of 80 |
+| prot paladin p3 | 25 / 194 / 78 | 139,000 → 145,250 | 73 → 75 of 85 (trinket 2, main hand +1 each) |
+| feral tank p2 | 25 / 116 / 92 | 151,250 → 157,500 | 67 → 67 of 80 (trinket 1 −1, trinket 2 +1) |
+
+"Could rank" counts per slot, so a trinket can count twice. Quick walls (review run, loaded) 12.2 → 7.4, 12.8 → 13.3,
+3.1 → 3.0, 5.9 → 6.1, 4.5 → 4.9, 6.3 → 5.7 s; an earlier run, under heavier load, swung Normal's as much on identical
+sims (fury 83 → 130 s). `slow_test.go` logs each alternative under `-decisions`.
+
+Left: the screen doesn't pair a one-hand main hand with an off hand, so against a two-hand pick it undervalues
+those (`runnersUp` pairs them after BIS-OH-PAIR).
+
 ### BIS-CURVES (wave Z3)
 
 Response curves (`response.go`) span the pool's stat range (`statRanges`, `surrogate.go`): cap-prone stats get

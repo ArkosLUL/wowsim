@@ -257,6 +257,11 @@ func TestOptimizerSlow(t *testing.T) {
 				for _, w := range result.Warnings {
 					t.Logf("warning: %s", w)
 				}
+				if *decisions {
+					for _, a := range result.Alternatives {
+						t.Logf("alternative %s: %d %+.1f ± %.1f", a.Slot, a.Item.GetId(), a.ScoreDelta, a.ScoreDeltaSe)
+					}
+				}
 
 				// Quick used to leave a clearly better runner-up on the table (BIS-adopt): a short
 				// round could never adopt, only report. It still races each one, so this stays a live
