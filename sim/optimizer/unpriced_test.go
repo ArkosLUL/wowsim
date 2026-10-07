@@ -22,14 +22,22 @@ const (
 	uqWeakDPS = 10
 )
 
+// uqFillers are plain trinkets of 36 to 45 attack power, which push the pool's fifteenth best
+// candidate down to the 35 attack power one.
+var uqFillers = []int32{9700511, 9700512, 9700513, 9700514, 9700515, 9700516, 9700517, 9700518, 9700519, 9700520}
+
 var uqOnce sync.Once
 
 func uqRegister() {
 	uqOnce.Do(func() {
-		core.AddToDatabase(&proto.SimDatabase{Items: []*proto.SimItem{
+		items := []*proto.SimItem{
 			kaItem(uqProc, proto.ItemType_ItemTypeTrinket, stats.Stats{stats.AttackPower: 10}, ""),
 			kaItem(uqWeak, proto.ItemType_ItemTypeTrinket, stats.Stats{stats.AttackPower: 5}, ""),
-		}})
+		}
+		for i, id := range uqFillers {
+			items = append(items, kaItem(id, proto.ItemType_ItemTypeTrinket, stats.Stats{stats.AttackPower: float64(36 + i)}, ""))
+		}
+		core.AddToDatabase(&proto.SimDatabase{Items: items})
 		core.NewItemEffect(uqProc, func(core.Agent) {})
 		core.NewItemEffect(uqWeak, func(core.Agent) {})
 	})
@@ -147,11 +155,11 @@ func TestQuickPricesBestStatsFirst(t *testing.T) {
 }
 
 // An unpriced item whose stats plus the most its family's measured items add can't reach the slot's
-// fifth alternative isn't simmed, even with allowance to spare.
+// fifteenth candidate isn't simmed, even with allowance to spare.
 func TestQuickSkipsUnpricedItemsThatCantRank(t *testing.T) {
-	rn, s := uqRun(t, proto.OptimizerEffort_OptimizerEffortQuick, kaTrinketA)
+	rn, s := uqRun(t, proto.OptimizerEffort_OptimizerEffortQuick, append([]int32{kaTrinketA}, uqFillers...)...)
 	trinket1 := proto.ItemSlot_ItemSlotTrinket1
-	// the family's only measured residual, at most +27: the fifth alternative sits 25 under the seed,
+	// the family's only measured residual, at most +27: the fifteenth candidate sits 25 under the seed,
 	// uqProc's stats 50 under and uqWeak's 55
 	s.items[trinket1][kaTrinketA] = Estimate{Mean: 5, SE: 11}
 	simmed := rn.eval.simmed()

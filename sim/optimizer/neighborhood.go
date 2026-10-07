@@ -1,6 +1,7 @@
 package optimizer
 
 import (
+	"math"
 	"slices"
 
 	"github.com/wowsims/wotlk/sim/core/proto"
@@ -10,22 +11,31 @@ import (
 // const, so tests can shrink it to reach the last round without a long adoption chain.
 var neighborhoodRounds = 5
 
-// alternativesPerSlot is how many runners-up per slot the neighborhood sims and reports.
-// firstRunnersUp of them get simmed before the rest, which only run when none of those moved the best.
+// alternativesPerSlot is how many alternatives per slot the neighborhood reports, the best five of
+// the candidatesPerSlot it sims. firstRunnersUp candidates get simmed before the rest, which only run
+// when none of those moved the best. rankedPerSlot is how many a slot's top get simmed to the full
+// round before the reported five are picked, so their order isn't a few shards' luck.
 const (
 	alternativesPerSlot = 5
+	candidatesPerSlot   = 15
 	firstRunnersUp      = 3
+	rankedPerSlot       = alternativesPerSlot + 2
 )
+
+// alternativesShare is the budget the neighborhood adds to what the stages before it left, as a share
+// of the budget the run started with. A var so tests can change it.
+var alternativesShare = 1.0
 
 // raceSE is how many standard errors apart a race step treats as decided: a gap that wide is not
 // going to close with more iterations, so there's nothing left to learn from simming it further.
 const raceSE = 3
 
 // neighborhood sims the best loadout's alternatives: per slot, the surrogate's top
-// alternativesPerSlot other items out of every priced one, pruned or not, each with the rest of the
+// candidatesPerSlot other items out of every priced one, pruned or not, each with the rest of the
 // best unchanged but for the off hand a main hand empties or brings along (see runnersUp), paired
 // with the best. A round sims each slot's first firstRunnersUp, then the rest only if none of those
-// moved the best.
+// moved the best. The surrogate only picks who gets simmed: the reported alternatives are each slot's
+// best alternativesPerSlot by measured delta (see rank).
 // Each batch races its alternatives against the best in DefaultShardIterations shards (race),
 // dropping one once it's decided or can't clear the acceptance bar, so a batch stops as soon as
 // there's nothing left to decide instead of always spending the round's full iterations. A batch's
@@ -54,11 +64,14 @@ func (r *run) neighborhood(s *surrogate, verified []*verifiedLoadout) ([]*proto.
 		raidDelta Estimate
 	}
 
-	// describes says whether a's loadout is r.best with only what a reports changed: its slot, and
-	// for a main hand the off hand, which it reports whenever that differs from r.best's.
+	// describes says whether a's loadout is r.best with only what a reports changed: its slot, for a
+	// main hand the off hand, which it reports whenever that differs from r.best's, and any gems
+	// elsewhere the move had to shift.
 	describes := func(a *alternative) bool {
 		want := r.best
-		want.Items[a.slot] = a.loadout.Items[a.slot]
+		for _, ch := range a.changes {
+			want.Items[ch.slot] = a.loadout.Items[ch.slot]
+		}
 		if a.slot == mh {
 			want.Items[oh] = a.loadout.Items[oh]
 		}
@@ -146,6 +159,83 @@ func (r *run) neighborhood(s *surrogate, verified []*verifiedLoadout) ([]*proto.
 		}
 		return evals[0], evals[1], evals[2], nil
 	}
+
+	// rank picks each slot's reported alternatives, the best alternativesPerSlot by measured delta. A
+	// slot's top rankedPerSlot get simmed up to the round's full iterations first (or as many as the
+	// run's budget affords), so their order doesn't rest on the few shards race gave one it dropped early.
+	rank := func(alts []*alternative) ([]*alternative, error) {
+		alts = slices.DeleteFunc(alts, func(a *alternative) bool { return a.eval == nil })
+		byDelta := func(a, b *alternative) int {
+			if a.slot != b.slot {
+				return int(a.slot) - int(b.slot)
+			}
+			switch {
+			case a.delta.Mean > b.delta.Mean:
+				return -1
+			case a.delta.Mean < b.delta.Mean:
+				return 1
+			}
+			// items that do nothing in the sim tie to the digit; the one with an effect says more
+			return boolIndex(ItemHasEffect(b.choice.ItemID)) - boolIndex(ItemHasEffect(a.choice.ItemID))
+		}
+		// keep returns alts' first n in each slot, in order
+		keep := func(alts []*alternative, n int) []*alternative {
+			seen := map[proto.ItemSlot]int{}
+			return slices.DeleteFunc(alts, func(a *alternative) bool {
+				seen[a.slot]++
+				return seen[a.slot] > n
+			})
+		}
+		slices.SortStableFunc(alts, byDelta)
+		if traceHook != nil {
+			for _, a := range alts {
+				r.trace("candidate %s: %d, %+.1f ± %.1f at %d iterations, moves %v", a.slot, a.choice.ItemID, a.delta.Mean, a.delta.SE, a.eval.Iterations, a.changes)
+			}
+		}
+		alts = keep(alts, rankedPerSlot)
+		iterations := r.budget.Iterations
+		points := []Point{{Loadout: r.best}}
+		for _, a := range alts {
+			points = append(points, Point{Loadout: a.loadout})
+		}
+		for iterations > DefaultShardIterations && r.eval.cost(points, iterations) > r.remaining() {
+			iterations /= 2
+		}
+		before := r.eval.simmed()
+		evals, err := r.evaluate(points, iterations)
+		if err != nil {
+			return nil, err
+		}
+		r.trace("alternatives: ranked %d at %d, %d iterations", len(points)-1, iterations, r.eval.simmed()-before)
+		if evals[0] != nil {
+			r.bestEval = mostIterations(r.bestEval, evals[0])
+			for i, a := range alts {
+				if e := evals[i+1]; e != nil && e.Iterations >= a.eval.Iterations {
+					a.eval = e
+					a.delta = r.obj.Delta(evals[0], e)
+					if r.raidMode() {
+						a.raidDelta = Delta(evals[0], e, MetricDPS)
+					}
+				}
+			}
+		}
+		slices.SortStableFunc(alts, byDelta)
+		alts = keep(alts, alternativesPerSlot)
+		if traceHook != nil {
+			short, inside := 0, 0
+			for i, a := range alts {
+				if a.eval.Iterations < iterations {
+					short++
+				}
+				if i > 0 && alts[i-1].slot == a.slot && abs(alts[i-1].delta.Mean-a.delta.Mean) <= 2*math.Hypot(alts[i-1].delta.SE, a.delta.SE) {
+					inside++
+				}
+			}
+			r.trace("alternatives: %d reported, %d under %d iterations, %d adjacent pairs inside 2 se", len(alts), short, iterations, inside)
+		}
+		return alts, nil
+	}
+
 rounds:
 	for round := 0; round < neighborhoodRounds; round++ {
 		if err := se.check(r.best); err != nil {
@@ -159,7 +249,7 @@ rounds:
 			if r.pool.Locked[slot] {
 				continue
 			}
-			for i, changes := range se.runnersUp(st, slot, alternativesPerSlot, se.all[slot]) {
+			for i, changes := range se.runnersUp(st, slot, candidatesPerSlot, se.all[slot]) {
 				l := r.best
 				for _, ch := range changes {
 					l.Items[ch.slot] = ch.choice
@@ -183,10 +273,12 @@ rounds:
 			if len(batch) == 0 {
 				continue
 			}
+			before := r.eval.simmed()
 			bestEval, seedEval, err := race(batch)
 			if err != nil {
 				return nil, verified, err
 			}
+			r.trace("alternatives: raced %d, %d iterations", len(batch), r.eval.simmed()-before)
 			// a later batch can run fewer iterations than the first, and a race may decide early
 			r.bestEval, r.seedEval = mostIterations(r.bestEval, bestEval), mostIterations(r.seedEval, seedEval)
 			var top *alternative
@@ -276,22 +368,11 @@ rounds:
 		}
 
 		var out []*proto.OptimizerSlotAlternative
-		slices.SortStableFunc(alts, func(a, b *alternative) int {
-			if a.slot != b.slot {
-				return int(a.slot) - int(b.slot)
-			}
-			switch {
-			case a.delta.Mean > b.delta.Mean:
-				return -1
-			case a.delta.Mean < b.delta.Mean:
-				return 1
-			}
-			return 0
-		})
+		alts, err := rank(alts)
+		if err != nil {
+			return nil, verified, err
+		}
 		for _, a := range alts {
-			if a.eval == nil {
-				continue
-			}
 			r.trace("alternative %s: %d, off hand %d, %+.1f ± %.1f", a.slot, a.choice.ItemID, a.loadout.Items[oh].ItemID, a.delta.Mean, a.delta.SE)
 			alt := &proto.OptimizerSlotAlternative{
 				Slot:           a.slot,

@@ -411,6 +411,13 @@ func (se *searcher) trial(st *state, changes ...change) float64 {
 // (a meta that won't activate, too many unique or jewelcrafter gems) gets one try at fixing: the
 // exact gem DP over the changed slots.
 func (se *searcher) apply(st *state, changes ...change) bool {
+	return se.applyWith(st, false, changes...)
+}
+
+// applyWith is apply, and with wide, a gem rule the changed slots' gems can't fix gets a second try over
+// every slot: a weapon without sockets replacing one whose gems kept the meta active can only be worn
+// with those gems elsewhere. It leaves each other slot's gems alone unless the rule needs them moved.
+func (se *searcher) applyWith(st *state, wide bool, changes ...change) bool {
 	old := make([]change, len(changes))
 	for i, ch := range changes {
 		old[i] = change{ch.slot, st.l.Items[ch.slot]}
@@ -431,11 +438,45 @@ func (se *searcher) apply(st *state, changes ...change) bool {
 			}
 			return true
 		}
+		if wide {
+			if regemmed, ok := se.regemWide(st, slots); ok {
+				for slot, c := range regemmed.Items {
+					if c != st.l.Items[slot] {
+						se.set(st, proto.ItemSlot(slot), c)
+					}
+				}
+				return true
+			}
+		}
 	}
 	for i := len(old) - 1; i >= 0; i-- {
 		se.set(st, old[i].slot, old[i].choice)
 	}
 	return false
+}
+
+// regemWide is st's loadout with the gem DP run over every slot, then each slot outside moved put back
+// to its own gems wherever the loadout still passes; false when no gemming passes.
+func (se *searcher) regemWide(st *state, moved []proto.ItemSlot) (Loadout, bool) {
+	all := make([]proto.ItemSlot, NumSlots)
+	for i := range all {
+		all[i] = proto.ItemSlot(i)
+	}
+	regemmed, _, err := se.pool.Gem(st.l, all, se.linear(st.total, st.racial))
+	if err != nil || se.check(regemmed) != nil {
+		return st.l, false
+	}
+	for slot := range regemmed.Items {
+		if slices.Contains(moved, proto.ItemSlot(slot)) || regemmed.Items[slot] == st.l.Items[slot] {
+			continue
+		}
+		back := regemmed
+		back.Items[slot].Gems = st.l.Items[slot].Gems
+		if se.check(back) == nil {
+			regemmed = back
+		}
+	}
+	return regemmed, true
 }
 
 // check is CheckGear plus the surrogate's own rule: nothing it couldn't price.
@@ -1276,17 +1317,25 @@ func (se *searcher) runnersUp(st *state, slot proto.ItemSlot, n int, opts []*opt
 	for i := 0; i < len(moves) && len(out) < n; i++ {
 		m := moves[i]
 		trial := st.clone()
-		if se.apply(trial, m.changes...) {
+		if se.applyWith(trial, true, m.changes...) {
 			var fixed []change
+			moved := map[proto.ItemSlot]bool{}
 			for _, ch := range m.changes {
 				fixed = append(fixed, change{ch.slot, trial.l.Items[ch.slot]})
+				moved[ch.slot] = true
+			}
+			// other slots' gems the move had to shift to keep the meta active
+			for slot, c := range trial.l.Items {
+				if !moved[proto.ItemSlot(slot)] && c != st.l.Items[slot] {
+					fixed = append(fixed, change{proto.ItemSlot(slot), c})
+				}
 			}
 			out = append(out, fixed)
 			continue
 		}
 		// bestPartner doesn't check rules, so it can pick the main hand's own unique item: keep the
 		// main hand with the best off hand that fits, ranked again at what that pair scores
-		if m.paired && se.apply(trial, m.changes[0]) {
+		if m.paired && se.applyWith(trial, true, m.changes[0]) {
 			se.bestItem(trial, oh)
 			legal := move{trial.value, []change{{mh, trial.l.Items[mh]}, {oh, trial.l.Items[oh]}}, false}
 			at := slices.IndexFunc(moves[i+1:], func(o move) bool { return o.value < legal.value })

@@ -118,6 +118,19 @@ export interface PoolBuilderInput {
 	// OptimizerObjectiveOwnMetrics when unset. The raid batch's stage 2 sends OptimizerObjectiveRaidDps
 	// for its DPS raiders, which scores against the whole raid in `base` instead of the target alone.
 	objective?: OptimizerObjective;
+	// The sim settings' fixed seed (Sim.getFixedRngSeed), 0 for none. When given, the request's seed is
+	// pinned to it, else to the optimizer's default, so the same inputs give the same result. Left
+	// unset, `base` keeps the seed it came with.
+	fixedSeed?: number;
+}
+
+export const DEFAULT_OPTIMIZER_SEED = 1;
+
+// Pins the request's random seed: a per-run random one makes every pass search differently.
+export function pinOptimizerSeed(base: RaidSimRequest, fixedSeed: number) {
+	if (base.simOptions) {
+		base.simOptions.randomSeed = BigInt(fixedSeed || DEFAULT_OPTIMIZER_SEED);
+	}
 }
 
 export interface BuiltRequest {
@@ -565,6 +578,9 @@ export function buildOptimizeRequest(input: PoolBuilderInput): BuiltRequest {
 	}
 	if (base.simOptions) {
 		base.simOptions.debugFirstIteration = false;
+	}
+	if (input.fixedSeed !== undefined) {
+		pinOptimizerSeed(base, input.fixedSeed);
 	}
 
 	const request = OptimizeGearRequest.create({

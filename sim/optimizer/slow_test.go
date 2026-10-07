@@ -240,16 +240,18 @@ func TestOptimizerSlow(t *testing.T) {
 				var stages []string
 				stageStart := time.Now()
 				lastStage := ""
+				var stageSims, sims int32
 				result := Optimize(context.Background(), req, func(p *proto.OptimizerProgress) {
 					if p.Stage != lastStage {
 						if lastStage != "" {
-							stages = append(stages, fmt.Sprintf("%s %.1fs", lastStage, time.Since(stageStart).Seconds()))
+							stages = append(stages, fmt.Sprintf("%s %.1fs/%d sims", lastStage, time.Since(stageStart).Seconds(), sims-stageSims))
 						}
-						lastStage, stageStart = p.Stage, time.Now()
+						lastStage, stageStart, stageSims = p.Stage, time.Now(), sims
 					}
+					sims = p.CompletedSims
 				})
 				wall := time.Since(start)
-				stages = append(stages, fmt.Sprintf("%s %.1fs", lastStage, time.Since(stageStart).Seconds()))
+				stages = append(stages, fmt.Sprintf("%s %.1fs/%d sims", lastStage, time.Since(stageStart).Seconds(), result.TotalSims-stageSims))
 				if result.ErrorResult != "" {
 					t.Fatal(result.ErrorResult)
 				}
