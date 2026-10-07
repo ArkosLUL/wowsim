@@ -120,8 +120,7 @@ Owns: `sim/optimizer/**`, `sim/web/main.go`'s worker cap.
 - `setScreen` sizes against `ownJ` (`api.go`): the seed's J, but in raid mode only the target's own DPS in J's
   points, which the raid evaluator keeps beside the raid's (`Evaluation.ownDPS`). Raid25's combat rogue simmed 11
   sets in 21,000 whole-raid iterations; now its 4 tier sets in 5,000 to 6,000.
-- Left open: raid mode's acceptance bar (`acceptFraction`, `api.go`) still takes 0.05% of the whole raid's J, 15
-  times the rogue's own share.
+- Raid mode's acceptance bar (`accepts`, `api.go`) sizes against `ownJ` too since BIS-e2e-perf.
 
 ### PERF-HOT: single-thread hot paths (wave I3, done)
 

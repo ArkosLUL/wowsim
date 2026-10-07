@@ -80,6 +80,7 @@ G = changes goldens. FS = runs all 37 suites.
 | Y | EC-TICK-FIX (G, FS) · EC-CORE-FIX (G, FS) · EC-PET-FIX (G) · PERF-THREAT | ✔ |
 | Z | EC-THREAT-FIX2 (G, FS, live) · EC-MELEE-FIX (G) · EC-NATURE-FIX (G, live) · EC-ARCANE-FIX (G, live) · PERF-Y | ✔ |
 | Z2 | EC-THREAT-FIX3 (G, FS, C++, live) · EC-CORE-FIX2 (G, FS) · EC-CLASS-FIX (G, live) · PERF-Z · BIS-ALTS | ✔ |
+| Z3 | BIS-OH-PAIR · BIS-QUICK-ALTS · BIS-WEAPON-PAIR · BIS-CURVES | ✔ |
 
 F2 is an inserted wave, not a fifth item in F: the core swing and cast fixes of PAR-P7-0c have to land
 before the class items in G, a class item can't build on a core fix merging in its own wave, and F already
@@ -138,6 +139,8 @@ fixes then work on records from the current server build, and take whatever X2's
 PERF-Y joins Z as a fifth item (the user's call, 2026-10-06): wave Y slowed every bench, Elemental 16%.
 Z2 is the user's call too (the same day): Z's follow-ups. EC-THREAT-FIX3's C++ needs one rebuild by the user, so the
 code stages run first and the live stages after it.
+Z3 is the user's call (2026-10-07): the BiS optimizer's backlog, before the deferred BiS chain reruns presets and
+dataset.
 
 **Where the specs are:**
 
@@ -154,14 +157,12 @@ code stages run first and the live stages after it.
 
 ## Current wave
 
-- Wave: Z2, landed (master fast-forwarded to this close-out). Next: none planned.
-  Item notes: `G:\DevStuff\GitHub\.wave-loop\{ec-threat-fix3,ec-core-fix2,ec-class-fix,perf-z,bis-alts}-tmp`.
+- Wave: Z3, planned on this commit. Integrate BIS-OH-PAIR, BIS-QUICK-ALTS, BIS-WEAPON-PAIR, BIS-CURVES in that
+  order: all four are offline and golden-neutral, and meet in `surrogate.go`, `search.go` and `neighborhood.go`,
+  so the cross-review checks bounds, trial-equals-value and the alternatives across them.
+  Z2 landed. Its item notes: `G:\DevStuff\GitHub\.wave-loop\{ec-threat-fix3,ec-core-fix2,ec-class-fix,perf-z,bis-alts}-tmp`.
   Prod runs X's `25cb9dddc` (no `rollback-q` image: its layers were gone), without Y's and Z's sim changes.
 - Open: Z2's follow-ups (the e2e-coverage, sim-performance and bis-optimizer backlogs) and the deferred BiS chain.
-  Timing a 25-player raid with healers and tanks (perf's
-  `optimizer/quick/raid25_raiddps_p1`, `0ccf8aa60` against an older commit): `BenchmarkSimulate`'s raid has
-  neither, and a BiS batch took 107 min against about 60 (contended); the user's call: 2026-10-07, with Z2's idle
-  throughput row.
   Closed as not sim gaps: the sheet fields the server shows raw (per-school crit, Blood-Gorged, Mace and Holy
   Specialization), which the fixture README explains.
 - Deferred (the user's calls, 2026-10-02, 10-03 and 10-05), each only on the user's go-ahead:
@@ -303,8 +304,8 @@ Feral Tank +1.3% (its enchants load, so its gains fell to +710 / +740); Fury's `
 normalizer. Normal's walls fell 7–22% under Y's, both beside the live server (PERF-Y).
 In Z2 every `dps_preset` fell 0.02–0.07% (damage truncation); Prot Pal's `J_preset` fell 0.7% (energize threat, its
 TPS −0.55%), Feral Tank's rose 2.2% and Fury's 0.2%, the normalizer. Feral Tank Normal adopts trinket 45609
-(BIS-ALTS). Normal's walls rose 11–22% over Z's, both beside the live server with no player online: the sim's
-per-hit truncation and gain threat, or BIS-ALTS ranking every priced item; the idle bench will tell.
+(BIS-ALTS). Normal's walls rose 11–22% over Z's, both beside the live server with no player online; Z2's idle
+bench shows no sim slowdown (see Sim throughput), which leaves BIS-ALTS ranking every priced item, or the load.
 
 ## Sim throughput
 
@@ -337,6 +338,7 @@ From G the benches run their suites' default players with rotations, at 1 and 10
 | V | 1.196 / 89.0 | 0.589 / 31.9 | 0.847 / 48.2 | 0.457 / 18.2 | 5.489 / 285.3 |
 | Y | 1.367 / 96.2 | 0.616 / 34.5 | 0.926 / 54.5 | 0.502 / 21.2 | 5.636 / 295.5 |
 | Z | 1.293 / 96.2 | 0.614 / 37.2 | 0.866 / 50.8 | 0.622 / 20.9 | 7.648 / 300.3 |
+| Z2 | 1.311 / 98.2 | 0.629 / 34.0 | 0.892 / 50.0 | 0.473 / 19.7 | 5.640 / 297.3 |
 
 H2 ran with the live worldserver using half a core, which moved whole runs by up to 2×
 and cost a few percent here (Ret, which H2 barely touched, +4%). An interleaved A/B against the base
@@ -436,6 +438,12 @@ Z's row ran idle too. At 100 iterations against Y's: Hunter −7%, Elemental −
 (its runs spread 32–39 ms: noise). PERF-Y cut Gift of Arthas' share of Elemental's profile from 7.1% to 1.4% and
 the cross-review the hunter pet's tick from 3.4% to 2.1%, so Z's class fixes likely added back most of Elemental's
 saving (no A/B).
+
+Z2's row ran idle (the AC containers and Chronicle stopped; the host at 1–2%), by `.wave-loop/rebase-z2-idle.sh`,
+logs in `.wave-loop/logs/z2-bench`. At 100 iterations against Z's: Elemental −6%, Ret −9% (Z's was noise), the
+rest within 2%. Then perf's `optimizer/quick/raid25_raiddps_p1` at 16 procs (4 tanks, 5 healers): 287.8 s against
+wave O's idle baseline 292.1 s, on 146,250 whole-raid sims against 158,000, so 6% more a sim across the 10 ms
+player tick and Z2. A BiS batch's 107 minutes against about 60 was the contended machine.
 
 E to F2 ran the old requests: one iteration, and no rotation for Ret, Hunter and Elemental.
 

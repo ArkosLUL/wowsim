@@ -1695,3 +1695,93 @@ unpriced gap unmeasured on Agony's request.
 Picks: 11 of 12 identical. Feral tank Normal moved a trinket, 45158 to 45609, which pruning had dropped:
 the neighborhood adopted it, J over the preset +739.6 to +753.4 (SE 3.0). Quick's alternatives change too,
 as intended.
+
+### BIS-OH-PAIR (wave Z3)
+
+When the pick is a two-hander, `runnersUp` (`search.go`) ranks a one-hand main hand with the off hand still
+empty, so it trials and sims weaker than it would play. `bestItem` already brings the best off hand along
+(`bestPartner`); the alternatives don't, and `OptimizerSlotAlternative` (`proto/optimizer.proto`) holds the
+main hand only.
+
+- `runnersUp` pairs a one-hand main hand into an empty off hand with `bestPartner`, as `bestItem` does, for
+  both callers; the neighborhood sims and reports that pair.
+- `OptimizerSlotAlternative` gains the off hand that came along (a new field, absent otherwise). The tab's and
+  the batch's alternatives (`optimizer_tab.ts`, `optimizer_batch.ts`) show it beside the main hand, and Equip
+  equips both.
+- `acbis` and the tooltip format don't change; add a line to this item's As built on what the tooltip would
+  need to show the pair.
+
+**Tests:** a fake-`Evaluator` case with a two-hand pick whose best alternative is a one-hander plus an off
+hand, reported with its partner; a dual-wield pick's alternatives unchanged; the proto round-trips through
+the CLI. **Measure:** the slow suite's picks (they may move only through the forced runners-up; report any)
+and, per case with a two-hand pick, the main-hand alternatives before and after.
+
+Golden-neutral. **Owns:** `search.go`'s `runnersUp`, `neighborhood.go`, `proto/optimizer.proto`
+(`OptimizerSlotAlternative` only), the alternatives views in `optimizer_tab.ts` and `ui/raid/optimizer_batch.ts`,
+their tests.
+
+### BIS-WEAPON-PAIR (wave Z3)
+
+The surrogate is separable per slot, with pair corrections for rings and trinkets only (`pairSlots`,
+`surrogate.go`). Talents keyed by weapon type read both hands (`Character.GetProcMaskForTypes`): rogue Close
+Quarters Combat, Hack and Slash and Mace Specialization (`sim/rogue/talents.go`), warrior Sword, Poleaxe and
+Mace Specialization (`sim/warrior/talents.go`). Close Quarters Combat puts its crit on the character when both
+hands are covered and on off-hand spells only when one is. A weapon's residual is measured beside the seed's
+other hand, so it carries that hand's coverage, and two residuals summed don't reproduce the pair. The
+racial half is already priced (`racialExpertise`, `core.RacialWeaponSpecialization`). No pick in dataset
+`abc74401` changed for it: Assasin (Combat, Close Quarters Combat 5) keeps a sword main hand because daggers
+normalize at 1.7 against 2.4.
+
+- Price each such talent from the two hands' weapon types together, so a weapon's residual is measured
+  without the seed's other hand's share and the term moves when either hand changes. Keep `trial`, `set`,
+  `configure` and a whole-loadout `value` equal, and widen weapons' prune bounds by what the term can win or
+  lose, as `racialBounds` does.
+- Search: a move that changes one hand's type rescores the term for both hands.
+
+**Tests:** per talent, the surrogate's value of main-hand/off-hand type pairs (both, one, neither covered)
+against paired sims within 2 se; trial, state and rescore agree; bounds hold. **Measure:** the slow suite's
+picks and J (combat rogue p3 and fury p1 carry these talents) and, from the evidence exports in
+`C:\Users\boss2\AppData\Local\Temp\claude\g--DevStuff-GitHub-wowsimwotlk\bis-weaponpair-evidence\`
+(read-only), Assasin's three main hands (Remorse 45142, Golem-Shard Sticker 45246, Fang of Oblivion 45607)
+scored by the surrogate against their sims (8969.7, 8898.4, 8335.4 DPS).
+
+Golden-neutral. **Owns:** `surrogate.go`'s scoring terms and bounds, `residuals.go`, `search.go`'s scoring and
+bounds (not `runnersUp`), a new `sim/optimizer/weapon_talents.go`, their tests.
+
+### BIS-QUICK-ALTS (wave Z3)
+
+At Quick, `candBounds` leaves an item out of `se.all` when its family is unpriced or it `NeedsSim` without a
+measured residual, so it can never be an alternative: round 0 of the slow suite leaves 164–353 items unpriced
+(trinkets 35 each and main hand 63 for fury p1); Normal about none (BIS-ALTS' As built). The batch and the tab
+default to Quick.
+
+- At Quick, sim the unpriced items that could rank among a slot's `alternativesPerSlot` (by the stats part
+  of their value, or another cheap screen), within Quick's budget, so they enter the ranking with a measured
+  value. Normal is unchanged.
+- No pick may move except through an item this prices that beats it, verified as usual.
+
+**Tests:** a fake-`Evaluator` case where an unpriced trinket is the slot's second best and is reported at
+Quick. **Measure:** per slow-suite case, Quick's alternatives against Normal's (overlap per slot), sims and
+wall at Quick before and after, picks.
+
+Golden-neutral. **Owns:** a new `sim/optimizer/unpriced.go`, its call in `neighborhood.go`, `surrogate.go`'s
+pricing gate (`candBounds`' unpriced check), their tests.
+
+### BIS-CURVES (wave Z3)
+
+Response curves (`response.go`) span the pool's stat range (`statRanges`, `surrogate.go`): cap-prone stats get
+five offsets across it, then a bisected breakpoint. The range follows the pool's extremes, so cutting items no
+pick uses moves the curves and the pick: BIS-outclassed's cut moved fury p1 Normal's ArP breakpoint 111.6 →
+69.9 and its J over the preset +274.5 → +230.3, though every item of the uncut pick is in the cut pool.
+
+- Make the pick hold when items it doesn't use leave the pool: measure the curves where loadouts go (for
+  example refit around the search's best and search again), not across the extremes. `addKnots` already sims
+  near the seed.
+- Keep Quick's sims within 10% of today's; report Normal's.
+
+**Tests:** a fake-`Evaluator` case where adding an extreme item no pick uses leaves the pick unchanged.
+**Measure:** fury p1 Normal on the cut pool reaches the uncut pool's +274.5 within 2 se; every slow-suite
+case's J, picks, sims and wall before and after.
+
+Golden-neutral. **Owns:** `response.go`, `surrogate.go`'s `statRanges` and `addKnots`, `api.go`'s stage
+order, their tests.
