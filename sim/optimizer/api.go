@@ -995,7 +995,12 @@ func (r *run) caps(sheet stats.Stats) []*proto.OptimizerStatCap {
 		if !capProneStats[st] || c.SlopeAbove >= c.SlopeBelow {
 			continue
 		}
-		out = append(out, &proto.OptimizerStatCap{Stat: proto.Stat(st), Value: sheet[st], Cap: seed.FinalStats[st] + c.Breakpoint})
+		cp := seed.FinalStats[st] + c.Breakpoint
+		// D* is exact, and the curve's bend can sit well off it: where J flattens isn't where crits stop
+		if st == stats.Defense && r.critImmunity > 0 {
+			cp = r.critImmunity
+		}
+		out = append(out, &proto.OptimizerStatCap{Stat: proto.Stat(st), Value: sheet[st], Cap: cp})
 	}
 	// past D* more defense buys no crit reduction, so it caps the same way a hit cap does
 	if r.critImmunity > 0 && !slices.ContainsFunc(out, func(c *proto.OptimizerStatCap) bool { return c.Stat == proto.Stat_StatDefense }) {

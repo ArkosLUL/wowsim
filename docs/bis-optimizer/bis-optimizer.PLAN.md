@@ -1725,15 +1725,24 @@ their tests.
 - `runnersUp` pairs as specced. bestPartner skips rule checks, so a pair can break one (a unique
   one-hander picked as its own partner): the main hand then stays with `bestItem`'s best legal off hand,
   re-ranked at that pair's trial.
-- `OptimizerSlotAlternative.off_hand` (7) is set for a main-hand alternative whose off hand isn't the final
-  best's: a one-hander's partner under a two-hand pick, or the off hand kept when the round cap adopts a
-  two-hander. `-decisions` traces each reported alternative: slot, item, the loadout's off hand, delta.
-- UI: the Instead cell shows "main hand + off hand", tooltips counting both. Runners-up had no Equip, so
-  both views gain one per row: the best set with that swap and the best's racial traits; the tab then
-  opens the Gear tab, the batch puts it on the raider (roster-change guard as Apply).
-- Tests: `ohpair_test.go` (two-hand pick, dual-wield pick, unique fallback and its rank, a two-hander adopted
-  on the round cap); `cmd/wowsimcli/cmd/optimize_ohpair_test.go` round-trips `off_hand` through a real
-  Quick run.
+- `OptimizerSlotAlternative.off_hand` (7) is set for a main-hand alternative whose simmed off hand isn't
+  the final best's: a one-hander's partner under a two-hand pick, the off hand kept when the round cap
+  adopts a two-hander, or an empty `ItemSpec` (id 0) when a two-hander drops the best's off hand. Not for a
+  Titan's Grip two-hander keeping it, nor other slots. Exporters key on presence: the CLI's JSON writes it
+  as an object, `null` when unset. `-decisions` traces each reported alternative: slot, item, the loadout's
+  off hand, delta.
+- Round cap (cross-review): every reported alternative is the final best with only its change. The rest
+  batch's moves are remade (`rebuild`) on a best the first batch adopted before racing; after the batches,
+  an alternative simmed beside a since-replaced best is remade and raced again (never adopted), or left out
+  when its move breaks a rule there (an off hand beside an adopted two-hander).
+- UI: the Instead cell shows "main hand + off hand" ("+ no off hand" for an empty one), tooltips counting
+  both. Runners-up had no Equip, so both views gain one per row: the best set with that swap (off hand
+  emptied for an empty one) and the best's racial traits; the tab then opens the Gear tab, the batch puts
+  it on the raider (roster-change guard as Apply).
+- Tests: `ohpair_test.go` (two-hand pick, dual-wield pick with the empty off hand, unique fallback and its
+  rank, a two-hander adopted on the round cap, an alternative raced again beside a one-hander the cap
+  adopted, each delta checked against the final best with its change);
+  `cmd/wowsimcli/cmd/optimize_ohpair_test.go` round-trips `off_hand`, set and empty, through real Quick runs.
 - Slow suite: all 12 pass; picks, J and sims identical to the base. Two-hand picks: ret p4 and feral tank
   p2, both efforts; their 5 main-hand alternatives are unchanged, none paired (no one-hander with
   an off hand outranks them). Fury p1 (Titan's Grip) holds an off hand, so it doesn't pair.
@@ -1783,7 +1792,8 @@ an uncovered one. Each hand's own share stays in its residual, which single-hand
   The four pairs sim at full iterations, prefetched beside the screening wave; the double difference
   is the term, kept over 2 se. Twins hold the stats fixed: real-weapon pairs gave Assasin a −423 J
   Close Quarters Combat term that was expertise around its cap (−312 DPS with the talent off too).
-- `applyEffects` takes each item variant's change in the term out of its residual (`weaponShare`).
+- `applyEffects` takes each item variant's change in the term out of its residual (`weaponShare`, through
+  `itemResidual`, which BIS-QUICK-ALTS' late pricing shares).
   `value`, `state.weapon` (`newState`, `set`), `trial` (`weaponAfter`) and `moveBase` add it;
   `candBounds` widens hands by `min/max(0, term)` (`weaponBounds`, none for a main hand filling both).
 - A target without these talents sims nothing more and scores as before.
@@ -1839,10 +1849,13 @@ measured residual (+2 se) reaches the slot's 5th priced alternative (all of them
 measured or the slot fewer than 5). These sim at `r.screen` against their family base, slots taking turns,
 each best stats first, until `unpricedShare` (5% of the budget) runs out.
 `r.total` grows by their cost, so the race keeps its budget. Their
-residuals go straight into `s.items`, with `applyEffects`' emptied-off-hand correction: applying `fx` whole would
-unprice weapons `fx.flat` priced.
+residuals go straight into `s.items` through `applyEffects`' own item step (`itemResidual`: weapon-term share
+out, emptied-off-hand refund in): applying `fx` whole would unprice weapons `fx.flat` priced. The screen
+values each item by the move `runnersUp` ranks (`moveTo`, shared with `bestItem`), so a one-hander beside a
+two-hand pick counts its partner (cross-review).
 Tests (`unpriced_test.go`): Quick reports an unpriced effect trinket, prices best stats first and skips one
-that can't rank; Normal leaves them unpriced.
+that can't rank; Normal leaves them unpriced; a one-hander is screened with its partner; a late weapon's
+residual leaves out the weapon term.
 
 Screen choice: a diagnostic Quick run pricing every unpriced item moved the top 5 only in prot paladin (trinket 2
 44253; main hand 47973, 48714, 45947) and feral tank (trinkets 42987, 44254), at stats ranks 0–7 and 1, 16 among
@@ -1865,9 +1878,6 @@ alternatives logged, Normal is the after run's.
 "Could rank" counts per slot, so a trinket can count twice. Quick walls (review run, loaded) 12.2 → 7.4, 12.8 → 13.3,
 3.1 → 3.0, 5.9 → 6.1, 4.5 → 4.9, 6.3 → 5.7 s; an earlier run, under heavier load, swung Normal's as much on identical
 sims (fury 83 → 130 s). `slow_test.go` logs each alternative under `-decisions`.
-
-Left: the screen doesn't pair a one-hand main hand with an off hand, so against a two-hand pick it undervalues
-those (`runnersUp` pairs them after BIS-OH-PAIR).
 
 ### BIS-CURVES (wave Z3)
 
@@ -1898,8 +1908,10 @@ power of two from 16; a stat the seed lacks takes the candidates' median. A wide
 past a narrower pool's. The stat screen sims the outermost knot instead of the range end; `addKnots`,
 `newKnots`, `knotFractions` and `earlyKnotPoints` are gone (the lattice is already dense near the
 seed). Bisection starts only from a knot inside the range: past it, long segments pin slopes so
-tightly that a far bend outscored prot paladin Quick's crit-immunity cap (−289 → +1012). `api.go` is
-untouched.
+tightly that a far bend outscored prot paladin Quick's crit-immunity cap (−289 → +1012). That bend
+isn't crit immunity, though: the seed sits at 822 sheet Defense against D* 674, so D* is at −148 while the
+bend sat at −289 (base), −291 / −253 (Quick / Normal now), and `run.caps` reported the bend in D*'s place.
+It now reports D* for Defense whenever crit immunity is enforced (`api.go`, cross-review).
 
 The refit came first and was dropped: a grid over the search's top 5 candidates ± a slot's typical
 amount, residuals repriced to keep reproducing their sims, up to 3 search rounds. Normal sims +12–28%;

@@ -15,13 +15,15 @@ import (
 // Made-up weapons for the off-hand pairing tests. Under kaDPS a main hand adds 1.5x its average
 // damage and an off hand 0.75x, plus 2 per Strength: the great sword is worth 660 alone, the small
 // one 460, the sword 320 in the main hand and 170 in the off hand, the axe 240 and 120, the unique
-// sword 380 and 200.
+// sword 380 and 200, the strong great sword 530, the light sword 170 and 95.
 const (
 	ohpGreat  = 9781001
 	ohpGreat2 = 9781002
 	ohpSword  = 9781003
 	ohpAxe    = 9781004
 	ohpUnique = 9781005 // unique-equipped
+	ohpGreat3 = 9781006
+	ohpLight  = 9781007
 )
 
 var ohpOnce sync.Once
@@ -35,6 +37,8 @@ func ohpRegister() {
 			kaWeapon(ohpSword, proto.HandType_HandTypeOneHand, proto.WeaponType_WeaponTypeSword, 160, 240, 2.6, stats.Stats{stats.Strength: 10}),
 			kaWeapon(ohpAxe, proto.HandType_HandTypeOneHand, proto.WeaponType_WeaponTypeAxe, 120, 200, 2.6, stats.Stats{}),
 			kaWeapon(ohpUnique, proto.HandType_HandTypeOneHand, proto.WeaponType_WeaponTypeSword, 200, 280, 2.6, stats.Stats{stats.Strength: 10}),
+			kaWeapon(ohpGreat3, proto.HandType_HandTypeTwoHand, proto.WeaponType_WeaponTypeSword, 260, 340, 3.4, stats.Stats{stats.Strength: 40}),
+			kaWeapon(ohpLight, proto.HandType_HandTypeOneHand, proto.WeaponType_WeaponTypeSword, 80, 120, 2.6, stats.Stats{stats.Strength: 10}),
 		}})
 	})
 }
@@ -167,22 +171,20 @@ func TestAlternativesPairAnOffHandWithATwoHandPick(t *testing.T) {
 	}
 	for i, w := range want {
 		a := got[i]
-		if a.Item.GetId() != w.mh || a.OffHand.GetId() != w.oh {
-			t.Errorf("alternative %d is %d with off hand %d, want %d with %d", i, a.Item.GetId(), a.OffHand.GetId(), w.mh, w.oh)
+		// the small great sword leaves the off hand as empty as the best's, so it reports none
+		if a.Item.GetId() != w.mh || a.OffHand.GetId() != w.oh || (a.OffHand == nil) != (w.oh == 0) {
+			t.Errorf("alternative %d is %d with off hand %v, want %d with %d", i, a.Item.GetId(), a.OffHand, w.mh, w.oh)
 		}
 		if math.Abs(a.ScoreDelta-w.delta) > 5 {
 			t.Errorf("alternative %d (%d) scores %+.1f ± %.1f, want about %+.0f", i, a.Item.GetId(), a.ScoreDelta, a.ScoreDeltaSe, w.delta)
 		}
 	}
-	for _, a := range alts {
-		if a.Slot != proto.ItemSlot_ItemSlotMainHand && a.OffHand != nil {
-			t.Errorf("%s alternative %d carries off hand %d", a.Slot, a.Item.GetId(), a.OffHand.GetId())
-		}
-	}
+	ohpCheckAgainstBest(t, rn, alts)
 }
 
 // With the swords in both hands picked, a main hand moves alone: the axe next to the kept sword
-// (410), the small great sword with the off hand emptied (460). Neither reports an off hand.
+// (410), the small great sword with the off hand emptied (460). The axe reports no off hand, the
+// small great sword an empty one.
 func TestAlternativesOfADualWieldPickKeepItsOffHand(t *testing.T) {
 	req := ohpRequest(ohpSword, ohpSword, []int32{ohpGreat2, ohpSword, ohpAxe}, []int32{ohpSword, ohpAxe})
 	rn, s := ohpRun(t, req)
@@ -210,11 +212,48 @@ func TestAlternativesOfADualWieldPickKeepItsOffHand(t *testing.T) {
 		t.Fatalf("%d main-hand alternatives, want %d: %v", len(got), len(want), got)
 	}
 	for _, a := range got {
-		if a.OffHand != nil {
-			t.Errorf("main hand %d reports off hand %d", a.Item.GetId(), a.OffHand.GetId())
+		if drops := a.Item.GetId() == ohpGreat2; (a.OffHand != nil) != drops || a.OffHand.GetId() != 0 {
+			t.Errorf("main hand %d reports off hand %v, want an empty one %v", a.Item.GetId(), a.OffHand, drops)
 		}
 		if d, ok := want[a.Item.GetId()]; !ok || math.Abs(a.ScoreDelta-d) > 5 {
 			t.Errorf("main hand %d scores %+.1f ± %.1f, want about %+.0f", a.Item.GetId(), a.ScoreDelta, a.ScoreDeltaSe, d)
+		}
+	}
+	ohpCheckAgainstBest(t, rn, alts)
+}
+
+// ohpCheckAgainstBest checks that each alternative is the final best with only what it reports
+// changed, a main hand's off hand included, and that it scores what the fake says that loadout does.
+func ohpCheckAgainstBest(t *testing.T, rn *run, alts []*proto.OptimizerSlotAlternative) {
+	t.Helper()
+	mh, oh := proto.ItemSlot_ItemSlotMainHand, proto.ItemSlot_ItemSlotOffHand
+	score := func(l Loadout) float64 {
+		m, err := kaMetrics(Point{Loadout: l})
+		if err != nil {
+			t.Fatal(err)
+		}
+		return rn.obj.coef[MetricDPS] * m[MetricDPS]
+	}
+	for _, a := range alts {
+		l := rn.best
+		var err error
+		if l.Items[a.Slot], err = ItemChoiceFromProto(a.Item); err != nil {
+			t.Fatal(err)
+		}
+		if a.OffHand != nil {
+			if a.Slot != mh {
+				t.Errorf("%s alternative %d carries off hand %d", a.Slot, a.Item.GetId(), a.OffHand.GetId())
+			}
+			if l.Items[oh], err = ItemChoiceFromProto(a.OffHand); err != nil {
+				t.Fatal(err)
+			}
+		}
+		if err := rn.pool.CheckGear(l); err != nil {
+			t.Errorf("%s alternative %d with off hand %d breaks a rule beside the best: %v", a.Slot, a.Item.GetId(), l.Items[oh].ItemID, err)
+			continue
+		}
+		if want := score(l) - score(rn.best); math.Abs(a.ScoreDelta-want) > 5 {
+			t.Errorf("%s alternative %d with off hand %d scores %+.1f ± %.1f, the best with it %+.1f", a.Slot, a.Item.GetId(), l.Items[oh].ItemID, a.ScoreDelta, a.ScoreDeltaSe, want)
 		}
 	}
 }
@@ -276,7 +315,8 @@ func TestRunnersUpRankAFallbackAtItsLegalScore(t *testing.T) {
 }
 
 // On the round cap the great sword replaces the swords in both hands, and the axe, simmed beside the
-// kept sword, has to report that sword: the new best's off hand is empty.
+// kept sword, has to report that sword: the new best's off hand is empty. The off-hand axe, simmed
+// beside the sword in the main hand, can't go next to the great sword, so it isn't reported.
 func TestAlternativesReportTheOffHandAnAdoptedTwoHanderDropped(t *testing.T) {
 	old := neighborhoodRounds
 	neighborhoodRounds = 1
@@ -298,4 +338,38 @@ func TestAlternativesReportTheOffHandAnAdoptedTwoHanderDropped(t *testing.T) {
 	if a := got[0]; a.Item.GetId() != ohpAxe || a.OffHand.GetId() != ohpSword || math.Abs(a.ScoreDelta+250) > 5 {
 		t.Errorf("main hand %d with off hand %d scores %+.1f ± %.1f, want %d with %d at about -250", a.Item.GetId(), a.OffHand.GetId(), a.ScoreDelta, a.ScoreDeltaSe, ohpAxe, ohpSword)
 	}
+	if len(got) != len(alts) {
+		t.Errorf("%d alternatives in other slots beside a two-hander: %v", len(alts)-len(got), alts)
+	}
+	ohpCheckAgainstBest(t, rn, alts)
+}
+
+// On the round cap the unique sword replaces the main-hand axe, and the off-hand sword, simmed beside
+// that axe, is simmed again beside the unique sword: 550 against the new best's 500, not the 410
+// against 500 it first scored. The main-hand sword keeps its sim, the new best's off hand beside it.
+func TestAlternativesSimAgainAgainstTheBestTheRoundCapAdopted(t *testing.T) {
+	old := neighborhoodRounds
+	neighborhoodRounds = 1
+	defer func() { neighborhoodRounds = old }()
+
+	req := ohpRequest(ohpAxe, ohpAxe, []int32{ohpAxe, ohpSword, ohpUnique}, []int32{ohpAxe, ohpSword})
+	rn, s := ohpRun(t, req)
+	alts, _, err := rn.neighborhood(s, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	mh, oh := proto.ItemSlot_ItemSlotMainHand, proto.ItemSlot_ItemSlotOffHand
+	if rn.best.Items[mh].ItemID != ohpUnique || rn.best.Items[oh].ItemID != ohpAxe {
+		t.Fatalf("best holds %d and %d, want %d and %d", rn.best.Items[mh].ItemID, rn.best.Items[oh].ItemID, ohpUnique, ohpAxe)
+	}
+	want := map[proto.ItemSlot]float64{mh: -60, oh: +50}
+	if len(alts) != len(want) {
+		t.Fatalf("%d alternatives, want %d: %v", len(alts), len(want), alts)
+	}
+	for _, a := range alts {
+		if a.Item.GetId() != ohpSword || a.OffHand != nil || math.Abs(a.ScoreDelta-want[a.Slot]) > 5 {
+			t.Errorf("%s alternative %d with off hand %v scores %+.1f ± %.1f, want the sword alone at about %+.0f", a.Slot, a.Item.GetId(), a.OffHand, a.ScoreDelta, a.ScoreDeltaSe, want[a.Slot])
+		}
+	}
+	ohpCheckAgainstBest(t, rn, alts)
 }

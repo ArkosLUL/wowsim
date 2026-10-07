@@ -57,6 +57,8 @@ type surrogate struct {
 	// seed's hands.
 	weaponTerms []weaponTerm
 	seedWeapon  float64
+	// What a main hand that empties the seed's off hand gets back for it (see itemResidual).
+	emptiedRefund Estimate
 	// What setFloorsAndCeilings priced, so forRace can price it again under other traits.
 	floorSettings   []*proto.StatMinimum
 	ceilingSettings []*proto.StatMaximum
@@ -1484,6 +1486,30 @@ type effects struct {
 	pairList []pairKey
 }
 
+func newEffects() *effects {
+	return &effects{
+		raw:       map[effectKey]Estimate{},
+		family:    map[effectKey]*effectFamily{},
+		variant:   map[effectKey]Loadout{},
+		emptiedOH: map[effectKey]bool{},
+		flat:      map[proto.ItemSlot]Estimate{},
+		missing:   map[effectKey]bool{},
+		pairBase:  map[proto.ItemSlot]Loadout{},
+	}
+}
+
+// index records where each of families' keys is measured.
+func (fx *effects) index(families []*effectFamily) {
+	for _, f := range families {
+		for i, k := range f.keys {
+			fx.family[k], fx.variant[k] = f, f.variants[i]
+			if f.emptiedOH[i] {
+				fx.emptiedOH[k] = true
+			}
+		}
+	}
+}
+
 // itemNeedsSim is whether an item alone, whatever its gems and enchant, is worth more than its stats.
 func itemNeedsSim(id int32) bool {
 	if id == 0 {
@@ -1531,26 +1557,9 @@ func (p *Pool) fillsHands(item *core.Item) bool {
 func (r *run) measureEffects(s *surrogate) error {
 	v0 := s.slopes(s.seedStats, 0)
 	gp0 := s.newGemPlan(v0)
-	fx := &effects{
-		raw:       map[effectKey]Estimate{},
-		family:    map[effectKey]*effectFamily{},
-		variant:   map[effectKey]Loadout{},
-		emptiedOH: map[effectKey]bool{},
-		flat:      map[proto.ItemSlot]Estimate{},
-		missing:   map[effectKey]bool{},
-		pairBase:  map[proto.ItemSlot]Loadout{},
-	}
-
+	fx := newEffects()
 	families := r.effectFamilies(s, v0, gp0, fx)
-	for _, f := range families {
-		for i, k := range f.keys {
-			fx.family[k] = f
-			fx.variant[k] = f.variants[i]
-			if f.emptiedOH[i] {
-				fx.emptiedOH[k] = true
-			}
-		}
-	}
+	fx.index(families)
 	talents := r.talentProbes(s, v0, gp0)
 	waitTalents := r.prefetch(batch{talentProbePoints(talents, families, s.seed), r.budget.Iterations})
 
@@ -1861,18 +1870,15 @@ func (s *surrogate) hasResidual(slot proto.ItemSlot, id int32) bool {
 // place. Anything a family should have priced but didn't is unpriced.
 func (s *surrogate) applyEffects(fx *effects) {
 	oh := proto.ItemSlot_ItemSlotOffHand
-	seedOH := s.seed.Items[oh].ItemID
+	if seedOH := s.seed.Items[oh].ItemID; itemNeedsSim(seedOH) {
+		ohKey := effectKey{effectItem, oh, seedOH}
+		s.emptiedRefund = fx.raw[ohKey]
+		s.emptiedRefund.Mean -= s.weaponShare(fx, ohKey)
+	}
 	for k, est := range fx.raw {
 		switch k.kind {
 		case effectItem:
-			est.Mean -= s.weaponShare(fx, k)
-			if fx.emptiedOH[k] && itemNeedsSim(seedOH) {
-				ohKey := effectKey{effectItem, oh, seedOH}
-				ohRes := fx.raw[ohKey]
-				ohRes.Mean -= s.weaponShare(fx, ohKey)
-				est = Estimate{Mean: est.Mean + ohRes.Mean, SE: math.Hypot(est.SE, ohRes.SE)}
-			}
-			s.items[k.slot][k.id] = est
+			s.items[k.slot][k.id] = s.itemResidual(fx, k, est)
 			delete(s.unpriced[k.slot], k.id)
 		case effectEnchant:
 			s.enchants[k.slot][k.id] = est
@@ -1946,6 +1952,17 @@ func (s *surrogate) applyEffects(fx *effects) {
 			}
 		}
 	}
+}
+
+// itemResidual is item key k's residual from est, what its family measured: less the weapon talents'
+// change, which their terms price, and for a main hand that emptied the seed's off hand, plus what
+// that off hand was worth, so every main hand counts from the same place.
+func (s *surrogate) itemResidual(fx *effects, k effectKey, est Estimate) Estimate {
+	est.Mean -= s.weaponShare(fx, k)
+	if fx.emptiedOH[k] && itemNeedsSim(s.seed.Items[proto.ItemSlot_ItemSlotOffHand].ItemID) {
+		est = Estimate{Mean: est.Mean + s.emptiedRefund.Mean, SE: math.Hypot(est.SE, s.emptiedRefund.SE)}
+	}
+	return est
 }
 
 // pairCandidates is how many of the best ring and trinket effects get simmed together, by effort.

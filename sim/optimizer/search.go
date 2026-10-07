@@ -621,17 +621,7 @@ func (se *searcher) bestItem(st *state, slot proto.ItemSlot) bool {
 		if bounds.of(o) <= st.value+improvement {
 			continue
 		}
-		var extra []change
-		if slot == mh && se.pool.fillsHands(&o.cand.Item) && st.l.Items[oh].ItemID != 0 {
-			extra = []change{{oh, ItemChoice{}}}
-		}
-		c := se.configure(st, slot, o.cand, extra...)
-		changes := append([]change{{slot, c}}, extra...)
-		if slot == mh && len(extra) == 0 && st.l.Items[oh].ItemID == 0 && len(se.opts[oh]) > 0 && !se.pool.fillsHands(&o.cand.Item) {
-			if ohChange, ok := se.bestPartner(st, c); ok {
-				changes = append(changes, ohChange)
-			}
-		}
+		changes, _ := se.moveTo(st, slot, o.cand)
 		moves = append(moves, move{se.trial(st, changes...), changes})
 	}
 	slices.SortStableFunc(moves, func(a, b move) int {
@@ -652,6 +642,25 @@ func (se *searcher) bestItem(st *state, slot proto.ItemSlot) bool {
 		}
 	}
 	return false
+}
+
+// moveTo is the move to cand in slot from st, configured: a main hand that fills both hands empties
+// the off hand, and a one-hander into an empty off hand brings its best off hand along (bestPartner),
+// which paired reports.
+func (se *searcher) moveTo(st *state, slot proto.ItemSlot, cand *Candidate) (changes []change, paired bool) {
+	mh, oh := proto.ItemSlot_ItemSlotMainHand, proto.ItemSlot_ItemSlotOffHand
+	var extra []change
+	if slot == mh && se.pool.fillsHands(&cand.Item) && st.l.Items[oh].ItemID != 0 {
+		extra = []change{{oh, ItemChoice{}}}
+	}
+	c := se.configure(st, slot, cand, extra...)
+	changes = append([]change{{slot, c}}, extra...)
+	if slot == mh && len(extra) == 0 && st.l.Items[oh].ItemID == 0 && len(se.opts[oh]) > 0 && !se.pool.fillsHands(&cand.Item) {
+		if ohChange, ok := se.bestPartner(st, c); ok {
+			return append(changes, ohChange), true
+		}
+	}
+	return changes, false
 }
 
 // bestPartner is the best off hand for a new main-hand choice, with the off hand empty now: the first
@@ -1235,9 +1244,9 @@ func (se *searcher) search() ([]Loadout, error) {
 const forcedRunnersUp = 3
 
 // runnersUp are the best configured moves to another item among opts (a slot's options), from st,
-// best first. Each is a change to that slot alone, plus the off hand when a main hand fills both
-// hands, or, as in bestItem, the best off hand (bestPartner) a one-hander brings into an empty one;
-// moves that break a rule are skipped.
+// best first. Each is bestItem's move (moveTo): a change to that slot alone, plus the off hand when a
+// main hand fills both hands or a one-hander brings one into an empty off hand; moves that break a
+// rule are skipped.
 func (se *searcher) runnersUp(st *state, slot proto.ItemSlot, n int, opts []*option) [][]change {
 	mh, oh := proto.ItemSlot_ItemSlotMainHand, proto.ItemSlot_ItemSlotOffHand
 	type move struct {
@@ -1251,18 +1260,7 @@ func (se *searcher) runnersUp(st *state, slot proto.ItemSlot, n int, opts []*opt
 		if o.cand.Item.ID == current {
 			continue
 		}
-		var extra []change
-		if slot == mh && se.pool.fillsHands(&o.cand.Item) && st.l.Items[oh].ItemID != 0 {
-			extra = []change{{oh, ItemChoice{}}}
-		}
-		c := se.configure(st, slot, o.cand, extra...)
-		changes := append([]change{{slot, c}}, extra...)
-		paired := false
-		if slot == mh && len(extra) == 0 && st.l.Items[oh].ItemID == 0 && len(se.opts[oh]) > 0 && !se.pool.fillsHands(&o.cand.Item) {
-			if ohChange, ok := se.bestPartner(st, c); ok {
-				changes, paired = append(changes, ohChange), true
-			}
-		}
+		changes, paired := se.moveTo(st, slot, o.cand)
 		moves = append(moves, move{se.trial(st, changes...), changes, paired})
 	}
 	slices.SortStableFunc(moves, func(a, b move) int {

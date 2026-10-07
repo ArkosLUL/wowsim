@@ -186,7 +186,7 @@ message OptimizerLoadoutResult {
 	repeated string warnings = 13;
 }
 
-// A runner-up for one slot, with the rest of the best loadout unchanged.
+// A runner-up for one slot, with the rest of the best loadout unchanged but for off_hand.
 message OptimizerSlotAlternative {
 	ItemSlot slot = 1;
 	ItemSpec item = 2;
@@ -195,8 +195,10 @@ message OptimizerSlotAlternative {
 	double score_delta_se = 4;
 	double raid_dps_delta = 5;
 	double raid_dps_delta_se = 6;
-	// A main-hand alternative's off hand when it isn't the best's, e.g. the one a one-hander brings
-	// into a two-hand pick's empty off hand. Unset otherwise.
+	// Set on a main-hand alternative whose off hand isn't the best's: the off hand it was simmed
+	// with, e.g. the one a one-hander brings into a two-hand pick's empty off hand, or an empty
+	// ItemSpec (id 0) when a two-hander drops the best's off hand. Unset on every other alternative,
+	// and on a two-hander that keeps the off hand under Titan's Grip.
 	ItemSpec off_hand = 7;
 }
 

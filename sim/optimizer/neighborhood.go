@@ -33,22 +33,49 @@ const raceSE = 3
 // replaces the best, so a race that decided early on a small sample still has to hold up at the
 // round's full iterations; only then does it become the new best, with its own neighborhood simmed in
 // turn. On the round cap, there's no round left to look again, so the cap's own first and rest batches
-// both run against whatever is current when they're reached, rebasing the round's other alternatives
-// onto each adoption instead of leaving them pointing at a pick that's since been replaced. The
-// alternatives returned are the last round's, around the final best, best first within each slot;
-// verified gains every best the rounds adopt.
+// both run against whatever is current when they're reached, each alternative's move made again on
+// the pick it now stands beside, and what was simmed beside a pick since replaced simmed again. The
+// alternatives returned are the last round's, each the final best with its change alone (a main
+// hand's off hand included), best first within each slot; verified gains every best the rounds adopt.
 func (r *run) neighborhood(s *surrogate, verified []*verifiedLoadout) ([]*proto.OptimizerSlotAlternative, []*verifiedLoadout, error) {
 	if err := r.priceUnpriced(s); err != nil {
 		return nil, verified, err
 	}
 	se := newSearcher(s, r)
+	mh, oh := proto.ItemSlot_ItemSlotMainHand, proto.ItemSlot_ItemSlotOffHand
 	type alternative struct {
-		slot      proto.ItemSlot
-		choice    ItemChoice
+		slot   proto.ItemSlot
+		choice ItemChoice
+		// runnersUp's move, to make again on a best adopted since
+		changes   []change
 		loadout   Loadout
 		eval      *Evaluation
 		delta     Estimate
 		raidDelta Estimate
+	}
+
+	// describes says whether a's loadout is r.best with only what a reports changed: its slot, and
+	// for a main hand the off hand, which it reports whenever that differs from r.best's.
+	describes := func(a *alternative) bool {
+		want := r.best
+		want.Items[a.slot] = a.loadout.Items[a.slot]
+		if a.slot == mh {
+			want.Items[oh] = a.loadout.Items[oh]
+		}
+		return a.loadout == want
+	}
+	// rebuild makes a's move again on r.best, unsimmed; false when that breaks a rule there or
+	// changes nothing.
+	rebuild := func(a *alternative) bool {
+		l := r.best
+		for _, ch := range a.changes {
+			l.Items[ch.slot] = ch.choice
+		}
+		if l == r.best || se.check(l) != nil {
+			return false
+		}
+		a.loadout, a.eval = l, nil
+		return true
 	}
 
 	// race sims batch's alternatives against r.best, in DefaultShardIterations shards, dropping one
@@ -137,7 +164,7 @@ rounds:
 				for _, ch := range changes {
 					l.Items[ch.slot] = ch.choice
 				}
-				a := &alternative{slot: slot, choice: changes[0].choice, loadout: l}
+				a := &alternative{slot: slot, choice: changes[0].choice, changes: changes, loadout: l}
 				if i < firstRunnersUp {
 					first = append(first, a)
 				} else {
@@ -151,6 +178,8 @@ rounds:
 
 		var alts []*alternative
 		for _, batch := range [][]*alternative{first, rest} {
+			// on the round cap, the first batch can have replaced the best the rest were built on
+			batch = slices.DeleteFunc(batch, func(a *alternative) bool { return !describes(a) && !rebuild(a) })
 			if len(batch) == 0 {
 				continue
 			}
@@ -189,6 +218,7 @@ rounds:
 				if !r.accepts(top.delta) || !r.beatsSeed(top.eval) {
 					continue
 				}
+				r.trace("alternatives: round %d adopts %s %d, %+.1f ± %.1f", round, top.slot, top.choice.ItemID, top.delta.Mean, top.delta.SE)
 				r.best, r.bestEval = top.loadout, top.eval
 				verified = append(verified, &verifiedLoadout{top.loadout, top.eval})
 				r.sortVerified(verified)
@@ -196,10 +226,10 @@ rounds:
 				if round < neighborhoodRounds-1 {
 					continue rounds
 				}
-				// no round left to scan a fresh neighborhood around this pick: rebase what's
-				// already simmed onto it instead of reporting alternatives against the pick it
-				// just replaced, which is why a Quick tank run could list a runner-up well above
-				// the loadout it reports as best
+				// no round left to scan a fresh neighborhood around this pick: score what's already
+				// simmed against it instead of the pick it just replaced, which is why a Quick tank
+				// run could list a runner-up well above the loadout it reports as best. A loadout
+				// that isn't this pick with its own change gets rebuilt below.
 				for _, a := range alts {
 					if a == top || a.eval == nil {
 						continue
@@ -211,6 +241,38 @@ rounds:
 				}
 				alts = slices.DeleteFunc(alts, func(a *alternative) bool { return a == top })
 			}
+		}
+
+		// what was simmed beside a best adopted since gets its move again on the final best and a
+		// race of its own, never adopted: there's no round left. Gear and delta then both describe
+		// the final best with the alternative's change.
+		var stale []*alternative
+		alts = slices.DeleteFunc(alts, func(a *alternative) bool {
+			if a.eval == nil || describes(a) {
+				return false
+			}
+			if !rebuild(a) {
+				return true
+			}
+			stale = append(stale, a)
+			return false
+		})
+		if len(stale) > 0 {
+			bestEval, seedEval, err := race(stale)
+			if err != nil {
+				return nil, verified, err
+			}
+			r.bestEval, r.seedEval = mostIterations(r.bestEval, bestEval), mostIterations(r.seedEval, seedEval)
+			for _, a := range stale {
+				if a.eval == nil {
+					continue
+				}
+				a.delta = r.obj.Delta(bestEval, a.eval)
+				if r.raidMode() {
+					a.raidDelta = Delta(bestEval, a.eval, MetricDPS)
+				}
+			}
+			r.trace("alternatives: %d simmed again against the pick the round cap adopted", len(stale))
 		}
 
 		var out []*proto.OptimizerSlotAlternative
@@ -230,7 +292,7 @@ rounds:
 			if a.eval == nil {
 				continue
 			}
-			r.trace("alternative %s: %d, off hand %d, %+.1f ± %.1f", a.slot, a.choice.ItemID, a.loadout.Items[proto.ItemSlot_ItemSlotOffHand].ItemID, a.delta.Mean, a.delta.SE)
+			r.trace("alternative %s: %d, off hand %d, %+.1f ± %.1f", a.slot, a.choice.ItemID, a.loadout.Items[oh].ItemID, a.delta.Mean, a.delta.SE)
 			alt := &proto.OptimizerSlotAlternative{
 				Slot:           a.slot,
 				Item:           a.choice.ToProto(),
@@ -239,10 +301,9 @@ rounds:
 				RaidDpsDelta:   a.raidDelta.Mean,
 				RaidDpsDeltaSe: a.raidDelta.SE,
 			}
-			// against the final best: on the round cap a main hand can keep the off hand of a pick
-			// that a two-hander has since replaced
-			if oh := a.loadout.Items[proto.ItemSlot_ItemSlotOffHand]; a.slot == proto.ItemSlot_ItemSlotMainHand && oh.ItemID != 0 && oh.ItemID != r.best.Items[proto.ItemSlot_ItemSlotOffHand].ItemID {
-				alt.OffHand = oh.ToProto()
+			// an empty one when a two-hander drops the best's off hand
+			if a.slot == mh && a.loadout.Items[oh] != r.best.Items[oh] {
+				alt.OffHand = a.loadout.Items[oh].ToProto()
 			}
 			out = append(out, alt)
 		}

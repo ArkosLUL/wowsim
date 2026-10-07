@@ -259,7 +259,11 @@ func TestOptimizerSlow(t *testing.T) {
 				}
 				if *decisions {
 					for _, a := range result.Alternatives {
-						t.Logf("alternative %s: %d %+.1f ± %.1f", a.Slot, a.Item.GetId(), a.ScoreDelta, a.ScoreDeltaSe)
+						oh := ""
+						if a.OffHand != nil {
+							oh = fmt.Sprintf(", off hand %d", a.OffHand.GetId())
+						}
+						t.Logf("alternative %s: %d %+.1f ± %.1f%s", a.Slot, a.Item.GetId(), a.ScoreDelta, a.ScoreDeltaSe, oh)
 					}
 				}
 
@@ -286,6 +290,9 @@ func TestOptimizerSlow(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
+				if *decisions {
+					t.Logf("pick %s: %v", best.RacialTraits, setKey(best))
+				}
 				keep, _ := WeightedMetrics(r.Settings)
 				eval := NewSimEvaluator(r, keep...)
 				obj, err := NewObjective(context.Background(), eval, r, slowCheckIterations)
@@ -310,6 +317,18 @@ func TestOptimizerSlow(t *testing.T) {
 				}
 				if caps := capMargins(result.Settings, bestSheet); caps != "" {
 					t.Logf("caps: %s", caps)
+				}
+				if *decisions {
+					for _, cp := range result.Best.GetCaps() {
+						t.Logf("result cap %s: %.0f of %.0f", cp.Stat, cp.Value, cp.Cap)
+					}
+					if c.tank {
+						seedSheet, err := playerSheet(r.Base, r.TargetIndex, r.Seed, stats.Stats{})
+						if err != nil {
+							t.Fatal(err)
+						}
+						t.Logf("tank: the seed has %.0f Defense on the sheet", seedSheet.FinalStats[stats.Defense])
+					}
 				}
 				// preset items the phase rules out can outscore the pick, so this checks against the
 				// trimmed preset the search started from; a preset under a DPS cap floor is no longer a

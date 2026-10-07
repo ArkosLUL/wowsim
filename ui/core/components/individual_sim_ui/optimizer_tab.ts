@@ -406,13 +406,17 @@ export class LoadoutView {
 			const itemCell = newElement('td');
 			const equipped = alt.item ? this.db.lookupItemSpec(alt.item) : null;
 			const offHand = alt.offHand?.id ? this.db.lookupItemSpec(alt.offHand) : null;
+			// an off hand without an id: the runner-up empties the best's off hand
+			const dropsOffHand = !!alt.offHand && !alt.offHand.id;
 			// the set this runner-up would make, so its tooltip counts the right set pieces
 			const swapped = equipped ? bestGear?.withEquippedItem(alt.slot, equipped, canDualWield2H) : undefined;
-			const gear = swapped && offHand ? swapped.withEquippedItem(ItemSlot.ItemSlotOffHand, offHand, canDualWield2H) : swapped;
+			const gear = swapped && (offHand || dropsOffHand) ? swapped.withEquippedItem(ItemSlot.ItemSlotOffHand, offHand, canDualWield2H) : swapped;
 			this.appendItem(itemCell, alt.item, equipped, gear);
 			if (alt.offHand?.id) {
 				itemCell.append(' + ');
 				this.appendItem(itemCell, alt.offHand, offHand, gear);
+			} else if (dropsOffHand) {
+				itemCell.append(' + no off hand');
 			}
 			tr.appendChild(itemCell);
 
@@ -433,7 +437,7 @@ export class LoadoutView {
 			table.appendChild(tr);
 		}
 		const swaps = improved ? 'Each swaps one slot of the best set.' : `Each swaps one slot of ${this.config.possessive} starting gear.`;
-		const paired = alternatives.some(a => a.offHand?.id) ? ' A main hand listed with an off hand swaps both.' : '';
+		const paired = alternatives.some(a => a.offHand) ? ' A main hand listed with an off hand, or with no off hand, sets both hands.' : '';
 		return section('Runners-up per slot', table, swaps + paired);
 	}
 
