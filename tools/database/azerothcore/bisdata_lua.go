@@ -20,8 +20,9 @@ import (
 //   - Bistooltip_server_roster: roster subjects by character guid, each with name, class, spec,
 //     raid_index and phases, where phases[phase key] is a list of slots like the above.
 //
-// Slots also get extra = {deltas, reforge = {from, to}} when they have either, which leaves the slot
-// itself with only the shipped lists' keys: slot_name, enhs and the ranked item ids.
+// Slots also get extra = {deltas, reforge = {from, to}, pairings = {{rank, item}, ...}} when they have
+// any of those, which leaves the slot itself with only the shipped lists' keys: slot_name, enhs and
+// the ranked item ids.
 func WriteBisLua(w io.Writer, dataset *BisDataset) error {
 	subjects := map[int]BisSubject{}
 	for _, subject := range dataset.Subjects {
@@ -134,6 +135,13 @@ func luaSlot(slot BisSlot, classID int32) string {
 	}
 	if slot.ReforgeFrom != 0 {
 		extra = append(extra, fmt.Sprintf(`["reforge"] = { ["from"] = %d, ["to"] = %d }`, slot.ReforgeFrom, slot.ReforgeTo))
+	}
+	if len(slot.Pairings) > 0 {
+		values := make([]string, len(slot.Pairings))
+		for i, pair := range slot.Pairings {
+			values[i] = fmt.Sprintf(`{ ["rank"] = %d, ["item"] = %d }`, pair.Rank, pair.Item)
+		}
+		extra = append(extra, `["pairings"] = `+luaList(values))
 	}
 	if len(extra) > 0 {
 		fields = append(fields, `["extra"] = { `+strings.Join(extra, ", ")+" }")

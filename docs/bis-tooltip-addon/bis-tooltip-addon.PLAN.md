@@ -144,15 +144,19 @@ codec, the module and the addon's decoder all implement. Why it looks the way it
 - **A delta per rank,** so the tooltip prices every alternative rather than only rank 1's lead. Only
   where the objective is the subject's own damage alone, which leaves tanks and raid-DPS subjects
   without one; `BuildBisBlock` says which, and acbis prints them.
+- **A weapon runner-up brings its off hand.** Where a main-hand alternative was simmed with a
+  different off hand, the payload names it, so that rank's percentage prices both hands rather than one
+  slot. `off_hand` present means it changed and id 0 that it goes away, so `BuildBisBlock` tests
+  presence, never the id. No other slot carries one.
 - **Only rank 1 carries enhancements.** Gems and enchants reuse the addon's `enhs` icon renderer; the
   reforge becomes a plain text line.
-- **Sizing,** measured on the live 21-raider phase-2 export: 23,918 B and 118 frames over 21 blocks,
-  so 1,139 B and 5.6 frames each, the largest 1,248 B over 6 frames. Per-rank deltas cost 12.9% of both.
+- **Sizing,** measured on the imported 21-raider phase-2 dataset: 24,441 B and 121 frames over 21
+  blocks, so 1,164 B and 5.8 frames each, the largest 1,253 B over 6 frames, 147 messages for the lot.
   25 raiders × 5 phases = 125 roster blocks, up to 30 non-healer addon specs × 5 = 150 spec blocks:
-  ~275 blocks, ~310 KB, ≈1,550 frames at 10 per `SendIntervalMs` (100 ms), so a cold sync runs **~19 s**
+  ~275 blocks, ~320 KB, ≈1,585 frames at 10 per `SendIntervalMs` (100 ms), so a cold sync runs **~20 s**
   scaled from the harness's measured 17 s at 1,375 frames; healers have no blocks, so less in practice.
 - **No compression in v1.** Plain decimal stays readable on the wire, which makes bugs in a
-  two-language codec far cheaper to find, and a ~19 s sync once per dataset change isn't worth buying
+  two-language codec far cheaper to find, and a ~20 s sync once per dataset change isn't worth buying
   complexity to fix. Two levers if the measured number annoys: base-36 item ids (~20% off) or raw
   deflate with LibDeflate client-side (~55% off, at the cost of a printable-encoding layer and a second
   way for the codecs to disagree).
@@ -204,7 +208,8 @@ are written against it; changing it later means touching three repos and bumping
 version. A change may skip the bump only while the one installed addon updates with it, as raising
 ranks per slot from 4 to 6 did. Per-rank deltas bumped it to 2: an addon on 1 reads every multi-rank
 slot as a bad delta and drops the block, so the mismatch `ERR` says to update instead of leaving the
-lists silently empty.
+lists silently empty. The off-hand pairing bumped it to 3 for the same reason: a build-2 decoder reads
+the first `(` to the last `)` as the enhancement group, and so rejected 9 of 21 real payloads.
 
 **Gates that need the user**, none of which a session may do on its own:
 
@@ -337,7 +342,10 @@ ways. `Enable = 0` is checked in the harness only.
   `<spec icon> <Raider> (<spec>)`, then `T8 BIS +0.4% / T9 alt 2 -2.2%` on the right: rank 1's lead over
   rank 2, and what taking an alternative costs. A zero reads `0.0%` unsigned, and an alternative that came
   out ahead keeps its `+`. Tanks and raid-DPS subjects carry no number.
-  Under it goes a dim sub-line per reforge, named like mod-reforging's `ItemReforge::StatTypeToString`.
+  Under it goes a dim sub-line per reforge, named like mod-reforging's `ItemReforge::StatTypeToString`,
+  and one per off hand the hovered runner-up was simmed with: `alt N with <item>`, `with a second <item>`
+  where both hands take the same weapon, or `alt N drops the off hand`. A sub-line names its phases
+  where it doesn't cover every phase on the line.
   With the server selected, spec lines from the shipped list are marked with a grey `(Wowhead)`. Hide specs
   and Highlight spec now apply, and Alt shows everything.
 - Phases are shown up to the one after the viewer's: `min(5, max(0, tier - 12) + 1)`, since tier 13 opens
@@ -391,13 +399,16 @@ Changed from the plan: the six ranks, the BoE coins and the row padding weren't 
 `Core.lua`'s owned-item scan now reads raiders' lists too.
 
 **Verified:**
-- `test/run-tests.sh`: 1,862 checks on a six-rank fixture from `gen-fixture.sh`. Deliberately broken
-  copies were each caught. `go test ./tools/database/azerothcore/` passes. Two caveats since per-rank
-  deltas: the optimizer results behind that fixture are gone, so it was rebuilt from the messages the
-  module sends for it — items are the originals, delta values are derived, and every multi-rank slot has
-  a group, so the fixture never exercises a dataset mixing subjects with and without one. And a fixture
-  built from the live export fails 9 checks, because the harness needs at least one spec subject while
-  the export carries roster raiders only; that assumption predates this change.
+- `test/run-tests.sh`: 1,905 checks on a six-rank fixture from `gen-fixture.sh`. Deliberately broken
+  copies were each caught. `go test ./tools/database/azerothcore/` passes. The two decoders also agreed
+  on every one of 204,726 differential payloads, each accepted one re-encoding to itself. Three caveats
+  since per-rank deltas: the optimizer results behind that fixture are gone, so it was rebuilt from the
+  messages the module sends for it — items are the originals, delta values are derived, and every
+  multi-rank slot has a group, so the fixture never exercises a dataset mixing subjects with and without
+  one. It carries no pairing group at all, so only hand-written cases cover those; the end-to-end leg
+  was checked against a fixture built from a real export instead. And a fixture built from the live
+  export fails 9 checks, because the harness needs at least one spec subject while the export carries
+  roster raiders only; that assumption predates this change.
 - In the client: Deathsong's `UnitGUID` `0x000000000006A9B9` parses to 436665; the reset after the
   rename; "My raid" and the target preference; aligned rows; BoE coins; and Phase 4's offline-member
   warning. Wintergrasp detection is checked in the harness only.
@@ -409,8 +420,8 @@ Known limits:
 
 ### Phase 6 — Real data, zip, docs
 
-**Status:** done for content phase 2, the one the realm is raiding. Live dataset `abc74401` (sim
-`0ccf8aa60`, catalog 2026-09-19), 21 raiders, imported 2026-10-06. Phases 1 and 3–5 are unrun.
+**Status:** done for content phase 2, the one the realm is raiding. Live dataset `cc5cbd49` (sim
+`c463f2d5f`, catalog 2026-09-19), 21 raiders, imported 2026-10-07. Phases 1 and 3–5 are unrun.
 
 - **Per-spec lists are dropped** (the user's call): the dataset carries roster raiders only, and every
   spec keeps the shipped Wowhead lists.

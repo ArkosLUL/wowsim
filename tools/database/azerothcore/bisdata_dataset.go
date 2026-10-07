@@ -288,7 +288,8 @@ func bisNoDeltaReason(result *proto.OptimizerResult) string {
 
 // BuildBisBlock takes each filled slot's best item and its runners-up, best first, with the best
 // item's enchant, gems and reforge, plus each runner-up's loss against rank 1 where
-// bisNoDeltaReason allows it. Anything it has to leave out comes back as a warning.
+// bisNoDeltaReason allows it, and the off hand a runner-up was simmed with where the optimizer says it
+// isn't the best loadout's. Anything it has to leave out comes back as a warning.
 func BuildBisBlock(result *proto.OptimizerResult, enchants EnchantSpells) (BisBlock, []string) {
 	var warnings []string
 	deltas := bisNoDeltaReason(result) == ""
@@ -323,6 +324,11 @@ func BuildBisBlock(result *proto.OptimizerResult, enchants EnchantSpells) (BisBl
 				slot.Deltas = append(slot.Deltas, int32(math.Round(-alt.GetScoreDelta()/bestScore*1000)))
 			}
 			slot.Items = append(slot.Items, id)
+			// set only where the alternative's off hand isn't the best loadout's, and then holding item 0
+			// when it drops the off hand, so presence is the test and not the id
+			if alt.OffHand != nil {
+				slot.Pairings = append(slot.Pairings, BisPairing{Rank: int32(len(slot.Items)), Item: alt.OffHand.GetId()})
+			}
 		}
 		if len(dropped) > 0 {
 			warnings = append(warnings, fmt.Sprintf("slot %d: runners-up %v don't fit the %d ranks, left out", i, dropped, BisMaxRanks))

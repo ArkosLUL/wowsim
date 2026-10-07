@@ -40,6 +40,14 @@ func bisAlt(slot proto.ItemSlot, id int32, delta float64) *proto.OptimizerSlotAl
 	return &proto.OptimizerSlotAlternative{Slot: slot, Item: &proto.ItemSpec{Id: id}, ScoreDelta: delta}
 }
 
+// bisPairedAlt is an alternative the optimizer simmed with another off hand than the best loadout's.
+// An offHand of &proto.ItemSpec{} is the empty one that says the alternative drops the off hand.
+func bisPairedAlt(slot proto.ItemSlot, id int32, delta float64, offHand *proto.ItemSpec) *proto.OptimizerSlotAlternative {
+	alt := bisAlt(slot, id, delta)
+	alt.OffHand = offHand
+	return alt
+}
+
 func headResult(phase int32, head int32) *proto.OptimizerResult {
 	return bisResult(phase, map[proto.ItemSlot]*proto.ItemSpec{proto.ItemSlot_ItemSlotHead: {Id: head}})
 }
@@ -193,6 +201,46 @@ func TestBuildBisBlockDeltaGate(t *testing.T) {
 		if bisNoDeltaReason(result) == "" {
 			t.Errorf("%s: no reason given", comment)
 		}
+	}
+}
+
+// off_hand is set only where the alternative's off hand isn't the best loadout's, so its presence is
+// what makes a pairing, and item 0 in it means the alternative drops the off hand. An alternative
+// without the field keeps the best's off hand and gets no pairing, which is a different fact.
+func TestBuildBisBlockOffHandPairings(t *testing.T) {
+	result := bisResult(1, map[proto.ItemSlot]*proto.ItemSpec{
+		proto.ItemSlot_ItemSlotMainHand: {Id: 50730},
+		proto.ItemSlot_ItemSlotOffHand:  {Id: 50411},
+	},
+		// a one-hander that brings its own off hand, a two-hander that drops it, and one that keeps it
+		bisPairedAlt(proto.ItemSlot_ItemSlotMainHand, 50708, -6.4, &proto.ItemSpec{Id: 50412}),
+		bisPairedAlt(proto.ItemSlot_ItemSlotMainHand, 47520, -18, &proto.ItemSpec{}),
+		bisAlt(proto.ItemSlot_ItemSlotMainHand, 50717, -25),
+		// the rank numbering follows what lands in the slot, so this repeat of rank 1 mustn't shift it
+		bisPairedAlt(proto.ItemSlot_ItemSlotMainHand, 50730, -1, &proto.ItemSpec{Id: 50412}),
+		bisAlt(proto.ItemSlot_ItemSlotOffHand, 50412, -3),
+	)
+
+	block, warnings := BuildBisBlock(result, testEnchants)
+	want := BisBlock{Slots: []BisSlot{
+		{Slot: proto.ItemSlot_ItemSlotMainHand, Items: []int32{50730, 50708, 47520, 50717}, Deltas: []int32{6, 18, 25},
+			Pairings: []BisPairing{{Rank: 2, Item: 50412}, {Rank: 3, Item: 0}}},
+		{Slot: proto.ItemSlot_ItemSlotOffHand, Items: []int32{50411, 50412}, Deltas: []int32{3}},
+	}}
+	if !reflect.DeepEqual(block, want) {
+		t.Errorf("got  %+v\nwant %+v", block, want)
+	}
+	if len(warnings) != 0 {
+		t.Errorf("warnings = %q", warnings)
+	}
+
+	// a pairing is a fact about the loadout, not a percentage, so it travels even when the deltas can't
+	noDeltas := tankRun(bisResult(1, map[proto.ItemSlot]*proto.ItemSpec{proto.ItemSlot_ItemSlotMainHand: {Id: 50730}},
+		bisPairedAlt(proto.ItemSlot_ItemSlotMainHand, 50708, -6.4, &proto.ItemSpec{Id: 50412})))
+	block, _ = BuildBisBlock(noDeltas, testEnchants)
+	slot := block.Slots[0]
+	if len(slot.Deltas) != 0 || !reflect.DeepEqual(slot.Pairings, []BisPairing{{Rank: 2, Item: 50412}}) {
+		t.Errorf("a tank run's slot: deltas %v, pairings %+v", slot.Deltas, slot.Pairings)
 	}
 }
 
@@ -572,10 +620,14 @@ func testDataset() *BisDataset {
 			{ID: 3, Kind: BisSubjectSpec, ClassID: 8, SpecName: "Frost", RaidIndex: -1},
 		},
 		Blocks: []BisDatasetBlock{
-			{SubjectID: 1, ContentPhase: 1, Payload: "0:51227,50712(e59954,g41398,g40111,r31-37)+142;16:50462", Checksum: "11111111",
+			{SubjectID: 1, ContentPhase: 1, Checksum: "11111111",
+				Payload: "0:51227,50712(e59954,g41398,g40111,r31-37)+142;" +
+					"14:50730,50708,47520(e59621)(o2-50412,o3-0)+64,180;16:50462",
 				Block: BisBlock{Slots: []BisSlot{
 					{Slot: proto.ItemSlot_ItemSlotHead, Items: []int32{51227, 50712}, Enchant: 59954, Gems: []int32{41398, 40111},
 						ReforgeFrom: 31, ReforgeTo: 37, Deltas: []int32{142}},
+					{Slot: proto.ItemSlot_ItemSlotMainHand, Items: []int32{50730, 50708, 47520}, Enchant: 59621,
+						Deltas: []int32{64, 180}, Pairings: []BisPairing{{Rank: 2, Item: 50412}, {Rank: 3, Item: 0}}},
 					{Slot: proto.ItemSlot_ItemSlotRanged, Items: []int32{50462}},
 				}}},
 			{SubjectID: 2, ContentPhase: 4, Payload: "1:50633", Checksum: "22222222",
@@ -621,7 +673,8 @@ Bistooltip_server_roster = {
         ["phases"] = {
             ["T7"] = {
                 [1] = { ["slot_name"] = "Head", ["enhs"] = { [1] = { ["type"] = "spell", ["id"] = 59954 }, [2] = { ["type"] = "item", ["id"] = 41398 }, [3] = { ["type"] = "none", ["id"] = 0 }, [4] = { ["type"] = "item", ["id"] = 40111 } }, ["extra"] = { ["deltas"] = { [1] = 142 }, ["reforge"] = { ["from"] = 31, ["to"] = 37 } }, [1] = 51227, [2] = 50712 },
-                [2] = { ["slot_name"] = "Relic", ["enhs"] = { }, [1] = 50462 },
+                [2] = { ["slot_name"] = "Weapon", ["enhs"] = { [1] = { ["type"] = "spell", ["id"] = 59621 } }, ["extra"] = { ["deltas"] = { [1] = 64, [2] = 180 }, ["pairings"] = { [1] = { ["rank"] = 2, ["item"] = 50412 }, [2] = { ["rank"] = 3, ["item"] = 0 } } }, [1] = 50730, [2] = 50708, [3] = 47520 },
+                [3] = { ["slot_name"] = "Relic", ["enhs"] = { }, [1] = 50462 },
             },
         },
     },
@@ -655,7 +708,8 @@ func TestWriteBisSQL(t *testing.T) {
 		"START TRANSACTION;\nDELETE FROM `bistooltip_block`;\nDELETE FROM `bistooltip_subject`;\nDELETE FROM `bistooltip_dataset`;\n",
 		"('abcd1234', '0123456789ab', '2026-09-19', 'own', '0badf00d', '2026-09-21 12:30:00');\n",
 		"(1, 0, 1001, 'Deathsong', 6, 'Frost', 0),\n(2, 1, 0, '', 8, 'Fire', -1),\n(3, 1, 0, '', 8, 'Frost', -1);\n",
-		"(1, 1, '0:51227,50712(e59954,g41398,g40111,r31-37)+142;16:50462', '11111111'),\n(2, 4, '1:50633', '22222222'),\n(3, 5, '10:50402(g40125)', '33333333');\n",
+		"(1, 1, '0:51227,50712(e59954,g41398,g40111,r31-37)+142;14:50730,50708,47520(e59621)(o2-50412,o3-0)+64,180;" +
+			"16:50462', '11111111'),\n(2, 4, '1:50633', '22222222'),\n(3, 5, '10:50402(g40125)', '33333333');\n",
 	} {
 		if !strings.Contains(got, want) {
 			t.Errorf("missing:\n%s\nin:\n%s", want, got)

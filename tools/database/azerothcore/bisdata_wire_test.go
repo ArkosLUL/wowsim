@@ -28,6 +28,40 @@ func TestEncodeBlock(t *testing.T) {
 	}
 }
 
+// The pairing group sits between the enhancements and the deltas, and only names the ranks whose off
+// hand isn't rank 1's.
+func TestEncodeBlockPairings(t *testing.T) {
+	for _, tc := range []struct {
+		comment string
+		slot    BisSlot
+		want    string
+	}{
+		{"both groups", BisSlot{Slot: proto.ItemSlot_ItemSlotMainHand, Items: []int32{50730, 50708}, Enchant: 59621,
+			Gems: []int32{40111}, ReforgeFrom: 31, ReforgeTo: 37, Deltas: []int32{64},
+			Pairings: []BisPairing{{Rank: 2, Item: 50412}}},
+			"14:50730,50708(e59621,g40111,r31-37)(o2-50412)+64"},
+		{"no enhancements", BisSlot{Slot: proto.ItemSlot_ItemSlotMainHand, Items: []int32{50730, 50708},
+			Pairings: []BisPairing{{Rank: 2, Item: 50412}}},
+			"14:50730,50708(o2-50412)"},
+		{"a dropped off hand", BisSlot{Slot: proto.ItemSlot_ItemSlotMainHand, Items: []int32{50730, 50708},
+			Deltas: []int32{64}, Pairings: []BisPairing{{Rank: 2, Item: 0}}},
+			"14:50730,50708(o2-0)+64"},
+		{"ranks skipped", BisSlot{Slot: proto.ItemSlot_ItemSlotMainHand,
+			Items: []int32{50730, 50708, 47520, 50411, 50412, 50413}, Deltas: []int32{12, 35, 48, 103, 250},
+			Pairings: []BisPairing{{Rank: 3, Item: 40704}, {Rank: 6, Item: 0}}},
+			"14:50730,50708,47520,50411,50412,50413(o3-40704,o6-0)+12,35,48,103,250"},
+	} {
+		got, err := EncodeBlock(BisBlock{Slots: []BisSlot{tc.slot}})
+		if err != nil {
+			t.Errorf("%s: %v", tc.comment, err)
+			continue
+		}
+		if got != tc.want {
+			t.Errorf("%s: got  %s\nwant %s", tc.comment, got, tc.want)
+		}
+	}
+}
+
 func TestBlockRoundTrip(t *testing.T) {
 	var everySlot BisBlock
 	for slot := proto.ItemSlot_ItemSlotHead; slot <= proto.ItemSlot_ItemSlotRanged; slot++ {
@@ -54,6 +88,19 @@ func TestBlockRoundTrip(t *testing.T) {
 			{Slot: proto.ItemSlot_ItemSlotHead, Items: []int32{1}},
 			{Slot: proto.ItemSlot_ItemSlotMainHand, Items: []int32{2}, Enchant: 3},
 		}}},
+		{"pairings, no enhancements", BisBlock{Slots: []BisSlot{{Slot: proto.ItemSlot_ItemSlotMainHand,
+			Items: []int32{50730, 50708}, Pairings: []BisPairing{{Rank: 2, Item: 50412}}}}}},
+		{"pairings with both other groups", BisBlock{Slots: []BisSlot{{Slot: proto.ItemSlot_ItemSlotMainHand,
+			Items: []int32{50730, 50708}, Enchant: 59621, Gems: []int32{40111}, ReforgeFrom: 31, ReforgeTo: 37,
+			Deltas: []int32{64}, Pairings: []BisPairing{{Rank: 2, Item: 50412}}}}}},
+		{"a dropped off hand", BisBlock{Slots: []BisSlot{{Slot: proto.ItemSlot_ItemSlotMainHand,
+			Items: []int32{50730, 50708}, Deltas: []int32{64}, Pairings: []BisPairing{{Rank: 2, Item: 0}}}}}},
+		{"ranks skipped", BisBlock{Slots: []BisSlot{{Slot: proto.ItemSlot_ItemSlotMainHand,
+			Items: []int32{50730, 50708, 47520, 50411, 50412, 50413}, Deltas: []int32{12, 35, 48, 103, 250},
+			Pairings: []BisPairing{{Rank: 3, Item: 40704}, {Rank: 6, Item: 0}}}}}},
+		{"the last rank paired", BisBlock{Slots: []BisSlot{{Slot: proto.ItemSlot_ItemSlotMainHand,
+			Items: []int32{50730, 50708, 47520}, Deltas: []int32{64, 180},
+			Pairings: []BisPairing{{Rank: 2, Item: 50412}, {Rank: 3, Item: 0}}}}}},
 	} {
 		payload, err := EncodeBlock(tc.block)
 		if err != nil {
@@ -80,19 +127,28 @@ func TestEncodeBlockRejects(t *testing.T) {
 		return BisBlock{Slots: []BisSlot{slot}}
 	}
 	for comment, block := range map[string]BisBlock{
-		"no slots":           {},
-		"no items":           head(BisSlot{}),
-		"seven items":        head(BisSlot{Items: []int32{1, 2, 3, 4, 5, 6, 7}}),
-		"zero item":          head(BisSlot{Items: []int32{0}}),
-		"zero gem":           head(BisSlot{Items: []int32{1}, Gems: []int32{0}}),
-		"half a reforge":     head(BisSlot{Items: []int32{1}, ReforgeFrom: 13}),
-		"item twice":         head(BisSlot{Items: []int32{1, 1}}),
-		"delta, no rank 2":   head(BisSlot{Items: []int32{1}, Deltas: []int32{5}}),
-		"too few deltas":     head(BisSlot{Items: []int32{1, 2, 3}, Deltas: []int32{5}}),
-		"too many deltas":    head(BisSlot{Items: []int32{1, 2}, Deltas: []int32{5, 6}}),
-		"slot past ranged":   {Slots: []BisSlot{{Slot: proto.ItemSlot_ItemSlotRanged + 1, Items: []int32{1}}}},
-		"slots out of order": {Slots: []BisSlot{{Slot: 2, Items: []int32{1}}, {Slot: 1, Items: []int32{1}}}},
-		"slot twice":         {Slots: []BisSlot{{Slot: 1, Items: []int32{1}}, {Slot: 1, Items: []int32{2}}}},
+		"no slots":         {},
+		"no items":         head(BisSlot{}),
+		"seven items":      head(BisSlot{Items: []int32{1, 2, 3, 4, 5, 6, 7}}),
+		"zero item":        head(BisSlot{Items: []int32{0}}),
+		"zero gem":         head(BisSlot{Items: []int32{1}, Gems: []int32{0}}),
+		"half a reforge":   head(BisSlot{Items: []int32{1}, ReforgeFrom: 13}),
+		"item twice":       head(BisSlot{Items: []int32{1, 1}}),
+		"delta, no rank 2": head(BisSlot{Items: []int32{1}, Deltas: []int32{5}}),
+		"too few deltas":   head(BisSlot{Items: []int32{1, 2, 3}, Deltas: []int32{5}}),
+		"too many deltas":  head(BisSlot{Items: []int32{1, 2}, Deltas: []int32{5, 6}}),
+		"pairs rank 1":     head(BisSlot{Items: []int32{1, 2}, Pairings: []BisPairing{{Rank: 1, Item: 5}}}),
+		"pairs a rank past the items": head(BisSlot{Items: []int32{1, 2},
+			Pairings: []BisPairing{{Rank: 3, Item: 5}}}),
+		"pairs ranks out of order": head(BisSlot{Items: []int32{1, 2, 3},
+			Pairings: []BisPairing{{Rank: 3, Item: 5}, {Rank: 2, Item: 6}}}),
+		"pairs a rank twice": head(BisSlot{Items: []int32{1, 2, 3},
+			Pairings: []BisPairing{{Rank: 2, Item: 5}, {Rank: 2, Item: 6}}}),
+		"pairs with one item":       head(BisSlot{Items: []int32{1}, Pairings: []BisPairing{{Rank: 2, Item: 5}}}),
+		"pairs a negative off hand": head(BisSlot{Items: []int32{1, 2}, Pairings: []BisPairing{{Rank: 2, Item: -5}}}),
+		"slot past ranged":          {Slots: []BisSlot{{Slot: proto.ItemSlot_ItemSlotRanged + 1, Items: []int32{1}}}},
+		"slots out of order":        {Slots: []BisSlot{{Slot: 2, Items: []int32{1}}, {Slot: 1, Items: []int32{1}}}},
+		"slot twice":                {Slots: []BisSlot{{Slot: 1, Items: []int32{1}}, {Slot: 1, Items: []int32{2}}}},
 	} {
 		if payload, err := EncodeBlock(block); err == nil {
 			t.Errorf("%s: encoded as %q", comment, payload)
@@ -108,6 +164,12 @@ func TestDecodeBlockRejects(t *testing.T) {
 		"0:1+", "0:1+x", "0:1+-0", "0:1+1+2", "0:1+5", "0:1;", "1:1;0:1", "0:1;0:2",
 		"0:1,2+1,", "0:1,2+,1", "0:1,2+1,,2", "0:1,2+-0", "0:1,2+01", "0:1,2+1 ", "0:1,2,3+1", "0:1,2+1,2",
 		"0:1,2,3+1,2+3",
+		// pairing groups: a rank outside 2..items, repeated or out of order, empty, malformed, on a
+		// one-item slot, twice over, or ahead of the enhancements
+		"14:1,2()", "14:1,2(o)", "14:1,2(o2)", "14:1,2(o2-)", "14:1,2(o1-5)", "14:1,2(o7-5)",
+		"14:1,2,3(o3-5,o2-6)", "14:1,2,3(o2-5,o2-6)", "14:1(o2-5)", "14:1,2(o2-5)(e59621)",
+		"14:1,2,3(o2-5)(o3-6)", "14:1,2(x2-5)", "14:1,2(o2--5)", "14:1,2(o-2-5)", "14:1,2(o02-5)",
+		"14:1,2(o2-05)", "14:1,2(o2-5", "14:1,2(e59621,o2-5)", "14:1,2(o2-5,e59621)", "14:1,2(o2-5)+1+2",
 	} {
 		if block, err := DecodeBlock(payload); err == nil {
 			t.Errorf("%q: decoded to %+v", payload, block)
