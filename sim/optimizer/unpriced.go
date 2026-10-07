@@ -11,10 +11,10 @@ import (
 var unpricedShare = 0.05
 
 // priceUnpriced sims, at Quick only, the unpriced items that could rank among a slot's
-// alternativesPerSlot around the best, so the neighborhood ranks them on a measured residual.
+// candidatesPerSlot around the best, so the neighborhood ranks them on a measured residual.
 // Could rank: the trial of the move runnersUp would rank, the off hand a one-hander brings included,
 // less the item's own residual, plus the most a measured item of its family adds beyond its stats
-// reaches the slot's last priced alternative. Slots take turns, each best stats first, up to
+// reaches the slot's last priced candidate. Slots take turns, each best stats first, up to
 // unpricedShare; the run's budget grows by what they cost, so the race keeps what it had.
 func (r *run) priceUnpriced(s *surrogate) error {
 	if r.asked.Settings.GetEffort() != proto.OptimizerEffort_OptimizerEffortQuick {
@@ -101,7 +101,7 @@ func (r *run) priceUnpriced(s *surrogate) error {
 			continue
 		}
 		threshold := math.Inf(-1)
-		if alts := se.runnersUp(st, slot, alternativesPerSlot, se.all[slot]); len(alts) == alternativesPerSlot {
+		if alts := se.runnersUp(st, slot, candidatesPerSlot, se.all[slot]); len(alts) == candidatesPerSlot {
 			threshold = se.trial(st, alts[len(alts)-1]...)
 		}
 		// a family with nothing measured gives no bound: all of it could rank

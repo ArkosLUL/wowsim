@@ -865,6 +865,7 @@ export class OptimizerTab extends SimTab {
 		const catalog = await loadCatalog();
 		return buildOptimizeRequest({
 			base: this.simUI.sim.makeRaidSimRequest(false),
+			fixedSeed: this.simUI.sim.getFixedRngSeed(),
 			targetRaidIndex: player.getRaidIndex(),
 			settings: this.settings,
 			catalog,

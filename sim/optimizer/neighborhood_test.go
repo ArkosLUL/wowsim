@@ -286,3 +286,60 @@ func TestRunnersUpBeatEveryUnreportedItem(t *testing.T) {
 		}
 	}
 }
+
+// nbBare has no stats at all, so the surrogate ranks it under every plain trinket; in the sim it's
+// worth 59 DPS, one under the 60 attack power seed.
+const (
+	nbBare    = 9700501
+	nbBareDPS = 59
+)
+
+var nbBareOnce sync.Once
+
+func nbBareMetrics(p Point) (Metrics, error) {
+	m, err := kaMetrics(p)
+	for _, c := range p.Loadout.Items {
+		if c.ItemID == nbBare {
+			m[MetricDPS] += nbBareDPS
+		}
+	}
+	return m, err
+}
+
+// An item whose worth isn't in its stats still reaches the alternatives when it sims best: the
+// surrogate ranks it last of nine, but all nine get simmed and the five reported go by what they sim.
+func TestAlternativesAreTheMeasuredBest(t *testing.T) {
+	nbBareOnce.Do(func() {
+		core.AddToDatabase(&proto.SimDatabase{Items: []*proto.SimItem{
+			kaItem(nbBare, proto.ItemType_ItemTypeTrinket, stats.Stats{}, ""),
+		}})
+	})
+	trinket1 := proto.ItemSlot_ItemSlotTrinket1
+	rank := nbPoolRank()
+	rank[nbBare] = 0
+	rn, s := nbRunWith(t, rank, 1_000_000, append(nbAlternativesPool(), nbBare)...)
+	rn.eval.inner = newKnownEvaluator(nbBareMetrics)
+	seed := rn.best
+
+	alts, verified, err := rn.neighborhood(s, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rn.best != seed || len(verified) != 0 {
+		t.Fatalf("the pick moved %d times, to trinket 1 %d", len(verified), rn.best.Items[trinket1].ItemID)
+	}
+	if len(alts) != alternativesPerSlot {
+		t.Fatalf("%d alternatives, want %d", len(alts), alternativesPerSlot)
+	}
+	if alts[0].Item.GetId() != nbBare {
+		t.Errorf("trinket 1's alternatives are %v, want %d first", uqAltIDs(alts), nbBare)
+	}
+	if d := alts[0].ScoreDelta; d > 0 || d < -3 {
+		t.Errorf("trinket %d scores %+.1f against the pick, want about -1", nbBare, d)
+	}
+	for i := 1; i < len(alts); i++ {
+		if alts[i].ScoreDelta > alts[i-1].ScoreDelta {
+			t.Errorf("alternative %d scores %+.1f, over the one before it (%+.1f)", i, alts[i].ScoreDelta, alts[i-1].ScoreDelta)
+		}
+	}
+}

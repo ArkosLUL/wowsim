@@ -27,7 +27,7 @@ import {
 import { SimTab } from '../core/components/sim_tab';
 import { IndividualSimUIConfig } from '../core/individual_sim_ui';
 import { ALL_SOURCE_KINDS, loadCatalog, MAX_CONTENT_PHASE, MIN_CONTENT_PHASE } from '../core/optimizer/catalog';
-import { buildOptimizeRequest, BuiltRequest, defaultTabSettings, optimizerEncounter } from '../core/optimizer/pool_builder';
+import { buildOptimizeRequest, BuiltRequest, defaultTabSettings, optimizerEncounter, pinOptimizerSeed } from '../core/optimizer/pool_builder';
 import { getSpecConfig, Player } from '../core/player';
 import { OptimizeGearRequest, ProgressMetrics, RaidSimRequest, RaidSimResult } from '../core/proto/api';
 import { Class, EquipmentSpec, Glyphs, Race, SimDatabase, UnitReference_Type } from '../core/proto/common';
@@ -911,6 +911,7 @@ export class OptimizerBatchTab extends SimTab {
 			db: this.simUI.sim.db,
 			warmStarts,
 			objective,
+			fixedSeed: this.simUI.sim.getFixedRngSeed(),
 		});
 	}
 
@@ -1025,6 +1026,7 @@ export class OptimizerBatchTab extends SimTab {
 		if (base.simOptions) {
 			base.simOptions.debugFirstIteration = false;
 		}
+		pinOptimizerSeed(base, this.simUI.sim.getFixedRngSeed());
 		return OptimizeGearRequest.create({
 			base,
 			targetRaidIndex,

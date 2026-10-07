@@ -419,6 +419,8 @@ func (r *run) execute() *proto.OptimizerResult {
 	r.verified = verified
 
 	r.setStage("Alternatives")
+	// the candidates and their ranking come on top of what the stages before left
+	r.total += int64(alternativesShare * float64(int64(r.budget.Evaluations)*int64(r.budget.Iterations)))
 	// the neighborhood only swaps items, so the best's race stays and its pricing with it
 	alternatives, verified, err := r.neighborhood(r.surrogates[r.best.RacialTraits], verified)
 	if err != nil {
