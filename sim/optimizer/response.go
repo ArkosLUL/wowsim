@@ -9,9 +9,9 @@ import (
 	"github.com/wowsims/wotlk/sim/core/stats"
 )
 
-// capProneStats get five offsets and a bisected breakpoint instead of one offset each side of the
-// seed. ArP is here though the sheet knows its cap: Blood Gorged adds ArP to some spells only, so the
-// real breakpoint moves per spell and only sims find it.
+// capProneStats get a bisected breakpoint on top of their lattice's knots. ArP is here though the
+// sheet knows its cap: Blood Gorged adds ArP to some spells only, so the real breakpoint moves per
+// spell and only sims find it.
 var capProneStats = map[stats.Stat]bool{
 	stats.MeleeHit:         true,
 	stats.SpellHit:         true,
@@ -21,16 +21,20 @@ var capProneStats = map[stats.Stat]bool{
 }
 
 const (
-	capProneOffsets = 5
-	// Each step halves the bracket around a breakpoint: five take it to 1/64 of the range.
+	// Each step halves the bracket around a breakpoint: five take it to 1/32 of the lattice segment
+	// it's in.
 	bisectionSteps = 5
 	// Standard errors a slope change needs to count as a breakpoint rather than noise.
 	breakpointZ = 3
 )
 
-// ResponseRange is the offsets from the seed a curve has to cover, usually what the pool can reach.
+// ResponseRange is the offsets from the seed a curve has to cover, usually what the pool can reach,
+// and the lattice its knots sit on: Unit times powers of Ratio, either side of the seed. The lattice
+// doesn't move with the range, so a pool that reaches further only adds knots past the ones a
+// smaller pool gets.
 type ResponseRange struct {
-	Min, Max float64
+	Min, Max    float64
+	Unit, Ratio float64
 }
 
 // Knot is one simmed offset and J's paired change from the seed there.
@@ -84,6 +88,9 @@ func MeasureResponse(ctx context.Context, eval Evaluator, obj *Objective, seed L
 		if rng.Min > rng.Max {
 			return nil, fmt.Errorf("%s range runs backwards, %g to %g", s.StatName(), rng.Min, rng.Max)
 		}
+		if (rng.Min != 0 || rng.Max != 0) && (rng.Unit <= 0 || rng.Ratio <= 1) {
+			return nil, fmt.Errorf("%s has no lattice for its knots: unit %g, ratio %g", s.StatName(), rng.Unit, rng.Ratio)
+		}
 		if rng.Min != 0 || rng.Max != 0 {
 			order = append(order, s)
 		}
@@ -123,7 +130,7 @@ func MeasureResponse(ctx context.Context, eval Evaluator, obj *Objective, seed L
 		if !capProneStats[s] {
 			continue
 		}
-		if b := findBreakpoint(knots[s]); b != nil {
+		if b := findBreakpoint(knots[s], ranges[s]); b != nil {
 			brackets[s] = b
 		}
 	}
@@ -156,7 +163,7 @@ func MeasureResponse(ctx context.Context, eval Evaluator, obj *Objective, seed L
 			c.Breakpoint = b.estimate()
 			c.SlopeBelow, c.SlopeAbove = fitHinge(knots[s], c.Breakpoint)
 		case capProneStats[s]:
-			// no breakpoint in range, so one line fits all five offsets best
+			// no breakpoint in range, so one line fits all the knots best
 			slope := fitLine(knots[s])
 			c.SlopeBelow, c.SlopeAbove = slope, slope
 		default:
@@ -167,22 +174,32 @@ func MeasureResponse(ctx context.Context, eval Evaluator, obj *Objective, seed L
 	return resp, nil
 }
 
-// initialOffsets never includes 0: the seed is simmed once for every stat.
+// initialOffsets are the lattice's knots across the range: up to the first one at or past Max, and
+// down to Min itself. Min is about all the seed's gear holds of the stat, lost to candidates without
+// it, so the pool's extremes barely move it and it can be a knot; a lattice knot within a quarter of
+// itself of Min would only make a short, noisy segment. Never 0: the seed is simmed once for every
+// stat.
 func initialOffsets(s stats.Stat, rng ResponseRange) []float64 {
-	var offsets []float64
-	if capProneStats[s] && rng.Max > rng.Min {
-		step := (rng.Max - rng.Min) / (capProneOffsets - 1)
-		for i := 0; i < capProneOffsets; i++ {
-			offsets = append(offsets, rng.Min+float64(i)*step)
-		}
-	} else {
-		offsets = []float64{rng.Min, rng.Max}
+	var out []float64
+	// one knot further for a cap-prone stat, so a cap anywhere up to Max has a clean segment past it
+	extra := 0
+	if capProneStats[s] {
+		extra = 1
 	}
-	out := offsets[:0]
-	for _, off := range offsets {
-		if off != 0 && !slices.Contains(out, off) {
-			out = append(out, off)
+	for x := rng.Unit; rng.Max > 0; x *= rng.Ratio {
+		out = append(out, x)
+		if x >= rng.Max {
+			if extra == 0 {
+				break
+			}
+			extra--
 		}
+	}
+	if rng.Min < 0 {
+		for x := rng.Unit; 1.25*x <= -rng.Min; x *= rng.Ratio {
+			out = append(out, -x)
+		}
+		out = append(out, rng.Min)
 	}
 	return out
 }
@@ -275,9 +292,10 @@ func (b *bracket) estimate() float64 {
 	return b.mid()
 }
 
-// findBreakpoint brackets the knot where the slope changes the most, or returns nil when no change
-// clears breakpointZ standard errors.
-func findBreakpoint(knots []Knot) *bracket {
+// findBreakpoint brackets the knot in rng where the slope changes the most, or returns nil when no
+// change clears breakpointZ standard errors. Knots past rng only lend their segments: those are long,
+// so their slopes come out precise enough that a bend no loadout reaches would outscore a real cap.
+func findBreakpoint(knots []Knot, rng ResponseRange) *bracket {
 	n := len(knots)
 	// with 4 knots or more, at least one side of any bracket has a clean segment for narrow
 	if n < 4 {
@@ -292,6 +310,9 @@ func findBreakpoint(knots []Knot) *bracket {
 	}
 	best, bestZ := -1, 0.0
 	for j := 1; j < n-1; j++ {
+		if knots[j].Offset < rng.Min || knots[j].Offset > rng.Max {
+			continue
+		}
 		change := math.Abs(slopes[j].Mean - slopes[j-1].Mean)
 		scale := max(math.Abs(slopes[j].Mean), math.Abs(slopes[j-1].Mean))
 		// the floor keeps float noise on a straight noiseless line from reading as a break

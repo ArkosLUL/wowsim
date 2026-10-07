@@ -19,9 +19,10 @@ func TestMeasureResponseFindsTheCap(t *testing.T) {
 		hit, str := p.Offset[stats.MeleeHit], p.Offset[stats.Strength]
 		return Metrics{MetricDPS: 5000 + 3*min(hit, hitCap) + 0.5*max(hit-hitCap, 0) + 2*str - 0.001*str*str}
 	})
+	hitRange := ResponseRange{Min: -100, Max: 300, Unit: 100, Ratio: 2}
 	resp, err := MeasureResponse(context.Background(), fake, dpsObjective(), Loadout{}, map[stats.Stat]ResponseRange{
-		stats.MeleeHit:  {Min: -100, Max: 300},
-		stats.Strength:  {Min: -100, Max: 100},
+		stats.MeleeHit:  hitRange,
+		stats.Strength:  {Min: -100, Max: 100, Unit: 25, Ratio: 4},
 		stats.Expertise: {},
 	}, 1000)
 	if err != nil {
@@ -32,7 +33,7 @@ func TestMeasureResponseFindsTheCap(t *testing.T) {
 	if hit == nil || !near(hit.Breakpoint, hitCap, 2) || !near(hit.SlopeBelow, 3, 0.02) || !near(hit.SlopeAbove, 0.5, 0.02) {
 		t.Fatalf("hit curve = %+v, want a break at %g from 3 to 0.5", hit, hitCap)
 	}
-	if fake.calls != 1+bisectionSteps || len(hit.Knots) != 5+bisectionSteps {
+	if fake.calls != 1+bisectionSteps || len(hit.Knots) != len(initialOffsets(stats.MeleeHit, hitRange))+1+bisectionSteps {
 		t.Errorf("%d evaluate calls and %d knots, want the first batch plus %d bisection steps", fake.calls, len(hit.Knots), bisectionSteps)
 	}
 	str := resp[stats.Strength]
@@ -60,8 +61,8 @@ func TestMeasureResponseCapInAnOuterSegment(t *testing.T) {
 		return Metrics{MetricDPS: 5000 + 2*min(exp+40, 0) + 3*min(hit, 45)}
 	})
 	resp, err := MeasureResponse(context.Background(), fake, dpsObjective(), Loadout{}, map[stats.Stat]ResponseRange{
-		stats.Expertise: {Min: -60, Max: 60},
-		stats.SpellHit:  {Min: -60, Max: 60},
+		stats.Expertise: {Min: -60, Max: 60, Unit: 30, Ratio: 2},
+		stats.SpellHit:  {Min: -60, Max: 60, Unit: 30, Ratio: 2},
 	}, 1000)
 	if err != nil {
 		t.Fatal(err)
@@ -77,11 +78,12 @@ func TestMeasureResponseCapInAnOuterSegment(t *testing.T) {
 func TestFindBreakpointNeedsFourKnots(t *testing.T) {
 	// slope 3 up to +5, then 0.5
 	kink := []Knot{{Offset: -10, Delta: Estimate{Mean: -30}}, {Offset: 0}, {Offset: 10, Delta: Estimate{Mean: 17.5}}}
-	if b := findBreakpoint(kink); b != nil {
+	rng := ResponseRange{Min: -10, Max: 20}
+	if b := findBreakpoint(kink, rng); b != nil {
 		t.Errorf("3 knots gave a bracket %+v; neither side has a clean segment", b)
 	}
 	kink = append(kink, Knot{Offset: 20, Delta: Estimate{Mean: 22.5}})
-	if b := findBreakpoint(kink); b == nil || b.lo.Offset != 0 || b.hi.Offset != 10 || !near(b.estimate(), 5, 1e-9) {
+	if b := findBreakpoint(kink, rng); b == nil || b.lo.Offset != 0 || b.hi.Offset != 10 || !near(b.estimate(), 5, 1e-9) {
 		t.Errorf("4 knots gave %+v, want the break at 5, bracketed by 0 and 10", b)
 	}
 }
@@ -91,7 +93,7 @@ func TestMeasureResponseWithoutACap(t *testing.T) {
 		return Metrics{MetricDPS: 5000 + 1.5*p.Offset[stats.Expertise]}
 	})
 	resp, err := MeasureResponse(context.Background(), fake, dpsObjective(), Loadout{}, map[stats.Stat]ResponseRange{
-		stats.Expertise: {Min: -50, Max: 50},
+		stats.Expertise: {Min: -50, Max: 50, Unit: 16, Ratio: 4},
 	}, 1000)
 	if err != nil {
 		t.Fatal(err)
@@ -107,7 +109,7 @@ func TestMeasureResponseOneSidedRange(t *testing.T) {
 		return Metrics{MetricDPS: 5000 + 4*p.Offset[stats.SpellPower]}
 	})
 	resp, err := MeasureResponse(context.Background(), fake, dpsObjective(), Loadout{}, map[stats.Stat]ResponseRange{
-		stats.SpellPower: {Min: 0, Max: 80},
+		stats.SpellPower: {Min: 0, Max: 80, Unit: 16, Ratio: 4},
 	}, 500)
 	if err != nil {
 		t.Fatal(err)
