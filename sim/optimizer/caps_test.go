@@ -375,18 +375,28 @@ func TestAddStatFloorKeepsAHigherFloor(t *testing.T) {
 	}
 }
 
-// A melee DPS's search reaches both the hit and expertise floors.
+// A melee DPS's search reaches both the hit and expertise floors, where some of the unconstrained
+// search's top loadouts fall short of one.
 func TestMeleeCapFloorsReachTheCap(t *testing.T) {
-	without, _ := optimizedSheet(t, realCapRequest(t, "fury_p1", 1, false))
+	free := realCapRequest(t, "fury_p1", 1, false)
+	without, freeResult := optimizedSheet(t, free)
 	with, result := optimizedSheet(t, realCapRequest(t, "fury_p1", 1, true))
 
 	hitFloor, expFloor := floorOf(result.Settings, stats.MeleeHit), floorOf(result.Settings, stats.Expertise)
 	if hitFloor == 0 || expFloor == 0 {
 		t.Fatalf("no hit/expertise floor in the result's settings: %v", result.Settings.GetStatMinimums())
 	}
-	if without[stats.MeleeHit] >= hitFloor && without[stats.Expertise] >= expFloor {
-		t.Fatalf("unconstrained hit is %.1f (floor %.1f) and expertise %.1f (floor %.1f), both already clear; want at least one under its floor for this test to mean anything",
-			without[stats.MeleeHit], hitFloor, without[stats.Expertise], expFloor)
+	// the free pick alone can land right on both caps, so check its whole top list
+	hits, exps := loadoutStat(t, free, freeResult.Top, stats.MeleeHit), loadoutStat(t, free, freeResult.Top, stats.Expertise)
+	short := 0
+	for i := range hits {
+		if hits[i] < hitFloor || exps[i] < expFloor {
+			short++
+		}
+	}
+	if short == 0 {
+		t.Fatalf("unconstrained, all %d top loadouts reach both floors (hit %v, floor %.1f; expertise %v, floor %.1f), want some short of one for this test to mean anything",
+			len(hits), hits, hitFloor, exps, expFloor)
 	}
 	if with[stats.MeleeHit] < hitFloor-0.5 {
 		t.Errorf("with the caps on, hit is %.1f, under its floor of %.1f", with[stats.MeleeHit], hitFloor)
@@ -394,8 +404,8 @@ func TestMeleeCapFloorsReachTheCap(t *testing.T) {
 	if with[stats.Expertise] < expFloor-0.5 {
 		t.Errorf("with the caps on, expertise is %.1f, under its floor of %.1f", with[stats.Expertise], expFloor)
 	}
-	t.Logf("fury p1: caps off hit=%.0f exp=%.0f; caps on hit=%.0f (floor %.0f) exp=%.0f (floor %.0f)",
-		without[stats.MeleeHit], without[stats.Expertise], with[stats.MeleeHit], hitFloor, with[stats.Expertise], expFloor)
+	t.Logf("fury p1: caps off hit=%.0f exp=%.0f (%d of %d top loadouts short); caps on hit=%.0f (floor %.0f) exp=%.0f (floor %.0f)",
+		without[stats.MeleeHit], without[stats.Expertise], short, len(hits), with[stats.MeleeHit], hitFloor, with[stats.Expertise], expFloor)
 }
 
 // capShortfallAgainst is how far l's sheet sits under settings' floors (0 if it meets every one),

@@ -1785,3 +1785,51 @@ case's J, picks, sims and wall before and after.
 
 Golden-neutral. **Owns:** `response.go`, `surrogate.go`'s `statRanges` and `addKnots`, `api.go`'s stage
 order, their tests.
+
+#### As built
+
+Not the refit: the knots moved off the range instead. Each curve's knots sit on a lattice, unit × ratio^k
+either side of the seed (`knotLattice`, `initialOffsets`): out to the first knot at or past the range's
+Max (one more for a cap-prone stat, so a cap has a clean segment past it), down to Min. Ratio 4, or 8 at
+Quick with the unit doubled. Unit: the median of what the seed's unlocked slots hold of the stat, as a
+power of two from 16; a stat the seed lacks takes the candidates' median. A wider pool only adds knots
+past a narrower pool's. The stat screen sims the outermost knot instead of the range end; `addKnots`,
+`newKnots`, `knotFractions` and `earlyKnotPoints` are gone (the lattice is already dense near the
+seed). Bisection starts only from a knot inside the range: past it, long segments pin slopes so
+tightly that a far bend outscored prot paladin Quick's crit-immunity cap (−289 → +1012). `api.go` is
+untouched.
+
+The refit came first and was dropped: a grid over the search's top 5 candidates ± a slot's typical
+amount, residuals repriced to keep reproducing their sims, up to 3 search rounds. Normal sims +12–28%;
+at Quick it ate the verification budget (8 picks verified, not 20); J moved −136 (rogue Normal) to +221
+(prot Normal), and fury's cut and uncut picks still differed (+226.3 / +185.8).
+
+Base check (`TestCurvesPoolCut`, `curves_slow_test.go`, fury p1 Normal, cut against uncut pool, one
+paired check): the wave-R +274.5 doesn't reproduce at 924ddc393. Base: uncut +205.1 ± 2.6, cut
++235.4 ± 2.7, picks differing in waist, a ring and gems. After: uncut +194.8 ± 2.8, cut +201.9 ± 2.8,
+within 2 se of the +205.1 target; the picks differ in one ring (40717 / 40075). The cut pick keeps
+base's items with other gems, reforges and the scope, −33.5.
+
+**Tests** (`curves_test.go`): `TestCurvesIgnoreAnUnusedExtremeItem`, a fake at Quick where a feet piece
+stretches haste's range 270 → 1270: same pick, same knots up to 270 (base: picks with 1 and 3 haste
+pieces, knots moved); `TestCurvesBisectACapInRange` (a cap at +40 against a bend at +2000, past
+Max); `TestMeasureResponseNeedsALattice`; `TestInitialOffsetsOnTheLattice`; `TestKnotLattice`. Small
+hunks elsewhere: `response_test.go`'s ranges carry a lattice; `caps_test.go`'s
+`TestMeleeCapFloorsReachTheCap` now reads the unconstrained run's whole top list (its pick reaches both
+caps, hit 271/262 and expertise 212/212), as `TestCasterCapFloorReachesTheCap` does.
+
+Slow suite (`tmp/slow-after.log`; J and sims repeat exactly across runs), all 12 pass, walls loaded and not comparable; Δ is J over the preset as equipped:
+
+| Case | Δ Quick | Δ Normal | Sims Q / N | Wall Q / N |
+|---|---|---|---|---|
+| fury p1 | +220.5 → +215.8 | +235.4 → +201.9 | 143.3k → 143.0k / 1,238k → 1,481k | 12.2 → 9.8 / 83.3 → 91.9 s |
+| combat rogue p3 | +527.1 → +664.7 | +658.2 → +573.1 | 145.3k → 155.5k / 1,378k → 1,424k | 12.8 → 17.6 / 113.7 → 133.3 s |
+| fire mage p3 | +68.3 → +92.2 | +100.9 → +102.3 | 131.3k → 124.5k / 806k → 843k | 3.1 → 3.2 / 17.7 → 20.6 s |
+| ret p4 | +161.1 → +248.1 | +218.1 → +252.9 | 138.0k → 143.3k / 1,361k → 1,411k | 5.9 → 6.8 / 49.7 → 55.1 s |
+| prot paladin p3 | +5213.5 → +5317.8 | +5178.1 → +5254.6 | 139.0k → 137.5k / 1,400k → 1,427k | 4.5 → 4.9 / 42.6 → 45.0 s |
+| feral tank p2 | +703.6 → +734.8 | +732.9 → +732.7 | 151.3k → 149.3k / 1,248k → 1,317k | 6.3 → 6.3 / 46.4 → 49.5 s |
+
+Every pick moved, since every curve's knots did; which loadouts reach verification turns on surrogate
+errors bigger than the gains (rogue's verified picks sit 350–400 under their surrogate, and base's
++658.2 was one weapon pair among them). Quick sims stay within +7.1%; Normal's +20% on fury is
+verification racing two close picks to 64k iterations, the curves cost +2–6%.
