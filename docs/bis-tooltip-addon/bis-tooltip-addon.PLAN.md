@@ -398,8 +398,8 @@ Known limits:
 
 ### Phase 6 — Real data, zip, docs
 
-**Status:** done for content phase 2, the one the realm is raiding. Live dataset `557998fe` (sim
-`d2b022d5b`, catalog 2026-09-19), 21 raiders, imported 2026-09-29. Phases 1 and 3–5 are unrun.
+**Status:** done for content phase 2, the one the realm is raiding. Live dataset `abc74401` (sim
+`0ccf8aa60`, catalog 2026-09-19), 21 raiders, imported 2026-10-06. Phases 1 and 3–5 are unrun.
 
 - **Per-spec lists are dropped** (the user's call): the dataset carries roster raiders only, and every
   spec keeps the shipped Wowhead lists.
