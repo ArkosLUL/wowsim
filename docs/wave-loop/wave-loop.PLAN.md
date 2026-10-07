@@ -157,13 +157,12 @@ dataset.
 
 ## Current wave
 
-- Wave: Z3, running on base `924ddc393` (master's `8cf4b275a` merged in); base slow suite in
-  `.wave-loop/logs/z3-base/slow.log`. Integrate BIS-OH-PAIR, BIS-QUICK-ALTS, BIS-WEAPON-PAIR, BIS-CURVES in that
-  order: all four are offline and golden-neutral, and meet in `surrogate.go`, `search.go` and `neighborhood.go`,
-  so the cross-review checks bounds, trial-equals-value and the alternatives across them.
-  Z2 landed. Its item notes: `G:\DevStuff\GitHub\.wave-loop\{ec-threat-fix3,ec-core-fix2,ec-class-fix,perf-z,bis-alts}-tmp`.
+- Wave: Z3, landed (master fast-forwarded to this close-out). Next: none planned.
+  Item notes: `G:\DevStuff\GitHub\.wave-loop\bis-{oh-pair,quick-alts,weapon-pair,curves}-tmp`.
   Prod runs X's `25cb9dddc` (no `rollback-q` image: its layers were gone), without Y's and Z's sim changes.
-- Open: Z2's follow-ups (the e2e-coverage, sim-performance and bis-optimizer backlogs) and the deferred BiS chain.
+- Open: Z2's and Z3's follow-ups (the e2e-coverage, sim-performance and bis-optimizer backlogs; Z3's in its As
+  builts, warrior Mace Specialization applying whatever the weapons among them, a golden change) and the deferred
+  BiS chain.
   Closed as not sim gaps: the sheet fields the server shows raw (per-school crit, Blood-Gorged, Mace and Holy
   Specialization), which the fixture README explains.
 - Deferred (the user's calls, 2026-10-02, 10-03 and 10-05), each only on the user's go-ahead:
@@ -176,8 +175,6 @@ dataset.
   - Then the BiS tooltip dataset (acbis driver, both stages, fresh `--out`, then `acbis`; the import needs
     the OK), the changed builds' stat weights, and the perf harness's `opt_*` scenarios (`update.sh`, a new
     baseline; the raid25 dumps in `_dump/optimizer_dump_test.go` still build uncut pools).
-  - Before the preset rerun: the response curves span the pool's stat range, so BIS-outclassed's cut moved Fury
-    P1's Normal pick 45 J below the uncut pool's, every item of which it still holds.
 - Workflow runIds: Z3's `wf_9aabe6e6-7af` (all four); Z2's `wf_7c79ba74-4ca` (code stages) and `wf_7e9c6966-820` (live stages, BIS-ALTS); Z's `wf_8821da6d-91f` (all five); Y's `wf_e58e8b14-102` (all four), `wf_d290cc37-ee6` and `wf_fe29d895-a35` (EC-TICK-FIX's rest and
   review); X2's `wf_b555c578-f46` (code stages), `wf_a0107f34-c7b` (live stages) and `wf_b00ecbe0-79a` (EC-RECHECK's
   live stages again, after an API error); X's `wf_a31ea7ec-8e3`; W's `wf_aa1b462c-590` (code stages) and
@@ -234,6 +231,7 @@ Reckoning that way), but J isn't DPS: see below.
 | Y | 8646.8, +205 / +221 | 10774.4, +567 / +539 | 5048.0, +80 / +103 | 12979.9, +174 / +258 | -16943.2, +5205 / +5188 | -1181.2, +978 / +982 |
 | Z | 8755.4, +203 / +203 | 10772.2, +596 / +647 | 5048.0, +68 / +101 | 12979.9, +174 / +258 | -16924.7, +5282 / +5172 | -1186.3, +710 / +740 |
 | Z2 | 8771.0, +221 / +235 | 10760.6, +527 / +658 | 5044.5, +68 / +101 | 12972.8, +161 / +218 | -17045.6, +5214 / +5178 | -1160.0, +704 / +733 |
+| Z3 | 8771.0, +216 / +202 | 10760.6, +665 / +573 | 5044.5, +92 / +102 | 12972.8, +248 / +253 | -17045.6, +5318 / +5255 | -1160.0, +735 / +733 |
 
 Quick / Normal. Ret P4 ran at Quick only in wave D, after the glyph fix; its wave C numbers
 (12821.9, +54 / +73) came from a seed that wore the glyph. The two tanks arrive with
@@ -307,6 +305,10 @@ In Z2 every `dps_preset` fell 0.02–0.07% (damage truncation); Prot Pal's `J_pr
 TPS −0.55%), Feral Tank's rose 2.2% and Fury's 0.2%, the normalizer. Feral Tank Normal adopts trinket 45609
 (BIS-ALTS). Normal's walls rose 11–22% over Z's, both beside the live server with no player online; Z2's idle
 bench shows no sim slowdown (see Sim throughput), which leaves BIS-ALTS ranking every priced item, or the load.
+In Z3 the presets held; every J move is BIS-CURVES' (the merge adds none). Quick gains +24 to +138 in five cases
+(Fury −5); Normal: Fury −33.5, Combat Rogue −85, Ret +35, Prot Pal +77, the rest flat. Quick sims −5% to +13%
+(BIS-QUICK-ALTS' pricing, BIS-WEAPON-PAIR's probes on the rogue), Normal's +2–6%, Fury's +20% (verification racing
+two close picks). Walls ran beside the live server.
 
 ## Sim throughput
 
@@ -639,6 +641,11 @@ crashed before F2, so its column starts there.
 | PERF-Z | merged | `cbedeaae8` | goldens byte-identical; no allocation per hardcast or failed cast (raid −50%, Hunter −45%, Elemental −32%) |
 | BIS-ALTS | merged | `5319540e0` | alternatives ranked from every priced item; 11 of 12 slow picks kept, Feral Tank P2 Normal better |
 | wave Z2 cross-review | direct | `4c9ef52d0` | the rune weapon's creature-type AP and Troll Beast Slaying, Icebound Fortitude's defense skill, off-hand aura 122 out of the flat bonus, Crusade split; 8 suites move (Combat Twin Blades −0.28%, Ret DTPS +3.0%) |
+| BIS-OH-PAIR | merged | `971ff7603` | one-hand alternatives to a two-hand pick simmed with their best off hand, `off_hand` on the alternative, an Equip per runner-up; slow picks unchanged |
+| BIS-QUICK-ALTS | merged | `f10a00c08` | Quick sims the unpriced items that could rank, up to 5% of its budget (+4–6% sims); Normal unchanged |
+| BIS-WEAPON-PAIR | merged | `76d96ec07` | rogue and warrior weapon-type talents priced from both hands by twin-weapon probes; only Combat Rogue Quick moves (the probes' budget) |
+| BIS-CURVES | merged | `c05b8fcb2` | curve knots on a lattice around the seed; Fury P1 Normal's cut and uncut pools within 2 se (+201.9 / +194.8); every case's items or gems move |
+| wave Z3 cross-review | direct | `5b2538301` | late-priced weapons net out the talent term, the screen pairs one-handers, `off_hand` also marks a dropped off hand, alternatives rebuilt on the final best, Defense cap at D*; goldens unchanged |
 
 Later WIs are added as their wave starts.
 

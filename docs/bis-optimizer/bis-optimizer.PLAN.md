@@ -1696,7 +1696,7 @@ Picks: 11 of 12 identical. Feral tank Normal moved a trinket, 45158 to 45609, wh
 the neighborhood adopted it, J over the preset +739.6 to +753.4 (SE 3.0). Quick's alternatives change too,
 as intended.
 
-### BIS-OH-PAIR (wave Z3)
+### BIS-OH-PAIR (wave Z3, done)
 
 When the pick is a two-hander, `runnersUp` (`search.go`) ranks a one-hand main hand with the off hand still
 empty, so it trials and sims weaker than it would play. `bestItem` already brings the best off hand along
@@ -1749,7 +1749,7 @@ their tests.
 - Tooltip: to show the pair, `BuildBisBlock` would carry each main-hand rank's `off_hand` id (under a
   two-hand pick the off hand has no block of its own) and the wire format a field for it.
 
-### BIS-WEAPON-PAIR (wave Z3)
+### BIS-WEAPON-PAIR (wave Z3, done)
 
 The surrogate is separable per slot, with pair corrections for rings and trinkets only (`pairSlots`,
 `surrogate.go`). Talents keyed by weapon type read both hands (`Character.GetProcMaskForTypes`): rogue Close
@@ -1821,7 +1821,7 @@ so Assasin's daggers screened with Accuracy (3788) instead of the seed's Berserk
 nets the enchant change out of the item residual: it absorbs Berserking's ~195 J. Mutilate's
 both-daggers requirement is a pair effect left unpriced.
 
-### BIS-QUICK-ALTS (wave Z3)
+### BIS-QUICK-ALTS (wave Z3, done)
 
 At Quick, `candBounds` leaves an item out of `se.all` when its family is unpriced or it `NeedsSim` without a
 measured residual, so it can never be an alternative: round 0 of the slow suite leaves 164–353 items unpriced
@@ -1879,7 +1879,7 @@ alternatives logged, Normal is the after run's.
 3.1 → 3.0, 5.9 → 6.1, 4.5 → 4.9, 6.3 → 5.7 s; an earlier run, under heavier load, swung Normal's as much on identical
 sims (fury 83 → 130 s). `slow_test.go` logs each alternative under `-decisions`.
 
-### BIS-CURVES (wave Z3)
+### BIS-CURVES (wave Z3, done)
 
 Response curves (`response.go`) span the pool's stat range (`statRanges`, `surrogate.go`): cap-prone stats get
 five offsets across it, then a bisected breakpoint. The range follows the pool's extremes, so cutting items no
@@ -1947,3 +1947,7 @@ Every pick moved, since every curve's knots did; which loadouts reach verificati
 errors bigger than the gains (rogue's verified picks sit 350–400 under their surrogate, and base's
 +658.2 was one weapon pair among them). Quick sims stay within +7.1%; Normal's +20% on fury is
 verification racing two close picks to 64k iterations, the curves cost +2–6%.
+
+Left: Combat Rogue P3 Normal's −85 (its verified picks sit 350–400 under their surrogate; BIS-WEAPON-PAIR's
+enchant residual is a lead); a cap-prone stat still sims one knot past Max, up to ratio² × Max (+65536 hit at
+Quick).
