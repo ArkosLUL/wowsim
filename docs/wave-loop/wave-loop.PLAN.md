@@ -157,7 +157,8 @@ dataset.
 
 ## Current wave
 
-- Wave: Z3, planned on this commit. Integrate BIS-OH-PAIR, BIS-QUICK-ALTS, BIS-WEAPON-PAIR, BIS-CURVES in that
+- Wave: Z3, running on base `924ddc393` (master's `8cf4b275a` merged in); base slow suite in
+  `.wave-loop/logs/z3-base/slow.log`. Integrate BIS-OH-PAIR, BIS-QUICK-ALTS, BIS-WEAPON-PAIR, BIS-CURVES in that
   order: all four are offline and golden-neutral, and meet in `surrogate.go`, `search.go` and `neighborhood.go`,
   so the cross-review checks bounds, trial-equals-value and the alternatives across them.
   Z2 landed. Its item notes: `G:\DevStuff\GitHub\.wave-loop\{ec-threat-fix3,ec-core-fix2,ec-class-fix,perf-z,bis-alts}-tmp`.
@@ -177,7 +178,7 @@ dataset.
     baseline; the raid25 dumps in `_dump/optimizer_dump_test.go` still build uncut pools).
   - Before the preset rerun: the response curves span the pool's stat range, so BIS-outclassed's cut moved Fury
     P1's Normal pick 45 J below the uncut pool's, every item of which it still holds.
-- Workflow runIds: Z2's `wf_7c79ba74-4ca` (code stages) and `wf_7e9c6966-820` (live stages, BIS-ALTS); Z's `wf_8821da6d-91f` (all five); Y's `wf_e58e8b14-102` (all four), `wf_d290cc37-ee6` and `wf_fe29d895-a35` (EC-TICK-FIX's rest and
+- Workflow runIds: Z3's `wf_9aabe6e6-7af` (all four); Z2's `wf_7c79ba74-4ca` (code stages) and `wf_7e9c6966-820` (live stages, BIS-ALTS); Z's `wf_8821da6d-91f` (all five); Y's `wf_e58e8b14-102` (all four), `wf_d290cc37-ee6` and `wf_fe29d895-a35` (EC-TICK-FIX's rest and
   review); X2's `wf_b555c578-f46` (code stages), `wf_a0107f34-c7b` (live stages) and `wf_b00ecbe0-79a` (EC-RECHECK's
   live stages again, after an API error); X's `wf_a31ea7ec-8e3`; W's `wf_aa1b462c-590` (code stages) and
   `wf_894cf391-8a3` (live stages); V's `wf_ea73babf-e53`; T2's `wf_5af2b99d-6d0`; T's `wf_8a59e202-2f8`,
