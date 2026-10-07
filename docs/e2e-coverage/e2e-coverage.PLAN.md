@@ -49,7 +49,7 @@ The live e2e and the replays leave timing, costs, threat, pets, gear and buffs u
 | Y | EC-TICK-FIX (G, FS) · EC-CORE-FIX (G, FS) · EC-PET-FIX (G) · PERF-THREAT | The sim gaps the loop found, core first |
 | Z | EC-THREAT-FIX2 (G, FS, live) · EC-MELEE-FIX (G) · EC-NATURE-FIX (G, live) · EC-ARCANE-FIX (G, live) · PERF-Y | The class gaps, on Y's core |
 | Z2 | EC-THREAT-FIX3 (G, FS, C++, live) · EC-CORE-FIX2 (G, FS) · EC-CLASS-FIX (G, live) · PERF-Z · BIS-ALTS | Z's follow-ups |
-| Z4 | EC-CORE-FIX3 (G, FS, live) · EC-PET-FIX2 (G, live) · EC-CLASS-FIX2 (G, live) · EC-THREAT-FIX4 (G, FS, C++, live) | Z2's follow-ups and Y's pets, before the BiS chain |
+| Z5 | EC-CORE-FIX3 (G, FS, live) · EC-PET-FIX2 (G, live) · EC-CLASS-FIX2 (G, live) · EC-THREAT-FIX4 (G, FS, C++, live) | Z2's follow-ups and Y's pets, before the BiS chain |
 
 U is taken (the UI wave). Versus the INVESTIGATION's order, B7, A3 and A4 moved forward (cheap, independent) and
 C1 moved last (after B6).
@@ -1856,7 +1856,7 @@ Live stage, against the server build of 2026-10-06 19:37 (`3d89793c7` plus the m
 - Follow-up: priest Mental Agility on Penance (`sim/priest/penance.go`; mask `0x173` in index 1, Penance is
   `0x800000`).
 
-### EC-CORE-FIX3 (Z4; changes goldens, full suite; stages: code, live)
+### EC-CORE-FIX3 (Z5; changes goldens, full suite; stages: code, live)
 
 - Heals: `SpellHealingBonusDone` and `SpellHealingBonusTaken` return `uint32` on the server, as damage does; the sim
   doesn't truncate heals (heal threat follows the amount).
@@ -1879,7 +1879,7 @@ Live stage, against the server build of 2026-10-06 19:37 (`3d89793c7` plus the m
   CSVs, `spellmod_spells.json` and the fight check; the hunter fight's cycle and log; their drops and rows.
 - **Goldens:** every suite whose damage or heals truncate; report each.
 
-### EC-PET-FIX2 (Z4; changes goldens; stages: code, live)
+### EC-PET-FIX2 (Z5; changes goldens; stages: code, live)
 
 - Timers: pets' 2 s scaling and mana regen, and the 3 s hit and 2 s haste refreshes (`sim/core/pet.go`), count from
   the summon in the sim; the server runs them on the map update.
@@ -1890,7 +1890,7 @@ Live stage, against the server build of 2026-10-06 19:37 (`3d89793c7` plus the m
   drops and rows.
 - **Goldens:** the pet suites; report each.
 
-### EC-CLASS-FIX2 (Z4; changes goldens; stages: melee, casters, live)
+### EC-CLASS-FIX2 (Z5; changes goldens; stages: melee, casters, live)
 
 - Death knight: Blood Tap's rune pick against `EffectActivateRune` and `spell_dk_death_rune` (the talent takes over
   the tapped slot); a Threat of Thassarian off-hand strike rerolls partial Death Rune Mastery (`CAN_PROC_FROM_PROCS`,
@@ -1911,11 +1911,11 @@ Live stage, against the server build of 2026-10-06 19:37 (`3d89793c7` plus the m
 - UI: RaidStats shows Devotion Aura and Blood Pact unimproved at 1–2 points of their talents (`ui/raid/raid_stats.ts`).
 - Live: what each verdict needs, at least Omen of Clarity's recheck, Blood Presence's heal on a DPS DK, and
   Penance's cost and damage.
-- **Owns:** `sim/{deathknight,paladin,warrior,druid,mage,priest}/` but the other Z4 items' hunks; `weaponTalentsOf`
+- **Owns:** `sim/{deathknight,paladin,warrior,druid,mage,priest}/` but the other Z5 items' hunks; `weaponTalentsOf`
   and its test; `raid_stats.ts`'s two rows; their cycles, fights, drops and rows.
 - **Goldens:** those classes' suites; report each.
 
-### EC-THREAT-FIX4 (Z4; changes goldens, full suite; C++; stages: threat, C++ and e2e, live)
+### EC-THREAT-FIX4 (Z5; changes goldens, full suite; C++; stages: threat, C++ and e2e, live)
 
 - Probe: `.simval threat` gains an energize field, so energize threat gets a record (Bloodrage's 20 rage should give
   100, split); 22845 (Frenzied Regeneration) and 44578 (Lifeward) heal threat probed.

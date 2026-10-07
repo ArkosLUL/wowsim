@@ -81,7 +81,8 @@ G = changes goldens. FS = runs all 37 suites.
 | Z | EC-THREAT-FIX2 (G, FS, live) · EC-MELEE-FIX (G) · EC-NATURE-FIX (G, live) · EC-ARCANE-FIX (G, live) · PERF-Y | ✔ |
 | Z2 | EC-THREAT-FIX3 (G, FS, C++, live) · EC-CORE-FIX2 (G, FS) · EC-CLASS-FIX (G, live) · PERF-Z · BIS-ALTS | ✔ |
 | Z3 | BIS-OH-PAIR · BIS-QUICK-ALTS · BIS-WEAPON-PAIR · BIS-CURVES | ✔ |
-| Z4 | EC-CORE-FIX3 (G, FS, live) · EC-PET-FIX2 (G, live) · EC-CLASS-FIX2 (G, live) · EC-THREAT-FIX4 (G, FS, C++, live) | ✔ |
+| Z4 | BIS-ALTS-MEASURED | ✔ |
+| Z5 | EC-CORE-FIX3 (G, FS, live) · EC-PET-FIX2 (G, live) · EC-CLASS-FIX2 (G, live) · EC-THREAT-FIX4 (G, FS, C++, live) | ✔ |
 
 F2 is an inserted wave, not a fifth item in F: the core swing and cast fixes of PAR-P7-0c have to land
 before the class items in G, a class item can't build on a core fix merging in its own wave, and F already
@@ -141,7 +142,9 @@ PERF-Y joins Z as a fifth item (the user's call, 2026-10-06): wave Y slowed ever
 Z2 is the user's call too (the same day): Z's follow-ups. EC-THREAT-FIX3's C++ needs one rebuild by the user, so the
 code stages run first and the live stages after it.
 Z3 is the user's call (2026-10-07): the BiS optimizer's backlog, before the deferred BiS chain reruns presets and
-dataset. Z4 too (2026-10-07): the sim's parity backlog first; the BiS chain runs once the other items are done.
+dataset. Z5 too (2026-10-07): the sim's parity backlog first; the BiS chain runs once the other items are done.
+Z4 is inserted before it (the user's call, the same day): the BiS alternatives aren't the measured best, and a
+pass doesn't repeat.
 
 **Where the specs are:**
 
@@ -158,12 +161,13 @@ dataset. Z4 too (2026-10-07): the sim's parity backlog first; the BiS chain runs
 
 ## Current wave
 
-- Wave: Z4, planned on this commit. Run 1: every item's code stages, and the live stages of EC-CORE-FIX3,
+- Wave: Z4, planned on this commit, on base `01731f687` (master's `7b29c6b99` merged in): BIS-ALTS-MEASURED alone,
+  offline. Next, Z5: run 1, every item's code stages, and the live stages of EC-CORE-FIX3,
   EC-PET-FIX2 and EC-CLASS-FIX2, which need no rebuild; then the user rebuilds with EC-THREAT-FIX4's C++; run 2:
   its live stage. Integrate EC-CORE-FIX3, EC-PET-FIX2, EC-CLASS-FIX2, EC-THREAT-FIX4 in that order.
   Z3 landed. Its item notes: `G:\DevStuff\GitHub\.wave-loop\bis-{oh-pair,quick-alts,weapon-pair,curves}-tmp`.
   Prod runs X's `25cb9dddc` (no `rollback-q` image: its layers were gone), without Y's and Z's sim changes.
-- Open: the e2e-coverage backlog Z4 leaves, sim-performance's Left items, the bis-optimizer backlog (Z3's As
+- Open: the e2e-coverage backlog Z5 leaves, sim-performance's Left items, the bis-optimizer backlog (Z3's As
   builts: the enchant residual, Mutilate's pair, Combat Rogue P3 Normal), then the deferred BiS chain.
   Closed as not sim gaps: the sheet fields the server shows raw (per-school crit, Blood-Gorged, Mace and Holy
   Specialization), which the fixture README explains.

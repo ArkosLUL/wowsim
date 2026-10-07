@@ -1951,3 +1951,42 @@ verification racing two close picks to 64k iterations, the curves cost +2–6%.
 Left: Combat Rogue P3 Normal's −85 (its verified picks sit 350–400 under their surrogate; BIS-WEAPON-PAIR's
 enchant residual is a lead); a cap-prone stat still sims one knot past Max, up to ratio² × Max (+65536 hit at
 Quick).
+
+### BIS-ALTS-MEASURED (wave Z4)
+
+A slot's alternatives are the surrogate's top five (`alternativesPerSlot`, `searcher.runnersUp`), picked before
+anything is simmed, so an item whose value isn't in its stats (an idol, a weapon's damage) ranks only if the
+search measured it anyway. And a pass doesn't repeat: the batch and the tab send `makeRaidSimRequest`'s per-run
+random seed (`nextRngSeed`, `ui/core/sim.ts`), so the same roster, commit and effort gave another rank 1 in 29 of
+83 slots (best score +2.8% Angry, −2.9% Mighty).
+
+- Report each slot's measured best five besides the pick (the tooltip's six), out of 12–15 simmed candidates per
+  slot. The user accepts about double a pass (21-raider P2 Normal: stage 1 1786 s, stage 2 2216 s). Rank by
+  measured delta; say how much of the order rests on the few shards `race` gives an alternative it drops early.
+- Weapons: since Z3 (sim `c463f2d5f` against `0ccf8aa60`), main- and off-hand lists fill with one-hand pairings
+  over two-handers that measure better, some paired with a junk off hand. Find why (unconfirmed lead: BIS-OH-PAIR's
+  pairing or BIS-WEAPON-PAIR's talent share outranking a plain two-hand swap); fix the pricing if it's wrong, and
+  report whether picks move.
+- Fix a run's seed (the sim settings' fixed seed, else `defaultRandomSeed`). Measure the best score's spread over 3
+  seeds for Angry and Mighty: the search's luck, which a fixed seed hides.
+- `OptimizerSlotAlternative` keeps its shape (the bis-tooltip-addon export reads it); a change goes in
+  contractChangeRequests.
+
+**Cases** (data in `G:\DevStuff\GitHub\.wave-loop\bis-measured`: the 7 Oct batch, the 6 Oct one, the rerun, the
+single-slot probes; roster `G:\DevStuff\GitHub\wowsimwotlk\tmp\raid-20261007.json`):
+- Ecoterrorist's idol: Idol of the Corruptor (45509, −2.50%) absent; four idols that do nothing listed at −2.63%.
+- Angry's off hand (Titan's Grip, Voldrethar in both hands): her worn Stormrune Edge (−4.0%) absent, one-handers
+  listed at 7.0–10.3%; her main hand flips between two-handers and one-handers across the rerun.
+- Nightwarrior's main hand: his worn Lotrafen (−1.9%) absent, pairings listed at 3.0–3.8%.
+- Mighty's main hand: one-handers at 17.7–26.6%, paired with an ilvl 200 axe.
+
+A loadout's value: a roster wearing it, `tools/database/acbis/driver/driver.py run --stage 1 --phases 2 --effort
+Quick --raiders NAME --base <a sim server built from the worktree> --port <own Chrome port>` with the 25-man
+`--sources` of the driver README, then `result.seed.metrics.dps`.
+
+**Tests:** a fake-`Evaluator` case where a statless item that sims best reaches the alternatives. **Measure:** a
+raider run twice gives the identical result; the four cases through the driver; every slow-suite case's J, picks,
+sims and wall before and after.
+
+Golden-neutral. **Owns:** `sim/optimizer/`; the optimizer requests' seed in `ui/raid/optimizer_batch.ts`,
+`ui/core/components/individual_sim_ui/optimizer_tab.ts` and `ui/core/optimizer/pool_builder.ts`.
