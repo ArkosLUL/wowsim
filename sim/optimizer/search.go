@@ -1232,12 +1232,14 @@ const forcedRunnersUp = 3
 
 // runnersUp are the best configured moves to another item among opts (a slot's options), from st,
 // best first. Each is a change to that slot alone, plus the off hand when a main hand fills both
-// hands; moves that break a rule are skipped.
+// hands, or, as in bestItem, the best off hand (bestPartner) a one-hander brings into an empty one;
+// moves that break a rule are skipped.
 func (se *searcher) runnersUp(st *state, slot proto.ItemSlot, n int, opts []*option) [][]change {
 	mh, oh := proto.ItemSlot_ItemSlotMainHand, proto.ItemSlot_ItemSlotOffHand
 	type move struct {
 		value   float64
 		changes []change
+		paired  bool
 	}
 	var moves []move
 	current := st.l.Items[slot].ItemID
@@ -1251,7 +1253,13 @@ func (se *searcher) runnersUp(st *state, slot proto.ItemSlot, n int, opts []*opt
 		}
 		c := se.configure(st, slot, o.cand, extra...)
 		changes := append([]change{{slot, c}}, extra...)
-		moves = append(moves, move{se.trial(st, changes...), changes})
+		paired := false
+		if slot == mh && len(extra) == 0 && st.l.Items[oh].ItemID == 0 && len(se.opts[oh]) > 0 && !se.pool.fillsHands(&o.cand.Item) {
+			if ohChange, ok := se.bestPartner(st, c); ok {
+				changes, paired = append(changes, ohChange), true
+			}
+		}
+		moves = append(moves, move{se.trial(st, changes...), changes, paired})
 	}
 	slices.SortStableFunc(moves, func(a, b move) int {
 		switch {
@@ -1263,10 +1271,8 @@ func (se *searcher) runnersUp(st *state, slot proto.ItemSlot, n int, opts []*opt
 		return 0
 	})
 	var out [][]change
-	for _, m := range moves {
-		if len(out) == n {
-			break
-		}
+	for i := 0; i < len(moves) && len(out) < n; i++ {
+		m := moves[i]
 		trial := st.clone()
 		if se.apply(trial, m.changes...) {
 			var fixed []change
@@ -1274,6 +1280,18 @@ func (se *searcher) runnersUp(st *state, slot proto.ItemSlot, n int, opts []*opt
 				fixed = append(fixed, change{ch.slot, trial.l.Items[ch.slot]})
 			}
 			out = append(out, fixed)
+			continue
+		}
+		// bestPartner doesn't check rules, so it can pick the main hand's own unique item: keep the
+		// main hand with the best off hand that fits, ranked again at what that pair scores
+		if m.paired && se.apply(trial, m.changes[0]) {
+			se.bestItem(trial, oh)
+			legal := move{trial.value, []change{{mh, trial.l.Items[mh]}, {oh, trial.l.Items[oh]}}, false}
+			at := slices.IndexFunc(moves[i+1:], func(o move) bool { return o.value < legal.value })
+			if at < 0 {
+				at = len(moves) - i - 1
+			}
+			moves = slices.Insert(moves, i+1+at, legal)
 		}
 	}
 	return out

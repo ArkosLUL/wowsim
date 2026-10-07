@@ -46,6 +46,7 @@ import {
 import { SavedGearSet } from '../core/proto/ui';
 import { Warlock_Options_Summon } from '../core/proto/warlock';
 import { Database } from '../core/proto_utils/database';
+import { Gear } from '../core/proto_utils/gear';
 import { raceNames } from '../core/proto_utils/names';
 import { isHealingSpec, isTankSpec, specNames, specToLocalStorageKey } from '../core/proto_utils/utils';
 import { SimError } from '../core/sim';
@@ -1491,14 +1492,20 @@ export class OptimizerBatchTab extends SimTab {
 
 	// Equips the job's pick on its raider, racial traits included, the way the tab's Equip does.
 	private apply(eventID: EventID, job: Job) {
-		const player = this.simUI.sim.raid.getPlayer(job.raidIndex);
 		const best = job.result?.best;
-		if (!player || !best) {
+		if (best) {
+			this.wear(eventID, job.raidIndex, this.simUI.sim.db.lookupEquipmentSpec(best.equipment || EquipmentSpec.create()), best.racialTraits);
+		}
+	}
+
+	private wear(eventID: EventID, raidIndex: number, gear: Gear, racialTraits: Race) {
+		const player = this.simUI.sim.raid.getPlayer(raidIndex);
+		if (!player) {
 			return;
 		}
-		player.setGear(eventID, this.simUI.sim.db.lookupEquipmentSpec(best.equipment || EquipmentSpec.create()));
-		if (best.racialTraits != Race.RaceUnknown && best.racialTraits != player.getEffectiveRacialTraits()) {
-			player.setRacialTraits(eventID, best.racialTraits == player.getRace() ? Race.RaceUnknown : best.racialTraits);
+		player.setGear(eventID, gear);
+		if (racialTraits != Race.RaceUnknown && racialTraits != player.getEffectiveRacialTraits()) {
+			player.setRacialTraits(eventID, racialTraits == player.getRace() ? Race.RaceUnknown : racialTraits);
 		}
 	}
 
@@ -1721,6 +1728,14 @@ export class OptimizerBatchTab extends SimTab {
 			tank: isTankSpec(player.spec),
 			possessive: `${name}'s`,
 			object: name,
+			equipAlternative: (gear, racialTraits) => {
+				if (this.rosterChanged()) {
+					return;
+				}
+				const eventID = TypedEvent.nextEventID();
+				TypedEvent.freezeAllAndDo(() => this.wear(eventID, job.raidIndex, gear, racialTraits));
+				note.textContent = `${name} has that runner-up on in the raid sim now.`;
+			},
 		});
 		const unit = scoreUnit(result.scoreStats);
 		if (result.best) {

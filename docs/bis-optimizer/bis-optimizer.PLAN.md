@@ -1720,6 +1720,26 @@ Golden-neutral. **Owns:** `search.go`'s `runnersUp`, `neighborhood.go`, `proto/o
 (`OptimizerSlotAlternative` only), the alternatives views in `optimizer_tab.ts` and `ui/raid/optimizer_batch.ts`,
 their tests.
 
+#### As built
+
+- `runnersUp` pairs as specced. bestPartner skips rule checks, so a pair can break one (a unique
+  one-hander picked as its own partner): the main hand then stays with `bestItem`'s best legal off hand,
+  re-ranked at that pair's trial.
+- `OptimizerSlotAlternative.off_hand` (7) is set for a main-hand alternative whose off hand isn't the final
+  best's: a one-hander's partner under a two-hand pick, or the off hand kept when the round cap adopts a
+  two-hander. `-decisions` traces each reported alternative: slot, item, the loadout's off hand, delta.
+- UI: the Instead cell shows "main hand + off hand", tooltips counting both. Runners-up had no Equip, so
+  both views gain one per row: the best set with that swap and the best's racial traits; the tab then
+  opens the Gear tab, the batch puts it on the raider (roster-change guard as Apply).
+- Tests: `ohpair_test.go` (two-hand pick, dual-wield pick, unique fallback and its rank, a two-hander adopted
+  on the round cap); `cmd/wowsimcli/cmd/optimize_ohpair_test.go` round-trips `off_hand` through a real
+  Quick run.
+- Slow suite: all 12 pass; picks, J and sims identical to the base. Two-hand picks: ret p4 and feral tank
+  p2, both efforts; their 5 main-hand alternatives are unchanged, none paired (no one-hander with
+  an off hand outranks them). Fury p1 (Titan's Grip) holds an off hand, so it doesn't pair.
+- Tooltip: to show the pair, `BuildBisBlock` would carry each main-hand rank's `off_hand` id (under a
+  two-hand pick the off hand has no block of its own) and the wire format a field for it.
+
 ### BIS-WEAPON-PAIR (wave Z3)
 
 The surrogate is separable per slot, with pair corrections for rings and trinkets only (`pairSlots`,

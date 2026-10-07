@@ -195,6 +195,9 @@ message OptimizerSlotAlternative {
 	double score_delta_se = 4;
 	double raid_dps_delta = 5;
 	double raid_dps_delta_se = 6;
+	// A main-hand alternative's off hand when it isn't the best's, e.g. the one a one-hander brings
+	// into a two-hand pick's empty off hand. Unset otherwise.
+	ItemSpec off_hand = 7;
 }
 
 // One race's traits in the racial screen.

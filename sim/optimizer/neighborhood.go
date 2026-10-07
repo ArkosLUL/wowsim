@@ -23,8 +23,9 @@ const raceSE = 3
 
 // neighborhood sims the best loadout's alternatives: per slot, the surrogate's top
 // alternativesPerSlot other items out of every priced one, pruned or not, each with the rest of the
-// best unchanged, paired with the best. A round sims each slot's first firstRunnersUp, then the rest
-// only if none of those moved the best.
+// best unchanged but for the off hand a main hand empties or brings along (see runnersUp), paired
+// with the best. A round sims each slot's first firstRunnersUp, then the rest only if none of those
+// moved the best.
 // Each batch races its alternatives against the best in DefaultShardIterations shards (race),
 // dropping one once it's decided or can't clear the acceptance bar, so a batch stops as soon as
 // there's nothing left to decide instead of always spending the round's full iterations. A batch's
@@ -226,14 +227,21 @@ rounds:
 			if a.eval == nil {
 				continue
 			}
-			out = append(out, &proto.OptimizerSlotAlternative{
+			r.trace("alternative %s: %d, off hand %d, %+.1f ± %.1f", a.slot, a.choice.ItemID, a.loadout.Items[proto.ItemSlot_ItemSlotOffHand].ItemID, a.delta.Mean, a.delta.SE)
+			alt := &proto.OptimizerSlotAlternative{
 				Slot:           a.slot,
 				Item:           a.choice.ToProto(),
 				ScoreDelta:     a.delta.Mean,
 				ScoreDeltaSe:   a.delta.SE,
 				RaidDpsDelta:   a.raidDelta.Mean,
 				RaidDpsDeltaSe: a.raidDelta.SE,
-			})
+			}
+			// against the final best: on the round cap a main hand can keep the off hand of a pick
+			// that a two-hander has since replaced
+			if oh := a.loadout.Items[proto.ItemSlot_ItemSlotOffHand]; a.slot == proto.ItemSlot_ItemSlotMainHand && oh.ItemID != 0 && oh.ItemID != r.best.Items[proto.ItemSlot_ItemSlotOffHand].ItemID {
+				alt.OffHand = oh.ToProto()
+			}
+			out = append(out, alt)
 		}
 		return out, verified, nil
 	}
