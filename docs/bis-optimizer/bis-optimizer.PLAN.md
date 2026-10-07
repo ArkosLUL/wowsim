@@ -1748,6 +1748,49 @@ scored by the surrogate against their sims (8969.7, 8898.4, 8335.4 DPS).
 Golden-neutral. **Owns:** `surrogate.go`'s scoring terms and bounds, `residuals.go`, `search.go`'s scoring and
 bounds (not `runnersUp`), a new `sim/optimizer/weapon_talents.go`, their tests.
 
+#### As built
+
+Only the pair's interaction needs a term: what two covered hands add beyond each covered hand next to
+an uncovered one. Each hand's own share stays in its residual, which single-hand moves price right.
+
+- `weapon_talents.go`: `weaponTalentsOf` reads rogue Close Quarters Combat, Hack and Slash and Mace
+  Specialization, warrior Sword and Poleaxe Specialization. Warrior Mace Specialization is left out:
+  `warrior/talents.go` compares its mask to `ProcMaskEmpty`, which `GetProcMaskForTypes` never returns,
+  so the sim applies it whatever the weapons (`TestWarriorMaceSpecializationIgnoresTheWeapons`).
+- Pricing (`talentProbes`, `priceWeaponTalents`): per talent, a covered weapon per hand (the seed's,
+  else the most DPS, effect-free first) and its type twin, a copy under a type no talent and no racial
+  specialization of the seed's race covers, added to core's database at id `1e9 + type·1e7 + id`.
+  The four pairs sim at full iterations, prefetched beside the screening wave; the double difference
+  is the term, kept over 2 se. Twins hold the stats fixed: real-weapon pairs gave Assasin a −423 J
+  Close Quarters Combat term that was expertise around its cap (−312 DPS with the talent off too).
+- `applyEffects` takes each item variant's change in the term out of its residual (`weaponShare`).
+  `value`, `state.weapon` (`newState`, `set`), `trial` (`weaponAfter`) and `moveBase` add it;
+  `candBounds` widens hands by `min/max(0, term)` (`weaponBounds`, none for a main hand filling both).
+- A target without these talents sims nothing more and scores as before.
+
+Tests (`weapon_talents_test.go`): twin weapons on real sims (2000 iterations, checked at seed 9001
+over 4000), surrogate against sim per pair: Close Quarters Combat and Hack and Slash need no term
+(both hands +285.3 against +286.2 ± 1.0, +359.1 against +354.2 ± 2.5); rogue Mace Specialization
+−331.8 (residuals alone +663.5, with it +331.8, sim +331.7); Sword Specialization −105.1 (+420.9 →
++315.8, sim +312.8); Poleaxe Specialization −247.1, its crit damage counting once for any hand (+890.2
+→ +643.0, sim +650.8). A fake-sim pair bonus, trial/state/rescore agreement, candidate and move bounds.
+
+Assasin (`TestAssasinMainHands`, `OPTIMIZER_ASSASIN=1`, alone with full buffs): the three seeds sim
+9021.7, 8939.8 and 8379.9 DPS, 0.5–0.6% over the export. Close Quarters Combat −0.3 ± 0.5, dropped.
+Against Remorse the surrogate says Golem-Shard Sticker −283.5 J and Fang of Oblivion −912.6 J, the
+sims −88.9 and −696.3: the order holds, but both residuals sit about 195 J low, the same without this
+item (open below).
+
+Slow suite: fury p1 has none of these talents and is unchanged, like fire mage, Ret and both tanks.
+Combat rogue p3 (Close Quarters Combat 5, term +0.0, dropped): Normal unchanged (+658.2, sims +16,000);
+Quick moved with the probes' budget only, chest 47004 → 48232, hands 48231 → 47945, ranged 46995 →
+47521, +527.1 → +556.1 ± 2.0, sims 145,250 → 157,000.
+
+Open: the main-hand family's variants are configured (`quickChoice`) before enchant residuals exist,
+so Assasin's daggers screened with Accuracy (3788) instead of the seed's Berserking (3789), and nothing
+nets the enchant change out of the item residual: it absorbs Berserking's ~195 J. Mutilate's
+both-daggers requirement is a pair effect left unpriced.
+
 ### BIS-QUICK-ALTS (wave Z3)
 
 At Quick, `candBounds` leaves an item out of `se.all` when its family is unpriced or it `NeedsSim` without a

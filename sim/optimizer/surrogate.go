@@ -53,6 +53,10 @@ type surrogate struct {
 	// stat it lands on, and what it adds there with the seed's weapons.
 	weaponSpec *core.WeaponSpecialization
 	seedRacial float64
+	// Weapon talents priced from both hands together (weapon_talents.go), and what they add with the
+	// seed's hands.
+	weaponTerms []weaponTerm
+	seedWeapon  float64
 	// What setFloorsAndCeilings priced, so forRace can price it again under other traits.
 	floorSettings   []*proto.StatMinimum
 	ceilingSettings []*proto.StatMaximum
@@ -414,7 +418,7 @@ func (s *surrogate) score(total stats.Stats, res float64, counts []int8, racial 
 // value is score for a whole loadout.
 func (s *surrogate) value(l Loadout) float64 {
 	var total stats.Stats
-	res := s.pairCorrection(&l)
+	res := s.pairCorrection(&l) + s.weaponDelta(&l)
 	counts := make([]int8, len(s.sets))
 	for slot, c := range l.Items {
 		total = total.Add(s.choiceStats(proto.ItemSlot(slot), c))
@@ -927,7 +931,8 @@ func (s *surrogate) candBounds(slot proto.ItemSlot, cand *Candidate, lo, hi stat
 		jumpLo, jumpHi := s.sets[i].jumpBounds()
 		lb, ub = lb+jumpLo, ub+jumpHi
 	}
-	return lb, ub, true
+	weaponLo, weaponHi := s.weaponBounds(slot, &cand.Item)
+	return lb + weaponLo, ub + weaponHi, true
 }
 
 // candStatBounds is candBounds without the item's own residual: stats, enchants (effects included),
@@ -1582,6 +1587,8 @@ func (r *run) measureEffects(s *surrogate) error {
 			}
 		}
 	}
+	talents := r.talentProbes(s, v0, gp0)
+	waitTalents := r.prefetch(batch{talentProbePoints(talents, families, s.seed), r.budget.Iterations})
 
 	// wave 1: weapon probes
 	var probes []*effectFamily
@@ -1634,6 +1641,10 @@ func (r *run) measureEffects(s *surrogate) error {
 	// wave 2: screening, trimmed to the budget
 	screen = r.trimToBudget(screen, fx, r.screen, screenShare*float64(r.total))
 	if err := r.measureFamilies(s, fx, screen, r.screen); err != nil {
+		return err
+	}
+	waitTalents()
+	if err := r.priceWeaponTalents(s, talents); err != nil {
 		return err
 	}
 	s.applyEffects(fx)
@@ -1890,8 +1901,11 @@ func (s *surrogate) applyEffects(fx *effects) {
 	for k, est := range fx.raw {
 		switch k.kind {
 		case effectItem:
+			est.Mean -= s.weaponShare(fx, k)
 			if fx.emptiedOH[k] && itemNeedsSim(seedOH) {
-				ohRes := fx.raw[effectKey{effectItem, oh, seedOH}]
+				ohKey := effectKey{effectItem, oh, seedOH}
+				ohRes := fx.raw[ohKey]
+				ohRes.Mean -= s.weaponShare(fx, ohKey)
 				est = Estimate{Mean: est.Mean + ohRes.Mean, SE: math.Hypot(est.SE, ohRes.SE)}
 			}
 			s.items[k.slot][k.id] = est
