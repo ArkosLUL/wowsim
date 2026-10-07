@@ -14,7 +14,7 @@ import {
 } from '../../optimizer/pool_builder';
 import { Player } from '../../player';
 import { AsyncAPIResult, OptimizeGearRequest, ProgressMetrics } from '../../proto/api';
-import { EquipmentSpec, ItemSpec, Race, Spec, Stat } from '../../proto/common';
+import { EquipmentSpec, ItemSlot, ItemSpec, Race, Spec, Stat } from '../../proto/common';
 import {
 	CatalogSourceKind,
 	OptimizerEffort,
@@ -253,6 +253,8 @@ export interface LoadoutViewConfig {
 	object: string;
 	// goes after each item and runner-up, e.g. the tab's Exclude button
 	itemAction?: (id: number) => HTMLElement;
+	// a runner-up's Equip: gear is the best set with that runner-up swapped in, off hand included
+	equipAlternative?: (gear: Gear, racialTraits: Race) => void;
 }
 
 // Draws a result's loadouts for one player: gear with tooltips, the sheet with its caps, runners-up
@@ -384,6 +386,7 @@ export class LoadoutView {
 		const table = newElement('table', 'table table-sm optimizer-table');
 		const raid = alternatives.some(a => a.raidDpsDelta || a.raidDpsDeltaSe);
 		const action = this.config.itemAction;
+		const equipAlternative = this.config.equipAlternative;
 		const unitSuffix = unit.short ? ` (${unit.short})` : '';
 		table.appendChild(
 			tableRow('th', [
@@ -391,22 +394,25 @@ export class LoadoutView {
 				'Instead',
 				(improved ? 'Score vs best' : `Score vs ${this.config.possessive} starting gear`) + unitSuffix,
 				...(raid ? ['Raid DPS'] : []),
-				...(action ? [''] : []),
+				...(action || equipAlternative ? [''] : []),
 			]),
 		);
 		const bestGear = best?.equipment ? this.db.lookupEquipmentSpec(best.equipment) : null;
+		const canDualWield2H = this.player.canDualWield2H();
 		for (const alt of alternatives) {
 			const tr = newElement('tr');
 			tr.appendChild(newElement('td', undefined, slotNames.get(alt.slot) || ''));
 
 			const itemCell = newElement('td');
 			const equipped = alt.item ? this.db.lookupItemSpec(alt.item) : null;
-			if (equipped) {
-				// the set this runner-up would make, so its tooltip counts the right set pieces
-				const gear = bestGear?.withEquippedItem(alt.slot, equipped, this.player.canDualWield2H());
-				itemCell.appendChild(this.itemLink(equipped, gear));
-			} else if (alt.item) {
-				itemCell.textContent = this.itemName(alt.item.id);
+			const offHand = alt.offHand?.id ? this.db.lookupItemSpec(alt.offHand) : null;
+			// the set this runner-up would make, so its tooltip counts the right set pieces
+			const swapped = equipped ? bestGear?.withEquippedItem(alt.slot, equipped, canDualWield2H) : undefined;
+			const gear = swapped && offHand ? swapped.withEquippedItem(ItemSlot.ItemSlotOffHand, offHand, canDualWield2H) : swapped;
+			this.appendItem(itemCell, alt.item, equipped, gear);
+			if (alt.offHand?.id) {
+				itemCell.append(' + ');
+				this.appendItem(itemCell, alt.offHand, offHand, gear);
 			}
 			tr.appendChild(itemCell);
 
@@ -414,20 +420,29 @@ export class LoadoutView {
 			if (raid) {
 				tr.appendChild(newElement('td', undefined, formatDelta(alt.raidDpsDelta, alt.raidDpsDeltaSe)));
 			}
-			if (action) {
+			if (action || equipAlternative) {
 				const cell = newElement('td');
-				if (alt.item?.id) {
+				if (action && alt.item?.id) {
 					cell.appendChild(action(alt.item.id));
+				}
+				if (equipAlternative && gear && (offHand || !alt.offHand?.id)) {
+					cell.appendChild(button('Equip', 'btn-link btn-sm', () => equipAlternative(gear, best?.racialTraits ?? Race.RaceUnknown)));
 				}
 				tr.appendChild(cell);
 			}
 			table.appendChild(tr);
 		}
-		return section(
-			'Runners-up per slot',
-			table,
-			improved ? 'Each swaps one slot of the best set.' : `Each swaps one slot of ${this.config.possessive} starting gear.`,
-		);
+		const swaps = improved ? 'Each swaps one slot of the best set.' : `Each swaps one slot of ${this.config.possessive} starting gear.`;
+		const paired = alternatives.some(a => a.offHand?.id) ? ' A main hand listed with an off hand swaps both.' : '';
+		return section('Runners-up per slot', table, swaps + paired);
+	}
+
+	private appendItem(cell: HTMLElement, spec: ItemSpec | undefined, equipped: EquippedItem | null, gear: Gear | undefined) {
+		if (equipped) {
+			cell.appendChild(this.itemLink(equipped, gear));
+		} else if (spec) {
+			cell.append(this.itemName(spec.id));
+		}
 	}
 
 	// The icon and hover tooltip the gear tab gives an item, sized for a table row.
@@ -492,6 +507,7 @@ export class OptimizerTab extends SimTab {
 			possessive: 'your',
 			object: 'you',
 			itemAction: id => this.excludeButton(id),
+			equipAlternative: (gear, racialTraits) => this.wear(gear, racialTraits),
 		});
 
 		this.leftPanel = newElement('div', 'optimizer-tab-left tab-panel-left');
@@ -1095,12 +1111,16 @@ export class OptimizerTab extends SimTab {
 	}
 
 	private equip(best: OptimizerLoadoutResult) {
+		this.wear(this.simUI.sim.db.lookupEquipmentSpec(best.equipment || EquipmentSpec.create()), best.racialTraits);
+	}
+
+	private wear(gear: Gear, racialTraits: Race) {
 		const player = this.simUI.player;
 		const eventID = TypedEvent.nextEventID();
 		TypedEvent.freezeAllAndDo(() => {
-			player.setGear(eventID, this.simUI.sim.db.lookupEquipmentSpec(best.equipment || EquipmentSpec.create()));
-			if (best.racialTraits != Race.RaceUnknown && best.racialTraits != player.getEffectiveRacialTraits()) {
-				player.setRacialTraits(eventID, best.racialTraits == player.getRace() ? Race.RaceUnknown : best.racialTraits);
+			player.setGear(eventID, gear);
+			if (racialTraits != Race.RaceUnknown && racialTraits != player.getEffectiveRacialTraits()) {
+				player.setRacialTraits(eventID, racialTraits == player.getRace() ? Race.RaceUnknown : racialTraits);
 			}
 		});
 		this.simUI.simHeader.activateTab('gear-tab');
