@@ -112,7 +112,10 @@ layouts come from [ac] `src/server/shared/DataStores/DBCStructure.h` and `DBCfmt
 
 - `character_reforging(guid, item_guid, stat_decrease, stat_increase, stat_value)`. `stat_value` is
   floor(40% of the server's stat), so it can be 1–2 off the sim's. The sim recomputes from its own item.
-- `character_racial_swap(guid, selected_race)`.
+- `character_racial_swap(guid, selected_race)`: the race whose racials the character uses (**Racial
+  traits** in [CONTEXT](../../CONTEXT.md#server-modules)). `characters.race` is base stats and faction
+  only, so join this table for anything that depends on racials, a party buff included. acraid's roster
+  carries both as `raceId` and `swapRaceId`, printed "nightelf as draenei".
 - **mod-playerbots** (`acore_playerbots`): a character is a bot when `playerbots_db_store` holds rows for it
   (its saved strategies: `co`, `nc`, `dead`) or its account is typed 1 in `playerbots_account_type` (random
   bots). A bot takes flask, elixirs and food from `AiPlayerbot.WorldBuffMatrix` (live: the

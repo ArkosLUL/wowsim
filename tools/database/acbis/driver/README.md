@@ -23,6 +23,16 @@ page with `tools/uicheck/cdp.py` and `raid.js`; `page.js` adds download capture 
   same session as pass 1: gear, talents and glyphs drift daily, so a stale one builds lists for builds
   nobody has. Pin the core members with `-names`; `-leader` takes the live group, where a stand-in for
   one boss would replace a raider in the dataset.
+- **Read the live party layout first**, every pass: `-names` fills subgroups of 5 in order, so an older
+  roster's order silently invents a raid. Wrong parties mis-model the party-scoped buffs, Heroic Presence
+  (its 1% hit moves hit-capped reforges and gems) and Mana Tide Totems, and make stage 2's Heroic Presence
+  check switch raiders whose party already had a Draenei. Substitute the raider for any stand-in rather
+  than copying the group verbatim.
+
+  ```sh
+  MSYS_NO_PATHCONV=1 docker exec -i ac-database mysql -uroot -ppassword -B acore_characters \
+    -e "SELECT gm.subgroup+1 party, c.name FROM group_member gm JOIN characters c ON c.guid=gm.memberGuid ORDER BY gm.subgroup, c.name;"
+  ```
 - Host Python with `websockets`, Chrome at its default install path, and PowerShell — the driver asks it
   which process holds the debugging port, ends a Chrome that stopped answering, and reads the CPU load.
 

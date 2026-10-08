@@ -43,7 +43,7 @@ character, plus a `!` line for each warning.
 |---|---|---|
 | `-out` | required | the roster JSON to write |
 | `-leader` | | export the group this character is in, keeping its subgroups. Fails with "isn't in a group" when there's no group; use `-names` then |
-| `-names` | | comma-separated characters. Alone, they fill subgroups of 5 in order, so the core roster named in party order comes back with its own subgroups: prefer this to `-leader` when the export has to keep the same members, since the live group can hold a stand-in for one boss. With `-leader`, they top up the group |
+| `-names` | | comma-separated characters. Alone, they fill subgroups of 5 in the order given, so that order **is** the party layout and must match the live group ([acbis driver](../acbis/driver/README.md#before-running)): prefer this to `-leader` when the export has to keep the same members, since the live group can hold a stand-in for one boss. With `-leader`, they top up the group |
 | `-worldBuffMatrix` | empty: bots' flask, elixirs and food stay as they are | the bots' `AiPlayerbot.WorldBuffMatrix`: a `Playerbot.env`, a `playerbots.conf` or the bare matrix. The live one is the override in `[ac]/configurationOverrides/Playerbot.env` |
 | `-players` | empty: read off mod-playerbots | comma-separated characters someone plays; everyone else counts as a bot |
 | `-dsn` | `root:password@tcp(127.0.0.1:3306)/` | no database name: the queries name `acore_characters`, `acore_world` and `acore_playerbots` themselves |
