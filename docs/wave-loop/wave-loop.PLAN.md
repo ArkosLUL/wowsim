@@ -167,11 +167,30 @@ user's continue.
 
 ## Current wave
 
-- Wave: Z6, running on base `c00231f37` (master hadn't moved). One run, code stages then live stages: the user
-  rebuilt the server on 2026-10-10 (image of 20:04 local: [ac] `3d89793c7`, mod-spell-tweaks `9bf5c75`,
-  mod-sim-validation `bb2a21d`). Worktrees `wowsimwotlk-wi-{par-fu-8,par-fu-9,par-fu-10,ri-5}`; args and shared
-  rules in `G:\DevStuff\GitHub\.wave-loop\waveZ6-{args.json,shared.md}`. Integrate PAR-FU-8, PAR-FU-9,
-  PAR-FU-10, RI-5 in that order. RI-5's "After it lands on master" prod steps need the user's OK. Then Z7.
+- Wave: Z6, paused mid-integration (the user's call, 2026-10-11) on base `c00231f37`; master is still there. Run 1
+  did every code and live stage on the server the user rebuilt on 2026-10-10 (image of 20:04 local: [ac]
+  `3d89793c7`, mod-spell-tweaks `9bf5c75`, mod-sim-validation `bb2a21d`). Reports: `.wave-loop/z6-run1/*.md`,
+  `waveZ6-results.json`; item notes and re-recorded fixtures: `.wave-loop/{par-fu-8,par-fu-9,par-fu-10,ri-5}-tmp`.
+  - Merged, checked, goldens promoted, module e2e committed: PAR-FU-8 (`91e81e0bb`, goldens `71c772dc8`, module
+    `43ac347`) and PAR-FU-9 (`74eb5e100`, goldens `4ed7bc69b`, module `91889e0`).
+  - Committed on their branches, worktrees kept, to merge in this order: PAR-FU-10 (`c6b498f29`), RI-5
+    (`c6d2ce5f1`). The module's `parfu10_test.go` and README paragraph are uncommitted
+    (`.wave-loop/z6-mod/readme-fu10.patch`, `msg-fu10.txt`).
+  - PAR-FU-10's review returned blocked on two tests outside its paths, no code defect. At its merge the
+    orchestrator: replaces `sim/core/testdata/simval/spellmods.jsonl` with `par-fu-10-tmp/spellmods.candidate.jsonl`
+    (MageFire re-recorded; the sweep then skips Pyroblast's damage until the module lists
+    `spell_tweaks_pyroblast_dot_haste` and `spell_tweaks_curse_of_doom` in `TICK_PERIOD_SCRIPTS` and it reruns
+    after a rebuild); gives `TestDemonologyValuesSpellPowerHigherInRaidMode` 4 mages and 32000 iterations (gap
+    0.011, needs 0.012); trims `par-fu-10-tmp/fights/*.log` into the MageArcane and WarlockDemonology fixtures;
+    keeps both sides of the switch conflicts with PAR-FU-9, then `dock.sh proto` and `gen_server_defaults`.
+  - Then: `gen_serverdata` once; the cross-review, which also takes `sim/mage/ignite.go` (periodic Ignite gated on
+    Living Bomb), `sim/priest/devouring_plague.go` (Improved Devouring Plague bursts on a miss), Rupture's glyph
+    cap into `rupture.go`, `feral_spirit.go`'s stale comment and the module's `TICK_PERIOD_SCRIPTS`; the
+    re-baseline; docs and guides; land. RI-5's "After it lands on master" prod steps need the user's OK.
+  - For Z7 or the backlog: guardians still out at a fight's end reset wrong (Spirit Wolves, Shadowfiend);
+    same-update ticks in spell id order (`dot.go`); a mechanic immunity mask on targets; the bleed bonus by
+    mechanic; an APL value for Curse of Doom's length; Ignite's total on a hasted Fire mage, live.
+  Then Z7.
   Z5 landed in four runs.
   Z5's item notes: `G:\DevStuff\GitHub\.wave-loop\ec-{core-fix3,pet-fix2,class-fix2,class-fix2-apl,threat-fix4,z5-live}-tmp`.
   Prod runs X's `25cb9dddc` (no `rollback-q` image: its layers were gone), without Y's and Z's sim changes.
