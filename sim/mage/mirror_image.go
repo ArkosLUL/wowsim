@@ -8,8 +8,6 @@ import (
 	"github.com/wowsims/wotlk/sim/core/stats"
 )
 
-// The numbers in this file are VERY rough approximations based on logs.
-
 func (mage *Mage) registerMirrorImageCD() {
 	var t10Aura *core.Aura
 	if mage.HasSetBonus(ItemSetBloodmagesRegalia, 4) {
@@ -72,11 +70,16 @@ type MirrorImage struct {
 
 func (mage *Mage) NewMirrorImage() *MirrorImage {
 	mirrorImage := &MirrorImage{
-		Pet:       core.NewPet("Mirror Image", &mage.Character, mirrorImageBaseStats, createMirrorImageInheritance(mage), false, true),
+		// an image carries the Water Elemental's scaling auras (spell_mage_pet_scaling)
+		Pet:       core.NewPet("Mirror Image", &mage.Character, mirrorImageBaseStats, waterElementalStatInheritance, false, true),
 		mageOwner: mage,
 	}
 	mirrorImage.BuffImmunity = core.PetImmuneToScaling
-	mirrorImage.EnableManaBar()
+	// InitStatsForLevel's NPC_MIRROR_IMAGE case sets the create mana to 28 + 30 a level, but the
+	// pool keeps the base it got before that: creature_classlevelstats' 8814 for a level 80 mage
+	mirrorImage.EnableCreatureManaBar(2428, mirrorImageBaseStats[stats.Intellect], 15, false)
+	mirrorImage.AddStat(stats.Mana, 8814-2428)
+	mirrorImage.AddStatDependency(stats.Strength, stats.AttackPower, 2)
 
 	mage.AddPet(mirrorImage)
 
@@ -106,20 +109,15 @@ func (mi *MirrorImage) ExecuteCustomRotation(sim *core.Simulation) {
 	}
 }
 
-var mirrorImageBaseStats = stats.Stats{
-	stats.Mana: 3000, // Unknown
-}
-
-var createMirrorImageInheritance = func(mage *Mage) func(stats.Stats) stats.Stats {
-	return func(ownerStats stats.Stats) stats.Stats {
-		return stats.Stats{
-			stats.SpellHit: ownerStats[stats.SpellHit] - float64(mage.Talents.Precision),
-			// seems to be about 8% baseline
-			stats.SpellCrit:  8 * core.CritRatingPerCritChance,
-			stats.SpellPower: ownerStats[stats.SpellPower] * 0.33,
-		}
-	}
-}
+// No pet_levelstats row for 31216, so InitStatsForLevel's fallback stats, 2 * Str - 20 attack power
+// and a creature's flat 5% crit.
+var mirrorImageBaseStats = core.GuardianCreateStats.Add(stats.Stats{
+	// Guardian::UpdateMaxHealth: creature_classlevelstats' 10080 at the template's 0.4, plus 10 a
+	// point of stamina over 25. The universal stamina dependency (10 a point, -180) adds the rest
+	stats.Health:      4032 - 10*25 + 180,
+	stats.AttackPower: -20,
+	stats.SpellCrit:   5 * core.CritRatingPerCritChance,
+})
 
 func (mi *MirrorImage) registerFrostboltSpell() {
 	mage := mi.mageOwner
@@ -133,7 +131,7 @@ func (mi *MirrorImage) registerFrostboltSpell() {
 		MissileSpeed: 24,
 
 		ManaCost: core.ManaCostOptions{
-			BaseCost: 0.01,
+			FlatCost: 90,
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
@@ -199,7 +197,7 @@ func (mi *MirrorImage) registerFireblastSpell() {
 		ProcMask:    core.ProcMaskSpellDamage,
 
 		ManaCost: core.ManaCostOptions{
-			BaseCost: 0.01,
+			FlatCost: 120,
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{

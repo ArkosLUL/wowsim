@@ -1890,6 +1890,66 @@ Live stage, against the server build of 2026-10-06 19:37 (`3d89793c7` plus the m
   drops and rows.
 - **Goldens:** the pet suites; report each.
 
+#### As built
+
+Stage code, re-measured on `a1bb8d403` against [ac] `3d89793c7`:
+- Timers (`sim/core/pet.go`, `startUpdateTimer`): hit, haste, scaling and mana regen count from the map update
+  before the pet's first one and tick on the update each period is up by, the wait not carried over
+  (`AuraEffect::Update`, `Creature::Update`: `timer += period`). `ActionPriorityLow`, regen last. A pet out since
+  before the pull draws its place in the cycles (`"Pet Timers"`, one start for all four). Map interval 0 keeps the
+  exact times. Fixed.
+- Intellect crit: `EnableCreatureManaBar` wires its own mana bar, without the intellect dependency
+  (`Unit::SpellDoneCritChance`: a non-player's is `m_baseSpellCritChance`). The strikes replay now holds a mana
+  pet's spell crit to the record's `baseSpellCrit`: on base the Imp (7.50 vs 5), Felguard (6.18) and Water
+  Elemental (7.54) fail it. Fixed.
+- Fire Elemental, from source and DB, no record yet: `pet_levelstats` 15438 (283/160/125/405/460, 8000 health,
+  2280 mana, 1100 armor), 2 × Str − 20 AP, weapon 200–360 at 2 s; `spell_sha_fire_elemental_scaling`: intellect
+  30%, armor 35%, AP 300% and SP 100% of the owner's spell power, no stamina (35665's first effect is a dummy);
+  15 mana a point of intellect, creature regen; Fire Blast costs 40 (57984), Fire Nova 30.
+- Mirror Image, from source and DB, no record yet: fallback create stats, crit a flat 5% (the 8% went),
+  `spell_mage_pet_scaling` as the Water Elemental's; pool 8814 (`creature_classlevelstats`; the `NPC_MIRROR_IMAGE`
+  case only resets the create mana, 2428) plus 15 a point; Frostbolt costs 90, Fire Blast 120.
+- No drop or README row was theirs.
+- Goldens (Average-Default): Destruction −1.2% (Firebolt crit 25.8 → 17.9%, so Empowered Imp 25.9 → 18.0 s),
+  Frost −0.4% (Waterbolt crit 24.2 → 18.0%), Affliction −0.2% (Shadow Bite crit), Arcane, Fire and FrostFire
+  −0.03 to −0.05% (Mirror Image crit), BM +0.15%, MM, SV, Unholy and Demonology within ±0.05% (timers),
+  Enhancement +0.16%, Elemental +0.07%: the elemental swings for 2611 (was 3296) and Fire Nova hits for 2622
+  (was 1423), so its multi-target tests gain 12 to 21% (Enhancement's up to 4.9%).
+- Left: focus and energy regen (24 every 4 s, 20 every 2 s on the map update; `sim/core/focus.go` ticks each
+  second from the summon); a pet's MP5 inside the truncated regen tick; Improved Demonic Tactics (every 10 s,
+  whole percent, a spell mod); the Fire Elemental's AI timers and its 13339 id.
+
+Stage live, 2026-10-10 against [ac] `3d89793c7`, no rebuild:
+- e2e `TestPetfixRecords` (`e2e/petfix_test.go`, module README): Greater Fire Elemental, Mirror Image, Imp and Water
+  Elemental through `pet:<n>`; 18 records, the new `pets.jsonl`, replayed by `TestPetsRecords` (`tools/simval/pets.go`;
+  `simPets` gains 15438 and 31216, `petsThatNeverSwing` 31216). 152 checks pass.
+- Fire Elemental: every stat, pool (8000 health, 2280 + 15 a point mana), AP, SP, armor, weapon range, regen, cost and
+  spell amount is as stage code modelled it. One gap, fixed: its swing is fire, so `Unit::CalculateMeleeDamage` skips
+  the sheet's range for `Creature::CalculateMinMaxDamage`'s, (weapon + AP/14) × attack time: mean 860 a plain swing at
+  2106 AP where the sim rolled 580. Physical pets keep the sheet's range. No glancing (a guardian isn't `IsPet`); a
+  swing takes the level resist.
+- Mirror Image: crit 5% (rolled 5.0% of 20000), mana 8814 + 15 a point, health, armor, SP, amounts and costs as
+  modelled; it carries none of the mage's auras.
+- Intellect crit: Imp (416 intellect) and Water Elemental (423) show `critTaken` 5 and roll 4.86% and 4.85% of
+  20000; the elemental (442) 5.2%. Confirmed.
+- Goldens against the base, shaman suites only moved from stage code: Elemental +0.6% (Convection-Average; swing
+  3296 → 2966 a hit, was 2611 after stage code), multi-target up to +21%; Enhancement +0.7% (swing 2688 → 2536),
+  multi-target up to +5.1%.
+- Left: the sim's GCDs on the four guardian spells stand in for the AI's event timers (the server's GCD is 0;
+  `petCadenceAllowed`, the classes' `serverdata_allowlist.go`); the Imp's and Water Elemental's health pools
+  (`petsWithoutHealth`: 4421 and 7688 on the server, 8.4 and 7.5 a point of stamina; nothing in the sim reads them).
+
+Review, on `a1bb8d403`:
+- The swing fix moved to core (`Pet.rollCreatureRangeOffPhysical`, from `Pet.Finalize`): any pet swing off the
+  physical school rolls (weapon + AP/14) × attack time. The Shadowfiend's is shadow (`creature_template` 19668:
+  `dmgschool` 5, `DamageModifier` and `BaseVariance` 1, as 15438's), so it had the elemental's gap. From source and
+  DB: no `melee` record of it yet. `TestPetSwingOffPhysicalRollsTheCreatureRange`.
+- Goldens: Shadow +0.16% (Average-Default; swing 1838 → 1980 a hit, tests +0.13 to +0.46%); the other 13 suites as
+  the stages left them.
+- Left: a `melee` record of the Shadowfiend; a pet out since before the pull ticks nothing during the prepull, its
+  first tick lands up to a period after 0 (as before the item); a tick sharing a map update with the pet's own
+  swing or cast runs after it, where the server's aura tick comes first.
+
 ### EC-CLASS-FIX2 (Z5; changes goldens; stages: melee, casters, live)
 
 - Death knight: Blood Tap's rune pick against `EffectActivateRune` and `spell_dk_death_rune` (the talent takes over

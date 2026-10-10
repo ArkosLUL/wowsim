@@ -3,7 +3,9 @@ package core
 import (
 	"math"
 	"math/rand/v2"
+	"slices"
 	"testing"
+	"time"
 
 	"github.com/wowsims/wotlk/sim/core/proto"
 	"github.com/wowsims/wotlk/sim/core/stats"
@@ -413,6 +415,215 @@ func TestCreatureManaRegen(t *testing.T) {
 		if got := pet.CreatureManaRegen(tc.underFSR); got != tc.want {
 			t.Errorf("while casting %v, under the rule %v: got %v, want %v", tc.whileCasting, tc.underFSR, got, tc.want)
 		}
+	}
+}
+
+// A pet's own timers count from the map update before its first one and tick on the update each
+// period is up by. The wait for that update isn't carried over (timer += period).
+func TestPetUpdateTimersFollowTheMapUpdate(t *testing.T) {
+	for _, tc := range []struct {
+		name  string
+		mapMs int32
+		want  []time.Duration
+	}{
+		{"exact timing", 0, []time.Duration{ms(2000), ms(4000), ms(6000)}},
+		{"live", 100, []time.Duration{ms(2000), ms(4000), ms(6000)}},
+		{"updates that don't divide the period", 150, []time.Duration{ms(2100), ms(4050), ms(6000)}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			sim, a := newTickTestSim(t, tc.mapMs, 10, nil)
+			pet := newTestPet(&a.Character)
+			sim.PrePull()
+			runUntil(sim, ms(1234)+567*time.Microsecond)
+			now := sim.CurrentTime
+
+			start := pet.updateTimersStart(sim, false)
+			wantStart := now
+			if tc.mapMs > 0 {
+				wantStart = sim.NextServerTick(now) - sim.serverTickInterval
+				if sim.NextServerTick(now) == now {
+					t.Fatalf("the summon at %v is on a map update, so the test shows nothing", now)
+				}
+			}
+			if start != wantStart {
+				t.Fatalf("timers start at %v, want %v (summoned at %v)", start, wantStart, now)
+			}
+
+			var ticks []time.Duration
+			pet.startUpdateTimer(sim, start, 2*time.Second, func(sim *Simulation) {
+				ticks = append(ticks, sim.CurrentTime-start)
+			})
+			runUntil(sim, now+7*time.Second)
+			if !slices.Equal(ticks, tc.want) {
+				t.Errorf("ticks %v after the start, want %v", ticks, tc.want)
+			}
+		})
+	}
+}
+
+// A pet out since before the pull is anywhere in its timers' cycles, and the 2 s and 3 s ones stay
+// locked to the same start.
+func TestPetOutSinceBeforeThePullIsAnywhereInItsTimers(t *testing.T) {
+	sim, a := newTickTestSim(t, 100, 10, nil)
+	pet := newTestPet(&a.Character)
+	now := sim.CurrentTime
+	noop := func(*Simulation) {}
+
+	early, late := 0, 0
+	for range 400 {
+		start := pet.updateTimersStart(sim, true)
+		if start > now || sim.NextServerTick(start) != start {
+			t.Fatalf("timers start at %v: want a map update at or before %v", start, now)
+		}
+		scaling := pet.startUpdateTimer(sim, start, 2*time.Second, noop)
+		hit := pet.startUpdateTimer(sim, start, 3*time.Second, noop)
+		for _, timer := range []struct {
+			next, period time.Duration
+		}{{scaling.NextActionAt, 2 * time.Second}, {hit.NextActionAt, 3 * time.Second}} {
+			if wait := timer.next - now; wait <= 0 || wait > timer.period || (timer.next-start)%timer.period != 0 {
+				t.Fatalf("%v timer from %v ticks next at %v, now %v", timer.period, start, timer.next, now)
+			}
+		}
+		switch wait := scaling.NextActionAt - now; {
+		case wait < 500*time.Millisecond:
+			early++
+		case wait > 1500*time.Millisecond:
+			late++
+		}
+		scaling.Cancel(sim)
+		hit.Cancel(sim)
+	}
+	if early < 50 || late < 50 {
+		t.Errorf("of 400 pets, %d tick in the first quarter of the period and %d in the last: want about 100 each", early, late)
+	}
+
+	exact, a := newTickTestSim(t, 0, 10, nil)
+	if start := newTestPet(&a.Character).updateTimersStart(exact, true); start != exact.CurrentTime {
+		t.Errorf("exact timing: timers start at %v, want %v", start, exact.CurrentTime)
+	}
+}
+
+// A real pet picks up its owner's stats on its next scaling tick, a map update at most 2 s away, and
+// regenerates on the same updates. Whatever else happens on that update comes first.
+func TestPetScalingAndRegenTickOnItsOwnUpdates(t *testing.T) {
+	var pet *timingTestPet
+	timingTestConstruct = func(a *timingTestAgent) {
+		pet = &timingTestPet{Pet: NewPet("Pet", &a.Character, stats.Stats{stats.Spirit: 100}, func(owner stats.Stats) stats.Stats {
+			return stats.Stats{stats.AttackPower: owner[stats.AttackPower]}
+		}, true, false)}
+		pet.SummonedAsPet = true
+		pet.ScalingPeriod = 2 * time.Second
+		pet.EnableCreatureManaBar(1000, 0, 15, false)
+		a.AddPet(pet)
+	}
+	sim, a := newTickTestSim(t, 100, 10, nil)
+	timingTestConstruct = nil
+	sim.PrePull()
+	runUntil(sim, ms(3210))
+
+	before := pet.GetStat(stats.AttackPower)
+	a.AddStatsDynamic(sim, stats.Stats{stats.AttackPower: 100})
+	pet.currentMana = 0
+
+	tick := pet.scalingRefresh.NextActionAt
+	if wait := tick - sim.CurrentTime; wait <= 0 || wait > 2*time.Second || sim.NextServerTick(tick) != tick {
+		t.Fatalf("next scaling tick at %v, now %v: want a map update within 2 s", tick, sim.CurrentTime)
+	}
+	if regen := pet.creatureManaRefresh.NextActionAt; regen != tick {
+		t.Errorf("next regen tick at %v, want the scaling's %v", regen, tick)
+	}
+	if hit := pet.ownerHitRefresh.NextActionAt; sim.NextServerTick(hit) != hit || hit-sim.CurrentTime > 3*time.Second {
+		t.Errorf("next hit tick at %v, now %v: want a map update within 3 s", hit, sim.CurrentTime)
+	}
+
+	runUntil(sim, tick)
+	if got := pet.GetStat(stats.AttackPower); got != before {
+		t.Errorf("attack power %v before the tick's turn at %v, want %v", got, tick, before)
+	}
+	if pet.CurrentMana() != 0 {
+		t.Errorf("mana %v before the tick's turn at %v, want 0", pet.CurrentMana(), tick)
+	}
+	runUntil(sim, tick+1)
+	if got := pet.GetStat(stats.AttackPower); got != before+100 {
+		t.Errorf("attack power %v after the tick at %v, want %v", got, tick, before+100)
+	}
+	if got, want := pet.CurrentMana(), pet.CreatureManaRegen(false); got != want || want != 37 {
+		t.Errorf("mana %v after the tick at %v, want %v", got, tick, want)
+	}
+}
+
+// A creature's intellect raises its mana, not its spell crit (Unit::SpellDoneCritChance).
+func TestCreatureManaBarGivesNoCritFromIntellect(t *testing.T) {
+	var pet *timingTestPet
+	timingTestConstruct = func(a *timingTestAgent) {
+		pet = &timingTestPet{Pet: NewPet("Pet", &a.Character,
+			stats.Stats{stats.Intellect: 405, stats.SpellCrit: 5 * CritRatingPerCritChance},
+			func(stats.Stats) stats.Stats { return stats.Stats{stats.Intellect: 300} }, true, false)}
+		pet.EnableCreatureManaBar(2280, 405, 15, false)
+		a.AddPet(pet)
+	}
+	sim, _ := newTimingTestSim(t, 0, nil)
+	timingTestConstruct = nil
+	sim.PrePull()
+	runUntil(sim, ms(100))
+
+	if got, want := pet.GetStat(stats.SpellCrit), 5*CritRatingPerCritChance; got != want {
+		t.Errorf("spell crit rating %v at %v intellect, want %v", got, pet.GetStat(stats.Intellect), want)
+	}
+	if got, want := pet.MaxMana(), 2280+15*300.0; got != want || pet.BaseMana != 2280 {
+		t.Errorf("mana %v on a base of %v, want %v on 2280", got, pet.BaseMana, want)
+	}
+}
+
+// A swing in any school but physical rolls Creature::CalculateMinMaxDamage's range, the attack time on
+// the weapon as well as on the attack power. A physical one keeps the sheet's.
+func TestPetSwingOffPhysicalRollsTheCreatureRange(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		school SpellSchool
+		want   float64
+	}{
+		// a 100 weapon at 2 s with 1400 attack power
+		{"physical", SpellSchoolPhysical, 100 + 1400.0/14*2},
+		{"fire", SpellSchoolFire, (100 + 1400.0/14) * 2},
+		{"shadow", SpellSchoolShadow, (100 + 1400.0/14) * 2},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var pet *timingTestPet
+			timingTestConstruct = func(a *timingTestAgent) {
+				pet = &timingTestPet{Pet: NewPet("Pet", &a.Character, stats.Stats{stats.AttackPower: 1400},
+					func(stats.Stats) stats.Stats { return stats.Stats{} }, true, true)}
+				pet.EnableAutoAttacks(pet, AutoAttackOptions{
+					MainHand:       Weapon{BaseDamageMin: 100, BaseDamageMax: 100, SwingSpeed: 2, CritMultiplier: 2, SpellSchool: tc.school},
+					AutoSwingMelee: true,
+				})
+				a.AddPet(pet)
+			}
+			sim, _ := newTimingTestSim(t, 0, nil)
+			timingTestConstruct = nil
+
+			auto, target := pet.AutoAttacks.MHAuto(), sim.Encounter.TargetUnits[0]
+			// no armor and no partial resist, so a plain hit is the roll itself
+			auto.Flags |= SpellFlagIgnoreResists
+			got, landed := 0.0, false
+			target.DynamicDamageTakenModifiers = append(target.DynamicDamageTakenModifiers, func(_ *Simulation, spell *Spell, result *SpellResult) {
+				if spell == auto && !landed && result.Outcome == OutcomeHit {
+					got, landed = result.Damage, true
+				}
+			})
+			for range 200 {
+				if landed {
+					break
+				}
+				auto.ApplyEffects(sim, target, auto)
+			}
+			if !landed {
+				t.Fatal("no plain hit in 200 swings")
+			}
+			if got != tc.want {
+				t.Errorf("a plain swing deals %v, want %v", got, tc.want)
+			}
+		})
 	}
 }
 

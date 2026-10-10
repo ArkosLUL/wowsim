@@ -12,8 +12,9 @@ func (fireElemental *FireElemental) registerFireBlast() {
 		SpellSchool: core.SpellSchoolFire,
 		ProcMask:    core.ProcMaskSpellDamage,
 
+		// 57984's cost, the spell the AI casts
 		ManaCost: core.ManaCostOptions{
-			FlatCost: 276,
+			FlatCost: 40,
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
@@ -47,7 +48,7 @@ func (fireElemental *FireElemental) registerFireNova() {
 		ProcMask:    core.ProcMaskSpellDamage,
 
 		ManaCost: core.ManaCostOptions{
-			FlatCost: 207,
+			FlatCost: 30,
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{

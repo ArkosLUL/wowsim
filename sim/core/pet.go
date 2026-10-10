@@ -138,10 +138,30 @@ func (pet *Pet) Finalize() {
 	if pet.Env.IsFinalized() {
 		return
 	}
+	// before Character.Finalize, which builds the swing's spell from its config
+	pet.rollCreatureRangeOffPhysical()
 	pet.Character.Finalize()
 	// After Character.Finalize: that's where the pet's swings get their spells, and the inherited
 	// armor pen lands on them.
 	pet.inheritOwnerArmorPen()
+}
+
+// rollCreatureRangeOffPhysical gives a swing in any school but physical the range the server rolls for
+// it. Unit::CalculateMeleeDamage skips the sheet's range there and takes
+// Creature::CalculateMinMaxDamage's, where the attack time multiplies the weapon roll too. The
+// template's DamageModifier and BaseVariance aren't modelled: both are 1 for the Greater Fire
+// Elemental and the Shadowfiend, the only pets that swing this way.
+func (pet *Pet) rollCreatureRangeOffPhysical() {
+	config := pet.AutoAttacks.MHConfig()
+	if !pet.AutoAttacks.AutoSwingMelee || config.SpellSchool.Matches(SpellSchoolPhysical) {
+		return
+	}
+	config.ApplyEffects = func(sim *Simulation, target *Unit, spell *Spell) {
+		weapon := pet.AutoAttacks.MH()
+		baseDamage := (weapon.BaseDamage(sim)+spell.MeleeAttackPower()/weapon.AttackPowerPerDPS)*weapon.SwingSpeed +
+			spell.BonusWeaponDamage()
+		spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeWhite)
+	}
 }
 
 // PetCreateStats is a summon's five create stats and its base armor (Guardian::InitStatsForLevel):
@@ -266,9 +286,15 @@ func (pet *Pet) dropBuffsItCannotTake(raid *proto.RaidBuffs, party *proto.PartyB
 // EnableCreatureManaBar is a creature's mana (Guardian::UpdateMaxPower): its create mana plus
 // manaPerIntellect a point of intellect over the create value, and spell costs off the create mana.
 // It regenerates the creature's way (creatureManaTick), not off spirit like a player.
+// Intellect gives it no spell crit either: Unit::SpellDoneCritChance only reads a player's.
 func (pet *Pet) EnableCreatureManaBar(createMana, createIntellect, manaPerIntellect float64, regensWhileCasting bool) {
-	pet.EnableManaBarWithModifier(manaPerIntellect / 15)
-	pet.AddStat(stats.Mana, createMana-manaPerIntellect*createIntellect-(20-20*manaPerIntellect))
+	pet.AddStat(stats.Mana, createMana-manaPerIntellect*createIntellect)
+	pet.AddStatDependency(stats.Intellect, stats.Mana, manaPerIntellect)
+
+	pet.manaCastingMetrics = pet.NewManaMetrics(ActionID{OtherID: proto.OtherAction_OtherActionManaRegen, Tag: 1})
+	pet.manaNotCastingMetrics = pet.NewManaMetrics(ActionID{OtherID: proto.OtherAction_OtherActionManaRegen, Tag: 2})
+	pet.Unit.manaBar.unit = &pet.Unit
+
 	pet.BaseMana = createMana
 	pet.PseudoStats.SpiritRegenMultiplier = 0
 	pet.creatureManaRegen = true
@@ -338,7 +364,54 @@ const (
 
 	// CREATURE_REGEN_INTERVAL
 	creatureRegenInterval = 2 * time.Second
+
+	// Holds whole periods of every pet timer (1, 2 and 3 s), so a pet out since before the pull
+	// lands evenly anywhere in each one's cycle.
+	petTimerCycle = time.Minute
 )
+
+// updateTimersStart is when the timers the pet's own update counts down began: its scaling auras'
+// (AuraEffect::Update) and its regen timer (Creature::Update). Its first update takes a whole map
+// update off them, so they count from the one before. A pet out since before the pull is already
+// somewhere in their cycles.
+func (pet *Pet) updateTimersStart(sim *Simulation, outSinceBeforePull bool) time.Duration {
+	if sim.serverTickInterval <= 0 {
+		return sim.CurrentTime
+	}
+	summoned := sim.CurrentTime
+	if outSinceBeforePull {
+		summoned -= time.Duration(sim.UnitRandomFloat(&pet.Unit, "Pet Timers") * float64(petTimerCycle))
+	}
+	return sim.NextServerTick(summoned) - sim.serverTickInterval
+}
+
+// startUpdateTimer runs onTick every period counted from start, each tick on the first map update
+// at or after its time. Both server timers keep what's left over (timer += period), so the wait for
+// an update never pushes the later ticks back.
+func (pet *Pet) startUpdateTimer(sim *Simulation, start, period time.Duration, onTick func(*Simulation)) *PendingAction {
+	due := start + period
+	if elapsed := sim.CurrentTime - start; elapsed >= period {
+		due = start + elapsed/period*period
+	}
+	// a tick due by now went off in an update before this one
+	for sim.NextServerTick(due) <= sim.CurrentTime {
+		due += period
+	}
+
+	// Low, so the owner's actions on this update come first: players update before pets
+	pa := &PendingAction{NextActionAt: sim.NextServerTick(due), Priority: ActionPriorityLow}
+	pa.OnAction = func(sim *Simulation) {
+		onTick(sim)
+		if pa.cancelled {
+			return
+		}
+		due += period
+		pa.NextActionAt = sim.NextServerTick(due)
+		sim.AddPendingAction(pa)
+	}
+	sim.AddPendingAction(pa)
+	return pa
+}
 
 // ownerHitScaling is what the scaling aura is worth right now. Which of the owner's hit chances 61017
 // reads depends on the owner: ranged for a hunter, spell for anyone casting off mana, else melee.
@@ -548,7 +621,7 @@ func (pet *Pet) reset(sim *Simulation, agent PetAgent) {
 
 	pet.enabled = false
 	if pet.enabledOnStart {
-		pet.Enable(sim, agent)
+		pet.enable(sim, agent, true)
 	}
 }
 func (pet *Pet) doneIteration(sim *Simulation) {
@@ -562,6 +635,11 @@ func (pet *Pet) IsGuardian() bool {
 
 // petAgent should be the PetAgent which embeds this Pet.
 func (pet *Pet) Enable(sim *Simulation, petAgent PetAgent) {
+	pet.enable(sim, petAgent, false)
+}
+
+// enable summons the pet now, or with outSinceBeforePull has it out already as the fight starts.
+func (pet *Pet) enable(sim *Simulation, petAgent PetAgent, outSinceBeforePull bool) {
 	if pet.enabled {
 		if sim.Log != nil {
 			pet.Log(sim, "Pet already summoned")
@@ -582,12 +660,11 @@ func (pet *Pet) Enable(sim *Simulation, petAgent PetAgent) {
 	// summons start at full health, owner's stamina included (Guardian::InitStatsForLevel)
 	pet.healthBar.reset(sim)
 
+	timersStart := pet.updateTimersStart(sim, outSinceBeforePull)
+
 	// A guardian's scaling aura never ticks, so what it got at summon is what it keeps.
 	if pet.SummonedAsPet {
-		pet.ownerHitRefresh = StartPeriodicAction(sim, PeriodicActionOptions{
-			Period:   petOwnerHitRefreshInterval,
-			OnAction: pet.refreshOwnerHitScaling,
-		})
+		pet.ownerHitRefresh = pet.startUpdateTimer(sim, timersStart, petOwnerHitRefreshInterval, pet.refreshOwnerHitScaling)
 	}
 
 	// The haste carrier's own snapshot: a real pet retakes it every 2 s, a guardian only now, at the
@@ -597,19 +674,13 @@ func (pet *Pet) Enable(sim *Simulation, petAgent PetAgent) {
 		pet.MultiplyMeleeSpeed(sim, pet.ownerHasteAmount)
 
 		if pet.SummonedAsPet {
-			pet.ownerHasteRefresh = StartPeriodicAction(sim, PeriodicActionOptions{
-				Period:   petOwnerHasteRefreshInterval,
-				OnAction: pet.refreshOwnerHaste,
-			})
+			pet.ownerHasteRefresh = pet.startUpdateTimer(sim, timersStart, petOwnerHasteRefreshInterval, pet.refreshOwnerHaste)
 		}
 	}
 
 	switch {
 	case pet.ScalingPeriod > 0:
-		pet.scalingRefresh = StartPeriodicAction(sim, PeriodicActionOptions{
-			Period:   pet.ScalingPeriod,
-			OnAction: pet.refreshScaling,
-		})
+		pet.scalingRefresh = pet.startUpdateTimer(sim, timersStart, pet.ScalingPeriod, pet.refreshScaling)
 	case !pet.isGuardian:
 		pet.Owner.DynamicStatsPets = append(pet.Owner.DynamicStatsPets, pet)
 		pet.dynamicStatInheritance = pet.statInheritance
@@ -617,11 +688,9 @@ func (pet *Pet) Enable(sim *Simulation, petAgent PetAgent) {
 
 	//reset current mana after applying stats
 	pet.manaBar.reset()
+	// started last: Creature::Update regenerates after the auras have ticked and the AI has cast
 	if pet.creatureManaRegen {
-		pet.creatureManaRefresh = StartPeriodicAction(sim, PeriodicActionOptions{
-			Period:   creatureRegenInterval,
-			OnAction: pet.creatureManaTick,
-		})
+		pet.creatureManaRefresh = pet.startUpdateTimer(sim, timersStart, creatureRegenInterval, pet.creatureManaTick)
 	}
 
 	// Call onEnable callbacks before enabling auto swing
