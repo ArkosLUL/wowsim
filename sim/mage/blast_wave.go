@@ -41,7 +41,9 @@ func (mage *Mage) registerBlastWaveSpell() {
 			for _, aoeTarget := range sim.Encounter.TargetUnits {
 				baseDamage := spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()
 				baseDamage *= sim.Encounter.AOECapMultiplier()
-				spell.CalcAndDealDamage(sim, aoeTarget, baseDamage, spell.OutcomeMagicHitAndCrit)
+				if spell.CalcAndDealDamage(sim, aoeTarget, baseDamage, spell.OutcomeMagicHitAndCrit).Landed() {
+					mage.snare(sim, aoeTarget, time.Second*6)
+				}
 			}
 		},
 	})

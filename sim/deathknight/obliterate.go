@@ -22,7 +22,8 @@ func (dk *Deathknight) newObliterateHitSpell(isMH bool) *core.Spell {
 		RuneCost: core.RuneCostOptions{
 			FrostRuneCost:  1,
 			UnholyRuneCost: 1,
-			RunicPowerGain: 15 + 2.5*float64(dk.Talents.ChillOfTheGrave) + dk.scourgeborneBattlegearRunicPowerBonus(),
+			// Chill of the Grave's and Dirge's class masks both cover Obliterate
+			RunicPowerGain: 15 + 2.5*float64(dk.Talents.ChillOfTheGrave+dk.Talents.Dirge) + dk.scourgeborneBattlegearRunicPowerBonus(),
 			Refundable:     true,
 		},
 		Cast: core.CastConfig{
@@ -66,6 +67,9 @@ func (dk *Deathknight) newObliterateHitSpell(isMH bool) *core.Spell {
 				if sim.RandomFloat("Rime") < dk.rimeHbChanceProc() {
 					dk.FreezingFogAura.Activate(sim)
 				}
+			} else if result.Landed() {
+				// Death Rune Mastery procs from procs, so the off hand rolls for the main hand's runes too
+				dk.RollFrostUnholyDeathRunes(sim, deathConvertChance)
 			}
 
 			spell.DealDamage(sim, result)

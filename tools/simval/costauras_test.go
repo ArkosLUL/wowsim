@@ -14,9 +14,7 @@ import (
 // droppedCostAuras are spell steps of costAuraFixture, or checks of them, that disagree with the sim, each with
 // a row in the fixture README.
 var droppedCostAuras = slices.Concat(
-	// Penance: the sim takes Mental Agility's cut though the server's mask misses it, and counts the cast's
-	// channel, which the server's dummy 53007 doesn't have
-	spellModDrops("PriestDiscipline", "powerInfusion", "cost", 53007),
+	// Penance: the probe reads the dummy 53007, which has no channel; the sim's cast carries the one it starts
 	spellModDrops("PriestDiscipline", "powerInfusion", "channel", 53007),
 )
 

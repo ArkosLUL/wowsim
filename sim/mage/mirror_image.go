@@ -171,7 +171,17 @@ func (mi *MirrorImage) registerFrostboltSpell() {
 			//3x damage for 3 mirror images
 			baseDamage := (spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()) * numImages
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
-			spell.DealDamageAfterTravel(sim, result)
+			if mage.chills == nil || mage.chills.Get(target) == nil {
+				spell.DealDamageAfterTravel(sim, result)
+				return
+			}
+			// 59638 slows for 4 s, which counts for the mage's Torment the Weak
+			spell.WaitTravelTime(sim, func(sim *core.Simulation) {
+				spell.DealDamage(sim, result)
+				if result.Landed() {
+					mage.chill(sim, target, time.Second*4)
+				}
+			})
 		},
 	})
 

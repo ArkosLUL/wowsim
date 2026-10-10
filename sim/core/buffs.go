@@ -205,6 +205,10 @@ func applyBuffEffects(agent Agent, raidBuffs *proto.RaidBuffs, partyBuffs *proto
 		character.AddStats(stats.Stats{
 			stats.Armor: GetTristateValueFloat(raidBuffs.DevotionAura, 1205, addPct(1205, 50)),
 		})
+		// Improved Devotion Aura's 63514 rides the aura: 2% healing taken a point
+		if raidBuffs.DevotionAura == proto.TristateEffect_TristateEffectImproved {
+			character.PseudoStats.HealingTakenMultiplier *= 1.06
+		}
 	}
 
 	if raidBuffs.ScrollOfProtection && raidBuffs.DevotionAura == proto.TristateEffect_TristateEffectMissing {

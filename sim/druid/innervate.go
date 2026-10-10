@@ -20,7 +20,8 @@ func (druid *Druid) registerInnervateCD() {
 
 	var innervateAura *core.Aura
 	var innervateManaThreshold float64
-	druid.RegisterResetEffect(func(sim *core.Simulation) {
+	// once, not per reset: InnervateAura makes new mana metrics each call
+	druid.Env.RegisterPostFinalizeEffect(func() {
 		if innervateTarget == &druid.Unit {
 			if druid.StartingForm.Matches(Cat) {
 				// double shift + innervate cost.

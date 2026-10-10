@@ -77,6 +77,7 @@ replays as its records stood until a rerun replaces them.
 | WarlockDestruction | devastation | fire spell crit % | spell specific crit in the sim, a spell mod on the server |
 | PriestDiscipline | holySpecialization | holy spell crit % | the sheet field is the aura's raw sum; Penance is holy but outside its class mask, so the sim's lowest holy spell stays at 0 |
 | RogueCombat | maceSpecialization | armor penetration % | the sheet field counts the aura without a mace; the server's damage applies it only with one (`HasItemFitToSpellRequirements`), as the sim does, and the path carries two daggers |
+| WarriorArms | maceSpecialization | armor penetration % | the same sheet artifact: the path carries a two-handed axe, so the server's damage and the sim give it nothing |
 | DeathknightBlood | bloodGorged | armor penetration % | the sheet field is the aura's raw sum; the sim applies it per spell by the server's class mask (white swings, Plague, Blood, Heart and Death Strike, Rune Strike) |
 
 `spellmods.jsonl`, each in `droppedSpellMods` (`tools/simval/spellmods_test.go`). Lines stay; a dropped step (spell 0),
@@ -91,8 +92,7 @@ spell (empty check) or check is only logged.
 
 | Path | Talent | Spell | Check | Why |
 |---|---|---|---|---|
-| PriestDiscipline | powerInfusion | 53007 Penance | cost | not a mage gap: the sim's Penance takes Mental Agility's cut, which the server's class mask leaves out (server 618, sim 556 before the aura) |
-| PriestDiscipline | powerInfusion | 53007 Penance | channel | the server's 53007 is a dummy with no channel (the cast triggers it), the sim's cast has one |
+| PriestDiscipline | powerInfusion | 53007 Penance | channel | probe artifact: 53007 is a dummy with no channel, and the channel its script casts (52988, 53003) is what the sim's cast carries |
 
 `timing.jsonl`, each in `knownTimingMismatches` (`tools/simval/timing.go`, keyed by class, spell, pass and check name;
 passes are bare, talents and Bloodlust). The record stays and the check still runs; its failure is let through in the

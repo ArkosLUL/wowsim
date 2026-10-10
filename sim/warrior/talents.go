@@ -427,7 +427,8 @@ func (warrior *Warrior) applyWeaponSpecializations() {
 	}
 
 	if ms := warrior.Talents.MaceSpecialization; ms > 0 {
-		if mask := warrior.GetProcMaskForTypes(proto.WeaponType_WeaponTypeMace); mask != core.ProcMaskEmpty {
+		// a mace in either hand covers every attack (Player::HasItemFitToSpellRequirements)
+		if mask := warrior.GetProcMaskForTypes(proto.WeaponType_WeaponTypeMace); mask != core.ProcMaskUnknown {
 			warrior.PseudoStats.BonusArmorPenPct += 3 * float64(ms)
 		}
 	}

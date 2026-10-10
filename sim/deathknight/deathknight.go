@@ -191,6 +191,8 @@ type Deathknight struct {
 	FrostPresenceAura  *core.Aura
 	UnholyPresence     *core.Spell
 	UnholyPresenceAura *core.Aura
+	// Blood Presence's heal off a hit's damage, nothing outside a presence that has it
+	bloodPresenceHeal func(sim *core.Simulation, damage float64)
 
 	// Debuffs
 	FrostFeverDebuffAura       core.AuraArray

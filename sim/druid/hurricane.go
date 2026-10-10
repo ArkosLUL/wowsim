@@ -63,6 +63,10 @@ func (druid *Druid) registerHurricaneSpell() {
 		},
 
 		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, spell *core.Spell) {
+			// the cast puts an aura on the druid, and that hit rolls Omen of Clarity before any tick does
+			if druid.rollOmenOfClarity != nil {
+				druid.rollOmenOfClarity(sim, spell)
+			}
 			spell.AOEDot().Apply(sim)
 		},
 	})

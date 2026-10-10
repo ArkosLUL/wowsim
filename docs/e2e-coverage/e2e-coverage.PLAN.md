@@ -1915,6 +1915,130 @@ Live stage, against the server build of 2026-10-06 19:37 (`3d89793c7` plus the m
   and its test; `raid_stats.ts`'s two rows; their cycles, fights, drops and rows.
 - **Goldens:** those classes' suites; report each.
 
+#### As built
+
+Melee stage, on `a1bb8d403`, each lead re-measured against [ac] `3d89793c7` and the spelldump (notes and the live
+checks in `tmp/ec-class-fix2-melee.md`). Verdicts:
+- Blood Tap's rune pick (fixed, `BloodTapConversion`): `EffectActivateRune` runs first, at launch. It readies a blood
+  slot's death rune that's on cooldown, else, only with both blood runes plain and down, the one due back sooner (the
+  second on a tie). Then the aura turns the first plain blood rune that's ready, so sometimes none. The sim turned a
+  rune whatever its state and always readied one.
+- The talent takes over the tapped slot (fixed, `procDeathRuneTalent`): a proc puts its own aura on the rune it turns
+  (`AddRuneByAuraEffect`), so a tapped rune Blood of the North or Reaping turns again reverts with the talent's 30 s,
+  not with Blood Tap. The sim turned the other blood rune instead.
+- Off-hand rerolls (fixed): the three death rune talents are `CAN_PROC_FROM_PROCS`, so Threat of Thassarian's
+  off-hand Blood Strike, Death Strike and Obliterate roll them again for the runes the main hand just spent
+  (`RollBloodDeathRunes`, `RollFrostUnholyDeathRunes`; `RuneMeta.spentAt` is the script's "just went on cooldown").
+  Blood of the North and Reaping too: their 100 ms cooldown starts only on a proc, so a failed main-hand roll leaves
+  the off hand free. After a main-hand miss the off hand's proc turns nothing but restarts the periodic.
+- Chill of the Grave per Howling Blast target (no gap): spell_proc 49149 is phase HIT, and `howling_blast.go` and
+  the threat hook already give it per landed target.
+- Dirge on Obliterate (fixed): spell_proc 49223's mask has Obliterate, so +2.5 runic power a point.
+- Blood Presence's heal (fixed, `registerBloodPresenceHeal`): 63611 is on every DK in Blood Presence (4%) and, with
+  Improved Blood Presence, in the other two (2% a point). It procs on auto attacks, the DK's own casts, every
+  periodic damage tick, and triggered spells only with `NOT_A_PROC` (Death Coil's 47632, Necrosis): not the off-hand
+  strikes, Scourge Strike's 70890, Blood-Caked Blade, Razorice (all three `SUPPRESS_CASTER_PROCS`), Wandering Plague
+  or Death and Decay's 52212. The heal is int32(damage × percent), then the healing taken percent, truncated.
+- Improved Devotion Aura's 63514 (fixed): aura 118, +2% healing taken a point on whoever carries that paladin's
+  Devotion Aura: ×1.06 with the raid buff Improved (`sim/core/buffs.go`), 1–2 points through `improveDevotionAura`.
+- Mace Specialization (fixed): needs a mace in either hand (`HasItemFitToSpellRequirements`); it's in
+  `weaponTalentsOf`, and `TestWarriorMaceSpecializationNeedsAMace` replaces the old test. The WarriorArms sweep step
+  (two-handed axe) is now a sheet artifact like the rogue's: dropped, with its README row.
+- RaidStats (no gap): the rows key on `Boolean(talent)`, so a paladin or warlock with 1–2 points already counts under
+  the Improved row, never the plain one. `raid_stats.ts` is unchanged.
+
+Core hunks: `sim/core/runic_power.go` (DK only), `sim/core/buffs.go` (the 63514 line). Tests:
+`sim/deathknight/dps/{blood_tap,presence_heal,runes}_test.go`, `sim/paladin/retribution/devotion_aura_test.go`,
+`sim/optimizer/weapon_talents_test.go`.
+
+Goldens (`dock.sh delta`), Average-Default: FrostUH −5.5% dps (Obliterate 74.6 → 68.5 casts), Frost −1.7%, Blood
+−0.7%, Unholy −0.3% (Ghoul Frenzy 6 → 4.9 casts, hps −13.8%): the rotations cast Blood Tap where the old one always
+gave a rune. TPS −4.1 to +1.3%: it follows the damage, plus the heal's level 40 a proc on a DPS DK. BloodTank dps ±0.06%, tps up to
++1.3%. Every other suite moves only in hps, +6% (63514 under the Improved raid buff): the Bauble of True Blood rows,
+Disc +0.9%, Holy priest +1.9%, Resto shaman.
+
+Follow-ups: retune the DK APLs' Blood Tap conditions (`ui/deathknight/apls`); `SPELL_AURA_MOD_HEALING_PCT` counts
+only the highest positive aura (`SpellHealingBonusTaken`), the sim multiplies them all (Vampiric Blood, Guardian
+Spirit, Spirit Bond, 63514); Improved Blood Presence's +5/10% healing taken in Blood Presence; Unholy Blight's ticks
+skip the damage callbacks, so `DONE_PERIODIC` procs miss them; an on-use item's damage is a non-triggered cast and
+procs 63611; `class-mechanics.md` says RaidStats shows 1–2 points unimproved.
+
+Casters stage, same base (notes and the live plan in `tmp/ec-class-fix2-code.md`). Verdicts:
+- Omen of Clarity from triggered item damage (not changed, live decides): by the source a magic-class direct damage
+  or heal spell rolls 8.75% triggered or not, but so would Starfall's stars, which Z2 saw never roll, and nothing in
+  the proc code explains that. The sim rolls it on Hurricane's tick (48466), which the recheck covers too.
+- Innervate (fixed): the aura is made once, post-finalize, not a new `ResourceMetrics` each reset.
+- Torment the Weak (fixed): a Mirror Image's Frostbolt (59638, 4 s plus Permafrost), Blast Wave (6 s) and Dragon's
+  Breath (5 s, less under Review) snare a target that isn't a world boss. Frostbite doesn't count: 12494 is a root, and only snares
+  and attack slows do.
+- Frostbite's Fingers of Frost (refuted): the 12494 sync needs the root's triggering aura, which the
+  `ADD_TARGET_TRIGGER` cast never passes (`Spell::DoTriggersOnSpellHit`), so it never rolls.
+- Brain Freeze (fixed): spell_proc -44546's mask has Blizzard's tick, so each landed tick hit rolls, with or
+  without Improved Blizzard; Chilled is outside it. Misses no longer roll (`brainFreezeMask`).
+- Penance (fixed): Mental Agility's mask leaves it out (cost 618); a tick's 53000 takes 0.1905 of spell power
+  (`spell_bonus_data`).
+- Penance and Illustration of the Dragon Soul (refuted as worded, fixed the other way): 53007 and its channel are
+  `SPELL_DAMAGE_CLASS_NONE`, outside 60485's flags, so only the three ticks give stacks. The sim's damage Penance
+  gave a fourth from an outcome at the cast, which also rolled a hit the server doesn't (class NONE with a family
+  never misses): the cast now rolls and deals nothing.
+
+Drops: Penance's `cost` entry in `droppedCostAuras` and its README row are gone; `channel` stays, a probe artifact.
+Tests: `sim/mage/procs_test.go`, `sim/priest/smite/penance_test.go`.
+
+Goldens on top of the melee stage: mage Frost Average-Default −0.04% dps (rows −0.7 to +0.9%; Frostfire Bolt 29.2 →
+28.8 casts, as a missed Frostbolt no longer rolls Brain Freeze); one Disc row's tps +0.004%. Nothing else moves.
+
+Follow-ups: a snare immunity field on the proto target (the mage reads `IsWorldBoss`); item damage spells carry
+no server spell id (`sim/common/wotlk/damage_procs.go`), which the Omen fix needs if live confirms it; heal
+Penance's hits count one short (`Hits--`); `class-mechanics.md` says Starfall's stars proc nothing, they proc
+Illustration.
+
+Live stage, 2026-10-10 against `3d89793c7` with module `408f7b5`, no rebuild (runs, logs and counts in
+`tmp/ec-class-fix2-live.md`). The module's new `TestSimvalEcClass2Fight` (`e2e/ecclass2_test.go`, module README)
+fights one-off cycles: a chosen spot, no swing, casts at the bot or the ground, an XP-giving mob.
+- Omen of Clarity (fixed for druid spells): Z2's refutal was an artifact. From 18 yards north no star falls, as
+  `spell_dru_starfall_dummy` wants line of sight to the dummy's centre. From 4 yards south Clearcasting came at 6 of
+  82 star hits, 29 of 288 Hurricane ticks, 3 of 30 Hurricane casts and 4 of 29 Extract of Necromantic Power bolts,
+  each on the hit's own millisecond. Stars and splash hits now roll it (`SpellFlagOmenTrigger`), and Hurricane's
+  cast (`rollOmenOfClarity`). Item damage stays unfixed: its spells carry no server id to read the class and cast
+  time from (60488's 2.2 s entry makes 12.83%).
+- Blood Presence's heal (confirmed): none on a simval dummy, which carries `NO_XP` (63611 needs an XP or honor
+  target). On the Heroic Training Dummy 192 heals in 90 s: every swing, own cast and disease tick, no off-hand
+  strike or Razorice hit, each exactly int(damage × 0.04).
+- Blood Tap (confirmed): one blood rune down, the tap brings none back (a third Heart Strike is refused); both
+  down, one comes back; a Blood of the North death rune on cooldown comes back and the ready rune turns (three
+  Blood Strikes). The take-over fits its log but a missed Icy Touch leaves it unproven.
+- Penance (confirmed, one more fix): cost 618 and 494 in a fresh sweep; 53000 probes at 0.1905; three Illustration
+  stacks a Penance, damage or heal, none at the cast. Searing Light and Twin Disciplines multiply on 53000 (974 at
+  2290 spell power), the sim added them: fixed.
+
+Drops: `costauras.jsonl`'s PriestDiscipline lines are the fresh sweep's; 53007 still has no channel, so the
+`channel` drop stays. Tests: `sim/druid/balance/starfall_test.go`.
+
+Goldens on top: Balance Average-Default 0 (Clearcasting 44.6 → 47.4 s), 17 rows −1.6 to +8.6%, the mana-starved
+NoBuffs rows most.
+
+Follow-ups: item damage spells need their server spell id (`sim/common/wotlk`), then any landed magic-class
+damage or heal spell rolls Omen at its own cast time entry (60203, 60307, 60443, 60483 at 8.75%, Sapper Charge
+too; not Saronite Bomb, class none); by the same source rule Nature's Grace's 16886 (magic class, on each crit of a
+cast spell) rolls it and Survival Instincts' 61336 (class none) doesn't, the sim has it the other way; Hurricane's
+ticks give no Illustration stack live and its cast gives one; the sim's Blood Presence heal ignores the XP rule;
+the fight e2e's north spot hides the dummy's centre, so area scripts that check it (Starfall) can't be recorded
+there; `class-mechanics.md`'s Starfall line is wrong on Omen.
+
+Review, on the same base:
+- Heal Penance (fixed): its multiplier was 1 + the talents' product + Twin Disciplines, about twice the server's.
+  Spiritual Healing and Twin Disciplines are percent mods on 52985, Blessed Resilience and Focused Power healing
+  done auras, so all four multiply, as the live 2960–3170 shows. Disc hps −21 to −23% (Penance 12450 → 6505 a
+  hit), tps −30%.
+- Dragon's Breath's snare (corrected): 42950's aura has one proc charge (spell_proc -31661), so the first direct
+  hit that damages the target takes it off; dot ticks and Living Bomb's explosion don't. It has its own aura
+  (`dragonsBreathSnares`), not the casters stage's flat 5 s. No golden moves.
+- Tests: `sim/priest/healing/penance_test.go`, `TestDamagePenanceTalentsMultiply`, the Dragon's Breath part of
+  `TestTormentTheWeakCountsImagesAndFireSnares`.
+- Contract request: 63514 multiplies with a larger healing taken aura the server would count alone (Spirit Bond,
+  Vampiric Blood, Guardian Spirit, Strength of Wrynn); core needs the highest positive aura only.
+
 ### EC-THREAT-FIX4 (Z5; changes goldens, full suite; C++; stages: threat, C++ and e2e, live)
 
 - Probe: `.simval threat` gains an energize field, so energize threat gets a record (Bloodrage's 20 rage should give

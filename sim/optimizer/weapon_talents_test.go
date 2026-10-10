@@ -90,8 +90,7 @@ func TestWeaponTalentsOf(t *testing.T) {
 		{rogue(wtRogueTalents), []string{"Close Quarters Combat"}},
 		{rogue(allRogue), []string{"Close Quarters Combat", "Hack and Slash", "Mace Specialization"}},
 		{warrior(wtWarriorTalents), nil},
-		// the sim applies warrior Mace Specialization whatever the weapons
-		{warrior(allWarrior), []string{"Sword Specialization", "Poleaxe Specialization"}},
+		{warrior(allWarrior), []string{"Sword Specialization", "Poleaxe Specialization", "Mace Specialization"}},
 		{&proto.Player{Class: proto.Class_ClassPaladin, TalentsString: "050501-05-05232051203331302133231331"}, nil},
 	} {
 		got, err := weaponTalentsOf(c.player)
@@ -524,7 +523,7 @@ func wtMeasure(t *testing.T, req *proto.OptimizeGearRequest, iterations int) (*r
 }
 
 // Per weapon talent, the surrogate's value of each pair of hands (both, one or neither covered)
-// against a paired sim of that pair on other random numbers, within 2 standard errors. Rogue Mace
+// against a paired sim of that pair on other random numbers, within 2 standard errors. Mace
 // Specialization counts once whichever hands hold maces, Poleaxe Specialization's crit damage too,
 // and two swords share Sword Specialization's cooldown, so their residuals alone overcount a covered
 // pair: the term has to make that up.
@@ -553,6 +552,7 @@ func TestWeaponTalentPairsMatchTheSim(t *testing.T) {
 		{"rogue Mace Specialization", proto.Class_ClassRogue, rogueOnly(wtRogueMace), fist, mace, true},
 		{"warrior Sword Specialization", proto.Class_ClassWarrior, withTalent(wtWarriorTalents, 0, wtSwordSpec, 5), fist, sword, true},
 		{"warrior Poleaxe Specialization", proto.Class_ClassWarrior, withTalent(wtWarriorTalents, 0, wtPoleaxe, 5), fist, axe, true},
+		{"warrior Mace Specialization", proto.Class_ClassWarrior, withTalent(wtWarriorTalents, 0, wtWarriorMace, 5), fist, mace, true},
 	}
 	mh, oh := proto.ItemSlot_ItemSlotMainHand, proto.ItemSlot_ItemSlotOffHand
 	for _, c := range cases {
@@ -614,9 +614,9 @@ func TestWeaponTalentPairsMatchTheSim(t *testing.T) {
 	}
 }
 
-// The sim gives a warrior Mace Specialization whatever the hands hold, which is why it's no weapon
-// talent here: with fists it adds as much as with maces, and maces add nothing over fists.
-func TestWarriorMaceSpecializationIgnoresTheWeapons(t *testing.T) {
+// A warrior's Mace Specialization needs a mace in a hand: with fists it adds nothing, and maces
+// gain over fists.
+func TestWarriorMaceSpecializationNeedsAMace(t *testing.T) {
 	if !core.WITH_DB {
 		t.Skip("needs the with_db item data")
 	}
@@ -638,11 +638,11 @@ func TestWarriorMaceSpecializationIgnoresTheWeapons(t *testing.T) {
 		return evals[0]
 	}
 	fists, maces, untalented := evaluate(5, fist), evaluate(5, mace), evaluate(0, fist)
-	if d := Delta(fists, maces, MetricDPS); math.Abs(d.Mean) > 2*d.SE {
-		t.Errorf("with Mace Specialization, maces deal %+.1f ± %.1f DPS over fists", d.Mean, d.SE)
+	if d := Delta(untalented, fists, MetricDPS); math.Abs(d.Mean) > 2*d.SE {
+		t.Errorf("Mace Specialization adds %+.1f ± %.1f DPS with fists", d.Mean, d.SE)
 	}
-	if d := Delta(untalented, fists, MetricDPS); d.Mean <= 2*d.SE {
-		t.Errorf("Mace Specialization adds %+.1f ± %.1f DPS with fists, want a gain", d.Mean, d.SE)
+	if d := Delta(fists, maces, MetricDPS); d.Mean <= 2*d.SE {
+		t.Errorf("with Mace Specialization, maces deal %+.1f ± %.1f DPS over fists, want a gain", d.Mean, d.SE)
 	}
 }
 

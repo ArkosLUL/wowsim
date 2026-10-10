@@ -28,6 +28,7 @@ var droppedSweep = []sweepDrop{
 	{"WarlockDestruction", "devastation", "fire spell crit %"},
 	{"PriestDiscipline", "holySpecialization", "holy spell crit %"},
 	{"RogueCombat", "maceSpecialization", "armor penetration %"},
+	{"WarriorArms", "maceSpecialization", "armor penetration %"},
 	{"DeathknightBlood", "bloodGorged", "armor penetration %"},
 }
 

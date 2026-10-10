@@ -433,7 +433,8 @@ func (mage *Mage) tormentTheWeak(target *core.Unit) float64 {
 	if mage.Talents.TormentTheWeak == 0 {
 		return 1
 	}
-	if !mage.attackSpeedSlows.Get(target).AnyActive() && !mage.chills.Get(target).IsActive() {
+	if !mage.attackSpeedSlows.Get(target).AnyActive() && !mage.chills.Get(target).IsActive() &&
+		(mage.dragonsBreathSnares == nil || !mage.dragonsBreathSnares.Get(target).IsActive()) {
 		return 1
 	}
 	return 1 + .04*float64(mage.Talents.TormentTheWeak)
@@ -456,9 +457,14 @@ func (mage *Mage) registerChills() {
 	})
 }
 
-// chill is a landed Frostbolt's, Frostfire Bolt's or Chilled's snare: Permafrost adds a second a point to each
-// (11175's duration mod), and the longest one left counts.
+// chill is a landed Frostbolt's, Frostfire Bolt's or Chilled's snare, or a Mirror Image's Frostbolt's, which
+// casts with the mage's spell mods: Permafrost adds a second a point to each (11175's duration mod).
 func (mage *Mage) chill(sim *core.Simulation, target *core.Unit, duration time.Duration) {
+	mage.snare(sim, target, duration+time.Second*time.Duration(mage.Talents.Permafrost))
+}
+
+// snare is a snare outside Permafrost's class mask (Blast Wave). The longest one left counts.
+func (mage *Mage) snare(sim *core.Simulation, target *core.Unit, duration time.Duration) {
 	if mage.chills == nil {
 		return
 	}
@@ -466,7 +472,6 @@ func (mage *Mage) chill(sim *core.Simulation, target *core.Unit, duration time.D
 	if aura == nil {
 		return
 	}
-	duration += time.Second * time.Duration(mage.Talents.Permafrost)
 	if aura.IsActive() && aura.RemainingDuration(sim) >= duration {
 		return
 	}
@@ -789,10 +794,6 @@ func (mage *Mage) applyMoltenFury() {
 	})
 }
 
-func (mage *Mage) hasChillEffect(spell *core.Spell) bool {
-	return spell == mage.Frostbolt || spell == mage.FrostfireBolt || (spell == mage.Blizzard && mage.Talents.ImprovedBlizzard > 0)
-}
-
 func (mage *Mage) applyFingersOfFrost() {
 	if mage.Talents.FingersOfFrost == 0 {
 		return
@@ -924,19 +925,32 @@ func (mage *Mage) applyBrainFreeze() {
 	})
 
 	procChance := .05 * float64(mage.Talents.BrainFreeze)
+	var procSpells []*core.Spell
 	mage.RegisterAura(core.Aura{
 		Label:    "Brain Freeze Talent",
 		Duration: core.NeverExpires,
+		OnInit: func(aura *core.Aura, sim *core.Simulation) {
+			for _, spell := range mage.Spellbook {
+				// Blizzard's own cast puts its aura on the mage, so it's no harmful hit
+				if inMageMask(spell, brainFreezeMask) && !spell.Flags.Matches(core.SpellFlagChanneled) {
+					procSpells = append(procSpells, spell)
+				}
+			}
+		},
 		OnReset: func(aura *core.Aura, sim *core.Simulation) {
 			aura.Activate(sim)
 		},
 		OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
-			if mage.hasChillEffect(spell) && sim.RandomFloat("Brain Freeze") < procChance {
+			if result.Landed() && slices.Contains(procSpells, spell) && sim.RandomFloat("Brain Freeze") < procChance {
 				mage.BrainFreezeAura.Activate(sim)
 			}
 		},
 	})
 }
+
+// spell_proc -44546: a landed Frostbolt, Frostfire Bolt or Blizzard tick, on each target it hits (Frost Nova and
+// Cone of Cold too, which the sim lacks). Chilled is outside the mask, so Improved Blizzard adds nothing.
+var brainFreezeMask = [3]uint32{736, 4096, 0}
 
 func (mage *Mage) applyWintersChill() {
 	if mage.Talents.WintersChill == 0 {

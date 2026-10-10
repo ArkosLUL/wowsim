@@ -24,9 +24,7 @@ func (t *weaponTalent) covers(item *core.Item) bool {
 	return item.ID != 0 && slices.Contains(t.types, item.WeaponType)
 }
 
-// weaponTalentsOf lists the target's weapon talents it has points in. Warrior Mace Specialization
-// isn't one: warrior/talents.go compares its mask to ProcMaskEmpty, which GetProcMaskForTypes never
-// returns, so the sim applies it whatever the weapons.
+// weaponTalentsOf lists the target's weapon talents it has points in.
 func weaponTalentsOf(target *proto.Player) (out []weaponTalent, err error) {
 	// FillTalentsProto panics on a string that doesn't fit the class's trees
 	defer func() {
@@ -51,6 +49,7 @@ func weaponTalentsOf(target *proto.Player) (out []weaponTalent, err error) {
 		core.FillTalentsProto(talents.ProtoReflect(), target.GetTalentsString(), warrior.TalentTreeSizes)
 		add(talents.SwordSpecialization, "Sword Specialization", proto.WeaponType_WeaponTypeSword)
 		add(talents.PoleaxeSpecialization, "Poleaxe Specialization", proto.WeaponType_WeaponTypeAxe, proto.WeaponType_WeaponTypePolearm)
+		add(talents.MaceSpecialization, "Mace Specialization", proto.WeaponType_WeaponTypeMace)
 	}
 	return out, nil
 }

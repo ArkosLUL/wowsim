@@ -294,3 +294,147 @@ func TestTormentTheWeakChillsAnAdd(t *testing.T) {
 		t.Errorf("chill lasts %v with %d points of Permafrost", got, mage.Talents.Permafrost)
 	}
 }
+
+// Brain Freeze (spell_proc -44546) rolls on a landed Frostbolt or Blizzard tick, never on a miss, and needs no
+// Improved Blizzard.
+func TestBrainFreezeRollsOnLandedHits(t *testing.T) {
+	player := procMage(FrostTalents, "p3_frost_alliance", `{"type": "TypeAPL", "priorityList": []}`, PlayerOptionsFrost)
+	// no gear, so about one hit in six misses
+	player.Equipment = &proto.EquipmentSpec{}
+	sim, mage := newProcSim(t, player)
+	if mage.Talents.BrainFreeze != 3 || mage.Talents.ImprovedBlizzard != 0 {
+		t.Fatalf("FrostTalents: Brain Freeze %d, Improved Blizzard %d", mage.Talents.BrainFreeze, mage.Talents.ImprovedBlizzard)
+	}
+	target := sim.GetTargetUnit(0)
+	tick := mage.GetSpell(core.ActionID{SpellID: 42938})
+	metrics := &tick.SpellMetrics[target.UnitIndex]
+	landed, missed, procs := 0, 0, 0
+	for i := 0; i < 2000; i++ {
+		misses := metrics.Misses
+		tick.Cast(sim, target)
+		proc := mage.BrainFreezeAura.IsActive()
+		mage.BrainFreezeAura.Deactivate(sim)
+		if metrics.Misses > misses {
+			missed++
+			if proc {
+				t.Fatalf("tick %d missed and gave Brain Freeze", i)
+			}
+			continue
+		}
+		landed++
+		if proc {
+			procs++
+		}
+	}
+	if missed < 200 {
+		t.Fatalf("%d of 2000 ticks missed, want about 340", missed)
+	}
+	if rate := float64(procs) / float64(landed); rate < 0.12 || rate > 0.18 {
+		t.Errorf("%d procs in %d landed ticks (%.3f), want about 0.15", procs, landed, rate)
+	}
+
+	mage.Blizzard.Cast(sim, target)
+	if mage.BrainFreezeAura.IsActive() {
+		t.Errorf("Blizzard's own cast gave Brain Freeze")
+	}
+
+	procs = 0
+	for seed := int64(1); seed <= 3; seed++ {
+		entries := runProcLog(t, procMage(FrostTalents, "p3_frost_alliance", castApl("", "42842"), PlayerOptionsFrost), 180, seed)
+		procs += len(logTimes(entries, gainedOrRefreshed("44549")...))
+	}
+	if procs == 0 {
+		t.Errorf("no Brain Freeze in 540 s of Frostbolts")
+	}
+}
+
+// A Mirror Image's Frostbolt, Blast Wave and Dragon's Breath snare an add too, so they count for Torment the
+// Weak. Only the image's Frostbolt is in Permafrost's class mask, and Dragon's Breath's aura has one proc
+// charge, so the next direct hit that damages the add takes its snare off.
+func TestTormentTheWeakCountsImagesAndFireSnares(t *testing.T) {
+	add := &proto.Target{Level: 80, MobType: proto.MobType_MobTypeHumanoid}
+	newSim := func(targets ...*proto.Target) (*core.Simulation, *Mage) {
+		sim, mage := newProcSim(t, procMage(FireTalents, "p3_fire_alliance", `{"type": "TypeAPL", "priorityList": []}`, PlayerOptionsFire),
+			targets...)
+		if mage.BlastWave == nil || mage.DragonsBreath == nil {
+			t.Fatalf("FireTalents lacks Blast Wave or Dragon's Breath")
+		}
+		// read when a snare goes on
+		mage.Talents.Permafrost = 2
+		return sim, mage
+	}
+
+	sim, mage := newSim(core.NewDefaultTarget(), add)
+	bossUnit, addUnit := sim.GetTargetUnit(0), sim.GetTargetUnit(1)
+	// castUntil casts the spell, off its cooldown, until done says so
+	castUntil := func(spell *core.Spell, target *core.Unit, done func() bool) {
+		t.Helper()
+		for i := 0; !done(); i++ {
+			if i == 10 {
+				t.Fatalf("10 casts of %s and none landed on the add", spell.ActionID)
+			}
+			if spell.CD.Timer != nil {
+				spell.CD.Reset()
+			}
+			mage.GCD.Reset()
+			spell.Cast(sim, target)
+		}
+	}
+	wantTorment := func(when string, target *core.Unit, want float64) {
+		t.Helper()
+		if got := mage.tormentTheWeak(target); got < want-1e-9 || got > want+1e-9 {
+			t.Errorf("%s: x%v, want x%v", when, got, want)
+		}
+	}
+
+	chilled := mage.chills.Get(addUnit)
+	castUntil(mage.BlastWave, bossUnit, chilled.IsActive)
+	if chilled.Duration != 6*time.Second {
+		t.Errorf("Blast Wave snares the add for %v, want 6 s", chilled.Duration)
+	}
+	wantTorment("the boss after Blast Wave", bossUnit, 1)
+	wantTorment("the add after Blast Wave", addUnit, 1.12)
+	chilled.Deactivate(sim)
+
+	breath := mage.dragonsBreathSnares.Get(addUnit)
+	castUntil(mage.DragonsBreath, bossUnit, breath.IsActive)
+	if breath.Duration != 5*time.Second || chilled.IsActive() {
+		t.Errorf("Dragon's Breath snares the add for %v (chilled %v), want 5 s of its own aura", breath.Duration, chilled.IsActive())
+	}
+	wantTorment("the boss after Dragon's Breath", bossUnit, 1)
+	wantTorment("the add after Dragon's Breath", addUnit, 1.12)
+	explosion := mage.GetSpell(core.ActionID{SpellID: livingBombExplosionID})
+	if explosion == nil {
+		t.Fatalf("FireTalents lacks Living Bomb")
+	}
+	damage := func() float64 { return explosion.SpellMetrics[addUnit.UnitIndex].TotalDamage }
+	castUntil(explosion, addUnit, func() bool { return damage() > 0 })
+	if !breath.IsActive() {
+		t.Errorf("Living Bomb's explosion took Dragon's Breath's snare off")
+	}
+	castUntil(mage.FireBlast, addUnit, func() bool { return !breath.IsActive() })
+	if hits := mage.FireBlast.SpellMetrics[addUnit.UnitIndex]; hits.Hits+hits.Crits != 1 {
+		t.Errorf("the snare came off after %d Fire Blasts landed, want the first", hits.Hits+hits.Crits)
+	}
+	wantTorment("the add after a Fire Blast", addUnit, 1)
+
+	sim, mage = newSim(add)
+	addUnit = sim.GetTargetUnit(0)
+	mage.MirrorImage.Cast(sim, addUnit)
+	metrics := &mage.mirrorImage.Frostbolt.SpellMetrics[addUnit.UnitIndex]
+	// a hit's damage counts when it lands
+	for metrics.TotalDamage == 0 && !sim.Step() {
+		if metrics.TotalDamage == 0 && mage.chills.Get(addUnit).IsActive() {
+			t.Fatalf("add snared before an image's Frostbolt landed")
+		}
+	}
+	if metrics.TotalDamage == 0 {
+		t.Fatalf("no image Frostbolt landed")
+	}
+	if aura := mage.chills.Get(addUnit); !aura.IsActive() || aura.Duration != 6*time.Second {
+		t.Errorf("after an image's Frostbolt: add snared %v for %v, want 4 s plus Permafrost's 2", aura.IsActive(), aura.Duration)
+	}
+	if got := mage.tormentTheWeak(addUnit); got < 1.12-1e-9 || got > 1.12+1e-9 {
+		t.Errorf("after an image's Frostbolt: x%v, want x1.12", got)
+	}
+}

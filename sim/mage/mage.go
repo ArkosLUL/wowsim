@@ -86,6 +86,8 @@ type Mage struct {
 	attackSpeedSlows     core.ExclusiveCategoryArray
 	// the mage's own chills on a target that takes snares, nil without Torment the Weak
 	chills core.AuraArray
+	// Dragon's Breath's snare, which the next hit takes off; nil without the two talents
+	dragonsBreathSnares core.AuraArray
 
 	hasT84pc bool
 	// Bloodmage's Regalia's 2 pieces, nil without them

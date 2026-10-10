@@ -123,6 +123,23 @@ func TestDeathCoilMissCost(t *testing.T) {
 	}
 }
 
+// Dirge's class mask covers Obliterate, like Chill of the Grave's: 5 runic power each on top of its 15.
+func TestDirgeOnObliterate(t *testing.T) {
+	obliterates := castsIn(`{"spellId": 51425, "tag": 1}`, 1, 12, 23, 34)
+	gains := func(talents string, amount string) int {
+		entries := runParity(t, parityPlayer(talents, "p3_frost", obliterates), 1)
+		return len(times(entries, "(#1)", "Gained "+amount+" runic power from {SpellID: 51425, Tag: 1}"))
+	}
+	// the frost build has Chill of the Grave; Dirge is the unholy tree's 16th talent
+	if gains(FrostTalents, "20.000") == 0 {
+		t.Error("without Dirge: no Obliterate gave 20 runic power")
+	}
+	withDirge := talentsWith(FrostTalents, 2, 15, '2')
+	if gains(withDirge, "25.000") == 0 || gains(withDirge, "20.000") != 0 {
+		t.Error("with Dirge: Obliterate should give 25 runic power every time")
+	}
+}
+
 // runeWeaponHit is a hit's damage debug line: its base damage and its damage after the attacker's multipliers.
 type runeWeaponHit struct{ base, done float64 }
 
