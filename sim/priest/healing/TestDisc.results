@@ -217,7 +217,7 @@ dps_results: {
 dps_results: {
  key: "TestDisc-AllItems-DarkmoonCard:Greatness-44255"
  value: {
-  tps: 887.47348
+  tps: 888.81613
   hps: 2852.47827
  }
 }
@@ -343,7 +343,7 @@ dps_results: {
 dps_results: {
  key: "TestDisc-AllItems-Figurine-SapphireOwl-42413"
  value: {
-  tps: 875.3858
+  tps: 875.41466
   hps: 2832.62816
  }
 }

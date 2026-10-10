@@ -896,8 +896,8 @@ dps_results: {
 dps_results: {
  key: "TestRestoration-Talents-HealingGrace-Average"
  value: {
-  tps: 2863.68938
-  hps: 8869.13668
+  tps: 2863.687
+  hps: 8869.13619
  }
 }
 ability_results: {
@@ -1193,10 +1193,10 @@ ability_results: {
   entries: {
    key: "player|action|{SpellID: 51994}"
    value: {
-    casts: 114.6635
-    hits: 114.6635
-    amount_per_hit: 785.37714
-    amount: 90054.092
+    casts: 114.663
+    hits: 114.663
+    amount_per_hit: 785.38414
+    amount: 90054.5015
    }
   }
   entries: {
@@ -1211,10 +1211,10 @@ ability_results: {
   entries: {
    key: "player|action|{SpellID: 52752}"
    value: {
-    casts: 15.598
-    hits: 15.598
-    amount_per_hit: 1578.40396
-    amount: 24619.945
+    casts: 15.5985
+    hits: 15.5985
+    amount_per_hit: 1578.40453
+    amount: 24620.743
    }
   }
   entries: {
@@ -1222,9 +1222,9 @@ ability_results: {
    value: {
     casts: 138.477
     hits: 415.431
-    crit_pct: 35.33222
-    amount_per_hit: 5630.01943
-    amount: 2.3388846035e+06
+    crit_pct: 35.33234
+    amount_per_hit: 5630.02989
+    amount: 2.3388889475e+06
    }
   }
   entries: {
@@ -1236,11 +1236,11 @@ ability_results: {
   entries: {
    key: "player|action|{SpellID: 61301}"
    value: {
-    casts: 44.217
-    hits: 44.217
-    crit_pct: 35.27603
-    amount_per_hit: 4354.59924
-    amount: 192547.3145
+    casts: 44.2155
+    hits: 44.2155
+    crit_pct: 35.27835
+    amount_per_hit: 4354.62488
+    amount: 192541.9165
    }
   }
   entries: {
@@ -1252,7 +1252,7 @@ ability_results: {
   entries: {
    key: "player|aura|{SpellID: 16188}"
    value: {
-    uptime_s: 0.92579
+    uptime_s: 0.92001
    }
   }
   entries: {
@@ -1306,7 +1306,7 @@ ability_results: {
   entries: {
    key: "player|aura|{SpellID: 52000}"
    value: {
-    uptime_s: 233.76266
+    uptime_s: 233.76685
    }
   }
   entries: {
@@ -1354,7 +1354,7 @@ ability_results: {
   entries: {
    key: "player|aura|{SpellID: 60062}"
    value: {
-    uptime_s: 63.47582
+    uptime_s: 63.47343
    }
   }
   entries: {
