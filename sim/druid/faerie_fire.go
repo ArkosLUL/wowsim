@@ -29,9 +29,6 @@ func (druid *Druid) registerFaerieFireSpell() {
 		manaCostOptions = core.ManaCostOptions{}
 		gcd = time.Second
 		ignoreHaste = true
-		// Its Omen of Clarity interaction is handled explicitly below (spell_tweaks_omen_faerie_fire),
-		// so it should not also fall into the generic OmenTrigger roll.
-		flags = core.SpellFlagNone
 		formMask = Cat | Bear
 		cd = core.Cooldown{
 			Timer:    druid.NewTimer(),
@@ -50,7 +47,8 @@ func (druid *Druid) registerFaerieFireSpell() {
 			ActionID:    FaerieFireFeralDamageActionID,
 			SpellSchool: core.SpellSchoolNature,
 			ProcMask:    core.ProcMaskSpellDamage,
-			Flags:       core.SpellFlagNoOnCastComplete,
+			// Omen of Clarity procs from procs, so this hit gets a roll of its own
+			Flags: core.SpellFlagNoOnCastComplete | SpellFlagOmenTrigger,
 
 			DamageMultiplier: 1,
 			ThreatMultiplier: 1,

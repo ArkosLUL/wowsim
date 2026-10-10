@@ -30,6 +30,7 @@ func LiveServerDefaults() *proto.ServerSettings {
 			TitansGripNoDamagePenalty: googleProto.Bool(true),
 			OmenClarityFaerieFire:     googleProto.Bool(true),
 			ShadowDotHaste:            googleProto.Bool(true),
+			GlyphOfBackstabTicks:      googleProto.Bool(true),
 		},
 		DungeonScale: &proto.DungeonScaleSettings{
 			Raid:           &proto.DungeonScaleModifiers{Global: googleProto.Float64(1), Health: googleProto.Float64(1), Armor: googleProto.Float64(1), Damage: googleProto.Float64(1)},

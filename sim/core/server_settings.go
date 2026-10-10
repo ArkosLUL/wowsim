@@ -43,8 +43,8 @@ func (s *ServerSettings) updateGrids() (world, mapUpdate time.Duration) {
 // SpellTweaks is mod-spell-tweaks with SpellTweaks.Enable already folded in: each field says whether
 // that tweak is live.
 type SpellTweaks struct {
-	// SpellTweaks.Enable, for the tweaks with no switch of their own: CS and DS seal stacks, Glyph of
-	// Reckoning damage, Explosive Trap via Trap Launcher, the Detonate Mana and Frost Blast nerfs.
+	// SpellTweaks.Enable, for the tweaks with no switch of their own: Crusader Strike and Divine Storm
+	// stacking the seal DoT, and Explosive Trap laid from range (Trap Launcher).
 	Enabled bool
 
 	// Damage multiplier for BM exotic pets, 1 when off.
@@ -62,6 +62,7 @@ type SpellTweaks struct {
 	TitansGripNoDamagePenalty bool
 	OmenClarityFaerieFire     bool
 	ShadowDotHaste            bool
+	GlyphOfBackstabTicks      bool
 }
 
 // DungeonScaleModifiers is one mod-dungeon-scale key group, e.g. StatModifierRaid25M.Boss.
@@ -152,6 +153,7 @@ func newSpellTweaks(settings, live *proto.SpellTweaksSettings) SpellTweaks {
 	tweaks.TitansGripNoDamagePenalty = pick(settings.TitansGripNoDamagePenalty, live.TitansGripNoDamagePenalty)
 	tweaks.OmenClarityFaerieFire = pick(settings.OmenClarityFaerieFire, live.OmenClarityFaerieFire)
 	tweaks.ShadowDotHaste = pick(settings.ShadowDotHaste, live.ShadowDotHaste)
+	tweaks.GlyphOfBackstabTicks = pick(settings.GlyphOfBackstabTicks, live.GlyphOfBackstabTicks)
 	return tweaks
 }
 

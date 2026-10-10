@@ -734,9 +734,9 @@ message ServerSettings {
 // mod-spell-tweaks, keys SpellTweaks.*. Only its scripted tweaks switch off; its spell_dbc and SQL
 // changes (talent values, tick crits for Murder and Trauma, ...) always apply.
 message SpellTweaksSettings {
-	// SpellTweaks.Enable. Off turns off every toggle below except the two armor pen ones, which core
-	// reads itself. It also gates the tweaks with no toggle of their own: CS and DS seal stacks, Glyph
-	// of Reckoning damage, Explosive Trap via Trap Launcher, the Detonate Mana and Frost Blast nerfs.
+	// SpellTweaks.Enable. Off drops the exotic pet bonus and every toggle below except the two armor
+	// pen ones, which core reads itself. It also gates what has no toggle of its own: Crusader Strike
+	// and Divine Storm stacking the seal DoT, and Explosive Trap laid from range (Trap Launcher).
 	optional bool enable = 1;
 
 	// SpellTweaks.ExoticPetDamage.Pct: extra damage in percent for BM exotic pets. Below 0 counts as 0.
@@ -781,6 +781,10 @@ message SpellTweaksSettings {
 	// SpellTweaks.ShadowDotHaste.Enable: in Shadowform, spell haste speeds up SW:P, VT and DP ticks
 	// over a fixed duration.
 	optional bool shadow_dot_haste = 14;
+
+	// SpellTweaks.GlyphOfBackstabTicks.Enable: the seconds Glyph of Backstab adds to Rupture tick, at
+	// the interval Rupture went on with. Off, Rupture only lasts longer.
+	optional bool glyph_of_backstab_ticks = 15;
 }
 
 // mod-dungeon-scale's full raid stat modifiers, keys DungeonScale.StatModifier<set>[.Boss].<stat>.
