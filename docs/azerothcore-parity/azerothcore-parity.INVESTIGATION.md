@@ -274,9 +274,10 @@ Roll details the tables above don't show:
     gargoyle get the orc's Command (65221).
 - **Correction (PAR-P7-0d):** the line above said the hunter pet's inherited haste is continuous.
   It's the carrier aura itself that ticks every 2 s (`CalcPeriodic`'s amplitude on 425790/425792/51996
-  alike), so `Pet.OwnerHasteSource` now resnapshots on that cadence too, real pet only, same as the
-  owner-hit scaling's 3 s (`petOwnerHasteRefreshInterval`, `pet.go`). A guardian still only takes the
-  one snapshot at the summon, since `CalcPeriodic` gates the reschedule on `IsPet()`.
+  alike), so `Pet.OwnerHasteSource` now resnapshots on that cadence too (`petOwnerHasteRefreshInterval`,
+  `pet.go`). Only `spell_dk_pet_scaling`'s `CalcPeriodic` gates on `IsPet()`, so the DK's guardians take
+  one snapshot at the summon; 425790 and 425792 have no such check, so the Spirit Wolves, guardians,
+  tick too (`Pet.OwnerHasteTicksOnGuardian`, PAR-FU-8).
   The sim blocks Bloodlust on an inheriting pet by ignoring `MultiplyAttackSpeed`, its closest match for
   `MOD_MELEE_RANGED_HASTE`. The carrier blocks positive `MELEE_SLOW` too, and the sim's two buffs of that
   type are build-phase multipliers rather than `MultiplyAttackSpeed` calls, so that guard missed them:
@@ -2518,3 +2519,35 @@ Code stage (druid, shaman, mage). Each fix removed its `droppedSweep` entry and 
 - **ShamanElemental setup**: `auras` is empty. A triggered `.cast` of Totem of Wrath (57722) never summons the totem, so the glyph script (`spell_sha_totem_of_wrath`) finds none, and 63283's own cast only gives the raw 30 spell power, not the sim's 84. Neither is cast: the server sheet reads 1869 spell power (no glyph aura), as does the sim, whose golden character has no totem. A real cast needs the e2e's raw CMSG_CAST_SPELL path (`imbueMainHand`) and a pause.
 
 Live stage (server lock, `SIMVAL_GOLDCHAR_ONLY=ShamanElemental,DruidBalance`, 59 s, no restart or config change): both setups re-recorded and swapped into `goldchar.jsonl`. `TestGoldenCharacters` passes with spell power compared and no new drop.
+
+## PAR-FU-8 as built
+
+Code stage. Spirit Wolves retake the shaman's melee speed every 2 s.
+
+**Claims** (mod-spell-tweaks `9bf5c75`, [ac] `3d89793c7`)
+- Confirmed: 425792's `CalcPeriodic` (`spell_tweaks_feral_spirit_haste`) sets a 2 s period with no `IsPet()` check; `spell_dk_pet_scaling`'s returns early for a guardian. 425790 has none either, but hunter pets are real pets.
+- Confirmed: the sim's wolves kept the summon's speed, and every default APL casts Feral Spirit a GCD before Bloodlust.
+- Wrong: "about 100 off". With `FeralSpiritHaste` or `SpellTweaks.Enable` off a wolf swings exactly 79.00 times on `TestEnhancement-Average-Default`: stock wolves get one 20% melee haste aura and Bloodlust, and a 1250 ms swing waits for the 1300 ms map update.
+
+**Built**
+- `Pet.OwnerHasteTicksOnGuardian` (`sim/core/pet.go`): `enable` starts `refreshOwnerHaste` through `startUpdateTimer` for a real pet or a guardian with the field (`ownerHasteTicks`). `spirit_wolves.go` sets it with the carrier.
+- Tests: `TestPetHasteCarrierFollowsTheOwnerWhereItTicks` (core: guardian, ticking guardian, real pet; dismiss and resummon), `TestSpiritWolvesFollowTheShamansHaste` (tweak on, off, `SpellTweaks.Enable` off; Bloodlust before and after the summon; 1500 → 1162 ms on, 1153 ms at once off), `TestSpiritWolfHasteTweakOnTheDefaultFight` (on ≥ 1.5 × off wolf swings: the summon's speed alone gives 1.24, so 1.15 passed without the ticks; raised in review).
+- e2e `TestParfu8SpiritWolfHaste` (mod-sim-validation `e2e/parfu8_test.go`).
+
+**On against off**, `TestEnhancement-Average-Default`, 2000 iterations:
+
+| | DPS | swings a wolf |
+|---|---|---|
+| before, on | 8047.29 | 97.88 |
+| now, on | 8202.33 (+1.93%) | 139.79 (+42.8%) |
+| off (either switch) | 7975.44 | 79.00 |
+
+**Goldens** (`dock.sh delta`): only TestEnhancement, 208 tests. Average-Default +1.93%, Talents-FrozenPower-Average +2.09%: each wolf's `casts` 97.9 → 139.8 (139.0), `amount_per_hit` 570 → 572. Long single target +1.1 to +3.4%, short +5.8 to +7.7% (the wolves are out for 45 of 60 s). One 20-iteration row is down, Orc-FT-default_wf-NoBuffs-LongMultiTarget -0.31%: the extra swings reshuffle the rolls.
+
+**Left open:** Spirit Wolves still out when a fight ends start the next iteration wrong (the Shadowfiend's `Reset` has the same call, unchecked). Their `Reset` calls `Pet.Disable` after `Unit.reset` restored the stats, so last iteration's `inheritedStats` and `ownerHasteAmount` come off again: on a 30 s fight the second iteration's wolf has -583 attack power. No golden's fight ends with wolves out.
+
+**Live stage** (server lock, `run.sh TestParfu8SpiritWolfHaste` three times, no restart or config change): the server does what the sim does, so the sim is unchanged. A naked tauren shaman, wolf main hand, 1500 ms unhasted:
+- Bloodlust 2.6 s after the summon: 1500 ms, x1 at +10 ms and +760 ms after the cast, with Bloodlust's aura on the wolf; 1162 ms, x0.7751938 (100/129) at +4615, +5608 and +6606 ms after the summon. The shaman reads x0.7692308.
+- The tick that brings it fell between +3756 and +4159 ms after the summon, and between +3613 and +4011 ms the run before. The sim puts it in the last map update interval before 4 s.
+- Summoned 1.6 s after Bloodlust: 1162 ms at +406, +1803 and +3010 ms, no Bloodlust aura on the wolf.
+- The e2e gained back-to-back snapshots across the 4 s tick (about 400 ms each, logged, not judged) and a `TICK` line with the two the tick fell between. No orphan bots; its records are dropped.

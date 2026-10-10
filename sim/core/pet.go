@@ -63,8 +63,11 @@ type Pet struct {
 	// 425792 does that. The hunter pet's 425790 and spell_dk_pet_scaling leave it open, so Frenzy and
 	// Ghoul Frenzy stack on top there.
 	OwnerHasteCoversMeleeHasteAuras bool
-	// The carrier's last snapshot, as a swing-speed multiplier. A real pet retakes it every 2 s
-	// (ownerHasteRefresh); a guardian keeps what it got at the summon.
+	// For a guardian whose carrier ticks every 2 s like a real pet's. spell_dk_pet_scaling's CalcPeriodic
+	// stops at !IsPet(), but mod-spell-tweaks' 425792 has no such check, so the Spirit Wolves set this.
+	OwnerHasteTicksOnGuardian bool
+	// The carrier's last snapshot, as a swing-speed multiplier: the summon's, or the last tick's where
+	// the carrier ticks (ownerHasteTicks).
 	ownerHasteAmount  float64
 	ownerHasteRefresh *PendingAction
 
@@ -365,7 +368,7 @@ const (
 	petOwnerHitRefreshInterval = 3 * time.Second
 
 	// The haste carrier's own recalculation cadence (spell_dk_pet_scaling's and mod-spell-tweaks'
-	// CalcPeriodic), also real-pet only.
+	// CalcPeriodic), where it ticks at all (ownerHasteTicks).
 	petOwnerHasteRefreshInterval = 2 * time.Second
 
 	// CREATURE_REGEN_INTERVAL
@@ -537,9 +540,14 @@ func inheritedSwingSpeed(ownerSwingSpeed float64) float64 {
 	return 1 + math.Trunc(float64((1/modSpeed-1)*100))/100
 }
 
-// refreshOwnerHaste is the haste carrier's periodic tick, real pets only (a guardian's carrier never
-// ticks, so it keeps what it got at the summon): recalculate the owner's current swing speed and move
-// the pet's own melee swing speed by the difference.
+// ownerHasteTicks reports whether the carrier recalculates every 2 s: always on a real pet, on a
+// guardian only with OwnerHasteTicksOnGuardian. Any other guardian keeps the summon's value.
+func (pet *Pet) ownerHasteTicks() bool {
+	return pet.SummonedAsPet || pet.OwnerHasteTicksOnGuardian
+}
+
+// refreshOwnerHaste is the haste carrier's periodic tick: recalculate the owner's current swing speed
+// and move the pet's own melee swing speed by the difference.
 func (pet *Pet) refreshOwnerHaste(sim *Simulation) {
 	amount := pet.ownerHasteMultiplier()
 	if amount == pet.ownerHasteAmount {
@@ -680,13 +688,12 @@ func (pet *Pet) enable(sim *Simulation, petAgent PetAgent, outSinceBeforePull bo
 		pet.ownerHitRefresh = pet.startUpdateTimer(sim, timersStart, petOwnerHitRefreshInterval, petAuraTickPriority, pet.refreshOwnerHitScaling)
 	}
 
-	// The haste carrier's own snapshot: a real pet retakes it every 2 s, a guardian only now, at the
-	// summon (same IsPet gate as the hit scaling above).
+	// The haste carrier's own snapshot, taken now and again every 2 s where the carrier ticks.
 	if pet.OwnerHasteSource != nil {
 		pet.ownerHasteAmount = pet.ownerHasteMultiplier()
 		pet.MultiplyMeleeSpeed(sim, pet.ownerHasteAmount)
 
-		if pet.SummonedAsPet {
+		if pet.ownerHasteTicks() {
 			pet.ownerHasteRefresh = pet.startUpdateTimer(sim, timersStart, petOwnerHasteRefreshInterval, petAuraTickPriority, pet.refreshOwnerHaste)
 		}
 	}
