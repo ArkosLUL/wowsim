@@ -789,6 +789,68 @@ MSYS_NO_PATHCONV=1 docker run -d --name wowsims-wotlk --restart unless-stopped -
 - Anyone who can open the sim can read the core raid's gear. The route takes no input.
 - The mounted volume blocks `docker compose down -v` in [ac] until the sim container is removed.
 
+### As built
+
+**Go** (selection, library, route, acraid, crosscheck)
+- As specified, except:
+  - `selectNamedMembers(db *sql.DB, names)` keeps its signature, wrapping `selectNamedMembersContext`:
+    bis-tooltip-addon's `bisdata_sql.go` calls it.
+  - The names of the group members left out come from a second run of `loadCharacters`' query, since the
+    group query reads no names and the SQL stays unchanged.
+- Where the spec left it open:
+  - `NamesOnly` without `Leader` seats in list order with no warning, selector still `"core"`. Without
+    names it fails with the `SelectionError` "no names given".
+  - `LeaderIsGroupLeader` is left out when the leader is in no group.
+  - Every selection failure is a `SelectionError`: unknown or doubled names, no group, a full group, no
+    or over 40 characters.
+  - `-names` with `-namesFile` is refused, in acraid and crosscheck. The parser also strips a byte order
+    mark and takes a `#` comment after a name.
+  - `Roster.JSON()` is the one encoder acraid and the route share.
+  - Route checks run in the order 405, 403, 400, 503. A client that goes away reads as 504. A panic in
+    the build answers 500 `server_config`.
+  - A 500 names the file and the OS error; a bad DSN gets a fixed text, since the driver's error can
+    quote the DSN. 409 isn't logged.
+  - Item stats are cached by `db.json`'s size and mtime, like the DBCs, so a rebuilt `./dist` under
+    `--usefs` is picked up.
+  - `Config.WithEnv` applies the env fallback; `Config.Timeout` shortens the 30 s for tests.
+- Tests beyond the spec's list: `BuildRosterContext` in a read-only transaction on a fake driver that,
+  like MySQL, refuses a second open result set (`characters_test.go`); the builder's transaction and
+  close on another (`builder_test.go`).
+
+**UI**
+- As specified. Where the spec left it open:
+  - `fetchServerRoster` also throws "The sim server didn't answer" when the request itself fails, and
+    the non-JSON text for a JSON error without `error`.
+  - `importRoster` logs the long summary and returns the short one; the caller alerts it.
+  - The Raid tab button stays disabled through fetch and import, reading "Importing" with a spinner,
+    and picks its mode after the fetch.
+  - The dialog's fetch button alerts a failure as `Import error:\n…` and is disabled while fetching.
+    The `saveall` line always shows; a line explaining the button comes with the button.
+- `acore_server.spec.ts` beyond the spec's list: a non-JSON 404 gives the fallback text; a held reply
+  keeps the button disabled; Update through the button refreshes consumables; neither button shows
+  when `sim_worker.js` is the wasm worker.
+
+**Live** (2026-10-10, dev server on the dev line, SELECT-only, loaded machine)
+- The documented DSN works. The route's JSON equals `acraid -leader Deathsong -namesFile … -namesOnly`
+  minus `exportedAt` (25 characters, 144,620 bytes); `crosscheck.py` finds no differences (414 items).
+- Request times: first 0.50 s, second 0.08 s, five more 0.07 to 0.12 s. No database connection is left
+  behind.
+- Raid tab button in headless Chrome: Replace on an empty raid, then Update with nobody added or
+  removed. The grid follows the live parties, and the dialog's fetch fills the textarea. Both top-level
+  warnings showed under "Roster notes": a raider outside the group seated in party 5, a stand-in left out.
+- Also on real MySQL: an unknown or doubled name, an unknown leader and an empty file answer 409; a
+  names file with a byte order mark and CRLF, no leader, and a leader in no group answer 200 as specified.
+- Names are case-sensitive, as before RI-5: `characters.name` is `utf8mb4_bin`, so `deathsong` is
+  "no character named".
+- Added: an unstubbed test in `acore_server.spec.ts`, skipped without `UITEST_ACORE_LIVE=1`. Fixed: an
+  eslint error in that spec.
+
+**Review** (live check repeated: same bytes, no differences)
+- `SimItemStats` names the directory when the file can't be read, as `LoadTalentTrees` does.
+- `fetchServerRoster` also throws "The sim server didn't answer" when the reply's body breaks off.
+- The fake MySQL in `characters_test.go` matches names by case, like the server.
+- A `.ts` file left in `tmp/` fails `dock.sh tsc`, which type-checks it.
+
 ## Out of scope
 - Server item stats (item-data rework).
 - mod-spell-tweaks and mod-individual-progression modeling.

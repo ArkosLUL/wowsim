@@ -22,7 +22,7 @@ import {
 } from '../acore_roster';
 import { playerPresets } from '../presets';
 
-// Mirrors RaidAcoreImporter.replaceRaid, which can't be driven headlessly because it lives on a modal.
+// Mirrors replaceRaid in acore_importer.ts, which can't be driven headlessly because it needs the raid page.
 async function main() {
 	const roster = parseRoster(fs.readFileSync(process.argv[2], 'utf-8'));
 	const db = await Database.loadLeftoversIfNecessary(rosterEquipmentSpec(roster));

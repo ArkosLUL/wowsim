@@ -1,5 +1,6 @@
 import { Component } from '../core/components/component.js';
 import { EnumPicker } from '../core/components/enum_picker.js';
+import { simServerAvailable } from '../core/components/individual_sim_ui/optimizer_tab.js';
 import { Raid } from '../core/raid.js';
 import { MAX_PARTY_SIZE } from '../core/party.js';
 import { Party } from '../core/party.js';
@@ -18,6 +19,8 @@ import { EventID, TypedEvent } from '../core/typed_event.js';
 import { formatDeltaTextElem } from '../core/utils.js';
 import { getEnumValues } from '../core/utils.js';
 
+import { defaultImportMode, importRoster } from './acore_importer.js';
+import { fetchServerRoster } from './acore_server.js';
 import { RaidSimUI } from './raid_sim_ui.js';
 import { playerPresets, specSimFactories } from './presets.js';
 import { keepRaidReferences } from './raid_references.js';
@@ -110,6 +113,12 @@ export class RaidPicker extends Component {
 			},
 		});
 
+		simServerAvailable().then(available => {
+			if (available) {
+				this.addServerImportButton(raidControls);
+			}
+		});
+
 		const partiesContainer = document.createElement('div');
 		partiesContainer.classList.add('parties-container');
 		this.rootElem.appendChild(partiesContainer);
@@ -138,6 +147,38 @@ export class RaidPicker extends Component {
 			this.clearDragPlayer();
 			this.clearDragParty();
 		};
+	}
+
+	// The AzerothCore import dialog in one click, on the roster the sim server reads itself.
+	private addServerImportButton(raidControls: HTMLElement) {
+		const label = '<i class="fa fa-cloud-arrow-down"></i> Import from server';
+		const button = document.createElement('button');
+		button.classList.add('btn', 'btn-primary', 'acore-server-import');
+		button.innerHTML = label;
+		button.setAttribute('data-bs-toggle', 'tooltip');
+		button.setAttribute(
+			'data-bs-title',
+			"Imports the core raid from the AzerothCore server: updates the raid, or builds it when it's empty. Gear is as of each character's last save.",
+		);
+		raidControls.appendChild(button);
+		const tooltip = Tooltip.getOrCreateInstance(button);
+
+		button.addEventListener('click', async () => {
+			// a disabled button never gets the mouseleave that would close it
+			tooltip.hide();
+			button.disabled = true;
+			button.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Importing';
+			let message: string;
+			try {
+				const data = await fetchServerRoster();
+				message = await importRoster(this.raidSimUI, data, { mode: defaultImportMode(this.raidSimUI), refreshConsumes: true });
+			} catch (error: any) {
+				message = `Import error:\n${error?.message}`;
+			}
+			button.innerHTML = label;
+			button.disabled = false;
+			alert(message);
+		});
 	}
 
 	getCurrentFaction(): Faction {

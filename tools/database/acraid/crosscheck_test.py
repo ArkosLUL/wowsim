@@ -8,6 +8,10 @@ up by one character from -names, whom acraid puts in the first subgroup with roo
 The group are bots, led by a hunter with a pet and ammo and a warlock with a demon, and the topped-up
 character is played. Each case then tampers with the export and expects crosscheck to catch it, so a
 passing run says the check is doing something.
+
+The same server is then checked the way -namesOnly exports it: a names file that leaves two of the
+group out and names the played character, who takes the place one of them left. Last, without a group,
+where the names file's order is the seating.
 """
 import contextlib
 import copy
@@ -28,8 +32,17 @@ REPO = os.path.normpath(os.path.join(HERE, '..', '..', '..'))
 # crosscheck batches per table, so a 25 character raid costs a fixed number of queries, not a few per character
 MAX_QUERIES = 20
 EMPTY_ENCHANTMENTS = ' '.join(['0'] * 36) + ' '
-GROUP = [('Raider%02d' % i, i // 5, 0, 100 + i) for i in range(24)]
+MAIN_TANK = 5  # the one raider holding a member flag
+GROUP = [('Raider%02d' % i, i // 5, 2 if i == MAIN_TANK else 0, 100 + i) for i in range(24)]
 EXTRA_NAME, EXTRA_GUID, EXTRA_SUBGROUP = 'Felesta', 900, 4
+# The names file: the group minus Raider04 and Raider23, with the played character in the middle.
+LEFT_OUT = ('Raider04', 'Raider23')
+CORE_NAMES = [name for name, _, _, _ in GROUP if name not in LEFT_OUT]
+CORE_NAMES.insert(7, EXTRA_NAME)
+NAMES_FILE = '\ufeff# the core raid\n\n' + ''.join(
+    f'{name}  # party {index // 5 + 1}\r\n' if index % 5 == 0 else f'  {name}\n' for index, name in enumerate(CORE_NAMES))
+# what the stubbed server holds; a case without a group empties 'group'
+SERVER = {'group': GROUP}
 HUNTER_GUID, WARLOCK_GUID = 100, 101
 CLASSES = {HUNTER_GUID: '3', WARLOCK_GUID: '9'}  # the rest are paladins
 QUIVER_GUID = HUNTER_GUID  # only this raider carries a quiver
@@ -71,14 +84,18 @@ def write_fixtures(directory):
                 record(137, {0: 43186, 71: 30, 136: 22})], b'\0Refreshment\0Well Fed\0Restore Mana\0')
     json.dump({'items': [{'id': 47112, 'stats': [0] * 35}]}, open(os.path.join(directory, 'db.json'), 'w'))
     open(os.path.join(directory, 'Playerbot.env'), 'w').write(MATRIX)
+    open(os.path.join(directory, 'core.txt'), 'w', encoding='utf-8', newline='').write(NAMES_FILE)
 
 
 def server_rows(query, guids):
     if 'FROM acore_characters.group_member gm' in query and 'c.level' in query:
         return [[name, str(subgroup), str(flags), str(guid), '1', CLASSES.get(guid, '2'), '80']
-                for name, subgroup, flags, guid in GROUP]
+                for name, subgroup, flags, guid in SERVER['group']]
     if query.startswith('SELECT name, guid, race, class, level FROM acore_characters.characters'):
-        return [[EXTRA_NAME, str(EXTRA_GUID), '1', '2', '80']]
+        known = {name: guid for name, _, _, guid in GROUP}
+        known[EXTRA_NAME] = EXTRA_GUID
+        return [[name, str(known[name]), '1', CLASSES.get(known[name], '2'), '80']
+                for name in re.findall(r"'([^']*)'", query) if name in known]
     if 'character_skills' in query:
         return [[str(guid), '171', '450'] for guid in guids]
     if any(table in query for table in ('character_racial_swap', 'character_reforging', 'character_talent',
@@ -177,14 +194,31 @@ def export():
     return {'version': 2, 'characters': [character(*member) for member in members]}
 
 
-def crosscheck(directory, roster):
+def core_export():
+    """What acraid -namesOnly would have written: the named members where they stand, and the played
+    character in subgroup 0, where Raider04 left the first free place."""
+    members = [member for member in GROUP if member[0] in CORE_NAMES] + [(EXTRA_NAME, 0, 0, EXTRA_GUID)]
+    return {'version': 2, 'characters': [character(*member) for member in members]}
+
+
+def groupless_export():
+    """What acraid -namesOnly would have written with the leader in no group: the names file's order,
+    5 to a subgroup, and no member flags."""
+    guids = {name: guid for name, _, _, guid in GROUP}
+    guids[EXTRA_NAME] = EXTRA_GUID
+    return {'version': 2, 'characters': [character(name, index // 5, 0, guids[name])
+                                         for index, name in enumerate(CORE_NAMES)]}
+
+
+def crosscheck(directory, roster, selection=('--names', EXTRA_NAME), group=GROUP):
     """crosscheck.py's exit code, output and query count over that roster."""
     path = os.path.join(directory, 'raid.json')
     json.dump(roster, open(path, 'w'))
     queries = []
     real_run, subprocess.run = subprocess.run, stub_server(queries)
-    sys.argv = ['crosscheck.py', path, '--dbc', directory, '--leader', GROUP[0][0],
-                '--names', EXTRA_NAME, '--sim-db', os.path.join(directory, 'db.json'),
+    SERVER['group'] = group
+    sys.argv = ['crosscheck.py', path, '--dbc', directory, '--leader', GROUP[0][0], *selection,
+                '--sim-db', os.path.join(directory, 'db.json'),
                 '--world-buff-matrix', os.path.join(directory, 'Playerbot.env'),
                 '--trees', os.path.join(REPO, 'ui', 'core', 'talents', 'trees'),
                 '--consumables', os.path.join(REPO, 'ui', 'core', 'components', 'inputs', 'consumables.ts'),
@@ -201,8 +235,8 @@ def crosscheck(directory, roster):
     return code, output.getvalue(), len(queries)
 
 
-def tamper(mutate, name=EXTRA_NAME):
-    roster = copy.deepcopy(export())
+def tamper(mutate, name=EXTRA_NAME, roster=None):
+    roster = copy.deepcopy(roster or export())
     mutate(next(character for character in roster['characters'] if character['name'] == name))
     return roster
 
@@ -224,14 +258,30 @@ CASES = [
     ('the potion from another bag item', tamper(lambda c: c['consumes']['defaultPotion'].update(itemId=40212)),
      'defaultPotion'),
 ]
+CORE_CASES = [
+    ('the core raid picked out of a bigger group', core_export(), None),
+    ('a core raider seated where topping up would put them',
+     tamper(lambda c: c.update(subgroup=EXTRA_SUBGROUP), roster=core_export()), 'subgroup'),
+    ('a group member the names file leaves out',
+     {'version': 2, 'characters': core_export()['characters'] + [character(*GROUP[4])]}, 'members differ'),
+    ('a member flag lost on the way', tamper(lambda c: c.update(memberFlags=0), GROUP[MAIN_TANK][0], core_export()),
+     'memberFlags'),
+]
+GROUPLESS_CASES = [
+    ('the core raid without a group, in list order', groupless_export(), None),
+    ('a raider seated out of list order', tamper(lambda c: c.update(subgroup=0), roster=groupless_export()), 'subgroup'),
+]
 
 
 def main():
     failures = []
     with tempfile.TemporaryDirectory() as directory:
         write_fixtures(directory)
-        for label, roster, want in CASES:
-            code, output, queries = crosscheck(directory, roster)
+        core = ('--names-file', os.path.join(directory, 'core.txt'), '--names-only')
+        runs = [(case, ('--names', EXTRA_NAME), GROUP) for case in CASES] + \
+            [(case, core, GROUP) for case in CORE_CASES] + [(case, core, []) for case in GROUPLESS_CASES]
+        for (label, roster, want), selection, group in runs:
+            code, output, queries = crosscheck(directory, roster, selection, group)
             problems = []
             if want is None and code != 0:
                 problems.append(f'reported differences:\n{output}')

@@ -4,7 +4,9 @@ Offline checks for the AzerothCore raid importer ([PLAN](../../../docs/azerothco
 They import the committed roster export through the shipped `acore_roster.ts` and `acore_importer.ts` and
 print what came out, so the parts of the importer that aren't about the DOM can be checked without a
 browser. The dialog, the grid and the alerts get their browser tests in
-[acore_import.spec.ts](../../../tools/uitest/tests/raid/acore_import.spec.ts).
+[acore_import.spec.ts](../../../tools/uitest/tests/raid/acore_import.spec.ts); fetching the roster from
+the sim server and the Raid tab's one-click button in
+[acore_server.spec.ts](../../../tools/uitest/tests/raid/acore_server.spec.ts), on these fixtures.
 
 | Harness | Checks |
 |---|---|

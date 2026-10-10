@@ -1,4 +1,5 @@
 import { Importer } from '../core/components/importers';
+import { simServerAvailable } from '../core/components/individual_sim_ui/optimizer_tab';
 import { RaidSimPreset } from '../core/individual_sim_ui';
 import { MAX_PARTY_SIZE } from '../core/party';
 import { Player } from '../core/player';
@@ -27,6 +28,7 @@ import {
 	Roster,
 	rosterEquipmentSpec,
 } from './acore_roster';
+import { fetchServerRoster } from './acore_server';
 import { playerPresets } from './presets';
 import { RAID_TARGET_OPTIONS } from './raid_references';
 import { RaidSimUI } from './raid_sim_ui';
@@ -38,7 +40,13 @@ const MAX_SUMMARY_WARNINGS = 20;
 // Keeps the two radios apart when more than one import modal has been opened.
 let modeGroupCounter = 0;
 
-type ImportMode = 'replace' | 'update';
+export type ImportMode = 'replace' | 'update';
+
+export interface ImportOptions {
+	mode: ImportMode;
+	// Update only: also overwrite the consumables of raiders kept in place
+	refreshConsumes: boolean;
+}
 
 export interface RaidCharacter extends CharacterImport {
 	preset: RaidSimPreset<any>;
@@ -60,9 +68,7 @@ export class RaidAcoreImporter extends Importer {
 	constructor(parent: HTMLElement, simUI: RaidSimUI) {
 		super(parent, simUI, 'AzerothCore Import', true);
 		this.simUI = simUI;
-
-		// Update is only useful once there's a raid to update.
-		this.mode = simUI.sim.raid.getPlayers().some(player => player != null) ? 'update' : 'replace';
+		this.mode = defaultImportMode(simUI);
 
 		this.descriptionElem.innerHTML = `
 			<p>
@@ -75,11 +81,44 @@ export class RaidAcoreImporter extends Importer {
 				buffs and the encounter don't: those stay yours.
 			</p>
 			<p>
+				The server only knows a character as of their last save, so run <code>saveall</code> in the
+				worldserver console first.
+			</p>
+			<p>
 				To import, upload the roster file or paste it below, pick a mode, then click 'Import'.
 			</p>
 		`;
 
 		this.body.prepend(this.buildModePicker());
+		simServerAvailable().then(available => {
+			if (available) {
+				this.addFetchButton();
+			}
+		});
+	}
+
+	private addFetchButton() {
+		const button = document.createElement('button');
+		button.classList.add('importer-button', 'btn', 'btn-primary', 'fetch-button', 'me-2');
+		button.innerHTML = '<i class="fa fa-cloud-arrow-down"></i> Fetch from server';
+		button.addEventListener('click', async () => {
+			button.disabled = true;
+			try {
+				const data = await fetchServerRoster();
+				this.textElem.value = data;
+				this.onTextChanged(data);
+			} catch (error: any) {
+				alert(`Import error:\n${error?.message}`);
+			} finally {
+				button.disabled = false;
+			}
+		});
+		this.importButton.before(button);
+
+		const hint = document.createElement('p');
+		hint.classList.add('acore-fetch-hint');
+		hint.textContent = "'Fetch from server' reads the core raid straight off the server and puts its roster below, like an upload.";
+		this.descriptionElem.appendChild(hint);
 	}
 
 	private buildModePicker(): HTMLElement {
@@ -128,103 +167,113 @@ export class RaidAcoreImporter extends Importer {
 	}
 
 	async onImport(data: string) {
-		const roster = parseRoster(data);
-		await this.simUI.sim.waitForInit();
-		const db = await Database.loadLeftoversIfNecessary(rosterEquipmentSpec(roster));
+		const summary = await importRoster(this.simUI, data, { mode: this.mode, refreshConsumes: this.refreshConsumes });
+		this.close();
+		alert(summary);
+	}
+}
 
-		const raidIndexes = assignRaidIndexes(roster.characters);
-		const imports: Array<RaidCharacter> = [];
-		const skipped: Array<string> = [];
-		roster.characters.forEach((char, i) => {
-			try {
-				if (raidIndexes[i] == -1) {
-					throw new Error(`subgroup ${char.subgroup} has no room in the raid`);
-				}
-				const imported = buildCharacterImport(db, char);
-				imports.push({
-					...imported,
-					preset: matchPreset(playerPresets, imported.spec, imported.talentsString),
-					raidIndex: raidIndexes[i],
-					isMainTank: (char.memberFlags & MEMBER_FLAG_MAIN_TANK) != 0,
-				});
-			} catch (e: any) {
-				skipped.push(`${char.name}: ${e?.message || e}`);
+// Update is only useful once there's a raid to update.
+export function defaultImportMode(simUI: RaidSimUI): ImportMode {
+	return simUI.sim.raid.getPlayers().some(player => player != null) ? 'update' : 'replace';
+}
+
+// Puts the roster's raid in the sim and returns the summary to show. The console gets the long one.
+export async function importRoster(simUI: RaidSimUI, data: string, options: ImportOptions): Promise<string> {
+	const roster = parseRoster(data);
+	await simUI.sim.waitForInit();
+	const db = await Database.loadLeftoversIfNecessary(rosterEquipmentSpec(roster));
+
+	const raidIndexes = assignRaidIndexes(roster.characters);
+	const imports: Array<RaidCharacter> = [];
+	const skipped: Array<string> = [];
+	roster.characters.forEach((char, i) => {
+		try {
+			if (raidIndexes[i] == -1) {
+				throw new Error(`subgroup ${char.subgroup} has no room in the raid`);
+			}
+			const imported = buildCharacterImport(db, char);
+			imports.push({
+				...imported,
+				preset: matchPreset(playerPresets, imported.spec, imported.talentsString),
+				raidIndex: raidIndexes[i],
+				isMainTank: (char.memberFlags & MEMBER_FLAG_MAIN_TANK) != 0,
+			});
+		} catch (e: any) {
+			skipped.push(`${char.name}: ${e?.message || e}`);
+		}
+	});
+	if (imports.length == 0) {
+		throw new Error(`Nothing could be imported.\n\n${skipped.join('\n')}`);
+	}
+
+	const notes = new ImportNotes();
+	if (options.mode == 'replace') {
+		replaceRaid(simUI, imports, notes);
+	} else {
+		updateRaid(simUI.sim, imports, notes, options.refreshConsumes);
+	}
+
+	console.log(notes.summarize(options.mode, roster, imports, skipped));
+	const warnings = collectWarnings(roster, imports);
+	if (warnings.length > MAX_SUMMARY_WARNINGS) {
+		console.log(`All ${warnings.length} roster notes:\n${warnings.map(warning => `  ${warning}`).join('\n')}`);
+	}
+	// chrome cuts a long alert off mid-text, so the full spec list stays in the console
+	return notes.summarize(options.mode, roster, imports, skipped, true);
+}
+
+function replaceRaid(simUI: RaidSimUI, imports: Array<RaidCharacter>, notes: ImportNotes) {
+	const eventID = TypedEvent.nextEventID();
+	const raid = simUI.sim.raid;
+
+	// Everyone is a fresh Player here, so the only interesting move is who joined and who left.
+	const previousNames = new Set(raid.getPlayers().map(player => player?.getName()).filter(name => name !== undefined) as Array<string>);
+	if (previousNames.size > 0) {
+		const rosterNames = new Set(imports.map(imported => imported.char.name));
+		imports.filter(imported => !previousNames.has(imported.char.name)).forEach(imported => notes.added.push(imported.char.name));
+		previousNames.forEach(name => {
+			if (!rosterNames.has(name)) {
+				notes.removed.push(name);
 			}
 		});
-		if (imports.length == 0) {
-			throw new Error(`Nothing could be imported.\n\n${skipped.join('\n')}`);
-		}
-
-		const notes = new ImportNotes();
-		if (this.mode == 'replace') {
-			this.replaceRaid(imports, notes);
-		} else {
-			updateRaid(this.simUI.sim, imports, notes, this.refreshConsumes);
-		}
-
-		this.close();
-		const summary = notes.summarize(this.mode, roster, imports, skipped);
-		console.log(summary);
-		const warnings = collectWarnings(roster, imports);
-		if (warnings.length > MAX_SUMMARY_WARNINGS) {
-			console.log(`All ${warnings.length} roster notes:\n${warnings.map(warning => `  ${warning}`).join('\n')}`);
-		}
-		// chrome cuts a long alert off mid-text, so the full spec list stays in the console
-		alert(notes.summarize(this.mode, roster, imports, skipped, true));
 	}
 
-	private replaceRaid(imports: Array<RaidCharacter>, notes: ImportNotes) {
-		const eventID = TypedEvent.nextEventID();
-		const raid = this.simUI.sim.raid;
+	const raidProto = RaidProto.create({
+		parties: [...new Array(MAX_NUM_PARTIES).keys()].map(partyIdx =>
+			PartyProto.create({
+				players: [...new Array(MAX_PARTY_SIZE).keys()].map(() => PlayerProto.create()),
+				buffs: raid.getParty(partyIdx).getBuffs(),
+			}),
+		),
+		buffs: raid.getBuffs(),
+		debuffs: raid.getDebuffs(),
+		targetDummies: raid.getTargetDummies(),
+		tanks: tankReferences(imports),
+		numActiveParties: activeParties(imports.map(imported => imported.char)),
+	});
+	const numPaladins = imports.filter(imported => imported.playerClass == Class.ClassPaladin).length;
 
-		// Everyone is a fresh Player here, so the only interesting move is who joined and who left.
-		const previousNames = new Set(raid.getPlayers().map(player => player?.getName()).filter(name => name !== undefined) as Array<string>);
-		if (previousNames.size > 0) {
-			const rosterNames = new Set(imports.map(imported => imported.char.name));
-			imports.filter(imported => !previousNames.has(imported.char.name)).forEach(imported => notes.added.push(imported.char.name));
-			previousNames.forEach(name => {
-				if (!rosterNames.has(name)) {
-					notes.removed.push(name);
-				}
-			});
-		}
-
-		const raidProto = RaidProto.create({
-			parties: [...new Array(MAX_NUM_PARTIES).keys()].map(partyIdx =>
-				PartyProto.create({
-					players: [...new Array(MAX_PARTY_SIZE).keys()].map(() => PlayerProto.create()),
-					buffs: raid.getParty(partyIdx).getBuffs(),
-				}),
-			),
-			buffs: raid.getBuffs(),
-			debuffs: raid.getDebuffs(),
-			targetDummies: raid.getTargetDummies(),
-			tanks: tankReferences(imports),
-			numActiveParties: activeParties(imports.map(imported => imported.char)),
+	TypedEvent.freezeAllAndDo(() => {
+		imports.forEach(imported => {
+			const player = newPlayerFromPreset(imported.spec, imported.preset, simUI.sim, eventID);
+			applyCharacter(player, imported, eventID);
+			applyConsumes(player, imported, eventID);
+			const partyIdx = Math.floor(imported.raidIndex / MAX_PARTY_SIZE);
+			raidProto.parties[partyIdx].players[imported.raidIndex % MAX_PARTY_SIZE] = player.toProto();
 		});
-		const numPaladins = imports.filter(imported => imported.playerClass == Class.ClassPaladin).length;
 
-		TypedEvent.freezeAllAndDo(() => {
-			imports.forEach(imported => {
-				const player = newPlayerFromPreset(imported.spec, imported.preset, this.simUI.sim, eventID);
-				applyCharacter(player, imported, eventID);
-				applyConsumes(player, imported, eventID);
-				const partyIdx = Math.floor(imported.raidIndex / MAX_PARTY_SIZE);
-				raidProto.parties[partyIdx].players[imported.raidIndex % MAX_PARTY_SIZE] = player.toProto();
-			});
-
-			// Clear first, so nothing of the old raid lingers in a slot the roster doesn't fill.
-			this.simUI.clearRaid(eventID);
-			this.simUI.fromProto(
-				eventID,
-				RaidSimSettings.create({
-					raid: raidProto,
-					encounter: this.simUI.sim.encounter.toProto(),
-					blessings: makeDefaultBlessings(numPaladins),
-				}),
-			);
-		});
-	}
+		// Clear first, so nothing of the old raid lingers in a slot the roster doesn't fill.
+		simUI.clearRaid(eventID);
+		simUI.fromProto(
+			eventID,
+			RaidSimSettings.create({
+				raid: raidProto,
+				encounter: simUI.sim.encounter.toProto(),
+				blessings: makeDefaultBlessings(numPaladins),
+			}),
+		);
+	});
 }
 
 // Matches raiders by name, moves them to their roster subgroups, adds and drops the difference.

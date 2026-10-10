@@ -44,6 +44,8 @@ character, plus a `!` line for each warning.
 | `-out` | required | the roster JSON to write |
 | `-leader` | | export the group this character is in, keeping its subgroups. Fails with "isn't in a group" when there's no group; use `-names` then |
 | `-names` | | comma-separated characters. Alone, they fill subgroups of 5 in the order given, so that order **is** the party layout and must match the live group ([acbis driver](../acbis/driver/README.md#before-running)): prefer this to `-leader` when the export has to keep the same members, since the live group can hold a stand-in for one boss. With `-leader`, they top up the group |
+| `-namesFile` | | `-names` from a file: one character a line, blank lines and `#` comments skipped. Not together with `-names` |
+| `-namesOnly` | off | export the named characters and nobody else (roster `selector` `"core"`). With `-leader`, those in the leader's group keep their subgroup and member flags, the others take the first subgroup with room, and unnamed members are left out, each with a warning. Leader in no group, or no `-leader`: list order, 5 per subgroup |
 | `-worldBuffMatrix` | empty: bots' flask, elixirs and food stay as they are | the bots' `AiPlayerbot.WorldBuffMatrix`: a `Playerbot.env`, a `playerbots.conf` or the bare matrix. The live one is the override in `[ac]/configurationOverrides/Playerbot.env` |
 | `-players` | empty: read off mod-playerbots | comma-separated characters someone plays; everyone else counts as a bot |
 | `-dsn` | `root:password@tcp(127.0.0.1:3306)/` | no database name: the queries name `acore_characters`, `acore_world` and `acore_playerbots` themselves |
@@ -55,6 +57,26 @@ character, plus a `!` line for each warning.
 
 Keep `-minSkill` at 1 on this server. Profession bonuses (Toughness, Master of Anatomy) are granted by GM
 command or shared per account, so the skill value says nothing about who has them.
+
+`-leader`, `-names` and the names file take each name as the server spells it, case included:
+`characters.name` compares bytes.
+
+## From the sim server
+
+`GET /acoreRoster` on the sim server returns the same bytes as
+`acraid -namesFile <file> -namesOnly [-leader <name>] [-worldBuffMatrix <file>]`, built in
+`sim/web/acroster` from the server's own flags
+([dev-environment](../../../docs/guide/dev-environment.md#run)). `saveall` still comes first.
+
+To check the route against acraid, run both on the same input and compare them without `exportedAt`.
+dock.sh mounts only the checkout, so acraid reads a copy of the names file from `tmp/`. `crosscheck.py`
+takes the route's JSON like acraid's.
+
+```sh
+curl -s http://localhost:3334/acoreRoster -o tmp/route.json
+# acraid as under Running, plus: -namesFile tmp/<names file> -namesOnly
+diff <(grep -v exportedAt tmp/route.json) <(grep -v exportedAt tmp/raid.json)
+```
 
 ## Output (version 2)
 
@@ -95,7 +117,7 @@ command or shared per account, so the skill value says nothing about who has the
 `crosscheck.py` rebuilds the export independently in Python and diffs it. It reads the SQL through
 `docker exec ac-database mysql`, plus the DBC files, the sim DB and the sim's own sources for consumable
 items, ammo DPS and pet families. It exits 1 on any difference. Run it from the repo root, with the same
-`--names`, `--min-skill`, `--sim-db`, `--world-buff-matrix` and `--players` as the export.
+`--names`, `--names-file`, `--names-only`, `--min-skill`, `--sim-db`, `--world-buff-matrix` and `--players` as the export.
 
 ```sh
 python tools/database/acraid/crosscheck.py tmp/raid.json --dbc "$SCRATCH/dbc" --leader Deathsong \

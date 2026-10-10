@@ -54,7 +54,12 @@ Quirk: `UnitLevelFloat64` in `utils.go` treats every level outside 80–82 as +3
   level 83 AzerothCore boss that hits like Patchwerk 25: the tank specs' default and each tank suite's
   GenericBoss case.
 - `sim/web/main.go` is the server, with flags `--usefs`, `--wasm`, `--host`, `--launch` and `--pprof`
-  (profiling on its own address, off by default: [tools/perf](../../tools/perf/README.md)).
+  (profiling on its own address, off by default: [tools/perf](../../tools/perf/README.md)) and the
+  `--acore*` ones ([dev-environment](dev-environment.md#run)). The makefile builds `main.go` alone, so
+  new server code goes in a package of its own.
+- `sim/web/acroster`: the `/acoreRoster` route, which builds acraid's roster off the live server with
+  `tools/database/azerothcore`. `New(cfg)` serves it; `NewWithBuilder` takes a fake builder for tests. The
+  talent trees come embedded from `ui/core/talents/trees/embed.go`.
 - `sim/optimizer/`: the BiS gear optimizer ([PLAN](../bis-optimizer/bis-optimizer.PLAN.md)), with its
   contract in `types.go` and `proto/optimizer.proto`. `wowsimcli optimize`, `/optimizeGearAsync` and the
   wasm export run it. `evaluator.go` runs loadouts as paired, sharded sims behind the `Evaluator` seam;
@@ -119,8 +124,9 @@ Quirk: `UnitLevelFloat64` in `utils.go` treats every level outside 80–82 as +3
 - `tools/database/gen_db`: the item DB build. `make items` runs its AzerothCore mode
   ([README](../../tools/database/gen_db/README.md)).
 - `tools/database/azerothcore`: shared MySQL and DBC readers, item conversion, roster building and the
-  server catalog's tier rules (`catalog*.go`). It's kept library-shaped so a sim-server endpoint can reuse
-  it.
+  server catalog's tier rules (`catalog*.go`). The sim server links it (`sim/web/acroster`), so keep it
+  library-shaped: no package-level flags (they'd show in the server's `--help`), no `log.Fatal`, and
+  loaders that take an `fs.FS` or a transaction.
 - Thin mains: `tools/database/acdiff` ([README](../../tools/database/acdiff/README.md)),
   `tools/database/acraid` ([README](../../tools/database/acraid/README.md)) and `tools/database/accatalog`
   ([README](../../tools/database/accatalog/README.md)), which writes `assets/database/server_catalog.json`:

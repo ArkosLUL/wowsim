@@ -73,5 +73,12 @@ fixture, so sim changes don't break them.
 - `page.route` also catches the net worker's fetches: stubbing `**/optimizeGearAsync` or `**/asyncProgress`
   fails a batch job right after its request. To check a request without an optimizer run, decode the
   stubbed route's body with `OptimizeGearRequest.fromBinary` (`tests/raid/bis_batch.spec.ts`).
+- `/acoreRoster` needs a live AzerothCore database, so stub it with a roster from
+  `ui/raid/acore_harness/testdata` (`stubServer` in `tests/raid/acore_server.spec.ts`); a dev server
+  without `--acore*` flags then does. Match it with a regex that takes a query string: `**/acoreRoster`
+  lets one slip past. The one test that asks the real route runs only with `UITEST_ACORE_LIVE=1`,
+  against a server started with those flags; it only reads.
+- A page tells a sim server from wasm by fetching `sim_worker.js` (`simServerAvailable`). To fake wasm,
+  stub only requests whose `resourceType()` is `fetch`, or the worker itself won't load.
 - A spec page keeps its settings in localStorage under `__wotlk_<spec>__currentSettings__`, except
   enhancement's `__wotlk_enhacement_shaman` prefix (`storageKey` in `tests/settings/helpers.ts`).
