@@ -151,7 +151,10 @@
       ]
     },
     {
-      "setup": "HunterMM", "seconds": 90, "yards": 18, "ammo": 52020,
+      "setup": "HunterMM", "seconds": 90, "yards": 18, "ammo": 52020, "dummyHealthPct": 19,
+      "pull": [
+        {"spell": 53338, "name": "Hunter's Mark", "waitMs": 1500}
+      ],
       "before": [
         {"spell": 75, "name": "Auto Shot", "waitMs": 200}
       ],
@@ -161,6 +164,8 @@
         {"spell": 49052, "name": "Steady Shot", "waitMs": 2500},
         {"spell": 49050, "name": "Aimed Shot", "waitMs": 1500},
         {"spell": 49045, "name": "Arcane Shot", "waitMs": 2000},
+        {"spell": 49052, "name": "Steady Shot", "waitMs": 2500},
+        {"spell": 61006, "name": "Kill Shot", "waitMs": 1500},
         {"spell": 49052, "name": "Steady Shot", "waitMs": 2500}
       ]
     },

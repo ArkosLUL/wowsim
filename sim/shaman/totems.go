@@ -63,7 +63,7 @@ func (shaman *Shaman) registerHealingStreamTotemSpell() {
 		// 52042's coefficient
 		Direct: core.SpellEffect{Effect: 0, SP: 0.0827},
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			healing := shaman.HealingStreamTotem.Hot(target).Tick.Roll(sim) + spell.Direct.SP*shaman.healingPower(spell, target)
+			healing := shaman.HealingStreamTotem.Hot(target).Tick.Roll(sim) + core.PowerBonus(spell.Direct.SP*shaman.healingPower(spell, target))
 			spell.CalcAndDealHealing(sim, target, healing, spell.OutcomeHealing)
 		},
 	})

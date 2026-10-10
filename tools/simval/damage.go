@@ -731,29 +731,11 @@ func (d *damageSim) unmatchedAuras() (text string) {
 		strings.Join(simOnly, " "), strings.Join(others, " "))
 }
 
-// amountTolerance is how far below and above the server's amount the sim may land: 0.1% or 1 point,
-// widened only above. SpellDamageBonusDone and SpellHealingBonusDone truncate each power bonus
-// (spell power or attack power times its coefficient) before the done multiplier, so each one can cost
-// the server up to the multiplier, never add to it.
-func amountTolerance(server, multiplier float64, powerBonuses int) (below, above float64) {
-	below = max(server*0.001, 1)
-	return below, max(below, 1+float64(powerBonuses)*multiplier)
-}
-
-// powerBonuses counts the bonuses the server truncated into the effect's amount.
-func (r damageRecord) powerBonuses(e damageEffect) int {
-	n := 0
-	spellPower := r.SpellPower.Damage
-	if e.heal() {
-		spellPower = r.SpellPower.Healing
-	}
-	if e.Coefficient > 0 && spellPower > 0 {
-		n++
-	}
-	if r.Bonus != nil && r.AttackPower.Value > 0 && (e.periodic() && r.Bonus.APDot > 0 || !e.periodic() && r.Bonus.AP > 0) {
-		n++
-	}
-	return n
+// amountTolerance is how far from the server's amount the sim may land, either way: 0.1% or 1 point. The
+// sim truncates where SpellDamageBonusDone and SpellHealingBonusDone do, each power bonus included, so
+// what's left is the server's float32 arithmetic.
+func amountTolerance(server float64) float64 {
+	return max(server*0.001, 1)
 }
 
 // checkDamage compares each probed effect of a record with the sim: the declared base and spell power
@@ -824,19 +806,13 @@ func (d *damageSim) compareEffects(probed []damageEffect, declare func(damageEff
 			checks = append(checks, fail(name+" amount", err.Error()))
 			continue
 		}
-		multiplier, err := d.multiplier(*decl, e, lo, hi)
-		if err != nil {
-			checks = append(checks, fail(name+" amount", err.Error()))
-			continue
-		}
-		bonuses := rec.powerBonuses(e)
 		for _, end := range []struct {
 			label       string
 			sim, server float64
 		}{{"min", lo, e.Taken.Min}, {"max", hi, e.Taken.Max}} {
-			below, above := amountTolerance(end.server, multiplier, bonuses)
-			detail := fmt.Sprintf("sim %.2f, server %.0f (-%.2f/+%.2f)", end.sim, end.server, below, above)
-			if diff := end.sim - end.server; diff >= -below && diff <= above {
+			tolerance := amountTolerance(end.server)
+			detail := fmt.Sprintf("sim %.2f, server %.0f (-%.2f/+%.2f)", end.sim, end.server, tolerance, tolerance)
+			if math.Abs(end.sim-end.server) <= tolerance {
 				checks = append(checks, pass(name+" "+end.label, detail))
 			} else {
 				checks = append(checks, fail(name+" "+end.label, detail+"; "+d.unmatchedAuras()))
@@ -850,16 +826,6 @@ func (d *damageSim) compareEffects(probed []damageEffect, declare func(damageEff
 		}
 	}
 	return checks
-}
-
-// multiplier is the sim's own, from how its amount moves with the base.
-func (d *damageSim) multiplier(decl simDecl, e damageEffect, lo, hi float64) (float64, error) {
-	if e.Base.Max-e.Base.Min >= 1 {
-		return (hi - lo) / (e.Base.Max - e.Base.Min), nil
-	}
-	const step = 1000
-	far, err := d.amount(decl, e, e.Base.Min+step)
-	return (far - lo) / step, err
 }
 
 func firstErr(errs ...error) error {

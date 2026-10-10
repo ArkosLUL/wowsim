@@ -120,13 +120,23 @@ func applyShardOfTheGodsHealingProc(character *core.Character, isHeroic bool) {
 }
 
 // Each bonus is its own MOD_DAMAGE_DONE_VERSUS aura (57943, 29068, 57944), and the server multiplies them.
+// DONE_VERSUS is per target, and a weapon hit's flat attack power bonus takes it too.
 func makeUndeadSet(setName string) *core.ItemSet {
 	versusUndead := func(multiplier float64) core.ApplyEffect {
 		return func(agent core.Agent) {
 			character := agent.GetCharacter()
-			if character.CurrentTarget.MobType == proto.MobType_MobTypeUndead {
-				character.PseudoStats.DamageDealtMultiplier *= multiplier
-			}
+			var applied bool
+			character.RegisterResetEffect(func(_ *core.Simulation) {
+				if applied {
+					return
+				}
+				applied = true
+				for _, target := range character.Env.Encounter.TargetUnits {
+					if target.MobType == proto.MobType_MobTypeUndead {
+						character.AttackTables[target.UnitIndex].DamageDealtMultiplier *= multiplier
+					}
+				}
+			})
 		}
 	}
 	return core.NewItemSet(core.ItemSet{

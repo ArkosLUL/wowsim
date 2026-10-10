@@ -5,6 +5,7 @@ package serverdata
 
 var bonuses = []Bonus{
 	{SpellID: 12470, Row: 12470, Direct: 0.5},                                            // Fire Nova
+	{SpellID: 13376, Row: 13376, Direct: 0.015},                                          // Fire Shield
 	{SpellID: 20153, Row: 20153, Direct: 1.35},                                           // Immolation (Rank 1)
 	{SpellID: 20187, Row: 20187, Direct: 0.32, AP: 0.2},                                  // Judgement of Righteousness (Rank 1)
 	{SpellID: 22703, Row: 22703, Direct: 1},                                              // Inferno Effect

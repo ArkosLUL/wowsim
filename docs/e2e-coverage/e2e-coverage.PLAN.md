@@ -1879,6 +1879,74 @@ Live stage, against the server build of 2026-10-06 19:37 (`3d89793c7` plus the m
   CSVs, `spellmod_spells.json` and the fight check; the hunter fight's cycle and log; their drops and rows.
 - **Goldens:** every suite whose damage or heals truncate; report each.
 
+#### As built
+
+Code stage, on `a1bb8d403` against [ac] `3d89793c7` (notes in `tmp/ec-core-fix3-code.md`). Verdicts:
+- Heals (fixed): `calcHealingInternal` is whole after the caster multiplier, the target's and the crit. Left: direct
+  `GainHealth` heals (potions, DK and druid self heals).
+- SP and AP bonuses (fixed): `core.PowerBonus`, int32 of the float32 product, around each inline `coefficient × power`
+  (180 lines), script bonuses included (Rune Strike, Kill Shot, Rip, Ferocious Bite, Power Word: Shield).
+- Base roll (fixed, found on re-measure): `SpellEffect.Roll` is a whole step, as `CalcValue`'s irand.
+- Stacked dots (fixed): `Dot.SnapshotStacks`; one stack's done damage truncates, then multiplies (Deadly Poison,
+  Lacerate, Holy Vengeance).
+- Magic crit before resist (fixed): the resist is rolled where it was and comes off after the outcome.
+- Measured on the damage, goldchar and strikes replays: 114 of 296 non-strike amounts were 1 to 3 over the server,
+  none now; `amountTolerance` is 0.1% or 1 point either way. 56 of 148 weapon strike amounts stay 1 to 3 over
+  (`Spell::EffectWeaponDmg`'s own int32 steps).
+- Undead sets (fixed): per-target attack table multiplier.
+- Rage of Rivendare, Tundra Stalker (fixed): the DK's seven weapon strikes add `Spell.WeaponBonusForDonePct`, with
+  Glacier Rot and Merciless Combat on Frost Strike and Obliterate (DoneTotalMod too).
+- Improved Tracking (no change): a flat SPELLMOD_EFFECT2 on the tracking spells' aura 168 (type mask 127), so
+  DONE_VERSUS, where the sim has it.
+- Casting (fixed): cooldowns start after the GCD and hardcast checks.
+- Meta gems (partly): an item swap adds or takes the meta's stats with its condition (`metaGemStatChange`); its
+  effect and crit damage stay the starting gear's. Goldchar's `meta gem` check reads `HasMetaGemEquipped`.
+- UI: the sheet's defense skill and block chance count enchant 3847's 25 skill, read off the weapons.
+- Tooling: audit CSVs regenerated. `spellmod_spells.json` not: the new list names spells `spellmods.jsonl` never
+  probed (8 paths), so it needs the sweep re-recorded. The fight's means go through `checkMean` (4 deviations of a
+  fight's mean; a 1.4× Shadow Bolt fails).
+- Live stage tooling: cycle fields `dummyHealthPct` and `pull`, `Simulation.StartTargetAtHealth`, HunterMM's cycle
+  (Hunter's Mark pulled, dummy at 20.5%, Kill Shot), the module's `TestSimvalEcCore3LowHealthFight`.
+
+Tests: `sim/core/truncation_test.go`, `TestFightMeanCheck`. Replays all pass (`simval.jsonl` 1114/1114).
+
+Goldens (`dock.sh delta`), all 37 move, Average-Default: −0.00 to −0.15% (Protection paladin −0.15%, Retribution
+−0.09%, the priest healers' hps −0.03 and −0.05%), but Enhancement +0.27% (the Fire Elemental swings 35.9 → 38.1
+times; Elemental's fire elemental rows −1.7 to +2.0%), which is the cast fix (Review). Frost DKs' Twin Blades of
+Azzinoth rows +0.19 to +0.28% (Tundra Stalker on the creature-type AP).
+
+Follow-ups: weapon strikes' int32 steps; a meta gem's effect across an item swap; Heart Strike takes no Rage of
+Rivendare or Tundra Stalker though their class mask covers 55262; `spell_dru_rip` adds Rip's AP share and idol
+after `SpellDamageBonusDone`, so they'd take no done percents; class code's direct heals; the spell-mod sweep's
+re-record.
+
+Live stage, 2026-10-10, against [ac] `3d89793c7` with module `408f7b5` (notes in `tmp/ec-core-fix3-live.md`):
+- Spelldump: 13376, 13377, 48332 and 48333, which 48332 triggers; `gen_serverdata` and the audit CSVs rerun (0 not
+  captured). `TestSimAOESpells` takes Fire Shield 13376 as the pet's, uncapped. The sim deals it with no hit roll,
+  and the data has no can't-miss attribute: EC-PET-FIX2's file.
+- Hunter fight re-recorded (`HunterMM.log.gz`): Hunter's Mark pulled, the dummy at 19%, Kill Shot 4 times. The
+  dummy's AI zeroes every hit, `.damage`'s too, so the e2e sets its health with `.simval hp` and it stays there all
+  fight; `dummyHealthPct` is that percent. 57 checks pass, none dropped: the `HunterMM 49001 ticks` drop and its
+  README row went. Without the mark's aura line five means fail (Auto Shot z 9.7).
+- Chimera Shot - Serpent (fixed, found on the record at z −3.57): 53353 ignores caster modifiers
+  (`SPELL_ATTR3_IGNORE_CASTER_MODIFIERS`), so no Mortal Shots on its crits; Marked for Death's class mask leaves it
+  out; `spell_hun_chimera_shot` reads the sting's amount before recalculating it. Both logs' 11 hits are
+  int(the sting's stored tick × 2.8), crits × 2.06.
+- Goldens: only TestMM moved again, Average-Default −0.92% (53353 −14.4% a hit).
+- Not done: the spell-mod sweep's re-record, since 7 of its 8 changed paths are EC-CLASS-FIX2's classes this wave.
+
+Review, 2026-10-10:
+- The cast fix is Enhancement's +0.27%, measured: with the base `cast.go` overlaid (`go test -overlay`) the suite
+  sits at −0.016%, and Elemental's fire elemental rows at −0.01 to −0.06%. The elemental reaches its 15 Fire Novas
+  (14.94 before), then only swings.
+- `makeCastFuncSimple` set the cooldown before the shared cooldown's check; both now start after both checks. No
+  golden moves.
+- `damage_test.go`: a hand-checked Frostbolt 2 over the server fails, as 2 under does.
+- Follow-ups: `PowerBonus` casts a float64 product to float32, where the server multiplies two float32s (0.13 ×
+  1700 is 220 there, 221 here; 11 of the whole SP values under 6000 for that coefficient), and the sim's spell power can be
+  fractional where the server's is an int32; Ferocious Bite and Eviscerate roll their base inline, not in whole
+  steps; 53353 truncates after its 2.0 or 2.8, the server before; no UI test holds the sheet's defense skill.
+
 ### EC-PET-FIX2 (Z5; changes goldens; stages: code, live)
 
 - Timers: pets' 2 s scaling and mana regen, and the 3 s hit and 2 s haste refreshes (`sim/core/pet.go`), count from

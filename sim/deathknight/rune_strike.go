@@ -56,19 +56,21 @@ func (dk *Deathknight) newRuneStrikeSpell(isMH bool) *core.Spell {
 				baseDamage = (spell.Direct.Roll(sim)+
 					spell.Unit.MHWeaponDamage(sim, spell.MeleeAttackPower())+
 					spell.BonusWeaponDamage())*spell.Direct.WeaponPct +
-					spell.Direct.AP*spell.MeleeAttackPower()
+					core.PowerBonus(spell.Direct.AP*spell.MeleeAttackPower())
 
 				outcomeApplier = spell.OutcomeMeleeSpecialNoBlockDodgeParry
 			} else {
 				baseDamage = (spell.Direct.Roll(sim)+
 					spell.Unit.OHWeaponDamage(sim, spell.MeleeAttackPower())+
 					spell.BonusWeaponDamage())*spell.Direct.WeaponPct +
-					offHandFixedPct*spell.Direct.AP*spell.MeleeAttackPower()
+					offHandFixedPct*core.PowerBonus(spell.Direct.AP*spell.MeleeAttackPower())
 
 				outcomeApplier = spell.OutcomeMeleeSpecialCritOnly
 			}
 
 			baseDamage *= dk.RoRTSBonus(target)
+			// the class scripts are DoneTotalMod, which scales the flat creature-type bonus too
+			baseDamage += spell.WeaponBonusForDonePct(target, dk.RoRTSBonus(target))
 			result := spell.CalcDamage(sim, target, baseDamage, outcomeApplier)
 			if isMH {
 				spell.SpendRefundableCost(sim, result)
@@ -149,7 +151,7 @@ func (dk *Deathknight) registerDrwRuneStrikeSpell() {
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			baseDamage := (spell.Direct.Roll(sim)+dk.DrwWeaponDamage(sim, spell))*spell.Direct.WeaponPct +
-				spell.Direct.AP*spell.MeleeAttackPower() + dk.drwVersusAttackPowerBonus(spell, false)
+				core.PowerBonus(spell.Direct.AP*spell.MeleeAttackPower()) + dk.drwVersusAttackPowerBonus(spell, false)
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialNoBlockDodgeParry)
 		},
 	})

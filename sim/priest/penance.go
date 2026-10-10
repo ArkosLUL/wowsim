@@ -79,7 +79,7 @@ func (priest *Priest) makePenanceSpell(isHeal bool) *core.Spell {
 			AffectedByCastSpeed: true,
 
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
-				baseDamage := 375 + 0.2290*dot.Spell.SpellPower()
+				baseDamage := 375 + core.PowerBonus(0.2290*dot.Spell.SpellPower())
 				result := dot.Spell.CalcAndDealPeriodicDamage(sim, target, baseDamage, dot.Spell.OutcomeMagicHitAndCrit)
 				tickThreat.Hit(result)
 				tickThreat.Done(sim)
@@ -95,7 +95,7 @@ func (priest *Priest) makePenanceSpell(isHeal bool) *core.Spell {
 			AffectedByCastSpeed: true,
 
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
-				baseHealing := sim.Roll(1484, 1676) + 0.5362*dot.Spell.HealingPower(target)
+				baseHealing := sim.Roll(1484, 1676) + core.PowerBonus(0.5362*dot.Spell.HealingPower(target))
 				dot.Spell.CalcAndDealPeriodicHealing(sim, target, baseHealing, dot.Spell.OutcomeHealingCrit)
 				tickThreat.Done(sim)
 			},

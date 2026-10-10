@@ -33,7 +33,7 @@ func (priest *Priest) getMindSearTickSpell(numTicks int32) *core.Spell {
 		{Op: core.SpellModBonusMultiplier, Pct: 5 * int32(priest.Talents.Misery)},
 	}
 	config.ApplyEffects = func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-		damage := spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()
+		damage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP*spell.SpellPower())
 		damage *= core.AOECapMultiplierFor(len(sim.Encounter.Targets) - 1)
 		result := spell.CalcAndDealDamage(sim, target, damage, spell.OutcomeMagicHitAndCrit)
 
@@ -98,7 +98,7 @@ func (priest *Priest) newMindSearSpell(numTicksIdx int32) *core.Spell {
 		}
 	}
 	config.ExpectedTickDamage = func(sim *core.Simulation, target *core.Unit, spell *core.Spell, _ bool) *core.SpellResult {
-		baseDamage := mindSearTickSpell.Direct.Roll(sim) + mindSearTickSpell.Direct.SP*spell.SpellPower()
+		baseDamage := mindSearTickSpell.Direct.Roll(sim) + core.PowerBonus(mindSearTickSpell.Direct.SP*spell.SpellPower())
 		return spell.CalcPeriodicDamage(sim, target, baseDamage, spell.OutcomeExpectedMagicCrit)
 	}
 	return priest.GetOrRegisterSpell(config)

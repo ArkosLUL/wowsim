@@ -41,6 +41,7 @@ const (
 	// Sniper Training's buff on the server, and the aura the sim registers for it
 	sniperTrainingBuff = 64420
 	sniperTrainingAura = 53304
+	huntersMarkSpell   = 53338
 
 	defaultFightIterations = 1000
 	fightSeed              = 7000
@@ -182,9 +183,7 @@ type fightDrop struct {
 	Setup, Subject, Check string
 }
 
-var droppedFightChecks = []fightDrop{
-	{"HunterMM", "49001", "ticks"},
-}
+var droppedFightChecks = []fightDrop{}
 
 // fightLeftOut is a server aura by the log's id, where it sits ("self", "target", a minion's name), "" for
 // anywhere.
@@ -250,6 +249,10 @@ type fightCycle struct {
 	Ammo int32 `json:"ammo,omitempty"`
 	// passives the golden build doesn't teach and the sim character has, which the e2e .learns
 	Learn []int32 `json:"learn,omitempty"`
+	// the dummy's health all fight, in percent of its maximum (the e2e's .simval hp); 0 leaves it full
+	DummyHealthPct float64 `json:"dummyHealthPct,omitempty"`
+	// cast at the dummy before the fight starts: debuffs the sim takes as an option (Hunter's Mark)
+	Pull []fightStep `json:"pull,omitempty"`
 	// cast once each, in order, before the cycle; Auto Shot here starts a hunter shooting
 	Before []fightStep `json:"before,omitempty"`
 	// tried in order, again and again, whatever the server says to each
@@ -284,6 +287,15 @@ func fightCycleFor(cycles []fightCycle, setup string) (fightCycle, error) {
 }
 
 func (c fightCycle) melee() bool { return c.Yards <= meleeYards }
+
+// dummyHealth is where the e2e's .simval hp puts a dummy of that max health: whole points, on the command's
+// float percent. 0 when the cycle leaves it full.
+func (c fightCycle) dummyHealth(maxHealth float64) float64 {
+	if c.DummyHealthPct <= 0 {
+		return 0
+	}
+	return max(1, math.Floor(maxHealth*float64(float32(c.DummyHealthPct))/100))
+}
 
 // casts is every spell the bot casts, Auto Shot aside: the spells the replay casts too.
 func (c fightCycle) casts() map[int32]bool {
@@ -356,6 +368,7 @@ type fightLog struct {
 	autos                  [2]time.Duration
 	hasAutos               bool
 	sniperTraining         bool
+	huntersMark            bool
 	names                  map[int32]string
 	cycle                  fightCycle
 	spellsWithoutCastEvent []int32
@@ -414,6 +427,8 @@ func newFightLog(log *chronicleLog, c fightCycle, source string, fromMs int64) (
 		switch {
 		case e.Type == "SPELL_AURA_APPLIED" && e.Spell.ID == sniperTrainingBuff:
 			fl.sniperTraining = true
+		case e.Type == "SPELL_AURA_APPLIED" && e.Spell.ID == huntersMarkSpell:
+			fl.huntersMark = true
 		case e.TimeMs < fromMs:
 		case e.Type == "SPELL_CAST_SUCCESS" && e.Spell.ID == autoShotSpell:
 			autoMs = append(autoMs, e.TimeMs)
@@ -969,6 +984,8 @@ func newFightSim(s goldcharSetup, fl *fightLog) (*fightSim, error) {
 			hunter.Options.SniperTrainingUptime = 1
 			mirror = append(slices.Clone(mirror), sniperTrainingAura)
 		}
+		// the cycle's pull puts it on before the fight, the sim's option at the pull
+		hunter.Options.UseHuntersMark = fl.huntersMark
 	}
 	return newFightSimFor(player, mirror, fl)
 }
@@ -1216,6 +1233,9 @@ func (f *fightSim) runIteration(seed int64, schedule func(sim *core.Simulation))
 	// the target's health percent comes from this, else from the time left (Rend's +35% above 75% health);
 	// a fight barely scratches the dummy
 	sim.Encounter.EndFightAtHealth = bossDummy.MaxHealth
+	if health := f.fight.cycle.dummyHealth(bossDummy.MaxHealth); health > 0 {
+		sim.StartTargetAtHealth(bossDummy.MaxHealth, health)
+	}
 	for _, aura := range f.d.mirrored {
 		if !aura.IsActive() {
 			aura.Activate(sim)
@@ -1855,18 +1875,65 @@ func compareOutcomes(prefix string, logB *outcomeBreakdown, sims []*outcomeBreak
 		{"crit mean", func(b *outcomeBreakdown) outcomeStats { return b.Crit }},
 		{"glance mean", func(b *outcomeBreakdown) outcomeStats { return b.Glance }},
 	} {
-		meanOf := func(b *outcomeBreakdown) (float64, bool) {
-			stats := o.of(b)
-			return stats.mean(), stats.N > 0
-		}
-		log, ok := meanOf(logB)
-		if !ok {
+		log := o.of(logB)
+		if log.N == 0 {
 			continue
 		}
-		// a point or 0.1% for the server's truncations
-		checks = append(checks, checkRange(prefix+o.name, log, perFight(sims, meanOf), max(1, 0.001*log)/2, ""))
+		var perSim []outcomeStats
+		for _, b := range sims {
+			if stats := o.of(b); stats.N > 0 {
+				perSim = append(perSim, stats)
+			}
+		}
+		// a point or 0.1% for the server's float32 steps
+		checks = append(checks, checkMean(prefix+o.name, log, perSim, max(1, 0.001*log.mean())))
 	}
 	return checks
+}
+
+// meanDeviations is how many standard deviations a fight's mean may sit from the sim's. Under the parity
+// rules' 5, because partial resists and procs give the deviation heavy tails: the sim's own fights stay
+// within 2.4 of it, and 5 would pass a Shadow Bolt 40% too hard over four hits.
+const meanDeviations = 4
+
+// checkMean holds the log's mean over its hits to the sim's mean over every iteration's, within
+// meanDeviations of what a fight of that many hits spreads by, plus slack. The spread is what a fight's hits
+// share (a proc up all fight), measured between the iterations, and each hit's own over the log's count. A
+// range over the iterations' means would end at one iteration's single lucky hit.
+func checkMean(name string, log outcomeStats, sims []outcomeStats, slack float64) Check {
+	if len(sims) == 0 {
+		return notCompared(name, "the sim never had it")
+	}
+	var all outcomeStats
+	var within, inverseN float64
+	means := make([]float64, len(sims))
+	for i, s := range sims {
+		n := float64(s.N)
+		all.N += s.N
+		all.Sum += s.Sum
+		within += max(s.SumSq-s.Sum*s.Sum/n, 0)
+		inverseN += 1 / n
+		means[i] = s.mean()
+	}
+	// each hit's own variance, then what's left of the variance between the iterations' means
+	var perHit float64
+	if spare := all.N - int64(len(sims)); spare > 0 {
+		perHit = within / float64(spare)
+	}
+	between := stdDev(means)
+	shared := max(between*between-perHit*inverseN/float64(len(sims)), 0)
+	deviation := math.Sqrt(shared + perHit/float64(log.N))
+
+	z := 0.0
+	if deviation > 0 {
+		z = (log.mean() - all.mean()) / deviation
+	}
+	detail := fmt.Sprintf("log %.4g over %d, sim %.4g (a fight's deviation %.3g, z %.2f, over %d fights)",
+		log.mean(), log.N, all.mean(), deviation, z, len(sims))
+	if math.Abs(log.mean()-all.mean()) <= meanDeviations*deviation+slack {
+		return pass(name, detail)
+	}
+	return fail(name, detail)
 }
 
 func (c *fightComparison) comparePeriodic(k fightKey) {

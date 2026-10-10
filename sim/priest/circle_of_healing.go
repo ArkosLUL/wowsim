@@ -48,7 +48,7 @@ func (priest *Priest) registerCircleOfHealingSpell() {
 		Direct: core.SpellEffect{Effect: 0, Min: 958, Max: 1058, SP: 0.402},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			healFromSP := spell.Direct.SP * spell.HealingPower(target)
+			healFromSP := core.PowerBonus(spell.Direct.SP * spell.HealingPower(target))
 			for _, aoeTarget := range targets {
 				baseHealing := spell.Direct.Roll(sim) + healFromSP
 				spell.CalcAndDealHealing(sim, aoeTarget, baseHealing, spell.OutcomeHealingCrit)

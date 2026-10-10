@@ -738,6 +738,25 @@ var spells = []Spell{
 			{Effect: 2, BasePoints: 109, DieSides: 21, DamageMultiplier: 1},
 		},
 	},
+	// Fire Shield
+	{
+		ID: 13376, SchoolMask: 4, DmgClass: DmgClassMagic, Flags: FlagTargetsArea,
+		Attributes: [8]uint32{0x40000, 0x88}, AttributesCu: 0x1100,
+		ProcChance: 101, SpellLevel: 1, BaseLevel: 1,
+		Effects: [3]Effect{
+			{Effect: 2, DieSides: 1, PointsPerLevel: 1.2, DamageMultiplier: 1, BonusMultiplier: 0.032},
+		},
+	},
+	// Fire Shield
+	{
+		ID: 13377, SchoolMask: 2, Flags: FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0x9d0},
+		DurationMs: -1, MaxDurationMs: -1,
+		ProcChance: 101, SpellLevel: 40, BaseLevel: 40,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 23, AmplitudeMs: 3000, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, TriggerSpell: 13376},
+		},
+	},
 	// Dummy Trigger
 	{
 		ID: 13567, SchoolMask: 1, Flags: FlagPositive,

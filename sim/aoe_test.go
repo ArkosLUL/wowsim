@@ -77,6 +77,7 @@ func (s aoeSpell) with(mod aoeValues) aoeValues {
 var aoeSpells = map[aoeKey]aoeSpell{
 	{1680, byPlayer}:  {maxTargets: 4}, // Whirlwind
 	{12470, byPet}:    {},              // Fire Nova, the Fire Elemental's
+	{13376, byPet}:    {},              // Fire Shield, the Fire Elemental's
 	{20153, byPet}:    {},              // Immolation, the Infernal's
 	{20424, byPlayer}: {chain: 3},      // Seal of Command
 	{21992, byPlayer}: {chain: 5},      // Thunderfury

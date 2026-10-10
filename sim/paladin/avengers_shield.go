@@ -42,7 +42,7 @@ func (paladin *Paladin) registerAvengersShieldSpell() {
 		Direct: core.SpellEffect{Effect: 0, Min: 1100, Max: 1344, SP: 0.07, AP: 0.07},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			constBaseDamage := spell.Direct.SP*spell.SpellPower() + spell.Direct.AP*spell.MeleeAttackPower()
+			constBaseDamage := core.PowerBonus(spell.Direct.SP*spell.SpellPower()) + core.PowerBonus(spell.Direct.AP*spell.MeleeAttackPower())
 
 			// every jump is worked out at the launch and flies from the caster
 			curTarget := target

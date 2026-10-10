@@ -43,8 +43,8 @@ func (paladin *Paladin) registerSealOfRighteousnessSpellAndAura() {
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			baseDamage := spell.Direct.Roll(sim) +
-				spell.Direct.AP*spell.MeleeAttackPower() +
-				spell.Direct.SP*spell.SpellPower()
+				core.PowerBonus(spell.Direct.AP*spell.MeleeAttackPower()) +
+				core.PowerBonus(spell.Direct.SP*spell.SpellPower())
 
 			// Secondary Judgements cannot miss if the Primary Judgement hit, only roll for crit.
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialCritOnly)

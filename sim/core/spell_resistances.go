@@ -11,14 +11,23 @@ import (
 func (result *SpellResult) applyResistances(sim *Simulation, spell *Spell, isPeriodic bool, attackTable *AttackTable) {
 	// TODO check why result.Outcome isn't updated with resists anymore
 	resistanceMultiplier := spell.ResistanceMultiplier(sim, isPeriodic, attackTable)
-	if resistanceMultiplier != 1 {
-		// CalcArmorReducedDamage rounds up, and a partial resist takes off its share of the whole damage
-		// rounded down. The epsilon keeps float noise on an exact product from rounding it up a point.
+	// CalcArmorReducedDamage rounds up, before the crit. A partial resist is rolled here but comes off after
+	// the crit (applyPartialResist). The epsilon keeps float noise on an exact product from rounding it up.
+	if resistanceMultiplier != 1 && spell.SpellSchool.Matches(SpellSchoolPhysical) {
 		result.Damage = math.Ceil(result.Damage*resistanceMultiplier - 1e-6)
 	}
 
 	result.ResistanceMultiplier = resistanceMultiplier
 	result.PreOutcomeDamage = result.Damage
+}
+
+// applyPartialResist is CalcAbsorbResist's resist, its share of the whole damage rounded down, which the
+// server takes off the crit's whole result.
+func (result *SpellResult) applyPartialResist(spell *Spell) {
+	if result.ResistanceMultiplier == 1 || result.Damage <= 0 || spell.SpellSchool.Matches(SpellSchoolPhysical) {
+		return
+	}
+	result.Damage = math.Ceil(math.Trunc(result.Damage)*result.ResistanceMultiplier - 1e-6)
 }
 
 // Modifies damage based on Armor or Magic resistances, depending on the damage type.

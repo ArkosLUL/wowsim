@@ -38,7 +38,7 @@ func (paladin *Paladin) registerHolyWrathSpell() {
 		Direct: core.SpellEffect{Effect: 0, Min: 1058, Max: 1242, SP: 0.07, AP: 0.07},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			constBaseDamage := spell.Direct.SP*spell.SpellPower() + spell.Direct.AP*spell.MeleeAttackPower()
+			constBaseDamage := core.PowerBonus(spell.Direct.SP*spell.SpellPower()) + core.PowerBonus(spell.Direct.AP*spell.MeleeAttackPower())
 
 			// worked out at the launch, landing with the missile
 			for i, aoeTarget := range sim.Encounter.TargetUnits {

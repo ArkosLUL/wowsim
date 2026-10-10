@@ -662,7 +662,7 @@ type spellModEffect struct {
 	decl *simDecl
 	// the record's base, worked out for the min and max
 	lo, hi float64
-	// how far below or above the server's amount the sim's may be, the larger of the two
+	// how far from the server's amount the sim's may be
 	boundLo, boundHi float64
 	crit             float64
 	crits            bool
@@ -685,16 +685,8 @@ func (ts *timingSim) spellModEffect(e damageEffect) spellModEffect {
 		out.err = fmt.Errorf("the amount rolls: %.2f, then %.2f", lo, again)
 		return out
 	}
-	multiplier, err := ts.multiplier(*out.decl, e, lo, hi)
-	if err != nil {
-		out.err = err
-		return out
-	}
-	bonuses := ts.rec.powerBonuses(e)
-	below, above := amountTolerance(e.Taken.Min, multiplier, bonuses)
-	out.lo, out.boundLo = lo, max(below, above)
-	below, above = amountTolerance(e.Taken.Max, multiplier, bonuses)
-	out.hi, out.boundHi = hi, max(below, above)
+	out.lo, out.boundLo = lo, amountTolerance(e.Taken.Min)
+	out.hi, out.boundHi = hi, amountTolerance(e.Taken.Max)
 	out.crit, out.crits = ts.critMultiplier(*out.decl)
 	return out
 }

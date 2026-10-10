@@ -196,12 +196,18 @@ func TestDamageReplayOnHandCheckedRecords(t *testing.T) {
 			failed: []string{"e1 damage max"},
 		},
 		{
-			// truncation only ever lowers the server's number, so the sim landing under it gets just
-			// 0.1% or 1 point
+			// the sim truncates where the server does, so it gets 0.1% or 1 point either way
 			name: "Frostbolt under the server at the bottom",
 			rec: handRecord(t, mage, 1, 42842, nil, "", `
 				{"index": 1, "kind": "damage", "coefficient": 0.857, "pctDone": 1, "base": {"min": 803, "max": 865},
 					"taken": {"min": 1250, "max": 1310}, "crit": {"amount": 10000, "result": 15000}}`),
+			failed: []string{"e1 damage min"},
+		},
+		{
+			name: "Frostbolt over the server at the bottom",
+			rec: handRecord(t, mage, 1, 42842, nil, "", `
+				{"index": 1, "kind": "damage", "coefficient": 0.857, "pctDone": 1, "base": {"min": 803, "max": 865},
+					"taken": {"min": 1246, "max": 1310}, "crit": {"amount": 10000, "result": 15000}}`),
 			failed: []string{"e1 damage min"},
 		},
 		{

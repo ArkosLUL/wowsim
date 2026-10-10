@@ -51,7 +51,7 @@ func (hunter *Hunter) registerArcaneShotSpell(timer *core.Timer) {
 		Direct: core.SpellEffect{Effect: 0, Min: 492, Max: 492, AP: 0.15},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := spell.Direct.Roll(sim) + spell.Direct.AP*spell.RangedAttackPowerSpellBonus(target)
+			baseDamage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.AP*spell.RangedAttackPowerSpellBonus(target))
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeRangedHitAndCrit)
 			spell.WaitTravelTime(sim, func(sim *core.Simulation) {
 				if hasGlyph && result.Landed() && (hunter.SerpentSting.Dot(target).IsActive() || hunter.ScorpidStingAuras.Get(target).IsActive()) {

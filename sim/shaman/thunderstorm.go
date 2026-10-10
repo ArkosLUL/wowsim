@@ -49,7 +49,7 @@ func (shaman *Shaman) registerThunderstormSpell() {
 			shaman.AddMana(sim, shaman.MaxMana()*manaRestore, manaMetrics)
 
 			if shaman.thunderstormInRange {
-				dmgFromSP := spell.Direct.SP * spell.SpellPower()
+				dmgFromSP := core.PowerBonus(spell.Direct.SP * spell.SpellPower())
 				for _, aoeTarget := range sim.Encounter.TargetUnits {
 					baseDamage := spell.Direct.Roll(sim) + dmgFromSP
 					baseDamage *= core.AOECapMultiplierFor(len(sim.Encounter.Targets) + 1)

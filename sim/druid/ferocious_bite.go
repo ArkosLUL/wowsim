@@ -47,8 +47,8 @@ func (druid *Druid) registerFerociousBiteSpell() {
 			baseDamage := spell.Direct.Min +
 				sim.RandomFloat("Ferocious Bite")*(spell.Direct.Max-spell.Direct.Min) +
 				290*comboPoints +
-				excessEnergy*(9.4+attackPower/410) +
-				attackPower*0.07*comboPoints
+				core.PowerBonus(excessEnergy*(9.4+attackPower/410)) +
+				core.PowerBonus(attackPower*0.07*comboPoints)
 
 			result := spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 

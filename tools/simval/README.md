@@ -88,9 +88,9 @@ Per unshaped record (`damage.go`):
   server works it out before the dot's own aura, and with it Noxious Stings, is on the target.
 - Checks: declared base (skipped when it comes from another spell, e.g. Death Coil's), SP coefficient (±5e-4),
   `taken` at both roll ends, and the crit multiplier where both sides crit (server: a crit-capable spell, or a
-  tick unless `CANT_CRIT`; sim: dots only with ticks that crit). The sim may sit 0.1% or 1 point below the
-  server, and above it max(0.1%, 1 + bonuses × multiplier): the server truncates each SP or AP bonus before the
-  multipliers. A failing amount lists sim-only auras and server auras the sim lacks.
+  tick unless `CANT_CRIT`; sim: dots only with ticks that crit). The sim may sit 0.1% or 1 point from the
+  server either way (`amountTolerance`): it truncates where the server does, each SP or AP bonus included. A
+  failing amount lists sim-only auras and server auras the sim lacks.
 
 Pets (the strikes replay takes them) and non-80 characters fail. Shaped records give no checks.
 
@@ -349,7 +349,7 @@ that stood still) also gets `SniperTrainingUptime` 1 and its aura 53304. Per set
     truncates), the item's weapon damage (also in a feral form, which swings the form's), crit, hit (main hand and
     ranged) and expertise, from the auto attack spell's bonuses.
   - geared (`gearChecks`), per item: `socket bonus`, the sim's call read off `TotalStats` against the record's
-    `socketBonus`; `meta gem`, which the sim always counts, failing on a `condition` in `inactive`; any other
+    `socketBonus`; `meta gem`, the sim's `HasMetaGemEquipped` against a `condition` in `inactive`; any other
     `inactive` enchantment fails.
   - with `regen`: the timing replay's `checkRegen` (mana, energy, rune cooldowns) on a fresh start.
 - `damage`: the record's `shaped` must contain the probe's; unshaped records replay like `TestDamageRecords`
@@ -535,7 +535,8 @@ proc's internal cooldown in the sim then (the golden build procs Lightweave).
 - `fightLogTicks`: a dot's ticks the log has as direct damage (Explosive Shot's 53352, Devouring Plague's leech).
 
 **The sim** (`fightSim`): `goldcharPlayer`, geared, with the setup's `auras`, an empty APL, the cycle's
-distance and facing, a hunter's ammo, Sniper Training when the log has it, against `bossDummy` (held to
+distance and facing, a hunter's ammo, Sniper Training and Hunter's Mark when the log has them, the target
+starting at the cycle's `dummyHealthPct`, against `bossDummy` (held to
 `goldchar.jsonl`'s), for the fight's length, 1000 iterations. The dummy's max health goes on the encounter after
 each reset, so the target's health percent (Rend's +35% above 75%) follows damage dealt, as on the barely scratched
 dummy, not time left. At the pull it disables pets the log has no minion for and holds the autos until the first
@@ -570,8 +571,11 @@ A value on one side only is 0 on the other.
   sim's procs and power go their own way, so a proc-sped or power-gated cast isn't always the sim's; a GCD,
   cooldown or cost the sim gets wrong misses them all. Casts after the sim's fight ended aren't counted. The
   start follows the sim's own cast time, so a wrong cast time shows only through what it blocks.
-- Per ability: `count` (floor 0.5), `crits`, each avoidance count, `hit`/`crit`/`glance mean` (floor half a
-  point or 0.05%). Per dot: `ticks`, tick crits and means, `tick spacing` (median, floor 50 ms), and for the
+- Per ability: `count` (floor 0.5), `crits`, each avoidance count, `hit`/`crit`/`glance mean`. A mean isn't
+  ranged (`checkMean`): within 4 deviations of the sim's mean over every iteration, plus a point or 0.1%; a
+  fight's deviation is what its hits share, measured between the iterations, plus each hit's own over the log's
+  count. The sim's own fights stay within 2.4, the committed ones within 3.4. Per dot: `ticks`, tick crits and
+  means, `tick spacing` (median, floor 50 ms), and for the
   cycle's own dots `ticks per application` (floor one tick over all applications).
 - Per aura: `applications` (floor 0.5), `uptime` (floor half a map update per time it came up in the log, plus
   one; a refresh only moves the end). Per power gain: `amount` (floor 1, or 0.5% plus half the log's largest
@@ -586,7 +590,7 @@ its README row); `TestFightReplaysTheBotsOwnFight` (each cycle run by a sim bot 
 a Chronicle log and replayed: all agree and the bot lands every cycle spell; over seeds 2 to 9, 256 such fights
 had no false check failure, but twice the bot never landed a finisher cast once a cycle: Feral APL's Savage Roar,
 Subtlety's Eviscerate);
-`TestFightCatchesMismatches` (harder Shadow Bolts, casts moved into a GCD, an aura never applied, doubled mana,
+`TestFightCatchesMismatches` (Shadow Bolts 40% harder, casts moved into a GCD, an aura never applied, doubled mana,
 swings that never crit); hand-built logs for the window, the tally and the trim.
 
 ## chronicle

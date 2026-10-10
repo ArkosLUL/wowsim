@@ -49,7 +49,7 @@ func (hunter *Hunter) registerKillShotSpell() {
 				hunter.AmmoDamageBonus +
 				spell.BonusWeaponDamage()) * spell.Direct.WeaponPct
 			// Spell::EffectWeaponDmg's own 0.4 reads GetTotalAttackPowerValue with no victim, so no Hunter's Mark
-			baseDamage += spell.Direct.AP * hunter.rangedWeaponAP()
+			baseDamage += core.PowerBonus(spell.Direct.AP * hunter.rangedWeaponAP())
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeRangedHitAndCrit)
 			spell.DealDamageAfterTravel(sim, result)
 		},
