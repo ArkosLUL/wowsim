@@ -83,7 +83,7 @@ dps_results: {
  value: {
   dps: 8425.65783
   tps: 8349.57393
-  hps: 94.22367
+  hps: 99.87133
  }
 }
 dps_results: {
@@ -91,7 +91,7 @@ dps_results: {
  value: {
   dps: 8425.65783
   tps: 8349.57393
-  hps: 94.22367
+  hps: 99.87133
  }
 }
 dps_results: {
@@ -104,8 +104,8 @@ dps_results: {
 dps_results: {
  key: "TestBalance-AllItems-BlessedRegaliaofUndeadCleansing"
  value: {
-  dps: 6028.79333
-  tps: 5928.20594
+  dps: 5990.00083
+  tps: 5888.91744
  }
 }
 dps_results: {
@@ -238,8 +238,8 @@ dps_results: {
 dps_results: {
  key: "TestBalance-AllItems-DreamwalkerBattlegear"
  value: {
-  dps: 4296.11467
-  tps: 4187.94287
+  dps: 4380.74617
+  tps: 4272.70952
  }
 }
 dps_results: {
@@ -316,7 +316,7 @@ dps_results: {
  key: "TestBalance-AllItems-Figurine-SapphireOwl-42413"
  value: {
   dps: 8407.41467
-  tps: 8339.8141
+  tps: 8339.74156
  }
 }
 dps_results: {
@@ -371,8 +371,8 @@ dps_results: {
 dps_results: {
  key: "TestBalance-AllItems-Gladiator'sSanctuary"
  value: {
-  dps: 4553.089
-  tps: 4449.3579
+  dps: 4737.2465
+  tps: 4637.16612
  }
 }
 dps_results: {
@@ -518,15 +518,15 @@ dps_results: {
 dps_results: {
  key: "TestBalance-AllItems-LasherweaveBattlegear"
  value: {
-  dps: 4486.60967
-  tps: 4380.87032
+  dps: 4538.52883
+  tps: 4433.73363
  }
 }
 dps_results: {
  key: "TestBalance-AllItems-LasherweaveRegalia"
  value: {
-  dps: 10470.2765
-  tps: 10411.88681
+  dps: 10479.796
+  tps: 10421.40631
  }
 }
 dps_results: {
@@ -560,8 +560,8 @@ dps_results: {
 dps_results: {
  key: "TestBalance-AllItems-Malfurion'sBattlegear"
  value: {
-  dps: 4771.51467
-  tps: 4664.64876
+  dps: 4695.50383
+  tps: 4586.99075
  }
 }
 dps_results: {
@@ -602,8 +602,8 @@ dps_results: {
 dps_results: {
  key: "TestBalance-AllItems-NightsongBattlegear"
  value: {
-  dps: 4555.71117
-  tps: 4447.97004
+  dps: 4572.0545
+  tps: 4465.92226
  }
 }
 dps_results: {
@@ -791,8 +791,8 @@ dps_results: {
 dps_results: {
  key: "TestBalance-AllItems-StormshroudArmor"
  value: {
-  dps: 5154.1665
-  tps: 5047.67774
+  dps: 5159.43967
+  tps: 5052.51089
  }
 }
 dps_results: {
@@ -840,15 +840,15 @@ dps_results: {
 dps_results: {
  key: "TestBalance-AllItems-ThunderheartHarness"
  value: {
-  dps: 3298.5005
-  tps: 3189.67269
+  dps: 3386.64167
+  tps: 3280.52014
  }
 }
 dps_results: {
  key: "TestBalance-AllItems-ThunderheartRegalia"
  value: {
-  dps: 5500.096
-  tps: 5406.42715
+  dps: 5492.35533
+  tps: 5398.76479
  }
 }
 dps_results: {
@@ -910,8 +910,8 @@ dps_results: {
 dps_results: {
  key: "TestBalance-AllItems-UndeadSlayer'sBlessedArmor"
  value: {
-  dps: 5017.97467
-  tps: 4908.2498
+  dps: 5028.68933
+  tps: 4919.72259
  }
 }
 dps_results: {
@@ -973,15 +973,15 @@ dps_results: {
 dps_results: {
  key: "TestBalance-Settings-Tauren-p1-Default-basic_p3-NoBuffs-LongMultiTarget"
  value: {
-  dps: 3547.54733
-  tps: 3507.43923
+  dps: 3736.44283
+  tps: 3699.53228
  }
 }
 dps_results: {
  key: "TestBalance-Settings-Tauren-p1-Default-basic_p3-NoBuffs-LongSingleTarget"
  value: {
-  dps: 2483.10283
-  tps: 2425.35473
+  dps: 2531.28617
+  tps: 2474.47201
  }
 }
 dps_results: {
@@ -1015,15 +1015,15 @@ dps_results: {
 dps_results: {
  key: "TestBalance-Settings-Tauren-p2-Default-basic_p3-NoBuffs-LongMultiTarget"
  value: {
-  dps: 4791.78233
-  tps: 4753.5784
+  dps: 5127.97133
+  tps: 5097.19382
  }
 }
 dps_results: {
  key: "TestBalance-Settings-Tauren-p2-Default-basic_p3-NoBuffs-LongSingleTarget"
  value: {
-  dps: 3318.37033
-  tps: 3259.16594
+  dps: 3448.5765
+  tps: 3392.57784
  }
 }
 dps_results: {
@@ -1057,15 +1057,15 @@ dps_results: {
 dps_results: {
  key: "TestBalance-Settings-Tauren-p3_alliance-Default-basic_p3-NoBuffs-LongMultiTarget"
  value: {
-  dps: 9470.0975
-  tps: 9490.51192
+  dps: 10287.23383
+  tps: 10321.98436
  }
 }
 dps_results: {
  key: "TestBalance-Settings-Tauren-p3_alliance-Default-basic_p3-NoBuffs-LongSingleTarget"
  value: {
-  dps: 6079.355
-  tps: 6056.48946
+  dps: 6243.568
+  tps: 6223.40827
  }
 }
 dps_results: {
@@ -1240,7 +1240,7 @@ ability_results: {
   entries: {
    key: "player|aura|{SpellID: 16870}"
    value: {
-    uptime_s: 44.64091
+    uptime_s: 47.41866
    }
   }
   entries: {

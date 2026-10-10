@@ -71,14 +71,14 @@ dps_results: {
  key: "TestRestoration-AllItems-BaubleofTrueBlood-50354"
  value: {
   tps: 0.01
-  hps: 93.74733
+  hps: 99.3665
  }
 }
 dps_results: {
  key: "TestRestoration-AllItems-BaubleofTrueBlood-50726"
  value: {
   tps: 0.01
-  hps: 93.74733
+  hps: 99.3665
  }
 }
 dps_results: {
@@ -897,7 +897,7 @@ dps_results: {
  key: "TestRestoration-Talents-HealingGrace-Average"
  value: {
   tps: 2863.68938
-  hps: 8724.24262
+  hps: 8869.13668
  }
 }
 ability_results: {
@@ -1195,8 +1195,8 @@ ability_results: {
    value: {
     casts: 114.6635
     hits: 114.6635
-    amount_per_hit: 763.035
-    amount: 87492.264
+    amount_per_hit: 785.37714
+    amount: 90054.092
    }
   }
   entries: {
@@ -1204,8 +1204,8 @@ ability_results: {
    value: {
     casts: 30.18
     hits: 30.18
-    amount_per_hit: 448.42213
-    amount: 13533.38
+    amount_per_hit: 461.65408
+    amount: 13932.72
    }
   }
   entries: {
@@ -1223,8 +1223,8 @@ ability_results: {
     casts: 138.477
     hits: 415.431
     crit_pct: 35.33222
-    amount_per_hit: 5532.54093
-    amount: 2.2983890095e+06
+    amount_per_hit: 5630.01943
+    amount: 2.3388846035e+06
    }
   }
   entries: {

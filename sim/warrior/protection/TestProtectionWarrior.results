@@ -121,7 +121,7 @@ dps_results: {
  value: {
   dps: 1502.86467
   tps: 3291.33144
-  hps: 82.27967
+  hps: 87.21117
  }
 }
 dps_results: {
@@ -129,7 +129,7 @@ dps_results: {
  value: {
   dps: 1502.86467
   tps: 3291.33144
-  hps: 82.27967
+  hps: 87.21117
  }
 }
 dps_results: {
@@ -508,8 +508,8 @@ dps_results: {
  key: "TestProtectionWarrior-AllItems-InvigoratingEarthsiegeDiamond"
  value: {
   dps: 1499.5505
-  tps: 3287.1582
-  hps: 16.36067
+  tps: 3287.29695
+  hps: 17.33317
  }
 }
 dps_results: {
