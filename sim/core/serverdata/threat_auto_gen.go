@@ -645,6 +645,12 @@ var threats = []Threat{
 	{SpellID: 71873, Targets: ThreatTargetsCaster},                                         // Item - Icecrown 25 Heroic Tank Weapon Proc
 	{SpellID: 71875, Targets: ThreatTargetsCaster},                                         // Necrotic Touch
 	{SpellID: 71877, Targets: ThreatTargetsCaster},                                         // Necrotic Touch
+	{SpellID: 71881, Targets: ThreatTargetsCaster},                                         // Invigoration
+	{SpellID: 71882, Targets: ThreatTargetsCaster},                                         // Invigoration
+	{SpellID: 71883, Targets: ThreatTargetsCaster},                                         // Invigoration
+	{SpellID: 71886, Targets: ThreatTargetsCaster},                                         // Invigoration
+	{SpellID: 71887, Targets: ThreatTargetsCaster},                                         // Invigoration
+	{SpellID: 71888, Targets: ThreatTargetsCaster},                                         // Invigoration
 	{SpellID: 71904, Targets: ThreatTargetsEnemyArea},                                      // Chaos Bane
 	{SpellID: 71905, Targets: ThreatTargetsCaster},                                         // Soul Fragment
 	{SpellID: 72412, Targets: ThreatTargetsCaster},                                         // Frostforged Champion

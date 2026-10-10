@@ -38,6 +38,8 @@ func (character *Character) applyProfessionEffects() {
 	if character.HasProfession(proto.Profession_Herbalism) {
 		actionID := ActionID{SpellID: 55503}
 		healthMetrics := character.HealThreat(character.NewHealthMetrics(actionID), 55503)
+		// the spell below makes no threat of its own, so its cast's bonus goes with the heal's
+		castThreat := character.NewCastThreat(55503)
 
 		spell := character.RegisterSpell(SpellConfig{
 			ActionID:    actionID,
@@ -49,6 +51,7 @@ func (character *Character) applyProfessionEffects() {
 				},
 			},
 			ApplyEffects: func(sim *Simulation, _ *Unit, _ *Spell) {
+				castThreat.Add(sim, healthMetrics)
 				amount := (3600 + character.MaxHealth()*0.016) / 5
 				StartPeriodicAction(sim, PeriodicActionOptions{
 					Period:   time.Second,

@@ -152,9 +152,7 @@ var fightRefreshesLeftOut = map[int32]string{
 }
 
 // fightEnergizeLeftOut are server power gains the sim gives some way the comparison doesn't read.
-var fightEnergizeLeftOut = map[int32]string{
-	57669: "Replenishment: the sim gives it as MP5 in the mana regen",
-}
+var fightEnergizeLeftOut = map[int32]string{}
 
 // fightMissesLeftOut are server spells whose logged misses decide nothing the sim models, or repeat another
 // spell's.

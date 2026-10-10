@@ -131,6 +131,9 @@ type Raid struct {
 	replenishmentUnits         []*Unit   // All units who can receive replenishment.
 	curReplenishmentUnits      [][]*Unit // Units that currently have replenishment active, separated by source.
 	leftoverReplenishmentUnits []*Unit   // Units without replenishment currently active.
+
+	// each source's cast of Replenishment, by source
+	replenishmentCasts []*CastThreat
 }
 
 func (raid *Raid) GetActiveUnits() []*Unit {

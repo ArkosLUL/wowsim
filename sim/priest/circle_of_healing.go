@@ -43,7 +43,7 @@ func (priest *Priest) registerCircleOfHealingSpell() {
 			(1 + .02*float64(priest.Talents.DivineProvidence)) *
 			core.TernaryFloat64(priest.HasSetBonus(ItemSetCrimsonAcolytesRaiment, 4), 1.1, 1),
 		CritMultiplier:   priest.DefaultHealingCritMultiplier(),
-		ThreatMultiplier: 1 - []float64{0, .07, .14, .20}[priest.Talents.SilentResolve],
+		ThreatMultiplier: 1,
 
 		Direct: core.SpellEffect{Effect: 0, Min: 958, Max: 1058, SP: 0.402},
 

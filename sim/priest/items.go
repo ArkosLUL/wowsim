@@ -160,7 +160,7 @@ var ItemSetCrimsonAcolytesRaiment = core.NewItemSet(core.ItemSet{
 				Flags:       core.SpellFlagNoOnCastComplete | core.SpellFlagIgnoreModifiers | core.SpellFlagHelpful,
 
 				DamageMultiplier: 1,
-				ThreatMultiplier: 1 - []float64{0, .07, .14, .20}[priest.Talents.SilentResolve],
+				ThreatMultiplier: 1,
 
 				Hot: core.DotConfig{
 					Aura: core.Aura{

@@ -1,9 +1,7 @@
 package core
 
 import (
-	"cmp"
 	"math"
-	"slices"
 	"strconv"
 	"time"
 
@@ -149,20 +147,9 @@ func applyBuffEffects(agent Agent, raidBuffs *proto.RaidBuffs, partyBuffs *proto
 		})
 	}
 
-	var replenishmentActionID ActionID
-	if individualBuffs.VampiricTouch {
-		replenishmentActionID.SpellID = 48160
-	} else if individualBuffs.HuntingParty {
-		replenishmentActionID.SpellID = 53292
-	} else if individualBuffs.JudgementsOfTheWise {
-		replenishmentActionID.SpellID = 31878
-	} else if individualBuffs.ImprovedSoulLeech {
-		replenishmentActionID.SpellID = 54118
-	} else if individualBuffs.EnduringWinter {
-		replenishmentActionID.SpellID = 44561
-	}
-	if !(replenishmentActionID.IsEmptyAction()) {
-		MakePermanent(replenishmentAura(&character.Unit, replenishmentActionID))
+	if individualBuffs.VampiricTouch || individualBuffs.HuntingParty || individualBuffs.JudgementsOfTheWise ||
+		individualBuffs.ImprovedSoulLeech || individualBuffs.EnduringWinter {
+		MakePermanent(replenishmentAura(&character.Unit))
 	}
 
 	kingsAgiIntSpiAmount := 1.0
@@ -1265,108 +1252,6 @@ func ManaTideTotemAura(character *Character, actionTag int32) *Aura {
 			})
 		},
 	})
-}
-
-const ReplenishmentAuraDuration = time.Second * 15
-
-// Creates the actual replenishment aura for a unit.
-func replenishmentAura(unit *Unit, _ ActionID) *Aura {
-	if unit.ReplenishmentAura != nil {
-		return unit.ReplenishmentAura
-	}
-
-	replenishmentDep := unit.NewDynamicStatDependency(stats.Mana, stats.MP5, 0.01)
-
-	unit.ReplenishmentAura = unit.RegisterAura(Aura{
-		Label:    "Replenishment",
-		ActionID: ActionID{SpellID: 57669},
-		Duration: ReplenishmentAuraDuration,
-		OnGain: func(aura *Aura, sim *Simulation) {
-			aura.Unit.EnableDynamicStatDep(sim, replenishmentDep)
-		},
-		OnExpire: func(aura *Aura, sim *Simulation) {
-			aura.Unit.DisableDynamicStatDep(sim, replenishmentDep)
-		},
-	})
-
-	return unit.ReplenishmentAura
-}
-
-type ReplenishmentSource int
-
-// Returns a new aura whose activation will give the Replenishment buff to 10 party/raid members.
-func (raid *Raid) NewReplenishmentSource(actionID ActionID) ReplenishmentSource {
-	newReplSource := ReplenishmentSource(len(raid.curReplenishmentUnits))
-	raid.curReplenishmentUnits = append(raid.curReplenishmentUnits, []*Unit{})
-
-	if raid.replenishmentUnits != nil {
-		return newReplSource
-	}
-
-	// Get the list of all eligible units (party/raid members + their pets, but no guardians).
-	var manaUsers []*Unit
-	for _, party := range raid.Parties {
-		for _, player := range party.Players {
-			character := player.GetCharacter()
-			if character.HasManaBar() {
-				manaUsers = append(manaUsers, &character.Unit)
-			}
-		}
-		for _, petAgent := range party.Pets {
-			pet := petAgent.GetPet()
-			if pet.HasManaBar() && !pet.IsGuardian() {
-				manaUsers = append(manaUsers, &pet.Unit)
-			}
-		}
-	}
-	raid.replenishmentUnits = manaUsers
-
-	// Initialize replenishment aura for all applicable units.
-	for _, unit := range raid.replenishmentUnits {
-		replenishmentAura(unit, actionID)
-	}
-
-	return newReplSource
-}
-
-func (raid *Raid) resetReplenishment(_ *Simulation) {
-	raid.leftoverReplenishmentUnits = raid.replenishmentUnits
-	for i := 0; i < len(raid.curReplenishmentUnits); i++ {
-		raid.curReplenishmentUnits[i] = nil
-	}
-}
-
-func (raid *Raid) ProcReplenishment(sim *Simulation, src ReplenishmentSource) {
-	// If the raid is fully covered by one or more replenishment sources, we can
-	// skip the mana sorting.
-	if len(raid.curReplenishmentUnits)*10 >= len(raid.replenishmentUnits) {
-		if len(raid.curReplenishmentUnits[src]) == 0 {
-			if len(raid.leftoverReplenishmentUnits) > 10 {
-				raid.curReplenishmentUnits[src] = raid.leftoverReplenishmentUnits[:10]
-				raid.leftoverReplenishmentUnits = raid.leftoverReplenishmentUnits[10:]
-			} else {
-				raid.curReplenishmentUnits[src] = raid.leftoverReplenishmentUnits
-				raid.leftoverReplenishmentUnits = nil
-			}
-		}
-		for _, unit := range raid.curReplenishmentUnits[src] {
-			unit.ReplenishmentAura.Activate(sim)
-		}
-		return
-	}
-
-	eligible := append(raid.curReplenishmentUnits[src], raid.leftoverReplenishmentUnits...)
-	slices.SortFunc(eligible, func(v1, v2 *Unit) int {
-		return cmp.Compare(v1.CurrentManaPercent(), v2.CurrentManaPercent())
-	})
-	raid.curReplenishmentUnits[src] = eligible[:10]
-	raid.leftoverReplenishmentUnits = eligible[10:]
-	for _, unit := range raid.curReplenishmentUnits[src] {
-		unit.ReplenishmentAura.Activate(sim)
-	}
-	for _, unit := range raid.leftoverReplenishmentUnits {
-		unit.ReplenishmentAura.Deactivate(sim)
-	}
 }
 
 func TotemOfWrathAura(character *Character) *Aura {

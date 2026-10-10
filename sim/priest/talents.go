@@ -45,6 +45,12 @@ func (priest *Priest) ApplyTalents() {
 		priest.PseudoStats.ThreatMultiplier *= 0.7
 	}
 
+	if priest.Talents.SilentResolve > 0 {
+		// a threat aura on the holy and arcane schools. Its SPELLMOD_THREAT only covers Mana Burn.
+		priest.AddThreatSchoolMultiplier(core.SpellSchoolHoly|core.SpellSchoolArcane,
+			1-[]float64{0, .07, .14, .20}[priest.Talents.SilentResolve])
+	}
+
 	if priest.Talents.SpiritualGuidance > 0 {
 		priest.AddStatDependency(stats.Spirit, stats.SpellPower, 0.05*float64(priest.Talents.SpiritualGuidance))
 	}

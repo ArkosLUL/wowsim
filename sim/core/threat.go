@@ -418,24 +418,111 @@ type gainThreat struct {
 // rage from damage, a rune spell's runic power, refunds) makes no threat, and one another unit casts makes
 // that unit's.
 func (metrics *ResourceMetrics) EnergizeThreat(kind EnergizeKind) *ResourceMetrics {
-	perPoint := 0.5
-	var bar PowerBarType
-	switch metrics.Type {
-	case proto.ResourceType_ResourceTypeMana:
-		bar = ManaBar
-	case proto.ResourceType_ResourceTypeEnergy:
-		bar = EnergyBar
-	case proto.ResourceType_ResourceTypeRage:
-		// the server counts rage and runic power in tenths
-		bar, perPoint = RageBar, 5
-	case proto.ResourceType_ResourceTypeRunicPower:
-		bar, perPoint = RunicPower, 5
-	default:
-		panic(fmt.Sprintf("energize threat on %v metrics of %s", metrics.Type, metrics.ActionID))
-	}
+	bar, perPoint := metrics.energizePower()
 	metrics.gainThreat = &gainThreat{perPoint: perPoint, requested: kind != EnergizeByTick, bar: bar,
 		anyPower: kind == EnergizeByPotion}
 	return metrics
+}
+
+// energizePower is the power the metrics count and an energize's threat per point of it.
+func (metrics *ResourceMetrics) energizePower() (bar PowerBarType, perPoint float64) {
+	switch metrics.Type {
+	case proto.ResourceType_ResourceTypeMana:
+		return ManaBar, 0.5
+	case proto.ResourceType_ResourceTypeEnergy:
+		return EnergyBar, 0.5
+	case proto.ResourceType_ResourceTypeRage:
+		// the server counts rage and runic power in tenths
+		return RageBar, 5
+	case proto.ResourceType_ResourceTypeRunicPower:
+		return RunicPower, 5
+	default:
+		panic(fmt.Sprintf("energize threat on %v metrics of %s", metrics.Type, metrics.ActionID))
+	}
+}
+
+// AddEnergizeTickThreat books a tick of a periodic energize the unit put on someone else, itself included,
+// under the metrics' action: half of gain, the power the tick gave its target, unmodified. The server hands
+// it to the aura's caster on the enemies fighting the target (AuraEffect::HandlePeriodicEnergizeAuraTick),
+// and in the sim every enemy fights the whole raid. The caller checks the target takes the tick at all.
+func (unit *Unit) AddEnergizeTickThreat(sim *Simulation, metrics *ResourceMetrics, gain float64) {
+	if sim.CurrentTime < 0 || gain <= 0 {
+		return
+	}
+	_, perPoint := metrics.energizePower()
+	metrics.addThreat(sim, unit, gain*perPoint)
+}
+
+// addThreat books assist threat the unit made under the metrics' action.
+func (metrics *ResourceMetrics) addThreat(sim *Simulation, unit *Unit, threat float64) {
+	if threat == 0 {
+		return
+	}
+	metrics.threat += threat
+	if sim.Log != nil {
+		unit.Log(sim, "%s assist threat %0.3f over %d enemies", metrics.ActionID, threat, len(sim.Encounter.TargetUnits))
+	}
+}
+
+// CastThreat is the cast bonus of a server spell the sim puts on with no cast of its own: a proc's aura, the
+// aura another spell triggers, an area buff a proc casts. Positive spells only, whose bonus is assist threat.
+type CastThreat struct {
+	unit  *Unit
+	spell *serverdata.Spell
+
+	// what spell makes of a cast by unit, read at the first cast
+	threat spellThreat
+	school SpellSchool
+	read   bool
+}
+
+// NewCastThreat reads server spell spellID, which the unit casts on itself or its raid.
+func (unit *Unit) NewCastThreat(spellID int32) *CastThreat {
+	s := serverdata.SpellByID(spellID)
+	if s == nil {
+		panic(fmt.Sprintf("cast spell %d isn't in the server data", spellID))
+	}
+	cast := &CastThreat{unit: unit, spell: s}
+	unit.castThreats = append(unit.castThreats, cast)
+	return cast
+}
+
+// Add books one cast's bonus under the metrics' action, modified like a hit of the spell and shared over the
+// enemies (Spell::HandleThreatSpells, ThreatManager::ForwardThreatForAssistingMe). None before the pull.
+func (cast *CastThreat) Add(sim *Simulation, metrics *ResourceMetrics) {
+	if sim.CurrentTime < 0 {
+		return
+	}
+	metrics.addThreat(sim, cast.unit, cast.bonus())
+}
+
+// bonus is what one cast adds now, summed over the enemies.
+func (cast *CastThreat) bonus() float64 {
+	t := &cast.threat
+	if !cast.read {
+		*t = serverThreat(cast.unit, cast.spell, false)
+		if !t.noBonus && !t.assist {
+			panic(fmt.Sprintf("cast threat of %d, which isn't a positive spell", cast.spell.ID))
+		}
+		cast.school = SpellSchoolFromServerMask(cast.spell.SchoolMask)
+		cast.read = true
+	}
+	if t.noBonus {
+		return 0
+	}
+	return t.bonusBase(cast.unit) * t.pct * cast.unit.ThreatSchoolMultiplier(cast.school)
+}
+
+// CastThreatOf is what one cast of server spell spellID adds now through the unit's CastThreat, summed over the
+// enemies; ok is false when the unit has none.
+func (unit *Unit) CastThreatOf(spellID int32) (bonus float64, ok bool) {
+	for _, cast := range unit.castThreats {
+		// spellID first: TestHardCodedItemIDsCoverTheSim reads `.ID == x` as an item id check
+		if spellID == cast.spell.ID {
+			return cast.bonus(), true
+		}
+	}
+	return 0, false
 }
 
 // AddEnergizeThreat makes an energize's threat the sim books as part of another gain, like Chill of the
@@ -487,13 +574,7 @@ func (unit *Unit) addGainThreat(sim *Simulation, metrics *ResourceMetrics, amoun
 	} else {
 		threat = g.healThreatOf(unit, gain)
 	}
-	if threat == 0 {
-		return
-	}
-	metrics.threat += threat
-	if sim.Log != nil {
-		unit.Log(sim, "%s assist threat %0.3f over %d enemies", metrics.ActionID, threat, len(sim.Encounter.TargetUnits))
-	}
+	metrics.addThreat(sim, unit, threat)
 }
 
 func (unit *Unit) hasPower(bar PowerBarType) bool {
@@ -537,6 +618,37 @@ func (unit *Unit) HealThreatOf(spellID int32, gain float64) (heal, bonus float64
 		}
 	}
 	return 0, 0, false
+}
+
+// GainThreat is the assist threat booked under the action's resource metrics so far this iteration: its
+// energizes, heals and aura casts, summed over the enemies.
+func (unit *Unit) GainThreat(actionID ActionID) float64 {
+	threat := 0.0
+	for _, rm := range unit.Metrics.resources {
+		if rm.ActionID == actionID {
+			threat += rm.threat
+		}
+	}
+	return threat
+}
+
+// EnergizeThreatOf splits the assist threat the action's energizes made so far this iteration: bySpell is its
+// EnergizeBySpell and potion gains', byTick what its tick metrics hold, an aura cast's bonus booked there
+// included, and tickGain the power those ticks gave.
+func (unit *Unit) EnergizeThreatOf(actionID ActionID) (bySpell, byTick, tickGain float64) {
+	for _, rm := range unit.Metrics.resources {
+		g := rm.gainThreat
+		if rm.ActionID != actionID || g == nil || g.heal != nil {
+			continue
+		}
+		if g.requested {
+			bySpell += rm.threat
+		} else {
+			byTick += rm.threat
+			tickGain += rm.ActualGainForCurrentIteration()
+		}
+	}
+	return bySpell, byTick, tickGain
 }
 
 // doneGainThreat puts this iteration's gain threat in the unit's metrics, each under its gain's action and

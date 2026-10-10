@@ -12,7 +12,7 @@ func (priest *Priest) registerMindBlastSpell() {
 
 	var replSrc core.ReplenishmentSource
 	if priest.Talents.VampiricTouch {
-		replSrc = priest.Env.Raid.NewReplenishmentSource(core.ActionID{SpellID: 48160})
+		replSrc = priest.Env.Raid.NewReplenishmentSource(&priest.Unit, core.ActionID{SpellID: 48160})
 	}
 
 	// From Improved Mind Blast

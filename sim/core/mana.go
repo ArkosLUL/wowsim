@@ -21,6 +21,7 @@ type manaBar struct {
 	JowiseManaMetrics     *ResourceMetrics
 
 	ReplenishmentAura *Aura
+	replenishment     *replenishment
 
 	// For keeping track of OOM status.
 	waitingForMana          float64

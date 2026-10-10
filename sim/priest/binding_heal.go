@@ -30,7 +30,7 @@ func (priest *Priest) registerBindingHealSpell() {
 			(1 + .02*float64(priest.Talents.FocusedPower)) *
 			(1 + .02*float64(priest.Talents.DivineProvidence)),
 		CritMultiplier:   priest.DefaultHealingCritMultiplier(),
-		ThreatMultiplier: 1 - []float64{0, .07, .14, .20}[priest.Talents.SilentResolve],
+		ThreatMultiplier: 1,
 
 		Direct: core.SpellEffect{Effect: 0, Min: 1959, Max: 2515, SP: 0.8057},
 		Mods: []core.SpellMod{

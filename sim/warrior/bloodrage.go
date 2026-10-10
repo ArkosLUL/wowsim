@@ -11,6 +11,8 @@ func (warrior *Warrior) registerBloodrageCD() {
 	rageMetrics := warrior.NewRageMetrics(actionID).EnergizeThreat(core.EnergizeBySpell)
 	// 29131's ticks, booked under 2687 with the instant rage
 	tickMetrics := warrior.NewRageMetrics(actionID).EnergizeThreat(core.EnergizeByTick)
+	// 2687 triggers 29131, a cast with a bonus of its own
+	tickAuraCast := warrior.NewCastThreat(29131)
 
 	instantRage := 20.0 * (1.0 + 0.25*float64(warrior.Talents.ImprovedBloodrage))
 	ragePerSec := 1 + 0.25*float64(warrior.Talents.ImprovedBloodrage)
@@ -27,6 +29,7 @@ func (warrior *Warrior) registerBloodrageCD() {
 
 		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, _ *core.Spell) {
 			warrior.AddRage(sim, instantRage, rageMetrics)
+			tickAuraCast.Add(sim, tickMetrics)
 
 			core.StartPeriodicAction(sim, core.PeriodicActionOptions{
 				NumTicks: 10,

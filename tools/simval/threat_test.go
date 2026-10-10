@@ -119,17 +119,18 @@ func threatAssistProbesOf(spells ...int32) []threatProbe {
 // threatBots are TestSimvalThreat's characters and probes.
 var threatBots = []threatBot{
 	{"ProtWarrior", warrior, 1, []int32{71, 7376, 57339}, slices.Concat(threatProbesOf(47450, 47520), []threatProbe{{47520, 2, 0}},
-		threatProbesOf(57823, 47488, 47475, 50783, 7386, 58567, 47498, 47437, 47502, 12809, 57755, 47471),
-		threatAssistProbesOf(2565, 12975, 47440, 47436, 871))},
+		threatProbesOf(57823, 47488, 47475, 50783, 7386, 58567, 47498, 47437, 47502, 12809, 57755, 47471, 44578),
+		threatAssistProbesOf(2565, 12975, 47440, 47436, 871, 2687, 29131, 55503, 71883))},
 	{"FuryWarrior", warrior, 1, []int32{29763, 2458, 7381}, slices.Concat(
 		threatProbesOf(47450, 47520, 47475, 50783, 23881, 1680, 47471, 47486, 7384, 47465, 50622, 44949),
-		threatAssistProbesOf(12292, 1719, 18499))},
+		threatAssistProbesOf(12292, 1719, 18499, 2687, 29131))},
 	{"ProtPaladin", paladin, 1, []int32{25780, 57340}, slices.Concat(threatProbesOf(48827, 53595, 61411, 20187, 48801, 48817,
-		48819, 25742, 35395), threatAssistProbesOf(20375, 48952, 54428))},
+		48819, 25742, 35395, 44578), threatAssistProbesOf(20375, 48952, 54428))},
 	{"RetPaladin", paladin, 1, []int32{31881}, slices.Concat(threatProbesOf(35395, 53385, 48801, 20187, 48806, 48819, 20424),
 		threatAssistProbesOf(31884))},
 	{"BearDruid", druid, 4, []int32{9634, 9635, 21178, 57339}, slices.Concat(threatProbesOf(48480, 48568, 48564, 48562),
-		[]threatProbe{{48562, 3, 0}}, threatProbesOf(48560, 60089, 16857), threatAssistProbesOf(22812, 22842, 61336, 50334))},
+		[]threatProbe{{48562, 3, 0}}, threatProbesOf(48560, 60089, 16857, 22845),
+		threatAssistProbesOf(22812, 22842, 61336, 50334, 5229))},
 	{"CatDruid", druid, 4, []int32{768, 3025}, slices.Concat(threatProbesOf(48572, 48566, 48574, 49800, 48577, 62078, 16857),
 		threatAssistProbesOf(768, 50213))},
 	{"FrostDeathKnight", deathKnight, 1, []int32{48263, 57340, 61261}, slices.Concat(
@@ -143,7 +144,9 @@ var threatBots = []threatBot{
 		threatProbesOf(42897, 44781, 42833, 42926, 42842, 47610, 42914, 55360, 42859),
 		threatAssistProbesOf(12472, 12042, 11129, 12043, 11958, 12051, 55342))},
 	{"ShadowPriest", priest, 1, []int32{15320, 15473, 49868}, slices.Concat(
-		threatProbesOf(48127, 48156, 58381, 48125, 48160, 48300, 48158, 48123), threatAssistProbesOf(64901, 10060))},
+		threatProbesOf(48127, 48156, 58381, 48125, 48160, 48300, 48158, 48123), threatAssistProbesOf(64901, 10060, 57669))},
+	// Silent Resolve
+	{"HolyPriest", priest, 1, []int32{14785}, threatProbesOf(48123, 48135, 48127)},
 	{"Warlock", warlock, 1, []int32{18372, 17918},
 		threatProbesOf(47809, 47838, 47811, 47813, 59172, 47815, 47864, 47865, 47867, 50511, 59092, 47193)},
 	{"ElementalShaman", shaman, 11, []int32{30674}, slices.Concat(threatProbesOf(49238, 49271, 60043, 49231, 49233, 49236,
@@ -191,7 +194,8 @@ func TestThreatFixtureHasEveryProbe(t *testing.T) {
 }
 
 // handThreat is a threat record the way mod-sim-validation writes it: a level 80 player with those auras
-// and main hand attack power against the boss dummy, and the record's numbers as given.
+// and main hand attack power against the boss dummy, and the record's numbers as given. It has no school
+// multipliers: withSchools adds them.
 func handThreat(t *testing.T, class, race uint8, spellID int32, auras []int32, ap float64, body string) threatRecord {
 	t.Helper()
 	auraJSON := make([]string, len(auras))
@@ -209,7 +213,7 @@ func handThreat(t *testing.T, class, race uint8, spellID int32, auras []int32, a
 			"attacks": [{"type": "mainhand", "attackPower": %v}]},
 		"target": {"name": "Dummy", "entry": 999000, "level": 83, "worldBoss": true, "creatureType": 5,
 			"resistances": [10643, 0, 0, 0, 0, 0, 0], "auras": []},
-		"modifiers": {"schools": [1, 1, 1, 1, 1, 1, 1], "auras": [], "spellMods": [], "tempModifier": 0},
+		"modifiers": {"auras": [], "spellMods": [], "tempModifier": 0},
 		%s "live": {"canHaveThreatList": true, "redirects": false, "gm": false, "landed": true, "engaged": false,
 			"damage": 0, "bonus": 0}
 	}`, spellID, spellID, class, race, strings.Join(auraJSON, ","), ap, body)
@@ -288,6 +292,35 @@ func withShares(rec threatRecord, shares ...float64) threatRecord {
 	return rec
 }
 
+// withEnergizeShares are the creatures sharing the cast's energize threat.
+func withEnergizeShares(rec threatRecord, shares ...float64) threatRecord {
+	rec.Live.EnergizeAssist = threatShares(shares...)
+	return rec
+}
+
+// withSchools gives the record the server's threat multiplier per school, physical first.
+func withSchools(rec threatRecord, schools ...float64) threatRecord {
+	rec.Modifiers.Schools = schools
+	return rec
+}
+
+// threatEnergizeJSON is a record's energize of that server power on the caster: `cast` at once, then `tick`
+// every periodMs, each making `part` of itself in threat. A 0 leaves that one out.
+func threatEnergizeJSON(power int, cast, tick float64, periodMs int, part float64) string {
+	var effects, sums []string
+	if cast != 0 {
+		effects = append(effects, fmt.Sprintf(`{"index": 0, "type": "energize", "caster": true, "power": %d, "amount": %v}`,
+			power, cast))
+		sums = append(sums, fmt.Sprintf(`"cast": {"amount": %v, "threat": %v}`, cast, cast*part))
+	}
+	if tick != 0 {
+		effects = append(effects, fmt.Sprintf(`{"index": 1, "type": "periodicEnergize", "caster": true,
+			"amplitudeMs": %d, "power": %d, "amount": %v}`, periodMs, power, tick))
+		sums = append(sums, fmt.Sprintf(`"tick": {"amount": %v, "threat": %v}`, tick, tick*part))
+	}
+	return fmt.Sprintf(`"energize": {"effects": [%s], %s}`, strings.Join(effects, ","), strings.Join(sums, ","))
+}
+
 // Every probe but the dropped ones builds its sim character and casts, whatever the server's numbers.
 func TestThreatProbesReplay(t *testing.T) {
 	for _, bot := range threatBots {
@@ -334,6 +367,8 @@ func TestThreatReplayOnHandCheckedRecords(t *testing.T) {
 		protPaladin = []int32{25780, 57340}
 		cat         = []int32{768, 3025}
 		shadow      = []int32{15320, 15473, 49868}
+		holyPriest  = []int32{14785}
+		mageTal     = []int32{12592, 12351, 12519}
 	)
 	// three creatures sharing a self buff's level times the multiplier
 	thirds := func(level, multiplier float64) []float64 {
@@ -651,6 +686,146 @@ func TestThreatReplayOnHandCheckedRecords(t *testing.T) {
 			name:   "Power Infusion shared by three creatures",
 			rec:    withShares(handThreat(t, priest, 1, 10060, shadow, 3000, threatAssistBody(40, 0.7)), thirds(40, 0.7)...),
 			checks: []string{"damage threat (not compared)", "bonus", "assist shares"},
+		},
+		{
+			// 2687 has no bonus of its own; its 20 rage make 100, which no stance touches
+			name: "Bloodrage's rage shared by three creatures",
+			rec: withEnergizeShares(handThreat(t, warrior, 1, 2687, protWarrior, 3000,
+				threatNoBonusBody(def)+", "+threatEnergizeJSON(1, 200, 0, 0, 0.5)), 100.0/3, 100.0/3, 100.0/3),
+			checks: []string{"damage threat (not compared)", "bonus", "energize threat", "energize shares"},
+		},
+		{
+			name: "Bloodrage's rage times the stance",
+			rec: withEnergizeShares(handThreat(t, warrior, 1, 2687, protWarrior, 3000,
+				threatNoBonusBody(def)+", "+threatEnergizeJSON(1, 200, 0, 0, 0.5*def)), thirds(100, def)...),
+			checks: []string{"damage threat (not compared)", "bonus", "energize threat", "energize shares"},
+			failed: []string{"energize threat", "energize shares"},
+		},
+		{
+			// the aura 2687 triggers is a cast of its own: its level 10, modified, then a rage each second
+			name: "Bloodrage's rage over time",
+			rec: withShares(handThreat(t, warrior, 1, 29131, protWarrior, 3000,
+				threatAssistBody(10, def)+", "+threatEnergizeJSON(1, 0, 10, 1000, 0.5)), thirds(10, def)...),
+			checks: []string{"damage threat (not compared)", "bonus", "assist shares", "energize tick threat"},
+		},
+		{
+			name: "Bloodrage's rage over time, a tick times the stance",
+			rec: withShares(handThreat(t, warrior, 1, 29131, protWarrior, 3000,
+				threatAssistBody(10, def)+", "+threatEnergizeJSON(1, 0, 10, 1000, 0.5*def)), thirds(10, def)...),
+			checks: []string{"damage threat (not compared)", "bonus", "assist shares", "energize tick threat"},
+			failed: []string{"energize tick threat"},
+		},
+		{
+			name: "Bloodrage's rage over time without its level",
+			rec: handThreat(t, warrior, 1, 29131, furyWarrior, 3000,
+				threatNoBonusBody(0.7)+", "+threatEnergizeJSON(1, 0, 10, 1000, 0.5)),
+			checks: []string{"damage threat (not compared)", "bonus", "energize tick threat"},
+			failed: []string{"bonus"},
+		},
+		{
+			name: "Enrage, its rage and a tick",
+			rec: handThreat(t, druid, 4, 5229, bear, 3000,
+				threatNoBonusBody(def)+", "+threatEnergizeJSON(1, 200, 10, 1000, 0.5)),
+			checks: []string{"damage threat (not compared)", "bonus", "energize threat", "energize tick threat"},
+		},
+		{
+			// 15% of the server mage's 5703 mana every 2 s; Arcane Subtlety takes 40% off the level 20 bonus
+			name: "Evocation's ticks",
+			rec: handThreat(t, mage, 1, 12051, mageTal, 0,
+				threatAssistBody(20, 0.6)+", "+threatEnergizeJSON(0, 0, 855, 2000, 0.5)),
+			checks: []string{"damage threat (not compared)", "bonus", "tick bonus", "energize tick threat"},
+		},
+		{
+			// 5% of the server paladin's 5584 mana every 3 s; Righteous Fury on the level 71 bonus
+			name: "Divine Plea's ticks",
+			rec: handThreat(t, paladin, 1, 54428, protPaladin, 3000,
+				threatAssistBody(71, rfHoly)+", "+threatEnergizeJSON(0, 0, 279, 3000, 0.5)),
+			checks: []string{"damage threat (not compared)", "bonus", "energize tick threat"},
+		},
+		{
+			name: "Divine Plea's ticks making no threat",
+			rec: handThreat(t, paladin, 1, 54428, protPaladin, 3000,
+				threatAssistBody(71, rfHoly)+", "+threatEnergizeJSON(0, 0, 279, 3000, 1e-9)),
+			checks: []string{"damage threat (not compared)", "bonus", "energize tick threat"},
+			failed: []string{"energize tick threat"},
+		},
+		{
+			// the replay gives the warrior Herbalism
+			name: "Lifeblood, its level and its heal",
+			rec: withShares(handThreat(t, warrior, 1, 55503, protWarrior, 3000,
+				threatAssistBody(55, def)+", "+threatHealJSON(0.5, def)), thirds(55, def)...),
+			checks: []string{"damage threat (not compared)", "bonus", "assist shares", "heal threat"},
+		},
+		{
+			name: "Lifeblood without its level",
+			rec: handThreat(t, warrior, 1, 55503, protWarrior, 3000,
+				threatNoBonusBody(def)+", "+threatHealJSON(0.5, def)),
+			checks: []string{"damage threat (not compared)", "bonus", "heal threat"},
+			failed: []string{"bonus"},
+		},
+		{
+			// Heartpierce's proc for a rage user; the replay gives the warrior the dagger
+			name: "Invigoration",
+			rec: withShares(handThreat(t, warrior, 1, 71883, protWarrior, 3000,
+				threatAssistBody(80, def)+", "+threatEnergizeJSON(1, 0, 20, 2000, 0.5)), thirds(80, def)...),
+			checks: []string{"damage threat (not compared)", "bonus", "assist shares", "energize tick threat (not compared)"},
+		},
+		{
+			// the replay gives the priest Vampiric Touch, whose Mind Blast casts it
+			name: "Replenishment",
+			rec: withShares(handThreat(t, priest, 1, 57669, shadow, 0,
+				threatAssistBody(1, 0.7)+", "+threatEnergizeJSON(0, 0, 12, 1000, 0.5)), thirds(1, 0.7)...),
+			checks: []string{"damage threat (not compared)", "bonus", "assist shares", "energize tick threat (not compared)"},
+		},
+		{
+			// the replay puts the enchant on a weapon
+			name:   "Lifeward's heal",
+			rec:    handThreat(t, warrior, 1, 44578, protWarrior, 3000, threatNoBonusBody(def)+", "+threatHealJSON(0.5, def)),
+			checks: []string{"damage threat (not compared)", "bonus", "heal threat"},
+		},
+		{
+			name: "Lifeward's heal for a paladin, a quarter",
+			rec: handThreat(t, paladin, 1, 44578, protPaladin, 3000,
+				threatNoBonusBody(rfHoly)+", "+threatHealJSON(0.25, rfHoly)),
+			checks: []string{"damage threat (not compared)", "bonus", "heal threat"},
+		},
+		{
+			name: "Lifeward's heal for a paladin at a warrior's half",
+			rec: handThreat(t, paladin, 1, 44578, protPaladin, 3000,
+				threatNoBonusBody(rfHoly)+", "+threatHealJSON(0.5, rfHoly)),
+			checks: []string{"damage threat (not compared)", "bonus", "heal threat"},
+			failed: []string{"heal threat"},
+		},
+		{
+			name:   "Frenzied Regeneration's heal",
+			rec:    handThreat(t, druid, 4, 22845, bear, 3000, threatNoBonusBody(def)+", "+threatHealJSON(0.5, def)),
+			checks: []string{"damage threat (not compared)", "bonus", "heal threat"},
+		},
+		{
+			// Silent Resolve takes 20% off holy and arcane
+			name: "Smite under Silent Resolve",
+			rec: withSchools(handThreat(t, priest, 1, 48123, holyPriest, 0,
+				threatBody(0.8, 1, threatLandedBonus("spellLevel", 79, 1, 79))), 1, 0.8, 1, 1, 1, 1, 0.8),
+			checks: []string{"damage threat", "bonus", "school multipliers"},
+		},
+		{
+			name: "Smite under a Silent Resolve on holy and shadow",
+			rec: withSchools(handThreat(t, priest, 1, 48123, holyPriest, 0,
+				threatBody(0.8, 1, threatLandedBonus("spellLevel", 79, 1, 79))), 1, 0.8, 1, 1, 1, 0.8, 1),
+			checks: []string{"damage threat", "bonus", "school multipliers"},
+			failed: []string{"school multipliers"},
+		},
+		{
+			name: "Mind Blast under Silent Resolve",
+			rec: withSchools(handThreat(t, priest, 1, 48127, holyPriest, 0,
+				threatBody(1, 1, threatLandedBonus("spellLevel", 79, 1, 79))), 1, 0.8, 1, 1, 1, 1, 0.8),
+			checks: []string{"damage threat", "bonus", "school multipliers"},
+		},
+		{
+			name: "Holy Fire under Silent Resolve",
+			rec: withSchools(handThreat(t, priest, 1, 48135, holyPriest, 0,
+				threatBody(0.8, 1, threatLandedBonus("spellLevel", 78, 1, 78))), 1, 0.8, 1, 1, 1, 1, 0.8),
+			checks: []string{"damage threat", "bonus", "tick bonus", "school multipliers"},
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {

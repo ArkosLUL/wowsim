@@ -13,7 +13,7 @@ func (mage *Mage) registerFrostboltSpell() {
 	var replSrc core.ReplenishmentSource
 	var replICD core.Cooldown
 	if replProcChance > 0 {
-		replSrc = mage.Env.Raid.NewReplenishmentSource(core.ActionID{SpellID: 44561})
+		replSrc = mage.Env.Raid.NewReplenishmentSource(&mage.Unit, core.ActionID{SpellID: 44561})
 		replICD = core.Cooldown{
 			Timer:    mage.NewTimer(),
 			Duration: time.Second * 6,
