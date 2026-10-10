@@ -186,7 +186,7 @@ pass doesn't repeat.
   - Then the BiS tooltip dataset (acbis driver, both stages, fresh `--out`, then `acbis`; the import needs
     the OK), the changed builds' stat weights, and the perf harness's `opt_*` scenarios (`update.sh`, a new
     baseline; the raid25 dumps in `_dump/optimizer_dump_test.go` still build uncut pools).
-- Workflow runIds: Z4's `wf_e9e036c7-5bd`; Z3's `wf_9aabe6e6-7af` (all four); Z2's `wf_7c79ba74-4ca` (code stages) and `wf_7e9c6966-820` (live stages, BIS-ALTS); Z's `wf_8821da6d-91f` (all five); Y's `wf_e58e8b14-102` (all four), `wf_d290cc37-ee6` and `wf_fe29d895-a35` (EC-TICK-FIX's rest and
+- Workflow runIds: Z5's `wf_2bd87279-a32` (run 1, base `a1bb8d403`); Z4's `wf_e9e036c7-5bd`; Z3's `wf_9aabe6e6-7af` (all four); Z2's `wf_7c79ba74-4ca` (code stages) and `wf_7e9c6966-820` (live stages, BIS-ALTS); Z's `wf_8821da6d-91f` (all five); Y's `wf_e58e8b14-102` (all four), `wf_d290cc37-ee6` and `wf_fe29d895-a35` (EC-TICK-FIX's rest and
   review); X2's `wf_b555c578-f46` (code stages), `wf_a0107f34-c7b` (live stages) and `wf_b00ecbe0-79a` (EC-RECHECK's
   live stages again, after an API error); X's `wf_a31ea7ec-8e3`; W's `wf_aa1b462c-590` (code stages) and
   `wf_894cf391-8a3` (live stages); V's `wf_ea73babf-e53`; T2's `wf_5af2b99d-6d0`; T's `wf_8a59e202-2f8`,
