@@ -173,9 +173,10 @@ class by simval.
   - Guardians take party and raid auras like pets (`AnyGroupedUnitInObjectRangeCheck`), but an uncontrollable
     one (Bloodworms, Mirror Images, the Greater Fire Elemental: SummonProperties with neither a pet's type nor
     category) never gets a party or raid cast (`TARGET_CHECK_PARTY`/`RAID`), Replenishment included.
-  - Haste carriers (the hunter pet, the DK's ghouls and gargoyle; `Unit.HasteCarrier`) ignore direct haste
-    and slows, Bloodlust included, and take the owner's attack speed (`Pet.OwnerHasteSource`): every 2 s
-    for a pet, once at the summon for a guardian.
+  - Haste carriers (the hunter pet, the DK's ghouls, gargoyle and army, Spirit Wolves; `Unit.HasteCarrier`)
+    ignore direct haste and slows, Bloodlust included, and take the owner's attack speed as whole percent
+    (`Pet.OwnerHasteSource`): at the summon, then every 2 s for a pet and for Spirit Wolves
+    (`Pet.OwnerHasteTicksOnGuardian`), never again for the DK's guardians.
 - **Enchant PPMs:** Mongoose 1, Icebreaker 3, Deathfrost 3. An enchant procs only from the weapon that
   hit.
 - **Dungeon scale** (`NewEncounter`): health and armor become `round(float32(value) × multiplier)`, half

@@ -48,11 +48,13 @@ func (shaman *Shaman) NewSpiritWolf(index int) *SpiritWolf {
 
 	// mod-spell-tweaks' 425792: immune to direct haste and slows, Bloodlust included; its own melee
 	// swing speed tracks the shaman's melee speed instead (Windfury Totem and Improved Icy Talons
-	// already reach the wolves through it, so they'd otherwise double up).
+	// already reach the wolves through it, so they'd otherwise double up). It re-reads that speed
+	// every 2 s, guardian or not.
 	if shaman.Server().SpellTweaks.FeralSpiritHaste {
 		spiritWolf.HasteCarrier = true
 		spiritWolf.OwnerHasteSource = func() float64 { return shaman.SwingSpeed() }
 		spiritWolf.OwnerHasteCoversMeleeHasteAuras = true
+		spiritWolf.OwnerHasteTicksOnGuardian = true
 	}
 
 	// InitStatsForLevel's NPC_FERAL_SPIRIT case

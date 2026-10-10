@@ -134,12 +134,117 @@ func TestPetInheritedSwingSpeed(t *testing.T) {
 		{0.8, 1},
 		{1.15, 1.15},
 		{1.2, 1.2},
+		// Bloodlust alone: float32 leaves 1/0.7692308 - 1 just under 0.3, as it does on the server
+		{1.3, 1.29},
 		{1.5189343389857697, 1.51},
 		{2.005, 2},
 	} {
 		if got := inheritedSwingSpeed(tc.owner); !WithinToleranceFloat64(tc.want, got, 1e-9) {
 			t.Errorf("owner swing speed %.4f: got %.4f, want %.4f", tc.owner, got, tc.want)
 		}
+	}
+}
+
+// A carrier that ticks re-reads the owner's swing speed on the pet's first map update 2 s after the summon,
+// and every 2 s from there: a real pet's, and a guardian's with OwnerHasteTicksOnGuardian. Any other
+// guardian keeps what it took at the summon. Either way a dismissal takes off whatever is on by then.
+func TestPetHasteCarrierFollowsTheOwnerWhereItTicks(t *testing.T) {
+	const hasted = 1.29
+	for _, tc := range []struct {
+		name                           string
+		summonedAsPet, ticksOnGuardian bool
+		follows                        bool
+	}{
+		{name: "guardian", follows: false},
+		{name: "guardian whose carrier ticks", ticksOnGuardian: true, follows: true},
+		{name: "real pet", summonedAsPet: true, follows: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var pet *timingTestPet
+			timingTestConstruct = func(a *timingTestAgent) {
+				pet = &timingTestPet{Pet: NewPet("Pet", &a.Character, stats.Stats{}, func(stats.Stats) stats.Stats { return stats.Stats{} }, false, !tc.summonedAsPet)}
+				pet.SummonedAsPet = tc.summonedAsPet
+				pet.HasteCarrier = true
+				pet.OwnerHasteSource = func() float64 { return a.SwingSpeed() }
+				pet.OwnerHasteTicksOnGuardian = tc.ticksOnGuardian
+				pet.EnableAutoAttacks(pet, AutoAttackOptions{MainHand: testWeapon(1.5), AutoSwingMelee: true})
+				a.AddPet(pet)
+			}
+			sim, a := newTickTestSim(t, 100, 10, nil)
+			timingTestConstruct = nil
+			sim.PrePull()
+			if a.SwingSpeed() != 1 {
+				t.Fatalf("the owner starts at swing speed %v, want 1", a.SwingSpeed())
+			}
+			base := pet.PseudoStats.MeleeSpeedMultiplier
+			expect := func(when string, multiplier float64) {
+				t.Helper()
+				if got := pet.PseudoStats.MeleeSpeedMultiplier / base; math.Abs(got-multiplier) > 1e-9 {
+					t.Errorf("%s: the pet's melee speed is x%v, want x%v", when, got, multiplier)
+				}
+			}
+			var summoned time.Duration
+			summon := func() {
+				summoned = sim.CurrentTime
+				if sim.NextServerTick(summoned) == summoned {
+					t.Fatalf("the summon at %v is on a map update, so the test shows nothing", summoned)
+				}
+				pet.Enable(sim, pet)
+			}
+			// The owner's speed changes now. The pet keeps its own until the carrier's next tick, and past
+			// it too when the carrier doesn't tick.
+			follow := func(when string, ownerChange, before, after float64) {
+				t.Helper()
+				tick := sim.NextServerTick(summoned) - sim.serverTickInterval + petOwnerHasteRefreshInterval
+				for tick <= sim.CurrentTime {
+					tick += petOwnerHasteRefreshInterval
+				}
+				if !tc.follows {
+					after = before
+					if pet.ownerHasteRefresh != nil {
+						t.Fatalf("%s: the carrier ticks, next at %v", when, pet.ownerHasteRefresh.NextActionAt)
+					}
+				} else if refresh := pet.ownerHasteRefresh; refresh == nil || refresh.NextActionAt != tick {
+					t.Fatalf("%s: the carrier's next tick is %+v, want one at %v", when, refresh, tick)
+				}
+
+				a.MultiplyMeleeSpeed(sim, ownerChange)
+				expect(when+", at once", before)
+				runUntil(sim, tick)
+				expect(when+", before the tick's turn", before)
+				runUntil(sim, tick+1)
+				expect(when+", after the tick", after)
+				want := DurationFromSeconds(1.5 / after)
+				if got := pet.AutoAttacks.MainhandSwingSpeed(); got < want-time.Microsecond || got > want+time.Microsecond {
+					t.Errorf("%s: the pet swings every %v, want %v", when, got, want)
+				}
+			}
+
+			// the owner's haste comes 1540 ms after the summon, before the first tick, as in the live run
+			runUntil(sim, ms(1234)+567*time.Microsecond)
+			summon()
+			expect("summoned", 1)
+			runUntil(sim, summoned+ms(1540))
+			follow("owner hasted after the summon", 1.3, 1, hasted)
+
+			pet.Disable(sim)
+			expect("dismissed", 1)
+			if pet.ownerHasteRefresh != nil {
+				t.Errorf("the carrier still ticks after the dismissal")
+			}
+			runUntil(sim, sim.CurrentTime+3*time.Second)
+			expect("3 s after the dismissal", 1)
+
+			// summoned under the owner's haste, every carrier has it at once
+			summon()
+			expect("summoned again, under the owner's haste", hasted)
+			runUntil(sim, summoned+ms(2540))
+			expect("past the first tick with the owner's haste as it was", hasted)
+			follow("owner's haste gone", 1/1.3, hasted, 1)
+
+			pet.Disable(sim)
+			expect("dismissed again", 1)
+		})
 	}
 }
 
