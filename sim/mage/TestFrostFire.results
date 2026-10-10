@@ -846,12 +846,6 @@ ability_results: {
    }
   }
   entries: {
-   key: "pet:Mirror Image|aura|{SpellID: 57669}"
-   value: {
-    uptime_s: 299.9236
-   }
-  }
-  entries: {
    key: "pet:Mirror Image|aura|{SpellID: 57724}"
    value: {
     uptime_s: 28

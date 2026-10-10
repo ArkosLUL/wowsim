@@ -861,8 +861,8 @@ dps_results: {
 dps_results: {
  key: "TestFire-Talents-Firestarter-Average"
  value: {
-  dps: 6292.54416
-  tps: 6146.65479
+  dps: 6292.5459
+  tps: 6146.65636
  }
 }
 ability_results: {
@@ -892,12 +892,6 @@ ability_results: {
    key: "pet:Mirror Image|aura|{SpellID: 2825, Tag: -1}"
    value: {
     uptime_s: 28
-   }
-  }
-  entries: {
-   key: "pet:Mirror Image|aura|{SpellID: 57669}"
-   value: {
-    uptime_s: 299.9236
    }
   }
   entries: {
@@ -1330,12 +1324,6 @@ ability_results: {
    }
   }
   entries: {
-   key: "pet:Mirror Image|aura|{SpellID: 57669}"
-   value: {
-    uptime_s: 299.9236
-   }
-  }
-  entries: {
    key: "pet:Mirror Image|aura|{SpellID: 57724}"
    value: {
     uptime_s: 28
@@ -1438,8 +1426,8 @@ ability_results: {
     casts: 40.424
     hits: 40.424
     crit_pct: 59.61186
-    amount_per_hit: 2060.79439
-    amount: 83305.5525
+    amount_per_hit: 2060.80728
+    amount: 83306.0735
    }
   }
   entries: {

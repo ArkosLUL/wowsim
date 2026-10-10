@@ -904,12 +904,6 @@ ability_results: {
  key: "TestRestoration-Average-Default"
  value: {
   entries: {
-   key: "pet:Greater Fire Elemental|aura|{SpellID: 57669}"
-   value: {
-    uptime_s: 299.9236
-   }
-  }
-  entries: {
    key: "player|action|{ItemID: 22839}"
    value: {
     casts: 1
@@ -1148,12 +1142,6 @@ ability_results: {
 ability_results: {
  key: "TestRestoration-Talents-HealingGrace-Average"
  value: {
-  entries: {
-   key: "pet:Greater Fire Elemental|aura|{SpellID: 57669}"
-   value: {
-    uptime_s: 299.9236
-   }
-  }
   entries: {
    key: "player|action|{ItemID: 20520}"
    value: {

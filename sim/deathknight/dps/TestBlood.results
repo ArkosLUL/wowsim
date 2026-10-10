@@ -1047,12 +1047,6 @@ ability_results: {
    }
   }
   entries: {
-   key: "pet:Bloodworm|aura|{SpellID: 57669}"
-   value: {
-    uptime_s: 1199.69442
-   }
-  }
-  entries: {
    key: "pet:Bloodworm|aura|{SpellID: 57722}"
    value: {
     uptime_s: 1199.69442

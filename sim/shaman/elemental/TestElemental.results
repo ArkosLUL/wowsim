@@ -1380,12 +1380,6 @@ ability_results: {
  key: "TestElemental-Average-Default"
  value: {
   entries: {
-   key: "pet:Greater Fire Elemental|aura|{SpellID: 57669}"
-   value: {
-    uptime_s: 299.9236
-   }
-  }
-  entries: {
    key: "player|action|{ItemID: 22839}"
    value: {
     casts: 1
@@ -1782,12 +1776,6 @@ ability_results: {
    key: "pet:Greater Fire Elemental|aura|{SpellID: 2825, Tag: -1}"
    value: {
     uptime_s: 6.33558
-   }
-  }
-  entries: {
-   key: "pet:Greater Fire Elemental|aura|{SpellID: 57669}"
-   value: {
-    uptime_s: 299.9236
    }
   }
   entries: {
