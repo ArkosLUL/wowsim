@@ -167,14 +167,12 @@ user's continue.
 
 ## Current wave
 
-- Wave: Z5, landed (master fast-forwarded to this close-out). It took four runs: run 1 (every code stage, and
-  the live stages of EC-CORE-FIX3, EC-PET-FIX2 and EC-CLASS-FIX2); the death knight rotations' retune
-  (EC-CLASS-FIX2's contract request) while the user rebuilt; then EC-THREAT-FIX4's live stage and the live
-  records left open (the spell-mod sweep, the Shadowfiend, Fire Shield) on the rebuilt server (image of
-  2026-10-10 16:21 local: [ac] `3d89793c7` with mod-sim-validation `97ca11a`; the module's HEAD is `bb2a21d`).
-  Next, Z6, planned: the code stages first; the live stages of PAR-FU-8, PAR-FU-9, PAR-FU-10 and RI-5 (its
-  SELECT-only) once the user has rebuilt the server with mod-spell-tweaks `9bf5c75`, away from Saturday 17:00's
-  raid reset. Integrate PAR-FU-8, PAR-FU-9, PAR-FU-10, RI-5 in that order. Then Z7.
+- Wave: Z6, running on base `c00231f37` (master hadn't moved). One run, code stages then live stages: the user
+  rebuilt the server on 2026-10-10 (image of 20:04 local: [ac] `3d89793c7`, mod-spell-tweaks `9bf5c75`,
+  mod-sim-validation `bb2a21d`). Worktrees `wowsimwotlk-wi-{par-fu-8,par-fu-9,par-fu-10,ri-5}`; args and shared
+  rules in `G:\DevStuff\GitHub\.wave-loop\waveZ6-{args.json,shared.md}`. Integrate PAR-FU-8, PAR-FU-9,
+  PAR-FU-10, RI-5 in that order. RI-5's "After it lands on master" prod steps need the user's OK. Then Z7.
+  Z5 landed in four runs.
   Z5's item notes: `G:\DevStuff\GitHub\.wave-loop\ec-{core-fix3,pet-fix2,class-fix2,class-fix2-apl,threat-fix4,z5-live}-tmp`.
   Prod runs X's `25cb9dddc` (no `rollback-q` image: its layers were gone), without Y's and Z's sim changes.
 - Open: the e2e-coverage backlog Z7 leaves, sim-performance's Left items and Z5's 9–11% on mana users (Sim
@@ -197,7 +195,7 @@ user's continue.
   - Then the BiS tooltip dataset (acbis driver, both stages, fresh `--out`, then `acbis`; the import needs
     the OK), the changed builds' stat weights, and the perf harness's `opt_*` scenarios (`update.sh`, a new
     baseline; the raid25 dumps in `_dump/optimizer_dump_test.go` still build uncut pools).
-- Workflow runIds: Z5's `wf_2bd87279-a32` (run 1, base `a1bb8d403`), `wf_caa6cd72-af1` (the rotations, base
+- Workflow runIds: Z6's `wf_9f63df91-dcd` (all four, base `c00231f37`); Z5's `wf_2bd87279-a32` (run 1, base `a1bb8d403`), `wf_caa6cd72-af1` (the rotations, base
   `5692dd49d`), `wf_0d256663-f64` (EC-THREAT-FIX4's live stage) and `wf_4c054cc8-0ce` (the live records, base
   `ef598ad48`); Z4's `wf_e9e036c7-5bd`; Z3's `wf_9aabe6e6-7af` (all four); Z2's `wf_7c79ba74-4ca` (code stages) and `wf_7e9c6966-820` (live stages, BIS-ALTS); Z's `wf_8821da6d-91f` (all five); Y's `wf_e58e8b14-102` (all four), `wf_d290cc37-ee6` and `wf_fe29d895-a35` (EC-TICK-FIX's rest and
   review); X2's `wf_b555c578-f46` (code stages), `wf_a0107f34-c7b` (live stages) and `wf_b00ecbe0-79a` (EC-RECHECK's
