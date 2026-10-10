@@ -1965,6 +1965,18 @@ Cross-review, 2026-10-10, on `5692dd49d` with the three items merged:
 - Follow-ups: heal Penance rolls its base inline (`sim.Roll`), not in whole steps, as Ferocious Bite; Blood Presence's
   50475 takes Strength of Wrynn's stand-in, where the server's class-none heal takes no healing done percent.
 
+Run 2, 2026-10-10, on `ef598ad48` against [ac] `3d89793c7`, no rebuild (notes in `tmp/ec-z5-live-sweep.md`):
+- `spellmod_spells.json` regenerated: 279 talents, 359 spells, 1217 group-spell pairs. In: Seal of Righteousness
+  25742, Penance's 52985 and 53000, Windfury Attack 25504 and 33750, Sunder Armor 7386 and 58567, Scourge Strike
+  70890, Endurance (no spell). Out: Vampiric Touch 34917.
+- Sweep re-recorded: `spellmods.jsonl` is 2274 lines, 29 paths of one run and PriestHoly of a rerun. The weekly raid
+  reset (Saturday 17:00 local, `instance_reset.resettime`) ported its first bot out of Naxxramas at step 18
+  (`InstanceMap::Reset`'s `RepopAtGraveyard`). The 2240 probes the old file shares are unchanged.
+- `TestSpellModRecords`: 540 spell steps agree, 378 move nothing, 262 aren't compared, 2 disagree, the two standing
+  drops (Berserk's Mangle (Bear) cooldown, Dispersion's miss). No new mismatch, no drop removed. No golden moves.
+- Left: the 17 new step-spell probes aren't compared. The sim names those ids as a `ThreatSpellID` or a tick spell
+  and deals them under another id.
+
 ### EC-PET-FIX2 (Z5; changes goldens; stages: code, live)
 
 - Timers: pets' 2 s scaling and mana regen, and the 3 s hit and 2 s haste refreshes (`sim/core/pet.go`), count from
@@ -2045,6 +2057,18 @@ Cross-review, 2026-10-10, on `5692dd49d` with the three items merged:
 - Not changed: the three images' hits truncate as one sum, each on the server (about a point a cast over, with a
   talent multiplier).
 - Follow-up: a `spell 13376` record of the elemental (`petfixPets`, `petsProbes`).
+
+Run 2, 2026-10-10, against [ac] `3d89793c7`, no rebuild (notes in `tmp/ec-z5-live-fiend.md`):
+- `TestPetfixRecords` gains a Shadowfiend (`melee`) and the elemental's `spell 13376`; `pets.jsonl` is that run's 20
+  records, 170 checks pass. No golden moves.
+- Shadowfiend's swing, matches: at 1978 AP and 120–280 a 1.5 s swing, 18034 plain swings average 510.7 before the
+  resist; the sim rolls 391–631, the sheet's range would give 412. Table: block 5.6%, crit 4.4%, nothing else. Probed
+  out of combat, Shadowcrawl down.
+- Fire Shield, matches: 13376's table isn't auto-hit, miss threshold 1700, 3397 of 20000 rolls missed; crit 5%.
+- Replay: `rolled miss` holds a pet spell's rolled misses to the sim's chance. `TestPetsReplayCatchesAWrongRecord`
+  fails a fiend on the sheet's range and a Fire Shield that never misses.
+- Left: a swing under Shadowcrawl (63619), which the idle fiend never casts; the fixture README and
+  `tools/simval/README.md` don't name the Shadowfiend or `rolled miss`.
 
 ### EC-CLASS-FIX2 (Z5; changes goldens; stages: melee, casters, live)
 

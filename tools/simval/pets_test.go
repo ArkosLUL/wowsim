@@ -11,8 +11,8 @@ import (
 func petsFixturePath() string { return filepath.Join("..", "..", fixtureDir, petsFixture) }
 
 // TestPetsRecords replays a live TestPetfixRecords capture: the Greater Fire Elemental's and a Mirror
-// Image's stats, pools, spells, crit and costs, the elemental's swing, and an Imp's and a Water Elemental's
-// stats, pools and crit roll. Skips without the fixture.
+// Image's stats, pools, spells, crit and costs, the elemental's swing, an Imp's and a Water Elemental's
+// stats, pools and crit roll, and a Shadowfiend's swing. Skips without the fixture.
 func TestPetsRecords(t *testing.T) {
 	path := petsFixturePath()
 	if _, err := os.Stat(path); os.IsNotExist(err) {
@@ -42,10 +42,11 @@ func TestPetsRecords(t *testing.T) {
 
 // petsProbes are TestPetfixRecords' probes per guardian: the commands, and the spells of those that take one.
 var petsProbes = map[uint32]map[string][]int32{
-	15438: {"info": {0}, "damage": {57984, 12470, 13376}, "spell": {57984}, "melee": {0}, "timing": {57984, 12470}},
+	15438: {"info": {0}, "damage": {57984, 12470, 13376}, "spell": {57984, 13376}, "melee": {0}, "timing": {57984, 12470}},
 	31216: {"info": {0}, "damage": {59638, 59637}, "spell": {59638}, "timing": {59638, 59637}},
 	416:   {"info": {0}, "spell": {47964}},
 	510:   {"info": {0}, "spell": {31707}},
+	19668: {"melee": {0}},
 }
 
 func TestPetsFixtureHasEveryProbe(t *testing.T) {
@@ -137,6 +138,16 @@ func TestPetsReplayCatchesAWrongRecord(t *testing.T) {
 		}},
 		{"a glancing guardian", petsKey{"melee", 0, 15438}, "white glancing", func(r *petsRecord) {
 			r.Derived = derived(*r, "glancingBp", 2500)
+		}},
+		{"a fiend swinging the sheet's range", petsKey{"melee", 0, 19668}, "mean swing", func(r *petsRecord) {
+			// 332-492 a swing where the server rolls 391-631
+			normal := r.Outcomes["normal"]
+			normal.MeanDamage *= 412.0 / 511
+			normal.MeanResisted *= 412.0 / 511
+			r.Outcomes = map[string]petHits{"normal": normal, "crit": r.Outcomes["crit"]}
+		}},
+		{"a Fire Shield that never misses", petsKey{"spell", 13376, 15438}, "rolled miss", func(r *petsRecord) {
+			r.HitResults = map[string]counted{"none": {Count: r.Iterations}}
 		}},
 		{"a dearer Fire Nova", petsKey{"timing", 12470, 15438}, "cost", func(r *petsRecord) {
 			cast := *r.cast

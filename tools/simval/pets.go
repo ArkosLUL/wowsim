@@ -11,8 +11,8 @@ import (
 
 // TestPetfixRecords records the two guardians strikes.jsonl has none of, the Greater Fire Elemental and a
 // Mirror Image: `info` and `damage` like a strikes pet's, and `spell`, `melee` and `timing` through pet:<n>.
-// An Imp and a Water Elemental add `info` and their nuke's `spell` roll. The replay compares each on the
-// sim's pet, scaled off the record's owner.
+// An Imp and a Water Elemental add `info` and their nuke's `spell` roll, a Shadowfiend its `melee`. The
+// replay compares each on the sim's pet, scaled off the record's owner.
 
 const petsFixture = "pets.jsonl"
 
@@ -23,6 +23,8 @@ type petsRecord struct {
 	Derived    json.RawMessage    `json:"derived"`
 	Crit       counted            `json:"crit"`
 	Outcomes   map[string]petHits `json:"outcomes"`
+	// a `spell` record's SpellHitResult rolls, by result
+	HitResults map[string]counted `json:"hitResults"`
 	// the same line as a timing record, for a `timing`
 	cast *timingRecord
 	// the attacker's power pool, which the unit snapshot leaves out
@@ -193,7 +195,7 @@ func (d *damageSim) petSpell(id int32) *core.Spell {
 }
 
 // checkPetSpellRoll holds the spell's crit chance and miss against the dummy to the record's derived
-// table, and the server's rolled crits to the sim's chance.
+// table, and the server's rolled crits and misses to the sim's chances.
 func checkPetSpellRoll(rec petsRecord) []Check {
 	var server spellDerived
 	if err := json.Unmarshal(rec.Derived, &server); err != nil {
@@ -214,8 +216,11 @@ func checkPetSpellRoll(rec petsRecord) []Check {
 		checks = append(checks, checkRate("rolled crit", rec.Crit.Count, rec.Iterations, int32(math.Round(crit*100))))
 	}
 	if server.Magic != nil && !server.Magic.AutoHit {
-		miss := spell.SpellChanceToMiss(d.pet.pet.AttackTables[d.target.UnitIndex]) * core.MaxRollBP
-		checks = append(checks, checkBP("spell miss threshold", int32(math.Round(miss)), server.Magic.MissThreshold))
+		miss := int32(math.Round(spell.SpellChanceToMiss(d.pet.pet.AttackTables[d.target.UnitIndex]) * core.MaxRollBP))
+		checks = append(checks, checkBP("spell miss threshold", miss, server.Magic.MissThreshold))
+		if rec.Iterations > 0 {
+			checks = append(checks, checkRate("rolled miss", rec.HitResults["miss"].Count, rec.Iterations, miss))
+		}
 	}
 	return checks
 }
