@@ -56,7 +56,7 @@ func (hunter *Hunter) registerBlackArrowSpell(timer *core.Timer) {
 			Tick: core.SpellEffect{Effect: 0, Min: 553, Max: 553, AP: 0.02},
 
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + dot.Tick.AP*dot.Spell.RangedAttackPowerSpellBonus(target)
+				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + core.PowerBonus(dot.Tick.AP*dot.Spell.RangedAttackPowerSpellBonus(target))
 				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(dot.Spell.Unit.AttackTables[target.UnitIndex])
 			},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {

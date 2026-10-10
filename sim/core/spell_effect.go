@@ -30,14 +30,20 @@ type SpellEffect struct {
 	WeaponPct float64
 }
 
-// Roll is the base value, Min to Max. A fixed value takes no random number, so it leaves the rolls that
-// follow it alone.
+// Roll is the base value, a whole step from Min to Max like SpellEffectInfo::CalcValue's irand. A fixed
+// value takes no random number, so it leaves the rolls that follow it alone.
 func (e *SpellEffect) Roll(sim *Simulation) float64 {
 	if e.Min == e.Max {
 		return e.Min
 	}
-	// sim.Roll written out, label included, to keep Roll under the inlining budget
-	return e.Min + (e.Max-e.Min)*sim.RandomFloat("Damage Roll")
+	return e.rolled(sim)
+}
+
+// rolled is apart, and never inlined, to keep Roll under the inlining budget.
+//
+//go:noinline
+func (e *SpellEffect) rolled(sim *Simulation) float64 {
+	return e.Min + float64(int32((e.Max-e.Min+1)*sim.RandomFloat("Damage Roll")))
 }
 
 // Average is the mean of Roll, for expected damage.

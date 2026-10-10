@@ -46,6 +46,8 @@ func (dk *Deathknight) newBloodStrikeSpell(isMH bool) *core.Spell {
 			baseDamage := normalizedStrikeBase(sim, spell, isMH, spell.Direct.Roll(sim)) * spell.Direct.WeaponPct
 			baseDamage *= dk.RoRTSBonus(target) *
 				(1.0 + dk.dkCountActiveDiseases(target)*diseaseMulti)
+			// the class scripts are DoneTotalMod, which scales the flat creature-type bonus too
+			baseDamage += spell.WeaponBonusForDonePct(target, dk.RoRTSBonus(target))
 
 			result := spell.CalcDamage(sim, target, baseDamage, dk.threatOfThassarianOutcomeApplier(spell))
 

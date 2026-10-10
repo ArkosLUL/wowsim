@@ -52,8 +52,8 @@ func (paladin *Paladin) registerConsecrationSpell() {
 				target := paladin.CurrentTarget
 
 				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) +
-					dot.Tick.AP*dot.Spell.MeleeAttackPower() +
-					dot.Tick.SP*(dot.Spell.SpellPower()+bonusSpellPower)
+					core.PowerBonus(dot.Tick.AP*dot.Spell.MeleeAttackPower()) +
+					core.PowerBonus(dot.Tick.SP*(dot.Spell.SpellPower()+bonusSpellPower))
 
 				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(dot.Spell.Unit.AttackTables[target.UnitIndex])
 			},

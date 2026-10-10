@@ -51,8 +51,8 @@ func (druid *Druid) registerLacerateSpell() {
 
 			Tick: core.SpellEffect{Effect: 0, Min: 64, Max: 64, AP: 0.01},
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + dot.Tick.AP*dot.Spell.MeleeAttackPower()
-				dot.SnapshotBaseDamage *= float64(dot.Aura.GetStacks())
+				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + core.PowerBonus(dot.Tick.AP*dot.Spell.MeleeAttackPower())
+				dot.SnapshotStacks = dot.Aura.GetStacks()
 
 				if !isRollover {
 					attackTable := dot.Spell.Unit.AttackTables[target.UnitIndex]

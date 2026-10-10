@@ -153,7 +153,7 @@ func (warlock *Warlock) registerCurseOfAgonySpell() {
 			// spell_warl_curse_of_agony ramps the whole tick, spell power included: half for ticks 1 to 4,
 			// then 1, 1.5 and 2 times from ticks 5, 9 and 13
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-				dot.SnapshotBaseDamage = 0.5 * (dot.Tick.Roll(sim) + dot.Tick.SP*dot.Spell.SpellPower())
+				dot.SnapshotBaseDamage = 0.5 * (dot.Tick.Roll(sim) + core.PowerBonus(dot.Tick.SP*dot.Spell.SpellPower()))
 				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(dot.Spell.Unit.AttackTables[target.UnitIndex])
 			},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
@@ -212,7 +212,7 @@ func (warlock *Warlock) registerCurseOfDoomSpell() {
 			Tick: core.SpellEffect{Effect: 0, Min: 7300, Max: 7300, SP: 2},
 
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + dot.Tick.SP*dot.Spell.SpellPower()
+				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + core.PowerBonus(dot.Tick.SP*dot.Spell.SpellPower())
 				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(dot.Spell.Unit.AttackTables[target.UnitIndex])
 			},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {

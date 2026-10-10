@@ -70,7 +70,7 @@ func (warlock *Warlock) registerDrainSoulSpell() {
 			Tick: core.SpellEffect{Effect: 1, Min: 142, Max: 142, SP: 0.429},
 
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-				baseDmg := dot.Tick.Roll(sim) + dot.Tick.SP*dot.Spell.SpellPower()
+				baseDmg := dot.Tick.Roll(sim) + core.PowerBonus(dot.Tick.SP*dot.Spell.SpellPower())
 				dot.SnapshotBaseDamage = baseDmg * calcSoulSiphonMult(target)
 				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(dot.Spell.Unit.AttackTables[target.UnitIndex])
 			},
@@ -96,7 +96,7 @@ func (warlock *Warlock) registerDrainSoulSpell() {
 				return dot.CalcSnapshotDamage(sim, target, spell.OutcomeExpectedMagicAlwaysHit)
 			} else {
 				tick := &spell.Dot(target).Tick
-				baseDmg := (tick.Average() + tick.SP*spell.SpellPower()) * calcSoulSiphonMult(target)
+				baseDmg := (tick.Average() + core.PowerBonus(tick.SP*spell.SpellPower())) * calcSoulSiphonMult(target)
 				return spell.CalcPeriodicDamage(sim, target, baseDmg, spell.OutcomeExpectedMagicAlwaysHit)
 			}
 		},

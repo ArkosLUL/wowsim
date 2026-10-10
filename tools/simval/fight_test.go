@@ -322,6 +322,40 @@ func failsCheck(cmp *fightComparison, subject, check string) (Check, bool) {
 	return Check{}, false
 }
 
+// 200 fights of ten hits, five of 950 and five of 1050: each hit deviates by 52.7, so four hits' mean by
+// 26.4, and the check allows four of those. One more fight with a single hit of 2000 would stretch a range
+// to 2000, but it only adds a deviation of 68 between fights.
+func TestFightMeanCheck(t *testing.T) {
+	var fight outcomeStats
+	for range 5 {
+		fight.add(950)
+		fight.add(1050)
+	}
+	sims := slices.Repeat([]outcomeStats{fight}, 200)
+	log := func(mean float64) outcomeStats {
+		return outcomeStats{N: 4, Sum: 4 * mean, SumSq: 4 * mean * mean}
+	}
+	for _, tc := range []struct {
+		name   string
+		sims   []outcomeStats
+		mean   float64
+		passes bool
+	}{
+		{"3.8 deviations up", sims, 1100, true},
+		{"3.8 deviations down", sims, 900, true},
+		{"4.2 deviations up", sims, 1110, false},
+		{"under one lucky fight's hit", append(slices.Clone(sims), outcomeStats{N: 1, Sum: 2000, SumSq: 2000 * 2000}), 1900, false},
+		{"with a lucky fight, inside its spread", append(slices.Clone(sims), outcomeStats{N: 1, Sum: 2000, SumSq: 2000 * 2000}), 1250, true},
+	} {
+		if check := checkMean("hit mean", log(tc.mean), tc.sims, 0); check.Passed != tc.passes {
+			t.Errorf("%s: passed %v, want %v: %s", tc.name, check.Passed, tc.passes, check.Detail)
+		}
+	}
+	if check := checkMean("hit mean", log(1000), nil, 0); check.Name != "hit mean (not compared)" {
+		t.Errorf("a mean the sim never had is %q: %s", check.Name, check.Detail)
+	}
+}
+
 // Each kind of disagreement fails its own check: a harder hitting spell, a cast the sim can't land then, an
 // aura the server never put on, power the server gave twice, and swings that never crit.
 func TestFightCatchesMismatches(t *testing.T) {
@@ -375,10 +409,9 @@ func TestFightCatchesMismatches(t *testing.T) {
 			}
 		}
 		return []mismatch{
-			// the hit mean's range ends at one iteration's tail, so a 40% harder Shadow Bolt can still fall inside it
-			{"Shadow Bolt hits twice as hard", "47809", "hit mean", func(ms int64, f []string) (int64, []string) {
+			{"Shadow Bolt hits 40% harder", "47809", "hit mean", func(ms int64, f []string) (int64, []string) {
 				if f[0] == "SPELL_DAMAGE" && f[7] == "47809" && f[16] == "nil" {
-					return ms, scaleField(f, 10, 2)
+					return ms, scaleField(f, 10, 1.4)
 				}
 				return ms, f
 			}},
@@ -698,7 +731,7 @@ func TestFightCycles(t *testing.T) {
 	setups := allGoldcharSetups(t)
 	ids := map[int32]bool{}
 	for _, c := range cycles {
-		for _, step := range slices.Concat(c.Before, c.Cycle) {
+		for _, step := range slices.Concat(c.Pull, c.Before, c.Cycle) {
 			ids[step.Spell] = true
 		}
 		for _, spell := range c.Learn {
@@ -742,6 +775,16 @@ func TestFightCycles(t *testing.T) {
 		for _, spell := range c.Learn {
 			if sd, ok := dump[spell]; ok && !sd.Passive {
 				t.Errorf("%s: learns %d, which isn't a passive", c.Setup, spell)
+			}
+		}
+		if c.DummyHealthPct < 0 || c.DummyHealthPct >= 100 {
+			t.Errorf("%s: the dummy starts at %g%% health", c.Setup, c.DummyHealthPct)
+		}
+		for _, step := range c.Pull {
+			sd, ok := dump[step.Spell]
+			if !ok || sd.Name != step.Name || sd.Family != family || sd.Passive || c.casts()[step.Spell] {
+				t.Errorf("%s pull step %d %s: want a castable spell of the class the cycle doesn't cast, by the server's name",
+					c.Setup, step.Spell, step.Name)
 			}
 		}
 		for k, step := range slices.Concat(c.Before, c.Cycle) {

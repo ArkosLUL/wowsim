@@ -32,7 +32,7 @@ func (druid *Druid) registerTyphoonSpell() {
 		Direct: core.SpellEffect{Effect: 1, Min: 1190, Max: 1190, SP: 0.193},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()
+			baseDamage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP*spell.SpellPower())
 			baseDamage *= sim.Encounter.AOECapMultiplier()
 			results := make([]*core.SpellResult, len(sim.Encounter.TargetUnits))
 			for i, aoeTarget := range sim.Encounter.TargetUnits {

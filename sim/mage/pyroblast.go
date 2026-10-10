@@ -64,7 +64,7 @@ func (mage *Mage) registerPyroblastSpell() {
 			Tick: core.SpellEffect{Effect: 1, Min: 113, Max: 113, SP: 0.05},
 
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
-				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + dot.Tick.SP*dot.Spell.SpellPower()
+				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + core.PowerBonus(dot.Tick.SP*dot.Spell.SpellPower())
 				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(dot.Spell.Unit.AttackTables[target.UnitIndex]) *
 					mage.tormentTheWeak(target)
 			},
@@ -74,7 +74,7 @@ func (mage *Mage) registerPyroblastSpell() {
 		},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := (spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()) * mage.tormentTheWeak(target)
+			baseDamage := (spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP*spell.SpellPower())) * mage.tormentTheWeak(target)
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 			spell.WaitTravelTime(sim, func(sim *core.Simulation) {
 				if result.Landed() {

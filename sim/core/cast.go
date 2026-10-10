@@ -321,7 +321,6 @@ func (spell *Spell) makeCastFunc(config CastConfig) CastSuccessFunc {
 				}
 				return spell.castFailureHelper(sim, "still on cooldown for %s, curTime = %s", spell.CD.TimeToReady(sim), sim.CurrentTime)
 			}
-			spell.CD.Set(sim.CurrentTime + spell.CurCast.CastTime + spell.CD.Duration)
 		}
 
 		if config.SharedCD.Timer != nil {
@@ -332,7 +331,6 @@ func (spell *Spell) makeCastFunc(config CastConfig) CastSuccessFunc {
 				}
 				return spell.castFailureHelper(sim, "still on shared cooldown for %s, curTime = %s", spell.SharedCD.TimeToReady(sim), sim.CurrentTime)
 			}
-			spell.SharedCD.Set(sim.CurrentTime + spell.CurCast.CastTime + spell.SharedCD.Duration)
 		}
 
 		// By panicking if spell is on CD, we force each sim to properly check for their own CDs.
@@ -348,6 +346,14 @@ func (spell *Spell) makeCastFunc(config CastConfig) CastSuccessFunc {
 				return false
 			}
 			return spell.castFailureHelper(sim, "casting/channeling %v for %s, curTime = %s", hc.ActionID, hc.Expires-sim.CurrentTime, sim.CurrentTime)
+		}
+
+		// nothing refuses the cast from here on, so its cooldowns start
+		if config.CD.Timer != nil {
+			spell.CD.Set(sim.CurrentTime + spell.CurCast.CastTime + spell.CD.Duration)
+		}
+		if config.SharedCD.Timer != nil {
+			spell.SharedCD.Set(sim.CurrentTime + spell.CurCast.CastTime + spell.SharedCD.Duration)
 		}
 
 		resetsSwing := spell.timing.resetsSwing(spell)
@@ -470,8 +476,6 @@ func (spell *Spell) makeCastFuncSimple() CastSuccessFunc {
 				}
 				return spell.castFailureHelper(sim, "still on cooldown for %s, curTime = %s", spell.CD.TimeToReady(sim), sim.CurrentTime)
 			}
-
-			spell.CD.Set(sim.CurrentTime + spell.CD.Duration)
 		}
 
 		if spell.SharedCD.Timer != nil {
@@ -482,7 +486,13 @@ func (spell *Spell) makeCastFuncSimple() CastSuccessFunc {
 				}
 				return spell.castFailureHelper(sim, "still on shared cooldown for %s, curTime = %s", spell.SharedCD.TimeToReady(sim), sim.CurrentTime)
 			}
+		}
 
+		// both checks first: a cast the shared cooldown refuses mustn't start its own
+		if spell.CD.Timer != nil {
+			spell.CD.Set(sim.CurrentTime + spell.CD.Duration)
+		}
+		if spell.SharedCD.Timer != nil {
 			spell.SharedCD.Set(sim.CurrentTime + spell.SharedCD.Duration)
 		}
 

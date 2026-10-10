@@ -166,6 +166,17 @@ func (spell *Spell) weaponBonusMultiplier(attackerMultiplier float64) float64 {
 	return attackerMultiplier / totalPct
 }
 
+// WeaponBonusForDonePct is what a done percent that class code multiplies into a weapon hit's base damage
+// adds to the hit's flat attack power bonus: Unit::MeleeDamageBonusDone's DoneTotalMod scales both. It's in
+// base damage, so add it after the percent.
+func (spell *Spell) WeaponBonusForDonePct(target *Unit, donePct float64) float64 {
+	bonus := spell.weaponAttackPowerBonus(target)
+	if bonus == 0 {
+		return 0
+	}
+	return bonus * spell.weaponBonusMultiplier(1) * (donePct - 1)
+}
+
 // doneDamage is SpellDamageBonusDone's or MeleeDamageBonusDone's result, a whole number: the server
 // truncates it, a dot's amount at application, and keeps every later step whole too.
 func (spell *Spell) doneDamage(target *Unit, baseDamage float64, attackerMultiplier float64, isPeriodic bool) float64 {
@@ -213,6 +224,12 @@ func (spell *Spell) SpellPower() float64 {
 	return spell.Unit.GetStat(stats.SpellPower) +
 		spell.BonusSpellPower +
 		spell.Unit.PseudoStats.MobTypeSpellPower
+}
+
+// PowerBonus is one spell power or attack power bonus (power × coefficient) the way SpellDamageBonusDone
+// and SpellHealingBonusDone add it: each as its own int32, off a float32 product.
+func PowerBonus(bonus float64) float64 {
+	return float64(int32(float32(bonus)))
 }
 
 func (spell *Spell) SpellHitChance(target *Unit) float64 {
@@ -308,16 +325,18 @@ func (spell *Spell) CalcOutcome(sim *Simulation, target *Unit, outcomeApplier Ou
 	return result
 }
 
-func (spell *Spell) calcDamageInternal(sim *Simulation, target *Unit, baseDamage float64, attackerMultiplier float64, isPeriodic bool, outcomeApplier OutcomeApplier) *SpellResult {
+// calcDamageInternal takes the hit from doneDamage's result on. baseDamage is only logged.
+func (spell *Spell) calcDamageInternal(sim *Simulation, target *Unit, baseDamage float64, doneDamage float64, isPeriodic bool, outcomeApplier OutcomeApplier) *SpellResult {
 	attackTable := spell.Unit.AttackTables[target.UnitIndex]
 
 	result := spell.NewResult(target)
-	result.Damage = spell.doneDamage(target, baseDamage, attackerMultiplier, isPeriodic)
+	result.Damage = doneDamage
 
 	if sim.Log == nil {
 		result.applyTargetModifiers(spell, attackTable, isPeriodic)
 		result.applyResistances(sim, spell, isPeriodic, attackTable)
 		outcomeApplier(sim, result, attackTable)
+		result.applyPartialResist(spell)
 		spell.ApplyPostOutcomeDamageModifiers(sim, result)
 	} else {
 		afterAttackMods := result.Damage
@@ -326,6 +345,7 @@ func (spell *Spell) calcDamageInternal(sim *Simulation, target *Unit, baseDamage
 		result.applyResistances(sim, spell, isPeriodic, attackTable)
 		afterResistances := result.Damage
 		outcomeApplier(sim, result, attackTable)
+		result.applyPartialResist(spell)
 		afterOutcome := result.Damage
 		spell.ApplyPostOutcomeDamageModifiers(sim, result)
 		afterPostOutcome := result.Damage
@@ -345,14 +365,18 @@ func (spell *Spell) calcDamageInternal(sim *Simulation, target *Unit, baseDamage
 }
 func (spell *Spell) CalcDamage(sim *Simulation, target *Unit, baseDamage float64, outcomeApplier OutcomeApplier) *SpellResult {
 	attackerMultiplier := spell.AttackerDamageMultiplier(spell.Unit.AttackTables[target.UnitIndex])
-	return spell.calcDamageInternal(sim, target, baseDamage, attackerMultiplier, false, outcomeApplier)
+	return spell.calcDamageInternal(sim, target, baseDamage, spell.doneDamage(target, baseDamage, attackerMultiplier, false), false, outcomeApplier)
 }
 func (spell *Spell) CalcPeriodicDamage(sim *Simulation, target *Unit, baseDamage float64, outcomeApplier OutcomeApplier) *SpellResult {
 	attackerMultiplier := spell.AttackerDamageMultiplier(spell.Unit.AttackTables[target.UnitIndex])
-	return spell.calcDamageInternal(sim, target, baseDamage, attackerMultiplier, true, outcomeApplier)
+	return spell.calcDamageInternal(sim, target, baseDamage, spell.doneDamage(target, baseDamage, attackerMultiplier, true), true, outcomeApplier)
 }
 func (dot *Dot) CalcSnapshotDamage(sim *Simulation, target *Unit, outcomeApplier OutcomeApplier) *SpellResult {
-	return dot.Spell.calcDamageInternal(sim, target, dot.SnapshotBaseDamage, dot.SnapshotAttackerMultiplier, true, outcomeApplier)
+	done := dot.Spell.doneDamage(target, dot.SnapshotBaseDamage, dot.SnapshotAttackerMultiplier, true)
+	if dot.SnapshotStacks > 1 {
+		done *= float64(dot.SnapshotStacks)
+	}
+	return dot.Spell.calcDamageInternal(sim, target, dot.SnapshotBaseDamage, done, true, outcomeApplier)
 }
 
 func (spell *Spell) DealOutcome(sim *Simulation, result *SpellResult) {
@@ -424,18 +448,20 @@ func (spell *Spell) calcHealingInternal(sim *Simulation, target *Unit, baseHeali
 	attackTable := spell.Unit.AttackTables[target.UnitIndex]
 
 	result := spell.NewResult(target)
-	result.Damage = baseHealing
 
+	// SpellHealingBonusDone, SpellHealingBonusTaken and SpellCriticalHealingBonus each return a whole number
 	if sim.Log == nil {
-		result.Damage *= casterMultiplier
-		result.Damage = spell.applyTargetHealingModifiers(result.Damage, attackTable)
+		result.Damage = wholeHeal(baseHealing * casterMultiplier)
+		result.Damage = wholeHeal(spell.applyTargetHealingModifiers(result.Damage, attackTable))
 		outcomeApplier(sim, result, attackTable)
+		result.Damage = wholeHeal(result.Damage)
 	} else {
-		result.Damage *= casterMultiplier
+		result.Damage = wholeHeal(baseHealing * casterMultiplier)
 		afterCasterMods := result.Damage
-		result.Damage = spell.applyTargetHealingModifiers(result.Damage, attackTable)
+		result.Damage = wholeHeal(spell.applyTargetHealingModifiers(result.Damage, attackTable))
 		afterTargetMods := result.Damage
 		outcomeApplier(sim, result, attackTable)
+		result.Damage = wholeHeal(result.Damage)
 		afterOutcome := result.Damage
 
 		spell.Unit.Log(
@@ -446,6 +472,12 @@ func (spell *Spell) calcHealingInternal(sim *Simulation, target *Unit, baseHeali
 
 	return result
 }
+
+// wholeHeal is the server's uint32(max(heal, 0)).
+func wholeHeal(heal float64) float64 {
+	return max(0, math.Trunc(heal))
+}
+
 func (spell *Spell) CalcHealing(sim *Simulation, target *Unit, baseHealing float64, outcomeApplier OutcomeApplier) *SpellResult {
 	return spell.calcHealingInternal(sim, target, baseHealing, spell.CasterHealingMultiplier(), outcomeApplier)
 }

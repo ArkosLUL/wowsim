@@ -63,7 +63,7 @@ func (priest *Priest) registerPowerWordShieldSpell() {
 		},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			shieldAmount := 2230.0 + coeff*spell.HealingPower(target)
+			shieldAmount := 2230.0 + core.PowerBonus(coeff*spell.HealingPower(target))
 			shield := spell.Shield(target)
 			shield.Apply(sim, shieldAmount)
 
@@ -103,7 +103,7 @@ func (priest *Priest) registerPowerWordShieldSpell() {
 			ThreatMultiplier: 1 - []float64{0, .07, .14, .20}[priest.Talents.SilentResolve],
 
 			ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-				baseHealing := 2230 + coeff*spell.HealingPower(target)
+				baseHealing := 2230 + core.PowerBonus(coeff*spell.HealingPower(target))
 				spell.CalcAndDealHealing(sim, target, baseHealing, spell.OutcomeAlwaysHit)
 			},
 		})

@@ -1179,7 +1179,8 @@ func checkGoldcharInfo(rec goldcharRecord, s goldcharSetup) (checks []Check) {
 }
 
 // gearChecks hold each item's socket bonus and enchantments on the server to the sim's: the sim gives the
-// bonus when every socket's gem matches its color, and always counts every enchant and meta gem.
+// bonus when every socket's gem matches its color, a meta gem when its color condition is met
+// (HasMetaGemEquipped), and always counts every enchant.
 func (d *damageSim) gearChecks(c *goldcharCharacter) []Check {
 	var checks []Check
 	for _, e := range c.Equipment {
@@ -1194,7 +1195,7 @@ func (d *damageSim) gearChecks(c *goldcharCharacter) []Check {
 			checks = append(checks, checkOn(name+"socket bonus", on, e.SocketBonus != 0))
 		}
 
-		meta := slices.ContainsFunc(item.Gems, func(g core.Gem) bool { return g.Color == proto.GemColor_GemColorMeta })
+		metaAt := slices.IndexFunc(item.Gems, func(g core.Gem) bool { return g.Color == proto.GemColor_GemColorMeta })
 		metaOff := false
 		for _, off := range e.Inactive {
 			if off.Reason == "condition" {
@@ -1204,8 +1205,10 @@ func (d *damageSim) gearChecks(c *goldcharCharacter) []Check {
 			checks = append(checks, fail(fmt.Sprintf("%senchant %d", name, off.Enchant),
 				fmt.Sprintf("the server skips it (%s), the sim doesn't", off.Reason)))
 		}
-		if meta || metaOff {
-			checks = append(checks, checkOn(name+"meta gem", meta, !metaOff))
+		if metaAt >= 0 || metaOff {
+			// the sim's own read of the gem's color condition
+			simOn := metaAt >= 0 && d.char.HasMetaGemEquipped(item.Gems[metaAt].ID)
+			checks = append(checks, checkOn(name+"meta gem", simOn, !metaOff))
 		}
 	}
 	return checks

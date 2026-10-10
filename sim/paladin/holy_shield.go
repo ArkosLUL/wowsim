@@ -25,8 +25,8 @@ func (paladin *Paladin) registerHolyShieldSpell() {
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			baseDamage := spell.Direct.Roll(sim) +
-				spell.Direct.AP*spell.MeleeAttackPower() +
-				spell.Direct.SP*spell.SpellPower()
+				core.PowerBonus(spell.Direct.AP*spell.MeleeAttackPower()) +
+				core.PowerBonus(spell.Direct.SP*spell.SpellPower())
 
 			// SPELL_AURA_PROC_TRIGGER_DAMAGE deals its damage straight through
 			// AuraEffect::HandleProcTriggerDamageAuraProc, with no hit or crit roll.

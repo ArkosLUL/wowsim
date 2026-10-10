@@ -119,6 +119,9 @@ type Dot struct {
 	SnapshotBaseDamage         float64
 	SnapshotCritChance         float64
 	SnapshotAttackerMultiplier float64
+	// A stacking dot whose SnapshotBaseDamage is one stack's sets its stacks here: AuraEffect::CalculateAmount
+	// truncates one stack's done damage before it multiplies. 0 when the base already counts the stacks.
+	SnapshotStacks int32
 
 	tickAction *PendingAction
 	tickPeriod time.Duration

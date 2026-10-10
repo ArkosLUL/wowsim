@@ -95,7 +95,7 @@ func (warlock *Warlock) registerMetamorphosisSpell() {
 			Tick: core.SpellEffect{Effect: 0, FromSpellID: 50590, Min: 481, Max: 481, SP: 0.143},
 
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
-				baseDmg := (dot.Tick.Roll(sim) + dot.Tick.SP*dot.Spell.SpellPower()) * sim.Encounter.AOECapMultiplier()
+				baseDmg := (dot.Tick.Roll(sim) + core.PowerBonus(dot.Tick.SP*dot.Spell.SpellPower())) * sim.Encounter.AOECapMultiplier()
 				for _, aoeTarget := range sim.Encounter.TargetUnits {
 					dot.Spell.CalcAndDealDamage(sim, aoeTarget, baseDmg, dot.Spell.OutcomeMagicHit)
 				}

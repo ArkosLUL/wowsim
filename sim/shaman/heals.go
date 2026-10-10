@@ -63,7 +63,7 @@ func (shaman *Shaman) registerLesserHealingWaveSpell() {
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			healPower := shaman.healingPower(spell, target)
-			baseHealing := spell.Direct.Roll(sim) + spell.Direct.SP*(healPower+relicHealingPower)
+			baseHealing := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP*(healPower+relicHealingPower))
 			if hasGlyph {
 				if shaman.EarthShield.Hot(target).IsActive() {
 					baseHealing *= 1.2
@@ -134,7 +134,7 @@ func (shaman *Shaman) registerRiptideSpell() {
 			TicksCanCrit:  false,
 			Tick:          core.SpellEffect{Effect: 1, Min: 334, Max: 334, SP: 0.188},
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
-				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + dot.Tick.SP*shaman.healingPower(dot.Spell, target)
+				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + core.PowerBonus(dot.Tick.SP*shaman.healingPower(dot.Spell, target))
 				dot.SnapshotAttackerMultiplier = dot.Spell.CasterHealingMultiplier()
 			},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
@@ -144,7 +144,7 @@ func (shaman *Shaman) registerRiptideSpell() {
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			healPower := shaman.healingPower(spell, target)
-			baseHealing := spell.Direct.Roll(sim) + spell.Direct.SP*healPower
+			baseHealing := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP*healPower)
 			result := spell.CalcAndDealHealing(sim, target, baseHealing, spell.OutcomeHealingCrit)
 			spell.Hot(target).Apply(sim)
 
@@ -206,7 +206,7 @@ func (shaman *Shaman) registerHealingWaveSpell() {
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			healPower := shaman.healingPower(spell, target)
-			baseHealing := spell.Direct.Roll(sim) + spell.Direct.SP*healPower
+			baseHealing := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP*healPower)
 			result := spell.CalcAndDealHealing(sim, target, baseHealing, spell.OutcomeHealingCrit)
 
 			if result.Outcome.Matches(core.OutcomeCrit) {
@@ -293,7 +293,7 @@ func (shaman *Shaman) registerEarthShieldSpell() {
 			Tick:          core.SpellEffect{Effect: 0, Min: 337, Max: 337, SP: 0.5371},
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
 				base := dot.Tick.Roll(sim)
-				amount := (base + dot.Tick.SP*shaman.healingPower(dot.Spell, target)) * glyphMultiplier
+				amount := (base + core.PowerBonus(dot.Tick.SP*shaman.healingPower(dot.Spell, target))) * glyphMultiplier
 				dot.SnapshotBaseDamage = amount + (amount-base)*improvedShields
 				dot.SnapshotAttackerMultiplier = dot.Spell.CasterHealingMultiplier()
 			},
@@ -358,7 +358,7 @@ func (shaman *Shaman) registerChainHealSpell() {
 			targets := sim.Environment.Raid.GetFirstNPlayersOrPets(numHits)
 			for hitIndex := int32(0); hitIndex < numHits; hitIndex++ {
 				healPower := shaman.healingPower(spell, target)
-				baseHealing := spell.Direct.Roll(sim) + spell.Direct.SP*healPower + bonusHeal
+				baseHealing := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP*healPower) + bonusHeal
 				baseHealing *= bounceCoeff
 
 				riptide := shaman.Riptide.Hot(curTarget)

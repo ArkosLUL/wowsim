@@ -26,7 +26,7 @@ func (druid *Druid) registerHurricaneSpell() {
 			{Op: core.SpellModEffect1, Flat: core.TernaryInt32(druid.HasMajorGlyph(proto.DruidMajorGlyph_GlyphOfHurricane), -20, 0)},
 		},
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			damage := spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()
+			damage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP*spell.SpellPower())
 			damage *= sim.Encounter.AOECapMultiplier()
 			for _, aoeTarget := range sim.Encounter.TargetUnits {
 				spell.CalcAndDealDamage(sim, aoeTarget, damage, spell.OutcomeMagicHitAndCrit)

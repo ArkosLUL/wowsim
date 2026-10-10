@@ -84,7 +84,7 @@ func (shaman *Shaman) registerLavaBurstSpell() {
 		},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := dmgBonus + spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()
+			baseDamage := dmgBonus + spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP*spell.SpellPower())
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 			spell.WaitTravelTime(sim, func(sim *core.Simulation) {
 				if lvbDotSpell != nil && result.Landed() {

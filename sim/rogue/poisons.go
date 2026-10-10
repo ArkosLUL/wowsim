@@ -132,7 +132,7 @@ func (rogue *Rogue) registerDeadlyPoisonSpell() {
 				if stacks := dot.GetStacks(); stacks > 0 {
 					// AuraEffect::CalculateAmount works out one dose, AP part in whole points, then
 					// multiplies by the doses
-					dot.SnapshotBaseDamage = (dot.Tick.Roll(sim) + math.Floor(dot.Tick.AP*dot.Spell.MeleeAttackPower())) * float64(stacks)
+					dot.SnapshotBaseDamage, dot.SnapshotStacks = dot.Tick.Roll(sim)+math.Floor(dot.Tick.AP*dot.Spell.MeleeAttackPower()), stacks
 					attackTable := dot.Spell.Unit.AttackTables[target.UnitIndex]
 					dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(attackTable)
 					if canCrit {

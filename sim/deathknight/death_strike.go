@@ -54,6 +54,8 @@ func (dk *Deathknight) newDeathStrikeSpell(isMH bool) *core.Spell {
 			if hasGlyph {
 				baseDamage *= 1 + 0.01*min(dk.CurrentRunicPower(), 25)
 			}
+			// the class scripts are DoneTotalMod, which scales the flat creature-type bonus too
+			baseDamage += spell.WeaponBonusForDonePct(target, dk.RoRTSBonus(target))
 
 			result := spell.CalcDamage(sim, target, baseDamage, dk.threatOfThassarianOutcomeApplier(spell))
 

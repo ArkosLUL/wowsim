@@ -45,6 +45,7 @@ var threats = []Threat{
 	{SpellID: 12974, Targets: ThreatTargetsCaster},                                         // Flurry (Rank 5)
 	{SpellID: 12975, Targets: ThreatTargetsCaster},                                         // Last Stand
 	{SpellID: 13002, Targets: ThreatTargetsCaster},                                         // Unbridled Wrath (Rank 5)
+	{SpellID: 13376, Targets: ThreatTargetsEnemyArea},                                      // Fire Shield
 	{SpellID: 13750, Targets: ThreatTargetsCaster},                                         // Adrenaline Rush
 	{SpellID: 13877, Targets: ThreatTargetsCaster},                                         // Blade Flurry
 	{SpellID: 13964, Targets: ThreatTargetsCaster},                                         // Hack and Slash (Rank 5)

@@ -15,9 +15,14 @@ One entry per `goldchar_setups.json` setup; the e2e runs it, the replay reads it
 | `behind` | stand behind the dummy (melee DPS); else in front |
 | `ammo` | hunters only: the ammo item set as the ammo slot (52020 Shatter Rounds, the sim's Iceblade Arrow setting) |
 | `learn` | passives the golden build doesn't teach but the sim character has, which the e2e `.learn`s (Savage Defense) |
+| `dummyHealthPct` | the dummy's health all fight, in percent, set by the e2e's `.simval hp` (its AI zeroes every hit, `.damage`'s too, and it doesn't regenerate), so a 20% spell goes off (HunterMM: 19, Kill Shot). The replay starts its target there and takes its damage off, so keep the percent clear of a health line the fight would cross |
+| `pull` | steps cast at the dummy before the fight starts, outside the replayed casts: debuffs the sim takes as an option (Hunter's Mark, which the replay turns on when the log has its aura) |
 | `before` | steps cast once, in order, before the cycle; Auto Shot (75) here starts a hunter shooting |
 | `cycle` | steps tried in order, round and round, whatever the server answers |
 | step `spell`, `name`, `waitMs` | the spell id, the server's name, and how long the bot waits after trying it |
+
+A cycle with `dummyHealthPct` or `pull` is fought by `TestSimvalEcCore3LowHealthFight`, not `TestSimvalFight`
+(module README).
 
 Rules, held by `TestFightCycles`:
 - Every step is a spell of the setup's class the sim character can cast (`SpellFlagAPL`, through `fightSimActions`),
@@ -43,7 +48,8 @@ summon or a cast other than the bot's, and before the start only their auras goi
 pull, Sniper Training included). The 32 were fought against the worldserver build of 16:52 (rev 3d89793c7), on
 2026-10-05; DruidFeralTank again on 2026-10-06, wearing its gear set's five enchants; DeathknightFrost, MageFrost and
 RogueSubtlety again on 2026-10-06 against the worldserver build of 19:37 (rev 3d89793c7 plus the module's working
-tree): 105 KB.
+tree); HunterMM again on 2026-10-10 against the worldserver image of 2026-10-09 (rev 3d89793c7, module 408f7b5),
+Hunter's Mark pulled and the dummy at 19%: 105 KB.
 
 ## Left out
 
@@ -62,11 +68,6 @@ Representation gaps, not mismatches, each with its reason in `tools/simval/fight
 Real sim or cycle mismatches, each a follow-up, in `droppedFightChecks` (`tools/simval/fight.go`); a check is named
 by its subject (`47809`, `melee`, `Bloodworm melee`, `aura 17800 on target`, `energize 57946 mana`) and name. Why,
 by the table's cause:
-- **map update length**: the live map update runs about 104 ms (world ticks of about 10.4 ms, sleeping past
-  `MinWorldUpdateTime`), the sim's exactly 100. A whole-second dot's tick lands anywhere in a live update, but right
-  on the sim's: Serpent Sting's 4th tick beats the next cast's landing about half the cycles on the server, every
-  cycle in the sim.
 
 | Setup | Subject | Check | Why |
 |---|---|---|---|
-| HunterMM | 49001 | ticks | map update length |

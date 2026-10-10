@@ -97,7 +97,7 @@ func (warrior *Warrior) registerRevengeSpell(cdTimer *core.Timer) {
 		Direct: core.SpellEffect{Effect: 0, Min: 1636, Max: 1998, AP: 0.31},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := spell.Direct.Roll(sim) + spell.Direct.AP*spell.MeleeAttackPower()
+			baseDamage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.AP*spell.MeleeAttackPower())
 			result := spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 			if !result.Landed() {
 				spell.IssueRefund(sim)
@@ -105,7 +105,7 @@ func (warrior *Warrior) registerRevengeSpell(cdTimer *core.Timer) {
 
 			if extraHit {
 				otherTarget := sim.Environment.NextTargetUnit(target)
-				baseDamage := (spell.Direct.Roll(sim) + spell.Direct.AP*spell.MeleeAttackPower()) * extraHitMultiplier
+				baseDamage := (spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.AP*spell.MeleeAttackPower())) * extraHitMultiplier
 				spell.CalcAndDealDamage(sim, otherTarget, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 			}
 

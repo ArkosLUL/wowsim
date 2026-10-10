@@ -39,6 +39,8 @@ func (dk *Deathknight) newPlagueStrikeSpell(isMH bool) *core.Spell {
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			baseDamage := normalizedStrikeBase(sim, spell, isMH, spell.Direct.Roll(sim)) * spell.Direct.WeaponPct
 			baseDamage *= dk.RoRTSBonus(target)
+			// the class scripts are DoneTotalMod, which scales the flat creature-type bonus too
+			baseDamage += spell.WeaponBonusForDonePct(target, dk.RoRTSBonus(target))
 
 			result := spell.CalcDamage(sim, target, baseDamage, dk.threatOfThassarianOutcomeApplier(spell))
 

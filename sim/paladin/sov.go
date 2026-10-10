@@ -65,9 +65,9 @@ func (paladin *Paladin) registerSealOfVengeanceSpellAndAura() {
 			Tick:          core.SpellEffect{Effect: 0, SP: 0.013, AP: 0.025},
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
 				tickValue := dot.Tick.Roll(sim) +
-					dot.Tick.SP*dot.Spell.SpellPower() +
-					dot.Tick.AP*dot.Spell.MeleeAttackPower()
-				dot.SnapshotBaseDamage = tickValue * float64(dot.GetStacks())
+					core.PowerBonus(dot.Tick.SP*dot.Spell.SpellPower()) +
+					core.PowerBonus(dot.Tick.AP*dot.Spell.MeleeAttackPower())
+				dot.SnapshotBaseDamage, dot.SnapshotStacks = tickValue, dot.GetStacks()
 
 				attackTable := dot.Spell.Unit.AttackTables[target.UnitIndex]
 				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(attackTable)
@@ -122,8 +122,8 @@ func (paladin *Paladin) registerSealOfVengeanceSpellAndAura() {
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			baseDamage := spell.Direct.Roll(sim) +
-				spell.Direct.SP*spell.SpellPower() +
-				spell.Direct.AP*spell.MeleeAttackPower()
+				core.PowerBonus(spell.Direct.SP*spell.SpellPower()) +
+				core.PowerBonus(spell.Direct.AP*spell.MeleeAttackPower())
 
 			// 10% more a Holy Vengeance stack (Unit::SpellDamageBonusDone)
 			baseDamage *= 1 + .1*float64(dotSpell.Dot(target).GetStacks())

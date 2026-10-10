@@ -38,7 +38,7 @@ func (mage *Mage) registerFireBlastSpell() {
 		Direct: core.SpellEffect{Effect: 0, Min: 925, Max: 1095, SP: 0.4286},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()
+			baseDamage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP*spell.SpellPower())
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 		},
 	})

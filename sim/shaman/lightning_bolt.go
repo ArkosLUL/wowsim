@@ -68,7 +68,7 @@ func (shaman *Shaman) newLightningBoltSpellConfig(isLightningOverload bool) core
 	canLO := !isLightningOverload && shaman.Talents.LightningOverload > 0
 	lightningOverloadChance := float64(shaman.Talents.LightningOverload) * 0.11
 	spellConfig.ApplyEffects = func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-		baseDamage := spell.Direct.Roll(sim) + spell.Direct.SP*(spell.SpellPower()+relicSpellPower)
+		baseDamage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP*(spell.SpellPower()+relicSpellPower))
 		result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 
 		// Electrified and Lightning Overload proc off the hit, so they wait for the bolt too

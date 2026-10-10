@@ -22,7 +22,7 @@ func (priest *Priest) registerPrayerOfMendingSpell() {
 	var curTarget *core.Unit
 	var remainingJumps int
 	priest.ProcPrayerOfMending = func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-		baseHealing := 1043 + 0.8057*spell.HealingPower(target)
+		baseHealing := 1043 + core.PowerBonus(0.8057*spell.HealingPower(target))
 		priest.PrayerOfMending.CalcAndDealHealing(sim, target, baseHealing, spell.OutcomeHealingCrit)
 
 		pomAuras[target.UnitIndex].Deactivate(sim)

@@ -39,7 +39,7 @@ func (warlock *Warlock) registerSearingPainSpell() {
 		Direct: core.SpellEffect{Effect: 0, Min: 347, Max: 409, SP: 0.4286},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()
+			baseDamage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP*spell.SpellPower())
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 		},
 	})

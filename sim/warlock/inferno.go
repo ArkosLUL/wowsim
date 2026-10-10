@@ -43,7 +43,7 @@ func (warlock *Warlock) registerInfernoSpell() {
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			// TODO: add fire spell damage
-			baseDmg := (spell.Direct.Roll(sim) + spell.Direct.SP*spell.SpellPower()) * sim.Encounter.AOECapMultiplier()
+			baseDmg := (spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP*spell.SpellPower())) * sim.Encounter.AOECapMultiplier()
 
 			for _, aoeTarget := range sim.Encounter.TargetUnits {
 				spell.CalcAndDealDamage(sim, aoeTarget, baseDmg, spell.OutcomeMagicHitAndCrit)
@@ -141,7 +141,7 @@ func (infernal *InfernalPet) Initialize() {
 			Tick: core.SpellEffect{Effect: 0, Min: 40, Max: 40, SP: 1.35},
 
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
-				baseDmg := dot.Tick.Roll(sim) + dot.Tick.SP*dot.Spell.SpellPower()
+				baseDmg := dot.Tick.Roll(sim) + core.PowerBonus(dot.Tick.SP*dot.Spell.SpellPower())
 
 				for _, aoeTarget := range sim.Encounter.TargetUnits {
 					dot.Spell.CalcAndDealDamage(sim, aoeTarget, baseDmg, dot.Spell.OutcomeMagicHit)

@@ -724,6 +724,16 @@ func (sim *Simulation) advance(nextTime time.Duration) {
 	}
 }
 
+// StartTargetAtHealth puts the target at health of maxHealth, with the execute phases following the damage
+// it takes from there. Call it after Reset: the fight still ends the way Reset set it up. For replaying a
+// fight on a target whose health is known.
+func (sim *Simulation) StartTargetAtHealth(maxHealth, health float64) {
+	sim.Encounter.EndFightAtHealth = maxHealth
+	sim.Encounter.DamageTaken = maxHealth - health
+	sim.executePhase = 0
+	sim.nextExecutePhase()
+}
+
 // nextExecutePhase updates nextExecuteDuration and nextExecuteDamage based on executePhase.
 func (sim *Simulation) nextExecutePhase() {
 	setup := func(phase int32, damage float64, health float64) {

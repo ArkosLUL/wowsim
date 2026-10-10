@@ -152,13 +152,29 @@ func (swap *ItemSwap) GetItem(slot proto.ItemSlot) *Item {
 
 func (swap *ItemSwap) CalcStatChanges(slots []proto.ItemSlot) stats.Stats {
 	newStats := stats.Stats{}
+	after := swap.character.Equipment
 	for _, slot := range slots {
 		oldItemStats := swap.character.Equipment[slot].TotalStats()
 		newItemStats := swap.GetItem(slot).TotalStats()
 		newStats = newStats.Add(newItemStats.Subtract(oldItemStats))
+		after[slot] = *swap.GetItem(slot)
 	}
 
-	return newStats
+	return newStats.Add(metaGemStatChange(&swap.character.Equipment, &after))
+}
+
+// metaGemStatChange is the head's meta gem going on or off between two sets of gear: the server checks its
+// condition again on every equip (Player::CorrectMetaGemEnchants). Only the gem's stats follow. Its effect
+// and its crit damage are built once, off the starting gear.
+func metaGemStatChange(before, after *Equipment) stats.Stats {
+	wasOff, isOff := before.inactiveMetaGem(), after.inactiveMetaGem()
+	switch {
+	case wasOff == nil && isOff != nil:
+		return isOff.Stats.Invert()
+	case wasOff != nil && isOff == nil:
+		return wasOff.Stats
+	}
+	return stats.Stats{}
 }
 
 func (swap *ItemSwap) SwapItems(sim *Simulation, slots []proto.ItemSlot) {
@@ -169,6 +185,7 @@ func (swap *ItemSwap) SwapItems(sim *Simulation, slots []proto.ItemSlot) {
 	character := swap.character
 
 	newStats := stats.Stats{}
+	before := character.Equipment
 	has2H := swap.GetItem(proto.ItemSlot_ItemSlotMainHand).HandType == proto.HandType_HandTypeTwoHand
 	for _, slot := range slots {
 
@@ -181,6 +198,7 @@ func (swap *ItemSwap) SwapItems(sim *Simulation, slots []proto.ItemSlot) {
 			newStats = newStats.Add(swapStats)
 		}
 	}
+	newStats = newStats.Add(metaGemStatChange(&before, &character.Equipment))
 
 	character.AddStatsDynamic(sim, newStats)
 

@@ -12,7 +12,9 @@ func (hunter *Hunter) registerChimeraShotSpell() {
 		return
 	}
 
-	ssProcSpell := hunter.chimeraShotSerpentStingSpell()
+	// the sting's tick as spell_hun_chimera_shot reads it: before it recalculates the sting
+	var stingTick float64
+	ssProcSpell := hunter.chimeraShotSerpentStingSpell(&stingTick)
 
 	hunter.ChimeraShot = hunter.RegisterSpell(core.SpellConfig{
 		ActionID:     core.ActionID{SpellID: 53209},
@@ -54,8 +56,9 @@ func (hunter *Hunter) registerChimeraShotSpell() {
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeRangedHitAndCrit)
 			spell.WaitTravelTime(sim, func(sim *core.Simulation) {
 				if result.Landed() {
-					if hunter.SerpentSting.Dot(target).IsActive() {
-						hunter.SerpentSting.Dot(target).Rollover(sim)
+					if sting := hunter.SerpentSting.Dot(target); sting.IsActive() {
+						stingTick = sting.SnapshotBaseDamage
+						sting.Rollover(sim)
 						ssProcSpell.Cast(sim, target)
 					} else if hunter.ScorpidStingAuras.Get(target).IsActive() {
 						hunter.ScorpidStingAuras.Get(target).Refresh(sim)
@@ -67,7 +70,8 @@ func (hunter *Hunter) registerChimeraShotSpell() {
 	})
 }
 
-func (hunter *Hunter) chimeraShotSerpentStingSpell() *core.Spell {
+// chimeraShotSerpentStingSpell deals stingTick, the sting's tick Chimera Shot found on the target.
+func (hunter *Hunter) chimeraShotSerpentStingSpell(stingTick *float64) *core.Spell {
 	return hunter.RegisterSpell(core.SpellConfig{
 		ActionID:     core.ActionID{SpellID: 53353},
 		SpellSchool:  core.SpellSchoolNature,
@@ -79,18 +83,17 @@ func (hunter *Hunter) chimeraShotSerpentStingSpell() *core.Spell {
 			0.1*float64(hunter.Talents.ImprovedStings),
 			core.TernaryFloat64(hunter.HasSetBonus(ItemSetScourgestalkerBattlegear, 2), .1, 0),
 		),
-		DamageMultiplier: 1 *
-			(2.0 + core.TernaryFloat64(hunter.HasMajorGlyph(proto.HunterMajorGlyph_GlyphOfSerpentSting), 0.8, 0)) *
-			hunter.markedForDeathMultiplier(),
-		CritMultiplier:   hunter.critMultiplier(true, false),
+		// 53353 ignores caster modifiers (SPELL_ATTR3_IGNORE_CASTER_MODIFIERS), so no spell mod reaches it:
+		// no Mortal Shots on its crits. Marked for Death's class mask leaves it and the sting out.
+		DamageMultiplier: 2.0 + core.TernaryFloat64(hunter.HasMajorGlyph(proto.HunterMajorGlyph_GlyphOfSerpentSting), 0.8, 0),
+		CritMultiplier:   hunter.MeleeCritMultiplier(1, 0),
 		ThreatMultiplier: 1,
 
 		// spell_hun_chimera_shot deals the sting's tick, times 40% of its tick count in DamageMultiplier
 		Direct: core.SpellEffect{Effect: 0, FromSpellID: 49001, Min: 242, Max: 242, AP: 0.04},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := spell.Direct.Roll(sim) + spell.Direct.AP*spell.RangedAttackPowerSpellBonus(target)
-			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialCritOnly)
+			result := spell.CalcDamage(sim, target, *stingTick, spell.OutcomeMeleeSpecialCritOnly)
 			spell.DealDamageAfterTravel(sim, result)
 		},
 	})

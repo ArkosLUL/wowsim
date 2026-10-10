@@ -48,9 +48,11 @@ func (dk *Deathknight) newFrostStrikeHitSpell(isMH bool) *core.Spell {
 					spell.Unit.AutoAttacks.OH().CalculateNormalizedWeaponDamage(sim, spell.MeleeAttackPower()) +
 					spell.BonusWeaponDamage()) * spell.Direct.WeaponPct
 			}
-			baseDamage *= dk.glacielRotBonus(target) *
+			donePct := dk.glacielRotBonus(target) *
 				dk.RoRTSBonus(target) *
 				dk.mercilessCombatBonus(sim)
+			// the class scripts are DoneTotalMod, which scales the flat creature-type bonus too
+			baseDamage = baseDamage*donePct + spell.WeaponBonusForDonePct(target, donePct)
 
 			result := spell.CalcDamage(sim, target, baseDamage, dk.threatOfThassarianOutcomeApplier(spell))
 

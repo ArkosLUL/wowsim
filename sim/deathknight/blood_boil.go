@@ -12,9 +12,9 @@ var bloodBoilEffect = core.SpellEffect{Effect: 0, Min: 180, Max: 220, AP: 0.06}
 // Frost Fever takes 95 more, and the AP coefficient is multiplied by 1.5835 in place of Impurity's bonus.
 func bloodBoilBase(sim *core.Simulation, spell *core.Spell, diseased bool, impurityAP float64) float64 {
 	if diseased {
-		return spell.Direct.Roll(sim) + 95 + spell.Direct.AP*1.5835*spell.MeleeAttackPower()
+		return spell.Direct.Roll(sim) + 95 + core.PowerBonus(spell.Direct.AP*1.5835*spell.MeleeAttackPower())
 	}
-	return spell.Direct.Roll(sim) + spell.Direct.AP*impurityAP
+	return spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.AP*impurityAP)
 }
 
 func (dk *Deathknight) registerBloodBoilSpell() {
