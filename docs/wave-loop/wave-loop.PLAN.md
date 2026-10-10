@@ -83,8 +83,8 @@ G = changes goldens. FS = runs all 37 suites.
 | Z3 | BIS-OH-PAIR · BIS-QUICK-ALTS · BIS-WEAPON-PAIR · BIS-CURVES | ✔ |
 | Z4 | BIS-ALTS-MEASURED | ✔ |
 | Z5 | EC-CORE-FIX3 (G, FS, live) · EC-PET-FIX2 (G, live) · EC-CLASS-FIX2 (G, live) · EC-THREAT-FIX4 (G, FS, C++, live) | ✔ |
-| Z6 | PAR-FU-8 (G, live) · PAR-FU-9 (FS, live) · RI-5 (live) · EC-CORE-FIX4 (G, FS) | ✔ |
-| Z7 | EC-PET-FIX3 (G, live) · EC-CLASS-FIX3 (G, live) · EC-TOOLS | ✔ |
+| Z6 | PAR-FU-8 (G, live) · PAR-FU-9 (FS, live) · PAR-FU-10 (G, FS, live) · RI-5 (live) | ✔ |
+| Z7 | EC-CORE-FIX4 (G, FS) · EC-PET-FIX3 (G, live) · EC-CLASS-FIX3 (G, live) · EC-TOOLS | ✔ |
 
 F2 is an inserted wave, not a fifth item in F: the core swing and cast fixes of PAR-P7-0c have to land
 before the class items in G, a class item can't build on a core fix merging in its own wave, and F already
@@ -148,8 +148,9 @@ dataset. Z5 too (2026-10-07): the sim's parity backlog first; the BiS chain runs
 Z4 is inserted before it (the user's call, the same day): the BiS alternatives aren't the measured best, and a
 pass doesn't repeat.
 Z6 takes the three items the user planned on master on 2026-10-10 (PAR-FU-8 and PAR-FU-9 for "the next wave",
-and RI-5) with the core item of Z5's follow-ups; Z7 takes the rest of those, specced at Z5's close-out under the
-same call (the parity backlog first). Both wait for the user's continue.
+and RI-5) and PAR-FU-10, mod-spell-tweaks' new mage and warlock tweaks (the user's call, the same day); Z7 takes
+Z5's follow-ups, specced at its close-out under the earlier call (the parity backlog first). Both wait for the
+user's continue.
 
 **Where the specs are:**
 
@@ -171,14 +172,13 @@ same call (the parity backlog first). Both wait for the user's continue.
   (EC-CLASS-FIX2's contract request) while the user rebuilt; then EC-THREAT-FIX4's live stage and the live
   records left open (the spell-mod sweep, the Shadowfiend, Fire Shield) on the rebuilt server (image of
   2026-10-10 16:21 local: [ac] `3d89793c7` with mod-sim-validation `97ca11a`; the module's HEAD is `bb2a21d`).
-  Its throughput row is still to take: a Chronicle replay held six cores at the close-out
-  (`.wave-loop/rebase-z5.sh`, idle or loaded with a note).
-  Next, Z6, planned: one run, no rebuild; PAR-FU-8, PAR-FU-9 and RI-5 end on a live stage (RI-5's SELECT-only),
-  away from Saturday 17:00's raid reset. PAR-FU-9's Glyph of Backstab toggle waits for the server to run
-  mod-spell-tweaks `e9d0baf`. Integrate PAR-FU-8, PAR-FU-9, RI-5, EC-CORE-FIX4 in that order. Then Z7.
+  Next, Z6, planned: the code stages first; the live stages of PAR-FU-8, PAR-FU-9, PAR-FU-10 and RI-5 (its
+  SELECT-only) once the user has rebuilt the server with mod-spell-tweaks `9bf5c75`, away from Saturday 17:00's
+  raid reset. Integrate PAR-FU-8, PAR-FU-9, PAR-FU-10, RI-5 in that order. Then Z7.
   Z5's item notes: `G:\DevStuff\GitHub\.wave-loop\ec-{core-fix3,pet-fix2,class-fix2,class-fix2-apl,threat-fix4,z5-live}-tmp`.
   Prod runs X's `25cb9dddc` (no `rollback-q` image: its layers were gone), without Y's and Z's sim changes.
-- Open: the e2e-coverage backlog Z7 leaves, sim-performance's Left items, the bis-optimizer backlog (Z3's As
+- Open: the e2e-coverage backlog Z7 leaves, sim-performance's Left items and Z5's 9–11% on mana users (Sim
+  throughput), the bis-optimizer backlog (Z3's As
   builts: the enchant residual, Mutilate's pair, Combat Rogue P3 Normal; Z4's: the surrogate overpricing a
   one-hander's pairing, stage 2 and the Heroic Presence checks not yet run on the new lists, whether
   Ecoterrorist's rotation casts Mangle (Idol of the Corruptor sims like a dead idol); Z5's re-baseline: the
@@ -379,6 +379,7 @@ From G the benches run their suites' default players with rotations, at 1 and 10
 | Y | 1.367 / 96.2 | 0.616 / 34.5 | 0.926 / 54.5 | 0.502 / 21.2 | 5.636 / 295.5 |
 | Z | 1.293 / 96.2 | 0.614 / 37.2 | 0.866 / 50.8 | 0.622 / 20.9 | 7.648 / 300.3 |
 | Z2 | 1.311 / 98.2 | 0.629 / 34.0 | 0.892 / 50.0 | 0.473 / 19.7 | 5.640 / 297.3 |
+| Z5 | 1.510 / 100.2 | 0.603 / 39.8 | 1.006 / 56.5 | 0.552 / 22.5 | 7.135 / 311.3 |
 
 H2 ran with the live worldserver using half a core, which moved whole runs by up to 2×
 and cost a few percent here (Ret, which H2 barely touched, +4%). An interleaved A/B against the base
@@ -485,8 +486,14 @@ rest within 2%. Then perf's `optimizer/quick/raid25_raiddps_p1` at 16 procs (4 t
 wave O's idle baseline 292.1 s, on 146,250 whole-raid sims against 158,000, so 6% more a sim across the 10 ms
 player tick and Z2. A BiS batch's 107 minutes against about 60 was the contended machine.
 
-Z5's row is still to take (a Chronicle replay held six cores at its close-out): EC-THREAT-FIX4 adds a
-Replenishment event a second for every mana user, a mage's pets included while they're out.
+Z5's row ran with the AC containers stopped and Chronicle idle (the host at 7–9% before, a wallpaper program
+among it), by `.wave-loop/rebase-z5.sh`, logs in `.wave-loop/logs/z5-bench`. Its third run shared the machine
+with another session's container (265% CPU) and came in 30–40% over; the two idle runs' means at 100 iterations
+are 98.6, 37.8, 54.3, 21.9 and 312.8. Against Z2's: Ret +11%, Hunter +9%, Elemental +11%, the raid +5%, Rogue
+flat. Not attributed (no A/B): EC-THREAT-FIX4 queues a Replenishment event a second for every mana user,
+EC-PET-FIX2 moved the pets' timers, EC-CORE-FIX3 truncates each bonus. The raid optimizer scenario ran wholly
+beside that container (756 s at 60% utilisation, load average 23), so its wall says nothing; it now runs
+231,500 sims against Z2's 146,250, which is Z4's alternatives stage.
 
 E to F2 ran the old requests: one iteration, and no rotation for Ret, Hunter and Elemental.
 

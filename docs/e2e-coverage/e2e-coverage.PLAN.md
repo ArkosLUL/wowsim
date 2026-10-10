@@ -50,8 +50,7 @@ The live e2e and the replays leave timing, costs, threat, pets, gear and buffs u
 | Z | EC-THREAT-FIX2 (G, FS, live) · EC-MELEE-FIX (G) · EC-NATURE-FIX (G, live) · EC-ARCANE-FIX (G, live) · PERF-Y | The class gaps, on Y's core |
 | Z2 | EC-THREAT-FIX3 (G, FS, C++, live) · EC-CORE-FIX2 (G, FS) · EC-CLASS-FIX (G, live) · PERF-Z · BIS-ALTS | Z's follow-ups |
 | Z5 | EC-CORE-FIX3 (G, FS, live) · EC-PET-FIX2 (G, live) · EC-CLASS-FIX2 (G, live) · EC-THREAT-FIX4 (G, FS, C++, live) | Z2's follow-ups and Y's pets, before the BiS chain |
-| Z6 | EC-CORE-FIX4 (G, FS), beside PAR-FU-8, PAR-FU-9 and RI-5 | Z5's core follow-ups |
-| Z7 | EC-PET-FIX3 (G, live) · EC-CLASS-FIX3 (G, live) · EC-TOOLS | Z5's other follow-ups |
+| Z7 | EC-CORE-FIX4 (G, FS) · EC-PET-FIX3 (G, live) · EC-CLASS-FIX3 (G, live) · EC-TOOLS | Z5's follow-ups (Z6 is parity's and raid-import's) |
 
 U is taken (the UI wave). Versus the INVESTIGATION's order, B7, A3 and A4 moved forward (cheap, independent) and
 C1 moved last (after B6).
@@ -66,7 +65,7 @@ haste stacking beyond EC-BUFFS' pairs. From Y:
 From Z, not in Z2: the 72-point Fury and Balance strings in the gzipped perf scenarios and UI fixtures, which
 pin their requests (the BiS chain's `opt_*` regeneration takes the perf ones).
 
-From Z5, not in Z6 or Z7: Mana Burn, which Silent Resolve's spell mod covers and the sim lacks; `.simval threat`
+From Z5, not in Z7: Mana Burn, which Silent Resolve's spell mod covers and the sim lacks; `.simval threat`
 doesn't record `POWER_DRAIN`'s gain (Dark Pact), and the replay can't compare the tick threat of 71883 and
 57669; Heart Strike takes no Rage of Rivendare or Tundra Stalker (no level 80 build holds both);
 `spell_dru_rip` adding Rip's AP share after the done percents (a lead); the raid's Replenishment buff never
@@ -2386,7 +2385,7 @@ Cross-review, 2026-10-10, on `8be984c35` with the four items merged:
   Dead's guardian (829) are uncontrollable; the raid's buff puts its aura on units without mana; direct
   `GainHealth` heals (Lifeward, Frenzied Regeneration's integer steps) aren't whole.
 
-### EC-CORE-FIX4 (Z6; changes goldens, full suite)
+### EC-CORE-FIX4 (Z7; changes goldens, full suite)
 
 - Aura expiry: an aura expires only when some event advances the clock, one unit's tracker after another, so an
   unrelated event decides whether a tick still sees a buff (Arcane Power on the last Arcane Missiles tick, Z5's
@@ -2402,8 +2401,7 @@ Cross-review, 2026-10-10, on `8be984c35` with the four items merged:
   truncating as one sum, Chimera Shot - Serpent truncating after its 2.0 or 2.8.
 - Meta gems: an item swap moves the meta's stats only, not its effect or crit damage.
 - `StartTargetAtHealth` moves the execute phases only at the first advance.
-- **Owns:** `sim/core/` but the pet paths (PAR-FU-8's in Z6) and PAR-FU-9's settings; those inline lines in class
-  code; their drops and rows.
+- **Owns:** `sim/core/` but EC-PET-FIX3's pet paths; those inline lines in class code; their drops and rows.
 - **Goldens:** all 37 (aura expiry); report each.
 
 ### EC-PET-FIX3 (Z7; changes goldens; stages: code, live)
