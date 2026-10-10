@@ -83,7 +83,8 @@ G = changes goldens. FS = runs all 37 suites.
 | Z3 | BIS-OH-PAIR · BIS-QUICK-ALTS · BIS-WEAPON-PAIR · BIS-CURVES | ✔ |
 | Z4 | BIS-ALTS-MEASURED | ✔ |
 | Z5 | EC-CORE-FIX3 (G, FS, live) · EC-PET-FIX2 (G, live) · EC-CLASS-FIX2 (G, live) · EC-THREAT-FIX4 (G, FS, C++, live) | ✔ |
-| Z6 | EC-CORE-FIX4 (G, FS) · EC-PET-FIX3 (G, live) · EC-CLASS-FIX3 (G, live) · EC-TOOLS | ✔ |
+| Z6 | PAR-FU-8 (G, live) · PAR-FU-9 (FS, live) · RI-5 (live) · EC-CORE-FIX4 (G, FS) | ✔ |
+| Z7 | EC-PET-FIX3 (G, live) · EC-CLASS-FIX3 (G, live) · EC-TOOLS | ✔ |
 
 F2 is an inserted wave, not a fifth item in F: the core swing and cast fixes of PAR-P7-0c have to land
 before the class items in G, a class item can't build on a core fix merging in its own wave, and F already
@@ -146,8 +147,9 @@ Z3 is the user's call (2026-10-07): the BiS optimizer's backlog, before the defe
 dataset. Z5 too (2026-10-07): the sim's parity backlog first; the BiS chain runs once the other items are done.
 Z4 is inserted before it (the user's call, the same day): the BiS alternatives aren't the measured best, and a
 pass doesn't repeat.
-Z6 is Z5's follow-ups, specced at its close-out under the same call (the parity backlog first); it waits for
-the user's continue.
+Z6 takes the three items the user planned on master on 2026-10-10 (PAR-FU-8 and PAR-FU-9 for "the next wave",
+and RI-5) with the core item of Z5's follow-ups; Z7 takes the rest of those, specced at Z5's close-out under the
+same call (the parity backlog first). Both wait for the user's continue.
 
 **Where the specs are:**
 
@@ -171,11 +173,12 @@ the user's continue.
   2026-10-10 16:21 local: [ac] `3d89793c7` with mod-sim-validation `97ca11a`; the module's HEAD is `bb2a21d`).
   Its throughput row is still to take: a Chronicle replay held six cores at the close-out
   (`.wave-loop/rebase-z5.sh`, idle or loaded with a note).
-  Next, Z6, planned: one run, no rebuild (no C++); EC-PET-FIX3 and EC-CLASS-FIX3 end on a live stage, away from
-  Saturday 17:00's raid reset. Integrate EC-CORE-FIX4, EC-PET-FIX3, EC-CLASS-FIX3, EC-TOOLS in that order.
+  Next, Z6, planned: one run, no rebuild; PAR-FU-8, PAR-FU-9 and RI-5 end on a live stage (RI-5's SELECT-only),
+  away from Saturday 17:00's raid reset. PAR-FU-9's Glyph of Backstab toggle waits for the server to run
+  mod-spell-tweaks `e9d0baf`. Integrate PAR-FU-8, PAR-FU-9, RI-5, EC-CORE-FIX4 in that order. Then Z7.
   Z5's item notes: `G:\DevStuff\GitHub\.wave-loop\ec-{core-fix3,pet-fix2,class-fix2,class-fix2-apl,threat-fix4,z5-live}-tmp`.
   Prod runs X's `25cb9dddc` (no `rollback-q` image: its layers were gone), without Y's and Z's sim changes.
-- Open: the e2e-coverage backlog Z6 leaves, sim-performance's Left items, the bis-optimizer backlog (Z3's As
+- Open: the e2e-coverage backlog Z7 leaves, sim-performance's Left items, the bis-optimizer backlog (Z3's As
   builts: the enchant residual, Mutilate's pair, Combat Rogue P3 Normal; Z4's: the surrogate overpricing a
   one-hander's pairing, stage 2 and the Heroic Presence checks not yet run on the new lists, whether
   Ecoterrorist's rotation casts Mangle (Idol of the Corruptor sims like a dead idol); Z5's re-baseline: the

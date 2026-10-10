@@ -50,7 +50,8 @@ The live e2e and the replays leave timing, costs, threat, pets, gear and buffs u
 | Z | EC-THREAT-FIX2 (G, FS, live) · EC-MELEE-FIX (G) · EC-NATURE-FIX (G, live) · EC-ARCANE-FIX (G, live) · PERF-Y | The class gaps, on Y's core |
 | Z2 | EC-THREAT-FIX3 (G, FS, C++, live) · EC-CORE-FIX2 (G, FS) · EC-CLASS-FIX (G, live) · PERF-Z · BIS-ALTS | Z's follow-ups |
 | Z5 | EC-CORE-FIX3 (G, FS, live) · EC-PET-FIX2 (G, live) · EC-CLASS-FIX2 (G, live) · EC-THREAT-FIX4 (G, FS, C++, live) | Z2's follow-ups and Y's pets, before the BiS chain |
-| Z6 | EC-CORE-FIX4 (G, FS) · EC-PET-FIX3 (G, live) · EC-CLASS-FIX3 (G, live) · EC-TOOLS | Z5's follow-ups |
+| Z6 | EC-CORE-FIX4 (G, FS), beside PAR-FU-8, PAR-FU-9 and RI-5 | Z5's core follow-ups |
+| Z7 | EC-PET-FIX3 (G, live) · EC-CLASS-FIX3 (G, live) · EC-TOOLS | Z5's other follow-ups |
 
 U is taken (the UI wave). Versus the INVESTIGATION's order, B7, A3 and A4 moved forward (cheap, independent) and
 C1 moved last (after B6).
@@ -65,7 +66,7 @@ haste stacking beyond EC-BUFFS' pairs. From Y:
 From Z, not in Z2: the 72-point Fury and Balance strings in the gzipped perf scenarios and UI fixtures, which
 pin their requests (the BiS chain's `opt_*` regeneration takes the perf ones).
 
-From Z5, not in Z6: Mana Burn, which Silent Resolve's spell mod covers and the sim lacks; `.simval threat`
+From Z5, not in Z6 or Z7: Mana Burn, which Silent Resolve's spell mod covers and the sim lacks; `.simval threat`
 doesn't record `POWER_DRAIN`'s gain (Dark Pact), and the replay can't compare the tick threat of 71883 and
 57669; Heart Strike takes no Rage of Rivendare or Tundra Stalker (no level 80 build holds both);
 `spell_dru_rip` adding Rip's AP share after the done percents (a lead); the raid's Replenishment buff never
@@ -2401,10 +2402,11 @@ Cross-review, 2026-10-10, on `8be984c35` with the four items merged:
   truncating as one sum, Chimera Shot - Serpent truncating after its 2.0 or 2.8.
 - Meta gems: an item swap moves the meta's stats only, not its effect or crit damage.
 - `StartTargetAtHealth` moves the execute phases only at the first advance.
-- **Owns:** `sim/core/` but EC-PET-FIX3's pet paths; those inline lines in class code; their drops and rows.
+- **Owns:** `sim/core/` but the pet paths (PAR-FU-8's in Z6) and PAR-FU-9's settings; those inline lines in class
+  code; their drops and rows.
 - **Goldens:** all 37 (aura expiry); report each.
 
-### EC-PET-FIX3 (Z6; changes goldens; stages: code, live)
+### EC-PET-FIX3 (Z7; changes goldens; stages: code, live)
 
 - Guardian AIs: `npc_pet_shaman_fire_elemental` paces Fire Nova (5–20 s in, then 8–15 s) and Fire Blast (5–20 s,
   then 4–8 s) on event timers with no GCD, about 10 Novas and 19 Blasts in 2 min; the sim's rotation caps both at
@@ -2427,7 +2429,7 @@ Cross-review, 2026-10-10, on `8be984c35` with the four items merged:
   pets' files in class code; `pets.jsonl` and the module's `e2e/petfix_test.go`; their drops and rows.
 - **Goldens:** the pet suites, and the mana users under Replenishment; report each.
 
-### EC-CLASS-FIX3 (Z6; changes goldens; stages: melee, casters, live)
+### EC-CLASS-FIX3 (Z7; changes goldens; stages: melee, casters, live)
 
 - Item damage spells carry no server spell id (`sim/common/wotlk/damage_procs.go` and the other item damage
   effects), so no class aura can read their damage class or cast time. With it: Omen of Clarity rolls on any landed
@@ -2453,12 +2455,12 @@ Cross-review, 2026-10-10, on `8be984c35` with the four items merged:
   (z −2.8), Destruction's Immolate tick +15% (z 2.7).
 - Live: the death rune take-over (a Frost cycle with no Icy Touch miss), Nature's Grace's Omen (a Wrath-only
   fight of 900 s), a WarriorArms talent path with a mace.
-- **Owns:** `sim/{deathknight,druid,mage,hunter,priest,warrior}/` but the other Z6 items' hunks; the item damage
+- **Owns:** `sim/{deathknight,druid,mage,hunter,priest,warrior}/` but the other Z7 items' hunks; the item damage
   effects in `sim/common/`; `ui/deathknight/apls/`; `tools/simval/spellmods*.go`; `proto/common.proto`'s target
   field and its plumbing; their cycles, fights, drops and rows.
 - **Goldens:** those classes' suites, and every suite with an item damage proc; report each.
 
-### EC-TOOLS (Z6; golden-neutral)
+### EC-TOOLS (Z7; golden-neutral)
 
 - The rotation debug harness from Z5's retune (`G:\DevStuff\GitHub\.wave-loop\ec-class-fix2-apl-tmp\apldbg`:
   per-rotation rows, cast counts and aura uptimes at chosen iterations, against an overlaid base) moves under
