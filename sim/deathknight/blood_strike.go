@@ -60,6 +60,9 @@ func (dk *Deathknight) newBloodStrikeSpell(isMH bool) *core.Spell {
 						dk.DesolationAura.Activate(sim)
 					}
 				}
+			} else if result.Landed() {
+				// the death rune talents proc from procs, so the off hand rolls for the main hand's rune too
+				dk.RollBloodDeathRunes(sim, deathConvertChance)
 			}
 
 			spell.DealDamage(sim, result)

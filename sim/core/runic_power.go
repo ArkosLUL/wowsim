@@ -32,6 +32,8 @@ type RuneMeta struct {
 
 	revertAt time.Duration // time at which rune will no longer be kind death.
 	talent   deathRuneTalent
+
+	spentAt time.Duration // when a landed spell last put the rune on cooldown
 }
 
 // deathRuneTalent is the spell_dk_death_rune talent that turned a rune death. Each has its own 30 s periodic,
@@ -121,6 +123,7 @@ func (rp *runicPowerBar) reset(sim *Simulation) {
 
 		rp.runeMeta[i].revertAt = NeverExpires
 		rp.runeMeta[i].talent = noDeathRuneTalent
+		rp.runeMeta[i].spentAt = NeverExpires
 	}
 
 	rp.runeStates = baseRuneState
@@ -424,14 +427,9 @@ func (rp *runicPowerBar) ConvertFromDeath(sim *Simulation, slot int8) {
 	}
 }
 
-// ConvertToDeath converts the given slot to death until revertAt; the Blood Tapped slot keeps the later of
-// the two.
+// ConvertToDeath converts the given slot to death until revertAt.
 func (rp *runicPowerBar) ConvertToDeath(sim *Simulation, slot int8, revertAt time.Duration) {
 	rp.runeStates |= isDeaths[slot]
-
-	if rp.btSlot == slot && rp.runeMeta[slot].revertAt != NeverExpires {
-		revertAt = max(rp.runeMeta[slot].revertAt, revertAt)
-	}
 	rp.runeMeta[slot].revertAt = revertAt
 
 	// Note we gained
@@ -460,31 +458,40 @@ func (rp *runicPowerBar) CancelBloodTap(sim *Simulation) {
 	rp.maybeFireChange(sim, ConvertFromDeath)
 }
 
+// BloodTapConversion is Blood Tap's two rune effects. Spell::EffectActivateRune goes first, at launch: it
+// readies a blood slot's death rune that's on cooldown, or else, only with both blood runes plain and on
+// cooldown, the one due back sooner (the second on a tie). Then the aura turns the first plain blood rune
+// that's ready, so sometimes none.
 func (rp *runicPowerBar) BloodTapConversion(sim *Simulation) {
 	changeType := None
 
-	// 1. converts a blood rune -> death rune
-	// 2. then convert one inactive blood or death rune -> active
-	if rp.runeStates&isDeaths[0] == 0 {
-		rp.btSlot = 0
-		rp.ConvertToDeath(sim, 0, sim.CurrentTime+time.Second*20)
-		changeType |= ConvertToDeath
-	} else if rp.runeStates&isDeaths[1] == 0 {
-		rp.btSlot = 1
-		rp.ConvertToDeath(sim, 1, sim.CurrentTime+time.Second*20)
-		changeType |= ConvertToDeath
+	ready := int8(-1)
+	switch {
+	case rp.runeStates&isSpentDeath[0] == isSpentDeath[0]:
+		ready = 0
+	case rp.runeStates&isSpentDeath[1] == isSpentDeath[1]:
+		ready = 1
+	case rp.runeStates&(isSpentDeath[0]|isSpentDeath[1]) == isSpents[0]|isSpents[1]:
+		ready = 0
+		if rp.runeMeta[0].regenAt >= rp.runeMeta[1].regenAt {
+			ready = 1
+		}
 	}
-
-	if rp.runeStates&isSpents[0] > 0 {
-		rp.regenRune(sim, sim.CurrentTime, 0)
-		changeType |= GainRune
-	} else if rp.runeStates&isSpents[1] > 0 {
-		rp.regenRune(sim, sim.CurrentTime, 1)
+	if ready != -1 {
+		rp.regenRune(sim, sim.CurrentTime, ready)
 		changeType |= GainRune
 	}
 
-	// if PA isn't running, make it run 20s from now to disable BT
-	rp.launchPA(sim, sim.CurrentTime+20.0*time.Second)
+	for slot := int8(0); slot < 2; slot++ {
+		if rp.runeStates&isSpentDeath[slot] == 0 {
+			rp.btSlot = slot
+			rp.ConvertToDeath(sim, slot, sim.CurrentTime+time.Second*20)
+			changeType |= ConvertToDeath
+			// if PA isn't running, make it run 20s from now to disable BT
+			rp.launchPA(sim, sim.CurrentTime+20.0*time.Second)
+			break
+		}
+	}
 
 	rp.maybeFireChange(sim, changeType)
 }
@@ -728,6 +735,7 @@ func (rp *runicPowerBar) launchRuneRegen(sim *Simulation, slot int8, missed bool
 		rp.runeMeta[slot].regenAt = sim.CurrentTime + runeMissCooldown
 	} else {
 		rp.runeMeta[slot].regenAt = sim.CurrentTime + rp.runeCooldown(rp.RuneGraceAt(slot, sim.CurrentTime))
+		rp.runeMeta[slot].spentAt = sim.CurrentTime
 	}
 
 	rp.launchPA(sim, rp.runeMeta[slot].regenAt)
@@ -973,19 +981,9 @@ func (spell *Spell) SpendRefundableCost(sim *Simulation, result *SpellResult) {
 }
 
 func (rc *RuneCostImpl) spendRefundableCostAndConvertBloodRune(sim *Simulation, spell *Spell, result *SpellResult, convertChance float64) {
-	changeType, slots, hit := rc.spendOnResult(sim, spell, result)
-	if hit && sim.Proc(convertChance, "Blood of The North / Reaping / DRM") {
-		var convert []int8
-		for _, slot := range slots {
-			if slot == 0 || slot == 1 {
-				// If the slot to be converted is already blood-tapped, then we convert the other blood rune
-				if spell.Unit.IsBloodTappedRune(slot) {
-					slot = (slot + 1) % 2
-				}
-				convert = append(convert, slot)
-			}
-		}
-		changeType |= spell.Unit.procDeathRuneTalent(sim, bloodDeathRuneTalent, convert)
+	changeType, _, hit := rc.spendOnResult(sim, spell, result)
+	if hit && sim.Proc(convertChance, deathRuneTalentLabel) {
+		changeType |= spell.Unit.procDeathRuneTalent(sim, bloodDeathRuneTalent)
 	}
 	spell.Unit.maybeFireChange(sim, changeType)
 }
@@ -995,15 +993,9 @@ func (spell *Spell) SpendRefundableCostAndConvertBloodRune(sim *Simulation, resu
 }
 
 func (rc *RuneCostImpl) spendRefundableCostAndConvertFrostOrUnholyRune(sim *Simulation, spell *Spell, result *SpellResult, convertChance float64) {
-	changeType, slots, hit := rc.spendOnResult(sim, spell, result)
-	if hit && sim.Proc(convertChance, "Blood of The North / Reaping / DRM") {
-		var convert []int8
-		for _, slot := range slots {
-			if slot >= 2 {
-				convert = append(convert, slot)
-			}
-		}
-		changeType |= spell.Unit.procDeathRuneTalent(sim, frostUnholyDeathRuneTalent, convert)
+	changeType, _, hit := rc.spendOnResult(sim, spell, result)
+	if hit && sim.Proc(convertChance, deathRuneTalentLabel) {
+		changeType |= spell.Unit.procDeathRuneTalent(sim, frostUnholyDeathRuneTalent)
 	}
 	spell.Unit.maybeFireChange(sim, changeType)
 }
@@ -1012,13 +1004,26 @@ func (spell *Spell) SpendRefundableCostAndConvertFrostOrUnholyRune(sim *Simulati
 	spell.Cost.(*RuneCostImpl).spendRefundableCostAndConvertFrostOrUnholyRune(sim, spell, result, convertChance)
 }
 
+const deathRuneTalentLabel = "Blood of The North / Reaping / DRM"
+
+// The slots each death rune talent looks through, in the server's order (blood, unholy, frost), and how many
+// runes one proc turns.
+var deathRuneTalentSlots = [...]struct {
+	slots []int8
+	runes int
+}{
+	bloodDeathRuneTalent:       {[]int8{0, 1}, 1},
+	frostUnholyDeathRuneTalent: {[]int8{4, 5, 2, 3}, 2},
+}
+
 // procDeathRuneTalent is a spell_dk_death_rune proc: it restarts the talent's periodic, which pushes back the
-// revert of every rune the talent has turned, then turns the runes the cast just put on cooldown. A proc that
-// turns none (a Blood Strike paid with a frost death rune) still restarts it.
-func (rp *runicPowerBar) procDeathRuneTalent(sim *Simulation, talent deathRuneTalent, slots []int8) RuneChangeType {
+// revert of every rune the talent has turned, then turns the runes of its base types that a landed spell just
+// put on cooldown. A proc that turns none (a Blood Strike paid with a frost death rune) still restarts it. A
+// rune Blood Tap turned becomes the talent's, so Blood Tap running out no longer reverts it.
+func (rp *runicPowerBar) procDeathRuneTalent(sim *Simulation, talent deathRuneTalent) RuneChangeType {
 	// the player's aura update counts the periodic down, so it reverts on a world tick
 	revertAt := sim.NextWorldTick(sim.CurrentTime + deathRuneTalentPeriod)
-	pending := len(slots) > 0
+	pending := false
 	for i := range rp.runeMeta {
 		if rp.runeMeta[i].talent == talent {
 			rp.runeMeta[i].revertAt = revertAt
@@ -1026,15 +1031,44 @@ func (rp *runicPowerBar) procDeathRuneTalent(sim *Simulation, talent deathRuneTa
 		}
 	}
 	changeType := None
-	for _, slot := range slots {
+	left := deathRuneTalentSlots[talent].runes
+	for _, slot := range deathRuneTalentSlots[talent].slots {
+		if left == 0 {
+			break
+		}
+		if rp.runeMeta[slot].spentAt != sim.CurrentTime || rp.runeStates&isSpents[slot] == 0 {
+			continue
+		}
+		left--
+		if rp.btSlot == slot {
+			rp.btSlot = -1
+		}
 		rp.ConvertToDeath(sim, slot, revertAt)
 		rp.runeMeta[slot].talent = talent
 		changeType |= ConvertToDeath
+		pending = true
 	}
 	if pending {
 		rp.launchPA(sim, revertAt)
 	}
 	return changeType
+}
+
+// RollBloodDeathRunes rolls Blood of the North and Reaping for a landed spell in their mask that pays no runes
+// of its own: Threat of Thassarian's off-hand Blood Strike. Both talents can proc from procs, and their 100 ms
+// cooldown only starts on a proc, so the off hand rolls again when the main hand's roll failed.
+func (rp *runicPowerBar) RollBloodDeathRunes(sim *Simulation, chance float64) {
+	if sim.Proc(chance, deathRuneTalentLabel) {
+		rp.maybeFireChange(sim, rp.procDeathRuneTalent(sim, bloodDeathRuneTalent))
+	}
+}
+
+// RollFrostUnholyDeathRunes is the same for Death Rune Mastery, which has no cooldown: the off-hand Death
+// Strike and Obliterate.
+func (rp *runicPowerBar) RollFrostUnholyDeathRunes(sim *Simulation, chance float64) {
+	if sim.Proc(chance, deathRuneTalentLabel) {
+		rp.maybeFireChange(sim, rp.procDeathRuneTalent(sim, frostUnholyDeathRuneTalent))
+	}
 }
 
 func (rc *RuneCostImpl) IssueRefund(_ *Simulation, _ *Spell) {

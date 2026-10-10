@@ -42,9 +42,8 @@ func (priest *Priest) makePenanceSpell(isHeal bool) *core.Spell {
 
 		ManaCost: core.ManaCostOptions{
 			BaseCost: 0.16,
-			Multiplier: 1 -
-				0.05*float64(priest.Talents.ImprovedHealing) -
-				[]float64{0, .04, .07, .10}[priest.Talents.MentalAgility],
+			// Mental Agility's class mask leaves Penance out
+			Multiplier: 1 - 0.05*float64(priest.Talents.ImprovedHealing),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
@@ -56,14 +55,13 @@ func (priest *Priest) makePenanceSpell(isHeal bool) *core.Spell {
 			},
 		},
 
-		DamageMultiplier: 1 +
-			core.TernaryFloat64(isHeal,
-				1*
-					(1+.02*float64(priest.Talents.SpiritualHealing))*
-					(1+.01*float64(priest.Talents.BlessedResilience))*
-					(1+.02*float64(priest.Talents.FocusedPower)),
-				.05*float64(priest.Talents.SearingLight)) +
-			.01*float64(priest.Talents.TwinDisciplines),
+		// each talent is its own percent mod or done aura on the tick spell, so they all multiply
+		DamageMultiplier: core.TernaryFloat64(isHeal,
+			(1+.02*float64(priest.Talents.SpiritualHealing))*
+				(1+.01*float64(priest.Talents.BlessedResilience))*
+				(1+.02*float64(priest.Talents.FocusedPower))*
+				(1+.01*float64(priest.Talents.TwinDisciplines)),
+			(1+.05*float64(priest.Talents.SearingLight))*(1+.01*float64(priest.Talents.TwinDisciplines))),
 		CritMultiplier:   core.TernaryFloat64(isHeal, priest.DefaultHealingCritMultiplier(), priest.DefaultSpellCritMultiplier()),
 		ThreatMultiplier: 1 - []float64{0, .07, .14, .20}[priest.Talents.SilentResolve],
 		ThreatSpellID:    tickSpellID,
@@ -79,7 +77,8 @@ func (priest *Priest) makePenanceSpell(isHeal bool) *core.Spell {
 			AffectedByCastSpeed: true,
 
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
-				baseDamage := 375 + core.PowerBonus(0.2290*dot.Spell.SpellPower())
+				// spell_bonus_data's 0.1905 wins over 53000's own 0.229
+				baseDamage := 375 + core.PowerBonus(0.1905*dot.Spell.SpellPower())
 				result := dot.Spell.CalcAndDealPeriodicDamage(sim, target, baseDamage, dot.Spell.OutcomeMagicHitAndCrit)
 				tickThreat.Hit(result)
 				tickThreat.Done(sim)
@@ -109,15 +108,12 @@ func (priest *Priest) makePenanceSpell(isHeal bool) *core.Spell {
 				// Do immediate tick
 				hot.TickOnce(sim)
 			} else {
-				result := spell.CalcOutcome(sim, target, spell.OutcomeMagicHit)
-				if result.Landed() {
-					spell.SpellMetrics[target.UnitIndex].Hits--
-					dot := spell.Dot(target)
-					dot.Apply(sim)
-					// Do immediate tick
-					dot.TickOnce(sim)
-				}
-				spell.DealOutcome(sim, result)
+				// 53007 and the channel it starts aren't magic class, so they can't miss and proc nothing a
+				// harmful magic spell does (Illustration of the Dragon Soul). Each tick rolls its own hit.
+				dot := spell.Dot(target)
+				dot.Apply(sim)
+				// Do immediate tick
+				dot.TickOnce(sim)
 			}
 		},
 	})

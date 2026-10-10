@@ -128,7 +128,8 @@ func (paladin *Paladin) AddPartyBuffs(_ *proto.PartyBuffs) {
 
 // improveDevotionAura gives the raid's Devotion Aura Improved Devotion Aura's 17% a point at 1 or 2 points,
 // which the raid buff can't carry: it only knows none or all 3. The paladin's spell mod scales the aura's
-// armor (Unit::ApplyEffectModifiers), so every raider and pet under it gets that amount.
+// armor (Unit::ApplyEffectModifiers), so every raider and pet under it gets that amount. The talent's 63514
+// reaches the same units with 2% healing taken a point.
 func (paladin *Paladin) improveDevotionAura() {
 	points := paladin.Talents.ImprovedDevotionAura
 	if paladin.PaladinAura != proto.PaladinAura_DevotionAura || points == 0 || points == 3 ||
@@ -146,6 +147,7 @@ func (paladin *Paladin) improveDevotionAura() {
 		}
 	}
 	bonus := math.Trunc(1205 * float64(17*points) / 100)
+	healingTaken := 1 + 0.02*float64(points)
 	for _, party := range paladin.Env.Raid.Parties {
 		for _, player := range party.Players {
 			if _, ok := player.(*core.TargetDummy); ok {
@@ -153,9 +155,12 @@ func (paladin *Paladin) improveDevotionAura() {
 			}
 			character := player.GetCharacter()
 			character.AddStat(stats.Armor, bonus)
+			character.PseudoStats.HealingTakenMultiplier *= healingTaken
 			for _, pet := range character.Pets {
+				// 63514 needs the paladin's Devotion Aura on the unit, which an armor-immune summon never takes
 				if pet.BuffImmunity&core.PetImmuneArmor == 0 {
 					pet.AddStat(stats.Armor, bonus)
+					pet.PseudoStats.HealingTakenMultiplier *= healingTaken
 				}
 			}
 		}

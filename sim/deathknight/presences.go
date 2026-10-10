@@ -1,6 +1,7 @@
 package deathknight
 
 import (
+	"math"
 	"time"
 
 	"github.com/wowsims/wotlk/sim/core"
@@ -74,7 +75,6 @@ func (dk *Deathknight) registerBloodPresenceAura(timer *core.Timer) {
 	})
 
 	actionID := BloodPresenceActionID
-	healthMetrics := dk.HealThreat(dk.NewHealthMetrics(bloodPresenceHealActionID), 50475)
 	statDep := dk.NewDynamicMultiplyStat(stats.Stamina, staminaMult)
 
 	aura := core.Aura{
@@ -97,17 +97,65 @@ func (dk *Deathknight) registerBloodPresenceAura(timer *core.Timer) {
 		},
 	}
 
-	if !dk.Inputs.IsDps {
-		aura.OnSpellHitDealt = func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
-			if result.Damage > 0 {
-				healthGain := 0.04 * result.Damage
-				dk.GainHealth(sim, healthGain*dk.PseudoStats.HealingTakenMultiplier, healthMetrics)
-			}
-		}
-	}
-
 	dk.BloodPresenceAura = dk.GetOrRegisterAura(aura)
 	dk.BloodPresenceAura.NewExclusiveEffect(presenceEffectCategory, true, core.ExclusiveEffect{})
+}
+
+// registerBloodPresenceHeal is 63611, which every death knight carries in Blood Presence at 4% and Improved
+// Blood Presence keeps in the other two at 2% a point: a heal (50475) for that share of the damage of each
+// auto attack, cast and dot tick. Of the triggered spells only those with NOT_A_PROC proc it.
+func (dk *Deathknight) registerBloodPresenceHeal() {
+	healthMetrics := dk.HealThreat(dk.NewHealthMetrics(bloodPresenceHealActionID), 50475)
+	improved := 2 * float64(dk.Talents.ImprovedBloodPresence)
+
+	dk.bloodPresenceHeal = func(sim *core.Simulation, damage float64) {
+		pct := improved
+		if dk.PresenceMatches(BloodPresence) {
+			pct = 4
+		} else if !dk.PresenceMatches(FrostPresence | UnholyPresence) {
+			return
+		}
+		if pct == 0 || damage <= 0 {
+			return
+		}
+		// the script hands the heal a whole amount, and the healing taken percent truncates again
+		heal := math.Trunc(damage * pct / 100)
+		dk.GainHealth(sim, math.Trunc(heal*dk.PseudoStats.HealingTakenMultiplier), healthMetrics)
+	}
+
+	aura := core.MakePermanent(dk.RegisterAura(core.Aura{
+		Label: "Blood Presence Heal",
+		OnSpellHitDealt: func(_ *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
+			if dk.procsBloodPresenceHeal(spell) {
+				dk.bloodPresenceHeal(sim, result.Damage)
+			}
+		},
+	}))
+	// every dot tick but the ones the server deals as triggered casts (Death and Decay)
+	core.ApplyProcTriggerCallback(&dk.Unit, aura, core.ProcTrigger{
+		Name:        "Blood Presence Heal",
+		Callback:    core.CallbackOnPeriodicDamageDealt,
+		AnyPeriodic: true,
+		Harmful:     true,
+		Handler: func(sim *core.Simulation, _ *core.Spell, result *core.SpellResult) {
+			dk.bloodPresenceHeal(sim, result.Damage)
+		},
+	})
+}
+
+// procsBloodPresenceHeal is whether a direct hit of the spell procs 63611: auto attacks, the spells the DK
+// casts and Death Coil's damage (47632, NOT_A_PROC). Not the other triggered spells: Threat of Thassarian's
+// off-hand strikes, Scourge Strike's shadow part, Blood-Caked Blade, Wandering Plague, item procs. Necrosis
+// (NOT_A_PROC too) and Unholy Blight's ticks skip the damage callbacks, so they heal where they deal damage.
+func (dk *Deathknight) procsBloodPresenceHeal(spell *core.Spell) bool {
+	switch spell {
+	case dk.AutoAttacks.MHAuto(), dk.AutoAttacks.OHAuto(),
+		dk.IcyTouch, dk.PlagueStrikeMhHit, dk.BloodStrikeMhHit, dk.HeartStrike, dk.HeartStrikeOffHit,
+		dk.DeathStrikeMhHit, dk.ObliterateMhHit, dk.FrostStrikeMhHit, dk.ScourgeStrike, dk.RuneStrike,
+		dk.HowlingBlast, dk.BloodBoil, dk.DeathCoilDamage:
+		return true
+	}
+	return false
 }
 
 func (dk *Deathknight) registerFrostPresenceAura(timer *core.Timer) {
@@ -157,17 +205,6 @@ func (dk *Deathknight) registerFrostPresenceAura(timer *core.Timer) {
 		},
 	})
 	dk.FrostPresenceAura.NewExclusiveEffect(presenceEffectCategory, true, core.ExclusiveEffect{})
-
-	if !dk.Inputs.IsDps && dk.Talents.ImprovedBloodPresence > 0 {
-		healFactor := 0.02 * float64(dk.Talents.ImprovedBloodPresence)
-		healthMetrics := dk.HealThreat(dk.NewHealthMetrics(bloodPresenceHealActionID), 50475)
-		dk.FrostPresenceAura.OnSpellHitDealt = func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
-			if result.Damage > 0 {
-				healthGain := healFactor * result.Damage
-				dk.GainHealth(sim, healthGain*dk.PseudoStats.HealingTakenMultiplier, healthMetrics)
-			}
-		}
-	}
 }
 
 func (dk *Deathknight) registerUnholyPresenceAura(timer *core.Timer) {
@@ -245,17 +282,6 @@ func (dk *Deathknight) registerUnholyPresenceAura(timer *core.Timer) {
 		},
 	})
 	dk.UnholyPresenceAura.NewExclusiveEffect(presenceEffectCategory, true, core.ExclusiveEffect{})
-
-	if !dk.Inputs.IsDps && dk.Talents.ImprovedBloodPresence > 0 {
-		healFactor := 0.02 * float64(dk.Talents.ImprovedBloodPresence)
-		healthMetrics := dk.HealThreat(dk.NewHealthMetrics(bloodPresenceHealActionID), 50475)
-		dk.UnholyPresenceAura.OnSpellHitDealt = func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
-			if result.Damage > 0 {
-				healthGain := healFactor * result.Damage
-				dk.GainHealth(sim, healthGain*dk.PseudoStats.HealingTakenMultiplier, healthMetrics)
-			}
-		}
-	}
 }
 
 // Blood and Unholy Presence's -20% threat. Subversion adds its flat -8, -16 or -25 to that same aura
@@ -269,4 +295,5 @@ func (dk *Deathknight) registerPresences() {
 	dk.registerBloodPresenceAura(presenceTimer)
 	dk.registerUnholyPresenceAura(presenceTimer)
 	dk.registerFrostPresenceAura(presenceTimer)
+	dk.registerBloodPresenceHeal()
 }

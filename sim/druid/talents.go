@@ -386,6 +386,18 @@ func (druid *Druid) applyOmenOfClarity() {
 	// any other proc-trigger aura (Aura::CalcProcChance / GetPPMProcChance).
 	ppm := core.ServerProcFor(16864).PPM
 
+	druid.rollOmenOfClarity = func(sim *core.Simulation, spell *core.Spell) {
+		chanceToProc := druid.AuraPPMProcChance(ppm, spell)
+		if druid.GiftOfTheWild.IsEqual(spell) {
+			// This cast stands in for the real spell's ~30 raid-wide targets, each rolling its
+			// own chance (sim/druid/fake_gotw.go).
+			chanceToProc = 1 - math.Pow(1-chanceToProc, 30)
+		}
+		if sim.RandomFloat("Clearcasting") < chanceToProc {
+			druid.ProcOoc(sim)
+		}
+	}
+
 	druid.RegisterAura(core.Aura{
 		Label:    "Omen of Clarity",
 		Duration: core.NeverExpires,
@@ -409,15 +421,7 @@ func (druid *Druid) applyOmenOfClarity() {
 				return
 			}
 
-			chanceToProc := druid.AuraPPMProcChance(ppm, spell)
-			if druid.GiftOfTheWild.IsEqual(spell) {
-				// This cast stands in for the real spell's ~30 raid-wide targets, each rolling its
-				// own chance (sim/druid/fake_gotw.go).
-				chanceToProc = 1 - math.Pow(1-chanceToProc, 30)
-			}
-			if sim.RandomFloat("Clearcasting") < chanceToProc {
-				druid.ProcOoc(sim)
-			}
+			druid.rollOmenOfClarity(sim, spell)
 		},
 	})
 }

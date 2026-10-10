@@ -69,6 +69,9 @@ func (dk *Deathknight) newDeathStrikeSpell(isMH bool) *core.Spell {
 				}
 
 				dk.threatOfThassarianProc(sim, result, dk.DeathStrikeOhHit)
+			} else if result.Landed() {
+				// Death Rune Mastery procs from procs, so the off hand rolls for the main hand's runes too
+				dk.RollFrostUnholyDeathRunes(sim, deathConvertChance)
 			}
 
 			spell.DealDamage(sim, result)

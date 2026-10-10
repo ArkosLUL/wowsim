@@ -92,6 +92,8 @@ type Druid struct {
 	SavageRoarDurationTable        [6]time.Duration
 
 	ProcOoc func(sim *core.Simulation)
+	// one Omen of Clarity roll for a spell that landed; nil without the talent
+	rollOmenOfClarity func(sim *core.Simulation, spell *core.Spell)
 
 	ExtendingMoonfireStacks int
 	LunarICD                core.Cooldown
