@@ -143,6 +143,7 @@ func TestSpellTweaksEnableGatesScriptedTweaks(t *testing.T) {
 		DkGhoulArmorPen: on, FeralSpiritHaste: on, DiseaseHaste: on, DeadlyPoisonMurder: on,
 		RuptureWeaponExpertise: on, RendTrauma: on, BalanceDotScaling: on, TitansGripNoDamagePenalty: on,
 		OmenClarityFaerieFire: on, ShadowDotHaste: on,
+		PyroblastEmpoweredFire: on, CurseOfDoomScaling: on, ArcaneBlastHasteCost: on, ArcaneCritRefund: on,
 	}
 
 	got := NewServerSettings(&proto.ServerSettings{SpellTweaks: allOn}).SpellTweaks

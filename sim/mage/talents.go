@@ -29,6 +29,7 @@ func (mage *Mage) ApplyTalents() {
 	mage.applyIgnite()
 	mage.applyEmpoweredFire()
 	mage.applyMasterOfElements()
+	mage.applyArcaneCritRefund()
 	mage.applyWintersChill()
 	mage.applyMoltenFury()
 	mage.applyMissileBarrage()
@@ -561,6 +562,45 @@ func (mage *Mage) applyMasterOfElements() {
 			},
 		})
 	}
+}
+
+// applyArcaneCritRefund is spell_tweaks_arcane_crit_refund: an arcane crit gives back 15% a point of
+// Spell Power of what its cast paid, as an energize under the talent's id.
+func (mage *Mage) applyArcaneCritRefund() {
+	if mage.Talents.SpellPower == 0 || !mage.Server().SpellTweaks.ArcaneCritRefund {
+		return
+	}
+	refundPct := 15 * float64(mage.Talents.SpellPower)
+	talentID := []int32{35578, 35581}[mage.Talents.SpellPower-1]
+	manaMetrics := mage.NewManaMetrics(core.ActionID{SpellID: talentID}).EnergizeThreat(core.EnergizeBySpell)
+	// spell_proc -35578's 8 ms cooldown: one refund for all the targets an Arcane Explosion crits
+	icd := core.Cooldown{Timer: mage.NewTimer(), Duration: time.Millisecond * 8}
+
+	mage.RegisterAura(core.Aura{
+		Label:    "Arcane Crit Refund",
+		Duration: core.NeverExpires,
+		OnReset: func(aura *core.Aura, sim *core.Simulation) {
+			aura.Activate(sim)
+		},
+		OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
+			if !result.DidCrit() || !spell.Flags.Matches(SpellFlagMage) ||
+				!spell.SpellSchool.Matches(core.SpellSchoolArcane) || !icd.IsReady(sim) {
+				return
+			}
+			icd.Use(sim)
+			// what the cast paid, so nothing under Clearcasting. Arcane Barrage's cooldown outlasts its
+			// flight, so no later cast has written over it by the hit
+			cost := spell.CurCast.Cost
+			if spell == mage.ArcaneMissilesTickSpell {
+				// a missile lands after the channel, so it takes a share of the channel's base cost, free or
+				// not. SpellInfo::GetMaxTicks doesn't count a periodic trigger and gives its default 6, not 5
+				cost = math.Floor(mage.ArcaneMissiles.DefaultCast.Cost / 6)
+			}
+			if refund := math.Floor(cost * refundPct / 100); refund > 0 {
+				mage.AddMana(sim, refund, manaMetrics)
+			}
+		},
+	})
 }
 
 func (mage *Mage) registerCombustionCD() {

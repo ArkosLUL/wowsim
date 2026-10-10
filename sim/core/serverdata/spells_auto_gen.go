@@ -3797,7 +3797,7 @@ var spells = []Spell{
 		Attributes: [8]uint32{0x10000, 0, 0, 0, 0, 0, 0x800000}, AttributesCu: 0x1000,
 		GCDMs: 1500, GCDCategory: 133, CategoryCooldownMs: 60000, Category: 1179, DurationMs: 60000, MaxDurationMs: 60000,
 		ProcChance: 101, ManaCostPct: 15, SpellLevel: 80, BaseLevel: 80,
-		GCDMods: ModBounds{FlatMin: -500},
+		GCDMods: ModBounds{FlatMin: -500}, CooldownMods: ModBounds{FlatMin: -1},
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 3, AmplitudeMs: 60000, BasePoints: 7299, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 2},
 		},

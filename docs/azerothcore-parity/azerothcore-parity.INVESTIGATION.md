@@ -2518,3 +2518,64 @@ Code stage (druid, shaman, mage). Each fix removed its `droppedSweep` entry and 
 - **ShamanElemental setup**: `auras` is empty. A triggered `.cast` of Totem of Wrath (57722) never summons the totem, so the glyph script (`spell_sha_totem_of_wrath`) finds none, and 63283's own cast only gives the raw 30 spell power, not the sim's 84. Neither is cast: the server sheet reads 1869 spell power (no glyph aura), as does the sim, whose golden character has no totem. A real cast needs the e2e's raw CMSG_CAST_SPELL path (`imbueMainHand`) and a pause.
 
 Live stage (server lock, `SIMVAL_GOLDCHAR_ONLY=ShamanElemental,DruidBalance`, 59 s, no restart or config change): both setups re-recorded and swapped into `goldchar.jsonl`. `TestGoldenCharacters` passes with spell power compared and no new drop.
+
+## PAR-FU-10 as built
+
+mod-spell-tweaks' mage and warlock tweaks (`9bf5c75`; `docs/mage/PyroblastEmpoweredFire.md`, `docs/warlock/CurseOfDoomScaling.md`, `docs/mage/ArcaneManaScaling.md`), checked against its source and SQL.
+
+**Code stage 1: switches, Pyroblast, Curse of Doom**
+
+- **Switches:** `SpellTweaksSettings` fields 16 to 19 (`pyroblast_empowered_fire`, `curse_of_doom_scaling`, `arcane_blast_haste_cost`, `arcane_crit_refund`) through `gen_server_defaults`, `core.SpellTweaks` (gated by `SpellTweaks.Enable`) and the picker. All on live: the installed conf lacks the keys, so the code default counts.
+- **Pyroblast's DoT** (`sim/mage/pyroblast.go`). Every claim holds:
+  - Haste (`spell_tweaks_pyroblast_dot_haste`): with any rank of Empowered Fire and the switch, `core.SpellHasteAddsTicks`, read as the missile lands: tick `min(3 s × cast speed, 3 s)` in whole ms over the fixed 12 s, so 4 ticks under 25% haste, 5 from 25%, 6 from 50%.
+  - Crit: aura 286 on Empowered Fire's three ranks is `spell_dbc` data, so the ticks crit with the talent whatever the switches, `SpellTweaks.Enable` included. The crit chance is the cast's (World in Flames, Critical Mass and Combustion reach it), snapshotted at the landing.
+  - Procs: a crit tick feeds Ignite (spell_proc -11119 has the periodic flag). Hot Streak, Master of Elements and Combustion have none, and `spell_tweaks_burnout_pyroblast_dot` keeps Burnout off the ticks; the sim's handlers are direct-hit only, so nothing changed there.
+  - Ignite's order: `Unit::_UpdateSpells` walks a unit's auras in spell id order, so Ignite (12654) ticks before the Pyroblast DoT (42891) on an update both are due, and the DoT's crit rolls over only what's left. The sim runs same-time ticks in the order they were queued, so the DoT's tick now ticks a due Ignite first. Without it Fire read +9.8%.
+  - One DoT: the cast and its tag-1 twin each had a DoT on one shared aura, and the cast's ticked for 0 at a stock 3 s, giving periodic procs extra chances. The cast now owns the only DoT, dealt through the twin (`DotConfig.Spell`), which a rotation can no longer name. Alone that moves Fire's average by -0.01%.
+- **Curse of Doom** (`sim/warlock/curses.go`). Every claim holds. With Demonic Pact and the switch (the carrier 425793, which the switch and `SpellTweaks.Enable` gate whole):
+  - `max(60 s × min(cast speed, 1), 1 s)` in whole ms, read at the cast, is the cooldown, the duration and the one tick.
+  - The tick crits (the carrier's aura 286) for 1.5: no `SPELLMOD_CRIT_DAMAGE_BONUS` or crit chance mod lists the curse.
+  - A cast is refused while the warlock's own curse is on the target (`ExtraCastCondition`). Stock still lets a recast wipe it.
+- **APLs:** Fire and FrostFire cast Pyroblast only on Hot Streak, with no condition on its DoT. Demonology's `remainingTime > 60s` before Curse of Doom is now cautious rather than wrong: a hasted curse cast with less left could still land, but no APL value gives its length.
+- **Goldens** (`dock.sh delta`, 34 of 37 unchanged):
+  - TestFire Average-Default +6.40%: the DoT 94k to 226k a fight (108 ticks, 69.6% crit), Ignite 822k to 930k (257 applications from 183).
+  - TestFrostFire +7.60%, the same two.
+  - TestDemonology +2.49%: Curse of Doom 4.08 to 7 casts and 115k to 257k (58% crit), Curse of Agony 2.05 to 1.13 casts, Shadow Bolt 80.0 to 78.9.
+- **Ignite's read-ahead:** `CastDelayedSpellWithPeriodicAmount` reads the old Ignite at the proc and applies up to 400 ms later; an Ignite tick in between is dealt and rolled over again. More procs mean more of it: about a third of Fire's Ignite gain is beyond 40% of the new crits. The live stage should measure Ignite against the crits feeding it.
+- **Left open:**
+  - `sim/mage/ignite.go` procs Ignite from a periodic crit only when the mage has Living Bomb, so Empowered Fire without it gets no Ignite from Pyroblast's ticks; it should check the fire school.
+  - Living Bomb's glyphed ticks still read Ignite ahead of its same-update tick (about 0.8% of Fire). The fix belongs in `sim/core/dot.go`: same-update ticks on a unit in spell id order.
+  - `tools/simval`'s `TestSpellModRecords` fails on MageFire Icy Veins, Pyroblast's e1 amplitude (capture 3000, sim 2500): the capture predates the tweak and needs a new sweep.
+  - `sim/optimizer`'s `TestDemonologyValuesSpellPowerHigherInRaidMode` fails its margin (raid 1.604 ± 0.002, solo 1.593 ± 0.004, a gap of 0.011 under its 0.012). Curse of Doom's switch alone does it: off, the test reads 1.572 and 1.558 and passes by 0.002. The curse lifts both sides alike, so the pact's share moved inside its noise.
+
+**Code stage 2: Arcane Blast's cost, the arcane crit refund**
+
+- **Arcane Blast's stack cost** (`sim/mage/arcane_blast.go`). The claim holds. With any rank of Netherwind Presence and the switch, each stack of 36032 adds `int32(175 × min(cast speed, 1))` percent (float32) instead of 175: 165 at the talent's own 6%, 134 at 30%.
+  - `AuraEffect::CalculateAmount` runs the script before it multiplies by the stacks, and `Aura::SetStackAmount` runs on every stack gained and on a refresh at four. So the cost follows the cast speed of the last Arcane Blast to land, not of the cast that pays it.
+- **Arcane crit refund** (`applyArcaneCritRefund`, `sim/mage/talents.go`). With Spell Power and the switch, a crit of an arcane mage spell gives back 15% a point of `Spell::GetPowerCost()`, the cost fixed as the cast started: nothing under Clearcasting, most at four stacks. Once a cast (spell_proc -35578's 8 ms cooldown), as an energize under the talent's id (35578 or 35581), so with half its amount in threat, the capped part included.
+  - **A missile takes a sixth, not a fifth.** The script divides the channel's base cost by `SpellInfo::GetMaxTicks()`, which counts no `PERIODIC_TRIGGER_SPELL` effect and returns its default 6 for Arcane Missiles: `1013 / 6 = 168`, so 50 a crit at two points and 25 at one, a free channel's too. The module's write-up says about 60.
+- **APLs:** nothing changed. On the suite's player the default Arcane rotation with both tweaks never reaches 25% mana in 180 or 480 s, so Evocation and the low-mana filler go unused; stock it was out of mana 7 s a fight. Dropping Arcane Missiles on Missile Barrage for pure Arcane Blast is still 9% behind.
+- **Goldens** (`dock.sh delta`, 33 of 37 unchanged; Fire, FrostFire and Demonology as in stage 1):
+  - TestArcane Average-Default +3.72% (tps +3.45%): Arcane Blast 150.7 to 157.4 casts, Evocation 1.82 to 0, Mana Sapphire 3 to 2.1 uses. The cost alone gives +3.10%, the refund alone +2.64% (25.7k mana a fight with both).
+  - Talents-ArcaneBarrage-Average +3.05%. Short fights barely move (+0.02%), unbuffed long ones +15.8%: it all comes through mana.
+- **Left open:**
+  - The module's `docs/mage/ArcaneManaScaling.md` says about 60 a missile; its source gives 50, which the live stage measured.
+
+**Live stage** ([ac] `3d89793c7`, mod-spell-tweaks `9bf5c75`; no restart or config change)
+
+- **e2e** (`parfu10_test.go`, all three pass; the mage bots are human, since a gnome has no line of sight to the dummy from the e2e's spot):
+  - Pyroblast: 3000 ms and 4 ticks without Empowered Fire under Bloodlust; with it 3000/4, 2500/4 (Icy Veins), 2307/5 (Bloodlust), 1923/6 (both), the aura 12 s each. A crit tick makes 15000 of 10000. Real casts: 5 ticks 2321 ms apart and 6 ticks 1916 ms apart, every one a crit under ten Combustion stacks.
+  - Curse of Doom: cooldown, aura and tick 60000 ms without Demonic Pact; 60000, 46153 and 38461 ms with it. A real cast under Bloodlust: the second cast refused `NOT_READY` under `.cheat cooldown`, the one hit 46103 ms after the curse went on.
+  - Arcane Blast's cost at 0 to 4 stacks: 228, 627, 1026, 1425, 1824 without Netherwind Presence; 228, 604, 980, 1356, 1732 with it; 228, 515, 802, 1089, 1377 under Bloodlust too. Bloodlust put on at four stacks shows only after the next cast lands.
+  - Refunds (35581): Arcane Blast 68, 181 and 519 at 0, 1 and 4 stacks, none under Clearcasting; 50 a crit missile, a free channel's too, so the sixth holds; Arcane Barrage 176; Arcane Explosion 215.
+- **Arcane Blast's buff, fixed in the sim** (`arcane_blast.go`, `arcane_barrage.go`, `arcane_explosion.go`; `TestArcaneBlastBuffEnds`). Live it lasts 6 s (5992 ms), not the sim's 8, and goes as an Arcane Barrage or Arcane Explosion is cast (0 ms; spell_proc 36032, cast phase), which the sim kept it through. `Spell::_cast` launches before that proc, so the cast still hits with the stacks: at four, a rank 1 Barrage hit 750 before its resist (386 to 470 bare) and an Explosion 931 (538 to 582). An Arcane Missiles channel takes the stacks off as it ends (4723 ms; 2355 ms under Missile Barrage), as the sim had it. The e2e now holds all of it.
+- **Whole fights** (`TestSimvalFight`, the golden builds, 90 s; logs in the worktree's `tmp/fights`, replayed with `simval fight -v`):
+  - WarlockDemonology, 61 of 61 checks: Curse of Doom went off twice with three casts refused, its ticks 55510 ms after the casts (sim 55490), one of the two a crit.
+  - MageArcane, 38 of 38: nine Spell Power refunds of 50 to 148, 562 mana (sim 496 to 2732 a fight); the buff up 57.7 s (sim 57.5).
+- **Spell capture:** 31656 to 31658 (aura 286 on Pyroblast's mask), 35578 and 35581 (the DUMMY effect of 15 and 30, a proc entry: arcane, family 3, crit, 8 ms), 36032 (the script), the new 425793, and the script names on 42891 and 47867. `gen_serverdata` moves one row: Curse of Doom gains `CooldownMods: ModBounds{FlatMin: -1}` from the carrier. `gen_server_defaults` writes what stage 1 did.
+- **Spell-mod sweep:** MageFire re-run live. Icy Veins now moves Pyroblast's tick 3000 to 2500 ms, as the sim does, and `TestSpellModRecords` passes with those 192 lines in `spellmods.jsonl` (`tmp/spellmods.candidate.jsonl`; the fixture isn't this item's to change). The re-run costs coverage: `.simval damage` now reports Pyroblast as shaped by `spell_tweaks_pyroblast_dot_haste`, so the sweep stops comparing its damage at Fire Power and Combustion. mod-sim-validation's `TICK_PERIOD_SCRIPTS` needs that script, and `spell_tweaks_curse_of_doom` before a warlock re-run.
+- **Goldens** (`dock.sh delta`, 33 of 37 unchanged). The buff fix moves only Arcane rows; Average-Default stays +3.72%.
+  - Talents-ArcaneBarrage-Average -0.86% (it was +3.05% before the fix): the Barrage that used to keep four stacks now ends them, so 7.2 Barrages from 10.5 and Arcane Missiles 153 hits from 169, Arcane Blast 155.9 casts from 145.3.
+  - `arcane_aoe` multi-target rows -1.4%: Presence of Mind, cast with the other cooldowns, fires an instant Arcane Blast every 84 s. Its one stack (18% with the glyph) used to last 8 s of Arcane Explosions and now goes with the first; the 6 s alone was -0.43%. The short single-target row loses the same (-1.37%); the long ones gain through the refund (+13.9% buffed, +6.9% unbuffed).
+- **Not done:** Ignite's total against 40% of the crits feeding it. No golden fight casts Pyroblast (the cycles are proc-blind), so it needs its own e2e.
+- **Spelldump, left stale:** Burnout's five ranks (44449 to 44472) and the lower Pyroblast and Curse of Doom ranks still list their old scripts. Nothing generated reads script names.

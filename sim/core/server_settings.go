@@ -62,6 +62,10 @@ type SpellTweaks struct {
 	TitansGripNoDamagePenalty bool
 	OmenClarityFaerieFire     bool
 	ShadowDotHaste            bool
+	PyroblastEmpoweredFire    bool
+	CurseOfDoomScaling        bool
+	ArcaneBlastHasteCost      bool
+	ArcaneCritRefund          bool
 }
 
 // DungeonScaleModifiers is one mod-dungeon-scale key group, e.g. StatModifierRaid25M.Boss.
@@ -152,6 +156,10 @@ func newSpellTweaks(settings, live *proto.SpellTweaksSettings) SpellTweaks {
 	tweaks.TitansGripNoDamagePenalty = pick(settings.TitansGripNoDamagePenalty, live.TitansGripNoDamagePenalty)
 	tweaks.OmenClarityFaerieFire = pick(settings.OmenClarityFaerieFire, live.OmenClarityFaerieFire)
 	tweaks.ShadowDotHaste = pick(settings.ShadowDotHaste, live.ShadowDotHaste)
+	tweaks.PyroblastEmpoweredFire = pick(settings.PyroblastEmpoweredFire, live.PyroblastEmpoweredFire)
+	tweaks.CurseOfDoomScaling = pick(settings.CurseOfDoomScaling, live.CurseOfDoomScaling)
+	tweaks.ArcaneBlastHasteCost = pick(settings.ArcaneBlastHasteCost, live.ArcaneBlastHasteCost)
+	tweaks.ArcaneCritRefund = pick(settings.ArcaneCritRefund, live.ArcaneCritRefund)
 	return tweaks
 }
 

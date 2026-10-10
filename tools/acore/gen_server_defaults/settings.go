@@ -40,6 +40,10 @@ var spellTweakToggles = []struct {
 	{"titans_grip_no_damage_penalty", "SpellTweaks.TitansGrip.NoDamagePenalty.Enable", spellTweaksSrc},
 	{"omen_clarity_faerie_fire", "SpellTweaks.OmenClarityFaerieFire.Enable", spellTweaksSrc},
 	{"shadow_dot_haste", "SpellTweaks.ShadowDotHaste.Enable", spellTweaksSrc},
+	{"pyroblast_empowered_fire", "SpellTweaks.PyroblastEmpoweredFire.Enable", spellTweaksSrc},
+	{"curse_of_doom_scaling", "SpellTweaks.CurseOfDoomScaling.Enable", spellTweaksSrc},
+	{"arcane_blast_haste_cost", "SpellTweaks.ArcaneBlastHasteCost.Enable", spellTweaksSrc},
+	{"arcane_crit_refund", "SpellTweaks.ArcaneCritRefund.Enable", spellTweaksSrc},
 }
 
 const (

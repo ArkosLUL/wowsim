@@ -22,6 +22,10 @@ export const LIVE_SERVER_DEFAULTS = ServerSettings.create({
 		titansGripNoDamagePenalty: true,
 		omenClarityFaerieFire: true,
 		shadowDotHaste: true,
+		pyroblastEmpoweredFire: true,
+		curseOfDoomScaling: true,
+		arcaneBlastHasteCost: true,
+		arcaneCritRefund: true,
 	},
 	dungeonScale: {
 		raid: { global: 1, health: 1, armor: 1, damage: 1 },

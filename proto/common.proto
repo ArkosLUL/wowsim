@@ -781,6 +781,22 @@ message SpellTweaksSettings {
 	// SpellTweaks.ShadowDotHaste.Enable: in Shadowform, spell haste speeds up SW:P, VT and DP ticks
 	// over a fixed duration.
 	optional bool shadow_dot_haste = 14;
+
+	// SpellTweaks.PyroblastEmpoweredFire.Enable: spell haste speeds up Pyroblast's DoT ticks over a
+	// fixed duration, with Empowered Fire. The ticks crit either way.
+	optional bool pyroblast_empowered_fire = 16;
+
+	// SpellTweaks.CurseOfDoomScaling.Enable: spell haste shortens Curse of Doom and its cooldown, and
+	// the hit can crit, with Demonic Pact.
+	optional bool curse_of_doom_scaling = 17;
+
+	// SpellTweaks.ArcaneBlastHasteCost.Enable: spell haste cuts the extra mana each Arcane Blast stack
+	// costs, with Netherwind Presence.
+	optional bool arcane_blast_haste_cost = 18;
+
+	// SpellTweaks.ArcaneCritRefund.Enable: an arcane crit gives back part of the cast's mana, with
+	// Spell Power.
+	optional bool arcane_crit_refund = 19;
 }
 
 // mod-dungeon-scale's full raid stat modifiers, keys DungeonScale.StatModifier<set>[.Boss].<stat>.

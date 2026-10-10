@@ -73,6 +73,26 @@ const SPELL_TWEAK_SWITCHES: Array<SpellTweakInput> = [
 		label: 'Shadow DoT haste',
 		tooltip: 'SpellTweaks.ShadowDotHaste.Enable: in Shadowform, spell haste speeds up Shadow Word: Pain, Vampiric Touch and Devouring Plague ticks over a fixed duration.',
 	},
+	{
+		key: 'pyroblastEmpoweredFire',
+		label: 'Pyroblast DoT haste',
+		tooltip: "SpellTweaks.PyroblastEmpoweredFire.Enable: spell haste speeds up Pyroblast's DoT ticks over a fixed duration, with Empowered Fire. The ticks crit either way.",
+	},
+	{
+		key: 'curseOfDoomScaling',
+		label: 'Curse of Doom scaling',
+		tooltip: 'SpellTweaks.CurseOfDoomScaling.Enable: spell haste shortens Curse of Doom and its cooldown, and the hit can crit, with Demonic Pact.',
+	},
+	{
+		key: 'arcaneBlastHasteCost',
+		label: 'Arcane Blast haste cost',
+		tooltip: 'SpellTweaks.ArcaneBlastHasteCost.Enable: spell haste cuts the extra mana each Arcane Blast stack costs, with Netherwind Presence.',
+	},
+	{
+		key: 'arcaneCritRefund',
+		label: 'Arcane crit refund',
+		tooltip: "SpellTweaks.ArcaneCritRefund.Enable: an arcane crit gives back part of the cast's mana, with Spell Power.",
+	},
 ];
 
 type ScaleSet = keyof DungeonScaleSettings;
