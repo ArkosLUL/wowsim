@@ -161,10 +161,11 @@ pass doesn't repeat.
 
 ## Current wave
 
-- Wave: Z4, landed (master fast-forwarded to this close-out). Next, Z5, planned: run 1, every item's code
-  stages, and the live stages of EC-CORE-FIX3,
-  EC-PET-FIX2 and EC-CLASS-FIX2, which need no rebuild; then the user rebuilds with EC-THREAT-FIX4's C++; run 2:
-  its live stage. Integrate EC-CORE-FIX3, EC-PET-FIX2, EC-CLASS-FIX2, EC-THREAT-FIX4 in that order.
+- Wave: Z5, planned on this commit, on base `780b15256` (master's, fast-forwarded in). Run 1: every item's code
+  stages, and the live stages of EC-CORE-FIX3, EC-PET-FIX2 and EC-CLASS-FIX2, which need no rebuild (the server
+  runs [ac] `3d89793c7` with mod-sim-validation `408f7b5`, image of 2026-10-09); then the user rebuilds with
+  EC-THREAT-FIX4's C++; run 2: its live stage. Integrate EC-CORE-FIX3, EC-PET-FIX2, EC-CLASS-FIX2, EC-THREAT-FIX4
+  in that order. The user approved (2026-10-10) merging master again at this wave's end without asking.
   Z4's item notes: `G:\DevStuff\GitHub\.wave-loop\bis-alts-measured-tmp`; the peer's measured data:
   `G:\DevStuff\GitHub\.wave-loop\bis-measured`.
   Prod runs X's `25cb9dddc` (no `rollback-q` image: its layers were gone), without Y's and Z's sim changes.
