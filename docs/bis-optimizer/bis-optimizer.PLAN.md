@@ -1783,9 +1783,8 @@ Only the pair's interaction needs a term: what two covered hands add beyond each
 an uncovered one. Each hand's own share stays in its residual, which single-hand moves price right.
 
 - `weapon_talents.go`: `weaponTalentsOf` reads rogue Close Quarters Combat, Hack and Slash and Mace
-  Specialization, warrior Sword and Poleaxe Specialization. Warrior Mace Specialization is left out:
-  `warrior/talents.go` compares its mask to `ProcMaskEmpty`, which `GetProcMaskForTypes` never returns,
-  so the sim applies it whatever the weapons (`TestWarriorMaceSpecializationIgnoresTheWeapons`).
+  Specialization, warrior Sword, Poleaxe and Mace Specialization (the last since wave Z5, when the sim
+  began to need a mace for it).
 - Pricing (`talentProbes`, `priceWeaponTalents`): per talent, a covered weapon per hand (the seed's,
   else the most DPS, effect-free first) and its type twin, a copy under a type no talent and no racial
   specialization of the seed's race covers, added to core's database at id `1e9 + type·1e7 + id`.

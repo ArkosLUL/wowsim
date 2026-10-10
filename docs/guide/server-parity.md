@@ -112,19 +112,26 @@ class by simval.
 - **Damage rounding** (`doneDamage`, `ApplyPostOutcomeDamageModifiers`): every step is whole.
   `SpellDamageBonusDone` and `MeleeDamageBonusDone` (a dot's amount at application) and the `…Taken` steps
   truncate, `CalcArmorReducedDamage` rounds up, a partial resist takes `damage × i / 10` in integers; crit,
-  glancing and absorbs stay whole. Not modelled: each SP or AP bonus's own `int32`, a stacked dot's per-stack
-  amount, magic crit before resist.
+  glancing and absorbs stay whole. Each SP or AP bonus is its own `int32` (`core.PowerBonus`), a base roll a
+  whole step (`SpellEffect.Roll`), a stacked dot one stack truncated, then × stacks (`Dot.SnapshotStacks`); a
+  magic crit comes before the resist; heals are whole after the caster's multiplier, the target's and the crit.
+  Not modelled: a weapon strike's own `int32` steps (`Spell::EffectWeaponDmg`).
+- **Healing taken** percents (aura 118) don't stack: only the highest bonus and the lowest penalty count,
+  multiplied (`Unit.AddHealingTakenPct`). Strength of Wrynn is healing done, which multiplies.
+- **A cast that fails** its GCD, hardcast or shared-cooldown check starts no cooldown.
 - **Creature-type attack power** (Elixir of Demonslaying, Scourgebane) and, on a ranged hit, Hunter's Mark reach
   only weapon damage: a white swing or a spell with a weapon effect adds `int32(sum / 14 × speed)` after its
   weapon percent (`Spell.weaponAttackPowerBonus`).
   - A physical hit's bonus skips the hand's TOTAL_PCT (`weaponBonusMultiplier`): `DamageDealtMultiplier`, the
     physical school's, `Spell.TotalPctMultiplier` (Ranged Weapon Specialization on ranged attacks; the off
     hand's aura 122, Dual Wield Specialization and Nerves of Cold Steel).
-  - DONE_VERSUS (aura 168: Troll Beast Slaying, Crusade's second percent) sits per target in the attack tables
-    and scales it.
+  - DONE_VERSUS (aura 168: Troll Beast Slaying, Crusade's second percent, the undead sets' 57943 and 29068) sits
+    per target in the attack tables and scales it. So do the DK's DoneTotalMod talents on its strikes (Rage of
+    Rivendare, Tundra Stalker; Glacier Rot and Merciless Combat on Frost Strike and Obliterate).
   - The rune weapon's hits add the DK's bonus, halved, with the DK's per-target multipliers.
 - **Meta gems** work only with their `SpellItemEnchantmentCondition` met (`sim/core/meta_gems.go`); an inactive
-  one gives nothing.
+  one gives nothing. An item swap re-checks the condition for the meta's stats only: its effect and crit damage
+  stay the starting gear's.
 - **Timing and procs** (the rest is in [spell data and timing](spell-data-and-timing.md)):
   - The rage hit factor is truncated to `uint32`.
   - Spell-proc PPM uses max(cast time, 1500 ms).
@@ -151,8 +158,11 @@ class by simval.
   - Summons with a scaling script (Infernal, treants, Shadowfiend, Spirit Wolves, Fire Elemental, Water
     Elemental guardian, Mirror Image) are immune to their scaling aura types, so buffs of those types add nothing;
     the DK's ghoul, gargoyle and army only to stats and AP (`Pet.BuffImmunity`).
-  - A pet crits 5% plus crit auras, none from agility; magic spells crit ×1.5. The sim still gives pets with
-    mana spell crit from intellect.
+  - A pet crits 5% plus crit auras, none from agility or intellect; magic spells crit ×1.5.
+  - The hit (3 s), haste, scaling and mana regen (2 s) timers tick on the pet's map update; one out since before
+    the pull starts at a drawn point of its cycles.
+  - A swing off the physical school (Fire Elemental, Shadowfiend) rolls (weapon + AP / 14) × attack time
+    (`Creature::CalculateMinMaxDamage`). The Fire Elemental's Fire Shield rolls spell hit.
   - The DK's summons carry scaling aura 67561, not 61017: no melee hit. Risen ghouls, not the army, take the
     owner's ArP (`Pet.HitScaling`, `Pet.RisenGhoul`).
   - Guardians take party and raid auras like pets (`AnyGroupedUnitInObjectRangeCheck`), but an uncontrollable

@@ -11,7 +11,13 @@ follows it. Core rules (costs, threat, crit damage, procs, pets) are in [server 
   skip `OnCastComplete`).
 - **Death runes:** each `spell_dk_death_rune` proc restarts its talent's 30 s periodic, which then reverts every
   rune that talent turned; Blood of the North and Reaping share one. Chances are spell_proc's (30/60/100%,
-  33/66/100%).
+  33/66/100%). A Threat of Thassarian off-hand strike rerolls a partial rank; the 100 ms cooldown starts only on
+  a proc.
+- **Blood Tap** readies a rune only for a blood-slot death rune on cooldown, or with both plain blood runes down;
+  a death rune talent takes over the tapped slot.
+- **Dirge** covers Obliterate. **Blood Presence**'s heal (63611: 4%, Improved Blood Presence 2% a point in the
+  other presences) comes from swings, own casts, dot ticks and `NOT_A_PROC` triggered spells, as int32(damage ×
+  percent), and only off a target that gives XP or honor (never a simval dummy).
 - **Improved Unholy Presence** scales the rune cooldown after the grace cut, in whole ms.
 - **Death Coil** and **Rune Strike** are refundable: a miss takes irand(0, cost / 4). Sudden Doom's Death Coil
   pays nothing.
@@ -31,7 +37,7 @@ follows it. Core rules (costs, threat, crit damage, procs, pets) are in [server 
   spells; its 26017 (67 at one point) rolls spell hit.
 - **Crusader Strike** refreshes no judgement.
 - **Improved Devotion Aura:** 3 points is the raid buff's improved state; 1–2 give every raider and pet under
-  the best paladin's aura +204 / +409 armor (`improveDevotionAura`). RaidStats shows them unimproved.
+  the best paladin's aura +204 / +409 armor (`improveDevotionAura`). Its 63514 adds 2% healing taken a point.
 - **Crusade:** its first percent is aura 79 on all damage (`DamageDealtMultiplier`), its second DONE_VERSUS on
   humanoids, demons, undead and elementals, per target.
 - **Glyph of Reckoning** has a server script (mod-spell-tweaks) but no client data, so no player has it: Hand of
@@ -56,8 +62,9 @@ follows it. Core rules (costs, threat, crit damage, procs, pets) are in [server 
 - **Rake**'s first hit takes armor.
 - **Forms:** cat and bear weapon damage is min(level, 60) × 0.85 / 1.25 × the unhasted attack time; a weapon's feral
   AP truncates to int32 in float32; Predatory Strikes gives 7/14/20% of that feral AP plus the item's own AP.
-- **Starfall** (53201) is an aura on the druid and can't miss. Its stars (53195, `NOT_A_PROC`) proc nothing; the
-  53190 splash does, but not Omen of Clarity (measured live).
+- **Starfall** (53201) is an aura on the druid and can't miss. Its stars (53195) and splash (53190) roll Omen of
+  Clarity, as do Hurricane's cast and ticks (measured live, 8.75%). The stars need line of sight to the target's
+  centre.
 - **Force of Nature** casts 33831, inside Clearcasting's mask.
 - **Nature's Swiftness** makes instant what its aura's class mask covers (`Spell.AffectedByAuraEffect`): heals and
   Rebirth, not Starfire.
@@ -73,8 +80,13 @@ follows it. Core rules (costs, threat, crit damage, procs, pets) are in [server 
 
 - **Torment the Weak** counts only against a snared or attack-slowed target: raid bosses and the dummy are immune to
   snares, not `MECHANIC_SLOW_ATTACK`. A landed Frostbolt (not under Glyph of Frostbolt) or Frostfire Bolt (9 s),
-  or Chilled (1.5 s), slows any other target, Permafrost included.
-- **Brain Freeze:** Fireball! (57761) lasts 15 s and is used at the cast.
+  or Chilled (1.5 s), slows any other target, Permafrost included; so do a Mirror Image's Frostbolt, Blast Wave
+  (6 s) and Dragon's Breath (5 s, gone at the first direct damaging hit: one proc charge). Frostbite is a root.
+- **Brain Freeze** rolls on landed Frostbolts, Frostfire Bolts and Blizzard ticks (spell_proc -44546). Fireball!
+  (57761) lasts 15 s and is used at the cast.
+- **Penance:** Mental Agility's mask leaves it out. Its damage tick takes 0.1905 of spell power, and Searing
+  Light and Twin Disciplines multiply, as the heal's four talents do. 53007 and its channel can't miss; each tick
+  rolls its own hit.
 - **T10's 2-piece** triggers when Hot Streak or Missile Barrage is used up, never on a timeout. Missile Barrage
   goes at Arcane Missiles' finish phase.
 - **Fingers of Frost** rolls at the cast (spell_proc 44545), hit or miss; Improved Blizzard rolls its own on each
@@ -96,6 +108,8 @@ follows it. Core rules (costs, threat, crit damage, procs, pets) are in [server 
 - **Hunter's Mark:** a weapon hit's weapon part reads the hunter's own ranged AP; the mark joins the
   creature-type bonus ([server parity](server-parity.md)). Kill Shot's 0.4 AP reads no mark, and its weapon part
   the weapon's own speed.
+- **Chimera Shot - Serpent** (53353) ignores caster modifiers (no Mortal Shots, no Marked for Death) and deals
+  int(the sting's stored tick × 2.8).
 - **Thrill of the Hunt** returns 40% of the shot's truncated base cost, a free Lock and Load shot's too.
 - **Explosive Decoy** deals nothing: its creature casts 53273 only on death, and a boss never attacks it.
 - **Haste:** mod-individual-progression's aura 89507 never changes the speed, so ranged haste is just the quiver's

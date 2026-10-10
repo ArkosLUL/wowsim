@@ -132,7 +132,7 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
        failing record is a sim/server mismatch: remove it, add a row to the fixture README, and open a
        follow-up. Never fix the sim here. Move the `damage` lines to `damage.jsonl`.
 - `damage.jsonl`, `timing.jsonl`, `threat.jsonl`, `strikes.jsonl`, `buffs.jsonl`, `mobs.jsonl`, `goldchar.jsonl`,
-  `talents.jsonl` and `spellmods.jsonl` in the same folder each have their own replay test and live capture
+  `talents.jsonl`, `spellmods.jsonl`, `costauras.jsonl` and `pets.jsonl` in the same folder each have their own replay test and live capture
   (`timing.jsonl`, `threat.jsonl` and `strikes.jsonl`: `run.sh TestSimvalTiming`, `TestSimvalThreat` or
   `TestSimvalStrikes`, streamed as above. `buffs.jsonl` and `mobs.jsonl`: the `BUFFS` or `MOBS` log lines of `run.sh
   TestSimvalBuffs`, which needs `SIMVAL_GOLDCHAR_SETUPS` and `SIMVAL_BUFFS_PAIRS`, or `TestSimvalMobs`): the [simval
@@ -142,7 +142,9 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
   simval README's Fights); recaptured with `run.sh TestSimvalFight` (the module README).
 - e2e gotchas: armor can't be equipped or removed in combat (equip error 60), and `.simval threat` engages the dummy, so
   `.combatstop` first; in a druid form, `.simval info` shows no main-hand weapon; 4 yards north of the boss dummy has no
-  line of sight to it; equipping starts item proc cooldowns (`Player::ApplyEquipCooldown`), so equip under `.cheat
+  line of sight to it, and 18 yards north hides its centre from area scripts (Starfall); the dummy's AI zeroes every
+  hit, `.damage` included (set its health with `.simval hp`), and it gives no XP, so `REQ_EXP_OR_HONOR` procs never
+  fire on it; equipping starts item proc cooldowns (`Player::ApplyEquipCooldown`), so equip under `.cheat
   cooldown`. The default run's Mind Flay can land in the server's 100% resist bucket (`Unit::CalcAbsorbResist`, when
   `float(rand_norm())` rounds to 1.0f: about one full capture in six), which the replay can't absorb: rerun
   `TestSimvalPriest` alone.
