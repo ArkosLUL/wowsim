@@ -491,6 +491,8 @@ func (hp *HunterPet) newPin() *core.Spell {
 		ActionID:    core.ActionID{SpellID: 53548},
 		SpellSchool: core.SpellSchoolPhysical,
 		ProcMask:    core.ProcMaskEmpty,
+		// a root, not a bleed, so armor cuts its ticks (Unit::IsDamageReducedByArmor)
+		Flags: core.SpellFlagApplyArmorReduction,
 
 		Cast: core.CastConfig{
 			CD: core.Cooldown{
@@ -647,7 +649,8 @@ func (hp *HunterPet) newSavageRend() *core.Spell {
 		ActionID:    actionID,
 		SpellSchool: core.SpellSchoolPhysical,
 		ProcMask:    core.ProcMaskSpellDamage,
-		Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagIncludeTargetBonusDamage | core.SpellFlagApplyArmorReduction,
+		// a bleed: armor cuts the first hit, not the ticks (Unit::IsDamageReducedByArmor)
+		Flags: core.SpellFlagMeleeMetrics | core.SpellFlagIncludeTargetBonusDamage,
 
 		FocusCost: core.FocusCostOptions{
 			Cost: 20,

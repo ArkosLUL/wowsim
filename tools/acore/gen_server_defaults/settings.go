@@ -40,6 +40,7 @@ var spellTweakToggles = []struct {
 	{"titans_grip_no_damage_penalty", "SpellTweaks.TitansGrip.NoDamagePenalty.Enable", spellTweaksSrc},
 	{"omen_clarity_faerie_fire", "SpellTweaks.OmenClarityFaerieFire.Enable", spellTweaksSrc},
 	{"shadow_dot_haste", "SpellTweaks.ShadowDotHaste.Enable", spellTweaksSrc},
+	{"glyph_of_backstab_ticks", "SpellTweaks.GlyphOfBackstabTicks.Enable", spellTweaksSrc},
 }
 
 const (

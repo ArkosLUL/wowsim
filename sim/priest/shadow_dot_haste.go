@@ -21,12 +21,23 @@ func shadowDotTickHaste(addsTicks bool) core.TickHaste {
 	return core.SpellHasteScalesBoth
 }
 
-// devouringPlagueTotalTicks is what AuraEffect::GetTotalTicks gives the dot a cast now would apply.
+// devouringPlagueTotalTicks is what AuraEffect::GetTotalTicks gives Improved Devouring Plague's burst
+// for a cast now. Call it before the cast puts its dot on.
 func (priest *Priest) devouringPlagueTotalTicks(target *core.Unit) int32 {
 	dot := priest.DevouringPlague.Dot(target)
-	if dot.TickHaste == core.SpellHasteScalesBoth {
+	stock := dot.TickHaste == core.SpellHasteScalesBoth
+	// Stock haste shortens the duration with the interval, so a new dot counts its 8. A recast over
+	// a running one counts more: Aura::RefreshTimers puts the whole duration back before the burst,
+	// and the cast only shortens it after.
+	if stock && !(dot.AffectedByCastSpeed && dot.IsActive()) {
 		return dot.NumberOfTicks
 	}
-	period := min(priest.ApplyCastSpeedForSpell(dot.TickLength, priest.DevouringPlague), dot.TickLength).Truncate(time.Millisecond)
+
+	period := priest.ApplyCastSpeedForSpell(dot.TickLength, priest.DevouringPlague)
+	if !stock {
+		// the tweak's script doesn't let a slow stretch the interval
+		period = min(period, dot.TickLength)
+	}
+	period = period.Truncate(time.Millisecond)
 	return int32(dot.TickLength * time.Duration(dot.NumberOfTicks) / period)
 }

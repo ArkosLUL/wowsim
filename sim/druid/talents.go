@@ -409,11 +409,20 @@ func (druid *Druid) applyOmenOfClarity() {
 				return
 			}
 
-			// spell_tweaks_omen_faerie_fire (SpellTweaks_classes.cpp) guarantees the proc, no roll,
-			// off Faerie Fire (Feral) landing on a plain NPC (not a player, pet or charm).
-			if druid.FaerieFire.IsEqual(spell) && druid.InForm(Cat|Bear) &&
+			// spell_tweaks_omen_faerie_fire (SpellTweaks_classes.cpp) casts Clearcasting itself, no
+			// roll, off Faerie Fire (Feral) landing on a plain NPC (not a player, pet or charm). Its
+			// Bear Form hit lands in the same instant, so one Clearcasting covers both.
+			faerieFireFeral := druid.FaerieFire.IsEqual(spell) && druid.InForm(Cat|Bear)
+			if (faerieFireFeral || spell.ActionID.SameAction(FaerieFireFeralDamageActionID)) &&
 				result.Target.Type == core.EnemyUnit && druid.Server().SpellTweaks.OmenClarityFaerieFire {
-				druid.ProcOoc(sim)
+				if faerieFireFeral {
+					druid.ClearcastingAura.Activate(sim)
+				}
+				// Omen's own roll still runs, and only it gives the Balance T10 2-piece proc
+				// (spell_dru_omen_of_clarity::HandleProc)
+				if lasherweave2P != nil && sim.RandomFloat("Clearcasting") < druid.AuraPPMProcChance(ppm, spell) {
+					lasherweave2P.Activate(sim)
+				}
 				return
 			}
 

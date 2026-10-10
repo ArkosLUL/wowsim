@@ -359,7 +359,9 @@ func (warrior *Warrior) applyTitansGrip() {
 	if !warrior.Talents.TitansGrip {
 		return
 	}
-	if !warrior.AutoAttacks.IsDualWielding {
+	// 49152 takes its 10% with both hands full and a two-hander in either. A shield or a
+	// held-in-off-hand item fills the off hand as well as a weapon does (AuraEffect::CalculateAmount).
+	if warrior.MainHand().ID == 0 || warrior.OffHand().ID == 0 {
 		return
 	}
 	if warrior.MainHand().HandType != proto.HandType_HandTypeTwoHand && warrior.OffHand().HandType != proto.HandType_HandTypeTwoHand {

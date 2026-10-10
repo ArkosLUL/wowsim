@@ -157,6 +157,10 @@ func (paladin *Paladin) registerSealOfVengeanceSpellAndAura() {
 		},
 	})
 
+	// mod-spell-tweaks has Crusader Strike and Divine Storm stack the DoT too
+	// (spell_tweaks_seal_dot_on_strikes), with no switch but SpellTweaks.Enable.
+	strikesStackDot := paladin.Server().SpellTweaks.Enabled
+
 	// Seal of Vengeance aura.
 	auraActionID := core.ActionID{SpellID: 31801}
 	paladin.SealOfVengeanceAura = paladin.RegisterAura(core.Aura{
@@ -201,22 +205,15 @@ func (paladin *Paladin) registerSealOfVengeanceSpellAndAura() {
 				}
 			}
 
-			// The DoT itself only stacks off a white hit or Hammer of the Righteous (icon check),
-			// plus Crusader Strike and Divine Storm via mod-spell-tweaks. Hammer of Wrath and Shield
-			// of Righteousness still get the damage bonus above, just never stack the DoT.
-			dotApplicableSpells := []*core.Spell{
-				paladin.HammerOfTheRighteous,
-				paladin.CrusaderStrike,
-				paladin.DivineStorm,
-			}
-			isApplicableSpell := false
-			for _, validSpell := range dotApplicableSpells {
-				if spell == validSpell {
-					isApplicableSpell = true
-				}
+			// The DoT itself only stacks off a white hit or Hammer of the Righteous (icon check).
+			// Hammer of Wrath and Shield of Righteousness still get the damage bonus above, just
+			// never stack the DoT.
+			stacksDot := spell.ProcMask.Matches(core.ProcMaskMeleeWhiteHit) || spell == paladin.HammerOfTheRighteous
+			if strikesStackDot && (spell == paladin.CrusaderStrike || spell == paladin.DivineStorm) {
+				stacksDot = true
 			}
 
-			if spell.ProcMask.Matches(core.ProcMaskMeleeWhiteHit) || isApplicableSpell {
+			if stacksDot {
 				dotApplicationSpell.Cast(sim, result.Target)
 			}
 		},

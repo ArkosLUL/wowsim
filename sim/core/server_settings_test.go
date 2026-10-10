@@ -143,11 +143,15 @@ func TestSpellTweaksEnableGatesScriptedTweaks(t *testing.T) {
 		DkGhoulArmorPen: on, FeralSpiritHaste: on, DiseaseHaste: on, DeadlyPoisonMurder: on,
 		RuptureWeaponExpertise: on, RendTrauma: on, BalanceDotScaling: on, TitansGripNoDamagePenalty: on,
 		OmenClarityFaerieFire: on, ShadowDotHaste: on,
+		GlyphOfBackstabTicks: on,
 	}
 
 	got := NewServerSettings(&proto.ServerSettings{SpellTweaks: allOn}).SpellTweaks
 	if want := float64(float32(1.1)); got.ExoticPetDamageMultiplier != want {
 		t.Errorf("exotic pet multiplier at 10%% = %v, want %v", got.ExoticPetDamageMultiplier, want)
+	}
+	if !got.GlyphOfBackstabTicks {
+		t.Error("GlyphOfBackstabTicks is off with its switch and SpellTweaks.Enable on")
 	}
 
 	off := googleProto.Clone(allOn).(*proto.SpellTweaksSettings)

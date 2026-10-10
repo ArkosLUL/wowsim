@@ -2551,3 +2551,99 @@ Code stage. Spirit Wolves retake the shaman's melee speed every 2 s.
 - The tick that brings it fell between +3756 and +4159 ms after the summon, and between +3613 and +4011 ms the run before. The sim puts it in the last map update interval before 4 s.
 - Summoned 1.6 s after Bloodlust: 1162 ms at +406, +1803 and +3010 ms, no Bloodlust aura on the wolf.
 - The e2e gained back-to-back snapshots across the 4 s tick (about 400 ms each, logged, not judged) and a `TICK` line with the two the tick fell between. No orphan bots; its records are dropped.
+
+## PAR-FU-9 as built
+
+Server source: [ac] `3d89793c7`, mod-spell-tweaks `9bf5c75`.
+
+**Stage 1: pets and rogue**
+- **Pin** (53548, confirmed): its mechanic is root, the dot effect's none, so `Unit::IsDamageReducedByArmor` lets
+  armor cut the ticks, less the armor penetration a hunter pet takes from its owner (`Unit::CalcArmorReducedDamage`).
+  The spell now carries `SpellFlagApplyArmorReduction`.
+- **Savage Rend** (53582, confirmed): the bleed mechanic exempts the ticks. The first hit still meets armor:
+  `Unit::CalculateSpellDamageTaken` asks without an effect index, and only the per-effect check finds the bleed. The
+  flag is gone.
+- **Glyph of Backstab** (56800, confirmed): `spell_tweaks_glyph_of_backstab` replaces core's script on the glyph.
+  - `SpellTweaks.GlyphOfBackstabTicks` on (`SpellTweaksSettings` field 15, gated by `enable`): a landed Backstab
+    adds 2 s to Rupture's time left and max duration, 6 s a cast (`HandleCalcPeriodic` zeroes the counter on a
+    recast). The amplitude stays the cast's, so `extendRupture` no longer re-reads haste: 5 points give 11 ticks
+    unhasted, `floor(22 s / interval)` hasted.
+  - Off, or `enable` off: core's rule. The time left grows while the aura would end within 5 s of its apply time plus
+    max duration (three Backstabs on a fresh Rupture), and ticks stop at max duration / amplitude
+    (`AuraEffect::GetTotalTicks`): 8 ticks, aura off at 22 s, as measured live before the fix.
+  - Not modelled, off side only: a recast over a live Rupture keeps the server aura's first apply time (`m_applyTime`
+    is const), so core's test gives it fewer or no extensions. The sim restarts the aura and gives each cast three.
+- **`enable`'s comment and the picker's "Spell tweaks" tooltip** name what the switch gates in the sim: the exotic
+  pet bonus, every toggle but the two armor pen ones, the seal DoT stacks from Crusader Strike and Divine Storm,
+  and Explosive Trap laid from range.
+
+Tests: `sim/hunter/pet_abilities_test.go`, `sim/rogue/backstab_test.go`, `TestSpellTweaksEnableGatesScriptedTweaks`;
+live, `TestParfu9GlyphOfBackstab` (mod-sim-validation `e2e/parfu9_test.go`).
+
+**Stage 2: switches off**
+
+All four confirmed. Every switch is on live, so sim tests hold the off sides.
+- **Seal DoT from Crusader Strike and Divine Storm:** core stacks it off white hits and Hammer of the Righteous only
+  (`spell_pal_seal_of_vengeance_aura::HandleApplyDoT`). The strikes come from `spell_tweaks_seal_dot_on_strikes`,
+  gated by `SpellTweaks.Enable` alone, so `sov.go` stacks from them only with `SpellTweaks.Enabled`.
+- **Omen on Faerie Fire (Feral):** with `OmenClarityFaerieFire` off, a landed 16857 rolls Omen's 3.5 PPM on the
+  1.5 s an instant counts as, 8.75% (`Aura::CalcProcChance`; a hit without damage still carries a `DamageInfo`).
+  Beyond the row: in Bear Form the triggered 60089 rolls too, since Omen has `SPELL_ATTR3_CAN_PROC_FROM_PROCS`. Both
+  spells carry `SpellFlagOmenTrigger`.
+  - With the tweak on (found in review): the script casts Clearcasting (16870) itself, so Lasherweave Regalia's
+    2-piece proc (70721, cast only by `spell_dru_omen_of_clarity::HandleProc`) comes just from the stock roll, which
+    still runs. The sim activated both on every Faerie Fire (Feral). Now the tweak activates Clearcasting alone,
+    and a druid with the set rolls 8.75% a spell for its proc; without the set nothing rolls.
+- **Improved Devouring Plague on a recast:** with `ShadowDotHaste` off and Shadowform, a recast over a running dot
+  goes through `Aura::ModStackAmount`: `RefreshTimers` puts the 24 s back over the hasted interval, `SetStackAmount`
+  fires the burst (`HandleAuraSpecificMods`), and only then `Spell::DoSpellHitOnUnit` shortens the duration. The
+  burst counts `24000 / int32(3000 x cast speed)` ticks, unclamped (10 at 25% haste); a new dot counts 8
+  (`devouringPlagueTotalTicks`).
+- **Titan's Grip:** `AuraEffect::CalculateAmount` gives 49152 its -10% with a weapon in the main hand, a weapon or
+  any armor item (shield, held-in-off-hand) in the off hand, and a two-hander in either. `applyTitansGrip` no longer
+  needs dual wield.
+
+Tests: `sim/paladin/retribution/seal_dot_test.go`, `sim/druid/feral/faerie_fire_test.go` (the set's roll too),
+`sim/priest/shadow/devouring_plague_test.go`, `sim/warrior/dps/titans_grip_test.go`; each fails on the old code.
+
+**Stage 3: live** (2026-10-10, mod-sim-validation `e2e/parfu9_test.go`, all cast for real; no sim change needed)
+- **Glyph of Backstab** (`TestParfu9GlyphOfBackstab`, naked rogue, 5 point Rupture). Server and sim agree in all
+  four cases:
+
+  | Case | Ticks | Mean gap | Aura up |
+  |---|---|---|---|
+  | no glyph | 8 | 1994 ms | 15.9 s |
+  | glyph, 3 or 4 Backstabs landed (2 landed: 10 ticks, 19.9 s) | 11 | 1996 ms | 21.9 s |
+  | glyph, Weapon Expertise, Slice and Dice before the cast (x0.71428573) | 15 | 1432 ms | 21.9 s |
+  | glyph, Weapon Expertise, Slice and Dice 3.2 s after the cast | 11 | 1996 ms | 22.0 s |
+
+  The fourth Backstab adds nothing. In the third case Slice and Dice ends about 2.5 s before Rupture and the last
+  ticks keep 1428 ms; in the fourth it's up for every added second and they keep 2000 ms. So an extension never
+  re-reads haste.
+- **Savage Rend** (`TestParfu9PinAndSavageRend`, a tamed level 80 raptor on the boss dummy, from behind):
+  `.simval damage` gives a hit of 93–118 and a tick of 22–28, `.simval armor` x0.58869. The hit dealt 59, armor
+  taken off; the three ticks 28 each, none taken off.
+- **Pin**, a tamed level 80 crab:
+  - On a Drakkari Bat (31337, armor 9729, x0.61024, no immunities): probe tick 29–37, four real ticks of 20. Armor
+    cuts them.
+  - On the boss dummy: `SMSG_SPELL_GO` reports it immune and nothing ticks (twice). Pin's spell-level mechanic is
+    root, and `Unit::IsImmunedToSpell` refuses the whole spell to a target immune to that mechanic
+    (`WorldObject::SpellHitResult`). See Left open.
+
+**Left open**
+- A pet special whose spell-level mechanic the target is immune to never lands, and the sim has no target
+  immunities, so it deals the damage anyway. Every SimVal dummy and all 18 raid bosses sampled from
+  `creature_immunities` (Naxxramas to Ruby Sanctum) are immune to root, stun, snare and disarm, none to bleed.
+  Measured for Pin (root); by the same rule Venom Web Spray (55509, root), Ravage (53562, stun), Tendon Rip (53575,
+  snare) and Snatch (53543, disarm). `MechanicsMask` is `1 << mechanic`, so root is 128. No suite or preset runs
+  one of these pets.
+- `sim/priest/devouring_plague.go` casts Improved Devouring Plague's burst even when Devouring Plague misses; the
+  server only fires it from the applied aura.
+- The bleed damage bonus (Mangle, Trauma, Stampede) follows the spell's mechanic on the server
+  (`Unit::SpellDamageBonusTaken`, `GetAllEffectsMechanicMask`): Savage Rend's first hit takes it and Pin's ticks
+  don't. `Spell.TargetDamageMultiplier` gives it to every physical tick and no direct hit.
+- No live record: the five off sides (no config change), and Pin's ticks with armor penetration on the owner.
+
+**Goldens** (`dock.sh delta`): only the `AllItems-LasherweaveRegalia` row of TestFeral (+0.55% dps), TestFeralApl
+(-0.14%) and TestFeralTank (+0.88% dps, +0.73% tps), from the set's roll on Faerie Fire (Feral): it shares
+Omen's random stream, so the white hits' Clearcasting procs shift. 34 of 37 suites unchanged.

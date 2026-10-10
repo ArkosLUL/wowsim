@@ -73,6 +73,11 @@ const SPELL_TWEAK_SWITCHES: Array<SpellTweakInput> = [
 		label: 'Shadow DoT haste',
 		tooltip: 'SpellTweaks.ShadowDotHaste.Enable: in Shadowform, spell haste speeds up Shadow Word: Pain, Vampiric Touch and Devouring Plague ticks over a fixed duration.',
 	},
+	{
+		key: 'glyphOfBackstabTicks',
+		label: 'Glyph of Backstab ticks',
+		tooltip: 'SpellTweaks.GlyphOfBackstabTicks.Enable: the seconds Glyph of Backstab adds to Rupture tick, at the interval Rupture went on with. Off, Rupture only lasts longer.',
+	},
 ];
 
 type ScaleSet = keyof DungeonScaleSettings;
@@ -407,7 +412,7 @@ export class ServerSettingsPicker extends Component {
 			label: 'Spell tweaks',
 			labelTooltip:
 				'SpellTweaks.Enable. Off turns off every tweak below except the two armor pen ones, and the tweaks with no switch of their own: ' +
-				'CS and DS seal stacks, Glyph of Reckoning damage, Explosive Trap via Trap Launcher, and the Detonate Mana and Frost Blast nerfs.',
+				'Crusader Strike and Divine Storm stacking the seal DoT, and Explosive Trap laid from range with Trap Launcher.',
 			inline: true,
 			reverse: true,
 			changedEvent: encounter => encounter.serverSettingsChangeEmitter,
