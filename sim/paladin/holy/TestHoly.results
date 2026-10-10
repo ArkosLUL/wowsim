@@ -89,14 +89,14 @@ dps_results: {
  key: "TestHoly-AllItems-BaubleofTrueBlood-50354"
  value: {
   tps: 10.80219
-  hps: 90.47701
+  hps: 90.47083
  }
 }
 dps_results: {
  key: "TestHoly-AllItems-BaubleofTrueBlood-50726"
  value: {
   tps: 10.80219
-  hps: 90.47701
+  hps: 90.47083
  }
 }
 dps_results: {
@@ -349,8 +349,8 @@ dps_results: {
 dps_results: {
  key: "TestHoly-AllItems-GnomishLightningGenerator-41121"
  value: {
-  dps: 41.29317
-  tps: 49.88901
+  dps: 41.29217
+  tps: 49.88801
  }
 }
 dps_results: {

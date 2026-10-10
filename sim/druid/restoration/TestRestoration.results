@@ -66,13 +66,13 @@ dps_results: {
 dps_results: {
  key: "TestRestoration-AllItems-BaubleofTrueBlood-50354"
  value: {
-  hps: 87.04794
+  hps: 87.04217
  }
 }
 dps_results: {
  key: "TestRestoration-AllItems-BaubleofTrueBlood-50726"
  value: {
-  hps: 87.04794
+  hps: 87.04217
  }
 }
 dps_results: {
@@ -252,8 +252,8 @@ dps_results: {
 dps_results: {
  key: "TestRestoration-AllItems-GnomishLightningGenerator-41121"
  value: {
-  dps: 39.2645
-  tps: 39.2645
+  dps: 39.26383
+  tps: 39.26383
  }
 }
 dps_results: {

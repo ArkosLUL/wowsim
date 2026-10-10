@@ -71,14 +71,14 @@ dps_results: {
  key: "TestRestoration-AllItems-BaubleofTrueBlood-50354"
  value: {
   tps: 0.01
-  hps: 93.75404
+  hps: 93.74733
  }
 }
 dps_results: {
  key: "TestRestoration-AllItems-BaubleofTrueBlood-50726"
  value: {
   tps: 0.01
-  hps: 93.75404
+  hps: 93.74733
  }
 }
 dps_results: {
@@ -392,7 +392,7 @@ dps_results: {
  key: "TestRestoration-AllItems-GnomishLightningGenerator-41121"
  value: {
   tps: 0.01
-  dtps: 30.8215
+  dtps: 30.82083
  }
 }
 dps_results: {
@@ -896,8 +896,8 @@ dps_results: {
 dps_results: {
  key: "TestRestoration-Talents-HealingGrace-Average"
  value: {
-  tps: 2864.46778
-  hps: 8726.9568
+  tps: 2863.68938
+  hps: 8724.24262
  }
 }
 ability_results: {
@@ -1195,8 +1195,8 @@ ability_results: {
    value: {
     casts: 114.6635
     hits: 114.6635
-    amount_per_hit: 764.09214
-    amount: 87613.47904
+    amount_per_hit: 763.035
+    amount: 87492.264
    }
   }
   entries: {
@@ -1204,8 +1204,8 @@ ability_results: {
    value: {
     casts: 30.18
     hits: 30.18
-    amount_per_hit: 450.12215
-    amount: 13584.68663
+    amount_per_hit: 448.42213
+    amount: 13533.38
    }
   }
   entries: {
@@ -1213,8 +1213,8 @@ ability_results: {
    value: {
     casts: 15.598
     hits: 15.598
-    amount_per_hit: 1579.61098
-    amount: 24638.77214
+    amount_per_hit: 1578.40396
+    amount: 24619.945
    }
   }
   entries: {
@@ -1223,8 +1223,8 @@ ability_results: {
     casts: 138.477
     hits: 415.431
     crit_pct: 35.33222
-    amount_per_hit: 5533.78894
-    amount: 2.29890747171e+06
+    amount_per_hit: 5532.54093
+    amount: 2.2983890095e+06
    }
   }
   entries: {
@@ -1239,8 +1239,8 @@ ability_results: {
     casts: 44.217
     hits: 44.217
     crit_pct: 35.27603
-    amount_per_hit: 4356.95633
-    amount: 192651.5381
+    amount_per_hit: 4354.59924
+    amount: 192547.3145
    }
   }
   entries: {
