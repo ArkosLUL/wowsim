@@ -2322,6 +2322,38 @@ byte-identical to the code stages'; notes in `tmp/ec-threat-fix4-live.md`):
 - Not compared, for want of a sim spell to cast: the tick threat of Invigoration and Replenishment (server 10 of 20
   tenths, 6 of 12 mana).
 
+Cross-review, 2026-10-10, on `8be984c35` with the four items merged:
+- The threat stage's open item (fixed): `Pet.reset` and `Disable` pause a pet's Replenishment timer, `enable`
+  resumes it (`replenishment.pauseTicks`, `resumeTicks`). The timer keeps its place, so the ticks land on the
+  updates they did; a pet that isn't out queues nothing. A pet's permanent auras outlive `Disable` (`expireAll`
+  only walks timed ones), so the raid's buff ticked for nobody after every dismissal too.
+- Not golden-neutral, though the hook is: with a no-op event left at each paused tick time, TestArcane and
+  TestEnhancement are byte-identical to the goldens. Without, they reshuffle: the sim expires auras only when an
+  event moves the clock, tracker by tracker, so on seed 162 Arcane Power (out before 268.95 s) still raises
+  the Arcane Missiles tick at 269.00 that the target's tracker fires first.
+- Regen order (fixed): on a shared map update a pet's regen ran before its Replenishment tick, the server's
+  after (`Unit::Update`, then `Creature::Update`'s `Regenerate`); near full mana the caster lost the tick's
+  threat. Regen is now `petRegenPriority`, below the aura ticks; the tick is queued after the scaling timer
+  (lower spell ids tick first).
+- Uncontrollable guardians (fixed): Mirror Image (SummonProperties 1021) and the Greater Fire Elemental (61, from
+  32982) have neither a pet's type nor category (`Guardian::Guardian`), so `TARGET_CHECK_RAID` skips them. Both
+  are `Uncontrollable` now, and that drops the raid's Replenishment, a raid cast, as well.
+- Checked, no change: heal threat is half the health gained after the healing taken percent, as the server's
+  `gain`; Silent Resolve reaches Penance's ticks once, its damage tick's bonus unmodified; Dirge's threat hook
+  already had Obliterate, Blood Tap is `NO_THREAT`, 50475 adds its level 40 a cast; the `CastThreat`s sit in the
+  effects, past the cast checks; drop lists and READMEs agree; `gen_serverdata` rerun: no change.
+- Tests: `TestReplenishmentTimerKeepsItsPlaceWhileAPetIsAway`, `…WaitsForThePetAgainNextFight`,
+  `…ProcOnAPetThatIsAwayQueuesNothing`, `…TicksAheadOfThePetsRegen`, `TestMirrorImageTakesNoRaidCast`,
+  `TestFireElementalTakesNoRaidCast`; `TestPetDropsBuffsItCannotTake` holds Replenishment.
+- Goldens, 9 suites: Enhancement 160 rows within ±0.26% (Average-Default +0.005%) and Arcane 7 rows up to
+  +0.003%, both reshuffles; Destruction TPS +0.001% (the Imp's tick threat); Fire's Firestarter row +0.00003%.
+  A pet's `aura|57669` row goes from Blood (Bloodworm), the four mage suites and the three shaman ones.
+- Follow-ups: expire auras in time order, so no unrelated event moves a golden; a proc's cast skips every
+  guardian, the Water Elemental included (controllable, 1561), and still lands on a pet that's away (the Imp
+  under Inferno), taking one of the ten places; by the same rule the gargoyle (209), army ghouls (687) and Raise
+  Dead's guardian (829) are uncontrollable; the raid's buff puts its aura on units without mana; direct
+  `GainHealth` heals (Lifeward, Frenzied Regeneration's integer steps) aren't whole.
+
 ## Orchestrator onboarding (wave S start)
 
 - Add waves S–X to the registry and an `EC-` row to "Where the specs are".

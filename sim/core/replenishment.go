@@ -35,6 +35,10 @@ type replenishment struct {
 	ticksLeft int
 
 	tickAction *PendingAction
+	// the timer's next tick, before it's put on one of the unit's updates
+	tickDue time.Duration
+	// a pet that isn't out: the timer keeps its place but queues nothing
+	paused bool
 	// when the running aura runs out: the sim only gets to an expiry with whatever happens next
 	endsAt time.Duration
 }
@@ -126,21 +130,59 @@ func (r *replenishment) startTicks(sim *Simulation) {
 		// takes that whole tick off the timer
 		start -= sim.worldTickInterval
 	}
-	nominal := start + replenishmentTickPeriod
-	pa := &PendingAction{NextActionAt: r.aura.nextUpdate(sim, nominal)}
+	r.tickDue = start + replenishmentTickPeriod
+	r.endsAt = r.aura.ExpiresAt()
+	r.queueTick(sim)
+}
+
+// queueTick puts the timer's next tick on the unit's first update at or after its time.
+func (r *replenishment) queueTick(sim *Simulation) {
+	if r.paused {
+		return
+	}
+	pa := &PendingAction{NextActionAt: r.aura.nextUpdate(sim, r.tickDue)}
 	if r.onUpdateGrid(sim) {
 		// the unit's update comes after the casts of its world tick
 		pa.Priority = ActionPriorityLow
 	}
 	pa.OnAction = func(sim *Simulation) {
 		r.tick(sim)
-		nominal += replenishmentTickPeriod
-		pa.NextActionAt = r.aura.nextUpdate(sim, nominal)
+		r.tickDue += replenishmentTickPeriod
+		pa.NextActionAt = r.aura.nextUpdate(sim, r.tickDue)
 		sim.AddPendingAction(pa)
 	}
 	r.tickAction = pa
-	r.endsAt = r.aura.ExpiresAt()
 	sim.AddPendingAction(pa)
+}
+
+// pauseTicks is the pet going away: nothing is queued for it until resumeTicks. The raid's buff never ends,
+// and a tick a second for every mana pet that isn't out adds up. r is nil for a pet the buff never reached.
+func (r *replenishment) pauseTicks(sim *Simulation) {
+	if r == nil {
+		return
+	}
+	r.paused = true
+	if pa := r.tickAction; pa != nil {
+		r.tickAction = nil
+		pa.Cancel(sim)
+	}
+}
+
+// resumeTicks is the pet coming out. The timer kept its place while the pet was away: the ticks it skipped
+// had no pet to fill, and the next one lands on the update it always would have.
+func (r *replenishment) resumeTicks(sim *Simulation) {
+	if r == nil || !r.paused {
+		return
+	}
+	r.paused = false
+	if r.metrics == nil || !r.aura.IsActive() {
+		return
+	}
+	for r.aura.nextUpdate(sim, r.tickDue) < sim.CurrentTime {
+		r.countTick()
+		r.tickDue += replenishmentTickPeriod
+	}
+	r.queueTick(sim)
 }
 
 // stopTicks ends the tick timer as the aura runs out, is taken off or is refreshed. The sim can get there
@@ -164,14 +206,18 @@ func (r *replenishment) tick(sim *Simulation) {
 		amount = r.scriptedAmount()
 	}
 	// a player's tick only fills the power it's on (AuraEffect::HandlePeriodicEnergizeAuraTick)
-	if amount > 0 && r.manaIsCurrent() && r.unit.IsEnabled() {
+	if amount > 0 && r.manaIsCurrent() {
 		before := r.unit.CurrentMana()
 		r.unit.AddMana(sim, amount, r.metrics)
 		if r.caster != nil {
 			r.caster.AddEnergizeTickThreat(sim, r.caster.replenishment.metrics, r.unit.CurrentMana()-before)
 		}
 	}
+	r.countTick()
+}
 
+// countTick takes a tick off a proc's aura that runs over the raid's buff, whether the tick gave mana or not.
+func (r *replenishment) countTick() {
 	if r.caster != nil && r.aura.Duration == NeverExpires {
 		// the raid's buff is back as the proc's 15 s run out
 		if r.ticksLeft--; r.ticksLeft == 0 {

@@ -111,3 +111,33 @@ func TestFireShieldRollsSpellHit(t *testing.T) {
 		t.Errorf("%d of %d Fire Shield ticks missed, want about 680", metrics.Misses, ticks)
 	}
 }
+
+// 32982 summons the elemental as a plain guardian (SummonProperties 61), without a pet bar, so a raid cast
+// skips it (Spell.cpp's TARGET_CHECK_RAID): the raid's Replenishment never reaches it.
+func TestFireElementalTakesNoRaidCast(t *testing.T) {
+	sim := core.NewSim(&proto.RaidSimRequest{
+		Raid: core.SinglePlayerRaidProto(&proto.Player{
+			Race:      proto.Race_RaceTroll,
+			Class:     proto.Class_ClassShaman,
+			Equipment: &proto.EquipmentSpec{},
+			Consumes:  &proto.Consumes{},
+			Buffs:     core.FullIndividualBuffs,
+			Spec: &proto.Player_ElementalShaman{ElementalShaman: &proto.ElementalShaman{
+				Options: &proto.ElementalShaman_Options{Totems: &proto.ShamanTotems{UseFireElemental: true}},
+			}},
+			Rotation: core.APLRotationFromJsonString(`{"type": "TypeAPL", "priorityList": []}`),
+		}, core.FullPartyBuffs, core.FullRaidBuffs, core.FullDebuffs),
+		Encounter:  core.MakeSingleTargetEncounter(0),
+		SimOptions: &proto.SimOptions{Iterations: 1, IsTest: true, RandomSeed: 101},
+	})
+	sim.Reset()
+	shaman := sim.Raid.Parties[0].Players[0].(*ElementalShaman)
+	if shaman.ReplenishmentAura == nil || !shaman.ReplenishmentAura.IsActive() {
+		t.Fatal("the shaman has no Replenishment from the raid, so the test shows nothing")
+	}
+	elemental := shaman.FireElemental
+	elemental.Enable(sim, elemental)
+	if elemental.ReplenishmentAura != nil {
+		t.Error("the Fire Elemental carries the raid's Replenishment")
+	}
+}

@@ -450,7 +450,7 @@ func TestPetUpdateTimersFollowTheMapUpdate(t *testing.T) {
 			}
 
 			var ticks []time.Duration
-			pet.startUpdateTimer(sim, start, 2*time.Second, func(sim *Simulation) {
+			pet.startUpdateTimer(sim, start, 2*time.Second, petAuraTickPriority, func(sim *Simulation) {
 				ticks = append(ticks, sim.CurrentTime-start)
 			})
 			runUntil(sim, now+7*time.Second)
@@ -475,8 +475,8 @@ func TestPetOutSinceBeforeThePullIsAnywhereInItsTimers(t *testing.T) {
 		if start > now || sim.NextServerTick(start) != start {
 			t.Fatalf("timers start at %v: want a map update at or before %v", start, now)
 		}
-		scaling := pet.startUpdateTimer(sim, start, 2*time.Second, noop)
-		hit := pet.startUpdateTimer(sim, start, 3*time.Second, noop)
+		scaling := pet.startUpdateTimer(sim, start, 2*time.Second, petAuraTickPriority, noop)
+		hit := pet.startUpdateTimer(sim, start, 3*time.Second, petAuraTickPriority, noop)
 		for _, timer := range []struct {
 			next, period time.Duration
 		}{{scaling.NextActionAt, 2 * time.Second}, {hit.NextActionAt, 3 * time.Second}} {
@@ -641,6 +641,7 @@ func TestPetDropsBuffsItCannotTake(t *testing.T) {
 				LeaderOfThePack:      proto.TristateEffect_TristateEffectRegular,
 			}, &proto.PartyBuffs{}, &proto.IndividualBuffs{
 				BlessingOfKings: true,
+				VampiricTouch:   true,
 			}
 	}
 	pet := newTestPet(newTestOwner(proto.Class_ClassWarlock, ManaBar, stats.Stats{}))
@@ -652,15 +653,15 @@ func TestPetDropsBuffsItCannotTake(t *testing.T) {
 		raid.FlametongueTotem || raid.DevotionAura != 0 || individual.BlessingOfKings {
 		t.Errorf("immune to its scaling's types, kept %v %v", raid, individual)
 	}
-	if raid.LeaderOfThePack == 0 {
-		t.Error("immune to its scaling's types, lost Leader of the Pack")
+	if raid.LeaderOfThePack == 0 || !individual.VampiricTouch {
+		t.Errorf("immune to its scaling's types, lost Leader of the Pack or Replenishment: %v %v", raid, individual)
 	}
 
 	pet.BuffImmunity = 0
 	pet.Uncontrollable = true
 	raid, party, individual = buffs()
 	pet.dropBuffsItCannotTake(raid, party, individual)
-	if raid.HornOfWinter || raid.BattleShout != 0 || individual.BlessingOfKings {
+	if raid.HornOfWinter || raid.BattleShout != 0 || individual.BlessingOfKings || individual.VampiricTouch {
 		t.Errorf("uncontrollable, kept a party or raid cast: %v %v", raid, individual)
 	}
 	if raid.StrengthOfEarthTotem == 0 || !raid.TrueshotAura || !raid.FlametongueTotem || raid.DevotionAura == 0 {

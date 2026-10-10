@@ -235,6 +235,12 @@ func (pet *Pet) dropBuffsItCannotTake(raid *proto.RaidBuffs, party *proto.PartyB
 		individual.BlessingOfSanctuary = false
 		individual.Vigilance = false
 		individual.RenewedHope = false
+		// Replenishment (57669) is a raid cast too
+		individual.VampiricTouch = false
+		individual.HuntingParty = false
+		individual.JudgementsOfTheWise = false
+		individual.ImprovedSoulLeech = false
+		individual.EnduringWinter = false
 	}
 	if pet.BuffImmunity&PetImmuneStats != 0 {
 		raid.GiftOfTheWild = 0
@@ -368,6 +374,12 @@ const (
 	// Holds whole periods of every pet timer (1, 2 and 3 s), so a pet out since before the pull
 	// lands evenly anywhere in each one's cycle.
 	petTimerCycle = time.Minute
+
+	// An aura's tick on the pet's update. Low, so the owner's actions on that update come first: players
+	// update before pets.
+	petAuraTickPriority = ActionPriorityLow
+	// Creature::Update regenerates once Unit::Update has ticked every aura, Replenishment's too
+	petRegenPriority = ActionPriorityLow - 1
 )
 
 // updateTimersStart is when the timers the pet's own update counts down began: its scaling auras'
@@ -388,7 +400,7 @@ func (pet *Pet) updateTimersStart(sim *Simulation, outSinceBeforePull bool) time
 // startUpdateTimer runs onTick every period counted from start, each tick on the first map update
 // at or after its time. Both server timers keep what's left over (timer += period), so the wait for
 // an update never pushes the later ticks back.
-func (pet *Pet) startUpdateTimer(sim *Simulation, start, period time.Duration, onTick func(*Simulation)) *PendingAction {
+func (pet *Pet) startUpdateTimer(sim *Simulation, start, period time.Duration, priority ActionPriority, onTick func(*Simulation)) *PendingAction {
 	due := start + period
 	if elapsed := sim.CurrentTime - start; elapsed >= period {
 		due = start + elapsed/period*period
@@ -398,8 +410,7 @@ func (pet *Pet) startUpdateTimer(sim *Simulation, start, period time.Duration, o
 		due += period
 	}
 
-	// Low, so the owner's actions on this update come first: players update before pets
-	pa := &PendingAction{NextActionAt: sim.NextServerTick(due), Priority: ActionPriorityLow}
+	pa := &PendingAction{NextActionAt: sim.NextServerTick(due), Priority: priority}
 	pa.OnAction = func(sim *Simulation) {
 		onTick(sim)
 		if pa.cancelled {
@@ -614,6 +625,8 @@ func (pet *Pet) reset(sim *Simulation, agent PetAgent) {
 	}
 	pet.isReset = true
 
+	// before the auras go back on: the raid's Replenishment ticks only once the pet is out
+	pet.replenishment.pauseTicks(sim)
 	pet.Character.reset(sim, agent)
 
 	pet.CancelGCDTimer(sim)
@@ -664,7 +677,7 @@ func (pet *Pet) enable(sim *Simulation, petAgent PetAgent, outSinceBeforePull bo
 
 	// A guardian's scaling aura never ticks, so what it got at summon is what it keeps.
 	if pet.SummonedAsPet {
-		pet.ownerHitRefresh = pet.startUpdateTimer(sim, timersStart, petOwnerHitRefreshInterval, pet.refreshOwnerHitScaling)
+		pet.ownerHitRefresh = pet.startUpdateTimer(sim, timersStart, petOwnerHitRefreshInterval, petAuraTickPriority, pet.refreshOwnerHitScaling)
 	}
 
 	// The haste carrier's own snapshot: a real pet retakes it every 2 s, a guardian only now, at the
@@ -674,23 +687,24 @@ func (pet *Pet) enable(sim *Simulation, petAgent PetAgent, outSinceBeforePull bo
 		pet.MultiplyMeleeSpeed(sim, pet.ownerHasteAmount)
 
 		if pet.SummonedAsPet {
-			pet.ownerHasteRefresh = pet.startUpdateTimer(sim, timersStart, petOwnerHasteRefreshInterval, pet.refreshOwnerHaste)
+			pet.ownerHasteRefresh = pet.startUpdateTimer(sim, timersStart, petOwnerHasteRefreshInterval, petAuraTickPriority, pet.refreshOwnerHaste)
 		}
 	}
 
 	switch {
 	case pet.ScalingPeriod > 0:
-		pet.scalingRefresh = pet.startUpdateTimer(sim, timersStart, pet.ScalingPeriod, pet.refreshScaling)
+		pet.scalingRefresh = pet.startUpdateTimer(sim, timersStart, pet.ScalingPeriod, petAuraTickPriority, pet.refreshScaling)
 	case !pet.isGuardian:
 		pet.Owner.DynamicStatsPets = append(pet.Owner.DynamicStatsPets, pet)
 		pet.dynamicStatInheritance = pet.statInheritance
 	}
+	// queued after the scaling timer, whose auras tick first on a shared update: their spell ids are lower
+	pet.replenishment.resumeTicks(sim)
 
 	//reset current mana after applying stats
 	pet.manaBar.reset()
-	// started last: Creature::Update regenerates after the auras have ticked and the AI has cast
 	if pet.creatureManaRegen {
-		pet.creatureManaRefresh = pet.startUpdateTimer(sim, timersStart, creatureRegenInterval, pet.creatureManaTick)
+		pet.creatureManaRefresh = pet.startUpdateTimer(sim, timersStart, creatureRegenInterval, petRegenPriority, pet.creatureManaTick)
 	}
 
 	// Call onEnable callbacks before enabling auto swing
@@ -767,6 +781,7 @@ func (pet *Pet) Disable(sim *Simulation) {
 		pet.creatureManaRefresh.Cancel(sim)
 		pet.creatureManaRefresh = nil
 	}
+	pet.replenishment.pauseTicks(sim)
 
 	if pet.ownerHasteRefresh != nil {
 		pet.ownerHasteRefresh.Cancel(sim)

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/wowsims/wotlk/sim/core"
+	"github.com/wowsims/wotlk/sim/core/proto"
 	"github.com/wowsims/wotlk/sim/core/stats"
 )
 
@@ -48,5 +49,27 @@ func TestMirrorImageStats(t *testing.T) {
 	// 59638 and 59637 cost a flat 90 and 120
 	if bolt, blast := image.Frostbolt.DefaultCast.Cost, image.Fireblast.DefaultCast.Cost; bolt != 90 || blast != 120 {
 		t.Errorf("Frostbolt costs %v and Fire Blast %v, want 90 and 120", bolt, blast)
+	}
+}
+
+// A Mirror Image has no pet bar (SummonProperties 1021), so a raid cast skips it (Spell.cpp's
+// TARGET_CHECK_RAID): the raid's Replenishment never reaches it.
+func TestMirrorImageTakesNoRaidCast(t *testing.T) {
+	player := procMage("", "p5_bis_arcane", `{"type": "TypeAPL", "priorityList": []}`, PlayerOptionsArcane)
+	player.Buffs = core.FullIndividualBuffs
+	sim := core.NewSim(&proto.RaidSimRequest{
+		Raid:       core.SinglePlayerRaidProto(player, core.FullPartyBuffs, core.FullRaidBuffs, core.FullDebuffs),
+		Encounter:  core.MakeSingleTargetEncounter(0),
+		SimOptions: &proto.SimOptions{Iterations: 1, IsTest: true, RandomSeed: 101},
+	})
+	sim.Reset()
+	mage := sim.Raid.Parties[0].Players[0].(*Mage)
+	if mage.ReplenishmentAura == nil || !mage.ReplenishmentAura.IsActive() {
+		t.Fatal("the mage has no Replenishment from the raid, so the test shows nothing")
+	}
+	image := mage.mirrorImage
+	image.Enable(sim, image)
+	if image.ReplenishmentAura != nil {
+		t.Error("a Mirror Image carries the raid's Replenishment")
 	}
 }

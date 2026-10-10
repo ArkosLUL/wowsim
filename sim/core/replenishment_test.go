@@ -312,6 +312,183 @@ func TestReplenishmentRefreshOnAWorldTickDropsTheTickDueThen(t *testing.T) {
 	}
 }
 
+// newReplenishmentPetsTestSim gives the player two mana pets under the raid's buff, 10 mana a tick each: one out
+// all fight and one that waits for its summon.
+func newReplenishmentPetsTestSim(t *testing.T, mapUpdateMs, worldTickMs int32) (sim *Simulation, out, summoned *timingTestPet) {
+	t.Helper()
+	noScaling := func(stats.Stats) stats.Stats { return stats.Stats{} }
+	sim, _, _ = newReplenishmentTickTestSim(t, mapUpdateMs, worldTickMs, 20000, false, func(a *timingTestAgent) {
+		out = &timingTestPet{Pet: NewPet("Out", &a.Character, stats.Stats{}, noScaling, true, true)}
+		summoned = &timingTestPet{Pet: NewPet("Summoned", &a.Character, stats.Stats{}, noScaling, false, true)}
+		for _, pet := range []*timingTestPet{out, summoned} {
+			pet.EnableManaBarWithModifier(1)
+			a.AddPet(pet)
+			MakePermanent(replenishmentAura(&pet.Unit))
+		}
+	})
+	emptyReplenishmentTestPets(out, summoned)
+	return sim, out, summoned
+}
+
+// emptyReplenishmentTestPets sets the pets' mana, which a reset takes back to the sheet's.
+func emptyReplenishmentTestPets(pets ...*timingTestPet) {
+	for _, pet := range pets {
+		pet.stats[stats.Mana] = 5000
+		pet.currentMana = 0
+	}
+}
+
+// A pet that isn't out queues no tick, and once it's out its ticks land with those of a pet whose timer never
+// stopped: every tick time below is half a second clear of a check.
+func TestReplenishmentTimerKeepsItsPlaceWhileAPetIsAway(t *testing.T) {
+	for _, tc := range []struct {
+		name           string
+		mapMs, worldMs int32
+	}{
+		{"exact timing", 0, 0},
+		{"live", 100, 10},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			sim, out, summoned := newReplenishmentPetsTestSim(t, tc.mapMs, tc.worldMs)
+			always, r := out.replenishment.metrics, summoned.replenishment
+
+			runUntil(sim, ms(3450))
+			if always.Events != 3 {
+				t.Fatalf("the pet that's out ticked %d times by 3.45 s, want 3", always.Events)
+			}
+			if r.tickAction != nil || r.metrics.Events != 0 || !summoned.ReplenishmentAura.IsActive() {
+				t.Fatalf("before the summon: a tick queued %v, %d ticks, aura up %v", r.tickAction != nil, r.metrics.Events,
+					summoned.ReplenishmentAura.IsActive())
+			}
+
+			// off the timer: one restarted here would tick at 4.45 s, the raid's at 4 s
+			summoned.Enable(sim, summoned)
+			summoned.currentMana = 0
+			for _, until := range []time.Duration{ms(3500), ms(4200), ms(5500), ms(9500)} {
+				runUntil(sim, until)
+				if got, want := r.metrics.Events, always.Events-3; got != want {
+					t.Errorf("by %v: %d ticks since the summon, the pet that's out had %d", until, got, want)
+				}
+				if got, want := r.metrics.ActualGain, always.ActualGain-30; got != want {
+					t.Errorf("by %v: %v mana since the summon, the pet that's out got %v", until, got, want)
+				}
+			}
+			if r.metrics.Events != 6 {
+				t.Fatalf("%d ticks from 3.45 to 9.5 s, want 6", r.metrics.Events)
+			}
+
+			// the raid's buff stays on a pet that leaves, so it's there for the next summon
+			summoned.Disable(sim)
+			runUntil(sim, ms(14450))
+			if r.tickAction != nil || r.metrics.Events != 6 || !summoned.ReplenishmentAura.IsActive() {
+				t.Errorf("after the pet left: a tick queued %v, %d ticks, aura up %v, want none queued, 6 and up",
+					r.tickAction != nil, r.metrics.Events, summoned.ReplenishmentAura.IsActive())
+			}
+			if always.Events != 14 {
+				t.Fatalf("the pet that's out ticked %d times by 14.45 s, want 14", always.Events)
+			}
+
+			summoned.Enable(sim, summoned)
+			summoned.currentMana = 0
+			for _, until := range []time.Duration{ms(14500), ms(15200), ms(17500)} {
+				runUntil(sim, until)
+				if got, want := r.metrics.Events, 6+always.Events-14; got != want {
+					t.Errorf("by %v: %d ticks over both summons, want %d", until, got, want)
+				}
+			}
+			if r.metrics.Events != 9 {
+				t.Errorf("%d ticks over both summons by 17.5 s, want 9", r.metrics.Events)
+			}
+		})
+	}
+}
+
+// On a shared map update a pet's auras tick before it regenerates (Unit::Update, then Creature::Update's
+// Regenerate), so a Replenishment tick fills the mana first and its caster gets the threat.
+func TestReplenishmentTicksAheadOfThePetsRegen(t *testing.T) {
+	var pet *timingTestPet
+	sim, a, src := newReplenishmentTickTestSim(t, 100, 10, 20000, false, func(a *timingTestAgent) {
+		pet = &timingTestPet{Pet: NewPet("Pet", &a.Character, stats.Stats{stats.Spirit: 100},
+			func(stats.Stats) stats.Stats { return stats.Stats{} }, false, false)}
+		pet.EnableCreatureManaBar(5000, 0, 15, true)
+		a.AddPet(pet)
+	})
+	sim.serverTickPhase, sim.worldTickPhase = 0, 0
+
+	// summoned between the updates at 0.9 and 1 s, so it regenerates at 2.9 s
+	runUntil(sim, ms(950))
+	pet.Enable(sim, pet)
+	if regen := pet.creatureManaRefresh.NextActionAt; regen != ms(2900) {
+		t.Fatalf("first regen tick at %v, want 2.9 s", regen)
+	}
+	// and the cast lands between those at 1.9 and 2 s, so its first tick on the pet is at 2.9 s too
+	replenishmentProc(sim, src, ms(1950))
+	runUntil(sim, ms(2000))
+	if tick := pet.replenishment.tickAction; tick == nil || tick.NextActionAt != ms(2900) {
+		t.Fatalf("the pet's first Replenishment tick isn't queued for 2.9 s: %+v", tick)
+	}
+	// room for half the tick's 10 mana, and none of the regen's 37
+	pet.currentMana = pet.MaxMana() - 5
+
+	// stops ahead of the caster's own first tick, a world tick before 2.95 s
+	runUntil(sim, ms(2920))
+	if got := pet.replenishment.metrics.ActualGain; got != 5 {
+		t.Errorf("the tick gave the pet %v mana, want the 5 it had room for", got)
+	}
+	if got, want := a.replenishment.metrics.threat, 1+0.5*5; !threatNear(got, want) {
+		t.Errorf("the caster: threat %v, want %v", got, want)
+	}
+	if pet.CurrentMana() != pet.MaxMana() {
+		t.Errorf("the pet's mana %v of %v after both ticks", pet.CurrentMana(), pet.MaxMana())
+	}
+}
+
+// The next fight starts with the summoned pet away again, whatever it was doing as the last one ended.
+func TestReplenishmentWaitsForThePetAgainNextFight(t *testing.T) {
+	sim, out, summoned := newReplenishmentPetsTestSim(t, 100, 10)
+	runUntil(sim, ms(2500))
+	summoned.Enable(sim, summoned)
+	runUntil(sim, ms(5500))
+	if summoned.replenishment.tickAction == nil {
+		t.Fatal("no tick queued for the pet that's out")
+	}
+
+	sim.Cleanup()
+	sim.reset()
+	emptyReplenishmentTestPets(out, summoned)
+	ticked, always := summoned.replenishment.metrics.Events, out.replenishment.metrics.Events
+	runUntil(sim, ms(5500))
+	if r := summoned.replenishment; r.tickAction != nil || r.metrics.Events != ticked {
+		t.Errorf("the pet that isn't out: a tick queued %v, %d ticks this fight", r.tickAction != nil, r.metrics.Events-ticked)
+	}
+	if got := out.replenishment.metrics.Events - always; got != 5 {
+		t.Errorf("the pet that's out from the start ticked %d times by 5.5 s, want 5", got)
+	}
+}
+
+// A proc's aura still goes on a pet that's away, without a tick queued behind it.
+func TestReplenishmentProcOnAPetThatIsAwayQueuesNothing(t *testing.T) {
+	var pet *timingTestPet
+	sim, a, src := newReplenishmentTickTestSim(t, 0, 0, 20000, false, func(a *timingTestAgent) {
+		pet = &timingTestPet{Pet: NewPet("Pet", &a.Character, stats.Stats{}, func(stats.Stats) stats.Stats { return stats.Stats{} }, true, false)}
+		pet.EnableManaBarWithModifier(1)
+		a.AddPet(pet)
+	})
+	pet.stats[stats.Mana] = 5000
+	pet.currentMana = 2500
+	at(sim, ms(200), func(sim *Simulation) { pet.Disable(sim) })
+	replenishmentProc(sim, src, ms(500))
+
+	runUntil(sim, ms(4000))
+	if r := pet.replenishment; r.tickAction != nil || r.metrics.Events != 0 {
+		t.Errorf("the pet: a tick queued %v, %d ticks, want neither", r.tickAction != nil, r.metrics.Events)
+	}
+	// the cast, then three of the caster's own ticks
+	if got, want := a.replenishment.metrics.threat, 1+3*0.5*40; !threatNear(got, want) {
+		t.Errorf("the caster: threat %v, want %v", got, want)
+	}
+}
+
 // A tick on anyone in the raid makes its threat for the caster.
 func TestReplenishmentOnAPetMakesTheCastersThreat(t *testing.T) {
 	var pet *timingTestPet

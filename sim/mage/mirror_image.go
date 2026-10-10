@@ -75,6 +75,8 @@ func (mage *Mage) NewMirrorImage() *MirrorImage {
 		mageOwner: mage,
 	}
 	mirrorImage.BuffImmunity = core.PetImmuneToScaling
+	// SummonProperties 1021 has neither a pet's type nor its category (Guardian::Guardian)
+	mirrorImage.Uncontrollable = true
 	// InitStatsForLevel's NPC_MIRROR_IMAGE case sets the create mana to 28 + 30 a level, but the
 	// pool keeps the base it got before that: creature_classlevelstats' 8814 for a level 80 mage
 	mirrorImage.EnableCreatureManaBar(2428, mirrorImageBaseStats[stats.Intellect], 15, false)
