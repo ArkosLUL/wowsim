@@ -12,7 +12,7 @@ How the sim computes threat, matching the server (`sim/core/threat.go`; `ThreatM
 - A heal's threat is half the health it restores (a quarter for a paladin), modified like a hit and shared as
   assist threat; overhealing makes none. Self heals through `GainHealth` count too (`HealThreat(metrics,
   spellID)`): Death Strike, (Improved) Blood Presence, Rune Tap, Frenzied Regeneration, Lifeward, potions,
-  healthstone, Lifeblood. The sim doesn't truncate heals; the server does (`SpellHealingBonusDone`).
+  healthstone, Lifeblood. Spell heals are whole, as the server's; those direct `GainHealth` heals aren't yet.
 - `SPELL_EFFECT_THREAT` adds its flat amount, unmodified, on each enemy hit; a cut never takes threat below 0
   (Feint).
 
@@ -21,6 +21,8 @@ How the sim computes threat, matching the server (`sim/core/threat.go`; `ThreatM
 An energize gives the caster's enemies half its amount, unmodified, as assist threat (rage and runic power in
 tenths): `EnergizeBySpell` the amount asked for, the cap's cut included, a periodic energize or `OBS_MOD_POWER`
 tick the gain, both only for the unit's current power; a potion (`SPELLFAMILY_POTION`) for any power.
+- Replenishment (57669) is a periodic energize: each tick gives its caster half the mana the target really
+  gained (`Unit.AddEnergizeTickThreat`); the raid's buff has no caster and makes none.
 - A `ResourceMetrics` built with `EnergizeThreat(kind)` books it at each gain (none before the pull);
   `AddEnergizeThreat` books one the sim gains inside another gain (Chill of the Grave, Dirge).
 - None: `ATTR1_NO_THREAT` energizes (Life Tap, Soul Leech, Viper, Judgement of Wisdom), regen auras (Anger
@@ -34,6 +36,9 @@ tick the gain, both only for the unit's current power; a potion (`SPELLFAMILY_PO
   it; ticks get none, nor does anything before the pull, but a spell an aura casts each tick adds its own
   (`ThreatTick`: Bladestorm, Volley, Penance's 52985 and 53000), and `SetThreatCastOf` splits one bonus over a
   chain (Heart Strike, the rune weapon's copy).
+- `CastThreat` (`Unit.NewCastThreat(id).Add`) books the bonus of a positive spell the sim puts on without a
+  cast: Bloodrage's 29131 (10), Lifeblood's 55503 (55), Heartpierce's Invigoration (80), Replenishment (1 a
+  cast that takes a target).
 - A positive spell's bonus, self buffs' included, is modified and shared as assist threat, evenly over the
   creatures fighting its target, none to one under crowd control (`ThreatManager::ForwardThreatForAssistingMe`).
 
@@ -51,5 +56,6 @@ tick the gain, both only for the unit's current power; a potion (`SPELLFAMILY_PO
 - Dire Bear Form is ×1.45 × 1.43; Blood and Unholy Presence −20% with Subversion's flat added to that same effect
   (−45% at 3 points); Shadowform ×0.7 in every school; Fanaticism −10% a point, kept under Righteous Fury.
 - Arcane Subtlety, Burning Soul, Frost Channeling, Righteous Fury (holy ×1.8) and Elemental Precision (fire, frost,
-  nature) are school auras, so Frostfire Bolt gets two.
+  nature) are school auras, so Frostfire Bolt gets two. So is Silent Resolve (holy and arcane, 7/14/20%); its
+  `SPELLMOD_THREAT` covers only Mana Burn.
 - Thunderfury is one cast of 21992; its slow (27648) is `ATTR1_NO_THREAT`.

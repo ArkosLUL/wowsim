@@ -21,7 +21,7 @@ replays against `goldchar_setups.json` ([tools/simval](../../../../tools/simval/
 records, which `TestStrikesRecords` replays ([tools/simval](../../../../tools/simval/README.md#damage-probe)).
 
 `pets.jsonl` holds `TestPetfixRecords`' pet `info`, `damage`, `spell`, `melee` and `timing` records (Greater Fire
-Elemental, Mirror Image, Imp, Water Elemental), which `TestPetsRecords` replays
+Elemental, Mirror Image, Imp, Water Elemental, Shadowfiend), which `TestPetsRecords` replays
 ([tools/simval](../../../../tools/simval/README.md#damage-probe)).
 
 `buffs.jsonl` holds `TestSimvalBuffs`' `BUFFS` lines, which `TestBuffRecords` replays

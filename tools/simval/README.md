@@ -121,7 +121,7 @@ check in `knownStrikesMismatches` is let through; an entry nothing fails is stal
 - `timing` (Ghoul Frenzy): the timing replay, with `strikesTimingTaught`'s talent.
 
 `TestPetsRecords` replays `pets.jsonl`, `TestPetfixRecords`' capture (run by name, streamed like the others): the
-Greater Fire Elemental, a Mirror Image, an Imp and a Water Elemental. `TestPetsFixtureHasEveryProbe` lists the
+Greater Fire Elemental, a Mirror Image, an Imp, a Water Elemental and a Shadowfiend. `TestPetsFixtureHasEveryProbe` lists the
 probes (`petsProbes`). Per record (`pets.go`), on the pet built as for strikes:
 - `info`: the strikes checks, plus max health and max mana (`petsWithoutHealth`: `not compared`, stale once the
   sim's matches).

@@ -84,9 +84,6 @@ follows it. Core rules (costs, threat, crit damage, procs, pets) are in [server 
   (6 s) and Dragon's Breath (5 s, gone at the first direct damaging hit: one proc charge). Frostbite is a root.
 - **Brain Freeze** rolls on landed Frostbolts, Frostfire Bolts and Blizzard ticks (spell_proc -44546). Fireball!
   (57761) lasts 15 s and is used at the cast.
-- **Penance:** Mental Agility's mask leaves it out. Its damage tick takes 0.1905 of spell power, and Searing
-  Light and Twin Disciplines multiply, as the heal's four talents do. 53007 and its channel can't miss; each tick
-  rolls its own hit.
 - **T10's 2-piece** triggers when Hot Streak or Missile Barrage is used up, never on a timeout. Missile Barrage
   goes at Arcane Missiles' finish phase.
 - **Fingers of Frost** rolls at the cast (spell_proc 44545), hit or miss; Improved Blizzard rolls its own on each
@@ -100,6 +97,13 @@ follows it. Core rules (costs, threat, crit damage, procs, pets) are in [server 
   paid; **Burnout** burns apart. Each at most once per 8 ms (spell_proc -29074, -44449), so a crit on several targets
   refunds once.
 - **Blizzard**'s tick (42938) is a proc: only `CAN_PROC_FROM_PROCS` auras take it.
+
+## Priest
+
+- **Penance:** Mental Agility's mask leaves it out. Its damage tick takes 0.1905 of spell power, and Searing
+  Light and Twin Disciplines multiply, as the heal's four talents do. 53007 and its channel can't miss; each tick
+  rolls its own hit.
+- **Silent Resolve** cuts holy and arcane threat ([threat](threat.md)), so not Mind Blast's.
 
 ## Hunter
 

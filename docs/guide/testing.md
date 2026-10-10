@@ -64,6 +64,8 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
   - `delta` compares dps, hps, tps and dtps per test, and lists tests that appear or disappear. Under each
     Average test it lists the moved abilities (below), four-space indented, largest damage or healing change
     first. Diff the two files for stats and stat weights.
+- Auras expire only when an event advances the clock, tracker by tracker, so adding or removing an unrelated
+  event reshuffles single-iteration rows.
 - `Average` tests also store `ability_results`: one entry per `<unit>|action|<id>` and `<unit>|aura|<id>`,
   `<unit>` being `player`, `pet:<name>` or `target<i>` (target auras only).
   - Fields, per iteration and summed over targets: `casts`, `hits`, `crit_pct`, `amount_per_hit`, `amount`
@@ -144,7 +146,9 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
   `.combatstop` first; in a druid form, `.simval info` shows no main-hand weapon; 4 yards north of the boss dummy has no
   line of sight to it, and 18 yards north hides its centre from area scripts (Starfall); the dummy's AI zeroes every
   hit, `.damage` included (set its health with `.simval hp`), and it gives no XP, so `REQ_EXP_OR_HONOR` procs never
-  fire on it; equipping starts item proc cooldowns (`Player::ApplyEquipCooldown`), so equip under `.cheat
+  fire on it; Naxxramas, where the dummies stand, resets weekly (Saturday 17:00 local,
+  `acore_characters.instance_reset`, map 533) and ports every bot inside out, so a path running across it fails
+  with "Select the target dummy first": rerun it; equipping starts item proc cooldowns (`Player::ApplyEquipCooldown`), so equip under `.cheat
   cooldown`. The default run's Mind Flay can land in the server's 100% resist bucket (`Unit::CalcAbsorbResist`, when
   `float(rand_norm())` rounds to 1.0f: about one full capture in six), which the replay can't absorb: rerun
   `TestSimvalPriest` alone.

@@ -118,6 +118,10 @@ class by simval.
   Not modelled: a weapon strike's own `int32` steps (`Spell::EffectWeaponDmg`).
 - **Healing taken** percents (aura 118) don't stack: only the highest bonus and the lowest penalty count,
   multiplied (`Unit.AddHealingTakenPct`). Strength of Wrynn is healing done, which multiplies.
+- **Replenishment** (`sim/core/replenishment.go`): 15 ticks a second apart of int32(max mana × 0.002f), read as
+  the aura goes on or is refreshed (1 if it went on at no mana); a refresh restarts the timer; only a unit whose
+  power is mana takes it. The raid's buff ticks every second, reading the max each time. A pet that isn't out
+  queues no tick; its timer keeps its place.
 - **A cast that fails** its GCD, hardcast or shared-cooldown check starts no cooldown.
 - **Creature-type attack power** (Elixir of Demonslaying, Scourgebane) and, on a ranged hit, Hunter's Mark reach
   only weapon damage: a white swing or a spell with a weapon effect adds `int32(sum / 14 × speed)` after its
@@ -160,13 +164,15 @@ class by simval.
     the DK's ghoul, gargoyle and army only to stats and AP (`Pet.BuffImmunity`).
   - A pet crits 5% plus crit auras, none from agility or intellect; magic spells crit ×1.5.
   - The hit (3 s), haste, scaling and mana regen (2 s) timers tick on the pet's map update; one out since before
-    the pull starts at a drawn point of its cycles.
+    the pull starts at a drawn point of its cycles. On one update the scaling auras tick first, then
+    Replenishment, then the regen (`petRegenPriority`).
   - A swing off the physical school (Fire Elemental, Shadowfiend) rolls (weapon + AP / 14) × attack time
     (`Creature::CalculateMinMaxDamage`). The Fire Elemental's Fire Shield rolls spell hit.
   - The DK's summons carry scaling aura 67561, not 61017: no melee hit. Risen ghouls, not the army, take the
     owner's ArP (`Pet.HitScaling`, `Pet.RisenGhoul`).
   - Guardians take party and raid auras like pets (`AnyGroupedUnitInObjectRangeCheck`), but an uncontrollable
-    one (Bloodworms) never gets a party or raid cast (`TARGET_CHECK_PARTY`/`RAID`).
+    one (Bloodworms, Mirror Images, the Greater Fire Elemental: SummonProperties with neither a pet's type nor
+    category) never gets a party or raid cast (`TARGET_CHECK_PARTY`/`RAID`), Replenishment included.
   - Haste carriers (the hunter pet, the DK's ghouls and gargoyle; `Unit.HasteCarrier`) ignore direct haste
     and slows, Bloodlust included, and take the owner's attack speed (`Pet.OwnerHasteSource`): every 2 s
     for a pet, once at the summon for a guardian.
