@@ -50,6 +50,7 @@ The live e2e and the replays leave timing, costs, threat, pets, gear and buffs u
 | Z | EC-THREAT-FIX2 (G, FS, live) · EC-MELEE-FIX (G) · EC-NATURE-FIX (G, live) · EC-ARCANE-FIX (G, live) · PERF-Y | The class gaps, on Y's core |
 | Z2 | EC-THREAT-FIX3 (G, FS, C++, live) · EC-CORE-FIX2 (G, FS) · EC-CLASS-FIX (G, live) · PERF-Z · BIS-ALTS | Z's follow-ups |
 | Z5 | EC-CORE-FIX3 (G, FS, live) · EC-PET-FIX2 (G, live) · EC-CLASS-FIX2 (G, live) · EC-THREAT-FIX4 (G, FS, C++, live) | Z2's follow-ups and Y's pets, before the BiS chain |
+| Z6 | EC-CORE-FIX4 (G, FS) · EC-PET-FIX3 (G, live) · EC-CLASS-FIX3 (G, live) · EC-TOOLS | Z5's follow-ups |
 
 U is taken (the UI wave). Versus the INVESTIGATION's order, B7, A3 and A4 moved forward (cheap, independent) and
 C1 moved last (after B6).
@@ -63,6 +64,12 @@ haste stacking beyond EC-BUFFS' pairs. From Y:
 
 From Z, not in Z2: the 72-point Fury and Balance strings in the gzipped perf scenarios and UI fixtures, which
 pin their requests (the BiS chain's `opt_*` regeneration takes the perf ones).
+
+From Z5, not in Z6: Mana Burn, which Silent Resolve's spell mod covers and the sim lacks; `.simval threat`
+doesn't record `POWER_DRAIN`'s gain (Dark Pact), and the replay can't compare the tick threat of 71883 and
+57669; Heart Strike takes no Rage of Rivendare or Tundra Stalker (no level 80 build holds both);
+`spell_dru_rip` adding Rip's AP share after the done percents (a lead); the raid's Replenishment buff never
+restarts the tick timer.
 
 ## Work items
 
@@ -1856,7 +1863,7 @@ Live stage, against the server build of 2026-10-06 19:37 (`3d89793c7` plus the m
 - Follow-up: priest Mental Agility on Penance (`sim/priest/penance.go`; mask `0x173` in index 1, Penance is
   `0x800000`).
 
-### EC-CORE-FIX3 (Z5; changes goldens, full suite; stages: code, live)
+### EC-CORE-FIX3 (Z5, done; changes goldens, full suite; stages: code, live)
 
 - Heals: `SpellHealingBonusDone` and `SpellHealingBonusTaken` return `uint32` on the server, as damage does; the sim
   doesn't truncate heals (heal threat follows the amount).
@@ -1977,7 +1984,7 @@ Run 2, 2026-10-10, on `ef598ad48` against [ac] `3d89793c7`, no rebuild (notes in
 - Left: the 17 new step-spell probes aren't compared. The sim names those ids as a `ThreatSpellID` or a tick spell
   and deals them under another id.
 
-### EC-PET-FIX2 (Z5; changes goldens; stages: code, live)
+### EC-PET-FIX2 (Z5, done; changes goldens; stages: code, live)
 
 - Timers: pets' 2 s scaling and mana regen, and the 3 s hit and 2 s haste refreshes (`sim/core/pet.go`), count from
   the summon in the sim; the server runs them on the map update.
@@ -2070,7 +2077,7 @@ Run 2, 2026-10-10, against [ac] `3d89793c7`, no rebuild (notes in `tmp/ec-z5-liv
 - Left: a swing under Shadowcrawl (63619), which the idle fiend never casts; the fixture README and
   `tools/simval/README.md` don't name the Shadowfiend or `rolled miss`.
 
-### EC-CLASS-FIX2 (Z5; changes goldens; stages: melee, casters, live)
+### EC-CLASS-FIX2 (Z5, done; changes goldens; stages: melee, casters, live)
 
 - Death knight: Blood Tap's rune pick against `EffectActivateRune` and `spell_dk_death_rune` (the talent takes over
   the tapped slot); a Threat of Thassarian off-hand strike rerolls partial Death Rune Mastery (`CAN_PROC_FROM_PROCS`,
@@ -2256,7 +2263,7 @@ only 1.4 times a fight; on `uh_dnd_aoe` a both-runes-down condition gains 0.7–
 one long target, under the old model too, so it's no Blood Tap break; the scratch harness (`tmp/apldbg`) belongs
 in `tools/`.
 
-### EC-THREAT-FIX4 (Z5; changes goldens, full suite; C++; stages: threat, C++ and e2e, live)
+### EC-THREAT-FIX4 (Z5, done; changes goldens, full suite; C++; stages: threat, C++ and e2e, live)
 
 - Probe: `.simval threat` gains an energize field, so energize threat gets a record (Bloodrage's 20 rage should give
   100, split); 22845 (Frenzied Regeneration) and 44578 (Lifeward) heal threat probed.
@@ -2377,6 +2384,95 @@ Cross-review, 2026-10-10, on `8be984c35` with the four items merged:
   under Inferno), taking one of the ten places; by the same rule the gargoyle (209), army ghouls (687) and Raise
   Dead's guardian (829) are uncontrollable; the raid's buff puts its aura on units without mana; direct
   `GainHealth` heals (Lifeward, Frenzied Regeneration's integer steps) aren't whole.
+
+### EC-CORE-FIX4 (Z6; changes goldens, full suite)
+
+- Aura expiry: an aura expires only when some event advances the clock, one unit's tracker after another, so an
+  unrelated event decides whether a tick still sees a buff (Arcane Power on the last Arcane Missiles tick, Z5's
+  second cross-review). Expire auras in time order.
+- `Aura.countdownStart` doesn't take the cast's own world tick off a player's aura, so it expires one world tick
+  late; Replenishment's `startTicks` applies that shift itself and loses it once core does.
+- Weapon strikes: `Spell::EffectWeaponDmg`'s own `int32` steps (56 of 148 recorded strike amounts are 1 to 3 over).
+- `core.PowerBonus` casts a float64 product to float32 where the server multiplies two float32s (0.13 × 1700 is
+  220 there, 221 here), and the sim's spell power can be fractional where the server's is an `int32`: pass the
+  coefficient and the power apart (about 180 lines).
+- Whole steps left: direct `GainHealth` heals (potions, the DK's and druid's self heals, Lifeward, Frenzied
+  Regeneration), the inline base rolls (Ferocious Bite, Eviscerate, heal Penance), the three Mirror Images
+  truncating as one sum, Chimera Shot - Serpent truncating after its 2.0 or 2.8.
+- Meta gems: an item swap moves the meta's stats only, not its effect or crit damage.
+- `StartTargetAtHealth` moves the execute phases only at the first advance.
+- **Owns:** `sim/core/` but EC-PET-FIX3's pet paths; those inline lines in class code; their drops and rows.
+- **Goldens:** all 37 (aura expiry); report each.
+
+### EC-PET-FIX3 (Z6; changes goldens; stages: code, live)
+
+- Guardian AIs: `npc_pet_shaman_fire_elemental` paces Fire Nova (5–20 s in, then 8–15 s) and Fire Blast (5–20 s,
+  then 4–8 s) on event timers with no GCD, about 10 Novas and 19 Blasts in 2 min; the sim's rotation caps both at
+  15 under its own GCDs, so its multi-target rows are overstated. Fire Blast is 57984, registered as 13339. The
+  Mirror Image's 59638 and 59637 have no GCD either. The six serverdata allowances go.
+- Timers: focus and energy regen on the map update (24 focus every 4 s, 20 energy every 2 s; `sim/core/focus.go`
+  ticks each second from the summon); a pet's MP5 inside the truncated regen tick; Improved Demonic Tactics every
+  10 s in whole percent, as a spell mod; a pet out before the pull ticks through the prepull.
+- Guardians: by the SummonProperties rule (neither a pet's type nor category) the gargoyle (209), army ghouls
+  (687) and Raise Dead's guardian (829) are uncontrollable too: confirm, and drop the party and raid casts they
+  then can't take.
+- Replenishment's targets: a proc's cast skips every guardian, though the Water Elemental (1561) is controllable;
+  it lands on a pet that's away, which can take one of the ten places; the raid's buff goes on units without mana;
+  `ProcReplenishment` keeps the sim's own target lists; the mana potion and gem heuristics read
+  `ManaRegenPerSecondWhileCasting`, which no longer holds it.
+- Imp and Water Elemental health pools (server 4421 and 7688).
+- Live: Shadowcrawl (63619) on the Shadowfiend's swing (`.aura 63619` before a second `melee` probe); the Fire
+  Elemental's cast counts over its life.
+- **Owns:** `sim/core/pet.go`, `focus.go` and the pets' timers; `sim/core/replenishment.go`'s target rules; the
+  pets' files in class code; `pets.jsonl` and the module's `e2e/petfix_test.go`; their drops and rows.
+- **Goldens:** the pet suites, and the mana users under Replenishment; report each.
+
+### EC-CLASS-FIX3 (Z6; changes goldens; stages: melee, casters, live)
+
+- Item damage spells carry no server spell id (`sim/common/wotlk/damage_procs.go` and the other item damage
+  effects), so no class aura can read their damage class or cast time. With it: Omen of Clarity rolls on any landed
+  magic-class damage or heal at 3.5 PPM over the spell's cast time entry, floored at 1.5 s (Extract of Necromantic
+  Power 12.83%, 4 of 29 live; ferals too: DMC: Death, Bandit's Insignia). Nature's Grace's 16886 rolls it by the
+  same rule and Survival Instincts' 61336 shouldn't (neither measured).
+- Death knight: Blood Presence's heal fires on a `NO_XP` target (`PROC_ATTR_REQ_EXP_OR_HONOR`), skips an on-use
+  item's damage, and its 50475 takes Strength of Wrynn's stand-in though the server's class-none heal takes no
+  healing done percent; Improved Blood Presence's 5/10% healing taken (`AddHealingTakenPct` on the presence's
+  aura).
+- Death knight rotations: `frost_uh_pesti` stalls with both death runes ready and Frost Fever at 3–9 s (a
+  Pestilence line); TestFrost pairs it with talents without Epidemic; `blood_pesti_aoe` has no suite;
+  `uh_dnd_aoe` taps with a blood rune ready; `frost_bl_pesti` taps 1.4 times a fight.
+- Druid: Illustration of the Dragon Soul's trigger (Hurricane's ticks gave no stack live, its cast one).
+- Mage: other units' snares (Hamstring, Frost Shock, Slow) count for Torment the Weak; snare immunity becomes a
+  `Target` proto field from `creature_template.mechanic_immune_mask` (the snares key on `IsWorldBoss`).
+- Hunter: Hunting Party procs off Explosive Shot's ticks; Serpent Sting keeps its first application's multiplier
+  across Chimera Shot's refresh; the server applies the target's damage-taken mods to 53353 twice.
+- Spell-mod sweep: 17 step-spell probes aren't compared (25742, 52985, 53000, 25504, 33750, 7386, 58567, 70890):
+  the sim deals them under another id, so map each to the sim spell dealing it, cast time, cost and cooldown left
+  out (Twin Disciplines and Searing Light on Penance's damage first).
+- Fight means that pass far out: DeathknightBlood's Bloodworm melee +12% (z 3.4), Protection warrior melee −5%
+  (z −2.8), Destruction's Immolate tick +15% (z 2.7).
+- Live: the death rune take-over (a Frost cycle with no Icy Touch miss), Nature's Grace's Omen (a Wrath-only
+  fight of 900 s), a WarriorArms talent path with a mace.
+- **Owns:** `sim/{deathknight,druid,mage,hunter,priest,warrior}/` but the other Z6 items' hunks; the item damage
+  effects in `sim/common/`; `ui/deathknight/apls/`; `tools/simval/spellmods*.go`; `proto/common.proto`'s target
+  field and its plumbing; their cycles, fights, drops and rows.
+- **Goldens:** those classes' suites, and every suite with an item damage proc; report each.
+
+### EC-TOOLS (Z6; golden-neutral)
+
+- The rotation debug harness from Z5's retune (`G:\DevStuff\GitHub\.wave-loop\ec-class-fix2-apl-tmp\apldbg`:
+  per-rotation rows, cast counts and aura uptimes at chosen iterations, against an overlaid base) moves under
+  `tools/` with a README.
+- A threat fixture cutter in `tools/simval`: a recorded stream to `threat.jsonl`, by `threatRecord.key` and
+  `droppedThreatRecords` (each wave wrote a scratch script).
+- e2e: a fight spot with line of sight to the dummy's centre (18 yd north hides it from Starfall); a path fails
+  early, naming the cause, when its bot leaves map 533 (the weekly raid reset).
+- proto: a `BonusDefenseSkill` pseudo stat, so the sheet stops reading enchant 3847 off the gear, with a UI test
+  of the sheet's defense skill and block chance.
+- **Owns:** the new tool's directory; `tools/simval/threat*.go`'s cutter; the module's `e2e/fight_test.go` and
+  `spellmod_sweep_test.go`; `proto/common.proto`'s pseudo stat and its plumbing;
+  `ui/core/components/character_stats.tsx` and its test.
+- **Goldens:** none.
 
 ## Orchestrator onboarding (wave S start)
 

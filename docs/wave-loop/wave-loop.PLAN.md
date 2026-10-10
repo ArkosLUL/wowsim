@@ -83,6 +83,7 @@ G = changes goldens. FS = runs all 37 suites.
 | Z3 | BIS-OH-PAIR · BIS-QUICK-ALTS · BIS-WEAPON-PAIR · BIS-CURVES | ✔ |
 | Z4 | BIS-ALTS-MEASURED | ✔ |
 | Z5 | EC-CORE-FIX3 (G, FS, live) · EC-PET-FIX2 (G, live) · EC-CLASS-FIX2 (G, live) · EC-THREAT-FIX4 (G, FS, C++, live) | ✔ |
+| Z6 | EC-CORE-FIX4 (G, FS) · EC-PET-FIX3 (G, live) · EC-CLASS-FIX3 (G, live) · EC-TOOLS | ✔ |
 
 F2 is an inserted wave, not a fifth item in F: the core swing and cast fixes of PAR-P7-0c have to land
 before the class items in G, a class item can't build on a core fix merging in its own wave, and F already
@@ -145,6 +146,8 @@ Z3 is the user's call (2026-10-07): the BiS optimizer's backlog, before the defe
 dataset. Z5 too (2026-10-07): the sim's parity backlog first; the BiS chain runs once the other items are done.
 Z4 is inserted before it (the user's call, the same day): the BiS alternatives aren't the measured best, and a
 pass doesn't repeat.
+Z6 is Z5's follow-ups, specced at its close-out under the same call (the parity backlog first); it waits for
+the user's continue.
 
 **Where the specs are:**
 
@@ -161,18 +164,23 @@ pass doesn't repeat.
 
 ## Current wave
 
-- Wave: Z5, planned on this commit, on base `780b15256` (master's, fast-forwarded in). Run 1: every item's code
-  stages, and the live stages of EC-CORE-FIX3, EC-PET-FIX2 and EC-CLASS-FIX2, which need no rebuild (the server
-  runs [ac] `3d89793c7` with mod-sim-validation `408f7b5`, image of 2026-10-09); then the user rebuilds with
-  EC-THREAT-FIX4's C++; run 2: its live stage. Integrate EC-CORE-FIX3, EC-PET-FIX2, EC-CLASS-FIX2, EC-THREAT-FIX4
-  in that order. The user approved (2026-10-10) merging master again at this wave's end without asking.
-  Z4's item notes: `G:\DevStuff\GitHub\.wave-loop\bis-alts-measured-tmp`; the peer's measured data:
-  `G:\DevStuff\GitHub\.wave-loop\bis-measured`.
+- Wave: Z5, landed (master fast-forwarded to this close-out). It took four runs: run 1 (every code stage, and
+  the live stages of EC-CORE-FIX3, EC-PET-FIX2 and EC-CLASS-FIX2); the death knight rotations' retune
+  (EC-CLASS-FIX2's contract request) while the user rebuilt; then EC-THREAT-FIX4's live stage and the live
+  records left open (the spell-mod sweep, the Shadowfiend, Fire Shield) on the rebuilt server (image of
+  2026-10-10 16:21 local: [ac] `3d89793c7` with mod-sim-validation `97ca11a`; the module's HEAD is `bb2a21d`).
+  Its throughput row is still to take: a Chronicle replay held six cores at the close-out
+  (`.wave-loop/rebase-z5.sh`, idle or loaded with a note).
+  Next, Z6, planned: one run, no rebuild (no C++); EC-PET-FIX3 and EC-CLASS-FIX3 end on a live stage, away from
+  Saturday 17:00's raid reset. Integrate EC-CORE-FIX4, EC-PET-FIX3, EC-CLASS-FIX3, EC-TOOLS in that order.
+  Z5's item notes: `G:\DevStuff\GitHub\.wave-loop\ec-{core-fix3,pet-fix2,class-fix2,class-fix2-apl,threat-fix4,z5-live}-tmp`.
   Prod runs X's `25cb9dddc` (no `rollback-q` image: its layers were gone), without Y's and Z's sim changes.
-- Open: the e2e-coverage backlog Z5 leaves, sim-performance's Left items, the bis-optimizer backlog (Z3's As
+- Open: the e2e-coverage backlog Z6 leaves, sim-performance's Left items, the bis-optimizer backlog (Z3's As
   builts: the enchant residual, Mutilate's pair, Combat Rogue P3 Normal; Z4's: the surrogate overpricing a
   one-hander's pairing, stage 2 and the Heroic Presence checks not yet run on the new lists, whether
-  Ecoterrorist's rotation casts Mangle (Idol of the Corruptor sims like a dead idol)), then the deferred BiS chain.
+  Ecoterrorist's rotation casts Mangle (Idol of the Corruptor sims like a dead idol); Z5's re-baseline: the
+  search ends on a weaker set after sim changes that leave the presets within 0.1%, Ret P4 Normal 40 rating
+  over the expertise cap), then the deferred BiS chain.
   Closed as not sim gaps: the sheet fields the server shows raw (per-school crit, Blood-Gorged, Mace and Holy
   Specialization), which the fixture README explains.
 - Deferred (the user's calls, 2026-10-02, 10-03, 10-05 and 10-07), once the other items are done and only on the
@@ -186,7 +194,9 @@ pass doesn't repeat.
   - Then the BiS tooltip dataset (acbis driver, both stages, fresh `--out`, then `acbis`; the import needs
     the OK), the changed builds' stat weights, and the perf harness's `opt_*` scenarios (`update.sh`, a new
     baseline; the raid25 dumps in `_dump/optimizer_dump_test.go` still build uncut pools).
-- Workflow runIds: Z5's `wf_2bd87279-a32` (run 1, base `a1bb8d403`); Z4's `wf_e9e036c7-5bd`; Z3's `wf_9aabe6e6-7af` (all four); Z2's `wf_7c79ba74-4ca` (code stages) and `wf_7e9c6966-820` (live stages, BIS-ALTS); Z's `wf_8821da6d-91f` (all five); Y's `wf_e58e8b14-102` (all four), `wf_d290cc37-ee6` and `wf_fe29d895-a35` (EC-TICK-FIX's rest and
+- Workflow runIds: Z5's `wf_2bd87279-a32` (run 1, base `a1bb8d403`), `wf_caa6cd72-af1` (the rotations, base
+  `5692dd49d`), `wf_0d256663-f64` (EC-THREAT-FIX4's live stage) and `wf_4c054cc8-0ce` (the live records, base
+  `ef598ad48`); Z4's `wf_e9e036c7-5bd`; Z3's `wf_9aabe6e6-7af` (all four); Z2's `wf_7c79ba74-4ca` (code stages) and `wf_7e9c6966-820` (live stages, BIS-ALTS); Z's `wf_8821da6d-91f` (all five); Y's `wf_e58e8b14-102` (all four), `wf_d290cc37-ee6` and `wf_fe29d895-a35` (EC-TICK-FIX's rest and
   review); X2's `wf_b555c578-f46` (code stages), `wf_a0107f34-c7b` (live stages) and `wf_b00ecbe0-79a` (EC-RECHECK's
   live stages again, after an API error); X's `wf_a31ea7ec-8e3`; W's `wf_aa1b462c-590` (code stages) and
   `wf_894cf391-8a3` (live stages); V's `wf_ea73babf-e53`; T2's `wf_5af2b99d-6d0`; T's `wf_8a59e202-2f8`,
@@ -244,6 +254,7 @@ Reckoning that way), but J isn't DPS: see below.
 | Z2 | 8771.0, +221 / +235 | 10760.6, +527 / +658 | 5044.5, +68 / +101 | 12972.8, +161 / +218 | -17045.6, +5214 / +5178 | -1160.0, +704 / +733 |
 | Z3 | 8771.0, +216 / +202 | 10760.6, +665 / +573 | 5044.5, +92 / +102 | 12972.8, +248 / +253 | -17045.6, +5318 / +5255 | -1160.0, +735 / +733 |
 | Z4 | 8771.0, +216 / +202 | 10760.6, +765 / +725 | 5044.5, +92 / +102 | 12972.8, +248 / +253 | -17045.6, +5318 / +5255 | -1160.0, +735 / +733 |
+| Z5 | 8770.8, +195 / +187 | 10763.9, +656 / +683 | 5043.3, +59 / +107 | 12926.7, +162 / +196 | -16806.3, +5292 / +5032 | -1132.9, +732 / +741 |
 
 Quick / Normal. Ret P4 ran at Quick only in wave D, after the glyph fix; its wave C numbers
 (12821.9, +54 / +73) came from a seed that wore the glyph. The two tanks arrive with
@@ -325,6 +336,13 @@ In Z4 only Combat Rogue moved: weapon moves that drop the meta's gem now reach t
 and it adopts main hand 46969 at Quick, off hand 47001 and a ring at Normal. Sims rose 1.5–1.7× at Quick and
 1.3–1.6× at Normal (the alternatives stage, 15 simmed per slot). One item, so no cross-review: its own review
 covered the wave's whole diff.
+In Z5 the presets' DPS held within 0.1%; J_preset moves with the reference weight (Ret's AP is worth 0.3% more,
+the tanks' threat weights moved). The gains fell in ten of twelve cases: in DPS by 15–19 (Fury), 40–103 (Combat
+Rogue), 71–109 (Ret) and 78 (Fire Mage Quick); Fire Mage Normal rose 11 and Feral Tank Normal 22. Ten cases end
+on other items, in one to ten slots, and Ret P4 Normal's pick sits 40 rating over the expertise cap (170
+against 130; 131 in Z4). That's the search's path, which Z4 measured at 0.5–0.7% between seeds, not the sim
+pricing a set lower: Fury's goldens didn't move, and its curves' slopes agree to four digits. Walls ran beside
+a Chronicle replay on six cores (up to +82%).
 
 ## Sim throughput
 
@@ -463,6 +481,9 @@ logs in `.wave-loop/logs/z2-bench`. At 100 iterations against Z's: Elemental −
 rest within 2%. Then perf's `optimizer/quick/raid25_raiddps_p1` at 16 procs (4 tanks, 5 healers): 287.8 s against
 wave O's idle baseline 292.1 s, on 146,250 whole-raid sims against 158,000, so 6% more a sim across the 10 ms
 player tick and Z2. A BiS batch's 107 minutes against about 60 was the contended machine.
+
+Z5's row is still to take (a Chronicle replay held six cores at its close-out): EC-THREAT-FIX4 adds a
+Replenishment event a second for every mana user, a mage's pets included while they're out.
 
 E to F2 ran the old requests: one iteration, and no rotation for Ret, Hunter and Elemental.
 
@@ -663,6 +684,13 @@ crashed before F2, so its column starts there.
 | BIS-CURVES | merged | `c05b8fcb2` | curve knots on a lattice around the seed; Fury P1 Normal's cut and uncut pools within 2 se (+201.9 / +194.8); every case's items or gems move |
 | BIS-ALTS-MEASURED | merged | `803b415ac` | alternatives are the measured best 5 of 15 simmed per slot; weapon moves keep the meta active by moving other slots' gems; the optimizer's seed pinned (the sim's fixed seed, else 1); only Combat Rogue's picks move |
 | wave Z3 cross-review | direct | `5b2538301` | late-priced weapons net out the talent term, the screen pairs one-handers, `off_hand` also marks a dropped off hand, alternatives rebuilt on the final best, Defense cap at D*; goldens unchanged |
+| EC-CORE-FIX3 | merged | `316355e81` | module `6e7d862`; heals, SP and AP bonuses, base rolls and stacked dots whole, magic crit before resist, cooldowns after the cast checks, the undead sets and the DK's creature-type bonus per target, Chimera Shot - Serpent; HunterMM re-recorded with Hunter's Mark and Kill Shot; goldens `a4e7993a4`: all 37 move (most under 0.1%, Enhancement +0.27%, MM −0.92%) |
+| EC-PET-FIX2 | merged | `9e6978676` | module `9763c39`; pet timers on the map update, no spell crit from intellect, the Fire Elemental and Mirror Image from records (`pets.jsonl`), a swing off the physical school on the creature's range; goldens `6395ab7e2`: 14 suites (Destruction −1.19%, Frost mage −0.37%, Enhancement +0.64%, Elemental's fire elemental rows to +21%) |
+| EC-CLASS-FIX2 | merged | `01704bc4d` | module `f0ec156`; Blood Tap's rune pick and the death rune talents, Blood Presence's heal, 63514, Mace Specialization, Omen of Clarity from Starfall and Hurricane, Brain Freeze, Torment the Weak's snares, Penance; goldens `5692dd49d`: 35 suites (Disc hps −22.1%, FrostUH −5.5%, Holy hps +1.9%) |
+| EC-CLASS-FIX2's rotations | merged | `5e8bb7157` | five death knight rotations retuned for the server's Blood Tap; goldens `e2a5736b4`: FrostUH +5.0% (−0.8% against the wave base), Frost +1.3%, Blood +0.7%, Unholy +0.2% |
+| EC-THREAT-FIX4 | merged | `84a576750` | module `97ca11a` (one rebuild by the user); Replenishment as 57669's ticks with their threat, Silent Resolve by school, the aura casts' level bonus; `.simval threat`'s energize field, `threat.jsonl` re-recorded (175 records, 611 checks pass); goldens `8be984c35`: 27 suites (Elemental −0.52%, Frost mage TPS +0.33%) |
+| Z5's live records | merged | `45ad0031e` | module `bcd70f7`, `bb2a21d`; the spell-mod sweep re-recorded on the regenerated list (34 new lines, 17 probes not compared), the Shadowfiend's swing and Fire Shield's misses recorded: both source-only fixes of this wave hold; goldens unchanged; `db.json` regenerated, unchanged |
+| wave Z5 cross-review | direct | `a11b52bd7`, `78f24ac36` | module `1413cdb`; healing taken counts the highest bonus and the lowest penalty only, Fire Shield rolls spell hit, `TestSimvalFight` runs a pull or low-health cycle; a pet's Replenishment tick before its regen, uncontrollable guardians take no Replenishment, no tick event for a pet that isn't out; goldens `9e0b1d46c` (3 suites), `c840f5ae3` (9 suites, under 0.3% a row) |
 
 Later WIs are added as their wave starts.
 
