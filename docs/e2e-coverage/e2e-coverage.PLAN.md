@@ -2203,6 +2203,35 @@ Cross-review, 2026-10-10, on `5692dd49d` with the three items merged:
   reorder leaves Blood Tap and Death Coil as tested; nothing reads a pet's stats at a fixed time.
 - Follow-up: Improved Blood Presence's 5/10% is now `AddHealingTakenPct` on Blood Presence's aura.
 
+Rotations (EC-CLASS-FIX2-APL, on `5692dd49d`; `ui/deathknight/apls`): the changed lines tap only where the server
+rule returns a rune. Average-Default, old model on the wave base → before → after:
+- `frost_uh_pesti` 13938 → 13163 → 13826 (Obliterate 74.6 → 68.5 → 73.8 casts, Blood Tap's aura 11 → 87 → 14 s).
+  Unbreakable Armor's sequence is Obliterate on the two death runes, Blood Tap, Unbreakable Armor, cancel: both
+  blood runes are then plain and down, so the tap readies one, which pays the armor. It needs both death runes
+  ready, no frost or unholy rune, and Frost Fever over 10 s (the tapped rune loses its grace, so both return a
+  full 10 s later). Empower Rune Weapon now returns plain blood runes: the opener spends them on Pestilence and
+  Blood Strike at once, one Obliterate fewer than the old model. The hidden alternative is Pestilence, Blood Tap,
+  Unbreakable Armor.
+- `frost_bl_pesti` 11908 → 11702 → 11850: the opener starts Pestilence, Blood Tap (the old order tapped nothing,
+  then stopped before Empower Rune Weapon: 0.01 → 1 cast), and its death rune Obliterate is Pestilence, Blood
+  Strike.
+- `blood_dps` 12374 → 12290 → 12382: taps with both blood runes down, the sooner 5 s or more from ready.
+- `uh_2h_ss` 12031 → 11989 → 12017: taps with no blood rune ready; Ghoul Frenzy takes a death rune in either
+  blood slot (6 → 4.9 → 6 casts).
+- `blood_pesti_aoe` (no suite): taps with no blood rune ready; nothing measured moves. `unholy_dw_ss` and
+  `uh_dnd_aoe` are unchanged: their Blood Tap, Ghoul Frenzy sequence still lands 6 casts, though `uh_dnd_aoe`'s
+  tap returns a rune one time in five on one target.
+
+TestFrost's `frost_uh_pesti` rows fall 1.0–2.6%: its talents lack Epidemic, and 15 s diseases never meet that
+rotation's disease rules. FrostUH's short rows move −1.5 to 0%. `db.json`'s APL presets move with these files.
+
+Follow-ups: `frost_uh_pesti` stalls with both death runes ready and Frost Fever at 3–9 s (a Pestilence line would
+fix it); TestFrost pairs `frost_uh_pesti` with talents it wasn't written for; `blood_pesti_aoe` needs a suite
+before tuning (an 8 s threshold gains 3.9% full-buff multi-target, loses 2.5% unbuffed); `frost_bl_pesti` taps
+only 1.4 times a fight; on `uh_dnd_aoe` a both-runes-down condition gains 0.7–1.1% multi-target and costs 0.2% on
+one long target, under the old model too, so it's no Blood Tap break; the scratch harness (`tmp/apldbg`) belongs
+in `tools/`.
+
 ### EC-THREAT-FIX4 (Z5; changes goldens, full suite; C++; stages: threat, C++ and e2e, live)
 
 - Probe: `.simval threat` gains an energize field, so energize threat gets a record (Bloodrage's 20 rage should give
