@@ -850,6 +850,7 @@
     {"id":20154,"name":"Seal of Righteousness","ops":["DAMAGE"]},
     {"id":20187,"name":"Judgement of Righteousness","ops":["DAMAGE"]},
     {"id":21084,"name":"Seal of Righteousness","ops":["DAMAGE"]},
+    {"id":25742,"name":"Seal of Righteousness","ops":["DAMAGE"]},
     {"id":31801,"name":"Seal of Vengeance","ops":["DAMAGE","DOT"]},
     {"id":31803,"name":"Holy Vengeance","ops":["DAMAGE","DOT"]},
     {"id":31804,"name":"Judgement of Vengeance","ops":["DAMAGE"]},
@@ -988,6 +989,8 @@
     {"id":48158,"name":"Shadow Word: Death","ops":["DAMAGE"]},
     {"id":48300,"name":"Devouring Plague","ops":["DOT"]},
     {"id":48301,"name":"Mind Trauma","ops":["DAMAGE"]},
+    {"id":52985,"name":"Penance","ops":["DAMAGE"]},
+    {"id":53000,"name":"Penance","ops":["DAMAGE"]},
     {"id":53022,"name":"Mind Sear","ops":["DAMAGE"]},
     {"id":58381,"name":"Mind Flay","ops":["DAMAGE"]}
   ]},
@@ -1003,6 +1006,8 @@
     {"id":48158,"name":"Shadow Word: Death","ops":["DAMAGE"]},
     {"id":48300,"name":"Devouring Plague","ops":["DOT"]},
     {"id":48301,"name":"Mind Trauma","ops":["DAMAGE"]},
+    {"id":52985,"name":"Penance","ops":["DAMAGE"]},
+    {"id":53000,"name":"Penance","ops":["DAMAGE"]},
     {"id":53023,"name":"Mind Sear","ops":["DAMAGE"]},
     {"id":58381,"name":"Mind Flay","ops":["DAMAGE"]}
   ]}
@@ -1014,7 +1019,6 @@
     {"id":14751,"name":"Inner Focus","ops":["RESIST_DISPEL_CHANCE"]},
     {"id":15258,"name":"Shadow Weaving","ops":["RESIST_DISPEL_CHANCE"]},
     {"id":33206,"name":"Pain Suppression","ops":["RESIST_DISPEL_CHANCE"]},
-    {"id":34917,"name":"Vampiric Touch","ops":["RESIST_DISPEL_CHANCE"]},
     {"id":47585,"name":"Dispersion","ops":["RESIST_DISPEL_CHANCE"]},
     {"id":47788,"name":"Guardian Spirit","ops":["RESIST_DISPEL_CHANCE"]},
     {"id":48066,"name":"Power Word: Shield","ops":["RESIST_DISPEL_CHANCE"]},
@@ -1042,7 +1046,6 @@
     {"id":14751,"name":"Inner Focus","ops":["COST"]},
     {"id":33206,"name":"Pain Suppression","ops":["CRITICAL_CHANCE","COST"]},
     {"id":34433,"name":"Shadowfiend","ops":["CRITICAL_CHANCE","COST"]},
-    {"id":34917,"name":"Vampiric Touch","ops":["COST"]},
     {"id":47585,"name":"Dispersion","ops":["COST"]},
     {"id":47788,"name":"Guardian Spirit","ops":["CRITICAL_CHANCE","COST"]},
     {"id":48063,"name":"Greater Heal","ops":["CRITICAL_CHANCE","COST"]},
@@ -1062,6 +1065,8 @@
     {"id":48160,"name":"Vampiric Touch","ops":["COST"]},
     {"id":48300,"name":"Devouring Plague","ops":["COST"]},
     {"id":48301,"name":"Mind Trauma","ops":["CRITICAL_CHANCE","COST"]},
+    {"id":52985,"name":"Penance","ops":["CRITICAL_CHANCE","COST"]},
+    {"id":53000,"name":"Penance","ops":["CRITICAL_CHANCE","COST"]},
     {"id":53007,"name":"Penance","ops":["CRITICAL_CHANCE","COST"]},
     {"id":53022,"name":"Mind Sear","ops":["CRITICAL_CHANCE"]},
     {"id":53023,"name":"Mind Sear","ops":["COST"]},
@@ -1142,7 +1147,8 @@
  {"ranks":[14909,15017],"mods":[{"effect":0,"type":"pct","op":"DAMAGE","classMask":[5243008,32768,0]},{"effect":1,"type":"pct","op":"DOT","classMask":[1048576,0,0]}],
   "spells": [
     {"id":48123,"name":"Smite","ops":["DAMAGE"]},
-    {"id":48135,"name":"Holy Fire","ops":["DAMAGE","DOT"]}
+    {"id":48135,"name":"Holy Fire","ops":["DAMAGE","DOT"]},
+    {"id":53000,"name":"Penance","ops":["DAMAGE"]}
   ]}
 ]},
 {"class":"priest","tree":"Holy","talent":"healingPrayers","passive":true,"groups": [
@@ -1161,7 +1167,8 @@
     {"id":48072,"name":"Prayer of Healing","ops":["DAMAGE","DOT"]},
     {"id":48089,"name":"Circle of Healing","ops":["DAMAGE","DOT"]},
     {"id":48113,"name":"Prayer of Mending","ops":["DAMAGE"]},
-    {"id":48120,"name":"Binding Heal","ops":["DAMAGE","DOT"]}
+    {"id":48120,"name":"Binding Heal","ops":["DAMAGE","DOT"]},
+    {"id":52985,"name":"Penance","ops":["DAMAGE","DOT"]}
   ]}
 ]},
 {"class":"priest","tree":"Holy","talent":"empoweredHealing","passive":true,"groups": [
@@ -1190,7 +1197,6 @@
 {"class":"priest","tree":"Shadow","talent":"darkness","passive":true,"groups": [
  {"ranks":[15259,15307,15308,15309,15310],"mods":[{"effect":0,"type":"pct","op":"DAMAGE","classMask":[41951232,524290,0]},{"effect":1,"type":"pct","op":"DOT","classMask":[33587200,1024,0]},{"effect":2,"type":"pct","op":"DAMAGE","classMask":[524288,0,0]}],
   "spells": [
-    {"id":34917,"name":"Vampiric Touch","ops":["DOT"]},
     {"id":48125,"name":"Shadow Word: Pain","ops":["DOT"]},
     {"id":48127,"name":"Mind Blast","ops":["DAMAGE"]},
     {"id":48158,"name":"Shadow Word: Death","ops":["DAMAGE"]},
@@ -1204,7 +1210,6 @@
  {"ranks":[15318,15272,15320],"mods":[{"effect":0,"type":"pct","op":"THREAT","classMask":[109814020,787530,8256]}],
   "spells": [
     {"id":15258,"name":"Shadow Weaving","ops":["THREAT"]},
-    {"id":34917,"name":"Vampiric Touch","ops":["THREAT"]},
     {"id":47585,"name":"Dispersion","ops":["THREAT"]},
     {"id":48125,"name":"Shadow Word: Pain","ops":["THREAT"]},
     {"id":48127,"name":"Mind Blast","ops":["THREAT"]},
@@ -1228,7 +1233,6 @@
   "spells": [
     {"id":15258,"name":"Shadow Weaving","ops":["RESIST_MISS_CHANCE"]},
     {"id":34433,"name":"Shadowfiend","ops":["COST"]},
-    {"id":34917,"name":"Vampiric Touch","ops":["COST","RESIST_MISS_CHANCE"]},
     {"id":47585,"name":"Dispersion","ops":["COST","RESIST_MISS_CHANCE"]},
     {"id":48125,"name":"Shadow Word: Pain","ops":["COST","RESIST_MISS_CHANCE"]},
     {"id":48127,"name":"Mind Blast","ops":["COST","RESIST_MISS_CHANCE"]},
@@ -1268,7 +1272,6 @@
 {"class":"priest","tree":"Shadow","talent":"mindMelt","passive":true,"groups": [
  {"ranks":[14910,33371],"mods":[{"effect":0,"type":"flat","op":"CRITICAL_CHANCE","classMask":[8396800,524288,0]},{"effect":1,"type":"flat","op":"CRITICAL_CHANCE","classMask":[33587200,1024,0]}],
   "spells": [
-    {"id":34917,"name":"Vampiric Touch","ops":["CRITICAL_CHANCE"]},
     {"id":48125,"name":"Shadow Word: Pain","ops":["CRITICAL_CHANCE"]},
     {"id":48127,"name":"Mind Blast","ops":["CRITICAL_CHANCE"]},
     {"id":48160,"name":"Vampiric Touch","ops":["CRITICAL_CHANCE"]},
@@ -1402,6 +1405,10 @@
   "spells": [
     {"id":6774,"name":"Slice and Dice","ops":["DURATION"]}
   ]}
+]},
+{"class":"rogue","tree":"Combat","talent":"endurance","passive":true,"groups": [
+ {"ranks":[13742,13872],"mods":[{"effect":0,"type":"flat","op":"COOLDOWN","classMask":[96,0,0]}],
+  "spells": []}
 ]},
 {"class":"rogue","tree":"Combat","talent":"aggression","passive":true,"groups": [
  {"ranks":[18427,18428,18429,61330,61331],"mods":[{"effect":0,"type":"pct","op":"DAMAGE","classMask":[131078,0,0]}],
@@ -1642,7 +1649,9 @@
 {"class":"shaman","tree":"Enhancement","talent":"elementalWeapons","passive":true,"groups": [
  {"ranks":[16266,29079,29080],"mods":[{"effect":0,"type":"pct","op":"EFFECT2","classMask":[0,1048576,0]},{"effect":1,"type":"pct","op":"EFFECT2","classMask":[2097152,0,0]},{"effect":2,"type":"pct","op":"DAMAGE","classMask":[8388608,0,0]}],
   "spells": [
-    {"id":10444,"name":"Flametongue Attack","ops":["EFFECT2"]}
+    {"id":10444,"name":"Flametongue Attack","ops":["EFFECT2"]},
+    {"id":25504,"name":"Windfury Attack","ops":["DAMAGE"]},
+    {"id":33750,"name":"Windfury Attack","ops":["DAMAGE"]}
   ]}
 ]},
 {"class":"shaman","tree":"Enhancement","talent":"shamanisticFocus","passive":true,"groups": [
@@ -2209,6 +2218,7 @@
   "spells": [
     {"id":1680,"name":"Whirlwind","ops":["CRIT_DAMAGE_BONUS"]},
     {"id":7384,"name":"Overpower","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":7386,"name":"Sunder Armor","ops":["CRIT_DAMAGE_BONUS"]},
     {"id":12809,"name":"Concussion Blow","ops":["CRIT_DAMAGE_BONUS"]},
     {"id":23881,"name":"Bloodthirst","ops":["CRIT_DAMAGE_BONUS"]},
     {"id":44949,"name":"Whirlwind","ops":["CRIT_DAMAGE_BONUS"]},
@@ -2227,7 +2237,8 @@
     {"id":50622,"name":"Whirlwind","ops":["CRIT_DAMAGE_BONUS"]},
     {"id":50783,"name":"Slam","ops":["CRIT_DAMAGE_BONUS"]},
     {"id":57755,"name":"Heroic Throw","ops":["CRIT_DAMAGE_BONUS"]},
-    {"id":57823,"name":"Revenge","ops":["CRIT_DAMAGE_BONUS"]}
+    {"id":57823,"name":"Revenge","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":58567,"name":"Sunder Armor","ops":["CRIT_DAMAGE_BONUS"]}
   ]}
 ]},
 {"class":"warrior","tree":"Arms","talent":"improvedSlam","passive":true,"groups": [
@@ -2361,8 +2372,10 @@
 {"class":"warrior","tree":"Protection","talent":"puncture","passive":true,"groups": [
  {"ranks":[12308,12810,12811],"mods":[{"effect":0,"type":"flat","op":"COST","classMask":[16384,64,0]}],
   "spells": [
+    {"id":7386,"name":"Sunder Armor","ops":["COST"]},
     {"id":47467,"name":"Sunder Armor","ops":["COST"]},
-    {"id":47498,"name":"Devastate","ops":["COST"]}
+    {"id":47498,"name":"Devastate","ops":["COST"]},
+    {"id":58567,"name":"Sunder Armor","ops":["COST"]}
   ]}
 ]},
 {"class":"warrior","tree":"Protection","talent":"improvedDisciplines","passive":true,"groups": [
@@ -2383,6 +2396,7 @@
   "spells": [
     {"id":1680,"name":"Whirlwind","ops":["COST"]},
     {"id":7384,"name":"Overpower","ops":["COST"]},
+    {"id":7386,"name":"Sunder Armor","ops":["COST"]},
     {"id":12809,"name":"Concussion Blow","ops":["COST"]},
     {"id":23881,"name":"Bloodthirst","ops":["COST"]},
     {"id":25203,"name":"Demoralizing Shout","ops":["COST"]},
@@ -2403,6 +2417,7 @@
     {"id":50622,"name":"Whirlwind","ops":["COST"]},
     {"id":50783,"name":"Slam","ops":["COST"]},
     {"id":57823,"name":"Revenge","ops":["COST"]},
+    {"id":58567,"name":"Sunder Armor","ops":["COST"]},
     {"id":64382,"name":"Shattering Throw","ops":["COST"]}
   ]}
 ]},
@@ -2428,7 +2443,8 @@
     {"id":55262,"name":"Heart Strike","ops":["CRITICAL_CHANCE"]},
     {"id":55271,"name":"Scourge Strike","ops":["CRITICAL_CHANCE"]},
     {"id":66974,"name":"Obliterate","ops":["CRITICAL_CHANCE"]},
-    {"id":66979,"name":"Blood Strike","ops":["CRITICAL_CHANCE"]}
+    {"id":66979,"name":"Blood Strike","ops":["CRITICAL_CHANCE"]},
+    {"id":70890,"name":"Scourge Strike","ops":["CRITICAL_CHANCE"]}
   ]}
 ]},
 {"class":"deathknight","tree":"Blood","talent":"improvedRuneTap","passive":true,"groups": [
@@ -2559,7 +2575,8 @@
     {"id":49924,"name":"Death Strike","ops":["CRITICAL_CHANCE"]},
     {"id":55271,"name":"Scourge Strike","ops":["CRITICAL_CHANCE","CRIT_DAMAGE_BONUS"]},
     {"id":66953,"name":"Death Strike","ops":["CRITICAL_CHANCE"]},
-    {"id":66992,"name":"Plague Strike","ops":["CRITICAL_CHANCE","CRIT_DAMAGE_BONUS"]}
+    {"id":66992,"name":"Plague Strike","ops":["CRITICAL_CHANCE","CRIT_DAMAGE_BONUS"]},
+    {"id":70890,"name":"Scourge Strike","ops":["CRITICAL_CHANCE","CRIT_DAMAGE_BONUS"]}
   ]}
 ]},
 {"class":"deathknight","tree":"Unholy","talent":"virulence","passive":true,"groups": [
