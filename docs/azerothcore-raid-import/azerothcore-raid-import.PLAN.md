@@ -13,6 +13,7 @@ Outcome:
 - **Phase 3:** a Raid Sim importer loads or updates the whole raid from that roster, and an individual sim
   importer loads one character.
 - **RI-4:** the roster and both importers also carry each character's pet, ammo and consumables.
+- **RI-5:** the sim server builds the roster itself, so the Raid tab imports the core raid in one click.
 
 ## Decisions (settled with the user)
 
@@ -664,8 +665,131 @@ Both importers give a raider their spec preset's pet, ammo and consumables. RI-4
 - Checks: `loadout.ts` in the harness on the synthetic `testdata/loadout.json`; `acore_import.spec.ts`
   adds the fields, the box, a version 1 roster, the individual importer and the Edit-window case.
 
+## RI-5: one-click import from the live server
+
+The sim server builds the roster itself, so the Raid tab can import the core raid in one click (the
+user's decisions, 2026-10-10). Golden-neutral. One live stage, SELECT-only.
+
+**Selection: `Selector.NamesOnly`** (`tools/database/azerothcore/characters.go`)
+- With `Leader` and `Names`: export only `Names`.
+  - A named raider in the leader's group keeps their live subgroup and member flags.
+  - A named raider outside it takes the first subgroup with room (`addExtraMembers`), with a warning
+    naming the raider and the party.
+  - Group members not named are left out, with one warning listing them.
+  - Leader in no group: list order, 5 per party, with a warning. Unknown leader or name: error, as today.
+- `roster.Group.Selector` is `"core"`. Roster version stays 2.
+- `acraid` gets `-namesOnly` and `-namesFile` (one name per line, `#` comments, blank lines ignored;
+  parser shared with the server). `crosscheck.py` and `crosscheck_test.py` mirror the mode.
+
+**Library changes** (same package)
+- `BuildRosterContext(ctx, db, selector, inputs)`; `BuildRoster` wraps it. Loaders take a `querier`
+  interface (`QueryContext`, `QueryRowContext`) so `*sql.DB` and `*sql.Tx` both fit. No SQL changes.
+- `SelectionError` for selection failures, message text unchanged.
+- `LoadTalentTreesFS`, `LoadPetTalentTreesFS`, `SimItemStatsFS(fsys, name)`; the path versions wrap them
+  with `os.DirFS`. `SimItemStatsFS` returns an error on bad JSON (today's path panics) and keeps only each
+  item's stats.
+- `tools/io_utils.go`: `-readWebThreads` becomes a constant, or the server's `--help` lists it.
+- New `ui/core/talents/trees/embed.go`: `package trees`, `//go:embed *.json`, `var FS`.
+
+**Route: `GET /acoreRoster`**, new package `sim/web/acroster` (the makefile builds `sim/web/main.go`
+alone, so nothing new goes in package main beyond flags and registration)
+- 200: exactly acraid's bytes. Errors: `{"code", "error"}`.
+
+  | Status | Code | When |
+  |---|---|---|
+  | 400 | `bad_request` | any query parameter |
+  | 403 | `cross_site` | `Sec-Fetch-Site: cross-site` |
+  | 405 | `method_not_allowed` | not GET |
+  | 409 | `no_roster` | a `SelectionError`, message verbatim; empty names file |
+  | 500 | `server_config` | names file, DBCs, matrix or item DB unreadable; bad DSN |
+  | 502 | `database` | unreachable or failed query; detail only in the log |
+  | 503 | `not_configured` | names the missing flags |
+  | 504 | `timeout` | 30 s, queue wait included |
+
+- Flags on `sim/web/main.go`, defaults empty, env fallback applied after `flag.Parse()` so `--help`
+  never prints a DSN:
+
+  | Flag | Env | Required |
+  |---|---|---|
+  | `--acoreDsn` | `AC_DSN` | yes |
+  | `--acoreDbcDir` | `AC_DBC_DIR` | yes |
+  | `--acoreNamesFile` | `AC_RAID_NAMES_FILE` | yes |
+  | `--acoreLeader` | `AC_RAID_LEADER` | no: without it, list order |
+  | `--acoreWorldBuffMatrix` | `AC_WORLD_BUFF_MATRIX` | no |
+
+- Per request: read the names file and the matrix; open the DB (`Timeout` 5 s, `ReadTimeout` 20 s when the
+  DSN sets none), run every query in `BeginTx(ReadOnly: true)`, close. One request at a time.
+- Cached: trees (embedded, parsed once); parsed DBCs, keyed by each file's size and mtime; item stats from
+  `wotlk/assets/database/db.json` in the FS the server serves (`dist.FS`, or `./dist` under `--usefs`).
+- Never log the DSN. `Cache-Control: no-store`, no CORS header.
+- `Config{...}`, `BuildFunc`, `New(cfg)`, `NewWithBuilder(cfg, build)`: tests inject the builder.
+
+**UI**
+- New `ui/raid/acore_server.ts`: `fetchServerRoster(): Promise<string>`, throwing the server's `error`
+  text, or "This sim server can't import from AzerothCore" on a non-JSON reply.
+- `ui/raid/acore_importer.ts`: lift `onImport`'s body and `replaceRaid` into
+  `importRoster(simUI, data, {mode, refreshConsumes}): Promise<string>` and `defaultImportMode(simUI)`.
+  The dialog keeps its behaviour and order (import, close, alert), and gains a "Fetch from server" footer
+  button that fills the textarea like Upload File, plus a `saveall` line in its description.
+- `ui/raid/raid_picker.ts`: an "Import from server" button in `raid-controls`. It imports with
+  `defaultImportMode` and `refreshConsumes: true`, alerts the usual summary or `Import error:\n…`, and
+  is disabled while fetching. Its tooltip says gear is as of each character's last save.
+- Both buttons show only when `simServerAvailable()` (import it from `optimizer_tab.ts`; don't move it).
+
+**Owns:** RI-4's paths, plus `sim/web/acroster/**`, `ui/core/talents/trees/embed.go`,
+`ui/raid/acore_server.ts`, `tools/uitest/tests/raid/acore_server.spec.ts`. Shared edits: `sim/web/main.go`,
+`tools/io_utils.go`, `ui/raid/raid_picker.ts` and its scss.
+
+**Verification** (through `tools/acore/dock.sh`; dev port and container name from the wave)
+- Go, no DB: `handler_test.go` (each status above, byte-equal 200, no overlap of two requests, a blocked
+  builder gives 504); `builder_test.go` (DBC cache reloads after `os.Chtimes`, item stats from
+  `fstest.MapFS`, embedded trees load); table tests for `NamesOnly` seating and the names-file parser.
+  `test -count=1 -race ./sim/web/... ./tools/database/azerothcore/`, `go vet`, a wasm build and a
+  `CGO_ENABLED=0` build of `sim/web/main.go`; `./wowsimwotlk --help` has no `readWebThreads`.
+- `python tools/database/acraid/crosscheck_test.py`.
+- Playwright, `acore_server.spec.ts`, stubbing `**/acoreRoster` with harness fixtures: dialog fetch then
+  Import; a 503 shows its message and changes nothing; the Raid tab button on an empty raid (Replace) and
+  on a seated one (Update, a raider removed); a 502 re-enables the button; the request is a bare GET.
+  `acore_import.spec.ts` passes untouched. `dock.sh tsc`; the harness README's commands.
+- Live, SELECT-only, holding the server lock: a dev server started with the dev line below; the route's
+  JSON equals `acraid -leader Deathsong -namesFile … -namesOnly` minus `exportedAt`; `crosscheck.py`
+  passes on it; record first and second request times. Then click the button on the Raid tab.
+
+**Run lines** (Git Bash; replaces the lines in `docs/guide/dev-environment.md` "Run")
+```sh
+MSYS_NO_PATHCONV=1 docker run -d --name wowsims-wotlk --restart unless-stopped -p 3333:3333 \
+  --add-host=host.docker.internal:host-gateway \
+  -v azerothcore-wotlk-pb_ac-client-data:/acdata:ro \
+  --mount type=bind,source=G:/DevStuff/GitHub/.wowsim,target=/wowsim,readonly \
+  --mount type=bind,source=G:/DevStuff/GitHub/azerothcore-wotlk-pb/configurationOverrides/Playerbot.env,target=/acconf/Playerbot.env,readonly \
+  wowsims-wotlk \
+  '--acoreDsn=root:password@tcp(host.docker.internal:3306)/' --acoreDbcDir=/acdata/dbc \
+  --acoreNamesFile=/wowsim/core-raid.txt --acoreLeader=Deathsong \
+  --acoreWorldBuffMatrix=/acconf/Playerbot.env
+```
+- Dev: the existing `wotlk-dev` line plus the same `--add-host`, mounts and flags.
+- The names file's directory is mounted, not the file: an editor that replaces a file leaves a
+  single-file mount stale. `Playerbot.env` is mounted alone because `Chronicle.env` sits beside it.
+- `host.docker.internal`, not the AC network: a container on that network can't start once it's gone.
+
+**Docs, same change:** acraid README (the mode, the flags, "From the sim server"); `dev-environment.md`
+(run lines, flags, the route, and `/version` returns JSON, not protobuf); `sim-architecture.md`;
+`workstreams.md` (the new owned paths); `tools/uitest/README.md` (stubbing the route);
+`ui/raid/acore_harness/README.md`.
+
+**After it lands on `master`** (the user's call, 2026-10-10; prod then also gains waves Y to Z5)
+1. `docker tag wowsims-wotlk wowsims-wotlk:rollback-x`.
+2. Build as `wowsim-candidate:roster`, run it with the prod line on a spare port, and curl the route:
+   a 200 proves the nonroot image reads the volume and the mounts. Remove it.
+3. Build `wowsims-wotlk` with `SIM_COMMIT`, `docker rm -f wowsims-wotlk`, start it with the prod line.
+   Reload open sim tabs.
+
+**Known limits**
+- Nothing can trigger `saveall`: gear is as of each character's last save, and the page can't tell.
+- Anyone who can open the sim can read the core raid's gear. The route takes no input.
+- The mounted volume blocks `docker compose down -v` in [ac] until the sim container is removed.
+
 ## Out of scope
-- Sim-server endpoint for one-click import.
 - Server item stats (item-data rework).
 - mod-spell-tweaks and mod-individual-progression modeling.
 - Random suffix items.
