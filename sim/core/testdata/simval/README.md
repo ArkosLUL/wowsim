@@ -20,6 +20,10 @@ replays against `goldchar_setups.json` ([tools/simval](../../../../tools/simval/
 `strikes.jsonl` holds `TestSimvalStrikes`' weapon strike and pet `damage`, pet `info` and Ghoul Frenzy `timing`
 records, which `TestStrikesRecords` replays ([tools/simval](../../../../tools/simval/README.md#damage-probe)).
 
+`pets.jsonl` holds `TestPetfixRecords`' pet `info`, `damage`, `spell`, `melee` and `timing` records (Greater Fire
+Elemental, Mirror Image, Imp, Water Elemental), which `TestPetsRecords` replays
+([tools/simval](../../../../tools/simval/README.md#damage-probe)).
+
 `buffs.jsonl` holds `TestSimvalBuffs`' `BUFFS` lines, which `TestBuffRecords` replays
 ([tools/simval](../../../../tools/simval/README.md#buffs)). A disagreeing state or check goes in `droppedBuffs`
 (`tools/simval/buffs_test.go`) with a row here; its line stays. `buffs_pairs.json` lists the pairs both read.

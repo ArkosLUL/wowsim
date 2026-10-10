@@ -1,7 +1,6 @@
 package shaman
 
 import (
-	"math"
 	"time"
 
 	"github.com/wowsims/wotlk/sim/core"
@@ -28,25 +27,30 @@ type FireElemental struct {
 
 func (shaman *Shaman) NewFireElemental(bonusSpellPower float64) *FireElemental {
 	fireElemental := &FireElemental{
-		Pet:         core.NewPet("Greater Fire Elemental", &shaman.Character, fireElementalPetBaseStats, shaman.fireElementalStatInheritance(), false, true),
+		Pet:         core.NewPet("Greater Fire Elemental", &shaman.Character, fireElementalPetBaseStats, fireElementalStatInheritance, false, true),
 		shamanOwner: shaman,
 	}
 	fireElemental.BuffImmunity = core.PetImmuneToScaling
-	fireElemental.EnableManaBar()
+	// pet_levelstats' 2280 mana, and Guardian::UpdateMaxPower's default 15 a point of intellect
+	fireElemental.EnableCreatureManaBar(2280, fireElementalPetBaseStats[stats.Intellect], 15, false)
+	// InitStatsForLevel's NPC_FIRE_ELEMENTAL case: 3.5 a level -/+ the level, in the template's
+	// fire school at its 2 s attack time
 	fireElemental.EnableAutoAttacks(fireElemental, core.AutoAttackOptions{
 		MainHand: core.Weapon{
-			BaseDamageMin:  1,  // Estimated from base AP
-			BaseDamageMax:  23, // Estimated from base AP
+			BaseDamageMin:  200,
+			BaseDamageMax:  360,
 			SwingSpeed:     2,
-			CritMultiplier: 2, // Pretty sure this is right.
+			CritMultiplier: 2,
 			SpellSchool:    core.SpellSchoolFire,
 		},
 		AutoSwingMelee: true,
 	})
+	fireElemental.AddStatDependency(stats.Strength, stats.AttackPower, 2)
 
+	// the spell power the totem options add at the summon scales as the owner's own does
 	if bonusSpellPower > 0 {
-		fireElemental.AddStat(stats.SpellPower, float64(bonusSpellPower)*0.5218)
-		fireElemental.AddStat(stats.AttackPower, float64(bonusSpellPower)*4.45)
+		fireElemental.AddStat(stats.SpellPower, core.PetScalingPct(bonusSpellPower, 100))
+		fireElemental.AddStat(stats.AttackPower, core.PetScalingPct(bonusSpellPower, 300))
 	}
 
 	fireElemental.OnPetEnable = fireElemental.enable
@@ -125,42 +129,28 @@ func (fireElemental *FireElemental) TryCast(sim *core.Simulation, target *core.U
 	return spell.Cast(sim, target)
 }
 
-var fireElementalPetBaseStats = stats.Stats{
-	stats.Mana:        1789,
-	stats.Health:      994,
-	stats.Intellect:   147,
-	stats.Stamina:     327,
-	stats.SpellPower:  0,    //Estimated
-	stats.AttackPower: 1303, //Estimated
+// pet_levelstats for 15438 at 80, and 2 * Str - 20 attack power
+var fireElementalPetBaseStats = core.PetCreateStats(283, 160, 125, 405, 460, 1100).Add(stats.Stats{
+	// Guardian::UpdateMaxHealth: 8000 plus 10 a point of stamina over 125. The universal stamina
+	// dependency (10 a point, -180) adds the rest
+	stats.Health:      8000 - 10*125 + 180,
+	stats.AttackPower: -20,
 
 	// Unit::GetUnitCriticalChance and m_baseSpellCritChance give every non-player unit a flat 5%; the fire
 	// elemental isn't one of the pets a scripted aura scales further by a stat.
 	stats.MeleeCrit: 5 * core.CritRatingPerCritChance,
 	stats.SpellCrit: 5 * core.CritRatingPerCritChance,
-}
+})
 
-func (shaman *Shaman) fireElementalStatInheritance() core.PetStatInheritance {
-	return func(ownerStats stats.Stats) stats.Stats {
-		ownerSpellHitChance := math.Floor(ownerStats[stats.SpellHit] / core.SpellHitRatingPerHitChance)
-		spellHitRatingFromOwner := ownerSpellHitChance * core.SpellHitRatingPerHitChance
-
-		ownerHitChance := ownerStats[stats.MeleeHit] / core.MeleeHitRatingPerHitChance
-		hitRatingFromOwner := math.Floor(ownerHitChance) * core.MeleeHitRatingPerHitChance
-		return stats.Stats{
-			stats.Stamina:     ownerStats[stats.Stamina] * 0.75,
-			stats.Intellect:   ownerStats[stats.Intellect] * 0.30,
-			stats.SpellPower:  ownerStats[stats.SpellPower] * 0.4970,
-			stats.AttackPower: ownerStats[stats.SpellPower] * 4.2381,
-
-			// TODO tested useing pre-patch lvl 70 stats need to confirm in WOTLK at 80.
-			stats.MeleeHit: hitRatingFromOwner,
-			stats.SpellHit: spellHitRatingFromOwner,
-
-			/*
-				TODO working on figuring this out, getting close need more trials. will need to remove specific buffs,
-				ie does not gain the benefit from draenei buff.
-			*/
-			stats.Expertise: math.Floor(spellHitRatingFromOwner * 0.79),
-		}
+// fireElementalStatInheritance is spell_sha_fire_elemental_scaling on 35665 and 35666: 30% of the
+// owner's intellect, 35% of his armor, and 300% and 100% of his fire spell power as attack and spell
+// power. No stamina: 35665's first effect is a dummy. Hit and expertise come from core's scaling
+// aura, not from here.
+func fireElementalStatInheritance(ownerStats stats.Stats) stats.Stats {
+	return stats.Stats{
+		stats.Intellect:   core.PetScalingPct(ownerStats[stats.Intellect], 30),
+		stats.Armor:       core.PetScalingPct(ownerStats[stats.Armor], 35),
+		stats.AttackPower: core.PetScalingPct(ownerStats[stats.SpellPower], 300),
+		stats.SpellPower:  core.PetScalingPct(ownerStats[stats.SpellPower], 100),
 	}
 }

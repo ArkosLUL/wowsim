@@ -68,6 +68,8 @@ type damageUnit struct {
 	unitSnapshot
 	CreatureType  uint32  `json:"creatureType"`
 	AuraExpertise float64 `json:"auraExpertise"`
+	// a creature's m_baseSpellCritChance: 5 plus its crit auras
+	BaseSpellCrit *float64 `json:"baseSpellCrit"`
 }
 
 // damageRecord is one `.simval damage` line. A non-empty Shaped means the server adds something the
@@ -1360,7 +1362,9 @@ var simPets = map[uint32]simPet{
 	26125: {6, "deathknight", "Ghoul", "", nil},
 	27829: {6, "deathknight", "Gargoyle", "summonGargoyle", nil},
 	29264: {7, "enhancement_shaman", "Spirit Wolf 1", "", nil},
+	15438: {7, "elemental_shaman", "Greater Fire Elemental", "", nil},
 	510:   {8, "mage", "Water Elemental", "summonWaterElemental", nil},
+	31216: {8, "mage", "Mirror Image", "", nil},
 	1964:  {11, "balance_druid", "Treant", "forceOfNature", nil},
 	19668: {5, "shadow_priest", "Shadowfiend", "", nil},
 }
@@ -1603,6 +1607,10 @@ func checkPetInfo(rec strikesRecord) (checks []Check) {
 	if len(server.Resistances) > 0 {
 		checks = append(checks, checkPetStat("armor", s[stats.Armor], server.Resistances[0]))
 	}
+	// held where the sim pet has mana: intellect feeds that, and must not feed crit with it
+	if server.BaseSpellCrit != nil && pet.HasManaBar() {
+		checks = append(checks, checkNear("spell crit %", s[stats.SpellCrit]/core.CritRatingPerCritChance, *server.BaseSpellCrit, 1e-3))
+	}
 	checks = append(checks, d.petMelee(rec)...)
 	checks = append(checks, d.petRegen(rec)...)
 
@@ -1771,6 +1779,7 @@ var petsThatNeverSwing = map[uint32]string{
 	510: "PetAI::_canMeleeAttack keeps the Water Elemental at Waterbolt range, and out of mana it doesn't melee " +
 		"at all; its weapon is what Creature::SelectLevel rolled from a random level 60-70 creature_classlevelstats row",
 	27829: "npc_pet_dk_ebon_gargoyle only casts Gargoyle Strike",
+	31216: "npc_pet_mage_mirror_image only casts Frostbolt and Fire Blast",
 }
 
 // scalingSummary lists the record's scaling auras as id: aura/misc value=amount.
