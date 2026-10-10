@@ -24,7 +24,7 @@ func (priest *Priest) registerRenewSpell() {
 				.05 * float64(priest.Talents.EmpoweredRenew) *
 				core.TernaryFloat64(priest.HasSetBonus(ItemSetZabrasRaiment, 4), 1.1, 1),
 			CritMultiplier:   priest.DefaultHealingCritMultiplier(),
-			ThreatMultiplier: 1 - []float64{0, .07, .14, .20}[priest.Talents.SilentResolve],
+			ThreatMultiplier: 1,
 
 			ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 				tick := priest.Renew.Hot(target).Tick
@@ -51,7 +51,7 @@ func (priest *Priest) registerRenewSpell() {
 		},
 
 		DamageMultiplier: priest.renewHealingMultiplier(),
-		ThreatMultiplier: 1 - []float64{0, .07, .14, .20}[priest.Talents.SilentResolve],
+		ThreatMultiplier: 1,
 
 		Mods: []core.SpellMod{
 			{Op: core.SpellModBonusMultiplier, Pct: 5 * int32(priest.Talents.EmpoweredRenew)},

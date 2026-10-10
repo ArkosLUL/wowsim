@@ -2249,6 +2249,79 @@ in `tools/`.
   command changes, `e2e/threat_test.go`, the README's Commands rows and threat section.
 - **Goldens:** every suite whose TPS or mana moves; report each.
 
+#### As built
+
+Threat stage (offline; each lead re-measured against [ac] 3d89793c7 and the spelldump; `threat.jsonl` has no record
+of any of them; notes and the live plan in `tmp/ec-threat-fix4-threat.md`):
+- Replenishment: confirmed and fixed (`sim/core/replenishment.go`). 57669 is a periodic energize, 15 ticks a second
+  apart, each `int32(float32(max mana) × 0.002f)` read as the aura goes on or is refreshed
+  (`spell_gen_replenishment_aura`), 1 when it went on at no mana (the script's `Load`).
+  - A refresh restarts the tick timer (`AuraEffect::CalculatePeriodic`: only periodic damage keeps it). The cast
+    lands ahead of the unit's update (`Unit::Update` runs events, then auras), so a tick due on that world tick or
+    map update is lost and the tick's event runs last at its time; with exact timing it goes first. A player's
+    timer counts from the world tick before the cast.
+  - Mana must be the unit's power: the cast drops other targets (`PowerCheck`), and a player's tick skips them (57669
+    lacks the attribute 0x10000 of Ex7), so a druid in cat or bear form gets none.
+  - Each tick gives its caster half the mana really gained, unmodified, and each cast that takes a target its level
+    1, modified (`Unit.AddEnergizeTickThreat`, `CastThreat`). `NewReplenishmentSource` takes the caster.
+  - The raid's buff (individual buffs) has no caster: a tick a second for good, reading the max each time, no
+    threat. A proc over it owns its 15 ticks.
+  - `fightEnergizeLeftOut`'s 57669 went: the five fights with it (HunterSV, MageFrost, PaladinRetribution,
+    PriestShadow, WarlockDestruction) now compare its `amount` and `gain sizes` and pass, each logged tick size met
+    exactly (22, 46, 12, 36, 56).
+- Aura casts: confirmed and fixed with `CastThreat` (`Unit.NewCastThreat(spellID).Add`), a positive server spell's
+  bonus, modified, booked under a `ResourceMetrics`' action: Bloodrage's 29131 (10; 2687 itself is
+  `NO_INITIAL_THREAT`), Heartpierce's Invigoration of the wearer's power (80; 71881–71883, heroic 71886–71888),
+  Lifeblood's 55503 (55). No periodic aura sets `NO_INITIAL_THREAT` on this server.
+- Silent Resolve: confirmed in part and fixed. Its `MOD_THREAT` is on holy and arcane (misc 66), not shadow, at
+  7/14/20% (base points −8/−15/−21 plus die side 1); its `SPELLMOD_THREAT` mask 0x10 is Mana Burn alone, which the
+  sim lacks. Now one `AddThreatSchoolMultiplier`, the 15 per-spell multipliers back to 1.
+- `Unit.GainThreat(actionID)` reads an action's gain threat. serverdata regenerated: the six Invigorations.
+- Tests: `sim/core/replenishment_test.go`, `threat_test.go`, `sim/threat_casts_test.go`.
+- Open: a mana pet under the raid's buff queues a tick event every second while it isn't out (Mirror Images,
+  Water Elemental, Fire Elemental); stopping that needs a hook in `Pet.Enable` and `Disable`.
+
+Goldens (`dock.sh delta`): 27 suites move; DK, rogue, resto druid and holy paladin don't. Average-Default:
+- Replenishment's own ticks, TPS: Frost mage +0.33%, Destruction +0.26%, Ret +0.13%, SV +0.11%; Shadow sits at full
+  mana, so none.
+- Mana (truncated ticks, restarts): Elemental DPS −0.53% (one Lightning Bolt in 163), Balance −0.04 to −0.08%, Holy
+  priest HPS −0.16%, Smite TPS −0.34% (two Shadow Word: Pains become Smites), the rest within ±0.02%. NoBuffs and
+  small-pool rows move most, to −1.4%.
+- Warriors TPS +0.002 to +0.006% (29131); Heartpierce rows up to +0.09%.
+- Ferals: DPS within ±0.003%, 10 to 67 rows: no mana in form, and the ticks' events take expired auras off sooner.
+
+C++ and e2e stage (compile-checked with `-fsyntax-only -Werror`, e2e vetted; not rebuilt, no live run; golden-neutral;
+the live plan in `tmp/ec-threat-fix4-code.md`):
+- `.simval threat` writes `energize` (format in the module README): the direct energizes on the caster (`cast`,
+  `EffectEnergize` and `EffectEnergizePct` copied) and one tick of its periodic ones (`tick`, the amount read off
+  the caster's aura, put on for a moment), each half the power, unmodified; live through the real
+  `ForwardThreatForAssistingMe` (`energizeAssist`, `energizeTickAssist`). No command or SQL change.
+- `TestSimvalThreat` gains a HolyPriest (Silent Resolve: Smite, Holy Fire, Mind Blast) and the probes 2687, 29131,
+  55503 and 71883 (ProtWarrior; the first two on FuryWarrior too), 44578 (ProtWarrior, ProtPaladin), 22845 and 5229
+  (BearDruid), 57669 (ShadowPriest). `threatCheckEnergize` holds the arithmetic and the live split.
+- Replay (`tools/simval/threat.go`; 546 checks over the committed 161 records, was 385): `school multipliers` on
+  every record, all seven schools; `energize threat`, `energize shares` and `energize tick threat` for records
+  with the field; a `CastThreat`'s bonus counted (`Unit.CastThreatOf`, `Unit.EnergizeThreatOf` in
+  `sim/core/threat.go`). Shadowform is a `threatForms` form, so the two priests' keys differ.
+- Each new probe also replays on a hand-built record of what the source predicts
+  (`TestThreatReplayOnHandCheckedRecords`).
+
+Live stage (the user's rebuild: [ac] 3d89793c7 plus the module's working tree; golden-neutral, `dock.sh delta`
+byte-identical to the code stages'; notes in `tmp/ec-threat-fix4-live.md`):
+- One `run.sh TestSimvalThreat` (15 bots, 322 s, passed, no orphans) re-recorded `threat.jsonl`: 175 records, was
+  161. The 14 `threatNewProbe` drops and the six `recapture` rows went. Replay: 611 checks, all pass;
+  `knownThreatMismatches` stays empty.
+- Every verdict left to the run holds, so nothing more was fixed:
+  - Bloodrage 2687 and Enrage 5229: no bonus; 200 tenths of rage make 100, unmodified, a third per creature. Their
+    ticks (29131, 5229) make 5 of 10 tenths.
+  - 29131's level 10, Lifeblood's 55, Invigoration's 80 and Replenishment's 1: modified, in thirds (×2.0735 in
+    Defensive Stance, ×0.7 in Berserker Stance with the talent and in Shadowform).
+  - Silent Resolve: schools [1 0.8 1 1 1 1 0.8]; Smite and Holy Fire ×0.8, Mind Blast ×1.
+  - Lifeward and Frenzied Regeneration's 22845: no bonus, heal threat half (a quarter for the paladin), modified.
+  - Evocation's and Divine Plea's ticks: half the mana, unmodified.
+- Not compared, for want of a sim spell to cast: the tick threat of Invigoration and Replenishment (server 10 of 20
+  tenths, 6 of 12 mana).
+
 ## Orchestrator onboarding (wave S start)
 
 - Add waves S–X to the registry and an `EC-` row to "Where the specs are".

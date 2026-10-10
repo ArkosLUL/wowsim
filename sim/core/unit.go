@@ -120,6 +120,8 @@ type Unit struct {
 	// SPELL_AURA_MOD_THREAT auras on some schools; the all-school ones are in PseudoStats.ThreatMultiplier
 	threatSchoolMods        []threatSchoolMod
 	initialThreatSchoolMods []threatSchoolMod
+	// the unit's NewCastThreats, for CastThreatOf
+	castThreats []*CastThreat
 
 	// Only players have one; see avoid_dr.go.
 	playerAvoidance *playerAvoidance

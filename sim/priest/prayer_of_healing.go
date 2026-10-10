@@ -38,7 +38,7 @@ func (priest *Priest) registerPrayerOfHealingSpell() {
 			(1 + .02*float64(priest.Talents.FocusedPower)) *
 			(1 + .02*float64(priest.Talents.DivineProvidence)),
 		CritMultiplier:   priest.DefaultHealingCritMultiplier(),
-		ThreatMultiplier: 1 - []float64{0, .07, .14, .20}[priest.Talents.SilentResolve],
+		ThreatMultiplier: 1,
 
 		Direct: core.SpellEffect{Effect: 0, Min: 2109, Max: 2227, SP: 0.526},
 
@@ -65,7 +65,7 @@ func (priest *Priest) registerPrayerOfHealingSpell() {
 			Flags:       core.SpellFlagNoOnCastComplete | core.SpellFlagHelpful,
 
 			DamageMultiplier: priest.PrayerOfHealing.DamageMultiplier * 0.2 / 2,
-			ThreatMultiplier: 1 - []float64{0, .07, .14, .20}[priest.Talents.SilentResolve],
+			ThreatMultiplier: 1,
 
 			Hot: core.DotConfig{
 				Aura: core.Aura{

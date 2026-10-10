@@ -53,7 +53,7 @@ func (priest *Priest) registerPowerWordShieldSpell() {
 				.02*float64(priest.Talents.FocusedPower) +
 				.02*float64(priest.Talents.SpiritualHealing)) *
 			core.TernaryFloat64(priest.HasSetBonus(ItemSetCrimsonAcolytesRaiment, 4), 1.05, 1),
-		ThreatMultiplier: 1 - []float64{0, .07, .14, .20}[priest.Talents.SilentResolve],
+		ThreatMultiplier: 1,
 
 		Shield: core.ShieldConfig{
 			Aura: core.Aura{
@@ -100,7 +100,7 @@ func (priest *Priest) registerPowerWordShieldSpell() {
 					.05*float64(priest.Talents.ImprovedPowerWordShield) +
 					.01*float64(priest.Talents.TwinDisciplines)) *
 				core.TernaryFloat64(priest.HasSetBonus(ItemSetCrimsonAcolytesRaiment, 4), 1.05, 1),
-			ThreatMultiplier: 1 - []float64{0, .07, .14, .20}[priest.Talents.SilentResolve],
+			ThreatMultiplier: 1,
 
 			ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 				baseHealing := 2230 + core.PowerBonus(coeff*spell.HealingPower(target))

@@ -33,7 +33,7 @@ func (priest *Priest) registerGreaterHealSpell() {
 			(1 + .02*float64(priest.Talents.FocusedPower)) *
 			core.TernaryFloat64(priest.HasSetBonus(ItemSetVestmentsOfAbsolution, 4), 1.05, 1),
 		CritMultiplier:   priest.DefaultHealingCritMultiplier(),
-		ThreatMultiplier: 1 - []float64{0, .07, .14, .20}[priest.Talents.SilentResolve],
+		ThreatMultiplier: 1,
 
 		Direct: core.SpellEffect{Effect: 0, Min: 3980, Max: 4620, SP: 1.611},
 		Mods: []core.SpellMod{

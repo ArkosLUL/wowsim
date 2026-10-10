@@ -506,6 +506,137 @@ func TestHealThreatOfGains(t *testing.T) {
 	}
 }
 
+func TestCastThreat(t *testing.T) {
+	for _, c := range []struct {
+		name    string
+		spellID int32
+		want    float64
+	}{
+		// the level, modified: physical, then nature
+		{"Bloodrage's aura", 29131, 10 * 2},
+		{"Replenishment", 57669, 1 * 2 * 0.5},
+		{"Invigoration", 71881, 80 * 2 * 0.5},
+		{"heroic Invigoration, rage", 71886, 80 * 2 * 0.5},
+		// SPELL_EFFECT_ENERGIZE: SPELL_ATTR0_CU_NO_INITIAL_THREAT
+		{"Bloodrage", 2687, 0},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			sim := threatTestSim(2)
+			unit := threatTestGainUnit(sim)
+			unit.PseudoStats.ThreatMultiplier = 2
+			unit.AddThreatSchoolMultiplier(SpellSchoolNature, 0.5)
+			metrics := unit.NewManaMetrics(ActionID{SpellID: 1})
+			cast := unit.NewCastThreat(c.spellID)
+
+			sim.CurrentTime = -time.Second
+			cast.Add(sim, metrics)
+			if metrics.threat != 0 {
+				t.Errorf("before the pull: threat %v", metrics.threat)
+			}
+			sim.CurrentTime = 0
+			cast.Add(sim, metrics)
+			cast.Add(sim, metrics)
+			if got := metrics.threat; !threatNear(got, 2*c.want) {
+				t.Errorf("two casts: threat %v, want %v", got, 2*c.want)
+			}
+			unit.doneGainThreat(sim)
+			if c.want == 0 {
+				return
+			}
+			action := unit.Metrics.actions[ActionID{SpellID: 1}]
+			for _, enemy := range sim.Encounter.TargetUnits {
+				if got := action.Targets[enemy.UnitIndex].Threat; !threatNear(got, c.want) {
+					t.Errorf("%s: %v, want %v", enemy.Label, got, c.want)
+				}
+			}
+		})
+	}
+
+	// an enemy spell's bonus goes to the enemies it hits, which only a sim spell's cast knows
+	defer func() {
+		if recover() == nil {
+			t.Error("the cast threat of a negative spell didn't panic")
+		}
+	}()
+	sim := threatTestSim(1)
+	unit := threatTestGainUnit(sim)
+	unit.NewCastThreat(47450).Add(sim, unit.NewManaMetrics(ActionID{SpellID: 1}))
+}
+
+func TestCastThreatOf(t *testing.T) {
+	sim := threatTestSim(2)
+	unit := threatTestGainUnit(sim)
+	unit.PseudoStats.ThreatMultiplier = 2
+	unit.NewCastThreat(29131)
+	unit.NewCastThreat(2687)
+
+	if got, ok := unit.CastThreatOf(29131); !ok || !threatNear(got, 10*2) {
+		t.Errorf("Bloodrage's aura: %v, %v, want 20", got, ok)
+	}
+	if got, ok := unit.CastThreatOf(2687); !ok || got != 0 {
+		t.Errorf("Bloodrage, which has no bonus: %v, %v", got, ok)
+	}
+	if got, ok := unit.CastThreatOf(55503); ok {
+		t.Errorf("a spell the unit has no cast threat of: %v", got)
+	}
+}
+
+// The action's threat by what made it: the cast's energize, then its ticks with an aura cast's bonus.
+func TestEnergizeThreatOf(t *testing.T) {
+	sim := threatTestSim(2)
+	unit := threatTestGainUnit(sim)
+	unit.currentPowerBar = RageBar
+	action := ActionID{SpellID: 2687}
+	bySpell := unit.NewRageMetrics(action).EnergizeThreat(EnergizeBySpell)
+	byTick := unit.NewRageMetrics(action).EnergizeThreat(EnergizeByTick)
+	other := unit.NewRageMetrics(ActionID{SpellID: 1}).EnergizeThreat(EnergizeBySpell)
+	heal := unit.HealThreat(unit.NewHealthMetrics(action), 55503)
+
+	bySpell.AddEvent(20, 20)
+	unit.addGainThreat(sim, bySpell, 20, 20)
+	unit.NewCastThreat(29131).Add(sim, byTick)
+	byTick.AddEvent(1, 0.5)
+	unit.addGainThreat(sim, byTick, 1, 0.5)
+	other.AddEvent(10, 10)
+	unit.addGainThreat(sim, other, 10, 10)
+	unit.addGainThreat(sim, heal, 1000, 1000)
+
+	spell, tick, gain := unit.EnergizeThreatOf(action)
+	if !threatNear(spell, 100) || !threatNear(tick, 10+2.5) || !threatNear(gain, 0.5) {
+		t.Errorf("by spell %v, by tick %v for %v rage; want 100, 12.5 for 0.5", spell, tick, gain)
+	}
+}
+
+func TestEnergizeTickThreatForTheCaster(t *testing.T) {
+	for _, c := range []struct {
+		name          string
+		metrics       func(*Unit, ActionID) *ResourceMetrics
+		gain, want    float64
+		beforeThePull bool
+	}{
+		{name: "mana", metrics: (*Unit).NewManaMetrics, gain: 46, want: 23},
+		{name: "rage, in tenths", metrics: (*Unit).NewRageMetrics, gain: 1, want: 5},
+		{name: "a tick at full power", metrics: (*Unit).NewManaMetrics},
+		{name: "before the pull", metrics: (*Unit).NewManaMetrics, gain: 46, beforeThePull: true},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			sim := threatTestSim(2)
+			if c.beforeThePull {
+				sim.CurrentTime = -time.Second
+			}
+			caster := threatTestGainUnit(sim)
+			// unmodified, and whatever power the caster itself is on
+			caster.PseudoStats.ThreatMultiplier = 2
+			caster.currentPowerBar = EnergyBar
+			metrics := c.metrics(caster, ActionID{SpellID: 1})
+			caster.AddEnergizeTickThreat(sim, metrics, c.gain)
+			if got := metrics.threat; !threatNear(got, c.want) {
+				t.Errorf("threat %v, want %v", got, c.want)
+			}
+		})
+	}
+}
+
 type threatTestAgent struct {
 	Agent
 	character *Character

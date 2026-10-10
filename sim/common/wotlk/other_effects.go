@@ -621,6 +621,10 @@ func init() {
 			if character.HasEnergyBar() {
 				resourceMetricsEnergy = character.NewEnergyMetrics(actionID).EnergizeThreat(core.EnergizeByTick)
 			}
+			// a proc casts the Invigoration of the wearer's power
+			manaCast := character.NewCastThreat(core.TernaryInt32(isHeroic, 71888, 71881))
+			rageCast := character.NewCastThreat(core.TernaryInt32(isHeroic, 71886, 71883))
+			energyCast := character.NewCastThreat(core.TernaryInt32(isHeroic, 71887, 71882))
 
 			var pa *core.PendingAction
 			procAura := character.GetOrRegisterAura(core.Aura{
@@ -662,6 +666,14 @@ func init() {
 					// Deactivate first, to cancel old PA.
 					procAura.Deactivate(sim)
 					procAura.Activate(sim)
+					switch character.GetCurrentPowerBar() {
+					case core.ManaBar:
+						manaCast.Add(sim, resourceMetricsMana)
+					case core.RageBar:
+						rageCast.Add(sim, resourceMetricsRage)
+					case core.EnergyBar:
+						energyCast.Add(sim, resourceMetricsEnergy)
+					}
 				},
 			})
 		})

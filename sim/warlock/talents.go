@@ -489,7 +489,7 @@ func (warlock *Warlock) setupImprovedSoulLeech() {
 	if warlock.Pet != nil {
 		impSoulLeechPetManaMetric = warlock.Pet.NewManaMetrics(actionID)
 	}
-	replSrc := warlock.Env.Raid.NewReplenishmentSource(core.ActionID{SpellID: 54118})
+	replSrc := warlock.Env.Raid.NewReplenishmentSource(&warlock.Unit, core.ActionID{SpellID: 54118})
 
 	warlock.RegisterAura(core.Aura{
 		Label:    "Improved Soul Leech Hidden Aura",

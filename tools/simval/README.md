@@ -211,6 +211,21 @@ Per record (`threat.go`):
 - `heal threat` (records with `heal`): the sim's threat for `heal.amount` healed, through `Unit.HealThreat` of the
   probe's spell, else a measured spell's healing (`ProcMaskSpellHealing`), against `heal.threat`. Not compared
   when the sim doesn't heal with it.
+- An aura cast the sim books with a `CastThreat` (`Unit.CastThreatOf` of the probe's spell: Bloodrage's 29131,
+  Lifeblood) adds to `bonus` and the shares, evenly. With no sim spell (Invigoration, Replenishment) it's compared
+  like the heal-only probe, without a cast.
+- `school multipliers` (records with `modifiers.schools`, so every capture): `Unit.ThreatSchoolMultiplier` of all
+  seven schools before the cast, within 1e-4, so a school no probed spell has is held too (Silent Resolve's arcane).
+- `energize threat` (records with `energize.cast`): what the cast's `EnergizeBySpell` gains under the measured
+  spells' actions made (`Unit.EnergizeThreatOf`), a share per dummy, against the dummy's `live.energizeAssist`
+  share, else `energize.cast.threat`; `energize shares` for the other creatures. A capture without `energize`
+  gets neither.
+- `energize tick threat` (records with `energize.tick`): mana is spent to make room, the sim runs 1.5 periods
+  (a tick waits for the next server update), and the tick metrics' threat per power gained, times
+  `energize.tick.amount`, is held to `energize.tick.threat`. Rage and runic power are tenths on the server. The
+  size of the sim's tick isn't compared. Fails when the sim's spell gave no power; not compared without a sim spell.
+- A probe's key and encounter count the creatures of `live.assist`, else of `live.energizeAssist` (Bloodrage has no
+  bonus).
 - Within 0.01 or 1e-4 relative. A cast that panics or deals NaN fails as `sim cast`; one that misses every try (Holy
   Wrath on a giant) is compared with a note.
 

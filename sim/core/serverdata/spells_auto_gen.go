@@ -10507,6 +10507,66 @@ var spells = []Spell{
 			{Effect: 6, Aura: 4, BasePoints: 9, DieSides: 1, DamageMultiplier: 1, ClassMask: [3]uint32{0, 0x1000}},
 		},
 	},
+	// Invigoration
+	{
+		ID: 71881, Family: 7, SchoolMask: 8, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagPositive,
+		AttributesCu: 0x100000,
+		DurationMs:   10000, MaxDurationMs: 10000,
+		ProcChance: 101, SpellLevel: 80, BaseLevel: 80,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 24, AmplitudeMs: 2000, BasePoints: 119, DieSides: 1, DamageMultiplier: 1},
+		},
+	},
+	// Invigoration
+	{
+		ID: 71882, Family: 7, SchoolMask: 8, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagPositive,
+		AttributesCu: 0x100000,
+		DurationMs:   10000, MaxDurationMs: 10000,
+		ProcChance: 101, SpellLevel: 80, BaseLevel: 80,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 24, AmplitudeMs: 2000, BasePoints: 3, DieSides: 1, DamageMultiplier: 1, MiscValue: 3},
+		},
+	},
+	// Invigoration
+	{
+		ID: 71883, Family: 7, SchoolMask: 8, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagPositive,
+		AttributesCu: 0x100000,
+		DurationMs:   10000, MaxDurationMs: 10000,
+		ProcChance: 101, SpellLevel: 80, BaseLevel: 80,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 24, AmplitudeMs: 2000, BasePoints: 19, DieSides: 1, DamageMultiplier: 1, MiscValue: 1},
+		},
+	},
+	// Invigoration
+	{
+		ID: 71886, Family: 7, SchoolMask: 8, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagPositive,
+		AttributesCu: 0x100000,
+		DurationMs:   12000, MaxDurationMs: 12000,
+		ProcChance: 101, SpellLevel: 80, BaseLevel: 80,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 24, AmplitudeMs: 2000, BasePoints: 19, DieSides: 1, DamageMultiplier: 1, MiscValue: 1},
+		},
+	},
+	// Invigoration
+	{
+		ID: 71887, Family: 7, SchoolMask: 8, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagPositive,
+		AttributesCu: 0x100000,
+		DurationMs:   12000, MaxDurationMs: 12000,
+		ProcChance: 101, SpellLevel: 80, BaseLevel: 80,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 24, AmplitudeMs: 2000, BasePoints: 3, DieSides: 1, DamageMultiplier: 1, MiscValue: 3},
+		},
+	},
+	// Invigoration
+	{
+		ID: 71888, Family: 7, SchoolMask: 8, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagPositive,
+		AttributesCu: 0x100000,
+		DurationMs:   12000, MaxDurationMs: 12000,
+		ProcChance: 101, SpellLevel: 80, BaseLevel: 80,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 24, AmplitudeMs: 2000, BasePoints: 119, DieSides: 1, DamageMultiplier: 1},
+		},
+	},
 	// Chaos Bane
 	{
 		ID: 71904, SchoolMask: 32, Flags: FlagTargetsArea,
