@@ -104,8 +104,9 @@ func (fireElemental *FireElemental) registerFireShieldAura() {
 
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 				baseDamage := dot.Tick.Roll(sim) + core.PowerBonus(dot.Tick.SP*dot.Spell.SpellPower())
+				// magic class with no always-hit attribute, so each target rolls the elemental's spell hit
 				for _, aoeTarget := range sim.Encounter.TargetUnits {
-					dot.Spell.CalcAndDealDamage(sim, aoeTarget, baseDamage, dot.Spell.OutcomeMagicCrit)
+					dot.Spell.CalcAndDealDamage(sim, aoeTarget, baseDamage, dot.Spell.OutcomeMagicHitAndCrit)
 				}
 			},
 		},

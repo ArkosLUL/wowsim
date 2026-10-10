@@ -170,8 +170,8 @@ func (hunter *Hunter) applySpiritBond() {
 		return
 	}
 
-	hunter.PseudoStats.HealingTakenMultiplier *= 1 + 0.05*float64(hunter.Talents.SpiritBond)
-	hunter.pet.PseudoStats.HealingTakenMultiplier *= 1 + 0.05*float64(hunter.Talents.SpiritBond)
+	hunter.AddHealingTakenPct(5 * hunter.Talents.SpiritBond)
+	hunter.pet.AddHealingTakenPct(5 * hunter.Talents.SpiritBond)
 
 	actionID := core.ActionID{SpellID: 20895}
 	healthMultiplier := 0.01 * float64(hunter.Talents.SpiritBond)

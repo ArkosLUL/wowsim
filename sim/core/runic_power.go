@@ -600,24 +600,23 @@ func (rp *runicPowerBar) OptimalRuneCost(cost RuneCost) RuneCost {
 
 // spendRuneCost takes the cost the way Spell::TakeRunePower does. A missed spell's runes come back after
 // RUNE_MISS_COOLDOWN, and its death runes stay death.
-func (rp *runicPowerBar) spendRuneCost(sim *Simulation, spell *Spell, cost RuneCost, missed bool) (RuneChangeType, []int8) {
+func (rp *runicPowerBar) spendRuneCost(sim *Simulation, spell *Spell, cost RuneCost, missed bool) RuneChangeType {
 	if !cost.HasRune() {
 		if rpc := cost.RunicPower(); rpc > 0 {
 			rp.spendRunicPower(sim, float64(rpc)/10, spell.RunicPowerMetrics())
 		}
-		return None, nil
+		return None
 	}
 
 	b, f, u, d := cost.Blood(), cost.Frost(), cost.Unholy(), cost.Death()
-	slots := make([]int8, 0, b+f+u+d)
 	for i := int8(0); i < b; i++ {
-		slots = append(slots, rp.spendRune(sim, 0, spell.BloodRuneMetrics(), missed))
+		rp.spendRune(sim, 0, spell.BloodRuneMetrics(), missed)
 	}
 	for i := int8(0); i < f; i++ {
-		slots = append(slots, rp.spendRune(sim, 2, spell.FrostRuneMetrics(), missed))
+		rp.spendRune(sim, 2, spell.FrostRuneMetrics(), missed)
 	}
 	for i := int8(0); i < u; i++ {
-		slots = append(slots, rp.spendRune(sim, 4, spell.UnholyRuneMetrics(), missed))
+		rp.spendRune(sim, 4, spell.UnholyRuneMetrics(), missed)
 	}
 	if d > 0 {
 		modified := spell.Cost.(*RuneCostImpl).modified
@@ -632,7 +631,7 @@ func (rp *runicPowerBar) spendRuneCost(sim *Simulation, spell *Spell, cost RuneC
 				if left == 0 || rp.runeStates&isSpentDeath[slot] != isDeaths[slot] || !anyBase && owed[base] == 0 {
 					continue
 				}
-				slots = append(slots, rp.spendDeathRune(sim, slot, spell.DeathRuneMetrics(), missed))
+				rp.spendDeathRune(sim, slot, spell.DeathRuneMetrics(), missed)
 				left--
 				if !anyBase {
 					owed[base]--
@@ -645,7 +644,7 @@ func (rp *runicPowerBar) spendRuneCost(sim *Simulation, spell *Spell, cost RuneC
 		rp.AddRunicPower(sim, float64(rpc)/10, spell.RunicPowerMetrics())
 	}
 
-	return SpendRune, slots
+	return SpendRune
 }
 
 func (rp *runicPowerBar) typeAmount(metrics *ResourceMetrics) (string, int8) {
@@ -797,13 +796,12 @@ func (rp *runicPowerBar) Advance(sim *Simulation, newTime time.Duration) {
 	rp.maybeFireChange(sim, changeType)
 }
 
-func (rp *runicPowerBar) spendRune(sim *Simulation, firstSlot int8, metrics *ResourceMetrics, missed bool) int8 {
+func (rp *runicPowerBar) spendRune(sim *Simulation, firstSlot int8, metrics *ResourceMetrics, missed bool) {
 	slot := rp.findReadyRune(firstSlot)
 	rp.runeStates |= isSpents[slot]
 
 	rp.spendRuneMetrics(sim, metrics, 1)
 	rp.launchRuneRegen(sim, slot, missed)
-	return slot
 }
 
 func (rp *runicPowerBar) findReadyRune(slot int8) int8 {
@@ -816,7 +814,7 @@ func (rp *runicPowerBar) findReadyRune(slot int8) int8 {
 	panic(fmt.Sprintf("findReadyRune(%d) - no slot found (runeStates = %12b)", slot, rp.runeStates))
 }
 
-func (rp *runicPowerBar) spendDeathRune(sim *Simulation, slot int8, metrics *ResourceMetrics, missed bool) int8 {
+func (rp *runicPowerBar) spendDeathRune(sim *Simulation, slot int8, metrics *ResourceMetrics, missed bool) {
 	if rp.btSlot != slot && !missed {
 		rp.runeMeta[slot].revertAt = NeverExpires // disable revert at
 		rp.runeMeta[slot].talent = noDeathRuneTalent
@@ -828,7 +826,6 @@ func (rp *runicPowerBar) spendDeathRune(sim *Simulation, slot int8, metrics *Res
 
 	rp.spendRuneMetrics(sim, metrics, 1)
 	rp.launchRuneRegen(sim, slot, missed)
-	return slot
 }
 
 func (rp *runicPowerBar) IsBloodTappedRune(slot int8) bool {
@@ -934,7 +931,7 @@ func (rc *RuneCostImpl) SpendCost(sim *Simulation, spell *Spell) {
 	if rc.Refundable {
 		return
 	}
-	changeType, _ := spell.Unit.spendRuneCost(sim, spell, RuneCost(spell.CurCast.Cost), false)
+	changeType := spell.Unit.spendRuneCost(sim, spell, RuneCost(spell.CurCast.Cost), false)
 	spell.Unit.maybeFireChange(sim, changeType)
 	rc.gainRunicPower(sim, spell)
 }
@@ -949,11 +946,10 @@ func (rc *RuneCostImpl) gainRunicPower(sim *Simulation, spell *Spell) {
 // spendOnResult pays a refundable spell's cost as Spell::TakePower does on its main target's result: a miss,
 // dodge or parry still takes the runes, for RUNE_MISS_COOLDOWN, but gives no runic power, and of a runic
 // power cost it takes only irand(0, cost / 4).
-func (rc *RuneCostImpl) spendOnResult(sim *Simulation, spell *Spell, result *SpellResult) (RuneChangeType, []int8, bool) {
+func (rc *RuneCostImpl) spendOnResult(sim *Simulation, spell *Spell, result *SpellResult) (RuneChangeType, bool) {
 	// a full block counts as a hit
 	hit := result.Landed() || result.Outcome.Matches(OutcomeBlock)
 	var changeType RuneChangeType
-	var slots []int8
 	cost := RuneCost(spell.CurCast.Cost) // cost was already optimized in RuneSpell.Cast
 	switch {
 	case cost == 0:
@@ -963,16 +959,16 @@ func (rc *RuneCostImpl) spendOnResult(sim *Simulation, spell *Spell, result *Spe
 			spell.Unit.spendRunicPower(sim, float64(spent)/10, spell.RunicPowerMetrics())
 		}
 	default:
-		changeType, slots = spell.Unit.spendRuneCost(sim, spell, cost, !hit)
+		changeType = spell.Unit.spendRuneCost(sim, spell, cost, !hit)
 	}
 	if hit {
 		rc.gainRunicPower(sim, spell)
 	}
-	return changeType, slots, hit
+	return changeType, hit
 }
 
 func (rc *RuneCostImpl) spendRefundableCost(sim *Simulation, spell *Spell, result *SpellResult) {
-	changeType, _, _ := rc.spendOnResult(sim, spell, result)
+	changeType, _ := rc.spendOnResult(sim, spell, result)
 	spell.Unit.maybeFireChange(sim, changeType)
 }
 
@@ -981,7 +977,7 @@ func (spell *Spell) SpendRefundableCost(sim *Simulation, result *SpellResult) {
 }
 
 func (rc *RuneCostImpl) spendRefundableCostAndConvertBloodRune(sim *Simulation, spell *Spell, result *SpellResult, convertChance float64) {
-	changeType, _, hit := rc.spendOnResult(sim, spell, result)
+	changeType, hit := rc.spendOnResult(sim, spell, result)
 	if hit && sim.Proc(convertChance, deathRuneTalentLabel) {
 		changeType |= spell.Unit.procDeathRuneTalent(sim, bloodDeathRuneTalent)
 	}
@@ -993,7 +989,7 @@ func (spell *Spell) SpendRefundableCostAndConvertBloodRune(sim *Simulation, resu
 }
 
 func (rc *RuneCostImpl) spendRefundableCostAndConvertFrostOrUnholyRune(sim *Simulation, spell *Spell, result *SpellResult, convertChance float64) {
-	changeType, _, hit := rc.spendOnResult(sim, spell, result)
+	changeType, hit := rc.spendOnResult(sim, spell, result)
 	if hit && sim.Proc(convertChance, deathRuneTalentLabel) {
 		changeType |= spell.Unit.procDeathRuneTalent(sim, frostUnholyDeathRuneTalent)
 	}

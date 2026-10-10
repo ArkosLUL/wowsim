@@ -1,6 +1,8 @@
 package core
 
 import (
+	"fmt"
+	"slices"
 	"time"
 
 	"github.com/wowsims/wotlk/sim/core/proto"
@@ -88,6 +90,53 @@ func (hb *healthBar) RemoveHealth(sim *Simulation, amount float64) {
 	}
 
 	hb.currentHealth = newHealth
+}
+
+// AddHealingTakenPct puts a SPELL_AURA_MOD_HEALING_PCT aura of pct percent on the unit, and
+// RemoveHealingTakenPct takes it off. They don't stack: Unit::SpellHealingBonusTaken counts only the highest
+// positive one and the lowest negative one, and multiplies those two. PseudoStats.HealingTakenMultiplier
+// holds what they come to, so never multiply one of these auras into it directly.
+func (unit *Unit) AddHealingTakenPct(pct int32) {
+	if pct == 0 {
+		return
+	}
+	if pct <= -100 {
+		panic(fmt.Sprintf("%s: a %d%% healing taken aura can't be taken off again", unit.Label, pct))
+	}
+	before := healingTakenPctMultiplier(unit.healingTakenPcts)
+	unit.healingTakenPcts = append(unit.healingTakenPcts, pct)
+	unit.foldHealingTakenPcts(before)
+}
+
+func (unit *Unit) RemoveHealingTakenPct(pct int32) {
+	if pct == 0 {
+		return
+	}
+	i := slices.Index(unit.healingTakenPcts, pct)
+	if i == -1 {
+		panic(fmt.Sprintf("%s has no %d%% healing taken aura to take off", unit.Label, pct))
+	}
+	before := healingTakenPctMultiplier(unit.healingTakenPcts)
+	unit.healingTakenPcts = slices.Delete(unit.healingTakenPcts, i, i+1)
+	unit.foldHealingTakenPcts(before)
+}
+
+// foldHealingTakenPcts swaps the auras' old share of HealingTakenMultiplier for their new one. With nothing
+// else multiplied in, the result is exactly the new share.
+func (unit *Unit) foldHealingTakenPcts(before float64) {
+	if after := healingTakenPctMultiplier(unit.healingTakenPcts); after != before {
+		unit.PseudoStats.HealingTakenMultiplier = unit.PseudoStats.HealingTakenMultiplier / before * after
+	}
+}
+
+// healingTakenPctMultiplier works on whole percents, so 40% and -20% come to 1.12 and not 1.4 x 0.8's
+// 1.1199999999999999, which would cost a heal of 100 a point.
+func healingTakenPctMultiplier(pcts []int32) float64 {
+	highest, lowest := int32(0), int32(0)
+	for _, pct := range pcts {
+		highest, lowest = max(highest, pct), min(lowest, pct)
+	}
+	return float64((100+highest)*(100+lowest)) / 10000
 }
 
 var ChanceOfDeathAuraLabel = "Chance of Death"

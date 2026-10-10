@@ -105,3 +105,35 @@ func TestRangedWeaponSpecializationSchools(t *testing.T) {
 		t.Errorf("Serpent Sting's own multiplier x%v, want x1: its school carries the talent", got)
 	}
 }
+
+// Spirit Bond's 24529, Blood of the Rhino and Improved Devotion Aura's 63514 are all
+// SPELL_AURA_MOD_HEALING_PCT, and Unit::SpellHealingBonusTaken counts only the highest one on a unit: 10% on
+// the hunter and 40% on the pet, under the raid's 6%.
+func TestHealingTakenTalentsDontStack(t *testing.T) {
+	options := googleProto.Clone(PlayerOptionsBasic.Hunter.Options).(*proto.Hunter_Options)
+	options.PetType = proto.Hunter_Options_Wolf
+	options.PetTalents = &proto.HunterPetTalents{BloodOfTheRhino: 2}
+	raid := core.SinglePlayerRaidProto(&proto.Player{
+		Race:          proto.Race_RaceOrc,
+		Class:         proto.Class_ClassHunter,
+		Equipment:     core.GetGearSet("../../ui/hunter/gear_sets", "p1_sv").GearSet,
+		Consumes:      FullConsumes,
+		Spec:          &proto.Player_Hunter{Hunter: &proto.Hunter{Options: options}},
+		Rotation:      core.GetAplRotation("../../ui/hunter/apls", "bm").Rotation,
+		TalentsString: SpiritBondTalents,
+	}, core.FullPartyBuffs, core.FullRaidBuffs, core.FullDebuffs)
+	if raid.Buffs.DevotionAura != proto.TristateEffect_TristateEffectImproved || raid.Buffs.StrengthOfWrynn {
+		t.Fatalf("the full raid buffs: Devotion Aura %v, Strength of Wrynn %v", raid.Buffs.DevotionAura, raid.Buffs.StrengthOfWrynn)
+	}
+	env, _, _ := core.NewEnvironment(raid, core.MakeSingleTargetEncounter(0), false)
+	hunter := env.Raid.Parties[0].Players[0].(*Hunter)
+	if hunter.Talents.SpiritBond != 2 {
+		t.Fatalf("Spirit Bond %d, want 2", hunter.Talents.SpiritBond)
+	}
+	if got := hunter.PseudoStats.HealingTakenMultiplier; got != 1.1 {
+		t.Errorf("the hunter's healing taken x%v, want Spirit Bond's x1.1", got)
+	}
+	if got := hunter.pet.PseudoStats.HealingTakenMultiplier; got != 1.4 {
+		t.Errorf("the pet's healing taken x%v, want Blood of the Rhino's x1.4", got)
+	}
+}

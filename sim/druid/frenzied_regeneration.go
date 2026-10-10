@@ -14,18 +14,19 @@ func (druid *Druid) registerFrenziedRegenerationCD() {
 
 	cdTimer := druid.NewTimer()
 	cd := time.Minute * 3
-	healingMulti := core.TernaryFloat64(druid.HasMajorGlyph(proto.DruidMajorGlyph_GlyphOfFrenziedRegeneration), 1.2, 1.0)
+	// the glyph is a flat 20 on the spell's own healing taken effect, 0 without it
+	healingTaken := core.TernaryInt32(druid.HasMajorGlyph(proto.DruidMajorGlyph_GlyphOfFrenziedRegeneration), 20, 0)
 
 	druid.FrenziedRegenerationAura = druid.RegisterAura(core.Aura{
 		Label:    "Frenzied Regeneration",
 		ActionID: actionID,
 		Duration: time.Second * 10,
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
-			druid.PseudoStats.HealingTakenMultiplier *= healingMulti
+			druid.AddHealingTakenPct(healingTaken)
 		},
 
 		OnExpire: func(aura *core.Aura, sim *core.Simulation) {
-			druid.PseudoStats.HealingTakenMultiplier /= healingMulti
+			druid.RemoveHealingTakenPct(healingTaken)
 		},
 	})
 

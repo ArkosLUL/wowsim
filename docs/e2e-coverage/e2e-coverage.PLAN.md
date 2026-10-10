@@ -1947,6 +1947,24 @@ Review, 2026-10-10:
   fractional where the server's is an int32; Ferocious Bite and Eviscerate roll their base inline, not in whole
   steps; 53353 truncates after its 2.0 or 2.8, the server before; no UI test holds the sheet's defense skill.
 
+Cross-review, 2026-10-10, on `5692dd49d` with the three items merged:
+- Healing taken (fixed, the class item's contract request): `Unit::SpellHealingBonusTaken` counts one
+  `SPELL_AURA_MOD_HEALING_PCT`, the highest positive, times the lowest negative. `Unit.AddHealingTakenPct` and
+  `RemoveHealingTakenPct` (`sim/core/health.go`) keep the list and fold the result into `HealingTakenMultiplier`,
+  off whole percents. Through it: Improved Devotion Aura, Guardian Spirit, Spirit Bond, Blood of the Rhino, Vampiric
+  Blood, Glyph of Frenzied Regeneration, Mind Trauma. Strength of Wrynn stays a plain multiplier: its third effect is
+  healing done (aura 136), stood in on the one healed.
+- `spendRuneCost` and `spendOnResult` no longer build the spent-slot slice nobody reads (an allocation a rune cast).
+- e2e: `TestSimvalFight` failed HunterMM (Kill Shot never goes off on a full dummy) and saved a log the replay can't
+  use; it now fights a `pull` or `dummyHealthPct` cycle through `ecCore3Fight`. `run.sh`'s default run skips
+  `TestSimvalEcCore3LowHealthFight` and `TestSimvalEcClass2Fight` by name. Compiled and vetted, not run live.
+- `gen_serverdata` rerun on the merged tree: no change. The fights README's empty drop table says so.
+- Tests: `TestHealingTakenPctsDontStack`, `TestImprovedDevotionAuraDoesntStackWithGuardianSpirit`,
+  `TestHealingTakenTalentsDontStack` (hunter).
+- Goldens: TestFeralTank, one row's hps −1.4% (Glyph of Frenzied Regeneration's 20% no longer over the aura's 6%).
+- Follow-ups: heal Penance rolls its base inline (`sim.Roll`), not in whole steps, as Ferocious Bite; Blood Presence's
+  50475 takes Strength of Wrynn's stand-in, where the server's class-none heal takes no healing done percent.
+
 ### EC-PET-FIX2 (Z5; changes goldens; stages: code, live)
 
 - Timers: pets' 2 s scaling and mana regen, and the 3 s hit and 2 s haste refreshes (`sim/core/pet.go`), count from
@@ -2017,6 +2035,16 @@ Review, on `a1bb8d403`:
 - Left: a `melee` record of the Shadowfiend; a pet out since before the pull ticks nothing during the prepull, its
   first tick lands up to a period after 0 (as before the item); a tick sharing a map update with the pet's own
   swing or cast runs after it, where the server's aura tick comes first.
+
+Cross-review, 2026-10-10, on `5692dd49d` with the three items merged:
+- Fire Shield (fixed, the core item's contract request): 13376 is magic class with no `ALWAYS_HIT`, so
+  `WorldObject::MagicSpellHitResult` rolls each tick's hit per target; it had `OutcomeMagicCrit`.
+  `TestFireShieldRollsSpellHit`.
+- Goldens (Average-Convection): Elemental −0.06% (Fire Shield hits 40 → 38.8, the rest the extra roll's reshuffle),
+  rows −1.8 to +1.1%; Enhancement rows −1.2 to +0.7%.
+- Not changed: the three images' hits truncate as one sum, each on the server (about a point a cast over, with a
+  talent multiplier).
+- Follow-up: a `spell 13376` record of the elemental (`petfixPets`, `petsProbes`).
 
 ### EC-CLASS-FIX2 (Z5; changes goldens; stages: melee, casters, live)
 
@@ -2166,6 +2194,14 @@ Review, on the same base:
   `TestTormentTheWeakCountsImagesAndFireSnares`.
 - Contract request: 63514 multiplies with a larger healing taken aura the server would count alone (Spirit Bond,
   Vampiric Blood, Guardian Spirit, Strength of Wrynn); core needs the highest positive aura only.
+
+Cross-review, 2026-10-10, on `5692dd49d` with the three items merged:
+- 63514 went through core's new `AddHealingTakenPct` (EC-CORE-FIX3's Cross-review), in `sim/core/buffs.go` and
+  `improveDevotionAura`, with the other healing taken auras of these classes; no golden of theirs moves but
+  TestFeralTank's row.
+- Checked, no change: every damage and heal line the item added truncates once, where the server does; the cast
+  reorder leaves Blood Tap and Death Coil as tested; nothing reads a pet's stats at a fixed time.
+- Follow-up: Improved Blood Presence's 5/10% is now `AddHealingTakenPct` on Blood Presence's aura.
 
 ### EC-THREAT-FIX4 (Z5; changes goldens, full suite; C++; stages: threat, C++ and e2e, live)
 

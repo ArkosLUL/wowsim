@@ -393,6 +393,7 @@ type PseudoStats struct {
 	ReducedNatureHitTakenChance   float64
 	ReducedShadowHitTakenChance   float64
 
+	// healing taken percent auras don't stack, so they go on through Unit.AddHealingTakenPct
 	HealingTakenMultiplier float64
 }
 

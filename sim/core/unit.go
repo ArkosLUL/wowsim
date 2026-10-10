@@ -136,6 +136,10 @@ type Unit struct {
 	focusBar
 	runicPowerBar
 
+	// every SPELL_AURA_MOD_HEALING_PCT amount on the unit, in percent (AddHealingTakenPct)
+	healingTakenPcts        []int32
+	initialHealingTakenPcts []int32
+
 	// All spells that can be cast by this unit.
 	Spellbook                 []*Spell
 	spellRegistrationHandlers []SpellRegisteredHandler
@@ -473,6 +477,7 @@ func (unit *Unit) finalize() {
 	unit.initialCastSpeed = unit.CastSpeed
 	unit.initialMeleeSwingSpeed = unit.SwingSpeed()
 	unit.initialRangedSwingSpeed = unit.RangedSwingSpeed()
+	unit.initialHealingTakenPcts = append([]int32(nil), unit.healingTakenPcts...)
 
 	unit.StatDependencyManager.FinalizeStatDeps()
 	unit.initialStats = unit.ApplyStatDependencies(unit.initialStatsWithoutDeps)
@@ -493,6 +498,7 @@ func (unit *Unit) reset(sim *Simulation, _ Agent) {
 	unit.ChanneledDot = nil
 	unit.Metrics.reset()
 	unit.ResetStatDeps()
+	unit.healingTakenPcts = append(unit.healingTakenPcts[:0], unit.initialHealingTakenPcts...)
 	unit.statsWithoutDeps = unit.initialStatsWithoutDeps
 	unit.stats = unit.initialStats
 	unit.PseudoStats = unit.initialPseudoStats

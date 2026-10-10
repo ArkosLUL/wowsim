@@ -21,8 +21,8 @@ One entry per `goldchar_setups.json` setup; the e2e runs it, the replay reads it
 | `cycle` | steps tried in order, round and round, whatever the server answers |
 | step `spell`, `name`, `waitMs` | the spell id, the server's name, and how long the bot waits after trying it |
 
-A cycle with `dummyHealthPct` or `pull` is fought by `TestSimvalEcCore3LowHealthFight`, not `TestSimvalFight`
-(module README).
+`TestSimvalFight` fights a cycle with `dummyHealthPct` or `pull` the way `TestSimvalEcCore3LowHealthFight` does,
+which runs only those (module README).
 
 Rules, held by `TestFightCycles`:
 - Every step is a spell of the setup's class the sim character can cast (`SpellFlagAPL`, through `fightSimActions`),
@@ -66,8 +66,8 @@ Representation gaps, not mismatches, each with its reason in `tools/simval/fight
 ## Dropped checks
 
 Real sim or cycle mismatches, each a follow-up, in `droppedFightChecks` (`tools/simval/fight.go`); a check is named
-by its subject (`47809`, `melee`, `Bloodworm melee`, `aura 17800 on target`, `energize 57946 mana`) and name. Why,
-by the table's cause:
+by its subject (`47809`, `melee`, `Bloodworm melee`, `aura 17800 on target`, `energize 57946 mana`) and name. None
+now.
 
 | Setup | Subject | Check | Why |
 |---|---|---|---|

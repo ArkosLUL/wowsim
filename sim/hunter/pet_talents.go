@@ -33,7 +33,7 @@ func (hp *HunterPet) ApplyTalents() {
 	}
 
 	if talents.BloodOfTheRhino != 0 {
-		hp.PseudoStats.HealingTakenMultiplier *= 1 + 0.2*float64(talents.BloodOfTheRhino)
+		hp.AddHealingTakenPct(20 * talents.BloodOfTheRhino)
 
 		hp.MultiplyStat(stats.Stamina, 1.0+0.02*float64(talents.BloodOfTheRhino))
 	}

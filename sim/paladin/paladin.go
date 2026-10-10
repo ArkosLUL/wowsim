@@ -147,7 +147,7 @@ func (paladin *Paladin) improveDevotionAura() {
 		}
 	}
 	bonus := math.Trunc(1205 * float64(17*points) / 100)
-	healingTaken := 1 + 0.02*float64(points)
+	healingTaken := 2 * points
 	for _, party := range paladin.Env.Raid.Parties {
 		for _, player := range party.Players {
 			if _, ok := player.(*core.TargetDummy); ok {
@@ -155,12 +155,12 @@ func (paladin *Paladin) improveDevotionAura() {
 			}
 			character := player.GetCharacter()
 			character.AddStat(stats.Armor, bonus)
-			character.PseudoStats.HealingTakenMultiplier *= healingTaken
+			character.AddHealingTakenPct(healingTaken)
 			for _, pet := range character.Pets {
 				// 63514 needs the paladin's Devotion Aura on the unit, which an armor-immune summon never takes
 				if pet.BuffImmunity&core.PetImmuneArmor == 0 {
 					pet.AddStat(stats.Armor, bonus)
-					pet.PseudoStats.HealingTakenMultiplier *= healingTaken
+					pet.AddHealingTakenPct(healingTaken)
 				}
 			}
 		}

@@ -132,3 +132,72 @@ func TestAOECapMultiplier(t *testing.T) {
 		}
 	}
 }
+
+// Improved Devotion Aura's 63514 and Guardian Spirit are both SPELL_AURA_MOD_HEALING_PCT, so a heal under
+// both takes Guardian Spirit's 40% alone, not 1.06 x 1.4.
+func TestImprovedDevotionAuraDoesntStackWithGuardianSpirit(t *testing.T) {
+	sim := NewSim(&proto.RaidSimRequest{
+		SimOptions: &proto.SimOptions{RandomSeed: 100},
+		Raid: &proto.Raid{
+			Parties: []*proto.Party{{
+				Players: []*proto.Player{{
+					Name:      "Healed",
+					Class:     proto.Class_ClassShaman,
+					Consumes:  &proto.Consumes{},
+					Buffs:     &proto.IndividualBuffs{GuardianSpirits: 1},
+					Spec:      &proto.Player_ElementalShaman{},
+					Equipment: &proto.EquipmentSpec{},
+				}},
+				Buffs: &proto.PartyBuffs{},
+			}},
+			Buffs: &proto.RaidBuffs{DevotionAura: proto.TristateEffect_TristateEffectImproved},
+		},
+		Encounter: &proto.Encounter{
+			Targets:  []*proto.Target{{Name: "target", Level: 83, MobType: proto.MobType_MobTypeDemon}},
+			Duration: 180,
+		},
+	})
+	sim.Reset()
+	character := sim.Raid.Parties[0].Players[0].GetCharacter()
+	heal := character.RegisterSpell(SpellConfig{
+		ActionID:         ActionID{SpellID: 43},
+		SpellSchool:      SpellSchoolNature,
+		ProcMask:         ProcMaskSpellHealing,
+		Flags:            SpellFlagHelpful,
+		DamageMultiplier: 1,
+		ThreatMultiplier: 1,
+	})
+	healed := func() float64 {
+		result := heal.CalcHealing(sim, &character.Unit, 1000, heal.OutcomeHealing)
+		defer heal.DisposeResult(result)
+		return result.Damage
+	}
+	spirits := character.GetAurasWithTag(GuardianSpiritAuraTag)
+	if len(spirits) != 1 {
+		t.Fatalf("%d Guardian Spirit auras, want 1", len(spirits))
+	}
+
+	if got := healed(); got != 1060 {
+		t.Errorf("a heal of 1000 under Improved Devotion Aura is %v, want 1060", got)
+	}
+	spirits[0].Activate(sim)
+	if got := healed(); got != 1400 {
+		t.Errorf("with Guardian Spirit it's %v, want 1400", got)
+	}
+	spirits[0].Deactivate(sim)
+	if got := healed(); got != 1060 {
+		t.Errorf("after Guardian Spirit it's %v, want 1060 again", got)
+	}
+
+	// a new iteration starts from the aura alone, whatever was up when the last one ended
+	spirits[0].Activate(sim)
+	sim.Cleanup()
+	sim.Reset()
+	if got := healed(); got != 1060 {
+		t.Errorf("in the iteration after one that ended under Guardian Spirit a heal is %v, want 1060", got)
+	}
+	spirits[0].Activate(sim)
+	if got := healed(); got != 1400 {
+		t.Errorf("with Guardian Spirit after the reset it's %v, want 1400", got)
+	}
+}

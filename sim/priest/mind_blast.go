@@ -102,10 +102,10 @@ func MindTraumaAura(target *core.Unit) *core.Aura {
 		ActionID: core.ActionID{SpellID: 48301},
 		Duration: time.Second * 10,
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
-			aura.Unit.PseudoStats.HealingTakenMultiplier *= 0.8
+			aura.Unit.AddHealingTakenPct(-20)
 		},
 		OnExpire: func(aura *core.Aura, sim *core.Simulation) {
-			aura.Unit.PseudoStats.HealingTakenMultiplier /= 0.8
+			aura.Unit.RemoveHealingTakenPct(-20)
 		},
 	})
 }

@@ -100,6 +100,7 @@ func applyBuffEffects(agent Agent, raidBuffs *proto.RaidBuffs, partyBuffs *proto
 	if raidBuffs.StrengthOfWrynn {
 		character.MultiplyStat(stats.Health, 1.30)
 		character.PseudoStats.DamageDealtMultiplier *= 1.30
+		// healing done (aura 136), stood in on whoever is healed, so it multiplies with the healing taken auras
 		character.PseudoStats.HealingTakenMultiplier *= 1.30
 	}
 
@@ -207,7 +208,7 @@ func applyBuffEffects(agent Agent, raidBuffs *proto.RaidBuffs, partyBuffs *proto
 		})
 		// Improved Devotion Aura's 63514 rides the aura: 2% healing taken a point
 		if raidBuffs.DevotionAura == proto.TristateEffect_TristateEffectImproved {
-			character.PseudoStats.HealingTakenMultiplier *= 1.06
+			character.AddHealingTakenPct(6)
 		}
 	}
 
@@ -1042,10 +1043,10 @@ func GuardianSpiritAura(character *Character, actionTag int32) *Aura {
 		ActionID: actionID,
 		Duration: GuardianSpiritDuration,
 		OnGain: func(aura *Aura, sim *Simulation) {
-			character.PseudoStats.HealingTakenMultiplier *= 1.4
+			character.AddHealingTakenPct(40)
 		},
 		OnExpire: func(aura *Aura, sim *Simulation) {
-			character.PseudoStats.HealingTakenMultiplier /= 1.4
+			character.RemoveHealingTakenPct(40)
 		},
 	})
 }

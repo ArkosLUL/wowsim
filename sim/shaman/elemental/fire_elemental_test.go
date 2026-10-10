@@ -68,3 +68,46 @@ func TestFireElementalStats(t *testing.T) {
 		t.Errorf("Fire Blast costs %v and Fire Nova %v, want 40 and 30", blast, nova)
 	}
 }
+
+// Fire Shield's 13376 is magic class and has no always-hit attribute, so each tick rolls the elemental's spell
+// hit (WorldObject::MagicSpellHitResult): 17% misses against a level 83 target for a shaman with no hit.
+func TestFireShieldRollsSpellHit(t *testing.T) {
+	sim := core.NewSim(&proto.RaidSimRequest{
+		Raid: core.SinglePlayerRaidProto(&proto.Player{
+			Race:      proto.Race_RaceTroll,
+			Class:     proto.Class_ClassShaman,
+			Equipment: &proto.EquipmentSpec{},
+			Consumes:  &proto.Consumes{},
+			Spec: &proto.Player_ElementalShaman{ElementalShaman: &proto.ElementalShaman{
+				Options: &proto.ElementalShaman_Options{Totems: &proto.ShamanTotems{UseFireElemental: true}},
+			}},
+			Rotation: core.APLRotationFromJsonString(`{"type": "TypeAPL", "priorityList": []}`),
+		}, nil, nil, nil),
+		Encounter:  core.MakeSingleTargetEncounter(0),
+		SimOptions: &proto.SimOptions{Iterations: 1, IsTest: true, RandomSeed: 101},
+	})
+	sim.Reset()
+	shaman := sim.Raid.Parties[0].Players[0].(*ElementalShaman)
+	elemental := shaman.FireElemental
+	elemental.Enable(sim, elemental)
+	if hit := elemental.GetStat(stats.SpellHit); hit != 0 {
+		t.Fatalf("the elemental has %v spell hit rating off a shaman with none", hit)
+	}
+
+	shield := elemental.GetSpell(core.ActionID{SpellID: 13376})
+	if shield == nil || !shield.AOEDot().IsActive() {
+		t.Fatalf("Fire Shield isn't ticking on the summoned elemental")
+	}
+	const ticks = 4000
+	for i := 0; i < ticks; i++ {
+		shield.AOEDot().TickOnce(sim)
+	}
+	metrics := shield.SpellMetrics[sim.GetTargetUnit(0).UnitIndex]
+	if landed := metrics.Hits + metrics.Crits; landed+metrics.Misses != ticks {
+		t.Fatalf("%d ticks landed and %d missed, of %d", landed, metrics.Misses, ticks)
+	}
+	// 16.99% is 680 of 4000, give or take 5 deviations of 24
+	if metrics.Misses < 560 || metrics.Misses > 800 {
+		t.Errorf("%d of %d Fire Shield ticks missed, want about 680", metrics.Misses, ticks)
+	}
+}
