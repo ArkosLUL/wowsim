@@ -171,9 +171,9 @@ its specs. It waits for the user's continue.
   server the user rebuilt on 2026-10-10 (image of 20:04 local: [ac] `3d89793c7`, mod-spell-tweaks `9bf5c75`,
   mod-sim-validation `bb2a21d`). The module's HEAD is `8a6f13f`: its `TICK_PERIOD_SCRIPTS` change needs a rebuild
   by the user, then MageFire's spell-mod sweep again (EC-CLASS-FIX3).
-  Not done: RI-5's "After it lands on `master`" steps (raid-import PLAN). The user approved them (2026-10-11)
-  and auto mode refused the first (`docker tag`, the candidate build), so the user runs them. Prod still runs
-  X's `25cb9dddc` (no `rollback-q` image: its layers were gone), without Y's to Z6's sim changes.
+  Prod runs Z6's `e5a289570` (RI-5's "After it lands on `master`" steps, 2026-10-11); `wowsims-wotlk:rollback-x`
+  is X's `25cb9dddc`. Auto mode refuses the prod docker commands, a DSN on a command line and chained commands:
+  the user's allow rules (`.claude/settings.local.json` in [sim]) cover each plain command.
   Next, Z7, planned: EC-CORE-FIX4, EC-PET-FIX3, EC-CLASS-FIX3 and EC-TOOLS, Z6's follow-ups in their specs.
   Z6's reports: `G:\DevStuff\GitHub\.wave-loop\z6-run1\*.md`, `waveZ6-results.json`; item notes:
   `.wave-loop\{par-fu-8,par-fu-9,par-fu-10,ri-5}-tmp`.

@@ -73,12 +73,14 @@ npx protoc --ts_out ui/core/proto --proto_path proto proto/ui.proto
     -v azerothcore-wotlk-pb_ac-client-data:/acdata:ro \
     --mount type=bind,source=G:/DevStuff/GitHub/.wowsim,target=/wowsim,readonly \
     --mount type=bind,source=G:/DevStuff/GitHub/azerothcore-wotlk-pb/configurationOverrides/Playerbot.env,target=/acconf/Playerbot.env,readonly \
-    wowsims-wotlk \
-    '--acoreDsn=root:password@tcp(host.docker.internal:3306)/' --acoreDbcDir=/acdata/dbc \
+    --env-file G:/DevStuff/GitHub/.wowsim/prod.env \
+    wowsims-wotlk --acoreDbcDir=/acdata/dbc \
     --acoreNamesFile=/wowsim/core-raid.txt --acoreLeader=Deathsong \
     --acoreWorldBuffMatrix=/acconf/Playerbot.env
   ```
 
+  - `prod.env` holds one line, `AC_DSN=root:password@tcp(host.docker.internal:3306)/` with the real password,
+    unquoted, the final `/` included. It stays outside the repo, and the DSN off the command line.
   - It's distroless: no shell. It serves whatever was built into the image, so rebuild it to see
     changes. The mounts and `--acore*` flags only feed `/acoreRoster` (below).
   - The names file's directory is mounted, not the file: an editor that replaces a file leaves a
@@ -91,9 +93,8 @@ npx protoc --ts_out ui/core/proto --proto_path proto proto/ui.proto
 - **Dev server** on :3334, since prod holds :3333. `--usefs` serves `./dist` from the mounted checkout.
   There's no hot reload: `docker rm -f wotlk-dev` and start it again after changes. With a worktree
   mounted, add `-e SIM_COMMIT=$(git -C <worktree> rev-parse HEAD)`: its `.git` points outside the mount,
-  so the container can't read the commit. For `/acoreRoster`, add the prod line's `--add-host` and mounts
-  before the image, and its `--acore*` flags after `--host=":3333"` inside the `sh -c`, with the DSN in
-  double quotes there.
+  so the container can't read the commit. For `/acoreRoster`, add the prod line's `--add-host`, mounts
+  and `--env-file` before the image, and its `--acore*` flags after `--host=":3333"` inside the `sh -c`.
 
   ```sh
   MSYS_NO_PATHCONV=1 docker run -d --name wotlk-dev -p 3334:3333 -v <worktree>:/wotlk \

@@ -777,7 +777,8 @@ MSYS_NO_PATHCONV=1 docker run -d --name wowsims-wotlk --restart unless-stopped -
 `workstreams.md` (the new owned paths); `tools/uitest/README.md` (stubbing the route);
 `ui/raid/acore_harness/README.md`.
 
-**After it lands on `master`** (the user's call, 2026-10-10; prod then also gains waves Y to Z5)
+**After it lands on `master`** (the user's call, 2026-10-10; prod then also gains waves Y to Z5). Done
+2026-10-11 at `e5a289570`, the DSN from `--env-file` (dev-environment's prod line), not the command line.
 1. `docker tag wowsims-wotlk wowsims-wotlk:rollback-x`.
 2. Build as `wowsim-candidate:roster`, run it with the prod line on a spare port, and curl the route:
    a 200 proves the nonroot image reads the volume and the mounts. Remove it.
