@@ -149,8 +149,8 @@ Z4 is inserted before it (the user's call, the same day): the BiS alternatives a
 pass doesn't repeat.
 Z6 takes the three items the user planned on master on 2026-10-10 (PAR-FU-8 and PAR-FU-9 for "the next wave",
 and RI-5) and PAR-FU-10, mod-spell-tweaks' new mage and warlock tweaks (the user's call, the same day); Z7 takes
-Z5's follow-ups, specced at its close-out under the earlier call (the parity backlog first). Both wait for the
-user's continue.
+Z5's follow-ups, specced at its close-out under the earlier call (the parity backlog first), and Z6's, added to
+its specs. It waits for the user's continue.
 
 **Where the specs are:**
 
@@ -167,35 +167,20 @@ user's continue.
 
 ## Current wave
 
-- Wave: Z6, paused mid-integration (the user's call, 2026-10-11) on base `c00231f37`; master is still there. Run 1
-  did every code and live stage on the server the user rebuilt on 2026-10-10 (image of 20:04 local: [ac]
-  `3d89793c7`, mod-spell-tweaks `9bf5c75`, mod-sim-validation `bb2a21d`). Reports: `.wave-loop/z6-run1/*.md`,
-  `waveZ6-results.json`; item notes and re-recorded fixtures: `.wave-loop/{par-fu-8,par-fu-9,par-fu-10,ri-5}-tmp`.
-  - Merged, checked, goldens promoted, module e2e committed: PAR-FU-8 (`91e81e0bb`, goldens `71c772dc8`, module
-    `43ac347`) and PAR-FU-9 (`74eb5e100`, goldens `4ed7bc69b`, module `91889e0`).
-  - Committed on their branches, worktrees kept, to merge in this order: PAR-FU-10 (`c6b498f29`), RI-5
-    (`c6d2ce5f1`). The module's `parfu10_test.go` and README paragraph are uncommitted
-    (`.wave-loop/z6-mod/readme-fu10.patch`, `msg-fu10.txt`).
-  - PAR-FU-10's review returned blocked on two tests outside its paths, no code defect. At its merge the
-    orchestrator: replaces `sim/core/testdata/simval/spellmods.jsonl` with `par-fu-10-tmp/spellmods.candidate.jsonl`
-    (MageFire re-recorded; the sweep then skips Pyroblast's damage until the module lists
-    `spell_tweaks_pyroblast_dot_haste` and `spell_tweaks_curse_of_doom` in `TICK_PERIOD_SCRIPTS` and it reruns
-    after a rebuild); gives `TestDemonologyValuesSpellPowerHigherInRaidMode` 4 mages and 32000 iterations (gap
-    0.011, needs 0.012); trims `par-fu-10-tmp/fights/*.log` into the MageArcane and WarlockDemonology fixtures;
-    keeps both sides of the switch conflicts with PAR-FU-9, then `dock.sh proto` and `gen_server_defaults`.
-  - Then: `gen_serverdata` once; the cross-review, which also takes `sim/mage/ignite.go` (periodic Ignite gated on
-    Living Bomb), `sim/priest/devouring_plague.go` (Improved Devouring Plague bursts on a miss), Rupture's glyph
-    cap into `rupture.go`, `feral_spirit.go`'s stale comment and the module's `TICK_PERIOD_SCRIPTS`; the
-    re-baseline; docs and guides; land. RI-5's "After it lands on master" prod steps need the user's OK.
-  - For Z7 or the backlog: guardians still out at a fight's end reset wrong (Spirit Wolves, Shadowfiend);
-    same-update ticks in spell id order (`dot.go`); a mechanic immunity mask on targets; the bleed bonus by
-    mechanic; an APL value for Curse of Doom's length; Ignite's total on a hasted Fire mage, live.
-  Then Z7.
-  Z5 landed in four runs.
-  Z5's item notes: `G:\DevStuff\GitHub\.wave-loop\ec-{core-fix3,pet-fix2,class-fix2,class-fix2-apl,threat-fix4,z5-live}-tmp`.
-  Prod runs X's `25cb9dddc` (no `rollback-q` image: its layers were gone), without Y's and Z's sim changes.
-- Open: the e2e-coverage backlog Z7 leaves, sim-performance's Left items and Z5's 9–11% on mana users (Sim
-  throughput), the bis-optimizer backlog (Z3's As
+- Wave: Z6, landed (master fast-forwarded to this close-out). One run did every code and live stage on the
+  server the user rebuilt on 2026-10-10 (image of 20:04 local: [ac] `3d89793c7`, mod-spell-tweaks `9bf5c75`,
+  mod-sim-validation `bb2a21d`). The module's HEAD is `8a6f13f`: its `TICK_PERIOD_SCRIPTS` change needs a rebuild
+  by the user, then MageFire's spell-mod sweep again (EC-CLASS-FIX3).
+  Not done, both the user's call:
+  - `BenchmarkSimulate`: auto mode refused a run beside the live server, so Sim throughput has no Z6 row. It
+    needs the AC containers stopped (`.wave-loop/rebase-z6.sh`).
+  - RI-5's "After it lands on `master`" steps (raid-import PLAN): prod still runs X's `25cb9dddc` (no
+    `rollback-q` image: its layers were gone), without Y's to Z6's sim changes.
+  Next, Z7, planned: EC-CORE-FIX4, EC-PET-FIX3, EC-CLASS-FIX3 and EC-TOOLS, Z6's follow-ups in their specs.
+  Z6's reports: `G:\DevStuff\GitHub\.wave-loop\z6-run1\*.md`, `waveZ6-results.json`; item notes:
+  `.wave-loop\{par-fu-8,par-fu-9,par-fu-10,ri-5}-tmp`.
+- Open: the e2e-coverage backlog Z7 leaves, sim-performance's Left items, Z5's 9–11% on mana users and Z6's missing
+  row (Sim throughput), the bis-optimizer backlog (Z3's As
   builts: the enchant residual, Mutilate's pair, Combat Rogue P3 Normal; Z4's: the surrogate overpricing a
   one-hander's pairing, stage 2 and the Heroic Presence checks not yet run on the new lists, whether
   Ecoterrorist's rotation casts Mangle (Idol of the Corruptor sims like a dead idol); Z5's re-baseline: the
@@ -275,6 +260,7 @@ Reckoning that way), but J isn't DPS: see below.
 | Z3 | 8771.0, +216 / +202 | 10760.6, +665 / +573 | 5044.5, +92 / +102 | 12972.8, +248 / +253 | -17045.6, +5318 / +5255 | -1160.0, +735 / +733 |
 | Z4 | 8771.0, +216 / +202 | 10760.6, +765 / +725 | 5044.5, +92 / +102 | 12972.8, +248 / +253 | -17045.6, +5318 / +5255 | -1160.0, +735 / +733 |
 | Z5 | 8770.8, +195 / +187 | 10763.9, +656 / +683 | 5043.3, +59 / +107 | 12926.7, +162 / +196 | -16806.3, +5292 / +5032 | -1132.9, +732 / +741 |
+| Z6 | 8770.8, +195 / +187 | 10763.9, +656 / +683 | 5006.4, +203 / +305 | 12926.7, +162 / +196 | -16806.3, +5292 / +5032 | -1132.9, +732 / +741 |
 
 Quick / Normal. Ret P4 ran at Quick only in wave D, after the glyph fix; its wave C numbers
 (12821.9, +54 / +73) came from a seed that wore the glyph. The two tanks arrive with
@@ -363,6 +349,10 @@ on other items, in one to ten slots, and Ret P4 Normal's pick sits 40 rating ove
 against 130; 131 in Z4). That's the search's path, which Z4 measured at 0.5–0.7% between seeds, not the sim
 pricing a set lower: Fury's goldens didn't move, and its curves' slopes agree to four digits. Walls ran beside
 a Chronicle replay on six cores (up to +82%).
+In Z6 only Fire Mage moved; the other five repeat Z5's to the digit, sims included. Its `dps_preset` rose 7.7%
+(Pyroblast's hasted, critting DoT) and spell power's worth 8.4%, so `J_preset` fell 0.7%. The gains rose from
++141 / +254 DPS to +522 / +785 (the preset predates the tweak; not traced to a stat). Normal's walls ran beside
+the live server with no player online, 22–42% under Z5's.
 
 ## Sim throughput
 
@@ -718,6 +708,11 @@ crashed before F2, so its column starts there.
 | EC-THREAT-FIX4 | merged | `84a576750` | module `97ca11a` (one rebuild by the user); Replenishment as 57669's ticks with their threat, Silent Resolve by school, the aura casts' level bonus; `.simval threat`'s energize field, `threat.jsonl` re-recorded (175 records, 611 checks pass); goldens `8be984c35`: 27 suites (Elemental −0.52%, Frost mage TPS +0.33%) |
 | Z5's live records | merged | `45ad0031e` | module `bcd70f7`, `bb2a21d`; the spell-mod sweep re-recorded on the regenerated list (34 new lines, 17 probes not compared), the Shadowfiend's swing and Fire Shield's misses recorded: both source-only fixes of this wave hold; goldens unchanged; `db.json` regenerated, unchanged |
 | wave Z5 cross-review | direct | `a11b52bd7`, `78f24ac36` | module `1413cdb`; healing taken counts the highest bonus and the lowest penalty only, Fire Shield rolls spell hit, `TestSimvalFight` runs a pull or low-health cycle; a pet's Replenishment tick before its regen, uncontrollable guardians take no Replenishment, no tick event for a pet that isn't out; goldens `9e0b1d46c` (3 suites), `c840f5ae3` (9 suites, under 0.3% a row) |
+| PAR-FU-8 | merged | `91e81e0bb` | module `43ac347`; Spirit Wolves re-read the shaman's haste every 2 s (`Pet.OwnerHasteTicksOnGuardian`); live: 1500 ms to 1162 ms at the 2 s mark after Bloodlust; goldens `71c772dc8`: Enhancement +1.93% (139.8 swings a wolf from 97.9) |
+| PAR-FU-9 | merged | `74eb5e100` | module `91889e0`; Pin's ticks meet armor and Savage Rend's skip it, `glyph_of_backstab_ticks`, the seal DoT from strikes only with `SpellTweaks.Enable`, the stock Omen roll on Faerie Fire (Feral), Improved Devouring Plague's hasted recast, Titan's Grip's −10% with a shield; the review: Lasherweave's 2-piece proc came on every Faerie Fire (Feral); goldens `4ed7bc69b`: that set's row in the three feral suites (−0.1% to +0.9%) |
+| PAR-FU-10 | merged | `c6f7cf096` | module `b40e659`; Pyroblast's DoT with Empowered Fire, Curse of Doom with Demonic Pact, Arcane Blast's stack cost, the arcane crit refund, Arcane Blast's buff (6 s, ended by an Arcane Barrage or Explosion cast); at the merge: MageFire's spell-mod lines and the MageArcane and WarlockDemonology fights re-recorded, the optimizer's pact test without `FullRaidBuffs`' own 500 pact, which hid the warlock's; goldens `97c31624a`: Arcane +3.72%, Fire +6.40%, FrostFire +7.60%, Demonology +2.49% |
+| RI-5 | merged | `a762eabd7` | `GET /acoreRoster` on the sim server (`sim/web/acroster`) and the Raid tab's "Import from server"; live: 0.81 s, then 0.09 s, the JSON equal to acraid's but `exportedAt`; goldens unchanged; its prod steps wait for the user |
+| wave Z6 cross-review | direct | `b8686583a` | module `8a6f13f` (needs a rebuild by the user); `--pprof` served the command line, `--acoreDsn` and its password included; Improved Devouring Plague's burst only when the dot lands; Ignite from a fire tick's crit without Living Bomb; Rupture's glyph code in `rupture.go`; the two new scripts in `TICK_PERIOD_SCRIPTS`; left open: a dot whose haste adds ticks can tick once past the server's count (EC-CORE-FIX4); goldens `c61cbfb77`: Shadow −0.008%, 48 rows, down to −0.5% |
 
 Later WIs are added as their wave starts.
 

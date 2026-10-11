@@ -52,8 +52,13 @@ layouts come from [ac] `src/server/shared/DataStores/DBCStructure.h` and `DBCfmt
 ## Spells
 
 - `spell_cooldown_overrides`.
-- `spell_proc`: a negative `SpellId` applies to the whole rank chain.
+- `spell_proc`: a negative `SpellId` applies to the whole rank chain. A 0 in `ProcFlags` or `Charges` takes the
+  spell's own, as does `Chance` when `ProcsPerMinute` is 0 too.
 - `spell_enchant_proc_data`.
+- `spell_script_names` can name a script no code registers, which does nothing:
+  `spell_tweaks_concussion_flame_shock_haste` on nine Flame Shock ranks.
+- `creature_immunities` (by `creature_template.CreatureImmunitiesId`; no row, no mechanic immunity):
+  `MechanicsMask` is `1 << mechanic`, so root (7) is 128.
 - Spell.dbc field indices: ProcChance 35, DurationIndex 40, Effect 71, DieSides 74, BasePoints 80,
   Aura 95, ItemType 107, MiscValue 110, TriggerSpell 116, Name 136.
 - Cooldown and PPM precedence follow `Player::CastItemCombatSpell` and

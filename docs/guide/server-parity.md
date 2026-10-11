@@ -68,6 +68,16 @@ class by simval.
 - **Talent values** are the spelldump's, not the DBC files': mod-spell-tweaks' `spell_dbc` rows change some
   while the live DBC files stay stock. Rage of Rivendare is 2 expertise a point, Virulence and Nerves of Cold
   Steel 2% hit a point.
+- **mod-spell-tweaks' switches** are `SpellTweaksSettings` (`proto/common.proto`, a comment a field), read as
+  `Character.Server().SpellTweaks` with `SpellTweaks.Enable` folded in (`newSpellTweaks`). `Enable` off drops
+  the exotic pet bonus, every switch but the two armor pen ones (core reads those itself) and the tweaks
+  without a switch: the seal DoT from Crusader Strike and Divine Storm, Explosive Trap laid from range. A new
+  switch also goes in `tools/acore/gen_server_defaults/settings.go` and `server_settings_picker.ts`;
+  `TestSpellTweaksEnableGatesScriptedTweaks` fails for one `newSpellTweaks` doesn't read.
+- **Mechanic immunity:** a target immune to a spell's spell-level mechanic takes none of it
+  (`Unit::IsImmunedToSpell`). The simval dummies and the raid bosses sampled are immune to root, stun, snare
+  and disarm, not bleed, so the pet specials Pin, Venom Web Spray, Ravage, Tendon Rip and Snatch never land on
+  one. Not modelled: sim targets have no immunities.
 - **Binary spells** follow the spelldump. Mind Flay isn't binary; Steady Shot and Expose Armor are.
 - **Weapon requirements:** a spell with `SPELL_ATTR3_REQUIRES_MAIN_HAND_WEAPON` or `_OFF_HAND_WEAPON` and
   an item subclass mask fails without that weapon, triggered casts too (`Spell::CheckItems`): Mutilate

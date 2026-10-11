@@ -118,6 +118,9 @@ Quirk: `UnitLevelFloat64` in `utils.go` treats every level outside 80–82 as +3
 - `ui/raid/raid_sim_ui.ts`: the raid sim, where importers and the BiS batch (`optimizer_batch.ts`) are
   registered. Its tank and buff-target pickers only display: a roster edit runs inside `keepRaidReferences`
   (`raid_references.ts`), which keeps each reference on its raider as seats change.
+- `ui/raid/acore_importer.ts`: the AzerothCore roster import. `importRoster` serves both its dialog and the Raid
+  tab's "Import from server" button (`raid_picker.ts`); `fetchServerRoster` (`acore_server.ts`) gets
+  `/acoreRoster`. The server buttons show only on a sim server (`simServerAvailable`), never under wasm.
 
 ## Tools
 
@@ -125,8 +128,8 @@ Quirk: `UnitLevelFloat64` in `utils.go` treats every level outside 80–82 as +3
   ([README](../../tools/database/gen_db/README.md)).
 - `tools/database/azerothcore`: shared MySQL and DBC readers, item conversion, roster building and the
   server catalog's tier rules (`catalog*.go`). The sim server links it (`sim/web/acroster`), so keep it
-  library-shaped: no package-level flags (they'd show in the server's `--help`), no `log.Fatal`, and
-  loaders that take an `fs.FS` or a transaction.
+  library-shaped: no package-level flags, nor in `tools/io_utils.go` (they'd show in the server's `--help`),
+  no `log.Fatal`, and loaders that take an `fs.FS` (the `*FS` ones) or a transaction (`BuildRosterContext`).
 - Thin mains: `tools/database/acdiff` ([README](../../tools/database/acdiff/README.md)),
   `tools/database/acraid` ([README](../../tools/database/acraid/README.md)) and `tools/database/accatalog`
   ([README](../../tools/database/accatalog/README.md)), which writes `assets/database/server_catalog.json`:

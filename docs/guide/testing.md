@@ -7,6 +7,7 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
 - Tests: `go test --tags=with_db $(go list ./sim/... | grep -v /sim/web$) ./tools/... ./cmd/...`
   - `sim/web` needs `binary_dist/dist.go`.
   - Add `-count=1` when results come back `(cached)`.
+  - On a loaded machine `./tools/simval` can pass go's 10 min default: add `-timeout 45m`.
   - Ready to paste from Git Bash:
     `MSYS_NO_PATHCONV=1 docker run --rm -v G:/DevStuff/GitHub/wowsimwotlk:/wotlk -v wotlk-gomod:/go/pkg/mod -v wotlk-gocache:/root/.cache/go-build -w /wotlk wowsims-wotlk-dev sh -c 'go test --tags=with_db $(go list ./sim/... | grep -v /sim/web$) ./tools/... ./cmd/...'`
   - `dock.sh test [args]` runs `./sim/...` by default and generates `binary_dist` itself.
@@ -123,7 +124,7 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
   - `sim/core/testdata/simval/simval.jsonl` is the committed capture of the whole e2e suite; its README lists
     dropped records. `TestFixtureHasEveryE2ERecord` keys it on (command, spell id, class, dummy entry).
 - Live e2e, which needs the user's OK: `cd [ac]/modules/mod-sim-validation && ./e2e/run.sh [TestName]`
-  (default `-run TestSimval` minus `TestSimvalTiming`, `TestSimvalThreat`, `TestSimvalStrikes`, `TestSimvalBuffs`, `TestSimvalMobs` and `TestSimvalFight`, about 7 min). The module's `README.md` covers its commands, env vars and orphan cleanup.
+  (default `-run TestSimval` minus `TestSimvalTiming`, `TestSimvalThreat`, `TestSimvalStrikes`, `TestSimvalBuffs`, `TestSimvalMobs`, `TestSimvalFight`, `TestSimvalEcCore3LowHealthFight` and `TestSimvalEcClass2Fight`, about 7 min). The module's `README.md` covers its commands, env vars and orphan cleanup.
   - Recapture the fixture, never append: the suite deletes its own records and the host side of the log
     mount is stale, so stream from inside the container, started before the run:
     1. `MSYS_NO_PATHCONV=1 docker exec ac-worldserver tail -F -n +1 /azerothcore/env/dist/logs/simval/simval.jsonl > tmp/stream.jsonl &`,

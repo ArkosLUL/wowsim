@@ -2401,6 +2401,14 @@ Cross-review, 2026-10-10, on `8be984c35` with the four items merged:
   truncating as one sum, Chimera Shot - Serpent truncating after its 2.0 or 2.8.
 - Meta gems: an item swap moves the meta's stats only, not its effect or crit damage.
 - `StartTargetAtHealth` moves the execute phases only at the first advance.
+- Dot ticks (PAR-FU-10 as built): `AuraEffect::Update` stops at `GetTotalTicks`, `sim/core/dot.go` doesn't, so a
+  dot whose haste adds ticks can tick once more on its expiry's update (12 s at 2401 ms: 5 ticks, the server 4);
+  `Dot.Rollover` must zero `TickCount` first, as `RefreshTimersWithMods` does. One unit's same-update ticks run in
+  spell id order (`Unit::_UpdateSpells`): `pyroblast.go` orders Ignite by hand, Living Bomb's ticks still read
+  Ignite ahead (about 0.8% of Fire).
+- The bleed damage-taken bonus (Mangle, Trauma, Stampede) goes by the spell's mechanic mask
+  (`Unit::SpellDamageBonusTaken`; `Spell.TargetDamageMultiplier`): Savage Rend's first hit takes it, Pin's ticks
+  don't.
 - **Owns:** `sim/core/` but EC-PET-FIX3's pet paths; those inline lines in class code; their drops and rows.
 - **Goldens:** all 37 (aura expiry); report each.
 
@@ -2421,6 +2429,9 @@ Cross-review, 2026-10-10, on `8be984c35` with the four items merged:
   `ProcReplenishment` keeps the sim's own target lists; the mana potion and gem heuristics read
   `ManaRegenPerSecondWhileCasting`, which no longer holds it.
 - Imp and Water Elemental health pools (server 4421 and 7688).
+- A guardian whose `Reset` calls `Pet.Disable` and is still out at a fight's end (Spirit Wolves in fights ending
+  0–45 or 180–225 s in; check the Shadowfiend) starts the next iteration with the last one's inherited stats and
+  haste taken off again: `Unit.reset` sets enabled before `agent.Reset` runs.
 - Live: Shadowcrawl (63619) on the Shadowfiend's swing (`.aura 63619` before a second `melee` probe); the Fire
   Elemental's cast counts over its life.
 - **Owns:** `sim/core/pet.go`, `focus.go` and the pets' timers; `sim/core/replenishment.go`'s target rules; the
@@ -2443,7 +2454,13 @@ Cross-review, 2026-10-10, on `8be984c35` with the four items merged:
   `uh_dnd_aoe` taps with a blood rune ready; `frost_bl_pesti` taps 1.4 times a fight.
 - Druid: Illustration of the Dragon Soul's trigger (Hurricane's ticks gave no stack live, its cast one).
 - Mage: other units' snares (Hamstring, Frost Shock, Slow) count for Torment the Weak; snare immunity becomes a
-  `Target` proto field from `creature_template.mechanic_immune_mask` (the snares key on `IsWorldBoss`).
+  `Target` proto field from `creature_template.mechanic_immune_mask` (the snares key on `IsWorldBoss`). The same
+  mask refuses a spell whose own mechanic the target is immune to (`Unit::IsImmunedToSpell`;
+  `creature_immunities.MechanicsMask` is `1 << mechanic`): on the raid bosses Pin and Venom Web Spray (root),
+  Ravage (stun), Tendon Rip (snare) and Snatch (disarm) deal damage only in the sim.
+- Warlock: Demonology's rotation casts Curse of Doom only with `remainingTime > 60s`, so it skips a hasted curse
+  that would land with 40 to 60 s left; it needs an APL value for the curse's length (proto and core), right
+  with `SpellTweaks.CurseOfDoomScaling` off too.
 - Hunter: Hunting Party procs off Explosive Shot's ticks; Serpent Sting keeps its first application's multiplier
   across Chimera Shot's refresh; the server applies the target's damage-taken mods to 53353 twice.
 - Spell-mod sweep: 17 step-spell probes aren't compared (25742, 52985, 53000, 25504, 33750, 7386, 58567, 70890):
@@ -2452,9 +2469,13 @@ Cross-review, 2026-10-10, on `8be984c35` with the four items merged:
 - Fight means that pass far out: DeathknightBlood's Bloodworm melee +12% (z 3.4), Protection warrior melee −5%
   (z −2.8), Destruction's Immolate tick +15% (z 2.7).
 - Live: the death rune take-over (a Frost cycle with no Icy Touch miss), Nature's Grace's Omen (a Wrath-only
-  fight of 900 s), a WarriorArms talent path with a mace.
-- **Owns:** `sim/{deathknight,druid,mage,hunter,priest,warrior}/` but the other Z7 items' hunks; the item damage
-  effects in `sim/common/`; `ui/deathknight/apls/`; `tools/simval/spellmods*.go`; `proto/common.proto`'s target
+  fight of 900 s), a WarriorArms talent path with a mace; Ignite's total on a hasted Fire mage (Pyroblast under
+  Bloodlust for minutes: 40% of the fire crits feeding it, about 1.6% of Fire). Once the server runs
+  mod-sim-validation `8a6f13f` (a rebuild by the user), rerun MageFire's spell-mod sweep and drop the fixture
+  README's note on Pyroblast; exempting core's `spell_warl_curse_of_doom` (it acts on removal only) would compare
+  Curse of Doom's damage too.
+- **Owns:** `sim/{deathknight,druid,mage,hunter,priest,warrior,warlock}/` but the other Z7 items' hunks; the item damage
+  effects in `sim/common/`; `ui/deathknight/apls/`, `ui/warlock/apls/`; `tools/simval/spellmods*.go`; `proto/common.proto`'s target
   field and its plumbing; their cycles, fights, drops and rows.
 - **Goldens:** those classes' suites, and every suite with an item damage proc; report each.
 

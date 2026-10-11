@@ -118,7 +118,10 @@ npx protoc --ts_out ui/core/proto --proto_path proto proto/ui.proto
     405 `method_not_allowed`, 409 `no_roster` (unknown name, empty names file), 500 `server_config`
     (unreadable file, bad DSN), 502 `database` (detail only in the log), 503 `not_configured` (names the
     missing flags), 504 `timeout` (30 s, queue wait included).
-  - Item stats come from `wotlk/assets/database/db.json` in the files the server serves.
+  - `AC_DSN` keeps the DSN off the command line. `--pprof`'s listener serves no `/debug/pprof/cmdline`,
+    which would hand out `--acoreDsn`.
+  - Item stats come from `wotlk/assets/database/db.json` in the files the server serves. It and the DBCs
+    are cached by size and mtime, so a changed file needs no restart.
 - **API** (`/raidSim`, `/computeStats`) takes binary protobuf. `/version` returns JSON.
   - Encode and decode with the image's protoc: `protoc -I/p --encode=proto.RaidSimRequest /p/api.proto`,
     with `proto/` mounted at `/p`.

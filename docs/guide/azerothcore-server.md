@@ -55,8 +55,8 @@ The live server: where it runs, how to reach it, what's installed. For table and
     once, never updates it, and creates no module `.conf`: a module without one (mod-sim-validation)
     runs on its code defaults plus `AC_*` vars. A `.conf` you write by hand is read but lives outside
     git, so rebuilding `env/dist/` loses it (mod-bis-tooltip has one). The installed
-    `spell_tweaks.conf` lacks FeralSpiritHaste, RuptureWeaponExpertise and RendTrauma, so those run on
-    their code defaults (on).
+    `spell_tweaks.conf` is an old copy with 10 of its conf.dist's 19 keys, so the other nine switches run
+    on their code defaults (on).
   - Env names follow `IniKeyToEnvVarKey`, with quirks: `StatModifierRaid25M` → `RAID_25_M`,
     `Raid10MHeroic` → `RAID_10_MHEROIC`, `DKGhoul` → `DKGHOUL`.
   - `MapUpdateInterval` is 100 ms live (`ServerPerformance.env`; conf.dist says 10).

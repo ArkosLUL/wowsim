@@ -30,12 +30,16 @@ follows it. Core rules (costs, threat, crit damage, procs, pets) are in [server 
   percents.
 - **Flurry**, the shaman's too: charges go on landed white hits only, and the buff lasts 15 s. A shaman's white
   crit spends a charge before the talent refreshes, unless it was the last.
+- **Titan's Grip**'s -10% (49152) needs both hands full and a two-hander in either; a shield or held item fills
+  the off hand like a weapon.
 
 ## Paladin
 
 - **Vindication** procs at 3 PPM (spell_proc -9452) on landed damaging swings, casts and `NOT_A_PROC` triggered
   spells; its 26017 (67 at one point) rolls spell hit.
 - **Crusader Strike** refreshes no judgement.
+- **Seal of Vengeance**'s DoT stacks off white hits and Hammer of the Righteous; off Crusader Strike and Divine
+  Storm only with `SpellTweaks.Enable` (`spell_tweaks_seal_dot_on_strikes` has no switch of its own).
 - **Improved Devotion Aura:** 3 points is the raid buff's improved state; 1–2 give every raider and pet under
   the best paladin's aura +204 / +409 armor (`improveDevotionAura`). Its 63514 adds 2% healing taken a point.
 - **Crusade:** its first percent is aura 79 on all damage (`DamageDealtMultiplier`), its second DONE_VERSUS on
@@ -53,6 +57,13 @@ follows it. Core rules (costs, threat, crit damage, procs, pets) are in [server 
   casts of their own, each rolling (`CAN_PROC_FROM_PROCS`).
 - **Master Poisoner** (`SPELL_AURA_MOD_CRIT_CHANCE_FOR_CASTER`) raises only its rogue's crit against a poisoned
   target, so the sim gives it to that rogue as a buff, not to the raid as a debuff.
+- **Glyph of Backstab:** a landed Backstab adds 2 s to Rupture (`extendRupture`).
+  - With `GlyphOfBackstabTicks`: 6 s a Rupture cast, to the max duration too, so the seconds tick, at the
+    interval Rupture went on with (haste isn't read again). 5 points: 11 ticks unhasted.
+  - Stock: only the time left grows, while the aura would end within 5 s of its apply time plus max duration
+    (three Backstabs), and ticks stop at max duration / amplitude. 5 points: 8 ticks, aura off at 22 s.
+    Not modelled: a recast over a live Rupture keeps the server aura's first apply time, so it gets fewer or
+    no extensions.
 
 ## Druid
 
@@ -65,6 +76,9 @@ follows it. Core rules (costs, threat, crit damage, procs, pets) are in [server 
 - **Starfall** (53201) is an aura on the druid and can't miss. Its stars (53195) and splash (53190) roll Omen of
   Clarity, as do Hurricane's cast and ticks (measured live, 8.75%). The stars need line of sight to the target's
   centre.
+- **Faerie Fire (Feral):** a landed 16857 rolls Omen's 3.5 PPM over the 1.5 s an instant counts as (8.75%), and
+  so does Bear Form's triggered 60089 (`CAN_PROC_FROM_PROCS`). With `OmenClarityFaerieFire` the script casts
+  Clearcasting (16870) itself, and that roll still runs: only it gives the Balance T10 2-piece proc (70721).
 - **Force of Nature** casts 33831, inside Clearcasting's mask.
 - **Nature's Swiftness** makes instant what its aura's class mask covers (`Spell.AffectedByAuraEffect`): heals and
   Rebirth, not Starfire.
@@ -97,6 +111,23 @@ follows it. Core rules (costs, threat, crit damage, procs, pets) are in [server 
   paid; **Burnout** burns apart. Each at most once per 8 ms (spell_proc -29074, -44449), so a crit on several targets
   refunds once.
 - **Blizzard**'s tick (42938) is a proc: only `CAN_PROC_FROM_PROCS` auras take it.
+- **Pyroblast's DoT** with Empowered Fire:
+  - Its ticks crit whatever the switches (aura 286 on the talent is `spell_dbc` data), at the cast's crit
+    chance, snapshotted at the landing. A crit tick feeds Ignite; Hot Streak, Master of Elements, Combustion
+    and Burnout take no tick.
+  - With `PyroblastEmpoweredFire` the tick is min(3 s × cast speed, 3 s) in whole ms, read as the missile
+    lands, over the fixed 12 s: 5 ticks from 25% haste, 6 from 50%.
+  - The cast owns the DoT and deals it under tag 1, which no rotation can name.
+- **Ignite** takes any fire crit, a tick's too (spell_proc -11119): Living Bomb's with its glyph, Pyroblast's.
+- **Arcane Blast's buff** (36032) lasts 6 s. An Arcane Barrage or Arcane Explosion cast ends it (spell_proc
+  36032, cast phase) after the launch, so that cast still hits with the stacks.
+  - A stack adds 175% to the cost; with Netherwind Presence and `ArcaneBlastHasteCost`, int32(175 × min(cast
+    speed, 1)) in float32. The server works it out on each stack gained and on a refresh at four, so a haste
+    change shows at the next Arcane Blast to land.
+- **Spell Power** with `ArcaneCritRefund`: an arcane mage spell's crit gives back 15% a point of what its cast
+  paid (nothing under Clearcasting), once a cast (spell_proc -35578, 8 ms), as an energize under the talent's id.
+  An Arcane Missiles crit takes a sixth of the channel's base cost, a free channel's too: `SpellInfo::GetMaxTicks`
+  counts no `PERIODIC_TRIGGER_SPELL` effect and gives its default 6.
 
 ## Priest
 
@@ -104,6 +135,17 @@ follows it. Core rules (costs, threat, crit damage, procs, pets) are in [server 
   Light and Twin Disciplines multiply, as the heal's four talents do. 53007 and its channel can't miss; each tick
   rolls its own hit.
 - **Silent Resolve** cuts holy and arcane threat ([threat](threat.md)), so not Mind Blast's.
+- **Improved Devouring Plague**'s burst comes off the applied aura (`Aura::HandleAuraSpecificMods`), so a
+  resisted cast has none. It counts the dot's `GetTotalTicks`: 8 on a new dot without `ShadowDotHaste`. A
+  recast over a running one in Shadowform then counts 24000 / int32(3000 × cast speed), 10 at 25% haste:
+  `Aura::RefreshTimers` puts the 24 s back before the burst, and the cast shortens it only after.
+
+## Warlock
+
+- **Curse of Doom** with Demonic Pact and `CurseOfDoomScaling` (the carrier 425793): max(60 s × min(cast
+  speed, 1), 1 s) in whole ms, read at the cast, is the cooldown, the duration and the one tick. The tick
+  crits, for 1.5: no crit damage or crit chance mod lists the curse. A cast is refused while the warlock's own
+  curse is on the target; stock, a recast wipes it.
 
 ## Hunter
 
@@ -115,6 +157,8 @@ follows it. Core rules (costs, threat, crit damage, procs, pets) are in [server 
 - **Chimera Shot - Serpent** (53353) ignores caster modifiers (no Mortal Shots, no Marked for Death) and deals
   int(the sting's stored tick × 2.8).
 - **Thrill of the Hunt** returns 40% of the shot's truncated base cost, a free Lock and Load shot's too.
+- **Pin** (53548) is a root, so armor cuts its ticks. **Savage Rend** (53582) is a bleed: armor cuts the first
+  hit, not the ticks (`Unit::IsDamageReducedByArmor` finds the bleed per effect only).
 - **Explosive Decoy** deals nothing: its creature casts 53273 only on death, and a boss never attacks it.
 - **Haste:** mod-individual-progression's aura 89507 never changes the speed, so ranged haste is just the quiver's
   or ammo pouch's, which `Hunter.Options.quiver` picks (×1.15 by default), times Thori'dal's own ×1.15 (44972).

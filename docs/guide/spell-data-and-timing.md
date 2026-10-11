@@ -55,6 +55,12 @@ what unit tests want), with one phase rolled per iteration.
   (`Map::Update` hands `_UpdateSpells` the whole update's diff), so the dummy's dots tick and expire up to one
   update early (`Aura.countdownStart`). One the creature puts on itself in its own update (swing, AI instant,
   dot tick, expiry) counts from that update, and so does an area dot's object made in a map update.
+- A unit's auras update in spell id order (`Unit::_UpdateSpells`): on one update Ignite (12654) ticks before
+  Pyroblast's DoT (42891). The sim runs same-time ticks in the order queued; only Pyroblast's tick puts a due
+  Ignite first (`sim/mage/pyroblast.go`).
+- A dot stops at max duration / amplitude ticks (`AuraEffect::Update`, `GetTotalTicks`). The sim's tick action
+  has no such cap (`sim/core/dot.go`): a dot whose haste adds ticks can tick once more, on the expiry's update.
+  Only stock Glyph of Backstab's Rupture caps itself (`sim/rogue/rupture.go`).
 - The live map update runs about 104 ms (world ticks of about 10.4 ms); the sim's grid is exact.
 - A landed swing pushes the other hand to at least 200 ms. A melee swing restarts the ranged timer, and
   every Auto Shot restarts both melee timers (`Unit::_UpdateAutoRepeatSpell`).
