@@ -173,7 +173,7 @@ continue, or their call to run the BiS chain first.
   stage on the server at [ac] `3d89793c7`, mod-spell-tweaks `9bf5c75`, mod-sim-validation `8a6f13f` (image of
   2026-10-11 13:38 local). EC-CORE-FIX4 came back blocked on `sim/optimizer`'s calibration gap test alone, so it
   had one review round; the test's pair changed at its merge.
-  The module's HEAD is `bcc58cf`: its `NO_AMOUNT_SCRIPTS` change needs a rebuild by the user, then the spell-mod
+  The module's `bcc58cf` (`NO_AMOUNT_SCRIPTS`; HEAD `bc1d35e`) needs a rebuild by the user, then the spell-mod
   sweep's WarlockAffliction path again (EC-CLASS-FIX4).
   Prod runs Z6's `e5a289570`, without Z7; `wowsims-wotlk:rollback-x` is X's `25cb9dddc`. Auto mode refuses the
   prod docker commands, a DSN on a command line and chained commands: the user's allow rules
