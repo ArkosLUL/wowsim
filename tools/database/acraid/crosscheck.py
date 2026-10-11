@@ -8,7 +8,7 @@ reads them from the sim instead: consumable items from its pickers, ammo DPS fro
 families from the protos, and each consumable's buff from item_template and Spell.dbc.
 
   python tools/database/acraid/crosscheck.py raid.json --dbc <dir> [--leader Deathsong] [--names a,b]
-      [--world-buff-matrix <file>] [--players a,b]
+      [--names-file <file>] [--names-only] [--world-buff-matrix <file>] [--players a,b]
 
 --dbc takes the directory acraid read, e.g. what `docker cp ac-worldserver:/azerothcore/env/dist/data/dbc`
 gives. The queries go through `docker exec ac-database mysql`, so they need that container running. The
@@ -107,9 +107,16 @@ def signed(value):
     return value - (1 << 32) if value >= 1 << 31 else value
 
 
+def listed_names():
+    """--names, or the names file's: one character a line, blank lines and # comments skipped."""
+    if args.names_file:
+        lines = open(args.names_file, encoding='utf-8-sig').read().split('\n')
+        return [name for name in (line.split('#', 1)[0].strip() for line in lines) if name]
+    return [name.strip() for name in (args.names or '').split(',') if name.strip()]
+
+
 def named_rows():
-    """The characters --names lists, in the order acraid would have taken them."""
-    names = [name.strip() for name in args.names.split(',') if name.strip()]
+    """The characters named, in the order acraid would have taken them."""
     quoted = ', '.join("'%s'" % name.replace("'", "''") for name in names)
     found = {row[0].lower(): row for row in
              sql(f"""SELECT name, guid, race, class, level FROM acore_characters.characters
@@ -131,16 +138,22 @@ def group_rows():
 
 def select_members():
     """The group, the characters named, or the group topped up with the ones not in it. The subgroups
-    have to match how acraid assigns them: the group keeps its own, --names fills subgroups of 5 in
-    order, and a character topping up a group goes in the first subgroup with room."""
+    have to match how acraid assigns them: the group keeps its own, the names fill subgroups of 5 in
+    order, and a character topping up a group goes in the first subgroup with room. --names-only
+    drops the group's unnamed members first, so the room they leave counts. Without a group it comes
+    to list order either way, since the first subgroup with room is then the one being filled."""
     found = [Member(row[0], int(row[1]), int(row[2]), int(row[3]), int(row[4]), int(row[5]), int(row[6]))
              for row in (group_rows() if args.leader else [])]
-    if not args.names:
+    if not names:
         return found
 
+    named = named_rows()
+    if args.names_only:
+        named_guids = {int(row[1]) for row in named}
+        found = [member for member in found if member.guid in named_guids]
     sizes = collections.Counter(member.subgroup for member in found)
     known = {member.guid for member in found}
-    for name, guid, race, class_id, level in named_rows():
+    for name, guid, race, class_id, level in named:
         if int(guid) in known:
             continue
         if args.leader:
@@ -524,6 +537,8 @@ parser.add_argument('roster', help='the JSON acraid wrote')
 parser.add_argument('--dbc', required=True, help='directory holding the server DBC files')
 parser.add_argument('--leader', help='the character acraid was run with')
 parser.add_argument('--names', help='comma separated names, when acraid was run with -names')
+parser.add_argument('--names-file', help='what acraid was run with as -namesFile')
+parser.add_argument('--names-only', action='store_true', help='when acraid was run with -namesOnly')
 parser.add_argument('--sim-db', default='assets/database/db.json', help='what acraid was run with as -simDb')
 parser.add_argument('--min-skill', type=int, default=1, help='what acraid was run with as -minSkill')
 parser.add_argument('--world-buff-matrix', help='what acraid was run with as -worldBuffMatrix')
@@ -536,8 +551,13 @@ parser.add_argument('--container', default='ac-database')
 parser.add_argument('--user', default='root')
 parser.add_argument('--password', default='password')
 args = parser.parse_args()
-if not args.leader and not args.names:
-    parser.error('pass --leader or --names, whichever acraid used')
+if args.names and args.names_file:
+    parser.error('--names and --names-file both give the list of names: pass one')
+names = listed_names()
+if not args.leader and not names:
+    parser.error('pass --leader, --names or --names-file, whichever acraid used')
+if args.names_only and not names:
+    parser.error('--names-only needs the names acraid was given')
 
 gem_items = {row[0]: row[33] for row in dbc_rows('SpellItemEnchantment.dbc') if row[33]}
 glyphs = {row[0]: (row[1], row[2] & 1) for row in dbc_rows('GlyphProperties.dbc')}

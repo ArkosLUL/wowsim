@@ -28,6 +28,7 @@ import (
 	"github.com/wowsims/wotlk/sim/core"
 	proto "github.com/wowsims/wotlk/sim/core/proto"
 	"github.com/wowsims/wotlk/sim/optimizer"
+	"github.com/wowsims/wotlk/sim/web/acroster"
 
 	googleProto "google.golang.org/protobuf/proto"
 )
@@ -52,6 +53,12 @@ func main() {
 	var launch = flag.Bool("launch", true, "auto launch browser")
 	var skipVersionCheck = flag.Bool("nvc", false, "set true to skip version check")
 	var pprofAddr = flag.String("pprof", "", "serve net/http/pprof, with mutex and block profiling, on this address (e.g. localhost:6060); off when empty")
+	// No defaults from the environment here: --help prints a flag's default, and the DSN holds a password.
+	var acoreDsn = flag.String("acoreDsn", "", "AzerothCore database DSN for /acoreRoster, without a database name; $AC_DSN when empty")
+	var acoreDbcDir = flag.String("acoreDbcDir", "", "directory holding the AzerothCore server's DBC files; $AC_DBC_DIR when empty")
+	var acoreNamesFile = flag.String("acoreNamesFile", "", "file listing the core raid for /acoreRoster, one character a line; $AC_RAID_NAMES_FILE when empty")
+	var acoreLeader = flag.String("acoreLeader", "", "a member of the raid's group, whose parties the roster follows; $AC_RAID_LEADER when empty")
+	var acoreWorldBuffMatrix = flag.String("acoreWorldBuffMatrix", "", "file holding the bots' AiPlayerbot.WorldBuffMatrix, e.g. Playerbot.env; $AC_WORLD_BUFF_MATRIX when empty")
 
 	flag.Parse()
 
@@ -93,6 +100,13 @@ func main() {
 	s := &server{
 		progMut:         sync.RWMutex{},
 		asyncProgresses: map[string]*asyncProgress{},
+		acoreRoster: acroster.Config{
+			DSN:             *acoreDsn,
+			DBCDir:          *acoreDbcDir,
+			NamesFile:       *acoreNamesFile,
+			Leader:          *acoreLeader,
+			WorldBuffMatrix: *acoreWorldBuffMatrix,
+		}.WithEnv(os.Getenv),
 	}
 	s.runServer(*useFS, *host, *launch, *simName, *wasm, bufio.NewReader(os.Stdin))
 }
@@ -139,6 +153,9 @@ type server struct {
 	// Cancels an optimization nobody has polled for this long, so a closed or reloaded tab doesn't
 	// hold the slot until the run ends. 0 means defaultOptimizerAbandonAfter.
 	optimizerAbandonAfter time.Duration
+
+	// What /acoreRoster reads the AzerothCore server with. Left empty, the route answers 503.
+	acoreRoster acroster.Config
 }
 
 // net_worker.js polls every 500 ms; the rest is slack for throttled background tabs.
@@ -460,13 +477,17 @@ func (s *server) runServer(useFS bool, host string, launchBrowser bool, simName 
 	s.setupAsyncServer(mux)
 
 	var fs http.Handler
+	rosterConfig := s.acoreRoster
 	if useFS {
 		log.Printf("Using local file system for development.")
 		fs = http.FileServer(http.Dir("./dist"))
+		rosterConfig.Assets = os.DirFS("./dist")
 	} else {
 		log.Printf("Embedded file server running.")
 		fs = http.FileServer(http.FS(dist.FS))
+		rosterConfig.Assets = dist.FS
 	}
+	mux.Handle("/acoreRoster", acroster.New(rosterConfig))
 
 	for route := range handlers {
 		mux.HandleFunc(route, handleAPI)

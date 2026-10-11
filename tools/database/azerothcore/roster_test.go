@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"testing/fstest"
+	"time"
 
 	"github.com/wowsims/wotlk/sim/core"
 )
@@ -920,5 +922,170 @@ func TestLoadPetTalentTrees(t *testing.T) {
 	}
 	if len(trees[0]) != 1 || len(trees[1]) != 2 || len(trees[2]) != 3 || trees[1][1] != (TalentLocation{Row: 4, Col: 1}) {
 		t.Errorf("trees = %+v", trees)
+	}
+}
+
+// treeFile is a talent tree file of that many trees, each with one talent at (tree index, 1).
+func treeFile(trees int) *fstest.MapFile {
+	parts := make([]string, trees)
+	for i := range parts {
+		parts[i] = fmt.Sprintf(`{"name": "tree %d", "talents": [{"location": {"rowIdx": %d, "colIdx": 1}, "spellIds": [1]}]}`, i, i)
+	}
+	return &fstest.MapFile{Data: []byte("[" + strings.Join(parts, ",") + "]")}
+}
+
+func TestLoadTalentTreesFS(t *testing.T) {
+	fsys := fstest.MapFS{}
+	for _, name := range ClassNames {
+		fsys[name+".json"] = treeFile(3)
+	}
+	trees, err := LoadTalentTreesFS(fsys)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(trees) != len(ClassNames) || len(trees[classDruid]) != 3 || trees[classDruid][2][0] != (TalentLocation{Row: 2, Col: 1}) {
+		t.Errorf("trees = %+v", trees)
+	}
+
+	delete(fsys, "mage.json")
+	if _, err := LoadTalentTreesFS(fsys); err == nil || !strings.Contains(err.Error(), "mage.json") {
+		t.Errorf("without mage.json: err = %v, want one naming the file", err)
+	}
+}
+
+func TestLoadPetTalentTreesFS(t *testing.T) {
+	fsys := fstest.MapFS{"hunter_ferocity.json": treeFile(1), "hunter_tenacity.json": treeFile(1), "hunter_cunning.json": treeFile(1)}
+	trees, err := LoadPetTalentTreesFS(fsys)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(trees) != 3 || len(trees[2]) != 1 {
+		t.Errorf("trees = %+v", trees)
+	}
+
+	fsys["hunter_cunning.json"] = treeFile(2)
+	if _, err := LoadPetTalentTreesFS(fsys); err == nil {
+		t.Error("a pet tree file with two trees loaded")
+	}
+}
+
+// The path versions read the same files, and name the directory when one is missing.
+func TestLoadTalentTreesFromTheCheckout(t *testing.T) {
+	dir := filepath.Join("..", "..", "..", "ui", "core", "talents", "trees")
+	trees, err := LoadTalentTrees(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fromFS, err := LoadTalentTreesFS(os.DirFS(dir))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(trees, fromFS) || len(trees[classDeathKnight]) != 3 {
+		t.Errorf("LoadTalentTrees and LoadTalentTreesFS differ, or the death knight has %d trees", len(trees[classDeathKnight]))
+	}
+	if _, err := LoadPetTalentTrees(dir); err != nil {
+		t.Error(err)
+	}
+
+	missing := filepath.Join(t.TempDir(), "nowhere")
+	if _, err := LoadTalentTrees(missing); err == nil || !strings.Contains(err.Error(), missing) {
+		t.Errorf("a missing directory: err = %v, want one naming %s", err, missing)
+	}
+}
+
+func TestSimItemStatsFS(t *testing.T) {
+	fsys := fstest.MapFS{
+		"assets/db.json": {Data: []byte(`{"items": [
+			{"id": 47112, "name": "Belt", "stats": [0, 0, 55], "serverStats": [{"statType": 7, "value": 55}, {"statType": 36, "value": 40}]},
+			{"id": 47113, "name": "Plain"}
+		], "enchants": [{"effectId": 3817, "spellId": 60616}]}`)},
+		"assets/broken.json": {Data: []byte(`{"items": [{"id": 47112,`)},
+	}
+
+	itemStats, err := SimItemStatsFS(fsys, "assets/db.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	item, ok := itemStats(47112)
+	if !ok || item.Stats[2] != 55 || !reflect.DeepEqual(item.ServerStats, []core.ItemStat{{Type: 7, Value: 55}, {Type: 36, Value: 40}}) {
+		t.Errorf("item 47112 = %+v, found %v", item, ok)
+	}
+	if item.Name != "" || item.ID != 0 {
+		t.Errorf("item 47112 kept more than its stats: %+v", item)
+	}
+	if _, ok := itemStats(47113); !ok {
+		t.Error("an item without stats isn't in the database")
+	}
+	if _, ok := itemStats(1); ok {
+		t.Error("an item the database doesn't have was found")
+	}
+	if itemStats.lookup(1) != nil || itemStats.lookup(47112) == nil {
+		t.Error("lookup disagrees with the database")
+	}
+
+	if _, err := SimItemStatsFS(fsys, "assets/broken.json"); err == nil || !strings.Contains(err.Error(), "broken.json") {
+		t.Errorf("broken JSON: err = %v, want one naming the file", err)
+	}
+	if _, err := SimItemStatsFS(fsys, "assets/missing.json"); err == nil {
+		t.Error("a missing file loaded")
+	}
+}
+
+func TestSimItemStatsFromAPath(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "db.json")
+	if err := os.WriteFile(path, []byte(`{"items": [{"id": 5, "serverStats": [{"statType": 32, "value": 30}]}]}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	itemStats, err := SimItemStats(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if item, ok := itemStats(5); !ok || len(item.ServerStats) != 1 {
+		t.Errorf("item 5 = %+v, found %v", item, ok)
+	}
+
+	if err := os.WriteFile(path, []byte("not json"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := SimItemStats(path); err == nil {
+		t.Error("a file that isn't JSON loaded")
+	}
+
+	missing := filepath.Join(t.TempDir(), "db.json")
+	if _, err := SimItemStats(missing); err == nil || !strings.Contains(err.Error(), filepath.Dir(missing)) {
+		t.Errorf("a missing file: err = %v, want one naming %s", err, filepath.Dir(missing))
+	}
+}
+
+func TestRosterJSON(t *testing.T) {
+	leads := true
+	roster := &Roster{
+		Version:    RosterVersion,
+		ExportedAt: time.Date(2026, 10, 10, 18, 30, 0, 0, time.UTC),
+		Group:      RosterGroup{Selector: "core", Leader: "Deathsong", LeaderIsGroupLeader: &leads, Names: []string{"Angry"}},
+		Warnings:   []string{},
+		Characters: []*RosterCharacter{},
+	}
+	data, err := roster.JSON()
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := `{
+  "version": 2,
+  "exportedAt": "2026-10-10T18:30:00Z",
+  "group": {
+    "selector": "core",
+    "leader": "Deathsong",
+    "leaderIsGroupLeader": true,
+    "names": [
+      "Angry"
+    ]
+  },
+  "warnings": [],
+  "characters": []
+}
+`
+	if string(data) != want {
+		t.Errorf("roster JSON:\n%s\nwant:\n%s", data, want)
 	}
 }

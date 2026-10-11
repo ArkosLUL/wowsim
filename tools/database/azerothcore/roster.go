@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"math"
 	"os"
 	"path/filepath"
@@ -14,7 +15,7 @@ import (
 
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
-	"github.com/wowsims/wotlk/tools/database"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 // RosterVersion is the format version of the exported file. Version 1 files have no bot flag, pet,
@@ -30,10 +31,20 @@ type Roster struct {
 	Characters []*RosterCharacter `json:"characters"`
 }
 
+// JSON is the roster as acraid writes it to a file.
+func (roster *Roster) JSON() ([]byte, error) {
+	data, err := json.MarshalIndent(roster, "", "  ")
+	if err != nil {
+		return nil, err
+	}
+	return append(data, '\n'), nil
+}
+
 type RosterGroup struct {
-	Selector string `json:"selector"` // "leader" or "names"
-	// Leader and LeaderIsGroupLeader are only set for the "leader" selector. Any group member works,
-	// so the flag says whether the named character is the one leading it.
+	Selector string `json:"selector"` // "leader", "names", or "core" for Selector.NamesOnly
+	// Leader is set for the "leader" and "core" selectors, and LeaderIsGroupLeader once the leader
+	// turns out to be in a group. Any group member works, so the flag says whether the named
+	// character is the one leading it.
 	Leader              string   `json:"leader,omitempty"`
 	LeaderIsGroupLeader *bool    `json:"leaderIsGroupLeader,omitempty"`
 	Names               []string `json:"names,omitempty"`
@@ -478,9 +489,18 @@ var RaceNames = map[int32]string{
 // LoadTalentTrees reads the sim's talent tree layouts, e.g. ui/core/talents/trees. Only the grid
 // positions matter here; the spell ids in those files are incomplete.
 func LoadTalentTrees(dir string) (TalentTrees, error) {
+	trees, err := LoadTalentTreesFS(os.DirFS(dir))
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", dir, err)
+	}
+	return trees, nil
+}
+
+// LoadTalentTreesFS is LoadTalentTrees on a file system holding the layouts at its root.
+func LoadTalentTreesFS(fsys fs.FS) (TalentTrees, error) {
 	trees := make(TalentTrees, len(ClassNames))
 	for classID, name := range ClassNames {
-		classTrees, err := readTalentTreeFile(dir, name)
+		classTrees, err := readTalentTreeFile(fsys, name)
 		if err != nil {
 			return nil, err
 		}
@@ -496,9 +516,17 @@ var petTalentTreeFiles = map[int32]string{0: "hunter_ferocity", 1: "hunter_tenac
 
 // LoadPetTalentTrees reads the sim's hunter pet trees from the same directory as LoadTalentTrees.
 func LoadPetTalentTrees(dir string) (PetTalentTrees, error) {
+	trees, err := LoadPetTalentTreesFS(os.DirFS(dir))
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", dir, err)
+	}
+	return trees, nil
+}
+
+func LoadPetTalentTreesFS(fsys fs.FS) (PetTalentTrees, error) {
 	trees := make(PetTalentTrees, len(petTalentTreeFiles))
 	for talentType, name := range petTalentTreeFiles {
-		file, err := readTalentTreeFile(dir, name)
+		file, err := readTalentTreeFile(fsys, name)
 		if err != nil {
 			return nil, err
 		}
@@ -510,8 +538,8 @@ func LoadPetTalentTrees(dir string) (PetTalentTrees, error) {
 	return trees, nil
 }
 
-func readTalentTreeFile(dir, name string) ([][]TalentLocation, error) {
-	data, err := os.ReadFile(filepath.Join(dir, name+".json"))
+func readTalentTreeFile(fsys fs.FS, name string) ([][]TalentLocation, error) {
+	data, err := fs.ReadFile(fsys, name+".json")
 	if err != nil {
 		return nil, err
 	}
@@ -669,17 +697,31 @@ func (itemStats ItemStats) lookup(itemID int32) *core.Item {
 
 // SimItemStats reads the sim's item database, e.g. assets/database/db.json.
 func SimItemStats(path string) (ItemStats, error) {
-	data, err := os.ReadFile(path)
+	itemStats, err := SimItemStatsFS(os.DirFS(filepath.Dir(path)), filepath.Base(path))
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", filepath.Dir(path), err)
+	}
+	return itemStats, nil
+}
+
+// SimItemStatsFS is SimItemStats on a file in a file system. It keeps each item's stats and lets go
+// of the rest of the database.
+func SimItemStatsFS(fsys fs.FS, name string) (ItemStats, error) {
+	data, err := fs.ReadFile(fsys, name)
 	if err != nil {
 		return nil, err
 	}
-	db := database.ReadDatabaseFromJson(string(data))
+	db := &proto.UIDatabase{}
+	if err := protojson.Unmarshal(data, db); err != nil {
+		return nil, fmt.Errorf("%s: %w", name, err)
+	}
+	items := make(map[int32]core.Item, len(db.Items))
+	for _, item := range db.Items {
+		items[item.Id] = core.ItemFromProto(&proto.SimItem{Stats: item.Stats, ServerStats: item.ServerStats})
+	}
 	return func(itemID int32) (core.Item, bool) {
-		item, ok := db.Items[itemID]
-		if !ok {
-			return core.Item{}, false
-		}
-		return core.ItemFromProto(&proto.SimItem{Stats: item.Stats, ServerStats: item.ServerStats}), true
+		item, ok := items[itemID]
+		return item, ok
 	}, nil
 }
 

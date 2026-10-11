@@ -68,18 +68,32 @@ npx protoc --ts_out ui/core/proto --proto_path proto proto/ui.proto
 
   ```sh
   docker build --build-arg SIM_COMMIT=$(git rev-parse HEAD) --tag wowsims-wotlk .
-  docker run -d --name wowsims-wotlk --restart unless-stopped -p 3333:3333 wowsims-wotlk
+  MSYS_NO_PATHCONV=1 docker run -d --name wowsims-wotlk --restart unless-stopped -p 3333:3333 \
+    --add-host=host.docker.internal:host-gateway \
+    -v azerothcore-wotlk-pb_ac-client-data:/acdata:ro \
+    --mount type=bind,source=G:/DevStuff/GitHub/.wowsim,target=/wowsim,readonly \
+    --mount type=bind,source=G:/DevStuff/GitHub/azerothcore-wotlk-pb/configurationOverrides/Playerbot.env,target=/acconf/Playerbot.env,readonly \
+    wowsims-wotlk \
+    '--acoreDsn=root:password@tcp(host.docker.internal:3306)/' --acoreDbcDir=/acdata/dbc \
+    --acoreNamesFile=/wowsim/core-raid.txt --acoreLeader=Deathsong \
+    --acoreWorldBuffMatrix=/acconf/Playerbot.env
   ```
 
-  - It's distroless: no shell, no mounts. It serves whatever was built into the image, so rebuild it to
-    see changes.
+  - It's distroless: no shell. It serves whatever was built into the image, so rebuild it to see
+    changes. The mounts and `--acore*` flags only feed `/acoreRoster` (below).
+  - The names file's directory is mounted, not the file: an editor that replaces a file leaves a
+    single-file mount stale. `Playerbot.env` is mounted alone because `Chronicle.env` sits beside it.
+  - `host.docker.internal`, not the AC network: a container on that network can't start once it's gone.
+  - The mounted volume blocks `docker compose down -v` in [ac] until the sim container is removed.
   - Keep the `/wotlk/` path behind a reverse proxy.
   - Without `SIM_COMMIT`, optimizer results say sim "unknown": `.dockerignore` drops `.git`.
   - After a rebuild, reload every open sim tab: a page from the old build keeps sending its old requests.
 - **Dev server** on :3334, since prod holds :3333. `--usefs` serves `./dist` from the mounted checkout.
   There's no hot reload: `docker rm -f wotlk-dev` and start it again after changes. With a worktree
   mounted, add `-e SIM_COMMIT=$(git -C <worktree> rev-parse HEAD)`: its `.git` points outside the mount,
-  so the container can't read the commit.
+  so the container can't read the commit. For `/acoreRoster`, add the prod line's `--add-host` and mounts
+  before the image, and its `--acore*` flags after `--host=":3333"` inside the `sh -c`, with the DSN in
+  double quotes there.
 
   ```sh
   MSYS_NO_PATHCONV=1 docker run -d --name wotlk-dev -p 3334:3333 -v <worktree>:/wotlk \
@@ -87,7 +101,25 @@ npx protoc --ts_out ui/core/proto --proto_path proto proto/ui.proto
     sh -c 'make dist/wotlk/.dirstamp devserver && ./wowsimwotlk --usefs=true --launch=false --host=":3333"'
   ```
 
-- **API** (`/raidSim`, `/computeStats`, `/version`) takes binary protobuf.
+- **`GET /acoreRoster`** returns the core raid as acraid's roster JSON
+  ([acraid README](../../tools/database/acraid/README.md#from-the-sim-server)), read from the live
+  server in one read-only transaction, one request at a time.
+  - Flags, each falling back to its env variable; `--help` never shows a DSN:
+
+    | Flag | Env | Required |
+    |---|---|---|
+    | `--acoreDsn` | `AC_DSN` | yes; no database name needed |
+    | `--acoreDbcDir` | `AC_DBC_DIR` | yes |
+    | `--acoreNamesFile` | `AC_RAID_NAMES_FILE` | yes; read on every request |
+    | `--acoreLeader` | `AC_RAID_LEADER` | no: without it, list order |
+    | `--acoreWorldBuffMatrix` | `AC_WORLD_BUFF_MATRIX` | no; read on every request |
+
+  - Errors are `{"code", "error"}`: 400 `bad_request` (any query parameter), 403 `cross_site`,
+    405 `method_not_allowed`, 409 `no_roster` (unknown name, empty names file), 500 `server_config`
+    (unreadable file, bad DSN), 502 `database` (detail only in the log), 503 `not_configured` (names the
+    missing flags), 504 `timeout` (30 s, queue wait included).
+  - Item stats come from `wotlk/assets/database/db.json` in the files the server serves.
+- **API** (`/raidSim`, `/computeStats`) takes binary protobuf. `/version` returns JSON.
   - Encode and decode with the image's protoc: `protoc -I/p --encode=proto.RaidSimRequest /p/api.proto`,
     with `proto/` mounted at `/p`.
   - A minimal player needs a class options message, `equipment {}` and `rotation { type: TypeAPL }`, or

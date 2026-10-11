@@ -5,7 +5,6 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
-	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -22,7 +21,8 @@ import (
 	googleProto "google.golang.org/protobuf/proto"
 )
 
-var readWebThreads = flag.Int("readWebThreads", 8, "number of parallel workers to fetch web pages")
+// Not a flag: the sim server links this package, and every flag registered here shows in its --help.
+const readWebThreads = 8
 
 func ReadFile(filePath string) string {
 	b, err := os.ReadFile(filePath)
@@ -169,10 +169,7 @@ func ReadWebRequired(url string) string {
 
 // Fetches web results from all the given urls, and returns a parallel array of page contents.
 func ReadWebMulti(urls []string) []string {
-	threads := *readWebThreads
-	if threads > len(urls) {
-		threads = len(urls)
-	}
+	threads := min(readWebThreads, len(urls))
 
 	type WebResult struct {
 		urlIdx int

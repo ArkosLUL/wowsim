@@ -9,7 +9,6 @@ package main
 
 import (
 	"cmp"
-	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
@@ -24,6 +23,8 @@ var (
 	dsn         = flag.String("dsn", azerothcore.DefaultCharactersDSN, "AzerothCore database DSN")
 	leader      = flag.String("leader", "", "export the group this character is in, keeping its subgroups")
 	names       = flag.String("names", "", "comma separated characters to export, filling subgroups of 5 in order; with -leader they top up the group instead")
+	namesFile   = flag.String("namesFile", "", "-names from a file: one character a line, blank lines and # comments skipped")
+	namesOnly   = flag.Bool("namesOnly", false, "export the named characters and nobody else; with -leader, the ones in the group keep their subgroup and the rest take the first with room")
 	acContainer = flag.String("acContainer", "ac-worldserver", "worldserver container to copy DBC files from when -dbcDir is empty")
 	dbcDir      = flag.String("dbcDir", "", "directory holding the server's DBC files; copied from -acContainer when empty")
 	trees       = flag.String("trees", "ui/core/talents/trees", "sim talent tree layouts")
@@ -39,7 +40,15 @@ func main() {
 	if *out == "" {
 		log.Fatal("-out is required")
 	}
-	selector := azerothcore.Selector{Leader: *leader, Names: splitNames(*names)}
+	selector := azerothcore.Selector{Leader: *leader, Names: splitNames(*names), NamesOnly: *namesOnly}
+	if *namesFile != "" {
+		if selector.Names != nil {
+			log.Fatal("-names and -namesFile both give the list of names: pass one")
+		}
+		listed, err := azerothcore.ReadNamesFile(*namesFile)
+		check(err)
+		selector.Names = listed
+	}
 
 	db, err := azerothcore.OpenDB(*dsn)
 	check(err)
@@ -66,9 +75,9 @@ func main() {
 	roster, err := azerothcore.BuildRoster(db, selector, inputs)
 	check(err)
 
-	data, err := json.MarshalIndent(roster, "", "  ")
+	data, err := roster.JSON()
 	check(err)
-	check(os.WriteFile(*out, append(data, '\n'), 0o644))
+	check(os.WriteFile(*out, data, 0o644))
 
 	printSummary(roster)
 	log.Printf("wrote %d characters to %s", len(roster.Characters), *out)

@@ -18,6 +18,12 @@
 		&> * {
 			margin-bottom: 0;
 		}
+
+		// the pickers beside it have a label on top
+		.acore-server-import {
+			align-self: end;
+			white-space: nowrap;
+		}
 	}
 
 	.new-player-picker-root {
