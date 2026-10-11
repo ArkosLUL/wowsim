@@ -727,17 +727,6 @@ var spells = []Spell{
 			{Effect: 6, Aura: 42, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, TriggerSpell: 12964},
 		},
 	},
-	// Fire Blast
-	{
-		ID: 13339, Family: 3, FamilyFlags: [3]uint32{0x20002}, SchoolMask: 4, DmgClass: DmgClassMagic, Flags: FlagResetsAutoAttack,
-		Attributes: [8]uint32{0x90000}, AttributesCu: 0x1100,
-		CooldownMs: 5000, CategoryCooldownMs: 5000, Category: 19,
-		ProcChance: 101, ManaCost: 120, SpellLevel: 20, BaseLevel: 20,
-		CooldownMods: ModBounds{FlatMin: -2000},
-		Effects: [3]Effect{
-			{Effect: 2, BasePoints: 109, DieSides: 21, DamageMultiplier: 1},
-		},
-	},
 	// Fire Shield
 	{
 		ID: 13376, SchoolMask: 4, DmgClass: DmgClassMagic, Flags: FlagTargetsArea,
