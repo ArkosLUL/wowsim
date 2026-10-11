@@ -254,7 +254,11 @@ func calibrationPoolReq(req *proto.OptimizeGearRequest) *proto.OptimizeGearReque
 // calibration gap says how far that context's own DPS sits from simming the seed in the real raid,
 // which the derived context's approximate buffs and debuffs don't reproduce exactly.
 func TestCalibrationGapComparesTheDerivedContextToTheRealRaid(t *testing.T) {
-	req := calibrationPoolReq(raidContribRequest(t, 0, presetPlayer(t, "fury_p1", "Target"), presetPlayer(t, "arcane_p3", "Mage")))
+	// The warlock's own Demonic Pact moves through the fight, which a fixed buff can't follow
+	req := calibrationPoolReq(raidContribRequest(t, 0, presetPlayer(t, "arcane_p3", "Target"), demonologyWarlock("Warlock")))
+	buffs := googleProto.Clone(core.FullRaidBuffs).(*proto.RaidBuffs)
+	buffs.DemonicPactSp = 0
+	req.Base.Raid.Buffs = buffs
 	req.Settings.Objective = proto.OptimizerObjective_OptimizerObjectiveOwnMetrics
 	req.Settings.Effort = proto.OptimizerEffort_OptimizerEffortQuick
 	result := Optimize(context.Background(), req, nil)
