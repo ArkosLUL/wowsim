@@ -70,8 +70,8 @@ dps_results: {
 dps_results: {
  key: "TestUnholy-AllItems-Bandit'sInsignia-40371"
  value: {
-  dps: 11767.7205
-  tps: 7287.11707
+  dps: 11767.81017
+  tps: 7288.5188
   hps: 385.8
  }
 }
@@ -198,8 +198,8 @@ dps_results: {
 dps_results: {
  key: "TestUnholy-AllItems-DarkmoonCard:Death-42990"
  value: {
-  dps: 11754.47483
-  tps: 7298.0212
+  dps: 11754.56417
+  tps: 7298.09267
   hps: 385.8
  }
 }
@@ -350,8 +350,8 @@ dps_results: {
 dps_results: {
  key: "TestUnholy-AllItems-ExtractofNecromanticPower-40373"
  value: {
-  dps: 11760.18383
-  tps: 7304.03307
+  dps: 11760.38167
+  tps: 7305.08133
   hps: 385.8
  }
 }
@@ -446,8 +446,8 @@ dps_results: {
 dps_results: {
  key: "TestUnholy-AllItems-GnomishLightningGenerator-41121"
  value: {
-  dps: 11716.4075
-  tps: 7264.79813
+  dps: 11716.47083
+  tps: 7265.27547
   hps: 385.8
  }
 }
@@ -630,16 +630,16 @@ dps_results: {
 dps_results: {
  key: "TestUnholy-AllItems-ReignoftheDead-47316"
  value: {
-  dps: 11624.2695
-  tps: 7196.60413
+  dps: 11624.3895
+  tps: 7196.73047
   hps: 385.8
  }
 }
 dps_results: {
  key: "TestUnholy-AllItems-ReignoftheDead-47477"
  value: {
-  dps: 11635.97917
-  tps: 7205.97187
+  dps: 11636.09917
+  tps: 7206.0982
   hps: 385.8
  }
 }
@@ -1078,49 +1078,49 @@ dps_results: {
 dps_results: {
  key: "TestUnholy-Settings-Human-p3_uh_dw-Basic-uh_dnd_aoe-FullBuffs-LongMultiTarget"
  value: {
-  dps: 65854.5225
-  tps: 66281.80149
+  dps: 66659.104
+  tps: 67164.39318
   hps: 366.32
  }
 }
 dps_results: {
  key: "TestUnholy-Settings-Human-p3_uh_dw-Basic-uh_dnd_aoe-FullBuffs-LongSingleTarget"
  value: {
-  dps: 12083.005
-  tps: 8544.99789
-  hps: 359.89333
+  dps: 12086.268
+  tps: 8539.14326
+  hps: 378.53067
  }
 }
 dps_results: {
  key: "TestUnholy-Settings-Human-p3_uh_dw-Basic-uh_dnd_aoe-FullBuffs-ShortSingleTarget"
  value: {
-  dps: 15671.51583
-  tps: 8492.25328
-  hps: 514.13333
+  dps: 15653.5825
+  tps: 8449.45828
+  hps: 610.53333
  }
 }
 dps_results: {
  key: "TestUnholy-Settings-Human-p3_uh_dw-Basic-uh_dnd_aoe-NoBuffs-LongMultiTarget"
  value: {
-  dps: 39469.85767
-  tps: 41304.41897
-  hps: 233.30517
+  dps: 39756.75683
+  tps: 41625.65951
+  hps: 232.281
  }
 }
 dps_results: {
  key: "TestUnholy-Settings-Human-p3_uh_dw-Basic-uh_dnd_aoe-NoBuffs-LongSingleTarget"
  value: {
-  dps: 6289.4395
-  tps: 4939.7756
-  hps: 230.02783
+  dps: 6256.54233
+  tps: 4907.0431
+  hps: 239.24533
  }
 }
 dps_results: {
  key: "TestUnholy-Settings-Human-p3_uh_dw-Basic-uh_dnd_aoe-NoBuffs-ShortSingleTarget"
  value: {
-  dps: 7108.79
-  tps: 4545.13135
-  hps: 327.73333
+  dps: 7088.15167
+  tps: 4521.15622
+  hps: 389.18333
  }
 }
 dps_results: {
@@ -1222,49 +1222,49 @@ dps_results: {
 dps_results: {
  key: "TestUnholy-Settings-Orc-p3_uh_dw-Basic-uh_dnd_aoe-FullBuffs-LongMultiTarget"
  value: {
-  dps: 66372.50683
-  tps: 66639.01513
+  dps: 67149.45783
+  tps: 67507.32481
   hps: 366.51
  }
 }
 dps_results: {
  key: "TestUnholy-Settings-Orc-p3_uh_dw-Basic-uh_dnd_aoe-FullBuffs-LongSingleTarget"
  value: {
-  dps: 12278.643
-  tps: 8585.05794
-  hps: 360.08
+  dps: 12286.70567
+  tps: 8580.44688
+  hps: 378.727
  }
 }
 dps_results: {
  key: "TestUnholy-Settings-Orc-p3_uh_dw-Basic-uh_dnd_aoe-FullBuffs-ShortSingleTarget"
  value: {
-  dps: 16120.07167
-  tps: 8560.30661
-  hps: 514.4
+  dps: 16103.4875
+  tps: 8515.59821
+  hps: 610.85
  }
 }
 dps_results: {
  key: "TestUnholy-Settings-Orc-p3_uh_dw-Basic-uh_dnd_aoe-NoBuffs-LongMultiTarget"
  value: {
-  dps: 39795.75967
-  tps: 41567.42959
-  hps: 233.30517
+  dps: 40082.42267
+  tps: 41889.1814
+  hps: 232.281
  }
 }
 dps_results: {
  key: "TestUnholy-Settings-Orc-p3_uh_dw-Basic-uh_dnd_aoe-NoBuffs-LongSingleTarget"
  value: {
-  dps: 6385.00267
-  tps: 4969.06414
-  hps: 230.02783
+  dps: 6352.13367
+  tps: 4935.43888
+  hps: 239.24533
  }
 }
 dps_results: {
  key: "TestUnholy-Settings-Orc-p3_uh_dw-Basic-uh_dnd_aoe-NoBuffs-ShortSingleTarget"
  value: {
-  dps: 7313.675
-  tps: 4589.33629
-  hps: 327.73333
+  dps: 7292.28167
+  tps: 4564.41369
+  hps: 389.18333
  }
 }
 dps_results: {

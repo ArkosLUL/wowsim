@@ -78,8 +78,8 @@ dps_results: {
 dps_results: {
  key: "TestFeralTank-AllItems-Bandit'sInsignia-40371"
  value: {
-  dps: 2886.497
-  tps: 5886.83098
+  dps: 2909.518
+  tps: 5938.06835
   dtps: 7.2415
  }
 }
@@ -177,8 +177,8 @@ dps_results: {
 dps_results: {
  key: "TestFeralTank-AllItems-DarkmoonCard:Death-42990"
  value: {
-  dps: 2892.0695
-  tps: 5907.15826
+  dps: 2905.57467
+  tps: 5937.38112
   dtps: 7.079
  }
 }
@@ -329,8 +329,8 @@ dps_results: {
 dps_results: {
  key: "TestFeralTank-AllItems-ExtractofNecromanticPower-40373"
  value: {
-  dps: 2853.82233
-  tps: 5827.50953
+  dps: 2866.13833
+  tps: 5848.51
   dtps: 7.2415
  }
 }
@@ -441,8 +441,8 @@ dps_results: {
 dps_results: {
  key: "TestFeralTank-AllItems-GnomishLightningGenerator-41121"
  value: {
-  dps: 2891.22867
-  tps: 5904.58422
+  dps: 2883.01733
+  tps: 5892.60423
   dtps: 7.2415
  }
 }
@@ -770,16 +770,16 @@ dps_results: {
 dps_results: {
  key: "TestFeralTank-AllItems-ReignoftheDead-47316"
  value: {
-  dps: 2803.33533
-  tps: 5725.06408
+  dps: 2810.3575
+  tps: 5737.21758
   dtps: 7.2415
  }
 }
 dps_results: {
  key: "TestFeralTank-AllItems-ReignoftheDead-47477"
  value: {
-  dps: 2805.533
-  tps: 5729.62095
+  dps: 2812.44283
+  tps: 5741.54152
   dtps: 7.2415
  }
 }
@@ -898,8 +898,8 @@ dps_results: {
 dps_results: {
  key: "TestFeralTank-AllItems-StormshroudArmor"
  value: {
-  dps: 2298.0685
-  tps: 4679.72778
+  dps: 2316.17833
+  tps: 4721.74662
   dtps: 7.2415
  }
 }

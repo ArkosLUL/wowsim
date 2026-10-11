@@ -88,8 +88,8 @@ dps_results: {
 dps_results: {
  key: "TestProtection-AllItems-Bandit'sInsignia-40371"
  value: {
-  dps: 3442.23217
-  tps: 8352.70293
+  dps: 3442.3065
+  tps: 8353.97923
  }
 }
 dps_results: {
@@ -189,8 +189,8 @@ dps_results: {
 dps_results: {
  key: "TestProtection-AllItems-DarkmoonCard:Death-42990"
  value: {
-  dps: 3418.69
-  tps: 8289.14835
+  dps: 3418.76783
+  tps: 8289.25965
  }
 }
 dps_results: {
@@ -308,8 +308,8 @@ dps_results: {
 dps_results: {
  key: "TestProtection-AllItems-ExtractofNecromanticPower-40373"
  value: {
-  dps: 3412.38817
-  tps: 8286.07065
+  dps: 3412.59983
+  tps: 8287.36834
  }
 }
 dps_results: {
@@ -399,8 +399,8 @@ dps_results: {
 dps_results: {
  key: "TestProtection-AllItems-GnomishLightningGenerator-41121"
  value: {
-  dps: 3393.97183
-  tps: 8254.02331
+  dps: 3394.02867
+  tps: 8254.10458
  }
 }
 dps_results: {
@@ -631,15 +631,15 @@ dps_results: {
 dps_results: {
  key: "TestProtection-AllItems-ReignoftheDead-47316"
  value: {
-  dps: 3479.23783
-  tps: 8360.81857
+  dps: 3477.5795
+  tps: 8358.50065
  }
 }
 dps_results: {
  key: "TestProtection-AllItems-ReignoftheDead-47477"
  value: {
-  dps: 3499.402
-  tps: 8391.49097
+  dps: 3497.509
+  tps: 8388.83748
  }
 }
 dps_results: {

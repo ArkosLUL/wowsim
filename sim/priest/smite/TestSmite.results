@@ -168,8 +168,8 @@ dps_results: {
 dps_results: {
  key: "TestSmite-AllItems-DarkmoonCard:Death-42990"
  value: {
-  dps: 3146.76917
-  tps: 2664.78829
+  dps: 3146.846
+  tps: 2664.86512
  }
 }
 dps_results: {
@@ -287,8 +287,8 @@ dps_results: {
 dps_results: {
  key: "TestSmite-AllItems-ExtractofNecromanticPower-40373"
  value: {
-  dps: 3149.79067
-  tps: 2665.34505
+  dps: 3149.03783
+  tps: 2665.49082
  }
 }
 dps_results: {
@@ -385,8 +385,8 @@ dps_results: {
 dps_results: {
  key: "TestSmite-AllItems-GnomishLightningGenerator-41121"
  value: {
-  dps: 3127.032
-  tps: 2644.88085
+  dps: 3127.095
+  tps: 2644.94385
  }
 }
 dps_results: {
@@ -567,15 +567,15 @@ dps_results: {
 dps_results: {
  key: "TestSmite-AllItems-ReignoftheDead-47316"
  value: {
-  dps: 3280.48
-  tps: 2784.38209
+  dps: 3280.51333
+  tps: 2784.33435
  }
 }
 dps_results: {
  key: "TestSmite-AllItems-ReignoftheDead-47477"
  value: {
-  dps: 3306.15483
-  tps: 2807.94652
+  dps: 3306.2875
+  tps: 2807.99502
  }
 }
 dps_results: {

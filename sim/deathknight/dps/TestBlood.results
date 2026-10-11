@@ -67,8 +67,8 @@ dps_results: {
 dps_results: {
  key: "TestBlood-AllItems-Bandit'sInsignia-40371"
  value: {
-  dps: 11554.7055
-  tps: 5525.79152
+  dps: 11554.79367
+  tps: 5527.08001
  }
 }
 dps_results: {
@@ -182,8 +182,8 @@ dps_results: {
 dps_results: {
  key: "TestBlood-AllItems-DarkmoonCard:Death-42990"
  value: {
-  dps: 11525.947
-  tps: 5517.51026
+  dps: 11526.03467
+  tps: 5517.55848
  }
 }
 dps_results: {
@@ -315,8 +315,8 @@ dps_results: {
 dps_results: {
  key: "TestBlood-AllItems-ExtractofNecromanticPower-40373"
  value: {
-  dps: 11555.7565
-  tps: 5530.25715
+  dps: 11555.69267
+  tps: 5531.50704
  }
 }
 dps_results: {
@@ -399,8 +399,8 @@ dps_results: {
 dps_results: {
  key: "TestBlood-AllItems-GnomishLightningGenerator-41121"
  value: {
-  dps: 11503.644
-  tps: 5502.77383
+  dps: 11503.71283
+  tps: 5503.17836
  }
 }
 dps_results: {
@@ -561,15 +561,15 @@ dps_results: {
 dps_results: {
  key: "TestBlood-AllItems-ReignoftheDead-47316"
  value: {
-  dps: 11400.14117
-  tps: 5454.54333
+  dps: 11400.2355
+  tps: 5454.61854
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-ReignoftheDead-47477"
  value: {
-  dps: 11409.9755
-  tps: 5459.95221
+  dps: 11410.07333
+  tps: 5460.02935
  }
 }
 dps_results: {
@@ -951,6 +951,48 @@ dps_results: {
  }
 }
 dps_results: {
+ key: "TestBlood-Settings-Human-p3_blood-Basic-blood_pesti_aoe-FullBuffs-LongMultiTarget"
+ value: {
+  dps: 49845.89583
+  tps: 25487.60365
+ }
+}
+dps_results: {
+ key: "TestBlood-Settings-Human-p3_blood-Basic-blood_pesti_aoe-FullBuffs-LongSingleTarget"
+ value: {
+  dps: 9126.24533
+  tps: 4536.5576
+ }
+}
+dps_results: {
+ key: "TestBlood-Settings-Human-p3_blood-Basic-blood_pesti_aoe-FullBuffs-ShortSingleTarget"
+ value: {
+  dps: 12390.01583
+  tps: 5357.45846
+ }
+}
+dps_results: {
+ key: "TestBlood-Settings-Human-p3_blood-Basic-blood_pesti_aoe-NoBuffs-LongMultiTarget"
+ value: {
+  dps: 23527.9
+  tps: 12153.6834
+ }
+}
+dps_results: {
+ key: "TestBlood-Settings-Human-p3_blood-Basic-blood_pesti_aoe-NoBuffs-LongSingleTarget"
+ value: {
+  dps: 4479.68233
+  tps: 2307.1122
+ }
+}
+dps_results: {
+ key: "TestBlood-Settings-Human-p3_blood-Basic-blood_pesti_aoe-NoBuffs-ShortSingleTarget"
+ value: {
+  dps: 5622.96333
+  tps: 2523.50158
+ }
+}
+dps_results: {
  key: "TestBlood-Settings-Orc-p3_blood-Basic-blood_dps-FullBuffs-LongMultiTarget"
  value: {
   dps: 35315.26017
@@ -990,6 +1032,48 @@ dps_results: {
  value: {
   dps: 7446.97
   tps: 3392.13438
+ }
+}
+dps_results: {
+ key: "TestBlood-Settings-Orc-p3_blood-Basic-blood_pesti_aoe-FullBuffs-LongMultiTarget"
+ value: {
+  dps: 50288.07817
+  tps: 25663.44488
+ }
+}
+dps_results: {
+ key: "TestBlood-Settings-Orc-p3_blood-Basic-blood_pesti_aoe-FullBuffs-LongSingleTarget"
+ value: {
+  dps: 9197.044
+  tps: 4559.28296
+ }
+}
+dps_results: {
+ key: "TestBlood-Settings-Orc-p3_blood-Basic-blood_pesti_aoe-FullBuffs-ShortSingleTarget"
+ value: {
+  dps: 12532.06583
+  tps: 5394.58346
+ }
+}
+dps_results: {
+ key: "TestBlood-Settings-Orc-p3_blood-Basic-blood_pesti_aoe-NoBuffs-LongMultiTarget"
+ value: {
+  dps: 23670.99317
+  tps: 12186.66992
+ }
+}
+dps_results: {
+ key: "TestBlood-Settings-Orc-p3_blood-Basic-blood_pesti_aoe-NoBuffs-LongSingleTarget"
+ value: {
+  dps: 4501.51867
+  tps: 2310.83887
+ }
+}
+dps_results: {
+ key: "TestBlood-Settings-Orc-p3_blood-Basic-blood_pesti_aoe-NoBuffs-ShortSingleTarget"
+ value: {
+  dps: 5691.095
+  tps: 2541.23496
  }
 }
 dps_results: {

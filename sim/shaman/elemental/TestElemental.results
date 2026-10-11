@@ -238,8 +238,8 @@ dps_results: {
 dps_results: {
  key: "TestElemental-AllItems-DarkmoonCard:Death-42990"
  value: {
-  dps: 6861.6115
-  tps: 4108.86218
+  dps: 6861.70183
+  tps: 4108.95252
  }
 }
 dps_results: {
@@ -378,8 +378,8 @@ dps_results: {
 dps_results: {
  key: "TestElemental-AllItems-ExtractofNecromanticPower-40373"
  value: {
-  dps: 6955.13217
-  tps: 4170.96852
+  dps: 6954.66533
+  tps: 4171.32198
  }
 }
 dps_results: {
@@ -672,15 +672,15 @@ dps_results: {
 dps_results: {
  key: "TestElemental-AllItems-ReignoftheDead-47316"
  value: {
-  dps: 7179.51217
-  tps: 4302.22493
+  dps: 7178.79617
+  tps: 4301.73127
  }
 }
 dps_results: {
  key: "TestElemental-AllItems-ReignoftheDead-47477"
  value: {
-  dps: 7232.00133
-  tps: 4335.58192
+  dps: 7231.1355
+  tps: 4334.98313
  }
 }
 dps_results: {
