@@ -38,7 +38,6 @@ func (druid *Druid) registerSurvivalInstinctsCD() {
 
 	druid.SurvivalInstincts = druid.RegisterSpell(Cat|Bear, core.SpellConfig{
 		ActionID: actionID,
-		Flags:    SpellFlagOmenTrigger,
 		Cast: core.CastConfig{
 			CD: core.Cooldown{
 				Timer:    cdTimer,

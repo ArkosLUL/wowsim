@@ -50,7 +50,8 @@ pull, Sniper Training included). The 32 were fought against the worldserver buil
 RogueSubtlety again on 2026-10-06 against the worldserver build of 19:37 (rev 3d89793c7 plus the module's working
 tree); HunterMM again on 2026-10-10 against the worldserver image of 2026-10-09 (rev 3d89793c7, module 408f7b5),
 Hunter's Mark pulled and the dummy at 19%; MageArcane and WarlockDemonology again on 2026-10-10 against that day's
-worldserver image (rev 3d89793c7, mod-spell-tweaks 9bf5c75: its mage and warlock tweaks): 105 KB.
+worldserver image (rev 3d89793c7, mod-spell-tweaks 9bf5c75: its mage and warlock tweaks); DeathknightBlood and
+WarriorProtectionWarrior again on 2026-10-11 against that day's image (module 8a6f13f): 106 KB.
 
 ## Left out
 

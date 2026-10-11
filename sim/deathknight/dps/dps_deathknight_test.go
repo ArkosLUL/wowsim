@@ -25,6 +25,10 @@ func TestBlood(t *testing.T) {
 		SpecOptions: core.SpecOptionsCombo{Label: "Basic", SpecOptions: PlayerOptionsBlood},
 		Rotation:    core.GetAplRotation("../../../ui/deathknight/apls", "blood_dps"),
 
+		OtherRotations: []core.RotationCombo{
+			core.GetAplRotation("../../../ui/deathknight/apls", "blood_pesti_aoe"),
+		},
+
 		ItemFilter: ItemFilter,
 	}))
 }
@@ -66,10 +70,6 @@ func TestFrost(t *testing.T) {
 			{Label: "Desync", SpecOptions: PlayerOptionsDesyncFrost},
 		},
 		Rotation: core.GetAplRotation("../../../ui/deathknight/apls", "frost_bl_pesti"),
-
-		OtherRotations: []core.RotationCombo{
-			core.GetAplRotation("../../../ui/deathknight/apls", "frost_uh_pesti"),
-		},
 
 		ItemFilter: ItemFilter,
 	}))

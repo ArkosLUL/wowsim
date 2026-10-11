@@ -6371,6 +6371,16 @@ var spells = []Spell{
 			{Effect: 6, Aura: 189, BasePoints: 339, DieSides: 1, DamageMultiplier: 1, MiscValue: 917504},
 		},
 	},
+	// Lightning Bolt (Rank 1)
+	{
+		ID: 54843, Family: 11, SchoolMask: 8, DmgClass: DmgClassMagic,
+		Attributes: [8]uint32{0x10000}, AttributesCu: 0x1100,
+		GCDCategory: 133,
+		ProcChance:  101, Speed: 20, SpellLevel: 1, BaseLevel: 1, MaxLevel: 6,
+		Effects: [3]Effect{
+			{Effect: 2, BasePoints: 1180, DieSides: 191, DamageMultiplier: 1},
+		},
+	},
 	// Glyph of Starfire
 	{
 		ID: 54845, Family: 7, SchoolMask: 1, Flags: FlagPassive | FlagPositive,
@@ -6389,6 +6399,15 @@ var spells = []Spell{
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 99, BasePoints: 429, DieSides: 1, DamageMultiplier: 1},
 			{Effect: 6, Aura: 124, BasePoints: 429, DieSides: 1, DamageMultiplier: 1},
+		},
+	},
+	// Gnomish Lightning Generator
+	{
+		ID: 55039, SchoolMask: 8, DmgClass: DmgClassMagic,
+		Attributes: [8]uint32{0, 0, 0, 0, 0, 0, 0x20000000}, AttributesCu: 0x3100,
+		ProcChance: 101,
+		Effects: [3]Effect{
+			{Effect: 2, BasePoints: 1529, DieSides: 341, DamageMultiplier: 1},
 		},
 	},
 	// Blood Plague
@@ -6654,6 +6673,15 @@ var spells = []Spell{
 		Effects: [3]Effect{
 			{Effect: 3, DamageMultiplier: 1, BonusMultiplier: 1},
 			{Effect: 6, Aura: 3, AmplitudeMs: 2000, BasePoints: 19, DieSides: 7, DamageMultiplier: 1},
+		},
+	},
+	// Argent Fury
+	{
+		ID: 55748, SchoolMask: 2, DmgClass: DmgClassMagic,
+		AttributesCu: 0x1100,
+		ProcChance:   101, SpellLevel: 60, BaseLevel: 60,
+		Effects: [3]Effect{
+			{Effect: 2, BasePoints: 1023, DieSides: 513, DamageMultiplier: 1},
 		},
 	},
 	// Acid Spit (Rank 6)
@@ -7653,6 +7681,15 @@ var spells = []Spell{
 			{Effect: 6, Aura: 189, BasePoints: 34, DieSides: 1, DamageMultiplier: 1, MiscValue: 1792},
 		},
 	},
+	// Darkmoon Card: Death
+	{
+		ID: 60203, SchoolMask: 32, DmgClass: DmgClassMagic,
+		AttributesCu: 0x1100,
+		ProcChance:   101,
+		Effects: [3]Effect{
+			{Effect: 2, BasePoints: 1749, DieSides: 501, DamageMultiplier: 1},
+		},
+	},
 	// Greatness
 	{
 		ID: 60229, SchoolMask: 2, Flags: FlagBinary | FlagPositive,
@@ -7701,6 +7738,15 @@ var spells = []Spell{
 		ProcFlags: 0x15550, ProcChance: 100, SpellLevel: 60, BaseLevel: 60,
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 189, BasePoints: 443, DieSides: 1, ValueMultiplier: 1, DamageMultiplier: 1, MiscValue: 917504},
+		},
+	},
+	// Vestige of Haldor
+	{
+		ID: 60307, SchoolMask: 4, DmgClass: DmgClassMagic,
+		AttributesCu: 0x1100,
+		ProcChance:   101, SpellLevel: 60, BaseLevel: 60,
+		Effects: [3]Effect{
+			{Effect: 2, BasePoints: 1023, DieSides: 513, DamageMultiplier: 1},
 		},
 	},
 	// Fury of the Five Flights
@@ -7755,6 +7801,15 @@ var spells = []Spell{
 			{Effect: 6, Aura: 189, BasePoints: 611, DieSides: 1, ValueMultiplier: 1, DamageMultiplier: 1, MiscValue: 16777216},
 		},
 	},
+	// Bandit's Insignia
+	{
+		ID: 60443, SchoolMask: 64, DmgClass: DmgClassMagic,
+		AttributesCu: 0x1100,
+		ProcChance:   101, SpellLevel: 60, BaseLevel: 60,
+		Effects: [3]Effect{
+			{Effect: 2, BasePoints: 1503, DieSides: 753, DamageMultiplier: 1},
+		},
+	},
 	// Forge Ember
 	{
 		ID: 60479, SchoolMask: 1, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagPositive,
@@ -7766,6 +7821,15 @@ var spells = []Spell{
 			{Effect: 6, Aura: 135, BasePoints: 511, DieSides: 1, DamageMultiplier: 1, MiscValue: 126},
 		},
 	},
+	// Pendulum of Telluric Currents
+	{
+		ID: 60483, SchoolMask: 32, DmgClass: DmgClassMagic,
+		AttributesCu: 0x1100,
+		ProcChance:   101, SpellLevel: 60, BaseLevel: 60,
+		Effects: [3]Effect{
+			{Effect: 2, BasePoints: 1167, DieSides: 585, DamageMultiplier: 1},
+		},
+	},
 	// Illustration of the Dragon Soul
 	{
 		ID: 60486, SchoolMask: 1, Flags: FlagBinary | FlagPositive,
@@ -7775,6 +7839,16 @@ var spells = []Spell{
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 13, BasePoints: 19, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, MiscValue: 126},
 			{Effect: 6, Aura: 135, BasePoints: 19, DieSides: 1, DamageMultiplier: 1, MiscValue: 126},
+		},
+	},
+	// Extract of Necromatic Power
+	{
+		ID: 60488, SchoolMask: 32, DmgClass: DmgClassMagic, Flags: FlagHasteGCD,
+		Attributes: [8]uint32{0x10000}, AttributesCu: 0x1100,
+		CastMs: 2200, BaseCastMs: 2200, GCDMs: 1500, GCDCategory: 133,
+		ProcChance: 101, Speed: 20, SpellLevel: 30, BaseLevel: 30,
+		Effects: [3]Effect{
+			{Effect: 2, BasePoints: 787, DieSides: 525, ValueMultiplier: 1, DamageMultiplier: 1},
 		},
 	},
 	// Embrace of the Spider
@@ -9562,6 +9636,16 @@ var spells = []Spell{
 			{Effect: 6, Aura: 29, BasePoints: 449, DieSides: 1, DamageMultiplier: 1},
 		},
 	},
+	// Pillar of Flame (Rank 1)
+	{
+		ID: 67714, Family: 11, SchoolMask: 4, DmgClass: DmgClassMagic,
+		Attributes: [8]uint32{0x10000}, AttributesCu: 0x1100,
+		GCDCategory: 133,
+		ProcChance:  101, Speed: 20, SpellLevel: 1, BaseLevel: 1,
+		Effects: [3]Effect{
+			{Effect: 2, BasePoints: 1740, DieSides: 283, DamageMultiplier: 1},
+		},
+	},
 	// Escalation
 	{
 		ID: 67723, SchoolMask: 1, Flags: FlagBinary | FlagPositive,
@@ -9654,6 +9738,16 @@ var spells = []Spell{
 		ProcChance: 101,
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 85, BasePoints: 17, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1},
+		},
+	},
+	// Pillar of Flame (Rank 1)
+	{
+		ID: 67760, Family: 11, SchoolMask: 4, DmgClass: DmgClassMagic,
+		Attributes: [8]uint32{0x10000}, AttributesCu: 0x1100,
+		GCDCategory: 133,
+		ProcChance:  101, Speed: 20, SpellLevel: 1, BaseLevel: 1,
+		Effects: [3]Effect{
+			{Effect: 2, BasePoints: 1958, DieSides: 317, DamageMultiplier: 1},
 		},
 	},
 	// Paragon

@@ -31,6 +31,8 @@ func addThaddius25(bossPrefix string) {
 			DualWield:        false,
 			DualWieldPenalty: false,
 			TargetInputs:     make([]*proto.TargetInput, 0),
+
+			MechanicImmuneMask: mechanicImmunities(),
 		},
 		AI: NewThaddius25AI(),
 	})

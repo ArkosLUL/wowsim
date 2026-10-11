@@ -156,6 +156,11 @@ func NewTarget(options *proto.Target, targetIndex int32) *Target {
 	} else {
 		target.IsWorldBoss = target.Level >= defaultRaidBossLevel
 	}
+	if options.MechanicImmuneMask != nil {
+		target.MechanicImmuneMask = *options.MechanicImmuneMask
+	} else if target.IsWorldBoss {
+		target.MechanicImmuneMask = RaidBossMechanicImmunities
+	}
 	if target.stats[stats.MeleeCrit] == 0 {
 		// Creatures crit at a flat 5%; the level difference is handled by the
 		// skill term in the attack table.
@@ -182,6 +187,31 @@ func NewTarget(options *proto.Target, targetIndex int32) *Target {
 	}
 
 	return target
+}
+
+// Mechanic is a spell mechanic (SharedDefines.h Mechanics), of those the sim reads.
+type Mechanic uint8
+
+const (
+	MechanicDisarm Mechanic = 3
+	MechanicRoot   Mechanic = 7
+	MechanicSnare  Mechanic = 11
+	MechanicStun   Mechanic = 12
+)
+
+// RaidBossMechanicImmunities is creature_immunities -361, the row of the boss dummy and of Ulduar's, the
+// Coliseum's and Icecrown's bosses: disarm, root, snare and stun among others, not attack slows or bleeds.
+// Naxxramas' -286 only lacks interrupts.
+const RaidBossMechanicImmunities = 0x4D967EFE
+
+// SnareAuraTag marks an aura on a target whose spell or effect has MECHANIC_SNARE, for what asks whether
+// anyone snared the target (Torment the Weak). A snare-immune target never counts as snared.
+const SnareAuraTag = "Snare"
+
+// ImmuneToMechanic is Creature::HasMechanicTemplateImmunity: a spell with this mechanic doesn't land on the
+// unit (Creature::IsImmunedToSpell), and an effect with it isn't applied.
+func (unit *Unit) ImmuneToMechanic(mechanic Mechanic) bool {
+	return unit.MechanicImmuneMask&(1<<mechanic) != 0
 }
 
 // applyDungeonScale does what DungeonScale.cpp ModifyCreatureAttributes does to a creature in a full

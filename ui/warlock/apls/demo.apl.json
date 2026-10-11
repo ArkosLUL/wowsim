@@ -11,7 +11,7 @@
         { "action": { "condition": { "cmp": {
                         "op": "OpGt",
                         "lhs": { "remainingTime": {} },
-                        "rhs": { "const": { "val": "60s" } }
+                        "rhs": { "warlockCurseOfDoomLength": {} }
                     } }, "castSpell": { "spellId": { "spellId": 47867 } } } },
         { "action": { "multidot": { "spellId": { "spellId": 47813 }, "maxDots": 1, "maxOverlap": { "const": { "val": "0ms" } } } } },
         { "action": { "condition": { "and": {

@@ -13,6 +13,8 @@ func (warlock *Warlock) NewAPLValue(rot *core.APLRotation, config *proto.APLValu
 		return warlock.newValueWarlockShouldRecastDrainSoul(rot, config.GetWarlockShouldRecastDrainSoul())
 	case *proto.APLValue_WarlockShouldRefreshCorruption:
 		return warlock.newValueWarlockShouldRefreshCorruption(rot, config.GetWarlockShouldRefreshCorruption())
+	case *proto.APLValue_WarlockCurseOfDoomLength:
+		return &APLValueWarlockCurseOfDoomLength{warlock: warlock}
 	default:
 		return nil
 	}
@@ -140,4 +142,24 @@ func (value *APLValueWarlockShouldRefreshCorruption) GetBool(sim *core.Simulatio
 }
 func (value *APLValueWarlockShouldRefreshCorruption) String() string {
 	return "Warlock Should Refresh Corruption()"
+}
+
+// APLValueWarlockCurseOfDoomLength is how long a Curse of Doom cast now takes to deal its damage, so a
+// rotation can tell whether one still fits in the fight.
+type APLValueWarlockCurseOfDoomLength struct {
+	core.DefaultAPLValueImpl
+	warlock *Warlock
+}
+
+func (value *APLValueWarlockCurseOfDoomLength) Type() proto.APLValueType {
+	return proto.APLValueType_ValueTypeDuration
+}
+func (value *APLValueWarlockCurseOfDoomLength) GetDuration(sim *core.Simulation) time.Duration {
+	if !value.warlock.curseOfDoomScaling() {
+		return time.Minute
+	}
+	return value.warlock.curseOfDoomLength()
+}
+func (value *APLValueWarlockCurseOfDoomLength) String() string {
+	return "Warlock Curse Of Doom Length()"
 }

@@ -428,31 +428,31 @@ func (mage *Mage) registerArcanePowerCD() {
 }
 
 // tormentTheWeak is Torment the Weak's bonus against target, which the server gives only while the target is
-// snared or its attacks are slowed (Unit::SpellPctDamageModsDone). Raid bosses are immune to snares, so only the
-// attack speed debuffs count.
+// snared or its attacks are slowed (Unit::SpellPctDamageModsDone), whoever did it. Raid bosses are immune to
+// snares, so on them only the attack speed debuffs count.
 func (mage *Mage) tormentTheWeak(target *core.Unit) float64 {
 	if mage.Talents.TormentTheWeak == 0 {
 		return 1
 	}
-	if !mage.attackSpeedSlows.Get(target).AnyActive() && !mage.chills.Get(target).IsActive() &&
-		(mage.dragonsBreathSnares == nil || !mage.dragonsBreathSnares.Get(target).IsActive()) {
+	if !mage.attackSpeedSlows.Get(target).AnyActive() &&
+		(target.ImmuneToMechanic(core.MechanicSnare) || !target.HasActiveAuraWithTag(core.SnareAuraTag)) {
 		return 1
 	}
 	return 1 + .04*float64(mage.Talents.TormentTheWeak)
 }
 
-// registerChills gives Torment the Weak the mage's own snares. Raid bosses are immune to snares, so only a
-// target that isn't a world boss takes them.
+// registerChills gives Torment the Weak the mage's own snares, on the targets that take snares.
 func (mage *Mage) registerChills() {
 	if mage.Talents.TormentTheWeak == 0 {
 		return
 	}
 	mage.chills = mage.NewEnemyAuraArray(func(target *core.Unit) *core.Aura {
-		if target.IsWorldBoss {
+		if target.ImmuneToMechanic(core.MechanicSnare) {
 			return nil
 		}
 		return target.GetOrRegisterAura(core.Aura{
 			Label:    "Chilled by " + mage.Label,
+			Tag:      core.SnareAuraTag,
 			Duration: time.Second,
 		})
 	})

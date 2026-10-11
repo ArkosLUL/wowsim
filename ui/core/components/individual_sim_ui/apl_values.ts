@@ -76,6 +76,7 @@ import {
 	APLValueCatNewSavageRoarDuration,
 	APLValueBossSpellTimeToReady,
 	APLValueBossSpellIsCasting,
+	APLValueWarlockCurseOfDoomLength,
 } from '../../proto/apl.js';
 
 import { EventID } from '../../typed_event.js';
@@ -1036,5 +1037,13 @@ const valueKindFactories: {[f in NonNullable<APLValueKind>]: ValueKindConfig<APL
 		fields: [
 			AplHelpers.unitFieldConfig('targetUnit', 'targets'),
 		],
+	}),
+	'warlockCurseOfDoomLength': inputBuilder({
+		label: 'Curse of Doom Length',
+		submenu: ['Warlock'],
+		shortDescription: 'How long a Curse of Doom cast now takes to deal its damage: 60s, or less with haste when the server scales the curse (Demonic Pact with CurseOfDoomScaling).',
+		newValue: APLValueWarlockCurseOfDoomLength.create,
+		includeIf: (player: Player<any>) => player.getClass() == Class.ClassWarlock,
+		fields: [],
 	}),
 };

@@ -15,14 +15,26 @@ type petAbilityHit struct {
 }
 
 // runPetAbility fights two minutes with the pet and returns every landed hit and tick of its spell. The
-// hunter has 500 armor penetration rating.
+// hunter has 500 armor penetration rating. The target takes every mechanic: a raid boss is immune to roots,
+// so Pin would never land.
 func runPetAbility(t *testing.T, petType proto.Hunter_Options_PetType, spellID int32, tweaks *proto.SpellTweaksSettings) (direct, ticks []petAbilityHit) {
+	t.Helper()
+	return runPetAbilityOn(t, petType, spellID, tweaks, googleProto.Uint64(0))
+}
+
+// runPetAbilityOn is runPetAbility against a target with these mechanic immunities, nil for a raid boss's.
+func runPetAbilityOn(t *testing.T, petType proto.Hunter_Options_PetType, spellID int32, tweaks *proto.SpellTweaksSettings,
+	immunities *uint64) (direct, ticks []petAbilityHit) {
 	t.Helper()
 	options := googleProto.Clone(PlayerOptionsBasic.Hunter.Options).(*proto.Hunter_Options)
 	options.PetType = petType
 	encounter := core.MakeSingleTargetEncounter(0)
 	encounter.Duration = 120
 	encounter.ServerSettings = &proto.ServerSettings{SpellTweaks: tweaks}
+	// the default target is shared, so the test's goes on a copy
+	target := googleProto.Clone(encounter.Targets[0]).(*proto.Target)
+	target.MechanicImmuneMask = immunities
+	encounter.Targets[0] = target
 	sim := core.NewSim(&proto.RaidSimRequest{
 		Raid: core.SinglePlayerRaidProto(&proto.Player{
 			Race:      proto.Race_RaceOrc,
@@ -105,6 +117,35 @@ func TestSavageRendTicksSkipArmor(t *testing.T) {
 	for _, tick := range ticks {
 		if tick.armor != 1 {
 			t.Fatalf("armor left x%v of a Savage Rend tick, want all of it", tick.armor)
+		}
+	}
+}
+
+// A spell whose own mechanic the target is immune to never lands (Creature::IsImmunedToSpell): live, Pin on the
+// boss dummy came back immune and nothing ticked. Raid bosses are immune to roots, stuns, snares and disarms,
+// which takes out Pin, Venom Web Spray, Ravage, Tendon Rip and Snatch.
+func TestPetSpecialsNeverLandOnAnImmuneTarget(t *testing.T) {
+	for _, special := range []struct {
+		name     string
+		pet      proto.Hunter_Options_PetType
+		spellID  int32
+		mechanic core.Mechanic
+	}{
+		{"Pin", proto.Hunter_Options_Crab, 53548, core.MechanicRoot},
+		{"Venom Web Spray", proto.Hunter_Options_Silithid, 55509, core.MechanicRoot},
+		{"Ravage", proto.Hunter_Options_Ravager, 53562, core.MechanicStun},
+		{"Tendon Rip", proto.Hunter_Options_Hyena, 53575, core.MechanicSnare},
+		{"Snatch", proto.Hunter_Options_BirdOfPrey, 53543, core.MechanicDisarm},
+	} {
+		direct, ticks := runPetAbilityOn(t, special.pet, special.spellID, nil, nil)
+		if len(direct)+len(ticks) > 0 {
+			t.Errorf("%s landed %d times and ticked %d on a raid boss, want neither", special.name, len(direct), len(ticks))
+		}
+		// immune to every mechanic a raid boss is but the spell's own
+		others := googleProto.Uint64(core.RaidBossMechanicImmunities &^ (1 << special.mechanic))
+		direct, ticks = runPetAbilityOn(t, special.pet, special.spellID, nil, others)
+		if len(direct)+len(ticks) == 0 {
+			t.Errorf("%s never landed on a target that takes its mechanic", special.name)
 		}
 	}
 }

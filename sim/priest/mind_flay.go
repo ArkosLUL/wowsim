@@ -109,6 +109,8 @@ func (priest *Priest) newMindFlaySpell(numTicksIdx int32) *core.Spell {
 		Dot: core.DotConfig{
 			Aura: core.Aura{
 				Label: "MindFlay-" + strconv.Itoa(int(numTicksIdx)),
+				// the channel's second effect slows the target (MECHANIC_SNARE)
+				Tag: core.SnareAuraTag,
 			},
 			NumberOfTicks:       numTicks,
 			TickLength:          tickLength,

@@ -38,7 +38,7 @@ func (druid *Druid) registerHurricaneSpell() {
 		ActionID:    core.ActionID{SpellID: 48467},
 		SpellSchool: core.SpellSchoolNature,
 		ProcMask:    core.ProcMaskSpellDamage,
-		Flags:       core.SpellFlagChanneled | core.SpellFlagAPL,
+		Flags:       core.SpellFlagChanneled | core.SpellFlagAPL | SpellFlagOmenTrigger,
 		ManaCost: core.ManaCostOptions{
 			BaseCost:   0.81,
 			Multiplier: 1,
@@ -62,11 +62,14 @@ func (druid *Druid) registerHurricaneSpell() {
 			},
 		},
 
-		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, spell *core.Spell) {
-			// the cast puts an aura on the druid, and that hit rolls Omen of Clarity before any tick does
-			if druid.rollOmenOfClarity != nil {
-				druid.rollOmenOfClarity(sim, spell)
-			}
+		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+			// the cast puts an aura on the druid: a hit with no damage, which rolls Omen of Clarity and gives an
+			// Illustration of the Dragon Soul stack before any tick lands. Only the druid's procs see it. It
+			// names the cast's target, since a proc that reaches for the hit's target expects an enemy.
+			result := spell.NewResult(target)
+			result.Outcome = core.OutcomeHit
+			druid.OnSpellHitDealt(sim, spell, result)
+			spell.DisposeResult(result)
 			spell.AOEDot().Apply(sim)
 		},
 	})

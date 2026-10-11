@@ -172,12 +172,18 @@ func runParity(t *testing.T, player *proto.Player, seed int64) []logEntry {
 
 func runParityVs(t *testing.T, player *proto.Player, mobType proto.MobType, seed int64) []logEntry {
 	t.Helper()
+	return runParityIn(t, player, nil, func(target *proto.Target) { target.MobType = mobType }, seed)
+}
+
+// runParityIn is runParity under the raid buffs, against the default target as change leaves it.
+func runParityIn(t *testing.T, player *proto.Player, buffs *proto.RaidBuffs, change func(*proto.Target), seed int64) []logEntry {
+	t.Helper()
 	encounter := core.MakeSingleTargetEncounter(0)
 	// the default target is shared
 	encounter.Targets[0] = googleProto.Clone(encounter.Targets[0]).(*proto.Target)
-	encounter.Targets[0].MobType = mobType
+	change(encounter.Targets[0])
 	res := core.RunRaidSim(&proto.RaidSimRequest{
-		Raid:       core.SinglePlayerRaidProto(player, nil, nil, nil),
+		Raid:       core.SinglePlayerRaidProto(player, nil, buffs, nil),
 		Encounter:  encounter,
 		SimOptions: &proto.SimOptions{Iterations: 1, IsTest: true, Debug: true, RandomSeed: seed},
 	})

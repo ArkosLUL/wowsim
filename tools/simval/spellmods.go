@@ -17,6 +17,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/wowsims/wotlk/sim/core"
+	"github.com/wowsims/wotlk/sim/core/proto"
 	"github.com/wowsims/wotlk/sim/core/serverdata"
 	"github.com/wowsims/wotlk/sim/core/stats"
 )
@@ -142,6 +143,8 @@ type spellModSimKey struct {
 	steps       int
 	cast        int32
 	spec, teach string
+	// a sweepBuffOptions entry beyond the path's own
+	option int32
 }
 
 type spellModSim struct {
@@ -153,10 +156,10 @@ func newSpellModSims(path talentPath) *spellModSims {
 	return &spellModSims{path: path, built: map[spellModSimKey]*spellModSim{}}
 }
 
-// get is path.goldcharSetup(steps) as spec, with the cast talent's aura mirrored, and a point in the teach
-// talent when the steps have none.
-func (s *spellModSims) get(steps int, cast int32, spec, teach string) *spellModSim {
-	key := spellModSimKey{steps, cast, spec, teach}
+// get is path.goldcharSetup(steps) as spec, with the cast talent's aura mirrored, a point in the teach talent
+// when the steps have none, and the spec option a probed spell needs.
+func (s *spellModSims) get(steps int, cast int32, spec, teach string, option int32) *spellModSim {
+	key := spellModSimKey{steps, cast, spec, teach, option}
 	if sim, ok := s.built[key]; ok {
 		return sim
 	}
@@ -175,6 +178,9 @@ func (s *spellModSims) get(steps int, cast int32, spec, teach string) *spellModS
 	setup.Spec = spec
 	if cast != 0 {
 		setup.Auras = append(setup.Auras, cast)
+	}
+	if option != 0 {
+		setup.Auras = append(slices.Clone(setup.Auras), option)
 	}
 	defer func() {
 		if r := recover(); r != nil {
@@ -258,24 +264,88 @@ func (path talentPath) spellModTeacher(spellID int32) (string, error) {
 	return "", nil
 }
 
+// spellModSimSpell is the sim spell that deals a probed server spell it registers under none of its own.
+type spellModSimSpell struct {
+	sim int32
+	// the probed spell is the same cast under a rank the sim doesn't name, so its timing and cost compare too
+	sameCast bool
+	// the sweepBuffOptions entry the sim character needs to register it
+	option int32
+}
+
+// spellModSimSpells are those spells, by the probed id. The sim spell's threat follows the probed one
+// (ThreatSpellID): a proc's damage, a channel's tick, the debuff a cast puts on. Cast time, GCD, cost and
+// cooldown are then the sim spell's own and aren't compared.
+var spellModSimSpells = map[int32]spellModSimSpell{
+	25742: {sim: 20154},                // Seal of Righteousness' damage, under the seal
+	52985: {sim: 53007, option: 53007}, // Penance's heal
+	53000: {sim: 53007, option: 53007}, // and its damage
+	25504: {sim: 58804, option: 58804}, // Windfury Attack, under the imbue
+	33750: {sim: 58804, option: 58804}, // and its off hand
+	7386:  {sim: 47467, sameCast: true},
+	58567: {sim: 47467}, // the debuff Sunder Armor and Devastate cast
+	70890: {sim: 55271}, // Scourge Strike's shadow damage
+}
+
+// spellModExtraSpecs are specs past the class's own that register a spell of spellModSimSpells, by server
+// class id: only the smite priest has Penance's damage. Tried for those spells alone.
+var spellModExtraSpecs = map[uint8][]string{5: {"smite_priest"}}
+
+func init() {
+	// Penance's ticks come off a channel, which asks the rotation whether to go on: a real one, if empty
+	sweepBuffOptions[53007] = func(p *proto.Player) {
+		p.Rotation = &proto.APLRotation{Type: proto.APLRotation_TypeAPL}
+	}
+	// both hands, so the off hand's Windfury Attack is registered too
+	sweepBuffOptions[58804] = func(p *proto.Player) {
+		if spec, ok := p.Spec.(*proto.Player_EnhancementShaman); ok {
+			spec.EnhancementShaman.Options.ImbueMh = proto.ShamanImbue_WindfuryWeapon
+			spec.EnhancementShaman.Options.ImbueOh = proto.ShamanImbue_WindfuryWeapon
+		}
+	}
+}
+
+// simSpellDealing is the unit's spell for a probed server spell: the one registered by that id, else
+// spellModSimSpells' whose threat follows it, the lowest tag of several.
+func simSpellDealing(unit *core.Unit, id int32) (spell *core.Spell, alias bool) {
+	if spell = spellBySpell(unit, id); spell != nil {
+		return spell, false
+	}
+	other, ok := spellModSimSpells[id]
+	if !ok {
+		return nil, false
+	}
+	for _, s := range unit.Spellbook {
+		if s.ActionID.SpellID == other.sim && s.ActionID.ItemID == 0 && s.ActionID.OtherID == 0 && s.ThreatServerSpellID() == id &&
+			(spell == nil || s.ActionID.Tag < spell.ActionID.Tag) {
+			spell = s
+		}
+	}
+	return spell, spell != nil
+}
+
 // spellModPair is the sim's spell before and after a step, in the first spec that registers it on the
 // character both times, given a point in its teach talent when it takes one. Note says why there's none
 // to compare.
 type spellModPair struct {
 	before, after *timingSim
 	spec, teach   string
-	note          string
-	err           error
+	// the sim deals the probed spell under another id (spellModSimSpells), sameCast when it's the same cast
+	alias, sameCast bool
+	note            string
+	err             error
 }
 
 func (s *spellModSims) pair(k int, cast, spellID int32) spellModPair {
 	// Presence of Mind has no sim aura: the sim casts its one chosen spell with no cast time instead
 	if cast != 0 {
-		if after := s.get(k, cast, s.path.Spec, ""); after.err == nil && slices.Contains(after.d.others, cast) {
+		if after := s.get(k, cast, s.path.Spec, "", 0); after.err == nil && slices.Contains(after.d.others, cast) {
 			return spellModPair{note: fmt.Sprintf("the sim has no aura for cast talent %d to put on", cast)}
 		}
 	}
-	teach, err := s.path.spellModTeacher(spellID)
+	// a spell the sim deals under another id comes with that one's talent (Scourge Strike's shadow damage)
+	other := spellModSimSpells[spellID]
+	teach, err := s.path.spellModTeacher(cmp.Or(other.sim, spellID))
 	if err != nil {
 		return spellModPair{err: err}
 	}
@@ -284,23 +354,29 @@ func (s *spellModSims) pair(k int, cast, spellID int32) spellModPair {
 	if teach != "" && teach != s.path.Steps[k-1].Talent {
 		teaches = append(teaches, teach)
 	}
+	specs := s.path.spellModSpecs()
+	if other.sim != 0 {
+		specs = append(specs, spellModExtraSpecs[s.path.Class]...)
+	}
 	for _, t := range teaches {
-		for i, spec := range s.path.spellModSpecs() {
-			before, after := s.get(k-1, 0, spec, t), s.get(k, cast, spec, t)
+		for i, spec := range specs {
+			before, after := s.get(k-1, 0, spec, t, other.option), s.get(k, cast, spec, t, other.option)
 			if err := cmp.Or(before.err, after.err); err != nil {
 				if i == 0 {
 					return spellModPair{err: err}
 				}
 				continue
 			}
-			b, a := spellBySpell(&before.d.char.Unit, spellID), spellBySpell(&after.d.char.Unit, spellID)
+			b, alias := simSpellDealing(&before.d.char.Unit, spellID)
+			a, _ := simSpellDealing(&after.d.char.Unit, spellID)
 			if b != nil && a != nil {
 				return spellModPair{before: &timingSim{damageSim: before.d, spell: b},
-					after: &timingSim{damageSim: after.d, spell: a}, spec: spec, teach: t}
+					after: &timingSim{damageSim: after.d, spell: a}, spec: spec, teach: t, alias: alias,
+					sameCast: alias && other.sameCast}
 			}
 		}
 	}
-	d := s.get(k, cast, s.path.Spec, "").d
+	d := s.get(k, cast, s.path.Spec, "", 0).d
 	for _, pet := range d.char.Pets {
 		if spellBySpell(&pet.Unit, spellID) != nil {
 			return spellModPair{note: fmt.Sprintf("the sim's %s casts it; the server probed it as the player", pet.Name)}
@@ -318,6 +394,9 @@ func (p spellModPair) label(path talentPath) string {
 	}
 	if p.teach != "" {
 		parts = append(parts, "with a point in "+p.teach)
+	}
+	if p.alias {
+		parts = append(parts, fmt.Sprintf("under %s", p.after.spell.ActionID))
 	}
 	if len(parts) == 0 {
 		return ""
@@ -417,7 +496,13 @@ func compareSpellMod(path talentPath, before, after spellModLine, pair spellModP
 		}
 		r.skipped = append(r.skipped, reason)
 	}
-	if !castsOnItsOwn(pair.before.spell) && !castsOnItsOwn(pair.after.spell) {
+	switch {
+	case pair.sameCast:
+	case pair.alias:
+		leaveOut("cast time, GCD, cost and cooldown: the sim deals it under another spell, with that one's", func(name string) bool {
+			return name != "aura duration" && !strings.HasSuffix(name, " amplitude") && !strings.HasSuffix(name, " ticks")
+		})
+	case !castsOnItsOwn(pair.before.spell) && !castsOnItsOwn(pair.after.spell):
 		leaveOut("cast time, GCD, cost and cooldown: the sim only procs or triggers it", func(name string) bool {
 			return name != "aura duration" && !strings.HasSuffix(name, " amplitude") && !strings.HasSuffix(name, " ticks")
 		})
@@ -629,7 +714,7 @@ func (ts *timingSim) hitSpell(path talentPath, line spellModLine) *core.Spell {
 		if !e.probed() {
 			continue
 		}
-		if decl := ts.declaration(e); decl != nil {
+		if decl := ts.spellModDeclaration(e); decl != nil {
 			return decl.spell
 		}
 	}
@@ -669,8 +754,20 @@ type spellModEffect struct {
 	err              error
 }
 
+// spellModDeclaration is declaration, or for a direct effect the sim deals as its spell's ticks (Penance's
+// 53000, each tick a cast of its own), the dot whose tick names the probed spell.
+func (ts *timingSim) spellModDeclaration(e damageEffect) *simDecl {
+	if decl := ts.declaration(e); decl != nil || e.periodic() || e.heal() {
+		return decl
+	}
+	if dot := dotOn(ts.spell, ts.target); dot != nil && dot.Tick.FromSpellID == ts.rec.Spell.ID && dot.Tick.Effect == e.Index {
+		return &simDecl{spell: ts.spell, dot: dot}
+	}
+	return nil
+}
+
 func (ts *timingSim) spellModEffect(e damageEffect) spellModEffect {
-	out := spellModEffect{decl: ts.declaration(e)}
+	out := spellModEffect{decl: ts.spellModDeclaration(e)}
 	if out.decl == nil {
 		return out
 	}

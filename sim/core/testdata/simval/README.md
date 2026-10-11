@@ -46,9 +46,7 @@ run trimmed by `simval talents`, which `TestTalentSweepRecords` replays.
 `spellmod_spells.json` lists, per spell-mod talent, the spells the sim names that its mods change on the server;
 the spell-mod sweep probes them. Rewrite it with [spellmods](../../../../tools/acore/spellmods/README.md).
 `spellmods.jsonl` holds a `TestSimvalSpellModSweep` run's `SPELLMOD` lines, which `TestSpellModRecords` replays
-([spell-mod sweep](../../../../tools/simval/README.md#spell-mod-sweep)). MageFire's lines carry Pyroblast as shaped by
-`spell_tweaks_pyroblast_dot_haste`, so its damage isn't compared until a rerun on a module build whose
-`TICK_PERIOD_SCRIPTS` lists that script.
+([spell-mod sweep](../../../../tools/simval/README.md#spell-mod-sweep)).
 
 `costaura_spells.json` is the same list for the school cost aura talents, and `costauras.jsonl` a
 `TestSimvalCostAuraSweep` run's lines, which `TestCostAuraRecords` replays

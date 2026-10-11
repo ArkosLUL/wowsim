@@ -22,6 +22,9 @@ const (
 	protectionOfAncientKingsSpellID = 64413
 )
 
+// GnomishLightningGeneratorSpellID is the trinket's use spell, which deals the damage itself.
+const GnomishLightningGeneratorSpellID = 55039
+
 func init() {
 	core.NewItemEffect(37220, func(agent core.Agent) {
 		character := agent.GetCharacter()
@@ -280,33 +283,20 @@ func init() {
 
 	core.NewItemEffect(41121, func(agent core.Agent) { // Gnomish Lightning Generator
 		character := agent.GetCharacter()
-		actionID := core.ActionID{ItemID: 41121}
 
-		spell := character.GetOrRegisterSpell(core.SpellConfig{
-			ActionID:    actionID,
-			SpellSchool: core.SpellSchoolNature,
-			ProcMask:    core.ProcMaskEmpty,
-			Flags:       core.SpellFlagNoOnCastComplete,
-
-			Cast: core.CastConfig{
-				CD: core.Cooldown{
-					Timer:    character.NewTimer(),
-					Duration: time.Minute * 1,
-				},
-				SharedCD: core.Cooldown{
-					Timer:    character.GetOffensiveTrinketCD(),
-					Duration: time.Second * 10,
-				},
+		config := itemDamageSpell(character, GnomishLightningGeneratorSpellID, core.SpellSchoolNature, 1530, 1870, 0)
+		config.Flags = core.SpellFlagNoOnCastComplete
+		config.Cast = core.CastConfig{
+			CD: core.Cooldown{
+				Timer:    character.NewTimer(),
+				Duration: time.Minute * 1,
 			},
-
-			DamageMultiplier: 1,
-			CritMultiplier:   character.DefaultSpellCritMultiplier(),
-			ThreatMultiplier: 1,
-
-			ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-				spell.CalcAndDealDamage(sim, target, sim.Roll(1530, 1870), spell.OutcomeMagicHitAndCrit)
+			SharedCD: core.Cooldown{
+				Timer:    character.GetOffensiveTrinketCD(),
+				Duration: time.Second * 10,
 			},
-		})
+		}
+		spell := character.GetOrRegisterSpell(config)
 
 		character.AddMajorCooldown(core.MajorCooldown{
 			Spell:    spell,

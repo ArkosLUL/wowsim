@@ -11,6 +11,7 @@ import (
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
 	"github.com/wowsims/wotlk/sim/core/stats"
+	googleProto "google.golang.org/protobuf/proto"
 )
 
 var procLogLine = regexp.MustCompile(`^\[(-?[\d.]+)\] \[([^\]]*)\] (.*)$`)
@@ -306,6 +307,53 @@ func TestTormentTheWeakChillsAnAdd(t *testing.T) {
 	if got := mage.chills.Get(addUnit).Duration; got != 9*time.Second+time.Duration(mage.Talents.Permafrost)*time.Second {
 		t.Errorf("chill lasts %v with %d points of Permafrost", got, mage.Talents.Permafrost)
 	}
+}
+
+// Snare immunity is the target's creature_immunities mask, not the boss flag, and a snare counts for Torment
+// the Weak whoever put it on (Unit::HasAuraWithMechanic looks at every aura on the victim), another mage's
+// chill included.
+func TestTormentTheWeakReadsImmunitiesAndOtherUnitsSnares(t *testing.T) {
+	newMage := func() *proto.Player {
+		return procMage(FireTalents, "p3_fire_alliance", `{"type": "TypeAPL", "priorityList": []}`, PlayerOptionsFire)
+	}
+	wantTorment := func(when string, mage *Mage, target *core.Unit, want float64) {
+		t.Helper()
+		if got := mage.tormentTheWeak(target); got < want-1e-9 || got > want+1e-9 {
+			t.Errorf("%s: x%v, want x%v", when, got, want)
+		}
+	}
+
+	// a boss with no immunity row takes snares, an add whose row has snares doesn't
+	boss := googleProto.Clone(core.NewDefaultTarget()).(*proto.Target)
+	boss.MechanicImmuneMask = googleProto.Uint64(0)
+	add := &proto.Target{Level: 80, MobType: proto.MobType_MobTypeHumanoid, MechanicImmuneMask: googleProto.Uint64(1 << core.MechanicSnare)}
+	sim, mage := newProcSim(t, newMage(), boss, add)
+	bossUnit, addUnit := sim.GetTargetUnit(0), sim.GetTargetUnit(1)
+	if !bossUnit.IsWorldBoss || addUnit.IsWorldBoss {
+		t.Fatalf("world boss: boss %v, add %v", bossUnit.IsWorldBoss, addUnit.IsWorldBoss)
+	}
+	mage.chill(sim, bossUnit, 9*time.Second)
+	mage.chill(sim, addUnit, 9*time.Second)
+	wantTorment("a boss that takes snares, chilled", mage, bossUnit, 1.12)
+	wantTorment("a snare-immune add, chilled", mage, addUnit, 1)
+
+	// two mages on an add
+	encounter := core.MakeSingleTargetEncounter(0)
+	encounter.Targets = []*proto.Target{{Level: 80, MobType: proto.MobType_MobTypeHumanoid}}
+	sim = core.NewSim(&proto.RaidSimRequest{
+		Raid: &proto.Raid{Parties: []*proto.Party{{Players: []*proto.Player{newMage(), newMage()}, Buffs: &proto.PartyBuffs{}}},
+			Buffs: &proto.RaidBuffs{}, Debuffs: &proto.Debuffs{}},
+		Encounter:  encounter,
+		SimOptions: &proto.SimOptions{Iterations: 1, IsTest: true, RandomSeed: 101},
+	})
+	sim.Reset()
+	first, second := sim.Raid.Parties[0].Players[0].(*Mage), sim.Raid.Parties[0].Players[1].(*Mage)
+	target := sim.GetTargetUnit(0)
+	wantTorment("an add nobody snared", first, target, 1)
+	second.chill(sim, target, 9*time.Second)
+	wantTorment("an add another mage chilled", first, target, 1.12)
+	second.chills.Get(target).Deactivate(sim)
+	wantTorment("the add with the chill gone", first, target, 1)
 }
 
 // Brain Freeze (spell_proc -44546) rolls on a landed Frostbolt or Blizzard tick, never on a miss, and needs no

@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/wowsims/wotlk/sim/core/proto"
 )
 
 var (
@@ -28,6 +30,9 @@ var bloodPresenceHealSources = map[string]bool{
 	"{SpellID: 55271, Tag: 1}": true, // Scourge Strike
 	"{SpellID: 47632}":         true, // Death Coil
 	"{SpellID: 51460}":         true, // Necrosis
+	"{ItemID: 41119}":          true, // Saronite Bomb
+	"{ItemID: 42641}":          true, // Global Thermal Sapper Charge
+	"{SpellID: 55039}":         true, // Gnomish Lightning Generator
 }
 
 // deathAndDecay's ticks are triggered casts of 52212, so they proc nothing.
@@ -56,9 +61,10 @@ func presenceHealRotation(presence int, opener, rest []string) string {
 		`}}}, "doAtValue": {"const": {"val": "-10s"}}}], "priorityList": [` + strings.Join(actions, ", ") + `]}`
 }
 
-// checkPresenceHeals holds every 50475 heal in the log to pct percent of a hit that procs it, whole, and
-// every such hit to its heal. It returns how many hits of each action healed.
-func checkPresenceHeals(t *testing.T, entries []logEntry, pct float64) map[string]int {
+// checkPresenceHeals holds every 50475 heal in the log to pct percent of a hit that procs it, whole, times
+// the healing taken, whole again, and every such hit to its heal. It returns how many hits of each action
+// healed.
+func checkPresenceHeals(t *testing.T, entries []logEntry, pct, taken float64) map[string]int {
 	t.Helper()
 	want, got := map[time.Duration][]float64{}, map[time.Duration][]float64{}
 	healed := map[string]int{}
@@ -81,7 +87,7 @@ func checkPresenceHeals(t *testing.T, entries []logEntry, pct float64) map[strin
 		}
 		damage, _ := strconv.ParseFloat(m[3], 64)
 		if damage > 0 && pct > 0 {
-			want[e.at] = append(want[e.at], math.Trunc(damage*pct/100))
+			want[e.at] = append(want[e.at], math.Trunc(math.Trunc(damage*pct/100)*taken))
 			if tick {
 				action += " tick"
 			}
@@ -111,7 +117,7 @@ func TestBloodPresenceHeal(t *testing.T) {
 	const icyTouch, plagueStrike = `{"spellId": 49909}`, `{"spellId": 49921, "tag": 1}`
 	frost := presenceHealRotation(bloodPresence, []string{icyTouch, plagueStrike},
 		[]string{`{"spellId": 51425, "tag": 1}`, bloodStrike, `{"spellId": 55268, "tag": 1}`})
-	healed := checkPresenceHeals(t, runParity(t, parityPlayer(FrostTalents, "p3_frost", frost), 1), 4)
+	healed := checkPresenceHeals(t, runParity(t, parityPlayer(FrostTalents, "p3_frost", frost), 1), 4, 1)
 	for _, action := range []string{"{OtherID: 3, Tag: 1}", "{OtherID: 3, Tag: 2}", "{SpellID: 51425, Tag: 1}",
 		"{SpellID: 55268, Tag: 1}", "{SpellID: 55095} tick", "{SpellID: 55078} tick"} {
 		if healed[action] == 0 {
@@ -122,7 +128,7 @@ func TestBloodPresenceHeal(t *testing.T) {
 	unholy := presenceHealRotation(bloodPresence, []string{deathAndDecay49938, icyTouch, plagueStrike},
 		[]string{`{"spellId": 55271, "tag": 1}`, bloodStrike, `{"spellId": 49895}`})
 	entries := runParity(t, parityPlayer(UnholyTalents, "p3_uh_dw", unholy), 1)
-	healed = checkPresenceHeals(t, entries, 4)
+	healed = checkPresenceHeals(t, entries, 4, 1)
 	for _, action := range []string{"{SpellID: 55271, Tag: 1}", "{SpellID: 47632}", "{SpellID: 51460}", "{SpellID: 50536} tick"} {
 		if healed[action] == 0 {
 			t.Errorf("unholy: no %s healed", action)
@@ -140,9 +146,85 @@ func TestImprovedBloodPresenceHeal(t *testing.T) {
 		[]string{`{"spellId": 51425, "tag": 1}`})
 	// Improved Blood Presence is the blood tree's 20th talent
 	for points, pct := range []float64{0, 2, 4} {
-		healed := checkPresenceHeals(t, runParity(t, parityPlayer(talentsWith(FrostTalents, 0, 19, byte('0'+points)), "p3_frost", rotation), 1), pct)
+		healed := checkPresenceHeals(t, runParity(t, parityPlayer(talentsWith(FrostTalents, 0, 19, byte('0'+points)), "p3_frost", rotation), 1), pct, 1)
 		if points > 0 && healed["{OtherID: 3, Tag: 1}"] == 0 {
 			t.Errorf("%d points: no swing healed", points)
+		}
+	}
+}
+
+// improvedBloodPresence puts points into Improved Blood Presence, the blood tree's 20th talent.
+func improvedBloodPresence(talents string, points int) string {
+	return talentsWith(talents, 0, 19, byte('0'+points))
+}
+
+func swingRotation(presence int) string {
+	return presenceHealRotation(presence, []string{`{"spellId": 49909}`, `{"spellId": 49921, "tag": 1}`}, []string{`{"spellId": 51425, "tag": 1}`})
+}
+
+// Improved Blood Presence's second effect adds 5 a point to Blood Presence's healing taken aura (48266's
+// effect 1, 0 by itself), so the heal grows only in Blood Presence.
+func TestImprovedBloodPresenceHealingTaken(t *testing.T) {
+	const bloodPresence, frostPresence = 48266, 48263
+	for points, taken := range []float64{1, 1.05, 1.10} {
+		player := parityPlayer(improvedBloodPresence(FrostTalents, points), "p3_frost", swingRotation(bloodPresence))
+		if healed := checkPresenceHeals(t, runParity(t, player, 1), 4, taken); healed["{OtherID: 3, Tag: 1}"] == 0 {
+			t.Errorf("%d points: no swing healed", points)
+		}
+	}
+	player := parityPlayer(improvedBloodPresence(FrostTalents, 2), "p3_frost", swingRotation(frostPresence))
+	if healed := checkPresenceHeals(t, runParity(t, player, 1), 4, 1); healed["{OtherID: 3, Tag: 1}"] == 0 {
+		t.Error("Frost Presence: no swing healed")
+	}
+}
+
+// 50475 has no damage class and no spell_bonus_data row, so it takes no healing done percent: Strength of
+// Wrynn's 30% leaves it alone, where Improved Blood Presence's healing taken still counts.
+func TestBloodPresenceHealSkipsStrengthOfWrynn(t *testing.T) {
+	wrynn := &proto.RaidBuffs{StrengthOfWrynn: true}
+	for points, taken := range []float64{1, 1.05, 1.10} {
+		player := parityPlayer(improvedBloodPresence(FrostTalents, points), "p3_frost", swingRotation(48266))
+		entries := runParityIn(t, player, wrynn, func(*proto.Target) {}, 1)
+		if healed := checkPresenceHeals(t, entries, 4, taken); healed["{OtherID: 3, Tag: 1}"] == 0 {
+			t.Errorf("%d points: no swing healed", points)
+		}
+	}
+}
+
+// 63611 asks for a target that gives experience or honor (PROC_ATTR_REQ_EXP_OR_HONOR): one above the gray
+// level, 71 for a level 80.
+func TestBloodPresenceHealNeedsATargetAboveGray(t *testing.T) {
+	for level, heals := range map[int32]bool{71: false, 72: true} {
+		player := parityPlayer(FrostTalents, "p3_frost", swingRotation(48266))
+		entries := runParityIn(t, player, nil, func(target *proto.Target) { target.Level = level }, 1)
+		healed := 0
+		for _, e := range entries {
+			if healLine.MatchString(e.text) {
+				healed++
+			}
+		}
+		if heals != (healed > 0) {
+			t.Errorf("level %d target: %d heals", level, healed)
+		}
+		if heals {
+			checkPresenceHeals(t, entries, 4, 1)
+		}
+	}
+}
+
+// An item's use spell is an untriggered cast (Player::CastItemUseSpell), so a bomb's damage heals like the
+// DK's own spells, the sapper's on the DK too.
+func TestBloodPresenceHealFromOnUseItems(t *testing.T) {
+	explosives := `{"type": "TypeAPL", "prepullActions": [{"action": {"castSpell": {"spellId": {"spellId": 48266}}}, "doAtValue": {"const": {"val": "-10s"}}}],` +
+		` "priorityList": [{"action": {"autocastOtherCooldowns": {}}}]}`
+	player := parityPlayer(FrostTalents, "p3_frost", explosives)
+	player.Profession1 = proto.Profession_Engineering
+	player.Consumes = &proto.Consumes{ThermalSapper: true, FillerExplosive: proto.Explosive_ExplosiveSaroniteBomb}
+	player.Equipment.Items[proto.ItemSlot_ItemSlotTrinket1] = &proto.ItemSpec{Id: 41121}
+	healed := checkPresenceHeals(t, runParity(t, player, 1), 4, 1)
+	for _, action := range []string{"{ItemID: 41119}", "{ItemID: 42641}", "{SpellID: 55039}"} {
+		if healed[action] == 0 {
+			t.Errorf("no %s hit healed", action)
 		}
 	}
 }

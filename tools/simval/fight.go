@@ -116,7 +116,6 @@ var fightSimActions = map[int32]core.ActionID{
 	// an item's proc, which the sim names by the item
 	71643: {ItemID: 50348}, // Dislodged Foreign Object (heroic)'s stacks
 	67759: {ItemID: 47188}, // Reign of the Unliving (heroic)'s Shard of Flame
-	67760: {ItemID: 47188}, // and its Pillar of Flame
 	// the sim's Sunder Armor is 47467, a rank players no longer get: the server turns it into a flat armor cut
 	7386:  {SpellID: 47467},
 	58567: {SpellID: 47467},
