@@ -10,6 +10,7 @@ import (
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
 	"github.com/wowsims/wotlk/sim/core/stats"
+	googleProto "google.golang.org/protobuf/proto"
 )
 
 // presetPlayer is presetOptimizeRequest's player under another name, for a raid slot.
@@ -200,6 +201,10 @@ func TestDemonologyValuesSpellPowerHigherInRaidMode(t *testing.T) {
 	// same aura, so their combined gain scales with their count while the paired standard error
 	// only grows with its square root.
 	req := raidContribRequest(t, 0, demonologyWarlock("Warlock"), presetPlayer(t, "arcane_p3", "Mage1"), presetPlayer(t, "arcane_p3", "Mage2"), presetPlayer(t, "arcane_p3", "Mage3"))
+	// FullRaidBuffs brings a 500 spell power pact that beats this warlock's own, so drop it
+	buffs := googleProto.Clone(core.FullRaidBuffs).(*proto.RaidBuffs)
+	buffs.DemonicPactSp = 0
+	req.Base.Raid.Buffs = buffs
 	r, err := PrepareRequest(req)
 	if err != nil {
 		t.Fatal(err)

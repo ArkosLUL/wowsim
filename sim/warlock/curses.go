@@ -177,6 +177,38 @@ func (warlock *Warlock) registerCurseOfAgonySpell() {
 }
 
 func (warlock *Warlock) registerCurseOfDoomSpell() {
+	scaling := warlock.curseOfDoomScaling()
+	// the cast's length, which its cooldown, the curse and its one tick all take
+	length := time.Minute
+
+	castConfig := core.CastConfig{
+		DefaultCast: core.Cast{
+			GCD: core.GCDDefault - core.TernaryDuration(warlock.Talents.AmplifyCurse, 1, 0)*500*time.Millisecond,
+		},
+		CD: core.Cooldown{
+			Timer:    warlock.NewTimer(),
+			Duration: time.Minute,
+		},
+	}
+	onTick := func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
+		dot.CalcAndDealPeriodicSnapshotDamage(sim, target, dot.OutcomeTick)
+	}
+	var extraCastCondition core.CanCastCondition
+	if scaling {
+		castConfig.ModifyCast = func(_ *core.Simulation, spell *core.Spell, _ *core.Cast) {
+			length = warlock.curseOfDoomLength()
+			spell.CD.Duration = length
+		}
+		onTick = func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
+			dot.CalcAndDealPeriodicSnapshotDamage(sim, target, dot.OutcomeSnapshotCrit)
+		}
+		// spell_tweaks_curse_of_doom refuses the cast while the warlock's own curse is on the target: the
+		// cooldown can be up an update before the hit, and a recast would wipe it
+		extraCastCondition = func(_ *core.Simulation, target *core.Unit) bool {
+			return !warlock.CurseOfDoom.Dot(target).IsActive()
+		}
+	}
+
 	warlock.CurseOfDoom = warlock.RegisterSpell(core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: 47867},
 		SpellSchool: core.SpellSchoolShadow,
@@ -187,18 +219,13 @@ func (warlock *Warlock) registerCurseOfDoomSpell() {
 			BaseCost:   0.15,
 			Multiplier: 1 - 0.02*float64(warlock.Talents.Suppression),
 		},
-		Cast: core.CastConfig{
-			DefaultCast: core.Cast{
-				GCD: core.GCDDefault - core.TernaryDuration(warlock.Talents.AmplifyCurse, 1, 0)*500*time.Millisecond,
-			},
-			CD: core.Cooldown{
-				Timer:    warlock.NewTimer(),
-				Duration: time.Minute,
-			},
-		},
+		Cast:               castConfig,
+		ExtraCastCondition: extraCastCondition,
 
 		DamageMultiplierAdditive: 1 +
 			0.03*float64(warlock.Talents.ShadowMastery),
+		// no crit talent lists Curse of Doom
+		CritMultiplier:   warlock.DefaultSpellCritMultiplier(),
 		ThreatMultiplier: 1 - 0.1*float64(warlock.Talents.ImprovedDrainSoul),
 
 		Dot: core.DotConfig{
@@ -207,25 +234,44 @@ func (warlock *Warlock) registerCurseOfDoomSpell() {
 			},
 			NumberOfTicks: 1,
 			TickLength:    time.Minute,
-			TicksCanCrit:  false,
+			// the tweak's carrier aura 425793 has the periodic crit effect
+			TicksCanCrit: scaling,
 
 			Tick: core.SpellEffect{Effect: 0, Min: 7300, Max: 7300, SP: 2},
 
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
 				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + core.PowerBonus(dot.Tick.SP*dot.Spell.SpellPower())
+				dot.SnapshotCritChance = dot.Spell.SpellCritChance(target)
 				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(dot.Spell.Unit.AttackTables[target.UnitIndex])
 			},
-			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
-				dot.CalcAndDealPeriodicSnapshotDamage(sim, target, dot.OutcomeTick)
-			},
+			OnTick: onTick,
 		},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			result := spell.CalcOutcome(sim, target, spell.OutcomeMagicHit)
 			if result.Landed() {
 				warlock.CurseOfAgony.Dot(target).Cancel(sim)
-				spell.Dot(target).Apply(sim)
+				dot := spell.Dot(target)
+				if scaling {
+					// the tick counts as the hit, as it can crit
+					spell.SpellMetrics[target.UnitIndex].Hits--
+					dot.TickLength = length
+				}
+				dot.Apply(sim)
 			}
 		},
 	})
+}
+
+// curseOfDoomScaling is whether the warlock carries mod-spell-tweaks' Curse of Doom aura (425793),
+// which Demonic Pact gives.
+func (warlock *Warlock) curseOfDoomScaling() bool {
+	return warlock.Talents.DemonicPact > 0 && warlock.Server().SpellTweaks.CurseOfDoomScaling
+}
+
+// curseOfDoomLength is spell_tweaks_doom_scaling's 60 s times the cast speed, in whole ms. A slow
+// changes nothing, and it never goes under 1 s.
+func (warlock *Warlock) curseOfDoomLength() time.Duration {
+	hasted := min(warlock.ApplyCastSpeed(time.Minute), time.Minute).Truncate(time.Millisecond)
+	return max(hasted, time.Second)
 }

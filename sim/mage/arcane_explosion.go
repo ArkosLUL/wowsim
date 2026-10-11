@@ -38,6 +38,8 @@ func (mage *Mage) registerArcaneExplosionSpell() {
 				baseDamage *= sim.Encounter.AOECapMultiplier()
 				spell.CalcAndDealDamage(sim, aoeTarget, baseDamage, spell.OutcomeMagicHitAndCrit)
 			}
+			// spell_proc 36032 takes the Arcane Blast stacks off at the cast, once every target has its damage
+			mage.ArcaneBlastAura.Deactivate(sim)
 		},
 	})
 }

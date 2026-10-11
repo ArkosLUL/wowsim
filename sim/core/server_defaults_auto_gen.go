@@ -31,6 +31,10 @@ func LiveServerDefaults() *proto.ServerSettings {
 			OmenClarityFaerieFire:     googleProto.Bool(true),
 			ShadowDotHaste:            googleProto.Bool(true),
 			GlyphOfBackstabTicks:      googleProto.Bool(true),
+			PyroblastEmpoweredFire:    googleProto.Bool(true),
+			CurseOfDoomScaling:        googleProto.Bool(true),
+			ArcaneBlastHasteCost:      googleProto.Bool(true),
+			ArcaneCritRefund:          googleProto.Bool(true),
 		},
 		DungeonScale: &proto.DungeonScaleSettings{
 			Raid:           &proto.DungeonScaleModifiers{Global: googleProto.Float64(1), Health: googleProto.Float64(1), Armor: googleProto.Float64(1), Damage: googleProto.Float64(1)},

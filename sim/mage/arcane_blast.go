@@ -12,16 +12,26 @@ const ArcaneBlastBaseCastTime = time.Millisecond * 2500
 
 func (mage *Mage) registerArcaneBlastSpell() {
 	abAuraMultiplierPerStack := core.TernaryFloat64(mage.HasMajorGlyph(proto.MageMajorGlyph_GlyphOfArcaneBlast), .18, .15)
+	hasteCost := mage.arcaneBlastHasteCost()
+	// the cost percent the stacks add right now
+	var stackCostPct int32
+	// Aura::SetStackAmount works the cost effect out again on every stack gained and on a refresh at four,
+	// so a haste change shows at the next Arcane Blast to land, never in between
+	setStackCost := func(stacks int32) {
+		pct := stacks * mage.arcaneBlastStackCostPct(hasteCost)
+		mage.ArcaneBlast.CostMultiplier += float64(pct-stackCostPct) / 100
+		stackCostPct = pct
+	}
 	mage.ArcaneBlastAura = mage.GetOrRegisterAura(core.Aura{
 		Label:     "Arcane Blast",
 		ActionID:  core.ActionID{SpellID: 36032},
-		Duration:  time.Second * 8,
+		Duration:  time.Second * 6,
 		MaxStacks: 4,
 		OnStacksChange: func(aura *core.Aura, sim *core.Simulation, oldStacks int32, newStacks int32) {
 			oldMultiplier := 1 + float64(oldStacks)*abAuraMultiplierPerStack
 			newMultiplier := 1 + float64(newStacks)*abAuraMultiplierPerStack
 			mage.PseudoStats.SchoolDamageDealtMultiplier[stats.SchoolIndexArcane] *= newMultiplier / oldMultiplier
-			mage.ArcaneBlast.CostMultiplier += 1.75 * float64(newStacks-oldStacks)
+			setStackCost(newStacks)
 		},
 	})
 
@@ -62,6 +72,24 @@ func (mage *Mage) registerArcaneBlastSpell() {
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 			mage.ArcaneBlastAura.Activate(sim)
 			mage.ArcaneBlastAura.AddStack(sim)
+			setStackCost(mage.ArcaneBlastAura.GetStacks())
 		},
 	})
+}
+
+// arcaneBlastHasteCost is whether spell_tweaks_arcane_blast_haste_cost scales this mage's Arcane Blast
+// stacks, which it does with any rank of Netherwind Presence.
+func (mage *Mage) arcaneBlastHasteCost() bool {
+	return mage.Talents.NetherwindPresence > 0 && mage.Server().SpellTweaks.ArcaneBlastHasteCost
+}
+
+// arcaneBlastStackCostPct is what one Arcane Blast stack adds to the cost now: 36032's 175%, times the cast
+// speed in whole percent when the tweak scales it. A slow changes nothing.
+func (mage *Mage) arcaneBlastStackCostPct(hasteCost bool) int32 {
+	const stock = 175
+	if !hasteCost {
+		return stock
+	}
+	// the server multiplies in float32 before it truncates
+	return int32(stock * float32(min(mage.CastSpeed, 1)))
 }

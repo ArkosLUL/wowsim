@@ -53,8 +53,21 @@ func auraUp(id int) string {
 
 func runProcLog(t *testing.T, player *proto.Player, seconds float64, seed int64) []procLogEntry {
 	t.Helper()
+	return runProcLogOn(t, player, nil, seconds, seed)
+}
+
+// runProcLogOn is runProcLog on a server with these settings, nil for the live ones.
+func runProcLogOn(t *testing.T, player *proto.Player, settings *proto.ServerSettings, seconds float64, seed int64) []procLogEntry {
+	t.Helper()
 	encounter := core.MakeSingleTargetEncounter(0)
 	encounter.Duration = seconds
+	encounter.ServerSettings = settings
+	return runProcLogIn(t, player, encounter, seed)
+}
+
+// runProcLogIn is the debug log of one iteration of the player in the encounter.
+func runProcLogIn(t *testing.T, player *proto.Player, encounter *proto.Encounter, seed int64) []procLogEntry {
+	t.Helper()
 	res := core.RunRaidSim(&proto.RaidSimRequest{
 		Raid:       core.SinglePlayerRaidProto(player, nil, nil, nil),
 		Encounter:  encounter,
