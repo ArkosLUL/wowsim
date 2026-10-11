@@ -50,15 +50,18 @@ pull, Sniper Training included). The 32 were fought against the worldserver buil
 RogueSubtlety again on 2026-10-06 against the worldserver build of 19:37 (rev 3d89793c7 plus the module's working
 tree); HunterMM again on 2026-10-10 against the worldserver image of 2026-10-09 (rev 3d89793c7, module 408f7b5),
 Hunter's Mark pulled and the dummy at 19%; MageArcane and WarlockDemonology again on 2026-10-10 against that day's
-worldserver image (rev 3d89793c7, mod-spell-tweaks 9bf5c75: its mage and warlock tweaks): 105 KB.
+worldserver image (rev 3d89793c7, mod-spell-tweaks 9bf5c75: its mage and warlock tweaks); DruidBalance again on
+2026-10-11 against that day's worldserver image (rev 3d89793c7, module 8a6f13f plus its working tree's
+`fight_test.go`), from the hub's outer floor with Starfall cast first, two of its twelve stars killing a Maggot and
+a Spider: 106 KB.
 
 ## Left out
 
 Representation gaps, not mismatches, each with its reason in `tools/simval/fight.go`, which the replay prints:
 - `fightAurasLeftOut`: server auras the sim has as no aura (a healing cut, a second aura of one spell, a channel's
   aura on the caster), by id, and where when only there.
-- `fightSimAurasLeftOut`: sim auras the server has as no aura (Hot Streak's crit counter), by sim action; left in,
-  one would count as the server aura sharing its id.
+- `fightSimAurasLeftOut`: sim auras the server has as no aura (Hot Streak's crit counter, Starfall's splash
+  timer), by sim action; left in, one would count as the server aura sharing its id.
 - `fightMissesLeftOut`: logged misses that decide nothing the sim models or repeat another spell's.
 - `fightRefreshesLeftOut`: auras whose refreshes the server does its own way; uptime is still compared.
 - `fightEnergizeLeftOut`, and runic power: gains the sim gives some way the comparison doesn't read, or the server

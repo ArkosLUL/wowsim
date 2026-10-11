@@ -2495,6 +2495,57 @@ Cross-review, 2026-10-10, on `8be984c35` with the four items merged:
   `ui/core/components/character_stats.tsx` and its test.
 - **Goldens:** none.
 
+#### As built
+
+Stage code (offline; live plan in `tmp/ec-tools-code.md`). No golden moves.
+- `tools/apldbg` ([README](../../tools/apldbg/README.md)): a preset is its suite's `CharacterSuiteConfig`, so its
+  rows are the suite's own requests (`FullCharacterTestSuiteGenerator`) and match the golden to the digit, held by
+  `TestPresetsRunTheirSuitesRows`; the four `sim/deathknight/dps` suites, or any request file. `-apl`, `-gear`,
+  `-row`, `-iters`, `-seed`, `-ids`, `-log`, `-timeline`; `base.sh` builds it over a commit's sim code too.
+- `simval threat` (`tools/simval/threat_fixture.go`, the simval README's Threat probe): cutting the committed
+  `threat.jsonl` gives it back byte for byte. `threatKey`, `key()` and `droppedThreatRecords` moved there from
+  `threat_test.go`, with their own class constants (the test file's aren't in the binary); `main.go` got the dispatch.
+- Fight spot: the entrance, where the dummies stand, is the foot of stairs rising 4.5 yards to the south, 2.7 yards
+  from the portal's wall (the hub's navmesh, `mmaps/5332638.mmtile`). A bot south of the dummy at the dummy's height
+  is inside the stairs, and 18 yards north is behind the wall, inside the hollow central block: in sight of the
+  dummy's hit sphere, not its centre. `fightBuild` now moves the bot to the hub's outer floor (3046 -3458 298.2,
+  level 18 yards north and south, hostile spawns 68 yards off) before the build spawns the dummy, so every fight
+  through it stands there; ranged stays `standOff`'s 18 yards north. `fightSight` holds a ranged spot to both lines
+  of sight with two casts that are always out of range (module README).
+- Spell-mod sweep: `spellModRun` checks the bot's map before each command and on a failure, and names the reset.
+- `PseudoStatBonusDefenseSkill` (6): `GetPseudoStatsProto` sends `PseudoStats.BonusDefenseSkill`; the sheet adds
+  each row's part to the defense skill and the total to block chance, and no longer knows enchant 3847. It now shows
+  what the sim applies: the rune on both weapons or on an item-swap weapon counts each time. UI tests in
+  `tests/gear/character_stats.spec.ts`: the rune on a death knight tank, and a bonus written into a protection
+  warrior's `computeStats` answer for block chance (no blocking class has one).
+- Pre-checked for the live stage: DruidBalance's cycle with `"before": [Starfall 53201]` passes `TestFightCycles`,
+  the bot's own fight and the committed log's replay (`tmp/cycles-starfall.json`).
+
+Review: `apldbg` refuses a broken `-timeline`, `-match` or `-apl` file before any sim runs; the cutter gives the
+last scratch script's output on a real X2 stream (950 lines, 119 kept); the sight probes are real ones (Kick 1766
+and Stormwind Banner 62736: 5 yards, neither ignores line of sight, and `Spell::CheckCast` tests it before range).
+
+Stage live (2026-10-11, one run, `tmp/ec-tools-live.md`): `TestSimvalFight` for DruidBalance from the new floor,
+its cycle now `"before": [Starfall 53201]`.
+- `FIGHTSPOT`: both casts answered `SPELL_FAILED_OUT_OF_RANGE`, so `fightSight`'s commands reply to a GM-off bot; its
+  `LINE_OF_SIGHT` branch stays unproven.
+- Starfall went off once and 10 stars (53195) hit the dummy (sim 10); two more killed a Maggot and a Spider in the
+  first two seconds; no splash (53190) landed.
+- Replay: 67 of 70 checks, the three failures all where the aura sits: the server's 53201 is on the druid, the sim's
+  a dot on the target beside a second dot timing the splash. `fightSimAurasOn[53201] = "self"` and
+  `fightSimAurasLeftOut[{53190}]` (`tools/simval/fight.go`) give 67 of 67, the aura's uptime compared (9.989 s
+  against 9.951 s). The trimmed log replaced `DruidBalance.log.gz` (old copy: `tmp/DruidBalance.committed.log.gz`);
+  DruidBalance had no left-out entry or drop row to remove.
+
+Follow-ups: with three or more units in sight Starfall's two stars a second go to two random ones, so a critter can
+take the dummy's star (a re-record fails the count: clear the critters first); the sim's multi-target Starfall is 20
+one-second ticks on the main target, the server's 10 seconds of two stars each; Nature's Grace applications log 22,
+sim 12 (4 to 21), passing only on the widened range;
+the other tests' dummies still stand at the entrance (`newBot`, `spawnInFront`), where a short race has
+no line of sight from 4 yards south (the threat and Parfu10 notes on Undead and gnomes) and `strikes_test.go` moves
+past the dummy; `testing.md`'s e2e gotchas and the module README's `TestSimvalEcClass2Fight` remarks on line of
+sight describe that spot; critters within 30 yards of the fight floor can take a star or an area spell.
+
 ## Orchestrator onboarding (wave S start)
 
 - Add waves S–X to the registry and an `EC-` row to "Where the specs are".

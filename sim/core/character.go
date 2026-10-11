@@ -677,6 +677,8 @@ func (character *Character) GetPseudoStatsProto() []float64 {
 		// Base values are modified by Enemy attackTables, but we display for LVL 80 enemy as paperdoll default
 		proto.PseudoStat_PseudoStatDodge: character.DodgeChance(),
 		proto.PseudoStat_PseudoStatParry: character.ParryChance(),
+		// skill, not rating: the sheet adds it to the defense skill and block chance it shows
+		proto.PseudoStat_PseudoStatBonusDefenseSkill: float64(character.PseudoStats.BonusDefenseSkill),
 	}
 }
 

@@ -1,7 +1,9 @@
 import { expect, type Page, test } from '@playwright/test';
 
+import { ComputeStatsResult } from '../../../../ui/core/proto/api';
+import { PseudoStat } from '../../../../ui/core/proto/common';
 import { SPECS } from '../lib/page';
-import { openGear, readStats, statsAfterChange } from './gear';
+import { closePicker, openGear, openPicker, picker, readStats, rows, search, showTab, statsAfterChange } from './gear';
 
 const statRow = (page: Page, label: string) =>
 	page.locator('.character-stats-table-row', { has: page.locator('.character-stats-table-label', { hasText: new RegExp(`^${label}$`) }) });
@@ -26,6 +28,90 @@ async function breakdown(page: Page, label: string): Promise<Record<string, numb
 	await expect(tip).toBeHidden();
 	return Object.fromEntries(rows.map(([k, v]) => [k.replace(':', ''), Number(/-?\d+/.exec(v)![0])]));
 }
+
+// The value's tooltip as label -> the number in brackets: a skill or a percent.
+async function breakdownDerived(page: Page, label: string): Promise<Record<string, number>> {
+	await statRow(page, label).locator('.stat-value-link').hover();
+	const tip = page.locator('.tooltip.show');
+	await expect(tip).toBeVisible();
+	const parts = await tip
+		.locator('.character-stats-tooltip-row')
+		.evaluateAll(divs => divs.map(d => [d.children[0].textContent ?? '', d.children[1].textContent ?? '']));
+	await page.mouse.move(0, 0);
+	await expect(tip).toBeHidden();
+	return Object.fromEntries(parts.map(([k, v]) => [k.replace(':', ''), Number(/\((-?[\d.]+)/.exec(v)?.[1])]));
+}
+
+// A row's rating and the number in brackets after it.
+async function ratingAndDerived(page: Page, label: string): Promise<{ rating: number; derived: number }> {
+	const text = (await statRow(page, label).locator('.stat-value-link').textContent()) ?? '';
+	const match = /(-?\d+) \((-?[\d.]+)/.exec(text);
+	return { rating: Number(match?.[1]), derived: Number(match?.[2]) };
+}
+
+// Puts the named enchant on the main hand, or takes its enchant off.
+async function setMainHandEnchant(page: Page, name?: string) {
+	const worn = picker(page, 'mainHand').locator('.item-picker-enchant');
+	// through the icon: an empty enchant link can't be clicked
+	const tab = await showTab(await openPicker(page, 'mainHand'), 'Enchants');
+	if (name) {
+		await search(tab, name);
+		await rows(tab).filter({ hasText: name }).first().locator('a').click();
+		await expect(worn).not.toHaveText('');
+	} else {
+		await tab.locator('.selector-modal-remove-button').click();
+		await expect(worn).toHaveText('');
+	}
+	await closePicker(page);
+	await page.waitForLoadState('networkidle');
+}
+
+test("a death knight's defense skill counts the Stoneskin Gargoyle rune, as part of the gear", async ({ page }) => {
+	await openGear(page, 'tank_deathknight');
+	await setMainHandEnchant(page);
+	const plain = await ratingAndDerived(page, 'Defense');
+	const plainParts = await breakdownDerived(page, 'Defense');
+
+	await setMainHandEnchant(page, 'Rune of the Stoneskin Gargoyle');
+	// 25 skill and no rating: the sim sends it as a pseudo stat, and nothing on the page knows the rune
+	await expect.poll(() => ratingAndDerived(page, 'Defense')).toEqual({ rating: plain.rating, derived: plain.derived + 25 });
+	const parts = await breakdownDerived(page, 'Defense');
+	expect(parts['Gear'] - plainParts['Gear']).toBe(25);
+	expect(parts['Total'] - plainParts['Total']).toBe(25);
+	for (const part of ['Base', 'Talents', 'Buffs', 'Consumes']) expect(parts[part], part).toBe(plainParts[part]);
+});
+
+test('block chance and defense skill add the defense skill bonus the sim reports', async ({ page }) => {
+	await openGear(page, 'protection_warrior');
+	const defense = await ratingAndDerived(page, 'Defense');
+	const block = await ratingAndDerived(page, 'Block');
+	const plainParts = await breakdownDerived(page, 'Defense');
+
+	// no warrior has such a bonus, so it's written into the sim's answer: 25 skill from the gear on
+	await page.route('**/computeStats', async route => {
+		const response = await route.fetch();
+		const result = ComputeStatsResult.fromBinary(await response.body());
+		for (const party of result.raidStats?.parties ?? []) {
+			for (const player of party.players) {
+				for (const stats of [player.gearStats, player.talentsStats, player.buffsStats, player.consumesStats, player.finalStats]) {
+					if (stats) stats.pseudoStats[PseudoStat.PseudoStatBonusDefenseSkill] = 25;
+				}
+			}
+		}
+		await route.fulfill({ response, body: Buffer.from(ComputeStatsResult.toBinary(result)) });
+	});
+	await page.reload();
+	await page.waitForLoadState('networkidle');
+
+	await expect.poll(() => ratingAndDerived(page, 'Defense')).toEqual({ rating: defense.rating, derived: defense.derived + 25 });
+	// 0.04% a skill point
+	const withBonus = await ratingAndDerived(page, 'Block');
+	expect(withBonus.rating).toBe(block.rating);
+	expect(withBonus.derived - block.derived).toBeCloseTo(1, 2);
+	const parts = await breakdownDerived(page, 'Defense');
+	expect(parts['Gear'] - plainParts['Gear']).toBe(25);
+	expect(parts['Talents']).toBe(plainParts['Talents']);
+});
 
 test('a bonus stat adds to its row and its breakdown, and stays after a reload', async ({ page }) => {
 	await openGear(page);
