@@ -51,6 +51,7 @@ The live e2e and the replays leave timing, costs, threat, pets, gear and buffs u
 | Z2 | EC-THREAT-FIX3 (G, FS, C++, live) · EC-CORE-FIX2 (G, FS) · EC-CLASS-FIX (G, live) · PERF-Z · BIS-ALTS | Z's follow-ups |
 | Z5 | EC-CORE-FIX3 (G, FS, live) · EC-PET-FIX2 (G, live) · EC-CLASS-FIX2 (G, live) · EC-THREAT-FIX4 (G, FS, C++, live) | Z2's follow-ups and Y's pets, before the BiS chain |
 | Z7 | EC-CORE-FIX4 (G, FS) · EC-PET-FIX3 (G, live) · EC-CLASS-FIX3 (G, live) · EC-TOOLS | Z5's follow-ups (Z6 is parity's and raid-import's) |
+| Z8 | EC-CORE-FIX5 (G, FS) · EC-PET-FIX4 (G, live) · EC-CLASS-FIX4 (G, live) · EC-TOOLS2 | Z7's follow-ups |
 
 U is taken (the UI wave). Versus the INVESTIGATION's order, B7, A3 and A4 moved forward (cheap, independent) and
 C1 moved last (after B6).
@@ -2385,7 +2386,7 @@ Cross-review, 2026-10-10, on `8be984c35` with the four items merged:
   Dead's guardian (829) are uncontrollable; the raid's buff puts its aura on units without mana; direct
   `GainHealth` heals (Lifeward, Frenzied Regeneration's integer steps) aren't whole.
 
-### EC-CORE-FIX4 (Z7; changes goldens, full suite)
+### EC-CORE-FIX4 (Z7, done; changes goldens, full suite)
 
 - Aura expiry: an aura expires only when some event advances the clock, one unit's tracker after another, so an
   unrelated event decides whether a tick still sees a buff (Arcane Power on the last Arcane Missiles tick, Z5's
@@ -2553,7 +2554,7 @@ Cross-review (Z7):
   meanwhile misses the spell; Prey on the Weak's and Predatory Instincts' values are the starting gem's. No preset
   swaps a meta gem's condition.
 
-### EC-PET-FIX3 (Z7; changes goldens; stages: code, live)
+### EC-PET-FIX3 (Z7, done; changes goldens; stages: code, live)
 
 - Guardian AIs: `npc_pet_shaman_fire_elemental` paces Fire Nova (5–20 s in, then 8–15 s) and Fire Blast (5–20 s,
   then 4–8 s) on event timers with no GCD, about 10 Novas and 19 Blasts in 2 min; the sim's rotation caps both at
@@ -2705,7 +2706,7 @@ cross-review. `e2e/run.sh` passes `SIMVAL_PETFIX_LIVES`; `spells_audit.csv` is r
 Improved Demonic Tactics' tick follows an expiry on its world tick (the server ticks first); `Pet.Disable` expires
 the raid's Replenishment, and a second summon doesn't get it back.
 
-### EC-CLASS-FIX3 (Z7; changes goldens; stages: melee, casters, live)
+### EC-CLASS-FIX3 (Z7, done; changes goldens; stages: melee, casters, live)
 
 - Item damage spells carry no server spell id (`sim/common/wotlk/damage_procs.go` and the other item damage
   effects), so no class aura can read their damage class or cast time. With it: Omen of Clarity rolls on any landed
@@ -2918,7 +2919,7 @@ Cross-review (Z7):
 Follow-ups: Death Strike's 45470 and Death Pact's 48743 have no damage class either; the class-none and own-caster
 hit rules belong in core's outcomes; `db.json` has no icon rows for the three explosives' spells.
 
-### EC-TOOLS (Z7; golden-neutral)
+### EC-TOOLS (Z7, done; golden-neutral; stages: code, live)
 
 - The rotation debug harness from Z5's retune (`G:\DevStuff\GitHub\.wave-loop\ec-class-fix2-apl-tmp\apldbg`:
   per-rotation rows, cast counts and aura uptimes at chosen iterations, against an overlaid base) moves under
@@ -2990,6 +2991,90 @@ siblings, which the tests and `tools/apldbg/presets.go` share. The copies and `T
 (`TestEveryPresetRunsItsDefaultRow` reads no golden), `base.sh` keeps `suites.go` in a base build, and
 `tools/simval/goldchar.go` follows a config a package function returns. No golden moves. The module README's
 `TestSimvalEcClass2Fight` paragraph describes the outer floor.
+
+### EC-CORE-FIX5 (Z8; changes goldens, full suite)
+
+- Update order: a hardcast landing, a missile hit or Auto Shot on the world tick a player's aura expires finds it
+  gone. `Unit::Update` runs `m_Events` (landings, hits), then `_UpdateSpells` (Auto Shot, ticks, then expiries),
+  and melee follows in `Player::Update`. Reorder landings, Auto Shot and held swings around the tracker pass
+  (`Simulation.advance`, `releaseCastHold`); every caster's goldens reshuffle.
+- The live map update runs about 102.7 ms (the host's loop time), the sim's 100: make it a server setting. It
+  decides Ignite's race (an application due 2.0 or 4.0 s after the last beat the old tick 14 times in 91 live,
+  never in the sim; −1.3% of Ignite on MageFire's replay), a creature's 2 s swing (20 updates, 2055 ms) and a
+  prepull opener's 4th Fire Blast. A creature's swing after its hardcast lands comes one update early (the cast
+  lands in the event pass, ahead of the attack timer: 1968 ms for 2057).
+- A periodic action has no owner unit: an aura its tick puts on (Prey on the Weak) counts a world tick early, and
+  an aura paired with one needs `DurationThroughLastTick`. Execute phase callbacks fire with the first clock stop
+  past their time. A channel's tick still follows a creature aura's expiry on a shared update.
+- Nothing expires auras on a pet that's away, and heals land on dismissed pets (Circle of Healing, Prayer of
+  Healing).
+- Whole steps left: white swings (`urand(uint32(min), uint32(max))`; `attack.go` rolls a float, about half a
+  point high), the rune weapon's strikes and swing, Sweeping Strikes' copy, Manifest Anger, Steady Shot's weapon
+  part, Eviscerate's and Envenom's AP share, the AoE cap inside Fan of Knives' and Swipe's base, Multi-Shot
+  rolling its weapon once, `HealingPower`'s flat healing taken ahead of the coefficient, the flat taken part
+  (Gift of Arthas) in Chimera Shot - Serpent.
+- Meta gems: a crit multiplier class code changes mid-fight (Combustion, Hodir's Storm Power, Prey on the Weak's
+  table, Predatory Instincts) misses a swap; `sim/common/tbc/metagems.go`'s effects stay the starting gear's.
+- Leads: `spell_sha_t10_elemental_4p_bonus` only raises Flame Shock's max duration, so `GetTotalTicks` would cap
+  the added 6 s; `arcane_p3` as optimizer target beside `fury_p1` shows a −0.018% calibration gap.
+- `tools/simval/fight.go`'s per-update event is no longer needed.
+- **Owns:** `sim/core/` but EC-PET-FIX4's pet paths; `proto/common.proto`'s server setting and its plumbing; those
+  inline lines in class code; their drops and rows.
+- **Goldens:** all 37; report each.
+
+### EC-PET-FIX4 (Z8; changes goldens; stages: code, live)
+
+- Replenishment: summons with a full mana pool the sim gives none (treants, Shadowfiend, Infernal) can take one
+  of a cast's ten places.
+- Mirror Images: summoned at exactly 0 s they count as out before the fight (`engagedAtSummon`); the server rolls
+  each image's opener, the sim once for all three; a cast landing on the update the image dies on is lost.
+- Fire Elemental: Fire Nova keeps `IgnoreHaste`; whether and when one summoned with nothing selected joins the
+  fight.
+- A permanent pet dismissed and summoned again in one fight gets its inherited stats twice. The Bloodworm's
+  health takes 1 a point of stamina (sim 10).
+- Disc's Greatness row and Restoration shaman's Healing Grace row are put down to the mana heuristics by pattern
+  only: A/B them.
+- Live: more Fire Elemental lives (`SIMVAL_PETFIX_LIVES`; Blasts 17.5 a life for the sim's 18.29, z −1.7); why one
+  Mirror Image in three casts nothing at the e2e spot.
+- **Owns:** `sim/core/pet.go`, `focus.go`, the pets' timers and `replenishment.go`'s target rules; the pets'
+  files in class code; `pets.jsonl` and the module's `e2e/petfix_test.go`; their drops and rows.
+- **Goldens:** the pet suites, and the mana users under Replenishment; report each.
+
+### EC-CLASS-FIX4 (Z8; changes goldens; stages: code, live)
+
+- Druid: multi-target Starfall is 20 one-second ticks on the main target, the server's 10 s of two stars a tick
+  on random units in sight; the Balance fight logs 22 Nature's Grace applications for the sim's 12 and 2
+  Clearcastings for 5.4; Barkskin, Innervate and Rebirth roll Omen; other missile spells in a cast-and-hit proc's
+  mask may need Nature's Grace's launch roll.
+- Items: heals and Bryntroll under their server spells; Shard of the Gods' sets by the server's scripts (69739
+  casts only the heal 69733, 69755 only Searing Flames 69729; the sim gives both sets both procs).
+- Death knight: `blood_pesti_aoe` tuning; a `no_xp` Target field, set on the simval dummies, for Blood Presence's
+  heal; Death Strike's 45470 and Death Pact's 48743 may need `HealingTakenPctMultiplier` too.
+- Snares for Torment the Weak: Hamstring and Slow have no sim spell; Typhoon's and Hurricane's.
+- Hunter pets: Ravage, Tendon Rip, Snatch and Venom Web Spray on an immune boss are from the source only (a live
+  cast of each); the simval dummies' own `creature_immunities` masks in `tools/simval/damage.go` and `fight.go`.
+- The WarriorArms sweep path with a mace (`tools/simval/talentpaths.go`), retiring its drop; its live records are
+  in `G:\DevStuff\GitHub\.wave-loop\ec-class-fix3-tmp`.
+- Live, once the server runs mod-sim-validation `bcc58cf` (a rebuild by the user): the spell-mod sweep's
+  WarlockAffliction path again (`SIMVAL_SPELLMOD_ONLY=WarlockAffliction`), dropping the fixture README's note on
+  Curse of Doom.
+- **Owns:** `sim/{deathknight,druid,mage,hunter,warrior}/` but the other Z8 items' hunks; the item effects in
+  `sim/common/`; `ui/deathknight/apls/`; `tools/simval/spellmods*.go` and `talentpaths.go`;
+  `proto/common.proto`'s target field and its plumbing; their cycles, fights, drops and rows.
+- **Goldens:** those classes' suites, and every suite wearing a changed item; report each.
+
+### EC-TOOLS2 (Z8; golden-neutral)
+
+- `db.json` has no icon rows for the explosives' spells (56350, 67769, 56488) or 55039: the UI fetches them.
+- e2e: `fightBuild` kills the critters near the floor first (a star of Starfall can hit one and fail the count);
+  `fightSight`'s `LINE_OF_SIGHT` branch and `spellModRun`'s weekly-reset message are unproven live; `simval fight
+  -trim` keeps `UNIT_DIED` lines for critters; DruidBalancePhase3's cycle has no Starfall and its log is from the
+  old spot; the other tests' dummies still stand at the entrance.
+- The sim applies enchant effects of unequipped item-swap weapons, which the sheet now shows.
+- **Owns:** `tools/database/gen_db`'s spell icons and `assets/database/`; the module's `e2e/fight_test.go` and
+  `spellmod_sweep_test.go`; `tools/simval/fight.go`'s trim; DruidBalancePhase3's cycle and log; the item-swap
+  enchants in `sim/core/`, in a small hunk.
+- **Goldens:** none.
 
 ## Orchestrator onboarding (wave S start)
 

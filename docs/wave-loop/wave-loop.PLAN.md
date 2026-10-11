@@ -85,6 +85,7 @@ G = changes goldens. FS = runs all 37 suites.
 | Z5 | EC-CORE-FIX3 (G, FS, live) · EC-PET-FIX2 (G, live) · EC-CLASS-FIX2 (G, live) · EC-THREAT-FIX4 (G, FS, C++, live) | ✔ |
 | Z6 | PAR-FU-8 (G, live) · PAR-FU-9 (FS, live) · PAR-FU-10 (G, FS, live) · RI-5 (live) | ✔ |
 | Z7 | EC-CORE-FIX4 (G, FS) · EC-PET-FIX3 (G, live) · EC-CLASS-FIX3 (G, live) · EC-TOOLS | ✔ |
+| Z8 | EC-CORE-FIX5 (G, FS) · EC-PET-FIX4 (G, live) · EC-CLASS-FIX4 (G, live) · EC-TOOLS2 | ✔ |
 
 F2 is an inserted wave, not a fifth item in F: the core swing and cast fixes of PAR-P7-0c have to land
 before the class items in G, a class item can't build on a core fix merging in its own wave, and F already
@@ -150,7 +151,8 @@ pass doesn't repeat.
 Z6 takes the three items the user planned on master on 2026-10-10 (PAR-FU-8 and PAR-FU-9 for "the next wave",
 and RI-5) and PAR-FU-10, mod-spell-tweaks' new mage and warlock tweaks (the user's call, the same day); Z7 takes
 Z5's follow-ups, specced at its close-out under the earlier call (the parity backlog first), and Z6's, added to
-its specs. It started 2026-10-11.
+its specs. Z8 is planned from Z7's follow-ups at its close-out, under the same call; it waits for the user's
+continue, or their call to run the BiS chain first.
 
 **Where the specs are:**
 
@@ -167,24 +169,26 @@ its specs. It started 2026-10-11.
 
 ## Current wave
 
-- Wave: Z7, running since 2026-10-11, base `fd12d68cc` (master had not moved): EC-CORE-FIX4, EC-PET-FIX3,
-  EC-CLASS-FIX3 and EC-TOOLS, Z6's follow-ups in their specs. One run does every code and live stage: no item
-  changes the module's C++, and the server runs [ac] `3d89793c7`, mod-spell-tweaks `9bf5c75` and mod-sim-validation
-  `8a6f13f` (the user's rebuild, image of 2026-10-11 13:38 local). EC-TOOLS gained a live stage: the Balance
-  druid's fight from the new spot. Args and shared rules: `G:\DevStuff\GitHub\.wave-loop\waveZ7-*`.
-  Z6 landed. Prod runs its `e5a289570` (RI-5's "After it lands on `master`" steps, 2026-10-11);
-  `wowsims-wotlk:rollback-x` is X's `25cb9dddc`. Auto mode refuses the prod docker commands, a DSN on a command
-  line and chained commands: the user's allow rules (`.claude/settings.local.json` in [sim]) cover each plain
-  command.
-  Z6's reports: `G:\DevStuff\GitHub\.wave-loop\z6-run1\*.md`, `waveZ6-results.json`; item notes:
-  `.wave-loop\{par-fu-8,par-fu-9,par-fu-10,ri-5}-tmp`.
-- Open: the e2e-coverage backlog Z7 leaves, sim-performance's Left items and Z5's 9–11% on mana users (Sim
-  throughput), the bis-optimizer backlog (Z3's As
+- Wave: Z7, landed (master fast-forwarded to this close-out), base `fd12d68cc`. One run did every code and live
+  stage on the server at [ac] `3d89793c7`, mod-spell-tweaks `9bf5c75`, mod-sim-validation `8a6f13f` (image of
+  2026-10-11 13:38 local). EC-CORE-FIX4 came back blocked on `sim/optimizer`'s calibration gap test alone, so it
+  had one review round; the test's pair changed at its merge.
+  The module's HEAD is `bcc58cf`: its `NO_AMOUNT_SCRIPTS` change needs a rebuild by the user, then the spell-mod
+  sweep's WarlockAffliction path again (EC-CLASS-FIX4).
+  Prod runs Z6's `e5a289570`, without Z7; `wowsims-wotlk:rollback-x` is X's `25cb9dddc`. Auto mode refuses the
+  prod docker commands, a DSN on a command line and chained commands: the user's allow rules
+  (`.claude/settings.local.json` in [sim]) cover each plain command.
+  Next, Z8, planned: EC-CORE-FIX5, EC-PET-FIX4, EC-CLASS-FIX4 and EC-TOOLS2.
+  Z7's reports: `G:\DevStuff\GitHub\.wave-loop\z7-run1\*.md` (`xreview.md`: the cross-review's),
+  `waveZ7-results.json`; item notes: `.wave-loop\{ec-core-fix4,ec-pet-fix3,ec-class-fix3,ec-tools}-tmp`.
+- Open: the e2e-coverage backlog Z8 leaves, sim-performance's Left items, Z5's 9–11% on mana users and Z7's missing
+  row (Sim throughput), the bis-optimizer backlog (Z3's As
   builts: the enchant residual, Mutilate's pair, Combat Rogue P3 Normal; Z4's: the surrogate overpricing a
   one-hander's pairing, stage 2 and the Heroic Presence checks not yet run on the new lists, whether
   Ecoterrorist's rotation casts Mangle (Idol of the Corruptor sims like a dead idol); Z5's re-baseline: the
   search ends on a weaker set after sim changes that leave the presets within 0.1%, Ret P4 Normal 40 rating
-  over the expertise cap), then the deferred BiS chain.
+  over the expertise cap; Z7's: Fire Mage P3 Quick ends on a trinket a measured alternative beats, which fails
+  the slow suite), then the deferred BiS chain.
   Closed as not sim gaps: the sheet fields the server shows raw (per-school crit, Blood-Gorged, Mace and Holy
   Specialization), which the fixture README explains.
 - Deferred (the user's calls, 2026-10-02, 10-03, 10-05 and 10-07), once the other items are done and only on the
@@ -260,6 +264,7 @@ Reckoning that way), but J isn't DPS: see below.
 | Z4 | 8771.0, +216 / +202 | 10760.6, +765 / +725 | 5044.5, +92 / +102 | 12972.8, +248 / +253 | -17045.6, +5318 / +5255 | -1160.0, +735 / +733 |
 | Z5 | 8770.8, +195 / +187 | 10763.9, +656 / +683 | 5043.3, +59 / +107 | 12926.7, +162 / +196 | -16806.3, +5292 / +5032 | -1132.9, +732 / +741 |
 | Z6 | 8770.8, +195 / +187 | 10763.9, +656 / +683 | 5006.4, +203 / +305 | 12926.7, +162 / +196 | -16806.3, +5292 / +5032 | -1132.9, +732 / +741 |
+| Z7 | 8790.3, +215 / +199 | 10770.5, +789 / +690 | 5008.5, +221 / +284 | 12918.7, +188 / +240 | -16814.4, +5205 / +5036 | -1122.7, +729 / +737 |
 
 Quick / Normal. Ret P4 ran at Quick only in wave D, after the glyph fix; its wave C numbers
 (12821.9, +54 / +73) came from a seed that wore the glyph. The two tanks arrive with
@@ -352,6 +357,9 @@ In Z6 only Fire Mage moved; the other five repeat Z5's to the digit, sims includ
 (Pyroblast's hasted, critting DoT) and spell power's worth 8.4%, so `J_preset` fell 0.7%. The gains rose from
 +141 / +254 DPS to +522 / +785 (the preset predates the tweak; not traced to a stat). Normal's walls ran beside
 the live server with no player online, 22–42% under Z5's.
+In Z7 every `J_preset` moved by under 0.25% but Feral Tank's +0.9% (the explosives' smaller hits on the tank).
+Fire Mage Quick fails the suite: its pick wears a trinket the measured alternative 40255 beats by 37.1 ± 3.5,
+past the 4 se guard; Normal passes. Combat Rogue Quick again beats Normal, now by 99.
 
 ## Sim throughput
 
@@ -387,6 +395,8 @@ From G the benches run their suites' default players with rotations, at 1 and 10
 | Z2 | 1.311 / 98.2 | 0.629 / 34.0 | 0.892 / 50.0 | 0.473 / 19.7 | 5.640 / 297.3 |
 | Z5 | 1.510 / 100.2 | 0.603 / 39.8 | 1.006 / 56.5 | 0.552 / 22.5 | 7.135 / 311.3 |
 | Z6 | 1.273 / 95.9 | 0.660 / 35.7 | 0.849 / 51.3 | 0.531 / 22.9 | 5.592 / 301.3 |
+
+Z7 has no row: the run needs the AC containers stopped (`.wave-loop/rebase-z6.sh` as a model), the user's call.
 
 H2 ran with the live worldserver using half a core, which moved whole runs by up to 2×
 and cost a few percent here (Ret, which H2 barely touched, +4%). An interleaved A/B against the base
@@ -719,6 +729,11 @@ crashed before F2, so its column starts there.
 | PAR-FU-10 | merged | `c6f7cf096` | module `b40e659`; Pyroblast's DoT with Empowered Fire, Curse of Doom with Demonic Pact, Arcane Blast's stack cost, the arcane crit refund, Arcane Blast's buff (6 s, ended by an Arcane Barrage or Explosion cast); at the merge: MageFire's spell-mod lines and the MageArcane and WarlockDemonology fights re-recorded, the optimizer's pact test without `FullRaidBuffs`' own 500 pact, which hid the warlock's; goldens `97c31624a`: Arcane +3.72%, Fire +6.40%, FrostFire +7.60%, Demonology +2.49% |
 | RI-5 | merged | `a762eabd7` | `GET /acoreRoster` on the sim server (`sim/web/acroster`) and the Raid tab's "Import from server"; live: 0.81 s, then 0.09 s, the JSON equal to acraid's but `exportedAt`; goldens unchanged; its prod steps wait for the user |
 | wave Z6 cross-review | direct | `b8686583a` | module `8a6f13f` (needs a rebuild by the user); `--pprof` served the command line, `--acoreDsn` and its password included; Improved Devouring Plague's burst only when the dot lands; Ignite from a fire tick's crit without Living Bomb; Rupture's glyph code in `rupture.go`; the two new scripts in `TICK_PERIOD_SCRIPTS`; left open: a dot whose haste adds ticks can tick once past the server's count (EC-CORE-FIX4); goldens `c61cbfb77`: Shadow −0.008%, 48 rows, down to −0.5% |
+| EC-CORE-FIX4 | merged | `18a41a330` | auras expire in time order, a player's counting from the world tick before its cast; dots stop at their tick total and tick in spell id order; whole weapon strikes, `PowerBonus(coefficient, power)`, `GainHealing`; the bleed bonus by `FlagBleed`; meta gems across an item swap; the review: Clearcasting spent by the cast that procced it (Balance −13 to −20% in places), three auras losing their last tick; `sim/optimizer`'s gap test on a pair that really differs (`ef4aa6953`); goldens `7bd973ac5`: all 37, Fire and FrostFire −0.45%, Arms −0.39%, Disc hps −1.0% |
+| EC-PET-FIX3 | merged | `e5d38d932` | module `514ef31`; the Fire Elemental's and Mirror Images' AI event timers (live: 9.7 Novas started and 17.5 Blasts a life), focus, energy and MP5 on the pets' ticks, Improved Demonic Tactics every 10 s, Replenishment's ten lowest, guardians without a pet bar, no Bloodlust on guardians, the pets' health; goldens `d721a1ce9`: 32 suites, Enhancement +0.38%, Elemental's multi-target Fire Elemental rows −10 to −18%, mages −0.06 to −0.28%, BM +0.17% |
+| EC-CLASS-FIX3 | merged | `45e118126` | module `17d703a`; item damage procs as server spells (Omen of Clarity rolls on them), Nature's Grace at a crit Wrath's launch (live 171 of 171), Blood Presence's heal, the death knight rotations, Chimera Shot - Serpent's sting percents, Hunting Party off Explosive Shot's ticks, `Target.mechanic_immune_mask`, an APL value for Curse of Doom's length; MageFire's sweep re-recorded; at the merge: `chimera_shot.go` whole at each step, a Nature's Grace test re-timed (`3c8423d2f`); goldens `36e0c387d`: 35 suites, Balance +1.2%, Frost DK +0.49% |
+| EC-TOOLS | merged | `99a1e046a` | module `ceb154c`; `tools/apldbg`, `simval threat` (the fixture cutter), `PseudoStatBonusDefenseSkill` on the sheet, fights on the hub's outer floor in sight of the dummy's centre (DruidBalance re-recorded, Starfall compared); serverdata and `db.json` regenerated in `837f53c95`; goldens unchanged |
+| wave Z7 cross-review | direct | `e84c1ee9b` | module `bcc58cf` (needs a rebuild by the user); the clock went back to an overdue aura's expiry on a returning pet; Replenishment lost a tick on Hunting Party's refresh; explosives as their use spells (Saronite Bomb always lands and never crits, the others 1.5× crits); Feral's Clearcasting check; `tools/apldbg` shares the DK suites' configs; the five untraced golden moves traced, none a bug; left open: a cast landing on an aura's last tick, the live 102.7 ms map update (Ignite's race), both EC-CORE-FIX5's; goldens `a88b63b7c`: Feral tank −0.34%, Retribution dtps −11.6%, three more within 0.3% |
 
 Later WIs are added as their wave starts.
 
