@@ -1,6 +1,7 @@
 package hunter
 
 import (
+	"math"
 	"time"
 
 	"github.com/wowsims/wotlk/sim/core"
@@ -48,10 +49,8 @@ func (hunter *Hunter) registerChimeraShotSpell() {
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			// the weapon's AP part, normalized: RAP / 14 × 2.8 s
-			baseDamage := (spell.Direct.Roll(sim) + 0.2*hunter.rangedWeaponAP() +
-				hunter.AutoAttacks.Ranged().BaseDamage(sim) +
-				hunter.NormalizedAmmoDamageBonus +
-				spell.BonusWeaponDamage()) * spell.Direct.WeaponPct
+			baseDamage := core.ApplyPct(spell.StrikeFixed(spell.Direct.Roll(sim), core.MainHand)+
+				spell.RangedNormalizedStrikeDamage(sim, hunter.rangedWeaponAP(), hunter.NormalizedAmmoDamageBonus), spell.Direct.WeaponPct)
 
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeRangedHitAndCrit)
 			spell.WaitTravelTime(sim, func(sim *core.Simulation) {
@@ -93,7 +92,9 @@ func (hunter *Hunter) chimeraShotSerpentStingSpell(stingTick *float64) *core.Spe
 		Direct: core.SpellEffect{Effect: 0, FromSpellID: 49001, Min: 242, Max: 242, AP: 0.04},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			result := spell.CalcDamage(sim, target, *stingTick, spell.OutcomeMeleeSpecialCritOnly)
+			// the sting's tick is whole before spell_hun_chimera_shot's ApplyPct of 40% a tick, and whole after
+			tick := math.Trunc(*stingTick * spell.AttackerDamageMultiplier(spell.Unit.AttackTables[target.UnitIndex]) / spell.DamageMultiplier)
+			result := spell.CalcDamageDone(sim, target, core.ApplyPct(tick, spell.DamageMultiplier), spell.OutcomeMeleeSpecialCritOnly)
 			spell.DealDamageAfterTravel(sim, result)
 		},
 	})

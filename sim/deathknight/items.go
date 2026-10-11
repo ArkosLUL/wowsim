@@ -416,7 +416,7 @@ func init() {
 			Direct: core.SpellEffect{Effect: 0, WeaponPct: 0.02},
 
 			ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-				baseDamage := spell.Direct.WeaponPct * spell.Unit.MHWeaponDamage(sim, spell.MeleeAttackPower())
+				baseDamage := core.ApplyPct(spell.MHStrikeDamage(sim, spell.MeleeAttackPower()), spell.Direct.WeaponPct)
 				spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeAlwaysHit)
 			},
 		})

@@ -301,7 +301,7 @@ func (shaman *Shaman) newFrostbrandImbueSpell() *core.Spell {
 		Direct: core.SpellEffect{Effect: 0, Min: 530, Max: 530, SP: 0.1},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP*spell.SpellPower())
+			baseDamage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP, spell.SpellPower())
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 		},
 	})
@@ -371,7 +371,7 @@ func (shaman *Shaman) newEarthlivingImbueSpell() *core.Spell {
 			TicksCanCrit:  false,
 			Tick:          core.SpellEffect{Effect: 0, FromSpellID: 52000, Min: 163, Max: 163, SP: 0.164},
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
-				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + core.PowerBonus(dot.Tick.SP*shaman.healingPower(dot.Spell, target))
+				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + core.PowerBonus(dot.Tick.SP, shaman.healingPower(dot.Spell, target))
 				dot.SnapshotAttackerMultiplier = dot.Spell.CasterHealingMultiplier()
 			},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {

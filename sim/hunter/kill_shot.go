@@ -45,11 +45,10 @@ func (hunter *Hunter) registerKillShotSpell() {
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			// effect 17 isn't normalized, so the weapon's AP part is RAP / 14 × the weapon's own speed
-			baseDamage := (spell.Direct.Roll(sim) + hunter.RangedWeaponDamage(sim, hunter.rangedWeaponAP()) +
-				hunter.AmmoDamageBonus +
-				spell.BonusWeaponDamage()) * spell.Direct.WeaponPct
+			baseDamage := core.ApplyPct(spell.StrikeFixed(spell.Direct.Roll(sim), core.MainHand)+
+				spell.RangedStrikeDamage(sim, hunter.rangedWeaponAP(), hunter.AmmoDamageBonus), spell.Direct.WeaponPct)
 			// Spell::EffectWeaponDmg's own 0.4 reads GetTotalAttackPowerValue with no victim, so no Hunter's Mark
-			baseDamage += core.PowerBonus(spell.Direct.AP * hunter.rangedWeaponAP())
+			baseDamage += spell.StrikeFixed(core.PowerBonus(spell.Direct.AP, hunter.rangedWeaponAP()), core.MainHand)
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeRangedHitAndCrit)
 			spell.DealDamageAfterTravel(sim, result)
 		},

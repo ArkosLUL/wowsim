@@ -49,11 +49,11 @@ func (dk *Deathknight) newHeartStrikeSpell(isMainTarget bool, isDrw bool) *core.
 			if isDrw {
 				baseDamage = (spell.Direct.Roll(sim) + dk.DrwWeaponDamage(sim, spell)) * spell.Direct.WeaponPct
 			} else {
-				baseDamage = normalizedStrikeBase(sim, spell, true, spell.Direct.Roll(sim)) * spell.Direct.WeaponPct
+				baseDamage = core.ApplyPct(normalizedStrikeBase(sim, spell, true, spell.Direct.Roll(sim)), spell.Direct.WeaponPct)
 			}
 
 			activeDiseases := core.TernaryFloat64(isDrw, dk.drwCountActiveDiseases(target), dk.dkCountActiveDiseases(target))
-			baseDamage *= 1 + activeDiseases*diseaseMulti
+			baseDamage = core.ApplyPct(baseDamage, 1+activeDiseases*diseaseMulti)
 			if isDrw {
 				baseDamage += dk.drwVersusAttackPowerBonus(spell, true)
 			}

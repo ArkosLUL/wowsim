@@ -364,9 +364,7 @@ func (hunter *Hunter) applyWildQuiver() {
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			// the ranged weapon's damage includes the ammo (Player::CalculateMinMaxDamage)
-			baseDamage := (spell.Unit.RangedWeaponDamage(sim, hunter.rangedWeaponAP()) +
-				hunter.AmmoDamageBonus +
-				spell.BonusWeaponDamage()) * spell.Direct.WeaponPct
+			baseDamage := core.ApplyPct(spell.RangedStrikeDamage(sim, hunter.rangedWeaponAP(), hunter.AmmoDamageBonus), spell.Direct.WeaponPct)
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeRangedHitAndCrit)
 			spell.DealDamageAfterTravel(sim, result)
 		},

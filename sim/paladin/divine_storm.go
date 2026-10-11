@@ -45,9 +45,8 @@ func (paladin *Paladin) registerDivineStormSpell() {
 			curTarget := target
 			for hitIndex := int32(0); hitIndex < numHits; hitIndex++ {
 				// normalized on the server (Spell::EffectWeaponDmg special-cases 53385), unlike its DBC effects
-				baseDamage := (bonusDmg +
-					spell.Unit.MHNormalizedWeaponDamage(sim, spell.MeleeAttackPower()) +
-					spell.BonusWeaponDamage()) * spell.Direct.WeaponPct
+				baseDamage := core.ApplyPct(spell.StrikeFixed(bonusDmg, core.MainHand)+
+					spell.MHNormalizedStrikeDamage(sim, spell.MeleeAttackPower()), spell.Direct.WeaponPct)
 
 				results[hitIndex] = spell.CalcDamage(sim, curTarget, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 				curTarget = sim.Environment.NextTargetUnit(curTarget)

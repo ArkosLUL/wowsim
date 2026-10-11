@@ -85,6 +85,16 @@ func NewItemEffect(id int32, itemEffect ApplyEffect) {
 	}
 }
 
+// the meta gems whose effect goes on and off with an item swap (Character.OnMetaGemSwap)
+var metaGemSwapEffects = map[int32]bool{}
+
+// NewMetaGemEffect is NewItemEffect for a meta gem whose effect handles Character.MetaGemSwaps: it's
+// then applied for a gem the gear starts without, too.
+func NewMetaGemEffect(id int32, itemEffect ApplyEffect) {
+	NewItemEffect(id, itemEffect)
+	metaGemSwapEffects[id] = true
+}
+
 func NewEnchantEffect(id int32, enchantEffect ApplyEffect) {
 	if WITH_DB {
 		if _, ok := LookupEnchant(id); !ok {

@@ -76,7 +76,7 @@ func (mage *Mage) registerFrostfireBoltSpell() {
 		},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := (spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP*spell.SpellPower())) * mage.tormentTheWeak(target)
+			baseDamage := (spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP, spell.SpellPower())) * mage.tormentTheWeak(target)
 
 			// FFB also double-dips the bonus from debuff crit modifiers:
 			//  1) Totem of Wrath / Heart of the Crusader / Master Poisoner

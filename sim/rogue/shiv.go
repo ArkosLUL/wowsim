@@ -34,6 +34,7 @@ func (rogue *Rogue) registerShivSpell() {
 			return ohWeapon != nil
 		},
 
+		TotalPctMultiplier: rogue.dwsMultiplier(),
 		DamageMultiplier: spellModDamage(
 			0.02*float64(rogue.Talents.FindWeakness),
 			core.TernaryFloat64(rogue.Talents.SurpriseAttacks, 0.1, 0),
@@ -46,8 +47,8 @@ func (rogue *Rogue) registerShivSpell() {
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			rogue.BreakStealth(sim)
-			baseDamage := (spell.Direct.Roll(sim) + spell.Unit.OHNormalizedWeaponDamage(sim, spell.MeleeAttackPower())) *
-				spell.Direct.WeaponPct
+			baseDamage := core.ApplyPct(spell.StrikeFixed(spell.Direct.Roll(sim), core.OffHand)+spell.OHNormalizedStrikeDamage(sim, spell.MeleeAttackPower()),
+				spell.Direct.WeaponPct)
 			result := spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialNoBlockDodgeParryNoCrit)
 
 			if result.Landed() {

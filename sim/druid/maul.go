@@ -46,19 +46,15 @@ func (druid *Druid) registerMaulSpell() {
 			}
 
 			modifier := 1.0
-			if druid.BleedCategories.Get(target).AnyActive() {
-				modifier += .3
-			}
 			if druid.AssumeBleedActive || druid.Rip.Dot(target).IsActive() || druid.Rake.Dot(target).IsActive() || druid.Lacerate.Dot(target).IsActive() {
 				modifier *= 1.0 + (0.04 * float64(druid.Talents.RendAndTear))
 			}
 
 			curTarget := target
 			for hitIndex := int32(0); hitIndex < numHits; hitIndex++ {
-				baseDamage := (spell.Direct.Roll(sim) +
-					spell.Unit.MHWeaponDamage(sim, spell.MeleeAttackPower()) +
-					spell.BonusWeaponDamage()) * spell.Direct.WeaponPct
-				baseDamage *= modifier
+				baseDamage := core.ApplyPct(spell.StrikeFixed(spell.Direct.Roll(sim), core.MainHand)+
+					spell.MHStrikeDamage(sim, spell.MeleeAttackPower()), spell.Direct.WeaponPct)
+				baseDamage = core.ApplyPct(baseDamage, modifier)
 
 				result := spell.CalcAndDealDamage(sim, curTarget, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 

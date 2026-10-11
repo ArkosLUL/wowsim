@@ -32,7 +32,7 @@ func (mage *Mage) registerArcaneExplosionSpell() {
 		Direct: core.SpellEffect{Effect: 0, Min: 538, Max: 582, SP: 0.214},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			dmgFromSP := core.PowerBonus(spell.Direct.SP * spell.SpellPower())
+			dmgFromSP := core.PowerBonus(spell.Direct.SP, spell.SpellPower())
 			for _, aoeTarget := range sim.Encounter.TargetUnits {
 				baseDamage := spell.Direct.Roll(sim) + dmgFromSP
 				baseDamage *= sim.Encounter.AOECapMultiplier()

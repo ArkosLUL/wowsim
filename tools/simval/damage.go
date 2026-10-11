@@ -1246,23 +1246,6 @@ func (d *damageSim) strikeAmount(spell *core.Spell, w *weaponStrike, end int) (a
 	return 0, fmt.Errorf("no hit in %d tries", maxHitAttempts)
 }
 
-// strikeTolerance is how far below and above the server's amount the sim may land: 0.1% or 1 point, widened
-// above for the server's truncations, which only ever lower its number. The weapon damage truncates before
-// the percent, the fixed bonus after the hand's percent, then the percent, the done amount and the taken
-// one, each losing up to a point at that step.
-func strikeTolerance(server, multiplier float64, w *weaponStrike, end int) (below, above float64) {
-	pct := w.Percent.at(end) / 100
-	steps := pct + 1
-	if w.Physical && w.Fixed.at(end) != 0 {
-		steps += max(pct, 1)
-	}
-	if w.Percent.at(end) != 100 {
-		steps++
-	}
-	below = max(server*0.001, 1)
-	return below, max(below, 1+steps*multiplier)
-}
-
 // checkStrike compares a weapon strike with the sim's: the declared fixed bonus and percent, the amount at
 // both ends of the roll, and the crit multiplier. A shaped strike gives none.
 func checkStrike(rec damageRecord) []Check {
@@ -1298,18 +1281,13 @@ func checkStrike(rec damageRecord) []Check {
 	if err := firstErr(errLo, errHi); err != nil {
 		return append(checks, fail("amount", err.Error()))
 	}
-	multiplier := hi / max(w.Base.Max, 1)
-	if w.Base.Max-w.Base.Min >= 1 {
-		multiplier = (hi - lo) / (w.Base.Max - w.Base.Min)
-	}
 	for _, end := range []struct {
 		label       string
-		i           int
 		sim, server float64
-	}{{"min", 0, lo, w.Taken.Min}, {"max", 1, hi, w.Taken.Max}} {
-		below, above := strikeTolerance(end.server, multiplier, w, end.i)
-		detail := fmt.Sprintf("sim %.2f, server %.0f (-%.2f/+%.2f)", end.sim, end.server, below, above)
-		if diff := end.sim - end.server; diff >= -below && diff <= above {
+	}{{"min", lo, w.Taken.Min}, {"max", hi, w.Taken.Max}} {
+		tolerance := amountTolerance(end.server)
+		detail := fmt.Sprintf("sim %.2f, server %.0f (-%.2f/+%.2f)", end.sim, end.server, tolerance, tolerance)
+		if math.Abs(end.sim-end.server) <= tolerance {
 			checks = append(checks, pass(end.label, detail))
 		} else {
 			checks = append(checks, fail(end.label, detail+"; "+d.strikeInputs(w)+"; "+d.unmatchedAuras()))

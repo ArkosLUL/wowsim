@@ -2412,6 +2412,119 @@ Cross-review, 2026-10-10, on `8be984c35` with the four items merged:
 - **Owns:** `sim/core/` but EC-PET-FIX3's pet paths; those inline lines in class code; their drops and rows.
 - **Goldens:** all 37 (aura expiry); report each.
 
+#### As built
+
+Timing stage, on `fd12d68cc` against [ac] `3d89793c7`, offline (notes in `tmp/ec-core-fix4-timing.md`). Verdicts:
+- Aura expiry (fixed): `Simulation.Step` stops at the earliest expiry ahead of every queued event; on one update
+  players' auras go before the map's (`Map::Update`), and a unit's due ticks before its expiries
+  (`Unit::_UpdateSpells`). A Fury warrior's DPS beside an Arcane mage is now bit-identical to its DPS alone.
+- `countdownStart` (fixed): a player's aura counts from the world tick before its cast or landing; not one its own
+  swing, tick or expiry puts on, nor a creature's or pet's update. Replenishment lost its own shift. Arcane Blast's
+  buff measured 5992 ms live.
+- Dot ticks (fixed): the fifth tick of four came from the late expiry, not the missing cap, and far more often than
+  one in 50 (Arms' Rend: 0.17 an application). `Dot.outOfTicks` stops at `TotalTicks`, the tick owed until a refresh;
+  `Rollover`, `Dot.Refresh` and `Dot.Activate` restart the count (the last two shadow the aura's for Holy Vengeance,
+  Deadly Poison and Lacerate). `Dot.UpdateExpires` raises the max duration, `Aura.UpdateExpires` the expiry alone
+  (stock Glyph of Backstab). One unit's due ticks run lowest spell id first (`Unit.tickingDots`); `pyroblast.go`'s
+  hand ordering and `rupture.go`'s own cap went.
+- `StartTargetAtHealth` (fixed): runs the phases the target is in.
+- Meta gems (fixed, but TBC effects): `metaGemSwap`, only where the full swap changes the gem's condition, moves
+  every crit multiplier and runs the gem's `OnMetaGemSwap` toggles (`NewMetaGemEffect`; the eight in
+  `sim/common/wotlk/metagems.go`). `sim/common/tbc/metagems.go` isn't owned: those effects stay the starting gear's.
+- No drop or README row belonged to these bullets.
+- Fallout: an aura with a `StartPeriodicAction` beside it now ends before the action a whole duration after the cast.
+  `Unit.DurationThroughLastTick` replaces the `+1` ns in Killing Spree and Divine Plea.
+
+Tests: `sim/core/update_order_test.go`, `TestItemSwapMovesTheMetaGemsCritDamageAndEffect`. `simval.jsonl` 1114/1114.
+Fails by design: `sim/optimizer`'s `TestCalibrationGapComparesTheDerivedContextToTheRealRaid` asserts a non-zero gap
+(+0.08% at base, all of it the mage's events expiring the warrior's auras).
+
+Goldens (`dock.sh delta`), all 37 move, Average-Default within ±0.13% but:
+- TestDisc hps −1.02%: Weakened Soul's 15 s is ten GCDs and is now gone at the tenth (Power Word: Shield 20 →
+  20.32 casts, Prayer of Mending hits −3.6%).
+- TestFire and TestFrostFire −0.45%: Ignite −1.7% a tick, its due tick ahead of the tick crit that rolls it over.
+- TestArms −0.39%: Rend 153.6 → 151.2 ticks, Overpower 43.7 → 43.1 casts.
+- TestUnholy tps +0.37%: Summon Gargoyle's 30 s is thirty GCDs, so Blood Presence comes 18 s sooner.
+
+Follow-ups: the optimizer's gap test needs a pair that really couples; periodic actions aren't on their aura's
+timeline; execute phase callbacks fire with the first clock stop past their time; a channel's tick still follows a
+creature aura's expiry on a shared update; `spell_sha_t10_elemental_4p_bonus` only raises Flame Shock's max
+duration past its own, so `GetTotalTicks` would cap the added 6 s (a lead); TBC meta gem effects across a swap;
+the guide's expiry, tick order, dot cap and meta gem lines are stale.
+
+Amounts stage, on the timing stage's tree, offline (notes in `tmp/ec-core-fix4-amounts.md`). Verdicts:
+- Weapon strikes (fixed): `Spell.StrikeDamage` rolls whole between the truncated ends, the hand's TOTAL_PCT inside
+  (`sim/core/weapon_strike.go`), `StrikeFixed` scales the fixed bonus, `core.ApplyPct` is each percent step; a
+  rolled spell is `wholeStrike`, and `doneDamage` leaves that percent out. White swings roll the same way. Off
+  the physical school there's no TOTAL_PCT, off hand's half included. Mutilate's and Shiv's off hand and
+  Whirlwind's gained `TotalPctMultiplier`. All 164 recorded strike amounts are exact; `strikeTolerance` went.
+- `core.PowerBonus(coefficient, power)` (fixed): two float32s; `Spell.SpellPower()` is whole.
+- Whole steps (fixed): `GainHealing` (potions, Healthstone, Lifeblood, Judgement of Light, Lifeward, Blood Reserve,
+  Death Pact, Death Strike, Rune Tap, Frenzied Regeneration, Improved Leader of the Pack, which now takes the
+  healing taken percent); `Simulation.RollWhole` (Ferocious Bite, Eviscerate, heal Penance, the potion, Lifeward);
+  a Mirror Image hit is one image's, times the images after the calc (`petHitsPerCast` went); Chimera Shot -
+  Serpent truncates the sting's tick before its 200 or 280% (`CalcDamageDone`).
+- Bleed bonus (fixed): `serverdata.FlagBleed` (`gen_serverdata` sets it; ten rows, regenerated identical), or
+  Shred and Maul on a weapon hit. Savage Rend's and the pet Rake's first hit take it, Pin's ticks don't; the
+  hand-applied 30% left Rake, Lacerate, Shred and Maul, so Stampede gives them its 25%.
+- No drop or README row belonged to these bullets.
+
+Tests: `sim/core/weapon_strike_test.go`. `simval.jsonl` 1114/1114; the optimizer's gap test still fails.
+
+Goldens: all 37 move again, each within ±0.04% of the timing stage's number (melee and hunters −0.01 to −0.04%,
+casters under 0.02%); TestFeralTank dtps +0.16% (the whole heals).
+
+Follow-ups: the rune weapon's strikes and swing, Sweeping Strikes' copy, `pet.go`'s swing and Manifest Anger still
+roll as floats; Steady Shot's weapon part is an `irand` of truncated ends; Eviscerate's and Envenom's AP share is
+a float64 floor; the AoE cap goes into Fan of Knives' and Swipe's base; Multi-Shot rolls its weapon once;
+`HealingPower` adds the target's flat healing taken before the coefficient; the guide's "Damage rounding" line is
+stale.
+
+Review, round 1 (the stages judged Average-Default only; every case was compared here). Fixed:
+- Clearcasting told "just procced" by time left == duration, never true once a player's aura counts from the tick
+  before: the proccing cast spent it (Balance's uptime 47 → 15 s, NoBuffs and set cases −13 to −20%).
+  `Aura.RefreshedNow` replaces it; `sim/druid/feral/apl_values.go` keeps the old test, true for swing procs.
+- The same shift cost Frenzied Regeneration and Enrage (druid) their tenth tick, and Heartpierce's Invigoration its
+  last: `DurationThroughLastTick`, as Killing Spree.
+- `ApplyFixedUptimeAura` at full uptime (Sniper Training, Focus Magic) dropped up to 10 ms a period: it activates as
+  the unit's own update.
+- A cast from the main hand's last-moment APL check is the session's, so its aura counts from the tick before
+  (`WeaponAttack.swing`).
+- A tick `RescheduleNextTick` puts in the past ran at once and was now skipped (`Dot.tickOwed`).
+- A dot out of ticks on a unit nothing updates (a hot on a dismissed pet) polled to the fight's end: it ends itself
+  past its expiry.
+- The meta gem's crit swap moved heals with a damage gem and damage with Revitalizing, where the multipliers
+  coincide: by `SpellFlagHelpful` now.
+
+Tests: `update_order_test.go` (+5), `sim/druid/balance/clearcasting_test.go`, the heal in the meta gem swap test.
+
+Goldens after the review: Average-Default as above but TestFeralTank dtps +0.11% and TestArms −0.39%. Cases over
+1.5%, each explained:
+- TestFeralTank multi-target −3.6%: Maul's second target has no Mangle, and the bleed percent is each victim's.
+- TestHoly Glowing Twilight Scale −6%: its hot on the dismissed Shadowfiend ticked for the whole fight at base;
+  the cap stops it at six.
+- TestShadow NoBuffs −1.6%, TestBloodTank Unholy Presence −0.4%: hasted dots without the tick past their total.
+- TestDisc −1.3% median: Weakened Soul, as the Average.
+- TestUnholy hps to +5.9%: Blood Presence sooner. TestSV aoe +1 to +1.5%: one more Volley a fight, each channel
+  ending a world tick sooner.
+- TestBlood Sigil of the Hanged Man +3.4%, TestFire fire_aoe +1.6%, TestProtection dtps +1.7% (4.64): 20-iteration
+  or small-number reshuffles.
+
+Follow-ups: a periodic action has no owner, so an aura a talent's tick puts on (Prey on the Weak) counts a world
+tick early; heals land on dismissed pets, whose auras never expire; a crit multiplier class code changes mid-fight
+(Combustion) misses a meta gem swap; `pet.go`'s physical swings do roll whole (core's default auto attack).
+
+Repair, round 1: no code change; the re-run matches the review's (delta identical, `simval.jsonl` 1114/1114). The
+one failure left is `sim/optimizer`'s gap test, not this item's to edit. Pairs measured through a build overlay:
+- `arcane_p3` as target beside `demonologyWarlock`, `DemonicPactSp` 0: gap −2.25%, the replacement to ask for.
+- `arcane_p3` beside `fury_p1`: −0.018%, cause untraced.
+- `fury_p1` beside `arcane_p3`: exactly 0.
+
+Cases over 1.5% the review's list left out, none an Average case, not traced: TestArms Wrynn's Battlegear −1.6%
+(119 item cases, median −0.43%), TestElemental Undead Slayer's Blessed Armor tps +1.7%, TestBalance
+NoBuffs-LongMultiTarget −1.8%, TestSV aoe NoBuffs-ShortSingleTarget tps +2.0%, TestFeralTank
+SwitchInFrontOfTarget dtps −4.1% (40.8 → 39.2).
+
 ### EC-PET-FIX3 (Z7; changes goldens; stages: code, live)
 
 - Guardian AIs: `npc_pet_shaman_fire_elemental` paces Fire Nova (5–20 s in, then 8–15 s) and Fire Blast (5–20 s,

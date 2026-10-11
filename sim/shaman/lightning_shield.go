@@ -30,7 +30,7 @@ func (shaman *Shaman) registerLightningShieldSpell() {
 		Direct: core.SpellEffect{Effect: 0, Min: 380, Max: 380, SP: 0.267},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP*spell.SpellPower())
+			baseDamage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP, spell.SpellPower())
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMagicHit)
 		},
 	})

@@ -21,7 +21,7 @@ func (druid *Druid) registerEnrageSpell() {
 	druid.EnrageAura = druid.RegisterAura(core.Aura{
 		Label:    "Enrage Aura",
 		ActionID: actionID,
-		Duration: 10 * time.Second,
+		Duration: druid.DurationThroughLastTick(10 * time.Second), // so the tenth tick still finds it on
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
 			druid.PseudoStats.DamageDealtMultiplier *= 1.0 + dmgBonus
 			if !t10_4p {

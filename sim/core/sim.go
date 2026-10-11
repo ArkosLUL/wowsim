@@ -100,7 +100,24 @@ func (sim *Simulation) addTracker(tracker *auraTracker) {
 func (sim *Simulation) removeTracker(tracker *auraTracker) {
 	if idx := slices.Index(sim.trackers, tracker); idx != -1 {
 		sim.trackers = removeBySwappingToBack(sim.trackers, idx)
+		// a pass over the trackers that's under way can skip the one swapped in, so look again
+		sim.rescheduleTracker(sim.CurrentTime)
 	}
+}
+
+// earliestExpiry is when the next aura runs out, if that's before the given time. A tracker's cached
+// time is too early once its soonest aura was refreshed or taken off, so the ones that look due are
+// counted again first.
+func (sim *Simulation) earliestExpiry(before time.Duration) time.Duration {
+	earliest := NeverExpires
+	for _, tracker := range sim.trackers {
+		if tracker.minExpires < before {
+			tracker.recountMinExpires()
+		}
+		earliest = min(earliest, tracker.minExpires)
+	}
+	sim.minTrackerTime = earliest
+	return earliest
 }
 
 func (sim *Simulation) rescheduleWeaponAttack(weaponAttackTime time.Duration) {
@@ -420,6 +437,11 @@ func (sim *Simulation) RollWithLabel(min float64, max float64, label string) flo
 	return min + (max-min)*sim.RandomFloat(label)
 }
 
+// RollWhole is the server's irand: a whole number from min to max, both ends included.
+func (sim *Simulation) RollWhole(min float64, max float64, label string) float64 {
+	return min + math.Trunc((max-min+1)*sim.RandomFloat(label))
+}
+
 func (sim *Simulation) Proc(p float64, label string) bool {
 	switch {
 	case p >= 1:
@@ -640,6 +662,17 @@ func (sim *Simulation) Step() bool {
 	last := len(sim.pendingActions) - 1
 	next := sim.pendingActions[last]
 
+	// an aura runs out at its own time, not with whatever happens to come next
+	if before := min(next.at, sim.minWeaponAttackTime, sim.minTaskTime); sim.minTrackerTime < before {
+		if at := sim.earliestExpiry(before); at < before {
+			if at > sim.endOfCombatDuration || sim.Encounter.DamageTaken > sim.endOfCombatDamage {
+				return true
+			}
+			sim.advance(at)
+			return false
+		}
+	}
+
 	if next.at >= sim.minWeaponAttackTime && sim.minWeaponAttackTime <= sim.minTaskTime {
 		if sim.minWeaponAttackTime > sim.endOfCombatDuration || sim.Encounter.DamageTaken > sim.endOfCombatDamage {
 			return true
@@ -718,8 +751,12 @@ func (sim *Simulation) advance(nextTime time.Duration) {
 
 	if sim.CurrentTime >= sim.minTrackerTime {
 		sim.minTrackerTime = NeverExpires
+		// Map::Update runs every player ahead of the map's creatures, pets and objects
 		for _, t := range sim.trackers {
-			sim.minTrackerTime = min(sim.minTrackerTime, t.tryAdvance(sim))
+			t.tryAdvance(sim, true)
+		}
+		for _, t := range sim.trackers {
+			sim.minTrackerTime = min(sim.minTrackerTime, t.tryAdvance(sim, false))
 		}
 	}
 }
@@ -732,6 +769,13 @@ func (sim *Simulation) StartTargetAtHealth(maxHealth, health float64) {
 	sim.Encounter.DamageTaken = maxHealth - health
 	sim.executePhase = 0
 	sim.nextExecutePhase()
+	// the phases the target is already in start now, not with the first event after the pull
+	for sim.Encounter.DamageTaken >= sim.nextExecuteDamage {
+		sim.nextExecutePhase()
+		for _, callback := range sim.executePhaseCallbacks {
+			callback(sim, sim.executePhase)
+		}
+	}
 }
 
 // nextExecutePhase updates nextExecuteDuration and nextExecuteDamage based on executePhase.

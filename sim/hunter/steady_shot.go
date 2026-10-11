@@ -86,7 +86,7 @@ func (hunter *Hunter) registerSteadyShotSpell() {
 			// Spell::EffectSchoolDMG adds a plain roll of the weapon's damage and ammo at the weapon's own
 			// speed, neither normalized; the 0.1 AP lands separately, through Unit::SpellDamageBonusDone's
 			// own spell_bonus_data path (GetTotalAttackPowerValue), not creature-type AP
-			baseDamage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.AP*spell.RangedAttackPowerSpellBonus(target)) +
+			baseDamage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.AP, spell.RangedAttackPowerSpellBonus(target)) +
 				hunter.AutoAttacks.Ranged().BaseDamage(sim) +
 				hunter.AmmoDamageBonus
 			// Unit::SpellPctDamageModsDone's SPELLFAMILY_HUNTER case: the caster's own Glyph of Steady

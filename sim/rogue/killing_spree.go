@@ -51,7 +51,7 @@ func (rogue *Rogue) registerKillingSpreeSpell() {
 	rogue.KillingSpreeAura = rogue.RegisterAura(core.Aura{
 		Label:    "Killing Spree",
 		ActionID: core.ActionID{SpellID: 51690},
-		Duration: time.Second*2 + 1,
+		Duration: rogue.DurationThroughLastTick(time.Second * 2),
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
 			rogue.SetGCDTimer(sim, core.NeverExpires)
 			rogue.PseudoStats.DamageDealtMultiplier *= 1.2

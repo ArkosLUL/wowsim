@@ -49,7 +49,7 @@ func (rogue *Rogue) registerEviscerate() {
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			rogue.BreakStealth(sim)
 			comboPoints := float64(rogue.ComboPoints())
-			roll := spell.Direct.Min + (spell.Direct.Max-spell.Direct.Min)*sim.RandomFloat("Eviscerate")
+			roll := sim.RollWhole(spell.Direct.Min, spell.Direct.Max, "Eviscerate")
 
 			// the effect's 370 per combo point, then Spell::EffectSchoolDMG's 7% AP per point, in whole points
 			baseDamage := roll + 370*comboPoints +

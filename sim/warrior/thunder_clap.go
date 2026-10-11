@@ -47,7 +47,7 @@ func (warrior *Warrior) registerThunderClapSpell() {
 		Direct: core.SpellEffect{Effect: 0, Min: 300, Max: 300, AP: 0.12},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.AP*spell.MeleeAttackPower())
+			baseDamage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.AP, spell.MeleeAttackPower())
 			baseDamage *= sim.Encounter.AOECapMultiplier()
 
 			for _, aoeTarget := range sim.Encounter.TargetUnits {

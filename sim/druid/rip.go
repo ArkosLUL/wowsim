@@ -60,7 +60,7 @@ func (druid *Druid) registerRipSpell() {
 				ap := dot.Spell.MeleeAttackPower()
 
 				// 93 a combo point from the effect, the AP share and the idol from spell_dru_rip
-				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + comboPointCoeff*cp + core.PowerBonus(0.01*cp*ap)
+				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + comboPointCoeff*cp + core.ApplyPct(ap, 0.01*cp)
 
 				if !isRollover {
 					attackTable := dot.Spell.Unit.AttackTables[target.UnitIndex]

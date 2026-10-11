@@ -16,7 +16,7 @@ func (paladin *Paladin) registerDivinePleaSpell() {
 	paladin.DivinePleaAura = paladin.RegisterAura(core.Aura{
 		Label:    "Divine Plea",
 		ActionID: actionID,
-		Duration: time.Second*15 + 1, // Add 1 to make sure the last tick takes effect
+		Duration: paladin.DurationThroughLastTick(time.Second * 15), // so the last tick takes effect
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
 			manaPA = core.StartPeriodicAction(sim, core.PeriodicActionOptions{
 				Period: time.Second * 3,

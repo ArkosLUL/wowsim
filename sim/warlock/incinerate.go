@@ -50,7 +50,7 @@ func (warlock *Warlock) registerIncinerateSpell() {
 			if warlock.Immolate.Dot(target).IsActive() {
 				baseDamage += baseDamage / 4
 			}
-			baseDamage += core.PowerBonus(spell.Direct.SP * spell.SpellPower())
+			baseDamage += core.PowerBonus(spell.Direct.SP, spell.SpellPower())
 			baseDamage *= warlock.fireAndBrimstoneMultiplier(target)
 
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)

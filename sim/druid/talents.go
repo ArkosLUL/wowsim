@@ -356,7 +356,7 @@ func (druid *Druid) applyOmenOfClarity() {
 			}
 		},
 		OnCastComplete: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell) {
-			if aura.RemainingDuration(sim) == aura.Duration {
+			if aura.RefreshedNow(sim) {
 				// OnCastComplete is called after OnSpellHitDealt / etc, so don't deactivate
 				// if it was just activated.
 				return
@@ -578,7 +578,7 @@ func (druid *Druid) applyImprovedLotp() {
 			}
 			icd.Use(sim)
 			druid.AddMana(sim, druid.MaxMana()*manaRestore, manaMetrics)
-			druid.GainHealth(sim, druid.MaxHealth()*healthRestore, healthMetrics)
+			druid.GainHealing(sim, druid.MaxHealth()*healthRestore, healthMetrics)
 		},
 	})
 }

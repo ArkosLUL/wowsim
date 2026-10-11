@@ -202,7 +202,7 @@ func (garg *GargoylePet) registerGargoyleStrikeSpell() {
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			// spell_pet_dk_gargoyle_strike adds 3 a level past 60 to the roll. The damage and crit are
 			// worked out at the launch (Spell::DoAllEffectOnLaunchTarget), and land with the missile.
-			baseDamage := spell.Direct.Roll(sim) + 3*float64(core.CharacterLevel-60) + core.PowerBonus(spell.Direct.SP*spell.SpellPower())
+			baseDamage := spell.Direct.Roll(sim) + 3*float64(core.CharacterLevel-60) + core.PowerBonus(spell.Direct.SP, spell.SpellPower())
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 			spell.DealDamageAfterTravel(sim, result)
 		},

@@ -124,13 +124,7 @@ func (r *replenishment) startTicks(sim *Simulation) {
 	if r.metrics == nil {
 		return
 	}
-	start := r.aura.countdownStart(sim)
-	if r.aura.onWorldTicks() {
-		// a player's update follows the cast or landing that put the aura on within the same world tick, and
-		// takes that whole tick off the timer
-		start -= sim.worldTickInterval
-	}
-	r.tickDue = start + replenishmentTickPeriod
+	r.tickDue = r.aura.countdownStart(sim) + replenishmentTickPeriod
 	r.endsAt = r.aura.ExpiresAt()
 	r.queueTick(sim)
 }

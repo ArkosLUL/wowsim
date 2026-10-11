@@ -53,7 +53,7 @@ func (shaman *Shaman) registerEarthShockSpell(shockTimer *core.Timer) {
 	config := shaman.newShockSpellConfig(49231, core.SpellSchoolNature, 0.18, shockTimer)
 	config.Direct = core.SpellEffect{Effect: 1, Min: 854, Max: 900, SP: 0.3858}
 	config.ApplyEffects = func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-		baseDamage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP*spell.SpellPower())
+		baseDamage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP, spell.SpellPower())
 		spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 	}
 
@@ -70,7 +70,7 @@ func (shaman *Shaman) registerFlameShockSpell(shockTimer *core.Timer) {
 	flameShockBaseNumberOfTicks := 6 + core.TernaryInt32(shaman.HasSetBonus(ItemSetThrallsRegalia, 2), 3, 0)
 	config.Direct = core.SpellEffect{Effect: 0, Min: 500, Max: 500, SP: 0.214}
 	config.ApplyEffects = func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-		baseDamage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP*spell.SpellPower())
+		baseDamage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP, spell.SpellPower())
 		result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 		if result.Landed() {
 			spell.Dot(target).NumberOfTicks = flameShockBaseNumberOfTicks
@@ -105,7 +105,7 @@ func (shaman *Shaman) registerFlameShockSpell(shockTimer *core.Timer) {
 		Tick: core.SpellEffect{Effect: 1, Min: 139, Max: 139, SP: 0.1},
 
 		OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
-			dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + core.PowerBonus(dot.Tick.SP*dot.Spell.SpellPower())
+			dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + core.PowerBonus(dot.Tick.SP, dot.Spell.SpellPower())
 			dot.SnapshotCritChance = dot.Spell.SpellCritChance(target)
 
 			dot.Spell.DamageMultiplierAdditive *= dotOnlyMultiplier
@@ -126,7 +126,7 @@ func (shaman *Shaman) registerFrostShockSpell(shockTimer *core.Timer) {
 	config.DamageMultiplier *= spellModDamage(0.1 * float64(shaman.Talents.BoomingEchoes))
 	config.Direct = core.SpellEffect{Effect: 1, Min: 812, Max: 858, SP: 0.3858}
 	config.ApplyEffects = func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-		baseDamage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP*spell.SpellPower())
+		baseDamage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP, spell.SpellPower())
 		spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 	}
 

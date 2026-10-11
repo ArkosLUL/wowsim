@@ -59,7 +59,7 @@ func (dk *Deathknight) registerDeathAndDecaySpell() {
 			TicksCanCrit: true,
 			Tick:         core.SpellEffect{Effect: 0, Min: 62, Max: 62},
 			OnSnapshot: func(sim *core.Simulation, _ *core.Unit, dot *core.Dot, _ bool) {
-				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + core.PowerBonus(dot.Spell.Direct.AP*dk.getImpurityBonus(dot.Spell))
+				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + core.PowerBonus(dot.Spell.Direct.AP, dk.getImpurityBonus(dot.Spell))
 			},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 				for _, aoeTarget := range sim.Encounter.TargetUnits {

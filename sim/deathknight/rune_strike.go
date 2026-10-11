@@ -53,17 +53,15 @@ func (dk *Deathknight) newRuneStrikeSpell(isMH bool) *core.Spell {
 			var outcomeApplier core.OutcomeApplier
 
 			if isMH {
-				baseDamage = (spell.Direct.Roll(sim)+
-					spell.Unit.MHWeaponDamage(sim, spell.MeleeAttackPower())+
-					spell.BonusWeaponDamage())*spell.Direct.WeaponPct +
-					core.PowerBonus(spell.Direct.AP*spell.MeleeAttackPower())
+				baseDamage = core.ApplyPct(spell.StrikeFixed(spell.Direct.Roll(sim), core.MainHand)+
+					spell.MHStrikeDamage(sim, spell.MeleeAttackPower()), spell.Direct.WeaponPct) +
+					spell.StrikeFixed(core.PowerBonus(spell.Direct.AP, spell.MeleeAttackPower()), core.MainHand)
 
 				outcomeApplier = spell.OutcomeMeleeSpecialNoBlockDodgeParry
 			} else {
-				baseDamage = (spell.Direct.Roll(sim)+
-					spell.Unit.OHWeaponDamage(sim, spell.MeleeAttackPower())+
-					spell.BonusWeaponDamage())*spell.Direct.WeaponPct +
-					offHandFixedPct*core.PowerBonus(spell.Direct.AP*spell.MeleeAttackPower())
+				baseDamage = core.ApplyPct(spell.StrikeFixed(spell.Direct.Roll(sim), core.OffHand)+
+					spell.OHStrikeDamage(sim, spell.MeleeAttackPower()), spell.Direct.WeaponPct) +
+					spell.StrikeFixed(core.PowerBonus(spell.Direct.AP, spell.MeleeAttackPower()), core.OffHand)
 
 				outcomeApplier = spell.OutcomeMeleeSpecialCritOnly
 			}
@@ -151,7 +149,7 @@ func (dk *Deathknight) registerDrwRuneStrikeSpell() {
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			baseDamage := (spell.Direct.Roll(sim)+dk.DrwWeaponDamage(sim, spell))*spell.Direct.WeaponPct +
-				core.PowerBonus(spell.Direct.AP*spell.MeleeAttackPower()) + dk.drwVersusAttackPowerBonus(spell, false)
+				core.PowerBonus(spell.Direct.AP, spell.MeleeAttackPower()) + dk.drwVersusAttackPowerBonus(spell, false)
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialNoBlockDodgeParry)
 		},
 	})

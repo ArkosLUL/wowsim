@@ -472,9 +472,10 @@ func TestOffHandStartsHalfAMainHandSwingBehind(t *testing.T) {
 	}
 }
 
-// A player's aura runs out on the first world tick its duration is up by. A creature's counts from the
-// map update before it went on, as the creature's next update takes off a whole one; so does an area
-// dot's, whose dynamic object is a creature in that respect.
+// A player's aura counts from the world tick before it went on: the player's update comes after the
+// cast in the same tick and takes that tick off. A creature's counts from the map update before it
+// went on, as the creature's next update takes off a whole one; so does an area dot's, whose dynamic
+// object is a creature in that respect.
 func TestAuraExpiresOnItsUpdate(t *testing.T) {
 	for _, tc := range []struct {
 		name           string
@@ -483,7 +484,7 @@ func TestAuraExpiresOnItsUpdate(t *testing.T) {
 		onMapGrid      bool
 		want           time.Duration // past the map update before it went on, 480 ms in
 	}{
-		{"player", 100, 10, false, false, ms(1530)},
+		{"player", 100, 10, false, false, ms(1520)},
 		{"target", 100, 10, true, false, ms(1500)},
 		{"area dot's", 100, 10, false, true, ms(1500)},
 		{"exact player", 0, 0, false, false, ms(1530)},
@@ -771,7 +772,9 @@ func TestChannelEndsWithItsLastTick(t *testing.T) {
 	})
 	runUntil(sim, start+5*time.Second)
 
-	if want := []time.Duration{start + time.Second, start + 2*time.Second, start + 3*time.Second}; !slices.Equal(*ticks, want) {
+	// the player's update in the cast's own world tick already takes that tick off the timer
+	first := start + time.Second - ms(10)
+	if want := []time.Duration{first, first + time.Second, first + 2*time.Second}; !slices.Equal(*ticks, want) {
 		t.Fatalf("ticks at %v, want %v", *ticks, want)
 	}
 	if last := (*ticks)[2]; last != expiresAt {

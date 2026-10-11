@@ -308,8 +308,8 @@ func (ghoulPet *GhoulPet) registerClaw() *core.Spell {
 		Direct: core.SpellEffect{Effect: 0, WeaponPct: 1.5},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := (spell.Unit.MHWeaponDamage(sim, spell.MeleeAttackPower()) + spell.BonusWeaponDamage()) *
-				spell.Direct.WeaponPct
+			baseDamage := core.ApplyPct(spell.MHStrikeDamage(sim, spell.MeleeAttackPower()),
+				spell.Direct.WeaponPct)
 
 			result := spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 			if !result.Landed() {

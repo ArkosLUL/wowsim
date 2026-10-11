@@ -38,7 +38,7 @@ func (mage *Mage) registerDeepFreezeSpell() {
 		Direct: core.SpellEffect{Effect: 0, FromSpellID: 71757, Min: 2369, Max: 2641, SP: 2.143},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP*spell.SpellPower())
+			baseDamage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP, spell.SpellPower())
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 		},
 	})

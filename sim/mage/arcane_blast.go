@@ -68,7 +68,7 @@ func (mage *Mage) registerArcaneBlastSpell() {
 		},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := (spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP*spell.SpellPower())) * mage.tormentTheWeak(target)
+			baseDamage := (spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP, spell.SpellPower())) * mage.tormentTheWeak(target)
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 			mage.ArcaneBlastAura.Activate(sim)
 			mage.ArcaneBlastAura.AddStack(sim)

@@ -48,9 +48,9 @@ func (dk *Deathknight) newObliterateHitSpell(isMH bool) *core.Spell {
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			// the flat effect comes before the percent one, so the percent scales it too
-			baseDamage := normalizedStrikeBase(sim, spell, isMH, spell.Direct.Roll(sim)) * spell.Direct.WeaponPct
-			baseDamage *= dk.RoRTSBonus(target) *
-				(1.0 + dk.dkCountActiveDiseases(target)*diseaseMulti) *
+			baseDamage := core.ApplyPct(normalizedStrikeBase(sim, spell, isMH, spell.Direct.Roll(sim)), spell.Direct.WeaponPct)
+			baseDamage = core.ApplyPct(baseDamage, 1.0+dk.dkCountActiveDiseases(target)*diseaseMulti) *
+				dk.RoRTSBonus(target) *
 				dk.mercilessCombatBonus(sim)
 			// the class scripts are DoneTotalMod, which scales the flat creature-type bonus too
 			baseDamage += spell.WeaponBonusForDonePct(target, dk.RoRTSBonus(target)*dk.mercilessCombatBonus(sim))

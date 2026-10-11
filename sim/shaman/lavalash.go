@@ -82,7 +82,7 @@ func (shaman *Shaman) registerLavaLashSpell() {
 			// the whole off hand: Spell::EffectWeaponDmg leaves out TOTAL_PCT mods, the off hand's 50% among
 			// them, for a non-physical spell
 			baseDamage := flatDamageBonus +
-				(spell.Unit.AutoAttacks.OH().CalculateWeaponDamage(sim, spell.MeleeAttackPower())+spell.BonusWeaponDamage())*spell.Direct.WeaponPct
+				core.ApplyPct(spell.OHStrikeDamage(sim, spell.MeleeAttackPower()), spell.Direct.WeaponPct)
 
 			result := spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 

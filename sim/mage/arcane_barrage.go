@@ -41,7 +41,7 @@ func (mage *Mage) registerArcaneBarrageSpell() {
 		Direct: core.SpellEffect{Effect: 0, Min: 936, Max: 1144, SP: 0.714},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := (spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP*spell.SpellPower())) * mage.tormentTheWeak(target)
+			baseDamage := (spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP, spell.SpellPower())) * mage.tormentTheWeak(target)
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 			// spell_proc 36032 takes the Arcane Blast stacks off at the cast, once the launch has the damage
 			mage.ArcaneBlastAura.Deactivate(sim)

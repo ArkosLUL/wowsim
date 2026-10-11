@@ -64,7 +64,7 @@ func (druid *Druid) registerStarfireSpell() {
 		},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP*(spell.SpellPower()+idolSpellPower))
+			baseDamage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP, (spell.SpellPower()+idolSpellPower))
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 			if result.Landed() && hasGlyph {
 				starfireGlyphSpell.Cast(sim, target)

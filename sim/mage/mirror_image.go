@@ -169,8 +169,10 @@ func (mi *MirrorImage) registerFrostboltSpell() {
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			//3x damage for 3 mirror images
-			baseDamage := (spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP*spell.SpellPower())) * numImages
+			baseDamage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP, spell.SpellPower())
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
+			// each image's hit is whole on its own
+			result.Damage, result.Threat = result.Damage*numImages, result.Threat*numImages
 			if mage.chills == nil || mage.chills.Get(target) == nil {
 				spell.DealDamageAfterTravel(sim, result)
 				return
@@ -241,8 +243,11 @@ func (mi *MirrorImage) registerFireblastSpell() {
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			//3x damage for 3 mirror images
-			baseDamage := (spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP*spell.SpellPower())) * numImages
-			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
+			baseDamage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP, spell.SpellPower())
+			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
+			// each image's hit is whole on its own
+			result.Damage, result.Threat = result.Damage*numImages, result.Threat*numImages
+			spell.DealDamage(sim, result)
 		},
 	})
 

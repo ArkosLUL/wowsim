@@ -76,7 +76,7 @@ func (druid *Druid) registerInsectSwarmSpell() {
 
 			Tick: core.SpellEffect{Effect: 0, Min: 215, Max: 215, SP: 0.2},
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + idolFlatDamage + core.PowerBonus(dot.Tick.SP*dot.Spell.SpellPower())
+				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + idolFlatDamage + core.PowerBonus(dot.Tick.SP, dot.Spell.SpellPower())
 				dot.SnapshotCritChance = dot.Spell.SpellCritChance(target)
 				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(dot.Spell.Unit.AttackTables[target.UnitIndex])
 			},

@@ -27,6 +27,7 @@ func (rogue *Rogue) newMutilateHitSpell(isMH bool) *core.Spell {
 			5*core.CritRatingPerCritChance*float64(rogue.Talents.PuncturingWounds),
 
 		// all three classMasks reach both hands' family flags (48665 [0,2,0], 48664 [0,4,0])
+		TotalPctMultiplier: core.TernaryFloat64(isMH, 1, rogue.dwsMultiplier()),
 		DamageMultiplier: spellModDamage(
 			0.02*float64(rogue.Talents.FindWeakness),
 			0.1*float64(rogue.Talents.Opportunity),
@@ -42,7 +43,7 @@ func (rogue *Rogue) newMutilateHitSpell(isMH bool) *core.Spell {
 			// Mutilate (for each hand): SpellEffects.cpp scans every aura on the target for
 			// Dispel == DISPEL_POISON, any caster's included, not just this rogue's own
 			if anyRoguePoisonAura(target).IsActive() {
-				baseDamage *= 1.2
+				baseDamage = core.ApplyPct(baseDamage, 1.2)
 			}
 
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialCritOnly)

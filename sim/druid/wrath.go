@@ -53,7 +53,7 @@ func (druid *Druid) registerWrathSpell() {
 			if druid.InsectSwarm != nil && druid.InsectSwarm.Dot(target).IsActive() {
 				roll *= impInsectSwarm
 			}
-			baseDamage := bonusFlatDamage + roll + core.PowerBonus(spell.Direct.SP*spell.SpellPower())
+			baseDamage := bonusFlatDamage + roll + core.PowerBonus(spell.Direct.SP, spell.SpellPower())
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 			spell.DealDamageAfterTravel(sim, result)
 		},

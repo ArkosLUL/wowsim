@@ -49,8 +49,8 @@ func (rogue *Rogue) registerGhostlyStrikeSpell() {
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			rogue.BreakStealth(sim)
 			// no normalized weapon effect, so the weapon's own speed
-			baseDamage := (spell.Unit.MHWeaponDamage(sim, spell.MeleeAttackPower()) + spell.BonusWeaponDamage()) *
-				spell.Direct.WeaponPct * daggerPct
+			baseDamage := core.ApplyPct(core.ApplyPct(spell.MHStrikeDamage(sim, spell.MeleeAttackPower()),
+				spell.Direct.WeaponPct), daggerPct)
 
 			result := spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 

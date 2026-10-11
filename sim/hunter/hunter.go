@@ -207,9 +207,7 @@ func NewHunter(character *core.Character, options *proto.Player) *Hunter {
 	// each shot is a cast of 75, so it adds the level 1 bonus
 	hunter.AutoAttacks.RangedConfig().ThreatSpellID = 75
 	hunter.AutoAttacks.RangedConfig().ApplyEffects = func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-		baseDamage := hunter.RangedWeaponDamage(sim, hunter.rangedWeaponAP()) +
-			hunter.AmmoDamageBonus +
-			spell.BonusWeaponDamage()
+		baseDamage := spell.RangedStrikeDamage(sim, hunter.rangedWeaponAP(), hunter.AmmoDamageBonus)
 		result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeRangedHitAndCrit)
 		spell.DealDamageAfterTravel(sim, result)
 	}

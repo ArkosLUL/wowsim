@@ -116,16 +116,14 @@ func (dk *Deathknight) necrosisDamage(damage float64, sim *core.Simulation, targ
 	dk.bloodPresenceHeal(sim, result.Damage)
 }
 func (dk *Deathknight) necrosisOHAuto(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-	baseDamage := spell.Unit.OHWeaponDamage(sim, spell.MeleeAttackPower()) +
-		spell.BonusWeaponDamage()
+	baseDamage := spell.OHStrikeDamage(sim, spell.MeleeAttackPower())
 
 	if result := spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeWhite); result.Damage > 0 {
 		dk.necrosisDamage(result.Damage, sim, target)
 	}
 }
 func (dk *Deathknight) necrosisMHAuto(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-	baseDamage := spell.Unit.MHWeaponDamage(sim, spell.MeleeAttackPower()) +
-		spell.BonusWeaponDamage()
+	baseDamage := spell.MHStrikeDamage(sim, spell.MeleeAttackPower())
 
 	if result := spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeWhite); result.Damage > 0 {
 		dk.necrosisDamage(result.Damage, sim, target)
@@ -176,10 +174,10 @@ func (dk *Deathknight) bloodCakedBladeHit(isMh bool) *core.Spell {
 		Direct: core.SpellEffect{Effect: 1, WeaponPct: 0.25},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := (spell.Unit.MHWeaponDamage(sim, spell.MeleeAttackPower()) + spell.BonusWeaponDamage()) *
-				spell.Direct.WeaponPct
+			baseDamage := core.ApplyPct(spell.MHStrikeDamage(sim, spell.MeleeAttackPower()),
+				spell.Direct.WeaponPct)
 			// Spell::EffectWeaponDmg's 50% a disease
-			baseDamage *= 1 + 0.5*dk.dkCountActiveDiseasesBcb(target)
+			baseDamage = core.ApplyPct(baseDamage, 1+0.5*dk.dkCountActiveDiseasesBcb(target))
 
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHit)
 		},

@@ -305,7 +305,8 @@ func (wa *WeaponAttack) swing(sim *Simulation, releasingHold bool) time.Duration
 		wa.swingAt = at
 		return at
 	}
-	defer func(outer *Unit) { sim.updating = outer }(sim.updating)
+	outer := sim.updating
+	defer func(outer *Unit) { sim.updating = outer }(outer)
 	sim.updating = wa.unit
 
 	aa := &wa.unit.AutoAttacks
@@ -326,8 +327,11 @@ func (wa *WeaponAttack) swing(sim *Simulation, releasingHold bool) time.Duration
 	}
 
 	if wa.replaceSwing != nil {
-		// Need to check APL here to allow last-moment HS queue casts.
+		// Need to check APL here to allow last-moment HS queue casts. The session takes them ahead of
+		// the unit's update, so an aura one puts on isn't this update's own.
+		sim.updating = outer
 		wa.unit.Rotation.DoNextAction(sim)
+		sim.updating = wa.unit
 
 		// that action can cancel auto attacks outright (a shapeshift, Vanish): nothing left to swing
 		if !aa.enabled {
@@ -498,8 +502,7 @@ func (unit *Unit) EnableAutoAttacks(agent Agent, options AutoAttackOptions) {
 		ThreatMultiplier: 1,
 
 		ApplyEffects: func(sim *Simulation, target *Unit, spell *Spell) {
-			baseDamage := spell.Unit.MHWeaponDamage(sim, spell.MeleeAttackPower()) +
-				spell.BonusWeaponDamage()
+			baseDamage := spell.MHStrikeDamage(sim, spell.MeleeAttackPower())
 
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeWhite)
 		},
@@ -517,8 +520,7 @@ func (unit *Unit) EnableAutoAttacks(agent Agent, options AutoAttackOptions) {
 		TotalPctMultiplier: 1,
 
 		ApplyEffects: func(sim *Simulation, target *Unit, spell *Spell) {
-			baseDamage := spell.Unit.OHWeaponDamage(sim, spell.MeleeAttackPower()) +
-				spell.BonusWeaponDamage()
+			baseDamage := spell.OHStrikeDamage(sim, spell.MeleeAttackPower())
 
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeWhite)
 		},
@@ -536,8 +538,7 @@ func (unit *Unit) EnableAutoAttacks(agent Agent, options AutoAttackOptions) {
 
 		ApplyEffects: func(sim *Simulation, target *Unit, spell *Spell) {
 			// Hunter's Mark comes with the flat weapon hit bonus (weaponAttackPowerBonus)
-			baseDamage := spell.Unit.RangedWeaponDamage(sim, spell.Unit.stats[stats.RangedAttackPower]) +
-				spell.BonusWeaponDamage()
+			baseDamage := spell.RangedStrikeDamage(sim, spell.Unit.stats[stats.RangedAttackPower], 0)
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeRangedHitAndCrit)
 		},
 	}

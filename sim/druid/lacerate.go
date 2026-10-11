@@ -51,7 +51,7 @@ func (druid *Druid) registerLacerateSpell() {
 
 			Tick: core.SpellEffect{Effect: 0, Min: 64, Max: 64, AP: 0.01},
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + core.PowerBonus(dot.Tick.AP*dot.Spell.MeleeAttackPower())
+				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + core.PowerBonus(dot.Tick.AP, dot.Spell.MeleeAttackPower())
 				dot.SnapshotStacks = dot.Aura.GetStacks()
 
 				if !isRollover {
@@ -77,9 +77,6 @@ func (druid *Druid) registerLacerateSpell() {
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			baseDamage := spell.Direct.Roll(sim)
-			if druid.BleedCategories.Get(target).AnyActive() {
-				baseDamage *= 1.3
-			}
 
 			spell.DamageMultiplier = initialDamageMul
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)

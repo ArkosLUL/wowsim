@@ -871,7 +871,7 @@ func MarkOfBloodAura(target *Unit) *Aura {
 					targetHealth /= 1.15
 				}
 				// Current testing shows 5% healing instead of 4% as stated in the tooltip
-				target.GainHealth(sim, targetHealth*0.05*target.PseudoStats.HealingTakenMultiplier, healthMetrics)
+				target.GainHealing(sim, targetHealth*0.05, healthMetrics)
 				aura.RemoveStack(sim)
 
 				if aura.GetStacks() == 0 {

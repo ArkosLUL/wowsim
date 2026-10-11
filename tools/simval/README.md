@@ -104,8 +104,8 @@ check in `knownStrikesMismatches` is let through; an entry nothing fails is stal
   to one end of its range, `Direct`'s fixed bonus and `WeaponPct` to the record's, the hand's attack power to
   `weapon.attackPower`, then `ApplyEffects` with a forced hit and no crit, read at calculation. `strikeProbeStates` sets
   what the probe assumes (Seal of Vengeance at 5 stacks). Checks: `fixed`, `percent` (`percent max` when the
-  ends differ), `min` and `max` (`taken` at each end, above by up to `strikeTolerance`: the server truncates weapon
-  damage, fixed bonus, percent, done and taken), `crit` when the spell is crit capable.
+  ends differ), `min` and `max` (`taken` at each end, within `amountTolerance`: the sim truncates weapon
+  damage, fixed bonus, percent, done and taken as the server does), `crit` when the spell is crit capable.
 - Pet or guardian (`owner`): the owner's class in `simPets`' spec (with the talent or options giving the pet),
   its stats and hit pinned to the `owner` snapshot, then the pet summoned and its auras put on. `damage` compares
   as above with the pet's power pinned, or as a strike; a direct effect the sim deals from its aura's ticks (the
@@ -125,8 +125,8 @@ Greater Fire Elemental, a Mirror Image, an Imp, a Water Elemental and a Shadowfi
 probes (`petsProbes`). Per record (`pets.go`), on the pet built as for strikes:
 - `info`: the strikes checks, plus max health and max mana (`petsWithoutHealth`: `not compared`, stale once the
   sim's matches).
-- `damage`: as a strikes pet's. The sim deals every Mirror Image's hit as one, so the record's amounts are
-  multiplied by `petHitsPerCast`.
+- `damage`: as a strikes pet's. The sim deals every Mirror Image's hit as one, each image's whole on its own,
+  so the record's amounts compare with one image's.
 - `spell`: the sim spell's crit chance and miss against the dummy vs the derived table, and the server's rolled
   crits vs the sim's chance.
 - `melee`: the pet's white table vs the derived one (with the record's facing), rolled crits, the mean plain swing
@@ -302,7 +302,7 @@ replays try them; white swings and attack power read the line's first strike's c
 the mechanical dummy (`mobReference`), the server's change against the sim's between targets of those two types.
 `mobTypedProbes` take another reference: Holy Wrath's undead line against its demon line, its other types left out.
 Checks:
-- each probed effect's and each strike's `taken` as a ratio (`amountTolerance`, `strikeTolerance`);
+- each probed effect's and each strike's `taken` as a ratio (`amountTolerance`);
 - crit chance taken of each `yellow` and `spell` probe: the reference's moved by the sim's change, both capped at 0
   and 100, within 0.02; the sim's is read while the spell's own effects run, so Exorcism's +100% on undead counts;
 - main hand and ranged attack power, the sim's unpinned (within 1);

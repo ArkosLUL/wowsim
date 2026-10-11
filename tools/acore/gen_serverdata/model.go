@@ -138,8 +138,14 @@ func flags(d *spellset.DumpSpell, s *serverdata.Spell) serverdata.Flags {
 	set(serverdata.FlagTargetsArea, slices.ContainsFunc(d.Effects, func(e spellset.DumpEffect) bool {
 		return areaTargets[e.TargetA] || areaTargets[e.TargetB]
 	}))
+	set(serverdata.FlagBleed, d.Mechanic == mechanicBleed || slices.ContainsFunc(d.Effects, func(e spellset.DumpEffect) bool {
+		return e.Effect != 0 && e.Mechanic == mechanicBleed
+	}))
 	return f
 }
+
+// MECHANIC_BLEED (SharedDefines.h)
+const mechanicBleed = 15
 
 // areaTargets are the implicit targets whose selection category is area or cone (SpellInfo.cpp's
 // SpellImplicitTargetInfo table), the ones SpellImplicitTargetInfo::IsArea accepts.
