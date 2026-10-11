@@ -851,6 +851,12 @@ MSYS_NO_PATHCONV=1 docker run -d --name wowsims-wotlk --restart unless-stopped -
 - The fake MySQL in `characters_test.go` matches names by case, like the server.
 - A `.ts` file left in `tmp/` fails `dock.sh tsc`, which type-checks it.
 
+**Cross-review**
+- `--pprof`'s listener no longer serves `/debug/pprof/cmdline` (404): it handed out the command line, `--acoreDsn`
+  and its password included. `AC_DSN` keeps the DSN off the command line altogether.
+- Checked, nothing to change: no answer or log line of `sim/web/acroster` carries the DSN; the path loaders'
+  other callers (acraid, `tools/simval/rrsim.go`); the wasm and `CGO_ENABLED=0` builds.
+
 ## Out of scope
 - Server item stats (item-data rework).
 - mod-spell-tweaks and mod-individual-progression modeling.

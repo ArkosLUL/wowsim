@@ -150,8 +150,11 @@ func TestSpellTweaksEnableGatesScriptedTweaks(t *testing.T) {
 	if want := float64(float32(1.1)); got.ExoticPetDamageMultiplier != want {
 		t.Errorf("exotic pet multiplier at 10%% = %v, want %v", got.ExoticPetDamageMultiplier, want)
 	}
-	if !got.GlyphOfBackstabTicks {
-		t.Error("GlyphOfBackstabTicks is off with its switch and SpellTweaks.Enable on")
+	// a switch newSpellTweaks doesn't read stays off
+	for tweaks, i := reflect.ValueOf(got), 0; i < tweaks.NumField(); i++ {
+		if field := tweaks.Field(i); field.Kind() == reflect.Bool && !field.Bool() {
+			t.Errorf("%s is off with every switch on", tweaks.Type().Field(i).Name)
+		}
 	}
 
 	off := googleProto.Clone(allOn).(*proto.SpellTweaksSettings)

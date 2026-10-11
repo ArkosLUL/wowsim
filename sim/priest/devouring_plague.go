@@ -110,9 +110,10 @@ func (priest *Priest) registerDevouringPlagueSpell() {
 		},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			// calculate first, so that if imp. DP procs Shadowy Insight it doesn't influence the dot damage
 			result := spell.CalcOutcome(sim, target, spell.OutcomeMagicHit)
-			if impDevouringPlague != nil {
+			// the burst comes off the aura as it goes on (Aura::HandleAuraSpecificMods), so a resisted cast
+			// has none. Cast before the dot below, whose tick count it mustn't read
+			if impDevouringPlague != nil && result.Landed() {
 				impDevouringPlague.Cast(sim, target)
 			}
 

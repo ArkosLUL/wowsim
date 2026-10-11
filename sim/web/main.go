@@ -461,7 +461,7 @@ func servePprof(addr string) net.Listener {
 	runtime.SetBlockProfileRate(blockProfileRate)
 	mux := http.NewServeMux()
 	mux.HandleFunc("/debug/pprof/", httppprof.Index)
-	mux.HandleFunc("/debug/pprof/cmdline", httppprof.Cmdline)
+	// no /debug/pprof/cmdline: the command line can hold --acoreDsn, password and all
 	mux.HandleFunc("/debug/pprof/profile", httppprof.Profile)
 	mux.HandleFunc("/debug/pprof/symbol", httppprof.Symbol)
 	mux.HandleFunc("/debug/pprof/trace", httppprof.Trace)

@@ -19,9 +19,18 @@ var (
 
 // FireTalents with this many points of Empowered Fire, the fire tree's 23rd talent
 func fireTalentsWithEmpoweredFire(points byte) string {
+	return fireTalentsWith(22, points)
+}
+
+// FireTalents without Living Bomb, the fire tree's last talent
+func fireTalentsWithoutLivingBomb() string {
+	return fireTalentsWith(27, 0)
+}
+
+func fireTalentsWith(fireTalent int, points byte) string {
 	trees := strings.Split(FireTalents, "-")
 	fire := []byte(trees[1])
-	fire[22] = '0' + points
+	fire[fireTalent] = '0' + points
 	return trees[0] + "-" + string(fire)
 }
 
@@ -133,10 +142,14 @@ func logCount(entries []procLogEntry, text string) int {
 }
 
 // With Empowered Fire the ticks crit, whatever the switches say. A crit tick puts Ignite on at the mage's
-// next 400 ms step (spell_proc -11119 takes periodic crits). Hot Streak and Master of Elements have no
-// periodic proc flag, and spell_tweaks_burnout_pyroblast_dot keeps Burnout's cost off the ticks.
+// next 400 ms step: spell_proc -11119 takes any fire crit, periodic ones too, with or without Living Bomb.
+// Hot Streak and Master of Elements have no periodic proc flag, and spell_tweaks_burnout_pyroblast_dot keeps
+// Burnout's cost off the ticks.
 func TestPyroblastDotCrits(t *testing.T) {
 	const fight = 120 * time.Second
+	if _, mage, _ := pyroblastSim(t, fireTalentsWithoutLivingBomb(), nil); mage.LivingBomb != nil || mage.Talents.EmpoweredFire == 0 {
+		t.Fatalf("without Living Bomb: Living Bomb %v, %d points of Empowered Fire", mage.LivingBomb != nil, mage.Talents.EmpoweredFire)
+	}
 	for _, c := range []struct {
 		name     string
 		talents  string
@@ -147,6 +160,7 @@ func TestPyroblastDotCrits(t *testing.T) {
 		{"haste switch off", FireTalents, pyroblastHasteOff, true},
 		{"spell tweaks off", FireTalents, spellTweaksOff, true},
 		{"no Empowered Fire", fireTalentsWithEmpoweredFire(0), nil, false},
+		{"no Living Bomb", fireTalentsWithoutLivingBomb(), nil, true},
 	} {
 		ticks, crits, direct := 0, 0, 0
 		for seed := int64(1); seed <= 3; seed++ {

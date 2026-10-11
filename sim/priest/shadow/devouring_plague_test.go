@@ -18,6 +18,24 @@ const noShadowWeavingTalents = "05032031--325023051220010323151301351"
 // and returns what Improved Devouring Plague's burst did each time, before crit and resist.
 func runPlagueBursts(t *testing.T, haste float64, tweaks *proto.SpellTweaksSettings, casts ...time.Duration) []float64 {
 	t.Helper()
+	// no miss
+	run := runPlagueCasts(t, haste, 20, tweaks, casts...)
+	if len(run.bursts) != len(casts) {
+		t.Fatalf("%d bursts from %d casts", len(run.bursts), len(casts))
+	}
+	return run.bursts
+}
+
+// plagueRun is what a run of Devouring Plague casts did: how many put the dot on, how many bursts that
+// cast, and what each burst that landed did.
+type plagueRun struct {
+	dots, burstCasts int
+	bursts           []float64
+}
+
+// runPlagueCasts is runPlagueBursts with this much spell hit in percent on top of the talents'.
+func runPlagueCasts(t *testing.T, haste, hitPct float64, tweaks *proto.SpellTweaksSettings, casts ...time.Duration) plagueRun {
+	t.Helper()
 	encounter := core.MakeSingleTargetEncounter(0)
 	encounter.Duration = 60
 	encounter.ServerSettings = &proto.ServerSettings{MapUpdateIntervalMs: googleProto.Int32(0), SpellTweaks: tweaks}
@@ -42,7 +60,7 @@ func runPlagueBursts(t *testing.T, haste float64, tweaks *proto.SpellTweaksSetti
 			talents.Shadowform, talents.ImprovedDevouringPlague, talents.ShadowWeaving)
 	}
 
-	var bursts []float64
+	var run plagueRun
 	priest.RegisterAura(core.Aura{
 		Label:    "Devouring Plague test log",
 		Duration: core.NeverExpires,
@@ -50,8 +68,14 @@ func runPlagueBursts(t *testing.T, haste float64, tweaks *proto.SpellTweaksSetti
 			aura.Activate(sim)
 		},
 		OnSpellHitDealt: func(_ *core.Aura, _ *core.Simulation, spell *core.Spell, result *core.SpellResult) {
-			if spell.ActionID.SpellID == 63675 && result.Landed() {
-				bursts = append(bursts, result.PreOutcomeDamage)
+			switch {
+			case spell == priest.DevouringPlague && result.Landed():
+				run.dots++
+			case spell.ActionID.SpellID == 63675:
+				run.burstCasts++
+				if result.Landed() {
+					run.bursts = append(run.bursts, result.PreOutcomeDamage)
+				}
 			}
 		},
 	})
@@ -59,8 +83,9 @@ func runPlagueBursts(t *testing.T, haste float64, tweaks *proto.SpellTweaksSetti
 	sim.Reset()
 	sim.PrePull()
 	priest.MultiplyCastSpeed(haste)
-	// no miss
-	priest.AddStatsDynamic(sim, stats.Stats{stats.SpellHit: 20 * core.SpellHitRatingPerHitChance})
+	priest.AddStatsDynamic(sim, stats.Stats{stats.SpellHit: hitPct * core.SpellHitRatingPerHitChance})
+	// free, so a long run of casts doesn't run dry
+	priest.DevouringPlague.CostMultiplier -= 1
 	for _, at := range casts {
 		sim.AddPendingAction(&core.PendingAction{
 			NextActionAt: at,
@@ -76,11 +101,24 @@ func runPlagueBursts(t *testing.T, haste float64, tweaks *proto.SpellTweaksSetti
 	for !sim.Step() {
 	}
 	sim.Cleanup()
+	return run
+}
 
-	if len(bursts) != len(casts) {
-		t.Fatalf("%d bursts from %d casts", len(bursts), len(casts))
+// The burst comes off Devouring Plague's aura as it goes on (Aura::HandleAuraSpecificMods), so a cast the
+// target resists has none.
+func TestImprovedDevouringPlagueNeedsTheDotToLand(t *testing.T) {
+	var casts []time.Duration
+	for at := time.Second; at < 59*time.Second; at += 1500 * time.Millisecond {
+		casts = append(casts, at)
 	}
-	return bursts
+	// with no hit from gear, some of these miss the boss
+	run := runPlagueCasts(t, 1, 0, nil, casts...)
+	if run.dots == 0 || run.dots == len(casts) {
+		t.Fatalf("%d of %d Devouring Plagues landed, want some to miss", run.dots, len(casts))
+	}
+	if run.burstCasts != run.dots {
+		t.Errorf("%d bursts from %d casts, %d of which landed", run.burstCasts, len(casts), run.dots)
+	}
 }
 
 // Improved Devouring Plague's burst is a share of the dot's whole damage, the tick times

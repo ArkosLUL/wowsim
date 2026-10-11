@@ -3,6 +3,7 @@ package main
 import (
 	"io"
 	"net/http"
+	"os"
 	"runtime"
 	"strings"
 	"testing"
@@ -41,5 +42,9 @@ func TestPprofOnlyOnItsOwnListener(t *testing.T) {
 	}
 	if status, _ := get(t, base+"goroutine?debug=1"); status != http.StatusOK {
 		t.Errorf("the pprof listener answers the goroutine profile with %d, want 200", status)
+	}
+	// the command line can hold --acoreDsn with its password
+	if status, body := get(t, base+"cmdline"); status != http.StatusNotFound || strings.Contains(body, os.Args[0]) {
+		t.Errorf("the pprof listener answers cmdline with %d %q, want 404 and no command line", status, body)
 	}
 }

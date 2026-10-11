@@ -76,6 +76,9 @@ type Rogue struct {
 	Rupture      *core.Spell
 	SliceAndDice *core.Spell
 
+	// how far Glyph of Backstab has extended the Rupture on each unit since it was cast
+	ruptureBackstabExtension []time.Duration
+
 	lastDeadlyPoisonProcMask core.ProcMask
 
 	deadlyPoisonProcChanceBonus float64

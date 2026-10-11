@@ -40,7 +40,9 @@ func (mage *Mage) applyIgnite() {
 			if !spell.ProcMask.Matches(core.ProcMaskSpellDamage) {
 				return
 			}
-			if mage.LivingBomb != nil && result.DidCrit() {
+			// spell_proc -11119 takes a fire crit from a tick like one from a hit: Living Bomb's with its
+			// glyph, Pyroblast's with Empowered Fire
+			if spell.SpellSchool.Matches(core.SpellSchoolFire) && result.DidCrit() {
 				// A dot tick is processed on the target's own update, not the caster's.
 				mage.procIgnite(sim, result, igniteDelay, false)
 			}

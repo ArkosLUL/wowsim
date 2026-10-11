@@ -45,8 +45,10 @@ func (shaman *Shaman) registerFeralSpirit() {
 	})
 
 	shaman.AddMajorCooldown(core.MajorCooldown{
-		Spell:    shaman.FeralSpirit,
-		Priority: core.CooldownPriorityDrums + 1000, // Always prefer to use wolves before bloodlust/drums so wolves gain haste buff
+		Spell: shaman.FeralSpirit,
+		// Ahead of Bloodlust, which stock wolves only get if they're out for the cast. With
+		// SpellTweaks.FeralSpiritHaste they follow the shaman's haste whenever they come out.
+		Priority: core.CooldownPriorityDrums + 1000,
 		Type:     core.CooldownTypeDPS,
 	})
 }

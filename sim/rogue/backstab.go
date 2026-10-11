@@ -7,17 +7,8 @@ import (
 	"github.com/wowsims/wotlk/sim/core/proto"
 )
 
-// Glyph of Backstab (56800): a landed Backstab adds 2 s to the rogue's Rupture on the target, 6 s at most.
-const (
-	glyphOfBackstabStep = 2 * time.Second
-	glyphOfBackstabCap  = 6 * time.Second
-)
-
 func (rogue *Rogue) registerBackstabSpell() {
 	hasGlyph := rogue.HasMajorGlyph(proto.RogueMajorGlyph_GlyphOfBackstab)
-	if hasGlyph && !rogue.Server().SpellTweaks.GlyphOfBackstabTicks {
-		rogue.Env.RegisterPostFinalizeEffect(rogue.capRuptureTicks)
-	}
 
 	rogue.Backstab = rogue.RegisterSpell(core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: 48657},
@@ -75,40 +66,4 @@ func (rogue *Rogue) registerBackstabSpell() {
 			}
 		},
 	})
-}
-
-// extendRupture is Glyph of Backstab's proc on a landed Backstab.
-func (rogue *Rogue) extendRupture(sim *core.Simulation, target *core.Unit) {
-	dot := rogue.Rupture.Dot(target)
-	if !dot.IsActive() {
-		return
-	}
-	if rogue.Server().SpellTweaks.GlyphOfBackstabTicks {
-		// mod-spell-tweaks raises the max duration too, so the added seconds tick, at the interval Rupture
-		// went on with. A recast starts the 6 s over: rupture.go keeps the cast's tick count in MaxStacks.
-		if dot.NumberOfTicks-dot.MaxStacks >= int32(glyphOfBackstabCap/glyphOfBackstabStep) {
-			return
-		}
-		// NumberOfTicks counts 2 s intervals, the glyph's step
-		dot.NumberOfTicks++
-		dot.Duration += glyphOfBackstabStep
-	} else if dot.ExpiresAt() >= dot.StartedAt()+dot.Duration+5*time.Second {
-		// core's script lets Rupture end up to 5 s past its apply time plus max duration: three Backstabs
-		return
-	}
-	dot.UpdateExpires(sim.NextServerTick(dot.ExpiresAt() + glyphOfBackstabStep))
-}
-
-// capRuptureTicks is for core's Glyph of Backstab, which only adds to the time left: a dot stops at
-// max duration / amplitude ticks (AuraEffect::GetTotalTicks), so the longer Rupture deals no more.
-func (rogue *Rogue) capRuptureTicks() {
-	for _, target := range rogue.Env.Encounter.TargetUnits {
-		dot := rogue.Rupture.Dot(target)
-		tick := dot.OnTick
-		dot.OnTick = func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
-			if dot.TickCount <= dot.TotalTicks() {
-				tick(sim, target, dot)
-			}
-		}
-	}
 }

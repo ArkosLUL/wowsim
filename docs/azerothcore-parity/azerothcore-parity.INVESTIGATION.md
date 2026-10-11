@@ -2552,6 +2552,8 @@ Code stage. Spirit Wolves retake the shaman's melee speed every 2 s.
 - Summoned 1.6 s after Bloodlust: 1162 ms at +406, +1803 and +3010 ms, no Bloodlust aura on the wolf.
 - The e2e gained back-to-back snapshots across the 4 s tick (about 400 ms each, logged, not judged) and a `TICK` line with the two the tick fell between. No orphan bots; its records are dropped.
 
+**Cross-review:** `sim/shaman/feral_spirit.go`'s cooldown priority comment said the wolves go before Bloodlust to gain its haste. That holds for stock wolves only, and the comment now says so.
+
 ## PAR-FU-9 as built
 
 Server source: [ac] `3d89793c7`, mod-spell-tweaks `9bf5c75`.
@@ -2637,8 +2639,6 @@ Tests: `sim/paladin/retribution/seal_dot_test.go`, `sim/druid/feral/faerie_fire_
   Measured for Pin (root); by the same rule Venom Web Spray (55509, root), Ravage (53562, stun), Tendon Rip (53575,
   snare) and Snatch (53543, disarm). `MechanicsMask` is `1 << mechanic`, so root is 128. No suite or preset runs
   one of these pets.
-- `sim/priest/devouring_plague.go` casts Improved Devouring Plague's burst even when Devouring Plague misses; the
-  server only fires it from the applied aura.
 - The bleed damage bonus (Mangle, Trauma, Stampede) follows the spell's mechanic on the server
   (`Unit::SpellDamageBonusTaken`, `GetAllEffectsMechanicMask`): Savage Rend's first hit takes it and Pin's ticks
   don't. `Spell.TargetDamageMultiplier` gives it to every physical tick and no direct hit.
@@ -2647,6 +2647,17 @@ Tests: `sim/paladin/retribution/seal_dot_test.go`, `sim/druid/feral/faerie_fire_
 **Goldens** (`dock.sh delta`): only the `AllItems-LasherweaveRegalia` row of TestFeral (+0.55% dps), TestFeralApl
 (-0.14%) and TestFeralTank (+0.88% dps, +0.73% tps), from the set's roll on Faerie Fire (Feral): it shares
 Omen's random stream, so the white hits' Clearcasting procs shift. 34 of 37 suites unchanged.
+
+**Cross-review**
+- Improved Devouring Plague's burst is cast only when Devouring Plague lands (`Aura::HandleAuraSpecificMods`
+  fires it off the applied aura); `TestImprovedDevouringPlagueNeedsTheDotToLand`. TestShadow moves where the
+  priest can miss: Average-Default -0.008% (14.459 to 14.440 bursts a fight), the NoBuffs rows -0.10%, AllItems
+  rows down to -0.51% (Vestments of Absolution), two up by under 0.03% from reshuffled rolls.
+- Glyph of Backstab's Rupture code is all in `rupture.go`: `extendRupture`, the stock tick cap in Rupture's own
+  `OnTick`, and a per-target extension counter where `dot.MaxStacks` held the cast's tick count. No rogue result
+  moves.
+- `TestSpellTweaksEnableGatesScriptedTweaks` fails for any switch `newSpellTweaks` doesn't read, PAR-FU-10's four
+  included.
 
 ## PAR-FU-10 as built
 
@@ -2672,10 +2683,7 @@ mod-spell-tweaks' mage and warlock tweaks (`9bf5c75`; `docs/mage/PyroblastEmpowe
   - TestDemonology +2.49%: Curse of Doom 4.08 to 7 casts and 115k to 257k (58% crit), Curse of Agony 2.05 to 1.13 casts, Shadow Bolt 80.0 to 78.9.
 - **Ignite's read-ahead:** `CastDelayedSpellWithPeriodicAmount` reads the old Ignite at the proc and applies up to 400 ms later; an Ignite tick in between is dealt and rolled over again. More procs mean more of it: about a third of Fire's Ignite gain is beyond 40% of the new crits. The live stage should measure Ignite against the crits feeding it.
 - **Left open:**
-  - `sim/mage/ignite.go` procs Ignite from a periodic crit only when the mage has Living Bomb, so Empowered Fire without it gets no Ignite from Pyroblast's ticks; it should check the fire school.
   - Living Bomb's glyphed ticks still read Ignite ahead of its same-update tick (about 0.8% of Fire). The fix belongs in `sim/core/dot.go`: same-update ticks on a unit in spell id order.
-  - `tools/simval`'s `TestSpellModRecords` fails on MageFire Icy Veins, Pyroblast's e1 amplitude (capture 3000, sim 2500): the capture predates the tweak and needs a new sweep.
-  - `sim/optimizer`'s `TestDemonologyValuesSpellPowerHigherInRaidMode` fails its margin (raid 1.604 ± 0.002, solo 1.593 ± 0.004, a gap of 0.011 under its 0.012). Curse of Doom's switch alone does it: off, the test reads 1.572 and 1.558 and passes by 0.002. The curse lifts both sides alike, so the pact's share moved inside its noise.
 
 **Code stage 2: Arcane Blast's cost, the arcane crit refund**
 
@@ -2708,3 +2716,11 @@ mod-spell-tweaks' mage and warlock tweaks (`9bf5c75`; `docs/mage/PyroblastEmpowe
   - `arcane_aoe` multi-target rows -1.4%: Presence of Mind, cast with the other cooldowns, fires an instant Arcane Blast every 84 s. Its one stack (18% with the glyph) used to last 8 s of Arcane Explosions and now goes with the first; the 6 s alone was -0.43%. The short single-target row loses the same (-1.37%); the long ones gain through the refund (+13.9% buffed, +6.9% unbuffed).
 - **Not done:** Ignite's total against 40% of the crits feeding it. No golden fight casts Pyroblast (the cycles are proc-blind), so it needs its own e2e.
 - **Spelldump, left stale:** Burnout's five ranks (44449 to 44472) and the lower Pyroblast and Curse of Doom ranks still list their old scripts. Nothing generated reads script names.
+
+**At the merge:** `spellmods.jsonl` took the re-run MageFire lines, so `TestSpellModRecords` passes. `TestDemonologyValuesSpellPowerHigherInRaidMode` drops `FullRaidBuffs`' 500 spell power pact, which beat the warlock's own and left the test measuring noise; it passes clearly.
+
+**Cross-review**
+- `sim/mage/ignite.go`: a periodic crit procs Ignite by its fire school, as spell_proc -11119 has it (fire, mage family, crit, with `PROC_FLAG_DONE_PERIODIC` from Ignite's own flags), not by the mage having Living Bomb. `TestPyroblastDotCrits` has the case; no golden moves.
+- mod-sim-validation's `TICK_PERIOD_SCRIPTS` lists `spell_tweaks_pyroblast_dot_haste` and `spell_tweaks_curse_of_doom` (neither hook touches an amount; compile-checked, needs a rebuild). A MageFire sweep on that build compares Pyroblast's damage again. Curse of Doom stays shaped by core's `spell_warl_curse_of_doom`, which only acts in `AfterEffectRemove`: its damage was never compared, and won't be until that name is exempt too.
+- `gen_serverdata` on the merged tree writes the committed rows.
+- **Left open, `sim/core/dot.go`:** a dot whose haste adds ticks can tick once more than `AuraEffect::GetTotalTicks` allows. `AuraEffect::Update` stops at that count; the sim's tick action doesn't, so a tick due under one map update after the aura's end lands on the expiry's update (12 s over 2401 ms: 5 ticks, the server 4). About one application in 50, under 0.05% DPS a spec, on every such dot: Pyroblast, Rupture, Deadly Poison, Rend, the diseases, Moonfire, Insect Swarm, the shadow dots. The cap needs `Dot.Rollover` to zero `TickCount`, as `Aura::RefreshTimersWithMods` zeroes the tick number.
