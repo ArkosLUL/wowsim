@@ -2087,9 +2087,10 @@ Growl, Dark Command and Hand of Reckoning are `DmgClass MELEE` without `SPELL_AT
 melee hit rating (263, or 164 with 3/3 Precision); spell hit does nothing. They also roll dodge 6.45% and, from
 the front, parry 14.0%, which only expertise lowers. Bot tanks re-taunt until they hold aggro.
 
-**Decided by the user (2026-10-11):** fix the fight model, no hand-set health or stamina floor; a tank melee-hit
-floor at the taunt cap, hit only; afterwards the full 21-raider pass, on the user's call
-([driver README](../../tools/database/acbis/driver/README.md)).
+**Decided by the user:** fix the fight model, no hand-set health or stamina floor; a tank melee-hit floor at the
+taunt cap, hit only; afterwards the full 21-raider pass, on the user's call
+([driver README](../../tools/database/acbis/driver/README.md)) (2026-10-11). Phase 1's boss is Kel'Thuzad 25, not
+Patchwerk, who has next to no mechanics (2026-10-12).
 
 **Step 0, the numbers.** For each `TANK_BOSSES` boss at its difficulty, every ability that damages the current
 tank and that armor and avoidance can't remove: spell id, school, damage, cadence. Sources: the boss script
@@ -2098,14 +2099,25 @@ evidence is in `G:\DevStuff\GitHub\.wave-loop\bis-tank-magic\step0.md` (research
 it against the source, then carry it into the As built. Server data only: a small magic share is modelled small,
 and a boss with none stays melee-only.
 
+That research found, to be modelled where the source confirms it:
+- The server strips Physical from a mixed-school spell (`SpellMgr::LoadSpellInfoCustomAttributes`), so Freezing
+  Slash and Soul Reaper are pure Frost and Shadow that always land.
+- Algalon dual-wields; `TankBoss` can't say so yet.
+- Halion has no Chill of the Throne (`spell_area`: Icecrown only) but Twilight Precision 78243: +5% hit, the
+  tank's dodge × 0.8.
+- Kel'Thuzad 25 is `creature_template` 30061: DamageModifier 70, BaseAttackTime 2000, `unit_class` 2, so his
+  `creature_classlevelstats` row differs from the class 1 numbers the generic boss carries. Where players can
+  interrupt a cast of his, state what the model assumes.
+
 **Step 1, the fight.**
 - New `sim/encounters/optimizer_tank_boss.go`: a synthetic `OptimizerTankBossID` (like `GenericBossID`),
   registered through `core.AddPresetTarget` with an AI that casts one spell on cooldown at `CurrentTarget` with
   `OutcomeAlwaysHit`: armor and avoidance don't touch it, the school's resistance and damage-taken multipliers
   do. Damage, period and school come from `target_inputs`, so the numbers live in `TANK_BOSSES`. Several
   abilities sum into damage per period at their real cadence.
-- `pool_builder.ts`: `TankBoss` gains those fields; `genericBossTargetAt` sets the id and inputs;
-  `suppressDodge: true` for phases 4 and 5 (Chill of the Throne).
+- `pool_builder.ts`: `TANK_BOSSES[1]` becomes Kel'Thuzad 25; `TankBoss` gains those fields and what the bosses
+  above need (an off hand, the boss's stat row, Halion's aura); `genericBossTargetAt` sets the id and inputs;
+  `suppressDodge: true` for phase 4 (Chill of the Throne).
 - Go mirror: the optimizer's own constructor beside `encounters.GenericBossTargetAt` (whose callers stay);
   `TestTankBossesMirrorUI` covers the new fields.
 - Healing: `healingModelForBoss` leaves `hps` 0 and keeps the cadence, so `pinHealingModel` derives 1.5 × the
@@ -2134,12 +2146,13 @@ and a boss with none stays melee-only.
 | Death is in the score | both tanks' results carry the term, and no warning drops it |
 | The fight is step 0's | damage taken per school on the new fight matches the table |
 | Taunt floor | both results carry a `StatMeleeHit` floor, final hit at or above it, no reforge takes hit off |
-| Picks | Bulwark and Felesta at phases 2 and 3: the gem, enchant and reforge mix against the 8 Oct pass's. If stamina still never shows, look at step 0's numbers or the weights, not the search |
+| Picks | Bulwark and Felesta at phases 2 and 3: the gem, enchant and reforge mix against the 8 Oct pass's. If stamina still never shows, look at step 0's numbers or the weights, not the search. Phase 1 has no before picture: report both tanks' picks on Kel'Thuzad as they come |
 | Nothing else moved | one DPS raider scores within 2 se with the same picks; `sim/optimizer` tests and the `optimizer/{quick,normal}/raid25_tank_p1` harness scenarios pass; the tank suites' goldens unchanged |
 
 **Not doing:** a taunt spell or threat retargeting in the sim; an expertise floor (about 671 rating to clear a
-taunt's dodge and parry); any change to `sim/core` combat mechanics, the tank suites' generic boss, the addon,
-the wire format or mod-bis-tooltip.
+taunt's dodge and parry); any change to `sim/core` combat mechanics, the tank suites' generic boss (it keeps
+Patchwerk's numbers), the addon, the wire format or mod-bis-tooltip; the tank presets, which the deferred BiS
+chain reruns.
 
 Golden-neutral. **Owns:** `sim/optimizer/`, `sim/encounters/optimizer_tank_boss.go` and its registration,
 `ui/core/optimizer/`, `ui/raid/optimizer_*.ts`, the tab's tank controls. At close-out the orchestrator adds
