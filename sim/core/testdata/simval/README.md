@@ -103,7 +103,7 @@ passes are bare, talents and Bloodlust). The record stays and the check still ru
 passes named, and an entry no record fails is stale. It, `droppedTimingRecords` and `timingRecapture` (finishers
 without combo point records yet, `tools/simval/timing_test.go`) are empty.
 
-`threat.jsonl`, each in `droppedThreatRecords` (`tools/simval/threat_test.go`), removed from the file, or in
+`threat.jsonl`, each in `droppedThreatRecords` (`tools/simval/threat_fixture.go`), removed from the file, or in
 `knownThreatMismatches` (`tools/simval/threat.go`), the record kept and only that check's failure let through. The
 capture is one run's records. A `recapture` row replays now; the next `TestSimvalThreat` run restores its record,
 then remove the row and the entry.

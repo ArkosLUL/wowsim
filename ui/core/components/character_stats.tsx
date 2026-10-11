@@ -1,4 +1,4 @@
-import { Class, ItemSlot, Stat, PseudoStat, Spec } from '..//proto/common.js';
+import { Class, Stat, PseudoStat, Spec } from '..//proto/common.js';
 import { TristateEffect } from '..//proto/common.js'
 import { getClassStatName, statOrder } from '..//proto_utils/names.js';
 import { Stats } from '..//proto_utils/stats.js';
@@ -110,10 +110,6 @@ export class CharacterStats extends Component {
 		const stanceDelta = Stats.fromProto(playerStats.finalStats).subtract(consumesStats);
 
 		const finalStats = Stats.fromProto(playerStats.finalStats).add(statMods.talents).add(debuffStats);
-		const gearSkill = this.gearDefenseSkill();
-		// rows from the gear on hold it; only the gear's own part and the total show it as theirs
-		const withGear = { total: gearSkill, part: 0 };
-		const ofGear = { total: gearSkill, part: gearSkill };
 
 		this.stats.forEach((stat, idx) => {
 			let valueElem = (
@@ -121,7 +117,7 @@ export class CharacterStats extends Component {
 					href="javascript:void(0)"
 					className="stat-value-link"
 					attributes={{role:"button"}}>
-					{`${this.statDisplayString(finalStats, finalStats, stat, undefined, ofGear)} `}
+					{`${this.statDisplayString(finalStats, finalStats, stat)} `}
 				</a>
 			)
 
@@ -146,24 +142,24 @@ export class CharacterStats extends Component {
 				</div>
 				<div className="character-stats-tooltip-row">
 					<span>Gear:</span>
-					<span>{this.statDisplayString(gearStats, gearDelta, stat, baseStats, ofGear)}</span>
+					<span>{this.statDisplayString(gearStats, gearDelta, stat, baseStats)}</span>
 				</div>
 				<div className="character-stats-tooltip-row">
 					<span>Talents:</span>
-					<span>{this.statDisplayString(talentsStats, talentsDelta, stat, gearStats, withGear)}</span>
+					<span>{this.statDisplayString(talentsStats, talentsDelta, stat, gearStats)}</span>
 				</div>
 				<div className="character-stats-tooltip-row">
 					<span>Buffs:</span>
-					<span>{this.statDisplayString(buffsStats, buffsDelta, stat, talentsStats, withGear)}</span>
+					<span>{this.statDisplayString(buffsStats, buffsDelta, stat, talentsStats)}</span>
 				</div>
 				<div className="character-stats-tooltip-row">
 					<span>Consumes:</span>
-					<span>{this.statDisplayString(consumesStats, consumesDelta, stat, buffsStats, withGear)}</span>
+					<span>{this.statDisplayString(consumesStats, consumesDelta, stat, buffsStats)}</span>
 				</div>
 				{stanceLabel && Math.round(stanceDelta.getStat(stat)) != 0 &&
 				<div className="character-stats-tooltip-row">
 					<span>{stanceLabel}:</span>
-					<span>{this.statDisplayString(finalStats, stanceDelta, stat, consumesStats, withGear)}</span>
+					<span>{this.statDisplayString(finalStats, stanceDelta, stat, consumesStats)}</span>
 				</div>
 				}
 				{debuffStats.getStat(stat) != 0 &&
@@ -180,7 +176,7 @@ export class CharacterStats extends Component {
 				}
 				<div className="character-stats-tooltip-row">
 					<span>Total:</span>
-					<span>{this.statDisplayString(finalStats, finalStats, stat, undefined, ofGear)}</span>
+					<span>{this.statDisplayString(finalStats, finalStats, stat)}</span>
 				</div>
 			</div>;
 			Tooltip.getOrCreateInstance(valueElem, {
@@ -260,17 +256,11 @@ export class CharacterStats extends Component {
 		}
 	}
 
-	// Rune of the Stoneskin Gargoyle's 25 defense is skill, not rating, so no row's stats carry it.
-	private gearDefenseSkill(): number {
-		const stoneskinGargoyle = 3847;
-		return 25 * [ItemSlot.ItemSlotMainHand, ItemSlot.ItemSlotOffHand]
-			.filter(slot => this.player.getEquippedItem(slot)?.enchant?.effectId == stoneskinGargoyle).length;
-	}
-
 	// prevStats: the stats before this row's part, when the row is one part of a total
-	// gearSkill: gearDefenseSkill within stats (total) and within this row's part
-	private statDisplayString(stats: Stats, deltaStats: Stats, stat: Stat, prevStats?: Stats, gearSkill = { total: 0, part: 0 }): string {
+	private statDisplayString(stats: Stats, deltaStats: Stats, stat: Stat, prevStats?: Stats): string {
 		let rawValue = deltaStats.getStat(stat);
+		// defense that's skill, not rating (Rune of the Stoneskin Gargoyle), so no row's rating carries it
+		const bonusSkill = (s: Stats) => s.getPseudoStat(PseudoStat.PseudoStatBonusDefenseSkill);
 
 		if (stat == Stat.StatBlockValue) {
 			const multiplier = (s: Stats) => s.getPseudoStat(PseudoStat.PseudoStatBlockValueMultiplier) || 1;
@@ -301,11 +291,11 @@ export class CharacterStats extends Component {
 			// continuously in reality since the patch.
 			displayStr += ` (${(rawValue / Mechanics.EXPERTISE_PER_QUARTER_PERCENT_REDUCTION / 4).toFixed(2)}%)`;
 		} else if (stat == Stat.StatDefense) {
-			displayStr += ` (${(Mechanics.CHARACTER_LEVEL * 5 + Math.floor(rawValue / Mechanics.DEFENSE_RATING_PER_DEFENSE) + gearSkill.part).toFixed(0)})`;
+			displayStr += ` (${(Mechanics.CHARACTER_LEVEL * 5 + Math.floor(rawValue / Mechanics.DEFENSE_RATING_PER_DEFENSE) + bonusSkill(deltaStats)).toFixed(0)})`;
 		} else if (stat == Stat.StatBlock) {
 			// TODO: Figure out how to display these differently for the components than the final value
 			//displayStr += ` (${(rawValue / Mechanics.BLOCK_RATING_PER_BLOCK_CHANCE).toFixed(2)}%)`;
-			displayStr += ` (${((rawValue / Mechanics.BLOCK_RATING_PER_BLOCK_CHANCE) + (Mechanics.MISS_DODGE_PARRY_BLOCK_CRIT_CHANCE_PER_DEFENSE * (Math.floor(stats.getStat(Stat.StatDefense) / Mechanics.DEFENSE_RATING_PER_DEFENSE) + gearSkill.total)) + 5.00).toFixed(2)}%)`;
+			displayStr += ` (${((rawValue / Mechanics.BLOCK_RATING_PER_BLOCK_CHANCE) + (Mechanics.MISS_DODGE_PARRY_BLOCK_CRIT_CHANCE_PER_DEFENSE * (Math.floor(stats.getStat(Stat.StatDefense) / Mechanics.DEFENSE_RATING_PER_DEFENSE) + bonusSkill(stats))) + 5.00).toFixed(2)}%)`;
 		} else if (stat == Stat.StatDodge) {
 			//displayStr += ` (${(rawValue / Mechanics.DODGE_RATING_PER_DODGE_CHANCE).toFixed(2)}%)`;
 			displayStr += ` (${(stats.getPseudoStat(PseudoStat.PseudoStatDodge) * 100).toFixed(2)}%)`;

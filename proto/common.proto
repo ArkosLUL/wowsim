@@ -133,6 +133,7 @@ enum PseudoStat {
 	PseudoStatBlockValueMultiplier = 3;
 	PseudoStatDodge = 4;
 	PseudoStatParry = 5;
+	PseudoStatBonusDefenseSkill = 6;
 }
 
 message UnitStats {

@@ -235,6 +235,20 @@ Pet casters and non-80 characters fail. A spell no spec registers fails as `sim 
 with a row in the fixture README; an entry no record fails fails the test. `TestThreatReplayOnHandCheckedRecords`
 tests the comparison without it.
 
+**Fixture cutter.** `simval threat` cuts a `TestSimvalThreat` run's streamed records ([testing](../../docs/guide/testing.md),
+Against the server) down to `threat.jsonl`:
+
+```sh
+tools/acore/dock.sh run ./tools/simval threat -records /wotlk/tmp/stream.jsonl -since <the run's start, unix ms>
+```
+
+It keeps the threat records from `-since` on, raw, one per `threatRecord.key` (a repeated probe's last, in the order
+the probes last ran), a line the stream repeats once, and leaves out `droppedThreatRecords`' probes; one marked
+`recapture` is kept, with a note to take its entry and README row out. `-merge` is for a part of a run (one bot): its
+probes replace the fixture's in place or go at the end, the rest stay. `-out` names another file; the old file's line
+endings are kept. Then run `tools/acore/dock.sh test ./tools/simval -run TestThreat`: `TestThreatFixtureHasEveryProbe` names a probe
+without a record.
+
 ## Buffs
 
 mod-sim-validation's `TestSimvalBuffs` gives `buffsSetup`'s golden character (RogueAssassination) each switch of
@@ -564,7 +578,7 @@ proc's internal cooldown in the sim then (the golden build procs Lightweave).
 - `fightLogIDs`: a tagged sim action, or a second sim aura, under the server's id (off-hand strikes, Lightning
   Overload, Insect Swarm's hit debuff).
 - `fightAurasByCast`: a sim aura several casts share, under the cycle's (Faerie Fire (Feral), Mangle (Bear));
-  `fightSimAurasOn` moves one to where the server has it (Consecration's, to the target).
+  `fightSimAurasOn` moves one to where the server has it (Consecration's, to the target; Starfall's, to the druid).
 - `fightLogTicks`: a dot's ticks the log has as direct damage (Explosive Shot's 53352, Devouring Plague's leech).
 
 **The sim** (`fightSim`): `goldcharPlayer`, geared, with the setup's `auras`, an empty APL, the cycle's

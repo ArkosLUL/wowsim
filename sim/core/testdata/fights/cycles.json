@@ -67,6 +67,9 @@
     },
     {
       "setup": "DruidBalance", "seconds": 90, "yards": 18,
+      "before": [
+        {"spell": 53201, "name": "Starfall", "waitMs": 1500}
+      ],
       "cycle": [
         {"spell": 48463, "name": "Moonfire", "waitMs": 1500},
         {"spell": 48468, "name": "Insect Swarm", "waitMs": 1500},

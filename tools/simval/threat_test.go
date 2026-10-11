@@ -52,35 +52,6 @@ func TestThreatRecords(t *testing.T) {
 	t.Logf("%d checks over %d records", checked, len(records))
 }
 
-// threatKey names a capture's record by what it probed: the player's class, its stance, form, presence or
-// Righteous Fury, the spell, the target count the probe was given and the creatures fighting the caster.
-type threatKey struct {
-	class     uint8
-	form      int32
-	spell     int32
-	override  int32
-	creatures int32
-}
-
-func (r threatRecord) key() threatKey {
-	return threatKey{r.Attacker.Class, r.form(), r.Spell.ID, r.override(), r.creatures()}
-}
-
-// threatDrop is why a probe has no record in the capture, with a row in the fixture README: the replay
-// can't build it, or it can now (recapture) but the capture lost the record, which the next
-// TestSimvalThreat run brings back.
-type threatDrop struct {
-	reason    string
-	recapture bool
-}
-
-var droppedThreatRecords = map[threatKey]threatDrop{
-	{deathKnight, 48263, 45524, 0, 0}: {reason: "the sim has no Chains of Ice"},
-	{deathKnight, 48263, 49576, 0, 0}: {reason: "the sim has no Death Grip"},
-	{warlock, 0, 47193, 0, 0}: {reason: "cast on the pet, so the server hands its bonus to the creatures fighting the " +
-		"pet; the probe's warlock has no pet in a fight, the replay's no Demonic Empowerment"},
-}
-
 // threatBot is one TestSimvalThreat character: its class, race, the auras its casts leave on it (talents,
 // stance or form and its passives) and its probes.
 type threatBot struct {
