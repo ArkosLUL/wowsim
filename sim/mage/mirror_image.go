@@ -45,7 +45,7 @@ func (mage *Mage) registerMirrorImageCD() {
 		ProcMask:         core.ProcMaskEmpty,
 		ThreatMultiplier: 1,
 		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, _ *core.Spell) {
-			mage.mirrorImage.EnableWithTimeout(sim, mage.mirrorImage, time.Second*30)
+			mage.mirrorImage.summon(sim)
 			if t10Aura != nil {
 				t10Aura.Activate(sim)
 			}
@@ -59,6 +59,17 @@ func (mage *Mage) registerMirrorImageCD() {
 	})
 }
 
+// npc_pet_mage_mirror_image's timers: it waits before it attacks, dies half a second short of the
+// summon's 30 s, and puts each spell's event back this far when it runs.
+const (
+	mirrorImageAttackDelay = 1200 * time.Millisecond
+	mirrorImageLife        = 29500 * time.Millisecond
+	mirrorImageFrostbolt   = 2500 * time.Millisecond
+	mirrorImageFireBlast   = 6500 * time.Millisecond
+	// CasterAI::JustEngagedWith's realCooldown for Fire Blast, its 6 s recovery time. Frostbolt's is 0.
+	mirrorImageFireBlastFirst = 6 * time.Second
+)
+
 type MirrorImage struct {
 	*core.Pet
 
@@ -66,6 +77,14 @@ type MirrorImage struct {
 
 	Frostbolt *core.Spell
 	Fireblast *core.Spell
+
+	// when each of the AI's two events is due
+	frostboltDue, fireblastDue time.Duration
+	// events level on time run in the order they were scheduled
+	frostboltScheduled, fireblastScheduled int
+	// the mage was fighting as they came: his target took them onto its threat list then, which engaged
+	// their AI before it had anything to attack
+	engagedAtSummon bool
 }
 
 func (mage *Mage) NewMirrorImage() *MirrorImage {
@@ -100,15 +119,93 @@ func (mi *MirrorImage) Initialize() {
 func (mi *MirrorImage) Reset(_ *core.Simulation) {
 }
 
+// The AI's events cast for it, so the GCD loop has nothing to do.
 func (mi *MirrorImage) ExecuteCustomRotation(sim *core.Simulation) {
-	spell := mi.Frostbolt
-	if mi.Fireblast.CD.IsReady(sim) && sim.RandomFloat("MirrorImage FB") < 0.5 {
-		spell = mi.Fireblast
+	mi.WaitUntil(sim, core.NeverExpires)
+}
+
+// summon brings the images out. Their AI counts from their first update: it holds them 1.2 s before
+// they attack, which they only do once the mage is fighting, and kills them at 29.5 s.
+func (mi *MirrorImage) summon(sim *core.Simulation) {
+	start := mi.AIClockStart(sim)
+	mi.engagedAtSummon = sim.CurrentTime > 0
+	mi.EnableWithTimeout(sim, mi, sim.NextServerTick(start+mirrorImageLife)-sim.CurrentTime)
+
+	sim.AddPendingAction(&core.PendingAction{
+		NextActionAt: sim.NextServerTick(max(start+mirrorImageAttackDelay, 0)),
+		Priority:     core.ActionPriorityLow,
+		OnAction:     mi.engage,
+	})
+}
+
+// engage is CasterAI::JustEngagedWith: it casts one of the two spells, picked evenly, and schedules both,
+// the one it cast for when the cast is over. An image's AI only runs one event an update after that.
+// Images that come into a fight were engaged at the summon, with no victim to open on: both events were
+// scheduled then, on a clock that only starts now, and this update just picks the target.
+func (mi *MirrorImage) engage(sim *core.Simulation) {
+	if !mi.IsEnabled() {
+		return
+	}
+	mi.frostboltScheduled, mi.fireblastScheduled = 0, 1
+	if mi.engagedAtSummon {
+		mi.frostboltDue = mi.AIClockStart(sim)
+		mi.fireblastDue = mi.frostboltDue + mirrorImageFireBlastFirst
+		mi.queueEvent(sim, mi.UpdateAfter(sim, sim.CurrentTime))
+		return
+	}
+	mi.frostboltDue = sim.CurrentTime
+	mi.fireblastDue = sim.CurrentTime + mirrorImageFireBlastFirst
+	if sim.RandomFloat("Mirror Image Opener") < 0.5 {
+		if mi.Frostbolt.Cast(sim, mi.CurrentTarget) {
+			mi.frostboltDue += mi.Frostbolt.CastTime()
+		}
+	} else {
+		mi.Fireblast.Cast(sim, mi.CurrentTarget)
+	}
+	mi.queueEvent(sim, mi.UpdateAfter(sim, sim.CurrentTime))
+}
+
+// queueEvent wakes the AI on the first update from earliest on that it can cast on and has an event due by.
+func (mi *MirrorImage) queueEvent(sim *core.Simulation, earliest time.Duration) {
+	at := max(earliest, mi.Hardcast.Expires, min(mi.frostboltDue, mi.fireblastDue))
+	sim.AddPendingAction(&core.PendingAction{
+		NextActionAt: sim.NextServerTick(at),
+		// a cast landing on this update goes first, as Unit::Update runs before UpdateAI
+		Priority: core.ActionPriorityLow,
+		OnAction: mi.runEvent,
+	})
+}
+
+// runEvent is the AI's UpdateAI once it's fighting: the earliest event due, put back its 2.5 or 6.5 s,
+// and that spell cast. It does nothing while a cast is going.
+func (mi *MirrorImage) runEvent(sim *core.Simulation) {
+	if !mi.IsEnabled() {
+		return
+	}
+	if mi.Hardcast.Expires > sim.CurrentTime {
+		mi.queueEvent(sim, sim.CurrentTime)
+		return
 	}
 
-	if success := spell.Cast(sim, mi.CurrentTarget); !success {
-		mi.Disable(sim)
+	frostbolt, fireblast := mi.frostboltDue <= sim.CurrentTime, mi.fireblastDue <= sim.CurrentTime
+	if frostbolt && fireblast {
+		if mi.frostboltDue != mi.fireblastDue {
+			frostbolt = mi.frostboltDue < mi.fireblastDue
+		} else {
+			frostbolt = mi.frostboltScheduled < mi.fireblastScheduled
+		}
+		fireblast = !frostbolt
 	}
+	scheduled := max(mi.frostboltScheduled, mi.fireblastScheduled) + 1
+	switch {
+	case frostbolt:
+		mi.frostboltDue, mi.frostboltScheduled = sim.CurrentTime+mirrorImageFrostbolt, scheduled
+		mi.Frostbolt.Cast(sim, mi.CurrentTarget)
+	case fireblast:
+		mi.fireblastDue, mi.fireblastScheduled = sim.CurrentTime+mirrorImageFireBlast, scheduled
+		mi.Fireblast.Cast(sim, mi.CurrentTarget)
+	}
+	mi.queueEvent(sim, mi.UpdateAfter(sim, sim.CurrentTime))
 }
 
 // No pet_levelstats row for 31216, so InitStatsForLevel's fallback stats, 2 * Str - 20 attack power
@@ -137,7 +234,6 @@ func (mi *MirrorImage) registerFrostboltSpell() {
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
-				GCD: core.GCDDefault,
 				// shares Frostbolt's own class mask, so its cast-time mods cut this cast too
 				CastTime: time.Second*3 - time.Millisecond*100*time.Duration(talents.ImprovedFrostbolt+talents.EmpoweredFrostbolt),
 			},
@@ -212,17 +308,6 @@ func (mi *MirrorImage) registerFireblastSpell() {
 
 		ManaCost: core.ManaCostOptions{
 			FlatCost: 120,
-		},
-		Cast: core.CastConfig{
-			DefaultCast: core.Cast{
-				GCD: core.GCDMin,
-			},
-			CD: core.Cooldown{
-				Timer: mi.NewTimer(),
-				// Improved Fire Blast does reach 59637's class mask, but npc_pet_mage_mirror_image only
-				// retries Fire Blast every 6.5 s, so a shorter cooldown never shows
-				Duration: time.Second * 6,
-			},
 		},
 
 		// Critical Mass is a school crit aura on the mage (SPELL_AURA_MOD_SPELL_CRIT_CHANCE_SCHOOL), not a

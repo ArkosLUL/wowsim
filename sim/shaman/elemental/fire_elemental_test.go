@@ -1,7 +1,9 @@
 package elemental
 
 import (
+	"slices"
 	"testing"
+	"time"
 
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
@@ -113,7 +115,7 @@ func TestFireShieldRollsSpellHit(t *testing.T) {
 }
 
 // 32982 summons the elemental as a plain guardian (SummonProperties 61), without a pet bar, so a raid cast
-// skips it (Spell.cpp's TARGET_CHECK_RAID): the raid's Replenishment never reaches it.
+// skips it (Spell.cpp's TARGET_CHECK_RAID): neither the raid's Replenishment nor Bloodlust reaches it.
 func TestFireElementalTakesNoRaidCast(t *testing.T) {
 	sim := core.NewSim(&proto.RaidSimRequest{
 		Raid: core.SinglePlayerRaidProto(&proto.Player{
@@ -139,5 +141,175 @@ func TestFireElementalTakesNoRaidCast(t *testing.T) {
 	elemental.Enable(sim, elemental)
 	if elemental.ReplenishmentAura != nil {
 		t.Error("the Fire Elemental carries the raid's Replenishment")
+	}
+
+	core.BloodlustAura(&shaman.Character, -1).Activate(sim)
+	if !shaman.HasActiveAuraWithTag(core.BloodlustAuraTag) {
+		t.Fatal("the shaman has no Bloodlust, so the test shows nothing")
+	}
+	if elemental.HasActiveAuraWithTag(core.BloodlustAuraTag) {
+		t.Error("a Fire Elemental out for Bloodlust has it too")
+	}
+}
+
+// npc_pet_shaman_fire_elemental casts off two event timers and nothing else: its first Fire Nova and Fire
+// Blast 5 to 20 s in, then a Nova every 8 to 15 s and a Blast every 4 to 8 s. A Blast breaks a Nova still
+// being cast, about three in ten of them. Over its 2 min that leaves about 6.6 Novas and 18.3 Blasts, and
+// 40 swings between them.
+func TestFireElementalCastsOffItsEventTimers(t *testing.T) {
+	sim := core.NewSim(&proto.RaidSimRequest{
+		Raid: core.SinglePlayerRaidProto(&proto.Player{
+			Race:      proto.Race_RaceTroll,
+			Class:     proto.Class_ClassShaman,
+			Equipment: &proto.EquipmentSpec{},
+			Consumes:  &proto.Consumes{},
+			Spec: &proto.Player_ElementalShaman{ElementalShaman: &proto.ElementalShaman{
+				Options: &proto.ElementalShaman_Options{Totems: &proto.ShamanTotems{UseFireElemental: true}},
+			}},
+			Rotation: core.APLRotationFromJsonString(`{"type": "TypeAPL", "priorityList": []}`),
+		}, nil, nil, nil),
+		Encounter:  core.MakeSingleTargetEncounter(0),
+		SimOptions: &proto.SimOptions{Iterations: 1, IsTest: true, RandomSeed: 101},
+	})
+	shaman := sim.Raid.Parties[0].Players[0].(*ElementalShaman)
+	elemental := shaman.FireElemental
+	target := sim.GetTargetUnit(0)
+
+	var blastAt, novaAt, swingAt []time.Duration
+	blast, nova := elemental.FireBlast.ApplyEffects, elemental.FireNova.ApplyEffects
+	auto := elemental.AutoAttacks.MHAuto()
+	swing := auto.ApplyEffects
+	auto.ApplyEffects = func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+		swingAt = append(swingAt, sim.CurrentTime)
+		swing(sim, target, spell)
+	}
+	elemental.FireBlast.ApplyEffects = func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+		blastAt = append(blastAt, sim.CurrentTime)
+		blast(sim, target, spell)
+	}
+	elemental.FireNova.ApplyEffects = func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+		novaAt = append(novaAt, sim.CurrentTime)
+		nova(sim, target, spell)
+	}
+
+	const lives = 600
+	const update = 100 * time.Millisecond
+	novas, blasts, swings := 0, 0, 0
+	for life := 0; life < lives; life++ {
+		sim.Reseed(int64(1000 + life))
+		sim.Reset()
+		sim.PrePull()
+		blastAt, novaAt, swingAt = blastAt[:0], novaAt[:0], swingAt[:0]
+		elemental.EnableWithTimeout(sim, elemental, 2*time.Minute)
+		for sim.CurrentTime < 125*time.Second && !sim.Step() {
+		}
+		if elemental.IsEnabled() {
+			t.Fatalf("life %d: the elemental is still out at %v", life, sim.CurrentTime)
+		}
+		if got := elemental.FireNova.SpellMetrics[target.UnitIndex].Casts; int(got) != len(novaAt) {
+			t.Fatalf("life %d: %d Novas counted, %d landed", life, got, len(novaAt))
+		}
+		novas += len(novaAt)
+		blasts += len(blastAt)
+		swings += len(swingAt)
+
+		// the first of each at 4.9 s at the earliest, counted from the update before its first one
+		if len(blastAt) == 0 || blastAt[0] < 4900*time.Millisecond || blastAt[0] > 20*time.Second+update {
+			t.Fatalf("life %d: first Fire Blast at %v, want 4.9 to 20 s in", life, blastAt)
+		}
+		for i := 1; i < len(blastAt); i++ {
+			if gap := blastAt[i] - blastAt[i-1]; gap < 4*time.Second || gap > 8*time.Second {
+				t.Fatalf("life %d: Fire Blasts %v apart, want 4 to 8 s", life, gap)
+			}
+		}
+		for i, at := range novaAt {
+			// a Nova lands 2 s after its event, so 6.9 s in at the earliest and 8 s after the last one
+			if at < 6900*time.Millisecond || (i > 0 && at-novaAt[i-1] < 8*time.Second) {
+				t.Fatalf("life %d: Fire Novas landed at %v", life, novaAt)
+			}
+			// no Blast went off while it was being cast, or it would have been broken
+			for _, b := range blastAt {
+				if b > at-2*time.Second && b < at {
+					t.Fatalf("life %d: the Nova landing at %v was being cast through the Blast at %v", life, at, b)
+				}
+			}
+		}
+		// UpdateAI casts what's due ahead of DoMeleeAttackIfReady, so a swing never shares an update with a
+		// Blast or a Nova's start: the cast takes it
+		for _, at := range swingAt {
+			if slices.Contains(blastAt, at) || slices.Contains(novaAt, at+2*time.Second) {
+				t.Fatalf("life %d: a swing at %v, on the update of a cast: Blasts at %v, Novas landed at %v", life, at, blastAt, novaAt)
+			}
+		}
+		sim.Cleanup()
+	}
+
+	// the timers alone give 6.63 Novas and 18.29 Blasts a life, with deviations of 1.5 and 1.1
+	if mean := float64(novas) / lives; mean < 6.3 || mean > 6.95 {
+		t.Errorf("%.2f Fire Novas landed a life, want about 6.63", mean)
+	}
+	if mean := float64(blasts) / lives; mean < 18.05 || mean > 18.55 {
+		t.Errorf("%.2f Fire Blasts a life, want about 18.29", mean)
+	}
+	// every Blast and landed Nova starts the 2 s swing over, a Nova being cast holds it, and a cast on the
+	// update a swing is due takes it: 40.1 swings of the 60 its 2 min have room for, with a deviation of 2.2
+	if mean := float64(swings) / lives; mean < 39.65 || mean > 40.55 {
+		t.Errorf("%.2f swings a life, want about 40.1", mean)
+	}
+}
+
+// An elemental out before the pull has nothing to attack until then, so its event timers count from the
+// pull: nothing cast ahead of it, and the first Fire Blast 5 to 20 s after it.
+func TestFireElementalOutBeforeThePullWaitsForIt(t *testing.T) {
+	sim := core.NewSim(&proto.RaidSimRequest{
+		Raid: core.SinglePlayerRaidProto(&proto.Player{
+			Race:      proto.Race_RaceTroll,
+			Class:     proto.Class_ClassShaman,
+			Equipment: &proto.EquipmentSpec{},
+			Consumes:  &proto.Consumes{},
+			Spec: &proto.Player_ElementalShaman{ElementalShaman: &proto.ElementalShaman{
+				Options: &proto.ElementalShaman_Options{Totems: &proto.ShamanTotems{UseFireElemental: true}},
+			}},
+			Rotation: core.APLRotationFromJsonString(`{"type": "TypeAPL", "prepullActions": [
+				{"action": {"castSpell": {"spellId": {"spellId": 2894}}}, "doAtValue": {"const": {"val": "-10s"}}}
+			], "priorityList": []}`),
+		}, nil, nil, nil),
+		Encounter:  core.MakeSingleTargetEncounter(0),
+		SimOptions: &proto.SimOptions{Iterations: 1, IsTest: true, RandomSeed: 101},
+	})
+	elemental := sim.Raid.Parties[0].Players[0].(*ElementalShaman).FireElemental
+
+	var castAt, blastAt []time.Duration
+	blast, nova := elemental.FireBlast.ApplyEffects, elemental.FireNova.ApplyEffects
+	elemental.FireBlast.ApplyEffects = func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+		castAt, blastAt = append(castAt, sim.CurrentTime), append(blastAt, sim.CurrentTime)
+		blast(sim, target, spell)
+	}
+	elemental.FireNova.ApplyEffects = func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+		castAt = append(castAt, sim.CurrentTime)
+		nova(sim, target, spell)
+	}
+
+	const update = 100 * time.Millisecond
+	for life := 0; life < 100; life++ {
+		sim.Reseed(int64(1000 + life))
+		sim.Reset()
+		sim.PrePull()
+		castAt, blastAt = castAt[:0], blastAt[:0]
+		for sim.CurrentTime < 0 && !sim.Step() {
+		}
+		if !elemental.IsEnabled() {
+			t.Fatalf("life %d: no elemental out at the pull, so the test shows nothing", life)
+		}
+		for sim.CurrentTime < 25*time.Second && !sim.Step() {
+		}
+		// a Nova lands 2 s after its event
+		if len(castAt) > 0 && castAt[0] < 4900*time.Millisecond {
+			t.Fatalf("life %d: a cast landed %v after the pull, want none before 4.9 s", life, castAt[0])
+		}
+		if len(blastAt) == 0 || blastAt[0] > 20*time.Second+update {
+			t.Fatalf("life %d: Fire Blasts at %v, want the first 4.9 to 20 s after the pull", life, blastAt)
+		}
+		sim.Cleanup()
 	}
 }

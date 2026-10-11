@@ -2551,6 +2551,125 @@ SwitchInFrontOfTarget dtps −4.1% (40.8 → 39.2).
   pets' files in class code; `pets.jsonl` and the module's `e2e/petfix_test.go`; their drops and rows.
 - **Goldens:** the pet suites, and the mana users under Replenishment; report each.
 
+#### As built
+
+Stage code, re-measured on `fd12d68cc` against [ac] `3d89793c7` (notes and the live plan in
+`tmp/ec-pet-fix3-code.md`). Verdicts:
+- Fire Elemental AI (fixed): two event timers on its updates (`FireElemental.runEvents`), counted from the update
+  before its first one (`Pet.AIClockStart`); whole ms draws. Neither spell has a GCD, and a script cast starts no
+  creature cooldown (`Creature::AddSpellCooldown` is PetAI's and the pet bar's). Found on re-measure: the AI casts
+  with `CastSpell`, not `DoCast`, so a Fire Blast during a Fire Nova's 2 s cast breaks it
+  (`Unit::SetCurrentCastedSpell`; `Pet.InterruptCast`). A life gives 9.8 Novas started, 6.6 landed, 18.3 Blasts.
+  Fire Blast is 57984.
+- Mirror Image AI (fixed): `MirrorImage.summon`, `engage`, `runEvent`. 1.2 s wait, then `CasterAI`'s opener (either
+  spell, evenly), one event an update, Frostbolt put back 2.5 s and Fire Blast 6.5 s, dead at 29.5 s: 9 Frostbolts
+  of 3 s and 3 or 4 Fire Blasts. No GCD, no cooldown.
+- Serverdata allowances: the four GCD ones and 13339's cooldown went. 12470's cooldown stays and 59637 gains one,
+  both sim 0 with the reason corrected: the DBC recovery time never starts on a script cast.
+- Focus and energy (fixed): `sim/core/focus.go` ticks 24 focus (whole, times Bestial Discipline) every 4 s ahead of
+  the pet's AI and 20 energy every 2 s after it (`EnableCreatureEnergyBar`), on the pet's timers. The ghoul's AI
+  runs on its updates. The strikes replay compares tick and interval (`Unit.FocusRegenTick`), the ghoul's too.
+- MP5 (fixed): two fifths of the whole MP5 in `Pet.CreatureManaRegen`, five second rule or not; core's mana tick
+  skips those pets; a full pool takes no tick.
+- Improved Demonic Tactics (fixed): `sim/warlock/pet.go`. int32(int32(sheet crit %) × 10 a point / 100), spell for
+  spell and melee for melee (the sim gave the spell share to both), reworked every 10 s on the warlock's world
+  ticks from a drawn phase, on the demon at once when it comes.
+- Prepull (fixed): a pet out since before the pull starts its timers at the prepull's start.
+- Guardians (confirmed from SummonProperties.dbc: 209, 687 and 829 are category 1 with types 7, 3 and 2): gargoyle,
+  army and Raise Dead's guardian are `Uncontrollable`. Found on re-measure: Bloodlust is a raid cast
+  (`TARGET_UNIT_CASTER_AREA_RAID`), and the sim gave it to Mirror Images, the Fire Elemental and Bloodworms.
+- Replenishment (fixed): a cast lands on every unit that's out and on mana, pets and guardians with a pet bar
+  included; over ten, the ten lowest (`PowerPctOrderPred`, float32, stable), the rest keeping their aura. No
+  per-source lists. A Spirit Wolf's power is mana with a pool of 0, so it sorts first (`Pet.EmptyManaPool`). The
+  raid's buff only goes on a unit with mana. The potion, rune and gem heuristics add
+  `Unit.ReplenishmentManaPerSecond`.
+- Health (fixed): `Pet.SetCreateHealth`, `pet_levelstats` health and `Guardian::UpdateMaxHealth`'s per-stamina
+  (Imp 8.4, Water Elemental 7.5, Succubus 9.1, Felhunter 9.5, Felguard 11). `petsWithoutHealth` went; the replay
+  takes the sim's Blood Pact off an Imp whose record has none.
+- Reset (fixed): `Pet.forgetSummon` ahead of the reset. The Shadowfiend had it as the Spirit Wolves did.
+- `petCadenceAllowed` went: the pets' `timing` records compare the GCD.
+
+Outside the owned paths, in place: `mana.go` (the tick's pet list), `raid.go` (Replenishment's fields and reset
+call), `buffs.go` (the raid buff's mana check, Bloodlust's guardian check), `tools/simval/damage.go` (`petRegen`).
+
+Tests: `sim/core/pet_regen_test.go`, five in `replenishment_test.go`, `TestFireElementalCastsOffItsEventTimers`,
+`TestMirrorImageCastsOffItsEventTimers`, `TestImprovedDemonicTacticsTicksEveryTenSeconds`, `TestDemonHealth`,
+`TestDeathKnightGuardiansHaveNoPetBar`. Replays all pass (`simval.jsonl` 1114/1114).
+
+e2e (run in stage live): `TestPetfixRecords` runs the Shadowfiend's `melee` again under `.aura 63619` (`petsKey.under`
+keeps the two apart; `petsProbes` gains it with the capture); `TestPetfixFireElementalCasts` reads an elemental's
+casts and swings off the packets and fails a life that breaks the timers.
+
+Goldens (`dock.sh delta`), 32 of 37 move, Average-Default:
+- Elemental +0.56% (Convection): swings 39.3 → 50.0, Novas 15 → 6.6, Blasts 15 → 18.3; single-target rows −0.06
+  to +3.7%, multi-target −10 to −17.8%. Enhancement +0.56%, same rows.
+- Mages: Arcane −0.14%, Fire +0.04%, Frost −0.22%, FrostFire −0.05% (the images' timers and no Bloodlust; Frost's
+  short rows to −2.6%).
+- BM +0.21% (focus in 24s; Kill Command up 34.7 s for 31.3), MM and SV −0.002%.
+- Demonology +0.002%, its Improved Demonic Tactics row −0.21%; Affliction and Destruction +0.001%.
+- Death knights +0.003 to +0.007%, Shadow −0.002%.
+- Protection paladin rows within ±0.09% (Dark Rune 0.34 → 0.28 casts), Retribution TPS, one Disc and one
+  Restoration shaman row: the mana heuristics.
+- Only `aura|57669` rows gone: Balance, Holy, Smite, the three rogue and three warrior suites.
+
+Follow-ups: summons with a full mana pool the sim gives none (treants, Shadowfiend, Infernal) can take one of a
+cast's ten places; the image's cast landing on the update it dies on is lost; the elemental's Fire Nova ignores
+the haste auras that reach it; `gen_serverdata` and the audit CSVs still name 13339.
+
+Stage live, on the server at [ac] `3d89793c7` (notes: `tmp/ec-pet-fix3-live.md`):
+- `pets.jsonl` recut from `TestPetfixRecords`, 21 records; `petsProbes` gains the fiend's `melee` under 63619, and
+  `TestPetsReplayCatchesAWrongRecord` a Shadowcrawl that adds nothing and one that counts twice.
+- Shadowcrawl (confirmed, sim unchanged): the fiend's plain swing is 510.7 bare and 586.8 under it, 1.149 times, so
+  the 15% applies once.
+- Creature roll (fixed, found on the record): `Unit::CalculateDamage` rolls a whole number between the two truncated
+  ends; the sim rolled a float and truncated after the percent, 0.4 a swing high bare and 1.1 under Shadowcrawl
+  (`rollCreatureRangeOffPhysical`, `TestPetSwingOffPhysicalRollsAWholeNumber`). Fiend and Fire Elemental only.
+- Fire Elemental (confirmed, sim unchanged), 6 lives of `TestPetfixFireElementalCasts`, a life: 9.67 Novas started
+  (sim 9.82), 6.17 landed (6.63), 3.33 broken (3.06; 34% of the starts for 31%), 17.5 Blasts (18.29), 39.67 swings
+  (41.09, now held by `TestFireElementalCastsOffItsEventTimers`). All 99 Blast gaps are 4.05 to 8.05 s and all 52
+  Nova gaps 8.1 to 15.02 s, 21% of them under the DBC's 9.5 s cooldown; a Nova breaks when the Blast comes on its
+  own update too. All 114 swings come 1.94 to 2.13 s after the swing, Blast or landed Nova before them.
+- e2e fixes: `.learn` fails with the dummy selected, and a GM's elemental never attacks (`.gm off`); the test now
+  logs and checks each swing's wait, and holds the swings a life to the sim's.
+- Goldens on top of stage code (`dock.sh delta`, still 32 of 37): the roll moves only Shadow (−0.002% to −0.003%),
+  Elemental (+0.562% to +0.561%) and Enhancement (+0.561% to +0.559%), the fiend's and the elemental's swings.
+
+Follow-up: the live map update runs about 102.7 ms, so an unhasted 2 s creature swing takes 20 updates, 2055 ms (63
+swing to swing gaps, 1994 to 2125), where the sim's exact 100 ms grid gives 2000: about one swing a life more in
+the sim. Players' and physical pets' white swings roll whole numbers on the server too (`attack.go`).
+
+Review and repair, on the same server build (logs: `tmp/e2e_images2.log`, `e2e_images3.log`, `e2e_casts5.log`):
+- Fire Elemental swing order (fixed): `UpdateAI` runs its events ahead of `DoMeleeAttackIfReady`, so a cast on the
+  update a swing is due takes it, a Blast by restarting the timer, a Nova by holding it. The swing goes through
+  `ReplaceMHSwing`, and `ExecuteCustomRotation` runs the due events first. 40.1 swings a life for 41.1; live 40.2
+  over 9 lives, with no swing on a cast's update. This replaces the 41.09 above.
+- Mirror Image opener (fixed): images summoned into a fight are engaged in `InitializeAI`, as the target's threat
+  list takes them in, with no victim for `CasterAI`'s opener: a Frostbolt an update after the wait and 3 Fire
+  Blasts, never 4 (`engagedAtSummon`, a summon after time 0). A prepull summon keeps the opener.
+- e2e: `TestPetfixMirrorImageCasts` watches the images' casts, three summons into a fight and three 3 s ahead of the
+  pull. Two runs: into a fight 0 of 14 images opened on a Fire Blast, each starting a Frostbolt 1.26 to 1.32 s in,
+  with 9 landed and 3 Fire Blasts; ahead of the pull 7 of 11 opened on a Fire Blast, at the pull, with a Frostbolt
+  an update later, and a Frostbolt opener's first Fire Blast 9 s on. One image in three often casts nothing at the
+  test spot. `TestPetfixFireElementalCasts` fails a run with a swing on a cast's update.
+- Goldens on top of stage live (`dock.sh delta`, still 32 of 37; the other 26 unchanged): Elemental +0.405%
+  (swings 39.3 → 48.8), Enhancement +0.385%; Arcane −0.155%, Fire −0.012%, Frost −0.246%, FrostFire −0.079% (the
+  images' 59637 casts 6.98 → 6.50: the second summon of a fight has no opener).
+
+Follow-ups: a 4th Fire Blast after a prepull opener lands 0.1 s before the images die in the sim, and wouldn't on
+the live 102.7 ms update; the Bloodworm's health takes 1 a point of stamina (`Guardian::UpdateMaxHealth`), the sim
+10, and nothing reads it.
+
+Review round 2 (no live run, goldens unchanged):
+- Prepull Fire Elemental (fixed): its event timers counted from the summon, so a totem dropped in the prepull
+  cast before the pull. `FireElemental.enable` engages at the pull (`TestFireElementalOutBeforeThePullWaitsForIt`).
+
+Follow-ups:
+- A creature's swing after its hardcast lands comes one update early on the server: the cast lands in the event
+  pass, ahead of `Unit::Update`'s timer decrement. 22 recorded swings after a landed Nova waited 1968 ms on
+  average, 2057 after a swing or Blast; core's `resetSwingTimers` gives the full 2 s (about 0.3 swings a life).
+- Mirror Images summoned at exactly 0 s count as out before the fight (`engagedAtSummon`).
+- Whether and when an elemental summoned with nothing selected joins the fight is unmeasured.
+
 ### EC-CLASS-FIX3 (Z7; changes goldens; stages: melee, casters, live)
 
 - Item damage spells carry no server spell id (`sim/common/wotlk/damage_procs.go` and the other item damage

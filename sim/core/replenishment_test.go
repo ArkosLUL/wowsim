@@ -1,9 +1,11 @@
 package core
 
 import (
+	"slices"
 	"testing"
 	"time"
 
+	"github.com/wowsims/wotlk/sim/core/proto"
 	"github.com/wowsims/wotlk/sim/core/stats"
 )
 
@@ -466,8 +468,8 @@ func TestReplenishmentWaitsForThePetAgainNextFight(t *testing.T) {
 	}
 }
 
-// A proc's aura still goes on a pet that's away, without a tick queued behind it.
-func TestReplenishmentProcOnAPetThatIsAwayQueuesNothing(t *testing.T) {
+// A proc's cast doesn't land on a pet that's away.
+func TestReplenishmentProcSkipsAPetThatIsAway(t *testing.T) {
 	var pet *timingTestPet
 	sim, a, src := newReplenishmentTickTestSim(t, 0, 0, 20000, false, func(a *timingTestAgent) {
 		pet = &timingTestPet{Pet: NewPet("Pet", &a.Character, stats.Stats{}, func(stats.Stats) stats.Stats { return stats.Stats{} }, true, false)}
@@ -480,8 +482,9 @@ func TestReplenishmentProcOnAPetThatIsAwayQueuesNothing(t *testing.T) {
 	replenishmentProc(sim, src, ms(500))
 
 	runUntil(sim, ms(4000))
-	if r := pet.replenishment; r.tickAction != nil || r.metrics.Events != 0 {
-		t.Errorf("the pet: a tick queued %v, %d ticks, want neither", r.tickAction != nil, r.metrics.Events)
+	if r := pet.replenishment; r.aura.IsActive() || r.tickAction != nil || r.metrics.Events != 0 {
+		t.Errorf("the pet: aura up %v, a tick queued %v, %d ticks, want none of it", r.aura.IsActive(), r.tickAction != nil,
+			r.metrics.Events)
 	}
 	// the cast, then three of the caster's own ticks
 	if got, want := a.replenishment.metrics.threat, 1+3*0.5*40; !threatNear(got, want) {
@@ -509,5 +512,179 @@ func TestReplenishmentOnAPetMakesTheCastersThreat(t *testing.T) {
 	// one cast, split over both, then half of each one's tick
 	if got, want := a.replenishment.metrics.threat, 1+0.5*40+0.5*10; !threatNear(got, want) {
 		t.Errorf("the caster: threat %v, want %v", got, want)
+	}
+}
+
+// newReplenishmentRaidTestSim gives the caster, at half of 20000 mana, pets that are out from the start: mana
+// of them with a pool of 5000 each, the i-th at i+1 hundredths of it, and whatever more adds.
+func newReplenishmentRaidTestSim(t *testing.T, mana int, more func(a *timingTestAgent, newPet func(name string, out bool) *timingTestPet)) (
+	*Simulation, *timingTestAgent, ReplenishmentSource, []*timingTestPet) {
+	t.Helper()
+	var pets, extra []*timingTestPet
+	sim, a, src := newReplenishmentTickTestSim(t, 0, 0, 20000, false, func(a *timingTestAgent) {
+		newPet := func(name string, out bool) *timingTestPet {
+			pet := &timingTestPet{Pet: NewPet(name, &a.Character, stats.Stats{}, func(stats.Stats) stats.Stats { return stats.Stats{} }, out, true)}
+			a.AddPet(pet)
+			return pet
+		}
+		for i := range mana {
+			pet := newPet("Mana "+string(rune('A'+i)), true)
+			pet.EnableManaBarWithModifier(1)
+			pets = append(pets, pet)
+		}
+		if more != nil {
+			more(a, func(name string, out bool) *timingTestPet {
+				pet := newPet(name, out)
+				extra = append(extra, pet)
+				return pet
+			})
+		}
+	})
+	for i, pet := range pets {
+		pet.stats[stats.Mana] = 5000
+		pet.currentMana = float64(50 * (i + 1))
+	}
+	for _, pet := range extra {
+		if pet.HasManaBar() {
+			pet.stats[stats.Mana] = 5000
+			pet.currentMana = 1
+		}
+	}
+	return sim, a, src, pets
+}
+
+func replenishmentUp(units ...*Unit) (up []string) {
+	for _, unit := range units {
+		if unit.ReplenishmentAura.IsActive() {
+			up = append(up, unit.Label)
+		}
+	}
+	return up
+}
+
+// With more than ten on mana a cast lands on the ten lowest for their pool, and the others keep the aura
+// they had (spell_gen_replenishment).
+func TestReplenishmentLandsOnTheTenLowestOnMana(t *testing.T) {
+	sim, a, src, pets := newReplenishmentRaidTestSim(t, 12, nil)
+	units := []*Unit{&a.Unit}
+	for _, pet := range pets {
+		units = append(units, &pet.Unit)
+	}
+	label := func(from, to int) (labels []string) {
+		for _, pet := range pets[from:to] {
+			labels = append(labels, pet.Label)
+		}
+		return labels
+	}
+
+	replenishmentProc(sim, src, ms(500))
+	runUntil(sim, ms(600))
+	if got, want := replenishmentUp(units...), label(0, 10); !slices.Equal(got, want) {
+		t.Fatalf("the first cast landed on %v, want the ten lowest %v", got, want)
+	}
+
+	// the lowest fills up, so the next cast takes the eleventh in its place
+	pets[0].currentMana = pets[0].MaxMana()
+	replenishmentProc(sim, src, ms(3000))
+	runUntil(sim, ms(3100))
+	if got, want := replenishmentUp(units...), label(0, 11); !slices.Equal(got, want) {
+		t.Fatalf("after the second cast %v have the aura, want %v", got, want)
+	}
+	// the first cast's aura on the one left out runs its 15 s from 0.5 s, the second cast's from 3 s
+	runUntil(sim, ms(15600))
+	if got, want := replenishmentUp(units...), label(1, 11); !slices.Equal(got, want) {
+		t.Errorf("at 15.6 s %v have the aura, want %v", got, want)
+	}
+}
+
+// A cast counts neither a pet that's away nor a guardian without a pet bar, so they take no place from the
+// ten.
+func TestReplenishmentSkipsAPetThatIsAwayAndAGuardianWithoutAPetBar(t *testing.T) {
+	var away, uncontrollable *timingTestPet
+	sim, a, src, pets := newReplenishmentRaidTestSim(t, 9, func(a *timingTestAgent, newPet func(string, bool) *timingTestPet) {
+		away = newPet("Away", false)
+		away.EnableManaBarWithModifier(1)
+		uncontrollable = newPet("Uncontrollable", true)
+		uncontrollable.EnableManaBarWithModifier(1)
+		uncontrollable.Uncontrollable = true
+	})
+
+	replenishmentProc(sim, src, ms(500))
+	runUntil(sim, ms(600))
+	if !a.ReplenishmentAura.IsActive() {
+		t.Error("the caster, tenth lowest of the ten a cast can take, has no aura")
+	}
+	for _, pet := range pets {
+		if !pet.ReplenishmentAura.IsActive() {
+			t.Errorf("%s has no aura", pet.Label)
+		}
+	}
+	if away.ReplenishmentAura.IsActive() {
+		t.Error("the cast landed on the pet that's away")
+	}
+	if uncontrollable.ReplenishmentAura != nil {
+		t.Error("a guardian without a pet bar has a Replenishment aura")
+	}
+}
+
+// A summon whose power is mana with nothing in the pool is a target like any other, and the lowest of them.
+func TestReplenishmentCountsAnEmptyManaPool(t *testing.T) {
+	sim, a, src, pets := newReplenishmentRaidTestSim(t, 9, func(a *timingTestAgent, newPet func(string, bool) *timingTestPet) {
+		newPet("Wolf 1", true).EmptyManaPool = true
+		newPet("Wolf 2", true).EmptyManaPool = true
+	})
+	units := []*Unit{&a.Unit}
+	var want []string
+	for i, pet := range pets {
+		units = append(units, &pet.Unit)
+		if i < 8 {
+			want = append(want, pet.Label)
+		}
+	}
+
+	replenishmentProc(sim, src, ms(500))
+	runUntil(sim, ms(600))
+	if got := replenishmentUp(units...); !slices.Equal(got, want) {
+		t.Errorf("with two empty pools in the raid the cast landed on %v, want the eight lowest %v", got, want)
+	}
+}
+
+// The raid's buff only goes on a unit with mana.
+func TestReplenishmentFromTheRaidNeedsMana(t *testing.T) {
+	for _, mana := range []bool{true, false} {
+		timingTestConstruct = func(a *timingTestAgent) {
+			if mana {
+				a.EnableManaBar()
+			}
+		}
+		_, a := newTickTestSim(t, 0, 0, func(a *timingTestAgent) {
+			applyBuffEffects(a, &proto.RaidBuffs{}, &proto.PartyBuffs{}, &proto.IndividualBuffs{VampiricTouch: true})
+		})
+		timingTestConstruct = nil
+		if got := a.ReplenishmentAura.IsActive(); got != mana {
+			t.Errorf("a unit with mana %v: the raid's aura is up %v", mana, got)
+		}
+	}
+}
+
+// What the mana potion and gem heuristics count on from Replenishment: the tick a second while it's up.
+func TestReplenishmentManaPerSecond(t *testing.T) {
+	sim, a, src := newReplenishmentTestSim(t, 20000, false)
+	if got := a.ReplenishmentManaPerSecond(); got != 0 {
+		t.Errorf("%v a second without the aura, want 0", got)
+	}
+	replenishmentProc(sim, src, ms(500))
+	runUntil(sim, ms(600))
+	if got := a.ReplenishmentManaPerSecond(); got != 40 {
+		t.Errorf("%v a second under a proc's aura at 20000 mana, want 40", got)
+	}
+	runUntil(sim, ms(16000))
+	if got := a.ReplenishmentManaPerSecond(); got != 0 {
+		t.Errorf("%v a second once the aura ran out, want 0", got)
+	}
+
+	_, raid, _ := newReplenishmentTestSim(t, 20000, true)
+	if got := raid.ReplenishmentManaPerSecond(); got != 40 {
+		t.Errorf("%v a second under the raid's buff at 20000 mana, want 40", got)
 	}
 }

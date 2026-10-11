@@ -9,7 +9,6 @@ func init() {
 			Why: "Call of the Elements (66842) drops it on its own GCD, as the server triggers it without one. " +
 				"Cast alone it takes 1 s, so the two paths need splitting first"}
 	}
-	fireElementalAI := "the Greater Fire Elemental's AI picks its spells, which the server scripts"
 	flametongueScript := "spell_sha_flametongue_weapon casts 10444 for the passive rank's effect value / 100 (58792's 6850, " +
 		"58791's 6000) per second of weapon speed, plus 0.03811 spell power per second"
 	flametongue := func(field core.ServerField, sim, server float64) core.ServerConflictAllowance {
@@ -32,10 +31,9 @@ func init() {
 		totem(58757), // Healing Stream
 		totem(58774), // Mana Spring
 
-		core.ServerConflictAllowance{Spell: core.ActionID{SpellID: 12470}, Field: core.ServerGCD, Sim: 1500, Server: 0, KeepSim: true, Why: fireElementalAI},
-		core.ServerConflictAllowance{Spell: core.ActionID{SpellID: 12470}, Field: core.ServerCD, Sim: 1000, Server: 9500, KeepSim: true, Why: fireElementalAI},
-		core.ServerConflictAllowance{Spell: core.ActionID{SpellID: 13339}, Field: core.ServerGCD, Sim: 1500, Server: 0, KeepSim: true, Why: fireElementalAI},
-		core.ServerConflictAllowance{Spell: core.ActionID{SpellID: 13339}, Field: core.ServerCD, Sim: 1000, Server: 5000, KeepSim: true, Why: fireElementalAI},
+		core.ServerConflictAllowance{Spell: core.ActionID{SpellID: 12470}, Field: core.ServerCD, Sim: 0, Server: 9500, KeepSim: true,
+			Why: "a creature only starts a cooldown from a pet bar or PetAI cast (Creature::AddSpellCooldown), and " +
+				"npc_pet_shaman_fire_elemental casts off its own event timers"},
 
 		core.ServerConflictAllowance{Spell: core.ActionID{SpellID: 2825}, Field: core.ServerCD, Sim: 600000, Server: 300000, KeepSim: true,
 			Why: "Sated (57724) lasts 10 min, so the raid can't take Bloodlust sooner"},

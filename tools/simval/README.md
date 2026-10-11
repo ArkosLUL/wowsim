@@ -111,8 +111,8 @@ check in `knownStrikesMismatches` is let through; an entry nothing fails is stal
   as above with the pet's power pinned, or as a strike; a direct effect the sim deals from its aura's ticks (the
   Infernal's Immolation) is one forced tick. `info`: base stats vs `createStats`, stats, attack and spell
   power, armor, spell crit vs `baseSpellCrit` (a sim pet with mana), melee and spell hit, expertise, the main
-  hand's weapon range and attack time (`not compared` for `petsThatNeverSwing`), one regen tick (focus off core's
-  unexported rate; mana at the record's intellect and spirit).
+  hand's weapon range and attack time (`not compared` for `petsThatNeverSwing`), one regen tick (focus, and the
+  energy the sim keeps as focus, by amount and interval; mana at the record's intellect and spirit).
 - Buffed pet `info` (its owner carries the pet's `strikesPetBuffs`; the Infernal's: Strength of Earth, Devotion Aura,
   Flametongue Totem, Battle Shout): what they added since the pet's last bare `info` against what the same raid buffs
   add to the sim pet, within 2 per stat. Both sim pets scale off the bare record's owner: the Infernal's scaling auras
@@ -122,17 +122,17 @@ check in `knownStrikesMismatches` is let through; an entry nothing fails is stal
 
 `TestPetsRecords` replays `pets.jsonl`, `TestPetfixRecords`' capture (run by name, streamed like the others): the
 Greater Fire Elemental, a Mirror Image, an Imp, a Water Elemental and a Shadowfiend. `TestPetsFixtureHasEveryProbe` lists the
-probes (`petsProbes`). Per record (`pets.go`), on the pet built as for strikes:
-- `info`: the strikes checks, plus max health and max mana (`petsWithoutHealth`: `not compared`, stale once the
-  sim's matches).
+probes (`petsProbes`), each keyed by the `petsProbeAuras` aura on the pet too (a second `melee` under
+Shadowcrawl). Per record (`pets.go`), on the pet built as for strikes:
+- `info`: the strikes checks, plus max health (without the sim's Blood Pact when the record's Imp has none) and
+  max mana.
 - `damage`: as a strikes pet's. The sim deals every Mirror Image's hit as one, each image's whole on its own,
   so the record's amounts compare with one image's.
 - `spell`: the sim spell's crit chance and miss against the dummy vs the derived table, and the server's rolled
   crits vs the sim's chance.
 - `melee`: the pet's white table vs the derived one (with the record's facing), rolled crits, the mean plain swing
   before block and resists (weapon pinned to each end, within 5 standard errors + 2), and the resisted share.
-- `timing`: cast speed, cast time, cost. A creature's record has no cooldown; the GCD is `not compared` for
-  `petCadenceAllowed`, whose sim GCD stands in for the AI's timers.
+- `timing`: cast speed, cast time, cost, GCD. A creature's record has no cooldown.
 
 ## Timing probe
 

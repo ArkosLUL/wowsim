@@ -2,6 +2,7 @@ package mage
 
 import (
 	"testing"
+	"time"
 
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
@@ -53,7 +54,7 @@ func TestMirrorImageStats(t *testing.T) {
 }
 
 // A Mirror Image has no pet bar (SummonProperties 1021), so a raid cast skips it (Spell.cpp's
-// TARGET_CHECK_RAID): the raid's Replenishment never reaches it.
+// TARGET_CHECK_RAID): neither the raid's Replenishment nor Bloodlust reaches it.
 func TestMirrorImageTakesNoRaidCast(t *testing.T) {
 	player := procMage("", "p5_bis_arcane", `{"type": "TypeAPL", "priorityList": []}`, PlayerOptionsArcane)
 	player.Buffs = core.FullIndividualBuffs
@@ -71,5 +72,100 @@ func TestMirrorImageTakesNoRaidCast(t *testing.T) {
 	image.Enable(sim, image)
 	if image.ReplenishmentAura != nil {
 		t.Error("a Mirror Image carries the raid's Replenishment")
+	}
+
+	core.BloodlustAura(&mage.Character, -1).Activate(sim)
+	if !mage.HasActiveAuraWithTag(core.BloodlustAuraTag) {
+		t.Fatal("the mage has no Bloodlust, so the test shows nothing")
+	}
+	if image.HasActiveAuraWithTag(core.BloodlustAuraTag) {
+		t.Error("a Mirror Image out for Bloodlust has it too")
+	}
+}
+
+// npc_pet_mage_mirror_image holds an image 1.2 s, then runs one event an update: Frostbolt put back 2.5 s and
+// Fire Blast 6.5 s as each is cast, nothing while a cast is going. Its 29.5 s leave room for 9 Frostbolts of
+// 3 s and 3 Fire Blasts. Images out before the mage fights open with Frostbolt or Fire Blast as CasterAI
+// picks, and a Fire Blast opener makes 4. Images that come into a fight were engaged at the summon with
+// nothing to open on (the target's threat list takes them in InitializeAI), so they start with a Frostbolt
+// an update after the 1.2 s.
+func TestMirrorImageCastsOffItsEventTimers(t *testing.T) {
+	sim, mage := newProcSim(t, procMage("", "p5_bis_arcane", `{"type": "TypeAPL", "priorityList": []}`, PlayerOptionsArcane))
+	image := mage.mirrorImage
+	target := sim.GetTargetUnit(0)
+	if cast := image.Frostbolt.DefaultCast; cast.CastTime != 3*time.Second || cast.GCD != 0 || image.Fireblast.DefaultCast.GCD != 0 {
+		t.Fatalf("Frostbolt takes %v with a GCD of %v, Fire Blast has one of %v: want 3 s and none", cast.CastTime, cast.GCD,
+			image.Fireblast.DefaultCast.GCD)
+	}
+
+	var first time.Duration
+	var blastFirst bool
+	record := func(spell *core.Spell, blast bool) {
+		effects := spell.ApplyEffects
+		spell.ApplyEffects = func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+			if first == 0 {
+				first, blastFirst = sim.CurrentTime, blast
+			}
+			effects(sim, target, spell)
+		}
+	}
+	record(image.Frostbolt, false)
+	record(image.Fireblast, true)
+
+	for _, tc := range []struct {
+		name     string
+		summonAt time.Duration
+		opens    bool
+	}{
+		{"out before the fight", 0, true},
+		{"summoned into a fight", 2 * time.Second, false},
+	} {
+		openers := map[bool]int{}
+		for life := 0; life < 40; life++ {
+			// newProcSim hands the sim over reset
+			sim.Cleanup()
+			sim.Reseed(int64(1000 + life))
+			sim.Reset()
+			sim.PrePull()
+			for sim.CurrentTime < tc.summonAt && !sim.Step() {
+			}
+			summoned := sim.CurrentTime
+			first = 0
+			image.summon(sim)
+			for image.IsEnabled() && !sim.Step() {
+			}
+			if lived := sim.CurrentTime - summoned; lived <= 29400*time.Millisecond || lived > 29500*time.Millisecond {
+				t.Fatalf("%s, life %d: the images lasted %v, want 29.5 s less the wait for their first update", tc.name, life, lived)
+			}
+
+			bolts := image.Frostbolt.SpellMetrics[target.UnitIndex].Casts
+			blasts := image.Fireblast.SpellMetrics[target.UnitIndex].Casts
+			wantBlasts := int32(3)
+			at := first - summoned
+			switch {
+			case blastFirst && !tc.opens:
+				t.Fatalf("%s, life %d: opened with Fire Blast %v in, want no opener", tc.name, life, at)
+			case blastFirst:
+				wantBlasts = 4
+				// its opener goes off as it attacks, 1.2 s in
+				if at <= 1100*time.Millisecond || at > 1200*time.Millisecond {
+					t.Fatalf("%s, life %d: opened with Fire Blast %v in, want 1.2 s less the wait", tc.name, life, at)
+				}
+			case !tc.opens:
+				// the update that ends the wait only picks the target, so its 3 s start on the next
+				if at <= 4200*time.Millisecond || at > 4300*time.Millisecond {
+					t.Fatalf("%s, life %d: the first Frostbolt landed %v in, want 4.3 s less the wait", tc.name, life, at)
+				}
+			}
+			if bolts != 9 || blasts != wantBlasts {
+				t.Fatalf("%s, life %d, Fire Blast first %v: %d Frostbolts and %d Fire Blasts, want 9 and %d", tc.name, life, blastFirst,
+					bolts, blasts, wantBlasts)
+			}
+			openers[blastFirst]++
+		}
+		if tc.opens && (openers[true] < 8 || openers[false] < 8) {
+			t.Errorf("%s: of 40 summons %d opened with Fire Blast and %d with Frostbolt, want about half each", tc.name, openers[true],
+				openers[false])
+		}
 	}
 }

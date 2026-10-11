@@ -220,36 +220,78 @@ func (r *replenishment) countTick() {
 	}
 }
 
+// ReplenishmentManaPerSecond is what the unit's Replenishment gives it a second right now.
+func (unit *Unit) ReplenishmentManaPerSecond() float64 {
+	r := unit.replenishment
+	if r == nil || r.metrics == nil || !r.aura.IsActive() || !r.manaIsCurrent() {
+		return 0
+	}
+	amount := r.amount
+	if r.caster == nil {
+		amount = r.scriptedAmount()
+	}
+	return amount / replenishmentTickPeriod.Seconds()
+}
+
+// replenishmentMaxTargets is spell_gen_replenishment's cap.
+const replenishmentMaxTargets = 10
+
+// takesReplenishment is whether a cast counts the unit right now: out, and on mana
+// (spell_gen_replenishment drops every other power before it counts).
+func takesReplenishment(unit *Unit) bool {
+	if !unit.enabled {
+		return false
+	}
+	if r := unit.replenishment; r != nil {
+		return r.manaIsCurrent()
+	}
+	return true
+}
+
+// replenishmentOrder is PowerPctOrderPred's key: whole mana over the whole pool in float32, 0 without
+// a pool.
+func replenishmentOrder(unit *Unit) float32 {
+	if !unit.HasManaBar() {
+		return 0
+	}
+	pool := float32(math.Floor(unit.MaxMana()))
+	if pool <= 0 {
+		return 0
+	}
+	return float32(math.Floor(unit.CurrentMana())) / pool
+}
+
 type ReplenishmentSource int
 
 // Returns a new source whose procs give the Replenishment buff to 10 party/raid members, cast by caster.
 func (raid *Raid) NewReplenishmentSource(caster *Unit, _ ActionID) ReplenishmentSource {
-	newReplSource := ReplenishmentSource(len(raid.curReplenishmentUnits))
-	raid.curReplenishmentUnits = append(raid.curReplenishmentUnits, []*Unit{})
+	newReplSource := ReplenishmentSource(len(raid.replenishmentCasts))
 	raid.replenishmentCasts = append(raid.replenishmentCasts, caster.NewCastThreat(replenishmentActionID.SpellID))
 
 	if raid.replenishmentUnits == nil {
-		// Get the list of all eligible units (party/raid members + their pets, but no guardians).
-		var manaUsers []*Unit
+		// TARGET_UNIT_CASTER_AREA_RAID: the raid's players on mana and what they control. Pets and the
+		// guardians with a pet bar count, the other guardians don't (TARGET_CHECK_RAID).
+		var units []*Unit
 		for _, party := range raid.Parties {
 			for _, player := range party.Players {
 				character := player.GetCharacter()
 				if character.HasManaBar() {
-					manaUsers = append(manaUsers, &character.Unit)
+					units = append(units, &character.Unit)
 				}
 			}
 			for _, petAgent := range party.Pets {
 				pet := petAgent.GetPet()
-				if pet.HasManaBar() && !pet.IsGuardian() {
-					manaUsers = append(manaUsers, &pet.Unit)
+				if (pet.HasManaBar() || pet.EmptyManaPool) && !pet.Uncontrollable {
+					units = append(units, &pet.Unit)
 				}
 			}
 		}
-		raid.replenishmentUnits = manaUsers
+		raid.replenishmentUnits = units
 
-		// Initialize replenishment aura for all applicable units.
-		for _, unit := range raid.replenishmentUnits {
-			replenishmentAura(unit)
+		for _, unit := range units {
+			if unit.HasManaBar() {
+				replenishmentAura(unit)
+			}
 		}
 	}
 
@@ -259,44 +301,34 @@ func (raid *Raid) NewReplenishmentSource(caster *Unit, _ ActionID) Replenishment
 	return newReplSource
 }
 
-func (raid *Raid) resetReplenishment(_ *Simulation) {
-	raid.leftoverReplenishmentUnits = raid.replenishmentUnits
-	for i := 0; i < len(raid.curReplenishmentUnits); i++ {
-		raid.curReplenishmentUnits[i] = nil
-	}
-}
-
+// ProcReplenishment is a cast of 57669. It lands on every raid unit on mana, or with more than ten of
+// them on the ten with the least mana left for their pool (spell_gen_replenishment). The others keep
+// whatever aura they have.
 func (raid *Raid) ProcReplenishment(sim *Simulation, src ReplenishmentSource) {
 	cast := raid.replenishmentCasts[src]
-	landed := false
 
-	// If the raid is fully covered by one or more replenishment sources, we can
-	// skip the mana sorting.
-	if len(raid.curReplenishmentUnits)*10 >= len(raid.replenishmentUnits) {
-		if len(raid.curReplenishmentUnits[src]) == 0 {
-			if len(raid.leftoverReplenishmentUnits) > 10 {
-				raid.curReplenishmentUnits[src] = raid.leftoverReplenishmentUnits[:10]
-				raid.leftoverReplenishmentUnits = raid.leftoverReplenishmentUnits[10:]
-			} else {
-				raid.curReplenishmentUnits[src] = raid.leftoverReplenishmentUnits
-				raid.leftoverReplenishmentUnits = nil
-			}
+	picks := raid.replenishmentPicks[:0]
+	for _, unit := range raid.replenishmentUnits {
+		if takesReplenishment(unit) {
+			picks = append(picks, unit)
 		}
-		for _, unit := range raid.curReplenishmentUnits[src] {
-			landed = unit.replenishment.apply(sim, cast.unit) || landed
-		}
-	} else {
-		eligible := append(raid.curReplenishmentUnits[src], raid.leftoverReplenishmentUnits...)
-		slices.SortFunc(eligible, func(v1, v2 *Unit) int {
-			return cmp.Compare(v1.CurrentManaPercent(), v2.CurrentManaPercent())
+	}
+	if len(picks) > replenishmentMaxTargets {
+		// std::list::sort is stable: units level on mana keep the order they were found in, the raid's here
+		slices.SortStableFunc(picks, func(a, b *Unit) int {
+			return cmp.Compare(replenishmentOrder(a), replenishmentOrder(b))
 		})
-		raid.curReplenishmentUnits[src] = eligible[:10]
-		raid.leftoverReplenishmentUnits = eligible[10:]
-		for _, unit := range raid.curReplenishmentUnits[src] {
-			landed = unit.replenishment.apply(sim, cast.unit) || landed
-		}
-		for _, unit := range raid.leftoverReplenishmentUnits {
-			unit.ReplenishmentAura.Deactivate(sim)
+		picks = picks[:replenishmentMaxTargets]
+	}
+	raid.replenishmentPicks = picks
+
+	landed := false
+	for _, unit := range picks {
+		if r := unit.replenishment; r != nil {
+			landed = r.apply(sim, cast.unit) || landed
+		} else {
+			// an empty pool takes the aura and nothing from it
+			landed = true
 		}
 	}
 

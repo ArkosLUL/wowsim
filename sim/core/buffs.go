@@ -148,8 +148,9 @@ func applyBuffEffects(agent Agent, raidBuffs *proto.RaidBuffs, partyBuffs *proto
 		})
 	}
 
-	if individualBuffs.VampiricTouch || individualBuffs.HuntingParty || individualBuffs.JudgementsOfTheWise ||
-		individualBuffs.ImprovedSoulLeech || individualBuffs.EnduringWinter {
+	// spell_gen_replenishment only keeps the targets whose power is mana
+	if (individualBuffs.VampiricTouch || individualBuffs.HuntingParty || individualBuffs.JudgementsOfTheWise ||
+		individualBuffs.ImprovedSoulLeech || individualBuffs.EnduringWinter) && character.HasManaBar() {
 		MakePermanent(replenishmentAura(&character.Unit))
 	}
 
@@ -633,8 +634,9 @@ func BloodlustAura(character *Character, actionTag int32) *Aura {
 			character.MultiplyAttackSpeed(sim, 1.3)
 			for _, pet := range character.Pets {
 				// the haste carrier makes an inheriting pet immune to both halves, cast speed included,
-				// guardian or real pet alike (the army is immune by carrying it too, not by id)
-				if pet.IsEnabled() && !pet.inheritsOwnerAttackSpeed() {
+				// guardian or real pet alike (the army is immune by carrying it too, not by id). A raid
+				// cast, so it skips a guardian without a pet bar as well
+				if pet.IsEnabled() && !pet.inheritsOwnerAttackSpeed() && !pet.Uncontrollable {
 					BloodlustAura(&pet.Character, actionTag).Activate(sim)
 				}
 			}
