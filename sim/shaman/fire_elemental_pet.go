@@ -7,11 +7,13 @@ import (
 	"github.com/wowsims/wotlk/sim/core/stats"
 )
 
-// Variables that control the Fire Elemental.
-const (
-	// 7.5 CPM
-	maxFireBlastCasts = 15
-	maxFireNovaCasts  = 15
+// npc_pet_shaman_fire_elemental's event timers, in ms: each spell's first cast after it engages, then
+// the wait from one cast to the next. The AI draws a whole ms anywhere in the range.
+var (
+	fireNovaFirst   = [2]int{5000, 20000}
+	fireNovaRepeat  = [2]int{8000, 15000}
+	fireBlastFirst  = [2]int{5000, 20000}
+	fireBlastRepeat = [2]int{4000, 8000}
 )
 
 type FireElemental struct {
@@ -23,6 +25,13 @@ type FireElemental struct {
 	FireShieldAura *core.Aura
 
 	shamanOwner *Shaman
+
+	// the AI's two events: when each is due, and the update that runs whatever is due by then
+	novaDue, blastDue time.Duration
+	// two events due on one update run in the order of their times, and level in the order they were
+	// scheduled
+	novaScheduled, blastScheduled int
+	aiAction                      *core.PendingAction
 }
 
 func (shaman *Shaman) NewFireElemental(bonusSpellPower float64) *FireElemental {
@@ -46,6 +55,8 @@ func (shaman *Shaman) NewFireElemental(bonusSpellPower float64) *FireElemental {
 			SpellSchool:    core.SpellSchoolFire,
 		},
 		AutoSwingMelee: true,
+		// has a swing ask the AI first: UpdateAI casts what's due ahead of DoMeleeAttackIfReady
+		ReplaceMHSwing: func(_ *core.Simulation, swing *core.Spell) *core.Spell { return swing },
 	})
 	fireElemental.AddStatDependency(stats.Strength, stats.AttackPower, 2)
 
@@ -65,10 +76,28 @@ func (shaman *Shaman) NewFireElemental(bonusSpellPower float64) *FireElemental {
 
 func (fireElemental *FireElemental) enable(sim *core.Simulation) {
 	fireElemental.FireShieldAura.Activate(sim)
+	if sim.CurrentTime >= 0 {
+		fireElemental.engage(sim)
+		return
+	}
+	// out before the pull, it has nothing to attack until then
+	sim.AddPendingAction(&core.PendingAction{
+		NextActionAt: 0,
+		Priority:     core.ActionPriorityPrePull,
+		OnAction: func(sim *core.Simulation) {
+			if fireElemental.IsEnabled() && fireElemental.aiAction == nil {
+				fireElemental.engage(sim)
+			}
+		},
+	})
 }
 
 func (fireElemental *FireElemental) disable(sim *core.Simulation) {
 	fireElemental.FireShieldAura.Deactivate(sim)
+	if fireElemental.aiAction != nil {
+		fireElemental.aiAction.Cancel(sim)
+		fireElemental.aiAction = nil
+	}
 }
 
 func (fireElemental *FireElemental) GetPet() *core.Pet {
@@ -83,52 +112,85 @@ func (fireElemental *FireElemental) Initialize() {
 }
 
 func (fireElemental *FireElemental) Reset(_ *core.Simulation) {
-
+	fireElemental.aiAction = nil
 }
 
+// The AI's events cast for it, so the GCD loop has nothing to do. A swing comes through here before it
+// lands: an event due on its update casts first, and that cast takes the swing, a Fire Blast by starting
+// the timer over, a Fire Nova by holding it until it lands or breaks.
 func (fireElemental *FireElemental) ExecuteCustomRotation(sim *core.Simulation) {
-	/*
-		TODO this is a little dirty, can probably clean this up, the rotation might go through some more overhauls,
-		the random AI is hard to emulate.
-	*/
-	target := fireElemental.CurrentTarget
-	fireBlastCasts := fireElemental.FireBlast.SpellMetrics[0].Casts
-	fireNovaCasts := fireElemental.FireNova.SpellMetrics[0].Casts
-
-	if fireBlastCasts == maxFireBlastCasts && fireNovaCasts == maxFireNovaCasts {
-		return
+	if pa := fireElemental.aiAction; pa != nil && pa.NextActionAt <= sim.CurrentTime {
+		pa.Cancel(sim)
+		fireElemental.runEvents(sim)
 	}
-
-	if fireElemental.FireNova.DefaultCast.Cost > fireElemental.CurrentMana() {
-		return
+	// a Fire Nova being cast lands off the GCD's action, so that one stays where it is
+	if fireElemental.GCD.IsReady(sim) {
+		fireElemental.WaitUntil(sim, core.NeverExpires)
 	}
-
-	random := sim.RandomFloat("Fire Elemental Pet Spell")
-
-	//Melee the other 30%
-	if random >= .65 {
-		if !fireElemental.TryCast(sim, target, fireElemental.FireNova, maxFireNovaCasts) {
-			fireElemental.TryCast(sim, target, fireElemental.FireBlast, maxFireBlastCasts)
-		}
-	} else if random >= .35 {
-		if !fireElemental.TryCast(sim, target, fireElemental.FireBlast, maxFireBlastCasts) {
-			fireElemental.TryCast(sim, target, fireElemental.FireNova, maxFireNovaCasts)
-		}
-	}
-
-	if !fireElemental.GCD.IsReady(sim) {
-		return
-	}
-
-	fireElemental.WaitUntil(sim, sim.CurrentTime+time.Second)
 }
 
-func (fireElemental *FireElemental) TryCast(sim *core.Simulation, target *core.Unit, spell *core.Spell, maxCastCount int32) bool {
-	if maxCastCount == spell.SpellMetrics[0].Casts {
-		return false
-	}
+// engage is the AI's JustEngagedWith, on the elemental's first update: it attacks the shaman's target
+// at once, and schedules its first Fire Nova and Fire Blast.
+func (fireElemental *FireElemental) engage(sim *core.Simulation) {
+	start := fireElemental.AIClockStart(sim)
+	fireElemental.novaScheduled, fireElemental.blastScheduled = 0, 1
+	fireElemental.novaDue = start + fireElemental.eventDelay(sim, fireNovaFirst)
+	fireElemental.blastDue = start + fireElemental.eventDelay(sim, fireBlastFirst)
+	fireElemental.queueEvents(sim)
+}
 
-	return spell.Cast(sim, target)
+func (fireElemental *FireElemental) eventDelay(sim *core.Simulation, ms [2]int) time.Duration {
+	roll := ms[0] + int(sim.RandomFloat("Fire Elemental Event")*float64(ms[1]-ms[0]+1))
+	return time.Duration(min(roll, ms[1])) * time.Millisecond
+}
+
+// queueEvents wakes the AI on the update its next event is due by.
+func (fireElemental *FireElemental) queueEvents(sim *core.Simulation) {
+	fireElemental.aiAction = &core.PendingAction{
+		NextActionAt: sim.NextServerTick(min(fireElemental.novaDue, fireElemental.blastDue)),
+		// a cast landing on this update goes first, as Unit::Update runs before UpdateAI
+		Priority: core.ActionPriorityLow,
+		OnAction: fireElemental.runEvents,
+	}
+	sim.AddPendingAction(fireElemental.aiAction)
+}
+
+// runEvents is the AI's UpdateAI: every event due by now, earliest first. Neither cast is a DoCast, so
+// nothing holds one back while the other is still being cast.
+func (fireElemental *FireElemental) runEvents(sim *core.Simulation) {
+	if !fireElemental.IsEnabled() {
+		return
+	}
+	for {
+		nova, blast := fireElemental.novaDue <= sim.CurrentTime, fireElemental.blastDue <= sim.CurrentTime
+		if nova && blast {
+			if fireElemental.novaDue != fireElemental.blastDue {
+				nova = fireElemental.novaDue < fireElemental.blastDue
+			} else {
+				nova = fireElemental.novaScheduled < fireElemental.blastScheduled
+			}
+			blast = !nova
+		}
+		scheduled := max(fireElemental.novaScheduled, fireElemental.blastScheduled) + 1
+		switch {
+		case nova:
+			fireElemental.FireNova.Cast(sim, fireElemental.CurrentTarget)
+			fireElemental.novaDue = sim.CurrentTime + fireElemental.eventDelay(sim, fireNovaRepeat)
+			fireElemental.novaScheduled = scheduled
+			continue
+		case blast:
+			// a Fire Nova still being cast is broken off for it, if the elemental can pay for the blast
+			if fireElemental.CurrentMana() >= fireElemental.FireBlast.DefaultCast.Cost {
+				fireElemental.InterruptCast(sim, fireElemental.FireNova)
+			}
+			fireElemental.FireBlast.Cast(sim, fireElemental.CurrentTarget)
+			fireElemental.blastDue = sim.CurrentTime + fireElemental.eventDelay(sim, fireBlastRepeat)
+			fireElemental.blastScheduled = scheduled
+			continue
+		}
+		break
+	}
+	fireElemental.queueEvents(sim)
 }
 
 // pet_levelstats for 15438 at 80, and 2 * Str - 20 attack power

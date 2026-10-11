@@ -560,7 +560,7 @@ func makePotionActivationInternal(potionType proto.Potions, character *Character
 			Type: CooldownTypeMana,
 			ShouldActivate: func(sim *Simulation, character *Character) bool {
 				// Only pop if we have less than the max mana provided by the potion minus 1mp5 tick.
-				totalRegen := character.ManaRegenPerSecondWhileCasting() * 5
+				totalRegen := (character.ManaRegenPerSecondWhileCasting() + character.ReplenishmentManaPerSecond()) * 5
 				manaGain := 4400.0
 				if alchStoneEquipped && potionType == proto.Potions_RunicManaPotion {
 					manaGain *= 1.4
@@ -648,7 +648,7 @@ func makePotionActivationInternal(potionType proto.Potions, character *Character
 			Type: CooldownTypeMana,
 			ShouldActivate: func(sim *Simulation, character *Character) bool {
 				// Only pop if we have less than the max mana provided by the potion minus 1mp5 tick.
-				totalRegen := character.ManaRegenPerSecondWhileCasting() * 5
+				totalRegen := (character.ManaRegenPerSecondWhileCasting() + character.ReplenishmentManaPerSecond()) * 5
 				return character.MaxMana()-(character.CurrentMana()+totalRegen) >= 3000
 			},
 			Spell: character.GetOrRegisterSpell(SpellConfig{
@@ -821,7 +821,7 @@ func registerConjuredCD(agent Agent, consumes *proto.Consumes) {
 			Type:  CooldownTypeMana,
 			ShouldActivate: func(sim *Simulation, character *Character) bool {
 				// Only pop if we have less than the max mana provided by the potion minus 1mp5 tick.
-				totalRegen := character.ManaRegenPerSecondWhileCasting() * 5
+				totalRegen := (character.ManaRegenPerSecondWhileCasting() + character.ReplenishmentManaPerSecond()) * 5
 				return character.MaxMana()-(character.CurrentMana()+totalRegen) >= 1500
 			},
 		})

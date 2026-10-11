@@ -85,7 +85,7 @@ func (mage *Mage) registerManaGemsCD() {
 		Type:     core.CooldownTypeMana,
 		ShouldActivate: func(sim *core.Simulation, character *core.Character) bool {
 			// Only pop if we have less than the max mana provided by the gem minus 1mp5 tick.
-			totalRegen := character.ManaRegenPerSecondWhileCasting() * 5
+			totalRegen := (character.ManaRegenPerSecondWhileCasting() + character.ReplenishmentManaPerSecond()) * 5
 			maxManaGain := maxManaSapphireGain
 			if remainingManaGems <= 3 {
 				maxManaGain = maxManaEmeraldGain

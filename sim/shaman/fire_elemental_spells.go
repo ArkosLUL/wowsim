@@ -8,31 +8,19 @@ import (
 
 func (fireElemental *FireElemental) registerFireBlast() {
 	fireElemental.FireBlast = fireElemental.RegisterSpell(core.SpellConfig{
-		ActionID:    core.ActionID{SpellID: 13339},
+		ActionID:    core.ActionID{SpellID: 57984},
 		SpellSchool: core.SpellSchoolFire,
 		ProcMask:    core.ProcMaskSpellDamage,
 
-		// 57984's cost, the spell the AI casts
 		ManaCost: core.ManaCostOptions{
 			FlatCost: 40,
-		},
-		Cast: core.CastConfig{
-			DefaultCast: core.Cast{
-				GCD: core.GCDDefault,
-			},
-			IgnoreHaste: true,
-			CD: core.Cooldown{
-				Timer:    fireElemental.NewTimer(),
-				Duration: time.Second,
-			},
 		},
 
 		DamageMultiplier: 1,
 		CritMultiplier:   fireElemental.DefaultSpellCritMultiplier(),
 		ThreatMultiplier: 1,
 
-		// the elemental's AI casts 57984, which has this spell's roll and its own spell_bonus_data row
-		Direct: core.SpellEffect{Effect: 0, FromSpellID: 57984, Min: 110, Max: 130, SP: 0.2},
+		Direct: core.SpellEffect{Effect: 0, Min: 110, Max: 130, SP: 0.2},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			baseDamage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP*spell.SpellPower())
@@ -52,14 +40,9 @@ func (fireElemental *FireElemental) registerFireNova() {
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
-				GCD:      core.GCDDefault,
 				CastTime: time.Second * 2,
 			},
 			IgnoreHaste: true,
-			CD: core.Cooldown{
-				Timer:    fireElemental.NewTimer(),
-				Duration: time.Second, // TODO estimated from log digging,
-			},
 		},
 
 		DamageMultiplier: 1,

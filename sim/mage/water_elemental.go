@@ -77,6 +77,8 @@ func (mage *Mage) NewWaterElemental(disobeyChance float64) *WaterElemental {
 	} else {
 		waterElemental.BuffImmunity = core.PetImmuneToScaling
 	}
+	// pet_levelstats' 7561 health, and Guardian::UpdateMaxHealth's 7.5 a point of stamina for it
+	waterElemental.SetCreateHealth(7561, waterElementalBaseStats[stats.Stamina], 7.5)
 	waterElemental.EnableCreatureManaBar(2908, waterElementalBaseStats[stats.Intellect], 4.95, true)
 	waterElemental.AddStatDependency(stats.Strength, stats.AttackPower, 2)
 

@@ -50,8 +50,7 @@ func (hunter *Hunter) NewHunterPet() *HunterPet {
 		hp.OwnerHasteSource = func() float64 { return hunter.RangedSwingSpeed() }
 	}
 
-	// Creature::Regenerate gives a hunter pet 24 focus every 4 s, where core's focus bar has 5 a second
-	hp.EnableFocusBar(1.2*(1.0+0.5*float64(hunter.Talents.BestialDiscipline)), func(sim *core.Simulation) {
+	hp.EnableFocusBar(1.0+0.5*float64(hunter.Talents.BestialDiscipline), func(sim *core.Simulation) {
 		if hp.GCD.IsReady(sim) {
 			hp.OnGCDReady(sim)
 		}

@@ -17,14 +17,21 @@ type WarlockPet struct {
 	secondaryAbility *core.Spell
 
 	DemonicEmpowermentAura *core.Aura
+
+	// Improved Demonic Tactics' crit: what the warlock's aura holds since its last tick, and what of it
+	// is on the pet
+	tacticsCrit, tacticsCritOnPet stats.Stats
 }
 
 func (warlock *Warlock) NewWarlockPet() *WarlockPet {
 	// pet_levelstats at 80, its weapon range included. Guardian::UpdateMaxPower gives a demon 11.5 mana a
-	// point of intellect over the create value, the Imp 4.95
+	// point of intellect over the create value, the Imp 4.95. Guardian::UpdateMaxHealth has its own
+	// health a point of stamina for each
 	var cfg struct {
 		Name             string
 		Stats            stats.Stats
+		CreateHealth     float64
+		HealthPerStamina float64
 		CreateMana       float64
 		ManaPerIntellect float64
 		AutoAttacks      core.AutoAttackOptions
@@ -38,6 +45,7 @@ func (warlock *Warlock) NewWarlockPet() *WarlockPet {
 	case proto.Warlock_Options_Felguard:
 		cfg.Name = "Felguard"
 		cfg.Stats = core.PetCreateStats(314, 90, 328, 150, 209, 14033)
+		cfg.CreateHealth, cfg.HealthPerStamina = 5428, 11
 		cfg.CreateMana, cfg.ManaPerIntellect = 3077, 11.5
 		cfg.AutoAttacks = core.AutoAttackOptions{
 			MainHand: core.Weapon{
@@ -51,10 +59,12 @@ func (warlock *Warlock) NewWarlockPet() *WarlockPet {
 	case proto.Warlock_Options_Imp:
 		cfg.Name = "Imp"
 		cfg.Stats = core.PetCreateStats(297, 79, 118, 369, 367, 6273)
+		cfg.CreateHealth, cfg.HealthPerStamina = 3867, 8.4
 		cfg.CreateMana, cfg.ManaPerIntellect = 2908, 4.95
 	case proto.Warlock_Options_Succubus:
 		cfg.Name = "Succubus"
 		cfg.Stats = core.PetCreateStats(314, 90, 328, 150, 209, 9706)
+		cfg.CreateHealth, cfg.HealthPerStamina = 4567, 9.1
 		cfg.CreateMana, cfg.ManaPerIntellect = 3077, 11.5
 		cfg.AutoAttacks = core.AutoAttackOptions{
 			MainHand: core.Weapon{
@@ -68,6 +78,7 @@ func (warlock *Warlock) NewWarlockPet() *WarlockPet {
 	case proto.Warlock_Options_Felhunter:
 		cfg.Name = "Felhunter"
 		cfg.Stats = core.PetCreateStats(314, 90, 328, 150, 209, 7782)
+		cfg.CreateHealth, cfg.HealthPerStamina = 4787, 9.5
 		cfg.CreateMana, cfg.ManaPerIntellect = 3077, 11.5
 		cfg.AutoAttacks = core.AutoAttackOptions{
 			MainHand: core.Weapon{
@@ -89,6 +100,7 @@ func (warlock *Warlock) NewWarlockPet() *WarlockPet {
 	// spell_warl_generic_scaling's HandlePeriodic
 	wp.ScalingPeriod = 2 * time.Second
 
+	wp.SetCreateHealth(cfg.CreateHealth, cfg.Stats[stats.Stamina], cfg.HealthPerStamina)
 	wp.EnableCreatureManaBar(cfg.CreateMana, cfg.Stats[stats.Intellect], cfg.ManaPerIntellect, isImp)
 
 	// Guardian::UpdateAttackPowerAndDamage: the Imp's is strength - 10
@@ -158,6 +170,7 @@ func (warlock *Warlock) NewWarlockPet() *WarlockPet {
 		wp.MultiplyStat(stats.Stamina, bonus)
 	}
 
+	var enableMasterDemonologist, disableMasterDemonologist func(sim *core.Simulation)
 	if warlock.Talents.MasterDemonologist > 0 {
 		val := 1.0 + 0.01*float64(warlock.Talents.MasterDemonologist)
 		md := core.Aura{
@@ -193,7 +206,7 @@ func (warlock *Warlock) NewWarlockPet() *WarlockPet {
 		masterDemonologistFireCrit := core.TernaryFloat64(warlock.Options.Summon == proto.Warlock_Options_Imp, masterDemonologist, 0)
 		masterDemonologistShadowCrit := core.TernaryFloat64(warlock.Options.Summon == proto.Warlock_Options_Succubus, masterDemonologist, 0)
 
-		wp.OnPetEnable = func(sim *core.Simulation) {
+		enableMasterDemonologist = func(sim *core.Simulation) {
 			mdLockAura.Activate(sim)
 			mdPetAura.Activate(sim)
 
@@ -212,7 +225,7 @@ func (warlock *Warlock) NewWarlockPet() *WarlockPet {
 			}
 		}
 
-		wp.OnPetDisable = func(sim *core.Simulation) {
+		disableMasterDemonologist = func(sim *core.Simulation) {
 			mdLockAura.Deactivate(sim)
 			mdPetAura.Deactivate(sim)
 
@@ -232,11 +245,81 @@ func (warlock *Warlock) NewWarlockPet() *WarlockPet {
 		}
 	}
 
+	wp.OnPetEnable = func(sim *core.Simulation) {
+		if enableMasterDemonologist != nil {
+			enableMasterDemonologist(sim)
+		}
+		wp.applyTacticsCrit(sim)
+	}
+	wp.OnPetDisable = func(sim *core.Simulation) {
+		if disableMasterDemonologist != nil {
+			disableMasterDemonologist(sim)
+		}
+		// a demon keeps what it has from its owner when it goes, but the crit comes back with the passive
+		wp.AddStatsDynamic(sim, wp.tacticsCritOnPet.Invert())
+		wp.tacticsCritOnPet = stats.Stats{}
+	}
+
 	core.ApplyPetConsumeEffects(&wp.Character, warlock.Consumes)
 
 	warlock.AddPet(wp)
 
 	return wp
+}
+
+// improvedDemonicTacticsPeriod is spell_warl_improved_demonic_tactics' CalcPeriodic.
+const improvedDemonicTacticsPeriod = 10 * time.Second
+
+// startImprovedDemonicTactics is the talent's aura on the warlock (54347) as a fight starts. Its two
+// amounts are flat spell mods on the demon's passive 35695: a tenth a point of the warlock's sheet spell
+// crit as the demon's spell crit, and the same share of his melee crit as its melee crit. The script
+// reworks them every 10 s, so the demon runs up to that far behind.
+func (wp *WarlockPet) startImprovedDemonicTactics(sim *core.Simulation) {
+	wp.tacticsCrit, wp.tacticsCritOnPet = stats.Stats{}, stats.Stats{}
+	if wp.owner.Talents.ImprovedDemonicTactics == 0 {
+		return
+	}
+
+	// the aura has been ticking since long before the fight: its last tick saw him as he stands here,
+	// and the next comes anywhere in the period
+	wp.tacticsCrit = wp.tacticsCritNow()
+
+	due := sim.PrepullStartTime() + time.Duration(sim.RandomFloat("Improved Demonic Tactics")*float64(improvedDemonicTacticsPeriod))
+	// his aura ticks on his own update, after what he cast in that world tick
+	pa := &core.PendingAction{NextActionAt: sim.NextWorldTick(due), Priority: core.ActionPriorityLow}
+	pa.OnAction = func(sim *core.Simulation) {
+		wp.tacticsCrit = wp.tacticsCritNow()
+		if wp.IsEnabled() {
+			wp.applyTacticsCrit(sim)
+		}
+		due += improvedDemonicTacticsPeriod
+		pa.NextActionAt = sim.NextWorldTick(due)
+		sim.AddPendingAction(pa)
+	}
+	sim.AddPendingAction(pa)
+}
+
+// tacticsCritNow is the script's CalculateAmount for both effects: CalculatePct<int32, float> of the
+// crit chance on the warlock's sheet, which truncates the chance and then the share.
+func (wp *WarlockPet) tacticsCritNow() stats.Stats {
+	pct := float32(10 * wp.owner.Talents.ImprovedDemonicTactics)
+	share := func(ownerCrit float64) float64 {
+		chance := int32(ownerCrit / core.CritRatingPerCritChance)
+		return float64(int32(float32(chance)*pct/100)) * core.CritRatingPerCritChance
+	}
+	return stats.Stats{
+		stats.SpellCrit: share(wp.owner.GetStat(stats.SpellCrit)),
+		stats.MeleeCrit: share(wp.owner.GetStat(stats.MeleeCrit)),
+	}
+}
+
+// applyTacticsCrit moves the demon to what the warlock's aura holds now.
+func (wp *WarlockPet) applyTacticsCrit(sim *core.Simulation) {
+	if wp.tacticsCrit == wp.tacticsCritOnPet {
+		return
+	}
+	wp.AddStatsDynamic(sim, wp.tacticsCrit.Subtract(wp.tacticsCritOnPet))
+	wp.tacticsCritOnPet = wp.tacticsCrit
 }
 
 func (wp *WarlockPet) GetPet() *core.Pet {
@@ -257,7 +340,8 @@ func (wp *WarlockPet) Initialize() {
 	}
 }
 
-func (wp *WarlockPet) Reset(_ *core.Simulation) {
+func (wp *WarlockPet) Reset(sim *core.Simulation) {
+	wp.startImprovedDemonicTactics(sim)
 }
 
 func (wp *WarlockPet) ExecuteCustomRotation(sim *core.Simulation) {
@@ -272,8 +356,6 @@ func (wp *WarlockPet) ExecuteCustomRotation(sim *core.Simulation) {
 // makeStatInheritance is spell_warl_generic_scaling: 75% of the owner's stamina, 30% of his intellect,
 // 35% of his armor, and 57% and 15% of his spell power as attack and spell power.
 func (warlock *Warlock) makeStatInheritance() core.PetStatInheritance {
-	improvedDemonicTactics := float64(warlock.Talents.ImprovedDemonicTactics)
-
 	return func(ownerStats stats.Stats) stats.Stats {
 		// TODO: Account for sunfire/soulfrost
 		return stats.Stats{
@@ -283,8 +365,6 @@ func (warlock *Warlock) makeStatInheritance() core.PetStatInheritance {
 			stats.AttackPower:      core.PetScalingPct(ownerStats[stats.SpellPower], 57),
 			stats.SpellPower:       core.PetScalingPct(ownerStats[stats.SpellPower], 15),
 			stats.SpellPenetration: ownerStats[stats.SpellPenetration],
-			stats.SpellCrit:        improvedDemonicTactics * 0.1 * ownerStats[stats.SpellCrit],
-			stats.MeleeCrit:        improvedDemonicTactics * 0.1 * ownerStats[stats.SpellCrit],
 			// not MeleeHit/SpellHit/Expertise: pet.ownerHitScaling owns those and overwrites
 			// whatever this returns for them (spell_pet_hit_expertise_scalling)
 		}

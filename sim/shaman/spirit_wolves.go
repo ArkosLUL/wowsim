@@ -45,6 +45,8 @@ func (shaman *Shaman) NewSpiritWolf(index int) *SpiritWolf {
 	// spell_sha_feral_spirit_scaling ticks every second, guardian or not
 	spiritWolf.ScalingPeriod = time.Second
 	spiritWolf.BuffImmunity = core.PetImmuneToScaling
+	// a wolf's power is mana with a pool of 0, so a Replenishment cast on more than ten counts it first
+	spiritWolf.EmptyManaPool = true
 
 	// mod-spell-tweaks' 425792: immune to direct haste and slows, Bloodlust included; its own melee
 	// swing speed tracks the shaman's melee speed instead (Windfury Totem and Improved Icy Talons

@@ -2,46 +2,72 @@ package core
 
 import (
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/wowsims/wotlk/sim/core/proto"
 )
 
-// Time between focus ticks.
 const MaxFocus = 100.0
-const tickDuration = time.Second * 1
-const BaseFocusPerTick = 5.0
+
+// Creature::Regenerate: a hunter pet gets 24 focus every PET_FOCUS_REGEN_INTERVAL, a creature on
+// energy 20 every CREATURE_REGEN_INTERVAL.
+const (
+	petFocusRegenInterval = 4 * time.Second
+	petFocusPerTick       = 24.0
+	creatureEnergyPerTick = 20.0
+)
 
 // OnFocusGain is called any time focus is increased.
 type OnFocusGain func(sim *Simulation)
 
+// focusBar is a pet's focus, or the energy of one that has it for a power. Either regenerates a
+// fixed amount each time its timer runs out, on the pet's own update (Pet.enable starts the timer).
 type focusBar struct {
 	unit *Unit
 
-	focusPerTick float64
+	regenPerTick  float64
+	regenInterval time.Duration
+	// energy comes from Creature::Update's regen timer, which runs once the AI has
+	regenAfterAI bool
 
 	currentFocus float64
 
 	onFocusGain OnFocusGain
 
-	nextFocusTick time.Duration
-
 	regenMetrics  *ResourceMetrics
 	refundMetrics *ResourceMetrics
 }
 
+// EnableFocusBar gives a hunter pet its focus. regenMultiplier is 1 plus the focus regen percent
+// auras on it (Bestial Discipline), and the tick is whole.
 func (unit *Unit) EnableFocusBar(regenMultiplier float64, onFocusGain OnFocusGain) {
 	unit.focusBar = focusBar{
 		unit:          unit,
-		focusPerTick:  BaseFocusPerTick * regenMultiplier,
+		regenPerTick:  math.Trunc(petFocusPerTick * regenMultiplier),
+		regenInterval: petFocusRegenInterval,
 		onFocusGain:   onFocusGain,
 		regenMetrics:  unit.NewEnergyMetrics(ActionID{OtherID: proto.OtherAction_OtherActionFocusRegen}),
 		refundMetrics: unit.NewEnergyMetrics(ActionID{OtherID: proto.OtherAction_OtherActionRefund}),
 	}
 }
 
+// EnableCreatureEnergyBar gives a pet whose power is energy (the DK's ghouls) a bar of it, kept as
+// its focus.
+func (unit *Unit) EnableCreatureEnergyBar(onFocusGain OnFocusGain) {
+	unit.EnableFocusBar(1, onFocusGain)
+	unit.focusBar.regenPerTick = creatureEnergyPerTick
+	unit.focusBar.regenInterval = creatureRegenInterval
+	unit.focusBar.regenAfterAI = true
+}
+
 func (unit *Unit) HasFocusBar() bool {
 	return unit.focusBar.unit != nil
+}
+
+// FocusRegenTick is what the bar regenerates a tick, and how far apart the ticks are.
+func (unit *Unit) FocusRegenTick() (amount float64, interval time.Duration) {
+	return unit.focusBar.regenPerTick, unit.focusBar.regenInterval
 }
 
 func (fb *focusBar) CurrentFocus() float64 {
@@ -82,38 +108,20 @@ func (fb *focusBar) SpendFocus(sim *Simulation, amount float64, metrics *Resourc
 	fb.currentFocus = newFocus
 }
 
-func (fb *focusBar) reset(sim *Simulation) {
+func (fb *focusBar) reset(_ *Simulation) {
 	if fb.unit == nil {
 		return
 	}
 
 	fb.currentFocus = MaxFocus
+}
 
-	if fb.unit.Type != PetUnit {
-		fb.enable(sim)
+// regenTick is the bar's Creature::Regenerate, which leaves a full bar alone.
+func (fb *focusBar) regenTick(sim *Simulation) {
+	if fb.currentFocus >= MaxFocus {
+		return
 	}
-}
-
-func (fb *focusBar) enable(sim *Simulation) {
-	sim.AddTask(fb)
-	fb.nextFocusTick = sim.CurrentTime + tickDuration
-	sim.RescheduleTask(fb.nextFocusTick)
-}
-
-func (fb *focusBar) disable(sim *Simulation) {
-	fb.nextFocusTick = NeverExpires
-	sim.RemoveTask(fb)
-}
-
-func (fb *focusBar) RunTask(sim *Simulation) time.Duration {
-	if sim.CurrentTime < fb.nextFocusTick {
-		return fb.nextFocusTick
-	}
-
-	fb.AddFocus(sim, fb.focusPerTick, fb.regenMetrics)
-
-	fb.nextFocusTick = sim.CurrentTime + tickDuration
-	return fb.nextFocusTick
+	fb.AddFocus(sim, fb.regenPerTick, fb.regenMetrics)
 }
 
 type FocusCostOptions struct {

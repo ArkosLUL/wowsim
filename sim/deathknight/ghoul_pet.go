@@ -50,6 +50,8 @@ func (dk *Deathknight) NewArmyGhoulPet(_ int) *GhoulPet {
 	}
 	ghoulPet.HitScaling = core.PetHitScalingMasterSpell06
 	ghoulPet.BuffImmunity = dkGuardianImmunity
+	// 42651 summons it with SummonProperties 687, a minion's (Guardian::Guardian)
+	ghoulPet.Uncontrollable = true
 
 	ghoulPet.PseudoStats.DamageTakenMultiplier *= 0.1
 	ghoulPet.PseudoStats.MeleeHasteRatingPerHastePercent = dk.PseudoStats.MeleeHasteRatingPerHastePercent
@@ -99,6 +101,8 @@ func (dk *Deathknight) NewGhoulPet(permanent bool) *GhoulPet {
 		ghoulPet.ScalingPeriod = 2 * time.Second
 	} else {
 		ghoulPet.BuffImmunity = dkGuardianImmunity
+		// 46585 summons it with SummonProperties 829, a plain guardian's (Guardian::Guardian)
+		ghoulPet.Uncontrollable = true
 	}
 	ghoulPet.HitScaling = core.PetHitScalingMasterSpell06
 	ghoulPet.RisenGhoul = true
@@ -147,7 +151,7 @@ func (dk *Deathknight) SetupGhoul(ghoulPet *GhoulPet) {
 	ghoulPet.HasteCarrier = true
 	ghoulPet.OwnerHasteSource = func() float64 { return ghoulPet.dkOwner.SwingSpeed() }
 
-	ghoulPet.Unit.EnableFocusBar(2, func(sim *core.Simulation) {
+	ghoulPet.Unit.EnableCreatureEnergyBar(func(sim *core.Simulation) {
 		if ghoulPet.GCD.IsReady(sim) {
 			ghoulPet.OnGCDReady(sim)
 		}
@@ -187,6 +191,12 @@ func (ghoulPet *GhoulPet) ExecuteCustomRotation(sim *core.Simulation) {
 
 	if ghoulPet.IsGuardian() && sim.CurrentTime < ghoulPet.nextClawAt {
 		ghoulPet.WaitUntil(sim, ghoulPet.nextClawAt)
+		return
+	}
+
+	// its AI only runs on its own update, and the energy an update regenerates comes after it
+	if next := sim.NextServerTick(sim.CurrentTime); next > sim.CurrentTime {
+		ghoulPet.WaitUntil(sim, next)
 		return
 	}
 

@@ -68,34 +68,42 @@ func readPetsRecords(path string) ([]petsRecord, error) {
 	return records, nil
 }
 
-// petsKey names a pets.jsonl record by what it probed.
+// petsKey names a pets.jsonl record by what it probed, and the aura the pet was given for the probe.
 type petsKey struct {
 	command string
 	spell   int32
 	entry   uint32
+	under   int32
 }
 
 func (k petsKey) String() string {
-	if k.spell == 0 {
-		return fmt.Sprintf("%s of pet %d", k.command, k.entry)
+	name := fmt.Sprintf("%s of pet %d", k.command, k.entry)
+	if k.spell != 0 {
+		name = fmt.Sprintf("%s %d of pet %d", k.command, k.spell, k.entry)
 	}
-	return fmt.Sprintf("%s %d of pet %d", k.command, k.spell, k.entry)
+	if k.under != 0 {
+		name += fmt.Sprintf(" under %d", k.under)
+	}
+	return name
 }
 
-func (r petsRecord) key() petsKey { return petsKey{r.Command, r.Spell.ID, r.Attacker.Entry} }
+// petsProbeAuras are the auras TestPetfixRecords puts on a pet to run a probe again under: Shadowcrawl,
+// which an idle Shadowfiend never casts.
+var petsProbeAuras = []int32{63619}
+
+func (r petsRecord) key() petsKey {
+	key := petsKey{command: r.Command, spell: r.Spell.ID, entry: r.Attacker.Entry}
+	for _, a := range r.Attacker.Auras {
+		if slices.Contains(petsProbeAuras, a.ID) {
+			key.under = a.ID
+		}
+	}
+	return key
+}
 
 // petHitsPerCast are the pets the sim folds into one: it deals every Mirror Image's hit as one, so a
 // record's amount, one image's, is that many times short.
 var petHitsPerCast = map[uint32]float64{31216: 3}
-
-// petCadenceAllowed are the pet spells whose GCD the sim keeps as its stand-in for the AI's timers, each
-// with a ServerGCD allowance in its class's serverdata_allowlist.go.
-var petCadenceAllowed = map[int32]string{
-	57984: "npc_pet_shaman_fire_elemental's event timers pace it; sim/shaman/serverdata_allowlist.go keeps the sim's GCD",
-	12470: "npc_pet_shaman_fire_elemental's event timers pace it; sim/shaman/serverdata_allowlist.go keeps the sim's GCD",
-	59638: "npc_pet_mage_mirror_image's event timers pace it; sim/mage/serverdata_allowlist.go keeps the sim's GCD",
-	59637: "npc_pet_mage_mirror_image's event timers pace it; sim/mage/serverdata_allowlist.go keeps the sim's GCD",
-}
 
 // checkPetsRecord compares a pets.jsonl record with the sim.
 func checkPetsRecord(rec petsRecord) (checks []Check) {
@@ -141,16 +149,11 @@ func perSimHit(rec damageRecord) damageRecord {
 	return rec
 }
 
-// petsWithoutHealth are the pets the sim gives no health pool of their own, only core's 10 a point of
-// stamina. Nothing in the sim reads a pet's health.
-var petsWithoutHealth = map[uint32]string{
-	416: "the sim's Imp lacks pet_levelstats' health and Guardian::UpdateMaxHealth's 8.4 a point of stamina; nothing reads a pet's health",
-	510: "the sim's Water Elemental lacks pet_levelstats' health and Guardian::UpdateMaxHealth's 7.5 a point of stamina; " +
-		"nothing reads a pet's health",
-}
+// bloodPactSpell is the Imp's Blood Pact, which the sim's Imp starts a fight under.
+const bloodPactSpell = 47982
 
-// checkPetPools holds the pet's health and mana pools to the record's. The server truncates the mana
-// pool, so the sim's may sit a point above.
+// checkPetPools holds the pet's health and mana pools to the record's. The server truncates both, so the
+// sim's may sit a point above.
 func checkPetPools(rec petsRecord) []Check {
 	d, err := buildPetSim(rec.damageRecord)
 	if err != nil {
@@ -158,16 +161,12 @@ func checkPetPools(rec petsRecord) []Check {
 	}
 	d.start()
 	pet := d.pet.pet
-	var checks []Check
-	if why, ok := petsWithoutHealth[rec.Attacker.Entry]; ok {
-		if math.Abs(pet.MaxHealth()-rec.Attacker.MaxHealth) <= 0.5 {
-			checks = append(checks, fail("max health", "the sim's matches now, so take the pet off petsWithoutHealth"))
-		} else {
-			checks = append(checks, notCompared("max health", why))
-		}
-	} else {
-		checks = append(checks, checkNear("max health", pet.MaxHealth(), rec.Attacker.MaxHealth, 0.5))
+	// a freshly summoned Imp hasn't cast Blood Pact yet
+	if pact := pet.GetAuraByID(core.ActionID{SpellID: bloodPactSpell}); pact.IsActive() &&
+		!slices.ContainsFunc(rec.Attacker.Auras, func(a aura) bool { return a.ID == bloodPactSpell }) {
+		pact.Deactivate(d.sim)
 	}
+	checks := []Check{checkNear("max health", pet.MaxHealth(), rec.Attacker.MaxHealth, 0.5)}
 	if rec.Attacker.PowerType == powerMana {
 		if !pet.HasManaBar() {
 			return append(checks, fail("max mana", fmt.Sprintf("server %.0f, the sim's has no mana", rec.maxPower)))
@@ -315,8 +314,8 @@ func (d *damageSim) petSwing(end int) (amount float64, err error) {
 	return 0, fmt.Errorf("no plain hit in %d swings", maxHitAttempts)
 }
 
-// checkPetTiming holds the spell's cast time and cost to the record's. A creature has no cooldown in the
-// record, and its GCD is left to petCadenceAllowed.
+// checkPetTiming holds the spell's cast time, cost and GCD to the record's. A creature has no cooldown in
+// the record.
 func checkPetTiming(rec petsRecord) []Check {
 	server := rec.cast
 	d, err := buildPetSim(rec.damageRecord)
@@ -333,9 +332,6 @@ func checkPetTiming(rec petsRecord) []Check {
 		checkInt("cast time before haste", simMs(spell.DefaultCast.CastTime), int64(max(0, server.Cast.AfterSpellModsMs))),
 		checkInt("cast time", simMs(spell.CastTime()), int64(server.Cast.Ms)),
 		checkInt("cost", int64(math.Floor(spell.ApplyCostModifiers(spell.DefaultCast.Cost)+1e-6)), int64(server.Cost.Amount)),
-	}
-	if why, ok := petCadenceAllowed[rec.Spell.ID]; ok {
-		return append(checks, notCompared("gcd", why))
 	}
 	ts := &timingSim{damageSim: d, spell: spell}
 	return append(checks, ts.checkGCD(*server)...)

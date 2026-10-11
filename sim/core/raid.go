@@ -128,9 +128,8 @@ type Raid struct {
 
 	nextPetIndex int32
 
-	replenishmentUnits         []*Unit   // All units who can receive replenishment.
-	curReplenishmentUnits      [][]*Unit // Units that currently have replenishment active, separated by source.
-	leftoverReplenishmentUnits []*Unit   // Units without replenishment currently active.
+	replenishmentUnits []*Unit // All units a Replenishment cast can land on.
+	replenishmentPicks []*Unit // Scratch for the units one cast lands on.
 
 	// each source's cast of Replenishment, by source
 	replenishmentCasts []*CastThreat
@@ -362,7 +361,6 @@ func (raid *Raid) GetPlayerFromUnitIndex(unitIndex int32) Agent {
 }
 
 func (raid *Raid) reset(sim *Simulation) {
-	raid.resetReplenishment(sim)
 	for _, party := range raid.Parties {
 		party.reset(sim)
 	}

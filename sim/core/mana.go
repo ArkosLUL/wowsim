@@ -206,7 +206,8 @@ func (sim *Simulation) initManaTickAction() {
 			}
 
 			for _, petAgent := range character.PetAgents {
-				if petAgent.GetPet().HasManaBar() {
+				// a creature's own regen tick takes its MP5 too (Pet.creatureManaTick)
+				if pet := petAgent.GetPet(); pet.HasManaBar() && !pet.creatureManaRegen {
 					unitsWithManaBars = append(unitsWithManaBars, &petAgent.GetCharacter().Unit)
 				}
 			}

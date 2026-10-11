@@ -100,6 +100,8 @@ func (dk *Deathknight) NewGargoyle() *GargoylePet {
 	}
 	gargoyle.HitScaling = core.PetHitScalingMasterSpell06
 	gargoyle.BuffImmunity = dkGuardianImmunity
+	// SummonProperties 209 has neither a pet's type nor its category (Guardian::Guardian)
+	gargoyle.Uncontrollable = true
 	// 51996 (Death Knight Pet Scaling 02): immune to direct haste and slows, Bloodlust included.
 	gargoyle.HasteCarrier = true
 	gargoyle.AddStatDependency(stats.Strength, stats.AttackPower, 2)

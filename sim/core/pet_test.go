@@ -542,7 +542,7 @@ func TestPetUpdateTimersFollowTheMapUpdate(t *testing.T) {
 			runUntil(sim, ms(1234)+567*time.Microsecond)
 			now := sim.CurrentTime
 
-			start := pet.updateTimersStart(sim, false)
+			start := pet.updateTimersStart(sim, now, false)
 			wantStart := now
 			if tc.mapMs > 0 {
 				wantStart = sim.NextServerTick(now) - sim.serverTickInterval
@@ -555,7 +555,7 @@ func TestPetUpdateTimersFollowTheMapUpdate(t *testing.T) {
 			}
 
 			var ticks []time.Duration
-			pet.startUpdateTimer(sim, start, 2*time.Second, petAuraTickPriority, func(sim *Simulation) {
+			pet.startUpdateTimer(sim, start, now, 2*time.Second, petAuraTickPriority, func(sim *Simulation) {
 				ticks = append(ticks, sim.CurrentTime-start)
 			})
 			runUntil(sim, now+7*time.Second)
@@ -576,12 +576,12 @@ func TestPetOutSinceBeforeThePullIsAnywhereInItsTimers(t *testing.T) {
 
 	early, late := 0, 0
 	for range 400 {
-		start := pet.updateTimersStart(sim, true)
+		start := pet.updateTimersStart(sim, now, true)
 		if start > now || sim.NextServerTick(start) != start {
 			t.Fatalf("timers start at %v: want a map update at or before %v", start, now)
 		}
-		scaling := pet.startUpdateTimer(sim, start, 2*time.Second, petAuraTickPriority, noop)
-		hit := pet.startUpdateTimer(sim, start, 3*time.Second, petAuraTickPriority, noop)
+		scaling := pet.startUpdateTimer(sim, start, now, 2*time.Second, petAuraTickPriority, noop)
+		hit := pet.startUpdateTimer(sim, start, now, 3*time.Second, petAuraTickPriority, noop)
 		for _, timer := range []struct {
 			next, period time.Duration
 		}{{scaling.NextActionAt, 2 * time.Second}, {hit.NextActionAt, 3 * time.Second}} {
@@ -603,7 +603,7 @@ func TestPetOutSinceBeforeThePullIsAnywhereInItsTimers(t *testing.T) {
 	}
 
 	exact, a := newTickTestSim(t, 0, 10, nil)
-	if start := newTestPet(&a.Character).updateTimersStart(exact, true); start != exact.CurrentTime {
+	if start := newTestPet(&a.Character).updateTimersStart(exact, exact.CurrentTime, true); start != exact.CurrentTime {
 		t.Errorf("exact timing: timers start at %v, want %v", start, exact.CurrentTime)
 	}
 }
@@ -729,6 +729,50 @@ func TestPetSwingOffPhysicalRollsTheCreatureRange(t *testing.T) {
 				t.Errorf("a plain swing deals %v, want %v", got, tc.want)
 			}
 		})
+	}
+}
+
+// Unit::CalculateDamage rolls that range as a whole number between its two truncated ends, each as likely
+// as the next: 300.75 to 302.25 gives 300, 301 and 302 a third of the time each.
+func TestPetSwingOffPhysicalRollsAWholeNumber(t *testing.T) {
+	var pet *timingTestPet
+	timingTestConstruct = func(a *timingTestAgent) {
+		// 1407 attack power is 100.5 a swing before the 1.5 s
+		pet = &timingTestPet{Pet: NewPet("Pet", &a.Character, stats.Stats{stats.AttackPower: 1407},
+			func(stats.Stats) stats.Stats { return stats.Stats{} }, true, true)}
+		pet.EnableAutoAttacks(pet, AutoAttackOptions{
+			MainHand:       Weapon{BaseDamageMin: 100, BaseDamageMax: 101, SwingSpeed: 1.5, CritMultiplier: 2, SpellSchool: SpellSchoolShadow},
+			AutoSwingMelee: true,
+		})
+		a.AddPet(pet)
+	}
+	sim, _ := newTimingTestSim(t, 0, nil)
+	timingTestConstruct = nil
+
+	auto, target := pet.AutoAttacks.MHAuto(), sim.Encounter.TargetUnits[0]
+	auto.Flags |= SpellFlagIgnoreResists
+	const hits = 3000
+	rolled, landed := map[float64]int{}, 0
+	target.DynamicDamageTakenModifiers = append(target.DynamicDamageTakenModifiers, func(_ *Simulation, spell *Spell, result *SpellResult) {
+		if spell == auto && result.Outcome == OutcomeHit && landed < hits {
+			rolled[result.Damage]++
+			landed++
+		}
+	})
+	for swings := 0; landed < hits && swings < 20*hits; swings++ {
+		auto.ApplyEffects(sim, target, auto)
+	}
+	if landed < hits {
+		t.Fatalf("%d plain hits, want %d", landed, hits)
+	}
+	// 1000 each, give or take 5 deviations of 26
+	for _, want := range []float64{300, 301, 302} {
+		if n := rolled[want]; n < 870 || n > 1130 {
+			t.Errorf("%d of %d plain swings deal %v, want about a third: %v", n, hits, want, rolled)
+		}
+	}
+	if len(rolled) != 3 {
+		t.Errorf("plain swings deal %v, want only 300, 301 and 302", rolled)
 	}
 }
 

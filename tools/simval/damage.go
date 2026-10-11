@@ -7,7 +7,6 @@ import (
 	"math"
 	"os"
 	"path/filepath"
-	"reflect"
 	"slices"
 	"strconv"
 	"strings"
@@ -1802,8 +1801,9 @@ const (
 	powerEnergy = 3
 )
 
-// petRegen compares one regen tick of the pet's power: focus at the sim's rate, mana at the record's
-// intellect and spirit with the five second rule as the server had it, energy at the sim's tick rate.
+// petRegen compares one regen tick of the pet's power: focus, or the energy the sim keeps as focus, by
+// the tick and how far apart the ticks are, mana at the record's intellect and spirit with the five
+// second rule as the server had it, a player form's energy at the sim's tick rate.
 func (d *damageSim) petRegen(rec strikesRecord) []Check {
 	regen, unit := rec.Pet.Regen, &d.pet.pet.Unit
 	if regen == nil {
@@ -1811,10 +1811,11 @@ func (d *damageSim) petRegen(rec strikesRecord) []Check {
 	}
 	perSecond := 0.0
 	switch {
-	case regen.Power == powerFocus && unit.HasFocusBar():
-		var ok bool
-		if perSecond, ok = focusPerSecond(unit); !ok {
-			return []Check{fail("focus regen", "core's focus bar has no focusPerTick to read")}
+	case (regen.Power == powerFocus || regen.Power == powerEnergy) && unit.HasFocusBar():
+		perTick, interval := unit.FocusRegenTick()
+		return []Check{
+			checkNear("regen per tick", perTick, regen.PerTick, 0.01),
+			checkNear("regen interval ms", float64(interval/time.Millisecond), regen.IntervalMs, 0.5),
 		}
 	case regen.Power == powerMana && unit.HasManaBar():
 		if st := rec.Attacker.Stats; st.Intellect > 0 && st.Spirit > 0 {
@@ -1826,9 +1827,7 @@ func (d *damageSim) petRegen(rec strikesRecord) []Check {
 			perSecond = unit.ManaRegenPerSecondWhileCasting()
 		}
 		if pet := d.pet.pet; pet.HasCreatureManaRegen() {
-			// core's own tick still adds the MP5
-			perTick := pet.CreatureManaRegen(regen.LastManaUse) + perSecond*regen.IntervalMs/1000
-			return []Check{checkNear("regen per tick", perTick, regen.PerTick, 1)}
+			return []Check{checkNear("regen per tick", pet.CreatureManaRegen(regen.LastManaUse), regen.PerTick, 1)}
 		}
 	case regen.Power == powerEnergy && unit.HasEnergyBar():
 		perSecond = core.EnergyPerTick * unit.EnergyTickMultiplier * float64(time.Second/core.EnergyTickDuration)
@@ -1837,20 +1836,6 @@ func (d *damageSim) petRegen(rec strikesRecord) []Check {
 	}
 	// the server truncates each tick to a whole amount
 	return []Check{checkNear("regen per tick", perSecond*regen.IntervalMs/1000, regen.PerTick, 1)}
-}
-
-// focusPerSecond is the unit's focus regen. Core keeps it unexported: focusBar.focusPerTick, one tick a
-// second.
-func focusPerSecond(unit *core.Unit) (float64, bool) {
-	bar := reflect.ValueOf(unit).Elem().FieldByName("focusBar")
-	if !bar.IsValid() {
-		return 0, false
-	}
-	perTick := bar.FieldByName("focusPerTick")
-	if !perTick.IsValid() || perTick.Kind() != reflect.Float64 {
-		return 0, false
-	}
-	return perTick.Float(), true
 }
 
 // strikesTimingTaught are the spells of strikes.jsonl's timing records the sim only registers with a talent.
