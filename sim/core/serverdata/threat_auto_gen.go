@@ -380,7 +380,9 @@ var threats = []Threat{
 	{SpellID: 55776, Targets: ThreatTargetsCaster},                                         // Swordguard Embroidery
 	{SpellID: 56186, Targets: ThreatTargetsCaster},                                         // Sapphire Owl
 	{SpellID: 56344, Targets: ThreatTargetsCaster},                                         // Lock and Load (Rank 3)
+	{SpellID: 56350, Targets: ThreatTargetsEnemyArea},                                      // Saronite Bomb
 	{SpellID: 56453, Targets: ThreatTargetsCaster},                                         // Lock and Load
+	{SpellID: 56488, Targets: ThreatTargetsCaster | ThreatTargetsEnemyArea},                // Global Thermal Sapper Charge
 	{SpellID: 56815, Row: 56815, FlatMod: 0, PctMod: 1.75},                                 // Rune Strike
 	{SpellID: 57516, Targets: ThreatTargetsCaster},                                         // Enrage (Rank 2)
 	{SpellID: 57518, Targets: ThreatTargetsCaster},                                         // Enrage (Rank 1)
@@ -579,6 +581,7 @@ var threats = []Threat{
 	{SpellID: 67743, Targets: ThreatTargetsCaster},                                         // Volatility
 	{SpellID: 67746, Targets: ThreatTargetsCaster},                                         // Risen Fury
 	{SpellID: 67750, Targets: ThreatTargetsCaster},                                         // Energized
+	{SpellID: 67769, Targets: ThreatTargetsEnemyArea},                                      // Cobalt Frag Bomb
 	{SpellID: 67772, Targets: ThreatTargetsCaster},                                         // Paragon
 	{SpellID: 67773, Targets: ThreatTargetsCaster},                                         // Paragon
 	{SpellID: 68051, Targets: ThreatTargetsCaster},                                         // Overpower Ready!

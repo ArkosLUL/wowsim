@@ -222,9 +222,15 @@ func readPackageSuites(root, dir string) ([]suiteSetup, error) {
 		files = append(files, f)
 	}
 
-	pkg := &suitePackage{values: map[string]ast.Expr{}}
+	pkg := &suitePackage{values: map[string]ast.Expr{}, configs: map[string]*ast.CompositeLit{}}
 	for _, f := range files {
 		for _, decl := range f.Decls {
+			if fn, ok := decl.(*ast.FuncDecl); ok {
+				if lit := returnedSuiteConfig(fn); lit != nil {
+					pkg.configs[fn.Name.Name] = lit
+				}
+				continue
+			}
 			gen, ok := decl.(*ast.GenDecl)
 			if !ok {
 				continue
@@ -258,6 +264,12 @@ func readPackageSuites(root, dir string) ([]suiteSetup, error) {
 			var problem error
 			ast.Inspect(fn.Body, func(n ast.Node) bool {
 				lit, ok := n.(*ast.CompositeLit)
+				if call, isCall := n.(*ast.CallExpr); isCall {
+					// a config a function of the package hands the test
+					if name, isName := call.Fun.(*ast.Ident); isName && pkg.configs[name.Name] != nil {
+						lit, ok = pkg.configs[name.Name], true
+					}
+				}
 				if !ok || !isSelector(lit.Type, "core", "CharacterSuiteConfig") || problem != nil {
 					return problem == nil
 				}
@@ -278,9 +290,27 @@ func readPackageSuites(root, dir string) ([]suiteSetup, error) {
 	return setups, nil
 }
 
-// suitePackage holds a package's top-level vars and consts, which suite configs name.
+// returnedSuiteConfig is the core.CharacterSuiteConfig literal a function returns as its whole body, or nil.
+func returnedSuiteConfig(fn *ast.FuncDecl) *ast.CompositeLit {
+	if fn.Body == nil || len(fn.Body.List) != 1 {
+		return nil
+	}
+	ret, ok := fn.Body.List[0].(*ast.ReturnStmt)
+	if !ok || len(ret.Results) != 1 {
+		return nil
+	}
+	lit, ok := ret.Results[0].(*ast.CompositeLit)
+	if !ok || !isSelector(lit.Type, "core", "CharacterSuiteConfig") {
+		return nil
+	}
+	return lit
+}
+
+// suitePackage holds a package's top-level vars and consts, which suite configs name, and the configs its
+// functions return, by function.
 type suitePackage struct {
-	values map[string]ast.Expr
+	configs map[string]*ast.CompositeLit
+	values  map[string]ast.Expr
 }
 
 // resolve follows identifiers to the values they're declared with and drops a leading &.
@@ -390,13 +420,18 @@ func (p *suitePackage) stringValue(expr ast.Expr) (string, error) {
 	return strconv.Unquote(lit.Value)
 }
 
-// gearSetPath reads core.GetGearSet(dir, name), whose dir is relative to the suite's package.
+// gearSetPath reads core.GetGearSet(dir, name), whose dir is relative to the suite's package, or
+// filepath.Join(root, dir) with dir from the checkout's root.
 func (p *suitePackage) gearSetPath(expr ast.Expr, pkgDir string) (string, error) {
 	call, ok := expr.(*ast.CallExpr)
 	if !ok || !isSelector(call.Fun, "core", "GetGearSet") || len(call.Args) != 2 {
 		return "", fmt.Errorf("not a core.GetGearSet call")
 	}
-	dir, err := p.stringValue(p.resolve(call.Args[0]))
+	dirExpr := p.resolve(call.Args[0])
+	if join, ok := dirExpr.(*ast.CallExpr); ok && isSelector(join.Fun, "filepath", "Join") && len(join.Args) == 2 {
+		pkgDir, dirExpr = "", p.resolve(join.Args[1])
+	}
+	dir, err := p.stringValue(dirExpr)
 	if err != nil {
 		return "", err
 	}

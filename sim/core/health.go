@@ -135,6 +135,12 @@ func (unit *Unit) foldHealingTakenPcts(before float64) {
 	}
 }
 
+// HealingTakenPctMultiplier is the unit's healing taken percent auras alone, for a heal that takes no healing
+// done percent: PseudoStats.HealingTakenMultiplier holds Strength of Wrynn's too.
+func (unit *Unit) HealingTakenPctMultiplier() float64 {
+	return healingTakenPctMultiplier(unit.healingTakenPcts)
+}
+
 // healingTakenPctMultiplier works on whole percents, so 40% and -20% come to 1.12 and not 1.4 x 0.8's
 // 1.1199999999999999, which would cost a heal of 100 a point.
 func healingTakenPctMultiplier(pcts []int32) float64 {

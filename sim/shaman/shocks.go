@@ -125,9 +125,25 @@ func (shaman *Shaman) registerFrostShockSpell(shockTimer *core.Timer) {
 	config.Cast.CD.Duration -= time.Duration(shaman.Talents.BoomingEchoes) * time.Second
 	config.DamageMultiplier *= spellModDamage(0.1 * float64(shaman.Talents.BoomingEchoes))
 	config.Direct = core.SpellEffect{Effect: 1, Min: 812, Max: 858, SP: 0.3858}
+
+	// the shock's other effect slows the target for 8 s (MECHANIC_SNARE), where it takes snares
+	snares := shaman.NewEnemyAuraArray(func(target *core.Unit) *core.Aura {
+		if target.ImmuneToMechanic(core.MechanicSnare) {
+			return nil
+		}
+		return target.GetOrRegisterAura(core.Aura{
+			Label:    "Frost Shock by " + shaman.Label,
+			Tag:      core.SnareAuraTag,
+			Duration: time.Second * 8,
+		})
+	})
+
 	config.ApplyEffects = func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 		baseDamage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP, spell.SpellPower())
-		spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
+		result := spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
+		if snare := snares.Get(target); snare != nil && result.Landed() {
+			snare.Activate(sim)
+		}
 	}
 
 	shaman.FrostShock = shaman.RegisterSpell(config)

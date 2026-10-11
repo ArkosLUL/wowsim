@@ -450,6 +450,38 @@ func TestTimeAddedToADotTicksOnlyWithTheMaxDuration(t *testing.T) {
 	}
 }
 
+// An aura left on a unit nothing updated (a pet that was away) is overdue when the unit is back. It goes
+// then, and the clock doesn't go back to when it ran out.
+func TestOverdueAuraLeavesTheClockAlone(t *testing.T) {
+	var aura *Aura
+	expiredAt := time.Duration(-1)
+	sim, _ := newTickTestSim(t, 100, 10, func(a *timingTestAgent) {
+		aura = a.Env.Encounter.TargetUnits[0].RegisterAura(Aura{
+			Label:    "left on",
+			Duration: time.Second,
+			OnExpire: func(_ *Aura, sim *Simulation) { expiredAt = sim.CurrentTime },
+		})
+	})
+	target := sim.Encounter.TargetUnits[0]
+	sim.removeTracker(&target.auraTracker)
+	sim.PrePull()
+	at(sim, ms(500), func(sim *Simulation) { aura.Activate(sim) })
+	back := 5 * time.Second
+	at(sim, back, func(sim *Simulation) { sim.addTracker(&target.auraTracker) })
+	at(sim, back+ms(300), func(*Simulation) {})
+
+	last := sim.CurrentTime
+	for sim.CurrentTime < back+ms(300) && !sim.Step() {
+		if sim.CurrentTime < last {
+			t.Fatalf("the clock went from %v back to %v", last, sim.CurrentTime)
+		}
+		last = sim.CurrentTime
+	}
+	if expiredAt != back {
+		t.Errorf("the overdue aura went at %v, want %v, when its unit was back", expiredAt, back)
+	}
+}
+
 // A target that starts in the execute range is there from the pull.
 func TestStartTargetAtHealthStartsTheExecutePhasesAtOnce(t *testing.T) {
 	sim, _ := newTickTestSim(t, 0, 0, nil)

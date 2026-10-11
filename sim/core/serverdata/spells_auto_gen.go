@@ -6764,6 +6764,17 @@ var spells = []Spell{
 			{Effect: 6, Aura: 4, BasePoints: 5, DieSides: 1, DamageMultiplier: 1},
 		},
 	},
+	// Saronite Bomb
+	{
+		ID: 56350, SchoolMask: 4, Flags: FlagTargetsArea,
+		Attributes: [8]uint32{0, 0x88}, AttributesCu: 0x3100,
+		CooldownMs: 60000, CategoryCooldownMs: 60000, Category: 24,
+		ProcChance: 101, Speed: 14,
+		Effects: [3]Effect{
+			{Effect: 2, BasePoints: 1149, DieSides: 351, DamageMultiplier: 1},
+			{Effect: 32, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, TriggerSpell: 61766},
+		},
+	},
 	// Lock and Load
 	{
 		ID: 56453, Family: 9, SchoolMask: 1, Flags: FlagBinary | FlagPositive,
@@ -6774,6 +6785,17 @@ var spells = []Spell{
 			{Effect: 6, Aura: 108, BasePoints: -101, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, MiscValue: 11, ClassMask: [3]uint32{0x800, 0x80000000}},
 			{Effect: 6, Aura: 108, BasePoints: -101, DieSides: 1, DamageMultiplier: 1, MiscValue: 14, ClassMask: [3]uint32{0x800, 0x80000000}},
 			{Effect: 6, Aura: 274, DamageMultiplier: 1, ClassMask: [3]uint32{0x800, 0x80000000}},
+		},
+	},
+	// Global Thermal Sapper Charge
+	{
+		ID: 56488, SchoolMask: 4, DmgClass: DmgClassMagic, Flags: FlagTargetsArea,
+		AttributesCu: 0x7100,
+		ProcChance:   101, SpellLevel: 1,
+		Effects: [3]Effect{
+			{Effect: 2, BasePoints: 2187, DieSides: 625, DamageMultiplier: 1},
+			{Effect: 2, BasePoints: 2187, DieSides: 625, DamageMultiplier: 1},
+			{Effect: 142, BasePoints: 249, DieSides: 1, DamageMultiplier: 1, TriggerSpell: 61765},
 		},
 	},
 	// Sting (Rank 6)
@@ -8358,6 +8380,24 @@ var spells = []Spell{
 			{Effect: 6, Aura: 4, DamageMultiplier: 1},
 		},
 	},
+	// Global Thermal Sapper Charge
+	{
+		ID: 61765, SchoolMask: 1, Flags: FlagBinary | FlagTargetsArea,
+		Attributes: [8]uint32{0, 0, 0x4}, AttributesCu: 0x101000,
+		ProcChance: 101,
+		Effects: [3]Effect{
+			{Effect: 87, BasePoints: 249, DieSides: 1, DamageMultiplier: 1},
+		},
+	},
+	// Saronite Bomb
+	{
+		ID: 61766, SchoolMask: 1, Flags: FlagBinary | FlagTargetsArea,
+		Attributes: [8]uint32{0, 0, 0x4}, AttributesCu: 0x101000,
+		ProcChance: 101,
+		Effects: [3]Effect{
+			{Effect: 87, BasePoints: 149, DieSides: 1, DamageMultiplier: 1},
+		},
+	},
 	// Summon Gargoyle
 	{
 		ID: 61777, Family: 15, FamilyFlags: [3]uint32{0, 0x80}, SchoolMask: 32, Flags: FlagPositive,
@@ -9737,6 +9777,17 @@ var spells = []Spell{
 		ProcChance:  101, Speed: 20, SpellLevel: 1, BaseLevel: 1,
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 1958, DieSides: 317, DamageMultiplier: 1},
+		},
+	},
+	// Cobalt Frag Bomb
+	{
+		ID: 67769, SchoolMask: 4, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagTargetsArea,
+		Attributes: [8]uint32{0, 0x88}, AttributesCu: 0x103120,
+		CastMs: 500, BaseCastMs: 500, CooldownMs: 60000, CategoryCooldownMs: 60000, Category: 24, DurationMs: 3000, MaxDurationMs: 3000,
+		ProcChance: 101, Speed: 25,
+		Effects: [3]Effect{
+			{Effect: 2, BasePoints: 749, DieSides: 251, DamageMultiplier: 1},
+			{Effect: 6, Aura: 12, BasePoints: 2, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1},
 		},
 	},
 	// Paragon

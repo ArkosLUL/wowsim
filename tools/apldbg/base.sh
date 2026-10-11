@@ -22,6 +22,15 @@ mkdir -p "$out/src"
 # The container can't run git in a worktree, so the copies are made here. They're named .txt: a .go file
 # under tmp/ would join the module.
 entries=()
+# the presets' characters stay the working tree's, so both builds run the same one
+presets=(sim/deathknight/dps/suites.go)
+is_preset() {
+	local file
+	for file in "${presets[@]}"; do
+		[ "$file" = "$1" ] && return 0
+	done
+	return 1
+}
 swap() {
 	local file=$1 copy
 	copy=$(printf '%s' "$file" | tr / _).txt
@@ -37,13 +46,14 @@ while IFS=$'\t' read -r status file; do
 	*.go) ;;
 	*) continue ;;
 	esac
+	is_preset "$file" && continue
 	# a file the commit doesn't have is left out of the base build
 	if [ "$status" = A ]; then leave_out "$file"; else swap "$file"; fi
 done < <(git -C "$root" diff --name-status --no-renames "$base" -- "${paths[@]}")
 while IFS= read -r file; do
 	case "$file" in
 	*_test.go) continue ;;
-	*.go) leave_out "$file" ;;
+	*.go) is_preset "$file" || leave_out "$file" ;;
 	esac
 done < <(git -C "$root" ls-files --others --exclude-standard -- "${paths[@]}")
 

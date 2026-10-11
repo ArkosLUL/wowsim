@@ -193,8 +193,6 @@ type Deathknight struct {
 	UnholyPresenceAura *core.Aura
 	// Blood Presence's heal off a hit's damage on target, nothing outside a presence that has it
 	bloodPresenceHeal func(sim *core.Simulation, target *core.Unit, damage float64)
-	// the raid's Strength of Wrynn, whose healing done percent the sim puts on whoever is healed
-	strengthOfWrynn bool
 
 	// Debuffs
 	FrostFeverDebuffAura       core.AuraArray
@@ -237,8 +235,6 @@ func (dk *Deathknight) AddRaidBuffs(raidBuffs *proto.RaidBuffs) {
 	}
 
 	raidBuffs.HornOfWinter = true
-
-	dk.strengthOfWrynn = raidBuffs.StrengthOfWrynn
 }
 
 func (dk *Deathknight) ApplyTalents() {

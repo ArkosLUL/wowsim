@@ -2,12 +2,9 @@ package main
 
 import (
 	"bytes"
-	"math"
 	"os"
 	"path/filepath"
-	"regexp"
 	"slices"
-	"strconv"
 	"strings"
 	"testing"
 
@@ -15,7 +12,6 @@ import (
 	googleProto "google.golang.org/protobuf/proto"
 
 	"github.com/wowsims/wotlk/sim"
-	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
 )
 
@@ -32,71 +28,16 @@ func testRoot(t *testing.T) string {
 	return root
 }
 
-var goldenDPS = regexp.MustCompile(`key: "([^"]+)"\r?\n value: \{\r?\n  dps: ([0-9.eE+-]+)`)
-
-// goldenRows is the DPS of each test in a .results golden, by its name without the suite's.
-func goldenRows(t *testing.T, root, suite string) map[string]float64 {
-	t.Helper()
-	data, err := os.ReadFile(filepath.Join(root, suite+".results"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	rows := map[string]float64{}
-	for _, m := range goldenDPS.FindAllSubmatch(data, -1) {
-		dps, err := strconv.ParseFloat(string(m[2]), 64)
-		if err != nil {
-			t.Fatal(err)
-		}
-		rows[strings.TrimPrefix(string(m[1]), filepath.Base(suite)+"-")] = dps
-	}
-	return rows
-}
-
-func dpsOf(t *testing.T, r row) float64 {
-	t.Helper()
-	r.rsr.SimOptions = simOptions(r.rsr.SimOptions, 0, 0)
-	result := core.RunRaidSim(r.rsr)
-	if result.ErrorResult != "" {
-		t.Fatalf("%s: %s", r.label, result.ErrorResult)
-	}
-	return player(result).Dps.Avg
-}
-
-// A preset is a copy of its suite's character, so its rows have to be the golden's, to the digit. One that
-// drifted gives rows no golden holds, or another DPS.
-func TestPresetsRunTheirSuitesRows(t *testing.T) {
-	root := testRoot(t)
+// The tests run in tools/apldbg, so a suite that reads a file from outside the root it's given fails here.
+func TestEveryPresetRunsItsDefaultRow(t *testing.T) {
 	for _, name := range presetNames() {
-		t.Run(name, func(t *testing.T) {
-			p := presets[name]
-			golden := goldenRows(t, root, p.suite)
-			rows := presetRows(p, root, nil, "")
-			want := 0
-			for label := range golden {
-				if strings.HasPrefix(label, "Settings-") || strings.HasPrefix(label, "Average-") {
-					want++
-				}
-			}
-			if len(rows) != want {
-				t.Errorf("%d rows, %s.results has %d: copy the suite's races, options and rotations again", len(rows), p.suite, want)
-			}
-			// a 20-iteration row per preset, and one Average, which takes seconds
-			check := []row{rows[0]}
-			if name == "frostuh" {
-				check = append(check, rows[len(rows)-1])
-			}
-			for _, r := range check {
-				dps, ok := golden[r.label]
-				if !ok {
-					t.Errorf("%s.results has no %s", p.suite, r.label)
-					continue
-				}
-				if got := dpsOf(t, r); math.Abs(got-dps) > 1e-4 {
-					t.Errorf("%s: %.5f DPS, the golden's %.5f. If %s fails too, its golden moved: promote it. If not, "+
-						"copy the suite's gear, talents, glyphs, options and consumes again", r.label, got, dps, filepath.Base(p.suite))
-				}
-			}
-		})
+		var out bytes.Buffer
+		if code := run([]string{"-spec", name, "-iters", "1"}, &out); code != 0 {
+			t.Fatalf("-spec %s exits %d", name, code)
+		}
+		if !strings.Contains(out.String(), "Average-Default iters=1 seed=101: dps ") {
+			t.Errorf("-spec %s: no header for the Average row in\n%s", name, out.String())
+		}
 	}
 }
 
@@ -278,7 +219,7 @@ func TestRunPrintsRowsAndRefusesBadFlags(t *testing.T) {
 		t.Errorf("the refusals printed %q", out.String())
 	}
 
-	if code := run([]string{"-spec", "blood", "-row", "orc,nobuffs,short", "-iters", "2", "-ids", "49924", "-timeline", "0:3"}, &out); code != 0 {
+	if code := run([]string{"-spec", "blood", "-row", "orc,blood_dps,nobuffs,short", "-iters", "2", "-ids", "49924", "-timeline", "0:3"}, &out); code != 0 {
 		t.Fatalf("exit %d", code)
 	}
 	text := out.String()

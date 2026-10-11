@@ -30,8 +30,8 @@ var bloodPresenceHealSources = map[string]bool{
 	"{SpellID: 55271, Tag: 1}": true, // Scourge Strike
 	"{SpellID: 47632}":         true, // Death Coil
 	"{SpellID: 51460}":         true, // Necrosis
-	"{ItemID: 41119}":          true, // Saronite Bomb
-	"{ItemID: 42641}":          true, // Global Thermal Sapper Charge
+	"{SpellID: 56350}":         true, // Saronite Bomb
+	"{SpellID: 56488}":         true, // Global Thermal Sapper Charge
 	"{SpellID: 55039}":         true, // Gnomish Lightning Generator
 }
 
@@ -222,7 +222,7 @@ func TestBloodPresenceHealFromOnUseItems(t *testing.T) {
 	player.Consumes = &proto.Consumes{ThermalSapper: true, FillerExplosive: proto.Explosive_ExplosiveSaroniteBomb}
 	player.Equipment.Items[proto.ItemSlot_ItemSlotTrinket1] = &proto.ItemSpec{Id: 41121}
 	healed := checkPresenceHeals(t, runParity(t, player, 1), 4, 1)
-	for _, action := range []string{"{ItemID: 41119}", "{ItemID: 42641}", "{SpellID: 55039}"} {
+	for _, action := range []string{"{SpellID: 56350}", "{SpellID: 56488}", "{SpellID: 55039}"} {
 		if healed[action] == 0 {
 			t.Errorf("no %s hit healed", action)
 		}

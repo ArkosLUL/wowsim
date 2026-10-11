@@ -46,7 +46,9 @@ run trimmed by `simval talents`, which `TestTalentSweepRecords` replays.
 `spellmod_spells.json` lists, per spell-mod talent, the spells the sim names that its mods change on the server;
 the spell-mod sweep probes them. Rewrite it with [spellmods](../../../../tools/acore/spellmods/README.md).
 `spellmods.jsonl` holds a `TestSimvalSpellModSweep` run's `SPELLMOD` lines, which `TestSpellModRecords` replays
-([spell-mod sweep](../../../../tools/simval/README.md#spell-mod-sweep)).
+([spell-mod sweep](../../../../tools/simval/README.md#spell-mod-sweep)). WarlockAffliction's lines carry Curse of Doom
+as shaped by `spell_warl_curse_of_doom`, so its damage isn't compared until a rerun on a module build whose
+`NO_AMOUNT_SCRIPTS` lists that script.
 
 `costaura_spells.json` is the same list for the school cost aura talents, and `costauras.jsonl` a
 `TestSimvalCostAuraSweep` run's lines, which `TestCostAuraRecords` replays

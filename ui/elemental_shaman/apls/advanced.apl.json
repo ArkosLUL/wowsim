@@ -831,8 +831,8 @@
 				"castSpell": { "spellId": { "spellId": 33697 } }
 			}
 		},
-		{ "action": { "castSpell": { "spellId": { "itemId": 42641 } } } },
-		{ "action": { "castSpell": { "spellId": { "itemId": 41119 } } } },
+		{ "action": { "castSpell": { "spellId": { "spellId": 56488 } } } },
+		{ "action": { "castSpell": { "spellId": { "spellId": 56350 } } } },
 		{
 			"action": {
 				"condition": {

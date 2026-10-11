@@ -123,9 +123,11 @@ func (dk *Deathknight) registerBloodPresenceHeal() {
 		if pct == 0 || damage <= 0 || !dk.givesXPOrHonor(target) {
 			return
 		}
-		// the script hands the heal a whole amount, and the healing taken percent truncates again
+		// the script hands the heal a whole amount, and the healing taken percent truncates again. 50475 has
+		// no damage class and no spell_bonus_data row, so Unit::SpellHealingBonusDone hands it back before
+		// any healing done percent: Strength of Wrynn's doesn't reach it
 		heal := math.Trunc(damage * pct / 100)
-		dk.GainHealth(sim, math.Trunc(heal*dk.healingTakenPct()), healthMetrics)
+		dk.GainHealth(sim, math.Trunc(heal*dk.HealingTakenPctMultiplier()), healthMetrics)
 	}
 
 	aura := core.MakePermanent(dk.RegisterAura(core.Aura{
@@ -152,18 +154,6 @@ func (dk *Deathknight) registerBloodPresenceHeal() {
 // victim has to be above the gray level, 9 under a level 60+ player's own.
 func (dk *Deathknight) givesXPOrHonor(target *core.Unit) bool {
 	return target.Level > dk.Level-9
-}
-
-// healingTakenPct is the DK's healing taken percent auras alone. 50475 has no damage class and no
-// spell_bonus_data row, so Unit::SpellHealingBonusDone hands it back before any healing done percent, and
-// Strength of Wrynn's is in HealingTakenMultiplier too.
-func (dk *Deathknight) healingTakenPct() float64 {
-	taken := dk.PseudoStats.HealingTakenMultiplier
-	if dk.strengthOfWrynn {
-		// the percent auras always come to whole ten-thousandths, which the division can miss by a bit
-		taken = math.Round(taken/1.30*10000) / 10000
-	}
-	return taken
 }
 
 // onUseItemDamage are the items whose use spell deals the damage itself. Player::CastItemUseSpell casts an

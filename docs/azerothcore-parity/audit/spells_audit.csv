@@ -15,52 +15,51 @@ warrior,2457,Battle Stance,,4,2,1,0,0,0,0,0,1000,-1,-1,0,0,0,0,yes,no,no,no,no,n
 warrior,2458,Berserker Stance,,4,2,1,0,0,0,0,0,1000,-1,-1,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/warrior/stances.go:173
 warrior,2565,Shield Block,,4,0,1,0,0,0,0,60000,0,10000,10000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/warrior/shield_block.go:11
 warrior,2687,Bloodrage,,4,0,1,0,0,0,0,60000,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,29131,,sim/warrior/bloodrage.go:10
-core shaman,2825,Bloodlust,,11,0,8,0,0,1500,133,300000,0,40000,40000,0,0,0,0,yes,no,no,no,no,yes,no,no,no,yes,no,,,,,spell_sha_bloodlust,sim/core/buffs.go:586 sim/core/serverdata_allowlist.go:14 sim/core/serverdata_allowlist.go:15 +2 more
+core shaman,2825,Bloodlust,,11,0,8,0,0,1500,133,300000,0,40000,40000,0,0,0,0,yes,no,no,no,no,yes,no,no,no,yes,no,,,,,spell_sha_bloodlust,sim/core/buffs.go:579 sim/core/serverdata_allowlist.go:14 sim/core/serverdata_allowlist.go:15 +2 more
 shaman,2894,Fire Elemental Totem,,11,1,1,0,0,1000,133,600000,120000,120000,120000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/shaman/fire_elemental_totem.go:17
 core hunter,3043,Scorpid Sting,,9,3,8,0,-1000000,1500,133,0,0,20000,20000,0,0,40,0,yes,no,yes,no,no,no,no,no,no,no,no,,,,,,sim/core/debuffs.go:910 sim/hunter/scorpid_sting.go:11
 hunter,3045,Rapid Fire,,9,0,1,0,0,0,0,0,300000,15000,15000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/hunter/rapid_fire.go:11
-shaman,3738,Wrath of Air Totem,,11,1,1,0,0,1000,133,0,0,300000,300000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/shaman/serverdata_allowlist.go:25 sim/shaman/totems.go:26
+shaman,3738,Wrath of Air Totem,,11,1,1,0,0,1000,133,0,0,300000,300000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/shaman/serverdata_allowlist.go:24 sim/shaman/totems.go:26
 druid,5229,Enrage,,7,0,1,0,0,0,0,60000,0,10000,10000,0,1000,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,spell_dru_enrage,sim/druid/enrage.go:11
 rogue,5938,Shiv,,8,2,1,0,0,1000,133,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,yes,yes,no,no,,,,,spell_rog_shiv,sim/rogue/shiv.go:18
-rogue,5940,Shiv,,8,2,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,yes,no,no,no,,,,,,sim/rogue/shiv.go:45
+rogue,5940,Shiv,,8,2,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,yes,no,no,no,,,,,,sim/rogue/shiv.go:46
 rogue,6774,Slice and Dice,Rank 2,8,0,1,0,0,1000,133,0,0,6000,21000,0,0,0,0,no,no,no,no,no,no,no,no,yes,yes,no,,,,,,sim/rogue/slice_and_dice.go:11
 priest,6788,Weakened Soul,,6,0,2,0,0,0,0,0,0,15000,15000,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/priest/power_word_shield.go:83
-core,6940,Hand of Sacrifice,,10,1,2,0,0,1500,133,120000,0,12000,12000,0,0,0,0,yes,no,no,no,no,yes,no,no,no,yes,no,,,,,spell_pal_hand_of_sacrifice,sim/core/buffs.go:909 sim/core/buffs.go:927 sim/core/serverdata_allowlist.go:16 +1 more
+core,6940,Hand of Sacrifice,,10,1,2,0,0,1500,133,120000,0,12000,12000,0,0,0,0,yes,no,no,no,no,yes,no,no,no,yes,no,,,,,spell_pal_hand_of_sacrifice,sim/core/buffs.go:903 sim/core/buffs.go:921 sim/core/serverdata_allowlist.go:16 +1 more
 warrior,7384,Overpower,,4,2,1,0,0,1500,133,0,5000,1,1,0,0,0,0,no,no,no,no,no,no,no,yes,no,no,no,,,,,spell_warr_overpower,sim/warrior/overpower.go:45
 warrior,7386,Sunder Armor,,4,2,1,0,0,1500,133,0,0,0,0,5,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,58567,,sim/warrior/sunder_armor.go:50
-shaman,8143,Tremor Totem,,11,1,1,0,0,1000,133,0,0,300000,300000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/shaman/serverdata_allowlist.go:26 sim/shaman/totems.go:133
-shaman,8512,Windfury Totem,,11,1,1,0,0,1000,133,0,0,300000,300000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/shaman/serverdata_allowlist.go:27 sim/shaman/totems.go:34
+shaman,8143,Tremor Totem,,11,1,1,0,0,1000,133,0,0,300000,300000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/shaman/serverdata_allowlist.go:25 sim/shaman/totems.go:133
+shaman,8512,Windfury Totem,,11,1,1,0,0,1000,133,0,0,300000,300000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/shaman/serverdata_allowlist.go:26 sim/shaman/totems.go:34
 core rogue,8647,Expose Armor,,8,2,1,0,0,1000,133,0,0,0,30000,0,0,0,0,yes,no,no,no,no,no,no,no,no,no,no,,,,,,sim/core/debuffs.go:607 sim/rogue/expose_armor.go:25
 druid,9634,Dire Bear Form,Shapeshift,7,0,1,0,0,1500,133,0,0,-1,-1,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,no,,,,,spell_dru_feral_swiftness,sim/druid/forms.go:235
-core priest,10060,Power Infusion,,6,0,2,0,0,0,0,120000,0,15000,15000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/core/buffs.go:660 sim/core/buffs.go:693 sim/core/serverdata_allowlist.go:18 +1 more
-shaman,10444,Flametongue Attack,,11,1,4,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/shaman/serverdata_allowlist.go:16 sim/shaman/weapon_imbues.go:145
-mage,11129,Combustion,,3,1,4,0,0,0,0,120000,0,-1,-1,0,0,0,0,yes,no,no,no,yes,no,no,no,no,yes,no,0,100,0,28682,spell_mage_combustion,sim/mage/talents.go:565
-core,11374,Gift of Arthas,,0,0,8,0,0,0,0,0,0,180000,180000,0,0,0,0,yes,no,no,no,no,no,no,no,no,no,no,,,,,,sim/core/consumes.go:279 sim/core/debuffs.go:401
+core priest,10060,Power Infusion,,6,0,2,0,0,0,0,120000,0,15000,15000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/core/buffs.go:654 sim/core/buffs.go:687 sim/core/serverdata_allowlist.go:18 +1 more
+shaman,10444,Flametongue Attack,,11,1,4,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/shaman/serverdata_allowlist.go:15 sim/shaman/weapon_imbues.go:145
+mage,11129,Combustion,,3,1,4,0,0,0,0,120000,0,-1,-1,0,0,0,0,yes,no,no,no,yes,no,no,no,no,yes,no,0,100,0,28682,spell_mage_combustion,sim/mage/talents.go:610
+core,11374,Gift of Arthas,,0,0,8,0,0,0,0,0,0,180000,180000,0,0,0,0,yes,no,no,no,no,no,no,no,no,no,no,,,,,,sim/core/consumes.go:280 sim/core/debuffs.go:401
 warlock,11719,Curse of Tongues,Rank 2,5,1,32,0,0,1500,133,0,0,30000,30000,0,0,0,0,yes,no,no,no,yes,yes,no,no,no,no,no,,,,,,sim/warlock/curses.go:77
-mage,11958,Cold Snap,,3,1,16,0,0,0,0,480000,0,0,0,0,0,0,0,no,no,no,no,yes,no,no,no,no,yes,no,,,,,spell_mage_cold_snap,sim/mage/talents.go:725
-mage,12042,Arcane Power,,3,1,64,0,0,0,0,120000,15000,15000,15000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/mage/talents.go:372
-mage,12043,Presence of Mind,,3,1,1,0,0,0,0,120000,1500,-1,-1,0,0,0,0,yes,no,no,no,yes,no,no,no,no,yes,no,0,100,0,,,sim/mage/talents.go:313
+mage,11958,Cold Snap,,3,1,16,0,0,0,0,480000,0,0,0,0,0,0,0,no,no,no,no,yes,no,no,no,no,yes,no,,,,,spell_mage_cold_snap,sim/mage/talents.go:770
+mage,12042,Arcane Power,,3,1,64,0,0,0,0,120000,15000,15000,15000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/mage/talents.go:373
+mage,12043,Presence of Mind,,3,1,1,0,0,0,0,120000,1500,-1,-1,0,0,0,0,yes,no,no,no,yes,no,no,no,no,yes,no,0,100,0,,,sim/mage/talents.go:314
 mage,12051,Evocation,,3,0,64,0,0,1500,133,240000,0,8000,8000,0,2000,0,0,yes,yes,no,no,yes,yes,yes,no,no,yes,no,,,,,,sim/mage/evocation.go:10
-warrior,12281,Sword Specialization,Rank 1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,0,2,6000,16459,,sim/warrior/talents.go:449
-warrior,12292,Death Wish,,4,0,1,0,0,1500,133,180000,0,30000,30000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/warrior/serverdata_allowlist.go:10 sim/warrior/talents.go:704
+warrior,12281,Sword Specialization,Rank 1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,0,2,6000,16459,,sim/warrior/talents.go:452
+warrior,12292,Death Wish,,4,0,1,0,0,1500,133,180000,0,30000,30000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/warrior/serverdata_allowlist.go:10 sim/warrior/talents.go:707
 warrior,12296,Anger Management,,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,,,,,,sim/warrior/talents.go:142
-shaman,12470,Fire Nova,,0,1,4,2000,2000,0,0,9500,14000,0,0,0,0,0,0,no,no,no,no,yes,no,no,no,no,no,no,,,,,,sim/shaman/fire_elemental_spells.go:45 sim/shaman/serverdata_allowlist.go:35 sim/shaman/serverdata_allowlist.go:36
-mage,12472,Icy Veins,,3,1,16,0,0,0,0,180000,0,20000,20000,0,0,0,0,yes,no,no,no,yes,no,no,no,no,yes,no,,,,,,sim/mage/talents.go:674
+shaman,12470,Fire Nova,,0,1,4,2000,2000,0,0,9500,14000,0,0,0,0,0,0,no,no,no,no,yes,no,no,no,no,no,no,,,,,,sim/shaman/fire_elemental_spells.go:34 sim/shaman/serverdata_allowlist.go:34
+mage,12472,Icy Veins,,3,1,16,0,0,0,0,180000,0,20000,20000,0,0,0,0,yes,no,no,no,yes,no,no,no,no,yes,no,,,,,,sim/mage/talents.go:719
 mage,12488,Improved Blizzard,Rank 3,3,0,1,0,0,0,0,0,0,-1,-1,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,101,0,,spell_mage_imp_blizzard,sim/mage/blizzard.go:14 sim/mage/blizzard.go:20
-mage,12536,Clearcasting,,3,1,64,0,0,0,0,0,0,15000,15000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,0,100,0,,spell_mage_clearcasting,sim/mage/talents.go:195
-mage,12654,Ignite,,3,0,4,0,0,0,0,0,0,4000,4000,0,2000,0,0,no,no,no,no,no,no,no,no,yes,no,no,,,,,,sim/mage/ignite.go:51
+mage,12536,Clearcasting,,3,1,64,0,0,0,0,0,0,15000,15000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,0,100,0,,spell_mage_clearcasting,sim/mage/talents.go:196
+mage,12654,Ignite,,3,0,4,0,0,0,0,0,0,4000,4000,0,2000,0,0,no,no,no,no,no,no,no,no,yes,no,no,,,,,,sim/mage/ignite.go:53
 warrior,12721,Deep Wounds,,4,0,1,0,0,0,0,0,0,6000,6000,0,1000,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/warrior/deep_wounds.go:23
 warrior,12723,Sweeping Strikes,Rank 1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/warrior/serverdata_allowlist.go:12 sim/warrior/sweeping_strikes.go:15
-warrior,12727,Shield Specialization,Rank 5,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,100,0,23602,,sim/warrior/talents.go:681
+warrior,12727,Shield Specialization,Rank 5,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,100,0,23602,,sim/warrior/talents.go:684
 warrior,12809,Concussion Blow,,4,2,1,0,0,1500,133,30000,0,5000,5000,0,0,0,0,yes,no,no,no,no,no,no,no,no,no,no,,,,,spell_warr_concussion_blow,sim/warrior/concussion_blow.go:16
 warrior,12867,Deep Wounds,Rank 3,4,0,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,0,100,0,12868,spell_warr_deep_wounds_aura,sim/warrior/deep_wounds.go:15
 core,12873,Improved Scorch,Rank 3,3,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,100,0,22959,,sim/core/debuffs.go:458
-warrior,12974,Flurry,Rank 5,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,100,0,12970,,sim/warrior/talents.go:513
-warrior,12975,Last Stand,,4,0,1,0,0,0,0,0,180000,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,spell_warr_last_stand,sim/warrior/talents.go:755
-warrior,13002,Unbridled Wrath,Rank 5,0,0,1,0,0,0,0,0,0,-1,-1,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,15,0,0,12964,,sim/warrior/talents.go:483
-shaman,13339,Fire Blast,,3,1,4,0,0,0,0,5000,5000,0,0,0,0,0,0,no,no,no,no,yes,no,no,no,no,no,no,,,,,,sim/shaman/fire_elemental_spells.go:11 sim/shaman/serverdata_allowlist.go:37 sim/shaman/serverdata_allowlist.go:38
-shaman,13376,Fire Shield,,0,1,4,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/shaman/fire_elemental_spells.go:85
-shaman,13377,Fire Shield,,0,0,2,0,0,0,0,0,0,-1,-1,0,3000,0,0,no,no,no,no,no,no,no,no,no,yes,yes,,,,13376,,sim/shaman/fire_elemental_spells.go:115
+warrior,12974,Flurry,Rank 5,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,100,0,12970,,sim/warrior/talents.go:516
+warrior,12975,Last Stand,,4,0,1,0,0,0,0,0,180000,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,spell_warr_last_stand,sim/warrior/talents.go:758
+warrior,13002,Unbridled Wrath,Rank 5,0,0,1,0,0,0,0,0,0,-1,-1,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,15,0,0,12964,,sim/warrior/talents.go:486
+shaman,13376,Fire Shield,,0,1,4,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/shaman/fire_elemental_spells.go:69
+shaman,13377,Fire Shield,,0,0,2,0,0,0,0,0,0,-1,-1,0,3000,0,0,no,no,no,no,no,no,no,no,no,yes,yes,,,,13376,,sim/shaman/fire_elemental_spells.go:100
 rogue,13750,Adrenaline Rush,,8,0,1,0,0,1000,133,180000,0,15000,15000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/rogue/talents.go:613
 rogue,13877,Blade Flurry,,8,0,1,0,0,1000,133,120000,0,15000,15000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,0,100,0,,spell_rog_blade_flurry,sim/rogue/talents.go:509
 rogue,13964,Hack and Slash,Rank 5,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,5,0,66923,,sim/rogue/hack_and_slash.go:23
@@ -73,22 +72,22 @@ rogue,14183,Premeditation,,8,0,1,0,0,0,0,20000,0,20000,20000,0,0,0,0,yes,no,no,n
 rogue,14185,Preparation,,8,0,1,0,0,1000,133,480000,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,no,,,,,spell_rog_preparation,sim/rogue/preparation.go:16
 rogue,14195,Seal Fate,Rank 5,8,0,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,0,100,500,14189,,sim/rogue/talents.go:361
 rogue,14278,Ghostly Strike,,8,2,1,0,0,1000,133,20000,0,7000,7000,0,0,0,0,yes,no,no,no,no,no,no,no,no,no,no,,,,,,sim/rogue/ghostly_strike.go:17
-priest,14751,Inner Focus,,6,1,1,0,0,0,0,180000,0,-1,-1,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,0,100,0,,,sim/priest/talents.go:478
+priest,14751,Inner Focus,,6,1,1,0,0,0,0,180000,0,-1,-1,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,0,100,0,,,sim/priest/talents.go:484
 core,15235,Crystal Yield,,0,1,64,0,0,0,0,0,0,120000,120000,0,0,0,0,yes,no,no,no,no,no,no,no,no,no,no,,,,,,sim/core/debuffs.go:979
-priest,15258,Shadow Weaving,Rank 1,6,0,32,0,0,0,0,0,0,15000,15000,5,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/priest/talents.go:439
-core,15363,Inspiration,Rank 3,6,0,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,0,100,0,15359,,sim/core/buffs.go:390
+priest,15258,Shadow Weaving,Rank 1,6,0,32,0,0,0,0,0,0,15000,15000,5,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/priest/talents.go:445
+core,15363,Inspiration,Rank 3,6,0,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,0,100,0,15359,,sim/core/buffs.go:383
 common/tbc,15600,Hand of Justice,,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,1,2,2000,15601,spell_gen_proc_reduced_above_60,sim/common/tbc/melee_trinkets.go:12 sim/common/tbc/melee_trinkets.go:33
 shaman,16166,Elemental Mastery,,11,1,8,0,0,0,0,0,180000,30000,30000,0,0,0,0,yes,no,no,no,yes,no,no,no,no,yes,no,0,100,0,64701,,sim/shaman/talents.go:192
 shaman,16188,Nature's Swiftness,,11,1,1,0,0,0,0,0,120000,-1,-1,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,0,100,0,,,sim/shaman/talents.go:292
-core,16190,Mana Tide Totem,,11,1,1,0,0,1000,133,0,300000,13000,13000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/core/buffs.go:1196 sim/core/serverdata_allowlist.go:19 sim/core/serverdata_allowlist.go:20
+core,16190,Mana Tide Totem,,11,1,1,0,0,1000,133,0,300000,13000,13000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/core/buffs.go:1190 sim/core/serverdata_allowlist.go:19 sim/core/serverdata_allowlist.go:20
 shaman,16246,Clearcasting,,11,1,64,0,0,0,0,0,0,15000,15000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,0,100,0,,spell_sha_clearcasting,sim/shaman/talents.go:93
 shaman,16280,Flurry,Rank 5,11,0,1,0,0,0,0,0,0,15000,15000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,0,100,500,,spell_sha_flurry_proc,sim/shaman/talents.go:368
 common/tbc,16551,Felstriker,,3,0,1,0,0,0,0,0,0,3000,3000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/tbc/melee_items.go:360
 druid,16857,Faerie Fire (Feral),,7,1,8,0,0,1000,133,0,6000,300000,300000,0,0,0,0,yes,no,no,no,no,no,no,no,no,no,no,,,,,spell_tweaks_omen_faerie_fire,sim/druid/faerie_fire.go:28
-druid,16864,Omen of Clarity,,7,1,8,0,0,1500,133,0,0,0,0,0,0,0,0,no,no,no,no,no,yes,no,no,no,yes,yes,3.5,0,0,16870,spell_dru_omen_of_clarity,sim/druid/talents.go:387
-druid,16870,Clearcasting,,7,1,8,0,0,0,0,0,0,15000,15000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,0,100,0,,,sim/druid/talents.go:320
-druid,16886,Nature's Grace,,7,1,8,0,0,0,0,0,0,3000,3000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/druid/talents.go:104
-druid,17116,Nature's Swiftness,,7,1,1,0,0,0,0,180000,0,-1,-1,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,0,100,0,,,sim/druid/talents.go:137
+druid,16864,Omen of Clarity,,7,1,8,0,0,1500,133,0,0,0,0,0,0,0,0,no,no,no,no,no,yes,no,no,no,yes,yes,3.5,0,0,16870,spell_dru_omen_of_clarity,sim/druid/talents.go:402
+druid,16870,Clearcasting,,7,1,8,0,0,0,0,0,0,15000,15000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,0,100,0,,,sim/druid/talents.go:335
+druid,16886,Nature's Grace,,7,1,8,0,0,0,0,0,0,3000,3000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/druid/talents.go:106
+druid,17116,Nature's Swiftness,,7,1,1,0,0,0,0,180000,0,-1,-1,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,0,100,0,,,sim/druid/talents.go:152
 shaman,17364,Stormstrike,,11,2,1,0,0,1500,133,8000,0,12000,12000,0,0,0,0,yes,no,no,no,no,no,no,no,no,no,no,0,100,0,32175 32176,,sim/shaman/stormstrike.go:11
 core,17800,Shadow Mastery,,5,0,32,0,0,0,0,0,0,30000,30000,0,0,0,0,yes,no,no,no,no,no,no,no,no,no,no,,,,,,sim/core/debuffs.go:454
 warlock,17941,Shadow Trance,,5,1,32,0,0,0,0,0,0,10000,10000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,0,101,0,,,sim/warlock/talents.go:329
@@ -98,8 +97,8 @@ common/tbc,18979,Lightning,,0,1,8,0,0,0,0,0,0,-1,-1,0,0,0,0,no,no,no,no,no,no,no
 common/tbc,18980,Lightning,Rank 1,0,1,8,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/common/tbc/melee_sets.go:74
 warlock,19483,Immolation,Rank 1,0,1,4,0,0,0,0,0,0,0,0,0,2000,0,0,no,no,no,no,no,no,no,no,no,yes,yes,,,,20153,,sim/warlock/inferno.go:132
 hunter,19556,Improved Aspect of the Hawk,Rank 5,9,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,,,,,,sim/hunter/aspects.go:21
-hunter,19574,Bestial Wrath,,9,0,1,0,0,0,0,120000,0,10000,10000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,spell_hun_bestial_wrath,sim/hunter/talents.go:445
-hunter,19625,Frenzy,Rank 5,9,0,1,0,0,0,0,0,0,-1,-1,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,,,,,,sim/hunter/talents.go:410
+hunter,19574,Bestial Wrath,,9,0,1,0,0,0,0,120000,0,10000,10000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,spell_hun_bestial_wrath,sim/hunter/talents.go:443
+hunter,19625,Frenzy,Rank 5,9,0,1,0,0,0,0,0,0,-1,-1,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,,,,,,sim/hunter/talents.go:408
 common/tbc,20007,Holy Strength,,0,0,1,0,0,0,0,0,0,15000,15000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,spell_gen_reduced_above_60,sim/common/tbc/enchant_effects.go:73 sim/common/tbc/enchant_effects.go:74
 paladin,20057,Vengeance,Rank 3,0,0,1,0,0,0,0,0,0,-1,-1,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,0,100,0,20053,,sim/paladin/talents.go:406
 paladin,20132,Redoubt,,0,0,1,0,0,0,0,0,0,10000,10000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,0,100,0,,,sim/paladin/talents.go:141
@@ -110,9 +109,9 @@ core,20186,Judgement of Wisdom,Rank 1,10,2,2,0,0,0,0,0,0,20000,20000,0,0,0,0,no,
 paladin,20187,Judgement of Righteousness,Rank 1,10,2,2,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,yes,yes,no,no,,,,,,sim/paladin/sor.go:30
 core paladin,20271,Judgement of Light,,10,3,2,0,0,1500,133,10000,10000,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,no,no,,,,,spell_pal_judgement_of_light,sim/core/debuffs.go:251 sim/paladin/judgement.go:66
 core,20337,Heart of the Crusader,Rank 3,10,0,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,yes,0,100,0,54499,spell_pal_heart_of_the_crusader,sim/core/debuffs.go:951
-paladin,20375,Seal of Command,,10,1,2,0,0,1500,133,0,0,1800000,1800000,0,0,0,0,no,no,no,no,no,yes,no,no,no,yes,no,0,100,0,20424,spell_pal_seal_of_command,sim/paladin/soc.go:119
-paladin,20424,Seal of Command,,10,2,2,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,spell_pal_seal_of_command,sim/paladin/soc.go:61
-paladin,20467,Judgement of Command,Rank 1,10,2,2,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,yes,yes,no,no,,,,,,sim/paladin/serverdata_allowlist.go:12 sim/paladin/serverdata_allowlist.go:14 sim/paladin/soc.go:33
+paladin,20375,Seal of Command,,10,1,2,0,0,1500,133,0,0,1800000,1800000,0,0,0,0,no,no,no,no,no,yes,no,no,no,yes,no,0,100,0,20424,spell_pal_seal_of_command,sim/paladin/soc.go:115
+paladin,20424,Seal of Command,,10,2,2,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,spell_pal_seal_of_command,sim/paladin/soc.go:57
+paladin,20467,Judgement of Command,Rank 1,10,2,2,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,yes,yes,no,no,,,,,,sim/paladin/serverdata_allowlist.go:12 sim/paladin/serverdata_allowlist.go:14 sim/paladin/soc.go:31
 core,20594,Stoneform,Racial,0,0,1,0,0,0,133,120000,0,100,100,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/core/racials.go:88
 hunter,20895,Spirit Bond,Rank 2,0,0,8,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,,,,,,sim/hunter/talents.go:176
 paladin,21084,Seal of Righteousness,,10,1,2,0,0,1500,133,0,0,1800000,1800000,0,0,0,0,no,no,no,no,no,yes,no,no,no,yes,no,0,100,0,,spell_pal_seal_of_righteousness,sim/paladin/sor.go:73
@@ -126,34 +125,35 @@ warlock,23720,Blessing of the Black Book,,0,1,32,0,0,0,0,0,0,30000,30000,0,0,0,0
 common/tbc,23863,Revitalize,,0,0,8,0,0,0,0,0,0,-1,-1,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,0,2,0,23864,,sim/common/tbc/melee_sets.go:108
 common/tbc,23864,Revitalize,,0,0,8,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/tbc/melee_sets.go:110
 warrior,23881,Bloodthirst,,4,2,1,0,0,1500,133,0,4000,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,no,no,,,,,spell_warr_bloodthirst,sim/warrior/bloodthirst.go:16
-hunter,23989,Readiness,,9,0,1,0,0,1000,133,180000,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,no,,,,,spell_hun_readiness,sim/hunter/talents.go:847
+hunter,23989,Readiness,,9,0,1,0,0,1000,133,180000,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,no,,,,,spell_hun_readiness,sim/hunter/talents.go:854
 common/tbc,24585,Drain Life,,0,1,32,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,no,no,,,,,,sim/common/tbc/melee_items.go:216
 druid,24858,Moonkin Form,Shapeshift,7,0,1,0,0,1500,133,0,0,-1,-1,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,no,,,,24907,,sim/druid/forms.go:413
-hunter,25012,Lightning Breath,Rank 6,9,1,8,0,0,1500,133,10000,0,0,0,0,0,0,0,no,no,no,no,no,yes,no,no,no,no,no,,,,,,sim/hunter/pet_abilities.go:441
+hunter,25012,Lightning Breath,Rank 6,9,1,8,0,0,1500,133,10000,0,0,0,0,0,0,0,no,no,no,no,no,yes,no,no,no,no,no,,,,,,sim/hunter/pet_abilities.go:447
 core,25046,Arcane Torrent,Racial,0,1,64,0,0,0,0,120000,0,2000,2000,0,0,0,0,yes,no,no,no,no,no,no,no,no,no,no,,,,,,sim/core/racials.go:27
 warrior,25203,Demoralizing Shout,Rank 7,4,1,1,0,0,1500,133,0,0,30000,30000,0,0,0,0,yes,no,no,no,no,no,no,no,no,no,no,,,,,,sim/warrior/demoralizing_shout.go:13
 shaman,25504,Windfury Attack,,11,2,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/shaman/weapon_imbues.go:61
 paladin,25742,Seal of Righteousness,,10,2,2,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,yes,yes,no,no,,,,,,sim/paladin/sor.go:63
 paladin,25771,Forbearance,,10,0,2,0,0,0,0,0,0,120000,120000,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/paladin/divine_protection.go:69
 paladin,25780,Righteous Fury,,10,1,2,0,0,1500,133,0,0,-1,-1,0,0,0,0,yes,no,no,no,no,yes,no,no,no,yes,no,,,,,,sim/paladin/righteous_fury.go:12
-core,25899,Greater Blessing of Sanctuary,,10,1,2,0,0,1500,133,0,0,1800000,1800000,0,0,0,0,no,no,no,no,no,yes,no,no,no,yes,no,0,100,0,,spell_gen_damage_reduction_aura spell_pal_blessing_of_sanctuary,sim/core/buffs.go:489
+core,25899,Greater Blessing of Sanctuary,,10,1,2,0,0,1500,133,0,0,1800000,1800000,0,0,0,0,no,no,no,no,no,yes,no,no,no,yes,no,0,100,0,,spell_gen_damage_reduction_aura spell_pal_blessing_of_sanctuary,sim/core/buffs.go:482
 core paladin,26016,Vindication,Rank 2,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,3,0,0,26017,,sim/core/debuffs.go:762 sim/paladin/talents.go:477
 paladin,26017,Vindication,Rank 2,10,1,2,0,0,0,0,0,0,10000,10000,0,0,0,0,yes,no,no,no,no,no,no,no,no,no,no,,,,,,sim/paladin/talents.go:463
 core,26297,Berserking,Racial,0,0,1,0,0,0,0,180000,0,10000,10000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/core/racials.go:189
-common/wotlk,26464,Mercurial Shield,,0,1,1,0,0,0,0,0,0,60000,60000,10,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/other_effects.go:1082
+common/wotlk,26464,Mercurial Shield,,0,1,1,0,0,0,0,0,0,60000,60000,10,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/other_effects.go:1084
 common/tbc,26467,Persistent Shield,,3,1,1,0,0,0,0,0,0,30000,30000,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,no,0,100,0,13567,spell_item_persistent_shield,sim/common/tbc/caster_trinkets.go:46
 common/tbc,26470,Persistent Shield,,3,0,8,0,0,0,0,0,0,8000,8000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/tbc/caster_trinkets.go:28
 rogue,26889,Vanish,Rank 3,8,0,1,0,0,0,0,0,180000,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,no,,,,26888 18461,spell_rog_vanish,sim/rogue/vanish.go:11
-core,26982,Rejuvenation,Rank 13,7,1,8,0,0,1500,133,0,0,15000,15000,0,3000,0,0,yes,no,no,no,yes,yes,no,no,no,yes,no,,,,,spell_dru_rejuvenation_moonglade_2_set isAllowedToCastSpell,sim/core/buffs.go:283
+core,26982,Rejuvenation,Rank 13,7,1,8,0,0,1500,133,0,0,15000,15000,0,3000,0,0,yes,no,no,no,yes,yes,no,no,no,yes,no,,,,,spell_dru_rejuvenation_moonglade_2_set isAllowedToCastSpell,sim/core/buffs.go:276
 core,27013,Insect Swarm,Rank 6,7,1,8,0,0,1500,133,0,0,12000,12000,0,2000,0,0,yes,no,no,no,yes,yes,no,no,no,no,no,,,,,spell_dru_insect_swarm spell_tweaks_balance_dot_haste,sim/core/debuffs.go:902
 common/tbc,27521,Mana Restore,,0,0,1,0,0,0,0,0,0,-1,-1,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,5,15000,32848,,sim/common/tbc/metagems.go:12 sim/common/tbc/metagems.go:49
 common/tbc,28093,Lightning Speed,,0,0,1,0,0,0,0,0,0,15000,15000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/tbc/enchant_effects.go:114 sim/common/tbc/enchant_effects.go:115
-encounters,28131,Frenzy,,0,0,1,0,0,0,0,0,0,300000,300000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/encounters/naxxramas/patchwerk10_ai.go:94 sim/encounters/naxxramas/patchwerk25_ai.go:94
+encounters,28131,Frenzy,,0,0,1,0,0,0,0,0,0,300000,300000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/encounters/naxxramas/patchwerk10_ai.go:96 sim/encounters/naxxramas/patchwerk25_ai.go:96
 core,28593,Winter's Chill,Rank 3,3,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,100,0,12579,,sim/core/debuffs.go:467
 core,28730,Arcane Torrent,Racial,0,1,64,0,0,0,0,120000,0,2000,2000,0,0,0,0,yes,no,no,no,no,no,no,no,no,no,no,,,,,,sim/core/racials.go:30
-mage,29076,Master of Elements,Rank 3,3,0,4,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,0,100,8,,spell_mage_master_of_elements,sim/mage/talents.go:495
-core druid,29166,Innervate,,7,1,8,0,0,1500,133,180000,0,10000,10000,0,1000,0,0,yes,no,no,no,no,yes,no,no,no,yes,no,,,,,spell_dru_innervate,sim/core/buffs.go:1154 sim/core/buffs.go:1172 sim/core/serverdata_allowlist.go:21 +2 more
-warrior,29724,Sudden Death,Rank 3,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,9,0,52437,spell_war_sudden_death_aura spell_warr_extra_proc,sim/warrior/talents.go:596 sim/warrior/talents.go:603
+mage,29076,Master of Elements,Rank 3,3,0,4,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,0,100,8,,spell_mage_master_of_elements,sim/mage/talents.go:501
+warrior,29131,Bloodrage,,4,0,1,0,0,0,0,0,0,10000,10000,0,1000,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/warrior/bloodrage.go:15
+core druid,29166,Innervate,,7,1,8,0,0,1500,133,180000,0,10000,10000,0,1000,0,0,yes,no,no,no,no,yes,no,no,no,yes,no,,,,,spell_dru_innervate,sim/core/buffs.go:1148 sim/core/buffs.go:1166 sim/core/serverdata_allowlist.go:21 +2 more
+warrior,29724,Sudden Death,Rank 3,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,9,0,52437,spell_war_sudden_death_aura spell_warr_extra_proc,sim/warrior/talents.go:599 sim/warrior/talents.go:606
 core,29859,Blood Frenzy,Rank 2,4,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,,,,30070,,sim/core/debuffs.go:371
 shaman,30160,Elemental Devastation,Rank 1,11,0,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,0,100,500,30165,,sim/shaman/talents.go:172
 core,30708,Totem of Wrath,,11,1,4,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,no,yes,,,,,,sim/core/debuffs.go:928
@@ -161,48 +161,48 @@ shaman,30823,Shamanistic Rage,,11,0,1,0,0,1500,133,60000,0,15000,15000,0,0,0,0,y
 rogue,31221,Master of Subtlety,Rank 1,8,0,1,0,0,0,0,0,0,-1,-1,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,,,,,,sim/rogue/master_of_subtlety.go:11
 rogue,31222,Master of Subtlety,Rank 2,8,0,1,0,0,0,0,0,0,-1,-1,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,,,,,,sim/rogue/master_of_subtlety.go:11
 rogue,31223,Master of Subtlety,Rank 3,8,0,1,0,0,0,0,0,0,-1,-1,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,,,,,,sim/rogue/master_of_subtlety.go:11
-rogue,31245,Quick Recovery,Rank 2,8,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,100,0,,spell_rog_quick_recovery,sim/rogue/rogue.go:169
-mage,31572,Arcane Potency,Rank 2,3,0,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,0,101,0,,spell_mage_arcane_potency,sim/mage/talents.go:172
+rogue,31245,Quick Recovery,Rank 2,8,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,100,0,,spell_rog_quick_recovery,sim/rogue/rogue.go:172
+mage,31572,Arcane Potency,Rank 2,3,0,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,0,101,0,,spell_mage_arcane_potency,sim/mage/talents.go:173
 mage,31687,Summon Water Elemental,,3,1,16,0,0,1500,133,180000,0,0,0,0,0,0,0,yes,no,no,no,no,yes,no,no,no,yes,no,,,,,spell_mage_summon_water_elemental,sim/mage/water_elemental.go:25
-mage,31707,Waterbolt,,5,1,16,2500,2500,1500,133,0,0,0,0,0,0,16,0,no,no,no,no,yes,yes,no,no,no,no,no,,,,,,sim/mage/water_elemental.go:134
-paladin,31801,Seal of Vengeance,,10,1,2,0,0,1500,133,0,0,1800000,1800000,0,0,0,0,no,no,no,no,no,yes,no,no,no,yes,no,0,100,0,,spell_pal_seal_of_vengeance,sim/paladin/sov.go:161
+mage,31707,Waterbolt,,5,1,16,2500,2500,1500,133,0,0,0,0,0,0,16,0,no,no,no,no,yes,yes,no,no,no,no,no,,,,,,sim/mage/water_elemental.go:136
+paladin,31801,Seal of Vengeance,,10,1,2,0,0,1500,133,0,0,1800000,1800000,0,0,0,0,no,no,no,no,no,yes,no,no,no,yes,no,0,100,0,,spell_pal_seal_of_vengeance,sim/paladin/sov.go:165
 paladin,31803,Holy Vengeance,Rank 1,10,2,2,0,0,0,0,0,0,15000,15000,5,3000,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/paladin/sov.go:48 sim/paladin/sov.go:86
 paladin,31804,Judgement of Vengeance,Rank 1,10,2,2,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,yes,yes,no,no,,,,,,sim/paladin/sov.go:110
-core paladin,31878,Judgements of the Wise,Rank 3,10,0,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,0,100,0,,spell_pal_judgements_of_the_wise,sim/core/buffs.go:158 sim/paladin/talents.go:598 sim/paladin/talents.go:599 +1 more
+paladin,31878,Judgements of the Wise,Rank 3,10,0,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,0,100,0,,spell_pal_judgements_of_the_wise,sim/paladin/talents.go:598 sim/paladin/talents.go:599 sim/paladin/talents.go:602
 paladin,31884,Avenging Wrath,,10,0,2,0,0,0,0,180000,0,20000,20000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,spell_pal_avenging_wrath,sim/paladin/avenging_wrath.go:11 sim/paladin/serverdata_allowlist.go:10
 shaman,32175,Stormstrike,,11,2,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,yes,yes,no,no,,,,,,sim/shaman/stormstrike.go:15
 shaman,32176,Stormstrike,,11,2,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,yes,yes,no,no,,,,,,sim/shaman/stormstrike.go:16
 warlock,32391,Shadow Embrace,,5,0,32,0,0,0,0,0,0,12000,12000,3,0,0,0,yes,no,no,no,no,no,no,no,no,no,no,,,,,,sim/warlock/talents.go:286
-warlock,32851,Demonic Frenzy,,5,0,1,0,0,0,0,0,0,10000,10000,10,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/warlock/pet.go:127
-priest,33154,Surge of Light,Rank 2,6,0,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,0,50,6000,33151,,sim/priest/talents.go:338
+warlock,32851,Demonic Frenzy,,5,0,1,0,0,0,0,0,0,10000,10000,10,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/warlock/pet.go:139
+priest,33154,Surge of Light,Rank 2,6,0,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,0,50,6000,33151,,sim/priest/talents.go:344
 core,33198,Misery,Rank 3,6,0,32,0,0,0,0,0,0,24000,24000,0,0,0,0,yes,no,no,no,no,no,no,no,no,no,no,,,,,,sim/core/debuffs.go:513
-core,33206,Pain Suppression,,6,0,2,0,0,1500,133,180000,0,8000,8000,0,0,0,0,yes,no,no,no,yes,yes,no,no,no,yes,no,,,,,,sim/core/buffs.go:958 sim/core/buffs.go:974 sim/core/serverdata_allowlist.go:23 +1 more
+core,33206,Pain Suppression,,6,0,2,0,0,1500,133,180000,0,8000,8000,0,0,0,0,yes,no,no,no,yes,yes,no,no,no,yes,no,,,,,,sim/core/buffs.go:952 sim/core/buffs.go:968 sim/core/serverdata_allowlist.go:23 +1 more
 core,33697,Blood Fury,Racial,0,0,1,0,0,0,0,120000,0,15000,15000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/core/racials.go:135
 shaman,33750,Windfury Attack,,11,2,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/shaman/weapon_imbues.go:61
 paladin,33776,Spiritual Attunement,Rank 2,10,0,2,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,0,100,0,,spell_pal_spiritual_attunement,sim/paladin/spiritual_attunement.go:15
 druid,33831,Force of Nature,,7,0,8,0,0,1500,133,180000,0,30000,30000,0,200,0,0,yes,no,no,no,yes,yes,no,no,no,no,no,,,,,,sim/druid/force_of_nature.go:19 sim/druid/force_of_nature.go:23
 hunter,34026,Kill Command,,9,0,1,0,0,0,0,0,60000,30000,30000,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,no,,,,,spell_hun_kill_command,sim/hunter/kill_command.go:14
 hunter,34074,Aspect of the Viper,,9,1,8,0,0,0,0,0,1000,-1,-1,0,3000,0,0,yes,no,no,no,no,no,no,no,no,yes,no,0,100,0,,spell_hun_ascpect_of_the_viper,sim/hunter/aspects.go:82
-druid,34300,Improved Leader of the Pack,Rank 2,7,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,,,,,,sim/druid/talents.go:538
+druid,34300,Improved Leader of the Pack,Rank 2,7,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,,,,,,sim/druid/talents.go:596
 priest,34433,Shadowfiend,,6,0,32,0,0,1500,133,300000,0,15000,15000,0,0,0,0,no,no,no,no,no,yes,no,no,no,no,no,,,,41967,,sim/priest/shadowfiend.go:14 sim/priest/shadowfiend_pet.go:38
-hunter,34471,The Beast Within,,9,0,1,0,0,0,133,0,0,10000,10000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/hunter/talents.go:461
+hunter,34471,The Beast Within,,9,0,1,0,0,0,133,0,0,10000,10000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/hunter/talents.go:459
 hunter,34490,Silencing Shot,,9,3,1,0,-1000000,0,0,20000,0,3000,3000,0,0,0,0,no,no,yes,no,no,no,no,no,no,no,no,,,,,,sim/hunter/silencing_shot.go:15
-hunter,34499,Thrill of the Hunt,Rank 3,9,0,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,0,100,0,,spell_hun_thrill_of_the_hunt,sim/hunter/talents.go:641
-hunter,34503,Expose Weakness,Rank 3,9,0,64,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,0,100,0,34501,,sim/hunter/talents.go:683
+hunter,34499,Thrill of the Hunt,Rank 3,9,0,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,0,100,0,,spell_hun_thrill_of_the_hunt,sim/hunter/talents.go:639
+hunter,34503,Expose Weakness,Rank 3,9,0,64,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,0,100,0,34501,,sim/hunter/talents.go:681
 common/tbc,34774,Magtheridon Melee Trinket,,0,1,8,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,1.5,0,20000,34775,,sim/common/tbc/melee_trinkets.go:13 sim/common/tbc/melee_trinkets.go:78
-hunter,34839,Master Tactician,Rank 5,9,0,64,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,0,10,0,34837,,sim/hunter/talents.go:741
-priest,34860,Holy Concentration,Rank 3,6,0,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,0,100,1,63725,,sim/priest/talents.go:263
-hunter,34953,Go for the Throat,Rank 2,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/hunter/talents.go:510
-hunter,35295,Gore,Rank 6,9,2,1,0,0,1500,133,10000,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/hunter/pet_abilities.go:416
+hunter,34839,Master Tactician,Rank 5,9,0,64,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,0,10,0,34837,,sim/hunter/talents.go:739
+priest,34860,Holy Concentration,Rank 3,6,0,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,0,100,1,63725,,sim/priest/talents.go:269
+hunter,34953,Go for the Throat,Rank 2,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/hunter/talents.go:508
+hunter,35295,Gore,Rank 6,9,2,1,0,0,1500,133,10000,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/hunter/pet_abilities.go:422
 paladin,35395,Crusader Strike,,10,2,1,0,0,1500,133,4000,0,1,1,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,spell_tweaks_seal_dot_on_strikes,sim/paladin/crusader_strike.go:15
 rogue,35553,Combat Potency,Rank 5,8,0,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,0,20,0,35548,spell_rog_combat_potency,sim/rogue/talents.go:459
-warlock,35706,Master Demonologist,,0,0,32,0,0,0,0,0,0,-1,-1,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/warlock/pet.go:165
-mage,36032,Arcane Blast,,3,0,64,0,0,0,0,0,0,6000,6000,4,0,0,0,yes,no,no,no,no,no,no,no,no,no,no,0,100,0,,,sim/mage/arcane_blast.go:17
+warlock,35706,Master Demonologist,,0,0,32,0,0,0,0,0,0,-1,-1,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/warlock/pet.go:178
+mage,36032,Arcane Blast,,3,0,64,0,0,0,0,0,0,6000,6000,4,0,0,0,yes,no,no,no,no,no,no,no,no,no,no,0,100,0,,spell_tweaks_arcane_blast_haste_cost,sim/mage/arcane_blast.go:27
 rogue,36554,Shadowstep,,8,0,1,0,0,0,0,30000,0,3000,3000,0,0,0,0,yes,no,no,no,no,no,no,no,no,no,no,,,,36563 44373,,sim/rogue/shadowstep.go:14
-druid,37117,Primal Fury,Rank 2,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,no,,,,16961 16954,,sim/druid/talents.go:239
+druid,37117,Primal Fury,Rank 2,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,no,,,,16961 16954,,sim/druid/talents.go:254
 paladin,38428,Wisdom,,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/paladin/items.go:16
-shaman,38432,Stormstrike AP Buff,,11,0,1,0,0,0,0,0,0,-1,-1,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,,,,,,sim/shaman/stormstrike.go:91
-core,38927,Fel Ache,,0,0,1,0,0,0,0,0,0,900000,900000,10,0,0,0,yes,no,no,no,no,no,no,no,no,no,no,,,,,,sim/core/consumes.go:719
+shaman,38432,Stormstrike AP Buff,,11,0,1,0,0,0,0,0,0,-1,-1,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,,,,,,sim/shaman/stormstrike.go:92
+core,38927,Fel Ache,,0,0,1,0,0,0,0,0,0,900000,900000,10,0,0,0,yes,no,no,no,no,no,no,no,no,no,no,,,,,,sim/core/consumes.go:720
 common/tbc,39958,Skyfire Swiftness,,0,0,2,0,0,0,133,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,0.7,0,40000,39959,,sim/common/tbc/metagems.go:13 sim/common/tbc/metagems.go:74
 common/tbc,40291,Siphon Essence,,0,0,1,0,0,0,0,0,0,6000,6000,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,no,0,100,0,40293,,sim/common/tbc/melee_items.go:250 sim/common/tbc/melee_items.go:265
 common/tbc,40407,Illidan Tank Shield,,0,0,1,0,0,0,0,0,0,-1,-1,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,6,0,0,40408,,sim/common/tbc/melee_items.go:10 sim/common/tbc/melee_items.go:294
@@ -222,8 +222,8 @@ mage,42845,Arcane Missiles,Rank 13,3,1,64,0,0,0,0,0,0,0,0,0,0,20,0,no,no,no,no,y
 mage,42846,Arcane Missiles,Rank 13,3,0,64,0,0,1500,133,0,0,5000,5000,0,1000,0,0,no,yes,no,no,yes,yes,yes,no,no,no,no,,,,42845,spell_mage_arcane_missiles,sim/mage/arcane_missiles.go:41
 mage,42859,Scorch,Rank 11,3,1,4,1500,1500,1500,133,0,0,0,0,0,0,0,0,no,no,no,no,yes,yes,no,no,no,no,no,,,,,,sim/mage/scorch.go:20
 mage,42873,Fire Blast,Rank 11,3,1,4,0,0,1500,133,0,8000,0,0,0,0,0,0,no,no,no,no,yes,yes,no,no,no,no,no,,,,,,sim/mage/fire_blast.go:11
-mage,42891,Pyroblast,Rank 12,3,1,4,5000,5000,1500,133,0,0,12000,12000,0,3000,24,0,no,no,no,no,yes,yes,no,no,no,no,no,,,,,,sim/mage/pyroblast.go:17
-mage,42897,Arcane Blast,Rank 4,3,1,64,2500,2500,1500,133,0,0,0,0,0,0,0,0,no,no,no,no,yes,yes,no,no,no,no,no,,,,36032,spell_mage_arcane_blast,sim/mage/arcane_blast.go:28
+mage,42891,Pyroblast,Rank 12,3,1,4,5000,5000,1500,133,0,0,12000,12000,0,3000,24,0,no,no,no,no,yes,yes,no,no,no,no,no,,,,,spell_tweaks_pyroblast_dot_haste,sim/mage/pyroblast.go:14
+mage,42897,Arcane Blast,Rank 4,3,1,64,2500,2500,1500,133,0,0,0,0,0,0,0,0,no,no,no,no,yes,yes,no,no,no,no,no,,,,36032,spell_mage_arcane_blast,sim/mage/arcane_blast.go:38
 mage,42914,Ice Lance,Rank 3,3,1,16,0,0,1500,133,0,0,0,0,0,0,38,0,no,no,no,no,yes,yes,no,no,no,no,no,,,,,,sim/mage/ice_lance.go:9
 mage,42921,Arcane Explosion,Rank 10,3,1,64,0,0,1500,133,0,0,0,0,0,0,0,0,no,no,no,no,yes,yes,no,no,no,no,no,,,,,,sim/mage/arcane_explosion.go:10
 mage,42925,Flamestrike,Rank 8,3,1,4,2000,2000,1500,133,0,0,8000,8000,0,2000,0,0,no,no,no,no,yes,yes,no,no,no,no,no,,,,,,sim/mage/flamestrike.go:16
@@ -231,24 +231,24 @@ mage,42926,Flamestrike,Rank 9,3,1,4,2000,2000,1500,133,0,0,8000,8000,0,2000,0,0,
 mage,42938,Blizzard,Rank 9,3,1,16,0,0,0,133,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/mage/blizzard.go:30
 mage,42940,Blizzard,Rank 9,3,1,16,0,0,1500,133,0,0,8000,8000,0,1000,0,0,no,yes,no,no,yes,yes,yes,no,no,no,no,,,,42938,,sim/mage/blizzard.go:62
 mage,42945,Blast Wave,Rank 9,3,1,4,0,0,1500,133,0,30000,6000,6000,0,0,0,0,yes,no,no,no,no,yes,no,no,no,no,no,,,,,spell_mage_blast_wave,sim/mage/blast_wave.go:14
-mage,42950,Dragon's Breath,Rank 6,3,1,4,0,0,1500,133,0,20000,5000,5000,0,0,0,0,yes,no,no,no,no,yes,no,no,no,no,no,0,100,0,,spell_mage_dragon_breath,sim/mage/dragons_breath.go:14
+mage,42950,Dragon's Breath,Rank 6,3,1,4,0,0,1500,133,0,20000,5000,5000,0,0,0,0,yes,no,no,no,no,yes,no,no,no,no,no,0,100,0,,spell_mage_dragon_breath,sim/mage/dragons_breath.go:37
 common/tbc,42976,Executioner,,0,0,1,0,0,0,0,0,0,15000,15000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/tbc/enchant_effects.go:163
-core,43185,Healing Potion,,13,0,1,0,0,0,0,0,10000,0,0,0,0,0,0,yes,no,no,no,yes,no,no,no,no,yes,no,,,,,,sim/core/consumes.go:532
+core,43185,Healing Potion,,13,0,1,0,0,0,0,0,10000,0,0,0,0,0,0,yes,no,no,no,yes,no,no,no,no,yes,no,,,,,,sim/core/consumes.go:533
 druid,43740,Lunar Grace,,0,0,8,0,0,0,133,0,0,10000,10000,0,0,0,0,yes,no,no,no,yes,no,no,no,no,yes,no,,,,,,sim/druid/items.go:355
 shaman,43749,Elemental Strength,,0,0,2,0,0,0,0,0,0,10000,10000,0,0,0,0,yes,no,no,no,yes,no,no,no,no,yes,no,,,,,,sim/shaman/items.go:97
 shaman,43751,Energized,,0,1,8,0,0,0,133,0,0,10000,10000,0,0,0,0,yes,no,no,no,yes,no,no,no,no,yes,no,,,,,,sim/shaman/items.go:70
-mage,44401,Missile Barrage,,3,1,64,0,0,0,0,0,0,15000,15000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,0,101,0,,spell_mage_missile_barrage_proc,sim/mage/talents.go:266
-mage,44448,Hot Streak,Rank 3,3,0,4,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,0,100,0,,spell_mage_hot_streak,sim/mage/talents.go:114 sim/mage/talents.go:120
-mage,44472,Burnout,Rank 5,3,0,4,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,100,8,,spell_mage_burnout,sim/mage/talents.go:531
+mage,44401,Missile Barrage,,3,1,64,0,0,0,0,0,0,15000,15000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,0,101,0,,spell_mage_missile_barrage_proc,sim/mage/talents.go:267
+mage,44448,Hot Streak,Rank 3,3,0,4,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,0,100,0,,spell_mage_hot_streak,sim/mage/talents.go:115 sim/mage/talents.go:121
+mage,44472,Burnout,Rank 5,3,0,4,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,100,8,,spell_mage_burnout,sim/mage/talents.go:537
 common/wotlk,44525,Icebreaker,,0,1,4,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/common/wotlk/enchant_effects.go:83
-mage,44545,Fingers of Frost,Rank 2,3,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,15,0,44544,,sim/mage/talents.go:808
-mage,44549,Brain Freeze,Rank 3,3,0,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,0,15,0,57761,spell_mage_brain_freeze,sim/mage/talents.go:903
-core mage,44561,Enduring Winter,Rank 3,3,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,100,6000,57669,,sim/core/buffs.go:162 sim/mage/frostbolt.go:16
+mage,44545,Fingers of Frost,Rank 2,3,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,15,0,44544,,sim/mage/talents.go:849
+mage,44549,Brain Freeze,Rank 3,3,0,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,0,15,0,57761,spell_mage_brain_freeze,sim/mage/talents.go:944
+mage,44561,Enduring Winter,Rank 3,3,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,100,6000,57669,,sim/mage/frostbolt.go:16
 mage,44572,Deep Freeze,,3,1,16,0,0,1500,133,0,30000,5000,5000,0,0,0,0,no,no,no,no,yes,yes,no,no,no,no,no,,,,,,sim/mage/deep_freeze.go:15
 common/wotlk,44578,Lifeward,,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/enchant_effects.go:224
 common/wotlk,44622,Tendon Rip,,0,0,1,0,0,0,0,0,0,15000,15000,0,0,0,0,yes,no,no,no,no,no,no,no,no,no,no,,,,,,sim/common/wotlk/enchant_effects.go:38
 mage,44781,Arcane Barrage,Rank 3,3,1,64,0,0,1500,133,0,3000,0,0,0,0,24,0,no,no,no,no,yes,yes,no,no,no,no,no,,,,,,sim/mage/arcane_barrage.go:16
-warrior,44949,Whirlwind,,4,2,1,0,0,0,0,0,0,0,0,0,0,0,4,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/warrior/talents.go:823 sim/warrior/talents.go:910 sim/warrior/whirlwind.go:32
+warrior,44949,Whirlwind,,4,2,1,0,0,0,0,0,0,0,0,0,0,0,4,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/warrior/talents.go:826 sim/warrior/talents.go:913 sim/warrior/whirlwind.go:33
 deathknight,45470,Death Strike,,15,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/deathknight/death_strike.go:22
 deathknight,45529,Blood Tap,,15,0,1,0,0,0,0,60000,0,20000,20000,0,0,0,0,yes,no,no,no,yes,no,no,no,no,yes,no,,,,,,sim/deathknight/blood_tap.go:10
 common/tbc,46579,Deathfrost,,0,1,16,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,yes,no,no,,,,46629,,sim/common/tbc/enchant_effects.go:247
@@ -257,38 +257,38 @@ common/tbc,46662,Deathfrost,,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,
 druid,46832,Moonkin Starfire Bonus,,7,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,15,15000,46833,,sim/druid/items.go:169
 core,46855,Trauma,Rank 2,4,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,100,0,46857,,sim/core/debuffs.go:423
 warrior,46916,Slam!,,4,0,1,0,0,0,0,0,0,5000,5000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,0,100,0,,,sim/warrior/talents.go:240
-warrior,46924,Bladestorm,,4,2,1,0,0,1500,133,90000,0,6000,6000,0,1000,0,0,no,no,no,no,no,no,no,no,no,yes,no,,,,50622,,sim/warrior/serverdata_allowlist.go:14 sim/warrior/talents.go:805
+warrior,46924,Bladestorm,,4,2,1,0,0,1500,133,90000,0,6000,6000,0,1000,0,0,no,no,no,no,no,no,no,no,no,yes,no,,,,50622,,sim/warrior/serverdata_allowlist.go:14 sim/warrior/talents.go:808
 hunter,46939,Black Bow of the Betrayer,,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,100,0,18350,spell_gen_black_bow_of_the_betrayer,sim/hunter/items.go:28
-warrior,46953,Sword and Board,Rank 3,4,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,30,0,50227,spell_warr_sword_and_board,sim/warrior/talents.go:926
+warrior,46953,Sword and Board,Rank 3,4,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,30,0,50227,spell_warr_sword_and_board,sim/warrior/talents.go:929
 warrior,46968,Shockwave,,4,3,1,0,0,1500,133,0,20000,4000,4000,0,0,0,0,yes,no,no,no,no,no,no,no,no,no,no,,,,,,sim/warrior/shockwave.go:17
 warlock,47193,Demonic Empowerment,,5,1,32,0,0,0,0,60000,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,no,,,,,spell_warl_demonic_empowerment,sim/warlock/demonic_empowerment.go:21 sim/warlock/demonic_empowerment.go:37 sim/warlock/demonic_empowerment.go:49 +1 more
-core,47240,Demonic Pact,Rank 5,5,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,,,,,,sim/core/buffs.go:1403
+core,47240,Demonic Pact,Rank 5,5,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,,,,,,sim/core/buffs.go:1295
 warlock,47241,Metamorphosis,,5,0,1,0,0,0,0,180000,0,30000,30000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/warlock/metamorphosis.go:17 sim/warlock/metamorphosis.go:29
 warlock,47283,Empowered Imp,,5,1,32,0,0,0,0,0,0,8000,8000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,0,100,0,,,sim/warlock/talents.go:126
 warrior,47296,Critical Block,Rank 3,4,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,,,,,,sim/warrior/talents.go:79
-core warrior,47436,Battle Shout,Rank 9,4,0,1,0,0,1500,133,0,0,120000,120000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/core/buffs.go:1430 sim/warrior/shouts.go:43
+core warrior,47436,Battle Shout,Rank 9,4,0,1,0,0,1500,133,0,0,120000,120000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/core/buffs.go:1322 sim/warrior/shouts.go:43
 core warrior,47437,Demoralizing Shout,Rank 8,4,1,1,0,0,1500,133,0,0,30000,30000,0,0,0,0,yes,no,no,no,no,no,no,no,no,no,no,,,,,,sim/core/debuffs.go:750 sim/warrior/demoralizing_shout.go:30
-core warrior,47440,Commanding Shout,Rank 3,4,0,1,0,0,1500,133,0,0,120000,120000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/core/buffs.go:1474 sim/warrior/shouts.go:47
+core warrior,47440,Commanding Shout,Rank 3,4,0,1,0,0,1500,133,0,0,120000,120000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/core/buffs.go:1366 sim/warrior/shouts.go:47
 lib warrior,47450,Heroic Strike,Rank 13,4,2,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,spell_warr_heroic_strike,sim/lib/library.go:178 sim/warrior/heroic_strike_cleave.go:16 sim/warrior/items.go:200
 warrior,47465,Rend,Rank 10,4,2,1,0,0,1500,133,0,0,15000,15000,0,3000,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,spell_warr_rend spell_tweaks_rend_haste,sim/warrior/rend.go:29
 core warrior,47467,Sunder Armor,Rank 7,4,2,1,0,0,1500,133,0,0,0,0,5,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,11971,,sim/core/debuffs.go:557 sim/warrior/sunder_armor.go:14
-deathknight,47468,Claw,,0,2,1,0,0,1000,133,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/deathknight/ghoul_pet.go:287
+deathknight,47468,Claw,,0,2,1,0,0,1000,133,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/deathknight/ghoul_pet.go:297
 warrior,47471,Execute,Rank 9,4,2,1,0,0,1500,133,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,no,no,,,,,spell_warr_execute,sim/warrior/execute.go:22 sim/warrior/serverdata_allowlist.go:16
-warrior,47475,Slam,Rank 8,4,2,1,1500,1500,1500,133,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,yes,no,no,no,,,,,spell_warr_slam,sim/warrior/slam.go:46
+warrior,47475,Slam,Rank 8,4,2,1,1500,1500,1500,133,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,yes,no,no,no,,,,,spell_warr_slam,sim/warrior/slam.go:45
 warrior,47486,Mortal Strike,Rank 8,4,2,1,0,0,1500,133,0,6000,10000,10000,0,0,0,0,yes,no,no,no,no,no,no,no,no,no,no,,,,,,sim/warrior/mortal_strike.go:16
 warrior,47488,Shield Slam,Rank 8,4,2,1,0,0,1500,133,0,6000,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,no,no,,,,,,sim/warrior/shield_slam.go:29
 warrior,47498,Devastate,Rank 5,4,2,1,0,0,1500,133,0,0,0,0,5,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/warrior/devastate.go:19
 core warrior,47502,Thunder Clap,Rank 9,4,3,1,0,0,1500,133,0,6000,30000,30000,0,0,0,0,yes,no,no,no,no,no,no,no,no,no,no,,,,,,sim/core/debuffs.go:795 sim/warrior/thunder_clap.go:16
-priest,47515,Divine Aegis,Rank 3,6,0,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,0,100,0,,spell_pri_divine_aegis,sim/priest/serverdata_allowlist.go:13 sim/priest/talents.go:89
-priest,47517,Grace,Rank 2,6,0,1,0,0,0,0,0,0,0,0,3,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,100,0,47930,,sim/priest/talents.go:133
-warrior,47520,Cleave,Rank 8,4,2,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/warrior/heroic_strike_cleave.go:61
-deathknight,47528,Mind Freeze,,15,1,16,0,0,0,0,0,10000,4000,4000,0,0,0,0,yes,no,no,no,no,no,no,no,no,no,no,,,,,,sim/deathknight/deathknight.go:297
-priest,47537,Rapture,Rank 3,6,0,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,,,,,,sim/priest/talents.go:174
+priest,47515,Divine Aegis,Rank 3,6,0,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,0,100,0,,spell_pri_divine_aegis,sim/priest/serverdata_allowlist.go:13 sim/priest/talents.go:95
+priest,47517,Grace,Rank 2,6,0,1,0,0,0,0,0,0,0,0,3,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,100,0,47930,,sim/priest/talents.go:139
+warrior,47520,Cleave,Rank 8,4,2,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/warrior/heroic_strike_cleave.go:60
+deathknight,47528,Mind Freeze,,15,1,16,0,0,0,0,0,10000,4000,4000,0,0,0,0,yes,no,no,no,no,no,no,no,no,no,no,,,,,,sim/deathknight/deathknight.go:299
+priest,47537,Rapture,Rank 3,6,0,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,,,,,,sim/priest/talents.go:180
 deathknight,47568,Empower Rune Weapon,,15,0,0,0,0,0,0,300000,0,0,0,0,0,1,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,53258,,sim/deathknight/empower_rune_weapon.go:10 sim/deathknight/serverdata_allowlist.go:8
 priest,47585,Dispersion,,6,0,1,0,0,1500,133,120000,0,6000,6000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/priest/dispersion.go:16 sim/priest/dispersion.go:24 sim/priest/dispersion.go:39
 mage,47610,Frostfire Bolt,Rank 2,3,1,20,3000,3000,1500,133,0,0,9000,9000,0,3000,28,0,yes,no,no,no,yes,yes,no,no,no,no,no,,,,,spell_mage_frostfire_bolt,sim/mage/frostfire_bolt.go:14
 deathknight,47632,Death Coil,,15,1,32,0,0,0,0,0,0,0,0,0,0,24,0,no,no,no,no,no,no,no,no,yes,no,no,,,,,,sim/deathknight/death_coil.go:12 sim/deathknight/serverdata_allowlist.go:12
-core,47788,Guardian Spirit,,6,0,2,0,0,0,0,180000,0,10000,10000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,spell_pri_guardian_spirit,sim/core/buffs.go:1002 sim/core/buffs.go:1015 sim/core/buffs.go:1033 +1 more
+core,47788,Guardian Spirit,,6,0,2,0,0,0,0,180000,0,10000,10000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,spell_pri_guardian_spirit,sim/core/buffs.go:996 sim/core/buffs.go:1009 sim/core/buffs.go:1027 +1 more
 warlock,47809,Shadow Bolt,Rank 13,5,1,32,3000,3000,1500,133,0,0,0,0,0,0,20,0,no,no,no,no,yes,yes,no,no,no,no,no,,,,,,sim/warlock/shadowbolt.go:19
 warlock,47811,Immolate,Rank 11,5,1,4,2000,2000,1500,133,0,0,15000,15000,0,3000,0,0,no,no,no,no,yes,yes,no,no,no,no,no,,,,,,sim/warlock/immolate.go:28
 warlock,47813,Corruption,Rank 10,5,1,32,0,0,1500,133,0,0,18000,18000,0,3000,0,0,no,no,no,no,yes,yes,no,no,no,no,no,,,,,,sim/warlock/corruption.go:14
@@ -302,11 +302,11 @@ warlock,47843,Unstable Affliction,Rank 5,5,1,32,1500,1500,1500,133,0,0,15000,150
 warlock,47855,Drain Soul,Rank 6,5,1,32,0,0,1500,133,0,0,15000,15000,0,3000,0,0,no,yes,no,no,yes,yes,yes,no,no,no,no,0,100,0,,spell_warl_drain_soul,sim/warlock/drain_soul.go:38
 warlock,47864,Curse of Agony,Rank 9,5,1,32,0,0,1500,133,0,0,24000,24000,0,2000,0,0,no,no,no,no,yes,yes,no,no,no,no,no,,,,,spell_warl_curse_of_agony,sim/warlock/curses.go:121
 core warlock,47865,Curse of the Elements,Rank 5,5,1,32,0,0,1500,133,0,0,300000,300000,0,0,0,0,yes,no,no,no,yes,yes,no,no,no,no,no,,,,,,sim/core/debuffs.go:268 sim/warlock/curses.go:14
-warlock,47867,Curse of Doom,Rank 3,5,1,32,0,0,1500,133,0,60000,60000,60000,0,60000,0,0,no,no,no,no,yes,yes,no,no,no,no,no,,,,,spell_warl_curse_of_doom,sim/warlock/curses.go:181
-core,47875,Master Healthstone,,5,1,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/core/consumes.go:898
+warlock,47867,Curse of Doom,Rank 3,5,1,32,0,0,1500,133,0,60000,60000,60000,0,60000,0,0,no,no,no,no,yes,yes,no,no,no,no,no,,,,,spell_warl_curse_of_doom spell_tweaks_curse_of_doom,sim/warlock/curses.go:213
+core,47875,Master Healthstone,,5,1,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/core/consumes.go:899
 priest,47948,Pain and Suffering,,6,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,no,no,,,,,spell_pri_pain_and_suffering_proc,sim/priest/mind_flay.go:53
 warlock,47964,Firebolt,Rank 9,5,1,4,2500,2500,1000,133,0,0,0,0,0,0,16,0,no,no,no,no,yes,no,no,no,no,no,no,,,,,,sim/warlock/pet_abilities.go:161 sim/warlock/serverdata_allowlist.go:8
-core warlock,47982,Blood Pact,Rank 7,5,0,32,0,0,0,0,0,0,-1,-1,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/core/buffs.go:1485 sim/warlock/warlock.go:179
+core warlock,47982,Blood Pact,Rank 7,5,0,32,0,0,0,0,0,0,-1,-1,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/core/buffs.go:1377 sim/warlock/warlock.go:179
 warlock,47992,Lash of Pain,Rank 9,5,1,32,0,0,1500,133,0,12000,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/warlock/pet_abilities.go:58
 warlock,47994,Cleave,Rank 4,4,2,1,0,0,1500,133,0,6000,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/warlock/pet_abilities.go:14
 priest,48063,Greater Heal,Rank 9,6,1,2,3000,3000,1500,133,0,0,0,0,0,0,0,0,yes,no,no,no,yes,yes,no,no,no,yes,no,,,,,,sim/priest/greater_heal.go:11
@@ -323,13 +323,13 @@ priest,48127,Mind Blast,Rank 13,6,1,32,1500,1500,1500,133,0,8000,0,0,0,0,0,0,no,
 priest,48135,Holy Fire,Rank 11,6,1,2,2000,2000,1500,133,0,10000,7000,7000,0,1000,0,0,no,no,no,no,yes,yes,no,no,no,no,no,,,,,,sim/priest/holy_fire.go:14
 priest,48156,Mind Flay,Rank 9,6,1,32,0,0,1500,133,0,0,3000,3000,0,1000,0,0,no,yes,no,no,yes,yes,yes,no,no,no,no,,,,58381,,sim/priest/mind_flay.go:85 sim/priest/serverdata_allowlist.go:10
 priest,48158,Shadow Word: Death,Rank 4,6,1,32,0,0,1500,133,0,12000,0,0,0,0,0,0,no,no,no,no,yes,yes,no,no,no,no,no,,,,,spell_pri_shadow_word_death,sim/priest/shadow_word_death.go:26
-core priest,48160,Vampiric Touch,Rank 5,6,1,32,1500,1500,1500,133,0,0,15000,15000,0,3000,0,0,no,no,no,no,yes,yes,no,no,no,no,no,0,100,0,,spell_pri_vampiric_touch spell_tweaks_shadow_dot_haste,sim/core/buffs.go:154 sim/priest/mind_blast.go:15 sim/priest/vampiric_touch.go:14
-deathknight,48263,Frost Presence,,15,0,16,0,0,0,0,0,1000,-1,-1,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,spell_dk_presence,sim/deathknight/presences.go:116 sim/deathknight/presences.go:138
-deathknight,48265,Unholy Presence,,15,0,32,0,0,0,0,0,1000,-1,-1,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,spell_dk_presence,sim/deathknight/presences.go:177 sim/deathknight/presences.go:200
-core deathknight,48266,Blood Presence,,15,0,1,0,0,0,0,0,1000,-1,-1,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,spell_dk_presence,sim/core/apl_helpers.go:110 sim/deathknight/presences.go:21
+priest,48160,Vampiric Touch,Rank 5,6,1,32,1500,1500,1500,133,0,0,15000,15000,0,3000,0,0,no,no,no,no,yes,yes,no,no,no,no,no,0,100,0,,spell_pri_vampiric_touch spell_tweaks_shadow_dot_haste,sim/priest/mind_blast.go:15 sim/priest/vampiric_touch.go:14
+deathknight,48263,Frost Presence,,15,0,16,0,0,0,0,0,1000,-1,-1,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,spell_dk_presence,sim/deathknight/presences.go:188 sim/deathknight/presences.go:210
+deathknight,48265,Unholy Presence,,15,0,32,0,0,0,0,0,1000,-1,-1,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,spell_dk_presence,sim/deathknight/presences.go:238 sim/deathknight/presences.go:261
+core deathknight,48266,Blood Presence,,15,0,1,0,0,0,0,0,1000,-1,-1,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,spell_dk_presence,sim/core/apl_helpers.go:110 sim/deathknight/presences.go:24
 priest,48300,Devouring Plague,Rank 9,6,1,32,0,0,1500,133,0,0,24000,24000,0,3000,0,0,no,no,no,no,yes,yes,no,no,no,no,no,,,,,spell_tweaks_shadow_dot_haste,sim/priest/devouring_plague.go:14
 priest,48301,Mind Trauma,,6,1,32,0,0,1500,0,0,0,10000,10000,0,0,0,0,no,no,no,no,no,no,no,no,yes,no,no,,,,,,sim/priest/mind_blast.go:20 sim/priest/mind_blast.go:102
-druid,48393,Owlkin Frenzy,Rank 3,3,0,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,0,15,0,48391,,sim/druid/talents.go:522
+druid,48393,Owlkin Frenzy,Rank 3,3,0,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,0,15,0,48391,,sim/druid/talents.go:580
 druid,48410,Primal Precision,Rank 2,7,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,,,,,,sim/druid/druid.go:208
 druid,48461,Wrath,Rank 12,7,1,8,2000,2000,1500,133,0,0,0,0,0,0,20,0,no,no,no,no,yes,yes,no,no,no,no,no,,,,,,sim/druid/wrath.go:18
 druid,48463,Moonfire,Rank 14,7,1,64,0,0,1500,133,0,0,12000,12000,0,3000,0,0,no,no,no,no,yes,yes,no,no,no,no,no,,,,,spell_tweaks_balance_dot_haste,sim/druid/moonfire.go:31
@@ -342,13 +342,13 @@ druid,48477,Rebirth,Rank 7,7,1,8,2000,2000,1500,133,0,600000,0,0,0,0,0,0,yes,no,
 druid,48480,Maul,Rank 10,7,2,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/druid/maul.go:22
 core,48485,Infected Wounds,Rank 3,7,0,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,0,100,0,58181,,sim/core/debuffs.go:805
 core,48511,Earth and Moon,Rank 3,7,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,100,0,60433,,sim/core/debuffs.go:284
-druid,48517,Eclipse (Solar),,7,0,1,0,0,0,0,0,0,15000,15000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/druid/talents.go:449
-druid,48518,Eclipse (Lunar),,7,0,1,0,0,0,0,0,0,15000,15000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/druid/talents.go:486
-core,48545,Revitalize,Rank 3,7,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,101,0,,spell_dru_revitalize,sim/core/buffs.go:1055
+druid,48517,Eclipse (Solar),,7,0,1,0,0,0,0,0,0,15000,15000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/druid/talents.go:507
+druid,48518,Eclipse (Lunar),,7,0,1,0,0,0,0,0,0,15000,15000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/druid/talents.go:544
+core,48545,Revitalize,Rank 3,7,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,101,0,,spell_dru_revitalize,sim/core/buffs.go:1049
 core druid,48560,Demoralizing Roar,Rank 8,7,1,1,0,0,1500,133,0,0,30000,30000,0,0,0,0,yes,no,no,no,no,no,no,no,no,no,no,,,,,,sim/core/debuffs.go:739 sim/druid/demoralizing_roar.go:15
 druid,48562,Swipe (Bear),Rank 8,7,2,1,0,0,1500,133,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/druid/swipe.go:22
 druid,48564,Mangle (Bear),Rank 5,7,2,1,0,0,1500,133,0,6000,60000,60000,0,0,0,0,yes,no,no,no,no,no,no,no,no,no,no,,,,,,sim/druid/mangle.go:20
-core druid,48566,Mangle (Cat),Rank 5,7,2,1,0,0,1000,133,0,0,60000,60000,0,0,0,0,yes,no,no,no,no,no,no,no,no,no,no,,,,,,sim/core/debuffs.go:415 sim/druid/mangle.go:89
+core druid,48566,Mangle (Cat),Rank 5,7,2,1,0,0,1000,133,0,0,60000,60000,0,0,0,0,yes,no,no,no,no,no,no,no,no,no,no,,,,,,sim/core/debuffs.go:415 sim/druid/mangle.go:88
 druid,48568,Lacerate,Rank 3,7,2,1,0,0,1500,133,0,0,15000,15000,5,3000,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/druid/lacerate.go:21
 druid,48572,Shred,Rank 9,7,2,1,0,0,1000,133,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,no,no,,,,,,sim/druid/shred.go:18
 druid,48574,Rake,Rank 7,7,2,1,0,0,1000,133,0,0,9000,9000,0,3000,0,0,yes,no,no,no,no,no,no,no,no,no,no,,,,,,sim/druid/rake.go:13
@@ -361,7 +361,7 @@ rogue,48664,Mutilate,Rank 6,8,2,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,n
 rogue,48665,Mutilate,Rank 6,8,2,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/rogue/mutilate.go:13
 rogue,48666,Mutilate,Rank 6,8,2,1,0,0,1000,133,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,no,no,,,,48665 48664,spell_rog_mutilate,sim/rogue/mutilate.go:10
 rogue,48668,Eviscerate,Rank 12,8,2,1,0,0,1000,133,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/rogue/eviscerate.go:13
-rogue,48672,Rupture,Rank 9,8,2,1,0,0,1000,133,0,0,6000,16000,0,2000,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,spell_rog_rupture spell_tweaks_rupture_haste,sim/rogue/items.go:86 sim/rogue/rupture.go:12 sim/rogue/rupture.go:25
+rogue,48672,Rupture,Rank 9,8,2,1,0,0,1000,133,0,0,6000,16000,0,2000,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,spell_rog_rupture spell_tweaks_rupture_haste,sim/rogue/items.go:86 sim/rogue/rupture.go:12 sim/rogue/rupture.go:32
 rogue,48676,Garrote,Rank 10,8,2,1,0,0,1000,133,0,0,18000,18000,0,3000,0,0,yes,no,no,no,no,no,no,yes,no,no,no,,,,1330,,sim/rogue/garrote.go:20
 rogue,48691,Ambush,Rank 10,8,2,1,0,0,1000,133,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,yes,no,no,no,,,,,,sim/rogue/ambush.go:11
 deathknight,48707,Anti-Magic Shell,,15,0,32,0,0,0,0,45000,45000,5000,5000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,spell_dk_anti_magic_shell_self,sim/deathknight/anti_magic_shell.go:12
@@ -373,13 +373,13 @@ paladin,48817,Holy Wrath,Rank 5,10,1,2,0,0,1500,133,0,30000,3000,3000,0,0,20,0,n
 paladin,48819,Consecration,Rank 8,10,1,2,0,0,1500,133,0,8000,8000,8000,0,1000,0,0,no,no,no,no,no,yes,no,no,no,no,no,,,,,,sim/paladin/consecration.go:19
 paladin,48827,Avenger's Shield,Rank 5,10,3,2,0,0,1500,133,0,30000,10000,10000,0,0,35,0,yes,no,no,no,no,no,no,no,no,no,no,,,,,,sim/paladin/avengers_shield.go:17
 paladin,48835,Justice,,10,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,100,0,48836,,sim/paladin/items.go:236
-core,48932,Blessing of Might,Rank 10,10,1,2,0,0,1500,133,0,0,600000,600000,0,0,0,0,yes,no,no,no,no,yes,no,no,no,yes,no,,,,,,sim/core/buffs.go:1442
+core,48932,Blessing of Might,Rank 10,10,1,2,0,0,1500,133,0,0,600000,600000,0,0,0,0,yes,no,no,no,no,yes,no,no,no,yes,no,,,,,,sim/core/buffs.go:1334
 paladin,48952,Holy Shield,Rank 6,10,1,2,0,0,1500,133,0,8000,10000,10000,0,0,0,0,yes,no,no,no,no,yes,no,no,no,yes,no,0,100,0,,,sim/paladin/holy_shield.go:11
 deathknight,48982,Rune Tap,,15,1,32,0,0,0,0,60000,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/deathknight/rune_tap.go:20 sim/deathknight/rune_tap.go:23
 hunter,48996,Raptor Strike,Rank 11,9,2,1,0,0,0,0,0,6000,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/hunter/raptor_strike.go:11
 hunter,49001,Serpent Sting,Rank 12,9,3,8,0,-1000000,1500,133,0,0,15000,15000,0,3000,40,0,no,no,yes,no,no,no,no,no,no,no,no,,,,,,sim/hunter/chimera_shot.go:93 sim/hunter/serpent_sting.go:14 sim/hunter/sting_debuffs.go:23
 core deathknight,49005,Mark of Blood,,15,0,32,0,0,1500,133,180000,0,20000,20000,0,0,0,0,no,no,no,no,no,yes,no,no,no,no,no,0,100,0,,spell_dk_mark_of_blood,sim/core/debuffs.go:847 sim/deathknight/mark_of_blood.go:14
-core deathknight,49016,Hysteria,,15,0,1,0,0,0,0,180000,0,30000,30000,0,1000,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/core/buffs.go:806 sim/core/buffs.go:822 sim/core/serverdata_allowlist.go:26 +1 more
+core deathknight,49016,Hysteria,,15,0,1,0,0,0,0,180000,0,30000,30000,0,1000,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/core/buffs.go:800 sim/core/buffs.go:816 sim/core/serverdata_allowlist.go:26 +1 more
 deathknight,49028,Dancing Rune Weapon,,15,1,1,0,0,1500,133,90000,0,12000,12000,0,0,0,0,yes,no,no,no,no,yes,no,no,no,no,no,0,100,0,1206,spell_dk_dancing_rune_weapon,sim/deathknight/dancing_rune_weapon.go:24 sim/deathknight/dancing_rune_weapon.go:59
 hunter,49045,Arcane Shot,Rank 11,9,3,64,0,-1000000,1500,133,0,6000,0,0,0,0,40,0,no,no,yes,no,no,no,no,no,no,no,no,,,,,,sim/hunter/arcane_shot.go:18
 hunter,49048,Multi-Shot,Rank 8,9,3,1,500,0,1500,133,0,10000,0,0,0,0,30,0,no,no,yes,no,no,no,no,no,no,no,no,,,,,,sim/hunter/multi_shot.go:14
@@ -421,7 +421,7 @@ druid,50334,Berserk,,7,0,1,0,0,1000,133,180000,180000,15000,15000,0,0,0,0,yes,no
 deathknight,50401,Razor Frost,,15,0,16,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,yes,no,no,,,,,,sim/deathknight/items.go:392
 deathknight,50449,Bloody Vengeance,,10,0,1,0,0,0,0,0,0,30000,30000,3,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/deathknight/talents_blood.go:288
 deathknight,50463,Blood-Caked Strike,,15,2,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/deathknight/talents_unholy.go:166
-deathknight,50475,Blood Presence,,15,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/deathknight/presences.go:24 sim/deathknight/presences.go:77 sim/deathknight/presences.go:163 +1 more
+deathknight,50475,Blood Presence,,15,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/deathknight/presences.go:27 sim/deathknight/presences.go:113
 deathknight,50480,Chill of the Grave,,15,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,,,,,,sim/deathknight/energize_threat.go:16
 core warlock,50511,Curse of Weakness,Rank 9,5,1,32,0,0,1500,133,0,0,120000,120000,0,0,0,0,yes,no,no,no,yes,yes,no,no,no,no,no,,,,,,sim/core/debuffs.go:634 sim/warlock/curses.go:48
 deathknight,50526,Wandering Plague,,0,0,32,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,yes,no,no,,,,,spell_dk_wandering_plague,sim/deathknight/talents_unholy.go:66
@@ -429,7 +429,7 @@ deathknight,50536,Unholy Blight,,15,1,32,0,0,0,0,0,0,10000,10000,0,1000,15,0,no,
 warlock,50589,Immolation Aura,Demon,5,1,4,0,0,1500,133,30000,0,15000,15000,0,1000,0,0,no,no,no,no,no,yes,yes,no,no,no,no,,,,50590,,sim/warlock/metamorphosis.go:59
 warlock,50590,Immolation,Rank 1,5,1,4,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/warlock/metamorphosis.go:83 sim/warlock/metamorphosis.go:95
 core,50613,Arcane Torrent,Racial,0,1,64,0,0,0,0,120000,0,2000,2000,0,0,0,0,yes,no,no,no,no,no,no,no,no,no,no,,,,,,sim/core/racials.go:24 sim/core/racials.go:34
-warrior,50622,Whirlwind,,4,2,1,0,0,0,0,0,0,0,0,0,0,0,4,no,no,no,no,no,no,no,no,no,no,no,,,,44949,,sim/warrior/talents.go:859 sim/warrior/talents.go:908
+warrior,50622,Whirlwind,,4,2,1,0,0,0,0,0,0,0,0,0,0,0,4,no,no,no,no,no,no,no,no,no,no,no,,,,44949,,sim/warrior/talents.go:862 sim/warrior/talents.go:911
 warrior,50783,Slam,,4,2,1,1500,1500,1500,133,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,yes,no,no,,,,,,sim/warrior/slam.go:20
 deathknight,50842,Pestilence,,15,1,32,0,0,1500,133,0,0,0,0,0,0,0,0,no,no,no,no,no,yes,no,no,no,no,no,,,,,spell_dk_pestilence,sim/deathknight/pestilence.go:8 sim/deathknight/pestilence.go:15
 deathknight,50887,Icy Talons,Rank 5,15,0,16,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,100,0,58578,,sim/deathknight/talents_frost.go:299
@@ -439,8 +439,8 @@ deathknight,51206,Dirge,,15,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no
 deathknight,51271,Unbreakable Armor,,15,0,1,0,0,0,0,60000,0,20000,20000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/deathknight/unbreakable_armor.go:16
 deathknight,51411,Howling Blast,Rank 4,15,1,16,0,0,1500,133,8000,8000,0,0,0,0,0,0,yes,no,no,no,no,yes,no,no,no,no,no,,,,,,sim/deathknight/howling_blast.go:10
 deathknight,51425,Obliterate,Rank 4,15,2,1,0,0,1500,133,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,no,no,,,,,,sim/deathknight/obliterate.go:9
-common/wotlk deathknight,51460,Necrosis,,15,0,32,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,yes,no,no,,,,,,sim/common/wotlk/other_effects.go:1000 sim/deathknight/talents_unholy.go:98
-shaman,51522,Improved Stormstrike,Rank 2,11,0,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,0,100,0,63375,,sim/shaman/stormstrike.go:100
+common/wotlk deathknight,51460,Necrosis,,15,0,32,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,yes,no,no,,,,,,sim/common/wotlk/other_effects.go:1002 sim/deathknight/talents_unholy.go:98
+shaman,51522,Improved Stormstrike,Rank 2,11,0,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,0,100,0,63375,,sim/shaman/stormstrike.go:101
 shaman,51533,Feral Spirit,,11,0,8,0,0,1500,133,180000,0,45000,45000,0,0,0,0,yes,no,no,no,yes,yes,no,no,no,yes,no,,,,,,sim/shaman/feral_spirit.go:16 sim/shaman/feral_spirit.go:21
 rogue,51637,Focused Attacks,,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/rogue/talents.go:486
 rogue,51662,Hunger For Blood,,8,0,1,0,0,1000,133,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,yes,no,no,no,,,,,,sim/rogue/talents.go:135
@@ -449,7 +449,7 @@ rogue,51701,Honor Among Thieves,Rank 3,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,n
 rogue,51713,Shadow Dance,,8,0,1,0,0,0,0,60000,0,6000,6000,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/rogue/shadow_dance.go:21
 core deathknight,51714,Frost Vulnerability,,15,1,16,0,0,0,0,0,0,20000,20000,5,0,0,0,yes,no,no,no,no,no,no,no,no,no,no,,,,,,sim/core/debuffs.go:893 sim/deathknight/items.go:355 sim/deathknight/items.go:426
 rogue,51723,Fan of Knives,,8,2,1,0,0,1000,133,0,0,0,0,0,0,18,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/rogue/fan_of_knives.go:10 sim/rogue/fan_of_knives.go:25 sim/rogue/fan_of_knives.go:28 +3 more
-deathknight,51963,Gargoyle Strike,,0,1,8,2000,2000,0,0,0,0,0,0,0,0,20,0,no,no,no,no,yes,no,no,no,no,no,no,,,,,spell_pet_dk_gargoyle_strike,sim/deathknight/summon_gargoyle.go:185
+deathknight,51963,Gargoyle Strike,,0,1,8,2000,2000,0,0,0,0,0,0,0,0,20,0,no,no,no,no,yes,no,no,no,no,no,no,,,,,spell_pet_dk_gargoyle_strike,sim/deathknight/summon_gargoyle.go:187
 shaman,51994,Earthliving Weapon,Rank 6,11,1,8,0,0,1500,133,0,0,0,0,0,0,0,0,yes,no,no,no,no,yes,no,no,no,yes,no,,,,,,sim/shaman/weapon_imbues.go:356
 shaman,52000,Earthliving,Rank 6,11,1,8,0,0,0,133,0,0,12000,12000,0,3000,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/shaman/weapon_imbues.go:367 sim/shaman/weapon_imbues.go:372
 shaman,52042,Healing Stream Totem,,0,1,8,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/shaman/totems.go:52
@@ -459,8 +459,8 @@ hunter,52474,Bite,Rank 11,9,2,1,0,0,1500,133,0,0,0,0,0,0,0,0,no,no,no,no,no,no,n
 hunter,52476,Smack,Rank 11,9,2,1,0,0,1500,133,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/hunter/pet_abilities.go:48 sim/hunter/pet_abilities.go:154 sim/hunter/pet_talents.go:124
 druid,52610,Savage Roar,Rank 1,7,0,1,0,0,1000,133,0,0,9000,34000,0,0,0,0,no,no,no,no,no,no,no,no,yes,no,no,,,,,spell_dru_savage_roar,sim/druid/savage_roar.go:16
 shaman,52752,Ancestral Awakening,,0,1,8,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,yes,no,no,no,no,yes,no,,,,,,sim/shaman/heals.go:12
-core,52789,Visual Dummy,,15,1,16,0,0,1500,133,0,6000,0,0,0,0,15,0,yes,no,no,no,no,yes,no,no,no,no,no,,,,,,sim/core/debuffs.go:298 sim/core/serverdata_allowlist.go:42 sim/core/serverdata_allowlist.go:44
-priest,52800,Borrowed Time,Rank 5,6,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,100,0,59891,,sim/priest/talents.go:195
+core,52789,Visual Dummy,,15,1,16,0,0,1500,133,0,6000,0,0,0,0,15,0,yes,no,no,no,no,yes,no,no,no,no,no,,,,,,sim/core/debuffs.go:298 sim/core/serverdata_allowlist.go:48 sim/core/serverdata_allowlist.go:50
+priest,52800,Borrowed Time,Rank 5,6,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,100,0,59891,,sim/priest/talents.go:201
 hunter,52858,Culling the Herd,Rank 3,0,0,8,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,100,0,70893,spell_pet_culling_the_herd,sim/hunter/pet_talents.go:104
 rogue,52874,Fan of Knives,,8,2,1,0,0,0,0,0,0,0,0,0,0,18,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/rogue/fan_of_knives.go:32
 rogue,52910,Turn the Tables,,8,2,8,0,0,0,0,0,0,8000,8000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,spell_rog_turn_the_tables_proc,sim/rogue/talents.go:750
@@ -471,24 +471,24 @@ priest,53000,Penance,Rank 4,6,1,2,0,0,0,0,0,0,0,0,0,0,40,0,no,no,no,no,no,no,no,
 priest,53007,Penance,Rank 4,6,0,2,0,0,1500,133,0,12000,0,0,0,0,0,0,no,yes,no,no,yes,yes,yes,no,no,yes,no,,,,,spell_pri_penance,sim/priest/penance.go:38
 priest,53022,Mind Sear,Rank 2,6,1,32,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,spell_pri_mind_sear,sim/priest/mind_sear.go:30
 priest,53023,Mind Sear,Rank 2,6,1,32,0,0,1500,133,0,0,5000,5000,0,1000,0,0,no,yes,no,no,yes,yes,yes,no,no,no,no,,,,53022,,sim/priest/mind_sear.go:61
-druid,53190,Starfall,Rank 4,7,1,64,0,0,0,133,0,0,0,0,0,0,0,0,no,no,no,no,yes,no,no,no,no,no,no,,,,,spell_dru_starfall_aoe,sim/druid/starfall.go:77 sim/druid/starfall.go:99
+druid,53190,Starfall,Rank 4,7,1,64,0,0,0,133,0,0,0,0,0,0,0,0,no,no,no,no,yes,no,no,no,no,no,no,,,,,spell_dru_starfall_aoe,sim/druid/starfall.go:78 sim/druid/starfall.go:102
 druid,53195,Starfall,Rank 4,7,1,64,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,53190,,sim/druid/starfall.go:20
-druid,53201,Starfall,Rank 4,7,1,64,0,0,1500,133,0,90000,10000,10000,0,1000,0,0,no,no,no,no,yes,yes,no,no,no,yes,no,,,,53198,,sim/druid/starfall.go:38
-hunter,53209,Chimera Shot,Rank 1,9,3,8,0,-1000000,1500,133,10000,6000,0,0,0,0,40,0,no,no,yes,no,no,no,no,no,no,no,no,,,,,spell_hun_chimera_shot,sim/hunter/chimera_shot.go:20
+druid,53201,Starfall,Rank 4,7,1,64,0,0,1500,133,0,90000,10000,10000,0,1000,0,0,no,no,no,no,yes,yes,no,no,no,yes,no,,,,53198,,sim/druid/starfall.go:39
+hunter,53209,Chimera Shot,Rank 1,9,3,8,0,-1000000,1500,133,10000,6000,0,0,0,0,40,0,no,no,yes,no,no,no,no,no,no,no,no,,,,,spell_hun_chimera_shot,sim/hunter/chimera_shot.go:22
 hunter,53220,Improved Steady Shot,,9,0,1,0,0,0,0,0,0,12000,12000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,0,100,0,,,sim/hunter/steady_shot.go:16
 druid,53227,Typhoon,Rank 5,7,1,8,0,0,0,0,0,0,6000,6000,0,0,30,0,yes,no,no,no,yes,no,no,no,no,no,no,,,,,spell_dru_typhoon,sim/druid/typhoon.go:13
 hunter,53232,Rapid Recuperation,Rank 2,9,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,100,0,54227,spell_hun_rapid_recuperation_trigger,sim/hunter/rapid_fire.go:16
 hunter,53238,Piercing Shots,Rank 3,9,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,100,0,,spell_hun_piercing_shots,sim/hunter/talents.go:284
-core,53251,Wild Growth,Rank 4,7,1,8,0,0,1500,133,0,6000,7000,7000,0,1000,0,0,yes,no,no,no,yes,yes,no,no,no,yes,no,,,,,spell_dru_wild_growth,sim/core/buffs.go:284
+core,53251,Wild Growth,Rank 4,7,1,8,0,0,1500,133,0,6000,7000,7000,0,1000,0,0,yes,no,no,no,yes,yes,no,no,no,yes,no,,,,,spell_dru_wild_growth,sim/core/buffs.go:277
 hunter,53253,Invigoration,Rank 2,9,0,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,,,,,,sim/hunter/talents.go:199
 hunter,53254,Wild Quiver Auto Shot,,9,3,8,0,-1000000,0,0,0,0,0,0,0,0,40,0,no,no,yes,no,no,no,no,no,no,no,no,,,,,,sim/hunter/talents.go:348
 hunter,53260,Cobra Strikes,Rank 3,9,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,60,0,53257,spell_hun_cobra_strikes,sim/hunter/talents.go:228
-core hunter,53292,Hunting Party,Rank 3,9,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,100,0,,spell_hun_hunting_party,sim/core/buffs.go:156 sim/hunter/talents.go:818
-hunter,53304,Sniper Training,Rank 3,9,0,1,0,0,0,0,0,0,0,0,0,1000,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,,,,,spell_hun_sniper_training,sim/hunter/talents.go:779
-core,53307,Thorns,Rank 8,7,1,8,0,0,1500,133,0,0,600000,600000,0,0,0,0,no,no,no,no,yes,yes,no,no,yes,yes,no,,,,,,sim/core/buffs.go:452
+hunter,53292,Hunting Party,Rank 3,9,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,100,0,,spell_hun_hunting_party,sim/hunter/talents.go:817
+hunter,53304,Sniper Training,Rank 3,9,0,1,0,0,0,0,0,0,0,0,0,1000,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,,,,,spell_hun_sniper_training,sim/hunter/talents.go:777
+core,53307,Thorns,Rank 8,7,1,8,0,0,1500,133,0,0,600000,600000,0,0,0,0,no,no,no,no,yes,yes,no,no,yes,yes,no,,,,,,sim/core/buffs.go:445
 core,53338,Hunter's Mark,Rank 5,9,1,64,0,0,0,0,0,0,300000,300000,0,0,0,0,no,no,no,no,no,no,no,no,yes,no,no,,,,,,sim/core/debuffs.go:719
 hunter,53352,Explosive Shot,,9,3,4,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,yes,no,no,,,,,,sim/hunter/explosive_shot.go:61
-hunter,53353,Chimera Shot - Serpent,,9,3,8,0,-1000000,0,133,0,0,0,0,0,0,40,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/hunter/chimera_shot.go:76
+hunter,53353,Chimera Shot - Serpent,,9,3,8,0,-1000000,0,133,0,0,0,0,0,0,40,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/hunter/chimera_shot.go:79
 deathknight,53365,Unholy Strength,,0,0,1,0,0,0,0,0,0,15000,15000,1,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,spell_dk_rune_of_the_fallen_crusader,sim/deathknight/items.go:478
 paladin,53385,Divine Storm,,10,2,1,0,0,1500,133,10000,0,0,0,0,0,0,4,yes,no,no,no,no,no,no,no,no,no,no,,,,,spell_pal_divine_storm spell_tweaks_seal_dot_on_strikes,sim/paladin/divine_storm.go:16
 deathknight,53386,Cinderglacier,,15,0,16,0,0,0,0,0,0,30000,30000,1,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,0,100,0,,,sim/deathknight/items.go:753
@@ -501,32 +501,34 @@ paladin,53488,The Art of War,Rank 2,10,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,
 hunter,53508,Wolverine Bite,,9,2,1,0,0,1500,133,10000,5000,0,0,0,0,0,0,no,no,no,no,no,no,no,yes,no,no,no,,,,,,sim/hunter/pet_talents.go:335
 hunter,53515,Owl's Focus,,9,1,0,0,0,0,0,0,0,8000,8000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,0,100,0,,,sim/hunter/pet_talents.go:65
 hunter,53517,Roar of Recovery,,9,1,8,0,0,0,0,180000,0,9000,9000,0,3000,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/hunter/pet_talents.go:151
-core,53530,Divine Guardian,Rank 2,10,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,100,0,70940,,sim/core/buffs.go:862 sim/core/buffs.go:878 sim/core/serverdata_allowlist.go:27
-hunter,53533,Swipe,Rank 6,9,2,1,0,0,1500,133,5000,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/hunter/pet_abilities.go:917
-hunter,53543,Snatch,Rank 6,9,2,1,0,0,0,0,0,60000,6000,6000,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/hunter/pet_abilities.go:767
-hunter,53548,Pin,Rank 6,9,2,1,0,0,0,0,40000,0,4000,4000,0,1000,0,0,no,yes,no,no,no,no,no,no,no,no,no,,,,,,sim/hunter/pet_abilities.go:491
-hunter,53562,Ravage,Rank 6,9,2,1,0,0,0,0,40000,0,2000,2000,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/hunter/pet_abilities.go:625
-hunter,53568,Sonic Blast,Rank 6,9,1,8,0,0,0,0,60000,0,2000,2000,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/hunter/pet_abilities.go:778
-hunter,53575,Tendon Rip,Rank 6,9,2,1,0,0,0,0,0,20000,6000,6000,0,0,0,0,yes,no,no,no,no,no,no,no,no,no,no,,,,,,sim/hunter/pet_abilities.go:929
-hunter,53582,Savage Rend,Rank 6,9,2,1,0,0,0,0,60000,0,15000,15000,0,5000,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/hunter/pet_abilities.go:632
-hunter,53589,Nether Shock,Rank 6,9,1,32,0,0,0,0,40000,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,62347,,sim/hunter/pet_abilities.go:482
+core,53530,Divine Guardian,Rank 2,10,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,100,0,70940,,sim/core/buffs.go:856 sim/core/buffs.go:872 sim/core/serverdata_allowlist.go:27
+hunter,53533,Swipe,Rank 6,9,2,1,0,0,1500,133,5000,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/hunter/pet_abilities.go:935
+hunter,53543,Snatch,Rank 6,9,2,1,0,0,0,0,0,60000,6000,6000,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/hunter/pet_abilities.go:783
+hunter,53548,Pin,Rank 6,9,2,1,0,0,0,0,40000,0,4000,4000,0,1000,0,0,no,yes,no,no,no,no,no,no,no,no,no,,,,,,sim/hunter/pet_abilities.go:497
+hunter,53562,Ravage,Rank 6,9,2,1,0,0,0,0,40000,0,2000,2000,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/hunter/pet_abilities.go:638
+hunter,53568,Sonic Blast,Rank 6,9,1,8,0,0,0,0,60000,0,2000,2000,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/hunter/pet_abilities.go:796
+hunter,53575,Tendon Rip,Rank 6,9,2,1,0,0,0,0,0,20000,6000,6000,0,0,0,0,yes,no,no,no,no,no,no,no,no,no,no,,,,,,sim/hunter/pet_abilities.go:947
+hunter,53582,Savage Rend,Rank 6,9,2,1,0,0,0,0,60000,0,15000,15000,0,5000,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/hunter/pet_abilities.go:647
+hunter,53589,Nether Shock,Rank 6,9,1,32,0,0,0,0,40000,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,62347,,sim/hunter/pet_abilities.go:488
 paladin,53595,Hammer of the Righteous,,10,2,2,0,0,1500,133,6000,0,0,0,0,0,35,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/paladin/hammer_of_the_righteous.go:16
-core hunter,53598,Spore Cloud,Rank 6,9,1,8,0,0,1500,133,10000,0,9000,9000,0,3000,0,0,no,no,no,no,yes,no,no,no,yes,no,no,,,,,,sim/core/debuffs.go:670 sim/hunter/pet_abilities.go:824
+core hunter,53598,Spore Cloud,Rank 6,9,1,8,0,0,1500,133,10000,0,9000,9000,0,3000,0,0,no,no,no,no,yes,no,no,no,yes,no,no,,,,,,sim/core/debuffs.go:670 sim/hunter/pet_abilities.go:842
 core,53696,Judgements of the Just,Rank 2,10,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,100,0,,spell_pal_judgements_of_the_just,sim/core/debuffs.go:817
 shaman,53817,Maelstrom Weapon,,11,1,1,0,0,0,0,0,0,30000,30000,5,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,0,100,0,,spell_sha_maelstrom_weapon,sim/shaman/talents.go:451
-core,54043,Retribution Aura,Rank 7,10,1,2,0,0,1500,133,0,0,-1,-1,0,0,0,0,yes,no,no,no,no,yes,no,no,no,yes,no,,,,,,sim/core/buffs.go:413
+core,54043,Retribution Aura,Rank 7,10,1,2,0,0,1500,133,0,0,-1,-1,0,0,0,0,yes,no,no,no,no,yes,no,no,no,yes,no,,,,,,sim/core/buffs.go:406
 warlock,54053,Shadow Bite,Rank 5,5,1,32,0,0,1500,133,6000,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/warlock/pet_abilities.go:91
-core warlock,54118,Improved Soul Leech,Rank 2,5,0,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,,,,,,sim/core/buffs.go:160 sim/warlock/talents.go:486 sim/warlock/talents.go:492
+warlock,54118,Improved Soul Leech,Rank 2,5,0,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,,,,,,sim/warlock/talents.go:486 sim/warlock/talents.go:492
 warlock,54277,Backdraft,,5,1,1,0,0,0,0,0,0,15000,15000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,0,100,0,,,sim/warlock/talents.go:424
 paladin,54428,Divine Plea,,10,0,2,0,0,1500,133,60000,0,15000,15000,0,3000,0,0,yes,no,no,no,no,yes,no,no,no,yes,no,,,,,,sim/paladin/divine_plea.go:11
-core,54648,Focus Magic,,3,0,64,0,0,0,133,0,0,10000,10000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/core/buffs.go:1513
+core,54648,Focus Magic,,3,0,64,0,0,0,133,0,0,10000,10000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/core/buffs.go:1405
 common/wotlk,54696,Wracking Pains,,0,1,1,0,0,0,0,0,0,20000,20000,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,no,0,100,0,54697,,sim/common/wotlk/stat_bonus_stacking.go:170
 common/wotlk,54697,Oozing Wound,,0,1,1,0,0,0,0,0,0,-1,-1,10,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/stat_bonus_stacking.go:152
-mage,54741,Firestarter,,3,0,1,0,0,0,0,0,0,10000,10000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,0,101,0,,,sim/mage/talents.go:986
-common/wotlk,54757,Pyro Rocket,,0,1,4,0,0,0,0,45000,10000,0,0,0,0,31,0,no,no,no,no,no,no,no,no,yes,no,no,,,,,,sim/common/wotlk/enchant_effects.go:287
+mage,54741,Firestarter,,3,0,1,0,0,0,0,0,0,10000,10000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,0,101,0,,,sim/mage/talents.go:1040
+common/wotlk deathknight,54757,Pyro Rocket,,0,1,4,0,0,0,0,45000,10000,0,0,0,0,31,0,no,no,no,no,no,no,no,no,yes,no,no,,,,,,sim/common/wotlk/enchant_effects.go:287 sim/deathknight/presences.go:165
 common/wotlk,54758,Hyperspeed Acceleration,,0,0,1,0,0,0,0,60000,10000,12000,12000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/enchant_effects.go:324
+common/wotlk,54843,Lightning Bolt,Rank 1,11,1,8,0,0,0,133,0,0,0,0,0,0,20,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/common/wotlk/capacitors.go:82
 druid,54845,Glyph of Starfire,,7,0,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,0,101,0,,spell_dru_glyph_of_starfire_dummy,sim/druid/starfire.go:20
 common/wotlk,55018,Sonic Awareness,,0,0,1,0,0,0,0,0,0,10000,10000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/stat_bonus_procs.go:227
+common/wotlk deathknight,55039,Gnomish Lightning Generator,,0,1,8,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/common/wotlk/other_effects.go:26 sim/common/wotlk/other_effects.go:287 sim/common/wotlk/serverdata_allowlist.go:9 +1 more
 deathknight,55078,Blood Plague,,15,2,32,0,0,0,0,0,0,15000,15000,0,3000,0,0,no,no,no,no,no,no,no,no,yes,no,no,,,,,spell_tweaks_disease_haste,sim/deathknight/diseases.go:182 sim/deathknight/diseases.go:192 sim/deathknight/diseases.go:298
 core deathknight,55095,Frost Fever,,15,2,16,0,0,0,0,0,0,15000,15000,0,3000,0,0,no,no,no,no,no,no,no,no,yes,no,no,,,,,spell_tweaks_disease_haste,sim/core/debuffs.go:827 sim/deathknight/diseases.go:118 sim/deathknight/diseases.go:254
 deathknight,55226,Blade Barrier,Rank 5,15,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,no,yes,0,100,0,64859,spell_dk_blade_barrier,sim/deathknight/talents_blood.go:216
@@ -534,52 +536,55 @@ deathknight,55233,Vampiric Blood,,15,0,1,0,0,0,0,60000,0,10000,10000,0,0,0,0,yes
 deathknight,55262,Heart Strike,Rank 6,15,2,1,0,0,1500,133,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/deathknight/heart_strike.go:7
 deathknight,55268,Frost Strike,Rank 6,15,2,16,0,0,1500,133,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/deathknight/frost_strike.go:8
 deathknight,55271,Scourge Strike,Rank 4,15,2,1,0,0,1500,133,0,0,0,0,1,0,0,0,yes,no,no,no,no,no,no,no,no,no,no,,,,,spell_dk_scourge_strike,sim/deathknight/scourge_strike.go:10 sim/deathknight/serverdata_allowlist.go:10
-common/wotlk,55341,Invigorating Earthsiege Health Regen,,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/metagems.go:38
-mage,55342,Mirror Image,,3,0,64,0,0,1500,133,180000,0,30000,30000,0,1000,0,0,yes,no,no,no,no,yes,no,no,no,yes,no,,,,58832 58836,spell_mage_mirror_image,sim/mage/mirror_image.go:30
+common/wotlk,55341,Invigorating Earthsiege Health Regen,,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/metagems.go:93
+mage,55342,Mirror Image,,3,0,64,0,0,1500,133,180000,0,30000,30000,0,1000,0,0,yes,no,no,no,no,yes,no,no,no,yes,no,,,,58832 58836,spell_mage_mirror_image,sim/mage/mirror_image.go:28
 mage,55360,Living Bomb,Rank 3,3,1,4,0,0,1500,133,0,0,12000,12000,0,3000,0,0,no,no,no,no,yes,yes,no,no,no,no,no,,,,,spell_mage_living_bomb,sim/mage/living_bomb.go:50
-mage,55362,Living Bomb,Rank 3,3,1,4,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/mage/living_bomb.go:16 sim/mage/talents.go:514
-common/wotlk,55379,Skyflare Swiftness,,0,0,2,0,0,0,133,0,0,6000,6000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/metagems.go:82
-common/wotlk,55382,Mana Restore,,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/metagems.go:101
+mage,55362,Living Bomb,Rank 3,3,1,4,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/mage/dragons_breath.go:28 sim/mage/living_bomb.go:16 sim/mage/talents.go:520
+common/wotlk,55379,Skyflare Swiftness,,0,0,2,0,0,0,133,0,0,6000,6000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/metagems.go:142
+common/wotlk,55382,Mana Restore,,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/metagems.go:162
 shaman,55459,Chain Heal,Rank 7,11,1,8,2500,2500,1500,133,0,0,0,0,0,0,0,0,yes,no,no,no,yes,yes,no,no,no,yes,no,,,,,spell_sha_chain_heal,sim/shaman/heals.go:328
-hunter,55485,Fire Breath,Rank 6,9,1,4,0,0,1500,133,10000,0,2000,2000,0,1000,0,0,no,no,no,no,no,yes,no,no,no,no,no,,,,,,sim/hunter/pet_abilities.go:321
-core hunter,55487,Demoralizing Screech,Rank 6,9,1,1,0,0,1500,133,0,10000,10000,10000,0,0,0,0,yes,no,no,no,no,no,no,no,no,no,no,,,,,,sim/core/debuffs.go:772 sim/hunter/pet_abilities.go:300
-hunter,55492,Froststorm Breath,Rank 6,9,1,24,0,0,0,0,0,10000,5000,5000,0,0,0,0,yes,no,no,no,yes,no,no,no,no,no,no,,,,54689,,sim/hunter/pet_abilities.go:357
-hunter,55499,Monstrous Bite,Rank 6,9,2,1,0,0,1500,133,10000,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,54681,,sim/hunter/pet_abilities.go:451 sim/hunter/pet_abilities.go:465
-core,55503,Lifeblood,Rank 6,0,0,8,0,0,0,0,180000,0,5000,5000,0,1000,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,spell_gen_lifeblood,sim/core/professions.go:39 sim/core/professions.go:40
-hunter,55509,Venom Web Spray,Rank 6,9,1,8,0,0,0,0,40000,0,4000,4000,0,1000,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/hunter/pet_abilities.go:937
-hunter,55557,Poison Spit,Rank 6,9,1,8,0,0,1500,133,0,10000,8000,8000,0,2000,40,0,yes,no,no,no,no,yes,no,no,no,no,no,,,,,,sim/hunter/pet_abilities.go:534
+hunter,55485,Fire Breath,Rank 6,9,1,4,0,0,1500,133,10000,0,2000,2000,0,1000,0,0,no,no,no,no,no,yes,no,no,no,no,no,,,,,,sim/hunter/pet_abilities.go:327
+core hunter,55487,Demoralizing Screech,Rank 6,9,1,1,0,0,1500,133,0,10000,10000,10000,0,0,0,0,yes,no,no,no,no,no,no,no,no,no,no,,,,,,sim/core/debuffs.go:772 sim/hunter/pet_abilities.go:306
+hunter,55492,Froststorm Breath,Rank 6,9,1,24,0,0,0,0,0,10000,5000,5000,0,0,0,0,yes,no,no,no,yes,no,no,no,no,no,no,,,,54689,,sim/hunter/pet_abilities.go:363
+hunter,55499,Monstrous Bite,Rank 6,9,2,1,0,0,1500,133,10000,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,54681,,sim/hunter/pet_abilities.go:457 sim/hunter/pet_abilities.go:471
+core,55503,Lifeblood,Rank 6,0,0,8,0,0,0,0,180000,0,5000,5000,0,1000,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,spell_gen_lifeblood,sim/core/professions.go:39 sim/core/professions.go:40 sim/core/professions.go:42
+hunter,55509,Venom Web Spray,Rank 6,9,1,8,0,0,0,0,40000,0,4000,4000,0,1000,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/hunter/pet_abilities.go:957
+hunter,55557,Poison Spit,Rank 6,9,1,8,0,0,1500,133,0,10000,8000,8000,0,2000,40,0,yes,no,no,no,no,yes,no,no,no,no,no,,,,,,sim/hunter/pet_abilities.go:547
 common/wotlk,55637,Lightweave,,0,1,2,0,0,0,0,0,0,15000,15000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/enchant_effects.go:365
 common/wotlk,55640,Lightweave Embroidery,,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,0,35,60000,55637,spell_gen_allow_proc_from_spells_with_cost,sim/common/wotlk/enchant_effects.go:18 sim/common/wotlk/enchant_effects.go:360
-hunter,55728,Scorpid Poison,Rank 6,9,2,8,0,0,1500,133,10000,0,10000,10000,0,2000,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/hunter/pet_abilities.go:714
-core hunter,55754,Acid Spit,Rank 6,9,1,8,0,0,1500,133,10000,0,30000,30000,2,0,24,0,yes,no,no,no,yes,yes,no,no,no,no,no,,,,,,sim/core/debuffs.go:582 sim/hunter/pet_abilities.go:275
+hunter,55728,Scorpid Poison,Rank 6,9,2,8,0,0,1500,133,10000,0,10000,10000,0,2000,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/hunter/pet_abilities.go:730
+common/wotlk,55748,Argent Fury,,0,1,2,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/common/wotlk/damage_procs.go:101
+core hunter,55754,Acid Spit,Rank 6,9,1,8,0,0,1500,133,10000,0,30000,30000,2,0,24,0,yes,no,no,no,yes,yes,no,no,no,no,no,,,,,,sim/core/debuffs.go:582 sim/hunter/pet_abilities.go:281
 common/wotlk,55767,Darkglow,,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/enchant_effects.go:403
 common/wotlk,55768,Darkglow Embroidery,,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,0,35,45000,55767,,sim/common/wotlk/enchant_effects.go:19 sim/common/wotlk/enchant_effects.go:395
 common/wotlk,55775,Swordguard Embroidery,,0,0,1,0,0,0,0,0,0,15000,15000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/enchant_effects.go:438
 common/wotlk,55776,Swordguard Embroidery,,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,0,20,55000,55775,,sim/common/wotlk/enchant_effects.go:20 sim/common/wotlk/enchant_effects.go:433
 priest,56172,Glyph of Shadow Word: Pain,,0,0,1,5000,5000,0,0,0,0,0,0,0,0,0,0,no,no,no,no,yes,no,no,no,no,yes,no,,,,,,sim/priest/shadow_word_pain.go:20
-common/wotlk core,56186,Sapphire Owl,,0,0,8,0,0,0,0,0,0,12000,12000,0,1000,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,56187,,sim/common/wotlk/other_effects.go:552 sim/core/serverdata_allowlist.go:35
-hunter,56344,Lock and Load,Rank 3,9,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,100,22000,56453,spell_hun_lock_and_load,sim/hunter/talents.go:575
-core hunter,56631,Sting,Rank 6,9,2,8,0,0,1500,133,0,6000,20000,20000,0,0,0,0,yes,no,no,no,no,no,no,no,no,no,no,,,,,,sim/core/debuffs.go:660 sim/hunter/pet_abilities.go:900
+common/wotlk core,56186,Sapphire Owl,,0,0,8,0,0,0,0,0,0,12000,12000,0,1000,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,56187,,sim/common/wotlk/other_effects.go:542 sim/core/serverdata_allowlist.go:35
+hunter,56344,Lock and Load,Rank 3,9,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,100,22000,56453,spell_hun_lock_and_load,sim/hunter/talents.go:573
+core,56350,Saronite Bomb,,0,0,4,0,0,0,0,60000,60000,0,0,0,0,14,0,no,no,no,no,no,no,no,no,no,no,no,,,,61766,,sim/core/consumes.go:925
+core,56488,Global Thermal Sapper Charge,,0,1,4,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,61765,,sim/core/consumes.go:923
+core hunter,56631,Sting,Rank 6,9,2,8,0,0,1500,133,0,6000,20000,20000,0,0,0,0,yes,no,no,no,no,no,no,no,no,no,no,,,,,,sim/core/debuffs.go:660 sim/hunter/pet_abilities.go:918
 deathknight,56815,Rune Strike,,15,2,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,yes,no,no,no,,,,,,sim/deathknight/rune_strike.go:10 sim/deathknight/serverdata_allowlist.go:14
-core hunter,57393,Stampede,Rank 6,9,2,1,0,0,0,0,60000,0,12000,12000,0,0,0,0,yes,no,no,no,yes,no,no,no,no,no,no,,,,,,sim/core/debuffs.go:431 sim/hunter/pet_abilities.go:882
+core hunter,57393,Stampede,Rank 6,9,2,1,0,0,0,0,60000,0,12000,12000,0,0,0,0,yes,no,no,no,yes,no,no,no,no,no,no,,,,,,sim/core/debuffs.go:431 sim/hunter/pet_abilities.go:900
 warrior,57516,Enrage,Rank 2,0,0,1,0,0,0,0,0,0,12000,12000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/warrior/stances.go:93
-warrior,57518,Enrage,Rank 1,0,0,1,0,0,0,0,0,0,12000,12000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/warrior/talents.go:558
+warrior,57518,Enrage,Rank 1,0,0,1,0,0,0,0,0,0,12000,12000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/warrior/talents.go:561
 deathknight,57623,Horn of Winter,Rank 2,15,1,1,0,0,1500,133,0,20000,120000,120000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/deathknight/horn_of_winter.go:10
-core,57669,Replenishment,,0,0,8,0,0,0,0,0,0,15000,15000,0,1000,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,spell_gen_replenishment,sim/core/buffs.go:1282
-core shaman,57722,Totem of Wrath,Rank 4,11,1,1,0,0,1000,133,0,0,300000,300000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,spell_sha_totem_of_wrath,sim/core/buffs.go:1375 sim/shaman/serverdata_allowlist.go:28 sim/shaman/totems.go:93
-core,57724,Sated,,0,0,1,0,0,0,0,0,0,600000,600000,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/core/buffs.go:631
+core,57669,Replenishment,,0,0,8,0,0,0,0,0,0,15000,15000,0,1000,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,spell_gen_replenishment,sim/core/replenishment.go:18
+core shaman,57722,Totem of Wrath,Rank 4,11,1,1,0,0,1000,133,0,0,300000,300000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,spell_sha_totem_of_wrath,sim/core/buffs.go:1267 sim/shaman/serverdata_allowlist.go:27 sim/shaman/totems.go:93
+core,57724,Sated,,0,0,1,0,0,0,0,0,0,600000,600000,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/core/buffs.go:624
 warrior,57755,Heroic Throw,,4,2,1,0,0,1500,133,60000,0,0,0,0,0,50,0,no,no,no,no,yes,no,no,yes,no,no,no,,,,,,sim/warrior/heroic_throw.go:11
 warrior,57823,Revenge,Rank 9,4,2,1,0,0,1500,133,0,5000,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/warrior/revenge.go:11
 rogue,57841,Killing Spree,,8,2,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,yes,no,no,no,,,,57842,,sim/rogue/killing_spree.go:17
 rogue,57842,Killing Spree,,8,2,1,0,0,0,0,0,0,0,0,0,0,0,1,no,no,no,no,no,no,no,yes,no,no,no,,,,,,sim/rogue/killing_spree.go:37
-core,57933,Tricks of the Trade,,8,0,1,0,0,0,0,0,0,6000,6000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/core/buffs.go:756 sim/core/buffs.go:772 sim/core/serverdata_allowlist.go:28
+core,57933,Tricks of the Trade,,8,0,1,0,0,0,0,0,0,6000,6000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/core/buffs.go:750 sim/core/buffs.go:766 sim/core/serverdata_allowlist.go:28
 rogue,57934,Tricks of the Trade,,8,0,1,0,0,1000,133,30000,0,30000,30000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,0,100,0,,spell_rog_tricks_of_the_trade,sim/rogue/tricks_of_the_trade.go:11 sim/rogue/tricks_of_the_trade.go:29
 warlock,57946,Life Tap,Rank 8,5,1,32,0,0,1500,133,0,0,0,0,0,0,0,0,yes,no,no,no,yes,yes,no,no,no,yes,no,,,,,spell_warl_life_tap,sim/warlock/lifetap.go:9
 shaman,57960,Water Shield,Rank 9,11,1,8,0,0,1500,133,0,0,600000,600000,0,0,0,0,yes,no,no,no,no,yes,no,no,no,yes,no,0,100,3500,57961,,sim/shaman/shaman.go:32
 rogue,57965,Instant Poison IX,Rank 9,8,1,8,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/rogue/poisons.go:283
 rogue,57970,Deadly Poison IX,Rank 9,8,1,8,0,0,0,0,0,0,12000,12000,5,3000,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,spell_rog_deadly_poison spell_tweaks_deadly_poison_haste,sim/rogue/poisons.go:92
 rogue,57975,Wound Poison VII,Rank 7,8,1,8,0,0,0,0,0,0,15000,15000,0,0,0,0,yes,no,no,no,no,no,no,no,no,no,no,,,,,,sim/rogue/poisons.go:308 sim/rogue/poisons.go:335
-shaman,57984,Fire Blast,,3,1,4,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,yes,no,no,no,no,no,no,,,,,,sim/shaman/fire_elemental_spells.go:34
+shaman,57984,Fire Blast,,3,1,4,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,yes,no,no,no,no,no,no,,,,,,sim/shaman/fire_elemental_spells.go:11
 rogue,57993,Envenom,Rank 4,8,2,8,0,0,1000,133,0,0,1000,6000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/rogue/envenom.go:13 sim/rogue/envenom.go:27
 priest,58381,Mind Flay,Rank 9,6,1,32,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,yes,no,no,no,no,no,no,,,,,,sim/priest/mind_flay.go:15
 warrior,58397,Glyph of Shield Slam,,4,0,1,5000,5000,0,0,0,0,0,0,0,0,0,0,no,no,no,no,yes,no,no,no,no,yes,no,,,,,,sim/warrior/shield_slam.go:17
@@ -590,39 +595,39 @@ rogue,58426,Overkill,,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,y
 hunter,58433,Volley,Rank 6,9,3,64,500,0,0,133,0,0,0,0,0,0,0,0,no,no,yes,no,no,no,no,no,no,no,no,,,,,spell_hun_volley_trigger,sim/hunter/volley.go:54 sim/hunter/volley.go:77
 hunter,58434,Volley,Rank 6,9,3,64,0,-1000000,1500,133,0,0,6000,6000,0,1000,30,0,no,yes,yes,no,no,no,yes,no,no,no,no,,,,58433,,sim/hunter/volley.go:14
 warrior,58567,Sunder Armor,Rank 1,4,2,1,0,0,1500,133,0,0,30000,30000,5,0,0,0,no,no,no,no,no,no,no,yes,yes,no,no,,,,,,sim/warrior/sunder_armor.go:45
-hunter,58611,Lava Breath,Rank 6,9,1,4,0,0,1500,133,10000,0,10000,10000,0,0,0,0,yes,no,no,no,yes,yes,no,no,no,no,no,,,,58605,,sim/hunter/pet_abilities.go:428
-shaman,58643,Strength of Earth Totem,Rank 8,11,1,1,0,0,1000,133,0,0,300000,300000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/shaman/serverdata_allowlist.go:29 sim/shaman/totems.go:125
-core shaman,58656,Flametongue Totem,Rank 8,11,1,1,0,0,1000,133,0,0,300000,300000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/core/buffs.go:1389 sim/shaman/serverdata_allowlist.go:30 sim/shaman/totems.go:117
+hunter,58611,Lava Breath,Rank 6,9,1,4,0,0,1500,133,10000,0,10000,10000,0,0,0,0,yes,no,no,no,yes,yes,no,no,no,no,no,,,,58605,,sim/hunter/pet_abilities.go:434
+shaman,58643,Strength of Earth Totem,Rank 8,11,1,1,0,0,1000,133,0,0,300000,300000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/shaman/serverdata_allowlist.go:28 sim/shaman/totems.go:125
+core shaman,58656,Flametongue Totem,Rank 8,11,1,1,0,0,1000,133,0,0,300000,300000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/core/buffs.go:1281 sim/shaman/serverdata_allowlist.go:29 sim/shaman/totems.go:117
 rogue,58670,Prey on the Weak,,0,0,1,0,0,0,0,0,0,10000,10000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/rogue/talents.go:190
 shaman,58702,Attack,Rank 10,11,1,4,2200,2200,0,0,0,0,0,0,0,0,19,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/shaman/fire_totems.go:17 sim/shaman/fire_totems.go:59
 shaman,58704,Searing Totem,Rank 10,11,0,1,0,0,1000,133,0,0,60000,60000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/shaman/fire_totems.go:33
 shaman,58734,Magma Totem,Rank 7,11,1,1,0,0,1000,133,0,0,21000,21000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/shaman/fire_totems.go:98
 shaman,58735,Magma Totem,Rank 7,11,1,4,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/shaman/fire_totems.go:83 sim/shaman/fire_totems.go:124
-shaman,58753,Stoneskin Totem,Rank 10,11,1,1,0,0,1000,133,0,0,300000,300000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/shaman/serverdata_allowlist.go:31 sim/shaman/totems.go:141
-shaman,58757,Healing Stream Totem,Rank 9,11,1,16,0,0,1000,133,0,0,300000,300000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/shaman/serverdata_allowlist.go:32 sim/shaman/totems.go:50
+shaman,58753,Stoneskin Totem,Rank 10,11,1,1,0,0,1000,133,0,0,300000,300000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/shaman/serverdata_allowlist.go:30 sim/shaman/totems.go:141
+shaman,58757,Healing Stream Totem,Rank 9,11,1,16,0,0,1000,133,0,0,300000,300000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/shaman/serverdata_allowlist.go:31 sim/shaman/totems.go:50
 shaman,58761,Healing Stream Totem,,11,0,32,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,spell_sha_healing_stream_totem,sim/shaman/totems.go:78
-shaman,58774,Mana Spring Totem,Rank 8,11,1,1,0,0,1000,133,0,0,300000,300000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/shaman/serverdata_allowlist.go:33 sim/shaman/totems.go:42
+shaman,58774,Mana Spring Totem,Rank 8,11,1,1,0,0,1000,133,0,0,300000,300000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/shaman/serverdata_allowlist.go:32 sim/shaman/totems.go:42
 shaman,58799,Frostbrand Attack,Rank 9,11,1,16,0,0,0,0,0,0,8000,8000,0,0,0,0,yes,no,no,no,no,no,no,no,no,no,no,,,,,,sim/shaman/weapon_imbues.go:263 sim/shaman/weapon_imbues.go:292
-shaman,58804,Windfury Weapon,Rank 8,11,1,8,0,0,1500,133,0,0,0,0,0,0,0,0,yes,no,no,no,no,yes,no,no,no,yes,no,,,,,,sim/shaman/serverdata_allowlist.go:43 sim/shaman/weapon_imbues.go:52
+shaman,58804,Windfury Weapon,Rank 8,11,1,8,0,0,1500,133,0,0,0,0,0,0,0,0,yes,no,no,no,no,yes,no,no,no,yes,no,,,,,,sim/shaman/serverdata_allowlist.go:41 sim/shaman/weapon_imbues.go:52
 warrior,58872,Damage Shield,Rank 1,4,0,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,0,100,0,,spell_warr_damage_shield,sim/warrior/talents.go:102
 warrior,58874,Damage Shield,Rank 2,4,0,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,0,100,0,,spell_warr_damage_shield,sim/warrior/talents.go:102
 common/wotlk,58904,Tears of Anguish,,0,0,1,0,0,0,0,0,0,10000,10000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/stat_bonus_procs.go:239
-priest,59000,Improved Spirit Tap,Rank 2,6,0,32,0,0,0,0,0,0,8000,8000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/priest/talents.go:460
+priest,59000,Improved Spirit Tap,Rank 2,6,0,32,0,0,0,0,0,0,8000,8000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/priest/talents.go:466
 deathknight,59052,Freezing Fog,,15,1,16,0,0,0,0,0,0,15000,15000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,0,100,0,,,sim/deathknight/talents_frost.go:128
-druid,59072,Natural Reaction,,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/druid/talents.go:602
+druid,59072,Natural Reaction,,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/druid/talents.go:660
 warlock,59092,Dark Pact,Rank 5,5,0,32,0,0,1500,133,0,0,0,0,0,0,0,0,yes,no,no,no,yes,yes,no,no,no,yes,no,,,,,,sim/warlock/darkpact.go:16
 shaman,59159,Thunderstorm,Rank 4,11,1,8,0,0,1500,133,0,45000,0,0,0,0,0,0,yes,no,no,no,yes,yes,no,no,no,no,no,,,,,spell_sha_thunderstorm,sim/shaman/thunderstorm.go:15
 warlock,59164,Haunt,Rank 4,5,1,32,1500,1500,1500,133,0,8000,12000,12000,0,0,20,0,no,no,no,no,yes,yes,no,no,no,no,no,,,,,spell_warl_haunt,sim/warlock/haunt.go:15
 warlock,59172,Chaos Bolt,Rank 4,5,1,4,2500,2500,1500,133,0,12000,0,0,0,0,20,0,no,no,no,no,yes,yes,no,no,yes,no,no,,,,,,sim/warlock/chaos_bolt.go:19
-encounters,59192,Hateful Strike,,0,2,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/encounters/naxxramas/patchwerk10_ai.go:68 sim/encounters/naxxramas/patchwerk25_ai.go:68
+encounters,59192,Hateful Strike,,0,2,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/encounters/naxxramas/patchwerk10_ai.go:70 sim/encounters/naxxramas/patchwerk25_ai.go:70
 common/wotlk,59620,Berserk,,0,0,2,0,0,0,0,0,0,15000,15000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/enchant_effects.go:190 sim/common/wotlk/enchant_effects.go:191
 common/wotlk,59626,Black Magic,,0,0,32,0,0,0,0,0,0,10000,10000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/enchant_effects.go:12
 rogue,59628,Tricks of the Trade,,8,0,1,0,0,0,0,0,0,6000,6000,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,no,,,,,spell_rog_tricks_of_the_trade_proc,sim/rogue/tricks_of_the_trade.go:23
 common/wotlk,59630,Black Magic,,0,0,1,0,0,0,0,0,0,-1,-1,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,0,35,35000,59626,spell_gen_black_magic_enchant,sim/common/wotlk/enchant_effects.go:17 sim/common/wotlk/enchant_effects.go:246
-mage,59637,Fire Blast,,3,1,4,0,0,0,0,6000,0,0,0,0,0,0,0,no,no,no,no,yes,no,no,no,no,no,no,,,,,,sim/mage/mirror_image.go:197 sim/mage/serverdata_allowlist.go:8
-mage,59638,Frostbolt,,3,1,16,3000,3000,0,0,0,0,4000,4000,0,0,24,0,no,no,no,no,yes,no,no,no,no,no,no,,,,,,sim/mage/mirror_image.go:130 sim/mage/serverdata_allowlist.go:10
+mage,59637,Fire Blast,,3,1,4,0,0,0,0,6000,0,0,0,0,0,0,0,no,no,no,no,yes,no,no,no,no,no,no,,,,,,sim/mage/mirror_image.go:305 sim/mage/serverdata_allowlist.go:8
+mage,59638,Frostbolt,,3,1,16,3000,3000,0,0,0,0,4000,4000,0,0,24,0,no,no,no,no,yes,no,no,no,no,no,no,,,,,,sim/mage/mirror_image.go:227
 warrior,59653,Damage Shield,,4,1,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,yes,no,no,,,,,,sim/warrior/talents.go:109
-hunter,59886,Rake,Rank 6,9,2,1,0,0,1500,133,10000,0,9000,9000,0,3000,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/hunter/pet_abilities.go:592
+hunter,59886,Rake,Rank 6,9,2,1,0,0,1500,133,10000,0,9000,9000,0,3000,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/hunter/pet_abilities.go:605
 shaman,60043,Lava Burst,Rank 2,11,1,4,2000,2000,1500,133,0,8000,0,0,0,0,24,0,no,no,no,no,yes,yes,no,no,no,no,no,,,,,,sim/shaman/lavaburst.go:11
 hunter,60052,Explosive Shot,Rank 3,9,3,4,0,-1000000,1500,133,0,6000,2000,2000,0,1000,40,0,no,no,yes,no,no,no,no,no,no,no,no,,,,,spell_hun_explosive_shot,sim/hunter/explosive_shot.go:24
 hunter,60053,Explosive Shot,Rank 4,9,3,4,0,-1000000,1500,133,0,6000,2000,2000,0,1000,40,0,no,no,yes,no,no,no,no,no,no,no,no,,,,,spell_hun_explosive_shot,sim/hunter/explosive_shot.go:21
@@ -632,23 +637,28 @@ common/wotlk,60065,Reflection of Torment,,0,0,1,0,0,0,0,0,0,10000,10000,0,0,0,0,
 druid,60089,Faerie Fire (Feral),,7,1,8,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,yes,no,no,,,,,spell_tweaks_omen_faerie_fire,sim/druid/faerie_fire.go:13
 shaman,60103,Lava Lash,Rank 1,11,2,4,0,0,1500,133,6000,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,no,no,,,,,spell_sha_lava_lash,sim/shaman/lavalash.go:53
 common/wotlk,60196,Berserker!,,0,0,1,0,0,0,133,0,0,12000,12000,3,0,0,0,yes,no,no,no,yes,no,no,no,no,yes,no,,,,,,sim/common/wotlk/stat_bonus_stacking.go:216
-common/wotlk deathknight,60229,Greatness,,0,0,2,0,0,0,0,0,0,15000,15000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/highest_stat_effects.go:56 sim/deathknight/deathknight.go:289
+common/wotlk,60203,Darkmoon Card: Death,,0,1,32,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/common/wotlk/damage_procs.go:154
+common/wotlk deathknight,60229,Greatness,,0,0,2,0,0,0,0,0,0,15000,15000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/highest_stat_effects.go:56 sim/deathknight/deathknight.go:291
 common/wotlk,60233,Greatness,,0,0,2,0,0,0,0,0,0,15000,15000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/highest_stat_effects.go:57
 common/wotlk,60234,Greatness,,0,0,2,0,0,0,0,0,0,15000,15000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/highest_stat_effects.go:58
 common/wotlk,60235,Greatness,,0,0,2,0,0,0,0,0,0,15000,15000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/highest_stat_effects.go:59
 common/wotlk,60302,Meteorite Whetstone,,0,1,1,0,0,0,0,0,0,10000,10000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/stat_bonus_procs.go:86
+common/wotlk,60307,Vestige of Haldor,,0,1,4,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/common/wotlk/damage_procs.go:67
 common/wotlk,60314,Fury of the Five Flights,,0,0,1,0,0,0,0,0,0,10000,10000,20,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/stat_bonus_stacking.go:191
 common/wotlk,60318,Edward's Insight,,0,1,1,0,0,0,0,0,0,13000,13000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/stat_bonus_procs.go:275
-druid,60432,Earth and Moon,,7,0,64,0,0,0,0,0,0,12000,12000,1,0,0,0,yes,no,no,no,no,no,no,no,no,no,no,,,,,,sim/druid/talents.go:211
+druid,60432,Earth and Moon,,7,0,64,0,0,0,0,0,0,12000,12000,1,0,0,0,yes,no,no,no,no,no,no,no,no,no,no,,,,,,sim/druid/talents.go:226
 common/wotlk,60437,Grim Toll,,0,1,1,0,0,0,0,0,0,10000,10000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/stat_bonus_procs.go:181
+common/wotlk,60443,Bandit's Insignia,,0,1,64,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/common/wotlk/damage_procs.go:120
 common/wotlk,60479,Forge Ember,,0,1,1,0,0,0,0,0,0,10000,10000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,0,100,0,,,sim/common/wotlk/stat_bonus_procs.go:119
+common/wotlk,60483,Pendulum of Telluric Currents,,0,1,32,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/common/wotlk/damage_procs.go:84
 common/wotlk,60486,Illustration of the Dragon Soul,,0,0,1,0,0,0,0,0,0,10000,10000,10,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/stat_bonus_stacking.go:202
+common/wotlk,60488,Extract of Necromatic Power,,0,1,32,2200,2200,1500,133,0,0,0,0,0,0,20,0,no,no,no,no,no,yes,no,no,no,no,no,,,,,,sim/common/wotlk/damage_procs.go:137
 common/wotlk,60492,Embrace of the Spider,,0,1,1,0,0,0,0,0,0,10000,10000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/stat_bonus_procs.go:155
 common/wotlk shaman,60494,Dying Curse,,0,1,64,0,0,0,0,0,0,10000,10000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/stat_bonus_procs.go:166 sim/shaman/shaman.go:272
-common/wotlk,60518,Touched by a Troll,,7,1,8,0,0,0,0,0,0,10000,10000,5,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/other_effects.go:96
+common/wotlk,60518,Touched by a Troll,,7,1,8,0,0,0,0,0,0,10000,10000,5,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/other_effects.go:99
 common/wotlk,60520,Spark of Life,,0,0,1,0,0,0,0,0,0,15000,15000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/stat_bonus_procs.go:109
 common/wotlk,60525,Majestic Dragon Figurine,,0,0,1,0,0,0,0,0,0,10000,10000,10,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/stat_bonus_stacking.go:182
-common/wotlk,60529,Forethought Talisman,,10,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,20,45000,60530,,sim/common/wotlk/other_effects.go:19 sim/common/wotlk/other_effects.go:219
+common/wotlk,60529,Forethought Talisman,,10,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,20,45000,60530,,sim/common/wotlk/other_effects.go:19 sim/common/wotlk/other_effects.go:222
 shaman,60549,Deadly Aggression,,0,0,1,0,0,0,0,0,0,10000,10000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/shaman/lavalash.go:43
 shaman,60551,Furious Gladiator's Libram of Fortitude,,0,0,1,0,0,0,0,0,0,10000,10000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/shaman/lavalash.go:45
 shaman,60553,Relentless Aggression,,0,0,1,0,0,0,0,0,0,10000,10000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/shaman/lavalash.go:47
@@ -671,7 +681,7 @@ druid,60696,Deadly Gladiator's Idol of Resolve,,7,0,1,0,0,0,0,0,0,0,0,0,0,0,0,ye
 druid,60698,LK Arena 4 Gladiator's Idol of Resolve,,7,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,,,,60551,,sim/druid/items.go:592
 druid,60700,LK Arena 5 Gladiator's Idol of Resolve,,7,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,,,,60553,,sim/druid/items.go:593
 druid,60701,LK Arena 6 Gladiator's Idol of Resolve,,7,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,,,,60555,,sim/druid/items.go:594
-shaman,60766,Essence of the Storm,,0,0,1,0,0,0,0,0,0,6000,6000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/shaman/stormstrike.go:96
+shaman,60766,Essence of the Storm,,0,0,1,0,0,0,0,0,0,6000,6000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/shaman/stormstrike.go:97
 shaman,60771,Totem of the Elemental Plane,,0,1,8,0,0,0,133,0,0,10000,10000,0,0,0,0,yes,no,no,no,yes,no,no,no,no,yes,no,,,,,,sim/shaman/items_wotlk.go:87
 paladin,60794,Libram of Obstruction,,10,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,,,,60795,,sim/paladin/items.go:458
 paladin,60819,Libram of Reciprocation,,0,0,8,0,0,0,133,0,0,10000,10000,0,0,0,0,yes,no,no,no,yes,no,no,no,no,yes,no,,,,,,sim/paladin/items.go:254
@@ -679,7 +689,7 @@ deathknight,60828,Sigil of Haunted Dreams,,0,0,8,0,0,0,133,0,0,10000,10000,0,0,0
 hunter,61006,Kill Shot,Rank 3,9,3,1,0,-1000000,1500,133,0,15000,0,0,0,0,40,0,no,no,yes,no,no,no,no,no,no,no,no,,,,,,sim/hunter/kill_shot.go:12 sim/hunter/serverdata_allowlist.go:8
 mage,61062,Improved Mana Gems,,3,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,101,0,,spell_mage_imp_mana_gems,sim/mage/mana_gems.go:18
 warlock,61082,Spirits of the Damned,,5,0,1,0,0,0,0,0,0,10000,10000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/warlock/items.go:71
-hunter,61198,Spirit Strike,Rank 6,9,1,64,0,0,1500,0,10000,0,6000,6000,0,6000,0,0,no,no,no,no,yes,no,no,no,no,no,no,,,,,,sim/hunter/pet_abilities.go:791
+hunter,61198,Spirit Strike,Rank 6,9,1,64,0,0,1500,0,10000,0,6000,6000,0,6000,0,0,no,no,no,no,yes,no,no,no,no,no,no,,,,,,sim/hunter/pet_abilities.go:809
 shaman,61301,Riptide,Rank 4,11,1,8,0,0,1500,133,0,6000,15000,15000,0,3000,0,0,yes,no,no,no,yes,yes,no,no,no,yes,no,,,,,,sim/shaman/heals.go:101
 druid,61336,Survival Instincts,,7,0,1,0,0,0,0,0,180000,20000,20000,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,no,,,,,spell_dru_survival_instincts,sim/druid/survival_instincts.go:16
 druid,61384,Typhoon,Rank 5,7,1,8,0,0,1500,133,0,20000,0,0,0,0,27,0,no,no,no,no,yes,yes,no,no,no,no,no,,,,53227,,sim/druid/typhoon.go:50
@@ -706,7 +716,7 @@ warlock,63244,Pyroclasm,,0,1,4,0,0,0,0,0,0,10000,10000,0,0,0,0,yes,no,no,no,no,n
 common/wotlk,63250,Jouster's Fury,,0,0,1,0,0,0,0,0,0,10000,10000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/stat_bonus_procs.go:308 sim/common/wotlk/stat_bonus_procs.go:320
 shaman,63283,Totem of Wrath,,11,1,4,0,0,0,0,0,0,300000,300000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/shaman/totems.go:97
 warlock,63321,Life Tap,,5,1,4,0,0,0,0,0,0,40000,40000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/warlock/talents.go:105
-core encounters,63511,Frozen Blows,,0,1,16,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/core/serverdata_allowlist.go:47 sim/encounters/ulduar/hodir_ai.go:345 sim/encounters/ulduar/hodir_ai.go:367
+core encounters,63511,Frozen Blows,,0,1,16,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/core/serverdata_allowlist.go:53 sim/encounters/ulduar/hodir_ai.go:345 sim/encounters/ulduar/hodir_ai.go:367
 encounters,63512,Frozen Blows,,0,0,16,0,0,0,0,0,0,20000,20000,0,2000,0,0,no,no,no,no,yes,no,no,no,no,no,no,0,100,0,63511 64545,,sim/encounters/ulduar/hodir_ai.go:308 sim/encounters/ulduar/hodir_ai.go:319
 priest,63543,Empowered Renew,Rank 3,6,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,,,,,,sim/priest/renew.go:15 sim/priest/serverdata_allowlist.go:15
 deathknight,63560,Ghoul Frenzy,,15,1,8,0,0,1500,133,10000,0,30000,30000,0,3000,0,0,yes,no,no,no,no,yes,no,no,no,yes,no,,,,,,sim/deathknight/ghoul_frenzy.go:15 sim/deathknight/ghoul_frenzy.go:66 sim/deathknight/ghoul_frenzy.go:72
@@ -714,14 +724,14 @@ priest,63619,Shadowcrawl,,6,0,64,0,0,1500,133,6000,0,5000,5000,0,0,0,0,yes,no,no
 hunter,63672,Black Arrow,Rank 6,9,3,32,0,-1000000,1500,133,0,30000,15000,15000,0,3000,40,0,yes,no,yes,no,no,no,no,no,no,no,no,,,,,,sim/hunter/black_arrow.go:14 sim/hunter/sting_debuffs.go:24
 priest,63675,Improved Devouring Plague,,6,1,32,0,0,1500,133,0,0,0,0,0,0,0,0,no,no,no,no,no,yes,no,no,no,no,no,,,,,,sim/priest/devouring_plague.go:33
 encounters,63711,Storm Power,,0,0,8,0,0,0,0,0,0,30000,30000,0,0,0,0,no,no,no,no,no,no,no,no,yes,yes,no,,,,,spell_hodir_storm_power_aura,sim/encounters/ulduar/hodir_ai.go:286
-priest,63737,Serendipity,Rank 3,6,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,100,100,63734,,sim/priest/talents.go:297
+priest,63737,Serendipity,Rank 3,6,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,100,100,63734,,sim/priest/talents.go:303
 warlock,64371,Eradication,,5,1,32,0,0,0,0,0,0,10000,10000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/warlock/talents.go:255
-core warrior,64382,Shattering Throw,,4,2,1,1500,1500,1500,133,300000,0,10000,10000,0,0,50,0,yes,no,no,no,yes,no,no,no,no,no,no,,,,,,sim/core/buffs.go:1108 sim/core/debuffs.go:700 sim/core/serverdata_allowlist.go:29 +4 more
-common/wotlk,64411,Blessing of Ancient Kings,,3,1,1,0,0,0,0,0,0,15000,15000,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,no,0,100,0,,spell_item_blessing_of_ancient_kings,sim/common/wotlk/other_effects.go:21 sim/common/wotlk/other_effects.go:319 sim/common/wotlk/other_effects.go:346
+core warrior,64382,Shattering Throw,,4,2,1,1500,1500,1500,133,300000,0,10000,10000,0,0,50,0,yes,no,no,no,yes,no,no,no,no,no,no,,,,,,sim/core/buffs.go:1102 sim/core/debuffs.go:700 sim/core/serverdata_allowlist.go:29 +4 more
+common/wotlk,64411,Blessing of Ancient Kings,,3,1,1,0,0,0,0,0,0,15000,15000,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,no,0,100,0,,spell_item_blessing_of_ancient_kings,sim/common/wotlk/other_effects.go:21 sim/common/wotlk/other_effects.go:309 sim/common/wotlk/other_effects.go:336
 encounters,64412,Phase Punch,,0,0,64,0,0,0,0,0,0,45000,45000,5,1000,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,spell_algalon_phase_punch_aura,sim/encounters/ulduar/algalon25_ai.go:102
-common/wotlk,64413,Protection of Ancient Kings,,3,0,8,0,0,0,0,0,0,8000,8000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/other_effects.go:22 sim/common/wotlk/other_effects.go:320 sim/common/wotlk/other_effects.go:325
-common/wotlk,64415,Val'anyr Hammer of Ancient Kings - Equip Effect,,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,10,45000,64411,spell_item_valanyr_hammer_of_ancient_kings,sim/common/wotlk/other_effects.go:20 sim/common/wotlk/other_effects.go:318
-hunter,64495,Furious Howl,Rank 6,9,2,1,0,0,0,0,40000,0,20000,20000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,spell_hun_target_self_and_pet,sim/hunter/pet_abilities.go:365
+common/wotlk,64413,Protection of Ancient Kings,,3,0,8,0,0,0,0,0,0,8000,8000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/other_effects.go:22 sim/common/wotlk/other_effects.go:310 sim/common/wotlk/other_effects.go:315
+common/wotlk,64415,Val'anyr Hammer of Ancient Kings - Equip Effect,,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,10,45000,64411,spell_item_valanyr_hammer_of_ancient_kings,sim/common/wotlk/other_effects.go:20 sim/common/wotlk/other_effects.go:308
+hunter,64495,Furious Howl,Rank 6,9,2,1,0,0,0,0,40000,0,20000,20000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,spell_hun_target_self_and_pet,sim/hunter/pet_abilities.go:371
 common/wotlk,64568,Blood Reserve,,0,0,1,0,0,0,0,0,0,20000,20000,5,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,0,100,0,,spell_item_blood_draining_enchant,sim/common/wotlk/enchant_effects.go:471
 common/wotlk,64569,Blood Reserve,,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/enchant_effects.go:467
 common/wotlk,64571,Blood Draining,,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,0,50,10000,64568,,sim/common/wotlk/enchant_effects.go:21 sim/common/wotlk/enchant_effects.go:464
@@ -767,7 +777,7 @@ paladin,65182,Increased Block,,0,0,1,0,0,0,0,0,0,20000,20000,0,0,0,0,yes,no,no,n
 encounters,65280,Singed,,0,0,4,0,0,0,0,0,0,25000,25000,25,0,24,0,yes,no,no,no,no,no,no,no,no,no,no,,,,,,sim/encounters/ulduar/hodir_ai.go:236
 encounters,66012,Freezing Slash,,0,0,16,0,0,0,0,0,0,3000,3000,0,0,0,0,no,no,no,no,yes,no,no,no,no,no,no,,,,,,sim/encounters/toc/anub25h_ai.go:69
 encounters,66118,Leeching Swarm,,0,0,8,1500,1500,0,0,0,0,-1,-1,0,1000,30,0,no,no,no,no,yes,no,no,no,no,no,no,,,,,spell_gen_leeching_swarm_aura,sim/encounters/toc/anub25h_ai.go:120
-deathknight,66217,Rune Strike,Rank 1,15,2,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,yes,yes,no,no,,,,,,sim/deathknight/rune_strike.go:97 sim/deathknight/rune_strike.go:98
+deathknight,66217,Rune Strike,Rank 1,15,2,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,yes,yes,no,no,,,,,,sim/deathknight/rune_strike.go:95 sim/deathknight/rune_strike.go:96
 paladin,66233,Ardent Defender,,10,0,2,0,0,0,0,0,0,120000,120000,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/paladin/talents.go:268 sim/paladin/talents.go:274
 paladin,66235,Ardent Defender,,10,0,2,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/paladin/talents.go:279 sim/paladin/talents.go:282
 encounters,66330,Staggering Stomp,,0,0,1,500,500,0,0,0,0,8000,8000,0,0,0,0,no,no,no,no,yes,no,no,yes,yes,no,no,,,,,,sim/encounters/toc/gormok25h_ai.go:157
@@ -775,10 +785,10 @@ encounters,66331,Impale,,0,2,1,0,0,0,0,0,0,30000,30000,10,2000,0,0,no,no,no,no,y
 encounters,66636,Rising Anger,,0,0,1,0,0,0,0,0,0,-1,-1,99,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/encounters/toc/gormok25h_ai.go:195
 deathknight,66803,Desolation,,15,0,32,0,0,0,0,0,0,20000,20000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/deathknight/talents_unholy.go:210
 shaman,66842,Call of the Elements,,0,0,0,0,0,1500,133,0,0,0,0,0,0,0,0,no,no,no,no,no,yes,no,no,no,yes,no,,,,,,sim/shaman/totems.go:174
-deathknight,66953,Death Strike,Rank 5,15,2,1,0,0,1500,133,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,yes,yes,no,no,,,,,,sim/deathknight/death_strike.go:83 sim/deathknight/death_strike.go:84
-deathknight,66962,Frost Strike,Rank 6,15,2,16,0,0,1500,133,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,yes,yes,no,no,,,,,,sim/deathknight/frost_strike.go:73 sim/deathknight/frost_strike.go:74
-deathknight,66974,Obliterate,Rank 4,15,2,1,0,0,1500,133,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,yes,yes,no,no,,,,,,sim/deathknight/obliterate.go:81 sim/deathknight/obliterate.go:82
-deathknight,66979,Blood Strike,Rank 6,15,2,1,0,0,1500,133,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,yes,yes,no,no,,,,,,sim/deathknight/blood_strike.go:74 sim/deathknight/blood_strike.go:75
+deathknight,66953,Death Strike,Rank 5,15,2,1,0,0,1500,133,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,yes,yes,no,no,,,,,,sim/deathknight/death_strike.go:86 sim/deathknight/death_strike.go:87
+deathknight,66962,Frost Strike,Rank 6,15,2,16,0,0,1500,133,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,yes,yes,no,no,,,,,,sim/deathknight/frost_strike.go:71 sim/deathknight/frost_strike.go:72
+deathknight,66974,Obliterate,Rank 4,15,2,1,0,0,1500,133,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,yes,yes,no,no,,,,,,sim/deathknight/obliterate.go:85 sim/deathknight/obliterate.go:86
+deathknight,66979,Blood Strike,Rank 6,15,2,1,0,0,1500,133,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,yes,yes,no,no,,,,,,sim/deathknight/blood_strike.go:77 sim/deathknight/blood_strike.go:78
 deathknight,66992,Plague Strike,Rank 6,15,2,1,0,0,1500,133,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,yes,yes,no,no,,,,,,sim/deathknight/plague_strike.go:63 sim/deathknight/plague_strike.go:64
 deathknight,67117,Unholy Might,,0,0,1,0,0,0,0,0,0,15000,15000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/deathknight/items.go:116
 rogue,67209,Item - Rogue T9 2P Bonus (Rupture),,8,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,2,15000,67210,,sim/rogue/items.go:45 sim/rogue/items.go:49
@@ -790,15 +800,16 @@ deathknight,67380,Evasion,Rank 1,0,0,8,0,0,0,0,0,0,20000,20000,0,0,0,0,yes,no,no
 deathknight,67383,Unholy Force,Rank 1,0,0,8,0,0,0,0,0,0,20000,20000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/deathknight/items.go:368
 shaman,67385,Energized,,0,0,8,0,0,0,0,0,0,12000,12000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/shaman/items_wotlk.go:114
 shaman,67391,Volcanic Fury,,0,0,8,0,0,0,0,0,0,18000,18000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/shaman/items.go:145
-core,67489,Runic Healing Injector,,13,0,1,0,0,0,0,0,10000,0,0,0,0,0,0,yes,no,no,no,yes,no,no,no,no,yes,no,,,,,spell_item_healing_injector,sim/core/consumes.go:532
-mage,67545,Empowered Fire,,0,0,64,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/mage/ignite.go:111
+core,67489,Runic Healing Injector,,13,0,1,0,0,0,0,0,10000,0,0,0,0,0,0,yes,no,no,no,yes,no,no,no,no,yes,no,,,,,spell_item_healing_injector,sim/core/consumes.go:533
+mage,67545,Empowered Fire,,0,0,64,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/mage/ignite.go:113
 common/wotlk,67631,Aegis,,0,1,2,0,0,0,0,0,0,10000,10000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/stat_bonus_procs.go:462
-common/wotlk,67667,Coliseum 5 Healer Trinket,,0,1,64,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,0,25,45000,67666,,sim/common/wotlk/other_effects.go:582
+common/wotlk,67667,Coliseum 5 Healer Trinket,,0,1,64,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,0,25,45000,67666,,sim/common/wotlk/other_effects.go:572
 common/wotlk,67669,Elusive Power,,0,1,64,0,0,0,0,0,0,10000,10000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/stat_bonus_procs.go:438
 common/wotlk,67671,Fury,,0,1,64,0,0,0,0,0,0,10000,10000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/stat_bonus_procs.go:450
 common/wotlk,67696,Energized,,0,0,1,0,0,0,0,0,0,10000,10000,8,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/stat_bonus_stacking.go:239 sim/common/wotlk/stat_bonus_stacking.go:257
 common/wotlk,67703,Paragon,,0,0,2,0,0,0,0,0,0,15000,15000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/highest_stat_effects.go:138
 common/wotlk,67708,Paragon,,0,0,2,0,0,0,0,0,0,15000,15000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/highest_stat_effects.go:137
+common/wotlk,67714,Pillar of Flame,Rank 1,11,1,4,0,0,0,133,0,0,0,0,0,0,20,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/common/wotlk/capacitors.go:98 sim/common/wotlk/capacitors.go:133
 common/wotlk,67723,Escalation,,0,0,1,0,0,0,0,0,0,-1,-1,8,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/stat_bonus_stacking.go:416 sim/common/wotlk/stat_bonus_stacking.go:460
 common/wotlk,67727,Hardened,,0,0,1,0,0,0,0,0,0,-1,-1,5,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/stat_bonus_stacking.go:392 sim/common/wotlk/stat_bonus_stacking.go:506
 common/wotlk,67735,Volatility,,0,0,1,0,0,0,0,0,0,-1,-1,8,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/stat_bonus_stacking.go:370 sim/common/wotlk/stat_bonus_stacking.go:438
@@ -808,6 +819,8 @@ common/wotlk,67741,Hardened,,0,0,1,0,0,0,0,0,0,-1,-1,5,0,0,0,yes,no,no,no,no,no,
 common/wotlk,67743,Volatility,,0,0,1,0,0,0,0,0,0,-1,-1,8,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/stat_bonus_stacking.go:381 sim/common/wotlk/stat_bonus_stacking.go:449
 common/wotlk,67746,Risen Fury,,0,0,1,0,0,0,0,0,0,-1,-1,5,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/stat_bonus_stacking.go:358 sim/common/wotlk/stat_bonus_stacking.go:494
 common/wotlk,67750,Energized,,0,0,1,0,0,0,0,0,0,10000,10000,8,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/stat_bonus_stacking.go:248 sim/common/wotlk/stat_bonus_stacking.go:266
+common/wotlk,67760,Pillar of Flame,Rank 1,11,1,4,0,0,0,133,0,0,0,0,0,0,20,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/common/wotlk/capacitors.go:114 sim/common/wotlk/capacitors.go:149
+core,67769,Cobalt Frag Bomb,,0,1,4,500,500,0,0,60000,60000,3000,3000,0,0,25,0,yes,no,no,no,no,no,no,no,no,no,no,,,,,,sim/core/consumes.go:926
 common/wotlk,67772,Paragon,,0,0,2,0,0,0,0,0,0,15000,15000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/highest_stat_effects.go:143
 common/wotlk,67773,Paragon,,0,0,2,0,0,0,0,0,0,15000,15000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/highest_stat_effects.go:142
 warrior,68051,Overpower Ready!,,4,0,1,0,0,0,0,0,0,6000,6000,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,no,0,100,0,,,sim/warrior/overpower.go:30
@@ -825,17 +838,17 @@ encounters,70106,Chilled to the Bone,,0,0,16,0,0,0,0,0,0,8000,8000,99,2000,0,0,n
 encounters,70127,Mystic Buffet,,0,0,64,0,0,0,0,0,0,8000,8000,99,4000,0,0,yes,no,no,no,no,no,no,no,no,no,no,,,,,spell_sindragosa_mystic_buffet,sim/encounters/icc/sindragosa25h_ai.go:171
 deathknight,70654,Blood Armor,,0,0,32,0,0,0,0,0,0,10000,10000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/deathknight/items.go:262
 deathknight,70657,Advantage,Rank 5,15,0,1,0,0,0,0,0,0,15000,15000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/deathknight/items.go:215
-druid,70718,Item - Druid T10 Balance 2P Bonus,,7,0,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,,,,,,sim/druid/talents.go:304
+druid,70718,Item - Druid T10 Balance 2P Bonus,,7,0,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,,,,,,sim/druid/talents.go:319
 hunter,70727,Item - Hunter T10 2P Bonus,,7,0,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,0,5,0,70728,,sim/hunter/wotlk_items.go:140
 hunter,70730,Item - Hunter T10 4P Bonus,,9,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,5,0,71007,,sim/hunter/wotlk_items.go:170
-mage,70748,Item - Mage T10 4P Bonus,,3,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,100,0,70747,,sim/mage/mirror_image.go:18
+mage,70748,Item - Mage T10 4P Bonus,,3,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,100,0,70747,,sim/mage/mirror_image.go:16
 mage,70752,Item - Mage T10 2P Bonus,,3,0,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,,,,,,sim/mage/items.go:113
 paladin,70765,Item - Paladin T10 Retribution 2P Bonus,,10,0,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,0,40,0,70769,,sim/paladin/items.go:101
 priest,70770,Item - Priest T10 Healer 2P Bonus,,6,0,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,0,33,0,,spell_pri_t10_heal_2p_bonus,sim/priest/items.go:157 sim/priest/serverdata_allowlist.go:17
 rogue,70802,Mayhem,Rank 1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,no,no,,,,,,sim/rogue/talents.go:88
 shaman,70831,Maelstrom Power,,0,0,8,0,0,0,0,0,0,10000,10000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/shaman/talents.go:437
 warlock,70840,Devious Minds,,0,0,32,0,0,0,0,0,0,10000,10000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/warlock/items.go:142 sim/warlock/items.go:156
-warrior,70847,Item - Warrior T10 Melee 4P Bonus,,6,0,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,,,,,,sim/warrior/talents.go:258 sim/warrior/talents.go:621
+warrior,70847,Item - Warrior T10 Melee 4P Bonus,,6,0,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,yes,,,,,,sim/warrior/talents.go:258 sim/warrior/talents.go:624
 warrior,70855,Blood Drinker,,0,0,8,0,0,0,0,0,0,10000,10000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/warrior/items.go:243
 deathknight,70890,Scourge Strike,,15,2,32,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,yes,no,no,,,,,,sim/deathknight/scourge_strike.go:29
 druid,71023,Languish,,3,0,8,0,0,0,0,0,0,4000,4000,0,2000,0,0,no,no,no,no,no,no,no,no,yes,no,no,,,,,,sim/druid/items.go:93
@@ -850,26 +863,26 @@ deathknight,71229,Precognition,,0,0,8,0,0,0,0,0,0,15000,15000,5,0,0,0,yes,no,no,
 common/wotlk,71396,Rage of the Fallen,,0,0,1,0,0,0,0,0,0,10000,10000,20,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/stat_bonus_stacking.go:321
 common/wotlk,71401,Icy Rage,,0,1,64,0,0,0,0,0,0,15000,15000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/stat_bonus_procs.go:520
 common/wotlk,71403,Fatal Flaws,,0,0,1,0,0,0,0,0,0,10000,10000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/stat_bonus_procs.go:508
-common/wotlk,71432,Mote of Anger,,0,0,1,0,0,0,0,0,0,-1,-1,8,0,0,0,no,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/capacitors.go:222
-common/wotlk,71433,Manifest Anger,,0,2,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/common/wotlk/capacitors.go:188
-common/wotlk,71434,Manifest Anger,,0,2,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/common/wotlk/capacitors.go:203
-common/wotlk,71484,Strength of the Taunka,,0,0,1,0,0,0,0,0,0,30000,30000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/other_effects.go:145
-common/wotlk,71485,Agility of the Vrykul,,0,0,1,0,0,0,0,0,0,30000,30000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/other_effects.go:146
-common/wotlk,71486,Power of the Taunka,,0,0,1,0,0,0,0,0,0,30000,30000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/other_effects.go:147
-common/wotlk,71491,Aim of the Iron Dwarves,,0,0,1,0,0,0,0,0,0,30000,30000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/other_effects.go:148
-common/wotlk,71492,Speed of the Vrykul,,0,0,1,0,0,0,0,0,0,30000,30000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/other_effects.go:149
+common/wotlk,71432,Mote of Anger,,0,0,1,0,0,0,0,0,0,-1,-1,8,0,0,0,no,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/capacitors.go:217
+common/wotlk,71433,Manifest Anger,,0,2,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/common/wotlk/capacitors.go:183
+common/wotlk,71434,Manifest Anger,,0,2,1,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/common/wotlk/capacitors.go:198
+common/wotlk,71484,Strength of the Taunka,,0,0,1,0,0,0,0,0,0,30000,30000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/other_effects.go:148
+common/wotlk,71485,Agility of the Vrykul,,0,0,1,0,0,0,0,0,0,30000,30000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/other_effects.go:149
+common/wotlk,71486,Power of the Taunka,,0,0,1,0,0,0,0,0,0,30000,30000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/other_effects.go:150
+common/wotlk,71491,Aim of the Iron Dwarves,,0,0,1,0,0,0,0,0,0,30000,30000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/other_effects.go:151
+common/wotlk,71492,Speed of the Vrykul,,0,0,1,0,0,0,0,0,0,30000,30000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/other_effects.go:152
 common/wotlk,71541,Icy Rage,,0,1,64,0,0,0,0,0,0,15000,15000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/stat_bonus_procs.go:532
-common/wotlk,71556,Agility of the Vrykul,,0,0,1,0,0,0,0,0,0,30000,30000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/other_effects.go:157
-common/wotlk,71558,Power of the Taunka,,0,0,1,0,0,0,0,0,0,30000,30000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/other_effects.go:158
-common/wotlk,71559,Aim of the Iron Dwarves,,0,0,1,0,0,0,0,0,0,30000,30000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/other_effects.go:159
-common/wotlk,71560,Speed of the Vrykul,,0,0,1,0,0,0,0,0,0,30000,30000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/other_effects.go:160
-common/wotlk,71561,Strength of the Taunka,,0,0,1,0,0,0,0,0,0,30000,30000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/other_effects.go:156
+common/wotlk,71556,Agility of the Vrykul,,0,0,1,0,0,0,0,0,0,30000,30000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/other_effects.go:160
+common/wotlk,71558,Power of the Taunka,,0,0,1,0,0,0,0,0,0,30000,30000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/other_effects.go:161
+common/wotlk,71559,Aim of the Iron Dwarves,,0,0,1,0,0,0,0,0,0,30000,30000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/other_effects.go:162
+common/wotlk,71560,Speed of the Vrykul,,0,0,1,0,0,0,0,0,0,30000,30000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/other_effects.go:163
+common/wotlk,71561,Strength of the Taunka,,0,0,1,0,0,0,0,0,0,30000,30000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/other_effects.go:159
 common/wotlk,71570,Cultivated Power,,0,0,1,0,0,0,0,0,0,10000,10000,10,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/stat_bonus_stacking.go:275
 common/wotlk,71572,Cultivated Power,,0,0,1,0,0,0,0,0,0,10000,10000,10,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/stat_bonus_stacking.go:286
 common/wotlk,71575,Invigorated,,0,0,1,0,0,0,0,0,0,10000,10000,10,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/stat_bonus_stacking.go:297
 common/wotlk,71577,Invigorated,,0,0,1,0,0,0,0,0,0,10000,10000,10,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/stat_bonus_stacking.go:309
 common/wotlk,71584,Revitalized,,0,0,1,0,0,0,0,0,0,15000,15000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/stat_bonus_procs.go:544
-common/wotlk core,71586,Hardened Skin,,0,1,2,0,0,0,0,0,1000,10000,10000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/other_effects.go:688 sim/core/serverdata_allowlist.go:36
+common/wotlk core,71586,Hardened Skin,,0,1,2,0,0,0,0,0,1000,10000,10000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/other_effects.go:690 sim/core/serverdata_allowlist.go:36
 common/wotlk,71605,Siphoned Power,,0,1,64,0,0,0,0,0,0,20000,20000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/stat_bonus_procs.go:554
 common/wotlk,71636,Siphoned Power,,0,1,64,0,0,0,0,0,0,20000,20000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/stat_bonus_procs.go:565
 mage,71757,Deep Freeze,,3,1,16,0,0,0,0,0,0,0,0,0,0,0,0,no,no,no,no,yes,no,no,no,no,no,no,,,,,,sim/mage/deep_freeze.go:38
@@ -880,12 +893,18 @@ common/wotlk,71843,Summon Val'kyr,,0,0,1,0,0,0,0,0,0,30000,30000,0,0,0,0,yes,no,
 common/wotlk,71844,Summon Val'kyr,,0,0,1,0,0,0,0,0,0,30000,30000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/nibelung.go:93
 common/wotlk,71845,Item - Icecrown 25 Normal Caster Weapon Proc,,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,2,0,71843,,sim/common/wotlk/nibelung.go:97
 common/wotlk,71846,Item - Icecrown 25 Heroic Caster Weapon Proc,,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,2,0,71844,,sim/common/wotlk/nibelung.go:94
-common/wotlk,71870,Blessing of Light,,0,0,2,0,0,0,0,0,0,10000,10000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/other_effects.go:1130
-common/wotlk,71871,Item - Icecrown 25 Normal Tank Weapon Proc,,10,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,37,0,71870,,sim/common/wotlk/other_effects.go:1131
-common/wotlk,71872,Blessing of Light,,0,0,2,0,0,0,0,0,0,10000,10000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/other_effects.go:1139
-common/wotlk,71873,Item - Icecrown 25 Heroic Tank Weapon Proc,,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,37,0,71872,,sim/common/wotlk/other_effects.go:1140
-common/wotlk,71875,Necrotic Touch,,0,0,32,0,0,0,0,0,0,10000,10000,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,no,0,100,0,,spell_item_necrotic_touch,sim/common/wotlk/other_effects.go:987
-common/wotlk,71877,Necrotic Touch,,0,0,32,0,0,0,0,0,0,10000,10000,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,no,0,100,0,,spell_item_necrotic_touch,sim/common/wotlk/other_effects.go:991
+common/wotlk,71870,Blessing of Light,,0,0,2,0,0,0,0,0,0,10000,10000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/other_effects.go:1132
+common/wotlk,71871,Item - Icecrown 25 Normal Tank Weapon Proc,,10,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,37,0,71870,,sim/common/wotlk/other_effects.go:1133
+common/wotlk,71872,Blessing of Light,,0,0,2,0,0,0,0,0,0,10000,10000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/other_effects.go:1141
+common/wotlk,71873,Item - Icecrown 25 Heroic Tank Weapon Proc,,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,yes,0,37,0,71872,,sim/common/wotlk/other_effects.go:1142
+common/wotlk,71875,Necrotic Touch,,0,0,32,0,0,0,0,0,0,10000,10000,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,no,0,100,0,,spell_item_necrotic_touch,sim/common/wotlk/other_effects.go:989
+common/wotlk,71877,Necrotic Touch,,0,0,32,0,0,0,0,0,0,10000,10000,0,0,0,0,no,no,no,no,no,no,no,no,no,yes,no,0,100,0,,spell_item_necrotic_touch,sim/common/wotlk/other_effects.go:993
+common/wotlk,71881,Invigoration,,7,1,8,0,0,0,0,0,0,10000,10000,0,2000,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/other_effects.go:615
+common/wotlk,71882,Invigoration,,7,1,8,0,0,0,0,0,0,10000,10000,0,2000,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/other_effects.go:617
+common/wotlk,71883,Invigoration,,7,1,8,0,0,0,0,0,0,10000,10000,0,2000,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/other_effects.go:616
+common/wotlk,71886,Invigoration,,7,1,8,0,0,0,0,0,0,12000,12000,0,2000,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/other_effects.go:616
+common/wotlk,71887,Invigoration,,7,1,8,0,0,0,0,0,0,12000,12000,0,2000,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/other_effects.go:617
+common/wotlk,71888,Invigoration,,7,1,8,0,0,0,0,0,0,12000,12000,0,2000,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/other_effects.go:615
 common/wotlk,71904,Chaos Bane,,0,0,32,0,0,0,0,0,0,0,0,0,0,10,0,no,no,no,no,no,no,no,no,no,no,no,,,,,,sim/common/wotlk/shadowmourne.go:30
 common/wotlk,71905,Soul Fragment,,0,0,1,0,0,0,0,0,0,60000,60000,10,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,spell_item_shadowmourne_soul_fragment,sim/common/wotlk/shadowmourne.go:49
 common/wotlk,72412,Frostforged Champion,,0,0,1,0,0,0,0,0,0,10000,10000,0,0,0,0,yes,no,no,no,no,no,no,no,no,yes,no,,,,,,sim/common/wotlk/stat_bonus_procs.go:603 sim/common/wotlk/stat_bonus_procs.go:615 sim/common/wotlk/stat_bonus_procs.go:651 +1 more

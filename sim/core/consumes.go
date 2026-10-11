@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/wowsims/wotlk/sim/core/proto"
+	"github.com/wowsims/wotlk/sim/core/serverdata"
 	"github.com/wowsims/wotlk/sim/core/stats"
 )
 
@@ -917,10 +918,12 @@ func registerConjuredCD(agent Agent, consumes *proto.Consumes) {
 	}
 }
 
-var ThermalSapperActionID = ActionID{ItemID: 42641}
+// The explosives go by the spell their item casts on use (item_template.spellid_1). The decoy's does nothing
+// here but take the shared cooldown, so it keeps its item.
+var ThermalSapperActionID = ActionID{SpellID: 56488}
 var ExplosiveDecoyActionID = ActionID{ItemID: 40536}
-var SaroniteBombActionID = ActionID{ItemID: 41119}
-var CobaltFragBombActionID = ActionID{ItemID: 40771}
+var SaroniteBombActionID = ActionID{SpellID: 56350}
+var CobaltFragBombActionID = ActionID{SpellID: 67769}
 
 func registerExplosivesCD(agent Agent, consumes *proto.Consumes) {
 	character := agent.GetCharacter()
@@ -971,14 +974,16 @@ func registerExplosivesCD(agent Agent, consumes *proto.Consumes) {
 	}
 }
 
-// Creates a spell object for the common explosive case.
-func (character *Character) newBasicExplosiveSpellConfig(sharedTimer *Timer, actionID ActionID, school SpellSchool, minDamage float64, maxDamage float64, cooldown Cooldown, _ float64, _ float64) SpellConfig {
+// Creates a spell object for the common explosive case. missileSpeed is how fast a thrown one flies, in yards
+// a second.
+func (character *Character) newBasicExplosiveSpellConfig(sharedTimer *Timer, actionID ActionID, school SpellSchool, minDamage float64, maxDamage float64, missileSpeed float64, cooldown Cooldown) SpellConfig {
 	dealSelfDamage := actionID.SameAction(ThermalSapperActionID)
 
 	return SpellConfig{
-		ActionID:    actionID,
-		SpellSchool: school,
-		ProcMask:    ProcMaskEmpty,
+		ActionID:     actionID,
+		SpellSchool:  school,
+		ProcMask:     ProcMaskEmpty,
+		MissileSpeed: missileSpeed,
 
 		Cast: CastConfig{
 			CD: cooldown,
@@ -988,43 +993,56 @@ func (character *Character) newBasicExplosiveSpellConfig(sharedTimer *Timer, act
 			},
 		},
 
-		// Explosives always have 1% resist chance, so just give them hit cap.
-		BonusHitRating:   100 * SpellHitRatingPerHitChance,
 		DamageMultiplier: 1,
-		CritMultiplier:   2,
+		CritMultiplier:   character.DefaultSpellCritMultiplier(),
 		ThreatMultiplier: 1,
 
+		Direct: SpellEffect{Effect: 0, Min: minDamage, Max: maxDamage},
+
 		ApplyEffects: func(sim *Simulation, target *Unit, spell *Spell) {
+			// A spell without a damage class always lands and never crits (WorldObject::SpellHitResult,
+			// Unit::SpellDoneCritChance): Saronite Bomb. The magic ones roll like any spell.
+			outcome := spell.OutcomeMagicHitAndCrit
+			if ss := spell.ServerSpell(); ss != nil && ss.DmgClass == serverdata.DmgClassNone {
+				outcome = spell.OutcomeAlwaysHit
+			}
+
 			// sapper hits the caster too, so it counts one more
 			capMultiplier := sim.Encounter.AOECapMultiplier()
 			if dealSelfDamage {
 				capMultiplier = AOECapMultiplierFor(len(sim.Encounter.Targets) + 1)
 			}
 			for _, aoeTarget := range sim.Encounter.TargetUnits {
-				baseDamage := sim.Roll(minDamage, maxDamage) * capMultiplier
-				spell.CalcAndDealDamage(sim, aoeTarget, baseDamage, spell.OutcomeMagicHitAndCrit)
+				baseDamage := spell.Direct.Roll(sim) * capMultiplier
+				if spell.MissileSpeed == 0 {
+					spell.CalcAndDealDamage(sim, aoeTarget, baseDamage, outcome)
+				} else {
+					spell.DealDamageAfterTravel(sim, spell.CalcDamage(sim, aoeTarget, baseDamage, outcome))
+				}
 			}
 
 			if dealSelfDamage {
-				baseDamage := sim.Roll(minDamage, maxDamage)
-				spell.CalcAndDealDamage(sim, &character.Unit, baseDamage, spell.OutcomeMagicHitAndCrit)
+				// a spell never misses its own caster
+				spell.CalcAndDealDamage(sim, &character.Unit, spell.Direct.Roll(sim), spell.OutcomeMagicCrit)
 			}
 		},
 	}
 }
 func (character *Character) newThermalSapperSpell(sharedTimer *Timer) *Spell {
-	return character.GetOrRegisterSpell(character.newBasicExplosiveSpellConfig(sharedTimer, ThermalSapperActionID, SpellSchoolFire, 2188, 2812, Cooldown{Timer: character.NewTimer(), Duration: time.Minute * 5}, 2188, 2812))
+	return character.GetOrRegisterSpell(character.newBasicExplosiveSpellConfig(sharedTimer, ThermalSapperActionID, SpellSchoolFire, 2188, 2812, 0, Cooldown{Timer: character.NewTimer(), Duration: time.Minute * 5}))
 }
 func (character *Character) newExplosiveDecoySpell(sharedTimer *Timer) *Spell {
-	config := character.newBasicExplosiveSpellConfig(sharedTimer, ExplosiveDecoyActionID, SpellSchoolPhysical, 1440, 2160, Cooldown{Timer: character.NewTimer(), Duration: time.Minute * 2}, 0, 0)
+	config := character.newBasicExplosiveSpellConfig(sharedTimer, ExplosiveDecoyActionID, SpellSchoolPhysical, 0, 0, 0, Cooldown{Timer: character.NewTimer(), Duration: time.Minute * 2})
 	// the decoy (creature 29134) casts its blast (53273) only from its SmartAI's death event, and a boss already
 	// fighting the raid never attacks it, so all it does here is take the explosives' shared cooldown
 	config.ApplyEffects = func(*Simulation, *Unit, *Spell) {}
 	return character.GetOrRegisterSpell(config)
 }
+
+// The bombs' own cooldown is the minute their category has too.
 func (character *Character) newSaroniteBombSpell(sharedTimer *Timer) *Spell {
-	return character.GetOrRegisterSpell(character.newBasicExplosiveSpellConfig(sharedTimer, SaroniteBombActionID, SpellSchoolFire, 1150, 1500, Cooldown{}, 0, 0))
+	return character.GetOrRegisterSpell(character.newBasicExplosiveSpellConfig(sharedTimer, SaroniteBombActionID, SpellSchoolFire, 1150, 1500, 14, Cooldown{Timer: character.NewTimer(), Duration: time.Minute}))
 }
 func (character *Character) newCobaltFragBombSpell(sharedTimer *Timer) *Spell {
-	return character.GetOrRegisterSpell(character.newBasicExplosiveSpellConfig(sharedTimer, CobaltFragBombActionID, SpellSchoolFire, 750, 1000, Cooldown{}, 0, 0))
+	return character.GetOrRegisterSpell(character.newBasicExplosiveSpellConfig(sharedTimer, CobaltFragBombActionID, SpellSchoolFire, 750, 1000, 25, Cooldown{Timer: character.NewTimer(), Duration: time.Minute}))
 }

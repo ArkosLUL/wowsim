@@ -668,7 +668,8 @@ func (sim *Simulation) Step() bool {
 			if at > sim.endOfCombatDuration || sim.Encounter.DamageTaken > sim.endOfCombatDamage {
 				return true
 			}
-			sim.advance(at)
+			// an aura that ran out while nothing updated its unit (a pet that was away) is overdue
+			sim.advance(max(at, sim.CurrentTime))
 			return false
 		}
 	}

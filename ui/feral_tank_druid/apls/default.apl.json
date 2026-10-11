@@ -4,7 +4,7 @@
         {"action":{"castSpell":{"spellId":{"otherId":"OtherActionPotion"}}},"doAtValue":{"const":{"val":"-1s"}}}
       ],
       "priorityList": [
-        {"action":{"schedule":{"schedule":"0s","innerAction":{"castSpell":{"spellId":{"itemId":42641}}}}}},
+        {"action":{"schedule":{"schedule":"0s","innerAction":{"castSpell":{"spellId":{"spellId":56488}}}}}},
         {"action":{"autocastOtherCooldowns":{}}},
         {"action":{"condition":{"and":{"vals":[{"cmp":{"op":"OpEq","lhs":{"auraNumStacks":{"sourceUnit":{"type":"CurrentTarget"},"auraId":{"spellId":48568}}},"rhs":{"const":{"val":"5"}}}},{"cmp":{"op":"OpLe","lhs":{"dotRemainingTime":{"spellId":{"spellId":48568}}},"rhs":{"const":{"val":"1.5s"}}}}]}},"castSpell":{"spellId":{"spellId":48568}}}},
         {"action":{"condition":{"auraShouldRefresh":{"auraId":{"spellId":48560},"maxOverlap":{"const":{"val":"1.5s"}}}},"castSpell":{"spellId":{"spellId":48560}}}},

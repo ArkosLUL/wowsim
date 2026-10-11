@@ -1,7 +1,5 @@
 kind,spell_id,sim_refs
-not a constant,,sim/common/wotlk/capacitors.go:46
-not a constant,,sim/common/wotlk/capacitors.go:63
-not a constant,,sim/common/wotlk/damage_procs.go:25
+not a constant,,sim/common/wotlk/capacitors.go:53
 not a constant,,sim/common/wotlk/stat_bonus_procs.go:46
 not a constant,,sim/common/wotlk/stat_bonus_procs.go:63
 not a constant,,sim/common/wotlk/stat_bonus_stacking.go:33
@@ -9,11 +7,12 @@ not a constant,,sim/common/wotlk/stat_bonus_stacking.go:46
 not a constant,,sim/common/wotlk/stat_bonus_stacking.go:86
 not a constant,,sim/common/wotlk/stat_bonus_stacking.go:119
 not a constant,,sim/core/apl.go:159
-not a constant,,sim/core/apl_helpers.go:115
-not a constant,,sim/core/apl_helpers.go:125
-not a constant,,sim/core/apl_helpers.go:138
+not a constant,,sim/core/apl_helpers.go:123
+not a constant,,sim/core/apl_helpers.go:126
+not a constant,,sim/core/apl_helpers.go:136
+not a constant,,sim/core/apl_helpers.go:149
 not a constant,,sim/core/cast.go:199
-not a constant,,sim/core/damage_taken.go:110
+not a constant,,sim/core/damage_taken.go:135
 not a constant,,sim/core/spell_effect.go:232
 not a constant,,sim/core/spell_effect.go:306
 not a constant,,sim/core/spell_effect.go:345
@@ -21,6 +20,7 @@ not a constant,,sim/core/spell_effect.go:367
 not a constant,,sim/core/threat.go:75
 not a constant,,sim/core/threat.go:154
 not a constant,,sim/deathknight/items.go:809
+not a constant,,sim/mage/talents.go:575
 not a constant,,sim/optimizer/api.go:964
 not a constant,,sim/optimizer/search.go:537
 not a constant,,sim/optimizer/search.go:1010

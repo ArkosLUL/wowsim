@@ -110,8 +110,19 @@ var legacyAPLSpellIDs = map[int32]int32{
 	50689: 48266, // Blood Presence
 }
 
+// Items a saved rotation names whose use now registers as the spell the item casts.
+var legacyAPLItemIDs = map[int32]int32{
+	40771: 67769, // Cobalt Frag Bomb
+	41119: 56350, // Saronite Bomb
+	41121: 55039, // Gnomish Lightning Generator
+	42641: 56488, // Global Thermal Sapper Charge
+}
+
 func currentAPLActionID(id *proto.ActionID) *proto.ActionID {
 	if current, ok := legacyAPLSpellIDs[id.GetSpellId()]; ok {
+		return &proto.ActionID{RawId: &proto.ActionID_SpellId{SpellId: current}, Tag: id.GetTag()}
+	}
+	if current, ok := legacyAPLItemIDs[id.GetItemId()]; ok {
 		return &proto.ActionID{RawId: &proto.ActionID_SpellId{SpellId: current}, Tag: id.GetTag()}
 	}
 	return id

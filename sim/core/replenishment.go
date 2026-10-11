@@ -39,8 +39,6 @@ type replenishment struct {
 	tickDue time.Duration
 	// a pet that isn't out: the timer keeps its place but queues nothing
 	paused bool
-	// when the running aura runs out: the sim only gets to an expiry with whatever happens next
-	endsAt time.Duration
 }
 
 // Creates the actual replenishment aura for a unit.
@@ -91,8 +89,9 @@ func (r *replenishment) apply(sim *Simulation, caster *Unit) bool {
 		return false
 	}
 	// On a grid the cast lands ahead of the unit's update, so a tick due on that update is lost to the restart.
-	// With exact timing that tick's update was the one before, and it goes first.
-	r.stopTicks(sim, !r.onUpdateGrid(sim))
+	// With exact timing that tick's update was the one before, and it goes first. So it does when the cast
+	// comes out of an update that runs after the unit's.
+	r.stopTicks(sim, !r.onUpdateGrid(sim) || r.updatedAheadOf(sim.updating))
 
 	// the same caster's refreshes the aura, anyone else's replaces it
 	if !r.aura.IsActive() || r.caster != caster {
@@ -113,6 +112,16 @@ func (r *replenishment) apply(sim *Simulation, caster *Unit) bool {
 	return true
 }
 
+// updatedAheadOf is whether the unit's auras have ticked on this world tick by the time caster's update
+// casts: a player's have when a creature or pet casts (Hunting Party off Explosive Shot's tick on the
+// target), and the unit's own when its swing does.
+func (r *replenishment) updatedAheadOf(caster *Unit) bool {
+	if caster == nil {
+		return false
+	}
+	return caster == r.unit || (caster.Type != PlayerUnit && r.aura.onWorldTicks())
+}
+
 // scriptedAmount is spell_gen_replenishment_aura's CalculateAmount: a float multiply cut to int32.
 func (r *replenishment) scriptedAmount() float64 {
 	return float64(int32(float32(math.Floor(r.unit.MaxMana())) * 0.002))
@@ -125,7 +134,6 @@ func (r *replenishment) startTicks(sim *Simulation) {
 		return
 	}
 	r.tickDue = r.aura.countdownStart(sim) + replenishmentTickPeriod
-	r.endsAt = r.aura.ExpiresAt()
 	r.queueTick(sim)
 }
 
@@ -188,7 +196,7 @@ func (r *replenishment) stopTicks(sim *Simulation, dueTickLands bool) {
 	}
 	r.tickAction = nil
 	pa.Cancel(sim)
-	if dueTickLands && pa.NextActionAt == sim.CurrentTime && pa.NextActionAt <= r.endsAt {
+	if dueTickLands && pa.NextActionAt == sim.CurrentTime {
 		r.tick(sim)
 	}
 }

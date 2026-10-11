@@ -2525,6 +2525,34 @@ Cases over 1.5% the review's list left out, none an Average case, not traced: Te
 NoBuffs-LongMultiTarget −1.8%, TestSV aoe NoBuffs-ShortSingleTarget tps +2.0%, TestFeralTank
 SwitchInFrontOfTarget dtps −4.1% (40.8 → 39.2).
 
+Cross-review (Z7):
+- `Simulation.Step` (fixed): an aura overdue on a unit nothing updated (a pet summoned again with one put on while
+  it was away) took the clock back to its expiry. It goes at the current time (`TestOverdueAuraLeavesTheClockAlone`).
+- Replenishment's refresh (fixed): it dropped the tick due on that world tick even when the cast came out of a
+  creature's update or the unit's own swing, after the unit's auras ticked (Hunting Party off Explosive Shot's tick):
+  `replenishment.updatedAheadOf`; `endsAt` went. TestSV tps +0.004% (145 rows, −0.12 to +0.30%).
+- `sim/druid/feral/apl_values.go` reads `RefreshedNow`: on a world tick that doesn't divide 15 s (7 ms) a swing's
+  proc never had its duration left (`TestSwingProcDelaysTheNextMoveAtAnyWorldTick`). Golden: the Gnomish Lightning
+  Generator row of TestFeral (+0.06%) and TestFeralApl (+0.13%), whose hit's proc reads as fresh too.
+- The five untraced cases, `18a41a330^1` against `18a41a330` over 5000 batches of the golden's 20 iterations
+  (`.wave-loop/z7-xreview-ab`), none a bug:
+  - Reshuffles: Elemental Undead Slayer's −0.02% (se 0.02), Balance NoBuffs-LongMultiTarget +0.14% (se 0.06),
+    FeralTank SwitchInFrontOfTarget dtps −0.04% (se 0.14).
+  - Arms Wrynn's Battlegear −0.60% (se 0.01): the Average's Rend tick and Overpower loss, larger where the lost
+    tenth tick procced Taste for Blood 0.64 times (default gear 0.28). The rest is reshuffle.
+  - SV aoe NoBuffs-ShortSingleTarget tps +1.61% (se 0.02): one more Auto Shot a fight (2 → 3), not a Volley. The
+    channel's aura ends on time, so the ranged timer runs the 50 ms clip delay between two Volleys, here with
+    0.19 ms to spare.
+  - TestFeralTank's Average dtps is +0.01% (se 0.13), not the +0.11% above.
+- A cast on its aura's last tick (confirmed, not fixed): `Unit::Update` runs `m_Events` (a hardcast's landing, a
+  missile's hit) ahead of `_UpdateSpells`, which fires Auto Shot, ticks the auras, then removes the expired ones;
+  melee follows in `Player::Update`. The sim expires first. A tie needs the landing on the aura's last 10 ms world
+  tick: about 10 ms over the cast time of each expiry's last cast. The fix reorders landings, Auto Shot and held
+  swings around the tracker pass (`Simulation.advance`, `releaseCastHold`) and reshuffles every caster's goldens.
+- Meta gem swap (not fixed): Combustion and Hodir's Storm Power multiply a crit multiplier in place, so a swap
+  meanwhile misses the spell; Prey on the Weak's and Predatory Instincts' values are the starting gem's. No preset
+  swaps a meta gem's condition.
+
 ### EC-PET-FIX3 (Z7; changes goldens; stages: code, live)
 
 - Guardian AIs: `npc_pet_shaman_fire_elemental` paces Fire Nova (5–20 s in, then 8–15 s) and Fire Blast (5–20 s,
@@ -2669,6 +2697,13 @@ Follow-ups:
   average, 2057 after a swing or Blast; core's `resetSwingTimers` gives the full 2 s (about 0.3 swings a life).
 - Mirror Images summoned at exactly 0 s count as out before the fight (`engagedAtSummon`).
 - Whether and when an elemental summoned with nothing selected joins the fight is unmeasured.
+
+Cross-review (Z7): the pets' timers, the Fire Elemental's and Mirror Images' event clocks and Improved Demonic
+Tactics' tick are queued actions on their units' updates, not auras, so EC-CORE-FIX4's expiry order left them as
+they were, and no check tells a fresh aura by its time left. Replenishment's refresh is in EC-CORE-FIX4's
+cross-review. `e2e/run.sh` passes `SIMVAL_PETFIX_LIVES`; `spells_audit.csv` is regenerated, 13339 gone. Follow-ups:
+Improved Demonic Tactics' tick follows an expiry on its world tick (the server ticks first); `Pet.Disable` expires
+the raid's Replenishment, and a second summon doesn't get it back.
 
 ### EC-CLASS-FIX3 (Z7; changes goldens; stages: melee, casters, live)
 
@@ -2849,6 +2884,40 @@ would retire its drop; a hit phase of its own for other missile spells in a cast
 of the Gods sets by the server's scripts (69739 casts only the heal, 69755 only Searing Flames 69729; the sim
 gives both sets both).
 
+Cross-review (Z7):
+- Explosives (fixed): Saronite Bomb, Cobalt Frag Bomb and the sapper go by 56350, 67769 and 56488
+  (`item_template.spellid_1`), with declared ranges, the bombs' flight (14 and 25 yd/s) and their own 60 s. They had
+  hit cap and 2× crits; by the server's class rules the two magic ones miss and crit as spells, Saronite Bomb (no
+  damage class) always lands and never crits (`WorldObject::SpellHitResult`, `Unit::SpellDoneCritChance`), and the
+  sapper never misses its caster. `legacyAPLItemIDs` keeps a rotation naming the item, the generator's 41121 too;
+  the four preset APLs name the spells. Cobalt's 0.5 s cast is an allowance. Goldens: TestFeralTank Average-Default
+  dps −0.34%, tps −0.36%, dtps −0.78% (133 rows, dps −2.7 to +1.8%, dtps to −10.0%; Saronite 7786 → 6163 and the
+  sapper 5494 → 4800 a fight); TestRetribution dps −0.04% (175 rows, −0.23 to +0.05%), dtps −11.6% (the sapper's
+  hit on the paladin crits for 1.5×).
+- Frost Shock (fixed): an 8 s `SnareAuraTag` aura where the target takes snares. Hamstring and Slow have no sim
+  spell.
+- `Unit.HealingTakenPctMultiplier` replaces the death knight's division by 1.30.
+- Chimera Shot - Serpent agrees with `spell_hun_chimera_shot` and `SpellDamageBonusTaken` step by step, but for the
+  flat taken part (Gift of Arthas), which the sim leaves out.
+- Mechanics agree: `FlagBleed` (Savage Rend, the pet's Rake) and the abilities' `Mechanic` (Pin and Venom Web Spray
+  7, Ravage 12, Tendon Rip 11, Snatch 3) match the dump, and -361 has no bleed bit.
+- An unset `mechanic_immune_mask` is right on every preset: Hodir, Algalon, Anub'arak, Gormok 25H, Sindragosa and
+  the Lich King carry -361 (`CreatureImmunitiesId`, difficulty entries included), as do 144 level 83 bosses, the
+  generic boss's stand-in. Gormok's 10 and 25 normal carry -355, without disarm.
+- Ignite (cause found, not fixed): the sim agrees with `spell_mage_ignite`, `CastDelayedSpellWithPeriodicAmount` and
+  `AuraEffect::Update`. An application due 2.0 or 4.0 s after the last races the old Ignite's tick. On the sim's
+  exact 100 ms map update the tick is always first (1.9 to 2.0 s on); on the live 102.7 ms it comes 1.95 to 2.05 s
+  on and the application wins about half. The live fight is phase-locked (4 s is ten 400 ms windows, Pyroblast's dot
+  ticks every 1.96 s), so its 1.19 is one draw of what the sim's seeds spread from 1.00 to 2.57. On the committed
+  MageFire fight a 102.7 ms update (build overlay) takes Ignite from 23.5 to 22.8 ticks for the log's 22, −1.3% of
+  its damage. It needs the real update period in the server settings.
+- Module: `NO_AMOUNT_SCRIPTS` (was `TICK_PERIOD_SCRIPTS`) lists `spell_warl_curse_of_doom`, which only acts in
+  `AfterEffectRemove`. Syntax-checked, not built: after a rebuild, rerun WarlockAffliction's spell-mod sweep and
+  drop the fixture README's note.
+
+Follow-ups: Death Strike's 45470 and Death Pact's 48743 have no damage class either; the class-none and own-caster
+hit rules belong in core's outcomes; `db.json` has no icon rows for the three explosives' spells.
+
 ### EC-TOOLS (Z7; golden-neutral)
 
 - The rotation debug harness from Z5's retune (`G:\DevStuff\GitHub\.wave-loop\ec-class-fix2-apl-tmp\apldbg`:
@@ -2915,6 +2984,12 @@ the other tests' dummies still stand at the entrance (`newBot`, `spawnInFront`),
 no line of sight from 4 yards south (the threat and Parfu10 notes on Undead and gnomes) and `strikes_test.go` moves
 past the dummy; `testing.md`'s e2e gotchas and the module README's `TestSimvalEcClass2Fight` remarks on line of
 sight describe that spot; critters within 30 yards of the fight floor can take a star or an area spell.
+
+Cross-review (Z7): the four suites' configs are `sim/deathknight/dps/suites.go`'s `BloodSuite(root)` and its three
+siblings, which the tests and `tools/apldbg/presets.go` share. The copies and `TestPresetsRunTheirSuitesRows` went
+(`TestEveryPresetRunsItsDefaultRow` reads no golden), `base.sh` keeps `suites.go` in a base build, and
+`tools/simval/goldchar.go` follows a config a package function returns. No golden moves. The module README's
+`TestSimvalEcClass2Fight` paragraph describes the outer floor.
 
 ## Orchestrator onboarding (wave S start)
 

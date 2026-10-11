@@ -35,6 +35,12 @@ func init() {
 		ServerConflictAllowance{Spell: ActionID{SpellID: 56186}, Field: ServerCD, Sim: 300000, Server: 0, KeepSim: true, Why: itemCooldown},    // Sapphire Owl
 		ServerConflictAllowance{Spell: ActionID{SpellID: 71586}, Field: ServerCD, Sim: 120000, Server: 1000, KeepSim: true, Why: itemCooldown}, // Hardened Skin
 
+		// Global Thermal Sapper Charge
+		ServerConflictAllowance{Spell: ThermalSapperActionID, Field: ServerCD, Sim: 300000, Server: 0, KeepSim: true, Why: itemCooldown},
+		ServerConflictAllowance{Spell: ThermalSapperActionID, Field: ServerSharedCD, Sim: 60000, Server: 0, KeepSim: true, Why: itemCooldown},
+		ServerConflictAllowance{Spell: CobaltFragBombActionID, Field: ServerCastTime, Sim: 0, Server: 500, KeepSim: true,
+			Why: "the sim throws its explosives between casts, with no cast bar of their own"},
+
 		ServerConflictAllowance{Spell: ActionID{SpellID: 41989}, Field: ServerSchool, Sim: 8, Server: 64, KeepSim: true,
 			Why: "the sim deals the set's Fire proc under the set bonus aura, the server as its own spell 41990"}, // The Fists of Fury
 

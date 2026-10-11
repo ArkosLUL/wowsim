@@ -314,6 +314,41 @@ func TestReplenishmentRefreshOnAWorldTickDropsTheTickDueThen(t *testing.T) {
 	}
 }
 
+// A cast out of a creature's update (a dot's tick on the target) comes after every player's update of that
+// world tick, so the tick due on it has landed by the time the refresh restarts the timer.
+func TestReplenishmentRefreshFromACreaturesUpdateKeepsTheTickDueThen(t *testing.T) {
+	sim, a, src := newReplenishmentTickTestSim(t, 100, 10, 20000, false, nil)
+	sim.serverTickPhase, sim.worldTickPhase = 0, 0
+	r := a.replenishment
+	target := sim.Encounter.TargetUnits[0]
+	replenishmentProc(sim, src, ms(2010))
+	// the first tick is due at 3 s, a map update. Queued after it, as in the test above
+	at(sim, ms(2500), func(sim *Simulation) {
+		at(sim, ms(3000), func(sim *Simulation) {
+			sim.updating = target
+			sim.Raid.ProcReplenishment(sim, src)
+			sim.updating = nil
+		})
+	})
+
+	for _, c := range []struct {
+		until time.Duration
+		ticks int32
+	}{
+		{ms(2995), 0},
+		{ms(3005), 1},
+		{ms(3995), 1},
+		{ms(4005), 2},
+		{ms(18005), 16},
+		{ms(19000), 16},
+	} {
+		runUntil(sim, c.until)
+		if r.metrics.Events != c.ticks {
+			t.Errorf("by %v: %d ticks, want %d", c.until, r.metrics.Events, c.ticks)
+		}
+	}
+}
+
 // newReplenishmentPetsTestSim gives the player two mana pets under the raid's buff, 10 mana a tick each: one out
 // all fight and one that waits for its summon.
 func newReplenishmentPetsTestSim(t *testing.T, mapUpdateMs, worldTickMs int32) (sim *Simulation, out, summoned *timingTestPet) {

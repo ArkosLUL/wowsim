@@ -39,7 +39,6 @@ type aoeSpell struct {
 	maxTargets int32               // most targets an area hit picks, 0 for all of them
 	capped     bool                // multiplied by Encounter.AOECapMultiplier
 	mods       map[int32]aoeValues // the spell with one talent, glyph or set bonus on, by its spell id
-	item       int32               // the item the sim names it by, for an on-use spell
 }
 
 // aoeValues are a spell's chain targets, per-jump multiplier and max targets. In aoeSpell.mods a zero
@@ -142,9 +141,9 @@ var aoeSpells = map[aoeKey]aoeSpell{
 	{69649, byNPC}:    {},                          // Frost Breath
 	{71904, byPlayer}: {capped: true},              // Chaos Bane
 	{73061, byNPC}:    {},                          // Frost Breath
-	{56350, byPlayer}: {capped: true, item: 41119}, // Saronite Bomb
-	{56488, byPlayer}: {capped: true, item: 42641}, // Global Thermal Sapper Charge
-	{67769, byPlayer}: {capped: true, item: 40771}, // Cobalt Frag Bomb
+	{56350, byPlayer}: {capped: true},              // Saronite Bomb
+	{56488, byPlayer}: {capped: true},              // Global Thermal Sapper Charge
+	{67769, byPlayer}: {capped: true},              // Cobalt Frag Bomb
 }
 
 // aoeDiff is one value the sim and the server disagree on: field is "listed", "mod", "chain",
@@ -390,10 +389,7 @@ func TestSimAOESpells(t *testing.T) {
 			continue
 		}
 		label := aoeLabel(s, key.caster)
-		switch {
-		case entry.item != 0 && len(lits.Items[entry.item]) == 0:
-			t.Errorf("%s: the sim no longer names item %d, so the entry is stale", label, entry.item)
-		case entry.item == 0 && len(lits.Spells[key.spell]) == 0:
+		if len(lits.Spells[key.spell]) == 0 {
 			t.Errorf("%s: the sim no longer names it, so the entry is stale", label)
 		}
 

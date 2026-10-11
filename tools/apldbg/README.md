@@ -43,12 +43,12 @@ tools/acore/dock.sh exec tmp/apldbg/new -spec frostuh -rows
 ```
 
 `base` overlays that commit's copy of every non-test Go file under the paths that differs from the working tree
-(`go build -overlay`); `new` is the working tree. A commit whose protos differ won't build: the generated code isn't
-tracked.
+(`go build -overlay`); `new` is the working tree. Both keep the working tree's presets (`suites.go` below), so
+they run one character. A commit whose protos differ won't build: the generated code isn't tracked.
 
 ## Presets
 
-A suite's config lives in its `_test.go`, which nothing can import, so `presets.go` copies it.
-`TestPresetsRunTheirSuitesRows` holds each copy to its `.results`, so it also fails while that suite's golden
-is unpromoted. When it fails alone, copy the suite's gear, talents, glyphs, options, races and rotations again. A
-new spec is a new `presets` entry naming its golden.
+A preset is its suite's config: `sim/deathknight/dps/suites.go` builds it for the suite's test and for `presets.go`
+alike, reading gear sets and rotations under the checkout root it's given. `TestEveryPresetRunsItsDefaultRow` runs
+each from `tools/apldbg`, so it fails on a config that reads a path outside that root. A new spec is a new
+`presets` entry naming its config function, and a line in `base.sh` for the file holding it.

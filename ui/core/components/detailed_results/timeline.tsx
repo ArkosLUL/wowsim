@@ -1336,10 +1336,10 @@ const idToCategoryMap: Record<number, number> = {
 	[53307]: SPELL_ACTION_CATEGORY + 0.931, // Thorns
 	[54043]: SPELL_ACTION_CATEGORY + 0.932, // Retribution Aura
 	[54758]: SPELL_ACTION_CATEGORY + 0.933, // Hyperspeed Acceleration
-	[42641]: SPELL_ACTION_CATEGORY + 0.941, // Sapper
+	[56488]: SPELL_ACTION_CATEGORY + 0.941, // Sapper
 	[40536]: SPELL_ACTION_CATEGORY + 0.942, // Explosive Decoy
-	[41119]: SPELL_ACTION_CATEGORY + 0.943, // Saronite Bomb
-	[40771]: SPELL_ACTION_CATEGORY + 0.944, // Cobalt Frag Bomb
+	[56350]: SPELL_ACTION_CATEGORY + 0.943, // Saronite Bomb
+	[67769]: SPELL_ACTION_CATEGORY + 0.944, // Cobalt Frag Bomb
 };
 
 const idsToGroupForRotation: Array<number> = [
