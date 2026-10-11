@@ -26,8 +26,6 @@ func (rogue *Rogue) ruptureAddsTicks() bool {
 
 func (rogue *Rogue) registerRupture() {
 	glyphTicks := core.TernaryInt32(rogue.HasMajorGlyph(proto.RogueMajorGlyph_GlyphOfRupture), 2, 0)
-	// core's Glyph of Backstab, without mod-spell-tweaks' fix: it only adds to the time left
-	stockGlyphOfBackstab := rogue.HasMajorGlyph(proto.RogueMajorGlyph_GlyphOfBackstab) && !rogue.Server().SpellTweaks.GlyphOfBackstabTicks
 	rogue.ruptureBackstabExtension = make([]time.Duration, len(rogue.Env.AllUnits))
 
 	rogue.Rupture = rogue.RegisterSpell(core.SpellConfig{
@@ -91,11 +89,6 @@ func (rogue *Rogue) registerRupture() {
 				dot.SnapshotCritChance = dot.Spell.PhysicalCritChance(attackTable)
 			},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
-				// a dot stops at max duration / amplitude ticks (AuraEffect::GetTotalTicks), so the time
-				// core's glyph adds deals nothing
-				if stockGlyphOfBackstab && dot.TickCount > dot.TotalTicks() {
-					return
-				}
 				dot.CalcAndDealPeriodicSnapshotDamage(sim, target, dot.OutcomeSnapshotCrit)
 			},
 		},
@@ -136,11 +129,16 @@ func (rogue *Rogue) extendRupture(sim *core.Simulation, target *core.Unit) {
 		// NumberOfTicks counts 2 s intervals, the glyph's step
 		dot.NumberOfTicks++
 		dot.Duration += glyphOfBackstabStep
-	} else if dot.ExpiresAt() >= dot.StartedAt()+dot.Duration+5*time.Second {
+		dot.UpdateExpires(sim.NextServerTick(dot.ExpiresAt() + glyphOfBackstabStep))
+		return
+	}
+	if dot.ExpiresAt() >= dot.StartedAt()+dot.Duration+5*time.Second {
 		// core's script lets Rupture end up to 5 s past its apply time plus max duration: three Backstabs
 		return
 	}
-	dot.UpdateExpires(sim.NextServerTick(dot.ExpiresAt() + glyphOfBackstabStep))
+	// it only adds to the time left: the max duration stays, so the dot is out of ticks by then
+	// (AuraEffect::GetTotalTicks) and the added time deals nothing
+	dot.Aura.UpdateExpires(sim.NextServerTick(dot.ExpiresAt() + glyphOfBackstabStep))
 }
 
 // ruptureAPDamage is spell_rog_rupture's share of attack power in a tick, in whole points.

@@ -188,6 +188,9 @@ type Unit struct {
 	// The currently-channeled DOT spell, otherwise nil.
 	ChanneledDot *Dot
 
+	// the running dots this unit's update ticks, lowest spell id first (Dot.startTicking)
+	tickingDots []*Dot
+
 	// This unit's own IsTest streams, see Simulation.UnitRandomFloat. Nil until first used.
 	testRands map[string]*testRandStream
 }
@@ -498,6 +501,7 @@ func (unit *Unit) reset(sim *Simulation, _ Agent) {
 	unit.resetCDs(sim)
 	unit.Hardcast.Expires = startingCDTime
 	unit.ChanneledDot = nil
+	unit.tickingDots = unit.tickingDots[:0]
 	unit.Metrics.reset()
 	unit.ResetStatDeps()
 	unit.healingTakenPcts = append(unit.healingTakenPcts[:0], unit.initialHealingTakenPcts...)

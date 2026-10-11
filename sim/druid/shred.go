@@ -45,20 +45,16 @@ func (druid *Druid) registerShredSpell() {
 		},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := (spell.Direct.Roll(sim) +
-				spell.Unit.MHWeaponDamage(sim, spell.MeleeAttackPower()) +
-				spell.BonusWeaponDamage()) * spell.Direct.WeaponPct
+			baseDamage := core.ApplyPct(spell.StrikeFixed(spell.Direct.Roll(sim), core.MainHand)+
+				spell.MHStrikeDamage(sim, spell.MeleeAttackPower()), spell.Direct.WeaponPct)
 
 			modifier := 1.0
-			if druid.BleedCategories.Get(target).AnyActive() {
-				modifier += .3
-			}
 
 			ripDot := druid.Rip.Dot(target)
 			if druid.AssumeBleedActive || ripDot.IsActive() || druid.Rake.Dot(target).IsActive() || druid.Lacerate.Dot(target).IsActive() {
 				modifier *= 1.0 + (0.04 * float64(druid.Talents.RendAndTear))
 			}
-			baseDamage *= modifier
+			baseDamage = core.ApplyPct(baseDamage, modifier)
 
 			result := spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 
@@ -77,13 +73,11 @@ func (druid *Druid) registerShredSpell() {
 			}
 		},
 		ExpectedInitialDamage: func(sim *core.Simulation, target *core.Unit, spell *core.Spell, _ bool) *core.SpellResult {
-			baseDamage := (spell.Direct.Average() + spell.Unit.AutoAttacks.MH().CalculateAverageWeaponDamage(spell.MeleeAttackPower()) +
-				spell.BonusWeaponDamage()) * spell.Direct.WeaponPct
+			mh := spell.Unit.AutoAttacks.MH()
+			baseDamage := (spell.StrikeFixed(spell.Direct.Average(), core.MainHand) +
+				spell.StrikeAverageDamage(mh, core.MainHand, mh.SwingSpeed, spell.MeleeAttackPower(), spell.BonusWeaponDamage())) * spell.Direct.WeaponPct
 
 			modifier := 1.0
-			if druid.BleedCategories.Get(target).AnyActive() {
-				modifier += .3
-			}
 			if druid.AssumeBleedActive || druid.Rip.Dot(target).IsActive() || druid.Rake.Dot(target).IsActive() || druid.Lacerate.Dot(target).IsActive() {
 				modifier *= 1.0 + (0.04 * float64(druid.Talents.RendAndTear))
 			}

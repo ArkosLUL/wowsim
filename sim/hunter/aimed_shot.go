@@ -50,10 +50,8 @@ func (hunter *Hunter) registerAimedShotSpell(timer *core.Timer) {
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			// the weapon's AP part, normalized: RAP / 14 × 2.8 s
-			baseDamage := (spell.Direct.Roll(sim) + 0.2*hunter.rangedWeaponAP() +
-				hunter.AutoAttacks.Ranged().BaseDamage(sim) +
-				hunter.NormalizedAmmoDamageBonus +
-				spell.BonusWeaponDamage()) * spell.Direct.WeaponPct
+			baseDamage := core.ApplyPct(spell.StrikeFixed(spell.Direct.Roll(sim), core.MainHand)+
+				spell.RangedNormalizedStrikeDamage(sim, hunter.rangedWeaponAP(), hunter.NormalizedAmmoDamageBonus), spell.Direct.WeaponPct)
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeRangedHitAndCrit)
 			spell.DealDamageAfterTravel(sim, result)
 		},

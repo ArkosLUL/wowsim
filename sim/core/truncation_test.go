@@ -10,16 +10,18 @@ import (
 
 // SpellDamageBonusDone adds int32(spell power × coefficient): 0.857 × 520 = 445.64 is 445.
 func TestPowerBonusIsItsOwnWholeNumber(t *testing.T) {
-	for _, tc := range []struct{ bonus, want float64 }{
-		{0.857 * 520, 445},
-		{0.2 * 1000, 200},
+	for _, tc := range []struct{ coefficient, power, want float64 }{
+		{0.857, 520, 445},
+		{0.2, 1000, 200},
 		// 56.99999999999999 as a float64, 57 in the server's float32
-		{0.57 * 100, 57},
-		{-12.7, -12},
-		{0, 0},
+		{0.57, 100, 57},
+		// 221.00000000000003 as a float64 product, 220.99998 as the server's two float32s
+		{0.13, 1700, 220},
+		{-0.127, 100, -12},
+		{0.5, 0, 0},
 	} {
-		if got := PowerBonus(tc.bonus); got != tc.want {
-			t.Errorf("PowerBonus(%v) = %v, want %v", tc.bonus, got, tc.want)
+		if got := PowerBonus(tc.coefficient, tc.power); got != tc.want {
+			t.Errorf("PowerBonus(%v, %v) = %v, want %v", tc.coefficient, tc.power, got, tc.want)
 		}
 	}
 }

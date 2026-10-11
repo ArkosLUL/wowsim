@@ -48,7 +48,7 @@ func (priest *Priest) registerPrayerOfHealingSpell() {
 
 			for _, partyAgent := range party.PlayersAndPets {
 				partyTarget := &partyAgent.GetCharacter().Unit
-				baseHealing := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP*spell.HealingPower(partyTarget))
+				baseHealing := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP, spell.HealingPower(partyTarget))
 				spell.CalcAndDealHealing(sim, partyTarget, baseHealing, spell.OutcomeHealingCrit)
 				if glyphSpell != nil {
 					glyphSpell.Hot(partyTarget).Apply(sim)
@@ -76,7 +76,7 @@ func (priest *Priest) registerPrayerOfHealingSpell() {
 				TicksCanCrit:  false,
 				OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
 					base := priest.PrayerOfHealing.Direct
-					dot.SnapshotBaseDamage = base.Roll(sim) + core.PowerBonus(base.SP*dot.Spell.HealingPower(target))
+					dot.SnapshotBaseDamage = base.Roll(sim) + core.PowerBonus(base.SP, dot.Spell.HealingPower(target))
 					dot.SnapshotAttackerMultiplier = dot.Spell.CasterHealingMultiplier()
 				},
 				OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {

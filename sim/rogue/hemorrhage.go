@@ -78,7 +78,7 @@ func (rogue *Rogue) registerHemorrhageSpell() {
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			rogue.BreakStealth(sim)
-			baseDamage := normalizedStrike(sim, spell, &spell.Direct, true) * daggerPct
+			baseDamage := core.ApplyPct(normalizedStrike(sim, spell, &spell.Direct, true), daggerPct)
 
 			result := spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 

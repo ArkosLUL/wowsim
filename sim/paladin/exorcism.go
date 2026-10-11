@@ -38,8 +38,8 @@ func (paladin *Paladin) registerExorcismSpell() {
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			baseDamage := spell.Direct.Roll(sim) +
-				core.PowerBonus(spell.Direct.SP*spell.SpellPower()) +
-				core.PowerBonus(spell.Direct.AP*spell.MeleeAttackPower())
+				core.PowerBonus(spell.Direct.SP, spell.SpellPower()) +
+				core.PowerBonus(spell.Direct.AP, spell.MeleeAttackPower())
 
 			// hits any creature type (no TargetCreatureType in Spell.dbc), but undead and demons always
 			// take a crit (Unit::SpellTakenCritChance)

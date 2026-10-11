@@ -40,13 +40,11 @@ func (dk *Deathknight) newFrostStrikeHitSpell(isMH bool) *core.Spell {
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			var baseDamage float64
 			if isMH {
-				baseDamage = normalizedStrikeBase(sim, spell, true, spell.Direct.Roll(sim)) * spell.Direct.WeaponPct
+				baseDamage = core.ApplyPct(normalizedStrikeBase(sim, spell, true, spell.Direct.Roll(sim)), spell.Direct.WeaponPct)
 			} else {
 				// Spell::EffectWeaponDmg applies the hand's TOTAL_PCT to physical strikes only, so this Frost
 				// one skips the off hand's half and Nerves of Cold Steel, on the weapon and the fixed bonus alike.
-				baseDamage = (spell.Direct.Roll(sim) +
-					spell.Unit.AutoAttacks.OH().CalculateNormalizedWeaponDamage(sim, spell.MeleeAttackPower()) +
-					spell.BonusWeaponDamage()) * spell.Direct.WeaponPct
+				baseDamage = core.ApplyPct(normalizedStrikeBase(sim, spell, false, spell.Direct.Roll(sim)), spell.Direct.WeaponPct)
 			}
 			donePct := dk.glacielRotBonus(target) *
 				dk.RoRTSBonus(target) *

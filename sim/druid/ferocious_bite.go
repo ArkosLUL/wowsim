@@ -44,11 +44,10 @@ func (druid *Druid) registerFerociousBiteSpell() {
 			excessEnergy := min(druid.CurrentEnergy(), 30)
 
 			// 290 a combo point from the effect, the energy and AP shares from Spell::EffectSchoolDMG
-			baseDamage := spell.Direct.Min +
-				sim.RandomFloat("Ferocious Bite")*(spell.Direct.Max-spell.Direct.Min) +
+			baseDamage := sim.RollWhole(spell.Direct.Min, spell.Direct.Max, "Ferocious Bite") +
 				290*comboPoints +
-				core.PowerBonus(excessEnergy*(9.4+attackPower/410)) +
-				core.PowerBonus(attackPower*0.07*comboPoints)
+				core.PowerBonus(9.4+attackPower/410, excessEnergy) +
+				core.ApplyPct(comboPoints*attackPower, 0.07)
 
 			result := spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 

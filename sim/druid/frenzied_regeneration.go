@@ -20,7 +20,7 @@ func (druid *Druid) registerFrenziedRegenerationCD() {
 	druid.FrenziedRegenerationAura = druid.RegisterAura(core.Aura{
 		Label:    "Frenzied Regeneration",
 		ActionID: actionID,
-		Duration: time.Second * 10,
+		Duration: druid.DurationThroughLastTick(time.Second * 10), // so the tenth tick still finds it on
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
 			druid.AddHealingTakenPct(healingTaken)
 		},
@@ -51,11 +51,11 @@ func (druid *Druid) registerFrenziedRegenerationCD() {
 				Period:   time.Second * 1,
 				OnAction: func(sim *core.Simulation) {
 					rageDumped := min(druid.CurrentRage(), 10.0)
-					healthGained := rageDumped * 0.3 / 100 * druid.MaxHealth() * druid.PseudoStats.HealingTakenMultiplier
+					healthGained := core.ApplyPct(druid.MaxHealth(), rageDumped*0.3/100)
 
 					if druid.FrenziedRegenerationAura.IsActive() {
 						druid.SpendRage(sim, rageDumped, rageMetrics)
-						druid.GainHealth(sim, healthGained, healthMetrics)
+						druid.GainHealing(sim, healthGained, healthMetrics)
 					}
 				},
 			})

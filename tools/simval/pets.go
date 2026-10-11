@@ -84,10 +84,6 @@ func (k petsKey) String() string {
 
 func (r petsRecord) key() petsKey { return petsKey{r.Command, r.Spell.ID, r.Attacker.Entry} }
 
-// petHitsPerCast are the pets the sim folds into one: it deals every Mirror Image's hit as one, so a
-// record's amount, one image's, is that many times short.
-var petHitsPerCast = map[uint32]float64{31216: 3}
-
 // petCadenceAllowed are the pet spells whose GCD the sim keeps as its stand-in for the AI's timers, each
 // with a ServerGCD allowance in its class's serverdata_allowlist.go.
 var petCadenceAllowed = map[int32]string{
@@ -114,7 +110,7 @@ func checkPetsRecord(rec petsRecord) (checks []Check) {
 		}
 		return append(checkPetInfo(rec.strikesRecord), checkPetPools(rec)...)
 	case "damage":
-		return checkPetDamage(perSimHit(rec.damageRecord))
+		return checkPetDamage(rec.damageRecord)
 	case "spell":
 		return checkPetSpellRoll(rec)
 	case "melee":
@@ -125,20 +121,6 @@ func checkPetsRecord(rec petsRecord) (checks []Check) {
 		}
 	}
 	return []Check{fail("record", fmt.Sprintf("no replay for a pet's %q", rec.Command))}
-}
-
-// perSimHit is the record with its amounts as the sim deals them, for a pet in petHitsPerCast.
-func perSimHit(rec damageRecord) damageRecord {
-	n, ok := petHitsPerCast[rec.Attacker.Entry]
-	if !ok {
-		return rec
-	}
-	rec.Effects = slices.Clone(rec.Effects)
-	for i := range rec.Effects {
-		e := &rec.Effects[i]
-		e.Taken.Min, e.Taken.Max = e.Taken.Min*n, e.Taken.Max*n
-	}
-	return rec
 }
 
 // petsWithoutHealth are the pets the sim gives no health pool of their own, only core's 10 a point of

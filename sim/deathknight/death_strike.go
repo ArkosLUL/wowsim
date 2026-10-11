@@ -49,11 +49,11 @@ func (dk *Deathknight) newDeathStrikeSpell(isMH bool) *core.Spell {
 		ThreatMultiplier: 1,
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := normalizedStrikeBase(sim, spell, isMH, spell.Direct.Roll(sim)) * spell.Direct.WeaponPct
-			baseDamage *= dk.RoRTSBonus(target)
+			baseDamage := core.ApplyPct(normalizedStrikeBase(sim, spell, isMH, spell.Direct.Roll(sim)), spell.Direct.WeaponPct)
 			if hasGlyph {
-				baseDamage *= 1 + 0.01*min(dk.CurrentRunicPower(), 25)
+				baseDamage = core.ApplyPct(baseDamage, 1+0.01*min(dk.CurrentRunicPower(), 25))
 			}
+			baseDamage *= dk.RoRTSBonus(target)
 			// the class scripts are DoneTotalMod, which scales the flat creature-type bonus too
 			baseDamage += spell.WeaponBonusForDonePct(target, dk.RoRTSBonus(target))
 
@@ -64,7 +64,7 @@ func (dk *Deathknight) newDeathStrikeSpell(isMH bool) *core.Spell {
 
 				if result.Landed() {
 					healingAmount := 0.05 * dk.dkCountActiveDiseases(target) * dk.MaxHealth() * (1.0 + 0.5*float64(dk.Talents.ImprovedDeathStrike))
-					dk.GainHealth(sim, healingAmount*dk.PseudoStats.HealingTakenMultiplier, healthMetrics)
+					dk.GainHealing(sim, healingAmount, healthMetrics)
 					dk.DeathStrikeHeals = append(dk.DeathStrikeHeals, healingAmount)
 				}
 

@@ -35,7 +35,7 @@ func (fireElemental *FireElemental) registerFireBlast() {
 		Direct: core.SpellEffect{Effect: 0, FromSpellID: 57984, Min: 110, Max: 130, SP: 0.2},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP*spell.SpellPower())
+			baseDamage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP, spell.SpellPower())
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 		},
 	})
@@ -72,7 +72,7 @@ func (fireElemental *FireElemental) registerFireNova() {
 		// doesn't reach it (INVESTIGATION, Findings: Attack table).
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			for _, aoeTarget := range sim.Encounter.TargetUnits {
-				baseDamage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP*spell.SpellPower())
+				baseDamage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP, spell.SpellPower())
 				spell.CalcAndDealDamage(sim, aoeTarget, baseDamage, spell.OutcomeMagicHitAndCrit)
 			}
 		},
@@ -103,7 +103,7 @@ func (fireElemental *FireElemental) registerFireShieldAura() {
 			Tick: core.SpellEffect{Effect: 0, Min: 95, Max: 95, SP: 0.015},
 
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
-				baseDamage := dot.Tick.Roll(sim) + core.PowerBonus(dot.Tick.SP*dot.Spell.SpellPower())
+				baseDamage := dot.Tick.Roll(sim) + core.PowerBonus(dot.Tick.SP, dot.Spell.SpellPower())
 				// magic class with no always-hit attribute, so each target rolls the elemental's spell hit
 				for _, aoeTarget := range sim.Encounter.TargetUnits {
 					dot.Spell.CalcAndDealDamage(sim, aoeTarget, baseDamage, dot.Spell.OutcomeMagicHitAndCrit)

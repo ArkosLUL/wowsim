@@ -46,16 +46,14 @@ func (hunter *Hunter) registerMultiShotSpell(timer *core.Timer) {
 		Direct: core.SpellEffect{Effect: 0, Min: 408, Max: 408, WeaponPct: 1},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			sharedDmg := spell.Direct.Roll(sim) +
-				hunter.AutoAttacks.Ranged().BaseDamage(sim) +
-				hunter.NormalizedAmmoDamageBonus +
-				spell.BonusWeaponDamage()
+			// the weapon's AP part, normalized: RAP / 14 × 2.8 s
+			sharedDmg := spell.StrikeFixed(spell.Direct.Roll(sim), core.MainHand) +
+				spell.RangedNormalizedStrikeDamage(sim, hunter.rangedWeaponAP(), hunter.NormalizedAmmoDamageBonus)
 
 			results := make([]*core.SpellResult, numHits)
 			curTarget := target
 			for hitIndex := range results {
-				// the weapon's AP part, normalized: RAP / 14 × 2.8 s
-				baseDamage := (sharedDmg + 0.2*hunter.rangedWeaponAP()) * spell.Direct.WeaponPct
+				baseDamage := core.ApplyPct(sharedDmg, spell.Direct.WeaponPct)
 				results[hitIndex] = spell.CalcDamage(sim, curTarget, baseDamage, spell.OutcomeRangedHitAndCrit)
 
 				curTarget = sim.Environment.NextTargetUnit(curTarget)

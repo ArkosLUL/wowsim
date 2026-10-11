@@ -34,9 +34,8 @@ func (warrior *Warrior) registerSlamSpell() {
 		Direct: core.SpellEffect{Effect: 0, Min: 250, Max: 250, WeaponPct: 1},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := (spell.Direct.Roll(sim) +
-				spell.Unit.MHWeaponDamage(sim, spell.MeleeAttackPower()) +
-				spell.BonusWeaponDamage()) * spell.Direct.WeaponPct
+			baseDamage := core.ApplyPct(spell.StrikeFixed(spell.Direct.Roll(sim), core.MainHand)+
+				spell.MHStrikeDamage(sim, spell.MeleeAttackPower()), spell.Direct.WeaponPct)
 
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialCritOnly)
 		},

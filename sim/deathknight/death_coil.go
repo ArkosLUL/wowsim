@@ -41,7 +41,7 @@ func (dk *Deathknight) registerDeathCoilSpell() {
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			// Vengeful Heart's bonus comes from spell_dk_death_coil, once. Damage and crit are worked out at
 			// launch and land with the missile.
-			baseDamage := (spell.Direct.Roll(sim) + vengefulHeart + core.PowerBonus(spell.Direct.AP*dk.getImpurityBonus(spell))) *
+			baseDamage := (spell.Direct.Roll(sim) + vengefulHeart + core.PowerBonus(spell.Direct.AP, dk.getImpurityBonus(spell))) *
 				dk.RoRTSBonus(target)
 			// SPELL_ATTR3_ALWAYS_HIT, and not binary, so it resists partially
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMagicCrit)
@@ -107,7 +107,7 @@ func (dk *Deathknight) registerDrwDeathCoilSpell() {
 		Mods:   []core.SpellMod{{Op: core.SpellModEffect1, Flat: dk.sigilOfTheWildBuckBonus()}},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.AP*dk.RuneWeapon.getImpurityBonus(spell))
+			baseDamage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.AP, dk.RuneWeapon.getImpurityBonus(spell))
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMagicCrit)
 			spell.DealDamageAfterTravel(sim, result)
 		},

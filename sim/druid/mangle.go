@@ -46,9 +46,8 @@ func (druid *Druid) registerMangleBearSpell() {
 		Mods:   druid.mangleMods(),
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := (spell.Direct.Roll(sim) +
-				spell.Unit.MHWeaponDamage(sim, spell.MeleeAttackPower()) +
-				spell.BonusWeaponDamage()) * spell.Direct.WeaponPct
+			baseDamage := core.ApplyPct(spell.StrikeFixed(spell.Direct.Roll(sim), core.MainHand)+
+				spell.MHStrikeDamage(sim, spell.MeleeAttackPower()), spell.Direct.WeaponPct)
 
 			result := spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 
@@ -111,9 +110,8 @@ func (druid *Druid) registerMangleCatSpell() {
 		Mods:   druid.mangleMods(),
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := (spell.Direct.Roll(sim) +
-				spell.Unit.MHWeaponDamage(sim, spell.MeleeAttackPower()) +
-				spell.BonusWeaponDamage()) * spell.Direct.WeaponPct
+			baseDamage := core.ApplyPct(spell.StrikeFixed(spell.Direct.Roll(sim), core.MainHand)+
+				spell.MHStrikeDamage(sim, spell.MeleeAttackPower()), spell.Direct.WeaponPct)
 
 			result := spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 

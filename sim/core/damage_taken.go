@@ -19,6 +19,7 @@ type serverDerived struct {
 
 	weapon, normalized bool
 	ticksAsCasts       bool
+	bleed              bool
 	// takenCoefficient's, direct then periodic
 	taken         [2]float32
 	takenByStacks [2]bool
@@ -44,6 +45,7 @@ func (spell *Spell) derived() *serverDerived {
 	d.weapon, d.normalized = spell.resolveWeaponDamage()
 	sd := spell.ServerSpell()
 	d.ticksAsCasts = ticksAsCastsOn(sd)
+	d.bleed = spell.hasBleedMechanic(sd, d.weapon)
 	if sd != nil {
 		for i, isPeriodic := range [2]bool{false, true} {
 			d.taken[i], d.takenByStacks[i] = spell.takenCoefficient(sd, isPeriodic)
@@ -73,6 +75,29 @@ func (spell *Spell) resolveWeaponDamage() (weapon, normalized bool) {
 		normalized = normalized || e.Effect == effectNormalizedWeaponDmg
 	}
 	return weapon, normalized
+}
+
+// hasBleedMechanic is whether SPELL_AURA_MOD_MECHANIC_DAMAGE_TAKEN_PERCENT's bleed auras (Mangle, Trauma,
+// Stampede) reach the spell, hit and ticks alike: its mechanic mask has bleed, or it's Shred or Maul, which
+// Unit::MeleeDamageBonusTaken counts in by family flag.
+func (spell *Spell) hasBleedMechanic(sd *serverdata.Spell, weapon bool) bool {
+	if sd == nil {
+		return false
+	}
+	return sd.Flags&serverdata.FlagBleed != 0 ||
+		(weapon && sd.Family == spellFamilyDruid && sd.FamilyFlags[0]&0x8800 != 0)
+}
+
+// SPELLFAMILY_DRUID
+const spellFamilyDruid = 7
+
+// takesBleedBonus goes by the server's mechanic. A spell without server data is a bleed when it's a
+// physical dot.
+func (spell *Spell) takesBleedBonus(isPeriodic bool) bool {
+	if spell.ServerSpell() == nil {
+		return isPeriodic && spell.SpellSchool.Matches(SpellSchoolPhysical)
+	}
+	return spell.derived().bleed
 }
 
 // flatDamageTaken is a SPELL_AURA_MOD_DAMAGE_TAKEN amount on a hit: all of it on a weapon hit

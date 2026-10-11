@@ -57,7 +57,7 @@ func (druid *Druid) registerFaerieFireSpell() {
 			Direct: core.SpellEffect{Effect: 1, Min: 1, Max: 1, AP: 0.15},
 
 			ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-				baseDamage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.AP*spell.MeleeAttackPower())
+				baseDamage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.AP, spell.MeleeAttackPower())
 				spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 			},
 		})

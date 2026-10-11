@@ -174,12 +174,23 @@ func (spell *Spell) WeaponBonusForDonePct(target *Unit, donePct float64) float64
 	if bonus == 0 {
 		return 0
 	}
+	if spell.wholeStrike && spell.SpellSchool.Matches(SpellSchoolPhysical) {
+		// doneDamage adds the bonus to a whole strike before any percent
+		return bonus * (donePct - 1)
+	}
 	return bonus * spell.weaponBonusMultiplier(1) * (donePct - 1)
 }
 
 // doneDamage is SpellDamageBonusDone's or MeleeDamageBonusDone's result, a whole number: the server
 // truncates it, a dot's amount at application, and keeps every later step whole too.
 func (spell *Spell) doneDamage(target *Unit, baseDamage float64, attackerMultiplier float64, isPeriodic bool) float64 {
+	if spell.wholeStrike && !isPeriodic && spell.SpellSchool.Matches(SpellSchoolPhysical) {
+		// float(int32(pdamage) + DoneFlatBenefit) * DoneTotalMod, the hand's percent already in pdamage
+		if baseDamage > 0 {
+			baseDamage += spell.weaponAttackPowerBonus(target)
+		}
+		return math.Trunc(baseDamage * spell.strikeDoneMultiplier(target))
+	}
 	damage := baseDamage * attackerMultiplier
 	if !isPeriodic && baseDamage > 0 {
 		if bonus := spell.weaponAttackPowerBonus(target); bonus != 0 {
@@ -220,16 +231,17 @@ func (spell *Spell) PhysicalCritCheck(sim *Simulation, attackTable *AttackTable)
 	return sim.UnitRandomFloat(spell.Unit, "Physical Crit Roll") < spell.PhysicalCritChance(attackTable)
 }
 
+// SpellPower is whole, like the server's int32 (Unit::SpellBaseDamageBonusDone).
 func (spell *Spell) SpellPower() float64 {
-	return spell.Unit.GetStat(stats.SpellPower) +
+	return math.Trunc(spell.Unit.GetStat(stats.SpellPower) +
 		spell.BonusSpellPower +
-		spell.Unit.PseudoStats.MobTypeSpellPower
+		spell.Unit.PseudoStats.MobTypeSpellPower)
 }
 
-// PowerBonus is one spell power or attack power bonus (power × coefficient) the way SpellDamageBonusDone
-// and SpellHealingBonusDone add it: each as its own int32, off a float32 product.
-func PowerBonus(bonus float64) float64 {
-	return float64(int32(float32(bonus)))
+// PowerBonus is one spell power or attack power bonus the way SpellDamageBonusDone and SpellHealingBonusDone
+// add it: its own int32, off the product of two float32s. 0.13 × 1700 is 220 there, 221 in float64.
+func PowerBonus(coefficient float64, power float64) float64 {
+	return float64(int32(float32(coefficient) * float32(power)))
 }
 
 func (spell *Spell) SpellHitChance(target *Unit) float64 {
@@ -366,6 +378,11 @@ func (spell *Spell) calcDamageInternal(sim *Simulation, target *Unit, baseDamage
 func (spell *Spell) CalcDamage(sim *Simulation, target *Unit, baseDamage float64, outcomeApplier OutcomeApplier) *SpellResult {
 	attackerMultiplier := spell.AttackerDamageMultiplier(spell.Unit.AttackTables[target.UnitIndex])
 	return spell.calcDamageInternal(sim, target, baseDamage, spell.doneDamage(target, baseDamage, attackerMultiplier, false), false, outcomeApplier)
+}
+
+// CalcDamageDone is CalcDamage for a hit whose done amount a script worked out itself, whole.
+func (spell *Spell) CalcDamageDone(sim *Simulation, target *Unit, doneDamage float64, outcomeApplier OutcomeApplier) *SpellResult {
+	return spell.calcDamageInternal(sim, target, doneDamage, doneDamage, false, outcomeApplier)
 }
 func (spell *Spell) CalcPeriodicDamage(sim *Simulation, target *Unit, baseDamage float64, outcomeApplier OutcomeApplier) *SpellResult {
 	attackerMultiplier := spell.AttackerDamageMultiplier(spell.Unit.AttackTables[target.UnitIndex])
@@ -600,7 +617,7 @@ func (spell *Spell) TargetDamageMultiplier(attackTable *AttackTable, isPeriodic 
 
 	if spell.SpellSchool.Matches(SpellSchoolNature) {
 		multiplier *= attackTable.NatureDamageTakenMultiplier
-	} else if isPeriodic && spell.SpellSchool.Matches(SpellSchoolPhysical) {
+	} else if spell.takesBleedBonus(isPeriodic) {
 		multiplier *= attackTable.Defender.PseudoStats.PeriodicPhysicalDamageTakenMultiplier
 	}
 

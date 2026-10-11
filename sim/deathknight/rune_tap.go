@@ -41,7 +41,7 @@ func (dk *Deathknight) registerRuneTapSpell() {
 		},
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			dk.bladeBarrierCastPhase(sim)
-			dk.GainHealth(sim, dk.GetRuneTapHealing()*dk.PseudoStats.HealingTakenMultiplier, healthMetrics)
+			dk.GainHealing(sim, dk.GetRuneTapHealing(), healthMetrics)
 		},
 	})
 

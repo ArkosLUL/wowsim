@@ -50,8 +50,8 @@ func (warrior *Warrior) registerDevastateSpell() {
 			// per stack
 			stacks := min(warrior.SunderArmorAuras.Get(target).GetStacks()+sunderStacks, 5)
 
-			baseDamage := (spell.Unit.MHNormalizedWeaponDamage(sim, spell.MeleeAttackPower())+spell.BonusWeaponDamage())*spell.Direct.WeaponPct +
-				spell.Direct.Roll(sim)*float64(stacks)
+			baseDamage := core.ApplyPct(spell.MHNormalizedStrikeDamage(sim, spell.MeleeAttackPower()), spell.Direct.WeaponPct) +
+				spell.StrikeFixed(spell.Direct.Roll(sim), core.MainHand) + spell.StrikeFixed(spell.Direct.Roll(sim)*float64(stacks-1), core.MainHand)
 
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 			spell.DealDamage(sim, result)

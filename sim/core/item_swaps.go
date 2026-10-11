@@ -164,8 +164,8 @@ func (swap *ItemSwap) CalcStatChanges(slots []proto.ItemSlot) stats.Stats {
 }
 
 // metaGemStatChange is the head's meta gem going on or off between two sets of gear: the server checks its
-// condition again on every equip (Player::CorrectMetaGemEnchants). Only the gem's stats follow. Its effect
-// and its crit damage are built once, off the starting gear.
+// condition again on every equip (Player::CorrectMetaGemEnchants). These are the gem's stats. Its effect
+// and its crit damage follow through metaGemSwap.
 func metaGemStatChange(before, after *Equipment) stats.Stats {
 	wasOff, isOff := before.inactiveMetaGem(), after.inactiveMetaGem()
 	switch {
@@ -201,6 +201,7 @@ func (swap *ItemSwap) SwapItems(sim *Simulation, slots []proto.ItemSlot) {
 	newStats = newStats.Add(metaGemStatChange(&before, &character.Equipment))
 
 	character.AddStatsDynamic(sim, newStats)
+	character.updateMetaGemSwap(sim)
 
 	if sim.Log != nil {
 		sim.Log("Item Swap Stats: %v", newStats)
@@ -220,6 +221,23 @@ func (swap *ItemSwap) SwapItems(sim *Simulation, slots []proto.ItemSlot) {
 	}
 
 	swap.swapped = !swap.swapped
+}
+
+// otherSet is the gear with every swap slot holding its other item, as SwapItems leaves it.
+func (swap *ItemSwap) otherSet(worn *Equipment) Equipment {
+	other := *worn
+	has2H := swap.GetItem(proto.ItemSlot_ItemSlotMainHand).HandType == proto.HandType_HandTypeTwoHand
+	for _, slot := range swap.slots {
+		switch item := swap.GetItem(slot); {
+		case slot == proto.ItemSlot_ItemSlotOffHand && has2H:
+		case item.ID != 0:
+			other[slot] = *item
+			if has2H && slot == proto.ItemSlot_ItemSlotMainHand {
+				other[proto.ItemSlot_ItemSlotOffHand] = *swap.GetItem(proto.ItemSlot_ItemSlotOffHand)
+			}
+		}
+	}
+	return other
 }
 
 func (swap *ItemSwap) swapItem(slot proto.ItemSlot, has2H bool) (bool, stats.Stats) {

@@ -1,8 +1,6 @@
 package paladin
 
 import (
-	"math"
-
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
 )
@@ -46,12 +44,10 @@ func (paladin *Paladin) registerSealOfCommandSpellAndAura() {
 		Direct: core.SpellEffect{Effect: 0, SP: 0.13, AP: 0.08, WeaponPct: 0.24},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			mhWeaponDamage := 0 +
-				spell.Unit.MHWeaponDamage(sim, spell.MeleeAttackPower()) +
-				spell.BonusWeaponDamage()
-			baseDamage := spell.Direct.WeaponPct*mhWeaponDamage +
-				math.Floor(spell.Direct.AP*spell.MeleeAttackPower()) +
-				math.Floor(spell.Direct.SP*spell.SpellPower())
+			mhWeaponDamage := spell.MHStrikeDamage(sim, spell.MeleeAttackPower())
+			baseDamage := core.ApplyPct(mhWeaponDamage, spell.Direct.WeaponPct) +
+				core.PowerBonus(spell.Direct.AP, spell.MeleeAttackPower()) +
+				core.PowerBonus(spell.Direct.SP, spell.SpellPower())
 
 			// Secondary Judgements cannot miss if the Primary Judgement hit, only roll for crit.
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialCritOnly)
@@ -74,8 +70,8 @@ func (paladin *Paladin) registerSealOfCommandSpellAndAura() {
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			curTarget := target
 			for hitIndex := int32(0); hitIndex < numHits; hitIndex++ {
-				baseDamage := (spell.Unit.MHWeaponDamage(sim, spell.MeleeAttackPower()) +
-					spell.BonusWeaponDamage()) * spell.Direct.WeaponPct
+				baseDamage := core.ApplyPct(spell.MHStrikeDamage(sim, spell.MeleeAttackPower()),
+					spell.Direct.WeaponPct)
 
 				results[hitIndex] = spell.CalcDamage(sim, curTarget, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 				curTarget = sim.Environment.NextTargetUnit(curTarget)
@@ -102,8 +98,8 @@ func (paladin *Paladin) registerSealOfCommandSpellAndAura() {
 		Direct: core.SpellEffect{Effect: 0, WeaponPct: 0.36},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := (spell.Unit.MHWeaponDamage(sim, spell.MeleeAttackPower()) +
-				spell.BonusWeaponDamage()) * spell.Direct.WeaponPct
+			baseDamage := core.ApplyPct(spell.MHStrikeDamage(sim, spell.MeleeAttackPower()),
+				spell.Direct.WeaponPct)
 
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 		},

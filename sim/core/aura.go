@@ -53,8 +53,9 @@ type Aura struct {
 
 	Duration time.Duration // Duration of aura, upon being applied.
 
-	startTime time.Duration // Time at which the aura was applied.
-	expires   time.Duration // Time at which aura will be removed.
+	startTime   time.Duration // Time at which the aura was applied.
+	refreshedAt time.Duration // Time at which the aura last went on or was refreshed.
+	expires     time.Duration // Time at which aura will be removed.
 
 	// The unit this aura is attached to.
 	Unit *Unit
@@ -188,10 +189,21 @@ func (aura *Aura) nextUpdate(sim *Simulation, t time.Duration) time.Duration {
 // update after that takes off the whole map update (Unit::_UpdateSpells hands Aura::UpdateOwner
 // Map::Update's diff), so it counts from the map update before. Not when the creature puts it on
 // itself in its own swing, AI cast, dot tick or aura expiry: _UpdateSpells has already listed the
-// auras to update by then.
+// auras to update by then. A player's goes the same way on world ticks: a cast or a landing comes
+// ahead of the player's update in its tick, which takes that whole tick off.
 func (aura *Aura) countdownStart(sim *Simulation) time.Duration {
+	if aura.onWorldTicks() {
+		switch {
+		case sim.worldTickInterval <= 0 || sim.updating == aura.countdownUnit():
+			return sim.CurrentTime
+		case sim.updating != nil && sim.updating.Type != PlayerUnit:
+			// creatures and pets update after every player, so the next world tick is the first one off
+			return sim.NextWorldTick(sim.CurrentTime+time.Nanosecond) - sim.worldTickInterval
+		}
+		return sim.NextWorldTick(sim.CurrentTime) - sim.worldTickInterval
+	}
 	switch {
-	case aura.onWorldTicks() || sim.serverTickInterval <= 0:
+	case sim.serverTickInterval <= 0:
 		return sim.CurrentTime
 	case aura.madeInMapUpdate:
 		// a dynamic object made during UpdateNonPlayerObjects only joins the update list on the next
@@ -203,7 +215,16 @@ func (aura *Aura) countdownStart(sim *Simulation) time.Duration {
 	return sim.NextServerTick(sim.CurrentTime) - sim.serverTickInterval
 }
 
+// DurationThroughLastTick is a duration that keeps a player's aura on for an action d after the cast that
+// put it on. The aura counts from the world tick before the cast and ends ahead of anything else on
+// its last update, so it takes a tick more than d.
+func (unit *Unit) DurationThroughLastTick(d time.Duration) time.Duration {
+	world, _ := unit.Env.serverSettings().updateGrids()
+	return d + world + 1
+}
+
 func (aura *Aura) Refresh(sim *Simulation) {
+	aura.refreshedAt = sim.CurrentTime
 	if aura.Duration == NeverExpires {
 		aura.expires = NeverExpires
 	} else {
@@ -281,6 +302,12 @@ func (aura *Aura) RemainingDuration(sim *Simulation) time.Duration {
 
 func (aura *Aura) StartedAt() time.Duration {
 	return aura.startTime
+}
+
+// RefreshedNow is whether the aura went on or was refreshed at the current time. The time left doesn't
+// say: a player's aura counts from the world tick before its cast.
+func (aura *Aura) RefreshedNow(sim *Simulation) bool {
+	return aura.active && aura.refreshedAt == sim.CurrentTime
 }
 
 func (aura *Aura) ExpiresAt() time.Duration {
@@ -526,27 +553,41 @@ func (at *auraTracker) reset(sim *Simulation) {
 }
 
 // inlineable stub for advance
-func (at *auraTracker) tryAdvance(sim *Simulation) time.Duration {
+func (at *auraTracker) tryAdvance(sim *Simulation, worldTicksOnly bool) time.Duration {
 	if sim.CurrentTime < at.minExpires {
 		return at.minExpires
 	}
-	return at.advance(sim)
+	return at.advance(sim, worldTicksOnly)
 }
 
-func (at *auraTracker) advance(sim *Simulation) time.Duration {
+// advance takes off the auras that have run out, only the ones a player's update counts down with
+// worldTicksOnly. Unit::_UpdateSpells ticks every aura of the unit before it removes the expired ones,
+// so the ticks due on this update go first.
+func (at *auraTracker) advance(sim *Simulation, worldTicksOnly bool) time.Duration {
 restart:
 	at.minExpires = NeverExpires
 	for _, aura := range at.activeAuras {
-		if aura.expires <= sim.CurrentTime {
+		if aura.expires <= sim.CurrentTime && (!worldTicksOnly || aura.onWorldTicks()) {
+			unit := aura.countdownUnit()
 			outer := sim.updating
-			sim.updating = aura.countdownUnit()
-			aura.Deactivate(sim)
+			sim.updating = unit
+			// a tick can refresh this aura or take others off
+			if aura.countsOnMapGrid || !unit.runDueTicks(sim, nil) {
+				aura.Deactivate(sim)
+			}
 			sim.updating = outer
 			goto restart // activeAuras have changed
 		}
 		at.minExpires = min(at.minExpires, aura.expires)
 	}
 	return at.minExpires
+}
+
+func (at *auraTracker) recountMinExpires() {
+	at.minExpires = NeverExpires
+	for _, aura := range at.activeAuras {
+		at.minExpires = min(at.minExpires, aura.expires)
+	}
 }
 
 func (at *auraTracker) expireAll(sim *Simulation) {

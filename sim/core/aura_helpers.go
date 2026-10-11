@@ -316,12 +316,21 @@ func ApplyFixedUptimeAura(aura *Aura, uptime float64, tickLength time.Duration, 
 	ticksPerAura := float64(auraDuration) / float64(tickLength)
 	chancePerTick := TernaryFloat64(uptime == 1, 1, 1.0-math.Pow(1-uptime, 1/ticksPerAura))
 
+	// counted from now, like an aura the unit's own update puts on: a tick one duration later still
+	// finds it on, so a full uptime has no gaps
+	activate := func(sim *Simulation) {
+		outer := sim.updating
+		sim.updating = aura.countdownUnit()
+		aura.Activate(sim)
+		sim.updating = outer
+	}
+
 	aura.Unit.RegisterResetEffect(func(sim *Simulation) {
 		StartPeriodicAction(sim, PeriodicActionOptions{
 			Period: tickLength,
 			OnAction: func(sim *Simulation) {
 				if sim.UnitRandomFloat(aura.Unit, "FixedAura") < chancePerTick {
-					aura.Activate(sim)
+					activate(sim)
 				}
 			},
 		})
@@ -336,7 +345,7 @@ func ApplyFixedUptimeAura(aura *Aura, uptime float64, tickLength time.Duration, 
 					randomDur := tickLength + time.Duration(float64(auraDuration-tickLength)*sim.UnitRandomFloat(aura.Unit, "FixedAuraDur"))
 
 					aura.Duration = randomDur
-					aura.Activate(sim)
+					activate(sim)
 					aura.Duration = auraDuration
 				}
 			},

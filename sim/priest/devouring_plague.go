@@ -48,7 +48,7 @@ func (priest *Priest) registerDevouringPlagueSpell() {
 			Direct: core.SpellEffect{Effect: 0, Min: 1, Max: 1},
 
 			ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-				baseDamage := (devouringPlagueTickBase + core.PowerBonus(devouringPlagueTickSP*spell.SpellPower())) * priest.DpInitMultiplier * float64(priest.devouringPlagueTotalTicks(target))
+				baseDamage := (devouringPlagueTickBase + core.PowerBonus(devouringPlagueTickSP, spell.SpellPower())) * priest.DpInitMultiplier * float64(priest.devouringPlagueTotalTicks(target))
 				result := spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 
 				if result.DidCrit() && hasGlyphOfShadow {
@@ -96,7 +96,7 @@ func (priest *Priest) registerDevouringPlagueSpell() {
 			Tick:         core.SpellEffect{Effect: 0, Min: devouringPlagueTickBase, Max: devouringPlagueTickBase, SP: devouringPlagueTickSP},
 
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
-				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + core.PowerBonus(dot.Tick.SP*dot.Spell.SpellPower())
+				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + core.PowerBonus(dot.Tick.SP, dot.Spell.SpellPower())
 				dot.SnapshotCritChance = dot.Spell.SpellCritChance(target)
 				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(dot.Spell.Unit.AttackTables[target.UnitIndex])
 			},
@@ -134,7 +134,7 @@ func (priest *Priest) registerDevouringPlagueSpell() {
 				}
 			} else {
 				tick := spell.Dot(target).Tick
-				baseDamage := tick.Roll(sim) + core.PowerBonus(tick.SP*spell.SpellPower())
+				baseDamage := tick.Roll(sim) + core.PowerBonus(tick.SP, spell.SpellPower())
 				if priest.Talents.Shadowform {
 					return spell.CalcPeriodicDamage(sim, target, baseDamage, spell.OutcomeExpectedMagicCrit)
 				} else {

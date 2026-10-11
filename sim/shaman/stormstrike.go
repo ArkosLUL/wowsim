@@ -64,13 +64,14 @@ func (shaman *Shaman) newStormstrikeHitSpell(actionID core.ActionID, procMask co
 			flatBonus := spell.Direct.Roll(sim)
 			var weaponDamage float64
 			if isMH {
-				weaponDamage = spell.Unit.MHWeaponDamage(sim, spell.MeleeAttackPower())
+				flatBonus = spell.StrikeFixed(flatBonus, core.MainHand)
+				weaponDamage = spell.MHStrikeDamage(sim, spell.MeleeAttackPower())
 			} else {
 				// the off hand's 50% cuts the flat bonus too, truncated (Spell::EffectWeaponDmg)
-				flatBonus = float64(int32(flatBonus * 0.5))
-				weaponDamage = spell.Unit.OHWeaponDamage(sim, spell.MeleeAttackPower())
+				flatBonus = spell.StrikeFixed(flatBonus, core.OffHand)
+				weaponDamage = spell.OHStrikeDamage(sim, spell.MeleeAttackPower())
 			}
-			baseDamage := (flatBonus + weaponDamage + spell.BonusWeaponDamage()) * spell.Direct.WeaponPct
+			baseDamage := core.ApplyPct(flatBonus+weaponDamage, spell.Direct.WeaponPct)
 
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialCritOnly)
 		},

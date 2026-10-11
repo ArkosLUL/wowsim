@@ -45,7 +45,7 @@ func (druid *Druid) registerSwipeBearSpell() {
 		},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.AP*spell.MeleeAttackPower())
+			baseDamage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.AP, spell.MeleeAttackPower())
 			baseDamage *= sim.Encounter.AOECapMultiplier()
 			for _, aoeTarget := range sim.Encounter.TargetUnits {
 				spell.CalcAndDealDamage(sim, aoeTarget, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
@@ -81,7 +81,7 @@ func (druid *Druid) registerSwipeCatSpell() {
 		Direct: core.SpellEffect{Effect: 0, WeaponPct: 2.5},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := spell.Unit.MHNormalizedWeaponDamage(sim, spell.MeleeAttackPower()) * spell.Direct.WeaponPct
+			baseDamage := core.ApplyPct(spell.MHNormalizedStrikeDamage(sim, spell.MeleeAttackPower()), spell.Direct.WeaponPct)
 			baseDamage *= sim.Encounter.AOECapMultiplier()
 			for _, aoeTarget := range sim.Encounter.TargetUnits {
 				spell.CalcAndDealDamage(sim, aoeTarget, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)

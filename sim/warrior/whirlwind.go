@@ -22,6 +22,7 @@ func (warrior *Warrior) registerWhirlwindSpell() {
 
 			// Dual Wield Specialization is a different aura (SPELL_AURA_MOD_OFFHAND_DAMAGE_PCT, not a
 			// spell mod), so it stays its own factor.
+			TotalPctMultiplier: 1 + 0.05*float64(warrior.Talents.DualWieldSpecialization),
 			DamageMultiplier: spellModDamage(
 				0.02*float64(warrior.Talents.UnendingFury),
 				0.1*float64(warrior.Talents.ImprovedWhirlwind),

@@ -47,6 +47,12 @@ func (hb *healthBar) CurrentHealthPercent() float64 {
 	return hb.currentHealth / hb.unit.stats[stats.Health]
 }
 
+// GainHealing is a heal dealt outside a sim spell: a whole amount, then the unit's healing taken percent,
+// whole again (Unit::SpellHealingBonusTaken).
+func (hb *healthBar) GainHealing(sim *Simulation, amount float64, metrics *ResourceMetrics) {
+	hb.GainHealth(sim, wholeHeal(wholeHeal(amount)*hb.unit.PseudoStats.HealingTakenMultiplier), metrics)
+}
+
 func (hb *healthBar) GainHealth(sim *Simulation, amount float64, metrics *ResourceMetrics) {
 	if amount < 0 {
 		panic("Trying to gain negative health!")

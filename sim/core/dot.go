@@ -126,8 +126,16 @@ type Dot struct {
 	tickAction *PendingAction
 	tickPeriod time.Duration
 
-	// Number of ticks since last call to Apply().
+	// Number of ticks since the dot went on or was last refreshed.
 	TickCount int32
+
+	// the aura's max duration before haste: ticks times length as the dot went on or was refreshed,
+	// plus what UpdateExpires added since
+	maxDuration time.Duration
+
+	// whose update ticks the dot, in spell id order with its other dots. Nil for an area dot's object.
+	tickUnit  *Unit
+	tickOrder int32
 
 	lastTickTime time.Duration
 	// when the next tick is due on its own lattice, and the server tick it lands on
@@ -153,13 +161,52 @@ func (dot *Dot) TimeUntilNextTick(sim *Simulation) time.Duration {
 	return dot.NextTickAt() - sim.CurrentTime
 }
 
-// TotalTicks is AuraEffect::GetTotalTicks: how many whole tick intervals fit the duration, in ms.
-// Haste that only shortens the interval therefore buys extra ticks.
+// TotalTicks is AuraEffect::GetTotalTicks: how many whole tick intervals fit the max duration, in ms.
+// Haste that only shortens the interval therefore buys extra ticks, and so does time added to a
+// running dot (UpdateExpires).
 func (dot *Dot) TotalTicks() int32 {
-	if dot.TickHaste == SpellHasteScalesBoth || dot.tickPeriod <= 0 {
+	period := dot.tickPeriod
+	if dot.TickHaste == SpellHasteScalesBoth {
+		// the duration shrinks with the interval, so count in unhasted ones
+		period = dot.TickLength
+	}
+	if period <= 0 {
 		return dot.NumberOfTicks
 	}
-	return int32(dot.TickLength * time.Duration(dot.NumberOfTicks) / dot.tickPeriod)
+	return int32(max(dot.TickLength*time.Duration(dot.NumberOfTicks), dot.maxDuration) / period)
+}
+
+// outOfTicks is AuraEffect::Update's stop: a dot that has ticked its total doesn't tick again until a
+// refresh starts the count over, though its timer runs on.
+func (dot *Dot) outOfTicks() bool {
+	return dot.TickCount >= dot.TotalTicks() && dot.Aura.Duration != NeverExpires
+}
+
+// restartTickCount is Aura::RefreshDuration's ResetTicks, with the max duration back at the dot's own.
+func (dot *Dot) restartTickCount() {
+	dot.TickCount = 0
+	dot.maxDuration = dot.TickLength * time.Duration(dot.NumberOfTicks)
+}
+
+// Refresh starts the duration and the tick count over and leaves the tick timer running, as
+// Aura::RefreshTimers does without a periodic reset.
+func (dot *Dot) Refresh(sim *Simulation) {
+	dot.Aura.Refresh(sim)
+	dot.restartTickCount()
+}
+
+// Activate puts the aura on, or refreshes a running one as Refresh does.
+func (dot *Dot) Activate(sim *Simulation) {
+	dot.restartTickCount()
+	dot.Aura.Activate(sim)
+}
+
+// UpdateExpires moves the expiry and the max duration with it, so the added time ticks: what the
+// glyphs that lengthen a running dot do (SetDuration with SetMaxDuration). Aura.UpdateExpires moves
+// the expiry alone.
+func (dot *Dot) UpdateExpires(newExpires time.Duration) {
+	dot.maxDuration += newExpires - dot.Aura.expires
+	dot.Aura.UpdateExpires(newExpires)
 }
 
 func (dot *Dot) MaxTicksRemaining() int32 {
@@ -190,6 +237,7 @@ func (dot *Dot) NumTicksRemaining(_ *Simulation) int {
 // Like Aura::RefreshTimersWithMods, it leaves the tick timer alone: the tick already scheduled keeps
 // its time, and the new period applies from the one after it.
 func (dot *Dot) Rollover(sim *Simulation) {
+	dot.restartTickCount()
 	dot.TakeSnapshot(sim, true)
 
 	dot.RecomputeAuraDuration() // recalculate haste
@@ -214,7 +262,7 @@ func (dot *Dot) Apply(sim *Simulation) {
 	dot.TakeSnapshot(sim, false)
 
 	dot.Cancel(sim)
-	dot.TickCount = 0
+	dot.restartTickCount()
 	dot.RecomputeAuraDuration()
 	dot.Aura.Activate(sim)
 }
@@ -237,7 +285,7 @@ func (dot *Dot) ApplyOrReset(sim *Simulation) {
 	dot.RecomputeAuraDuration() // recalculate haste
 	dot.Aura.Refresh(sim)       // update aura's duration
 
-	dot.TickCount = 0
+	dot.restartTickCount()
 
 	oldTickAction := dot.tickAction
 	dot.tickAction = nil      // prevent tickAction.CleanUp() from adding an extra tick
@@ -270,7 +318,7 @@ func (dot *Dot) refreshKeepingTicks(sim *Simulation, doRollover bool) {
 	dot.RecomputeAuraDuration()
 	dot.Aura.Refresh(sim)
 
-	dot.TickCount = 0
+	dot.restartTickCount()
 }
 
 func (dot *Dot) Cancel(sim *Simulation) {
@@ -378,38 +426,109 @@ func (dot *Dot) startTickAction(sim *Simulation, nominal time.Duration) {
 		CleanUp: func(sim *Simulation) {
 			// In certain cases, the last tick and the dot aura expiration can happen in
 			// different orders, so we might need to apply the last tick.
-			if dot.tickAction != nil && dot.tickAction.NextActionAt == sim.CurrentTime {
-				if dot.lastTickTime != sim.CurrentTime {
-					outer := sim.updating
-					sim.updating = dot.Aura.countdownUnit()
-					dot.TickCount++
-					dot.TickOnce(sim)
-					sim.updating = outer
-				}
+			if dot.tickIsDue(sim) {
+				dot.runTick(sim)
 			}
 		},
 	}
 	pa.OnAction = func(sim *Simulation) {
-		if dot.lastTickTime != sim.CurrentTime {
-			outer := sim.updating
-			sim.updating = dot.Aura.countdownUnit()
-			dot.TickCount++
-			dot.TickOnce(sim)
-			sim.updating = outer
+		// not tickIsDue: a tick rescheduled into the past is late, and still runs
+		if dot.tickOwed(sim) {
+			// only another action queued for now can be a tick due with this one
+			if dot.tickUnit != nil && sim.pendingActions[len(sim.pendingActions)-1].at == sim.CurrentTime {
+				dot.tickUnit.runDueTicks(sim, dot)
+			}
+			// a lower spell's tick can have refreshed or ended this dot
+			if dot.tickAction == pa && dot.tickOwed(sim) {
+				dot.runTick(sim)
+			}
 		}
 
 		// a tick can refresh or end the dot, and that schedules its own ticks
 		if dot.tickAction != pa || pa.cancelled {
 			return
 		}
-		dot.nextTickNominal += dot.tickPeriod
-		dot.nextTickAt = dot.Aura.nextUpdate(sim, dot.nextTickNominal)
+		if dot.lastTickTime != sim.CurrentTime && dot.outOfTicks() {
+			if dot.Aura.expires < sim.CurrentTime {
+				// nothing updates this unit (a pet that's away), so nothing else ends its aura
+				dot.Cancel(sim)
+				return
+			}
+			// the tick stays owed and the server looks again every update: a refresh lets it through
+			dot.nextTickAt = dot.Aura.nextUpdate(sim, sim.CurrentTime+time.Millisecond)
+		} else {
+			dot.nextTickNominal += dot.tickPeriod
+			dot.nextTickAt = dot.Aura.nextUpdate(sim, dot.nextTickNominal)
+		}
 		pa.NextActionAt = dot.nextTickAt
 		sim.AddPendingAction(pa)
 	}
 
 	dot.tickAction = pa
 	sim.AddPendingAction(pa)
+}
+
+// tickIsDue is whether the tick queued for this update is still to run.
+func (dot *Dot) tickIsDue(sim *Simulation) bool {
+	return dot.tickAction != nil && dot.tickAction.NextActionAt == sim.CurrentTime && dot.tickOwed(sim)
+}
+
+// tickOwed is whether the dot may tick now: once an update, and not past its total.
+func (dot *Dot) tickOwed(sim *Simulation) bool {
+	return dot.lastTickTime != sim.CurrentTime && !dot.outOfTicks()
+}
+
+func (dot *Dot) runTick(sim *Simulation) {
+	outer := sim.updating
+	sim.updating = dot.Aura.countdownUnit()
+	dot.TickCount++
+	dot.TickOnce(sim)
+	sim.updating = outer
+}
+
+// runDueTicks runs the ticks of the unit's dots that are due on this update, lowest spell id first, as
+// Unit::_UpdateSpells walks the unit's auras. It stops short of upTo. Reports whether any ran.
+func (unit *Unit) runDueTicks(sim *Simulation, upTo *Dot) bool {
+	ran := false
+	for {
+		var due *Dot
+		for _, dot := range unit.tickingDots {
+			if dot == upTo {
+				break
+			}
+			if dot.tickIsDue(sim) {
+				due = dot
+				break
+			}
+		}
+		if due == nil {
+			return ran
+		}
+		// a tick can put dots on and take them off, so the list is walked again after each
+		due.runTick(sim)
+		ran = true
+	}
+}
+
+// startTicking puts the dot among its unit's ticking ones, after those with its spell id or a lower one.
+func (dot *Dot) startTicking() {
+	unit := dot.tickUnit
+	if unit == nil {
+		return
+	}
+	i := len(unit.tickingDots)
+	for i > 0 && unit.tickingDots[i-1].tickOrder > dot.tickOrder {
+		i--
+	}
+	unit.tickingDots = slices.Insert(unit.tickingDots, i, dot)
+}
+
+func (dot *Dot) stopTicking() {
+	if unit := dot.tickUnit; unit != nil {
+		if i := slices.Index(unit.tickingDots, dot); i >= 0 {
+			unit.tickingDots = slices.Delete(unit.tickingDots, i, i+1)
+		}
+	}
 }
 
 func newDot(config Dot) *Dot {
@@ -425,10 +544,18 @@ func newDot(config Dot) *Dot {
 	if dot.isChanneled {
 		dot.Aura.countdownBy = dot.Spell.Unit
 	}
+	if !dot.Aura.countsOnMapGrid {
+		dot.tickUnit = dot.Aura.countdownUnit()
+	}
+	dot.tickOrder = dot.Aura.ActionID.SpellID
+	if dot.tickOrder == 0 {
+		dot.tickOrder = dot.Spell.ActionID.SpellID
+	}
 
 	dot.Aura.ApplyOnGain(func(aura *Aura, sim *Simulation) {
 		dot.lastTickTime = sim.CurrentTime
 		dot.startTickAction(sim, aura.countdownStart(sim)+dot.tickPeriod)
+		dot.startTicking()
 		if dot.isChanneled {
 			dot.Spell.Unit.ChanneledDot = dot
 		}
@@ -438,6 +565,8 @@ func newDot(config Dot) *Dot {
 			dot.tickAction.Cancel(sim)
 			dot.tickAction = nil
 		}
+		dot.stopTicking()
+		dot.maxDuration = 0
 		if dot.isChanneled {
 			dot.Spell.Unit.ChanneledDot = nil
 			dot.Spell.Unit.Rotation.interruptChannelIf = nil

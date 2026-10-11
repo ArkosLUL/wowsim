@@ -415,14 +415,7 @@ func (b mobBuilt) strikeAmounts(w *weaponStrike) (lo, hi, boundLo, boundHi float
 	if err := firstErr(errLo, errHi); err != nil {
 		return 0, 0, 0, 0, err
 	}
-	multiplier := hi / max(w.Base.Max, 1)
-	if w.Base.Max-w.Base.Min >= 1 {
-		multiplier = (hi - lo) / (w.Base.Max - w.Base.Min)
-	}
-	below, above := strikeTolerance(w.Taken.Min, multiplier, w, 0)
-	boundLo = max(below, above)
-	below, above = strikeTolerance(w.Taken.Max, multiplier, w, 1)
-	return lo, hi, boundLo, max(below, above), nil
+	return lo, hi, amountTolerance(w.Taken.Min), amountTolerance(w.Taken.Max), nil
 }
 
 func (m *mobReplay) compareStrike(r *spellModResult, l, ref mobLine, rec, refRec damageRecord) {

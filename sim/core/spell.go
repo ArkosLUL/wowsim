@@ -141,6 +141,8 @@ type Spell struct {
 	// bonus doesn't take: an item-restricted aura 79 (Ranged Weapon Specialization on ranged attacks) or the off
 	// hand's SPELL_AURA_MOD_OFFHAND_DAMAGE_PCT (Dual Wield Specialization, Nerves of Cold Steel)
 	TotalPctMultiplier float64
+	// its hits are whole strikes: StrikeDamage rolled the base with the hand's TOTAL_PCT inside
+	wholeStrike bool
 
 	// the spell's threat mods (SPELLMOD_THREAT), on its damage and healing threat; 0 means no threat at all
 	ThreatMultiplier float64

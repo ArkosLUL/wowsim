@@ -31,7 +31,7 @@ func (priest *Priest) getMindFlayTickSpell(numTicks int32, basePoints *float64) 
 			{Op: core.SpellModBonusMultiplier, Pct: 5 * int32(priest.Talents.Misery)},
 		},
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			damage := *basePoints + core.PowerBonus(spell.Direct.SP*spell.SpellPower())
+			damage := *basePoints + core.PowerBonus(spell.Direct.SP, spell.SpellPower())
 			damage *= priest.MindFlayModifier
 			result := spell.CalcAndDealDamage(sim, target, damage, spell.OutcomeMagicHitAndCrit)
 
@@ -138,7 +138,7 @@ func (priest *Priest) newMindFlaySpell(numTicksIdx int32) *core.Spell {
 			spell.DealOutcome(sim, result)
 		},
 		ExpectedTickDamage: func(sim *core.Simulation, target *core.Unit, spell *core.Spell, _ bool) *core.SpellResult {
-			baseDamage := spell.Dot(target).Tick.Average() + core.PowerBonus(mindFlayTickSpell.Direct.SP*spell.SpellPower())
+			baseDamage := spell.Dot(target).Tick.Average() + core.PowerBonus(mindFlayTickSpell.Direct.SP, spell.SpellPower())
 
 			if priest.Talents.Shadowform {
 				return spell.CalcPeriodicDamage(sim, target, baseDamage, spell.OutcomeExpectedMagicCrit)

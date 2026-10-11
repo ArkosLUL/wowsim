@@ -40,7 +40,7 @@ func (dk *Deathknight) registerIcyTouchSpell() {
 		Mods:   mods,
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := (spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.AP*dk.getImpurityBonus(spell))) *
+			baseDamage := (spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.AP, dk.getImpurityBonus(spell))) *
 				dk.glacielRotBonus(target) *
 				dk.RoRTSBonus(target) *
 				dk.mercilessCombatBonus(sim)
@@ -75,7 +75,7 @@ func (dk *Deathknight) registerDrwIcyTouchSpell() {
 		Mods:   mods,
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.AP*dk.RuneWeapon.getImpurityBonus(spell))
+			baseDamage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.AP, dk.RuneWeapon.getImpurityBonus(spell))
 
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 			if result.Landed() {

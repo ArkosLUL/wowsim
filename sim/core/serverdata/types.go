@@ -51,6 +51,8 @@ const (
 	// SpellEffectInfo::IsTargetingArea on an effect: an area or cone target, for which
 	// Unit::GetCastingTimeForBonus halves the default coefficient
 	FlagTargetsArea
+	// SpellInfo::GetAllEffectsMechanicMask has MECHANIC_BLEED: the spell's own mechanic or an effect's
+	FlagBleed
 )
 
 // Spell is one spell's SpellInfo as the server holds it after Spell.dbc, spell_dbc and its corrections.

@@ -79,8 +79,8 @@ func (rogue *Rogue) registerFanOfKnives() {
 			targets := sim.Encounter.TargetUnits
 			mhResults := make([]*core.SpellResult, len(targets))
 			for i, aoeTarget := range targets {
-				baseDamage := (mhSpell.Unit.MHWeaponDamage(sim, mhSpell.MeleeAttackPower()) + mhSpell.BonusWeaponDamage()) *
-					mhSpell.Direct.WeaponPct * mhDaggerPct
+				baseDamage := core.ApplyPct(core.ApplyPct(mhSpell.MHStrikeDamage(sim, mhSpell.MeleeAttackPower()),
+					mhSpell.Direct.WeaponPct), mhDaggerPct)
 				baseDamage *= sim.Encounter.AOECapMultiplier()
 				mhResults[i] = mhSpell.CalcDamage(sim, aoeTarget, baseDamage, mhSpell.OutcomeMeleeSpecialHitAndCrit)
 			}
@@ -88,8 +88,8 @@ func (rogue *Rogue) registerFanOfKnives() {
 			if hasOH {
 				ohResults = make([]*core.SpellResult, len(targets))
 				for i, aoeTarget := range targets {
-					baseDamage := (ohSpell.Unit.OHWeaponDamage(sim, ohSpell.MeleeAttackPower()) + ohSpell.BonusWeaponDamage()) *
-						ohSpell.Direct.WeaponPct * ohDaggerPct
+					baseDamage := core.ApplyPct(core.ApplyPct(ohSpell.OHStrikeDamage(sim, ohSpell.MeleeAttackPower()),
+						ohSpell.Direct.WeaponPct), ohDaggerPct)
 					baseDamage *= sim.Encounter.AOECapMultiplier()
 					ohResults[i] = ohSpell.CalcDamage(sim, aoeTarget, baseDamage, ohSpell.OutcomeMeleeSpecialHitAndCrit)
 				}

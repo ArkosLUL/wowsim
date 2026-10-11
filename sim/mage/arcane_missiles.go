@@ -30,7 +30,7 @@ func (mage *Mage) registerArcaneMissilesSpell() {
 		},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			damage := (spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP*spell.SpellPower())) * mage.tormentTheWeak(target)
+			damage := (spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP, spell.SpellPower())) * mage.tormentTheWeak(target)
 			result := spell.CalcDamage(sim, target, damage, spell.OutcomeMagicHitAndCrit)
 
 			spell.DealDamageAfterTravel(sim, result)

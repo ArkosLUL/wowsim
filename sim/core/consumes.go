@@ -538,14 +538,14 @@ func makePotionActivationInternal(potionType proto.Potions, character *Character
 				Flags:    SpellFlagNoOnCastComplete,
 				Cast:     potionCast,
 				ApplyEffects: func(sim *Simulation, _ *Unit, _ *Spell) {
-					healthGain := sim.RollWithLabel(2700, 4500, "RunicHealingPotion")
+					healthGain := sim.RollWhole(2700, 4500, "RunicHealingPotion")
 
 					if alchStoneEquipped && potionType == proto.Potions_RunicHealingPotion {
 						healthGain *= 1.40
 					} else if hasEngi && potionType == proto.Potions_RunicHealingInjector {
 						healthGain *= 1.25
 					}
-					character.GainHealth(sim, healthGain*character.PseudoStats.HealingTakenMultiplier, healthMetrics)
+					character.GainHealing(sim, healthGain, healthMetrics)
 				},
 			}),
 		}
@@ -907,7 +907,7 @@ func registerConjuredCD(agent Agent, consumes *proto.Consumes) {
 				},
 			},
 			ApplyEffects: func(sim *Simulation, _ *Unit, _ *Spell) {
-				character.GainHealth(sim, 4280*character.PseudoStats.HealingTakenMultiplier, healthMetrics)
+				character.GainHealing(sim, 4280, healthMetrics)
 			},
 		})
 		character.AddMajorCooldown(MajorCooldown{

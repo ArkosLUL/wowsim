@@ -57,7 +57,7 @@ func (warlock *Warlock) registerCorruptionSpell() {
 			Tick: core.SpellEffect{Effect: 0, Min: 180, Max: 180, SP: 0.2},
 
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + core.PowerBonus(dot.Tick.SP*dot.Spell.SpellPower())
+				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + core.PowerBonus(dot.Tick.SP, dot.Spell.SpellPower())
 				if !isRollover {
 					attackTable := dot.Spell.Unit.AttackTables[target.UnitIndex]
 					dot.SnapshotCritChance = dot.Spell.SpellCritChance(target)
@@ -86,7 +86,7 @@ func (warlock *Warlock) registerCorruptionSpell() {
 				return dot.CalcSnapshotDamage(sim, target, dot.OutcomeExpectedMagicSnapshotCrit)
 			} else {
 				tick := &spell.Dot(target).Tick
-				baseDmg := tick.Average() + core.PowerBonus(tick.SP*spell.SpellPower())
+				baseDmg := tick.Average() + core.PowerBonus(tick.SP, spell.SpellPower())
 				return spell.CalcPeriodicDamage(sim, target, baseDmg, spell.OutcomeExpectedMagicCrit)
 			}
 		},

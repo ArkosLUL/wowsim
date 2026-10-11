@@ -630,7 +630,7 @@ func init() {
 			procAura := character.GetOrRegisterAura(core.Aura{
 				Label:    name,
 				ActionID: actionID,
-				Duration: time.Second * 2 * time.Duration(numTicks),
+				Duration: character.DurationThroughLastTick(time.Second * 2 * time.Duration(numTicks)), // or its end cancels the last tick
 				OnGain: func(aura *core.Aura, sim *core.Simulation) {
 					pa = core.StartPeriodicAction(sim, core.PeriodicActionOptions{
 						NumTicks: numTicks,

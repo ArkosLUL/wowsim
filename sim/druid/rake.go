@@ -42,7 +42,7 @@ func (druid *Druid) registerRakeSpell() {
 			TicksCanCrit:  dotCanCrit,
 			Tick:          core.SpellEffect{Effect: 1, Min: 358, Max: 358, AP: 0.06},
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + core.PowerBonus(dot.Tick.AP*dot.Spell.MeleeAttackPower())
+				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + core.PowerBonus(dot.Tick.AP, dot.Spell.MeleeAttackPower())
 				attackTable := dot.Spell.Unit.AttackTables[target.UnitIndex]
 				dot.SnapshotCritChance = dot.Spell.PhysicalCritChance(attackTable)
 				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(attackTable)
@@ -59,10 +59,7 @@ func (druid *Druid) registerRakeSpell() {
 		Direct: core.SpellEffect{Effect: 0, Min: 176, Max: 176, AP: 0.01},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.AP*spell.MeleeAttackPower())
-			if druid.BleedCategories.Get(target).AnyActive() {
-				baseDamage *= 1.3
-			}
+			baseDamage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.AP, spell.MeleeAttackPower())
 
 			result := spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 
@@ -75,7 +72,7 @@ func (druid *Druid) registerRakeSpell() {
 		},
 
 		ExpectedInitialDamage: func(sim *core.Simulation, target *core.Unit, spell *core.Spell, _ bool) *core.SpellResult {
-			baseDamage := spell.Direct.Average() + core.PowerBonus(spell.Direct.AP*spell.MeleeAttackPower())
+			baseDamage := spell.Direct.Average() + core.PowerBonus(spell.Direct.AP, spell.MeleeAttackPower())
 			initial := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeExpectedMagicAlwaysHit)
 
 			attackTable := spell.Unit.AttackTables[target.UnitIndex]
@@ -86,7 +83,7 @@ func (druid *Druid) registerRakeSpell() {
 		},
 		ExpectedTickDamage: func(sim *core.Simulation, target *core.Unit, spell *core.Spell, _ bool) *core.SpellResult {
 			tick := &spell.Dot(target).Tick
-			tickBase := tick.Average() + core.PowerBonus(tick.AP*spell.MeleeAttackPower())
+			tickBase := tick.Average() + core.PowerBonus(tick.AP, spell.MeleeAttackPower())
 			ticks := spell.CalcPeriodicDamage(sim, target, tickBase, spell.OutcomeExpectedMagicAlwaysHit)
 
 			attackTable := spell.Unit.AttackTables[target.UnitIndex]

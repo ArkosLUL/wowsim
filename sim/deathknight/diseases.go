@@ -144,7 +144,7 @@ func (dk *Deathknight) registerFrostFever() {
 			TicksCanCrit:        canCrit,
 			Tick:                frostFeverTick,
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + core.PowerBonus(dot.Tick.AP*dk.getImpurityBonus(dot.Spell))
+				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + core.PowerBonus(dot.Tick.AP, dk.getImpurityBonus(dot.Spell))
 
 				if !isRollover {
 					dot.SnapshotCritChance = dk.diseaseCritChance(dot, target)
@@ -216,7 +216,7 @@ func (dk *Deathknight) registerBloodPlague() {
 			Tick:                bloodPlagueTick,
 
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + core.PowerBonus(dot.Tick.AP*dk.getImpurityBonus(dot.Spell))
+				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + core.PowerBonus(dot.Tick.AP, dk.getImpurityBonus(dot.Spell))
 
 				if !isRollover {
 					dot.SnapshotCritChance = dk.diseaseCritChance(dot, target)
@@ -269,7 +269,7 @@ func (dk *Deathknight) registerDrwFrostFever() {
 			TicksCanCrit:  canCrit,
 			Tick:          frostFeverTick,
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + core.PowerBonus(dot.Tick.AP*dk.getImpurityBonus(dot.Spell))
+				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + core.PowerBonus(dot.Tick.AP, dk.getImpurityBonus(dot.Spell))
 
 				if !isRollover {
 					dot.SnapshotCritChance = dk.diseaseCritChance(dot, target)
@@ -314,7 +314,7 @@ func (dk *Deathknight) registerDrwBloodPlague() {
 			Tick:          bloodPlagueTick,
 
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + core.PowerBonus(dot.Tick.AP*dk.getImpurityBonus(dot.Spell))
+				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + core.PowerBonus(dot.Tick.AP, dk.getImpurityBonus(dot.Spell))
 
 				if !isRollover {
 					dot.SnapshotCritChance = dk.diseaseCritChance(dot, target)

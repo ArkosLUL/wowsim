@@ -611,7 +611,7 @@ var spells = []Spell{
 	},
 	// Deep Wounds
 	{
-		ID: 12721, Family: 4, FamilyFlags: [3]uint32{0, 0x10}, SchoolMask: 1,
+		ID: 12721, Family: 4, FamilyFlags: [3]uint32{0, 0x10}, SchoolMask: 1, Flags: FlagBleed,
 		Attributes: [8]uint32{0x10, 0, 0x4, 0, 0x100, 0, 0x20000000}, AttributesCu: 0x1000,
 		DurationMs: 6000, MaxDurationMs: 6000,
 		ProcChance: 101, SpellLevel: 1,
@@ -661,7 +661,7 @@ var spells = []Spell{
 	},
 	// Deep Wounds (Rank 3)
 	{
-		ID: 12868, SchoolMask: 1,
+		ID: 12868, SchoolMask: 1, Flags: FlagBleed,
 		Attributes: [8]uint32{0x40190, 0, 0x4}, AttributesCu: 0x1000,
 		ProcChance: 101, SpellLevel: 1,
 		Effects: [3]Effect{
@@ -3447,7 +3447,7 @@ var spells = []Spell{
 	},
 	// Rend (Rank 10)
 	{
-		ID: 47465, Family: 4, FamilyFlags: [3]uint32{0x20}, SchoolMask: 1, DmgClass: DmgClassMelee,
+		ID: 47465, Family: 4, FamilyFlags: [3]uint32{0x20}, SchoolMask: 1, DmgClass: DmgClassMelee, Flags: FlagBleed,
 		Attributes: [8]uint32{0x50010, 0x8000200, 0, 0x400, 0, 0, 0x800000}, AttributesCu: 0x1000,
 		GCDMs: 1500, GCDCategory: 133, DurationMs: 15000, MaxDurationMs: 15000,
 		ProcChance: 101, PowerType: 1, ManaCost: 100, SpellLevel: 76, BaseLevel: 76,
@@ -4330,7 +4330,7 @@ var spells = []Spell{
 	},
 	// Lacerate (Rank 3)
 	{
-		ID: 48568, Family: 7, FamilyFlags: [3]uint32{0, 0x100}, SchoolMask: 1, DmgClass: DmgClassMelee,
+		ID: 48568, Family: 7, FamilyFlags: [3]uint32{0, 0x100}, SchoolMask: 1, DmgClass: DmgClassMelee, Flags: FlagBleed,
 		Attributes: [8]uint32{0x10, 0x8000200, 0, 0x80}, AttributesCu: 0x3100,
 		GCDMs: 1500, GCDCategory: 133, DurationMs: 15000, MaxDurationMs: 15000, StackAmount: 5,
 		ProcChance: 101, PowerType: 1, ManaCost: 150, SpellLevel: 80, BaseLevel: 80,
@@ -4353,7 +4353,7 @@ var spells = []Spell{
 	},
 	// Rake (Rank 7)
 	{
-		ID: 48574, Family: 7, FamilyFlags: [3]uint32{0x1000}, SchoolMask: 1, DmgClass: DmgClassMelee, Flags: FlagBinary | FlagCompletelyBlocked,
+		ID: 48574, Family: 7, FamilyFlags: [3]uint32{0x1000}, SchoolMask: 1, DmgClass: DmgClassMelee, Flags: FlagBinary | FlagCompletelyBlocked | FlagBleed,
 		Attributes: [8]uint32{0x40010, 0x8000200, 0, 0x8, 0x100000}, AttributesCu: 0x107100,
 		GCDMs: 1000, GCDCategory: 133, DurationMs: 9000, MaxDurationMs: 9000,
 		ProcChance: 101, PowerType: 3, ManaCost: 40, SpellLevel: 78, BaseLevel: 78,
@@ -4462,7 +4462,7 @@ var spells = []Spell{
 	},
 	// Rupture (Rank 9)
 	{
-		ID: 48672, Family: 8, FamilyFlags: [3]uint32{0x100000}, SchoolMask: 1, DmgClass: DmgClassMelee,
+		ID: 48672, Family: 8, FamilyFlags: [3]uint32{0x100000}, SchoolMask: 1, DmgClass: DmgClassMelee, Flags: FlagBleed,
 		Attributes: [8]uint32{0x50010, 0x100200, 0, 0x400, 0x8, 0, 0x800000}, AttributesCu: 0x1000,
 		GCDMs: 1000, GCDCategory: 133, DurationMs: 6000, MaxDurationMs: 16000,
 		ProcChance: 101, PowerType: 3, ManaCost: 25, SpellLevel: 79, BaseLevel: 79,
@@ -4473,7 +4473,7 @@ var spells = []Spell{
 	},
 	// Garrote (Rank 10)
 	{
-		ID: 48676, Family: 8, FamilyFlags: [3]uint32{0x100}, SchoolMask: 1, DmgClass: DmgClassMelee, Flags: FlagBinary | FlagNoActiveDefense,
+		ID: 48676, Family: 8, FamilyFlags: [3]uint32{0x100}, SchoolMask: 1, DmgClass: DmgClassMelee, Flags: FlagBinary | FlagNoActiveDefense | FlagBleed,
 		Attributes: [8]uint32{0x270010, 0x8000200, 0x100000, 0, 0, 0, 0x800000}, AttributesCu: 0x127000,
 		GCDMs: 1000, GCDCategory: 133, DurationMs: 18000, MaxDurationMs: 18000,
 		ProcChance: 101, PowerType: 3, ManaCost: 50, SpellLevel: 80, BaseLevel: 80,
@@ -4961,7 +4961,7 @@ var spells = []Spell{
 	},
 	// Rip (Rank 9)
 	{
-		ID: 49800, Family: 7, FamilyFlags: [3]uint32{0x800000, 0, 0x200000}, SchoolMask: 1, DmgClass: DmgClassMelee,
+		ID: 49800, Family: 7, FamilyFlags: [3]uint32{0x800000, 0, 0x200000}, SchoolMask: 1, DmgClass: DmgClassMelee, Flags: FlagBleed,
 		Attributes: [8]uint32{0x40010, 0x100200, 0, 0, 0, 0, 0x800000}, AttributesCu: 0x1000,
 		GCDMs: 1000, GCDCategory: 133, DurationMs: 12000, MaxDurationMs: 12000,
 		ProcChance: 101, PowerType: 3, ManaCost: 30, SpellLevel: 80, BaseLevel: 80,
@@ -6147,7 +6147,7 @@ var spells = []Spell{
 	},
 	// Savage Rend (Rank 6)
 	{
-		ID: 53582, Family: 9, FamilyFlags: [3]uint32{0, 0x50000000}, SchoolMask: 1, DmgClass: DmgClassMelee,
+		ID: 53582, Family: 9, FamilyFlags: [3]uint32{0, 0x50000000}, SchoolMask: 1, DmgClass: DmgClassMelee, Flags: FlagBleed,
 		Attributes: [8]uint32{0x10, 0x200}, AttributesCu: 0x3100,
 		CooldownMs: 60000, DurationMs: 15000, MaxDurationMs: 15000,
 		ProcFlags: 0x10, ProcChance: 100, PowerType: 2, ManaCost: 20, SpellLevel: 80, BaseLevel: 80,
@@ -7539,7 +7539,7 @@ var spells = []Spell{
 	},
 	// Rake (Rank 6)
 	{
-		ID: 59886, Family: 9, FamilyFlags: [3]uint32{0, 0x10000000}, SchoolMask: 1, DmgClass: DmgClassMelee, Flags: FlagCompletelyBlocked,
+		ID: 59886, Family: 9, FamilyFlags: [3]uint32{0, 0x10000000}, SchoolMask: 1, DmgClass: DmgClassMelee, Flags: FlagCompletelyBlocked | FlagBleed,
 		Attributes: [8]uint32{0x40010, 0x8000200, 0, 0x8, 0x100000}, AttributesCu: 0x7100,
 		GCDMs: 1500, GCDCategory: 133, CooldownMs: 10000, DurationMs: 9000, MaxDurationMs: 9000,
 		ProcChance: 101, PowerType: 2, ManaCost: 20, SpellLevel: 80, BaseLevel: 80,

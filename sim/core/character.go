@@ -48,6 +48,8 @@ type Character struct {
 	Equipment
 	//Item Swap Handler
 	ItemSwap ItemSwap
+	// set when the item swap turns the head's meta gem on or off
+	metaSwap *metaGemSwap
 
 	// Consumables this Character will be using.
 	Consumes *proto.Consumes
@@ -188,7 +190,13 @@ func NewCharacter(party *Party, partyIndex int, player *proto.Player) Character 
 	character.PseudoStats.InFrontOfTarget = player.InFrontOfTarget
 
 	if player.EnableItemSwap && player.ItemSwap != nil {
-		character.enableItemSwap(player.ItemSwap, character.DefaultMeleeCritMultiplier(), character.DefaultMeleeCritMultiplier(), 0)
+		character.enableItemSwap(player.ItemSwap, 0, 0, 0)
+		// ahead of the first crit multiplier, so each one that follows a swapped meta gem is noted
+		character.initMetaGemSwap()
+		if len(character.ItemSwap.slots) > 0 {
+			character.ItemSwap.mhCritMultiplier = character.DefaultMeleeCritMultiplier()
+			character.ItemSwap.ohCritMultiplier = character.DefaultMeleeCritMultiplier()
+		}
 	}
 
 	return character
@@ -338,6 +346,9 @@ func (character *Character) clearBuildPhaseAuras(phase CharacterBuildPhase) {
 func (character *Character) applyItemEffects(agent Agent) {
 	character.applySparkOfHope()
 	inactiveMeta := character.Equipment.inactiveMetaGem()
+	if character.metaSwap != nil {
+		character.registerMetaGemSwapAura()
+	}
 	for slot, eq := range character.Equipment {
 		if applyItemEffect, ok := itemEffects[eq.ID]; ok {
 			applyItemEffect(agent)
@@ -345,7 +356,8 @@ func (character *Character) applyItemEffects(agent Agent) {
 
 		for i := range eq.Gems {
 			g := &eq.Gems[i]
-			if applyGemEffect, ok := itemEffects[g.ID]; ok && g != inactiveMeta {
+			// a meta gem the item swap turns on registers its effect too, where it knows how
+			if applyGemEffect, ok := itemEffects[g.ID]; ok && (g != inactiveMeta || character.metaSwap != nil && metaGemSwapEffects[g.ID]) {
 				applyGemEffect(agent)
 			}
 		}
@@ -387,33 +399,29 @@ func (character *Character) GetBaseStats() stats.Stats {
 }
 
 // metaCritDamageBonus is the crit damage meta gems' SPELL_AURA_MOD_CRIT_DAMAGE_BONUS (163), 3% on every school.
-func (character *Character) metaCritDamageBonus() float64 {
-	if character.HasMetaGemEquipped(34220) ||
-		character.HasMetaGemEquipped(32409) ||
-		character.HasMetaGemEquipped(41285) ||
-		character.HasMetaGemEquipped(41398) {
-		return 0.03
-	}
-	return 0
-}
+const metaCritDamageBonus = 0.03
 
 // Unit::SpellCriticalDamageBonus, for spells and specials: the base crit takes the 163 auras added up (the meta
 // gem's 3% and whatever primaryModifiers holds over 1), then the summed SPELLMOD_CRIT_DAMAGE_BONUS talents
 // (secondaryModifiers) scale what's above 1.
 func (character *Character) calculateCritMultiplier(normalCritDamage float64, primaryModifiers float64, secondaryModifiers float64) float64 {
-	return 1.0 + (normalCritDamage*(primaryModifiers+character.metaCritDamageBonus())-1.0)*(1.0+secondaryModifiers)
+	multiplier := func(meta float64) float64 {
+		return 1.0 + (normalCritDamage*(primaryModifiers+meta)-1.0)*(1.0+secondaryModifiers)
+	}
+	return character.metaGemCrit(critDamageMetaGems, multiplier(metaCritDamageBonus), multiplier(0))
 }
 
 // WhiteCritMultiplier is a white melee swing's. Unit::CalculateMeleeDamage multiplies the 163 auras into its 2x
 // one by one instead of adding them up, so primaryModifiers and the meta gem's 3% multiply here.
 func (character *Character) WhiteCritMultiplier(primaryModifiers float64) float64 {
-	return 2.0 * primaryModifiers * (1 + character.metaCritDamageBonus())
+	multiplier := func(meta float64) float64 { return 2.0 * primaryModifiers * (1 + meta) }
+	return character.metaGemCrit(critDamageMetaGems, multiplier(metaCritDamageBonus), multiplier(0))
 }
 func (character *Character) calculateHealingCritMultiplier(normalCritDamage float64, primaryModifiers float64, secondaryModifiers float64) float64 {
-	if character.HasMetaGemEquipped(41376) {
-		primaryModifiers *= 1.03
+	multiplier := func(primary float64) float64 {
+		return 1.0 + (normalCritDamage*primary-1.0)*(1.0+secondaryModifiers)
 	}
-	return 1.0 + (normalCritDamage*primaryModifiers-1.0)*(1.0+secondaryModifiers)
+	return character.metaGemCrit(healingCritMetaGem, multiplier(primaryModifiers*1.03), multiplier(primaryModifiers))
 }
 
 // SpellCritMultiplier and MeleeCritMultiplier are by damage class: 1.5 for magic, 2 for melee and ranged.
@@ -540,9 +548,11 @@ func (character *Character) FillPlayerStats(playerStats *proto.PlayerStats) {
 }
 
 func (character *Character) reset(sim *Simulation, agent Agent) {
+	character.resetMetaGemCrit()
 	character.Unit.reset(sim, agent)
 	character.majorCooldownManager.reset(sim)
 	character.ItemSwap.reset(sim)
+	character.updateMetaGemSwap(sim)
 	character.CurrentTarget = character.defaultTarget
 
 	agent.Reset(sim)

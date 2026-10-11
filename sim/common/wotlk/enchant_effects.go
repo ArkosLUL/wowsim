@@ -235,7 +235,7 @@ func init() {
 				}
 
 				if ppmm.Proc(sim, spell.ProcMask, "Lifeward") {
-					character.GainHealth(sim, sim.Roll(310, 356)*character.PseudoStats.HealingTakenMultiplier, healthMetrics)
+					character.GainHealing(sim, sim.RollWhole(310, 356, "Damage Roll"), healthMetrics)
 				}
 			},
 		})
@@ -474,7 +474,7 @@ func init() {
 			OnSpellHitTaken: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
 				if character.CurrentHealth()/character.MaxHealth() < 0.35 {
 					amountHealed := float64(aura.GetStacks()) * (360. + sim.RandomFloat("Blood Reserve")*80.)
-					character.GainHealth(sim, amountHealed*character.PseudoStats.HealingTakenMultiplier, healthMetrics)
+					character.GainHealing(sim, amountHealed, healthMetrics)
 					aura.Deactivate(sim)
 				}
 			},

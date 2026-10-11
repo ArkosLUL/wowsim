@@ -21,13 +21,6 @@ func (mage *Mage) registerPyroblastSpell() {
 	}
 	if ticksCanCrit {
 		onTick = func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
-			// Unit::_UpdateSpells walks the target's auras in spell id order, so an Ignite tick due on this
-			// update lands first and a crit here rolls over what's left after it
-			if mage.Ignite != nil {
-				if ignite := mage.Ignite.Dot(target); ignite.IsActive() && ignite.NextTickAt() == sim.CurrentTime && ignite.MaxTicksRemaining() > 0 {
-					ignite.ManualTick(sim)
-				}
-			}
 			dot.CalcAndDealPeriodicSnapshotDamage(sim, target, dot.OutcomeSnapshotCrit)
 		}
 	}
@@ -72,7 +65,7 @@ func (mage *Mage) registerPyroblastSpell() {
 		},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := (spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP*spell.SpellPower())) * mage.tormentTheWeak(target)
+			baseDamage := (spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP, spell.SpellPower())) * mage.tormentTheWeak(target)
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 			spell.WaitTravelTime(sim, func(sim *core.Simulation) {
 				if result.Landed() {
@@ -106,7 +99,7 @@ func (mage *Mage) registerPyroblastSpell() {
 		Tick: core.SpellEffect{Effect: 1, Min: 113, Max: 113, SP: 0.05},
 
 		OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
-			dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + core.PowerBonus(dot.Tick.SP*dot.Spell.SpellPower())
+			dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + core.PowerBonus(dot.Tick.SP, dot.Spell.SpellPower())
 			dot.SnapshotCritChance = dot.Spell.SpellCritChance(target)
 			dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(dot.Spell.Unit.AttackTables[target.UnitIndex]) *
 				mage.tormentTheWeak(target)
