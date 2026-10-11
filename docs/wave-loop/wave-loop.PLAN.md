@@ -150,7 +150,7 @@ pass doesn't repeat.
 Z6 takes the three items the user planned on master on 2026-10-10 (PAR-FU-8 and PAR-FU-9 for "the next wave",
 and RI-5) and PAR-FU-10, mod-spell-tweaks' new mage and warlock tweaks (the user's call, the same day); Z7 takes
 Z5's follow-ups, specced at its close-out under the earlier call (the parity backlog first), and Z6's, added to
-its specs. It waits for the user's continue.
+its specs. It started 2026-10-11.
 
 **Where the specs are:**
 
@@ -167,14 +167,15 @@ its specs. It waits for the user's continue.
 
 ## Current wave
 
-- Wave: Z6, landed (master fast-forwarded to this close-out). One run did every code and live stage on the
-  server the user rebuilt on 2026-10-10 (image of 20:04 local: [ac] `3d89793c7`, mod-spell-tweaks `9bf5c75`,
-  mod-sim-validation `bb2a21d`). The module's HEAD is `8a6f13f`: its `TICK_PERIOD_SCRIPTS` change needs a rebuild
-  by the user, then MageFire's spell-mod sweep again (EC-CLASS-FIX3).
-  Prod runs Z6's `e5a289570` (RI-5's "After it lands on `master`" steps, 2026-10-11); `wowsims-wotlk:rollback-x`
-  is X's `25cb9dddc`. Auto mode refuses the prod docker commands, a DSN on a command line and chained commands:
-  the user's allow rules (`.claude/settings.local.json` in [sim]) cover each plain command.
-  Next, Z7, planned: EC-CORE-FIX4, EC-PET-FIX3, EC-CLASS-FIX3 and EC-TOOLS, Z6's follow-ups in their specs.
+- Wave: Z7, running since 2026-10-11, base `fd12d68cc` (master had not moved): EC-CORE-FIX4, EC-PET-FIX3,
+  EC-CLASS-FIX3 and EC-TOOLS, Z6's follow-ups in their specs. One run does every code and live stage: no item
+  changes the module's C++, and the server runs [ac] `3d89793c7`, mod-spell-tweaks `9bf5c75` and mod-sim-validation
+  `8a6f13f` (the user's rebuild, image of 2026-10-11 13:38 local). EC-TOOLS gained a live stage: the Balance
+  druid's fight from the new spot. Args and shared rules: `G:\DevStuff\GitHub\.wave-loop\waveZ7-*`.
+  Z6 landed. Prod runs its `e5a289570` (RI-5's "After it lands on `master`" steps, 2026-10-11);
+  `wowsims-wotlk:rollback-x` is X's `25cb9dddc`. Auto mode refuses the prod docker commands, a DSN on a command
+  line and chained commands: the user's allow rules (`.claude/settings.local.json` in [sim]) cover each plain
+  command.
   Z6's reports: `G:\DevStuff\GitHub\.wave-loop\z6-run1\*.md`, `waveZ6-results.json`; item notes:
   `.wave-loop\{par-fu-8,par-fu-9,par-fu-10,ri-5}-tmp`.
 - Open: the e2e-coverage backlog Z7 leaves, sim-performance's Left items and Z5's 9–11% on mana users (Sim
@@ -197,7 +198,7 @@ its specs. It waits for the user's continue.
   - Then the BiS tooltip dataset (acbis driver, both stages, fresh `--out`, then `acbis`; the import needs
     the OK), the changed builds' stat weights, and the perf harness's `opt_*` scenarios (`update.sh`, a new
     baseline; the raid25 dumps in `_dump/optimizer_dump_test.go` still build uncut pools).
-- Workflow runIds: Z6's `wf_9f63df91-dcd` (all four, base `c00231f37`); Z5's `wf_2bd87279-a32` (run 1, base `a1bb8d403`), `wf_caa6cd72-af1` (the rotations, base
+- Workflow runIds: Z7's `wf_90c05e5f-5b7` (all four, base `fd12d68cc`); Z6's `wf_9f63df91-dcd` (all four, base `c00231f37`); Z5's `wf_2bd87279-a32` (run 1, base `a1bb8d403`), `wf_caa6cd72-af1` (the rotations, base
   `5692dd49d`), `wf_0d256663-f64` (EC-THREAT-FIX4's live stage) and `wf_4c054cc8-0ce` (the live records, base
   `ef598ad48`); Z4's `wf_e9e036c7-5bd`; Z3's `wf_9aabe6e6-7af` (all four); Z2's `wf_7c79ba74-4ca` (code stages) and `wf_7e9c6966-820` (live stages, BIS-ALTS); Z's `wf_8821da6d-91f` (all five); Y's `wf_e58e8b14-102` (all four), `wf_d290cc37-ee6` and `wf_fe29d895-a35` (EC-TICK-FIX's rest and
   review); X2's `wf_b555c578-f46` (code stages), `wf_a0107f34-c7b` (live stages) and `wf_b00ecbe0-79a` (EC-RECHECK's
