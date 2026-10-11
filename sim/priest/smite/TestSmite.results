@@ -869,12 +869,6 @@ ability_results: {
  key: "TestSmite-Average-Default"
  value: {
   entries: {
-   key: "pet:Shadowfiend|aura|{SpellID: 57669}"
-   value: {
-    uptime_s: 299.9236
-   }
-  }
-  entries: {
    key: "player|action|{ItemID: 40212}"
    value: {
     casts: 1

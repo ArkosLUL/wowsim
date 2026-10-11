@@ -896,8 +896,8 @@ dps_results: {
 dps_results: {
  key: "TestRestoration-Talents-HealingGrace-Average"
  value: {
-  tps: 2864.07094
-  hps: 8870.32019
+  tps: 2864.12692
+  hps: 8870.49161
  }
 }
 ability_results: {
@@ -1181,10 +1181,10 @@ ability_results: {
   entries: {
    key: "player|action|{SpellID: 51994}"
    value: {
-    casts: 114.6765
-    hits: 114.6765
-    amount_per_hit: 785.33161
-    amount: 90059.0805
+    casts: 114.6795
+    hits: 114.6795
+    amount_per_hit: 785.30818
+    amount: 90058.749
    }
   }
   entries: {
@@ -1199,20 +1199,20 @@ ability_results: {
   entries: {
    key: "player|action|{SpellID: 52752}"
    value: {
-    casts: 15.6055
-    hits: 15.6055
-    amount_per_hit: 1578.46102
-    amount: 24632.6735
+    casts: 15.6065
+    hits: 15.6065
+    amount_per_hit: 1578.46006
+    amount: 24634.237
    }
   }
   entries: {
    key: "player|action|{SpellID: 55459}"
    value: {
-    casts: 138.4925
-    hits: 415.4775
-    crit_pct: 35.33236
-    amount_per_hit: 5630.10945
-    amount: 2.339183799e+06
+    casts: 138.4955
+    hits: 415.4865
+    crit_pct: 35.33219
+    amount_per_hit: 5630.10162
+    amount: 2.3392312165e+06
    }
   }
   entries: {
@@ -1224,11 +1224,11 @@ ability_results: {
   entries: {
    key: "player|action|{SpellID: 61301}"
    value: {
-    casts: 44.2195
-    hits: 44.2195
-    crit_pct: 35.29099
-    amount_per_hit: 4355.06676
-    amount: 192578.8745
+    casts: 44.22
+    hits: 44.22
+    crit_pct: 35.29285
+    amount_per_hit: 4355.07679
+    amount: 192581.4955
    }
   }
   entries: {
@@ -1294,7 +1294,7 @@ ability_results: {
   entries: {
    key: "player|aura|{SpellID: 52000}"
    value: {
-    uptime_s: 233.71264
+    uptime_s: 233.71481
    }
   }
   entries: {
@@ -1342,7 +1342,7 @@ ability_results: {
   entries: {
    key: "player|aura|{SpellID: 60062}"
    value: {
-    uptime_s: 63.42808
+    uptime_s: 63.42955
    }
   }
   entries: {

@@ -217,7 +217,7 @@ dps_results: {
 dps_results: {
  key: "TestDisc-AllItems-DarkmoonCard:Greatness-44255"
  value: {
-  tps: 871.48391
+  tps: 870.13465
   hps: 2814.93586
  }
 }
@@ -910,12 +910,6 @@ dps_results: {
 ability_results: {
  key: "TestDisc-Average-Default"
  value: {
-  entries: {
-   key: "pet:Shadowfiend|aura|{SpellID: 57669}"
-   value: {
-    uptime_s: 299.9236
-   }
-  }
   entries: {
    key: "player|action|{ItemID: 40212}"
    value: {

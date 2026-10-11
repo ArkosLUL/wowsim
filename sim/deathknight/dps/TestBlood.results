@@ -1019,12 +1019,6 @@ ability_results: {
    }
   }
   entries: {
-   key: "pet:Army of the Dead|aura|{SpellID: 57669}"
-   value: {
-    uptime_s: 2399.38884
-   }
-  }
-  entries: {
    key: "pet:Army of the Dead|aura|{SpellID: 57722}"
    value: {
     uptime_s: 2399.38884
@@ -1074,12 +1068,6 @@ ability_results: {
   }
   entries: {
    key: "pet:Ghoul|aura|{SpellID: 47240}"
-   value: {
-    uptime_s: 299.9236
-   }
-  }
-  entries: {
-   key: "pet:Ghoul|aura|{SpellID: 57669}"
    value: {
     uptime_s: 299.9236
    }
@@ -1186,12 +1174,6 @@ ability_results: {
   }
   entries: {
    key: "pet:Rune Weapon|aura|{SpellID: 47436}"
-   value: {
-    uptime_s: 299.9236
-   }
-  }
-  entries: {
-   key: "pet:Rune Weapon|aura|{SpellID: 57669}"
    value: {
     uptime_s: 299.9236
    }
@@ -1525,12 +1507,6 @@ ability_results: {
    key: "player|aura|{SpellID: 54758}"
    value: {
     uptime_s: 47.98022
-   }
-  }
-  entries: {
-   key: "player|aura|{SpellID: 57669}"
-   value: {
-    uptime_s: 299.9236
    }
   }
   entries: {

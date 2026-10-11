@@ -872,12 +872,6 @@ ability_results: {
    }
   }
   entries: {
-   key: "pet:Shadowfiend|aura|{SpellID: 57669}"
-   value: {
-    uptime_s: 299.9236
-   }
-  }
-  entries: {
    key: "player|action|{ItemID: 40212}"
    value: {
     casts: 1
@@ -1187,12 +1181,6 @@ ability_results: {
    key: "pet:Shadowfiend|aura|{SpellID: 15363}"
    value: {
     uptime_s: 298.45418
-   }
-  }
-  entries: {
-   key: "pet:Shadowfiend|aura|{SpellID: 57669}"
-   value: {
-    uptime_s: 299.9236
    }
   }
   entries: {

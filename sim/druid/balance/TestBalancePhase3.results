@@ -1018,12 +1018,6 @@ ability_results: {
    }
   }
   entries: {
-   key: "pet:Treant|aura|{SpellID: 57669}"
-   value: {
-    uptime_s: 899.77081
-   }
-  }
-  entries: {
    key: "pet:Treant|aura|{SpellID: 57724}"
    value: {
     uptime_s: 74.24657

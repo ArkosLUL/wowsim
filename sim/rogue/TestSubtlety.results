@@ -1134,12 +1134,6 @@ ability_results: {
    }
   }
   entries: {
-   key: "player|aura|{SpellID: 57669}"
-   value: {
-    uptime_s: 299.9236
-   }
-  }
-  entries: {
    key: "player|aura|{SpellID: 57722}"
    value: {
     uptime_s: 299.9236
@@ -1608,12 +1602,6 @@ ability_results: {
    key: "player|aura|{SpellID: 54758}"
    value: {
     uptime_s: 60.42003
-   }
-  }
-  entries: {
-   key: "player|aura|{SpellID: 57669}"
-   value: {
-    uptime_s: 299.9236
    }
   }
   entries: {
