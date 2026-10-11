@@ -51,7 +51,8 @@ The live e2e and the replays leave timing, costs, threat, pets, gear and buffs u
 | Z2 | EC-THREAT-FIX3 (G, FS, C++, live) · EC-CORE-FIX2 (G, FS) · EC-CLASS-FIX (G, live) · PERF-Z · BIS-ALTS | Z's follow-ups |
 | Z5 | EC-CORE-FIX3 (G, FS, live) · EC-PET-FIX2 (G, live) · EC-CLASS-FIX2 (G, live) · EC-THREAT-FIX4 (G, FS, C++, live) | Z2's follow-ups and Y's pets, before the BiS chain |
 | Z7 | EC-CORE-FIX4 (G, FS) · EC-PET-FIX3 (G, live) · EC-CLASS-FIX3 (G, live) · EC-TOOLS | Z5's follow-ups (Z6 is parity's and raid-import's) |
-| Z8 | EC-CORE-FIX5 (G, FS) · EC-PET-FIX4 (G, live) · EC-CLASS-FIX4 (G, live) · EC-TOOLS2 | Z7's follow-ups |
+| Z8 | EC-CORE-FIX5 (G, FS) · EC-PET-FIX4 (G, live) · EC-CLASS-FIX4 (G, live) | Z7's follow-ups; the fourth place is bis-optimizer's BIS-TANK-MAGIC |
+| Z9 | EC-TOOLS2 | Moved from Z8 |
 
 U is taken (the UI wave). Versus the INVESTIGATION's order, B7, A3 and A4 moved forward (cheap, independent) and
 C1 moved last (after B6).
@@ -3063,7 +3064,7 @@ siblings, which the tests and `tools/apldbg/presets.go` share. The copies and `T
   `proto/common.proto`'s target field and its plumbing; their cycles, fights, drops and rows.
 - **Goldens:** those classes' suites, and every suite wearing a changed item; report each.
 
-### EC-TOOLS2 (Z8; golden-neutral)
+### EC-TOOLS2 (Z9; golden-neutral)
 
 - `db.json` has no icon rows for the explosives' spells (56350, 67769, 56488) or 55039: the UI fetches them.
 - e2e: `fightBuild` kills the critters near the floor first (a star of Starfall can hit one and fail the count);

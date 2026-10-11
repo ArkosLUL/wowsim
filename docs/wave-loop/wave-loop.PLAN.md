@@ -85,7 +85,8 @@ G = changes goldens. FS = runs all 37 suites.
 | Z5 | EC-CORE-FIX3 (G, FS, live) · EC-PET-FIX2 (G, live) · EC-CLASS-FIX2 (G, live) · EC-THREAT-FIX4 (G, FS, C++, live) | ✔ |
 | Z6 | PAR-FU-8 (G, live) · PAR-FU-9 (FS, live) · PAR-FU-10 (G, FS, live) · RI-5 (live) | ✔ |
 | Z7 | EC-CORE-FIX4 (G, FS) · EC-PET-FIX3 (G, live) · EC-CLASS-FIX3 (G, live) · EC-TOOLS | ✔ |
-| Z8 | EC-CORE-FIX5 (G, FS) · EC-PET-FIX4 (G, live) · EC-CLASS-FIX4 (G, live) · EC-TOOLS2 | ✔ |
+| Z8 | EC-CORE-FIX5 (G, FS) · EC-PET-FIX4 (G, live) · EC-CLASS-FIX4 (G, live) · BIS-TANK-MAGIC | ✔ |
+| Z9 | EC-TOOLS2 | ✔ |
 
 F2 is an inserted wave, not a fifth item in F: the core swing and cast fixes of PAR-P7-0c have to land
 before the class items in G, a class item can't build on a core fix merging in its own wave, and F already
@@ -151,8 +152,9 @@ pass doesn't repeat.
 Z6 takes the three items the user planned on master on 2026-10-10 (PAR-FU-8 and PAR-FU-9 for "the next wave",
 and RI-5) and PAR-FU-10, mod-spell-tweaks' new mage and warlock tweaks (the user's call, the same day); Z7 takes
 Z5's follow-ups, specced at its close-out under the earlier call (the parity backlog first), and Z6's, added to
-its specs. Z8 is planned from Z7's follow-ups at its close-out, under the same call; it waits for the user's
-continue, or their call to run the BiS chain first.
+its specs. Z8 takes Z7's follow-ups, specced at its close-out under the same call, with BIS-TANK-MAGIC in
+EC-TOOLS2's place (the user's call, 2026-10-11: the raid pass gears both tanks for avoidance against a melee-only
+boss); EC-TOOLS2 waits for Z9.
 
 **Where the specs are:**
 

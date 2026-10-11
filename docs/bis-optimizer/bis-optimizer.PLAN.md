@@ -2062,3 +2062,86 @@ Whole runs cost 1.5 to 1.7x at Quick and 1.3 to 1.6x at Normal. The ranking top-
 
 Left: the surrogate overprices a one-hander's pairing next to some items (Nightwarrior's neck), so a good
 two-hander can sit below the 15; Corruptor ties with the dead idols.
+
+### BIS-TANK-MAGIC (wave Z8)
+
+The raid pass gears both tanks for avoidance and no hit. At phase 3 (the 8 Oct pass, sim `7f1b9aede`) Bulwark
+(prot paladin) got 16 of 23 gems agility, one stamina gem (the meta) and 0 hit rating; Felesta (tank DK) got 13
+dodge gems, 9 defense, 1039 defense rating against a floor of 566, and hit reforged off two pieces. The search
+works as designed; the model it searches against is wrong:
+
+1. **No magic, no abilities.** `genericBossTargetAt` (`pool_builder.ts`) builds one attacker that only swings. It
+   sets no `id`, and an AI attaches only to a registered preset's id (`sim/core/target.go`).
+2. **Against pure physical, mitigation compounds.** Armor takes 62% (Felesta) and 69% (Bulwark), on top of
+   avoidance and of defense far past the floor: Felesta takes 1033 DTPS from a boss set for about 41,600 a second.
+3. **Stamina can't reach the score.** DTPS is the damage that landed and TPS ignores stamina; only TMI's
+   `amount / MaxHealth()` sees it. Chance of death, the metric stamina moves most, weighs 0 (`TankWeights`,
+   `tankMetricWeights`).
+4. **The tank can't die.** `healingModelForBoss` pins HPS to 0.175 × the boss's unmitigated damage with no cadence
+   variation: about 4,620 HPS against Felesta's 1,033 DTPS, death chance 0.00025. A set HPS also skips the presim
+   that derives 1.5 × the tank's own DTPS (`sim/core/health.go`, `pinHealingModel`).
+
+**Taunts** (server source and DBCs; the sim has no taunt spell, and enemies never retarget by threat): Taunt,
+Growl, Dark Command and Hand of Reckoning are `DmgClass MELEE` without `SPELL_ATTR3_ALWAYS_HIT` or
+`SPELL_ATTR7_NO_ATTACK_MISS`, so they take `MeleeSpellHitResult`: 8% miss against a level 83 boss, removed 1:1 by
+melee hit rating (263, or 164 with 3/3 Precision); spell hit does nothing. They also roll dodge 6.45% and, from
+the front, parry 14.0%, which only expertise lowers. Bot tanks re-taunt until they hold aggro.
+
+**Decided by the user (2026-10-11):** fix the fight model, no hand-set health or stamina floor; a tank melee-hit
+floor at the taunt cap, hit only; afterwards the full 21-raider pass, on the user's call
+([driver README](../../tools/database/acbis/driver/README.md)).
+
+**Step 0, the numbers.** For each `TANK_BOSSES` boss at its difficulty, every ability that damages the current
+tank and that armor and avoidance can't remove: spell id, school, damage, cadence. Sources: the boss script
+under [ac] `src/server/scripts/`, Spell.dbc and SpellDifficulty.dbc, `creature_template`. A first table with its
+evidence is in `G:\DevStuff\GitHub\.wave-loop\bis-tank-magic\step0.md` (research run at the wave's start): check
+it against the source, then carry it into the As built. Server data only: a small magic share is modelled small,
+and a boss with none stays melee-only.
+
+**Step 1, the fight.**
+- New `sim/encounters/optimizer_tank_boss.go`: a synthetic `OptimizerTankBossID` (like `GenericBossID`),
+  registered through `core.AddPresetTarget` with an AI that casts one spell on cooldown at `CurrentTarget` with
+  `OutcomeAlwaysHit`: armor and avoidance don't touch it, the school's resistance and damage-taken multipliers
+  do. Damage, period and school come from `target_inputs`, so the numbers live in `TANK_BOSSES`. Several
+  abilities sum into damage per period at their real cadence.
+- `pool_builder.ts`: `TankBoss` gains those fields; `genericBossTargetAt` sets the id and inputs;
+  `suppressDodge: true` for phases 4 and 5 (Chill of the Throne).
+- Go mirror: the optimizer's own constructor beside `encounters.GenericBossTargetAt` (whose callers stay);
+  `TestTankBossesMirrorUI` covers the new fields.
+- Healing: `healingModelForBoss` leaves `hps` 0 and keeps the cadence, so `pinHealingModel` derives 1.5 × the
+  seed's own DTPS once, and sets a non-zero `cadenceVariation`. If the tank then never dies or always does, the
+  multiplier becomes a named constant beside `TANK_BOSSES`; nothing in `sim/core` is tuned.
+
+**Step 2, death has a price.**
+- `tankMetricWeights` and `TankWeights` split the survival share three ways: DTPS, TMI, chance of death. Still
+  one slider; the Advanced editor still overrides it.
+- A metric whose normalizer doesn't clear 2 se with the right sign is dropped with a warning (`objective.go`).
+  Chance of death must survive at Normal for both tanks: else raise the tank runs' normalizer iterations or the
+  Armor offset (`normalizerOffset`).
+
+**Step 3, the taunt floor.**
+- `caps.go`: a tank role in `dpsCapRole` that adds only the melee-hit floor, through
+  `floor("hit", stats.MeleeHit, s.PhysicalMissChance == 0)` and `bisectCapBonus`. `PhysicalMissChance` is the
+  special-attack miss (`sim/core/sheet.go`), the roll a taunt takes; the bisection counts hit talents and racials.
+- The floor must land near 8% of rating for both tanks: `PhysicalMissChance` takes the worst of the rotation's
+  yellow attacks when it has any.
+
+**Verify** (the roster: the two tanks as the 8 Oct pass ran them, or a fresh `acraid` export; never committed):
+
+| What | How |
+|---|---|
+| Effective health is priced | dJ per point of Stamina, Agility, Dodge and Defense rating at both tanks' seed gear, paired sims, old fight and new: Stamina goes from about zero to a real number |
+| Death is in the score | both tanks' results carry the term, and no warning drops it |
+| The fight is step 0's | damage taken per school on the new fight matches the table |
+| Taunt floor | both results carry a `StatMeleeHit` floor, final hit at or above it, no reforge takes hit off |
+| Picks | Bulwark and Felesta at phases 2 and 3: the gem, enchant and reforge mix against the 8 Oct pass's. If stamina still never shows, look at step 0's numbers or the weights, not the search |
+| Nothing else moved | one DPS raider scores within 2 se with the same picks; `sim/optimizer` tests and the `optimizer/{quick,normal}/raid25_tank_p1` harness scenarios pass; the tank suites' goldens unchanged |
+
+**Not doing:** a taunt spell or threat retargeting in the sim; an expertise floor (about 671 rating to clear a
+taunt's dodge and parry); any change to `sim/core` combat mechanics, the tank suites' generic boss, the addon,
+the wire format or mod-bis-tooltip.
+
+Golden-neutral. **Owns:** `sim/optimizer/`, `sim/encounters/optimizer_tank_boss.go` and its registration,
+`ui/core/optimizer/`, `ui/raid/optimizer_*.ts`, the tab's tank controls. At close-out the orchestrator adds
+`docs/guide/tank-modeling.md` and corrects this PLAN's lines on the tank encounter, the survival split and
+"a tank run gets none".
