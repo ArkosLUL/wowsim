@@ -43,6 +43,7 @@ Before starting, read every doc whose trigger matches the task.
 | [sim-architecture](docs/guide/sim-architecture.md) | locating sim, proto, UI or tool code |
 | [server-parity](docs/guide/server-parity.md) | changing a mechanic, item value or module behaviour |
 | [class-mechanics](docs/guide/class-mechanics.md) | changing a class's spells, talents or procs |
+| [pets](docs/guide/pets.md) | changing a pet's or guardian's stats, timers, AI, or the buffs and casts that reach it |
 | [threat](docs/guide/threat.md) | changing threat, energizes or heals, or a spell's threat data |
 | [spell-data-and-timing](docs/guide/spell-data-and-timing.md) | declaring a spell's server data; swing, cast, GCD or missile timing |
 | [azerothcore-server](docs/guide/azerothcore-server.md) | touching the live server, its containers, config, modules or characters |
@@ -62,6 +63,7 @@ Before starting, read every doc whose trigger matches the task.
 | [uitest README](tools/uitest/README.md) | verifying a UI change, or writing a UI test |
 | [uicheck README](tools/uicheck/README.md) | driving a page by hand in headless Chrome, e.g. for screenshots |
 | [perf README](tools/perf/README.md) | profiling a sim, the optimizer or the server; timing a change against the baseline |
+| [apldbg README](tools/apldbg/README.md) | tuning or debugging a rotation; comparing a rotation across a sim change |
 
 ## Keeping the docs live
 

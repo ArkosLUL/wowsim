@@ -10,9 +10,9 @@ How the sim computes threat, matching the server (`sim/core/threat.go`; `ThreatM
   per aura. `ThreatMultiplier` 0 means no threat at all, bonus included, as does `ATTR1_NO_THREAT` (Healing Stream
   Totem).
 - A heal's threat is half the health it restores (a quarter for a paladin), modified like a hit and shared as
-  assist threat; overhealing makes none. Self heals through `GainHealth` count too (`HealThreat(metrics,
+  assist threat; overhealing makes none. Self heals dealt outside a spell count too (`HealThreat(metrics,
   spellID)`): Death Strike, (Improved) Blood Presence, Rune Tap, Frenzied Regeneration, Lifeward, potions,
-  healthstone, Lifeblood. Spell heals are whole, as the server's; those direct `GainHealth` heals aren't yet.
+  healthstone, Lifeblood. Every heal is whole, as the server's.
 - `SPELL_EFFECT_THREAT` adds its flat amount, unmodified, on each enemy hit; a cut never takes threat below 0
   (Feint).
 
@@ -50,6 +50,8 @@ tick the gain, both only for the unit's current power; a potion (`SPELLFAMILY_PO
   AP, the rank warriors know, and adds 58567's 10 on landing; its ActionID stays 47467). `NoThreatBonus` marks
   damage the server deals through an aura (damage shields, proc trigger damage), `Spell.LandThreatBonus` counts an
   enemy a cast selects without a hit (Consecration).
+- Item damage dealt under its server spell takes that spell's row: the explosives' 56350, 67769 and 56488,
+  whose sapper row counts the caster.
 
 ## Multipliers
 

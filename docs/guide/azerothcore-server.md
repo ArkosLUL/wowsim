@@ -33,7 +33,8 @@ The live server: where it runs, how to reach it, what's installed. For table and
   working trees for unfinished edits before any restart.
 - To compile-check C++ without a rebuild, use image `acore/ac-wotlk-build:master`: mount [ac]'s `src/` over its
   `/azerothcore/src` and run a module file's command from its `/azerothcore/build/compile_commands.json` with
-  `-fsyntax-only`. mod-bis-tooltip's `test/syntax-check.sh` does this.
+  `-fsyntax-only`. mod-bis-tooltip's `test/syntax-check.sh` does this. A module file that
+  `compile_commands.json` lacks compiles with any other module file's flags.
 - Character data reaches the DB only when a character saves. Before reading it, ask the user to run
   `saveall` in the worldserver console. There's no SOAP, and don't `docker attach`.
 
@@ -125,6 +126,7 @@ mod-individual-progression stores a character's tier as rewarded quest `66000 + 
 - `PSendSysMessage` prints nothing to a console session. Use `SendSysMessage` + `SetSentErrorMessage`.
 - Relog after `.maxskill`, or crit isn't recomputed.
 - Characters leveled by GM command never learn trainer spells, Parry (3127) included: `.learn` them.
+- `.learn` fails with the dummy selected. A GM's guardian (the Fire Elemental) never attacks: `.gm off`.
 - A triggered `.cast` never summons a totem: cast it from the client (a raw `CMSG_CAST_SPELL`).
 - The e2e client never sees passive auras, so `HasAura` on one is always false.
 - `.cast <id> triggered` skips spell effects (`TRIGGERED_IGNORE_EFFECTS`): the aura's effects and a form's passives

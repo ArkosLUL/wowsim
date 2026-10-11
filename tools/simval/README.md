@@ -359,8 +359,9 @@ sharing one share an entry), which mod-sim-validation's `TestSimvalGoldenCharact
   (below), so buffs.go and the sweeps build without, as their captures' characters went without.
 
 Edit the list by hand. Four tests keep it honest:
-- `TestGoldcharSetupsFollowTheSuites` parses every `CharacterSuiteConfig` in a `sim/**` Test function with
-  `go/ast` and fails, printing the expected entry, when the list drifts from the suites.
+- `TestGoldcharSetupsFollowTheSuites` parses every `CharacterSuiteConfig` in a `sim/**` Test function, or in the
+  package function it calls that returns one, with `go/ast` and fails, printing the expected entry, when the list
+  drifts from the suites.
 - `TestGoldcharAurasCoverTheSimsStart` fails on an aura the sim has up after a reset, or a raid buff the class gives
   itself, that isn't in `auras`; passives (serverdata), glyphs and `unlistedStartingAuras` (Thorns) are exempt. It
   also holds `imbue` to the sim's main hand enchant (`imbueSpells`). Bare and geared; an aura only the geared

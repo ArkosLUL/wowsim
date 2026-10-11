@@ -65,8 +65,6 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
   - `delta` compares dps, hps, tps and dtps per test, and lists tests that appear or disappear. Under each
     Average test it lists the moved abilities (below), four-space indented, largest damage or healing change
     first. Diff the two files for stats and stat weights.
-- Auras expire only when an event advances the clock, tracker by tracker, so adding or removing an unrelated
-  event reshuffles single-iteration rows.
 - `Average` tests also store `ability_results`: one entry per `<unit>|action|<id>` and `<unit>|aura|<id>`,
   `<unit>` being `player`, `pet:<name>` or `target<i>` (target auras only).
   - Fields, per iteration and summed over targets: `casts`, `hits`, `crit_pct`, `amount_per_hit`, `amount`
@@ -124,7 +122,7 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
   - `sim/core/testdata/simval/simval.jsonl` is the committed capture of the whole e2e suite; its README lists
     dropped records. `TestFixtureHasEveryE2ERecord` keys it on (command, spell id, class, dummy entry).
 - Live e2e, which needs the user's OK: `cd [ac]/modules/mod-sim-validation && ./e2e/run.sh [TestName]`
-  (default `-run TestSimval` minus `TestSimvalTiming`, `TestSimvalThreat`, `TestSimvalStrikes`, `TestSimvalBuffs`, `TestSimvalMobs`, `TestSimvalFight`, `TestSimvalEcCore3LowHealthFight` and `TestSimvalEcClass2Fight`, about 7 min). The module's `README.md` covers its commands, env vars and orphan cleanup.
+  (default `-run TestSimval` minus `TestSimvalTiming`, `TestSimvalThreat`, `TestSimvalStrikes`, `TestSimvalBuffs`, `TestSimvalMobs`, `TestSimvalFight`, `TestSimvalEcCore3LowHealthFight`, `TestSimvalEcClass2Fight` and `TestSimvalEcClass3Fight`, about 7 min). The module's `README.md` covers its commands, env vars and orphan cleanup.
   - Recapture the fixture, never append: the suite deletes its own records and the host side of the log
     mount is stale, so stream from inside the container, started before the run:
     1. `MSYS_NO_PATHCONV=1 docker exec ac-worldserver tail -F -n +1 /azerothcore/env/dist/logs/simval/simval.jsonl > tmp/stream.jsonl &`,
@@ -140,12 +138,16 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
   `TestSimvalStrikes`, streamed as above. `buffs.jsonl` and `mobs.jsonl`: the `BUFFS` or `MOBS` log lines of `run.sh
   TestSimvalBuffs`, which needs `SIMVAL_GOLDCHAR_SETUPS` and `SIMVAL_BUFFS_PAIRS`, or `TestSimvalMobs`): the [simval
   README](../../tools/simval/README.md)'s Damage probe, Timing probe, Threat probe, Buffs, Mob types, Golden characters,
-  Talent sweep and Spell-mod sweep.
+  Talent sweep and Spell-mod sweep. Cut `threat.jsonl` from the stream with `simval threat` (the Threat probe's
+  Fixture cutter).
 - `sim/core/testdata/fights/` holds a Chronicle-logged fight per golden setup, replayed by `TestFightReplays` (the
   simval README's Fights); recaptured with `run.sh TestSimvalFight` (the module README).
 - e2e gotchas: armor can't be equipped or removed in combat (equip error 60), and `.simval threat` engages the dummy, so
-  `.combatstop` first; in a druid form, `.simval info` shows no main-hand weapon; 4 yards north of the boss dummy has no
-  line of sight to it, and 18 yards north hides its centre from area scripts (Starfall); the dummy's AI zeroes every
+  `.combatstop` first; in a druid form, `.simval info` shows no main-hand weapon; the fights (`fightBuild`) stand on
+  the hub's outer floor, in sight of the dummy's centre, where critters wander and can take an area spell's hit; the
+  other tests' dummies stand at the entrance, where a spot south of the dummy has no line of sight past a few yards
+  (4 for a short race) and 18 yards north hides its centre from area scripts (Starfall); an item's `SMSG_SPELL_GO`
+  names the item as caster; the dummy's AI zeroes every
   hit, `.damage` included (set its health with `.simval hp`), and it gives no XP, so `REQ_EXP_OR_HONOR` procs never
   fire on it; Naxxramas, where the dummies stand, resets weekly (Saturday 17:00 local,
   `acore_characters.instance_reset`, map 533) and ports every bot inside out, so a path running across it fails

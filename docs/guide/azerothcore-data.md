@@ -27,7 +27,8 @@ layouts come from [ac] `src/server/shared/DataStores/DBCStructure.h` and `DBCfmt
   - `armor` is the total, and `ArmorDamageModifier` is its bonus part.
   - `block` only applies to shields.
   - `VerifiedBuild = 15595` marks placeholder rows.
-  - Per-item procs are in `spellppmRate_N` and `spellcooldown_N`.
+  - Per-item procs are in `spellppmRate_N` and `spellcooldown_N`. `spellid_1` is the spell an item's use
+    casts (Saronite Bomb 56350).
   - There's no `StatsCount` column: count the non-zero stat slots, as the worldserver does.
 - An item is obtainable when any of these reference it:
   - `*_loot_template` with `Reference = 0`
@@ -57,8 +58,10 @@ layouts come from [ac] `src/server/shared/DataStores/DBCStructure.h` and `DBCfmt
 - `spell_enchant_proc_data`.
 - `spell_script_names` can name a script no code registers, which does nothing:
   `spell_tweaks_concussion_flame_shock_haste` on nine Flame Shock ranks.
-- `creature_immunities` (by `creature_template.CreatureImmunitiesId`; no row, no mechanic immunity):
-  `MechanicsMask` is `1 << mechanic`, so root (7) is 128.
+- `creature_immunities` (by `creature_template.CreatureImmunitiesId`, on the difficulty entries too; no row, no
+  mechanic immunity; `creature_template` has no `mechanic_immune_mask` column): `MechanicsMask` is
+  `1 << mechanic`, so root (7) is 128. Ids are negative: -361 is the usual raid boss row, -286 Naxxramas'
+  (no interrupts), -355 Gormok's 10 and 25 normal (no disarm).
 - Spell.dbc field indices: ProcChance 35, DurationIndex 40, Effect 71, DieSides 74, BasePoints 80,
   Aura 95, ItemType 107, MiscValue 110, TriggerSpell 116, Name 136.
 - Cooldown and PPM precedence follow `Player::CastItemCombatSpell` and

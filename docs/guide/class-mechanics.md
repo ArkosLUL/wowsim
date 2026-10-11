@@ -1,7 +1,8 @@
 # Class mechanics
 
 Class spells, talents and procs where the server differs from what the Classic sim did, and the sim now
-follows it. Core rules (costs, threat, crit damage, procs, pets) are in [server parity](server-parity.md).
+follows it. Core rules (costs, threat, crit damage, procs) are in [server parity](server-parity.md), pets and
+guardians in [pets](pets.md).
 
 ## Death knight
 
@@ -15,9 +16,17 @@ follows it. Core rules (costs, threat, crit damage, procs, pets) are in [server 
   a proc.
 - **Blood Tap** readies a rune only for a blood-slot death rune on cooldown, or with both plain blood runes down;
   a death rune talent takes over the tapped slot.
-- **Dirge** covers Obliterate. **Blood Presence**'s heal (63611: 4%, Improved Blood Presence 2% a point in the
-  other presences) comes from swings, own casts, dot ticks and `NOT_A_PROC` triggered spells, as int32(damage ×
-  percent), and only off a target that gives XP or honor (never a simval dummy).
+- **Dirge** covers Obliterate.
+- **Blood Presence**'s heal (63611: 4%, Improved Blood Presence 2% a point in the other presences) comes from
+  swings, own casts, dot ticks, `NOT_A_PROC` triggered spells and an on-use item's damage, which
+  `Player::CastItemUseSpell` casts untriggered (`onUseItemDamage`: the explosives, Pyro Rocket, Gnomish
+  Lightning Generator; the sapper's hit on the DK too).
+  - It's int32(int32(damage × percent) × the healing taken percents): 50475 has no damage class, so no healing
+    done percent reaches it, Strength of Wrynn's included (`Unit.HealingTakenPctMultiplier`).
+  - Only off a target that gives XP or honor (`PROC_ATTR_REQ_EXP_OR_HONOR`). The sim checks the gray level
+    (`givesXPOrHonor`), not the `NO_XP` flag, so it heals off a `NO_XP` creature (the simval dummies) where
+    the server doesn't.
+  - Improved Blood Presence adds 5% healing taken a point, in Blood Presence only.
 - **Improved Unholy Presence** scales the rune cooldown after the grace cut, in whole ms.
 - **Death Coil** and **Rune Strike** are refundable: a miss takes irand(0, cost / 4). Sudden Doom's Death Coil
   pays nothing.
@@ -76,6 +85,15 @@ follows it. Core rules (costs, threat, crit damage, procs, pets) are in [server 
 - **Starfall** (53201) is an aura on the druid and can't miss. Its stars (53195) and splash (53190) roll Omen of
   Clarity, as do Hurricane's cast and ticks (measured live, 8.75%). The stars need line of sight to the target's
   centre.
+- **Omen of Clarity** rolls 3.5 PPM over the spell's cast time entry, at least 1.5 s: 8.75% an instant, 11.67%
+  Wrath (2 s). Any landed magic-class spell outside the druid's family that deals direct damage or heals and
+  gives no power rolls it too, an item's proc included (`rollsOmenOffFamily`): Extract of Necromantic Power's
+  bolt at 12.83%. Nature's Grace's 16886 and Survival Instincts roll nothing.
+- **Nature's Grace** rolls its chance in the cast phase and again in the hit phase (spell_proc -16880): a crit
+  Wrath gives 16886 at its launch and at its hit, a cast spell without a missile rolls both at its hit, a
+  triggered one (Starfall's stars) the hit phase only (`rollNaturesGrace`).
+- **Hurricane**'s cast is a hit without damage on the druid's side: one Illustration of the Dragon Soul stack,
+  none from its ticks.
 - **Faerie Fire (Feral):** a landed 16857 rolls Omen's 3.5 PPM over the 1.5 s an instant counts as (8.75%), and
   so does Bear Form's triggered 60089 (`CAN_PROC_FROM_PROCS`). With `OmenClarityFaerieFire` the script casts
   Clearcasting (16870) itself, and that roll still runs: only it gives the Balance T10 2-piece proc (70721).
@@ -92,10 +110,13 @@ follows it. Core rules (costs, threat, crit damage, procs, pets) are in [server 
 
 ## Mage
 
-- **Torment the Weak** counts only against a snared or attack-slowed target: raid bosses and the dummy are immune to
-  snares, not `MECHANIC_SLOW_ATTACK`. A landed Frostbolt (not under Glyph of Frostbolt) or Frostfire Bolt (9 s),
-  or Chilled (1.5 s), slows any other target, Permafrost included; so do a Mirror Image's Frostbolt, Blast Wave
-  (6 s) and Dragon's Breath (5 s, gone at the first direct damaging hit: one proc charge). Frostbite is a root.
+- **Torment the Weak** counts only against a snared or attack-slowed target, whoever did it: raid bosses and
+  the dummy are immune to snares ([mechanic immunity](server-parity.md#other-measured-server-behaviour)), not
+  `MECHANIC_SLOW_ATTACK`. A landed Frostbolt (not under Glyph of Frostbolt) or Frostfire Bolt (9 s), or Chilled
+  (1.5 s), slows any other target, Permafrost included; so do a Mirror Image's Frostbolt, Blast Wave (6 s) and
+  Dragon's Breath (5 s, gone at the first direct damaging hit: one proc charge). Frostbite is a root.
+  - Another unit's snare counts through an aura tagged `core.SnareAuraTag`: another mage's chill, Frost Shock
+    (8 s), Mind Flay. Hamstring and Slow have no sim spell.
 - **Brain Freeze** rolls on landed Frostbolts, Frostfire Bolts and Blizzard ticks (spell_proc -44546). Fireball!
   (57761) lasts 15 s and is used at the cast.
 - **T10's 2-piece** triggers when Hot Streak or Missile Barrage is used up, never on a timeout. Missile Barrage
@@ -145,7 +166,11 @@ follows it. Core rules (costs, threat, crit damage, procs, pets) are in [server 
 - **Curse of Doom** with Demonic Pact and `CurseOfDoomScaling` (the carrier 425793): max(60 s × min(cast
   speed, 1), 1 s) in whole ms, read at the cast, is the cooldown, the duration and the one tick. The tick
   crits, for 1.5: no crit damage or crit chance mod lists the curse. A cast is refused while the warlock's own
-  curse is on the target; stock, a recast wipes it.
+  curse is on the target; stock, a recast wipes it. A rotation compares the fight's time left to the APL value
+  `APLValueWarlockCurseOfDoomLength` (60 s stock), never to a literal 60 s.
+- **Improved Demonic Tactics** gives the demon int32(int32(the warlock's sheet crit %) × 10 a point / 100),
+  spell crit for spell and melee for melee, reworked every 10 s from a drawn phase; a demon summoned later
+  takes the current value at once (`sim/warlock/pet.go`).
 
 ## Hunter
 
@@ -155,7 +180,13 @@ follows it. Core rules (costs, threat, crit damage, procs, pets) are in [server 
   creature-type bonus ([server parity](server-parity.md)). Kill Shot's 0.4 AP reads no mark, and its weapon part
   the weapon's own speed.
 - **Chimera Shot - Serpent** (53353) ignores caster modifiers (no Mortal Shots, no Marked for Death) and deals
-  int(the sting's stored tick × 2.8).
+  int32(the sting's stored tick × 2, 2.8 with Glyph of Serpent Sting) × the target's damage taken as the
+  sting's, truncated (`spell_hun_chimera_shot`). The stored tick is whole and keeps the done percents the
+  sting went on with; Chimera Shot's refresh rereads only its AP. 53353's own hit takes a damage taken
+  multiplier only below 1 (`SPELL_ATTR0_CU_NO_POSITIVE_TAKEN_BONUS`), so a bonus counts once and a reduction
+  twice. Not modelled: the flat taken part (Gift of Arthas).
+- **Hunting Party** rolls on each crit tick of Explosive Shot (53352, in spell_proc -53290's mask with
+  `TRIGGERED_CAN_PROC`), never on its cast, at 33/66/100%.
 - **Thrill of the Hunt** returns 40% of the shot's truncated base cost, a free Lock and Load shot's too.
 - **Pin** (53548) is a root, so armor cuts its ticks. **Savage Rend** (53582) is a bleed: armor cuts the first
   hit, not the ticks (`Unit::IsDamageReducedByArmor` finds the bleed per effect only).

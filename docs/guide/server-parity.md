@@ -4,6 +4,7 @@ Where the server differs from the Classic behaviour upstream modelled.
 - Why the sim follows the server: [ADRs](../adr/).
 - How each module is handled: [azerothcore-server.md](azerothcore-server.md#modules-that-affect-the-sim).
 - Class spells, talents and procs: [class mechanics](class-mechanics.md). Threat: [threat](threat.md).
+  Pets and guardians: [pets](pets.md).
 - Full evidence and phase status:
   - `docs/azerothcore-parity/azerothcore-parity.{PLAN,INVESTIGATION}.md`.
     The INVESTIGATION also lists every retail deviation and every mod-spell-tweaks change.
@@ -61,7 +62,8 @@ class by simval.
   one point's worth.
 - Defense skill bonuses (`PseudoStats.BonusDefenseSkill`: Rune of the Stoneskin Gargoyle) add after the
   rating's truncation, so dodge, parry and miss take them undiminished; `Unit.DefenseSkill()` is the total,
-  for the attack table, crit taken, block and every talent reading defense.
+  for the attack table, crit taken, block and every talent reading defense. The sheet reads the bonus from
+  the sim (`PseudoStatBonusDefenseSkill`), never off the gear.
 
 ## Other measured server behaviour
 
@@ -75,9 +77,15 @@ class by simval.
   switch also goes in `tools/acore/gen_server_defaults/settings.go` and `server_settings_picker.ts`;
   `TestSpellTweaksEnableGatesScriptedTweaks` fails for one `newSpellTweaks` doesn't read.
 - **Mechanic immunity:** a target immune to a spell's spell-level mechanic takes none of it
-  (`Unit::IsImmunedToSpell`). The simval dummies and the raid bosses sampled are immune to root, stun, snare
-  and disarm, not bleed, so the pet specials Pin, Venom Web Spray, Ravage, Tendon Rip and Snatch never land on
-  one. Not modelled: sim targets have no immunities.
+  (`Unit::IsImmunedToSpell`), and a snare or root effect never goes on (`Unit.ImmuneToMechanic`). The mask is
+  `proto.Target.mechanic_immune_mask`. Unset, a world boss gets `core.RaidBossMechanicImmunities`
+  (`creature_immunities` -361, the boss dummy's and the Ulduar, ToC and ICC bosses': root, stun, snare and
+  disarm among others, not attack slows or bleeds) and any other target none. The Naxxramas presets carry
+  -286, the same without interrupts. The pet specials Pin, Venom Web Spray, Ravage, Tendon Rip and Snatch cast
+  and miss on an immune target.
+- **Hit rules by damage class:** a spell with no damage class always lands and never crits
+  (`WorldObject::SpellHitResult`, `Unit::SpellDoneCritChance`: Saronite Bomb), and a spell never misses its
+  own caster (the sapper). The sim applies both only to the explosives (`sim/core/consumes.go`).
 - **Binary spells** follow the spelldump. Mind Flay isn't binary; Steady Shot and Expose Armor are.
 - **Weapon requirements:** a spell with `SPELL_ATTR3_REQUIRES_MAIN_HAND_WEAPON` or `_OFF_HAND_WEAPON` and
   an item subclass mask fails without that weapon, triggered casts too (`Spell::CheckItems`): Mutilate
@@ -122,16 +130,34 @@ class by simval.
 - **Damage rounding** (`doneDamage`, `ApplyPostOutcomeDamageModifiers`): every step is whole.
   `SpellDamageBonusDone` and `MeleeDamageBonusDone` (a dot's amount at application) and the `…Taken` steps
   truncate, `CalcArmorReducedDamage` rounds up, a partial resist takes `damage × i / 10` in integers; crit,
-  glancing and absorbs stay whole. Each SP or AP bonus is its own `int32` (`core.PowerBonus`), a base roll a
-  whole step (`SpellEffect.Roll`), a stacked dot one stack truncated, then × stacks (`Dot.SnapshotStacks`); a
-  magic crit comes before the resist; heals are whole after the caster's multiplier, the target's and the crit.
-  Not modelled: a weapon strike's own `int32` steps (`Spell::EffectWeaponDmg`).
+  glancing and absorbs stay whole. Each SP or AP bonus is its own `int32` off two float32s
+  (`core.PowerBonus(coefficient, power)`; `Spell.SpellPower()` is whole), a base roll a whole step
+  (`SpellEffect.Roll`, or `Simulation.RollWhole` inline), a stacked dot one stack truncated, then × stacks
+  (`Dot.SnapshotStacks`); a magic crit comes before the resist; heals are whole after the caster's multiplier,
+  the target's and the crit, one dealt outside a spell through `GainHealing`.
+  - A weapon strike or white swing rolls whole between the truncated ends, with the AP at speed, the flat
+    bonuses and the hand's TOTAL_PCT inside (`Spell.StrikeDamage` in `sim/core/weapon_strike.go`;
+    `Unit::CalculateDamage`), so `doneDamage` leaves that percent out. `StrikeFixed` scales a fixed bonus,
+    `core.ApplyPct` is each percent step (`Spell::EffectWeaponDmg`). Off the physical school there's no
+    TOTAL_PCT, the off hand's half included.
+  - Not modelled: the rune weapon's strikes and swing roll floats.
+- **Bleed bonus** (Mangle, Trauma, Stampede; `Unit::SpellDamageBonusTaken`) goes by the spell's mechanic
+  (`serverdata.FlagBleed`, set by `gen_serverdata`), hit and ticks alike, and to Shred and Maul on a weapon
+  hit, at each victim's own percent: Savage Rend's and the pet Rake's first hit take it, Pin's ticks don't.
 - **Healing taken** percents (aura 118) don't stack: only the highest bonus and the lowest penalty count,
-  multiplied (`Unit.AddHealingTakenPct`). Strength of Wrynn is healing done, which multiplies.
+  multiplied (`Unit.AddHealingTakenPct`). Strength of Wrynn is healing done, which multiplies; a heal with no
+  damage class takes none of that, only `Unit.HealingTakenPctMultiplier`.
 - **Replenishment** (`sim/core/replenishment.go`): 15 ticks a second apart of int32(max mana × 0.002f), read as
-  the aura goes on or is refreshed (1 if it went on at no mana); a refresh restarts the timer; only a unit whose
-  power is mana takes it. The raid's buff ticks every second, reading the max each time. A pet that isn't out
-  queues no tick; its timer keeps its place.
+  the aura goes on or is refreshed (1 if it went on at no mana). A refresh restarts the timer and drops a tick
+  due on that update, unless the cast comes out of an update that runs after the unit's: a creature's or
+  pet's (Hunting Party off Explosive Shot's tick), or the unit's own swing.
+  - A cast (`ProcReplenishment`) lands on every raid unit that's out and on mana, pets and guardians with a
+    pet bar included; over ten, on the ten lowest on mana for their pool (`PowerPctOrderPred`: float32,
+    stable), the rest keeping their aura. A Spirit Wolf's pool of 0 sorts first (`Pet.EmptyManaPool`).
+  - The raid's buff goes only on a unit with mana and ticks every second, reading the max each time. A pet
+    that isn't out queues no tick; its timer keeps its place.
+  - The potion, rune and gem heuristics add `Unit.ReplenishmentManaPerSecond`:
+    `ManaRegenPerSecondWhileCasting` doesn't hold it.
 - **A cast that fails** its GCD, hardcast or shared-cooldown check starts no cooldown.
 - **Creature-type attack power** (Elixir of Demonslaying, Scourgebane) and, on a ranged hit, Hunter's Mark reach
   only weapon damage: a white swing or a spell with a weapon effect adds `int32(sum / 14 × speed)` after its
@@ -144,8 +170,12 @@ class by simval.
     Rivendare, Tundra Stalker; Glacier Rot and Merciless Combat on Frost Strike and Obliterate).
   - The rune weapon's hits add the DK's bonus, halved, with the DK's per-target multipliers.
 - **Meta gems** work only with their `SpellItemEnchantmentCondition` met (`sim/core/meta_gems.go`); an inactive
-  one gives nothing. An item swap re-checks the condition for the meta's stats only: its effect and crit damage
-  stay the starting gear's.
+  one gives nothing. An item swap that meets or breaks the condition moves the whole enchant
+  (`Player::CorrectMetaGemEnchants`; `metaGemSwap`): the stats, the effect (its `OnMetaGemSwap` toggles, for a
+  gem registered with `NewMetaGemEffect`) and every crit multiplier, heals' or damage's by the gem. Not
+  followed: a TBC gem's effect (`sim/common/tbc/metagems.go`), and a crit multiplier class code changes
+  mid-fight (Combustion, Hodir's Storm Power) or builds from the starting gem (Prey on the Weak, Predatory
+  Instincts).
 - **Timing and procs** (the rest is in [spell data and timing](spell-data-and-timing.md)):
   - The rage hit factor is truncated to `uint32`.
   - Spell-proc PPM uses max(cast time, 1500 ms).
@@ -163,30 +193,6 @@ class by simval.
     `MunchingBlizzlike.Enabled`), ahead of a swing or tick due on the same server tick. The sim does this with
     `core.DelayedPeriodicApplier`, a phase per caster per iteration. A player's instant cast draws the step off a
     clock one world tick stale (the session pass runs before `Player::Update`), so it can land that update.
-- **Pets:** pet hit is floored to a whole percent. Pet scaling comes from the server's scripts. A summon starts at
-  full health, its owner's stamina included.
-  - Create stats are the `pet_levelstats` row, else `Guardian::InitStatsForLevel`'s 22/22/25/28/27 and 50 armor
-    a level; the scaling auras add a truncated percent of the owner's (`PetScalingPct`). Real pets rescale every
-    2 s, Spirit Wolves every 1 s, other guardians once at the summon. A controlled creature regains
-    trunc(spirit/5 + 17) mana every 2 s (`Creature::Regenerate`).
-  - Summons with a scaling script (Infernal, treants, Shadowfiend, Spirit Wolves, Fire Elemental, Water
-    Elemental guardian, Mirror Image) are immune to their scaling aura types, so buffs of those types add nothing;
-    the DK's ghoul, gargoyle and army only to stats and AP (`Pet.BuffImmunity`).
-  - A pet crits 5% plus crit auras, none from agility or intellect; magic spells crit ×1.5.
-  - The hit (3 s), haste, scaling and mana regen (2 s) timers tick on the pet's map update; one out since before
-    the pull starts at a drawn point of its cycles. On one update the scaling auras tick first, then
-    Replenishment, then the regen (`petRegenPriority`).
-  - A swing off the physical school (Fire Elemental, Shadowfiend) rolls (weapon + AP / 14) × attack time
-    (`Creature::CalculateMinMaxDamage`). The Fire Elemental's Fire Shield rolls spell hit.
-  - The DK's summons carry scaling aura 67561, not 61017: no melee hit. Risen ghouls, not the army, take the
-    owner's ArP (`Pet.HitScaling`, `Pet.RisenGhoul`).
-  - Guardians take party and raid auras like pets (`AnyGroupedUnitInObjectRangeCheck`), but an uncontrollable
-    one (Bloodworms, Mirror Images, the Greater Fire Elemental: SummonProperties with neither a pet's type nor
-    category) never gets a party or raid cast (`TARGET_CHECK_PARTY`/`RAID`), Replenishment included.
-  - Haste carriers (the hunter pet, the DK's ghouls, gargoyle and army, Spirit Wolves; `Unit.HasteCarrier`)
-    ignore direct haste and slows, Bloodlust included, and take the owner's attack speed as whole percent
-    (`Pet.OwnerHasteSource`): at the summon, then every 2 s for a pet and for Spirit Wolves
-    (`Pet.OwnerHasteTicksOnGuardian`), never again for the DK's guardians.
 - **Enchant PPMs:** Mongoose 1, Icebreaker 3, Deathfrost 3. An enchant procs only from the weapon that
   hit.
 - **Dungeon scale** (`NewEncounter`): health and armor become `round(float32(value) × multiplier)`, half
@@ -208,6 +214,11 @@ checks it and the Go effects.
 - **Hardcoded Go effects:**
   - Shared ones (`sim/common`) match the server. Thunderfury's and Rod of the Sun King's PPMs are
     literals: `serverdata` doesn't carry `item_template`'s `spellppmRate`.
+  - Item damage is dealt as the item's server spell, with its range, whole rolls and missile travel, so class
+    auras read its damage class and cast time: the proc trinkets, capacitors and Gnomish Lightning Generator
+    (`itemDamageSpell` in `sim/common/wotlk`), and the explosives by their use spells (56350, 67769, 56488;
+    `sim/core/consumes.go`). `legacyAPLItemIDs` keeps a saved rotation that names the item working. Still
+    under the item: Bryntroll and the items' heals.
   - Class relics, sigils, totems, idols and a few class set bonuses still carry Classic values until
     their class's P7 item. Totem of the Third Wind also buffs Healing Wave.
   - Verdicts per row are in `docs/azerothcore-item-diff/data/{effects,sets}_review.csv`.

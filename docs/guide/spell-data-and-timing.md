@@ -23,7 +23,8 @@ spell is only as right as its id.
     (`Unit::GetSpellModOwner`), charged ones too except on a guardian's cast time. The owner's other auras
     don't reach it, e.g. school crit (71) or a meta gem's crit damage (163).
   - A physical strike's fixed bonus takes its hand's TOTAL_PCT, 0.5 in the off hand; other schools don't
-    (`Spell::EffectWeaponDmg`). The sim's helpers: `sim/{deathknight,rogue,warrior}/weapon_strikes.go`.
+    (`Spell::EffectWeaponDmg`). The sim's helpers: `sim/core/weapon_strike.go` and
+    `sim/{deathknight,rogue,warrior}/weapon_strikes.go`.
   - Damage a script hands over (`CastCustomSpell`) is dealt exactly, with no roll.
   - Below its MaxLevel, a spell's spell power part scales by (SpellLevel + 6) / level, at most 1
     (`Unit::CalculateLevelPenalty`).
@@ -51,17 +52,29 @@ what unit tests want), with one phase rolled per iteration.
   tick it landed on, losing the overshoot: up to a world tick for a player, a map update for a pet.
 - Auras and dots tick and expire on the grid of what counts them down: the unit they sit on, a channel's
   caster, or the map update for an area dot from a dynamic object, totem or trap (effects 27, 28, 105).
-- A creature aura put on outside the creature's own update counts down from the map update before
-  (`Map::Update` hands `_UpdateSpells` the whole update's diff), so the dummy's dots tick and expire up to one
-  update early (`Aura.countdownStart`). One the creature puts on itself in its own update (swing, AI instant,
-  dot tick, expiry) counts from that update, and so does an area dot's object made in a map update.
-- A unit's auras update in spell id order (`Unit::_UpdateSpells`): on one update Ignite (12654) ticks before
-  Pyroblast's DoT (42891). The sim runs same-time ticks in the order queued; only Pyroblast's tick puts a due
-  Ignite first (`sim/mage/pyroblast.go`).
-- A dot stops at max duration / amplitude ticks (`AuraEffect::Update`, `GetTotalTicks`). The sim's tick action
-  has no such cap (`sim/core/dot.go`): a dot whose haste adds ticks can tick once more, on the expiry's update.
-  Only stock Glyph of Backstab's Rupture caps itself (`sim/rogue/rupture.go`).
-- The live map update runs about 104 ms (world ticks of about 10.4 ms); the sim's grid is exact.
+- An aura expires at its own time, ahead of any event queued for then (`Simulation.Step`). On one update
+  players' auras go before creatures' (`Map::Update`), and a unit's due ticks, lowest spell id first, before
+  its expiries (`Unit::_UpdateSpells`; `Unit.tickingDots`): Ignite (12654) ticks before Pyroblast's DoT (42891).
+- An aura put on outside its unit's own update counts down from the update before (`Aura.countdownStart`):
+  - A creature's from the map update before (`Map::Update` hands `_UpdateSpells` the whole update's diff), so
+    the dummy's dots tick and expire up to one update early.
+  - A player's from the world tick before: a cast or landing comes ahead of the player's update in its tick.
+    One put on from a creature's or pet's update counts from that world tick.
+  - One the unit puts on itself in its own update (swing, AI instant, dot tick, expiry) counts from that
+    update, and so does an area dot's object made in a map update.
+  - So time left never equals the duration on a fresh aura: ask `Aura.RefreshedNow`. An aura that must still
+    be on for an action a whole duration after its cast (a periodic action's last tick) takes
+    `Unit.DurationThroughLastTick`.
+- A dot stops at max duration / amplitude ticks (`AuraEffect::Update`, `GetTotalTicks`; `Dot.TotalTicks`), its
+  next tick owed until a refresh: `Dot.Rollover`, `Refresh` and `Activate` restart the count.
+  `Dot.UpdateExpires` moves the max duration with the expiry, so the added time ticks; `Aura.UpdateExpires`
+  moves the expiry alone (stock Glyph of Backstab).
+- Not modelled:
+  - `Unit::Update` lands hardcasts and missiles and fires Auto Shot before it ticks and expires auras; the sim
+    expires first, so one landing on an aura's last world tick misses the aura.
+  - The live map update runs about 102.7 ms, the sim's exactly 100. Live, an unhasted 2 s creature swing takes
+    2055 ms, and an Ignite application due 2.0 s after the last beats the old Ignite's tick about half the
+    time; in the sim the tick always comes first.
 - A landed swing pushes the other hand to at least 200 ms. A melee swing restarts the ranged timer, and
   every Auto Shot restarts both melee timers (`Unit::_UpdateAutoRepeatSpell`).
 - At the pull, and when auto attacks restart (breaking stealth), a ready off hand starts half the main hand's
