@@ -672,6 +672,12 @@ message Target {
 
 	// Custom Target AI parameters
 	repeated TargetInput target_inputs = 18;
+
+	// creature_immunities.MechanicsMask of the creature's CreatureImmunitiesId, bit
+	// 1 << mechanic. A spell with one of these mechanics never lands, and a snare or
+	// root never goes on. Unset means the usual raid boss set for a world boss and
+	// nothing for anything else.
+	optional uint64 mechanic_immune_mask = 21;
 }
 
 message Encounter {

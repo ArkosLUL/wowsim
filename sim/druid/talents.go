@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/wowsims/wotlk/sim/core"
+	"github.com/wowsims/wotlk/sim/core/proto"
+	"github.com/wowsims/wotlk/sim/core/serverdata"
 	"github.com/wowsims/wotlk/sim/core/stats"
 )
 
@@ -111,8 +113,6 @@ func (druid *Druid) setupNaturesGrace() {
 		},
 	})
 
-	procChance := []float64{0, .33, .66, 1}[druid.Talents.NaturesGrace]
-
 	druid.RegisterAura(core.Aura{
 		Label:    "Natures Grace",
 		Duration: core.NeverExpires,
@@ -120,14 +120,29 @@ func (druid *Druid) setupNaturesGrace() {
 			aura.Activate(sim)
 		},
 		OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
-			if !result.Outcome.Matches(core.OutcomeCrit) {
+			if !result.Outcome.Matches(core.OutcomeCrit) || !spell.Flags.Matches(SpellFlagNaturesGrace) {
 				return
 			}
-			if spell.Flags.Matches(SpellFlagNaturesGrace) && sim.Proc(procChance, "Natures Grace") {
-				druid.NaturesGraceProcAura.Activate(sim)
+			// the cast phase: a missile had it at its launch, another spell the druid casts has it here. A
+			// triggered spell has none (Starfall's stars)
+			if spell.MissileSpeed == 0 && spell.Flags.Matches(core.SpellFlagAPL) {
+				druid.rollNaturesGrace(sim)
 			}
+			druid.rollNaturesGrace(sim)
 		},
 	})
+}
+
+// rollNaturesGrace is one phase's roll for a crit. spell_proc -16880 takes the cast phase and the hit phase,
+// each rolling the talent's chance: live, all 171 crit Wraths of a fight gave 16886 at the launch and again at
+// the hit.
+func (druid *Druid) rollNaturesGrace(sim *core.Simulation) {
+	if druid.NaturesGraceProcAura == nil {
+		return
+	}
+	if sim.Proc([]float64{0, .33, .66, 1}[druid.Talents.NaturesGrace], "Natures Grace") {
+		druid.NaturesGraceProcAura.Activate(sim)
+	}
 }
 
 func (druid *Druid) registerNaturesSwiftnessCD() {
@@ -386,7 +401,7 @@ func (druid *Druid) applyOmenOfClarity() {
 	// any other proc-trigger aura (Aura::CalcProcChance / GetPPMProcChance).
 	ppm := core.ServerProcFor(16864).PPM
 
-	druid.rollOmenOfClarity = func(sim *core.Simulation, spell *core.Spell) {
+	rollOmenOfClarity := func(sim *core.Simulation, spell *core.Spell) {
 		chanceToProc := druid.AuraPPMProcChance(ppm, spell)
 		if druid.GiftOfTheWild.IsEqual(spell) {
 			// This cast stands in for the real spell's ~30 raid-wide targets, each rolling its
@@ -426,13 +441,43 @@ func (druid *Druid) applyOmenOfClarity() {
 				return
 			}
 
-			if !spell.ProcMask.Matches(core.ProcMaskMeleeWhiteHit) && !spell.Flags.Matches(SpellFlagOmenTrigger) {
+			if !spell.ProcMask.Matches(core.ProcMaskMeleeWhiteHit) && !spell.Flags.Matches(SpellFlagOmenTrigger) &&
+				!rollsOmenOffFamily(spell) {
 				return
 			}
 
-			druid.rollOmenOfClarity(sim, spell)
+			rollOmenOfClarity(sim, spell)
 		},
 	})
+}
+
+// SPELL_ATTR0_CU_NO_INITIAL_THREAT and SPELL_ATTR0_CU_DIRECT_DAMAGE, SPELL_EFFECT_ENERGIZE and
+// SPELL_EFFECT_CREATE_ITEM
+const (
+	attrCuNoInitialThreat = 0x00000010
+	attrCuDirectDamage    = 0x00000100
+	effectCreateItem      = 24
+	effectEnergize        = 30
+)
+
+var druidFamily = serverdata.ClassFamily(proto.Class_ClassDruid)
+
+// rollsOmenOffFamily is whether a spell from outside the druid's family rolls Omen of Clarity when it lands,
+// which an item's damage does: 16864 takes any magic-class spell, procs included (CAN_PROC_FROM_PROCS), and
+// spell_dru_omen_of_clarity::CheckProc lets one through that deals direct damage or heals and gives no power.
+// The chance is the PPM over the spell's own cast time entry, 2.2 s for Extract of Necromantic Power's bolt.
+func rollsOmenOffFamily(spell *core.Spell) bool {
+	ss := spell.ServerSpell()
+	if ss == nil || ss.Family == druidFamily || ss.DmgClass != serverdata.DmgClassMagic ||
+		ss.Flags&serverdata.FlagPassive != 0 || ss.AttributesCu&(attrCuDirectDamage|attrCuNoInitialThreat) == 0 {
+		return false
+	}
+	for _, e := range ss.Effects {
+		if e.Effect == effectEnergize || e.Effect == effectCreateItem {
+			return false
+		}
+	}
+	return true
 }
 
 func (druid *Druid) applyEclipse() {

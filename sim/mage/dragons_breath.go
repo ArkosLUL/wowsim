@@ -17,11 +17,12 @@ func (mage *Mage) registerDragonsBreathSpell() {
 	// the whole aura off, snare included. Dot ticks and Living Bomb's explosion leave it.
 	if mage.Talents.TormentTheWeak > 0 {
 		mage.dragonsBreathSnares = mage.NewEnemyAuraArray(func(target *core.Unit) *core.Aura {
-			if target.IsWorldBoss {
+			if target.ImmuneToMechanic(core.MechanicSnare) {
 				return nil
 			}
 			return target.GetOrRegisterAura(core.Aura{
 				Label:    "Dragon's Breath by " + mage.Label,
+				Tag:      core.SnareAuraTag,
 				Duration: time.Second * 5,
 				OnSpellHitTaken: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
 					if result.Damage > 0 && spell.SpellID != livingBombExplosionID {

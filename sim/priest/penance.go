@@ -75,10 +75,11 @@ func (priest *Priest) makePenanceSpell(isHeal bool) *core.Spell {
 			TickLength:          time.Second,
 			TicksCanCrit:        false,
 			AffectedByCastSpeed: true,
+			// spell_bonus_data's 0.1905 wins over 53000's own 0.229
+			Tick: core.SpellEffect{FromSpellID: tickSpellID, Effect: 0, Min: 375, Max: 375, SP: 0.1905},
 
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
-				// spell_bonus_data's 0.1905 wins over 53000's own 0.229
-				baseDamage := 375 + core.PowerBonus(0.1905*dot.Spell.SpellPower())
+				baseDamage := dot.Tick.Roll(sim) + core.PowerBonus(dot.Tick.SP*dot.Spell.SpellPower())
 				result := dot.Spell.CalcAndDealPeriodicDamage(sim, target, baseDamage, dot.Spell.OutcomeMagicHitAndCrit)
 				tickThreat.Hit(result)
 				tickThreat.Done(sim)

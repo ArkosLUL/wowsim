@@ -2,8 +2,10 @@ package deathknight
 
 import (
 	"math"
+	"slices"
 	"time"
 
+	"github.com/wowsims/wotlk/sim/common/wotlk"
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/stats"
 )
@@ -51,8 +53,9 @@ func (dk *Deathknight) ChangePresence(sim *core.Simulation, newPresence Presence
 
 func (dk *Deathknight) registerBloodPresenceAura(timer *core.Timer) {
 	threatMult := dk.presenceThreatMultiplier()
-	//TODO: Include hps bonus
 	damageBonusCoeff := 0.15
+	// Improved Blood Presence is a flat mod on the presence's own healing taken aura, 0 without it
+	healingTaken := 5 * dk.Talents.ImprovedBloodPresence
 	staminaMult := 1.0 + 0.04*float64(dk.Talents.ImprovedFrostPresence)
 	damageTakenMult := 1.0 - 0.01*float64(dk.Talents.ImprovedFrostPresence)
 
@@ -87,6 +90,7 @@ func (dk *Deathknight) registerBloodPresenceAura(timer *core.Timer) {
 
 			dk.ModifyDamageModifier(damageBonusCoeff)
 			aura.Unit.EnableDynamicStatDep(sim, statDep)
+			aura.Unit.AddHealingTakenPct(healingTaken)
 		},
 		OnExpire: func(aura *core.Aura, sim *core.Simulation) {
 			aura.Unit.PseudoStats.ThreatMultiplier /= threatMult
@@ -94,6 +98,7 @@ func (dk *Deathknight) registerBloodPresenceAura(timer *core.Timer) {
 
 			dk.ModifyDamageModifier(-damageBonusCoeff)
 			aura.Unit.DisableDynamicStatDep(sim, statDep)
+			aura.Unit.RemoveHealingTakenPct(healingTaken)
 		},
 	}
 
@@ -108,26 +113,26 @@ func (dk *Deathknight) registerBloodPresenceHeal() {
 	healthMetrics := dk.HealThreat(dk.NewHealthMetrics(bloodPresenceHealActionID), 50475)
 	improved := 2 * float64(dk.Talents.ImprovedBloodPresence)
 
-	dk.bloodPresenceHeal = func(sim *core.Simulation, damage float64) {
+	dk.bloodPresenceHeal = func(sim *core.Simulation, target *core.Unit, damage float64) {
 		pct := improved
 		if dk.PresenceMatches(BloodPresence) {
 			pct = 4
 		} else if !dk.PresenceMatches(FrostPresence | UnholyPresence) {
 			return
 		}
-		if pct == 0 || damage <= 0 {
+		if pct == 0 || damage <= 0 || !dk.givesXPOrHonor(target) {
 			return
 		}
 		// the script hands the heal a whole amount, and the healing taken percent truncates again
 		heal := math.Trunc(damage * pct / 100)
-		dk.GainHealth(sim, math.Trunc(heal*dk.PseudoStats.HealingTakenMultiplier), healthMetrics)
+		dk.GainHealth(sim, math.Trunc(heal*dk.healingTakenPct()), healthMetrics)
 	}
 
 	aura := core.MakePermanent(dk.RegisterAura(core.Aura{
 		Label: "Blood Presence Heal",
 		OnSpellHitDealt: func(_ *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
 			if dk.procsBloodPresenceHeal(spell) {
-				dk.bloodPresenceHeal(sim, result.Damage)
+				dk.bloodPresenceHeal(sim, result.Target, result.Damage)
 			}
 		},
 	}))
@@ -138,15 +143,44 @@ func (dk *Deathknight) registerBloodPresenceHeal() {
 		AnyPeriodic: true,
 		Harmful:     true,
 		Handler: func(sim *core.Simulation, _ *core.Spell, result *core.SpellResult) {
-			dk.bloodPresenceHeal(sim, result.Damage)
+			dk.bloodPresenceHeal(sim, result.Target, result.Damage)
 		},
 	})
 }
 
+// givesXPOrHonor is Player::isHonorOrXPTarget, which 63611's proc asks for (PROC_ATTR_REQ_EXP_OR_HONOR): the
+// victim has to be above the gray level, 9 under a level 60+ player's own.
+func (dk *Deathknight) givesXPOrHonor(target *core.Unit) bool {
+	return target.Level > dk.Level-9
+}
+
+// healingTakenPct is the DK's healing taken percent auras alone. 50475 has no damage class and no
+// spell_bonus_data row, so Unit::SpellHealingBonusDone hands it back before any healing done percent, and
+// Strength of Wrynn's is in HealingTakenMultiplier too.
+func (dk *Deathknight) healingTakenPct() float64 {
+	taken := dk.PseudoStats.HealingTakenMultiplier
+	if dk.strengthOfWrynn {
+		// the percent auras always come to whole ten-thousandths, which the division can miss by a bit
+		taken = math.Round(taken/1.30*10000) / 10000
+	}
+	return taken
+}
+
+// onUseItemDamage are the items whose use spell deals the damage itself. Player::CastItemUseSpell casts an
+// item's first spell untriggered, so it procs like one of the DK's own casts.
+var onUseItemDamage = []core.ActionID{
+	core.SaroniteBombActionID,
+	core.CobaltFragBombActionID,
+	core.ThermalSapperActionID,
+	{SpellID: 54757}, // Hand-Mounted Pyro Rocket
+	{SpellID: wotlk.GnomishLightningGeneratorSpellID},
+}
+
 // procsBloodPresenceHeal is whether a direct hit of the spell procs 63611: auto attacks, the spells the DK
-// casts and Death Coil's damage (47632, NOT_A_PROC). Not the other triggered spells: Threat of Thassarian's
-// off-hand strikes, Scourge Strike's shadow part, Blood-Caked Blade, Wandering Plague, item procs. Necrosis
-// (NOT_A_PROC too) and Unholy Blight's ticks skip the damage callbacks, so they heal where they deal damage.
+// casts, an on-use item's damage and Death Coil's damage (47632, NOT_A_PROC). Not the other triggered spells:
+// Threat of Thassarian's off-hand strikes, Scourge Strike's shadow part, Blood-Caked Blade, Wandering Plague,
+// item procs. Necrosis (NOT_A_PROC too) and Unholy Blight's ticks skip the damage callbacks, so they heal
+// where they deal damage.
 func (dk *Deathknight) procsBloodPresenceHeal(spell *core.Spell) bool {
 	switch spell {
 	case dk.AutoAttacks.MHAuto(), dk.AutoAttacks.OHAuto(),
@@ -155,7 +189,7 @@ func (dk *Deathknight) procsBloodPresenceHeal(spell *core.Spell) bool {
 		dk.HowlingBlast, dk.BloodBoil, dk.DeathCoilDamage:
 		return true
 	}
-	return false
+	return slices.ContainsFunc(onUseItemDamage, spell.ActionID.SameAction)
 }
 
 func (dk *Deathknight) registerFrostPresenceAura(timer *core.Timer) {

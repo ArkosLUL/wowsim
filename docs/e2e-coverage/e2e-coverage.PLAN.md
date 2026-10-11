@@ -2479,6 +2479,144 @@ Cross-review, 2026-10-10, on `8be984c35` with the four items merged:
   field and its plumbing; their cycles, fights, drops and rows.
 - **Goldens:** those classes' suites, and every suite with an item damage proc; report each.
 
+#### As built
+
+Melee stage, on `fd12d68cc`, each lead re-measured against [ac] `3d89793c7` (notes and the live checks in
+`tmp/ec-class-fix3-melee.md`). Verdicts:
+- Blood Presence's XP rule (partly fixed, `givesXPOrHonor`): `Player::isHonorOrXPTarget` wants a victim above the
+  gray level (71 for an 80). The `NO_XP` flag stays unread: `proto.Target` has no field for it (contract request).
+- On-use item damage (fixed, `onUseItemDamage`): `Player::CastItemUseSpell` casts an item's first spell
+  untriggered, so the bombs, the Pyro Rocket and the Gnomish Lightning Generator heal, the sapper's hit on the DK
+  too (by the source). The list keys on their sim action ids.
+- Strength of Wrynn (fixed, `healingTakenPct`): 50475 takes the healing taken percents only; the DK reads the raid
+  buff in `AddRaidBuffs` and divides the stand-in out.
+- Improved Blood Presence (fixed): a flat `SPELLMOD_EFFECT2` on 48266's healing taken aura, 5% a point in Blood
+  Presence only.
+- Rotations, Average-Default base → after:
+  - `frost_uh_pesti` 13826 → 13831: Pestilence with both death runes ready, no frost or unholy rune, Frost Fever
+    at 9 s or less.
+  - `frost_bl_pesti` 11850 → 11903 (Blood Tap 1.4 → 5 casts, Blood Strike 23.6 → 26.9): taps a blood-slot death
+    rune 5 s or more from ready, after 19 s, Unbreakable Armor over 20 s away, on one target (on several the tap
+    costs 0.7%: the armor's sequence needs it).
+  - `uh_dnd_aoe` 12317 → 12310: taps with no blood rune ready; multi-target +0.7 to +1.1%, one long target −0.2%.
+  - TestFrost drops `frost_uh_pesti` (TestFrostUH runs it); TestBlood runs `blood_pesti_aoe`, untuned.
+- Hunting Party (fixed): spell_proc -53290's mask holds 53352, not the cast, with `TRIGGERED_CAN_PROC`: each crit
+  tick of Explosive Shot rolls it. The ranks' chances are 33/66/100.
+- Chimera Shot - Serpent (fixed): the sting's stored tick keeps the done percents it went on with
+  (`AuraEffect::CalculateAmount` reuses `m_pctMods`), and 53353 adds none. The target's damage taken applied
+  twice here; the live stage undid that. No truncation added (EC-CORE-FIX4's).
+- Bloodworm melee (no gap): both logged summons came with all four strength procs up; the sim's worm at that AP
+  hits 56–79, mean 67.8, against the log's 58–79, mean 69.3 (z 1.2). The replay averages summons at any AP.
+- Protection warrior melee (no gap): the log's second Devastate was parried and Sunder Armor ran out at 44 s; sim
+  fights that lose it the same way (7%) average 398 (z −1.7), glances agree.
+
+Tests: `presence_heal_test.go` (four new), `sim/hunter/chimera_shot_test.go`, `hunting_party_test.go`.
+
+Goldens (`dock.sh delta`), Average-Default: TestFrost +0.45% (133 rows −0.5 to +1.2%, 24 gone), TestFrostUH
++0.03% (133 rows), TestMM +0.69% (all rows; 53353 4036 → 4550 a hit), TestSV 0 (145 rows −0.1 to +1.6%,
+Replenishment). TestUnholy: the 12 `uh_dnd_aoe` rows (dps to +1.6%, hps to +18.8%). TestBlood: 12 new rows. The
+Gnomish Lightning Generator rows' tps +0.004 and +0.007%. `db.json`'s APL presets move.
+
+Follow-ups: a `no_xp` target field, set on the simval dummies; a core accessor for the healing taken percents
+apart from the healing done stand-in, which Death Strike's 45470 and Death Pact's 48743 (class none) may need
+too; `blood_pesti_aoe`'s tuning; the fight replay summoning proc guardians when the log does.
+
+Casters stage, same base (notes and the live plan in `tmp/ec-class-fix3-code.md`). Verdicts:
+- Item damage (fixed, `itemDamageSpell` in `sim/common/wotlk`): the six proc trinkets, the capacitors and the
+  Gnomish Lightning Generator deal their damage as the server spell (60307, 60483, 55748, 60443, 60488, 60203,
+  54843, 67714, 67760, 55039), with a declared range, whole-step rolls and the bolt's travel (20 yd/s for 60488
+  and the capacitors). Left: the bombs and the sapper (`sim/core`), Bryntroll, the items' heals.
+- Omen of Clarity off item damage (fixed, `rollsOmenOffFamily`): any landed magic-class spell outside the druid
+  family that deals direct damage, at the PPM over its cast time entry (8.75%, 60488 12.83%).
+- Nature's Grace's 16886 (refuted): the talent has `SPELL_ATTR3_INSTANT_TARGET_PROCS`, so
+  `Unit::TriggerAurasProcOnEvent` blocks procs while it casts 16886 on the druid; nothing rolls. Not changed.
+- Survival Instincts (no gap): its `SpellFlagOmenTrigger` never rolled, as the spell deals no outcome; removed.
+- Illustration of the Dragon Soul (fixed): Hurricane's cast deals a hit with no damage on the druid's side
+  (`OnSpellHitDealt` only), one stack; the ticks already gave none. The hit names the cast's target, not the
+  druid: a proc that puts a dot on the hit's target (Shard of the Gods) panicked on a friendly one (review).
+- Mechanic immunities (fixed): `proto.Target.mechanic_immune_mask` (field 21), unset meaning row -361
+  (`core.RaidBossMechanicImmunities`) on a world boss and nothing elsewhere; `Unit.ImmuneToMechanic`. The
+  Naxxramas presets carry row -286. Pin, Venom Web Spray, Ravage, Tendon Rip and Snatch cast and miss on an
+  immune target. The mage's snares read the mask, and Torment the Weak counts any aura tagged
+  `core.SnareAuraTag` (another mage's chill, Mind Flay). Hamstring and Slow have no sim spell.
+- Curse of Doom (fixed): `APLValueWarlockCurseOfDoomLength` (apl.proto field 66), 60 s without the tweak;
+  `demo.apl.json` compares the time left to it. Demonology Average-Default 15057.9 → 15059.2, Curse of Doom
+  7.00 → 7.02 casts; the short single-target rows +2.3 and +1.8%.
+- Destruction's Immolate tick (no gap): the log's five snapshots (1315, 2109, 1329, 1329, 1983) are the sim's to
+  the point in the same aura states; six of ten non-crit ticks came from the two under procs.
+- Spell-mod sweep (fixed, `spellModSimSpells`): the 17 probes compare as the sim spell whose `ThreatSpellID` they
+  are. 6 agree (53000 under Twin Disciplines ×1.0479 and Searing Light ×1.0987, through a declared tick; Inner
+  Focus on both ticks; 7386's cost under Puncture and Focused Rage), 11 move nothing. Replay: 544 agree, 391 move
+  nothing, 245 not compared.
+
+Tests: `omen_items_test.go`, `mechanic_immunity_test.go`, `mind_flay_snare_test.go`,
+`TestTormentTheWeakReadsImmunitiesAndOtherUnitsSnares`, `TestPetSpecialsNeverLandOnAnImmuneTarget`,
+`TestCurseOfDoomLengthValue`, `TestSpellModSimSpellsResolve`. e2e: `TestSimvalEcClass3Fight`
+(`e2e/ecclass3_test.go`: auras on the bot or target, items used as steps), vetted only.
+
+Goldens on top: 35 of 37 suites, most by one to seven item rows within 0.02%. The mage suites and
+BalancePhase3 wear Reign of the Unliving, so every row moves (Average-Default −0.006 to −0.018%, key
+`{ItemID: 47188}` → `{SpellID: 67760}`); feral rows with a damage trinket −0.7 to +1.0% (Omen). TestBalance's
+six `p3_alliance` rows wear the trinket too (one iteration each, to −1.34%). Subtlety's Reign of the Dead rows
+−0.37% on 20 iterations; over 10000 it's +0.15%: at the suite's 30 yd the bolt's crit lands 1.5 s on, past Honor
+Among Thieves' 1 s cooldown, and rolls it again (51701 has `CAN_PROC_FROM_PROCS`, finish phase; 90.2 → 93.1
+points a fight). `db.json` moves
+(the Naxxramas presets, `demo.apl.json`); `spells_auto_gen.go` regenerated.
+
+Follow-ups: Frost Shock's snare tag (shaman); the bombs and sapper under their spells; the simval dummies' own
+masks; Barkskin, Innervate and Rebirth never roll Omen; Typhoon's and Hurricane's snares; exempting
+`spell_warl_curse_of_doom` in the module's shaped scripts.
+
+Live stage, 2026-10-11 against `3d89793c7` with module `8a6f13f`, no rebuild (runs, logs and counts in
+`tmp/ec-class-fix3-live.md`). `TestSimvalEcClass3Fight` ran after three e2e fixes: the dummy selected again after
+the item commands, the equip waited for in the saved inventory, and item steps counted from the Chronicle log
+(an item's SMSG_SPELL_GO names the item as caster).
+- Blood Presence (confirmed): on the Heroic Training Dummy with Improved Blood Presence 2/2, 220 heals, each
+  int(int(damage × 0.04) × 1.10); 228 more under Hellscream's Warsong, no ×1.30. One heal per Saronite Bomb and
+  Gnomish Lightning Generator hit; the sapper heals for its hit on the dummy and for its hit on the DK. None for a
+  critter or the `NO_XP` simval dummy.
+- Death rune take-over (confirmed): twice with no miss, Blood Tap, two Blood Strikes, then four Icy Touches, the
+  last two 22.0 and 23.5 s after the tap, all went off. With one Blood Strike dodged the tapped rune was never
+  taken over and the fourth Icy Touch was refused.
+- Chimera Shot - Serpent (the melee fix undone): under Curse of the Elements a 603 sting gave 1907 =
+  uint32(int32(603 × 2.8) × 1.13), not 2154. 53353 has `SPELL_ATTR0_CU_NO_POSITIVE_TAKEN_BONUS`
+  (`spell_custom_attr`), so its own hit takes a damage taken multiplier only below 1: it's now
+  `SpellFlagIgnoreModifiers`. In Aspect of the Viper it kept the Dragonhawk amount, and the sting's refresh there
+  lost only the 300 AP (confirmed).
+- Hunting Party (confirmed): 19 Replenishment procs, each on a crit of 53352, none at a cast; 19 of 53 crits at
+  1/3.
+- Omen of Clarity (confirmed): 69 Clearcasting procs on 518 landed Wraths, each on its hit: 13.3% against 11.67%
+  (Wrath's cast time entry is 2 s, not the plan's 8.75%). 16886 rolls nothing: none at the launch of 171 crit
+  Wraths, where it goes on.
+- Nature's Grace (new, fixed, `rollNaturesGrace`): spell_proc -16880 has the cast and the hit phase, so a crit
+  Wrath gives 16886 at its launch and again at its hit (171 of 171 each); the sim gave it at the hit only. A
+  cast spell without a missile rolls both phases at its hit, a triggered one (Starfall's stars) the hit phase
+  only (`Spell::_cast`; review); it matters under 3 points.
+- Ignite (found, not fixed): all 76 ticks are the amount the server's rule gives. Over the fight Ignite paid 1.19
+  of 40% of the crits feeding it, the sim's bot in the same fight 1.56 (sd 0.38 over 60 seeds), 110 ticks to 76.
+  After an application the sim's first tick comes exactly 1.9 s later, ahead of an application due 2.0 s on; live
+  it comes 1.85 to 2.05 s later and that application won 14 times in 91. Core timing.
+- Mace Specialization (confirmed): WarriorArms with a two-handed mace (40406) moves armor penetration +15 on
+  both sides. The committed axe path's drop stays.
+- Spell-mod sweep: MageFire's 192 lines are fresh, Pyroblast unshaped: 546 agree, 389 move nothing, 245 not
+  compared. The fixture README's Pyroblast note is gone.
+- Fights: DeathknightBlood and WarriorProtectionWarrior re-recorded. Bloodworm melee mean 61.51 against 61.71
+  (z −0.1), warrior melee 402.2 against 402.3 (z 0.0).
+
+Tests: `TestChimeraShotSerpentTakesTheTargetsBonusOnce`, `TestChimeraShotSerpentTakesAReductionTwice`,
+`TestNaturesGraceComesAtWrathsLaunch`; from the review, golden-neutral: `TestNaturesGraceRollsOncePerPhase`,
+`TestHurricaneCastProcsGoOnItsTarget`.
+
+Goldens on top: TestBalance +1.32% and BalancePhase3 +1.09% Average-Default (all rows, −4.0 to +3.8%; Nature's
+Grace uptime 247 → 263 s, Wrath 124.6 → 126.7 casts); TestMM back to −0.02% against the base (53353 4036 → 4022 a
+hit), where the melee stage had +0.69%.
+
+Follow-ups: Ignite's first tick after a delayed application (`sim/core/dot.go`, `delayed_periodic.go`); the
+WarriorArms sweep path with a mace (`sweepClasses` in `talentpaths.go`, then its talent and spell-mod lines), which
+would retire its drop; a hit phase of its own for other missile spells in a cast-and-hit proc's mask; the Shard
+of the Gods sets by the server's scripts (69739 casts only the heal, 69755 only Searing Flames 69729; the sim
+gives both sets both).
+
 ### EC-TOOLS (Z7; golden-neutral)
 
 - The rotation debug harness from Z5's retune (`G:\DevStuff\GitHub\.wave-loop\ec-class-fix2-apl-tmp\apldbg`:

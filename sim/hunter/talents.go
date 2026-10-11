@@ -814,8 +814,18 @@ func (hunter *Hunter) applyHuntingParty() {
 		return
 	}
 
-	procChance := float64(hunter.Talents.HuntingParty) / 3
+	// the ranks' own proc chances
+	procChance := []float64{0, 0.33, 0.66, 1}[hunter.Talents.HuntingParty]
 	replSrc := hunter.Env.Raid.NewReplenishmentSource(&hunter.Unit, core.ActionID{SpellID: 53292})
+
+	proc := func(sim *core.Simulation, result *core.SpellResult) {
+		if !result.DidCrit() {
+			return
+		}
+		if procChance == 1 || sim.RandomFloat("Hunting Party") < procChance {
+			hunter.Env.Raid.ProcReplenishment(sim, replSrc)
+		}
+	}
 
 	hunter.RegisterAura(core.Aura{
 		Label:    "Hunting Party",
@@ -824,16 +834,15 @@ func (hunter *Hunter) applyHuntingParty() {
 			aura.Activate(sim)
 		},
 		OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
-			if !result.DidCrit() {
-				return
+			if spell == hunter.SteadyShot || spell == hunter.ArcaneShot {
+				proc(sim, result)
 			}
-
-			if spell != hunter.SteadyShot && spell != hunter.ArcaneShot && spell != hunter.ExplosiveShotR4 && spell != hunter.ExplosiveShotR3 {
-				return
-			}
-
-			if procChance == 1 || sim.RandomFloat("Hunting Party") < procChance {
-				hunter.Env.Raid.ProcReplenishment(sim, replSrc)
+		},
+		// the mask holds Explosive Shot's damage (53352), which every tick casts, not its cast: a triggered
+		// spell, but the proc takes those (PROC_ATTR_TRIGGERED_CAN_PROC)
+		OnPeriodicDamageDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
+			if spell == hunter.ExplosiveShotR4 || spell == hunter.ExplosiveShotR3 {
+				proc(sim, result)
 			}
 		},
 	})

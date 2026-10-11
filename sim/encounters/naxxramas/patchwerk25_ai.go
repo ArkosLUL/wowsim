@@ -33,6 +33,8 @@ func addPatchwerk25(bossPrefix string) {
 			DualWieldPenalty: false,
 			DamageSpread:     0.1,
 			TargetInputs:     make([]*proto.TargetInput, 0),
+
+			MechanicImmuneMask: mechanicImmunities(),
 		},
 		AI: NewPatchwerk25AI(),
 	})

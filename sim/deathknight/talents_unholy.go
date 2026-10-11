@@ -113,7 +113,7 @@ func (dk *Deathknight) necrosisDamage(damage float64, sim *core.Simulation, targ
 	dk.Necrosis.SpellMetrics[target.UnitIndex].Casts++
 	result := dk.Necrosis.CalcAndDealDamage(sim, target, damage*dk.NecrosisCoeff, dk.Necrosis.OutcomeAlwaysHit)
 	// 51460 is NOT_A_PROC, so triggered or not it procs Blood Presence's heal
-	dk.bloodPresenceHeal(sim, result.Damage)
+	dk.bloodPresenceHeal(sim, target, result.Damage)
 }
 func (dk *Deathknight) necrosisOHAuto(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 	baseDamage := spell.Unit.OHWeaponDamage(sim, spell.MeleeAttackPower()) +
@@ -284,7 +284,7 @@ func (dk *Deathknight) applyUnholyBlight() {
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 				result := dot.CalcAndDealPeriodicSnapshotDamage(sim, target, dot.OutcomeTick)
 				// a dot tick like any other for Blood Presence's heal, which the skipped callbacks would miss
-				dk.bloodPresenceHeal(sim, result.Damage)
+				dk.bloodPresenceHeal(sim, target, result.Damage)
 			},
 		},
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {

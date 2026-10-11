@@ -485,7 +485,10 @@ the line before (`steps` k-1, no cast) to after (k, the talent's cast if not pas
 `goldcharSetup(k-1)` and `(k)` (`newPathSim`), the cast aura mirrored. The sim's spell comes from the path's spec, else
 the class's other specs, else with a point in the talent whose rank spell is its first rank (Mortal Strike, Living
 Bomb); none (a pet's or Mirror Image's spell, an off-hand strike) is `not compared`, as is a cast talent the sim has no
-aura for (Presence of Mind). Checks, on numbers all four sides have:
+aura for (Presence of Mind). A probed spell the sim deals under another id compares as the sim spell whose
+`ThreatSpellID` is it (`spellModSimSpells`: Penance's ticks, Sunder Armor's 7386 and 58567, Windfury Attack, Seal
+of Righteousness' and Scourge Strike's second spells), without cast time, GCD, cost and cooldown unless it's the
+same cast (7386). Checks, on numbers all four sides have:
 - Exact: cast time before haste (`DefaultCast.CastTime` × `CastTimeMultiplier`) and after, GCD (category 133), own
   and category cooldown, cost (or rune costs, runic power gain and cost), channel, aura duration, each periodic
   effect's amplitude and ticks; per probed effect its declared base (when the declaration is the spell's own).

@@ -121,11 +121,11 @@ func spellModLineFrom(t *testing.T, sims *spellModSims, steps int, cast, spellID
 	t.Helper()
 	path := sims.path
 	line := spellModLine{Path: path.Name, Bot: "Svsleadabcde", Steps: steps, Cast: cast, Spell: spellID, Name: "Spell"}
-	sim := sims.get(steps, cast, spec, teach)
+	sim := sims.get(steps, cast, spec, teach, spellModSimSpells[spellID].option)
 	if sim.err != nil {
 		t.Fatalf("%s after %d steps as %s: %v", path.Name, steps, spec, sim.err)
 	}
-	spell := spellBySpell(&sim.d.char.Unit, spellID)
+	spell, _ := simSpellDealing(&sim.d.char.Unit, spellID)
 	if spell == nil {
 		return line
 	}
@@ -611,5 +611,47 @@ func TestSpellModReplay(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+// Every spell of spellModSimSpells is probed in some path's step, and the sim deals it there under the spell
+// the entry names, so a stale entry or a sim spell that stopped following it fails.
+func TestSpellModSimSpellsResolve(t *testing.T) {
+	needsItemDB(t)
+	steps := spellModSteps(t)
+	seen := map[int32]bool{}
+	for _, path := range allTalentPaths(t) {
+		sims := newSpellModSims(path)
+		for n, step := range path.Steps {
+			listed, ok := steps[step.Spell]
+			if !ok {
+				continue
+			}
+			var cast int32
+			if !listed.passive {
+				cast = step.Spell
+			}
+			for _, spell := range listed.group.Spells {
+				other, ok := spellModSimSpells[spell.ID]
+				if !ok {
+					continue
+				}
+				seen[spell.ID] = true
+				pair := sims.pair(n+1, cast, spell.ID)
+				if pair.err != nil || pair.note != "" {
+					t.Errorf("%s step %d %s, %d %s: no sim spell: %v %s", path.Name, n+1, step.Talent, spell.ID, spell.Name, pair.err, pair.note)
+					continue
+				}
+				if !pair.alias || pair.after.spell.ActionID.SpellID != other.sim || pair.after.spell.ThreatServerSpellID() != spell.ID {
+					t.Errorf("%s step %d %s, %d %s: the sim deals it as %s (threat spell %d), want under %d", path.Name, n+1, step.Talent,
+						spell.ID, spell.Name, pair.after.spell.ActionID, pair.after.spell.ThreatServerSpellID(), other.sim)
+				}
+			}
+		}
+	}
+	for id := range spellModSimSpells {
+		if !seen[id] {
+			t.Errorf("%d is in spellModSimSpells, but no path step probes it", id)
+		}
 	}
 }

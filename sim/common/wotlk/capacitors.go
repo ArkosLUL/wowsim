@@ -26,8 +26,10 @@ func makeCapacitorAura(unit *core.Unit, config CapacitorAura) *core.Aura {
 }
 
 type CapacitorDamageEffect struct {
-	Name      string
-	ID        int32
+	Name string
+	ID   int32
+	// the bolt the full stack fires, which flies at 20 yards a second
+	SpellID   int32
 	MaxStacks int32
 	Trigger   core.ProcTrigger
 
@@ -40,21 +42,9 @@ func newCapacitorDamageEffect(config CapacitorDamageEffect) {
 	core.NewItemEffect(config.ID, func(agent core.Agent) {
 		character := agent.GetCharacter()
 
-		minDmg := config.MinDmg
-		maxDmg := config.MaxDmg
-		damageSpell := character.RegisterSpell(core.SpellConfig{
-			ActionID:    core.ActionID{ItemID: config.ID},
-			SpellSchool: config.School,
-			ProcMask:    core.ProcMaskEmpty,
-
-			DamageMultiplier: 1,
-			CritMultiplier:   character.DefaultSpellCritMultiplier(),
-			ThreatMultiplier: 1,
-
-			ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-				spell.CalcAndDealDamage(sim, target, sim.Roll(minDmg, maxDmg), spell.OutcomeMagicHitAndCrit)
-			},
-		})
+		// Reign of the Unliving and Reign of the Dead fire the same spell
+		damageSpell := character.GetOrRegisterSpell(itemDamageSpell(character, config.SpellID, config.School,
+			config.MinDmg, config.MaxDmg, 20))
 
 		var procTarget *core.Unit
 		capacitorAura := makeCapacitorAura(&character.Unit, CapacitorAura{
@@ -89,6 +79,7 @@ func init() {
 	newCapacitorDamageEffect(CapacitorDamageEffect{
 		Name:      "Thunder Capacitor",
 		ID:        38072,
+		SpellID:   54843,
 		MaxStacks: 4,
 		Trigger: core.ProcTrigger{
 			Callback: core.CallbackOnSpellHitDealt,
@@ -104,6 +95,7 @@ func init() {
 	newCapacitorDamageEffect(CapacitorDamageEffect{
 		Name:      "Reign of the Unliving",
 		ID:        47182,
+		SpellID:   67714,
 		MaxStacks: 3,
 		Trigger: core.ProcTrigger{
 			Callback: core.CallbackOnSpellHitDealt,
@@ -119,6 +111,7 @@ func init() {
 	newCapacitorDamageEffect(CapacitorDamageEffect{
 		Name:      "Reign of the Unliving H",
 		ID:        47188,
+		SpellID:   67760,
 		MaxStacks: 3,
 		Trigger: core.ProcTrigger{
 			Callback: core.CallbackOnSpellHitDealt,
@@ -137,6 +130,7 @@ func init() {
 	newCapacitorDamageEffect(CapacitorDamageEffect{
 		Name:      "Reign of the Dead",
 		ID:        47316,
+		SpellID:   67714,
 		MaxStacks: 3,
 		Trigger: core.ProcTrigger{
 			Callback: core.CallbackOnSpellHitDealt,
@@ -152,6 +146,7 @@ func init() {
 	newCapacitorDamageEffect(CapacitorDamageEffect{
 		Name:      "Reign of the Dead H",
 		ID:        47477,
+		SpellID:   67760,
 		MaxStacks: 3,
 		Trigger: core.ProcTrigger{
 			Callback: core.CallbackOnSpellHitDealt,

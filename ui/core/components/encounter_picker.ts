@@ -505,6 +505,7 @@ class TargetPicker extends Input<Encounter, TargetProto> {
 			suppressDodge: this.suppressDodgePicker.getInputValue(),
 			// Passed through as is, so a preset that leaves it unset still matches.
 			worldBoss: this.getTarget().worldBoss,
+			mechanicImmuneMask: this.getTarget().mechanicImmuneMask,
 			dualWield: this.dualWieldPicker.getInputValue(),
 			dualWieldPenalty: this.dwMissPenaltyPicker.getInputValue(),
 			parryHaste: this.parryHastePicker.getInputValue(),

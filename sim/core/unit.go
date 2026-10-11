@@ -52,6 +52,9 @@ type Unit struct {
 	// and the armor penetration cap use Level regardless.
 	IsWorldBoss bool
 
+	// creature_immunities.MechanicsMask, bit 1 << mechanic; read it through ImmuneToMechanic
+	MechanicImmuneMask uint64
+
 	// Unit::IsPet: summoned with SPELL_EFFECT_SUMMON_PET, i.e. hunter and warlock
 	// pets and the Master of Ghouls ghoul. Every other summon is a guardian and
 	// doesn't glance.

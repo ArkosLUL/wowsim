@@ -172,6 +172,8 @@ type PetSpecialAbilityConfig struct {
 	MissileSpeed float64
 	// SP only counts for a magic school: the pet's spell damage reaches no other
 	Damage core.SpellEffect
+	// the spell's own mechanic: a target immune to it takes none of the spell (Creature::IsImmunedToSpell)
+	Mechanic core.Mechanic
 
 	Dot core.DotConfig
 
@@ -202,6 +204,10 @@ func (hp *HunterPet) newSpecialAbility(config PetSpecialAbilityConfig) *core.Spe
 		}
 	}
 	hit := func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+		if config.Mechanic != 0 && target.ImmuneToMechanic(config.Mechanic) {
+			spell.CalcAndDealOutcome(sim, target, spell.OutcomeAlwaysMiss)
+			return
+		}
 		baseDamage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.AP*spell.MeleeAttackPower())
 		if magicSchool {
 			baseDamage += core.PowerBonus(spell.Direct.SP * spell.SpellPower())
@@ -523,6 +529,11 @@ func (hp *HunterPet) newPin() *core.Spell {
 		},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+			// Pin is a root at spell level, so a target immune to roots takes none of it
+			if target.ImmuneToMechanic(core.MechanicRoot) {
+				spell.CalcAndDealOutcome(sim, target, spell.OutcomeAlwaysMiss)
+				return
+			}
 			result := spell.CalcAndDealOutcome(sim, target, spell.OutcomeMeleeSpecialHit)
 			if result.Landed() {
 				spell.Dot(result.Target).Apply(sim)
@@ -627,6 +638,8 @@ func (hp *HunterPet) newRavage() *core.Spell {
 		SpellID: 53562,
 		School:  core.SpellSchoolPhysical,
 		Damage:  core.SpellEffect{Effect: 0, Min: 106, Max: 150, SP: 0.119658, AP: 0.07},
+
+		Mechanic: core.MechanicStun,
 	})
 }
 
@@ -770,6 +783,8 @@ func (hp *HunterPet) newSnatch() *core.Spell {
 		SpellID: 53543,
 		School:  core.SpellSchoolPhysical,
 		Damage:  core.SpellEffect{Effect: 0, Min: 89, Max: 125, SP: 0.119658, AP: 0.07},
+
+		Mechanic: core.MechanicDisarm,
 	})
 }
 
@@ -932,6 +947,8 @@ func (hp *HunterPet) newTendonRip() *core.Spell {
 		SpellID: 53575,
 		School:  core.SpellSchoolPhysical,
 		Damage:  core.SpellEffect{Effect: 1, Min: 49, Max: 69, SP: 0.333},
+
+		Mechanic: core.MechanicSnare,
 	})
 }
 
@@ -970,6 +987,11 @@ func (hp *HunterPet) newVenomWebSpray() *core.Spell {
 		},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+			// a root at spell level, like Pin
+			if target.ImmuneToMechanic(core.MechanicRoot) {
+				spell.CalcAndDealOutcome(sim, target, spell.OutcomeAlwaysMiss)
+				return
+			}
 			result := spell.CalcAndDealOutcome(sim, target, spell.OutcomeMagicHit)
 			if result.Landed() {
 				spell.Dot(target).Apply(sim)

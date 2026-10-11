@@ -55,6 +55,10 @@ func (druid *Druid) registerWrathSpell() {
 			}
 			baseDamage := bonusFlatDamage + roll + core.PowerBonus(spell.Direct.SP*spell.SpellPower())
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
+			// Nature's Grace's cast phase: the bolt's crit is rolled at its launch
+			if result.DidCrit() {
+				druid.rollNaturesGrace(sim)
+			}
 			spell.DealDamageAfterTravel(sim, result)
 		},
 	})

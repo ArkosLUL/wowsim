@@ -116,6 +116,81 @@ func TestCurseOfDoomScaling(t *testing.T) {
 	}
 }
 
+// The rotation's value for the curse's length follows the cast speed under the tweak and stays at 60 s without
+// it, so a condition on the time left casts a hasted curse that still fits and skips a stock one that doesn't.
+func TestCurseOfDoomLengthValue(t *testing.T) {
+	const ms = time.Millisecond
+	for _, c := range []struct {
+		name     string
+		talents  string
+		settings *proto.ServerSettings
+		haste    float64
+		length   time.Duration
+	}{
+		{"no haste", DemonologyTalents, doomScalingOn, 1, 60000 * ms},
+		{"30% haste", DemonologyTalents, doomScalingOn, 1.3, 46153 * ms},
+		{"slowed", DemonologyTalents, doomScalingOn, 0.8, 60000 * ms},
+		{"switch off", DemonologyTalents, doomScalingOff, 1.3, 60000 * ms},
+		{"no Demonic Pact", DestructionTalents, doomScalingOn, 1.3, 60000 * ms},
+	} {
+		sim, warlock, _ := doomSim(t, c.talents, c.settings)
+		value := warlock.NewAPLValue(nil, &proto.APLValue{Value: &proto.APLValue_WarlockCurseOfDoomLength{
+			WarlockCurseOfDoomLength: &proto.APLValueWarlockCurseOfDoomLength{}}})
+		if value == nil {
+			t.Fatalf("%s: the warlock has no value for the curse's length", c.name)
+		}
+		warlock.MultiplyCastSpeed(c.haste)
+		if got := value.GetDuration(sim); got != c.length {
+			t.Errorf("%s: the value says %v, want %v", c.name, got, c.length)
+		}
+	}
+
+	// 58 s of fight under the raid's 8% spell haste, a curse of 55.5 s: only the scaled one fits, and the
+	// rotation's condition sees that
+	casts := func(settings *proto.ServerSettings) int32 {
+		encounter := core.MakeSingleTargetEncounter(0)
+		encounter.Duration = 58
+		encounter.ServerSettings = settings
+		res := core.RunRaidSim(&proto.RaidSimRequest{
+			Raid: core.SinglePlayerRaidProto(&proto.Player{
+				Race:      proto.Race_RaceOrc,
+				Class:     proto.Class_ClassWarlock,
+				Equipment: &proto.EquipmentSpec{},
+				Consumes:  &proto.Consumes{},
+				Spec: &proto.Player_Warlock{Warlock: &proto.Warlock{Options: &proto.Warlock_Options{
+					Armor:  proto.Warlock_Options_FelArmor,
+					Summon: proto.Warlock_Options_Imp,
+				}}},
+				Rotation: core.APLRotationFromJsonString(`{"type": "TypeAPL", "priorityList": [{"action": {"condition": {"cmp": {` +
+					`"op": "OpGt", "lhs": {"remainingTime": {}}, "rhs": {"warlockCurseOfDoomLength": {}}}}, ` +
+					`"castSpell": {"spellId": {"spellId": 47867}}}}]}`),
+				TalentsString: DemonologyTalents,
+			}, &proto.PartyBuffs{}, &proto.RaidBuffs{SwiftRetribution: true, WrathOfAirTotem: true, MoonkinAura: proto.TristateEffect_TristateEffectImproved},
+				&proto.Debuffs{}),
+			Encounter:  encounter,
+			SimOptions: &proto.SimOptions{Iterations: 1, IsTest: true, RandomSeed: 101},
+		})
+		if res.ErrorResult != "" {
+			t.Fatal(res.ErrorResult)
+		}
+		var n int32
+		for _, action := range res.RaidMetrics.Parties[0].Players[0].Actions {
+			if action.Id.GetSpellId() == 47867 {
+				for _, target := range action.Targets {
+					n += target.Casts
+				}
+			}
+		}
+		return n
+	}
+	if got := casts(doomScalingOn); got != 1 {
+		t.Errorf("%d Curse of Doom casts in a 58 s fight with the scaled curse, want 1", got)
+	}
+	if got := casts(doomScalingOff); got != 0 {
+		t.Errorf("%d Curse of Doom casts in a 58 s fight with the stock curse, want 0", got)
+	}
+}
+
 // The hit lands as the hasted curse runs out, with the cooldown ready for the next one. With the tweak it
 // can crit, for 1.5 times: no crit talent lists Curse of Doom.
 func TestCurseOfDoomHit(t *testing.T) {
