@@ -171,16 +171,14 @@ its specs. It waits for the user's continue.
   server the user rebuilt on 2026-10-10 (image of 20:04 local: [ac] `3d89793c7`, mod-spell-tweaks `9bf5c75`,
   mod-sim-validation `bb2a21d`). The module's HEAD is `8a6f13f`: its `TICK_PERIOD_SCRIPTS` change needs a rebuild
   by the user, then MageFire's spell-mod sweep again (EC-CLASS-FIX3).
-  Not done, both the user's call:
-  - `BenchmarkSimulate`: auto mode refused a run beside the live server, so Sim throughput has no Z6 row. It
-    needs the AC containers stopped (`.wave-loop/rebase-z6.sh`).
-  - RI-5's "After it lands on `master`" steps (raid-import PLAN): prod still runs X's `25cb9dddc` (no
-    `rollback-q` image: its layers were gone), without Y's to Z6's sim changes.
+  Not done: RI-5's "After it lands on `master`" steps (raid-import PLAN). The user approved them (2026-10-11)
+  and auto mode refused the first (`docker tag`, the candidate build), so the user runs them. Prod still runs
+  X's `25cb9dddc` (no `rollback-q` image: its layers were gone), without Y's to Z6's sim changes.
   Next, Z7, planned: EC-CORE-FIX4, EC-PET-FIX3, EC-CLASS-FIX3 and EC-TOOLS, Z6's follow-ups in their specs.
   Z6's reports: `G:\DevStuff\GitHub\.wave-loop\z6-run1\*.md`, `waveZ6-results.json`; item notes:
   `.wave-loop\{par-fu-8,par-fu-9,par-fu-10,ri-5}-tmp`.
-- Open: the e2e-coverage backlog Z7 leaves, sim-performance's Left items, Z5's 9–11% on mana users and Z6's missing
-  row (Sim throughput), the bis-optimizer backlog (Z3's As
+- Open: the e2e-coverage backlog Z7 leaves, sim-performance's Left items and Z5's 9–11% on mana users (Sim
+  throughput), the bis-optimizer backlog (Z3's As
   builts: the enchant residual, Mutilate's pair, Combat Rogue P3 Normal; Z4's: the surrogate overpricing a
   one-hander's pairing, stage 2 and the Heroic Presence checks not yet run on the new lists, whether
   Ecoterrorist's rotation casts Mangle (Idol of the Corruptor sims like a dead idol); Z5's re-baseline: the
@@ -387,6 +385,7 @@ From G the benches run their suites' default players with rotations, at 1 and 10
 | Z | 1.293 / 96.2 | 0.614 / 37.2 | 0.866 / 50.8 | 0.622 / 20.9 | 7.648 / 300.3 |
 | Z2 | 1.311 / 98.2 | 0.629 / 34.0 | 0.892 / 50.0 | 0.473 / 19.7 | 5.640 / 297.3 |
 | Z5 | 1.510 / 100.2 | 0.603 / 39.8 | 1.006 / 56.5 | 0.552 / 22.5 | 7.135 / 311.3 |
+| Z6 | 1.273 / 95.9 | 0.660 / 35.7 | 0.849 / 51.3 | 0.531 / 22.9 | 5.592 / 301.3 |
 
 H2 ran with the live worldserver using half a core, which moved whole runs by up to 2×
 and cost a few percent here (Ret, which H2 barely touched, +4%). An interleaved A/B against the base
@@ -501,6 +500,12 @@ flat. Not attributed (no A/B): EC-THREAT-FIX4 queues a Replenishment event a sec
 EC-PET-FIX2 moved the pets' timers, EC-CORE-FIX3 truncates each bonus. The raid optimizer scenario ran wholly
 beside that container (756 s at 60% utilisation, load average 23), so its wall says nothing; it now runs
 231,500 sims against Z2's 146,250, which is Z4's alternatives stage.
+
+Z6's row ran idle (the AC containers stopped, Chronicle idle, no other container), by `.wave-loop/rebase-z6.sh`,
+logs in `.wave-loop/logs/z6-bench`; the three runs agree within 5% but Hunter's first (+8%). At 100 iterations
+against Z5's two idle runs: Ret −6%, Hunter −6%, the raid −4%, Rogue −3%, Elemental +5%, so the wave cost
+nothing that shows. The raid optimizer scenario: 451.9 s at 98% utilisation on 230,750 sims, 1.96 ms a sim as
+in Z2 (1.97); the wall over the baseline's 292.1 s is Z4's alternatives stage.
 
 E to F2 ran the old requests: one iteration, and no rotation for Ret, Hunter and Elemental.
 
