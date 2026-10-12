@@ -9,12 +9,17 @@ import (
 )
 
 func (result *SpellResult) applyResistances(sim *Simulation, spell *Spell, isPeriodic bool, attackTable *AttackTable) {
+	if spell.AoECapUnits > 10 && !isPeriodic && result.Damage > 0 {
+		result.Damage = float64(int32(result.Damage) * 10 / int32(spell.AoECapUnits))
+	}
 	// TODO check why result.Outcome isn't updated with resists anymore
 	resistanceMultiplier := spell.ResistanceMultiplier(sim, isPeriodic, attackTable)
 	// CalcArmorReducedDamage rounds up, before the crit. A partial resist is rolled here but comes off after
 	// the crit (applyPartialResist). The epsilon keeps float noise on an exact product from rounding it up.
 	if resistanceMultiplier != 1 && spell.SpellSchool.Matches(SpellSchoolPhysical) {
+		before := result.Damage
 		result.Damage = math.Ceil(result.Damage*resistanceMultiplier - 1e-6)
+		result.ArmorReduced = before - result.Damage
 	}
 
 	result.ResistanceMultiplier = resistanceMultiplier

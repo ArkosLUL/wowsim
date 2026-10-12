@@ -4,7 +4,8 @@ import (
 	"time"
 )
 
-// Note that this is only used when the hardcast and GCD actions happen at different times.
+// A player's cast always lands through this, ahead of its auras on that tick. A creature's only when the
+// hardcast and GCD actions happen at different times.
 func (unit *Unit) newHardcastAction(sim *Simulation) {
 	if unit.hardcastAction != nil && !unit.hardcastAction.consumed {
 		unit.hardcastAction.Cancel(sim)
@@ -14,6 +15,7 @@ func (unit *Unit) newHardcastAction(sim *Simulation) {
 	if unit.hardcastAction == nil {
 		pa := &PendingAction{
 			NextActionAt: unit.Hardcast.Expires,
+			playerEvent:  unit.Type == PlayerUnit,
 			OnAction: func(sim *Simulation) {
 				if hc := &unit.Hardcast; hc.Expires != startingCDTime && hc.Expires <= sim.CurrentTime {
 					hc.Expires = startingCDTime
@@ -22,6 +24,9 @@ func (unit *Unit) newHardcastAction(sim *Simulation) {
 					}
 				}
 			},
+		}
+		if pa.playerEvent {
+			pa.Priority = ActionPriorityEvent
 		}
 		unit.hardcastAction = pa
 	} else {

@@ -201,6 +201,14 @@ func (dot *Dot) Activate(sim *Simulation) {
 	dot.Aura.Activate(sim)
 }
 
+// AddRemaining is a script's SetDuration(GetDuration() + extra) that raises the max duration only when the
+// new time left passes it (spell_sha_t10_elemental_4p_bonus), so the added time ticks just past the old cap.
+func (dot *Dot) AddRemaining(sim *Simulation, extra time.Duration) {
+	expires := sim.NextServerTick(dot.Aura.expires + extra)
+	dot.Aura.UpdateExpires(expires)
+	dot.maxDuration = max(dot.maxDuration, expires-sim.CurrentTime)
+}
+
 // UpdateExpires moves the expiry and the max duration with it, so the added time ticks: what the
 // glyphs that lengthen a running dot do (SetDuration with SetMaxDuration). Aura.UpdateExpires moves
 // the expiry alone.
@@ -422,6 +430,8 @@ func (dot *Dot) startTickAction(sim *Simulation, nominal time.Duration) {
 
 	pa := &PendingAction{
 		NextActionAt: dot.nextTickAt,
+		// a player's channel or self hot ticks on its update, ahead of the creatures' auras that update
+		playerEvent: dot.tickUnit != nil && dot.tickUnit.Type == PlayerUnit,
 		//Priority: ActionPriorityDOT,
 		CleanUp: func(sim *Simulation) {
 			// In certain cases, the last tick and the dot aura expiration can happen in
@@ -464,6 +474,9 @@ func (dot *Dot) startTickAction(sim *Simulation, nominal time.Duration) {
 		sim.AddPendingAction(pa)
 	}
 
+	if pa.playerEvent {
+		pa.Priority = ActionPriorityEvent
+	}
 	dot.tickAction = pa
 	sim.AddPendingAction(pa)
 }

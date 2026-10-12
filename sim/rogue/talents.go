@@ -200,19 +200,21 @@ func (rogue *Rogue) registerPreyOnTheWeak() {
 		},
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
 			for _, spell := range rogue.Spellbook {
-				up := withPrey[spell.CritMultiplier]
+				// the tables hold what the rogue was built with, which a meta gem swap has moved
+				built := rogue.MetaCritBuilt(spell.CritMultiplier)
+				up := withPrey[built]
 				if spell.ProcMask.Matches(core.ProcMaskMeleeWhiteHit) {
-					up = core.TernaryFloat64(spell.CritMultiplier == white, preyWhite, 0)
+					up = core.TernaryFloat64(built == white, preyWhite, 0)
 				}
 				if up != 0 {
-					swaps = append(swaps, swap{spell, spell.CritMultiplier})
-					spell.CritMultiplier = up
+					swaps = append(swaps, swap{spell, built})
+					spell.CritMultiplier = rogue.MetaCritFollow(up)
 				}
 			}
 		},
 		OnExpire: func(aura *core.Aura, sim *core.Simulation) {
 			for _, s := range swaps {
-				s.spell.CritMultiplier = s.base
+				s.spell.CritMultiplier = rogue.MetaCritFollow(s.base)
 			}
 			swaps = swaps[:0]
 		},
@@ -223,7 +225,6 @@ func (rogue *Rogue) registerPreyOnTheWeak() {
 		Duration: core.NeverExpires,
 		OnReset: func(aura *core.Aura, sim *core.Simulation) {
 			aura.Activate(sim)
-			var upUntil time.Duration
 			check := func(sim *core.Simulation) {
 				health := 1.0
 				if rogue.HasHealthBar() {
@@ -232,23 +233,17 @@ func (rogue *Rogue) registerPreyOnTheWeak() {
 				// the fight's remaining duration stands in for the target's health
 				if health <= sim.GetRemainingDurationPercent() {
 					buff.Deactivate(sim)
-					upUntil = 0
-				} else if sim.CurrentTime > upUntil {
+				} else if !buff.IsActive() {
 					buff.Activate(sim)
-					upUntil = sim.CurrentTime + buff.Duration
 				}
 			}
 			// the talent ticks since it was learnt, so at any point of its period at the pull
 			first := sim.NextWorldTick(sim.CurrentTime + time.Duration(sim.RandomFloat("Prey on the Weak")*float64(2*time.Second)))
-			core.StartDelayedAction(sim, core.DelayedActionOptions{
-				DoAt: first,
-				OnAction: func(sim *core.Simulation) {
-					check(sim)
-					core.StartPeriodicAction(sim, core.PeriodicActionOptions{
-						Period:   2 * time.Second,
-						OnAction: check,
-					})
-				},
+			core.StartPeriodicAction(sim, core.PeriodicActionOptions{
+				Owner:       &rogue.Unit,
+				FirstTickAt: first,
+				Period:      2 * time.Second,
+				OnAction:    check,
 			})
 		},
 	})

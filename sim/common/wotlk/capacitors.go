@@ -184,11 +184,11 @@ func init() {
 					SpellSchool:      core.SpellSchoolPhysical,
 					ProcMask:         core.ProcMaskMeleeMHSpecial,
 					Flags:            core.SpellFlagMeleeMetrics | core.SpellFlagIncludeTargetBonusDamage | core.SpellFlagNoOnCastComplete,
-					DamageMultiplier: character.AutoAttacks.MHConfig().DamageMultiplier * 0.5,
+					DamageMultiplier: character.AutoAttacks.MHConfig().DamageMultiplier,
 					CritMultiplier:   character.AutoAttacks.MHConfig().CritMultiplier,
 					ThreatMultiplier: character.AutoAttacks.MHConfig().ThreatMultiplier,
 					ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-						baseDamage := character.MHWeaponDamage(sim, spell.MeleeAttackPower())
+						baseDamage := core.ApplyPct(spell.MHStrikeDamage(sim, spell.MeleeAttackPower()), 0.5)
 						spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 					},
 				})
@@ -199,11 +199,11 @@ func init() {
 						SpellSchool:      core.SpellSchoolPhysical,
 						ProcMask:         core.ProcMaskMeleeOHSpecial,
 						Flags:            core.SpellFlagMeleeMetrics | core.SpellFlagIncludeTargetBonusDamage | core.SpellFlagNoOnCastComplete,
-						DamageMultiplier: character.AutoAttacks.OHConfig().DamageMultiplier * 0.5,
+						DamageMultiplier: character.AutoAttacks.OHConfig().DamageMultiplier,
 						CritMultiplier:   character.AutoAttacks.OHConfig().CritMultiplier,
 						ThreatMultiplier: character.AutoAttacks.OHConfig().ThreatMultiplier,
 						ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-							baseDamage := character.OHWeaponDamage(sim, spell.MeleeAttackPower())
+							baseDamage := core.ApplyPct(spell.OHStrikeDamage(sim, spell.MeleeAttackPower()), 0.5)
 							spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 						},
 					})

@@ -1,6 +1,7 @@
 package core
 
 import (
+	"fmt"
 	"slices"
 	"testing"
 	"time"
@@ -495,5 +496,119 @@ func TestStartTargetAtHealthStartsTheExecutePhasesAtOnce(t *testing.T) {
 	}
 	if want := []int32{35, 25}; !slices.Equal(phases, want) {
 		t.Errorf("phase callbacks %v, want %v", phases, want)
+	}
+}
+
+// Unit::Update runs a player's events ahead of its auras: a hardcast landing on the world tick a buff
+// runs out on still finds it.
+func TestHardcastLandingOnAnAurasLastTickFindsIt(t *testing.T) {
+	var buff *Aura
+	var spell *Spell
+	var order []string
+	sim, a := newTickTestSim(t, 100, 10, func(a *timingTestAgent) {
+		buff = a.RegisterAura(Aura{
+			Label:    "buff",
+			Duration: time.Second,
+			OnExpire: func(_ *Aura, _ *Simulation) { order = append(order, "expires") },
+		})
+		spell = a.RegisterSpell(castConfig(testSpellSlam, ms(1500)))
+	})
+	spell.ApplyEffects = func(sim *Simulation, _ *Unit, _ *Spell) {
+		order = append(order, fmt.Sprintf("lands, buff up %v", buff.IsActive()))
+	}
+	sim.PrePull()
+	start := sim.NextWorldTick(ms(500))
+	var landsAt time.Duration
+	at(sim, start, func(sim *Simulation) {
+		if !spell.Cast(sim, a.CurrentTarget) {
+			t.Fatal("the cast failed")
+		}
+		landsAt = a.Hardcast.Expires
+		// counts from the tick before, ends on a tick: expires with the landing
+		buff.Duration = landsAt - start + sim.worldTickInterval
+		buff.Activate(sim)
+	})
+	runUntil(sim, start+2*time.Second)
+
+	if buff.ExpiresAt() != 0 {
+		t.Fatalf("the buff should be gone, expires at %v", buff.ExpiresAt())
+	}
+	if want := []string{"lands, buff up true", "expires"}; !slices.Equal(order, want) {
+		t.Errorf("order %v, want %v (landing at %v)", order, want, landsAt)
+	}
+}
+
+// A periodic action with an owner is one of its periodic aura ticks: an aura it puts on counts from that
+// tick, and it comes ahead of the aura the previous tick put on running out then.
+func TestOwnedPeriodicActionPutsItsAuraOnFromItsOwnTick(t *testing.T) {
+	var buff *Aura
+	var order []string
+	sim, a := newTickTestSim(t, 100, 10, func(a *timingTestAgent) {
+		buff = a.RegisterAura(Aura{
+			Label:    "buff",
+			Duration: 10 * time.Second,
+			OnExpire: func(_ *Aura, _ *Simulation) { order = append(order, "expires") },
+		})
+	})
+	sim.PrePull()
+	first := sim.NextWorldTick(ms(500))
+	var expires []time.Duration
+	StartPeriodicAction(sim, PeriodicActionOptions{
+		Owner:       &a.Unit,
+		FirstTickAt: first,
+		Period:      2 * time.Second,
+		OnAction: func(sim *Simulation) {
+			if !buff.IsActive() {
+				buff.Activate(sim)
+				expires = append(expires, buff.ExpiresAt()-sim.CurrentTime)
+				return
+			}
+			order = append(order, "check sees it")
+		},
+	})
+	runUntil(sim, first+13*time.Second)
+
+	if len(expires) < 2 || expires[0] != 10*time.Second {
+		t.Errorf("the buff has %v left as the tick puts it on, want 10 s", expires)
+	}
+	// the fifth check shares an update with the end of the buff and still sees it, so it is up again two seconds later
+	want := []string{"check sees it", "check sees it", "check sees it", "check sees it", "check sees it", "expires"}
+	if len(order) < len(want) || !slices.Equal(order[:len(want)], want) {
+		t.Errorf("order %v, want it to start %v", order, want)
+	}
+}
+
+// An execute phase begins at its own time, not with the next thing that moves the clock.
+func TestExecutePhaseStartsAtItsTime(t *testing.T) {
+	sim, _ := newTickTestSim(t, 100, 10, nil)
+	sim.Encounter.ExecuteProportion_35 = 0.5
+	sim.Reset()
+	var got []time.Duration
+	sim.RegisterExecutePhaseCallback(func(sim *Simulation, phase int32) {
+		got = append(got, sim.CurrentTime)
+	})
+	sim.PrePull()
+	// nothing else is queued until the end
+	at(sim, 50*time.Second, func(*Simulation) {})
+	for sim.CurrentTime < 50*time.Second {
+		if sim.Step() {
+			break
+		}
+	}
+	if want := sim.Duration / 2; len(got) == 0 || got[0] != want {
+		t.Errorf("the 35%% phase began at %v, want %v", got, want)
+	}
+}
+
+// The world loop time makes every world tick, and with it a map update, longer than MinWorldUpdateTime.
+func TestWorldLoopTimeStretchesTheTicks(t *testing.T) {
+	settings := NewServerSettings(nil)
+	world, mapUpdate := settings.updateGrids()
+	if world != 10270*time.Microsecond || mapUpdate != 102700*time.Microsecond {
+		t.Errorf("live world tick %v and map update %v, want 10.27 and 102.7 ms", world, mapUpdate)
+	}
+	settings.WorldLoopTime = ms(4)
+	if world, mapUpdate = settings.updateGrids(); world != ms(10) || mapUpdate != ms(100) {
+		t.Errorf("a loop under the floor: tick %v and map update %v, want 10 and 100 ms", world, mapUpdate)
 	}
 }

@@ -96,7 +96,8 @@ func (hunter *Hunter) chimeraShotSerpentStingSpell(stingTick *float64) *core.Spe
 			table := hunter.AttackTables[target.UnitIndex]
 			// whole after spell_hun_chimera_shot's ApplyPct of 40% a tick, and after the target's damage taken as
 			// the sting's tick
-			damage := math.Trunc(core.ApplyPct(*stingTick, spell.DamageMultiplier) * hunter.SerpentSting.TargetDamageMultiplier(table, true))
+			damage := math.Trunc((core.ApplyPct(*stingTick, spell.DamageMultiplier) + hunter.SerpentSting.PeriodicFlatDamageTaken(target)) *
+				hunter.SerpentSting.TargetDamageMultiplier(table, true))
 			// the sting is nature too, so its direct multiplier is the one 53353 would take
 			if own := hunter.SerpentSting.TargetDamageMultiplier(table, false); own < 1 {
 				damage = math.Trunc(damage * own)

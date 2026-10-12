@@ -63,6 +63,11 @@ const (
 	reforgeStatsKey       = "Reforging.ReforgeableStats"
 )
 
+// worldLoopMs is the host's measured world tick: ten of them make the live map update, 102.7 ms in the logs
+// (an unhasted 2 s creature swing takes 20 updates, 2055 ms). It comes from the machine's sleep granularity,
+// not from a config key, so another host changes it.
+const worldLoopMs = 10.27
+
 // reforgeHeaderSrc holds the constants mod-reforging enforces on its config; parseReforgeLimits
 // reads them from it rather than the sim hand-copying them.
 const reforgeHeaderSrc = "modules/mod-reforging/src/item_reforge.h"
@@ -217,6 +222,7 @@ func build(c *config, limits reforgeLimits) (*proto.ServerSettings, floors, erro
 		DungeonScale:          scale,
 		Reforge:               reforge,
 		WorldUpdateIntervalMs: googleProto.Int32(int32(worldTick)),
+		WorldLoopMs:           googleProto.Float64(worldLoopMs),
 	}
 	return settings, floors{
 		minHealth: c.float(minHPModifierKey, minHPModifierDef),

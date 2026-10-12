@@ -8,7 +8,7 @@ import (
 )
 
 func newMissileTestSpell() *Spell {
-	return &Spell{Unit: &Unit{DistanceFromTarget: 20}, MissileSpeed: 20} // lands after 1 s
+	return &Spell{Unit: &Unit{Type: PetUnit, DistanceFromTarget: 20}, MissileSpeed: 20} // lands after 1 s
 }
 
 // Landings keep the queue's order: after what's already due at that time and priority, before what's

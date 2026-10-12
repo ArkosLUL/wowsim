@@ -25,7 +25,7 @@ func (druid *Druid) registerStarfireSpell() {
 
 			if moonfireDot.IsActive() && druid.ExtendingMoonfireStacks > 0 {
 				druid.ExtendingMoonfireStacks -= 1
-				moonfireDot.UpdateExpires(moonfireDot.ExpiresAt() + time.Second*3)
+				moonfireDot.UpdateExpires(sim.NextServerTick(moonfireDot.ExpiresAt() + time.Second*3))
 			}
 		},
 	})

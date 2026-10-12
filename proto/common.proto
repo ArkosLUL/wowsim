@@ -736,6 +736,12 @@ message ServerSettings {
 	// tick, and a map update waits for the first tick past its interval, at least three ticks apart
 	// (MapMgr::Update). 0 is sim only: exact timing for players.
 	optional int32 world_update_interval_ms = 5;
+
+	// How long the host's world loop really takes for one tick, in ms. MinWorldUpdateTime is only the
+	// floor: the loop sleeps the rest of it and wakes a little late, so every tick runs longer and a map
+	// update, ten ticks on the default config, falls about 102.7 ms apart. Values below the world update
+	// interval count as that interval, and 0 leaves the interval as it is.
+	optional double world_loop_ms = 6;
 }
 
 // mod-spell-tweaks, keys SpellTweaks.*. Only its scripted tweaks switch off; its spell_dbc and SQL

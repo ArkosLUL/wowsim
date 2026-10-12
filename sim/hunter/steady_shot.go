@@ -1,6 +1,7 @@
 package hunter
 
 import (
+	"math"
 	"time"
 
 	"github.com/wowsims/wotlk/sim/core"
@@ -87,8 +88,8 @@ func (hunter *Hunter) registerSteadyShotSpell() {
 			// speed, neither normalized; the 0.1 AP lands separately, through Unit::SpellDamageBonusDone's
 			// own spell_bonus_data path (GetTotalAttackPowerValue), not creature-type AP
 			baseDamage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.AP, spell.RangedAttackPowerSpellBonus(target)) +
-				hunter.AutoAttacks.Ranged().BaseDamage(sim) +
-				hunter.AmmoDamageBonus
+				hunter.AutoAttacks.Ranged().WholeBaseDamage(sim) +
+				math.Trunc(float64(float32(hunter.AmmoDPS)*float32(math.Round(hunter.AutoAttacks.Ranged().SwingSpeed*1000))*0.001))
 			// Unit::SpellPctDamageModsDone's SPELLFAMILY_HUNTER case: the caster's own Glyph of Steady
 			// Shot (GetAuraEffect(56826, 0)) needs the caster's own Serpent Sting on this target
 			// (GetAuraEffect(..., GetGUID())), not any hunter's on any target

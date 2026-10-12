@@ -295,6 +295,29 @@ func TestTicksCanCritGatesTheCritRoll(t *testing.T) {
 	}
 }
 
+// Time added to what's left of a dot raises its max duration, and so its ticks, only past the old max
+// (spell_sha_t10_elemental_4p_bonus).
+func TestAddRemainingRaisesTheMaxDurationOnlyPastIt(t *testing.T) {
+	sim := SetupFakeSim()
+	dot := sim.Raid.Parties[0].Players[0].(*FakeAgent).Dot
+	dot.Apply(sim)
+	total := dot.TotalTicks()
+
+	// a full dot: what's left passes the max
+	dot.AddRemaining(sim, dot.TickLength)
+	if got := dot.TotalTicks(); got <= total {
+		t.Errorf("total ticks %d after adding a tick's time to a full dot, want more than %d", got, total)
+	}
+	raised := dot.maxDuration
+
+	// two ticks in, the same time added leaves what's left under the max
+	sim.CurrentTime = 2 * dot.TickLength
+	dot.AddRemaining(sim, dot.TickLength)
+	if dot.maxDuration != raised {
+		t.Errorf("max duration %v after adding time under it, want %v", dot.maxDuration, raised)
+	}
+}
+
 // Earth Shield spends a charge per ManualTick, so all of them have to land before the dot goes.
 func TestManualTickSpendsEveryTick(t *testing.T) {
 	sim := SetupFakeSim()

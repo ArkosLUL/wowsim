@@ -390,7 +390,7 @@ func (spell *Spell) makeCastFunc(config CastConfig) CastSuccessFunc {
 				keepsCombatTimers: spell.timing.keepsCombatTimers,
 			}
 
-			if spell.Unit.Hardcast.Expires != spell.Unit.NextGCDAt() {
+			if spell.Unit.Type == PlayerUnit || spell.Unit.Hardcast.Expires != spell.Unit.NextGCDAt() {
 				spell.Unit.newHardcastAction(sim)
 			}
 

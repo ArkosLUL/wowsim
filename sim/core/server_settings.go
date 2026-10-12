@@ -1,6 +1,7 @@
 package core
 
 import (
+	"math"
 	"slices"
 	"sync"
 	"time"
@@ -20,6 +21,10 @@ type ServerSettings struct {
 	// timing for players.
 	WorldUpdateInterval time.Duration
 
+	// WorldLoopTime is how long the host's world loop takes for a tick (proto.ServerSettings.WorldLoopMs).
+	// A tick is never shorter than WorldUpdateInterval. Zero means the interval itself.
+	WorldLoopTime time.Duration
+
 	SpellTweaks  SpellTweaks
 	DungeonScale DungeonScale
 	Reforging    Reforging
@@ -36,8 +41,9 @@ func (s *ServerSettings) updateGrids() (world, mapUpdate time.Duration) {
 	if s.WorldUpdateInterval <= 0 {
 		return 0, s.MapUpdateInterval
 	}
-	ticks := max(3, (s.MapUpdateInterval+s.WorldUpdateInterval-1)/s.WorldUpdateInterval)
-	return s.WorldUpdateInterval, ticks * s.WorldUpdateInterval
+	tick := max(s.WorldUpdateInterval, s.WorldLoopTime)
+	ticks := max(3, (s.MapUpdateInterval+tick-1)/tick)
+	return tick, ticks * tick
 }
 
 // SpellTweaks is mod-spell-tweaks with SpellTweaks.Enable already folded in: each field says whether
@@ -123,6 +129,7 @@ func resolveServerSettings(settings, live *proto.ServerSettings) *ServerSettings
 	return &ServerSettings{
 		MapUpdateInterval:   time.Duration(max(0, firstSet(0, settings.MapUpdateIntervalMs, live.MapUpdateIntervalMs))) * time.Millisecond,
 		WorldUpdateInterval: time.Duration(max(0, firstSet(0, settings.WorldUpdateIntervalMs, live.WorldUpdateIntervalMs))) * time.Millisecond,
+		WorldLoopTime:       time.Duration(math.Round(max(0, firstSet(0, settings.WorldLoopMs, live.WorldLoopMs)) * float64(time.Millisecond))),
 		SpellTweaks:         newSpellTweaks(orEmpty(settings.SpellTweaks), orEmpty(live.SpellTweaks)),
 		DungeonScale:        newDungeonScale(settings.DungeonScale, live.DungeonScale),
 		Reforging:           newReforging(orEmpty(settings.Reforge), orEmpty(live.Reforge)),

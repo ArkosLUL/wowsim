@@ -129,6 +129,15 @@ func (spell *Spell) flatDamageTaken(amount float64, target *Unit, isPeriodic boo
 	return math.Trunc(float64(float32(amount) * coefficient * stacks))
 }
 
+// PeriodicFlatDamageTaken is the flat damage taken (Gift of Arthas) this spell's tick takes, for a script
+// that hands the tick on as another hit.
+func (spell *Spell) PeriodicFlatDamageTaken(target *Unit) float64 {
+	if taken := target.PseudoStats.BonusDamageTaken; taken != 0 {
+		return spell.flatDamageTaken(taken, target, true)
+	}
+	return 0
+}
+
 // takenCoefficient is the spell's spell_bonus_data direct or dot value, else
 // Unit::CalculateDefaultCoefficient, which then takes the stacks (so a stacked dot counts them twice).
 func (spell *Spell) takenCoefficient(sd *serverdata.Spell, isPeriodic bool) (c float32, byStacks bool) {

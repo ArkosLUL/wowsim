@@ -81,7 +81,7 @@ func (rogue *Rogue) registerFanOfKnives() {
 			for i, aoeTarget := range targets {
 				baseDamage := core.ApplyPct(core.ApplyPct(mhSpell.MHStrikeDamage(sim, mhSpell.MeleeAttackPower()),
 					mhSpell.Direct.WeaponPct), mhDaggerPct)
-				baseDamage *= sim.Encounter.AOECapMultiplier()
+				mhSpell.AoECapUnits = len(targets)
 				mhResults[i] = mhSpell.CalcDamage(sim, aoeTarget, baseDamage, mhSpell.OutcomeMeleeSpecialHitAndCrit)
 			}
 			var ohResults []*core.SpellResult
@@ -90,7 +90,7 @@ func (rogue *Rogue) registerFanOfKnives() {
 				for i, aoeTarget := range targets {
 					baseDamage := core.ApplyPct(core.ApplyPct(ohSpell.OHStrikeDamage(sim, ohSpell.MeleeAttackPower()),
 						ohSpell.Direct.WeaponPct), ohDaggerPct)
-					baseDamage *= sim.Encounter.AOECapMultiplier()
+					ohSpell.AoECapUnits = len(targets)
 					ohResults[i] = ohSpell.CalcDamage(sim, aoeTarget, baseDamage, ohSpell.OutcomeMeleeSpecialHitAndCrit)
 				}
 			}

@@ -64,6 +64,7 @@ type Simulation struct {
 
 	minWeaponAttackTime time.Duration
 	weaponAttacks       []*WeaponAttack
+	shotPassAt          time.Duration // the tick whose Auto Shots already went ahead of its auras
 
 	minTaskTime time.Duration
 	tasks       []Task
@@ -591,6 +592,7 @@ func (sim *Simulation) reset() {
 
 	sim.weaponAttacks = sim.weaponAttacks[:0]
 	sim.minWeaponAttackTime = NeverExpires
+	sim.shotPassAt = NeverExpires
 
 	sim.tasks = sim.tasks[:0]
 	sim.minTaskTime = NeverExpires
@@ -663,22 +665,46 @@ func (sim *Simulation) Step() bool {
 	next := sim.pendingActions[last]
 
 	// an aura runs out at its own time, not with whatever happens to come next
-	if before := min(next.at, sim.minWeaponAttackTime, sim.minTaskTime); sim.minTrackerTime < before {
-		if at := sim.earliestExpiry(before); at < before {
+	rangedFirst := false
+	stops := min(next.at, sim.minWeaponAttackTime, sim.minTaskTime)
+	before := min(stops, sim.nextExecuteDuration)
+	if sim.minTrackerTime <= before {
+		limit := before
+		if limit < NeverExpires {
+			limit++
+		}
+		// a tie goes to what a player's update does ahead of its aura pass: landings, then Auto Shot
+		if at := sim.earliestExpiry(limit); at < NeverExpires && at <= before {
+			landingFirst := at == before && sim.playerEventAt(next, at)
+			rangedFirst = !landingFirst && at == before && at == sim.minWeaponAttackTime && sim.playerShotDue(at)
 			if at > sim.endOfCombatDuration || sim.Encounter.DamageTaken > sim.endOfCombatDamage {
 				return true
 			}
-			// an aura that ran out while nothing updated its unit (a pet that was away) is overdue
-			sim.advance(max(at, sim.CurrentTime))
-			return false
+			if !landingFirst && !rangedFirst {
+				// an aura that ran out while nothing updated its unit (a pet that was away) is overdue
+				sim.advance(max(at, sim.CurrentTime))
+				return false
+			}
+			sim.advanceClock(at)
+			if rangedFirst {
+				sim.advanceWeaponAttacks(true)
+				return false
+			}
+			return sim.popPendingAction(last, next)
 		}
 	}
 
-	if next.at >= sim.minWeaponAttackTime && sim.minWeaponAttackTime <= sim.minTaskTime {
+	// an execute phase starts at its own time too
+	if x := sim.nextExecuteDuration; x < stops && x > sim.CurrentTime && x <= sim.endOfCombatDuration {
+		sim.advance(x)
+		return false
+	}
+
+	if next.at >= sim.minWeaponAttackTime && sim.minWeaponAttackTime <= sim.minTaskTime && !sim.landingAheadOfSwings(next) {
 		if sim.minWeaponAttackTime > sim.endOfCombatDuration || sim.Encounter.DamageTaken > sim.endOfCombatDamage {
 			return true
 		}
-		sim.advanceWeaponAttacks()
+		sim.advanceWeaponAttacks(false)
 		return false
 	}
 
@@ -690,6 +716,11 @@ func (sim *Simulation) Step() bool {
 		return false
 	}
 
+	return sim.popPendingAction(last, next)
+}
+
+// popPendingAction runs the head of the queue, at index last.
+func (sim *Simulation) popPendingAction(last int, next pendingEntry) bool {
 	sim.pendingActions = sim.pendingActions[:last]
 	pa := sim.pendingSlots[next.slot]
 	if pa.cancelled {
@@ -715,14 +746,60 @@ func (sim *Simulation) Step() bool {
 	return false
 }
 
-func (sim *Simulation) advanceWeaponAttacks() {
+// playerEventAt is whether the queue's head is a player's cast landing or missile hit due at t: Unit::Update
+// runs those (m_Events) ahead of the unit's auras.
+func (sim *Simulation) playerEventAt(head pendingEntry, t time.Duration) bool {
+	if head.at != t || head.prio != ActionPriorityEvent {
+		return false
+	}
+	pa := sim.pendingSlots[head.slot]
+	return pa.playerEvent && !pa.cancelled
+}
+
+// landingAheadOfSwings is whether a player's landing due with the weapon attacks goes first.
+func (sim *Simulation) landingAheadOfSwings(head pendingEntry) bool {
+	return head.at == sim.minWeaponAttackTime && sim.playerEventAt(head, head.at)
+}
+
+// playerShotDue is whether a player's Auto Shot is due at t and nothing holds it back: Unit::_UpdateSpells
+// fires it ahead of the unit's auras. Only once a tick, so a shot that stays due can't keep the aura pass
+// waiting.
+func (sim *Simulation) playerShotDue(t time.Duration) bool {
+	if sim.shotPassAt == t {
+		return false
+	}
+	for _, wa := range sim.weaponAttacks {
+		if wa.isPlayerShot() && wa.swingAt <= t && !wa.held {
+			if _, held := wa.castHold(sim); !held {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// advanceClock moves the clock and runs the execute phases, leaving the auras to the next pass.
+func (sim *Simulation) advanceClock(nextTime time.Duration) {
+	sim.CurrentTime = nextTime
+	sim.runExecutePhases()
+}
+
+// advanceWeaponAttacks swings what is due; with shotsOnly just the players' Auto Shots.
+func (sim *Simulation) advanceWeaponAttacks(shotsOnly bool) {
 	if sim.minWeaponAttackTime > sim.CurrentTime {
 		sim.advance(sim.minWeaponAttackTime)
 	}
 
+	if shotsOnly {
+		sim.shotPassAt = sim.CurrentTime
+	}
 	sim.minWeaponAttackTime = NeverExpires
 	for _, wa := range sim.weaponAttacks {
-		sim.minWeaponAttackTime = min(sim.minWeaponAttackTime, wa.trySwing(sim, false))
+		if shotsOnly && !wa.isPlayerShot() {
+			sim.minWeaponAttackTime = min(sim.minWeaponAttackTime, wa.swingAt)
+			continue
+		}
+		sim.minWeaponAttackTime = min(sim.minWeaponAttackTime, wa.trySwing(sim, wa.releasing))
 	}
 }
 
@@ -740,15 +817,7 @@ func (sim *Simulation) advanceTasks() {
 // Advance moves time forward counting down auras, CDs, mana regen, etc
 func (sim *Simulation) advance(nextTime time.Duration) {
 	sim.CurrentTime = nextTime
-
-	// this is a loop to handle duplicate ExecuteProportions, e.g. if they're all set to 100%, you reach
-	// execute phases 35%, 25%, and 20% in the first advance() call.
-	for sim.CurrentTime >= sim.nextExecuteDuration || sim.Encounter.DamageTaken >= sim.nextExecuteDamage {
-		sim.nextExecutePhase()
-		for _, callback := range sim.executePhaseCallbacks {
-			callback(sim, sim.executePhase)
-		}
-	}
+	sim.runExecutePhases()
 
 	if sim.CurrentTime >= sim.minTrackerTime {
 		sim.minTrackerTime = NeverExpires
@@ -758,6 +827,18 @@ func (sim *Simulation) advance(nextTime time.Duration) {
 		}
 		for _, t := range sim.trackers {
 			sim.minTrackerTime = min(sim.minTrackerTime, t.tryAdvance(sim, false))
+		}
+	}
+}
+
+// runExecutePhases starts the execute phases the clock or the damage taken has reached. This is a loop
+// to handle duplicate ExecuteProportions: if they're all set to 100%, advance reaches 35%, 25% and 20%
+// in one call.
+func (sim *Simulation) runExecutePhases() {
+	for sim.CurrentTime >= sim.nextExecuteDuration || sim.Encounter.DamageTaken >= sim.nextExecuteDamage {
+		sim.nextExecutePhase()
+		for _, callback := range sim.executePhaseCallbacks {
+			callback(sim, sim.executePhase)
 		}
 	}
 }
@@ -852,7 +933,7 @@ type landingAction struct {
 }
 
 // startLanding queues the landing at the given time, as StartDelayedAction would, without allocating.
-func (sim *Simulation) startLanding(at time.Duration, onLand func(*Simulation), spell *Spell, result *SpellResult) {
+func (sim *Simulation) startLanding(at time.Duration, caster *Unit, onLand func(*Simulation), spell *Spell, result *SpellResult) {
 	var la *landingAction
 	if n := len(sim.freeLandings); n > 0 {
 		la = sim.freeLandings[n-1]
@@ -863,6 +944,11 @@ func (sim *Simulation) startLanding(at time.Duration, onLand func(*Simulation), 
 		sim.landings = append(sim.landings, la)
 	}
 	la.NextActionAt = at
+	la.playerEvent = caster.Type == PlayerUnit
+	la.Priority = 0
+	if la.playerEvent {
+		la.Priority = ActionPriorityEvent
+	}
 	la.onLand, la.spell, la.result = onLand, spell, result
 	sim.AddPendingAction(&la.PendingAction)
 }

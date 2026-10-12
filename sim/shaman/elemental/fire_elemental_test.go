@@ -193,7 +193,7 @@ func TestFireElementalCastsOffItsEventTimers(t *testing.T) {
 	}
 
 	const lives = 600
-	const update = 100 * time.Millisecond
+	const update = 102700 * time.Microsecond
 	novas, blasts, swings := 0, 0, 0
 	for life := 0; life < lives; life++ {
 		sim.Reseed(int64(1000 + life))
@@ -218,7 +218,7 @@ func TestFireElementalCastsOffItsEventTimers(t *testing.T) {
 			t.Fatalf("life %d: first Fire Blast at %v, want 4.9 to 20 s in", life, blastAt)
 		}
 		for i := 1; i < len(blastAt); i++ {
-			if gap := blastAt[i] - blastAt[i-1]; gap < 4*time.Second || gap > 8*time.Second {
+			if gap := blastAt[i] - blastAt[i-1]; gap < 4*time.Second || gap > 8*time.Second+update {
 				t.Fatalf("life %d: Fire Blasts %v apart, want 4 to 8 s", life, gap)
 			}
 		}
@@ -252,9 +252,10 @@ func TestFireElementalCastsOffItsEventTimers(t *testing.T) {
 		t.Errorf("%.2f Fire Blasts a life, want about 18.29", mean)
 	}
 	// every Blast and landed Nova starts the 2 s swing over, a Nova being cast holds it, and a cast on the
-	// update a swing is due takes it: 40.1 swings of the 60 its 2 min have room for, with a deviation of 2.2
-	if mean := float64(swings) / lives; mean < 39.65 || mean > 40.55 {
-		t.Errorf("%.2f swings a life, want about 40.1", mean)
+	// update a swing is due takes it: 38.65 swings of the 58 its 2 min have room for at the live 102.7 ms update,
+	// with a deviation of 2.2
+	if mean := float64(swings) / lives; mean < 38.2 || mean > 39.1 {
+		t.Errorf("%.2f swings a life, want about 38.65", mean)
 	}
 }
 
@@ -290,7 +291,7 @@ func TestFireElementalOutBeforeThePullWaitsForIt(t *testing.T) {
 		nova(sim, target, spell)
 	}
 
-	const update = 100 * time.Millisecond
+	const update = 102700 * time.Microsecond
 	for life := 0; life < 100; life++ {
 		sim.Reseed(int64(1000 + life))
 		sim.Reset()

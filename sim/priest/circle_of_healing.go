@@ -1,6 +1,7 @@
 package priest
 
 import (
+	"math"
 	"time"
 
 	"github.com/wowsims/wotlk/sim/core"
@@ -13,7 +14,7 @@ func (priest *Priest) registerCircleOfHealingSpell() {
 	}
 
 	numTargets := 5 + core.TernaryInt32(priest.HasMajorGlyph(proto.PriestMajorGlyph_GlyphOfCircleOfHealing), 1, 0)
-	targets := priest.Env.Raid.GetFirstNPlayersOrPets(numTargets)
+	units := priest.Env.Raid.GetFirstNPlayersOrPets(math.MaxInt32)
 
 	priest.CircleOfHealing = priest.RegisterSpell(core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: 48089},
@@ -49,7 +50,16 @@ func (priest *Priest) registerCircleOfHealingSpell() {
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			healFromSP := core.PowerBonus(spell.Direct.SP, spell.HealingPower(target))
-			for _, aoeTarget := range targets {
+			healed := int32(0)
+			for _, aoeTarget := range units {
+				// a pet that's away isn't in the world to be healed
+				if healed == numTargets {
+					break
+				}
+				if !aoeTarget.IsEnabled() {
+					continue
+				}
+				healed++
 				baseHealing := spell.Direct.Roll(sim) + healFromSP
 				spell.CalcAndDealHealing(sim, aoeTarget, baseHealing, spell.OutcomeHealingCrit)
 			}

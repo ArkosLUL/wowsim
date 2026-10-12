@@ -18,6 +18,7 @@ type SpellResult struct {
 
 	ResistanceMultiplier float64 // Partial Resists / Armor multiplier
 	PreOutcomeDamage     float64 // Damage done by this cast before Outcome is applied
+	ArmorReduced         float64 // what armor took off the base damage (the server's cleanDamage)
 
 	castWasInstant bool
 
@@ -36,6 +37,7 @@ func (spell *Spell) NewResult(target *Unit) *SpellResult {
 	result.Target = target
 	result.Damage = 0
 	result.Threat = 0
+	result.ArmorReduced = 0
 	result.Outcome = OutcomeEmpty // for blocks
 	result.castWasInstant = spell.CurCast.CastTime == 0
 	result.inUse = true
@@ -558,13 +560,13 @@ func (spell *Spell) WaitTravelTime(sim *Simulation, callback func(*Simulation)) 
 	if callback == nil {
 		panic("WaitTravelTime: callback must not be nil")
 	}
-	sim.startLanding(sim.CurrentTime+spell.TravelTime(), callback, nil, nil)
+	sim.startLanding(sim.CurrentTime+spell.TravelTime(), spell.Unit, callback, nil, nil)
 }
 
 // DealDamageAfterTravel is WaitTravelTime with a landing that only deals result, minus the closure's
 // allocation.
 func (spell *Spell) DealDamageAfterTravel(sim *Simulation, result *SpellResult) {
-	sim.startLanding(sim.CurrentTime+spell.TravelTime(), nil, spell, result)
+	sim.startLanding(sim.CurrentTime+spell.TravelTime(), spell.Unit, nil, spell, result)
 }
 
 // Returns the combined attacker modifiers.

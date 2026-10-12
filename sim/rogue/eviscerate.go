@@ -1,7 +1,6 @@
 package rogue
 
 import (
-	"math"
 	"time"
 
 	"github.com/wowsims/wotlk/sim/core"
@@ -51,9 +50,9 @@ func (rogue *Rogue) registerEviscerate() {
 			comboPoints := float64(rogue.ComboPoints())
 			roll := sim.RollWhole(spell.Direct.Min, spell.Direct.Max, "Eviscerate")
 
-			// the effect's 370 per combo point, then Spell::EffectSchoolDMG's 7% AP per point, in whole points
+			// the effect's 370 per combo point, then Spell::EffectSchoolDMG's 7% AP per point: int32(ap × combo × 0.07f)
 			baseDamage := roll + 370*comboPoints +
-				math.Floor(0.07*comboPoints*spell.MeleeAttackPower()) +
+				core.PowerBonus(0.07, float64(float32(comboPoints)*float32(spell.MeleeAttackPower()))) +
 				spell.BonusWeaponDamage()
 
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
