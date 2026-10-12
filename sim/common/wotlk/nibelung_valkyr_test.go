@@ -34,11 +34,15 @@ func init() {
 	)
 }
 
-// newValkyrTestSim runs on the live server settings when server is nil.
+// newValkyrTestSim runs on a regular 102.7 ms map update when server is nil: the tests count updates.
 func newValkyrTestSim(t *testing.T, server *proto.ServerSettings) (*core.Simulation, *valkyrTestAgent, *ValkyrPet) {
 	t.Helper()
 	encounter := core.MakeSingleTargetEncounter(0)
-	encounter.ServerSettings = server
+	if server == nil {
+		core.OnRegularGrid(encounter, 10.27)
+	} else {
+		encounter.ServerSettings = server
+	}
 	sim := core.NewSim(&proto.RaidSimRequest{
 		Raid: core.SinglePlayerRaidProto(&proto.Player{
 			Race:      proto.Race_RaceTauren,
