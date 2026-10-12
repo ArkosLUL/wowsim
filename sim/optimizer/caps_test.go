@@ -32,10 +32,10 @@ func TestDpsCapRole(t *testing.T) {
 		{"smite priest", &proto.Player{Spec: &proto.Player_SmitePriest{SmitePriest: &proto.SmitePriest{}}}, capRoleCaster},
 		{"elemental shaman", &proto.Player{Spec: &proto.Player_ElementalShaman{ElementalShaman: &proto.ElementalShaman{}}}, capRoleCaster},
 		{"warlock", &proto.Player{Spec: &proto.Player_Warlock{Warlock: &proto.Warlock{}}}, capRoleCaster},
-		{"protection warrior", &proto.Player{Spec: &proto.Player_ProtectionWarrior{ProtectionWarrior: &proto.ProtectionWarrior{}}}, capRoleNone},
-		{"protection paladin", &proto.Player{Spec: &proto.Player_ProtectionPaladin{ProtectionPaladin: &proto.ProtectionPaladin{}}}, capRoleNone},
-		{"feral tank druid", &proto.Player{Spec: &proto.Player_FeralTankDruid{FeralTankDruid: &proto.FeralTankDruid{}}}, capRoleNone},
-		{"tank death knight", &proto.Player{Spec: &proto.Player_TankDeathknight{TankDeathknight: &proto.TankDeathknight{}}}, capRoleNone},
+		{"protection warrior", &proto.Player{Spec: &proto.Player_ProtectionWarrior{ProtectionWarrior: &proto.ProtectionWarrior{}}}, capRoleTank},
+		{"protection paladin", &proto.Player{Spec: &proto.Player_ProtectionPaladin{ProtectionPaladin: &proto.ProtectionPaladin{}}}, capRoleTank},
+		{"feral tank druid", &proto.Player{Spec: &proto.Player_FeralTankDruid{FeralTankDruid: &proto.FeralTankDruid{}}}, capRoleTank},
+		{"tank death knight", &proto.Player{Spec: &proto.Player_TankDeathknight{TankDeathknight: &proto.TankDeathknight{}}}, capRoleTank},
 		{"holy paladin", &proto.Player{Spec: &proto.Player_HolyPaladin{HolyPaladin: &proto.HolyPaladin{}}}, capRoleNone},
 		{"no spec", &proto.Player{}, capRoleNone},
 	} {
@@ -164,20 +164,35 @@ func TestTheFloorFollowsTargetDebuffs(t *testing.T) {
 	t.Logf("spell hit floor %.0f with the debuffs, %.0f without them", withFloor, withoutFloor)
 }
 
-// Tanks get none of the DPS cap floors or the haste ceiling.
-func TestTankGetsNoCapFloors(t *testing.T) {
+// A tank gets the melee hit floor and nothing else: the special-attack miss a taunt rolls, exact
+// against the run's boss, and near 8% of hit rating (less the talents').
+func TestTankGetsOnlyTheTauntHitFloor(t *testing.T) {
 	r, err := PrepareRequest(tankOptimizeRequest(t, protPaladin(t, "p3"), 3))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if role := dpsCapRole(r.Target()); role != capRoleNone {
-		t.Fatalf("prot paladin classified as %v, want none", role)
+	if role := dpsCapRole(r.Target()); role != capRoleTank {
+		t.Fatalf("prot paladin classified as %v, want tank", role)
 	}
 	rn := &run{asked: r, r: r}
 	rn.dpsCapFloors()
-	if len(r.Settings.GetStatMinimums()) != 0 || len(r.Settings.GetStatMaximums()) != 0 {
-		t.Errorf("a tank got floors %v and ceilings %v, want none", r.Settings.StatMinimums, r.Settings.StatMaximums)
+	if len(r.Settings.GetStatMaximums()) != 0 {
+		t.Errorf("a tank got ceilings %v, want none", r.Settings.StatMaximums)
 	}
+	mins := r.Settings.GetStatMinimums()
+	hit := -1.0
+	for _, m := range mins {
+		if stats.Stat(m.Stat) == stats.MeleeHit {
+			hit = m.MinValue
+		}
+	}
+	if hit < 0 || len(rn.capFloors) != 1 {
+		t.Fatalf("floors %v, cap floors %v: want the melee hit floor alone", mins, rn.capFloors)
+	}
+	if hit < 100 || hit > 270 {
+		t.Errorf("hit floor %.0f, want near 8%% of rating (263 before talents)", hit)
+	}
+	checkCapExact(t, r, stats.MeleeHit, meleeMissOK, func(s core.PlayerSheet) float64 { return s.PhysicalMissChance })
 }
 
 // With the caps off, dpsCapFloors adds nothing, so an unticked run picks exactly what it did before

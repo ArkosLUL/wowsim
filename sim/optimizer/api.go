@@ -475,7 +475,9 @@ const healingPresimIterations = 100
 // anything is simmed. A tank's healing model carries a cadence and no HPS, and core then runs a
 // presim inside every sim to fill it in: that costs about 40% more, and it ties each point's
 // healing to that point's own damage taken, which skews the DTPS, TMI and death-chance deltas the
-// objective pairs. One number from the seed keeps the healing the same for every point.
+// objective pairs. One number keeps the healing the same for every point. It comes from the gear as
+// equipped, not the trimmed seed: a seed missing most of its slots takes far more damage than the
+// tank the healers actually heal, and its 1.5x would leave the real gear no chance of dying.
 //
 // It mirrors Character.GetPresimOptions: 100 iterations at seed 1 with healing off, then 1.5x the
 // damage taken per second.
@@ -492,7 +494,10 @@ func (r *run) pinHealingModel() (err error) {
 	}
 	rsr := goproto.Clone(r.r.Base).(*proto.RaidSimRequest)
 	rsr.SimOptions = &proto.SimOptions{Iterations: healingPresimIterations, RandomSeed: 1, IsTest: true}
-	rsr.Raid.Parties[r.r.TargetIndex/5].Players[r.r.TargetIndex%5].HealingModel = nil
+	player := rsr.Raid.Parties[r.r.TargetIndex/5].Players[r.r.TargetIndex%5]
+	player.HealingModel = nil
+	player.Equipment = r.r.Equipped.Equipment()
+	player.RacialTraits = r.r.Equipped.RacialTraits
 	result := core.RunRaidSim(rsr)
 	if result.ErrorResult != "" {
 		return errors.New(firstLine(result.ErrorResult))

@@ -2162,3 +2162,121 @@ Golden-neutral. **Owns:** `sim/optimizer/`, `sim/encounters/optimizer_tank_boss.
 `ui/core/optimizer/`, `ui/raid/optimizer_*.ts`, the tab's tank controls. At close-out the orchestrator adds
 `docs/guide/tank-modeling.md` and corrects this PLAN's lines on the tank encounter, the survival split and
 "a tank run gets none".
+
+#### As built
+
+**Stage 1, the model** (steps 0 to 2).
+
+- `sim/encounters/optimizer_tank_boss.go`: `OptimizerTankBossID` 999998, registered through
+  `core.AddPresetTarget` with no preset encounter. `OptimizerTankBossTarget(OptimizerTankBoss)` is the
+  constructor beside `GenericBossTargetAt` (whose callers stay): the swinging boss from the boss's own stat
+  row (`DamageExp2`, `AttackPower`), an off hand with the dual wield miss penalty, `SuppressDodge`, and its
+  abilities as `target_inputs`, 8 numbers each (spell id, school, damage, period min and max, cast seconds,
+  land chance, start). The AI casts each ability with `OutcomeAlwaysHit` at its period rolled uniformly
+  between the two; a cast with cast time holds the boss's melee (core's cast hold); a land chance under 1
+  skips the cast without holding anything (the raid's interrupts). Each spell's `ActionID` carries its
+  index as `Tag`, so two abilities may share a spell id.
+- `pool_builder.ts`: `TankBoss` gains `damageExp2`, `attackPower`, `dualWield`, `suppressDodge` and
+  `abilities`; `genericBossTargetAt` sets the id and inputs. `TANK_BOSSES[1]` is Kel'Thuzad 25 and phase 4
+  has `suppressDodge`. `healingModelForBoss` leaves `hps` 0, keeps the cadence and sets
+  `cadenceVariation` to `TANK_HEAL_CADENCE_VARIATION` (0.5) times it; `pinHealingModel` then derives 1.5 x
+  the seed's own DTPS once. The multiplier stayed at 1.5: Bulwark's seed dies in 0.014 (phase 1) and 0.33 (phase 3) of
+  iterations, Felesta's in 0.72 and 0.99, so death is in play for both; Felesta p3 is near saturation.
+- `TankWeights` and `tankMetricWeights`: survival / 3 each to DTPS, TMI and death chance. The tab's
+  slider hint says so.
+- Tests: `TestTankBossesMirrorUI` parses the new table (`critimmunity_test.go`);
+  `TestTankBossCastsTheListedAbilities` (`tankboss_test.go`: cast rates within 15%, no cast above its
+  damage); `TestOptimizerTankBossAbilitiesRoundTrip` and `...SwingFollowsTheStatRow` (encounters).
+  `TestMeasureTankModel` (`tankmodel_measure_test.go`) prints the Verify numbers below from a roster
+  (`BIS_ROSTER=<raid sim storage snapshot or raid JSON>`, never committed).
+
+**Step 0, the table**, as modelled. Damage is the average per cast, before the tank's own modifiers;
+spell data re-read from Spell.dbc and SpellDifficulty (ids, damage, cast time) and the periods from the
+boss scripts for the rows marked *, the rest taken from `step0.md`.
+
+| Phase | Boss | Ability (id) | School | Damage | Period s | Notes |
+|---|---|---|---|---|---|---|
+| 1 | Kel'Thuzad 25 (30061; class 2 row 177.438 / 783) | Frostbolt (55802)* | Frost | 30,000 | 2 to 10 | 2 s cast, 0.5 land (raid interrupts the rest) |
+| | | Frostbolt volley (55807)* | Frost | 8,000 | 15 to 30 | instant |
+| 2 | Algalon 25 (dual wield) | Phase Punch (64412)* | Arcane | 9,500 | 15.5 | |
+| | | Black Hole Explosion (65108)* | Shadow | 21,000 | 25 | 4 stars per 60 to 120 s, only above 20% health: 840 DTPS |
+| 3 | Anub'arak 25H | Freezing Slash (66012) | Frost | 20,788 | 15 to 20 | 25% of his average swing |
+| | | Penetrating Cold (68510)* | Frost | 6,000 | 3 | 0.18 land: 5 of 25 players, 72 of every 80 s |
+| 4 | the Lich King 25H, `suppressDodge` | Soul Reaper (73799)* | Shadow | 103,081 | 30.5 | 50% of his average swing |
+| | | Soul Reaper tick (73799)* | Shadow | 70,000 | 30.5 | starts 5 s later |
+| | | Infest (73781)* | Shadow | 18,750 | 22.5 | 2 s cast |
+| 5 | Halion 25H | Flame Breath (74528)* | Fire | 45,000 | 10 to 12 | 2 s cast |
+
+Deviations from the research and the spec:
+- Left out because armor, avoidance or position change them, or they have no fixed number: Algalon's
+  Quantum Strike (9,333 raw a second, armor only: `SPELL_ATTR3_NO_AVOIDANCE`), Big Bang, Cosmic Smash, Arcane
+  Barrage; Kel'Thuzad's Frost Blast (follows the tank's health), Shadow Fissure, adds; Leeching Swarm; the
+  Lich King's Harvest Souls, Pain and Suffering, Raging Spirits; Halion's Cleave and Dusk Shroud.
+- Phase 4 is the phase 2 steady state, not the 3,978 average, which needs Harvest Souls. Phase 5 is the
+  physical realm's tank.
+- Halion's Twilight Precision (tank dodge x 0.8, +5% hit) isn't modelled: core's `EnemyDodgeMultiplier`
+  stays 1 and nothing sets it.
+- Chill of the Throne is `suppressDodge`, which core applies only at boss level and as -20 points of dodge.
+- Kel'Thuzad's 228 s without attacks are not in the fight.
+
+**Verify**, Normal budget (4,000 iterations), the full 25-player roster of the 8 Oct pass with the page's
+usual raid buffs and the tank's blessings, seed gear as worn, +100 of each stat, J in Armor points per
+rating point (se in brackets), old fight against new. Old: generic boss, HPS 0.175 x its damage, weights
+DTPS and TMI 0.35, TPS 0.3. New: abilities, pinned HPS, thirds.
+
+| Row | What | Result |
+|---|---|---|
+| 1 | dJ per point of Stamina / Agility / Dodge / Defense | |
+| | Bulwark p1 | old 2.89 / 8.62 / 7.41 / 9.72; new 9.71 (2.01) / 7.67 / 6.62 / 7.85 |
+| | Bulwark p3 | old 3.74 / 8.27 / 7.00 / 8.28; new 4.24 (0.38) / 7.48 / 6.18 / 7.35 |
+| | Felesta p1 | old 3.07 / 6.33 / 7.79 / 7.57; new 8.83 (0.94) / 6.19 / 7.35 / 7.82 |
+| | Felesta p3 | old 2.25 / 6.46 / 7.90 / 7.65; new 3.36 (1.33) / 5.77 / 6.98 / 7.03 |
+| 2 | death chance in the score | all four fights keep DTPS, TMI and death chance, no warning. Seed death chance: Bulwark p1 0.014, p3 0.33; Felesta p1 0.72, p3 0.99 (old fight: 0.00, 0.45, 0.11, 0.99) |
+| 3 | fight matches step 0 | cast rates within 15% of the table for all 10 abilities; the tank takes 0.45 to 0.67 of each cast's damage (damage taken, resistance, Ardent Defender) |
+
+Stamina's value rises to 1.3 to 1.4 times Agility's at phase 1 and 0.6 at phase 3 (0.3 to 0.5 before),
+but its se is 0.4 to 2: death chance has no per-iteration samples, so its delta isn't paired. Felesta's
+phase 3 seed still dies in 99% of iterations, so its death term barely separates loadouts there.
+
+**Stage 2, the proof.**
+
+- Taunt floor (step 3): `capRoleTank` in `caps.go` for the four tank specs. `dpsCapFloors` adds only
+  `floor("taunt hit", MeleeHit, PhysicalMissChance == 0)`, bisected on the sheet, so talents and racials count.
+  Both tanks get 262 rating (8% against the level 83 boss) on every phase, and no ceiling or expertise floor.
+  `TestTankGetsOnlyTheTauntHitFloor` checks it is exact.
+- `pinHealingModel` now sims the gear as equipped, not the trimmed seed. A phase 1 pool lacks most worn slots
+  (seed Defense 86 and 25), so 1.5 x the seed's DTPS healed the real gear past any death (Bulwark and Felesta p1
+  dropped the death term: "doesn't move it measurably"). `TestPinnedHealingFollowsTheEquippedGear`.
+- `normalizerOffset(Armor)` 1000 to 2000: with the pin fixed, Felesta p1's death chance still sat at 1.9 se per
+  1000 Armor. At 2000 no tank run drops it.
+
+**Verify**, Normal, the 8 Oct roster through the BiS Batch page on a sim server of this worktree (stage 1 jobs,
+same sources and warm starts as the 8 Oct pass; its sim `7f1b9aede`, this one `c244f8ee9` plus the item).
+
+| Row | What | Result |
+|---|---|---|
+| 2 | death in the score | none of the 6 runs warns of a dropped term; picks die in 0.000 to 0.006 of iterations |
+| 4 | taunt floor | every result's `settings.statMinimums` has `StatMeleeHit` 262. Final hit: Bulwark 263 / 263 / 265, Felesta 270 / 272 / 285 (P1 / P2 / P3), against 0 and 60 for Bulwark and 135 to 162 for Felesta before. A reforge off one piece's hit remains where another piece or gem makes it up (floor is on the sheet) |
+| 6 | nothing else moved | Angry (DPS warrior) P2 and P3 on a sim server of the base tree and of this one: same picks, race and score to the last digit (10313.09, 13801.75). Against the 8 Oct pass (10264 / 13616; P3 Orc to Troll) the gap is master's changes since `7f1b9aede`. Whole test run, vet, simval 1114 of 1114, tsc: pass; no golden moved |
+| 6 | harness | `optimizer/{quick,normal}/raid25_tank_p1` run to the end; they hold the old request, and their wall times (+39% to +163%) were taken on a shared machine |
+
+**Row 5, picks** (gems by stat, final stats; old = 8 Oct pass):
+
+| Run | Old | New |
+|---|---|---|
+| Bulwark P2 | Sta 3295, Agi 717, Dodge 577, Hit 60; gems Agi 11, Sta 7, Def 3 | Sta 2859, Agi 651, Dodge 693, Hit 263; gems Agi 8, hit 3, Def 2, Parry 2, Sta 0 |
+| Bulwark P3 | Sta 3548, Agi 836, Dodge 719, Hit 0; health 46,441; Agi-bearing gems 16, Sta-bearing 6 | Sta 3934, Agi 629, Dodge 502, Hit 265; health 50,297; Agi-bearing gems 9, Sta-bearing 14 |
+| Felesta P2 | Sta 2978, Def 872, Dodge 771, Hit 135; Sta-bearing gems 5 | Sta 2726, Def 917, Dodge 835, Hit 272; Sta-bearing 1, Def 9, hit 4 |
+| Felesta P3 | Sta 3289, Def 1039, Dodge 1007, Hit 162; dodge gems 13, Sta-bearing 2 | Sta 3318, Def 984, Dodge 1029, Hit 285; dodge gems 19, Sta-bearing 5 |
+| Bulwark P1 (Kel'Thuzad) | none | Sta 2893, Def 698, Hit 263, health 40,168; Sta gems 5, Def 3, Exp 2 |
+| Felesta P1 (Kel'Thuzad) | none | Sta 3041, Def 690, Hit 270, health 42,833; Sta gems 10, Def 3 |
+
+Enchants barely moved (Frost Resist fur lining, Frag Belt or Electromagnetic Pulse Generator in places). The hit
+floor takes 2 to 4 gem slots and a few reforges in each run.
+
+Stamina shows where Row 1's number favours it: Kel'Thuzad (1.3 to 1.4 x Agility) and Bulwark P3. It stays out
+of Felesta P2 and P3 and Bulwark P2. Cause, from the numbers and not the search: Felesta P3's Stamina is worth
+3.4 per point against 7.0 for Dodge and 5.8 for Agility, and its seed dies in 99% of iterations, so the death
+term separates nothing there. Every pick dies in at most 0.6% of iterations, so the death third has no
+gradient at the optimum and only TMI prices Stamina. Phase 2 (Algalon) wasn't in Row 1. Weights and the 1.5x
+stay as set.

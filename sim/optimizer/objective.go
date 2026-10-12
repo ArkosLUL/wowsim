@@ -64,16 +64,17 @@ func objectiveWeights(settings *proto.OptimizerSettings) (Metrics, error) {
 }
 
 // TankWeights turns the survival/threat slider into metric weights. Survival splits evenly between
-// the damage the tank takes and how spiky it is, threat goes to TPS; the normalizers then put both
-// sides in the same units, so the slider trades one against the other.
+// the damage the tank takes, how spiky it is and how often it dies, threat goes to TPS; the normalizers
+// then put all of them in the same units, so the slider trades one against the other.
 //
 // The UI sends metric_weights as well, and those win: this is what a request that only carries the
 // slider - the CLI, an export replayed by hand - runs.
 func TankWeights(survival float64) Metrics {
 	survival = min(1, max(0, survival))
 	var weights Metrics
-	weights[MetricDTPS] = survival / 2
-	weights[MetricTMI] = survival / 2
+	weights[MetricDTPS] = survival / 3
+	weights[MetricTMI] = survival / 3
+	weights[MetricPDeath] = survival / 3
 	weights[MetricTPS] = 1 - survival
 	return weights
 }
@@ -108,10 +109,11 @@ func referenceStat(player *proto.Player) stats.Stat {
 }
 
 // normalizerOffset is how far each side of the seed the normalizer sims move the reference stat.
-// Armor moves DTPS far less per point than AP or SP move DPS, so it gets more.
+// Armor moves DTPS far less per point than AP or SP move DPS, so it gets more. At 2000 a tank's
+// chance of death clears 2 se at Normal on both tanks' phase 1 gear; at 1000 Felesta's didn't.
 func normalizerOffset(s stats.Stat) float64 {
 	if s == stats.Armor {
-		return 1000
+		return 2000
 	}
 	return 100
 }

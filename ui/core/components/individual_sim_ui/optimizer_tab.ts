@@ -722,7 +722,7 @@ export class OptimizerTab extends SimTab {
 				slider,
 				this.settings.metricWeights
 					? 'The weights under Advanced are in charge. Move the slider to hand it back.'
-					: 'Survival is the damage you take and how spiky it is. Threat is TPS.',
+					: 'Survival is the damage you take, how spiky it is and how often you die. Threat is TPS.',
 			),
 		);
 		this.setupBody.appendChild(

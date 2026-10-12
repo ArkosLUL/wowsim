@@ -14,6 +14,7 @@ func init() {
 	toc.Register()
 	icc.Register()
 	RegisterGenericBoss()
+	RegisterOptimizerTankBoss()
 }
 
 func AddSingleTargetBossEncounter(presetTarget *core.PresetTarget) {
