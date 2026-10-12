@@ -2,8 +2,10 @@ package optimizer
 
 import (
 	"bufio"
+	"fmt"
 	"math"
 	"os"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -16,22 +18,55 @@ import (
 )
 
 type tankBoss struct {
-	name           string
-	damageModifier float64
-	attackTimeMs   int32
-	difficulty     proto.RaidDifficulty
+	encounters.OptimizerTankBoss
+	difficulty proto.RaidDifficulty
+}
+
+func ability(id int32, school proto.SpellSchool, damage, periodMin, periodMax float64) encounters.OptimizerTankAbility {
+	return encounters.OptimizerTankAbility{SpellID: id, School: school, Damage: damage, PeriodMin: periodMin, PeriodMax: periodMax}
 }
 
 // The tank bosses ui/core/optimizer/pool_builder.ts sends per content phase, off each phase boss's
 // live creature_template row (DamageModifier, BaseAttackTime; 0 falls back to the server's 2000 ms
-// default): Patchwerk 25 (29324), Algalon 25 (33070), Anub'arak 25H (35616), the Lich King 25H
-// (39168), Halion 25H (39945). TestTankBossesMirrorUI checks this stays in sync with the UI's table.
+// default) and boss script: Kel'Thuzad 25 (30061), Algalon 25 (33070), Anub'arak 25H (35616), the
+// Lich King 25H (39168), Halion 25H (39945). TestTankBossesMirrorUI checks this stays in sync with the
+// UI's table.
 var tankBosses = map[int32]tankBoss{
-	1: {"Patchwerk", 70, 1200, proto.RaidDifficulty_RaidDifficulty25Normal},
-	2: {"Algalon", 285, 1000, proto.RaidDifficulty_RaidDifficulty25Normal},
-	3: {"Anub'arak", 149.1, 0, proto.RaidDifficulty_RaidDifficulty25Heroic},
-	4: {"the Lich King", 492.9, 1500, proto.RaidDifficulty_RaidDifficulty25Heroic},
-	5: {"Halion", 385.4, 1500, proto.RaidDifficulty_RaidDifficulty25Heroic},
+	1: {encounters.OptimizerTankBoss{
+		Name: "Kel'Thuzad", DamageModifier: 70, AttackTimeMs: 2000, DamageExp2: 177.438, AttackPower: 783,
+		Abilities: []encounters.OptimizerTankAbility{
+			{SpellID: 55802, School: proto.SpellSchool_SpellSchoolFrost, Damage: 30000, PeriodMin: 2, PeriodMax: 10, CastSeconds: 2, LandChance: 0.5},
+			ability(55807, proto.SpellSchool_SpellSchoolFrost, 8000, 15, 30),
+		},
+	}, proto.RaidDifficulty_RaidDifficulty25Normal},
+	2: {encounters.OptimizerTankBoss{
+		Name: "Algalon", DamageModifier: 285, AttackTimeMs: 1000, DualWield: true,
+		Abilities: []encounters.OptimizerTankAbility{
+			ability(64412, proto.SpellSchool_SpellSchoolArcane, 9500, 15.5, 15.5),
+			ability(65108, proto.SpellSchool_SpellSchoolShadow, 21000, 25, 25),
+		},
+	}, proto.RaidDifficulty_RaidDifficulty25Normal},
+	3: {encounters.OptimizerTankBoss{
+		Name: "Anub'arak", DamageModifier: 149.1,
+		Abilities: []encounters.OptimizerTankAbility{
+			ability(66012, proto.SpellSchool_SpellSchoolFrost, 20788, 15, 20),
+			{SpellID: 68510, School: proto.SpellSchool_SpellSchoolFrost, Damage: 6000, PeriodMin: 3, PeriodMax: 3, LandChance: 0.18},
+		},
+	}, proto.RaidDifficulty_RaidDifficulty25Heroic},
+	4: {encounters.OptimizerTankBoss{
+		Name: "the Lich King", DamageModifier: 492.9, AttackTimeMs: 1500, SuppressDodge: true,
+		Abilities: []encounters.OptimizerTankAbility{
+			ability(73799, proto.SpellSchool_SpellSchoolShadow, 103081, 30.5, 30.5),
+			{SpellID: 73799, School: proto.SpellSchool_SpellSchoolShadow, Damage: 70000, PeriodMin: 30.5, PeriodMax: 30.5, StartSeconds: 5},
+			{SpellID: 73781, School: proto.SpellSchool_SpellSchoolShadow, Damage: 18750, PeriodMin: 22.5, PeriodMax: 22.5, CastSeconds: 2},
+		},
+	}, proto.RaidDifficulty_RaidDifficulty25Heroic},
+	5: {encounters.OptimizerTankBoss{
+		Name: "Halion", DamageModifier: 385.4, AttackTimeMs: 1500,
+		Abilities: []encounters.OptimizerTankAbility{
+			{SpellID: 74528, School: proto.SpellSchool_SpellSchoolFire, Damage: 45000, PeriodMin: 10, PeriodMax: 12, CastSeconds: 2},
+		},
+	}, proto.RaidDifficulty_RaidDifficulty25Heroic},
 }
 
 func tankEncounter(tb testing.TB, phase int32) *proto.Encounter {
@@ -40,34 +75,56 @@ func tankEncounter(tb testing.TB, phase int32) *proto.Encounter {
 	if !ok {
 		tb.Fatalf("no tank boss for phase %d", phase)
 	}
-	target := encounters.GenericBossTargetAt(boss.damageModifier, boss.attackTimeMs)
-	target.Name = boss.name
 	return &proto.Encounter{
 		Duration:             180,
 		DurationVariation:    5,
 		ExecuteProportion_20: 0.2,
 		ExecuteProportion_25: 0.25,
 		ExecuteProportion_35: 0.35,
-		Targets:              []*proto.Target{target},
+		Targets:              []*proto.Target{encounters.OptimizerTankBossTarget(boss.OptimizerTankBoss)},
 		RaidDifficulty:       boss.difficulty,
 	}
 }
 
 // tankHealing is the healing a tank takes from the boss it fights, the way the UI's pool builder
-// re-derives it per phase (ui/core/optimizer/pool_builder.ts healingModelForBoss). A concrete Hps
-// also keeps core's presim out of every sim shard.
+// derives it per phase (ui/core/optimizer/pool_builder.ts healingModelForBoss): a cadence with some
+// variation and no HPS, which the optimizer's pinHealingModel fills in from the seed gear.
 func tankHealing(boss *proto.Target) *proto.HealingModel {
-	cadence, hps := 1.5*boss.SwingSpeed, 0.175*boss.MinBaseDamage/boss.SwingSpeed
+	cadence := 1.5 * boss.SwingSpeed
 	if boss.DualWield {
 		cadence /= 2
-		hps *= 1.5
 	}
-	return &proto.HealingModel{Hps: hps, CadenceSeconds: cadence, BurstWindow: 6}
+	return &proto.HealingModel{CadenceSeconds: cadence, CadenceVariation: tankHealCadenceVariation * cadence, BurstWindow: 6}
 }
 
-// tankBossLine matches one TANK_BOSSES entry in pool_builder.ts, e.g.
-// `1: { name: 'Patchwerk', damageModifier: 70, attackTimeMs: 1200, difficulty: RaidDifficulty.RaidDifficulty25Normal },`
-var tankBossLine = regexp.MustCompile(`^\s*(\d+):\s*\{\s*name:\s*(?:'([^']*)'|"([^"]*)"),\s*damageModifier:\s*([0-9.]+),\s*attackTimeMs:\s*(\d+),\s*difficulty:\s*RaidDifficulty\.(\w+)\s*\},?\s*$`)
+// ui/core/optimizer/pool_builder.ts TANK_HEAL_CADENCE_VARIATION.
+const tankHealCadenceVariation = 0.5
+
+var (
+	bossHeader  = regexp.MustCompile(`^\s*(\d+):\s*\{\s*$`)
+	bossField   = regexp.MustCompile(`^\s*(\w+):\s*(.+?),\s*$`)
+	abilityLine = regexp.MustCompile(`^\s*\{(.*)\},\s*$`)
+	// one `key: value` of an ability line; values are quoted strings or bare words and numbers
+	abilityPair = regexp.MustCompile(`(\w+):\s*('[^']*'|"[^"]*"|[\w.]+)`)
+)
+
+func uiNumber(tb testing.TB, raw string) float64 {
+	tb.Helper()
+	v, err := strconv.ParseFloat(raw, 64)
+	if err != nil {
+		tb.Fatalf("bad number %q: %v", raw, err)
+	}
+	return v
+}
+
+func uiSchool(tb testing.TB, raw string) proto.SpellSchool {
+	tb.Helper()
+	school, ok := proto.SpellSchool_value[strings.TrimPrefix(raw, "SpellSchool.")]
+	if !ok {
+		tb.Fatalf("unknown SpellSchool %q", raw)
+	}
+	return proto.SpellSchool(school)
+}
 
 func readTankBossesFromUI(tb testing.TB) map[int32]tankBoss {
 	tb.Helper()
@@ -78,46 +135,102 @@ func readTankBossesFromUI(tb testing.TB) map[int32]tankBoss {
 	defer f.Close()
 
 	result := map[int32]tankBoss{}
-	started := false
+	started, inAbilities := false, false
+	var phase int32
+	var cur *tankBoss
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
 		line := scanner.Text()
+		trimmed := strings.TrimSpace(line)
 		if !started {
-			started = strings.HasPrefix(strings.TrimSpace(line), "export const TANK_BOSSES")
+			started = strings.HasPrefix(trimmed, "export const TANK_BOSSES")
 			continue
 		}
-		if strings.HasPrefix(strings.TrimSpace(line), "};") {
-			break
+		switch {
+		case cur == nil && strings.HasPrefix(trimmed, "};"):
+			if len(result) == 0 {
+				tb.Fatal("TANK_BOSSES has no boss")
+			}
+			return result
+		case cur == nil:
+			if m := bossHeader.FindStringSubmatch(line); m != nil {
+				n, _ := strconv.Atoi(m[1])
+				phase, cur = int32(n), &tankBoss{}
+			}
+		case inAbilities && trimmed == "],":
+			inAbilities = false
+		case inAbilities:
+			m := abilityLine.FindStringSubmatch(line)
+			if m == nil {
+				continue
+			}
+			a := encounters.OptimizerTankAbility{}
+			for _, kv := range abilityPair.FindAllStringSubmatch(m[1], -1) {
+				key, raw := kv[1], strings.Trim(kv[2], `'"`)
+				switch key {
+				case "name":
+				case "spellId":
+					a.SpellID = int32(uiNumber(tb, raw))
+				case "school":
+					a.School = uiSchool(tb, raw)
+				case "damage":
+					a.Damage = uiNumber(tb, raw)
+				case "periodMin":
+					a.PeriodMin = uiNumber(tb, raw)
+				case "periodMax":
+					a.PeriodMax = uiNumber(tb, raw)
+				case "castSeconds":
+					a.CastSeconds = uiNumber(tb, raw)
+				case "landChance":
+					a.LandChance = uiNumber(tb, raw)
+				case "startSeconds":
+					a.StartSeconds = uiNumber(tb, raw)
+				default:
+					tb.Fatalf("unknown ability field %q in %q", key, line)
+				}
+			}
+			cur.Abilities = append(cur.Abilities, a)
+		case trimmed == "abilities: [":
+			inAbilities = true
+		case trimmed == "},":
+			result[phase], cur = *cur, nil
+		default:
+			m := bossField.FindStringSubmatch(line)
+			if m == nil {
+				tb.Fatalf("unreadable TANK_BOSSES line %q", line)
+			}
+			key, raw := m[1], strings.Trim(m[2], `'"`)
+			switch key {
+			case "name":
+				cur.Name = raw
+			case "damageModifier":
+				cur.DamageModifier = uiNumber(tb, raw)
+			case "attackTimeMs":
+				cur.AttackTimeMs = int32(uiNumber(tb, raw))
+			case "difficulty":
+				d, ok := proto.RaidDifficulty_value[strings.TrimPrefix(raw, "RaidDifficulty.")]
+				if !ok {
+					tb.Fatalf("unknown RaidDifficulty %q", raw)
+				}
+				cur.difficulty = proto.RaidDifficulty(d)
+			case "damageExp2":
+				cur.DamageExp2 = uiNumber(tb, raw)
+			case "attackPower":
+				cur.AttackPower = uiNumber(tb, raw)
+			case "dualWield":
+				cur.DualWield = raw == "true"
+			case "suppressDodge":
+				cur.SuppressDodge = raw == "true"
+			default:
+				tb.Fatalf("unknown TANK_BOSSES field %q", key)
+			}
 		}
-		m := tankBossLine.FindStringSubmatch(line)
-		if m == nil {
-			continue
-		}
-		phase, err := strconv.Atoi(m[1])
-		if err != nil {
-			tb.Fatalf("bad phase in %q: %v", line, err)
-		}
-		modifier, err := strconv.ParseFloat(m[4], 64)
-		if err != nil {
-			tb.Fatalf("bad damageModifier in %q: %v", line, err)
-		}
-		attackTime, err := strconv.Atoi(m[5])
-		if err != nil {
-			tb.Fatalf("bad attackTimeMs in %q: %v", line, err)
-		}
-		difficulty, ok := proto.RaidDifficulty_value[m[6]]
-		if !ok {
-			tb.Fatalf("unknown RaidDifficulty %q", m[6])
-		}
-		result[int32(phase)] = tankBoss{m[2] + m[3], modifier, int32(attackTime), proto.RaidDifficulty(difficulty)}
 	}
 	if err := scanner.Err(); err != nil {
 		tb.Fatal(err)
 	}
-	if !started {
-		tb.Fatal("pool_builder.ts has no TANK_BOSSES")
-	}
-	return result
+	tb.Fatal("pool_builder.ts has no TANK_BOSSES")
+	return nil
 }
 
 // TestTankBossesMirrorUI fails when the UI's TANK_BOSSES (ui/core/optimizer/pool_builder.ts) and this
@@ -127,8 +240,8 @@ func TestTankBossesMirrorUI(t *testing.T) {
 	for phase, want := range ui {
 		if got, ok := tankBosses[phase]; !ok {
 			t.Errorf("phase %d: the UI has a boss, tankBosses doesn't", phase)
-		} else if got != want {
-			t.Errorf("phase %d: tankBosses = %+v, the UI has %+v", phase, got, want)
+		} else if !reflect.DeepEqual(got, want) {
+			t.Errorf("phase %d: tankBosses = %s, the UI has %s", phase, fmt.Sprintf("%+v", got), fmt.Sprintf("%+v", want))
 		}
 	}
 	for phase := range tankBosses {

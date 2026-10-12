@@ -23,8 +23,8 @@ const steadyShotBaseCast = 2 * time.Second
 // unreachable cap is reported rather than guessed at.
 const maxCapBonus = 4000
 
-// capRole is which of the DPS cap floors and the haste ceiling a spec gets. Tanks and healers get
-// none.
+// capRole is which of the DPS cap floors and the haste ceiling a spec gets. A tank gets the melee hit
+// floor only, a healer none.
 type capRole int
 
 const (
@@ -32,6 +32,7 @@ const (
 	capRoleMelee
 	capRoleHunter
 	capRoleCaster
+	capRoleTank
 )
 
 // dpsCapRole reads the target's role off its spec, the way objective.go's referenceStat does.
@@ -45,6 +46,9 @@ func dpsCapRole(player *proto.Player) capRole {
 	case *proto.Player_BalanceDruid, *proto.Player_Mage, *proto.Player_ShadowPriest,
 		*proto.Player_SmitePriest, *proto.Player_ElementalShaman, *proto.Player_Warlock:
 		return capRoleCaster
+	case *proto.Player_ProtectionWarrior, *proto.Player_ProtectionPaladin,
+		*proto.Player_FeralTankDruid, *proto.Player_TankDeathknight:
+		return capRoleTank
 	default:
 		return capRoleNone
 	}
@@ -157,6 +161,9 @@ func (r *run) dpsCapFloors() {
 	}
 
 	switch role {
+	case capRoleTank:
+		// the taunt rolls the special-attack miss, which only melee hit rating removes
+		floor("taunt hit", stats.MeleeHit, func(s core.PlayerSheet) bool { return s.PhysicalMissChance == 0 })
 	case capRoleMelee, capRoleHunter:
 		floor("hit", stats.MeleeHit, func(s core.PlayerSheet) bool { return s.PhysicalMissChance == 0 })
 		if role == capRoleMelee {

@@ -6,6 +6,7 @@ import {
 	GemColor,
 	HandType,
 	HealingModel,
+	InputType,
 	ItemSlot,
 	ItemSpec,
 	ItemStat,
@@ -20,6 +21,7 @@ import {
 	SpellSchool,
 	Stat,
 	Target,
+	TargetInput,
 	UnitReference,
 	UnitReference_Type,
 	WeaponType,
@@ -89,11 +91,11 @@ export function defaultTabSettings(contentPhase: number): OptimizerTabSettings {
 }
 
 // The survival/threat slider as metric weights, mirroring optimizer.TankWeights: survival splits
-// evenly between the damage taken and how spiky it is, threat goes to TPS. The normalizers put both
-// sides in the same units, so the slider trades one against the other.
+// evenly between the damage taken, how spiky it is and the chance of dying, threat goes to TPS. The
+// normalizers put all of them in the same units, so the slider trades one against the other.
 export function tankMetricWeights(survival: number): OptimizerMetrics {
 	const s = Math.min(1, Math.max(0, survival));
-	return OptimizerMetrics.create({ dtps: s / 2, tmi: s / 2, tps: 1 - s });
+	return OptimizerMetrics.create({ dtps: s / 3, tmi: s / 3, pDeath: s / 3, tps: 1 - s });
 }
 
 export interface PoolBuilderInput {
@@ -191,6 +193,25 @@ export function optimizerEncounter(current: Encounter | undefined): Encounter {
 	});
 }
 
+// A boss spell that damages its tank and that armor and avoidance can't remove, so it always hits. A
+// real spell's roll is a fixed damage and a cadence here; encounters.OptimizerTankAbility reads it.
+export interface TankAbility {
+	name: string;
+	spellId: number;
+	school: SpellSchool;
+	// Damage per cast, before the tank's own modifiers.
+	damage: number;
+	// Seconds between casts, uniform in [periodMin, periodMax].
+	periodMin: number;
+	periodMax: number;
+	// Seconds the cast holds the boss's melee; 0 is an instant.
+	castSeconds?: number;
+	// Share of the casts that land; the raid interrupts or avoids the rest. 1 when unset.
+	landChance?: number;
+	// Seconds added to the first cast.
+	startSeconds?: number;
+}
+
 export interface TankBoss {
 	name: string;
 	// creature_template.DamageModifier.
@@ -198,40 +219,130 @@ export interface TankBoss {
 	// creature_template.BaseAttackTime; 0 falls back to the server's 2000 ms default.
 	attackTimeMs: number;
 	difficulty: RaidDifficulty;
+	// creature_classlevelstats damage_exp2 and attackpower of the boss's class row; the class 1 row
+	// (177.074, 805) when unset.
+	damageExp2?: number;
+	attackPower?: number;
+	dualWield?: boolean;
+	// Chill of the Throne, which Icecrown's bosses stand in for.
+	suppressDodge?: boolean;
+	abilities: Array<TankAbility>;
 }
 
 // The boss a tank optimizes against, per content phase, off that phase boss's live creature_template
-// row. Anub'arak, the Lich King and Halion are the heroic 25-player fights; Patchwerk and Algalon run
-// 25 normal, which is what an unset raid_difficulty means to the sim.
+// row and boss script. Anub'arak, the Lich King and Halion are the heroic 25-player fights; Kel'Thuzad
+// and Algalon run 25 normal, which is what an unset raid_difficulty means to the sim. The abilities are
+// only what armor and avoidance can't remove; the white swing is the
+// rest. Kel'Thuzad is modelled from 228 s on, when he starts attacking.
 //
-// sim/optimizer's TestTankBossesMirrorUI reads this table, so keep one phase per line, in this shape.
+// sim/optimizer's TestTankBossesMirrorUI reads this table, so keep its shape: one boss per
+// `<phase>: {` block, one field per line, one ability per line.
 export const TANK_BOSSES: Record<number, TankBoss> = {
-	1: { name: 'Patchwerk', damageModifier: 70, attackTimeMs: 1200, difficulty: RaidDifficulty.RaidDifficulty25Normal },
-	2: { name: 'Algalon', damageModifier: 285, attackTimeMs: 1000, difficulty: RaidDifficulty.RaidDifficulty25Normal },
-	3: { name: "Anub'arak", damageModifier: 149.1, attackTimeMs: 0, difficulty: RaidDifficulty.RaidDifficulty25Heroic },
-	4: { name: 'the Lich King', damageModifier: 492.9, attackTimeMs: 1500, difficulty: RaidDifficulty.RaidDifficulty25Heroic },
-	5: { name: 'Halion', damageModifier: 385.4, attackTimeMs: 1500, difficulty: RaidDifficulty.RaidDifficulty25Heroic },
+	1: {
+		name: "Kel'Thuzad",
+		damageModifier: 70,
+		attackTimeMs: 2000,
+		difficulty: RaidDifficulty.RaidDifficulty25Normal,
+		damageExp2: 177.438,
+		attackPower: 783,
+		abilities: [
+			// the raid interrupts about half of the single-target casts; a landed one holds his melee
+			{ name: 'Frostbolt', spellId: 55802, school: SpellSchool.SpellSchoolFrost, damage: 30000, periodMin: 2, periodMax: 10, castSeconds: 2, landChance: 0.5 },
+			{ name: 'Frostbolt volley', spellId: 55807, school: SpellSchool.SpellSchoolFrost, damage: 8000, periodMin: 15, periodMax: 30 },
+		],
+	},
+	2: {
+		name: 'Algalon',
+		damageModifier: 285,
+		attackTimeMs: 1000,
+		difficulty: RaidDifficulty.RaidDifficulty25Normal,
+		dualWield: true,
+		abilities: [
+			{ name: 'Phase Punch', spellId: 64412, school: SpellSchool.SpellSchoolArcane, damage: 9500, periodMin: 15.5, periodMax: 15.5 },
+			// 4 stars per 60 to 120 s, only above 20% health
+			{ name: 'Black Hole Explosion', spellId: 65108, school: SpellSchool.SpellSchoolShadow, damage: 21000, periodMin: 25, periodMax: 25 },
+		],
+	},
+	3: {
+		name: "Anub'arak",
+		damageModifier: 149.1,
+		attackTimeMs: 0,
+		difficulty: RaidDifficulty.RaidDifficulty25Heroic,
+		abilities: [
+			// 25% of his average swing
+			{ name: 'Freezing Slash', spellId: 66012, school: SpellSchool.SpellSchoolFrost, damage: 20788, periodMin: 15, periodMax: 20 },
+			// 5 of 25 players per cast, a 6000 tick every 3 s for 18 s, on the surface 72 of every 80 s
+			{ name: 'Penetrating Cold', spellId: 68510, school: SpellSchool.SpellSchoolFrost, damage: 6000, periodMin: 3, periodMax: 3, landChance: 0.18 },
+		],
+	},
+	4: {
+		name: 'the Lich King',
+		damageModifier: 492.9,
+		attackTimeMs: 1500,
+		difficulty: RaidDifficulty.RaidDifficulty25Heroic,
+		suppressDodge: true,
+		abilities: [
+			// 50% of his average swing at once, then 70000 five seconds later
+			{ name: 'Soul Reaper', spellId: 73799, school: SpellSchool.SpellSchoolShadow, damage: 103081, periodMin: 30.5, periodMax: 30.5 },
+			{ name: 'Soul Reaper tick', spellId: 73799, school: SpellSchool.SpellSchoolShadow, damage: 70000, periodMin: 30.5, periodMax: 30.5, startSeconds: 5 },
+			{ name: 'Infest', spellId: 73781, school: SpellSchool.SpellSchoolShadow, damage: 18750, periodMin: 22.5, periodMax: 22.5, castSeconds: 2 },
+		],
+	},
+	5: {
+		name: 'Halion',
+		damageModifier: 385.4,
+		attackTimeMs: 1500,
+		difficulty: RaidDifficulty.RaidDifficulty25Heroic,
+		abilities: [
+			{ name: 'Flame Breath', spellId: 74528, school: SpellSchool.SpellSchoolFire, damage: 45000, periodMin: 10, periodMax: 12, castSeconds: 2 },
+		],
+	},
 };
 
 // The generic AC boss (encounters.GenericBossTarget, Encounter.genericBossTargetProto), swinging at
-// a specific phase boss's own attack time instead of the pinned 2.0 s default. The server's
+// a specific phase boss's own attack time instead of the pinned 2.0 s default, and carrying its
+// abilities as target inputs for encounters.OptimizerTankBossID's AI. The server's
 // Creature::CalculateMinMaxDamage multiplies weapon damage by both DamageModifier and the attack
 // time in seconds, so a faster boss's swing lands smaller, not less per second. Duplicated rather than
 // imported from encounter.ts, which this module can't load under Node (see plainBossTarget).
+//
+// OPTIMIZER_TANK_BOSS_ID is encounters.OptimizerTankBossID, and the input labels below are
+// optimizerTankAbilityLabels.
+const OPTIMIZER_TANK_BOSS_ID = 999998;
+
+function abilityInputs(ability: TankAbility): Array<TargetInput> {
+	const values: Array<[string, number]> = [
+		['Spell id', ability.spellId],
+		['School', ability.school],
+		['Damage', ability.damage],
+		['Period min', ability.periodMin],
+		['Period max', ability.periodMax],
+		['Cast time', ability.castSeconds ?? 0],
+		['Land chance', ability.landChance ?? 1],
+		['Start', ability.startSeconds ?? 0],
+	];
+	return values.map(([label, numberValue]) => TargetInput.create({ inputType: InputType.Number, label, numberValue }));
+}
+
 function genericBossTargetAt(boss: TankBoss): Target {
 	const attackTimeMs = boss.attackTimeMs > 0 ? boss.attackTimeMs : 2000;
 	return Target.create({
+		id: OPTIMIZER_TANK_BOSS_ID,
 		name: boss.name,
 		level: BOSS_LEVEL,
 		tankIndex: 0,
 		swingSpeed: attackTimeMs / 1000,
-		minBaseDamage: (177.074 * boss.damageModifier * attackTimeMs) / 1000,
+		minBaseDamage: ((boss.damageExp2 ?? 177.074) * boss.damageModifier * attackTimeMs) / 1000,
 		damageSpread: 0.5,
 		parryHaste: true,
+		dualWield: boss.dualWield ?? false,
+		dualWieldPenalty: boss.dualWield ?? false,
+		suppressDodge: boss.suppressDodge ?? false,
 		spellSchool: SpellSchool.SpellSchoolPhysical,
+		targetInputs: boss.abilities.flatMap(abilityInputs),
 		stats: Stats.fromMap({
 			[Stat.StatArmor]: 10643,
-			[Stat.StatAttackPower]: 805,
+			[Stat.StatAttackPower]: boss.attackPower ?? 805,
 			[Stat.StatHealth]: 13945,
 		}).asArray(),
 	});
@@ -256,16 +367,22 @@ export function tankEncounter(current: Encounter | undefined, contentPhase: numb
 	});
 }
 
-// The healing a tank takes, re-derived for the boss it now fights, the way
-// Player.setDefaultHealingParams derives it. Whatever the sim's own encounter produced came from a
-// different boss, so both numbers are replaced rather than filled in.
+// Share of the cadence the heals' timing varies by. Without it the heals land on a metronome and
+// the tank can't die between two of them.
+export const TANK_HEAL_CADENCE_VARIATION = 0.5;
+
+// The healing a tank takes from the boss it now fights. Only the cadence comes from the boss
+// (as Player.setDefaultHealingParams derives it); hps stays 0 so sim/optimizer's pinHealingModel sets it once to 1.5
+// times what the seed gear takes from this fight, magic included. Whatever the sim's own encounter
+// produced came from a different boss, so both numbers are replaced rather than filled in.
 export function healingModelForBoss(current: HealingModel | undefined, boss: Target): HealingModel {
 	const model = current ? HealingModel.clone(current) : HealingModel.create();
 	if (boss.swingSpeed <= 0) {
 		return model;
 	}
 	model.cadenceSeconds = boss.dualWield ? (1.5 * boss.swingSpeed) / 2 : 1.5 * boss.swingSpeed;
-	model.hps = ((0.175 * boss.minBaseDamage) / boss.swingSpeed) * (boss.dualWield ? 1.5 : 1);
+	model.cadenceVariation = TANK_HEAL_CADENCE_VARIATION * model.cadenceSeconds;
+	model.hps = 0;
 	return model;
 }
 

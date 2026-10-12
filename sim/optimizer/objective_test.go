@@ -195,7 +195,7 @@ func TestNewObjectiveNormalizesAgainstEquippedNotTrimmedSeed(t *testing.T) {
 // landing more threat.
 func TestTankSliderObjective(t *testing.T) {
 	slider, err := objectiveWeights(&proto.OptimizerSettings{TankSurvival: 0.7})
-	want := Metrics{MetricTPS: 0.3, MetricDTPS: 0.35, MetricTMI: 0.35}
+	want := Metrics{MetricTPS: 0.3, MetricDTPS: 0.7 / 3, MetricTMI: 0.7 / 3, MetricPDeath: 0.7 / 3}
 	if err != nil {
 		t.Fatal(err)
 	}
