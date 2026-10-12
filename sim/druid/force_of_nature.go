@@ -66,6 +66,7 @@ func (druid *Druid) NewTreant() *TreantPet {
 		druidOwner: druid,
 	}
 	treant.BuffImmunity = core.PetImmuneToScaling
+	treant.FullManaPool = true
 	treant.AddStatDependency(stats.Strength, stats.AttackPower, 2)
 
 	// InitStatsForLevel's NPC_TREANT case, and 1964's template attack time. A white crit is the plain

@@ -130,6 +130,8 @@ type Raid struct {
 
 	replenishmentUnits []*Unit // All units a Replenishment cast can land on.
 	replenishmentPicks []*Unit // Scratch for the units one cast lands on.
+	// The units whose mana pool is always full, which rank last.
+	replenishmentFullPool map[*Unit]bool
 
 	// each source's cast of Replenishment, by source
 	replenishmentCasts []*CastThreat

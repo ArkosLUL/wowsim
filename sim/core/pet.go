@@ -88,6 +88,12 @@ type Pet struct {
 	// Its power is mana but the pool is empty (Spirit Wolves). A raid cast that picks whoever is lowest
 	// on mana still counts it, at nothing.
 	EmptyManaPool bool
+	// Its power is mana and the pool is full and stays so (treants, Shadowfiend, Infernal: they spend none
+	// and Creature::Regenerate refills a controlled creature), so a raid cast ranks it last, at 100%.
+	FullManaPool bool
+	// Takes Wrath of Air's cast speed, a raid area aura that reaches a guardian too. Only the pets that
+	// set this get it.
+	TakesWrathOfAir bool
 
 	// Mana regen is Creature::Regenerate's (creatureManaTick), set by EnableCreatureManaBar.
 	creatureManaRegen   bool
@@ -890,13 +896,11 @@ func (pet *Pet) Disable(sim *Simulation) {
 		pet.ownerHasteAmount = 0
 	}
 
-	// Remove inherited stats on dismiss if not permanent
-	if pet.isGuardian || pet.timeoutAction != nil {
-		pet.AddStatsDynamic(sim, pet.inheritedStats.Invert())
-		pet.inheritedStats = stats.Stats{}
-		pet.ownerHit = stats.Stats{}
-		pet.scalingTick.fresh = false
-	}
+	// a pet summoned again is a new creature, which takes what the owner hands over once more
+	pet.AddStatsDynamic(sim, pet.inheritedStats.Invert())
+	pet.inheritedStats = stats.Stats{}
+	pet.ownerHit = stats.Stats{}
+	pet.scalingTick.fresh = false
 
 	if pet.dynamicStatInheritance != nil {
 		if idx := slices.Index(pet.Owner.DynamicStatsPets, pet); idx != -1 {

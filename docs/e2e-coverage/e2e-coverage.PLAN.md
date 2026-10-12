@@ -3116,6 +3116,85 @@ past 10 targets), TestArms rows to 0.75% (Sweeping Strikes on Whirlwind), TestEl
   files in class code; `pets.jsonl` and the module's `e2e/petfix_test.go`; their drops and rows.
 - **Goldens:** the pet suites, and the mana users under Replenishment; report each.
 
+#### As built
+
+Code stage, re-measured on `c244f8ee9` against [ac] `3d89793c7`. Verdicts:
+- Replenishment (fixed): treants, Shadowfiend and Infernal have a pool that stays full (`pet_levelstats` mana, the
+  scaling int, `Creature::Regenerate` refilling a controlled creature), so a cast ranks them last at 100%
+  (`Pet.FullManaPool`, `Raid.replenishmentFullPool`). They displace only units tied at 100% further down the raid.
+  No golden moves.
+- Fire Nova (fixed): magic class, so `Unit::ModSpellCastTime` scales it by cast speed; `IgnoreHaste` went. Wrath of
+  Air is a raid area aura (effect 65), which reaches a guardian, so the Greater Fire Elemental takes it
+  (`Pet.TakesWrathOfAir`) and casts Nova in 1904 ms. Other casting pets (Imp, Water Elemental, Mirror Image) would
+  take it too; the sim still drops it for them.
+- Nothing selected (not a gap): `_initAttack` looks for the owner's selection on the first update only. After that a
+  guardian joins through `OwnerAttacked`, called by `Spell::_cast` for each harmful unit-target spell of the owner as
+  it goes off. The sim always has a target selected.
+- Mirror Images, three leads, none changed:
+  - Opener per image: each image's marginal is the sim's, so the mean is the same; only the correlation of the three
+    differs. Splitting them means three casters and 3x the cast counts.
+  - A summon at exactly 0 s: images engage when the owner is in combat (his first harmful cast going off), which the
+    sim has no notion of. Every preset summons at -2 s.
+  - A cast landing on the image's death update (a gap, not fixed): a cast's `SpellEvent` is queued for the last
+    update's time plus 1 ms, ahead of `DeathEvent`'s 29.5 s (`EventProcessor::Update`), so it goes off, and the AI
+    doesn't run on that update: the live 2 s lead shows it (9 Frostbolts, 2 Fire Blasts). The sim's timeout runs first
+    and loses the cast. Landing it (the death at `ActionPriorityLow`) moves Frost +0.4%: there a Fire Blast opener's last
+    Frostbolt at the presets' lead is such a tie. Whether its missile hits before the corpse goes at 30 s is unmeasured,
+    so it stays.
+- Permanent pet summoned again (fixed): `Pet.Disable` takes the inherited stats off for every pet, not just guardians
+  and timed ones.
+- Bloodworm health (fixed): 437 create health, 1 a point of stamina (`SetCreateHealth(437, 25, 1)`). Nothing reads it.
+- A/B, 100,000 iterations (400,000 for the shaman), same seed:
+  - Disc Greatness row, `205e071b3^` against `205e071b3`: TPS 890.78 to 889.89 (se 0.05), HPS unchanged. A real move of
+    -0.1%, matching the golden's; the heuristics only add a tick's mana. Against this base TPS is 874.25, from later work.
+  - Restoration shaman Healing Grace row, `205e071b3^` against this base: TPS 2862.78 to 2863.34, HPS 8866.67 to 8868.43
+    (se 0.07, 0.17). A real +0.02%, the golden's direction.
+- Lead: the Rune Weapon (SummonProperties 208) and the Valkyr (2909) have neither a pet's type nor category, so they are
+  `Uncontrollable` on the server and take no Bloodlust; the sim gives it to both.
+
+Goldens: only Elemental (Convection Average +0.02%, Nova 6.65 to 6.80 a fight) and Enhancement (Average +0.10%) move,
+with the Fire Elemental's Nova landing 96 ms sooner. The rest of the 37 are unchanged; `simval.jsonl` 1114 of 1114.
+
+e2e: `TestPetfixFireElementalJoinsOnTheOwnersCast`, `TestPetfixFireElementalUnderWrathOfAir`; the packet watch reads
+a spell start's cast time.
+
+Stage live, on [ac] `3d89793c7` (notes: `tmp/ec-pet-fix4-live.md`). The sim is unchanged and no golden moves past
+stage code's.
+- Wrath of Air (confirmed): with 2895 on the shaman (`.aura`, the area aura's owner as his totem would be), his
+  elemental's Fire Nova started with a 1904 ms cast; so did both Novas with the aura put on the elemental itself.
+- Nothing selected (confirmed): the elemental did nothing for 12 s, then swung 13 ms after the shaman's bolt went
+  off. Rank 1 Lightning Bolt is interrupted as a level 80's cast bar fills (cause not found); the test casts rank 12.
+- Fire Elemental, 12 lives (confirmed): 10.0 Novas started, 6.25 landed, 3.75 broken, 18.17 Blasts, 39.25 swings a
+  life, for the sim's 9.8, 6.58, 3.06, 18.27 and 40.16: z -0.7, -0.3 and -1.4. With Z7's 6 lives Blasts are 17.94.
+  All 206 Blast gaps are 4.06 to 8.08 s.
+- Silent image (a spot artifact): at the entrance the mage's spot is inside the stairs, and one or two of the three
+  images drop to the ground at z 150, 144 yd below; a Frostbolt at their victim gets `SPELL_FAILED_BAD_TARGETS`. On
+  the hub's outer floor (`fightGround`) all 45 images of 15 summons cast. The test moved there and fails a summon with
+  fewer than three casters, logging each image's `.gps` and the refusal (`PETFIX_IMAGE_PROBE`).
+- Mirror Images (confirmed, but for the last casts): into a fight 18 of 18 images land 9 Frostbolts and 3 Fire Blasts,
+  3 s ahead of the pull 8 and 2, or 3 after a Fire Blast opener, as the sim. 2 s ahead, the presets' lead, the server
+  has 8 and 3 after a Fire Blast opener (6 images) and 9 and 2 after a Frostbolt (3, the 9th landing on the update
+  the image dies on); this base's 100 ms grid gives 9 and 4, and 9 and 3. Those casts ride on the update period:
+  EC-CORE-FIX5's `world_loop_ms`, already on `integration`, should give 8 and 3, and 8 and 2.
+- Opener (confirmed, unchanged): 8 of 9 summons ahead of the pull mix both openers, so the server rolls per image;
+  16 of 27 opened on a Fire Blast.
+- Fixture: `pets_casts.jsonl`, the 12 lives and 15 summons, replayed by `TestPetsCastsRecords`
+  (`tools/simval/pets_casts.go`, 100 checks); a cast within 0.5 s of an image's death may be missing on either side.
+- e2e: `TestPetfixMirrorImageCasts` gains three summons 2 s ahead of the pull (9 summons, about 6 min).
+
+Follow-ups:
+- A 3 s cast takes 3048 ms live on average (3.00 to 3.10: the first update past 3 s of a loop that jitters), 3081 on
+  a fixed 102.7 ms grid, which loses the Frostbolt opener's 9th Frostbolt at a 2 s lead.
+- An image's corpse is unsummoned at 30 s (`TempSummon::Update`), which cancels a Frostbolt still in flight: one
+  cast as it dies only hits within 12 yd, which decides the tie above. The sim flies it 5 yd (the pet's
+  `DistanceFromTarget` is 0); `CasterAI` keeps an image within 20 yd. Unmeasured: the e2e reads `SMSG_SPELL_GO`, not
+  the damage log.
+- `TEMPSUMMON_TIMED_DESPAWN` runs the creature's whole update before it unsummons, so another timed guardian's cast
+  or AI event due on its last update may still happen; `EnableWithTimeout` ends it first. Unchecked per guardian.
+- Wrath of Air for the Imp, Water Elemental and Mirror Image, and the Rune Weapon's and Valkyr's Bloodlust (above).
+- The Fire Elemental tests and `TestPetfixRecords` still stand at the entrance.
+- Why a level 80's rank 1 Lightning Bolt is interrupted.
+
 ### EC-CLASS-FIX4 (Z8; changes goldens; stages: code, live)
 
 - Druid: multi-target Starfall is 20 one-second ticks on the main target, the server's 10 s of two stars a tick

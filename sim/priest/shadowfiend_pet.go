@@ -34,6 +34,7 @@ func (priest *Priest) NewShadowfiend() *Shadowfiend {
 		Priest: priest,
 	}
 	shadowfiend.BuffImmunity = core.PetImmuneToScaling
+	shadowfiend.FullManaPool = true
 
 	manaMetric := priest.NewManaMetrics(core.ActionID{SpellID: 34433})
 	_ = core.MakePermanent(shadowfiend.GetOrRegisterAura(core.Aura{

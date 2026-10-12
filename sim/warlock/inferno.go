@@ -87,6 +87,7 @@ func (warlock *Warlock) NewInfernal() *InfernalPet {
 		owner: warlock,
 	}
 	infernal.BuffImmunity = core.PetImmuneToScaling
+	infernal.FullManaPool = true
 
 	infernal.AddStatDependency(stats.Strength, stats.AttackPower, 2)
 	infernal.AddStat(stats.AttackPower, -20)

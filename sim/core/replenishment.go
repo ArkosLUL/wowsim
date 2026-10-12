@@ -257,8 +257,11 @@ func takesReplenishment(unit *Unit) bool {
 }
 
 // replenishmentOrder is PowerPctOrderPred's key: whole mana over the whole pool in float32, 0 without
-// a pool.
-func replenishmentOrder(unit *Unit) float32 {
+// a pool, 1 for a pool that is always full.
+func (raid *Raid) replenishmentOrder(unit *Unit) float32 {
+	if raid.replenishmentFullPool[unit] {
+		return 1
+	}
 	if !unit.HasManaBar() {
 		return 0
 	}
@@ -289,8 +292,14 @@ func (raid *Raid) NewReplenishmentSource(caster *Unit, _ ActionID) Replenishment
 			}
 			for _, petAgent := range party.Pets {
 				pet := petAgent.GetPet()
-				if (pet.HasManaBar() || pet.EmptyManaPool) && !pet.Uncontrollable {
+				if (pet.HasManaBar() || pet.EmptyManaPool || pet.FullManaPool) && !pet.Uncontrollable {
 					units = append(units, &pet.Unit)
+					if pet.FullManaPool {
+						if raid.replenishmentFullPool == nil {
+							raid.replenishmentFullPool = map[*Unit]bool{}
+						}
+						raid.replenishmentFullPool[&pet.Unit] = true
+					}
 				}
 			}
 		}
@@ -324,7 +333,7 @@ func (raid *Raid) ProcReplenishment(sim *Simulation, src ReplenishmentSource) {
 	if len(picks) > replenishmentMaxTargets {
 		// std::list::sort is stable: units level on mana keep the order they were found in, the raid's here
 		slices.SortStableFunc(picks, func(a, b *Unit) int {
-			return cmp.Compare(replenishmentOrder(a), replenishmentOrder(b))
+			return cmp.Compare(raid.replenishmentOrder(a), raid.replenishmentOrder(b))
 		})
 		picks = picks[:replenishmentMaxTargets]
 	}

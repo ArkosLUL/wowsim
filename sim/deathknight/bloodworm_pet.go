@@ -23,6 +23,9 @@ func (dk *Deathknight) NewBloodwormPet(_ int) *BloodwormPet {
 		dkOwner: dk,
 	}
 	bloodworm.Uncontrollable = true
+	// create health is level 80's 5342 at the template's 0.0819, and Guardian::UpdateMaxHealth gives
+	// a Bloodworm 1 a point of stamina over the create value
+	bloodworm.SetCreateHealth(437, 25, 1)
 
 	bloodworm.EnableAutoAttacks(bloodworm, core.AutoAttackOptions{
 		MainHand: core.Weapon{
