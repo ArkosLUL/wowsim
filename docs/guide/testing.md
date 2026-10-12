@@ -51,6 +51,8 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
 - gofmt reads CRLF as a diff, so use `tr -d '\r' < f | gofmt -l`, with the whole pipe in the container:
   `dock.sh exec` doesn't forward stdin.
 - Float asserts need a tolerance, e.g. `math.Abs(got-want) > 0.001`.
+- A test that counts on exact 10 ms world ticks sets `WorldLoopMs` to 0 beside `WorldUpdateIntervalMs`: unset,
+  it takes the live 10.27 ([update timing](spell-data-and-timing.md#update-timing)).
 - Reviewers build and test too. A review that skipped the build ("Go not installed") once missed a
   compile error.
 
@@ -82,6 +84,10 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
     tests that use that combo. An entry without a reason, or one no player drops, fails.
   - A generator outside `FullCharacterTestSuiteGenerator` passes its own allowlist by implementing
     `core.DroppedSpellsGenerator`; `JoinTestGenerators` forwards it.
+- Only `Average` runs 2000 iterations; the other rows run 20 (`DefaultSimTestOptions`), so a row's move can
+  be sampling. A tank's SwitchInFrontOfTarget dtps moved +13.7% in the golden for +0.1% at 400,000 iterations:
+  rerun such a row at depth before reading its sign. TestProtection's Average dtps scatters by 2.8% too, on
+  1.1 hits a fight.
 - Not real coverage of their spec: the three healer suites (Resto Shaman, Holy Paladin, Resto Druid)
   only autocast cooldowns, so they check stats and item heals only; Subtlety runs a Combat APL.
 - A `.results` that shows as modified with an empty `git diff` is CRLF noise: leave it out of commits.
@@ -121,6 +127,9 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
   `dock.sh run ./tools/simval -records /wotlk/sim/core/testdata/simval/simval.jsonl`.
   - `sim/core/testdata/simval/simval.jsonl` is the committed capture of the whole e2e suite; its README lists
     dropped records. `TestFixtureHasEveryE2ERecord` keys it on (command, spell id, class, dummy entry).
+  - The simval sims build each dummy with `no_xp` and its own `creature_immunities` row
+    (`dummyMechanicImmunities` in `tools/simval/damage.go`): -361 for the boss dummy 999000, -286 for 999001
+    to 999008.
 - Live e2e, which needs the user's OK: `cd [ac]/modules/mod-sim-validation && ./e2e/run.sh [TestName]`
   (default `-run TestSimval` minus `TestSimvalTiming`, `TestSimvalThreat`, `TestSimvalStrikes`, `TestSimvalBuffs`, `TestSimvalMobs`, `TestSimvalFight`, `TestSimvalEcCore3LowHealthFight`, `TestSimvalEcClass2Fight` and `TestSimvalEcClass3Fight`, about 7 min). The module's `README.md` covers its commands, env vars and orphan cleanup.
   - Recapture the fixture, never append: the suite deletes its own records and the host side of the log
@@ -133,7 +142,7 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
        failing record is a sim/server mismatch: remove it, add a row to the fixture README, and open a
        follow-up. Never fix the sim here. Move the `damage` lines to `damage.jsonl`.
 - `damage.jsonl`, `timing.jsonl`, `threat.jsonl`, `strikes.jsonl`, `buffs.jsonl`, `mobs.jsonl`, `goldchar.jsonl`,
-  `talents.jsonl`, `spellmods.jsonl`, `costauras.jsonl` and `pets.jsonl` in the same folder each have their own replay test and live capture
+  `talents.jsonl`, `spellmods.jsonl`, `costauras.jsonl`, `pets.jsonl` and `pets_casts.jsonl` in the same folder each have their own replay test and live capture
   (`timing.jsonl`, `threat.jsonl` and `strikes.jsonl`: `run.sh TestSimvalTiming`, `TestSimvalThreat` or
   `TestSimvalStrikes`, streamed as above. `buffs.jsonl` and `mobs.jsonl`: the `BUFFS` or `MOBS` log lines of `run.sh
   TestSimvalBuffs`, which needs `SIMVAL_GOLDCHAR_SETUPS` and `SIMVAL_BUFFS_PAIRS`, or `TestSimvalMobs`): the [simval

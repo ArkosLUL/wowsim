@@ -85,7 +85,7 @@ Quirk: `UnitLevelFloat64` in `utils.go` treats every level outside 80–82 as +3
   - `Player.professions`, with `profession1`/`profession2` kept for old links and presets
   - `SavedSettings.racial_traits`
   - `Encounter.raid_difficulty` and `Encounter.server_settings`
-  - `Target.mechanic_immune_mask`
+  - `Target.mechanic_immune_mask` and `Target.no_xp`
 
 ## UI
 

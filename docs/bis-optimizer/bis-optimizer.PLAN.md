@@ -1240,7 +1240,7 @@ added the way `critImmunityFloor` adds Defense (one floor per stat, raised rathe
 - A floor the pool can't reach doesn't fail the run: the pick gets as close as it can, and the result warns.
 - Tests: a melee DPS whose unfloored pick sits under the expertise cap reaches it; a caster reaches the spell
   hit cap; the floor follows the buffs (Heroic Presence lowers the hit floor); a caster and a hunter whose
-  unconstrained picks pass their haste ceiling stop at it; a tank run gets none (the taunt hit floor since
+  unconstrained picks pass their haste ceiling stop at it; a tank run gets none (a melee-hit floor since
   BIS-TANK-MAGIC); unticked matches today's picks.
   The slow suite runs with the caps on: report how its J moved.
 - Golden-neutral.
@@ -2084,7 +2084,8 @@ works as designed; the model it searches against is wrong:
    variation: about 4,620 HPS against Felesta's 1,033 DTPS, death chance 0.00025. A set HPS also skips the presim
    that derives 1.5 × the tank's own DTPS (`sim/core/health.go`, `pinHealingModel`).
 
-**Taunts** (server source and DBCs; the sim has no taunt spell, and enemies never retarget by threat): Taunt,
+**Taunts** (wrong, as the cross-review below found: the four are `DmgClass MAGIC` and roll spell hit; the sim
+has no taunt spell, and enemies never retarget by threat): Taunt,
 Growl, Dark Command and Hand of Reckoning are `DmgClass MELEE` without `SPELL_ATTR3_ALWAYS_HIT` or
 `SPELL_ATTR7_NO_ATTACK_MISS`, so they take `MeleeSpellHitResult`: 8% miss against a level 83 boss, removed 1:1 by
 melee hit rating (263, or 164 with 3/3 Precision); spell hit does nothing. They also roll dodge 6.45% and, from
@@ -2315,3 +2316,14 @@ the picks are stale; the step 0 table's ids, schools, damage, periods and cast t
   the tick drifts off its 5 s when an Infest cast delays either.
 - Harness: `opt_raid25_tank_p1`, `opt_feral_tank_p2` and `opt_prot_paladin_p3` regenerated; `baseline.json`
   still holds the old requests' timings for those six scenarios.
+
+Left:
+- The user's call: what the hit floor should be, now that a taunt rolls spell hit (keep 262 and glyph the
+  taunts, floor at 446 or 367 under Misery, or none). Then rerun the tank picks for every phase, ahead of the
+  21-raider pass: the boss fixes above made them stale, phase 2 most.
+- Bulwark P1's dropped death term: more normalizer iterations, a larger Armor offset, or the healing multiplier
+  as a named constant beside `TANK_BOSSES`.
+- Needs `sim/core`: a `Target` field for `EnemyDodgeMultiplier` (Halion's Twilight Precision, with its +5% hit),
+  per-iteration death flags so chance of death pairs between two loadouts.
+- Soul Reaper's 69410 and its tick as a follow-up of the cast; the abilities step 0 left out.
+- A perf baseline for the six tank scenarios on an idle machine.

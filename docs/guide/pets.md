@@ -11,7 +11,10 @@ guardians' scripted AIs. Declaring their spells: [spell data and timing](spell-d
 - Create stats are the `pet_levelstats` row, else `Guardian::InitStatsForLevel`'s 22/22/25/28/27 and 50 armor
   a level; the scaling auras add a truncated percent of the owner's (`PetScalingPct`).
 - Health is the create health plus `Guardian::UpdateMaxHealth`'s amount a point of stamina over the create
-  value (`Pet.SetCreateHealth`): 10, but Imp 8.4, Water Elemental 7.5, Succubus 9.1, Felhunter 9.5, Felguard 11.
+  value (`Pet.SetCreateHealth`): 10, but Imp 8.4, Water Elemental 7.5, Succubus 9.1, Felhunter 9.5, Felguard 11,
+  Bloodworm 1.
+- A pet summoned again is a new creature: `Pet.Disable` takes the inherited stats off every pet, so the next
+  summon gets them once.
 - A pet crits 5% plus crit auras, none from agility or intellect; magic spells crit ×1.5.
 - A swing off the physical school (Fire Elemental, Shadowfiend) rolls a whole number between the truncated
   ends of (weapon + AP / 14) × attack time (`Creature::CalculateMinMaxDamage`, `Unit::CalculateDamage`;
@@ -32,8 +35,6 @@ guardians' scripted AIs. Declaring their spells: [spell data and timing](spell-d
   - Mana, every 2 s: trunc(spirit/5 + 17); under the five second rule spirit/8 + 17 for the Imp and the Water
     Elemental, nothing for the rest. Two fifths of the whole MP5 come on top either way
     (`Pet.CreatureManaRegen`; `Creature::Regenerate`).
-- The live map update is longer than the sim's ([spell data and timing](spell-data-and-timing.md)): the sim
-  gives a creature about one swing a life more.
 
 ## Buffs and casts
 
@@ -45,6 +46,9 @@ guardians' scripted AIs. Declaring their spells: [spell data and timing](spell-d
   raid cast (`TARGET_CHECK_PARTY`/`RAID`), Replenishment and Bloodlust included: Bloodworms, Mirror Images,
   the Greater Fire Elemental, the DK's gargoyle, army and Raise Dead guardian (not Master of Ghouls' pet).
   The Water Elemental guardian has a pet bar and takes them.
+- Wrath of Air is a raid area aura (effect 65), so it reaches a guardian too. The sim gives it only to a pet
+  with `Pet.TakesWrathOfAir`, the Greater Fire Elemental; the Imp, Water Elemental and Mirror Images go
+  without.
 - Haste carriers (the hunter pet, the DK's ghouls, gargoyle and army, Spirit Wolves; `Unit.HasteCarrier`)
   ignore direct haste and slows, Bloodlust included, and take the owner's attack speed as whole percent
   (`Pet.OwnerHasteSource`): at the summon, then every 2 s for a pet and for Spirit Wolves
@@ -54,14 +58,18 @@ guardians' scripted AIs. Declaring their spells: [spell data and timing](spell-d
 
 A scripted AI casts off event timers on the guardian's own updates, counted from the update before it engages
 (`Pet.AIClockStart`), with no GCD. A script cast starts no creature cooldown (`Creature::AddSpellCooldown` is
-PetAI's and the pet bar's), so its DBC recovery time never runs.
+PetAI's and the pet bar's), so its DBC recovery time never runs. `TestPetsCastsRecords` replays recorded
+Fire Elemental lives and Mirror Image summons, `pets_casts.jsonl`, against both AIs
+([simval README](../../tools/simval/README.md#damage-probe)).
 
 - **Greater Fire Elemental** (`npc_pet_shaman_fire_elemental`; `FireElemental.runEvents`): Fire Nova 5–20 s
   in, then every 8–15 s; Fire Blast (57984) 5–20 s in, then every 4–8 s, in whole ms.
-  - The AI casts with `CastSpell`, not `DoCast`: a Fire Blast during Fire Nova's 2 s cast breaks it
+  - Fire Nova is magic class, so its 2 s cast scales with cast speed: 1904 ms under Wrath of Air.
+  - The AI casts with `CastSpell`, not `DoCast`: a Fire Blast during Fire Nova's cast breaks it
     (`Pet.InterruptCast`), about a third of the Novas.
   - Events run ahead of the swing: a cast on the update a swing is due takes it, a Blast by restarting the
-    timer, a Nova by holding it.
+    timer, a Nova by holding it. The swing after a landed Nova comes an update short
+    ([spell data and timing](spell-data-and-timing.md#update-timing)).
   - Out before the pull, it engages at the pull.
 - **Mirror Images** (`npc_pet_mage_mirror_image`; `sim/mage/mirror_image.go`): a 1.2 s wait, then one event an
   update, Frostbolt put back 2.5 s and Fire Blast 6.5 s, dead at 29.5 s.

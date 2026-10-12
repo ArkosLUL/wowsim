@@ -23,10 +23,11 @@ guardians in [pets](pets.md).
   Lightning Generator; the sapper's hit on the DK too).
   - It's int32(int32(damage × percent) × the healing taken percents): 50475 has no damage class, so no healing
     done percent reaches it, Strength of Wrynn's included (`Unit.HealingTakenPctMultiplier`).
-  - Only off a target that gives XP or honor (`PROC_ATTR_REQ_EXP_OR_HONOR`). The sim checks the gray level
-    (`givesXPOrHonor`), not the `NO_XP` flag, so it heals off a `NO_XP` creature (the simval dummies) where
-    the server doesn't.
+  - Only off a target that gives XP or honor (`PROC_ATTR_REQ_EXP_OR_HONOR`; `givesXPOrHonor`): above the gray
+    level and without `proto.Target.no_xp`, the creature's `NO_XP` flag.
   - Improved Blood Presence adds 5% healing taken a point, in Blood Presence only.
+- **Death Strike**'s heal (45470) and **Death Pact**'s (48743) have no damage class either: only the healing
+  taken percents reach them (`gainHealingTakenOnly`).
 - **Improved Unholy Presence** scales the rune cooldown after the grace cut, in whole ms.
 - **Death Coil** and **Rune Strike** are refundable: a miss takes irand(0, cost / 4). Sudden Doom's Death Coil
   pays nothing.
@@ -41,6 +42,9 @@ guardians in [pets](pets.md).
   crit spends a charge before the talent refreshes, unless it was the last.
 - **Titan's Grip**'s -10% (49152) needs both hands full and a two-hander in either; a shield or held item fills
   the off hand like a weapon.
+- **Sweeping Strikes** copies the hit's damage before armor (`GetUnmitigatedDamage`;
+  `SpellResult.ArmorReduced`). Execute's copy outside the execute phase is a whole normalized weapon roll, and
+  only a Whirlwind's first hit is copied (0.5 s lockout).
 
 ## Paladin
 
@@ -82,16 +86,20 @@ guardians in [pets](pets.md).
 - **Rake**'s first hit takes armor.
 - **Forms:** cat and bear weapon damage is min(level, 60) × 0.85 / 1.25 × the unhasted attack time; a weapon's feral
   AP truncates to int32 in float32; Predatory Strikes gives 7/14/20% of that feral AP plus the item's own AP.
-- **Starfall** (53201) is an aura on the druid and can't miss. Its stars (53195) and splash (53190) roll Omen of
-  Clarity, as do Hurricane's cast and ticks (measured live, 8.75%). The stars need line of sight to the target's
-  centre.
+- **Starfall** (53201) is an aura on the druid and can't miss: 10 ticks, each casting a star (53195) at two
+  different random units in sight, or at the one there is (`spell_dru_starfall_dummy`). A star casts its splash
+  (53190) at launch, on the units around its target. Stars and splash roll Omen of Clarity, as do Hurricane's
+  cast and ticks (measured live, 8.75%). The stars need line of sight to the target's centre.
 - **Omen of Clarity** rolls 3.5 PPM over the spell's cast time entry, at least 1.5 s: 8.75% an instant, 11.67%
   Wrath (2 s). Any landed magic-class spell outside the druid's family that deals direct damage or heals and
   gives no power rolls it too, an item's proc included (`rollsOmenOffFamily`): Extract of Necromantic Power's
-  bolt at 12.83%. Nature's Grace's 16886 and Survival Instincts roll nothing.
+  bolt at 12.83%. Barkskin, Innervate and Rebirth roll (`CheckProc` passes them); Nature's Grace's 16886 and
+  Survival Instincts roll nothing.
 - **Nature's Grace** rolls its chance in the cast phase and again in the hit phase (spell_proc -16880): a crit
   Wrath gives 16886 at its launch and at its hit, a cast spell without a missile rolls both at its hit, a
-  triggered one (Starfall's stars) the hit phase only (`rollNaturesGrace`).
+  triggered one (Starfall's stars, Typhoon's 53227) the hit phase only (`rollNaturesGrace`).
+- **Savage Defense** holds one charge, which the druid's crits refill at their own rate: the slower the boss
+  swings, the fewer swings find it down.
 - **Hurricane**'s cast is a hit without damage on the druid's side: one Illustration of the Dragon Soul stack,
   none from its ticks.
 - **Faerie Fire (Feral):** a landed 16857 rolls Omen's 3.5 PPM over the 1.5 s an instant counts as (8.75%), and
@@ -107,6 +115,9 @@ guardians in [pets](pets.md).
 - **Enhancing Totems:** Flametongue Totem's 58655 is a raid area aura, so its int32(144 × 1.15) = 165 reaches every
   raid member and pet.
 - **Improved Healing Wave** takes 0.1 s a point off Healing Wave.
+- **Frost Witch's 4-piece** (`spell_sha_t10_elemental_4p_bonus`): a Lava Burst cast adds 6 s to Flame Shock's
+  time left. The max duration, which caps the ticks, rises only when the new time passes it
+  ([`Dot.AddRemaining`](spell-data-and-timing.md#update-timing)).
 
 ## Mage
 
@@ -116,7 +127,9 @@ guardians in [pets](pets.md).
   (1.5 s), slows any other target, Permafrost included; so do a Mirror Image's Frostbolt, Blast Wave (6 s) and
   Dragon's Breath (5 s, gone at the first direct damaging hit: one proc charge). Frostbite is a root.
   - Another unit's snare counts through an aura tagged `core.SnareAuraTag`: another mage's chill, Frost Shock
-    (8 s), Mind Flay. Hamstring and Slow have no sim spell.
+    (8 s), Mind Flay, a landed Typhoon (53227, 6 s). Hurricane slows every target's attacks for its channel,
+    a boss's too (`core.SlowAttackAuraTag`); the tag is all the sim has of it, so no swing slows. Hamstring
+    and Slow have no sim spell.
 - **Brain Freeze** rolls on landed Frostbolts, Frostfire Bolts and Blizzard ticks (spell_proc -44546). Fireball!
   (57761) lasts 15 s and is used at the cast.
 - **T10's 2-piece** triggers when Hot Streak or Missile Barrage is used up, never on a timeout. Missile Barrage
@@ -155,6 +168,8 @@ guardians in [pets](pets.md).
 - **Penance:** Mental Agility's mask leaves it out. Its damage tick takes 0.1905 of spell power, and Searing
   Light and Twin Disciplines multiply, as the heal's four talents do. 53007 and its channel can't miss; each tick
   rolls its own hit.
+- **Circle of Healing** and **Prayer of Healing** skip a pet that isn't out: their area search finds only
+  units in the world.
 - **Silent Resolve** cuts holy and arcane threat ([threat](threat.md)), so not Mind Blast's.
 - **Improved Devouring Plague**'s burst comes off the applied aura (`Aura::HandleAuraSpecificMods`), so a
   resisted cast has none. It counts the dot's `GetTotalTicks`: 8 on a new dot without `ShadowDotHaste`. A
@@ -184,7 +199,8 @@ guardians in [pets](pets.md).
   sting's, truncated (`spell_hun_chimera_shot`). The stored tick is whole and keeps the done percents the
   sting went on with; Chimera Shot's refresh rereads only its AP. 53353's own hit takes a damage taken
   multiplier only below 1 (`SPELL_ATTR0_CU_NO_POSITIVE_TAKEN_BONUS`), so a bonus counts once and a reduction
-  twice. Not modelled: the flat taken part (Gift of Arthas).
+  twice. Flat damage taken (Gift of Arthas) joins the tick at the sting's dot coefficient, ahead of the taken
+  percents (`Spell.PeriodicFlatDamageTaken`).
 - **Hunting Party** rolls on each crit tick of Explosive Shot (53352, in spell_proc -53290's mask with
   `TRIGGERED_CAN_PROC`), never on its cast, at 33/66/100%.
 - **Thrill of the Hunt** returns 40% of the shot's truncated base cost, a free Lock and Load shot's too.

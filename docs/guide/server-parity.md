@@ -112,11 +112,11 @@ class by simval.
   overshoot less 250 ms, at most 2250; death runes go first to a base type owed, then blood, unholy, frost. A
   refundable spell missing its main target gives no runic power, puts its runes on a 1.5 s cooldown with death
   runes kept, and a runic power cost takes irand(0, cost / 4).
-- **Hasted channels:** the server truncates the duration and the tick period each (`int32(x × cast speed)`),
-  so the aura can outlast period × ticks by a few ms.
 - **AoE cap** counts every unit the effect hits (`AOECapMultiplierFor`): the caster of Thunderstorm and the
   Thermal Sapper, not the target a script drops (Mind Sear tick, Starfall splash). Guardians' casts and
-  Explosive Decoy's blast are uncapped.
+  Explosive Decoy's blast are uncapped. Past 10 units the server cuts each hit to `damage × 10 / units` in
+  whole numbers, after the done and taken percents and before armor (`Spell::DoAllEffectOnLaunchTarget`):
+  `Spell.AoECapUnits`, set by Swipe and Fan of Knives. The other callers still scale the base as a float.
 - **Power Infusion and Arcane Power** share group 1123 with no common aura type: the one cast last removes the
   other.
 - **Armor debuffs:** Sunder ×5 (debuff 58567, not ability 47467) and Expose Armor don't stack. Faerie
@@ -140,20 +140,28 @@ class by simval.
     `Unit::CalculateDamage`), so `doneDamage` leaves that percent out. `StrikeFixed` scales a fixed bonus,
     `core.ApplyPct` is each percent step (`Spell::EffectWeaponDmg`). Off the physical school there's no
     TOTAL_PCT, the off hand's half included.
-  - Not modelled: the rune weapon's strikes and swing roll floats.
+  - A hit whose multipliers come after the roll takes `Weapon.WholeDamage` (the rune weapon's strikes and
+    swing); a script adding its own weapon roll, `Weapon.WholeBaseDamage` (Steady Shot's `irand(int32(min),
+    int32(max))`). Manifest Anger is `ApplyPct` 50% of a whole strike.
+  - A script's AP share keeps the server's float32 order: Eviscerate `int32(ap × combo × 0.07f)`, Envenom
+    `int32(ap × 0.09f × combo)`.
 - **Bleed bonus** (Mangle, Trauma, Stampede; `Unit::SpellDamageBonusTaken`) goes by the spell's mechanic
   (`serverdata.FlagBleed`, set by `gen_serverdata`), hit and ticks alike, and to Shred and Maul on a weapon
   hit, at each victim's own percent: Savage Rend's and the pet Rake's first hit take it, Pin's ticks don't.
 - **Healing taken** percents (aura 118) don't stack: only the highest bonus and the lowest penalty count,
   multiplied (`Unit.AddHealingTakenPct`). Strength of Wrynn is healing done, which multiplies; a heal with no
-  damage class takes none of that, only `Unit.HealingTakenPctMultiplier`.
+  damage class takes none of that, only `Unit.HealingTakenPctMultiplier`. Not modelled: flat healing taken
+  (`BonusHealingTaken`: Talisman of Troll Divinity) is its own whole step after the caster's multiplier; the
+  sim adds it to spell power ahead of the coefficient (`Spell.HealingPower`).
 - **Replenishment** (`sim/core/replenishment.go`): 15 ticks a second apart of int32(max mana × 0.002f), read as
   the aura goes on or is refreshed (1 if it went on at no mana). A refresh restarts the timer and drops a tick
   due on that update, unless the cast comes out of an update that runs after the unit's: a creature's or
   pet's (Hunting Party off Explosive Shot's tick), or the unit's own swing.
   - A cast (`ProcReplenishment`) lands on every raid unit that's out and on mana, pets and guardians with a
     pet bar included; over ten, on the ten lowest on mana for their pool (`PowerPctOrderPred`: float32,
-    stable), the rest keeping their aura. A Spirit Wolf's pool of 0 sorts first (`Pet.EmptyManaPool`).
+    stable), the rest keeping their aura. A Spirit Wolf's pool of 0 sorts first (`Pet.EmptyManaPool`); a pool
+    that stays full sorts last, at 100% (`Pet.FullManaPool`: treants, Shadowfiend, Infernal). Either takes the
+    aura and nothing from it.
   - The raid's buff goes only on a unit with mana and ticks every second, reading the max each time. A pet
     that isn't out queues no tick; its timer keeps its place.
   - The potion, rune and gem heuristics add `Unit.ReplenishmentManaPerSecond`:
@@ -172,10 +180,10 @@ class by simval.
 - **Meta gems** work only with their `SpellItemEnchantmentCondition` met (`sim/core/meta_gems.go`); an inactive
   one gives nothing. An item swap that meets or breaks the condition moves the whole enchant
   (`Player::CorrectMetaGemEnchants`; `metaGemSwap`): the stats, the effect (its `OnMetaGemSwap` toggles, for a
-  gem registered with `NewMetaGemEffect`) and every crit multiplier, heals' or damage's by the gem. Not
-  followed: a TBC gem's effect (`sim/common/tbc/metagems.go`), and a crit multiplier class code changes
-  mid-fight (Combustion, Hodir's Storm Power) or builds from the starting gem (Prey on the Weak, Predatory
-  Instincts).
+  gem registered with `NewMetaGemEffect`) and every crit multiplier, heals' or damage's by the gem. Class code
+  that touches a crit multiplier mid-fight has to follow the swap: a factor held on it goes through
+  `Character.ScaleCrit` (Combustion, Hodir's Storm Power), a value worked out ahead of time through
+  `MetaCritFollow` and `MetaCritBuilt` (Prey on the Weak, Predatory Instincts).
 - **Timing and procs** (the rest is in [spell data and timing](spell-data-and-timing.md)):
   - The rage hit factor is truncated to `uint32`.
   - Spell-proc PPM uses max(cast time, 1500 ms).
@@ -218,7 +226,12 @@ checks it and the Go effects.
     auras read its damage class and cast time: the proc trinkets, capacitors and Gnomish Lightning Generator
     (`itemDamageSpell` in `sim/common/wotlk`), and the explosives by their use spells (56350, 67769, 56488;
     `sim/core/consumes.go`). `legacyAPLItemIDs` keeps a saved rotation that names the item working. Still
-    under the item: Bryntroll and the items' heals.
+    under the item: the items' heals.
+  - Bryntroll's proc is Drain Life 71838 (heroic 71839), magic class, so it can crit. Its heal to the wearer
+    isn't modelled.
+  - Shard of the Gods: the Purified set (bonus 69755) casts only Cauterizing Heal 69733, the Shiny set (69739)
+    only Searing Flames 69729, with no heroic ids: 25%, 45 s cooldown, off any landed magic damage or heal. A
+    hit of the wrong kind uses the proc up and casts nothing (`SPELL_FAILED_BAD_TARGETS`).
   - Class relics, sigils, totems, idols and a few class set bonuses still carry Classic values until
     their class's P7 item. Totem of the Third Wind also buffs Healing Wave.
   - Verdicts per row are in `docs/azerothcore-item-diff/data/{effects,sets}_review.csv`.

@@ -45,7 +45,7 @@ Before starting, read every doc whose trigger matches the task.
 | [class-mechanics](docs/guide/class-mechanics.md) | changing a class's spells, talents or procs |
 | [pets](docs/guide/pets.md) | changing a pet's or guardian's stats, timers, AI, or the buffs and casts that reach it |
 | [threat](docs/guide/threat.md) | changing threat, energizes or heals, or a spell's threat data |
-| [tank-modeling](docs/guide/tank-modeling.md) | changing the optimizer's tank boss, healing model, survival score or taunt hit floor |
+| [tank-modeling](docs/guide/tank-modeling.md) | changing the optimizer's tank boss, healing model, survival score or hit floor |
 | [spell-data-and-timing](docs/guide/spell-data-and-timing.md) | declaring a spell's server data; swing, cast, GCD or missile timing |
 | [azerothcore-server](docs/guide/azerothcore-server.md) | touching the live server, its containers, config, modules or characters |
 | [azerothcore-data](docs/guide/azerothcore-data.md) | querying server tables or parsing DBCs |

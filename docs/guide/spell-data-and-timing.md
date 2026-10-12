@@ -3,6 +3,8 @@
 How the sim applies the server's spell data and update timing. The rest of where the server differs is in
 [server parity](server-parity.md).
 
+## Server data
+
 `RegisterSpell` applies the server's own data for the spell it's given (`Spell.ServerSpell()`), so a
 spell is only as right as its id.
 
@@ -42,19 +44,37 @@ spell is only as right as its id.
   where the closure calls `spell.WaitTravelTime`, or `spell.DealDamageAfterTravel` for a landing that only
   deals the result, over `DistanceFromTarget`, which is 0 for a pet: its missiles wait the 5 yd floor.
 
-The server updates players every world tick (`MinWorldUpdateTime`, 10 ms live), and creatures, pets and
-guardians, with the auras they carry, only on the map update, 100 ms live (`Map::Update`): the first world
-tick its interval is up by, at least 3 ticks apart (`MapMgr::Update`). The sim runs both grids
-(`ServerSettings.WorldUpdateInterval`, `MapUpdateInterval`; a map interval of 0 makes every unit exact, which is
-what unit tests want), with one phase rolled per iteration.
+## Update timing
 
+The server updates players every world tick, and creatures, pets and guardians, with the auras they carry, only
+on the map update, 100 ms live (`Map::Update`): the first world tick its interval is up by, at least 3 ticks
+apart (`MapMgr::Update`). `MinWorldUpdateTime` (10 ms live) is only a tick's floor: the loop sleeps the rest of
+it and wakes late, so a tick takes `ServerSettings.world_loop_ms`, 10.27 ms live, and a map update ten of
+them, 102.7 ms. That's the host's sleep granularity, not a config key: a constant in
+`tools/acore/gen_server_defaults/settings.go`, "World loop time" in the UI.
+
+The sim runs both grids (`ServerSettings.updateGrids`), with one phase rolled per iteration. A map interval of
+0 makes every unit exact, which is what unit tests want; `world_loop_ms` 0 leaves a tick at
+`world_update_interval_ms`.
+
+- Riding on the loop time: a creature's unhasted 2 s swing takes 20 updates, 2054 ms, and its 3 s cast 30,
+  3081 ms. An Ignite application due 2.0 s after the last beats the old Ignite's tick about half the time,
+  never on exact 10 ms ticks: the fire mages' goldens move 0.15% for each 0.01 ms.
 - Swings, Auto Shot and hardcast landings land on the caster's next tick. A swing restarts its timer from the
   tick it landed on, losing the overshoot: up to a world tick for a player, a map update for a pet.
 - Auras and dots tick and expire on the grid of what counts them down: the unit they sit on, a channel's
   caster, or the map update for an area dot from a dynamic object, totem or trap (effects 27, 28, 105).
-- An aura expires at its own time, ahead of any event queued for then (`Simulation.Step`). On one update
-  players' auras go before creatures' (`Map::Update`), and a unit's due ticks, lowest spell id first, before
-  its expiries (`Unit::_UpdateSpells`; `Unit.tickingDots`): Ignite (12654) ticks before Pyroblast's DoT (42891).
+- An aura expires at its own time (`Simulation.Step`), ahead of anything queued for then but what
+  `Unit::Update` runs before a player's aura pass: its cast landings and missile hits (`m_Events`;
+  `ActionPriorityEvent`), then its Auto Shot. Its melee follows the pass (`Player::Update`), a swing a cast held
+  included (`WeaponAttack.releasing`). A creature's landing keeps its place in the queue.
+- On one update players' auras go before creatures' (`Map::Update`), a player's channel and self hot ticks
+  too, and a unit's due ticks, lowest spell id first, before its expiries (`Unit::_UpdateSpells`;
+  `Unit.tickingDots`): Ignite (12654) ticks before Pyroblast's DoT (42891).
+- A periodic action with `PeriodicActionOptions.Owner` is one of that unit's periodic ticks: on its first
+  update after each period, the remainder carried, ahead of a player's expiries, and an aura it puts on counts
+  from that update (Prey on the Weak's check).
+- An execute phase by time starts at its own time; one by damage at the first clock stop after the damage.
 - An aura put on outside its unit's own update counts down from the update before (`Aura.countdownStart`):
   - A creature's from the map update before (`Map::Update` hands `_UpdateSpells` the whole update's diff), so
     the dummy's dots tick and expire up to one update early.
@@ -69,12 +89,17 @@ what unit tests want), with one phase rolled per iteration.
   next tick owed until a refresh: `Dot.Rollover`, `Refresh` and `Activate` restart the count.
   `Dot.UpdateExpires` moves the max duration with the expiry, so the added time ticks; `Aura.UpdateExpires`
   moves the expiry alone (stock Glyph of Backstab).
+  - `Dot.AddRemaining` adds to the time left and raises the max duration only when the new time passes it
+    (`spell_sha_t10_elemental_4p_bonus`). A dot whose duration shrinks with haste (`SpellHasteScalesBoth`)
+    keeps its max duration in unhasted intervals, so the hasted time left is converted first.
+  - Snap an expiry moved by whole seconds with `sim.NextServerTick`: off the grid it ends ahead of the last
+    tick.
 - Not modelled:
-  - `Unit::Update` lands hardcasts and missiles and fires Auto Shot before it ticks and expires auras; the sim
-    expires first, so one landing on an aura's last world tick misses the aura.
-  - The live map update runs about 102.7 ms, the sim's exactly 100. Live, an unhasted 2 s creature swing takes
-    2055 ms, and an Ignite application due 2.0 s after the last beats the old Ignite's tick about half the
-    time; in the sim the tick always comes first.
+  - The live update jitters and drifts (103.1 ms over one logged fight). On the sim's fixed one a creature's
+    3 s cast takes 3081 ms for the live 3048, and the old Ignite's last tick always beats an application due
+    4.0 s after the last, which wins about half of those live.
+  - A player's swing restarted by its own cast landing loses a world tick on the server.
+  - A creature's swing goes ahead of a dot on it ticking on the same update; the server ticks first.
 - A landed swing pushes the other hand to at least 200 ms. A melee swing restarts the ranged timer, and
   every Auto Shot restarts both melee timers (`Unit::_UpdateAutoRepeatSpell`).
 - At the pull, and when auto attacks restart (breaking stealth), a ready off hand starts half the main hand's
@@ -82,7 +107,8 @@ what unit tests want), with one phase rolled per iteration.
   A weapon swap doesn't reset swings.
 - A cast resets every swing timer when the server's `ResetsAutoAttack` says so. A triggered cast never
   resets, nor does one made instant or one an `SPELL_AURA_IGNORE_MELEE_RESET` aura covers (Maelstrom
-  Weapon).
+  Weapon). A creature's swing after its cast lands comes a map update short of the attack time: the cast lands
+  in `Unit::Update`'s event pass, ahead of that update's attack timers (`cast.go`).
 - A swing due during a hardcast waits for the update the cast lands on and goes after its effects; a cast
   started off that landing comes a later update, so it can't hold the same swing again. Melee
   waits out any hardcast, Auto Shot only one without `SPELL_ATTR2_DO_NOT_RESET_COMBAT_TIMERS`. With that
@@ -92,6 +118,9 @@ what unit tests want), with one phase rolled per iteration.
   time left on a frozen timer.
 - A channel holds melee too. In the sim a channel opts in with `Spell.HoldMeleeUntil` (Army of the Dead;
   Bladestorm isn't a server channel), and Volley stands the ranged timer still (`suspendRangedAttackTimer`).
+- A hasted channel's duration and tick period truncate each on its own (`int32(x × cast speed)`), so its aura
+  can end on the caster's update after the last tick. The rotation comes back from the aura's end, never from
+  a tick: with the GCD over, the next action is queued `ChannelClipDelay` later (`newDot`).
 - The GCD follows `Spell::TriggerGlobalCooldown`: hasted only with `HasteGCD`, then kept within
   [1000, 1500] ms. Cast time scales by damage class: spell haste for magic, ranged attack speed for
   ranged, nothing for melee. Hasted GCDs and cast times truncate to whole ms before the clamp and the
