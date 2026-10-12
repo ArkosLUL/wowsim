@@ -74,7 +74,7 @@ func (mage *Mage) registerFlamestrikeSpell(rank8 bool) *core.Spell {
 			dmgFromSP := core.PowerBonus(spell.Direct.SP*spCoeffMultiplier, spell.SpellPower())
 			for _, aoeTarget := range sim.Encounter.TargetUnits {
 				baseDamage := spell.Direct.Roll(sim) + dmgFromSP
-				baseDamage *= sim.Encounter.AOECapMultiplier()
+				spell.AoECapUnits = len(sim.Encounter.Targets)
 				spell.CalcAndDealDamage(sim, aoeTarget, baseDamage, spell.OutcomeMagicHitAndCrit)
 			}
 			spell.AOEDot().Apply(sim)

@@ -56,6 +56,18 @@ func serverSpellHasEffect(sd *serverdata.Spell, effects ...int32) bool {
 	return false
 }
 
+func serverSpellHasAura(sd *serverdata.Spell, aura int32) bool {
+	if sd == nil {
+		return false
+	}
+	for _, e := range sd.Effects {
+		if e.Effect == effectApplyAura && e.Aura == aura {
+			return true
+		}
+	}
+	return false
+}
+
 // areaDotMadeInMapUpdate: the area dot's dynamic object is made in a map object's own update, a
 // trap going off in GameObject::Update or a pet casting from its AI.
 func areaDotMadeInMapUpdate(caster *Unit, sd *serverdata.Spell) bool {
@@ -204,9 +216,9 @@ func (dot *Dot) Activate(sim *Simulation) {
 // AddRemaining is a script's SetDuration(GetDuration() + extra) that raises the max duration only when the
 // new time left passes it (spell_sha_t10_elemental_4p_bonus), so the added time ticks just past the old cap.
 func (dot *Dot) AddRemaining(sim *Simulation, extra time.Duration) {
-	expires := sim.NextServerTick(dot.Aura.expires + extra)
-	dot.Aura.UpdateExpires(expires)
-	left := expires - sim.CurrentTime
+	dot.Aura.AddDuration(sim, extra)
+	// GetDuration is what the unit's last update left of it
+	left := dot.Aura.expiresNominal - dot.Aura.countdownStart(sim)
 	if dot.TickHaste == SpellHasteScalesBoth && dot.tickPeriod > 0 && dot.tickPeriod != dot.TickLength {
 		// the max duration counts in unhasted intervals for these (TotalTicks), the time left in hasted ones
 		left = time.Duration(left.Milliseconds()*dot.TickLength.Milliseconds()/dot.tickPeriod.Milliseconds()) * time.Millisecond
@@ -220,6 +232,12 @@ func (dot *Dot) AddRemaining(sim *Simulation, extra time.Duration) {
 func (dot *Dot) UpdateExpires(newExpires time.Duration) {
 	dot.maxDuration += newExpires - dot.Aura.expires
 	dot.Aura.UpdateExpires(newExpires)
+}
+
+// AddDuration lengthens the running dot and its max duration by extra, so the added time ticks.
+func (dot *Dot) AddDuration(sim *Simulation, extra time.Duration) {
+	dot.maxDuration += extra
+	dot.Aura.AddDuration(sim, extra)
 }
 
 func (dot *Dot) MaxTicksRemaining() int32 {

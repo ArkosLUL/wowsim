@@ -44,7 +44,7 @@ func (dk *Deathknight) registerBloodBoilSpell() {
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			for _, aoeTarget := range sim.Encounter.TargetUnits {
 				baseDamage := bloodBoilBase(sim, spell, dk.DiseasesAreActive(aoeTarget), dk.getImpurityBonus(spell)) * dk.RoRTSBonus(aoeTarget)
-				baseDamage *= sim.Encounter.AOECapMultiplier()
+				spell.AoECapUnits = len(sim.Encounter.Targets)
 
 				spell.CalcAndDealDamage(sim, aoeTarget, baseDamage, spell.OutcomeMagicHitAndCrit)
 			}

@@ -68,8 +68,19 @@ func newTickTestSim(t *testing.T, mapUpdateMs, worldTickMs int32, setup func(*ti
 	return newLoopTestSim(t, mapUpdateMs, worldTickMs, 0, setup)
 }
 
-// newLoopTestSim is newTickTestSim with a world loop that takes worldLoopMs a tick: 10.27 is live.
+// newLoopTestSim is newTickTestSim with a world loop that takes worldLoopMs a tick, every tick the same.
 func newLoopTestSim(t *testing.T, mapUpdateMs, worldTickMs int32, worldLoopMs float64, setup func(*timingTestAgent)) (*Simulation, *timingTestAgent) {
+	t.Helper()
+	return newSettingsTestSim(t, &proto.ServerSettings{
+		MapUpdateIntervalMs:   googleProto.Int32(mapUpdateMs),
+		WorldUpdateIntervalMs: googleProto.Int32(worldTickMs),
+		WorldLoopMs:           googleProto.Float64(worldLoopMs),
+		MapUpdateJitterMs:     googleProto.Float64(0),
+	}, setup)
+}
+
+// newSettingsTestSim is newTimingTestSim under the given settings: nil is the live server's, jitter and all.
+func newSettingsTestSim(t *testing.T, settings *proto.ServerSettings, setup func(*timingTestAgent)) (*Simulation, *timingTestAgent) {
 	t.Helper()
 	timingTestSetup = setup
 	defer func() { timingTestSetup = nil }()
@@ -90,13 +101,9 @@ func newLoopTestSim(t *testing.T, mapUpdateMs, worldTickMs int32, worldLoopMs fl
 			}},
 		},
 		Encounter: &proto.Encounter{
-			Targets:  []*proto.Target{{Name: "target", Level: 83, MobType: proto.MobType_MobTypeDemon}},
-			Duration: 60,
-			ServerSettings: &proto.ServerSettings{
-				MapUpdateIntervalMs:   googleProto.Int32(mapUpdateMs),
-				WorldUpdateIntervalMs: googleProto.Int32(worldTickMs),
-				WorldLoopMs:           googleProto.Float64(worldLoopMs),
-			},
+			Targets:        []*proto.Target{{Name: "target", Level: 83, MobType: proto.MobType_MobTypeDemon}},
+			Duration:       60,
+			ServerSettings: settings,
 		},
 	})
 	sim.reset()

@@ -42,7 +42,7 @@ func (mage *Mage) registerBlizzardSpell() {
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			damage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP, spell.SpellPower())
-			damage *= sim.Encounter.AOECapMultiplier()
+			spell.AoECapUnits = len(sim.Encounter.Targets)
 			for _, aoeTarget := range sim.Encounter.TargetUnits {
 				result := spell.CalcAndDealDamage(sim, aoeTarget, damage, spell.OutcomeMagicHitAndCrit)
 

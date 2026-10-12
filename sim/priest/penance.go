@@ -39,6 +39,8 @@ func (priest *Priest) makePenanceSpell(isHeal bool) *core.Spell {
 		SpellSchool: core.SpellSchoolHoly,
 		ProcMask:    procMask,
 		Flags:       flags,
+		// the heal is 52985, with this spell_bonus_data row
+		HealingTakenCoefficient: 0.5362,
 
 		ManaCost: core.ManaCostOptions{
 			BaseCost: 0.16,

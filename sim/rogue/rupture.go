@@ -129,7 +129,7 @@ func (rogue *Rogue) extendRupture(sim *core.Simulation, target *core.Unit) {
 		// NumberOfTicks counts 2 s intervals, the glyph's step
 		dot.NumberOfTicks++
 		dot.Duration += glyphOfBackstabStep
-		dot.UpdateExpires(sim.NextServerTick(dot.ExpiresAt() + glyphOfBackstabStep))
+		dot.AddDuration(sim, glyphOfBackstabStep)
 		return
 	}
 	if dot.ExpiresAt() >= dot.StartedAt()+dot.Duration+5*time.Second {
@@ -138,7 +138,7 @@ func (rogue *Rogue) extendRupture(sim *core.Simulation, target *core.Unit) {
 	}
 	// it only adds to the time left: the max duration stays, so the dot is out of ticks by then
 	// (AuraEffect::GetTotalTicks) and the added time deals nothing
-	dot.Aura.UpdateExpires(sim.NextServerTick(dot.ExpiresAt() + glyphOfBackstabStep))
+	dot.Aura.AddDuration(sim, glyphOfBackstabStep)
 }
 
 // ruptureAPDamage is spell_rog_rupture's share of attack power in a tick, in whole points.

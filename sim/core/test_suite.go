@@ -6,13 +6,16 @@ import (
 	"maps"
 	"math"
 	"os"
+	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 
 	"github.com/wowsims/wotlk/sim/core/proto"
 	"github.com/wowsims/wotlk/sim/core/serverdata"
 	"github.com/wowsims/wotlk/sim/core/stats"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/encoding/prototext"
 	googleProto "google.golang.org/protobuf/proto"
 )
@@ -60,7 +63,7 @@ func (testSuite *IndividualTestSuite) TestStatWeights(testName string, swr *prot
 	}
 }
 
-func (testSuite *IndividualTestSuite) TestDPS(testName string, rsr *proto.RaidSimRequest) {
+func (testSuite *IndividualTestSuite) TestDPS(testName string, rsr *proto.RaidSimRequest) *proto.RaidSimResult {
 	testSuite.testNames = append(testSuite.testNames, testName)
 
 	result := RunRaidSim(rsr)
@@ -79,6 +82,7 @@ func (testSuite *IndividualTestSuite) TestDPS(testName string, rsr *proto.RaidSi
 	if strings.Contains(testName, "Average") {
 		testSuite.testResults.AbilityResults[testName] = abilityResults(result, rsr.SimOptions.Iterations)
 	}
+	return result
 }
 
 type abilitySums struct {
@@ -177,21 +181,94 @@ func compareAbilities(t *testing.T, expected, actual *proto.AbilitiesTestResult)
 }
 
 func (testSuite *IndividualTestSuite) Done(t *testing.T) {
-	testSuite.writeToFile()
+	testSuite.writeToFile(testSuite.Name + ".results.tmp")
 }
 
 const tolerance = 0.00001
 
-func (testSuite *IndividualTestSuite) writeToFile() {
+func (testSuite *IndividualTestSuite) writeToFile(path string) {
 	str := prototext.Format(testSuite.testResults)
 	// For some reason the formatter sometimes outputs 2 spaces instead of one.
 	// Replace so we get consistent output.
 	str = strings.ReplaceAll(str, "  ", " ")
 	data := []byte(str)
 
-	err := os.WriteFile(testSuite.Name+".results.tmp", data, 0644)
+	err := os.WriteFile(path, data, 0644)
 	if err != nil {
 		panic(err)
+	}
+}
+
+// suiteDepthRun reruns a suite's Average-Default row at depth, under server settings of the caller's. It
+// tells a row's real move from the noise of its 2000 iterations, and one setting's share of it:
+//
+//	SUITE_DEPTH_ITERATIONS=200000 SUITE_DEPTH_DIR=/wotlk/tmp/depth SUITE_DEPTH_SETTINGS='{"worldLoopMs":0}' \
+//	    go test --tags=with_db -run 'TestBM$' ./sim/hunter
+//
+// writes <dir>/TestBM.results, or with SUITE_DEPTH_NEW=1 <dir>/TestBM.results.tmp, so `dock.sh delta <dir>`
+// reads one run against another. The settings are a proto.ServerSettings in JSON, laid over the suite's.
+// Nothing is held to the goldens and their .tmp files stay as they are.
+type suiteDepthRun struct {
+	iterations int32
+	dir        string
+	asNew      bool
+	settings   *proto.ServerSettings
+}
+
+func suiteDepthRunFromEnv() (*suiteDepthRun, error) {
+	iterations := os.Getenv("SUITE_DEPTH_ITERATIONS")
+	if iterations == "" {
+		return nil, nil
+	}
+	n, err := strconv.Atoi(iterations)
+	if err != nil || n <= 0 {
+		return nil, fmt.Errorf("SUITE_DEPTH_ITERATIONS=%q: want a count of iterations", iterations)
+	}
+	run := &suiteDepthRun{iterations: int32(n), dir: os.Getenv("SUITE_DEPTH_DIR"), asNew: os.Getenv("SUITE_DEPTH_NEW") != ""}
+	if !filepath.IsAbs(run.dir) {
+		return nil, fmt.Errorf("SUITE_DEPTH_DIR=%q: want an absolute directory, since each package's tests run in its own", run.dir)
+	}
+	if settings := os.Getenv("SUITE_DEPTH_SETTINGS"); settings != "" {
+		run.settings = &proto.ServerSettings{}
+		if err := protojson.Unmarshal([]byte(settings), run.settings); err != nil {
+			return nil, fmt.Errorf("SUITE_DEPTH_SETTINGS: %w", err)
+		}
+	}
+	return run, nil
+}
+
+func (run *suiteDepthRun) do(t *testing.T, suiteName string, generator TestGenerator) {
+	for i := 0; i < generator.NumTests(); i++ {
+		testName, _, _, rsr := generator.GetTest(i)
+		if rsr == nil || testName != "Average-Default" {
+			continue
+		}
+		rsr = googleProto.Clone(rsr).(*proto.RaidSimRequest)
+		rsr.SimOptions.Iterations = run.iterations
+		if run.settings != nil {
+			if rsr.Encounter.ServerSettings == nil {
+				rsr.Encounter.ServerSettings = &proto.ServerSettings{}
+			}
+			googleProto.Merge(rsr.Encounter.ServerSettings, run.settings)
+		}
+
+		suite := NewIndividualTestSuite(suiteName)
+		result := suite.TestDPS(suiteName+"-"+testName, rsr)
+		path := filepath.Join(run.dir, suiteName+".results")
+		if run.asNew {
+			path += ".tmp"
+		}
+		if err := os.MkdirAll(run.dir, 0755); err != nil {
+			t.Fatal(err)
+		}
+		suite.writeToFile(path)
+
+		player := result.RaidMetrics.Parties[0].Players[0]
+		root := math.Sqrt(float64(run.iterations))
+		t.Logf("%s-%s at %d iterations: dps %.2f ± %.2f, hps %.2f ± %.2f, tps %.2f ± %.2f, dtps %.3f ± %.3f; wrote %s",
+			suiteName, testName, run.iterations, result.RaidMetrics.Dps.Avg, result.RaidMetrics.Dps.Stdev/root,
+			player.Hps.Avg, player.Hps.Stdev/root, player.Threat.Avg, player.Threat.Stdev/root,
+			player.Dtps.Avg, player.Dtps.Stdev/root, path)
 	}
 }
 
@@ -327,6 +404,13 @@ func (g *rotationGuard) check(t *testing.T) {
 }
 
 func RunTestSuite(t *testing.T, suiteName string, generator TestGenerator) {
+	if depth, err := suiteDepthRunFromEnv(); err != nil {
+		t.Fatal(err)
+	} else if depth != nil {
+		depth.do(t, suiteName, generator)
+		return
+	}
+
 	testSuite := NewIndividualTestSuite(suiteName)
 	var currentTestName string
 	guard := &rotationGuard{seen: map[string]bool{}}

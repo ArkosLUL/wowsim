@@ -99,7 +99,7 @@ func (druid *Druid) registerStarfallSpell() {
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			baseDamage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP, spell.SpellPower())
 			// the server's script drops the star's own target from the splash, and the cap counts the rest
-			baseDamage *= core.AOECapMultiplierFor(len(sim.Encounter.Targets) - 1)
+			spell.AoECapUnits = len(sim.Encounter.Targets) - 1
 			for _, aoeTarget := range sim.Encounter.TargetUnits {
 				if aoeTarget == target {
 					continue

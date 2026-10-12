@@ -576,8 +576,8 @@ func TestExecutePhaseStartsAtItsTime(t *testing.T) {
 func TestWorldLoopTimeStretchesTheTicks(t *testing.T) {
 	settings := NewServerSettings(nil)
 	world, mapUpdate := settings.updateGrids()
-	if world != 10270*time.Microsecond || mapUpdate != 102700*time.Microsecond {
-		t.Errorf("live world tick %v and map update %v, want 10.27 and 102.7 ms", world, mapUpdate)
+	if world != 10460*time.Microsecond || mapUpdate != 104600*time.Microsecond {
+		t.Errorf("live world tick %v and map update %v, want 10.46 and 104.6 ms", world, mapUpdate)
 	}
 	settings.WorldLoopTime = ms(4)
 	if world, mapUpdate = settings.updateGrids(); world != ms(10) || mapUpdate != ms(100) {

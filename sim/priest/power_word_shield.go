@@ -90,7 +90,9 @@ func (priest *Priest) registerPowerWordShieldSpell() {
 			ActionID:    core.ActionID{ItemID: 42408},
 			SpellSchool: core.SpellSchoolHoly,
 			ProcMask:    core.ProcMaskSpellHealing,
-			Flags:       core.SpellFlagHelpful,
+			// the heal is 56160, which has no spell_bonus_data row
+			HealingTakenCoefficient: core.DefaultHealingTakenCoefficient(0),
+			Flags:                   core.SpellFlagHelpful,
 
 			// Talent effects are combined differently in this spell compared to PWS, for some reason.
 			DamageMultiplier: 0.2 *

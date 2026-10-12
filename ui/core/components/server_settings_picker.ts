@@ -174,7 +174,7 @@ function withSpellTweak<K extends keyof SpellTweaksSettings>(settings: ServerSet
 	return next;
 }
 
-type IntervalField = 'mapUpdateIntervalMs' | 'worldUpdateIntervalMs' | 'worldLoopMs';
+type IntervalField = 'mapUpdateIntervalMs' | 'worldUpdateIntervalMs' | 'worldLoopMs' | 'mapUpdateJitterMs';
 
 function intervalMs(settings: ServerSettings, field: IntervalField): number {
 	return settings[field] ?? LIVE_SERVER_DEFAULTS[field] ?? 0;
@@ -310,7 +310,7 @@ export class ServerSettingsPicker extends Component {
 			label: 'World loop time (ms)',
 			labelTooltip:
 				'How long the host really takes for one world tick. The world update interval is only its floor: the ' +
-				'loop sleeps the rest of it and wakes late, so a map update (ten ticks) falls about 102.7 ms apart, not ' +
+				'loop sleeps the rest of it and wakes late, so a map update (ten ticks) falls about 104.6 ms apart, not ' +
 				'100. A value below the world update interval counts as that interval.',
 			inline: true,
 			float: true,
@@ -319,6 +319,22 @@ export class ServerSettingsPicker extends Component {
 			getValue: encounter => intervalMs(encounter.getServerSettings(), 'worldLoopMs'),
 			setValue: (eventID: EventID, encounter: Encounter, newValue: number) =>
 				encounter.setServerSettings(eventID, withIntervalMs(encounter.getServerSettings(), 'worldLoopMs', newValue)),
+		});
+
+		new NumberPicker<Encounter>(this.rootElem, encounter, {
+			label: 'Map update jitter (ms)',
+			labelTooltip:
+				"How far one map update's length strays from its mean, as a standard deviation. The host wakes late by " +
+				'a different amount every tick and stalls now and then, so no update is shorter than its interval and ' +
+				'the rest scatters above it. It needs a world loop time over the world update interval. 0 gives every ' +
+				'update the same length, which no real server has.',
+			inline: true,
+			float: true,
+			positive: true,
+			changedEvent: encounter => encounter.serverSettingsChangeEmitter,
+			getValue: encounter => intervalMs(encounter.getServerSettings(), 'mapUpdateJitterMs'),
+			setValue: (eventID: EventID, encounter: Encounter, newValue: number) =>
+				encounter.setServerSettings(eventID, withIntervalMs(encounter.getServerSettings(), 'mapUpdateJitterMs', newValue)),
 		});
 
 		new EnumPicker<Encounter>(this.rootElem, encounter, {

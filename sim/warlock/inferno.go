@@ -43,7 +43,8 @@ func (warlock *Warlock) registerInfernoSpell() {
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			// TODO: add fire spell damage
-			baseDmg := (spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP, spell.SpellPower())) * sim.Encounter.AOECapMultiplier()
+			baseDmg := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP, spell.SpellPower())
+			spell.AoECapUnits = len(sim.Encounter.Targets)
 
 			for _, aoeTarget := range sim.Encounter.TargetUnits {
 				spell.CalcAndDealDamage(sim, aoeTarget, baseDmg, spell.OutcomeMagicHitAndCrit)

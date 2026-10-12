@@ -32,7 +32,8 @@ func (shaman *Shaman) registerFireNovaAttackSpell() *core.Spell {
 		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, spell *core.Spell) {
 			dmgFromSP := core.PowerBonus(spell.Direct.SP, spell.SpellPower())
 			for _, aoeTarget := range sim.Encounter.TargetUnits {
-				baseDamage := (spell.Direct.Roll(sim) + dmgFromSP) * sim.Encounter.AOECapMultiplier()
+				baseDamage := spell.Direct.Roll(sim) + dmgFromSP
+				spell.AoECapUnits = len(sim.Encounter.Targets)
 				spell.CalcAndDealDamage(sim, aoeTarget, baseDamage, spell.OutcomeMagicHitAndCrit)
 			}
 		},

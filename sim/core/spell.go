@@ -49,6 +49,9 @@ type SpellConfig struct {
 	// the spell's threat mods (SPELLMOD_THREAT); 0 means it makes no threat at all
 	ThreatMultiplier float64
 
+	// starts Spell.HealingTakenCoefficient
+	HealingTakenCoefficient float64
+
 	// Deprecated: the cast's bonus comes from the server data (threat.go); RegisterSpell panics on one.
 	FlatThreatBonus float64
 	// the server spell whose spell_threat row, level and targets the threat follows, when the sim spell
@@ -144,8 +147,14 @@ type Spell struct {
 	// its hits are whole strikes: StrikeDamage rolled the base with the hand's TOTAL_PCT inside
 	wholeStrike bool
 	// units an area effect hits, set by the cast: past 10 the server cuts each hit to damage × 10 / units
-	// in whole numbers, after the done and taken percents (Spell::DoAllEffectOnLaunchTarget)
+	// in whole numbers, after the done and taken percents (Spell::DoAllEffectOnLaunchTarget). Only a
+	// player's: its pets, totems and traps aren't cut.
 	AoECapUnits int
+
+	// what the target's flat healing taken is multiplied by on this spell's heals, where the server's
+	// heal isn't this spell with its declared coefficient: Prayer of Mending heals as 33110. See
+	// flatHealingTaken.
+	HealingTakenCoefficient float64
 
 	// the spell's threat mods (SPELLMOD_THREAT), on its damage and healing threat; 0 means no threat at all
 	ThreatMultiplier float64
@@ -290,6 +299,8 @@ func (unit *Unit) RegisterSpell(config SpellConfig) *Spell {
 		TotalPctMultiplier:       TernaryFloat64(config.TotalPctMultiplier == 0, 1, config.TotalPctMultiplier),
 
 		ThreatMultiplier: config.ThreatMultiplier,
+
+		HealingTakenCoefficient: config.HealingTakenCoefficient,
 
 		splitSpellMetrics: make([][]SpellMetrics, max(1, config.MetricSplits)),
 

@@ -65,7 +65,7 @@ func (druid *Druid) registerShredSpell() {
 					if ripDot.NumberOfTicks < maxRipTicks {
 						ripDot.NumberOfTicks += 1
 						ripDot.RecomputeAuraDuration()
-						ripDot.UpdateExpires(sim.NextServerTick(ripDot.ExpiresAt() + time.Second*2))
+						ripDot.AddDuration(sim, time.Second*2)
 					}
 				}
 			} else {

@@ -80,7 +80,7 @@ func (dk *Deathknight) applyWanderingPlague() {
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			baseDamage := dk.LastDiseaseDamage * dk.bonusCoeffs.wanderingPlagueMultiplier
-			baseDamage *= sim.Encounter.AOECapMultiplier()
+			spell.AoECapUnits = len(sim.Encounter.Targets)
 			for _, aoeTarget := range sim.Encounter.TargetUnits {
 				spell.CalcAndDealDamage(sim, aoeTarget, baseDamage, spell.OutcomeAlwaysHit)
 			}

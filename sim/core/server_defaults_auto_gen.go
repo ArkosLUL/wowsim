@@ -44,7 +44,8 @@ func LiveServerDefaults() *proto.ServerSettings {
 		},
 		Reforge:               &proto.ReforgeSettings{Enable: googleProto.Bool(true), Percentage: googleProto.Float64(40), StatTypes: []int32{6, 13, 14, 31, 32, 36, 37}},
 		WorldUpdateIntervalMs: googleProto.Int32(10),
-		WorldLoopMs:           googleProto.Float64(10.27),
+		WorldLoopMs:           googleProto.Float64(10.46),
+		MapUpdateJitterMs:     googleProto.Float64(6),
 	}
 }
 

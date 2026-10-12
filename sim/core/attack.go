@@ -307,6 +307,16 @@ func (wa *WeaponAttack) swing(sim *Simulation, releasingHold bool) time.Duration
 	sim.updating = wa.unit
 
 	aa := &wa.unit.AutoAttacks
+	// a creature's auras tick in Unit::Update, ahead of the AI that swings: Creature::Update. A tick can
+	// stop or move the swing.
+	if wa.unit.Type != PlayerUnit && len(wa.unit.tickingDots) > 0 && wa.unit.runDueTicks(sim, nil) {
+		if !aa.enabled {
+			return NeverExpires
+		}
+		if wa.swingAt > sim.CurrentTime {
+			return wa.swingAt
+		}
+	}
 	if until, held := wa.castHold(sim); held {
 		return wa.hold(until)
 	}

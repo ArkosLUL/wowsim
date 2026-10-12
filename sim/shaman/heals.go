@@ -265,6 +265,8 @@ func (shaman *Shaman) registerEarthShieldSpell() {
 		BonusCritRating:  float64(shaman.Talents.TidalMastery) * 1 * core.CritRatingPerCritChance,
 		DamageMultiplier: 1,
 		ThreatMultiplier: 1,
+		// the heal is 379, which has no spell_bonus_data row
+		HealingTakenCoefficient: core.DefaultHealingTakenCoefficient(0),
 		Mods: []core.SpellMod{
 			{Op: core.SpellModEffect1, Pct: 5 * shaman.Talents.ImprovedShields},
 			{Op: core.SpellModEffect1, Pct: 5 * shaman.Talents.ImprovedEarthShield},
