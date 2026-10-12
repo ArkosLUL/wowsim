@@ -142,6 +142,16 @@ var spells = []Spell{
 			{Effect: 64, DamageMultiplier: 1, TriggerSpell: 44949},
 		},
 	},
+	// Hamstring
+	{
+		ID: 1715, Family: 4, FamilyFlags: [3]uint32{0x2}, SchoolMask: 1, DmgClass: DmgClassMelee, Flags: FlagBinary | FlagCompletelyBlocked,
+		Attributes: [8]uint32{0x50010, 0x8000200, 0, 0x408, 0, 0, 0xa00000}, AttributesCu: 0x101000,
+		GCDMs: 1500, GCDCategory: 133, DurationMs: 15000, MaxDurationMs: 15000,
+		ProcChance: 101, PowerType: 1, ManaCost: 100, SpellLevel: 8, BaseLevel: 8,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 33, BasePoints: -51, DieSides: 1, DamageMultiplier: 1},
+		},
+	},
 	// Recklessness
 	{
 		ID: 1719, Family: 4, FamilyFlags: [3]uint32{0x10}, SchoolMask: 1, DmgClass: DmgClassMelee, Flags: FlagBinary | FlagPositive,
@@ -2069,6 +2079,18 @@ var spells = []Spell{
 		ProcChance: 101, SpellLevel: 1,
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 4, BasePoints: 29, DieSides: 1, DamageMultiplier: 1, MiscValue: 12, ClassMask: [3]uint32{0, 0x22}},
+		},
+	},
+	// Slow
+	{
+		ID: 31589, Family: 3, FamilyFlags: [3]uint32{0x80000000}, SchoolMask: 64, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagHasteGCD,
+		Attributes: [8]uint32{0x10000, 0, 0, 0, 0, 0x20, 0x800000}, AttributesCu: 0x107000,
+		GCDMs: 1500, GCDCategory: 133, DurationMs: 15000, MaxDurationMs: 15000,
+		ProcChance: 101, ManaCostPct: 12, SpellLevel: 50, BaseLevel: 50,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 33, BasePoints: -61, DieSides: 1, DamageMultiplier: 1, ClassMask: [3]uint32{0xe012f7}},
+			{Effect: 6, Aura: 218, BasePoints: -61, DieSides: 1, DamageMultiplier: 1, ClassMask: [3]uint32{0xc01af7}},
+			{Effect: 6, Aura: 216, BasePoints: -31, DieSides: 1, DamageMultiplier: 1, ClassMask: [3]uint32{0x400085}},
 		},
 	},
 	// Summon Water Elemental
@@ -9884,16 +9906,6 @@ var spells = []Spell{
 			{Effect: 6, Aura: 3, AmplitudeMs: 2000, BasePoints: 476, DieSides: 1, DamageMultiplier: 1},
 		},
 	},
-	// Searing Flames
-	{
-		ID: 69730, Family: 10, SchoolMask: 4, DmgClass: DmgClassMagic,
-		Attributes: [8]uint32{0x10000}, AttributesCu: 0x1000,
-		DurationMs: 12000, MaxDurationMs: 12000,
-		ProcChance: 101, SpellLevel: 80, BaseLevel: 80, MaxLevel: 80,
-		Effects: [3]Effect{
-			{Effect: 6, Aura: 3, AmplitudeMs: 2000, BasePoints: 531, DieSides: 1, DamageMultiplier: 1},
-		},
-	},
 	// Cauterizing Heal
 	{
 		ID: 69733, SchoolMask: 2, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagPositive,
@@ -9901,15 +9913,6 @@ var spells = []Spell{
 		ProcChance: 101, SpellLevel: 80, BaseLevel: 80,
 		Effects: [3]Effect{
 			{Effect: 10, BasePoints: 2268, DieSides: 505, ValueMultiplier: 1, DamageMultiplier: 1},
-		},
-	},
-	// Cauterizing Heal
-	{
-		ID: 69734, SchoolMask: 2, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagPositive,
-		Attributes: [8]uint32{0, 0, 0, 0x10000}, AttributesCu: 0x100100,
-		ProcChance: 101, SpellLevel: 80, BaseLevel: 80,
-		Effects: [3]Effect{
-			{Effect: 10, BasePoints: 2529, DieSides: 563, ValueMultiplier: 1, DamageMultiplier: 1},
 		},
 	},
 	// Frost Aura
@@ -10493,6 +10496,24 @@ var spells = []Spell{
 			{Effect: 6, Aura: 135, BasePoints: 1073, DieSides: 1, DamageMultiplier: 1, MiscValue: 126},
 		},
 	},
+	// Release of Light
+	{
+		ID: 71607, SchoolMask: 2, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagPositive,
+		AttributesCu: 0x100100,
+		ProcChance:   101,
+		Effects: [3]Effect{
+			{Effect: 10, BasePoints: 7399, DieSides: 1201, DamageMultiplier: 1, ClassMask: [3]uint32{0, 0x1000}},
+		},
+	},
+	// Echoes of Light
+	{
+		ID: 71610, SchoolMask: 2, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagPositive | FlagTargetsArea,
+		AttributesCu: 0x100100,
+		ProcChance:   101,
+		Effects: [3]Effect{
+			{Effect: 10, BasePoints: 5549, DieSides: 901, DamageMultiplier: 1, ClassMask: [3]uint32{0, 0x1000}},
+		},
+	},
 	// Siphoned Power
 	{
 		ID: 71636, SchoolMask: 64, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagPositive,
@@ -10502,6 +10523,15 @@ var spells = []Spell{
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 13, BasePoints: 1206, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, MiscValue: 126},
 			{Effect: 6, Aura: 135, BasePoints: 1206, DieSides: 1, DamageMultiplier: 1, MiscValue: 126},
+		},
+	},
+	// Echoes of Light
+	{
+		ID: 71641, SchoolMask: 2, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagPositive | FlagTargetsArea,
+		AttributesCu: 0x100100,
+		ProcChance:   101,
+		Effects: [3]Effect{
+			{Effect: 10, BasePoints: 6279, DieSides: 1019, DamageMultiplier: 1, ClassMask: [3]uint32{0, 0x1000}},
 		},
 	},
 	// Deep Freeze
@@ -10521,6 +10551,24 @@ var spells = []Spell{
 		ProcChance: 101, SpellLevel: 99, BaseLevel: 99,
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 3, AmplitudeMs: 2000, BasePoints: -1, DieSides: 1, DamageMultiplier: 1},
+		},
+	},
+	// Drain Life
+	{
+		ID: 71838, SchoolMask: 32, DmgClass: DmgClassMagic, Flags: FlagBinary,
+		Attributes: [8]uint32{0x50000, 0, 0x20000000}, AttributesCu: 0x101010,
+		ProcChance: 101, SpellLevel: 45, BaseLevel: 45,
+		Effects: [3]Effect{
+			{Effect: 9, BasePoints: 2137, DieSides: 225, ValueMultiplier: 1, DamageMultiplier: 1},
+		},
+	},
+	// Drain Life
+	{
+		ID: 71839, SchoolMask: 32, DmgClass: DmgClassMagic, Flags: FlagBinary,
+		Attributes: [8]uint32{0x50000, 0, 0x20000000}, AttributesCu: 0x101010,
+		ProcChance: 101, SpellLevel: 45, BaseLevel: 45,
+		Effects: [3]Effect{
+			{Effect: 9, BasePoints: 2411, DieSides: 253, ValueMultiplier: 1, DamageMultiplier: 1},
 		},
 	},
 	// Smite
@@ -10833,6 +10881,26 @@ var spells = []Spell{
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 13, BasePoints: 860, DieSides: 1, DamageMultiplier: 1, MiscValue: 126},
 			{Effect: 6, Aura: 135, BasePoints: 860, DieSides: 1, DamageMultiplier: 1, MiscValue: 126},
+		},
+	},
+	// Twilight Renewal
+	{
+		ID: 75493, SchoolMask: 2, Flags: FlagBinary | FlagPositive,
+		Attributes: [8]uint32{0, 0, 0, 0x40000000}, AttributesCu: 0x100000,
+		DurationMs: 6000, MaxDurationMs: 6000,
+		ProcChance: 101,
+		Effects: [3]Effect{
+			{Effect: 65, Aura: 8, AmplitudeMs: 1000, BasePoints: 355, DieSides: 1, DamageMultiplier: 1, ClassMask: [3]uint32{0, 0x1000}},
+		},
+	},
+	// Twilight Renewal
+	{
+		ID: 75494, SchoolMask: 2, Flags: FlagBinary | FlagPositive,
+		Attributes: [8]uint32{0, 0, 0, 0x40000000}, AttributesCu: 0x100000,
+		DurationMs: 6000, MaxDurationMs: 6000,
+		ProcChance: 101,
+		Effects: [3]Effect{
+			{Effect: 65, Aura: 8, AmplitudeMs: 1000, BasePoints: 401, DieSides: 1, DamageMultiplier: 1, ClassMask: [3]uint32{0, 0x1000}},
 		},
 	},
 }

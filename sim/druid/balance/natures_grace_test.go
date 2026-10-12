@@ -143,6 +143,17 @@ func TestNaturesGraceRollsOncePerPhase(t *testing.T) {
 			t.Errorf("%s gave Nature's Grace at %.3f of its crits, want %.3f", c.name, got, c.want)
 		}
 	}
+	// the mask's heals come in as heals, not hits. No druid heal is registered, so Moonfire stands in for one
+	grace.Deactivate(sim)
+	result := druid.Moonfire.NewResult(&druid.Unit)
+	result.Outcome = core.OutcomeCrit
+	for range 50 {
+		talent.OnHealDealt(talent, sim, druid.Moonfire.Spell, result)
+	}
+	druid.Moonfire.DisposeResult(result)
+	if !grace.IsActive() {
+		t.Error("50 crit heals of a spell in the mask gave no Nature's Grace")
+	}
 	grace.Deactivate(sim)
 	sim.Cleanup()
 }

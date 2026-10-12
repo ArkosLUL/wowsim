@@ -1,6 +1,7 @@
 package sim
 
 import (
+	"math"
 	"testing"
 	"time"
 
@@ -10,9 +11,11 @@ import (
 	"github.com/wowsims/wotlk/sim/mage"
 )
 
-// A druid's Typhoon snares the add it lands on, and its Hurricane slows the attacks of every creature in the
-// storm. Torment the Weak counts both whoever cast them, but the raid boss is snare immune and not attack-slow
-// immune.
+// A druid's Typhoon snares the add it lands on, and so does its Hurricane, at 0% without the glyph. Torment the
+// Weak counts both whoever cast them, but not on the snare-immune raid boss: Hurricane's rank 5 slows the boss's
+// attacks without MECHANIC_SLOW_ATTACK, which only ranks 1 to 4 have. The boss takes the storm's aura without
+// its snare, so the storm drops it at every other look at its targets: live, it was on the boss dummy in about
+// half the probes of a channel.
 func TestTormentTheWeakCountsADruidsTyphoonAndHurricane(t *testing.T) {
 	idle := core.APLRotationFromJsonString(`{"type": "TypeAPL", "priorityList": []}`)
 	moonkin := &proto.Player{
@@ -38,16 +41,17 @@ func TestTormentTheWeakCountsADruidsTyphoonAndHurricane(t *testing.T) {
 	encounter := core.MakeSingleTargetEncounter(0)
 	encounter.Targets = append(encounter.Targets, &proto.Target{Level: 80, MobType: proto.MobType_MobTypeHumanoid})
 
-	newSim := func() (*core.Simulation, *mage.Mage, *balance.BalanceDruid) {
+	newSimWith := func(debuffs *proto.Debuffs) (*core.Simulation, *mage.Mage, *balance.BalanceDruid) {
 		sim := core.NewSim(&proto.RaidSimRequest{
 			Raid: &proto.Raid{Parties: []*proto.Party{{Players: []*proto.Player{firemage, moonkin}, Buffs: &proto.PartyBuffs{}}},
-				Buffs: &proto.RaidBuffs{}, Debuffs: &proto.Debuffs{}},
+				Buffs: &proto.RaidBuffs{}, Debuffs: debuffs},
 			Encounter:  encounter,
 			SimOptions: &proto.SimOptions{Iterations: 1, IsTest: true, RandomSeed: 101},
 		})
 		sim.Reset()
 		return sim, sim.Raid.Parties[0].Players[0].(*mage.Mage), sim.Raid.Parties[0].Players[1].(*balance.BalanceDruid)
 	}
+	newSim := func() (*core.Simulation, *mage.Mage, *balance.BalanceDruid) { return newSimWith(&proto.Debuffs{}) }
 	wantTorment := func(when string, m *mage.Mage, target *core.Unit, want float64) {
 		t.Helper()
 		if got := m.TormentTheWeakBonus(target); got < want-1e-9 || got > want+1e-9 {
@@ -56,6 +60,12 @@ func TestTormentTheWeakCountsADruidsTyphoonAndHurricane(t *testing.T) {
 	}
 	advance := func(sim *core.Simulation, by time.Duration) {
 		for until := sim.CurrentTime + by; sim.CurrentTime < until && !sim.Step(); {
+		}
+	}
+	wantSwingSpeed := func(when string, unit *core.Unit, want float64) {
+		t.Helper()
+		if got := unit.SwingSpeed(); math.Abs(got-want) > 1e-9 {
+			t.Errorf("%s: swing speed x%v, want x%v", when, got, want)
 		}
 	}
 
@@ -80,12 +90,63 @@ func TestTormentTheWeakCountsADruidsTyphoonAndHurricane(t *testing.T) {
 
 	sim, m, moon = newSim()
 	boss, add = sim.GetTargetUnit(0), sim.GetTargetUnit(1)
+	bossSpeed, addSpeed := boss.SwingSpeed(), add.SwingSpeed()
+	// the storm looks at its targets every 500 ms, counted on its map updates
+	firstUpdate := sim.NextServerTick(sim.CurrentTime)
+	mapUpdate := sim.NextServerTick(firstUpdate+1) - firstUpdate
+	pass := (500*time.Millisecond + mapUpdate - 1) / mapUpdate * mapUpdate
+	if mapUpdate < 50*time.Millisecond || pass < 500*time.Millisecond {
+		t.Fatalf("map updates %v apart and a pass every %v", mapUpdate, pass)
+	}
+	cast := sim.CurrentTime
 	if !moon.Hurricane.Cast(sim, boss) {
 		t.Fatal("Hurricane didn't cast")
 	}
-	advance(sim, 2*time.Second)
-	wantTorment("the boss in Hurricane", m, boss, 1.12)
-	wantTorment("the add in Hurricane", m, add, 1.12)
-	advance(sim, 11*time.Second)
-	wantTorment("the boss after Hurricane ended", m, boss, 1)
+	wantSwingSpeed("the boss as Hurricane goes off", boss, bossSpeed/1.2)
+	slowed := true
+	var flips []time.Duration
+	for sim.CurrentTime < cast+7*time.Second && !sim.Step() {
+		wantTorment("the boss in Hurricane", m, boss, 1)
+		wantTorment("the add in Hurricane", m, add, 1.12)
+		wantSwingSpeed("the add in Hurricane", add, addSpeed/1.2)
+		now := boss.SwingSpeed() < bossSpeed*0.99
+		if now != slowed {
+			slowed = now
+			flips = append(flips, sim.CurrentTime-cast)
+		}
+		want := bossSpeed
+		if slowed {
+			want = bossSpeed / 1.2
+		}
+		wantSwingSpeed("the boss in Hurricane", boss, want)
+	}
+	if len(flips) < 13 {
+		t.Fatalf("the boss's slow came or went %d times in 7 s, want every %v: %v", len(flips), pass, flips)
+	}
+	for i, flip := range flips {
+		if want := firstUpdate - cast + pass - mapUpdate + time.Duration(i)*pass; flip != want {
+			t.Errorf("the boss's slow changed %v into the channel, want %v (change %d)", flip, want, i)
+		}
+	}
+	advance(sim, 3*time.Second)
+	wantTorment("the add after Hurricane ended", m, add, 1)
+	wantSwingSpeed("the boss after Hurricane ended", boss, bossSpeed)
+
+	// under Hurricane a weaker Thunder Clap still counts, and only the stronger of the two slows the swing
+	// (spell_group 1059)
+	sim, m, moon = newSimWith(&proto.Debuffs{ThunderClap: proto.TristateEffect_TristateEffectRegular})
+	boss = sim.GetTargetUnit(0)
+	clapped := boss.SwingSpeed()
+	wantTorment("the boss under Thunder Clap", m, boss, 1.12)
+	if !moon.Hurricane.Cast(sim, boss) {
+		t.Fatal("Hurricane didn't cast")
+	}
+	wantTorment("the boss under Thunder Clap in Hurricane", m, boss, 1.12)
+	wantSwingSpeed("the boss under Thunder Clap in Hurricane", boss, clapped*1.1/1.2)
+	// past the storm's first pass, which takes its aura off the boss
+	advance(sim, 600*time.Millisecond)
+	wantTorment("the boss under Thunder Clap with the storm's aura off", m, boss, 1.12)
+	wantSwingSpeed("the boss under Thunder Clap with the storm's aura off", boss, clapped)
+	advance(sim, 12*time.Second)
+	wantSwingSpeed("the boss under Thunder Clap after Hurricane ended", boss, clapped)
 }

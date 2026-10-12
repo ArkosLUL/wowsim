@@ -113,23 +113,26 @@ func (druid *Druid) setupNaturesGrace() {
 		},
 	})
 
+	onCrit := func(_ *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
+		if !result.Outcome.Matches(core.OutcomeCrit) || !spell.Flags.Matches(SpellFlagNaturesGrace) {
+			return
+		}
+		// the cast phase: a missile had it at its launch, another spell the druid casts has it here. A
+		// triggered spell has none (Starfall's stars)
+		if spell.MissileSpeed == 0 && spell.Flags.Matches(core.SpellFlagAPL) {
+			druid.rollNaturesGrace(sim)
+		}
+		druid.rollNaturesGrace(sim)
+	}
 	druid.RegisterAura(core.Aura{
 		Label:    "Natures Grace",
 		Duration: core.NeverExpires,
 		OnReset: func(aura *core.Aura, sim *core.Simulation) {
 			aura.Activate(sim)
 		},
-		OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
-			if !result.Outcome.Matches(core.OutcomeCrit) || !spell.Flags.Matches(SpellFlagNaturesGrace) {
-				return
-			}
-			// the cast phase: a missile had it at its launch, another spell the druid casts has it here. A
-			// triggered spell has none (Starfall's stars)
-			if spell.MissileSpeed == 0 && spell.Flags.Matches(core.SpellFlagAPL) {
-				druid.rollNaturesGrace(sim)
-			}
-			druid.rollNaturesGrace(sim)
-		},
+		OnSpellHitDealt: onCrit,
+		// spell_proc -16880's mask has heals too: Healing Touch, Regrowth, Nourish and Swiftmend
+		OnHealDealt: onCrit,
 	})
 }
 
@@ -447,6 +450,13 @@ func (druid *Druid) applyOmenOfClarity() {
 			}
 
 			rollOmenOfClarity(sim, spell)
+		},
+		// 16864 takes a magic-class heal like a hit (PROC_FLAG_DONE_SPELL_MAGIC_DMG_CLASS_POS), an item's too.
+		// A heal over time's ticks roll nothing.
+		OnHealDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
+			if spell.Flags.Matches(SpellFlagOmenTrigger) || rollsOmenOffFamily(spell) {
+				rollOmenOfClarity(sim, spell)
+			}
 		},
 	})
 }

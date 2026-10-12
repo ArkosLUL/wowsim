@@ -129,3 +129,101 @@ func TestHurricaneCastProcsGoOnItsTarget(t *testing.T) {
 		t.Error("Searing Flames never burned the target of a druid who only casts Hurricane")
 	}
 }
+
+// An item's magic-class heal rolls Omen of Clarity like its damage, 8.75% for an instant: Bauble of True Blood's
+// Release of Light (71607) and the Echoes of Light (71610) Althor's Abacus answers it with. Nothing else is cast.
+func TestItemHealsRollOmen(t *testing.T) {
+	const iterations = 1000
+	player := nakedDruidWith(50354, `{"type": "TypeAPL", "priorityList": [`+
+		`{"action": {"castSpell": {"spellId": {"itemId": 50354}, "target": {"type": "Self"}}}}]}`)
+	player.Equipment.Items[proto.ItemSlot_ItemSlotTrinket2] = &proto.ItemSpec{Id: 50359}
+	encounter := core.MakeSingleTargetEncounter(0)
+	encounter.Duration = 600
+	res := core.RunRaidSim(&proto.RaidSimRequest{
+		Raid:       core.SinglePlayerRaidProto(player, nil, nil, nil),
+		Encounter:  encounter,
+		SimOptions: &proto.SimOptions{Iterations: iterations, IsTest: true, RandomSeed: 101},
+	})
+	if res.ErrorResult != "" {
+		t.Fatal(res.ErrorResult)
+	}
+	metrics := res.RaidMetrics.Parties[0].Players[0]
+	heals := map[int32]float64{}
+	for _, action := range metrics.Actions {
+		for _, target := range action.Targets {
+			if target.Healing > 0 {
+				heals[action.Id.GetSpellId()] += float64(target.Casts)
+			}
+		}
+	}
+	var procs float64
+	for _, aura := range metrics.Auras {
+		if aura.Id.GetSpellId() == 16870 {
+			procs = aura.ProcsAvg * iterations
+		}
+	}
+	baubles, echoes := heals[71607], heals[71610]
+	if baubles < 4*iterations || echoes < iterations/2 {
+		t.Fatalf("%.0f Releases of Light and %.0f Echoes of Light healed", baubles, echoes)
+	}
+
+	const instant = 3.5 * 1.5 / 60
+	rolls := baubles + echoes
+	want := instant * rolls
+	tolerance := 5 * math.Sqrt(instant*(1-instant)*rolls)
+	if math.Abs(procs-want) > tolerance {
+		t.Errorf("%.0f Clearcasting procs from %.0f item heals, want %.0f give or take %.0f", procs, rolls, want, tolerance)
+	}
+	// the run can tell the two heals from the Bauble's alone
+	if alone := instant * baubles; math.Abs(procs-alone) <= tolerance {
+		t.Errorf("%.0f Clearcasting procs also fit the Bauble's heals alone (%.0f give or take %.0f)", procs, alone, tolerance)
+	}
+	t.Logf("%.0f Releases of Light, %.0f Echoes of Light, %.0f Clearcasting procs, want %.0f", baubles, echoes, procs, want)
+}
+
+// Glowing Twilight Scale's Twilight Renewal (75493) is a heal over time with no damage class: its ticks heal and
+// roll nothing, so only the Bauble's heals that start it do.
+func TestItemHealOverTimeRollsNoOmen(t *testing.T) {
+	const iterations = 1000
+	player := nakedDruidWith(54573, `{"type": "TypeAPL", "priorityList": [`+
+		`{"action": {"castSpell": {"spellId": {"itemId": 54573}}}}, `+
+		`{"action": {"castSpell": {"spellId": {"itemId": 50354}, "target": {"type": "Self"}}}}]}`)
+	player.Equipment.Items[proto.ItemSlot_ItemSlotTrinket2] = &proto.ItemSpec{Id: 50354}
+	encounter := core.MakeSingleTargetEncounter(0)
+	encounter.Duration = 600
+	res := core.RunRaidSim(&proto.RaidSimRequest{
+		Raid:       core.SinglePlayerRaidProto(player, nil, nil, nil),
+		Encounter:  encounter,
+		SimOptions: &proto.SimOptions{Iterations: iterations, IsTest: true, RandomSeed: 101},
+	})
+	if res.ErrorResult != "" {
+		t.Fatal(res.ErrorResult)
+	}
+	metrics := res.RaidMetrics.Parties[0].Players[0]
+	var baubles, renewed float64
+	for _, action := range metrics.Actions {
+		for _, target := range action.Targets {
+			switch action.Id.GetSpellId() {
+			case 71607:
+				baubles += float64(target.Casts)
+			case 75493:
+				renewed += target.Healing
+			}
+		}
+	}
+	var procs float64
+	for _, aura := range metrics.Auras {
+		if aura.Id.GetSpellId() == 16870 {
+			procs = aura.ProcsAvg * iterations
+		}
+	}
+	// 6 ticks of 356 for each Bauble heal but the one at the fight's end
+	if baubles < 4*iterations || renewed < 6*356*(baubles-iterations) {
+		t.Fatalf("%.0f Releases of Light healed, Twilight Renewal healed %.0f", baubles, renewed)
+	}
+	const instant = 3.5 * 1.5 / 60
+	want := instant * baubles
+	if tolerance := 5 * math.Sqrt(instant*(1-instant)*baubles); math.Abs(procs-want) > tolerance {
+		t.Errorf("%.0f Clearcasting procs from %.0f Bauble heals, want %.0f give or take %.0f", procs, baubles, want, tolerance)
+	}
+}

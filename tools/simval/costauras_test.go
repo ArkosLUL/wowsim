@@ -131,7 +131,7 @@ func TestCostAuraRecords(t *testing.T) {
 	for _, note := range notes {
 		t.Log(note)
 	}
-	report := replaySpellMods(allTalentPaths(t), costAuraSteps(t), lines, droppedCostAuras)
+	report := replayUncut(t, allTalentPaths(t), costAuraSteps(t), lines, droppedCostAuras)
 	for _, line := range report.logs {
 		t.Log(line)
 	}

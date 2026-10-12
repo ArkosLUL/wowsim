@@ -37,6 +37,7 @@ var untakenTalents = map[proto.Class]map[string]string{
 	},
 	proto.Class_ClassMage: {
 		"magicAbsorption": "tank-only: resistances, and nothing attacks a mage in the goldens",
+		"slow":            "a cast no golden rotation makes: every golden target is snare immune, so it gives Torment the Weak nothing",
 	},
 	proto.Class_ClassRogue: {
 		"deflection": "tank-only: parry, and nothing attacks a rogue in the goldens",

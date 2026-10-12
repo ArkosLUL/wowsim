@@ -734,26 +734,23 @@ func init() {
 
 		core.NewItemEffect(itemID, func(agent core.Agent) {
 			character := agent.GetCharacter()
-			actionID := core.ActionID{ItemID: itemID}
+
+			// both items cast Release of Light 71607 on this server (item_template.spellid_1)
+			heal := character.GetOrRegisterSpell(itemHealSpell(character, 71607, 7400, 8600))
 
 			spell := character.RegisterSpell(core.SpellConfig{
-				ActionID:    actionID,
-				SpellSchool: core.SpellSchoolHoly,
-				ProcMask:    core.ProcMaskSpellHealing,
-				Flags:       core.SpellFlagNoOnCastComplete | core.SpellFlagHelpful,
+				ActionID: core.ActionID{ItemID: itemID},
+				ProcMask: core.ProcMaskEmpty,
+				Flags:    core.SpellFlagNoOnCastComplete | core.SpellFlagHelpful,
 				Cast: core.CastConfig{
 					CD: core.Cooldown{
 						Timer:    character.NewTimer(),
 						Duration: time.Minute * 2,
 					},
 				},
-				DamageMultiplier: 1,
-				ThreatMultiplier: 1,
-				CritMultiplier:   character.DefaultHealingCritMultiplier(),
 
-				ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-					baseHealing := sim.Roll(7400, 8600)
-					spell.CalcAndDealHealing(sim, target, baseHealing, spell.OutcomeHealingCrit)
+				ApplyEffects: func(sim *core.Simulation, target *core.Unit, _ *core.Spell) {
+					heal.Cast(sim, target)
 				},
 			})
 
@@ -767,34 +764,21 @@ func init() {
 	NewItemEffectWithHeroic(func(isHeroic bool) {
 		name := "Althor's Abacus"
 		itemID := int32(50359)
+		spellID := int32(71610)
 		minHeal := 5550.0
 		maxHeal := 6450.0
 		if isHeroic {
 			name += " H"
 			itemID = 50366
+			spellID = 71641
 			minHeal = 6280.0
 			maxHeal = 7298.0
 		}
 
 		core.NewItemEffect(itemID, func(agent core.Agent) {
 			character := agent.GetCharacter()
-			actionID := core.ActionID{ItemID: itemID}
 
-			spell := character.RegisterSpell(core.SpellConfig{
-				ActionID:    actionID,
-				SpellSchool: core.SpellSchoolPhysical,
-				ProcMask:    core.ProcMaskSpellHealing,
-				Flags:       core.SpellFlagNoOnCastComplete | core.SpellFlagHelpful,
-
-				DamageMultiplier: 1,
-				ThreatMultiplier: 1,
-				CritMultiplier:   character.DefaultHealingCritMultiplier(),
-
-				ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-					baseHealing := sim.Roll(minHeal, maxHeal)
-					spell.CalcAndDealHealing(sim, target, baseHealing, spell.OutcomeHealingCrit)
-				},
-			})
+			spell := character.RegisterSpell(itemHealSpell(character, spellID, minHeal, maxHeal))
 
 			eligibleUnits := character.Env.Raid.AllUnits
 
@@ -816,10 +800,12 @@ func init() {
 	NewItemEffectWithHeroic(func(isHeroic bool) {
 		name := "Glowing Twilight Scale"
 		itemID := int32(54573)
+		spellID := int32(75493)
 		healingPerTick := 356.0
 		if isHeroic {
 			name += " H"
 			itemID = 54589
+			spellID = 75494
 			healingPerTick = 402.0
 		}
 
@@ -827,8 +813,9 @@ func init() {
 			character := agent.GetCharacter()
 			actionID := core.ActionID{ItemID: itemID}
 
+			// Twilight Renewal, the heal over time the use's aura (Eyes of Twilight) triggers
 			healSpell := character.GetOrRegisterSpell(core.SpellConfig{
-				ActionID:    actionID,
+				ActionID:    core.ActionID{SpellID: spellID},
 				SpellSchool: core.SpellSchoolHoly,
 				ProcMask:    core.ProcMaskSpellHealing,
 				Flags:       core.SpellFlagNoOnCastComplete | core.SpellFlagHelpful,
@@ -843,8 +830,9 @@ func init() {
 					NumberOfTicks: 6,
 					TickLength:    time.Second * 1,
 					TicksCanCrit:  false,
+					Tick:          core.SpellEffect{Effect: 0, Min: healingPerTick, Max: healingPerTick},
 					OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
-						dot.SnapshotBaseDamage = healingPerTick
+						dot.SnapshotBaseDamage = dot.Tick.Roll(sim)
 						dot.SnapshotAttackerMultiplier = dot.Spell.CasterHealingMultiplier()
 					},
 					OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
@@ -950,7 +938,23 @@ func init() {
 			procMask := character.GetProcMaskForItem(itemID)
 			ppmm := character.AutoAttacks.NewPPMManager(2.0, procMask)
 
-			proc := character.RegisterSpell(itemDamageSpell(character, spellID, core.SpellSchoolShadow, minDmg, maxDmg, 0))
+			// the item gives its spell a 500 ms cooldown, and Player::CastItemCombatSpell casts with cooldowns
+			// checked: a roll won inside it is lost
+			icd := core.Cooldown{Timer: character.NewTimer(), Duration: time.Millisecond * 500}
+
+			// the leech heals the wielder for the damage dealt, ahead of the damage. It's a bare HealBySpell: no
+			// crit, no threat, no procs, and no spell power (Spell::DoAllEffectOnTarget). The spell itself never
+			// crits either: both ids carry SPELL_ATTR2_CANT_CRIT
+			healthMetrics := character.NewHealthMetrics(core.ActionID{SpellID: spellID})
+			config := itemDamageSpell(character, spellID, core.SpellSchoolShadow, minDmg, maxDmg, 0)
+			config.ApplyEffects = func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+				result := spell.CalcDamage(sim, target, spell.Direct.Roll(sim), spell.OutcomeMagicHit)
+				if result.Damage > 0 {
+					character.GainHealing(sim, result.Damage, healthMetrics)
+				}
+				spell.DealDamage(sim, result)
+			}
+			proc := character.RegisterSpell(config)
 
 			character.GetOrRegisterAura(core.Aura{
 				Label:    name,
@@ -963,7 +967,8 @@ func init() {
 						return
 					}
 
-					if ppmm.Proc(sim, spell.ProcMask, name) {
+					if ppmm.Proc(sim, spell.ProcMask, name) && icd.IsReady(sim) {
+						icd.Use(sim)
 						proc.Cast(sim, result.Target)
 					}
 				},
