@@ -553,8 +553,8 @@ dps_results: {
 dps_results: {
  key: "TestBalance-AllItems-MajesticDragonFigurine-40430"
  value: {
-  dps: 8562.94983
-  tps: 8497.96543
+  dps: 8562.9285
+  tps: 8497.9441
  }
 }
 dps_results: {
@@ -952,8 +952,8 @@ dps_results: {
 dps_results: {
  key: "TestBalance-Settings-Tauren-p1-Default-basic_p3-FullBuffs-LongMultiTarget"
  value: {
-  dps: 12647.14517
-  tps: 12622.82859
+  dps: 12700.46133
+  tps: 12673.85307
  }
 }
 dps_results: {
@@ -973,8 +973,8 @@ dps_results: {
 dps_results: {
  key: "TestBalance-Settings-Tauren-p1-Default-basic_p3-NoBuffs-LongMultiTarget"
  value: {
-  dps: 3740.48567
-  tps: 3696.05558
+  dps: 3708.02417
+  tps: 3663.05319
  }
 }
 dps_results: {
@@ -994,8 +994,8 @@ dps_results: {
 dps_results: {
  key: "TestBalance-Settings-Tauren-p2-Default-basic_p3-FullBuffs-LongMultiTarget"
  value: {
-  dps: 14119.793
-  tps: 14081.48683
+  dps: 14200.40617
+  tps: 14161.70358
  }
 }
 dps_results: {
@@ -1015,8 +1015,8 @@ dps_results: {
 dps_results: {
  key: "TestBalance-Settings-Tauren-p2-Default-basic_p3-NoBuffs-LongMultiTarget"
  value: {
-  dps: 5320.61017
-  tps: 5287.18246
+  dps: 4948.22567
+  tps: 4905.51349
  }
 }
 dps_results: {
@@ -1036,8 +1036,8 @@ dps_results: {
 dps_results: {
  key: "TestBalance-Settings-Tauren-p3_alliance-Default-basic_p3-FullBuffs-LongMultiTarget"
  value: {
-  dps: 17564.1015
-  tps: 17549.19891
+  dps: 17755.35417
+  tps: 17740.41678
  }
 }
 dps_results: {
@@ -1057,8 +1057,8 @@ dps_results: {
 dps_results: {
  key: "TestBalance-Settings-Tauren-p3_alliance-Default-basic_p3-NoBuffs-LongMultiTarget"
  value: {
-  dps: 10108.32083
-  tps: 10134.82969
+  dps: 9868.0865
+  tps: 9887.76028
  }
 }
 dps_results: {
@@ -1451,12 +1451,6 @@ ability_results: {
    key: "target0|aura|{SpellID: 51161}"
    value: {
     uptime_s: 299.9236
-   }
-  }
-  entries: {
-   key: "target0|aura|{SpellID: 53190}"
-   value: {
-    uptime_s: 50.05825
    }
   }
   entries: {
