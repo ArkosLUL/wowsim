@@ -98,15 +98,15 @@ dps_results: {
 dps_results: {
  key: "TestDisc-AllItems-Althor'sAbacus-50359"
  value: {
-  tps: 918.2009
-  hps: 3075.43269
+  tps: 918.2029
+  hps: 3075.44684
  }
 }
 dps_results: {
  key: "TestDisc-AllItems-Althor'sAbacus-50366"
  value: {
-  tps: 924.8179
-  hps: 3108.74872
+  tps: 924.81998
+  hps: 3108.76222
  }
 }
 dps_results: {
@@ -127,14 +127,14 @@ dps_results: {
  key: "TestDisc-AllItems-BaubleofTrueBlood-50354"
  value: {
   tps: 863.32598
-  hps: 2911.01854
+  hps: 2911.02422
  }
 }
 dps_results: {
  key: "TestDisc-AllItems-BaubleofTrueBlood-50726"
  value: {
   tps: 863.32598
-  hps: 2911.01854
+  hps: 2911.02422
  }
 }
 dps_results: {

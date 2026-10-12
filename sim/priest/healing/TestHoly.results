@@ -53,15 +53,15 @@ dps_results: {
 dps_results: {
  key: "TestHoly-AllItems-Althor'sAbacus-50359"
  value: {
-  tps: 1590.97575
-  hps: 4856.01883
+  tps: 1590.97767
+  hps: 4856.03
  }
 }
 dps_results: {
  key: "TestHoly-AllItems-Althor'sAbacus-50366"
  value: {
-  tps: 1601.42083
-  hps: 4900.13833
+  tps: 1601.42283
+  hps: 4900.15083
  }
 }
 dps_results: {
@@ -82,14 +82,14 @@ dps_results: {
  key: "TestHoly-AllItems-BaubleofTrueBlood-50354"
  value: {
   tps: 1588.74008
-  hps: 4768.93467
+  hps: 4768.93967
  }
 }
 dps_results: {
  key: "TestHoly-AllItems-BaubleofTrueBlood-50726"
  value: {
   tps: 1593.41317
-  hps: 4776.397
+  hps: 4776.40217
  }
 }
 dps_results: {

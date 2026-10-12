@@ -76,7 +76,7 @@ dps_results: {
  value: {
   dps: 7028.71183
   tps: 5683.80593
-  hps: 94.45017
+  hps: 94.457
  }
 }
 dps_results: {
@@ -84,7 +84,7 @@ dps_results: {
  value: {
   dps: 7028.71183
   tps: 5683.80593
-  hps: 94.45017
+  hps: 94.457
  }
 }
 dps_results: {
@@ -146,15 +146,15 @@ dps_results: {
 dps_results: {
  key: "TestArms-AllItems-Bryntroll,theBoneArbiter-50415"
  value: {
-  dps: 9138.52783
-  tps: 7399.75788
+  dps: 9124.4215
+  tps: 7388.47281
  }
 }
 dps_results: {
  key: "TestArms-AllItems-Bryntroll,theBoneArbiter-50709"
  value: {
-  dps: 9217.8475
-  tps: 7463.8805
+  dps: 9201.645
+  tps: 7450.9185
  }
 }
 dps_results: {
