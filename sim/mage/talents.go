@@ -444,7 +444,7 @@ func (mage *Mage) tormentTheWeak(target *core.Unit) float64 {
 	if mage.Talents.TormentTheWeak == 0 {
 		return 1
 	}
-	if !mage.attackSlowed(target) && !target.HasActiveAuraWithTag(core.SlowAttackAuraTag) &&
+	if !mage.attackSlowed(target) &&
 		(target.ImmuneToMechanic(core.MechanicSnare) || !target.HasActiveAuraWithTag(core.SnareAuraTag)) {
 		return 1
 	}

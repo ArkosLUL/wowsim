@@ -84,13 +84,6 @@ func (result *SpellResult) DidCrit() bool {
 	return result.Outcome.Matches(OutcomeCrit)
 }
 
-// FromInstantCast is whether the cast behind this result had no cast time, which decides how long a
-// proc it feeds waits (DelayedPeriodicApplier.DelayFromInstantCast). Read at the cast, not at the
-// hit: a missile outlives CurCast, which the next cast of the same spell overwrites mid-flight.
-func (result *SpellResult) FromInstantCast() bool {
-	return result.castWasInstant
-}
-
 // DealtWithItsCast is whether spell's hit came straight off an instant cast the player made itself, in
 // the session pass that handles its packet: a proc it feeds reads the caster's clock a tick behind
 // (DelayedPeriodicApplier.DelayFromInstantCast). A missile lands in the caster's event pass (Spell::_cast

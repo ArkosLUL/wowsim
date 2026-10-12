@@ -85,7 +85,7 @@ type Simulation struct {
 
 	// Set when the updates jitter: it places them, the intervals above are the shortest an update and
 	// a tick get, and both phases are the first jittered update. Ask ServerTickBefore and
-	// WorldTickBefore for the update before a time, since it's no longer one interval back.
+	// WorldTickBefore for the update before a time: it isn't one interval back.
 	updates *updateJitter
 
 	// the unit whose own update is running, while its swing, AI instant cast, dot tick or aura expiry

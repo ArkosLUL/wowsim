@@ -25,9 +25,6 @@ type Encounter struct {
 	DamageTaken float64
 	// In health fight: set to true until we get something to base on
 	DurationIsEstimate bool
-
-	// Value to multiply by, for damage spells which are subject to the aoe cap.
-	aoeCapMultiplier float64
 }
 
 // NewEncounter builds the encounter's targets, each scaled by the server's dungeon scale for the
@@ -79,20 +76,7 @@ func NewEncounter(options *proto.Encounter, server *ServerSettings) Encounter {
 		encounter.DurationIsEstimate = true
 	}
 
-	encounter.updateAOECapMultiplier()
-
 	return encounter
-}
-
-func (encounter *Encounter) AOECapMultiplier() float64 {
-	return encounter.aoeCapMultiplier
-}
-
-// The server caps a player's area damage at ten targets' worth: `Spell::DoAllEffectOnLaunchTarget`
-// does damage*10/count past 10 targets. Only for a player caster, and only on the launch damage, so
-// a pet's or totem's area hit and a periodic tick aren't capped.
-func (encounter *Encounter) updateAOECapMultiplier() {
-	encounter.aoeCapMultiplier = AOECapMultiplierFor(len(encounter.Targets))
 }
 
 func (encounter *Encounter) doneIteration(sim *Simulation) {
@@ -208,9 +192,6 @@ const RaidBossMechanicImmunities = 0x4D967EFE
 // SnareAuraTag marks an aura on a target whose spell or effect has MECHANIC_SNARE, for what asks whether
 // anyone snared the target (Torment the Weak). A snare-immune target never counts as snared.
 const SnareAuraTag = "Snare"
-
-// SlowAttackAuraTag is SnareAuraTag for an aura with MECHANIC_SLOW_ATTACK, which a raid boss isn't immune to.
-const SlowAttackAuraTag = "SlowAttack"
 
 // ImmuneToMechanic is Creature::HasMechanicTemplateImmunity: a spell with this mechanic doesn't land on the
 // unit (Creature::IsImmunedToSpell), and an effect with it isn't applied.
@@ -381,10 +362,4 @@ func (at *AttackTable) meleeTableInput() MeleeTableInput {
 
 		EnemyDodgeMultiplier: 1,
 	}
-}
-
-// AOECapMultiplierFor is the cap for a hit that reaches this many units. The server counts every unit
-// an effect hits, so a spell that also hits its caster passes one more than the enemy count.
-func AOECapMultiplierFor(units int) float64 {
-	return min(10/float64(max(units, 1)), 1)
 }

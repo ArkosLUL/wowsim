@@ -167,8 +167,8 @@ func TestSummonedAgainWhileStillOutLastsItsNewTime(t *testing.T) {
 	}
 }
 
-// A summon is a new creature. Whatever was cast on the pet while it was away isn't on it, and what stands
-// for a buff that's always up (a permanent aura) is.
+// Nothing can be cast on a creature that isn't in the world, so a summon is a new creature without what
+// was cast on the pet while it was away. What stands for a buff that's always up (a permanent aura) is on.
 func TestSummonStartsWithoutWhatWasCastOnItAway(t *testing.T) {
 	sim, pet := newSummonTestSim(t)
 	cast := pet.RegisterAura(Aura{Label: "Cast While Away", Duration: 15 * time.Second})
@@ -178,6 +178,9 @@ func TestSummonStartsWithoutWhatWasCastOnItAway(t *testing.T) {
 
 	runUntil(sim, ms(1000))
 	cast.Activate(sim)
+	if cast.IsActive() {
+		t.Error("an aura went onto a pet that isn't in the world")
+	}
 	runUntil(sim, ms(2000))
 	pet.EnableWithTimeout(sim, pet, 10*time.Second)
 	if cast.IsActive() {
@@ -221,5 +224,50 @@ func TestMissileInTheAirAtTheUnsummonIsLost(t *testing.T) {
 		if got := pet.MissileLost(sim, bolt); got != tc.lost {
 			t.Errorf("launched %v before the unsummon: lost = %v, want %v", last-tc.launch, got, tc.lost)
 		}
+	}
+}
+
+// A pet's clocks step by the map updates there are, not by the shortest one: on the live settings the
+// updates differ in length, so a fixed step lands between two of them.
+func TestPetClocksFollowUpdatesOfVaryingLength(t *testing.T) {
+	var pet *timingTestPet
+	timingTestConstruct = func(a *timingTestAgent) {
+		pet = &timingTestPet{Pet: NewPet("Guardian", &a.Character, stats.Stats{}, func(stats.Stats) stats.Stats { return stats.Stats{} }, false, true)}
+		a.AddPet(pet)
+	}
+	sim, _ := newSettingsTestSim(t, nil, nil)
+	timingTestConstruct = nil
+	if sim.updates == nil {
+		t.Fatal("the live settings give every map update the same length")
+	}
+
+	const life = 12 * time.Second
+	varied := false
+	for now := ms(1000); now < ms(1600); now += ms(7) {
+		runUntil(sim, now)
+		this := sim.NextServerTick(now)
+
+		// the update before the one this summon's first is on
+		start := pet.AIClockStart(sim)
+		if sim.NextServerTick(start) != start || sim.NextServerTick(start+1) != this || start >= this {
+			t.Fatalf("at %v the AI clock starts at %v, want the update before %v", now, start, this)
+		}
+		if got := pet.updateTimersStart(sim, now, false); got != start {
+			t.Errorf("at %v the timers start at %v, the AI clock at %v", now, got, start)
+		}
+
+		after := pet.UpdateAfter(sim, now)
+		if after <= this || sim.NextServerTick(this+1) != after {
+			t.Fatalf("at %v the update after %v is %v", now, this, after)
+		}
+		varied = varied || this-start != sim.serverTickInterval || after-this != sim.serverTickInterval
+
+		// a timed summon goes on the first update a duration past the one before its first
+		if last := sim.NextServerTick(start + life); last < start+life || last-start >= life+ms(200) || sim.NextServerTick(last) != last {
+			t.Fatalf("at %v the 12 s summon's last update is %v after %v", now, last, start)
+		}
+	}
+	if !varied {
+		t.Error("every update the pet's clocks met had the shortest length: the test never left the regular grid")
 	}
 }

@@ -152,3 +152,51 @@ func TestValkyrSmitesOnExactTiming(t *testing.T) {
 		}
 	}
 }
+
+// On the live settings the map updates differ in length, so a Smite comes at least 2 s after the last on the
+// first update there is. Its 30 s leave room for 15 of them whatever the lengths.
+func TestValkyrSmitesOnUpdatesOfVaryingLength(t *testing.T) {
+	sim, _, valkyr := newValkyrTestSim(t, &proto.ServerSettings{})
+	var wentOff []time.Duration
+	valkyr.smite.ApplyEffects = func(sim *core.Simulation, _ *core.Unit, _ *core.Spell) {
+		wentOff = append(wentOff, sim.CurrentTime)
+	}
+
+	counts := map[int]int{}
+	for seed := int64(0); seed < 30; seed++ {
+		sim.Cleanup()
+		sim.Reseed(500 + seed)
+		sim.Reset()
+		wentOff = wentOff[:0]
+		sim.PrePull()
+		for sim.CurrentTime < 1037*time.Millisecond && !sim.Step() {
+		}
+		came := sim.CurrentTime
+		valkyr.EnableWithTimeout(sim, valkyr, valkyrLife(16))
+		end := valkyr.UnsummonAt()
+		for valkyr.IsEnabled() && !sim.Step() {
+		}
+
+		for i, at := range wentOff {
+			if sim.NextServerTick(at) != at {
+				t.Fatalf("seed %d: Smite %d at %v is between two map updates", seed, i+1, at)
+			}
+			if at > end {
+				t.Fatalf("seed %d: Smite %d at %v, after the unsummon at %v", seed, i+1, at, end)
+			}
+			if i == 0 {
+				if first := sim.NextServerTick(came); at != first {
+					t.Fatalf("seed %d: the first Smite at %v, want the first update at %v", seed, at, first)
+				}
+				continue
+			}
+			if gap := at - wentOff[i-1]; gap < valkyrAttackTime || gap >= valkyrAttackTime+200*time.Millisecond {
+				t.Fatalf("seed %d: Smite %d came %v after the one before, want 2 s to the next update", seed, i+1, gap)
+			}
+		}
+		counts[len(wentOff)]++
+	}
+	if counts[15] != 30 {
+		t.Errorf("Smites in 30 s over 30 summons: %v, want 15 every time", counts)
+	}
+}

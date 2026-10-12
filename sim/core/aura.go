@@ -645,6 +645,10 @@ restart:
 // Adds a new aura to the simulation. If an aura with the same ID already
 // exists it will be replaced with the new one.
 func (aura *Aura) Activate(sim *Simulation) {
+	// nothing can be cast on a creature that isn't in the world; a permanent aura stands for a buff that's always up
+	if aura.Unit.Type == PetUnit && !aura.Unit.enabled && aura.Duration != NeverExpires {
+		return
+	}
 	aura.metrics.Procs++
 	if aura.IsActive() {
 		if sim.Log != nil && !aura.ActionID.IsEmptyAction() {

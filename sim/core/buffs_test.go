@@ -111,28 +111,6 @@ func TestBoomingVoiceExtendsEveryShout(t *testing.T) {
 	}
 }
 
-// AzerothCore caps a player's area damage at ten targets' worth, so the multiplier stays.
-func TestAOECapMultiplier(t *testing.T) {
-	for _, tc := range []struct {
-		targets int
-		want    float64
-	}{
-		{1, 1},
-		{10, 1},
-		{11, 10.0 / 11},
-		{25, 0.4},
-	} {
-		options := &proto.Encounter{}
-		for i := 0; i < tc.targets; i++ {
-			options.Targets = append(options.Targets, &proto.Target{Level: CharacterLevel + 3})
-		}
-		encounter := NewEncounter(options, nil)
-		if got := encounter.AOECapMultiplier(); got != tc.want {
-			t.Errorf("%d targets: got %v, want %v", tc.targets, got, tc.want)
-		}
-	}
-}
-
 // Improved Devotion Aura's 63514 and Guardian Spirit are both SPELL_AURA_MOD_HEALING_PCT, so a heal under
 // both takes Guardian Spirit's 40% alone, not 1.06 x 1.4.
 func TestImprovedDevotionAuraDoesntStackWithGuardianSpirit(t *testing.T) {

@@ -426,7 +426,7 @@ func (pet *Pet) updateTimersStart(sim *Simulation, now time.Duration, outSinceBe
 	if outSinceBeforePull {
 		summoned -= time.Duration(sim.UnitRandomFloat(&pet.Unit, "Pet Timers") * float64(petTimerCycle))
 	}
-	return sim.NextServerTick(summoned) - sim.serverTickInterval
+	return sim.ServerTickBefore(sim.NextServerTick(summoned))
 }
 
 // startUpdateTimer runs onTick every period counted from start, each tick on the first map update
@@ -461,12 +461,16 @@ func (pet *Pet) startUpdateTimer(sim *Simulation, start, now, period time.Durati
 // update. The AI's clock only moves on the pet's updates, a whole one each, and it takes that first
 // one right after scheduling: the events run a map update sooner than their delay says.
 func (pet *Pet) AIClockStart(sim *Simulation) time.Duration {
-	return sim.NextServerTick(sim.CurrentTime) - sim.serverTickInterval
+	return sim.ServerTickBefore(sim.NextServerTick(sim.CurrentTime))
 }
 
 // UpdateAfter is the pet's update after the one at or after t.
 func (pet *Pet) UpdateAfter(sim *Simulation, t time.Duration) time.Duration {
-	return sim.NextServerTick(t) + sim.serverTickInterval
+	at := sim.NextServerTick(t)
+	if sim.serverTickInterval <= 0 {
+		return at
+	}
+	return sim.NextServerTick(at + 1)
 }
 
 // InterruptCast drops the cast the pet is in the middle of, as its next untriggered cast does on the
@@ -758,10 +762,6 @@ func (pet *Pet) enable(sim *Simulation, petAgent PetAgent, outSinceBeforePull bo
 	// TODO: Check if this has side effects
 	if !pet.isReset {
 		pet.reset(sim, petAgent)
-	} else if !outSinceBeforePull {
-		// a summon is a new creature, so nothing cast while the pet was away is on it. Its permanent
-		// auras stand for buffs that are always up, and stay
-		pet.auraTracker.expireAll(sim)
 	}
 
 	pet.unsummonAt = NeverExpires

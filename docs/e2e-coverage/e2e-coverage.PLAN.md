@@ -3461,6 +3461,13 @@ Review, round 1: no code change; the delta is the live stage's, byte for byte.
 - Tank dtps at 100,000 iterations, the old fixed 102.7 ms grid against the default: TestProtection +0.69% (4.474 to
   4.505, ±0.013 each), so the rest of its +3.0% golden row is noise; TestFeralTank +1.36% (42.19 to 42.76, ±0.04).
 
+**Cross-review (Z9).** `pet.go`'s clocks follow the varying grid: `updateTimersStart` and `AIClockStart` are
+`ServerTickBefore(NextServerTick(x))`, `UpdateAfter` is `NextServerTick(NextServerTick(t) + 1)` (`TestPetClocksFollowUpdatesOfVaryingLength`).
+Treants' timed unsummon moves 16 ms earlier in TestBalance's uptime rows. Dead code gone: `Encounter.AOECapMultiplier` with
+`AOECapMultiplierFor`, `SpellResult.FromInstantCast`, `SlowAttackAuraTag`. `arcane_blast_buff_test.go` allows the longest
+world tick (17.9 ms). The grid's cost stays open: lookups are about 10% of an Elemental run (`stretch` 8%, drawing 2.4%), so
+drawing the updates in one loop recovers little.
+
 ### EC-PET-FIX5 (Z9; changes goldens; stages: code, live)
 
 - Wrath of Air: the totem's raid area aura reaches pets and guardians (live, the Greater Fire Elemental's Fire
@@ -3609,6 +3616,14 @@ Review, both in `Pet.EnableWithTimeout`:
 - Lead, from the source only: the Val'kyr's attack timer is hasted (`resetAttackTimer`), so under Windfury Totem
   it would Smite every 17 updates, 18 in 30 s. The sim's 2 s is fixed; it only matters past 15 casts.
 
+**Cross-review (Z9).** `Aura.Activate` refuses a temporary aura on a pet that isn't out, and the summon's `expireAll`
+is gone. Callers that assumed the aura went on guard it: Cobra Strikes, and Prayer of Mending's bounce, which skips units
+not in the world (it lost the chain on an away Shadowfiend). `TestSummonStartsWithoutWhatWasCastOnItAway` checks the
+refusal; `TestValkyrSmitesOnUpdatesOfVaryingLength` covers the Val'kyr on the live grid (15 Smites, each on an update).
+The three `OnRegularGrid` count tests still test their counts; the Mirror Image's casts on the varying grid are covered
+by its replay. Replay: a Frostbolt opener at a 2 s lead is 8 and 2 in sim and server alike; at 1.8 s the ninth cast goes
+either way at 29.3 to 29.5 s. The Val'kyr tooltip says 15.
+
 ### EC-CLASS-FIX5 (Z9; changes goldens; stages: code, live)
 
 - Druid:
@@ -3727,6 +3742,10 @@ Live checks, all agreeing with the sim after those two:
 
 Review: no sim change. `ecclass5_test.go`: its chat helper carries the item's prefix (`ecClass5Answers`), and the
 Shard test's message names its 130 s; vetted, not rerun live.
+
+**Cross-review (Z9).** `.cast 71838` in `TestEcClass5DrainLifeLeech` is untriggered, as its README row says; a triggered
+`.cast` runs no effect (`TRIGGERED_FULL_DEBUG_MASK` holds `TRIGGERED_IGNORE_EFFECTS`), and the test comment now says so.
+`SlowAttackAuraTag` is gone.
 
 ### EC-TOOLS2 (Z10; golden-neutral)
 

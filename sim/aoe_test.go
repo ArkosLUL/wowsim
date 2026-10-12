@@ -37,7 +37,7 @@ type aoeSpell struct {
 	chain      int32               // targets the chain reaches counting the first, 0 when it doesn't chain
 	perJump    float64             // share of the damage or healing each jump keeps, 0 means all of it
 	maxTargets int32               // most targets an area hit picks, 0 for all of them
-	capped     bool                // multiplied by Encounter.AOECapMultiplier
+	capped     bool                // cut by Spell.AoECapUnits
 	mods       map[int32]aoeValues // the spell with one talent, glyph or set bonus on, by its spell id
 }
 
@@ -335,8 +335,8 @@ func compareAOEKeys(a, b aoeKey) int {
 }
 
 // TestSimAOESpells checks the chains, max targets and ten-target caps the class code hard-codes against
-// the server's spell data in assets/db_inputs/acore/spelldump.jsonl. TestAOECapMultiplier covers the cap's
-// formula, this covers which spells get it.
+// the server's spell data in assets/db_inputs/acore/spelldump.jsonl. TestAoECapCutsTheWholeDamageAfterThePercents
+// (sim/core) covers the cap's formula, this covers which spells get it.
 //
 // The cap is Spell::DoAllEffectOnLaunchTarget's damage × 10 / targets past ten targets, counting every
 // unit any of the spell's effects hits, the caster too. It takes the launch damage of an effect that

@@ -36,7 +36,8 @@ func (priest *Priest) registerPrayerOfMendingSpell() {
 		// Find ally with lowest % HP and is not the current mending target.
 		var newTarget *core.Unit
 		for _, raidUnit := range priest.Env.Raid.AllUnits {
-			if raidUnit == target {
+			// a pet that isn't out can't be picked
+			if raidUnit == target || !raidUnit.IsEnabled() {
 				continue
 			}
 

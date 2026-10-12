@@ -18,10 +18,11 @@ func TestSpellResultKeepsTheCastItWasMadeFor(t *testing.T) {
 	spell.CurCast.CastTime = 2 * time.Second
 	hardcast := spell.NewResult(target)
 
-	if !instant.FromInstantCast() {
+	sim := &Simulation{}
+	if !instant.DealtWithItsCast(sim, spell) {
 		t.Error("the instant cast's result reads as a hardcast")
 	}
-	if hardcast.FromInstantCast() {
+	if hardcast.DealtWithItsCast(sim, spell) {
 		t.Error("the hardcast's result reads as instant")
 	}
 }

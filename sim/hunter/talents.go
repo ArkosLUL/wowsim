@@ -267,7 +267,7 @@ func (hunter *Hunter) applyCobraStrikes() {
 				return
 			}
 
-			if sim.RandomFloat("Cobra Strikes") < procChance {
+			if sim.RandomFloat("Cobra Strikes") < procChance && hunter.pet.IsEnabled() {
 				hunter.pet.CobraStrikesAura.Activate(sim)
 				hunter.pet.CobraStrikesAura.SetStacks(sim, 2)
 			}
