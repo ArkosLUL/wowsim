@@ -171,18 +171,16 @@ boss); EC-TOOLS2 waits for Z9.
 
 ## Current wave
 
-- Wave: Z7, landed (master fast-forwarded to this close-out), base `fd12d68cc`. One run did every code and live
-  stage on the server at [ac] `3d89793c7`, mod-spell-tweaks `9bf5c75`, mod-sim-validation `8a6f13f` (image of
-  2026-10-11 13:38 local). EC-CORE-FIX4 came back blocked on `sim/optimizer`'s calibration gap test alone, so it
-  had one review round; the test's pair changed at its merge.
-  The module's `bcc58cf` (`NO_AMOUNT_SCRIPTS`; HEAD `bc1d35e`) needs a rebuild by the user, then the spell-mod
-  sweep's WarlockAffliction path again (EC-CLASS-FIX4).
+- Wave: Z8, running, base `c244f8ee9`, runId `wf_22d8a7f1-a8a`, launched 2026-10-12. Transcripts:
+  `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\wf_22d8a7f1-a8a`.
+  Briefs: `G:\DevStuff\GitHub\.wave-loop\waveZ8-build.py` (`waveZ8-args.json`, `waveZ8-shared.md`); the tank
+  item's research: `.wave-loop\bis-tank-magic\step0.md`.
+  Server: [ac] `3d89793c7`, mod-spell-tweaks `9bf5c75`, mod-sim-validation `bc1d35e` (the user's image of
+  2026-10-11 21:56 local, with `bcc58cf`). No item changes the module's C++.
+  Z7 landed at base `fd12d68cc`; its reports: `.wave-loop\z7-run1\*.md` (`xreview.md`: the cross-review's).
   Prod runs Z6's `e5a289570`, without Z7; `wowsims-wotlk:rollback-x` is X's `25cb9dddc`. Auto mode refuses the
   prod docker commands, a DSN on a command line and chained commands: the user's allow rules
   (`.claude/settings.local.json` in [sim]) cover each plain command.
-  Next, Z8, planned: EC-CORE-FIX5, EC-PET-FIX4, EC-CLASS-FIX4 and EC-TOOLS2.
-  Z7's reports: `G:\DevStuff\GitHub\.wave-loop\z7-run1\*.md` (`xreview.md`: the cross-review's),
-  `waveZ7-results.json`; item notes: `.wave-loop\{ec-core-fix4,ec-pet-fix3,ec-class-fix3,ec-tools}-tmp`.
 - Open: the e2e-coverage backlog Z8 leaves, sim-performance's Left items, Z5's 9–11% on mana users and Z7's missing
   row (Sim throughput), the bis-optimizer backlog (Z3's As
   builts: the enchant residual, Mutilate's pair, Combat Rogue P3 Normal; Z4's: the surrogate overpricing a
@@ -736,6 +734,10 @@ crashed before F2, so its column starts there.
 | EC-CLASS-FIX3 | merged | `45e118126` | module `17d703a`; item damage procs as server spells (Omen of Clarity rolls on them), Nature's Grace at a crit Wrath's launch (live 171 of 171), Blood Presence's heal, the death knight rotations, Chimera Shot - Serpent's sting percents, Hunting Party off Explosive Shot's ticks, `Target.mechanic_immune_mask`, an APL value for Curse of Doom's length; MageFire's sweep re-recorded; at the merge: `chimera_shot.go` whole at each step, a Nature's Grace test re-timed (`3c8423d2f`); goldens `36e0c387d`: 35 suites, Balance +1.2%, Frost DK +0.49% |
 | EC-TOOLS | merged | `99a1e046a` | module `ceb154c`; `tools/apldbg`, `simval threat` (the fixture cutter), `PseudoStatBonusDefenseSkill` on the sheet, fights on the hub's outer floor in sight of the dummy's centre (DruidBalance re-recorded, Starfall compared); serverdata and `db.json` regenerated in `837f53c95`; goldens unchanged |
 | wave Z7 cross-review | direct | `e84c1ee9b` | module `bcc58cf` (needs a rebuild by the user); the clock went back to an overdue aura's expiry on a returning pet; Replenishment lost a tick on Hunting Party's refresh; explosives as their use spells (Saronite Bomb always lands and never crits, the others 1.5× crits); Feral's Clearcasting check; `tools/apldbg` shares the DK suites' configs; the five untraced golden moves traced, none a bug; left open: a cast landing on an aura's last tick, the live 102.7 ms map update (Ignite's race), both EC-CORE-FIX5's; goldens `a88b63b7c`: Feral tank −0.34%, Retribution dtps −11.6%, three more within 0.3% |
+| EC-CORE-FIX5 | running | | branch `e2e-coverage-core-fix5` |
+| EC-PET-FIX4 | running | | branch `e2e-coverage-pet-fix4` |
+| EC-CLASS-FIX4 | running | | branch `e2e-coverage-class-fix4` |
+| BIS-TANK-MAGIC | running | | branch `bis-optimizer-tank-magic` |
 
 Later WIs are added as their wave starts.
 
