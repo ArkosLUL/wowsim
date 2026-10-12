@@ -2090,7 +2090,8 @@ the front, parry 14.0%, which only expertise lowers. Bot tanks re-taunt until th
 **Decided by the user:** fix the fight model, no hand-set health or stamina floor; a tank melee-hit floor at the
 taunt cap, hit only; afterwards the full 21-raider pass, on the user's call
 ([driver README](../../tools/database/acbis/driver/README.md)) (2026-10-11). Phase 1's boss is Kel'Thuzad 25, not
-Patchwerk, who has next to no mechanics (2026-10-12).
+Patchwerk, who has next to no mechanics, and the raid interrupts half of his single-target Frostbolts
+(2026-10-12).
 
 **Step 0, the numbers.** For each `TANK_BOSSES` boss at its difficulty, every ability that damages the current
 tank and that armor and avoidance can't remove: spell id, school, damage, cadence. Sources: the boss script
@@ -2106,8 +2107,11 @@ That research found, to be modelled where the source confirms it:
 - Halion has no Chill of the Throne (`spell_area`: Icecrown only) but Twilight Precision 78243: +5% hit, the
   tank's dodge × 0.8.
 - Kel'Thuzad 25 is `creature_template` 30061: DamageModifier 70, BaseAttackTime 2000, `unit_class` 2, so his
-  `creature_classlevelstats` row differs from the class 1 numbers the generic boss carries. Where players can
-  interrupt a cast of his, state what the model assumes.
+  `creature_classlevelstats` row differs from the class 1 numbers the generic boss carries. Players can
+  interrupt his Frostbolt 55802 (about 30,000 Frost every 2 to 10 s, no swing during the 2 s cast): the
+  interrupted share is one named number in his `TANK_BOSSES` row, 0.5, and an interrupted cast costs no swing.
+  Only the part of the fight where he attacks is modelled, not the first 228 s. The Guardians of Icecrown and
+  Unstoppable Abominations are other tanks' and stay out.
 
 **Step 1, the fight.**
 - New `sim/encounters/optimizer_tank_boss.go`: a synthetic `OptimizerTankBossID` (like `GenericBossID`),
