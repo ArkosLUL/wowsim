@@ -318,6 +318,45 @@ func TestAddRemainingRaisesTheMaxDurationOnlyPastIt(t *testing.T) {
 	}
 }
 
+// Haste shortens Flame Shock's duration and interval alike, so its 6 ticks fit 14.4 s at 25%. The server
+// divides the raised max duration by the hasted 2.4 s: 18.9 s left after the first 1.5 s come to 7 ticks.
+func TestAddRemainingCountsAHastedDotsTicksInItsOwnInterval(t *testing.T) {
+	var spell *Spell
+	var ticks *[]time.Duration
+	sim, a := newTickTestSim(t, 100, 10, func(a *timingTestAgent) {
+		spell, ticks = dotSpell(a, 0, DotConfig{
+			Aura:                Aura{Label: "hasted dot"},
+			NumberOfTicks:       6,
+			TickLength:          3 * time.Second,
+			TicksCanCrit:        false,
+			AffectedByCastSpeed: true,
+		})
+	})
+	a.MultiplyCastSpeed(1.25)
+	dot := spell.Dot(a.CurrentTarget)
+	sim.PrePull()
+	start := sim.NextServerTick(ms(500))
+	at(sim, start, func(sim *Simulation) { dot.Apply(sim) })
+	at(sim, start+ms(1500), func(sim *Simulation) {
+		dot.AddRemaining(sim, 6*time.Second)
+		if got := dot.TotalTicks(); got != 7 {
+			t.Errorf("total ticks %d with 18.9 s left of a dot ticking every %v, want 7", got, dot.TickPeriod())
+		}
+	})
+	// 8 s on, the same 6 s leave less than that max
+	at(sim, start+ms(9500), func(sim *Simulation) {
+		dot.AddRemaining(sim, 6*time.Second)
+		if got := dot.TotalTicks(); got != 7 {
+			t.Errorf("total ticks %d after adding time under the max, want 7 still", got)
+		}
+	})
+	runUntil(sim, start+30*time.Second)
+
+	if len(*ticks) != 7 {
+		t.Errorf("%d ticks at %v, want 7", len(*ticks), *ticks)
+	}
+}
+
 // Earth Shield spends a charge per ManualTick, so all of them have to land before the dot goes.
 func TestManualTickSpendsEveryTick(t *testing.T) {
 	sim := SetupFakeSim()

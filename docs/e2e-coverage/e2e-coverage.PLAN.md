@@ -3056,12 +3056,24 @@ Frost Shock snare and Nature's Grace moved with the period. `simval.jsonl` 1114/
 
 Goldens (`dock.sh delta`), all 37 move. The order change alone moves 24, Average-Default within ±0.075% but TestHoly
 hps −5.3% (heals on pets that are away: Circle of Healing hits 75.8 to 50.5). With the period:
-- TestFire −3.7% and TestFrostFire −3.3%: Ignite −13.8% and −11.9% a tick. An application due 2.0 s after the last
-  beats the old tick about half the time (live 14 in 91), which drops the double count of the tick-first order
-  (`procIgnite` reads the old tick as owed, then it pays). The MageFire replay passes (ticks log 22, sim 22.8).
+- TestFire −3.7% and TestFrostFire −3.3%: Ignite's damage −13.8% and −11.9% (ticks −22%, each 10% larger), 90 and
+  95% of the drop. An application due 2.0 s after the last beats the old tick 52% of the time (never before), which
+  drops the double count of the tick-first order (`procIgnite` reads the old tick as owed, then it pays; the server
+  does the same). Cross-review, on the live fight the count came from (Pyroblast under Bloodlust, not the committed
+  `MageFire.log.gz`, which holds 3 races): the application won 14 of 21 such races live and 54.7% in the sim's replay
+  of it (z +0.95). One due 4.0 s after wins 5 of 9 live and 4% in the sim: on a fixed 102.7 ms update the old
+  Ignite's last tick always comes first, and the live update drifts (103.1 ms in that fight). Under one such race a
+  fight in the goldens. The fire goldens move 0.15% for each 0.01 ms of `world_loop_ms`.
 - Boss swings −2.7%: BloodTank dtps −2.6%, FeralTank −5.3%, Protection (paladin) −6.2%, ProtectionWarrior −2.8%.
+  Cross-review, at 400,000 to 1,000,000 iterations against `world_loop_ms` 0 (the reorder moves none of the four):
+  swings −2.5 to −2.6% everywhere. FeralTank is −5.6%: the rest is Savage Defense, whose one charge the druid's
+  crits refill at their own rate, so a longer gap leaves fewer swings without one (13.65 to 13.11%). The paladin is
+  −2.4%: it only takes 1.1 hits a fight, and the golden's 2000 iterations scatter by 2.8%. The warrior is −2.75%
+  (Shield Block's windows −0.26%).
 - TestUnholy −0.48%, TestFury −0.69%, TestBM −0.92%, TestDisc −0.77%: reshuffles and pet swings, not traced further.
-- The other suites within ±0.4%; rows over 5% are small bases.
+- The other suites within ±0.4%. After the channel fix (`32ca3596c`) the rows 5% or more off the base are TestHoly's
+  (above), the fire mages' Bloodmage's rows and one short FrostFire row (Ignite), a Balance multi-target row and the
+  Frost Witch row (below), and the tanks' Average and 20-iteration SwitchInFrontOfTarget rows.
 
 Amounts stage (notes `tmp/ec-core-fix5-amounts.md`), on top of the timing stage. Verdicts:
 - White swings: whole already (`Spell.StrikeDamage`). The rune weapon's strikes and swing roll whole now
@@ -3088,8 +3100,14 @@ Amounts stage (notes `tmp/ec-core-fix5-amounts.md`), on top of the timing stage.
   Instincts, Prey on the Weak). `sim/common/tbc/metagems.go`'s six effects go on and off with the swap. No preset
   swaps a gem, so no golden moves from it.
 - `spell_sha_t10_elemental_4p_bonus` (fixed): 6 s on the time left, the max duration (which caps the ticks) raised only
-  when the new time passes it (`Dot.AddRemaining`). The old extra ticks and the haste reschedule went. A Frost Witch
-  row of TestElemental −5.0%, nothing else.
+  when the new time passes it (`Dot.AddRemaining`). The old extra ticks and the haste reschedule went. Flame Shock's
+  max duration is hasted like its interval (`SPELL_ATTR5_SPELL_HASTE_AFFECTS_PERIODIC`), so the raised one counts in
+  hasted intervals: 7 to 8 ticks an application, not 6 (cross-review). A Frost Witch row of TestElemental −4.1%,
+  nothing else.
+- A creature's swing after its hardcast lands (fixed in cross-review): `Unit::Update` runs the attack timers down
+  after its event pass, so the restarted timer loses that update. Live the Fire Elemental swung 1957 ms after a landed
+  Nova (34 swings) and 2058 ms after a swing or Blast: 19 and 20 updates in the sim now. A player's restart loses
+  its 10 ms world tick by the same lines: unmeasured, not changed.
 - `arcane_p3` beside `fury_p1`: not fixed. The gap is `sim/optimizer`'s derived context against the real raid, no
   server mechanic, and that package is BIS-TANK-MAGIC's.
 - `tools/simval/fight.go` per-update event: kept, as the timing stage found.
@@ -3140,7 +3158,9 @@ Code stage, re-measured on `c244f8ee9` against [ac] `3d89793c7`. Verdicts:
     doesn't run on that update: the live 2 s lead shows it (9 Frostbolts, 2 Fire Blasts). The sim's timeout runs first
     and loses the cast. Landing it (the death at `ActionPriorityLow`) moves Frost +0.4%: there a Fire Blast opener's last
     Frostbolt at the presets' lead is such a tie. Whether its missile hits before the corpse goes at 30 s is unmeasured,
-    so it stays.
+    so it stays. Cross-review, on `integration`'s `world_loop_ms`: the same change moves no mage golden and no line of
+    the replay, so no cast is due on that update at the presets' lead any more. The 9th Frostbolt the server has after
+    a Frostbolt opener would end 0.43 s after the sim's image dies: nine casts of 3081 ms against the live 3048.
 - Permanent pet summoned again (fixed): `Pet.Disable` takes the inherited stats off for every pet, not just guardians
   and timed ones.
 - Bloodworm health (fixed): 437 create health, 1 a point of stamina (`SetCreateHealth(437, 25, 1)`). Nothing reads it.
@@ -3175,11 +3195,13 @@ stage code's.
   3 s ahead of the pull 8 and 2, or 3 after a Fire Blast opener, as the sim. 2 s ahead, the presets' lead, the server
   has 8 and 3 after a Fire Blast opener (6 images) and 9 and 2 after a Frostbolt (3, the 9th landing on the update
   the image dies on); this base's 100 ms grid gives 9 and 4, and 9 and 3. Those casts ride on the update period:
-  EC-CORE-FIX5's `world_loop_ms`, already on `integration`, should give 8 and 3, and 8 and 2.
+  EC-CORE-FIX5's `world_loop_ms`, already on `integration`, gives 8 and 3, and 8 and 2 (cross-review).
 - Opener (confirmed, unchanged): 8 of 9 summons ahead of the pull mix both openers, so the server rolls per image;
   16 of 27 opened on a Fire Blast.
 - Fixture: `pets_casts.jsonl`, the 12 lives and 15 summons, replayed by `TestPetsCastsRecords`
   (`tools/simval/pets_casts.go`, 100 checks); a cast within 0.5 s of an image's death may be missing on either side.
+  Its drift allowance is 1.5% since the cross-review, 3% before: on `world_loop_ms` only the sim's fixed update
+  against the live jitter is left (0.5% fails 6 checks).
 - e2e: `TestPetfixMirrorImageCasts` gains three summons 2 s ahead of the pull (9 summons, about 6 min).
 
 Follow-ups:
@@ -3228,8 +3250,9 @@ Druid and items stage (notes in `tmp/ec-class-fix4-druid.md`). Verdicts:
 - Nature's Grace launch roll: only Wrath and Typhoon are missiles in the mask; Typhoon's triggered 53227 rolls at its hit
   only (added).
 - Shard of the Gods (fixed): Purified (69755) casts only Cauterizing Heal 69733, Shiny (69739) only Searing Flames
-  69729 (spell_script_names; the cpp comments swap the two), 25%, 45 s, off any landed spell damage or heal; no
-  heroic ids. A damage hit uses up the Purified proc and heals nothing.
+  69729 (spell_script_names; the cpp comments swap the two; ItemSet.dbc rows 881 and 882 carry 69755 and 69739), 25%,
+  45 s, off any landed spell damage or heal; no heroic ids. A damage hit uses up the Purified proc and heals nothing,
+  and a heal the Shiny one (cross-review): the spell fails on the wrong kind of target (`SPELL_FAILED_BAD_TARGETS`).
 - Bryntroll (fixed): Drain Life 71838/71839, crit capable; the leech heal to the player isn't modeled.
 - Item heals under server spells (not changed): nothing reads them, as Omen rolls on `OnSpellHitDealt` only and no
   restoration heal rolls it.

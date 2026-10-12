@@ -28,6 +28,9 @@ type OptimizerTankAbility struct {
 	LandChance float64
 	// Seconds added to the first cast, to offset a paired ability (Soul Reaper's delayed tick).
 	StartSeconds float64
+	// The boss's swing timer restarts when the cast goes off: an untriggered spell with
+	// SPELL_INTERRUPT_FLAG_INTERRUPT (Spell::IsAutoActionResetSpell).
+	ResetsSwing bool
 }
 
 // OptimizerTankBoss is one phase boss as the optimizer's tank runs fight it: the swinging generic
@@ -41,7 +44,10 @@ type OptimizerTankBoss struct {
 	// row GenericBossTarget carries.
 	DamageExp2  float64
 	AttackPower float64
-	DualWield   bool
+	// An off hand from Dual Wield (42459), whose 20% hit takes the 19% dual wield miss back off.
+	DualWield bool
+	// creature_template.flags_extra has CREATURE_FLAG_EXTRA_NO_PARRY_HASTEN.
+	NoParryHaste bool
 	// ICC bosses' Chill of the Throne.
 	SuppressDodge bool
 	Abilities     []OptimizerTankAbility
@@ -54,10 +60,14 @@ const (
 )
 
 // The labels of a TargetInput group, in order; abilities travel as consecutive groups.
-var optimizerTankAbilityLabels = [...]string{"Spell id", "School", "Damage", "Period min", "Period max", "Cast time", "Land chance", "Start"}
+var optimizerTankAbilityLabels = [...]string{"Spell id", "School", "Damage", "Period min", "Period max", "Cast time", "Land chance", "Start", "Resets swing"}
 
 func (a OptimizerTankAbility) inputs() []*proto.TargetInput {
-	values := [...]float64{float64(a.SpellID), float64(a.School), a.Damage, a.PeriodMin, a.PeriodMax, a.CastSeconds, a.LandChance, a.StartSeconds}
+	resetsSwing := 0.0
+	if a.ResetsSwing {
+		resetsSwing = 1
+	}
+	values := [...]float64{float64(a.SpellID), float64(a.School), a.Damage, a.PeriodMin, a.PeriodMax, a.CastSeconds, a.LandChance, a.StartSeconds, resetsSwing}
 	out := make([]*proto.TargetInput, len(values))
 	for i, v := range values {
 		out[i] = &proto.TargetInput{InputType: proto.InputType_Number, Label: optimizerTankAbilityLabels[i], NumberValue: v}
@@ -87,8 +97,7 @@ func OptimizerTankBossTarget(boss OptimizerTankBoss) *proto.Target {
 	target.SwingSpeed = float64(attackTimeMs) / 1000
 	target.MinBaseDamage = exp2 * boss.DamageModifier * target.SwingSpeed
 	target.DualWield = boss.DualWield
-	// the server's off hand takes the dual wield miss penalty on both hands
-	target.DualWieldPenalty = boss.DualWield
+	target.ParryHaste = !boss.NoParryHaste
 	target.SuppressDodge = boss.SuppressDodge
 	for _, ability := range boss.Abilities {
 		target.TargetInputs = append(target.TargetInputs, ability.inputs()...)
@@ -137,6 +146,7 @@ func abilitiesFromInputs(inputs []*proto.TargetInput) []OptimizerTankAbility {
 		out = append(out, OptimizerTankAbility{
 			SpellID: int32(v(0)), School: proto.SpellSchool(v(1)), Damage: v(2),
 			PeriodMin: v(3), PeriodMax: v(4), CastSeconds: v(5), LandChance: v(6), StartSeconds: v(7),
+			ResetsSwing: v(8) != 0,
 		})
 	}
 	return out
@@ -192,9 +202,18 @@ func (ai *optimizerTankBossAI) ExecuteCustomRotation(sim *core.Simulation) {
 		if sim.CurrentTime >= s.nextAt {
 			s.nextAt = sim.CurrentTime + max(s.gap(sim), time.Millisecond)
 			landed := s.LandChance == 0 || s.LandChance >= 1 || sim.RandomFloat("Optimizer Tank Boss Interrupt") < s.LandChance
-			if landed {
-				s.spell.Cast(sim, ai.target.CurrentTarget)
-				if ai.target.Hardcast.Expires > sim.CurrentTime {
+			if landed && s.spell.Cast(sim, ai.target.CurrentTarget) {
+				castEnd := max(ai.target.Hardcast.Expires, sim.CurrentTime)
+				if s.ResetsSwing {
+					readyAt := castEnd
+					if castEnd > sim.CurrentTime {
+						// a cast with a cast time goes off in the boss's event pass, ahead of that update's
+						// attack timers, so the restarted swing has an update off it already
+						readyAt -= sim.NextServerTick(castEnd+time.Nanosecond) - castEnd
+					}
+					ai.target.AutoAttacks.StopMeleeUntil(sim, readyAt, false)
+				}
+				if castEnd > sim.CurrentTime {
 					// the cast holds the boss; this runs again when it lands
 					return
 				}

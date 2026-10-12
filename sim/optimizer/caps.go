@@ -162,8 +162,9 @@ func (r *run) dpsCapFloors() {
 
 	switch role {
 	case capRoleTank:
-		// the taunt rolls the special-attack miss, which only melee hit rating removes
-		floor("taunt hit", stats.MeleeHit, func(s core.PlayerSheet) bool { return s.PhysicalMissChance == 0 })
+		// A taunt rolls spell hit, 17% against a boss. This floor's rating is 10 of it and the taunt
+		// glyph adds 8, so a taunt without the glyph still misses.
+		floor("hit", stats.MeleeHit, func(s core.PlayerSheet) bool { return s.PhysicalMissChance == 0 })
 	case capRoleMelee, capRoleHunter:
 		floor("hit", stats.MeleeHit, func(s core.PlayerSheet) bool { return s.PhysicalMissChance == 0 })
 		if role == capRoleMelee {

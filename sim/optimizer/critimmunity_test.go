@@ -2,7 +2,6 @@ package optimizer
 
 import (
 	"bufio"
-	"fmt"
 	"math"
 	"os"
 	"reflect"
@@ -35,36 +34,36 @@ var tankBosses = map[int32]tankBoss{
 	1: {encounters.OptimizerTankBoss{
 		Name: "Kel'Thuzad", DamageModifier: 70, AttackTimeMs: 2000, DamageExp2: 177.438, AttackPower: 783,
 		Abilities: []encounters.OptimizerTankAbility{
-			{SpellID: 55802, School: proto.SpellSchool_SpellSchoolFrost, Damage: 30000, PeriodMin: 2, PeriodMax: 10, CastSeconds: 2, LandChance: 0.5},
+			{SpellID: 55802, School: proto.SpellSchool_SpellSchoolFrost, Damage: 30000, PeriodMin: 2, PeriodMax: 10, CastSeconds: 2, LandChance: 0.5, ResetsSwing: true},
 			ability(55807, proto.SpellSchool_SpellSchoolFrost, 8000, 15, 30),
 		},
 	}, proto.RaidDifficulty_RaidDifficulty25Normal},
 	2: {encounters.OptimizerTankBoss{
-		Name: "Algalon", DamageModifier: 285, AttackTimeMs: 1000, DualWield: true,
+		Name: "Algalon", DamageModifier: 285, AttackTimeMs: 1000, DualWield: true, NoParryHaste: true,
 		Abilities: []encounters.OptimizerTankAbility{
 			ability(64412, proto.SpellSchool_SpellSchoolArcane, 9500, 15.5, 15.5),
 			ability(65108, proto.SpellSchool_SpellSchoolShadow, 21000, 25, 25),
 		},
 	}, proto.RaidDifficulty_RaidDifficulty25Normal},
 	3: {encounters.OptimizerTankBoss{
-		Name: "Anub'arak", DamageModifier: 149.1,
+		Name: "Anub'arak", DamageModifier: 149.1, NoParryHaste: true,
 		Abilities: []encounters.OptimizerTankAbility{
-			ability(66012, proto.SpellSchool_SpellSchoolFrost, 20788, 15, 20),
+			{SpellID: 66012, School: proto.SpellSchool_SpellSchoolFrost, Damage: 20788, PeriodMin: 15, PeriodMax: 20, ResetsSwing: true},
 			{SpellID: 68510, School: proto.SpellSchool_SpellSchoolFrost, Damage: 6000, PeriodMin: 3, PeriodMax: 3, LandChance: 0.18},
 		},
 	}, proto.RaidDifficulty_RaidDifficulty25Heroic},
 	4: {encounters.OptimizerTankBoss{
-		Name: "the Lich King", DamageModifier: 492.9, AttackTimeMs: 1500, SuppressDodge: true,
+		Name: "the Lich King", DamageModifier: 492.9, AttackTimeMs: 1500, NoParryHaste: true, SuppressDodge: true,
 		Abilities: []encounters.OptimizerTankAbility{
-			ability(73799, proto.SpellSchool_SpellSchoolShadow, 103081, 30.5, 30.5),
+			{SpellID: 73799, School: proto.SpellSchool_SpellSchoolShadow, Damage: 103081, PeriodMin: 30.5, PeriodMax: 30.5, ResetsSwing: true},
 			{SpellID: 73799, School: proto.SpellSchool_SpellSchoolShadow, Damage: 70000, PeriodMin: 30.5, PeriodMax: 30.5, StartSeconds: 5},
-			{SpellID: 73781, School: proto.SpellSchool_SpellSchoolShadow, Damage: 18750, PeriodMin: 22.5, PeriodMax: 22.5, CastSeconds: 2},
+			{SpellID: 73781, School: proto.SpellSchool_SpellSchoolShadow, Damage: 18750, PeriodMin: 22.5, PeriodMax: 22.5, CastSeconds: 2, ResetsSwing: true},
 		},
 	}, proto.RaidDifficulty_RaidDifficulty25Heroic},
 	5: {encounters.OptimizerTankBoss{
 		Name: "Halion", DamageModifier: 385.4, AttackTimeMs: 1500,
 		Abilities: []encounters.OptimizerTankAbility{
-			{SpellID: 74528, School: proto.SpellSchool_SpellSchoolFire, Damage: 45000, PeriodMin: 10, PeriodMax: 12, CastSeconds: 2},
+			{SpellID: 74528, School: proto.SpellSchool_SpellSchoolFire, Damage: 45000, PeriodMin: 10, PeriodMax: 12, CastSeconds: 2, ResetsSwing: true},
 		},
 	}, proto.RaidDifficulty_RaidDifficulty25Heroic},
 }
@@ -88,7 +87,7 @@ func tankEncounter(tb testing.TB, phase int32) *proto.Encounter {
 
 // tankHealing is the healing a tank takes from the boss it fights, the way the UI's pool builder
 // derives it per phase (ui/core/optimizer/pool_builder.ts healingModelForBoss): a cadence with some
-// variation and no HPS, which the optimizer's pinHealingModel fills in from the seed gear.
+// variation and no HPS, which the optimizer's pinHealingModel fills in from the gear as equipped.
 func tankHealing(boss *proto.Target) *proto.HealingModel {
 	cadence := 1.5 * boss.SwingSpeed
 	if boss.DualWield {
@@ -162,6 +161,9 @@ func readTankBossesFromUI(tb testing.TB) map[int32]tankBoss {
 		case inAbilities:
 			m := abilityLine.FindStringSubmatch(line)
 			if m == nil {
+				if !strings.HasPrefix(trimmed, "//") {
+					tb.Fatalf("unreadable ability line %q", line)
+				}
 				continue
 			}
 			a := encounters.OptimizerTankAbility{}
@@ -185,6 +187,8 @@ func readTankBossesFromUI(tb testing.TB) map[int32]tankBoss {
 					a.LandChance = uiNumber(tb, raw)
 				case "startSeconds":
 					a.StartSeconds = uiNumber(tb, raw)
+				case "resetsSwing":
+					a.ResetsSwing = raw == "true"
 				default:
 					tb.Fatalf("unknown ability field %q in %q", key, line)
 				}
@@ -219,6 +223,8 @@ func readTankBossesFromUI(tb testing.TB) map[int32]tankBoss {
 				cur.AttackPower = uiNumber(tb, raw)
 			case "dualWield":
 				cur.DualWield = raw == "true"
+			case "noParryHaste":
+				cur.NoParryHaste = raw == "true"
 			case "suppressDodge":
 				cur.SuppressDodge = raw == "true"
 			default:
@@ -241,7 +247,7 @@ func TestTankBossesMirrorUI(t *testing.T) {
 		if got, ok := tankBosses[phase]; !ok {
 			t.Errorf("phase %d: the UI has a boss, tankBosses doesn't", phase)
 		} else if !reflect.DeepEqual(got, want) {
-			t.Errorf("phase %d: tankBosses = %s, the UI has %s", phase, fmt.Sprintf("%+v", got), fmt.Sprintf("%+v", want))
+			t.Errorf("phase %d: tankBosses = %+v, the UI has %+v", phase, got, want)
 		}
 	}
 	for phase := range tankBosses {

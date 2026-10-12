@@ -137,7 +137,7 @@ Shadowcrawl). Per record (`pets.go`), on the pet built as for strikes:
 `TestPetsCastsRecords` replays `pets_casts.jsonl` (`pets_casts.go`): the `PETFIX_CASTS` lines of
 `TestPetfixFireElementalCasts` and the `PETFIX_IMAGES` lines of `TestPetfixMirrorImageCasts`, cut from the run's log
 with `grep -o 'PETFIX_CASTS {.*'` and `'PETFIX_IMAGES {.*'`, the prefix dropped. Times are packet arrivals, so every
-bound has 250 ms of jitter, a 110 ms update and 3% of drift on it (`petsCastsSlack`).
+bound has 250 ms of jitter, a 110 ms update and 1.5% of drift on it (`petsCastsSlack`).
 - Elemental lives against 600 of the sim's: landed Novas, Blasts and swings a life within 5 standard errors of the
   recorded mean; the first Blast, Blast gaps and landed Nova gaps inside the sim's span; each landed Nova the sim's
   cast time after a start, each broken one on a Blast, each swing one attack time after the swing or cast before it.

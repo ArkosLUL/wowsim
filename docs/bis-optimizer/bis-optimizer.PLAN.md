@@ -2172,9 +2172,9 @@ Golden-neutral. **Owns:** `sim/optimizer/`, `sim/encounters/optimizer_tank_boss.
 - `sim/encounters/optimizer_tank_boss.go`: `OptimizerTankBossID` 999998, registered through
   `core.AddPresetTarget` with no preset encounter. `OptimizerTankBossTarget(OptimizerTankBoss)` is the
   constructor beside `GenericBossTargetAt` (whose callers stay): the swinging boss from the boss's own stat
-  row (`DamageExp2`, `AttackPower`), an off hand with the dual wield miss penalty, `SuppressDodge`, and its
-  abilities as `target_inputs`, 8 numbers each (spell id, school, damage, period min and max, cast seconds,
-  land chance, start). The AI casts each ability with `OutcomeAlwaysHit` at its period rolled uniformly
+  row (`DamageExp2`, `AttackPower`), an off hand, `SuppressDodge`, and its abilities as `target_inputs` (spell
+  id, school, damage, period min and max, cast seconds, land chance, start; the cross-review below added
+  a ninth). The AI casts each ability with `OutcomeAlwaysHit` at its period rolled uniformly
   between the two; a cast with cast time holds the boss's melee (core's cast hold); a land chance under 1
   skips the cast without holding anything (the raid's interrupts). Each spell's `ActionID` carries its
   index as `Tag`, so two abilities may share a spell id.
@@ -2243,9 +2243,10 @@ phase 3 seed still dies in 99% of iterations, so its death term barely separates
 **Stage 2, the proof.**
 
 - Taunt floor (step 3): `capRoleTank` in `caps.go` for the four tank specs. `dpsCapFloors` adds only
-  `floor("taunt hit", MeleeHit, PhysicalMissChance == 0)`, bisected on the sheet, so talents and racials count.
+  `floor("hit", MeleeHit, PhysicalMissChance == 0)`, bisected on the sheet, so talents and racials count.
   Both tanks get 262 rating (8% against the level 83 boss) on every phase, and no ceiling or expertise floor.
-  `TestTankGetsOnlyTheTauntHitFloor` checks it is exact.
+  `TestTankGetsOnlyTheMeleeHitFloor` checks it is exact. It is the special-attack cap, not the taunt cap (see
+  the cross-review).
 - `pinHealingModel` now sims the gear as equipped, not the trimmed seed. A phase 1 pool lacks most worn slots
   (seed Defense 86 and 25), so 1.5 x the seed's DTPS healed the real gear past any death (Bulwark and Felesta p1
   dropped the death term: "doesn't move it measurably"). `TestPinnedHealingFollowsTheEquippedGear`.
@@ -2282,3 +2283,35 @@ of Felesta P2 and P3 and Bulwark P2. Cause, from the numbers and not the search:
 term separates nothing there. Every pick dies in at most 0.6% of iterations, so the death third has no
 gradient at the optimum and only TMI prices Stamina. Phase 2 (Algalon) wasn't in Row 1. Weights and the 1.5x
 stay as set.
+
+**Cross-review (Z8)**, against [ac] `3d89793c7` and the live DBCs. Every number above was measured on
+`c244f8ee9` plus the item, before the wave's other merges and before these fixes, so the Verify tables and
+the picks are stale; the step 0 table's ids, schools, damage, periods and cast times all hold.
+
+- Taunts (wrong in the spec): Taunt 355, Growl 6795, Dark Command 56222 and Hand of Reckoning 62124 are
+  `DmgClass MAGIC`, so they roll `MagicSpellHitResult`: 17% miss against a boss, removed by spell hit (26.23
+  rating a point), never dodged or parried. The 262 floor is 10 points of it; the taunt glyph's 8
+  (`SPELLMOD_RESIST_MISS_CHANCE`) covers the rest, and Misery's 3 counts. Without the glyph the cap is 446
+  rating (367 under Misery). The floor's value stays, as the user's call; the floor is now named "hit".
+- Algalon (fixed): Dual Wield 42459 gives +20% hit beside the off hand, so the 19% dual wield miss never
+  shows. `dualWieldPenalty` is off. His swings missed 34% of the time for 15% (the P3 paladin preset).
+- Parry haste (fixed): `noParryHaste` for Algalon, Anub'arak and the Lich King, whose rows get
+  `CREATURE_FLAG_EXTRA_NO_PARRY_HASTEN` from [ac] `2026_09_12_05.sql`. Not checked on the live DB.
+- Swing restart (fixed): an untriggered cast with `SPELL_INTERRUPT_FLAG_INTERRUPT` restarts the boss's swing
+  timer as it goes off (`Spell::IsAutoActionResetSpell`). `resetsSwing`, the ninth input, for Frostbolt,
+  Freezing Slash, Soul Reaper, Infest and Flame Breath; the AI calls `StopMeleeUntil`, one map update short
+  for a cast with a cast time, which lands ahead of that update's attack timers. The boss swung the moment a
+  cast landed before. `TestTankBossSwingRestartsAfterItsCasts`.
+- The fixes on the P3 paladin preset, 300 s, no healing: DTPS −7% (P1), +95% (P2), −5% (P3), −11% (P4),
+  −12% (P5). The merges alone moved it under 2%.
+- `TestMeasureTankModel` lost its old-fight half and gained phase 2. On the 7 Oct roster snapshot, seed death
+  chance as merged and with the fixes: Bulwark 0.050 / 0.176 / 0.406 to 0.003 / 0.166 / 0.224 (P1 / P2 /
+  P3), Felesta 0.716 / 0.944 / 0.991 to 0.361 / 0.995 / 0.977. **Bulwark P1 now drops the death term**
+  ("2000 Armor doesn't move it measurably"); the other five keep all three. Agility's dJ at P2 halves
+  (Bulwark 13.5 to 7.4, Felesta 13.2 to 6.0) while Stamina's holds (4.3, 2.7).
+- `TestOptimizerTankBossSwingFollowsTheStatRow` couldn't fail (it passed on the class 1 row); it checks the
+  fields now. `TestTankBossesMirrorUI` fails on an ability line it can't read.
+- Not modelled, beside the list above: Soul Reaper's 69410 (+100% boss melee haste for 5 s after the tick);
+  the tick drifts off its 5 s when an Infest cast delays either.
+- Harness: `opt_raid25_tank_p1`, `opt_feral_tank_p2` and `opt_prot_paladin_p3` regenerated; `baseline.json`
+  still holds the old requests' timings for those six scenarios.

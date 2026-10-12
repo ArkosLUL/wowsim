@@ -67,10 +67,10 @@ func (rogue *Rogue) registerEnvenom() {
 
 			dp := rogue.DeadlyPoison.Dot(target)
 			// Spell::EffectSchoolDMG: the effect's value per consumed dose (<= comboPoints), plus 9% AP per
-			// combo point, int32(ap × combo × 0.09f), whatever the doses
+			// combo point, int32(ap × 0.09f × combo) in that order, whatever the doses
 			consumed := min(dp.GetStacks(), comboPoints)
 			baseDamage := spell.Direct.Roll(sim)*float64(consumed) +
-				core.PowerBonus(0.09, float64(float32(comboPoints)*float32(spell.MeleeAttackPower())))
+				float64(int32(float32(spell.MeleeAttackPower())*0.09*float32(comboPoints)))
 
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 

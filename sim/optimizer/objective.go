@@ -109,8 +109,8 @@ func referenceStat(player *proto.Player) stats.Stat {
 }
 
 // normalizerOffset is how far each side of the seed the normalizer sims move the reference stat.
-// Armor moves DTPS far less per point than AP or SP move DPS, so it gets more. At 2000 a tank's
-// chance of death clears 2 se at Normal on both tanks' phase 1 gear; at 1000 Felesta's didn't.
+// Armor moves DTPS far less per point than AP or SP move DPS, so it gets more: at 1000 a tank's
+// chance of death doesn't always clear 2 se at Normal.
 func normalizerOffset(s stats.Stat) float64 {
 	if s == stats.Armor {
 		return 2000

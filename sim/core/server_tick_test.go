@@ -290,6 +290,45 @@ func TestPlayerSwingsOnWorldTicksPetOnMapUpdates(t *testing.T) {
 	}
 }
 
+// Unit::Update runs the attack timers down after its event pass, so the timer a creature's landing cast
+// restarts has that update off it at once. Live a Greater Fire Elemental swung 1957 ms after a landed Fire
+// Nova, 2058 ms after a swing.
+func TestCreatureSwingAfterItsCastLandsComesAnUpdateEarly(t *testing.T) {
+	var pet *tickTestPet
+	timingTestConstruct = func(a *timingTestAgent) {
+		pet = &tickTestPet{Pet: NewPet("Pet", &a.Character, stats.Stats{}, func(stats.Stats) stats.Stats { return stats.Stats{} }, true, false)}
+		pet.EnableAutoAttacks(pet, AutoAttackOptions{MainHand: testWeapon(2), AutoSwingMelee: true})
+		a.AddPet(pet)
+	}
+	var spell *Spell
+	sim, a := newTickTestSim(t, 100, 10, func(a *timingTestAgent) {
+		spell = pet.RegisterSpell(castConfig(testSpellExorcism, ms(1500)))
+	})
+	timingTestConstruct = nil
+	swings, landings := recordCasts(pet.AutoAttacks.MHAuto()), recordCasts(spell)
+	sim.PrePull()
+	at(sim, ms(2500), func(sim *Simulation) {
+		if !spell.Cast(sim, a.CurrentTarget) {
+			t.Fatal("the pet's cast failed")
+		}
+	})
+	runUntil(sim, 8*time.Second)
+
+	if len(*landings) != 1 {
+		t.Fatalf("landings at %v, want one", *landings)
+	}
+	landed := (*landings)[0]
+	var after []time.Duration
+	for _, swing := range *swings {
+		if swing > landed {
+			after = append(after, swing-landed)
+		}
+	}
+	if want := []time.Duration{ms(1900), ms(3900)}; len(after) < 2 || !slices.Equal(after[:2], want) {
+		t.Errorf("swings %v after the landing at %v, want %v: the first an update short of the 2 s", after, landed, want)
+	}
+}
+
 // Auto Shot is the player's too: a 2.608 s bow shoots every 2.61 s on 10 ms world ticks.
 func TestAutoShotOnWorldTicks(t *testing.T) {
 	sim, a := newTickTestSim(t, 100, 10, func(a *timingTestAgent) {

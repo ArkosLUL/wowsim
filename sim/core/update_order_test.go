@@ -358,34 +358,6 @@ func TestDotOnAUnitNothingUpdatesEndsItself(t *testing.T) {
 	}
 }
 
-// RescheduleNextTick with a shorter period can put the next tick in the past. It's late, not lost: it
-// runs at once, and the ticks after it keep the new lattice.
-func TestTickRescheduledIntoThePastRunsAtOnce(t *testing.T) {
-	var spell *Spell
-	var ticks *[]time.Duration
-	sim, _ := newTickTestSim(t, 0, 0, func(a *timingTestAgent) {
-		spell, ticks = dotSpell(a, SpellFlagNone, DotConfig{
-			Aura:          Aura{Label: "dot"},
-			NumberOfTicks: 2,
-			TickLength:    2 * time.Second,
-			TicksCanCrit:  false,
-		})
-	})
-	sim.PrePull()
-	dot := spell.Dot(sim.Encounter.TargetUnits[0])
-	at(sim, 0, func(sim *Simulation) { dot.Apply(sim) })
-	at(sim, ms(1500), func(sim *Simulation) {
-		dot.TickLength = time.Second
-		dot.RescheduleNextTick(sim)
-	})
-	runUntil(sim, 10*time.Second)
-
-	// the 4 s the dot went on with holds four 1 s ticks
-	if want := []time.Duration{ms(1500), ms(2000), ms(3000), ms(4000)}; !slices.Equal(*ticks, want) {
-		t.Errorf("ticks at %v, want %v", *ticks, want)
-	}
-}
-
 // Dot.Refresh is the server's refresh of a stacking dot: the duration and the tick count start over.
 func TestRefreshedDotKeepsTicking(t *testing.T) {
 	var spell *Spell

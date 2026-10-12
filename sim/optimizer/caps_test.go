@@ -164,9 +164,9 @@ func TestTheFloorFollowsTargetDebuffs(t *testing.T) {
 	t.Logf("spell hit floor %.0f with the debuffs, %.0f without them", withFloor, withoutFloor)
 }
 
-// A tank gets the melee hit floor and nothing else: the special-attack miss a taunt rolls, exact
-// against the run's boss, and near 8% of hit rating (less the talents').
-func TestTankGetsOnlyTheTauntHitFloor(t *testing.T) {
+// A tank gets the melee hit floor and nothing else: what a special attack needs to never miss the
+// run's boss, exact, and near 8% of hit rating (less the talents').
+func TestTankGetsOnlyTheMeleeHitFloor(t *testing.T) {
 	r, err := PrepareRequest(tankOptimizeRequest(t, protPaladin(t, "p3"), 3))
 	if err != nil {
 		t.Fatal(err)

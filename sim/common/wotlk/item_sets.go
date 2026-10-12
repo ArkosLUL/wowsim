@@ -65,13 +65,16 @@ func applyShardOfTheGodsDamageProc(character *core.Character) {
 
 	core.MakeProcTriggerAura(&character.Unit, core.ProcTrigger{
 		Name:       name + " Trigger",
-		Callback:   core.CallbackOnSpellHitDealt,
-		ProcMask:   core.ProcMaskSpellDamage,
+		Callback:   core.CallbackOnHealDealt | core.CallbackOnSpellHitDealt,
+		ProcMask:   core.ProcMaskSpellHealing | core.ProcMaskSpellDamage,
 		Outcome:    core.OutcomeLanded,
 		ProcChance: 0.25,
 		ICD:        time.Second * 45,
 		Handler: func(sim *core.Simulation, _ *core.Spell, result *core.SpellResult) {
-			dotSpell.Dot(result.Target).Apply(sim)
+			// a heal's hit uses up the proc too: the dot is aimed at whoever was healed and fails
+			if result.Target.Type == core.EnemyUnit {
+				dotSpell.Dot(result.Target).Apply(sim)
+			}
 		},
 	})
 }
@@ -106,7 +109,7 @@ func applyShardOfTheGodsHealingProc(character *core.Character) {
 		ProcChance: 0.25,
 		ICD:        time.Second * 45,
 		Handler: func(sim *core.Simulation, _ *core.Spell, result *core.SpellResult) {
-			// a damage spell's hit uses up the proc too, and the server heals the enemy it hit
+			// a damage spell's hit uses up the proc too: the heal is aimed at the enemy it hit and fails
 			if result.Target.Type != core.EnemyUnit {
 				spell.Cast(sim, result.Target)
 			}

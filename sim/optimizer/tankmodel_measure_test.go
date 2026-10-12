@@ -9,21 +9,9 @@ import (
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
 	"github.com/wowsims/wotlk/sim/core/stats"
-	"github.com/wowsims/wotlk/sim/encounters"
 	"google.golang.org/protobuf/encoding/protojson"
 	goproto "google.golang.org/protobuf/proto"
 )
-
-// oldTankFight is the tank fight before the optimizer's tank boss: the generic boss at the phase
-// boss's swing, healing pinned to 0.175 of its unmitigated damage with no variation, survival split
-// between DTPS and TMI.
-var oldTankFight = map[int32]struct {
-	damageModifier float64
-	attackTimeMs   int32
-}{
-	1: {70, 1200},
-	3: {149.1, 0},
-}
 
 // rosterRaid reads a raid sim page's saved state (the raid.json the BiS driver imports, or its
 // storage snapshot): the roster is never committed, so the path comes from the environment.
@@ -59,15 +47,9 @@ func rosterRaid(tb testing.TB) *proto.Raid {
 	return raid
 }
 
-type fightScore struct {
-	label   string
-	request *Request
-	obj     *Objective
-}
-
-// tankFightRequest is the roster's raid with the named raider tanking the phase's fight, old or new,
-// the way the raid batch builds it: the whole raid, so the server's dungeon scale is the full-raid one.
-func tankFightRequest(tb testing.TB, name string, phase int32, old bool) *Request {
+// tankFightRequest is the roster's raid with the named raider tanking the phase's fight, the way the
+// raid batch builds it: the whole raid, so the server's dungeon scale is the full-raid one.
+func tankFightRequest(tb testing.TB, name string, phase int32) *Request {
 	tb.Helper()
 	if !core.WITH_DB {
 		tb.Skip("needs the with_db item data")
@@ -108,32 +90,20 @@ func tankFightRequest(tb testing.TB, name string, phase int32, old bool) *Reques
 			RacialMode:          proto.OptimizerRacialMode_OptimizerRacialKeepCurrent,
 		},
 	}
-	if old {
-		fight := oldTankFight[phase]
-		boss := encounters.GenericBossTargetAt(fight.damageModifier, fight.attackTimeMs)
-		req.Base.Encounter.Targets = []*proto.Target{boss}
-		cadence, hps := 1.5*boss.SwingSpeed, 0.175*boss.MinBaseDamage/boss.SwingSpeed
-		player.HealingModel = &proto.HealingModel{Hps: hps, CadenceSeconds: cadence, BurstWindow: 6}
-		req.Settings.MetricWeights = &proto.OptimizerMetrics{Dtps: 0.35, Tmi: 0.35, Tps: 0.3}
-	} else {
-		player.HealingModel = tankHealing(req.Base.Encounter.Targets[0])
-	}
+	player.HealingModel = tankHealing(req.Base.Encounter.Targets[0])
 	r, err := PrepareRequest(req)
 	if err != nil {
 		tb.Fatal(err)
 	}
-	if !old {
-		if err := (&run{r: r}).pinHealingModel(); err != nil {
-			tb.Fatal(err)
-		}
+	if err := (&run{r: r}).pinHealingModel(); err != nil {
+		tb.Fatal(err)
 	}
 	return r
 }
 
-// TestMeasureTankModel prints, per raider and phase, what one more point of stamina, agility, dodge
-// and defense rating is worth on the old and the new tank fight, the new fight's damage taken, and
-// whether the objective keeps the chance of death. It asserts only that the new objective keeps all
-// three survival terms.
+// TestMeasureTankModel prints, per raider and phase, the tank fight's damage taken and chance of
+// death, the objective's normalizers, and what one more point of stamina, agility, dodge and defense
+// rating is worth. It asserts only that the objective keeps all three survival terms.
 //
 //	BIS_ROSTER=<storage-snapshot.json> go test -tags with_db -run TestMeasureTankModel -v ./sim/optimizer/
 func TestMeasureTankModel(t *testing.T) {
@@ -149,46 +119,39 @@ func TestMeasureTankModel(t *testing.T) {
 	const bump = 100.0
 
 	for _, name := range []string{"Bulwark", "Felesta"} {
-		for _, phase := range []int32{1, 3} {
-			for _, old := range []bool{true, false} {
-				fight := "new"
-				if old {
-					fight = "old"
+		for _, phase := range []int32{1, 2, 3} {
+			r := tankFightRequest(t, name, phase)
+			eval := NewSimEvaluator(r, MetricDTPS, MetricTMI, MetricTPS, MetricPDeath)
+			obj, err := NewObjective(context.Background(), eval, r, iterations)
+			if err != nil {
+				t.Fatalf("%s phase %d: %v", name, phase, err)
+			}
+			t.Logf("%s phase %d: pinned %.0f HPS, weights %v normalizers %+v warnings %v", name, phase,
+				r.Target().GetHealingModel().GetHps(), obj.Weights, obj.Normalizers, obj.Warnings)
+			for _, m := range []Metric{MetricDTPS, MetricTMI, MetricPDeath} {
+				if obj.coef[m] == 0 {
+					t.Errorf("%s phase %d: %s left out of the objective", name, phase, metricName(m))
 				}
-				r := tankFightRequest(t, name, phase, old)
-				eval := NewSimEvaluator(r, MetricDTPS, MetricTMI, MetricTPS, MetricPDeath)
-				obj, err := NewObjective(context.Background(), eval, r, iterations)
-				if err != nil {
-					t.Fatalf("%s phase %d %s fight: %v", name, phase, fight, err)
-				}
-				t.Logf("%s phase %d %s fight: weights %v normalizers %+v warnings %v", name, phase, fight, obj.Weights, obj.Normalizers, obj.Warnings)
-				if !old {
-					for _, m := range []Metric{MetricDTPS, MetricTMI, MetricPDeath} {
-						if obj.coef[m] == 0 {
-							t.Errorf("%s phase %d: %s left out of the objective", name, phase, metricName(m))
-						}
-					}
-				}
-				points := []Point{{Loadout: r.Seed}}
-				for _, o := range offsets {
-					var offset stats.Stats
-					offset[o.stat] = bump
-					points = append(points, Point{Loadout: r.Seed, Offset: offset})
-				}
-				evals, err := eval.Evaluate(context.Background(), points, iterations)
-				if err != nil {
-					t.Fatal(err)
-				}
-				seed := evals[0]
-				t.Logf("%s phase %d %s fight seed: DTPS %.0f TMI %.0f TPS %.0f death %.4f", name, phase, fight,
-					seed.Metrics[MetricDTPS].Mean, seed.Metrics[MetricTMI].Mean, seed.Metrics[MetricTPS].Mean, seed.Metrics[MetricPDeath].Mean)
-				for i, o := range offsets {
-					d := obj.Delta(seed, evals[i+1])
-					t.Logf("%s phase %d %s fight: dJ per %s point %+.4f (se %.4f); dDTPS %+.3f dTMI %+.3f dDeath %+.6f",
-						name, phase, fight, o.name, d.Mean/bump, d.SE/bump,
-						Delta(seed, evals[i+1], MetricDTPS).Mean/bump, Delta(seed, evals[i+1], MetricTMI).Mean/bump,
-						Delta(seed, evals[i+1], MetricPDeath).Mean/bump)
-				}
+			}
+			points := []Point{{Loadout: r.Seed}}
+			for _, o := range offsets {
+				var offset stats.Stats
+				offset[o.stat] = bump
+				points = append(points, Point{Loadout: r.Seed, Offset: offset})
+			}
+			evals, err := eval.Evaluate(context.Background(), points, iterations)
+			if err != nil {
+				t.Fatal(err)
+			}
+			seed := evals[0]
+			t.Logf("%s phase %d seed: DTPS %.0f TMI %.0f TPS %.0f death %.4f", name, phase,
+				seed.Metrics[MetricDTPS].Mean, seed.Metrics[MetricTMI].Mean, seed.Metrics[MetricTPS].Mean, seed.Metrics[MetricPDeath].Mean)
+			for i, o := range offsets {
+				d := obj.Delta(seed, evals[i+1])
+				t.Logf("%s phase %d: dJ per %s point %+.4f (se %.4f); dDTPS %+.3f dTMI %+.3f dDeath %+.6f",
+					name, phase, o.name, d.Mean/bump, d.SE/bump,
+					Delta(seed, evals[i+1], MetricDTPS).Mean/bump, Delta(seed, evals[i+1], MetricTMI).Mean/bump,
+					Delta(seed, evals[i+1], MetricPDeath).Mean/bump)
 			}
 		}
 	}

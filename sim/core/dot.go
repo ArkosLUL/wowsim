@@ -206,7 +206,12 @@ func (dot *Dot) Activate(sim *Simulation) {
 func (dot *Dot) AddRemaining(sim *Simulation, extra time.Duration) {
 	expires := sim.NextServerTick(dot.Aura.expires + extra)
 	dot.Aura.UpdateExpires(expires)
-	dot.maxDuration = max(dot.maxDuration, expires-sim.CurrentTime)
+	left := expires - sim.CurrentTime
+	if dot.TickHaste == SpellHasteScalesBoth && dot.tickPeriod > 0 && dot.tickPeriod != dot.TickLength {
+		// the max duration counts in unhasted intervals for these (TotalTicks), the time left in hasted ones
+		left = time.Duration(left.Milliseconds()*dot.TickLength.Milliseconds()/dot.tickPeriod.Milliseconds()) * time.Millisecond
+	}
+	dot.maxDuration = max(dot.maxDuration, left)
 }
 
 // UpdateExpires moves the expiry and the max duration with it, so the added time ticks: what the
@@ -250,14 +255,6 @@ func (dot *Dot) Rollover(sim *Simulation) {
 
 	dot.RecomputeAuraDuration() // recalculate haste
 	dot.Aura.Refresh(sim)       // update aura's duration
-}
-
-// RescheduleNextTick recomputes the period and moves the pending tick to one period past the last.
-func (dot *Dot) RescheduleNextTick(sim *Simulation) {
-	dot.RecomputeAuraDuration()
-
-	dot.tickAction.Cancel(sim) // remove old PA ticker
-	dot.startTickAction(sim, dot.lastTickTime+dot.tickPeriod)
 }
 
 // Apply starts the dot, or reapplies a running one under the server's refresh rule.
@@ -431,7 +428,7 @@ func (dot *Dot) startTickAction(sim *Simulation, nominal time.Duration) {
 		},
 	}
 	pa.OnAction = func(sim *Simulation) {
-		// not tickIsDue: a tick rescheduled into the past is late, and still runs
+		// not tickIsDue: a tick queued for a time already past is late, and still runs
 		if dot.tickOwed(sim) {
 			// only another action queued for now can be a tick due with this one
 			if dot.tickUnit != nil && sim.pendingActions[len(sim.pendingActions)-1].at == sim.CurrentTime {

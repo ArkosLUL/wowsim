@@ -344,7 +344,7 @@ func (raid *Raid) ProcReplenishment(sim *Simulation, src ReplenishmentSource) {
 		if r := unit.replenishment; r != nil {
 			landed = r.apply(sim, cast.unit) || landed
 		} else {
-			// an empty pool takes the aura and nothing from it
+			// a pool that's empty or always full takes the aura and nothing from it
 			landed = true
 		}
 	}

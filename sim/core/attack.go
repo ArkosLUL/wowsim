@@ -128,22 +128,12 @@ func (weapon *Weapon) CalculateAverageWeaponDamage(attackPower float64) float64 
 	return weapon.AverageDamage() + (weapon.SwingSpeed*attackPower)/weapon.AttackPowerPerDPS
 }
 
-func (weapon *Weapon) CalculateNormalizedWeaponDamage(sim *Simulation, attackPower float64) float64 {
-	return weapon.BaseDamage(sim) + (weapon.NormalizedSwingSpeed*attackPower)/weapon.AttackPowerPerDPS
-}
-
 func (unit *Unit) MHWeaponDamage(sim *Simulation, attackPower float64) float64 {
 	return unit.AutoAttacks.mh.CalculateWeaponDamage(sim, attackPower)
-}
-func (unit *Unit) MHNormalizedWeaponDamage(sim *Simulation, attackPower float64) float64 {
-	return unit.AutoAttacks.mh.CalculateNormalizedWeaponDamage(sim, attackPower)
 }
 
 func (unit *Unit) OHWeaponDamage(sim *Simulation, attackPower float64) float64 {
 	return 0.5 * unit.AutoAttacks.oh.CalculateWeaponDamage(sim, attackPower)
-}
-func (unit *Unit) OHNormalizedWeaponDamage(sim *Simulation, attackPower float64) float64 {
-	return 0.5 * unit.AutoAttacks.oh.CalculateNormalizedWeaponDamage(sim, attackPower)
 }
 
 func (unit *Unit) RangedWeaponDamage(sim *Simulation, attackPower float64) float64 {
@@ -409,7 +399,8 @@ func (wa *WeaponAttack) swing(sim *Simulation, releasingHold bool) time.Duration
 // keeps running meanwhile, so the swing goes on the update the cast lands.
 func (wa *WeaponAttack) castHold(sim *Simulation) (time.Duration, bool) {
 	hc := &wa.unit.Hardcast
-	// still casting at Expires itself: weapon attacks run before the pending action that lands it
+	// still casting at Expires itself: a creature's weapon attacks run before the pending action that lands
+	// its cast (a player's landing goes ahead of them)
 	if hc.OnComplete == nil || hc.Expires == startingCDTime || hc.Expires < sim.CurrentTime {
 		return 0, false
 	}
@@ -1018,7 +1009,6 @@ func (unit *Unit) applyParryHaste() {
 	})
 }
 
-// isPlayerShot is whether this is a player's Auto Shot.
 func (wa *WeaponAttack) isPlayerShot() bool {
 	return wa.unit.Type == PlayerUnit && wa == &wa.unit.AutoAttacks.ranged
 }

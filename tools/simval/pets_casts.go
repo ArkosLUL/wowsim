@@ -22,9 +22,9 @@ const (
 	petsCastsJitterMs = 250
 	// the longest live map update: a cast or swing that's due goes on the next one
 	petsCastsUpdateMs = 110
-	// the live update runs about 2.7% past the configured 100 ms, so the server's clock falls that far behind
-	// the sim's over a guardian's life
-	petsCastsDrift = 0.03
+	// the live updates jitter around 102.7 ms and the sim's don't: a 3 s cast is 3081 ms in the sim and 3048 on
+	// average live, so a chain of casts runs about 1% apart
+	petsCastsDrift = 0.015
 	// a cast this close to an image's death rides on the update period, so either side may lack it
 	petsCastsEdgeMs = 500
 	// lives of the sim's elemental the recorded ones are held to
