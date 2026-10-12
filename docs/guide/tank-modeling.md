@@ -57,7 +57,8 @@ that under `dualWield`, varied by `TANK_HEAL_CADENCE_VARIATION` (0.5) of itself,
 ## Hit floor
 
 A tank run's only cap floor is melee hit (`capRoleTank` in `caps.go`): enough to bring `PhysicalMissChance` to
-0, bisected on the sheet so talents and racials count, 262 rating bare. No expertise floor.
+0, bisected on the sheet so talents and racials count, 262 rating bare. No expertise floor. It stays there by
+the user's call: the tanks glyph their taunts.
 
 That isn't a taunt cap. Taunt 355, Growl 6795, Dark Command 56222 and Hand of Reckoning 62124 are
 `DmgClass MAGIC`: they roll spell hit (17% miss on a boss, 26.23 rating a point) and are never dodged or

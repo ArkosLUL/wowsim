@@ -52,7 +52,8 @@ The live e2e and the replays leave timing, costs, threat, pets, gear and buffs u
 | Z5 | EC-CORE-FIX3 (G, FS, live) · EC-PET-FIX2 (G, live) · EC-CLASS-FIX2 (G, live) · EC-THREAT-FIX4 (G, FS, C++, live) | Z2's follow-ups and Y's pets, before the BiS chain |
 | Z7 | EC-CORE-FIX4 (G, FS) · EC-PET-FIX3 (G, live) · EC-CLASS-FIX3 (G, live) · EC-TOOLS | Z5's follow-ups (Z6 is parity's and raid-import's) |
 | Z8 | EC-CORE-FIX5 (G, FS) · EC-PET-FIX4 (G, live) · EC-CLASS-FIX4 (G, live) | Z7's follow-ups; the fourth place is bis-optimizer's BIS-TANK-MAGIC |
-| Z9 | EC-CORE-FIX6 (G, FS, live) · EC-PET-FIX5 (G, live) · EC-CLASS-FIX5 (G, live) · EC-TOOLS2 | Z8's follow-ups; EC-TOOLS2 moved from Z8 |
+| Z9 | EC-CORE-FIX6 (G, FS, live) · EC-PET-FIX5 (G, live) · EC-CLASS-FIX5 (G, live) | Z8's follow-ups; the fourth place is bis-optimizer's BIS-TANK-PICKS |
+| Z10 | EC-TOOLS2 | Moved from Z8, then Z9 |
 
 U is taken (the UI wave). Versus the INVESTIGATION's order, B7, A3 and A4 moved forward (cheap, independent) and
 C1 moved last (after B6).
@@ -3363,7 +3364,8 @@ Live stage (notes in `tmp/ec-class-fix4-live.md`; server 3d89793c7, module bc1d3
 - Live: a Fire fight several times the logged one's length (its cycle is `cycles-ecclass3.json`, beside the
   scripts), with its period read off the recording: 21 and 9 races leave the 2 s rate at 45 to 83% and the fire
   goldens' level at ±0.75%. Note the host's load, which moves the period.
-- **Owns:** `sim/core/` but EC-PET-FIX5's pet paths; `proto/common.proto`'s server setting and its plumbing; those
+- **Owns:** `sim/core/` but EC-PET-FIX5's pet paths and BIS-TANK-PICKS' hunks (the enemy's dodge multiplier, a
+  unit's per-iteration death values); `proto/common.proto`'s server setting and its plumbing; those
   inline lines in class code (`mage/ignite.go`, the AoE and heal call sites); `tools/simval/fight.go`'s cast
   replay and `pets_casts.go`'s drift; their drops and rows.
 - **Goldens:** all 37 (the period); report each.
@@ -3450,7 +3452,7 @@ Live stage (notes in `tmp/ec-class-fix4-live.md`; server 3d89793c7, module bc1d3
 - **Goldens:** those classes' suites, the restoration druid's (Omen on its item heals), and every suite wearing
   a changed item; report each.
 
-### EC-TOOLS2 (Z9; golden-neutral)
+### EC-TOOLS2 (Z10; golden-neutral)
 
 - `db.json` has no icon rows for the explosives' spells (56350, 67769, 56488) or 55039: the UI fetches them.
 - e2e: `fightBuild` kills the critters near the floor first (a star of Starfall can hit one and fail the count);

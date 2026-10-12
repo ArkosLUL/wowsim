@@ -2318,12 +2318,55 @@ the picks are stale; the step 0 table's ids, schools, damage, periods and cast t
   still holds the old requests' timings for those six scenarios.
 
 Left:
-- The user's call: what the hit floor should be, now that a taunt rolls spell hit (keep 262 and glyph the
-  taunts, floor at 446 or 367 under Misery, or none). Then rerun the tank picks for every phase, ahead of the
-  21-raider pass: the boss fixes above made them stale, phase 2 most.
+- Decided by the user (2026-10-12): the floor stays at 262 and the tanks glyph their taunts. The rest of this
+  list is BIS-TANK-PICKS, but the perf baseline.
+- Rerun the tank picks for every phase, ahead of the 21-raider pass: the boss fixes above made them stale,
+  phase 2 most.
 - Bulwark P1's dropped death term: more normalizer iterations, a larger Armor offset, or the healing multiplier
   as a named constant beside `TANK_BOSSES`.
 - Needs `sim/core`: a `Target` field for `EnemyDodgeMultiplier` (Halion's Twilight Precision, with its +5% hit),
   per-iteration death flags so chance of death pairs between two loadouts.
 - Soul Reaper's 69410 and its tick as a follow-up of the cast; the abilities step 0 left out.
 - A perf baseline for the six tank scenarios on an idle machine.
+
+### BIS-TANK-PICKS (wave Z9)
+
+BIS-TANK-MAGIC's follow-up: its picks predate the cross-review's boss fixes, one run lost its death term, and
+the fight still misses what core couldn't express.
+
+**Decided by the user (2026-10-12):** the hit floor stays at 262 rating and the tanks glyph their taunts.
+
+- **Taunt glyph warning.** A tank run whose glyphs lack the class's taunt glyph (`GlyphOfTaunt`,
+  `GlyphOfGrowling`, `GlyphOfDarkCommand`, `GlyphOfRighteousDefense`) warns that a taunt then misses a boss 7%
+  of the time (4% under Misery or Improved Faerie Fire). No floor change. Check each glyph's +8 against the
+  spell data first.
+- **The death term must survive** at Normal on every run: Bulwark P1 drops it since the boss fixes. More
+  normalizer iterations, a larger Armor offset, or the healing multiplier as a named constant beside
+  `TANK_BOSSES`, whichever the measurements point to; say why. Felesta's seeds die in 98 to 99% of iterations at
+  P2 and P3, where the term separates nothing: the same choice.
+- **Paired death chance.** Core reports whether the tank died in each iteration beside its other per-iteration
+  values (`UnitMetrics`, under `SaveAllValues`); `evaluator.go` pairs chance of death like DTPS and TMI instead
+  of passing a count to `newShard`.
+- **Halion.** `proto.Target` field 23, the enemy's dodge multiplier, reaches `EnemyDodgeMultiplier` in core's
+  melee table; Twilight Precision 78243 sets 0.8 with its +5% hit. Unset changes nothing.
+- **Abilities avoidance can't remove but armor can**, which step 0's rule left out: Algalon's Quantum Strike
+  (9,333 raw a second, `SPELL_ATTR3_NO_AVOIDANCE`) and any other the boss scripts confirm, as Physical rows that
+  take armor and no avoidance roll. Soul Reaper's 69410 (+100% boss melee haste for 5 s) and its tick as a
+  follow-up of the cast, not a second timer. Each number checked against the source and the DBC copy
+  (`G:\DevStuff\GitHub\.wave-loop\dbc-live`, `bis-tank-magic\step0.md`).
+- **The picks again**, both tanks, phases 1 to 5, Normal, after the changes above: gems, enchants and reforges
+  by stat against the 8 Oct pass and Z8's As built, with dJ per point of Stamina, Agility, Dodge and Defense
+  for each run. Where Stamina still stays out, name the number that explains it; nothing is tuned toward a
+  wanted pick. The Lich King's fight may be lethal for most seeds: report it.
+
+**Verify:** no run drops a term or warns beyond the glyph; a DPS raider scores the same on the base tree and
+this one; `sim/optimizer` and `sim/encounters` tests pass, `TestTankBossesMirrorUI` covering the new fields;
+tsc, eslint and the tab's and batch's UI tests; every golden unchanged.
+
+**Not doing:** the 21-raider pass and the tank presets (the user's call, the deferred BiS chain); a perf
+baseline for the tank scenarios (with the speed benchmark, after Z9); a taunt spell in the sim.
+
+Golden-neutral. **Owns:** `sim/optimizer/`, `sim/encounters/optimizer_tank_boss.go`, `ui/core/optimizer/`,
+`ui/raid/optimizer_*.ts`, the tab's tank controls and `docs/guide/tank-modeling.md`; in small hunks,
+`proto/common.proto`'s `Target` field 23 and `proto/api.proto`'s death values with their plumbing in
+`sim/core` (the melee table's input, the metrics aggregator). The rest of `sim/core` is EC-CORE-FIX6's.

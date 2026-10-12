@@ -86,7 +86,8 @@ G = changes goldens. FS = runs all 37 suites.
 | Z6 | PAR-FU-8 (G, live) · PAR-FU-9 (FS, live) · PAR-FU-10 (G, FS, live) · RI-5 (live) | ✔ |
 | Z7 | EC-CORE-FIX4 (G, FS) · EC-PET-FIX3 (G, live) · EC-CLASS-FIX3 (G, live) · EC-TOOLS | ✔ |
 | Z8 | EC-CORE-FIX5 (G, FS) · EC-PET-FIX4 (G, live) · EC-CLASS-FIX4 (G, live) · BIS-TANK-MAGIC | ✔ |
-| Z9 | EC-CORE-FIX6 (G, FS, live) · EC-PET-FIX5 (G, live) · EC-CLASS-FIX5 (G, live) · EC-TOOLS2 | ✔ |
+| Z9 | EC-CORE-FIX6 (G, FS, live) · EC-PET-FIX5 (G, live) · EC-CLASS-FIX5 (G, live) · BIS-TANK-PICKS | ✔ |
+| Z10 | EC-TOOLS2 | ✔ |
 
 F2 is an inserted wave, not a fifth item in F: the core swing and cast fixes of PAR-P7-0c have to land
 before the class items in G, a class item can't build on a core fix merging in its own wave, and F already
@@ -154,7 +155,8 @@ and RI-5) and PAR-FU-10, mod-spell-tweaks' new mage and warlock tweaks (the user
 Z5's follow-ups, specced at its close-out under the earlier call (the parity backlog first), and Z6's, added to
 its specs. Z8 takes Z7's follow-ups, specced at its close-out under the same call, with BIS-TANK-MAGIC in
 EC-TOOLS2's place (the user's call, 2026-10-11: the raid pass gears both tanks for avoidance against a melee-only
-boss); EC-TOOLS2 waits for Z9, which takes Z8's follow-ups the same way.
+boss). Z9 takes Z8's follow-ups the same way, with BIS-TANK-PICKS in EC-TOOLS2's place again (the user's call,
+2026-10-12: the 21-raider pass waits on the tank picks); EC-TOOLS2 waits for Z10.
 
 **Where the specs are:**
 
@@ -181,18 +183,19 @@ boss); EC-TOOLS2 waits for Z9, which takes Z8's follow-ups the same way.
   across a rebuild sends the optimizer's tank boss its old input group, and the run fails: reload it. Auto mode
   refuses the prod docker commands, a DSN on a command line and chained commands: the user's allow rules
   (`.claude/settings.local.json` in [sim]) cover each plain command.
-  Next, Z9, planned: EC-CORE-FIX6, EC-PET-FIX5, EC-CLASS-FIX5 and EC-TOOLS2.
+  Next, Z9, planned: EC-CORE-FIX6, EC-PET-FIX5, EC-CLASS-FIX5 and BIS-TANK-PICKS. It waits for the user's
+  "continue".
   Z8's reports: `G:\DevStuff\GitHub\.wave-loop\z8-run1\*.json` (each agent's) and `xreview.md` (the
   cross-review's), `waveZ8-results.json`; item notes: `.wave-loop\{ec-core-fix5,ec-pet-fix4,ec-class-fix4,bis-tank-magic}-tmp`.
-- Open: the user's call on the tank hit floor (a taunt rolls spell hit: bis-optimizer PLAN, BIS-TANK-MAGIC's
-  "Left"), then the tank picks again; the e2e-coverage backlog Z9 leaves, sim-performance's Left items, Z5's 9–11%
+- Open: the speed benchmark with a perf baseline for the tank scenarios, after Z9 (the user's call,
+  2026-10-12; ask before stopping the AC containers); the e2e-coverage backlog Z9 leaves, sim-performance's Left items, Z5's 9–11%
   on mana users and Z7's and Z8's missing rows (Sim throughput), two guide pages past the split mark
   (`server-parity.md` 237 lines, `class-mechanics.md` 211), the bis-optimizer backlog (Z3's As
   builts: the enchant residual, Mutilate's pair, Combat Rogue P3 Normal; Z4's: the surrogate overpricing a
   one-hander's pairing, stage 2 and the Heroic Presence checks not yet run on the new lists, whether
   Ecoterrorist's rotation casts Mangle (Idol of the Corruptor sims like a dead idol); Z5's re-baseline: the
   search ends on a weaker set after sim changes that leave the presets within 0.1%, Ret P4 Normal 40 rating
-  over the expertise cap; Z8's: BIS-TANK-MAGIC's "Left"), then the deferred BiS chain.
+  over the expertise cap), then the deferred BiS chain.
   Closed as not sim gaps: the sheet fields the server shows raw (per-school crit, Blood-Gorged, Mace and Holy
   Specialization), which the fixture README explains.
 - Deferred (the user's calls, 2026-10-02, 10-03, 10-05 and 10-07), once the other items are done and only on the
