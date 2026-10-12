@@ -52,7 +52,7 @@ The live e2e and the replays leave timing, costs, threat, pets, gear and buffs u
 | Z5 | EC-CORE-FIX3 (G, FS, live) · EC-PET-FIX2 (G, live) · EC-CLASS-FIX2 (G, live) · EC-THREAT-FIX4 (G, FS, C++, live) | Z2's follow-ups and Y's pets, before the BiS chain |
 | Z7 | EC-CORE-FIX4 (G, FS) · EC-PET-FIX3 (G, live) · EC-CLASS-FIX3 (G, live) · EC-TOOLS | Z5's follow-ups (Z6 is parity's and raid-import's) |
 | Z8 | EC-CORE-FIX5 (G, FS) · EC-PET-FIX4 (G, live) · EC-CLASS-FIX4 (G, live) | Z7's follow-ups; the fourth place is bis-optimizer's BIS-TANK-MAGIC |
-| Z9 | EC-TOOLS2 | Moved from Z8 |
+| Z9 | EC-CORE-FIX6 (G, FS, live) · EC-PET-FIX5 (G, live) · EC-CLASS-FIX5 (G, live) · EC-TOOLS2 | Z8's follow-ups; EC-TOOLS2 moved from Z8 |
 
 U is taken (the UI wave). Versus the INVESTIGATION's order, B7, A3 and A4 moved forward (cheap, independent) and
 C1 moved last (after B6).
@@ -2993,17 +2993,18 @@ siblings, which the tests and `tools/apldbg/presets.go` share. The copies and `T
 `tools/simval/goldchar.go` follows a config a package function returns. No golden moves. The module README's
 `TestSimvalEcClass2Fight` paragraph describes the outer floor.
 
-### EC-CORE-FIX5 (Z8; changes goldens, full suite)
+### EC-CORE-FIX5 (Z8, done; changes goldens, full suite)
 
 - Update order: a hardcast landing, a missile hit or Auto Shot on the world tick a player's aura expires finds it
   gone. `Unit::Update` runs `m_Events` (landings, hits), then `_UpdateSpells` (Auto Shot, ticks, then expiries),
   and melee follows in `Player::Update`. Reorder landings, Auto Shot and held swings around the tracker pass
   (`Simulation.advance`, `releaseCastHold`); every caster's goldens reshuffle.
 - The live map update runs about 102.7 ms (the host's loop time), the sim's 100: make it a server setting. It
-  decides Ignite's race (an application due 2.0 or 4.0 s after the last beat the old tick 14 times in 91 live,
-  never in the sim; −1.3% of Ignite on MageFire's replay), a creature's 2 s swing (20 updates, 2055 ms) and a
-  prepull opener's 4th Fire Blast. A creature's swing after its hardcast lands comes one update early (the cast
-  lands in the event pass, ahead of the attack timer: 1968 ms for 2057).
+  decides Ignite's race (an application due 2.0 s after the last beat the old tick in 14 of 21 such races live,
+  one due 4.0 s after in 5 of 9, never in the sim; −1.3% of Ignite on MageFire's replay, another recording with
+  3 races), a creature's 2 s swing (20 updates, 2055 ms) and a prepull opener's 4th Fire Blast. A creature's
+  swing after its hardcast lands comes one update early (the cast lands in the event pass, ahead of the attack
+  timer: 1968 ms for 2057).
 - A periodic action has no owner unit: an aura its tick puts on (Prey on the Weak) counts a world tick early, and
   an aura paired with one needs `DurationThroughLastTick`. Execute phase callbacks fire with the first clock stop
   past their time. A channel's tick still follows a creature aura's expiry on a shared update.
@@ -3071,9 +3072,12 @@ hps −5.3% (heals on pets that are away: Circle of Healing hits 75.8 to 50.5). 
   −2.4%: it only takes 1.1 hits a fight, and the golden's 2000 iterations scatter by 2.8%. The warrior is −2.75%
   (Shield Block's windows −0.26%).
 - TestUnholy −0.48%, TestFury −0.69%, TestBM −0.92%, TestDisc −0.77%: reshuffles and pet swings, not traced further.
-- The other suites within ±0.4%. After the channel fix (`32ca3596c`) the rows 5% or more off the base are TestHoly's
-  (above), the fire mages' Bloodmage's rows and one short FrostFire row (Ignite), a Balance multi-target row and the
-  Frost Witch row (below), and the tanks' Average and 20-iteration SwitchInFrontOfTarget rows.
+- The other suites within ±0.4%. TestArcane's Ephemeral Snowflake row (−31.7%) and TestDisc's Regalia of Faith row
+  (−29.6%) were a stalled rotation, no golden move: on the 10.27 ms tick a GCD could end between a hasted channel's
+  last tick and its aura's end, and nothing woke the unit again. The channel dot's `OnExpire` hands off now
+  (`32ca3596c`). After that fix the rows 5% or more off the base are TestHoly's (above), the fire mages'
+  Bloodmage's rows and one short FrostFire row (Ignite), a Balance multi-target row and the Frost Witch row (below),
+  and the tanks' Average and 20-iteration SwitchInFrontOfTarget rows.
 
 Amounts stage (notes `tmp/ec-core-fix5-amounts.md`), on top of the timing stage. Verdicts:
 - White swings: whole already (`Spell.StrikeDamage`). The rune weapon's strikes and swing roll whole now
@@ -3082,7 +3086,8 @@ Amounts stage (notes `tmp/ec-core-fix5-amounts.md`), on top of the timing stage.
   roll under a halved `DamageMultiplier`.
 - Steady Shot (fixed): `irand(int32(min), int32(max))` of the ranged weapon plus `int32(ammo dps × speed ms ×
   0.001f)`.
-- Eviscerate, Envenom (fixed): the AP share is `int32(ap × combo × 0.07f)` (Envenom 0.09f) in float32.
+- Eviscerate, Envenom (fixed): the AP share is `int32(ap × combo × 0.07f)` in float32, Envenom's
+  `int32(ap × 0.09f × combo)` (that order since the cross-review: the other can be a point off).
 - AoE cap (fixed for Swipe and Fan of Knives): `Spell.AoECapUnits`; past 10 units the hit is cut to `damage × 10 /
   units` in ints, after the done and taken percents, before armor and crit. No effect up to 10 targets.
 - Multi-Shot: already one weapon roll for all hits. Not changed.
@@ -3114,9 +3119,10 @@ Amounts stage (notes `tmp/ec-core-fix5-amounts.md`), on top of the timing stage.
 
 Goldens move little on top of the timing stage (still 37 of 37, Average-Default within 0.01%): TestBlood,
 TestBloodTank, TestBM, TestMM, TestSV rows ±0.01% (rune weapon, Steady Shot), TestCombat rows to 0.3% (Fan of Knives
-past 10 targets), TestArms rows to 0.75% (Sweeping Strikes on Whirlwind), TestElemental's Frost Witch row −5.0%.
+past 10 targets), TestArms rows to 0.75% (Sweeping Strikes on Whirlwind), TestElemental's Frost Witch row −5.0%
+(−4.1% since the cross-review's tick count).
 
-### EC-PET-FIX4 (Z8; changes goldens; stages: code, live)
+### EC-PET-FIX4 (Z8, done; changes goldens; stages: code, live)
 
 - Replenishment: summons with a full mana pool the sim gives none (treants, Shadowfiend, Infernal) can take one
   of a cast's ten places.
@@ -3186,7 +3192,8 @@ stage code's.
   off. Rank 1 Lightning Bolt is interrupted as a level 80's cast bar fills (cause not found); the test casts rank 12.
 - Fire Elemental, 12 lives (confirmed): 10.0 Novas started, 6.25 landed, 3.75 broken, 18.17 Blasts, 39.25 swings a
   life, for the sim's 9.8, 6.58, 3.06, 18.27 and 40.16: z -0.7, -0.3 and -1.4. With Z7's 6 lives Blasts are 17.94.
-  All 206 Blast gaps are 4.06 to 8.08 s.
+  All 206 Blast gaps are 4.06 to 8.08 s. On `integration` the replay swings 38.87 times a life (cross-review:
+  `world_loop_ms`, and the swing an update sooner after a landed Nova).
 - Silent image (a spot artifact): at the entrance the mage's spot is inside the stairs, and one or two of the three
   images drop to the ground at z 150, 144 yd below; a Frostbolt at their victim gets `SPELL_FAILED_BAD_TARGETS`. On
   the hub's outer floor (`fightGround`) all 45 images of 15 summons cast. The test moved there and fails a summon with
@@ -3217,14 +3224,15 @@ Follow-ups:
 - The Fire Elemental tests and `TestPetfixRecords` still stand at the entrance.
 - Why a level 80's rank 1 Lightning Bolt is interrupted.
 
-### EC-CLASS-FIX4 (Z8; changes goldens; stages: code, live)
+### EC-CLASS-FIX4 (Z8, done; changes goldens; stages: code, live)
 
 - Druid: multi-target Starfall is 20 one-second ticks on the main target, the server's 10 s of two stars a tick
   on random units in sight; the Balance fight logs 22 Nature's Grace applications for the sim's 12 and 2
   Clearcastings for 5.4; Barkskin, Innervate and Rebirth roll Omen; other missile spells in a cast-and-hit proc's
   mask may need Nature's Grace's launch roll.
-- Items: heals and Bryntroll under their server spells; Shard of the Gods' sets by the server's scripts (69739
-  casts only the heal 69733, 69755 only Searing Flames 69729; the sim gives both sets both procs).
+- Items: heals and Bryntroll under their server spells; Shard of the Gods' sets by the server's script table (the
+  Purified set's 69755 casts only Cauterizing Heal 69733, the Shiny set's 69739 only Searing Flames 69729:
+  ItemSet.dbc rows 881 and 882; the cpp comments swap the two; the sim gives both sets both procs).
 - Death knight: `blood_pesti_aoe` tuning; a `no_xp` Target field, set on the simval dummies, for Blood Presence's
   heal; Death Strike's 45470 and Death Pact's 48743 may need `HealingTakenPctMultiplier` too.
 - Snares for Torment the Weak: Hamstring and Slow have no sim spell; Typhoon's and Hurricane's.
@@ -3268,8 +3276,8 @@ Rest stage (notes in `tmp/ec-class-fix4-code.md`). Verdicts:
 - `blood_pesti_aoe` (tuned): Blood Tap needs the next blood rune 6 s or more from ready. Average-Default 9231 -> 9338
   (+1.15%, se 4); full-buff multi-target +3.7%, unbuffed rows -0.1 to -2.7%.
 - Torment the Weak's snares (partly fixed): Typhoon's 53227 snares a landed target for 6 s (`SnareAuraTag`), Hurricane
-  slows the attacks of every target for the channel (`SlowAttackAuraTag`, counts on a boss too). Hamstring and Slow stay
-  unmodelled: no sim spell casts them.
+  tags every target for the channel (`SlowAttackAuraTag`, counts on a boss too); the tag slows no swing
+  (cross-review). Hamstring and Slow stay unmodelled: no sim spell casts them.
 - Dummy immunities (fixed): the simval sims give 999000 row -361 and 999001 to 999008 row -286 (`dummyMechanicImmunities`);
   the boss dummy's matched the default already.
 - WarriorArms with a mace (partly): the setup takes 40406, which moved the axe talents between the warrior paths
@@ -3292,6 +3300,155 @@ Live stage (notes in `tmp/ec-class-fix4-live.md`; server 3d89793c7, module bc1d3
 - Not live-checked: Omen on Barkskin, Innervate and Rebirth, Typhoon's Nature's Grace, Shard of the Gods, Bryntroll's
   crit and heal, a multi-target Starfall; the source stands.
 - Goldens: none from this stage.
+
+### EC-CORE-FIX6 (Z9; changes goldens, full suite; stages: code, live)
+
+- The map update's period: the sim's is a fixed ten world ticks of `world_loop_ms`, 102.7 ms; live it jitters from
+  update to update and drifts (103.14 ms over the logged Fire fight, 102.2 to 104.1 over 21 s stretches). Model it:
+  a jitter per update, or the period read off each recording for its replay. The sim already rolls an update
+  phase per iteration. Three things ride on it:
+  - Ignite's races, a new application against the old Ignite's tick on one update. Due 4.0 s after the last, the
+    application wins 5 of 9 live and 4.1% in the sim (z +9.2): a fixed update always puts the last tick on the
+    39th, 4005 ms, just ahead. Under one such race a fight, about 0.15% of Fire. Due 2.0 s after, it wins 14 of 21
+    live (67%, 95% interval 45 to 83%), 54.7% in the sim's replay of that fight (z +0.95) and 52% of the goldens'
+    27 races a fight. `spell_mage_ignite`, `AuraMunchingQueue` and `AuraEffect::Update` agree with the sim step
+    for step, the double count included, so only the period is open.
+  - The fire goldens' level: 0.15% for each 0.01 ms of `world_loop_ms` (TestFire 12047 at 10.20, 11693 at 10.40),
+    −0.47% and −0.64% at that log's 10.314, about −1.2% at its two rates.
+  - A creature's 3 s cast: 3048 ms live on average (3.00 to 3.10 s over 584 Frostbolts in `pets_casts.jsonl`, the
+    first update past 3 s), always 3081 in the sim. That costs a Mirror Image its 9th Frostbolt after a Frostbolt
+    opener at the presets' 2 s lead (server 9 and 2, the 9th at 29.49 to 29.53 s; sim 8 and 2) and keeps
+    `petsCastsDrift` at 1.5% (0.5% fails 6 checks).
+
+  The log is `G:\DevStuff\GitHub\.wave-loop\ec-class-fix3-tmp\live\fights\MageFire_Svfleadizmkp_1791726042.log`
+  (71 Pyroblasts under Bloodlust; the committed `MageFire.log.gz` is another recording, with 3 races). The counting
+  is in `G:\DevStuff\GitHub\wowsimwotlk-int\tmp\xr-ignite`: `py/races.py` defines both races, `py/live_period.py`
+  reads the period off the Embalming Slimes' casts (20 updates apart), `src/` holds the replay and golden tests.
+- Ignite off an instant cast (a Hot Streak Pyroblast's hit, Living Bomb's explosion) takes
+  `DelayedPeriodicApplier.ApplyFromInstantCast`'s delay, drawn off the clock of the tick before; on the server
+  both see the current clock, as a hardcast's landing does (`Apply`). From the source only; 1.1 applications a
+  fight in TestFire.
+- Order on a shared update, each from the source only:
+  - A player's swing timer, restarted as its hardcast lands, loses that world tick: `Unit::Update` runs the
+    attack timers down after its event pass. `cast.go` does it for creatures, a map update back. Unmeasurable
+    live.
+  - A creature swings ahead of the ticks of the auras on it: `Step` runs a weapon attack before a pending action
+    due with it, the server ticks the creature's auras before its AI swings (`Creature::Update`). The boss beats
+    a Lacerate tick 0.83 times a fight, Savage Defense's uncovered swings −0.04%.
+  - A creature's own landing against an aura expiring on it, and a player's swing against an aura expiring on a
+    creature, still follow the whole aura pass: EC-CORE-FIX5 moved a player's landings, Auto Shot and held swings
+    only. By `Unit::Update` the landing comes first, and players update ahead of creatures.
+- Damage-based execute phases (health-based fights, `StartTargetAtHealth`'s replays) start at the first clock
+  stop after the damage that crosses them (`runExecutePhases`); time-based ones are exact since EC-CORE-FIX5.
+  Check after each damage event, or start the phase in the damage path.
+- Expiries off the update grid: on a world tick that isn't 10 ms, an `UpdateExpires` caller adding whole seconds
+  to a snapped expiry leaves it ahead of the last tick (Rip lost about a tick a cast). Rip, Moonfire, Scourge
+  Strike, Pestilence and Rupture snap with `NextServerTick`; Bone Shield's `now + 5 min` and every other
+  `Aura.UpdateExpires` caller are unchecked.
+- Whole steps left:
+  - `Spell.HealingPower` adds `BonusHealingTaken` to spell power ahead of the coefficient; `SpellHealingBonusTaken`
+    adds `int32(TakenAdvertisedBenefit × coeff × factorMod)` as its own term after the caster's multiplier. Off by
+    the done percent on that share, about 0.2% of a heal under Talisman of Troll Divinity: a hook after the done
+    percent, 11 priest call sites and `shaman/talents.go`.
+  - The AoE cap: `Spell::DoAllEffectOnLaunchTarget` cuts a player's area hit to `damage × 10 / targets` in ints
+    past 10 targets, after the done and taken percents, before armor and crit. Swipe and Fan of Knives do
+    (`Spell.AoECapUnits`); every other `AOECapMultiplier` caller still scales its base as a float.
+- The fight replay's PaladinRetribution `energize 57669 mana amount` drop (log 1128, sim 1087; 1123 on 10 ms
+  ticks): the log stamps an application about 47 ms after its first tick's clock and the bot refreshes 8.976 s
+  after the last stamp, so the sim's refresh lands before the ninth tick. Replay the casts at the log's tick
+  stamps; the drop (`tools/simval/fight.go`) and its fights README row go.
+- EC-CORE-FIX5's Average moves nobody traced: TestBM −0.92% (wolf swings −2.5%), TestDisc hps −0.77% (aura
+  52800's uptime −18.8%), TestFury −0.69% (Slam −5.2%, Whirlwind −3.8%), TestUnholy −0.48% (aura 48265's uptime
+  +24.7%, 48266's −7.3%). A/B each against `world_loop_ms` 0 at depth, as the cross-review did the tanks.
+- Live: a Fire fight several times the logged one's length (its cycle is `cycles-ecclass3.json`, beside the
+  scripts), with its period read off the recording: 21 and 9 races leave the 2 s rate at 45 to 83% and the fire
+  goldens' level at ±0.75%. Note the host's load, which moves the period.
+- **Owns:** `sim/core/` but EC-PET-FIX5's pet paths; `proto/common.proto`'s server setting and its plumbing; those
+  inline lines in class code (`mage/ignite.go`, the AoE and heal call sites); `tools/simval/fight.go`'s cast
+  replay and `pets_casts.go`'s drift; their drops and rows.
+- **Goldens:** all 37 (the period); report each.
+
+### EC-PET-FIX5 (Z9; changes goldens; stages: code, live)
+
+- Wrath of Air: the totem's raid area aura reaches pets and guardians (live, the Greater Fire Elemental's Fire
+  Nova in 1904 ms with 2895 on the shaman). `applyPetBuffEffects` drops it for every pet without
+  `Pet.TakesWrathOfAir`, which only the elemental sets; the Imp, Water Elemental and Mirror Images cast hasted
+  spells too.
+- Bloodlust: the Rune Weapon (SummonProperties 208) and Nibelung's Valkyr (2909) have neither a pet's type nor
+  category, so by EC-PET-FIX3's rule they are uncontrollable and no party or raid cast reaches them. The sim
+  gives both Bloodlust: neither sets `Pet.Uncontrollable`. A lead from the two rows; confirm it first.
+- Nothing expires auras on a pet that's away: TestHoly's Shadowfiend, never summoned, carried Inspiration for
+  298 s until EC-CORE-FIX5 kept Circle of Healing and Prayer of Healing off such a pet. Other casts still land.
+- A timed guardian's last update:
+  - A Mirror Image's cast due on the update it dies on goes off on the server: a cast's `SpellEvent` is queued
+    for the last update's time plus 1 ms, ahead of `DeathEvent`'s 29.5 s (`EventProcessor::Update`); live, the 9th
+    Frostbolt of 3 of 3 images after a Frostbolt opener at a 2 s lead. The sim's timeout runs first. The death
+    at `ActionPriorityLow` fixes the order and moves no golden or replay line today, since the sim's 9th Frostbolt
+    would end 0.43 s late (EC-CORE-FIX6's period): do it if the damage lands (Live).
+  - The corpse is unsummoned at 30 s (`TempSummon::Update`), which cancels a Frostbolt in flight: one cast on the
+    death update only hits within 12 yd. The sim flies it 5 yd (the pet's `DistanceFromTarget` is 0); `CasterAI`
+    keeps an image within 20 yd.
+  - `TEMPSUMMON_TIMED_DESPAWN` runs the creature's whole update before it unsummons, so a cast or AI event due on
+    any timed guardian's last update may still happen; `Pet.EnableWithTimeout` ends it first. Check each.
+- Mirror Image leads EC-PET-FIX4 left as they were:
+  - One opener roll for all three; the server rolls per image (8 of 9 summons mixed, 16 of 27 images on Fire
+    Blast). Each image's mean is the sim's, so only the spread differs; splitting them takes three casters.
+  - Summoned at exactly 0 s they count as out before the fight (`engagedAtSummon`); the server engages them at
+    the owner's first harmful cast. Every preset summons at −2 s.
+- Live:
+  - Whether that Frostbolt's damage lands: `SMSG_SPELLNONMELEEDAMAGELOG` in `TestPetfixMirrorImageCasts`, which
+    reads `SMSG_SPELL_GO` only, 2 s ahead of the pull after a Frostbolt opener, with the image's distance.
+  - Cast times under 2895 on the owner for the Imp, the Water Elemental and a Mirror Image, as
+    `TestPetfixFireElementalUnderWrathOfAir` reads Fire Nova's; the Rune Weapon's swings and the Valkyr's casts
+    under Bloodlust.
+  - The Fire Elemental tests and `TestPetfixRecords` still stand at the entrance, inside the stairs (the spot
+    that silenced the images): move them to `fightGround` and re-record with more lives. At 12 the replay's mean
+    checks are weak (5 standard errors is 3.2 swings; 39.25 swings a life for the sim's 38.87). 12 lives take
+    24 min: run them in the foreground, since a background run ends with the agent's turn.
+  - Why a level 80's rank 1 Lightning Bolt (403) is interrupted as its cast bar fills: `CheckCast` passes and no
+    `SMSG_SPELL_GO` follows; rank 12 goes off.
+- **Owns:** `sim/core/pet.go`, `buffs.go`'s pet rules and the pets' timers; the pets' files in class code and
+  `sim/common/wotlk/nibelung.go`; `pets.jsonl`, `pets_casts.jsonl` but its drift, and the module's
+  `e2e/petfix_test.go`; their drops and rows.
+- **Goldens:** the mage and warlock suites (Wrath of Air), the death knight suites and Nibelung's rows
+  (Bloodlust); report each.
+
+### EC-CLASS-FIX5 (Z9; changes goldens; stages: code, live)
+
+- Druid:
+  - Omen of Clarity and Nature's Grace on heals. Omen rolls on any landed magic-class damage or heal
+    (EC-CLASS-FIX3: 3.5 PPM over the cast time entry, floored at 1.5 s); the sim rolls on `OnSpellHitDealt` only,
+    so no restoration heal rolls it and no item heal (Bauble of True Blood 71607, Althor's Abacus 71610 and
+    71641, Glowing Twilight Scale 75493 and 75494, which then go under those spells). Healing Touch, Regrowth,
+    Nourish and Swiftmend are in Nature's Grace's mask without `SpellFlagNaturesGrace`.
+  - Insect Swarm and Faerie Fire carry `SpellFlagOmenTrigger`; whether a hit with no damage rolls Omen on the
+    server is unconfirmed (the source wasn't read through for them).
+  - Hurricane's `SlowAttackAuraTag` aura only tags its targets for Torment the Weak. 16914's second effect slows
+    the attacks of every creature in the storm (`MECHANIC_SLOW_ATTACK`, which no immunity row blocks), a boss's
+    swings too.
+- Bryntroll's Drain Life (71838, 71839) heals its wielder; the sim deals the damage only.
+- Torment the Weak: Hamstring and Slow have no sim spell, so neither tags a snare (`SnareAuraTag`, as Frost
+  Shock's does); each is a new spell.
+- `blood_pesti_aoe`: Blood Tap waiting until the next blood rune is 6 s or more from ready gains 1.15% on
+  Average-Default and 3.7% on the full-buff multi-target rows, and costs the unbuffed rows 0.1 to 2.7%. Find a
+  condition that keeps both (`tools/apldbg`).
+- Live, each from the source only so far:
+  - Omen rolling on a Barkskin, Innervate or Rebirth cast (8.75% a cast).
+  - A Typhoon crit giving Nature's Grace 16886 at the hit, once per target.
+  - Shard of the Gods: the Purified set casting only 69733 and the Shiny only 69729, 45 s apart, off damage and
+    heals, a hit of the wrong kind using the proc up (`SPELL_FAILED_BAD_TARGETS`).
+  - Bryntroll's 71838 critting, and the size of its heal.
+  - A multi-target Starfall: 20 stars over 10 s on two distinct units a tick, each with its splash 53190 (the
+    fight dummy stands alone).
+  - Typhoon's 6 s snare (53227) and Hurricane counting for a mage's Torment the Weak (a mage and a druid).
+  - Death Strike's 45470 and Death Pact's 48743 taking nothing from Strength of Wrynn.
+  - The bat control of `TestEcClass4PetSpecialsOnImmuneTarget`: refused (`DONT_REPORT`) for all four pets, so
+    nothing shows a pet landing its special on a target that isn't immune. Cause unknown.
+- **Owns:** `sim/{deathknight,druid,mage,warrior}/` but the other Z9 items' hunks; the item effects in
+  `sim/common/` but the Valkyr's; `ui/deathknight/apls/`; the module's `e2e/ecclass4_test.go` and this item's
+  own e2e file; their cycles, fights, drops and rows.
+- **Goldens:** those classes' suites, the restoration druid's (Omen on its item heals), and every suite wearing
+  a changed item; report each.
 
 ### EC-TOOLS2 (Z9; golden-neutral)
 

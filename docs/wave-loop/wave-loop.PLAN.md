@@ -86,7 +86,7 @@ G = changes goldens. FS = runs all 37 suites.
 | Z6 | PAR-FU-8 (G, live) · PAR-FU-9 (FS, live) · PAR-FU-10 (G, FS, live) · RI-5 (live) | ✔ |
 | Z7 | EC-CORE-FIX4 (G, FS) · EC-PET-FIX3 (G, live) · EC-CLASS-FIX3 (G, live) · EC-TOOLS | ✔ |
 | Z8 | EC-CORE-FIX5 (G, FS) · EC-PET-FIX4 (G, live) · EC-CLASS-FIX4 (G, live) · BIS-TANK-MAGIC | ✔ |
-| Z9 | EC-TOOLS2 | ✔ |
+| Z9 | EC-CORE-FIX6 (G, FS, live) · EC-PET-FIX5 (G, live) · EC-CLASS-FIX5 (G, live) · EC-TOOLS2 | ✔ |
 
 F2 is an inserted wave, not a fifth item in F: the core swing and cast fixes of PAR-P7-0c have to land
 before the class items in G, a class item can't build on a core fix merging in its own wave, and F already
@@ -154,7 +154,7 @@ and RI-5) and PAR-FU-10, mod-spell-tweaks' new mage and warlock tweaks (the user
 Z5's follow-ups, specced at its close-out under the earlier call (the parity backlog first), and Z6's, added to
 its specs. Z8 takes Z7's follow-ups, specced at its close-out under the same call, with BIS-TANK-MAGIC in
 EC-TOOLS2's place (the user's call, 2026-10-11: the raid pass gears both tanks for avoidance against a melee-only
-boss); EC-TOOLS2 waits for Z9.
+boss); EC-TOOLS2 waits for Z9, which takes Z8's follow-ups the same way.
 
 **Where the specs are:**
 
@@ -171,24 +171,28 @@ boss); EC-TOOLS2 waits for Z9.
 
 ## Current wave
 
-- Wave: Z8, running, base `c244f8ee9`, runId `wf_22d8a7f1-a8a`, launched 2026-10-12. Transcripts:
-  `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\wf_22d8a7f1-a8a`.
-  Briefs: `G:\DevStuff\GitHub\.wave-loop\waveZ8-build.py` (`waveZ8-args.json`, `waveZ8-shared.md`); the tank
-  item's research: `.wave-loop\bis-tank-magic\step0.md`.
-  Server: [ac] `3d89793c7`, mod-spell-tweaks `9bf5c75`, mod-sim-validation `bc1d35e` (the user's image of
-  2026-10-11 21:56 local, with `bcc58cf`). No item changes the module's C++.
-  Z7 landed at base `fd12d68cc`; its reports: `.wave-loop\z7-run1\*.md` (`xreview.md`: the cross-review's).
-  Prod runs Z6's `e5a289570`, without Z7; `wowsims-wotlk:rollback-x` is X's `25cb9dddc`. Auto mode refuses the
-  prod docker commands, a DSN on a command line and chained commands: the user's allow rules
+- Wave: Z8, landed (master fast-forwarded to this close-out), base `c244f8ee9`. Run `wf_22d8a7f1-a8a` did all
+  four; EC-PET-FIX4's live stage came back blocked (its agent ended its turn under a 24 min run, which finished on
+  its own) and ran again as `wf_6d39358e-cad`, so the merge order was core, class, tank, pet. After the merges: a
+  rotation deadlock the 10.27 ms tick opened (`32ca3596c`, found from two golden rows 30% down), then the
+  cross-review. Server: [ac] `3d89793c7`, mod-spell-tweaks `9bf5c75`, mod-sim-validation's C++ as `bc1d35e` (the
+  user's image of 2026-10-11 21:56 local); the module's HEAD `0c4d80f` adds e2e tests only, no rebuild needed.
+  Prod runs Z6's `e5a289570`, without Z7 or Z8; `wowsims-wotlk:rollback-x` is X's `25cb9dddc`. A sim page left open
+  across a rebuild sends the optimizer's tank boss its old input group, and the run fails: reload it. Auto mode
+  refuses the prod docker commands, a DSN on a command line and chained commands: the user's allow rules
   (`.claude/settings.local.json` in [sim]) cover each plain command.
-- Open: the e2e-coverage backlog Z8 leaves, sim-performance's Left items, Z5's 9–11% on mana users and Z7's missing
-  row (Sim throughput), the bis-optimizer backlog (Z3's As
+  Next, Z9, planned: EC-CORE-FIX6, EC-PET-FIX5, EC-CLASS-FIX5 and EC-TOOLS2.
+  Z8's reports: `G:\DevStuff\GitHub\.wave-loop\z8-run1\*.json` (each agent's) and `xreview.md` (the
+  cross-review's), `waveZ8-results.json`; item notes: `.wave-loop\{ec-core-fix5,ec-pet-fix4,ec-class-fix4,bis-tank-magic}-tmp`.
+- Open: the user's call on the tank hit floor (a taunt rolls spell hit: bis-optimizer PLAN, BIS-TANK-MAGIC's
+  "Left"), then the tank picks again; the e2e-coverage backlog Z9 leaves, sim-performance's Left items, Z5's 9–11%
+  on mana users and Z7's and Z8's missing rows (Sim throughput), two guide pages past the split mark
+  (`server-parity.md` 237 lines, `class-mechanics.md` 211), the bis-optimizer backlog (Z3's As
   builts: the enchant residual, Mutilate's pair, Combat Rogue P3 Normal; Z4's: the surrogate overpricing a
   one-hander's pairing, stage 2 and the Heroic Presence checks not yet run on the new lists, whether
   Ecoterrorist's rotation casts Mangle (Idol of the Corruptor sims like a dead idol); Z5's re-baseline: the
   search ends on a weaker set after sim changes that leave the presets within 0.1%, Ret P4 Normal 40 rating
-  over the expertise cap; Z7's: Fire Mage P3 Quick ends on a trinket a measured alternative beats, which fails
-  the slow suite), then the deferred BiS chain.
+  over the expertise cap; Z8's: BIS-TANK-MAGIC's "Left"), then the deferred BiS chain.
   Closed as not sim gaps: the sheet fields the server shows raw (per-school crit, Blood-Gorged, Mace and Holy
   Specialization), which the fixture README explains.
 - Deferred (the user's calls, 2026-10-02, 10-03, 10-05 and 10-07), once the other items are done and only on the
@@ -202,7 +206,7 @@ boss); EC-TOOLS2 waits for Z9.
   - Then the BiS tooltip dataset (acbis driver, both stages, fresh `--out`, then `acbis`; the import needs
     the OK), the changed builds' stat weights, and the perf harness's `opt_*` scenarios (`update.sh`, a new
     baseline; the raid25 dumps in `_dump/optimizer_dump_test.go` still build uncut pools).
-- Workflow runIds: Z7's `wf_90c05e5f-5b7` (all four, base `fd12d68cc`); Z6's `wf_9f63df91-dcd` (all four, base `c00231f37`); Z5's `wf_2bd87279-a32` (run 1, base `a1bb8d403`), `wf_caa6cd72-af1` (the rotations, base
+- Workflow runIds: Z8's `wf_22d8a7f1-a8a` (all four, base `c244f8ee9`) and `wf_6d39358e-cad` (EC-PET-FIX4's live stage and review); Z7's `wf_90c05e5f-5b7` (all four, base `fd12d68cc`); Z6's `wf_9f63df91-dcd` (all four, base `c00231f37`); Z5's `wf_2bd87279-a32` (run 1, base `a1bb8d403`), `wf_caa6cd72-af1` (the rotations, base
   `5692dd49d`), `wf_0d256663-f64` (EC-THREAT-FIX4's live stage) and `wf_4c054cc8-0ce` (the live records, base
   `ef598ad48`); Z4's `wf_e9e036c7-5bd`; Z3's `wf_9aabe6e6-7af` (all four); Z2's `wf_7c79ba74-4ca` (code stages) and `wf_7e9c6966-820` (live stages, BIS-ALTS); Z's `wf_8821da6d-91f` (all five); Y's `wf_e58e8b14-102` (all four), `wf_d290cc37-ee6` and `wf_fe29d895-a35` (EC-TICK-FIX's rest and
   review); X2's `wf_b555c578-f46` (code stages), `wf_a0107f34-c7b` (live stages) and `wf_b00ecbe0-79a` (EC-RECHECK's
@@ -265,6 +269,7 @@ Reckoning that way), but J isn't DPS: see below.
 | Z5 | 8770.8, +195 / +187 | 10763.9, +656 / +683 | 5043.3, +59 / +107 | 12926.7, +162 / +196 | -16806.3, +5292 / +5032 | -1132.9, +732 / +741 |
 | Z6 | 8770.8, +195 / +187 | 10763.9, +656 / +683 | 5006.4, +203 / +305 | 12926.7, +162 / +196 | -16806.3, +5292 / +5032 | -1132.9, +732 / +741 |
 | Z7 | 8790.3, +215 / +199 | 10770.5, +789 / +690 | 5008.5, +221 / +284 | 12918.7, +188 / +240 | -16814.4, +5205 / +5036 | -1122.7, +729 / +737 |
+| Z8 | 8938.8, +173 / +231 | 10778.3, +838 / +854 | 5012.8, +103 / +88 | 12920.8, +243 / +243 | -16810.8, +1851 / +3205 | -223.3, +65 / +46 |
 
 Quick / Normal. Ret P4 ran at Quick only in wave D, after the glyph fix; its wave C numbers
 (12821.9, +54 / +73) came from a seed that wore the glyph. The two tanks arrive with
@@ -360,6 +365,12 @@ the live server with no player online, 22–42% under Z5's.
 In Z7 every `J_preset` moved by under 0.25% but Feral Tank's +0.9% (the explosives' smaller hits on the tank).
 Fire Mage Quick fails the suite: its pick wears a trinket the measured alternative 40255 beats by 37.1 ± 3.5,
 past the 4 se guard; Normal passes. Combat Rogue Quick again beats Normal, now by 99.
+In Z8 all twelve pass. The tank columns start a new series: BIS-TANK-MAGIC changed their fight (Anub'arak and
+Algalon with abilities, healing pinned to the worn gear) and their score (thirds with chance of death, Armor
+offset 2000), and the unpaired death term widens the gain's se to 130 to 200 for the paladin. Fury's `J_preset`
+rose 1.7% on a 2.3% lower AP normalizer (its DPS fell 0.6%). Fire Mage's preset lost 3.2% DPS to Ignite's race and
+the gains fell from +565 / +725 DPS to +255 / +217, not traced to a stat; its Quick pick passes the guard again.
+Combat Rogue Normal is ahead of Quick now, by 16.
 
 ## Sim throughput
 
@@ -396,7 +407,7 @@ From G the benches run their suites' default players with rotations, at 1 and 10
 | Z5 | 1.510 / 100.2 | 0.603 / 39.8 | 1.006 / 56.5 | 0.552 / 22.5 | 7.135 / 311.3 |
 | Z6 | 1.273 / 95.9 | 0.660 / 35.7 | 0.849 / 51.3 | 0.531 / 22.9 | 5.592 / 301.3 |
 
-Z7 has no row: the run needs the AC containers stopped (`.wave-loop/rebase-z6.sh` as a model), the user's call.
+Z7 and Z8 have no row: the run needs the AC containers stopped (`.wave-loop/rebase-z6.sh` as a model), the user's call.
 
 H2 ran with the live worldserver using half a core, which moved whole runs by up to 2×
 and cost a few percent here (Ret, which H2 barely touched, +4%). An interleaved A/B against the base
@@ -739,6 +750,7 @@ crashed before F2, so its column starts there.
 | EC-CLASS-FIX4 | merged | `fff0b3742` | module `1bc3f02`; multi-target Starfall, Omen of Clarity on Barkskin, Innervate and Rebirth, Shard of the Gods by the server's script table, Bryntroll crit capable, `Target.no_xp`, Death Strike's and Death Pact's heals, `blood_pesti_aoe`; live: Curse of Doom agrees, the warrior sweeps and the Balance fight re-recorded; six suites move (`498b84440`) |
 | BIS-TANK-MAGIC | merged | `955ed07f1` | the optimizer's tank boss casts (`OptimizerTankBossID`), Kel'Thuzad 25 at phase 1, healing pinned to the worn gear, survival in thirds with chance of death, a 262 melee-hit floor for taunts; no golden moves |
 | channel hand-off | direct | `32ca3596c` | the 10.27 ms tick let a GCD end between a hasted channel's last tick and its aura's end, and the rotation never woke again (TestArcane's Ephemeral Snowflake row -31.7%, TestDisc's Regalia of Faith row -29.6%); the hand-off is the channel dot's `OnExpire` now; goldens `7c3c0ac78` |
+| wave Z8 cross-review | direct | `7c5f16c23` | module `0c4d80f`; the optimizer's boss restarts its swing on five casts (`resetsSwing`), Algalon without the dual wield miss, `noParryHaste` per boss; Flame Shock's ticks under the Frost Witch 4-piece (`Dot.AddRemaining`); a creature's swing an update short after its hardcast lands; the Shiny Shard's proc used up by heals; Envenom's float32 order; taunts found to roll spell hit, the floor renamed "hit"; goldens `0359396ba` |
 
 Later WIs are added as their wave starts.
 

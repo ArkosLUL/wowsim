@@ -2297,7 +2297,7 @@ the picks are stale; the step 0 table's ids, schools, damage, periods and cast t
 - Algalon (fixed): Dual Wield 42459 gives +20% hit beside the off hand, so the 19% dual wield miss never
   shows. `dualWieldPenalty` is off. His swings missed 34% of the time for 15% (the P3 paladin preset).
 - Parry haste (fixed): `noParryHaste` for Algalon, Anub'arak and the Lich King, whose rows get
-  `CREATURE_FLAG_EXTRA_NO_PARRY_HASTEN` from [ac] `2026_09_12_05.sql`. Not checked on the live DB.
+  `CREATURE_FLAG_EXTRA_NO_PARRY_HASTEN` from [ac] `2026_09_12_05.sql`, as the live `creature_template` has it.
 - Swing restart (fixed): an untriggered cast with `SPELL_INTERRUPT_FLAG_INTERRUPT` restarts the boss's swing
   timer as it goes off (`Spell::IsAutoActionResetSpell`). `resetsSwing`, the ninth input, for Frostbolt,
   Freezing Slash, Soul Reaper, Infest and Flame Breath; the AI calls `StopMeleeUntil`, one map update short
