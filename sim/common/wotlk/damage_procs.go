@@ -59,6 +59,26 @@ func itemDamageSpell(character *core.Character, spellID int32, school core.Spell
 	}
 }
 
+// itemHealSpell is itemDamageSpell for an item's holy heal: Omen of Clarity rolls on a magic-class heal too.
+func itemHealSpell(character *core.Character, spellID int32, minHeal, maxHeal float64) core.SpellConfig {
+	return core.SpellConfig{
+		ActionID:    core.ActionID{SpellID: spellID},
+		SpellSchool: core.SpellSchoolHoly,
+		ProcMask:    core.ProcMaskSpellHealing,
+		Flags:       core.SpellFlagNoOnCastComplete | core.SpellFlagHelpful,
+
+		DamageMultiplier: 1,
+		CritMultiplier:   character.DefaultHealingCritMultiplier(),
+		ThreatMultiplier: 1,
+
+		Direct: core.SpellEffect{Effect: 0, Min: minHeal, Max: maxHeal},
+
+		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+			spell.CalcAndDealHealing(sim, target, spell.Direct.Roll(sim), spell.OutcomeHealingCrit)
+		},
+	}
+}
+
 func init() {
 	core.AddEffectsToTest = false
 

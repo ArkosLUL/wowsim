@@ -522,6 +522,7 @@
   {"talent":"arcanePower","rank":1,"spell":12042},
   {"talent":"arcaneFlows","rank":2,"spell":44379},
   {"talent":"mindMastery","rank":5,"spell":31588},
+  {"talent":"slow","rank":1,"spell":31589},
   {"talent":"missileBarrage","rank":5,"spell":54490},
   {"talent":"netherwindPresence","rank":3,"spell":44403},
   {"talent":"spellPower","rank":2,"spell":35581},
@@ -529,7 +530,7 @@
   {"talent":"improvedFireBlast","rank":2,"spell":11080},
   {"talent":"incineration","rank":3,"spell":54734},
   {"talent":"improvedFireball","rank":5,"spell":12341},
-  {"talent":"iceFloes","rank":3,"spell":55094}
+  {"talent":"pyroblast","rank":1,"spell":11366}
 ]},
 {"name":"MageFire","class":8,"race":7,"spec":"mage","items":[],"auras":[42995],"steps": [
   {"talent":"improvedFireBlast","rank":2,"spell":11080},
@@ -554,15 +555,16 @@
   {"talent":"burnout","rank":5,"spell":44472},
   {"talent":"livingBomb","rank":1,"spell":44457},
   {"talent":"improvedFrostbolt","rank":5,"spell":16766},
+  {"talent":"iceFloes","rank":3,"spell":55094},
   {"talent":"iceShards","rank":3,"spell":15047},
   {"talent":"precision","rank":3,"spell":29440},
-  {"talent":"permafrost","rank":3,"spell":12571},
   {"talent":"icyVeins","rank":1,"spell":12472}
 ]},
 {"name":"MageFrost","class":8,"race":7,"spec":"mage","items":[],"auras":[42995],"steps": [
   {"talent":"frostbite","rank":3,"spell":12497,"filler":true},
-  {"talent":"improvedFrostbolt","rank":5,"spell":16766},
+  {"talent":"improvedFrostbolt","rank":2,"spell":12473},
   {"talent":"frostWarding","rank":2,"spell":28332,"filler":true},
+  {"talent":"permafrost","rank":3,"spell":12571},
   {"talent":"piercingIce","rank":3,"spell":12953},
   {"talent":"improvedBlizzard","rank":3,"spell":12488},
   {"talent":"arcticReach","rank":2,"spell":16758,"filler":true},

@@ -63,6 +63,7 @@ type Mage struct {
 	IceLance                *core.Spell
 	Pyroblast               *core.Spell
 	Scorch                  *core.Spell
+	Slow                    *core.Spell
 	MirrorImage             *core.Spell
 	BlastWave               *core.Spell
 	DragonsBreath           *core.Spell
@@ -126,8 +127,8 @@ func (mage *Mage) AddPartyBuffs(partyBuffs *proto.PartyBuffs) {
 }
 
 func (mage *Mage) Initialize() {
-	// every attack speed debuff the sim has (Thunder Clap, Frost Fever, Infected Wounds, Judgements of the Just)
-	// carries MECHANIC_SLOW_ATTACK on the server
+	// the attack speed debuffs: Thunder Clap, Frost Fever, Infected Wounds and Judgements of the Just carry
+	// MECHANIC_SLOW_ATTACK on the server, a druid's Hurricane doesn't (attackSlowed)
 	mage.attackSpeedSlows = mage.GetEnemyExclusiveCategories("AtkSpdReduction")
 	mage.registerChills()
 	mage.hasT84pc = mage.HasSetBonus(ItemSetKirinTorGarb, 4)
@@ -152,6 +153,7 @@ func (mage *Mage) Initialize() {
 	mage.registerMirrorImageCD()
 	mage.registerBlastWaveSpell()
 	mage.registerDragonsBreathSpell()
+	mage.registerSlowSpell()
 }
 
 func (mage *Mage) Reset(sim *core.Simulation) {

@@ -2,6 +2,7 @@
 {"class":"mage","tree":"Arcane","talent":"arcaneFocus","passive":true,"groups": [
  {"ranks":[11222,12839,12840],"mods":[{"effect":1,"aura":72,"schoolMask":64}],
   "spells": [
+    {"id":31589,"name":"Slow","ops":["COST"]},
     {"id":42846,"name":"Arcane Missiles","ops":["COST"]},
     {"id":42897,"name":"Arcane Blast","ops":["COST"]},
     {"id":42921,"name":"Arcane Explosion","ops":["COST"]},
@@ -13,6 +14,7 @@
  {"ranks":[29438,29439,29440],"mods":[{"effect":1,"aura":72,"schoolMask":126}],
   "spells": [
     {"id":12472,"name":"Icy Veins","ops":["COST"]},
+    {"id":31589,"name":"Slow","ops":["COST"]},
     {"id":31687,"name":"Summon Water Elemental","ops":["COST"]},
     {"id":42833,"name":"Fireball","ops":["COST"]},
     {"id":42842,"name":"Frostbolt","ops":["COST"]},
@@ -41,6 +43,7 @@
  {"ranks":[11160,12518,12519],"mods":[{"effect":0,"aura":72,"schoolMask":84}],
   "spells": [
     {"id":12472,"name":"Icy Veins","ops":["COST"]},
+    {"id":31589,"name":"Slow","ops":["COST"]},
     {"id":31687,"name":"Summon Water Elemental","ops":["COST"]},
     {"id":42833,"name":"Fireball","ops":["COST"]},
     {"id":42842,"name":"Frostbolt","ops":["COST"]},

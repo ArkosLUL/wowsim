@@ -3646,6 +3646,88 @@ Review, both in `Pet.EnableWithTimeout`:
 - **Goldens:** those classes' suites, the restoration druid's (Omen on its item heals), and every suite wearing
   a changed item; report each.
 
+#### As built
+
+Druid stage (notes in `tmp/ec-class-fix5-druid.md`). Verdicts:
+- Omen on heals (fixed): the aura rolls on `OnHealDealt` too, for a flagged spell or one `rollsOmenOffFamily`
+  passes. A magic-class heal carries `DONE_SPELL_MAGIC_DMG_CLASS_POS` and a HealInfo, so the PPM applies (8.75%).
+- Item heals (fixed): Bauble of True Blood's use casts 71607 (both items: the heroic's `spellid_1` is 71607 here),
+  Althor's Abacus heals as 71610 / 71641, Glowing Twilight Scale ticks as 75493 / 75494, each rolling a whole step
+  (`itemHealSpell`). 75493 / 75494 have no damage class and only tick: no roll. Cauterizing Heal 69733 rolls.
+- Nature's Grace on heals (nothing to flag): the sim registers no Healing Touch, Regrowth, Nourish or Swiftmend.
+  The aura reads heals now, so one only needs `SpellFlagNaturesGrace`.
+- Insect Swarm and Faerie Fire (confirmed, no change): a landed hit without damage reaches `ProcSkillsAndAuras`
+  with a `NODAMAGE` DamageInfo, `PROC_HIT_NORMAL` and `DONE_SPELL_MAGIC_DMG_CLASS_NEG`; `CheckProc` passes a
+  druid-family spell, and the DamageInfo makes the PPM apply.
+- Hurricane (fixed; the bullet's mechanic holds for ranks 1 to 4 only): 48467's attack slow has mechanic 0. Every
+  target's swings slow by 20% in the `AtkSpdReduction` category (spell_group 1059), a boss's half the time (live
+  stage). Torment the Weak counts Hurricane only where its snare effect lands, never on a snare-immune target
+  (`attackSlowed` in `sim/mage/talents.go`).
+- Shard of the Gods (fixed, found on the way): 50 s cooldown, not 45 (`2026_02_18_01.sql` updates both rows).
+- `spells_auto_gen.go` regenerated: the five heal ids, and 71838 / 71839, which the base lacked.
+- Goldens: 35 of 37 suites, item rows only. Bauble rows hps up to +0.008% (whole-step roll); Abacus rows of
+  TestUnholy, TestDisc, priest TestHoly up to +0.002%; Bauble rows of TestFeral dps +0.66%, TestFeralApl +0.23%,
+  TestFeralTank +0.13% (Omen on the heal); Bryntroll rows of TestBlood, TestBloodTank, TestArms +0.03 to +0.26%
+  (71838 / 71839 now binary from their server rows).
+- Live stage: rank 5 Hurricane gives a mage no Torment the Weak on the dummy and rank 4 (27012) does; the dummy's
+  attack time x1.2 under Hurricane; Clearcasting off Bauble uses; Shard procs 50 s apart.
+
+Rest stage (notes and the live plan in `tmp/ec-class-fix5-code.md`). Verdicts:
+- Bryntroll's heal (fixed): the wielder gains the damage dealt through `GainHealing`
+  (`Spell::DoAllEffectOnTarget`: a bare `HealBySpell`, so no crit, threat, proc or spell power; healing done percent
+  applies). Found on the way: the item gives 71838 / 71839 a 500 ms cooldown, which `Player::CastItemCombatSpell`
+  checks, so a roll won inside it is lost.
+- Hamstring (fixed): 1715, 10 rage less Focused Rage, Battle or Berserker Stance, a 15 s `SnareAuraTag` aura. Its
+  one effect is the snare, so a snare-immune target is immune to the whole spell: a miss with the refund.
+- Slow (fixed): 31589 behind the talent, a 15 s aura on one target at a time: cast time x1.3 and ranged attack time
+  x1.6 on any target (category `CastTimeDebuff`, spell_group 1096), the snare tag only where snares land. No
+  `SpellFlagMage`: Arcane Concentration takes damage only, and Clearcasting's and Arcane Power's masks leave Slow
+  out, so it pays in full under Clearcasting.
+  - `slow` is now an implemented talent: `implemented_talents.json`, `talent_paths.json` and `costaura_spells.json`
+    are rewritten, and the three mage paths wait in `sweepRecut` for a rerun of the three sweeps.
+  - Every dummy is snare immune (rows -361 and -286), so live can show only the immune side.
+- `blood_pesti_aoe` (fixed; the premise is gone on this base): against no gate the 6 s gate gains 0.05% on the
+  default row and 0.1 to 0.3% on full-buff multi-target, and costs unbuffed and short rows 0.7 to 3.0%. Blood Tap
+  now also needs no death rune ready, and in the last 60 s takes neither condition: full-buff long rows and the
+  default row keep the gate's numbers, unbuffed and short rows gain 0.6 to 2.8% (1500 iterations a row).
+- Goldens: the six Bryntroll rows and 8 of TestBlood's 12 `blood_pesti_aoe` rows. `db.json` moves (the rotation, and an
+  icon for Hamstring).
+- e2e, vetted only: `ecclass5_test.go`, five tests (Slow, Hamstring, Drain Life's leech, Hurricane's ranks with
+  Torment the Weak, Omen on Barkskin and Innervate).
+
+Live stage (notes in `tmp/ec-class-fix5-live.md`; server [ac] 3d89793c7, no orphan bots). Fixed in the sim:
+- Bryntroll's Drain Life never crits: 71838 and 71839 carry `SPELL_ATTR2_CANT_CRIT` (0 crits in 146 hits at 28%
+  crit). The spelldump's `critCapable` doesn't read that attribute. Its six golden rows now sit 0.16 to 0.20% under
+  the base.
+- Hurricane's slow is on a snare-immune target half the time. `Aura::UpdateTargetMap` compares an application's
+  effects with the storm's, immune ones included, and a persistent area aura isn't `IsArea()`, so the mismatch is
+  dropped and added back on alternate passes, 500 ms apart on the storm's map updates (`nextStormPass`). Live: on
+  the dummy in 9 and 11 of 21 probes. No golden moves.
+
+Live checks, all agreeing with the sim after those two:
+- Omen: Barkskin 19 of 200, Innervate 10 of 100, Insect Swarm 7 of 80 landed, Bauble of True Blood 18 of 150 heals.
+  Rebirth not run (needs a dead player).
+- Typhoon: a crit of 53227 gives 16886 within 10 ms of the hit, 0.5 s after the launch at 16 yards (5 of 5); a
+  plain hit gives none; a crit on a critter in the cone gives it too. Its snare sat 5.93 s on a Drakkari Bat, with
+  Torment the Weak's 12% for as long.
+- Shard of the Gods: the Purified set cast only 69733 and the Shiny only 69729, procs 52.2 and 51.5 s apart, and no
+  proc of the right kind in the 25 s after 25 s of the wrong kind.
+- Bryntroll: each heal equals its hit, x1.3 under Strength of Wrynn (73828).
+- Starfall on two dummies: 10 stars each, one a tick, each star's splash on the other dummy only.
+- Hurricane: with the aura on, swings 20% slower for both ranks and the 12% only in rank 4; rank 5 never gives it.
+- Death Strike 5% of maximum health a disease and Death Pact 40%, nothing from Strength of Wrynn.
+- The bat control: refused at the entrance because the pet has no line of sight to the bat there. On the fight's
+  floor all four specials go off at the bat (three land, one dodged); the test stands there now and requires it.
+- Hamstring immune (8) on the dummy; Slow's aura on it without the 12%, with it under Thunder Clap.
+- The three mage sweeps rerun: `talents.jsonl` 727 records, 31 of 31 paths; `spellmods.jsonl` 404 lines for 399;
+  `costauras.jsonl` 108 for 102. `sweepRecut` is empty. Slow's cost: -12 under Arcane Focus and Precision, -40 under
+  Frost Channeling, both sides.
+- The code stage's e2e had three faults, fixed: `.cast triggered` skips effects, `Effects[0]` isn't Frostbolt's
+  damage, and a `.aura` read before the next update.
+
+Review: no sim change. `ecclass5_test.go`: its chat helper carries the item's prefix (`ecClass5Answers`), and the
+Shard test's message names its 130 s; vetted, not rerun live.
+
 ### EC-TOOLS2 (Z10; golden-neutral)
 
 - `db.json` has no icon rows for the explosives' spells (56350, 67769, 56488) or 55039: the UI fetches them.

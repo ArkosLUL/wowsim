@@ -144,6 +144,7 @@
   {"class":"mage","tree":"Arcane","fieldName":"arcanePower","row":6,"maxPoints":1,"rankSpells":[12042]},
   {"class":"mage","tree":"Arcane","fieldName":"arcaneFlows","row":7,"maxPoints":2,"rankSpells":[44378,44379]},
   {"class":"mage","tree":"Arcane","fieldName":"mindMastery","row":7,"maxPoints":5,"rankSpells":[31584,31585,31586,31587,31588]},
+  {"class":"mage","tree":"Arcane","fieldName":"slow","row":8,"maxPoints":1,"rankSpells":[31589]},
   {"class":"mage","tree":"Arcane","fieldName":"missileBarrage","row":8,"maxPoints":5,"rankSpells":[44404,54486,54488,54489,54490]},
   {"class":"mage","tree":"Arcane","fieldName":"netherwindPresence","row":9,"maxPoints":3,"rankSpells":[44400,44402,44403]},
   {"class":"mage","tree":"Arcane","fieldName":"spellPower","row":9,"maxPoints":2,"rankSpells":[35578,35581]},

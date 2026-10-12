@@ -451,7 +451,9 @@ Rewrite it with `tools/acore/dock.sh test ./tools/simval -run TestTalentPathsFil
 `talents.jsonl` records then match nothing, so rerun it (`SIMVAL_TALENT_ONLY`) and trim its stream: paths it has no
 bot for keep their records from the fixture. Until that rerun, list the path in `sweepRerecord` (`talents_test.go`):
 the replay builds it as its records stood (`asRecorded`: their items, the path's auras they had, each step's
-talent at the rank they learned), and a listed path whose records stand as the path fails. Tests: `TestTalentPathsFile` (stale), `TestTalentPathsAreLegal` (points,
+talent at the rank they learned), and a listed path whose records stand as the path fails. A path whose steps
+themselves changed (a newly implemented talent) goes in `sweepRecut` instead: the talent, spell-mod and cost-aura
+replays leave it out until all three sweeps are rerun for it, and fail it once its records fit. Tests: `TestTalentPathsFile` (stale), `TestTalentPathsAreLegal` (points,
 rows, prerequisites, ranks, every implemented talent covered in a setup that shows it, on the committed file),
 `TestTalentPathsCoverTheSimsStart` (after each step, what the sim has up that isn't passive is in the auras; buff
 option raid buffs in `sweepRaidBuffs`), `TestTalentPathsItemClasses`.

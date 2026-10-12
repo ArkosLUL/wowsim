@@ -197,9 +197,16 @@ func (mage *Mage) applyArcaneConcentration() {
 		Duration: time.Second * 15,
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
 			aura.Unit.PseudoStats.CostMultiplier -= 1
+			// Slow isn't in 12536's class mask, so it stays at its price
+			if mage.Slow != nil {
+				mage.Slow.CostMultiplier += 1
+			}
 		},
 		OnExpire: func(aura *core.Aura, sim *core.Simulation) {
 			aura.Unit.PseudoStats.CostMultiplier += 1
+			if mage.Slow != nil {
+				mage.Slow.CostMultiplier -= 1
+			}
 		},
 		OnCastComplete: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell) {
 			if !spell.Flags.Matches(SpellFlagMage) {
@@ -437,11 +444,39 @@ func (mage *Mage) tormentTheWeak(target *core.Unit) float64 {
 	if mage.Talents.TormentTheWeak == 0 {
 		return 1
 	}
-	if !mage.attackSpeedSlows.Get(target).AnyActive() && !target.HasActiveAuraWithTag(core.SlowAttackAuraTag) &&
+	if !mage.attackSlowed(target) && !target.HasActiveAuraWithTag(core.SlowAttackAuraTag) &&
 		(target.ImmuneToMechanic(core.MechanicSnare) || !target.HasActiveAuraWithTag(core.SnareAuraTag)) {
 		return 1
 	}
 	return 1 + .04*float64(mage.Talents.TormentTheWeak)
+}
+
+// Hurricane's rank 5, whose attack slow has no mechanic: it shares the other attack speed debuffs' stacking
+// rule (spell_group 1059) without being one to Torment the Weak.
+const hurricaneSpellID = 48467
+
+// attackSlowed is whether an attack speed debuff with MECHANIC_SLOW_ATTACK is on target. Each counts while its
+// aura is on, whichever of them sets the swing speed.
+func (mage *Mage) attackSlowed(target *core.Unit) bool {
+	slows := mage.attackSpeedSlows.Get(target)
+	if !slows.AnyActive() {
+		return false
+	}
+	if slows.GetActiveAura().ActionID.SpellID != hurricaneSpellID {
+		return true
+	}
+	// Hurricane sets the speed, and an equal or weaker debuff can sit under it
+	for _, aura := range target.GetAuras() {
+		if !aura.IsActive() || aura.ActionID.SpellID == hurricaneSpellID {
+			continue
+		}
+		for _, effect := range aura.ExclusiveEffects {
+			if effect.Category == slows {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // registerChills gives Torment the Weak the mage's own snares, on the targets that take snares.

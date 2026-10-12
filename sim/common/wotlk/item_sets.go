@@ -32,7 +32,7 @@ var ItemSetShinyShardOfTheGods = core.NewItemSet(core.ItemSet{
 
 // Each set's script casts one spell whatever its tier: the Shiny set's bonus 69739 (spell_item_shiny_shard_of_the_scale)
 // casts Searing Flames 69729, the Purified set's 69755 (spell_item_purified_shard_of_the_scale) Cauterizing Heal
-// 69733, off any magic-class spell, 25% with a 45 s cooldown.
+// 69733, off any magic-class spell, 25% with a 50 s cooldown (spell_proc).
 func applyShardOfTheGodsDamageProc(character *core.Character) {
 	name := "Searing Flames"
 	actionID := core.ActionID{SpellID: 69729}
@@ -69,7 +69,7 @@ func applyShardOfTheGodsDamageProc(character *core.Character) {
 		ProcMask:   core.ProcMaskSpellHealing | core.ProcMaskSpellDamage,
 		Outcome:    core.OutcomeLanded,
 		ProcChance: 0.25,
-		ICD:        time.Second * 45,
+		ICD:        time.Second * 50,
 		Handler: func(sim *core.Simulation, _ *core.Spell, result *core.SpellResult) {
 			// a heal's hit uses up the proc too: the dot is aimed at whoever was healed and fails
 			if result.Target.Type == core.EnemyUnit {
@@ -81,25 +81,7 @@ func applyShardOfTheGodsDamageProc(character *core.Character) {
 
 func applyShardOfTheGodsHealingProc(character *core.Character) {
 	name := "Cauterizing Heal"
-	actionID := core.ActionID{SpellID: 69733}
-	minHeal := 2269.0
-	maxHeal := 2773.0
-
-	spell := character.RegisterSpell(core.SpellConfig{
-		ActionID:    actionID,
-		SpellSchool: core.SpellSchoolHoly,
-		ProcMask:    core.ProcMaskSpellHealing,
-		Flags:       core.SpellFlagNoOnCastComplete | core.SpellFlagHelpful,
-
-		DamageMultiplier: 1,
-		ThreatMultiplier: 1,
-		CritMultiplier:   character.DefaultHealingCritMultiplier(),
-
-		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseHealing := sim.Roll(minHeal, maxHeal)
-			spell.CalcAndDealHealing(sim, target, baseHealing, spell.OutcomeHealingCrit)
-		},
-	})
+	spell := character.RegisterSpell(itemHealSpell(character, 69733, 2269, 2773))
 
 	core.MakeProcTriggerAura(&character.Unit, core.ProcTrigger{
 		Name:       name + " Trigger",
@@ -107,7 +89,7 @@ func applyShardOfTheGodsHealingProc(character *core.Character) {
 		ProcMask:   core.ProcMaskSpellHealing | core.ProcMaskSpellDamage,
 		Outcome:    core.OutcomeLanded,
 		ProcChance: 0.25,
-		ICD:        time.Second * 45,
+		ICD:        time.Second * 50,
 		Handler: func(sim *core.Simulation, _ *core.Spell, result *core.SpellResult) {
 			// a damage spell's hit uses up the proc too: the heal is aimed at the enemy it hit and fails
 			if result.Target.Type != core.EnemyUnit {

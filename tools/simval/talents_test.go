@@ -36,6 +36,42 @@ var droppedSweep = []sweepDrop{
 // listed path whose records stand as the path fails, so the entry goes with the rerun.
 var sweepRerecord = []string{}
 
+// sweepRecut are paths whose steps changed after the talent, spell-mod and cost-aura fixtures were recorded: a
+// talent the sim now implements joined them, so their records sit at the old steps. The three replays leave
+// them out until a rerun, and a listed path whose records fit its steps fails, so the entry goes with the rerun.
+var sweepRecut = []string{}
+
+// withoutRecut takes sweepRecut's paths out of the talent replay, with their records and drops.
+func withoutRecut(t *testing.T, paths []talentPath, records []talentRecord, drops []sweepDrop) ([]talentPath, []talentRecord, []sweepDrop) {
+	t.Helper()
+	for _, name := range sweepRecut {
+		i := slices.IndexFunc(paths, func(p talentPath) bool { return p.Name == name })
+		if i < 0 {
+			t.Errorf("sweepRecut lists %s, which isn't a path", name)
+			continue
+		}
+		own, fit := 0, 0
+		for _, rec := range records {
+			if rec.Path != name {
+				continue
+			}
+			own++
+			if paths[i].fits(rec) && paths[i].stepOf(rec.Talents) == rec.Step {
+				fit++
+			}
+		}
+		if own > 0 && fit == own {
+			t.Errorf("%s: its %d records fit the path's steps, so take it off sweepRecut", name, own)
+		}
+		t.Logf("%s: left out until its rerun, %d of its %d records are of the steps before the recut", name, own-fit, own)
+		paths = slices.Delete(slices.Clone(paths), i, i+1)
+	}
+	recut := func(path string) bool { return slices.Contains(sweepRecut, path) }
+	records = slices.DeleteFunc(slices.Clone(records), func(r talentRecord) bool { return recut(r.Path) })
+	drops = slices.DeleteFunc(slices.Clone(drops), func(d sweepDrop) bool { return recut(d.path) })
+	return paths, records, drops
+}
+
 // TestTalentSweepRecords replays a live TestSimvalTalentSweep run, trimmed by `simval talents`: each
 // step's sheet change against the sim's change from the same talent. Skips without the capture, like
 // TestGoldenCharacters. Every step's class is logged on a SWEEPSIM line.
@@ -53,7 +89,8 @@ func TestTalentSweepRecords(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	replayTalentSweep(t, allTalentPaths(t), records, droppedSweep, sweepRerecord)
+	paths, records, drops := withoutRecut(t, allTalentPaths(t), records, droppedSweep)
+	replayTalentSweep(t, paths, records, drops, sweepRerecord)
 }
 
 // replayTalentSweep compares every step of every path, holding the records to drops. Rerecord paths are

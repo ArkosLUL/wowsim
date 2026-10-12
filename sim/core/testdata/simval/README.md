@@ -59,6 +59,10 @@ the spell-mod sweep probes them. Rewrite it with [spellmods](../../../../tools/a
 ([cost-aura sweep](../../../../tools/simval/README.md#cost-aura-sweep)); drops go in `droppedCostAuras`
 (`tools/simval/costauras_test.go`) with a row here, as for `spellmods.jsonl`.
 
+`sweepRecut` (`tools/simval/talents_test.go`) lists paths whose steps changed after these three captures: the
+replays leave them out until `TestSimvalTalentSweep`, `TestSimvalSpellModSweep` and `TestSimvalCostAuraSweep` are
+rerun for them, and fail a listed path whose records fit again. Empty now.
+
 `spell_groups.json` is a SELECT export of `acore_world.spell_group` and `spell_group_stack_rules`, which
 `TestSimSpellGroups` (`sim/spell_groups_test.go`) compares with the sim's exclusive effects. Re-export it with the
 query in that test's doc comment when the server's rules change.
