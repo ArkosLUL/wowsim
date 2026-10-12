@@ -56,9 +56,9 @@ the sim, so they're provisional until parity lands. It runs as `BIS-` work items
 
 **Encounters**
 - DPS: a plain single-target level-83 boss, with duration and variation taken from the current encounter.
-- Tanks: parity's generic AzerothCore boss, swinging like each phase's boss (its `creature_template`
-  DamageModifier and BaseAttackTime): Patchwerk 25, Algalon 25, Anub'arak 25H, the Lich King 25H,
-  Halion 25H.
+- Tanks: each phase's boss with its swing and the damage armor and avoidance can't remove: Kel'Thuzad 25,
+  Algalon 25, Anub'arak 25H, the Lich King 25H, Halion 25H
+  ([tank-modeling](../guide/tank-modeling.md)).
 
 **Sources and the catalog**
 - Sources: all PvE (10 and 25, normal and heroic, heroic 5-mans, emblem vendors, crafted, quest, rep), with
@@ -421,7 +421,8 @@ regenerates at integration, and no golden wears it.
   it. It bisects downwards too, or a seed already past D* would have to keep every point it has. D*
   holds resilience and talent crit reductions at the seed, so each result's own sheet is rechecked and
   warns when it is still critable.
-- The slider is `TankWeights(survival)`: DTPS and TMI take half the survival share each, TPS the rest.
+- The slider is `TankWeights(survival)`: DTPS and TMI take half the survival share each, TPS the rest
+  (thirds with chance of death since BIS-TANK-MAGIC).
   `objectiveWeights` reads it only when `metric_weights` is all zero, so the UI's weights win.
 - Stage "Racial screen", after Objective: `screenRacials` scores the seed under all 10 races at
   screening iterations and keeps the top 3 plus anything within 2 se of the 3rd, capped at 6: several
@@ -436,7 +437,8 @@ regenerates at integration, and no golden wears it.
 - Tab: the survival/threat slider, a crit-immunity checkbox, the 6-metric editor under Advanced, and a
   racial-traits select. Searching is now the default for every spec. `individual_sim_ui.ts` registers
   the tab for tanks too.
-- `pool_builder.ts` `TANK_BOSSES` maps each phase to a preset path and `raid_difficulty`: Patchwerk 25,
+- `pool_builder.ts` `TANK_BOSSES` (rebuilt by BIS-tank-boss and BIS-TANK-MAGIC) maps each phase to a preset
+  path and `raid_difficulty`: Patchwerk 25,
   Algalon 25, Anub'arak 25H, Lich King 25H for P4 and P5 (unset reads as 25 normal). It forces the
   target into `raid.tanks[0]`, since the preset's `tankIndex` points there and nothing swings otherwise,
   and `healingModelForBoss` re-derives the healing from that boss with `Player.setDefaultHealingParams`'
@@ -1238,7 +1240,8 @@ added the way `critImmunityFloor` adds Defense (one floor per stat, raised rathe
 - A floor the pool can't reach doesn't fail the run: the pick gets as close as it can, and the result warns.
 - Tests: a melee DPS whose unfloored pick sits under the expertise cap reaches it; a caster reaches the spell
   hit cap; the floor follows the buffs (Heroic Presence lowers the hit floor); a caster and a hunter whose
-  unconstrained picks pass their haste ceiling stop at it; a tank run gets none; unticked matches today's picks.
+  unconstrained picks pass their haste ceiling stop at it; a tank run gets none (the taunt hit floor since
+  BIS-TANK-MAGIC); unticked matches today's picks.
   The slow suite runs with the caps on: report how its J moved.
 - Golden-neutral.
 
@@ -2063,7 +2066,7 @@ Whole runs cost 1.5 to 1.7x at Quick and 1.3 to 1.6x at Normal. The ranking top-
 Left: the surrogate overprices a one-hander's pairing next to some items (Nightwarrior's neck), so a good
 two-hander can sit below the 15; Corruptor ties with the dead idols.
 
-### BIS-TANK-MAGIC (wave Z8)
+### BIS-TANK-MAGIC (wave Z8, done)
 
 The raid pass gears both tanks for avoidance and no hit. At phase 3 (the 8 Oct pass, sim `7f1b9aede`) Bulwark
 (prot paladin) got 16 of 23 gems agility, one stamina gem (the meta) and 0 hit rating; Felesta (tank DK) got 13
@@ -2159,9 +2162,8 @@ Patchwerk's numbers), the addon, the wire format or mod-bis-tooltip; the tank pr
 chain reruns.
 
 Golden-neutral. **Owns:** `sim/optimizer/`, `sim/encounters/optimizer_tank_boss.go` and its registration,
-`ui/core/optimizer/`, `ui/raid/optimizer_*.ts`, the tab's tank controls. At close-out the orchestrator adds
-`docs/guide/tank-modeling.md` and corrects this PLAN's lines on the tank encounter, the survival split and
-"a tank run gets none".
+`ui/core/optimizer/`, `ui/raid/optimizer_*.ts`, the tab's tank controls. Durable facts:
+[tank-modeling](../guide/tank-modeling.md).
 
 #### As built
 
