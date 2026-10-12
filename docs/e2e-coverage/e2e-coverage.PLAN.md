@@ -3415,6 +3415,109 @@ Live stage (notes in `tmp/ec-class-fix4-live.md`; server 3d89793c7, module bc1d3
 - **Goldens:** the mage and warlock suites (Wrath of Air), the death knight suites and Nibelung's rows
   (Bloodlust); report each.
 
+#### As built
+
+Stage code, re-measured on `b4e8f6d52` against [ac] `3d89793c7` and the live DBCs (notes and the live plan:
+`tmp/ec-pet-fix5-code.md`). Verdicts:
+- Wrath of Air (fixed): every pet and guardian takes it but a haste carrier, whose script makes it immune to
+  positive `MOD_CASTING_SPEED_NOT_STACK` (`spell_dk_pet_scaling`, mod-spell-tweaks' 425790 and 425792).
+  `Pet.TakesWrathOfAir` went. Firebolt and Waterbolt 2500 to 2380 ms, an image's Frostbolt 3000 to 2857.
+- Bloodlust:
+  - Val'kyr (fixed): SummonProperties 2909 is category 1, type 2, so `Uncontrollable`. Found on re-measure: its AI
+    casts Smite on the creature's 2 s attack timer (`DoSpellAttackIfReady`), not a 1.95 s GCD: one on its first
+    update, then every 20 updates, 15 in 30 s for the sim's 16. A life is `NibelungAverageCasts` × 2 s.
+  - Rune Weapon (not a gap, unchanged): 208 is category 1, type 6, so the aura never lands. But
+    `npc_pet_dk_dancing_rune_weapon` is a `NullCreatureAI` that never swings: `spell_dk_dancing_rune_weapon` copies
+    each white swing the DK lands, so the copies come as fast as he swings, Bloodlust included. The sim's pet
+    Bloodlust stands in for that.
+- A pet that's away (fixed in part): a summon starts without what was cast on it while away (`Pet.enable`).
+  Casts still land on an away pet: over every `./sim/...` test, a warrior's Commanding Shout, a priest's Prayer of
+  Mending, Inspiration, Divine Aegis and Forethought Talisman, the hunter's Bestial Wrath, Cobra Strikes and
+  Windrunner proc, the warlock's Devious Minds. Refusing them takes a gate in `Aura.Activate`, EC-CORE-FIX6's file.
+- A timed guardian's last update (fixed): `EnableWithTimeout` unsummons on the pet's own update, the first one a
+  duration past the update before its first, behind everything the pet does on it (`petUnsummonPriority`). Before,
+  15% of 12 s summons had one update fewer. It covers every timed guardian; the gargoyle's 32 s is its AI's timer,
+  which runs out the same way.
+- Mirror Image's last casts (fixed, from the source):
+  - Its death is its own action at `ActionPriorityLow`: behind a cast landing on that update, ahead of its AI.
+  - The corpse goes at the first update 30 s in, and a Frostbolt whose flight ends later is lost
+    (`Pet.MissileLost`; a timed Water Elemental's Waterbolt too).
+  - It flies the mage's distance: an image casts from where it's summoned, and `CasterAI` only moves it between
+    casts, toward 15 yd (three quarters of Fire Blast's 20), not 20.
+- Mirror Image leads, both unchanged:
+  - Per-image opener: `CasterAI::JustEngagedWith` rolls per creature. The mean is the sim's.
+  - A summon at exactly 0 s: on a raid boss the mage is in combat from the boss's first update
+    (`BossAI::_JustEngagedWith` calls `DoZoneInCombat`), after his cast at the pull, so the images do come ahead of
+    the fight. Only the e2e's dummy waits for his own cast.
+
+Tests: `sim/core/pet_summon_test.go`, `TestMageGuardiansCastFasterUnderWrathOfAir`,
+`TestMirrorImageFrostboltInTheAirAtTheUnsummonIsLost`, `TestMirrorImageCastDueOnItsDeathUpdateGoesOff`,
+`TestImpFireboltUnderWrathOfAir`, `TestValkyrSmitesOnItsAttackTimer`; each fails on the old code. Replays pass
+(`simval.jsonl` 1114 of 1114); no drop or allowance entry was this item's.
+
+e2e (written and vetted, run in stage live): `TestPetfixMirrorImageCasts` reads the damage logs, miss lists and
+each image's distance; `TestPetfixCastTimesUnderWrathOfAir`, `TestPetfixRuneWeaponUnderBloodlust`,
+`TestPetfixValkyrSmites`.
+
+Goldens (`dock.sh delta`), 16 of 37 move, Average-Default:
+- Mages: Frost +0.39% (Waterbolt casts 125.3 to 131.0; image Frostbolt hits 20.58 to 19.60 of 21.5 casts, the
+  goldens' mage standing 30 yd out), Fire +0.10%, Arcane −0.02%, FrostFire −0.06%; rows to +1.6%.
+- Destruction +0.19% (Firebolt casts 128.1 to 130.0, the Imp's mana holding it back); Affliction's Infernal
+  uptime only; Demonology unchanged.
+- The last update: Blood +0.05% (Rune Weapon swings 36.26 to 36.72), BloodTank +0.004%, Frost, FrostUH and
+  Unholy within ±0.02% (army, ghoul, bloodworm), Balance and BalancePhase3 +0.02% (treants), Enhancement −0.005%
+  (rows to −1.0%), 17 Elemental rows to +0.7%, Shadow's fiend uptime only.
+- No Nibelung row: the goldens never summon a Val'kyr.
+
+Follow-ups:
+- The Rune Weapon's white hits as copies: each landed DK swing, either hand, rolled again on the DK's own table
+  and halved (`HandleProc`), with no procs. The sim swings a 3.5 s weapon on its own timer, and buffs on the pet
+  count twice (Battle Shout, the 10% attack power auras).
+- `Aura.Activate` refusing a temporary aura on a pet that's away.
+- An image more than 20 yd plus reach out can't Fire Blast (`CheckRange`), and never closes in while it chains
+  Frostbolts. The goldens' mage stands at 30.
+- The tooltip of `nibelungAverageCasts` says max 16; it's 15.
+
+Stage live, on [ac] `3d89793c7` (logs and notes: `tmp/live/`, `tmp/ec-pet-fix5-live.md`). No sim change came of it
+but `Pet.UnsummonAt` for the replay; the records back the code stage's model:
+- Wrath of Air: Firebolt and Waterbolt 2500 to 2380 ms, an image's Frostbolt 3000 to 2857, Fire Nova 1904.
+- Val'kyr: 15 Smites in its 30 s, the first as it comes, 2055 ms apart, the same under the priest's Bloodlust, no
+  2825 on it.
+- Rune Weapon: no 2825. It swung with 10 of the knight's 10 landed swings, on the same update, and never
+  otherwise, plain and under Bloodlust: the copies follow-up stands, now with a record.
+- Mirror Image, 24 summons:
+  - Images stay where they come up, within 4 yd of the mage (2 to 8 yd for a mage at 4, 11 to 19 at 16), and a
+    Frostbolt flies the image's own distance less about 1.5 yd.
+  - The lost missile: from 16 yd, the ninth Frostbolts whose flight ended by 29975 ms after the summon hit (12)
+    and those from 30006 ms on never did (5). The sim's corpse goes at 29988.
+  - A ninth Frostbolt 2 s ahead of the pull needs the live updates to run fast: none of 18 images got one at
+    3081 ms a cast, where Z8's three did at 3055. EC-CORE-FIX6's period decides it.
+  - Past 20 yd is unmeasured: from 28 yd the mage's own Fire Blast doesn't reach the dummy on that floor.
+- Fire Elemental, 12 lives on `fightGround`: 6.83 Novas landed, 17.83 Blasts and 38.83 swings a life for the sim's
+  6.51, 18.30 and 38.89 (z +0.8, −1.4, −0.1).
+- Rank 1 Lightning Bolt: mod-individual-progression cancels the vanilla and TBC ranks a level 70 player past TBC
+  casts, as the cast time is up (`OnPlayerSpellCast`; `IndividualProgression.EnableAllSpellRanks = 0`).
+
+Fixtures re-cut: `pets.jsonl` (21 records, 180 checks) and `pets_casts.jsonl` (12 lives, 24 summons). The replay
+gained `image N Frostbolt hits` (`checkPetsCastsHits`): each Frostbolt against the lost-missile rule at the
+image's own distance, either outcome within one update of the corpse going; three mutants fail it.
+
+e2e: every petfix test stands on `fightGround`. New: `TestPetfixFarMirrorImageCasts`,
+`TestPetfixMirrorImageLastFrostbolt`, `TestPetfixLightningBoltRanks`. Found on the way: `.cast <id> triggered`
+skips a spell's effects (`TRIGGERED_IGNORE_EFFECTS`), so it summons nothing; a fresh Imp's Firebolt is off
+autocast; Dancing Rune Weapon needs a weapon in hand.
+
+Review, both in `Pet.EnableWithTimeout`:
+- A summon that comes again while still out cancels the old timer. Bloodworms' 20 s proc cooldown is their life,
+  and the unsummon can now come up to 26 ms past it: a proc in between lost its worms to the stale timer
+  (TestBlood's Bloodworm swings went down; now 274.02 to 274.05).
+- On exact timing (`MapUpdateInterval` 0) the unsummon keeps its old priority, ahead of a cast due at that very
+  moment: a Val'kyr on 11 casts got 12.
+- Tests: `TestSummonedAgainWhileStillOutLastsItsNewTime`, `TestTimedSummonOnExactTimingEndsAheadOfACastDueThen`,
+  `TestValkyrSmitesOnExactTiming`.
+- Lead, from the source only: the Val'kyr's attack timer is hasted (`resetAttackTimer`), so under Windfury Totem
+  it would Smite every 17 updates, 18 in 30 s. The sim's 2 s is fixed; it only matters past 15 casts.
+
 ### EC-CLASS-FIX5 (Z9; changes goldens; stages: code, live)
 
 - Druid:

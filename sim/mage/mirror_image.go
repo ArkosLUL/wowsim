@@ -70,6 +70,9 @@ const (
 	mirrorImageFireBlastFirst = 6 * time.Second
 )
 
+// The summon's own duration (58831), which takes the corpse away.
+const mirrorImageSummon = 30 * time.Second
+
 type MirrorImage struct {
 	*core.Pet
 
@@ -85,6 +88,7 @@ type MirrorImage struct {
 	// the mage was fighting as they came: his target took them onto its threat list then, which engaged
 	// their AI before it had anything to attack
 	engagedAtSummon bool
+	summonedAt      time.Duration
 }
 
 func (mage *Mage) NewMirrorImage() *MirrorImage {
@@ -96,6 +100,8 @@ func (mage *Mage) NewMirrorImage() *MirrorImage {
 	mirrorImage.BuffImmunity = core.PetImmuneToScaling
 	// SummonProperties 1021 has neither a pet's type nor its category (Guardian::Guardian)
 	mirrorImage.Uncontrollable = true
+	// an image casts from beside its mage: it's summoned on him, and CasterAI only moves it between casts
+	mirrorImage.DistanceFromTarget = mage.DistanceFromTarget
 	// InitStatsForLevel's NPC_MIRROR_IMAGE case sets the create mana to 28 + 30 a level, but the
 	// pool keeps the base it got before that: creature_classlevelstats' 8814 for a level 80 mage
 	mirrorImage.EnableCreatureManaBar(2428, mirrorImageBaseStats[stats.Intellect], 15, false)
@@ -129,7 +135,22 @@ func (mi *MirrorImage) ExecuteCustomRotation(sim *core.Simulation) {
 func (mi *MirrorImage) summon(sim *core.Simulation) {
 	start := mi.AIClockStart(sim)
 	mi.engagedAtSummon = sim.CurrentTime > 0
-	mi.EnableWithTimeout(sim, mi, sim.NextServerTick(start+mirrorImageLife)-sim.CurrentTime)
+	mi.Enable(sim, mi)
+	mi.SetUnsummonAt(sim.NextServerTick(start + mirrorImageSummon))
+
+	summonedAt := sim.CurrentTime
+	mi.summonedAt = summonedAt
+	sim.AddPendingAction(&core.PendingAction{
+		NextActionAt: sim.NextServerTick(start + mirrorImageLife),
+		// DeathEvent runs in Unit::Update's event pass: behind a cast landing on that update, which was
+		// queued first, and ahead of UpdateAI
+		Priority: core.ActionPriorityLow,
+		OnAction: func(sim *core.Simulation) {
+			if mi.summonedAt == summonedAt && mi.IsEnabled() {
+				mi.Disable(sim)
+			}
+		},
+	})
 
 	sim.AddPendingAction(&core.PendingAction{
 		NextActionAt: sim.NextServerTick(max(start+mirrorImageAttackDelay, 0)),
@@ -264,6 +285,10 @@ func (mi *MirrorImage) registerFrostboltSpell() {
 		},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+			// the corpse goes when the summon's 30 s are up, and a bolt still in the air goes with it
+			if mi.MissileLost(sim, spell) {
+				return
+			}
 			//3x damage for 3 mirror images
 			baseDamage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP, spell.SpellPower())
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)

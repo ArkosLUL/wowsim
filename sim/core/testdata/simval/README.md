@@ -25,8 +25,10 @@ Elemental, Mirror Image, Imp, Water Elemental, Shadowfiend), which `TestPetsReco
 ([tools/simval](../../../../tools/simval/README.md#damage-probe)).
 
 `pets_casts.jsonl` holds 12 Greater Fire Elemental lives (`TestPetfixFireElementalCasts`' `PETFIX_CASTS` lines) and
-15 Mirror Image summons (`TestPetfixMirrorImageCasts`' `PETFIX_IMAGES` lines: 6 into a fight, 6 ahead of the pull by
-3 s and 3 by 2 s), which `TestPetsCastsRecords` replays ([tools/simval](../../../../tools/simval/README.md#damage-probe)).
+24 Mirror Image summons (the `PETFIX_IMAGES` lines of `TestPetfixMirrorImageCasts`, `TestPetfixFarMirrorImageCasts`
+and `TestPetfixMirrorImageLastFrostbolt`: 6 into a fight and 18 ahead of the pull by 3, 2, 1.8 and 1.7 s, half of
+the 24 with the mage 16 yd out), which `TestPetsCastsRecords` replays
+([tools/simval](../../../../tools/simval/README.md#damage-probe)).
 
 `buffs.jsonl` holds `TestSimvalBuffs`' `BUFFS` lines, which `TestBuffRecords` replays
 ([tools/simval](../../../../tools/simval/README.md#buffs)). A disagreeing state or check goes in `droppedBuffs`

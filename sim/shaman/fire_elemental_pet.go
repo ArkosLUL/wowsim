@@ -42,7 +42,6 @@ func (shaman *Shaman) NewFireElemental(bonusSpellPower float64) *FireElemental {
 	fireElemental.BuffImmunity = core.PetImmuneToScaling
 	// 32982 summons it with SummonProperties 61, a plain guardian's (Guardian::Guardian)
 	fireElemental.Uncontrollable = true
-	fireElemental.TakesWrathOfAir = true
 	// pet_levelstats' 2280 mana, and Guardian::UpdateMaxPower's default 15 a point of intellect
 	fireElemental.EnableCreatureManaBar(2280, fireElementalPetBaseStats[stats.Intellect], 15, false)
 	// InitStatsForLevel's NPC_FIRE_ELEMENTAL case: 3.5 a level -/+ the level, in the template's

@@ -91,9 +91,6 @@ type Pet struct {
 	// Its power is mana and the pool is full and stays so (treants, Shadowfiend, Infernal: they spend none
 	// and Creature::Regenerate refills a controlled creature), so a raid cast ranks it last, at 100%.
 	FullManaPool bool
-	// Takes Wrath of Air's cast speed, a raid area aura that reaches a guardian too. Only the pets that
-	// set this get it.
-	TakesWrathOfAir bool
 
 	// Mana regen is Creature::Regenerate's (creatureManaTick), set by EnableCreatureManaBar.
 	creatureManaRegen   bool
@@ -107,6 +104,8 @@ type Pet struct {
 	// Some pets expire after a certain duration. This is the pending action that disables
 	// the pet on expiration.
 	timeoutAction *PendingAction
+	// when a timed summon leaves the world, NeverExpires for one that stays
+	unsummonAt time.Duration
 }
 
 func NewPet(name string, owner *Character, baseStats stats.Stats, statInheritance PetStatInheritance, enabledOnStart bool, isGuardian bool) *Pet {
@@ -132,6 +131,7 @@ func NewPet(name string, owner *Character, baseStats stats.Stats, statInheritanc
 		statInheritance: statInheritance,
 		enabledOnStart:  enabledOnStart,
 		isGuardian:      isGuardian,
+		unsummonAt:      NeverExpires,
 	}
 	pet.GCD = pet.NewTimer()
 
@@ -410,6 +410,8 @@ const (
 	petAuraTickPriority = ActionPriorityLow
 	// Creature::Update regenerates once Unit::Update has ticked every aura, Replenishment's too
 	petRegenPriority = ActionPriorityLow - 1
+	// TempSummon::Update unsummons after Creature::Update, so behind everything else the pet does then
+	petUnsummonPriority = petRegenPriority - 1
 )
 
 // updateTimersStart is when the timers the pet's own update counts down began: its scaling auras'
@@ -731,6 +733,7 @@ func (pet *Pet) forgetSummon() {
 	pet.creatureManaRefresh = nil
 	pet.focusRefresh = nil
 	pet.timeoutAction = nil
+	pet.unsummonAt = NeverExpires
 }
 
 func (pet *Pet) IsGuardian() bool {
@@ -755,8 +758,13 @@ func (pet *Pet) enable(sim *Simulation, petAgent PetAgent, outSinceBeforePull bo
 	// TODO: Check if this has side effects
 	if !pet.isReset {
 		pet.reset(sim, petAgent)
+	} else if !outSinceBeforePull {
+		// a summon is a new creature, so nothing cast while the pet was away is on it. Its permanent
+		// auras stand for buffs that are always up, and stay
+		pet.auraTracker.expireAll(sim)
 	}
 
+	pet.unsummonAt = NeverExpires
 	pet.ownerHit = pet.ownerHitScaling()
 	pet.inheritedStats = pet.ownerScaling()
 	pet.scalingTick.fresh = false
@@ -838,17 +846,48 @@ func (pet *Pet) enable(sim *Simulation, petAgent PetAgent, outSinceBeforePull bo
 	sim.addTracker(&pet.auraTracker)
 }
 
-// Helper for enabling a pet that will expire after a certain duration.
+// EnableWithTimeout summons a pet that goes away after petDuration. TempSummon::Update counts that
+// timer down on the pet's own updates and unsummons it once the rest of the update is done, so what the
+// pet has due on its last update still happens.
 func (pet *Pet) EnableWithTimeout(sim *Simulation, petAgent PetAgent, petDuration time.Duration) {
 	pet.Enable(sim, petAgent)
 
+	// still out from the summon before (Bloodworms can proc again as their 20 s end): this one's time takes over
+	if pet.timeoutAction != nil {
+		pet.timeoutAction.Cancel(sim)
+	}
+
+	priority := petUnsummonPriority
+	if sim.serverTickInterval <= 0 {
+		// exact timing has no last update to act on: the time is up ahead of a cast due at that very moment
+		priority = ActionPriorityGCD
+	}
+	pet.unsummonAt = sim.NextServerTick(pet.AIClockStart(sim) + petDuration)
 	pet.timeoutAction = &PendingAction{
-		NextActionAt: sim.CurrentTime + petDuration,
+		NextActionAt: pet.unsummonAt,
+		Priority:     priority,
 		OnAction: func(sim *Simulation) {
 			pet.Disable(sim)
 		},
 	}
 	sim.AddPendingAction(pet.timeoutAction)
+}
+
+// MissileLost is whether a missile the pet launches now is still in the air when the pet is unsummoned.
+// Taking the pet out of the world kills its events, the spell in flight among them, so it never hits.
+func (pet *Pet) MissileLost(sim *Simulation, spell *Spell) bool {
+	return sim.CurrentTime+spell.TravelTime() > pet.unsummonAt
+}
+
+// SetUnsummonAt is for a summon that leaves the world later than it stops acting, like a Mirror Image's
+// corpse. EnableWithTimeout sets it for the rest.
+func (pet *Pet) SetUnsummonAt(at time.Duration) {
+	pet.unsummonAt = at
+}
+
+// UnsummonAt is when a timed summon leaves the world, NeverExpires for one that stays.
+func (pet *Pet) UnsummonAt() time.Duration {
+	return pet.unsummonAt
 }
 
 // Enables and possibly updates how the pet inherits its owner's stats. DK use only.

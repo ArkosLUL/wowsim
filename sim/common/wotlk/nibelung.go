@@ -11,6 +11,10 @@ import (
 const (
 	nibelungID       = 49992
 	nibelungHeroicID = 50648
+
+	// creature_template's attack time for 38391 and 38392. The AI casts Smite where a swing would come
+	// (DoSpellAttackIfReady), so this timer paces it, not a cooldown or a GCD.
+	valkyrAttackTime = 2 * time.Second
 )
 
 var valkyrStats = stats.Stats{
@@ -24,24 +28,21 @@ type ValkyrPet struct {
 }
 
 func newValkyr(character *core.Character) *ValkyrPet {
-	return &ValkyrPet{
+	valkyr := &ValkyrPet{
 		Pet: core.NewPet("Valkyr", character, valkyrStats, func(ownerStats stats.Stats) stats.Stats {
 			return stats.Stats{}
 		}, false, true),
 	}
+	// SummonProperties 2909 is a guardian's, with neither a pet's type nor its category (Guardian::Guardian)
+	valkyr.Uncontrollable = true
+	return valkyr
 }
 
 func getSmiteConfig(valkyr *ValkyrPet, spellId int32, damageMin float64, damageMax float64) core.SpellConfig {
 	return core.SpellConfig{
-		ActionID:    core.ActionID{SpellID: spellId},
-		SpellSchool: core.SpellSchoolHoly,
-		ProcMask:    core.ProcMaskSpellDamage,
-		Cast: core.CastConfig{
-			DefaultCast: core.Cast{
-				GCD:      time.Millisecond * 1950, // about 16 instant-casts per 30s with some time left-over
-				CastTime: 0,
-			},
-		},
+		ActionID:         core.ActionID{SpellID: spellId},
+		SpellSchool:      core.SpellSchoolHoly,
+		ProcMask:         core.ProcMaskSpellDamage,
 		DamageMultiplier: 1,
 		ThreatMultiplier: 1,
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
@@ -78,12 +79,25 @@ func (valkyr *ValkyrPet) Initialize() {}
 
 func (valkyr *ValkyrPet) Reset(_ *core.Simulation) {}
 
+// npc_pet_gen_valkyr_guardian's UpdateAI, on the Val'kyr's own updates: Smite whenever its attack timer
+// is up, which starts the timer over.
 func (valkyr *ValkyrPet) ExecuteCustomRotation(sim *core.Simulation) {
+	if next := sim.NextServerTick(sim.CurrentTime); next > sim.CurrentTime {
+		valkyr.WaitUntil(sim, next)
+		return
+	}
 	valkyr.smite.Cast(sim, valkyr.CurrentTarget)
+	valkyr.WaitUntil(sim, sim.NextServerTick(sim.CurrentTime+valkyrAttackTime))
 }
 
 func (valkyr *ValkyrPet) GetPet() *core.Pet {
 	return valkyr.Pet
+}
+
+// valkyrLife is how long a Val'kyr that gets averageCasts Smites off is out: an attack time for each, the
+// summon's 30 s at most.
+func valkyrLife(averageCasts float64) time.Duration {
+	return min(time.Duration(averageCasts*float64(valkyrAttackTime)), time.Second*30)
 }
 
 func MakeNibelungTriggerAura(agent core.Agent, isHeroic bool) {
@@ -119,8 +133,7 @@ func MakeNibelungTriggerAura(agent core.Agent, isHeroic bool) {
 					valkyr.registerSmite(isHeroic)
 
 					averageCasts := character.NibelungAverageCasts
-					duration := min(time.Duration(averageCasts/16*30)*time.Second, time.Second*30)
-					valkyrAura.Duration = max(duration, time.Millisecond*250)
+					valkyrAura.Duration = max(valkyrLife(averageCasts), time.Millisecond*250)
 
 					if averageCasts > 0 {
 						valkyr.EnableWithTimeout(sim, petAgent, valkyrAura.Duration)

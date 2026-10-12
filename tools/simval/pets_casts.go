@@ -60,6 +60,13 @@ type petsCastsImage struct {
 	Opener      string  `json:"opener"`
 	FrostboltGo []int64 `json:"frostboltGo"`
 	FireBlastGo []int64 `json:"fireBlastGo"`
+	// when each Frostbolt's damage came, and the landings that missed or were resisted
+	FrostboltHit  []int64 `json:"frostboltHit"`
+	FrostboltMiss []int64 `json:"frostboltMiss"`
+	// how far the image stood from the dummy, centre to centre, and the mage. 0 in a record from before
+	// the hits were read
+	Yards     float64 `json:"yards"`
+	MageYards float64 `json:"mageYards"`
 }
 
 const petsCastsBlastOpener = "Fire Blast"
@@ -296,6 +303,9 @@ func checkPetsCastsElemental(lives []petsCastsRecord, sim *petsCastsElemental) [
 type petsCastsImageRun struct {
 	boltGo, blastGo []int64
 	lifeMs          int64
+	// when the corpse goes, and how long the sim's Frostbolt flies from that many yards
+	unsummonMs int64
+	flightMs   func(yards float64) int64
 }
 
 func (r petsCastsImageRun) blastOpener() bool {
@@ -352,6 +362,12 @@ func simImageRuns(lead time.Duration) (map[bool]petsCastsImageRun, error) {
 		}
 		// their first cast is over a second off, so the clock is set before any is logged
 		came = g.sim.CurrentTime
+		// the recorded clock starts at the summon's packet, which goes out on the update the images first run on
+		run.unsummonMs = (g.pet.UnsummonAt() - g.sim.NextServerTick(came)).Milliseconds()
+		run.flightMs = func(yards float64) int64 {
+			g.pet.DistanceFromTarget = yards
+			return bolt.TravelTime().Milliseconds()
+		}
 		for g.pet.IsEnabled() && g.sim.CurrentTime < came+time.Minute && !g.sim.Step() {
 		}
 		run.lifeMs = (g.sim.CurrentTime - came).Milliseconds()
@@ -408,8 +424,62 @@ func checkPetsCastsSummon(rec petsCastsRecord, runs map[bool]petsCastsImageRun, 
 		checks = append(checks,
 			checkPetsCastsTimes(fmt.Sprintf("image %d Frostbolts", n+1), img.FrostboltGo, run.boltGo, recOrigin, simOrigin, run.lifeMs),
 			checkPetsCastsTimes(fmt.Sprintf("image %d Fire Blasts", n+1), img.FireBlastGo, run.blastGo, recOrigin, simOrigin, run.lifeMs))
+		if img.MageYards > 0 {
+			checks = append(checks, checkPetsCastsHits(fmt.Sprintf("image %d Frostbolt hits", n+1), img, run))
+		}
 	}
 	return checks
+}
+
+const (
+	// a creature's missile flies from its model's edge (WorldObject::GetDistance takes the caster's reach off)
+	petsCastsImageReach = 1.5
+	// a Frostbolt whose flight ends within an update of the corpse going may have its hit or not: the live
+	// update isn't the sim's, and a packet's time is good to a few tens of ms
+	petsCastsHitEdgeMs = petsCastsUpdateMs
+)
+
+// checkPetsCastsHits holds each recorded Frostbolt that went off to the sim's rule for a missile of a summon
+// that goes: it hits unless it's still in the air when the corpse is unsummoned. The flight is the sim's,
+// from where the recorded image stood. A landing that missed or was resisted has no hit either way.
+func checkPetsCastsHits(name string, img petsCastsImage, run petsCastsImageRun) Check {
+	flight := run.flightMs(max(img.Yards-petsCastsImageReach, 0))
+	used := make([]bool, len(img.FrostboltHit))
+	hits, lost, edge := 0, 0, 0
+	for _, went := range img.FrostboltGo {
+		if slices.Contains(img.FrostboltMiss, went) {
+			continue
+		}
+		hit := false
+		for k, at := range img.FrostboltHit {
+			// a hit comes on the first update its flight is over by
+			if !used[k] && at >= went-petsCastsJitterMs && at <= went+flight+petsCastsHitEdgeMs+petsCastsJitterMs {
+				used[k], hit = true, true
+				break
+			}
+		}
+		ends := went + flight
+		switch {
+		case ends > run.unsummonMs-petsCastsHitEdgeMs && ends < run.unsummonMs+petsCastsHitEdgeMs:
+			edge++
+		case hit && ends >= run.unsummonMs:
+			return fail(name, fmt.Sprintf("the Frostbolt that went off %d ms in hit, %d ms of flight from %.1f yd: the sim's corpse goes at %d ms and takes it",
+				went, flight, img.Yards, run.unsummonMs))
+		case !hit && ends < run.unsummonMs:
+			return fail(name, fmt.Sprintf("the Frostbolt that went off %d ms in never hit, %d ms of flight from %.1f yd: the sim lands it, its corpse goes at %d ms",
+				went, flight, img.Yards, run.unsummonMs))
+		}
+		if hit {
+			hits++
+		} else {
+			lost++
+		}
+	}
+	if n := slices.Index(used, false); n >= 0 {
+		return fail(name, fmt.Sprintf("the hit %d ms in has no Frostbolt that went off before it", img.FrostboltHit[n]))
+	}
+	return pass(name, fmt.Sprintf("%d hit and %d were lost with the corpse, %d of them ending within %d ms of the sim's %d; %d ms of flight from %.1f yd",
+		hits, lost, edge, petsCastsHitEdgeMs, run.unsummonMs, flight, img.Yards))
 }
 
 // petsCastsLead is how far ahead of the pull a recorded summon came, to the tenth of a second the test

@@ -135,7 +135,8 @@ Shadowcrawl). Per record (`pets.go`), on the pet built as for strikes:
 - `timing`: cast speed, cast time, cost, GCD. A creature's record has no cooldown.
 
 `TestPetsCastsRecords` replays `pets_casts.jsonl` (`pets_casts.go`): the `PETFIX_CASTS` lines of
-`TestPetfixFireElementalCasts` and the `PETFIX_IMAGES` lines of `TestPetfixMirrorImageCasts`, cut from the run's log
+`TestPetfixFireElementalCasts` and the `PETFIX_IMAGES` lines of `TestPetfixMirrorImageCasts`,
+`TestPetfixFarMirrorImageCasts` and `TestPetfixMirrorImageLastFrostbolt`, cut from the run's log
 with `grep -o 'PETFIX_CASTS {.*'` and `'PETFIX_IMAGES {.*'`, the prefix dropped. Times are packet arrivals, so every
 bound has 250 ms of jitter, a 110 ms update and 1.5% of drift on it (`petsCastsSlack`).
 - Elemental lives against 600 of the sim's: landed Novas, Blasts and swings a life within 5 standard errors of the
@@ -144,6 +145,10 @@ bound has 250 ms of jitter, a 110 ms update and 1.5% of drift on it (`petsCastsS
 - Each image against the sim's images summoned with the record's lead and opener: Frostbolts and Fire Blasts cast
   for cast, timed from the pull (from the summon into a fight). A cast within 0.5 s of the image's death may be
   missing on either side, named in the check's detail: it rides on the update period. Three images a summon.
+- Each recorded Frostbolt that went off and wasn't missed against the sim's lost-missile rule (`Pet.MissileLost`),
+  for a record with `mageYards`: the sim's flight from the image's own `yards` less its 1.5 yd reach, the sim's
+  corpse going 29988 ms after the summon's update. It has to hit when its flight ends before that and never when
+  after; within one 110 ms update of it either is taken.
 - Fire Blast openers among the images ahead of the pull against CasterAI's even pick.
 
 `TestPetsCastsReplayCatchesAWrongRecord` moves one recorded thing a case.
