@@ -41,12 +41,14 @@ Before starting, read every doc whose trigger matches the task.
 | [dev-environment](docs/guide/dev-environment.md) | building, running, regenerating protos, any Docker or shell work |
 | [testing](docs/guide/testing.md) | verifying or reviewing a change, touching goldens |
 | [sim-architecture](docs/guide/sim-architecture.md) | locating sim, proto, UI or tool code |
-| [server-parity](docs/guide/server-parity.md) | changing a mechanic, item value or module behaviour |
-| [class-mechanics](docs/guide/class-mechanics.md) | changing a class's spells, talents or procs |
+| [server-parity](docs/guide/server-parity.md) | changing a combat table, cost, proc, immunity or other core mechanic, an item value or module behaviour |
+| [damage-and-healing](docs/guide/damage-and-healing.md) | changing how a hit's or heal's amount is worked out: percents, rounding, the AoE cap, crit damage |
+| [class-mechanics](docs/guide/class-mechanics.md) | changing a death knight's, warrior's, paladin's, rogue's or hunter's spells, talents or procs |
+| [caster-mechanics](docs/guide/caster-mechanics.md) | changing a druid's, shaman's, mage's, priest's or warlock's spells, talents or procs |
 | [pets](docs/guide/pets.md) | changing a pet's or guardian's stats, timers, AI, or the buffs and casts that reach it |
 | [threat](docs/guide/threat.md) | changing threat, energizes or heals, or a spell's threat data |
 | [tank-modeling](docs/guide/tank-modeling.md) | changing the optimizer's tank boss, healing model, survival score or hit floor |
-| [spell-data-and-timing](docs/guide/spell-data-and-timing.md) | declaring a spell's server data; swing, cast, GCD or missile timing |
+| [spell-data-and-timing](docs/guide/spell-data-and-timing.md) | declaring a spell's server data; update, aura, swing, cast, GCD or missile timing |
 | [azerothcore-server](docs/guide/azerothcore-server.md) | touching the live server, its containers, config, modules or characters |
 | [azerothcore-data](docs/guide/azerothcore-data.md) | querying server tables or parsing DBCs |
 | [workflow](docs/guide/workflow.md) | planning, branching, reviewing, committing |

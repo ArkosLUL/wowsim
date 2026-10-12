@@ -51,8 +51,10 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
 - gofmt reads CRLF as a diff, so use `tr -d '\r' < f | gofmt -l`, with the whole pipe in the container:
   `dock.sh exec` doesn't forward stdin.
 - Float asserts need a tolerance, e.g. `math.Abs(got-want) > 0.001`.
-- A test that counts on exact 10 ms world ticks sets `WorldLoopMs` to 0 beside `WorldUpdateIntervalMs`: unset,
-  it takes the live 10.27 ([update timing](spell-data-and-timing.md#update-timing)).
+- Unset, a test's map updates differ in length, as live ([update timing](spell-data-and-timing.md#update-timing)).
+  One that counts updates or ticks pins the grid with `core.OnRegularGrid(encounter, loopMs)`: every world tick
+  takes `loopMs` and no update strays. For exact 10 ms world ticks set `WorldLoopMs` to 0 beside
+  `WorldUpdateIntervalMs`. A bound on a time left has to allow the longest world tick, 17.9 ms live.
 - Reviewers build and test too. A review that skipped the build ("Go not installed") once missed a
   compile error.
 
@@ -88,6 +90,12 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
   be sampling. A tank's SwitchInFrontOfTarget dtps moved +13.7% in the golden for +0.1% at 400,000 iterations:
   rerun such a row at depth before reading its sign. TestProtection's Average dtps scatters by 2.8% too, on
   1.1 hits a fight.
+- A suite's Average-Default row reruns at depth, under server settings of your own, to tell a real move from
+  noise and one setting's share of it (`suiteDepthRun` in `sim/core/test_suite.go`):
+  `SUITE_DEPTH_ITERATIONS=200000 SUITE_DEPTH_DIR=/wotlk/tmp/depth SUITE_DEPTH_SETTINGS='{"worldLoopMs":0}' go test --tags=with_db -run 'TestBM$' ./sim/hunter`
+  - It writes `<dir>/TestBM.results`, or `.results.tmp` with `SUITE_DEPTH_NEW=1`, so `dock.sh delta <dir>` reads
+    one run against another. The directory must be absolute.
+  - The settings are a `proto.ServerSettings` in JSON, laid over the suite's. Nothing is held to the goldens.
 - Not real coverage of their spec: the three healer suites (Resto Shaman, Holy Paladin, Resto Druid)
   only autocast cooldowns, so they check stats and item heals only; Subtlety runs a Combat APL.
 - A `.results` that shows as modified with an empty `git diff` is CRLF noise: leave it out of commits.
@@ -164,6 +172,13 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
   cooldown`. The default run's Mind Flay can land in the server's 100% resist bucket (`Unit::CalcAbsorbResist`, when
   `float(rand_norm())` rounds to 1.0f: about one full capture in six), which the replay can't absorb: rerun
   `TestSimvalPriest` alone.
+  - `.cast <id> triggered` runs no effect, so it deals and summons nothing (`TRIGGERED_FULL_DEBUG_MASK` holds
+    `TRIGGERED_IGNORE_EFFECTS`): cast untriggered for a spell's effects.
+  - An aura from `.aura` shows its effects after the unit's next update: wait before reading them.
+  - At the entrance a pet has no line of sight to a target beside the dummy, and its cast is refused
+    (`DONT_REPORT`): stand such a test on the fights' floor (`fightGround`).
+  - mod-individual-progression cancels a vanilla or TBC spell rank as its cast time is up, for a level 70
+    player past TBC (`OnPlayerSpellCast`; `IndividualProgression.EnableAllSpellRanks = 0`): cast the WotLK rank.
 - `TestSimSpellGroups` (`sim/spell_groups_test.go`, offline) checks the sim's exclusive-effect categories against
   the server's `spell_group` rules in `sim/core/testdata/simval/spell_groups.json`; the export query is in its
   doc comment. A pair the two disagree on needs a reason in `spellGroupAllowances`, and a stale entry fails.
