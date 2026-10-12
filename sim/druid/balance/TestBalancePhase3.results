@@ -980,7 +980,7 @@ dps_results: {
 dps_results: {
  key: "TestBalancePhase3-Settings-Tauren-p3_alliance-Default-basic_p3-NoBuffs-LongSingleTarget"
  value: {
-  dps: 4569.6835
+  dps: 4569.99783
   tps: 4496.15593
  }
 }
@@ -1014,13 +1014,13 @@ ability_results: {
   entries: {
    key: "pet:Treant|aura|{SpellID: 2825, Tag: -1}"
    value: {
-    uptime_s: 72.41783
+    uptime_s: 72.4326
    }
   }
   entries: {
    key: "pet:Treant|aura|{SpellID: 57724}"
    value: {
-    uptime_s: 72.41783
+    uptime_s: 72.4326
    }
   }
   entries: {

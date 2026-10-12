@@ -980,7 +980,7 @@ dps_results: {
 dps_results: {
  key: "TestBalance-Settings-Tauren-p1-Default-basic_p3-NoBuffs-LongSingleTarget"
  value: {
-  dps: 2634.03033
+  dps: 2634.17
   tps: 2573.39606
  }
 }
@@ -1022,7 +1022,7 @@ dps_results: {
 dps_results: {
  key: "TestBalance-Settings-Tauren-p2-Default-basic_p3-NoBuffs-LongSingleTarget"
  value: {
-  dps: 3472.61617
+  dps: 3472.95917
   tps: 3410.50124
  }
 }
@@ -1057,14 +1057,14 @@ dps_results: {
 dps_results: {
  key: "TestBalance-Settings-Tauren-p3_alliance-Default-basic_p3-NoBuffs-LongMultiTarget"
  value: {
-  dps: 9729.8
+  dps: 9730.28567
   tps: 9748.14968
  }
 }
 dps_results: {
  key: "TestBalance-Settings-Tauren-p3_alliance-Default-basic_p3-NoBuffs-LongSingleTarget"
  value: {
-  dps: 6150.26433
+  dps: 6150.464
   tps: 6122.129
  }
 }
@@ -1105,13 +1105,13 @@ ability_results: {
   entries: {
    key: "pet:Treant|aura|{SpellID: 2825, Tag: -1}"
    value: {
-    uptime_s: 72.30083
+    uptime_s: 72.3156
    }
   }
   entries: {
    key: "pet:Treant|aura|{SpellID: 57724}"
    value: {
-    uptime_s: 72.30083
+    uptime_s: 72.3156
    }
   }
   entries: {
