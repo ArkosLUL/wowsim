@@ -147,8 +147,8 @@ dps_results: {
 dps_results: {
  key: "TestShadow-AllItems-CrimsonAcolyte'sRaiment"
  value: {
-  dps: 8132.546
-  tps: 5571.06253
+  dps: 8132.1665
+  tps: 5571.03534
  }
 }
 dps_results: {
@@ -231,8 +231,8 @@ dps_results: {
 dps_results: {
  key: "TestShadow-AllItems-DislodgedForeignObject-50353"
  value: {
-  dps: 8243.84533
-  tps: 5657.85271
+  dps: 8243.888
+  tps: 5658.1018
  }
 }
 dps_results: {
@@ -567,15 +567,15 @@ dps_results: {
 dps_results: {
  key: "TestShadow-AllItems-ReignoftheDead-47316"
  value: {
-  dps: 8062.607
-  tps: 5530.07361
+  dps: 8062.1815
+  tps: 5530.00245
  }
 }
 dps_results: {
  key: "TestShadow-AllItems-ReignoftheDead-47477"
  value: {
-  dps: 8117.73733
-  tps: 5568.14148
+  dps: 8117.29717
+  tps: 5568.06098
  }
 }
 dps_results: {
@@ -756,8 +756,8 @@ dps_results: {
 dps_results: {
  key: "TestShadow-AllItems-TomeofArcanePhenomena-36972"
  value: {
-  dps: 7824.19317
-  tps: 5365.55266
+  dps: 7823.3905
+  tps: 5365.16731
  }
 }
 dps_results: {
@@ -798,8 +798,8 @@ dps_results: {
 dps_results: {
  key: "TestShadow-AllItems-Zabra'sRaiment"
  value: {
-  dps: 7088.3355
-  tps: 4851.62155
+  dps: 7088.34833
+  tps: 4851.85733
  }
 }
 dps_results: {
@@ -812,8 +812,8 @@ dps_results: {
 dps_results: {
  key: "TestShadow-Average-Default"
  value: {
-  dps: 8044.74604
-  tps: 5518.75578
+  dps: 8044.54115
+  tps: 5518.77529
  }
 }
 dps_results: {
@@ -1204,8 +1204,8 @@ dps_results: {
 dps_results: {
  key: "TestShadow-Talents-ShadowAffinity-Average"
  value: {
-  dps: 8044.74604
-  tps: 4678.82119
+  dps: 8044.54115
+  tps: 4678.84383
  }
 }
 ability_results: {
@@ -1214,11 +1214,11 @@ ability_results: {
   entries: {
    key: "pet:Shadowfiend|action|{OtherID: 3, Tag: 1}"
    value: {
-    casts: 27.825
-    hits: 27.825
-    crit_pct: 12.22102
-    amount_per_hit: 1982.09923
-    amount: 55151.911
+    casts: 27.79
+    hits: 27.79
+    crit_pct: 12.22562
+    amount_per_hit: 1982.08388
+    amount: 55082.111
    }
   }
   entries: {
@@ -1230,19 +1230,19 @@ ability_results: {
   entries: {
    key: "pet:Shadowfiend|aura|{SpellID: 2825, Tag: -1}"
    value: {
-    uptime_s: 13.83992
+    uptime_s: 13.83545
    }
   }
   entries: {
    key: "pet:Shadowfiend|aura|{SpellID: 57724}"
    value: {
-    uptime_s: 13.83992
+    uptime_s: 13.83545
    }
   }
   entries: {
    key: "pet:Shadowfiend|aura|{SpellID: 63619}"
    value: {
-    uptime_s: 26.21181
+    uptime_s: 26.20237
    }
   }
   entries: {
@@ -1287,8 +1287,8 @@ ability_results: {
     casts: 1.003
     hits: 134.3915
     crit_pct: 37.54962
-    amount_per_hit: 2208.32512
-    amount: 296780.126
+    amount_per_hit: 2208.33361
+    amount: 296781.2665
    }
   }
   entries: {
@@ -1297,8 +1297,8 @@ ability_results: {
     casts: 19.6035
     hits: 122.338
     crit_pct: 33.56112
-    amount_per_hit: 3398.29096
-    amount: 415740.1195
+    amount_per_hit: 3398.16846
+    amount: 415725.1325
    }
   }
   entries: {
@@ -1307,8 +1307,8 @@ ability_results: {
     casts: 14.2395
     hits: 130.2765
     crit_pct: 33.73517
-    amount_per_hit: 2792.5028
-    amount: 363797.4915
+    amount_per_hit: 2792.58615
+    amount: 363808.349
    }
   }
   entries: {
@@ -1323,8 +1323,8 @@ ability_results: {
     casts: 123.493
     hits: 347.934
     crit_pct: 31.44188
-    amount_per_hit: 3371.04783
-    amount: 1.1729021555e+06
+    amount_per_hit: 3371.03247
+    amount: 1.172896811e+06
    }
   }
   entries: {
@@ -1333,8 +1333,8 @@ ability_results: {
     casts: 14.2205
     hits: 14.2035
     crit_pct: 33.12564
-    amount_per_hit: 7632.5411
-    amount: 108408.7975
+    amount_per_hit: 7633.72225
+    amount: 108425.574
    }
   }
   entries: {
@@ -1603,11 +1603,11 @@ ability_results: {
   entries: {
    key: "pet:Shadowfiend|action|{OtherID: 3, Tag: 1}"
    value: {
-    casts: 27.825
-    hits: 27.825
-    crit_pct: 12.22102
-    amount_per_hit: 1982.09923
-    amount: 55151.911
+    casts: 27.79
+    hits: 27.79
+    crit_pct: 12.22562
+    amount_per_hit: 1982.08388
+    amount: 55082.111
    }
   }
   entries: {
@@ -1619,19 +1619,19 @@ ability_results: {
   entries: {
    key: "pet:Shadowfiend|aura|{SpellID: 2825, Tag: -1}"
    value: {
-    uptime_s: 13.83992
+    uptime_s: 13.83545
    }
   }
   entries: {
    key: "pet:Shadowfiend|aura|{SpellID: 57724}"
    value: {
-    uptime_s: 13.83992
+    uptime_s: 13.83545
    }
   }
   entries: {
    key: "pet:Shadowfiend|aura|{SpellID: 63619}"
    value: {
-    uptime_s: 26.21181
+    uptime_s: 26.20237
    }
   }
   entries: {
@@ -1676,8 +1676,8 @@ ability_results: {
     casts: 1.003
     hits: 134.3915
     crit_pct: 37.54962
-    amount_per_hit: 2208.32512
-    amount: 296780.126
+    amount_per_hit: 2208.33361
+    amount: 296781.2665
    }
   }
   entries: {
@@ -1686,8 +1686,8 @@ ability_results: {
     casts: 19.6035
     hits: 122.338
     crit_pct: 33.56112
-    amount_per_hit: 3398.29096
-    amount: 415740.1195
+    amount_per_hit: 3398.16846
+    amount: 415725.1325
    }
   }
   entries: {
@@ -1696,8 +1696,8 @@ ability_results: {
     casts: 14.2395
     hits: 130.2765
     crit_pct: 33.73517
-    amount_per_hit: 2792.5028
-    amount: 363797.4915
+    amount_per_hit: 2792.58615
+    amount: 363808.349
    }
   }
   entries: {
@@ -1712,8 +1712,8 @@ ability_results: {
     casts: 123.493
     hits: 347.934
     crit_pct: 31.44188
-    amount_per_hit: 3371.04783
-    amount: 1.1729021555e+06
+    amount_per_hit: 3371.03247
+    amount: 1.172896811e+06
    }
   }
   entries: {
@@ -1722,8 +1722,8 @@ ability_results: {
     casts: 14.2205
     hits: 14.2035
     crit_pct: 33.12564
-    amount_per_hit: 7632.5411
-    amount: 108408.7975
+    amount_per_hit: 7633.72225
+    amount: 108425.574
    }
   }
   entries: {

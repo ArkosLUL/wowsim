@@ -1105,13 +1105,13 @@ ability_results: {
   entries: {
    key: "pet:Treant|aura|{SpellID: 2825, Tag: -1}"
    value: {
-    uptime_s: 72.3156
+    uptime_s: 72.29976
    }
   }
   entries: {
    key: "pet:Treant|aura|{SpellID: 57724}"
    value: {
-    uptime_s: 72.3156
+    uptime_s: 72.29976
    }
   }
   entries: {
