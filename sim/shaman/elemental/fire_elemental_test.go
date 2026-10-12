@@ -202,7 +202,8 @@ func TestFireElementalCastsOffItsEventTimers(t *testing.T) {
 			}},
 			Rotation: core.APLRotationFromJsonString(`{"type": "TypeAPL", "priorityList": []}`),
 		}, nil, nil, nil),
-		Encounter:  core.MakeSingleTargetEncounter(0),
+		// the windows and counts below are for updates of 102.7 ms, every one the same
+		Encounter:  core.OnRegularGrid(core.MakeSingleTargetEncounter(0), 10.27),
 		SimOptions: &proto.SimOptions{Iterations: 1, IsTest: true, RandomSeed: 101},
 	})
 	shaman := sim.Raid.Parties[0].Players[0].(*ElementalShaman)

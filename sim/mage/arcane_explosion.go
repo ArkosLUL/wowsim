@@ -35,7 +35,7 @@ func (mage *Mage) registerArcaneExplosionSpell() {
 			dmgFromSP := core.PowerBonus(spell.Direct.SP, spell.SpellPower())
 			for _, aoeTarget := range sim.Encounter.TargetUnits {
 				baseDamage := spell.Direct.Roll(sim) + dmgFromSP
-				baseDamage *= sim.Encounter.AOECapMultiplier()
+				spell.AoECapUnits = len(sim.Encounter.Targets)
 				spell.CalcAndDealDamage(sim, aoeTarget, baseDamage, spell.OutcomeMagicHitAndCrit)
 			}
 			// spell_proc 36032 takes the Arcane Blast stacks off at the cast, once every target has its damage

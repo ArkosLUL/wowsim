@@ -30,7 +30,7 @@ func (mage *Mage) registerLivingBombSpell() {
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			baseDamage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP, spell.SpellPower())
-			baseDamage *= sim.Encounter.AOECapMultiplier()
+			spell.AoECapUnits = len(sim.Encounter.Targets)
 			for _, aoeTarget := range sim.Encounter.TargetUnits {
 				spell.CalcAndDealDamage(sim, aoeTarget, baseDamage, spell.OutcomeMagicHitAndCrit)
 			}

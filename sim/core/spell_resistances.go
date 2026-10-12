@@ -9,7 +9,8 @@ import (
 )
 
 func (result *SpellResult) applyResistances(sim *Simulation, spell *Spell, isPeriodic bool, attackTable *AttackTable) {
-	if spell.AoECapUnits > 10 && !isPeriodic && result.Damage > 0 {
+	// a tick the server casts as a spell of its own is a launch too (Volley)
+	if spell.AoECapUnits > 10 && result.Damage > 0 && (!isPeriodic || spell.ticksAsCasts()) {
 		result.Damage = float64(int32(result.Damage) * 10 / int32(spell.AoECapUnits))
 	}
 	// TODO check why result.Outcome isn't updated with resists anymore

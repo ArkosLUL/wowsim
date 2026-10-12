@@ -50,8 +50,8 @@ func (dk *Deathknight) registerHowlingBlastSpell() {
 				baseDamage := (spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.AP, dk.getImpurityBonus(spell))) *
 					dk.glacielRotBonus(aoeTarget) *
 					dk.RoRTSBonus(aoeTarget) *
-					dk.mercilessCombatBonus(sim) *
-					sim.Encounter.AOECapMultiplier()
+					dk.mercilessCombatBonus(sim)
+				spell.AoECapUnits = len(sim.Encounter.Targets)
 
 				result := spell.CalcDamage(sim, aoeTarget, baseDamage, spell.OutcomeMagicHitAndCrit)
 

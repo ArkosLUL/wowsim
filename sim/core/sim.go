@@ -63,8 +63,14 @@ type Simulation struct {
 	trackers       []*auraTracker
 
 	minWeaponAttackTime time.Duration
-	weaponAttacks       []*WeaponAttack
-	shotPassAt          time.Duration // the tick whose Auto Shots already went ahead of its auras
+	weaponAttacks       []*WeaponAttack // the players' first, as Map::Update runs players ahead of creatures
+	playerAttacks       int             // how many of them are players'
+	shotPassAt          time.Duration   // the tick whose Auto Shots already went ahead of its auras
+	meleePassAt         time.Duration   // the tick whose player swings already went ahead of the creatures' auras
+
+	// starts the execute phases the damage taken has reached, see executeDamageReached
+	executeAction *PendingAction
+	executeQueued bool
 
 	minTaskTime time.Duration
 	tasks       []Task
@@ -76,6 +82,11 @@ type Simulation struct {
 	serverTickPhase    time.Duration
 	worldTickInterval  time.Duration
 	worldTickPhase     time.Duration
+
+	// Set when the updates jitter: it places them, the intervals above are the shortest an update and
+	// a tick get, and both phases are the first jittered update. Ask ServerTickBefore and
+	// WorldTickBefore for the update before a time, since it's no longer one interval back.
+	updates *updateJitter
 
 	// the unit whose own update is running, while its swing, AI instant cast, dot tick or aura expiry
 	// does: an aura it puts on itself then counts from this update, not the one before
@@ -127,12 +138,28 @@ func (sim *Simulation) rescheduleWeaponAttack(weaponAttackTime time.Duration) {
 
 func (sim *Simulation) addWeaponAttack(weaponAttack *WeaponAttack) {
 	sim.weaponAttacks = append(sim.weaponAttacks, weaponAttack)
+	if weaponAttack.unit.Type == PlayerUnit {
+		// behind the last player's, and the creature's that was there goes to the back
+		last := len(sim.weaponAttacks) - 1
+		sim.weaponAttacks[last], sim.weaponAttacks[sim.playerAttacks] = sim.weaponAttacks[sim.playerAttacks], weaponAttack
+		sim.playerAttacks++
+	}
 }
 
 func (sim *Simulation) removeWeaponAttack(weaponAttack *WeaponAttack) {
-	if idx := slices.Index(sim.weaponAttacks, weaponAttack); idx != -1 {
-		sim.weaponAttacks = removeBySwappingToBack(sim.weaponAttacks, idx)
+	idx := slices.Index(sim.weaponAttacks, weaponAttack)
+	if idx == -1 {
+		return
 	}
+	if idx < sim.playerAttacks {
+		// the last player's takes its place, so the players stay in front
+		sim.playerAttacks--
+		sim.weaponAttacks[idx] = sim.weaponAttacks[sim.playerAttacks]
+		idx = sim.playerAttacks
+	}
+	sim.weaponAttacks = removeBySwappingToBack(sim.weaponAttacks, idx)
+	// a pass over the attacks that's under way can skip the ones moved up, so look again
+	sim.rescheduleWeaponAttack(sim.CurrentTime)
 }
 
 func (sim *Simulation) RescheduleTask(taskTime time.Duration) {
@@ -242,7 +269,7 @@ func newSimWithEnv(env *Environment, simOptions *proto.SimOptions) *Simulation {
 	}
 
 	world, mapUpdate := env.serverSettings().updateGrids()
-	return &Simulation{
+	sim := &Simulation{
 		Environment: env,
 		Options:     simOptions,
 
@@ -255,6 +282,12 @@ func newSimWithEnv(env *Environment, simOptions *proto.SimOptions) *Simulation {
 		serverTickInterval: mapUpdate,
 		worldTickInterval:  world,
 	}
+	if lengths := env.serverSettings().updateLengths(); lengths != nil {
+		sim.updates = newUpdateJitter(lengths)
+		sim.serverTickInterval = lengths.shortest
+		sim.worldTickInterval = lengths.shortest / lengths.ticks
+	}
+	return sim
 }
 
 // The raid's server settings, or the live ones without a raid, same as Character.Server().
@@ -268,12 +301,41 @@ func (env *Environment) serverSettings() *ServerSettings {
 // NextServerTick is the first map update at or after t: when a creature's, pet's or guardian's timer
 // that runs out at t fires on the server. Returns t unchanged with exact timing.
 func (sim *Simulation) NextServerTick(t time.Duration) time.Duration {
+	if sim.updates != nil {
+		return sim.updates.nextUpdate(t)
+	}
 	return nextTick(t, sim.serverTickInterval, sim.serverTickPhase)
 }
 
 // NextWorldTick is NextServerTick for a player: the first world tick at or after t.
 func (sim *Simulation) NextWorldTick(t time.Duration) time.Duration {
+	if sim.updates != nil {
+		return sim.updates.nextWorldTick(t)
+	}
 	return nextTick(t, sim.worldTickInterval, sim.worldTickPhase)
+}
+
+// ServerTickBefore is the last map update before t: the one whose diff a creature's next update takes off
+// a timer started at t. Returns t unchanged with exact timing.
+func (sim *Simulation) ServerTickBefore(t time.Duration) time.Duration {
+	if sim.updates != nil {
+		return sim.updates.updateBefore(t)
+	}
+	if sim.serverTickInterval <= 0 {
+		return t
+	}
+	return nextTick(t, sim.serverTickInterval, sim.serverTickPhase) - sim.serverTickInterval
+}
+
+// WorldTickBefore is ServerTickBefore for a player: the last world tick before t.
+func (sim *Simulation) WorldTickBefore(t time.Duration) time.Duration {
+	if sim.updates != nil {
+		return sim.updates.worldTickBefore(t)
+	}
+	if sim.worldTickInterval <= 0 {
+		return t
+	}
+	return nextTick(t, sim.worldTickInterval, sim.worldTickPhase) - sim.worldTickInterval
 }
 
 // nextUpdate is the unit's first update at or after t.
@@ -282,6 +344,14 @@ func (sim *Simulation) nextUpdate(unit *Unit, t time.Duration) time.Duration {
 		return sim.NextWorldTick(t)
 	}
 	return sim.NextServerTick(t)
+}
+
+// updateBefore is the unit's last update before t.
+func (sim *Simulation) updateBefore(unit *Unit, t time.Duration) time.Duration {
+	if unit.Type == PlayerUnit {
+		return sim.WorldTickBefore(t)
+	}
+	return sim.ServerTickBefore(t)
 }
 
 func nextTick(t, interval, phase time.Duration) time.Duration {
@@ -560,7 +630,20 @@ func (sim *Simulation) reset() {
 
 	// the pull lands anywhere between two map updates, and the world ticks line up with them
 	sim.serverTickPhase, sim.worldTickPhase = 0, 0
-	if period := max(sim.serverTickInterval, sim.worldTickInterval); period > 0 {
+	if sim.updates != nil {
+		// the jitter starts on the last update before the sim does, and stops where the fight has to be over
+		start, horizon := time.Duration(0), min(sim.Duration, time.Hour)
+		if len(sim.prepullActions) > 0 {
+			start = min(start, sim.prepullActions[0].DoAt)
+		}
+		if sim.Encounter.EndFightAtHealth > 0 {
+			horizon = 2*horizon + time.Minute
+		}
+		phase := time.Duration(sim.RandomFloat("Server Tick Phase") * float64(sim.updates.lengths.mean))
+		sim.serverTickPhase, sim.worldTickPhase = start-phase, start-phase
+		// its own stream, so placing an update never moves another roll
+		sim.updates.reset(start-phase, horizon+time.Second, sim.rand.GetSeed()^updateJitterSeed)
+	} else if period := max(sim.serverTickInterval, sim.worldTickInterval); period > 0 {
 		phase := time.Duration(sim.RandomFloat("Server Tick Phase") * float64(period))
 		if sim.serverTickInterval > 0 {
 			sim.serverTickPhase = phase
@@ -576,6 +659,7 @@ func (sim *Simulation) reset() {
 	sim.executePhase = 0
 	sim.nextExecutePhase()
 	sim.executePhaseCallbacks = nil
+	sim.executeQueued = false
 
 	// Use duration as an end check if not using health.
 	sim.endOfCombatDuration = sim.Duration
@@ -591,8 +675,10 @@ func (sim *Simulation) reset() {
 	sim.minTrackerTime = NeverExpires
 
 	sim.weaponAttacks = sim.weaponAttacks[:0]
+	sim.playerAttacks = 0
 	sim.minWeaponAttackTime = NeverExpires
 	sim.shotPassAt = NeverExpires
+	sim.meleePassAt = NeverExpires
 
 	sim.tasks = sim.tasks[:0]
 	sim.minTaskTime = NeverExpires
@@ -665,7 +751,6 @@ func (sim *Simulation) Step() bool {
 	next := sim.pendingActions[last]
 
 	// an aura runs out at its own time, not with whatever happens to come next
-	rangedFirst := false
 	stops := min(next.at, sim.minWeaponAttackTime, sim.minTaskTime)
 	before := min(stops, sim.nextExecuteDuration)
 	if sim.minTrackerTime <= before {
@@ -673,24 +758,32 @@ func (sim *Simulation) Step() bool {
 		if limit < NeverExpires {
 			limit++
 		}
-		// a tie goes to what a player's update does ahead of its aura pass: landings, then Auto Shot
 		if at := sim.earliestExpiry(limit); at < NeverExpires && at <= before {
-			landingFirst := at == before && sim.playerEventAt(next, at)
-			rangedFirst = !landingFirst && at == before && at == sim.minWeaponAttackTime && sim.playerShotDue(at)
 			if at > sim.endOfCombatDuration || sim.Encounter.DamageTaken > sim.endOfCombatDamage {
 				return true
 			}
-			if !landingFirst && !rangedFirst {
+			swings := at == sim.minWeaponAttackTime
+			switch {
+			case at < before:
 				// an aura that ran out while nothing updated its unit (a pet that was away) is overdue
 				sim.advance(max(at, sim.CurrentTime))
-				return false
+			// a tie goes to what a player's update does ahead of its aura pass: landings, then Auto Shot
+			case sim.playerEventAt(next, at):
+				sim.advanceClock(at)
+				return sim.popPendingAction(last, next)
+			case swings && sim.playerShotDue(at):
+				sim.advanceClock(at)
+				sim.advanceWeaponAttacks(playerShots)
+			case sim.playerAuraDue(at):
+				sim.advancePlayerAuras(at)
+			// and the rest of the player's update, its melee, comes ahead of the creatures' auras
+			case swings && sim.playerSwingDue(at):
+				sim.advanceClock(at)
+				sim.advanceWeaponAttacks(playerSwings)
+			default:
+				sim.advance(max(at, sim.CurrentTime))
 			}
-			sim.advanceClock(at)
-			if rangedFirst {
-				sim.advanceWeaponAttacks(true)
-				return false
-			}
-			return sim.popPendingAction(last, next)
+			return false
 		}
 	}
 
@@ -704,7 +797,7 @@ func (sim *Simulation) Step() bool {
 		if sim.minWeaponAttackTime > sim.endOfCombatDuration || sim.Encounter.DamageTaken > sim.endOfCombatDamage {
 			return true
 		}
-		sim.advanceWeaponAttacks(false)
+		sim.advanceWeaponAttacks(allAttacks)
 		return false
 	}
 
@@ -784,18 +877,72 @@ func (sim *Simulation) advanceClock(nextTime time.Duration) {
 	sim.runExecutePhases()
 }
 
-// advanceWeaponAttacks swings what is due; with shotsOnly just the players' Auto Shots.
-func (sim *Simulation) advanceWeaponAttacks(shotsOnly bool) {
+// playerSwingDue is whether a player's melee swing is due at t and nothing holds it back: Map::Update runs
+// every player's update, swings and all, ahead of the creatures'. Only once a tick, as playerShotDue.
+func (sim *Simulation) playerSwingDue(t time.Duration) bool {
+	if sim.meleePassAt == t {
+		return false
+	}
+	for _, wa := range sim.weaponAttacks[:sim.playerAttacks] {
+		if wa != &wa.unit.AutoAttacks.ranged && wa.swingAt <= t && !wa.held {
+			if _, held := wa.castHold(sim); !held {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// playerAuraDue is whether an aura a player's update counts down has run out by t.
+func (sim *Simulation) playerAuraDue(t time.Duration) bool {
+	for _, tracker := range sim.trackers {
+		if tracker.minExpires > t {
+			continue
+		}
+		for _, aura := range tracker.activeAuras {
+			if aura.expires <= t && aura.onWorldTicks() {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// advancePlayerAuras is advance for the auras the players' updates count down, leaving the creatures'.
+func (sim *Simulation) advancePlayerAuras(nextTime time.Duration) {
+	sim.advanceClock(nextTime)
+	sim.minTrackerTime = NeverExpires
+	for _, t := range sim.trackers {
+		sim.minTrackerTime = min(sim.minTrackerTime, t.tryAdvance(sim, true))
+	}
+}
+
+// which weapon attacks a pass swings
+type attackPass uint8
+
+const (
+	allAttacks   attackPass = iota
+	playerShots             // the players' Auto Shots, ahead of their auras
+	playerSwings            // the players' melee, ahead of the creatures' auras
+)
+
+// advanceWeaponAttacks swings what is due, of the attacks the pass takes.
+func (sim *Simulation) advanceWeaponAttacks(pass attackPass) {
 	if sim.minWeaponAttackTime > sim.CurrentTime {
 		sim.advance(sim.minWeaponAttackTime)
 	}
 
-	if shotsOnly {
+	switch pass {
+	case playerShots:
 		sim.shotPassAt = sim.CurrentTime
+	case playerSwings:
+		sim.meleePassAt = sim.CurrentTime
 	}
 	sim.minWeaponAttackTime = NeverExpires
-	for _, wa := range sim.weaponAttacks {
-		if shotsOnly && !wa.isPlayerShot() {
+	// by index: a swing can take attacks off the list or put new ones on
+	for i := 0; i < len(sim.weaponAttacks); i++ {
+		wa := sim.weaponAttacks[i]
+		if pass != allAttacks && (i >= sim.playerAttacks || (pass == playerShots) != wa.isPlayerShot()) {
 			sim.minWeaponAttackTime = min(sim.minWeaponAttackTime, wa.swingAt)
 			continue
 		}
@@ -831,16 +978,56 @@ func (sim *Simulation) advance(nextTime time.Duration) {
 	}
 }
 
-// runExecutePhases starts the execute phases the clock or the damage taken has reached. This is a loop
-// to handle duplicate ExecuteProportions: if they're all set to 100%, advance reaches 35%, 25% and 20%
-// in one call.
+// runExecutePhases starts the execute phases the clock has reached. This is a loop to handle duplicate
+// ExecuteProportions: if they're all set to 100%, advance reaches 35%, 25% and 20% in one call.
 func (sim *Simulation) runExecutePhases() {
-	for sim.CurrentTime >= sim.nextExecuteDuration || sim.Encounter.DamageTaken >= sim.nextExecuteDamage {
-		sim.nextExecutePhase()
-		for _, callback := range sim.executePhaseCallbacks {
-			callback(sim, sim.executePhase)
+	for sim.CurrentTime >= sim.nextExecuteDuration {
+		sim.startNextExecutePhase()
+	}
+}
+
+func (sim *Simulation) startNextExecutePhase() {
+	sim.nextExecutePhase()
+	for _, callback := range sim.executePhaseCallbacks {
+		callback(sim, sim.executePhase)
+	}
+}
+
+// executeDamageReached queues the execute phases the damage taken has reached. The server only sets a
+// unit's under 35% and under 20% aura states in its own update (Unit::Update), so those phases start on
+// the target's first map update from the damage on, after the players' part of it. Nothing in the sim
+// rides on 25% but Drain Soul, whose script reads the health itself, so that one starts at once.
+func (sim *Simulation) executeDamageReached() {
+	if sim.executeQueued {
+		return
+	}
+	if sim.executeAction == nil {
+		sim.executeAction = &PendingAction{}
+		sim.executeAction.OnAction = func(sim *Simulation) {
+			sim.executeQueued = false
+			for sim.Encounter.DamageTaken >= sim.nextExecuteDamage {
+				if at := sim.executePhaseStart(); at > sim.CurrentTime {
+					sim.queueExecuteAction(at)
+					return
+				}
+				sim.startNextExecutePhase()
+			}
 		}
 	}
+	sim.queueExecuteAction(sim.executePhaseStart())
+}
+
+func (sim *Simulation) executePhaseStart() time.Duration {
+	if sim.executePhase == 35 {
+		return sim.CurrentTime
+	}
+	return sim.NextServerTick(sim.CurrentTime)
+}
+
+func (sim *Simulation) queueExecuteAction(at time.Duration) {
+	sim.executeQueued = true
+	sim.executeAction.NextActionAt = at
+	sim.AddPendingAction(sim.executeAction)
 }
 
 // StartTargetAtHealth puts the target at health of maxHealth, with the execute phases following the damage

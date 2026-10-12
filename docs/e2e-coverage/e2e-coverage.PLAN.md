@@ -3370,6 +3370,97 @@ Live stage (notes in `tmp/ec-class-fix4-live.md`; server 3d89793c7, module bc1d3
   replay and `pets_casts.go`'s drift; their drops and rows.
 - **Goldens:** all 37 (the period); report each.
 
+#### As built
+
+Period stage, on `b4e8f6d52` against [ac] `3d89793c7`, offline (notes `tmp/ec-core-fix6-period.md`). Verdicts:
+- Map update period (fixed, a jitter per update): `ServerSettings.map_update_jitter_ms` (field 7), the standard
+  deviation of one update's length; an update is its configured 100 ms plus a lognormal excess, ten even world
+  ticks, drawn per iteration (`sim/core/update_grid.go`). Defaults 10.46 ms a tick and 6 ms, fitted to 10,264
+  spacings of the Naxxramas slimes' 2 s cast timer in 124 raw fight logs: 2064 ms on average, a quarter on the 19th
+  update. A fixed period gives that timer one length, and so does a period per recording; the 103.14 read off the
+  Fire log assumed 20 updates every time. Sim: a 2 s timer 2064.3 ms, a 3 s cast 3044.3 ms (3.00 to 3.14 s).
+  Outside the fight the grid keeps the mean; `world_loop_ms` 0 or jitter 0 gives a fixed grid.
+- Ignite's races (fixed): the logged Fire fight replayed over 2000 seeds has the application win 62.7% at 2 s (live
+  14 of 21) and 54.8% at 4 s (live 5 of 9, z +0.03; was 4.1%).
+- A creature's 3 s cast (fixed); `petsCastsDrift` 0.5%. A Mirror Image's 9th Frostbolt now ends within an update
+  of its death (19 of 978 summons land it): EC-PET-FIX5's order on the death update decides the rest.
+- Ignite off an instant cast (fixed): `SpellResult.DealtWithItsCast`. A missile's hit and Living Bomb's explosion
+  read the current clock; Fire Blast keeps the stale one.
+- PaladinRetribution energize (fixed, drop and README row gone): `castClocks` moves a cast that put a ticking aura
+  on the player to the aura's clock, the earliest tick stamp less its periods. Log 1128, sim 1110 (1068 to 1128).
+  The log's rule: the 9th tick lands when the next cast's clock is 9000 ms on.
+- EC-CORE-FIX5's untraced moves (all hold at 200,000 iterations against `world_loop_ms` 0): TestBM −0.89% (wolf
+  swings −2.4%), TestDisc −0.79% (Power Word: Shield 20.33 to 20.00 casts, Borrowed Time 103.5 to 84.1 s), TestFury
+  −0.74% (Deep Wounds −4% a tick, Overpower −5.4%; Slam and Whirlwind were noise), TestUnholy −0.46% (Gargoyle casts
+  −3.0%). On the jittered grid: −1.09%, +0.29%, −0.93%, −0.15%.
+
+Built besides: `Simulation.ServerTickBefore` and `WorldTickBefore` (with jitter the update before isn't one
+interval back; `serverTickInterval` then holds the shortest update), `core.OnRegularGrid` for tests that count
+updates, a depth rerun of a suite's Average row (`SUITE_DEPTH_*`, `sim/core/test_suite.go`).
+
+Goldens (`dock.sh delta`), all 37 move, period and Ignite fix only:
+- TestFire −0.58% and TestFrostFire −0.69%: Ignite −2.8% and −3.0%. The period alone is −0.65% and −0.79%, the
+  instant-cast fix +0.07% and +0.10%.
+- Tank dtps +0.6 to +0.9% (paladin +2.0%, 1.1 hits a fight): the boss's 2.4 s swing took 24 fixed updates,
+  2464.8 ms, and now the 23rd or 24th, about 2449 ms.
+- TestDisc hps +1.08% (above); every other Average row within ±0.31%. 20-iteration rows reshuffle by up to 2.8%.
+
+Open: `pet.go` and `optimizer_tank_boss.go` still step by `serverTickInterval` (other items' files); the jittered
+grid costs Elemental about 14% of its run time (measured loaded); the world tick's own length isn't measured.
+
+Order-amounts stage, on the period stage's tree, offline (notes `tmp/ec-core-fix6-order.md`). Verdicts:
+- A player's swing after its hardcast lands (fixed): the restart counts from the world tick before
+  (`sim.updateBefore`), as an instant the session casts does; one cast from the unit's own update keeps its tick.
+- A creature's swing against the ticks on it (fixed): `WeaponAttack.swing` runs its due ticks first.
+- A creature's landing against an aura running out on it (fixed): `auraTracker.advance` lands its due hardcast
+  first (`Unit.landDueCast`). Its missiles in flight keep their queue order.
+- A player's swing against a creature's aura running out (fixed): `Step` runs the players' auras, their melee, then
+  the creatures' auras, and the players' attacks lead `sim.weaponAttacks`. In 88 raw fight logs the swing came
+  first in 13 of 13 shared ticks.
+- Damage-based execute phases (fixed on the target's update): the server sets the under 35% and under 20% aura
+  states only in `Unit::Update`, so those phases start on the target's first map update from the crossing damage
+  on, as a queued action. 25% starts with its damage: only Drain Soul reads it, off the health.
+- Expiries off the grid (fixed): Bone Shield's `UpdateExpires` is gone. `Aura.AddDuration` and `Dot.AddDuration`
+  add to what the duration has left (`Aura.expiresNominal`), where the snapped callers ended an update late half
+  the time; Rip, Moonfire, Scourge Strike, Pestilence, Rupture and `Dot.AddRemaining` use them.
+- `Spell.HealingPower` (fixed): the caster's alone. The heal path adds `int32(taken × coefficient)` after the
+  caster's percent, per target and tick: the declared coefficient where the sim's spell is the server's heal, else
+  `SpellConfig.HealingTakenCoefficient` (Prayer of Mending, Penance, Earth Shield, the two priest glyph heals).
+  Power Word: Shield's absorb takes none.
+- The AoE cap (fixed): every caller sets `Spell.AoECapUnits`; a tick the server casts (Volley) is cut too.
+
+Goldens, this stage alone: Average rows within 0.03% but TestFeral +0.19% and TestFeralApl +0.16% (Rip back up an
+update sooner), TestBalancePhase3 +0.08%, TestFeralTank dtps −0.16%, TestProtection dtps +1.0% (noise). The
+20-target rows move under 0.11% with the cap; 20-iteration rows reshuffle by up to 1.7%.
+
+Open: the taken coefficient takes the target's spell mods on the server, the sim the caster's; Empowered Renew's
+heal (63544) gets no taken term; `Encounter.AOECapMultiplier` has no caller left.
+
+Live stage, 2026-10-12 against [ac] `3d89793c7` (notes `tmp/ec-core-fix6-live.md`). No sim change, no golden move:
+- Five more 300 s Fire fights, six with last wave's (1813 s). The application wins 108 of 174 two-second races
+  (62.1%, sim 62.7%) and 41 of 84 four-second ones (48.8%, sim 54.8%, z −1.1). Ignite ticks 82.3 a fight (sim
+  81.4) but pays 1.256 of 40% of the crits against 1.175 (z +2.2): open, about +0.6% of TestFire if it holds.
+- The period is the recording's: counted off the creatures' cast stamps it's 103.75 to 104.53 ms a fight, and
+  104.36 on average over the 125 earlier logs (sd 0.75; a test run on the host adds about a ms). The four-second
+  race reads it, (39 p − 4000) / p: 2 of 16 in one fight, 11 of 14 in another.
+- The grid strays 4.66 ms an update: the share of the slimes' timers on the 19th update follows each log's own
+  period (2.9% at 103.0 ms, 24.7% at 104.5, 74.0% at 106.0). The period stage's fit, floored at 100 ms, reads high.
+- Defaults kept at 104.6 and 6 ms: at 104.4 and 4.7 the sim's race rates leave the live ones (66.5%, 56.9%). The
+  6 covers the scatter of the players' ticks, which the even-tick model lacks. Over the recordings' range the fire
+  goldens sit within −0.4% to +0.45% of the default's (50,000 iterations).
+- New, not fixed: world ticks aren't even. `TestEcCore6WorldTick` (`.server info`): median 10 ms, mean 13 to 14,
+  one tick in eight 31 to 60 ms. `MapMgr::Update` updates the open world, battlegrounds and instances on three
+  ticks in a row and the first runs long under the bots, so an instance updates one tick after the long one. 1321
+  recorded player swings land 10.8 ms past the attack time (sim 5.2), 21% over 12 ms. Needs a setting for the long
+  tick; with it the period and jitter go to 104.4 and 4.7.
+- Not measured: the swing after a hardcast (the recording's Flash of Light at itself was refused), a boss swing
+  against a tick, the execute phase (the dummies zero every hit).
+
+Review, round 1: no code change; the delta is the live stage's, byte for byte.
+- Each new order, execute-phase and `AddDuration` test fails with its fix switched off.
+- Tank dtps at 100,000 iterations, the old fixed 102.7 ms grid against the default: TestProtection +0.69% (4.474 to
+  4.505, ±0.013 each), so the rest of its +3.0% golden row is noise; TestFeralTank +1.36% (42.19 to 42.76, ±0.04).
+
 ### EC-PET-FIX5 (Z9; changes goldens; stages: code, live)
 
 - Wrath of Air: the totem's raid area aura reaches pets and guardians (live, the Greater Fire Elemental's Fire

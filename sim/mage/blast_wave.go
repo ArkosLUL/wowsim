@@ -40,7 +40,7 @@ func (mage *Mage) registerBlastWaveSpell() {
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			for _, aoeTarget := range sim.Encounter.TargetUnits {
 				baseDamage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP, spell.SpellPower())
-				baseDamage *= sim.Encounter.AOECapMultiplier()
+				spell.AoECapUnits = len(sim.Encounter.Targets)
 				if spell.CalcAndDealDamage(sim, aoeTarget, baseDamage, spell.OutcomeMagicHitAndCrit).Landed() {
 					mage.snare(sim, aoeTarget, time.Second*6)
 				}

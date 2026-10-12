@@ -20,6 +20,8 @@ type wolfStep struct {
 func runWolfSteps(settings *proto.ServerSettings, steps ...wolfStep) {
 	encounter := core.MakeSingleTargetEncounter(0)
 	encounter.ServerSettings = settings
+	// the steps below are timed against updates of 102.7 ms, every one the same
+	core.OnRegularGrid(encounter, 10.27)
 	sim := core.NewSim(&proto.RaidSimRequest{
 		Raid: core.SinglePlayerRaidProto(&proto.Player{
 			Race:      proto.Race_RaceTauren,

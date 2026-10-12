@@ -102,7 +102,7 @@ func (dk *Deathknight) diseaseCritChance(dot *core.Dot, target *core.Unit) float
 func refreshDiseaseDuration(sim *core.Simulation, dot *core.Dot, extensions int) {
 	dot.Aura.Refresh(sim)
 	if extensions > 0 {
-		dot.Aura.UpdateExpires(sim.NextServerTick(dot.Aura.ExpiresAt() + time.Duration(extensions)*3*time.Second))
+		dot.Aura.AddDuration(sim, time.Duration(extensions)*3*time.Second)
 	}
 	dot.TickCount = 0
 }

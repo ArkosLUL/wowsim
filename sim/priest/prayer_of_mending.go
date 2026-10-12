@@ -57,6 +57,8 @@ func (priest *Priest) registerPrayerOfMendingSpell() {
 		SpellSchool: core.SpellSchoolHoly,
 		ProcMask:    core.ProcMaskSpellHealing,
 		Flags:       core.SpellFlagHelpful | core.SpellFlagAPL,
+		// the heal is 33110, with this spell_bonus_data row
+		HealingTakenCoefficient: 0.8057,
 
 		ManaCost: core.ManaCostOptions{
 			BaseCost: 0.15,

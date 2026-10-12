@@ -56,11 +56,14 @@ func (dpa *DelayedPeriodicApplier) Delay(sim *Simulation) time.Duration {
 // boundary is drawn off the clock as of the tick before, so it can already be behind by the time
 // this tick's advance catches up: it lands sooner than Delay's, in the same update at the earliest.
 func (dpa *DelayedPeriodicApplier) DelayFromInstantCast(sim *Simulation) time.Duration {
-	stale := sim.CurrentTime - sim.worldTickInterval
+	// the tick this cast is handled on, which the clock hasn't taken yet
+	handled := sim.NextWorldTick(sim.CurrentTime)
+	tick := handled - sim.WorldTickBefore(handled)
+	stale := sim.CurrentTime - tick
 	if stale < 0 {
 		stale = 0
 	}
-	if d := dpa.window(sim, stale) - sim.worldTickInterval; d > time.Nanosecond {
+	if d := dpa.window(sim, stale) - tick; d > time.Nanosecond {
 		return d
 	}
 	return 2 * time.Nanosecond

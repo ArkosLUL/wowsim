@@ -1008,12 +1008,12 @@ func (character *Character) newBasicExplosiveSpellConfig(sharedTimer *Timer, act
 			}
 
 			// sapper hits the caster too, so it counts one more
-			capMultiplier := sim.Encounter.AOECapMultiplier()
+			spell.AoECapUnits = len(sim.Encounter.Targets)
 			if dealSelfDamage {
-				capMultiplier = AOECapMultiplierFor(len(sim.Encounter.Targets) + 1)
+				spell.AoECapUnits++
 			}
 			for _, aoeTarget := range sim.Encounter.TargetUnits {
-				baseDamage := spell.Direct.Roll(sim) * capMultiplier
+				baseDamage := spell.Direct.Roll(sim)
 				if spell.MissileSpeed == 0 {
 					spell.CalcAndDealDamage(sim, aoeTarget, baseDamage, outcome)
 				} else {
@@ -1022,7 +1022,8 @@ func (character *Character) newBasicExplosiveSpellConfig(sharedTimer *Timer, act
 			}
 
 			if dealSelfDamage {
-				// a spell never misses its own caster
+				// a spell never misses its own caster, and the cut is only for the area effect
+				spell.AoECapUnits = 0
 				spell.CalcAndDealDamage(sim, &character.Unit, spell.Direct.Roll(sim), spell.OutcomeMagicCrit)
 			}
 		},

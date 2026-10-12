@@ -25,15 +25,19 @@ type ServerSettings struct {
 	// A tick is never shorter than WorldUpdateInterval. Zero means the interval itself.
 	WorldLoopTime time.Duration
 
+	// MapUpdateJitter is how far a map update's length strays from its mean, as a standard deviation
+	// (proto.ServerSettings.MapUpdateJitterMs). Zero means every update takes the mean.
+	MapUpdateJitter time.Duration
+
 	SpellTweaks  SpellTweaks
 	DungeonScale DungeonScale
 	Reforging    Reforging
 }
 
-// updateGrids is how far apart the world ticks and the map updates the sim runs on are. Every map
-// update falls on a world tick: MapMgr::Update runs a map's full update on the first tick its
-// interval is up by, and its four steps (continents, battlegrounds, instances, wait) keep two of them
-// at least three ticks apart.
+// updateGrids is how far apart the world ticks and the map updates the sim runs on are, on average
+// where the updates jitter. Every map update falls on a world tick: MapMgr::Update runs a map's full
+// update on the first tick its interval is up by, and its four steps (continents, battlegrounds,
+// instances, wait) keep two of them at least three ticks apart.
 func (s *ServerSettings) updateGrids() (world, mapUpdate time.Duration) {
 	if s.MapUpdateInterval <= 0 {
 		return 0, 0
@@ -44,6 +48,43 @@ func (s *ServerSettings) updateGrids() (world, mapUpdate time.Duration) {
 	tick := max(s.WorldUpdateInterval, s.WorldLoopTime)
 	ticks := max(3, (s.MapUpdateInterval+tick-1)/tick)
 	return tick, ticks * tick
+}
+
+// updateLengths is what the map updates' lengths are drawn from, or nil when they all take the mean:
+// no jitter set, or a world loop that keeps time, which leaves an update nothing to stray by.
+func (s *ServerSettings) updateLengths() *updateLengths {
+	world, mapUpdate := s.updateGrids()
+	if world <= 0 || s.MapUpdateJitter <= 0 {
+		return nil
+	}
+	ticks := mapUpdate / world
+	// the timer has to pass the interval, and no tick is under MinWorldUpdateTime
+	shortest := max(s.MapUpdateInterval, ticks*s.WorldUpdateInterval)
+	if mapUpdate <= shortest {
+		return nil
+	}
+	return updateLengthsFor(updateLengthsKey{shortest: shortest, mean: mapUpdate, jitter: s.MapUpdateJitter, ticks: ticks})
+}
+
+// OnRegularGrid puts the encounter on a server that keeps time: every world tick takes loopMs and no map
+// update strays. For tests that count updates or ticks, which the live server's jitter would scatter.
+func OnRegularGrid(encounter *proto.Encounter, loopMs float64) *proto.Encounter {
+	if encounter.ServerSettings == nil {
+		encounter.ServerSettings = &proto.ServerSettings{}
+	}
+	jitterMs := 0.0
+	encounter.ServerSettings.WorldLoopMs = &loopMs
+	encounter.ServerSettings.MapUpdateJitterMs = &jitterMs
+	return encounter
+}
+
+// longestWorldTick is the most a world tick takes: the one length it has, or the longest drawn.
+func (s *ServerSettings) longestWorldTick() time.Duration {
+	if lengths := s.updateLengths(); lengths != nil {
+		return lengths.tick[len(lengths.tick)-1]
+	}
+	world, _ := s.updateGrids()
+	return world
 }
 
 // SpellTweaks is mod-spell-tweaks with SpellTweaks.Enable already folded in: each field says whether
@@ -130,6 +171,7 @@ func resolveServerSettings(settings, live *proto.ServerSettings) *ServerSettings
 		MapUpdateInterval:   time.Duration(max(0, firstSet(0, settings.MapUpdateIntervalMs, live.MapUpdateIntervalMs))) * time.Millisecond,
 		WorldUpdateInterval: time.Duration(max(0, firstSet(0, settings.WorldUpdateIntervalMs, live.WorldUpdateIntervalMs))) * time.Millisecond,
 		WorldLoopTime:       time.Duration(math.Round(max(0, firstSet(0, settings.WorldLoopMs, live.WorldLoopMs)) * float64(time.Millisecond))),
+		MapUpdateJitter:     time.Duration(math.Round(max(0, firstSet(0, settings.MapUpdateJitterMs, live.MapUpdateJitterMs)) * float64(time.Millisecond))),
 		SpellTweaks:         newSpellTweaks(orEmpty(settings.SpellTweaks), orEmpty(live.SpellTweaks)),
 		DungeonScale:        newDungeonScale(settings.DungeonScale, live.DungeonScale),
 		Reforging:           newReforging(orEmpty(settings.Reforge), orEmpty(live.Reforge)),

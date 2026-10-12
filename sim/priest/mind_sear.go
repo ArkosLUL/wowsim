@@ -34,7 +34,7 @@ func (priest *Priest) getMindSearTickSpell(numTicks int32) *core.Spell {
 	}
 	config.ApplyEffects = func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 		damage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP, spell.SpellPower())
-		damage *= core.AOECapMultiplierFor(len(sim.Encounter.Targets) - 1)
+		spell.AoECapUnits = len(sim.Encounter.Targets) - 1
 		result := spell.CalcAndDealDamage(sim, target, damage, spell.OutcomeMagicHitAndCrit)
 
 		if result.Landed() {

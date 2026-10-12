@@ -29,11 +29,10 @@ func (mage *Mage) applyIgnite() {
 				return
 			}
 			if spell.SpellSchool.Matches(core.SpellSchoolFire) && result.DidCrit() {
-				// An instant cast (Living Bomb's direct hit, or Pyroblast/Frostfire Bolt made
-				// instant by Hot Streak/Brain Freeze) is processed with the session, ahead of this
-				// update's own clock advance; a hardcast landing in _UpdateSpells is processed
-				// after it.
-				mage.procIgnite(sim, result, igniteDelay, result.FromInstantCast())
+				// An instant hit with no missile (Fire Blast) is processed with the session, ahead of
+				// this update's own clock advance. A landing comes after it: a hardcast's, a Hot Streak
+				// Pyroblast's missile, and Living Bomb's explosion off the target's update.
+				mage.procIgnite(sim, result, igniteDelay, result.DealtWithItsCast(sim, spell))
 			}
 		},
 		OnPeriodicDamageDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {

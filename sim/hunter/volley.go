@@ -56,7 +56,7 @@ func (hunter *Hunter) registerVolleySpell() {
 			OnSnapshot: func(sim *core.Simulation, _ *core.Unit, dot *core.Dot, _ bool) {
 				target := hunter.CurrentTarget
 				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + core.PowerBonus(dot.Tick.AP, dot.Spell.RangedAttackPowerSpellBonus(target))
-				dot.SnapshotBaseDamage *= sim.Encounter.AOECapMultiplier()
+				dot.Spell.AoECapUnits = len(sim.Encounter.Targets)
 
 				attackTable := dot.Spell.Unit.AttackTables[target.UnitIndex]
 				dot.SnapshotCritChance = dot.Spell.PhysicalCritChance(attackTable)

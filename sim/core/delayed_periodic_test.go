@@ -8,7 +8,7 @@ import (
 func newDelayedPeriodicTestSim(seed int64) *Simulation {
 	sim := newOutcomeSim()
 	sim.rand.Seed(seed)
-	sim.serverTickInterval, sim.worldTickInterval = 0, 0
+	sim.serverTickInterval, sim.worldTickInterval, sim.updates = 0, 0, nil
 	sim.resetPendingActions()
 	return sim
 }

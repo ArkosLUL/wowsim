@@ -90,7 +90,15 @@ func TestMirrorImageTakesNoRaidCast(t *testing.T) {
 // nothing to open on (the target's threat list takes them in InitializeAI), so they start with a Frostbolt
 // an update after the 1.2 s.
 func TestMirrorImageCastsOffItsEventTimers(t *testing.T) {
-	sim, mage := newProcSim(t, procMage("", "p5_bis_arcane", `{"type": "TypeAPL", "priorityList": []}`, PlayerOptionsArcane))
+	// the windows and counts below are for updates of 102.7 ms, every one the same
+	sim := core.NewSim(&proto.RaidSimRequest{
+		Raid: core.SinglePlayerRaidProto(procMage("", "p5_bis_arcane", `{"type": "TypeAPL", "priorityList": []}`,
+			PlayerOptionsArcane), nil, nil, nil),
+		Encounter:  core.OnRegularGrid(core.MakeSingleTargetEncounter(0), 10.27),
+		SimOptions: &proto.SimOptions{Iterations: 1, IsTest: true, RandomSeed: 101},
+	})
+	sim.Reset()
+	mage := sim.Raid.Parties[0].Players[0].(*Mage)
 	image := mage.mirrorImage
 	target := sim.GetTargetUnit(0)
 	if cast := image.Frostbolt.DefaultCast; cast.CastTime != 3*time.Second || cast.GCD != 0 || image.Fireblast.DefaultCast.GCD != 0 {

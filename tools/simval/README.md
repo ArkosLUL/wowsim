@@ -137,7 +137,7 @@ Shadowcrawl). Per record (`pets.go`), on the pet built as for strikes:
 `TestPetsCastsRecords` replays `pets_casts.jsonl` (`pets_casts.go`): the `PETFIX_CASTS` lines of
 `TestPetfixFireElementalCasts` and the `PETFIX_IMAGES` lines of `TestPetfixMirrorImageCasts`, cut from the run's log
 with `grep -o 'PETFIX_CASTS {.*'` and `'PETFIX_IMAGES {.*'`, the prefix dropped. Times are packet arrivals, so every
-bound has 250 ms of jitter, a 110 ms update and 1.5% of drift on it (`petsCastsSlack`).
+bound has 250 ms of jitter, a 110 ms update and 0.5% of drift on it (`petsCastsSlack`).
 - Elemental lives against 600 of the sim's: landed Novas, Blasts and swings a life within 5 standard errors of the
   recorded mean; the first Blast, Blast gaps and landed Nova gaps inside the sim's span; each landed Nova the sim's
   cast time after a start, each broken one on a Blast, each swing one attack time after the swing or cast before it.
@@ -605,6 +605,11 @@ dummy, not time left. At the pull it disables pets the log has no minion for and
 logged swing or shot; they stop after the last.
 - Each logged cast starts at its landing minus the sim's own `CastTime()`, planned from its base cast time
   before; an instant, a channel or a proc-made instant goes at the landing.
+- A cast that put a ticking aura on the player goes at that aura's clock, not its stamp (`castClocks`): Chronicle
+  stamps a cast 10 to 47 ms past the update its aura counts from, and the earliest of each tick's stamp less its
+  count of periods says which. A refresh a whole number of periods later lands on either side of the tick due
+  with it (Judgement every 9 s under Replenishment's 1 s ticks), which only the clocks tell. Such a cast isn't
+  held for the GCD of the cast before, whose stamp trails the same way.
 - A block (cast, GCD, cooldown) ending within a map update holds it once; one within 2 s holds it and it lands
   late. Anything else the sim refuses (cost, a condition) is a miss, never retried. On time: within a map
   update of the log, two after a hold.

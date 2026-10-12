@@ -24,7 +24,6 @@ func (dk *Deathknight) registerBoneShieldSpell() {
 		MaxStacks: 3 + core.TernaryInt32(dk.HasMajorGlyph(proto.DeathknightMajorGlyph_GlyphOfBoneShield), 1, 0),
 		OnReset: func(aura *core.Aura, sim *core.Simulation) {
 			dk.BoneShieldAura.Activate(sim)
-			dk.BoneShieldAura.UpdateExpires(sim.CurrentTime + time.Minute*5)
 			dk.BoneShieldAura.SetStacks(sim, dk.BoneShieldAura.MaxStacks)
 		},
 		OnSpellHitTaken: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {

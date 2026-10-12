@@ -91,6 +91,15 @@ func (result *SpellResult) FromInstantCast() bool {
 	return result.castWasInstant
 }
 
+// DealtWithItsCast is whether spell's hit came straight off an instant cast the player made itself, in
+// the session pass that handles its packet: a proc it feeds reads the caster's clock a tick behind
+// (DelayedPeriodicApplier.DelayFromInstantCast). A missile lands in the caster's event pass (Spell::_cast
+// delays anything with a speed), and a cast off an aura's end, a tick or a swing is part of that unit's
+// update: both find the clock already moved, like a hardcast's landing.
+func (result *SpellResult) DealtWithItsCast(sim *Simulation, spell *Spell) bool {
+	return result.castWasInstant && spell.MissileSpeed == 0 && sim.updating == nil
+}
+
 func (result *SpellResult) DamageString() string {
 	outcomeStr := result.Outcome.String()
 	if !result.Landed() {
@@ -306,8 +315,57 @@ func (spell *Spell) MagicCritCheck(sim *Simulation, target *Unit) bool {
 	return sim.UnitRandomFloat(spell.Unit, "Magical Crit Roll") < critChance
 }
 
-func (spell *Spell) HealingPower(target *Unit) float64 {
-	return spell.SpellPower() + target.PseudoStats.BonusHealingTaken
+// HealingPower is the caster's own. The target's flat healing taken joins the heal after the caster's
+// percent (flatHealingTaken), and an absorb never takes it.
+func (spell *Spell) HealingPower(_ *Unit) float64 {
+	return spell.SpellPower()
+}
+
+// instantHealShare is Unit::CalculateDefaultCoefficient for an instant direct heal: 1.5 s of 3.5.
+var instantHealShare = float32(1500) / 3500
+
+// DefaultHealingTakenCoefficient is the taken coefficient of a heal without a spell_bonus_data row, the
+// default coefficient times 1.88 (Unit::SpellHealingBonusTaken). share is the default coefficient: 0 for
+// an instant direct heal's, else a hot's duration over 15 s, split over its ticks.
+func DefaultHealingTakenCoefficient(share float32) float64 {
+	if share == 0 {
+		share = instantHealShare
+	}
+	return float64(share * 1.88)
+}
+
+// flatHealingTaken is Unit::SpellHealingBonusTaken's flat term: the target's SPELL_AURA_MOD_HEALING
+// amount (Talisman of Troll Divinity, Last Word) times the heal's bonus coefficient, an int32 of its
+// own, added after the caster's percent and ahead of the target's.
+func (spell *Spell) flatHealingTaken(target *Unit, coefficient float64) float64 {
+	taken := target.PseudoStats.BonusHealingTaken
+	if taken == 0 || coefficient == 0 {
+		return 0
+	}
+	return PowerBonus(coefficient, taken)
+}
+
+// healTakenCoefficient is the coefficient of the spell's direct heal for flatHealingTaken: the declared
+// one where the spell is the server's heal, else HealingTakenCoefficient.
+func (spell *Spell) healTakenCoefficient() float64 {
+	if spell.HealingTakenCoefficient != 0 {
+		return spell.HealingTakenCoefficient
+	}
+	if spell.Direct.SP != 0 && serverSpellHasEffect(spell.ServerSpell(), effectHeal) {
+		return spell.Direct.SP
+	}
+	return 0
+}
+
+// healTakenCoefficient is Spell.healTakenCoefficient for the hot's ticks.
+func (dot *Dot) healTakenCoefficient() float64 {
+	if c := dot.Spell.HealingTakenCoefficient; c != 0 {
+		return c
+	}
+	if dot.Tick.SP != 0 && serverSpellHasAura(dot.Spell.ServerSpell(), auraTypePeriodicHeal) {
+		return dot.Tick.SP
+	}
+	return 0
 }
 func (spell *Spell) healingCritRating() float64 {
 	return spell.Unit.GetStat(stats.SpellCrit) + spell.BonusCritRating
@@ -418,6 +476,9 @@ func (spell *Spell) dealDamageInternal(sim *Simulation, isPeriodic bool, result 
 	// Don't include damage done by EnemyUnits to Players
 	if result.Target.Type == EnemyUnit {
 		sim.Encounter.DamageTaken += result.Damage
+		if sim.Encounter.DamageTaken >= sim.nextExecuteDamage {
+			sim.executeDamageReached()
+		}
 	}
 
 	if sim.Log != nil {
@@ -463,7 +524,7 @@ func (dot *Dot) CalcAndDealPeriodicSnapshotDamage(sim *Simulation, target *Unit,
 	return result
 }
 
-func (spell *Spell) calcHealingInternal(sim *Simulation, target *Unit, baseHealing float64, casterMultiplier float64, outcomeApplier OutcomeApplier) *SpellResult {
+func (spell *Spell) calcHealingInternal(sim *Simulation, target *Unit, baseHealing float64, casterMultiplier float64, takenCoefficient float64, outcomeApplier OutcomeApplier) *SpellResult {
 	attackTable := spell.Unit.AttackTables[target.UnitIndex]
 
 	result := spell.NewResult(target)
@@ -471,13 +532,13 @@ func (spell *Spell) calcHealingInternal(sim *Simulation, target *Unit, baseHeali
 	// SpellHealingBonusDone, SpellHealingBonusTaken and SpellCriticalHealingBonus each return a whole number
 	if sim.Log == nil {
 		result.Damage = wholeHeal(baseHealing * casterMultiplier)
-		result.Damage = wholeHeal(spell.applyTargetHealingModifiers(result.Damage, attackTable))
+		result.Damage = wholeHeal(spell.applyTargetHealingModifiers(result.Damage, target, takenCoefficient, attackTable))
 		outcomeApplier(sim, result, attackTable)
 		result.Damage = wholeHeal(result.Damage)
 	} else {
 		result.Damage = wholeHeal(baseHealing * casterMultiplier)
 		afterCasterMods := result.Damage
-		result.Damage = wholeHeal(spell.applyTargetHealingModifiers(result.Damage, attackTable))
+		result.Damage = wholeHeal(spell.applyTargetHealingModifiers(result.Damage, target, takenCoefficient, attackTable))
 		afterTargetMods := result.Damage
 		outcomeApplier(sim, result, attackTable)
 		result.Damage = wholeHeal(result.Damage)
@@ -498,10 +559,10 @@ func wholeHeal(heal float64) float64 {
 }
 
 func (spell *Spell) CalcHealing(sim *Simulation, target *Unit, baseHealing float64, outcomeApplier OutcomeApplier) *SpellResult {
-	return spell.calcHealingInternal(sim, target, baseHealing, spell.CasterHealingMultiplier(), outcomeApplier)
+	return spell.calcHealingInternal(sim, target, baseHealing, spell.CasterHealingMultiplier(), spell.healTakenCoefficient(), outcomeApplier)
 }
 func (dot *Dot) CalcSnapshotHealing(sim *Simulation, target *Unit, outcomeApplier OutcomeApplier) *SpellResult {
-	return dot.Spell.calcHealingInternal(sim, target, dot.SnapshotBaseDamage, dot.SnapshotAttackerMultiplier, outcomeApplier)
+	return dot.Spell.calcHealingInternal(sim, target, dot.SnapshotBaseDamage, dot.SnapshotAttackerMultiplier, dot.healTakenCoefficient(), outcomeApplier)
 }
 
 // Applies the fully computed spell result to the sim.
@@ -633,12 +694,12 @@ func (spell *Spell) CasterHealingMultiplier() float64 {
 
 	return spell.DamageMultiplier * spell.DamageMultiplierAdditive
 }
-func (spell *Spell) applyTargetHealingModifiers(damage float64, attackTable *AttackTable) float64 {
+func (spell *Spell) applyTargetHealingModifiers(damage float64, target *Unit, takenCoefficient float64, attackTable *AttackTable) float64 {
 	if spell.Flags.Matches(SpellFlagIgnoreTargetModifiers) {
 		return damage
 	}
 
-	return damage *
+	return (damage + spell.flatHealingTaken(target, takenCoefficient)) *
 		attackTable.Defender.PseudoStats.HealingTakenMultiplier *
 		attackTable.HealingDealtMultiplier
 }

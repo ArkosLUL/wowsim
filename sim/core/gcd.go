@@ -37,6 +37,18 @@ func (unit *Unit) newHardcastAction(sim *Simulation) {
 	sim.AddPendingAction(unit.hardcastAction)
 }
 
+// landDueCast lands the unit's hardcast if it's due right now, ahead of the action queued for it, which
+// then finds nothing to land. Reports whether it did.
+func (unit *Unit) landDueCast(sim *Simulation) bool {
+	hc := &unit.Hardcast
+	if hc.Expires != sim.CurrentTime || hc.OnComplete == nil {
+		return false
+	}
+	hc.Expires = startingCDTime
+	hc.OnComplete(sim, hc.Target)
+	return true
+}
+
 func (unit *Unit) NextGCDAt() time.Duration {
 	return unit.gcdAction.NextActionAt
 }

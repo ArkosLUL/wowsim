@@ -52,7 +52,7 @@ func (shaman *Shaman) registerThunderstormSpell() {
 				dmgFromSP := core.PowerBonus(spell.Direct.SP, spell.SpellPower())
 				for _, aoeTarget := range sim.Encounter.TargetUnits {
 					baseDamage := spell.Direct.Roll(sim) + dmgFromSP
-					baseDamage *= core.AOECapMultiplierFor(len(sim.Encounter.Targets) + 1)
+					spell.AoECapUnits = len(sim.Encounter.Targets) + 1
 					spell.CalcAndDealDamage(sim, aoeTarget, baseDamage, spell.OutcomeMagicHitAndCrit)
 				}
 			}

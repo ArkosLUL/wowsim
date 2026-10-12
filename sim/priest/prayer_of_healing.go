@@ -66,7 +66,9 @@ func (priest *Priest) registerPrayerOfHealingSpell() {
 			ActionID:    core.ActionID{ItemID: 42409},
 			SpellSchool: core.SpellSchoolHoly,
 			ProcMask:    core.ProcMaskSpellHealing,
-			Flags:       core.SpellFlagNoOnCastComplete | core.SpellFlagHelpful,
+			// the hot is 56161, without a spell_bonus_data row: 6 s of 15, over its 2 ticks
+			HealingTakenCoefficient: core.DefaultHealingTakenCoefficient(6.0 / 15 / 2),
+			Flags:                   core.SpellFlagNoOnCastComplete | core.SpellFlagHelpful,
 
 			DamageMultiplier: priest.PrayerOfHealing.DamageMultiplier * 0.2 / 2,
 			ThreatMultiplier: 1,

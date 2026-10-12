@@ -63,10 +63,15 @@ const (
 	reforgeStatsKey       = "Reforging.ReforgeableStats"
 )
 
-// worldLoopMs is the host's measured world tick: ten of them make the live map update, 102.7 ms in the logs
-// (an unhasted 2 s creature swing takes 20 updates, 2055 ms). It comes from the machine's sleep granularity,
-// not from a config key, so another host changes it.
-const worldLoopMs = 10.27
+// The host's world tick and how much its map updates scatter, measured off the Naxxramas slimes' 2 s cast
+// timers in the logged fights (10,264 casts): ten ticks make a 104.6 ms update, 6 ms standard deviation.
+// A slime casts 2065 ms apart on average, on the 19th update a quarter of the time and the 20th otherwise.
+// Neither is a config key: they come from how late the machine wakes and how often it stalls, so another
+// host or another load changes them.
+const (
+	worldLoopMs       = 10.46
+	mapUpdateJitterMs = 6
+)
 
 // reforgeHeaderSrc holds the constants mod-reforging enforces on its config; parseReforgeLimits
 // reads them from it rather than the sim hand-copying them.
@@ -223,6 +228,7 @@ func build(c *config, limits reforgeLimits) (*proto.ServerSettings, floors, erro
 		Reforge:               reforge,
 		WorldUpdateIntervalMs: googleProto.Int32(int32(worldTick)),
 		WorldLoopMs:           googleProto.Float64(worldLoopMs),
+		MapUpdateJitterMs:     googleProto.Float64(mapUpdateJitterMs),
 	}
 	return settings, floors{
 		minHealth: c.float(minHPModifierKey, minHPModifierDef),

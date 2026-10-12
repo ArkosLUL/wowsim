@@ -56,6 +56,8 @@ type Aura struct {
 	startTime   time.Duration // Time at which the aura was applied.
 	refreshedAt time.Duration // Time at which the aura last went on or was refreshed.
 	expires     time.Duration // Time at which aura will be removed.
+	// when the duration runs out, which is at or before expires, the update that sees it
+	expiresNominal time.Duration
 
 	// The unit this aura is attached to.
 	Unit *Unit
@@ -198,9 +200,9 @@ func (aura *Aura) countdownStart(sim *Simulation) time.Duration {
 			return sim.CurrentTime
 		case sim.updating != nil && sim.updating.Type != PlayerUnit:
 			// creatures and pets update after every player, so the next world tick is the first one off
-			return sim.NextWorldTick(sim.CurrentTime+time.Nanosecond) - sim.worldTickInterval
+			return sim.WorldTickBefore(sim.CurrentTime + time.Nanosecond)
 		}
-		return sim.NextWorldTick(sim.CurrentTime) - sim.worldTickInterval
+		return sim.WorldTickBefore(sim.CurrentTime)
 	}
 	switch {
 	case sim.serverTickInterval <= 0:
@@ -208,19 +210,18 @@ func (aura *Aura) countdownStart(sim *Simulation) time.Duration {
 	case aura.madeInMapUpdate:
 		// a dynamic object made during UpdateNonPlayerObjects only joins the update list on the next
 		// map update, so it counts from the last one at or before now
-		return sim.NextServerTick(sim.CurrentTime+time.Nanosecond) - sim.serverTickInterval
+		return sim.ServerTickBefore(sim.CurrentTime + time.Nanosecond)
 	case !aura.countsOnMapGrid && sim.updating == aura.countdownUnit():
 		return sim.CurrentTime
 	}
-	return sim.NextServerTick(sim.CurrentTime) - sim.serverTickInterval
+	return sim.ServerTickBefore(sim.CurrentTime)
 }
 
 // DurationThroughLastTick is a duration that keeps a player's aura on for an action d after the cast that
 // put it on. The aura counts from the world tick before the cast and ends ahead of anything else on
-// its last update, so it takes a tick more than d.
+// its last update, so it takes a tick more than d, the longest a tick gets.
 func (unit *Unit) DurationThroughLastTick(d time.Duration) time.Duration {
-	world, _ := unit.Env.serverSettings().updateGrids()
-	return d + world + 1
+	return d + unit.Env.serverSettings().longestWorldTick() + 1
 }
 
 func (aura *Aura) Refresh(sim *Simulation) {
@@ -229,7 +230,8 @@ func (aura *Aura) Refresh(sim *Simulation) {
 		aura.expires = NeverExpires
 	} else {
 		// Aura::Update counts the duration down once per update, and can't end it before the next one
-		aura.expires = aura.nextUpdate(sim, max(aura.countdownStart(sim)+aura.Duration, sim.CurrentTime))
+		aura.expiresNominal = max(aura.countdownStart(sim)+aura.Duration, sim.CurrentTime)
+		aura.expires = aura.nextUpdate(sim, aura.expiresNominal)
 		if aura.expires < aura.Unit.minExpires {
 			aura.Unit.minExpires = aura.expires
 			sim.rescheduleTracker(aura.expires)
@@ -279,8 +281,25 @@ func (aura *Aura) RemoveStack(sim *Simulation) {
 	aura.SetStacks(sim, aura.stacks-1)
 }
 
+// UpdateExpires ends the aura at the time given. To lengthen a running one use AddDuration, which keeps
+// the end on an update.
 func (aura *Aura) UpdateExpires(newExpires time.Duration) {
 	aura.expires = newExpires
+	aura.expiresNominal = newExpires
+}
+
+// AddDuration is a script's SetDuration(GetDuration() + extra): the time goes on what the duration has
+// left, not on the update it would have ended on, so the aura ends on the first update that far on.
+func (aura *Aura) AddDuration(sim *Simulation, extra time.Duration) {
+	if !aura.active || aura.expires == NeverExpires {
+		return
+	}
+	aura.expiresNominal += extra
+	aura.expires = aura.nextUpdate(sim, max(aura.expiresNominal, sim.CurrentTime))
+	if aura.expires < aura.Unit.minExpires {
+		aura.Unit.minExpires = aura.expires
+		sim.rescheduleTracker(aura.expires)
+	}
 }
 
 // The amount of time this aura has been active.
@@ -569,6 +588,11 @@ restart:
 	for _, aura := range at.activeAuras {
 		if aura.expires <= sim.CurrentTime && (!worldTicksOnly || aura.onWorldTicks()) {
 			unit := aura.countdownUnit()
+			// Unit::Update runs the unit's events first, so a creature's cast landing on this update still
+			// finds the aura. A player's has landed by now (Simulation.Step).
+			if unit.Type != PlayerUnit && unit.landDueCast(sim) {
+				goto restart
+			}
 			outer := sim.updating
 			sim.updating = unit
 			// a tick can refresh this aura or take others off

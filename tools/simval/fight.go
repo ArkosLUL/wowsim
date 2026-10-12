@@ -181,9 +181,7 @@ type fightDrop struct {
 	Setup, Subject, Check string
 }
 
-var droppedFightChecks = []fightDrop{
-	{Setup: "PaladinRetribution", Subject: "energize 57669 mana", Check: "amount"},
-}
+var droppedFightChecks = []fightDrop{}
 
 // fightLeftOut is a server aura by the log's id, where it sits ("self", "target", a minion's name), "" for
 // anywhere.
@@ -364,6 +362,8 @@ type fightLog struct {
 	// minion dealt
 	startMs, endMs int64
 	casts          []fightCast
+	// the casts whose time is their aura's clock, read off its ticks (castClocks)
+	clocked []bool
 	// the first and last melee swing or Auto Shot, from the start
 	autos                  [2]time.Duration
 	hasAutos               bool
@@ -439,6 +439,7 @@ func newFightLog(log *chronicleLog, c fightCycle, source string, fromMs int64) (
 			autoMs = append(autoMs, e.TimeMs)
 		}
 	}
+	castMs, fl.clocked = castClocks(log, player.GUID, castMs)
 	var firsts []int64
 	for i, ms := range castMs {
 		firsts = append(firsts, ms-hardcastLead(castSpells[i]).Milliseconds())
@@ -500,6 +501,91 @@ func newFightLog(log *chronicleLog, c fightCycle, source string, fromMs int64) (
 	}
 	slices.Sort(fl.spellsWithoutCastEvent)
 	return fl, nil
+}
+
+const (
+	// an aura a cast puts on is stamped with it, give or take the update's own work
+	castAuraLagMs = 5
+	// the most a cast's stamp trails the update its aura counts from: a slow tick, 47 ms in the logs
+	castClockLagMs = 100
+)
+
+// castClocks moves each cast that put a ticking aura on the player to where the aura's ticks say its clock
+// started. Chronicle stamps a cast as the bot makes it, 10 to 47 ms past the update the aura counts from, and
+// a tick comes on the first update its period is up by. So a refresh a whole number of periods later lands on
+// either side of the tick due with it, and only the ticks tell which: the earliest of each tick's stamp less
+// its count of periods is the clock.
+func castClocks(log *chronicleLog, player string, castMs []int64) (clocks []int64, clocked []bool) {
+	type run struct {
+		cast    int
+		applied int64
+		ticks   []int64
+	}
+	clocks, clocked = slices.Clone(castMs), make([]bool, len(castMs))
+	settle := func(spell int32, r *run) {
+		period := int64(auraPeriodMs(spell))
+		if r == nil || r.cast < 0 || period <= 0 || len(r.ticks) < 2 {
+			return
+		}
+		clock := r.applied
+		for k, tick := range r.ticks {
+			clock = min(clock, tick-period*int64(k+1))
+		}
+		for k, tick := range r.ticks {
+			// off the period: a hasted aura, or not the one this cast put on
+			if tick-period*int64(k+1)-clock > castClockLagMs {
+				return
+			}
+		}
+		if r.applied-clock <= castClockLagMs {
+			clocks[r.cast], clocked[r.cast] = min(clocks[r.cast], clock), true
+		}
+	}
+
+	runs := map[int32]*run{}
+	next := 0
+	for _, e := range log.Events {
+		for next < len(castMs) && castMs[next] <= e.TimeMs {
+			next++
+		}
+		if e.Src.GUID != player || e.Dst.GUID != player {
+			continue
+		}
+		switch e.Type {
+		case "SPELL_AURA_APPLIED":
+			settle(e.Spell.ID, runs[e.Spell.ID])
+			r := &run{cast: -1, applied: e.TimeMs}
+			if next > 0 && e.TimeMs-castMs[next-1] <= castAuraLagMs {
+				r.cast = next - 1
+			}
+			runs[e.Spell.ID] = r
+		case "SPELL_AURA_REMOVED":
+			settle(e.Spell.ID, runs[e.Spell.ID])
+			delete(runs, e.Spell.ID)
+		case "SPELL_PERIODIC_ENERGIZE", "SPELL_PERIODIC_HEAL":
+			if r := runs[e.Spell.ID]; r != nil {
+				r.ticks = append(r.ticks, e.TimeMs)
+			}
+		}
+	}
+	for spell, r := range runs {
+		settle(spell, r)
+	}
+	return clocks, clocked
+}
+
+// auraPeriodMs is how far apart the spell's aura ticks, 0 when it doesn't.
+func auraPeriodMs(spell int32) int32 {
+	sd := serverdata.SpellByID(spell)
+	if sd == nil {
+		return 0
+	}
+	for _, effect := range sd.Effects {
+		if effect.AmplitudeMs > 0 {
+			return effect.AmplitudeMs
+		}
+	}
+	return 0
 }
 
 func simMinionName(name string) string {
@@ -1333,7 +1419,8 @@ func (f *fightSim) scheduleAutos(sim *core.Simulation) {
 
 func (f *fightSim) scheduleCasts(sim *core.Simulation) {
 	for j, cast := range f.fight.casts {
-		r := &castReplay{f: f, j: j, spell: f.spells[cast.Spell], at: cast.At}
+		r := &castReplay{f: f, j: j, spell: f.spells[cast.Spell], at: cast.At,
+			clocked: j < len(f.fight.clocked) && f.fight.clocked[j]}
 		addAction(sim, max(cast.At-hardcastLead(cast.Spell), 0), castPriority, r.attempt)
 	}
 }
@@ -1358,6 +1445,7 @@ type castReplay struct {
 	j       int
 	spell   *core.Spell
 	at      time.Duration
+	clocked bool // at is the cast's own clock, not its stamp
 	replans int
 	held    bool
 	waits   int
@@ -1385,6 +1473,11 @@ func (r *castReplay) attempt(sim *core.Simulation) {
 	// a GCD, cooldown or cast that ends within one map update holds the cast for it, once: the log's
 	// timestamps jitter by a few ms, and the sim's casts land on its own map updates
 	wait, why := r.f.blockedFor(sim, spell)
+	if r.clocked && why == "gcd" && wait <= castClockLagMs*time.Millisecond {
+		// the cast before is at its stamp, which trails its clock like this one's did: its GCD was over
+		r.f.gcdUntil = sim.CurrentTime
+		wait, why = r.f.blockedFor(sim, spell)
+	}
 	switch {
 	case wait > 0 && wait <= mapTick && !r.held:
 		r.held = true

@@ -260,13 +260,10 @@ func (spell *Spell) makeCastFunc(config CastConfig) CastSuccessFunc {
 
 			spell.applyEffects(sim, target)
 			if resetsSwing {
-				readyAt := sim.CurrentTime
-				if spell.Unit.Type != PlayerUnit {
-					// Unit::Update runs the attack timers down after its event pass, so a creature's restart
-					// has this update off it already: its next swing comes an update short of the attack time
-					readyAt -= sim.serverTickInterval
-				}
-				spell.Unit.AutoAttacks.resetSwingTimers(sim, readyAt)
+				// Unit::Update runs the attack timers down after its event pass, so the restart has this
+				// update off it already: the next swing comes an update short of the attack time, a world
+				// tick for a player
+				spell.Unit.AutoAttacks.resetSwingTimers(sim, sim.updateBefore(spell.Unit, sim.CurrentTime))
 			}
 
 			if !spell.Flags.Matches(SpellFlagNoOnCastComplete) {
@@ -421,7 +418,12 @@ func (spell *Spell) makeCastFunc(config CastConfig) CastSuccessFunc {
 		}
 		spell.applyEffects(sim, target)
 		if resetsSwing {
-			spell.Unit.AutoAttacks.resetSwingTimers(sim, sim.CurrentTime)
+			readyAt := sim.CurrentTime
+			if spell.Unit.Type == PlayerUnit && sim.updating != spell.Unit {
+				// the session casts it ahead of the player's update, which takes that tick off the new timer
+				readyAt = sim.WorldTickBefore(readyAt)
+			}
+			spell.Unit.AutoAttacks.resetSwingTimers(sim, readyAt)
 		}
 
 		if !spell.Flags.Matches(SpellFlagNoOnCastComplete) {

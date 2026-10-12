@@ -42,7 +42,7 @@ func (warrior *Warrior) registerShockwaveSpell() {
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			baseDamage := math.Floor(spell.Direct.Roll(sim) * spell.MeleeAttackPower() / 100)
-			baseDamage *= sim.Encounter.AOECapMultiplier()
+			spell.AoECapUnits = len(sim.Encounter.Targets)
 			for _, aoeTarget := range sim.Encounter.TargetUnits {
 				spell.CalcAndDealDamage(sim, aoeTarget, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 			}
