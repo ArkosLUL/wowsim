@@ -387,21 +387,10 @@ func (dot *Dot) TickOnce(sim *Simulation) {
 	dot.lastTickTime = sim.CurrentTime
 	dot.OnTick(sim, dot.Unit, dot)
 
-	if dot.isChanneled {
-		// Note: even if the clip delay is 0ms, need a WaitUntil so that APL is called after the channel aura fully fades.
-		if dot.MaxTicksRemaining() == 0 {
-			if dot.Spell.Unit.GCD.IsReady(sim) {
-				// the aura is what holds the rotation, so wait for it, not for the tick. Its expiry
-				// and the last tick share a server tick, and ExpiresAt is 0 once it already faded.
-				channelEnd := max(sim.CurrentTime, dot.Aura.ExpiresAt())
-				dot.Spell.Unit.WaitUntil(sim, channelEnd+dot.Spell.Unit.ChannelClipDelay)
-			}
-		} else if dot.Spell.Unit.Rotation.shouldInterruptChannel(sim) {
-			dot.Cancel(sim)
-			if dot.Spell.Unit.GCD.IsReady(sim) {
-				dot.Spell.Unit.WaitUntil(sim, sim.CurrentTime+dot.Spell.Unit.ChannelClipDelay)
-			}
-		}
+	// A tick only ends the channel by interrupting it. After the last one the aura still runs to its own
+	// expiry, which can be the caster's next update.
+	if dot.isChanneled && dot.MaxTicksRemaining() != 0 && dot.Spell.Unit.Rotation.shouldInterruptChannel(sim) {
+		dot.Cancel(sim)
 	}
 }
 
@@ -581,9 +570,15 @@ func newDot(config Dot) *Dot {
 		dot.stopTicking()
 		dot.maxDuration = 0
 		if dot.isChanneled {
-			dot.Spell.Unit.ChanneledDot = nil
-			dot.Spell.Unit.Rotation.interruptChannelIf = nil
-			dot.Spell.Unit.Rotation.allowChannelRecastOnInterrupt = false
+			caster := dot.Spell.Unit
+			caster.ChanneledDot = nil
+			caster.Rotation.interruptChannelIf = nil
+			caster.Rotation.allowChannelRecastOnInterrupt = false
+			// A GCD that ran out under the channel woke the rotation for nothing, so every way a channel
+			// ends has to queue it again here. Not a dismissed pet's: its GCD loop is off.
+			if caster.enabled && caster.GCD.IsReady(sim) {
+				caster.WaitUntil(sim, sim.CurrentTime+caster.ChannelClipDelay)
+			}
 		}
 	})
 

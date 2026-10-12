@@ -65,6 +65,12 @@ func newTimingTestSim(t *testing.T, tickMs int32, setup func(*timingTestAgent)) 
 // newTickTestSim is newTimingTestSim with MapUpdateInterval and MinWorldUpdateTime as given.
 func newTickTestSim(t *testing.T, mapUpdateMs, worldTickMs int32, setup func(*timingTestAgent)) (*Simulation, *timingTestAgent) {
 	t.Helper()
+	return newLoopTestSim(t, mapUpdateMs, worldTickMs, 0, setup)
+}
+
+// newLoopTestSim is newTickTestSim with a world loop that takes worldLoopMs a tick: 10.27 is live.
+func newLoopTestSim(t *testing.T, mapUpdateMs, worldTickMs int32, worldLoopMs float64, setup func(*timingTestAgent)) (*Simulation, *timingTestAgent) {
+	t.Helper()
 	timingTestSetup = setup
 	defer func() { timingTestSetup = nil }()
 
@@ -89,7 +95,7 @@ func newTickTestSim(t *testing.T, mapUpdateMs, worldTickMs int32, setup func(*ti
 			ServerSettings: &proto.ServerSettings{
 				MapUpdateIntervalMs:   googleProto.Int32(mapUpdateMs),
 				WorldUpdateIntervalMs: googleProto.Int32(worldTickMs),
-				WorldLoopMs:           googleProto.Float64(0),
+				WorldLoopMs:           googleProto.Float64(worldLoopMs),
 			},
 		},
 	})
@@ -781,5 +787,172 @@ func TestChannelEndsWithItsLastTick(t *testing.T) {
 	}
 	if last := (*ticks)[2]; last != expiresAt {
 		t.Errorf("last tick at %v, channel aura expires at %v: they have to be the same update", last, expiresAt)
+	}
+}
+
+// channelRotationTest is a player on live ticks with a channel, and a rotation that casts a filler on
+// every GCD from the channel's cast on.
+type channelRotationTest struct {
+	sim     *Simulation
+	a       *timingTestAgent
+	channel *Dot
+	ticks   *[]time.Duration
+	fillers *[]time.Duration
+
+	// as of the channel's cast: when its GCD is over and when its aura runs out
+	gcdOver, channelEnds time.Duration
+}
+
+func newChannelRotationTest(t *testing.T, config DotConfig) *channelRotationTest {
+	t.Helper()
+	ct := &channelRotationTest{}
+	var channel, filler *Spell
+	ct.sim, ct.a = newLoopTestSim(t, 100, 10, 10.27, func(a *timingTestAgent) {
+		channel, ct.ticks = dotSpell(a, SpellFlagChanneled, config)
+		filler = a.RegisterSpell(SpellConfig{
+			ActionID: ActionID{SpellID: testSpellNoServerData, Tag: 1},
+			Cast:     CastConfig{DefaultCast: Cast{GCD: GCDDefault}},
+		})
+	})
+	a := ct.a
+	channel.ApplyEffects = func(sim *Simulation, target *Unit, spell *Spell) { spell.Dot(target).Apply(sim) }
+	ct.channel, ct.fillers = channel.Dot(a.CurrentTarget), recordCasts(filler)
+	a.ChannelClipDelay = ms(50)
+	a.Rotation = &APLRotation{unit: &a.Unit, priorityList: []*APLAction{{impl: &testAPLAction{
+		ready:   func(sim *Simulation) bool { return ct.channelEnds != 0 && filler.CanCast(sim, a.CurrentTarget) },
+		execute: func(sim *Simulation) { filler.Cast(sim, a.CurrentTarget) },
+	}}}}
+	ct.sim.PrePull()
+	return ct
+}
+
+func (ct *channelRotationTest) castChannelAt(castAt time.Duration) {
+	at(ct.sim, castAt, func(sim *Simulation) {
+		ct.a.GCD.Reset() // the idle rotation's polling keeps it busy
+		ct.channel.Spell.Cast(sim, ct.channel.Unit)
+		ct.gcdOver, ct.channelEnds = ct.a.GCD.ReadyAt(), ct.channel.ExpiresAt()
+	})
+}
+
+// The server truncates a hasted channel's duration and its period each on its own, so the aura can run
+// a world tick past the last tick. A GCD that ends in that tick still finds the channel up.
+func TestRotationComesBackWhenTheGCDEndsInAChannelsLastWorldTick(t *testing.T) {
+	ct := newChannelRotationTest(t, DotConfig{
+		Aura:                Aura{Label: "channel"},
+		NumberOfTicks:       2,
+		TickLength:          time.Second,
+		TicksCanCrit:        false,
+		AffectedByCastSpeed: true,
+	})
+	// 503 ms a tick under 1007 ms of aura, and the GCD at its 1 s floor
+	ct.a.MultiplyCastSpeed(1.985)
+	// on a world tick, so the channel counts from the tick before and its GCD from here
+	castAt := ct.sim.NextWorldTick(ms(500))
+	ct.castChannelAt(castAt)
+	runUntil(ct.sim, castAt+3*time.Second)
+
+	if len(*ct.ticks) != 2 {
+		t.Fatalf("ticks at %v, want two", *ct.ticks)
+	}
+	if lastTick := (*ct.ticks)[1]; lastTick >= ct.gcdOver || ct.gcdOver >= ct.channelEnds {
+		t.Fatalf("last tick at %v, GCD over at %v, channel ends at %v: the GCD has to end between the two", lastTick, ct.gcdOver, ct.channelEnds)
+	}
+	if len(*ct.fillers) == 0 {
+		t.Fatal("the rotation never cast again after the channel")
+	}
+	if got, want := (*ct.fillers)[0], ct.channelEnds+ct.a.ChannelClipDelay; got != want {
+		t.Errorf("next cast at %v, want %v: the clip delay after the channel's end", got, want)
+	}
+}
+
+// No tick sees a channel that's taken off between two of them, with the GCD long over.
+func TestRotationComesBackWhenAChannelIsTakenOffBetweenTicks(t *testing.T) {
+	ct := newChannelRotationTest(t, DotConfig{
+		Aura:          Aura{Label: "channel"},
+		NumberOfTicks: 3,
+		TickLength:    time.Second,
+		TicksCanCrit:  false,
+	})
+	castAt := ct.sim.NextWorldTick(ms(500))
+	ct.castChannelAt(castAt)
+	takenOffAt := castAt + ms(2500)
+	at(ct.sim, takenOffAt, func(sim *Simulation) { ct.channel.Cancel(sim) })
+	runUntil(ct.sim, castAt+5*time.Second)
+
+	if len(*ct.ticks) != 2 || ct.gcdOver >= takenOffAt {
+		t.Fatalf("ticks at %v, GCD over at %v, channel taken off at %v: want two ticks and the GCD over first", *ct.ticks, ct.gcdOver, takenOffAt)
+	}
+	if len(*ct.fillers) == 0 {
+		t.Fatal("the rotation never cast again after the channel")
+	}
+	if got, want := (*ct.fillers)[0], takenOffAt+ct.a.ChannelClipDelay; got != want {
+		t.Errorf("next cast at %v, want %v: the clip delay after the channel's end", got, want)
+	}
+}
+
+// rotatingTestPet's rotation is whatever the test hands it.
+type rotatingTestPet struct {
+	tickTestPet
+	rotate func(*Simulation)
+}
+
+func (p *rotatingTestPet) ExecuteCustomRotation(sim *Simulation) { p.rotate(sim) }
+
+// A pet's channel calls its rotation back like a player's. Not a dismissed pet's: its GCD loop is off,
+// and the channel it left on the target still runs out.
+func TestChannelEndCallsBackOnlyAPetThatIsOut(t *testing.T) {
+	for _, dismissed := range []bool{false, true} {
+		var pet *rotatingTestPet
+		timingTestConstruct = func(a *timingTestAgent) {
+			pet = &rotatingTestPet{tickTestPet: tickTestPet{Pet: NewPet("Pet", &a.Character, stats.Stats{}, func(stats.Stats) stats.Stats { return stats.Stats{} }, true, false)}}
+			a.AddPet(pet)
+		}
+		var channel *Spell
+		sim, a := newLoopTestSim(t, 100, 10, 10.27, func(a *timingTestAgent) {
+			channel = pet.RegisterSpell(SpellConfig{
+				ActionID: ActionID{SpellID: testSpellNoServerData},
+				Flags:    SpellFlagChanneled,
+				Cast:     CastConfig{DefaultCast: Cast{GCD: GCDDefault}},
+				Dot: DotConfig{
+					Aura:          Aura{Label: "channel"},
+					NumberOfTicks: 3,
+					TickLength:    time.Second,
+					TicksCanCrit:  false,
+					OnTick:        func(*Simulation, *Unit, *Dot) {},
+				},
+				ApplyEffects: func(sim *Simulation, target *Unit, spell *Spell) { spell.Dot(target).Apply(sim) },
+			})
+		})
+		timingTestConstruct = nil
+
+		dot := channel.Dot(a.CurrentTarget)
+		var gcdOver, channelEnds time.Duration
+		var rotatedSince []time.Duration
+		pet.rotate = func(sim *Simulation) {
+			switch {
+			case channelEnds != 0:
+				rotatedSince = append(rotatedSince, sim.CurrentTime)
+			case sim.CurrentTime >= ms(500):
+				channel.Cast(sim, a.CurrentTarget)
+				gcdOver, channelEnds = pet.GCD.ReadyAt(), dot.ExpiresAt()
+			}
+		}
+		sim.PrePull()
+		dismissAt := ms(2600)
+		if dismissed {
+			at(sim, dismissAt, func(sim *Simulation) { pet.Disable(sim) })
+		}
+		runUntil(sim, 5*time.Second)
+
+		if gcdOver >= dismissAt || dismissAt >= channelEnds || dot.IsActive() {
+			t.Fatalf("dismissed %v: GCD over at %v, channel ends at %v, still up %v: want the GCD over, then %v, then the end",
+				dismissed, gcdOver, channelEnds, dot.IsActive(), dismissAt)
+		}
+		switch {
+		case dismissed && len(rotatedSince) != 0:
+			t.Errorf("dismissed: the pet's rotation ran at %v, after its channel ended at %v", rotatedSince[0], channelEnds)
+		case !dismissed && (len(rotatedSince) == 0 || rotatedSince[0] != channelEnds):
+			t.Errorf("out: the pet's rotation ran at %v after the channel, want first at %v, its end", rotatedSince, channelEnds)
+		}
 	}
 }
