@@ -176,6 +176,9 @@ boss). Z9 takes Z8's follow-ups the same way, with BIS-TANK-PICKS in EC-TOOLS2's
 - Wave: Z9, running, base `b4e8f6d52` (master `10f9c8d0a` hadn't moved). Run `wf_68977dde-6ef` holds all four
   items; its transcript dir, with `journal.jsonl`, is
   `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\wf_68977dde-6ef`.
+  Core, pet and class are merged and promoted; the cross-review of those three comes next (brief
+  `G:\DevStuff\GitHub\.wave-loop\waveZ9-xreview-brief.md`, report `z9-run1\xreview.md`), then the tank item's
+  merge once run 2 (`wf_bade63ce-ecd`, the tank item alone, args `waveZ9b-args.json`) is green.
   Stages: core period, order-amounts, live; pet code, live; class druid, rest, live; tank model, picks. Briefs:
   `G:\DevStuff\GitHub\.wave-loop\waveZ9-build.py`, which writes `waveZ9-args.json` and `waveZ9-shared.md`. Proto
   numbers: `ServerSettings` 7 is EC-CORE-FIX6's, `Target` 23 and `UnitMetrics` 18 BIS-TANK-PICKS'. Merge order: core,
@@ -211,7 +214,7 @@ boss). Z9 takes Z8's follow-ups the same way, with BIS-TANK-PICKS in EC-TOOLS2's
   - Then the BiS tooltip dataset (acbis driver, both stages, fresh `--out`, then `acbis`; the import needs
     the OK), the changed builds' stat weights, and the perf harness's `opt_*` scenarios (`update.sh`, a new
     baseline; the raid25 dumps in `_dump/optimizer_dump_test.go` still build uncut pools).
-- Workflow runIds: Z9's `wf_68977dde-6ef` (all four, base `b4e8f6d52`); Z8's `wf_22d8a7f1-a8a` (all four, base `c244f8ee9`) and `wf_6d39358e-cad` (EC-PET-FIX4's live stage and review); Z7's `wf_90c05e5f-5b7` (all four, base `fd12d68cc`); Z6's `wf_9f63df91-dcd` (all four, base `c00231f37`); Z5's `wf_2bd87279-a32` (run 1, base `a1bb8d403`), `wf_caa6cd72-af1` (the rotations, base
+- Workflow runIds: Z9's `wf_68977dde-6ef` (all four, base `b4e8f6d52`) and `wf_bade63ce-ecd` (BIS-TANK-PICKS's picks stage and review); Z8's `wf_22d8a7f1-a8a` (all four, base `c244f8ee9`) and `wf_6d39358e-cad` (EC-PET-FIX4's live stage and review); Z7's `wf_90c05e5f-5b7` (all four, base `fd12d68cc`); Z6's `wf_9f63df91-dcd` (all four, base `c00231f37`); Z5's `wf_2bd87279-a32` (run 1, base `a1bb8d403`), `wf_caa6cd72-af1` (the rotations, base
   `5692dd49d`), `wf_0d256663-f64` (EC-THREAT-FIX4's live stage) and `wf_4c054cc8-0ce` (the live records, base
   `ef598ad48`); Z4's `wf_e9e036c7-5bd`; Z3's `wf_9aabe6e6-7af` (all four); Z2's `wf_7c79ba74-4ca` (code stages) and `wf_7e9c6966-820` (live stages, BIS-ALTS); Z's `wf_8821da6d-91f` (all five); Y's `wf_e58e8b14-102` (all four), `wf_d290cc37-ee6` and `wf_fe29d895-a35` (EC-TICK-FIX's rest and
   review); X2's `wf_b555c578-f46` (code stages), `wf_a0107f34-c7b` (live stages) and `wf_b00ecbe0-79a` (EC-RECHECK's
@@ -756,10 +759,11 @@ crashed before F2, so its column starts there.
 | BIS-TANK-MAGIC | merged | `955ed07f1` | the optimizer's tank boss casts (`OptimizerTankBossID`), Kel'Thuzad 25 at phase 1, healing pinned to the worn gear, survival in thirds with chance of death, a 262 melee-hit floor for taunts; no golden moves |
 | channel hand-off | direct | `32ca3596c` | the 10.27 ms tick let a GCD end between a hasted channel's last tick and its aura's end, and the rotation never woke again (TestArcane's Ephemeral Snowflake row -31.7%, TestDisc's Regalia of Faith row -29.6%); the hand-off is the channel dot's `OnExpire` now; goldens `7c3c0ac78` |
 | wave Z8 cross-review | direct | `7c5f16c23` | module `0c4d80f`; the optimizer's boss restarts its swing on five casts (`resetsSwing`), Algalon without the dual wield miss, `noParryHaste` per boss; Flame Shock's ticks under the Frost Witch 4-piece (`Dot.AddRemaining`); a creature's swing an update short after its hardcast lands; the Shiny Shard's proc used up by heals; Envenom's float32 order; taunts found to roll spell hit, the floor renamed "hit"; goldens `0359396ba` |
-| EC-CORE-FIX6 | running | | wave Z9 |
-| EC-PET-FIX5 | running | | wave Z9 |
-| EC-CLASS-FIX5 | running | | wave Z9 |
-| BIS-TANK-PICKS | running | | wave Z9 |
+| EC-CORE-FIX6 | merged | `d8c728fa1` | module `0096c2f`; map updates vary in length (`ServerSettings.map_update_jitter_ms`, 10.46 ms a world tick and 6 ms of jitter, a 104.6 ms update on average), Ignite off an instant cast, the server's order of swings, landings and aura ticks on a shared update, damage-based execute phases on the target's update, `Aura.AddDuration`, healing taken as its own term, the AoE cap as `Spell.AoECapUnits`, the Retribution replay's cast clocks; live: five more Fire fights, uneven world ticks found; all 37 suites move (`c8edf210c`) |
+| EC-PET-FIX5 | merged | `7340812b4` | module `32c9c21`; Wrath of Air on every pet but the haste carriers, a timed guardian unsummoned behind its last update, a Mirror Image's missile lost at the unsummon, the Val'kyr's Smites on its attack timer without Bloodlust; the Rune Weapon's swings found to be copies of the knight's (not fixed); 16 suites move (`842aac3d3`) |
+| EC-CLASS-FIX5 | merged | `1bebb6396` | module `6091c89`; Omen of Clarity on heals, item heals under their server spells, Hurricane's attack slow (a boss half the time), Bryntroll's heal without crits, Hamstring and Slow, `blood_pesti_aoe`'s Blood Tap condition, Shard of the Gods' 50 s cooldown; item and rotation rows of 35 suites move (`2f308cb20`); `db.json` gains Hamstring's icon (`8576bb383`) |
+| update-grid fixes | direct | `dc16890dc`, `5342e4b5d` | two places built on the fixed grid that the varying one broke after the merges: the Val'kyr's Smite test (pinned with `core.OnRegularGrid`) and Hurricane's `nextStormPass` (now the first map update 500 ms or more after the last pass); no golden moves |
+| BIS-TANK-PICKS | running | | wave Z9, run 2 (`wf_bade63ce-ecd`): the model stage came back blocked with its work done, since the death term can't be normalized where the worn gear dies in none or all of the iterations (Bulwark P1, P4, P5; Felesta P4, P5): the user's call, asked in the wave report. The picks stage runs on the code as it stands |
 
 Later WIs are added as their wave starts.
 
