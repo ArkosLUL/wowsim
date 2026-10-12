@@ -14,14 +14,14 @@ var HurricaneActionID = core.ActionID{SpellID: 48467}
 const stormTargetInterval = 500 * time.Millisecond
 
 // nextStormPass is when a storm whose next map update comes at first looks at its targets again: the interval
-// counts down on its map updates, and the pass runs on the first one with no more than its own length left.
+// counts down by each map update's length, so the pass runs on the first update that leaves the update
+// before first 500 ms or more behind.
 func nextStormPass(sim *core.Simulation, first time.Duration) time.Duration {
-	step := sim.NextServerTick(first+1) - first
-	if step <= 1 {
+	if sim.NextServerTick(first+1) == first+1 {
 		// exact timing
 		return sim.CurrentTime + stormTargetInterval
 	}
-	return first + (stormTargetInterval+step-1)/step*step - step
+	return sim.NextServerTick(sim.ServerTickBefore(first) + stormTargetInterval)
 }
 
 func (druid *Druid) registerHurricaneSpell() {

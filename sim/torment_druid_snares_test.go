@@ -91,12 +91,11 @@ func TestTormentTheWeakCountsADruidsTyphoonAndHurricane(t *testing.T) {
 	sim, m, moon = newSim()
 	boss, add = sim.GetTargetUnit(0), sim.GetTargetUnit(1)
 	bossSpeed, addSpeed := boss.SwingSpeed(), add.SwingSpeed()
-	// the storm looks at its targets every 500 ms, counted on its map updates
+	// the storm looks at its targets on the first map update 500 ms or more after the update of its last look
+	const pass = 500 * time.Millisecond
 	firstUpdate := sim.NextServerTick(sim.CurrentTime)
-	mapUpdate := sim.NextServerTick(firstUpdate+1) - firstUpdate
-	pass := (500*time.Millisecond + mapUpdate - 1) / mapUpdate * mapUpdate
-	if mapUpdate < 50*time.Millisecond || pass < 500*time.Millisecond {
-		t.Fatalf("map updates %v apart and a pass every %v", mapUpdate, pass)
+	if mapUpdate := sim.NextServerTick(firstUpdate+1) - firstUpdate; mapUpdate < 50*time.Millisecond {
+		t.Fatalf("map updates %v apart: the test needs the server's update grid", mapUpdate)
 	}
 	cast := sim.CurrentTime
 	if !moon.Hurricane.Cast(sim, boss) {
@@ -123,10 +122,12 @@ func TestTormentTheWeakCountsADruidsTyphoonAndHurricane(t *testing.T) {
 	if len(flips) < 13 {
 		t.Fatalf("the boss's slow came or went %d times in 7 s, want every %v: %v", len(flips), pass, flips)
 	}
+	wantFlip := sim.NextServerTick(sim.ServerTickBefore(firstUpdate) + pass)
 	for i, flip := range flips {
-		if want := firstUpdate - cast + pass - mapUpdate + time.Duration(i)*pass; flip != want {
-			t.Errorf("the boss's slow changed %v into the channel, want %v (change %d)", flip, want, i)
+		if flip != wantFlip-cast {
+			t.Errorf("the boss's slow changed %v into the channel, want %v (change %d)", flip, wantFlip-cast, i)
 		}
+		wantFlip = sim.NextServerTick(wantFlip + pass)
 	}
 	advance(sim, 3*time.Second)
 	wantTorment("the add after Hurricane ended", m, add, 1)
