@@ -1,5 +1,5 @@
 {"paths": [
-{"name":"WarriorArms","class":1,"race":6,"spec":"warrior","items":[{"slot":15,"id":40384}],"auras":[2457],"steps": [
+{"name":"WarriorArms","class":1,"race":6,"spec":"warrior","items":[{"slot":15,"id":40406}],"auras":[2457],"steps": [
   {"talent":"improvedHeroicStrike","rank":3,"spell":12664},
   {"talent":"deflection","rank":5,"spell":16466},
   {"talent":"improvedRend","rank":2,"spell":12658},
@@ -10,7 +10,6 @@
   {"talent":"deepWounds","rank":3,"spell":12867},
   {"talent":"twoHandedWeaponSpecialization","rank":3,"spell":12712},
   {"talent":"tasteForBlood","rank":3,"spell":56638},
-  {"talent":"poleaxeSpecialization","rank":5,"spell":12785},
   {"talent":"sweepingStrikes","rank":1,"spell":12328},
   {"talent":"maceSpecialization","rank":5,"spell":12704},
   {"talent":"swordSpecialization","rank":5,"spell":12815},
@@ -26,10 +25,11 @@
   {"talent":"bloodFrenzy","rank":2,"spell":29859},
   {"talent":"wreckingCrew","rank":5,"spell":56614},
   {"talent":"bladestorm","rank":1,"spell":46924},
-  {"talent":"boomingVoice","rank":2,"spell":12835}
+  {"talent":"armoredToTheTeeth","rank":3,"spell":61222},
+  {"talent":"boomingVoice","rank":2,"spell":12835},
+  {"talent":"improvedBloodrage","rank":2,"spell":12818}
 ]},
 {"name":"WarriorFury","class":1,"race":6,"spec":"warrior","items":[{"slot":15,"id":40402},{"slot":16,"id":40402}],"auras":[2458,47436],"steps": [
-  {"talent":"armoredToTheTeeth","rank":3,"spell":61222},
   {"talent":"cruelty","rank":5,"spell":12856},
   {"talent":"improvedDemoralizingShout","rank":5,"spell":12879},
   {"talent":"unbridledWrath","rank":5,"spell":13002},
@@ -50,11 +50,21 @@
   {"talent":"unendingFury","rank":5,"spell":56932},
   {"talent":"titansGrip","rank":1,"spell":46917},
   {"talent":"improvedBloodrage","rank":2,"spell":12818},
-  {"talent":"improvedThunderClap","rank":3,"spell":12666}
+  {"talent":"improvedThunderClap","rank":3,"spell":12666},
+  {"talent":"incite","rank":3,"spell":50687}
+]},
+{"name":"WarriorFury2","class":1,"race":6,"spec":"warrior","items":[{"slot":15,"id":40402},{"slot":16,"id":40402}],"auras":[2458,47436],"steps": [
+  {"talent":"improvedHeroicStrike","rank":3,"spell":12664},
+  {"talent":"deflection","rank":5,"spell":16466},
+  {"talent":"improvedRend","rank":2,"spell":12658},
+  {"talent":"improvedCharge","rank":2,"spell":12697,"filler":true},
+  {"talent":"ironWill","rank":3,"spell":12960,"filler":true},
+  {"talent":"tacticalMastery","rank":3,"spell":12677},
+  {"talent":"improvedOverpower","rank":2,"spell":12963},
+  {"talent":"poleaxeSpecialization","rank":5,"spell":12785}
 ]},
 {"name":"WarriorProtection","class":1,"race":6,"spec":"protection_warrior","items":[{"slot":15,"id":40402},{"slot":16,"id":40400}],"auras":[71],"steps": [
   {"talent":"shieldSpecialization","rank":5,"spell":12727},
-  {"talent":"incite","rank":3,"spell":50687},
   {"talent":"anticipation","rank":5,"spell":12753},
   {"talent":"lastStand","rank":1,"spell":12975},
   {"talent":"improvedRevenge","rank":2,"spell":12799},

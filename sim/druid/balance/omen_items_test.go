@@ -101,11 +101,11 @@ func TestHurricaneCastGivesOneIllustrationStack(t *testing.T) {
 	}
 }
 
-// A proc off the cast's hit that goes on the hit's target finds the cast's target there: Purified Shard of
+// A proc off the cast's hit that goes on the hit's target finds the cast's target there: Shiny Shard of
 // the Gods' Searing Flames, a dot the druid has on enemies only.
 func TestHurricaneCastProcsGoOnItsTarget(t *testing.T) {
-	player := nakedDruidWith(49310, `{"type": "TypeAPL", "priorityList": [{"action": {"castSpell": {"spellId": {"spellId": 48467}}}}]}`)
-	player.Equipment.Items[proto.ItemSlot_ItemSlotTrinket2] = &proto.ItemSpec{Id: 49463}
+	player := nakedDruidWith(49488, `{"type": "TypeAPL", "priorityList": [{"action": {"castSpell": {"spellId": {"spellId": 48467}}}}]}`)
+	player.Equipment.Items[proto.ItemSlot_ItemSlotTrinket2] = &proto.ItemSpec{Id: 49464}
 	encounter := core.MakeSingleTargetEncounter(0)
 	encounter.Duration = 120
 	res := core.RunRaidSim(&proto.RaidSimRequest{

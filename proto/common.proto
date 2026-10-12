@@ -679,6 +679,10 @@ message Target {
 	// root never goes on. Unset means the usual raid boss set for a world boss and
 	// nothing for anything else.
 	optional uint64 mechanic_immune_mask = 21;
+
+	// CREATURE_FLAG_EXTRA_NO_XP: killing it gives no experience or honor, so a proc that
+	// needs a victim worth either (Blood Presence's heal) never fires on it.
+	bool no_xp = 22;
 }
 
 message Encounter {

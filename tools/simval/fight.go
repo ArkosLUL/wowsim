@@ -231,7 +231,6 @@ var fightAurasLeftOut = map[fightLeftOut]string{
 // as part of the server aura its id shares.
 var fightSimAurasLeftOut = map[core.ActionID]string{
 	{SpellID: 44448, Tag: 1}: "Hot Streak's count of crits in a row, which the server keeps inside the talent's script",
-	{SpellID: 53190}:         "Starfall's splash: the sim times it with a second dot on the target, the server casts it off each star",
 }
 
 type fightCycles struct {

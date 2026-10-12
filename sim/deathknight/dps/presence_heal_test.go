@@ -228,3 +228,54 @@ func TestBloodPresenceHealFromOnUseItems(t *testing.T) {
 		}
 	}
 }
+
+// A NO_XP creature (the simval dummies) gives no experience or honor whatever its level, so 63611 never
+// procs on it.
+func TestBloodPresenceHealNeedsAnXPTarget(t *testing.T) {
+	for _, noXP := range []bool{false, true} {
+		player := parityPlayer(FrostTalents, "p3_frost", swingRotation(48266))
+		entries := runParityIn(t, player, nil, func(target *proto.Target) { target.NoXp = noXP }, 1)
+		healed := 0
+		for _, e := range entries {
+			if healLine.MatchString(e.text) {
+				healed++
+			}
+		}
+		if noXP != (healed == 0) {
+			t.Errorf("NO_XP %v target: %d heals", noXP, healed)
+		}
+	}
+}
+
+var deathStrikeHealLine = regexp.MustCompile(`^Gained ([\d.]+) health from \{SpellID: 49924\}`)
+
+// Death Strike's heal (45470) has no damage class and no spell_bonus_data row either, so Strength of Wrynn's
+// healing done doesn't reach it: only its 30% more health, which the heal is a share of, does.
+func TestDeathStrikeHealSkipsStrengthOfWrynn(t *testing.T) {
+	rotation := presenceHealRotation(48266, []string{`{"spellId": 49909}`, `{"spellId": 49921, "tag": 1}`},
+		[]string{`{"spellId": 49924, "tag": 1}`})
+	heals := func(buffs *proto.RaidBuffs) []float64 {
+		player := parityPlayer(FrostTalents, "p3_frost", rotation)
+		var amounts []float64
+		for _, e := range runParityIn(t, player, buffs, func(*proto.Target) {}, 1) {
+			if m := deathStrikeHealLine.FindStringSubmatch(e.text); m != nil {
+				if amount, _ := strconv.ParseFloat(m[1], 64); amount > 0 {
+					amounts = append(amounts, amount)
+				}
+			}
+		}
+		return amounts
+	}
+	plain, wrynn := heals(nil), heals(&proto.RaidBuffs{StrengthOfWrynn: true})
+	if len(plain) == 0 {
+		t.Fatal("no Death Strike healed")
+	}
+	if len(wrynn) != len(plain) {
+		t.Fatalf("%d heals under Strength of Wrynn, %d without", len(wrynn), len(plain))
+	}
+	for i := range plain {
+		if ratio := wrynn[i] / plain[i]; ratio < 1.29 || ratio > 1.31 {
+			t.Errorf("heal %d: %v under Strength of Wrynn, %v without, want x1.3 for the health", i, wrynn[i], plain[i])
+		}
+	}
+}

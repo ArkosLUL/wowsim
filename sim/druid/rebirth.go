@@ -38,7 +38,8 @@ func (druid *Druid) registerRebirthSpell() {
 			},
 		},
 
-		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, _ *core.Spell) {
+		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+			spell.CalcAndDealOutcome(sim, target, spell.OutcomeAlwaysHit)
 			druid.RebirthUsed = true
 		},
 	})

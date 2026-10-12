@@ -933,11 +933,13 @@ func init() {
 	NewItemEffectWithHeroic(func(isHeroic bool) {
 		name := "Bryntroll, the Bone Arbiter"
 		itemID := int32(50415)
+		spellID := int32(71838)
 		minDmg := float64(2138)
 		maxDmg := float64(2362)
 		if isHeroic {
 			name += " H"
 			itemID = 50709
+			spellID = 71839
 			minDmg = float64(2412)
 			maxDmg = float64(2664)
 		}
@@ -948,20 +950,7 @@ func init() {
 			procMask := character.GetProcMaskForItem(itemID)
 			ppmm := character.AutoAttacks.NewPPMManager(2.0, procMask)
 
-			procActionID := core.ActionID{ItemID: itemID}
-
-			proc := character.RegisterSpell(core.SpellConfig{
-				ActionID:    procActionID.WithTag(1),
-				SpellSchool: core.SpellSchoolShadow,
-				ProcMask:    core.ProcMaskEmpty,
-
-				DamageMultiplier: 1,
-				ThreatMultiplier: 1,
-
-				ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-					spell.CalcAndDealDamage(sim, target, sim.Roll(minDmg, maxDmg), spell.OutcomeMagicHit)
-				},
-			})
+			proc := character.RegisterSpell(itemDamageSpell(character, spellID, core.SpellSchoolShadow, minDmg, maxDmg, 0))
 
 			character.GetOrRegisterAura(core.Aura{
 				Label:    name,

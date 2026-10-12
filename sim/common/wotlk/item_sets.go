@@ -15,8 +15,7 @@ var ItemSetPurifiedShardOfTheGods = core.NewItemSet(core.ItemSet{
 	Bonuses: map[int32]core.ApplyEffect{
 		2: func(agent core.Agent) {
 			agent.GetCharacter().AddStats(stats.Stats{stats.SpellPower: 222})
-			applyShardOfTheGodsDamageProc(agent.GetCharacter(), false)
-			applyShardOfTheGodsHealingProc(agent.GetCharacter(), false)
+			applyShardOfTheGodsHealingProc(agent.GetCharacter())
 		},
 	},
 })
@@ -26,21 +25,18 @@ var ItemSetShinyShardOfTheGods = core.NewItemSet(core.ItemSet{
 	Bonuses: map[int32]core.ApplyEffect{
 		2: func(agent core.Agent) {
 			agent.GetCharacter().AddStats(stats.Stats{stats.SpellPower: 250})
-			applyShardOfTheGodsDamageProc(agent.GetCharacter(), true)
-			applyShardOfTheGodsHealingProc(agent.GetCharacter(), true)
+			applyShardOfTheGodsDamageProc(agent.GetCharacter())
 		},
 	},
 })
 
-func applyShardOfTheGodsDamageProc(character *core.Character, isHeroic bool) {
+// Each set's script casts one spell whatever its tier: the Shiny set's bonus 69739 (spell_item_shiny_shard_of_the_scale)
+// casts Searing Flames 69729, the Purified set's 69755 (spell_item_purified_shard_of_the_scale) Cauterizing Heal
+// 69733, off any magic-class spell, 25% with a 45 s cooldown.
+func applyShardOfTheGodsDamageProc(character *core.Character) {
 	name := "Searing Flames"
 	actionID := core.ActionID{SpellID: 69729}
 	tickAmount := 477.0
-	if isHeroic {
-		name += " H"
-		actionID = core.ActionID{SpellID: 69730}
-		tickAmount = 532.0
-	}
 
 	dotSpell := character.RegisterSpell(core.SpellConfig{
 		ActionID:    actionID,
@@ -73,24 +69,18 @@ func applyShardOfTheGodsDamageProc(character *core.Character, isHeroic bool) {
 		ProcMask:   core.ProcMaskSpellDamage,
 		Outcome:    core.OutcomeLanded,
 		ProcChance: 0.25,
-		ICD:        time.Second * 50,
+		ICD:        time.Second * 45,
 		Handler: func(sim *core.Simulation, _ *core.Spell, result *core.SpellResult) {
 			dotSpell.Dot(result.Target).Apply(sim)
 		},
 	})
 }
 
-func applyShardOfTheGodsHealingProc(character *core.Character, isHeroic bool) {
+func applyShardOfTheGodsHealingProc(character *core.Character) {
 	name := "Cauterizing Heal"
 	actionID := core.ActionID{SpellID: 69733}
 	minHeal := 2269.0
 	maxHeal := 2773.0
-	if isHeroic {
-		name += " H"
-		actionID = core.ActionID{SpellID: 69734}
-		minHeal = 2530.0
-		maxHeal = 3092.0
-	}
 
 	spell := character.RegisterSpell(core.SpellConfig{
 		ActionID:    actionID,
@@ -110,11 +100,16 @@ func applyShardOfTheGodsHealingProc(character *core.Character, isHeroic bool) {
 
 	core.MakeProcTriggerAura(&character.Unit, core.ProcTrigger{
 		Name:       name + " Trigger",
-		Callback:   core.CallbackOnHealDealt,
+		Callback:   core.CallbackOnHealDealt | core.CallbackOnSpellHitDealt,
+		ProcMask:   core.ProcMaskSpellHealing | core.ProcMaskSpellDamage,
+		Outcome:    core.OutcomeLanded,
 		ProcChance: 0.25,
-		ICD:        time.Second * 50,
+		ICD:        time.Second * 45,
 		Handler: func(sim *core.Simulation, _ *core.Spell, result *core.SpellResult) {
-			spell.Cast(sim, result.Target)
+			// a damage spell's hit uses up the proc too, and the server heals the enemy it hit
+			if result.Target.Type != core.EnemyUnit {
+				spell.Cast(sim, result.Target)
+			}
 		},
 	})
 }

@@ -46,9 +46,7 @@ run trimmed by `simval talents`, which `TestTalentSweepRecords` replays.
 `spellmod_spells.json` lists, per spell-mod talent, the spells the sim names that its mods change on the server;
 the spell-mod sweep probes them. Rewrite it with [spellmods](../../../../tools/acore/spellmods/README.md).
 `spellmods.jsonl` holds a `TestSimvalSpellModSweep` run's `SPELLMOD` lines, which `TestSpellModRecords` replays
-([spell-mod sweep](../../../../tools/simval/README.md#spell-mod-sweep)). WarlockAffliction's lines carry Curse of Doom
-as shaped by `spell_warl_curse_of_doom`, so its damage isn't compared until a rerun on a module build whose
-`NO_AMOUNT_SCRIPTS` lists that script.
+([spell-mod sweep](../../../../tools/simval/README.md#spell-mod-sweep)).
 
 `costaura_spells.json` is the same list for the school cost aura talents, and `costauras.jsonl` a
 `TestSimvalCostAuraSweep` run's lines, which `TestCostAuraRecords` replays
@@ -83,7 +81,6 @@ replays as its records stood until a rerun replaces them.
 | WarlockDestruction | devastation | fire spell crit % | spell specific crit in the sim, a spell mod on the server |
 | PriestDiscipline | holySpecialization | holy spell crit % | the sheet field is the aura's raw sum; Penance is holy but outside its class mask, so the sim's lowest holy spell stays at 0 |
 | RogueCombat | maceSpecialization | armor penetration % | the sheet field counts the aura without a mace; the server's damage applies it only with one (`HasItemFitToSpellRequirements`), as the sim does, and the path carries two daggers |
-| WarriorArms | maceSpecialization | armor penetration % | the same sheet artifact: the path carries a two-handed axe, so the server's damage and the sim give it nothing |
 | DeathknightBlood | bloodGorged | armor penetration % | the sheet field is the aura's raw sum; the sim applies it per spell by the server's class mask (white swings, Plague, Blood, Heart and Death Strike, Rune Strike) |
 
 `spellmods.jsonl`, each in `droppedSpellMods` (`tools/simval/spellmods_test.go`). Lines stay; a dropped step (spell 0),

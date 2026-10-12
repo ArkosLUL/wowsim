@@ -161,6 +161,7 @@ func NewTarget(options *proto.Target, targetIndex int32) *Target {
 	} else if target.IsWorldBoss {
 		target.MechanicImmuneMask = RaidBossMechanicImmunities
 	}
+	target.NoXP = options.NoXp
 	if target.stats[stats.MeleeCrit] == 0 {
 		// Creatures crit at a flat 5%; the level difference is handled by the
 		// skill term in the attack table.
@@ -207,6 +208,9 @@ const RaidBossMechanicImmunities = 0x4D967EFE
 // SnareAuraTag marks an aura on a target whose spell or effect has MECHANIC_SNARE, for what asks whether
 // anyone snared the target (Torment the Weak). A snare-immune target never counts as snared.
 const SnareAuraTag = "Snare"
+
+// SlowAttackAuraTag is SnareAuraTag for an aura with MECHANIC_SLOW_ATTACK, which a raid boss isn't immune to.
+const SlowAttackAuraTag = "SlowAttack"
 
 // ImmuneToMechanic is Creature::HasMechanicTemplateImmunity: a spell with this mechanic doesn't land on the
 // unit (Creature::IsImmunedToSpell), and an effect with it isn't applied.

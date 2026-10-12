@@ -7,14 +7,12 @@ import (
 	"github.com/wowsims/wotlk/sim/core/proto"
 )
 
-// We register two spells to apply two different dot effects and get two entries in Damage/Detailed results
 func (druid *Druid) registerStarfallSpell() {
 	if !druid.Talents.Starfall {
 		return
 	}
 
-	numberOfTicks := core.TernaryInt32(druid.Env.GetNumTargets() > 1, 20, 10)
-	tickLength := time.Second
+	var starfallSplashSpell *DruidSpell
 
 	starfallTickSpell := druid.RegisterSpell(Humanoid|Moonkin, core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: 53195},
@@ -31,6 +29,8 @@ func (druid *Druid) registerStarfallSpell() {
 		Direct:           core.SpellEffect{Effect: 0, Min: 563, Max: 653, SP: 0.3},
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			baseDamage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP, spell.SpellPower())
+			// the star's trigger effect casts the splash at launch, ahead of the star's own hit
+			starfallSplashSpell.Cast(sim, target)
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 		},
 	})
@@ -57,11 +57,23 @@ func (druid *Druid) registerStarfallSpell() {
 			Aura: core.Aura{
 				Label: "Starfall",
 			},
-			NumberOfTicks: numberOfTicks,
-			TickLength:    tickLength,
+			NumberOfTicks: 10,
+			TickLength:    time.Second,
 			TicksCanCrit:  false,
-			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
-				starfallTickSpell.Cast(sim, target)
+			// each tick the dummy spell hits two random units in sight, or the one there is
+			OnTick: func(sim *core.Simulation, _ *core.Unit, dot *core.Dot) {
+				targets := sim.Encounter.TargetUnits
+				if len(targets) == 1 {
+					starfallTickSpell.Cast(sim, targets[0])
+					return
+				}
+				first := int(sim.RandomFloat("Starfall Target") * float64(len(targets)))
+				second := int(sim.RandomFloat("Starfall Target") * float64(len(targets)-1))
+				if second >= first {
+					second++
+				}
+				starfallTickSpell.Cast(sim, targets[first])
+				starfallTickSpell.Cast(sim, targets[second])
 			},
 		},
 
@@ -70,11 +82,10 @@ func (druid *Druid) registerStarfallSpell() {
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			spell.CalcAndDealOutcome(sim, target, spell.OutcomeAlwaysHit)
 			spell.Dot(target).Apply(sim)
-			druid.StarfallSplash.Dot(target).Apply(sim)
 		},
 	})
 
-	starfallSplashTickSpell := druid.RegisterSpell(Any, core.SpellConfig{
+	starfallSplashSpell = druid.RegisterSpell(Any, core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: 53190},
 		SpellSchool: core.SpellSchoolArcane,
 		ProcMask:    core.ProcMaskSuppressedProc,
@@ -95,21 +106,6 @@ func (druid *Druid) registerStarfallSpell() {
 				}
 				spell.CalcAndDealDamage(sim, aoeTarget, baseDamage, spell.OutcomeMagicHitAndCrit)
 			}
-		},
-	})
-
-	druid.StarfallSplash = druid.RegisterSpell(Any, core.SpellConfig{
-		ActionID: core.ActionID{SpellID: 53190},
-		Dot: core.DotConfig{
-			Aura: core.Aura{
-				Label: "StarfallSplash",
-			},
-			NumberOfTicks: numberOfTicks,
-			TickLength:    tickLength,
-			TicksCanCrit:  false,
-			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
-				starfallSplashTickSpell.Cast(sim, target)
-			},
 		},
 	})
 }

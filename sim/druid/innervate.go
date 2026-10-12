@@ -63,7 +63,8 @@ func (druid *Druid) registerInnervateCD() {
 		SpellSchool:      core.SpellSchoolNature,
 		ProcMask:         core.ProcMaskEmpty,
 		ThreatMultiplier: 1,
-		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, _ *core.Spell) {
+		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+			spell.CalcAndDealOutcome(sim, target, spell.OutcomeAlwaysHit)
 			innervateAura.Activate(sim)
 		},
 	})

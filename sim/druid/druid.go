@@ -54,7 +54,6 @@ type Druid struct {
 	Shred                *DruidSpell
 	Starfire             *DruidSpell
 	Starfall             *DruidSpell
-	StarfallSplash       *DruidSpell
 	SurvivalInstincts    *DruidSpell
 	SwipeBear            *DruidSpell
 	SwipeCat             *DruidSpell
