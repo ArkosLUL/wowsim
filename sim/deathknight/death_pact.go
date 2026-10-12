@@ -39,7 +39,7 @@ func (dk *Deathknight) registerDeathPactSpell() {
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			dk.bladeBarrierCastPhase(sim)
 			healthGain := spell.Direct.Roll(sim) / 100 * dk.MaxHealth()
-			dk.GainHealing(sim, healthGain, hpMetrics)
+			dk.gainHealingTakenOnly(sim, healthGain, hpMetrics)
 			dk.Ghoul.Pet.Disable(sim)
 		},
 	})

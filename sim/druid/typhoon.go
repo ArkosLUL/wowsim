@@ -17,11 +17,23 @@ func (druid *Druid) registerTyphoonSpell() {
 		return
 	}
 
+	// the damage spell's third effect slows the target for 6 s (MECHANIC_SNARE), where it takes snares
+	snares := druid.NewEnemyAuraArray(func(target *core.Unit) *core.Aura {
+		if target.ImmuneToMechanic(core.MechanicSnare) {
+			return nil
+		}
+		return target.GetOrRegisterAura(core.Aura{
+			Label:    "Typhoon by " + druid.Label,
+			Tag:      core.SnareAuraTag,
+			Duration: time.Second * 6,
+		})
+	})
+
 	typhoonDamage := druid.RegisterSpell(Any, core.SpellConfig{
 		ActionID:     TyphoonDamageActionID,
 		SpellSchool:  core.SpellSchoolNature,
 		ProcMask:     core.ProcMaskSpellDamage,
-		Flags:        core.SpellFlagNoOnCastComplete | SpellFlagOmenTrigger,
+		Flags:        core.SpellFlagNoOnCastComplete | SpellFlagOmenTrigger | SpellFlagNaturesGrace,
 		MissileSpeed: 30,
 
 		DamageMultiplier: spellModDamage(0.15 * float64(druid.Talents.GaleWinds)),
@@ -41,6 +53,9 @@ func (druid *Druid) registerTyphoonSpell() {
 			spell.WaitTravelTime(sim, func(sim *core.Simulation) {
 				for _, result := range results {
 					spell.DealDamage(sim, result)
+					if snare := snares.Get(result.Target); snare != nil && result.Landed() {
+						snare.Activate(sim)
+					}
 				}
 			})
 		},

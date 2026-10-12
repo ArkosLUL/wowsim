@@ -427,6 +427,9 @@ func (mage *Mage) registerArcanePowerCD() {
 	})
 }
 
+// TormentTheWeakBonus is tormentTheWeak for tests outside the package.
+func (mage *Mage) TormentTheWeakBonus(target *core.Unit) float64 { return mage.tormentTheWeak(target) }
+
 // tormentTheWeak is Torment the Weak's bonus against target, which the server gives only while the target is
 // snared or its attacks are slowed (Unit::SpellPctDamageModsDone), whoever did it. Raid bosses are immune to
 // snares, so on them only the attack speed debuffs count.
@@ -434,7 +437,7 @@ func (mage *Mage) tormentTheWeak(target *core.Unit) float64 {
 	if mage.Talents.TormentTheWeak == 0 {
 		return 1
 	}
-	if !mage.attackSpeedSlows.Get(target).AnyActive() &&
+	if !mage.attackSpeedSlows.Get(target).AnyActive() && !target.HasActiveAuraWithTag(core.SlowAttackAuraTag) &&
 		(target.ImmuneToMechanic(core.MechanicSnare) || !target.HasActiveAuraWithTag(core.SnareAuraTag)) {
 		return 1
 	}

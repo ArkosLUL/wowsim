@@ -861,6 +861,7 @@ func recordedRunRequest(player *proto.Player, opts rrsimOptions) *proto.RaidSimR
 	// the boss dummy is a giant; the default target's other stats already match it
 	target := googleProto.Clone(core.NewDefaultTarget()).(*proto.Target)
 	target.MobType = proto.MobType_MobTypeGiant
+	target.NoXp = true
 	return &proto.RaidSimRequest{
 		Raid:       core.SinglePlayerRaidProto(player, &proto.PartyBuffs{}, &proto.RaidBuffs{}, &proto.Debuffs{}),
 		Encounter:  &proto.Encounter{Duration: opts.Seconds, Targets: []*proto.Target{target}},

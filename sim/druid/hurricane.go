@@ -8,6 +8,16 @@ import (
 )
 
 func (druid *Druid) registerHurricaneSpell() {
+	// 16914's second effect slows the attacks of every creature in the storm (MECHANIC_SLOW_ATTACK), which no
+	// creature immunity row blocks
+	slows := druid.NewEnemyAuraArray(func(target *core.Unit) *core.Aura {
+		return target.GetOrRegisterAura(core.Aura{
+			Label:    "Hurricane by " + druid.Label,
+			Tag:      core.SlowAttackAuraTag,
+			Duration: core.NeverExpires,
+		})
+	})
+
 	druid.HurricaneTickSpell = druid.RegisterSpell(Humanoid|Moonkin, core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: 48466},
 		SpellSchool: core.SpellSchoolNature,
@@ -52,6 +62,16 @@ func (druid *Druid) registerHurricaneSpell() {
 			IsAOE: true,
 			Aura: core.Aura{
 				Label: "Hurricane",
+				OnGain: func(_ *core.Aura, sim *core.Simulation) {
+					for _, target := range sim.Encounter.TargetUnits {
+						slows.Get(target).Activate(sim)
+					}
+				},
+				OnExpire: func(_ *core.Aura, sim *core.Simulation) {
+					for _, target := range sim.Encounter.TargetUnits {
+						slows.Get(target).Deactivate(sim)
+					}
+				},
 			},
 			NumberOfTicks:       10,
 			TickLength:          time.Second * 1,

@@ -218,7 +218,7 @@ func newBuffSim(rec damageRecord, s goldcharSetup, keys []string) (d *damageSim,
 		Raid: core.SinglePlayerRaidProto(player, set.party, set.raid, set.debuffs),
 		Encounter: &proto.Encounter{Duration: 180, Targets: []*proto.Target{{
 			Level: rec.Target.Level, MobType: mobTypes[rec.Target.CreatureType], Stats: targetStats.ToFloatArray(),
-			WorldBoss: &worldBoss,
+			WorldBoss: &worldBoss, NoXp: true, MechanicImmuneMask: dummyMechanicImmunities(rec.Target.Entry),
 		}}},
 		SimOptions: &proto.SimOptions{RandomSeed: 1, Iterations: 1},
 	})

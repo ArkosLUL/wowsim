@@ -104,7 +104,8 @@ func withChest(items []goldcharItem, chest int32) []goldcharItem {
 }
 
 // Weapons from the golden characters' gear sets, known to equip on the live server. Two-handed: 40384 axe,
-// 40406 mace, 40388 staff. One-handed: 40402 axe, 40345 sword, 39714 and 40386 daggers, 39763 and 39468
+// 40406 mace (WarriorArms: Mace Specialization needs one), 40388 staff. One-handed: 40402 axe, 40345 sword,
+// 39714 and 40386 daggers, 39763 and 39468
 // fists. 40400 shield, 40385 gun. Chests for the armor-from-items talents, stamina and frost resistance
 // only so no crit or hit moves under the other talents: 43586 plate, 43593 mail, 43590 leather.
 //
@@ -113,7 +114,7 @@ func withChest(items []goldcharItem, chest int32) []goldcharItem {
 // Flametongue Totem auras. The sim gets them through sweepBuffOptions.
 var sweepClasses = []sweepClass{
 	{class: 1, race: 6, setups: []sweepSetup{
-		{"WarriorArms", 0, "warrior", armed(40384, 0), []int32{2457}},
+		{"WarriorArms", 0, "warrior", armed(40406, 0), []int32{2457}},
 		{"WarriorFury", 1, "warrior", armed(40402, 40402), []int32{2458, 47436}},
 		{"WarriorProtection", 2, "protection_warrior", armed(40402, 40400), []int32{71}},
 	}, needs: map[string][]string{

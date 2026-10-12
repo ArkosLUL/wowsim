@@ -55,6 +55,9 @@ type Unit struct {
 	// creature_immunities.MechanicsMask, bit 1 << mechanic; read it through ImmuneToMechanic
 	MechanicImmuneMask uint64
 
+	// CREATURE_FLAG_EXTRA_NO_XP
+	NoXP bool
+
 	// Unit::IsPet: summoned with SPELL_EFFECT_SUMMON_PET, i.e. hunter and warlock
 	// pets and the Master of Ghouls ghoul. Every other summon is a guardian and
 	// doesn't glance.

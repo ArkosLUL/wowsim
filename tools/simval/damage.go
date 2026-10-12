@@ -405,6 +405,21 @@ func setSpec(player *proto.Player, spec protoreflect.Name) error {
 	return nil
 }
 
+// dummyMechanicImmunities is the dummy's creature_immunities mask: -361 for the boss dummy and -286 for the
+// elite ones and the level 80 dummy (no interrupts). nil for a unit that isn't one, so the sim's default holds.
+func dummyMechanicImmunities(entry uint32) *uint64 {
+	var mask uint64
+	switch {
+	case entry == 999000:
+		mask = core.RaidBossMechanicImmunities
+	case entry > 999000 && entry <= 999008:
+		mask = 0x49967EFE
+	default:
+		return nil
+	}
+	return &mask
+}
+
 // newDamageSim puts the player in a sim against `targets` copies of the record's dummy. Of the server
 // auras in mirror, the ones the sim registers by spell id go on at every start.
 func newDamageSim(rec damageRecord, player *proto.Player, mirror []int32, targets int) (*damageSim, error) {
@@ -433,6 +448,9 @@ func newSimWith(rec damageRecord, player *proto.Player, mirror []int32, targets 
 			MobType:   mobTypes[rec.Target.CreatureType],
 			Stats:     targetStats.ToFloatArray(),
 			WorldBoss: &worldBoss,
+			// every dummy carries NO_XP
+			NoXp:               true,
+			MechanicImmuneMask: dummyMechanicImmunities(rec.Target.Entry),
 		}
 	}
 	s := core.NewSim(&proto.RaidSimRequest{

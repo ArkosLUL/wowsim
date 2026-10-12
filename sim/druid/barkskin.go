@@ -48,7 +48,9 @@ func (druid *Druid) registerBarkskinCD() {
 		SpellSchool:      core.SpellSchoolNature,
 		ProcMask:         core.ProcMaskEmpty,
 		ThreatMultiplier: 1,
-		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, _ *core.Spell) {
+		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+			// the hit is what rolls Omen of Clarity
+			spell.CalcAndDealOutcome(sim, target, spell.OutcomeAlwaysHit)
 			druid.BarkskinAura.Activate(sim)
 			druid.AutoAttacks.StopMeleeUntil(sim, sim.CurrentTime, false)
 		},

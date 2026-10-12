@@ -64,7 +64,7 @@ func (dk *Deathknight) newDeathStrikeSpell(isMH bool) *core.Spell {
 
 				if result.Landed() {
 					healingAmount := 0.05 * dk.dkCountActiveDiseases(target) * dk.MaxHealth() * (1.0 + 0.5*float64(dk.Talents.ImprovedDeathStrike))
-					dk.GainHealing(sim, healingAmount, healthMetrics)
+					dk.gainHealingTakenOnly(sim, healingAmount, healthMetrics)
 					dk.DeathStrikeHeals = append(dk.DeathStrikeHeals, healingAmount)
 				}
 

@@ -3064,6 +3064,58 @@ siblings, which the tests and `tools/apldbg/presets.go` share. The copies and `T
   `proto/common.proto`'s target field and its plumbing; their cycles, fights, drops and rows.
 - **Goldens:** those classes' suites, and every suite wearing a changed item; report each.
 
+#### As built
+
+Druid and items stage (notes in `tmp/ec-class-fix4-druid.md`). Verdicts:
+- Starfall (fixed): 10 ticks, each casting 2 stars on distinct random units (the one unit when alone), every star
+  casting its splash 53190 at launch; the splash dot is gone. The Balance fight's Nature's Grace (log 22, sim 15.8, range
+  4 to 28) and Clearcasting (2 vs 5.4, range 0 to 13) are chance, not changed.
+- Omen on Barkskin, Innervate, Rebirth (fixed): `CheckProc` passes them, so each hit rolls.
+- Nature's Grace launch roll: only Wrath and Typhoon are missiles in the mask; Typhoon's triggered 53227 rolls at its hit
+  only (added).
+- Shard of the Gods (fixed): Purified (69755) casts only Cauterizing Heal 69733, Shiny (69739) only Searing Flames
+  69729 (spell_script_names; the cpp comments swap the two), 25%, 45 s, off any landed spell damage or heal; no
+  heroic ids. A damage hit uses up the Purified proc and heals nothing.
+- Bryntroll (fixed): Drain Life 71838/71839, crit capable; the leech heal to the player isn't modeled.
+- Item heals under server spells (not changed): nothing reads them, as Omen rolls on `OnSpellHitDealt` only and no
+  restoration heal rolls it.
+- Goldens: TestBlood, TestBloodTank, TestArms (Bryntroll rows +0.2 to +0.5%), TestBalance, TestBalancePhase3
+  (multi-target rows -4.3 to +1.3%), TestFeralTank (Barkskin's Omen roll shifts the random stream, Average dps +0.07%).
+
+Rest stage (notes in `tmp/ec-class-fix4-code.md`). Verdicts:
+- Death knight `NO_XP` (fixed): `proto.Target.no_xp` (field 22) reaches `Unit.NoXP`; `givesXPOrHonor` reads it, and the
+  simval dummies set it, so Blood Presence's heal never fires on them (`Player::isHonorOrXPTarget`).
+- Death Strike's 45470 and Death Pact's 48743 (fixed, `gainHealingTakenOnly`): no damage class and no
+  `spell_bonus_data` row, so `SpellHealingBonusDone` returns the amount; only the healing taken percents apply, not
+  Strength of Wrynn's stand-in.
+- `blood_pesti_aoe` (tuned): Blood Tap needs the next blood rune 6 s or more from ready. Average-Default 9231 -> 9338
+  (+1.15%, se 4); full-buff multi-target +3.7%, unbuffed rows -0.1 to -2.7%.
+- Torment the Weak's snares (partly fixed): Typhoon's 53227 snares a landed target for 6 s (`SnareAuraTag`), Hurricane
+  slows the attacks of every target for the channel (`SlowAttackAuraTag`, counts on a boss too). Hamstring and Slow stay
+  unmodelled: no sim spell casts them.
+- Dummy immunities (fixed): the simval sims give 999000 row -361 and 999001 to 999008 row -286 (`dummyMechanicImmunities`);
+  the boss dummy's matched the default already.
+- WarriorArms with a mace (partly): the setup takes 40406, which moved the axe talents between the warrior paths
+  (WarriorFury2 is new), so the 146 live mace records fit no path. WarriorArms, Fury, Fury2 and Protection leave both
+  sweeps' replay (`sweepStaleSteps`, `spellModRerecord`) until the live stage reran them (below).
+- Pet specials on an immune target: `TestEcClass4PetSpecialsOnImmuneTarget` (live stage, below).
+- Goldens: TestBlood (12 `blood_pesti_aoe` rows), no other moves from this stage.
+
+Live stage (notes in `tmp/ec-class-fix4-live.md`; server 3d89793c7, module bc1d35e). Verdicts:
+- Pet specials on an immune target (confirmed, no sim change): Ravage, Tendon Rip, Snatch and Venom Web Spray at the
+  boss dummy go off and report immune with no hit or tick, as the sim has them. The bat control was refused
+  (`DONT_REPORT`) and is only logged.
+- Curse of Doom (fixed by the rebuild): WarlockAffliction rerun, `shaped` is empty, the dot compares and agrees. Its
+  fixture README note is gone.
+- WarriorArms mace path (fixed): talent and spell-mod sweeps rerun for Arms, Fury, Fury2 and Protection. Mace
+  Specialization +15 armor penetration on both sides; `sweepStaleSteps`, `spellModRerecord`, the Arms
+  `maceSpecialization` drop and its README row are gone.
+- Balance fight (re-recorded, no sim change): Nature's Grace 11 applications (sim 15.8, range 4 to 28), Clearcasting 5
+  (sim 5.4), Starfall 9 stars; 66 checks, none dropped. The old 22 vs 12 and 2 vs 5.4 were chance.
+- Not live-checked: Omen on Barkskin, Innervate and Rebirth, Typhoon's Nature's Grace, Shard of the Gods, Bryntroll's
+  crit and heal, a multi-target Starfall; the source stands.
+- Goldens: none from this stage.
+
 ### EC-TOOLS2 (Z9; golden-neutral)
 
 - `db.json` has no icon rows for the explosives' spells (56350, 67769, 56488) or 55039: the UI fetches them.

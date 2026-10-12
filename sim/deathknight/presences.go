@@ -150,10 +150,17 @@ func (dk *Deathknight) registerBloodPresenceHeal() {
 	})
 }
 
+// gainHealingTakenOnly is a heal of a spell with no damage class and no spell_bonus_data row (Death Strike's
+// 45470, Death Pact's 48743): Unit::SpellHealingBonusDone hands the amount back, so no healing done percent
+// reaches it, Strength of Wrynn's included, only the healing taken percents.
+func (dk *Deathknight) gainHealingTakenOnly(sim *core.Simulation, amount float64, metrics *core.ResourceMetrics) {
+	dk.GainHealth(sim, math.Trunc(math.Trunc(amount)*dk.HealingTakenPctMultiplier()), metrics)
+}
+
 // givesXPOrHonor is Player::isHonorOrXPTarget, which 63611's proc asks for (PROC_ATTR_REQ_EXP_OR_HONOR): the
-// victim has to be above the gray level, 9 under a level 60+ player's own.
+// victim has to be above the gray level, 9 under a level 60+ player's own, and not NO_XP.
 func (dk *Deathknight) givesXPOrHonor(target *core.Unit) bool {
-	return target.Level > dk.Level-9
+	return target.Level > dk.Level-9 && !target.NoXP
 }
 
 // onUseItemDamage are the items whose use spell deals the damage itself. Player::CastItemUseSpell casts an

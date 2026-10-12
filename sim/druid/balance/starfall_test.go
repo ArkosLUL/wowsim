@@ -19,9 +19,14 @@ type omenFight struct {
 
 func runOmenFight(t *testing.T, castID, hitID int32) omenFight {
 	t.Helper()
-	const iterations = 400
 	encounter := core.MakeSingleTargetEncounter(0)
 	encounter.Duration = 12
+	return runOmenFightOn(t, encounter, castID, hitID)
+}
+
+func runOmenFightOn(t *testing.T, encounter *proto.Encounter, castID, hitID int32) omenFight {
+	t.Helper()
+	const iterations = 400
 	res := core.RunRaidSim(&proto.RaidSimRequest{
 		Raid: core.SinglePlayerRaidProto(&proto.Player{
 			Race:     proto.Race_RaceTauren,
@@ -98,4 +103,15 @@ func TestHurricaneCastAndTicksRollOmen(t *testing.T) {
 		t.Fatalf("%d Hurricanes, %d ticks, %d missed", fight.casts, fight.hits, fight.hitMisses)
 	}
 	checkOmenRolls(t, fight)
+}
+
+// The server's dummy spell casts two stars a tick on random units in sight, 20 over the 10 s.
+func TestStarfallCastsTwoStarsATickOnManyTargets(t *testing.T) {
+	encounter := core.MakeSingleTargetEncounter(0)
+	encounter.Duration = 12
+	encounter.Targets = append(encounter.Targets, core.NewDefaultTarget(), core.NewDefaultTarget())
+	fight := runOmenFightOn(t, encounter, 53201, 53195)
+	if fight.casts == 0 || fight.hits != 20*fight.casts {
+		t.Errorf("%d stars from %d Starfalls, want 20 each", fight.hits, fight.casts)
+	}
 }
