@@ -134,6 +134,20 @@ Shadowcrawl). Per record (`pets.go`), on the pet built as for strikes:
   before block and resists (weapon pinned to each end, within 5 standard errors + 2), and the resisted share.
 - `timing`: cast speed, cast time, cost, GCD. A creature's record has no cooldown.
 
+`TestPetsCastsRecords` replays `pets_casts.jsonl` (`pets_casts.go`): the `PETFIX_CASTS` lines of
+`TestPetfixFireElementalCasts` and the `PETFIX_IMAGES` lines of `TestPetfixMirrorImageCasts`, cut from the run's log
+with `grep -o 'PETFIX_CASTS {.*'` and `'PETFIX_IMAGES {.*'`, the prefix dropped. Times are packet arrivals, so every
+bound has 250 ms of jitter, a 110 ms update and 3% of drift on it (`petsCastsSlack`).
+- Elemental lives against 600 of the sim's: landed Novas, Blasts and swings a life within 5 standard errors of the
+  recorded mean; the first Blast, Blast gaps and landed Nova gaps inside the sim's span; each landed Nova the sim's
+  cast time after a start, each broken one on a Blast, each swing one attack time after the swing or cast before it.
+- Each image against the sim's images summoned with the record's lead and opener: Frostbolts and Fire Blasts cast
+  for cast, timed from the pull (from the summon into a fight). A cast within 0.5 s of the image's death may be
+  missing on either side, named in the check's detail: it rides on the update period. Three images a summon.
+- Fire Blast openers among the images ahead of the pull against CasterAI's even pick.
+
+`TestPetsCastsReplayCatchesAWrongRecord` moves one recorded thing a case.
+
 ## Timing probe
 
 `TestTimingRecords` replays `sim/core/testdata/simval/timing.jsonl`, a capture of mod-sim-validation's

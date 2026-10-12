@@ -24,6 +24,10 @@ records, which `TestStrikesRecords` replays ([tools/simval](../../../../tools/si
 Elemental, Mirror Image, Imp, Water Elemental, Shadowfiend), which `TestPetsRecords` replays
 ([tools/simval](../../../../tools/simval/README.md#damage-probe)).
 
+`pets_casts.jsonl` holds 12 Greater Fire Elemental lives (`TestPetfixFireElementalCasts`' `PETFIX_CASTS` lines) and
+15 Mirror Image summons (`TestPetfixMirrorImageCasts`' `PETFIX_IMAGES` lines: 6 into a fight, 6 ahead of the pull by
+3 s and 3 by 2 s), which `TestPetsCastsRecords` replays ([tools/simval](../../../../tools/simval/README.md#damage-probe)).
+
 `buffs.jsonl` holds `TestSimvalBuffs`' `BUFFS` lines, which `TestBuffRecords` replays
 ([tools/simval](../../../../tools/simval/README.md#buffs)). A disagreeing state or check goes in `droppedBuffs`
 (`tools/simval/buffs_test.go`) with a row here; its line stays. `buffs_pairs.json` lists the pairs both read.

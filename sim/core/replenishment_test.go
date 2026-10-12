@@ -684,6 +684,32 @@ func TestReplenishmentCountsAnEmptyManaPool(t *testing.T) {
 	}
 }
 
+// A summon whose pool is always full ranks at 100%: it takes the place of a unit that ties with it further
+// down the raid, and nobody lower.
+func TestReplenishmentCountsAFullManaPool(t *testing.T) {
+	var late *timingTestPet
+	sim, a, src, pets := newReplenishmentRaidTestSim(t, 8, func(a *timingTestAgent, newPet func(string, bool) *timingTestPet) {
+		newPet("Treant", true).FullManaPool = true
+		late = newPet("Late", true)
+		late.EnableManaBarWithModifier(1)
+	})
+	late.currentMana = late.MaxMana()
+	units := []*Unit{&a.Unit, &late.Unit}
+	for _, pet := range pets {
+		units = append(units, &pet.Unit)
+	}
+
+	replenishmentProc(sim, src, ms(500))
+	runUntil(sim, ms(600))
+	want := []string{a.Label}
+	for _, pet := range pets {
+		want = append(want, pet.Label)
+	}
+	if got := replenishmentUp(units...); !slices.Equal(got, want) {
+		t.Errorf("with a full pool ahead of a full unit the cast landed on %v, want %v", got, want)
+	}
+}
+
 // The raid's buff only goes on a unit with mana.
 func TestReplenishmentFromTheRaidNeedsMana(t *testing.T) {
 	for _, mana := range []bool{true, false} {

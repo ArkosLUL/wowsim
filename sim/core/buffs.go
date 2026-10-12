@@ -319,7 +319,7 @@ func applyPetBuffEffects(petAgent PetAgent, raidBuffs *proto.RaidBuffs, partyBuf
 	// We need to modify the buffs a bit because some things are applied to pets by
 	// the owner during combat (Bloodlust) or don't make sense for a pet.
 	raidBuffs.Bloodlust = false
-	raidBuffs.WrathOfAirTotem = false
+	raidBuffs.WrathOfAirTotem = raidBuffs.WrathOfAirTotem && petAgent.GetPet().TakesWrathOfAir
 
 	// The carrier aura makes the pet immune to positive MELEE_SLOW, so Improved Moonkin Form and
 	// Swift Retribution (both aura 193) reach it through the owner's swing speed, not twice. Plain

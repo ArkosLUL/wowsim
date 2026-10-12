@@ -152,6 +152,40 @@ func TestFireElementalTakesNoRaidCast(t *testing.T) {
 	}
 }
 
+// Wrath of Air's 2895 is a raid area aura, which takes a guardian like anyone else in the raid
+// (AnyGroupedUnitInObjectRangeCheck), and Fire Nova is a magic spell, so the elemental's cast speed cuts its
+// 2 s (Unit::ModSpellCastTime): int32(2000 * 100 / 105) is 1904 ms.
+func TestFireNovaUnderWrathOfAir(t *testing.T) {
+	for _, tc := range []struct {
+		wrathOfAir bool
+		want       time.Duration
+	}{
+		{false, 2000 * time.Millisecond},
+		{true, 1904 * time.Millisecond},
+	} {
+		sim := core.NewSim(&proto.RaidSimRequest{
+			Raid: core.SinglePlayerRaidProto(&proto.Player{
+				Race:      proto.Race_RaceTroll,
+				Class:     proto.Class_ClassShaman,
+				Equipment: &proto.EquipmentSpec{},
+				Consumes:  &proto.Consumes{},
+				Spec: &proto.Player_ElementalShaman{ElementalShaman: &proto.ElementalShaman{
+					Options: &proto.ElementalShaman_Options{Totems: &proto.ShamanTotems{UseFireElemental: true}},
+				}},
+				Rotation: core.APLRotationFromJsonString(`{"type": "TypeAPL", "priorityList": []}`),
+			}, &proto.PartyBuffs{}, &proto.RaidBuffs{WrathOfAirTotem: tc.wrathOfAir}, &proto.Debuffs{}),
+			Encounter:  core.MakeSingleTargetEncounter(0),
+			SimOptions: &proto.SimOptions{Iterations: 1, IsTest: true, RandomSeed: 101},
+		})
+		sim.Reset()
+		elemental := sim.Raid.Parties[0].Players[0].(*ElementalShaman).FireElemental
+		elemental.Enable(sim, elemental)
+		if got := elemental.FireNova.CastTime(); got != tc.want {
+			t.Errorf("Wrath of Air %v: Fire Nova takes %v, want %v", tc.wrathOfAir, got, tc.want)
+		}
+	}
+}
+
 // npc_pet_shaman_fire_elemental casts off two event timers and nothing else: its first Fire Nova and Fire
 // Blast 5 to 20 s in, then a Nova every 8 to 15 s and a Blast every 4 to 8 s. A Blast breaks a Nova still
 // being cast, about three in ten of them. Over its 2 min that leaves about 6.6 Novas and 18.3 Blasts, and

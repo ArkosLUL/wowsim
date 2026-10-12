@@ -5,6 +5,7 @@ import (
 
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
+	"github.com/wowsims/wotlk/sim/core/stats"
 )
 
 // The gargoyle (SummonProperties 209), the army's ghouls (687) and Raise Dead's guardian (829) have
@@ -53,5 +54,18 @@ func TestDeathKnightGuardiansHaveNoPetBar(t *testing.T) {
 		if dk.Gargoyle != nil && !dk.Gargoyle.Uncontrollable {
 			t.Errorf("%s: the gargoyle has a pet bar", tc.name)
 		}
+	}
+}
+
+// Guardian::UpdateMaxHealth gives a Bloodworm 1 a point of stamina over its create value, on the
+// 437 that level 80's 5342 at the template's 0.0819 comes to.
+func TestBloodwormHealthTakesOneAPointOfStamina(t *testing.T) {
+	blood := parityEnv(t, parityPlayer(BloodTalents, "p3_blood", noRotation), nil)
+	worm := blood.Bloodworm[0].Pet
+	if got, want := worm.MaxHealth(), 437.0; got != want {
+		t.Errorf("a Bloodworm has %v health, want %v", got, want)
+	}
+	if got := worm.ApplyStatDependencies(stats.Stats{stats.Stamina: 100})[stats.Health]; got != 100 {
+		t.Errorf("100 stamina gives a Bloodworm %v health, want 100", got)
 	}
 }

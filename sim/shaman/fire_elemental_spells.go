@@ -42,7 +42,6 @@ func (fireElemental *FireElemental) registerFireNova() {
 			DefaultCast: core.Cast{
 				CastTime: time.Second * 2,
 			},
-			IgnoreHaste: true,
 		},
 
 		DamageMultiplier: 1,

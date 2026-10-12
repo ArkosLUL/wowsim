@@ -363,6 +363,31 @@ func TestPetSummonsAtFullHealth(t *testing.T) {
 	}
 }
 
+// A permanent pet dismissed and summoned again is a new creature: it takes what the owner hands over
+// once, not on top of what the last summon left.
+func TestPermanentPetSummonedAgainTakesItsInheritedStatsOnce(t *testing.T) {
+	var pet *timingTestPet
+	timingTestConstruct = func(a *timingTestAgent) {
+		pet = &timingTestPet{Pet: NewPet("Pet", &a.Character, stats.Stats{},
+			func(stats.Stats) stats.Stats { return stats.Stats{stats.AttackPower: 500} }, true, false)}
+		a.AddPet(pet)
+	}
+	sim, _ := newTimingTestSim(t, 0, nil)
+	timingTestConstruct = nil
+	sim.PrePull()
+	runUntil(sim, ms(100))
+
+	first := pet.GetStat(stats.AttackPower)
+	if first < 500 {
+		t.Fatalf("attack power %v, want the inherited 500 in it", first)
+	}
+	pet.Disable(sim)
+	pet.Enable(sim, pet)
+	if got := pet.GetStat(stats.AttackPower); got != first {
+		t.Errorf("attack power %v after a second summon, want %v", got, first)
+	}
+}
+
 // both scaling ticks without their shortcuts
 func refRefreshScaling(pet *Pet, sim *Simulation) {
 	scaling := pet.statInheritance(pet.Owner.GetStats())
