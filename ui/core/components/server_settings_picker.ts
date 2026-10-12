@@ -174,7 +174,7 @@ function withSpellTweak<K extends keyof SpellTweaksSettings>(settings: ServerSet
 	return next;
 }
 
-type IntervalField = 'mapUpdateIntervalMs' | 'worldUpdateIntervalMs';
+type IntervalField = 'mapUpdateIntervalMs' | 'worldUpdateIntervalMs' | 'worldLoopMs';
 
 function intervalMs(settings: ServerSettings, field: IntervalField): number {
 	return settings[field] ?? LIVE_SERVER_DEFAULTS[field] ?? 0;
@@ -304,6 +304,21 @@ export class ServerSettingsPicker extends Component {
 			getValue: encounter => intervalMs(encounter.getServerSettings(), 'worldUpdateIntervalMs'),
 			setValue: (eventID: EventID, encounter: Encounter, newValue: number) =>
 				encounter.setServerSettings(eventID, withIntervalMs(encounter.getServerSettings(), 'worldUpdateIntervalMs', newValue)),
+		});
+
+		new NumberPicker<Encounter>(this.rootElem, encounter, {
+			label: 'World loop time (ms)',
+			labelTooltip:
+				'How long the host really takes for one world tick. The world update interval is only its floor: the ' +
+				'loop sleeps the rest of it and wakes late, so a map update (ten ticks) falls about 102.7 ms apart, not ' +
+				'100. A value below the world update interval counts as that interval.',
+			inline: true,
+			float: true,
+			positive: true,
+			changedEvent: encounter => encounter.serverSettingsChangeEmitter,
+			getValue: encounter => intervalMs(encounter.getServerSettings(), 'worldLoopMs'),
+			setValue: (eventID: EventID, encounter: Encounter, newValue: number) =>
+				encounter.setServerSettings(eventID, withIntervalMs(encounter.getServerSettings(), 'worldLoopMs', newValue)),
 		});
 
 		new EnumPicker<Encounter>(this.rootElem, encounter, {

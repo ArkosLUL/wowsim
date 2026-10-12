@@ -46,6 +46,14 @@ type PeriodicActionOptions struct {
 	// wait for Period.
 	TickImmediately bool
 
+	// Owner makes the action one of that unit's periodic aura ticks (Aura::Update): it falls on the
+	// first update of the unit's after each period, with the remainder carried, comes ahead of that
+	// update's expiries if the unit is a player, and an aura it puts on counts from that update.
+	Owner *Unit
+
+	// FirstTickAt is when an Owner action ticks first, instead of a period from now.
+	FirstTickAt time.Duration
+
 	Priority ActionPriority
 
 	OnAction func(*Simulation)
@@ -65,13 +73,39 @@ func NewPeriodicAction(sim *Simulation, options PeriodicActionOptions) *PendingA
 
 	tickIndex := 0
 
+	// an owner's ticks snap to its updates, the remainder carried like Aura::Update's periodic timer
+	owner := options.Owner
+	nominal := pa.NextActionAt
+	if owner != nil {
+		if options.FirstTickAt != 0 {
+			nominal = options.FirstTickAt
+		}
+		pa.NextActionAt = sim.nextUpdate(owner, nominal)
+		if owner.Type == PlayerUnit {
+			pa.playerEvent = true
+			pa.Priority = ActionPriorityEvent
+		}
+	}
+
 	pa.OnAction = func(sim *Simulation) {
-		options.OnAction(sim)
+		if owner != nil {
+			outer := sim.updating
+			sim.updating = owner
+			options.OnAction(sim)
+			sim.updating = outer
+		} else {
+			options.OnAction(sim)
+		}
 		tickIndex++
 
 		if options.NumTicks == 0 || tickIndex < options.NumTicks {
 			// Refresh action.
-			pa.NextActionAt = sim.CurrentTime + options.Period
+			if owner != nil {
+				nominal += options.Period
+				pa.NextActionAt = sim.nextUpdate(owner, nominal)
+			} else {
+				pa.NextActionAt = sim.CurrentTime + options.Period
+			}
 			sim.AddPendingAction(pa)
 		} else {
 			pa.Cancel(sim)

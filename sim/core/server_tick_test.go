@@ -89,6 +89,7 @@ func newTickTestSim(t *testing.T, mapUpdateMs, worldTickMs int32, setup func(*ti
 			ServerSettings: &proto.ServerSettings{
 				MapUpdateIntervalMs:   googleProto.Int32(mapUpdateMs),
 				WorldUpdateIntervalMs: googleProto.Int32(worldTickMs),
+				WorldLoopMs:           googleProto.Float64(0),
 			},
 		},
 	})
@@ -177,6 +178,7 @@ func TestUpdateGrids(t *testing.T) {
 		world, mapUpdate := NewServerSettings(&proto.ServerSettings{
 			MapUpdateIntervalMs:   googleProto.Int32(tc.mapMs),
 			WorldUpdateIntervalMs: googleProto.Int32(tc.worldMs),
+			WorldLoopMs:           googleProto.Float64(0),
 		}).updateGrids()
 		if world != tc.wantWorld || mapUpdate != tc.wantMapUpd {
 			t.Errorf("map %d ms, world %d ms: world tick %v, map update %v; want %v, %v",

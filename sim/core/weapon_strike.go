@@ -46,7 +46,23 @@ func (spell *Spell) StrikeDamage(sim *Simulation, weapon *Weapon, hand Hand, spe
 		return math.NaN()
 	}
 	spell.wholeStrike = true
-	pct := float32(spell.strikeTotalPct(hand))
+	return weapon.wholeRoll(sim, speed, attackPower, flat, float32(spell.strikeTotalPct(hand)))
+}
+
+// WholeDamage is a weapon roll with no percent inside, for a hit whose multipliers come after it (the rune
+// weapon's copies, a copy of a normalized strike).
+func (weapon *Weapon) WholeDamage(sim *Simulation, speed float64, attackPower float64, flat float64) float64 {
+	return weapon.wholeRoll(sim, speed, attackPower, flat, 1)
+}
+
+// WholeBaseDamage is irand(int32(min), int32(max)) of the bare weapon, for a spell script that adds its own
+// weapon roll (Steady Shot).
+func (weapon *Weapon) WholeBaseDamage(sim *Simulation) float64 {
+	low, high := math.Trunc(weapon.BaseDamageMin), math.Trunc(weapon.BaseDamageMax)
+	return low + math.Trunc((high-low+1)*sim.UnitRandomFloat(weapon.unit, "Weapon Base Damage"))
+}
+
+func (weapon *Weapon) wholeRoll(sim *Simulation, speed float64, attackPower float64, flat float64, pct float32) float64 {
 	// float32 steps, as the server takes them
 	added := float32(float32(attackPower)/float32(weapon.AttackPowerPerDPS)*float32(speed)) + float32(flat)
 	lo := max(float32((float32(weapon.BaseDamageMin)+added)*pct), 0)

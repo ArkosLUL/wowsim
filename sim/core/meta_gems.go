@@ -97,6 +97,114 @@ type metaGemSwap struct {
 	critWithout, critWith map[float64]float64
 	// which of the two the character's spells and weapons hold, and which they were built with
 	critOn, critBuiltOn bool
+	// spells with a factor an effect holds on their crit multiplier (ScaleCrit)
+	scaled map[*Spell]*critScale
+}
+
+// critScale is a spell's crit multiplier before the effects that scale it in place, and what they scale it
+// by in the state it was built in and in the other.
+type critScale struct {
+	base, built, other float64
+	n                  int
+}
+
+func (ms *metaGemSwap) factor(s *critScale) float64 {
+	if ms.critOn == ms.critBuiltOn {
+		return s.built
+	}
+	return s.other
+}
+
+// built to now and back, through the tables of a multiplier worked out when the character was built
+func (ms *metaGemSwap) builtTable() map[float64]float64 {
+	if ms.critBuiltOn {
+		return ms.critWithout
+	}
+	return ms.critWith
+}
+
+func (ms *metaGemSwap) nowTable() map[float64]float64 {
+	if ms.critBuiltOn {
+		return ms.critWith
+	}
+	return ms.critWithout
+}
+
+// MetaCritOther is the multiplier a character built with this one has in the other state of its meta gem,
+// for an effect that works out its own values ahead of time. It's the same one without an item swap.
+func (character *Character) MetaCritOther(built float64) float64 {
+	if ms := character.metaSwap; ms != nil {
+		if to, ok := ms.builtTable()[built]; ok && !math.IsNaN(to) {
+			return to
+		}
+	}
+	return built
+}
+
+// MetaCritFollow is a multiplier worked out ahead of time, with the meta gem in the state the character was
+// built in, as it is now.
+func (character *Character) MetaCritFollow(built float64) float64 {
+	if ms := character.metaSwap; ms != nil && ms.critOn != ms.critBuiltOn {
+		return character.MetaCritOther(built)
+	}
+	return built
+}
+
+// MetaCritBuilt is MetaCritFollow's inverse: a multiplier a spell holds now, as it was worked out ahead of time.
+func (character *Character) MetaCritBuilt(now float64) float64 {
+	if ms := character.metaSwap; ms != nil && ms.critOn != ms.critBuiltOn {
+		if to, ok := ms.nowTable()[now]; ok && !math.IsNaN(to) {
+			return to
+		}
+	}
+	return now
+}
+
+// ScaleCrit multiplies the spell's crit multiplier in place, or divides it again, for an effect that holds
+// a factor on it (Combustion, Storm Power). built and other are the factor in the state the character was
+// built in and in the other state of its meta gem: a swap while the effect is up moves the multiplier under
+// the factor and keeps the factor for the new state.
+func (character *Character) ScaleCrit(spell *Spell, built, other float64, apply bool) {
+	ms := character.metaSwap
+	if ms == nil {
+		if apply {
+			spell.CritMultiplier *= built
+		} else {
+			spell.CritMultiplier /= built
+		}
+		return
+	}
+	s := ms.scaled[spell]
+	if apply {
+		if s == nil {
+			if ms.scaled == nil {
+				ms.scaled = map[*Spell]*critScale{}
+			}
+			s = &critScale{base: spell.CritMultiplier, built: 1, other: 1}
+			ms.scaled[spell] = s
+		}
+		s.built *= built
+		s.other *= other
+		s.n++
+		if ms.critOn == ms.critBuiltOn {
+			spell.CritMultiplier *= built
+		} else {
+			spell.CritMultiplier *= other
+		}
+		return
+	}
+	if s == nil {
+		spell.CritMultiplier /= built
+		return
+	}
+	s.built /= built
+	s.other /= other
+	if s.n--; s.n <= 0 {
+		spell.CritMultiplier = s.base
+		delete(ms.scaled, spell)
+		return
+	}
+	spell.CritMultiplier = s.base * ms.factor(s)
 }
 
 // initMetaGemSwap sets the character up for a meta gem that goes on or off with the item swap.
@@ -210,10 +318,18 @@ func (character *Character) setMetaGemCrit(on bool) {
 	}
 	// a heal's multiplier can equal a damage spell's, and each gem's bonus is on only one of the two
 	healing := slices.Contains(healingCritMetaGem, character.Equipment.metaGem().ID)
+	// the effects that scale a multiplier move its base, then put their factor back
+	for spell, s := range ms.scaled {
+		spell.CritMultiplier = s.base
+	}
 	for _, spell := range character.Spellbook {
 		if spell.Flags.Matches(SpellFlagHelpful) == healing {
 			move(&spell.CritMultiplier)
 		}
+	}
+	for spell, s := range ms.scaled {
+		s.base = spell.CritMultiplier
+		spell.CritMultiplier *= ms.factor(s)
 	}
 	if healing {
 		return
@@ -231,6 +347,7 @@ func (character *Character) setMetaGemCrit(on bool) {
 // resetMetaGemCrit runs ahead of a reset, which puts the spells back at what they were built with.
 func (character *Character) resetMetaGemCrit() {
 	if ms := character.metaSwap; ms != nil {
+		clear(ms.scaled)
 		character.setMetaGemCrit(ms.critBuiltOn)
 	}
 }

@@ -1,7 +1,6 @@
 package rogue
 
 import (
-	"math"
 	"time"
 
 	"github.com/wowsims/wotlk/sim/core"
@@ -68,10 +67,10 @@ func (rogue *Rogue) registerEnvenom() {
 
 			dp := rogue.DeadlyPoison.Dot(target)
 			// Spell::EffectSchoolDMG: the effect's value per consumed dose (<= comboPoints), plus 9% AP per
-			// combo point in whole points, whatever the doses
+			// combo point, int32(ap × combo × 0.09f), whatever the doses
 			consumed := min(dp.GetStacks(), comboPoints)
 			baseDamage := spell.Direct.Roll(sim)*float64(consumed) +
-				math.Floor(0.09*float64(comboPoints)*spell.MeleeAttackPower())
+				core.PowerBonus(0.09, float64(float32(comboPoints)*float32(spell.MeleeAttackPower())))
 
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 

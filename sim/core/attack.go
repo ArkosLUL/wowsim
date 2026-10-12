@@ -249,6 +249,9 @@ type WeaponAttack struct {
 	// ran out mid-cast and waits for the cast to land, see castHold
 	held bool
 
+	// a cast just landed on the swing it held, which goes after the aura pass of that tick
+	releasing bool
+
 	// the timer stands still for a channel (SuspendRangedTimer, suspendMelee), with suspendedLeft to go
 	// once it runs again. Parked while timerAt is NeverExpires.
 	suspended     bool
@@ -267,12 +270,14 @@ func (wa *WeaponAttack) setTimer(sim *Simulation, timerAt time.Duration) {
 	wa.timerAt = timerAt
 	wa.swingAt = sim.nextUpdate(wa.unit, timerAt)
 	wa.held = false
+	wa.releasing = false
 }
 
 func (wa *WeaponAttack) stopTimer() {
 	wa.timerAt = NeverExpires
 	wa.swingAt = NeverExpires
 	wa.held = false
+	wa.releasing = false
 	wa.suspended = false
 }
 
@@ -282,6 +287,7 @@ func (wa *WeaponAttack) park(from time.Duration) {
 	wa.timerAt = NeverExpires
 	wa.swingAt = NeverExpires
 	wa.held = false
+	wa.releasing = false
 }
 
 func (wa *WeaponAttack) setWeapon(weapon Weapon) {
@@ -300,6 +306,7 @@ func (wa *WeaponAttack) trySwing(sim *Simulation, releasingHold bool) time.Durat
 }
 
 func (wa *WeaponAttack) swing(sim *Simulation, releasingHold bool) time.Duration {
+	wa.releasing = false
 	// SetOffhandSwingAt can leave a swing between the unit's updates
 	if at := sim.nextUpdate(wa.unit, wa.swingAt); at > sim.CurrentTime {
 		wa.swingAt = at
@@ -820,15 +827,20 @@ func (aa *AutoAttacks) resumeMelee(sim *Simulation) {
 			continue
 		}
 		wa.setTimer(sim, sim.CurrentTime+wa.suspendedLeft)
-		if aa.enabled {
+		if aa.enabled && wa.unit.Type == PlayerUnit && wa.swingAt <= sim.CurrentTime {
+			// overdue: Player::Update swings it after this update's auras
+			wa.releasing = true
+			sim.rescheduleWeaponAttack(sim.CurrentTime)
+		} else if aa.enabled {
 			sim.rescheduleWeaponAttack(wa.trySwing(sim, true))
 		}
 	}
 }
 
-// releaseCastHold swings what a cast held, right as it lands and before anything cast after it. Ranged
-// goes first, as Unit::_UpdateSpells runs Auto Shot before Player::Update gets to melee. Passes
-// releasingHold through so a cast this triggers can't turn around and hold the same swing (see swing()).
+// releaseCastHold swings what a cast held, right as it lands and before anything cast after it. Auto
+// Shot goes first and at once, as Unit::_UpdateSpells fires it ahead of the unit's auras. Melee waits for
+// that tick's aura pass (Player::Update runs after), and passes releasingHold through so a cast this
+// triggers can't turn around and hold the same swing (see swing()).
 func (aa *AutoAttacks) releaseCastHold(sim *Simulation) {
 	for _, wa := range []*WeaponAttack{&aa.ranged, &aa.mh, &aa.oh} {
 		if !wa.held {
@@ -836,9 +848,15 @@ func (aa *AutoAttacks) releaseCastHold(sim *Simulation) {
 		}
 		// an earlier hand's swing can restart this one, which clears held
 		wa.held = false
-		if aa.enabled {
-			sim.rescheduleWeaponAttack(wa.trySwing(sim, true))
+		if !aa.enabled {
+			continue
 		}
+		if wa == &aa.ranged || wa.unit.Type != PlayerUnit {
+			sim.rescheduleWeaponAttack(wa.trySwing(sim, true))
+			continue
+		}
+		wa.releasing = true
+		sim.rescheduleWeaponAttack(sim.CurrentTime)
 	}
 }
 
@@ -998,4 +1016,9 @@ func (unit *Unit) applyParryHaste() {
 			sim.rescheduleWeaponAttack(mh.swingAt)
 		},
 	})
+}
+
+// isPlayerShot is whether this is a player's Auto Shot.
+func (wa *WeaponAttack) isPlayerShot() bool {
+	return wa.unit.Type == PlayerUnit && wa == &wa.unit.AutoAttacks.ranged
 }

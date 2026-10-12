@@ -7,6 +7,10 @@ import (
 type ActionPriority int32
 
 const (
+	// A player's cast landing or missile hit: pops ahead of any other action due then, as Unit::Update runs
+	// those first.
+	ActionPriorityEvent ActionPriority = 4
+
 	ActionPriorityLow ActionPriority = -1
 	ActionPriorityGCD ActionPriority = 0
 
@@ -32,6 +36,9 @@ type PendingAction struct {
 	OnAction func(sim *Simulation)
 	// Cleanup when the action is cancelled (optional).
 	CleanUp func(sim *Simulation)
+
+	// a player's landing, which goes ahead of the aura pass on its tick (Simulation.Step)
+	playerEvent bool
 
 	cancelled bool
 	consumed  bool

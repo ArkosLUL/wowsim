@@ -187,6 +187,41 @@ func TestItemSwapMovesTheMetaGemsCritDamageAndEffect(t *testing.T) {
 	}
 }
 
+// An effect that scales a crit multiplier in place (Combustion, Storm Power) keeps its factor across a swap, and
+// a multiplier worked out ahead of time follows the gem.
+func TestItemSwapKeepsAScaledCritMultiplier(t *testing.T) {
+	const with, without = 1 + (1.5*1.03 - 1), 1.5
+	for _, startsOn := range []bool{true, false} {
+		var spell *Spell
+		sim, a := metaSwapTestSim(t, startsOn, func(a *timingTestAgent) {
+			spell = a.RegisterSpell(SpellConfig{
+				ActionID:       ActionID{SpellID: testSpellNoServerData},
+				CritMultiplier: a.DefaultSpellCritMultiplier(),
+			})
+		})
+		base, swapped := with, without
+		if !startsOn {
+			base, swapped = without, with
+		}
+		builtFactor, otherFactor := 1.1, 1.2
+		a.ScaleCrit(spell, builtFactor, otherFactor, true)
+		if got, want := spell.CritMultiplier, base*builtFactor; got != want {
+			t.Errorf("starts on %v, scaled: crit multiplier %v, want %v", startsOn, got, want)
+		}
+		a.ItemSwap.SwapItems(sim, a.ItemSwap.slots)
+		if got, want := spell.CritMultiplier, swapped*otherFactor; got != want {
+			t.Errorf("starts on %v, swapped under the factor: crit multiplier %v, want %v", startsOn, got, want)
+		}
+		if got := a.MetaCritFollow(base); got != swapped {
+			t.Errorf("starts on %v, swapped: a multiplier built as %v follows to %v, want %v", startsOn, base, got, swapped)
+		}
+		a.ScaleCrit(spell, builtFactor, otherFactor, false)
+		if got := spell.CritMultiplier; got != swapped {
+			t.Errorf("starts on %v, unscaled: crit multiplier %v, want %v", startsOn, got, swapped)
+		}
+	}
+}
+
 // A swap that leaves the gem's condition alone leaves its effect to apply for good, as before.
 func TestItemSwapThatKeepsTheMetaGemSetsNothingUp(t *testing.T) {
 	character := &Character{}

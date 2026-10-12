@@ -287,12 +287,12 @@ func (ai *HodirAI) registerBuffsDebuffs(target *core.Target) {
 				Duration: 30 * time.Second,
 				OnGain: func(aura *core.Aura, sim *core.Simulation) {
 					for _, spell := range aura.Unit.Spellbook {
-						spell.CritMultiplier *= 2.35
+						character.ScaleCrit(spell, 2.35, 2.35, true)
 					}
 				},
 				OnExpire: func(aura *core.Aura, sim *core.Simulation) {
 					for _, spell := range aura.Unit.Spellbook {
-						spell.CritMultiplier /= 2.35
+						character.ScaleCrit(spell, 2.35, 2.35, false)
 					}
 				},
 			})

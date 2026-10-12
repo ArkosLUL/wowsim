@@ -36,6 +36,7 @@ export const LIVE_SERVER_DEFAULTS = ServerSettings.create({
 	},
 	reforge: { enable: true, percentage: 40, statTypes: [6, 13, 14, 31, 32, 36, 37] },
 	worldUpdateIntervalMs: 10,
+	worldLoopMs: 10.27,
 });
 
 // What mod-reforging's item_reforge.h lets Reforging.Percentage and Reforging.ReforgeableStats ask

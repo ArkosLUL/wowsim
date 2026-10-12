@@ -613,10 +613,13 @@ func (mage *Mage) registerCombustionCD() {
 		Duration: time.Minute * 2,
 	}
 
-	fireCombCritMult := mage.SpellCritMultiplier(1, mage.bonusCritDamage+.5) / mage.SpellCritMultiplier(1, mage.bonusCritDamage)
-
-	frostfireCombCritMult := mage.SpellCritMultiplier(1, mage.bonusCritDamage+float64(mage.Talents.IceShards)/3+.5) /
-		mage.SpellCritMultiplier(1, mage.bonusCritDamage+float64(mage.Talents.IceShards)/3)
+	// the factor in the state the mage was built in and with the other state of its meta gem
+	combCritMult := func(bonus float64) (float64, float64) {
+		with, without := mage.SpellCritMultiplier(1, bonus+.5), mage.SpellCritMultiplier(1, bonus)
+		return with / without, mage.MetaCritOther(with) / mage.MetaCritOther(without)
+	}
+	fireCombCritMult, fireCombCritOther := combCritMult(mage.bonusCritDamage)
+	frostfireCombCritMult, frostfireCombCritOther := combCritMult(mage.bonusCritDamage + float64(mage.Talents.IceShards)/3)
 
 	var fireSpells []*core.Spell
 	mage.OnSpellRegistered(func(spell *core.Spell) {
@@ -642,7 +645,11 @@ func (mage *Mage) registerCombustionCD() {
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
 			numCrits = 0
 			for _, spell := range fireSpells {
-				spell.CritMultiplier *= core.TernaryFloat64(spell != mage.FrostfireBolt, fireCombCritMult, frostfireCombCritMult)
+				if spell == mage.FrostfireBolt {
+					mage.ScaleCrit(spell, frostfireCombCritMult, frostfireCombCritOther, true)
+				} else {
+					mage.ScaleCrit(spell, fireCombCritMult, fireCombCritOther, true)
+				}
 			}
 			mage.mirrorImage.Fireblast.CritMultiplier *= imageCombCritMult()
 		},
@@ -650,7 +657,11 @@ func (mage *Mage) registerCombustionCD() {
 			cd.Use(sim)
 			mage.UpdateMajorCooldowns()
 			for _, spell := range fireSpells {
-				spell.CritMultiplier /= core.TernaryFloat64(spell != mage.FrostfireBolt, fireCombCritMult, frostfireCombCritMult)
+				if spell == mage.FrostfireBolt {
+					mage.ScaleCrit(spell, frostfireCombCritMult, frostfireCombCritOther, false)
+				} else {
+					mage.ScaleCrit(spell, fireCombCritMult, fireCombCritOther, false)
+				}
 			}
 			mage.mirrorImage.Fireblast.CritMultiplier /= imageCombCritMult()
 		},

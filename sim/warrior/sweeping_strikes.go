@@ -15,6 +15,7 @@ func (warrior *Warrior) registerSweepingStrikesCD() {
 	actionID := core.ActionID{SpellID: 12723}
 
 	var curDmg float64
+	var whirlwindLockedUntil time.Duration
 	ssHit := warrior.RegisterSpell(core.SpellConfig{
 		ActionID:    actionID,
 		SpellSchool: core.SpellSchoolPhysical,
@@ -35,6 +36,7 @@ func (warrior *Warrior) registerSweepingStrikesCD() {
 		Duration:  core.NeverExpires,
 		MaxStacks: 5,
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
+			whirlwindLockedUntil = 0
 			aura.SetStacks(sim, 5)
 		},
 		OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
@@ -42,18 +44,21 @@ func (warrior *Warrior) registerSweepingStrikesCD() {
 				return
 			}
 
-			if spell == warrior.Execute && !sim.IsExecutePhase20() {
-				curDmg = spell.Unit.MHNormalizedWeaponDamage(sim, spell.MeleeAttackPower()) +
-					spell.BonusWeaponDamage()
-			} else if spell == warrior.Whirlwind {
-				curDmg = spell.Unit.MHNormalizedWeaponDamage(sim, spell.MeleeAttackPower()) +
-					spell.BonusWeaponDamage()
-			} else {
-				curDmg = result.Damage
+			if spell == warrior.Whirlwind {
+				// only the first target of a Whirlwind gets a copy (0.5 s lockout)
+				if sim.CurrentTime < whirlwindLockedUntil {
+					return
+				}
+				whirlwindLockedUntil = sim.CurrentTime + time.Millisecond*500
 			}
 
-			// Undo armor reduction to get the raw damage value.
-			curDmg /= result.ResistanceMultiplier
+			if spell == warrior.Execute && !sim.IsExecutePhase20() {
+				weapon := spell.Unit.AutoAttacks.MH()
+				curDmg = weapon.WholeDamage(sim, weapon.NormalizedSwingSpeed, spell.MeleeAttackPower(), spell.BonusWeaponDamage())
+			} else {
+				// the hit's damage before armor, as the server's GetUnmitigatedDamage
+				curDmg = result.Damage + result.ArmorReduced
+			}
 
 			ssHit.Cast(sim, warrior.Env.NextTargetUnit(result.Target))
 			ssHit.SpellMetrics[result.Target.UnitIndex].Casts--

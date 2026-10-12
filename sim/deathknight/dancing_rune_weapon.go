@@ -125,7 +125,8 @@ func (runeWeapon *RuneWeaponPet) Initialize() {
 }
 
 func (dk *Deathknight) DrwWeaponDamage(sim *core.Simulation, spell *core.Spell) float64 {
-	return spell.Unit.MHWeaponDamage(sim, spell.MeleeAttackPower()) + spell.BonusWeaponDamage()
+	weapon := spell.Unit.AutoAttacks.MH()
+	return weapon.WholeDamage(sim, weapon.SwingSpeed, spell.MeleeAttackPower(), spell.BonusWeaponDamage())
 }
 
 // drwVersusAttackPowerBonus is the creature-type attack power on a rune weapon hit: Unit::MeleeDamageBonusDone
@@ -186,8 +187,7 @@ func (dk *Deathknight) NewRuneWeapon() *RuneWeaponPet {
 		AutoSwingMelee: true,
 	})
 	runeWeapon.AutoAttacks.MHConfig().ApplyEffects = func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-		baseDamage := spell.Unit.MHWeaponDamage(sim, spell.MeleeAttackPower()) + spell.BonusWeaponDamage() +
-			dk.drwVersusAttackPowerBonus(spell, false)
+		baseDamage := dk.DrwWeaponDamage(sim, spell) + dk.drwVersusAttackPowerBonus(spell, false)
 		spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeWhite)
 	}
 

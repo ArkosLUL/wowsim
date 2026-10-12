@@ -143,6 +143,9 @@ type Spell struct {
 	TotalPctMultiplier float64
 	// its hits are whole strikes: StrikeDamage rolled the base with the hand's TOTAL_PCT inside
 	wholeStrike bool
+	// units an area effect hits, set by the cast: past 10 the server cuts each hit to damage × 10 / units
+	// in whole numbers, after the done and taken percents (Spell::DoAllEffectOnLaunchTarget)
+	AoECapUnits int
 
 	// the spell's threat mods (SPELLMOD_THREAT), on its damage and healing threat; 0 means no threat at all
 	ThreatMultiplier float64

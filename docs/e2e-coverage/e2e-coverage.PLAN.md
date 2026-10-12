@@ -3023,6 +3023,81 @@ siblings, which the tests and `tools/apldbg/presets.go` share. The copies and `T
   inline lines in class code; their drops and rows.
 - **Goldens:** all 37; report each.
 
+#### As built
+
+Timing stage, on `c244f8ee9` against [ac] `3d89793c7`, offline (notes `tmp/ec-core-fix5-timing.md`). Verdicts:
+- Update order (fixed): a player's cast landing and missile hit (`ActionPriorityEvent`, `PendingAction.playerEvent`)
+  go ahead of its aura pass on a tick they tie, then its Auto Shot; a melee swing a cast held or `resumeMelee` frees
+  goes after the pass (`WeaponAttack.releasing`). A player's hardcast always queues its own landing now, apart from
+  the GCD action. Creatures' landings keep their place.
+- Map update period (fixed): `ServerSettings.world_loop_ms` (field 6), the host's real tick, never under
+  `world_update_interval_ms`. Default 10.27 ms, a constant in `gen_server_defaults`: ten ticks are the 102.7 ms of
+  the creature swings (20 updates, 2055 ms) and Ignite's ticks, and it comes from the host's sleep granularity, not
+  a config key. A map update stays ten world ticks, so it still falls on a tick. UI: "World loop time".
+- Periodic action owner (fixed): `PeriodicActionOptions.Owner` and `FirstTickAt` make it one of the unit's periodic
+  ticks (own update, remainder carried, ahead of the player's expiries, auras it puts on count from it). Prey on the
+  Weak uses it and loses `upUntil`.
+- Execute phases (fixed for time-based ones): `Step` stops at their time. Damage-based ones still start at the first
+  clock stop after the damage.
+- Channel tick (fixed): a player's channel or self hot ticks ahead of the creatures' expiries on a shared update.
+- Pet that's away (heals fixed, `pet.go` not touched): Circle of Healing and Prayer of Healing skip disabled units.
+- Found: with a non-10 ms tick, `Dot.UpdateExpires` callers that add a whole 2 or 3 s to a snapped expiry left it
+  off the grid and ahead of the last tick (Rip lost about a tick a cast); Rip, Moonfire, Scourge Strike and the
+  Pestilence refresh snap with `NextServerTick`, as Rupture does.
+- `tools/simval/fight.go`'s per-update event stays: it samples refreshes, metrics-only damage and silent misses once
+  an update (taking it out fails checks). Its comment no longer says auras run out on it.
+- Drop: PaladinRetribution `energize 57669 mana amount` (log 1128, sim 1087; 1123 on 10 ms ticks). The log stamps an
+  application about 47 ms after its first tick's clock and the bot refreshes 8.976 s after the last stamp, so the
+  sim's refresh lands before the ninth tick; 9 s is a whole number of 10 ms ticks, which hid it. Needs the casts read
+  off the log's tick stamps.
+
+Tests: `update_order_test.go` (+4), Arcane Blast buff, Mirror Image, Fire Elemental (swings 40.1 to 38.65 a life),
+Frost Shock snare and Nature's Grace moved with the period. `simval.jsonl` 1114/1114.
+
+Goldens (`dock.sh delta`), all 37 move. The order change alone moves 24, Average-Default within ±0.075% but TestHoly
+hps −5.3% (heals on pets that are away: Circle of Healing hits 75.8 to 50.5). With the period:
+- TestFire −3.7% and TestFrostFire −3.3%: Ignite −13.8% and −11.9% a tick. An application due 2.0 s after the last
+  beats the old tick about half the time (live 14 in 91), which drops the double count of the tick-first order
+  (`procIgnite` reads the old tick as owed, then it pays). The MageFire replay passes (ticks log 22, sim 22.8).
+- Boss swings −2.7%: BloodTank dtps −2.6%, FeralTank −5.3%, Protection (paladin) −6.2%, ProtectionWarrior −2.8%.
+- TestUnholy −0.48%, TestFury −0.69%, TestBM −0.92%, TestDisc −0.77%: reshuffles and pet swings, not traced further.
+- The other suites within ±0.4%; rows over 5% are small bases.
+
+Amounts stage (notes `tmp/ec-core-fix5-amounts.md`), on top of the timing stage. Verdicts:
+- White swings: whole already (`Spell.StrikeDamage`). The rune weapon's strikes and swing roll whole now
+  (`Weapon.WholeDamage`; its multipliers still follow the roll).
+- Manifest Anger (fixed): 50% of a whole weapon roll (`ApplyPct` of `MHStrikeDamage`/`OHStrikeDamage`), not a float
+  roll under a halved `DamageMultiplier`.
+- Steady Shot (fixed): `irand(int32(min), int32(max))` of the ranged weapon plus `int32(ammo dps × speed ms ×
+  0.001f)`.
+- Eviscerate, Envenom (fixed): the AP share is `int32(ap × combo × 0.07f)` (Envenom 0.09f) in float32.
+- AoE cap (fixed for Swipe and Fan of Knives): `Spell.AoECapUnits`; past 10 units the hit is cut to `damage × 10 /
+  units` in ints, after the done and taken percents, before armor and crit. No effect up to 10 targets.
+- Multi-Shot: already one weapon roll for all hits. Not changed.
+- Sweeping Strikes (fixed): the Execute copy is a whole normalized roll; every other copy is the hit's damage before
+  armor (`SpellResult.ArmorReduced` is the server's cleanDamage); Whirlwind copies only its first hit (0.5 s lockout)
+  and copies that hit, not a fresh roll.
+- Chimera Shot - Serpent (fixed): flat damage taken (Gift of Arthas) at the sting's dot coefficient joins the tick
+  before the taken percents (`Spell.PeriodicFlatDamageTaken`).
+- `HealingPower` (confirmed, not fixed): the server adds flat healing taken as its own int after the caster's
+  multiplier; the sim folds it into spell power ahead of the coefficient. Only `BonusHealingTaken` gear (Talisman of
+  Troll Divinity) is off, by the caster's done percent on that share; the fix is a hook after the done percent
+  (11 priest lines, `shaman/talents.go`).
+- Meta gems (fixed): `Character.ScaleCrit` keeps the factor of an effect that scales a multiplier in place (Combustion,
+  Storm Power) across a swap; `MetaCritFollow`/`MetaCritBuilt` carry values worked out ahead of time (Predatory
+  Instincts, Prey on the Weak). `sim/common/tbc/metagems.go`'s six effects go on and off with the swap. No preset
+  swaps a gem, so no golden moves from it.
+- `spell_sha_t10_elemental_4p_bonus` (fixed): 6 s on the time left, the max duration (which caps the ticks) raised only
+  when the new time passes it (`Dot.AddRemaining`). The old extra ticks and the haste reschedule went. A Frost Witch
+  row of TestElemental −5.0%, nothing else.
+- `arcane_p3` beside `fury_p1`: not fixed. The gap is `sim/optimizer`'s derived context against the real raid, no
+  server mechanic, and that package is BIS-TANK-MAGIC's.
+- `tools/simval/fight.go` per-update event: kept, as the timing stage found.
+
+Goldens move little on top of the timing stage (still 37 of 37, Average-Default within 0.01%): TestBlood,
+TestBloodTank, TestBM, TestMM, TestSV rows ±0.01% (rune weapon, Steady Shot), TestCombat rows to 0.3% (Fan of Knives
+past 10 targets), TestArms rows to 0.75% (Sweeping Strikes on Whirlwind), TestElemental's Frost Witch row −5.0%.
+
 ### EC-PET-FIX4 (Z8; changes goldens; stages: code, live)
 
 - Replenishment: summons with a full mana pool the sim gives none (treants, Shadowfiend, Infernal) can take one

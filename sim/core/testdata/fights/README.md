@@ -70,8 +70,8 @@ Representation gaps, not mismatches, each with its reason in `tools/simval/fight
 ## Dropped checks
 
 Real sim or cycle mismatches, each a follow-up, in `droppedFightChecks` (`tools/simval/fight.go`); a check is named
-by its subject (`47809`, `melee`, `Bloodworm melee`, `aura 17800 on target`, `energize 57946 mana`) and name. None
-now.
+by its subject (`47809`, `melee`, `Bloodworm melee`, `aura 17800 on target`, `energize 57946 mana`) and name.
 
 | Setup | Subject | Check | Why |
 |---|---|---|---|
+| PaladinRetribution | energize 57669 mana | amount | log 94 ticks, sim 90.6 (90 to 92) on the 10.27 ms world tick. The log stamps each application about 47 ms later than its ticks (the first tick is 953 ms after it), and the bot refreshes 8.976 s after the last stamp, so the sim's refresh lands before the 9th tick the log has ahead of it. Exact 10 ms ticks hid it: 9 s is a whole number of them. Needs the cast times read off the log's ticks, not its stamps |

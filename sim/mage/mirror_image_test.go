@@ -134,8 +134,8 @@ func TestMirrorImageCastsOffItsEventTimers(t *testing.T) {
 			image.summon(sim)
 			for image.IsEnabled() && !sim.Step() {
 			}
-			if lived := sim.CurrentTime - summoned; lived <= 29400*time.Millisecond || lived > 29500*time.Millisecond {
-				t.Fatalf("%s, life %d: the images lasted %v, want 29.5 s less the wait for their first update", tc.name, life, lived)
+			if lived := sim.CurrentTime - summoned; lived <= 29397*time.Millisecond || lived > 29610*time.Millisecond {
+				t.Fatalf("%s, life %d: the images lasted %v, want 29.5 s within one update", tc.name, life, lived)
 			}
 
 			bolts := image.Frostbolt.SpellMetrics[target.UnitIndex].Casts
@@ -147,14 +147,14 @@ func TestMirrorImageCastsOffItsEventTimers(t *testing.T) {
 				t.Fatalf("%s, life %d: opened with Fire Blast %v in, want no opener", tc.name, life, at)
 			case blastFirst:
 				wantBlasts = 4
-				// its opener goes off as it attacks, 1.2 s in
-				if at <= 1100*time.Millisecond || at > 1200*time.Millisecond {
-					t.Fatalf("%s, life %d: opened with Fire Blast %v in, want 1.2 s less the wait", tc.name, life, at)
+				// its opener goes off as it attacks, 12 updates in
+				if at <= 1129*time.Millisecond || at > 1233*time.Millisecond {
+					t.Fatalf("%s, life %d: opened with Fire Blast %v in, want 12 updates less the wait", tc.name, life, at)
 				}
 			case !tc.opens:
 				// the update that ends the wait only picks the target, so its 3 s start on the next
-				if at <= 4200*time.Millisecond || at > 4300*time.Millisecond {
-					t.Fatalf("%s, life %d: the first Frostbolt landed %v in, want 4.3 s less the wait", tc.name, life, at)
+				if at <= 4313*time.Millisecond || at > 4417*time.Millisecond {
+					t.Fatalf("%s, life %d: the first Frostbolt landed %v in, want 43 updates less the wait", tc.name, life, at)
 				}
 			}
 			if bolts != 9 || blasts != wantBlasts {

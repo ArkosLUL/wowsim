@@ -51,7 +51,7 @@ func TestFrostShockMarksItsTargetSnared(t *testing.T) {
 	if len(snares) != 1 || !snares[0].IsActive() {
 		t.Fatalf("the add isn't marked snared after Frost Shock: %d snare auras", len(snares))
 	}
-	if left := snares[0].RemainingDuration(sim); left > 8*time.Second || left < 7900*time.Millisecond {
+	if left := snares[0].RemainingDuration(sim); left > 8*time.Second+11*time.Millisecond || left < 7900*time.Millisecond {
 		t.Errorf("the snare has %v left, want the shock's 8 s", left)
 	}
 }

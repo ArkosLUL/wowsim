@@ -15,7 +15,7 @@ func TestSwingProcDelaysTheNextMoveAtAnyWorldTick(t *testing.T) {
 	for _, worldTickMs := range []int32{10, 7} {
 		encounter := core.MakeSingleTargetEncounter(0)
 		encounter.Duration = 300
-		encounter.ServerSettings = &proto.ServerSettings{WorldUpdateIntervalMs: googleProto.Int32(worldTickMs)}
+		encounter.ServerSettings = &proto.ServerSettings{WorldUpdateIntervalMs: googleProto.Int32(worldTickMs), WorldLoopMs: googleProto.Float64(0)}
 
 		sim := core.NewSim(&proto.RaidSimRequest{
 			Raid: core.SinglePlayerRaidProto(&proto.Player{

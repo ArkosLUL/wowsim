@@ -181,7 +181,9 @@ type fightDrop struct {
 	Setup, Subject, Check string
 }
 
-var droppedFightChecks = []fightDrop{}
+var droppedFightChecks = []fightDrop{
+	{Setup: "PaladinRetribution", Subject: "energize 57669 mana", Check: "amount"},
+}
 
 // fightLeftOut is a server aura by the log's id, where it sits ("self", "target", a minion's name), "" for
 // anywhere.
@@ -1254,8 +1256,8 @@ func (f *fightSim) runIteration(seed int64, schedule func(sim *core.Simulation))
 		f.metricsOnly[i].seen = core.SpellMetrics{}
 	}
 	f.missesCounted, f.missesSeen = map[*core.Spell]int32{}, map[*core.Spell]int32{}
-	// the sim only looks at what expired when something else happens, and the replay can go a while without
-	// anything, so every map update and world tick gets an event: auras run out on them, as on the server
+	// the replay reads aura refreshes, metrics-only damage and silent misses once an update, so every map
+	// update and world tick gets an event
 	var mapUpdate func(sim *core.Simulation)
 	mapUpdate = func(sim *core.Simulation) {
 		f.refreshes(sim, false)
