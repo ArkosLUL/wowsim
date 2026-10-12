@@ -155,6 +155,10 @@ func (we *WaterElemental) registerWaterboltSpell() {
 		Direct: core.SpellEffect{Effect: 0, Min: 601, Max: 673, SP: 0.83},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+			// a timed elemental's last bolt can still be in the air when it's unsummoned
+			if we.MissileLost(sim, spell) {
+				return
+			}
 			baseDamage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP, spell.SpellPower())
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 			spell.DealDamageAfterTravel(sim, result)

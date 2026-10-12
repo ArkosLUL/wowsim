@@ -177,3 +177,148 @@ func TestMirrorImageCastsOffItsEventTimers(t *testing.T) {
 		}
 	}
 }
+
+// Wrath of Air's raid area aura reaches a mage's guardians, and their bolts are magic-class spells, so the
+// server cuts each cast to int32(ms * 100 / 105) (Unit::ModSpellCastTime): a Mirror Image's Frostbolt
+// from 3 s to 2857 ms, the Water Elemental's Waterbolt from 2.5 s to 2380 ms.
+func TestMageGuardiansCastFasterUnderWrathOfAir(t *testing.T) {
+	for _, tc := range []struct {
+		wrathOfAir      bool
+		frostbolt, bolt time.Duration
+	}{
+		{false, 3000 * time.Millisecond, 2500 * time.Millisecond},
+		{true, 2857 * time.Millisecond, 2380 * time.Millisecond},
+	} {
+		build := func(talents, gear string, spec *proto.Player_Mage) *Mage {
+			sim := core.NewSim(&proto.RaidSimRequest{
+				Raid: core.SinglePlayerRaidProto(procMage(talents, gear, `{"type": "TypeAPL", "priorityList": []}`, spec),
+					&proto.PartyBuffs{}, &proto.RaidBuffs{WrathOfAirTotem: tc.wrathOfAir}, &proto.Debuffs{}),
+				Encounter:  core.MakeSingleTargetEncounter(0),
+				SimOptions: &proto.SimOptions{Iterations: 1, IsTest: true, RandomSeed: 101},
+			})
+			sim.Reset()
+			return sim.Raid.Parties[0].Players[0].(*Mage)
+		}
+		// no talents, so nothing of the mage's shortens the image's Frostbolt
+		if got := build("", "p5_bis_arcane", PlayerOptionsArcane).mirrorImage.Frostbolt.CastTime(); got != tc.frostbolt {
+			t.Errorf("Wrath of Air %v: a Mirror Image's Frostbolt takes %v, want %v", tc.wrathOfAir, got, tc.frostbolt)
+		}
+		frost := build(FrostTalents, "p3_frost_alliance", PlayerOptionsFrost)
+		if frost.waterElemental == nil {
+			t.Fatal("FrostTalents has no Water Elemental")
+		}
+		if got := frost.waterElemental.Waterbolt.CastTime(); got != tc.bolt {
+			t.Errorf("Wrath of Air %v: Waterbolt takes %v, want %v", tc.wrathOfAir, got, tc.bolt)
+		}
+	}
+}
+
+// An image casts from beside its mage, so its Frostbolt flies his distance, and its corpse is unsummoned when
+// the summon's 30 s are up, half a second after it dies. That takes a Frostbolt still in the air with it.
+// From 30 yd the flight is 1250 ms, which loses the Frostbolts that go off in the last 1.25 s; from point
+// blank it's the 5 yd floor, 208 ms, and every one that goes off hits.
+func TestMirrorImageFrostboltInTheAirAtTheUnsummonIsLost(t *testing.T) {
+	for _, tc := range []struct {
+		yards    float64
+		travel   time.Duration
+		wantLost bool
+	}{
+		{0, 208 * time.Millisecond, false},
+		{30, 1250 * time.Millisecond, true},
+	} {
+		player := procMage("", "p5_bis_arcane", `{"type": "TypeAPL", "priorityList": []}`, PlayerOptionsArcane)
+		player.DistanceFromTarget = tc.yards
+		sim, mage := newProcSim(t, player)
+		image := mage.mirrorImage
+		target := sim.GetTargetUnit(0)
+		if got := image.Frostbolt.TravelTime(); got != tc.travel {
+			t.Fatalf("%v yd: an image's Frostbolt flies %v, want %v", tc.yards, got, tc.travel)
+		}
+
+		var wentOff []time.Duration
+		effects := image.Frostbolt.ApplyEffects
+		image.Frostbolt.ApplyEffects = func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+			wentOff = append(wentOff, sim.CurrentTime)
+			effects(sim, target, spell)
+		}
+
+		lost := 0
+		for life := 0; life < 40; life++ {
+			// newProcSim hands the sim over reset
+			sim.Cleanup()
+			sim.Reseed(int64(2000 + life))
+			sim.Reset()
+			sim.PrePull()
+			for sim.CurrentTime < 2*time.Second && !sim.Step() {
+			}
+			wentOff = wentOff[:0]
+			unsummon := sim.NextServerTick(image.AIClockStart(sim) + 30*time.Second)
+			image.summon(sim)
+			for sim.CurrentTime < unsummon+2*time.Second && !sim.Step() {
+			}
+
+			want := 0
+			for _, at := range wentOff {
+				if at+tc.travel <= unsummon {
+					want++
+				}
+			}
+			m := image.Frostbolt.SpellMetrics[target.UnitIndex]
+			if rolled := int(m.Hits + m.Crits + m.Misses); rolled != want {
+				t.Fatalf("%v yd, life %d: %d of the %d Frostbolts that went off hit or missed, want %d (they went off at %v, the corpse goes at %v)",
+					tc.yards, life, rolled, len(wentOff), want, wentOff, unsummon)
+			}
+			lost += len(wentOff) - want
+		}
+		if (lost > 0) != tc.wantLost {
+			t.Errorf("%v yd: %d Frostbolts lost over 40 summons, want some = %v", tc.yards, lost, tc.wantLost)
+		}
+	}
+}
+
+// DeathEvent runs in the image's event pass: behind the landing of a cast that was queued before it, so a
+// Frostbolt due on the update the image dies on still goes off, and ahead of UpdateAI, so the image starts
+// nothing more on that update.
+func TestMirrorImageCastDueOnItsDeathUpdateGoesOff(t *testing.T) {
+	player := procMage("", "p5_bis_arcane", `{"type": "TypeAPL", "priorityList": []}`, PlayerOptionsArcane)
+	player.DistanceFromTarget = 0
+	sim, mage := newProcSim(t, player)
+	image := mage.mirrorImage
+
+	var wentOff []time.Duration
+	effects := image.Frostbolt.ApplyEffects
+	image.Frostbolt.ApplyEffects = func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+		wentOff = append(wentOff, sim.CurrentTime)
+		effects(sim, target, spell)
+	}
+
+	sim.Cleanup()
+	sim.Reset()
+	sim.PrePull()
+	for sim.CurrentTime < 2*time.Second && !sim.Step() {
+	}
+	dies := sim.NextServerTick(image.AIClockStart(sim) + mirrorImageLife)
+	image.summon(sim)
+	for sim.CurrentTime < dies-time.Second && !sim.Step() {
+	}
+	if sim.CurrentTime >= dies || !image.IsEnabled() {
+		t.Fatalf("stepped to %v, past the image's death at %v", sim.CurrentTime, dies)
+	}
+	// drop what it's casting and keep its AI quiet, for a Frostbolt timed to end on the very update it dies on
+	image.InterruptCast(sim, image.Frostbolt)
+	wentOff = wentOff[:0]
+	image.frostboltDue, image.fireblastDue = core.NeverExpires, core.NeverExpires
+	image.Frostbolt.DefaultCast.CastTime = dies - sim.CurrentTime
+	image.Frostbolt.Cast(sim, image.CurrentTarget)
+	if got := image.Hardcast.Expires; got != dies {
+		t.Fatalf("the Frostbolt ends at %v, the test wants it on the death update at %v", got, dies)
+	}
+	for sim.CurrentTime < dies+time.Second && !sim.Step() {
+	}
+	if len(wentOff) != 1 || wentOff[0] != dies {
+		t.Errorf("Frostbolts went off at %v, want the one due on the death update at %v", wentOff, dies)
+	}
+	if image.IsEnabled() {
+		t.Error("the image is still out past its death")
+	}
+}

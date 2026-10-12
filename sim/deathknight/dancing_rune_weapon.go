@@ -25,6 +25,10 @@ func (dk *Deathknight) registerDancingRuneWeaponCD() {
 		Duration: duration,
 		// Casts
 		OnCastComplete: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell) {
+			// the weapon is unsummoned on its own update, which can come before this aura runs out
+			if !dk.RuneWeapon.IsEnabled() {
+				return
+			}
 			switch spell {
 			case dk.IcyTouch:
 				dk.RuneWeapon.IcyTouch.Cast(sim, spell.Unit.CurrentTarget)
@@ -49,7 +53,7 @@ func (dk *Deathknight) registerDancingRuneWeaponCD() {
 		// mirrors the same as a normal one; dk.DeathCoil's OnCastComplete fires on both a miss
 		// and a hit, so the mirror hooks the inner damage spell's outcome instead.
 		OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
-			if spell == dk.DeathCoilDamage && result.Landed() {
+			if spell == dk.DeathCoilDamage && result.Landed() && dk.RuneWeapon.IsEnabled() {
 				dk.RuneWeapon.DeathCoil.Cast(sim, result.Target)
 			}
 		},
@@ -170,6 +174,9 @@ func (dk *Deathknight) NewRuneWeapon() *RuneWeaponPet {
 		dkOwner: dk,
 	}
 
+	// Not Uncontrollable, though SummonProperties 208 gives it no pet bar and Bloodlust never lands on it.
+	// Its white hits are copies of the DK's own swings (spell_dk_dancing_rune_weapon), which come as fast
+	// as he swings, and the sim's Bloodlust on the weapon stands in for that.
 	runeWeapon.OnPetEnable = runeWeapon.enable
 	runeWeapon.OnPetDisable = runeWeapon.disable
 

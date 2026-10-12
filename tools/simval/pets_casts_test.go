@@ -190,6 +190,43 @@ func TestPetsCastsReplayCatchesAWrongRecord(t *testing.T) {
 			failed(t, checkPetsCastsSummon(rec, images(lead), lead), c.check)
 		})
 	}
+	// an image that came into a fight, with its first and last Frostbolt both hitting
+	withHits := func() (petsCastsRecord, int) {
+		t.Helper()
+		for _, rec := range summons {
+			for i, img := range rec.Images {
+				n := len(img.FrostboltGo)
+				if rec.Fighting && img.MageYards > 0 && n > 0 && !slices.Contains(img.FrostboltMiss, img.FrostboltGo[0]) &&
+					!slices.Contains(img.FrostboltMiss, img.FrostboltGo[n-1]) {
+					rec.Images = slices.Clone(rec.Images)
+					return rec, i
+				}
+			}
+		}
+		t.Fatal("no summon into a fight has an image whose first and last Frostbolt hit")
+		return petsCastsRecord{}, 0
+	}
+	for _, c := range []struct {
+		name string
+		move func(*petsCastsImage)
+	}{
+		{"a first Frostbolt that never hit", func(img *petsCastsImage) {
+			img.FrostboltHit = img.FrostboltHit[1:]
+		}},
+		{"a last Frostbolt hitting from 60 yd, after the corpse went", func(img *petsCastsImage) {
+			img.Yards = 60
+		}},
+		{"a hit ahead of every Frostbolt", func(img *petsCastsImage) {
+			img.FrostboltHit = append([]int64{img.FrostboltGo[0] - 1000}, img.FrostboltHit...)
+		}},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			rec, i := withHits()
+			c.move(&rec.Images[i])
+			lead := petsCastsLead(rec)
+			failed(t, checkPetsCastsSummon(rec, images(lead), lead), fmt.Sprintf("image %d Frostbolt hits", i+1))
+		})
+	}
 	t.Run("two images of three", func(t *testing.T) {
 		rec := summon(true)
 		rec.Images = rec.Images[:2]
