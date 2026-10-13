@@ -1,8 +1,11 @@
 package core
 
 import (
+	"slices"
 	"testing"
 	"time"
+
+	googleProto "google.golang.org/protobuf/proto"
 
 	"github.com/wowsims/wotlk/sim/core/proto"
 )
@@ -199,5 +202,111 @@ func TestTargetDungeonScaleReachesIgnoreAttackerModifiersSpells(t *testing.T) {
 	}
 	if want := base * 1.5; scaled != want {
 		t.Errorf("scaled damage %v, want %v (dungeon scale should still reach a SpellFlagIgnoreAttackerModifiers spell)", scaled, want)
+	}
+}
+
+const tickOrderAITestBossID = 900003
+
+// tickOrderAITest casts an instant spell once, on the first rotation call at or after castAt, and notes it.
+type tickOrderAITest struct {
+	spell  *Spell
+	castAt time.Duration
+	casted bool
+	note   func(string)
+}
+
+func (ai *tickOrderAITest) Initialize(target *Target, _ *proto.Target) {
+	ai.spell = target.GetOrRegisterSpell(SpellConfig{
+		ActionID:    ActionID{SpellID: 3},
+		SpellSchool: SpellSchoolPhysical,
+		ProcMask:    ProcMaskSpellDamage,
+
+		DamageMultiplier: 1,
+		CritMultiplier:   1,
+
+		ApplyEffects: func(*Simulation, *Unit, *Spell) { ai.note("cast") },
+	})
+}
+
+func (ai *tickOrderAITest) Reset(*Simulation) { ai.casted = false }
+
+func (ai *tickOrderAITest) ExecuteCustomRotation(sim *Simulation) {
+	if ai.castAt == 0 || sim.CurrentTime < ai.castAt || ai.casted {
+		return
+	}
+	ai.casted = true
+	ai.spell.Cast(sim, nil)
+}
+
+func init() {
+	AddPresetTarget(&PresetTarget{
+		PathPrefix: "TargetAITest",
+		Config:     &proto.Target{Id: tickOrderAITestBossID, Name: "Tick Order Boss", Level: CharacterLevel + 3},
+		AI:         func() TargetAI { return &tickOrderAITest{} },
+	})
+}
+
+// Creature::Update runs Unit::Update, whose _UpdateSpells ticks the creature's auras, ahead of the AI that
+// casts: a tick due on the update the boss casts on goes first, whichever was queued first.
+func TestBossInstantCastComesAfterTheTicksOnIt(t *testing.T) {
+	// run puts a dot on the boss and, when wakeAt is set, queues the boss's cast for that time ahead of the
+	// dot's first tick. It returns the order of events and the time of the first tick.
+	run := func(wakeAt time.Duration) ([]string, time.Duration) {
+		var dot *Spell
+		var order []string
+		timingTestSetup = func(a *timingTestAgent) {
+			config := DotConfig{NumberOfTicks: 2, TickLength: time.Second, TicksCanCrit: false, Aura: Aura{Label: "dot"}}
+			config.OnTick = func(*Simulation, *Unit, *Dot) { order = append(order, "tick") }
+			dot = orderTestDot(t, a, testDotLowID, config)
+		}
+		sim := NewSim(&proto.RaidSimRequest{
+			SimOptions: &proto.SimOptions{RandomSeed: 101, IsTest: true},
+			Raid: &proto.Raid{
+				Parties: []*proto.Party{{
+					Players: []*proto.Player{{
+						Name: "Timing", Class: proto.Class_ClassShaman, Consumes: &proto.Consumes{}, Buffs: &proto.IndividualBuffs{},
+						Spec: &proto.Player_EnhancementShaman{}, Equipment: &proto.EquipmentSpec{},
+					}},
+					Buffs: &proto.PartyBuffs{},
+				}},
+				Tanks: []*proto.UnitReference{{Type: proto.UnitReference_Player, Index: 0}},
+			},
+			Encounter: &proto.Encounter{
+				Targets:  []*proto.Target{{Id: tickOrderAITestBossID, Level: CharacterLevel + 3}},
+				Duration: 60,
+				ServerSettings: &proto.ServerSettings{
+					MapUpdateIntervalMs:   googleProto.Int32(100),
+					WorldUpdateIntervalMs: googleProto.Int32(10),
+					WorldLoopMs:           googleProto.Float64(0),
+					MapUpdateJitterMs:     googleProto.Float64(0),
+				},
+			},
+		})
+		timingTestSetup = nil
+		sim.reset()
+		boss := sim.Encounter.Targets[0]
+		ai := boss.AI.(*tickOrderAITest)
+		ai.note = func(label string) { order = append(order, label) }
+		ai.castAt = wakeAt
+
+		sim.PrePull()
+		start := sim.serverTickPhase + ms(500)
+		var tickAt time.Duration
+		at(sim, start, func(sim *Simulation) {
+			if wakeAt != 0 {
+				boss.WaitUntil(sim, wakeAt)
+			}
+			dot := dot.Dot(&boss.Unit)
+			dot.Apply(sim)
+			tickAt = dot.nextTickAt
+		})
+		runUntil(sim, start+3*time.Second)
+		return order, tickAt
+	}
+
+	_, tickAt := run(0)
+	order, _ := run(tickAt)
+	if want := []string{"tick", "cast", "tick"}; !slices.Equal(order, want) {
+		t.Errorf("order %v, want %v (the first tick at %v)", order, want, tickAt)
 	}
 }

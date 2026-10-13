@@ -16,6 +16,8 @@ func (shaman *Shaman) registerAncestralHealingSpell() {
 		DamageMultiplier: 1 * (1 + .02*float64(shaman.Talents.Purification)),
 		CritMultiplier:   1,
 		ThreatMultiplier: 1 - (float64(shaman.Talents.HealingGrace) * 0.05),
+		// 52752 has no spell_bonus_data row
+		HealingTakenCoefficient: core.DefaultHealingTakenCoefficient(0),
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			spell.CalcAndDealHealing(sim, target, shaman.ancestralHealingAmount, spell.OutcomeHealing)
 		},

@@ -360,6 +360,8 @@ func (shaman *Shaman) newEarthlivingImbueSpell() *core.Spell {
 		DamageMultiplier: 1,
 		CritMultiplier:   shaman.ElementalCritMultiplier(0),
 		ThreatMultiplier: 1,
+		// the hot is 52000, whose spell_bonus_data row is 0.164
+		HealingTakenCoefficient: 0.164,
 
 		Hot: core.DotConfig{
 			Aura: core.Aura{

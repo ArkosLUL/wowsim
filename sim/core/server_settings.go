@@ -29,6 +29,10 @@ type ServerSettings struct {
 	// (proto.ServerSettings.MapUpdateJitterMs). Zero means every update takes the mean.
 	MapUpdateJitter time.Duration
 
+	// WorldLongTick is the one slow world tick of a map update (proto.ServerSettings.WorldLongTickMs); the
+	// update's other ticks are WorldUpdateInterval. Zero means every tick of an update takes the same time.
+	WorldLongTick time.Duration
+
 	SpellTweaks  SpellTweaks
 	DungeonScale DungeonScale
 	Reforging    Reforging
@@ -52,6 +56,7 @@ func (s *ServerSettings) updateGrids() (world, mapUpdate time.Duration) {
 
 // updateLengths is what the map updates' lengths are drawn from, or nil when they all take the mean:
 // no jitter set, or a world loop that keeps time, which leaves an update nothing to stray by.
+// WorldLongTick splits an update into short ticks and one long one.
 func (s *ServerSettings) updateLengths() *updateLengths {
 	world, mapUpdate := s.updateGrids()
 	if world <= 0 || s.MapUpdateJitter <= 0 {
@@ -63,7 +68,11 @@ func (s *ServerSettings) updateLengths() *updateLengths {
 	if mapUpdate <= shortest {
 		return nil
 	}
-	return updateLengthsFor(updateLengthsKey{shortest: shortest, mean: mapUpdate, jitter: s.MapUpdateJitter, ticks: ticks})
+	key := updateLengthsKey{shortest: shortest, mean: mapUpdate, jitter: s.MapUpdateJitter, ticks: ticks}
+	if s.WorldLongTick > 0 {
+		key.interval, key.long = s.WorldUpdateInterval, s.WorldLongTick
+	}
+	return updateLengthsFor(key)
 }
 
 // OnRegularGrid puts the encounter on a server that keeps time: every world tick takes loopMs and no map
@@ -81,7 +90,7 @@ func OnRegularGrid(encounter *proto.Encounter, loopMs float64) *proto.Encounter 
 // longestWorldTick is the most a world tick takes: the one length it has, or the longest drawn.
 func (s *ServerSettings) longestWorldTick() time.Duration {
 	if lengths := s.updateLengths(); lengths != nil {
-		return lengths.tick[len(lengths.tick)-1]
+		return lengths.longest
 	}
 	world, _ := s.updateGrids()
 	return world
@@ -172,6 +181,7 @@ func resolveServerSettings(settings, live *proto.ServerSettings) *ServerSettings
 		WorldUpdateInterval: time.Duration(max(0, firstSet(0, settings.WorldUpdateIntervalMs, live.WorldUpdateIntervalMs))) * time.Millisecond,
 		WorldLoopTime:       time.Duration(math.Round(max(0, firstSet(0, settings.WorldLoopMs, live.WorldLoopMs)) * float64(time.Millisecond))),
 		MapUpdateJitter:     time.Duration(math.Round(max(0, firstSet(0, settings.MapUpdateJitterMs, live.MapUpdateJitterMs)) * float64(time.Millisecond))),
+		WorldLongTick:       time.Duration(math.Round(max(0, firstSet(0, settings.WorldLongTickMs, live.WorldLongTickMs)) * float64(time.Millisecond))),
 		SpellTweaks:         newSpellTweaks(orEmpty(settings.SpellTweaks), orEmpty(live.SpellTweaks)),
 		DungeonScale:        newDungeonScale(settings.DungeonScale, live.DungeonScale),
 		Reforging:           newReforging(orEmpty(settings.Reforge), orEmpty(live.Reforge)),

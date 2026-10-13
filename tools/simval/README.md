@@ -146,7 +146,7 @@ bound has 250 ms of jitter, a 110 ms update and 0.5% of drift on it (`petsCastsS
   for cast, timed from the pull (from the summon into a fight). A cast within 0.5 s of the image's death may be
   missing on either side, named in the check's detail: it rides on the update period. Three images a summon.
 - Each recorded Frostbolt that went off and wasn't missed against the sim's lost-missile rule (`Pet.MissileLost`),
-  for a record with `mageYards`: the sim's flight from the image's own `yards` less its 1.5 yd reach, the sim's
+  for a record with `mageYards`: the sim's flight from the image's own `yards`, the sim's
   corpse going 29988 ms after the summon's update. It has to hit when its flight ends before that and never when
   after; within one 110 ms update of it either is taken.
 - Fire Blast openers among the images ahead of the pull against CasterAI's even pick.

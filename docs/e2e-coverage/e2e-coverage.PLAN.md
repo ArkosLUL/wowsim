@@ -3839,6 +3839,102 @@ Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\ec-core-fix6-tmp\`.
   `tools/simval/pets_casts.go`'s reach; the module's `e2e/eccore6_test.go`; their drops and rows.
 - **Goldens:** all 37 (the long tick); report each.
 
+#### As built
+
+Tick stage (notes in `tmp/ec-core-fix7-tick.md`; base `346249292`, offline). Built:
+- `ServerSettings.world_long_tick_ms` (field 8; 40 live, picker "World long tick (ms)" with a Playwright test of
+  all five timing fields). An update is short ticks of `world_update_interval_ms`, the long tick, one short tick,
+  the next update (`sim/core/update_grid.go`). The update's length is normal around its mean, no 100 ms floor; the
+  long tick takes what the length leaves after as many short ticks as bring it nearest the setting. At 0 the
+  grid is the old one, ten even ticks.
+- Refit with it: `world_loop_ms` 10.44 (mean update 104.4), `map_update_jitter_ms` 5 (was 10.46 and 6).
+
+Verdicts:
+- Long tick (modelled; the spec's 34 became 40). `MapMgr::Update` runs three steps on three ticks and ends the cycle
+  on the first tick `i_timer[3]` passes 100 ms by, the open world's step being the long tick: a cycle is the least
+  `L + 10 m` of 100 or over, 104.5 for L of 31 to 60, which is the counted 104.4, and an instance's gap
+  (`C_n + L_(n+1) - L_n`) can be under 100. A player's event waits 10.8 ms for the next tick at 40 (live swings
+  10.8, `.server info` 10.8 to 11.8), 8.9 at 34, 5.2 on even ticks. Live long ticks average 38.5 to 40.8.
+- Fit: the slimes' 2 s timer 2064.6 ms and 22.6% on the 19th update (live 2064.4, 25%), a 3 s timer 3043 ms;
+  Ignite's 2 s race 62.7% (live 62.1%), 4 s 56.4% (48.8% of 84, z -1.4), 81.1 ticks a fight (82.3); 2400 fights,
+  six recordings. The old 10.46 and 6 gave 57.7% and 53.4% on the new grid.
+- Ignite's +7% (not a gap): the server's amount is what `procIgnite` computes, off the crit's post-resist damage; the
+  comparison added the tick's resisted part back for the live side only, and the sim's tick is resisted. Without
+  it live pays 1.218 against the sim's 1.18. One difference left: `CalcValue` adds 1 to a die-of-1 effect, 0.04%
+  of a tick, unmodelled.
+- Goldens: all 37 suites run, 34 move (the healers' three only in uptimes). Average-Default: -0.54 to +0.10%, the
+  rogues -0.39 to -0.54 and the rest -0.34 to +0.10 (every player timer waits 5.6 ms longer a step); the loop and
+  jitter refit alone moves nothing over 0.3% but Fire's -0.29.
+- `DurationThroughLastTick` adds 45 ms now (the longest tick). Tests that counted on 10 ms ticks changed:
+  `dot_test.go`, `natures_grace_test.go`, `arcane_blast_buff_test.go`. `TestTankBossFollowUpTicksOnceAndHastesTheBoss`
+  (optimizer) wants its 0.02 s bound at 0.05.
+
+Live stage must measure: the world tick (one in 7.4 over 15 ms, 35 to 45 long in the sim against live 31 to 60, mean wait
+10.8 ms), swings 10.8 ms past the attack time, and the period against the new defaults (details in the notes).
+
+Rest stage (notes `tmp/ec-core-fix7-rest.md`, on the tick stage's tree, offline). Verdicts:
+- Heal's taken term (fixed): `Unit::SpellHealingBonusTaken` runs the target's own `SPELLMOD_BONUS_MULTIPLIER` mods on
+  the coefficient. `healTakenCoefficient(target)` (`spell_result.go`) takes the caster's modded one only on a self
+  heal, else the target's own copy of the spell, else the unmodded declaration (`Spell.unmoddedSP`,
+  `Dot.unmoddedTickSP`). Pets are left to the unmodded one.
+- Missing terms (fixed). The server's heal 63544 is in the dump (magic class, no bonus row), so Empowered Renew takes
+  the default 0.8057. Item heals 69733, 71607, 71610, 71641 and Ancestral Awakening 52752 take it too. Earthliving's
+  hot is 52000 with row 0.164 (the sim's spell is 51994, which has no hot aura). No term, checked in the dump: 66235,
+  55341, 60530, 75493/4 and 70770 (class none, or an aura that ignores heal mods), Ghoul Frenzy (aura 20).
+  Open: Empowered Renew's base is the Renew tick after `SpellHealingBonusTaken` (flat and percent), then 63544 takes it
+  again; the sim takes it once.
+- Missile reach (fixed): `GetDistance` takes the caster's object size off, which is 1.5 for a player
+  (`Player::SetObjectScale`) and an image (live: Typhoon 0.48 to 0.50 s at 16 yd of 30 yd/s). `Spell.TravelTime` is
+  `max(distance - 1.5, 5)`; `petsCastsImageReach` is gone and the replay passes `yards` whole. Other guardians'
+  model reach is unread (Gargoyle, Val'kyr take 1.5).
+- Order leads. A creature's missile landing against an aura running out: unfixed. `Unit::Update` runs the caster's
+  events ahead of its own auras, but no sim hit reads its creature caster's aura (damage is fixed at launch), and the
+  target's side is a player (updates first, already modelled) or a creature (grid order, not in the source). A boss's
+  instant cast against a tick on it (fixed): `Creature::Update` ticks the creature's auras in `Unit::Update` ahead of
+  `UpdateAI`; the target's gcd action now runs its due ticks first (`target_ai.go`).
+- Playwright test: `server_timing.spec.ts` (tick stage) already covers the jitter field with the other four.
+
+Goldens, this stage on top of the tick's: the heal terms and the boss order move nothing (all 37 suites bit-identical
+with the reach off). The reach moves 28 suites, Average-Default within +-0.13%: Fire -0.125% (Fire Blast -2.2%,
+Scorch +1.1%, Ignite -0.6%), MM +0.05%, Frost +0.03%, Demonology +0.03%, FrostFire +0.03%; Unholy Blight -2.5%;
+TestProtection dtps +0.5% (1.1 hits a fight). Nine suites are unchanged. Tests changed to the 1.5 yd reach:
+`missile_pool_test.go`, `pet_summon_test.go`, `serverdata_test.go`, `mirror_image_test.go` (30 yd flight 1187 ms).
+
+Live stage must also measure: a missile's flight from a known distance (a Frostbolt at 30 yd lands 1187 ms after its
+cast, not 1250), and a heal under Talisman of Troll Divinity on a target other than the caster.
+
+Speed stage (notes `tmp/ec-core-fix7-speed.md`, offline). Golden-neutral: `dock.sh delta` before and after is identical.
+- Grid lookups (`sim/core/update_grid.go`): a bucket table (`tab`, buckets the biggest power of two within the shortest
+  update) replaces the cursor walk, `growTo` draws in one loop, and an update's tick fields are one packed `updateStep`.
+  `TestUpdateTableFindsTheUpdateAtATime` checks the lookup against a binary search. Interleaved old/new, 100 iterations:
+  Ret and Elemental -3 to -5%, Hunter, Rogue and the raid about -1%. The draw itself (4% of a run) stays.
+- Where Z6 to this base went (interleaved A/B per wave, Z6 = 1.00; Ret / Elemental / raid): Z7 1.07 / 0.96 / 1.15 (dot
+  ticks on the server's timers, +4% on the raid), Z8 1.05 / 1.03 / 1.12, EC-CORE-FIX6's jittered grid 1.28 / 1.12 / 1.22,
+  Z9 end 1.21 / 1.16 / 1.21, this base 1.26 / 1.20 / 1.24. The grid is about 11% of a Ret or Elemental run (0.9 to 1.0 s of
+  8 to 9 s, against 0.05 s before), half of their gap to Z6; the rest is spread over events and APL work. This wave's long
+  tick adds 2 to 4%.
+- Left: Z7's dot ticking and the spread costs, unattributed; the PLAN's Sim throughput row not retaken (host not idle).
+
+Live stage (2026-10-13, server `3d89793c7`, no rebuild; notes `tmp/ec-core-fix7-live.md`). No sim change, no golden move;
+the new `TestEcCore6MissileReach` (module `e2e/eccore6_test.go`, README paragraph) logs the bot's and the dummy's distance and
+the bot's combat reach.
+- World tick (two 600-sample runs): the long tick follows the host's load. Over 15 ms: 13.3% at worldserver 102%
+  (long ticks 29.6 ms, wait 8.3 ms), 19.0% at 144% (40.4, 13.3), last wave 38.5 to 40.8 and 10.8 to 11.8; sim 13.4%, 40, 10.8.
+  Settings stand.
+- Swing after a hardcast (ShamanElemental's Lightning Bolt every 6 s, 104 casts): landing to swing 20.4 +- 4.0 ms shorter
+  than swing to swing; the sim's size-biased tick is 21.6. A bolt every 3.6 s equals the swing period, so no swing
+  falls between casts: a spacing must not equal the attack time plus the cast.
+- Period and races, nine Fire recordings: update 103.75 to 104.80, mean 104.29 (sim 104.4); slimes' 19th-update spread
+  5.14 ms (sim 5); Ignite 2 s races 171 of 284 (60.2%, sim 62.8%), 4 s 68 of 129 (52.7%, sim 56.0%), ticks 81.3 (79.7);
+  the paid ratio stays about 1.28 against 1.18 (the resist add-back). Defaults 104.4, 5 and 40 stand; 129 four-second
+  races give +-9%, and the host was never idle, so the spec's days of idle fights are still open.
+- Missile reach: bot 18.000 yd from the dummy, reach 1.500, scale 1.000. Fireball, Frostbolt, Frostfire Bolt, Lightning
+  Bolt, Shadow Bolt, Chaos Bolt and Starfire at 18 yd imply 1.5 to 1.7 by the fastest flight, so the 1.5 yd reach stands
+  (30 yd: 1187 ms). Open: Pyroblast lands 20 ms earlier than that (878 casts, median 676, minimum 657).
+- Not run: the heal term under healing taken (needs a priest, a second bot and `.simval damage` of a heal with the target
+  selected), a boss's swing against a Lacerate tick and the Execute window (the dummies neither swing nor lose health;
+  the e2e lacks a mob fight with GM off).
+
 ### EC-PET-FIX6 (Z11; changes goldens; stages: code, live)
 
 Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\ec-pet-fix5-tmp\`.

@@ -46,7 +46,7 @@ func TestNaturesGraceComesAtWrathsLaunch(t *testing.T) {
 				landed = sim.CurrentTime
 				// a player's aura counts from the world tick before the hit; the launch's own 3 s are over by then
 				tick := sim.NextWorldTick(landed)
-				ends := sim.NextWorldTick(2*tick - sim.NextWorldTick(tick+time.Nanosecond) + 3*time.Second)
+				ends := sim.NextWorldTick(sim.WorldTickBefore(tick) + 3*time.Second)
 				at(ends-time.Millisecond, func(*core.Simulation) { upLate = grace.IsActive() })
 				at(ends+time.Millisecond, func(*core.Simulation) { downAfter = !grace.IsActive() })
 			}

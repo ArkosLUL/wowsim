@@ -979,7 +979,7 @@ func TestServerDataApplied(t *testing.T) {
 
 	missile := unit.RegisterSpell(core.SpellConfig{ActionID: core.ActionID{OtherID: proto.OtherAction_OtherActionAttack, Tag: 99},
 		MissileSpeed: 24})
-	for distance, want := range map[float64]time.Duration{0: 208 * time.Millisecond, 30: 1250 * time.Millisecond} {
+	for distance, want := range map[float64]time.Duration{0: 208 * time.Millisecond, 30: 1187 * time.Millisecond} {
 		unit.DistanceFromTarget = distance
 		if got := missile.TravelTime(); got != want {
 			t.Errorf("travel time at %v yd: %v, want %v", distance, got, want)

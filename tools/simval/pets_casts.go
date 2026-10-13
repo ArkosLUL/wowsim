@@ -431,19 +431,13 @@ func checkPetsCastsSummon(rec petsCastsRecord, runs map[bool]petsCastsImageRun, 
 	return checks
 }
 
-const (
-	// a creature's missile flies from its model's edge (WorldObject::GetDistance takes the caster's reach off)
-	petsCastsImageReach = 1.5
-	// a Frostbolt whose flight ends within an update of the corpse going may have its hit or not: the live
-	// update isn't the sim's, and a packet's time is good to a few tens of ms
-	petsCastsHitEdgeMs = petsCastsUpdateMs
-)
+const petsCastsHitEdgeMs = petsCastsUpdateMs
 
 // checkPetsCastsHits holds each recorded Frostbolt that went off to the sim's rule for a missile of a summon
 // that goes: it hits unless it's still in the air when the corpse is unsummoned. The flight is the sim's,
 // from where the recorded image stood. A landing that missed or was resisted has no hit either way.
 func checkPetsCastsHits(name string, img petsCastsImage, run petsCastsImageRun) Check {
-	flight := run.flightMs(max(img.Yards-petsCastsImageReach, 0))
+	flight := run.flightMs(img.Yards)
 	used := make([]bool, len(img.FrostboltHit))
 	hits, lost, edge := 0, 0, 0
 	for _, went := range img.FrostboltGo {

@@ -160,6 +160,9 @@ type Spell struct {
 	ThreatMultiplier float64
 	threat           spellThreat
 
+	// the declared SP coefficients before SpellConfig.Mods: direct, dot tick, hot tick
+	unmoddedSP [3]float64
+
 	initialBonusHitRating           float64
 	initialBonusCritRating          float64
 	initialBonusSpellPower          float64
@@ -644,12 +647,17 @@ func (spell *Spell) CastTime() time.Duration {
 	return spell.castTimeFn(spell)
 }
 
-// TravelTime is Spell::AddUnitTarget's missile delay: at least 5 yards, in whole ms.
+// defaultCombatReach is the reach of a player (Player::SetObjectScale) and of a pet or image (its model's
+// 1.5), which WorldObject::GetDistance takes off the distance to the target.
+const defaultCombatReach = 1.5
+
+// TravelTime is Spell::AddUnitTarget's missile delay: the distance less the caster's reach, at least 5 yards,
+// in whole ms.
 func (spell *Spell) TravelTime() time.Duration {
 	if spell.MissileSpeed == 0 {
 		return 0
 	}
-	distance := max(spell.Unit.DistanceFromTarget, 5)
+	distance := max(spell.Unit.DistanceFromTarget-defaultCombatReach, 5)
 	return time.Duration(math.Floor(distance/spell.MissileSpeed*1000)) * time.Millisecond
 }
 

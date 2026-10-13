@@ -54,7 +54,7 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
 - Unset, a test's map updates differ in length, as live ([update timing](spell-data-and-timing.md#update-timing)).
   One that counts updates or ticks pins the grid with `core.OnRegularGrid(encounter, loopMs)`: every world tick
   takes `loopMs` and no update strays. For exact 10 ms world ticks set `WorldLoopMs` to 0 beside
-  `WorldUpdateIntervalMs`. A bound on a time left has to allow the longest world tick, 17.9 ms live.
+  `WorldUpdateIntervalMs`. A bound on a time left has to allow the longest world tick, 45 ms live (`unit.DurationThroughLastTick(0)` gives it).
 - Reviewers build and test too. A review that skipped the build ("Go not installed") once missed a
   compile error.
 

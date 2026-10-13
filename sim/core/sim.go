@@ -285,7 +285,7 @@ func newSimWithEnv(env *Environment, simOptions *proto.SimOptions) *Simulation {
 	if lengths := env.serverSettings().updateLengths(); lengths != nil {
 		sim.updates = newUpdateJitter(lengths)
 		sim.serverTickInterval = lengths.shortest
-		sim.worldTickInterval = lengths.shortest / lengths.ticks
+		sim.worldTickInterval = lengths.world
 	}
 	return sim
 }

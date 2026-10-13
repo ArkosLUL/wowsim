@@ -135,6 +135,9 @@ type Dot struct {
 	// truncates one stack's done damage before it multiplies. 0 when the base already counts the stacks.
 	SnapshotStacks int32
 
+	// Tick.SP before SpellConfig.Mods
+	unmoddedTickSP float64
+
 	tickAction *PendingAction
 	tickPeriod time.Duration
 
@@ -624,6 +627,7 @@ func (spell *Spell) createDots(config DotConfig, isHot bool) {
 		TickHaste:           config.TickHaste,
 		TicksCanCrit:        config.TicksCanCrit,
 		Tick:                config.Tick,
+		unmoddedTickSP:      spell.unmoddedSP[TernaryInt32(isHot, 2, 1)],
 
 		OnSnapshot: config.OnSnapshot,
 		OnTick:     config.OnTick,

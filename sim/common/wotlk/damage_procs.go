@@ -70,6 +70,8 @@ func itemHealSpell(character *core.Character, spellID int32, minHeal, maxHeal fl
 		DamageMultiplier: 1,
 		CritMultiplier:   character.DefaultHealingCritMultiplier(),
 		ThreatMultiplier: 1,
+		// none of these heals has a spell_bonus_data row
+		HealingTakenCoefficient: core.DefaultHealingTakenCoefficient(0),
 
 		Direct: core.SpellEffect{Effect: 0, Min: minHeal, Max: maxHeal},
 
