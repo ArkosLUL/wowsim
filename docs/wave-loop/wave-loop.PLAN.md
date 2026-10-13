@@ -176,8 +176,12 @@ follow-ups with EC-TOOLS2 at last and BIS-TANK-SWAP in EC-PET-FIX6's place, whic
 
 ## Current wave
 
-- Wave: Z10, planned, not started: launch on the user's "continue". Z9 (base `b4e8f6d52`) landed on master as
-  `6dfc2d6c9`.
+- Wave: Z10, running since 2026-10-13: base `346249292`, runId `wf_bd8bf9a8-4de` (all four; args
+  `waveZ10-args.json`, shared rules `waveZ10-shared.md`, builder `waveZ10-build.py`). Worktrees
+  `wowsimwotlk-wi-{ec-core-fix7,ec-class-fix6,ec-tools2,bis-tank-swap}`, ports 3335 to 3338. EC-CLASS-FIX6's C++
+  isn't in the server during the run: its after-rebuild checks are listed in its
+  `tmp/ec-class-fix6-live.md`; ask the user for the rebuild once the run ends. Z9 (base `b4e8f6d52`) landed on
+  master as `6dfc2d6c9`.
   The user's calls on Z9's report (2026-10-13): a tank swap on the Lich King's Soul Reaper but not the zone's 30%
   buff; death chance normalized at a first pick, on a clearer signal (both BIS-TANK-SWAP's); the line-up above;
   the speed benchmark, run the same day; no Phase Punch swap on Algalon.
@@ -218,7 +222,7 @@ follow-ups with EC-TOOLS2 at last and BIS-TANK-SWAP in EC-PET-FIX6's place, whic
   - Then the BiS tooltip dataset (acbis driver, both stages, fresh `--out`, then `acbis`; the import needs
     the OK), the changed builds' stat weights, and the perf harness's `opt_*` scenarios (`update.sh`, a new
     baseline; the raid25 dumps in `_dump/optimizer_dump_test.go` still build uncut pools).
-- Workflow runIds: Z9's `wf_68977dde-6ef` (all four, base `b4e8f6d52`) `wf_bade63ce-ecd` (BIS-TANK-PICKS's picks stage) and `wf_af6c63ed-d23` (its review); Z8's `wf_22d8a7f1-a8a` (all four, base `c244f8ee9`) and `wf_6d39358e-cad` (EC-PET-FIX4's live stage and review); Z7's `wf_90c05e5f-5b7` (all four, base `fd12d68cc`); Z6's `wf_9f63df91-dcd` (all four, base `c00231f37`); Z5's `wf_2bd87279-a32` (run 1, base `a1bb8d403`), `wf_caa6cd72-af1` (the rotations, base
+- Workflow runIds: Z10's `wf_bd8bf9a8-4de` (all four, base `346249292`); Z9's `wf_68977dde-6ef` (all four, base `b4e8f6d52`) `wf_bade63ce-ecd` (BIS-TANK-PICKS's picks stage) and `wf_af6c63ed-d23` (its review); Z8's `wf_22d8a7f1-a8a` (all four, base `c244f8ee9`) and `wf_6d39358e-cad` (EC-PET-FIX4's live stage and review); Z7's `wf_90c05e5f-5b7` (all four, base `fd12d68cc`); Z6's `wf_9f63df91-dcd` (all four, base `c00231f37`); Z5's `wf_2bd87279-a32` (run 1, base `a1bb8d403`), `wf_caa6cd72-af1` (the rotations, base
   `5692dd49d`), `wf_0d256663-f64` (EC-THREAT-FIX4's live stage) and `wf_4c054cc8-0ce` (the live records, base
   `ef598ad48`); Z4's `wf_e9e036c7-5bd`; Z3's `wf_9aabe6e6-7af` (all four); Z2's `wf_7c79ba74-4ca` (code stages) and `wf_7e9c6966-820` (live stages, BIS-ALTS); Z's `wf_8821da6d-91f` (all five); Y's `wf_e58e8b14-102` (all four), `wf_d290cc37-ee6` and `wf_fe29d895-a35` (EC-TICK-FIX's rest and
   review); X2's `wf_b555c578-f46` (code stages), `wf_a0107f34-c7b` (live stages) and `wf_b00ecbe0-79a` (EC-RECHECK's
