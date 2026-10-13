@@ -53,7 +53,8 @@ The live e2e and the replays leave timing, costs, threat, pets, gear and buffs u
 | Z7 | EC-CORE-FIX4 (G, FS) · EC-PET-FIX3 (G, live) · EC-CLASS-FIX3 (G, live) · EC-TOOLS | Z5's follow-ups (Z6 is parity's and raid-import's) |
 | Z8 | EC-CORE-FIX5 (G, FS) · EC-PET-FIX4 (G, live) · EC-CLASS-FIX4 (G, live) | Z7's follow-ups; the fourth place is bis-optimizer's BIS-TANK-MAGIC |
 | Z9 | EC-CORE-FIX6 (G, FS, live) · EC-PET-FIX5 (G, live) · EC-CLASS-FIX5 (G, live) | Z8's follow-ups; the fourth place is bis-optimizer's BIS-TANK-PICKS |
-| Z10 | EC-CORE-FIX7 (G, FS, live) · EC-PET-FIX6 (G, live) · EC-CLASS-FIX6 (G, C++, live) · EC-TOOLS2 | Z9's follow-ups, and EC-TOOLS2 moved from Z8, then Z9. Proposed: the user decides whether bis-optimizer's tank follow-up takes a place |
+| Z10 | EC-CORE-FIX7 (G, FS, live) · EC-CLASS-FIX6 (G, C++, live) · EC-TOOLS2 | Z9's follow-ups, and EC-TOOLS2 moved from Z8, then Z9; the fourth place is bis-optimizer's BIS-TANK-SWAP (the user's call, 2026-10-13) |
+| Z11 | EC-PET-FIX6 (G, live) | Moved from Z10 by the same call |
 
 U is taken (the UI wave). Versus the INVESTIGATION's order, B7, A3 and A4 moved forward (cheap, independent) and
 C1 moved last (after B6).
@@ -3801,6 +3802,10 @@ Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\ec-core-fix6-tmp\`.
   `nextUpdate` 2.4%, `worldTickBefore` 2.2%; the drawing, `grow`, 2.4%). A flat table drawn to the horizon at
   reset and indexed by time over the shortest update, in place of the cursor walk. No golden may move; A/B on an
   idle host.
+- Z9's idle throughput row is 10 to 24% over Z6's at 100 iterations, Ret and the raid most (wave-loop PLAN, Sim
+  throughput), unattributed across Z7 to Z9. Profile `BenchmarkSimulate` for Ret and the raid against
+  `e5a289570` (Z6), name where the time went, and win back what the grid's table doesn't; an interleaved A/B
+  stands in for an idle host.
 - A heal's taken term (`healTakenCoefficient`, `sim/core/spell_result.go`), each from the source only:
   - `Unit::SpellHealingBonusTaken` puts the target's own `SPELLMOD_BONUS_MULTIPLIER` mods on the coefficient
     (its `GetSpellModOwner`); the sim uses the caster's modded coefficient. Up to 1.9% of a Greater Heal with
@@ -3834,7 +3839,7 @@ Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\ec-core-fix6-tmp\`.
   `tools/simval/pets_casts.go`'s reach; the module's `e2e/eccore6_test.go`; their drops and rows.
 - **Goldens:** all 37 (the long tick); report each.
 
-### EC-PET-FIX6 (Z10; changes goldens; stages: code, live)
+### EC-PET-FIX6 (Z11; changes goldens; stages: code, live)
 
 Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\ec-pet-fix5-tmp\`.
 

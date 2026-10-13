@@ -87,7 +87,8 @@ G = changes goldens. FS = runs all 37 suites.
 | Z7 | EC-CORE-FIX4 (G, FS) · EC-PET-FIX3 (G, live) · EC-CLASS-FIX3 (G, live) · EC-TOOLS | ✔ |
 | Z8 | EC-CORE-FIX5 (G, FS) · EC-PET-FIX4 (G, live) · EC-CLASS-FIX4 (G, live) · BIS-TANK-MAGIC | ✔ |
 | Z9 | EC-CORE-FIX6 (G, FS, live) · EC-PET-FIX5 (G, live) · EC-CLASS-FIX5 (G, live) · BIS-TANK-PICKS | ✔ |
-| Z10 | EC-CORE-FIX7 (G, FS, live) · EC-PET-FIX6 (G, live) · EC-CLASS-FIX6 (G, C++, live) · EC-TOOLS2 | ✔ |
+| Z10 | EC-CORE-FIX7 (G, FS, live) · EC-CLASS-FIX6 (G, C++, live) · EC-TOOLS2 · BIS-TANK-SWAP | ✔ |
+| Z11 | EC-PET-FIX6 (G, live) | ✔ |
 
 F2 is an inserted wave, not a fifth item in F: the core swing and cast fixes of PAR-P7-0c have to land
 before the class items in G, a class item can't build on a core fix merging in its own wave, and F already
@@ -156,8 +157,9 @@ Z5's follow-ups, specced at its close-out under the earlier call (the parity bac
 its specs. Z8 takes Z7's follow-ups, specced at its close-out under the same call, with BIS-TANK-MAGIC in
 EC-TOOLS2's place (the user's call, 2026-10-11: the raid pass gears both tanks for avoidance against a melee-only
 boss). Z9 takes Z8's follow-ups the same way, with BIS-TANK-PICKS in EC-TOOLS2's place again (the user's call,
-2026-10-12: the 21-raider pass waits on the tank picks); EC-TOOLS2 waits for Z10. Z10 is proposed the same
-way, Z9's follow-ups with EC-TOOLS2 at last; whether a tank follow-up takes a place is asked in Z9's report.
+2026-10-12: the 21-raider pass waits on the tank picks); EC-TOOLS2 waits for Z10. Z10 takes Z9's
+follow-ups with EC-TOOLS2 at last and BIS-TANK-SWAP in EC-PET-FIX6's place, which waits for Z11 (the user's call,
+2026-10-13: its one confirmed fix reaches Blood death knights only).
 
 **Where the specs are:**
 
@@ -174,15 +176,14 @@ way, Z9's follow-ups with EC-TOOLS2 at last; whether a tank follow-up takes a pl
 
 ## Current wave
 
-- Wave: Z10, not started. Z9 (base `b4e8f6d52`) landed on master with the commit that closed it out.
-  Waiting on the user's answers to Z9's report:
-  1. The Lich King's fight in the tank picks kills every loadout: add the zone's 30% buff (the server has it on) and
-     a tank swap on Soul Reaper?
-  2. Death chance where the worn gear dies in 0 or 100% of iterations: normalize it at a first pick (two passes)?
-  3. Z10's line-up: the registry's four, or a tank follow-up in one's place (five candidates, four places).
-  4. The speed benchmark, due now: it needs the AC containers stopped (ask first).
-  The tank follow-up isn't specced: its spec depends on answers 1 and 2 (bis-optimizer PLAN, BIS-TANK-PICKS'
-  "Left").
+- Wave: Z10, planned, not started: launch on the user's "continue". Z9 (base `b4e8f6d52`) landed on master as
+  `6dfc2d6c9`.
+  The user's calls on Z9's report (2026-10-13): a tank swap on the Lich King's Soul Reaper but not the zone's 30%
+  buff; death chance normalized at a first pick, on a clearer signal (both BIS-TANK-SWAP's); the line-up above;
+  the speed benchmark, run the same day. Asked, unanswered: whether Algalon's fight gets the bots' Phase Punch
+  swap too (default: no).
+  Merge order: core, class, tools, tank. EC-TOOLS2 is the wave's `db.json` item; EC-CLASS-FIX6 the one that
+  changes the module's C++.
   Z9's reports: `G:\DevStuff\GitHub\.wave-loop\z9-run1\*.json` (each agent's, with
   `impl_bis-tank-picks_picks.json`) and `xreview.md` (the cross-review's), `waveZ9-results.json`,
   `waveZ9c-results.json` (BIS-TANK-PICKS' review); item notes:
@@ -198,11 +199,8 @@ way, Z9's follow-ups with EC-TOOLS2 at last; whether a tank follow-up takes a pl
   across a rebuild sends the optimizer's tank boss its old input group, and the run fails: reload it. Auto mode
   refuses the prod docker commands, a DSN on a command line and chained commands: the user's allow rules
   (`.claude/settings.local.json` in [sim]) cover each plain command.
-- Open: the speed benchmark with a perf baseline for the tank scenarios, due (the user's call, 2026-10-12; ask
-  before stopping the AC containers); the tank follow-up (BIS-TANK-PICKS' "Left"); the e2e-coverage backlog Z10
-  leaves, sim-performance's Left items, Z5's 9–11% on mana users and Z7's to Z9's missing rows (Sim throughput;
-  EC-CORE-FIX6's update grid costs about 10% of a TestElemental run, EC-CORE-FIX7's to win back), `tools/perf`'s
-  stored tank requests on Z8's boss tables, the bis-optimizer backlog (Z3's As
+- Open: the e2e-coverage backlog Z10 leaves, sim-performance's Left items, Z9's slower sims (Sim throughput;
+  EC-CORE-FIX7 has the update grid's lookups), the bis-optimizer backlog (Z3's As
   builts: the enchant residual, Mutilate's pair, Combat Rogue P3 Normal; Z4's: the surrogate overpricing a
   one-hander's pairing, stage 2 and the Heroic Presence checks not yet run on the new lists, whether
   Ecoterrorist's rotation casts Mangle (Idol of the Corruptor sims like a dead idol); Z5's re-baseline: the
@@ -428,8 +426,9 @@ From G the benches run their suites' default players with rotations, at 1 and 10
 | Z2 | 1.311 / 98.2 | 0.629 / 34.0 | 0.892 / 50.0 | 0.473 / 19.7 | 5.640 / 297.3 |
 | Z5 | 1.510 / 100.2 | 0.603 / 39.8 | 1.006 / 56.5 | 0.552 / 22.5 | 7.135 / 311.3 |
 | Z6 | 1.273 / 95.9 | 0.660 / 35.7 | 0.849 / 51.3 | 0.531 / 22.9 | 5.592 / 301.3 |
+| Z9 | 1.585 / 105.8 | 0.836 / 44.4 | 1.062 / 59.7 | 0.687 / 26.3 | 6.342 / 357.9 |
 
-Z7 and Z8 have no row: the run needs the AC containers stopped (`.wave-loop/rebase-z6.sh` as a model), the user's call.
+Z7 and Z8 have no row: the run needs the AC containers stopped, the user's call each time.
 
 H2 ran with the live worldserver using half a core, which moved whole runs by up to 2×
 and cost a few percent here (Ret, which H2 barely touched, +4%). An interleaved A/B against the base
@@ -550,6 +549,16 @@ logs in `.wave-loop/logs/z6-bench`; the three runs agree within 5% but Hunter's 
 against Z5's two idle runs: Ret −6%, Hunter −6%, the raid −4%, Rogue −3%, Elemental +5%, so the wave cost
 nothing that shows. The raid optimizer scenario: 451.9 s at 98% utilisation on 230,750 sims, 1.96 ms a sim as
 in Z2 (1.97); the wall over the baseline's 292.1 s is Z4's alternatives stage.
+
+Z9's row ran idle (the AC containers stopped with nobody online, Chronicle idle, no other container), by
+`.wave-loop/rebase-z9.sh`, logs in `.wave-loop/logs/z9-bench`; at 100 iterations the three runs agree within 2%
+but Elemental's first (+5%). Against Z6's, three waves on, at 100 iterations: Ret +24%, the raid +19%, Hunter +16%,
+Elemental +15%, Rogue +10%. Not attributed (no A/B, and Z7 and Z8 have no row); the candidates are Z8's 10.27 ms
+world tick and Z9's update grid, whose lookups are about 10% of a TestElemental run (EC-CORE-FIX7). The raid
+optimizer scenario: 550.2 s at 98% utilisation on 245,250 sims, 2.24 ms a sim for Z6's 1.96. The six tank
+scenarios ran on requests rebuilt for Z9's fights and are `tools/perf/baseline.json`'s points now, at 16 procs
+only (the rest of the file is wave O's): Quick 13.3 s (feral tank P2), 10.2 (prot paladin P3), 12.5 (raid25 tank
+P1); Normal 88.2, 72.2, 103.1.
 
 E to F2 ran the old requests: one iteration, and no rotation for Ret, Hunter and Elemental.
 

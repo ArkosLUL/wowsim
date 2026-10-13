@@ -2514,14 +2514,9 @@ Stamina is where it is:
 | Felesta P5 | 1215 / 425 / 428 / 390 | every socket: death swamps the score and Stamina moves it most |
 
 Left:
-- Merged with Verify's "no run drops a term" unmet on four runs. **Open, the user's call:**
-  - The Lich King's fight kills every loadout. Proposed: the zone's 30% buff, which the server has on
-    (`ICC.Buff.Horde = 73822`, `ICC.Buff.Alliance = 73828` in [ac] `env/dist/etc/worldserver.conf`), and a tank
-    swap on Soul Reaper.
-  - Where the worn gear dies in 0 or 100% of iterations: proposed, normalize death chance at a first pick (two
-    passes). Kel'Thuzad needs nothing if "never dies" is accepted as the answer.
-  - Whether a term that only just clears 2 se counts: on Halion it swamps the score, and Bulwark P5's 19
-    Agility gems are priced noise.
+- Merged with Verify's "no run drops a term" unmet on four runs. Decided by the user (2026-10-13), all
+  BIS-TANK-SWAP's: the Lich King's fight gets a tank swap on Soul Reaper and not the zone's 30% buff; death
+  chance is normalized at a first pick, and needs a clearer signal before it counts.
 - The picks were measured on `b4e8f6d52`, before the map updates of varying length merged; rerun them with the
   decisions above.
 - Felesta has no Glyph of Dark Command.
@@ -2530,6 +2525,56 @@ Left:
   are 1% high.
 - 69410 has a missile speed of 20 and the tank casts it at the boss: the haste starts about 0.25 s after the
   tick. Not modelled.
-- `tools/perf`'s three stored tank requests hold Z8's boss tables (no Quantum Strike at P2); they still run.
+- `tools/perf`'s three tank requests were rebuilt for these fights and their six points retaken idle
+  (2026-10-13, `6dfc2d6c9`; the wave-loop PLAN's Sim throughput has the times).
 - An option in the acbis driver (another session's) to save each posted `OptimizeGearRequest` would replace
   `capture_requests.py`.
+
+### BIS-TANK-SWAP (wave Z10)
+
+BIS-TANK-PICKS' follow-up: four runs drop the death term, Halion's is noise, and nothing the phase 4 pool builds
+survives the Lich King.
+
+**Decided by the user (2026-10-13):** tank swaps, but not Icecrown's 30% buff; death chance normalized at a
+first pick (two passes), counted only on a clearer signal.
+
+- **Tank swap on Soul Reaper.** An ability input, in `TANK_BOSSES` and its Go mirror, marks a cast after which
+  the other tank taunts. The boss then leaves the modelled tank (no swing, no cast on it; a follow-up tick
+  already on it still lands) until that ability's next cast, which lands on the other tank and brings the boss
+  back: the modelled tank holds him every other interval and takes the hasted swings of the other tank's Soul
+  Reaper, not of its own. Healing keeps running, pinned by the same rule on the new fight. A lead: settle the
+  taunt's delay and who holds the boss first from `boss_the_lich_king.cpp` and say what was chosen. The taunts
+  always land (a missed one would only spare the modelled tank).
+  - The bots' Lich King strategy has no such swap today
+    (`[ac]/modules/mod-playerbots/src/Ai/Raid/ICC/Action/ICCActions_LK.cpp`): the fight is modelled as the
+    user decided, not as the bots play it.
+  - Not Algalon, though the bots trade him at 4 Phase Punch stacks (`Uld/Util/UldEncounter_Algalon.h`): the
+    user's call, asked 2026-10-13.
+- **Death chance in two passes.** Where the worn gear's death normalizer fails the bar, the run searches once
+  without the term, measures the normalizer at that pick (paired, the same Armor offsets), and if it clears the
+  bar searches again with it, warm from the first pick. A first pick that still dies in 0 or 100% drops the
+  term with today's warning.
+- **The bar.** 2 se let Halion's 2.2 and 5.8 swamp the score while 27 to 56 se at P2 and P3 priced Stamina
+  sanely. Set it from measurements (`TestMeasureTankDeathTerm`), and bound what the term can add where its
+  normalizer is small; say why.
+- **A boss's spells can miss.** `DmgClass MAGIC` and damage-only `NONE` spells from a level 83 creature miss a
+  level 80 player 1% of the time (`MagicSpellHitResult`); the abilities use `OutcomeAlwaysHit`.
+- **The picks again**, both tanks, phases 1 to 5, Normal, on the 8 Oct roster through
+  `capture_requests.py` ([measuring](../guide/tank-modeling.md#measuring)): BIS-TANK-PICKS' tables, with each
+  run's passes, bar and death chance at the worn gear, the first pick and the final one. Nothing is tuned
+  toward a wanted pick; if the Lich King still kills every loadout, report by how much health.
+- **Time.** The six tank scenarios (`optimizer/{quick,normal}/{prot_paladin_p3,feral_tank_p2,raid25_tank_p1}`)
+  against `tools/perf/baseline.json`'s idle points of 2026-10-13, for what a second pass costs. Loaded
+  timings only say so.
+
+**Verify:** no run drops the death term but one whose first pick dies in 0 or 100% (name them); a DPS raider
+scores the same on the base tree and this one; `sim/optimizer` and `sim/encounters` tests pass,
+`TestTankBossesMirrorUI` covering the new input; tsc, eslint and the tab's and batch's UI tests; every golden
+unchanged.
+
+**Not doing:** the zone buff; a taunt spell or its misses; 69410's 0.25 s missile; the 21-raider pass and the
+tank presets (the deferred BiS chain).
+
+Golden-neutral. **Owns:** `sim/optimizer/`, `sim/encounters/optimizer_tank_boss.go`, `ui/core/optimizer/`,
+`ui/raid/optimizer_*.ts`, the tab's tank controls, `docs/guide/tank-modeling.md`, and `tools/perf`'s three
+tank requests if a stored fight changes. `sim/core` is EC-CORE-FIX7's: ask through `contractChangeRequests`.
