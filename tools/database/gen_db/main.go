@@ -28,6 +28,14 @@ import (
 // go run ./tools/database/gen_db -outDir=assets -gen=db
 // go run ./tools/database/gen_db -outDir=assets -gen=azerothcore -dbcDir=<server DBCs>
 
+// Explosives are cast by spell id, so the UI needs the spell icons too, not just the items'.
+var explosiveSpellIcons = []int32{
+	56350, // Saronite Bomb
+	67769, // Cobalt Frag Bomb
+	56488, // Global Thermal Sapper Charge
+	55039, // Gnomish Lightning Generator
+}
+
 var minId = flag.Int("minid", 1, "Minimum ID to scan for")
 var maxId = flag.Int("maxid", 57000, "Maximum ID to scan for")
 var outDir = flag.String("outDir", "assets", "Path to output directory for writing generated .go files.")
@@ -146,6 +154,10 @@ func main() {
 	}
 
 	for _, spellId := range database.SharedSpellsIcons {
+		db.AddSpellIcon(spellId, spellTooltips)
+	}
+
+	for _, spellId := range explosiveSpellIcons {
 		db.AddSpellIcon(spellId, spellTooltips)
 	}
 

@@ -44,8 +44,8 @@ Rules, held by `TestFightCycles`:
 `<setup>.log.gz`: the e2e's `<setup>_<player>_<unix>.log` (`<unix>`: the fight's first second on the log's clock),
 cut by `simval fight -trim`. Kept: the header and zone lines, the player's and its minions' unit lines, what they
 did from the fight's start to its end to themselves or the dummy but a spell's plain `HIT` target result, a heal, a
-summon or a cast other than the bot's, and before the start only their auras going on and off (what was up at the
-pull, Sniper Training included). The 32 were fought against the worldserver build of 16:52 (rev 3d89793c7), on
+summon, a cast other than the bot's or a death but theirs or the dummy's, and before the start only their auras going on
+and off (what was up at the pull, Sniper Training included). The 32 were fought against the worldserver build of 16:52 (rev 3d89793c7), on
 2026-10-05; DruidFeralTank again on 2026-10-06, wearing its gear set's five enchants; DeathknightFrost, MageFrost and
 RogueSubtlety again on 2026-10-06 against the worldserver build of 19:37 (rev 3d89793c7 plus the module's working
 tree); HunterMM again on 2026-10-10 against the worldserver image of 2026-10-09 (rev 3d89793c7, module 408f7b5),
@@ -53,7 +53,7 @@ Hunter's Mark pulled and the dummy at 19%; MageArcane and WarlockDemonology agai
 worldserver image (rev 3d89793c7, mod-spell-tweaks 9bf5c75: its mage and warlock tweaks); DeathknightBlood and
 WarriorProtectionWarrior again on 2026-10-11 against that day's image (module 8a6f13f), and DruidBalance on
 2026-10-12 against the same image with module bc1d35e's working tree `fight_test.go`, from the hub's outer floor with
-Starfall cast first: 109 KB.
+Starfall cast first: 109 KB. DruidBalancePhase3 the same way on 2026-10-13, with the critters near the floor killed first.
 
 ## Left out
 

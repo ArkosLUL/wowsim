@@ -248,3 +248,57 @@ func TestItemSwapSkipsSameItemWithDifferentReforge(t *testing.T) {
 		t.Errorf("swap slots = %v, want none", character.ItemSwap.slots)
 	}
 }
+
+const enchantTestStatic = 9100031
+
+func init() {
+	AddToDatabase(&proto.SimDatabase{Enchants: []*proto.SimEnchant{{EffectId: enchantTestStatic}}})
+	NewEnchantEffect(enchantTestStatic, func(agent Agent) {
+		agent.GetCharacter().AddStat(stats.Strength, 100)
+	})
+}
+
+// An enchant with a static effect counts for the weapon worn, not for the one in the bag.
+func TestItemSwapLeavesAStaticEnchantOfTheBagWeaponUnapplied(t *testing.T) {
+	strength := func(worn, bag *proto.ItemSpec) float64 {
+		items := make([]*proto.ItemSpec, proto.ItemSlot_ItemSlotRanged+1)
+		for i := range items {
+			items[i] = &proto.ItemSpec{}
+		}
+		items[proto.ItemSlot_ItemSlotMainHand] = worn
+		sim := NewSim(&proto.RaidSimRequest{
+			SimOptions: &proto.SimOptions{RandomSeed: 101, IsTest: true},
+			Raid: &proto.Raid{
+				Parties: []*proto.Party{{
+					Players: []*proto.Player{{
+						Name:           "Swap",
+						Class:          proto.Class_ClassShaman,
+						Consumes:       &proto.Consumes{},
+						Buffs:          &proto.IndividualBuffs{},
+						Spec:           &proto.Player_EnhancementShaman{},
+						Equipment:      &proto.EquipmentSpec{Items: items},
+						EnableItemSwap: true,
+						ItemSwap:       &proto.ItemSwap{MhItem: bag},
+					}},
+					Buffs: &proto.PartyBuffs{},
+				}},
+			},
+			Encounter: &proto.Encounter{
+				Targets:  []*proto.Target{{Name: "target", Level: 83, MobType: proto.MobType_MobTypeDemon}},
+				Duration: 60,
+			},
+		})
+		sim.reset()
+		return sim.Raid.Parties[0].Players[0].GetCharacter().GetStat(stats.Strength)
+	}
+	plain := &proto.ItemSpec{Id: itemTestSwapPlain}
+	enchanted := &proto.ItemSpec{Id: itemTestSwapSocketed, Enchant: enchantTestStatic}
+
+	base := strength(plain, plain)
+	if got := strength(plain, enchanted); got != base {
+		t.Errorf("strength %v with the enchant in the bag, want %v", got, base)
+	}
+	if got := strength(enchanted, plain); got != base+100 {
+		t.Errorf("strength %v with the enchant worn, want %v", got, base+100)
+	}
+}

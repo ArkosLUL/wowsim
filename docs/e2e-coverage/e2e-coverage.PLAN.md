@@ -4104,6 +4104,39 @@ Live stage (notes in `tmp/ec-class-fix6-live.md`; server lock 15:01 to 15:35 on 
   enchants in `sim/core/`, in a small hunk.
 - **Goldens:** none.
 
+#### As built
+
+Code stage (offline; the live stage re-records DruidBalancePhase3):
+- `db.json`: `gen_db` adds `explosiveSpellIcons` (56350, 67769, 56488, 55039) after `SharedSpellsIcons`. Regenerated
+  with `make items`' command through `dock.sh run` and `DBC_DIR` the loop's live DBCs: the diff is those four icon
+  rows plus `db.bin`; `leftover_db.*` and `server_catalog.json` come out unchanged.
+- e2e `fightBuild`: after `fightGround` and before the dummy spawns, `fightKillCritters` kills every creature within
+  `fightClearYards` (40) under GM mode, logging `FIGHTCLEAR`. Vetted only (`go vet -tags=e2e`). `fightSight`'s
+  `LINE_OF_SIGHT` branch and `spellModRun`'s weekly-reset message stay unproven live and unchanged.
+- `simval fight -trim` drops a `UNIT_DIED` unless the victim is the player's, a minion or the dummy
+  (`TestTrimFightDropsCritterDeaths`). `DruidBalance.log.gz` still holds its two critter deaths until re-recorded.
+- `cycles.json`: DruidBalancePhase3 gets DruidBalance's `before` Starfall (53201). The committed log has no Starfall;
+  `TestFightReplays` passes on it, so the replay only needs the live re-record.
+- Item swap (`sim/core/item_swaps.go`, `character.go`): the weapon in the bag applies only the enchants in
+  `swapFollowingEnchants`, those that register through the two `RegisterOnSwapItemFor...Enchant...` helpers (which
+  panic on an id missing from it). Static effects (stats, threat, defense skill, weapon damage) used to count for
+  the bag weapon beside the worn one's; a static enchant on the weapon swapped in now isn't applied at all.
+  `TestItemSwapLeavesAStaticEnchantOfTheBagWeaponUnapplied`.
+- Not touched: the other tests' dummies still stand at the entrance (`newBot`, `spawnInFront`): they are other
+  items' files.
+
+Live stage (2026-10-13, server lock held 13:31 to 13:40; `ac-worldserver` untouched):
+- DruidBalancePhase3 from the outer floor, `TestSimvalFight` with `SIMVAL_FIGHT_ONLY`, 171 s, PASS. `FIGHTCLEAR`
+  killed 3 creatures (a Spider, two Maggots); `FIGHTSPOT` answered `SPELL_FAILED_OUT_OF_RANGE` from both spots
+  (in sight, so `fightSight`'s `LINE_OF_SIGHT` branch wasn't reached); `FIGHTSTEP 53201 Starfall: sent 1, went off 1`.
+  The log has 10 stars (53195), all on the dummy.
+- First run failed: `fightKillCritters` left the last dead critter selected, and the build's `.simval hp 100`
+  answers "Attacker and target must both be alive" on a dead selection. It now selects the bot again after the loop.
+- Re-trimmed into `DruidBalancePhase3.log.gz` (no critter deaths; 2936 bytes, was 2546). `simval fight` replays it
+  73 of 73, 0 dropped (Starfall aura 1 application, 9.95 s against the sim's 10 s), and `TestFightReplays` passes.
+- Not reachable live: `spellModRun`'s weekly-reset message (needs the sweep to run on a reset day). `DruidBalance.log.gz`
+  keeps its two critter deaths (no re-record; the replay doesn't read them). Orphan bots: none.
+
 ## Orchestrator onboarding (wave S start)
 
 - Add waves S–X to the registry and an `EC-` row to "Where the specs are".
