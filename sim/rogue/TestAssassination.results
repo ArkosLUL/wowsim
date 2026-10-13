@@ -104,15 +104,15 @@ dps_results: {
 dps_results: {
  key: "TestAssassination-AllItems-BlessedRegaliaofUndeadCleansing"
  value: {
-  dps: 5860.14483
-  tps: 4343.03517
+  dps: 5928.51767
+  tps: 4393.85213
  }
 }
 dps_results: {
  key: "TestAssassination-AllItems-BonescytheBattlegear"
  value: {
-  dps: 7244.06683
-  tps: 5348.70095
+  dps: 7290.53617
+  tps: 5382.67835
  }
 }
 dps_results: {
@@ -343,8 +343,8 @@ dps_results: {
 dps_results: {
  key: "TestAssassination-AllItems-Gladiator'sVestments"
  value: {
-  dps: 7458.764
-  tps: 5482.69127
+  dps: 7580.14767
+  tps: 5573.54934
  }
 }
 dps_results: {
@@ -560,8 +560,8 @@ dps_results: {
 dps_results: {
  key: "TestAssassination-AllItems-Shadowblade'sBattlegear"
  value: {
-  dps: 9186.8445
-  tps: 6749.12218
+  dps: 9241.34233
+  tps: 6789.50531
  }
 }
 dps_results: {
@@ -581,8 +581,8 @@ dps_results: {
 dps_results: {
  key: "TestAssassination-AllItems-Slayer'sArmor"
  value: {
-  dps: 5783.5875
-  tps: 4291.01188
+  dps: 5827.81
+  tps: 4324.15443
  }
 }
 dps_results: {
@@ -630,8 +630,8 @@ dps_results: {
 dps_results: {
  key: "TestAssassination-AllItems-StormshroudArmor"
  value: {
-  dps: 6423.02783
-  tps: 4766.43251
+  dps: 6483.70017
+  tps: 4811.52962
  }
 }
 dps_results: {
@@ -672,8 +672,8 @@ dps_results: {
 dps_results: {
  key: "TestAssassination-AllItems-TerrorbladeBattlegear"
  value: {
-  dps: 7607.557
-  tps: 5611.9128
+  dps: 7653.279
+  tps: 5645.75351
  }
 }
 dps_results: {
@@ -742,15 +742,15 @@ dps_results: {
 dps_results: {
  key: "TestAssassination-AllItems-UndeadSlayer'sBlessedArmor"
  value: {
-  dps: 6259.302
-  tps: 4629.11375
+  dps: 6302.85367
+  tps: 4661.13119
  }
 }
 dps_results: {
  key: "TestAssassination-AllItems-VanCleef'sBattlegear"
  value: {
-  dps: 7375.28983
-  tps: 5442.1952
+  dps: 7461.094
+  tps: 5506.17057
  }
 }
 dps_results: {
@@ -2114,8 +2114,8 @@ dps_results: {
 dps_results: {
  key: "TestAssassination-SwitchInFrontOfTarget-Default"
  value: {
-  dps: 7453.65817
-  tps: 5488.7818
+  dps: 7625.81967
+  tps: 5616.93438
  }
 }
 dps_results: {
