@@ -377,3 +377,73 @@ func TestUpdateTableFindsTheUpdateAtATime(t *testing.T) {
 		}
 	}
 }
+
+// The table is right where a search is easiest to get wrong: either side of every update's start and of
+// every bucket's start, and the last drawn update.
+func TestUpdateTableAtTheEdges(t *testing.T) {
+	for name, settings := range map[string]*proto.ServerSettings{"long tick": nil, "even ticks": evenTicks()} {
+		sim, _ := newSettingsTestSim(t, settings, nil)
+		updates := sim.updates
+		for seed := int64(0); seed < 5; seed++ {
+			sim.reseedRands(seed)
+			sim.reset()
+			updates.growTo(updates.limit - 1)
+			check := func(at time.Duration) {
+				t.Helper()
+				if at < updates.at[0] || at >= updates.at[len(updates.at)-1] {
+					return
+				}
+				k := updates.stretch(at)
+				if updates.at[k] > at || updates.at[k+1] <= at {
+					t.Fatalf("%s, seed %d: update %d [%v, %v) doesn't hold %v", name, seed, k, updates.at[k], updates.at[k+1], at)
+				}
+			}
+			for _, at := range slices.Clone(updates.at) {
+				check(at - 1)
+				check(at)
+				check(at + 1)
+			}
+			for b := range updates.tab {
+				at := updates.at[0] + time.Duration(b)<<updates.tabShift
+				check(at - 1)
+				check(at)
+				check(at + 1)
+			}
+		}
+	}
+}
+
+// With ticks of one length the updates are drawn as they always were: one step per update from the seed's
+// bits, in order, whatever time asked for them.
+func TestEvenTickUpdatesAreDrawnLikeTheCursorWalk(t *testing.T) {
+	sim, _ := newSettingsTestSim(t, evenTicks(), nil)
+	updates := sim.updates
+	lengths := updates.lengths
+	// the reference draw below is the old loop's bit handling and cut-off
+	first := updates.at[0]
+	updates.reset(first, first+100*time.Second, 7)
+	limit := updates.limit
+	updates.growTo(limit - 1)
+	var rng SplitMix64
+	rng.Seed(7)
+	var bitsLeft uint64
+	nbits := 0
+	want := []time.Duration{first}
+	for want[len(want)-1] < limit {
+		if nbits < updateLengthBits {
+			bitsLeft, nbits = rng.Next(), 64/updateLengthBits*updateLengthBits
+		}
+		length := lengths.length[bitsLeft&(updateLengthCount-1)]
+		bitsLeft >>= updateLengthBits
+		nbits -= updateLengthBits
+		last := want[len(want)-1]
+		next := last + length
+		if next > limit-lengths.shortest {
+			next = limit
+		}
+		want = append(want, next)
+	}
+	if !slices.Equal(updates.at[:len(want)], want) {
+		t.Fatalf("the drawn updates differ from the cursor walk's: %v vs %v", updates.at[:5], want[:5])
+	}
+}

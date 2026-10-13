@@ -47,6 +47,9 @@ type OptimizerTankAbility struct {
 	// back: the modelled tank holds the boss every other interval, and the haste of a cast it
 	// didn't take falls on it.
 	SwapsTank bool
+	// The spell hits everyone around the boss, not its victim (Infest is cast on itself), so it lands on the
+	// modelled tank while the other tank holds the boss.
+	Raidwide bool
 }
 
 // OptimizerTankBoss is one phase boss as the optimizer's tank runs fight it: the swinging generic
@@ -116,6 +119,7 @@ func (a OptimizerTankAbility) inputs() []*proto.TargetInput {
 	out := []*proto.TargetInput{
 		numberInput(spellIDLabel, float64(a.SpellID)), numberInput("School", float64(a.School)),
 		numberInput("Resets swing", flag(a.ResetsSwing)), numberInput("Can miss", flag(a.CanMiss)), numberInput("Swaps tank", flag(a.SwapsTank)),
+		numberInput("Raidwide", flag(a.Raidwide)),
 	}
 	for _, field := range a.fields() {
 		out = append(out, numberInput(field.label, *field.value))
@@ -209,6 +213,8 @@ func bossFromInputs(inputs []*proto.TargetInput) (hitChance float64, abilities [
 			ability.CanMiss = input.NumberValue != 0
 		case "Swaps tank":
 			ability.SwapsTank = input.NumberValue != 0
+		case "Raidwide":
+			ability.Raidwide = input.NumberValue != 0
 		default:
 			known = false
 			for _, field := range ability.fields() {
@@ -341,7 +347,7 @@ func (ai *optimizerTankBossAI) ExecuteCustomRotation(sim *core.Simulation) {
 		s := &ai.spells[i]
 		if sim.CurrentTime >= s.nextAt {
 			s.nextAt = sim.CurrentTime + max(s.gap(sim), time.Millisecond)
-			if ai.away {
+			if ai.away && !s.Raidwide {
 				if s.SwapsTank {
 					ai.takeBack(sim, s)
 				}
@@ -351,7 +357,7 @@ func (ai *optimizerTankBossAI) ExecuteCustomRotation(sim *core.Simulation) {
 			landed := s.LandChance == 0 || s.LandChance >= 1 || sim.RandomFloat("Optimizer Tank Boss Interrupt") < s.LandChance
 			if landed && s.spell.Cast(sim, ai.target.CurrentTarget) {
 				castEnd := max(ai.target.Hardcast.Expires, sim.CurrentTime)
-				if s.ResetsSwing {
+				if s.ResetsSwing && !ai.away {
 					readyAt := castEnd
 					if castEnd > sim.CurrentTime {
 						// a cast with a cast time goes off in the boss's event pass, ahead of that update's

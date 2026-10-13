@@ -2589,10 +2589,13 @@ that can miss, a pure addition if none fits.
   AI (`CancelAutoSwing` / `EnableAutoSwing` hand the boss over; away, no cast lands). Choices: the modelled tank
   is the main tank and holds him first, since the script's first Soul Reaper (40 s into phases 2 and 3,
   `EVENT_SOUL_REAPER`) lands on whoever holds the boss; no taunt delay, since Soul Reaper resets his swing and
-  a taunt inside 1.5 s changes no swing; the other tank's casts still start 69410's haste. Infest, cast while
-  the boss is away, is skipped, so the tank takes half the Soul Reapers and half the Infests (5 and 6 in a
-  300 s fight). Casts keep their 30.5 s period; an Infest in progress delays the next Soul Reaper (92 s, not
-  91.5).
+  a taunt inside 1.5 s changes no swing; the other tank's casts still start 69410's haste. Casts keep
+  their 30.5 s period; an Infest in progress delays the next Soul Reaper (92 s, not 91.5). The tank takes half
+  the Soul Reapers (5 in a 300 s fight).
+- **Infest (cross-review fix).** `Raidwide` (input "Raidwide") on Infest: the script casts it on the boss itself
+  (`EVENT_INFEST`, `me->CastSpell(me, SPELL_INFEST)`), so it hits everyone around him, not his victim. The first
+  build skipped it while the boss was away and the tank took 6 of 13; it now takes all 13 (a 22.5 s period), and
+  an away Infest restarts no swing.
 - **Misses.** "Can miss" on Frostbolt 55802 and 55807, Quantum Strike, Black Hole Explosion, Penetrating Cold,
   Infest and Flame Breath, checked against `Object.cpp` `SpellHitResult` and the live DBC rows (no spell family,
   no `ALWAYS_HIT`, none in `SpellInfoCorrections.cpp`). Phase Punch, Freezing Slash and Soul Reaper never miss.
@@ -2612,10 +2615,12 @@ that can miss, a pure addition if none fits.
 - **Tests.** `TestTankSwapsOnSoulReaper`, `TestTankBossSpellsMissAsTheServerRolls`,
   `TestTankBossFollowUpTicksOnce` (replacing the haste check, now in the swap test),
   `TestDeathCoefficientNeedsAClearSignal`, `TestDeathChanceComesBackAtTheFirstPick`; `TestTankBossesMirrorUI`
-  reads the two new fields; the cast test halves its rate for a boss that swaps.
+  reads the two new fields; the cast test halves the rate of a swapping boss's victim-aimed casts only.
 - **Verify so far:** `sim/optimizer/...` and `sim/encounters/...` pass (616 s), vet, gofmt, tsc and eslint on
   `pool_builder.ts` clean. DPS raider before (base tree, Angry, Normal, stage 1, `tmp/dps-before/`): P2
   10333.5737 Troll 2,142,250 sims, P3 13850.4487 Orc 2,007,000. Stage 2 has the rest.
+- `TotalSims` of a two-pass run is the first pass's, the death pair's and what the second pass adds to the
+  points the first had cached, not the second's reads of them again (cross-review fix).
 - `tools/perf`'s three tank requests are untouched: they read the new inputs as 0 (always hit), and only the
   Lich King swaps.
 

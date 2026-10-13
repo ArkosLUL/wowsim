@@ -65,7 +65,7 @@ var tankBosses = map[int32]tankBoss{
 		Abilities: []encounters.OptimizerTankAbility{
 			{SpellID: 73799, School: proto.SpellSchool_SpellSchoolShadow, Damage: 103081, PeriodMin: 30.5, PeriodMax: 30.5, ResetsSwing: true,
 				FollowUpSeconds: 5, FollowUpDamage: 70000, FollowUpHaste: 2, FollowUpHasteSeconds: 5, SwapsTank: true},
-			{SpellID: 73781, School: proto.SpellSchool_SpellSchoolShadow, Damage: 18750, PeriodMin: 22.5, PeriodMax: 22.5, CastSeconds: 2, ResetsSwing: true, CanMiss: true},
+			{SpellID: 73781, School: proto.SpellSchool_SpellSchoolShadow, Damage: 18750, PeriodMin: 22.5, PeriodMax: 22.5, CastSeconds: 2, ResetsSwing: true, CanMiss: true, Raidwide: true},
 		},
 	}, proto.RaidDifficulty_RaidDifficulty25Heroic},
 	5: {encounters.OptimizerTankBoss{
@@ -207,6 +207,8 @@ func readTankBossesFromUI(tb testing.TB) map[int32]tankBoss {
 					a.CanMiss = raw == "true"
 				case "swapsTank":
 					a.SwapsTank = raw == "true"
+				case "raidwide":
+					a.Raidwide = raw == "true"
 				default:
 					tb.Fatalf("unknown ability field %q in %q", key, line)
 				}

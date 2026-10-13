@@ -66,8 +66,8 @@ func TestTankBossCastsTheListedAbilities(t *testing.T) {
 			if ability.LandChance > 0 {
 				wantRate *= ability.LandChance
 			}
-			if bossSwapsTank(boss) {
-				// the modelled tank holds him every other interval, and takes every other tank swap cast
+			if bossSwapsTank(boss) && !ability.Raidwide {
+				// the modelled tank holds him every other interval, and takes every other cast aimed at his victim
 				wantRate /= 2
 			}
 			t.Logf("phase %d %s (%d): %.0f per cast against %.0f, %.4f casts/s against %.4f", phase, boss.Name, ability.SpellID,
@@ -281,7 +281,8 @@ func TestTankBossFollowUpTicksOnce(t *testing.T) {
 
 // The tanks swap after each Soul Reaper. The modelled tank takes the first one and the boss leaves it
 // until the next cast, which lands on the other tank. That cast's haste falls on the modelled tank's
-// swings, and the Infests cast while the boss is away don't land on it.
+// swings. Infest is cast on the boss itself and hits everyone around it, so it keeps landing on the modelled
+// tank while the other tank holds the boss.
 func TestTankSwapsOnSoulReaper(t *testing.T) {
 	const phase = 4
 	boss := tankBosses[phase]
@@ -318,7 +319,17 @@ func TestTankSwapsOnSoulReaper(t *testing.T) {
 	if len(reapers) < 4 || math.Abs(reapers[0]-period) > 0.1 || math.Abs(reapers[1]-reapers[0]-2*period) > 2.5 {
 		t.Fatalf("Soul Reaper landed on the tank at %v, want every %.1f s from %.1f s", reapers, 2*period, period)
 	}
-	checked := 0
+	checked, awayInfests := 0, 0
+	infests := 0
+	for _, e := range events {
+		if e.kind == bossEventCast && e.index == 1 {
+			infests++
+		}
+	}
+	// one every 22.5 s, whoever holds the boss
+	if want := 300 / boss.Abilities[1].PeriodMin; float64(infests) < want-2 || float64(infests) > want+1 {
+		t.Errorf("%d Infests landed on the tank in 300 s, want about %.0f", infests, want)
+	}
 	for _, cast := range reapers {
 		if cast+period > 299 {
 			continue
@@ -327,12 +338,12 @@ func TestTankSwapsOnSoulReaper(t *testing.T) {
 			t.Errorf("%d swings at the tank while the other tank holds the boss after the cast at %.2f", n, cast)
 		}
 		if castIn(1, cast+0.1, cast+period-0.1) {
-			t.Errorf("an Infest landed on the tank while the other tank held the boss after the cast at %.2f", cast)
+			awayInfests++
 		}
 		// the other tank's Soul Reaper comes at cast + period, its haste 5 s later
 		hasteFrom := cast + period + ability.FollowUpSeconds
 		hasteTo := hasteFrom + ability.FollowUpHasteSeconds
-		if hasteTo+ability.FollowUpHasteSeconds > 299 || castIn(1, cast+period-3, hasteTo+ability.FollowUpHasteSeconds+gap) {
+		if hasteTo+ability.FollowUpHasteSeconds > 299 || castIn(1, hasteFrom-3*gap, hasteTo+ability.FollowUpHasteSeconds) {
 			continue
 		}
 		checked++
@@ -342,6 +353,9 @@ func TestTankSwapsOnSoulReaper(t *testing.T) {
 			t.Errorf("after the cast at %.2f: %d swings in the %.0f s of haste and %d in the same time after, want about %.1f and %.1f",
 				cast, fast, ability.FollowUpHasteSeconds, after, want*ability.FollowUpHaste, want)
 		}
+	}
+	if awayInfests == 0 {
+		t.Error("no Infest landed on the tank while the other tank held the boss")
 	}
 	if checked < 1 {
 		t.Errorf("only %d hasted stretches without an Infest cast inside to check", checked)

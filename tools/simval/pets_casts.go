@@ -431,6 +431,8 @@ func checkPetsCastsSummon(rec petsCastsRecord, runs map[bool]petsCastsImageRun, 
 	return checks
 }
 
+// a Frostbolt whose flight ends within an update of the corpse going may have its hit or not: the live
+// update isn't the sim's, and a packet's time is good to a few tens of ms
 const petsCastsHitEdgeMs = petsCastsUpdateMs
 
 // checkPetsCastsHits holds each recorded Frostbolt that went off to the sim's rule for a missile of a summon

@@ -39,9 +39,10 @@ the melee-only `GenericBossTarget` instead, with Patchwerk's numbers.
   `followUpHaste` multiplies the boss's melee speed for `followUpHasteSeconds` as it ticks (Soul Reaper's 69410).
 - `swapsTank` (Soul Reaper, instant casts only): the other tank taunts after each cast, so the boss alternates.
   The modelled tank holds him first and takes the 1st, 3rd... cast, with its follow-up tick even after the
-  boss left. Between casts 1 and 2 the boss neither swings at it nor casts on it (no Infest); cast 2 lands on
+  boss left. Between casts 1 and 2 the boss neither swings at it nor casts at its victim; cast 2 lands on
   the other tank, who has just taunted back: the modelled tank holds the boss until cast 3, and takes the
-  haste of cast 2's follow-up (a timer at the follow-up delay hastes the boss all the same). No taunt delay:
+  haste of cast 2's follow-up (a timer at the follow-up delay hastes the boss all the same). A `raidwide`
+  ability (Infest, cast on the boss itself) still lands every cast, without restarting a swing. No taunt delay:
   Soul Reaper resets his swing, so a taunt inside the swing time (1.5 s) costs the tank nothing. The bots
   don't swap, and Algalon (traded at 4 Phase Punch stacks) isn't swapped, nor is Icecrown's 30% buff
   modelled: the user's calls. The Lich King's script has no Soul Reaper in phase 1 and 40 s into phases 2
@@ -75,20 +76,16 @@ that under `dualWield`, varied by `TANK_HEAL_CADENCE_VARIATION` (0.5) of itself,
   under `SaveAllValues`, for a unit that tanks). Where a pick all but never dies (Anub'arak), the death third
   is flat and only TMI prices Stamina.
 - **Death chance in two passes** (`optimize`). The normalizer must clear `deathMinSE` (10 se): worn gear
-  that dies 10 to 30% of iterations reads 27 to 56 se and prices Stamina sanely, while Halion's worn gear
-  (99.7 to 99.9%) reads 3.0 and 5.7, and at 2 se death chance swamped the score. The coefficient is capped
-  at the Armor the loadout wears (J's points are Armor; a certain death can't cost more than the Armor).
-  Where the worn gear fails the bar, the first search runs without the term and holds its warning back. Then
-  the normalizer is measured at its pick (`measureDeath`, paired, ±2000 Armor): if it clears the bar, a second
-  search warm-starts from the pick with death chance counted at that normalizer (`countDeathAt`), and its
-  result stands, with a warning naming both; if the pick dies in 0 or 100%, or fails the bar, the first
-  result stands with the warning of each.
-- The worn gear dies in every iteration on the Lich King and all but never on Kel'Thuzad P1; ±8000 Armor,
-  16,000 iterations or healing at 0.75 to 4 times DTPS don't move the Lich King off 100%. Whether a pick
-  brings the term back is then up to the pick: Felesta's Lich King pick dies in 79% (12.4 se, a second search
-  ran); Bulwark's in 99.94% (1.7 se, term out), where half survive only at about 85,000 health against 50,600,
-  Felesta's at about 65,000 against 53,100. Halion's picks die in 53 to 54% and both ran a second search.
-  Kel'Thuzad P1 picks die in 0% and keep the term out.
+  that dies 10 to 30% of iterations clears it and prices Stamina sanely, while a gear that nearly always dies
+  reads a few se and lets death chance swamp the score. The coefficient is capped at the Armor the loadout
+  wears (J's points are Armor; a certain death can't cost more than the Armor). Where the worn gear fails the
+  bar, the first search runs without the term and holds its warning back. Then the normalizer is measured at
+  its pick (`measureDeath`, paired, ±2000 Armor): if it clears the bar, a second search warm-starts from the
+  pick with death chance counted at that normalizer (`countDeathAt`), and its result stands, with a warning
+  naming both; if the pick dies in 0 or 100%, or fails the bar, the first result stands with the warning of
+  each. `TotalSims` counts what the passes simmed, not the second one's reads of cached points.
+- Neither ±8000 Armor, 16,000 iterations nor healing at 0.75 to 4 times DTPS moves a worn gear that dies in
+  every iteration off 100%, so whether a pick brings the term back is up to the pick.
 - The Defense and hit floors come before the score: a P1 pool has almost no Defense, so its gems go there
   though a Stamina socket is worth 1.4 to 2.6 times any other.
 

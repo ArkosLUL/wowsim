@@ -4121,7 +4121,13 @@ Code stage (offline; the live stage re-records DruidBalancePhase3):
   `swapFollowingEnchants`, those that register through the two `RegisterOnSwapItemFor...Enchant...` helpers (which
   panic on an id missing from it). Static effects (stats, threat, defense skill, weapon damage) used to count for
   the bag weapon beside the worn one's; a static enchant on the weapon swapped in now isn't applied at all.
-  `TestItemSwapLeavesAStaticEnchantOfTheBagWeaponUnapplied`.
+  `TestItemSwapLeavesAStaticEnchantOfTheBagWeaponUnapplied`. Cross-review: the list missed 3273 (Deathfrost) and
+  3370 (Razorice), which register their own `RegisterOnItemSwap` callback instead of a helper, so a bag weapon
+  with either lost it; both are in now. The server's swap (`Player::SwapItem`, `_ApplyItemMods`) removes the old
+  weapon's enchants and applies the new one's, static ones included; the sim moves stat enchants (they are item
+  stats) but not an enchant effect with a static part (the Death Knight runes 3883, 3847, 3594, 3365, 3595,
+  3367, 3369 and weapon enchants like 3247 or 963). No preset or suite swaps to one, so it's a follow-up: make
+  those effects reversible on `RegisterOnItemSwap`, ten or so, each an inverse stat or pseudo-stat change.
 - Not touched: the other tests' dummies still stand at the entrance (`newBot`, `spawnInFront`): they are other
   items' files.
 

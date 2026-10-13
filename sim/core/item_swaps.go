@@ -92,12 +92,13 @@ func (character *Character) RegisterOnItemSwap(callback OnSwapItem) {
 	character.ItemSwap.onSwapCallbacks = append(character.ItemSwap.onSwapCallbacks, callback)
 }
 
-// Enchants whose effect goes on and off with the swap, through the two helpers below. Any other enchant's effect
-// is static (stats, threat, weapon damage), so the weapon in the bag leaves it unapplied, or it would stay on
-// beside the worn one's.
+// Enchants whose effect goes on and off with the swap, through the two helpers below or their own
+// RegisterOnItemSwap (3273, 3370). Any other enchant's effect is static (stats, threat, weapon damage), so the
+// weapon in the bag leaves it unapplied, or it would stay on beside the worn one's. Add an enchant here when it
+// registers a swap callback.
 var swapFollowingEnchants = map[int32]bool{
-	1900: true, 2673: true, 3225: true, 3239: true, 3241: true, 3251: true, 3368: true, 3748: true, 3784: true,
-	3789: true, 3790: true,
+	1900: true, 2673: true, 3225: true, 3239: true, 3241: true, 3251: true, 3273: true, 3368: true, 3370: true,
+	3748: true, 3784: true, 3789: true, 3790: true,
 }
 
 func checkSwapFollowingEnchant(effectID int32) {

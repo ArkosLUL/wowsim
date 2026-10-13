@@ -225,6 +225,8 @@ export interface TankAbility {
 	// The other tank taunts right after this instant cast, so the boss leaves the modelled tank until
 	// the ability's next cast, which lands on the other tank and brings the boss back.
 	swapsTank?: boolean;
+	// The spell hits everyone around the boss, not its victim, so it lands while the other tank holds him.
+	raidwide?: boolean;
 }
 
 export interface TankBoss {
@@ -312,7 +314,7 @@ export const TANK_BOSSES: Record<number, TankBoss> = {
 			// 50% of his average swing at once, then 70000 five seconds later, when 69410 doubles his melee speed for 5 s.
 			// The tanks swap after each cast; the modelled one holds him first
 			{ name: 'Soul Reaper', spellId: 73799, school: SpellSchool.SpellSchoolShadow, damage: 103081, periodMin: 30.5, periodMax: 30.5, resetsSwing: true, followUpSeconds: 5, followUpDamage: 70000, followUpHaste: 2, followUpHasteSeconds: 5, swapsTank: true },
-			{ name: 'Infest', spellId: 73781, school: SpellSchool.SpellSchoolShadow, damage: 18750, periodMin: 22.5, periodMax: 22.5, castSeconds: 2, resetsSwing: true, canMiss: true },
+			{ name: 'Infest', spellId: 73781, school: SpellSchool.SpellSchoolShadow, damage: 18750, periodMin: 22.5, periodMax: 22.5, castSeconds: 2, resetsSwing: true, canMiss: true, raidwide: true },
 		],
 	},
 	5: {
@@ -355,6 +357,7 @@ function abilityInputs(ability: TankAbility): Array<TargetInput> {
 		['Resets swing', ability.resetsSwing ? 1 : 0],
 		['Can miss', ability.canMiss ? 1 : 0],
 		['Swaps tank', ability.swapsTank ? 1 : 0],
+		['Raidwide', ability.raidwide ? 1 : 0],
 		['Follow-up delay', ability.followUpSeconds ?? 0],
 		['Follow-up damage', ability.followUpDamage ?? 0],
 		['Follow-up haste', ability.followUpHaste ?? 0],

@@ -254,7 +254,8 @@ func optimize(ctx context.Context, asked, simmed *Request, eval Evaluator, progr
 	}
 	// the pick the result holds: the search's best, or the seed where nothing beat it
 	pick := first.best
-	dm, err := measureDeath(ctx, eval, simmed, pick, first.budget.Iterations)
+	measured := &countingEvaluator{inner: eval, have: map[Point]int{}}
+	dm, err := measureDeath(ctx, measured, simmed, pick, first.budget.Iterations)
 	if err != nil {
 		result.Warnings = append(result.Warnings, first.obj.DeathWarning, fmt.Sprintf("couldn't measure death chance at the pick, so it stays out: %v", err))
 		return result
@@ -268,12 +269,13 @@ func optimize(ctx context.Context, asked, simmed *Request, eval Evaluator, progr
 	}
 	next := *simmed
 	next.WarmStarts = append(slices.Clone(simmed.WarmStarts), pick)
-	_, second := optimizePass(ctx, asked, &next, eval, progress, start, &dm)
+	secondRun, second := optimizePass(ctx, asked, &next, eval, progress, start, &dm)
 	if second.ErrorResult != "" {
 		result.Warnings = append(result.Warnings, first.obj.DeathWarning, fmt.Sprintf("the second search, with death chance counted, failed: %s", firstLine(second.ErrorResult)))
 		return result
 	}
-	second.TotalSims += result.TotalSims
+	// the second search reads the first's cached points again; only what it adds to them was simmed
+	second.TotalSims = int32(first.eval.simmed() + measured.simmed() + secondRun.eval.simmedBeyond(first.eval))
 	second.Warnings = append([]string{fmt.Sprintf("%s; the first search's pick dies in %.0f%% of iterations and %g Armor moves that %.1f standard errors, so a second search counted death chance from that pick",
 		first.obj.DeathWarning, dm.Dies*100, normalizerOffset(stats.Armor), -dm.Norm.Mean/dm.Norm.SE)}, second.Warnings...)
 	second.Warnings = slices.Compact(second.Warnings)
@@ -880,6 +882,19 @@ func (c *countingEvaluator) simmed() int64 {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	return c.used
+}
+
+// simmedBeyond is the iterations this evaluator read past what other already had of the same points.
+func (c *countingEvaluator) simmedBeyond(other *countingEvaluator) int64 {
+	other.mu.Lock()
+	defer other.mu.Unlock()
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	var total int64
+	for p, n := range c.have {
+		total += int64(max(0, n-other.have[p]))
+	}
+	return total
 }
 
 func (r *run) remaining() int64 {
