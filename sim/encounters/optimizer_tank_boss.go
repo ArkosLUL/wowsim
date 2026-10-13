@@ -294,7 +294,7 @@ func (ai *optimizerTankBossAI) ExecuteCustomRotation(sim *core.Simulation) {
 					if castEnd > sim.CurrentTime {
 						// a cast with a cast time goes off in the boss's event pass, ahead of that update's
 						// attack timers, so the restarted swing has an update off it already
-						readyAt -= sim.NextServerTick(castEnd+time.Nanosecond) - castEnd
+						readyAt -= castEnd - sim.ServerTickBefore(castEnd)
 					}
 					ai.target.AutoAttacks.StopMeleeUntil(sim, readyAt, false)
 				}
