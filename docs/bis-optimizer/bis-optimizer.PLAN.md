@@ -2579,3 +2579,80 @@ Golden-neutral. **Owns:** `sim/optimizer/`, `sim/encounters/optimizer_tank_boss.
 `ui/raid/optimizer_*.ts`, the tab's tank controls, `docs/guide/tank-modeling.md`, and `tools/perf`'s three
 tank requests if a stored fight changes. `sim/core` is EC-CORE-FIX7's: ask through `contractChangeRequests`, but for an outcome for a creature's spell
 that can miss, a pure addition if none fits.
+
+#### As built
+
+**Stage 1, the model.** Sim `346249292` plus this item. No `sim/core` change: `OutcomeMagicHit` already rolls
+`MagicSpellHitResult`. Mechanics and rules live in [tank-modeling](../guide/tank-modeling.md).
+
+- **Swap.** `swapsTank` / `SwapsTank` (input "Swaps tank") on Soul Reaper, in `TANK_BOSSES`, its Go mirror and the
+  AI (`CancelAutoSwing` / `EnableAutoSwing` hand the boss over; away, no cast lands). Choices: the modelled tank
+  is the main tank and holds him first, since the script's first Soul Reaper (40 s into phases 2 and 3,
+  `EVENT_SOUL_REAPER`) lands on whoever holds the boss; no taunt delay, since Soul Reaper resets his swing and
+  a taunt inside 1.5 s changes no swing; the other tank's casts still start 69410's haste. Infest, cast while
+  the boss is away, is skipped, so the tank takes half the Soul Reapers and half the Infests (5 and 6 in a
+  300 s fight). Casts keep their 30.5 s period; an Infest in progress delays the next Soul Reaper (92 s, not
+  91.5).
+- **Misses.** "Can miss" on Frostbolt 55802 and 55807, Quantum Strike, Black Hole Explosion, Penetrating Cold,
+  Infest and Flame Breath, checked against `Object.cpp` `SpellHitResult` and the live DBC rows (no spell family,
+  no `ALWAYS_HIT`, none in `SpellInfoCorrections.cpp`). Phase Punch, Freezing Slash and Soul Reaper never miss.
+  Quantum Strike missed 0.97% of 79,471 casts. A missed cast applies no follow-up.
+- **Two passes and the bar.** `optimize` / `optimizePass` / `measureDeath` / `deathCoefficient`
+  (`objective.go`, `api.go`). Bar 10 se (`deathMinSE`), coefficient capped at the loadout's Armor. Worn-gear
+  normalizers, ±2000 Armor, Bulwark / Felesta, on the swap fights (`TestMeasureTankModel`): P1 2.0 / 1.3 se
+  (death 0.0013 / 0.0027), P2 48.3 / 53.4 (0.147 / 0.299), P3 29.7 / 28.2 (0.122 / 0.094), P4 none (1.0000
+  both), P5 3.0 / 5.7 (0.9985 / 0.9968). So P1, P4 and P5 go to a first search without the term. Healthy 28 to
+  53 se stays above the bar and Halion's 3.0 and 5.7 below it; `TestMeasureTankDeathTerm` has ±4000 reaching
+  4.4 / 9.5 at P5, ±8000 7.5 / 15.8, 16,000 iterations 5.8 / 12.2.
+- **At picks** (`TestMeasureTankDeathAtPicks`, wave Z9's picks, which were made on the old fights, so only a
+  guide to the second pass): Bulwark P5 pick dies 0.867 at 17.4 se (coefficient 12,486), Felesta P4 0.868 at
+  11.6 (14,304), Felesta P5 0.270 at 33.5, Bulwark P1 and Felesta P1 picks 0 (stay out), Bulwark P4 pick 0.9996
+  at 1.7 (stays out). The cap never bound; the largest counted coefficient was 14,304 against 18,000 to 37,000
+  Armor. Uncapped, Halion's worn gear read 109,804 and 414,815.
+- **Tests.** `TestTankSwapsOnSoulReaper`, `TestTankBossSpellsMissAsTheServerRolls`,
+  `TestTankBossFollowUpTicksOnce` (replacing the haste check, now in the swap test),
+  `TestDeathCoefficientNeedsAClearSignal`, `TestDeathChanceComesBackAtTheFirstPick`; `TestTankBossesMirrorUI`
+  reads the two new fields; the cast test halves its rate for a boss that swaps.
+- **Verify so far:** `sim/optimizer/...` and `sim/encounters/...` pass (616 s), vet, gofmt, tsc and eslint on
+  `pool_builder.ts` clean. DPS raider before (base tree, Angry, Normal, stage 1, `tmp/dps-before/`): P2
+  10333.5737 Troll 2,142,250 sims, P3 13850.4487 Orc 2,007,000. Stage 2 has the rest.
+- `tools/perf`'s three tank requests are untouched: they read the new inputs as 0 (always hit), and only the
+  Lich King swaps.
+
+**Stage 2, the picks.** Both tanks, phases 1 to 5, stage 1, Normal, the 8 Oct roster and sources, one driver
+pass on this tree (loaded machine; details in [tank-modeling](../guide/tank-modeling.md)).
+
+- **Verify, terms:** the death term drops only where the first pick dies in 0 or 100%: Bulwark P1 and Felesta P1
+  (0%), Bulwark P4 (99.94%). Bulwark P5, Felesta P4 and Felesta P5 ran a second search (worn gear 100% dead, 3.0,
+  none and 5.7 se; first picks 70, 86 and 54% dead at 18.1, 12.4 and 14.9 se). The other four count it from the
+  worn gear (29 to 53 se).
+- **Verify, the DPS raider:** Angry, Normal, stage 1: base tree and this one score P2 10333.5737 (Troll,
+  2,142,250 sims) and P3 13850.4487 (Orc, 2,007,000), same gear, race, sims and warnings.
+- **Verify, the rest:** `./sim/... ./tools/... ./cmd/...` 50 ok, none failing, no golden moved; simval 1114 of
+  1114; vet, gofmt, tsc and eslint clean; `optimizer_tab.spec.ts` and `bis_batch.spec.ts` 10 of 10.
+
+Picks (final death chance, DTPS, TMI, TPS; Hit is 263 to 280 against the 262 floor):
+
+| Run | Pick | Metrics | Passes |
+|---|---|---|---|
+| Bulwark P1 | Sta 2929, Def 709, health 40,519; gems Def 5, Sta 3, Resil 2, hit 2, Agi 2 | 0, 2334, 60, 6997 | one, term out |
+| Bulwark P2 | Sta 3582, Agi 430, health 46,780; gems Sta 11, hit 5, Agi 2 | 0.022, 9860, 213, 10350 | one, 48 se |
+| Bulwark P3 | Sta 3843, Agi 651, health 49,388; gems Agi+Sta 5, Sta 4, Agi 4, hit 3, Sta+Def 3 | 0, 2400, 65, 10466 | one, 30 se |
+| Bulwark P4 | Sta 3967, Agi 997, health 50,624; gems Agi 11, Agi+Sta 6, Sta+Def 3, Def 2 | 0.9994, 5159, 211, 13816 | one, term out |
+| Bulwark P5 | Sta 4295, Def 1188, Exp 371, health 53,911; gems Agi 8, Def 6, Agi+Sta 4, Exp 3 | 0.542, 6061, 150, 11949 | two |
+| Felesta P1 | Sta 3045, Def 695, health 42,869; gems Sta 10, Def 2, hit 1 | 0, 2406, 57, 7846 | one, term out |
+| Felesta P2 | Sta 3186, Def 780, Dodge 585, health 44,008; gems Sta 8, Def 4, hit 3, Agi 3 | 0.114, 8104, 185, 13365 | one, 53 se |
+| Felesta P3 | Sta 3287, Def 1016, Dodge 1078, health 45,013; gems Dodge 10, Sta+Dodge 6, Def+Dodge 3 | 0.002, 1755, 58, 11738 | one, 28 se |
+| Felesta P4 | Sta 4100, Def 1300, Dodge 990, health 53,149; gems Def 12, Sta+Def 5, Agi+Sta 4 | 0.794, 3742, 149, 11173 | two |
+| Felesta P5 | Sta 3696, Def 1414, Dodge 908, health 49,104; gems Def 17, Def+Parry 4, Sta+Def 2 | 0.532, 4572, 128, 15100 | two |
+
+- **The Lich King still kills.** Bulwark's pick dies in 99.94%: half survive at about 85,000 health (50,624
+  worn), 10% die at 111,000. Felesta's: half at about 65,000 (53,149). Every socket Stamina: 56,639 / 0.993 and
+  58,488 / 0.742. Halion's picks die in 53 to 54%; Bulwark's reaches 0 at 81,000 health.
+- **Normalizers at the picks:** Bulwark P2 19.8 se, P5 24.2; Felesta P2 31.6, P4 14.0, P5 11.1; coefficients
+  counted 2.1 to 10.7 thousand, never near the Armor cap (18,000 to 38,000).
+- **Time** (`tools/perf`, `-procs 16 -raid-procs 16 -reps 3`, loaded by the other items, so no claim): the six
+  tank scenarios sim the baseline's counts (none takes a second pass) and read wall +40 to +117%, cpu +20 to
+  +36% against the idle baseline. A second pass costs 1.6 to 2.1 million sims on the runs that take it: Bulwark
+  P5 3.2 to 5.0 million, Felesta P4 2.3 to 4.4, P5 3.0 to 5.6, over Z9's.
+- **Left:** the second search's `TotalSims` counts cached sims again. `tools/perf`'s requests and baseline stay.

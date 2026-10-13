@@ -49,6 +49,10 @@ func bossAbilityDamage(tb testing.TB, player *proto.Player, phase int32, iterati
 	return perCast, castsPerSecond
 }
 
+func bossSwapsTank(boss tankBoss) bool {
+	return slices.ContainsFunc(boss.Abilities, func(a encounters.OptimizerTankAbility) bool { return a.SwapsTank })
+}
+
 // The boss casts what TANK_BOSSES lists, at the cadence it lists it, and every cast lands for no more
 // than its damage, follow-up included. The tank's damage taken multipliers, resistance and Ardent
 // Defender take part of it, which is why the lower bound is loose; armor takes most of a Physical one.
@@ -61,6 +65,10 @@ func TestTankBossCastsTheListedAbilities(t *testing.T) {
 			wantRate := 1 / ((ability.PeriodMin + ability.PeriodMax) / 2)
 			if ability.LandChance > 0 {
 				wantRate *= ability.LandChance
+			}
+			if bossSwapsTank(boss) {
+				// the modelled tank holds him every other interval, and takes every other tank swap cast
+				wantRate /= 2
 			}
 			t.Logf("phase %d %s (%d): %.0f per cast against %.0f, %.4f casts/s against %.4f", phase, boss.Name, ability.SpellID,
 				perCast[i], ability.Damage+ability.FollowUpDamage, castsPerSecond[i], wantRate)
@@ -134,7 +142,7 @@ func bossFightLog(t *testing.T, phase int32) []bossEvent {
 		}
 		events = append(events, event)
 	}
-	if swings < 100 {
+	if swings < 60 {
 		t.Fatalf("phase %d: read %d boss swings off the log, want a fight's worth", phase, swings)
 	}
 	return events
@@ -145,7 +153,12 @@ func hastedBetween(boss tankBoss, events []bossEvent) [][2]float64 {
 	var out [][2]float64
 	for _, e := range events {
 		if e.kind == bossEventTick {
-			out = append(out, [2]float64{e.at, e.at + boss.Abilities[e.index].FollowUpHasteSeconds})
+			ability := boss.Abilities[e.index]
+			out = append(out, [2]float64{e.at, e.at + ability.FollowUpHasteSeconds})
+			if ability.SwapsTank {
+				// the other tank's cast, a period on, hastes the boss the same way
+				out = append(out, [2]float64{e.at + ability.PeriodMin, e.at + ability.PeriodMin + ability.FollowUpHasteSeconds})
+			}
 		}
 	}
 	return out
@@ -183,6 +196,10 @@ func TestTankBossSwingRestartsAfterItsCasts(t *testing.T) {
 					next = later.at
 					break
 				}
+			}
+			if boss.Abilities[cast.index].SwapsTank {
+				// the boss leaves for the other tank, see TestTankSwapsOnSoulReaper
+				continue
 			}
 			whole := swingTime
 			if boss.Abilities[cast.index].CastSeconds > 0 {
@@ -230,30 +247,16 @@ func usualSwingGap(events []bossEvent) float64 {
 	return gaps[len(gaps)/2]
 }
 
-// Soul Reaper's aura ticks once, 5 s after the cast that left it, and the Lich King then swings twice
-// as fast for 5 s. An Infest cast in that stretch holds his melee, so those are left out.
-func TestTankBossFollowUpTicksOnceAndHastesTheBoss(t *testing.T) {
+// Soul Reaper's aura ticks once, 5 s after the cast that left it, though the boss has gone to the other
+// tank by then.
+func TestTankBossFollowUpTicksOnce(t *testing.T) {
 	const phase = 4
 	boss := tankBosses[phase]
 	events := bossFightLog(t, phase)
-	swingTime := usualSwingGap(events)
-
-	swingsIn := func(from, to float64) (n int, held bool) {
-		for _, e := range events {
-			switch {
-			case e.kind == bossEventSwing && e.at > from && e.at <= to:
-				n++
-			case e.kind == bossEventCast && boss.Abilities[e.index].CastSeconds > 0 && e.at > from-swingTime && e.at <= to+swingTime:
-				held = true
-			}
-		}
-		return n, held
-	}
-
-	followUps, hasted := 0, 0
+	followUps := 0
 	for i, cast := range events {
 		ability := boss.Abilities[cast.index]
-		if cast.kind != bossEventCast || ability.FollowUpSeconds == 0 || cast.at+ability.FollowUpSeconds+2*ability.FollowUpHasteSeconds > 300 {
+		if cast.kind != bossEventCast || ability.FollowUpSeconds == 0 || cast.at+ability.FollowUpSeconds > 299 {
 			continue
 		}
 		followUps++
@@ -266,26 +269,121 @@ func TestTankBossFollowUpTicksOnceAndHastesTheBoss(t *testing.T) {
 				ticks = append(ticks, later.at)
 			}
 		}
-		tickAt := cast.at + ability.FollowUpSeconds
-		if len(ticks) != 1 || math.Abs(ticks[0]-tickAt) > 0.02 {
+		if tickAt := cast.at + ability.FollowUpSeconds; len(ticks) != 1 || math.Abs(ticks[0]-tickAt) > 0.02 {
 			t.Errorf("spell %d cast at %.2f ticked at %v, want once at %.2f", ability.SpellID, cast.at, ticks, tickAt)
-			continue
-		}
-		fast, heldFast := swingsIn(tickAt, tickAt+ability.FollowUpHasteSeconds)
-		after, heldAfter := swingsIn(tickAt+ability.FollowUpHasteSeconds+swingTime, tickAt+2*ability.FollowUpHasteSeconds+swingTime)
-		if heldFast || heldAfter {
-			continue
-		}
-		hasted++
-		// a window's edges can cut one swing either way
-		wantFast := ability.FollowUpHasteSeconds / swingTime * ability.FollowUpHaste
-		if float64(fast) < wantFast-1 || float64(fast) > wantFast+1 || float64(after) > ability.FollowUpHasteSeconds/swingTime+1 {
-			t.Errorf("spell %d cast at %.2f: %d swings in the %.0f s after its tick and %d in the same time later, want about %.1f and %.1f",
-				ability.SpellID, cast.at, fast, ability.FollowUpHasteSeconds, after, wantFast, ability.FollowUpHasteSeconds/swingTime)
 		}
 	}
-	if followUps < 5 || hasted < 2 {
-		t.Errorf("%d casts with a follow-up in the log, %d of them with no cast holding the boss after, want at least 5 and 2", followUps, hasted)
+	if followUps < 3 {
+		t.Errorf("%d casts with a follow-up in the log, want at least 3", followUps)
+	}
+}
+
+// The tanks swap after each Soul Reaper. The modelled tank takes the first one and the boss leaves it
+// until the next cast, which lands on the other tank. That cast's haste falls on the modelled tank's
+// swings, and the Infests cast while the boss is away don't land on it.
+func TestTankSwapsOnSoulReaper(t *testing.T) {
+	const phase = 4
+	boss := tankBosses[phase]
+	events := bossFightLog(t, phase)
+	gap := usualSwingGap(events)
+	ability := boss.Abilities[0]
+	if !ability.SwapsTank {
+		t.Fatal("the Lich King's first ability should swap the tank")
+	}
+	period := ability.PeriodMin
+
+	swingsIn := func(from, to float64) (n int) {
+		for _, e := range events {
+			if e.kind == bossEventSwing && e.at > from && e.at <= to {
+				n++
+			}
+		}
+		return n
+	}
+	castIn := func(index int, from, to float64) bool {
+		for _, e := range events {
+			if e.kind == bossEventCast && e.index == index && e.at > from && e.at < to {
+				return true
+			}
+		}
+		return false
+	}
+	var reapers []float64
+	for _, e := range events {
+		if e.kind == bossEventCast && e.index == 0 {
+			reapers = append(reapers, e.at)
+		}
+	}
+	if len(reapers) < 4 || math.Abs(reapers[0]-period) > 0.1 || math.Abs(reapers[1]-reapers[0]-2*period) > 2.5 {
+		t.Fatalf("Soul Reaper landed on the tank at %v, want every %.1f s from %.1f s", reapers, 2*period, period)
+	}
+	checked := 0
+	for _, cast := range reapers {
+		if cast+period > 299 {
+			continue
+		}
+		if n := swingsIn(cast+0.1, cast+period-0.1); n != 0 {
+			t.Errorf("%d swings at the tank while the other tank holds the boss after the cast at %.2f", n, cast)
+		}
+		if castIn(1, cast+0.1, cast+period-0.1) {
+			t.Errorf("an Infest landed on the tank while the other tank held the boss after the cast at %.2f", cast)
+		}
+		// the other tank's Soul Reaper comes at cast + period, its haste 5 s later
+		hasteFrom := cast + period + ability.FollowUpSeconds
+		hasteTo := hasteFrom + ability.FollowUpHasteSeconds
+		if hasteTo+ability.FollowUpHasteSeconds > 299 || castIn(1, cast+period-3, hasteTo+ability.FollowUpHasteSeconds+gap) {
+			continue
+		}
+		checked++
+		fast, after := swingsIn(hasteFrom, hasteTo), swingsIn(hasteTo, hasteTo+ability.FollowUpHasteSeconds)
+		want := ability.FollowUpHasteSeconds / gap
+		if float64(fast) < want*ability.FollowUpHaste-1 || float64(fast) > want*ability.FollowUpHaste+1 || float64(after) > want+1 {
+			t.Errorf("after the cast at %.2f: %d swings in the %.0f s of haste and %d in the same time after, want about %.1f and %.1f",
+				cast, fast, ability.FollowUpHasteSeconds, after, want*ability.FollowUpHaste, want)
+		}
+	}
+	if checked < 1 {
+		t.Errorf("only %d hasted stretches without an Infest cast inside to check", checked)
+	}
+	if n := swingsIn(0, period); n < int(period/gap)-2 {
+		t.Errorf("%d swings in the first %.1f s, want the tank holding the boss first", n, period)
+	}
+}
+
+// A spell that rolls the server's magic hit misses a level 80 tank 1% of the time, one that doesn't
+// never does.
+func TestTankBossSpellsMissAsTheServerRolls(t *testing.T) {
+	for _, tc := range []struct {
+		phase int32
+		index int
+	}{{2, 0}, {2, 1}, {4, 0}} {
+		boss := tankBosses[tc.phase]
+		req := tankOptimizeRequest(t, protPaladin(t, "p3"), tc.phase)
+		rsr := goproto.Clone(req.Base).(*proto.RaidSimRequest)
+		rsr.SimOptions = &proto.SimOptions{Iterations: 1000, RandomSeed: 11, IsTest: true}
+		rsr.Encounter.Duration, rsr.Encounter.DurationVariation = 300, 0
+		rsr.Raid.Parties[0].Players[0].HealingModel = nil
+		result := core.RunRaidSim(rsr)
+		if result.ErrorResult != "" {
+			t.Fatal(result.ErrorResult)
+		}
+		ability := boss.Abilities[tc.index]
+		var casts, misses float64
+		for _, action := range result.GetEncounterMetrics().GetTargets()[0].GetActions() {
+			if action.GetId().GetSpellId() == ability.SpellID && action.GetId().GetTag() == int32(tc.index) {
+				for _, target := range action.GetTargets() {
+					casts += float64(target.GetCasts())
+					misses += float64(target.GetMisses())
+				}
+			}
+		}
+		t.Logf("%s %d: %.0f casts, %.0f missed (%.2f%%)", boss.Name, ability.SpellID, casts, misses, misses/casts*100)
+		if casts < 3000 {
+			t.Fatalf("spell %d: %.0f casts, want a sample", ability.SpellID, casts)
+		}
+		if rate := misses / casts; ability.CanMiss && (rate < 0.007 || rate > 0.013) || !ability.CanMiss && misses > 0 {
+			t.Errorf("spell %d (can miss %v) missed %.2f%% of %.0f casts, want 1%% or none", ability.SpellID, ability.CanMiss, rate*100, casts)
+		}
 	}
 }
 

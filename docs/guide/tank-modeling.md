@@ -26,11 +26,26 @@ the melee-only `GenericBossTarget` instead, with Patchwerk's numbers.
   AI takes `hitChance` off `PseudoStats.IncreasedMissChance`.
 - The boss's hit chance and each ability travel as labelled `target_inputs`, an ability starting at its
   "Spell id". The AI reads them by label: a missing one is 0, an unknown one panics.
-- The AI casts an ability with `OutcomeAlwaysHit` at a period rolled between its two, so only the school's
-  resistance and damage-taken multipliers cut it, and armor a `Physical` one. That is a `DmgClass NONE` spell
-  on the server (`MagicSpellHitResult`, no block); `SPELL_ATTR3_NO_AVOIDANCE` is never read.
+- The AI casts an ability at a period rolled between its two. It never dodges, parries or blocks, so only the
+  school's resistance and damage-taken multipliers cut it, and armor a `Physical` one (`DmgClass NONE` on the
+  server; `SPELL_ATTR3_NO_AVOIDANCE` is never read).
+- `canMiss` abilities roll `OutcomeMagicHit`, 1% for a level 83 creature against a level 80 player
+  (`MagicSpellHitResult`); the rest use `OutcomeAlwaysHit`. By `DmgClass` and `Effect`s (`SpellHitResult`; no
+  spell family or `SPELL_ATTR3_ALWAYS_HIT` on any of them): MAGIC rolls (Frostbolt, volley, Black Hole
+  Explosion, Penetrating Cold, Flame Breath); NONE rolls only when every effect is school damage or a periodic
+  damage aura (Quantum Strike, Infest). Phase Punch (periodic dummy), Freezing Slash and Soul Reaper (weapon
+  percent damage) never miss.
 - `followUpSeconds` and `followUpDamage` are a periodic aura's one tick after the cast, a DoT of it.
   `followUpHaste` multiplies the boss's melee speed for `followUpHasteSeconds` as it ticks (Soul Reaper's 69410).
+- `swapsTank` (Soul Reaper, instant casts only): the other tank taunts after each cast, so the boss alternates.
+  The modelled tank holds him first and takes the 1st, 3rd... cast, with its follow-up tick even after the
+  boss left. Between casts 1 and 2 the boss neither swings at it nor casts on it (no Infest); cast 2 lands on
+  the other tank, who has just taunted back: the modelled tank holds the boss until cast 3, and takes the
+  haste of cast 2's follow-up (a timer at the follow-up delay hastes the boss all the same). No taunt delay:
+  Soul Reaper resets his swing, so a taunt inside the swing time (1.5 s) costs the tank nothing. The bots
+  don't swap, and Algalon (traded at 4 Phase Punch stacks) isn't swapped, nor is Icecrown's 30% buff
+  modelled: the user's calls. The Lich King's script has no Soul Reaper in phase 1 and 40 s into phases 2
+  and 3; the fight casts it from 30.5 s.
 - A cast with a cast time holds the boss's melee. A cast that fails its land chance is skipped and holds nothing:
   the raid interrupted it or it went to another player.
 - `resetsSwing` restarts the boss's swing as the cast goes off (`Spell::IsAutoActionResetSpell`: untriggered,
@@ -54,27 +69,34 @@ that under `dualWield`, varied by `TANK_HEAL_CADENCE_VARIATION` (0.5) of itself,
 
 - `tankMetricWeights` and `TankWeights` give threat its slider share and split survival in thirds: DTPS, TMI,
   chance of death. The Advanced editor overrides them.
-- Armor is the reference stat for the three, with a `normalizerOffset` of 2000. A metric whose normalizer
-  doesn't clear 2 se is dropped with a warning.
+- Armor is the reference stat for the three, with a `normalizerOffset` of 2000. DTPS and TMI are dropped with a
+  warning where their normalizer doesn't clear 2 se; death chance's rules are below.
 - Chance of death pairs like the others: core lists each iteration's death (`UnitMetrics.iteration_deaths`,
   under `SaveAllValues`, for a unit that tanks). Where a pick all but never dies (Anub'arak), the death third
   is flat and only TMI prices Stamina.
-- Where the gear as equipped all but always or never dies, the death normalizer doesn't clear 2 se and the
-  run drops the term with a warning. The raid's gear all but never dies on Kel'Thuzad and always on the Lich
-  King, and no gear in either pool changes that: half the Lich King's iterations survive only at 81,000 to
-  96,000 health. On the Lich King neither ±8000 Armor, 16,000 iterations nor healing at 0.75 to 4 times DTPS
-  moves it off 100%; on Kel'Thuzad ±8000 Armor or healing at 1.0 times DTPS brings the term back, and 1.0
-  kills the same gear on Algalon in 87 to 99%.
-- A normalizer that clears 2 se by little (Halion, worn gear dying in 99.7 to 99.9%) keeps the term with a
-  noisy, oversized coefficient: death chance swamps the score, and the stat curves measured at that gear can
-  be noise.
+- **Death chance in two passes** (`optimize`). The normalizer must clear `deathMinSE` (10 se): worn gear
+  that dies 10 to 30% of iterations reads 27 to 56 se and prices Stamina sanely, while Halion's worn gear
+  (99.7 to 99.9%) reads 3.0 and 5.7, and at 2 se death chance swamped the score. The coefficient is capped
+  at the Armor the loadout wears (J's points are Armor; a certain death can't cost more than the Armor).
+  Where the worn gear fails the bar, the first search runs without the term and holds its warning back. Then
+  the normalizer is measured at its pick (`measureDeath`, paired, ±2000 Armor): if it clears the bar, a second
+  search warm-starts from the pick with death chance counted at that normalizer (`countDeathAt`), and its
+  result stands, with a warning naming both; if the pick dies in 0 or 100%, or fails the bar, the first
+  result stands with the warning of each.
+- The worn gear dies in every iteration on the Lich King and all but never on Kel'Thuzad P1; ±8000 Armor,
+  16,000 iterations or healing at 0.75 to 4 times DTPS don't move the Lich King off 100%. Whether a pick
+  brings the term back is then up to the pick: Felesta's Lich King pick dies in 79% (12.4 se, a second search
+  ran); Bulwark's in 99.94% (1.7 se, term out), where half survive only at about 85,000 health against 50,600,
+  Felesta's at about 65,000 against 53,100. Halion's picks die in 53 to 54% and both ran a second search.
+  Kel'Thuzad P1 picks die in 0% and keep the term out.
 - The Defense and hit floors come before the score: a P1 pool has almost no Defense, so its gems go there
   though a Stamina socket is worth 1.4 to 2.6 times any other.
 
 ## Measuring
 
 `TestMeasureTankModel` (worn gear: death chance, normalizers, dJ per stat point), `TestMeasureTankPicks`
-(the same at a batch export's picks, plus death chance against health) and `TestMeasureTankDeathTerm` (the
+(the same at a batch export's picks, plus death chance against health), `TestMeasureTankDeathAtPicks` (the
+death normalizer, coefficient and cap at the worn gear and at a pick) and `TestMeasureTankDeathTerm` (the
 death normalizer under other Armor offsets, iteration counts and healing) sim the requests the page posted,
 never one rebuilt from its saved raid: the save holds no rotation (`TypeAuto` resolves as the page builds a
 request) and no raid buffs, so that tank only auto-attacks and dies far more often.
@@ -85,7 +107,7 @@ request) and no raid buffs, so that tank only auto-attacks and dies far more oft
 2. Run the tanks through `http://127.0.0.1:3348`, by hand or with the
    [acbis driver](../../tools/database/acbis/driver/README.md)'s `--base`, on a Chrome `--port` and `--out`
    of its own.
-3. `MSYS_NO_PATHCONV=1 tools/acore/dock.sh exec env BIS_REQUESTS=/wotlk/tmp/requests [BIS_PICKS=/wotlk/tmp/<batch-stage1.json>] go test -tags with_db -v -run 'TestMeasureTank(Model|Picks|DeathTerm)' ./sim/optimizer/`
+3. `MSYS_NO_PATHCONV=1 tools/acore/dock.sh exec env BIS_REQUESTS=/wotlk/tmp/requests [BIS_PICKS=/wotlk/tmp/<batch-stage1.json>] go test -tags with_db -v -run 'TestMeasureTank(Model|Picks|DeathAtPicks|DeathTerm)' ./sim/optimizer/`
 
 Requests and exports hold the roster: they go under the gitignored `tmp/`, which the container can read,
 and are deleted afterwards, never committed.

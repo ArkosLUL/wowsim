@@ -219,6 +219,12 @@ export interface TankAbility {
 	// As that tick fires the boss swings followUpHaste times as fast for followUpHasteSeconds.
 	followUpHaste?: number;
 	followUpHasteSeconds?: number;
+	// The spell rolls the server's magic hit (MagicSpellHitResult): DmgClass MAGIC, or a damage-only
+	// DmgClass NONE with no spell family. A level 83 creature misses a level 80 player 1% of the time.
+	canMiss?: boolean;
+	// The other tank taunts right after this instant cast, so the boss leaves the modelled tank until
+	// the ability's next cast, which lands on the other tank and brings the boss back.
+	swapsTank?: boolean;
 }
 
 export interface TankBoss {
@@ -263,8 +269,8 @@ export const TANK_BOSSES: Record<number, TankBoss> = {
 		attackPower: 783,
 		abilities: [
 			// the raid interrupts about half of the single-target casts; a landed one holds his melee
-			{ name: 'Frostbolt', spellId: 55802, school: SpellSchool.SpellSchoolFrost, damage: 30000, periodMin: 2, periodMax: 10, castSeconds: 2, landChance: 0.5, resetsSwing: true },
-			{ name: 'Frostbolt volley', spellId: 55807, school: SpellSchool.SpellSchoolFrost, damage: 8000, periodMin: 15, periodMax: 30 },
+			{ name: 'Frostbolt', spellId: 55802, school: SpellSchool.SpellSchoolFrost, damage: 30000, periodMin: 2, periodMax: 10, castSeconds: 2, landChance: 0.5, resetsSwing: true, canMiss: true },
+			{ name: 'Frostbolt volley', spellId: 55807, school: SpellSchool.SpellSchoolFrost, damage: 8000, periodMin: 15, periodMax: 30, canMiss: true },
 		],
 	},
 	2: {
@@ -276,10 +282,10 @@ export const TANK_BOSSES: Record<number, TankBoss> = {
 		noParryHaste: true,
 		abilities: [
 			// DmgClass NONE, so no dodge, parry or block, but armor cuts it
-			{ name: 'Quantum Strike', spellId: 64592, school: SpellSchool.SpellSchoolPhysical, damage: 35000, periodMin: 3, periodMax: 4.5 },
+			{ name: 'Quantum Strike', spellId: 64592, school: SpellSchool.SpellSchoolPhysical, damage: 35000, periodMin: 3, periodMax: 4.5, canMiss: true },
 			{ name: 'Phase Punch', spellId: 64412, school: SpellSchool.SpellSchoolArcane, damage: 9500, periodMin: 15.5, periodMax: 15.5 },
 			// 4 stars per 60 to 120 s, only above 20% health
-			{ name: 'Black Hole Explosion', spellId: 65108, school: SpellSchool.SpellSchoolShadow, damage: 21000, periodMin: 25, periodMax: 25 },
+			{ name: 'Black Hole Explosion', spellId: 65108, school: SpellSchool.SpellSchoolShadow, damage: 21000, periodMin: 25, periodMax: 25, canMiss: true },
 		],
 	},
 	3: {
@@ -292,7 +298,7 @@ export const TANK_BOSSES: Record<number, TankBoss> = {
 			// 25% of his average swing
 			{ name: 'Freezing Slash', spellId: 66012, school: SpellSchool.SpellSchoolFrost, damage: 20788, periodMin: 15, periodMax: 20, resetsSwing: true },
 			// 5 of 25 players per cast, a 6000 tick every 3 s for 18 s, on the surface 72 of every 80 s
-			{ name: 'Penetrating Cold', spellId: 68510, school: SpellSchool.SpellSchoolFrost, damage: 6000, periodMin: 3, periodMax: 3, landChance: 0.18 },
+			{ name: 'Penetrating Cold', spellId: 68510, school: SpellSchool.SpellSchoolFrost, damage: 6000, periodMin: 3, periodMax: 3, landChance: 0.18, canMiss: true },
 		],
 	},
 	4: {
@@ -303,9 +309,10 @@ export const TANK_BOSSES: Record<number, TankBoss> = {
 		noParryHaste: true,
 		suppressDodge: true,
 		abilities: [
-			// 50% of his average swing at once, then 70000 five seconds later, when 69410 doubles his melee speed for 5 s
-			{ name: 'Soul Reaper', spellId: 73799, school: SpellSchool.SpellSchoolShadow, damage: 103081, periodMin: 30.5, periodMax: 30.5, resetsSwing: true, followUpSeconds: 5, followUpDamage: 70000, followUpHaste: 2, followUpHasteSeconds: 5 },
-			{ name: 'Infest', spellId: 73781, school: SpellSchool.SpellSchoolShadow, damage: 18750, periodMin: 22.5, periodMax: 22.5, castSeconds: 2, resetsSwing: true },
+			// 50% of his average swing at once, then 70000 five seconds later, when 69410 doubles his melee speed for 5 s.
+			// The tanks swap after each cast; the modelled one holds him first
+			{ name: 'Soul Reaper', spellId: 73799, school: SpellSchool.SpellSchoolShadow, damage: 103081, periodMin: 30.5, periodMax: 30.5, resetsSwing: true, followUpSeconds: 5, followUpDamage: 70000, followUpHaste: 2, followUpHasteSeconds: 5, swapsTank: true },
+			{ name: 'Infest', spellId: 73781, school: SpellSchool.SpellSchoolShadow, damage: 18750, periodMin: 22.5, periodMax: 22.5, castSeconds: 2, resetsSwing: true, canMiss: true },
 		],
 	},
 	5: {
@@ -316,7 +323,7 @@ export const TANK_BOSSES: Record<number, TankBoss> = {
 		hitChance: 5,
 		enemyDodgeMultiplier: 0.8,
 		abilities: [
-			{ name: 'Flame Breath', spellId: 74528, school: SpellSchool.SpellSchoolFire, damage: 45000, periodMin: 10, periodMax: 12, castSeconds: 2, resetsSwing: true },
+			{ name: 'Flame Breath', spellId: 74528, school: SpellSchool.SpellSchoolFire, damage: 45000, periodMin: 10, periodMax: 12, castSeconds: 2, resetsSwing: true, canMiss: true },
 		],
 	},
 };
@@ -346,6 +353,8 @@ function abilityInputs(ability: TankAbility): Array<TargetInput> {
 		['Cast time', ability.castSeconds ?? 0],
 		['Land chance', ability.landChance ?? 1],
 		['Resets swing', ability.resetsSwing ? 1 : 0],
+		['Can miss', ability.canMiss ? 1 : 0],
+		['Swaps tank', ability.swapsTank ? 1 : 0],
 		['Follow-up delay', ability.followUpSeconds ?? 0],
 		['Follow-up damage', ability.followUpDamage ?? 0],
 		['Follow-up haste', ability.followUpHaste ?? 0],

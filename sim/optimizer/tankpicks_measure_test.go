@@ -226,3 +226,42 @@ func TestMeasureTankPicks(t *testing.T) {
 		}
 	}
 }
+
+// TestMeasureTankDeathAtPicks prints, per tank pick of a BiS Batch export, the death normalizer at the
+// gear as worn and at the pick (what optimize's second search is gated on), the coefficient it gives
+// death chance, and that coefficient capped at the Armor the loadout wears. It asserts nothing.
+//
+//	BIS_REQUESTS=<dir> BIS_PICKS=<batch-stage1.json> go test -tags with_db -run TestMeasureTankDeathAtPicks -v ./sim/optimizer/
+func TestMeasureTankDeathAtPicks(t *testing.T) {
+	picks := batchPicks(t)
+	iterations := EffortBudget(proto.OptimizerEffort_OptimizerEffortNormal).Iterations
+	ctx := context.Background()
+	for _, p := range picks {
+		tag := fmt.Sprintf("%s P%d", p.raider, p.phase)
+		r := tankFightRequest(t, p.raider, p.phase)
+		eval := NewSimEvaluator(r, MetricDTPS, MetricTMI, MetricTPS, MetricPDeath)
+		best := p.result.GetBest()
+		race := best.GetRacialTraits()
+		if race == proto.Race_RaceUnknown {
+			race = r.Seed.RacialTraits
+		}
+		pick, err := LoadoutFromProto(best.GetEquipment(), race)
+		if err != nil {
+			t.Fatalf("%s: %v", tag, err)
+		}
+		weight := TankWeights(r.Settings.GetTankSurvival())[MetricPDeath]
+		for _, at := range []struct {
+			what string
+			l    Loadout
+		}{{"worn", r.Equipped}, {"pick", pick}} {
+			dm, err := measureDeath(ctx, eval, r, at.l, iterations)
+			if err != nil {
+				t.Fatalf("%s: %v", tag, err)
+			}
+			coef, left := deathCoefficient(weight, dm)
+			uncapped := weight / dm.Norm.Mean
+			t.Logf("%s %s: dies %.4f (%.4f at -2000 Armor, %.4f at +2000), %.3g ± %.2g per Armor point = %.1f se, Armor %.0f, coefficient %.0f uncapped, %.0f counted; left out: %q",
+				tag, at.what, dm.Dies, dm.Down, dm.Up, dm.Norm.Mean, dm.Norm.SE, -dm.Norm.Mean/max(dm.Norm.SE, 1e-12), dm.Armor, uncapped, coef, left)
+		}
+	}
+}
