@@ -683,6 +683,10 @@ message Target {
 	// CREATURE_FLAG_EXTRA_NO_XP: killing it gives no experience or honor, so a proc that
 	// needs a victim worth either (Blood Presence's heal) never fires on it.
 	bool no_xp = 22;
+
+	// SPELL_AURA_MOD_ENEMY_DODGE on the creature: the dodge chance of whoever it attacks
+	// is multiplied by this (0.8 under Halion's Twilight Precision). Unset means 1.
+	double enemy_dodge_multiplier = 23;
 }
 
 message Encounter {

@@ -13,8 +13,9 @@ import (
 // attached. Only the optimizer sends it; the tank suites keep GenericBossTarget.
 const OptimizerTankBossID = 999998
 
-// OptimizerTankAbility is a boss spell that damages its current tank and that armor and avoidance
-// can't remove: it always hits, so only the school's resistance and damage taken multipliers touch it.
+// OptimizerTankAbility is a boss spell that damages its current tank and that avoidance can't remove:
+// it always hits. The school's resistance and damage taken multipliers still cut it, and armor cuts
+// a Physical one.
 type OptimizerTankAbility struct {
 	SpellID int32
 	School  proto.SpellSchool
@@ -26,15 +27,21 @@ type OptimizerTankAbility struct {
 	CastSeconds float64
 	// Share of the casts that land; players interrupt the rest before they hold any melee. 0 means 1.
 	LandChance float64
-	// Seconds added to the first cast, to offset a paired ability (Soul Reaper's delayed tick).
+	// Seconds added to the first cast.
 	StartSeconds float64
 	// The boss's swing timer restarts when the cast goes off: an untriggered spell with
 	// SPELL_INTERRUPT_FLAG_INTERRUPT (Spell::IsAutoActionResetSpell).
 	ResetsSwing bool
+	// The cast leaves a periodic aura on the tank that ticks once, FollowUpSeconds after it lands, for
+	// FollowUpDamage of the same school. 0 seconds means no aura.
+	FollowUpSeconds, FollowUpDamage float64
+	// As that tick fires the boss swings FollowUpHaste times as fast for FollowUpHasteSeconds (Soul
+	// Reaper's 69410). 0 means no haste.
+	FollowUpHaste, FollowUpHasteSeconds float64
 }
 
 // OptimizerTankBoss is one phase boss as the optimizer's tank runs fight it: the swinging generic
-// boss at the phase boss's own numbers, plus the abilities of its fight that mitigation can't touch.
+// boss at the phase boss's own numbers, plus the abilities of its fight that avoidance can't touch.
 type OptimizerTankBoss struct {
 	Name string
 	// creature_template.DamageModifier and BaseAttackTime (0 falls back to the server's 2000 ms).
@@ -50,7 +57,11 @@ type OptimizerTankBoss struct {
 	NoParryHaste bool
 	// ICC bosses' Chill of the Throne.
 	SuppressDodge bool
-	Abilities     []OptimizerTankAbility
+	// SPELL_AURA_MOD_HIT_CHANCE on the boss, in points: its swings miss that much less.
+	HitChance float64
+	// SPELL_AURA_MOD_ENEMY_DODGE on the boss: the tank's dodge against it times this. 0 means 1.
+	EnemyDodgeMultiplier float64
+	Abilities            []OptimizerTankAbility
 }
 
 // Class 1, level 83 creature_classlevelstats.
@@ -59,25 +70,47 @@ const (
 	genericAttackPower = 805
 )
 
-// The labels of a TargetInput group, in order; abilities travel as consecutive groups.
-var optimizerTankAbilityLabels = [...]string{"Spell id", "School", "Damage", "Period min", "Period max", "Cast time", "Land chance", "Start", "Resets swing"}
+// The target inputs' labels: the boss's own first, then each ability's, starting at its spell id.
+const (
+	hitChanceLabel = "Hit chance"
+	spellIDLabel   = "Spell id"
+)
+
+// fields is every other input of an ability, by label.
+func (a *OptimizerTankAbility) fields() []struct {
+	label string
+	value *float64
+} {
+	return []struct {
+		label string
+		value *float64
+	}{
+		{"Damage", &a.Damage}, {"Period min", &a.PeriodMin}, {"Period max", &a.PeriodMax},
+		{"Cast time", &a.CastSeconds}, {"Land chance", &a.LandChance}, {"Start", &a.StartSeconds},
+		{"Follow-up delay", &a.FollowUpSeconds}, {"Follow-up damage", &a.FollowUpDamage},
+		{"Follow-up haste", &a.FollowUpHaste}, {"Follow-up haste time", &a.FollowUpHasteSeconds},
+	}
+}
+
+func numberInput(label string, value float64) *proto.TargetInput {
+	return &proto.TargetInput{InputType: proto.InputType_Number, Label: label, NumberValue: value}
+}
 
 func (a OptimizerTankAbility) inputs() []*proto.TargetInput {
 	resetsSwing := 0.0
 	if a.ResetsSwing {
 		resetsSwing = 1
 	}
-	values := [...]float64{float64(a.SpellID), float64(a.School), a.Damage, a.PeriodMin, a.PeriodMax, a.CastSeconds, a.LandChance, a.StartSeconds, resetsSwing}
-	out := make([]*proto.TargetInput, len(values))
-	for i, v := range values {
-		out[i] = &proto.TargetInput{InputType: proto.InputType_Number, Label: optimizerTankAbilityLabels[i], NumberValue: v}
+	out := []*proto.TargetInput{numberInput(spellIDLabel, float64(a.SpellID)), numberInput("School", float64(a.School)), numberInput("Resets swing", resetsSwing)}
+	for _, field := range a.fields() {
+		out = append(out, numberInput(field.label, *field.value))
 	}
 	return out
 }
 
-// OptimizerTankBossTarget is GenericBossTargetAt for a phase boss, with its stat row, off hand and
-// abilities. Creature::CalculateMinMaxDamage scales the weapon by DamageModifier and the attack time
-// in seconds, so a faster boss swings smaller, not less per second.
+// OptimizerTankBossTarget is GenericBossTargetAt for a phase boss, with its stat row, off hand, auras
+// and abilities. Creature::CalculateMinMaxDamage scales the weapon by DamageModifier and the attack
+// time in seconds, so a faster boss swings smaller, not less per second.
 func OptimizerTankBossTarget(boss OptimizerTankBoss) *proto.Target {
 	attackTimeMs := boss.AttackTimeMs
 	if attackTimeMs <= 0 {
@@ -99,6 +132,8 @@ func OptimizerTankBossTarget(boss OptimizerTankBoss) *proto.Target {
 	target.DualWield = boss.DualWield
 	target.ParryHaste = !boss.NoParryHaste
 	target.SuppressDodge = boss.SuppressDodge
+	target.EnemyDodgeMultiplier = boss.EnemyDodgeMultiplier
+	target.TargetInputs = []*proto.TargetInput{numberInput(hitChanceLabel, boss.HitChance)}
 	for _, ability := range boss.Abilities {
 		target.TargetInputs = append(target.TargetInputs, ability.inputs()...)
 	}
@@ -130,37 +165,56 @@ func NewOptimizerTankBossAI() core.TargetAI {
 	return &optimizerTankBossAI{}
 }
 
-func abilitiesFromInputs(inputs []*proto.TargetInput) []OptimizerTankAbility {
-	group := len(optimizerTankAbilityLabels)
-	if len(inputs)%group != 0 {
-		panic(fmt.Sprintf("optimizer tank boss: %d target inputs, want a multiple of %d", len(inputs), group))
-	}
-	var out []OptimizerTankAbility
-	for i := 0; i < len(inputs); i += group {
-		for j, label := range optimizerTankAbilityLabels {
-			if inputs[i+j].Label != label {
-				panic(fmt.Sprintf("optimizer tank boss: input %d is %q, want %q", i+j, inputs[i+j].Label, label))
+// bossFromInputs reads back what OptimizerTankBossTarget put in the target inputs: the boss's hit
+// chance and its abilities. It goes by label, so a request saved before an input existed still reads,
+// with that field at 0.
+func bossFromInputs(inputs []*proto.TargetInput) (hitChance float64, abilities []OptimizerTankAbility) {
+	for i, input := range inputs {
+		switch {
+		case input.Label == hitChanceLabel:
+			hitChance = input.NumberValue
+			continue
+		case input.Label == spellIDLabel:
+			abilities = append(abilities, OptimizerTankAbility{SpellID: int32(input.NumberValue)})
+			continue
+		case len(abilities) == 0:
+			panic(fmt.Sprintf("optimizer tank boss: input %d is %q, ahead of any ability's %q", i, input.Label, spellIDLabel))
+		}
+		ability := &abilities[len(abilities)-1]
+		known := true
+		switch input.Label {
+		case "School":
+			ability.School = proto.SpellSchool(input.NumberValue)
+		case "Resets swing":
+			ability.ResetsSwing = input.NumberValue != 0
+		default:
+			known = false
+			for _, field := range ability.fields() {
+				if field.label == input.Label {
+					*field.value, known = input.NumberValue, true
+				}
 			}
 		}
-		v := func(j int) float64 { return inputs[i+j].NumberValue }
-		out = append(out, OptimizerTankAbility{
-			SpellID: int32(v(0)), School: proto.SpellSchool(v(1)), Damage: v(2),
-			PeriodMin: v(3), PeriodMax: v(4), CastSeconds: v(5), LandChance: v(6), StartSeconds: v(7),
-			ResetsSwing: v(8) != 0,
-		})
+		if !known {
+			panic(fmt.Sprintf("optimizer tank boss: input %d has the unknown label %q", i, input.Label))
+		}
 	}
-	return out
+	return hitChance, abilities
 }
 
 func (ai *optimizerTankBossAI) Initialize(target *core.Target, config *proto.Target) {
 	ai.target = target
-	for i, ability := range abilitiesFromInputs(config.TargetInputs) {
+	hitChance, abilities := bossFromInputs(config.TargetInputs)
+	// core gives an enemy's swing no hit of its own, so the aura's points come off its miss chance,
+	// which is where Unit::MeleeSpellMissChance takes them off too
+	target.PseudoStats.IncreasedMissChance -= hitChance / 100
+	for i, ability := range abilities {
 		ai.spells = append(ai.spells, optimizerTankSpell{OptimizerTankAbility: ability, spell: ai.register(target, ability, int32(i))})
 	}
 }
 
 func (ai *optimizerTankBossAI) register(target *core.Target, ability OptimizerTankAbility, index int32) *core.Spell {
-	return target.RegisterSpell(core.SpellConfig{
+	config := core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: ability.SpellID, Tag: index},
 		SpellSchool: core.SpellSchoolFromProto(ability.School),
 		ProcMask:    core.ProcMaskSpellDamage,
@@ -172,8 +226,39 @@ func (ai *optimizerTankBossAI) register(target *core.Target, ability OptimizerTa
 		CritMultiplier: 1,
 		ApplyEffects: func(sim *core.Simulation, tank *core.Unit, spell *core.Spell) {
 			spell.CalcAndDealDamage(sim, tank, ability.Damage, spell.OutcomeAlwaysHit)
+			if ability.FollowUpSeconds > 0 {
+				spell.Dot(tank).Apply(sim)
+			}
 		},
-	})
+	}
+	if ability.FollowUpSeconds > 0 {
+		var haste *core.Aura
+		if ability.FollowUpHaste > 0 && ability.FollowUpHasteSeconds > 0 {
+			haste = target.RegisterAura(core.Aura{
+				Label:    fmt.Sprintf("Optimizer Tank Boss Haste %d", index),
+				Duration: core.DurationFromSeconds(ability.FollowUpHasteSeconds),
+				OnGain: func(aura *core.Aura, sim *core.Simulation) {
+					aura.Unit.MultiplyMeleeSpeed(sim, ability.FollowUpHaste)
+				},
+				OnExpire: func(aura *core.Aura, sim *core.Simulation) {
+					aura.Unit.MultiplyMeleeSpeed(sim, 1/ability.FollowUpHaste)
+				},
+			})
+		}
+		config.Dot = core.DotConfig{
+			Aura:          core.Aura{Label: fmt.Sprintf("Optimizer Tank Boss Follow-up %d", index)},
+			NumberOfTicks: 1,
+			TicksCanCrit:  false,
+			TickLength:    core.DurationFromSeconds(ability.FollowUpSeconds),
+			OnTick: func(sim *core.Simulation, tank *core.Unit, dot *core.Dot) {
+				dot.Spell.CalcAndDealPeriodicDamage(sim, tank, ability.FollowUpDamage, dot.Spell.OutcomeAlwaysHit)
+				if haste != nil {
+					haste.Activate(sim)
+				}
+			},
+		}
+	}
+	return target.RegisterSpell(config)
 }
 
 func (ai *optimizerTankBossAI) Reset(*core.Simulation) {

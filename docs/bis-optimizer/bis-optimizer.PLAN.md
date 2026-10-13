@@ -2370,3 +2370,143 @@ Golden-neutral. **Owns:** `sim/optimizer/`, `sim/encounters/optimizer_tank_boss.
 `ui/raid/optimizer_*.ts`, the tab's tank controls and `docs/guide/tank-modeling.md`; in small hunks,
 `proto/common.proto`'s `Target` field 23 and `proto/api.proto`'s death values with their plumbing in
 `sim/core` (the melee table's input, the metrics aggregator). The rest of `sim/core` is EC-CORE-FIX6's.
+
+#### As built
+
+**Stage 1, the model.** Sim `b4e8f6d52` plus the item, the 8 Oct roster, Normal (4,000 iterations).
+
+- **Taunt glyph warning** (`warnTauntGlyph`, `caps.go`). Glyph of Taunt 58353, Growling 54812, Dark Command
+  58613 and Righteous Defense 54929 are each `SPELL_AURA_ADD_FLAT_MODIFIER` +8 on
+  `SPELLMOD_RESIST_MISS_CHANCE`, masked to their class's taunt (355, 6795, 56222; 62124, and 31789 with the
+  31790 it triggers), each taunt `DmgClass MAGIC`. A tank run without its glyph warns with the miss chance at the hit floor, 7% and 4% at 262
+  rating; with the caps off, the equipped gear's. Felesta has no Glyph of Dark Command, so her runs warn.
+- **Paired death chance.** `UnitMetrics.iteration_deaths` (field 18), kept under `SaveAllValues` for a unit
+  that tanks; `newShard` takes it as 0/1 values, so `Delta` and the objective pair it like DTPS.
+- **Halion.** `Target.enemy_dodge_multiplier` (field 23) sets the new `PseudoStats.EnemyDodgeMultiplier`,
+  which `meleeTableInput` reads. Twilight Precision's +5% hit has no core input: the tank boss's AI takes it
+  off `PseudoStats.IncreasedMissChance`, from a boss-level "Hit chance" target input. Against the P3 paladin
+  preset his swing misses 4.56% for 9.56% and is dodged 23.67% for 29.74%.
+- **Quantum Strike** 64592 (25-player row of 64395): Physical, `DmgClass NONE`, 34,125 to 35,875 every 3 to
+  4.5 s on the victim. The server never reads `SPELL_ATTR3_NO_AVOIDANCE`: `DmgClass NONE` sends it through
+  `MagicSpellHitResult`, so no dodge, parry or block, and armor still applies. A `Physical` ability row; the
+  preset takes 9,205 of 35,000. No other boss has one: Big Bang hits whoever stays out of a black hole (the
+  bots send a Dispersion priest first), and its 11 s without melee isn't modelled.
+- **Soul Reaper**: one row with `followUpSeconds` 5, `followUpDamage` 70,000, `followUpHaste` 2 for 5 s
+  (69410, cast on the boss as 73799's periodic effect ticks). A one-tick DoT of the cast, so the tick no
+  longer drifts; the second timer row is gone.
+- Target inputs are read by label now, so a request saved in the old layout still runs.
+- Tests: `TestDeathChancePairsIterations`, `TestTankWithoutTheTauntGlyphIsWarned`,
+  `TestHalionsTwilightPrecision`, `TestTankBossFollowUpTicksOnceAndHastesTheBoss`,
+  `TestOptimizerTankBossReadsOlderInputs`.
+- `TestMeasureTankModel` covers phases 1 to 5 and sims the request the page posted (see stage 2).
+  `TestMeasureTankDeathTerm` sweeps the spec's three options the same way.
+
+**The death term doesn't survive everywhere, and none of the three options makes it on every boss.**
+Everything below is the run's fight (stage 2 has why an earlier measurement wasn't). Worn gear: Bulwark
+50,172 health and 27,204 armor, Felesta 45,521 and 18,443.
+
+| Fight | Worn death chance | Death normalizer, se at ±2000 Armor | dJ per point: Stamina / Agility / Dodge / Defense |
+|---|---|---|---|
+| Bulwark P1 | 0.0005 | 1.4: dropped | 10.79 / 5.43 / 4.36 / 4.76 |
+| Bulwark P2 | 0.1507 | 48.2 | 3.72 / 5.92 / 4.80 / 5.23 |
+| Bulwark P3 | 0.1180 | 29.3 | 3.66 / 6.73 / 5.52 / 6.02 |
+| Bulwark P4 | 1.0000 | none: dropped | 2.45 / 4.75 / 3.69 / 4.23 |
+| Bulwark P5 | 0.9992 | 2.2 | 2.18 / 2.66 / 1.42 / 4.46 (se 3) |
+| Felesta P1 | 0.0025 | 0.6: dropped | 5.27 / 3.43 / 4.51 / 5.20 |
+| Felesta P2 | 0.2965 | 55.9 | 2.43 / 3.64 / 4.31 / 4.66 |
+| Felesta P3 | 0.1055 | 27.5 | 3.32 / 4.59 / 5.71 / 6.02 |
+| Felesta P4 | 1.0000 | none: dropped | 1.95 / 2.32 / 2.59 / 2.91 |
+| Felesta P5 | 0.9965 | 5.8 | 2.11 / 3.49 / 2.82 / 2.44 (se 1) |
+
+- Pairing is enough wherever the worn gear dies in 10 to 30% of iterations: 27 to 56 se, so iterations and the
+  offset stay.
+- Four fights drop the term: both tanks on Kel'Thuzad (they all but never die) and on the Lich King (they
+  always do).
+- Halion keeps it at 2.2 and 5.8 se. The coefficient is the weight over that small, noisy number, so death
+  chance swamps the score there: the picks score +104,286 (se 3,948, Bulwark) and +88,871 (se 783, Felesta)
+  over the worn gear, where the other bosses' score +2,000 to +12,000 at se 17 to 57.
+- The three options on the worn gear (`TestMeasureTankDeathTerm`; se of the death normalizer, Bulwark /
+  Felesta):
+
+  | Boss | ±4000 Armor | ±8000 Armor | 16,000 iterations | Healing at other multiples of DTPS |
+  |---|---|---|---|---|
+  | Kel'Thuzad | 2.5 / 0.9 | 5.3 / 5.3 | 2.8 / 1.8 | 1.0: dies 22% / 1.5%, 20 / 5.0 se. 0.75: 80% / 5.8%. 2.0 and up: 0.0000 / 0.0015, no slope |
+  | The Lich King | none | none | none | 1.0000 for both from 0.75 to 4.0 |
+  | Halion | 3.7 / 9.1 | 6.4 / 15.8 | 4.8 / 11.5 | 4.0: still dies 98% / 98%. 1.0: 1.0000, dropped |
+
+  The Lich King kills the worn gear in every iteration whatever is tried. Kel'Thuzad clears 2 se for both
+  tanks only at ±8000 Armor or at healing 1.0, and 1.0 moves Algalon to 99% / 87% and Anub'arak to 74% /
+  27%: one multiplier for every boss doesn't work, one per boss could for Kel'Thuzad. Where a term only
+  just clears 2 se it would swamp the score as on Halion. Iterations, offset and the 1.5 stay.
+- A run whose worn gear dies in every iteration or none warns "the gear as equipped dies in N% of this fight's
+  iterations"; one that is merely close keeps the older "doesn't move it measurably". Both score DTPS, TMI and
+  threat. **Open, the user's call:** what a run should normalize death chance against when the worn gear all
+  but always or never dies, and whether a term that clears 2 se by a hair should count.
+
+**Stage 2, the picks.** Sim server of this tree, the 8 Oct roster through the BiS Batch driver, stage 1,
+Normal, the 8 Oct pass's sources, phases 1 to 5 in order (each warm-starts from the one before).
+
+- **The measurement harness was wrong** (Z8's too). It rebuilt the request from the page's saved raid, which
+  holds the rotation as `TypeAuto` with no priority list and no raid buffs: the tank only swung (Felesta P1
+  TPS 761 for 10,358 in the run, worn death chance 0.312 for 0.0022). Z8's Row 1 and seed death chances carry
+  the same error. Now `sim/optimizer/testdata/capture_requests.py` relays a browser to a sim server and saves
+  each `/optimizeGearAsync` body; `TestMeasureTankModel` and the new `TestMeasureTankPicks` read those
+  (`BIS_REQUESTS=<dir>`, the latter with `BIS_PICKS=<batch-stage1.json>`) and reproduce the runs' warnings and
+  pick metrics. Run commands: [tank-modeling](../guide/tank-modeling.md#measuring).
+- **Verify, terms and warnings:** fails for the four runs above; the other six keep all three terms. Beyond
+  that the runs warn only of the missing Glyph of Dark Command (all five of Felesta's) and the lines every
+  run may carry (a worn item outside the pool, a seed under a floor, tied races).
+- **Verify, the DPS raider:** Angry on the base tree and this one: P2 10331.4138 and P3 13810.3871 both
+  times, same gear, race (Troll, Orc), sims and warnings.
+- **Verify, the rest:** the whole test run, vet, gofmt, simval 1114 of 1114, tsc, and the tab's and batch's UI
+  tests (`optimizer_tab.spec.ts`, `bis_batch.spec.ts`, 10 of 10) pass; 37 of 37 suites unchanged.
+
+Death chance against health, for the user's call. "Every socket Stamina" is the pick with a Solid Stormjewel
+in each non-meta socket, three of them Solid Dragon's Eyes: about the most health the phase's pool gives.
+
+| Run | Pick: health, death chance | Health where the pick's chance leaves 0 or 1 | Further along | Every socket Stamina: health, death |
+|---|---|---|---|---|
+| Bulwark P1 (dropped) | 39,889, 0.0000 | starts dying at 31,703 | 2% at 27,762, 48% at 21,699 | 44,545, 0.0000 |
+| Felesta P1 (dropped) | 42,374, 0.0000 | starts dying at 37,953 | 0.7% at 30,586, 34% at 21,745 | 45,309, 0.0000 |
+| Bulwark P4 (dropped) | 50,661, 1.0000 | first survivals at 55,815 | 93% at 80,977, 47% at 96,135, 5% at 123,419 | 56,482, 1.0000 |
+| Felesta P4 (dropped) | 51,727, 0.9902 | off 1 already | 90% at 63,284, 54% at 80,619, 10% at 100,843 | 58,904, 0.9810 |
+| Bulwark P5 (kept) | 45,155, 0.8718 | off 1 already | | 54,020, 0.8445 |
+| Felesta P5 (kept) | 64,058, 0.2671 | off 1 already | | the pick: 22 Stamina gems |
+
+No gear in the pool brings a tank near dying on Kel'Thuzad or near living on the Lich King (half the
+iterations survive at 81,000 to 96,000 health). Halion responds to gear.
+
+Picks, gems by stat ("-bearing" counts hybrids). Old = the 8 Oct pass, which ran P2 and P3 only; Z8 = its As
+built.
+
+| Run | Before | New |
+|---|---|---|
+| Bulwark P1 | Z8: Sta 2893, Def 698, health 40,168; gems Sta 5, Def 3, Exp 2, hit 2 | Sta 2865, Def 715, Hit 268, health 39,889; gems Def 6, Sta 5, Resil 3, hit 2 |
+| Bulwark P2 | old: Sta 3295, Agi 717, Hit 60; gems Agi 11, Sta 7. Z8: Sta 2859, Agi 651; Sta 0 | Sta 3579, Agi 446, Hit 265, health 46,744; gems Sta 12, hit 4, Agi 2 |
+| Bulwark P3 | old: Sta 3548, Agi 836, Hit 0, health 46,441; Sta-bearing 7. Z8: Sta 3934, health 50,297; Sta-bearing 15 | Sta 3872, Agi 645, Hit 280, health 49,679; Sta-bearing 13, Agi 4, hit 3 |
+| Bulwark P4 | none | Sta 3970, Agi 981, Hit 321, health 50,661; gems Agi 11, Agi+Sta 5, Sta+Def 4, Def 2, Sta 1 |
+| Bulwark P5 | none | Sta 3420, Agi 1805, Hit 312, health 45,155; gems Agi 19, hit 3, Def 1 |
+| Felesta P1 | Z8: Sta 3041, Def 690, health 42,833; gems Sta 10, Def 3, hit 2 | Sta 2995, Def 702, Hit 267, health 42,374; gems Sta 8, Def 6, hit 1 |
+| Felesta P2 | old: Sta 2978, Def 872, Dodge 771, Hit 135; Sta-bearing 5. Z8: Sta 2726, Def 917; Sta-bearing 1 | Sta 3158, Def 807, Dodge 684, Hit 265, health 43,730; gems Sta 7, Def 6, Agi 3, hit 3 |
+| Felesta P3 | old: Sta 3289, Def 1039, Dodge 1007, Hit 162; Sta-bearing 3. Z8: Sta 3318; Sta-bearing 6 | Sta 3344, Def 1029, Dodge 1026, Hit 268, health 45,591; Dodge-bearing 16, Sta-bearing 9 |
+| Felesta P4 | none | Sta 3958, Def 1124, Dodge 1081, Hit 269, health 51,727; gems Def 11, Agi 7, hit 2, Sta-bearing 3 |
+| Felesta P5 | none | Sta 5191, Def 795, Dodge 683, Hit 342, health 64,058; gems Sta 22, Agi+Sta 1 |
+
+Enchants follow the boss's magic: Frost resistance on head and hands at P3, Shadow at P4 (and Felesta's
+cloak). Reforges, 5 to 12 a run, go mostly from Parry and Dodge into Hit and Expertise.
+
+dJ at the pick, per socket (30 Stamina against 20 of the others), Stamina / Agility / Dodge / Defense, and why
+Stamina is where it is:
+
+| Run | Per socket at the pick | Stamina |
+|---|---|---|
+| Bulwark P1 | 420 / 161 / 141 / 149 | 5 of 16 gems: the P1 pool's seed has 86 Defense for a floor of 689, so Defense, Resilience and hit gems come first |
+| Felesta P1 | 161 / 83 / 110 / 116 | 8 of 15, the same floor (seed Defense 25) |
+| Bulwark P2 | 97 / 95 / 75 / 80 | in: Quantum Strike made a Stamina socket equal an Agility one |
+| Felesta P2 | 64 / 62 / 75 / 81 | 7 of 19, level with Defense |
+| Bulwark P3 | 69 / 99 / 79 / 85 | mixed: the pick never dies, so the death third is flat and TMI alone prices Stamina |
+| Felesta P3 | 42 / 55 / 77 / 75 | mostly out: 42 against Dodge's 77, the pick dies in 0.1% |
+| Bulwark P4 | 43 / 65 / 39 / 46 | hybrids only: no death term, and the pick dies regardless |
+| Felesta P4 | 26 / 31 / 32 / 33 | out, as Bulwark's |
+| Bulwark P5 | 3695 / 2264 / 1976 / 2741 | out though worth most: at the worn gear, where the curves are measured, Agility, Dodge and Defense are worth 1.4 to 4.5 with a se of 3, against Stamina's 2.18 (se 0.02). The search priced noise |
+| Felesta P5 | 1215 / 425 / 428 / 390 | every socket: death swamps the score and Stamina moves it most |

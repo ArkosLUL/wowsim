@@ -293,7 +293,7 @@ func (f *knownEvaluator) Evaluate(ctx context.Context, points []Point, iteration
 			own += values[MetricDPS][it]
 			values[MetricDPS][it] += f.others
 		}
-		s, err := newShard(values, 0, [NumMetrics]bool{true, true, true, true, true})
+		s, err := newShard(values, [NumMetrics]bool{true, true, true, true, true})
 		if err != nil {
 			return nil, err
 		}

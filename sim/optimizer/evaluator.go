@@ -49,12 +49,11 @@ type Evaluation struct {
 	// Mean and standard error per metric.
 	Metrics [NumMetrics]Estimate
 
-	// Per-iteration values of the metrics the evaluator keeps, for pairing. Death chance never has
-	// any: core only reports how many iterations the target died in.
+	// Per-iteration values of the metrics the evaluator keeps, for pairing. Death chance's are 1 for
+	// an iteration the target died in and 0 otherwise.
 	samples [NumMetrics][]float32
 	sum     [NumMetrics]float64
 	sumSq   [NumMetrics]float64
-	deaths  int
 	// the target's own DPS summed; differs from sum[MetricDPS] only from a raid-wide evaluator
 	ownDPSSum float64
 }
@@ -73,17 +72,17 @@ type shard struct {
 	samples   [NumMetrics][]float32
 	sum       [NumMetrics]float64
 	sumSq     [NumMetrics]float64
-	deaths    int
 	ownDPSSum float64
 }
 
-// newShard takes per-iteration values for every metric but death chance, which comes as a count.
-func newShard(values [NumMetrics][]float64, deaths int, keep [NumMetrics]bool) (shard, error) {
-	s := shard{n: len(values[MetricDPS]), deaths: deaths}
+// newShard takes per-iteration values for every metric. Death chance's are 1 for a death and 0
+// otherwise; none at all means the sim tracked no deaths for the target, so it never died.
+func newShard(values [NumMetrics][]float64, keep [NumMetrics]bool) (shard, error) {
+	s := shard{n: len(values[MetricDPS])}
+	if values[MetricPDeath] == nil {
+		values[MetricPDeath] = make([]float64, s.n)
+	}
 	for m, v := range values {
-		if Metric(m) == MetricPDeath {
-			continue
-		}
 		if len(v) != s.n {
 			return s, fmt.Errorf("got %d values for metric %d but %d for DPS", len(v), m, s.n)
 		}
@@ -107,7 +106,7 @@ func (e *Evaluation) extend(shards []shard) *Evaluation {
 	out := &Evaluation{}
 	if e != nil {
 		out.Iterations = e.Iterations
-		out.sum, out.sumSq, out.deaths, out.ownDPSSum = e.sum, e.sumSq, e.deaths, e.ownDPSSum
+		out.sum, out.sumSq, out.ownDPSSum = e.sum, e.sumSq, e.ownDPSSum
 	}
 	total := out.Iterations
 	for _, s := range shards {
@@ -127,7 +126,6 @@ func (e *Evaluation) extend(shards []shard) *Evaluation {
 	}
 	for _, s := range shards {
 		out.Iterations += s.n
-		out.deaths += s.deaths
 		out.ownDPSSum += s.ownDPSSum
 		for m := range out.sum {
 			out.sum[m] += s.sum[m]
@@ -138,16 +136,10 @@ func (e *Evaluation) extend(shards []shard) *Evaluation {
 		}
 	}
 
-	n := float64(out.Iterations)
-	if n == 0 {
+	if out.Iterations == 0 {
 		return out
 	}
 	for m := range out.Metrics {
-		if Metric(m) == MetricPDeath {
-			p := float64(out.deaths) / n
-			out.Metrics[m] = Estimate{Mean: p, SE: math.Sqrt(p * (1 - p) / n)}
-			continue
-		}
 		out.Metrics[m] = meanAndSE(out.Iterations, out.sum[m], out.sumSq[m])
 	}
 	return out
@@ -299,9 +291,7 @@ func NewSimEvaluator(r *Request, keep ...Metric) *SimEvaluator {
 		e.seed = defaultRandomSeed
 	}
 	for _, m := range keep {
-		if m != MetricPDeath {
-			e.keep[m] = true
-		}
+		e.keep[m] = true
 	}
 	return e
 }
@@ -505,6 +495,15 @@ func (e *SimEvaluator) runSpan(p Point, first, n int) (s shard, err *SimError) {
 		MetricDTPS: m.GetDtps().GetAllValues(),
 		MetricTMI:  m.GetTmi().GetAllValues(),
 	}
+	// core lists them only for a unit that tanks a target
+	if deaths := m.GetIterationDeaths(); len(deaths) > 0 {
+		values[MetricPDeath] = make([]float64, len(deaths))
+		for i, died := range deaths {
+			if died {
+				values[MetricPDeath][i] = 1
+			}
+		}
+	}
 	own := values[MetricDPS]
 	if e.raidWide {
 		values[MetricDPS] = raidctx.RaidDPS(metrics)
@@ -514,7 +513,7 @@ func (e *SimEvaluator) runSpan(p Point, first, n int) (s shard, err *SimError) {
 	if got != n {
 		return s, &SimError{Point: p, Message: fmt.Sprintf("the sim reported %d iterations, want %d", got, n)}
 	}
-	s, verr := newShard(values, int(math.Round(m.GetChanceOfDeath()*float64(n))), e.keep)
+	s, verr := newShard(values, e.keep)
 	if verr != nil {
 		return s, &SimError{Point: p, Message: verr.Error()}
 	}

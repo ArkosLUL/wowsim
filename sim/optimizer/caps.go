@@ -163,7 +163,7 @@ func (r *run) dpsCapFloors() {
 	switch role {
 	case capRoleTank:
 		// A taunt rolls spell hit, 17% against a boss. This floor's rating is 10 of it and the taunt
-		// glyph adds 8, so a taunt without the glyph still misses.
+		// glyph adds 8, so a taunt without the glyph still misses (warnTauntGlyph).
 		floor("hit", stats.MeleeHit, func(s core.PlayerSheet) bool { return s.PhysicalMissChance == 0 })
 	case capRoleMelee, capRoleHunter:
 		floor("hit", stats.MeleeHit, func(s core.PlayerSheet) bool { return s.PhysicalMissChance == 0 })
@@ -180,6 +180,60 @@ func (r *run) dpsCapFloors() {
 			return globalCooldown(s.CastSpeed) <= hasteCeilingFloor
 		})
 	}
+}
+
+// tauntGlyph is the major glyph that adds 8 points of hit to a tank spec's taunt
+// (SPELLMOD_RESIST_MISS_CHANCE on Taunt, Growl, Dark Command, and Hand of Reckoning with Righteous
+// Defense), as the item id a player's glyphs hold, and its name.
+func tauntGlyph(player *proto.Player) (id int32, name string) {
+	switch player.GetSpec().(type) {
+	case *proto.Player_ProtectionWarrior:
+		return int32(proto.WarriorMajorGlyph_GlyphOfTaunt), "Glyph of Taunt"
+	case *proto.Player_FeralTankDruid:
+		return int32(proto.DruidMajorGlyph_GlyphOfGrowling), "Glyph of Growling"
+	case *proto.Player_TankDeathknight:
+		return int32(proto.DeathknightMajorGlyph_GlyphOfDarkCommand), "Glyph of Dark Command"
+	case *proto.Player_ProtectionPaladin:
+		return int32(proto.PaladinMajorGlyph_GlyphOfRighteousDefense), "Glyph of Righteous Defense"
+	}
+	return 0, ""
+}
+
+// A raid boss reads three levels above a level 80, which is what a taunt's 17% miss comes from.
+const bossLevelDiff = 3
+
+// The spell hit Misery and Improved Faerie Fire put on the boss, in points.
+const spellHitDebuff = 3
+
+// warnTauntGlyph warns a tank whose glyphs lack the class's taunt glyph how often a taunt then misses
+// a boss. A taunt rolls spell hit, and the hit floor is only 10 of the 17 points it needs: the glyph
+// is the rest. The floor's rating counts as spell hit too, since gear gives both at once; without a
+// floor it's the gear as equipped that's measured.
+func (r *run) warnTauntGlyph() {
+	player := r.r.Target()
+	glyph, name := tauntGlyph(player)
+	glyphs := player.GetGlyphs()
+	if glyph == 0 || glyph == glyphs.GetMajor1() || glyph == glyphs.GetMajor2() || glyph == glyphs.GetMajor3() {
+		return
+	}
+	sheet, err := playerSheet(r.r.Base, r.r.TargetIndex, r.r.Equipped, stats.Stats{})
+	if err != nil {
+		r.warn("the glyphs have no %s, so a taunt can miss a boss: %v", name, err)
+		return
+	}
+	spellHit, where := sheet.FinalStats[stats.SpellHit], "in the gear as equipped"
+	for _, floor := range r.r.Settings.GetStatMinimums() {
+		if stats.Stat(floor.Stat) == stats.MeleeHit {
+			spellHit += floor.MinValue - sheet.FinalStats[stats.MeleeHit]
+			where = "at the hit floor"
+		}
+	}
+	missAt := func(debuff float64) float64 {
+		hitPct := spellHit/core.SpellHitRatingPerHitChance + debuff
+		return float64(core.SpellMissBP(bossLevelDiff, float32(hitPct), false)) / 100
+	}
+	r.warn("the glyphs have no %s, so %s a taunt misses a boss %.0f%% of the time (%.0f%% under Misery or Improved Faerie Fire)",
+		name, where, missAt(0), missAt(spellHitDebuff))
 }
 
 // globalCooldown is Unit.SpellGCD: the default GCD scaled by castSpeed, floored at 1 s.

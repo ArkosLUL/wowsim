@@ -324,6 +324,7 @@ type PseudoStats struct {
 	DisableDWMissPenalty bool    // Used by Heroic Strike and Cleave
 	IncreasedMissChance  float64 // Insect Swarm and Scorpid Sting
 	DodgeReduction       float64 // Used by Warrior talent 'Weapon Mastery' and SWP boss auras.
+	EnemyDodgeMultiplier float64 // SPELL_AURA_MOD_ENEMY_DODGE: scales the dodge of whoever the unit attacks.
 
 	MobTypeAttackPower float64 // Bonus AP against mobs of the current type.
 	MobTypeSpellPower  float64 // Bonus SP against mobs of the current type.
@@ -405,6 +406,8 @@ func NewPseudoStats() PseudoStats {
 		MeleeSpeedMultiplier:  1,
 		RangedSpeedMultiplier: 1,
 		SpiritRegenMultiplier: 1,
+
+		EnemyDodgeMultiplier: 1,
 
 		ThreatMultiplier: 1,
 

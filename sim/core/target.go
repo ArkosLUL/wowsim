@@ -175,6 +175,9 @@ func NewTarget(options *proto.Target, targetIndex int32) *Target {
 		// ICC boss Dodge Suppression. -20% dodge only.
 		target.PseudoStats.DodgeReduction += 0.2
 	}
+	if options.EnemyDodgeMultiplier != 0 {
+		target.PseudoStats.EnemyDodgeMultiplier = options.EnemyDodgeMultiplier
+	}
 
 	target.PseudoStats.CanBlock = true
 	target.PseudoStats.CanParry = true
@@ -379,7 +382,7 @@ func (at *AttackTable) meleeTableInput() MeleeTableInput {
 		// really 20% off the tank's own dodge.
 		DodgeReductionPct: float32(at.Attacker.PseudoStats.DodgeReduction * 100),
 
-		EnemyDodgeMultiplier: 1,
+		EnemyDodgeMultiplier: float32(at.Attacker.PseudoStats.EnemyDodgeMultiplier),
 	}
 }
 

@@ -94,6 +94,7 @@ type UnitMetrics struct {
 
 	// Aggregate values. These are updated after each iteration.
 	numItersDead int32
+	deaths       []bool // Died, per iteration: kept under SaveAllValues for a unit that's tanking.
 	oomTimeSum   float64
 	actions      map[ActionID]*ActionMetrics
 	resources    []*ResourceMetrics
@@ -444,6 +445,9 @@ func (unitMetrics *UnitMetrics) doneIteration(unit *Unit, sim *Simulation) {
 	if unitMetrics.Died {
 		unitMetrics.numItersDead++
 	}
+	if sim.Options.SaveAllValues && unitMetrics.isTanking {
+		unitMetrics.deaths = append(unitMetrics.deaths, unitMetrics.Died)
+	}
 }
 
 func (unitMetrics *UnitMetrics) calculateTMI(unit *Unit, sim *Simulation) float64 {
@@ -530,6 +534,8 @@ func (unitMetrics *UnitMetrics) ToProto() *proto.UnitMetrics {
 		Tto:           unitMetrics.tto.ToProto(),
 		SecondsOomAvg: unitMetrics.oomTimeSum / n,
 		ChanceOfDeath: float64(unitMetrics.numItersDead) / n,
+
+		IterationDeaths: unitMetrics.deaths,
 	}
 
 	// every action's messages share a few allocations
@@ -665,6 +671,7 @@ func (unitMetrics *UnitMetrics) merge(o *UnitMetrics) {
 	unitMetrics.hps.merge(&o.hps)
 	unitMetrics.tto.merge(&o.tto)
 	unitMetrics.numItersDead += o.numItersDead
+	unitMetrics.deaths = append(unitMetrics.deaths, o.deaths...)
 	unitMetrics.oomTimeSum += o.oomTimeSum
 
 	for actionID, action := range o.actions {
