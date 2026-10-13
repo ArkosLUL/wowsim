@@ -2530,7 +2530,7 @@ Left:
 - An option in the acbis driver (another session's) to save each posted `OptimizeGearRequest` would replace
   `capture_requests.py`.
 
-### BIS-TANK-SWAP (wave Z10)
+### BIS-TANK-SWAP (wave Z10, done)
 
 BIS-TANK-PICKS' follow-up: four runs drop the death term, Halion's is noise, and nothing the phase 4 pool builds
 survives the Lich King.

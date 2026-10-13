@@ -176,11 +176,13 @@ follow-ups with EC-TOOLS2 at last and BIS-TANK-SWAP in EC-PET-FIX6's place, whic
 
 ## Current wave
 
-- Wave: Z10, running since 2026-10-13: base `346249292`, runId `wf_bd8bf9a8-4de` (all four; args
-  `waveZ10-args.json`, shared rules `waveZ10-shared.md`, builder `waveZ10-build.py`). Worktrees
-  `wowsimwotlk-wi-{ec-core-fix7,ec-class-fix6,ec-tools2,bis-tank-swap}`, ports 3335 to 3338. EC-CLASS-FIX6's C++
-  isn't in the server during the run: its after-rebuild checks are listed in its
-  `tmp/ec-class-fix6-live.md`; ask the user for the rebuild once the run ends. Z9 (base `b4e8f6d52`) landed on
+- Wave: Z10, all four merged (HEAD `92b1b1aa4` before the status commit), at the cross-review: base `346249292`, runId `wf_bd8bf9a8-4de` (all four; args
+  `waveZ10-args.json`, shared rules `waveZ10-shared.md`, builder `waveZ10-build.py`). Reports
+  `.wave-loop\z10-run1\*.json`, item notes `.wave-loop\{ec-core-fix7,ec-class-fix6,ec-tools2,bis-tank-swap}-tmp`
+  (the last holds raiders' gear: never commit), cross-review brief `waveZ10-xreview-brief.md`. Left: the
+  cross-review, the slow suite, close-out, landing, the report. EC-CLASS-FIX6's C++ isn't in the server: its
+  after-rebuild checks are in `ec-class-fix6-tmp\ec-class-fix6-live.md`; ask the user for the rebuild in the
+  report. Z9 (base `b4e8f6d52`) landed on
   master as `6dfc2d6c9`.
   The user's calls on Z9's report (2026-10-13): a tank swap on the Lich King's Soul Reaper but not the zone's 30%
   buff; death chance normalized at a first pick, on a clearer signal (both BIS-TANK-SWAP's); the line-up above;
@@ -792,6 +794,10 @@ crashed before F2, so its column starts there.
 | wave Z9 cross-review | direct | `f5ace1d3e` | module `037d006`; the pets' timers follow updates of varying length, `Aura.Activate` refuses a temporary aura on a pet that isn't out (Cobra Strikes and Prayer of Mending's bounce skip it), `Encounter.AOECapMultiplier`, `SpellResult.FromInstantCast` and `SlowAttackAuraTag` removed; 21 suites move under 0.02% on average (`a0d44a6e4`); guides `248c8e0f6` |
 | BIS-TANK-PICKS | merged | `02ab825c4` | a warning for a tank without its taunt glyph, chance of death paired per iteration (`UnitMetrics.iteration_deaths`), Halion's Twilight Precision (`Target.enemy_dodge_multiplier`), Algalon's Quantum Strike, Soul Reaper's tick and haste as a follow-up of the cast, the measurement tests on the requests the page posts (the old harness simmed a tank that only auto-attacked); the picks for phases 1 to 5. Merged with one Verify point unmet, the user's call: four runs drop the death term (both tanks never die on Kel'Thuzad and always on the Lich King, where no loadout survives), and on Halion its weight is noise; no golden moves |
 | tank boss on the varying update | direct | `749264975`, `3f054f011` | after the merge: a cast with a cast time takes the update that ended off the restarted swing (`castEnd - ServerTickBefore(castEnd)`, the cross-review's note), and `TestTankBossFollowUpTicksOnceAndHastesTheBoss` counts against the swing gap the log shows (the raid's 20% attack slow; it had passed by 30 ms); no golden moves |
+| EC-CORE-FIX7 | merged | `b1084dacb` | module `4a1880c`; the long world tick (`ServerSettings.world_long_tick_ms`, 40 ms, with 10.44 ms a tick and 5 ms of jitter, a 104.4 ms update on average), the grid's lookups as a table, a missile's flight less the caster's 1.5 yd, a heal's taken term with the target's own spell mods and on more heals, a boss's instant cast after the ticks on it; the Ignite amount lead isn't a sim gap; live: the swing after a hardcast agrees (20.4 ms for the sim's 21.6), nine Fire recordings; all 37 suites move (`017cd8db4`) |
+| EC-CLASS-FIX6 | merged | `f720f9a7c` | module `86f62a3` (C++: needs a rebuild by the user); a miss costs `irand(0, cost / 4)` of rage or energy (live: 12.43 tenths a Hamstring for 12.5, Quick Recovery 20.07 for 20), area spells keep the full cost, Shattering Throw and Shiv refund, the ghoul's Claw pays in full, `blood_pesti_aoe`'s Blood Tap in the last minute only, the spell-mod sweep with Slow, Hamstring and Bloodrage; no `SPELL_ATTR2_CANT_CRIT` gap in 26 spells, no persistent area aura gap beyond Hurricane; 11 suites move (`fde54242e`) |
+| EC-TOOLS2 | merged | `62de6d370` | module `80d864c`; a bag weapon applies only the enchants that follow a swap, icon rows for the explosives' spells, the fight trim without other creatures' deaths, critters cleared before a fight, DruidBalancePhase3 recorded again with Starfall (73 checks); `db.json` and serverdata regenerated after the merges, unchanged; no golden moves |
+| BIS-TANK-SWAP | merged | `b0f8b67b8` | the tank boss leaves the modelled tank between Soul Reaper casts, a boss's rolled spells miss 1%, death chance in two passes behind a 10 se bar; the death term drops only where the first pick dies in 0 or 100% (both tanks at P1, Bulwark at P4), a second search on three runs; the Lich King still kills (Bulwark 99.94%, Felesta 79%); the follow-up tick test's bound for the long tick `92b1b1aa4`; no golden moves |
 
 Later WIs are added as their wave starts.
 
