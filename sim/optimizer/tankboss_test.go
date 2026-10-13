@@ -3,6 +3,7 @@ package optimizer
 import (
 	"math"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
@@ -210,13 +211,32 @@ func TestTankBossSwingRestartsAfterItsCasts(t *testing.T) {
 	}
 }
 
+// usualSwingGap is the time between two of the boss's swings as the fight has it: the raid's attack
+// slow and the map updates make it longer than the creature's own attack time. The median, so hasted
+// stretches and casts that hold the melee don't count.
+func usualSwingGap(events []bossEvent) float64 {
+	var gaps []float64
+	last := math.Inf(-1)
+	for _, e := range events {
+		if e.kind != bossEventSwing {
+			continue
+		}
+		if !math.IsInf(last, -1) {
+			gaps = append(gaps, e.at-last)
+		}
+		last = e.at
+	}
+	slices.Sort(gaps)
+	return gaps[len(gaps)/2]
+}
+
 // Soul Reaper's aura ticks once, 5 s after the cast that left it, and the Lich King then swings twice
 // as fast for 5 s. An Infest cast in that stretch holds his melee, so those are left out.
 func TestTankBossFollowUpTicksOnceAndHastesTheBoss(t *testing.T) {
 	const phase = 4
 	boss := tankBosses[phase]
-	swingTime := float64(boss.AttackTimeMs) / 1000
 	events := bossFightLog(t, phase)
+	swingTime := usualSwingGap(events)
 
 	swingsIn := func(from, to float64) (n int, held bool) {
 		for _, e := range events {
@@ -257,7 +277,7 @@ func TestTankBossFollowUpTicksOnceAndHastesTheBoss(t *testing.T) {
 			continue
 		}
 		hasted++
-		// 5 s hold 3 or 4 swings at 1.5 s and 6 or 7 at half that
+		// a window's edges can cut one swing either way
 		wantFast := ability.FollowUpHasteSeconds / swingTime * ability.FollowUpHaste
 		if float64(fast) < wantFast-1 || float64(fast) > wantFast+1 || float64(after) > ability.FollowUpHasteSeconds/swingTime+1 {
 			t.Errorf("spell %d cast at %.2f: %d swings in the %.0f s after its tick and %d in the same time later, want about %.1f and %.1f",
