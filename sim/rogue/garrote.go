@@ -26,7 +26,6 @@ func (rogue *Rogue) registerGarrote() {
 			Cost:       50,
 			FlatMod:    -10 * float64(rogue.Talents.DirtyDeeds),
 			Multiplier: rogue.cheaperComboMoves(),
-			Refund:     0.8,
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{

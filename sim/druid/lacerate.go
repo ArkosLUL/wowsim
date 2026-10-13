@@ -26,7 +26,6 @@ func (druid *Druid) registerLacerateSpell() {
 		RageCost: core.RageCostOptions{
 			Cost:    15,
 			FlatMod: -float64(druid.Talents.ShreddingAttacks),
-			Refund:  0.8,
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{

@@ -32,8 +32,7 @@ func (warrior *Warrior) registerShieldSlamSpell() {
 		Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagIncludeTargetBonusDamage | core.SpellFlagAPL,
 
 		RageCost: core.RageCostOptions{
-			Cost:   20 - float64(warrior.Talents.FocusedRage),
-			Refund: 0.8,
+			Cost: 20 - float64(warrior.Talents.FocusedRage),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{

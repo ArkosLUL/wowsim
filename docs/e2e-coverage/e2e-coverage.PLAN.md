@@ -4023,6 +4023,74 @@ Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\ec-class-fix5-tmp\`
 - **Goldens:** the suites of each class whose spell changes (warrior and rogue for the miss cost), TestBlood's
   `blood_pesti_aoe` rows, and every suite wearing a changed item; report each.
 
+#### As built
+
+Melee stage (notes in `tmp/ec-class-fix6-melee.md`). Verdicts:
+- `SPELL_ATTR2_CANT_CRIT` (confirmed, no change): all 26 spells checked. The 24 the sim casts use `OutcomeAlwaysHit`,
+  `OutcomeMagicHit`, `OutcomeMeleeSpecialHit`, `OutcomeHealing`, `OutcomeMeleeSpecialNoBlockDodgeParryNoCrit` (Shiv),
+  `TicksCanCrit: false` or the hunter pet's `CantCrit`; none rolls a crit. Water Shield 57961 and Improved Stormstrike
+  63375 are mana gains, which the sim has no spell for.
+- Miss cost (fixed): `RageCost` and `EnergyCost` `IssueRefund` give back all but `irand(0, cost / 4)` (rage in tenths),
+  as `Spell::TakePower` takes. `Refund` is now `SPELLMOD_SPELL_COST_REFUND_ON_FAIL`'s percent mod only (Primal
+  Precision on Ferocious Bite and Rip; the cost is cut before the `/ 4`). The flat `Refund: 0.8` of every warrior,
+  rogue builder and druid spell is gone. Quick Recovery isn't that mod but a proc (`spell_rog_quick_recovery`): a
+  separate energize of the listed `ManaCost` at 40 / 80% on top, so `EnergyCostOptions.ProcRefund`.
+- Missing refunds (fixed): Cleave pays by its main target's result like Heroic Strike; Shiv, which never refunded.
+- Ghoul's Claw (fixed): `TakePower` pays full for a non-player, so the refund is gone.
+- Area spells (unchecked): Whirlwind, Thunder Clap, Shockwave, Swipe, the shouts and Fan of Knives pay the full cost on
+  a miss. Whether the bot's unit target makes its miss count is for the live stage.
+- Blood Tap gate (`blood_pesti_aoe`, fixed): 6 s, 10 s and no gate swing the long rows by -3 to +2%. Any threshold of
+  10 s or more never fires (rune cooldown is under 10 s), so the gate is dropped: Blood Tap only in the last 60 s.
+  Full-buff long rows +1.1 to +3.0%, Average-Default (the pesti APL) +1.1%, unbuffed long rows -0.3 to -1.5%
+  (1500 iterations a row, seeds 101 and 5001 agree).
+- Goldens (`dock.sh delta`): TestBlood 8 `blood_pesti_aoe` rows (above); TestUnholy -0.17% Average-Default (Ghoul's Claw
+  81.3 to 76.2 casts); TestFeral, TestFeralApl, TestFeralTank (Maul, Swipe casts), TestCombat, TestAssassination,
+  TestSubtlety, TestArms, TestFury and TestProtectionWarrior move within +-0.3% on their default rows, up to +-2% on
+  single rows, from the new miss draw. `tools/simval` unchanged and all-PASS; `db.json` moves with the APL.
+- `TestHamstringSnaresWhatTakesSnares` now wants the immune boss's miss to take 0 to a quarter of the cost.
+
+Casters and C++ stage (notes in `tmp/ec-class-fix6-code.md`). No sim Go code changed. Verdicts:
+- C++ (`SimValidationCommands.cpp`, compile-checked, not built): the spelldump's `critCapable` also needs no
+  `SPELL_ATTR2_CANT_CRIT`; `.simval trace on|off` appends each summon's spell go and unsummon, with the world update
+  (`gameTimeMs`), to `summontrace.jsonl` (`simval_commands.sql` and the module README have the row). `critcap.go` keeps
+  reading `Attributes[2]`.
+- Persistent area auras (no gap): `Aura::UpdateTargetMap` flickers an application only when the aura mixes an effect the
+  target is immune to with one it isn't, and a `DYNOBJ_AURA` isn't `IsArea()`. Of the 105 spells with a persistent area
+  effect, only Hurricane (done) and the Frost Trap auras mix them, and Frost Trap's spell-level snare mechanic makes a
+  snare-immune target immune to the whole aura. Blizzard, Death and Decay, Rain of Fire, Volley, Consecration and the
+  traps have no immune effect (`creature_immunities` -361 and -286: mechanics and knock back / pull effects).
+- Shard of the Gods' heal (gap, not fixed): the proc flags are `DONE_SPELL_MAGIC_DMG_CLASS_POS | _NEG`, type mask 7, so any
+  landed magic-class cast procs, a Renew or Power Word: Shield with no result too, ticks never. The sim's trigger reads
+  `OnHealDealt` and `OnSpellHitDealt`, which `Hits++`-only casts (Renew, Earth Shield, Riptide's hot) don't fire. The fix
+  is a core callback on a landed cast with its target. No suite wears the sets.
+- `spellmod_spells.json` regenerated: +Slow (Arcane Focus), Hamstring (Impale, Focused Rage), Bloodrage 29131 (Improved
+  Bloodrage, Intensify Rage). Six `droppedSpellMods` entries and four fixture README rows hold them until the live sweep.
+- e2e `ecclass6_test.go` (vetted, not run): the rage and energy miss cost (Hamstring and Kidney Shot at the boss dummy,
+  Quick Recovery's refund) and, after a rebuild, the summon trace and `critCapable`.
+
+Live stage (notes in `tmp/ec-class-fix6-live.md`; server lock 15:01 to 15:35 on 2026-10-13, no rebuild or restart):
+- Rage miss cost (confirmed): 30 immune Hamstrings took 1 to 25 tenths, mean 12.43 (sim 12.5).
+- Energy miss cost and Quick Recovery (confirmed): immune Kidney Shot changed energy by -2 to +5 (draw 0 to 6, regeneration
+  only adds); with rank 2, +20 to +25; means 20.07 apart (sim 20). The test refills to 100 and spends 70 on Eviscerates
+  first, since `.modify energy N` sets the cap to 10N and the cast's change was lost to it.
+- Area spells (no change): they pay the full cost on a miss. `Spell::InitExplicitTargets` drops a unit target the spell's
+  explicit mask doesn't name, so a playerbot's `SetUnitTarget` doesn't survive for Whirlwind, Thunder Clap, Shockwave,
+  Swipe, the shouts or Fan of Knives. Live: Piercing Howl on the dummy (unit target sent), 20 casts, full 100 tenths each
+  (`TestEcClass6AreaMissCost`; that the dummy's result was an immune miss rests on Hamstring's snare immunity).
+- Shattering Throw (fixed): its target is an explicit unit, so a miss now refunds (`sim/warrior/shattering_throw.go`). No
+  suite moves beyond the melee stage's.
+- Ghoul's Claw, Cleave's main target, Primal Precision's Bite and Rip: source only, no deterministic miss to probe.
+- Spell-mod sweep for MageArcane, WarriorArms, WarriorFury and WarriorProtection: Slow, Hamstring and Bloodrage compare equal
+  to the sim. Their 6 `droppedSpellMods` entries and 4 fixture README rows are gone; `spellmods.jsonl` has the four paths'
+  new lines (all bot names change).
+- Hurricane's attack time reads x1.2 on the server (`m_modAttackSpeedPct`), the sim's speed / 1.2; the test wants that only.
+  `TestEcClass5HealsUnderStrengthOfWrynn` is flaky (about half the Death Strikes that go off show no heal packet, cause
+  unknown); it now takes 8 tries per phase.
+- Not run (need new tests): Omen off a Rebirth, Bryntroll's proc rate and 500 ms cooldown, Nature's Grace once per target at
+  ranks 1 and 2.
+- After the rebuild (apply `simval_commands.sql` first): `TestEcClass6CritCapable`, `TestSpelldumpCapture` (only the
+  CANT_CRIT spells' `critCapable` flips), `TestEcClass6SummonTrace` and the Mirror Image tie read off its rows.
+
 ### EC-TOOLS2 (Z10; golden-neutral; stages: code, live)
 
 - `db.json` has no icon rows for the explosives' spells (56350, 67769, 56488) or 55039: the UI fetches them.

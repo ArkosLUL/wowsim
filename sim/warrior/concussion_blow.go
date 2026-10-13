@@ -21,8 +21,7 @@ func (warrior *Warrior) registerConcussionBlowSpell() {
 		Flags: core.SpellFlagMeleeMetrics | core.SpellFlagIncludeTargetBonusDamage | core.SpellFlagAPL | core.SpellFlagIgnoreAttackerModifiers,
 
 		RageCost: core.RageCostOptions{
-			Cost:   15 - float64(warrior.Talents.FocusedRage),
-			Refund: 0.8,
+			Cost: 15 - float64(warrior.Talents.FocusedRage),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{

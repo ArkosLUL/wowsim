@@ -28,8 +28,7 @@ func (warrior *Warrior) registerHamstringSpell() {
 		Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagAPL,
 
 		RageCost: core.RageCostOptions{
-			Cost:   10 - float64(warrior.Talents.FocusedRage),
-			Refund: 0.8,
+			Cost: 10 - float64(warrior.Talents.FocusedRage),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{

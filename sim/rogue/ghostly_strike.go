@@ -24,8 +24,7 @@ func (rogue *Rogue) registerGhostlyStrikeSpell() {
 		ProcMask:    core.ProcMaskMeleeMHSpecial,
 		Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagIncludeTargetBonusDamage | SpellFlagBuilder | SpellFlagColdBlooded | core.SpellFlagAPL,
 		EnergyCost: core.EnergyCostOptions{
-			Cost:   40.0,
-			Refund: 0.8,
+			Cost: 40.0,
 		},
 
 		Cast: core.CastConfig{

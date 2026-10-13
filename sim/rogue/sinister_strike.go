@@ -20,7 +20,6 @@ func (rogue *Rogue) registerSinisterStrikeSpell() {
 			Cost:       45,
 			FlatMod:    -[]float64{0, 3, 5}[rogue.Talents.ImprovedSinisterStrike],
 			Multiplier: rogue.cheaperComboMoves(),
-			Refund:     0.8,
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{

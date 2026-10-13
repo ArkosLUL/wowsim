@@ -300,8 +300,7 @@ func (ghoulPet *GhoulPet) registerClaw() *core.Spell {
 		Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagIncludeTargetBonusDamage,
 
 		FocusCost: core.FocusCostOptions{
-			Cost:   40,
-			Refund: 0.8,
+			Cost: 40,
 		},
 
 		Cast: core.CastConfig{
@@ -321,10 +320,7 @@ func (ghoulPet *GhoulPet) registerClaw() *core.Spell {
 			baseDamage := core.ApplyPct(spell.MHStrikeDamage(sim, spell.MeleeAttackPower()),
 				spell.Direct.WeaponPct)
 
-			result := spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
-			if !result.Landed() {
-				spell.IssueRefund(sim)
-			}
+			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 		},
 	})
 }

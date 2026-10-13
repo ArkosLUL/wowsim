@@ -51,6 +51,9 @@ func (rogue *Rogue) registerShivSpell() {
 				spell.Direct.WeaponPct)
 			result := spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialNoBlockDodgeParryNoCrit)
 
+			if !result.Landed() {
+				spell.IssueRefund(sim)
+			}
 			if result.Landed() {
 				rogue.AddComboPoints(sim, 1, spell.ComboPointMetrics())
 
