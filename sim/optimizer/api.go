@@ -223,6 +223,9 @@ type run struct {
 	calibrationGap float64
 
 	prefetching sync.WaitGroup
+
+	// The death normalizer a second search prices death chance with, taken at the first pick.
+	deathAt *deathMeasure
 }
 
 // traceHook, when set, gets a line for each decision a run makes. Tests set it to t.Logf.
@@ -234,7 +237,51 @@ func (r *run) trace(format string, args ...any) {
 	}
 }
 
+// optimize runs the search, and a second one where the first left death chance out and its pick
+// brings the term back. The gear as equipped can all but always or never die while a pick that
+// trades health for avoidance doesn't, and then the normalizer measured at the pick prices death
+// where the worn gear's couldn't. The second search starts from the first pick and scores with that
+// normalizer; a pick that still dies in 0 or 100% of iterations, or moves too little to price, ends
+// the run with the first result.
 func optimize(ctx context.Context, asked, simmed *Request, eval Evaluator, progress ProgressFunc, start time.Time) *proto.OptimizerResult {
+	first, result := optimizePass(ctx, asked, simmed, eval, progress, start, nil)
+	if first.obj == nil || first.obj.DeathWarning == "" {
+		return result
+	}
+	if result.ErrorResult != "" || result.Cancelled || ctx.Err() != nil {
+		result.Warnings = append(result.Warnings, first.obj.DeathWarning)
+		return result
+	}
+	// the pick the result holds: the search's best, or the seed where nothing beat it
+	pick := first.best
+	dm, err := measureDeath(ctx, eval, simmed, pick, first.budget.Iterations)
+	if err != nil {
+		result.Warnings = append(result.Warnings, first.obj.DeathWarning, fmt.Sprintf("couldn't measure death chance at the pick, so it stays out: %v", err))
+		return result
+	}
+	if first.bestEval != nil {
+		dm.Dies = first.bestEval.Metrics[MetricPDeath].Mean
+	}
+	if _, left := deathCoefficient(first.obj.Weights[MetricPDeath], dm); left != "" {
+		result.Warnings = append(result.Warnings, first.obj.DeathWarning, "death chance stays out: the search's first pick "+left)
+		return result
+	}
+	next := *simmed
+	next.WarmStarts = append(slices.Clone(simmed.WarmStarts), pick)
+	_, second := optimizePass(ctx, asked, &next, eval, progress, start, &dm)
+	if second.ErrorResult != "" {
+		result.Warnings = append(result.Warnings, first.obj.DeathWarning, fmt.Sprintf("the second search, with death chance counted, failed: %s", firstLine(second.ErrorResult)))
+		return result
+	}
+	second.TotalSims += result.TotalSims
+	second.Warnings = append([]string{fmt.Sprintf("%s; the first search's pick dies in %.0f%% of iterations and %g Armor moves that %.1f standard errors, so a second search counted death chance from that pick",
+		first.obj.DeathWarning, dm.Dies*100, normalizerOffset(stats.Armor), -dm.Norm.Mean/dm.Norm.SE)}, second.Warnings...)
+	second.Warnings = slices.Compact(second.Warnings)
+	return second
+}
+
+// optimizePass is one search. deathAt, when set, is the death normalizer to price death chance with.
+func optimizePass(ctx context.Context, asked, simmed *Request, eval Evaluator, progress ProgressFunc, start time.Time, deathAt *deathMeasure) (*run, *proto.OptimizerResult) {
 	budget := EffortBudget(asked.Settings.GetEffort())
 	seed := simmed.Base.GetSimOptions().GetRandomSeed()
 	if seed == 0 {
@@ -254,13 +301,14 @@ func optimize(ctx context.Context, asked, simmed *Request, eval Evaluator, progr
 		start:    start,
 		best:     simmed.Seed,
 		ref:      simmed.Equipped,
+		deathAt:  deathAt,
 	}
 	r.eval = &countingEvaluator{inner: eval, have: map[Point]int{}, after: r.report}
 	r.region = trace.StartRegion(ctx, stages[0])
 	defer func() { r.region.End() }()
 	defer r.prefetching.Wait()
 	defer cancel()
-	return r.execute()
+	return r, r.execute()
 }
 
 // batch is points to sim at iterations.
@@ -349,8 +397,15 @@ func (r *run) execute() *proto.OptimizerResult {
 	if err != nil {
 		return r.stop(err)
 	}
+	if r.deathAt != nil {
+		obj.countDeathAt(*r.deathAt)
+	}
 	r.obj = obj
 	for _, w := range obj.Warnings {
+		// a first search that dropped death chance may get it back at its pick, see optimize
+		if w == obj.DeathWarning {
+			continue
+		}
 		r.warn("%s", w)
 	}
 	// runs alongside every later stage; only its wait, right before the result, needs the seed eval

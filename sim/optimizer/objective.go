@@ -3,6 +3,7 @@ package optimizer
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
@@ -23,8 +24,95 @@ type Objective struct {
 	Normalizers [NumMetrics]Estimate
 	// Weighted metrics J had to leave out, and why.
 	Warnings []string
+	// The Warnings entry that left death chance out, or "". A tank run searches again once it knows
+	// whether the first pick brings the term back, so execute holds that entry back.
+	DeathWarning string
 
 	coef Metrics
+}
+
+// deathMinSE is how many standard errors the death normalizer has to clear before J counts death
+// chance: the coefficient is a weight over that normalizer, so a barely measurable one lets death
+// chance swamp the score.
+const deathMinSE = 10.0
+
+// deathMeasure is the death chance a pair of sims with the reference stat moved down and up came to.
+type deathMeasure struct {
+	// Per point of Armor, as measured: negative when more Armor means fewer deaths.
+	Norm     Estimate
+	Down, Up float64
+	// Chance of death at the loadout itself.
+	Dies float64
+	// Armor on the sheet the pair was taken around; 0 where it couldn't be read.
+	Armor float64
+}
+
+// measureDeath is NewObjective's death normalizer for the loadout at: paired sims of it with the Armor
+// offsets the objective uses.
+func measureDeath(ctx context.Context, eval Evaluator, r *Request, at Loadout, iterations int) (deathMeasure, error) {
+	var down, up stats.Stats
+	down[stats.Armor], up[stats.Armor] = -normalizerOffset(stats.Armor), normalizerOffset(stats.Armor)
+	evals, err := eval.Evaluate(ctx, []Point{{Loadout: at, Offset: down}, {Loadout: at, Offset: up}}, iterations)
+	if err != nil {
+		return deathMeasure{}, err
+	}
+	d := Delta(evals[0], evals[1], MetricPDeath)
+	span := 2 * normalizerOffset(stats.Armor)
+	dm := deathMeasure{
+		Norm: Estimate{Mean: d.Mean / span, SE: d.SE / span},
+		Down: evals[0].Metrics[MetricPDeath].Mean,
+		Up:   evals[1].Metrics[MetricPDeath].Mean,
+	}
+	dm.Dies = (dm.Down + dm.Up) / 2
+	if sheet, err := playerSheet(r.Base, r.TargetIndex, at, stats.Stats{}); err == nil {
+		dm.Armor = sheet.FinalStats[stats.Armor]
+	}
+	return dm, nil
+}
+
+// deathCoefficient is the death term's coefficient for a weight, or 0 and why it stays out. The
+// normalizer has to clear deathMinSE with the right sign. The coefficient is the weight over a
+// per-point slope, so a small slope makes it huge: death chance is capped at what dying could cost in
+// J's points, the Armor the gear wears, however little a point of Armor moves it.
+func deathCoefficient(weight float64, dm deathMeasure) (coef float64, left string) {
+	norm := dm.Norm
+	signed := -norm.Mean
+	switch {
+	case dm.Down == dm.Up && (dm.Down == 0 || dm.Down == 1):
+		// no offset or iteration count measures this one: one hit outsizes the health bar, or none comes close
+		return 0, fmt.Sprintf("dies in %.0f%% of this fight's iterations, %g Armor either way, so nothing there measures it",
+			dm.Dies*100, normalizerOffset(stats.Armor))
+	case signed <= 2*norm.SE:
+		return 0, fmt.Sprintf("dies in %.0f%% of this fight's iterations, and %g Armor doesn't move that measurably (%g ± %g per point)",
+			dm.Dies*100, normalizerOffset(stats.Armor), norm.Mean, norm.SE)
+	case signed < deathMinSE*norm.SE:
+		return 0, fmt.Sprintf("dies in %.0f%% of this fight's iterations, and %g Armor moves that only %.1f standard errors (%g ± %g per point), short of the %g it takes to price it",
+			dm.Dies*100, normalizerOffset(stats.Armor), signed/norm.SE, norm.Mean, norm.SE, deathMinSE)
+	}
+	coef = weight / norm.Mean
+	if dm.Armor > 0 && -coef > dm.Armor {
+		coef = -dm.Armor
+	}
+	return coef, ""
+}
+
+// judgeDeath sets death chance's coefficient from dm, or leaves it out with a warning.
+func (o *Objective) judgeDeath(dm deathMeasure) {
+	o.Normalizers[MetricPDeath] = dm.Norm
+	coef, left := deathCoefficient(o.Weights[MetricPDeath], dm)
+	o.coef[MetricPDeath] = coef
+	if left != "" {
+		o.DeathWarning = "left death chance out of the objective: the gear as equipped " + left
+		o.Warnings = append(o.Warnings, o.DeathWarning)
+	}
+}
+
+// countDeathAt prices death chance from the normalizer at dm, taken at the first search's pick, in
+// place of the gear as equipped's, which failed the bar and dropped the term.
+func (o *Objective) countDeathAt(dm deathMeasure) {
+	o.Warnings = slices.DeleteFunc(o.Warnings, func(w string) bool { return w == o.DeathWarning })
+	o.DeathWarning = ""
+	o.judgeDeath(dm)
 }
 
 // Lower is better for these, so their normalizers must come out negative.
@@ -175,15 +263,13 @@ func NewObjective(ctx context.Context, eval Evaluator, r *Request, iterations in
 		span := 2 * normalizerOffset(s)
 		norm := Estimate{Mean: d.Mean / span, SE: d.SE / span}
 		o.Normalizers[m] = norm
+		if Metric(m) == MetricPDeath {
+			o.judgeDeath(deathMeasure{Norm: norm, Down: evals[i].Metrics[m].Mean, Up: evals[i+1].Metrics[m].Mean, Dies: (evals[i].Metrics[m].Mean + evals[i+1].Metrics[m].Mean) / 2, Armor: o.armorOf(r, base)})
+			continue
+		}
 		signed := norm.Mean
 		if lowerIsBetter[m] {
 			signed = -signed
-		}
-		if p := evals[i].Metrics[m].Mean; Metric(m) == MetricPDeath && p == evals[i+1].Metrics[m].Mean && (p == 0 || p == 1) {
-			// no offset or iteration count measures this one: one hit outsizes the health bar, or none comes close
-			o.Warnings = append(o.Warnings, fmt.Sprintf("left death chance out of the objective: the gear as equipped dies in %.0f%% of this fight's iterations, %g %s either way, so nothing there measures it",
-				p*100, normalizerOffset(s), s.StatName()))
-			continue
 		}
 		if signed <= 2*norm.SE {
 			o.Warnings = append(o.Warnings, fmt.Sprintf("left %s out of the objective: %g %s doesn't move it measurably there (%g ± %g per point)",
@@ -196,6 +282,21 @@ func NewObjective(ctx context.Context, eval Evaluator, r *Request, iterations in
 		return nil, fmt.Errorf("no weighted metric responds to its reference stat at the seed: %v", o.Warnings)
 	}
 	return o, nil
+}
+
+// armorOf is the Armor on the sheet of the loadout, 0 where it can't be read.
+func (o *Objective) armorOf(r *Request, l Loadout) (armor float64) {
+	defer func() {
+		// a request the sheet can't build, a test's stand-in
+		if recover() != nil {
+			armor = 0
+		}
+	}()
+	sheet, err := playerSheet(r.Base, r.TargetIndex, l, stats.Stats{})
+	if err != nil {
+		return 0
+	}
+	return sheet.FinalStats[stats.Armor]
 }
 
 // Score is J for one evaluation.

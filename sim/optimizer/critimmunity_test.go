@@ -25,6 +25,13 @@ func ability(id int32, school proto.SpellSchool, damage, periodMin, periodMax fl
 	return encounters.OptimizerTankAbility{SpellID: id, School: school, Damage: damage, PeriodMin: periodMin, PeriodMax: periodMax}
 }
 
+// missable is ability for a spell that rolls the server's magic hit.
+func missable(id int32, school proto.SpellSchool, damage, periodMin, periodMax float64) encounters.OptimizerTankAbility {
+	a := ability(id, school, damage, periodMin, periodMax)
+	a.CanMiss = true
+	return a
+}
+
 // The tank bosses ui/core/optimizer/pool_builder.ts sends per content phase, off each phase boss's
 // live creature_template row (DamageModifier, BaseAttackTime; 0 falls back to the server's 2000 ms
 // default) and boss script: Kel'Thuzad 25 (30061), Algalon 25 (33070), Anub'arak 25H (35616), the
@@ -34,37 +41,37 @@ var tankBosses = map[int32]tankBoss{
 	1: {encounters.OptimizerTankBoss{
 		Name: "Kel'Thuzad", DamageModifier: 70, AttackTimeMs: 2000, DamageExp2: 177.438, AttackPower: 783,
 		Abilities: []encounters.OptimizerTankAbility{
-			{SpellID: 55802, School: proto.SpellSchool_SpellSchoolFrost, Damage: 30000, PeriodMin: 2, PeriodMax: 10, CastSeconds: 2, LandChance: 0.5, ResetsSwing: true},
-			ability(55807, proto.SpellSchool_SpellSchoolFrost, 8000, 15, 30),
+			{SpellID: 55802, School: proto.SpellSchool_SpellSchoolFrost, Damage: 30000, PeriodMin: 2, PeriodMax: 10, CastSeconds: 2, LandChance: 0.5, ResetsSwing: true, CanMiss: true},
+			missable(55807, proto.SpellSchool_SpellSchoolFrost, 8000, 15, 30),
 		},
 	}, proto.RaidDifficulty_RaidDifficulty25Normal},
 	2: {encounters.OptimizerTankBoss{
 		Name: "Algalon", DamageModifier: 285, AttackTimeMs: 1000, DualWield: true, NoParryHaste: true,
 		Abilities: []encounters.OptimizerTankAbility{
-			ability(64592, proto.SpellSchool_SpellSchoolPhysical, 35000, 3, 4.5),
+			missable(64592, proto.SpellSchool_SpellSchoolPhysical, 35000, 3, 4.5),
 			ability(64412, proto.SpellSchool_SpellSchoolArcane, 9500, 15.5, 15.5),
-			ability(65108, proto.SpellSchool_SpellSchoolShadow, 21000, 25, 25),
+			missable(65108, proto.SpellSchool_SpellSchoolShadow, 21000, 25, 25),
 		},
 	}, proto.RaidDifficulty_RaidDifficulty25Normal},
 	3: {encounters.OptimizerTankBoss{
 		Name: "Anub'arak", DamageModifier: 149.1, NoParryHaste: true,
 		Abilities: []encounters.OptimizerTankAbility{
 			{SpellID: 66012, School: proto.SpellSchool_SpellSchoolFrost, Damage: 20788, PeriodMin: 15, PeriodMax: 20, ResetsSwing: true},
-			{SpellID: 68510, School: proto.SpellSchool_SpellSchoolFrost, Damage: 6000, PeriodMin: 3, PeriodMax: 3, LandChance: 0.18},
+			{SpellID: 68510, School: proto.SpellSchool_SpellSchoolFrost, Damage: 6000, PeriodMin: 3, PeriodMax: 3, LandChance: 0.18, CanMiss: true},
 		},
 	}, proto.RaidDifficulty_RaidDifficulty25Heroic},
 	4: {encounters.OptimizerTankBoss{
 		Name: "the Lich King", DamageModifier: 492.9, AttackTimeMs: 1500, NoParryHaste: true, SuppressDodge: true,
 		Abilities: []encounters.OptimizerTankAbility{
 			{SpellID: 73799, School: proto.SpellSchool_SpellSchoolShadow, Damage: 103081, PeriodMin: 30.5, PeriodMax: 30.5, ResetsSwing: true,
-				FollowUpSeconds: 5, FollowUpDamage: 70000, FollowUpHaste: 2, FollowUpHasteSeconds: 5},
-			{SpellID: 73781, School: proto.SpellSchool_SpellSchoolShadow, Damage: 18750, PeriodMin: 22.5, PeriodMax: 22.5, CastSeconds: 2, ResetsSwing: true},
+				FollowUpSeconds: 5, FollowUpDamage: 70000, FollowUpHaste: 2, FollowUpHasteSeconds: 5, SwapsTank: true},
+			{SpellID: 73781, School: proto.SpellSchool_SpellSchoolShadow, Damage: 18750, PeriodMin: 22.5, PeriodMax: 22.5, CastSeconds: 2, ResetsSwing: true, CanMiss: true},
 		},
 	}, proto.RaidDifficulty_RaidDifficulty25Heroic},
 	5: {encounters.OptimizerTankBoss{
 		Name: "Halion", DamageModifier: 385.4, AttackTimeMs: 1500, HitChance: 5, EnemyDodgeMultiplier: 0.8,
 		Abilities: []encounters.OptimizerTankAbility{
-			{SpellID: 74528, School: proto.SpellSchool_SpellSchoolFire, Damage: 45000, PeriodMin: 10, PeriodMax: 12, CastSeconds: 2, ResetsSwing: true},
+			{SpellID: 74528, School: proto.SpellSchool_SpellSchoolFire, Damage: 45000, PeriodMin: 10, PeriodMax: 12, CastSeconds: 2, ResetsSwing: true, CanMiss: true},
 		},
 	}, proto.RaidDifficulty_RaidDifficulty25Heroic},
 }
@@ -196,6 +203,10 @@ func readTankBossesFromUI(tb testing.TB) map[int32]tankBoss {
 					a.FollowUpHaste = uiNumber(tb, raw)
 				case "followUpHasteSeconds":
 					a.FollowUpHasteSeconds = uiNumber(tb, raw)
+				case "canMiss":
+					a.CanMiss = raw == "true"
+				case "swapsTank":
+					a.SwapsTank = raw == "true"
 				default:
 					tb.Fatalf("unknown ability field %q in %q", key, line)
 				}

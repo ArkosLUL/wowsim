@@ -13,9 +13,9 @@ import (
 // attached. Only the optimizer sends it; the tank suites keep GenericBossTarget.
 const OptimizerTankBossID = 999998
 
-// OptimizerTankAbility is a boss spell that damages its current tank and that avoidance can't remove:
-// it always hits. The school's resistance and damage taken multipliers still cut it, and armor cuts
-// a Physical one.
+// OptimizerTankAbility is a boss spell that damages its current tank and that avoidance can't remove.
+// It lands unless CanMiss says it rolls the server's magic hit. The school's resistance and damage
+// taken multipliers still cut it, and armor cuts a Physical one.
 type OptimizerTankAbility struct {
 	SpellID int32
 	School  proto.SpellSchool
@@ -38,6 +38,15 @@ type OptimizerTankAbility struct {
 	// As that tick fires the boss swings FollowUpHaste times as fast for FollowUpHasteSeconds (Soul
 	// Reaper's 69410). 0 means no haste.
 	FollowUpHaste, FollowUpHasteSeconds float64
+	// The spell goes through MagicSpellHitResult, where a level 83 creature misses a level 80 player 1% of
+	// the time: DmgClass MAGIC, or a damage-only DmgClass NONE with no spell family. A spell with a
+	// non-damage effect, or SPELL_ATTR3_ALWAYS_HIT, never misses.
+	CanMiss bool
+	// The other tank taunts right after this cast (instant casts only), so the boss leaves the modelled
+	// tank until the ability's next cast. That one lands on the other tank, who has just taunted
+	// back: the modelled tank holds the boss every other interval, and the haste of a cast it
+	// didn't take falls on it.
+	SwapsTank bool
 }
 
 // OptimizerTankBoss is one phase boss as the optimizer's tank runs fight it: the swinging generic
@@ -96,12 +105,18 @@ func numberInput(label string, value float64) *proto.TargetInput {
 	return &proto.TargetInput{InputType: proto.InputType_Number, Label: label, NumberValue: value}
 }
 
-func (a OptimizerTankAbility) inputs() []*proto.TargetInput {
-	resetsSwing := 0.0
-	if a.ResetsSwing {
-		resetsSwing = 1
+func flag(on bool) float64 {
+	if on {
+		return 1
 	}
-	out := []*proto.TargetInput{numberInput(spellIDLabel, float64(a.SpellID)), numberInput("School", float64(a.School)), numberInput("Resets swing", resetsSwing)}
+	return 0
+}
+
+func (a OptimizerTankAbility) inputs() []*proto.TargetInput {
+	out := []*proto.TargetInput{
+		numberInput(spellIDLabel, float64(a.SpellID)), numberInput("School", float64(a.School)),
+		numberInput("Resets swing", flag(a.ResetsSwing)), numberInput("Can miss", flag(a.CanMiss)), numberInput("Swaps tank", flag(a.SwapsTank)),
+	}
 	for _, field := range a.fields() {
 		out = append(out, numberInput(field.label, *field.value))
 	}
@@ -152,6 +167,7 @@ func RegisterOptimizerTankBoss() {
 type optimizerTankSpell struct {
 	OptimizerTankAbility
 	spell  *core.Spell
+	haste  *core.Aura
 	nextAt time.Duration
 }
 
@@ -159,6 +175,8 @@ type optimizerTankBossAI struct {
 	target *core.Target
 	spells []optimizerTankSpell
 	armed  bool
+	// The other tank holds the boss: it neither swings at nor casts on the modelled tank.
+	away bool
 }
 
 func NewOptimizerTankBossAI() core.TargetAI {
@@ -187,6 +205,10 @@ func bossFromInputs(inputs []*proto.TargetInput) (hitChance float64, abilities [
 			ability.School = proto.SpellSchool(input.NumberValue)
 		case "Resets swing":
 			ability.ResetsSwing = input.NumberValue != 0
+		case "Can miss":
+			ability.CanMiss = input.NumberValue != 0
+		case "Swaps tank":
+			ability.SwapsTank = input.NumberValue != 0
 		default:
 			known = false
 			for _, field := range ability.fields() {
@@ -209,11 +231,15 @@ func (ai *optimizerTankBossAI) Initialize(target *core.Target, config *proto.Tar
 	// which is where Unit::MeleeSpellMissChance takes them off too
 	target.PseudoStats.IncreasedMissChance -= hitChance / 100
 	for i, ability := range abilities {
-		ai.spells = append(ai.spells, optimizerTankSpell{OptimizerTankAbility: ability, spell: ai.register(target, ability, int32(i))})
+		if ability.SwapsTank && ability.CastSeconds > 0 {
+			panic(fmt.Sprintf("optimizer tank boss: spell %d swaps the tank and has a cast time", ability.SpellID))
+		}
+		spell, haste := ai.register(target, ability, int32(i))
+		ai.spells = append(ai.spells, optimizerTankSpell{OptimizerTankAbility: ability, spell: spell, haste: haste})
 	}
 }
 
-func (ai *optimizerTankBossAI) register(target *core.Target, ability OptimizerTankAbility, index int32) *core.Spell {
+func (ai *optimizerTankBossAI) register(target *core.Target, ability OptimizerTankAbility, index int32) (*core.Spell, *core.Aura) {
 	config := core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: ability.SpellID, Tag: index},
 		SpellSchool: core.SpellSchoolFromProto(ability.School),
@@ -225,14 +251,18 @@ func (ai *optimizerTankBossAI) register(target *core.Target, ability OptimizerTa
 		// creatures never crit with spells
 		CritMultiplier: 1,
 		ApplyEffects: func(sim *core.Simulation, tank *core.Unit, spell *core.Spell) {
-			spell.CalcAndDealDamage(sim, tank, ability.Damage, spell.OutcomeAlwaysHit)
-			if ability.FollowUpSeconds > 0 {
+			outcome := spell.OutcomeAlwaysHit
+			if ability.CanMiss {
+				outcome = spell.OutcomeMagicHit
+			}
+			result := spell.CalcAndDealDamage(sim, tank, ability.Damage, outcome)
+			if ability.FollowUpSeconds > 0 && result.Landed() {
 				spell.Dot(tank).Apply(sim)
 			}
 		},
 	}
+	var haste *core.Aura
 	if ability.FollowUpSeconds > 0 {
-		var haste *core.Aura
 		if ability.FollowUpHaste > 0 && ability.FollowUpHasteSeconds > 0 {
 			haste = target.RegisterAura(core.Aura{
 				Label:    fmt.Sprintf("Optimizer Tank Boss Haste %d", index),
@@ -258,11 +288,36 @@ func (ai *optimizerTankBossAI) register(target *core.Target, ability OptimizerTa
 			},
 		}
 	}
-	return target.RegisterSpell(config)
+	return target.RegisterSpell(config), haste
 }
 
 func (ai *optimizerTankBossAI) Reset(*core.Simulation) {
 	ai.armed = false
+	ai.away = false
+}
+
+// handOff is the other tank's taunt after a cast on the modelled tank. The follow-up already on it
+// still ticks.
+func (ai *optimizerTankBossAI) handOff(sim *core.Simulation) {
+	ai.away = true
+	ai.target.AutoAttacks.CancelAutoSwing(sim)
+}
+
+// takeBack is the cast that lands on the other tank, who has just taunted back to the modelled one.
+// Its haste starts all the same, on the swings the modelled tank now takes.
+func (ai *optimizerTankBossAI) takeBack(sim *core.Simulation, s *optimizerTankSpell) {
+	ai.away = false
+	ai.target.AutoAttacks.EnableAutoSwing(sim)
+	if s.ResetsSwing {
+		ai.target.AutoAttacks.StopMeleeUntil(sim, sim.CurrentTime, false)
+	}
+	if s.haste != nil {
+		haste := s.haste
+		core.StartDelayedAction(sim, core.DelayedActionOptions{
+			DoAt:     sim.CurrentTime + core.DurationFromSeconds(s.FollowUpSeconds),
+			OnAction: func(sim *core.Simulation) { haste.Activate(sim) },
+		})
+	}
 }
 
 func (s *optimizerTankSpell) gap(sim *core.Simulation) time.Duration {
@@ -286,6 +341,13 @@ func (ai *optimizerTankBossAI) ExecuteCustomRotation(sim *core.Simulation) {
 		s := &ai.spells[i]
 		if sim.CurrentTime >= s.nextAt {
 			s.nextAt = sim.CurrentTime + max(s.gap(sim), time.Millisecond)
+			if ai.away {
+				if s.SwapsTank {
+					ai.takeBack(sim, s)
+				}
+				next = min(next, s.nextAt)
+				continue
+			}
 			landed := s.LandChance == 0 || s.LandChance >= 1 || sim.RandomFloat("Optimizer Tank Boss Interrupt") < s.LandChance
 			if landed && s.spell.Cast(sim, ai.target.CurrentTarget) {
 				castEnd := max(ai.target.Hardcast.Expires, sim.CurrentTime)
@@ -297,6 +359,9 @@ func (ai *optimizerTankBossAI) ExecuteCustomRotation(sim *core.Simulation) {
 						readyAt -= castEnd - sim.ServerTickBefore(castEnd)
 					}
 					ai.target.AutoAttacks.StopMeleeUntil(sim, readyAt, false)
+				}
+				if s.SwapsTank {
+					ai.handOff(sim)
 				}
 				if castEnd > sim.CurrentTime {
 					// the cast holds the boss; this runs again when it lands
