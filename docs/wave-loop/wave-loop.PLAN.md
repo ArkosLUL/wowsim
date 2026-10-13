@@ -87,7 +87,7 @@ G = changes goldens. FS = runs all 37 suites.
 | Z7 | EC-CORE-FIX4 (G, FS) · EC-PET-FIX3 (G, live) · EC-CLASS-FIX3 (G, live) · EC-TOOLS | ✔ |
 | Z8 | EC-CORE-FIX5 (G, FS) · EC-PET-FIX4 (G, live) · EC-CLASS-FIX4 (G, live) · BIS-TANK-MAGIC | ✔ |
 | Z9 | EC-CORE-FIX6 (G, FS, live) · EC-PET-FIX5 (G, live) · EC-CLASS-FIX5 (G, live) · BIS-TANK-PICKS | ✔ |
-| Z10 | EC-TOOLS2 | ✔ |
+| Z10 | EC-CORE-FIX7 (G, FS, live) · EC-PET-FIX6 (G, live) · EC-CLASS-FIX6 (G, C++, live) · EC-TOOLS2 | ✔ |
 
 F2 is an inserted wave, not a fifth item in F: the core swing and cast fixes of PAR-P7-0c have to land
 before the class items in G, a class item can't build on a core fix merging in its own wave, and F already
@@ -156,7 +156,8 @@ Z5's follow-ups, specced at its close-out under the earlier call (the parity bac
 its specs. Z8 takes Z7's follow-ups, specced at its close-out under the same call, with BIS-TANK-MAGIC in
 EC-TOOLS2's place (the user's call, 2026-10-11: the raid pass gears both tanks for avoidance against a melee-only
 boss). Z9 takes Z8's follow-ups the same way, with BIS-TANK-PICKS in EC-TOOLS2's place again (the user's call,
-2026-10-12: the 21-raider pass waits on the tank picks); EC-TOOLS2 waits for Z10.
+2026-10-12: the 21-raider pass waits on the tank picks); EC-TOOLS2 waits for Z10. Z10 is proposed the same
+way, Z9's follow-ups with EC-TOOLS2 at last; whether a tank follow-up takes a place is asked in Z9's report.
 
 **Where the specs are:**
 
@@ -173,42 +174,35 @@ boss). Z9 takes Z8's follow-ups the same way, with BIS-TANK-PICKS in EC-TOOLS2's
 
 ## Current wave
 
-- Wave: Z9, running, base `b4e8f6d52` (master `10f9c8d0a` hadn't moved). Run `wf_68977dde-6ef` holds all four
-  items; its transcript dir, with `journal.jsonl`, is
-  `C:\Users\boss2\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-1b9b-4106-be24-1e2f5864000d\subagents\workflows\wf_68977dde-6ef`.
-  Paused 2026-10-13 on the user's word, to go on the next day. Done: core, pet and class merged and promoted, the
-  cross-review of those three (`z9-run1\xreview.md`) with its fixes and goldens, the guides, and the e2e-coverage
-  PLAN's done marks with the follow-up specs EC-CORE-FIX7, EC-PET-FIX6 and EC-CLASS-FIX6. Left, in order:
-  1. BIS-TANK-PICKS: read its review (run 3, `wf_af6c63ed-d23`, args `waveZ9c-args.json`). If green: commit, merge,
-     `dock.sh proto`, then in `sim/encounters/optimizer_tank_boss.go` make the update a landed cast takes off the swing
-     `castEnd - sim.ServerTickBefore(castEnd)` (the cross-review's note; its `sim/core/target.go` hunk sits beside
-     lines the cross-review deleted), `int-check.sh`, no golden may move.
-  2. The slow suite (`.wave-loop\z8-slow.sh` as the model, about 11 min) and its row in "BiS baseline".
-  3. Close-out: the e2e-coverage PLAN's Waves table and EC-TOOLS2's wave, the bis-optimizer PLAN (BIS-TANK-PICKS
-     done, its Verify exception, the follow-up item once the user answers), this file's registry and "Open".
-  4. Land (`git -C [sim] merge --ff-only integration`) and the wave report.
-  Questions for the report: how the Lich King fight should be made survivable (the server's Icecrown buff is on at
-  30%, `ICC.Buff.*` in worldserver.conf, and the fight has no tank swap on Soul Reaper); weighing death chance on a
-  first pick where the worn gear sits at 0 or 100%; Z10's line-up (three EC follow-ups, the tank follow-up,
-  EC-TOOLS2); the speed benchmark, now due (ask before stopping the AC containers). Felesta has no Glyph of Dark
-  Command, so her runs warn.
-  Stages: core period, order-amounts, live; pet code, live; class druid, rest, live; tank model, picks. Briefs:
-  `G:\DevStuff\GitHub\.wave-loop\waveZ9-build.py`, which writes `waveZ9-args.json` and `waveZ9-shared.md`. Proto
-  numbers: `ServerSettings` 7 is EC-CORE-FIX6's, `Target` 23 and `UnitMetrics` 18 BIS-TANK-PICKS'. Merge order: core,
-  pet, class, tank. The tank picks run on the 8 Oct pass's roster snapshot, to compare like for like.
+- Wave: Z10, not started. Z9 (base `b4e8f6d52`) landed on master with the commit that closed it out.
+  Waiting on the user's answers to Z9's report:
+  1. The Lich King's fight in the tank picks kills every loadout: add the zone's 30% buff (the server has it on) and
+     a tank swap on Soul Reaper?
+  2. Death chance where the worn gear dies in 0 or 100% of iterations: normalize it at a first pick (two passes)?
+  3. Z10's line-up: the registry's four, or a tank follow-up in one's place (five candidates, four places).
+  4. The speed benchmark, due now: it needs the AC containers stopped (ask first).
+  The tank follow-up isn't specced: its spec depends on answers 1 and 2 (bis-optimizer PLAN, BIS-TANK-PICKS'
+  "Left").
+  Z9's reports: `G:\DevStuff\GitHub\.wave-loop\z9-run1\*.json` (each agent's, with
+  `impl_bis-tank-picks_picks.json`) and `xreview.md` (the cross-review's), `waveZ9-results.json`,
+  `waveZ9c-results.json` (BIS-TANK-PICKS' review); item notes:
+  `.wave-loop\{ec-core-fix6,ec-pet-fix5,ec-class-fix5,bis-tank-picks}-tmp` (the last holds raiders' gear: never
+  commit). Brief builders to copy: `waveZ9-build.py`, `waveZ9-xreview-brief.md`, `waveZ9-specs-brief.md`,
+  `waveZ9-guides-brief.md`; the slow suite: `z9-slow.sh`.
+  Proto numbers taken: `ServerSettings` 7, `Target` 23, `UnitMetrics` 18; EC-CORE-FIX7's spec names `ServerSettings`
+  8.
   Server: [ac] `3d89793c7`, mod-spell-tweaks `9bf5c75`, mod-sim-validation's C++ as `bc1d35e` (the user's image of
-  2026-10-11 21:56 local); the module's HEAD `0c4d80f` adds e2e tests only, and no Z9 item changes its C++.
-  Prod runs Z6's `e5a289570`, without Z7 or Z8; `wowsims-wotlk:rollback-x` is X's `25cb9dddc`. A sim page left open
+  2026-10-11 21:56 local); the module's HEAD `037d006` adds e2e tests only. EC-CLASS-FIX6 changes its C++: one
+  rebuild by the user.
+  Prod runs Z6's `e5a289570`, without Z7 to Z9; `wowsims-wotlk:rollback-x` is X's `25cb9dddc`. A sim page left open
   across a rebuild sends the optimizer's tank boss its old input group, and the run fails: reload it. Auto mode
   refuses the prod docker commands, a DSN on a command line and chained commands: the user's allow rules
   (`.claude/settings.local.json` in [sim]) cover each plain command.
-  Z8 landed as `10f9c8d0a`; its reports: `G:\DevStuff\GitHub\.wave-loop\z8-run1\*.json` (each agent's) and
-  `xreview.md` (the cross-review's), `waveZ8-results.json`; item notes:
-  `.wave-loop\{ec-core-fix5,ec-pet-fix4,ec-class-fix4,bis-tank-magic}-tmp`.
-- Open: the speed benchmark with a perf baseline for the tank scenarios, after Z9 (the user's call,
-  2026-10-12; ask before stopping the AC containers); the e2e-coverage backlog Z9 leaves, sim-performance's Left items, Z5's 9–11%
-  on mana users and Z7's and Z8's missing rows (Sim throughput), two guide pages past the split mark
-  (`server-parity.md` 237 lines, `class-mechanics.md` 211), the bis-optimizer backlog (Z3's As
+- Open: the speed benchmark with a perf baseline for the tank scenarios, due (the user's call, 2026-10-12; ask
+  before stopping the AC containers); the tank follow-up (BIS-TANK-PICKS' "Left"); the e2e-coverage backlog Z10
+  leaves, sim-performance's Left items, Z5's 9–11% on mana users and Z7's to Z9's missing rows (Sim throughput;
+  EC-CORE-FIX6's update grid costs about 10% of a TestElemental run, EC-CORE-FIX7's to win back), `tools/perf`'s
+  stored tank requests on Z8's boss tables, the bis-optimizer backlog (Z3's As
   builts: the enchant residual, Mutilate's pair, Combat Rogue P3 Normal; Z4's: the surrogate overpricing a
   one-hander's pairing, stage 2 and the Heroic Presence checks not yet run on the new lists, whether
   Ecoterrorist's rotation casts Mangle (Idol of the Corruptor sims like a dead idol); Z5's re-baseline: the
@@ -291,6 +285,7 @@ Reckoning that way), but J isn't DPS: see below.
 | Z6 | 8770.8, +195 / +187 | 10763.9, +656 / +683 | 5006.4, +203 / +305 | 12926.7, +162 / +196 | -16806.3, +5292 / +5032 | -1132.9, +732 / +741 |
 | Z7 | 8790.3, +215 / +199 | 10770.5, +789 / +690 | 5008.5, +221 / +284 | 12918.7, +188 / +240 | -16814.4, +5205 / +5036 | -1122.7, +729 / +737 |
 | Z8 | 8938.8, +173 / +231 | 10778.3, +838 / +854 | 5012.8, +103 / +88 | 12920.8, +243 / +243 | -16810.8, +1851 / +3205 | -223.3, +65 / +46 |
+| Z9 | 8737.0, +182 / +194 | 10774.4, +796 / +817 | 5013.8, +92 / +89 | 12923.5, +204 / +217 | -16892.1, +2642 / +3276 | -164.7, +1 / +58 |
 
 Quick / Normal. Ret P4 ran at Quick only in wave D, after the glyph fix; its wave C numbers
 (12821.9, +54 / +73) came from a seed that wore the glyph. The two tanks arrive with
@@ -392,6 +387,12 @@ offset 2000), and the unpaired death term widens the gain's se to 130 to 200 for
 rose 1.7% on a 2.3% lower AP normalizer (its DPS fell 0.6%). Fire Mage's preset lost 3.2% DPS to Ignite's race and
 the gains fell from +565 / +725 DPS to +255 / +217, not traced to a stat; its Quick pick passes the guard again.
 Combat Rogue Normal is ahead of Quick now, by 16.
+In Z9 all twelve pass. Fury's `J_preset` fell 2.3% on a 2.2% higher AP normalizer (its DPS fell 0.1%): it
+undoes Z8's rise, both the normalizer's noise. Fire Mage's preset lost 0.9% DPS with TestFire (−0.6%)
+and spell power's worth fell with it, so its J held. Ret's gains fell from +243 / +243 to +204 / +217 on a preset
+0.3% lower. Feral Tank's fight gained Quantum Strike (BIS-TANK-PICKS): Armor is worth a quarter more against DTPS
+(−1.627 a point for −1.297), `J_preset` moved with it, and Quick no longer beats the preset (+0.8 ± 6.5; Normal
++58). Prot Paladin's Quick gain rose from +1851 to +2642 (se 112 for 200, not traced); Normal's held.
 
 ## Sim throughput
 
@@ -777,7 +778,8 @@ crashed before F2, so its column starts there.
 | EC-CLASS-FIX5 | merged | `1bebb6396` | module `6091c89`; Omen of Clarity on heals, item heals under their server spells, Hurricane's attack slow (a boss half the time), Bryntroll's heal without crits, Hamstring and Slow, `blood_pesti_aoe`'s Blood Tap condition, Shard of the Gods' 50 s cooldown; item and rotation rows of 35 suites move (`2f308cb20`); `db.json` gains Hamstring's icon (`8576bb383`) |
 | update-grid fixes | direct | `dc16890dc`, `5342e4b5d` | two places built on the fixed grid that the varying one broke after the merges: the Val'kyr's Smite test (pinned with `core.OnRegularGrid`) and Hurricane's `nextStormPass` (now the first map update 500 ms or more after the last pass); no golden moves |
 | wave Z9 cross-review | direct | `f5ace1d3e` | module `037d006`; the pets' timers follow updates of varying length, `Aura.Activate` refuses a temporary aura on a pet that isn't out (Cobra Strikes and Prayer of Mending's bounce skip it), `Encounter.AOECapMultiplier`, `SpellResult.FromInstantCast` and `SlowAttackAuraTag` removed; 21 suites move under 0.02% on average (`a0d44a6e4`); guides `248c8e0f6` |
-| BIS-TANK-PICKS | in review | | both stages done and verified, uncommitted in its worktree; its review runs as `wf_af6c63ed-d23`. Each stage came back blocked on one Verify point, the user's call: death chance can't be weighed where the worn gear never dies (both tanks on Kel'Thuzad) or always dies (both on the Lich King, where no loadout of the pool survives), and on Halion its weight is noise. Picks and numbers: `G:\DevStuff\GitHub\.wave-loop\z9-run1\impl_bis-tank-picks_picks.json`, its As built |
+| BIS-TANK-PICKS | merged | `02ab825c4` | a warning for a tank without its taunt glyph, chance of death paired per iteration (`UnitMetrics.iteration_deaths`), Halion's Twilight Precision (`Target.enemy_dodge_multiplier`), Algalon's Quantum Strike, Soul Reaper's tick and haste as a follow-up of the cast, the measurement tests on the requests the page posts (the old harness simmed a tank that only auto-attacked); the picks for phases 1 to 5. Merged with one Verify point unmet, the user's call: four runs drop the death term (both tanks never die on Kel'Thuzad and always on the Lich King, where no loadout survives), and on Halion its weight is noise; no golden moves |
+| tank boss on the varying update | direct | `749264975`, `3f054f011` | after the merge: a cast with a cast time takes the update that ended off the restarted swing (`castEnd - ServerTickBefore(castEnd)`, the cross-review's note), and `TestTankBossFollowUpTicksOnceAndHastesTheBoss` counts against the swing gap the log shows (the raid's 20% attack slow; it had passed by 30 ms); no golden moves |
 
 Later WIs are added as their wave starts.
 

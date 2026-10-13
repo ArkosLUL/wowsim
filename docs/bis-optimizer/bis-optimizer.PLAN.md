@@ -2316,6 +2316,8 @@ the picks are stale; the step 0 table's ids, schools, damage, periods and cast t
   the tick drifts off its 5 s when an Infest cast delays either.
 - Harness: `opt_raid25_tank_p1`, `opt_feral_tank_p2` and `opt_prot_paladin_p3` regenerated; `baseline.json`
   still holds the old requests' timings for those six scenarios.
+- Row 1 and the seed death chances in this section came from a harness whose tank only auto-attacked
+  (BIS-TANK-PICKS, stage 2): BIS-TANK-PICKS' tables replace them.
 
 Left:
 - Decided by the user (2026-10-12): the floor stays at 262 and the tanks glyph their taunts. The rest of this
@@ -2329,7 +2331,7 @@ Left:
 - Soul Reaper's 69410 and its tick as a follow-up of the cast; the abilities step 0 left out.
 - A perf baseline for the six tank scenarios on an idle machine.
 
-### BIS-TANK-PICKS (wave Z9)
+### BIS-TANK-PICKS (wave Z9, done)
 
 BIS-TANK-MAGIC's follow-up: its picks predate the cross-review's boss fixes, one run lost its death term, and
 the fight still misses what core couldn't express.
@@ -2510,3 +2512,24 @@ Stamina is where it is:
 | Felesta P4 | 26 / 31 / 32 / 33 | out, as Bulwark's |
 | Bulwark P5 | 3695 / 2264 / 1976 / 2741 | out though worth most: at the worn gear, where the curves are measured, Agility, Dodge and Defense are worth 1.4 to 4.5 with a se of 3, against Stamina's 2.18 (se 0.02). The search priced noise |
 | Felesta P5 | 1215 / 425 / 428 / 390 | every socket: death swamps the score and Stamina moves it most |
+
+Left:
+- Merged with Verify's "no run drops a term" unmet on four runs. **Open, the user's call:**
+  - The Lich King's fight kills every loadout. Proposed: the zone's 30% buff, which the server has on
+    (`ICC.Buff.Horde = 73822`, `ICC.Buff.Alliance = 73828` in [ac] `env/dist/etc/worldserver.conf`), and a tank
+    swap on Soul Reaper.
+  - Where the worn gear dies in 0 or 100% of iterations: proposed, normalize death chance at a first pick (two
+    passes). Kel'Thuzad needs nothing if "never dies" is accepted as the answer.
+  - Whether a term that only just clears 2 se counts: on Halion it swamps the score, and Bulwark P5's 19
+    Agility gems are priced noise.
+- The picks were measured on `b4e8f6d52`, before the map updates of varying length merged; rerun them with the
+  decisions above.
+- Felesta has no Glyph of Dark Command.
+- The boss's spells use `OutcomeAlwaysHit`; a `DmgClass MAGIC` or damage-only `NONE` spell from a level 83
+  creature misses a level 80 player 1% of the time (`MagicSpellHitResult`), so Quantum Strike and the Frostbolts
+  are 1% high.
+- 69410 has a missile speed of 20 and the tank casts it at the boss: the haste starts about 0.25 s after the
+  tick. Not modelled.
+- `tools/perf`'s three stored tank requests hold Z8's boss tables (no Quantum Strike at P2); they still run.
+- An option in the acbis driver (another session's) to save each posted `OptimizeGearRequest` would replace
+  `capture_requests.py`.

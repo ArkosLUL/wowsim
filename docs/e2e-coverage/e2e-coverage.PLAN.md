@@ -53,7 +53,7 @@ The live e2e and the replays leave timing, costs, threat, pets, gear and buffs u
 | Z7 | EC-CORE-FIX4 (G, FS) · EC-PET-FIX3 (G, live) · EC-CLASS-FIX3 (G, live) · EC-TOOLS | Z5's follow-ups (Z6 is parity's and raid-import's) |
 | Z8 | EC-CORE-FIX5 (G, FS) · EC-PET-FIX4 (G, live) · EC-CLASS-FIX4 (G, live) | Z7's follow-ups; the fourth place is bis-optimizer's BIS-TANK-MAGIC |
 | Z9 | EC-CORE-FIX6 (G, FS, live) · EC-PET-FIX5 (G, live) · EC-CLASS-FIX5 (G, live) | Z8's follow-ups; the fourth place is bis-optimizer's BIS-TANK-PICKS |
-| Z10 | EC-TOOLS2 | Moved from Z8, then Z9 |
+| Z10 | EC-CORE-FIX7 (G, FS, live) · EC-PET-FIX6 (G, live) · EC-CLASS-FIX6 (G, C++, live) · EC-TOOLS2 | Z9's follow-ups, and EC-TOOLS2 moved from Z8, then Z9. Proposed: the user decides whether bis-optimizer's tank follow-up takes a place |
 
 U is taken (the UI wave). Versus the INVESTIGATION's order, B7, A3 and A4 moved forward (cheap, independent) and
 C1 moved last (after B6).
