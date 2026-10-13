@@ -88,7 +88,7 @@ G = changes goldens. FS = runs all 37 suites.
 | Z8 | EC-CORE-FIX5 (G, FS) · EC-PET-FIX4 (G, live) · EC-CLASS-FIX4 (G, live) · BIS-TANK-MAGIC | ✔ |
 | Z9 | EC-CORE-FIX6 (G, FS, live) · EC-PET-FIX5 (G, live) · EC-CLASS-FIX5 (G, live) · BIS-TANK-PICKS | ✔ |
 | Z10 | EC-CORE-FIX7 (G, FS, live) · EC-CLASS-FIX6 (G, C++, live) · EC-TOOLS2 · BIS-TANK-SWAP | ✔ |
-| Z11 | EC-PET-FIX6 (G, live) | ✔ |
+| Z11 | EC-CORE-FIX8 (G, FS, live) · EC-PET-FIX6 (G, live) · EC-CLASS-FIX7 (G, live) · EC-TOOLS3 (C++, live) | ✔ |
 
 F2 is an inserted wave, not a fifth item in F: the core swing and cast fixes of PAR-P7-0c have to land
 before the class items in G, a class item can't build on a core fix merging in its own wave, and F already
@@ -176,41 +176,34 @@ follow-ups with EC-TOOLS2 at last and BIS-TANK-SWAP in EC-PET-FIX6's place, whic
 
 ## Current wave
 
-- Wave: Z10, all four merged (HEAD `92b1b1aa4` before the status commit), at the cross-review: base `346249292`, runId `wf_bd8bf9a8-4de` (all four; args
-  `waveZ10-args.json`, shared rules `waveZ10-shared.md`, builder `waveZ10-build.py`). Reports
-  `.wave-loop\z10-run1\*.json`, item notes `.wave-loop\{ec-core-fix7,ec-class-fix6,ec-tools2,bis-tank-swap}-tmp`
-  (the last holds raiders' gear: never commit), cross-review brief `waveZ10-xreview-brief.md`. Left: the
-  cross-review, the slow suite, close-out, landing, the report. EC-CLASS-FIX6's C++ isn't in the server: its
-  after-rebuild checks are in `ec-class-fix6-tmp\ec-class-fix6-live.md`; ask the user for the rebuild in the
-  report. Z9 (base `b4e8f6d52`) landed on
-  master as `6dfc2d6c9`.
-  The user's calls on Z9's report (2026-10-13): a tank swap on the Lich King's Soul Reaper but not the zone's 30%
-  buff; death chance normalized at a first pick, on a clearer signal (both BIS-TANK-SWAP's); the line-up above;
-  the speed benchmark, run the same day; no Phase Punch swap on Algalon.
-  Merge order: core, class, tools, tank. EC-TOOLS2 is the wave's `db.json` item; EC-CLASS-FIX6 the one that
-  changes the module's C++.
-  Z9's reports: `G:\DevStuff\GitHub\.wave-loop\z9-run1\*.json` (each agent's, with
-  `impl_bis-tank-picks_picks.json`) and `xreview.md` (the cross-review's), `waveZ9-results.json`,
-  `waveZ9c-results.json` (BIS-TANK-PICKS' review); item notes:
-  `.wave-loop\{ec-core-fix6,ec-pet-fix5,ec-class-fix5,bis-tank-picks}-tmp` (the last holds raiders' gear: never
-  commit). Brief builders to copy: `waveZ9-build.py`, `waveZ9-xreview-brief.md`, `waveZ9-specs-brief.md`,
-  `waveZ9-guides-brief.md`; the slow suite: `z9-slow.sh`.
-  Proto numbers taken: `ServerSettings` 7, `Target` 23, `UnitMetrics` 18; EC-CORE-FIX7's spec names `ServerSettings`
-  8.
+- Wave: Z11, planned, not started: launch on the user's "continue". Z10 (base `346249292`) landed on master with
+  its close-out; Z9 as `6dfc2d6c9`.
+  Before Z11: the user rebuilds the server (mod-sim-validation `86f62a3`: `.simval trace`, the spelldump's
+  `critCapable`; its SQL file gains a `simval trace` row). Then `TestEcClass6CritCapable`, `TestSpelldumpCapture`
+  and `TestEcClass6SummonTrace` open EC-CLASS-FIX7's and EC-PET-FIX6's live stages. EC-TOOLS3 changes the C++
+  again: a second rebuild during Z11.
+  Asked in Z10's report, unanswered: what to do about the Lich King still killing both tanks' picks (the zone
+  buff, more healing, or leave it), whether a tank item takes a place in Z11, the idle speed benchmark for Z10.
+  Z10's reports: `.wave-loop\z10-run1\*.json` and `xreview.md`, `waveZ10-results.json`; item notes
+  `.wave-loop\{ec-core-fix7,ec-class-fix6,ec-tools2,bis-tank-swap}-tmp` (the last holds raiders' gear: never
+  commit). Briefs to copy: `waveZ10-build.py`, `waveZ10-xreview-brief.md`, `waveZ10-specs-brief.md`,
+  `waveZ10-guides-brief.md`, `waveZ10-picks-p4-brief.md`; the slow suite: `z10-slow.sh`, its row:
+  the session scratchpad's `slow-row.py`. `int-check.sh`'s gofmt and eslint see committed files only: after a
+  cross-review's commit, run them on its files.
+  Proto numbers taken: `ServerSettings` 8, `Target` 23, `UnitMetrics` 18.
   Server: [ac] `3d89793c7`, mod-spell-tweaks `9bf5c75`, mod-sim-validation's C++ as `bc1d35e` (the user's image of
-  2026-10-11 21:56 local); the module's HEAD `037d006` adds e2e tests only. EC-CLASS-FIX6 changes its C++: one
-  rebuild by the user.
-  Prod runs Z6's `e5a289570`, without Z7 to Z9; `wowsims-wotlk:rollback-x` is X's `25cb9dddc`. A sim page left open
-  across a rebuild sends the optimizer's tank boss its old input group, and the run fails: reload it. Auto mode
-  refuses the prod docker commands, a DSN on a command line and chained commands: the user's allow rules
+  2026-10-11 21:56 local); the module's HEAD `80d864c`.
+  Prod runs Z6's `e5a289570`, without Z7 to Z10; `wowsims-wotlk:rollback-x` is X's `25cb9dddc`. A sim page left
+  open across a rebuild sends the optimizer's tank boss its old input group, and the run fails: reload it. Auto
+  mode refuses the prod docker commands, a DSN on a command line and chained commands: the user's allow rules
   (`.claude/settings.local.json` in [sim]) cover each plain command.
-- Open: the e2e-coverage backlog Z10 leaves, sim-performance's Left items, Z9's slower sims (Sim throughput;
-  EC-CORE-FIX7 has the update grid's lookups), the bis-optimizer backlog (Z3's As
+- Open: the e2e-coverage backlog Z11 leaves, sim-performance's Left items, the sims' run time over Z6's (Sim
+  throughput; EC-CORE-FIX8 has the dot ticking), the bis-optimizer backlog (Z3's As
   builts: the enchant residual, Mutilate's pair, Combat Rogue P3 Normal; Z4's: the surrogate overpricing a
   one-hander's pairing, stage 2 and the Heroic Presence checks not yet run on the new lists, whether
   Ecoterrorist's rotation casts Mangle (Idol of the Corruptor sims like a dead idol); Z5's re-baseline: the
   search ends on a weaker set after sim changes that leave the presets within 0.1%, Ret P4 Normal 40 rating
-  over the expertise cap), then the deferred BiS chain.
+  over the expertise cap; Z10's: Feral Tank P2 Normal 124 under its Quick), then the deferred BiS chain.
   Closed as not sim gaps: the sheet fields the server shows raw (per-school crit, Blood-Gorged, Mace and Holy
   Specialization), which the fixture README explains.
 - Deferred (the user's calls, 2026-10-02, 10-03, 10-05 and 10-07), once the other items are done and only on the
@@ -224,7 +217,7 @@ follow-ups with EC-TOOLS2 at last and BIS-TANK-SWAP in EC-PET-FIX6's place, whic
   - Then the BiS tooltip dataset (acbis driver, both stages, fresh `--out`, then `acbis`; the import needs
     the OK), the changed builds' stat weights, and the perf harness's `opt_*` scenarios (`update.sh`, a new
     baseline; the raid25 dumps in `_dump/optimizer_dump_test.go` still build uncut pools).
-- Workflow runIds: Z10's `wf_bd8bf9a8-4de` (all four, base `346249292`); Z9's `wf_68977dde-6ef` (all four, base `b4e8f6d52`) `wf_bade63ce-ecd` (BIS-TANK-PICKS's picks stage) and `wf_af6c63ed-d23` (its review); Z8's `wf_22d8a7f1-a8a` (all four, base `c244f8ee9`) and `wf_6d39358e-cad` (EC-PET-FIX4's live stage and review); Z7's `wf_90c05e5f-5b7` (all four, base `fd12d68cc`); Z6's `wf_9f63df91-dcd` (all four, base `c00231f37`); Z5's `wf_2bd87279-a32` (run 1, base `a1bb8d403`), `wf_caa6cd72-af1` (the rotations, base
+- Workflow runIds: Z10's `wf_bd8bf9a8-4de` (all four, base `346249292`; the cross-review, the phase 4 picks, the specs and the guides ran as plain agents); Z9's `wf_68977dde-6ef` (all four, base `b4e8f6d52`) `wf_bade63ce-ecd` (BIS-TANK-PICKS's picks stage) and `wf_af6c63ed-d23` (its review); Z8's `wf_22d8a7f1-a8a` (all four, base `c244f8ee9`) and `wf_6d39358e-cad` (EC-PET-FIX4's live stage and review); Z7's `wf_90c05e5f-5b7` (all four, base `fd12d68cc`); Z6's `wf_9f63df91-dcd` (all four, base `c00231f37`); Z5's `wf_2bd87279-a32` (run 1, base `a1bb8d403`), `wf_caa6cd72-af1` (the rotations, base
   `5692dd49d`), `wf_0d256663-f64` (EC-THREAT-FIX4's live stage) and `wf_4c054cc8-0ce` (the live records, base
   `ef598ad48`); Z4's `wf_e9e036c7-5bd`; Z3's `wf_9aabe6e6-7af` (all four); Z2's `wf_7c79ba74-4ca` (code stages) and `wf_7e9c6966-820` (live stages, BIS-ALTS); Z's `wf_8821da6d-91f` (all five); Y's `wf_e58e8b14-102` (all four), `wf_d290cc37-ee6` and `wf_fe29d895-a35` (EC-TICK-FIX's rest and
   review); X2's `wf_b555c578-f46` (code stages), `wf_a0107f34-c7b` (live stages) and `wf_b00ecbe0-79a` (EC-RECHECK's
@@ -289,6 +282,7 @@ Reckoning that way), but J isn't DPS: see below.
 | Z7 | 8790.3, +215 / +199 | 10770.5, +789 / +690 | 5008.5, +221 / +284 | 12918.7, +188 / +240 | -16814.4, +5205 / +5036 | -1122.7, +729 / +737 |
 | Z8 | 8938.8, +173 / +231 | 10778.3, +838 / +854 | 5012.8, +103 / +88 | 12920.8, +243 / +243 | -16810.8, +1851 / +3205 | -223.3, +65 / +46 |
 | Z9 | 8737.0, +182 / +194 | 10774.4, +796 / +817 | 5013.8, +92 / +89 | 12923.5, +204 / +217 | -16892.1, +2642 / +3276 | -164.7, +1 / +58 |
+| Z10 | 8795.2, +202 / +168 | 10769.7, +759 / +827 | 5013.2, +109 / +98 | 12922.4, +196 / +227 | -16056.1, +3310 / +3290 | -155.4, +112 / -12 |
 
 Quick / Normal. Ret P4 ran at Quick only in wave D, after the glyph fix; its wave C numbers
 (12821.9, +54 / +73) came from a seed that wore the glyph. The two tanks arrive with
@@ -396,6 +390,14 @@ and spell power's worth fell with it, so its J held. Ret's gains fell from +243 
 0.3% lower. Feral Tank's fight gained Quantum Strike (BIS-TANK-PICKS): Armor is worth a quarter more against DTPS
 (−1.627 a point for −1.297), `J_preset` moved with it, and Quick no longer beats the preset (+0.8 ± 6.5; Normal
 +58). Prot Paladin's Quick gain rose from +1851 to +2642 (se 112 for 200, not traced); Normal's held.
+
+In Z10 (`5098e3521`, logs `.wave-loop/logs/z10-rebaseline`) all twelve pass. Fury's `J_preset` rose 0.7% on a 0.7%
+lower AP normalizer with its DPS flat, the normalizer's noise again; its Normal now ends 33 under its Quick (se
+2.8). Combat Rogue's and Fire Mage's presets lost 0.3% DPS to the long tick and their J held. Prot Paladin's
+`J_preset` rose 5% and its gains' se fell from 112 and 127 to 14: the death term's coefficient is capped at the
+worn Armor and Penetrating Cold can miss (BIS-TANK-SWAP); Quick and Normal agree now. Feral Tank's Normal
+ends 124 under its Quick (−12 ± 6.3 against a preset 54 hit under the floor, so the test passes): the search
+isn't settled on this case (Z8 +65 / +46, Z9 +1 / +58).
 
 ## Sim throughput
 
@@ -564,6 +566,13 @@ optimizer scenario: 550.2 s at 98% utilisation on 245,250 sims, 2.24 ms a sim fo
 scenarios ran on requests rebuilt for Z9's fights and are `tools/perf/baseline.json`'s points now, at 16 procs
 only (the rest of the file is wave O's): Quick 13.3 s (feral tank P2), 10.2 (prot paladin P3), 12.5 (raid25 tank
 P1); Normal 88.2, 72.2, 103.1.
+
+Z10 has no idle row. EC-CORE-FIX7's interleaved A/B on a loaded host, each tree's time over Z6's at 100
+iterations, Ret / Elemental / raid: Z7 1.07 / 0.96 / 1.15, Z8 1.05 / 1.03 / 1.12, EC-CORE-FIX6's jittered grid
+1.28 / 1.12 / 1.22, Z9 1.21 / 1.16 / 1.21, Z10's base 1.26 / 1.20 / 1.24. The grid is about 11% of a Ret or
+Elemental run, half their gap to Z6; Z7's dot ticking (`Dot.runTick`) about 4% of the raid's (EC-CORE-FIX8);
+the rest of Ret's is spread with no hot spot. The grid's table won back 3 to 5% on Ret and 1 to 5% on
+Elemental, and the long tick costs 2 to 4%. Pairs in `.wave-loop/ec-core-fix7-tmp/ab_*.txt`.
 
 E to F2 ran the old requests: one iteration, and no rotation for Ret, Hunter and Elemental.
 
@@ -798,6 +807,8 @@ crashed before F2, so its column starts there.
 | EC-CLASS-FIX6 | merged | `f720f9a7c` | module `86f62a3` (C++: needs a rebuild by the user); a miss costs `irand(0, cost / 4)` of rage or energy (live: 12.43 tenths a Hamstring for 12.5, Quick Recovery 20.07 for 20), area spells keep the full cost, Shattering Throw and Shiv refund, the ghoul's Claw pays in full, `blood_pesti_aoe`'s Blood Tap in the last minute only, the spell-mod sweep with Slow, Hamstring and Bloodrage; no `SPELL_ATTR2_CANT_CRIT` gap in 26 spells, no persistent area aura gap beyond Hurricane; 11 suites move (`fde54242e`) |
 | EC-TOOLS2 | merged | `62de6d370` | module `80d864c`; a bag weapon applies only the enchants that follow a swap, icon rows for the explosives' spells, the fight trim without other creatures' deaths, critters cleared before a fight, DruidBalancePhase3 recorded again with Starfall (73 checks); `db.json` and serverdata regenerated after the merges, unchanged; no golden moves |
 | BIS-TANK-SWAP | merged | `b0f8b67b8` | the tank boss leaves the modelled tank between Soul Reaper casts, a boss's rolled spells miss 1%, death chance in two passes behind a 10 se bar; the death term drops only where the first pick dies in 0 or 100% (both tanks at P1, Bulwark at P4), a second search on three runs; the Lich King still kills (Bulwark 99.94%, Felesta 79%); the follow-up tick test's bound for the long tick `92b1b1aa4`; no golden moves |
+| wave Z10 cross-review | direct | `5098e3521` | Infest is cast on the boss itself, so it reaches the tank he has left (`Raidwide`; the swap skipped 7 of 13 in 300 s); a bag weapon with Deathfrost or Razorice lost the enchant; `TotalSims` counted the first pass twice; two tests for the grid's table; the module's C++ compiles and its hooks are thread safe; `TestEcClass6RageMissCost` passes live; no golden moves; guides `c062df2b6` (the live-server checks moved to `server-validation.md`) |
+| BIS-TANK-SWAP's phase 4 picks | direct | `51f26ca4b` | rerun on `5098e3521`, Infest on every cast: Bulwark's first pick dies in 99.75% at 2.6 se, so the term stays out; Felesta's in 87% at 12 se, a second search, 79%. Half the fights are survived at about 79,000 and 66,000 health, for 50,831 and 53,368 on the picks |
 
 Later WIs are added as their wave starts.
 
