@@ -896,8 +896,8 @@ dps_results: {
 dps_results: {
  key: "TestRestoration-Talents-HealingGrace-Average"
  value: {
-  tps: 2861.77303
-  hps: 8863.16066
+  tps: 2852.78734
+  hps: 8837.08798
  }
 }
 ability_results: {
@@ -930,25 +930,25 @@ ability_results: {
   entries: {
    key: "player|aura|{ItemID: 22839}"
    value: {
-    uptime_s: 14.0001
+    uptime_s: 14.00032
    }
   }
   entries: {
    key: "player|aura|{SpellID: 16188}"
    value: {
-    uptime_s: 259.8977
+    uptime_s: 259.89833
    }
   }
   entries: {
    key: "player|aura|{SpellID: 16190, Tag: -1}"
    value: {
-    uptime_s: 24.0007
+    uptime_s: 24.00327
    }
   }
   entries: {
    key: "player|aura|{SpellID: 16190}"
    value: {
-    uptime_s: 12.00006
+    uptime_s: 12.0001
    }
   }
   entries: {
@@ -960,13 +960,13 @@ ability_results: {
   entries: {
    key: "player|aura|{SpellID: 26297}"
    value: {
-    uptime_s: 19.99999
+    uptime_s: 19.99986
    }
   }
   entries: {
    key: "player|aura|{SpellID: 2825, Tag: -1}"
    value: {
-    uptime_s: 40.00023
+    uptime_s: 40.00005
    }
   }
   entries: {
@@ -1163,7 +1163,7 @@ ability_results: {
   entries: {
    key: "player|action|{SpellID: 16188}"
    value: {
-    casts: 3
+    casts: 2.999
    }
   }
   entries: {
@@ -1181,38 +1181,38 @@ ability_results: {
   entries: {
    key: "player|action|{SpellID: 51994}"
    value: {
-    casts: 114.572
-    hits: 114.572
-    amount_per_hit: 785.49753
-    amount: 89996.023
+    casts: 114.26
+    hits: 114.26
+    amount_per_hit: 785.68013
+    amount: 89771.812
    }
   }
   entries: {
    key: "player|action|{SpellID: 52042}"
    value: {
-    casts: 30.201
-    hits: 30.201
-    amount_per_hit: 461.64875
-    amount: 13942.254
+    casts: 30.911
+    hits: 30.911
+    amount_per_hit: 461.47307
+    amount: 14264.594
    }
   }
   entries: {
    key: "player|action|{SpellID: 52752}"
    value: {
-    casts: 15.5815
-    hits: 15.5815
-    amount_per_hit: 1578.36983
-    amount: 24593.3695
+    casts: 15.553
+    hits: 15.553
+    amount_per_hit: 1578.29454
+    amount: 24547.215
    }
   }
   entries: {
    key: "player|action|{SpellID: 55459}"
    value: {
-    casts: 138.3785
-    hits: 415.1355
-    crit_pct: 35.33437
-    amount_per_hit: 5630.28323
-    amount: 2.337330443e+06
+    casts: 137.9755
+    hits: 413.9265
+    crit_pct: 35.3297
+    amount_per_hit: 5629.80391
+    amount: 2.330325027e+06
    }
   }
   entries: {
@@ -1224,35 +1224,35 @@ ability_results: {
   entries: {
    key: "player|action|{SpellID: 61301}"
    value: {
-    casts: 44.1895
-    hits: 44.1895
-    crit_pct: 35.26064
-    amount_per_hit: 4353.60159
-    amount: 192383.4775
+    casts: 44.076
+    hits: 44.076
+    crit_pct: 35.28678
+    amount_per_hit: 4345.25599
+    amount: 191521.503
    }
   }
   entries: {
    key: "player|aura|{ItemID: 22839}"
    value: {
-    uptime_s: 14.0001
+    uptime_s: 14.00032
    }
   }
   entries: {
    key: "player|aura|{SpellID: 16188}"
    value: {
-    uptime_s: 0.96989
+    uptime_s: 1.05002
    }
   }
   entries: {
    key: "player|aura|{SpellID: 16190, Tag: -1}"
    value: {
-    uptime_s: 23.99009
+    uptime_s: 23.97698
    }
   }
   entries: {
    key: "player|aura|{SpellID: 16190}"
    value: {
-    uptime_s: 11.99482
+    uptime_s: 11.98901
    }
   }
   entries: {
@@ -1264,13 +1264,13 @@ ability_results: {
   entries: {
    key: "player|aura|{SpellID: 26297}"
    value: {
-    uptime_s: 19.99507
+    uptime_s: 19.99598
    }
   }
   entries: {
    key: "player|aura|{SpellID: 2825, Tag: -1}"
    value: {
-    uptime_s: 40.00023
+    uptime_s: 40.00005
    }
   }
   entries: {
@@ -1294,7 +1294,7 @@ ability_results: {
   entries: {
    key: "player|aura|{SpellID: 52000}"
    value: {
-    uptime_s: 233.55784
+    uptime_s: 233.44358
    }
   }
   entries: {
@@ -1336,13 +1336,13 @@ ability_results: {
   entries: {
    key: "player|aura|{SpellID: 58757}"
    value: {
-    uptime_s: 30.79378
+    uptime_s: 30.97688
    }
   }
   entries: {
    key: "player|aura|{SpellID: 60062}"
    value: {
-    uptime_s: 63.35018
+    uptime_s: 63.10392
    }
   }
   entries: {
