@@ -1,6 +1,7 @@
 package core
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/wowsims/wotlk/sim/core/proto"
@@ -91,8 +92,23 @@ func (character *Character) RegisterOnItemSwap(callback OnSwapItem) {
 	character.ItemSwap.onSwapCallbacks = append(character.ItemSwap.onSwapCallbacks, callback)
 }
 
+// Enchants whose effect goes on and off with the swap, through the two helpers below. Any other enchant's effect
+// is static (stats, threat, weapon damage), so the weapon in the bag leaves it unapplied, or it would stay on
+// beside the worn one's.
+var swapFollowingEnchants = map[int32]bool{
+	1900: true, 2673: true, 3225: true, 3239: true, 3241: true, 3251: true, 3368: true, 3748: true, 3784: true,
+	3789: true, 3790: true,
+}
+
+func checkSwapFollowingEnchant(effectID int32) {
+	if !swapFollowingEnchants[effectID] {
+		panic(fmt.Sprintf("enchant %d follows the item swap: add it to swapFollowingEnchants", effectID))
+	}
+}
+
 // Helper for handling Effects that use PPMManager to toggle the aura on/off
 func (swap *ItemSwap) RegisterOnSwapItemForEffectWithPPMManager(effectID int32, ppm float64, ppmm *PPMManager, aura *Aura) {
+	checkSwapFollowingEnchant(effectID)
 	character := swap.character
 	character.RegisterOnItemSwap(func(sim *Simulation) {
 		procMask := character.GetProcMaskForEnchant(effectID)
@@ -123,6 +139,7 @@ func (swap *ItemSwap) RegisterOnSwapItemForItemEffect(itemID int32, aura *Aura) 
 
 // Helper for handling Effects that use the effectID to toggle the aura on and off
 func (swap *ItemSwap) RegisterOnSwapItemForEnchantEffect(effectID int32, aura *Aura) {
+	checkSwapFollowingEnchant(effectID)
 	character := swap.character
 	character.RegisterOnItemSwap(func(sim *Simulation) {
 		procMask := character.GetProcMaskForEnchant(effectID)

@@ -2268,8 +2268,8 @@ func (c *fightComparison) report(out io.Writer, verbose bool) {
 
 // trimFight cuts an e2e fight log down to what the replay reads: the header, the player's and its minions'
 // unit lines, what they did in the fight to themselves or the dummy but a spell's plain HIT, a heal, a summon
-// or a cast other than the bot's, and before it only their auras going on and off. It's written gzipped to
-// dir as <setup>.log.gz.
+// or a cast other than the bot's, a death but theirs or the dummy's, and before it only their auras going on and
+// off. It's written gzipped to dir as <setup>.log.gz.
 func trimFight(rawPath, dir, source string, cycles []fightCycle) (string, error) {
 	c, err := fightCycleFor(cycles, fightSetupName(rawPath))
 	if err != nil {
@@ -2334,6 +2334,10 @@ func (fl *fightLog) keeps(e chronicleEvent) bool {
 	// only the bot's own casts start, time or end anything the replay reads
 	case e.Type == "SPELL_CAST_SUCCESS" && (e.Src.GUID != fl.player.GUID ||
 		e.Spell.ID != autoShotSpell && !fl.cycle.casts()[e.Spell.ID]):
+		return false
+	}
+	// a critter a star or an area spell killed
+	if e.Type == "UNIT_DIED" && !fl.mine[e.Dst.GUID] && e.Dst.GUID != fl.target {
 		return false
 	}
 	aura := e.Type == "SPELL_AURA_APPLIED" || e.Type == "SPELL_AURA_REMOVED"

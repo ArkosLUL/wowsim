@@ -557,6 +557,28 @@ func TestFightLogTally(t *testing.T) {
 	}
 }
 
+func TestTrimFightDropsCritterDeaths(t *testing.T) {
+	saved := fightMinionNames
+	fightMinionNames = map[string]string{"Risen Ghoul": "Ghoul"}
+	t.Cleanup(func() { fightMinionNames = saved })
+	text := strings.Replace(handFightLog, "13500  SPELL_PERIODIC_DAMAGE",
+		`12500  UNIT_DIED,0x0000000000000001,"Testlock",0x511,0xF130000000000077,"Maggot",0xa28`+"\n"+
+			`13000  UNIT_DIED,0x0000000000000001,"Testlock",0x511,0xF130000000000002,"SimVal Boss Dummy",0xa28`+"\n"+
+			"13500  SPELL_PERIODIC_DAMAGE", 1)
+	raw := writeFightFile(t, "Test_Testlock_1.log", text)
+	dest, err := trimFight(raw, t.TempDir(), "", []fightCycle{handCycle})
+	if err != nil {
+		t.Fatal(err)
+	}
+	data, err := readMaybeGzipped(dest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(data), "Maggot") || !strings.Contains(string(data), "UNIT_DIED") {
+		t.Errorf("the critter's death should go and the dummy's stay:\n%s", data)
+	}
+}
+
 func TestTrimFight(t *testing.T) {
 	saved := fightMinionNames
 	fightMinionNames = map[string]string{"Risen Ghoul": "Ghoul"}
