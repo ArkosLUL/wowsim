@@ -3771,7 +3771,7 @@ Shard test's message names its 130 s; vetted, not rerun live.
 `.cast` runs no effect (`TRIGGERED_FULL_DEBUG_MASK` holds `TRIGGERED_IGNORE_EFFECTS`), and the test comment now says so.
 `SlowAttackAuraTag` is gone.
 
-### EC-CORE-FIX7 (Z10; changes goldens, full suite; stages: code, live)
+### EC-CORE-FIX7 (Z10; changes goldens, full suite; stages: tick, rest, speed, live)
 
 Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\ec-core-fix6-tmp\`.
 
@@ -3834,7 +3834,7 @@ Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\ec-core-fix6-tmp\`.
   - A boss's swing against a Lacerate tick on it (the tick first every time) and the first Execute or Kill
     Shot no sooner than the target's first map update after the hit that crosses 20%: they need a target that
     swings and one that loses health. The dummies do neither, and no e2e cycle fights a mob with GM off.
-- **Owns:** `sim/core/` but EC-PET-FIX6's pet paths; `proto/common.proto`'s server settings and their
+- **Owns:** `sim/core/` but EC-PET-FIX6's pet paths and the other Z10 items' hunks; `proto/common.proto`'s server settings and their
   plumbing, the picker and its Playwright test; `mage/ignite.go` and the heal call sites, in inline hunks;
   `tools/simval/pets_casts.go`'s reach; the module's `e2e/eccore6_test.go`; their drops and rows.
 - **Goldens:** all 37 (the long tick); report each.
@@ -3880,7 +3880,7 @@ Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\ec-pet-fix5-tmp\`.
 - **Goldens:** TestBlood and TestBloodTank (the copies), Abacus rows (TestUnholy, TestDisc, the priest's
   TestHoly), the mage suites if the image's range changes; report each.
 
-### EC-CLASS-FIX6 (Z10; changes goldens, C++; stages: code, live)
+### EC-CLASS-FIX6 (Z10; changes goldens, C++; stages: melee, casters and C++, live)
 
 Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\ec-class-fix5-tmp\`.
 
@@ -3921,12 +3921,13 @@ Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\ec-class-fix5-tmp\`
     `TestEcClass5HealsUnderStrengthOfWrynn` failed once with no Death Strike heal in three tries and passed
     unchanged on the next run (`live/wrynn.log`): unexplained.
 - **Owns:** the class directories its fixes touch but the other Z10 items' hunks; the item effects in
-  `sim/common/` but EC-PET-FIX6's; `ui/deathknight/apls/`; `spellmod_spells.json` and its probes; the module's
+  `sim/common/` but EC-PET-FIX6's; `ui/deathknight/apls/`; the rage and energy costs' refund in `sim/core/`, in a small hunk;
+  `spellmod_spells.json` and its probes; the module's
   `SimValidationCommands.cpp` and `e2e/ecclass5_test.go`; their cycles, fights, drops and rows.
 - **Goldens:** the suites of each class whose spell changes (warrior and rogue for the miss cost), TestBlood's
   `blood_pesti_aoe` rows, and every suite wearing a changed item; report each.
 
-### EC-TOOLS2 (Z10; golden-neutral)
+### EC-TOOLS2 (Z10; golden-neutral; stages: code, live)
 
 - `db.json` has no icon rows for the explosives' spells (56350, 67769, 56488) or 55039: the UI fetches them.
 - e2e: `fightBuild` kills the critters near the floor first (a star of Starfall can hit one and fail the count);

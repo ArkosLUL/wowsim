@@ -2549,7 +2549,7 @@ first pick (two passes), counted only on a clearer signal.
     (`[ac]/modules/mod-playerbots/src/Ai/Raid/ICC/Action/ICCActions_LK.cpp`): the fight is modelled as the
     user decided, not as the bots play it.
   - Not Algalon, though the bots trade him at 4 Phase Punch stacks (`Uld/Util/UldEncounter_Algalon.h`): the
-    user's call, asked 2026-10-13.
+    user's call (2026-10-13).
 - **Death chance in two passes.** Where the worn gear's death normalizer fails the bar, the run searches once
   without the term, measures the normalizer at that pick (paired, the same Armor offsets), and if it clears the
   bar searches again with it, warm from the first pick. A first pick that still dies in 0 or 100% drops the
@@ -2577,4 +2577,5 @@ tank presets (the deferred BiS chain).
 
 Golden-neutral. **Owns:** `sim/optimizer/`, `sim/encounters/optimizer_tank_boss.go`, `ui/core/optimizer/`,
 `ui/raid/optimizer_*.ts`, the tab's tank controls, `docs/guide/tank-modeling.md`, and `tools/perf`'s three
-tank requests if a stored fight changes. `sim/core` is EC-CORE-FIX7's: ask through `contractChangeRequests`.
+tank requests if a stored fight changes. `sim/core` is EC-CORE-FIX7's: ask through `contractChangeRequests`, but for an outcome for a creature's spell
+that can miss, a pure addition if none fits.

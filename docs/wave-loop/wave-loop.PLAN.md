@@ -180,8 +180,7 @@ follow-ups with EC-TOOLS2 at last and BIS-TANK-SWAP in EC-PET-FIX6's place, whic
   `6dfc2d6c9`.
   The user's calls on Z9's report (2026-10-13): a tank swap on the Lich King's Soul Reaper but not the zone's 30%
   buff; death chance normalized at a first pick, on a clearer signal (both BIS-TANK-SWAP's); the line-up above;
-  the speed benchmark, run the same day. Asked, unanswered: whether Algalon's fight gets the bots' Phase Punch
-  swap too (default: no).
+  the speed benchmark, run the same day; no Phase Punch swap on Algalon.
   Merge order: core, class, tools, tank. EC-TOOLS2 is the wave's `db.json` item; EC-CLASS-FIX6 the one that
   changes the module's C++.
   Z9's reports: `G:\DevStuff\GitHub\.wave-loop\z9-run1\*.json` (each agent's, with
