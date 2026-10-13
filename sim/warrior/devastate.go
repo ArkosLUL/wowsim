@@ -22,8 +22,7 @@ func (warrior *Warrior) registerDevastateSpell() {
 		Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagAPL,
 
 		RageCost: core.RageCostOptions{
-			Cost:   15 - float64(warrior.Talents.FocusedRage) - float64(warrior.Talents.Puncture),
-			Refund: 0.8,
+			Cost: 15 - float64(warrior.Talents.FocusedRage) - float64(warrior.Talents.Puncture),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{

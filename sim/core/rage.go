@@ -177,6 +177,8 @@ type RageCostOptions struct {
 	Multiplier float64 // see ManaCostOptions
 	FlatMod    float64
 
+	// Refund is SPELLMOD_SPELL_COST_REFUND_ON_FAIL's share, which cuts the cost a miss takes. A miss takes
+	// irand(0, cost / 4) of it without one.
 	Refund        float64
 	RefundMetrics *ResourceMetrics // Optional, will default to unit.RageRefundMetrics if not supplied.
 }
@@ -189,7 +191,7 @@ type RageCost struct {
 func newRageCost(spell *Spell, options RageCostOptions) *RageCost {
 	spell.DefaultCast.Cost = options.Cost
 	spell.setStaticCost(options.Multiplier, options.FlatMod, 10)
-	if options.Refund > 0 && options.RefundMetrics == nil {
+	if options.RefundMetrics == nil {
 		options.RefundMetrics = spell.Unit.RageRefundMetrics
 	}
 
@@ -212,8 +214,22 @@ func (rc *RageCost) SpendCost(sim *Simulation, spell *Spell) {
 		spell.Unit.SpendRage(sim, spell.CurCast.Cost, rc.ResourceMetrics)
 	}
 }
+
+// IssueRefund gives back what a miss on the main target doesn't take: SpendCost already took it all.
 func (rc *RageCost) IssueRefund(sim *Simulation, spell *Spell) {
-	if rc.Refund > 0 {
-		spell.Unit.AddRage(sim, rc.Refund*spell.StaticCost(), rc.RefundMetrics)
+	cost := spell.CurCast.Cost
+	if refund := cost - missCostTaken(sim, cost, rc.Refund, 10); refund > 0 {
+		spell.Unit.AddRage(sim, refund, rc.RefundMetrics)
 	}
+}
+
+// missCostTaken is Spell::TakePower's irand(0, cost / 4) for a player's rage or energy cost, after the
+// refund talent's percent mod (a float32 sum like the server's), in the server's units (scale per point).
+func missCostTaken(sim *Simulation, cost, refund, scale float64) float64 {
+	units := truncCost(cost * scale)
+	if refund > 0 {
+		mul := float32(1) + float32(1)*-float32(math.Round(refund*100))/100
+		units = float64(int32(float32(units) * mul))
+	}
+	return math.Floor(sim.RandomFloat("Power on a Miss")*(math.Floor(units/4)+1)) / scale
 }

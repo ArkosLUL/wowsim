@@ -52,7 +52,6 @@ func (rogue *Rogue) registerHemorrhageSpell() {
 			Cost:       35,
 			FlatMod:    -float64(rogue.Talents.SlaughterFromTheShadows),
 			Multiplier: rogue.cheaperComboMoves(),
-			Refund:     0.8,
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{

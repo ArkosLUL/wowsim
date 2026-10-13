@@ -17,7 +17,6 @@ func (rogue *Rogue) registerAmbushSpell() {
 			Cost:       60,
 			FlatMod:    -4 * float64(rogue.Talents.SlaughterFromTheShadows),
 			Multiplier: rogue.cheaperComboMoves(),
-			Refund:     0,
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{

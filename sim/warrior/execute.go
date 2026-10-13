@@ -29,7 +29,6 @@ func (warrior *Warrior) registerExecuteSpell() {
 				float64(warrior.Talents.FocusedRage) -
 				[]float64{0, 2, 5}[warrior.Talents.ImprovedExecute] -
 				core.TernaryFloat64(warrior.HasSetBonus(ItemSetOnslaughtBattlegear, 2), 3, 0),
-			Refund: 0.8,
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{

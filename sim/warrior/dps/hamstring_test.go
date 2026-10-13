@@ -48,8 +48,9 @@ func TestHamstringSnaresWhatTakesSnares(t *testing.T) {
 	if boss.HasActiveAuraWithTag(core.SnareAuraTag) {
 		t.Error("the boss is snared")
 	}
-	if got, want := 100-war.CurrentRage(), cost*0.2; math.Abs(got-want) > 1e-9 {
-		t.Errorf("Hamstring at the immune boss took %v rage, want %v", got, want)
+	// a miss takes irand(0, cost / 4) in tenths
+	if got := 100 - war.CurrentRage(); got < 0 || got > cost/4+1e-9 {
+		t.Errorf("Hamstring at the immune boss took %v rage, want 0 to %v", got, cost/4)
 	}
 	if war.GCD.IsReady(sim) {
 		t.Error("Hamstring at the immune boss took no GCD")

@@ -20,7 +20,6 @@ func (rogue *Rogue) registerBackstabSpell() {
 			Cost:       60,
 			FlatMod:    -4 * float64(rogue.Talents.SlaughterFromTheShadows),
 			Multiplier: rogue.cheaperComboMoves(),
-			Refund:     0.8,
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{

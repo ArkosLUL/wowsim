@@ -23,7 +23,6 @@ func (druid *Druid) registerShredSpell() {
 		EnergyCost: core.EnergyCostOptions{
 			Cost:    60,
 			FlatMod: -9 * float64(druid.Talents.ShreddingAttacks),
-			Refund:  0.8,
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{

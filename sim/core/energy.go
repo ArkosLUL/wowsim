@@ -261,12 +261,20 @@ type EnergyCostOptions struct {
 	Multiplier float64 // see ManaCostOptions
 	FlatMod    float64
 
+	// Refund is SPELLMOD_SPELL_COST_REFUND_ON_FAIL's share, which cuts the cost a miss takes. A miss takes
+	// irand(0, cost / 4) of it without one.
 	Refund        float64
 	RefundMetrics *ResourceMetrics // Optional, will default to unit.EnergyRefundMetrics if not supplied.
+
+	// ProcRefund is the share of the spell's energy cost a miss energizes back through a proc (Quick Recovery).
+	ProcRefund        float64
+	ProcRefundMetrics *ResourceMetrics
 }
 type EnergyCost struct {
 	Refund            float64
 	RefundMetrics     *ResourceMetrics
+	ProcRefund        float64
+	ProcRefundMetrics *ResourceMetrics
 	ResourceMetrics   *ResourceMetrics
 	ComboPointMetrics *ResourceMetrics
 }
@@ -274,13 +282,15 @@ type EnergyCost struct {
 func newEnergyCost(spell *Spell, options EnergyCostOptions) *EnergyCost {
 	spell.DefaultCast.Cost = options.Cost
 	spell.setStaticCost(options.Multiplier, options.FlatMod, 1)
-	if options.Refund > 0 && options.RefundMetrics == nil {
+	if options.RefundMetrics == nil {
 		options.RefundMetrics = spell.Unit.EnergyRefundMetrics
 	}
 
 	return &EnergyCost{
 		Refund:            options.Refund,
 		RefundMetrics:     options.RefundMetrics,
+		ProcRefund:        options.ProcRefund,
+		ProcRefundMetrics: options.ProcRefundMetrics,
 		ResourceMetrics:   spell.Unit.NewEnergyMetrics(spell.ActionID),
 		ComboPointMetrics: spell.Unit.NewComboPointMetrics(spell.ActionID),
 	}
@@ -296,9 +306,22 @@ func (ec *EnergyCost) CostFailureReason(_ *Simulation, spell *Spell) string {
 func (ec *EnergyCost) SpendCost(sim *Simulation, spell *Spell) {
 	spell.Unit.SpendEnergy(sim, spell.CurCast.Cost, ec.ResourceMetrics)
 }
+
+// IssueRefund gives back what a miss on the main target doesn't take: SpendCost already took it all.
 func (ec *EnergyCost) IssueRefund(sim *Simulation, spell *Spell) {
-	if ec.Refund > 0 {
-		spell.Unit.AddEnergy(sim, ec.Refund*spell.CurCast.Cost, ec.RefundMetrics)
+	cost := spell.CurCast.Cost
+	if refund := cost - missCostTaken(sim, cost, ec.Refund, 1); refund > 0 {
+		spell.Unit.AddEnergy(sim, refund, ec.RefundMetrics)
+	}
+	if ec.ProcRefund > 0 {
+		// the proc takes a percent of the spell's listed cost, truncated
+		listed := cost
+		if sd := spell.ServerSpell(); sd != nil {
+			listed = float64(sd.ManaCost)
+		}
+		if amount := math.Floor(listed * math.Round(ec.ProcRefund*100) / 100); amount > 0 {
+			spell.Unit.AddEnergy(sim, amount, ec.ProcRefundMetrics)
+		}
 	}
 }
 

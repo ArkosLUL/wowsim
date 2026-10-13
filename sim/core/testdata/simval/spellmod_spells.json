@@ -527,6 +527,7 @@
 {"class":"mage","tree":"Arcane","talent":"arcaneFocus","passive":true,"groups": [
  {"ranks":[11222,12839,12840],"mods":[{"effect":0,"type":"flat","op":"RESIST_MISS_CHANCE","classMask":[2703249408,32784,0]}],
   "spells": [
+    {"id":31589,"name":"Slow","ops":["RESIST_MISS_CHANCE"]},
     {"id":42845,"name":"Arcane Missiles","ops":["RESIST_MISS_CHANCE"]},
     {"id":42897,"name":"Arcane Blast","ops":["RESIST_MISS_CHANCE"]},
     {"id":42921,"name":"Arcane Explosion","ops":["RESIST_MISS_CHANCE"]},
@@ -2217,6 +2218,7 @@
  {"ranks":[16493,16494],"mods":[{"effect":0,"type":"pct","op":"CRIT_DAMAGE_BONUS","classMask":[3999288558,51013,0]}],
   "spells": [
     {"id":1680,"name":"Whirlwind","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":1715,"name":"Hamstring","ops":["CRIT_DAMAGE_BONUS"]},
     {"id":7384,"name":"Overpower","ops":["CRIT_DAMAGE_BONUS"]},
     {"id":7386,"name":"Sunder Armor","ops":["CRIT_DAMAGE_BONUS"]},
     {"id":12809,"name":"Concussion Blow","ops":["CRIT_DAMAGE_BONUS"]},
@@ -2307,7 +2309,8 @@
     {"id":1719,"name":"Recklessness","ops":["COOLDOWN"]},
     {"id":2687,"name":"Bloodrage","ops":["COOLDOWN"]},
     {"id":12292,"name":"Death Wish","ops":["COOLDOWN"]},
-    {"id":18499,"name":"Berserker Rage","ops":["COOLDOWN"]}
+    {"id":18499,"name":"Berserker Rage","ops":["COOLDOWN"]},
+    {"id":29131,"name":"Bloodrage","ops":["COOLDOWN"]}
   ]}
 ]},
 {"class":"warrior","tree":"Fury","talent":"improvedWhirlwind","passive":true,"groups": [
@@ -2336,7 +2339,8 @@
 {"class":"warrior","tree":"Protection","talent":"improvedBloodrage","passive":true,"groups": [
  {"ranks":[12301,12818],"mods":[{"effect":0,"type":"pct","op":"EFFECT1","classMask":[256,0,0]}],
   "spells": [
-    {"id":2687,"name":"Bloodrage","ops":["EFFECT1"]}
+    {"id":2687,"name":"Bloodrage","ops":["EFFECT1"]},
+    {"id":29131,"name":"Bloodrage","ops":["EFFECT1"]}
   ]}
 ]},
 {"class":"warrior","tree":"Protection","talent":"improvedThunderClap","passive":true,"groups": [
@@ -2395,6 +2399,7 @@
  {"ranks":[29787,29790,29792],"mods":[{"effect":0,"type":"flat","op":"COST","classMask":[1852722926,4253284,0]}],
   "spells": [
     {"id":1680,"name":"Whirlwind","ops":["COST"]},
+    {"id":1715,"name":"Hamstring","ops":["COST"]},
     {"id":7384,"name":"Overpower","ops":["COST"]},
     {"id":7386,"name":"Sunder Armor","ops":["COST"]},
     {"id":12809,"name":"Concussion Blow","ops":["COST"]},

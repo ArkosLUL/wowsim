@@ -19,7 +19,6 @@ func (druid *Druid) registerRakeSpell() {
 		EnergyCost: core.EnergyCostOptions{
 			Cost:    40,
 			FlatMod: -float64(druid.Talents.Ferocity),
-			Refund:  0.8,
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{

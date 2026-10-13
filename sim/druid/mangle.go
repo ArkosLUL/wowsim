@@ -25,7 +25,6 @@ func (druid *Druid) registerMangleBearSpell() {
 		RageCost: core.RageCostOptions{
 			Cost:    20,
 			FlatMod: -float64(druid.Talents.Ferocity),
-			Refund:  0.8,
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
@@ -93,7 +92,6 @@ func (druid *Druid) registerMangleCatSpell() {
 		EnergyCost: core.EnergyCostOptions{
 			Cost:    45,
 			FlatMod: -2*float64(druid.Talents.ImprovedMangle) - float64(druid.Talents.Ferocity) - core.TernaryFloat64(druid.HasSetBonus(ItemSetThunderheartHarness, 2), 5, 0),
-			Refund:  0.8,
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{

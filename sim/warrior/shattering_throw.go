@@ -51,6 +51,9 @@ func (warrior *Warrior) RegisterShatteringThrowCD() {
 			// the damage and crit are worked out at the launch, the armor debuff lands with the missile
 			baseDamage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.AP, spell.MeleeAttackPower())
 			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialNoBlockDodgeParry)
+			if !result.Landed() {
+				spell.IssueRefund(sim)
+			}
 			spell.WaitTravelTime(sim, func(sim *core.Simulation) {
 				spell.DealDamage(sim, result)
 				if result.Landed() {

@@ -27,7 +27,6 @@ func (druid *Druid) registerMaulSpell() {
 		RageCost: core.RageCostOptions{
 			Cost:    15,
 			FlatMod: -float64(druid.Talents.Ferocity),
-			Refund:  0.8,
 		},
 
 		DamageMultiplier: 1 + 0.1*float64(druid.Talents.SavageFury),

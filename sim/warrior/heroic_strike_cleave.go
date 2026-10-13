@@ -19,8 +19,7 @@ func (warrior *Warrior) registerHeroicStrikeSpell() {
 		Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagIncludeTargetBonusDamage | core.SpellFlagNoOnCastComplete | SpellFlagBloodsurge,
 
 		RageCost: core.RageCostOptions{
-			Cost:   15 - float64(warrior.Talents.ImprovedHeroicStrike) - float64(warrior.Talents.FocusedRage),
-			Refund: 0.8,
+			Cost: 15 - float64(warrior.Talents.ImprovedHeroicStrike) - float64(warrior.Talents.FocusedRage),
 		},
 
 		BonusCritRating:  (5*float64(warrior.Talents.Incite) + core.TernaryFloat64(warrior.HasSetBonus(ItemSetWrynnsBattlegear, 4), 5, 0)) * core.CritRatingPerCritChance,
@@ -82,6 +81,10 @@ func (warrior *Warrior) registerCleaveSpell() {
 				results[hitIndex] = spell.CalcDamage(sim, curTarget, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 
 				curTarget = sim.Environment.NextTargetUnit(curTarget)
+			}
+
+			if !results[0].Landed() {
+				spell.IssueRefund(sim)
 			}
 
 			curTarget = target
