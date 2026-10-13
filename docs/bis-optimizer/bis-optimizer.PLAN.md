@@ -2625,12 +2625,13 @@ that can miss, a pure addition if none fits.
   Lich King swaps.
 
 **Stage 2, the picks.** Both tanks, phases 1 to 5, stage 1, Normal, the 8 Oct roster and sources, one driver
-pass on this tree (loaded machine; details in [tank-modeling](../guide/tank-modeling.md)).
+pass on this tree (loaded machine; details in [tank-modeling](../guide/tank-modeling.md)). The P4 rows and
+numbers are a rerun on `5098e3521`, where Infest lands on every cast.
 
 - **Verify, terms:** the death term drops only where the first pick dies in 0 or 100%: Bulwark P1 and Felesta P1
-  (0%), Bulwark P4 (99.94%). Bulwark P5, Felesta P4 and Felesta P5 ran a second search (worn gear 100% dead, 3.0,
-  none and 5.7 se; first picks 70, 86 and 54% dead at 18.1, 12.4 and 14.9 se). The other four count it from the
-  worn gear (29 to 53 se).
+  (0%), Bulwark P4 (99.75%, 2.6 se). Bulwark P5, Felesta P4 and Felesta P5 ran a second search (worn gear 100%
+  dead, 3.0, none and 5.7 se; first picks 70, 87 and 54% dead at 18.1, 12.0 and 14.9 se). The other four count it
+  from the worn gear (29 to 53 se).
 - **Verify, the DPS raider:** Angry, Normal, stage 1: base tree and this one score P2 10333.5737 (Troll,
   2,142,250 sims) and P3 13850.4487 (Orc, 2,007,000), same gear, race, sims and warnings.
 - **Verify, the rest:** `./sim/... ./tools/... ./cmd/...` 50 ok, none failing, no golden moved; simval 1114 of
@@ -2643,21 +2644,32 @@ Picks (final death chance, DTPS, TMI, TPS; Hit is 263 to 280 against the 262 flo
 | Bulwark P1 | Sta 2929, Def 709, health 40,519; gems Def 5, Sta 3, Resil 2, hit 2, Agi 2 | 0, 2334, 60, 6997 | one, term out |
 | Bulwark P2 | Sta 3582, Agi 430, health 46,780; gems Sta 11, hit 5, Agi 2 | 0.022, 9860, 213, 10350 | one, 48 se |
 | Bulwark P3 | Sta 3843, Agi 651, health 49,388; gems Agi+Sta 5, Sta 4, Agi 4, hit 3, Sta+Def 3 | 0, 2400, 65, 10466 | one, 30 se |
-| Bulwark P4 | Sta 3967, Agi 997, health 50,624; gems Agi 11, Agi+Sta 6, Sta+Def 3, Def 2 | 0.9994, 5159, 211, 13816 | one, term out |
+| Bulwark P4 | Sta 3987, Agi 997, health 50,831; gems Agi 11, Agi+Sta 5, Sta+Def 4, Def 2, Sta 1, prismatic 1 | 0.9975, 5074, 200, 12782 | one, term out |
 | Bulwark P5 | Sta 4295, Def 1188, Exp 371, health 53,911; gems Agi 8, Def 6, Agi+Sta 4, Exp 3 | 0.542, 6061, 150, 11949 | two |
 | Felesta P1 | Sta 3045, Def 695, health 42,869; gems Sta 10, Def 2, hit 1 | 0, 2406, 57, 7846 | one, term out |
 | Felesta P2 | Sta 3186, Def 780, Dodge 585, health 44,008; gems Sta 8, Def 4, hit 3, Agi 3 | 0.114, 8104, 185, 13365 | one, 53 se |
 | Felesta P3 | Sta 3287, Def 1016, Dodge 1078, health 45,013; gems Dodge 10, Sta+Dodge 6, Def+Dodge 3 | 0.002, 1755, 58, 11738 | one, 28 se |
-| Felesta P4 | Sta 4100, Def 1300, Dodge 990, health 53,149; gems Def 12, Sta+Def 5, Agi+Sta 4 | 0.794, 3742, 149, 11173 | two |
+| Felesta P4 | Sta 4122, Def 1226, Dodge 1016, health 53,368; gems Def 9, Agi+Sta 5, Sta+Def 4, hit 2, Sta 1, Def+Dodge 1, prismatic 1 | 0.792, 3954, 148, 11263 | two |
 | Felesta P5 | Sta 3696, Def 1414, Dodge 908, health 49,104; gems Def 17, Def+Parry 4, Sta+Def 2 | 0.532, 4572, 128, 15100 | two |
 
-- **The Lich King still kills.** Bulwark's pick dies in 99.94%: half survive at about 85,000 health (50,624
-  worn), 10% die at 111,000. Felesta's: half at about 65,000 (53,149). Every socket Stamina: 56,639 / 0.993 and
-  58,488 / 0.742. Halion's picks die in 53 to 54%; Bulwark's reaches 0 at 81,000 health.
-- **Normalizers at the picks:** Bulwark P2 19.8 se, P5 24.2; Felesta P2 31.6, P4 14.0, P5 11.1; coefficients
-  counted 2.1 to 10.7 thousand, never near the Armor cap (18,000 to 38,000).
+- **The Lich King still kills.** Bulwark's pick dies in 99.75%: half survive at about 79,000 health (50,831
+  worn), 10% die at 101,000. Felesta's: half at about 66,000 (53,368). Every socket Stamina: 56,651 / 0.984 and
+  58,742 / 0.727. Halion's picks die in 53 to 54%; Bulwark's reaches 0 at 81,000 health.
+- **Normalizers at the picks:** Bulwark P2 19.8 se, P5 24.2; Felesta P2 31.6, P4 12.5, P5 11.1; coefficients
+  counted 2.1 to 11.9 thousand, never near the Armor cap (18,000 to 38,000).
 - **Time** (`tools/perf`, `-procs 16 -raid-procs 16 -reps 3`, loaded by the other items, so no claim): the six
   tank scenarios sim the baseline's counts (none takes a second pass) and read wall +40 to +117%, cpu +20 to
   +36% against the idle baseline. A second pass costs 1.6 to 2.1 million sims on the runs that take it: Bulwark
-  P5 3.2 to 5.0 million, Felesta P4 2.3 to 4.4, P5 3.0 to 5.6, over Z9's.
-- **Left:** the second search's `TotalSims` counts cached sims again. `tools/perf`'s requests and baseline stay.
+  P5 3.2 to 5.0 million, Felesta P5 3.0 to 5.6, over Z9's. Felesta P4's rerun, with cached reads no longer
+  counted, sims 3.1 million against Z9's 2.3; Bulwark P4's one pass 2.4.
+- **Left:**
+  - Bulwark's P4 run drops the death term on a first pick that dies in 99.75%, short of always (2.6 se, under
+    the bar): Verify's "0 or 100%" holds only loosely there.
+  - The Lich King kills both picks; what to do about it is the user's call (asked 2026-10-13).
+  - The first Soul Reaper and Infest come at 30.5 and 22.5 s, for the server's 40 and 14 s into a phase: it
+    matters on short fights only.
+  - The P1 to P3 and P5 rows are from before the wave's other items merged: on the merged tree the worn-gear
+    numbers move at sampling level (Bulwark P2 death 0.147 to 0.138, 48.3 to 47.6 se). Not rerun.
+  - `TestMeasureTankDeathTerm` wasn't rerun on the fight with Infest on every cast.
+  - Feral Tank P2 Normal ends 124 under its Quick in the slow suite (wave-loop PLAN, BiS baseline).
+  - The six perf scenarios want an idle retake; `tools/perf`'s requests and baseline stay.
