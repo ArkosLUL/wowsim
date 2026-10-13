@@ -319,6 +319,7 @@ func (r *run) execute() *proto.OptimizerResult {
 		}
 	}
 	r.dpsCapFloors()
+	r.warnTauntGlyph()
 
 	pool, err := CompilePool(r.r)
 	if err != nil {

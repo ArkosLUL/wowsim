@@ -12,17 +12,21 @@ import (
 func TestOptimizerTankBossAbilitiesRoundTrip(t *testing.T) {
 	boss := OptimizerTankBoss{
 		Name: "Test", DamageModifier: 70, AttackTimeMs: 2000, DualWield: true, NoParryHaste: true, SuppressDodge: true,
+		HitChance: 5, EnemyDodgeMultiplier: 0.8,
 		Abilities: []OptimizerTankAbility{
 			{SpellID: 55802, School: proto.SpellSchool_SpellSchoolFrost, Damage: 30000, PeriodMin: 2, PeriodMax: 10, CastSeconds: 2, LandChance: 0.5, ResetsSwing: true},
-			{SpellID: 73799, School: proto.SpellSchool_SpellSchoolShadow, Damage: 70000, PeriodMin: 30.5, PeriodMax: 30.5, StartSeconds: 5},
+			{SpellID: 64592, School: proto.SpellSchool_SpellSchoolPhysical, Damage: 35000, PeriodMin: 3, PeriodMax: 4.5, StartSeconds: 3.5},
+			{SpellID: 73799, School: proto.SpellSchool_SpellSchoolShadow, Damage: 103081, PeriodMin: 30.5, PeriodMax: 30.5, ResetsSwing: true,
+				FollowUpSeconds: 5, FollowUpDamage: 70000, FollowUpHaste: 2, FollowUpHasteSeconds: 5},
 		},
 	}
 	target := OptimizerTankBossTarget(boss)
 	if target.Id != OptimizerTankBossID {
 		t.Errorf("id = %d, want %d", target.Id, OptimizerTankBossID)
 	}
-	if got := abilitiesFromInputs(target.TargetInputs); !reflect.DeepEqual(got, boss.Abilities) {
-		t.Errorf("abilities read back as %+v, want %+v", got, boss.Abilities)
+	hitChance, abilities := bossFromInputs(target.TargetInputs)
+	if hitChance != boss.HitChance || !reflect.DeepEqual(abilities, boss.Abilities) {
+		t.Errorf("read back hit chance %v and abilities %+v, want %v and %+v", hitChance, abilities, boss.HitChance, boss.Abilities)
 	}
 	if !target.DualWield || target.DualWieldPenalty {
 		t.Errorf("dual wield %v with the miss penalty %v, want the off hand without the penalty", target.DualWield, target.DualWieldPenalty)
@@ -30,6 +34,41 @@ func TestOptimizerTankBossAbilitiesRoundTrip(t *testing.T) {
 	if target.ParryHaste || !target.SuppressDodge {
 		t.Errorf("parry haste %v, dodge suppression %v, want off and on", target.ParryHaste, target.SuppressDodge)
 	}
+	if target.EnemyDodgeMultiplier != 0.8 {
+		t.Errorf("enemy dodge multiplier = %v, want 0.8", target.EnemyDodgeMultiplier)
+	}
+}
+
+// A request saved before the follow-up and the boss's hit chance existed has neither input. It still
+// reads, with those fields at 0.
+func TestOptimizerTankBossReadsOlderInputs(t *testing.T) {
+	number := func(label string, value float64) *proto.TargetInput {
+		return &proto.TargetInput{InputType: proto.InputType_Number, Label: label, NumberValue: value}
+	}
+	shadow := float64(proto.SpellSchool_SpellSchoolShadow)
+	saved := []*proto.TargetInput{
+		number("Spell id", 73799), number("School", shadow), number("Damage", 70000),
+		number("Period min", 30.5), number("Period max", 30.5), number("Cast time", 0), number("Land chance", 1),
+		number("Start", 5), number("Resets swing", 0),
+		number("Spell id", 73781), number("School", shadow), number("Damage", 18750),
+		number("Period min", 22.5), number("Period max", 22.5), number("Cast time", 2), number("Land chance", 1),
+		number("Start", 0), number("Resets swing", 1),
+	}
+	want := []OptimizerTankAbility{
+		{SpellID: 73799, School: proto.SpellSchool_SpellSchoolShadow, Damage: 70000, PeriodMin: 30.5, PeriodMax: 30.5, LandChance: 1, StartSeconds: 5},
+		{SpellID: 73781, School: proto.SpellSchool_SpellSchoolShadow, Damage: 18750, PeriodMin: 22.5, PeriodMax: 22.5, CastSeconds: 2, LandChance: 1, ResetsSwing: true},
+	}
+	hitChance, abilities := bossFromInputs(saved)
+	if hitChance != 0 || !reflect.DeepEqual(abilities, want) {
+		t.Errorf("read hit chance %v and abilities %+v, want 0 and %+v", hitChance, abilities, want)
+	}
+
+	defer func() {
+		if recover() == nil {
+			t.Error("an input with a label nobody knows read without a panic")
+		}
+	}()
+	bossFromInputs(append(saved, number("Splash", 1)))
 }
 
 // Kel'Thuzad's class 2 row swings (177.438 + 783/14) * 70 * 2.0 at its minimum. A boss without a row

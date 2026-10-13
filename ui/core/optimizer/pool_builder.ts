@@ -193,8 +193,9 @@ export function optimizerEncounter(current: Encounter | undefined): Encounter {
 	});
 }
 
-// A boss spell that damages its tank and that armor and avoidance can't remove, so it always hits. A
-// real spell's roll is a fixed damage and a cadence here; encounters.OptimizerTankAbility reads it.
+// A boss spell that damages its tank and that avoidance can't remove, so it always hits. Armor cuts a
+// Physical one and nothing else. A real spell's roll is a fixed damage and a cadence here;
+// encounters.OptimizerTankAbility reads it.
 export interface TankAbility {
 	name: string;
 	spellId: number;
@@ -208,11 +209,16 @@ export interface TankAbility {
 	castSeconds?: number;
 	// Share of the casts that land; the raid interrupts or avoids the rest. 1 when unset.
 	landChance?: number;
-	// Seconds added to the first cast.
-	startSeconds?: number;
 	// The boss's swing timer restarts when the cast goes off: an untriggered spell with
 	// SPELL_INTERRUPT_FLAG_INTERRUPT.
 	resetsSwing?: boolean;
+	// The cast leaves a periodic aura on the tank that ticks once, this many seconds after it lands,
+	// for followUpDamage of the same school.
+	followUpSeconds?: number;
+	followUpDamage?: number;
+	// As that tick fires the boss swings followUpHaste times as fast for followUpHasteSeconds.
+	followUpHaste?: number;
+	followUpHasteSeconds?: number;
 }
 
 export interface TankBoss {
@@ -232,14 +238,18 @@ export interface TankBoss {
 	noParryHaste?: boolean;
 	// Chill of the Throne, which Icecrown's bosses stand in for.
 	suppressDodge?: boolean;
+	// SPELL_AURA_MOD_HIT_CHANCE on the boss, in points: its swings miss that much less.
+	hitChance?: number;
+	// SPELL_AURA_MOD_ENEMY_DODGE on the boss: the tank's dodge against it times this.
+	enemyDodgeMultiplier?: number;
 	abilities: Array<TankAbility>;
 }
 
 // The boss a tank optimizes against, per content phase, off that phase boss's live creature_template
 // row and boss script. Anub'arak, the Lich King and Halion are the heroic 25-player fights; Kel'Thuzad
 // and Algalon run 25 normal, which is what an unset raid_difficulty means to the sim. The abilities are
-// only what armor and avoidance can't remove; the white swing is the rest. Kel'Thuzad is modelled from
-// 228 s on, when he starts attacking.
+// only what avoidance can't remove; the white swing is the rest. Kel'Thuzad is modelled from 228 s on,
+// when he starts attacking.
 //
 // sim/optimizer's TestTankBossesMirrorUI reads this table, so keep its shape: one boss per
 // `<phase>: {` block, one field per line, one ability per line.
@@ -265,6 +275,8 @@ export const TANK_BOSSES: Record<number, TankBoss> = {
 		dualWield: true,
 		noParryHaste: true,
 		abilities: [
+			// DmgClass NONE, so no dodge, parry or block, but armor cuts it
+			{ name: 'Quantum Strike', spellId: 64592, school: SpellSchool.SpellSchoolPhysical, damage: 35000, periodMin: 3, periodMax: 4.5 },
 			{ name: 'Phase Punch', spellId: 64412, school: SpellSchool.SpellSchoolArcane, damage: 9500, periodMin: 15.5, periodMax: 15.5 },
 			// 4 stars per 60 to 120 s, only above 20% health
 			{ name: 'Black Hole Explosion', spellId: 65108, school: SpellSchool.SpellSchoolShadow, damage: 21000, periodMin: 25, periodMax: 25 },
@@ -291,9 +303,8 @@ export const TANK_BOSSES: Record<number, TankBoss> = {
 		noParryHaste: true,
 		suppressDodge: true,
 		abilities: [
-			// 50% of his average swing at once, then 70000 five seconds later
-			{ name: 'Soul Reaper', spellId: 73799, school: SpellSchool.SpellSchoolShadow, damage: 103081, periodMin: 30.5, periodMax: 30.5, resetsSwing: true },
-			{ name: 'Soul Reaper tick', spellId: 73799, school: SpellSchool.SpellSchoolShadow, damage: 70000, periodMin: 30.5, periodMax: 30.5, startSeconds: 5 },
+			// 50% of his average swing at once, then 70000 five seconds later, when 69410 doubles his melee speed for 5 s
+			{ name: 'Soul Reaper', spellId: 73799, school: SpellSchool.SpellSchoolShadow, damage: 103081, periodMin: 30.5, periodMax: 30.5, resetsSwing: true, followUpSeconds: 5, followUpDamage: 70000, followUpHaste: 2, followUpHasteSeconds: 5 },
 			{ name: 'Infest', spellId: 73781, school: SpellSchool.SpellSchoolShadow, damage: 18750, periodMin: 22.5, periodMax: 22.5, castSeconds: 2, resetsSwing: true },
 		],
 	},
@@ -302,6 +313,8 @@ export const TANK_BOSSES: Record<number, TankBoss> = {
 		damageModifier: 385.4,
 		attackTimeMs: 1500,
 		difficulty: RaidDifficulty.RaidDifficulty25Heroic,
+		hitChance: 5,
+		enemyDodgeMultiplier: 0.8,
 		abilities: [
 			{ name: 'Flame Breath', spellId: 74528, school: SpellSchool.SpellSchoolFire, damage: 45000, periodMin: 10, periodMax: 12, castSeconds: 2, resetsSwing: true },
 		],
@@ -315,12 +328,16 @@ export const TANK_BOSSES: Record<number, TankBoss> = {
 // time in seconds, so a faster boss's swing lands smaller, not less per second. Duplicated rather than
 // imported from encounter.ts, which this module can't load under Node (see plainBossTarget).
 //
-// OPTIMIZER_TANK_BOSS_ID is encounters.OptimizerTankBossID, and the input labels below are
-// optimizerTankAbilityLabels.
+// OPTIMIZER_TANK_BOSS_ID is encounters.OptimizerTankBossID. Its AI reads the inputs below by label
+// (bossFromInputs): the boss's own first, then each ability's, starting at its spell id.
 const OPTIMIZER_TANK_BOSS_ID = 999998;
 
+function numberInputs(values: Array<[string, number]>): Array<TargetInput> {
+	return values.map(([label, numberValue]) => TargetInput.create({ inputType: InputType.Number, label, numberValue }));
+}
+
 function abilityInputs(ability: TankAbility): Array<TargetInput> {
-	const values: Array<[string, number]> = [
+	return numberInputs([
 		['Spell id', ability.spellId],
 		['School', ability.school],
 		['Damage', ability.damage],
@@ -328,10 +345,12 @@ function abilityInputs(ability: TankAbility): Array<TargetInput> {
 		['Period max', ability.periodMax],
 		['Cast time', ability.castSeconds ?? 0],
 		['Land chance', ability.landChance ?? 1],
-		['Start', ability.startSeconds ?? 0],
 		['Resets swing', ability.resetsSwing ? 1 : 0],
-	];
-	return values.map(([label, numberValue]) => TargetInput.create({ inputType: InputType.Number, label, numberValue }));
+		['Follow-up delay', ability.followUpSeconds ?? 0],
+		['Follow-up damage', ability.followUpDamage ?? 0],
+		['Follow-up haste', ability.followUpHaste ?? 0],
+		['Follow-up haste time', ability.followUpHasteSeconds ?? 0],
+	]);
 }
 
 function genericBossTargetAt(boss: TankBoss): Target {
@@ -347,8 +366,9 @@ function genericBossTargetAt(boss: TankBoss): Target {
 		parryHaste: !boss.noParryHaste,
 		dualWield: boss.dualWield ?? false,
 		suppressDodge: boss.suppressDodge ?? false,
+		enemyDodgeMultiplier: boss.enemyDodgeMultiplier ?? 0,
 		spellSchool: SpellSchool.SpellSchoolPhysical,
-		targetInputs: boss.abilities.flatMap(abilityInputs),
+		targetInputs: numberInputs([['Hit chance', boss.hitChance ?? 0]]).concat(boss.abilities.flatMap(abilityInputs)),
 		stats: Stats.fromMap({
 			[Stat.StatArmor]: 10643,
 			[Stat.StatAttackPower]: boss.attackPower ?? 805,

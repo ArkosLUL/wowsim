@@ -109,8 +109,7 @@ func referenceStat(player *proto.Player) stats.Stat {
 }
 
 // normalizerOffset is how far each side of the seed the normalizer sims move the reference stat.
-// Armor moves DTPS far less per point than AP or SP move DPS, so it gets more: at 1000 a tank's
-// chance of death doesn't always clear 2 se at Normal.
+// Armor moves DTPS far less per point than AP or SP move DPS, so it gets more.
 func normalizerOffset(s stats.Stat) float64 {
 	if s == stats.Armor {
 		return 2000
@@ -179,6 +178,12 @@ func NewObjective(ctx context.Context, eval Evaluator, r *Request, iterations in
 		signed := norm.Mean
 		if lowerIsBetter[m] {
 			signed = -signed
+		}
+		if p := evals[i].Metrics[m].Mean; Metric(m) == MetricPDeath && p == evals[i+1].Metrics[m].Mean && (p == 0 || p == 1) {
+			// no offset or iteration count measures this one: one hit outsizes the health bar, or none comes close
+			o.Warnings = append(o.Warnings, fmt.Sprintf("left death chance out of the objective: the gear as equipped dies in %.0f%% of this fight's iterations, %g %s either way, so nothing there measures it",
+				p*100, normalizerOffset(s), s.StatName()))
+			continue
 		}
 		if signed <= 2*norm.SE {
 			o.Warnings = append(o.Warnings, fmt.Sprintf("left %s out of the objective: %g %s doesn't move it measurably there (%g ± %g per point)",

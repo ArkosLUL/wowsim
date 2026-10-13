@@ -195,6 +195,54 @@ func TestTankGetsOnlyTheMeleeHitFloor(t *testing.T) {
 	checkCapExact(t, r, stats.MeleeHit, meleeMissOK, func(s core.PlayerSheet) float64 { return s.PhysicalMissChance })
 }
 
+// A tank whose glyphs lack the class's taunt glyph is told what that costs: the hit floor's 262 rating
+// is 9.99 points of spell hit, which leaves 7 of a taunt's 17 against a boss, and 4 once Misery or
+// Improved Faerie Fire is on it. With the glyph nothing is said. With the caps off there's no floor,
+// so the number is the equipped gear's own.
+func TestTankWithoutTheTauntGlyphIsWarned(t *testing.T) {
+	warnings := func(glyph int32, disableCaps bool) []string {
+		t.Helper()
+		player := protPaladin(t, "p3")
+		player.Glyphs.Major2 = glyph
+		req := tankOptimizeRequest(t, player, 3)
+		req.Settings.DisableStatCaps = disableCaps
+		r, err := PrepareRequest(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		rn := &run{asked: r, r: r}
+		rn.dpsCapFloors()
+		rn.warnTauntGlyph()
+		return rn.allWarnings()
+	}
+	if got := warnings(int32(proto.PaladinMajorGlyph_GlyphOfRighteousDefense), false); len(got) != 0 {
+		t.Errorf("a paladin with Glyph of Righteous Defense is warned: %v", got)
+	}
+	got := warnings(int32(proto.PaladinMajorGlyph_GlyphOfHammerOfTheRighteous), false)
+	want := "the glyphs have no Glyph of Righteous Defense, so at the hit floor a taunt misses a boss 7% of the time (4% under Misery or Improved Faerie Fire)"
+	if len(got) != 1 || got[0] != want {
+		t.Errorf("warnings %q, want %q", got, want)
+	}
+	got = warnings(int32(proto.PaladinMajorGlyph_GlyphOfHammerOfTheRighteous), true)
+	if len(got) != 1 || !strings.Contains(got[0], "in the gear as equipped a taunt misses a boss") {
+		t.Errorf("warnings with the caps off: %q, want the equipped gear's miss chance", got)
+	}
+
+	for _, c := range []struct {
+		player *proto.Player
+		name   string
+	}{
+		{&proto.Player{Spec: &proto.Player_ProtectionWarrior{}}, "Glyph of Taunt"},
+		{&proto.Player{Spec: &proto.Player_FeralTankDruid{}}, "Glyph of Growling"},
+		{&proto.Player{Spec: &proto.Player_TankDeathknight{}}, "Glyph of Dark Command"},
+		{&proto.Player{Spec: &proto.Player_Warrior{}}, ""},
+	} {
+		if _, got := tauntGlyph(c.player); got != c.name {
+			t.Errorf("%T's taunt glyph is %q, want %q", c.player.Spec, got, c.name)
+		}
+	}
+}
+
 // With the caps off, dpsCapFloors adds nothing, so an unticked run picks exactly what it did before
 // this feature existed.
 func TestDisableStatCapsIsANoOp(t *testing.T) {

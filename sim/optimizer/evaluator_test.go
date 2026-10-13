@@ -165,8 +165,8 @@ func (f *fakeEvaluator) Evaluate(ctx context.Context, points []Point, iterations
 				values[m][it] = mean[m] + f.shared*f.noise[it][m] + f.own*f.rng.NormFloat64()
 			}
 		}
-		deaths := int(math.Round(mean[MetricPDeath] * float64(iterations)))
-		s, err := newShard(values, deaths, [NumMetrics]bool{true, true, true, true, true})
+		values[MetricPDeath] = deathFlags(iterations, int(math.Round(mean[MetricPDeath]*float64(iterations))))
+		s, err := newShard(values, [NumMetrics]bool{true, true, true, true, true})
 		if err != nil {
 			return nil, err
 		}
@@ -175,9 +175,19 @@ func (f *fakeEvaluator) Evaluate(ctx context.Context, points []Point, iterations
 	return out, nil
 }
 
+// deathFlags is n iterations of which the first deaths ended in one.
+func deathFlags(n, deaths int) []float64 {
+	flags := make([]float64, n)
+	for i := range flags[:deaths] {
+		flags[i] = 1
+	}
+	return flags
+}
+
 func evaluationOf(t *testing.T, values [NumMetrics][]float64, deaths int, keep [NumMetrics]bool) *Evaluation {
 	t.Helper()
-	s, err := newShard(values, deaths, keep)
+	values[MetricPDeath] = deathFlags(len(values[MetricDPS]), deaths)
+	s, err := newShard(values, keep)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -195,14 +205,16 @@ func TestEvaluationStatistics(t *testing.T) {
 	if first.Iterations != 4 || !near(first.Metrics[MetricDPS].Mean, 2.5, 1e-9) || !near(first.Metrics[MetricDPS].SE, math.Sqrt(5.0/3/4), 1e-9) {
 		t.Errorf("DPS = %+v over %d iterations", first.Metrics[MetricDPS], first.Iterations)
 	}
-	if !near(first.Metrics[MetricPDeath].Mean, 0.25, 1e-9) || !near(first.Metrics[MetricPDeath].SE, math.Sqrt(0.25*0.75/4), 1e-9) {
+	// one death in four, with the n-1 variance every other metric gets
+	if !near(first.Metrics[MetricPDeath].Mean, 0.25, 1e-9) || !near(first.Metrics[MetricPDeath].SE, math.Sqrt(0.25*0.75/3), 1e-9) {
 		t.Errorf("death chance = %+v", first.Metrics[MetricPDeath])
 	}
-	if first.samples[MetricDPS] == nil || first.samples[MetricTPS] != nil {
+	if first.samples[MetricDPS] == nil || first.samples[MetricTPS] != nil || first.samples[MetricPDeath] != nil {
 		t.Error("kept the wrong metrics")
 	}
 
-	more, _ := newShard(values, 0, [NumMetrics]bool{MetricDPS: true})
+	// no death values at all: the sim tracked none, so nobody died
+	more, _ := newShard(values, [NumMetrics]bool{MetricDPS: true})
 	both := first.extend([]shard{more})
 	if both.Iterations != 8 || len(both.samples[MetricDPS]) != 8 || !near(both.Metrics[MetricPDeath].Mean, 0.125, 1e-9) {
 		t.Errorf("extended = %d iterations, %d samples, death chance %v", both.Iterations, len(both.samples[MetricDPS]), both.Metrics[MetricPDeath])
@@ -244,6 +256,32 @@ func TestDeltaPairsIterations(t *testing.T) {
 	score := combinedScore(ea, Metrics{MetricDPS: 2, MetricTPS: 1})
 	if !near(score.Mean, 2*ea.Metrics[MetricDPS].Mean+ea.Metrics[MetricTPS].Mean, 1e-6) || score.SE <= 0 {
 		t.Errorf("score = %+v", score)
+	}
+}
+
+// Death chance pairs like the other metrics: two loadouts that die in mostly the same iterations
+// differ by the few where only one of them does.
+func TestDeathChancePairsIterations(t *testing.T) {
+	const n = 1000
+	var values [NumMetrics][]float64
+	for m := MetricDPS; m < MetricPDeath; m++ {
+		values[m] = make([]float64, n)
+	}
+	for _, kept := range []bool{true, false} {
+		keep := [NumMetrics]bool{MetricPDeath: kept}
+		// b survives 20 of the 500 iterations a dies in, and dies in no other
+		a, b := evaluationOf(t, values, 500, keep), evaluationOf(t, values, 480, keep)
+		d := Delta(a, b, MetricPDeath)
+		if !near(d.Mean, -0.02, 1e-9) {
+			t.Errorf("kept %v: death chance delta = %+v, want -0.02", kept, d)
+		}
+		independent := math.Hypot(a.Metrics[MetricPDeath].SE, b.Metrics[MetricPDeath].SE)
+		if kept && d.SE > independent/3 {
+			t.Errorf("paired death chance delta has se %.5f, want well under the independent %.5f", d.SE, independent)
+		}
+		if !kept && !near(d.SE, independent, 1e-9) {
+			t.Errorf("unpaired death chance delta has se %.5f, want the independent %.5f", d.SE, independent)
+		}
 	}
 }
 

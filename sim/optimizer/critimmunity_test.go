@@ -41,6 +41,7 @@ var tankBosses = map[int32]tankBoss{
 	2: {encounters.OptimizerTankBoss{
 		Name: "Algalon", DamageModifier: 285, AttackTimeMs: 1000, DualWield: true, NoParryHaste: true,
 		Abilities: []encounters.OptimizerTankAbility{
+			ability(64592, proto.SpellSchool_SpellSchoolPhysical, 35000, 3, 4.5),
 			ability(64412, proto.SpellSchool_SpellSchoolArcane, 9500, 15.5, 15.5),
 			ability(65108, proto.SpellSchool_SpellSchoolShadow, 21000, 25, 25),
 		},
@@ -55,13 +56,13 @@ var tankBosses = map[int32]tankBoss{
 	4: {encounters.OptimizerTankBoss{
 		Name: "the Lich King", DamageModifier: 492.9, AttackTimeMs: 1500, NoParryHaste: true, SuppressDodge: true,
 		Abilities: []encounters.OptimizerTankAbility{
-			{SpellID: 73799, School: proto.SpellSchool_SpellSchoolShadow, Damage: 103081, PeriodMin: 30.5, PeriodMax: 30.5, ResetsSwing: true},
-			{SpellID: 73799, School: proto.SpellSchool_SpellSchoolShadow, Damage: 70000, PeriodMin: 30.5, PeriodMax: 30.5, StartSeconds: 5},
+			{SpellID: 73799, School: proto.SpellSchool_SpellSchoolShadow, Damage: 103081, PeriodMin: 30.5, PeriodMax: 30.5, ResetsSwing: true,
+				FollowUpSeconds: 5, FollowUpDamage: 70000, FollowUpHaste: 2, FollowUpHasteSeconds: 5},
 			{SpellID: 73781, School: proto.SpellSchool_SpellSchoolShadow, Damage: 18750, PeriodMin: 22.5, PeriodMax: 22.5, CastSeconds: 2, ResetsSwing: true},
 		},
 	}, proto.RaidDifficulty_RaidDifficulty25Heroic},
 	5: {encounters.OptimizerTankBoss{
-		Name: "Halion", DamageModifier: 385.4, AttackTimeMs: 1500,
+		Name: "Halion", DamageModifier: 385.4, AttackTimeMs: 1500, HitChance: 5, EnemyDodgeMultiplier: 0.8,
 		Abilities: []encounters.OptimizerTankAbility{
 			{SpellID: 74528, School: proto.SpellSchool_SpellSchoolFire, Damage: 45000, PeriodMin: 10, PeriodMax: 12, CastSeconds: 2, ResetsSwing: true},
 		},
@@ -185,10 +186,16 @@ func readTankBossesFromUI(tb testing.TB) map[int32]tankBoss {
 					a.CastSeconds = uiNumber(tb, raw)
 				case "landChance":
 					a.LandChance = uiNumber(tb, raw)
-				case "startSeconds":
-					a.StartSeconds = uiNumber(tb, raw)
 				case "resetsSwing":
 					a.ResetsSwing = raw == "true"
+				case "followUpSeconds":
+					a.FollowUpSeconds = uiNumber(tb, raw)
+				case "followUpDamage":
+					a.FollowUpDamage = uiNumber(tb, raw)
+				case "followUpHaste":
+					a.FollowUpHaste = uiNumber(tb, raw)
+				case "followUpHasteSeconds":
+					a.FollowUpHasteSeconds = uiNumber(tb, raw)
 				default:
 					tb.Fatalf("unknown ability field %q in %q", key, line)
 				}
@@ -227,6 +234,10 @@ func readTankBossesFromUI(tb testing.TB) map[int32]tankBoss {
 				cur.NoParryHaste = raw == "true"
 			case "suppressDodge":
 				cur.SuppressDodge = raw == "true"
+			case "hitChance":
+				cur.HitChance = uiNumber(tb, raw)
+			case "enemyDodgeMultiplier":
+				cur.EnemyDodgeMultiplier = uiNumber(tb, raw)
 			default:
 				tb.Fatalf("unknown TANK_BOSSES field %q", key)
 			}
