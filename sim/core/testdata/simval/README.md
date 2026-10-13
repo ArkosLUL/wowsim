@@ -2,7 +2,7 @@
 
 `simval.jsonl` is a capture of mod-sim-validation's e2e records. `tools/simval`'s `TestAgainstServerRecords`
 replays it through `CheckRecord` on every `go test`, and `int-check.sh` runs it too. Recapture it
-(never append) per [testing](../../../../docs/guide/testing.md#against-the-server);
+(never append) per [server validation](../../../../docs/guide/server-validation.md#live-e2e);
 `TestFixtureHasEveryE2ERecord` lists what a full run records.
 
 `damage.jsonl` holds `TestSimvalDamage`'s `damage` records, which `TestDamageRecords` replays

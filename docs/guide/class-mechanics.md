@@ -6,6 +6,23 @@ from what the Classic sim did, and the sim now follows it. The druid, shaman, ma
 [server parity](server-parity.md), damage and heal amounts in [damage and healing](damage-and-healing.md),
 pets and guardians in [pets](pets.md).
 
+## Miss cost
+
+A player's rage, energy, rune or runic power spell with an explicit unit target takes only irand(0, cost / 4)
+when that target's result isn't a hit, block, absorb or reflect (`Spell::TakePower`; `missCostTaken`, rage in
+tenths). A sim spell opts in by calling `IssueRefund` on that result, the druid's cat and bear strikes too.
+
+- `SPELLMOD_SPELL_COST_REFUND_ON_FAIL` cuts the cost before the `/ 4`. It's the cost options' `Refund`: Primal
+  Precision on Ferocious Bite and Rip, nothing else.
+- **Quick Recovery** isn't that mod but a proc (`spell_rog_quick_recovery`): an energize of its own, 40 / 80%
+  of the listed cost, truncated, on top (`EnergyCostOptions.ProcRefund`: Eviscerate, Envenom, Expose Armor,
+  Rupture).
+- Cleave pays by its main target's result. A full block pays in full (Hamstring).
+- An area spell pays in full: `Spell::InitExplicitTargets` drops a unit target the spell's explicit mask
+  doesn't name (Whirlwind, Thunder Clap, the shouts, Fan of Knives).
+- So does a pet, which isn't a player: the ghoul's Claw, a hunter pet's focus.
+- Runes and a runic power cost: [server parity](server-parity.md#other-measured-server-behaviour).
+
 ## Death knight
 
 - **Frost Vulnerability** (Razorice's 51714) rolls spell hit.
@@ -31,8 +48,8 @@ pets and guardians in [pets](pets.md).
 - **Death Strike**'s heal (45470) and **Death Pact**'s (48743) have no damage class either: only the healing
   taken percents reach them (`gainHealingTakenOnly`).
 - **Improved Unholy Presence** scales the rune cooldown after the grace cut, in whole ms.
-- **Death Coil** and **Rune Strike** are refundable: a miss takes irand(0, cost / 4). Sudden Doom's Death Coil
-  pays nothing.
+- **Death Coil** and **Rune Strike** are refundable ([miss cost](#miss-cost)). Sudden Doom's Death Coil pays
+  nothing.
 - **Icebound Fortitude:** 30 + int32((full defense skill − 400) × 0.15) percent, at least 40 with the glyph.
 - **Rune of the Stoneskin Gargoyle** (3847) is +25 defense skill, not rating.
 
@@ -48,7 +65,7 @@ pets and guardians in [pets](pets.md).
   `SpellResult.ArmorReduced`). Execute's copy outside the execute phase is a whole normalized weapon roll, and
   only a Whirlwind's first hit is copied (0.5 s lockout).
 - **Hamstring** (1715) is only its 15 s snare, which a mage's Torment the Weak reads (`core.SnareAuraTag`). A
-  snare-immune target is immune to the whole spell: a miss, with the refund.
+  snare-immune target is immune to the whole spell: a miss, at the [miss cost](#miss-cost).
 
 ## Paladin
 

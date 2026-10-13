@@ -39,7 +39,7 @@ rounding, caps and crit damage. Everything else the server does differently is i
   effect hits: the caster of Thunderstorm and the Thermal Sapper, not the target a script drops (Mind Sear
   tick, Starfall splash). A tick the server casts as a spell of its own is cut too (Volley). Guardians' casts
   and Explosive Decoy's blast are uncapped. `TestSimAOESpells` holds the list
-  ([testing](testing.md#against-the-server)).
+  ([server validation](server-validation.md#offline-cross-checks)).
 - **Bleed bonus** (Mangle, Trauma, Stampede; `Unit::SpellDamageBonusTaken`) goes by the spell's mechanic
   (`serverdata.FlagBleed`, set by `gen_serverdata`), hit and ticks alike, and to Shred and Maul on a weapon
   hit, at each victim's own percent: Savage Rend's and the pet Rake's first hit take it, Pin's ticks don't.
@@ -67,7 +67,12 @@ rounding, caps and crit damage. Everything else the server does differently is i
 - **Flat healing taken** (`BonusHealingTaken`: Talisman of Troll Divinity) is a term of its own:
   `int32(taken × coefficient)` for each target and tick, added after the caster's percent and ahead of the
   target's (`Unit::SpellHealingBonusTaken`; `flatHealingTaken`). `Spell.HealingPower` is the caster's alone.
-  - The coefficient is the declared one where the sim's spell is the server's heal, else
-    `SpellConfig.HealingTakenCoefficient` (Prayer of Mending heals as 33110; Penance), or
-    `core.DefaultHealingTakenCoefficient` for a heal without a `spell_bonus_data` row.
-  - An absorb takes none.
+  - The coefficient (`healTakenCoefficient`) is the declared one where the sim's spell is the server's heal, with
+    the target's own `SPELLMOD_BONUS_MULTIPLIER` mods, not the caster's: the caster's modded one on a self heal,
+    else the target's own copy of the spell, else the declaration without mods (a pet's too; the server reads
+    its owner's mods).
+  - A sim spell that isn't the server's heal sets `SpellConfig.HealingTakenCoefficient` to the server heal's
+    (Prayer of Mending heals as 33110; Penance; Earthliving's hot 52000) or, where that has no
+    `spell_bonus_data` row, to `core.DefaultHealingTakenCoefficient` (Empowered Renew's 63544, Ancestral
+    Awakening's 52752, Earth Shield's 379, `itemHealSpell`'s item heals).
+  - An absorb takes none, nor does a heal with neither.

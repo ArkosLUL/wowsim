@@ -86,7 +86,9 @@ class by simval.
   and miss on an immune target.
 - **Hit rules by damage class:** a spell with no damage class always lands and never crits
   (`WorldObject::SpellHitResult`, `Unit::SpellDoneCritChance`: Saronite Bomb), and a spell never misses its
-  own caster (the sapper). The sim applies both only to the explosives (`sim/core/consumes.go`).
+  own caster (the sapper). The sim applies both only to the explosives (`sim/core/consumes.go`). A
+  `SPELL_ATTR2_CANT_CRIT` spell never crits either (`Unit::SpellCriticalHitChance`); the committed spelldump's
+  `critCapable` is still true for those, so read `Attributes[2] & 0x20000000` (`tools/simval/critcap.go`).
 - **Binary spells** follow the spelldump. Mind Flay isn't binary; Steady Shot and Expose Armor are.
 - **Weapon requirements:** a spell with `SPELL_ATTR3_REQUIRES_MAIN_HAND_WEAPON` or `_OFF_HAND_WEAPON` and
   an item subclass mask fails without that weapon, triggered casts too (`Spell::CheckItems`): Mutilate
@@ -107,7 +109,7 @@ class by simval.
 - **Runes** (`sim/core/runic_power.go`; `Player::GetRuneBaseCooldown`, `Spell::TakePower`): grace cuts the
   overshoot less 250 ms, at most 2250; death runes go first to a base type owed, then blood, unholy, frost. A
   refundable spell missing its main target gives no runic power, puts its runes on a 1.5 s cooldown with death
-  runes kept, and a runic power cost takes irand(0, cost / 4).
+  runes kept, and takes a runic power cost's [miss cost](class-mechanics.md#miss-cost).
 - **Power Infusion and Arcane Power** share group 1123 with no common aura type: the one cast last removes the
   other.
 - **Armor debuffs:** Sunder ×5 (debuff 58567, not ability 47467) and Expose Armor don't stack. Faerie
@@ -140,6 +142,12 @@ class by simval.
   that touches a crit multiplier mid-fight has to follow the swap: a factor held on it goes through
   `Character.ScaleCrit` (Combustion, Hodir's Storm Power), a value worked out ahead of time through
   `MetaCritFollow` and `MetaCritBuilt` (Prey on the Weak, Predatory Instincts).
+- **Item-swap enchants** (`sim/core/item_swaps.go`): the weapon in the bag applies only an enchant in
+  `swapFollowingEnchants`, one whose effect a swap callback turns on and off; any other effect is static (a
+  rune's stats, threat, weapon damage) and would stay on beside the worn weapon's. An enchant that registers
+  a swap callback goes on the list: the two `RegisterOnSwapItemFor…` helpers panic on a missing id, a direct
+  `RegisterOnItemSwap` doesn't (Deathfrost, Razorice). Not modelled: the server's swap moves a static effect
+  too (`Player::SwapItem`, `_ApplyItemMods`), the sim only the enchant's item stats.
 - **Timing and procs** (the rest is in [spell data and timing](spell-data-and-timing.md)):
   - The rage hit factor is truncated to `uint32`.
   - Spell-proc PPM uses max(cast time, 1500 ms).
@@ -177,13 +185,14 @@ checks it and the Go effects.
   - Item heals go the same way (`itemHealSpell`): Bauble of True Blood's use casts 71607 for both items,
     Althor's Abacus heals as 71610 / 71641, Glowing Twilight Scale ticks as 75493 / 75494. Still under the
     item: Forethought Talisman's heal over time.
-  - Bryntroll's proc is Drain Life 71838 (heroic 71839), magic class. It never crits (`SPELL_ATTR2_CANT_CRIT`,
-    which the spelldump's `critCapable` doesn't read) and heals the wielder for the damage dealt, a bare `HealBySpell`
+  - Bryntroll's proc is Drain Life 71838 (heroic 71839), magic class. It never crits
+    (`SPELL_ATTR2_CANT_CRIT`) and heals the wielder for the damage dealt, a bare `HealBySpell`
     with no crit, threat, proc or spell power (`GainHealing`). The item gives the spell a 500 ms cooldown, so
     a roll won inside it is lost (`Player::CastItemCombatSpell`).
   - Shard of the Gods: the Purified set (bonus 69755) casts only Cauterizing Heal 69733, the Shiny set (69739)
     only Searing Flames 69729, with no heroic ids: 25%, 50 s cooldown, off any landed magic damage or heal. A
-    hit of the wrong kind uses the proc up and casts nothing (`SPELL_FAILED_BAD_TARGETS`).
+    hit of the wrong kind uses the proc up and casts nothing (`SPELL_FAILED_BAD_TARGETS`). Not modelled: a
+    cast that only puts on a hot or shield rolls it too (Renew, Earth Shield, Power Word: Shield).
   - Class relics, sigils, totems, idols and a few class set bonuses still carry Classic values until
     their class's P7 item. Totem of the Third Wind also buffs Healing Wave.
   - Verdicts per row are in `docs/azerothcore-item-diff/data/{effects,sets}_review.csv`.

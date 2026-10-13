@@ -70,7 +70,7 @@ Frostbolt, Heroic Strike and Steady Shot, which pick a different PPM basis each.
 `TestDamageFixtureHasEveryProbe` fails when a probe's bare or talented record is missing and not in
 `droppedDamageRecords`. `CheckRecord` ignores `damage` records, so a `simval.jsonl` recapture holding them still
 passes; move them to `damage.jsonl`. Recapture it like `simval.jsonl`
-([testing](../../docs/guide/testing.md#against-the-server)), running only `run.sh TestSimvalDamage` and keeping
+([server validation](../../docs/guide/server-validation.md#live-e2e)), running only `run.sh TestSimvalDamage` and keeping
 its `damage` lines.
 
 Per unshaped record (`damage.go`):
@@ -160,7 +160,7 @@ bound has 250 ms of jitter, a 110 ms update and 0.5% of drift on it (`petsCastsS
 without the file. `TestTimingFixtureHasEveryProbe` fails when a probe's bare, talent or Bloodlust record (a
 `timingFinishers` one's at each of 1 to 5 combo points) is missing and in neither `droppedTimingRecords` nor
 `timingRecapture`, or `timingRecapture` lists a finisher the capture has. Capture it by running only
-`run.sh TestSimvalTiming`, which the default run leaves out ([testing](../../docs/guide/testing.md#against-the-server)).
+`run.sh TestSimvalTiming`, which the default run leaves out ([server validation](../../docs/guide/server-validation.md#live-e2e)).
 `CheckRecord` ignores `timing` records anyway, but the bots' `info` lines look like the base stats bots'.
 
 Per record (`timing.go`):
@@ -197,7 +197,7 @@ fails when a probe's record is missing and not in `droppedThreatRecords`, or a d
 before a recapture; a dropped probe must fail to build unless marked `recapture` (the capture lacks its record,
 the next run brings it: then remove the entry). A probe's key includes the creatures fighting the caster when a
 positive spell's bonus was shared out (3 for `threatAssistCreatures`, 0 for the dummy alone). Capture by running only
-`run.sh TestSimvalThreat`, streamed as for `simval.jsonl` ([testing](../../docs/guide/testing.md#against-the-server));
+`run.sh TestSimvalThreat`, streamed as for `simval.jsonl` ([server validation](../../docs/guide/server-validation.md#live-e2e));
 `CheckRecord` ignores `threat` records. Keep that run's `"command":"threat"` lines, remove the `droppedThreatRecords`
 keys, and keep only the last record of a repeated probe (the e2e repeats Envenom until the dummy shows the poison);
 the fixture test fails on a key twice.
@@ -254,8 +254,8 @@ Pet casters and non-80 characters fail. A spell no spec registers fails as `sim 
 with a row in the fixture README; an entry no record fails fails the test. `TestThreatReplayOnHandCheckedRecords`
 tests the comparison without it.
 
-**Fixture cutter.** `simval threat` cuts a `TestSimvalThreat` run's streamed records ([testing](../../docs/guide/testing.md),
-Against the server) down to `threat.jsonl`:
+**Fixture cutter.** `simval threat` cuts a `TestSimvalThreat` run's streamed records
+([server validation](../../docs/guide/server-validation.md#live-e2e)) down to `threat.jsonl`:
 
 ```sh
 tools/acore/dock.sh run ./tools/simval threat -records /wotlk/tmp/stream.jsonl -since <the run's start, unix ms>
@@ -501,7 +501,7 @@ sim, through the trim), `TestTalentSweepCatchesMismatches`, `TestTalentTrim`.
 
 mod-sim-validation's `TestSimvalSpellModSweep` walks the talent sweep's paths and probes each spell
 `spellmod_spells.json` lists for a step's rank spell ([spellmods](../acore/spellmods/README.md)) before and after the
-step: `timing`, `damage`, `yellow <id> 1`. Run it streamed as in [testing](../../docs/guide/testing.md#against-the-server):
+step: `timing`, `damage`, `yellow <id> 1`. Run it streamed as in [server validation](../../docs/guide/server-validation.md#live-e2e):
 
 ```bash
 SIMVAL_SPELLMOD_SPELLS=<sim>/sim/core/testdata/simval/spellmod_spells.json \

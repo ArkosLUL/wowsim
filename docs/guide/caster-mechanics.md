@@ -12,6 +12,8 @@ pets and guardians in [pets](pets.md).
   for Wrath), then spell_proc's chance; never while either eclipse is up.
 - **Vengeance** covers Wrath, Moonfire, Starfire and Starfall, not Insect Swarm.
 - **Rake**'s first hit takes armor.
+- A missed cat or bear strike pays the [miss cost](class-mechanics.md#miss-cost), Primal Precision's cut
+  included.
 - **Forms:** cat and bear weapon damage is min(level, 60) × 0.85 / 1.25 × the unhasted attack time; a weapon's feral
   AP truncates to int32 in float32; Predatory Strikes gives 7/14/20% of that feral AP plus the item's own AP.
 - **Starfall** (53201) is an aura on the druid and can't miss: 10 ticks, each casting a star (53195) at two

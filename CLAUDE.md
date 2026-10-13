@@ -39,7 +39,8 @@ Before starting, read every doc whose trigger matches the task.
 |---|---|
 | [CONTEXT.md](CONTEXT.md) | a project term is unclear, or you're naming something |
 | [dev-environment](docs/guide/dev-environment.md) | building, running, regenerating protos, any Docker or shell work |
-| [testing](docs/guide/testing.md) | verifying or reviewing a change, touching goldens |
+| [testing](docs/guide/testing.md) | verifying or reviewing a change with Go or UI tests, touching goldens |
+| [server-validation](docs/guide/server-validation.md) | replaying or recapturing server records, running or writing a live e2e test, judging parity |
 | [sim-architecture](docs/guide/sim-architecture.md) | locating sim, proto, UI or tool code |
 | [server-parity](docs/guide/server-parity.md) | changing a combat table, cost, proc, immunity or other core mechanic, an item value or module behaviour |
 | [damage-and-healing](docs/guide/damage-and-healing.md) | changing how a hit's or heal's amount is worked out: percents, rounding, the AoE cap, crit damage |

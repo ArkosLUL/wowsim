@@ -76,7 +76,7 @@ The live server: where it runs, how to reach it, what's installed. For table and
 | mod-spell-tweaks | spell and talent changes, listed in the parity INVESTIGATION; swaps two hunter talent tiers | toggles become server settings; talents keep stock tree positions |
 | mod-playerbots | bots fill the raid; strategies in `acore_playerbots.playerbots_db_store` | none |
 | mod-chronicle | combat logs, inside instances only. The server deletes its copy after upload, so download from the app API | recorded runs |
-| mod-sim-validation | ours, and its own git repo. `.simval` GM commands, test dummies 999000–999008 (mod-dungeon-scale's `DisabledID`, so never scaled), output in `[ac]/env/dist/logs/simval/`. `Enable = 0` by default; `configurationOverrides/SimValidation.env` turns it on live. Every `.simval` command refuses while it's off | validation ([testing.md](testing.md#against-the-server)) |
+| mod-sim-validation | ours, and its own git repo. `.simval` GM commands, test dummies 999000–999008 (mod-dungeon-scale's `DisabledID`, so never scaled), output in `[ac]/env/dist/logs/simval/`. `Enable = 0` by default; `configurationOverrides/SimValidation.env` turns it on live. Every `.simval` command refuses while it's off | validation ([server-validation.md](server-validation.md)) |
 | mod-bis-tooltip | ours, and its own git repo. Serves the BiS dataset in `acore_world.bistooltip_*` to the BisTooltipAC addon over addon whispers; `.bistooltip` commands. Wire format, config and tests: its `README.md` | nothing; it ships what `acbis` exports ([acbis README](../../tools/database/acbis/README.md)) |
 | mod-npc-enchanter | NPC 601015 applies nearly every WotLK enchant free, at any tier. Profession enchants check skill == 450; Hyperspeed Accelerators checks Engineering == 400, so a 450 engineer can't buy it there | enchants count as available in every phase |
 
@@ -129,7 +129,8 @@ mod-individual-progression stores a character's tier as rewarded quest `66000 + 
 - `.learn` fails with the dummy selected. A GM's guardian (the Fire Elemental) never attacks: `.gm off`.
 - A triggered `.cast` never summons a totem: cast it from the client (a raw `CMSG_CAST_SPELL`).
 - The e2e client never sees passive auras, so `HasAura` on one is always false.
-- `.cast <id> triggered` skips spell effects (`TRIGGERED_IGNORE_EFFECTS`): the aura's effects and a form's passives
+- `.cast <id> triggered` runs no spell effect (`TRIGGERED_FULL_DEBUG_MASK` holds `TRIGGERED_IGNORE_EFFECTS`), so
+  it deals and summons nothing: cast untriggered for a spell's effects. The aura's effects and a form's passives
   go on at its next map update, about 500 ms later. Wait before recording.
 - Form, stance and presence bonuses and improved raid buffs take a newly learned talent only on a new cast.
 - `.learn` never fills `m_talents`, so a `Player::HasTalent` check fails for a talent learned that way:
@@ -145,5 +146,9 @@ mod-individual-progression stores a character's tier as rewarded quest `66000 + 
 - AzerothGhost, the e2e client, needs the Warden OS FourCC patch, plus `E2E_WORLD_ADDR` because the
   realmlist gives the public address.
 - GM command loops freeze the world thread, so cap their iterations (simval's `MaxIterations`).
+- Maps update on worker threads (`MapUpdate.Threads` is above 0 live), so a module hook called from a map's
+  update runs on one (`OnSpellSendSpellGo`). An object's removal runs on the world thread once the maps are done
+  (`Map::DelayedUpdate`: `OnCreatureRemoveWorld`), at the same `GameTime`. Lock what hooks share
+  (`SimValidation::AppendLine` does).
 - A bot relogging right after a level-up can crash the worldserver: core's `ServerMailReward::OnPlayerLogin` query
   callback runs on a null player. Docker restarts it, disconnecting everyone online.

@@ -39,19 +39,21 @@ spell is only as right as its id.
   only triggers the real one (totems, Faerie Fire (Feral), Typhoon). The wrapper's
   flags are not the damage's, so those entries keep the sim's values until the class's P7 item moves
   the damage to the real id. When a suite moves for a spell you didn't touch, look here first.
-- Missiles roll hit, crit and damage at launch (`Spell::DoAllEffectOnLaunchTarget`) and deal it on landing,
-  after at least 5 yards of travel (`Spell::AddUnitTarget`), in whole ms. The sim waits out the travel only
-  where the closure calls `spell.WaitTravelTime`, or `spell.DealDamageAfterTravel` for a landing that only
-  deals the result, over `DistanceFromTarget`, which is 0 for a pet, so its missiles wait the 5 yd floor (a
-  Mirror Image takes its mage's).
+- Missiles roll hit, crit and damage at launch (`Spell::DoAllEffectOnLaunchTarget`) and deal it on landing, in
+  whole ms. The flight is the distance less the caster's reach, at least 5 yd (`Spell::AddUnitTarget`;
+  `Spell.TravelTime`): `GetDistance` takes off the caster's object size, 1.5 yd for a player, and the sim
+  takes 1.5 for every pet and guardian too. The sim waits it out only where the closure calls
+  `spell.WaitTravelTime`, or `spell.DealDamageAfterTravel` for a landing that only deals the result, over
+  `DistanceFromTarget`, which is 0 for a pet, so its missiles wait the 5 yd floor (a Mirror Image takes its
+  mage's).
 
 ## Update timing
 
 The server updates players every world tick, and creatures, pets and guardians, with the auras they carry, only
 on the map update, 100 ms live (`Map::Update`): the first world tick its interval is up by, at least 3 ticks
 apart (`MapMgr::Update`). `MinWorldUpdateTime` (10 ms live) is only a tick's floor: the loop sleeps the rest of
-it and wakes late, by a different amount each time, so no map update is under its interval and the rest
-scatter above it.
+it and wakes late, by a different amount each time, and one tick of every update runs long, so an update's
+length scatters around a mean above its interval.
 
 The sim draws every map update's length, per iteration (`sim/core/update_grid.go`). Three `ServerSettings`
 shape it:
@@ -68,8 +70,9 @@ shape it:
 
 None is a config key. They're what the host does under its load, fitted to recordings as constants in
 `tools/acore/gen_server_defaults/settings.go` ("World loop time", "Map update jitter" and "World long tick" in
-the UI): a test run on the host adds about a ms to the update, so record a period-sensitive number on an idle
-host.
+the UI): a test run on the host adds about a ms to the update and the long tick grows with the worldserver's
+load, so record a period-sensitive number on an idle host. `TestEcCore6WorldTick` measures the ticks
+([server validation](server-validation.md#live-e2e)).
 
 The long tick at 0 gives a map update ten even world ticks, drawn above a 100 ms floor (lognormal, whatever
 `map_update_jitter_ms` says). Jitter or `world_loop_ms` at 0 gives a fixed grid with a phase rolled per
@@ -78,7 +81,10 @@ exact, which is what unit tests want. Outside the fight every update takes the m
 
 - Ask the grid, never step by an interval: `sim.NextServerTick` and `NextWorldTick` give the first update at or
   after a time, `ServerTickBefore` and `WorldTickBefore` the last one before it. With jitter
-  `serverTickInterval` holds only the shortest update.
+  `serverTickInterval` holds only the shortest update. A lookup reads a bucket table (`updateJitter.tab`): a
+  bucket is a power of two no wider than the shortest update, so a time is in its bucket's update or the one
+  after (`TestUpdateTableAtTheEdges`). Each update draws one step off the seed, in order
+  (`TestEvenTickUpdatesAreDrawnLikeTheCursorWalk`).
 - Riding on the grid: a creature's 2 s timer runs out on its 19th update or its 20th, about 2064 ms on average, and
   its 3 s cast takes 3.00 to 3.14 s. An Ignite application due 2 s or 4 s after the last races the old
   Ignite's tick on one update and wins a little over half the time; a fixed grid decides each race one way,
@@ -95,10 +101,10 @@ exact, which is what unit tests want. Outside the fight every update takes the m
   and self hot ticks too, then their melee, then the creatures' auras (`Step`; the players' attacks lead
   `sim.weaponAttacks`). A unit's due ticks go, lowest spell id first, before its expiries
   (`Unit::_UpdateSpells`; `Unit.tickingDots`): Ignite (12654) ticks before Pyroblast's DoT (42891).
-- A creature's own update runs its due hardcast landing, then the auras on it, then its swing
-  (`Creature::Update`): the landing still finds an aura running out on that update (`Unit.landDueCast`), and
-  a swing comes behind the ticks due with it (`WeaponAttack.swing`). Its missiles in flight keep their queue
-  order.
+- A creature's own update runs its due hardcast landing, then the auras on it, then its AI's instant cast and
+  its swing (`Creature::Update`): the landing still finds an aura running out on that update
+  (`Unit.landDueCast`), and the cast or swing comes behind the ticks due with it (`target_ai.go`,
+  `WeaponAttack.swing`). Its missiles in flight keep their queue order.
 - A periodic action with `PeriodicActionOptions.Owner` is one of that unit's periodic ticks: on its first
   update after each period, the remainder carried, ahead of a player's expiries, and an aura it puts on counts
   from that update (Prey on the Weak's check).
@@ -136,7 +142,6 @@ exact, which is what unit tests want. Outside the fight every update takes the m
   - Any other hit reads the current clock, as a hardcast's landing does: a missile's (a Hot Streak
     Pyroblast) or one off a tick, a swing or an aura's end (Living Bomb's explosion). Ignite tells them apart
     with `SpellResult.DealtWithItsCast`.
-- A missile flies the distance less the caster's 1.5 yd reach, at least 5 yd (`Spell.TravelTime`).
 - A landed swing pushes the other hand to at least 200 ms. A melee swing restarts the ranged timer, and
   every Auto Shot restarts both melee timers (`Unit::_UpdateAutoRepeatSpell`).
 - At the pull, and when auto attacks restart (breaking stealth), a ready off hand starts half the main hand's
