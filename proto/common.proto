@@ -747,15 +747,21 @@ message ServerSettings {
 
 	// How long the host's world loop really takes for one tick, in ms. MinWorldUpdateTime is only the
 	// floor: the loop sleeps the rest of it and wakes a little late, so every tick runs longer and a map
-	// update, ten ticks on the default config, falls about 104.6 ms apart. Values below the world update
+	// update, ten ticks on the default config, falls about 104.4 ms apart. Values below the world update
 	// interval count as that interval, and 0 leaves the interval as it is.
 	optional double world_loop_ms = 6;
 
-	// How far one map update's length strays from that mean, as a standard deviation in ms. A late
-	// wake-up or a stall only ever adds to a tick, so no update is shorter than its configured interval
-	// and the rest scatters above it. It's what the host does under its load, not a config key. 0 is sim
-	// only: every update takes the mean.
+	// How far one map update's length strays from that mean, as a standard deviation in ms. With a long
+	// tick an update falls either side of the mean; without one no update is shorter than its configured
+	// interval and the rest scatters above it. It's what the host does under its load, not a config key.
+	// 0 is sim only: every update takes the mean.
 	optional double map_update_jitter_ms = 7;
+
+	// How long the one slow world tick of a map update takes, in ms. MapMgr::Update runs the open world, the
+	// battlegrounds and the instances on three ticks in a row, and with the bots the first of them runs
+	// 30 to 60 ms, so a map update is a few 10 ms ticks and one long one. The long tick takes what the
+	// update's drawn length leaves. 0 is sim only: every tick of an update takes the same time.
+	optional double world_long_tick_ms = 8;
 }
 
 // mod-spell-tweaks, keys SpellTweaks.*. Only its scripted tweaks switch off; its spell_dbc and SQL

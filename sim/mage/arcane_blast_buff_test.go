@@ -28,8 +28,9 @@ func TestArcaneBlastBuffEnds(t *testing.T) {
 		metrics := &spell.SpellMetrics[target.UnitIndex]
 
 		blast.SkipCastAndApplyEffects(sim, target)
-		// it counts from the world tick before the cast, and ends on a tick: within one, which takes up to 17.9 ms
-		if got := buff.RemainingDuration(sim); got <= 5982*time.Millisecond || got > 6018*time.Millisecond {
+		// it counts from the world tick before the cast, and ends on a tick: within the longest one
+		tick := mage.DurationThroughLastTick(0)
+		if got := buff.RemainingDuration(sim); got <= 6*time.Second-tick || got > 6*time.Second+tick {
 			t.Errorf("Arcane Blast's buff has %v left as it goes on, want 6s", got)
 		}
 		buff.Deactivate(sim)

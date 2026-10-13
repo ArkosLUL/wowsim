@@ -68,6 +68,10 @@ func (target *Target) initialize(config *proto.Target) {
 					}
 				}
 
+				// the creature's auras tick in Unit::Update, ahead of the AI: Creature::Update
+				if len(target.tickingDots) > 0 {
+					target.runDueTicks(sim, nil)
+				}
 				target.Rotation.DoNextAction(sim)
 			},
 		}

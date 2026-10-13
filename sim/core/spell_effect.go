@@ -77,6 +77,7 @@ var effectModOps = [...]SpellModOp{SpellModEffect1, SpellModEffect2, SpellModEff
 // belongs to the spell, as on the server: each effect mod reaches the declaration of its effect, and op 24
 // reaches every coefficient.
 func (spell *Spell) applyMods(config *SpellConfig) {
+	spell.unmoddedSP = [3]float64{spell.Direct.SP, config.Dot.Tick.SP, config.Hot.Tick.SP}
 	if len(config.Mods) == 0 {
 		return
 	}

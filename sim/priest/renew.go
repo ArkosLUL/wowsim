@@ -25,6 +25,8 @@ func (priest *Priest) registerRenewSpell() {
 				core.TernaryFloat64(priest.HasSetBonus(ItemSetZabrasRaiment, 4), 1.1, 1),
 			CritMultiplier:   priest.DefaultHealingCritMultiplier(),
 			ThreatMultiplier: 1,
+			// the server heals as 63544, which has no spell_bonus_data row
+			HealingTakenCoefficient: core.DefaultHealingTakenCoefficient(0),
 
 			ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 				tick := priest.Renew.Hot(target).Tick

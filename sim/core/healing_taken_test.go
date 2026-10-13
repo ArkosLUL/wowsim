@@ -1,6 +1,10 @@
 package core
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/wowsims/wotlk/sim/core/serverdata"
+)
 
 // Unit::SpellHealingBonusTaken adds the target's flat healing taken times the heal's coefficient as an
 // int32 of its own, after the caster's percent: five stacks of Talisman of Troll Divinity put 233 on a
@@ -46,5 +50,35 @@ func TestDefaultHealingTakenCoefficient(t *testing.T) {
 	// a 6 s hot with two ticks
 	if got := PowerBonus(DefaultHealingTakenCoefficient(6.0/15/2), 290); got != 109 {
 		t.Errorf("290 healing taken on a tick of a 6 s hot adds %v, want 109", got)
+	}
+}
+
+// Unit::SpellHealingBonusTaken runs the target's own SPELLMOD_BONUS_MULTIPLIER mods on the coefficient, so a
+// priest's Empowered Healing raises the term on its own Greater Heal and no other target's.
+func TestHealTakenCoefficientTakesTheTargetsMods(t *testing.T) {
+	heal := &serverdata.Spell{ID: testSpellID, DmgClass: serverdata.DmgClassMagic,
+		Effects: [3]serverdata.Effect{{Effect: effectHeal}}}
+	newSpell := func(unit *Unit, sp float64) *Spell {
+		spell := &Spell{Unit: unit, ActionID: ActionID{SpellID: testSpellID}, serverSpell: heal,
+			Direct: SpellEffect{SP: sp}, unmoddedSP: [3]float64{1.611}}
+		unit.Spellbook = append(unit.Spellbook, spell)
+		return spell
+	}
+	caster, sameTalents, bare := &Unit{}, &Unit{}, &Unit{}
+	cast := newSpell(caster, 1.711)
+	newSpell(sameTalents, 1.811)
+
+	for _, tc := range []struct {
+		name   string
+		target *Unit
+		want   float64
+	}{
+		{"the caster's own mods on a self heal", caster, 1.711},
+		{"the target's mods", sameTalents, 1.811},
+		{"none on a target without the spell", bare, 1.611},
+	} {
+		if got := cast.healTakenCoefficient(tc.target); got != tc.want {
+			t.Errorf("%s: %v, want %v", tc.name, got, tc.want)
+		}
 	}
 }

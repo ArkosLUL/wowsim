@@ -339,26 +339,42 @@ func (spell *Spell) flatHealingTaken(target *Unit, coefficient float64) float64 
 }
 
 // healTakenCoefficient is the coefficient of the spell's direct heal for flatHealingTaken: the declared
-// one where the spell is the server's heal, else HealingTakenCoefficient.
-func (spell *Spell) healTakenCoefficient() float64 {
+// one where the spell is the server's heal, else HealingTakenCoefficient. The declared one carries the
+// target's SPELLMOD_BONUS_MULTIPLIER mods, not the caster's (Unit::SpellHealingBonusTaken runs them off
+// the target's GetSpellModOwner).
+func (spell *Spell) healTakenCoefficient(target *Unit) float64 {
 	if spell.HealingTakenCoefficient != 0 {
 		return spell.HealingTakenCoefficient
 	}
-	if spell.Direct.SP != 0 && serverSpellHasEffect(spell.ServerSpell(), effectHeal) {
+	if spell.Direct.SP == 0 || !serverSpellHasEffect(spell.ServerSpell(), effectHeal) {
+		return 0
+	}
+	if target == spell.Unit {
 		return spell.Direct.SP
 	}
-	return 0
+	if own := target.GetSpell(spell.ActionID); own != nil && own.Direct.SP != 0 {
+		return own.Direct.SP
+	}
+	return spell.unmoddedSP[0]
 }
 
 // healTakenCoefficient is Spell.healTakenCoefficient for the hot's ticks.
-func (dot *Dot) healTakenCoefficient() float64 {
+func (dot *Dot) healTakenCoefficient(target *Unit) float64 {
 	if c := dot.Spell.HealingTakenCoefficient; c != 0 {
 		return c
 	}
-	if dot.Tick.SP != 0 && serverSpellHasAura(dot.Spell.ServerSpell(), auraTypePeriodicHeal) {
+	if dot.Tick.SP == 0 || !serverSpellHasAura(dot.Spell.ServerSpell(), auraTypePeriodicHeal) {
+		return 0
+	}
+	if target == dot.Spell.Unit {
 		return dot.Tick.SP
 	}
-	return 0
+	if own := target.GetSpell(dot.Spell.ActionID); own != nil && own.dots != nil {
+		if hot := own.Hot(target); hot != nil && hot.Tick.SP != 0 {
+			return hot.Tick.SP
+		}
+	}
+	return dot.unmoddedTickSP
 }
 func (spell *Spell) healingCritRating() float64 {
 	return spell.Unit.GetStat(stats.SpellCrit) + spell.BonusCritRating
@@ -552,10 +568,10 @@ func wholeHeal(heal float64) float64 {
 }
 
 func (spell *Spell) CalcHealing(sim *Simulation, target *Unit, baseHealing float64, outcomeApplier OutcomeApplier) *SpellResult {
-	return spell.calcHealingInternal(sim, target, baseHealing, spell.CasterHealingMultiplier(), spell.healTakenCoefficient(), outcomeApplier)
+	return spell.calcHealingInternal(sim, target, baseHealing, spell.CasterHealingMultiplier(), spell.healTakenCoefficient(target), outcomeApplier)
 }
 func (dot *Dot) CalcSnapshotHealing(sim *Simulation, target *Unit, outcomeApplier OutcomeApplier) *SpellResult {
-	return dot.Spell.calcHealingInternal(sim, target, dot.SnapshotBaseDamage, dot.SnapshotAttackerMultiplier, dot.healTakenCoefficient(), outcomeApplier)
+	return dot.Spell.calcHealingInternal(sim, target, dot.SnapshotBaseDamage, dot.SnapshotAttackerMultiplier, dot.healTakenCoefficient(target), outcomeApplier)
 }
 
 // Applies the fully computed spell result to the sim.

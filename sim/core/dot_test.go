@@ -221,7 +221,7 @@ func TestDotRefreshResetsTheTickTimerOnlyBelowTwoStacks(t *testing.T) {
 		dot.Apply(sim)
 
 		// the target counts both down from the map update before the reapplication
-		start := sim.NextServerTick(sim.CurrentTime) - sim.serverTickInterval
+		start := sim.ServerTickBefore(sim.CurrentTime)
 		want := firstTick
 		if tc.resets {
 			want = sim.NextServerTick(start + dot.TickPeriod())

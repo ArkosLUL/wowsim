@@ -201,8 +201,8 @@ func TestSummonStartsWithoutWhatWasCastOnItAway(t *testing.T) {
 // Unsummoning takes the creature out of the world and kills its events, a spell in flight among them.
 func TestMissileInTheAirAtTheUnsummonIsLost(t *testing.T) {
 	sim, pet := newSummonTestSim(t)
-	// 20 yd at 20 yd a second
-	pet.DistanceFromTarget = 20
+	// 20 yd past the 1.5 yd reach, at 20 yd a second
+	pet.DistanceFromTarget = 21.5
 	bolt := &Spell{Unit: &pet.Unit, MissileSpeed: 20}
 
 	runUntil(sim, ms(1000))

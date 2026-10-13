@@ -2,6 +2,7 @@ package core
 
 import (
 	"math"
+	"math/bits"
 	"sync"
 	"time"
 )
@@ -20,17 +21,46 @@ const (
 // MinWorldUpdateTime, so a late wake-up or a stall only adds: no update is under the configured interval,
 // and what the ticks add scatters above it. That part is lognormal, cut into equally likely steps that
 // keep its mean and its standard deviation.
+//
+// With a long world tick set, an update is instead short ticks of MinWorldUpdateTime and the one long tick
+// (the open world's maps), and its length is normal around the mean: the cycle's own floor is 100 ms, but
+// an instance updates a tick after the long one, so it comes under that when the long tick shrinks.
 type updateLengths struct {
-	ticks    time.Duration // world ticks in a map update
+	ticks    time.Duration // world ticks in a mean map update
 	mean     time.Duration // of a map update
-	shortest time.Duration // a map update with every tick on time
+	shortest time.Duration // the shortest map update
+	longest  time.Duration // the longest world tick of any step
+	world    time.Duration // the shortest world tick
 
-	// a world tick's length in each step, shortest first: the update takes ticks of them
-	tick [updateLengthCount]time.Duration
+	// each step, shortest update first: the update is shorts[i] ticks of short[i], then a tick of long[i],
+	// then one more of short[i]
+	length [updateLengthCount]time.Duration
+	short  [updateLengthCount]time.Duration
+	long   [updateLengthCount]time.Duration
+	shorts [updateLengthCount]int32
+
+	// the same steps in one table, a step's numbers on a cache line
+	steps [updateLengthCount]updateStep
+
+	// the long tick the steps aim for, 0 for ticks of one length
+	longTarget time.Duration
+}
+
+// updateStep is one update's length and the world ticks it is cut into.
+type updateStep struct {
+	length, short, long time.Duration
+	shorts              int32
+}
+
+func (l *updateLengths) packSteps() *updateLengths {
+	for i := range l.steps {
+		l.steps[i] = updateStep{l.length[i], l.short[i], l.long[i], l.shorts[i]}
+	}
+	return l
 }
 
 type updateLengthsKey struct {
-	shortest, mean, jitter, ticks time.Duration
+	shortest, mean, jitter, ticks, interval, long time.Duration
 }
 
 var (
@@ -60,6 +90,9 @@ var updateLengthScores = sync.OnceValue(func() *[updateLengthCount]float64 {
 })
 
 func newUpdateLengths(key updateLengthsKey) *updateLengths {
+	if key.long > 0 {
+		return newUnevenUpdateLengths(key)
+	}
 	scores := updateLengthScores()
 	excess := float64(key.mean - key.shortest)
 
@@ -92,33 +125,76 @@ func newUpdateLengths(key updateLengthsKey) *updateLengths {
 	spread(wide)
 
 	onTime := (key.shortest + key.ticks - 1) / key.ticks
-	lengths := &updateLengths{ticks: key.ticks, mean: key.mean, shortest: onTime * key.ticks}
+	lengths := &updateLengths{ticks: key.ticks, mean: key.mean, shortest: onTime * key.ticks, world: onTime}
 	for i, step := range steps {
-		lengths.tick[i] = onTime + time.Duration(math.Round(step/float64(key.ticks)))
+		tick := onTime + time.Duration(math.Round(step/float64(key.ticks)))
+		lengths.length[i] = tick * key.ticks
+		lengths.short[i], lengths.long[i], lengths.shorts[i] = tick, tick, int32(key.ticks-1)
 	}
-	return lengths
+	lengths.longest = lengths.short[updateLengthCount-1]
+	return lengths.packSteps()
+}
+
+// newUnevenUpdateLengths draws an update's length from a normal around the mean.
+func newUnevenUpdateLengths(key updateLengthsKey) *updateLengths {
+	scores := updateLengthScores()
+	squares := 0.0
+	for _, score := range scores {
+		squares += score * score
+	}
+	// the steps cut the tail off, so the scores are scaled to a standard deviation of exactly 1
+	unit := float64(key.jitter) / math.Sqrt(squares/updateLengthCount)
+
+	lengths := &updateLengths{ticks: key.ticks, mean: key.mean, longTarget: key.long, world: key.interval}
+	for i, score := range scores {
+		length := key.mean + time.Duration(math.Round(score*unit))
+		length = max(length, minUnevenTicks*key.interval)
+		lengths.length[i] = length
+		lengths.short[i] = key.interval
+		lengths.shorts[i], lengths.long[i] = layoutUpdate(length, key.interval, key.long)
+		lengths.longest = max(lengths.longest, lengths.long[i], key.interval)
+	}
+	lengths.shortest = lengths.length[0]
+	return lengths.packSteps()
+}
+
+// the fewest ticks an update with a long one has: the long tick, the short ones before and after it
+const minUnevenTicks = 3
+
+// layoutUpdate splits an update of this length into short ticks and a long one: as many short ones as
+// leave the long tick nearest target, and at least one that isn't the tick before the next update.
+func layoutUpdate(length, short, target time.Duration) (shorts int32, long time.Duration) {
+	n := int64(math.Round(float64(length-target) / float64(short)))
+	n = min(max(n, 1), int64(length/short)-1)
+	return int32(n), length - time.Duration(n)*short
 }
 
 // updateJitter lays out one iteration's map updates on a host that doesn't keep time. Each update draws its
 // own length, so the grid wanders the way the server's does: a creature's 2 s timer runs out on its 19th
-// update or its 20th. The world ticks split their update evenly. Before the first update and from limit on
-// every update takes the mean, so a time far outside the fight costs nothing to place.
+// update or its 20th. Before the first update and from limit on every update takes the mean, in even world
+// ticks, so a time far outside the fight costs nothing to place.
 type updateJitter struct {
 	lengths *updateLengths
 	rand    SplitMix64
 
 	at    []time.Duration // the updates drawn so far
-	tick  []time.Duration // the world tick between at[k] and at[k+1]
+	info  []updateStep    // how the update at at[k] is cut: its short world ticks (shorts of them, the one after the long tick included) and its long one
 	limit time.Duration
 
-	perMean float64 // one over the mean update
-	cursor  int     // where the last lookup landed
-	bits    uint64  // random bits not used yet
-	nbits   int
+	// tab[b] is the update holding the start of the b-th bucket, 1<<tabShift wide from at[0]. A bucket is
+	// no wider than the shortest update, so a time in it falls in tab[b] or the update after
+	tab      []int32
+	tabShift uint
+
+	bits  uint64 // random bits not used yet
+	nbits int
 }
 
 func newUpdateJitter(lengths *updateLengths) *updateJitter {
-	jitter := &updateJitter{lengths: lengths, perMean: 1 / float64(lengths.mean)}
+	jitter := &updateJitter{lengths: lengths}
+	if lengths.shortest > 1 {
+		jitter.tabShift = uint(bits.Len64(uint64(lengths.shortest)) - 1)
+	}
 	jitter.reset(0, 0, 0)
 	return jitter
 }
@@ -129,28 +205,44 @@ func (j *updateJitter) reset(first, horizon time.Duration, seed int64) {
 	// a whole number of mean updates on, so the grid past the limit starts on an update too
 	j.limit = first + (max(horizon-first, 0)/mean+2)*mean
 	j.at = append(j.at[:0], first)
-	j.tick = j.tick[:0]
-	j.cursor, j.nbits = 0, 0
+	j.info = j.info[:0]
+	j.tab, j.nbits = j.tab[:0], 0
 	j.rand.Seed(seed)
 }
 
-// grow draws the next update.
-func (j *updateJitter) grow() {
-	if j.nbits < updateLengthBits {
-		j.bits, j.nbits = j.rand.Next(), 64/updateLengthBits*updateLengthBits
-	}
-	tick := j.lengths.tick[j.bits&(updateLengthCount-1)]
-	j.bits >>= updateLengthBits
-	j.nbits -= updateLengthBits
-
+// growTo draws updates until one starts after t.
+func (j *updateJitter) growTo(t time.Duration) {
+	lengths := j.lengths
+	at0 := j.at[0]
 	last := j.at[len(j.at)-1]
-	next := last + tick*j.lengths.ticks
-	if next > j.limit-j.lengths.shortest {
-		// no room for another one after it, so this one runs up to the limit
-		next, tick = j.limit, (j.limit-last)/j.lengths.ticks
+	for last <= t {
+		if j.nbits < updateLengthBits {
+			j.bits, j.nbits = j.rand.Next(), 64/updateLengthBits*updateLengthBits
+		}
+		step := j.bits & (updateLengthCount - 1)
+		j.bits >>= updateLengthBits
+		j.nbits -= updateLengthBits
+
+		info := lengths.steps[step]
+		next := last + info.length
+		if next > j.limit-lengths.shortest {
+			// no room for another one after it, so this one runs up to the limit
+			next = j.limit
+			if lengths.longTarget > 0 {
+				info.shorts, info.long = layoutUpdate(next-last, info.short, lengths.longTarget)
+			} else {
+				info.short = (j.limit - last) / lengths.ticks
+				info.long = info.short
+			}
+		}
+		// the buckets starting inside this update
+		for at0+time.Duration(len(j.tab))<<j.tabShift < next {
+			j.tab = append(j.tab, int32(len(j.at)-1))
+		}
+		j.at = append(j.at, next)
+		j.info = append(j.info, info)
+		last = next
 	}
-	j.at = append(j.at, next)
-	j.tick = append(j.tick, tick)
 }
 
 // drawn is whether t falls among the jittered updates.
@@ -168,23 +260,13 @@ func (j *updateJitter) meanGrid(t time.Duration) time.Duration {
 
 // stretch is the k with at[k] <= t < at[k+1], for a drawn t.
 func (j *updateJitter) stretch(t time.Duration) int {
-	for j.at[len(j.at)-1] <= t {
-		j.grow()
+	if j.at[len(j.at)-1] <= t {
+		j.growTo(t)
 	}
-	k := j.cursor
-	if t >= j.at[k] && t < j.at[k+1] {
-		return k
-	}
-	// the mean gets within a step or two of it
-	k += int(float64(t-j.at[k]) * j.perMean)
-	k = min(max(k, 0), len(j.at)-2)
-	for j.at[k] > t {
-		k--
-	}
-	for j.at[k+1] <= t {
+	k := int(j.tab[uint64(t-j.at[0])>>j.tabShift])
+	if j.at[k+1] <= t {
 		k++
 	}
-	j.cursor = k
 	return k
 }
 
@@ -206,10 +288,17 @@ func (j *updateJitter) nextWorldTick(t time.Duration) time.Duration {
 		return nextTick(t, j.lengths.mean/j.lengths.ticks, j.meanGrid(t))
 	}
 	k := j.stretch(t)
-	if over := (t - j.at[k]) % j.tick[k]; over > 0 {
-		return t + j.tick[k] - over
+	at, over, info := j.at[k], t-j.at[k], &j.info[k]
+	switch head := time.Duration(info.shorts-1) * info.short; {
+	case over <= head:
+		if rest := over % info.short; rest > 0 {
+			return t + info.short - rest
+		}
+		return t
+	case over <= head+info.long:
+		return at + head + info.long
 	}
-	return t
+	return j.at[k+1]
 }
 
 // updateBefore is the last map update before t.
@@ -227,5 +316,12 @@ func (j *updateJitter) worldTickBefore(t time.Duration) time.Duration {
 		return nextTick(t, tick, j.meanGrid(t)) - tick
 	}
 	k := j.stretch(t - 1)
-	return t - 1 - (t-1-j.at[k])%j.tick[k]
+	at, over, info := j.at[k], t-1-j.at[k], &j.info[k]
+	switch head := time.Duration(info.shorts-1) * info.short; {
+	case over >= head+info.long:
+		return at + head + info.long
+	case over >= head:
+		return at + head
+	}
+	return t - 1 - over%info.short
 }

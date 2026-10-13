@@ -63,14 +63,20 @@ const (
 	reforgeStatsKey       = "Reforging.ReforgeableStats"
 )
 
-// The host's world tick and how much its map updates scatter, measured off the Naxxramas slimes' 2 s cast
-// timers in the logged fights (10,264 casts): ten ticks make a 104.6 ms update, 6 ms standard deviation.
-// A slime casts 2065 ms apart on average, on the 19th update a quarter of the time and the 20th otherwise.
-// Neither is a config key: they come from how late the machine wakes and how often it stalls, so another
-// host or another load changes them.
+// The host's world ticks, fitted to the logged fights. A map update is short ticks, one long tick and the
+// next update, and its length wanders around a mean of ten average ticks, 104.4 ms: the instances' updates
+// counted off every creature's cast stamps, 104.4 over 125 recordings. The 5 ms standard deviation of one
+// update puts the Naxxramas slimes' 2 s cast timers (10,264 casts, 2064 ms on average) on the 19th update
+// a fifth of the time and the 20th otherwise, and Ignite's 2 s race at the application's 62%.
+// The long tick is the open world's maps (MapMgr::Update runs them first, and under the bots they take 30
+// to 60 ms): `.server info` over 1000 samples, one tick in eight, 38 to 41 ms on average, which makes a
+// swing land 10.8 ms past its attack time like the logged ones.
+// None is a config key: they come from how late the machine wakes and how often it stalls, so another host
+// or another load changes them.
 const (
-	worldLoopMs       = 10.46
-	mapUpdateJitterMs = 6
+	worldLoopMs       = 10.44
+	mapUpdateJitterMs = 5
+	worldLongTickMs   = 40
 )
 
 // reforgeHeaderSrc holds the constants mod-reforging enforces on its config; parseReforgeLimits
@@ -229,6 +235,7 @@ func build(c *config, limits reforgeLimits) (*proto.ServerSettings, floors, erro
 		WorldUpdateIntervalMs: googleProto.Int32(int32(worldTick)),
 		WorldLoopMs:           googleProto.Float64(worldLoopMs),
 		MapUpdateJitterMs:     googleProto.Float64(mapUpdateJitterMs),
+		WorldLongTickMs:       googleProto.Float64(worldLongTickMs),
 	}
 	return settings, floors{
 		minHealth: c.float(minHPModifierKey, minHPModifierDef),

@@ -215,8 +215,8 @@ func TestMageGuardiansCastFasterUnderWrathOfAir(t *testing.T) {
 
 // An image casts from beside its mage, so its Frostbolt flies his distance, and its corpse is unsummoned when
 // the summon's 30 s are up, half a second after it dies. That takes a Frostbolt still in the air with it.
-// From 30 yd the flight is 1250 ms, which loses the Frostbolts that go off in the last 1.25 s; from point
-// blank it's the 5 yd floor, 208 ms, and every one that goes off hits.
+// From 30 yd the flight is 1187 ms (the 1.5 yd reach comes off), which loses the Frostbolts that go off in
+// the last 1.19 s; from point blank it's the 5 yd floor, 208 ms, and every one that goes off hits.
 func TestMirrorImageFrostboltInTheAirAtTheUnsummonIsLost(t *testing.T) {
 	for _, tc := range []struct {
 		yards    float64
@@ -224,7 +224,7 @@ func TestMirrorImageFrostboltInTheAirAtTheUnsummonIsLost(t *testing.T) {
 		wantLost bool
 	}{
 		{0, 208 * time.Millisecond, false},
-		{30, 1250 * time.Millisecond, true},
+		{30, 1187 * time.Millisecond, true},
 	} {
 		player := procMage("", "p5_bis_arcane", `{"type": "TypeAPL", "priorityList": []}`, PlayerOptionsArcane)
 		player.DistanceFromTarget = tc.yards

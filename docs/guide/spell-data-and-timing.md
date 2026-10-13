@@ -53,18 +53,28 @@ apart (`MapMgr::Update`). `MinWorldUpdateTime` (10 ms live) is only a tick's flo
 it and wakes late, by a different amount each time, so no map update is under its interval and the rest
 scatter above it.
 
-The sim draws every map update's length, per iteration (`sim/core/update_grid.go`): the interval plus a
-lognormal excess, split into even world ticks. Two `ServerSettings` shape it:
-- `world_loop_ms`, 10.46 live: a world tick's mean length, so a map update's ten average 104.6 ms.
-- `map_update_jitter_ms`, 6 live: the standard deviation of one update's length.
+The sim draws every map update's length, per iteration (`sim/core/update_grid.go`). Three `ServerSettings`
+shape it:
+- `world_loop_ms`, 10.44 live: a world tick's mean length, so a map update's ten average 104.4 ms.
+- `map_update_jitter_ms`, 5 live: the standard deviation of one update's length, normal around that mean.
+- `world_long_tick_ms`, 40 live: an update is short ticks of `world_update_interval_ms`, one long tick and one
+  short tick after it, the next update. The long tick takes what the drawn length leaves after as many short
+  ticks as bring it nearest the setting, so one tick in about seven takes 35 to 45 ms. `MapMgr::Update` runs the
+  open world, battlegrounds and instances on three ticks in a row, the first runs long under the bots, and an
+  instance updates one tick after it: the cycle is 100 ms plus what the long tick leaves over a multiple of
+  10, which is the 104.4, and an instance's update can come under 100 ms after the last. A player's event
+  waits 10.8 ms for the next tick on average, 5.2 ms on even ticks (live swings land 10.8 ms past their attack
+  time).
 
-Neither is a config key. They're what the host does under its load, fitted to recordings as constants in
-`tools/acore/gen_server_defaults/settings.go` ("World loop time" and "Map update jitter" in the UI): a test run
-on the host adds about a ms to the update, so record a period-sensitive number on an idle host.
+None is a config key. They're what the host does under its load, fitted to recordings as constants in
+`tools/acore/gen_server_defaults/settings.go` ("World loop time", "Map update jitter" and "World long tick" in
+the UI): a test run on the host adds about a ms to the update, so record a period-sensitive number on an idle
+host.
 
-Either at 0 gives a fixed grid with a phase rolled per iteration, `world_loop_ms` 0 one of
-`world_update_interval_ms` ticks. A map interval of 0 makes every unit exact, which is what unit tests want.
-Outside the fight every update takes the mean.
+The long tick at 0 gives a map update ten even world ticks, drawn above a 100 ms floor (lognormal, whatever
+`map_update_jitter_ms` says). Jitter or `world_loop_ms` at 0 gives a fixed grid with a phase rolled per
+iteration, `world_loop_ms` 0 one of `world_update_interval_ms` ticks. A map interval of 0 makes every unit
+exact, which is what unit tests want. Outside the fight every update takes the mean, in even ticks.
 
 - Ask the grid, never step by an interval: `sim.NextServerTick` and `NextWorldTick` give the first update at or
   after a time, `ServerTickBefore` and `WorldTickBefore` the last one before it. With jitter
@@ -126,9 +136,7 @@ Outside the fight every update takes the mean.
   - Any other hit reads the current clock, as a hardcast's landing does: a missile's (a Hot Streak
     Pyroblast) or one off a tick, a swing or an aura's end (Living Bomb's explosion). Ignite tells them apart
     with `SpellResult.DealtWithItsCast`.
-- Not modelled: the server's world ticks aren't even. One in eight ran 31 to 60 ms live (`MapMgr::Update`
-  updates the open world, battlegrounds and instances on three ticks in a row, the first long under the bots),
-  so the live settings are the values that fit this even-tick grid to recordings, not the host's own period.
+- A missile flies the distance less the caster's 1.5 yd reach, at least 5 yd (`Spell.TravelTime`).
 - A landed swing pushes the other hand to at least 200 ms. A melee swing restarts the ranged timer, and
   every Auto Shot restarts both melee timers (`Unit::_UpdateAutoRepeatSpell`).
 - At the pull, and when auto attacks restart (breaking stealth), a ready off hand starts half the main hand's
