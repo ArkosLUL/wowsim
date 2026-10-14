@@ -657,8 +657,14 @@ func (spell *Spell) TravelTime() time.Duration {
 	if spell.MissileSpeed == 0 {
 		return 0
 	}
-	distance := max(spell.Unit.DistanceFromTarget-defaultCombatReach, 5)
+	distance := max(spell.Unit.DistanceFromTarget-spell.Unit.combatReach(), 5)
 	return time.Duration(math.Floor(distance/spell.MissileSpeed*1000)) * time.Millisecond
+}
+
+// combatReach grows with the unit's scale: Unit::RecalculateObjectScale adds the scale auras' percents to the
+// native 1, so under Bloodlust a player's reach is 1.95 and its missiles land as from 0.45 yd closer.
+func (unit *Unit) combatReach() float64 {
+	return defaultCombatReach * (1 + unit.PseudoStats.ScaleBonus)
 }
 
 // Handles computing the cost of spells and checking whether the Unit

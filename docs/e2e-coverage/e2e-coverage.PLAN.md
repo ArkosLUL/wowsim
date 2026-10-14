@@ -4156,6 +4156,105 @@ Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\ec-core-fix7-tmp\`;
 - **Goldens:** TestFire and TestFrostFire (Ignite's 1); all 37 if the long tick's spread changes; none for the
   dot rewrite; report each.
 
+#### As built
+
+Code stage (notes `tmp/ec-core-fix8-code.md`; base `434442b93`, offline). Built:
+- Heal taken terms (`sim/core/spell_result.go`): `healTakenCoefficient` reads the target's spell-mod owner
+  (`Unit.spellModOwner`, a pet's or guardian's owner); a heal whose server spell heals and has
+  `SPELL_ATTR6_IGNORE_HEALTH_MODIFIERS` or `SPELL_ATTR0_CU_NO_POSITIVE_TAKEN_BONUS` drops the flat term and the
+  taken percent when that percent is over 1 (`noPositiveHealingTaken`; a no damage class heal without a bonus row
+  returns earlier on the server); `Dot.TickHealingTaken`.
+- Empowered Renew (`sim/priest/renew.go`): 63544's base is `5 × rank × ticks × int32(tick) / 100`, the tick being
+  Renew's aura amount (its SPELLMOD_DOT mods, `renewDotMultiplier`) as the target takes it; 63544's multiplier is the
+  aura 136 talents (`renewHealingDoneMultiplier`) × Zabra's 4 piece, then its own taken terms.
+- `ServerSettings.world_long_tick_jitter_ms` (field 9, 6.5 live; picker "World long tick jitter (ms)", Playwright row,
+  6 of 6 pass). Each of the 1024 steps aims its long tick at `long + score × spread`, the score out of order
+  (`longTickPairing`, r 0.025 with the update's length), spread `sqrt(jitter² − interval²/12)`. Update lengths and
+  draws are unchanged; jitter 0 is the old table. `world_long_tick_ms` 40 to 39.5 keeps the wait at 10.8 ms (40 gives
+  10.95); the longest tick goes 45 to 59 ms.
+
+Verdicts:
+- Empowered Renew (fixed): `spell_pri_renew` takes the target's `SpellHealingBonusTaken(DOT)` on the aura's amount
+  (aura 136 left out of it), and `EffectHeal` runs 63544's done (aura 136, 67202) and taken (0.8057) again.
+- The two attributes (fixed in core): only Ancestral Awakening (52752, CU) among the sim's heals. Beacon of Light
+  53652-4 and 70691 (ATTR6) aren't modelled; Ardent Defender 66235 (ATTR6, class none) returns before the branch;
+  Earth Shield's 49284 has CU but heals as 379, which doesn't.
+- Pet as the target (fixed): `Unit::GetSpellModOwner` is the owner.
+- Ignite's 1 (not a gap): `Spell::SetSpellValue` stores a custom base point as `CalcBaseValue` (value − 1 for a die),
+  and `CalcValue` adds it back. 29 of 29 first ticks with no Ignite up for 4.5 s equal `trunc(trunc(0.4 × crit) / 2)`
+  plus their resisted part (nine Fire recordings, three older MageFire fights).
+- Long tick's spread (modelled): no source length, it's the open world maps' run; all four `.server info` samples
+  spread it by 5.3, 6.5, 6.6 and 12.2 ms against the sim's 2.9. At 200k iterations TestAssassination −0.013%,
+  TestFire −0.000%.
+- Pyroblast's 20 ms (not a sim gap): the nine recordings' 598 Pyroblasts are all hardcasts (the spec's 878 counted
+  copies of the same logs). There Pillar of Flame (67760, cast off the landing, delay from the next update) lands
+  early too, min 809 to 815 for 825 plus a tick, while the older MageFire fights at 18 yd give Pillar 832 and Fireball
+  685 (flight 687). Both floors imply 17.55 yd: the cycle fight's bot (`ecClass2Stand`, no `.simval face`) stood
+  about 0.45 yd closer. Cause unread.
+
+Goldens (never promoted): all 37 move, none 0.5% on Average-Default.
+- Heal changes alone: only priest TestHoly, +0.055 to +0.065% every row; Empowered Renew +3.1% a hit, as Improved
+  Devotion Aura's 6% now counts twice on the priest's self-cast ones.
+- Spread alone: a reshuffle of player ticks, Average-Default −0.064% (TestBalancePhase3) to +0.043% (TestFrostFire),
+  no sign pattern; healers' uptimes only.
+- Final: −0.064% to +0.053% (TestHoly hps); per suite in the notes.
+
+Speed stage (notes `tmp/ec-core-fix8-speed.md`; golden-neutral: `delta` and all 37 `.results.tmp` byte-identical):
+- The four named functions cost under 1% of the raid; the dot's cost was arming: each `startTickAction` allocated
+  a `PendingAction` and two closures, 60% of the raid's allocations an op (Ret 51%, Hunter 40%).
+- `sim/core/dot.go`: a dot re-arms its last tick action (`spareTick`) once nothing queued can run it (consumed,
+  not queued, or cancelled and detached, the GCD action's pattern), else makes one; `tickArmings` replaces the
+  `tickAction == pa` test, which re-arming under a running tick defeats; `tickIsDue` reads `nextTickAt`; the second
+  `tickOwed` runs only after `runDueTicks` ran a tick. `TotalTicks` kept: a multiply differs past int32. Tests in
+  `dot_rearm_test.go`.
+- Won: allocations an op raid −60%, Ret −51%, Hunter −40%, Elemental −20%, Rogue −24%. Five interleaved rounds
+  under load 30 to 50: Ret 0.925 (all five faster); the rest within the noise (0.98 to 1.01).
+
+Live stage must measure:
+- A new `e2e/eccore8_test.go`, real casts read off heal packets (`.simval damage` heals land on the caster): Renew from
+  a priest with Empowered Renew 3/3 on a second bot with and without five Talisman of Troll Divinity stacks (37734):
+  each tick +109, 63544 `int32(int32(75 × (tick0 + 109) / 100) × R136) + 233`; on the priest +125 a tick; on its
+  Shadowfiend +125 (the owner's mod). Ancestral Awakening on a target under Guardian Spirit: 52752 is
+  `int32(0.3 × the crit heal)` exactly.
+- `TestEcCore6WorldTick` on an idle host: long ticks by tick 39.5 ± 6.5, 13.4% of ticks, wait 10.8 ms.
+- `.distance` at the Fire cycle's spot (17.55 if the records hold, 18 if not), and after `.simval face`.
+- Follow-ups: Ancestral Awakening takes Purification and an untruncated 30% in the sim (52752 ignores caster mods,
+  `CalculatePct(int32(heal), 30)` on the server); a hot's aura 136 comes after its whole amount on the server.
+
+Live stage (notes `tmp/ec-core-fix8-live.md`; lock 16:01 to 16:46 and 16:55 to 16:56, 2026-10-14; host loaded throughout,
+another session's job at 1300 to 1400% CPU, worldserver 140 to 147%). Built:
+- `e2e/eccore8_test.go`: `TestEcCore8RenewTaken` (GM Island, two bots, Touched by a Troll 60518 ×5, read off heal
+  packets), `TestEcCore8AncestralAwakening`, `TestEcCore8FireSpot` (`.distance` and cast go to hit by cast kind and
+  Bloodlust). Module README rows.
+- Bloodlust's scale (`sim/core/spell.go`, `buffs.go`, `stats.go`): `TravelTime` takes the caster's
+  `combatReach()` = 1.5 × (1 + `PseudoStats.ScaleBonus`); `BloodlustAura` adds 0.3 (Heroism shares it).
+- Guardian heal coefficient (`spell_result.go`): a heal declared `DefaultHealingTakenCoefficient(0)` on a target whose
+  pet `IsGuardian()` takes `DefaultHealingTakenCoefficient(1)`.
+- Ancestral Awakening (`sim/shaman/heals.go`, inline): `SpellFlagIgnoreAttackerModifiers`, no Purification, amount
+  `int32(float32(crit) × 30 / 100)`.
+
+Verdicts:
+- Taken terms (as built, live): another player +109 a tick, 63544 75% of the taken tick + 233; the priest +125; its
+  Shadowfiend +125 (owner's mod). New gap, fixed: 63544 on the Shadowfiend + 545, as `Unit::GetCastingTimeForBonus`
+  gives a creature that isn't `IsPet()` 3500 ms for an instant spell (coefficient 1 × 1.88).
+- Ancestral Awakening (fixed): 6 of 6 exactly `CalculatePct(int32(crit), 30)` under Purification 5/5, Guardian Spirit
+  and five stacks.
+- Pyroblast's 20 ms (fixed; the code stage's 17.55 yd refuted): the spot is 18.000 yd, but Bloodlust and Heroism carry
+  SPELL_AURA_MOD_SCALE 30%, so `Player::SetObjectScale` makes the caster's reach 1.95 (`.distance` 14 to 13.55) and
+  flights 0.45 yd shorter: 668 ms at 18 yd for speed 24. Live minima under Bloodlust: Pyroblast 665 to 669, Fireball
+  670; without: 686, 684. The Fire cycle fights cast under Bloodlust all fight.
+- Ignite's 1 (not a gap, confirmed): 10 of 10 new first ticks exact, 39 of 39 over twelve recordings.
+- Period (not settled): new fights 105.0, 106.3, 108.1 ms an update (last wave 103.7 to 104.8), slimes on the 19th 43
+  to 83%; the period follows the host's load. Ignite races over twelve recordings, sim at the defaults: 2 s 202 of 349
+  (57.9%, sim 62.9%; the three loaded fights 47.7%), 4 s 83 of 155 (53.5%, sim 56.4%), about 850 more 4 s races
+  wanted. Defaults stand.
+- Long tick: one sample at worldserver 145%, long ticks 52.5% of ticks at 63.8 ± 43.8 ms, a load artefact; the 39.5 ±
+  6.5 fit stands until an idle sample.
+
+Goldens (never promoted): this stage moves 22 suites, Average-Default within 0.03% (missiles under Bloodlust; resto
+shaman's HealingGrace row from Ancestral Awakening, 52752 -9.1% a hit); 20-iteration rows to ±0.9%. Final against the
+goldens: all 37 move, Average-Default −0.060% (BalancePhase3) to +0.065% (FrostFire).
+
 ### EC-CLASS-FIX7 (Z11; changes goldens; stages: code, live)
 
 Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\ec-class-fix6-tmp\`; the stages' notes are

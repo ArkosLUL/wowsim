@@ -762,6 +762,12 @@ message ServerSettings {
 	// 30 to 60 ms, so a map update is a few 10 ms ticks and one long one. The long tick takes what the
 	// update's drawn length leaves. 0 is sim only: every tick of an update takes the same time.
 	optional double world_long_tick_ms = 8;
+
+	// How far the long tick strays from world_long_tick_ms, as a standard deviation in ms. How long the open
+	// world's maps take changes from one update to the next with what the bots do. The update's length is
+	// drawn as before, and the long tick still takes whole short ticks off it, which spreads it by about 2.9
+	// ms on its own: a value up to that adds nothing. 0 is sim only.
+	optional double world_long_tick_jitter_ms = 9;
 }
 
 // mod-spell-tweaks, keys SpellTweaks.*. Only its scripted tweaks switch off; its spell_dbc and SQL

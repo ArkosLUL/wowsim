@@ -33,6 +33,10 @@ type ServerSettings struct {
 	// update's other ticks are WorldUpdateInterval. Zero means every tick of an update takes the same time.
 	WorldLongTick time.Duration
 
+	// WorldLongTickJitter is how far the long tick strays from WorldLongTick, as a standard deviation
+	// (proto.ServerSettings.WorldLongTickJitterMs). Up to the spread whole short ticks leave it adds nothing.
+	WorldLongTickJitter time.Duration
+
 	SpellTweaks  SpellTweaks
 	DungeonScale DungeonScale
 	Reforging    Reforging
@@ -71,6 +75,7 @@ func (s *ServerSettings) updateLengths() *updateLengths {
 	key := updateLengthsKey{shortest: shortest, mean: mapUpdate, jitter: s.MapUpdateJitter, ticks: ticks}
 	if s.WorldLongTick > 0 {
 		key.interval, key.long = s.WorldUpdateInterval, s.WorldLongTick
+		key.longJitter = s.WorldLongTickJitter
 	}
 	return updateLengthsFor(key)
 }
@@ -182,6 +187,7 @@ func resolveServerSettings(settings, live *proto.ServerSettings) *ServerSettings
 		WorldLoopTime:       time.Duration(math.Round(max(0, firstSet(0, settings.WorldLoopMs, live.WorldLoopMs)) * float64(time.Millisecond))),
 		MapUpdateJitter:     time.Duration(math.Round(max(0, firstSet(0, settings.MapUpdateJitterMs, live.MapUpdateJitterMs)) * float64(time.Millisecond))),
 		WorldLongTick:       time.Duration(math.Round(max(0, firstSet(0, settings.WorldLongTickMs, live.WorldLongTickMs)) * float64(time.Millisecond))),
+		WorldLongTickJitter: time.Duration(math.Round(max(0, firstSet(0, settings.WorldLongTickJitterMs, live.WorldLongTickJitterMs)) * float64(time.Millisecond))),
 		SpellTweaks:         newSpellTweaks(orEmpty(settings.SpellTweaks), orEmpty(live.SpellTweaks)),
 		DungeonScale:        newDungeonScale(settings.DungeonScale, live.DungeonScale),
 		Reforging:           newReforging(orEmpty(settings.Reforge), orEmpty(live.Reforge)),

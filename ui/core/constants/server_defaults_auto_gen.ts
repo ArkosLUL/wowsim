@@ -38,7 +38,8 @@ export const LIVE_SERVER_DEFAULTS = ServerSettings.create({
 	worldUpdateIntervalMs: 10,
 	worldLoopMs: 10.44,
 	mapUpdateJitterMs: 5,
-	worldLongTickMs: 40,
+	worldLongTickMs: 39.5,
+	worldLongTickJitterMs: 6.5,
 });
 
 // What mod-reforging's item_reforge.h lets Reforging.Percentage and Reforging.ReforgeableStats ask

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 
+	"github.com/wowsims/wotlk/sim/core/serverdata"
 	"github.com/wowsims/wotlk/sim/core/stats"
 )
 
@@ -344,15 +345,19 @@ func (spell *Spell) flatHealingTaken(target *Unit, coefficient float64) float64 
 // the target's GetSpellModOwner).
 func (spell *Spell) healTakenCoefficient(target *Unit) float64 {
 	if spell.HealingTakenCoefficient != 0 {
+		if spell.HealingTakenCoefficient == DefaultHealingTakenCoefficient(0) && target.isGuardian() {
+			return DefaultHealingTakenCoefficient(1)
+		}
 		return spell.HealingTakenCoefficient
 	}
 	if spell.Direct.SP == 0 || !serverSpellHasEffect(spell.ServerSpell(), effectHeal) {
 		return 0
 	}
-	if target == spell.Unit {
+	owner := target.spellModOwner()
+	if owner == spell.Unit {
 		return spell.Direct.SP
 	}
-	if own := target.GetSpell(spell.ActionID); own != nil && own.Direct.SP != 0 {
+	if own := owner.GetSpell(spell.ActionID); own != nil && own.Direct.SP != 0 {
 		return own.Direct.SP
 	}
 	return spell.unmoddedSP[0]
@@ -366,15 +371,44 @@ func (dot *Dot) healTakenCoefficient(target *Unit) float64 {
 	if dot.Tick.SP == 0 || !serverSpellHasAura(dot.Spell.ServerSpell(), auraTypePeriodicHeal) {
 		return 0
 	}
-	if target == dot.Spell.Unit {
+	owner := target.spellModOwner()
+	if owner == dot.Spell.Unit {
 		return dot.Tick.SP
 	}
-	if own := target.GetSpell(dot.Spell.ActionID); own != nil && own.dots != nil {
-		if hot := own.Hot(target); hot != nil && hot.Tick.SP != 0 {
+	if own := owner.GetSpell(dot.Spell.ActionID); own != nil && own.dots != nil {
+		if hot := own.Hot(owner); hot != nil && hot.Tick.SP != 0 {
 			return hot.Tick.SP
 		}
 	}
 	return dot.unmoddedTickSP
+}
+
+// spellModOwner is Unit::GetSpellModOwner: a pet's or guardian's spell mods are its owner's.
+func (unit *Unit) spellModOwner() *Unit {
+	if unit.Type == PetUnit && unit.Env != nil {
+		if pet, ok := unit.Env.Raid.GetPlayerFromUnit(unit).(PetAgent); ok {
+			return &pet.GetPet().Owner.Unit
+		}
+	}
+	return unit
+}
+
+// isGuardian is a creature that isn't a server pet (UNIT_MASK_PET). Unit::GetCastingTimeForBonus gives such a
+// target 3500 ms for an instant spell, so an instant heal's default coefficient on it is a whole 1, not 1.5 of 3.5.
+func (unit *Unit) isGuardian() bool {
+	if unit.Type != PetUnit || unit.Env == nil {
+		return false
+	}
+	pet, ok := unit.Env.Raid.GetPlayerFromUnit(unit).(PetAgent)
+	return ok && pet.GetPet().IsGuardian()
+}
+
+// TickHealingTaken is what the target takes of amount, a whole done heal of the hot's: its flat term and
+// percents (Unit::SpellHealingBonusTaken), whole. For a script that reads a tick that way (spell_pri_renew).
+// The aura's amount has no healing done percent in it, so no Strength of Wrynn stand-in either.
+func (dot *Dot) TickHealingTaken(target *Unit, amount float64) float64 {
+	attackTable := dot.Spell.Unit.AttackTables[target.UnitIndex]
+	return wholeHeal(dot.Spell.healingTaken(amount, target, dot.healTakenCoefficient(target), attackTable, target.HealingTakenPctMultiplier()))
 }
 func (spell *Spell) healingCritRating() float64 {
 	return spell.Unit.GetStat(stats.SpellCrit) + spell.BonusCritRating
@@ -704,11 +738,45 @@ func (spell *Spell) CasterHealingMultiplier() float64 {
 	return spell.DamageMultiplier * spell.DamageMultiplierAdditive
 }
 func (spell *Spell) applyTargetHealingModifiers(damage float64, target *Unit, takenCoefficient float64, attackTable *AttackTable) float64 {
+	return spell.healingTaken(damage, target, takenCoefficient, attackTable, attackTable.Defender.PseudoStats.HealingTakenMultiplier)
+}
+
+// healingTaken is applyTargetHealingModifiers with the target's percents given: HealingTakenMultiplier, or
+// HealingTakenPctMultiplier alone for an amount that takes no healing done percent.
+func (spell *Spell) healingTaken(damage float64, target *Unit, takenCoefficient float64, attackTable *AttackTable, takenMultiplier float64) float64 {
 	if spell.Flags.Matches(SpellFlagIgnoreTargetModifiers) {
 		return damage
 	}
+	if spell.noPositiveHealingTaken() {
+		// Unit::SpellHealingBonusTaken's last branch: a taken percent over 1 goes, and the flat term with it.
+		// What HealingTakenMultiplier holds besides the taken auras is Strength of Wrynn's done percent.
+		defender := attackTable.Defender
+		if taken := defender.HealingTakenPctMultiplier() * attackTable.HealingDealtMultiplier; taken > 1 {
+			return damage * (takenMultiplier / defender.HealingTakenPctMultiplier())
+		}
+	}
 
 	return (damage + spell.flatHealingTaken(target, takenCoefficient)) *
-		attackTable.Defender.PseudoStats.HealingTakenMultiplier *
+		takenMultiplier *
 		attackTable.HealingDealtMultiplier
+}
+
+const (
+	attr6IgnoreHealthModifiers = 0x08000000
+	attrCuNoPositiveTakenBonus = 0x00200000
+)
+
+// noPositiveHealingTaken is whether the server's heal has SPELL_ATTR6_IGNORE_HEALTH_MODIFIERS or
+// SPELL_ATTR0_CU_NO_POSITIVE_TAKEN_BONUS (Ancestral Awakening, Beacon of Light). Only a spell that heals
+// counts: Earth Shield's 49284 has the second, its heal 379 doesn't. A no damage class heal without a
+// spell_bonus_data row returns before the check, with its percent.
+func (spell *Spell) noPositiveHealingTaken() bool {
+	sd := spell.ServerSpell()
+	if sd == nil || (sd.Attributes[6]&attr6IgnoreHealthModifiers == 0 && sd.AttributesCu&attrCuNoPositiveTakenBonus == 0) {
+		return false
+	}
+	if !serverSpellHasEffect(sd, effectHeal) && !serverSpellHasAura(sd, auraTypePeriodicHeal) {
+		return false
+	}
+	return sd.DmgClass != serverdata.DmgClassNone || serverdata.BonusBySpellID(sd.ID) != nil
 }

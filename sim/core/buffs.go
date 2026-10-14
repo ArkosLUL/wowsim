@@ -634,6 +634,7 @@ func BloodlustAura(character *Character, actionTag int32) *Aura {
 		Duration: BloodlustDuration,
 		OnGain: func(aura *Aura, sim *Simulation) {
 			character.MultiplyAttackSpeed(sim, 1.3)
+			character.PseudoStats.ScaleBonus += 0.3
 			for _, pet := range character.Pets {
 				// the haste carrier makes an inheriting pet immune to both halves, cast speed included,
 				// guardian or real pet alike (the army is immune by carrying it too, not by id). A raid
@@ -647,6 +648,7 @@ func BloodlustAura(character *Character, actionTag int32) *Aura {
 		},
 		OnExpire: func(aura *Aura, sim *Simulation) {
 			character.MultiplyAttackSpeed(sim, 1.0/1.3)
+			character.PseudoStats.ScaleBonus -= 0.3
 		},
 	})
 	multiplyCastSpeedEffect(aura, 1.3)

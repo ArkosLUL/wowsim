@@ -76,8 +76,13 @@ const (
 const (
 	worldLoopMs       = 10.44
 	mapUpdateJitterMs = 5
-	worldLongTickMs   = 40
+	worldLongTickMs   = 39.5
 )
+
+// The long tick's spread by tick in the four `.server info` samples: 5.3, 6.5, 6.6 and 12.2 ms (the last at a
+// worldserver past 140%, one tick 104 ms). 6.5 is the sample whose wait for the next tick is the swings' 10.8.
+// A spread makes the wait longer: the long tick at 39.5 keeps it at 10.8, where 40 would give 10.95.
+const worldLongTickJitterMs = 6.5
 
 // reforgeHeaderSrc holds the constants mod-reforging enforces on its config; parseReforgeLimits
 // reads them from it rather than the sim hand-copying them.
@@ -236,6 +241,7 @@ func build(c *config, limits reforgeLimits) (*proto.ServerSettings, floors, erro
 		WorldLoopMs:           googleProto.Float64(worldLoopMs),
 		MapUpdateJitterMs:     googleProto.Float64(mapUpdateJitterMs),
 		WorldLongTickMs:       googleProto.Float64(worldLongTickMs),
+		WorldLongTickJitterMs: googleProto.Float64(worldLongTickJitterMs),
 	}
 	return settings, floors{
 		minHealth: c.float(minHPModifierKey, minHPModifierDef),

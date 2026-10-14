@@ -12,6 +12,7 @@ const TIMING_FIELDS = [
 	{ label: 'World loop time (ms)', field: 'worldLoopMs', value: 12.5 },
 	{ label: 'Map update jitter (ms)', field: 'mapUpdateJitterMs', value: 3.5 },
 	{ label: 'World long tick (ms)', field: 'worldLongTickMs', value: 25.5 },
+	{ label: 'World long tick jitter (ms)', field: 'worldLongTickJitterMs', value: 4.5 },
 ];
 
 const serverSettings = async (page: Parameters<typeof storedSettings>[0]) => (await storedSettings(page, SPEC)).encounter?.serverSettings ?? {};

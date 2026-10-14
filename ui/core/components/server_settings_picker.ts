@@ -174,7 +174,7 @@ function withSpellTweak<K extends keyof SpellTweaksSettings>(settings: ServerSet
 	return next;
 }
 
-type IntervalField = 'mapUpdateIntervalMs' | 'worldUpdateIntervalMs' | 'worldLoopMs' | 'mapUpdateJitterMs' | 'worldLongTickMs';
+type IntervalField = 'mapUpdateIntervalMs' | 'worldUpdateIntervalMs' | 'worldLoopMs' | 'mapUpdateJitterMs' | 'worldLongTickMs' | 'worldLongTickJitterMs';
 
 function intervalMs(settings: ServerSettings, field: IntervalField): number {
 	return settings[field] ?? LIVE_SERVER_DEFAULTS[field] ?? 0;
@@ -352,6 +352,22 @@ export class ServerSettingsPicker extends Component {
 			getValue: encounter => intervalMs(encounter.getServerSettings(), 'worldLongTickMs'),
 			setValue: (eventID: EventID, encounter: Encounter, newValue: number) =>
 				encounter.setServerSettings(eventID, withIntervalMs(encounter.getServerSettings(), 'worldLongTickMs', newValue)),
+		});
+
+		new NumberPicker<Encounter>(this.rootElem, encounter, {
+			label: 'World long tick jitter (ms)',
+			labelTooltip:
+				"How far the long tick strays from the world long tick, as a standard deviation. The open world's maps " +
+				'take longer or shorter from one update to the next with what the bots do. The update keeps its length ' +
+				'and the long tick still takes whole short ticks off it, which alone spreads it by about 2.9 ms, so a ' +
+				'value up to that changes nothing.',
+			inline: true,
+			float: true,
+			positive: true,
+			changedEvent: encounter => encounter.serverSettingsChangeEmitter,
+			getValue: encounter => intervalMs(encounter.getServerSettings(), 'worldLongTickJitterMs'),
+			setValue: (eventID: EventID, encounter: Encounter, newValue: number) =>
+				encounter.setServerSettings(eventID, withIntervalMs(encounter.getServerSettings(), 'worldLongTickJitterMs', newValue)),
 		});
 
 		new EnumPicker<Encounter>(this.rootElem, encounter, {

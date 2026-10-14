@@ -12,8 +12,8 @@ func (shaman *Shaman) registerAncestralHealingSpell() {
 		ActionID:         core.ActionID{SpellID: 52752},
 		SpellSchool:      core.SpellSchoolNature,
 		ProcMask:         core.ProcMaskSpellHealing,
-		Flags:            core.SpellFlagHelpful | core.SpellFlagAPL,
-		DamageMultiplier: 1 * (1 + .02*float64(shaman.Talents.Purification)),
+		Flags:            core.SpellFlagHelpful | core.SpellFlagAPL | core.SpellFlagIgnoreAttackerModifiers,
+		DamageMultiplier: 1, // 52752 has SPELL_ATTR3_IGNORE_CASTER_MODIFIERS, so no Purification
 		CritMultiplier:   1,
 		ThreatMultiplier: 1 - (float64(shaman.Talents.HealingGrace) * 0.05),
 		// 52752 has no spell_bonus_data row
@@ -80,7 +80,7 @@ func (shaman *Shaman) registerLesserHealingWaveSpell() {
 					}
 				}
 				if shaman.Talents.AncestralAwakening > 0 {
-					shaman.ancestralHealingAmount = result.Damage * 0.3
+					shaman.ancestralHealingAmount = float64(int32(float32(result.Damage) * 30 / 100))
 
 					// TODO: this should actually target the lowest health target in the raid.
 					//  does it matter in a sim? We currently only simulate tanks taking damage (multiple tanks could be handled here though.)
@@ -157,7 +157,7 @@ func (shaman *Shaman) registerRiptideSpell() {
 					}
 				}
 				if shaman.Talents.AncestralAwakening > 0 {
-					shaman.ancestralHealingAmount = result.Damage * 0.3
+					shaman.ancestralHealingAmount = float64(int32(float32(result.Damage) * 30 / 100))
 					// TODO: this should actually target the lowest health target in the raid.
 					//  does it matter in a sim? We currently only simulate tanks taking damage (multiple tanks could be handled here though.)
 					shaman.AncestralAwakening.Cast(sim, target)
@@ -218,7 +218,7 @@ func (shaman *Shaman) registerHealingWaveSpell() {
 					}
 				}
 				if shaman.Talents.AncestralAwakening > 0 {
-					shaman.ancestralHealingAmount = result.Damage * 0.3
+					shaman.ancestralHealingAmount = float64(int32(float32(result.Damage) * 30 / 100))
 
 					// TODO: this should actually target the lowest health target in the raid.
 					//  does it matter in a sim? We currently only simulate tanks taking damage (multiple tanks could be handled here though.)

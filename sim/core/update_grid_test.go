@@ -66,9 +66,9 @@ func TestUpdateLengthsKeepTheMeanAndTheJitter(t *testing.T) {
 }
 
 // Every step's short ticks and long one add up to its length, and the long tick lands within half a short
-// tick of the setting.
+// tick of the setting when it doesn't stray.
 func TestALongTickTakesWhatTheUpdateLeaves(t *testing.T) {
-	settings, lengths := liveUpdateLengths(t, nil)
+	settings, lengths := liveUpdateLengths(t, &proto.ServerSettings{WorldLongTickJitterMs: googleProto.Float64(0)})
 	short := settings.WorldUpdateInterval
 	var sumLong time.Duration
 	for i, length := range lengths.length {
@@ -82,6 +82,38 @@ func TestALongTickTakesWhatTheUpdateLeaves(t *testing.T) {
 	}
 	if mean := sumLong / updateLengthCount; mean < settings.WorldLongTick-time.Millisecond || mean > settings.WorldLongTick+time.Millisecond {
 		t.Errorf("the long ticks average %v, want about %v", mean, settings.WorldLongTick)
+	}
+}
+
+// Live, the long tick keeps its mean and spreads by WorldLongTickJitter, whatever the update's length: the
+// four `.server info` samples ran 5.3 to 12.2 ms either side, where whole short ticks alone give 2.9.
+func TestALongTickStraysByItsJitter(t *testing.T) {
+	settings, lengths := liveUpdateLengths(t, nil)
+	if settings.WorldLongTickJitter <= 3*time.Millisecond {
+		t.Fatalf("the live long tick strays by %v", settings.WorldLongTickJitter)
+	}
+	var sum, squares, product, lengthSum, lengthSquares float64
+	for i, length := range lengths.length {
+		if got := time.Duration(lengths.shorts[i])*lengths.short[i] + lengths.long[i]; got != length {
+			t.Fatalf("step %d: its ticks add up to %v, want %v", i, got, length)
+		}
+		long, update := float64(lengths.long[i]), float64(length)
+		sum, squares, product = sum+long, squares+long*long, product+long*update
+		lengthSum, lengthSquares = lengthSum+update, lengthSquares+update*update
+	}
+	n := float64(updateLengthCount)
+	mean, lengthMean := sum/n, lengthSum/n
+	spread := math.Sqrt(squares/n - mean*mean)
+	correlation := (product/n - mean*lengthMean) / (spread * math.Sqrt(lengthSquares/n-lengthMean*lengthMean))
+
+	if math.Abs(mean-float64(settings.WorldLongTick)) > float64(200*time.Microsecond) {
+		t.Errorf("the long ticks average %v, want %v", time.Duration(mean), settings.WorldLongTick)
+	}
+	if math.Abs(spread-float64(settings.WorldLongTickJitter)) > float64(200*time.Microsecond) {
+		t.Errorf("the long ticks spread by %v, want %v", time.Duration(spread), settings.WorldLongTickJitter)
+	}
+	if math.Abs(correlation) > 0.05 {
+		t.Errorf("the long tick goes with the update's length at %.3f", correlation)
 	}
 }
 

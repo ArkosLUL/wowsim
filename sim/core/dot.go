@@ -141,6 +141,12 @@ type Dot struct {
 	tickAction *PendingAction
 	tickPeriod time.Duration
 
+	// the last tick action made, armed again once nothing queued can still run it
+	spareTick   *PendingAction
+	tickCleanUp func(*Simulation)
+	// bumped on every arming, so a running tick can tell its action got armed again under it
+	tickArmings uint32
+
 	// Number of ticks since the dot went on or was last refreshed.
 	TickCount int32
 
@@ -435,62 +441,96 @@ func (dot *Dot) startTickAction(sim *Simulation, nominal time.Duration) {
 	dot.nextTickNominal = nominal
 	dot.nextTickAt = dot.Aura.nextUpdate(sim, nominal)
 
-	pa := &PendingAction{
-		NextActionAt: dot.nextTickAt,
-		// a player's channel or self hot ticks on its update, ahead of the creatures' auras that update
-		playerEvent: dot.tickUnit != nil && dot.tickUnit.Type == PlayerUnit,
-		//Priority: ActionPriorityDOT,
-		CleanUp: func(sim *Simulation) {
+	pa := dot.reusableTickAction(sim)
+	if pa == nil {
+		pa = dot.newTickAction()
+	}
+	pa.NextActionAt = dot.nextTickAt
+	// a player's channel or self hot ticks on its update, ahead of the creatures' auras that update
+	pa.playerEvent = dot.tickUnit != nil && dot.tickUnit.Type == PlayerUnit
+	pa.Priority = 0
+	if pa.playerEvent {
+		pa.Priority = ActionPriorityEvent
+	}
+	pa.CleanUp = dot.tickCleanUp
+	pa.cancelled = false
+	dot.tickArmings++
+	dot.tickAction = pa
+	sim.AddPendingAction(pa)
+}
+
+// reusableTickAction is the dot's last tick action, or nil while it can still run: queued live, or the
+// action Step is advancing the clock to.
+func (dot *Dot) reusableTickAction(sim *Simulation) *PendingAction {
+	pa := dot.spareTick
+	if pa == nil {
+		return nil
+	}
+	if pa.consumed || pa.slot >= int32(len(sim.pendingSlots)) || sim.pendingSlots[pa.slot] != pa || sim.detachPendingAction(pa) {
+		return pa
+	}
+	return nil
+}
+
+func (dot *Dot) newTickAction() *PendingAction {
+	if dot.tickCleanUp == nil {
+		dot.tickCleanUp = func(sim *Simulation) {
 			// In certain cases, the last tick and the dot aura expiration can happen in
 			// different orders, so we might need to apply the last tick.
 			if dot.tickIsDue(sim) {
 				dot.runTick(sim)
 			}
-		},
-	}
-	pa.OnAction = func(sim *Simulation) {
-		// not tickIsDue: a tick queued for a time already past is late, and still runs
-		if dot.tickOwed(sim) {
-			// only another action queued for now can be a tick due with this one
-			if dot.tickUnit != nil && sim.pendingActions[len(sim.pendingActions)-1].at == sim.CurrentTime {
-				dot.tickUnit.runDueTicks(sim, dot)
-			}
-			// a lower spell's tick can have refreshed or ended this dot
-			if dot.tickAction == pa && dot.tickOwed(sim) {
-				dot.runTick(sim)
-			}
 		}
+	}
+	pa := &PendingAction{}
+	pa.OnAction = func(sim *Simulation) {
+		dot.onTickAction(sim, pa)
+	}
+	dot.spareTick = pa
+	return pa
+}
 
-		// a tick can refresh or end the dot, and that schedules its own ticks
-		if dot.tickAction != pa || pa.cancelled {
+func (dot *Dot) onTickAction(sim *Simulation, pa *PendingAction) {
+	// a tick can refresh or end the dot, and a refresh can arm pa again for its new timer
+	armings := dot.tickArmings
+
+	// not tickIsDue: a tick queued for a time already past is late, and still runs
+	if dot.tickOwed(sim) {
+		ranOthers := false
+		// only another action queued for now can be a tick due with this one
+		if dot.tickUnit != nil && sim.pendingActions[len(sim.pendingActions)-1].at == sim.CurrentTime {
+			ranOthers = dot.tickUnit.runDueTicks(sim, dot)
+		}
+		// a lower spell's tick can have refreshed or ended this dot
+		if dot.tickAction == pa && dot.tickArmings == armings && (!ranOthers || dot.tickOwed(sim)) {
+			dot.runTick(sim)
+		}
+	}
+
+	// a refresh or the end has scheduled its own ticks
+	if dot.tickAction != pa || dot.tickArmings != armings || pa.cancelled {
+		return
+	}
+	if dot.lastTickTime != sim.CurrentTime && dot.outOfTicks() {
+		if dot.Aura.expires < sim.CurrentTime {
+			// nothing updates this unit (a pet that's away), so nothing else ends its aura
+			dot.Cancel(sim)
 			return
 		}
-		if dot.lastTickTime != sim.CurrentTime && dot.outOfTicks() {
-			if dot.Aura.expires < sim.CurrentTime {
-				// nothing updates this unit (a pet that's away), so nothing else ends its aura
-				dot.Cancel(sim)
-				return
-			}
-			// the tick stays owed and the server looks again every update: a refresh lets it through
-			dot.nextTickAt = dot.Aura.nextUpdate(sim, sim.CurrentTime+time.Millisecond)
-		} else {
-			dot.nextTickNominal += dot.tickPeriod
-			dot.nextTickAt = dot.Aura.nextUpdate(sim, dot.nextTickNominal)
-		}
-		pa.NextActionAt = dot.nextTickAt
-		sim.AddPendingAction(pa)
+		// the tick stays owed and the server looks again every update: a refresh lets it through
+		dot.nextTickAt = dot.Aura.nextUpdate(sim, sim.CurrentTime+time.Millisecond)
+	} else {
+		dot.nextTickNominal += dot.tickPeriod
+		dot.nextTickAt = dot.Aura.nextUpdate(sim, dot.nextTickNominal)
 	}
-
-	if pa.playerEvent {
-		pa.Priority = ActionPriorityEvent
-	}
-	dot.tickAction = pa
+	pa.NextActionAt = dot.nextTickAt
 	sim.AddPendingAction(pa)
 }
 
-// tickIsDue is whether the tick queued for this update is still to run.
+// tickIsDue is whether the tick queued for this update is still to run. nextTickAt always matches the
+// armed action's NextActionAt.
 func (dot *Dot) tickIsDue(sim *Simulation) bool {
-	return dot.tickAction != nil && dot.tickAction.NextActionAt == sim.CurrentTime && dot.tickOwed(sim)
+	return dot.tickAction != nil && dot.nextTickAt == sim.CurrentTime && dot.tickOwed(sim)
 }
 
 // tickOwed is whether the dot may tick now: once an update, and not past its total.

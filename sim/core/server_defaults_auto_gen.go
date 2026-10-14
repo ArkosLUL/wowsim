@@ -46,7 +46,8 @@ func LiveServerDefaults() *proto.ServerSettings {
 		WorldUpdateIntervalMs: googleProto.Int32(10),
 		WorldLoopMs:           googleProto.Float64(10.44),
 		MapUpdateJitterMs:     googleProto.Float64(5),
-		WorldLongTickMs:       googleProto.Float64(40),
+		WorldLongTickMs:       googleProto.Float64(39.5),
+		WorldLongTickJitterMs: googleProto.Float64(6.5),
 	}
 }
 
