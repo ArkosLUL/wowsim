@@ -53,7 +53,8 @@ Hunter's Mark pulled and the dummy at 19%; MageArcane and WarlockDemonology agai
 worldserver image (rev 3d89793c7, mod-spell-tweaks 9bf5c75: its mage and warlock tweaks); DeathknightBlood and
 WarriorProtectionWarrior again on 2026-10-11 against that day's image (module 8a6f13f), and DruidBalance on
 2026-10-12 against the same image with module bc1d35e's working tree `fight_test.go`, from the hub's outer floor with
-Starfall cast first: 109 KB. DruidBalancePhase3 the same way on 2026-10-13, with the critters near the floor killed first.
+Starfall cast first: 109 KB. DruidBalancePhase3 the same way on 2026-10-13, with the critters near the floor killed
+first; DruidBalance re-trimmed on 2026-10-14, losing two critters' deaths.
 
 ## Left out
 
