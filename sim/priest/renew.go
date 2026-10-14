@@ -1,6 +1,7 @@
 package priest
 
 import (
+	"math"
 	"time"
 
 	"github.com/wowsims/wotlk/sim/core"
@@ -18,10 +19,8 @@ func (priest *Priest) registerRenewSpell() {
 			Flags:       core.SpellFlagNoOnCastComplete | core.SpellFlagHelpful,
 
 			BonusCritRating: float64(priest.Talents.HolySpecialization) * 1 * core.CritRatingPerCritChance,
-			DamageMultiplier: 1 *
-				float64(priest.renewTicks()) *
-				priest.renewHealingMultiplier() *
-				.05 * float64(priest.Talents.EmpoweredRenew) *
+			// 63544's own done percents (SpellPctHealingModsDone): the healing done talents and Zabra's 4 piece
+			DamageMultiplier: priest.renewHealingDoneMultiplier() *
 				core.TernaryFloat64(priest.HasSetBonus(ItemSetZabrasRaiment, 4), 1.1, 1),
 			CritMultiplier:   priest.DefaultHealingCritMultiplier(),
 			ThreatMultiplier: 1,
@@ -29,8 +28,11 @@ func (priest *Priest) registerRenewSpell() {
 			HealingTakenCoefficient: core.DefaultHealingTakenCoefficient(0),
 
 			ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-				tick := priest.Renew.Hot(target).Tick
-				baseHealing := tick.Roll(sim) + core.PowerBonus(tick.SP, spell.HealingPower(target))
+				// spell_pri_renew: 5% a rank of every tick of the hot's amount as the target takes it, so 63544
+				// takes the target's terms a second time
+				hot := priest.Renew.Hot(target)
+				tick := hot.TickHealingTaken(target, math.Trunc(hot.SnapshotBaseDamage*priest.renewDotMultiplier()))
+				baseHealing := float64(5 * priest.Talents.EmpoweredRenew * priest.renewTicks() * int32(tick) / 100)
 				spell.CalcAndDealHealing(sim, target, baseHealing, spell.OutcomeHealingCrit)
 			},
 		})
@@ -100,4 +102,22 @@ func (priest *Priest) renewHealingMultiplier() float64 {
 		(1 + .01*float64(priest.Talents.TwinDisciplines)) *
 		(1 + .05*float64(priest.Talents.ImprovedRenew)) *
 		core.TernaryFloat64(priest.HasMajorGlyph(proto.PriestMajorGlyph_GlyphOfRenew), 1.25, 1)
+}
+
+// renewDotMultiplier is Renew's SPELLMOD_DOT talents and glyph, the part of renewHealingMultiplier its aura's
+// amount carries.
+func (priest *Priest) renewDotMultiplier() float64 {
+	return 1 *
+		(1 + .02*float64(priest.Talents.SpiritualHealing)) *
+		(1 + .01*float64(priest.Talents.TwinDisciplines)) *
+		(1 + .05*float64(priest.Talents.ImprovedRenew)) *
+		core.TernaryFloat64(priest.HasMajorGlyph(proto.PriestMajorGlyph_GlyphOfRenew), 1.25, 1)
+}
+
+// renewHealingDoneMultiplier is the rest: the SPELL_AURA_MOD_HEALING_DONE_PERCENT talents, which a heal
+// takes after its amount.
+func (priest *Priest) renewHealingDoneMultiplier() float64 {
+	return 1 *
+		(1 + .01*float64(priest.Talents.BlessedResilience)) *
+		(1 + .02*float64(priest.Talents.FocusedPower))
 }

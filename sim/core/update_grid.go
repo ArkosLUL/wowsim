@@ -60,7 +60,7 @@ func (l *updateLengths) packSteps() *updateLengths {
 }
 
 type updateLengthsKey struct {
-	shortest, mean, jitter, ticks, interval, long time.Duration
+	shortest, mean, jitter, ticks, interval, long, longJitter time.Duration
 }
 
 var (
@@ -145,13 +145,22 @@ func newUnevenUpdateLengths(key updateLengthsKey) *updateLengths {
 	// the steps cut the tail off, so the scores are scaled to a standard deviation of exactly 1
 	unit := float64(key.jitter) / math.Sqrt(squares/updateLengthCount)
 
+	// Each step's long tick aims at its own target, normal around the setting. Taking whole short ticks off
+	// the update spreads the long tick by a short tick's width on top, so the targets spread by what that
+	// leaves of longJitter.
+	aimUnit := 0.0
+	if aim := math.Pow(float64(key.longJitter), 2) - math.Pow(float64(key.interval), 2)/12; aim > 0 {
+		aimUnit = math.Sqrt(aim) / math.Sqrt(squares/updateLengthCount)
+	}
+
 	lengths := &updateLengths{ticks: key.ticks, mean: key.mean, longTarget: key.long, world: key.interval}
 	for i, score := range scores {
 		length := key.mean + time.Duration(math.Round(score*unit))
 		length = max(length, minUnevenTicks*key.interval)
 		lengths.length[i] = length
 		lengths.short[i] = key.interval
-		lengths.shorts[i], lengths.long[i] = layoutUpdate(length, key.interval, key.long)
+		target := key.long + time.Duration(math.Round(scores[longTickPairing(i)]*aimUnit))
+		lengths.shorts[i], lengths.long[i] = layoutUpdate(length, key.interval, target)
 		lengths.longest = max(lengths.longest, lengths.long[i], key.interval)
 	}
 	lengths.shortest = lengths.length[0]
@@ -160,6 +169,13 @@ func newUnevenUpdateLengths(key updateLengthsKey) *updateLengths {
 
 // the fewest ticks an update with a long one has: the long tick, the short ones before and after it
 const minUnevenTicks = 3
+
+// longTickPairing is the score a step's long tick aims by. The steps go shortest update first, and the
+// open world's run doesn't follow the update's length, so a step takes a score far from its own place:
+// 633 is the count over the golden ratio, odd, so every score is used once.
+func longTickPairing(step int) int {
+	return (step*633 + updateLengthCount/2) % updateLengthCount
+}
 
 // layoutUpdate splits an update of this length into short ticks and a long one: as many short ones as
 // leave the long tick nearest target, and at least one that isn't the tick before the next update.

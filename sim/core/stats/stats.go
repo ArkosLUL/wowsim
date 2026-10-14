@@ -396,6 +396,8 @@ type PseudoStats struct {
 
 	// healing taken percent auras don't stack, so they go on through Unit.AddHealingTakenPct
 	HealingTakenMultiplier float64
+
+	ScaleBonus float64 // SPELL_AURA_MOD_SCALE percents, summed: Bloodlust's 0.3
 }
 
 func NewPseudoStats() PseudoStats {
