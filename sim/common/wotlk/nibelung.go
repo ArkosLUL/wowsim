@@ -17,6 +17,14 @@ const (
 	valkyrAttackTime = 2 * time.Second
 )
 
+// attackTime is Unit::resetAttackTimer's: the 2 s under the melee haste the raid's area auras give it
+// (Windfury Totem, Improved Icy Talons, Swift Retribution), in whole ms. It has no pet bar, so no
+// Bloodlust.
+func (valkyr *ValkyrPet) attackTime() time.Duration {
+	ms := float64(valkyrAttackTime/time.Millisecond) / valkyr.PseudoStats.MeleeSpeedMultiplier
+	return time.Duration(ms) * time.Millisecond
+}
+
 var valkyrStats = stats.Stats{
 	stats.Stamina: 1260,
 }
@@ -87,17 +95,17 @@ func (valkyr *ValkyrPet) ExecuteCustomRotation(sim *core.Simulation) {
 		return
 	}
 	valkyr.smite.Cast(sim, valkyr.CurrentTarget)
-	valkyr.WaitUntil(sim, sim.NextServerTick(sim.CurrentTime+valkyrAttackTime))
+	valkyr.WaitUntil(sim, sim.NextServerTick(sim.CurrentTime+valkyr.attackTime()))
 }
 
 func (valkyr *ValkyrPet) GetPet() *core.Pet {
 	return valkyr.Pet
 }
 
-// valkyrLife is how long a Val'kyr that gets averageCasts Smites off is out: an attack time for each, the
+// life is how long the Val'kyr is out when it gets averageCasts Smites off: an attack time for each, the
 // summon's 30 s at most.
-func valkyrLife(averageCasts float64) time.Duration {
-	return min(time.Duration(averageCasts*float64(valkyrAttackTime)), time.Second*30)
+func (valkyr *ValkyrPet) life(averageCasts float64) time.Duration {
+	return min(time.Duration(averageCasts*float64(valkyr.attackTime())), time.Second*30)
 }
 
 func MakeNibelungTriggerAura(agent core.Agent, isHeroic bool) {
@@ -133,7 +141,7 @@ func MakeNibelungTriggerAura(agent core.Agent, isHeroic bool) {
 					valkyr.registerSmite(isHeroic)
 
 					averageCasts := character.NibelungAverageCasts
-					valkyrAura.Duration = max(valkyrLife(averageCasts), time.Millisecond*250)
+					valkyrAura.Duration = max(valkyr.life(averageCasts), time.Millisecond*250)
 
 					if averageCasts > 0 {
 						valkyr.EnableWithTimeout(sim, petAgent, valkyrAura.Duration)

@@ -37,6 +37,12 @@ func init() {
 // newValkyrTestSim runs on a regular 102.7 ms map update when server is nil: the tests count updates.
 func newValkyrTestSim(t *testing.T, server *proto.ServerSettings) (*core.Simulation, *valkyrTestAgent, *ValkyrPet) {
 	t.Helper()
+	return newValkyrTestSimIn(t, server, &proto.RaidBuffs{})
+}
+
+// newValkyrTestSimIn is newValkyrTestSim under the raid's buffs.
+func newValkyrTestSimIn(t *testing.T, server *proto.ServerSettings, raidBuffs *proto.RaidBuffs) (*core.Simulation, *valkyrTestAgent, *ValkyrPet) {
+	t.Helper()
 	encounter := core.MakeSingleTargetEncounter(0)
 	if server == nil {
 		core.OnRegularGrid(encounter, 10.27)
@@ -51,7 +57,7 @@ func newValkyrTestSim(t *testing.T, server *proto.ServerSettings) (*core.Simulat
 			Consumes:  &proto.Consumes{},
 			Spec:      &proto.Player_BalanceDruid{},
 			Rotation:  &proto.APLRotation{},
-		}, &proto.PartyBuffs{}, &proto.RaidBuffs{}, &proto.Debuffs{}),
+		}, &proto.PartyBuffs{}, raidBuffs, &proto.Debuffs{}),
 		Encounter:  encounter,
 		SimOptions: &proto.SimOptions{Iterations: 1, IsTest: true, RandomSeed: 101},
 	})
@@ -99,7 +105,7 @@ func TestValkyrSmitesOnItsAttackTimer(t *testing.T) {
 			if update != 102700*time.Microsecond {
 				t.Fatalf("a map update of %v: the test wants the live 102.7 ms", update)
 			}
-			valkyr.EnableWithTimeout(sim, valkyr, valkyrLife(tc.averageCasts))
+			valkyr.EnableWithTimeout(sim, valkyr, valkyr.life(tc.averageCasts))
 			if tc.bloodlust {
 				core.BloodlustAura(&owner.Character, -1).Activate(sim)
 				if !owner.HasActiveAuraWithTag(core.BloodlustAuraTag) {
@@ -139,7 +145,7 @@ func TestValkyrSmitesOnExactTiming(t *testing.T) {
 	if sim.NextServerTick(came+1) != came+1 {
 		t.Fatal("the sim runs on map updates, so the test shows nothing")
 	}
-	valkyr.EnableWithTimeout(sim, valkyr, valkyrLife(11))
+	valkyr.EnableWithTimeout(sim, valkyr, valkyr.life(11))
 	for valkyr.IsEnabled() && !sim.Step() {
 	}
 
@@ -172,7 +178,7 @@ func TestValkyrSmitesOnUpdatesOfVaryingLength(t *testing.T) {
 		for sim.CurrentTime < 1037*time.Millisecond && !sim.Step() {
 		}
 		came := sim.CurrentTime
-		valkyr.EnableWithTimeout(sim, valkyr, valkyrLife(16))
+		valkyr.EnableWithTimeout(sim, valkyr, valkyr.life(16))
 		end := valkyr.UnsummonAt()
 		for valkyr.IsEnabled() && !sim.Step() {
 		}
@@ -198,5 +204,48 @@ func TestValkyrSmitesOnUpdatesOfVaryingLength(t *testing.T) {
 	}
 	if counts[15] != 30 {
 		t.Errorf("Smites in 30 s over 30 summons: %v, want 15 every time", counts)
+	}
+}
+
+// Unit::resetAttackTimer puts the creature's attack time under its melee haste, and Windfury Totem's (8515) and
+// Improved Icy Talons' raid area auras reach a guardian like any other: 1666 ms at 20%, 1724 at the totem's
+// own 16%, a Smite every 17 updates either way, 18 in the 30 s. Swift Retribution's 3% on top of the 20% makes
+// it 1618 ms, 16 updates.
+func TestValkyrSmitesFasterUnderMeleeHaste(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		buffs   *proto.RaidBuffs
+		updates int
+		want    int
+	}{
+		{"Improved Icy Talons", &proto.RaidBuffs{IcyTalons: true}, 17, 18},
+		{"Improved Windfury Totem", &proto.RaidBuffs{WindfuryTotem: proto.TristateEffect_TristateEffectImproved}, 17, 18},
+		{"Windfury Totem", &proto.RaidBuffs{WindfuryTotem: proto.TristateEffect_TristateEffectRegular}, 17, 18},
+		{"Icy Talons and Swift Retribution", &proto.RaidBuffs{IcyTalons: true, SwiftRetribution: true}, 16, 19},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			sim, _, valkyr := newValkyrTestSimIn(t, nil, tc.buffs)
+			var wentOff []time.Duration
+			valkyr.smite.ApplyEffects = func(sim *core.Simulation, _ *core.Unit, _ *core.Spell) {
+				wentOff = append(wentOff, sim.CurrentTime)
+			}
+			sim.PrePull()
+			for sim.CurrentTime < 1037*time.Millisecond && !sim.Step() {
+			}
+			first := sim.NextServerTick(sim.CurrentTime)
+			update := first - valkyr.AIClockStart(sim)
+			valkyr.EnableWithTimeout(sim, valkyr, valkyr.life(30))
+			for valkyr.IsEnabled() && !sim.Step() {
+			}
+
+			if len(wentOff) != tc.want {
+				t.Fatalf("%d Smites, want %d: %v", len(wentOff), tc.want, wentOff)
+			}
+			for i, at := range wentOff {
+				if want := first + time.Duration(i*tc.updates)*update; at != want {
+					t.Errorf("Smite %d went off at %v, want %v: %d updates after the one before", i+1, at, want, tc.updates)
+				}
+			}
+		})
 	}
 }

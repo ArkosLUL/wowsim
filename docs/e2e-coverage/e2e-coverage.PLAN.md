@@ -3998,6 +3998,75 @@ Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\ec-pet-fix5-tmp\`.
   TestHoly), the mage suites if the image's range changes, the suites of a guardian whose reach changes
   (TestUnholy's Gargoyle, the fire elemental's rows); report each.
 
+#### As built
+
+Stage code, re-measured on `434442b93` against [ac] `3d89793c7` and the live DB (SELECT); notes and the live plan in
+`tmp/ec-pet-fix6-code.md`. Verdicts:
+- Rune Weapon's white hits (fixed): no auto swing; each landed DK white swing (either hand, extra attacks too, not
+  Rune Strike) casts `RuneWeaponPet.swingCopies[hand]`: the DK's own swing rolled again on a never-dealt DK spell
+  (`registerDrwOwnerSwing`: his table, weapon, AP and mods, `OtherActionAttack` tags 3 and 4), floored half, dealt by
+  the weapon with no procs. `Uncontrollable` (SummonProperties 208). New `Pet.OwnerBuffsOnly`: the weapon's hits
+  read only the owner's AP, crit and damage mods (`Unit::MeleeDamageBonusDone`, `SpellDamageBonusDone`, Spell.cpp's
+  crit), so it gets no buffs; that ends the double count on its strike copies too.
+- Heals that pick a raid unit (fixed): Althor's Abacus picks from units in the world (71610 searches the area
+  around the healed unit); Chain Heal's bounces skip an away pet. Prayer of Healing, Circle of Healing and Prayer
+  of Mending already did; nothing else picks one.
+- Mirror Image past 20 yd (fixed, from the source and live): from 20 yd plus both reaches (24: the image's 1.5,
+  the boss dummy's 2.5, model 27510) `Spell::CheckRange` fails a Fire Blast at prepare (`<`), and the event is put
+  back anyway. The image does close in, against the lead: past 15 + reaches (19) on an update it starts with no cast
+  going, `ChaseMovementGenerator` sets it running: from 19.5 on (`ChaseRange`'s `MaxRange` + reaches, `IsInDist`) at
+  the target, the path cut at 19 (`ShortenPathUntilDist`), so it parks on 19; from nearer toward 15 + the target's
+  reach (17.5, `GetNearPoint`). The update after a cast starts still moves it (`UpdateSplineMovement` before the
+  generator stops it), at speed_run 1.14286 × 7 yd/s: one update's run a Frostbolt, two after a Fire Blast. From 30 yd
+  into a fight it casts Frostbolts from 29.2 down to 21 yd and about one Fire Blast, its last; Frostbolts fly
+  from where it stands (`MirrorImage.closeIn`).
+- Val'kyr under melee haste (fixed): Windfury Totem's 8515 and Improved Icy Talons' 55610 are raid area auras
+  (effect 65, aura 138), Swift Retribution and Improved Moonkin Form aura 193, and none is blocked on the guardian;
+  `resetAttackTimer` takes `GetAttackTime × m_modAttackSpeedPct`. `ValkyrPet.attackTime` is 2 s over the melee
+  speed multiplier: 1666 ms, 17 updates, 18 in 30 s; with Swift Retribution 1618 ms, 16, 19. `NibelungAverageCasts`
+  × that is the life.
+- `checkPetsCastsHits` (fixed): a record with `yards` 0 fails by name.
+- A guardian's missile reach (not a gap at the sim's distances, unchanged): `creature_model_info` × scale gives the
+  Gargoyle 1.5 (models 7533, 7534, 7854), the Val'kyr 1.6 and the Greater Fire Elemental 3, but Smite and Fire
+  Blast 57984 have no missile; the timed Water Elemental (70907, SummonProperties 1561: a `Guardian`, not
+  `IsPet`) has model 525's 0.85 and the Rune Weapon 0.01 (53160), both at the sim's distance 0, under the 5 yd floor.
+
+Tests: `rune_weapon_test.go` (copies on landed swings only, half the DK's roll; no buffs), `runes_test.go`'s two
+creature-type tests read the DK's roll; `abacus_test.go`, `chain_heal_test.go`; `TestValkyrSmitesFasterUnderMeleeHaste`;
+`TestMirrorImageClosesInBetweenCasts`, and the lost-missile test takes each Frostbolt's own flight. Replays: simval
+1114 of 1114, `TestPetsCastsReplayCatchesAWrongRecord` gains the unread distance. No drop or allowance entry is
+this item's.
+
+e2e (vetted, run in stage live): `TestPetfixValkyrSmites` adds a pass under `.aura 8515`;
+`TestPetfixMirrorImagesFromThirtyYards` (new); `petfixWatchImages` pulls with Frostbolt past 20 yd and logs each
+image's GUID and distance every 5 s; `TestEcClass6SummonTrace` runs the far-at-the-death summons and holds each last
+Frostbolt to the trace's updates.
+
+Goldens (`dock.sh delta`), 8 suites move, Average-Default:
+- TestBlood −2.03%: copies 35.8 to 28.8 a fight, crit 51.7 to 46.8%, and every weapon spell 15 to 20% a hit lower
+  (no buffs counted twice). TestBloodTank's BloodAggro −3.1% dps.
+- Mages, the image's Fire Blasts 6.5 to 2.1 casts at 30 yd: Arcane −0.16%, Fire −0.08%, FrostFire −0.07%; Frost
+  +0.06% (Fire Blasts 6.5 to 5.5, image Frostbolt hits 19.7 to 20.8 on shorter flights).
+- TestDisc and TestHoly: only the Abacus rows, hps +0.03 to +0.15%, tps +1.0 to +1.9%.
+- TestUnholy and TestRestoration don't move.
+
+Stage live (machine loaded by another session's batch; notes in `tmp/ec-pet-fix6-live.md`):
+- `TestPetfixValkyrSmites` passes: plain and Bloodlust 15 Smites (mean 2052, 2062 ms), under `.aura 8515` (16%) 17,
+  mean 1789 ms; the sim on its jittered updates gives 2064 ms and 17 (1776 ms), 18 only at 20%. Its precondition now
+  waits for the area aura, which reaches its owner on the owner's next aura update.
+- `TestPetfixMirrorImagesFromThirtyYards`: sight is fine at 30 yd. Every image closed in by the sim's step count;
+  Fire Blasts landed from up to about 24 yd and failed from 24.6 on, one image parked at 19.0 and one stepped to
+  18.44 (from 19 to 19.5), so the dummy's reach (2.5, not the assumed 1.5) went into the sim (range 24, chase 19,
+  stop 19 or 17.5) and the test's bounds. The recorded run passes them.
+- `TestEcClass6SummonTrace` not concluded: one summon's 3 unsummons share one update 30 s in, no cast after, but on
+  slow updates each image got 8 Frostbolts, the last 3.2 s clear of the corpse, so no bolt hit the edge; the other
+  summons and two retries hit server stalls (auth timeouts, a 159 s world update).
+
+Review round 1: the chase's stop now depends on where the run set off (19 from 19.5 on, else 17.5; live's image
+parked at 19.00 from 19.78), and Fire Blast's range is strict. `TestMirrorImageClosesInBetweenCasts` gains 19.7 and
+19.3 yd cases. Goldens: only TestFrost moves further, +0.047% (was +0.056%), image Frostbolt hits 19.7 to 20.7 as
+its images park on 19.
+
 ### EC-CLASS-FIX6 (Z10, done; changes goldens, C++; stages: melee, casters and C++, live)
 
 Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\ec-class-fix5-tmp\`.

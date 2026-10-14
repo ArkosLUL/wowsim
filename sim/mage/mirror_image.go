@@ -73,6 +73,23 @@ const (
 // The summon's own duration (58831), which takes the corpse away.
 const mirrorImageSummon = 30 * time.Second
 
+const (
+	// the image's reach is its mage's model's; the target's is the boss dummy's (model 27510), which
+	// every record fights
+	mirrorImageReach       = 1.5
+	mirrorImageTargetReach = 2.5
+	// Spell::CheckRange at the cast's start: Fire Blast's 20 yd between the two reaches
+	mirrorImageFireBlastRange = 20 + mirrorImageReach + mirrorImageTargetReach
+	// CasterAI chases at three quarters of Fire Blast's range (FillAISpellInfo) plus both reaches, and only
+	// sets off from past that. From past ChaseRange's extra half yard it runs at the target and stops on the
+	// chase range; from nearer it runs for GetNearPoint's spot 15 yd plus the target's reach out
+	mirrorImageChaseRange = 15 + mirrorImageReach + mirrorImageTargetReach
+	mirrorImageChaseFar   = mirrorImageChaseRange + 0.5
+	mirrorImageChaseStop  = 15 + mirrorImageTargetReach
+	// creature_template's speed_run for 31216, at the base 7 yd a second
+	mirrorImageRunSpeed = 7 * 1.14286
+)
+
 type MirrorImage struct {
 	*core.Pet
 
@@ -89,6 +106,10 @@ type MirrorImage struct {
 	// their AI before it had anything to attack
 	engagedAtSummon bool
 	summonedAt      time.Duration
+	// since when it's been moving toward its target, NeverExpires while it stands or casts
+	movingSince time.Duration
+	// where that run stops, picked as it sets off; 0 until then
+	chaseTo float64
 }
 
 func (mage *Mage) NewMirrorImage() *MirrorImage {
@@ -100,8 +121,6 @@ func (mage *Mage) NewMirrorImage() *MirrorImage {
 	mirrorImage.BuffImmunity = core.PetImmuneToScaling
 	// SummonProperties 1021 has neither a pet's type nor its category (Guardian::Guardian)
 	mirrorImage.Uncontrollable = true
-	// an image casts from beside its mage: it's summoned on him, and CasterAI only moves it between casts
-	mirrorImage.DistanceFromTarget = mage.DistanceFromTarget
 	// InitStatsForLevel's NPC_MIRROR_IMAGE case sets the create mana to 28 + 30 a level, but the
 	// pool keeps the base it got before that: creature_classlevelstats' 8814 for a level 80 mage
 	mirrorImage.EnableCreatureManaBar(2428, mirrorImageBaseStats[stats.Intellect], 15, false)
@@ -140,6 +159,9 @@ func (mi *MirrorImage) summon(sim *core.Simulation) {
 
 	summonedAt := sim.CurrentTime
 	mi.summonedAt = summonedAt
+	// it comes up beside its mage, and follows him until it attacks
+	mi.DistanceFromTarget = mi.mageOwner.DistanceFromTarget
+	mi.runFrom(core.NeverExpires)
 	sim.AddPendingAction(&core.PendingAction{
 		NextActionAt: sim.NextServerTick(start + mirrorImageLife),
 		// DeathEvent runs in Unit::Update's event pass: behind a cast landing on that update, which was
@@ -168,6 +190,8 @@ func (mi *MirrorImage) engage(sim *core.Simulation) {
 		return
 	}
 	mi.frostboltScheduled, mi.fireblastScheduled = 0, 1
+	// AttackStartCaster's chase starts moving it on the next update
+	mi.runFrom(mi.UpdateAfter(sim, sim.CurrentTime))
 	if mi.engagedAtSummon {
 		mi.frostboltDue = mi.AIClockStart(sim)
 		mi.fireblastDue = mi.frostboltDue + mirrorImageFireBlastFirst
@@ -177,13 +201,58 @@ func (mi *MirrorImage) engage(sim *core.Simulation) {
 	mi.frostboltDue = sim.CurrentTime
 	mi.fireblastDue = sim.CurrentTime + mirrorImageFireBlastFirst
 	if sim.RandomFloat("Mirror Image Opener") < 0.5 {
-		if mi.Frostbolt.Cast(sim, mi.CurrentTarget) {
+		if mi.castFrostbolt(sim) {
 			mi.frostboltDue += mi.Frostbolt.CastTime()
 		}
 	} else {
-		mi.Fireblast.Cast(sim, mi.CurrentTarget)
+		mi.castFireBlast(sim)
 	}
 	mi.queueEvent(sim, mi.UpdateAfter(sim, sim.CurrentTime))
+}
+
+// runFrom has the chase set the image off afresh at t, as it does after every stop for a cast.
+func (mi *MirrorImage) runFrom(t time.Duration) {
+	mi.movingSince, mi.chaseTo = t, 0
+}
+
+// closeIn moves the image toward its target from movingSince on. The chase moves it on each update it starts
+// without a cast going, and the step of the update after a cast starts still counts: Unit::Update moves it
+// along the spline before ChaseMovementGenerator stops it for the cast. Where the run ends is picked from where
+// it set off.
+func (mi *MirrorImage) closeIn(until time.Duration) {
+	if until <= mi.movingSince {
+		return
+	}
+	if mi.chaseTo == 0 {
+		switch d := mi.DistanceFromTarget; {
+		case d >= mirrorImageChaseFar:
+			mi.chaseTo = mirrorImageChaseRange
+		case d > mirrorImageChaseRange:
+			mi.chaseTo = mirrorImageChaseStop
+		default:
+			mi.chaseTo = d
+		}
+	}
+	moved := mirrorImageRunSpeed * (until - mi.movingSince).Seconds()
+	mi.DistanceFromTarget = max(mi.chaseTo, mi.DistanceFromTarget-moved)
+	mi.movingSince = until
+}
+
+func (mi *MirrorImage) castFrostbolt(sim *core.Simulation) bool {
+	mi.closeIn(mi.UpdateAfter(sim, sim.CurrentTime))
+	if !mi.Frostbolt.Cast(sim, mi.CurrentTarget) {
+		return false
+	}
+	mi.runFrom(mi.Hardcast.Expires)
+	return true
+}
+
+// castFireBlast is the cast the AI puts its event back for either way: out of range, Spell::CheckRange fails
+// it as it starts.
+func (mi *MirrorImage) castFireBlast(sim *core.Simulation) {
+	if mi.DistanceFromTarget < mirrorImageFireBlastRange {
+		mi.Fireblast.Cast(sim, mi.CurrentTarget)
+	}
 }
 
 // queueEvent wakes the AI on the first update from earliest on that it can cast on and has an event due by.
@@ -207,6 +276,7 @@ func (mi *MirrorImage) runEvent(sim *core.Simulation) {
 		mi.queueEvent(sim, sim.CurrentTime)
 		return
 	}
+	mi.closeIn(sim.CurrentTime)
 
 	frostbolt, fireblast := mi.frostboltDue <= sim.CurrentTime, mi.fireblastDue <= sim.CurrentTime
 	if frostbolt && fireblast {
@@ -221,10 +291,10 @@ func (mi *MirrorImage) runEvent(sim *core.Simulation) {
 	switch {
 	case frostbolt:
 		mi.frostboltDue, mi.frostboltScheduled = sim.CurrentTime+mirrorImageFrostbolt, scheduled
-		mi.Frostbolt.Cast(sim, mi.CurrentTarget)
+		mi.castFrostbolt(sim)
 	case fireblast:
 		mi.fireblastDue, mi.fireblastScheduled = sim.CurrentTime+mirrorImageFireBlast, scheduled
-		mi.Fireblast.Cast(sim, mi.CurrentTarget)
+		mi.castFireBlast(sim)
 	}
 	mi.queueEvent(sim, mi.UpdateAfter(sim, sim.CurrentTime))
 }

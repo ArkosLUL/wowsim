@@ -318,6 +318,7 @@ func (shaman *Shaman) registerChainHealSpell() {
 	hasGlyph := shaman.HasMajorGlyph(proto.ShamanMajorGlyph_GlyphOfChainHeal)
 
 	numHits := min(core.TernaryInt32(hasGlyph, 4, 3), int32(len(shaman.Env.Raid.AllUnits)))
+	bounceTargets := make([]*core.Unit, 0, numHits)
 
 	bonusHeal := 0 +
 		core.TernaryFloat64(shaman.Ranged().ID == 28523, 87, 0) +
@@ -359,8 +360,17 @@ func (shaman *Shaman) registerChainHealSpell() {
 			dmgReductionPerBounce := 0.6
 			curTarget := target
 			// TODO: This bounces to most hurt friendly...
-			targets := sim.Environment.Raid.GetFirstNPlayersOrPets(numHits)
-			for hitIndex := int32(0); hitIndex < numHits; hitIndex++ {
+			bounceTargets = bounceTargets[:0]
+			for _, unit := range sim.Environment.Raid.AllUnits {
+				if int32(len(bounceTargets)) == numHits-1 {
+					break
+				}
+				// a pet that's away isn't in the world to jump to
+				if unit.IsEnabled() {
+					bounceTargets = append(bounceTargets, unit)
+				}
+			}
+			for hitIndex := 0; hitIndex <= len(bounceTargets); hitIndex++ {
 				healPower := shaman.healingPower(spell, target)
 				baseHealing := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP, healPower) + bonusHeal
 				baseHealing *= bounceCoeff
@@ -385,7 +395,9 @@ func (shaman *Shaman) registerChainHealSpell() {
 				}
 
 				bounceCoeff *= dmgReductionPerBounce
-				curTarget = targets[hitIndex]
+				if hitIndex < len(bounceTargets) {
+					curTarget = bounceTargets[hitIndex]
+				}
 			}
 		},
 	})

@@ -312,6 +312,9 @@ func applyBuffEffects(agent Agent, raidBuffs *proto.RaidBuffs, partyBuffs *proto
 // (AnyGroupedUnitInObjectRangeCheck doesn't tell them apart), so it gets these too. A haste carrier's
 // own immunities (inheritsOwnerAttackSpeed) keep Bloodlust off a guardian the same as a real pet.
 func applyPetBuffEffects(petAgent PetAgent, raidBuffs *proto.RaidBuffs, partyBuffs *proto.PartyBuffs, individualBuffs *proto.IndividualBuffs) {
+	if petAgent.GetPet().OwnerBuffsOnly {
+		return
+	}
 	raidBuffs = googleProto.Clone(raidBuffs).(*proto.RaidBuffs)
 	partyBuffs = googleProto.Clone(partyBuffs).(*proto.PartyBuffs)
 	individualBuffs = googleProto.Clone(individualBuffs).(*proto.IndividualBuffs)

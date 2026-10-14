@@ -143,7 +143,10 @@ func TestDirgeOnObliterate(t *testing.T) {
 // runeWeaponHit is a hit's damage debug line: its base damage and its damage after the attacker's multipliers.
 type runeWeaponHit struct{ base, done float64 }
 
-// firstRuneWeaponHits reads the rune weapon's first white swing and first Heart Strike.
+// runeWeaponSwingRoll is the DK's main hand swing the rune weapon's white hit copies, rolled again on him.
+var runeWeaponSwingRoll = core.ActionID{OtherID: proto.OtherAction_OtherActionAttack, Tag: 3}
+
+// firstRuneWeaponHits reads the roll of the rune weapon's first white hit and its first Heart Strike.
 func firstRuneWeaponHits(entries []logEntry) (swing, heartStrike runeWeaponHit) {
 	field := func(text, name string) float64 {
 		_, rest, _ := strings.Cut(text, name+":")
@@ -151,14 +154,14 @@ func firstRuneWeaponHits(entries []logEntry) (swing, heartStrike runeWeaponHit) 
 		return value
 	}
 	for _, e := range entries {
-		if !strings.Contains(e.unit, "Rune Weapon") || !strings.Contains(e.text, "[DEBUG]") {
+		if !strings.Contains(e.text, "[DEBUG]") {
 			continue
 		}
 		hit := runeWeaponHit{field(e.text, "BaseDamage"), field(e.text, "AfterAttackerMods")}
 		switch {
-		case swing.base == 0 && strings.Contains(e.text, "{OtherID: 3, Tag: 1}"):
+		case swing.base == 0 && strings.Contains(e.text, runeWeaponSwingRoll.String()):
 			swing = hit
-		case heartStrike.base == 0 && strings.Contains(e.text, "{SpellID: 55262, Tag: 1}"):
+		case heartStrike.base == 0 && strings.Contains(e.unit, "Rune Weapon") && strings.Contains(e.text, "{SpellID: 55262, Tag: 1}"):
 			heartStrike = hit
 		}
 	}
@@ -172,13 +175,14 @@ const runeWeaponAPL = `{"type": "TypeAPL", "priorityList": [` +
 // Unit::MeleeDamageBonusDone hands the rune weapon's hits to the DK: Elixir of Demonslaying's 105 attack power
 // against the demon dummy adds int32(105 / 14 x speed) off the DK's own main hand, normalized for Heart Strike.
 // It's the DK's flat bonus on a physical hit, so the DK's aura 79 percents skip it: it takes the halving and
-// the spell's own mods only.
+// the spell's own mods only. A white hit is the DK's own swing rolled again, so it gets the bonus like his,
+// and the halving comes after.
 func TestRuneWeaponCreatureTypeAttackPower(t *testing.T) {
 	player := parityPlayer(BloodTalents, "p3_blood", runeWeaponAPL)
 	dk := parityEnv(t, player, nil)
 	speed := dk.AutoAttacks.MH().SwingSpeed
 	spellMods := func(spell *core.Spell) float64 { return spell.DamageMultiplier * spell.DamageMultiplierAdditive }
-	swingMods, heartStrikeMods := spellMods(dk.RuneWeapon.AutoAttacks.MHAuto()), spellMods(dk.RuneWeapon.HeartStrike)
+	swingMods, heartStrikeMods := spellMods(dk.GetSpell(runeWeaponSwingRoll)), spellMods(dk.RuneWeapon.HeartStrike)
 
 	swing, heartStrike := firstRuneWeaponHits(runParity(t, player, 1))
 	player.Consumes = &proto.Consumes{BattleElixir: proto.BattleElixir_ElixirOfDemonslaying}
@@ -187,7 +191,7 @@ func TestRuneWeaponCreatureTypeAttackPower(t *testing.T) {
 		t.Fatalf("no rune weapon swing (%v) or Heart Strike (%v)", swing, heartStrike)
 	}
 	// each done damage is whole, so the difference is within a point of the bonus
-	if got, want := swingElixir.done-swing.done, math.Trunc(float64(float32(105)/14*float32(speed)))*0.5*swingMods; math.Abs(got-want) >= 1 {
+	if got, want := swingElixir.done-swing.done, math.Trunc(float64(float32(105)/14*float32(speed)))*swingMods; math.Abs(got-want) >= 1 {
 		t.Errorf("swing damage +%v, want +%.2f (speed %v)", got, want, speed)
 	}
 	if got, want := heartStrikeElixir.done-heartStrike.done, math.Trunc(float64(float32(105)/14*3.3))*0.5*heartStrikeMods; math.Abs(got-want) >= 1 {

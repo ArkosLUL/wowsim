@@ -219,6 +219,9 @@ func TestPetsCastsReplayCatchesAWrongRecord(t *testing.T) {
 		{"a hit ahead of every Frostbolt", func(img *petsCastsImage) {
 			img.FrostboltHit = append([]int64{img.FrostboltGo[0] - 1000}, img.FrostboltHit...)
 		}},
+		{"an image whose distance wasn't read", func(img *petsCastsImage) {
+			img.Yards = 0
+		}},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			rec, i := withHits()
