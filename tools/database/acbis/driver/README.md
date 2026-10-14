@@ -88,8 +88,12 @@ better one for them or a Heroic Presence check switched their racial traits.
 
 - The driver reloads the page when the server goes away (giving it up to `--server-wait` s to come
   back), when the page stops answering (starting a new Chrome if it's gone), or after `--stall` s
-  without progress. The reloaded page resumes its batch. Its orphaned server run keeps the server busy
-  until the server cancels it, 2 unpolled minutes later, and the batch retries every 15 s meanwhile.
+  without progress. The reloaded page resumes its batch, starting over whatever job was in flight. Its
+  orphaned run keeps the server busy until the server cancels it, 2 unpolled minutes later, and the
+  batch retries every 15 s meanwhile.
+- **Stage 2 needs a `--stall` longer than the job**: a raid-DPS job goes quiet near the end of its
+  Alternatives step, so the 1800 s default reloads it just before it settles, forever. At Normal, Fel's
+  phase 2 job froze three times at the same 1,214,750 sims, then settled in 4997 s under `--stall 10800`.
 - **It gives up** when the server stays away, when a reload can't get the page back in 5 tries 30 s
   apart, when the batch stops with runs left 4 times, or when 3 reloads in a row bring no progress. The
   last two counts reset whenever a job settles.
@@ -115,7 +119,7 @@ better one for them or a Heroic Presence check switched their racial traits.
 | `--base` | `http://localhost:3346` | the sim server |
 | `--container` | `wotlk-bisdata` | the sim server's container, left out of the load log |
 | `--port` | `9346` | Chrome's debugging port |
-| `--stall`, `--server-wait` | `1800` | seconds |
+| `--stall`, `--server-wait` | `1800` | seconds; stage 2 wants a longer `--stall` (see Unattended runs) |
 | `--poll` | `5` | seconds between checks |
 | `--keep-chrome` | | leave Chrome running |
 

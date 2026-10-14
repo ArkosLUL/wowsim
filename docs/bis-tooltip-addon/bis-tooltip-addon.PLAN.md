@@ -254,8 +254,8 @@ Regeneration is **manual**: one documented command, run when you want it, never 
 loop's re-baseline. Don't commit the payload; record the dataset version, sim commit, catalog date
 and objective in this PLAN so any dataset on the server traces back to a sim state.
 
-**Live dataset:** `b235db6c`, a placeholder: one fury P1 result fanned out to every subject and phase.
-Sim `unknown`, catalog 2026-09-19, objective `own`, imported 2026-09-21.
+**Live dataset:** `39b4c8f1`, 21 raiders over content phases 2 and 3. Sim `434442b93`, catalog
+2026-10-14, objective `own+raid`, imported 2026-10-14.
 
 Tables in `acore_world` (DDL: `BisTablesSQL`):
 
@@ -420,8 +420,8 @@ Known limits:
 
 ### Phase 6 — Real data, zip, docs
 
-**Status:** done for content phase 2, the one the realm is raiding. Live dataset `cc5cbd49` (sim
-`c463f2d5f`, catalog 2026-09-19), 21 raiders, imported 2026-10-07. Phases 1 and 3–5 are unrun.
+**Status:** done for content phases 2 and 3. Live dataset `39b4c8f1` (sim `434442b93`, catalog
+2026-10-14), 21 raiders, imported 2026-10-14. Phases 1, 4 and 5 are unrun.
 
 - **Per-spec lists are dropped** (the user's call): the dataset carries roster raiders only, and every
   spec keeps the shipped Wowhead lists.
@@ -443,6 +443,10 @@ Known limits:
 **The phase 2 run** at Quick, 21 non-healers (19 DPS, 2 tanks) with one stage 2 raider: stage 1 297 s,
 stage 2 366 s including 54 s of Heroic Presence checks, nothing failed, 9% of the page's localStorage.
 
+**At Normal, over phases 2 and 3** with the same 21 raiders: stage 1 8534 s, stage 2 10186 s including
+420 s of Heroic Presence checks, 18% of localStorage. The whole pass sat at 9100 sims/s where the same
+jobs ran at 15450 on the sim two weeks earlier, so budget both stages off the current rate.
+
 - **Quick picks aren't stable:** one raider and phase run twice differed in 7 of its 17 slots, since the
   UI seeds each run randomly, so a re-run can't confirm a pipeline change.
 - **A feral druid's idol is arbitrary:** every idol the search shortlisted scored an identical
@@ -459,7 +463,7 @@ checks in a throwaway clone: the refusals (uncommitted changes, a toc/`ADDON_BUI
 inside the repo or in `Interface/AddOns`) and a zip of 81 files that leaves out `test/`, the script and
 every `.git*`, keeps the committed bytes under `core.autocrlf=true`, and holds everything the toc loads.
 
-**Still open:** phases 1 and 3–5, each one more pass of both stages and a re-import, which **needs the
+**Still open:** phases 1, 4 and 5, each one more pass of both stages and a re-import, which **needs the
 user's OK** (the live DB is otherwise SELECT-only).
 
 ## Verification summary
