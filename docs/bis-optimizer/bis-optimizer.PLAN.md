@@ -2665,7 +2665,7 @@ Picks (final death chance, DTPS, TMI, TPS; Hit is 263 to 280 against the 262 flo
 - **Left:**
   - Bulwark's P4 run drops the death term on a first pick that dies in 99.75%, short of always (2.6 se, under
     the bar): Verify's "0 or 100%" holds only loosely there.
-  - The Lich King kills both picks; what to do about it is the user's call (asked 2026-10-13).
+  - The Lich King kills both picks; left as it is (the user's call, 2026-10-14).
   - The first Soul Reaper and Infest come at 30.5 and 22.5 s, for the server's 40 and 14 s into a phase: it
     matters on short fights only.
   - The P1 to P3 and P5 rows are from before the wave's other items merged: on the merged tree the worn-gear

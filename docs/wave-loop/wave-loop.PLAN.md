@@ -176,23 +176,22 @@ follow-ups with EC-TOOLS2 at last and BIS-TANK-SWAP in EC-PET-FIX6's place, whic
 
 ## Current wave
 
-- Wave: Z11, planned, not started: launch on the user's "continue". Z10 (base `346249292`) landed on master with
-  its close-out; Z9 as `6dfc2d6c9`.
-  Before Z11: the user rebuilds the server (mod-sim-validation `86f62a3`: `.simval trace`, the spelldump's
-  `critCapable`; its SQL file gains a `simval trace` row). Then `TestEcClass6CritCapable`, `TestSpelldumpCapture`
-  and `TestEcClass6SummonTrace` open EC-CLASS-FIX7's and EC-PET-FIX6's live stages. EC-TOOLS3 changes the C++
-  again: a second rebuild during Z11.
-  Asked in Z10's report, unanswered: what to do about the Lich King still killing both tanks' picks (the zone
-  buff, more healing, or leave it), whether a tank item takes a place in Z11, the idle speed benchmark for Z10.
-  Z10's reports: `.wave-loop\z10-run1\*.json` and `xreview.md`, `waveZ10-results.json`; item notes
-  `.wave-loop\{ec-core-fix7,ec-class-fix6,ec-tools2,bis-tank-swap}-tmp` (the last holds raiders' gear: never
-  commit). Briefs to copy: `waveZ10-build.py`, `waveZ10-xreview-brief.md`, `waveZ10-specs-brief.md`,
-  `waveZ10-guides-brief.md`, `waveZ10-picks-p4-brief.md`; the slow suite: `z10-slow.sh`, its row:
-  the session scratchpad's `slow-row.py`. `int-check.sh`'s gofmt and eslint see committed files only: after a
-  cross-review's commit, run them on its files.
-  Proto numbers taken: `ServerSettings` 8, `Target` 23, `UnitMetrics` 18.
-  Server: [ac] `3d89793c7`, mod-spell-tweaks `9bf5c75`, mod-sim-validation's C++ as `bc1d35e` (the user's image of
-  2026-10-11 21:56 local); the module's HEAD `80d864c`.
+- Wave: Z11, running: base `434442b93`, runId `wf_ccee67e3-394`, all four items, args
+  `.wave-loop\waveZ11-args.json` (`waveZ11-build.py`, shared rules `waveZ11-shared.md`). Z10 landed as
+  `434442b93`.
+  The server runs mod-sim-validation's C++ as `86f62a3` (the user's rebuild, image 2026-10-13 20:46 local). The DB
+  import didn't run, so `command` lacks the `simval trace` help row; the command works at the code's level, and
+  the SQL isn't applied.
+  EC-TOOLS3's C++ needs a second rebuild by the user after the run; its move of the other tests' dummies waits as
+  `tmp/spawn-spots.patch` in its worktree. Both then go through a short live stage before its merge.
+  The user's answers to Z10's report (2026-10-14): the Lich King stays as it is (no zone buff, no more healing);
+  Z11 as planned, then the BiS chain; no idle benchmark for Z10.
+  Z10's reports: `.wave-loop\z10-run1\*.json` and `xreview.md`, `waveZ10-results.json`. Briefs to copy:
+  `waveZ10-xreview-brief.md`, `waveZ10-specs-brief.md`, `waveZ10-guides-brief.md`; the slow suite: `z10-slow.sh`,
+  its row: the session scratchpad's `slow-row.py`. `int-check.sh`'s gofmt and eslint see committed files only: after
+  a cross-review's commit, run them on its files.
+  Proto numbers taken: `ServerSettings` 8 (9 is EC-CORE-FIX8's if needed), `Target` 23, `UnitMetrics` 18.
+  Server: [ac] `3d89793c7`, mod-spell-tweaks `9bf5c75`; the module's HEAD `80d864c`.
   Prod runs Z6's `e5a289570`, without Z7 to Z10; `wowsims-wotlk:rollback-x` is X's `25cb9dddc`. A sim page left
   open across a rebuild sends the optimizer's tank boss its old input group, and the run fails: reload it. Auto
   mode refuses the prod docker commands, a DSN on a command line and chained commands: the user's allow rules
@@ -206,8 +205,7 @@ follow-ups with EC-TOOLS2 at last and BIS-TANK-SWAP in EC-PET-FIX6's place, whic
   over the expertise cap; Z10's: Feral Tank P2 Normal 124 under its Quick), then the deferred BiS chain.
   Closed as not sim gaps: the sheet fields the server shows raw (per-school crit, Blood-Gorged, Mace and Holy
   Specialization), which the fixture README explains.
-- Deferred (the user's calls, 2026-10-02, 10-03, 10-05 and 10-07), once the other items are done and only on the
-  user's go-ahead:
+- Deferred (the user's calls, 2026-10-02, 10-03, 10-05 and 10-07): right after Z11 (go-ahead 2026-10-14):
   - Rerun all 28 presets, tanks included, on the final HEAD: BIS-caps-race changes every racial search,
     `ff0920a96` the 16 builds `mage_*`, `rogue_*`, `warlock_*`, `warrior_arms`, `warrior_fury`,
     `protection_warrior`, `shadow_priest`, `smite_priest`, `dk_blood`, `elemental_shaman`, and BIS-outclassed
