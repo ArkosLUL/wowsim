@@ -66,6 +66,7 @@ func (priest *Priest) registerPowerWordShieldSpell() {
 			shieldAmount := 2230.0 + core.PowerBonus(coeff, spell.HealingPower(target))
 			shield := spell.Shield(target)
 			shield.Apply(sim, shieldAmount)
+			spell.LandOn(sim, target)
 
 			weakenedSoul := priest.WeakenedSouls.Get(target)
 			weakenedSoul.Duration = wsDuration

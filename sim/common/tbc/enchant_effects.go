@@ -28,9 +28,11 @@ func init() {
 	core.NewEnchantEffect(2523, func(agent core.Agent) {
 		agent.GetCharacter().AddBonusRangedHitRating(30)
 	})
+	core.NewEnchantSwapEffect(2523, core.EnchantSwapRangedHit(30))
 	core.NewEnchantEffect(2724, func(agent core.Agent) {
 		agent.GetCharacter().AddBonusRangedCritRating(28)
 	})
+	core.NewEnchantSwapEffect(2724, core.EnchantSwapRangedCrit(28))
 
 	core.NewEnchantEffect(2671, func(agent core.Agent) {
 		// Sunfire
@@ -40,6 +42,7 @@ func init() {
 			}
 		})
 	})
+	core.NewEnchantSwapEffect(2671, schoolSpellPowerSwap(core.SpellSchoolArcane|core.SpellSchoolFire, 50))
 	core.NewEnchantEffect(2672, func(agent core.Agent) {
 		// Soulfrost
 		agent.GetCharacter().OnSpellRegistered(func(spell *core.Spell) {
@@ -48,6 +51,7 @@ func init() {
 			}
 		})
 	})
+	core.NewEnchantSwapEffect(2672, schoolSpellPowerSwap(core.SpellSchoolFrost|core.SpellSchoolShadow, 54))
 
 	core.AddWeaponEffect(963, func(agent core.Agent, slot proto.ItemSlot) {
 		w := agent.GetCharacter().AutoAttacks.MH()
@@ -289,4 +293,17 @@ func init() {
 	})
 
 	core.AddEffectsToTest = true
+}
+
+// schoolSpellPowerSwap moves a weapon's spell power to some schools with an item swap, for Sunfire and Soulfrost.
+func schoolSpellPowerSwap(schools core.SpellSchool, amount float64) func(*core.Character) core.EnchantSwapEffect {
+	return func(character *core.Character) core.EnchantSwapEffect {
+		return func(_ *core.Simulation, sign float64) {
+			for _, spell := range character.Spellbook {
+				if spell.SpellSchool.Matches(schools) {
+					spell.BonusSpellPower += sign * amount
+				}
+			}
+		}
+	}
 }

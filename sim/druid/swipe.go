@@ -84,7 +84,11 @@ func (druid *Druid) registerSwipeCatSpell() {
 			baseDamage := core.ApplyPct(spell.MHNormalizedStrikeDamage(sim, spell.MeleeAttackPower()), spell.Direct.WeaponPct)
 			spell.AoECapUnits = len(sim.Encounter.Targets)
 			for _, aoeTarget := range sim.Encounter.TargetUnits {
-				spell.CalcAndDealDamage(sim, aoeTarget, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
+				result := spell.CalcAndDealDamage(sim, aoeTarget, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
+				// 62078 names a unit target, unlike the bear's Swipe, so a miss on that one pays the miss cost
+				if aoeTarget == target && !result.Landed() {
+					spell.IssueRefund(sim)
+				}
 			}
 		},
 	})

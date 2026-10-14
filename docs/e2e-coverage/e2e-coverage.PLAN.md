@@ -4202,6 +4202,77 @@ Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\ec-class-fix6-tmp\`
 - **Goldens:** the feral suites' rows that cast Swipe (Cat); none expected for the Shard or the swap enchants (no
   suite has them); report each.
 
+#### As built
+
+Code stage (notes and both live plans in `tmp/ec-class-fix7-code.md`). Verdicts:
+- Swipe (Cat) (fixed): a miss on the cast's own target calls `IssueRefund` (`sim/druid/swipe.go`); another target's miss
+  pays in full. `TestSwipeCatPaysTheMissCostOnItsTarget`. No golden casts 62078, so none moves.
+- Shard of the Gods (fixed, wider than the bullet): per the source, the roll is once per target a cast lands on
+  (`DoAllEffectOnTarget` procs each target), not once per cast, and both bonuses carry
+  `SPELL_ATTR3_CAN_PROC_FROM_PROCS`, so triggered magic-class landings roll too (Earth Shield's 379, Prayer of Mending's
+  41635 and 33110, Divine Aegis, Earthliving, a `ticksAsCasts` tick).
+  - Core: `Unit.RegisterOnCastLanded` and `Spell.LandOn` (`sim/core/cast_landed.go`), raised by every landed direct hit
+    or heal, by a `ticksAsCasts` tick, and by `LandOn` at the sites that land without a result: Renew, Power Word:
+    Shield, Divine Aegis, Prayer of Mending's cast and jumps, the Prayer of Healing glyph's hot, Earth Shield's cast and
+    charge heal, Earthliving, Ghoul Frenzy (on the ghoul), Ignite, Languish. Once per spell, target and instant.
+  - The trigger reads only that: a magic-class spell without `SPELL_ATTR3_SUPPRESS_CASTER_PROCS`; a spell with no damage
+    class by its proc mask (stand-ins: Prayer of Mending 48113, Empowered Renew 63543, Divine Aegis 47515, Arcane
+    Missiles 42846). Melee and ranged never. `TestShardOfTheGodsProcsOffAHotAlone`, `TestCastLandsOnceATarget`.
+  - Not covered: other aura-only casts with no `LandOn` (buffs, curses without an outcome, Beacon of Light, Sacred
+    Shield 53601, Power Infusion); NONE-class spells with a spell proc mask roll wrongly (Persistent Shield 26470,
+    Invigorating Earthsiege Health Regen 55341, Ardent Defender, Explosive Trap 49067).
+- Item-swap enchants (fixed): `NewEnchantSwapEffect` (`sim/core/item_swaps.go`) moves a static effect with the swap,
+  counted per worn weapon: the runes 3883, 3847 (defense, stamina via `NewEnchantSwapMultiplyStat`), 3594, 3365
+  (parry), Scourgebane 3247, scopes 2523, 2724, 3608, 3607, Sunfire 2671, Soulfrost 2672. Weapon-damage enchants
+  (963, 1897, 2723, 3843) go on the new weapon in `swapWeapon`. Cinderglacier 3369 now toggles like the other procs
+  (`swapFollowingEnchants`). 3595 and 3367 have no effect to move.
+  - Found on the way: an iteration ending swapped started the next one off by the swap's stat change, with a 1.5 s
+    GCD (`ItemSwap.reset` re-ran `SwapItems` after `Unit.reset`). Right after `Unit.reset` it now restores the gear
+    only, then runs the swap callbacks; the APL's mid-fight swap to the main set (also `reset`) stays a full
+    `SwapItems`. `TestItemSwapMovesStaticEnchants` (death knight: runes, weapon enchants, to a bare weapon),
+    `TestItemSwapBackToTheMainSet`.
+  - Not covered: racial weapon expertise (human swords) doesn't follow a swap.
+- Death Strike's missing heals (not found): `spell_dk_death_strike`'s EFFECT_2 dummy casts 45470 untriggered on a hit;
+  45470 has no GCD category, cooldown, cost, reagent or form, and the executing strike can't be interrupted by it,
+  so nothing in `Spell::prepare` or `CheckCast` refuses it. Logs from the last live runs show the strike from behind
+  (no dodge or parry; 7.6% miss) failing to heal about half the time, which a miss doesn't explain.
+  `TestEcClass5HealsUnderStrengthOfWrynn` now logs `ECCLASS5_STRIKE`: the strike's result on the dummy and 45470's
+  `SMSG_SPELL_GO` or `SMSG_CAST_FAILED`.
+- e2e (vetted, not run), `ecclass7_test.go`: `TestEcClass7SwipeMissCost`, `TestEcClass7RebirthOmen` (11.67%),
+  `TestEcClass7BryntrollProcs` (2 PPM, 500 ms; `item_template` agrees), `TestEcClass7NaturesGracePerTarget`
+  (ranks 1, 2). README rows.
+- Goldens: none moved (37 suites); no suite casts Swipe (Cat), wears the Shard sets or swaps items.
+
+Live stage (notes in `tmp/ec-class-fix7-live.md`; server lock 14:24 to 14:40 on 2026-10-14, no rebuild or restart):
+- `TestEcClass6CritCapable` (pass): the 12 `SPELL_ATTR2_CANT_CRIT` spells dump `critCapable` false, Frostbolt true.
+- Spelldump recaptured (`TestSpelldumpCapture`, `spellids -all`, the ten classes and pets, merged over the committed
+  capture): `critCapable` true to false for exactly the 109 CANT_CRIT spells that had true. Also moved, read by
+  neither `gen_serverdata` nor `tools/simval`: `scripts` on 19 spells (mod-spell-tweaks 9bf5c75's Pyroblast, Burnout,
+  Curse of Doom and Glyph of Backstab scripts, which the sim already models), and 31930 Judgements of the Wise is new
+  (AC `67b510271` sets its family to paladin). Six ids the id list no longer asks for keep their committed lines.
+- `gen_serverdata` rerun: no table moves, so no golden. `critcap.go` now reads the spelldump's `critCapable` (no
+  `Attributes[2]` or effect list); `attr2CantCrit` stays for `damage.go`'s ticks. `TestCritCapableReadsCantCrit`.
+- Death Strike's missing heals (test fault, fixed): in 7 runs, 13 of 17 strikes hit and each healed once; 3 dodges and
+  1 miss cast no 45470. A creature dodges from behind (`Unit::MeleeSpellHitResult` turns dodge off for a player
+  victim only), which the test had ruled out. It now retries a strike that doesn't land and fails one that hits
+  diseases and heals nothing. No sim gap: the sim's dodge doesn't depend on the side.
+- Swipe (Cat) (confirmed): 63 hits took 49 to 50 energy, 17 misses (9 parries, 5 dodges, 3 misses) 0 to 12, mean 5.59
+  (sim `irand(0, 12)`).
+
+Carried stage (notes in `tmp/ec-class-fix7-carried.md`; server lock 14:58 to 15:30 on 2026-10-14, no rebuild or
+restart). All three match the sim; no sim change, no golden.
+- Omen of Clarity off Rebirth (pass): 12 Clearcastings in 100 landed Rebirths, 12.0% (sim 11.67%: 3.5 PPM over 48477's
+  2 s cast time entry; a no-damage hit passes a `DamageInfo`, so `Aura::CalcProcChance` takes the PPM path).
+- Bryntroll (pass): white swings 8 Drain Lifes off 89 landed, 8.99% (sim 11.33%, z -0.70). Whirlwind, two runs: 42 off
+  385 landed hits in 140 Whirlwinds (about 40 expected at one a Whirlwind), never two inside 500 ms (about 5 expected
+  pairs without the cooldown). No white swings ran; 44949's off-hand hits can't roll a main-hand two-hander.
+- Nature's Grace per target (pass): rank 1 by dummies crit 0 to 3, casts 31/33/14/2 gave it 0/13/7/1; rank 2 26/41/12/1
+  gave 0/22/11/1. Per target beats once a cast about 26 to 1; nothing on 57 casts without a crit (61384 isn't crit
+  capable, so its cast phase never carries `PROC_HIT_CRITICAL`; 53227 is triggered, so it has none).
+- Test faults fixed (`ecclass7_test.go`): `.additem 44614 200` read 44614 as a character guid (an offline character,
+  so nothing was added anywhere), now named; the warrior is stripped and learns Two-Handed Axes (197) before
+  Bryntroll; `/Whirlwind` also checks the Drain Life count against `1 - (1 - p)^n` a Whirlwind plus white swings.
+
 ### EC-TOOLS3 (Z11; golden-neutral, C++; stages: code, live)
 
 Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\`.

@@ -26,6 +26,9 @@ type ItemSwap struct {
 	// Holds items that are currently not equipped
 	unEquippedItems [3]Item
 	swapped         bool
+
+	// set by Unit.reset, which already put back the stats the main set was built with
+	unitReset bool
 }
 
 /*
@@ -82,6 +85,124 @@ func (character *Character) enableItemSwap(itemSwap *proto.ItemSwap, mhCritMulti
 
 func (swap *ItemSwap) initialize(character *Character) {
 	swap.character = character
+	if !swap.IsEnabled() {
+		return
+	}
+	character.RegisterResetEffect(func(*Simulation) {
+		swap.unitReset = true
+	})
+	seen := map[int32]bool{}
+	for _, item := range append(weaponSlotItems(&character.Equipment), swap.unEquippedItems[:]...) {
+		id := item.Enchant.EffectID
+		if setup, ok := enchantSwapEffects[id]; ok && !seen[id] {
+			seen[id] = true
+			swap.followStaticEnchant(id, setup(character))
+		}
+	}
+}
+
+// EnchantSwapEffect changes a static enchant effect mid-fight: sign 1 puts it on once more, -1 takes one off.
+type EnchantSwapEffect func(sim *Simulation, sign float64)
+
+var enchantSwapEffects = map[int32]func(*Character) EnchantSwapEffect{}
+
+// NewEnchantSwapEffect makes a weapon enchant's static effect follow an item swap, as Player::SwapItem takes the
+// leaving weapon's enchants off and puts the new one's on (_ApplyItemMods). The enchant's NewEnchantEffect still
+// applies it at the build, once for each worn weapon holding it; setup runs at the build too, for a character
+// whose swap weapons hold it.
+func NewEnchantSwapEffect(id int32, setup func(*Character) EnchantSwapEffect) {
+	enchantSwapEffects[id] = setup
+}
+
+func (swap *ItemSwap) followStaticEnchant(id int32, effect EnchantSwapEffect) {
+	character := swap.character
+	built := wornEnchants(&character.Equipment, id)
+	worn := built
+	character.RegisterResetEffect(func(*Simulation) {
+		worn = built
+	})
+	character.RegisterOnItemSwap(func(sim *Simulation) {
+		for now := wornEnchants(&character.Equipment, id); worn != now; {
+			if worn < now {
+				worn++
+				effect(sim, 1)
+			} else {
+				worn--
+				effect(sim, -1)
+			}
+		}
+	})
+}
+
+func weaponSlotItems(equipment *Equipment) []Item {
+	return []Item{
+		equipment[proto.ItemSlot_ItemSlotMainHand],
+		equipment[proto.ItemSlot_ItemSlotOffHand],
+		equipment[proto.ItemSlot_ItemSlotRanged],
+	}
+}
+
+func wornEnchants(equipment *Equipment, id int32) int {
+	n := 0
+	for _, item := range weaponSlotItems(equipment) {
+		if item.Enchant.EffectID == id {
+			n++
+		}
+	}
+	return n
+}
+
+// EnchantSwapRangedHit is NewEnchantSwapEffect's setup for an AddBonusRangedHitRating.
+func EnchantSwapRangedHit(rating float64) func(*Character) EnchantSwapEffect {
+	return func(character *Character) EnchantSwapEffect {
+		return func(_ *Simulation, sign float64) {
+			for _, spell := range character.Spellbook {
+				if spell.ProcMask.Matches(ProcMaskRanged) {
+					spell.BonusHitRating += sign * rating
+				}
+			}
+		}
+	}
+}
+
+// EnchantSwapRangedCrit is NewEnchantSwapEffect's setup for an AddBonusRangedCritRating.
+func EnchantSwapRangedCrit(rating float64) func(*Character) EnchantSwapEffect {
+	return func(character *Character) EnchantSwapEffect {
+		return func(_ *Simulation, sign float64) {
+			for _, spell := range character.Spellbook {
+				if spell.ProcMask.Matches(ProcMaskRanged) {
+					spell.BonusCritRating += sign * rating
+				}
+			}
+		}
+	}
+}
+
+// NewEnchantSwapMultiplyStat is an EnchantSwapEffect for a static MultiplyStat, on up to two weapons.
+func (character *Character) NewEnchantSwapMultiplyStat(stat stats.Stat, amount float64) EnchantSwapEffect {
+	var up, down [2]*stats.StatDependency
+	for i := range up {
+		up[i] = character.NewDynamicMultiplyStat(stat, amount)
+		down[i] = character.NewDynamicMultiplyStat(stat, 1/amount)
+	}
+	// how many more of the enchant are worn than the build counted
+	level := 0
+	character.RegisterResetEffect(func(*Simulation) {
+		level = 0
+	})
+	return func(sim *Simulation, sign float64) {
+		switch {
+		case sign > 0 && level < 0:
+			character.DisableDynamicStatDep(sim, down[-level-1])
+		case sign > 0:
+			character.EnableDynamicStatDep(sim, up[level])
+		case level > 0:
+			character.DisableDynamicStatDep(sim, up[level-1])
+		default:
+			character.EnableDynamicStatDep(sim, down[-level])
+		}
+		level += int(sign)
+	}
 }
 
 func (character *Character) RegisterOnItemSwap(callback OnSwapItem) {
@@ -93,12 +214,12 @@ func (character *Character) RegisterOnItemSwap(callback OnSwapItem) {
 }
 
 // Enchants whose effect goes on and off with the swap, through the two helpers below or their own
-// RegisterOnItemSwap (3273, 3370). Any other enchant's effect is static (stats, threat, weapon damage), so the
-// weapon in the bag leaves it unapplied, or it would stay on beside the worn one's. Add an enchant here when it
-// registers a swap callback.
+// RegisterOnItemSwap (3273, 3370). Any other enchant's effect is static, so the weapon in the bag leaves it
+// unapplied, or it would stay on beside the worn one's: a swap moves it through NewEnchantSwapEffect, or the
+// weapon damage ones through swapWeapon. Add an enchant here when it registers a swap callback.
 var swapFollowingEnchants = map[int32]bool{
-	1900: true, 2673: true, 3225: true, 3239: true, 3241: true, 3251: true, 3273: true, 3368: true, 3370: true,
-	3748: true, 3784: true, 3789: true, 3790: true,
+	1900: true, 2673: true, 3225: true, 3239: true, 3241: true, 3251: true, 3273: true, 3368: true, 3369: true,
+	3370: true, 3748: true, 3784: true, 3789: true, 3790: true,
 }
 
 func checkSwapFollowingEnchant(effectID int32) {
@@ -290,11 +411,13 @@ func (swap *ItemSwap) swapWeapon(slot proto.ItemSlot) {
 	case proto.ItemSlot_ItemSlotMainHand:
 		if character.AutoAttacks.AutoSwingMelee {
 			character.AutoAttacks.SetMH(character.WeaponFromMainHand(swap.mhCritMultiplier))
+			swap.applyWeaponEnchant(slot)
 		}
 	case proto.ItemSlot_ItemSlotOffHand:
 		if character.AutoAttacks.AutoSwingMelee {
 			weapon := character.WeaponFromOffHand(swap.ohCritMultiplier)
 			character.AutoAttacks.SetOH(weapon)
+			swap.applyWeaponEnchant(slot)
 
 			character.AutoAttacks.IsDualWielding = weapon.SwingSpeed != 0
 			character.PseudoStats.CanBlock = character.OffHand().WeaponType == proto.WeaponType_WeaponTypeShield
@@ -302,16 +425,46 @@ func (swap *ItemSwap) swapWeapon(slot proto.ItemSlot) {
 	case proto.ItemSlot_ItemSlotRanged:
 		if character.AutoAttacks.AutoSwingRanged {
 			character.AutoAttacks.SetRanged(character.WeaponFromRanged(swap.rangedCritMultiplier))
+			swap.applyWeaponEnchant(slot)
 		}
 	}
 }
 
+// applyWeaponEnchant puts the new weapon's damage enchant (AddWeaponEffect) on it: the build added it to the
+// weapon it was worn on, which a swap replaces.
+func (swap *ItemSwap) applyWeaponEnchant(slot proto.ItemSlot) {
+	character := swap.character
+	if effect, ok := weaponEffects[character.Equipment[slot].Enchant.EffectID]; ok {
+		effect(character.Env.Raid.GetPlayerFromUnit(&character.Unit), slot)
+	}
+}
+
+// reset puts the main set back. Mid-fight (the APL's swap to the main set) that's a swap like any other; right
+// after Unit.reset it skips SwapItems' stat change and GCD, since the stats are already the main set's.
 func (swap *ItemSwap) reset(sim *Simulation) {
-	if !swap.IsEnabled() || !swap.IsSwapped() {
+	if !swap.IsEnabled() {
+		return
+	}
+	unitReset := swap.unitReset
+	swap.unitReset = false
+	if !swap.IsSwapped() {
+		return
+	}
+	if !unitReset {
+		swap.SwapItems(sim, swap.slots)
 		return
 	}
 
-	swap.SwapItems(sim, swap.slots)
+	has2H := swap.GetItem(proto.ItemSlot_ItemSlotMainHand).HandType == proto.HandType_HandTypeTwoHand
+	for _, slot := range swap.slots {
+		if slot != proto.ItemSlot_ItemSlotOffHand || !has2H {
+			swap.swapItem(slot, has2H)
+		}
+	}
+	swap.swapped = false
+	for _, onSwap := range swap.onSwapCallbacks {
+		onSwap(sim)
+	}
 }
 
 func toItem(itemSpec *proto.ItemSpec, reforging *Reforging) Item {

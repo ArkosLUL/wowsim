@@ -506,6 +506,7 @@ func (spell *Spell) dealDamageInternal(sim *Simulation, isPeriodic bool, result 
 			spell.Unit.OnSpellHitDealt(sim, spell, result)
 			result.Target.OnSpellHitTaken(sim, spell, result)
 		}
+		spell.landResult(sim, isPeriodic, result)
 	}
 
 	spell.DisposeResult(result)
@@ -601,6 +602,7 @@ func (spell *Spell) dealHealingInternal(sim *Simulation, isPeriodic bool, result
 		spell.Unit.OnHealDealt(sim, spell, result)
 		result.Target.OnHealTaken(sim, spell, result)
 	}
+	spell.landResult(sim, isPeriodic, result)
 
 	spell.DisposeResult(result)
 }

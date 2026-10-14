@@ -32,8 +32,8 @@ Commands covered: `melee`, `taken`, `yellow`, `spell`, `armor`, `info`, `procs`;
   whatever's equipped (`Unit::MeleeSpellHitResult`). `rangedWeaponSpell` reads `SpellInfo::IsRangedWeaponSpell`
   off serverdata, minus the equipped item mask serverdata lacks; `TestRangedWeaponSpellMatchesTheSpelldump`
   checks it against the spelldump. An id missing from serverdata counts as a ranged weapon spell.
-- Crit suppression is expected only from crit-capable spells (`critcap.go`: a damage or heal effect in
-  `sim/core/serverdata`, no `CANT_CRIT`); a spell that can't crit has none. An id missing from serverdata
+- Crit suppression is expected only from crit-capable spells (`critcap.go`: the spelldump's `critCapable`,
+  false for a `CANT_CRIT` spell too); a spell that can't crit has none. An id missing from the spelldump
   is assumed capable and gets a row in the fixture README.
 - Partial block is expected for every weapon class spell without `NO_ACTIVE_DEFENSE` or
   `ALWAYS_HIT`, from the front, whatever its school; only physical spells roll it.

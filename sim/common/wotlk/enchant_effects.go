@@ -120,10 +120,18 @@ func init() {
 			character.AddStats(stats.Stats{stats.MeleeHaste: 40, stats.SpellHaste: 40})
 		}
 	})
+	core.NewEnchantSwapEffect(3607, func(character *core.Character) core.EnchantSwapEffect {
+		return func(sim *core.Simulation, sign float64) {
+			if character.Class == proto.Class_ClassHunter {
+				character.AddStatsDynamic(sim, stats.Stats{stats.MeleeHaste: sign * 40, stats.SpellHaste: sign * 40})
+			}
+		}
+	})
 
 	core.NewEnchantEffect(3608, func(agent core.Agent) {
 		agent.GetCharacter().AddBonusRangedCritRating(40)
 	})
+	core.NewEnchantSwapEffect(3608, core.EnchantSwapRangedCrit(40))
 
 	core.NewEnchantEffect(3748, func(agent core.Agent) {
 		character := agent.GetCharacter()
@@ -165,6 +173,14 @@ func init() {
 		character := agent.GetCharacter()
 		if character.CurrentTarget.MobType == proto.MobType_MobTypeUndead {
 			character.PseudoStats.MobTypeAttackPower += 140
+		}
+	})
+	core.NewEnchantSwapEffect(3247, func(character *core.Character) core.EnchantSwapEffect {
+		undead := character.CurrentTarget.MobType == proto.MobType_MobTypeUndead
+		return func(_ *core.Simulation, sign float64) {
+			if undead {
+				character.PseudoStats.MobTypeAttackPower += sign * 140
+			}
 		}
 	})
 

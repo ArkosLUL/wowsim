@@ -48,6 +48,8 @@ func (priest *Priest) registerPrayerOfMendingSpell() {
 
 		if newTarget != nil {
 			pomAuras[newTarget.UnitIndex].Activate(sim)
+			// the jump is 41635, magic class like the first cast's 48111, though 48113 has none
+			priest.PrayerOfMending.LandOn(sim, newTarget)
 			curTarget = newTarget
 			remainingJumps--
 		}
@@ -94,6 +96,7 @@ func (priest *Priest) registerPrayerOfMendingSpell() {
 			}
 
 			pomAuras[target.UnitIndex].Activate(sim)
+			spell.LandOn(sim, target)
 			curTarget = target
 			remainingJumps = maxJumps
 		},
