@@ -439,6 +439,10 @@ const petsCastsHitEdgeMs = petsCastsUpdateMs
 // that goes: it hits unless it's still in the air when the corpse is unsummoned. The flight is the sim's,
 // from where the recorded image stood. A landing that missed or was resisted has no hit either way.
 func checkPetsCastsHits(name string, img petsCastsImage, run petsCastsImageRun) Check {
+	if img.Yards <= 0 {
+		// the flight would be the 5 yd floor's whatever the image's distance was
+		return fail(name, fmt.Sprintf("the image's distance wasn't read (yards %v), the mage's was %.1f", img.Yards, img.MageYards))
+	}
 	flight := run.flightMs(img.Yards)
 	used := make([]bool, len(img.FrostboltHit))
 	hits, lost, edge := 0, 0, 0

@@ -780,7 +780,8 @@ func init() {
 
 			spell := character.RegisterSpell(itemHealSpell(character, spellID, minHeal, maxHeal))
 
-			eligibleUnits := character.Env.Raid.AllUnits
+			raidUnits := character.Env.Raid.AllUnits
+			eligibleUnits := make([]*core.Unit, 0, len(raidUnits))
 
 			core.MakeProcTriggerAura(&character.Unit, core.ProcTrigger{
 				Name:       "Althor's Abacus Trigger",
@@ -789,6 +790,13 @@ func init() {
 				ICD:        time.Second * 45,
 				ActionID:   core.ActionID{ItemID: itemID},
 				Handler: func(sim *core.Simulation, _ *core.Spell, _ *core.SpellResult) {
+					// a pet that's away isn't in the world for 71610's area search
+					eligibleUnits = eligibleUnits[:0]
+					for _, unit := range raidUnits {
+						if unit.IsEnabled() {
+							eligibleUnits = append(eligibleUnits, unit)
+						}
+					}
 					randIndex := int(math.Floor(sim.RandomFloat("Althor's Abacus") * float64(len(eligibleUnits))))
 					healTarget := eligibleUnits[randIndex]
 					spell.Cast(sim, healTarget)

@@ -1,6 +1,7 @@
 package mage
 
 import (
+	"math"
 	"testing"
 	"time"
 
@@ -90,10 +91,12 @@ func TestMirrorImageTakesNoRaidCast(t *testing.T) {
 // nothing to open on (the target's threat list takes them in InitializeAI), so they start with a Frostbolt
 // an update after the 1.2 s.
 func TestMirrorImageCastsOffItsEventTimers(t *testing.T) {
+	// within Fire Blast's and the chase's range, where the images stand still
+	player := procMage("", "p5_bis_arcane", `{"type": "TypeAPL", "priorityList": []}`, PlayerOptionsArcane)
+	player.DistanceFromTarget = 10
 	// the windows and counts below are for updates of 102.7 ms, every one the same
 	sim := core.NewSim(&proto.RaidSimRequest{
-		Raid: core.SinglePlayerRaidProto(procMage("", "p5_bis_arcane", `{"type": "TypeAPL", "priorityList": []}`,
-			PlayerOptionsArcane), nil, nil, nil),
+		Raid:       core.SinglePlayerRaidProto(player, nil, nil, nil),
 		Encounter:  core.OnRegularGrid(core.MakeSingleTargetEncounter(0), 10.27),
 		SimOptions: &proto.SimOptions{Iterations: 1, IsTest: true, RandomSeed: 101},
 	})
@@ -213,10 +216,11 @@ func TestMageGuardiansCastFasterUnderWrathOfAir(t *testing.T) {
 	}
 }
 
-// An image casts from beside its mage, so its Frostbolt flies his distance, and its corpse is unsummoned when
-// the summon's 30 s are up, half a second after it dies. That takes a Frostbolt still in the air with it.
-// From 30 yd the flight is 1187 ms (the 1.5 yd reach comes off), which loses the Frostbolts that go off in
-// the last 1.19 s; from point blank it's the 5 yd floor, 208 ms, and every one that goes off hits.
+// The corpse is unsummoned when the summon's 30 s are up, half a second after the image dies, and takes a
+// Frostbolt still in the air with it: each one that goes off hits unless its flight ends past that. From point
+// blank every flight is the 5 yd floor, 208 ms. From 30 yd the first one is under the 1187 ms from the mage's
+// spot (the 1.5 yd reach comes off), as the image closes in between casts, and by its last Frostbolt it's near
+// enough for that one to land too.
 func TestMirrorImageFrostboltInTheAirAtTheUnsummonIsLost(t *testing.T) {
 	for _, tc := range []struct {
 		yards    float64
@@ -224,21 +228,19 @@ func TestMirrorImageFrostboltInTheAirAtTheUnsummonIsLost(t *testing.T) {
 		wantLost bool
 	}{
 		{0, 208 * time.Millisecond, false},
-		{30, 1187 * time.Millisecond, true},
+		{30, 1187 * time.Millisecond, false},
 	} {
 		player := procMage("", "p5_bis_arcane", `{"type": "TypeAPL", "priorityList": []}`, PlayerOptionsArcane)
 		player.DistanceFromTarget = tc.yards
 		sim, mage := newProcSim(t, player)
 		image := mage.mirrorImage
 		target := sim.GetTargetUnit(0)
-		if got := image.Frostbolt.TravelTime(); got != tc.travel {
-			t.Fatalf("%v yd: an image's Frostbolt flies %v, want %v", tc.yards, got, tc.travel)
-		}
 
-		var wentOff []time.Duration
+		var wentOff, flights []time.Duration
 		effects := image.Frostbolt.ApplyEffects
 		image.Frostbolt.ApplyEffects = func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			wentOff = append(wentOff, sim.CurrentTime)
+			flights = append(flights, spell.TravelTime())
 			effects(sim, target, spell)
 		}
 
@@ -251,15 +253,19 @@ func TestMirrorImageFrostboltInTheAirAtTheUnsummonIsLost(t *testing.T) {
 			sim.PrePull()
 			for sim.CurrentTime < 2*time.Second && !sim.Step() {
 			}
-			wentOff = wentOff[:0]
+			wentOff, flights = wentOff[:0], flights[:0]
 			unsummon := sim.NextServerTick(image.AIClockStart(sim) + 30*time.Second)
 			image.summon(sim)
 			for sim.CurrentTime < unsummon+2*time.Second && !sim.Step() {
 			}
+			if len(flights) == 0 || flights[0] > tc.travel || (tc.yards == 0) != (flights[0] == tc.travel) {
+				t.Fatalf("%v yd, life %d: the Frostbolts flew %v, want the first one %v, less once it's moved", tc.yards, life,
+					flights, tc.travel)
+			}
 
 			want := 0
-			for _, at := range wentOff {
-				if at+tc.travel <= unsummon {
+			for i, at := range wentOff {
+				if at+flights[i] <= unsummon {
 					want++
 				}
 			}
@@ -320,5 +326,94 @@ func TestMirrorImageCastDueOnItsDeathUpdateGoesOff(t *testing.T) {
 	}
 	if image.IsEnabled() {
 		t.Error("the image is still out past its death")
+	}
+}
+
+// npc_pet_mage_mirror_image chases its victim when it stands past 15 yd, three quarters of Fire Blast's 20
+// (CasterAI), plus both reaches, but only on the updates it starts with no cast going: one update's run at 8 yd
+// a second for each Frostbolt, two when a Fire Blast came between. From past ChaseRange's extra half yard the
+// run stops on the chase's range (ShortenPathUntilDist), so the image parks there; from nearer it heads for
+// GetNearPoint's spot 15 yd plus the target's reach out, inside it. Out past Fire Blast's 20 yd plus both
+// reaches, Spell::CheckRange fails the Fire Blast as it starts, and the event's put back all the same. Inside
+// the chase's range the image stands where it came up, beside its mage.
+func TestMirrorImageClosesInBetweenCasts(t *testing.T) {
+	const update = 0.1027 * mirrorImageRunSpeed
+	for _, tc := range []struct {
+		yards  float64
+		blasts int32
+		// where its last Frostbolt went off from, when the test pins it
+		parks float64
+	}{
+		{30, 1, 0},
+		{23, 3, mirrorImageChaseRange},
+		{19.7, 3, mirrorImageChaseRange},
+		{19.3, 3, 19.3 - update},
+		{16, 3, 16},
+	} {
+		player := procMage("", "p5_bis_arcane", `{"type": "TypeAPL", "priorityList": []}`, PlayerOptionsArcane)
+		player.DistanceFromTarget = tc.yards
+		sim := core.NewSim(&proto.RaidSimRequest{
+			Raid:       core.SinglePlayerRaidProto(player, nil, nil, nil),
+			Encounter:  core.OnRegularGrid(core.MakeSingleTargetEncounter(0), 10.27),
+			SimOptions: &proto.SimOptions{Iterations: 1, IsTest: true, RandomSeed: 101},
+		})
+		sim.Reset()
+		image := sim.Raid.Parties[0].Players[0].(*Mage).mirrorImage
+		target := sim.GetTargetUnit(0)
+
+		var boltYards, blastYards []float64
+		for _, spell := range []*core.Spell{image.Frostbolt, image.Fireblast} {
+			effects, yards := spell.ApplyEffects, &boltYards
+			if spell == image.Fireblast {
+				yards = &blastYards
+			}
+			spell.ApplyEffects = func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+				*yards = append(*yards, image.DistanceFromTarget)
+				effects(sim, target, spell)
+			}
+		}
+		sim.PrePull()
+		for sim.CurrentTime < 2*time.Second && !sim.Step() {
+		}
+		image.summon(sim)
+		for image.IsEnabled() && !sim.Step() {
+		}
+
+		t.Logf("%v yd: Frostbolts went off from %.2f yd, Fire Blasts from %.2f", tc.yards, boltYards, blastYards)
+		for i, yards := range boltYards {
+			before := tc.yards
+			if i > 0 {
+				before = boltYards[i-1]
+			}
+			moved, stop := before-yards, mirrorImageChaseStop
+			if before >= mirrorImageChaseFar {
+				stop = mirrorImageChaseRange
+			}
+			switch {
+			case before <= mirrorImageChaseRange:
+				if moved != 0 {
+					t.Errorf("%v yd: Frostbolt %d went off %.2f yd out, the one before %.2f: it stands inside the chase's range",
+						tc.yards, i+1, yards, before)
+				}
+			case yards < stop:
+				t.Errorf("%v yd: Frostbolt %d went off %.2f yd out, the one before %.2f: past the run's end at %v", tc.yards,
+					i+1, yards, before, stop)
+			case yards > stop && (moved < update-1e-6 || moved > 2*update+1e-6):
+				t.Errorf("%v yd: Frostbolt %d went off %.2f yd out, the one before %.2f: want one or two updates' run closer",
+					tc.yards, i+1, yards, before)
+			}
+		}
+		if n := len(boltYards); tc.parks != 0 && (n == 0 || math.Abs(boltYards[n-1]-tc.parks) > 1e-6) {
+			t.Errorf("%v yd: Frostbolts went off from %.2f yd, want the last from %.2f", tc.yards, boltYards, tc.parks)
+		}
+		for i, yards := range blastYards {
+			if yards >= mirrorImageFireBlastRange {
+				t.Errorf("%v yd: Fire Blast %d went off from %.2f yd, out of its range", tc.yards, i+1, yards)
+			}
+		}
+		if got := image.Fireblast.SpellMetrics[target.UnitIndex].Casts; got != tc.blasts {
+			t.Errorf("%v yd: %d Fire Blasts, want %d (they went off from %v yd)", tc.yards, got, tc.blasts, blastYards)
+		}
+		sim.Cleanup()
 	}
 }

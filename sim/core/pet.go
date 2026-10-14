@@ -85,6 +85,10 @@ type Pet struct {
 	// A guardian without a pet bar. The party and raid casts skip it (Spell.cpp's TARGET_CHECK_PARTY
 	// and TARGET_CHECK_RAID), so it only gets the area auras.
 	Uncontrollable bool
+	// Its hits take the owner's attack power, crit and damage mods, never its own (the Dancing Rune
+	// Weapon: Unit::MeleeDamageBonusDone, SpellDamageBonusDone, Spell.cpp's crit), so it gets no buffs.
+	// The stats it inherits already carry the owner's.
+	OwnerBuffsOnly bool
 	// Its power is mana but the pool is empty (Spirit Wolves). A raid cast that picks whoever is lowest
 	// on mana still counts it, at nothing.
 	EmptyManaPool bool

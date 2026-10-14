@@ -53,11 +53,24 @@ func (dk *Deathknight) registerDancingRuneWeaponCD() {
 		// mirrors the same as a normal one; dk.DeathCoil's OnCastComplete fires on both a miss
 		// and a hit, so the mirror hooks the inner damage spell's outcome instead.
 		OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
-			if spell == dk.DeathCoilDamage && result.Landed() && dk.RuneWeapon.IsEnabled() {
+			if !result.Landed() || !dk.RuneWeapon.IsEnabled() {
+				return
+			}
+			if spell == dk.DeathCoilDamage {
 				dk.RuneWeapon.DeathCoil.Cast(sim, result.Target)
+			}
+			// a white swing, extra attacks too, but not Rune Strike: that one has a spell to copy
+			if spell.ProcMask.Matches(core.ProcMaskMeleeWhiteHit) && !spell.ProcMask.Matches(core.ProcMaskMeleeSpecial) {
+				hand := core.TernaryInt(spell.ProcMask.Matches(core.ProcMaskMeleeOHAuto), 1, 0)
+				dk.RuneWeapon.swingCopies[hand].Cast(sim, result.Target)
 			}
 		},
 	})
+
+	dk.RuneWeapon.ownerSwings = [2]*core.Spell{
+		dk.registerDrwOwnerSwing(dk.AutoAttacks.MHConfig(), 3),
+		dk.registerDrwOwnerSwing(dk.AutoAttacks.OHConfig(), 4),
+	}
 
 	dk.DancingRuneWeapon = dk.RegisterSpell(core.SpellConfig{
 		ActionID: core.ActionID{SpellID: 49028},
@@ -112,9 +125,81 @@ type RuneWeaponPet struct {
 	// Diseases
 	FrostFeverSpell  *core.Spell
 	BloodPlagueSpell *core.Spell
+
+	// by hand: the DK's own white swing, rolled again but never dealt, and the weapon's half of it
+	ownerSwings [2]*core.Spell
+	swingCopies [2]*core.Spell
+}
+
+// registerDrwOwnerSwing is the white swing spell_dk_dancing_rune_weapon rolls again on the DK for each one
+// of his that lands (CalculateMeleeDamage): his table, weapon, attack power and mods for that hand. Its own
+// result is never dealt, so it fires nothing.
+func (dk *Deathknight) registerDrwOwnerSwing(swing *core.SpellConfig, tag int32) *core.Spell {
+	config := *swing
+	config.ActionID = core.ActionID{OtherID: proto.OtherAction_OtherActionAttack, Tag: tag}
+	config.Flags |= core.SpellFlagNoMetrics | core.SpellFlagNoLogs | core.SpellFlagNoOnCastComplete | core.SpellFlagNoOnDamageDealt
+	config.ApplyEffects = nil
+	return dk.RegisterSpell(config)
+}
+
+// registerSwingCopy is the weapon's copy of a landed white swing of the DK's: a fresh roll of his own,
+// halved, dealt by the weapon with no procs (DealMeleeDamage alone).
+func (runeWeapon *RuneWeaponPet) registerSwingCopy(hand int) *core.Spell {
+	ownerSwing := runeWeapon.ownerSwings[hand]
+	return runeWeapon.RegisterSpell(core.SpellConfig{
+		ActionID:    core.ActionID{OtherID: proto.OtherAction_OtherActionAttack, Tag: int32(hand + 1)},
+		SpellSchool: ownerSwing.SpellSchool,
+		ProcMask:    core.ProcMaskEmpty,
+		Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagNoOnCastComplete | core.SpellFlagNoOnDamageDealt,
+
+		DamageMultiplier: 1,
+		ThreatMultiplier: 1,
+
+		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+			var base float64
+			if hand == 0 {
+				base = ownerSwing.MHStrikeDamage(sim, ownerSwing.MeleeAttackPower())
+			} else {
+				base = ownerSwing.OHStrikeDamage(sim, ownerSwing.MeleeAttackPower())
+			}
+			roll := ownerSwing.CalcDamage(sim, target, base, ownerSwing.OutcomeMeleeWhite)
+			result := spell.NewResult(target)
+			result.Outcome = roll.Outcome
+			// HandleProc halves a uint32
+			result.Damage = math.Floor(roll.Damage / 2)
+			result.Threat = spell.ThreatFromDamage(result.Outcome, result.Damage)
+			ownerSwing.DisposeResult(roll)
+			countSwingOutcome(&spell.SpellMetrics[target.UnitIndex], result.Outcome)
+			spell.DealDamage(sim, result)
+		},
+	})
+}
+
+// countSwingOutcome books an outcome the way the white table books it on the swing that rolls it.
+func countSwingOutcome(metrics *core.SpellMetrics, outcome core.HitOutcome) {
+	switch {
+	case outcome.Matches(core.OutcomeMiss):
+		metrics.Misses++
+	case outcome.Matches(core.OutcomeDodge):
+		metrics.Dodges++
+	case outcome.Matches(core.OutcomeParry):
+		metrics.Parries++
+	case outcome.Matches(core.OutcomeBlock):
+		metrics.Blocks++
+	case outcome.Matches(core.OutcomeGlance):
+		metrics.Glances++
+	case outcome.Matches(core.OutcomeCrush):
+		metrics.Crushes++
+	case outcome.Matches(core.OutcomeCrit):
+		metrics.Crits++
+	default:
+		metrics.Hits++
+	}
 }
 
 func (runeWeapon *RuneWeaponPet) Initialize() {
+	runeWeapon.swingCopies = [2]*core.Spell{runeWeapon.registerSwingCopy(0), runeWeapon.registerSwingCopy(1)}
+
 	runeWeapon.dkOwner.registerDrwDiseaseDots()
 	runeWeapon.dkOwner.registerDrwPestilenceSpell()
 	runeWeapon.dkOwner.registerDrwBloodBoilSpell()
@@ -165,7 +250,6 @@ func (dk *Deathknight) NewRuneWeapon() *RuneWeaponPet {
 		}, func(ownerStats stats.Stats) stats.Stats {
 			return stats.Stats{
 				stats.AttackPower: ownerStats[stats.AttackPower],
-				stats.MeleeHaste:  ownerStats[stats.MeleeHaste],
 
 				stats.MeleeCrit: ownerStats[stats.MeleeCrit],
 				stats.SpellCrit: ownerStats[stats.SpellCrit],
@@ -174,9 +258,9 @@ func (dk *Deathknight) NewRuneWeapon() *RuneWeaponPet {
 		dkOwner: dk,
 	}
 
-	// Not Uncontrollable, though SummonProperties 208 gives it no pet bar and Bloodlust never lands on it.
-	// Its white hits are copies of the DK's own swings (spell_dk_dancing_rune_weapon), which come as fast
-	// as he swings, and the sim's Bloodlust on the weapon stands in for that.
+	// SummonProperties 208 is a guardian's with no pet bar
+	runeWeapon.Uncontrollable = true
+	runeWeapon.OwnerBuffsOnly = true
 	runeWeapon.OnPetEnable = runeWeapon.enable
 	runeWeapon.OnPetDisable = runeWeapon.disable
 
@@ -189,21 +273,17 @@ func (dk *Deathknight) NewRuneWeapon() *RuneWeaponPet {
 	mhWeapon.SwingSpeed = 3.5
 	mhWeapon.NormalizedSwingSpeed = 3.3
 
+	// npc_pet_dk_dancing_rune_weapon is a NullCreatureAI and never swings: its white hits are swingCopies.
+	// The weapon is only for its strikes.
 	runeWeapon.EnableAutoAttacks(runeWeapon, core.AutoAttackOptions{
-		MainHand:       mhWeapon,
-		AutoSwingMelee: true,
+		MainHand: mhWeapon,
 	})
-	runeWeapon.AutoAttacks.MHConfig().ApplyEffects = func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-		baseDamage := dk.DrwWeaponDamage(sim, spell) + dk.drwVersusAttackPowerBonus(spell, false)
-		spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeWhite)
-	}
 
 	runeWeapon.PseudoStats.DamageTakenMultiplier = 0
 	// the orc's Command (65221) only goes to risen ghouls and the gargoyle
 	if dk.RacialTraits == proto.Race_RaceOrc {
 		runeWeapon.PseudoStats.DamageDealtMultiplier /= 1.05
 	}
-	runeWeapon.PseudoStats.MeleeHasteRatingPerHastePercent = dk.PseudoStats.MeleeHasteRatingPerHastePercent
 
 	dk.AddPet(runeWeapon)
 
@@ -228,11 +308,7 @@ func (runeWeapon *RuneWeaponPet) Reset(_ *core.Simulation) {
 func (runeWeapon *RuneWeaponPet) ExecuteCustomRotation(_ *core.Simulation) {
 }
 
-func (runeWeapon *RuneWeaponPet) enable(sim *core.Simulation) {
-	// Snapshot extra % speed modifiers from dk owner
-	runeWeapon.PseudoStats.MeleeSpeedMultiplier = 1
-	runeWeapon.MultiplyMeleeSpeed(sim, runeWeapon.dkOwner.PseudoStats.MeleeSpeedMultiplier)
-
+func (runeWeapon *RuneWeaponPet) enable(_ *core.Simulation) {
 	// Unit::SpellDamageBonusDone and MeleeDamageBonusDone give entry 27893 the owner's own
 	// bonus (AP/SP, percent mods included) and halve it; this instead halves everything the
 	// rune weapon deals, base roll included, which overstates the cut on abilities whose base
@@ -242,14 +318,9 @@ func (runeWeapon *RuneWeaponPet) enable(sim *core.Simulation) {
 
 	runeWeapon.dkOwner.drwPhysSnapshot = runeWeapon.dkOwner.PseudoStats.SchoolDamageDealtMultiplier[stats.SchoolIndexPhysical]
 	runeWeapon.PseudoStats.SchoolDamageDealtMultiplier[stats.SchoolIndexPhysical] *= runeWeapon.dkOwner.drwPhysSnapshot
-
 }
 
-func (runeWeapon *RuneWeaponPet) disable(sim *core.Simulation) {
-	// Clear snapshot speed
-	runeWeapon.PseudoStats.MeleeSpeedMultiplier = 1
-	runeWeapon.MultiplyMeleeSpeed(sim, 1)
-
+func (runeWeapon *RuneWeaponPet) disable(_ *core.Simulation) {
 	// Clear snapshot damage multipliers
 	runeWeapon.dkOwner.RuneWeapon.PseudoStats.DamageDealtMultiplier /= runeWeapon.dkOwner.drwDmgSnapshot
 	runeWeapon.PseudoStats.SchoolDamageDealtMultiplier[stats.SchoolIndexPhysical] /= runeWeapon.dkOwner.drwPhysSnapshot
