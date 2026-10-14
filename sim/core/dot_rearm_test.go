@@ -71,3 +71,40 @@ func TestReArmingADotsTicksAllocatesNothing(t *testing.T) {
 		t.Errorf("a refresh made %v allocations, want none", allocs)
 	}
 }
+
+// A refresh that comes while the clock is advancing to the dot's own queued tick can't take that action
+// back: it makes another, and the old one does nothing when it gets there.
+func TestAReArmDuringTheAdvanceToItsTick(t *testing.T) {
+	var spell *Spell
+	var ticks *[]time.Duration
+	var helper *Aura
+	sim, a := newTickTestSim(t, 0, 0, func(a *timingTestAgent) {
+		spell, ticks = dotSpell(a, SpellFlagNone, DotConfig{
+			Aura:          Aura{Label: "dot"},
+			NumberOfTicks: 3,
+			TickLength:    time.Second,
+			TicksCanCrit:  false,
+		})
+	})
+	sim.PrePull()
+	dot := spell.Dot(sim.Encounter.TargetUnits[0])
+	// the aura runs out at 1.9 s, between the dot's first tick (1 s) and its second (2 s), and refreshes the dot
+	// as the clock moves to the 2 s tick
+	helper = a.RegisterAura(Aura{
+		Label:    "refresher",
+		Duration: ms(1900),
+		OnExpire: func(_ *Aura, sim *Simulation) {
+			dot.ApplyOrReset(sim)
+		},
+	})
+	at(sim, 0, func(sim *Simulation) {
+		dot.Apply(sim)
+		helper.Activate(sim)
+	})
+	runUntil(sim, 10*time.Second)
+
+	want := []time.Duration{ms(1000), ms(2900), ms(3900), ms(4900)}
+	if !slices.Equal(*ticks, want) {
+		t.Errorf("ticks at %v, want %v", *ticks, want)
+	}
+}

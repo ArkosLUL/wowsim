@@ -393,14 +393,11 @@ func (unit *Unit) spellModOwner() *Unit {
 	return unit
 }
 
-// isGuardian is a creature that isn't a server pet (UNIT_MASK_PET). Unit::GetCastingTimeForBonus gives such a
-// target 3500 ms for an instant spell, so an instant heal's default coefficient on it is a whole 1, not 1.5 of 3.5.
+// isGuardian is a pet unit the server doesn't summon as a pet (no UNIT_MASK_PET; the glyphed Water Elemental has
+// it). Unit::GetCastingTimeForBonus gives such a target 3500 ms for an instant spell, so an instant heal's default
+// coefficient on it is a whole 1, not 1.5 of 3.5.
 func (unit *Unit) isGuardian() bool {
-	if unit.Type != PetUnit || unit.Env == nil {
-		return false
-	}
-	pet, ok := unit.Env.Raid.GetPlayerFromUnit(unit).(PetAgent)
-	return ok && pet.GetPet().IsGuardian()
+	return unit.Type == PetUnit && !unit.SummonedAsPet
 }
 
 // TickHealingTaken is what the target takes of amount, a whole done heal of the hot's: its flat term and
@@ -740,7 +737,12 @@ func (spell *Spell) CasterHealingMultiplier() float64 {
 	return spell.DamageMultiplier * spell.DamageMultiplierAdditive
 }
 func (spell *Spell) applyTargetHealingModifiers(damage float64, target *Unit, takenCoefficient float64, attackTable *AttackTable) float64 {
-	return spell.healingTaken(damage, target, takenCoefficient, attackTable, attackTable.Defender.PseudoStats.HealingTakenMultiplier)
+	taken := attackTable.Defender.PseudoStats.HealingTakenMultiplier
+	if spell.Flags.Matches(SpellFlagIgnoreAttackerModifiers) {
+		// Strength of Wrynn's stand-in is a healing done percent, which such a heal never takes
+		taken = attackTable.Defender.HealingTakenPctMultiplier()
+	}
+	return spell.healingTaken(damage, target, takenCoefficient, attackTable, taken)
 }
 
 // healingTaken is applyTargetHealingModifiers with the target's percents given: HealingTakenMultiplier, or

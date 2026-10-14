@@ -240,6 +240,15 @@ func (dk *Deathknight) drwVersusAttackPowerBonus(spell *core.Spell, normalized b
 	return bonus * 0.5 / (ps.DamageDealtMultiplier * ps.SchoolDamageDealtMultiplier[stats.SchoolIndexPhysical])
 }
 
+func runeWeaponStatInheritance(ownerStats stats.Stats) stats.Stats {
+	return stats.Stats{
+		stats.AttackPower: ownerStats[stats.AttackPower],
+
+		stats.MeleeCrit: ownerStats[stats.MeleeCrit],
+		stats.SpellCrit: ownerStats[stats.SpellCrit],
+	}
+}
+
 func (dk *Deathknight) NewRuneWeapon() *RuneWeaponPet {
 	// Its hit and expertise come from the 61017 npc_pet_dk_dancing_rune_weapon gives it. Its
 	// crit chance is the owner's own (Spell.cpp:8466-8478, "totem's inherit owner crit chance
@@ -247,14 +256,7 @@ func (dk *Deathknight) NewRuneWeapon() *RuneWeaponPet {
 	runeWeapon := &RuneWeaponPet{
 		Pet: core.NewPet("Rune Weapon", &dk.Character, stats.Stats{
 			stats.Stamina: 100,
-		}, func(ownerStats stats.Stats) stats.Stats {
-			return stats.Stats{
-				stats.AttackPower: ownerStats[stats.AttackPower],
-
-				stats.MeleeCrit: ownerStats[stats.MeleeCrit],
-				stats.SpellCrit: ownerStats[stats.SpellCrit],
-			}
-		}, false, true),
+		}, runeWeaponStatInheritance, false, true),
 		dkOwner: dk,
 	}
 
@@ -309,6 +311,9 @@ func (runeWeapon *RuneWeaponPet) ExecuteCustomRotation(_ *core.Simulation) {
 }
 
 func (runeWeapon *RuneWeaponPet) enable(_ *core.Simulation) {
+	// its attack power and crit are the owner's as they stand (Unit::MeleeDamageBonusDone and Spell.cpp's crit
+	// ask the owner each time), so they follow his changes while it's out
+	runeWeapon.EnableDynamicStats(runeWeaponStatInheritance)
 	// Unit::SpellDamageBonusDone and MeleeDamageBonusDone give entry 27893 the owner's own
 	// bonus (AP/SP, percent mods included) and halve it; this instead halves everything the
 	// rune weapon deals, base roll included, which overstates the cut on abilities whose base

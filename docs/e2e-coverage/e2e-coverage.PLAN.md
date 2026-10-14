@@ -4002,7 +4002,9 @@ Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\ec-pet-fix5-tmp\`.
 
 Stage code, re-measured on `434442b93` against [ac] `3d89793c7` and the live DB (SELECT); notes and the live plan in
 `tmp/ec-pet-fix6-code.md`. Verdicts:
-- Rune Weapon's white hits (fixed): no auto swing; each landed DK white swing (either hand, extra attacks too, not
+- Rune Weapon's white hits (fixed; cross-review: its attack power and crit follow the DK while it's out, through
+  `Pet.EnableDynamicStats`, as the server asks the owner each time; the damage mods are still the summon's
+  snapshot): no auto swing; each landed DK white swing (either hand, extra attacks too, not
   Rune Strike) casts `RuneWeaponPet.swingCopies[hand]`: the DK's own swing rolled again on a never-dealt DK spell
   (`registerDrwOwnerSwing`: his table, weapon, AP and mods, `OtherActionAttack` tags 3 and 4), floored half, dealt by
   the weapon with no procs. `Uncontrollable` (SummonProperties 208). New `Pet.OwnerBuffsOnly`: the weapon's hits
@@ -4297,10 +4299,13 @@ another session's job at 1300 to 1400% CPU, worldserver 140 to 147%). Built:
   Bloodlust). Module README rows.
 - Bloodlust's scale (`sim/core/spell.go`, `buffs.go`, `stats.go`): `TravelTime` takes the caster's
   `combatReach()` = 1.5 × (1 + `PseudoStats.ScaleBonus`); `BloodlustAura` adds 0.3 (Heroism shares it).
-- Guardian heal coefficient (`spell_result.go`): a heal declared `DefaultHealingTakenCoefficient(0)` on a target whose
-  pet `IsGuardian()` takes `DefaultHealingTakenCoefficient(1)`.
+- Guardian heal coefficient (`spell_result.go`): a heal declared `DefaultHealingTakenCoefficient(0)` on a pet unit
+  that isn't `SummonedAsPet` takes `DefaultHealingTakenCoefficient(1)`. Cross-review: it keyed on `IsGuardian()`,
+  which a glyphed Water Elemental has (built as a guardian, summoned by 70908's SUMMON_PET, so a server pet).
 - Ancestral Awakening (`sim/shaman/heals.go`, inline): `SpellFlagIgnoreAttackerModifiers`, no Purification, amount
-  `int32(float32(crit) × 30 / 100)`.
+  `int32(float32(crit) × 30 / 100)`. Cross-review: that flag also keeps Strength of Wrynn's stand-in off it
+  (`SpellPctHealingModsDone` returns 1 for `SPELL_ATTR3_IGNORE_CASTER_MODIFIERS`, and the buff is a healing done
+  percent), so such a heal takes `HealingTakenPctMultiplier()` alone.
 
 Verdicts:
 - Taken terms (as built, live): another player +109 a tick, 63544 75% of the taken tick + 233; the priest +125; its
@@ -4440,6 +4445,8 @@ restart). All three match the sim; no sim change, no golden.
 - Test faults fixed (`ecclass7_test.go`): `.additem 44614 200` read 44614 as a character guid (an offline character,
   so nothing was added anywhere), now named; the warrior is stripped and learns Two-Handed Axes (197) before
   Bryntroll; `/Whirlwind` also checks the Drain Life count against `1 - (1 - p)^n` a Whirlwind plus white swings.
+  Cross-review: every other `.additem <entry> <count>` (ecclass3, ecclass5, fight, strikes, the hunter's recorded run)
+  had the same fault and goes through `runner.addItem`, which names the bot.
 
 ### EC-TOOLS3 (Z11, done; golden-neutral, no C++; stages: code, live, spawn spots)
 
@@ -4505,7 +4512,9 @@ Spawn spots (2026-10-14, lock 17:54 to 18:54; notes in `tmp/ec-tools3-spawn.md`)
 caster stand on `fightGround`. The default `run.sh` passes (two P7 tank tests on their known relog and talent
 races, then on a rerun), its capture replays 1114 of 1114, and every by-name test passes but
 `TestParfu10ArcaneMana`, which stays at the entrance: it fails there too, casting before its `.aura` takes effect.
-`TestEcTools3ExecuteWindow`'s final form passes, 8 of 8 rounds.
+`TestEcTools3ExecuteWindow`'s final form passes, 8 of 8 rounds. Cross-review: `parfu10SelfAuras` now waits 700 ms
+after its `.aura`s, `TestParfu10ArcaneMana` kills the floor's critters (`fightKillCritters`) and stands on the floor,
+and passes there (166 s).
 
 ### EC-TOOLS2 (Z10, done; golden-neutral; stages: code, live)
 

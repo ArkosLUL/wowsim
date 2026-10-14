@@ -269,8 +269,8 @@ func TestTankBossFollowUpTicksOnce(t *testing.T) {
 				ticks = append(ticks, later.at)
 			}
 		}
-		// the tick waits for the tank's next world tick, and the long one takes up to 45 ms
-		if tickAt := cast.at + ability.FollowUpSeconds; len(ticks) != 1 || math.Abs(ticks[0]-tickAt) > 0.05 {
+		// the tick waits for the tank's next world tick, and the long one takes up to 59 ms
+		if tickAt := cast.at + ability.FollowUpSeconds; len(ticks) != 1 || math.Abs(ticks[0]-tickAt) > 0.07 {
 			t.Errorf("spell %d cast at %.2f ticked at %v, want once at %.2f", ability.SpellID, cast.at, ticks, tickAt)
 		}
 	}

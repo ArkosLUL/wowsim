@@ -71,10 +71,10 @@ Gotchas (GM commands' own are in [server-dev gotchas](azerothcore-server.md#serv
   wander and can take an area or random-target spell's hit: `fightBuild` kills every creature within 40
   yards first (`fightKillCritters`). After a `.die`, select the bot again: `.simval hp` refuses a dead
   selection.
-- The other tests' dummies stand at the entrance, where a spot south of the dummy has no line of sight past a
-  few yards (4 for a short race) and 18 yards north hides its centre from area scripts (Starfall). A pet there
-  has no line of sight to a target beside the dummy, and its cast is refused (`DONT_REPORT`): stand such a
-  test on the fights' floor (`fightGround`).
+- Every test's dummy stands on the fights' floor (`fightGround`, where `newBot` puts the bot). At the entrance a
+  spot south of the dummy has no line of sight past a few yards (4 for a short race), 18 yards north hides its
+  centre from area scripts (Starfall), and a pet has no line of sight to a target beside the dummy (its cast is
+  refused, `DONT_REPORT`). The floor's critters take area and random-target hits (`fightKillCritters`).
 - Naxxramas, where the dummies stand, resets weekly (Saturday 17:00 local,
   `acore_characters.instance_reset`, map 533) and ports every bot inside out, so a path running across it
   fails with "Select the target dummy first": rerun it.

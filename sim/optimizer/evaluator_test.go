@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"slices"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -126,7 +127,9 @@ func withOffset(l Loadout, s stats.Stat, v float64) Point {
 
 // fakeEvaluator scores points with a known function. Its noise has a part shared by every point at
 // the same iteration, which pairing cancels the way the real sim's does, and a small part of its own.
+// The search calls Evaluate from several goroutines, so it holds mu throughout.
 type fakeEvaluator struct {
+	mu      sync.Mutex
 	metrics func(Point) Metrics
 	shared  float64
 	own     float64
@@ -145,6 +148,8 @@ func (f *fakeEvaluator) Evaluate(ctx context.Context, points []Point, iterations
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	f.calls++
 	f.points += len(points)
 	sharedRng := rand.New(rand.NewSource(int64(len(f.noise)) + 7))

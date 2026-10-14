@@ -117,7 +117,8 @@ func TestHealTakenCoefficientOnAPetIsItsOwners(t *testing.T) {
 }
 
 // A heal with SPELL_ATTR0_CU_NO_POSITIVE_TAKEN_BONUS (Ancestral Awakening) loses the flat term and the taken
-// percent once the percent is over 1, and keeps both under it. Strength of Wrynn's stand-in stays either way.
+// percent once the percent is over 1, and keeps both under it. It ignores the caster's modifiers too, so
+// Strength of Wrynn's stand-in, a healing done percent, never reaches it.
 func TestNoPositiveHealingTakenOverOne(t *testing.T) {
 	var spell *Spell
 	sim, a := newTickTestSim(t, 0, 0, func(a *timingTestAgent) {
@@ -125,7 +126,7 @@ func TestNoPositiveHealingTakenOverOne(t *testing.T) {
 			ActionID:                ActionID{SpellID: testSpellNoServerData},
 			SpellSchool:             SpellSchoolNature,
 			ProcMask:                ProcMaskSpellHealing,
-			Flags:                   SpellFlagHelpful,
+			Flags:                   SpellFlagHelpful | SpellFlagIgnoreAttackerModifiers,
 			DamageMultiplier:        1.5,
 			CritMultiplier:          1.5,
 			HealingTakenCoefficient: 0.8057,
@@ -138,24 +139,24 @@ func TestNoPositiveHealingTakenOverOne(t *testing.T) {
 	heal := func() float64 { return spell.CalcHealing(sim, target, 1000, spell.OutcomeHealing).Damage }
 
 	target.AddHealingTakenPct(-10)
-	// 1000 × 1.5 = 1500, + 233, × 0.9 = 1559.7
-	if got := heal(); got != 1559 {
+	// 1000 + 233, × 0.9 = 1109.7
+	if got := heal(); got != 1109 {
 		t.Errorf("under a -10%% aura healed %v, want 1559", got)
 	}
 	// 1.2 × 0.9 = 1.08, over 1
 	target.AddHealingTakenPct(20)
-	if got := heal(); got != 1500 {
-		t.Errorf("under -10%% and +20%% auras healed %v, want 1500", got)
+	if got := heal(); got != 1000 {
+		t.Errorf("under -10%% and +20%% auras healed %v, want 1000", got)
 	}
 	target.PseudoStats.HealingTakenMultiplier *= 1.3
-	if got := heal(); got != 1950 {
-		t.Errorf("with Strength of Wrynn's stand-in healed %v, want 1950", got)
+	if got := heal(); got != 1000 {
+		t.Errorf("with Strength of Wrynn's stand-in healed %v, want 1000", got)
 	}
 	// Earth Shield's 49284 has the attribute, and its heal is another spell
 	spell.serverSpell.Effects[0] = serverdata.Effect{Effect: effectApplyAura, Aura: 4}
-	// 1733 × 1.08 × 1.3 = 2433.1
-	if got := heal(); got != 2433 {
-		t.Errorf("a spell with the attribute that doesn't heal healed %v, want 2433", got)
+	// 1000 + 233, × 1.08 = 1331.6, without the stand-in
+	if got := heal(); got != 1331 {
+		t.Errorf("a spell with the attribute that doesn't heal healed %v, want 1331", got)
 	}
 }
 
@@ -163,13 +164,18 @@ func TestNoPositiveHealingTakenOverOne(t *testing.T) {
 // without a spell_bonus_data row takes 290 healing taken on a guardian at 1.88: live, Empowered Renew's 63544 on a
 // Shadowfiend gained 545, not 233. A real pet keeps the instant 1.5 of 3.5, and a hot keeps its share.
 func TestInstantHealTakenCoefficientOnAGuardian(t *testing.T) {
-	var guardian, pet *timingTestPet
+	var guardian, pet, glyphed *timingTestPet
 	timingTestConstruct = func(a *timingTestAgent) {
 		noStats := func(stats.Stats) stats.Stats { return stats.Stats{} }
 		guardian = &timingTestPet{Pet: NewPet("Guardian", &a.Character, stats.Stats{}, noStats, false, true)}
 		pet = &timingTestPet{Pet: NewPet("Pet", &a.Character, stats.Stats{}, noStats, true, false)}
+		pet.SummonedAsPet = true
+		// the glyphed Water Elemental is built as a guardian and summoned as a pet
+		glyphed = &timingTestPet{Pet: NewPet("Glyphed", &a.Character, stats.Stats{}, noStats, true, true)}
+		glyphed.SummonedAsPet = true
 		a.AddPet(guardian)
 		a.AddPet(pet)
+		a.AddPet(glyphed)
 	}
 	_, a := newTickTestSim(t, 0, 0, nil)
 	timingTestConstruct = nil
@@ -180,6 +186,9 @@ func TestInstantHealTakenCoefficientOnAGuardian(t *testing.T) {
 	}
 	if got := PowerBonus(instant.healTakenCoefficient(&pet.Unit), 290); got != 233 {
 		t.Errorf("an instant heal on a pet adds %v of 290, want 233", got)
+	}
+	if got := PowerBonus(instant.healTakenCoefficient(&glyphed.Unit), 290); got != 233 {
+		t.Errorf("an instant heal on a pet built as a guardian adds %v of 290, want 233", got)
 	}
 	if got := PowerBonus(instant.healTakenCoefficient(&a.Unit), 290); got != 233 {
 		t.Errorf("an instant heal on a player adds %v of 290, want 233", got)

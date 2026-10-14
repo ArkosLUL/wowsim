@@ -479,3 +479,11 @@ func TestEvenTickUpdatesAreDrawnLikeTheCursorWalk(t *testing.T) {
 		t.Fatalf("the drawn updates differ from the cursor walk's: %v vs %v", updates.at[:5], want[:5])
 	}
 }
+
+// Tests outside this package bound a wait for a world tick by the longest one the live settings draw.
+func TestTheLongestLiveWorldTickIsUnder60Ms(t *testing.T) {
+	settings := resolveServerSettings(nil, LiveServerDefaults())
+	if longest := settings.longestWorldTick(); longest < 50*time.Millisecond || longest > 60*time.Millisecond {
+		t.Errorf("the longest world tick is %v, want 50 to 60 ms: sim/optimizer's tankboss_test.go bounds a tick wait by it", longest)
+	}
+}

@@ -151,3 +151,34 @@ func TestRuneWeaponTakesNoBuffs(t *testing.T) {
 			buffed.FlatString(), buffedMultiplier, bare.FlatString(), bareMultiplier)
 	}
 }
+
+// The rune weapon's hits take the DK's attack power and crit as they stand, so it follows his changes while it's out.
+func TestRuneWeaponFollowsTheKnightsAttackPower(t *testing.T) {
+	player := parityPlayer(BloodTalents, "p3_blood", noRotation)
+	sim := core.NewSim(&proto.RaidSimRequest{
+		Raid:       core.SinglePlayerRaidProto(player, &proto.PartyBuffs{}, &proto.RaidBuffs{}, nil),
+		Encounter:  core.MakeSingleTargetEncounter(0),
+		SimOptions: &proto.SimOptions{Iterations: 1, IsTest: true, RandomSeed: 1},
+	})
+	sim.Reset()
+	sim.PrePull()
+	dk := sim.Raid.Parties[0].Players[0].(*DpsDeathknight)
+	dk.RuneWeapon.EnableWithTimeout(sim, dk.RuneWeapon, 12*time.Second)
+
+	before := dk.RuneWeapon.GetStat(stats.AttackPower)
+	if before != dk.GetStat(stats.AttackPower) {
+		t.Fatalf("the rune weapon has %v attack power, want the DK's %v", before, dk.GetStat(stats.AttackPower))
+	}
+	dkBefore := dk.GetStat(stats.AttackPower)
+	dk.AddStatsDynamic(sim, stats.Stats{stats.AttackPower: 1000})
+	gained := dk.GetStat(stats.AttackPower) - dkBefore
+	if got := dk.RuneWeapon.GetStat(stats.AttackPower); math.Abs(got-before-gained) > 1e-6 || gained < 1000 {
+		t.Errorf("after the DK gained %v attack power the rune weapon has %v, want %v", gained, got, before+gained)
+	}
+	dk.RuneWeapon.Disable(sim)
+	dk.AddStatsDynamic(sim, stats.Stats{stats.AttackPower: 500})
+	dk.RuneWeapon.Enable(sim, dk.RuneWeapon)
+	if got := dk.RuneWeapon.GetStat(stats.AttackPower); got != dk.GetStat(stats.AttackPower) {
+		t.Errorf("summoned again the rune weapon has %v attack power, want the DK's %v", got, dk.GetStat(stats.AttackPower))
+	}
+}

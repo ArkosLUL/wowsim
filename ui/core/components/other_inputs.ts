@@ -129,7 +129,7 @@ export const DistanceFromTarget = {
 export const nibelungAverageCasts =  {
 	type: 'number' as const,
 	label: "Nibelung's Valkyr Survival (in # of casts)",
-	labelTooltip: 'Number of casts of Nibelung\'s summoned Valkyrs get out before they die (max 15)',
+	labelTooltip: 'Number of casts of Nibelung\'s summoned Valkyrs get out before they die (max 15, or 18 under Windfury Totem or Improved Icy Talons, 19 with Swift Retribution or Improved Moonkin Form on top of their 20%)',
 	changedEvent: (player: Player<any>) => player.changeEmitter,
 	getValue: (player: Player<any>) => player.getNibelungAverageCasts(),
 	setValue: (eventID: EventID, player: Player<any>, newValue: number) => {
