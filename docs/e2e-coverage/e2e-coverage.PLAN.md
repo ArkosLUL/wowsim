@@ -4226,6 +4226,42 @@ Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\`.
   `DruidBalance.log.gz`; their rows.
 - **Goldens:** none.
 
+#### As built
+
+Code stage (offline; notes and live plan in `tmp/ec-tools3-code.md`):
+- No C++: the packets place the crossing. `Map::Update` sends a creature's changed fields only in
+  `SendObjectUpdates`, on the map's own update and after `UpdateNonPlayerObjects`, so the first values block with
+  the health under 20% is the update whose `Unit::Update` turns `AURA_STATE_HEALTHLESS_20_PERCENT` on
+  (`UNIT_FIELD_AURASTATE` comes with it). Each hit's damage packet (`SendAttackStateUpdate`,
+  `SendSpellNonMeleeDamageLog`, `SendPeriodicAuraLog`) goes out at the hit, in the same stream, so the last block's
+  health less each hit names the crossing hit. The committed logs agree (Chronicle stamps at those same sends): the
+  dummy's ticks on one update are 0 to 3 ms apart, on two at least 60, and the player's hits land between
+  (WarriorArms: Deep Wounds and Rend at ...936098, Overpower at ...936307).
+  A `.simval trace` health row would give the same health per update, on a clock Chronicle's doesn't share.
+- e2e `fight_test.go`: `fightMobs` (XT-005 Debugger 34515, a level 83 boss without script, spells or immunities, under
+  GM mode 10 yd south of the dummy, the bot 3 yd past) and `fightMobsEngage` (`.cheat god on`, `.gm off`, `FIGHTMOB`).
+  `ectools3_test.go`: `TestEcTools3LacerateBeforeSwing` and `TestEcTools3ExecuteWindow` (module README), off a packet
+  recorder that parses the values blocks itself: the client applies a packet after its hooks, and takes white hits off
+  its own copy of the health. Vetted; the analysis was checked on synthetic packets in a scratch copy.
+- Spawn spots: `tmp/spawn-spots.patch` (not applied) has `newBot` teleport to `fightGround`, so every
+  `spawnInFront` dummy stands on the floor, with the README and `fightGround` comment; `git apply --check` passes.
+- `DruidBalance.log.gz` re-trimmed with the existing `-trim`: only its two critter `UNIT_DIED` lines went. `fight.go`
+  needed no change.
+
+Live stage (2026-10-14, server lock held 14:08 to 14:23; running image, no rebuild; notes in `tmp/ec-tools3-live.md`):
+- `TestEcTools3LacerateBeforeSwing` PASS twice. XT-005 comes up with its template's 6,000,004 health (no
+  mod-dungeon-scale), targets the bot and swings every 2 s. First run: 70 of 160 Lacerates refused
+  `UNIT_NOT_INFRONT`, since engaged mobs spread around the bot. `fightFace` now turns the bot to each mob before its
+  cast: 155 of 160 went off, 72 to 76 ticks a mob. Tick before swing on every shared update, 14 of 14 and 28 of 28.
+- `TestEcTools3ExecuteWindow` PASS: 8 of 8 rounds with the crossing white hit, the update and an Execute, none
+  before the update. The aura state came in the first block under 20% and the health added up every round. Executes
+  sent between the hit and the update were refused (`TARGET_AURASTATE`) in 4 rounds. Loaded timings: hit to update
+  9 to 117 ms, update to Execute 3 to 25 ms.
+- Both match the sim (`runDueTicks` before a creature's swing; phase 20 at `NextServerTick` from the hit): nothing
+  for EC-CORE.
+- `ecTools3Kill` kills the tests' live mobs at the end: a temp spawn outlasts the bot. Orphan bots: none. Nothing
+  waits for a rebuild; the spawn-spot patch's checks still wait for it to be applied.
+
 ### EC-TOOLS2 (Z10, done; golden-neutral; stages: code, live)
 
 - `db.json` has no icon rows for the explosives' spells (56350, 67769, 56488) or 55039: the UI fetches them.
