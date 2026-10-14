@@ -42,10 +42,12 @@ spell is only as right as its id.
 - Missiles roll hit, crit and damage at launch (`Spell::DoAllEffectOnLaunchTarget`) and deal it on landing, in
   whole ms. The flight is the distance less the caster's reach, at least 5 yd (`Spell::AddUnitTarget`;
   `Spell.TravelTime`): `GetDistance` takes off the caster's object size, 1.5 yd for a player, and the sim
-  takes 1.5 for every pet and guardian too. The sim waits it out only where the closure calls
+  takes 1.5 for every pet and guardian too. The reach grows with the caster's scale (`Unit.combatReach()`,
+  `PseudoStats.ScaleBonus`): Bloodlust and Heroism carry `SPELL_AURA_MOD_SCALE` 30%, so under them it's 1.95,
+  and a speed 24 missile at 18 yd flies 668 ms, not 687. The sim waits it out only where the closure calls
   `spell.WaitTravelTime`, or `spell.DealDamageAfterTravel` for a landing that only deals the result, over
-  `DistanceFromTarget`, which is 0 for a pet, so its missiles wait the 5 yd floor (a Mirror Image takes its
-  mage's).
+  `DistanceFromTarget`, which is 0 for a pet, so its missiles wait the 5 yd floor (a Mirror Image starts at its
+  mage's and closes in: [pets](pets.md#guardian-ais)).
 
 ## Update timing
 
@@ -55,28 +57,30 @@ apart (`MapMgr::Update`). `MinWorldUpdateTime` (10 ms live) is only a tick's flo
 it and wakes late, by a different amount each time, and one tick of every update runs long, so an update's
 length scatters around a mean above its interval.
 
-The sim draws every map update's length, per iteration (`sim/core/update_grid.go`). Three `ServerSettings`
+The sim draws every map update's length, per iteration (`sim/core/update_grid.go`). Four `ServerSettings`
 shape it:
 - `world_loop_ms`, 10.44 live: a world tick's mean length, so a map update's ten average 104.4 ms.
 - `map_update_jitter_ms`, 5 live: the standard deviation of one update's length, normal around that mean.
-- `world_long_tick_ms`, 40 live: an update is short ticks of `world_update_interval_ms`, one long tick and one
-  short tick after it, the next update. The long tick takes what the drawn length leaves after as many short
-  ticks as bring it nearest the setting, so one tick in about seven takes 35 to 45 ms. `MapMgr::Update` runs the
-  open world, battlegrounds and instances on three ticks in a row, the first runs long under the bots, and an
-  instance updates one tick after it: the cycle is 100 ms plus what the long tick leaves over a multiple of
-  10, which is the 104.4, and an instance's update can come under 100 ms after the last. A player's event
-  waits 10.8 ms for the next tick on average, 5.2 ms on even ticks (live swings land 10.8 ms past their attack
-  time).
+- `world_long_tick_ms`, 39.5 live, and `world_long_tick_jitter_ms`, 6.5 live: an update is short ticks of
+  `world_update_interval_ms`, one long tick and one short tick after it, the next update. Each update's long
+  tick aims at its own target, normal around the setting with that standard deviation and unrelated to the
+  update's length (`longTickPairing`), and takes what the drawn length leaves after as many short ticks as bring
+  it nearest the target: one tick in about seven, the longest 59 ms. Taking whole short ticks off spreads it
+  about 2.9 ms alone, so a jitter up to that adds nothing. `MapMgr::Update` runs the open world, battlegrounds
+  and instances on three ticks in a row, the first runs long under the bots, and an instance updates one tick
+  after it: the cycle is 100 ms plus what the long tick leaves over a multiple of 10, which is the 104.4, and an
+  instance's update can come under 100 ms after the last. A player's event waits 10.8 ms for the next tick on
+  average, 5.2 ms on even ticks (live swings land 10.8 ms past their attack time).
 
 None is a config key. They're what the host does under its load, fitted to recordings as constants in
-`tools/acore/gen_server_defaults/settings.go` ("World loop time", "Map update jitter" and "World long tick" in
-the UI): a test run on the host adds about a ms to the update and the long tick grows with the worldserver's
-load, so record a period-sensitive number on an idle host. `TestEcCore6WorldTick` measures the ticks
+`tools/acore/gen_server_defaults/settings.go` ("World loop time", "Map update jitter", "World long tick" and
+"World long tick jitter" in the UI): a test run on the host adds about a ms to the update and the long tick
+grows with the worldserver's load, so record a period-sensitive number on an idle host. `TestEcCore6WorldTick` measures the ticks
 ([server validation](server-validation.md#live-e2e)).
 
 The long tick at 0 gives a map update ten even world ticks, drawn above a 100 ms floor (lognormal, whatever
-`map_update_jitter_ms` says). Jitter or `world_loop_ms` at 0 gives a fixed grid with a phase rolled per
-iteration, `world_loop_ms` 0 one of `world_update_interval_ms` ticks. A map interval of 0 makes every unit
+`map_update_jitter_ms` says). `map_update_jitter_ms` or `world_loop_ms` at 0 gives a fixed grid with a phase
+rolled per iteration, `world_loop_ms` 0 one of `world_update_interval_ms` ticks. A map interval of 0 makes every unit
 exact, which is what unit tests want. Outside the fight every update takes the mean, in even ticks.
 
 - Ask the grid, never step by an interval: `sim.NextServerTick` and `NextWorldTick` give the first update at or
@@ -123,6 +127,8 @@ exact, which is what unit tests want. Outside the fight every update takes the m
     `Unit.DurationThroughLastTick`.
 - A dot stops at max duration / amplitude ticks (`AuraEffect::Update`, `GetTotalTicks`; `Dot.TotalTicks`), its
   next tick owed until a refresh: `Dot.Rollover`, `Refresh` and `Activate` restart the count.
+  - A dot arms its last tick action again once nothing queued can run it (`Dot.spareTick`), even under its own
+    running tick, so a tick tells it was re-armed by `tickArmings`, never by `tickAction == pa`.
   - Lengthen a running aura with `Aura.AddDuration`, a script's `SetDuration(GetDuration() + extra)`: the time
     goes on what the duration has left (`Aura.expiresNominal`), not on the update it would have ended on, so
     it ends on the first update that far on. `UpdateExpires` ends it at the time given, off the grid unless

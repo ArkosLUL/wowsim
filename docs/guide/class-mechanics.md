@@ -19,7 +19,8 @@ tenths). A sim spell opts in by calling `IssueRefund` on that result, the druid'
   Rupture).
 - Cleave pays by its main target's result. A full block pays in full (Hamstring).
 - An area spell pays in full: `Spell::InitExplicitTargets` drops a unit target the spell's explicit mask
-  doesn't name (Whirlwind, Thunder Clap, the shouts, Fan of Knives).
+  doesn't name (Whirlwind, Thunder Clap, the shouts, Fan of Knives, Swipe (Bear), Shockwave). Swipe (Cat)
+  names one (`targetA` 6), so a miss on its own target pays the miss cost, any other target's in full.
 - So does a pet, which isn't a player: the ghoul's Claw, a hunter pet's focus.
 - Runes and a runic power cost: [server parity](server-parity.md#other-measured-server-behaviour).
 

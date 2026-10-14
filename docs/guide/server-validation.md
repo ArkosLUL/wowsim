@@ -51,6 +51,11 @@ and every test's run line.
     ([missiles](spell-data-and-timing.md#server-data)).
   - `TestEcClass6…`: the rage and energy a miss takes ([miss cost](class-mechanics.md#miss-cost)), a summon's
     casts and unsummon by world update (`.simval trace`), the spelldump's `critCapable`.
+  - `TestEcCore8…`: the healing taken terms on another bot and on a pet, Ancestral Awakening
+    ([healing](damage-and-healing.md#healing)), a missile's flight under Bloodlust
+    ([missiles](spell-data-and-timing.md#server-data)).
+  - `TestEcTools3…`: a creature's swing against a tick on one update, and the execute phase's start, against
+    mobs that swing back ([update timing](spell-data-and-timing.md#update-timing)).
 
 Gotchas (GM commands' own are in [server-dev gotchas](azerothcore-server.md#server-dev-gotchas)):
 - Armor can't be equipped or removed in combat (equip error 60), and `.simval threat` engages the dummy, so
@@ -58,23 +63,28 @@ Gotchas (GM commands' own are in [server-dev gotchas](azerothcore-server.md#serv
 - Equipping starts item proc cooldowns (`Player::ApplyEquipCooldown`), so equip under `.cheat cooldown`.
 - In a druid form, `.simval info` shows no main-hand weapon.
 - An item's `SMSG_SPELL_GO` names the item as caster.
-- An aura from `.aura` shows its effects after the unit's next update: wait before reading them.
+- An aura from `.aura` shows its effects after the unit's next update, and an area aura reaches another unit
+  on that unit's next aura update: wait before reading them.
 - `.modify energy N` sets the energy and its maximum to 10 × N (`HandleModifyEnergyCommand`), so a change read
   right after it can be lost to the cap: spend energy with casts before the one you measure.
 - The dummy's AI zeroes every hit, `.damage` included (set its health with `.simval hp`), and it gives no XP,
-  so `REQ_EXP_OR_HONOR` procs never fire on it.
+  so `REQ_EXP_OR_HONOR` procs never fire on it. It never swings either: for a target that swings and loses
+  health, `fightMobs` and `fightMobsEngage` (the module README). Engaged mobs spread around the bot, so a cast
+  that needs its target in front is refused (`UNIT_NOT_INFRONT`) unless `fightFace` turns the bot first, and a
+  temp spawn outlasts the bot: kill the mobs at the end.
+- A creature dodges from behind too (`Unit::MeleeSpellHitResult` turns dodge off only for a player victim), so
+  a strike from behind the dummy can still fail to land.
 - A spell whose mechanic the boss dummy is immune to comes out immune on every cast (Hamstring's snare, Kidney
   Shot's stun): the deterministic miss for a rule that reads one.
 - To time the swing after a hardcast, don't space the casts by the attack time plus the cast time: no swing
   then falls between two casts.
-- The fights (`fightBuild`) stand on the hub's outer floor, in sight of the dummy's centre, where critters
-  wander and can take an area or random-target spell's hit: `fightBuild` kills every creature within 40
-  yards first (`fightKillCritters`). After a `.die`, select the bot again: `.simval hp` refuses a dead
-  selection.
-- Every test's dummy stands on the fights' floor (`fightGround`, where `newBot` puts the bot). At the entrance a
-  spot south of the dummy has no line of sight past a few yards (4 for a short race), 18 yards north hides its
-  centre from area scripts (Starfall), and a pet has no line of sight to a target beside the dummy (its cast is
-  refused, `DONT_REPORT`). The floor's critters take area and random-target hits (`fightKillCritters`).
+- Every test's dummy stands on the hub's outer floor (`fightGround`, where `newBot` puts the bot), in sight of
+  its centre. Critters wander there and can take an area or random-target spell's hit: `fightKillCritters`
+  kills every creature within 40 yards (`fightBuild` first thing). At the entrance a spot south of the dummy
+  has no line of sight past a few yards (4 for a short race), 18 yards north hides its centre from area
+  scripts (Starfall), and a pet has no line of sight to a target beside the dummy (its cast is refused,
+  `DONT_REPORT`).
+- After a `.die`, select the bot again: `.simval hp` refuses a dead selection.
 - Naxxramas, where the dummies stand, resets weekly (Saturday 17:00 local,
   `acore_characters.instance_reset`, map 533) and ports every bot inside out, so a path running across it
   fails with "Select the target dummy first": rerun it.

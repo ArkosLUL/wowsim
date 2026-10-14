@@ -36,7 +36,9 @@ guardians' scripted AIs. Declaring their spells: [spell data and timing](spell-d
   timing its time is up ahead of a cast due at that moment.
 - Unsummoning kills a missile still in the air (`Pet.MissileLost`): a timed Water Elemental's last Waterbolt, a
   Mirror Image's last Frostbolt.
-- Real pets rescale every 2 s, Spirit Wolves every 1 s, other guardians once at the summon.
+- Real pets rescale every 2 s, Spirit Wolves every 1 s, other guardians once at the summon. The Rune Weapon's
+  attack power and crit follow the DK's on every change while it's out (`Pet.EnableDynamicStats`), its damage
+  multipliers stay the summon's.
 - On one update: focus ahead of the pet's AI, the scaling auras, Replenishment, then mana and energy
   (`petRegenPriority`). A full bar takes no tick.
   - Focus: 24 × Bestial Discipline, truncated, every 4 s. Energy (the DK's ghouls,
@@ -58,8 +60,13 @@ guardians' scripted AIs. Declaring their spells: [spell data and timing](spell-d
 - Wrath of Air is a raid area aura (effect 65), so it reaches every pet and guardian but a haste carrier, whose
   script makes it immune to positive `MOD_CASTING_SPEED_NOT_STACK`: Firebolt and Waterbolt take 2380 ms, a
   Mirror Image's Frostbolt 2857.
-- A temporary aura never goes on a pet that isn't out
-  ([server parity](server-parity.md#other-measured-server-behaviour)).
+- The Rune Weapon takes no buffs (`Pet.OwnerBuffsOnly`): its hits read only the DK's attack power, crit and
+  damage mods (`Unit::MeleeDamageBonusDone`, `SpellDamageBonusDone`, Spell.cpp's crit).
+- **A pet that isn't out** takes no temporary aura: nothing can be cast on a creature that isn't in the world,
+  so `Aura.Activate` returns for it and a summon starts without what was cast while it was away. A permanent
+  aura stands for a buff that's always up and stays on. A caller that needs the aura on asks
+  `pet.IsEnabled()` first (Cobra Strikes' stacks). A heal that picks a raid unit skips it too: Althor's Abacus,
+  Chain Heal's bounces, Prayer of Healing, Circle of Healing, Prayer of Mending.
 - Haste carriers (the hunter pet, the DK's ghouls, gargoyle and army, Spirit Wolves; `Unit.HasteCarrier`)
   ignore direct haste and slows, Bloodlust included, and take the owner's attack speed as whole percent
   (`Pet.OwnerHasteSource`): at the summon, then every 2 s for a pet and for Spirit Wolves
@@ -87,18 +94,30 @@ Fire Elemental lives and Mirror Image summons, `pets_casts.jsonl`, against both 
   - Summoned before the pull, they open on either spell, evenly (`CasterAI`): each image rolls its own on the
     server, the sim one for all three, with the same mean.
   - Summoned into a fight, they're engaged at the summon with no victim to open on: a Frostbolt an update
-    after the wait, and 3 Fire Blasts a life.
+    after the wait, and 3 Fire Blasts a life in range.
   - The death runs in the image's event pass (`DeathEvent`): behind a cast landing on that update, ahead of its
     AI, which starts nothing more. After a Frostbolt opener ahead of the pull the ninth Frostbolt ends within
     an update of it, so the update lengths decide whether it goes off.
   - The corpse goes at the first update 30 s in and takes a Frostbolt in the air with it.
-  - An image stands where it's summoned, within 4 yd of its mage, and `CasterAI` only moves it between casts,
-    so a Frostbolt flies the mage's distance.
+  - An image comes up beside its mage and casts from where it stands (`MirrorImage.closeIn`). Its ranges add
+    both reaches: the image's 1.5 and the target's, which the sim takes as the boss dummy's 2.5 (model 27510)
+    for every target.
+    - Fire Blast from 24 yd (20 + reaches) on fails at its start (`Spell::CheckRange`), and its event is put
+      back anyway.
+    - On an update it starts with no cast going, past 19 yd (15 + reaches), the chase runs it at 1.14286 × 7
+      yd/s (`ChaseMovementGenerator`): from 19.5 on it stops on 19, from nearer on 17.5 (15 + the target's
+      reach). The update after a cast starts still moves it: `Unit::Update` runs the spline before the chase
+      stops it for the cast.
 - **Nibelung's Val'kyr** (`npc_pet_gen_valkyr_guardian`; `sim/common/wotlk/nibelung.go`) casts Smite where a
-  swing would come (`DoSpellAttackIfReady`), so its 2 s attack time paces it, not a GCD: one on its first
-  update, then on the first update 2 s after the last, 15 in its 30 s. It's uncontrollable, so Bloodlust
-  doesn't speed it up. `NibelungAverageCasts` × 2 s is its life.
+  swing would come (`DoSpellAttackIfReady`), so its attack time paces it, not a GCD: one on its first update,
+  then on the first update an attack time after the last.
+  - The attack time is 2 s over its melee haste, in whole ms (`Unit::resetAttackTimer`;
+    `ValkyrPet.attackTime`): Windfury Totem's and Improved Icy Talons' raid area auras, Swift Retribution and
+    Improved Moonkin Form reach it. That gives 15 Smites in its 30 s, 18 under 20% (1666 ms), 19 with Swift
+    Retribution on top (1618 ms). It's uncontrollable, so Bloodlust doesn't.
+  - `NibelungAverageCasts` × the attack time is its life.
 - **Dancing Rune Weapon** (`npc_pet_dk_dancing_rune_weapon`, a `NullCreatureAI`) never swings on the server:
-  `spell_dk_dancing_rune_weapon` copies each white swing the DK lands, a fresh roll on his table for that
-  hand, halved, with no procs. The sim's stand-in swings a 3.5 s weapon on its own timer, and takes Bloodlust
-  to keep up with the DK though the aura never lands on it (SummonProperties 208).
+  `spell_dk_dancing_rune_weapon` copies each white swing the DK lands, either hand, extra attacks too, as a
+  fresh roll of his own swing on his table, floored half, dealt by the weapon with no procs
+  (`RuneWeaponPet.swingCopies`; `registerDrwOwnerSwing`, never dealt). Rune Strike copies as a strike. It's
+  uncontrollable (SummonProperties 208), so no Bloodlust.

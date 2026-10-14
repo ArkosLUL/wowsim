@@ -24,8 +24,8 @@ rounding, caps and crit damage. Everything else the server does differently is i
     `Unit::CalculateDamage`), so `doneDamage` leaves that percent out. `StrikeFixed` scales a fixed bonus,
     `core.ApplyPct` is each percent step (`Spell::EffectWeaponDmg`). Off the physical school there's no
     TOTAL_PCT, the off hand's half included.
-  - A hit whose multipliers come after the roll takes `Weapon.WholeDamage` (the rune weapon's strikes and
-    swing); a script adding its own weapon roll, `Weapon.WholeBaseDamage` (Steady Shot's `irand(int32(min),
+  - A hit whose multipliers come after the roll takes `Weapon.WholeDamage` (the rune weapon's strikes); a
+    script adding its own weapon roll, `Weapon.WholeBaseDamage` (Steady Shot's `irand(int32(min),
     int32(max))`). Manifest Anger is `ApplyPct` 50% of a whole strike.
   - A script's AP share keeps the server's float32 order: Eviscerate `int32(ap × combo × 0.07f)`, Envenom
     `int32(ap × 0.09f × combo)`.
@@ -63,16 +63,27 @@ rounding, caps and crit damage. Everything else the server does differently is i
   a spell through `GainHealing`.
 - **Healing taken** percents (aura 118) don't stack: only the highest bonus and the lowest penalty count,
   multiplied (`Unit.AddHealingTakenPct`). Strength of Wrynn is healing done, which multiplies; a heal with no
-  damage class takes none of that, only `Unit.HealingTakenPctMultiplier`.
+  damage class, or one that ignores caster modifiers (`SpellFlagIgnoreAttackerModifiers`:
+  `Unit::SpellPctHealingModsDone` returns 1), takes none of that, only `Unit.HealingTakenPctMultiplier`.
 - **Flat healing taken** (`BonusHealingTaken`: Talisman of Troll Divinity) is a term of its own:
   `int32(taken × coefficient)` for each target and tick, added after the caster's percent and ahead of the
   target's (`Unit::SpellHealingBonusTaken`; `flatHealingTaken`). `Spell.HealingPower` is the caster's alone.
   - The coefficient (`healTakenCoefficient`) is the declared one where the sim's spell is the server's heal, with
-    the target's own `SPELLMOD_BONUS_MULTIPLIER` mods, not the caster's: the caster's modded one on a self heal,
-    else the target's own copy of the spell, else the declaration without mods (a pet's too; the server reads
-    its owner's mods).
+    the `SPELLMOD_BONUS_MULTIPLIER` mods of the target's spell-mod owner, not the caster's (`Unit.spellModOwner`:
+    a pet's or guardian's owner): the caster's modded one when that's the caster, else the owner's own copy of
+    the spell, else the declaration without mods.
   - A sim spell that isn't the server's heal sets `SpellConfig.HealingTakenCoefficient` to the server heal's
     (Prayer of Mending heals as 33110; Penance; Earthliving's hot 52000) or, where that has no
     `spell_bonus_data` row, to `core.DefaultHealingTakenCoefficient` (Empowered Renew's 63544, Ancestral
     Awakening's 52752, Earth Shield's 379, `itemHealSpell`'s item heals).
+  - On a guardian, an instant heal's default is 1 × 1.88, not 1.5 / 3.5 × 1.88: `Unit::GetCastingTimeForBonus`
+    gives a creature that isn't `IsPet()` 3500 ms (`Unit.isGuardian`: a pet unit not `SummonedAsPet`, which only
+    the hunter's and warlock's pets, the permanent ghoul and the glyphed Water Elemental are).
   - An absorb takes none, nor does a heal with neither.
+- A heal whose server spell has `SPELL_ATTR6_IGNORE_HEALTH_MODIFIERS` or `SPELL_ATTR0_CU_NO_POSITIVE_TAKEN_BONUS`
+  loses the flat term and the taken percent when that percent is over 1 (`noPositiveHealingTaken`). Among the
+  sim's heals only Ancestral Awakening (52752) has one; Earth Shield's 49284 does, but heals as 379.
+- **Heals off another heal:** Empowered Renew's 63544 is 5% a rank of every Renew tick as the target takes it
+  (`Dot.TickHealingTaken`: flat term and percents), then takes the healing done talents and its own taken terms
+  again (`sim/priest/renew.go`). Ancestral Awakening is `int32(crit × 30 / 100)` and ignores caster modifiers,
+  Purification included (`sim/shaman/heals.go`).

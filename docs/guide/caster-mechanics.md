@@ -31,7 +31,8 @@ pets and guardians in [pets](pets.md).
   - A landed hit without damage rolls: Insect Swarm, Faerie Fire.
 - **Nature's Grace** rolls its chance in the cast phase and again in the hit phase (spell_proc -16880): a crit
   Wrath gives 16886 at its launch and at its hit, a cast spell without a missile rolls both at its hit, a
-  triggered one (Starfall's stars, Typhoon's 53227) the hit phase only (`rollNaturesGrace`). Its mask has
+  triggered one (Starfall's stars, Typhoon's 53227) the hit phase only (`rollNaturesGrace`). The hit phase rolls
+  once for each target the cast crits. Its mask has
   Healing Touch, Regrowth, Nourish and Swiftmend too: the aura reads heals, so one needs only
   `SpellFlagNaturesGrace` (the sim registers none of the four).
 - **Savage Defense** holds one charge, which the druid's crits refill at their own rate: the slower the boss

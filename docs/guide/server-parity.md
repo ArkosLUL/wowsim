@@ -6,10 +6,9 @@ Where the server differs from the Classic behaviour upstream modelled.
 - How a hit's or heal's amount is worked out: [damage and healing](damage-and-healing.md).
 - Class spells, talents and procs: [class mechanics](class-mechanics.md) and
   [caster mechanics](caster-mechanics.md). Threat: [threat](threat.md). Pets and guardians: [pets](pets.md).
-- Full evidence and phase status:
-  - `docs/azerothcore-parity/azerothcore-parity.{PLAN,INVESTIGATION}.md`.
-    The INVESTIGATION also lists every retail deviation and every mod-spell-tweaks change.
-  - `docs/azerothcore-item-diff/`.
+  Items, gems, enchants and item swaps: [items](items.md).
+- Full evidence and phase status: `docs/azerothcore-parity/azerothcore-parity.{PLAN,INVESTIGATION}.md`. The
+  INVESTIGATION also lists every retail deviation and every mod-spell-tweaks change.
 
 ## Combat tables
 
@@ -87,8 +86,8 @@ class by simval.
 - **Hit rules by damage class:** a spell with no damage class always lands and never crits
   (`WorldObject::SpellHitResult`, `Unit::SpellDoneCritChance`: Saronite Bomb), and a spell never misses its
   own caster (the sapper). The sim applies both only to the explosives (`sim/core/consumes.go`). A
-  `SPELL_ATTR2_CANT_CRIT` spell never crits either (`Unit::SpellCriticalHitChance`); the committed spelldump's
-  `critCapable` is still true for those, so read `Attributes[2] & 0x20000000` (`tools/simval/critcap.go`).
+  `SPELL_ATTR2_CANT_CRIT` spell never crits either (`Unit::SpellCriticalHitChance`): the spelldump's
+  `critCapable` is false for it, and simval's crit check reads that (`tools/simval/critcap.go`).
 - **Binary spells** follow the spelldump. Mind Flay isn't binary; Steady Shot and Expose Armor are.
 - **Weapon requirements:** a spell with `SPELL_ATTR3_REQUIRES_MAIN_HAND_WEAPON` or `_OFF_HAND_WEAPON` and
   an item subclass mask fails without that weapon, triggered casts too (`Spell::CheckItems`): Mutilate
@@ -116,11 +115,6 @@ class by simval.
   Fire multiplies. Curse of Weakness' armor holds only while its AP is the AP debuff that counts (group 1062,
   highest per aura).
 - **Hit debuffs** on a creature add up (`HandleModHitChance`): Insect Swarm and Scorpid Sting stack.
-- **A pet that isn't out** takes no temporary aura: nothing can be cast on a creature that isn't in the world,
-  so `Aura.Activate` returns for it and a summon starts without what was cast while it was away. A permanent
-  aura stands for a buff that's always up and stays on. A caller that needs the aura on asks
-  `pet.IsEnabled()` first (Cobra Strikes' stacks). Not modelled: Althor's Abacus still picks such a pet for
-  its heal.
 - **Replenishment** (`sim/core/replenishment.go`): 15 ticks a second apart of int32(max mana × 0.002f), read as
   the aura goes on or is refreshed (1 if it went on at no mana). A refresh restarts the timer and drops a tick
   due on that update, unless the cast comes out of an update that runs after the unit's: a creature's or
@@ -135,19 +129,6 @@ class by simval.
   - The potion, rune and gem heuristics add `Unit.ReplenishmentManaPerSecond`:
     `ManaRegenPerSecondWhileCasting` doesn't hold it.
 - **A cast that fails** its GCD, hardcast or shared-cooldown check starts no cooldown.
-- **Meta gems** work only with their `SpellItemEnchantmentCondition` met (`sim/core/meta_gems.go`); an inactive
-  one gives nothing. An item swap that meets or breaks the condition moves the whole enchant
-  (`Player::CorrectMetaGemEnchants`; `metaGemSwap`): the stats, the effect (its `OnMetaGemSwap` toggles, for a
-  gem registered with `NewMetaGemEffect`) and every crit multiplier, heals' or damage's by the gem. Class code
-  that touches a crit multiplier mid-fight has to follow the swap: a factor held on it goes through
-  `Character.ScaleCrit` (Combustion, Hodir's Storm Power), a value worked out ahead of time through
-  `MetaCritFollow` and `MetaCritBuilt` (Prey on the Weak, Predatory Instincts).
-- **Item-swap enchants** (`sim/core/item_swaps.go`): the weapon in the bag applies only an enchant in
-  `swapFollowingEnchants`, one whose effect a swap callback turns on and off; any other effect is static (a
-  rune's stats, threat, weapon damage) and would stay on beside the worn weapon's. An enchant that registers
-  a swap callback goes on the list: the two `RegisterOnSwapItemFor…` helpers panic on a missing id, a direct
-  `RegisterOnItemSwap` doesn't (Deathfrost, Razorice). Not modelled: the server's swap moves a static effect
-  too (`Player::SwapItem`, `_ApplyItemMods`), the sim only the enchant's item stats.
 - **Timing and procs** (the rest is in [spell data and timing](spell-data-and-timing.md)):
   - The rage hit factor is truncated to `uint32`.
   - Spell-proc PPM uses max(cast time, 1500 ms).
@@ -157,42 +138,16 @@ class by simval.
     server deals as a triggered cast (auras 23, 226, 227) procs only an aura with
     `SPELL_ATTR3_CAN_PROC_FROM_PROCS` (`ProcTrigger.CanProcFromProcs`: Greatness, Dying Curse), as a hit of its
     damage class.
+  - **Landed casts:** `Spell::DoAllEffectOnTarget` raises a hit-phase proc for every target a cast lands on,
+    whatever it did there. A proc that reads that registers `Unit.RegisterOnCastLanded`
+    (`sim/core/cast_landed.go`): raised once a spell, target and instant by every landed direct hit or heal and
+    every `ticksAsCasts` tick, never a plain tick or a `SpellFlagNoOnDamageDealt` spell. A cast that lands with
+    nothing to deal (a hot, shield or aura put on: Renew, Power Word: Shield, Earth Shield, Ignite) calls
+    `Spell.LandOn` itself.
   - Periodic ticks crit only with an aura 286 covering the spell, which can be a passive a skill teaches
     (SkillLineAbility AcquireMethod 2: Flame Shock's 75461, Immolate's 75445). Every sim dot declares it
     as `TicksCanCrit` (`sim/dotconfig_declared_test.go`).
-- **Enchant PPMs:** Mongoose 1, Icebreaker 3, Deathfrost 3. An enchant procs only from the weapon that
-  hit.
 - **Dungeon scale** (`NewEncounter`): health and armor become `round(float32(value) × multiplier)`, half
   away from zero. Damage multiplies the target's damage dealt, so swings, spells and DoTs all get it,
   except spells with `SpellFlagIgnoreAttackerModifiers`. Targets with `world_boss` (else level ≥ 83) take the boss set. The placeholder target of an
   encounter without targets is never scaled.
-
-## Items
-
-`db.json` takes item stats, ilvls, sockets and set names from the server (`make items`,
-[ADR 0002](../adr/0002-item-data-from-live-db.md)). acdiff ([README](../../tools/database/acdiff/README.md))
-checks it and the Go effects.
-
-- **Kept from Wowhead:** items nothing on the server awards (the only rows left in `items_diff.csv`),
-  heirlooms and random-enchant items.
-- **Hardcoded Go effects:**
-  - Shared ones (`sim/common`) match the server. Thunderfury's and Rod of the Sun King's PPMs are
-    literals: `serverdata` doesn't carry `item_template`'s `spellppmRate`.
-  - Item damage is dealt as the item's server spell, with its range, whole rolls and missile travel, so class
-    auras read its damage class and cast time: the proc trinkets, capacitors and Gnomish Lightning Generator
-    (`itemDamageSpell` in `sim/common/wotlk`), and the explosives by their use spells (56350, 67769, 56488;
-    `sim/core/consumes.go`). `legacyAPLItemIDs` keeps a saved rotation that names the item working.
-  - Item heals go the same way (`itemHealSpell`): Bauble of True Blood's use casts 71607 for both items,
-    Althor's Abacus heals as 71610 / 71641, Glowing Twilight Scale ticks as 75493 / 75494. Still under the
-    item: Forethought Talisman's heal over time.
-  - Bryntroll's proc is Drain Life 71838 (heroic 71839), magic class. It never crits
-    (`SPELL_ATTR2_CANT_CRIT`) and heals the wielder for the damage dealt, a bare `HealBySpell`
-    with no crit, threat, proc or spell power (`GainHealing`). The item gives the spell a 500 ms cooldown, so
-    a roll won inside it is lost (`Player::CastItemCombatSpell`).
-  - Shard of the Gods: the Purified set (bonus 69755) casts only Cauterizing Heal 69733, the Shiny set (69739)
-    only Searing Flames 69729, with no heroic ids: 25%, 50 s cooldown, off any landed magic damage or heal. A
-    hit of the wrong kind uses the proc up and casts nothing (`SPELL_FAILED_BAD_TARGETS`). Not modelled: a
-    cast that only puts on a hot or shield rolls it too (Renew, Earth Shield, Power Word: Shield).
-  - Class relics, sigils, totems, idols and a few class set bonuses still carry Classic values until
-    their class's P7 item. Totem of the Third Wind also buffs Healing Wave.
-  - Verdicts per row are in `docs/azerothcore-item-diff/data/{effects,sets}_review.csv`.

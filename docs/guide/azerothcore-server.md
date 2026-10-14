@@ -137,7 +137,9 @@ mod-individual-progression stores a character's tier as rewarded quest `66000 + 
   a character (or recorded-run bot) given its talents by `.learn` misses every talent-gated server effect.
 - mod-individual-progression refuses death knights (`CHAR_CREATE_DISABLED`) until a character on the
   account reaches progression tier 12: `.ip set <name> 12` one and log it out first.
-- `.additem <id> -1` destroys the item even when it's equipped.
+- `.additem <id> -1` destroys the item even when it's equipped. `.additem <entry> <count>` reads a leading
+  number that is an existing character's guid as that character, and gives it item `<count>`: name the player
+  first (the e2e's `runner.addItem`).
 - The playerbot factory resets a bot's progression, and below `PROGRESSION_PRE_TBC` the live
   `VanillaPowerAdjustment` scales a level 80's damage by 0.3. A recorded run sets `.ip set <name> 18` after
   gearing.

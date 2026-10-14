@@ -42,7 +42,8 @@ Before starting, read every doc whose trigger matches the task.
 | [testing](docs/guide/testing.md) | verifying or reviewing a change with Go or UI tests, touching goldens |
 | [server-validation](docs/guide/server-validation.md) | replaying or recapturing server records, running or writing a live e2e test, judging parity |
 | [sim-architecture](docs/guide/sim-architecture.md) | locating sim, proto, UI or tool code |
-| [server-parity](docs/guide/server-parity.md) | changing a combat table, cost, proc, immunity or other core mechanic, an item value or module behaviour |
+| [server-parity](docs/guide/server-parity.md) | changing a combat table, cost, proc, immunity or other core mechanic, or module behaviour |
+| [items](docs/guide/items.md) | changing an item's, gem's or enchant's value or effect, or the item swap |
 | [damage-and-healing](docs/guide/damage-and-healing.md) | changing how a hit's or heal's amount is worked out: percents, rounding, the AoE cap, crit damage |
 | [class-mechanics](docs/guide/class-mechanics.md) | changing a death knight's, warrior's, paladin's, rogue's or hunter's spells, talents or procs |
 | [caster-mechanics](docs/guide/caster-mechanics.md) | changing a druid's, shaman's, mage's, priest's or warlock's spells, talents or procs |
