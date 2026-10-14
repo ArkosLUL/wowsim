@@ -53,15 +53,15 @@ dps_results: {
 dps_results: {
  key: "TestHoly-AllItems-Althor'sAbacus-50359"
  value: {
-  tps: 1595.70067
-  hps: 4866.24333
+  tps: 1611.26
+  hps: 4867.696
  }
 }
 dps_results: {
  key: "TestHoly-AllItems-Althor'sAbacus-50366"
  value: {
-  tps: 1606.20842
-  hps: 4910.242
+  tps: 1623.8135
+  hps: 4911.88633
  }
 }
 dps_results: {

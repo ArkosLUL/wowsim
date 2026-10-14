@@ -98,15 +98,15 @@ dps_results: {
 dps_results: {
  key: "TestDisc-AllItems-Althor'sAbacus-50359"
  value: {
-  tps: 912.12773
-  hps: 3061.77159
+  tps: 928.05215
+  hps: 3065.98912
  }
 }
 dps_results: {
  key: "TestDisc-AllItems-Althor'sAbacus-50366"
  value: {
-  tps: 918.42532
-  hps: 3094.42359
+  tps: 936.44315
+  hps: 3099.19696
  }
 }
 dps_results: {
