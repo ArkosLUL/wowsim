@@ -881,19 +881,19 @@ ability_results: {
   entries: {
    key: "player|aura|{ItemID: 40093}"
    value: {
-    uptime_s: 238.99503
+    uptime_s: 238.9948
    }
   }
   entries: {
    key: "player|aura|{SpellID: 16190, Tag: -1}"
    value: {
-    uptime_s: 11.9999
+    uptime_s: 11.99982
    }
   }
   entries: {
    key: "player|aura|{SpellID: 25771}"
    value: {
-    uptime_s: 238.6973
+    uptime_s: 238.69741
    }
   }
   entries: {
@@ -905,7 +905,7 @@ ability_results: {
   entries: {
    key: "player|aura|{SpellID: 2825, Tag: -1}"
    value: {
-    uptime_s: 40.00005
+    uptime_s: 39.99997
    }
   }
   entries: {
@@ -929,7 +929,7 @@ ability_results: {
   entries: {
    key: "player|aura|{SpellID: 498}"
    value: {
-    uptime_s: 23.99945
+    uptime_s: 23.99999
    }
   }
   entries: {
@@ -941,7 +941,7 @@ ability_results: {
   entries: {
    key: "player|aura|{SpellID: 54758}"
    value: {
-    uptime_s: 61.2265
+    uptime_s: 61.22712
    }
   }
   entries: {

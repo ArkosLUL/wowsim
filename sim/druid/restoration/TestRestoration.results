@@ -608,13 +608,13 @@ ability_results: {
   entries: {
    key: "player|aura|{ItemID: 22839}"
    value: {
-    uptime_s: 14.00032
+    uptime_s: 14.00047
    }
   }
   entries: {
    key: "player|aura|{SpellID: 16190, Tag: -1}"
    value: {
-    uptime_s: 11.9999
+    uptime_s: 11.99982
    }
   }
   entries: {
@@ -626,7 +626,7 @@ ability_results: {
   entries: {
    key: "player|aura|{SpellID: 2825, Tag: -1}"
    value: {
-    uptime_s: 40.00005
+    uptime_s: 39.99997
    }
   }
   entries: {
