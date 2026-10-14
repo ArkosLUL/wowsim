@@ -199,6 +199,8 @@ type Unit struct {
 
 	// This unit's own IsTest streams, see Simulation.UnitRandomFloat. Nil until first used.
 	testRands map[string]*testRandStream
+
+	castLanded castLanded
 }
 
 // Units can be disabled for several reasons:

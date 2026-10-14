@@ -286,6 +286,8 @@ func (shaman *Shaman) registerEarthShieldSpell() {
 					}
 					icd.Use(sim)
 					shaman.EarthShield.Hot(result.Target).ManualTick(sim)
+					// the charge's heal is 379, a cast of its own on the server and not a tick
+					shaman.EarthShield.LandOn(sim, result.Target)
 				},
 				OnExpire: func(aura *core.Aura, sim *core.Simulation) {
 				},
@@ -307,6 +309,7 @@ func (shaman *Shaman) registerEarthShieldSpell() {
 		},
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			spell.Hot(target).Apply(sim)
+			spell.LandOn(sim, target)
 		},
 	})
 }

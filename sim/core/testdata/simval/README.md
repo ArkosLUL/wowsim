@@ -134,4 +134,5 @@ None now.
 
 ## Spells missing from serverdata
 
-`critCapable` assumes they crit, and `rangedWeaponSpell` that they're ranged weapon spells. None now.
+`rangedWeaponSpell` assumes they're ranged weapon spells, and `critCapable` that they crit when the spelldump lacks
+them too. None now.

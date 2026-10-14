@@ -119,6 +119,7 @@ func (priest *Priest) applyDivineAegis() {
 		OnHealDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
 			if result.Outcome.Matches(core.OutcomeCrit) {
 				divineAegis.Shield(result.Target).Apply(sim, result.Damage)
+				divineAegis.LandOn(sim, result.Target)
 			}
 		},
 	})

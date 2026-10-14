@@ -59,6 +59,7 @@ func (dk *Deathknight) registerGhoulFrenzySpell() {
 			dk.Ghoul.GhoulFrenzyAura.Activate(sim)
 			spell.SpellMetrics[target.UnitIndex].Hits++
 			spell.SelfHot().Apply(sim)
+			spell.LandOn(sim, &dk.Ghoul.Unit)
 		},
 	})
 

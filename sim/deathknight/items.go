@@ -504,6 +504,13 @@ func init() {
 		character.AddStat(stats.Defense, 13*core.DefenseRatingPerDefense)
 		character.MultiplyStat(stats.Stamina, 1.01)
 	})
+	core.NewEnchantSwapEffect(3883, func(character *core.Character) core.EnchantSwapEffect {
+		stamina := character.NewEnchantSwapMultiplyStat(stats.Stamina, 1.01)
+		return func(sim *core.Simulation, sign float64) {
+			character.AddStatDynamic(sim, stats.Defense, sign*13*core.DefenseRatingPerDefense)
+			stamina(sim, sign)
+		}
+	})
 
 	// Rune of the Stoneskin Gargoyle
 	addEnchantEffect(3847, func(agent core.Agent) {
@@ -513,6 +520,13 @@ func init() {
 		character.PseudoStats.BonusDefenseSkill += 25
 		character.MultiplyStat(stats.Stamina, 1.02)
 	})
+	core.NewEnchantSwapEffect(3847, func(character *core.Character) core.EnchantSwapEffect {
+		stamina := character.NewEnchantSwapMultiplyStat(stats.Stamina, 1.02)
+		return func(sim *core.Simulation, sign float64) {
+			character.PseudoStats.BonusDefenseSkill += int32(sign) * 25
+			stamina(sim, sign)
+		}
+	})
 
 	// Rune of the Swordbreaking
 	addEnchantEffect(3594, func(agent core.Agent) {
@@ -520,12 +534,22 @@ func init() {
 
 		character.AddStat(stats.Parry, 2*core.ParryRatingPerParryChance)
 	})
+	core.NewEnchantSwapEffect(3594, func(character *core.Character) core.EnchantSwapEffect {
+		return func(sim *core.Simulation, sign float64) {
+			character.AddStatDynamic(sim, stats.Parry, sign*2*core.ParryRatingPerParryChance)
+		}
+	})
 
 	// Rune of Swordshattering
 	addEnchantEffect(3365, func(agent core.Agent) {
 		character := agent.GetCharacter()
 
 		character.AddStat(stats.Parry, 4*core.ParryRatingPerParryChance)
+	})
+	core.NewEnchantSwapEffect(3365, func(character *core.Character) core.EnchantSwapEffect {
+		return func(sim *core.Simulation, sign float64) {
+			character.AddStatDynamic(sim, stats.Parry, sign*4*core.ParryRatingPerParryChance)
+		}
 	})
 
 	// Rune of the Spellbreaking
@@ -549,7 +573,7 @@ func init() {
 		// have to fetch it dynamically, otherwise aura reference becomes stale? not quite sure why
 		proc := character.GetAura("Cinderglacier")
 
-		core.MakePermanent(character.GetOrRegisterAura(core.Aura{
+		aura := core.MakePermanent(character.GetOrRegisterAura(core.Aura{
 			Label: "Rune of Cinderglacier",
 			OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
 				if !result.Landed() {
@@ -561,6 +585,8 @@ func init() {
 				}
 			},
 		}))
+
+		character.ItemSwap.RegisterOnSwapItemForEffectWithPPMManager(3369, 1.0, &ppmm, aura)
 	})
 
 	// Sigils

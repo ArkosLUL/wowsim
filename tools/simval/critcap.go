@@ -1,28 +1,64 @@
 package main
 
-import "github.com/wowsims/wotlk/sim/core/serverdata"
+import (
+	"bufio"
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"os"
+	"path/filepath"
+	"sync"
+)
 
 // SPELL_ATTR2_CANT_CRIT, in Attributes[2].
 const attr2CantCrit = 0x20000000
 
-// The effects that make a spell crit capable (SpellInfo::ComputeIsCritCapable): school damage, health
-// leech, heal, the weapon damage effects, power burn, mechanical heal and percent heal.
-var critEffects = map[int32]bool{2: true, 9: true, 10: true, 17: true, 31: true, 58: true, 62: true, 75: true, 121: true, 136: true}
+// loadCritCapable reads each spell's critCapable out of the live server's spell capture:
+// SpellInfo::IsCritCapable, and false for a CANT_CRIT spell too.
+var loadCritCapable = sync.OnceValues(func() (map[int32]bool, error) {
+	root, err := checkoutRoot()
+	if err != nil {
+		return nil, err
+	}
+	f, err := os.Open(filepath.Join(root, spelldumpPath))
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
 
-// critCapable reports whether the server rolls a crit for the spell at all: it has one of critEffects
-// and isn't CANT_CRIT. known is false for an id serverdata lacks, which is then assumed capable.
+	capable := map[int32]bool{}
+	scanner := bufio.NewScanner(f)
+	scanner.Buffer(make([]byte, 0, 64<<10), 8<<20)
+	for scanner.Scan() {
+		line := bytes.TrimSpace(scanner.Bytes())
+		if len(line) == 0 {
+			continue
+		}
+		var spell struct {
+			ID          int32 `json:"id"`
+			CritCapable *bool `json:"critCapable"`
+		}
+		if err := json.Unmarshal(line, &spell); err != nil {
+			return nil, fmt.Errorf("%s: %w", spelldumpPath, err)
+		}
+		if spell.CritCapable == nil {
+			return nil, fmt.Errorf("%s: spell %d has no critCapable", spelldumpPath, spell.ID)
+		}
+		capable[spell.ID] = *spell.CritCapable
+	}
+	return capable, scanner.Err()
+})
+
+// critCapable reports whether the server rolls a crit for the spell at all. known is false for an id
+// the capture lacks, which is then assumed capable.
 func critCapable(spellID int32) (capable, known bool) {
-	spell := serverdata.SpellByID(spellID)
-	if spell == nil {
+	spells, err := loadCritCapable()
+	if err != nil {
+		panic(err)
+	}
+	capable, known = spells[spellID]
+	if !known {
 		return true, false
 	}
-	if spell.Attributes[2]&attr2CantCrit != 0 {
-		return false, true
-	}
-	for _, effect := range spell.Effects {
-		if critEffects[effect.Effect] {
-			return true, true
-		}
-	}
-	return false, true
+	return capable, true
 }

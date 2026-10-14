@@ -56,6 +56,7 @@ func (priest *Priest) registerPrayerOfHealingSpell() {
 				spell.CalcAndDealHealing(sim, partyTarget, baseHealing, spell.OutcomeHealingCrit)
 				if glyphSpell != nil {
 					glyphSpell.Hot(partyTarget).Apply(sim)
+					glyphSpell.LandOn(sim, partyTarget)
 				}
 			}
 		},

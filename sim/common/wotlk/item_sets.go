@@ -5,6 +5,7 @@ import (
 
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
+	"github.com/wowsims/wotlk/sim/core/serverdata"
 	"github.com/wowsims/wotlk/sim/core/stats"
 )
 
@@ -63,19 +64,11 @@ func applyShardOfTheGodsDamageProc(character *core.Character) {
 		},
 	})
 
-	core.MakeProcTriggerAura(&character.Unit, core.ProcTrigger{
-		Name:       name + " Trigger",
-		Callback:   core.CallbackOnHealDealt | core.CallbackOnSpellHitDealt,
-		ProcMask:   core.ProcMaskSpellHealing | core.ProcMaskSpellDamage,
-		Outcome:    core.OutcomeLanded,
-		ProcChance: 0.25,
-		ICD:        time.Second * 50,
-		Handler: func(sim *core.Simulation, _ *core.Spell, result *core.SpellResult) {
-			// a heal's hit uses up the proc too: the dot is aimed at whoever was healed and fails
-			if result.Target.Type == core.EnemyUnit {
-				dotSpell.Dot(result.Target).Apply(sim)
-			}
-		},
+	registerShardOfTheGodsProc(character, name+" Trigger", func(sim *core.Simulation, target *core.Unit) {
+		// a heal's landing uses up the proc too: the dot is aimed at whoever was healed and fails
+		if target.Type == core.EnemyUnit {
+			dotSpell.Dot(target).Apply(sim)
+		}
 	})
 }
 
@@ -83,20 +76,60 @@ func applyShardOfTheGodsHealingProc(character *core.Character) {
 	name := "Cauterizing Heal"
 	spell := character.RegisterSpell(itemHealSpell(character, 69733, 2269, 2773))
 
-	core.MakeProcTriggerAura(&character.Unit, core.ProcTrigger{
-		Name:       name + " Trigger",
-		Callback:   core.CallbackOnHealDealt | core.CallbackOnSpellHitDealt,
-		ProcMask:   core.ProcMaskSpellHealing | core.ProcMaskSpellDamage,
-		Outcome:    core.OutcomeLanded,
-		ProcChance: 0.25,
-		ICD:        time.Second * 50,
-		Handler: func(sim *core.Simulation, _ *core.Spell, result *core.SpellResult) {
-			// a damage spell's hit uses up the proc too: the heal is aimed at the enemy it hit and fails
-			if result.Target.Type != core.EnemyUnit {
-				spell.Cast(sim, result.Target)
-			}
+	registerShardOfTheGodsProc(character, name+" Trigger", func(sim *core.Simulation, target *core.Unit) {
+		// a damage spell's landing uses up the proc too: the heal is aimed at the enemy it hit and fails
+		if target.Type != core.EnemyUnit {
+			spell.Cast(sim, target)
+		}
+	})
+}
+
+// Each bonus rolls once for every target a cast lands on (proc flags DONE_SPELL_MAGIC_DMG_CLASS_POS | _NEG, type
+// mask 7): a hit, a heal, or a hot or shield with nothing dealt, never a tick.
+func registerShardOfTheGodsProc(character *core.Character, label string, handler func(*core.Simulation, *core.Unit)) {
+	icd := core.Cooldown{
+		Timer:    character.NewTimer(),
+		Duration: time.Second * 50,
+	}
+	aura := character.RegisterAura(core.Aura{
+		Label:    label,
+		Duration: core.NeverExpires,
+		Icd:      &icd,
+		OnReset: func(aura *core.Aura, sim *core.Simulation) {
+			aura.Activate(sim)
 		},
 	})
+	character.RegisterOnCastLanded(func(sim *core.Simulation, spell *core.Spell, target *core.Unit) {
+		if !aura.IsActive() || !icd.IsReady(sim) || !rollsShardOfTheGods(spell) {
+			return
+		}
+		if sim.UnitRandomFloat(&character.Unit, label) > 0.25 {
+			return
+		}
+		icd.Use(sim)
+		handler(sim, target)
+	})
+}
+
+const attr3SuppressCasterProcs = 0x00010000
+
+// rollsShardOfTheGods is whether a landed spell can proc either set: magic class, triggered or not (both bonuses
+// carry SPELL_ATTR3_CAN_PROC_FROM_PROCS), without SPELL_ATTR3_SUPPRESS_CASTER_PROCS. A spell without a damage class
+// counts by its proc mask, for a sim spell that stands in for another id (Prayer of Mending's 48113 lands as 48111,
+// 41635 and 33110, all magic).
+func rollsShardOfTheGods(spell *core.Spell) bool {
+	if ss := spell.ServerSpell(); ss != nil {
+		if ss.Attributes[3]&attr3SuppressCasterProcs != 0 {
+			return false
+		}
+		switch ss.DmgClass {
+		case serverdata.DmgClassMagic:
+			return true
+		case serverdata.DmgClassMelee, serverdata.DmgClassRanged:
+			return false
+		}
+	}
+	return spell.ProcMask.Matches(core.ProcMaskSpellDamage | core.ProcMaskSpellHealing)
 }
 
 // Each bonus is its own MOD_DAMAGE_DONE_VERSUS aura (57943, 29068, 57944), and the server multiplies them.
