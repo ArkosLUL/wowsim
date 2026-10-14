@@ -3945,7 +3945,7 @@ the bot's combat reach.
   selected), a boss's swing against a Lacerate tick and the Execute window (the dummies neither swing nor lose health;
   the e2e lacks a mob fight with GM off).
 
-### EC-PET-FIX6 (Z11; changes goldens; stages: code, live)
+### EC-PET-FIX6 (Z11, done; changes goldens; stages: code, live)
 
 Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\ec-pet-fix5-tmp\`.
 
@@ -4183,7 +4183,7 @@ Live stage (notes in `tmp/ec-class-fix6-live.md`; server lock 15:01 to 15:35 on 
 - After the rebuild (apply `simval_commands.sql` first): `TestEcClass6CritCapable`, `TestSpelldumpCapture` (only the
   CANT_CRIT spells' `critCapable` flips), `TestEcClass6SummonTrace` and the Mirror Image tie read off its rows.
 
-### EC-CORE-FIX8 (Z11; changes goldens, full suite; stages: code, live)
+### EC-CORE-FIX8 (Z11, done; changes goldens, full suite; stages: code, speed, live)
 
 Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\ec-core-fix7-tmp\`; the stages' notes are
 `ec-core-fix7-<stage>.md` there.
@@ -4324,7 +4324,7 @@ Goldens (never promoted): this stage moves 22 suites, Average-Default within 0.0
 shaman's HealingGrace row from Ancestral Awakening, 52752 -9.1% a hit); 20-iteration rows to ±0.9%. Final against the
 goldens: all 37 move, Average-Default −0.060% (BalancePhase3) to +0.065% (FrostFire).
 
-### EC-CLASS-FIX7 (Z11; changes goldens; stages: code, live)
+### EC-CLASS-FIX7 (Z11, done; changes goldens; stages: code, live, carried)
 
 Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\ec-class-fix6-tmp\`; the stages' notes are
 `ec-class-fix6-<stage>.md` there.
@@ -4441,7 +4441,7 @@ restart). All three match the sim; no sim change, no golden.
   so nothing was added anywhere), now named; the warrior is stripped and learns Two-Handed Axes (197) before
   Bryntroll; `/Whirlwind` also checks the Drain Life count against `1 - (1 - p)^n` a Whirlwind plus white swings.
 
-### EC-TOOLS3 (Z11; golden-neutral, C++; stages: code, live)
+### EC-TOOLS3 (Z11, done; golden-neutral, no C++; stages: code, live, spawn spots)
 
 Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\`.
 
@@ -4499,7 +4499,13 @@ Live stage (2026-10-14, server lock held 14:08 to 14:23; running image, no rebui
 - Both match the sim (`runDueTicks` before a creature's swing; phase 20 at `NextServerTick` from the hit): nothing
   for EC-CORE.
 - `ecTools3Kill` kills the tests' live mobs at the end: a temp spawn outlasts the bot. Orphan bots: none. Nothing
-  waits for a rebuild; the spawn-spot patch's checks still wait for it to be applied.
+  waits for a rebuild.
+
+Spawn spots (2026-10-14, lock 17:54 to 18:54; notes in `tmp/ec-tools3-spawn.md`): `newBot` and `TestSimvalBuffs`'
+caster stand on `fightGround`. The default `run.sh` passes (two P7 tank tests on their known relog and talent
+races, then on a rerun), its capture replays 1114 of 1114, and every by-name test passes but
+`TestParfu10ArcaneMana`, which stays at the entrance: it fails there too, casting before its `.aura` takes effect.
+`TestEcTools3ExecuteWindow`'s final form passes, 8 of 8 rounds.
 
 ### EC-TOOLS2 (Z10, done; golden-neutral; stages: code, live)
 

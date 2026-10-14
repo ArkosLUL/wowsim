@@ -176,14 +176,14 @@ follow-ups with EC-TOOLS2 at last and BIS-TANK-SWAP in EC-PET-FIX6's place, whic
 
 ## Current wave
 
-- Wave: Z11, running: base `434442b93`, runId `wf_ccee67e3-394`, all four items, args
+- Wave: Z11, all four merged; cross-review next. Base `434442b93`, runId `wf_ccee67e3-394`, args
   `.wave-loop\waveZ11-args.json` (`waveZ11-build.py`, shared rules `waveZ11-shared.md`). Z10 landed as
   `434442b93`.
   The server runs mod-sim-validation's C++ as `86f62a3` (the user's rebuild, image 2026-10-13 20:46 local). The DB
   import didn't run, so `command` lacks the `simval trace` help row; the command works at the code's level, and
   the SQL isn't applied.
-  EC-TOOLS3's C++ needs a second rebuild by the user after the run; its move of the other tests' dummies waits as
-  `tmp/spawn-spots.patch` in its worktree. Both then go through a short live stage before its merge.
+  EC-TOOLS3 needed no C++, so no second rebuild. Orphan character `540417:1:8:55519` (left by a stalled
+  EC-PET-FIX6 run) waits for the user's OK to clean.
   The user's answers to Z10's report (2026-10-14): the Lich King stays as it is (no zone buff, no more healing);
   Z11 as planned, then the BiS chain; no idle benchmark for Z10.
   Z10's reports: `.wave-loop\z10-run1\*.json` and `xreview.md`, `waveZ10-results.json`. Briefs to copy:
@@ -807,6 +807,10 @@ crashed before F2, so its column starts there.
 | BIS-TANK-SWAP | merged | `b0f8b67b8` | the tank boss leaves the modelled tank between Soul Reaper casts, a boss's rolled spells miss 1%, death chance in two passes behind a 10 se bar; the death term drops only where the first pick dies in 0 or 100% (both tanks at P1, Bulwark at P4), a second search on three runs; the Lich King still kills (Bulwark 99.94%, Felesta 79%); the follow-up tick test's bound for the long tick `92b1b1aa4`; no golden moves |
 | wave Z10 cross-review | direct | `5098e3521` | Infest is cast on the boss itself, so it reaches the tank he has left (`Raidwide`; the swap skipped 7 of 13 in 300 s); a bag weapon with Deathfrost or Razorice lost the enchant; `TotalSims` counted the first pass twice; two tests for the grid's table; the module's C++ compiles and its hooks are thread safe; `TestEcClass6RageMissCost` passes live; no golden moves; guides `c062df2b6` (the live-server checks moved to `server-validation.md`) |
 | BIS-TANK-SWAP's phase 4 picks | direct | `51f26ca4b` | rerun on `5098e3521`, Infest on every cast: Bulwark's first pick dies in 99.75% at 2.6 se, so the term stays out; Felesta's in 87% at 12 se, a second search, 79%. Half the fights are survived at about 79,000 and 66,000 health, for 50,831 and 53,368 on the picks |
+| EC-CORE-FIX8 | merged | `28f3641e9` | module `b80fd2f`; Empowered Renew takes the target's healing taken twice (Strength of Wrynn's once), a pet target's owner mods, a guardian's 1.88 coefficient, Ancestral Awakening a truncated 30% without caster modifiers (6 of 6 live), the long tick's spread (`world_long_tick_jitter_ms`, 39.5 ± 6.5 ms), a caster's reach 1.95 under Bloodlust and Heroism (the Pyroblast lead), dots re-arm their tick action; Ignite's 1 isn't a gap (39 of 39); the period still unsettled (loaded host); all 37 suites move, no average dps or hps 0.1% (`f45dcfb8d`) |
+| EC-PET-FIX6 | merged | `54ebe668f` | module `8ad24da`; the Rune Weapon copies the knight's landed white swings, Mirror Image's chase stop and Fire Blast range (the dummy's reach is 2.5), the Val'kyr's attack time under melee haste (live 17 Smites under 8515), Abacus and Chain Heal skip an away pet; TestEcClass6SummonTrace unsettled on server stalls; TestBlood -2.0%, TestBloodTank -3.5%, the mage suites to -0.2% (`c9e05c544`) |
+| EC-CLASS-FIX7 | merged | `25b8ce09b` | module `f235e68`; Swipe (Cat) refunds on a miss (live 17 misses, mean 5.59), Shard of the Gods on any landed cast, static enchant effects follow an item swap, the spelldump with `critCapable` (109 CANT_CRIT spells) read by `critcap.go`; Wrynn's Death Strike test retries dodges; Omen off a Rebirth, Bryntroll and Nature's Grace per target match live; no golden moves |
+| EC-TOOLS3 | merged | `2d6894c17` | module `07f6538`; fights against XT-005s that swing back; a Lacerate tick before the swing on every shared update, Execute only after the update under 20%, both as the sim has them; no C++ (the packets place the crossing); the tests' dummies on the fight floor (all pass but `TestParfu10ArcaneMana`, kept at the entrance); DruidBalance re-trimmed; serverdata regenerated after the merges, unchanged; no golden moves |
 
 Later WIs are added as their wave starts.
 
