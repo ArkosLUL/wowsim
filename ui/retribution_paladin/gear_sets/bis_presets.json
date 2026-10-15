@@ -4,9 +4,9 @@
 		"build": "Retribution Paladin",
 		"phase": 1,
 		"effort": "Normal",
-		"racialTraits": "RaceDraenei",
-		"simCommit": "f5fa0df9e",
-		"catalogDate": "2026-09-19"
+		"racialTraits": "RaceOrc",
+		"simCommit": "9a9ccc6cd",
+		"catalogDate": "2026-10-14"
 	},
 	"p2_bis": {
 		"name": "P2 Retribution",
@@ -14,34 +14,34 @@
 		"phase": 2,
 		"effort": "Normal",
 		"racialTraits": "RaceDraenei",
-		"simCommit": "f5fa0df9e",
-		"catalogDate": "2026-09-19"
+		"simCommit": "9a9ccc6cd",
+		"catalogDate": "2026-10-14"
 	},
 	"p3_bis": {
 		"name": "P3 Retribution",
 		"build": "Retribution Paladin",
 		"phase": 3,
 		"effort": "Normal",
-		"racialTraits": "RaceDraenei",
-		"simCommit": "f5fa0df9e",
-		"catalogDate": "2026-09-19"
+		"racialTraits": "RaceTroll",
+		"simCommit": "9a9ccc6cd",
+		"catalogDate": "2026-10-14"
 	},
 	"p4_bis": {
 		"name": "P4 Retribution",
 		"build": "Retribution Paladin",
 		"phase": 4,
 		"effort": "Normal",
-		"racialTraits": "RaceDraenei",
-		"simCommit": "f5fa0df9e",
-		"catalogDate": "2026-09-19"
+		"racialTraits": "RaceOrc",
+		"simCommit": "9a9ccc6cd",
+		"catalogDate": "2026-10-14"
 	},
 	"p5_bis": {
 		"name": "P5 Retribution",
 		"build": "Retribution Paladin",
 		"phase": 5,
 		"effort": "Normal",
-		"racialTraits": "RaceDraenei",
-		"simCommit": "f5fa0df9e",
-		"catalogDate": "2026-09-19"
+		"racialTraits": "RaceOrc",
+		"simCommit": "9a9ccc6cd",
+		"catalogDate": "2026-10-14"
 	}
 }

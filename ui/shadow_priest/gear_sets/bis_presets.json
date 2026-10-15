@@ -5,43 +5,43 @@
 		"phase": 1,
 		"effort": "Normal",
 		"racialTraits": "RaceTroll",
-		"simCommit": "6c79a6a62",
-		"catalogDate": "2026-09-19"
+		"simCommit": "9a9ccc6cd",
+		"catalogDate": "2026-10-14"
 	},
 	"p2_bis": {
 		"name": "P2 Shadow",
 		"build": "Shadow Priest",
 		"phase": 2,
 		"effort": "Normal",
-		"racialTraits": "RaceDraenei",
-		"simCommit": "6c79a6a62",
-		"catalogDate": "2026-09-19"
+		"racialTraits": "RaceTroll",
+		"simCommit": "9a9ccc6cd",
+		"catalogDate": "2026-10-14"
 	},
 	"p3_bis": {
 		"name": "P3 Shadow",
 		"build": "Shadow Priest",
 		"phase": 3,
 		"effort": "Normal",
-		"racialTraits": "RaceDraenei",
-		"simCommit": "6c79a6a62",
-		"catalogDate": "2026-09-19"
+		"racialTraits": "RaceTroll",
+		"simCommit": "9a9ccc6cd",
+		"catalogDate": "2026-10-14"
 	},
 	"p4_bis": {
 		"name": "P4 Shadow",
 		"build": "Shadow Priest",
 		"phase": 4,
 		"effort": "Normal",
-		"racialTraits": "RaceDraenei",
-		"simCommit": "6c79a6a62",
-		"catalogDate": "2026-09-19"
+		"racialTraits": "RaceTroll",
+		"simCommit": "9a9ccc6cd",
+		"catalogDate": "2026-10-14"
 	},
 	"p5_bis": {
 		"name": "P5 Shadow",
 		"build": "Shadow Priest",
 		"phase": 5,
 		"effort": "Normal",
-		"racialTraits": "RaceDraenei",
-		"simCommit": "6c79a6a62",
-		"catalogDate": "2026-09-19"
+		"racialTraits": "RaceTroll",
+		"simCommit": "9a9ccc6cd",
+		"catalogDate": "2026-10-14"
 	}
 }

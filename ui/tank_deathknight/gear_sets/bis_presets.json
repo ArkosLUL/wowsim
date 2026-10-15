@@ -4,18 +4,18 @@
 		"build": "Tank DK Blood",
 		"phase": 1,
 		"effort": "Normal",
-		"racialTraits": "RaceNightElf",
-		"simCommit": "f5fa0df9e",
-		"catalogDate": "2026-09-19"
+		"racialTraits": "RaceDraenei",
+		"simCommit": "9a9ccc6cd",
+		"catalogDate": "2026-10-14"
 	},
 	"p1_bis_frost": {
 		"name": "P1 Frost",
 		"build": "Tank DK Frost",
 		"phase": 1,
 		"effort": "Normal",
-		"racialTraits": "RaceNightElf",
-		"simCommit": "f5fa0df9e",
-		"catalogDate": "2026-09-19"
+		"racialTraits": "RaceDraenei",
+		"simCommit": "9a9ccc6cd",
+		"catalogDate": "2026-10-14"
 	},
 	"p2_bis_blood": {
 		"name": "P2 Blood",
@@ -23,8 +23,8 @@
 		"phase": 2,
 		"effort": "Normal",
 		"racialTraits": "RaceNightElf",
-		"simCommit": "f5fa0df9e",
-		"catalogDate": "2026-09-19"
+		"simCommit": "9a9ccc6cd",
+		"catalogDate": "2026-10-14"
 	},
 	"p2_bis_frost": {
 		"name": "P2 Frost",
@@ -32,8 +32,8 @@
 		"phase": 2,
 		"effort": "Normal",
 		"racialTraits": "RaceNightElf",
-		"simCommit": "f5fa0df9e",
-		"catalogDate": "2026-09-19"
+		"simCommit": "9a9ccc6cd",
+		"catalogDate": "2026-10-14"
 	},
 	"p3_bis_blood": {
 		"name": "P3 Blood",
@@ -41,8 +41,8 @@
 		"phase": 3,
 		"effort": "Normal",
 		"racialTraits": "RaceNightElf",
-		"simCommit": "f5fa0df9e",
-		"catalogDate": "2026-09-19"
+		"simCommit": "9a9ccc6cd",
+		"catalogDate": "2026-10-14"
 	},
 	"p3_bis_frost": {
 		"name": "P3 Frost",
@@ -50,8 +50,8 @@
 		"phase": 3,
 		"effort": "Normal",
 		"racialTraits": "RaceNightElf",
-		"simCommit": "f5fa0df9e",
-		"catalogDate": "2026-09-19"
+		"simCommit": "9a9ccc6cd",
+		"catalogDate": "2026-10-14"
 	},
 	"p4_bis_blood": {
 		"name": "P4 Blood",
@@ -59,17 +59,17 @@
 		"phase": 4,
 		"effort": "Normal",
 		"racialTraits": "RaceNightElf",
-		"simCommit": "f5fa0df9e",
-		"catalogDate": "2026-09-19"
+		"simCommit": "9a9ccc6cd",
+		"catalogDate": "2026-10-14"
 	},
 	"p4_bis_frost": {
 		"name": "P4 Frost",
 		"build": "Tank DK Frost",
 		"phase": 4,
 		"effort": "Normal",
-		"racialTraits": "RaceNightElf",
-		"simCommit": "f5fa0df9e",
-		"catalogDate": "2026-09-19"
+		"racialTraits": "RaceDraenei",
+		"simCommit": "9a9ccc6cd",
+		"catalogDate": "2026-10-14"
 	},
 	"p5_bis_blood": {
 		"name": "P5 Blood",
@@ -77,8 +77,8 @@
 		"phase": 5,
 		"effort": "Normal",
 		"racialTraits": "RaceNightElf",
-		"simCommit": "f5fa0df9e",
-		"catalogDate": "2026-09-19"
+		"simCommit": "9a9ccc6cd",
+		"catalogDate": "2026-10-14"
 	},
 	"p5_bis_frost": {
 		"name": "P5 Frost",
@@ -86,7 +86,7 @@
 		"phase": 5,
 		"effort": "Normal",
 		"racialTraits": "RaceNightElf",
-		"simCommit": "f5fa0df9e",
-		"catalogDate": "2026-09-19"
+		"simCommit": "9a9ccc6cd",
+		"catalogDate": "2026-10-14"
 	}
 }

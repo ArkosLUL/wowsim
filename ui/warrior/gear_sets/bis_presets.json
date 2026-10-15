@@ -4,45 +4,45 @@
 		"build": "Warrior Arms",
 		"phase": 1,
 		"effort": "Normal",
-		"racialTraits": "RaceDraenei",
-		"simCommit": "f5fa0df9e",
-		"catalogDate": "2026-09-19"
+		"racialTraits": "RaceOrc",
+		"simCommit": "9a9ccc6cd",
+		"catalogDate": "2026-10-14"
 	},
 	"p1_bis_fury": {
 		"name": "P1 Fury",
 		"build": "Warrior Fury",
 		"phase": 1,
 		"effort": "Normal",
-		"racialTraits": "RaceDraenei",
-		"simCommit": "f5fa0df9e",
-		"catalogDate": "2026-09-19"
+		"racialTraits": "RaceTroll",
+		"simCommit": "9a9ccc6cd",
+		"catalogDate": "2026-10-14"
 	},
 	"p2_bis_arms": {
 		"name": "P2 Arms",
 		"build": "Warrior Arms",
 		"phase": 2,
 		"effort": "Normal",
-		"racialTraits": "RaceDraenei",
-		"simCommit": "f5fa0df9e",
-		"catalogDate": "2026-09-19"
+		"racialTraits": "RaceOrc",
+		"simCommit": "9a9ccc6cd",
+		"catalogDate": "2026-10-14"
 	},
 	"p2_bis_fury": {
 		"name": "P2 Fury",
 		"build": "Warrior Fury",
 		"phase": 2,
 		"effort": "Normal",
-		"racialTraits": "RaceDraenei",
-		"simCommit": "f5fa0df9e",
-		"catalogDate": "2026-09-19"
+		"racialTraits": "RaceTroll",
+		"simCommit": "9a9ccc6cd",
+		"catalogDate": "2026-10-14"
 	},
 	"p3_bis_arms": {
 		"name": "P3 Arms",
 		"build": "Warrior Arms",
 		"phase": 3,
 		"effort": "Normal",
-		"racialTraits": "RaceDraenei",
-		"simCommit": "f5fa0df9e",
-		"catalogDate": "2026-09-19"
+		"racialTraits": "RaceOrc",
+		"simCommit": "9a9ccc6cd",
+		"catalogDate": "2026-10-14"
 	},
 	"p3_bis_fury": {
 		"name": "P3 Fury",
@@ -50,17 +50,17 @@
 		"phase": 3,
 		"effort": "Normal",
 		"racialTraits": "RaceTroll",
-		"simCommit": "f5fa0df9e",
-		"catalogDate": "2026-09-19"
+		"simCommit": "9a9ccc6cd",
+		"catalogDate": "2026-10-14"
 	},
 	"p4_bis_arms": {
 		"name": "P4 Arms",
 		"build": "Warrior Arms",
 		"phase": 4,
 		"effort": "Normal",
-		"racialTraits": "RaceDraenei",
-		"simCommit": "f5fa0df9e",
-		"catalogDate": "2026-09-19"
+		"racialTraits": "RaceOrc",
+		"simCommit": "9a9ccc6cd",
+		"catalogDate": "2026-10-14"
 	},
 	"p4_bis_fury": {
 		"name": "P4 Fury",
@@ -68,17 +68,17 @@
 		"phase": 4,
 		"effort": "Normal",
 		"racialTraits": "RaceTroll",
-		"simCommit": "f5fa0df9e",
-		"catalogDate": "2026-09-19"
+		"simCommit": "9a9ccc6cd",
+		"catalogDate": "2026-10-14"
 	},
 	"p5_bis_arms": {
 		"name": "P5 Arms",
 		"build": "Warrior Arms",
 		"phase": 5,
 		"effort": "Normal",
-		"racialTraits": "RaceDraenei",
-		"simCommit": "f5fa0df9e",
-		"catalogDate": "2026-09-19"
+		"racialTraits": "RaceTroll",
+		"simCommit": "9a9ccc6cd",
+		"catalogDate": "2026-10-14"
 	},
 	"p5_bis_fury": {
 		"name": "P5 Fury",
@@ -86,7 +86,7 @@
 		"phase": 5,
 		"effort": "Normal",
 		"racialTraits": "RaceTroll",
-		"simCommit": "f5fa0df9e",
-		"catalogDate": "2026-09-19"
+		"simCommit": "9a9ccc6cd",
+		"catalogDate": "2026-10-14"
 	}
 }
