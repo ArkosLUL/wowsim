@@ -71,6 +71,9 @@ func (priest *Priest) ApplyTalents() {
 	if priest.Talents.FocusedPower > 0 {
 		priest.PseudoStats.DamageDealtMultiplier *= 1 + .02*float64(priest.Talents.FocusedPower)
 	}
+	// healing done percents for the hots' ticks, the direct heals carry them in their own multipliers
+	priest.AddHealingDonePct(2 * priest.Talents.FocusedPower)
+	priest.AddHealingDonePct(priest.Talents.BlessedResilience)
 
 	if priest.Talents.SpiritOfRedemption {
 		priest.MultiplyStat(stats.Spirit, 1.05)

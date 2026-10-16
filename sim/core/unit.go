@@ -55,6 +55,10 @@ type Unit struct {
 	// creature_immunities.MechanicsMask, bit 1 << mechanic; read it through ImmuneToMechanic
 	MechanicImmuneMask uint64
 
+	// An enemy's combat reach in yards (UNIT_FIELD_COMBATREACH), the boss dummy's unless its Target sets one.
+	// 0 on other units.
+	EnemyCombatReach float64
+
 	// CREATURE_FLAG_EXTRA_NO_XP
 	NoXP bool
 
@@ -147,6 +151,9 @@ type Unit struct {
 	// every SPELL_AURA_MOD_HEALING_PCT amount on the unit, in percent (AddHealingTakenPct)
 	healingTakenPcts        []int32
 	initialHealingTakenPcts []int32
+	// every SPELL_AURA_MOD_HEALING_DONE_PERCENT amount on the unit, in percent (AddHealingDonePct)
+	healingDonePcts        []int32
+	initialHealingDonePcts []int32
 
 	// All spells that can be cast by this unit.
 	Spellbook                 []*Spell
@@ -491,6 +498,7 @@ func (unit *Unit) finalize() {
 	unit.initialMeleeSwingSpeed = unit.SwingSpeed()
 	unit.initialRangedSwingSpeed = unit.RangedSwingSpeed()
 	unit.initialHealingTakenPcts = append([]int32(nil), unit.healingTakenPcts...)
+	unit.initialHealingDonePcts = append([]int32(nil), unit.healingDonePcts...)
 
 	unit.StatDependencyManager.FinalizeStatDeps()
 	unit.initialStats = unit.ApplyStatDependencies(unit.initialStatsWithoutDeps)
@@ -513,6 +521,7 @@ func (unit *Unit) reset(sim *Simulation, _ Agent) {
 	unit.Metrics.reset()
 	unit.ResetStatDeps()
 	unit.healingTakenPcts = append(unit.healingTakenPcts[:0], unit.initialHealingTakenPcts...)
+	unit.healingDonePcts = append(unit.healingDonePcts[:0], unit.initialHealingDonePcts...)
 	unit.statsWithoutDeps = unit.initialStatsWithoutDeps
 	unit.stats = unit.initialStats
 	unit.PseudoStats = unit.initialPseudoStats

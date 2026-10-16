@@ -84,7 +84,8 @@ func (priest *Priest) registerPrayerOfHealingSpell() {
 				OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
 					base := priest.PrayerOfHealing.Direct
 					dot.SnapshotBaseDamage = base.Roll(sim) + core.PowerBonus(base.SP, dot.Spell.HealingPower(target))
-					dot.SnapshotAttackerMultiplier = dot.Spell.CasterHealingMultiplier()
+					// 56161's amount comes off the Prayer of Healing heal, which had the healing done talents, and each tick takes them again
+					dot.SnapshotHotMultiplier(dot.Spell.CasterHealingMultiplier())
 				},
 				OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 					dot.CalcAndDealPeriodicSnapshotHealing(sim, target, dot.OutcomeTick)

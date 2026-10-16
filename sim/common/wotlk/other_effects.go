@@ -241,7 +241,7 @@ func init() {
 				TicksCanCrit:  false,
 				OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
 					dot.SnapshotBaseDamage = 3572.0 / 4
-					dot.SnapshotAttackerMultiplier = dot.Spell.CasterHealingMultiplier()
+					dot.SnapshotHotMultiplier(dot.Spell.CasterHealingMultiplier())
 				},
 				OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 					dot.CalcAndDealPeriodicSnapshotHealing(sim, target, dot.OutcomeTick)
@@ -841,7 +841,7 @@ func init() {
 					Tick:          core.SpellEffect{Effect: 0, Min: healingPerTick, Max: healingPerTick},
 					OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
 						dot.SnapshotBaseDamage = dot.Tick.Roll(sim)
-						dot.SnapshotAttackerMultiplier = dot.Spell.CasterHealingMultiplier()
+						dot.SnapshotHotMultiplier(dot.Spell.CasterHealingMultiplier())
 					},
 					OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 						dot.CalcAndDealPeriodicSnapshotHealing(sim, target, dot.OutcomeTick)

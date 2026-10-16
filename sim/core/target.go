@@ -146,6 +146,10 @@ func NewTarget(options *proto.Target, targetIndex int32) *Target {
 		target.MechanicImmuneMask = RaidBossMechanicImmunities
 	}
 	target.NoXP = options.NoXp
+	target.EnemyCombatReach = BossDummyCombatReach
+	if options.CombatReach > 0 {
+		target.EnemyCombatReach = options.CombatReach
+	}
 	if target.stats[stats.MeleeCrit] == 0 {
 		// Creatures crit at a flat 5%; the level difference is handled by the
 		// skill term in the attack table.
@@ -186,6 +190,9 @@ const (
 	MechanicSnare  Mechanic = 11
 	MechanicStun   Mechanic = 12
 )
+
+// BossDummyCombatReach is the boss dummy's combat reach, its model's (27510) in creature_model_info.
+const BossDummyCombatReach = 2.5
 
 // RaidBossMechanicImmunities is creature_immunities -361, the row of the boss dummy and of Ulduar's, the
 // Coliseum's and Icecrown's bosses: disarm, root, snare and stun among others, not attack slows or bleeds.

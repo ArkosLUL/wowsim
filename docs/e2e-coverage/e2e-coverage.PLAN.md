@@ -4567,6 +4567,76 @@ Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\ec-core-fix8-tmp\`;
 - **Goldens:** the healer suites with a hot under aura 136 (TestHoly, TestDisc, TestRestoration); TestFire and
   TestFrostFire if instant missiles land sooner; none for the target reach or the wall time; report each.
 
+#### As built
+
+Code stage (notes `tmp/ec-core-fix9-code.md`; base `9a5d8fb6a`, offline). Built:
+- Hot ticks (`sim/core/healing_done.go`): `Unit.AddHealingDonePct`/`RemoveHealingDonePct` hold the aura 136 percents;
+  `Dot.SnapshotHotMultiplier(m)` snapshots the amount without them, and each tick is `int32(float32(trunc(base × m)) ×
+  mult)`, mult `GetTotalAuraMultiplier`'s float32 AddPct chain off the caster at that tick. Call sites (inline): Renew
+  (`DamageMultiplier` now `renewDotMultiplier`), Glyph of Prayer of Healing's 56161 (keeps PoH's multiplier, as its
+  bp comes off the PoH heal), T10 2-piece, Riptide (Purification divided out), Earthliving, Forethought Talisman,
+  Glowing Twilight Scale; not Ghoul Frenzy (OBS_MOD_HEALTH, no caster 136) or Earth Shield (a charge, no tick; see
+  the review).
+  Registered: Focused Power, Blessed Resilience (`priest/talents.go`), Purification, aura 136 too
+  (`shaman/talents.go`), Avenging Wrath's 20% (`paladin/avenging_wrath.go`).
+- Target reach: `Target.combat_reach` (field 24) → `Unit.EnemyCombatReach`, `core.BossDummyCombatReach` 2.5 when
+  unset; Mirror Image moves its Fire Blast range and chase by `targetReachOver()`; UI "Combat Reach" in the advanced
+  target picker (0 means 2.5). Tests `healing_done_test.go`, `target_reach_test.go`, `priest/healing/renew_test.go`,
+  `mage/mirror_image_reach_test.go`.
+
+Verdicts:
+- Hot aura 136 (fixed, from the source; no record or drop existed): the tick multiplies for every unit-aura hot,
+  whatever its attributes or damage class, so item hots take it too.
+- Divinity (left out): reading `Talents.Divinity` makes it implemented, staling `implemented_talents.json` and the
+  talent sweep's paths for a live re-record, with no golden.
+- Target reach (built): bit-identical at the default.
+- Instant missile lead (not a gap, unchanged): an instant from the session pass starts its flight in the same tick's
+  `m_Events` (`Map::Update` runs the session, then `Player::Update`; `SpellEvent::Execute` sets DelayStart), as a
+  hardcast does in the Execute that casts it. Committed fights' Chronicle stamps, excess over the flight (min /
+  median ms): instants (Arcane, Aimed, Chimera, Kill Shot, Ice Lance) -3..3 / 1..7, hardcasts -2..5 / 5..14; the
+  twelve Fire recordings' 835 Pyroblasts are all hardcasts (-15 / 9 under Bloodlust). Firespot's 10 ms was client
+  receipt on a loaded host with fixed waits.
+- New, not fixed: the sim lands a missile at go + flight, the server on the caster's first update after (median 5
+  to 9 ms); Auto Shot (15 to 17) and a cast off a landing (Pillar of Flame 67760, 21) start one update later.
+
+Goldens (never promoted), the hot change alone; the reach and the lead move none:
+- TestDisc +0.097% hps: Forethought Talisman +3.9% a hit (Focused Power at the tick), rows +0.09 to +0.14%.
+- TestHoly (priest) BlessedResilience row -0.012%: Renew -0.038% a hit (truncation order); Default takes neither.
+- TestRestoration (shaman) HealingGrace row +0.338% hps: Earthliving +10% a hit (Purification).
+- 34 unchanged.
+
+Live stage must measure (idle host; plan with commands in the notes):
+- Fire recordings for the period: `cycles-fire3.json`, 300 s each, about 9 four-second races a fight; 12 fights add
+  about 105. Sim: period 104.4 ms, 2 s races 62.9%, 4 s 56.4%.
+- `TestEcCore6WorldTick`: long ticks 39.5 ± 6.5 ms, 13.4% of ticks, wait 10.8 ms.
+- Dot re-arm A/B: `tmp/speed/build.sh old new` (`tmp/old_src/dot.go`: Z11's pre-rearm file plus this item's field),
+  `ab.sh 10 <out> old new`; Z11 under load: Ret 0.925, others 0.98 to 1.01.
+
+Live stage (notes `tmp/ec-core-fix9-live.md`; lock 2026-10-16 15:34 to 21:12; no orphan bots). Host idle (7 to 30% CPU)
+until 20:59, but the random bots were refilling (106 online at 15:35, 982 by 16:04, 1180 from 18:43), and the
+worldserver's load and timing followed them; the user raided from 20:50 and loaded the host from 21:00 (last fight,
+last two tick samples). Recorded 51 Fire fights (`tmp/fights-fire/`) and ten tick samples; no fixture, no sim change.
+Verdicts:
+- Period (defaults stand): 104.35 over the 51, 104.36 over the 48 idle; by population 103.18 at 982 online, 104.24 at
+  1056, 105.08 at 1180 (the last 13 at 105.35 to 105.55); 104.35 and 104.54 with the user's raid on. Fights range
+  102.7 to 106.1; within one, 19 updates stray 16.8 ms (`nineteen.py`).
+- Ignite races: live 2 s 854 of 1590 (53.7%), 4 s 375 of 746 (50.3%); sim at the defaults 62.8% (z -7.5) and 56.2%
+  (z -3.2), but replayed at each log's own counted period 55.2% (z -0.7) and 49.9% (z +0.0), the twelve older logs
+  z -0.7 and +0.1: the model's races are right, and the gap is the fights' period spread against one mean (the rate
+  peaks near 104.3). Jitter 3.85 at the own period fits worse (z -1.8, older -2.5), so 5 stays. 4 s races: 901 with
+  the twelve, about 100 (7 or 8 fights) short of the spec's 1000.
+- Long tick (defaults stand): grows with the population: 106 online 2.6% of ticks at 18.9 ms (wait 5.3); 982 to 1056
+  12.9% at 36.2 ± 5.1 (9.7); 1180 15.3% at 37.7 ± 8.7 (11.0), the model's 13.4% at 39.5 ± 6.5 (10.8).
+- Dot re-arm A/B, 16 interleaved pairs, loaded by the user's game (host 18 to 48%): new/old Ret 0.972 (14 of 16
+  faster), Hunter 0.994, Elemental 0.992, Rogue 1.002, raid 0.999.
+
+Goldens: this stage moves none; the final moves are the code stage's.
+
+Review, round 1: Earth Shield's charge (fixed, from the source; golden-neutral, no suite casts it).
+`spell_sha_earth_shield::CalculateAmount` takes 49284's `SpellHealingBonusDone(HEAL)`, aura 136 (Purification)
+included, before the glyph and Improved Shields; 379 has `SPELL_ATTR3_IGNORE_CASTER_MODIFIERS`. The sim had none:
+`purification` in `shaman/heals.go`, test `shaman/restoration/earth_shield_test.go`.
+
 ### EC-PET-FIX7 (Z12; changes goldens; stages: code, live)
 
 Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\ec-pet-fix6-tmp\`.
