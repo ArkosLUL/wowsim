@@ -159,6 +159,20 @@ _Avoid_: TBC gear, which also tags holiday loot that isn't outclassed
 A raider's effect on the raid's total DPS: their own damage plus what they give others.
 _Avoid_: utility, raid value
 
+**Health margin**:
+A tank's lowest health in an iteration of the healed tank fight, counted on past 0 by unhealed overkill:
+0 or less exactly where it died. Its mean is half a tank run's survival weight.
+_Avoid_: effective health, EH (a stat-sheet figure, not simmed)
+
+**Time to live**:
+Seconds from the pull to a tank's first death with healing off, 60 if it lives; breaks a tank run's tie on
+score.
+_Avoid_: TTL alone, which reads as a cache term
+
+**Gem twin**:
+A copy of the optimizer's pick with one of its gems banned and its slots regemmed, simmed against the pick so
+the sim, not the curves alone, settles its gems.
+
 ### BiS tooltip
 
 **Subject**:

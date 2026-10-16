@@ -36,5 +36,22 @@ export class ToplineResults extends ResultComponent {
 		}
 
 		this.rootElem.innerHTML = content;
+
+		// only a tank with a healing model has one
+		const margin = players.length == 1 && players[0].getTargetIndex(resultData.filter) == null ? players[0].healthMargin : undefined;
+		if (margin) {
+			const row = document.createElement('div');
+			row.className = 'results-metric results-sim-health-margin threat-metrics';
+			row.innerHTML = `
+				<span class="topline-result-avg">${Math.round(margin.avg)}</span>
+				<span class="topline-result-stdev">health margin (<i class="fas fa-plus-minus fa-xs"></i>${margin.stdev.toFixed()})</span>
+			`;
+			const chanceOfDeath = this.rootElem.querySelector('.results-sim-cod');
+			if (chanceOfDeath) {
+				chanceOfDeath.after(row);
+			} else {
+				this.rootElem.appendChild(row);
+			}
+		}
 	}
 }

@@ -82,6 +82,7 @@ const METRIC_LABELS: Array<[keyof OptimizerMetrics, string]> = [
 	['dtps', 'DTPS'],
 	['tmi', 'TMI'],
 	['pDeath', 'Death chance'],
+	['healthMargin', 'Health margin'],
 ];
 
 export const RACIAL_MODES: Array<{ mode: OptimizerRacialMode; label: string }> = [
@@ -344,10 +345,13 @@ export class LoadoutView {
 		if (!metrics) {
 			return '';
 		}
+		// death chance as a percent, the margin in whole health
+		const format = (key: keyof OptimizerMetrics, value: number) =>
+			key == 'pDeath' ? `${formatNumber(value * 100)}%` : formatNumber(value, key == 'healthMargin' ? 0 : 1);
 		return METRIC_LABELS.filter(([key]) => metrics[key])
 			.map(([key, label]) => {
-				const value = key == 'pDeath' ? `${formatNumber(metrics[key] * 100)}%` : formatNumber(metrics[key]);
-				return seed?.[key] ? `${label} ${value} (was ${key == 'pDeath' ? `${formatNumber(seed[key] * 100)}%` : formatNumber(seed[key])})` : `${label} ${value}`;
+				const value = format(key, metrics[key]);
+				return seed?.[key] ? `${label} ${value} (was ${format(key, seed[key])})` : `${label} ${value}`;
 			})
 			.join(', ');
 	}
@@ -697,7 +701,7 @@ export class OptimizerTab extends SimTab {
 		return tankEncounter(undefined, this.settings.contentPhase)?.targets[0]?.name || plain;
 	}
 
-	// Tanks trade survival against threat on one slider, with the six metric weights under Advanced
+	// Tanks trade survival against threat on one slider, with the seven metric weights under Advanced
 	// for anyone who wants them. Everyone else optimizes their own DPS.
 	private buildObjective() {
 		if (!this.isTank()) {
@@ -722,7 +726,7 @@ export class OptimizerTab extends SimTab {
 				slider,
 				this.settings.metricWeights
 					? 'The weights under Advanced are in charge. Move the slider to hand it back.'
-					: 'Survival is the damage you take, how spiky it is and how often you die. Threat is TPS.',
+					: 'Survival is half how low your health gets, half the damage you take, how spiky it is and how often you die. Threat is TPS.',
 			),
 		);
 		this.setupBody.appendChild(
@@ -767,7 +771,7 @@ export class OptimizerTab extends SimTab {
 			newElement(
 				'div',
 				'optimizer-hint',
-				"Importance, not signs: less DTPS, TMI and death chance always count as better. A metric its reference stat doesn't move measurably is dropped with a warning.",
+				"Importance, not signs: less DTPS, TMI and death chance and more health margin always count as better. A metric its reference stat doesn't move measurably is dropped with a warning.",
 			),
 		);
 		return details;

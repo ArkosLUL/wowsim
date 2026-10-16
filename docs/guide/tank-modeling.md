@@ -66,15 +66,26 @@ the melee-only `GenericBossTarget` instead, with Patchwerk's numbers.
 as equipped (not the trimmed seed, which a small pool leaves nearly naked). Cadence is 1.5 boss swings, half
 that under `dualWield`, varied by `TANK_HEAL_CADENCE_VARIATION` (0.5) of itself, so the tank can die.
 
+Survival cooldowns fire below `hpPercentForDefensives`, 0.35 for a tank (`applySharedDefaults`); at 0 they
+fire on cooldown (`major_cooldown.go`). A saved raider keeps what it was saved with.
+
 ## Score
 
-- `tankMetricWeights` and `TankWeights` give threat its slider share and split survival in thirds: DTPS, TMI,
-  chance of death. The Advanced editor overrides them.
-- Armor is the reference stat for the three, with a `normalizerOffset` of 2000. DTPS and TMI are dropped with a
-  warning where their normalizer doesn't clear 2 se; death chance's rules are below.
+- `tankMetricWeights` and `TankWeights` give threat its slider share and split survival s: health margin s/2,
+  DTPS, TMI and chance of death s/6 each (0.7 gives 0.35 and 0.1167). The Advanced editor overrides them.
+- Armor is the reference stat for the four (`armorReferenced`), with a `normalizerOffset` of 2000. DTPS, TMI and
+  the margin are dropped with a warning where their normalizer doesn't clear 2 se, the margin also where all its
+  values are 0 (no healing model); death chance's rules are below.
+- **Health margin**: each iteration's lowest health in the healed fight, read from core's passive shadow
+  (`currentHealth - healthDebt`, `sim/core/health.go`: overkill adds to the debt, overheal pays it off), so it
+  runs on past 0 and is ≤ 0 exactly where the tank died. Higher is better; no cap; a death save counts as
+  survived. +X max health moves it by exactly X unless something scales with max health: below 35%, Ardent
+  Defender's and Will of the Necropolis' cuts and a death save's heal make it less. Core keeps it,
+  and each first-death time, only for a unit that tanks with a healing model (`UnitMetrics` 19 to 22); the
+  results page shows it beside TMI and chance of death.
 - Chance of death pairs like the others: core lists each iteration's death (`UnitMetrics.iteration_deaths`,
-  under `SaveAllValues`, for a unit that tanks). Where a pick all but never dies (Anub'arak), the death third
-  is flat and only TMI prices Stamina.
+  under `SaveAllValues`, for a unit that tanks). Where a pick all but never dies (Anub'arak), the death sixth
+  is flat and only TMI and the margin price Stamina.
 - **Death chance in two passes** (`optimize`). The normalizer must clear `deathMinSE` (10 se): worn gear
   that dies 10 to 30% of iterations clears it and prices Stamina sanely, while a gear that nearly always dies
   reads a few se and lets death chance swamp the score. The coefficient is capped at the Armor the loadout
@@ -86,8 +97,28 @@ that under `dualWield`, varied by `TANK_HEAL_CADENCE_VARIATION` (0.5) of itself,
   each. `TotalSims` counts what the passes simmed, not the second one's reads of cached points.
 - Neither ±8000 Armor, 16,000 iterations nor healing at 0.75 to 4 times DTPS moves a worn gear that dies in
   every iteration off 100%, so whether a pick brings the term back is up to the pick.
+- **Tiebreak** (`breakTie`, after verify's race): on a tank run whose best beats the seed, the loadouts within
+  2 se of it that beat the seed too go to **time to live**: the same fight with healing off (Hps, cadence and
+  variation 0, burst window kept), 60 s flat, a cloned request, seconds to the first death (60 alive). The
+  longest mean goes first, and a warning names each one's time and score. Its sims count in `TotalSims`.
+- **Gem check** (`checkGems`, every run, before the tiebreak): gems are priced off the curves and never simmed
+  alone, so a small edge can fill every socket with one gem. For each distinct gem in the best's free non-meta
+  sockets, a twin regems the slots holding it at the surrogate's slopes there with that gem banned
+  (`gemWithout`), so the runner-up `gemOptions` drops takes its place with socket bonuses and meta intact. Twins
+  that break a rule are left out; the rest sim paired at the run's iterations. The best mean over the best
+  takes its place (it must beat the seed where the best does), with a warning naming the swap. Twins join the
+  verified list, so a tie takes them to time to live.
 - The Defense and hit floors come before the score: a P1 pool has almost no Defense, so its gems go there
   though a Stamina socket is worth 1.4 to 2.6 times any other.
+
+## Resistance
+
+A tank's gear resists nothing: it answers the one boss the tank fight models, not the rest of the phase.
+The pool builder leaves out a tank's resistance-only enchants and gems (`isResistanceOnly`: fur linings,
+resistance cloak enchants, Void Sphere), and the seed trimmer notes it. In Go a tank spec's pool (`tankSpec`)
+prices items, socket bonuses, enchants and gems with resistance 0, and `dress` takes `gearResistance` back off
+the bonus stats of every sim, sheet and the healing pin. Raid auras, talents and racials keep theirs; the boss
+keeps its magic.
 
 ## Measuring
 

@@ -186,10 +186,34 @@ func TestRaidSimOneShardMatchesRunRaidSim(t *testing.T) {
 	}
 }
 
+// healedTankRaid has the tank healed at a fixed rate, so it reports health margins and first deaths.
+// Its early spikes still kill it in most iterations, not all.
+func healedTankRaid(t *testing.T, iterations int32) *proto.RaidSimRequest {
+	rsr := shardTestRaid(t, iterations)
+	rsr.Raid.Parties[0].Players[0].HealingModel = &proto.HealingModel{Hps: 14000, CadenceSeconds: 2, CadenceVariation: 1, BurstWindow: 6}
+	return rsr
+}
+
 // The shards are run by hand as RunRaidSim requests, and merged here from their protos.
 func TestRaidSimShardsMatchHandMerge(t *testing.T) {
+	t.Run("duration", func(t *testing.T) { testRaidSimShardsMatchHandMerge(t, shardTestRaid) })
+	t.Run("healed tank", func(t *testing.T) {
+		tank := testRaidSimShardsMatchHandMerge(t, healedTankRaid).RaidMetrics.Parties[0].Players[0]
+		deaths := 0
+		for _, died := range tank.IterationDeaths {
+			if died {
+				deaths++
+			}
+		}
+		if deaths == 0 || deaths == len(tank.IterationDeaths) || len(tank.IterationHealthMargins) != len(tank.IterationDeaths) {
+			t.Errorf("the tank died in %d of %d iterations, with %d margins: the merge needs deaths and survivals", deaths, len(tank.IterationDeaths), len(tank.IterationHealthMargins))
+		}
+	})
+}
+
+func testRaidSimShardsMatchHandMerge(t *testing.T, raid func(*testing.T, int32) *proto.RaidSimRequest) *proto.RaidSimResult {
 	const iterations, shards = 103, 4
-	rsr := shardTestRaid(t, iterations)
+	rsr := raid(t, iterations)
 	rsr.SimOptions.SaveAllValues = true
 
 	merge := handMerge{t: t}
@@ -222,6 +246,7 @@ func TestRaidSimShardsMatchHandMerge(t *testing.T) {
 
 	// one seed and shard count, one result
 	requireSameResult(t, got, core.RunRaidSimShards(clone(rsr), nil, shards))
+	return got
 }
 
 func TestRaidSimShardsAgreeWithOneStream(t *testing.T) {
@@ -397,6 +422,7 @@ func (h *handMerge) unit(path string, got *proto.UnitMetrics, parts []*proto.Uni
 	h.near(path+".secondsOomAvg", got.SecondsOomAvg, oom, relative(oom))
 	death := h.weighted(pick(parts, (*proto.UnitMetrics).GetChanceOfDeath))
 	h.near(path+".chanceOfDeath", got.ChanceOfDeath, death, relative(death))
+	h.healthMargins(path, got, parts)
 
 	h.actions(path, got.Actions, pick(parts, (*proto.UnitMetrics).GetActions))
 	h.auras(path, got.Auras, pick(parts, (*proto.UnitMetrics).GetAuras))
@@ -408,6 +434,34 @@ func (h *handMerge) unit(path string, got *proto.UnitMetrics, parts []*proto.Uni
 	for i, pet := range got.Pets {
 		h.unit(path, pet, pick(parts, func(u *proto.UnitMetrics) *proto.UnitMetrics { return u.Pets[i] }))
 	}
+}
+
+// Per-iteration values run on in shard order; the margin's mean and standard deviation pool.
+func (h *handMerge) healthMargins(path string, got *proto.UnitMetrics, parts []*proto.UnitMetrics) {
+	h.t.Helper()
+	if want := slices.Concat(pick(parts, (*proto.UnitMetrics).GetIterationDeaths)...); !slices.Equal(got.IterationDeaths, want) {
+		h.t.Errorf("%s.iterationDeaths = %v, want %v", path, got.IterationDeaths, want)
+	}
+	if want := slices.Concat(pick(parts, (*proto.UnitMetrics).GetIterationHealthMargins)...); !slices.Equal(got.IterationHealthMargins, want) {
+		h.t.Errorf("%s.iterationHealthMargins = %v, want %v", path, got.IterationHealthMargins, want)
+	}
+	if want := slices.Concat(pick(parts, (*proto.UnitMetrics).GetIterationFirstDeathSeconds)...); !slices.Equal(got.IterationFirstDeathSeconds, want) {
+		h.t.Errorf("%s.iterationFirstDeathSeconds = %v, want %v", path, got.IterationFirstDeathSeconds, want)
+	}
+	if parts[0].HealthMarginAvg == nil {
+		if got.HealthMarginAvg != nil {
+			h.t.Errorf("%s.healthMarginAvg = %v, want none", path, *got.HealthMarginAvg)
+		}
+		return
+	}
+	if got.HealthMarginAvg == nil {
+		h.t.Errorf("%s.healthMarginAvg is missing", path)
+		return
+	}
+	means := pick(parts, (*proto.UnitMetrics).GetHealthMarginAvg)
+	avg := h.weighted(means)
+	h.near(path+".healthMarginAvg", *got.HealthMarginAvg, avg, relative(avg))
+	h.stdev(path+".healthMarginStdev", got.HealthMarginStdev, means, pick(parts, (*proto.UnitMetrics).GetHealthMarginStdev), h.sizes, avg)
 }
 
 func (h *handMerge) actions(path string, got []*proto.ActionMetrics, parts [][]*proto.ActionMetrics) {

@@ -90,12 +90,13 @@ export function defaultTabSettings(contentPhase: number): OptimizerTabSettings {
 	};
 }
 
-// The survival/threat slider as metric weights, mirroring optimizer.TankWeights: survival splits
-// evenly between the damage taken, how spiky it is and the chance of dying, threat goes to TPS. The
-// normalizers put all of them in the same units, so the slider trades one against the other.
+// The survival/threat slider as metric weights, mirroring optimizer.TankWeights: half of survival goes
+// to the health margin, the rest splits evenly between the damage taken, how spiky it is and the
+// chance of dying, and threat goes to TPS. The normalizers put all of them in the same units, so the
+// slider trades one against the other.
 export function tankMetricWeights(survival: number): OptimizerMetrics {
 	const s = Math.min(1, Math.max(0, survival));
-	return OptimizerMetrics.create({ dtps: s / 3, tmi: s / 3, pDeath: s / 3, tps: 1 - s });
+	return OptimizerMetrics.create({ healthMargin: s / 2, dtps: s / 6, tmi: s / 6, pDeath: s / 6, tps: 1 - s });
 }
 
 export interface PoolBuilderInput {
@@ -607,6 +608,10 @@ function toSimItem(item: Item): SimItem {
 // way a phase's result can't keep gear from a later phase. Locked slots keep the seed's choice, but a
 // locked second ring, trinket or off-hand weapon moves up, lock and all, when the first slot empties.
 // The untrimmed gear goes along as `equipped`, which the result scores against.
+//
+// A tank's pool leaves out enchants and gems that only resist: the optimizer prices and sims a tank's
+// gear resistance as none, since it answers the one boss the tank fight models (sim/optimizer's
+// gearResistance).
 export function buildOptimizeRequest(input: PoolBuilderInput): BuiltRequest {
 	const { settings, catalog } = input;
 	const base = RaidSimRequest.clone(input.base);
@@ -625,6 +630,8 @@ export function buildOptimizeRequest(input: PoolBuilderInput): BuiltRequest {
 		const row = catalog.item(id);
 		return !excluded.has(id) && isAvailable(row, availability) && hasProfession(profession) && hasProfession(row!.requiredProfession);
 	};
+	const tank = isTank(target);
+	const resisting = { enchants: new Set<number>(), gems: new Set<number>() };
 
 	// Locked slots too: the trimmer can move a locked item to another slot, which frees its own.
 	const offers: SlotOffers = new Map();
@@ -644,7 +651,13 @@ export function buildOptimizeRequest(input: PoolBuilderInput): BuiltRequest {
 			}
 			return false;
 		});
-		const enchants = input.getEnchants(slot).filter(enchant => enchant.effectId != 0 && hasProfession(enchant.requiredProfession));
+		const enchants = input.getEnchants(slot).filter(enchant => {
+			if (tank && isResistanceOnly(enchant.stats)) {
+				resisting.enchants.add(enchant.effectId);
+				return false;
+			}
+			return enchant.effectId != 0 && hasProfession(enchant.requiredProfession);
+		});
 		const slotOffers = new Map<number, ItemOffer>();
 		for (const item of items) {
 			const fits = new Map<number, Enchant>();
@@ -659,10 +672,13 @@ export function buildOptimizeRequest(input: PoolBuilderInput): BuiltRequest {
 	}
 
 	const poolGems = new Map<number, Gem>();
-	input.db
-		.getGems()
-		.filter(gem => usable(gem.id, gem.requiredProfession, anySource))
-		.forEach(gem => poolGems.set(gem.id, gem));
+	for (const gem of input.db.getGems()) {
+		if (tank && isResistanceOnly(gem.stats)) {
+			resisting.gems.add(gem.id);
+		} else if (usable(gem.id, gem.requiredProfession, anySource)) {
+			poolGems.set(gem.id, gem);
+		}
+	}
 	const metaConditions = new Map<number, MetaGemCondition>();
 	for (const gem of poolGems.values()) {
 		const condition = gem.color == GemColor.GemColorMeta ? metaGemConditionProto(gem.id) : undefined;
@@ -683,6 +699,7 @@ export function buildOptimizeRequest(input: PoolBuilderInput): BuiltRequest {
 		poolGems,
 		metaConditions,
 		reforgingFor(base.encounter?.serverSettings),
+		resisting,
 	);
 	target.equipment = seed.trim(settings.contentPhase);
 	pruneDominatedItems(offers, catalog, equipped);
@@ -725,7 +742,6 @@ export function buildOptimizeRequest(input: PoolBuilderInput): BuiltRequest {
 
 	// tanks fight their phase's boss, and the healing they take follows it; everyone else gets the
 	// plain level 83 boss
-	const tank = isTank(target);
 	const tankFight = tank ? tankEncounter(base.encounter, settings.contentPhase) : undefined;
 	base.encounter = tankFight ?? optimizerEncounter(base.encounter);
 	const boss = base.encounter.targets[0];
@@ -782,6 +798,19 @@ export function buildOptimizeRequest(input: PoolBuilderInput): BuiltRequest {
 	return { request, seedChanges: seed.changes, seedLeftOut: seed.leftOut, bossName: boss?.name || 'a level 83 boss' };
 }
 
+const RESISTANCES = [
+	Stat.StatArcaneResistance,
+	Stat.StatFireResistance,
+	Stat.StatFrostResistance,
+	Stat.StatNatureResistance,
+	Stat.StatShadowResistance,
+];
+
+// Some resistance and nothing else: a fur lining, a resistance cloak enchant, Void Sphere.
+export function isResistanceOnly(stats: Array<number>): boolean {
+	return stats.some(v => v != 0) && stats.every((v, stat) => v == 0 || RESISTANCES.includes(stat));
+}
+
 // A player proto's spec can be unset in a half-built raid, which playerToSpec throws on; nothing
 // there is a tank.
 function isTank(player: PlayerProto): boolean {
@@ -811,6 +840,8 @@ class SeedTrimmer {
 		private readonly poolGems: Map<number, Gem>,
 		private readonly metaConditions: Map<number, MetaGemCondition>,
 		private readonly reforging: Reforging,
+		// what a tank's pool left out for only resisting
+		private readonly resisting: { enchants: Set<number>; gems: Set<number> },
 	) {
 		this.specs = ALL_SLOTS.map(slot => ItemSpec.clone(equipment?.items[slot] || ItemSpec.create()));
 	}
@@ -875,7 +906,8 @@ class SeedTrimmer {
 			return;
 		}
 		if (spec.enchant != 0 && !offer.enchants.has(spec.enchant)) {
-			this.note(slot, `dropped the enchant on ${item.name}, which the pool doesn't offer.`);
+			const why = this.resisting.enchants.has(spec.enchant) ? ': the optimizer counts no resistance for a tank' : ", which the pool doesn't offer";
+			this.note(slot, `dropped the enchant on ${item.name}${why}.`);
 			spec.enchant = 0;
 		}
 		if (spec.reforge && (spec.reforge.fromStatType != 0 || spec.reforge.toStatType != 0) && !isValidReforge(item, spec.reforge, this.reforging)) {
@@ -889,7 +921,13 @@ class SeedTrimmer {
 			}
 			const gem = this.poolGems.get(id);
 			if (i >= sockets.length || !gem || (gem.color == GemColor.GemColorMeta) != (sockets[i] == GemColor.GemColorMeta)) {
-				const why = gem ? '' : this.excluded.has(id) ? ': it is excluded' : `: it isn't in the P${contentPhase} pool`;
+				const why = gem
+					? ''
+					: this.excluded.has(id)
+						? ': it is excluded'
+						: this.resisting.gems.has(id)
+							? ': the optimizer counts no resistance for a tank'
+							: `: it isn't in the P${contentPhase} pool`;
 				this.note(slot, `took ${this.gemName(id)} out of ${item.name}${why}.`);
 				return 0;
 			}

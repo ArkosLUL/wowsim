@@ -153,11 +153,14 @@ func (f *fakeEvaluator) Evaluate(ctx context.Context, points []Point, iterations
 	f.calls++
 	f.points += len(points)
 	sharedRng := rand.New(rand.NewSource(int64(len(f.noise)) + 7))
+	// the margin draws from its own stream, so the other metrics' noise stays as it was before it
+	marginRng := rand.New(rand.NewSource(int64(len(f.noise)) + 1007))
 	for len(f.noise) < iterations {
 		var n [NumMetrics]float64
-		for m := range n {
+		for m := MetricDPS; m < MetricHealthMargin; m++ {
 			n[m] = sharedRng.NormFloat64()
 		}
+		n[MetricHealthMargin] = marginRng.NormFloat64()
 		f.noise = append(f.noise, n)
 	}
 	out := make([]*Evaluation, len(points))
@@ -171,7 +174,11 @@ func (f *fakeEvaluator) Evaluate(ctx context.Context, points []Point, iterations
 			}
 		}
 		values[MetricPDeath] = deathFlags(iterations, int(math.Round(mean[MetricPDeath]*float64(iterations))))
-		s, err := newShard(values, [NumMetrics]bool{true, true, true, true, true})
+		values[MetricHealthMargin] = make([]float64, iterations)
+		for it := range values[MetricHealthMargin] {
+			values[MetricHealthMargin][it] = mean[MetricHealthMargin] + f.shared*f.noise[it][MetricHealthMargin]
+		}
+		s, err := newShard(values, [NumMetrics]bool{true, true, true, true, true, MetricHealthMargin: true})
 		if err != nil {
 			return nil, err
 		}

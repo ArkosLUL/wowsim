@@ -408,6 +408,12 @@ export class UnitMetrics {
 		return this.metrics.chanceOfDeath * 100;
 	}
 
+	// the lowest health it reached, past 0 where it died; only a tank with a healing model has one
+	get healthMargin(): { avg: number; stdev: number } | undefined {
+		const avg = this.metrics.healthMarginAvg;
+		return avg === undefined ? undefined : { avg, stdev: this.metrics.healthMarginStdev };
+	}
+
 	get maxThreat() {
 		return this.threatLogs[this.threatLogs.length - 1]?.threatAfter || 0;
 	}

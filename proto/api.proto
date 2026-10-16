@@ -272,6 +272,17 @@ message UnitMetrics {
 	// Whether the unit died, one entry per iteration in order. Only with
 	// SimOptions.save_all_values, and only for a unit that tanks a target.
 	repeated bool iteration_deaths = 18;
+
+	// Lowest health the unit reached in each iteration, going on past 0 by the overkill no heal has
+	// paid back yet, so it's 0 or less exactly where the unit died. Only with
+	// SimOptions.save_all_values, and only for a unit that tanks a target with a healing model.
+	repeated double iteration_health_margins = 19;
+	// Mean and standard deviation of that over every iteration; unset for any other unit.
+	optional double health_margin_avg = 20;
+	double health_margin_stdev = 21;
+	// Seconds to the unit's first death in each iteration, or the iteration's length where it lived.
+	// Kept like iteration_health_margins.
+	repeated double iteration_first_death_seconds = 22;
 }
 
 // Results for a whole raid.

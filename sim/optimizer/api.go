@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"math/rand"
 	"runtime/debug"
 	"runtime/trace"
@@ -226,6 +227,8 @@ type run struct {
 
 	// The death normalizer a second search prices death chance with, taken at the first pick.
 	deathAt *deathMeasure
+	// Sims the time-to-live fight; made on first use.
+	lives *countingEvaluator
 }
 
 // traceHook, when set, gets a line for each decision a run makes. Tests set it to t.Logf.
@@ -275,7 +278,7 @@ func optimize(ctx context.Context, asked, simmed *Request, eval Evaluator, progr
 		return result
 	}
 	// the second search reads the first's cached points again; only what it adds to them was simmed
-	second.TotalSims = int32(first.eval.simmed() + measured.simmed() + secondRun.eval.simmedBeyond(first.eval))
+	second.TotalSims = int32(first.eval.simmed() + measured.simmed() + secondRun.eval.simmedBeyond(first.eval) + first.livesSimmed() + secondRun.livesSimmed())
 	second.Warnings = append([]string{fmt.Sprintf("%s; the first search's pick dies in %.0f%% of iterations and %g Armor moves that %.1f standard errors, so a second search counted death chance from that pick",
 		first.obj.DeathWarning, dm.Dies*100, normalizerOffset(stats.Armor), -dm.Norm.Mean/dm.Norm.SE)}, second.Warnings...)
 	second.Warnings = slices.Compact(second.Warnings)
@@ -417,6 +420,14 @@ func (r *run) execute() *proto.OptimizerResult {
 	if err != nil {
 		return r.stop(fmt.Errorf("seed sims: %w", err))
 	}
+	if err := r.checkNaN("the gear the search starts from", r.r.Seed, evals[0]); err != nil {
+		return r.fail(err)
+	}
+	if len(evals) > 1 {
+		if err := r.checkNaN("the gear as equipped", r.ref, evals[1]); err != nil {
+			return r.fail(err)
+		}
+	}
 	r.seedEval, r.bestEval = evals[0], evals[0]
 	r.seedJ = obj.Score(r.seedEval)
 	if len(evals) > 1 {
@@ -484,17 +495,20 @@ func (r *run) execute() *proto.OptimizerResult {
 	if err != nil {
 		return r.stop(err)
 	}
-	waitCalibration()
+	if err := waitCalibration(); err != nil {
+		return r.fail(err)
+	}
 	return r.result(verified, alternatives)
 }
 
 // calibrate kicks off, in the background, a sim of the seed inside the real raid r.asked names, so it
 // overlaps every later stage; the wait it returns sets calibrationGap once the seed eval it compares
 // against is ready too. A lone target has no real raid to differ from, raid mode already scores
-// against it directly, and a tank's survival/threat blend has no DPS term to compare.
-func (r *run) calibrate() (wait func()) {
+// against it directly, and a tank's survival/threat blend has no DPS term to compare. The wait fails
+// on a NaN, which would leave the result's calibrationGap junk.
+func (r *run) calibrate() (wait func() error) {
 	if r.raidMode() || r.obj.Weights[MetricDPS] == 0 || !hasOtherPlayers(r.asked.Base.Raid, r.asked.TargetIndex) {
-		return func() {}
+		return func() error { return nil }
 	}
 	seed := r.r.Seed
 	iterations := r.budget.Iterations
@@ -512,17 +526,32 @@ func (r *run) calibrate() (wait func()) {
 		}
 		real = evals[0].ownDPS()
 	}()
-	return func() {
+	return func() error {
 		<-done
 		if simErr != nil {
 			r.warn("calibration: %v", simErr)
-			return
+			return nil
 		}
-		if real == 0 {
-			return
-		}
-		r.calibrationGap = (r.seedEval.Metrics[MetricDPS].Mean - real) / real
+		gap, err := calibrationGap(seed, r.seedEval.Metrics[MetricDPS].Mean, real)
+		r.calibrationGap = gap
+		return err
 	}
+}
+
+// calibrationGap is how far own DPS sits from real, as a fraction of real: 0 where real is, and an
+// error where either is NaN.
+func calibrationGap(seed Loadout, own, real float64) (float64, error) {
+	switch {
+	case math.IsNaN(real):
+		return 0, fmt.Errorf("the gear the search starts from%s sims DPS as NaN inside the real raid, so calibration can't compare it", emptySlots(seed))
+	case real == 0:
+		return 0, nil
+	}
+	gap := (own - real) / real
+	if math.IsNaN(gap) {
+		return 0, fmt.Errorf("the gear the search starts from%s calibrates to NaN against the real raid", emptySlots(seed))
+	}
+	return gap, nil
 }
 
 // healingPresimIterations is core's numPresimIterations, so a pinned HPS is the number the presim
@@ -554,8 +583,7 @@ func (r *run) pinHealingModel() (err error) {
 	rsr.SimOptions = &proto.SimOptions{Iterations: healingPresimIterations, RandomSeed: 1, IsTest: true}
 	player := rsr.Raid.Parties[r.r.TargetIndex/5].Players[r.r.TargetIndex%5]
 	player.HealingModel = nil
-	player.Equipment = r.r.Equipped.Equipment()
-	player.RacialTraits = r.r.Equipped.RacialTraits
+	dress(player, r.r.Equipped, stats.Stats{})
 	result := core.RunRaidSim(rsr)
 	if result.ErrorResult != "" {
 		return errors.New(firstLine(result.ErrorResult))
@@ -600,7 +628,7 @@ func (r *run) fail(err error) *proto.OptimizerResult {
 		TargetRaidIndex: int32(r.asked.TargetIndex),
 		SimCommit:       SimCommit,
 		CatalogDate:     r.asked.Pool.GetCatalogDate(),
-		TotalSims:       int32(r.eval.simmed()),
+		TotalSims:       int32(r.simmed()),
 		ElapsedSeconds:  time.Since(r.start).Seconds(),
 		Warnings:        r.allWarnings(),
 		ErrorResult:     err.Error(),
@@ -965,7 +993,7 @@ func (r *run) result(verified []*verifiedLoadout, alternatives []*proto.Optimize
 	for _, v := range verified {
 		addTop(v.loadout, v.eval)
 	}
-	result.TotalSims = int32(r.eval.simmed())
+	result.TotalSims = int32(r.simmed())
 	result.ElapsedSeconds = time.Since(r.start).Seconds()
 	result.Warnings = r.allWarnings()
 	return result

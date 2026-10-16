@@ -20,16 +20,24 @@ func playerSheet(base *proto.RaidSimRequest, targetIndex int, l Loadout, offset 
 // sheetRequest is base with the target wearing l, offset added to its bonus stats.
 func sheetRequest(base *proto.RaidSimRequest, targetIndex int, l Loadout, offset stats.Stats) *proto.RaidSimRequest {
 	rsr := goproto.Clone(base).(*proto.RaidSimRequest)
-	player := rsr.Raid.Parties[targetIndex/5].Players[targetIndex%5]
+	dress(rsr.Raid.Parties[targetIndex/5].Players[targetIndex%5], l, offset)
+	return rsr
+}
+
+// dress puts l on player, with offset added to its bonus stats. A tank's gear resistance comes back
+// off there too (see gearResistance).
+func dress(player *proto.Player, l Loadout, offset stats.Stats) {
 	player.Equipment = l.Equipment()
 	player.RacialTraits = l.RacialTraits
+	if tankSpec(player) {
+		offset = offset.Subtract(gearResistance(l))
+	}
 	if offset != (stats.Stats{}) {
 		if player.BonusStats == nil {
 			player.BonusStats = &proto.UnitStats{}
 		}
 		player.BonusStats.Stats = stats.FromFloatArray(player.BonusStats.Stats).Add(offset).ToFloatArray()
 	}
-	return rsr
 }
 
 // sheetMemo keeps each loadout's sheet, since a run asks for the same ones over and over: verify,

@@ -13,12 +13,12 @@ import (
 // Objective is the score J the search maximizes: the sum over metrics of r[m] * M[m] / w[m]. w[m] is
 // how much one point of the metric's reference stat moves it at the seed, which puts every term in
 // reference-stat points, so the weights r[m] trade like for like. w is negative for DTPS, TMI and
-// death chance (more Armor lowers them), so lowering those raises J.
+// death chance (more Armor lowers them), so lowering those raises J; the health margin's is positive.
 type Objective struct {
 	// r[m] as run: the settings' weights, or DPS alone when they're all 0.
 	Weights Metrics
 	// What each w[m] is measured against: the spec's EP reference stat for DPS, HPS and TPS, Armor
-	// for the rest.
+	// for the survival metrics.
 	ReferenceStats [NumMetrics]stats.Stat
 	// w[m] per point of its reference stat, measured at the seed and frozen there.
 	Normalizers [NumMetrics]Estimate
@@ -118,6 +118,9 @@ func (o *Objective) countDeathAt(dm deathMeasure) {
 // Lower is better for these, so their normalizers must come out negative.
 var lowerIsBetter = [NumMetrics]bool{MetricDTPS: true, MetricTMI: true, MetricPDeath: true}
 
+// The survival metrics, normalized on Armor whichever way they run.
+var armorReferenced = [NumMetrics]bool{MetricDTPS: true, MetricTMI: true, MetricPDeath: true, MetricHealthMargin: true}
+
 // objectiveWeights is where raid mode (J = raid DPS) plugs in.
 func objectiveWeights(settings *proto.OptimizerSettings) (Metrics, error) {
 	var weights Metrics
@@ -151,18 +154,20 @@ func objectiveWeights(settings *proto.OptimizerSettings) (Metrics, error) {
 	return weights, nil
 }
 
-// TankWeights turns the survival/threat slider into metric weights. Survival splits evenly between
-// the damage the tank takes, how spiky it is and how often it dies, threat goes to TPS; the normalizers
-// then put all of them in the same units, so the slider trades one against the other.
+// TankWeights turns the survival/threat slider into metric weights. Half the survival share goes to
+// the health margin, which prices Stamina as the effective health it is; the rest splits evenly
+// between the damage the tank takes, how spiky it is and how often it dies, and threat goes to TPS.
+// The normalizers then put all of them in the same units, so the slider trades one against the other.
 //
 // The UI sends metric_weights as well, and those win: this is what a request that only carries the
 // slider - the CLI, an export replayed by hand - runs.
 func TankWeights(survival float64) Metrics {
 	survival = min(1, max(0, survival))
 	var weights Metrics
-	weights[MetricDTPS] = survival / 3
-	weights[MetricTMI] = survival / 3
-	weights[MetricPDeath] = survival / 3
+	weights[MetricHealthMargin] = survival / 2
+	weights[MetricDTPS] = survival / 6
+	weights[MetricTMI] = survival / 6
+	weights[MetricPDeath] = survival / 6
 	weights[MetricTPS] = 1 - survival
 	return weights
 }
@@ -219,7 +224,7 @@ func NewObjective(ctx context.Context, eval Evaluator, r *Request, iterations in
 	ref := referenceStat(r.Target())
 	for m := range o.ReferenceStats {
 		o.ReferenceStats[m] = ref
-		if lowerIsBetter[m] {
+		if armorReferenced[m] {
 			o.ReferenceStats[m] = core.DTPSReferenceStat
 		}
 	}
@@ -270,6 +275,10 @@ func NewObjective(ctx context.Context, eval Evaluator, r *Request, iterations in
 		signed := norm.Mean
 		if lowerIsBetter[m] {
 			signed = -signed
+		}
+		if Metric(m) == MetricHealthMargin && evals[i].Metrics[m] == (Estimate{}) && evals[i+1].Metrics[m] == (Estimate{}) {
+			o.Warnings = append(o.Warnings, "left health margin out of the objective: the target has no healing model, so the sim tracks no health for it")
+			continue
 		}
 		if signed <= 2*norm.SE {
 			o.Warnings = append(o.Warnings, fmt.Sprintf("left %s out of the objective: %g %s doesn't move it measurably there (%g ± %g per point)",
@@ -323,6 +332,8 @@ func metricName(m Metric) string {
 		return "TMI"
 	case MetricPDeath:
 		return "death chance"
+	case MetricHealthMargin:
+		return "health margin"
 	}
 	return fmt.Sprintf("metric %d", m)
 }

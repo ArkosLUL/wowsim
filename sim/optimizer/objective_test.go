@@ -196,7 +196,7 @@ func TestNewObjectiveNormalizesAgainstEquippedNotTrimmedSeed(t *testing.T) {
 // landing more threat.
 func TestTankSliderObjective(t *testing.T) {
 	slider, err := objectiveWeights(&proto.OptimizerSettings{TankSurvival: 0.7})
-	want := Metrics{MetricTPS: 0.3, MetricDTPS: 0.7 / 3, MetricTMI: 0.7 / 3, MetricPDeath: 0.7 / 3}
+	want := Metrics{MetricTPS: 0.3, MetricHealthMargin: 0.35, MetricDTPS: 0.7 / 6, MetricTMI: 0.7 / 6, MetricPDeath: 0.7 / 6}
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -252,6 +252,49 @@ func TestTankSliderObjective(t *testing.T) {
 	}
 	if d := o.Delta(evals[0], evals[2]); d.Mean <= 2*d.SE {
 		t.Errorf("50 more TPS moved J by %+v; it should raise it", d)
+	}
+}
+
+// The health margin is normalized on Armor like the other survival metrics, but higher is better, so
+// its normalizer and coefficient come out positive and more margin raises J.
+func TestHealthMarginNormalizesOnArmor(t *testing.T) {
+	r := tankRequest(t, &proto.OptimizerMetrics{Tps: 0.3, HealthMargin: 0.7})
+	fake := newFakeEvaluator(func(p Point) Metrics {
+		return Metrics{
+			MetricTPS:          3000 + p.Offset[stats.AttackPower],
+			MetricHealthMargin: 20000 + 2*p.Offset[stats.Armor] + p.Offset[stats.Health],
+		}
+	})
+	fake.shared, fake.own = 0.01, 0.0001
+	o, err := NewObjective(context.Background(), fake, r, 1000)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if o.ReferenceStats[MetricHealthMargin] != stats.Armor || !near(o.Normalizers[MetricHealthMargin].Mean, 2, 0.01) || o.coef[MetricHealthMargin] <= 0 {
+		t.Errorf("margin against %s: %+v per point, coefficient %v; want Armor, 2 and positive",
+			o.ReferenceStats[MetricHealthMargin].StatName(), o.Normalizers[MetricHealthMargin], o.coef[MetricHealthMargin])
+	}
+	if len(o.Warnings) != 0 {
+		t.Errorf("warnings %q", o.Warnings)
+	}
+	// 1000 more health is 1000 more margin: 500 Armor's worth, at the margin's 0.7
+	evals := evaluate(t, fake, 1000, Point{Loadout: r.Seed}, withOffset(r.Seed, stats.Health, 1000))
+	if d := o.Delta(evals[0], evals[1]); !near(d.Mean, 0.7*500, 1) {
+		t.Errorf("1000 more margin moved J %+v, want %v", d, 0.7*500)
+	}
+}
+
+// A target with no healing model reports no margin at all, and the warning says why.
+func TestHealthMarginLeftOutWithoutAHealingModel(t *testing.T) {
+	r := tankRequest(t, &proto.OptimizerMetrics{Tps: 0.3, HealthMargin: 0.7})
+	fake := newFakeEvaluator(func(p Point) Metrics { return Metrics{MetricTPS: 3000 + p.Offset[stats.AttackPower]} })
+	fake.shared, fake.own = 0, 0
+	o, err := NewObjective(context.Background(), fake, r, 1000)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if o.coef[MetricHealthMargin] != 0 || len(o.Warnings) != 1 || !strings.Contains(o.Warnings[0], "no healing model") {
+		t.Errorf("coefficient %v, warnings %q; want the margin left out for want of a healing model", o.coef[MetricHealthMargin], o.Warnings)
 	}
 }
 

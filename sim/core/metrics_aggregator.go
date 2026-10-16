@@ -98,6 +98,13 @@ type UnitMetrics struct {
 	oomTimeSum   float64
 	actions      map[ActionID]*ActionMetrics
 	resources    []*ResourceMetrics
+
+	// For a unit that tanks with a healing model: its lowest health each iteration (see
+	// healthBar.lowestHealth), and per iteration under SaveAllValues, with the first death's time.
+	keepsHealthMargin bool
+	healthMargin      aggregator
+	healthMargins     []float64
+	firstDeaths       []float64
 }
 
 // Metrics for the current iteration, for 1 agent. Keep this as a separate
@@ -112,6 +119,8 @@ type CharacterIterationMetrics struct {
 	OOMTime time.Duration // time spent not casting and waiting for regen.
 
 	FirstOOMTimestamp time.Duration // Timestamp at which unit first went OOM.
+
+	FirstDeathTimestamp time.Duration // When Died went true.
 }
 
 type ActionMetrics struct {
@@ -448,6 +457,19 @@ func (unitMetrics *UnitMetrics) doneIteration(unit *Unit, sim *Simulation) {
 	if sim.Options.SaveAllValues && unitMetrics.isTanking {
 		unitMetrics.deaths = append(unitMetrics.deaths, unitMetrics.Died)
 	}
+	if unitMetrics.keepsHealthMargin {
+		// lowestHealth moves on damage taken only; health lost any other way shows here at the end
+		margin := min(unit.healthBar.lowestHealth, unit.healthBar.shadowHealth())
+		unitMetrics.healthMargin.add(margin)
+		if sim.Options.SaveAllValues {
+			unitMetrics.healthMargins = append(unitMetrics.healthMargins, margin)
+			firstDeath := sim.Duration
+			if unitMetrics.Died {
+				firstDeath = unitMetrics.FirstDeathTimestamp
+			}
+			unitMetrics.firstDeaths = append(unitMetrics.firstDeaths, firstDeath.Seconds())
+		}
+	}
 }
 
 func (unitMetrics *UnitMetrics) calculateTMI(unit *Unit, sim *Simulation) float64 {
@@ -536,6 +558,17 @@ func (unitMetrics *UnitMetrics) ToProto() *proto.UnitMetrics {
 		ChanceOfDeath: float64(unitMetrics.numItersDead) / n,
 
 		IterationDeaths: unitMetrics.deaths,
+
+		IterationHealthMargins:     unitMetrics.healthMargins,
+		IterationFirstDeathSeconds: unitMetrics.firstDeaths,
+	}
+	if unitMetrics.keepsHealthMargin && unitMetrics.healthMargin.n > 0 {
+		mean, stdev := unitMetrics.healthMargin.meanAndStdDev()
+		protoMetrics.HealthMarginAvg = &mean
+		// rounding can take the variance a hair under 0
+		if !math.IsNaN(stdev) {
+			protoMetrics.HealthMarginStdev = stdev
+		}
 	}
 
 	// every action's messages share a few allocations
@@ -673,6 +706,9 @@ func (unitMetrics *UnitMetrics) merge(o *UnitMetrics) {
 	unitMetrics.numItersDead += o.numItersDead
 	unitMetrics.deaths = append(unitMetrics.deaths, o.deaths...)
 	unitMetrics.oomTimeSum += o.oomTimeSum
+	unitMetrics.healthMargin = *unitMetrics.healthMargin.merge(&o.healthMargin)
+	unitMetrics.healthMargins = append(unitMetrics.healthMargins, o.healthMargins...)
+	unitMetrics.firstDeaths = append(unitMetrics.firstDeaths, o.firstDeaths...)
 
 	for actionID, action := range o.actions {
 		if mine, ok := unitMetrics.actions[actionID]; ok {

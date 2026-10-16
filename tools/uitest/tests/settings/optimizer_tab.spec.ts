@@ -105,3 +105,53 @@ test('outclassed gear stays out of the pool unless worn, and then only in its ow
 	await expect.poll(() => requests.length).toBe(2);
 	expect(poolsWith(requests[1], DRAGONSPINE_TROPHY)).toEqual([ItemSlot.ItemSlotTrinket1]);
 });
+
+const VOID_SPHERE = 22459;
+// Superior Arcane, Fire, Nature, Shadow and Frost Resistance on a cloak
+const CLOAK_RESISTANCES = [1262, 1354, 1400, 1446, 3230];
+
+const offeredEnchants = (request: OptimizeGearRequest) => request.pool!.slots.flatMap(pool => pool.enchantOptions.flatMap(options => options.enchantIds));
+const target = (request: OptimizeGearRequest) => request.base!.raid!.parties[Math.floor(request.targetRaidIndex / 5)].players[request.targetRaidIndex % 5];
+
+test("a tank weighs its health margin, keeps its defensives for 35% health and gets no resistance-only gem or enchant", async ({ page }) => {
+	const requests: Array<OptimizeGearRequest> = [];
+	await page.route('**/optimizeGearAsync', async route => {
+		const body = route.request().postDataBuffer();
+		if (body) requests.push(OptimizeGearRequest.fromBinary(body));
+		await route.fulfill({ status: 200, body: '' });
+	});
+	await page.route('**/asyncProgress', route => route.fulfill({ status: 204 }));
+
+	await openOptimizer(page, 'protection_paladin');
+	const advanced = optimizerTab(page).locator('details.optimizer-advanced');
+	await advanced.locator('summary').click();
+	const weights = advanced.locator('.optimizer-floors .optimizer-inline');
+	await expect(weights).toHaveCount(7);
+	await expect(weights.last().locator('.optimizer-slot')).toHaveText('Health margin');
+	await expect(weights.last().locator('input')).toHaveValue('0.35');
+
+	await expect(optimizeButton(page)).toBeEnabled();
+	await optimizeButton(page).click();
+	await expect.poll(() => requests.length).toBe(1);
+	expect(requests[0].settings?.metricWeights?.healthMargin).toBe(0.35);
+	expect(target(requests[0]).cooldowns?.hpPercentForDefensives).toBe(0.35);
+	expect(requests[0].pool!.gemIds).not.toContain(VOID_SPHERE);
+	expect(offeredEnchants(requests[0]).filter(id => CLOAK_RESISTANCES.includes(id))).toEqual([]);
+});
+
+test('anyone but a tank keeps the resistance-only gems and enchants', async ({ page }) => {
+	const requests: Array<OptimizeGearRequest> = [];
+	await page.route('**/optimizeGearAsync', async route => {
+		const body = route.request().postDataBuffer();
+		if (body) requests.push(OptimizeGearRequest.fromBinary(body));
+		await route.fulfill({ status: 200, body: '' });
+	});
+	await page.route('**/asyncProgress', route => route.fulfill({ status: 204 }));
+
+	await openOptimizer(page);
+	await expect(optimizeButton(page)).toBeEnabled();
+	await optimizeButton(page).click();
+	await expect.poll(() => requests.length).toBe(1);
+	expect(requests[0].pool!.gemIds).toContain(VOID_SPHERE);
+	expect(offeredEnchants(requests[0]).filter(id => CLOAK_RESISTANCES.includes(id)).length).toBeGreaterThan(0);
+});

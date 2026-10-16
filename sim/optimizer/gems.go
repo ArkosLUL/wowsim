@@ -22,6 +22,12 @@ import (
 // jewelcrafter gems) and the socketed meta's colors. It fails when no gemming activates the meta.
 // The rest of l should already pass CheckGear.
 func (p *Pool) Gem(l Loadout, slots []proto.ItemSlot, value func(stats.Stats) float64) (Loadout, float64, error) {
+	return p.gemWithout(l, slots, value, nil)
+}
+
+// gemWithout is Gem with the banned gems out of the running. One already in a slot it doesn't regem
+// stays there.
+func (p *Pool) gemWithout(l Loadout, slots []proto.ItemSlot, value func(stats.Stats) float64, banned map[int32]bool) (Loadout, float64, error) {
 	var regem [NumSlots]bool
 	var items [NumSlots]*core.Item
 	for s, c := range l.Items {
@@ -40,7 +46,7 @@ func (p *Pool) Gem(l Loadout, slots []proto.ItemSlot, value func(stats.Stats) fl
 		}
 	}
 
-	dp := newGemDP(p, l, items, regem, value)
+	dp := newGemDP(p, l, items, regem, value, banned)
 	best, err := dp.solve()
 	if err != nil {
 		return l, 0, err
@@ -102,7 +108,7 @@ type gemDP struct {
 	fixedBonus float64
 }
 
-func newGemDP(p *Pool, l Loadout, items [NumSlots]*core.Item, regem [NumSlots]bool, value func(stats.Stats) float64) *gemDP {
+func newGemDP(p *Pool, l Loadout, items [NumSlots]*core.Item, regem [NumSlots]bool, value func(stats.Stats) float64, banned map[int32]bool) *gemDP {
 	dp := &gemDP{}
 
 	// the meta requirements and what the fixed gems already bring to them
@@ -167,7 +173,7 @@ func newGemDP(p *Pool, l Loadout, items [NumSlots]*core.Item, regem [NumSlots]bo
 		dp.steps[len(dp.steps)-1].last = true
 	}
 
-	dp.options = p.gemOptions(value, len(dp.steps))
+	dp.options = p.gemOptionsWithout(value, len(dp.steps), banned)
 	groupIndex := map[int32]int{}
 	uniqueIndex := map[int32]int{}
 	for i := range dp.options {
@@ -263,12 +269,20 @@ func (p *Pool) groupGems() {
 // uniqueness only differ by value: of a reusable kind the best is enough, of a unique kind the
 // best one per socket. A limited gem no better than a free one of the same colors never helps.
 func (p *Pool) gemOptions(value func(stats.Stats) float64, sockets int) []gemOption {
+	return p.gemOptionsWithout(value, sockets, nil)
+}
+
+// gemOptionsWithout is gemOptions with the banned gems out, so a kind's runner-up takes a banned
+// gem's place.
+func (p *Pool) gemOptionsWithout(value func(stats.Stats) float64, sockets int, banned map[int32]bool) []gemOption {
 	byKind := make([][]gemOption, len(p.gemKinds))
 	for i := range p.gemKinds {
 		k := &p.gemKinds[i]
-		options := make([]gemOption, len(k.gems))
-		for j, g := range k.gems {
-			options[j] = gemOption{id: g.Gem.ID, value: value(g.Gem.Stats), color: g.Gem.Color, colors: k.colors}
+		options := make([]gemOption, 0, len(k.gems))
+		for _, g := range k.gems {
+			if !banned[g.Gem.ID] {
+				options = append(options, gemOption{id: g.Gem.ID, value: value(g.Gem.Stats), color: g.Gem.Color, colors: k.colors})
+			}
 		}
 		byKind[i] = options
 	}
@@ -292,7 +306,7 @@ func (p *Pool) gemOptions(value func(stats.Stats) float64, sockets int) []gemOpt
 			keep = sockets
 		}
 		options = options[:min(keep, len(options))]
-		if (k.unique || k.category != 0) && k.free >= 0 {
+		if (k.unique || k.category != 0) && k.free >= 0 && len(byKind[k.free]) > 0 {
 			free := byKind[k.free]
 			best := free[0].value
 			for _, o := range free {

@@ -10,6 +10,7 @@ import (
 
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
+	"github.com/wowsims/wotlk/sim/core/stats"
 	"google.golang.org/protobuf/encoding/protojson"
 	goproto "google.golang.org/protobuf/proto"
 )
@@ -164,6 +165,21 @@ var metaConditions = map[int32][3]int32{
 	44082: {1, 0, 2}, 44084: {0, 2, 1}, 44087: {0, 0, 3}, 44088: {0, 1, 2}, 44089: {1, 1, 1},
 }
 
+// resistanceOnly mirrors the pool builder's isResistanceOnly: stats with a resistance and nothing else.
+func resistanceOnly(values []float64) bool {
+	found := false
+	for st, x := range values {
+		if x == 0 {
+			continue
+		}
+		if !slices.Contains(resistances[:], stats.Stat(st)) {
+			return false
+		}
+		found = true
+	}
+	return found
+}
+
 func playerFaction(race proto.Race) proto.Faction {
 	if slices.Contains(hordeRaces, race) {
 		return proto.Faction_Horde
@@ -286,8 +302,8 @@ func keepUnlessOutclassed(tb testing.TB, player *proto.Player) func(*proto.UIIte
 
 // realisticPool builds the pool the UI's pool builder would for the player at a content phase: the
 // class's usable items per slot at catalog tier <= 12 + phase, PvE only, for its faction or either,
-// with the enchants and gems that fit the same way. Item data stays in core's database, so the pool
-// carries none. keep, when set, narrows the items.
+// with the enchants and gems that fit the same way, less a tank's resistance-only ones. Item data
+// stays in core's database, so the pool carries none. keep, when set, narrows the items.
 func realisticPool(tb testing.TB, player *proto.Player, phase int32, keep func(*proto.UIItem) bool) *proto.CandidatePool {
 	tb.Helper()
 	uidb, catalog := loadRealData(tb)
@@ -308,6 +324,7 @@ func realisticPool(tb testing.TB, player *proto.Player, phase int32, keep func(*
 	}
 	spec := core.PlayerProtoToSpec(player)
 	professions := core.ProtoToProfessions(player)
+	tank := tankSpec(player)
 
 	pool := &proto.CandidatePool{CatalogDate: catalog.Date}
 	slots := map[proto.ItemSlot]*proto.SlotPool{}
@@ -333,7 +350,7 @@ func realisticPool(tb testing.TB, player *proto.Player, phase int32, keep func(*
 			sp.ItemIds = append(sp.ItemIds, item.Id)
 			var enchants []int32
 			for _, e := range uidb.Enchants {
-				if enchantFits(e, item, slot, player.Class, professions) && !slices.Contains(enchants, e.EffectId) {
+				if enchantFits(e, item, slot, player.Class, professions) && !(tank && resistanceOnly(e.Stats)) && !slices.Contains(enchants, e.EffectId) {
 					if _, ok := core.LookupEnchant(e.EffectId); ok {
 						enchants = append(enchants, e.EffectId)
 					}
@@ -354,7 +371,7 @@ func realisticPool(tb testing.TB, player *proto.Player, phase int32, keep func(*
 		}
 	}
 	for _, gem := range uidb.Gems {
-		if usable(gem.Id) == nil {
+		if usable(gem.Id) == nil || tank && resistanceOnly(gem.Stats) {
 			continue
 		}
 		if _, ok := core.LookupGem(gem.Id); !ok {

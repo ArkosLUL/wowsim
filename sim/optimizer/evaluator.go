@@ -49,6 +49,10 @@ type Evaluation struct {
 	// Mean and standard error per metric.
 	Metrics [NumMetrics]Estimate
 
+	// Seconds to the target's first death, the iteration's length where it lived. Zero when the sim
+	// kept none: core keeps them for a target that tanks with a healing model.
+	TimeToLive Estimate
+
 	// Per-iteration values of the metrics the evaluator keeps, for pairing. Death chance's are 1 for
 	// an iteration the target died in and 0 otherwise.
 	samples [NumMetrics][]float32
@@ -56,6 +60,34 @@ type Evaluation struct {
 	sumSq   [NumMetrics]float64
 	// the target's own DPS summed; differs from sum[MetricDPS] only from a raid-wide evaluator
 	ownDPSSum float64
+	lives     aggregate
+}
+
+// aggregate sums a value that only some sims report.
+type aggregate struct {
+	n          int
+	sum, sumSq float64
+}
+
+func (a *aggregate) add(values []float64) {
+	for _, x := range values {
+		a.n++
+		a.sum += x
+		a.sumSq += x * x
+	}
+}
+
+func (a *aggregate) merge(b aggregate) {
+	a.n += b.n
+	a.sum += b.sum
+	a.sumSq += b.sumSq
+}
+
+func (a aggregate) estimate() Estimate {
+	if a.n == 0 {
+		return Estimate{}
+	}
+	return meanAndSE(a.n, a.sum, a.sumSq)
 }
 
 // ownDPS is the target's own mean DPS, even where MetricDPS is the raid's.
@@ -73,14 +105,18 @@ type shard struct {
 	sum       [NumMetrics]float64
 	sumSq     [NumMetrics]float64
 	ownDPSSum float64
+	lives     aggregate
 }
 
 // newShard takes per-iteration values for every metric. Death chance's are 1 for a death and 0
-// otherwise; none at all means the sim tracked no deaths for the target, so it never died.
+// otherwise; none at all means the sim tracked no deaths for the target, so it never died. No health
+// margins means the target had no healing model, and they count as 0.
 func newShard(values [NumMetrics][]float64, keep [NumMetrics]bool) (shard, error) {
 	s := shard{n: len(values[MetricDPS])}
-	if values[MetricPDeath] == nil {
-		values[MetricPDeath] = make([]float64, s.n)
+	for _, m := range []Metric{MetricPDeath, MetricHealthMargin} {
+		if values[m] == nil {
+			values[m] = make([]float64, s.n)
+		}
 	}
 	for m, v := range values {
 		if len(v) != s.n {
@@ -106,7 +142,7 @@ func (e *Evaluation) extend(shards []shard) *Evaluation {
 	out := &Evaluation{}
 	if e != nil {
 		out.Iterations = e.Iterations
-		out.sum, out.sumSq, out.ownDPSSum = e.sum, e.sumSq, e.ownDPSSum
+		out.sum, out.sumSq, out.ownDPSSum, out.lives = e.sum, e.sumSq, e.ownDPSSum, e.lives
 	}
 	total := out.Iterations
 	for _, s := range shards {
@@ -127,6 +163,7 @@ func (e *Evaluation) extend(shards []shard) *Evaluation {
 	for _, s := range shards {
 		out.Iterations += s.n
 		out.ownDPSSum += s.ownDPSSum
+		out.lives.merge(s.lives)
 		for m := range out.sum {
 			out.sum[m] += s.sum[m]
 			out.sumSq[m] += s.sumSq[m]
@@ -142,6 +179,7 @@ func (e *Evaluation) extend(shards []shard) *Evaluation {
 	for m := range out.Metrics {
 		out.Metrics[m] = meanAndSE(out.Iterations, out.sum[m], out.sumSq[m])
 	}
+	out.TimeToLive = out.lives.estimate()
 	return out
 }
 
@@ -494,6 +532,8 @@ func (e *SimEvaluator) runSpan(p Point, first, n int) (s shard, err *SimError) {
 		MetricTPS:  m.GetThreat().GetAllValues(),
 		MetricDTPS: m.GetDtps().GetAllValues(),
 		MetricTMI:  m.GetTmi().GetAllValues(),
+
+		MetricHealthMargin: m.GetIterationHealthMargins(),
 	}
 	// core lists them only for a unit that tanks a target
 	if deaths := m.GetIterationDeaths(); len(deaths) > 0 {
@@ -517,6 +557,12 @@ func (e *SimEvaluator) runSpan(p Point, first, n int) (s shard, err *SimError) {
 	if verr != nil {
 		return s, &SimError{Point: p, Message: verr.Error()}
 	}
+	if lives := m.GetIterationFirstDeathSeconds(); len(lives) > 0 {
+		if len(lives) != n {
+			return s, &SimError{Point: p, Message: fmt.Sprintf("the sim reported %d first deaths for %d iterations", len(lives), n)}
+		}
+		s.lives.add(lives)
+	}
 	if e.raidWide {
 		s.ownDPSSum = 0
 		for _, x := range own {
@@ -530,15 +576,7 @@ func (e *SimEvaluator) runSpan(p Point, first, n int) (s shard, err *SimError) {
 // request clones the base for every sim: core's GetRaidBuffs writes into the raid it's given.
 func (e *SimEvaluator) request(p Point, first, n int) *proto.RaidSimRequest {
 	rsr := goproto.Clone(e.base).(*proto.RaidSimRequest)
-	player := rsr.Raid.Parties[e.targetIndex/5].Players[e.targetIndex%5]
-	player.Equipment = p.Loadout.Equipment()
-	player.RacialTraits = p.Loadout.RacialTraits
-	if p.Offset != (stats.Stats{}) {
-		if player.BonusStats == nil {
-			player.BonusStats = &proto.UnitStats{}
-		}
-		player.BonusStats.Stats = stats.FromFloatArray(player.BonusStats.Stats).Add(p.Offset).ToFloatArray()
-	}
+	dress(rsr.Raid.Parties[e.targetIndex/5].Players[e.targetIndex%5], p.Loadout, p.Offset)
 	rsr.SimOptions = &proto.SimOptions{
 		Iterations: int32(n),
 		// core reseeds iteration i with RandomSeed + i, so this gives the span the seeds one long sim would
