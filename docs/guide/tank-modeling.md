@@ -67,7 +67,8 @@ as equipped (not the trimmed seed, which a small pool leaves nearly naked). Cade
 that under `dualWield`, varied by `TANK_HEAL_CADENCE_VARIATION` (0.5) of itself, so the tank can die.
 
 Survival cooldowns fire below `hpPercentForDefensives`, 0.35 for a tank (`applySharedDefaults`); at 0 they
-fire on cooldown (`major_cooldown.go`). A saved raider keeps what it was saved with.
+fire on cooldown (`major_cooldown.go`). A saved raider keeps what it was saved with: the request's
+`cooldowns` comes from `rotation.simple.cooldowns`, so a save without it sends 0.
 
 ## Score
 
@@ -80,7 +81,9 @@ fire on cooldown (`major_cooldown.go`). A saved raider keeps what it was saved w
   (`currentHealth - healthDebt`, `sim/core/health.go`: overkill adds to the debt, overheal pays it off), so it
   runs on past 0 and is ≤ 0 exactly where the tank died. Higher is better; no cap; a death save counts as
   survived. +X max health moves it by exactly X unless something scales with max health: below 35%, Ardent
-  Defender's and Will of the Necropolis' cuts and a death save's heal make it less. Core keeps it,
+  Defender's and Will of the Necropolis' cuts, the defensives' threshold and a death save's heal. Measured on
+  the BiS fights, a Stamina point moves it 0.56 to 0.99 of the health it adds where the tank dies in up to 95%,
+  1.2 to 1.6 where it dies in 99% and up. Core keeps it,
   and each first-death time, only for a unit that tanks with a healing model (`UnitMetrics` 19 to 22); the
   results page shows it beside TMI and chance of death.
 - Chance of death pairs like the others: core lists each iteration's death (`UnitMetrics.iteration_deaths`,
@@ -108,8 +111,9 @@ fire on cooldown (`major_cooldown.go`). A saved raider keeps what it was saved w
   that break a rule are left out; the rest sim paired at the run's iterations. The best mean over the best
   takes its place (it must beat the seed where the best does), with a warning naming the swap. Twins join the
   verified list, so a tie takes them to time to live.
-- The Defense and hit floors come before the score: a P1 pool has almost no Defense, so its gems go there
-  though a Stamina socket is worth 1.4 to 2.6 times any other.
+- The Defense and hit floors come before the score. Gems are priced at the surrogate's slopes, and the gem
+  check bans one gem at a time at those slopes, so where the slopes miss, neither fixes it: P1 picks gem 3
+  Stamina in 11 to 13 sockets though a Stamina socket sims 4 to 8 times any other there.
 
 ## Resistance
 
@@ -122,16 +126,19 @@ keeps its magic.
 
 ## Measuring
 
-`TestMeasureTankModel` (worn gear: death chance, normalizers, dJ per stat point), `TestMeasureTankPicks`
-(the same at a batch export's picks, plus death chance against health), `TestMeasureTankDeathAtPicks` (the
-death normalizer, coefficient and cap at the worn gear and at a pick) and `TestMeasureTankDeathTerm` (the
-death normalizer under other Armor offsets, iteration counts and healing) sim the requests the page posted,
-never one rebuilt from its saved raid: the save holds no rotation (`TypeAuto` resolves as the page builds a
-request) and no raid buffs, so that tank only auto-attacks and dies far more often.
+`TestMeasureTankModel` (worn gear: death chance, margin, time to live, normalizers at Normal and Quick, dJ per
+stat point by term, margin per Stamina point against its health), `TestMeasureTankPicks` (the same at a batch
+export's picks, plus the run's warnings, gems by kind and death chance against health),
+`TestMeasureTankDeathAtPicks` (the death normalizer, coefficient and cap at the worn gear and at a pick) and
+`TestMeasureTankDeathTerm` (the death normalizer under other Armor offsets, iteration counts and healing) sim
+the requests the page posted, never one rebuilt from its saved raid: the save holds no rotation (`TypeAuto`
+resolves as the page builds a request) and no raid buffs, so that tank only auto-attacks and dies far more often.
 
 1. `python sim/optimizer/testdata/capture_requests.py tmp/requests --listen 3348 --server http://localhost:<sim port>`
    relays a browser to the sim server and saves each `/optimizeGearAsync` body; the page's run then fails at
-   once.
+   once. A tank saved without simple cooldowns sends defensives at 0 ([healing](#healing)): give it
+   `rotation.simple.cooldowns.hpPercentForDefensives` 0.35 in a copy of the storage the driver restores
+   (`<out>/storage-snapshot.json`), and check the captured requests.
 2. Run the tanks through `http://127.0.0.1:3348`, by hand or with the
    [acbis driver](../../tools/database/acbis/driver/README.md)'s `--base`, on a Chrome `--port` and `--out`
    of its own.

@@ -3,8 +3,10 @@ package optimizer
 import (
 	"context"
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/wowsims/wotlk/sim/core"
@@ -71,48 +73,155 @@ func tankFightRequest(tb testing.TB, name string, phase int32) *Request {
 	return r
 }
 
-// TestMeasureTankModel prints, per raider and phase, the tank fight's damage taken and chance of
-// death in the gear as worn, the objective's normalizers, and what one more point of stamina,
-// agility, dodge and defense rating is worth there. It asserts only that the objective keeps DTPS
-// and TMI: death chance drops out wherever the worn gear all but always or never dies.
+// The metrics a tank run weighs. The measurements keep samples of all of them, so their deltas pair.
+var tankMetrics = []Metric{MetricDTPS, MetricTMI, MetricTPS, MetricPDeath, MetricHealthMargin}
+
+// The ones normalized on Armor.
+var survivalMetrics = []Metric{MetricDTPS, MetricTMI, MetricPDeath, MetricHealthMargin}
+
+// tankOffsets are the stats the measurements add a bump of, with what one epic gem holds of each.
+var tankOffsets = []struct {
+	name string
+	stat stats.Stat
+	gem  float64
+}{
+	{"Stamina", stats.Stamina, 30}, {"Agility", stats.Agility, 20}, {"Dodge", stats.Dodge, 20}, {"Defense", stats.Defense, 20},
+}
+
+// seCount is how many standard errors n clears in the direction J wants.
+func seCount(m Metric, n Estimate) float64 {
+	if n.SE == 0 {
+		return 0
+	}
+	if lowerIsBetter[m] {
+		return -n.Mean / n.SE
+	}
+	return n.Mean / n.SE
+}
+
+// armorNormalizers are the survival metrics' normalizers from a pair of evals at -/+ the Armor offset.
+func armorNormalizers(down, up *Evaluation) (out [NumMetrics]Estimate) {
+	span := 2 * normalizerOffset(stats.Armor)
+	for _, m := range survivalMetrics {
+		d := Delta(down, up, m)
+		out[m] = Estimate{Mean: d.Mean / span, SE: d.SE / span}
+	}
+	return out
+}
+
+func normalizersText(norms [NumMetrics]Estimate) string {
+	parts := make([]string, len(survivalMetrics))
+	for i, m := range survivalMetrics {
+		parts[i] = fmt.Sprintf("%s %.4g ± %.2g (%.1f se)", metricName(m), norms[m].Mean, norms[m].SE, seCount(m, norms[m]))
+	}
+	return strings.Join(parts, "; ")
+}
+
+func coefficientsText(obj *Objective) string {
+	var parts []string
+	for m, c := range obj.coef {
+		if c != 0 {
+			parts = append(parts, fmt.Sprintf("%s %.4g", metricName(Metric(m)), c))
+		}
+	}
+	return strings.Join(parts, ", ")
+}
+
+// byTerm splits J(b) - J(a), per point of bump, into each counted metric's share.
+func byTerm(obj *Objective, a, b *Evaluation, bump float64) string {
+	var parts []string
+	for m, c := range obj.coef {
+		if c != 0 {
+			parts = append(parts, fmt.Sprintf("%s %+.4f", metricName(Metric(m)), c*Delta(a, b, Metric(m)).Mean/bump))
+		}
+	}
+	return strings.Join(parts, ", ")
+}
+
+// marginPerStamina is what bump Stamina moves the health margin by, per point, against the max health
+// it adds, and how many iterations move by all of it: less means something scaled with max health.
+func marginPerStamina(a, b *Evaluation, health, bump float64) string {
+	d := Delta(a, b, MetricHealthMargin)
+	as, bs := a.samples[MetricHealthMargin], b.samples[MetricHealthMargin]
+	n := min(len(as), len(bs))
+	whole, less := 0, 0
+	for i := 0; i < n; i++ {
+		switch shift := float64(bs[i]) - float64(as[i]); {
+		case math.Abs(shift-health) < 2:
+			whole++
+		case shift < health:
+			less++
+		}
+	}
+	return fmt.Sprintf("margin %+.2f ± %.2f against %.2f health (%.3f of it); %d of %d iterations move by all of it, %d by less",
+		d.Mean/bump, d.SE/bump, health/bump, d.Mean/health, whole, n, less)
+}
+
+// timesToLive sims the points in the run's time-to-live fight: healing off, 60 s from the pull.
+func timesToLive(tb testing.TB, r *Request, points []Point, iterations int) []Estimate {
+	tb.Helper()
+	evals, err := NewSimEvaluator(r).timeToLiveEvaluator(r).Evaluate(context.Background(), points, iterations)
+	if err != nil {
+		tb.Fatal(err)
+	}
+	out := make([]Estimate, len(evals))
+	for i, e := range evals {
+		out[i] = e.TimeToLive
+	}
+	return out
+}
+
+// TestMeasureTankModel prints, per raider and phase, the tank fight in the gear as worn: damage
+// taken, chance of death, health margin and time to live; the objective's normalizers at Normal and
+// at Quick; what one more point of stamina, agility, dodge and defense rating is worth there, term by
+// term; and what the margin gains per point of Stamina against the health it adds. It asserts only
+// that the objective keeps DTPS and TMI: death chance drops out wherever the worn gear all but
+// always or never dies.
 //
 //	BIS_REQUESTS=<dir> go test -tags with_db -run TestMeasureTankModel -v ./sim/optimizer/
 func TestMeasureTankModel(t *testing.T) {
+	ctx := context.Background()
 	budget := EffortBudget(proto.OptimizerEffort_OptimizerEffortNormal)
 	t.Logf("Normal budget: %+v", budget)
 	iterations := budget.Iterations
-	offsets := []struct {
-		name string
-		stat stats.Stat
-	}{
-		{"Stamina", stats.Stamina}, {"Agility", stats.Agility}, {"Dodge", stats.Dodge}, {"Defense", stats.Defense},
-	}
 	const bump = 100.0
 
 	for _, name := range []string{"Bulwark", "Felesta"} {
 		for phase := int32(1); phase <= 5; phase++ {
+			tag := fmt.Sprintf("%s P%d", name, phase)
 			r := tankFightRequest(t, name, phase)
-			eval := NewSimEvaluator(r, MetricDTPS, MetricTMI, MetricTPS, MetricPDeath)
-			obj, err := NewObjective(context.Background(), eval, r, iterations)
+			eval := NewSimEvaluator(r, tankMetrics...)
+			obj, err := NewObjective(ctx, eval, r, iterations)
 			if err != nil {
-				t.Fatalf("%s phase %d: %v", name, phase, err)
+				t.Fatalf("%s: %v", tag, err)
 			}
-			t.Logf("%s phase %d: pinned %.0f HPS, weights %v normalizers %+v warnings %v", name, phase,
-				r.Target().GetHealingModel().GetHps(), obj.Weights, obj.Normalizers, obj.Warnings)
-			for _, m := range []Metric{MetricDTPS, MetricTMI, MetricPDeath} {
-				norm := obj.Normalizers[m]
-				t.Logf("%s phase %d: %s moves %+.3g per Armor point, %.1f se", name, phase, metricName(m), norm.Mean, -norm.Mean/norm.SE)
-				if obj.coef[m] == 0 && m != MetricPDeath {
-					t.Errorf("%s phase %d: %s left out of the objective", name, phase, metricName(m))
+			t.Logf("%s: pinned %.0f HPS, defensives at %.2f, weights %v, warnings %v", tag,
+				r.Target().GetHealingModel().GetHps(), r.Target().GetCooldowns().GetHpPercentForDefensives(), obj.Weights, obj.Warnings)
+			t.Logf("%s normalizers per Armor point: %s; coefficients %s", tag, normalizersText(obj.Normalizers), coefficientsText(obj))
+			for _, m := range []Metric{MetricDTPS, MetricTMI} {
+				if obj.coef[m] == 0 {
+					t.Errorf("%s: %s left out of the objective", tag, metricName(m))
 				}
 			}
+
+			// what a Quick run measures at the same gear, its own shard spans included
+			quick := *r
+			quick.Settings = goproto.Clone(r.Settings).(*proto.OptimizerSettings)
+			quick.Settings.Effort = proto.OptimizerEffort_OptimizerEffortQuick
+			quickObj, err := NewObjective(ctx, NewSimEvaluator(&quick, tankMetrics...), &quick, QuickIterations)
+			if err != nil {
+				t.Fatalf("%s at Quick: %v", tag, err)
+			}
+			t.Logf("%s normalizers at Quick's %d iterations: %s; coefficients %s; warnings %v", tag, QuickIterations,
+				normalizersText(quickObj.Normalizers), coefficientsText(quickObj), quickObj.Warnings)
+
 			points := []Point{{Loadout: r.Equipped}}
-			for _, o := range offsets {
+			for _, o := range tankOffsets {
 				var offset stats.Stats
 				offset[o.stat] = bump
 				points = append(points, Point{Loadout: r.Equipped, Offset: offset})
 			}
-			evals, err := eval.Evaluate(context.Background(), points, iterations)
+			evals, err := eval.Evaluate(ctx, points, iterations)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -121,15 +230,25 @@ func TestMeasureTankModel(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			t.Logf("%s phase %d worn: health %.0f armor %.0f, DTPS %.0f TMI %.0f TPS %.0f death %.4f", name, phase,
+			more, err := playerSheet(r.Base, r.TargetIndex, r.Equipped, points[1].Offset)
+			if err != nil {
+				t.Fatal(err)
+			}
+			lives := timesToLive(t, r, points[:2], iterations)
+			margin := worn.Metrics[MetricHealthMargin]
+			t.Logf("%s worn: health %.0f armor %.0f, DTPS %.0f TMI %.0f TPS %.0f death %.4f margin %.0f ± %.0f, time to live %.2f ± %.2f s (%.2f with +%g Stamina)", tag,
 				sheet.FinalStats[stats.Health], sheet.FinalStats[stats.Armor],
-				worn.Metrics[MetricDTPS].Mean, worn.Metrics[MetricTMI].Mean, worn.Metrics[MetricTPS].Mean, worn.Metrics[MetricPDeath].Mean)
-			for i, o := range offsets {
-				d := obj.Delta(worn, evals[i+1])
-				t.Logf("%s phase %d: dJ per %s point %+.4f (se %.4f); dDTPS %+.3f dTMI %+.3f dDeath %+.6f",
-					name, phase, o.name, d.Mean/bump, d.SE/bump,
-					Delta(worn, evals[i+1], MetricDTPS).Mean/bump, Delta(worn, evals[i+1], MetricTMI).Mean/bump,
-					Delta(worn, evals[i+1], MetricPDeath).Mean/bump)
+				worn.Metrics[MetricDTPS].Mean, worn.Metrics[MetricTMI].Mean, worn.Metrics[MetricTPS].Mean, worn.Metrics[MetricPDeath].Mean,
+				margin.Mean, margin.SE, lives[0].Mean, lives[0].SE, lives[1].Mean, bump)
+			t.Logf("%s worn, per Stamina point: %s", tag,
+				marginPerStamina(worn, evals[1], more.FinalStats[stats.Health]-sheet.FinalStats[stats.Health], bump))
+			for i, o := range tankOffsets {
+				e := evals[i+1]
+				d := obj.Delta(worn, e)
+				t.Logf("%s: dJ per %s point %+.4f (se %.4f), by term %s; dDTPS %+.3f dTMI %+.3f dDeath %+.6f dMargin %+.2f",
+					tag, o.name, d.Mean/bump, d.SE/bump, byTerm(obj, worn, e, bump),
+					Delta(worn, e, MetricDTPS).Mean/bump, Delta(worn, e, MetricTMI).Mean/bump,
+					Delta(worn, e, MetricPDeath).Mean/bump, Delta(worn, e, MetricHealthMargin).Mean/bump)
 			}
 		}
 	}

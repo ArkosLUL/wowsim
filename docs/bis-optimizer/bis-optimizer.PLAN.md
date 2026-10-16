@@ -2803,3 +2803,74 @@ The Picks bullet runs on `integration`.
   predate `UnitMetrics` 19).
 - **Cross-review:** `TestHealthMarginSeesBonusHealthEnding`; `TestArdentDefenderSaveIsSurvived`
   (`sim/paladin/protection`): a boss swing the save absorbs leaves the tank alive at its pre-swing margin.
+
+**Picks** (`integration` `8a9fd80e8`, every Z12 item in). Both tanks, P1 to P5, stage 1, Normal, the 8 Oct roster
+and sources, one driver pass (2383 s, no other toolchain container running), plus P3 and P5 at Quick. The snapshot's
+tanks send defensives at 0, so the pass ran on a copy giving Bulwark and Felesta
+`rotation.simple.cooldowns.hpPercentForDefensives` 0.35 (the page reads the simple cooldowns, not `cooldowns`);
+every captured request sent 0.35 for both and weights 0.35 margin, 0.1167 DTPS, TMI and death, 0.30 TPS.
+`TestMeasureTankModel` and `TestMeasureTankPicks` gained the margin, time to live, normalizers at the pick and at
+Quick, dJ by term, gems by kind and the run's warnings. Raw: `.wave-loop/bis-tank-health-tmp/picks/`.
+
+Picks (death chance, DTPS, TMI, TPS as the run scored them; margin as scored, time to live measured at the pick;
+Stamina: sockets holding it, then dJ of one gem at the pick, Stamina's 30 against the best of 20 Agility, Dodge
+or Defense; Hit 262 to 294 against the 262 floor):
+
+| Run | Pick | Metrics | Margin, TTL | Passes, twin, tie | Stamina |
+|---|---|---|---|---|---|
+| Bulwark P1 | Sta 2825, Def 724, health 39,560; gems hit 3, Agi 2, Exp 2, Sta+Def 2, Def 1, Sta+Exp 1 | 0.033, 2793, 82, 7593 | 6442, 38.6 s | one, term out (first pick 3%, 5.4 se); twin 2 Delicate Stormjewel for Delicate Scarlet Ruby + Thick Autumn's Glow, +277 ± 22 | 3 of 11: +703 against Agi's +89 |
+| Bulwark P2 | Sta 3594, Agi 507, health 46,902; gems Sta 11, hit 5, Agi 1 | 0.024, 10525, 219, 10502 | 6180, 14.3 s | one, 34 se; tie of 2, the second by score (14.3 against 14.1 s) | 11 of 17: +103 against Agi's +77 |
+| Bulwark P3 | Sta 4572, Agi 579, health 56,676; gems Sta 10, Agi+Sta 8, Sta+Def 2, prismatic 1 | 0, 3168, 66, 10532 | 16,291, 50.2 s | one, 22 se; tie of 2 alike (46.8 s, same score), best kept | 20 of 21: +141 against Agi's +95 |
+| Bulwark P4 | Sta 3913, Agi 1113, health 50,091; gems Agi 19, Agi+Sta 1, Def+Dodge 1, prismatic 1 | 1.000, 5646, 233, 14055 | -42,161, 17.1 s | one, term out (100%); twin 5 Thick King's Amber + Shifting Dreadstone for 5 Delicate Cardinal Ruby + Stalwart Ametrine, +23 ± 5 | 1 of 22: +52 against Agi's +55 |
+| Bulwark P5 | Sta 4570, Def 921, Exp 362, health 56,663; gems Agi 9, Sta 5, Exp 4, Sta+Def 3, prismatic 2 | 0.629, 6663, 148, 12597 | -1190, 22.7 s | two (worn 3.6 se, first pick 78% at 10.6); twin 2 Delicate Dragon's Eye for Solid + Thick, +20 ± 26; tie of 6, the 5th by score (22.7 against 22.4 to 22.7 s) | 8 of 23: +73 against Agi's +78 |
+| Felesta P1 | Sta 2762, Def 700, health 40,171; gems Agi 7, Sta+Exp 3, Exp 2, Dodge 1 | 0.017, 2702, 75, 8557 | 11,487, 51.6 s | one, term out (first pick 2%, 1.6 se); twin Delicate Dragon's Eye for Subtle, +73 ± 25 | 3 of 13: +423 against Def's +101 |
+| Felesta P2 | Sta 3532, Parry 726, Dodge 575, health 47,463; gems Sta 14, hit 2, Agi 1, Sta+Dodge 1 | 0.059, 9217, 185, 13914 | 8533, 21.6 s | one, 47 se | 15 of 18: +77 against Def's +62 |
+| Felesta P3 | Sta 4356, Def 886, Dodge 819, health 55,978; gems Sta 8, Sta+Dodge 5, Sta+Def 4, hit 2, Agi+hit 1, prismatic 1 | 0.0005, 2448, 55, 10203 | 23,178, 59.7 s | one, 28 se; twin 5 Solid Majestic Zircon + Shifting Dreadstone for 5 Solid Stormjewel + Regal Dreadstone, +10 ± 3; tie of 3 (59.3 s, two alike), best kept | 17 of 21: +86 against Dodge's +70 |
+| Felesta P4 | Sta 4116, Def 934, Dodge 1008, health 53,311; gems Agi 5, Sta 5, Agi+Sta 3, Sta+Def 3, hit 3, Def 2, Def+Parry 1, prismatic 1 | 0.949, 4591, 163, 13855 | -19,806, 27.0 s | one, term out (first pick 95%, 3.4 se); twin 2 Delicate Dragon's Eye for Solid, +27 ± 9 | 11 of 23: +21 against Def's +24 |
+| Felesta P5 | Sta 4801, Def 994, Dodge 943, health 60,427; gems Sta 11, Sta+Def 5, Sta+Dodge 5, Sta+Parry 1, prismatic 1 | 0.516, 5988, 124, 14795 | 1528, 30.3 s | two (worn 6.4 se, first pick 66% at 12.0); twin 5 Shifting Dreadstone for Regal, +36 ± 22; tie of 13, best kept | 22 of 23: +46 against Def's +39 |
+
+- **Against BIS-TANK-SWAP:** every pick and worn gear takes more damage (defensives now wait for 35%, and
+  Z12's tank fixes): worn DTPS Bulwark P1 2699 to 2908, P3 3663 to 3925. Where the tank lives, Stamina gains:
+  Bulwark P3 Stamina gems 12 to 20 of 21 (+7,300 health), Felesta P2 +3,500, P3 +11,000, P5 +11,300 (Defense
+  gems 17 to 0); Bulwark P2 as before. Bulwark P4 gems Agility in 19 of 22 (11 before), its twin trading
+  Defense and Agility+Stamina gems for Agility. Both P1 picks gem less Stamina and now die (3.3%, 1.7%, from 0);
+  Felesta P4 drops the death term (first pick 3.4 se, 12.0 before) and dies 0.949 (0.79).
+- **The Lich King:** Bulwark's pick dies in every iteration: half survive at about 87,000 health (50,091 worn),
+  10% die at 107,000. Felesta's: half at 77,500 (53,311), 10% at 103,000. Every socket Stamina: 57,585 / 1.000
+  and 57,298 / 0.911. Z10: half at 79,000 and 66,000. Halion's picks reach 0 at 87,000 (Bulwark) and 101,000.
+- **Margin per point of Stamina** against the health it adds (12.13 Bulwark, 11.56 Felesta), P1 to P5: at the
+  picks Bulwark 0.68, 0.56, 0.79, 1.62, 0.67; Felesta 0.69, 0.80, 0.74, 0.89, 0.71. At the worn gear Bulwark
+  0.71, 0.61, 0.64, 1.43, 1.29; Felesta 0.84, 0.92, 0.99, 1.43, 1.22. Over 1 only where the tank dies in 99%
+  and up; 0 to 803 of 4000 iterations move by all of it. Bulwark P2 worn read 0.50 at the code stages (before
+  EC-CLASS-FIX8, defensives at 0).
+- **Margin and its normalizer per Armor point** (se), P1 to P5:
+
+  | | Margin | Normalizer | Time to live |
+  |---|---|---|---|
+  | Bulwark worn | 13,130; 4999; 6307; -131,031; -38,091 | 0.186 (29); 1.19 (66); 0.85 (49); 9.17 (131); 3.56 (72) | 45.3, 12.7, 35.8, 6.9, 14.0 s |
+  | Bulwark pick | as the table | 0.130 (24); 0.79 (61); 0.67 (67); 2.72 (56); 0.85 (38) | as the table |
+  | Felesta worn | 15,858; 3887; 7937; -75,657; -32,298 | 0.235 (22); 1.92 (75); 1.25 (55); 7.57 (100); 4.64 (84) | 54.5, 18.5, 48.5, 6.1, 16.3 s |
+  | Felesta pick | as the table | 0.205 (18); 1.47 (68); 0.62 (39); 1.24 (23); 1.18 (31) | as the table |
+
+  The margin's coefficient is largest at P1 (1.88 and 1.49 Armor points a health point), where the worn gear
+  rarely gets low.
+- **dJ by term at the picks:** Stamina's edge is the margin (and TMI) term, Agility's TPS and DTPS. Bulwark P3 a
+  point: Stamina +4.70 (margin +3.91, TMI +0.91, DTPS -0.11), Agility +4.75 (TPS +0.95, DTPS +1.42, margin
+  +1.74, TMI +0.64). Where death chance counts it adds +0.01 to +0.19 a point, but +0.4 to +1.7 on the second
+  searches (Bulwark P5, Felesta P5).
+- **Quick, the normalizer's se** (worn gear, 500 iterations): margin Bulwark P3 18.4, P5 26.1, Felesta P3 20.5,
+  P5 30.8 (7.7 to 48 over all phases); DTPS 36 to 72, TMI 27 to 40; death Bulwark P3 7.4 (Normal 21.5, so Quick
+  drops it), Felesta P3 11.2, P5 1.0 and 1.7. Quick picks (237,500 to 327,500 sims): Bulwark P3 18 of 21
+  Stamina, 56,166 health, death 0; Bulwark P5 7 of 22, 52,625, 0.785; Felesta P3 16 of 21, 55,562, 0.0005;
+  Felesta P5 4 of 22, 51,540, 0.645. Both P5 runs keep death out (first picks 2.5 and 5.2 se), where Normal's
+  Felesta P5 counted it and took 22 Stamina.
+- **Sims:** 1,967,000 to 2,506,000 a one-pass run, 3,577,750 and 3,867,000 the two-pass ones.
+- **Left:**
+  - Both P1 picks gem 3 Stamina of 11 and 13 though a Stamina socket sims 8 and 4 times any other at the pick:
+    the search prices gems at the surrogate's slopes, and the gem check bans one gem at a time at those slopes,
+    so neither reaches Stamina.
+  - Bulwark P3's and Felesta P3's ties (Normal and Quick) hold two loadouts with the same time and score: two
+    verified loadouts the sim can't tell apart. Not looked into.
+  - Twins win on the mean: Bulwark P5's +20 ± 26 and Felesta P5's +36 ± 22 sit under 2 se.
+  - A tie's times are taken at verify, before the alternatives stage, so the final pick's can differ (Bulwark
+    P3 46.8 s at the tie, 50.2 s at the pick).
