@@ -55,7 +55,8 @@ The live e2e and the replays leave timing, costs, threat, pets, gear and buffs u
 | Z9 | EC-CORE-FIX6 (G, FS, live) · EC-PET-FIX5 (G, live) · EC-CLASS-FIX5 (G, live) | Z8's follow-ups; the fourth place is bis-optimizer's BIS-TANK-PICKS |
 | Z10 | EC-CORE-FIX7 (G, FS, live) · EC-CLASS-FIX6 (G, C++, live) · EC-TOOLS2 | Z9's follow-ups, and EC-TOOLS2 moved from Z8, then Z9; the fourth place is bis-optimizer's BIS-TANK-SWAP (the user's call, 2026-10-13) |
 | Z11 | EC-CORE-FIX8 (G, FS, live) · EC-PET-FIX6 (G, live) · EC-CLASS-FIX7 (G, live) · EC-TOOLS3 (C++, live) | Z10's follow-ups; EC-PET-FIX6 moved from Z10 |
-| Z12 | EC-CORE-FIX9 (G, FS, live) · EC-PET-FIX7 (G, live) · EC-CLASS-FIX8 (G) · EC-TOOLS4 (live) | Z11's follow-ups |
+| Z12 | EC-CORE-FIX9 (G, FS, live) · EC-PET-FIX7 (G, live) · EC-CLASS-FIX8 (G) | Z11's follow-ups and the tank fixes; the fourth place is bis-optimizer's BIS-TANK-HEALTH (the user's call, 2026-10-15) |
+| Z13 | EC-TOOLS4 (live) | moved from Z12 |
 
 U is taken (the UI wave). Versus the INVESTIGATION's order, B7, A3 and A4 moved forward (cheap, independent) and
 C1 moved last (after B6).
@@ -4607,7 +4608,7 @@ Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\ec-pet-fix6-tmp\`.
 - **Goldens:** TestBlood and TestBloodTank (threat, multipliers, weapon); the suites of a pet that gets a distance
   (warlock, mage, TestUnholy's Gargoyle, the hunter suites); report each.
 
-### EC-CLASS-FIX8 (Z12; changes goldens; stages: code)
+### EC-CLASS-FIX8 (Z12; changes goldens, full suite if Judgement of Light moves every suite; stages: code)
 
 - Chain Heal's jumps: the sim takes the first units of `Raid.AllUnits` in order, the main target included
   (`sim/shaman/heals.go`). `Spell::SearchChainTargets` drops the main target and each unit already hit, and a chain
@@ -4626,13 +4627,49 @@ Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\ec-pet-fix6-tmp\`.
   49067 a lead). From the source and the code; no suite wears the sets (items 49310, 49463, 49464, 49488).
 - A racial weapon expertise (a human's sword or mace) doesn't follow an item swap (`sim/core/item_swaps.go`). From
   the code; no suite swaps items.
+- **Tank fixes** (the user's call, 2026-10-15; BIS-TANK-HEALTH's health margin measures through them). From the
+  code, against [ac]'s source:
+  - Ardent Defender (`applyArdentDefender`, `sim/paladin/talents.go`, against
+    `spell_pal_ardent_defender::Absorb`): lethal on the raw hit (`cur - dmg <= 0`, 66233 down), where the sim
+    decides on the hit after its own cut; a save absorbs the whole hit and heals to min(cur + heal, Max), where
+    the sim ends at the heal; under 35% the whole hit loses the absorb percent, crossing 35% only (35% Max -
+    remaining), where the sim over-cuts; integer amounts as `CalculatePct`; the heal percent at the proc,
+    `uint32(30 x min(1, def/540))` off `DefenseSkill()` then, where the sim fixes it at talent time. Check 66235
+    against healing-done percents and crits, and the absorb order against Sacred Shield and Divine Aegis.
+  - Bonus health on expiry (Vampiric Blood 55233, Last Stand 12976, Survival Instincts 50322): as
+    `HandleAuraModIncreaseHealth`, removal takes the bonus off current health (to 1 if health <= bonus; 0 stays
+    0), then lowers max; the sim never takes it off, a lasting heal. A `healthBar` method in `health.go`: no TMI
+    entry or damage-taken event, which `RemoveHealth` would add.
+  - Improved Death Strike's heal +100% at 2/2 against the server's +50% (`death_strike.go`), and Last Stand's
+    cooldown inverted with its glyph (`warrior/talents.go`, 58376 against 12975's 180 s): confirm from the spell
+    data first.
+  - Feral Tank `TypeAuto` (`autoRotation`, `ui/feral_tank_druid/sim.ts`) sends the simple preset with no
+    priority list: a bear only swings. Send a real APL; a captured request shows Survival Instincts, Frenzied
+    Regeneration and Barkskin cast.
+  - Judgement of Light's heal (`sim/core/debuffs.go`, an empty hook): 2% of the attacker's max health, rate and
+    conditions from the spell data and proc table.
+  - Lay on Hands, missing: heals for max health, 20 min (glyph), Forbearance with Divine Protection. Cast by the
+    Prot Paladin default APL behind `currentHealthPercent` at mod-playerbots' Lay on Hands threshold; say which.
+- **Hunter shots without a ranged weapon** (the user's call, the same day). Since 044fee9d6 `StrikeDamage` returns
+  NaN for a weapon with no `AttackPowerPerDPS`, which `EnableAutoAttacks` sets for the hands only: the chain's P1
+  hunters, whose Ulduar weapons the P1 pool trims, simmed NaN and the optimizer returned junk. `Spell::CheckItems`
+  fails a spell whose `EquippedItemClass` isn't worn: Auto, Aimed, Multi, Kill, Chimera, Silencing, Steady and
+  Arcane Shot can't be cast without one (confirm each from Spell.dbc). `no_ranged_weapon_test.go` passes on NaN
+  (`Dps.Avg <= 0`): make it fail on NaN and empty the main hand too.
+- **Verify, the tank fixes:** an AD save at 10,000 of 50,000 health, a raw 11,000 hit, 535 Defense ends at 24,500
+  with the debuff up, and a second lethal hit inside 120 s kills; at 30% a 5,000 hit costs 4,000; from 20,000 a
+  5,000 hit costs 4,500; a Defense buff applied after talents raises the heal. VB, Last Stand and SI on expiry:
+  from full the tank ends at max; at 30% at H - bonus; H <= bonus ends at 1; 0 stays 0; no TMI entry.
 - **Owns:** the class directories its fixes touch but the other Z12 items' hunks; the item effects in
   `sim/common/`; `sim/core/cast_landed.go` and the swap's racial expertise in `sim/core/item_swaps.go`, in small
-  hunks; their drops and rows.
+  hunks; the bonus-health helper in `health.go` and Judgement of Light in `debuffs.go`, in small hunks; the
+  Feral Tank `sim.ts` and the Prot Paladin APL; their drops and rows; `class-mechanics.md` and
+  `caster-mechanics.md` for the tank fixes.
 - **Goldens:** TestRestoration (Chain Heal), TestDisc and TestHoly (the Abacus rows); none for the Shard or the swap;
-  report each.
+  the tank suites have no healing model, so AD, the expiry and Lay on Hands move none; Judgement of Light's heal
+  moves the suites whose debuffs hold it, the hunter fix none (every suite wears a ranged weapon); report each.
 
-### EC-TOOLS4 (Z12; golden-neutral; stages: code, live)
+### EC-TOOLS4 (Z13, moved from Z12; golden-neutral; stages: code, live)
 
 - `docs/wave-loop/int-check.sh` takes gofmt's and eslint's files from `git diff BASE HEAD` only, so an uncommitted
   fix (a review's, the cross-review's) is never checked: add the changed files from `git status`. Confirmed; the
