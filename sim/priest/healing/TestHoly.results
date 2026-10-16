@@ -858,8 +858,8 @@ dps_results: {
 dps_results: {
  key: "TestHoly-Talents-BlessedResilience-Average"
  value: {
-  tps: 1647.83626
-  hps: 4852.26367
+  tps: 1647.68768
+  hps: 4851.66092
  }
 }
 ability_results: {
@@ -1198,8 +1198,8 @@ ability_results: {
    value: {
     casts: 48.378
     hits: 48.378
-    amount_per_hit: 9840.80196
-    amount: 476078.317
+    amount_per_hit: 9837.06513
+    amount: 475897.537
    }
   }
   entries: {
