@@ -89,7 +89,8 @@ G = changes goldens. FS = runs all 37 suites.
 | Z9 | EC-CORE-FIX6 (G, FS, live) · EC-PET-FIX5 (G, live) · EC-CLASS-FIX5 (G, live) · BIS-TANK-PICKS | ✔ |
 | Z10 | EC-CORE-FIX7 (G, FS, live) · EC-CLASS-FIX6 (G, C++, live) · EC-TOOLS2 · BIS-TANK-SWAP | ✔ |
 | Z11 | EC-CORE-FIX8 (G, FS, live) · EC-PET-FIX6 (G, live) · EC-CLASS-FIX7 (G, live) · EC-TOOLS3 (live) | ✔ |
-| Z12 | EC-CORE-FIX9 (G, FS, live) · EC-PET-FIX7 (G, live) · EC-CLASS-FIX8 (G) · EC-TOOLS4 (live) | ✔ |
+| Z12 | EC-CORE-FIX9 (G, FS, live) · EC-PET-FIX7 (G, live) · EC-CLASS-FIX8 (G) · BIS-TANK-HEALTH | ✔ |
+| Z13 | EC-TOOLS4 (live) | |
 
 F2 is an inserted wave, not a fifth item in F: the core swing and cast fixes of PAR-P7-0c have to land
 before the class items in G, a class item can't build on a core fix merging in its own wave, and F already
@@ -160,7 +161,10 @@ EC-TOOLS2's place (the user's call, 2026-10-11: the raid pass gears both tanks f
 boss). Z9 takes Z8's follow-ups the same way, with BIS-TANK-PICKS in EC-TOOLS2's place again (the user's call,
 2026-10-12: the 21-raider pass waits on the tank picks); EC-TOOLS2 waits for Z10. Z10 takes Z9's
 follow-ups with EC-TOOLS2 at last and BIS-TANK-SWAP in EC-PET-FIX6's place, which waits for Z11 (the user's call,
-2026-10-13: its one confirmed fix reaches Blood death knights only).
+2026-10-13: its one confirmed fix reaches Blood death knights only). Z12 takes Z11's follow-ups with BIS-TANK-HEALTH
+in EC-TOOLS4's place, which waits for Z13, and the tank fixes and the hunter shots in EC-CLASS-FIX8 (the user's call,
+2026-10-15: Bulwark gems Agility, the tanks take resistance, and the chain's P1 hunters simmed NaN); the deferred BiS
+chain waits for Z12.
 
 **Where the specs are:**
 
@@ -177,8 +181,10 @@ follow-ups with EC-TOOLS2 at last and BIS-TANK-SWAP in EC-PET-FIX6's place, whic
 
 ## Current wave
 
-- Wave: Z11, landed. Next, on the user's "continue": the BiS chain (Deferred, below; go-ahead 2026-10-14), then Z12
-  (Z11's follow-ups, specs in the e2e-coverage PLAN). Z11 base `434442b93`, runId `wf_ccee67e3-394`.
+- Wave: Z11, landed. Next, on the user's "continue": Z12 (Z11's follow-ups and the tank fixes in the e2e-coverage
+  PLAN, BIS-TANK-HEALTH in the bis-optimizer PLAN), then the BiS chain (Deferred, below). Paused 2026-10-15 after
+  P1 and Angry's P2 (`.wave-loop\bis-chain\bis`; its P1 hunters simmed NaN): Z12 changes every pick, so it reruns
+  fresh. Z11 base `434442b93`, runId `wf_ccee67e3-394`.
   The server runs mod-sim-validation's C++ as `86f62a3` (image 2026-10-13 20:46 local); `command` lacks the
   `simval trace` help row (the DB import didn't run; the command works). Orphan character `540417:1:8:55519`
   (left by a stalled EC-PET-FIX6 run) waits for the user's OK to clean.
@@ -188,7 +194,8 @@ follow-ups with EC-TOOLS2 at last and BIS-TANK-SWAP in EC-PET-FIX6's place, whic
   its row: the session scratchpad's `slow-row.py`; `lint-range.sh <base>` lints a cross-review's committed files.
   Another session's `wotlk-bisdata` container can load most cores: `sim/optimizer` then passes Go's 10-minute test
   timeout in `int-check.sh`; rerun it alone with `-timeout 40m`.
-  Proto numbers taken: `ServerSettings` 9, `Target` 23, `UnitMetrics` 18.
+  Proto numbers taken: `ServerSettings` 9, `Target` 23, `UnitMetrics` 18, `OptimizerMetrics` 6; BIS-TANK-HEALTH
+  takes `UnitMetrics` 19 on and `OptimizerMetrics` 7.
   Server: [ac] `3d89793c7`, mod-spell-tweaks `9bf5c75`; the module's HEAD `3d0c771`.
   Prod runs Z6's `e5a289570`, without Z7 to Z11; `wowsims-wotlk:rollback-x` is X's `25cb9dddc`. A sim page left
   open across a rebuild sends the optimizer's tank boss its old input group, and the run fails: reload it. Auto
@@ -203,7 +210,8 @@ follow-ups with EC-TOOLS2 at last and BIS-TANK-SWAP in EC-PET-FIX6's place, whic
   over the expertise cap; Z10's and Z11's: Feral Tank P2's search unsettled).
   Closed as not sim gaps: the sheet fields the server shows raw (per-school crit, Blood-Gorged, Mace and Holy
   Specialization), which the fixture README explains.
-- Deferred (the user's calls, 2026-10-02, 10-03, 10-05 and 10-07): right after Z11 (go-ahead 2026-10-14):
+- Deferred (the user's calls, 2026-10-02, 10-03, 10-05 and 10-07; go-ahead 2026-10-14): right after Z12 (the user's
+  call, 2026-10-15), whose BIS-TANK-HEALTH changes every raider's picks:
   - Rerun all 28 presets, tanks included, on the final HEAD: BIS-caps-race changes every racial search,
     `ff0920a96` the 16 builds `mage_*`, `rogue_*`, `warlock_*`, `warrior_arms`, `warrior_fury`,
     `protection_warrior`, `shadow_priest`, `smite_priest`, `dk_blood`, `elemental_shaman`, and BIS-outclassed

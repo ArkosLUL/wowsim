@@ -2494,8 +2494,8 @@ built.
 | Felesta P4 | none | Sta 3958, Def 1124, Dodge 1081, Hit 269, health 51,727; gems Def 11, Agi 7, hit 2, Sta-bearing 3 |
 | Felesta P5 | none | Sta 5191, Def 795, Dodge 683, Hit 342, health 64,058; gems Sta 22, Agi+Sta 1 |
 
-Enchants follow the boss's magic: Frost resistance on head and hands at P3, Shadow at P4 (and Felesta's
-cloak). Reforges, 5 to 12 a run, go mostly from Parry and Dodge into Hit and Expertise.
+Enchants follow the boss's magic: Frost resistance on head and wrist (Fur Lining) at P3, Shadow at P4, Fire at
+P5, and Felesta's cloak at P3 and P4. Reforges, 5 to 12 a run, go mostly from Parry and Dodge into Hit and Expertise.
 
 dJ at the pick, per socket (30 Stamina against 20 of the others), Stamina / Agility / Dodge / Defense, and why
 Stamina is where it is:
@@ -2510,7 +2510,7 @@ Stamina is where it is:
 | Felesta P3 | 42 / 55 / 77 / 75 | mostly out: 42 against Dodge's 77, the pick dies in 0.1% |
 | Bulwark P4 | 43 / 65 / 39 / 46 | hybrids only: no death term, and the pick dies regardless |
 | Felesta P4 | 26 / 31 / 32 / 33 | out, as Bulwark's |
-| Bulwark P5 | 3695 / 2264 / 1976 / 2741 | out though worth most: at the worn gear, where the curves are measured, Agility, Dodge and Defense are worth 1.4 to 4.5 with a se of 3, against Stamina's 2.18 (se 0.02). The search priced noise |
+| Bulwark P5 | 3695 / 2264 / 1976 / 2741 | out though worth most: at the worn gear (the curves themselves come from the trimmed seed, `measureCurves`), Agility, Dodge and Defense are worth 1.4 to 4.5 with a se of 3, against Stamina's 2.18 (se 0.02). The search priced noise |
 | Felesta P5 | 1215 / 425 / 428 / 390 | every socket: death swamps the score and Stamina moves it most |
 
 Left:
@@ -2673,3 +2673,79 @@ Picks (final death chance, DTPS, TMI, TPS; Hit is 263 to 280 against the 262 flo
   - `TestMeasureTankDeathTerm` wasn't rerun on the fight with Infest on every cast.
   - Feral Tank P2 Normal ends 124 under its Quick in the slow suite (wave-loop PLAN, BiS baseline).
   - The six perf scenarios want an idle retake; `tools/perf`'s requests and baseline stay.
+
+### BIS-TANK-HEALTH (wave Z12; golden-neutral; stages: code, picks)
+
+Bulwark gems Agility in most sockets at P3 to P5: Stamina reaches only TMI and death chance, and death chance is
+flat where the pick never dies (P1, P3) and dropped where it always dies (P4). ICC tanks gemmed Stamina for
+effective health (Maintankadin, EJ; Rawr scored it as its own term). Gems are priced off the curves and never
+simmed (`setKey` ignores gems), so a small or noisy edge fills every socket (Bulwark P5). Resistance enchants and
+gear answer the one modelled boss and do nothing for the rest of the phase.
+
+**Decided by the user (2026-10-15):** a health term measured in the sim, half the survival share; a time-to-live
+tiebreak; a gem-swap check on every run; resistance worth nothing to a tank; tanks' defensives at 35%; the margin
+on the sim page; a NaN guard.
+
+- **Health margin.** Per iteration, the lowest health the tank reaches in the healed fight, read from a passive
+  shadow (`shadow = currentHealth - healthDebt` in `sim/core/health.go`: `RemoveHealth` adds overkill to the
+  debt, `GainHealth`'s overheal pays it down), so it counts past 0 for a tank that dies and moves no existing
+  number. The mean, higher is better, normalized on ±2000 Armor and dropped under 2 se ("no healing model" when
+  all 0). No cap; an Ardent Defender save counts as survived. Per-iteration slices under `SaveAllValues` for a
+  tank with a healing model, like `deaths` (`DistributionMetrics`' min treats a negative as unset), plus a mean
+  and stdev for the results page. +X max health moves it by exactly X while nothing tied to a percent of max
+  health acts; below 35%, AD's and WotN's cuts give about 0.87X and 0.90X.
+- **Weights.** Survival s: margin s/2, DTPS, TMI and death chance s/6 each (`TankWeights`,
+  `tankMetricWeights`); the default 0.7 gives 0.35 and 0.1167, TPS 0.30. An Armor-referenced set (DTPS, TMI,
+  PDeath, HealthMargin) drives `ReferenceStats` in place of `lowerIsBetter`. `OptimizerMetrics.health_margin = 7`,
+  `MetricHealthMargin` after `MetricPDeath`; `newShard` zero-fills it when absent.
+- **Time to live.** The same fight with healing off (`HealingModel{Hps: 0, CadenceSeconds: 0}`, burst window
+  kept), from the pull, cooldowns as the rotation casts them, the encounter at 60 s: seconds to the first death,
+  60 if alive. A first-death time per iteration in core (as `FirstOOMTimestamp`). Its own `SimEvaluator` on a
+  cloned base: never edit `r.r.Base` in place, since prefetches and `calibrate` read it.
+- **Tiebreak** (tank runs). After verify's race, the loadouts within 2 se of the best
+  (`Delta(best, v).Mean + 2SE >= 0`) go to time to live, the longest wins, and a warning names the tie and the
+  times. The death second pass runs `verify` again.
+- **Gem-swap check** (every run). Copies of the pick with each gem swapped for its close alternatives (the
+  runners-up `gemOptions` drops), re-solved by `Pool.Gem` so socket bonuses and the meta hold, simmed paired at
+  verify's iterations and counted in `TotalSims`. The best mean wins; a tank's twins within 2 se of it go to
+  time to live.
+- **Resistance at zero** (tank runs). Pricing sees no resistance on items, enchants or gems (`isTank` before
+  the pool in `pool_builder.ts`; resistance-only enchants and gems drop; the seed trimmer notes them; mirrored
+  in `realpool_test.go`), and the sim applies none from the loadout (e.g. an offset in `request()`); raid
+  auras keep theirs, the boss keeps its magic.
+- **Defensives.** `ui/core/player.ts` drops `hpPercentForDefensives` when `applySharedDefaults` sets the
+  `TypeAuto` rotation, so tanks send 0 and survival cooldowns fire on cooldown (`major_cooldown.go`). Keep the
+  0.35.
+- **NaN guard.** A seed, worn-gear or calibration score of NaN fails the run, naming the metric and loadout.
+  Since 044fee9d6 a hunter without a ranged weapon sims NaN (`StrikeDamage`), and the chain's P1 hunters, whose
+  Ulduar weapons the P1 pool trims, came back as junk (empty curves, Void Sphere, empty slots); EC-CLASS-FIX8
+  fixes the shots.
+- **UI.** `METRIC_LABELS` row `['healthMargin', 'Health margin']`, whole health in `metricsText`, the hint, seven
+  weights; the results page shows the margin beside TMI and chance of death for a tank
+  (`ui/core/components/detailed_results/`).
+- **Contract change requests** (bis-tooltip-addon's, before the chain's dataset): `GetHealthMargin()` in
+  `bisdata_dataset.go` and `bisdata_slots.go`; the acbis driver flags a result with a NaN score or
+  `calibrationGap` and leaves it out of the export.
+- **Picks**, on `integration` after all of Z12 merges (EC-CLASS-FIX8's tank fixes, EC-PET-FIX7's Rune Weapon
+  threat): `TestMeasureTankModel` and `TestMeasureTankPicks` add the margin at the worn gear and the pick, its
+  normalizer and se, margin per point of Stamina against the health it adds, dJ per point of Stamina, Agility,
+  Dodge and Defense by term, and the ties and twins taken. Both tanks, P1 to P5, Normal, the 8 Oct roster
+  ([measuring](../guide/tank-modeling.md#measuring)): BIS-TANK-SWAP's table plus margin, time to live, twins and
+  each run's Stamina count with the number behind it; P3 and P5 at Quick for the normalizer's se. Nothing is
+  tuned toward a wanted pick.
+
+**Verify:** tests for the margin's exact shift, margin <= 0 exactly when dead (a survivor's equals its lowest
+health), no values without a healing model, the shard merge equal to one run, the AD save reading pre-hit
+health, the Armor reference, the split, time to live's 60 s cap, the tiebreak taking the longer-lived of two
+tied loadouts, twins keeping the bonus and meta, a tank's zero resistance, the NaN guard; `evaluator_test.go`'s
+fakes and `TestMetricsRoundTrip` widened to 7. `sim/core`, `sim/optimizer` and `tools/database/azerothcore`
+tests, vet, gofmt; tsc, eslint, `optimizer_tab.spec.ts` and `bis_batch.spec.ts`; every golden unchanged; simval
+replay; a captured tank request's DTPS, TMI, TPS and death chance equal the base tree's. Angry P2 and P3 Normal:
+report what the twins move.
+
+**Not doing:** a percentile margin, a margin cap, per-boss healing multipliers, several bosses a phase.
+
+Golden-neutral. **Owns:** `sim/optimizer/`, `proto/optimizer.proto`, `ui/core/optimizer/`, `optimizer_tab.ts`,
+the `player.ts` cooldowns hunk, the results page's margin row, `docs/guide/tank-modeling.md`, the CONTEXT.md
+terms; small hunks in `proto/api.proto` (`UnitMetrics` 19 on), `sim/core/health.go`, `metrics_aggregator.go`
+and the shard test. After it, the deferred BiS chain reruns every preset and the whole dataset (wave-loop PLAN).
