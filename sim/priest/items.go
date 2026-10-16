@@ -157,7 +157,8 @@ var ItemSetCrimsonAcolytesRaiment = core.NewItemSet(core.ItemSet{
 				ActionID:    core.ActionID{SpellID: 70770},
 				SpellSchool: core.SpellSchoolHoly,
 				ProcMask:    core.ProcMaskEmpty,
-				Flags:       core.SpellFlagNoOnCastComplete | core.SpellFlagIgnoreModifiers | core.SpellFlagHelpful,
+				// 70772 has no damage class or bonus row, so no done mods but the tick's healing done percents
+				Flags: core.SpellFlagNoOnCastComplete | core.SpellFlagHelpful,
 
 				DamageMultiplier: 1,
 				ThreatMultiplier: 1,
@@ -170,8 +171,8 @@ var ItemSetCrimsonAcolytesRaiment = core.NewItemSet(core.ItemSet{
 					TickLength:    time.Second * 3,
 					TicksCanCrit:  false,
 					OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
-						dot.SnapshotBaseDamage = curAmount * 0.33
-						dot.SnapshotHotMultiplier(dot.Spell.CasterHealingMultiplier())
+						dot.SnapshotBaseDamage = blessedHealingTick(curAmount)
+						dot.SnapshotHotMultiplier(1)
 					},
 					OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 						dot.CalcAndDealPeriodicSnapshotHealing(sim, target, dot.OutcomeTick)
@@ -201,6 +202,12 @@ var ItemSetCrimsonAcolytesRaiment = core.NewItemSet(core.ItemSet{
 		},
 	},
 })
+
+// blessedHealingTick is spell_pri_t10_heal_2p_bonus's amount for each of 70772's 3 ticks: 33% of the Flash Heal
+// (CalculatePct in float32, whole), shared out over them.
+func blessedHealingTick(flashHeal float64) float64 {
+	return float64(int32(float32(int32(flashHeal))*33/100) / 3)
+}
 
 var ItemSetGladiatorsInvestiture = core.NewItemSet(core.ItemSet{
 	Name: "Gladiator's Investiture",

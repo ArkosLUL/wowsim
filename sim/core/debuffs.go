@@ -253,7 +253,6 @@ const judgementOfLightAuraID = 20185
 func JudgementOfLightAura(target *Unit) *Aura {
 	actionID := ActionID{SpellID: 20271}
 	ppm := ServerProcFor(judgementOfLightAuraID).PPM
-	healMetrics := make(map[*Unit]*ResourceMetrics)
 
 	return target.GetOrRegisterAura(Aura{
 		Label:    JudgementOfLightAuraLabel,
@@ -271,13 +270,11 @@ func JudgementOfLightAura(target *Unit) *Aura {
 
 			// spell_pal_judgement_of_light_heal: 20267 for 2% of the attacker's max health. The judging paladin is
 			// its original caster, so the healing done and its threat are his, and no done percent or crit
-			// reaches it (no damage class, no bonus row).
-			metrics := healMetrics[unit]
-			if metrics == nil {
-				metrics = unit.NewHealthMetrics(ActionID{SpellID: 20267})
-				healMetrics[unit] = metrics
+			// reaches it (no damage class, no bonus row). One row on the attacker, whichever judged target he hit.
+			if unit.judgementOfLightMetrics == nil {
+				unit.judgementOfLightMetrics = unit.NewHealthMetrics(ActionID{SpellID: 20267})
 			}
-			unit.GainHealth(sim, wholeHeal(unit.CountPctFromMaxHealth(2)*unit.HealingTakenPctMultiplier()), metrics)
+			unit.GainHealth(sim, wholeHeal(unit.CountPctFromMaxHealth(2)*unit.HealingTakenPctMultiplier()), unit.judgementOfLightMetrics)
 		},
 	})
 }

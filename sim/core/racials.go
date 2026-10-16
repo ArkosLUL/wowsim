@@ -46,6 +46,8 @@ func applyRaceEffects(agent Agent) {
 				},
 			},
 			ApplyEffects: func(sim *Simulation, _ *Unit, spell *Spell) {
+				// the energize hits the caster
+				spell.LandOn(sim, spell.Unit)
 				if spell.Unit.HasRunicPowerBar() {
 					spell.Unit.AddRunicPower(sim, 15.0, resourceMetrics)
 				} else if spell.Unit.HasEnergyBar() {

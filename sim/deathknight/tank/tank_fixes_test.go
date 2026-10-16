@@ -70,6 +70,24 @@ func TestVampiricBloodBonusHealthOnExpiry(t *testing.T) {
 	}
 }
 
+// 56816 procs 56817 on each dodge or parry: Spell::HandleThreatSpells hands its level, 67, to the boss, and with
+// no school no threat aura touches it, Frost Presence's included.
+func TestRuneStrikeProcThreat(t *testing.T) {
+	sim, dk, start := newTankFixesDK(t)
+	start()
+	dk.FrostPresenceAura.Activate(sim)
+	if dk.PseudoStats.ThreatMultiplier == 1 {
+		t.Fatal("Frost Presence left the threat multiplier at 1")
+	}
+	trigger := dk.GetAura("Rune Strike Trigger")
+	for _, outcome := range []core.HitOutcome{core.OutcomeDodge, core.OutcomeParry, core.OutcomeHit} {
+		trigger.OnSpellHitTaken(trigger, sim, nil, &core.SpellResult{Target: &dk.Unit, Outcome: outcome})
+	}
+	if got := dk.GainThreat(core.ActionID{SpellID: 56817}); got != 2*67 {
+		t.Errorf("a dodge and a parry made %v threat, want 134", got)
+	}
+}
+
 // spell_dk_death_strike: 5% of max health a disease, plus Improved Death Strike's effect 2, 50% at 2/2.
 func TestImprovedDeathStrikeHeal(t *testing.T) {
 	sim, dk, start := newTankFixesDK(t)

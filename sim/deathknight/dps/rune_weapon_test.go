@@ -275,3 +275,21 @@ func TestRuneWeaponCopiesTakeTheKnightsPercentsAsTheyStand(t *testing.T) {
 		}
 	}
 }
+
+// 49028 puts its own aura on the DK, so the cast lands on him, a magic-class landing the Shard of the Gods sets
+// roll on.
+func TestDancingRuneWeaponLandsOnTheKnight(t *testing.T) {
+	sim, dk := runeWeaponSim(t)
+	var landed []*core.Unit
+	dk.RegisterOnCastLanded(func(_ *core.Simulation, spell *core.Spell, target *core.Unit) {
+		if spell == dk.DancingRuneWeapon {
+			landed = append(landed, target)
+		}
+	})
+	if !dk.DancingRuneWeapon.Cast(sim, dk.CurrentTarget) {
+		t.Fatal("Dancing Rune Weapon wasn't cast")
+	}
+	if len(landed) != 1 || landed[0] != &dk.Unit {
+		t.Errorf("landed on %d units, want the DK alone", len(landed))
+	}
+}

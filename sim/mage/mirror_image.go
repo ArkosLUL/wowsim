@@ -81,17 +81,10 @@ const (
 	mirrorImageChaseStop = 15 + mirrorImageTargetReach
 	// creature_template's speed_run for 31216, at the base 7 yd a second
 	mirrorImageRunSpeed = 7 * 1.14286
+	// its mage's model's at scale 1 (CloneCaster's Creature::SetDisplayId): every mage race's models have 1.5
+	// or 0 in creature_model_info, and LoadCreatureModelInfo makes a 0 1.5
+	mirrorImageReach = 1.5
 )
-
-// mirrorImageReach is the image's reach, its mage's model's at scale 1 (CloneCaster's Creature::SetDisplayId).
-// creature_model_info has none for either gnome model, so DEFAULT_WORLD_OBJECT_SIZE. The other mage races have
-// 1.5 for at least one gender, which isn't a sim input.
-func mirrorImageReach(race proto.Race) float64 {
-	if race == proto.Race_RaceGnome {
-		return 0.389
-	}
-	return 1.5
-}
 
 // fireBlastRange is Spell::CheckRange at the cast's start: Fire Blast's 20 yd between the two reaches.
 func (mi *MirrorImage) fireBlastRange() float64 {
@@ -137,7 +130,7 @@ func (mage *Mage) NewMirrorImage() *MirrorImage {
 		mageOwner: mage,
 	}
 	mirrorImage.BuffImmunity = core.PetImmuneToScaling
-	mirrorImage.BaseCombatReach = mirrorImageReach(mage.BaseStatsRace)
+	mirrorImage.BaseCombatReach = mirrorImageReach
 	// SummonProperties 1021 has neither a pet's type nor its category (Guardian::Guardian)
 	mirrorImage.Uncontrollable = true
 	// InitStatsForLevel's NPC_MIRROR_IMAGE case sets the create mana to 28 + 30 a level, but the

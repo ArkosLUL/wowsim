@@ -93,7 +93,9 @@ func (dk *Deathknight) registerDancingRuneWeaponCD() {
 			},
 		},
 
-		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, _ *core.Spell) {
+		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, spell *core.Spell) {
+			// effect 1's aura goes on the DK
+			spell.LandOn(sim, &dk.Unit)
 			dk.RuneWeapon.EnableWithTimeout(sim, dk.RuneWeapon, duration)
 			dk.RuneWeapon.CancelGCDTimer(sim)
 			dancingRuneWeaponAura.Activate(sim)

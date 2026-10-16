@@ -168,6 +168,20 @@ func TestHealthMarginAtAnAbsorbedLethalHit(t *testing.T) {
 	}
 }
 
+// Bonus health ending isn't damage, but the low it leaves counts even when a heal comes before the next hit.
+func TestHealthMarginSeesBonusHealthEnding(t *testing.T) {
+	m := newMarginTank(t, &proto.HealingModel{BurstWindow: 6}, 50000, true)
+	m.agent.GainBonusHealth(m.sim, 15000, m.heals)
+	m.hit(time.Second, 40000)
+	m.agent.LoseBonusHealth(m.sim, 15000)
+	m.heal(30000)
+	m.hit(3*time.Second, 1000)
+	got := m.done()
+	if !slices.Equal(got.IterationHealthMargins, []float64{10000}) || got.IterationDeaths[0] {
+		t.Errorf("margin %v, dead %v; want the 10000 the bonus left on ending, alive", got.IterationHealthMargins, got.IterationDeaths)
+	}
+}
+
 func TestHealthMarginNeedsAHealingModel(t *testing.T) {
 	m := newMarginTank(t, nil, 50000, true)
 	if !m.agent.Metrics.isTanking {

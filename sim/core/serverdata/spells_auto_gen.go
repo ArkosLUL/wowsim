@@ -6904,6 +6904,16 @@ var spells = []Spell{
 			{Effect: 31, BasePoints: 149, DieSides: 1, DamageMultiplier: 1},
 		},
 	},
+	// Rune strike proc
+	{
+		ID: 56817, Family: 6, Flags: FlagPositive,
+		Attributes: [8]uint32{0x180},
+		DurationMs: 10000, MaxDurationMs: 10000,
+		ProcFlags: 0x10, ProcChance: 101, ProcCharges: 1, SpellLevel: 67, BaseLevel: 67,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 4, ClassMask: [3]uint32{0, 0x20000000}},
+		},
+	},
 	// Stampede (Rank 6)
 	{
 		ID: 57393, Family: 9, FamilyFlags: [3]uint32{0, 0x10000000}, SchoolMask: 1, DmgClass: DmgClassMelee, Flags: FlagBinary | FlagResetsAutoAttack,

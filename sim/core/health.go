@@ -19,6 +19,8 @@ type healthBar struct {
 	lowestHealth float64
 
 	DamageTakenHealthMetrics *ResourceMetrics
+	// Judgement of Light's heals on the unit, made on the first one
+	judgementOfLightMetrics *ResourceMetrics
 }
 
 func (unit *Unit) EnableHealthBar() {
@@ -78,7 +80,7 @@ func (hb *healthBar) GainBonusHealth(sim *Simulation, amount float64, metrics *R
 
 // LoseBonusHealth takes that aura off as AuraEffect::HandleAuraModIncreaseHealth does: current health drops by
 // amount, or to 1 if the whole health isn't above it, then max health. Not damage, so no metrics or TMI
-// entry. 0 stays 0.
+// entry, but the lowest health counts the drop. 0 stays 0.
 func (hb *healthBar) LoseBonusHealth(sim *Simulation, amount float64) {
 	oldHealth := hb.currentHealth
 	if float64(int64(oldHealth)) > amount {
@@ -89,6 +91,7 @@ func (hb *healthBar) LoseBonusHealth(sim *Simulation, amount float64) {
 	hb.unit.AddStatsDynamic(sim, stats.Stats{stats.Health: -amount})
 	// a health percent aura scales the bonus in max health only, so Unit::SetMaxHealth's cap can bite
 	hb.currentHealth = min(hb.currentHealth, hb.MaxHealth())
+	hb.lowestHealth = min(hb.lowestHealth, hb.shadowHealth())
 	if sim.Log != nil {
 		hb.unit.Log(sim, "Lost %0.3f bonus health (%0.3f --> %0.3f).", amount, oldHealth, hb.currentHealth)
 	}

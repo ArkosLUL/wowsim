@@ -4637,6 +4637,10 @@ Review, round 1: Earth Shield's charge (fixed, from the source; golden-neutral, 
 included, before the glyph and Improved Shields; 379 has `SPELL_ATTR3_IGNORE_CASTER_MODIFIERS`. The sim had none:
 `purification` in `shaman/heals.go`, test `shaman/restoration/earth_shield_test.go`.
 
+Cross-review: the T10 2-piece hot ticked 33% of the Flash Heal each of 3 ticks; `spell_pri_t10_heal_2p_bonus` gives
+70772 `int32(heal × 33%) / 3` a tick, which then takes aura 136 and the target's healing taken (no done mods, no
+bonus row): `blessedHealingTick`, `TestCrimsonAcolytesRaimentHotIsAThirdOfItsShareATick`. Golden-neutral.
+
 ### EC-PET-FIX7 (Z12; changes goldens; stages: code, live)
 
 Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\ec-pet-fix6-tmp\`.
@@ -4700,8 +4704,9 @@ Stage code, re-measured on `9a5d8fb6a` against [ac] `3d89793c7` and the live DB 
   carriers take Bloodlust's scale alone (immune per effect to auras 65, 192, 193; `bloodlustScaleAura`); a melee pet's
   scale cancels out of its missiles (its chase stops at both reaches), which fly the target's reach, under the 5 yd
   floor at the dummy, so the hunter pet's family scale isn't modelled.
-- Mirror Image's own reach (fixed, live table read): a gnome's image has 0.389 (no reach on either gnome model), every
-  other mage race 1.5 (at least one gender's); `fireBlastRange`, `chaseRange` and the Frostbolt's flight read it.
+- Mirror Image's own reach: 1.5 for every mage race (`mirrorImageReach`); `fireBlastRange`, `chaseRange` and the
+  Frostbolt's flight read it. Both gnome models' `CombatReach` is 0, which `LoadCreatureModelInfo` loads as 1.5
+  (0.389 only for a model with no row): the stage's gnome 0.389 was wrong, fixed in the cross-review.
 
 Tests: `combat_reach_test.go` (the script reach, carriers under Bloodlust, the follow spot), `TestImpCastsFromWhereItFollows`,
 `TestWaterElementalCastsFromWhereItFollows`, `TestGargoyleCastsFromWhereItsSummoned`, `TestMirrorImageReachIsItsMagesModels`
@@ -4733,6 +4738,10 @@ Stage live, idle host (worldserver 13 to 60% CPU from its own load, host 5%), lo
   56817 (level 67, school mask 0) forwards 67 unmodified threat on each dodge and parry, which
   `sim/deathknight/rune_strike.go`'s trigger doesn't book, and `ThreatSchoolMultiplier` would scale a school-0
   spell by the presence's `PseudoStats.ThreatMultiplier`, which the server's empty mask never matches.
+
+Cross-review (fixed): the trigger books 56817's 67 (`NewCastThreat`, its own runic power row; `gen_serverdata` adds
+56817) and `ThreatSchoolMultiplier` returns 1 for no school, `TestRuneStrikeProcThreat`; the 49028 cast `LandOn`s the
+DK, `TestDancingRuneWeaponLandsOnTheKnight`.
 
 ### EC-CLASS-FIX8 (Z12; changes goldens, full suite if Judgement of Light moves every suite; stages: code)
 
@@ -4823,7 +4832,8 @@ Code stage, the bullets but the tank fixes (notes in `tmp/ec-class-fix8-code.md`
     has no damage class.
   - Found on the way: the totems' casts landed as the shaman's (Searing 58702, Magma 58735, Healing Stream's 52042);
     `Spell.CastFromAnotherUnit` (`cast_landed.go`) keeps them off. `TestCastFromAnotherUnitDoesNotLand`.
-  - Not covered: Arcane Torrent (`core/racials.go`), Dancing Rune Weapon's self aura (EC-PET-FIX7's file).
+  - Arcane Torrent (`core/racials.go`) and Dancing Rune Weapon's self aura `LandOn` the caster since the
+    cross-review.
 - Racial weapon expertise (fixed): `followWeaponSpecialization` (`item_swaps.go`) moves it per hand with the swap, as
   `Player::UpdateExpertise`; a reset effect puts the spells' share back, which `Unit.reset` doesn't.
   `TestItemSwapMovesTheRacialWeaponExpertise`.
@@ -4884,6 +4894,14 @@ Review round 1 fixes (golden-neutral):
   mapped spells with no proc mask and checks each landing id has server data.
 - `talent_paths.json` regenerated (`-update`): PaladinRetribution ends on improvedLayOnHands 2/2, which the capture
   predates, so `droppedSweep` drops that step (fixture README row) until the talent sweep reruns the path.
+
+Cross-review fixes:
+- Improved Water Shield rolled inverted (`RandomFloat > chance`, a 30% Chain Heal chance procced 70%), Healing Wave
+  had 20% a rank, and it gave mana without Water Shield. Now `impWaterShieldChance`: 33/66/100% × 60 (Lesser Healing
+  Wave), 30 (Chain Heal) or 100% (`spell_sha_imp_water_shield`), only with Water Shield up.
+  `TestImprovedWaterShieldOnCrits`. Moves TestRestoration's HealingGrace row again (fewer Chain Heal returns).
+- Judgement of Light's heals go on one row per attacker (`healthBar.judgementOfLightMetrics`), not one per judged
+  target. `TestJudgementOfLightHealsOnOneRow`.
 
 ### EC-TOOLS4 (Z13, moved from Z12; golden-neutral; stages: code, live)
 

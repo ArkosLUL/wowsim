@@ -120,11 +120,18 @@ func (dk *Deathknight) registerRuneStrikeSpell() {
 		Duration: 6 * time.Second,
 	})
 
+	// 56816 procs 56817 on the DK, a positive spell with no school: its level, 67, goes to his enemies as threat
+	// no threat aura changes, booked on a row of its own that never gains anything
+	procActionID := core.ActionID{SpellID: 56817}
+	procThreat := dk.NewCastThreat(procActionID.SpellID)
+	procMetrics := dk.NewRunicPowerMetrics(procActionID)
+
 	core.MakePermanent(dk.GetOrRegisterAura(core.Aura{
 		Label:    "Rune Strike Trigger",
 		Duration: core.NeverExpires,
 		OnSpellHitTaken: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
 			if result.Outcome.Matches(core.OutcomeDodge | core.OutcomeParry) {
+				procThreat.Add(sim, procMetrics)
 				dk.RuneStrikeAura.Activate(sim)
 			}
 		},

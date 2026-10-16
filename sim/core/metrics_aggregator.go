@@ -458,7 +458,7 @@ func (unitMetrics *UnitMetrics) doneIteration(unit *Unit, sim *Simulation) {
 		unitMetrics.deaths = append(unitMetrics.deaths, unitMetrics.Died)
 	}
 	if unitMetrics.keepsHealthMargin {
-		// lowestHealth moves on damage taken only; health lost any other way shows here at the end
+		// lowestHealth moves on damage taken and bonus health ending; health lost any other way shows here at the end
 		margin := min(unit.healthBar.lowestHealth, unit.healthBar.shadowHealth())
 		unitMetrics.healthMargin.add(margin)
 		if sim.Options.SaveAllValues {

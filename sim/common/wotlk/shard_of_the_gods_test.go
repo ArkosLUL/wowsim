@@ -71,8 +71,8 @@ func TestShardOfTheGodsProcsOffAHotAlone(t *testing.T) {
 	}
 }
 
-// Inner Focus (14751) is magic class and lands on the priest with nothing dealt, so it rolls the Purified set's
-// bonus too, and the heal goes on the priest.
+// Inner Focus (14751) and a blood elf's Arcane Torrent (28730) are magic class and land on the priest with
+// nothing dealt, so they roll the Purified set's bonus too, and the heal goes on the priest.
 func TestShardOfTheGodsProcsOffASelfBuff(t *testing.T) {
 	items := make([]*proto.ItemSpec, proto.ItemSlot_ItemSlotRanged+1)
 	for i := range items {
@@ -80,53 +80,65 @@ func TestShardOfTheGodsProcsOffASelfBuff(t *testing.T) {
 	}
 	items[proto.ItemSlot_ItemSlotTrinket1] = &proto.ItemSpec{Id: 49310}
 	items[proto.ItemSlot_ItemSlotTrinket2] = &proto.ItemSpec{Id: 49463}
-	sim := core.NewSim(&proto.RaidSimRequest{
-		Raid: core.SinglePlayerRaidProto(&proto.Player{
-			Race:          proto.Race_RaceUndead,
-			Class:         proto.Class_ClassPriest,
-			Equipment:     &proto.EquipmentSpec{Items: items},
-			Consumes:      &proto.Consumes{},
-			Spec:          &proto.Player_HealingPriest{HealingPriest: &proto.HealingPriest{Options: &proto.HealingPriest_Options{}}},
-			TalentsString: "0503203130300512301313231251-2351010303",
-			Rotation:      core.APLRotationFromJsonString(`{"type": "TypeAPL", "priorityList": []}`),
-		}, &proto.PartyBuffs{}, &proto.RaidBuffs{}, &proto.Debuffs{}),
-		Encounter:  core.MakeSingleTargetEncounter(0),
-		SimOptions: &proto.SimOptions{Iterations: 1, IsTest: true, RandomSeed: 101},
-	})
-	priest := sim.Raid.Parties[0].Players[0].(*healing.HealingPriest)
-	if priest.InnerFocus == nil {
-		t.Fatal("no Inner Focus in the talents")
-	}
-
-	var healed []*core.Unit
-	watch := priest.RegisterAura(core.Aura{
-		Label:    "shard test",
-		Duration: core.NeverExpires,
-		OnHealDealt: func(_ *core.Aura, _ *core.Simulation, spell *core.Spell, result *core.SpellResult) {
-			if spell.ActionID.SpellID == 69733 {
-				healed = append(healed, result.Target)
-			}
-		},
-	})
-
-	// one cast a fresh iteration, so the 50 s cooldown never holds a roll back
-	const casts = 80
-	for seed := int64(0); seed < casts; seed++ {
-		sim.Reseed(500 + seed)
-		sim.Reset()
-		watch.Activate(sim)
-		if !priest.InnerFocus.Cast(sim, priest.CurrentTarget) {
-			t.Fatal("Inner Focus didn't cast")
+	for _, c := range []struct {
+		name  string
+		race  proto.Race
+		spell func(*healing.HealingPriest) *core.Spell
+	}{
+		{"Inner Focus", proto.Race_RaceUndead, func(p *healing.HealingPriest) *core.Spell { return p.InnerFocus }},
+		{"Arcane Torrent", proto.Race_RaceBloodElf, func(p *healing.HealingPriest) *core.Spell {
+			return p.GetSpell(core.ActionID{SpellID: 28730})
+		}},
+	} {
+		sim := core.NewSim(&proto.RaidSimRequest{
+			Raid: core.SinglePlayerRaidProto(&proto.Player{
+				Race:          c.race,
+				Class:         proto.Class_ClassPriest,
+				Equipment:     &proto.EquipmentSpec{Items: items},
+				Consumes:      &proto.Consumes{},
+				Spec:          &proto.Player_HealingPriest{HealingPriest: &proto.HealingPriest{Options: &proto.HealingPriest_Options{}}},
+				TalentsString: "0503203130300512301313231251-2351010303",
+				Rotation:      core.APLRotationFromJsonString(`{"type": "TypeAPL", "priorityList": []}`),
+			}, &proto.PartyBuffs{}, &proto.RaidBuffs{}, &proto.Debuffs{}),
+			Encounter:  core.MakeSingleTargetEncounter(0),
+			SimOptions: &proto.SimOptions{Iterations: 1, IsTest: true, RandomSeed: 101},
+		})
+		priest := sim.Raid.Parties[0].Players[0].(*healing.HealingPriest)
+		spell := c.spell(priest)
+		if spell == nil {
+			t.Fatalf("no %s", c.name)
 		}
-		sim.Cleanup()
-	}
 
-	if len(healed) < casts/10 || len(healed) > casts/2 {
-		t.Errorf("%d Cauterizing Heals off %d Inner Focus casts, want about a quarter", len(healed), casts)
-	}
-	for _, target := range healed {
-		if target != &priest.Unit {
-			t.Errorf("Cauterizing Heal on %s, want the priest", target.Label)
+		var healed []*core.Unit
+		watch := priest.RegisterAura(core.Aura{
+			Label:    "shard test",
+			Duration: core.NeverExpires,
+			OnHealDealt: func(_ *core.Aura, _ *core.Simulation, spell *core.Spell, result *core.SpellResult) {
+				if spell.ActionID.SpellID == 69733 {
+					healed = append(healed, result.Target)
+				}
+			},
+		})
+
+		// one cast a fresh iteration, so neither cooldown ever holds a roll back
+		const casts = 80
+		for seed := int64(0); seed < casts; seed++ {
+			sim.Reseed(500 + seed)
+			sim.Reset()
+			watch.Activate(sim)
+			if !spell.Cast(sim, priest.CurrentTarget) {
+				t.Fatalf("%s didn't cast", c.name)
+			}
+			sim.Cleanup()
+		}
+
+		if len(healed) < casts/10 || len(healed) > casts/2 {
+			t.Errorf("%d Cauterizing Heals off %d %s casts, want about a quarter", len(healed), casts, c.name)
+		}
+		for _, target := range healed {
+			if target != &priest.Unit {
+				t.Errorf("%s: Cauterizing Heal on %s, want the priest", c.name, target.Label)
+			}
 		}
 	}
 }

@@ -2756,7 +2756,8 @@ Code stages on `9a5d8fb6a`, golden-neutral; mechanics and rules live in [tank-mo
 The Picks bullet runs on `integration`.
 
 - **Margin** (stage 1): `healthBar.healthDebt` / `lowestHealth` / `shadowHealth` in `health.go`, sampled in
-  `RemoveHealth` and at the iteration's end (`doneIteration`); both death sites set `FirstDeathTimestamp`.
+  `RemoveHealth`, `LoseBonusHealth` (cross-review) and at the iteration's end (`doneIteration`); both death sites
+  set `FirstDeathTimestamp`.
   `UnitMetrics` 19 `iteration_health_margins`, 20 `optional health_margin_avg`, 21 `health_margin_stdev`, 22
   `iteration_first_death_seconds`; a survivor's first death is the iteration's length. Per-iteration slices
   like `deaths`, not `DistributionMetrics`.
@@ -2799,5 +2800,6 @@ The Picks bullet runs on `integration`.
   `bis_batch.spec.ts` 13 of 13.
 - **Left:** the 8 Oct snapshot's Bulwark and Felesta hold `cooldowns {}` and no `rotation.simple`, so restored
   from storage they still send defensives at 0; the results page's margin row has no UI test (its fixtures
-  predate `UnitMetrics` 19); a low reached at EC-CLASS-FIX8's bonus-health expiry and healed over before the
-  next hit goes unseen until its helper lowers `lowestHealth`.
+  predate `UnitMetrics` 19).
+- **Cross-review:** `TestHealthMarginSeesBonusHealthEnding`; `TestArdentDefenderSaveIsSurvived`
+  (`sim/paladin/protection`): a boss swing the save absorbs leaves the tank alive at its pre-swing margin.

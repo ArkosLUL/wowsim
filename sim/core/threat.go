@@ -745,8 +745,12 @@ func (unit *Unit) RemoveThreatSchoolMultiplier(school SpellSchool, multiplier fl
 	unit.threatSchoolMods = slices.Delete(unit.threatSchoolMods, i, i+1)
 }
 
-// ThreatSchoolMultiplier is CalculateModifiedThreat's school part for a spell of these schools.
+// ThreatSchoolMultiplier is CalculateModifiedThreat's school part for a spell of these schools. A spell with no
+// school takes none: GetTotalAuraMultiplierByMiscMask finds no MOD_THREAT aura for an empty mask.
 func (unit *Unit) ThreatSchoolMultiplier(school SpellSchool) float64 {
+	if school == SpellSchoolNone {
+		return 1
+	}
 	m := unit.PseudoStats.ThreatMultiplier
 	for _, mod := range unit.threatSchoolMods {
 		if mod.school&school != 0 {

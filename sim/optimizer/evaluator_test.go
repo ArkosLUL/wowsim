@@ -153,7 +153,7 @@ func (f *fakeEvaluator) Evaluate(ctx context.Context, points []Point, iterations
 	f.calls++
 	f.points += len(points)
 	sharedRng := rand.New(rand.NewSource(int64(len(f.noise)) + 7))
-	// the margin draws from its own stream, so the other metrics' noise stays as it was before it
+	// the margin draws from its own stream, so the other metrics' noise doesn't depend on it
 	marginRng := rand.New(rand.NewSource(int64(len(f.noise)) + 1007))
 	for len(f.noise) < iterations {
 		var n [NumMetrics]float64

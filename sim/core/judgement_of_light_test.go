@@ -3,6 +3,7 @@ package core
 import (
 	"testing"
 
+	"github.com/wowsims/wotlk/sim/core/proto"
 	"github.com/wowsims/wotlk/sim/core/stats"
 )
 
@@ -61,5 +62,53 @@ func TestJudgementOfLightHeal(t *testing.T) {
 	}
 	if procs(strike, OutcomeHit, 0, 1000, 0) != 0 {
 		t.Errorf("a hit for 0 healed")
+	}
+}
+
+// The heals off two judged targets go on one row of the attacker's.
+func TestJudgementOfLightHealsOnOneRow(t *testing.T) {
+	var strike *Spell
+	timingTestSetup = func(a *timingTestAgent) {
+		strike = a.RegisterSpell(SpellConfig{ActionID: ActionID{SpellID: testSpellNoServerData}, SpellSchool: SpellSchoolFire,
+			ProcMask: ProcMaskSpellDamage, Flags: SpellFlagNoServerData})
+	}
+	defer func() { timingTestSetup = nil }()
+	sim := NewSim(&proto.RaidSimRequest{
+		SimOptions: &proto.SimOptions{RandomSeed: 101, IsTest: true},
+		Raid: &proto.Raid{Parties: []*proto.Party{{
+			Players: []*proto.Player{{Name: "Attacker", Class: proto.Class_ClassShaman, Consumes: &proto.Consumes{},
+				Buffs: &proto.IndividualBuffs{}, Spec: &proto.Player_EnhancementShaman{}, Equipment: &proto.EquipmentSpec{}}},
+			Buffs: &proto.PartyBuffs{},
+		}}},
+		Encounter: &proto.Encounter{
+			Targets:  []*proto.Target{{Name: "a", Level: 83}, {Name: "b", Level: 83}},
+			Duration: 60,
+		},
+	})
+	sim.reset()
+	unit := &sim.Raid.Parties[0].Players[0].(*timingTestAgent).Unit
+	unit.RemoveHealth(sim, unit.MaxHealth()/2)
+
+	for _, target := range sim.Encounter.TargetUnits {
+		jol := JudgementOfLightAura(target)
+		jol.Activate(sim)
+		healed := false
+		for i := 0; i < 200 && !healed; i++ {
+			before := unit.CurrentHealth()
+			jol.OnSpellHitTaken(jol, sim, strike, &SpellResult{Target: target, Outcome: OutcomeHit, Damage: 100})
+			healed = unit.CurrentHealth() > before
+		}
+		if !healed {
+			t.Fatalf("200 hits on %s never healed", target.Label)
+		}
+	}
+	rows := 0
+	for _, rm := range unit.Metrics.resources {
+		if rm.ActionID.SpellID == 20267 {
+			rows++
+		}
+	}
+	if rows != 1 {
+		t.Errorf("%d Judgement of Light rows, want 1", rows)
 	}
 }

@@ -335,12 +335,11 @@ func TestMirrorImageCastDueOnItsDeathUpdateGoesOff(t *testing.T) {
 // run stops on the chase's range (ShortenPathUntilDist), so the image parks there; from nearer it heads for
 // GetNearPoint's spot 15 yd plus the target's reach out, inside it. Out past Fire Blast's 20 yd plus both
 // reaches, Spell::CheckRange fails the Fire Blast as it starts, and the event's put back all the same. Inside
-// the chase's range the image stands where it came up, beside its mage. A gnome's image has no model reach, so
-// 0.389: its ranges are 1.1 yd shorter.
+// the chase's range the image stands where it came up, beside its mage. A gnome's image is no different: its
+// models' 0 reach loads as 1.5.
 func TestMirrorImageClosesInBetweenCasts(t *testing.T) {
 	const update = 0.1027 * mirrorImageRunSpeed
-	// a troll's chase range, and a gnome's
-	const chase, gnomeChase = 15 + 1.5 + mirrorImageTargetReach, 15 + 0.389 + mirrorImageTargetReach
+	const chase = 15 + 1.5 + mirrorImageTargetReach
 	for _, tc := range []struct {
 		gnome  bool
 		yards  float64
@@ -353,8 +352,8 @@ func TestMirrorImageClosesInBetweenCasts(t *testing.T) {
 		{false, 19.7, 3, chase},
 		{false, 19.3, 3, 19.3 - update},
 		{false, 16, 3, 16},
-		{true, 23, 3, mirrorImageChaseStop},
-		{true, 18.5, 3, gnomeChase},
+		{true, 23, 3, chase},
+		{true, 18.5, 3, 18.5},
 	} {
 		player := procMage("", "p5_bis_arcane", `{"type": "TypeAPL", "priorityList": []}`, PlayerOptionsArcane)
 		player.DistanceFromTarget = tc.yards
@@ -427,16 +426,16 @@ func TestMirrorImageClosesInBetweenCasts(t *testing.T) {
 	}
 }
 
-// CloneCaster gives the image its mage's model at scale 1, and with it that model's reach: creature_model_info has
-// none for a gnome's, so 0.389, which its Frostbolt's flight takes off the distance. From 20 yd that's 817 ms at 24
-// yd a second against a troll's 770.
+// CloneCaster gives the image its mage's model at scale 1, and with it that model's reach, which its Frostbolt's
+// flight takes off the distance. creature_model_info has 0 for both gnome models, which LoadCreatureModelInfo
+// loads as 1.5, so a gnome's image flies as a troll's: 770 ms from 20 yd at 24 yd a second.
 func TestMirrorImageReachIsItsMagesModels(t *testing.T) {
 	for _, tc := range []struct {
 		race   proto.Race
 		flight time.Duration
 	}{
 		{proto.Race_RaceTroll, 770 * time.Millisecond},
-		{proto.Race_RaceGnome, 817 * time.Millisecond},
+		{proto.Race_RaceGnome, 770 * time.Millisecond},
 	} {
 		player := procMage("", "p5_bis_arcane", `{"type": "TypeAPL", "priorityList": []}`, PlayerOptionsArcane)
 		player.Race = tc.race

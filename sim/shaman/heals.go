@@ -24,9 +24,25 @@ func (shaman *Shaman) registerAncestralHealingSpell() {
 	})
 }
 
+// impWaterShieldChance is Improved Water Shield's chance on a heal's crit: the talent's proc chance, then
+// spell_sha_imp_water_shield's pct of it (60 for Lesser Healing Wave, 30 for Chain Heal, 100 otherwise).
+func (shaman *Shaman) impWaterShieldChance(pct int32) float64 {
+	return float64([]int32{0, 33, 66, 100}[shaman.Talents.ImprovedWaterShield]*pct) / 10000
+}
+
+// procImpWaterShield rolls Improved Water Shield: its proc casts Water Shield's mana, without using an orb, and
+// only with Water Shield up.
+func (shaman *Shaman) procImpWaterShield(sim *core.Simulation, chance float64) {
+	if chance == 0 || shaman.SelfBuffs.Shield != proto.ShamanShield_WaterShield {
+		return
+	}
+	if chance >= 1 || sim.RandomFloat("imp water shield") < chance {
+		shaman.AddMana(sim, 428*(1+0.05*float64(shaman.Talents.ImprovedShields)), shaman.waterShieldManaMetrics)
+	}
+}
+
 func (shaman *Shaman) registerLesserHealingWaveSpell() {
-	impShieldChance := 0.2 * float64(shaman.Talents.ImprovedWaterShield)
-	impShieldManaGain := 428.0 * (1 + 0.05*float64(shaman.Talents.ImprovedShields))
+	impShieldChance := shaman.impWaterShieldChance(60)
 
 	hasGlyph := shaman.HasMajorGlyph(proto.ShamanMajorGlyph_GlyphOfLesserHealingWave)
 
@@ -74,11 +90,7 @@ func (shaman *Shaman) registerLesserHealingWaveSpell() {
 			result := spell.CalcAndDealHealing(sim, target, baseHealing, spell.OutcomeHealingCrit)
 
 			if result.Outcome.Matches(core.OutcomeCrit) {
-				if impShieldChance > 0 {
-					if sim.RandomFloat("imp water shield") > impShieldChance {
-						shaman.AddMana(sim, impShieldManaGain, shaman.waterShieldManaMetrics)
-					}
-				}
+				shaman.procImpWaterShield(sim, impShieldChance)
 				if shaman.Talents.AncestralAwakening > 0 {
 					shaman.ancestralHealingAmount = float64(int32(float32(result.Damage) * 30 / 100))
 
@@ -96,8 +108,7 @@ func (shaman *Shaman) registerLesserHealingWaveSpell() {
 }
 
 func (shaman *Shaman) registerRiptideSpell() {
-	impShieldChance := []float64{0, 0.33, 0.66, 1.0}[shaman.Talents.ImprovedWaterShield]
-	impShieldManaGain := 428.0 * (1 + 0.05*float64(shaman.Talents.ImprovedShields))
+	impShieldChance := shaman.impWaterShieldChance(100)
 
 	shaman.Riptide = shaman.RegisterSpell(core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: 61301},
@@ -152,11 +163,7 @@ func (shaman *Shaman) registerRiptideSpell() {
 			spell.Hot(target).Apply(sim)
 
 			if result.Outcome.Matches(core.OutcomeCrit) {
-				if impShieldChance > 0 {
-					if impShieldChance > 0.9999 || sim.RandomFloat("imp water shield") > impShieldChance {
-						shaman.AddMana(sim, impShieldManaGain, shaman.waterShieldManaMetrics)
-					}
-				}
+				shaman.procImpWaterShield(sim, impShieldChance)
 				if shaman.Talents.AncestralAwakening > 0 {
 					shaman.ancestralHealingAmount = float64(int32(float32(result.Damage) * 30 / 100))
 					// TODO: this should actually target the lowest health target in the raid.
@@ -178,8 +185,7 @@ func (shaman *Shaman) registerHealingWaveSpell() {
 
 	// -79 mana totem: 39728
 
-	impShieldChance := 0.2 * float64(shaman.Talents.ImprovedWaterShield)
-	impShieldManaGain := 428.0 * (1 + 0.05*float64(shaman.Talents.ImprovedShields))
+	impShieldChance := shaman.impWaterShieldChance(100)
 
 	shaman.HealingWave = shaman.RegisterSpell(core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: 49273},
@@ -213,11 +219,7 @@ func (shaman *Shaman) registerHealingWaveSpell() {
 			result := spell.CalcAndDealHealing(sim, target, baseHealing, spell.OutcomeHealingCrit)
 
 			if result.Outcome.Matches(core.OutcomeCrit) {
-				if impShieldChance > 0 {
-					if sim.RandomFloat("imp water shield") > impShieldChance {
-						shaman.AddMana(sim, impShieldManaGain, shaman.waterShieldManaMetrics)
-					}
-				}
+				shaman.procImpWaterShield(sim, impShieldChance)
 				if shaman.Talents.AncestralAwakening > 0 {
 					shaman.ancestralHealingAmount = float64(int32(float32(result.Damage) * 30 / 100))
 
@@ -318,8 +320,7 @@ func (shaman *Shaman) registerEarthShieldSpell() {
 }
 
 func (shaman *Shaman) registerChainHealSpell() {
-	impShieldChance := 0.1 * float64(shaman.Talents.ImprovedWaterShield)
-	impShieldManaGain := 428.0 * (1 + 0.05*float64(shaman.Talents.ImprovedShields))
+	impShieldChance := shaman.impWaterShieldChance(30)
 
 	hasGlyph := shaman.HasMajorGlyph(proto.ShamanMajorGlyph_GlyphOfChainHeal)
 
@@ -380,11 +381,7 @@ func (shaman *Shaman) registerChainHealSpell() {
 
 				result := spell.CalcAndDealHealing(sim, curTarget, baseHealing, spell.OutcomeHealingCrit)
 				if result.Outcome.Matches(core.OutcomeCrit) {
-					if impShieldChance > 0 {
-						if sim.RandomFloat("imp water shield") > impShieldChance {
-							shaman.AddMana(sim, impShieldManaGain, shaman.waterShieldManaMetrics)
-						}
-					}
+					shaman.procImpWaterShield(sim, impShieldChance)
 				}
 				if shaman.Talents.TidalWaves > 0 {
 					shaman.tidalWaveProc.Activate(sim)

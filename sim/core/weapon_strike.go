@@ -49,8 +49,8 @@ func (spell *Spell) StrikeDamage(sim *Simulation, weapon *Weapon, hand Hand, spe
 	return weapon.wholeRoll(sim, speed, attackPower, flat, float32(spell.strikeTotalPct(hand)))
 }
 
-// WholeDamage is a weapon roll with no percent inside, for a hit whose multipliers come after it (the rune
-// weapon's copies, a copy of a normalized strike).
+// WholeDamage is a weapon roll with no percent inside, for a hit whose multipliers come after it (a copy of a
+// normalized strike).
 func (weapon *Weapon) WholeDamage(sim *Simulation, speed float64, attackPower float64, flat float64) float64 {
 	return weapon.wholeRoll(sim, speed, attackPower, flat, 1)
 }

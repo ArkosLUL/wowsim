@@ -140,6 +140,59 @@ func TestArdentDefender(t *testing.T) {
 	p.expectHealth(t, "the save under a 20% healing taken aura", 28000)
 }
 
+// A boss swing Ardent Defender saves takes nothing off before the death tracking sees it, so with a healing
+// model the tank lives and its health margin is the health it had going into the swing.
+func TestArdentDefenderSaveIsSurvived(t *testing.T) {
+	raid := core.SinglePlayerRaidProto(&proto.Player{
+		Race:          proto.Race_RaceHuman,
+		Class:         proto.Class_ClassPaladin,
+		Equipment:     &proto.EquipmentSpec{},
+		Consumes:      &proto.Consumes{},
+		Spec:          tankFixesOptions,
+		TalentsString: StandardTalents,
+		Glyphs:        StandardGlyphs,
+		Rotation:      core.APLRotationFromJsonString(`{"type": "TypeAPL", "priorityList": []}`),
+		HealingModel:  &proto.HealingModel{BurstWindow: 6},
+	}, &proto.PartyBuffs{}, &proto.RaidBuffs{}, &proto.Debuffs{})
+	raid.Tanks = []*proto.UnitReference{{Type: proto.UnitReference_Player, Index: 0}}
+	sim := core.NewSim(&proto.RaidSimRequest{
+		Raid:       raid,
+		Encounter:  core.MakeSingleTargetEncounter(0),
+		SimOptions: &proto.SimOptions{Iterations: 1, IsTest: true, RandomSeed: 101, SaveAllValues: true},
+	})
+	pal := sim.Raid.Parties[0].Players[0].(*ProtectionPaladin)
+	saved := pal.GetAura("Ardent Defender")
+
+	sim.Reset()
+	sim.PrePull()
+	for sim.CurrentTime < 0 && !sim.Step() {
+	}
+	// any swing of the boss's that lands is lethal from 1,000
+	pal.AddStatsDynamic(sim, stats.Stats{stats.Health: 50000 - pal.MaxHealth()})
+	pal.GainHealth(sim, pal.MaxHealth(), pal.NewHealthMetrics(core.ActionID{OtherID: proto.OtherAction_OtherActionHealingModel}))
+	pal.RemoveHealth(sim, 49000)
+	for !saved.IsActive() && pal.CurrentHealth() > 0 && sim.CurrentTime < time.Minute && !sim.Step() {
+	}
+	if !saved.IsActive() {
+		t.Fatalf("no save by %v, at %v health", sim.CurrentTime, pal.CurrentHealth())
+	}
+	if pal.CurrentHealth() <= 1000 {
+		t.Errorf("health %v after the save, want the heal on top of 1000", pal.CurrentHealth())
+	}
+	sim.Cleanup()
+
+	got := pal.Metrics.ToProto()
+	if len(got.IterationDeaths) != 1 || got.IterationDeaths[0] {
+		t.Errorf("deaths %v, want none", got.IterationDeaths)
+	}
+	if len(got.IterationHealthMargins) != 1 || got.IterationHealthMargins[0] != 1000 {
+		t.Errorf("margins %v, want the 1000 before the swing", got.IterationHealthMargins)
+	}
+	if len(got.IterationFirstDeathSeconds) != 1 || got.IterationFirstDeathSeconds[0] != sim.Duration.Seconds() {
+		t.Errorf("first deaths %v s, want the fight's %v", got.IterationFirstDeathSeconds, sim.Duration.Seconds())
+	}
+}
+
 // Lay on Hands on himself: his max health, 1950 mana, 15 min with the glyph, and Forbearance and the Avenging
 // Wrath marker both ways with Divine Protection and Avenging Wrath.
 func TestLayOnHands(t *testing.T) {

@@ -386,6 +386,7 @@ var threats = []Threat{
 	{SpellID: 56453, Targets: ThreatTargetsCaster},                                         // Lock and Load
 	{SpellID: 56488, Targets: ThreatTargetsCaster | ThreatTargetsEnemyArea},                // Global Thermal Sapper Charge
 	{SpellID: 56815, Row: 56815, FlatMod: 0, PctMod: 1.75},                                 // Rune Strike
+	{SpellID: 56817, Targets: ThreatTargetsCaster},                                         // Rune strike proc
 	{SpellID: 57516, Targets: ThreatTargetsCaster},                                         // Enrage (Rank 2)
 	{SpellID: 57518, Targets: ThreatTargetsCaster},                                         // Enrage (Rank 1)
 	{SpellID: 57755, Row: 57755, FlatMod: 0, PctMod: 1.5},                                  // Heroic Throw
