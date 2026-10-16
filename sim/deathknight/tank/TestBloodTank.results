@@ -919,7 +919,7 @@ dps_results: {
  key: "TestBloodTank-Average-Default"
  value: {
   dps: 2344.78503
-  tps: 8179.37689
+  tps: 8191.77248
   dtps: 253.33343
  }
 }
@@ -927,7 +927,7 @@ dps_results: {
  key: "TestBloodTank-BloodAggro"
  value: {
   dps: 3620.43433
-  tps: 8379.91342
+  tps: 8393.44742
   dtps: 272.52767
  }
 }
@@ -935,7 +935,7 @@ dps_results: {
  key: "TestBloodTank-GenericBoss"
  value: {
   dps: 2332.31283
-  tps: 8089.43839
+  tps: 8101.68822
   dtps: 1742.95133
  }
 }
@@ -1027,7 +1027,7 @@ dps_results: {
  key: "TestBloodTank-SwitchInFrontOfTarget-Default"
  value: {
   dps: 2373.96767
-  tps: 8111.86769
+  tps: 8123.15719
   dtps: 238.75217
  }
 }
@@ -1035,7 +1035,7 @@ dps_results: {
  key: "TestBloodTank-Talents-FrostPresence-Average"
  value: {
   dps: 2430.69397
-  tps: 10684.86702
+  tps: 10696.70223
   dtps: 247.38074
  }
 }
@@ -1043,7 +1043,7 @@ dps_results: {
  key: "TestBloodTank-Talents-UnholyPresence-Average"
  value: {
   dps: 2503.89281
-  tps: 2344.67861
+  tps: 2357.99068
   dtps: 319.69749
  }
 }
