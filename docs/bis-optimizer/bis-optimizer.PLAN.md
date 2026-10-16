@@ -2874,3 +2874,30 @@ or Defense; Hit 262 to 294 against the 262 floor):
   - Twins win on the mean: Bulwark P5's +20 ± 26 and Felesta P5's +36 ± 22 sit under 2 se.
   - A tie's times are taken at verify, before the alternatives stage, so the final pick's can differ (Bulwark
     P3 46.8 s at the tie, 50.2 s at the pick).
+
+### BIS-GEM-SIM (after Z12, before the BiS chain; golden-neutral; stages: code, picks)
+
+At P1 both tank picks gem 3 Stamina in 11 and 13 sockets though a Stamina socket sims 8 and 4 times any other
+at the pick (BIS-TANK-HEALTH's Picks). The gem DP (`sim/optimizer/gems.go`) prices gems and socket bonuses at the
+surrogate's linear slopes (`linearAt`), and the gem check (`checkGems`, `gemTwins`) bans one gem at a time and
+re-solves at the same slopes: a stat the slopes underprice never comes up, neither as a gem nor as a socket bonus
+worth matching colors for.
+
+**Decided by the user (2026-10-17):** fix it before the BiS chain; the fix covers gems and socket bonuses alike.
+
+- **Find underpriced stats.** At the pick, sim one socket of each stat the pool's gems carry, paired, and re-solve
+  the DP with each stat's price raised to what its socket simmed, so socket bonuses and the meta re-solve with it.
+  Each re-solve that differs from the pick becomes a twin, simmed paired at verify's iterations, counted in
+  `TotalSims`; the best mean wins, and a tank's twins within 2 se go to time to live. Another way that finds the
+  same gems is fine; say why.
+- **Every run**, DPS too. Report the sims added per run at Quick and Normal.
+- **Twins under 2 se** (Bulwark P5 +20 ± 26, Felesta P5 +36 ± 22): decide whether a twin has to clear 2 se over
+  the pick to replace it, and say why.
+
+**Verify:** a test where the slopes underprice a stat a fake evaluator values: the check finds its gems and matches
+colors for its socket bonus; both tanks' P1 at Normal against BIS-TANK-HEALTH's Picks (Stamina gems, the dJ per
+socket behind them); Angry P2 and P3 Normal and the slow suite (picks, sims, walls); every golden unchanged;
+`sim/optimizer` tests, vet, gofmt.
+
+Golden-neutral. **Owns:** `sim/optimizer/`, `docs/guide/tank-modeling.md`'s gem lines. After it, the deferred BiS
+chain (wave-loop PLAN).
