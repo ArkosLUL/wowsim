@@ -23,9 +23,10 @@ const (
 
 // verify sims the search's picks at full iterations, paired with the seed, then races the ones within
 // 2 standard errors of the best: every round doubles their iterations (the seed's too, so deltas keep
-// pairing), until one stands out or the race's share runs out. The best replaces the seed only when it
-// beats it (see beatsSeed). The result is sorted best first; loadouts that break a rule, stat floors
-// included, aren't simmed.
+// pairing), until one stands out or the race's share runs out. The best's gems then face their
+// runners-up in the sim (checkGems), and a tank run hands what's still tied to time to live
+// (breakTie). The best replaces the seed only when it beats it (see beatsSeed). The result is sorted
+// best first; loadouts that break a rule, stat floors included, aren't simmed.
 func (r *run) verify(candidates []Loadout) ([]*verifiedLoadout, error) {
 	var picks []Loadout
 	for _, l := range candidates {
@@ -117,6 +118,11 @@ func (r *run) verify(candidates []Loadout) ([]*verifiedLoadout, error) {
 			}
 		}
 	}
+	verified, err = r.checkGems(verified)
+	if err != nil {
+		return nil, err
+	}
+	r.breakTie(verified)
 	if r.beatsSeed(verified[0].eval) {
 		r.best, r.bestEval = verified[0].loadout, verified[0].eval
 	}

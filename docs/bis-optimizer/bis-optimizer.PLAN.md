@@ -2749,3 +2749,55 @@ Golden-neutral. **Owns:** `sim/optimizer/`, `proto/optimizer.proto`, `ui/core/op
 the `player.ts` cooldowns hunk, the results page's margin row, `docs/guide/tank-modeling.md`, the CONTEXT.md
 terms; small hunks in `proto/api.proto` (`UnitMetrics` 19 on), `sim/core/health.go`, `metrics_aggregator.go`
 and the shard test. After it, the deferred BiS chain reruns every preset and the whole dataset (wave-loop PLAN).
+
+#### As built
+
+Code stages on `9a5d8fb6a`, golden-neutral; mechanics and rules live in [tank-modeling](../guide/tank-modeling.md).
+The Picks bullet runs on `integration`.
+
+- **Margin** (stage 1): `healthBar.healthDebt` / `lowestHealth` / `shadowHealth` in `health.go`, sampled in
+  `RemoveHealth` and at the iteration's end (`doneIteration`); both death sites set `FirstDeathTimestamp`.
+  `UnitMetrics` 19 `iteration_health_margins`, 20 `optional health_margin_avg`, 21 `health_margin_stdev`, 22
+  `iteration_first_death_seconds`; a survivor's first death is the iteration's length. Per-iteration slices
+  like `deaths`, not `DistributionMetrics`.
+- **Weights, time to live, tiebreak, NaN guard** (stage 1): `armorReferenced`, `TankWeights` /
+  `tankMetricWeights`, `timetolive.go` (`timeToLiveRequest`, optional `timeToLiveSource`, `run.lives`,
+  `breakTie`, `checkNaN`, `calibrationGap`). The tiebreak takes only loadouts that beat the seed, and only when
+  the best does; "longest" is the mean, no significance test.
+- **Gem check** (stage 2, `gemcheck.go`): one twin per distinct gem, that gem banned (`gemWithout`,
+  `gemOptionsWithout`) and the surrogate's unpriced gems with it, regemming only the slots that hold it at the
+  slopes there (`linearAt`); a twin breaking `Pool.Check` is dropped. In `verify` after the race, before
+  `breakTie`, so the death second pass checks again; the neighborhood's later adoptions aren't checked.
+- **Resistance at zero** (stage 2): `tankSpec` mirrors `isTankSpec`; `Pool.withoutResistance` on candidates,
+  socket bonuses, enchants, gems, `choiceStats`, `gearStats` and `Pool.gem`; `dress` (`sheet.go`) cancels
+  `gearResistance` in sims, sheets and `pinHealingModel`. `isResistanceOnly` in `pool_builder.ts`,
+  `resistanceOnly` in `realpool_test.go`.
+- **Defensives, UI** (stage 2): `applySharedDefaults` sets the simple cooldowns after the `TypeAuto` rotation;
+  `METRIC_LABELS` gets the margin (whole health in `metricsText`), the slider and Advanced hints name it;
+  `ToplineResults` adds the margin row after chance of death, from `UnitMetrics.healthMargin`
+  (`sim_result.ts`).
+- **Tests**: stage 1's (`health_margin_test.go`, the shard merge's `healed tank`, `timetolive_test.go`, the
+  objective's Armor reference and split, fakes and `TestMetricsRoundTrip` at 7);
+  `TestGemTwinsKeepTheBonusAndMeta`, `TestGemTwinsSkipBannedGemsAndLockedSlots`, `TestGemCheckTakesTheBestMean`,
+  `TestGemCheckKeepsAPickNoTwinBeats`, `TestGemTwinsTiedOnScoreGoToTimeToLive`, `TestTankGearResistsNothing`;
+  UI: the tab's tank and non-tank pool tests, the batch's imported-tank defensives test.
+
+**Verify** (loaded machine; Bulwark P2 Normal captured from the 8 Oct roster):
+
+- The captured request's DPS, TPS, DTPS, TMI and death chance at the worn gear, ±2000 Armor, +100 Stamina and
+  the seed equal the base tree's to 12 digits after both stages (Bulwark's P2 gear holds no resistance).
+- Margin at the worn gear 2205 ± 59, normalizer 1.287 ± 0.016 per Armor (79 se); +100 Stamina (1213 health)
+  moves it +604 ± 22 and J +348 ± 8: the lowest health sits under 35%, where this tree's Ardent Defender cut
+  grows with max health and its save ends at a max-health heal. Time to live 16.34 ± 0.03 s, +100 Stamina
+  16.50.
+- Angry, Normal, after both stages against the base tree: P2 takes one twin, Bold Dragon's Eye for Fractured
+  Dragon's Eye, +2.5 ± 1.3 over the search's gems; score 10320.08 to 10322.61, DPS 10041.89 to 10044.35, same race and
+  other gear, 1,874,500 to 1,902,500 sims. P3: no twin wins, pick and score unchanged (13718.91), 1,994,000 to
+  2,018,000 sims.
+- `./sim/... ./tools/... ./cmd/...` 50 ok, none failing; 37 of 37 suites unchanged; simval 1114 of 1114; vet and
+  gofmt clean; tsc clean, eslint on each changed UI file no worse than HEAD; `optimizer_tab.spec.ts` and
+  `bis_batch.spec.ts` 13 of 13.
+- **Left:** the 8 Oct snapshot's Bulwark and Felesta hold `cooldowns {}` and no `rotation.simple`, so restored
+  from storage they still send defensives at 0; the results page's margin row has no UI test (its fixtures
+  predate `UnitMetrics` 19); a low reached at EC-CLASS-FIX8's bonus-health expiry and healed over before the
+  next hit goes unseen until its helper lowers `lowestHealth`.

@@ -70,7 +70,8 @@ func NeedsSim(c ItemChoice) bool {
 
 // gearStats is what a loadout's items, enchants, gems, socket bonuses and reforges add up to, in the
 // same space as a Point's offsets: before the character's stat multipliers. Reforges count under
-// the run's mod-reforging config, like the pool's options and the sim.
+// the run's mod-reforging config, like the pool's options and the sim. A tank's resist nothing, as in
+// its sims.
 func (p *Pool) gearStats(l Loadout) stats.Stats {
 	var total stats.Stats
 	for _, c := range l.Items {
@@ -80,7 +81,7 @@ func (p *Pool) gearStats(l Loadout) stats.Stats {
 		item := core.NewItem(c.CoreSpec(), p.reforging)
 		total = total.Add(item.TotalStats())
 	}
-	return total
+	return p.withoutResistance(total)
 }
 
 // MeasureResiduals returns, per variant, what its changes from base are worth beyond their stats:

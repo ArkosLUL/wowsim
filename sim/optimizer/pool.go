@@ -41,6 +41,8 @@ type Pool struct {
 	reforging   *core.Reforging
 	sheets      sheetMemo
 	gemKinds    []gemKind
+	// A tank's: its gear's resistances are priced and simmed as none (see gearResistance).
+	noResistance bool
 }
 
 // Candidate is one item one slot can hold.
@@ -140,6 +142,8 @@ func CompilePool(r *Request) (*Pool, error) {
 		base:        r.Base,
 		targetIndex: r.TargetIndex,
 		reforging:   &core.NewServerSettings(r.Base.GetEncounter().GetServerSettings()).Reforging,
+
+		noResistance: tankSpec(r.Target()),
 	}
 	for _, id := range r.Settings.GetExcludedItemIds() {
 		p.excluded[id] = true
@@ -186,7 +190,8 @@ func CompilePool(r *Request) (*Pool, error) {
 				if !ok {
 					return nil, fmt.Errorf("pool slot %s: enchant %d for item %d isn't in the database", slot, enchantID, id)
 				}
-				c.Enchants = append(c.Enchants, EnchantOption{ID: enchantID, Stats: enchant.Stats, NeedsSim: EnchantHasEffect(enchantID), nz: nonzero(&enchant.Stats)})
+				priced := p.withoutResistance(enchant.Stats)
+				c.Enchants = append(c.Enchants, EnchantOption{ID: enchantID, Stats: priced, NeedsSim: EnchantHasEffect(enchantID), nz: nonzero(&priced)})
 			}
 			p.Slots[slot] = append(p.Slots[slot], c)
 			p.index[slot][id] = c
@@ -206,7 +211,8 @@ func CompilePool(r *Request) (*Pool, error) {
 		c.Reforges = slices.DeleteFunc(c.Reforges, func(o ReforgeOption) bool { return o.From != choice.ReforgeFrom || o.To != choice.ReforgeTo })
 		if choice.Enchant != 0 {
 			enchant, _ := core.LookupEnchant(choice.Enchant)
-			c.Enchants = []EnchantOption{{ID: choice.Enchant, Stats: enchant.Stats, NeedsSim: EnchantHasEffect(choice.Enchant), nz: nonzero(&enchant.Stats)}}
+			priced := p.withoutResistance(enchant.Stats)
+			c.Enchants = []EnchantOption{{ID: choice.Enchant, Stats: priced, NeedsSim: EnchantHasEffect(choice.Enchant), nz: nonzero(&priced)}}
 		}
 		p.Slots[slot] = []*Candidate{c}
 		p.index[slot][choice.ItemID] = c
@@ -220,12 +226,55 @@ func CompilePool(r *Request) (*Pool, error) {
 		if !ok {
 			return nil, fmt.Errorf("pool gem %d isn't in the database", id)
 		}
+		gem.Stats = p.withoutResistance(gem.Stats)
 		g := &GemCandidate{Gem: gem, NeedsSim: ItemHasEffect(id), Catalog: p.catalog[id], nz: nonzero(&gem.Stats)}
 		p.Gems = append(p.Gems, g)
 		p.gems[id] = g
 	}
 	p.groupGems()
 	return p, nil
+}
+
+// tankSpec mirrors the UI's isTankSpec: the specs its pool builder sends to the tank fight.
+func tankSpec(player *proto.Player) bool {
+	switch player.GetSpec().(type) {
+	case *proto.Player_FeralTankDruid, *proto.Player_ProtectionPaladin, *proto.Player_ProtectionWarrior, *proto.Player_TankDeathknight:
+		return true
+	}
+	return false
+}
+
+var resistances = [...]stats.Stat{stats.ArcaneResistance, stats.FireResistance, stats.FrostResistance, stats.NatureResistance, stats.ShadowResistance}
+
+// withoutResistance is x with its resistances at 0 on a tank's pool, x as it is on anyone else's.
+func (p *Pool) withoutResistance(x stats.Stats) stats.Stats {
+	if p.noResistance {
+		for _, st := range resistances {
+			x[st] = 0
+		}
+	}
+	return x
+}
+
+// gearResistance is the resistance l's items, enchants, gems and socket bonuses add. A tank's sims
+// take it back off through the bonus stats, so only raid auras, talents and racials resist for it:
+// resistance gear answers the one boss the tank fight models, not the rest of its phase.
+func gearResistance(l Loadout) stats.Stats {
+	var out stats.Stats
+	for _, c := range l.Items {
+		if c.ItemID == 0 {
+			continue
+		}
+		spec := c.CoreSpec()
+		// reforges only move ratings
+		spec.Reforge = nil
+		item := core.NewItem(spec, nil)
+		total := item.TotalStats()
+		for _, st := range resistances {
+			out[st] += total[st]
+		}
+	}
+	return out
 }
 
 func newPlayerRules(target *proto.Player) (pr playerRules, err error) {
@@ -254,6 +303,8 @@ func newPlayerRules(target *proto.Player) (pr playerRules, err error) {
 }
 
 func (p *Pool) newCandidate(item core.Item) *Candidate {
+	item.Stats = p.withoutResistance(item.Stats)
+	item.SocketBonus = p.withoutResistance(item.SocketBonus)
 	return &Candidate{
 		Item:      item,
 		Sockets:   p.sockets(&item),

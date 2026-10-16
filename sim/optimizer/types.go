@@ -120,6 +120,7 @@ const (
 	MetricDTPS
 	MetricTMI
 	MetricPDeath
+	MetricHealthMargin
 	NumMetrics
 )
 
@@ -134,6 +135,8 @@ func MetricsFromProto(m *proto.OptimizerMetrics) Metrics {
 		MetricDTPS:   m.GetDtps(),
 		MetricTMI:    m.GetTmi(),
 		MetricPDeath: m.GetPDeath(),
+
+		MetricHealthMargin: m.GetHealthMargin(),
 	}
 }
 
@@ -145,6 +148,8 @@ func (m Metrics) ToProto() *proto.OptimizerMetrics {
 		Dtps:   m[MetricDTPS],
 		Tmi:    m[MetricTMI],
 		PDeath: m[MetricPDeath],
+
+		HealthMargin: m[MetricHealthMargin],
 	}
 }
 

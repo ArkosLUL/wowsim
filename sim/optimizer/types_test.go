@@ -70,9 +70,9 @@ func TestLoadoutFromProtoRejects(t *testing.T) {
 }
 
 func TestMetricsRoundTrip(t *testing.T) {
-	m := &proto.OptimizerMetrics{Dps: 1, Hps: 2, Tps: 3, Dtps: 4, Tmi: 5, PDeath: 6}
+	m := &proto.OptimizerMetrics{Dps: 1, Hps: 2, Tps: 3, Dtps: 4, Tmi: 5, PDeath: 6, HealthMargin: 7}
 	got := MetricsFromProto(m)
-	if got != (Metrics{1, 2, 3, 4, 5, 6}) {
+	if got != (Metrics{1, 2, 3, 4, 5, 6, 7}) {
 		t.Errorf("MetricsFromProto = %v", got)
 	}
 	if !goproto.Equal(got.ToProto(), m) {

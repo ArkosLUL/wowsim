@@ -298,7 +298,7 @@ func (s *surrogate) choiceStats(slot proto.ItemSlot, c ItemChoice) stats.Stats {
 	cand := s.pool.candidate(slot, c.ItemID)
 	if cand == nil {
 		item := core.NewItem(c.CoreSpec(), s.pool.reforging)
-		return item.TotalStats()
+		return s.pool.withoutResistance(item.TotalStats())
 	}
 	total := cand.Item.Stats
 	if c.Enchant != 0 {
@@ -333,7 +333,8 @@ func (s *surrogate) choiceStats(slot proto.ItemSlot, c ItemChoice) stats.Stats {
 	if matched {
 		total.AddInplace(&cand.Item.SocketBonus)
 	}
-	return total
+	// an enchant or gem the pool doesn't offer comes from core, resistance and all
+	return s.pool.withoutResistance(total)
 }
 
 func (c *Candidate) enchantStats(id int32) stats.Stats {
@@ -357,6 +358,7 @@ func (p *Pool) gem(id int32) core.Gem {
 		return g.Gem
 	}
 	gem, _ := core.LookupGem(id)
+	gem.Stats = p.withoutResistance(gem.Stats)
 	return gem
 }
 

@@ -196,6 +196,28 @@ test('a run sends the ticked stat caps setting, unticking sends it off', async (
 	expect(requests[1].settings?.disableStatCaps).toBe(true);
 });
 
+// No real run: the routes answer empty, so the job fails right after sending its request.
+test('an imported tank keeps its defensives for 35% health and weighs its health margin', async ({ page }) => {
+	const requests: Array<OptimizeGearRequest> = [];
+	await page.route('**/optimizeGearAsync', async route => {
+		const body = route.request().postDataBuffer();
+		if (body) requests.push(OptimizeGearRequest.fromBinary(body));
+		await route.fulfill({ status: 200, body: '' });
+	});
+	await page.route('**/asyncProgress', route => route.fulfill({ status: 204 }));
+
+	await openBatch(page);
+	await tickOnly(page, [mainTank], [1]);
+	await batchTab(page).getByRole('button', { name: 'Start' }).click();
+	await expect(cell(page, mainTank, 1)).toHaveText('failed');
+	expect(requests).toHaveLength(1);
+	const index = requests[0].targetRaidIndex;
+	const tank = requests[0].base!.raid!.parties[Math.floor(index / 5)].players[index % 5];
+	expect(tank.name).toBe(mainTank);
+	expect(tank.cooldowns?.hpPercentForDefensives).toBe(0.35);
+	expect(requests[0].settings?.metricWeights?.healthMargin).toBe(0.35);
+});
+
 // The server runs one optimization at a time, so this is the suite's only real run: a tank, since a
 // DPS raider gets a second, raid-scored run after the first.
 test('one Quick run fills its cell, and its gear can be saved and cleared', async ({ page }) => {

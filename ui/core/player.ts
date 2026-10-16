@@ -1341,14 +1341,15 @@ export class Player<SpecType extends Spec> {
 			this.setHealingModel(eventID, HealingModel.create({
 				burstWindow: isTankSpec(this.spec) ? 6 : 0,
 			}));
-			this.setSimpleCooldowns(eventID, Cooldowns.create({
-				hpPercentForDefensives: isTankSpec(this.spec) ? 0.35 : 0,
-			}));
 			this.setBonusStats(eventID, new Stats());
 
 			this.setAplRotation(eventID, APLRotation.create({
 				type: APLRotationType.TypeAuto,
 			}))
+			// after the rotation, which holds the simple cooldowns and would drop them
+			this.setSimpleCooldowns(eventID, Cooldowns.create({
+				hpPercentForDefensives: isTankSpec(this.spec) ? 0.35 : 0,
+			}));
 		});
 	}
 }

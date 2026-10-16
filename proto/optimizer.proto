@@ -38,6 +38,8 @@ message OptimizerMetrics {
 	double dtps = 4;
 	double tmi = 5;
 	double p_death = 6;
+	// mean of the tank's lowest health in the healed fight, past 0 where it dies
+	double health_margin = 7;
 }
 
 // A floor on one of the target's final stats, as the character sheet shows them.

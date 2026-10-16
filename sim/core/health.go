@@ -13,6 +13,10 @@ type healthBar struct {
 	unit *Unit
 
 	currentHealth float64
+	// overkill no heal has paid back yet: currentHealth - healthDebt is the health a bar that runs
+	// on past 0 would show, and lowestHealth the lowest that went this iteration
+	healthDebt   float64
+	lowestHealth float64
 
 	DamageTakenHealthMetrics *ResourceMetrics
 }
@@ -33,6 +37,14 @@ func (hb *healthBar) reset(_ *Simulation) {
 		return
 	}
 	hb.currentHealth = hb.MaxHealth()
+	hb.healthDebt = 0
+	hb.lowestHealth = hb.currentHealth
+}
+
+// shadowHealth is currentHealth less the unpaid overkill: below 0 for a unit that died and hasn't
+// been healed back past it.
+func (hb *healthBar) shadowHealth() float64 {
+	return hb.currentHealth - hb.healthDebt
 }
 
 func (hb *healthBar) MaxHealth() float64 {
@@ -97,6 +109,11 @@ func (hb *healthBar) GainHealth(sim *Simulation, amount float64, metrics *Resour
 	if metrics.gainThreat != nil {
 		hb.unit.addGainThreat(sim, metrics, amount, newHealth-oldHealth)
 	}
+	if hb.healthDebt > 0 {
+		if overheal := oldHealth + amount - newHealth; overheal > 0 {
+			hb.healthDebt = max(0, hb.healthDebt-overheal)
+		}
+	}
 
 	hb.currentHealth = newHealth
 }
@@ -125,6 +142,10 @@ func (hb *healthBar) RemoveHealth(sim *Simulation, amount float64) {
 	}
 
 	hb.currentHealth = newHealth
+	if amount > oldHealth {
+		hb.healthDebt += amount - oldHealth
+	}
+	hb.lowestHealth = min(hb.lowestHealth, hb.shadowHealth())
 }
 
 // AddHealingTakenPct puts a SPELL_AURA_MOD_HEALING_PCT aura of pct percent on the unit, and
@@ -198,6 +219,7 @@ func (character *Character) trackChanceOfDeath(healingModel *proto.HealingModel)
 	}
 
 	character.Unit.Metrics.tmiBin = healingModel.BurstWindow
+	character.Unit.Metrics.keepsHealthMargin = true
 
 	character.RegisterAura(Aura{
 		Label:    ChanceOfDeathAuraLabel,
@@ -211,6 +233,7 @@ func (character *Character) trackChanceOfDeath(healingModel *proto.HealingModel)
 
 				if aura.Unit.CurrentHealth() <= 0 && !aura.Unit.Metrics.Died {
 					aura.Unit.Metrics.Died = true
+					aura.Unit.Metrics.FirstDeathTimestamp = sim.CurrentTime
 					if sim.Log != nil {
 						character.Log(sim, "Dead")
 					}
@@ -223,6 +246,7 @@ func (character *Character) trackChanceOfDeath(healingModel *proto.HealingModel)
 
 				if aura.Unit.CurrentHealth() <= 0 && !aura.Unit.Metrics.Died {
 					aura.Unit.Metrics.Died = true
+					aura.Unit.Metrics.FirstDeathTimestamp = sim.CurrentTime
 					if sim.Log != nil {
 						character.Log(sim, "Dead")
 					}
