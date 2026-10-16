@@ -374,7 +374,7 @@ func (shaman *Shaman) newEarthlivingImbueSpell() *core.Spell {
 			Tick:          core.SpellEffect{Effect: 0, FromSpellID: 52000, Min: 163, Max: 163, SP: 0.164},
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
 				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + core.PowerBonus(dot.Tick.SP, shaman.healingPower(dot.Spell, target))
-				dot.SnapshotAttackerMultiplier = dot.Spell.CasterHealingMultiplier()
+				dot.SnapshotHotMultiplier(dot.Spell.CasterHealingMultiplier())
 			},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 				dot.CalcAndDealPeriodicSnapshotHealing(sim, target, dot.OutcomeTick)

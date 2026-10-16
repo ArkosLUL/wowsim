@@ -19,12 +19,14 @@ func (paladin *Paladin) RegisterAvengingWrathCD() {
 				paladin.HammerOfWrath.CD.Duration /= 2
 			}
 			aura.Unit.PseudoStats.DamageDealtMultiplier *= 1.2
+			aura.Unit.AddHealingDonePct(20)
 		},
 		OnExpire: func(aura *core.Aura, sim *core.Simulation) {
 			if paladin.HasMajorGlyph(proto.PaladinMajorGlyph_GlyphOfAvengingWrath) {
 				paladin.HammerOfWrath.CD.Duration *= 2
 			}
 			aura.Unit.PseudoStats.DamageDealtMultiplier /= 1.2
+			aura.Unit.RemoveHealingDonePct(20)
 		},
 	})
 	core.RegisterPercentDamageModifierEffect(paladin.AvengingWrathAura, 1.2)

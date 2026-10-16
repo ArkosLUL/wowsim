@@ -237,6 +237,7 @@ class TargetPicker extends Input<Encounter, TargetProto> {
 	private readonly suppressDodgePicker: Input<null, boolean>;
 	private readonly worldBossPicker: Input<null, boolean>;
 	private readonly damageSpreadPicker: Input<null, number>;
+	private readonly combatReachPicker: Input<null, number>;
 	private readonly targetInputPickers: ListPicker<Encounter, TargetInput>;
 
 	private getTarget(): TargetProto {
@@ -404,6 +405,18 @@ class TargetPicker extends Input<Encounter, TargetProto> {
 				encounter.targetsChangeEmitter.emit(eventID);
 			},
 		});
+		this.combatReachPicker = new NumberPicker(section3, null, {
+			label: 'Combat Reach',
+			labelTooltip: "This enemy's combat reach in yards, its model's size, which moves the range of a Mirror Image's casts and chase. 0 means the boss dummy's 2.5.",
+			float: true,
+			positive: true,
+			changedEvent: () => encounter.targetsChangeEmitter,
+			getValue: () => this.getTarget().combatReach,
+			setValue: (eventID: EventID, _: null, newValue: number) => {
+				this.getTarget().combatReach = newValue;
+				encounter.targetsChangeEmitter.emit(eventID);
+			},
+		});
 		this.dualWieldPicker = new BooleanPicker(section3, null, {
 			label: 'Dual Wield',
 			labelTooltip: 'Uses 2 separate weapons to attack.',
@@ -512,6 +525,7 @@ class TargetPicker extends Input<Encounter, TargetProto> {
 			parryHaste: this.parryHastePicker.getInputValue(),
 			spellSchool: this.spellSchoolPicker.getInputValue(),
 			damageSpread: this.damageSpreadPicker.getInputValue(),
+			combatReach: this.combatReachPicker.getInputValue(),
 			stats: this.statPickers
 				.map(picker => picker.getInputValue())
 				.map((statValue, i) => new Stats().withStat(ALL_TARGET_STATS[i].stat, statValue))
@@ -537,6 +551,7 @@ class TargetPicker extends Input<Encounter, TargetProto> {
 		this.parryHastePicker.setInputValue(newValue.parryHaste);
 		this.spellSchoolPicker.setInputValue(newValue.spellSchool);
 		this.damageSpreadPicker.setInputValue(newValue.damageSpread);
+		this.combatReachPicker.setInputValue(newValue.combatReach);
 		ALL_TARGET_STATS.forEach((statData, i) => this.statPickers[i].setInputValue(newValue.stats[statData.stat]));
 		this.targetInputPickers.setInputValue(newValue.targetInputs);
 	}

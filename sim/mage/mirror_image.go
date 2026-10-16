@@ -77,7 +77,7 @@ const (
 	// the image's reach is its mage's model's; the target's is the boss dummy's (model 27510), which
 	// every record fights
 	mirrorImageReach       = 1.5
-	mirrorImageTargetReach = 2.5
+	mirrorImageTargetReach = core.BossDummyCombatReach // the ranges below move with another target's (targetReachOver)
 	// Spell::CheckRange at the cast's start: Fire Blast's 20 yd between the two reaches
 	mirrorImageFireBlastRange = 20 + mirrorImageReach + mirrorImageTargetReach
 	// CasterAI chases at three quarters of Fire Blast's range (FillAISpellInfo) plus both reaches, and only
@@ -224,13 +224,14 @@ func (mi *MirrorImage) closeIn(until time.Duration) {
 		return
 	}
 	if mi.chaseTo == 0 {
-		switch d := mi.DistanceFromTarget; {
+		over := mi.targetReachOver()
+		switch d := mi.DistanceFromTarget - over; {
 		case d >= mirrorImageChaseFar:
-			mi.chaseTo = mirrorImageChaseRange
+			mi.chaseTo = mirrorImageChaseRange + over
 		case d > mirrorImageChaseRange:
-			mi.chaseTo = mirrorImageChaseStop
+			mi.chaseTo = mirrorImageChaseStop + over
 		default:
-			mi.chaseTo = d
+			mi.chaseTo = mi.DistanceFromTarget
 		}
 	}
 	moved := mirrorImageRunSpeed * (until - mi.movingSince).Seconds()
@@ -250,9 +251,15 @@ func (mi *MirrorImage) castFrostbolt(sim *core.Simulation) bool {
 // castFireBlast is the cast the AI puts its event back for either way: out of range, Spell::CheckRange fails
 // it as it starts.
 func (mi *MirrorImage) castFireBlast(sim *core.Simulation) {
-	if mi.DistanceFromTarget < mirrorImageFireBlastRange {
+	if mi.DistanceFromTarget < mirrorImageFireBlastRange+mi.targetReachOver() {
 		mi.Fireblast.Cast(sim, mi.CurrentTarget)
 	}
+}
+
+// targetReachOver is how far the target's combat reach is past the boss dummy's, which moves every range of the
+// image's by as much.
+func (mi *MirrorImage) targetReachOver() float64 {
+	return mi.CurrentTarget.EnemyCombatReach - mirrorImageTargetReach
 }
 
 // queueEvent wakes the AI on the first update from earliest on that it can cast on and has an event due by.

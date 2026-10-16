@@ -687,6 +687,10 @@ message Target {
 	// SPELL_AURA_MOD_ENEMY_DODGE on the creature: the dodge chance of whoever it attacks
 	// is multiplied by this (0.8 under Halion's Twilight Precision). Unset means 1.
 	double enemy_dodge_multiplier = 23;
+
+	// The creature's combat reach in yards (UNIT_FIELD_COMBATREACH): its model's
+	// creature_model_info.CombatReach times its scale. Unset means the boss dummy's 2.5.
+	double combat_reach = 24;
 }
 
 message Encounter {

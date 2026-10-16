@@ -137,7 +137,8 @@ func (shaman *Shaman) registerRiptideSpell() {
 			Tick:          core.SpellEffect{Effect: 1, Min: 334, Max: 334, SP: 0.188},
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
 				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + core.PowerBonus(dot.Tick.SP, shaman.healingPower(dot.Spell, target))
-				dot.SnapshotAttackerMultiplier = dot.Spell.CasterHealingMultiplier()
+				// Purification is a healing done percent, which each tick takes from the shaman
+				dot.SnapshotHotMultiplier(dot.Spell.CasterHealingMultiplier() / (1 + .02*float64(shaman.Talents.Purification)))
 			},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 				dot.CalcAndDealPeriodicSnapshotHealing(sim, target, dot.OutcomeTick)
@@ -240,6 +241,8 @@ func (shaman *Shaman) registerEarthShieldSpell() {
 	// once more to what the bonuses added over the base value
 	glyphMultiplier := core.TernaryFloat64(shaman.HasMajorGlyph(proto.ShamanMajorGlyph_GlyphOfEarthShield), 1.2, 1)
 	improvedShields := 0.05 * float64(shaman.Talents.ImprovedShields)
+	// 49284's healing bonus puts Purification in the charge before the glyph, and 379 takes no caster mods of its own
+	purification := 1 + .02*float64(shaman.Talents.Purification)
 
 	icd := core.Cooldown{
 		Timer:    shaman.NewTimer(),
@@ -299,7 +302,7 @@ func (shaman *Shaman) registerEarthShieldSpell() {
 			Tick:          core.SpellEffect{Effect: 0, Min: 337, Max: 337, SP: 0.5371},
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
 				base := dot.Tick.Roll(sim)
-				amount := (base + core.PowerBonus(dot.Tick.SP, shaman.healingPower(dot.Spell, target))) * glyphMultiplier
+				amount := (base + core.PowerBonus(dot.Tick.SP, shaman.healingPower(dot.Spell, target))) * purification * glyphMultiplier
 				dot.SnapshotBaseDamage = amount + (amount-base)*improvedShields
 				dot.SnapshotAttackerMultiplier = dot.Spell.CasterHealingMultiplier()
 			},

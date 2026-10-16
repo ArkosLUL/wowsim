@@ -171,7 +171,7 @@ var ItemSetCrimsonAcolytesRaiment = core.NewItemSet(core.ItemSet{
 					TicksCanCrit:  false,
 					OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
 						dot.SnapshotBaseDamage = curAmount * 0.33
-						dot.SnapshotAttackerMultiplier = dot.Spell.CasterHealingMultiplier()
+						dot.SnapshotHotMultiplier(dot.Spell.CasterHealingMultiplier())
 					},
 					OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 						dot.CalcAndDealPeriodicSnapshotHealing(sim, target, dot.OutcomeTick)

@@ -26,6 +26,8 @@ func (shaman *Shaman) ApplyTalents() {
 	shaman.PseudoStats.SchoolDamageDealtMultiplier[stats.SchoolIndexPhysical] *= []float64{1, 1.04, 1.07, 1.1}[shaman.Talents.WeaponMastery]
 
 	shaman.AddStat(stats.Expertise, 3*core.ExpertisePerQuarterPercentReduction*float64(shaman.Talents.UnleashedRage))
+	// Purification is a healing done percent: the hots' ticks take it from here, the direct heals in their multipliers
+	shaman.AddHealingDonePct(2 * shaman.Talents.Purification)
 
 	if shaman.Talents.DualWieldSpecialization > 0 && shaman.HasOHWeapon() {
 		shaman.AddStat(stats.MeleeHit, core.MeleeHitRatingPerHitChance*2*float64(shaman.Talents.DualWieldSpecialization))

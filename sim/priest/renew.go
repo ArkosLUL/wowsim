@@ -54,7 +54,7 @@ func (priest *Priest) registerRenewSpell() {
 			},
 		},
 
-		DamageMultiplier: priest.renewHealingMultiplier(),
+		DamageMultiplier: priest.renewDotMultiplier(),
 		ThreatMultiplier: 1,
 
 		Mods: []core.SpellMod{
@@ -72,7 +72,7 @@ func (priest *Priest) registerRenewSpell() {
 			Tick:         core.SpellEffect{Effect: 0, Min: 280, Max: 280, SP: 0.376},
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
 				dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + core.PowerBonus(dot.Tick.SP, dot.Spell.HealingPower(target))
-				dot.SnapshotAttackerMultiplier = dot.Spell.CasterHealingMultiplier()
+				dot.SnapshotHotMultiplier(dot.Spell.CasterHealingMultiplier())
 			},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 				dot.CalcAndDealPeriodicSnapshotHealing(sim, target, dot.OutcomeTick)
@@ -95,18 +95,8 @@ func (priest *Priest) renewTicks() int32 {
 	return 5 - core.TernaryInt32(priest.HasMajorGlyph(proto.PriestMajorGlyph_GlyphOfRenew), 1, 0)
 }
 
-func (priest *Priest) renewHealingMultiplier() float64 {
-	return 1 *
-		(1 + .02*float64(priest.Talents.SpiritualHealing)) *
-		(1 + .01*float64(priest.Talents.BlessedResilience)) *
-		(1 + .02*float64(priest.Talents.FocusedPower)) *
-		(1 + .01*float64(priest.Talents.TwinDisciplines)) *
-		(1 + .05*float64(priest.Talents.ImprovedRenew)) *
-		core.TernaryFloat64(priest.HasMajorGlyph(proto.PriestMajorGlyph_GlyphOfRenew), 1.25, 1)
-}
-
-// renewDotMultiplier is Renew's SPELLMOD_DOT talents and glyph, the part of renewHealingMultiplier its aura's
-// amount carries.
+// renewDotMultiplier is Renew's SPELLMOD_DOT talents and glyph, what its aura's amount carries. Each tick takes
+// the healing done talents after it.
 func (priest *Priest) renewDotMultiplier() float64 {
 	return 1 *
 		(1 + .02*float64(priest.Talents.SpiritualHealing)) *
@@ -115,8 +105,8 @@ func (priest *Priest) renewDotMultiplier() float64 {
 		core.TernaryFloat64(priest.HasMajorGlyph(proto.PriestMajorGlyph_GlyphOfRenew), 1.25, 1)
 }
 
-// renewHealingDoneMultiplier is the rest: the SPELL_AURA_MOD_HEALING_DONE_PERCENT talents, which a heal
-// takes after its amount.
+// renewHealingDoneMultiplier is the SPELL_AURA_MOD_HEALING_DONE_PERCENT talents, which a heal takes after its
+// amount.
 func (priest *Priest) renewHealingDoneMultiplier() float64 {
 	return 1 *
 		(1 + .01*float64(priest.Talents.BlessedResilience)) *

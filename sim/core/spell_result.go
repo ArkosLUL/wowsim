@@ -603,6 +603,9 @@ func (spell *Spell) CalcHealing(sim *Simulation, target *Unit, baseHealing float
 	return spell.calcHealingInternal(sim, target, baseHealing, spell.CasterHealingMultiplier(), spell.healTakenCoefficient(target), outcomeApplier)
 }
 func (dot *Dot) CalcSnapshotHealing(sim *Simulation, target *Unit, outcomeApplier OutcomeApplier) *SpellResult {
+	if dot.healingDoneAtTick {
+		return dot.Spell.calcHealingInternal(sim, target, dot.hotTick(), 1, dot.healTakenCoefficient(target), outcomeApplier)
+	}
 	return dot.Spell.calcHealingInternal(sim, target, dot.SnapshotBaseDamage, dot.SnapshotAttackerMultiplier, dot.healTakenCoefficient(target), outcomeApplier)
 }
 
