@@ -221,7 +221,8 @@ func (warlock *Warlock) registerBlackBook() {
 		ExtraCastCondition: func(sim *core.Simulation, target *core.Unit) bool {
 			return sim.CurrentTime < 0
 		},
-		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, _ *core.Spell) {
+		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, spell *core.Spell) {
+			spell.LandOn(sim, &warlock.Pet.Unit)
 			effectAura.Activate(sim)
 		},
 	})

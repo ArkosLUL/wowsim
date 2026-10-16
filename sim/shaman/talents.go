@@ -257,7 +257,8 @@ func (shaman *Shaman) registerElementalMasteryCD() {
 		SpellSchool:      core.SpellSchoolNature,
 		ProcMask:         core.ProcMaskEmpty,
 		ThreatMultiplier: 1,
-		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, _ *core.Spell) {
+		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, spell *core.Spell) {
+			spell.LandOn(sim, &shaman.Unit)
 			buffAura.Activate(sim)
 			emAura.Activate(sim)
 		},
@@ -339,7 +340,8 @@ func (shaman *Shaman) registerNaturesSwiftnessCD() {
 		SpellSchool:      core.SpellSchoolPhysical,
 		ProcMask:         core.ProcMaskEmpty,
 		ThreatMultiplier: 1,
-		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, _ *core.Spell) {
+		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, spell *core.Spell) {
+			spell.LandOn(sim, &shaman.Unit)
 			nsAura.Activate(sim)
 		},
 	})

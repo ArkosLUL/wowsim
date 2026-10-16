@@ -27,6 +27,12 @@ func (dk *Deathknight) registerHornOfWinterSpell() {
 		ProcMask:         core.ProcMaskEmpty,
 		ThreatMultiplier: 1,
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+			// the buff lands on everyone in the raid, pets too
+			for _, unit := range sim.Raid.AllUnits {
+				if unit.IsEnabled() {
+					spell.LandOn(sim, unit)
+				}
+			}
 			dk.AddRunicPower(sim, 10, rpMetrics)
 		},
 	})

@@ -67,6 +67,8 @@ func (shaman *Shaman) registerHealingStreamTotemSpell() {
 			spell.CalcAndDealHealing(sim, target, healing, spell.OutcomeHealing)
 		},
 	})
+	// spell_sha_healing_stream_totem has the totem cast 52042
+	hsHeal.CastFromAnotherUnit()
 	config.Hot = core.DotConfig{
 		Aura: core.Aura{
 			Label: "HealingStreamHot",

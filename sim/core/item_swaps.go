@@ -99,6 +99,61 @@ func (swap *ItemSwap) initialize(character *Character) {
 			swap.followStaticEnchant(id, setup(character))
 		}
 	}
+	swap.followWeaponSpecialization()
+}
+
+// followWeaponSpecialization moves a racial weapon expertise with the swap: Player::UpdateExpertise counts the
+// race's MOD_EXPERTISE aura on a hand only while that hand's weapon fits it.
+func (swap *ItemSwap) followWeaponSpecialization() {
+	character := swap.character
+	spec, ok := RacialWeaponSpecialization(character.RacialTraits)
+	if !ok {
+		return
+	}
+	type covered struct {
+		mask   ProcMask
+		onStat bool
+	}
+	coveredNow := func() covered {
+		mask, onStat := spec.hands(character.MainHand(), character.OffHand())
+		return covered{mask, onStat}
+	}
+	onSpells := func(c covered, sign float64) {
+		if c.onStat {
+			return
+		}
+		for _, spell := range character.Spellbook {
+			if spell.ProcMask.Matches(c.mask) {
+				spell.BonusExpertiseRating += sign * spec.Expertise
+			}
+		}
+	}
+	onStat := func(c covered) float64 {
+		return TernaryFloat64(c.onStat, spec.Expertise, 0)
+	}
+
+	built := coveredNow()
+	current := built
+	character.RegisterResetEffect(func(*Simulation) {
+		// Unit.reset puts the built stats back, but not a spell's expertise
+		if current != built {
+			onSpells(current, -1)
+			onSpells(built, 1)
+			current = built
+		}
+	})
+	character.RegisterOnItemSwap(func(sim *Simulation) {
+		now := coveredNow()
+		if now == current {
+			return
+		}
+		onSpells(current, -1)
+		onSpells(now, 1)
+		if change := onStat(now) - onStat(current); change != 0 {
+			character.AddStatDynamic(sim, stats.Expertise, change)
+		}
+		current = now
+	})
 }
 
 // EnchantSwapEffect changes a static enchant effect mid-fight: sign 1 puts it on once more, -1 takes one off.

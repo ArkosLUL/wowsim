@@ -70,7 +70,9 @@ func (shaman *Shaman) registerFireNovaSpell() {
 			},
 		},
 
-		ApplyEffects: func(sim *core.Simulation, target *core.Unit, _ *core.Spell) {
+		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+			// 61657's dummy hits the shaman, whose script then casts the nova at the totem
+			spell.LandOn(sim, &shaman.Unit)
 			fireNovaAttack.Cast(sim, target)
 		},
 	})

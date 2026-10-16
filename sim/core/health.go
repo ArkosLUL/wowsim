@@ -53,6 +53,35 @@ func (hb *healthBar) GainHealing(sim *Simulation, amount float64, metrics *Resou
 	hb.GainHealth(sim, wholeHeal(wholeHeal(amount)*hb.unit.PseudoStats.HealingTakenMultiplier), metrics)
 }
 
+// CountPctFromMaxHealth is Unit::CountPctFromMaxHealth: pct whole percent of the whole max health, whole.
+func (hb *healthBar) CountPctFromMaxHealth(pct int32) float64 {
+	return float64(int64(hb.MaxHealth()) * int64(pct) / 100)
+}
+
+// GainBonusHealth is a SPELL_AURA_MOD_INCREASE_HEALTH aura going on: max and current health both go up by amount.
+func (hb *healthBar) GainBonusHealth(sim *Simulation, amount float64, metrics *ResourceMetrics) {
+	hb.unit.AddStatsDynamic(sim, stats.Stats{stats.Health: amount})
+	hb.GainHealth(sim, amount, metrics)
+}
+
+// LoseBonusHealth takes that aura off as AuraEffect::HandleAuraModIncreaseHealth does: current health drops by
+// amount, or to 1 if the whole health isn't above it, then max health. Not damage, so no metrics or TMI
+// entry. 0 stays 0.
+func (hb *healthBar) LoseBonusHealth(sim *Simulation, amount float64) {
+	oldHealth := hb.currentHealth
+	if float64(int64(oldHealth)) > amount {
+		hb.currentHealth -= amount
+	} else if oldHealth > 0 {
+		hb.currentHealth = 1
+	}
+	hb.unit.AddStatsDynamic(sim, stats.Stats{stats.Health: -amount})
+	// a health percent aura scales the bonus in max health only, so Unit::SetMaxHealth's cap can bite
+	hb.currentHealth = min(hb.currentHealth, hb.MaxHealth())
+	if sim.Log != nil {
+		hb.unit.Log(sim, "Lost %0.3f bonus health (%0.3f --> %0.3f).", amount, oldHealth, hb.currentHealth)
+	}
+}
+
 func (hb *healthBar) GainHealth(sim *Simulation, amount float64, metrics *ResourceMetrics) {
 	if amount < 0 {
 		panic("Trying to gain negative health!")

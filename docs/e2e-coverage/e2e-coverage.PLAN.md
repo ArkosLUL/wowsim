@@ -4669,6 +4669,96 @@ Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\ec-pet-fix6-tmp\`.
   the tank suites have no healing model, so AD, the expiry and Lay on Hands move none; Judgement of Light's heal
   moves the suites whose debuffs hold it, the hunter fix none (every suite wears a ranged weapon); report each.
 
+#### As built
+
+Code stage, the bullets but the tank fixes (notes in `tmp/ec-class-fix8-code.md`). Verdicts:
+- Chain Heal (fixed): `chainHealJumps` (`sim/shaman/chain_heal.go`) picks every jump before the first heal lands: the
+  enabled unit with a health bar, not the main target or one already healed, with the largest whole health deficit
+  over 0 (a tie keeps the first in raid order); none hurt ends the chain. No positions, so all are in range and
+  sight. `TestChainHealJumpsToTheMostHurt`.
+- Echoes of Light (fixed): the Abacus heals the enabled raid unit with the lowest health percent; a tie goes at random
+  on the same roll as before, and a unit without a health bar (a target dummy) counts as full. Test
+  `TestAbacusHealsTheLowestHealthPercentAndNoPetThatIsAway`.
+- Shard of the Gods (fixed), enumerated by instrumenting every test's casts, registrations and landings:
+  - A spell with no damage class never rolls (DMG_CLASS_NONE flags only): Persistent Shield 26470, 55341, Ardent
+    Defender 66233. `shardLandingSpellIDs` (`item_sets.go`) keeps the stand-ins that land as magic: 42846, 47515, 48113,
+    Explosive Trap 49067 (the lead holds: its trap casts 49065 with the hunter as original caster,
+    `GameObject::CastSpell`), Penance 53007, 63543. No server data under the action id (a glyph's heal under its item):
+    the proc mask decides. `TestShardOfTheGodsRollsOnMagicLandingsOnly`.
+  - Item hots and shields: Forethought's 60530, Twilight Renewal 75493/75494, Persistent Shield and Val'anyr's 64413
+    have no damage class, so not rolling was right. 40382 is Soul of the Dead, a mana proc; the magic-class item
+    shield is Corroded Skeleton Key's Hardened Skin 71586, now `LandOn`.
+  - Aura-only magic casts call `LandOn` on the unit the server lands them on (caster, target, pet, or every raid
+    unit for Horn of Winter): mage PoM, AP, Combustion, IV, Cold Snap, Blizzard; priest Inner Focus, Mind Trauma, Hymn
+    of Hope; shaman EM, NS, Fire Nova, Thunderstorm; warlock curses, Corruption, UA, Drain Soul (target and self),
+    Seed, Life Tap, Demonic Empowerment, Black Book; druid Hurricane; paladin Divine Protection, the three seals; DK
+    Bone Shield, Rune Tap, Raise Dead, Deathchill, Unholy Blight, Horn of Winter; hunter Viper, Dragonhawk.
+    `TestShardOfTheGodsProcsOffASelfBuff`. Beacon of Light and Sacred Shield aren't in the sim; Power Infusion 10060
+    has no damage class.
+  - Found on the way: the totems' casts landed as the shaman's (Searing 58702, Magma 58735, Healing Stream's 52042);
+    `Spell.CastFromAnotherUnit` (`cast_landed.go`) keeps them off. `TestCastFromAnotherUnitDoesNotLand`.
+  - Not covered: Arcane Torrent (`core/racials.go`), Dancing Rune Weapon's self aura (EC-PET-FIX7's file).
+- Racial weapon expertise (fixed): `followWeaponSpecialization` (`item_swaps.go`) moves it per hand with the swap, as
+  `Player::UpdateExpertise`; a reset effect puts the spells' share back, which `Unit.reset` doesn't.
+  `TestItemSwapMovesTheRacialWeaponExpertise`.
+- Hunter shots (fixed): Spell.dbc gives EquippedItemClass 2, mask 0x4000c (bow, gun, crossbow) to Aimed, Arcane,
+  Chimera, Explosive (60052, 60053), Kill, Multi, Silencing and Steady Shot, Serpent and Scorpid Sting, Black Arrow
+  and Volley 58434, and 0x2a5f3 (a melee weapon) to Raptor Strike; `requireWeapons`
+  (`sim/hunter/weapon_requirements.go`) adds the cast condition. Auto Shot was already off without one.
+  `TestNoRangedWeapon` fails on NaN and empties the main hand; the old code gave NaN and cast the shots.
+- Goldens: TestRestoration's HealingGrace-Average only, hps -53.5%, tps -35.9%: Chain Heal 3 heals a cast to 1 (nobody
+  is hurt), casts 138.0 to 109.5 (likely mana: fewer crits, fewer Improved Water Shield returns), Earthliving 114 to 37 hits.
+  TestDisc and TestHoly don't move: nobody is hurt, so the Abacus tie draws as before. The other 36 suites unchanged.
+
+Tanks stage (notes in `tmp/ec-class-fix8-tanks.md`; guide facts in `class-mechanics.md` and `caster-mechanics.md`).
+Verdicts, all fixed and confirmed from [ac]'s source and the spelldump:
+- Ardent Defender (`applyArdentDefender`): the old code cut first and judged lethality on the cut hit, ended a save at
+  the heal and over-cut under 35%. Now the `Absorb` script on the whole hit: lethal raw hit with 66233 down → absorbed
+  whole, 66235 heals `CountPctFromMaxHealth(uint32(healPct × min(1, def/540)))` with defense read at the proc (float32,
+  `ardentDefenderHealPct`); else the absorb percent of the part under 35%, or of all of it already under. 66235: no
+  damage class, no bonus row, ATTR6 0x08000000 → no done percent, no crit, healing taken percents only (DMG_CLASS_NONE
+  returns before the ATTR6 check). Absorb order: sim shields absorb nothing, so none to keep (the server sorts Sacred
+  Shield 58597 and Divine Aegis 47753 first). `TestArdentDefender`: 10,000 of 50,000, raw 11,000, 535 defense → 24,500,
+  66233 up, a second lethal hit → 0; at 15,000 a 5,000 hit → 11,000; from 20,000 → 15,500; ending over 35% uncut;
+  +25 defense rating (5 skill) after talents → save to 25,000; a +20% healing taken aura → 28,000.
+- Bonus health (VB 55233 15%, Last Stand 12976 30%, SI 50322 30/45%): `healthBar.CountPctFromMaxHealth`,
+  `GainBonusHealth`, `LoseBonusHealth` (`sim/core/health.go`, between `GainHealing` and `GainHealth`), as
+  `HandleAuraModIncreaseHealth`. `TestLoseBonusHealth` (also no damage taken event or TMI entry on a tank),
+  `TestVampiricBloodBonusHealthOnExpiry`, `TestLastStandBonusHealthOnExpiry`, `TestSurvivalInstinctsBonusHealthOnExpiry`:
+  from full → max; 30% → H − bonus; H = bonus → 1; 0 → 0.
+- Improved Death Strike: 62905/62908 effect 2 is 25/50 (icon 2751 in Spell.dbc), read by `spell_dk_death_strike`;
+  the heal is now diseases × `CountPctFromMaxHealth(5)` + 25% a point, whole. `TestImprovedDeathStrikeHeal`: 2 diseases at
+  50,000 → 7,500 (was 10,000).
+- Last Stand: category cooldown 180 s, glyph 58376 −60 s; the sim had it inverted. `TestLastStandCooldown`.
+- Feral Tank `autoRotation` returns `ROTATION_DEFAULT`. A request captured from the page's optimizer tab on a dev
+  server (TypeAuto, 12 priority-list actions with `autocastOtherCooldowns`) simmed 3,000 iterations: Survival Instincts
+  3,627 casts, Frenzied Regeneration 4,097, Barkskin 10,063. Request deleted. tsc clean, eslint as HEAD.
+- Judgement of Light: 20185's proc row (15 PPM, damage only, no triggered casts, as JoW's) heals the attacker 20267 for
+  `CountPctFromMaxHealth(2)` × healing taken percents. The judging paladin is the original caster, so his are the
+  healing and threat: credited to nobody. `TestJudgementOfLightHeal`.
+- Lay on Hands 48788 (`lay_on_hands.go`), on himself: whole max health via healing taken only, no crit (not crit
+  capable); 1950 mana (×2 Glyph of Divinity); 20 min − 5 (glyph) − 2 a point of Improved Lay on Hands (+20233/20236);
+  blocked by and puts up Forbearance and the AW marker (the DP/AW timer, set by hand: no allowance needed). Prot
+  Paladin APL casts it first under 25% health: mod-playerbots' "critical health" (`AiPlayerbot.CriticalHealth` = 25,
+  live conf; `health < 25`). `TestLayOnHands`, `TestLayOnHandsInTheDefaultRotation` (25.2% none, 24.8% cast).
+- `gen_serverdata` adds 20185 (spell, proc, threat), 20233, 20236, 20267, 48788; `implemented_talents.json` gains
+  `improvedLayOnHands`. db.json doesn't move.
+- Goldens, each change apart (checked by reverting each): JoL alone moves TestBloodTank TPS (about −0.1%,
+  ShortSingleTarget −0.53%, no ability): its threatless heal fills the deficit max health gains leave, before heals
+  that make threat. TestProtectionWarrior's IED row (TPS −0.03%) needs JoL and Last Stand's bonus health reverted
+  together, the same deficit; JoL alone reverted moves every row +0.2%. Last Stand's cooldown moves its 12975 uptime
+  (±0.001 s). No DPS or HPS moves; AD, Lay on Hands, VB, SI and the DS heal move nothing (no healing model).
+
+Review round 1 fixes (golden-neutral):
+- `LoseBonusHealth` caps current health at the lowered max, as `Unit::SetMaxHealth`: a health percent aura (Strength
+  of Wrynn) scales the bonus in max health only. `TestLoseBonusHealthUnderAHealthPercent`.
+- Lay on Hands' energize makes threat (`EnergizeThreat(EnergizeBySpell)`; 48788 lacks `SPELL_ATTR1_NO_THREAT`).
+- `shardLandingSpellIDs` (was `shardLandsAs`) has a spell id name `spellids` reads, so `gen_serverdata` adds Divine
+  Aegis 47753 and Empowered Renew 63544; before, those two fell back to the proc mask. The rolls test now runs the
+  mapped spells with no proc mask and checks each landing id has server data.
+- `talent_paths.json` regenerated (`-update`): PaladinRetribution ends on improvedLayOnHands 2/2, which the capture
+  predates, so `droppedSweep` drops that step (fixture README row) until the talent sweep reruns the path.
+
 ### EC-TOOLS4 (Z13, moved from Z12; golden-neutral; stages: code, live)
 
 - `docs/wave-loop/int-check.sh` takes gofmt's and eslint's files from `git diff BASE HEAD` only, so an uncommitted

@@ -221,107 +221,80 @@ func (paladin *Paladin) applyReckoning() {
 	})
 }
 
+// spell_pal_ardent_defender::Absorb on every hit as it reaches the absorbs: a killing blow (66233 down) is absorbed
+// whole and healed by 66235; short of that, the absorb percent comes off the part of the hit under 35% health.
 func (paladin *Paladin) applyArdentDefender() {
 	if paladin.Talents.ArdentDefender == 0 {
 		return
 	}
 
-	var ardentDamageReduction float64
-	switch paladin.Talents.ArdentDefender {
-	case 1:
-		ardentDamageReduction = 0.07
-	case 2:
-		ardentDamageReduction = 0.13
-	case 3:
-		ardentDamageReduction = 0.20
-	}
+	rank := paladin.Talents.ArdentDefender
+	absorbPct := []int64{0, 7, 13, 20}[rank]
+	healPct := 10 * rank
 
-	// spell_pal_ardent_defender::Absorb: the heal scales with total defense skill (base + rating)
-	// against level*5+140 (540 at 80), capping at that ratio instead of the rating alone.
-	reqDefenseSkill := float64(core.MaxSkill(core.CharacterLevel)) + 140
-	totalDefenseSkill := float64(core.MaxSkill(core.CharacterLevel) + paladin.DefenseSkill())
-	ardentHealAmount := min(1.0, totalDefenseSkill/reqDefenseSkill) * 0.10 * float64(paladin.Talents.ArdentDefender)
-
-	// TBD? Buff to mark time spent fully below 35% and attribute absorbs
-	// rangeAura := paladin.RegisterAura(core.Aura{
-	// Label:    "Ardent Defender (Active)",
-	// ActionID: core.ActionID{SpellID: 31852},
-	// Duration: core.NeverExpires,
-	// })
-
-	// paladin.RegisterAura(core.Aura{
-	// Label:    "Ardent Defender Talent",
-	// Duration: core.NeverExpires,
-	// OnReset: func(aura *core.Aura, sim *core.Simulation) {
-	// aura.Activate(sim)
-	// },
-	// OnSpellHitTaken: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
-	// if aura.Unit.CurrentHealthPercent() < 0.35 {
-	// procAura.Activate(sim)
-	// }
-	// },
-	// })
-
-	// Debuff to show that AD has procced
+	// spell_linked_spell has 66235 cast this
 	procAura := paladin.RegisterAura(core.Aura{
 		Label:    "Ardent Defender",
 		ActionID: core.ActionID{SpellID: 66233},
-		Duration: time.Second * 120.0,
+		Duration: time.Second * 120,
 	})
 
-	// Spell to heal you when AD has procced; fire this before fatal damage so that a Death is not detected
+	// no damage class and no bonus row: no done percents, no crit, only the healing taken percents
 	procHeal := paladin.RegisterSpell(core.SpellConfig{
-		ActionID:         core.ActionID{SpellID: 66233},
+		ActionID:         core.ActionID{SpellID: 66235},
 		SpellSchool:      core.SpellSchoolHoly,
 		ProcMask:         core.ProcMaskSpellHealing,
-		CritMultiplier:   1, // Assuming this can't really crit?
+		Flags:            core.SpellFlagHelpful | core.SpellFlagIgnoreAttackerModifiers | core.SpellFlagNoOnCastComplete,
+		CritMultiplier:   1,
 		ThreatMultiplier: 1,
-		ThreatSpellID:    66235,
 		DamageMultiplier: 1,
-		// the server heals as 66235, whose base points spell_pal_ardent_defender replaces with its own amount
-		Direct: core.SpellEffect{Effect: 0, FromSpellID: 66235, Min: 30, Max: 30},
+		Direct:           core.SpellEffect{Effect: 0, Min: 30, Max: 30},
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			spell.CalcAndDealHealing(sim, &paladin.Unit, ardentHealAmount*paladin.MaxHealth(), spell.OutcomeHealingCrit)
+			pct := ardentDefenderHealPct(healPct, paladin.defenseSkillValue())
+			spell.CalcAndDealHealing(sim, &paladin.Unit, paladin.CountPctFromMaxHealth(pct), spell.OutcomeHealing)
 		},
 	})
 
-	// >= 0.35, no effect
-	// < 0.35, pro-rated DR
-	// =< 0, proc death save
 	paladin.AddDynamicDamageTakenModifier(func(sim *core.Simulation, _ *core.Spell, result *core.SpellResult) {
-		incomingDamage := result.Damage
-		if (paladin.CurrentHealth()-incomingDamage)/paladin.MaxHealth() <= 0.35 {
-			//rangeAura.Activate(sim)
-			result.Damage -= (paladin.MaxHealth()*0.35 - (paladin.CurrentHealth() - incomingDamage)) * ardentDamageReduction
-			if sim.Log != nil {
-				paladin.Log(sim, "Ardent Defender reduced damage by %d", int32(incomingDamage-result.Damage))
-			}
-
-			incomingDamage2 := result.Damage
-
-			// Now check death save, based on the reduced damage
-			if (result.Damage >= paladin.CurrentHealth()) && !procAura.IsActive() {
-				if paladin.CurrentHealth()+ardentHealAmount*paladin.MaxHealth() > paladin.MaxHealth() {
-					// We will overheal and wind up at the wrong HP value... Let's work around this
-					// TODO: Find a cleaner way to do this, using absorbs?
-					procHeal.Cast(sim, &paladin.Unit)
-					result.Damage = paladin.CurrentHealth() - ardentHealAmount*paladin.MaxHealth()
-					if sim.Log != nil {
-						paladin.Log(sim, "Ardent Defender proc reduced overkill damage by %d, compensating for overheal", int32(incomingDamage2-result.Damage))
-					}
-				} else {
-					// Cleanest handling for < 70% HP, includes proper healing amount in metrics
-					result.Damage = paladin.CurrentHealth()
-					procHeal.Cast(sim, &paladin.Unit)
-					if sim.Log != nil {
-						paladin.Log(sim, "Ardent Defender proc reduced overkill damage by %d", int32(incomingDamage2-result.Damage))
-					}
-				}
-				procAura.Activate(sim)
-			}
+		damage := math.Trunc(result.Damage)
+		health := math.Trunc(paladin.CurrentHealth())
+		if damage <= 0 || health <= 0 {
+			return
 		}
-		// TODO: Metrics, attribute reduced damage as absorption
+		remaining := health - damage
+		allowed := paladin.CountPctFromMaxHealth(35)
+
+		if remaining <= 0 && !procAura.IsActive() {
+			result.Damage = 0
+			procHeal.Cast(sim, &paladin.Unit)
+			procAura.Activate(sim)
+			return
+		}
+		if remaining < allowed {
+			reduced := damage
+			if health >= allowed {
+				reduced = allowed - remaining
+			}
+			result.Damage = damage - float64(int64(reduced)*absorbPct/100)
+		}
 	})
+}
+
+// defenseSkillValue is Unit::GetDefenseSkillValue for a player hit by a creature: the level's skill plus the whole
+// points from rating.
+func (paladin *Paladin) defenseSkillValue() int32 {
+	return core.MaxSkill(core.CharacterLevel) + paladin.DefenseSkill()
+}
+
+// ardentDefenderHealPct is the script's uint32(healPct * pctFromDefense), in float32 like the server, where
+// pctFromDefense is defense over level*5+140, capped at 1.
+func ardentDefenderHealPct(healPct int32, defense int32) int32 {
+	required := int32(core.CharacterLevel*5 + 140)
+	if defense >= required {
+		return healPct
+	}
+	fromDefense := float32(defense) / float32(required)
+	return int32(float32(float32(healPct) * fromDefense))
 }
 
 // Crusade's first percent is aura 79 on all damage, its second DONE_VERSUS on four creature types, per target

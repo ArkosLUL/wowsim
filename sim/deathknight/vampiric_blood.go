@@ -5,7 +5,6 @@ import (
 
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
-	"github.com/wowsims/wotlk/sim/core/stats"
 )
 
 func (dk *Deathknight) registerVampiricBloodSpell() {
@@ -25,13 +24,13 @@ func (dk *Deathknight) registerVampiricBloodSpell() {
 		ActionID: actionID,
 		Duration: time.Second*10 + core.TernaryDuration(dk.HasMajorGlyph(proto.DeathknightMajorGlyph_GlyphOfVampiricBlood), 5*time.Second, 0),
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
-			bonusHealth = dk.MaxHealth() * 0.15
-			dk.AddStatsDynamic(sim, stats.Stats{stats.Health: bonusHealth})
-			dk.GainHealth(sim, bonusHealth, healthMetrics)
+			// spell_dk_vampiric_blood makes the aura's 15 a percent of max health
+			bonusHealth = dk.CountPctFromMaxHealth(15)
+			dk.GainBonusHealth(sim, bonusHealth, healthMetrics)
 			dk.AddHealingTakenPct(35)
 		},
 		OnExpire: func(aura *core.Aura, sim *core.Simulation) {
-			dk.AddStatsDynamic(sim, stats.Stats{stats.Health: -bonusHealth})
+			dk.LoseBonusHealth(sim, bonusHealth)
 			dk.RemoveHealingTakenPct(35)
 		},
 	})

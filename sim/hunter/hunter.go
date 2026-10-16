@@ -111,6 +111,7 @@ func (hunter *Hunter) Initialize() {
 	hunter.AutoAttacks.OHConfig().CritMultiplier = hunter.critMultiplier(false, false)
 	hunter.AutoAttacks.RangedConfig().CritMultiplier = hunter.critMultiplier(false, false)
 
+	hunter.requireWeapons()
 	hunter.registerAspectOfTheDragonhawkSpell()
 	hunter.registerAspectOfTheViperSpell()
 

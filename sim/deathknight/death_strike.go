@@ -63,7 +63,9 @@ func (dk *Deathknight) newDeathStrikeSpell(isMH bool) *core.Spell {
 				spell.SpendRefundableCostAndConvertFrostOrUnholyRune(sim, result, deathConvertChance)
 
 				if result.Landed() {
-					healingAmount := 0.05 * dk.dkCountActiveDiseases(target) * dk.MaxHealth() * (1.0 + 0.5*float64(dk.Talents.ImprovedDeathStrike))
+					// spell_dk_death_strike: 5% of max health a disease, then Improved Death Strike's effect 2 adds 25% a rank
+					healingAmount := dk.dkCountActiveDiseases(target) * dk.CountPctFromMaxHealth(5)
+					healingAmount += calculatePct(healingAmount, int64(25*dk.Talents.ImprovedDeathStrike))
 					dk.gainHealingTakenOnly(sim, healingAmount, healthMetrics)
 					dk.DeathStrikeHeals = append(dk.DeathStrikeHeals, healingAmount)
 				}

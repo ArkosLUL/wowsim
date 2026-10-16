@@ -362,17 +362,8 @@ func (shaman *Shaman) registerChainHealSpell() {
 			bounceCoeff := 1.0
 			dmgReductionPerBounce := 0.6
 			curTarget := target
-			// TODO: This bounces to most hurt friendly...
-			bounceTargets = bounceTargets[:0]
-			for _, unit := range sim.Environment.Raid.AllUnits {
-				if int32(len(bounceTargets)) == numHits-1 {
-					break
-				}
-				// a pet that's away isn't in the world to jump to
-				if unit.IsEnabled() {
-					bounceTargets = append(bounceTargets, unit)
-				}
-			}
+			// all jumps are picked before the first heal lands
+			bounceTargets = chainHealJumps(sim, target, bounceTargets[:0], int(numHits-1))
 			for hitIndex := 0; hitIndex <= len(bounceTargets); hitIndex++ {
 				healPower := shaman.healingPower(spell, target)
 				baseHealing := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP, healPower) + bonusHeal

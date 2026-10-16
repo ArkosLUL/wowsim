@@ -67,7 +67,8 @@ func (warlock *Warlock) registerDemonicEmpowermentSpell() {
 		SpellSchool:      core.SpellSchoolShadow,
 		ProcMask:         core.ProcMaskEmpty,
 		ThreatMultiplier: 1,
-		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, _ *core.Spell) {
+		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, spell *core.Spell) {
+			spell.LandOn(sim, &warlock.Pet.Unit)
 			warlock.Pet.DemonicEmpowermentAura.Activate(sim)
 		},
 	})

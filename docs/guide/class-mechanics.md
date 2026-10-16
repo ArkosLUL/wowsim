@@ -24,6 +24,14 @@ tenths). A sim spell opts in by calling `IssueRefund` on that result, the druid'
 - So does a pet, which isn't a player: the ghoul's Claw, a hunter pet's focus.
 - Runes and a runic power cost: [server parity](server-parity.md#other-measured-server-behaviour).
 
+## Bonus health
+
+Vampiric Blood (15%), Last Stand (12976, 30%) and Survival Instincts (50322, 30%, 45% glyphed) add that whole
+percent of the whole max health (`CountPctFromMaxHealth`) to max and current health (`GainBonusHealth`). On
+expiry `AuraEffect::HandleAuraModIncreaseHealth` takes it off current health, to 1 if health isn't above it (0
+stays 0), then off max, capping health there (`Unit::SetMaxHealth`; a health percent aura scales the bonus in max
+only) (`LoseBonusHealth`): no damage taken event, no TMI entry.
+
 ## Death knight
 
 - **Frost Vulnerability** (Razorice's 51714) rolls spell hit.
@@ -46,8 +54,9 @@ tenths). A sim spell opts in by calling `IssueRefund` on that result, the druid'
   - Only off a target that gives XP or honor (`PROC_ATTR_REQ_EXP_OR_HONOR`; `givesXPOrHonor`): above the gray
     level and without `proto.Target.no_xp`, the creature's `NO_XP` flag.
   - Improved Blood Presence adds 5% healing taken a point, in Blood Presence only.
-- **Death Strike**'s heal (45470) and **Death Pact**'s (48743) have no damage class either: only the healing
-  taken percents reach them (`gainHealingTakenOnly`).
+- **Death Strike**'s heal (45470) is 5% of max health a disease, whole, plus Improved Death Strike's effect 2,
+  25% a point (`spell_dk_death_strike`). It and **Death Pact**'s (48743) have no damage class either: only the
+  healing taken percents reach them (`gainHealingTakenOnly`).
 - **Improved Unholy Presence** scales the rune cooldown after the grace cut, in whole ms.
 - **Death Coil** and **Rune Strike** are refundable ([miss cost](#miss-cost)). Sudden Doom's Death Coil pays
   nothing.
@@ -67,6 +76,7 @@ tenths). A sim spell opts in by calling `IssueRefund` on that result, the druid'
   only a Whirlwind's first hit is copied (0.5 s lockout).
 - **Hamstring** (1715) is only its 15 s snare, which a mage's Torment the Weak reads (`core.SnareAuraTag`). A
   snare-immune target is immune to the whole spell: a miss, at the [miss cost](#miss-cost).
+- **Last Stand**'s category cooldown is 180 s, 120 s with its glyph (58376).
 
 ## Paladin
 
@@ -81,6 +91,25 @@ tenths). A sim spell opts in by calling `IssueRefund` on that result, the druid'
   humanoids, demons, undead and elementals, per target.
 - **Glyph of Reckoning** has a server script (mod-spell-tweaks) but no client data, so no player has it: Hand of
   Reckoning never deals damage (67485), and the sim registers nothing for it.
+- **Ardent Defender** is a school absorb (`spell_pal_ardent_defender::Absorb`) on the whole hit as it reaches the
+  absorbs:
+  - A hit leaving health at or under 0, with 66233 down, is absorbed whole, and 66235 heals
+    uint32(talent heal % × min(1, defense skill / 540)) of max health, defense read at the proc. Only the healing
+    taken percents reach the heal: no damage class, no crit. 66235 links 66233 (120 s).
+  - Otherwise a hit ending under 35% of max health loses the absorb percent (7/13/20) of the part under 35%, or
+    of all of it when health was already under.
+  - Sim shields absorb nothing, so there's no order to keep against Sacred Shield and Divine Aegis, which the
+    server runs first.
+- **Lay on Hands** (48788, on himself only) heals his whole max health, through the healing taken percents only,
+  no crit, and gives 1950 mana (3900 with Glyph of Divinity). Cooldown 20 min, less 5 with its glyph and 2 a
+  point of Improved Lay on Hands, whose 20233 / 20236 cut physical damage 10 / 20% for 15 s.
+  - Forbearance or the 30 s Avenging Wrath marker blocks it, and it puts up both, as Divine Protection does; the
+    DP/AW shared timer stands in for the marker.
+  - The Prot Paladin default APL casts it under 25% health, mod-playerbots' critical health
+    (`AiPlayerbot.CriticalHealth`).
+- **Judgement of Light**'s 20185 procs like Judgement of Wisdom's (15 PPM, landed damaging hits, no triggered
+  casts): 20267 heals the attacker for 2% of his max health through his healing taken percents. Its original
+  caster, the judging paladin, gets the healing and its threat, so the sim credits nobody.
 
 ## Rogue
 

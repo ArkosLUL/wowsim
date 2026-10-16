@@ -46,6 +46,8 @@ func (shaman *Shaman) registerThunderstormSpell() {
 		Direct: core.SpellEffect{Effect: 0, Min: 1450, Max: 1656, SP: 0.172},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+			// the mana effect hits the shaman, in range of anything or not
+			spell.LandOn(sim, &shaman.Unit)
 			shaman.AddMana(sim, shaman.MaxMana()*manaRestore, manaMetrics)
 
 			if shaman.thunderstormInRange {

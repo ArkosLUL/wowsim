@@ -30,6 +30,7 @@ func (warlock *Warlock) registerLifeTapSpell() {
 		ThreatMultiplier: 1,
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+			spell.LandOn(sim, &warlock.Unit)
 			restore := (2000.0 + 0.5*warlock.GetStat(stats.SpellPower)) * impLifetap
 			warlock.AddMana(sim, restore, manaMetrics)
 

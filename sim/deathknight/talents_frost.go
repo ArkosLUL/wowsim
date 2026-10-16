@@ -238,6 +238,7 @@ func (dk *Deathknight) applyDeathchill() {
 		ProcMask:         core.ProcMaskEmpty,
 		ThreatMultiplier: 1,
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+			spell.LandOn(sim, &dk.Unit)
 			dk.DeathchillAura.Activate(sim)
 		},
 	})

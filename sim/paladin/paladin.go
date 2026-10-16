@@ -198,6 +198,7 @@ func (paladin *Paladin) Initialize() {
 	paladin.registerDivinePleaSpell()
 	paladin.registerDivineProtectionSpell()
 	paladin.registerForbearanceDebuff()
+	paladin.registerLayOnHandsSpell()
 
 	for i := int32(0); i < paladin.Env.GetNumTargets(); i++ {
 		unit := paladin.Env.GetTargetUnit(i)

@@ -128,7 +128,8 @@
   {"talent":"sheathOfLight","rank":3,"spell":53503},
   {"talent":"righteousVengeance","rank":3,"spell":53382},
   {"talent":"spiritualFocus","rank":5,"spell":20208,"filler":true},
-  {"talent":"divineIntellect","rank":5,"spell":20261}
+  {"talent":"divineIntellect","rank":5,"spell":20261},
+  {"talent":"improvedLayOnHands","rank":2,"spell":20235}
 ]},
 {"name":"HunterBeastMastery","class":3,"race":3,"spec":"hunter","items":[{"slot":17,"id":40385},{"slot":4,"id":43593}],"auras":[61847],"steps": [
   {"talent":"improvedAspectOfTheHawk","rank":5,"spell":19556},
