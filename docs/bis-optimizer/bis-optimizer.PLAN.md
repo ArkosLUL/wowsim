@@ -2674,7 +2674,7 @@ Picks (final death chance, DTPS, TMI, TPS; Hit is 263 to 280 against the 262 flo
   - Feral Tank P2 Normal ends 124 under its Quick in the slow suite (wave-loop PLAN, BiS baseline).
   - The six perf scenarios want an idle retake; `tools/perf`'s requests and baseline stay.
 
-### BIS-TANK-HEALTH (wave Z12; golden-neutral; stages: code, picks)
+### BIS-TANK-HEALTH (wave Z12, done)
 
 Bulwark gems Agility in most sockets at P3 to P5: Stamina reaches only TMI and death chance, and death chance is
 flat where the pick never dies (P1, P3) and dropped where it always dies (P4). ICC tanks gemmed Stamina for

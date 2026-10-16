@@ -56,7 +56,7 @@ The live e2e and the replays leave timing, costs, threat, pets, gear and buffs u
 | Z10 | EC-CORE-FIX7 (G, FS, live) · EC-CLASS-FIX6 (G, C++, live) · EC-TOOLS2 | Z9's follow-ups, and EC-TOOLS2 moved from Z8, then Z9; the fourth place is bis-optimizer's BIS-TANK-SWAP (the user's call, 2026-10-13) |
 | Z11 | EC-CORE-FIX8 (G, FS, live) · EC-PET-FIX6 (G, live) · EC-CLASS-FIX7 (G, live) · EC-TOOLS3 (C++, live) | Z10's follow-ups; EC-PET-FIX6 moved from Z10 |
 | Z12 | EC-CORE-FIX9 (G, FS, live) · EC-PET-FIX7 (G, live) · EC-CLASS-FIX8 (G) | Z11's follow-ups and the tank fixes; the fourth place is bis-optimizer's BIS-TANK-HEALTH (the user's call, 2026-10-15) |
-| Z13 | EC-TOOLS4 (live) | moved from Z12 |
+| Z13 | EC-CORE-FIX10 (G, FS) · EC-PET-FIX8 (G, live) · EC-CLASS-FIX9 (G, live) · EC-TOOLS4 (live) | Z12's follow-ups; EC-TOOLS4 moved from Z12 |
 
 U is taken (the UI wave). Versus the INVESTIGATION's order, B7, A3 and A4 moved forward (cheap, independent) and
 C1 moved last (after B6).
@@ -98,6 +98,14 @@ sight) and `spellModRun`'s weekly-reset message (needs a reset day), unproven li
 From Z11: Mirror Image's chase from 19 to 19.5 yd, where the generator's 400 ms recheck (`PositionOkay` against 19)
 can stop the image short of 17.5 on a run over more than one non-casting update; `petfixCheckImageHits` taking
 each image's distance at 25 s for every Frostbolt; a shapeshift's `SetDisplayId` resetting the scale under Bloodlust.
+
+From Z12: Master Shapeshifter's aura 136 in Tree of Life (48422), with no Tree of Life form in the sim; Raptor Strike
+needing a main-hand weapon where `Player::HasItemFitToSpellRequirements` also takes an off-hand one; landing
+aura-only casts off the spell data (`TargetA` in `serverdata.Effect`) instead of per-site `LandOn`s; one reach per
+unit for `Unit.EnemyCombatReach` and `combatReach()`; 56817's zero-gain runic power row, where a threat-only row
+would do; the Rune Weapon's run-in from 2 yd in front of the target, a timed Water Elemental summoned while the mage
+is attacked casting from its spawn spot, a caster pet moving when its owner stands past its spell's range, and pet
+follow spots under Bloodlust's scale (a few ms), none modelled.
 
 ## Work items
 
@@ -4529,7 +4537,7 @@ races, then on a rerun), its capture replays 1114 of 1114, and every by-name tes
 after its `.aura`s, `TestParfu10ArcaneMana` kills the floor's critters (`fightKillCritters`) and stands on the floor,
 and passes there (166 s).
 
-### EC-CORE-FIX9 (Z12; changes goldens, full suite; stages: code, live)
+### EC-CORE-FIX9 (Z12, done; changes goldens, full suite; stages: code, live)
 
 Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\ec-core-fix8-tmp\`; the stages' notes are
 `ec-core-fix8-<stage>.md` there.
@@ -4546,17 +4554,18 @@ Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\ec-core-fix8-tmp\`;
   (`creature_model_info.CombatReach` × scale) moves. Add a target reach to the target's settings, the dummy's 2.5
   by default, and have the image read it (`mirrorImageReach` beside it is EC-PET-FIX7's). Confirmed from the source
   and live in EC-PET-FIX6; no golden at the default.
-- An instant's missile lands about 10 ms sooner than a hardcast's, a lead: at 18 yd, Pyroblast under the cast time
-  cheat took 658 ms from cast go to hit against 665 to 669 hardcast under Bloodlust (flight 668), 675 against 686
-  without (flight 687), minima of 15 casts (`TestEcCore8FireSpot`, `live8/firespot1.log` to `firespot3.log`). It
-  fits an instant going off in the session pass; the sim gives both the same flight (`Spell.TravelTime`). Cause
-  unread; Hot Streak's Pyroblasts (TestFire, TestFrostFire), size unknown.
+- An instant's missile lands about 10 ms sooner than a hardcast's, a lead the source refuted (both start their
+  flight in that tick's `m_Events`): at 18 yd, Pyroblast under the cast time cheat took 658 ms from cast go to hit
+  against 665 to 669 hardcast under Bloodlust (flight 668), 675 against 686 without (flight 687), minima of 15 casts
+  (`TestEcCore8FireSpot`, `live8/firespot1.log` to `firespot3.log`), client receipt on a loaded host. The sim gives
+  both the same flight (`Spell.TravelTime`); Hot Streak's Pyroblasts (TestFire, TestFrostFire).
 - Live, each on an idle host:
   - Settle the period, carried from Z10: twelve Fire recordings give 2 s races 202 of 349 (57.9%, sim 62.9%; Z11's
     three loaded fights 47.7%) and 4 s 83 of 155 (53.5%, sim 56.4%), about 850 more 4 s races wanted. The period
-    follows the host's load: Z11's fights ran 105.0 to 108.1 ms an update at worldserver 140 to 145%, Z10's 103.7
-    to 104.8. Each log with its period, slimes' share and load (`live8/updates.py`, `nineteen.py`, `replay8.sh`;
-    cycles `live8/cycles-fire3.json` through `TestSimvalEcClass3Fight`; recordings `fights-fire/`).
+    follows the worldserver's load, which the random bots' population sets, not the host's: Z11's fights ran 105.0
+    to 108.1 ms an update at worldserver 140 to 145%, Z10's 103.7 to 104.8. Each log with its period, slimes' share
+    and load (`live8/updates.py`, `nineteen.py`, `replay8.sh`; cycles `live8/cycles-fire3.json` through
+    `TestSimvalEcClass3Fight`; recordings `fights-fire/`).
   - `TestEcCore6WorldTick` (`e2e/eccore6_test.go`): the long tick's 39.5 ± 6.5 ms rests on four lighter samples;
     Z11's at worldserver 145% (52.5% long ticks at 63.8 ± 43.8 ms, `live8/worldtick1.log`) was a load artefact.
   - The dot re-arm's wall time: under load 30 to 50 only Ret's 0.925 cleared the noise. `speed/build.sh base old
@@ -4641,15 +4650,16 @@ Cross-review: the T10 2-piece hot ticked 33% of the Flash Heal each of 3 ticks; 
 70772 `int32(heal × 33%) / 3` a tick, which then takes aura 136 and the target's healing taken (no done mods, no
 bonus row): `blessedHealingTick`, `TestCrimsonAcolytesRaimentHotIsAThirdOfItsShareATick`. Golden-neutral.
 
-### EC-PET-FIX7 (Z12; changes goldens; stages: code, live)
+### EC-PET-FIX7 (Z12, done; changes goldens; stages: code, live)
 
 Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\ec-pet-fix6-tmp\`.
 
-- The Rune Weapon's threat goes to the knight: `spell_dk_dancing_rune_weapon::HandleApply` (49028) calls
+- The Rune Weapon's threat goes to the knight, refuted by the source (`SpellInfoCorrections.cpp` zeroes 49028's
+  effect 2, so the hook never fires): `spell_dk_dancing_rune_weapon::HandleApply` (49028) calls
   `RegisterRedirectThreat` for 100% of the weapon's threat. The sim books it on the weapon
   (`sim/deathknight/dancing_rune_weapon.go`), and `AddFinalPetMetrics` passes only dps to the owner. A redirect
   moves the threat the weapon made, with its own modifiers, not the knight's presence: read those first.
-  Confirmed from the source; TestBlood about +1.1k tps on 5868 (+9 to +18% by the weapon's threat per damage), and
+  Sized before that: TestBlood about +1.1k tps on 5868 (+9 to +18% by the weapon's threat per damage), and
   TestBloodTank's BloodAggro row, whose APL casts 49028, unsized.
 - The Rune Weapon's snapshot leftovers: its damage multipliers stay the summon's (`drwDmgSnapshot`, no event to
   hook), and its strikes roll a 3.5 s stand-in weapon where `Spell::EffectWeaponDmg` goes through
@@ -4662,14 +4672,15 @@ Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\ec-pet-fix6-tmp\`.
   Firebolt and Waterbolt fly the 5 yd floor (312 ms), Gargoyle Strike 250. With a distance the reach counts: a
   creature's is its model's `CombatReach` × scale (`Creature::SetObjectScale`; 1.5 × scale for `IsPet()`), the
   timed Water Elemental's 0.85 (model 525). Scale auras: Bestial Wrath 19574 gives a hunter pet +50%, and the haste
-  carriers (hunter pet, ghouls, Spirit Wolves) take Bloodlust's 30% (their immunity is per effect, auras 193 and
-  65), which `BloodlustAura` doesn't give them (`PseudoStats.ScaleBonus`, `Unit.combatReach`); a hunter pet's
-  native scale is its family's, for its missiles in `sim/hunter/pet_abilities.go`. Size unknown.
+  carriers (hunter pet, ghouls, Spirit Wolves) take Bloodlust's 30% (their immunity is per effect, auras 65, 192
+  and 193), which `BloodlustAura` doesn't give them (`PseudoStats.ScaleBonus`, `Unit.combatReach`); a hunter pet's
+  native scale is its family's, but a melee pet's scale cancels out of its missiles (its chase stops at both
+  reaches). Size unknown.
 - Mirror Image's own reach is its cloned model's (`CloneCaster`'s `SetDisplayId` resets the scale, and it never
   gets Bloodlust): in the base `creature_model_info`, 1.5 for the human, night elf and blood elf models and the
-  male dwarf, undead and troll ones; none, so 0.389, for the gnome models, the male draenei and the female dwarf,
-  undead and troll ones. The sim takes 1.5 (`mirrorImageReach`), 1.1 yd off on the range, chase and flights for those. Read
-  the live table first; gender isn't a sim input, so 1.5 stays the default and no golden moves (Troll mages).
+  male dwarf, undead and troll ones; 0 for the gnome models, the male draenei and the female dwarf, undead and troll
+  ones, which `ObjectMgr::LoadCreatureModelInfo` loads as 1.5 (0.389 is only for a model with no row), so the sim's
+  1.5 (`mirrorImageReach`) holds for every race and no golden moves (Troll mages).
 - Live:
   - `TestEcClass6SummonTrace` (`e2e/ecclass6_test.go`) on an idle host, carried from Z11 with EC-PET-FIX6's
     expectations: it needs a ninth Frostbolt going off about 29.2 to 29.5 s into the summon, which updates slower
@@ -4743,7 +4754,7 @@ Cross-review (fixed): the trigger books 56817's 67 (`NewCastThreat`, its own run
 56817) and `ThreatSchoolMultiplier` returns 1 for no school, `TestRuneStrikeProcThreat`; the 49028 cast `LandOn`s the
 DK, `TestDancingRuneWeaponLandsOnTheKnight`.
 
-### EC-CLASS-FIX8 (Z12; changes goldens, full suite if Judgement of Light moves every suite; stages: code)
+### EC-CLASS-FIX8 (Z12, done; changes goldens, full suite if Judgement of Light moves every suite; stages: code)
 
 - Chain Heal's jumps: the sim takes the first units of `Raid.AllUnits` in order, the main target included
   (`sim/shaman/heals.go`). `Spell::SearchChainTargets` drops the main target and each unit already hit, and a chain
@@ -4757,9 +4768,11 @@ DK, `TestDancingRuneWeaponLandsOnTheKnight`.
 - Shard of the Gods' remaining gaps: landings with no `LandOn` never roll: aura-only casts (buffs, curses without an
   outcome, Beacon of Light, Sacred Shield 53601, Power Infusion) and item hots and shields (Scarab Brooch 21625 in
   `sim/common/tbc/caster_trinkets.go`; Forethought Talisman, Glowing Twilight Scale and 40382's shield in
-  `sim/common/wotlk/other_effects.go`). Spells with no damage class but a spell proc mask roll where the server
-  wouldn't (Persistent Shield 26470, Invigorating Earthsiege Health Regen 55341, Ardent Defender; Explosive Trap
-  49067 a lead). From the source and the code; no suite wears the sets (items 49310, 49463, 49464, 49488).
+  `sim/common/wotlk/other_effects.go`), though the item ones have no damage class, so rightly never roll (40382 is
+  a mana proc). Spells with no damage class but a spell proc mask roll where the server wouldn't (Persistent
+  Shield 26470, Invigorating Earthsiege Health Regen 55341, Ardent Defender; not Explosive Trap 49067, whose trap
+  casts magic 49065 for the hunter). From the source and the code; no suite wears the sets (items 49310, 49463,
+  49464, 49488).
 - A racial weapon expertise (a human's sword or mace) doesn't follow an item swap (`sim/core/item_swaps.go`). From
   the code; no suite swaps items.
 - **Tank fixes** (the user's call, 2026-10-15; BIS-TANK-HEALTH's health margin measures through them). From the
@@ -4903,6 +4916,75 @@ Cross-review fixes:
 - Judgement of Light's heals go on one row per attacker (`healthBar.judgementOfLightMetrics`), not one per judged
   target. `TestJudgementOfLightHealsOnOneRow`.
 
+### EC-CORE-FIX10 (Z13; changes goldens, full suite; stages: code)
+
+Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\`.
+
+- A player's missile lands on his first world tick at or after go + flight: the server re-plans its `SpellEvent` in
+  the caster's `m_Events`, and the committed fights' Chronicle stamps (`sim/core/testdata/fights/*.log.gz`) land a
+  median 5 to 9 ms past the flight. Auto Shot (median 15 to 17) and a spell cast off a landing (Pillar of Flame
+  67760, 21) start their flight one update later, their `SpellEvent` queued at `m_time + 1` during or after the event
+  pass. The sim lands at `CurrentTime + TravelTime()` (`Spell.WaitTravelTime`, `DealDamageAfterTravel`,
+  `Simulation.startLanding`); `NextWorldTick` gives the grid. Confirmed from the source and the stamps
+  (`ec-core-fix9-tmp/ec-core-fix9-code.md`); a pet's missile waiting for the map update is a lead. Size unknown.
+- Earth Shield's charge is whole: `spell_sha_earth_shield::CalculateAmount` takes 49284's `SpellHealingBonusDone`
+  as an int32, then the glyph's `AddPct` and Improved Shields' `ApplyPct` truncate again. The sim keeps fractions
+  (`registerEarthShieldSpell`'s `OnSnapshot`, `sim/shaman/heals.go`). From the source; no suite casts it.
+- Glyph of Prayer of Healing: `spell_pri_glyph_of_prayer_of_healing::HandleProc` gives 56161
+  `int32(CalculatePct(int32(heal), 20) / GetMaxTicks())` off the Prayer of Healing heal on that target, crit and
+  healing taken included, and each tick takes aura 136 and the taken terms again. The sim re-rolls the heal's base
+  with neither (the glyph hot's `OnSnapshot`, `sim/priest/prayer_of_healing.go`). From the source; no suite casts
+  Prayer of Healing.
+- **Owns:** `sim/core/`'s landings (`sim.go`, `spell_result.go`); Earth Shield's charge and the glyph's hot, in
+  inline hunks; their tests and rows.
+- **Goldens:** every suite with a player's missile; none for Earth Shield or the glyph; report each.
+
+### EC-PET-FIX8 (Z13; changes goldens; stages: code, live)
+
+Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\ec-pet-fix7-tmp\`.
+
+- The Rune Weapon copies a spell only on a hit, a lead from the source: 49028's proc takes the default hit mask
+  (`SpellMgr::CanSpellTriggerProcOnEvent`, normal or critical), once per target hit. The sim copies in the aura's
+  `OnCastComplete` (`sim/deathknight/dancing_rune_weapon.go`), once a cast whatever its outcome; only Death Coil
+  copies off a landed hit. Size unknown (TestBlood, TestBloodTank).
+- The weapon's Heart, Death, Plague and Rune Strike copies take no Rage of Rivendare or Tundra Stalker: only the
+  Blood Strike copy multiplies `dk.RoRTSBonus` (`blood_strike.go`), though the server's copies go through the
+  knight's `MeleeDamageBonusDone`, which carries both. A lead; size unknown (TestBlood).
+- A melee hunter pet's spits under a target reach R: PetAI chases with `ChaseRange(0, 0)` at an angle behind, so
+  `GetNearPoint` stands the pet at R, and the 400 ms `PositionOkay` recheck can stop it up to its own reach further
+  out; Acid Spit and Poison Spit then fly between R - 1.5 and R. The sim's pet has no distance, so they fly the 5 yd
+  floor (`Spell.TravelTime`), right for R up to 5 (the dummy's 2.5); past it, read `Unit.EnemyCombatReach`
+  (`sim/hunter/pet_abilities.go`). From the source (Z12's cross-review); no preset sets a reach.
+- Live: an e2e of the Imp's, Water Elemental's and Gargoyle's cast spots and the knight's Death Coil flight after a
+  copy, all from the source so far (sim at 30 yd: Firebolt and Waterbolt 312 to 1793 ms, the timed Waterbolt 1830,
+  Gargoyle Strike 250 to 1322, Death Coil 1187 to 1249); a hunter pet's stop spot against a mob whose reach passes
+  5 yd.
+- **Owns:** `sim/deathknight/dancing_rune_weapon.go` and the weapon's spells in the knight's files, in inline hunks;
+  the spits' distance in `sim/hunter/pet_abilities.go`; the module's `e2e/petfix8_test.go`; their drops and rows.
+- **Goldens:** TestBlood and TestBloodTank (the copies); none for the spits; report each.
+
+### EC-CLASS-FIX9 (Z13; changes goldens; stages: code, live)
+
+- Rune Strike's window: 56815 needs `CasterAuraSpell` 56817 (Spell.dbc, read in Z12's cross-review), 10 s with one
+  charge (`sim/core/serverdata/spells_auto_gen.go`); the sim's `RuneStrikeAura` lasts 6 s
+  (`sim/deathknight/rune_strike.go`). Confirmed from the spell data; size unknown (TestBloodTank, whose APLs cast it).
+- Divinity (63646 to 63650: 1% a rank of aura 136, healing done, and aura 118, healing taken, on the paladin) isn't
+  modelled: nothing reads `Talents.Divinity`. Register 136 with `Unit.AddHealingDonePct` (only hot ticks read it,
+  and the paladin has no hot) and 118 with the healing taken percents, which Lay on Hands, Judgement of Light's
+  20267 and Ardent Defender's 66235 take. Reading the talent stales `implemented_talents.json` (`go test ./sim -run
+  TestTalentCoverage -update`) and `talent_paths.json`; the changed paths go in `sweepRecut`
+  (`tools/simval/talents_test.go`) until the live rerun. Confirmed from the spelldump; no golden (the Prot preset
+  takes no Divinity).
+- Chain Heal's jumps (`chainHealJumps`, `sim/shaman/chain_heal.go`) and the Abacus' target (its handler in
+  `sim/common/wotlk/other_effects.go`) take a unit at 0 health as the most hurt, where the server's area search
+  skips the dead. From the code and Z12's review; golden-neutral while no healer's raid can die.
+- Live: `TestSimvalTalentSweep` on PaladinRetribution, whose capture predates improvedLayOnHands (its
+  `droppedSweep` entry and fixture README row go), and on the paths Divinity changes.
+- **Owns:** `sim/deathknight/rune_strike.go`; Divinity in `sim/paladin/talents.go`; the dead-unit checks in
+  `chain_heal.go` and the Abacus handler, in small hunks; `implemented_talents.json`, `talent_paths.json` and the
+  paladin paths' records; their drops, `sweepRecut` entries and rows.
+- **Goldens:** TestBloodTank (Rune Strike); none for Divinity or the dead units; report each.
+
 ### EC-TOOLS4 (Z13, moved from Z12; golden-neutral; stages: code, live)
 
 - `docs/wave-loop/int-check.sh` takes gofmt's and eslint's files from `git diff BASE HEAD` only, so an uncommitted
@@ -4914,10 +4996,13 @@ Cross-review fixes:
   Soul Shard 6265 and Infernal Stone 5565 (`strikes_test.go`), the golden setups' items (`ecclass3_test.go`), the
   fights' ammo (`fightAmmo`), the hunter recorded run's ranged fallback, quiver and ammo. A record or recording
   taken without its item is re-taken.
+- No `tools/uitest` test covers the advanced target settings' Combat Reach (`combatReachPicker`,
+  `ui/core/components/encounter_picker.ts`; 0 means the dummy's 2.5): add one that sets it and checks the request's
+  `Target.combat_reach`. Needs a dev server build.
 - Live: the tests `3d0c771` touched, none run since: `TestSimvalStrikes`, the ecclass3 and ecclass5 tests that
   call `addItem`, a hunter `TestSimvalFight` cycle, the hunter recorded run.
 - **Owns:** `docs/wave-loop/int-check.sh`; the module's `addItem` call sites and the records or recordings they
-  re-take; their rows.
+  re-take; the picker's `tools/uitest` spec; their rows.
 - **Goldens:** none.
 
 ### EC-TOOLS2 (Z10, done; golden-neutral; stages: code, live)

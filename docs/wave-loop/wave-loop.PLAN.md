@@ -90,7 +90,7 @@ G = changes goldens. FS = runs all 37 suites.
 | Z10 | EC-CORE-FIX7 (G, FS, live) · EC-CLASS-FIX6 (G, C++, live) · EC-TOOLS2 · BIS-TANK-SWAP | ✔ |
 | Z11 | EC-CORE-FIX8 (G, FS, live) · EC-PET-FIX6 (G, live) · EC-CLASS-FIX7 (G, live) · EC-TOOLS3 (live) | ✔ |
 | Z12 | EC-CORE-FIX9 (G, FS, live) · EC-PET-FIX7 (G, live) · EC-CLASS-FIX8 (G) · BIS-TANK-HEALTH | ✔ |
-| Z13 | EC-TOOLS4 (live) | |
+| Z13 | EC-CORE-FIX10 (G, FS) · EC-PET-FIX8 (G, live) · EC-CLASS-FIX9 (G, live) · EC-TOOLS4 (live) | ✔ |
 
 F2 is an inserted wave, not a fifth item in F: the core swing and cast fixes of PAR-P7-0c have to land
 before the class items in G, a class item can't build on a core fix merging in its own wave, and F already
@@ -181,24 +181,24 @@ chain waits for Z12.
 
 ## Current wave
 
-- Wave: Z12, running. Base `9a5d8fb6a`. Run 1 `wf_661e4362-520`: every code stage, EC-CORE-FIX9's and
-  EC-PET-FIX7's reviews deferred (an item's `deferReview` in the inline script). Run 2: their live stages alone on
-  an idle host, then their reviews. BIS-TANK-HEALTH's picks run on integration after every merge. Args:
-  `.wave-loop\waveZ12-build.py run1|run2`. Then the BiS chain (Deferred, below), paused 2026-10-15 after P1 and
-  Angry's P2 (`.wave-loop\bis-chain\bis`; its P1 hunters simmed NaN): Z12 changes every pick, so it reruns fresh.
-  Z11 base `434442b93`, runId `wf_ccee67e3-394`.
+- Wave: Z12, landed. Next, on the user's "continue": the BiS chain (Deferred, below; the old pass in
+  `.wave-loop\bis-chain\bis` is dropped, it reruns fresh) or Z13 (Z12's follow-ups, specs in the e2e-coverage PLAN).
+  Z12 base `9a5d8fb6a`, runs `wf_661e4362-520` (code stages) and `wf_ce509f13-550` (the live stages one at a time,
+  then their reviews; the specs want an idle host). Live stages stay short: the user finds hours of recordings not
+  worth it (2026-10-16).
   The server runs mod-sim-validation's C++ as `86f62a3` (image 2026-10-13 20:46 local); `command` lacks the
   `simval trace` help row (the DB import didn't run; the command works).
-  Z11's reports: `.wave-loop\z11-run1\*.json` and `xreview.md`, `waveZ11-results.json`; item notes
-  `.wave-loop\{ec-core-fix8,ec-pet-fix6,ec-class-fix7,ec-tools3}-tmp`. Briefs to copy: `waveZ11-build.py`,
-  `waveZ11-xreview-brief.md`, `waveZ11-specs-brief.md`, `waveZ11-guides-brief.md`; the slow suite: `z11-slow.sh`,
-  its row: the session scratchpad's `slow-row.py`; `lint-range.sh <base>` lints a cross-review's committed files.
+  Z12's reports: `.wave-loop\z12-run1\*.json`, `z12-run2\*.json` and `xreview.md`; item notes
+  `.wave-loop\{ec-core-fix9,ec-pet-fix7,ec-class-fix8,bis-tank-health}-tmp`. Briefs to copy: `waveZ12-build.py`
+  (run1|run2), `waveZ12-run2.js` (the sequential live run), `waveZ12-xreview-brief.md`, `waveZ12-picks-brief.md`,
+  `waveZ12-specs-brief.md`, `waveZ12-guides-brief.md`; `journal-dump.py` and `z12-digest.py` split a run's reports;
+  the slow suite: `z12-slow.sh`, its row: the session scratchpad's `slow-row.py`; `lint-range.sh <base>` lints a
+  cross-review's committed files.
   Another session's `wotlk-bisdata` container can load most cores: `sim/optimizer` then passes Go's 10-minute test
   timeout in `int-check.sh`; rerun it alone with `-timeout 40m`.
-  Proto numbers taken: `ServerSettings` 9, `Target` 23, `UnitMetrics` 18, `OptimizerMetrics` 6; BIS-TANK-HEALTH
-  takes `UnitMetrics` 19 on and `OptimizerMetrics` 7.
-  Server: [ac] `3d89793c7`, mod-spell-tweaks `9bf5c75`; the module's HEAD `3d0c771`.
-  Prod runs Z6's `e5a289570`, without Z7 to Z11; `wowsims-wotlk:rollback-x` is X's `25cb9dddc`. A sim page left
+  Proto numbers taken: `ServerSettings` 9, `Target` 24, `UnitMetrics` 22, `OptimizerMetrics` 7.
+  Server: [ac] `3d89793c7`, mod-spell-tweaks `9bf5c75`; the module's HEAD `771b8e8`.
+  Prod runs Z6's `e5a289570`, without Z7 to Z12; `wowsims-wotlk:rollback-x` is X's `25cb9dddc`. A sim page left
   open across a rebuild sends the optimizer's tank boss its old input group, and the run fails: reload it. Auto
   mode refuses the prod docker commands, a DSN on a command line and chained commands: the user's allow rules
   (`.claude/settings.local.json` in [sim]) cover each plain command.
@@ -208,7 +208,8 @@ chain waits for Z12.
   one-hander's pairing, stage 2 and the Heroic Presence checks not yet run on the new lists, whether
   Ecoterrorist's rotation casts Mangle (Idol of the Corruptor sims like a dead idol); Z5's re-baseline: the
   search ends on a weaker set after sim changes that leave the presets within 0.1%, Ret P4 Normal 40 rating
-  over the expertise cap; Z10's and Z11's: Feral Tank P2's search unsettled).
+  over the expertise cap; Z10's to Z12's: Feral Tank P2's search unsettled; Z12's picks: the gem check never
+  tries Stamina at P1, twins under 2 se win on the mean, identical tied loadouts).
   Closed as not sim gaps: the sheet fields the server shows raw (per-school crit, Blood-Gorged, Mace and Holy
   Specialization), which the fixture README explains.
 - Deferred (the user's calls, 2026-10-02, 10-03, 10-05 and 10-07; go-ahead 2026-10-14): right after Z12 (the user's
@@ -222,7 +223,7 @@ chain waits for Z12.
   - Then the BiS tooltip dataset (acbis driver, both stages, fresh `--out`, then `acbis`; the import needs
     the OK), the changed builds' stat weights, and the perf harness's `opt_*` scenarios (`update.sh`, a new
     baseline; the raid25 dumps in `_dump/optimizer_dump_test.go` still build uncut pools).
-- Workflow runIds: Z11's `wf_ccee67e3-394` (all four, base `434442b93`; the spawn spots, the cross-review, the specs and the guides ran as plain agents); Z10's `wf_bd8bf9a8-4de` (all four, base `346249292`; the cross-review, the phase 4 picks, the specs and the guides ran as plain agents); Z9's `wf_68977dde-6ef` (all four, base `b4e8f6d52`) `wf_bade63ce-ecd` (BIS-TANK-PICKS's picks stage) and `wf_af6c63ed-d23` (its review); Z8's `wf_22d8a7f1-a8a` (all four, base `c244f8ee9`) and `wf_6d39358e-cad` (EC-PET-FIX4's live stage and review); Z7's `wf_90c05e5f-5b7` (all four, base `fd12d68cc`); Z6's `wf_9f63df91-dcd` (all four, base `c00231f37`); Z5's `wf_2bd87279-a32` (run 1, base `a1bb8d403`), `wf_caa6cd72-af1` (the rotations, base
+- Workflow runIds: Z12's `wf_661e4362-520` and `wf_ce509f13-550` (base `9a5d8fb6a`; the cross-review, the picks, the specs and the guides ran as plain agents); Z11's `wf_ccee67e3-394` (all four, base `434442b93`; the spawn spots, the cross-review, the specs and the guides ran as plain agents); Z10's `wf_bd8bf9a8-4de` (all four, base `346249292`; the cross-review, the phase 4 picks, the specs and the guides ran as plain agents); Z9's `wf_68977dde-6ef` (all four, base `b4e8f6d52`) `wf_bade63ce-ecd` (BIS-TANK-PICKS's picks stage) and `wf_af6c63ed-d23` (its review); Z8's `wf_22d8a7f1-a8a` (all four, base `c244f8ee9`) and `wf_6d39358e-cad` (EC-PET-FIX4's live stage and review); Z7's `wf_90c05e5f-5b7` (all four, base `fd12d68cc`); Z6's `wf_9f63df91-dcd` (all four, base `c00231f37`); Z5's `wf_2bd87279-a32` (run 1, base `a1bb8d403`), `wf_caa6cd72-af1` (the rotations, base
   `5692dd49d`), `wf_0d256663-f64` (EC-THREAT-FIX4's live stage) and `wf_4c054cc8-0ce` (the live records, base
   `ef598ad48`); Z4's `wf_e9e036c7-5bd`; Z3's `wf_9aabe6e6-7af` (all four); Z2's `wf_7c79ba74-4ca` (code stages) and `wf_7e9c6966-820` (live stages, BIS-ALTS); Z's `wf_8821da6d-91f` (all five); Y's `wf_e58e8b14-102` (all four), `wf_d290cc37-ee6` and `wf_fe29d895-a35` (EC-TICK-FIX's rest and
   review); X2's `wf_b555c578-f46` (code stages), `wf_a0107f34-c7b` (live stages) and `wf_b00ecbe0-79a` (EC-RECHECK's
@@ -289,6 +290,7 @@ Reckoning that way), but J isn't DPS: see below.
 | Z9 | 8737.0, +182 / +194 | 10774.4, +796 / +817 | 5013.8, +92 / +89 | 12923.5, +204 / +217 | -16892.1, +2642 / +3276 | -164.7, +1 / +58 |
 | Z10 | 8795.2, +202 / +168 | 10769.7, +759 / +827 | 5013.2, +109 / +98 | 12922.4, +196 / +227 | -16056.1, +3310 / +3290 | -155.4, +112 / -12 |
 | Z11 | 8599.5, +173 / +199 | 10770.0, +786 / +821 | 5013.3, +79 / +108 | 12922.4, +200 / +227 | -16056.0, +3284 / +3323 | -155.3, -2 / +16 |
+| Z12 | 8599.5, +173 / +199 | 10770.0, +855 / +875 | 5013.3, +93 / +84 | 12922.4, +201 / +227 | 5732.1, +2026 / +2386 | 1846.3, -74 / +108 |
 
 Quick / Normal. Ret P4 ran at Quick only in wave D, after the glyph fix; its wave C numbers
 (12821.9, +54 / +73) came from a seed that wore the glyph. The two tanks arrive with
@@ -408,6 +410,11 @@ isn't settled on this case (Z8 +65 / +46, Z9 +1 / +58).
 In Z11 (`64dd56964`, logs `.wave-loop/logs/z11-rebaseline`, a host loaded by another session) all twelve pass.
 Fury's `J_preset` fell 2.2% with its DPS flat (8292.7 for 8291.4): the AP normalizer's noise. Every other preset
 holds. Feral Tank swapped ends: Quick -1.6 ± 6.5, Normal +15.6, the search still unsettled on this case.
+
+In Z12 (`dc36c48f2`, logs `.wave-loop/logs/z12-rebaseline`) all twelve pass. The tanks' J is on a new scale (the
+health margin, BIS-TANK-HEALTH), so their rows don't compare with Z11's. The gem-swap check lifts Combat Rogue's
+gains by 54 to 69; Fire Mage's Normal ends 10 under its Quick, with 30% more sims. Feral Tank's Quick ends
+-74 ± 5.8 under its preset (Normal +108): still unsettled.
 
 ## Sim throughput
 
@@ -587,6 +594,9 @@ Elemental, and the long tick costs 2 to 4%. Pairs in `.wave-loop/ec-core-fix7-tm
 Z11 has no idle row either (the user's call). EC-CORE-FIX8's dots re-arm their tick action: allocations an op fall
 60% on the raid, 51% on Ret, 40% Hunter, 20 to 24% Elemental and Rogue. In five loaded interleaved rounds only
 Ret's gain clears the noise, about 7% (`.wave-loop/ec-core-fix8-tmp/speed/ab_final*.txt`).
+
+Z12 has no idle row. EC-CORE-FIX9's 16 interleaved dot re-arm pairs, beside the user's game, new over old: Ret
+0.972, Hunter 0.994, Elemental 0.992, Rogue 1.002, raid 0.999.
 
 E to F2 ran the old requests: one iteration, and no rotation for Ret, Hunter and Elemental.
 
@@ -828,6 +838,12 @@ crashed before F2, so its column starts there.
 | EC-CLASS-FIX7 | merged | `25b8ce09b` | module `f235e68`; Swipe (Cat) refunds on a miss (live 17 misses, mean 5.59), Shard of the Gods on any landed cast, static enchant effects follow an item swap, the spelldump with `critCapable` (109 CANT_CRIT spells) read by `critcap.go`; Wrynn's Death Strike test retries dodges; Omen off a Rebirth, Bryntroll and Nature's Grace per target match live; no golden moves |
 | EC-TOOLS3 | merged | `2d6894c17` | module `07f6538`; fights against XT-005s that swing back; a Lacerate tick before the swing on every shared update, Execute only after the update under 20%, both as the sim has them; no C++ (the packets place the crossing); the tests' dummies on the fight floor (all pass but `TestParfu10ArcaneMana`, kept at the entrance); DruidBalance re-trimmed; serverdata regenerated after the merges, unchanged; no golden moves |
 | wave Z11 cross-review | direct | `64dd56964` | module `3d0c771`; the glyphed Water Elemental keeps the pet's heal coefficient (`isGuardian` reads `SummonedAsPet`), Strength of Wrynn off heals that ignore caster modifiers, the Rune Weapon's attack power and crit follow the knight (TestBlood -0.2%, promoted in the commit), the follow-up tick test's bound for a 59 ms longest tick, `fakeEvaluator` thread safe, `.additem` by the bot's name at seven sites, `TestParfu10ArcaneMana` waits for its `.aura`s and stands on the floor; Rune Weapon threat left to Z12; guides `7e398cbe2` (items split from server-parity into `items.md`) |
+| EC-CORE-FIX9 | merged | `38b99df19` | a hot's healing done percents (aura 136) per tick after its whole amount, item hots too; Earth Shield's charge takes Purification; a target's combat reach (`Target.combat_reach`, 2.5) that Mirror Image reads; the instant missile lead isn't a gap; live: 51 Fire fights, period 104.35 ms (the default stands), the races agree at each fight's own period, the long tick's defaults stand; TestDisc +0.1%, Healing Grace +0.34% (`2109b629c`) |
+| EC-PET-FIX7 | merged | `66c1b0ed4` | module `771b8e8`; the Rune Weapon strikes with the knight's weapon and live percents, its threat redirect never runs (live: the knight's threat 2267.2 against 2267.2), the knight's reach 0.01 after a copy; the Imp, Water Elemental and Gargoyle cast from their spots; Bloodlust's scale on the haste carriers; TestEcClass6SummonTrace passes; TestBlood -0.3%, BloodAggro -0.4%, Frost and Destruction under 0.06% (`4de18a0c1`) |
+| EC-CLASS-FIX8 | merged | `6dadd9b4f` | Chain Heal jumps only to hurt units (Healing Grace -53%: no one is hurt in the suite), Echoes of Light on the lowest health, Shard of the Gods' landings, racial expertise follows a swap, hunter shots need a ranged weapon; Ardent Defender as the server's absorb, bonus health off on expiry, Improved Death Strike 25/50%, Last Stand's cooldown, Judgement of Light's heal, Lay on Hands at 25% in the Prot Paladin APL, the Feral Tank's real rotation; BloodTank tps -0.09% (`14e0e0569`) |
+| BIS-TANK-HEALTH | merged | `d64bd03fc` | the health margin (half the survival share), time to live as the tiebreak, the gem-swap check on every run, resistance worth nothing to a tank, defensives at 35%, a NaN guard; no golden moves |
+| wave Z12 cross-review | direct | `f75c3a14a` | Improved Water Shield's roll (Healing Grace -6.6% more), the knight's 67 threat a dodge or parry (56817) and a school-0 spell without threat auras (BloodTank tps +0.15%), the T10 hot a third, gnome Mirror Images at 1.5, bonus health running out in the margin, Judgement of Light one row per attacker, Arcane Torrent and the Rune Weapon's cast land for the Shard (`8a9fd80e8`); guides `aad372117` |
+| BIS-TANK-HEALTH's picks | direct | `dc36c48f2` | both tanks P1 to P5, defensives at 0.35: surviving picks gem far more Stamina (Bulwark P3 20 of 21, Felesta P5 22 of 23), P1 still 3 (the gem check never tries it), the Lich King kills Bulwark every time |
 
 Later WIs are added as their wave starts.
 
