@@ -508,7 +508,7 @@ dps_results: {
  key: "TestProtectionWarrior-AllItems-InvigoratingEarthsiegeDiamond"
  value: {
   dps: 1487.12267
-  tps: 3260.66301
+  tps: 3259.59119
   hps: 17.389
  }
 }
@@ -1186,7 +1186,7 @@ ability_results: {
   entries: {
    key: "player|aura|{SpellID: 12975}"
    value: {
-    uptime_s: 39.99967
+    uptime_s: 39.99954
    }
   }
   entries: {
@@ -1575,7 +1575,7 @@ ability_results: {
   entries: {
    key: "player|aura|{SpellID: 12975}"
    value: {
-    uptime_s: 40.00003
+    uptime_s: 40.00053
    }
   }
   entries: {
