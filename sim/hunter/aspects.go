@@ -72,7 +72,8 @@ func (hunter *Hunter) registerAspectOfTheDragonhawkSpell() {
 		ActionID: actionID,
 		Flags:    core.SpellFlagAPL,
 
-		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, _ *core.Spell) {
+		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, spell *core.Spell) {
+			spell.LandOn(sim, &hunter.Unit)
 			hunter.AspectOfTheDragonhawkAura.Activate(sim)
 		},
 	})
@@ -134,7 +135,8 @@ func (hunter *Hunter) registerAspectOfTheViperSpell() {
 		ActionID: actionID,
 		Flags:    core.SpellFlagAPL,
 
-		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, _ *core.Spell) {
+		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, spell *core.Spell) {
+			spell.LandOn(sim, &hunter.Unit)
 			hunter.AspectOfTheViperAura.Activate(sim)
 		},
 	})

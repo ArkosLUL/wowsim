@@ -1376,6 +1376,16 @@ var spells = []Spell{
 			{Effect: 6, Aura: 42, DamageMultiplier: 1, BonusMultiplier: 1, TriggerSpell: 20178},
 		},
 	},
+	// Judgement of Light (Rank 1)
+	{
+		ID: 20185, Family: 10, FamilyFlags: [3]uint32{0x80000}, SchoolMask: 2, DmgClass: DmgClassMelee, Flags: FlagNoActiveDefense | FlagAlwaysHit,
+		Attributes: [8]uint32{0x250800, 0, 0x10000004, 0x40050200, 0x800000}, AttributesCu: 0x1000,
+		DurationMs: 20000, MaxDurationMs: 20000,
+		ProcFlags: 0x222a8, ProcChance: 100, SpellLevel: 30, BaseLevel: 30,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 4, BasePoints: 1, DieSides: 1, DamageMultiplier: 1},
+		},
+	},
 	// Judgement of Wisdom (Rank 1)
 	{
 		ID: 20186, Family: 10, FamilyFlags: [3]uint32{0x80000}, SchoolMask: 2, DmgClass: DmgClassMelee, Flags: FlagNoActiveDefense | FlagAlwaysHit,
@@ -1396,6 +1406,35 @@ var spells = []Spell{
 			{Effect: 2, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 0.32},
 			{},
 			{Effect: 3, BasePoints: 107, DieSides: 1, PointsPerLevel: 18, DamageMultiplier: 1, BonusMultiplier: 0.058},
+		},
+	},
+	// Lay on Hands (Rank 1)
+	{
+		ID: 20233, Family: 10, FamilyFlags: [3]uint32{0, 0x80004000}, SchoolMask: 2, Flags: FlagBinary | FlagPositive,
+		AttributesCu: 0x100000,
+		DurationMs:   15000, MaxDurationMs: 15000,
+		ProcChance: 101,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 87, BasePoints: -11, DieSides: 1, DamageMultiplier: 1, MiscValue: 1},
+		},
+	},
+	// Lay on Hands (Rank 2)
+	{
+		ID: 20236, Family: 10, FamilyFlags: [3]uint32{0, 0x80004000}, SchoolMask: 2, Flags: FlagBinary | FlagPositive,
+		AttributesCu: 0x100000,
+		DurationMs:   15000, MaxDurationMs: 15000,
+		ProcChance: 101,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 87, BasePoints: -21, DieSides: 1, DamageMultiplier: 1, MiscValue: 1},
+		},
+	},
+	// Judgement of Light (Rank 1)
+	{
+		ID: 20267, Family: 10, FamilyFlags: [3]uint32{0, 0x1}, SchoolMask: 2, Flags: FlagBinary | FlagPositive,
+		Attributes: [8]uint32{0x20040010, 0x400, 0x20000004, 0x42010000}, AttributesCu: 0x100100,
+		SpellLevel: 30, BaseLevel: 30,
+		Effects: [3]Effect{
+			{Effect: 10, BasePoints: 24, DieSides: 1, DamageMultiplier: 1},
 		},
 	},
 	// Judgement of Light
@@ -3647,6 +3686,16 @@ var spells = []Spell{
 			{Effect: 2, BasePoints: 599, DieSides: 1, DamageMultiplier: 1},
 		},
 	},
+	// Divine Aegis (Rank 1)
+	{
+		ID: 47753, Family: 6, FamilyFlags: [3]uint32{0, 0x1001000, 0x400}, SchoolMask: 2, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagResetsAutoAttack | FlagPositive,
+		Attributes: [8]uint32{0x50000, 0, 0x280000, 0x4000000, 0x100000}, AttributesCu: 0x100000,
+		DurationMs: 12000, MaxDurationMs: 12000,
+		ProcChance: 101, SpellLevel: 1, BaseLevel: 1,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 69, BasePoints: 1, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, MiscValue: 127},
+		},
+	},
 	// Guardian Spirit
 	{
 		ID: 47788, Family: 6, FamilyFlags: [3]uint32{0xc0000000, 0, 0xc00}, SchoolMask: 2, Flags: FlagBinary | FlagPositive,
@@ -4527,6 +4576,18 @@ var spells = []Spell{
 			{Effect: 3, DamageMultiplier: 1},
 			{Effect: 1, BasePoints: -1, DieSides: 1, DamageMultiplier: 1},
 			{Effect: 10, BasePoints: 39, DieSides: 1, DamageMultiplier: 1},
+		},
+	},
+	// Lay on Hands (Rank 5)
+	{
+		ID: 48788, Family: 10, FamilyFlags: [3]uint32{0x8000}, SchoolMask: 2, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagHasteGCD | FlagPositive,
+		Attributes: [8]uint32{0x50000, 0x20000, 0, 0, 0, 0, 0x4000000}, AttributesCu: 0x100010,
+		GCDMs: 1500, GCDCategory: 133, CategoryCooldownMs: 1200000, Category: 56,
+		ProcChance: 101, SpellLevel: 78, BaseLevel: 78,
+		CooldownMods: ModBounds{FlatMin: -780000},
+		Effects: [3]Effect{
+			{Effect: 67, BasePoints: -1, DieSides: 1, DamageMultiplier: 1},
+			{Effect: 30, BasePoints: 1949, DieSides: 1, DamageMultiplier: 1},
 		},
 	},
 	// Icebound Fortitude
@@ -8648,6 +8709,15 @@ var spells = []Spell{
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 108, BasePoints: 14, DieSides: 1, DamageMultiplier: 1, MiscValue: 24, ClassMask: [3]uint32{0x40}},
 			{Effect: 6, Aura: 4, BasePoints: 14, DieSides: 1, DamageMultiplier: 1, MiscValue: 7997, ClassMask: [3]uint32{0x40}},
+		},
+	},
+	// Empowered Renew
+	{
+		ID: 63544, Family: 6, FamilyFlags: [3]uint32{0, 0, 0x1000}, SchoolMask: 2, DmgClass: DmgClassMagic, Flags: FlagPositive,
+		Attributes: [8]uint32{0x10000, 0, 0x80000, 0x40000000}, AttributesCu: 0x100,
+		ProcChance: 101, SpellLevel: 1, BaseLevel: 1,
+		Effects: [3]Effect{
+			{Effect: 10, BasePoints: -1, DieSides: 1, DamageMultiplier: 1},
 		},
 	},
 	// Ghoul Frenzy

@@ -91,6 +91,8 @@ var threats = []Threat{
 	{SpellID: 20154, Targets: ThreatTargetsCaster},                                         // Seal of Righteousness
 	{SpellID: 20178, Targets: ThreatTargetsCaster},                                         // Reckoning
 	{SpellID: 20182, Targets: ThreatTargetsCaster},                                         // Reckoning (Rank 5)
+	{SpellID: 20185, Row: 20185, FlatMod: 0, PctMod: 0},                                    // Judgement of Light (Rank 1)
+	{SpellID: 20267, Targets: ThreatTargetsCaster},                                         // Judgement of Light (Rank 1)
 	{SpellID: 20337, Targets: ThreatTargetsCaster},                                         // Heart of the Crusader (Rank 3)
 	{SpellID: 20375, Targets: ThreatTargetsCaster},                                         // Seal of Command
 	{SpellID: 20594, Targets: ThreatTargetsCaster},                                         // Stoneform (Racial)

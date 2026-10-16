@@ -13,7 +13,7 @@ import (
 // No proc mask: the totem is the caster, so the procs go on it, not on the shaman. Only crit reads
 // the owner (Spell::DoAllEffectOnLaunchTarget's IsTotem branch).
 func (shaman *Shaman) registerSearingTotemAttackSpell() *core.Spell {
-	return shaman.RegisterSpell(core.SpellConfig{
+	attack := shaman.RegisterSpell(core.SpellConfig{
 		ActionID:     core.ActionID{SpellID: 58702},
 		SpellSchool:  core.SpellSchoolFire,
 		ProcMask:     core.ProcMaskEmpty,
@@ -24,6 +24,8 @@ func (shaman *Shaman) registerSearingTotemAttackSpell() *core.Spell {
 		DamageMultiplier: 1 + float64(shaman.Talents.CallOfFlame)*0.05,
 		CritMultiplier:   shaman.ElementalCritMultiplier(0),
 	})
+	attack.CastFromAnotherUnit()
+	return attack
 }
 
 func (shaman *Shaman) registerSearingTotemSpell() {
@@ -79,7 +81,7 @@ func (shaman *Shaman) registerSearingTotemSpell() {
 // a player caster, so it doesn't reach it (INVESTIGATION, Findings: Attack table). No proc mask for
 // the same reason Searing Totem's bolt has none.
 func (shaman *Shaman) registerMagmaTotemAttackSpell() *core.Spell {
-	return shaman.RegisterSpell(core.SpellConfig{
+	attack := shaman.RegisterSpell(core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: 58735},
 		SpellSchool: core.SpellSchoolFire,
 		ProcMask:    core.ProcMaskEmpty,
@@ -89,6 +91,8 @@ func (shaman *Shaman) registerMagmaTotemAttackSpell() *core.Spell {
 		DamageMultiplier: 1 + float64(shaman.Talents.CallOfFlame)*0.05,
 		CritMultiplier:   shaman.ElementalCritMultiplier(0),
 	})
+	attack.CastFromAnotherUnit()
+	return attack
 }
 
 func (shaman *Shaman) registerMagmaTotemSpell() {

@@ -247,17 +247,37 @@ func JudgementOfWisdomAura(target *Unit) *Aura {
 
 var JudgementOfLightAuraLabel = "Judgement of Light"
 
+// Casting Judgement of Light puts aura 20185 on the target, and that aura's proc entry is what fires.
+const judgementOfLightAuraID = 20185
+
 func JudgementOfLightAura(target *Unit) *Aura {
 	actionID := ActionID{SpellID: 20271}
+	ppm := ServerProcFor(judgementOfLightAuraID).PPM
+	healMetrics := make(map[*Unit]*ResourceMetrics)
 
 	return target.GetOrRegisterAura(Aura{
 		Label:    JudgementOfLightAuraLabel,
 		ActionID: actionID,
 		Duration: time.Second * 20,
 		OnSpellHitTaken: func(aura *Aura, sim *Simulation, spell *Spell, result *SpellResult) {
-			if !spell.ProcMask.Matches(ProcMaskMelee) || !result.Landed() {
+			// the same entry as Judgement of Wisdom's: no triggered casts, and only a landed hit that dealt damage
+			if spell.ProcMask.Matches(ProcMaskEmpty|ProcMaskProc|ProcMaskWeaponProc) || !result.Landed() || result.Damage == 0 {
 				return
 			}
+			unit := spell.Unit
+			if !unit.HasHealthBar() || sim.UnitRandomFloat(unit, "jol") > unit.AuraPPMProcChance(ppm, spell) {
+				return
+			}
+
+			// spell_pal_judgement_of_light_heal: 20267 for 2% of the attacker's max health. The judging paladin is
+			// its original caster, so the healing done and its threat are his, and no done percent or crit
+			// reaches it (no damage class, no bonus row).
+			metrics := healMetrics[unit]
+			if metrics == nil {
+				metrics = unit.NewHealthMetrics(ActionID{SpellID: 20267})
+				healMetrics[unit] = metrics
+			}
+			unit.GainHealth(sim, wholeHeal(unit.CountPctFromMaxHealth(2)*unit.HealingTakenPctMultiplier()), metrics)
 		},
 	})
 }

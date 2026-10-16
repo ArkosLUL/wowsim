@@ -40,6 +40,7 @@ func (dk *Deathknight) registerRaiseDeadCD() {
 		},
 
 		ApplyEffects: func(sim *core.Simulation, unit *core.Unit, spell *core.Spell) {
+			spell.LandOn(sim, &dk.Unit)
 			raiseDeadAura.Activate(sim)
 		},
 	})

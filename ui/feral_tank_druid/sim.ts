@@ -206,7 +206,7 @@ const SPEC_CONFIG = registerSpecConfig(Spec.SpecFeralTankDruid, {
 	},
 
 	autoRotation: (_player: Player<Spec.SpecFeralTankDruid>): APLRotation => {
-		return Presets.ROTATION_PRESET_SIMPLE.rotation.rotation!;
+		return Presets.ROTATION_DEFAULT.rotation.rotation!;
 	},
 
 	simpleRotation: (player: Player<Spec.SpecFeralTankDruid>, simple: DruidRotation, cooldowns: Cooldowns): APLRotation => {

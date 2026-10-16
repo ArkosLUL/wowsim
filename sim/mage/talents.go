@@ -355,7 +355,8 @@ func (mage *Mage) registerPresenceOfMindCD() {
 		SpellSchool:      core.SpellSchoolPhysical,
 		ProcMask:         core.ProcMaskEmpty,
 		ThreatMultiplier: 1,
-		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, _ *core.Spell) {
+		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, spell *core.Spell) {
+			spell.LandOn(sim, &mage.Unit)
 			if mage.ArcanePotencyAura != nil {
 				mage.ArcanePotencyAura.Activate(sim)
 			}
@@ -420,7 +421,8 @@ func (mage *Mage) registerArcanePowerCD() {
 		SpellSchool:      core.SpellSchoolArcane,
 		ProcMask:         core.ProcMaskEmpty,
 		ThreatMultiplier: 1,
-		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, _ *core.Spell) {
+		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, spell *core.Spell) {
+			spell.LandOn(sim, &mage.Unit)
 			mage.ArcanePowerAura.Activate(sim)
 		},
 		ExtraCastCondition: func(sim *core.Simulation, target *core.Unit) bool {
@@ -748,7 +750,8 @@ func (mage *Mage) registerCombustionCD() {
 		SpellSchool:      core.SpellSchoolFire,
 		ProcMask:         core.ProcMaskEmpty,
 		ThreatMultiplier: 1,
-		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, _ *core.Spell) {
+		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, spell *core.Spell) {
+			spell.LandOn(sim, &mage.Unit)
 			mage.CombustionAura.Activate(sim)
 			mage.CombustionAura.AddStack(sim)
 		},
@@ -799,7 +802,8 @@ func (mage *Mage) registerIcyVeinsCD() {
 		SpellSchool:      core.SpellSchoolFrost,
 		ProcMask:         core.ProcMaskEmpty,
 		ThreatMultiplier: 1,
-		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, _ *core.Spell) {
+		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, spell *core.Spell) {
+			spell.LandOn(sim, &mage.Unit)
 			icyVeinsAura.Activate(sim)
 		},
 	})
@@ -836,7 +840,8 @@ func (mage *Mage) registerColdSnapCD() {
 		SpellSchool:      core.SpellSchoolFrost,
 		ProcMask:         core.ProcMaskEmpty,
 		ThreatMultiplier: 1,
-		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, _ *core.Spell) {
+		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, spell *core.Spell) {
+			spell.LandOn(sim, &mage.Unit)
 			if mage.IcyVeins != nil {
 				mage.IcyVeins.CD.Reset()
 			}

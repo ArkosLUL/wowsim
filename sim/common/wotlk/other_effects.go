@@ -714,6 +714,7 @@ func init() {
 			},
 
 			ApplyEffects: func(sim *core.Simulation, _ *core.Unit, spell *core.Spell) {
+				spell.LandOn(sim, &character.Unit)
 				spell.SelfShield().Apply(sim, 6400)
 			},
 		})
@@ -790,10 +791,24 @@ func init() {
 				ICD:        time.Second * 45,
 				ActionID:   core.ActionID{ItemID: itemID},
 				Handler: func(sim *core.Simulation, _ *core.Spell, _ *core.SpellResult) {
-					// a pet that's away isn't in the world for 71610's area search
+					// spell_item_echoes_of_light keeps the ally with the lowest health percent from 71610's area
+					// search. The search's order is unknown, so a tie goes at random. A pet that's away isn't in
+					// the world to be found.
 					eligibleUnits = eligibleUnits[:0]
+					lowest := math.Inf(1)
 					for _, unit := range raidUnits {
-						if unit.IsEnabled() {
+						if !unit.IsEnabled() {
+							continue
+						}
+						// the sim keeps no health for a target dummy
+						pct := 1.0
+						if unit.HasHealthBar() && unit.MaxHealth() > 0 {
+							pct = unit.CurrentHealthPercent()
+						}
+						if pct < lowest {
+							lowest = pct
+							eligibleUnits = append(eligibleUnits[:0], unit)
+						} else if pct == lowest {
 							eligibleUnits = append(eligibleUnits, unit)
 						}
 					}

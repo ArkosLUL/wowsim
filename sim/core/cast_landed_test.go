@@ -59,3 +59,33 @@ func TestCastLandsOnceATarget(t *testing.T) {
 	spell.LandOn(sim, self)
 	expect("two iterations", self, self)
 }
+
+// A totem's attack lands for the totem: the caster's handlers never hear of it, hit or aura.
+func TestCastFromAnotherUnitDoesNotLand(t *testing.T) {
+	var attack, own *Spell
+	var landed []*Spell
+	sim, a := newTimingTestSim(t, 10, func(a *timingTestAgent) {
+		config := SpellConfig{
+			ActionID:         ActionID{SpellID: testSpellNoServerData},
+			SpellSchool:      SpellSchoolFire,
+			ProcMask:         ProcMaskSpellDamage,
+			DamageMultiplier: 1,
+			ThreatMultiplier: 1,
+		}
+		attack = a.RegisterSpell(config)
+		attack.CastFromAnotherUnit()
+		config.ActionID.Tag = 1
+		own = a.RegisterSpell(config)
+		a.RegisterOnCastLanded(func(_ *Simulation, s *Spell, _ *Unit) {
+			landed = append(landed, s)
+		})
+	})
+	enemy := a.CurrentTarget
+
+	attack.CalcAndDealDamage(sim, enemy, 100, attack.OutcomeAlwaysHit)
+	attack.LandOn(sim, enemy)
+	own.CalcAndDealDamage(sim, enemy, 100, own.OutcomeAlwaysHit)
+	if len(landed) != 1 || landed[0] != own {
+		t.Errorf("%d landings told, want only the caster's own spell", len(landed))
+	}
+}

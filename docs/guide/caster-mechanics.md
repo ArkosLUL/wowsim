@@ -52,6 +52,9 @@ pets and guardians in [pets](pets.md).
 - **Force of Nature** casts 33831, inside Clearcasting's mask.
 - **Nature's Swiftness** makes instant what its aura's class mask covers (`Spell.AffectedByAuraEffect`): heals and
   Rebirth, not Starfire.
+- **Survival Instincts** is [bonus health](class-mechanics.md#bonus-health).
+- The Feral Tank's automatic rotation is its default APL, whose `autocastOtherCooldowns` casts Survival
+  Instincts, Frenzied Regeneration and Barkskin.
 
 ## Shaman
 

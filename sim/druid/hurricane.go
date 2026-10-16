@@ -155,6 +155,7 @@ func (druid *Druid) registerHurricaneSpell() {
 			result.Outcome = core.OutcomeHit
 			druid.OnSpellHitDealt(sim, spell, result)
 			spell.DisposeResult(result)
+			spell.LandOn(sim, &druid.Unit)
 			spell.AOEDot().Apply(sim)
 		},
 	})

@@ -120,6 +120,7 @@ func (paladin *Paladin) registerSealOfRighteousnessSpellAndAura() {
 		ProcMask:         core.ProcMaskEmpty,
 		ThreatMultiplier: 1,
 		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, spell *core.Spell) {
+			spell.LandOn(sim, &paladin.Unit)
 			if paladin.CurrentSeal != nil {
 				paladin.CurrentSeal.Deactivate(sim)
 			}

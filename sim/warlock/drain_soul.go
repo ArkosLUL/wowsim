@@ -80,8 +80,11 @@ func (warlock *Warlock) registerDrainSoulSpell() {
 		},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+			// its third effect lands on the warlock, whether the target's part misses or not
+			spell.LandOn(sim, &warlock.Unit)
 			result := spell.CalcOutcome(sim, target, spell.OutcomeMagicHit)
 			if result.Landed() {
+				spell.LandOn(sim, target)
 				spell.SpellMetrics[target.UnitIndex].Hits--
 				dot := spell.Dot(target)
 				dot.Apply(sim)

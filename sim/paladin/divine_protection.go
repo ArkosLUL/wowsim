@@ -54,6 +54,7 @@ func (paladin *Paladin) registerDivineProtectionSpell() {
 		},
 
 		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, spell *core.Spell) {
+			spell.LandOn(sim, &paladin.Unit)
 			paladin.DivineProtectionAura.Activate(sim)
 			paladin.ForbearanceAura.Activate(sim)
 		},

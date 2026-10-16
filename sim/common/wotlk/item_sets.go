@@ -113,23 +113,30 @@ func registerShardOfTheGodsProc(character *core.Character, label string, handler
 
 const attr3SuppressCasterProcs = 0x00010000
 
+// shardLandingSpellIDs maps a sim spell whose own id has no damage class to the magic one it lands as on the
+// server. Keep the spell id name: it's how tools/acore/spellids finds the values for gen_serverdata.
+var shardLandingSpellIDs = map[int32]int32{
+	42846: 42845, // Arcane Missiles: each missile
+	47515: 47753, // Divine Aegis: the shield
+	48113: 48111, // Prayer of Mending: the buff, its jumps (41635) and heals (33110)
+	49067: 49065, // Explosive Trap: the trap casts its effect for the hunter
+	53007: 53000, // Penance: each bolt or heal
+	63543: 63544, // Empowered Renew: the heal
+}
+
 // rollsShardOfTheGods is whether a landed spell can proc either set: magic class, triggered or not (both bonuses
-// carry SPELL_ATTR3_CAN_PROC_FROM_PROCS), without SPELL_ATTR3_SUPPRESS_CASTER_PROCS. A spell without a damage class
-// counts by its proc mask, for a sim spell that stands in for another id (Prayer of Mending's 48113 lands as 48111,
-// 41635 and 33110, all magic).
+// carry SPELL_ATTR3_CAN_PROC_FROM_PROCS), without SPELL_ATTR3_SUPPRESS_CASTER_PROCS. A spell with no damage class
+// raises only the DMG_CLASS_NONE flags (Spell::DoAllEffectOnTarget), so it never rolls.
 func rollsShardOfTheGods(spell *core.Spell) bool {
-	if ss := spell.ServerSpell(); ss != nil {
-		if ss.Attributes[3]&attr3SuppressCasterProcs != 0 {
-			return false
-		}
-		switch ss.DmgClass {
-		case serverdata.DmgClassMagic:
-			return true
-		case serverdata.DmgClassMelee, serverdata.DmgClassRanged:
-			return false
-		}
+	ss := spell.ServerSpell()
+	if id, ok := shardLandingSpellIDs[spell.ActionID.SpellID]; ok && ss != nil {
+		ss = serverdata.SpellByID(id)
 	}
-	return spell.ProcMask.Matches(core.ProcMaskSpellDamage | core.ProcMaskSpellHealing)
+	if ss == nil {
+		// no server data under its action id, like a glyph's heal under the glyph's item
+		return spell.ProcMask.Matches(core.ProcMaskSpellDamage | core.ProcMaskSpellHealing)
+	}
+	return ss.DmgClass == serverdata.DmgClassMagic && ss.Attributes[3]&attr3SuppressCasterProcs == 0
 }
 
 // Each bonus is its own MOD_DAMAGE_DONE_VERSUS aura (57943, 29068, 57944), and the server multiplies them.

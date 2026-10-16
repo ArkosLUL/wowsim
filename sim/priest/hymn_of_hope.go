@@ -33,6 +33,8 @@ func (priest *Priest) RegisterHymnOfHopeCD() {
 		ProcMask:         core.ProcMaskEmpty,
 		ThreatMultiplier: 1,
 		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, spell *core.Spell) {
+			// the channel's aura goes on the priest; its mana (64904) has no damage class
+			spell.LandOn(sim, &priest.Unit)
 			core.StartPeriodicAction(sim, core.PeriodicActionOptions{
 				Period:   spell.Unit.ApplyCastSpeedForSpell(time.Second*2, spell),
 				NumTicks: int(numTicks),

@@ -22,6 +22,7 @@ func (priest *Priest) registerMindBlastSpell() {
 		SpellSchool: core.SpellSchoolShadow,
 		Flags:       core.SpellFlagNoMetrics,
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+			spell.LandOn(sim, target)
 			MindTraumaAura(target).Activate(sim)
 		},
 	})

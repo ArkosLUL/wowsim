@@ -15,6 +15,9 @@ type castLanded struct {
 	spell  *Spell
 	target *Unit
 	at     time.Duration
+
+	// spells the server casts from another unit, a totem, so their landings are that unit's
+	fromOthers map[*Spell]bool
 }
 
 func (unit *Unit) RegisterOnCastLanded(handler CastLandedHandler) {
@@ -30,13 +33,23 @@ func (unit *Unit) RegisterOnCastLanded(handler CastLandedHandler) {
 // aura, a hot or a shield put on. A direct hit or heal tells them on its own.
 func (spell *Spell) LandOn(sim *Simulation, target *Unit) {
 	cl := &spell.Unit.castLanded
-	if len(cl.handlers) == 0 || cl.spell == spell && cl.target == target && cl.at == sim.CurrentTime {
+	if len(cl.handlers) == 0 || cl.fromOthers[spell] || cl.spell == spell && cl.target == target && cl.at == sim.CurrentTime {
 		return
 	}
 	cl.spell, cl.target, cl.at = spell, target, sim.CurrentTime
 	for _, handler := range cl.handlers {
 		handler(sim, spell, target)
 	}
+}
+
+// CastFromAnotherUnit marks a spell the sim casts as its unit that the server casts from another one, like a
+// totem's attack or heal: its landings proc that unit's auras, not the caster's.
+func (spell *Spell) CastFromAnotherUnit() {
+	cl := &spell.Unit.castLanded
+	if cl.fromOthers == nil {
+		cl.fromOthers = map[*Spell]bool{}
+	}
+	cl.fromOthers[spell] = true
 }
 
 func (spell *Spell) landResult(sim *Simulation, isPeriodic bool, result *SpellResult) {

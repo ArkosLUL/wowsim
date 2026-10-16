@@ -5,7 +5,6 @@ import (
 
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
-	"github.com/wowsims/wotlk/sim/core/stats"
 )
 
 func (druid *Druid) registerSurvivalInstinctsCD() {
@@ -18,7 +17,7 @@ func (druid *Druid) registerSurvivalInstinctsCD() {
 
 	cdTimer := druid.NewTimer()
 	cd := time.Minute * 3
-	healthFac := core.TernaryFloat64(druid.HasMajorGlyph(proto.DruidMajorGlyph_GlyphOfSurvivalInstincts), 0.45, 0.3)
+	healthPct := core.TernaryInt32(druid.HasMajorGlyph(proto.DruidMajorGlyph_GlyphOfSurvivalInstincts), 45, 30)
 
 	var bonusHealth float64
 	druid.SurvivalInstinctsAura = druid.RegisterAura(core.Aura{
@@ -26,13 +25,13 @@ func (druid *Druid) registerSurvivalInstinctsCD() {
 		ActionID: actionID,
 		Duration: time.Second*20 + core.TernaryDuration(druid.HasSetBonus(ItemSetNightsongBattlegear, 4), 8*time.Second, 0),
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
-			bonusHealth = druid.MaxHealth() * healthFac
-			druid.AddStatsDynamic(sim, stats.Stats{stats.Health: bonusHealth})
-			druid.GainHealth(sim, bonusHealth, healthMetrics)
+			// spell_dru_survival_instincts_aura casts 50322 for that percent of max health
+			bonusHealth = druid.CountPctFromMaxHealth(healthPct)
+			druid.GainBonusHealth(sim, bonusHealth, healthMetrics)
 		},
 
 		OnExpire: func(aura *core.Aura, sim *core.Simulation) {
-			druid.AddStatsDynamic(sim, stats.Stats{stats.Health: -bonusHealth})
+			druid.LoseBonusHealth(sim, bonusHealth)
 		},
 	})
 

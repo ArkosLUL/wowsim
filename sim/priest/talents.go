@@ -525,7 +525,8 @@ func (priest *Priest) registerInnerFocus() {
 			},
 		},
 
-		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, _ *core.Spell) {
+		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, spell *core.Spell) {
+			spell.LandOn(sim, &priest.Unit)
 			priest.InnerFocusAura.Activate(sim)
 		},
 	})

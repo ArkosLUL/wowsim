@@ -124,6 +124,7 @@ func (warlock *Warlock) registerSeedSpell() {
 			result := spell.CalcOutcome(sim, target, spell.OutcomeMagicHit)
 			spell.WaitTravelTime(sim, func(sim *core.Simulation) {
 				if result.Landed() {
+					spell.LandOn(sim, target)
 					// seed is mutually exclusive with corruption
 					warlock.Corruption.Dot(target).Deactivate(sim)
 

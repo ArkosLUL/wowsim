@@ -86,6 +86,8 @@ func (mage *Mage) registerBlizzardSpell() {
 		},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+			// the channel's aura goes on the mage
+			spell.LandOn(sim, &mage.Unit)
 			spell.AOEDot().Apply(sim)
 		},
 	})

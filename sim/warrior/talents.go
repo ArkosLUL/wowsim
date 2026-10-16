@@ -764,12 +764,12 @@ func (warrior *Warrior) registerLastStandCD() {
 		ActionID: actionID,
 		Duration: time.Second * 20,
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
-			bonusHealth = warrior.MaxHealth() * 0.3
-			warrior.AddStatsDynamic(sim, stats.Stats{stats.Health: bonusHealth})
-			warrior.GainHealth(sim, bonusHealth, healthMetrics)
+			// spell_warr_last_stand casts 12976 for 30% of max health
+			bonusHealth = warrior.CountPctFromMaxHealth(30)
+			warrior.GainBonusHealth(sim, bonusHealth, healthMetrics)
 		},
 		OnExpire: func(aura *core.Aura, sim *core.Simulation) {
-			warrior.AddStatsDynamic(sim, stats.Stats{stats.Health: -bonusHealth})
+			warrior.LoseBonusHealth(sim, bonusHealth)
 		},
 	})
 
@@ -778,8 +778,9 @@ func (warrior *Warrior) registerLastStandCD() {
 
 		Cast: core.CastConfig{
 			CD: core.Cooldown{
-				Timer:    warrior.NewTimer(),
-				Duration: core.TernaryDuration(warrior.HasMajorGlyph(proto.WarriorMajorGlyph_GlyphOfLastStand), time.Minute*3, time.Minute*2),
+				Timer: warrior.NewTimer(),
+				// the glyph (58376) takes 60 s off the 180 s category cooldown
+				Duration: core.TernaryDuration(warrior.HasMajorGlyph(proto.WarriorMajorGlyph_GlyphOfLastStand), time.Minute*2, time.Minute*3),
 			},
 		},
 		ExtraCastCondition: func(sim *core.Simulation, target *core.Unit) bool {

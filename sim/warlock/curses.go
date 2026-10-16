@@ -31,6 +31,7 @@ func (warlock *Warlock) registerCurseOfElementsSpell() {
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			result := spell.CalcOutcome(sim, target, spell.OutcomeMagicHit)
 			if result.Landed() {
+				spell.LandOn(sim, target)
 				warlock.CurseOfElementsAuras.Get(target).Activate(sim)
 			}
 		},
@@ -65,6 +66,7 @@ func (warlock *Warlock) registerCurseOfWeaknessSpell() {
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			result := spell.CalcOutcome(sim, target, spell.OutcomeMagicHit)
 			if result.Landed() {
+				spell.LandOn(sim, target)
 				warlock.CurseOfWeaknessAuras.Get(target).Activate(sim)
 			}
 		},
@@ -106,6 +108,7 @@ func (warlock *Warlock) registerCurseOfTonguesSpell() {
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			result := spell.CalcOutcome(sim, target, spell.OutcomeMagicHit)
 			if result.Landed() {
+				spell.LandOn(sim, target)
 				warlock.CurseOfTonguesAuras.Get(target).Activate(sim)
 			}
 		},
@@ -168,6 +171,7 @@ func (warlock *Warlock) registerCurseOfAgonySpell() {
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			result := spell.CalcOutcome(sim, target, spell.OutcomeMagicHit)
 			if result.Landed() {
+				spell.LandOn(sim, target)
 				spell.SpellMetrics[target.UnitIndex].Hits--
 				warlock.CurseOfDoom.Dot(target).Cancel(sim)
 				spell.Dot(target).Apply(sim)
@@ -250,6 +254,7 @@ func (warlock *Warlock) registerCurseOfDoomSpell() {
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			result := spell.CalcOutcome(sim, target, spell.OutcomeMagicHit)
 			if result.Landed() {
+				spell.LandOn(sim, target)
 				warlock.CurseOfAgony.Dot(target).Cancel(sim)
 				dot := spell.Dot(target)
 				if scaling {
