@@ -148,7 +148,7 @@ func (dk *Deathknight) registerDrwRuneStrikeSpell() {
 		Direct: runeStrikeEffect,
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := (spell.Direct.Roll(sim)+dk.DrwWeaponDamage(sim, spell))*spell.Direct.WeaponPct +
+			baseDamage := core.ApplyPct(spell.Direct.Roll(sim)+dk.DrwWeaponDamage(sim, false), spell.Direct.WeaponPct) +
 				core.PowerBonus(spell.Direct.AP, spell.MeleeAttackPower()) + dk.drwVersusAttackPowerBonus(spell, false)
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialNoBlockDodgeParry)
 		},

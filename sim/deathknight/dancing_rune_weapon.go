@@ -29,24 +29,28 @@ func (dk *Deathknight) registerDancingRuneWeaponCD() {
 			if !dk.RuneWeapon.IsEnabled() {
 				return
 			}
+			var copied *core.Spell
 			switch spell {
 			case dk.IcyTouch:
-				dk.RuneWeapon.IcyTouch.Cast(sim, spell.Unit.CurrentTarget)
+				copied = dk.RuneWeapon.IcyTouch
 			case dk.PlagueStrike:
-				dk.RuneWeapon.PlagueStrike.Cast(sim, spell.Unit.CurrentTarget)
+				copied = dk.RuneWeapon.PlagueStrike
 			case dk.DeathStrike:
-				dk.RuneWeapon.DeathStrike.Cast(sim, spell.Unit.CurrentTarget)
+				copied = dk.RuneWeapon.DeathStrike
 			case dk.BloodStrike:
-				dk.RuneWeapon.BloodStrike.Cast(sim, spell.Unit.CurrentTarget)
+				copied = dk.RuneWeapon.BloodStrike
 			case dk.HeartStrike:
-				dk.RuneWeapon.HeartStrike.Cast(sim, spell.Unit.CurrentTarget)
+				copied = dk.RuneWeapon.HeartStrike
 			case dk.RuneStrike:
-				dk.RuneWeapon.RuneStrike.Cast(sim, spell.Unit.CurrentTarget)
+				copied = dk.RuneWeapon.RuneStrike
 			case dk.Pestilence:
-				dk.RuneWeapon.Pestilence.Cast(sim, spell.Unit.CurrentTarget)
+				copied = dk.RuneWeapon.Pestilence
 			case dk.BloodBoil:
-				dk.RuneWeapon.BloodBoil.Cast(sim, spell.Unit.CurrentTarget)
+				copied = dk.RuneWeapon.BloodBoil
+			default:
+				return
 			}
+			dk.RuneWeapon.castCopy(sim, copied, spell.Unit.CurrentTarget)
 		},
 		// spell_dk_dancing_rune_weapon's Death Coil exception matches on 47632's own damage
 		// event, so a miss (no damage dealt) mirrors nothing and a Sudden Doom-triggered cast
@@ -57,7 +61,7 @@ func (dk *Deathknight) registerDancingRuneWeaponCD() {
 				return
 			}
 			if spell == dk.DeathCoilDamage {
-				dk.RuneWeapon.DeathCoil.Cast(sim, result.Target)
+				dk.RuneWeapon.castCopy(sim, dk.RuneWeapon.DeathCoil, result.Target)
 			}
 			// a white swing, extra attacks too, but not Rune Strike: that one has a spell to copy
 			if spell.ProcMask.Matches(core.ProcMaskMeleeWhiteHit) && !spell.ProcMask.Matches(core.ProcMaskMeleeSpecial) {
@@ -101,11 +105,18 @@ func (runeWeapon *RuneWeaponPet) getImpurityBonus(spell *core.Spell) float64 {
 	return spell.MeleeAttackPower()
 }
 
+// drwReach is UNIT_FIELD_COMBATREACH as 53160 sets it on the weapon, and as spell_dk_dancing_rune_weapon's HandleProc
+// leaves it on the DK after each spell it copies, until his scale next changes.
+const drwReach = 0.01
+
 type RuneWeaponPet struct {
 	*core.Pet
 
 	dkOwner            *Deathknight
 	ownerTablesApplied bool
+	// its damage percents before the DK's are laid over them
+	ownDamageDealt       float64
+	ownSchoolDamageDealt [stats.SchoolLen]float64
 
 	IcyTouch     *core.Spell
 	PlagueStrike *core.Spell
@@ -211,20 +222,54 @@ func (runeWeapon *RuneWeaponPet) Initialize() {
 	runeWeapon.dkOwner.registerDrwHeartStrikeSpell()
 	runeWeapon.dkOwner.registerDrwDeathCoilSpell()
 	runeWeapon.dkOwner.registerDrwRuneStrikeSpell()
+
+	// No threat at all: the target can't attack it (UNIT_FLAG_NON_ATTACKABLE), so its threat ref stays offline and
+	// ThreatManager::AddThreat adds nothing. HandleApply's redirect to the DK never runs, as SpellInfoCorrections
+	// leaves 49028 no effect 2 to hook.
+	for _, spell := range runeWeapon.Spellbook {
+		spell.ThreatMultiplier = 0
+	}
 }
 
-func (dk *Deathknight) DrwWeaponDamage(sim *core.Simulation, spell *core.Spell) float64 {
-	weapon := spell.Unit.AutoAttacks.MH()
-	return weapon.WholeDamage(sim, weapon.SwingSpeed, spell.MeleeAttackPower(), spell.BonusWeaponDamage())
+// DrwWeaponDamage is the weapon roll of a rune weapon strike: Spell::EffectWeaponDmg takes the DK's own main hand
+// for entry 27893 (owner->CalculateDamage), at its normalized speed or its own, with his attack power, flat
+// bonuses and TOTAL_PCT inside, whole.
+func (dk *Deathknight) DrwWeaponDamage(sim *core.Simulation, normalized bool) float64 {
+	swing := dk.RuneWeapon.ownerSwings[0]
+	if normalized {
+		return swing.MHNormalizedStrikeDamage(sim, swing.MeleeAttackPower())
+	}
+	return swing.MHStrikeDamage(sim, swing.MeleeAttackPower())
+}
+
+// castCopy is the weapon's copy of one of the DK's spells, which leaves his reach at drwReach.
+func (runeWeapon *RuneWeaponPet) castCopy(sim *core.Simulation, spell *core.Spell, target *core.Unit) {
+	runeWeapon.syncOwnerMultipliers()
+	spell.Cast(sim, target)
+	runeWeapon.dkOwner.SetCombatReach(drwReach)
+}
+
+// syncOwnerMultipliers gives the weapon the DK's damage percents as they stand, halved: Unit::SpellDamageBonusDone
+// and MeleeDamageBonusDone ask the owner on each hit. A strike's weapon roll is his own with his percents inside
+// (DrwWeaponDamage), so physical takes only the halving.
+func (runeWeapon *RuneWeaponPet) syncOwnerMultipliers() {
+	owner := &runeWeapon.dkOwner.PseudoStats
+	ps := &runeWeapon.PseudoStats
+	ps.DamageDealtMultiplier = runeWeapon.ownDamageDealt * 0.5
+	for i, own := range runeWeapon.ownSchoolDamageDealt {
+		ps.SchoolDamageDealtMultiplier[i] = own
+		if i != int(stats.SchoolIndexPhysical) {
+			ps.SchoolDamageDealtMultiplier[i] *= owner.DamageDealtMultiplier * owner.SchoolDamageDealtMultiplier[i]
+		}
+	}
 }
 
 // drwVersusAttackPowerBonus is the creature-type attack power on a rune weapon hit: Unit::MeleeDamageBonusDone
 // hands entry 27893's hit to its owner and halves what comes back, so it's the DK's own int32(AP / 14 x speed)
 // off the DK's main hand, in float32 like the server, halved with the rest of the hit. The rune weapon has none
 // of its own.
-// The owner skips aura 79 on this physical flat bonus, but the rune weapon's damage multipliers hold the owner's
-// aura 79s and the halving, so it comes back divided by them: the hit then gives it only the halving, the
-// per-target multipliers and the spell's own mods.
+// It's divided by the weapon's physical multipliers, so the hit gives it only the halving, the per-target
+// multipliers and the spell's own mods.
 func (dk *Deathknight) drwVersusAttackPowerBonus(spell *core.Spell, normalized bool) float64 {
 	ap := dk.PseudoStats.MobTypeAttackPower
 	if ap == 0 {
@@ -264,21 +309,12 @@ func (dk *Deathknight) NewRuneWeapon() *RuneWeaponPet {
 	runeWeapon.Uncontrollable = true
 	runeWeapon.OwnerBuffsOnly = true
 	runeWeapon.OnPetEnable = runeWeapon.enable
-	runeWeapon.OnPetDisable = runeWeapon.disable
+	runeWeapon.BaseCombatReach = drwReach
 
-	mhWeapon := dk.WeaponFromMainHand(dk.DefaultMeleeCritMultiplier())
-
-	baseDamage := mhWeapon.AverageDamage() / mhWeapon.SwingSpeed * 3.5
-	mhWeapon.BaseDamageMin = baseDamage - 150
-	mhWeapon.BaseDamageMax = baseDamage + 150
-
-	mhWeapon.SwingSpeed = 3.5
-	mhWeapon.NormalizedSwingSpeed = 3.3
-
-	// npc_pet_dk_dancing_rune_weapon is a NullCreatureAI and never swings: its white hits are swingCopies.
-	// The weapon is only for its strikes.
+	// npc_pet_dk_dancing_rune_weapon is a NullCreatureAI and never swings: its white hits are swingCopies, and
+	// its strikes roll the DK's own weapon (DrwWeaponDamage)
 	runeWeapon.EnableAutoAttacks(runeWeapon, core.AutoAttackOptions{
-		MainHand: mhWeapon,
+		MainHand: dk.WeaponFromMainHand(dk.DefaultMeleeCritMultiplier()),
 	})
 
 	runeWeapon.PseudoStats.DamageTakenMultiplier = 0
@@ -305,6 +341,8 @@ func (runeWeapon *RuneWeaponPet) Reset(_ *core.Simulation) {
 			at.DamageDealtMultiplier *= runeWeapon.dkOwner.AttackTables[i].DamageDealtMultiplier
 		}
 	}
+	runeWeapon.ownDamageDealt = runeWeapon.PseudoStats.DamageDealtMultiplier
+	runeWeapon.ownSchoolDamageDealt = runeWeapon.PseudoStats.SchoolDamageDealtMultiplier
 }
 
 func (runeWeapon *RuneWeaponPet) ExecuteCustomRotation(_ *core.Simulation) {
@@ -314,21 +352,6 @@ func (runeWeapon *RuneWeaponPet) enable(_ *core.Simulation) {
 	// its attack power and crit are the owner's as they stand (Unit::MeleeDamageBonusDone and Spell.cpp's crit
 	// ask the owner each time), so they follow his changes while it's out
 	runeWeapon.EnableDynamicStats(runeWeaponStatInheritance)
-	// Unit::SpellDamageBonusDone and MeleeDamageBonusDone give entry 27893 the owner's own
-	// bonus (AP/SP, percent mods included) and halve it; this instead halves everything the
-	// rune weapon deals, base roll included, which overstates the cut on abilities whose base
-	// roll is a large share of the hit.
-	runeWeapon.dkOwner.drwDmgSnapshot = runeWeapon.dkOwner.PseudoStats.DamageDealtMultiplier * 0.5
-	runeWeapon.dkOwner.RuneWeapon.PseudoStats.DamageDealtMultiplier *= runeWeapon.dkOwner.drwDmgSnapshot
-
-	runeWeapon.dkOwner.drwPhysSnapshot = runeWeapon.dkOwner.PseudoStats.SchoolDamageDealtMultiplier[stats.SchoolIndexPhysical]
-	runeWeapon.PseudoStats.SchoolDamageDealtMultiplier[stats.SchoolIndexPhysical] *= runeWeapon.dkOwner.drwPhysSnapshot
-}
-
-func (runeWeapon *RuneWeaponPet) disable(_ *core.Simulation) {
-	// Clear snapshot damage multipliers
-	runeWeapon.dkOwner.RuneWeapon.PseudoStats.DamageDealtMultiplier /= runeWeapon.dkOwner.drwDmgSnapshot
-	runeWeapon.PseudoStats.SchoolDamageDealtMultiplier[stats.SchoolIndexPhysical] /= runeWeapon.dkOwner.drwPhysSnapshot
-	runeWeapon.dkOwner.drwPhysSnapshot = 1
-	runeWeapon.dkOwner.drwDmgSnapshot = 1
+	// it follows the DK at 0.01 yd
+	runeWeapon.DistanceFromTarget = runeWeapon.dkOwner.DistanceFromTarget
 }

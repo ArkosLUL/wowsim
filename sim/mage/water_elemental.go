@@ -76,7 +76,12 @@ func (mage *Mage) NewWaterElemental(disobeyChance float64) *WaterElemental {
 		waterElemental.ScalingPeriod = 2 * time.Second
 	} else {
 		waterElemental.BuffImmunity = core.PetImmuneToScaling
+		// a guardian's reach is its model's, 525's
+		waterElemental.BaseCombatReach = 0.85
 	}
+	// casts Waterbolt from where it follows the mage, summoned into a fight too: its first target comes with
+	// his next cast, by when it's there
+	waterElemental.DistanceFromTarget = waterElemental.FollowSpotDistance()
 	// pet_levelstats' 7561 health, and Guardian::UpdateMaxHealth's 7.5 a point of stamina for it
 	waterElemental.SetCreateHealth(7561, waterElementalBaseStats[stats.Stamina], 7.5)
 	waterElemental.EnableCreatureManaBar(2908, waterElementalBaseStats[stats.Intellect], 4.95, true)

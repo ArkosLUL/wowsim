@@ -82,6 +82,12 @@ type Unit struct {
 	// for calculating spell travel time for certain spells.
 	DistanceFromTarget float64
 
+	// UNIT_FIELD_COMBATREACH at scale 1: a player's or pet's 1.5, a guardian's model's
+	// (creature_model_info). 0 means 1.5.
+	BaseCombatReach float64
+	// what a script set UNIT_FIELD_COMBATREACH to, until the unit's scale next changes; 0 for none
+	setCombatReach float64
+
 	// How many casts on average a Valkyr will get off during its lifetime.
 	NibelungAverageCasts float64
 
@@ -516,6 +522,7 @@ func (unit *Unit) reset(sim *Simulation, _ Agent) {
 	unit.statsWithoutDeps = unit.initialStatsWithoutDeps
 	unit.stats = unit.initialStats
 	unit.PseudoStats = unit.initialPseudoStats
+	unit.setCombatReach = 0
 	unit.threatSchoolMods = append(unit.threatSchoolMods[:0], unit.initialThreatSchoolMods...)
 	unit.auraTracker.reset(sim)
 	// Spellbook needs to be reset AFTER auras.

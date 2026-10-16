@@ -90,7 +90,7 @@ func (dk *Deathknight) registerDrwPlagueStrikeSpell() {
 		Direct: plagueStrikeEffect,
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := (spell.Direct.Roll(sim)+dk.DrwWeaponDamage(sim, spell))*spell.Direct.WeaponPct +
+			baseDamage := core.ApplyPct(spell.Direct.Roll(sim)+dk.DrwWeaponDamage(sim, true), spell.Direct.WeaponPct) +
 				dk.drwVersusAttackPowerBonus(spell, true)
 
 			result := spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)

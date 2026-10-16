@@ -74,21 +74,38 @@ const (
 const mirrorImageSummon = 30 * time.Second
 
 const (
-	// the image's reach is its mage's model's; the target's is the boss dummy's (model 27510), which
-	// every record fights
-	mirrorImageReach       = 1.5
+	// the target's reach is the boss dummy's (model 27510), which every record fights
 	mirrorImageTargetReach = 2.5
-	// Spell::CheckRange at the cast's start: Fire Blast's 20 yd between the two reaches
-	mirrorImageFireBlastRange = 20 + mirrorImageReach + mirrorImageTargetReach
-	// CasterAI chases at three quarters of Fire Blast's range (FillAISpellInfo) plus both reaches, and only
-	// sets off from past that. From past ChaseRange's extra half yard it runs at the target and stops on the
-	// chase range; from nearer it runs for GetNearPoint's spot 15 yd plus the target's reach out
-	mirrorImageChaseRange = 15 + mirrorImageReach + mirrorImageTargetReach
-	mirrorImageChaseFar   = mirrorImageChaseRange + 0.5
-	mirrorImageChaseStop  = 15 + mirrorImageTargetReach
+	// a run from inside chaseFar heads for GetNearPoint's spot 15 yd plus the target's reach out
+	mirrorImageChaseStop = 15 + mirrorImageTargetReach
 	// creature_template's speed_run for 31216, at the base 7 yd a second
 	mirrorImageRunSpeed = 7 * 1.14286
 )
+
+// mirrorImageReach is the image's reach, its mage's model's at scale 1 (CloneCaster's Creature::SetDisplayId).
+// creature_model_info has none for either gnome model, so DEFAULT_WORLD_OBJECT_SIZE. The other mage races have
+// 1.5 for at least one gender, which isn't a sim input.
+func mirrorImageReach(race proto.Race) float64 {
+	if race == proto.Race_RaceGnome {
+		return 0.389
+	}
+	return 1.5
+}
+
+// fireBlastRange is Spell::CheckRange at the cast's start: Fire Blast's 20 yd between the two reaches.
+func (mi *MirrorImage) fireBlastRange() float64 {
+	return 20 + mi.BaseCombatReach + mirrorImageTargetReach
+}
+
+// chaseRange is what CasterAI chases from: three quarters of Fire Blast's range (FillAISpellInfo) plus both
+// reaches. From past ChaseRange's extra half yard (chaseFar) the image runs at the target and stops on it.
+func (mi *MirrorImage) chaseRange() float64 {
+	return 15 + mi.BaseCombatReach + mirrorImageTargetReach
+}
+
+func (mi *MirrorImage) chaseFar() float64 {
+	return mi.chaseRange() + 0.5
+}
 
 type MirrorImage struct {
 	*core.Pet
@@ -119,6 +136,7 @@ func (mage *Mage) NewMirrorImage() *MirrorImage {
 		mageOwner: mage,
 	}
 	mirrorImage.BuffImmunity = core.PetImmuneToScaling
+	mirrorImage.BaseCombatReach = mirrorImageReach(mage.BaseStatsRace)
 	// SummonProperties 1021 has neither a pet's type nor its category (Guardian::Guardian)
 	mirrorImage.Uncontrollable = true
 	// InitStatsForLevel's NPC_MIRROR_IMAGE case sets the create mana to 28 + 30 a level, but the
@@ -225,9 +243,9 @@ func (mi *MirrorImage) closeIn(until time.Duration) {
 	}
 	if mi.chaseTo == 0 {
 		switch d := mi.DistanceFromTarget; {
-		case d >= mirrorImageChaseFar:
-			mi.chaseTo = mirrorImageChaseRange
-		case d > mirrorImageChaseRange:
+		case d >= mi.chaseFar():
+			mi.chaseTo = mi.chaseRange()
+		case d > mi.chaseRange():
 			mi.chaseTo = mirrorImageChaseStop
 		default:
 			mi.chaseTo = d
@@ -250,7 +268,7 @@ func (mi *MirrorImage) castFrostbolt(sim *core.Simulation) bool {
 // castFireBlast is the cast the AI puts its event back for either way: out of range, Spell::CheckRange fails
 // it as it starts.
 func (mi *MirrorImage) castFireBlast(sim *core.Simulation) {
-	if mi.DistanceFromTarget < mirrorImageFireBlastRange {
+	if mi.DistanceFromTarget < mi.fireBlastRange() {
 		mi.Fireblast.Cast(sim, mi.CurrentTarget)
 	}
 }

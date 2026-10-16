@@ -102,6 +102,10 @@ func (warlock *Warlock) NewWarlockPet() *WarlockPet {
 
 	wp.SetCreateHealth(cfg.CreateHealth, cfg.Stats[stats.Stamina], cfg.HealthPerStamina)
 	wp.EnableCreatureManaBar(cfg.CreateMana, cfg.Stats[stats.Intellect], cfg.ManaPerIntellect, isImp)
+	if isImp {
+		// casts Firebolt from where it follows the warlock
+		wp.DistanceFromTarget = wp.FollowSpotDistance()
+	}
 
 	// Guardian::UpdateAttackPowerAndDamage: the Imp's is strength - 10
 	if isImp {

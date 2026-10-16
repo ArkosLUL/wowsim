@@ -117,10 +117,10 @@ func (dk *Deathknight) registerDrwDeathStrikeSpell() {
 		Mods:   mods,
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := (spell.Direct.Roll(sim) + dk.DrwWeaponDamage(sim, spell)) * spell.Direct.WeaponPct
+			baseDamage := core.ApplyPct(spell.Direct.Roll(sim)+dk.DrwWeaponDamage(sim, true), spell.Direct.WeaponPct)
 
 			if hasGlyph {
-				baseDamage *= 1 + 0.01*min(dk.CurrentRunicPower(), 25)
+				baseDamage = core.ApplyPct(baseDamage, 1+0.01*min(dk.CurrentRunicPower(), 25))
 			}
 			baseDamage += dk.drwVersusAttackPowerBonus(spell, true)
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)

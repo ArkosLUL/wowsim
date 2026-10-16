@@ -310,7 +310,7 @@ func applyBuffEffects(agent Agent, raidBuffs *proto.RaidBuffs, partyBuffs *proto
 
 // Applies buffs to pets. A guardian is as valid an area-aura target as any other pet
 // (AnyGroupedUnitInObjectRangeCheck doesn't tell them apart), so it gets these too. A haste carrier's
-// own immunities (inheritsOwnerAttackSpeed) keep Bloodlust off a guardian the same as a real pet.
+// own immunities (inheritsOwnerAttackSpeed) keep Bloodlust's haste off a guardian the same as a real pet.
 func applyPetBuffEffects(petAgent PetAgent, raidBuffs *proto.RaidBuffs, partyBuffs *proto.PartyBuffs, individualBuffs *proto.IndividualBuffs) {
 	if petAgent.GetPet().OwnerBuffsOnly {
 		return
@@ -637,12 +637,17 @@ func BloodlustAura(character *Character, actionTag int32) *Aura {
 		Duration: BloodlustDuration,
 		OnGain: func(aura *Aura, sim *Simulation) {
 			character.MultiplyAttackSpeed(sim, 1.3)
-			character.PseudoStats.ScaleBonus += 0.3
+			character.AddScaleBonus(0.3)
 			for _, pet := range character.Pets {
-				// the haste carrier makes an inheriting pet immune to both halves, cast speed included,
-				// guardian or real pet alike (the army is immune by carrying it too, not by id). A raid
-				// cast, so it skips a guardian without a pet bar as well
-				if pet.IsEnabled() && !pet.inheritsOwnerAttackSpeed() && !pet.Uncontrollable {
+				// a raid cast, so it skips a guardian without a pet bar
+				if !pet.IsEnabled() || pet.Uncontrollable {
+					continue
+				}
+				// the haste carrier's immunity is per effect: both haste auras, cast speed included, but not
+				// the scale (the army is immune by carrying it too, not by id)
+				if pet.inheritsOwnerAttackSpeed() {
+					bloodlustScaleAura(&pet.Character, actionTag).Activate(sim)
+				} else {
 					BloodlustAura(&pet.Character, actionTag).Activate(sim)
 				}
 			}
@@ -651,11 +656,26 @@ func BloodlustAura(character *Character, actionTag int32) *Aura {
 		},
 		OnExpire: func(aura *Aura, sim *Simulation) {
 			character.MultiplyAttackSpeed(sim, 1.0/1.3)
-			character.PseudoStats.ScaleBonus -= 0.3
+			character.AddScaleBonus(-0.3)
 		},
 	})
 	multiplyCastSpeedEffect(aura, 1.3)
 	return aura
+}
+
+// bloodlustScaleAura is what's left of Bloodlust on a haste carrier: 2825's 30% SPELL_AURA_MOD_SCALE. No
+// metrics, as it changes nothing the results show.
+func bloodlustScaleAura(character *Character, actionTag int32) *Aura {
+	return character.GetOrRegisterAura(Aura{
+		Label:    "Bloodlust Scale-" + BloodlustActionID.WithTag(actionTag).String(),
+		Duration: BloodlustDuration,
+		OnGain: func(aura *Aura, sim *Simulation) {
+			character.AddScaleBonus(0.3)
+		},
+		OnExpire: func(aura *Aura, sim *Simulation) {
+			character.AddScaleBonus(-0.3)
+		},
+	})
 }
 
 var PowerInfusionActionID = ActionID{SpellID: 10060}

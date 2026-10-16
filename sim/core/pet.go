@@ -883,6 +883,16 @@ func (pet *Pet) MissileLost(sim *Simulation, spell *Spell) bool {
 	return sim.CurrentTime+spell.TravelTime() > pet.unsummonAt
 }
 
+// petFollowDistance is PET_FOLLOW_DIST, what FollowMovementGenerator keeps between a pet's reach and its owner.
+const petFollowDistance = 2.0
+
+// FollowSpotDistance is how far from the owner's target a pet stands where it follows him: its reach plus
+// PET_FOLLOW_DIST off his left side (PET_FOLLOW_ANGLE), him facing the target. A caster's chase (PetAI) leaves
+// it there while the target is in its spell's range.
+func (pet *Pet) FollowSpotDistance() float64 {
+	return math.Hypot(pet.Owner.DistanceFromTarget, pet.combatReach()+petFollowDistance)
+}
+
 // SetUnsummonAt is for a summon that leaves the world later than it stops acting, like a Mirror Image's
 // corpse. EnableWithTimeout sets it for the rest.
 func (pet *Pet) SetUnsummonAt(at time.Duration) {

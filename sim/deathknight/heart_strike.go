@@ -47,7 +47,7 @@ func (dk *Deathknight) newHeartStrikeSpell(isMainTarget bool, isDrw bool) *core.
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			var baseDamage float64
 			if isDrw {
-				baseDamage = (spell.Direct.Roll(sim) + dk.DrwWeaponDamage(sim, spell)) * spell.Direct.WeaponPct
+				baseDamage = core.ApplyPct(spell.Direct.Roll(sim)+dk.DrwWeaponDamage(sim, true), spell.Direct.WeaponPct)
 			} else {
 				baseDamage = core.ApplyPct(normalizedStrikeBase(sim, spell, true, spell.Direct.Roll(sim)), spell.Direct.WeaponPct)
 			}
