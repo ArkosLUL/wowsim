@@ -181,13 +181,14 @@ chain waits for Z12.
 
 ## Current wave
 
-- Wave: Z11, landed. Next, on the user's "continue": Z12 (Z11's follow-ups and the tank fixes in the e2e-coverage
-  PLAN, BIS-TANK-HEALTH in the bis-optimizer PLAN), then the BiS chain (Deferred, below). Paused 2026-10-15 after
-  P1 and Angry's P2 (`.wave-loop\bis-chain\bis`; its P1 hunters simmed NaN): Z12 changes every pick, so it reruns
-  fresh. Z11 base `434442b93`, runId `wf_ccee67e3-394`.
+- Wave: Z12, running. Base `9a5d8fb6a`. Run 1 `wf_661e4362-520`: every code stage, EC-CORE-FIX9's and
+  EC-PET-FIX7's reviews deferred (an item's `deferReview` in the inline script). Run 2: their live stages alone on
+  an idle host, then their reviews. BIS-TANK-HEALTH's picks run on integration after every merge. Args:
+  `.wave-loop\waveZ12-build.py run1|run2`. Then the BiS chain (Deferred, below), paused 2026-10-15 after P1 and
+  Angry's P2 (`.wave-loop\bis-chain\bis`; its P1 hunters simmed NaN): Z12 changes every pick, so it reruns fresh.
+  Z11 base `434442b93`, runId `wf_ccee67e3-394`.
   The server runs mod-sim-validation's C++ as `86f62a3` (image 2026-10-13 20:46 local); `command` lacks the
-  `simval trace` help row (the DB import didn't run; the command works). Orphan character `540417:1:8:55519`
-  (left by a stalled EC-PET-FIX6 run) waits for the user's OK to clean.
+  `simval trace` help row (the DB import didn't run; the command works).
   Z11's reports: `.wave-loop\z11-run1\*.json` and `xreview.md`, `waveZ11-results.json`; item notes
   `.wave-loop\{ec-core-fix8,ec-pet-fix6,ec-class-fix7,ec-tools3}-tmp`. Briefs to copy: `waveZ11-build.py`,
   `waveZ11-xreview-brief.md`, `waveZ11-specs-brief.md`, `waveZ11-guides-brief.md`; the slow suite: `z11-slow.sh`,
