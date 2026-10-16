@@ -926,7 +926,7 @@ dps_results: {
 dps_results: {
  key: "TestBloodTank-BloodAggro"
  value: {
-  dps: 3635.41983
+  dps: 3620.43433
   tps: 8388.03515
   dtps: 272.52767
  }
