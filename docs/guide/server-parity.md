@@ -91,7 +91,9 @@ class by simval.
 - **Binary spells** follow the spelldump. Mind Flay isn't binary; Steady Shot and Expose Armor are.
 - **Weapon requirements:** a spell with `SPELL_ATTR3_REQUIRES_MAIN_HAND_WEAPON` or `_OFF_HAND_WEAPON` and
   an item subclass mask fails without that weapon, triggered casts too (`Spell::CheckItems`): Mutilate
-  needs two daggers, and rogue off-hand strikes an off-hand weapon.
+  needs two daggers, and rogue off-hand strikes an off-hand weapon. So does one whose `EquippedItemClass` the
+  player doesn't wear: a hunter's shots, stings and Volley need a bow, gun or crossbow, Raptor Strike a melee
+  weapon, which the sim reads as a main hand (`sim/hunter/weapon_requirements.go`).
 - **Spell costs** (`sim/core/cost.go`; `SpellInfo::CalcPowerCost`, `Player::ApplySpellMod`): truncated base
   plus the first school's flat aura (Spark of Hope), then (that + Σ `SPELLMOD_COST` flats) × (1 + Σ percents),
   0 once the flats reach it, truncated, then × (1 + the first school's cost-multiplier aura, e.g. Power Infusion,
@@ -143,7 +145,10 @@ class by simval.
     (`sim/core/cast_landed.go`): raised once a spell, target and instant by every landed direct hit or heal and
     every `ticksAsCasts` tick, never a plain tick or a `SpellFlagNoOnDamageDealt` spell. A cast that lands with
     nothing to deal (a hot, shield or aura put on: Renew, Power Word: Shield, Earth Shield, Ignite) calls
-    `Spell.LandOn` itself.
+    `Spell.LandOn` itself, on each unit the server lands it on: the caster for a self buff (Arcane Torrent,
+    Dancing Rune Weapon), the pet, or every raid unit (Horn of Winter). A spell the server casts from another
+    unit (the totems' attacks, Healing Stream's heal) is that unit's landing, not the caster's
+    (`Spell.CastFromAnotherUnit`).
   - Periodic ticks crit only with an aura 286 covering the spell, which can be a passive a skill teaches
     (SkillLineAbility AcquireMethod 2: Flame Shock's 75461, Immolate's 75445). Every sim dot declares it
     as `TicksCanCrit` (`sim/dotconfig_declared_test.go`).

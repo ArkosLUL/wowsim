@@ -62,6 +62,13 @@ pets and guardians in [pets](pets.md).
 - **Enhancing Totems:** Flametongue Totem's 58655 is a raid area aura, so its int32(144 × 1.15) = 165 reaches every
   raid member and pet.
 - **Improved Healing Wave** takes 0.1 s a point off Healing Wave.
+- **Chain Heal** picks every jump before its first heal lands (`chainHealJumps`; `Spell::SearchChainTargets`):
+  the enabled unit with a health bar, not yet healed by the chain, with the largest whole health deficit over 0,
+  a tie to the first in raid order. Nobody hurt ends the chain, so a full raid takes one heal a cast. With no
+  positions, everyone is in range and sight.
+- **Improved Water Shield** rolls on a heal's crit at 33/66/100% × 60% for Lesser Healing Wave, 30% for Chain
+  Heal, 100% otherwise (`impWaterShieldChance`; `spell_sha_imp_water_shield`), and gives mana only with Water
+  Shield up, using no orb.
 - **Frost Witch's 4-piece** (`spell_sha_t10_elemental_4p_bonus`): a Lava Burst cast adds 6 s to Flame Shock's
   time left. The max duration, which caps the ticks, rises only when the new time passes it
   ([`Dot.AddRemaining`](spell-data-and-timing.md#update-timing)).

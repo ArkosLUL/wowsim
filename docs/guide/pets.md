@@ -1,8 +1,8 @@
 # Pets and guardians
 
-How a player's summons follow the server: stats, timers, the buffs and casts that reach them, and the
-guardians' scripted AIs. Declaring their spells: [spell data and timing](spell-data-and-timing.md). The files:
-[sim architecture](sim-architecture.md#classes-items-encounters).
+How a player's summons follow the server: stats, timers, the buffs and casts that reach them, where they
+stand, and the guardians' scripted AIs. Declaring their spells: [spell data and timing](spell-data-and-timing.md).
+The files: [sim architecture](sim-architecture.md#classes-items-encounters).
 
 ## Stats
 
@@ -38,7 +38,7 @@ guardians' scripted AIs. Declaring their spells: [spell data and timing](spell-d
   Mirror Image's last Frostbolt.
 - Real pets rescale every 2 s, Spirit Wolves every 1 s, other guardians once at the summon. The Rune Weapon's
   attack power and crit follow the DK's on every change while it's out (`Pet.EnableDynamicStats`), its damage
-  multipliers stay the summon's.
+  percents at each spell copy ([guardian AIs](#guardian-ais)).
 - On one update: focus ahead of the pet's AI, the scaling auras, Replenishment, then mana and energy
   (`petRegenPriority`). A full bar takes no tick.
   - Focus: 24 × Bestial Discipline, truncated, every 4 s. Energy (the DK's ghouls,
@@ -68,9 +68,25 @@ guardians' scripted AIs. Declaring their spells: [spell data and timing](spell-d
   `pet.IsEnabled()` first (Cobra Strikes' stacks). A heal that picks a raid unit skips it too: Althor's Abacus,
   Chain Heal's bounces, Prayer of Healing, Circle of Healing, Prayer of Mending.
 - Haste carriers (the hunter pet, the DK's ghouls, gargoyle and army, Spirit Wolves; `Unit.HasteCarrier`)
-  ignore direct haste and slows, Bloodlust included, and take the owner's attack speed as whole percent
+  ignore direct haste and slows, Bloodlust's haste included but not its scale (`bloodlustScaleAura`: the
+  immunity is per effect), and take the owner's attack speed as whole percent
   (`Pet.OwnerHasteSource`): at the summon, then every 2 s for a pet and for Spirit Wolves
   (`Pet.OwnerHasteTicksOnGuardian`), never again for the DK's guardians.
+
+## Reach and position
+
+- A summon's reach is `Unit.BaseCombatReach` (0 means 1.5, a pet's) × its scale: a guardian's is its
+  model's `creature_model_info.CombatReach`, a 0 there loaded as 1.5 (the timed Water Elemental's 0.85, model
+  525). How a reach moves a missile: [spell data and timing](spell-data-and-timing.md#server-data).
+- The Imp and the Water Elemental cast from their follow spot (`Pet.FollowSpotDistance`): their reach plus
+  `PET_FOLLOW_DIST` 2 off the owner's left, him facing the target; PetAI's chase leaves a caster there while
+  the target is in range. The Gargoyle casts from its summon spot, 3 yd off the DK's front left
+  (`gargoyleSpotDistance`), the Rune Weapon from the DK's.
+- A melee pet's missiles wait the 5 yd floor: its chase stops at both reaches, so on the server they fly at
+  most the target's reach, and a pet's scale (a hunter pet's family) changes nothing there.
+- Not modelled: the Rune Weapon's run-in from 2 yd in front of the target; a timed Water Elemental summoned
+  while something attacks the mage casting from its spawn spot; a caster pet moving when its owner stands
+  past its spell's range.
 
 ## Guardian AIs
 
@@ -100,8 +116,9 @@ Fire Elemental lives and Mirror Image summons, `pets_casts.jsonl`, against both 
     an update of it, so the update lengths decide whether it goes off.
   - The corpse goes at the first update 30 s in and takes a Frostbolt in the air with it.
   - An image comes up beside its mage and casts from where it stands (`MirrorImage.closeIn`). Its ranges add
-    both reaches: the image's 1.5 and the target's, which the sim takes as the boss dummy's 2.5 (model 27510)
-    for every target.
+    both reaches: its own 1.5, every mage race's models' (`mirrorImageReach`), and the
+    [target's](spell-data-and-timing.md#server-data). The yards below are at the boss dummy's 2.5; another
+    target reach moves each by the difference (`targetReachOver`).
     - Fire Blast from 24 yd (20 + reaches) on fails at its start (`Spell::CheckRange`), and its event is put
       back anyway.
     - On an update it starts with no cast going, past 19 yd (15 + reaches), the chase runs it at 1.14286 × 7
@@ -121,3 +138,11 @@ Fire Elemental lives and Mirror Image summons, `pets_casts.jsonl`, against both 
   fresh roll of his own swing on his table, floored half, dealt by the weapon with no procs
   (`RuneWeaponPet.swingCopies`; `registerDrwOwnerSwing`, never dealt). Rune Strike copies as a strike. It's
   uncontrollable (SummonProperties 208), so no Bloodlust.
+  - A spell copy (`castCopy`) takes the DK's damage percents as they stand, halved: his school ones on magic,
+    only the halving on physical, as a strike rolls his own main hand with his percents inside
+    (`DrwWeaponDamage`), normalized for Blood, Heart, Death and Plague Strike, not Rune Strike.
+  - After each spell copy the DK's reach is 0.01 until his scale next changes (`Unit.SetCombatReach`), so his
+    missiles fly the whole distance (Death Coil).
+  - It makes no threat: `UNIT_FLAG_NON_ATTACKABLE` keeps its threat ref on the target offline, and 49028's
+    redirect to the DK never runs (`SpellInfoCorrections` zeroes the effect it hooks). Its spells have
+    `ThreatMultiplier` 0; the DK's threat is his own damage's.

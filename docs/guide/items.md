@@ -24,6 +24,8 @@ checks it and the Go effects.
 - Item heals go the same way (`itemHealSpell`): Bauble of True Blood's use casts 71607 for both items,
   Althor's Abacus heals as 71610 / 71641, Glowing Twilight Scale ticks as 75493 / 75494. Still under the
   item: Forethought Talisman's heal over time.
+- Althor's Abacus heals the enabled raid unit with the lowest health percent (`spell_item_echoes_of_light`),
+  a tie at random; a unit without a health bar (a target dummy) counts as full.
 - Bryntroll's proc is Drain Life 71838 (heroic 71839), magic class. It never crits (`SPELL_ATTR2_CANT_CRIT`)
   and heals the wielder for the damage dealt, a bare `HealBySpell` with no crit, threat, proc or spell power
   (`GainHealing`). The item gives the spell a 500 ms cooldown, so a roll won inside it is lost
@@ -33,10 +35,12 @@ checks it and the Go effects.
   - It rolls once for every target a magic-class cast lands on, whatever the cast did there, triggered casts
     too (`SPELL_ATTR3_CAN_PROC_FROM_PROCS`), never a tick or a melee or ranged spell
     ([landed casts](server-parity.md#other-measured-server-behaviour); `rollsShardOfTheGods`).
+  - The class is the landing spell's: one with no damage class never rolls (Ardent Defender 66233, Power
+    Infusion, Invigorating Earthsiege Health Regen 55341, the item hots, Persistent Shield). A sim spell
+    landing as another id maps it in `shardLandingSpellIDs` (keep the name: `spellids` reads it for
+    `gen_serverdata`); with no server data under its action id (a glyph's heal under its item), the proc mask
+    decides.
   - A landing of the wrong kind uses the proc up and casts nothing (`SPELL_FAILED_BAD_TARGETS`).
-  - Not modelled: an aura-only cast without `LandOn` (buffs, Beacon of Light, Sacred Shield, Power Infusion)
-    never rolls, and a spell with no damage class but a spell proc mask rolls (Ardent Defender, Invigorating
-    Earthsiege Health Regen 55341).
 - Class relics, sigils, totems, idols and a few class set bonuses still carry Classic values until their
   class's P7 item. Totem of the Third Wind also buffs Healing Wave.
 
@@ -64,4 +68,5 @@ The server's swap takes the leaving weapon's enchants off and puts the new one's
   id, a direct `RegisterOnItemSwap` doesn't (Deathfrost, Razorice).
 - `ItemSwap.reset` right after `Unit.reset` puts the main set's gear back and runs the swap callbacks, without
   `SwapItems`' stat change and GCD; the APL's mid-fight swap to the main set is a full `SwapItems`.
-- Not modelled: a racial weapon expertise (a human's sword or mace) doesn't follow a swap.
+- A racial weapon expertise (a human's sword or mace) follows the swap per hand (`followWeaponSpecialization`;
+  `Player::UpdateExpertise`).

@@ -41,13 +41,18 @@ spell is only as right as its id.
   the damage to the real id. When a suite moves for a spell you didn't touch, look here first.
 - Missiles roll hit, crit and damage at launch (`Spell::DoAllEffectOnLaunchTarget`) and deal it on landing, in
   whole ms. The flight is the distance less the caster's reach, at least 5 yd (`Spell::AddUnitTarget`;
-  `Spell.TravelTime`): `GetDistance` takes off the caster's object size, 1.5 yd for a player, and the sim
-  takes 1.5 for every pet and guardian too. The reach grows with the caster's scale (`Unit.combatReach()`,
-  `PseudoStats.ScaleBonus`): Bloodlust and Heroism carry `SPELL_AURA_MOD_SCALE` 30%, so under them it's 1.95,
-  and a speed 24 missile at 18 yd flies 668 ms, not 687. The sim waits it out only where the closure calls
-  `spell.WaitTravelTime`, or `spell.DealDamageAfterTravel` for a landing that only deals the result, over
-  `DistanceFromTarget`, which is 0 for a pet, so its missiles wait the 5 yd floor (a Mirror Image starts at its
-  mage's and closes in: [pets](pets.md#guardian-ais)).
+  `Spell.TravelTime`): `GetDistance` takes off the caster's object size only, never the target's. The reach
+  is 1.5 for a player, a pet's or guardian's [its own](pets.md#reach-and-position), times the scale
+  (`Unit.combatReach()`, `PseudoStats.ScaleBonus`): Bloodlust and Heroism carry `SPELL_AURA_MOD_SCALE` 30%, so
+  under them a player's is 1.95, and a speed 24 missile at 18 yd flies 668 ms, not 687. A script writing the
+  reach holds until the scale next changes (`Unit.SetCombatReach`). The sim waits it out only where the
+  closure calls `spell.WaitTravelTime`, or `spell.DealDamageAfterTravel` for a landing that only deals the
+  result, over `DistanceFromTarget`: 0 for a pet that doesn't cast from a spot of its own, so its missiles wait
+  the 5 yd floor.
+- A target's combat reach is `Target.combat_reach` (`proto/common.proto`; "Combat Reach" in the advanced
+  target picker), unset the boss dummy's 2.5 (model 27510, `core.BossDummyCombatReach`), read as
+  `Unit.EnemyCombatReach`. Ranges add both reaches (`Spell::GetMinMaxRange`); only Mirror Image's read it
+  ([pets](pets.md#guardian-ais)).
 
 ## Update timing
 

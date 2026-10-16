@@ -28,9 +28,9 @@ tenths). A sim spell opts in by calling `IssueRefund` on that result, the druid'
 
 Vampiric Blood (15%), Last Stand (12976, 30%) and Survival Instincts (50322, 30%, 45% glyphed) add that whole
 percent of the whole max health (`CountPctFromMaxHealth`) to max and current health (`GainBonusHealth`). On
-expiry `AuraEffect::HandleAuraModIncreaseHealth` takes it off current health, to 1 if health isn't above it (0
-stays 0), then off max, capping health there (`Unit::SetMaxHealth`; a health percent aura scales the bonus in max
-only) (`LoseBonusHealth`): no damage taken event, no TMI entry.
+expiry (`LoseBonusHealth`; `AuraEffect::HandleAuraModIncreaseHealth`) it comes off current health, to 1 if
+health isn't above it (0 stays 0), then off max, capping health there (`Unit::SetMaxHealth`; a health percent
+aura scales the bonus in max only): no damage taken event, no TMI entry.
 
 ## Death knight
 

@@ -24,7 +24,7 @@ rounding, caps and crit damage. Everything else the server does differently is i
     `Unit::CalculateDamage`), so `doneDamage` leaves that percent out. `StrikeFixed` scales a fixed bonus,
     `core.ApplyPct` is each percent step (`Spell::EffectWeaponDmg`). Off the physical school there's no
     TOTAL_PCT, the off hand's half included.
-  - A hit whose multipliers come after the roll takes `Weapon.WholeDamage` (the rune weapon's strikes); a
+  - A hit whose multipliers come after the roll takes `Weapon.WholeDamage` (Sweeping Strikes' copy); a
     script adding its own weapon roll, `Weapon.WholeBaseDamage` (Steady Shot's `irand(int32(min),
     int32(max))`). Manifest Anger is `ApplyPct` 50% of a whole strike.
   - A script's AP share keeps the server's float32 order: Eviscerate `int32(ap × combo × 0.07f)`, Envenom
@@ -61,6 +61,18 @@ rounding, caps and crit damage. Everything else the server does differently is i
 
 - **Whole heals:** a heal is whole after the caster's multiplier, the target's and the crit, one dealt outside
   a spell through `GainHealing`.
+- **Healing done percents** (aura 136: Focused Power, Blessed Resilience, Purification, Avenging Wrath;
+  `Unit.AddHealingDonePct`) reach a hot at each tick, after its whole amount: `int32(float32(amount) × the
+  caster's float32 AddPct chain at that tick)` (`sim/core/healing_done.go`; `HandlePeriodicHealAurasTick`).
+  Every unit-aura hot takes them, an item's too, so it snapshots its amount without them
+  (`Dot.SnapshotHotMultiplier`); Ghoul Frenzy (`OBS_MOD_HEALTH`) doesn't.
+  - A class's direct heal carries its talents in its own multiplier, so Avenging Wrath's reaches hots only. A
+    direct heal with no damage class (an item's) takes none (`SpellHealingBonusDone` returns early).
+  - Earth Shield's charge takes Purification once, in 49284's healing bonus, before the glyph and Improved
+    Shields; 379 ignores caster modifiers.
+  - The priest T10 2-piece's 70772 ticks `int32(Flash Heal × 33%) / 3` three times
+    (`spell_pri_t10_heal_2p_bonus`; `blessedHealingTick`), then takes only aura 136 and the target's healing
+    taken.
 - **Healing taken** percents (aura 118) don't stack: only the highest bonus and the lowest penalty count,
   multiplied (`Unit.AddHealingTakenPct`). Strength of Wrynn is healing done, which multiplies; a heal with no
   damage class, or one that ignores caster modifiers (`SpellFlagIgnoreAttackerModifiers`:

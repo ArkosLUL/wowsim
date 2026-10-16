@@ -81,11 +81,10 @@ fire on cooldown (`major_cooldown.go`). A saved raider keeps what it was saved w
   (`currentHealth - healthDebt`, `sim/core/health.go`: overkill adds to the debt, overheal pays it off), so it
   runs on past 0 and is ≤ 0 exactly where the tank died. Higher is better; no cap; a death save counts as
   survived. +X max health moves it by exactly X unless something scales with max health: below 35%, Ardent
-  Defender's and Will of the Necropolis' cuts, the defensives' threshold and a death save's heal. Measured on
-  the BiS fights, a Stamina point moves it 0.56 to 0.99 of the health it adds where the tank dies in up to 95%,
-  1.2 to 1.6 where it dies in 99% and up. Core keeps it,
-  and each first-death time, only for a unit that tanks with a healing model (`UnitMetrics` 19 to 22); the
-  results page shows it beside TMI and chance of death.
+  Defender's and Will of the Necropolis' cuts, the defensives' threshold and a death save's heal. On the BiS
+  fights a Stamina point moves it by less than the health it adds, by more only where the tank dies in 99% and
+  up. Core keeps it, and each first-death time, only for a unit that tanks with a healing model (`UnitMetrics`
+  19 to 22); the results page shows it beside TMI and chance of death.
 - Chance of death pairs like the others: core lists each iteration's death (`UnitMetrics.iteration_deaths`,
   under `SaveAllValues`, for a unit that tanks). Where a pick all but never dies (Anub'arak), the death sixth
   is flat and only TMI and the margin price Stamina.
@@ -112,8 +111,8 @@ fire on cooldown (`major_cooldown.go`). A saved raider keeps what it was saved w
   takes its place (it must beat the seed where the best does), with a warning naming the swap. Twins join the
   verified list, so a tie takes them to time to live.
 - The Defense and hit floors come before the score. Gems are priced at the surrogate's slopes, and the gem
-  check bans one gem at a time at those slopes, so where the slopes miss, neither fixes it: P1 picks gem 3
-  Stamina in 11 to 13 sockets though a Stamina socket sims 4 to 8 times any other there.
+  check bans one gem at a time at those slopes, so where the slopes miss, neither fixes it: P1 picks gem
+  little Stamina though a Stamina socket sims several times any other there.
 
 ## Resistance
 
