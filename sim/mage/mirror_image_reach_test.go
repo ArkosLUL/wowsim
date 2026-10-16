@@ -14,7 +14,7 @@ import (
 // past the boss dummy's 2.5 moves every one of them out by 5: from 28 yd the images cast and close in as they
 // would from 23 against the dummy.
 func TestMirrorImageRangesMoveWithTheTargetsReach(t *testing.T) {
-	run := func(yards, reach float64) (bolts []float64, blasts int32) {
+	run := func(yards, reach float64) (bolts []float64, blasts int32, chase float64) {
 		player := procMage("", "p5_bis_arcane", `{"type": "TypeAPL", "priorityList": []}`, PlayerOptionsArcane)
 		player.DistanceFromTarget = yards
 		encounter := core.MakeSingleTargetEncounter(0)
@@ -40,12 +40,13 @@ func TestMirrorImageRangesMoveWithTheTargetsReach(t *testing.T) {
 		for image.IsEnabled() && !sim.Step() {
 		}
 		blasts = image.Fireblast.SpellMetrics[sim.GetTargetUnit(0).UnitIndex].Casts
+		chase = image.chaseRange()
 		sim.Cleanup()
-		return bolts, blasts
+		return bolts, blasts, chase
 	}
 
-	dummyBolts, dummyBlasts := run(23, 0)
-	bolts, blasts := run(28, 7.5)
+	dummyBolts, dummyBlasts, dummyChase := run(23, 0)
+	bolts, blasts, _ := run(28, 7.5)
 	if blasts != dummyBlasts || len(bolts) != len(dummyBolts) {
 		t.Fatalf("against a 7.5 yd reach from 28 yd: %d Fire Blasts, Frostbolts from %.2f; against the dummy from 23: %d, %.2f",
 			blasts, bolts, dummyBlasts, dummyBolts)
@@ -56,7 +57,7 @@ func TestMirrorImageRangesMoveWithTheTargetsReach(t *testing.T) {
 				i+1, bolts[i], dummyBolts[i])
 		}
 	}
-	if dummyBlasts != 3 || dummyBolts[len(dummyBolts)-1] != mirrorImageChaseRange {
+	if dummyBlasts != 3 || dummyBolts[len(dummyBolts)-1] != dummyChase {
 		t.Errorf("against the dummy from 23 yd: %d Fire Blasts, last Frostbolt from %.2f, want 3 and the chase's range",
 			dummyBlasts, dummyBolts[len(dummyBolts)-1])
 	}

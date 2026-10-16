@@ -61,8 +61,6 @@ type Deathknight struct {
 
 	RuneWeapon        *RuneWeaponPet
 	DancingRuneWeapon *core.Spell
-	drwDmgSnapshot    float64
-	drwPhysSnapshot   float64
 
 	ArmyOfTheDead *core.Spell
 	ArmyGhoul     []*GhoulPet

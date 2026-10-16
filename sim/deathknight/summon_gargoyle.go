@@ -1,6 +1,7 @@
 package deathknight
 
 import (
+	"math"
 	"time"
 
 	"github.com/wowsims/wotlk/sim/core"
@@ -36,6 +37,7 @@ func (dk *Deathknight) registerSummonGargoyleCD() {
 		},
 
 		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, _ *core.Spell) {
+			dk.Gargoyle.DistanceFromTarget = gargoyleSpotDistance(dk.DistanceFromTarget)
 			// npc_pet_dk_ebon_gargoyle flies off, interrupting its cast, once 32 of its 36 s are up
 			dk.Gargoyle.EnableWithTimeout(sim, dk.Gargoyle, gargoyleCastWindow)
 			dk.Gargoyle.CancelGCDTimer(sim)
@@ -64,6 +66,14 @@ const (
 	gargoyleFirstCast        = 2000 * time.Millisecond
 	gargoyleCastWindow       = 32 * time.Second
 )
+
+// gargoyleSpotDistance is how far from the DK's target the gargoyle casts: 49206 puts it 3 yd off his front left
+// (TARGET_DEST_CASTER_FRONT_LEFT), him facing the target, and AttackStartCaster's 40 yd chase leaves it there.
+func gargoyleSpotDistance(dkDistance float64) float64 {
+	const summonYards = 3
+	along, aside := summonYards*math.Cos(math.Pi/4), summonYards*math.Sin(math.Pi/4)
+	return math.Hypot(dkDistance-along, aside)
+}
 
 type GargoylePet struct {
 	*core.Pet

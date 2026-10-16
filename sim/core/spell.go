@@ -647,8 +647,8 @@ func (spell *Spell) CastTime() time.Duration {
 	return spell.castTimeFn(spell)
 }
 
-// defaultCombatReach is the reach of a player (Player::SetObjectScale) and of a pet or image (its model's
-// 1.5), which WorldObject::GetDistance takes off the distance to the target.
+// defaultCombatReach is the reach of a player (Player::SetObjectScale) and of a pet (Creature::SetObjectScale's
+// IsPet), which WorldObject::GetDistance takes off the distance to the target.
 const defaultCombatReach = 1.5
 
 // TravelTime is Spell::AddUnitTarget's missile delay: the distance less the caster's reach, at least 5 yards,
@@ -664,7 +664,26 @@ func (spell *Spell) TravelTime() time.Duration {
 // combatReach grows with the unit's scale: Unit::RecalculateObjectScale adds the scale auras' percents to the
 // native 1, so under Bloodlust a player's reach is 1.95 and its missiles land as from 0.45 yd closer.
 func (unit *Unit) combatReach() float64 {
-	return defaultCombatReach * (1 + unit.PseudoStats.ScaleBonus)
+	if unit.setCombatReach != 0 {
+		return unit.setCombatReach
+	}
+	base := unit.BaseCombatReach
+	if base == 0 {
+		base = defaultCombatReach
+	}
+	return base * (1 + unit.PseudoStats.ScaleBonus)
+}
+
+// SetCombatReach is a script writing UNIT_FIELD_COMBATREACH, which holds until the unit's scale next changes.
+func (unit *Unit) SetCombatReach(reach float64) {
+	unit.setCombatReach = reach
+}
+
+// AddScaleBonus adds a SPELL_AURA_MOD_SCALE percent, 0.3 for 30%. The new scale rewrites the reach
+// (Player::SetObjectScale, Creature::SetObjectScale), over whatever a script set.
+func (unit *Unit) AddScaleBonus(bonus float64) {
+	unit.PseudoStats.ScaleBonus += bonus
+	unit.setCombatReach = 0
 }
 
 // Handles computing the cost of spells and checking whether the Unit

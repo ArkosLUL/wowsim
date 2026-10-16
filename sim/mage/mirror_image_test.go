@@ -335,23 +335,32 @@ func TestMirrorImageCastDueOnItsDeathUpdateGoesOff(t *testing.T) {
 // run stops on the chase's range (ShortenPathUntilDist), so the image parks there; from nearer it heads for
 // GetNearPoint's spot 15 yd plus the target's reach out, inside it. Out past Fire Blast's 20 yd plus both
 // reaches, Spell::CheckRange fails the Fire Blast as it starts, and the event's put back all the same. Inside
-// the chase's range the image stands where it came up, beside its mage.
+// the chase's range the image stands where it came up, beside its mage. A gnome's image has no model reach, so
+// 0.389: its ranges are 1.1 yd shorter.
 func TestMirrorImageClosesInBetweenCasts(t *testing.T) {
 	const update = 0.1027 * mirrorImageRunSpeed
+	// a troll's chase range, and a gnome's
+	const chase, gnomeChase = 15 + 1.5 + mirrorImageTargetReach, 15 + 0.389 + mirrorImageTargetReach
 	for _, tc := range []struct {
+		gnome  bool
 		yards  float64
 		blasts int32
 		// where its last Frostbolt went off from, when the test pins it
 		parks float64
 	}{
-		{30, 1, 0},
-		{23, 3, mirrorImageChaseRange},
-		{19.7, 3, mirrorImageChaseRange},
-		{19.3, 3, 19.3 - update},
-		{16, 3, 16},
+		{false, 30, 1, 0},
+		{false, 23, 3, chase},
+		{false, 19.7, 3, chase},
+		{false, 19.3, 3, 19.3 - update},
+		{false, 16, 3, 16},
+		{true, 23, 3, mirrorImageChaseStop},
+		{true, 18.5, 3, gnomeChase},
 	} {
 		player := procMage("", "p5_bis_arcane", `{"type": "TypeAPL", "priorityList": []}`, PlayerOptionsArcane)
 		player.DistanceFromTarget = tc.yards
+		if tc.gnome {
+			player.Race = proto.Race_RaceGnome
+		}
 		sim := core.NewSim(&proto.RaidSimRequest{
 			Raid:       core.SinglePlayerRaidProto(player, nil, nil, nil),
 			Encounter:  core.OnRegularGrid(core.MakeSingleTargetEncounter(0), 10.27),
@@ -386,11 +395,11 @@ func TestMirrorImageClosesInBetweenCasts(t *testing.T) {
 				before = boltYards[i-1]
 			}
 			moved, stop := before-yards, mirrorImageChaseStop
-			if before >= mirrorImageChaseFar {
-				stop = mirrorImageChaseRange
+			if before >= image.chaseFar() {
+				stop = image.chaseRange()
 			}
 			switch {
-			case before <= mirrorImageChaseRange:
+			case before <= image.chaseRange():
 				if moved != 0 {
 					t.Errorf("%v yd: Frostbolt %d went off %.2f yd out, the one before %.2f: it stands inside the chase's range",
 						tc.yards, i+1, yards, before)
@@ -407,7 +416,7 @@ func TestMirrorImageClosesInBetweenCasts(t *testing.T) {
 			t.Errorf("%v yd: Frostbolts went off from %.2f yd, want the last from %.2f", tc.yards, boltYards, tc.parks)
 		}
 		for i, yards := range blastYards {
-			if yards >= mirrorImageFireBlastRange {
+			if yards >= image.fireBlastRange() {
 				t.Errorf("%v yd: Fire Blast %d went off from %.2f yd, out of its range", tc.yards, i+1, yards)
 			}
 		}
@@ -415,5 +424,27 @@ func TestMirrorImageClosesInBetweenCasts(t *testing.T) {
 			t.Errorf("%v yd: %d Fire Blasts, want %d (they went off from %v yd)", tc.yards, got, tc.blasts, blastYards)
 		}
 		sim.Cleanup()
+	}
+}
+
+// CloneCaster gives the image its mage's model at scale 1, and with it that model's reach: creature_model_info has
+// none for a gnome's, so 0.389, which its Frostbolt's flight takes off the distance. From 20 yd that's 817 ms at 24
+// yd a second against a troll's 770.
+func TestMirrorImageReachIsItsMagesModels(t *testing.T) {
+	for _, tc := range []struct {
+		race   proto.Race
+		flight time.Duration
+	}{
+		{proto.Race_RaceTroll, 770 * time.Millisecond},
+		{proto.Race_RaceGnome, 817 * time.Millisecond},
+	} {
+		player := procMage("", "p5_bis_arcane", `{"type": "TypeAPL", "priorityList": []}`, PlayerOptionsArcane)
+		player.Race = tc.race
+		_, mage := newProcSim(t, player)
+		image := mage.mirrorImage
+		image.DistanceFromTarget = 20
+		if got := image.Frostbolt.TravelTime(); got != tc.flight {
+			t.Errorf("%v: Frostbolt flies %v from 20 yd, want %v", tc.race, got, tc.flight)
+		}
 	}
 }

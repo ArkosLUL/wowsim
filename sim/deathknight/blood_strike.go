@@ -110,10 +110,10 @@ func (dk *Deathknight) registerDrwBloodStrikeSpell() {
 		Mods:   mods,
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := (spell.Direct.Roll(sim) + dk.DrwWeaponDamage(sim, spell)) * spell.Direct.WeaponPct
+			baseDamage := core.ApplyPct(spell.Direct.Roll(sim)+dk.DrwWeaponDamage(sim, true), spell.Direct.WeaponPct)
 
-			baseDamage *= dk.RoRTSBonus(target) *
-				(1.0 + dk.drwCountActiveDiseases(target)*diseaseMulti)
+			baseDamage = core.ApplyPct(baseDamage, 1.0+dk.drwCountActiveDiseases(target)*diseaseMulti) *
+				dk.RoRTSBonus(target)
 			// Rage of Rivendare and Tundra Stalker come after the flat bonus, the disease bonus before it
 			baseDamage += dk.drwVersusAttackPowerBonus(spell, true) * dk.RoRTSBonus(target)
 

@@ -4678,6 +4678,62 @@ Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\ec-pet-fix6-tmp\`.
 - **Goldens:** TestBlood and TestBloodTank (threat, multipliers, weapon); the suites of a pet that gets a distance
   (warlock, mage, TestUnholy's Gargoyle, the hunter suites); report each.
 
+#### As built
+
+Stage code, re-measured on `9a5d8fb6a` against [ac] `3d89793c7` and the live DB (SELECT); notes and the live plan in
+`tmp/ec-pet-fix7-code.md`. Verdicts:
+- The Rune Weapon's threat (not a gap, against the lead): the redirect never runs. `HandleApply` is bound to 49028's
+  effect 2, which `SpellInfoCorrections.cpp` zeroes, and `Aura::BuildEffectMaskForOwner` keeps only aura effects. The
+  weapon is `UNIT_FLAG_NON_ATTACKABLE`, so its threat ref on the target is offline (`ShouldBeOffline`) and takes
+  nothing; 61017 and 53160 carry no threat aura. The knight's tps never had it; the weapon's spells now make none.
+- Snapshot leftovers (fixed): before each spell copy (`castCopy`) the weapon takes the DK's percents as they stand,
+  halved, his school ones on magic (Black Ice and Cinderglacier were missing), physical the halving only. Strikes roll
+  his own main hand (`DrwWeaponDamage(sim, normalized)`: his AP, flat bonuses and TOTAL_PCT inside), normalized for
+  Blood, Heart, Death and Plague Strike (effect 121), not Rune Strike, through `core.ApplyPct`; the 3.5 s stand-in is
+  gone. After each spell copy the DK's reach is 0.01 until his scale next changes (`Unit.SetCombatReach`,
+  `AddScaleBonus`): his Death Coil at 30 yd 1187 to 1249 ms.
+- Pets' distance and reach (fixed): `Unit.BaseCombatReach` (0 means 1.5) × the scale. The Imp and the Water Elemental
+  cast from their follow spot (`Pet.FollowSpotDistance`: reach plus `PET_FOLLOW_DIST` 2 off the owner's left; PetAI's
+  chase leaves a caster in range), the timed Elemental with model 525's 0.85: at 30 yd Firebolt and Waterbolt 312 to
+  1793 ms, the timed Waterbolt 1830. The Gargoyle from its summon spot, 3 yd off the DK's front left
+  (`gargoyleSpotDistance`): Gargoyle Strike 250 to 1322 ms. The Rune Weapon from the DK's spot, reach 0.01. Haste
+  carriers take Bloodlust's scale alone (immune per effect to auras 65, 192, 193; `bloodlustScaleAura`); a melee pet's
+  scale cancels out of its missiles (its chase stops at both reaches), which fly the target's reach, under the 5 yd
+  floor at the dummy, so the hunter pet's family scale isn't modelled.
+- Mirror Image's own reach (fixed, live table read): a gnome's image has 0.389 (no reach on either gnome model), every
+  other mage race 1.5 (at least one gender's); `fireBlastRange`, `chaseRange` and the Frostbolt's flight read it.
+
+Tests: `combat_reach_test.go` (the script reach, carriers under Bloodlust, the follow spot), `TestImpCastsFromWhereItFollows`,
+`TestWaterElementalCastsFromWhereItFollows`, `TestGargoyleCastsFromWhereItsSummoned`, `TestMirrorImageReachIsItsMagesModels`
+and gnome cases in `TestMirrorImageClosesInBetweenCasts`, `TestRuneWeaponStrikesRollTheKnightsWeapon`,
+`TestRuneWeaponCopiesTakeTheKnightsPercentsAsTheyStand`. Simval 1114 of 1114; no drop or allowance entry is this item's.
+
+e2e (vetted, run in stage live): `TestPetfix7RuneWeaponThreat` (`e2e/petfix7_test.go`) reads `.debug threatinfo` on the
+weapon and `.debug threat` on the dummy: no redirect, no threat on the weapon, the knight's threat his own damage × his
+physical modifier.
+
+Goldens (`dock.sh delta`), 4 suites move, Average-Default:
+- TestBlood −0.297% dps (tps −0.001%): the weapon's Heart Strike −9.2% a hit, Death Strike −6.0%, Plague Strike −6.6%,
+  Death Coil −0.4%; one-handers −1.0 to −1.3%. TestBloodTank's BloodAggro −0.41% dps.
+- TestFrost −0.053% (Waterbolt flights), TestDestruction −0.013% (Firebolt flights; 20-iteration rows to −0.2%).
+- TestUnholy and the hunter suites don't move: the Gargoyle's strikes land long before it leaves or the fight ends.
+
+Stage live, idle host (worldserver 13 to 60% CPU from its own load, host 5%), lock 15:01 to 15:28; logs and notes in
+`tmp/live/` and `tmp/ec-pet-fix7-live.md`. No sim change, no golden move.
+- `TestEcClass6SummonTrace`, 3 summons, PASS. Idle updates gave plain Frostbolts 3.00 to 3.06 s apart, 3.1 to 3.2 s
+  after a Fire Blast. Summons 1 and 2: each image's ninth Frostbolt went off 29.39 to 29.49 s in, ahead of
+  `DeathEvent` at 29.5 s. Flights ending +44 to +217 ms past the unsummon's update were lost, one ending −136 ms
+  landed (+44 within the 50 ms edge, logged only); one ninth bolt missed. Summon 3 (gaps 3.03 to 3.21 s): eight
+  Frostbolts, the ninth cut by the death, last bolts landed 2.6 s before the corpse. All as the sim models them.
+- `TestPetfix7RuneWeaponThreat`, PASS after two test fixes. The boss dummy zeroes damage in `DamageTaken` before
+  `DealDamage` adds it as threat, so it now fights XT-005 Debugger (34515). The knight's threat matched to 0.1:
+  (damage + half the effective heal + 40 a Blood Presence heal) × 0.8, + 67 a dodge or parry; no redirect on the
+  weapon, the weapon off the mob's list, mob health lost equal to the packets. The sim agrees on the weapon and on
+  Blood Presence's heal (`HealThreat` adds 50475's level 40). Gap, left to its owners: Rune Strike's enabling aura
+  56817 (level 67, school mask 0) forwards 67 unmodified threat on each dodge and parry, which
+  `sim/deathknight/rune_strike.go`'s trigger doesn't book, and `ThreatSchoolMultiplier` would scale a school-0
+  spell by the presence's `PseudoStats.ThreatMultiplier`, which the server's empty mask never matches.
+
 ### EC-CLASS-FIX8 (Z12; changes goldens, full suite if Judgement of Light moves every suite; stages: code)
 
 - Chain Heal's jumps: the sim takes the first units of `Raid.AllUnits` in order, the main target included

@@ -182,3 +182,96 @@ func TestRuneWeaponFollowsTheKnightsAttackPower(t *testing.T) {
 		t.Errorf("summoned again the rune weapon has %v attack power, want the DK's %v", got, dk.GetStat(stats.AttackPower))
 	}
 }
+
+// runeWeaponSim is a blood DK with no rotation, 30 yd from the target, at the pull.
+func runeWeaponSim(t *testing.T) (*core.Simulation, *DpsDeathknight) {
+	t.Helper()
+	player := parityPlayer(BloodTalents, "p3_blood", noRotation)
+	player.DistanceFromTarget = 30
+	sim := core.NewSim(&proto.RaidSimRequest{
+		Raid:       core.SinglePlayerRaidProto(player, &proto.PartyBuffs{}, &proto.RaidBuffs{}, nil),
+		Encounter:  core.MakeSingleTargetEncounter(0),
+		SimOptions: &proto.SimOptions{Iterations: 1, IsTest: true, RandomSeed: 1},
+	})
+	sim.Reset()
+	sim.PrePull()
+	for sim.CurrentTime < 0 && !sim.Step() {
+	}
+	return sim, sim.Raid.Parties[0].Players[0].(*DpsDeathknight)
+}
+
+// Spell::EffectWeaponDmg rolls a rune weapon strike on the DK's own main hand (owner->CalculateDamage): his weapon
+// at its normalized speed, or its own for Rune Strike, his attack power, flat bonuses and TOTAL_PCT inside.
+func TestRuneWeaponStrikesRollTheKnightsWeapon(t *testing.T) {
+	sim, dk := runeWeaponSim(t)
+	dk.RuneWeapon.EnableWithTimeout(sim, dk.RuneWeapon, 12*time.Second)
+	// a percent he gains once it's out counts too
+	dk.PseudoStats.DamageDealtMultiplier *= 1.2
+
+	weapon := dk.AutoAttacks.MH()
+	pct := dk.PseudoStats.DamageDealtMultiplier * dk.PseudoStats.SchoolDamageDealtMultiplier[stats.SchoolIndexPhysical]
+	for _, normalized := range []bool{true, false} {
+		speed := weapon.SwingSpeed
+		if normalized {
+			speed = weapon.NormalizedSwingSpeed
+		}
+		added := dk.GetStat(stats.AttackPower)/core.DefaultAttackPowerPerDPS*speed + dk.PseudoStats.BonusDamage
+		low, high := math.Trunc((weapon.BaseDamageMin+added)*pct), math.Trunc((weapon.BaseDamageMax+added)*pct)
+		seenLow, seenHigh := math.Inf(1), math.Inf(-1)
+		for range 5000 {
+			roll := dk.DrwWeaponDamage(sim, normalized)
+			seenLow, seenHigh = min(seenLow, roll), max(seenHigh, roll)
+		}
+		// float32 steps move an end by a point at most, and 5000 rolls come within 2% of each
+		slack := 1 + 0.02*(high-low)
+		if seenLow < low-1 || seenLow > low+slack || seenHigh > high+1 || seenHigh < high-slack {
+			t.Errorf("normalized %v: rolls from %v to %v, want the DK's own %v to %v", normalized, seenLow, seenHigh, low, high)
+		}
+	}
+}
+
+// The weapon's hits take the DK's damage percents as they stand when it copies one of his spells, halved:
+// Unit::SpellDamageBonusDone asks the owner each time. Its strikes carry his physical percents in their weapon
+// roll, so physical gets only the halving. After a spell it copies, spell_dk_dancing_rune_weapon leaves his
+// UNIT_FIELD_COMBATREACH at 0.01, so his Death Coil flies 1.49 yd further. The weapon follows him at 0.01 yd with
+// a reach of 0.01 (53160), so its own Death Coil does too.
+func TestRuneWeaponCopiesTakeTheKnightsPercentsAsTheyStand(t *testing.T) {
+	sim, dk := runeWeaponSim(t)
+	target := sim.GetTargetUnit(0)
+	if got := dk.DeathCoilDamage.TravelTime(); got != 1187*time.Millisecond {
+		t.Errorf("the DK's Death Coil flies %v before any copy, want 1187 ms", got)
+	}
+	if !dk.DancingRuneWeapon.Cast(sim, target) {
+		t.Fatal("no Dancing Rune Weapon")
+	}
+	for until := sim.CurrentTime + 2*time.Second; sim.CurrentTime < until && !sim.Step(); {
+	}
+	// an empty rotation keeps putting the GCD back
+	dk.GCD.Set(sim.CurrentTime)
+
+	frost := stats.SchoolIndexFrost
+	dk.PseudoStats.DamageDealtMultiplier *= 1.2
+	dk.PseudoStats.SchoolDamageDealtMultiplier[frost] *= 1.1
+	if !dk.IcyTouch.Cast(sim, target) {
+		t.Fatal("no Icy Touch")
+	}
+	weapon := &dk.RuneWeapon.PseudoStats
+	// an orc's Command is taken off the weapon, so its own percents are 1
+	for _, c := range []struct {
+		name      string
+		got, want float64
+	}{
+		{"all schools", weapon.DamageDealtMultiplier, 0.5},
+		{"physical", weapon.SchoolDamageDealtMultiplier[stats.SchoolIndexPhysical], 1},
+		{"frost", weapon.SchoolDamageDealtMultiplier[frost], dk.PseudoStats.DamageDealtMultiplier * dk.PseudoStats.SchoolDamageDealtMultiplier[frost]},
+	} {
+		if math.Abs(c.got-c.want) > 1e-9 {
+			t.Errorf("the weapon's %s multiplier after the copy is %v, want %v", c.name, c.got, c.want)
+		}
+	}
+	for _, spell := range []*core.Spell{dk.DeathCoilDamage, dk.RuneWeapon.DeathCoil} {
+		if got := spell.TravelTime(); got != 1249*time.Millisecond {
+			t.Errorf("%s's Death Coil flies %v after a copy, want 1249 ms", spell.Unit.Label, got)
+		}
+	}
+}
