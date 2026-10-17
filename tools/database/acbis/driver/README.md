@@ -84,6 +84,24 @@ better one for them or a Heroic Presence check switched their racial traits.
   raiders, 1 of them with stage 2, took 52 min, about half each pass
   ([INVESTIGATION](../../../../docs/bis-optimizer/bis-optimizer.INVESTIGATION.md#performance)).
 
+## A build that changes by phase
+
+The batch runs each raider in the roster's talents and glyphs, so a raider who switches builds between
+phases (an Unholy DK: Morbidity dual-wield through phase 2, Scourge Strike 2H from phase 3) takes one
+pass per build:
+
+- The roster as exported for the first build's phases; a copy holding the other build for the rest, with
+  its own `--out` and `--port`.
+- A DK's Auto rotation follows the main hand he wears when the request is built (`autoRotation`,
+  `ui/deathknight/sim.ts`), so the 2H copy wears a two-hander and no off hand.
+- The page's item filters are raid-wide, in `settings.filters` of `__wotlk_raid____currentSettings__`,
+  and the driver writes `storage-snapshot.json`'s keys back before every load. For a two-hander-only
+  pool, open the page on that `--out` once, import the copy, set `oneHandedWeapons` false in that key,
+  and save the snapshot before the pass.
+- acbis takes one batch: replace the served batch's entries for the rerun raider-phases. The Heroic
+  Presence checks run only in the page, so where a rerun pick changes who in a party is Draenei, redo
+  that party's switch by hand.
+
 ## Unattended runs
 
 - The driver reloads the page when the server goes away (giving it up to `--server-wait` s to come

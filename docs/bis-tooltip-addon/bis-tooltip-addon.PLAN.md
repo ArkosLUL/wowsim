@@ -254,8 +254,9 @@ Regeneration is **manual**: one documented command, run when you want it, never 
 loop's re-baseline. Don't commit the payload; record the dataset version, sim commit, catalog date
 and objective in this PLAN so any dataset on the server traces back to a sim state.
 
-**Live dataset:** `39b4c8f1`, 21 raiders over content phases 2 and 3. Sim `434442b93`, catalog
-2026-10-14, objective `own+raid`, imported 2026-10-14.
+**Live dataset:** `5942107f`, 21 raiders over content phases 2 and 3, catalog 2026-10-14, objective
+`own+raid`, imported 2026-10-17. Sim `434442b93`, except Bulwark's, Felesta's and Deathsong's lists:
+`a4d680625`. META carries one commit, the most common.
 
 Tables in `acore_world` (DDL: `BisTablesSQL`):
 
@@ -420,8 +421,8 @@ Known limits:
 
 ### Phase 6 — Real data, zip, docs
 
-**Status:** done for content phases 2 and 3. Live dataset `39b4c8f1` (sim `434442b93`, catalog
-2026-10-14), 21 raiders, imported 2026-10-14. Phases 1, 4 and 5 are unrun.
+**Status:** done for content phases 2 and 3. Live dataset `5942107f`, 21 raiders, imported 2026-10-17.
+Phases 1, 4 and 5 are unrun.
 
 - **Per-spec lists are dropped** (the user's call): the dataset carries roster raiders only, and every
   spec keeps the shipped Wowhead lists.
@@ -446,6 +447,14 @@ stage 2 366 s including 54 s of Heroic Presence checks, nothing failed, 9% of th
 **At Normal, over phases 2 and 3** with the same 21 raiders: stage 1 8534 s, stage 2 10186 s including
 420 s of Heroic Presence checks, 18% of localStorage. The whole pass sat at 9100 sims/s where the same
 jobs ran at 15450 on the sim two weeks earlier, so budget both stages off the current rate.
+
+**Rerun on 2026-10-17** (sim `a4d680625`, fresh roster, Normal, stage 1): both tanks over phases 2 and 3,
+and Deathsong. Deathsong runs **Morbidity dual-wield through phase 2 and Scourge Strike 2H from phase 3**
+(the user's call), so phase 3 ran on a roster copy with the sim's Unholy 2H talents, Glyph of Icy Touch
+for Death and Decay, a worn two-hander and a two-hander-only pool
+([driver README](../../tools/database/acbis/driver/README.md#a-build-that-changes-by-phase)). The six
+entries replaced the Oct 14 batch's; nobody else was rerun. 24 min all told. Phase 3 health: Bulwark
+47,350 to 55,075, Felesta 45,267 to 56,382. Deathsong phase 3: 15,334 DPS, against 15,102 dual-wield.
 
 - **Quick picks aren't stable:** one raider and phase run twice differed in 7 of its 17 slots, since the
   UI seeds each run randomly, so a re-run can't confirm a pipeline change.
