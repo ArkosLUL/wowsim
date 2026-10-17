@@ -4978,12 +4978,17 @@ Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\ec-pet-fix7-tmp\`.
 - Chain Heal's jumps (`chainHealJumps`, `sim/shaman/chain_heal.go`) and the Abacus' target (its handler in
   `sim/common/wotlk/other_effects.go`) take a unit at 0 health as the most hurt, where the server's area search
   skips the dead. From the code and Z12's review; golden-neutral while no healer's raid can die.
+- Icebound Fortitude (`sim/deathknight/icebound_fortitude.go`) takes 30% plus int(0.15 × defense skill over 400),
+  uncapped: at 467 to 473 over 400 it's 100% and the expiry divides `DamageTakenMultiplier` by 0 (every later hit
+  NaN), past 473 negative. The server's `spell_dk_icebound_fortitude` (`spell_dk.cpp`) has no cap either: read how
+  it applies aura 87 at -100% or below, then match it and undo without division. Confirmed in the code (the
+  optimizer's Quick Defense curve hits it); no golden.
 - Live: `TestSimvalTalentSweep` on PaladinRetribution, whose capture predates improvedLayOnHands (its
   `droppedSweep` entry and fixture README row go), and on the paths Divinity changes.
-- **Owns:** `sim/deathknight/rune_strike.go`; Divinity in `sim/paladin/talents.go`; the dead-unit checks in
+- **Owns:** `sim/deathknight/rune_strike.go`, `icebound_fortitude.go`; Divinity in `sim/paladin/talents.go`; the dead-unit checks in
   `chain_heal.go` and the Abacus handler, in small hunks; `implemented_talents.json`, `talent_paths.json` and the
   paladin paths' records; their drops, `sweepRecut` entries and rows.
-- **Goldens:** TestBloodTank (Rune Strike); none for Divinity or the dead units; report each.
+- **Goldens:** TestBloodTank (Rune Strike); none for Divinity, the dead units or Icebound Fortitude; report each.
 
 ### EC-TOOLS4 (Z13, moved from Z12; golden-neutral; stages: code, live)
 

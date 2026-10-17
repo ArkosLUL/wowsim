@@ -2875,7 +2875,7 @@ or Defense; Hit 262 to 294 against the 262 floor):
   - A tie's times are taken at verify, before the alternatives stage, so the final pick's can differ (Bulwark
     P3 46.8 s at the tie, 50.2 s at the pick).
 
-### BIS-GEM-SIM (after Z12, before the BiS chain; golden-neutral; stages: code, picks)
+### BIS-GEM-SIM (after Z12, done; golden-neutral; stages: code, picks)
 
 At P1 both tank picks gem 3 Stamina in 11 and 13 sockets though a Stamina socket sims 8 and 4 times any other
 at the pick (BIS-TANK-HEALTH's Picks). The gem DP (`sim/optimizer/gems.go`) prices gems and socket bonuses at the

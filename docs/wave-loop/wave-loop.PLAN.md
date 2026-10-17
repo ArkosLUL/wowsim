@@ -181,9 +181,11 @@ chain waits for Z12.
 
 ## Current wave
 
-- Wave: BIS-GEM-SIM (bis-optimizer PLAN), running: base `6007155a8`, worktree `wowsimwotlk-wi-bis-gem-sim`
-  (branch `bis-optimizer-gem-sim`), run `wf_b5a7b2c1-34d` (code stage and review; args `.wave-loop\waveGEM-build.py`);
-  its picks then run as a plain agent in the worktree. Next (the user's call, 2026-10-17): the BiS chain (Deferred, below; the old pass in `.wave-loop\bis-chain\bis` is dropped, it reruns
+- Wave: BIS-GEM-SIM (bis-optimizer PLAN), landed. Base `6007155a8`; runs `wf_b5a7b2c1-34d` (code stage and review)
+  and `wf_06535cc2-e43` (review of the picks-stage fixes), args `.wave-loop\waveGEM-build.py`; picks and fixes ran as
+  plain agents; notes and reports `.wave-loop\bis-gem-sim-tmp`, `gem-run1`, `gem-run2`. `86968b184` regenerated the
+  server defaults (`DungeonScale.env` raised raid boss health 1.2 to 1.3; no golden moves). `int-check.sh` runs
+  tests with `-timeout 40m`. Next (the user's call, 2026-10-17): the BiS chain (Deferred, below; the old pass in `.wave-loop\bis-chain\bis` is dropped, it reruns
   fresh), then Z13 (Z12's follow-ups, specs in the e2e-coverage PLAN).
   Z12 base `9a5d8fb6a`, runs `wf_661e4362-520` (code stages) and `wf_ce509f13-550` (the live stages one at a time,
   then their reviews; the specs want an idle host). Live stages stay short: the user finds hours of recordings not
@@ -210,8 +212,8 @@ chain waits for Z12.
   one-hander's pairing, stage 2 and the Heroic Presence checks not yet run on the new lists, whether
   Ecoterrorist's rotation casts Mangle (Idol of the Corruptor sims like a dead idol); Z5's re-baseline: the
   search ends on a weaker set after sim changes that leave the presets within 0.1%, Ret P4 Normal 40 rating
-  over the expertise cap; Z10's to Z12's: Feral Tank P2's search unsettled; Z12's picks: the gem check never
-  tries Stamina at P1, twins under 2 se win on the mean, identical tied loadouts).
+  over the expertise cap; Z10's to Z12's: Feral Tank P2's search unsettled; Z12's picks: identical tied loadouts; BIS-GEM-SIM's: Quick's
+  noise loses tanks' Stamina twins, Bulwark P1 Quick 3 hit gems, Felesta P1 Quick Agility and hit in the figurine).
   Closed as not sim gaps: the sheet fields the server shows raw (per-school crit, Blood-Gorged, Mace and Holy
   Specialization), which the fixture README explains.
 - Deferred (the user's calls, 2026-10-02, 10-03, 10-05 and 10-07; go-ahead 2026-10-14): right after Z12 (the user's
@@ -293,6 +295,7 @@ Reckoning that way), but J isn't DPS: see below.
 | Z10 | 8795.2, +202 / +168 | 10769.7, +759 / +827 | 5013.2, +109 / +98 | 12922.4, +196 / +227 | -16056.1, +3310 / +3290 | -155.4, +112 / -12 |
 | Z11 | 8599.5, +173 / +199 | 10770.0, +786 / +821 | 5013.3, +79 / +108 | 12922.4, +200 / +227 | -16056.0, +3284 / +3323 | -155.3, -2 / +16 |
 | Z12 | 8599.5, +173 / +199 | 10770.0, +855 / +875 | 5013.3, +93 / +84 | 12922.4, +201 / +227 | 5732.1, +2026 / +2386 | 1846.3, -74 / +108 |
+| GEM | 8599.5, +173 / +206 | 10770.0, +855 / +875 | 5013.3, +92 / +84 | 12922.4, +197 / +234 | 5732.1, +2168 / +2498 | 1846.3, -74 / +129 |
 
 Quick / Normal. Ret P4 ran at Quick only in wave D, after the glyph fix; its wave C numbers
 (12821.9, +54 / +73) came from a seed that wore the glyph. The two tanks arrive with
@@ -417,6 +420,9 @@ In Z12 (`dc36c48f2`, logs `.wave-loop/logs/z12-rebaseline`) all twelve pass. The
 health margin, BIS-TANK-HEALTH), so their rows don't compare with Z11's. The gem-swap check lifts Combat Rogue's
 gains by 54 to 69; Fire Mage's Normal ends 10 under its Quick, with 30% more sims. Feral Tank's Quick ends
 -74 ± 5.8 under its preset (Normal +108): still unsettled.
+
+In GEM (`86968b184`, logs `.wave-loop/logs/gem-rebaseline`) all twelve pass, with 4 to 10% more sims. The gem
+check's sim prices lift Prot Paladin by 142 / 112 and Feral Tank's Normal by 21; the rest move within 2 se.
 
 ## Sim throughput
 
@@ -846,6 +852,7 @@ crashed before F2, so its column starts there.
 | BIS-TANK-HEALTH | merged | `d64bd03fc` | the health margin (half the survival share), time to live as the tiebreak, the gem-swap check on every run, resistance worth nothing to a tank, defensives at 35%, a NaN guard; no golden moves |
 | wave Z12 cross-review | direct | `f75c3a14a` | Improved Water Shield's roll (Healing Grace -6.6% more), the knight's 67 threat a dodge or parry (56817) and a school-0 spell without threat auras (BloodTank tps +0.15%), the T10 hot a third, gnome Mirror Images at 1.5, bonus health running out in the margin, Judgement of Light one row per attacker, Arcane Torrent and the Rune Weapon's cast land for the Shard (`8a9fd80e8`); guides `aad372117` |
 | BIS-TANK-HEALTH's picks | direct | `dc36c48f2` | both tanks P1 to P5, defensives at 0.35: surviving picks gem far more Stamina (Bulwark P3 20 of 21, Felesta P5 22 of 23), P1 still 3 (the gem check never tries it), the Lich King kills Bulwark every time |
+| BIS-GEM-SIM | merged | `87d1d8acd` | the gem check sims a socket of each gem stat at the pick and regems at those prices, again after each socketed adoption; a twin needs accepts; twins deduped; a NaN curve knot dropped; captures keep warm starts; P1 Stamina: Bulwark 10 of 13, Felesta 11 of 11; Angry P3 +2.6% DPS; no golden moves |
 
 Later WIs are added as their wave starts.
 

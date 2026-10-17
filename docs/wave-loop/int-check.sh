@@ -14,7 +14,8 @@ changed_go=$(git diff --name-only --diff-filter=AM "$BASE" HEAD -- '*.go' | tr '
 changed_ui=$(git diff --name-only --diff-filter=AM "$BASE" HEAD -- '*.ts' '*.tsx' '*.js' | grep -v '_auto_gen\.ts$' | tr '\n' ' ')
 
 echo "== test"
-$DOCK test -count=1 ./sim/... ./tools/... ./cmd/... >"$LOGS/test.log" 2>&1
+# sim/optimizer alone runs past go test's 10 min default while other containers load the cores
+$DOCK test -count=1 -timeout 40m ./sim/... ./tools/... ./cmd/... >"$LOGS/test.log" 2>&1
 echo "exit $?"
 grep -E '^(FAIL|--- FAIL|panic)' "$LOGS/test.log" | head -40
 grep -cE '^ok ' "$LOGS/test.log" | sed 's/^/ok packages: /'
