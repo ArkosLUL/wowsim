@@ -831,7 +831,7 @@ func skipForLowerBound(s *surrogate, c ItemChoice) bool {
 		if g == 0 {
 			continue
 		}
-		if gc := s.pool.gems[g]; gc == nil || gc.Gem.Color == proto.GemColor_GemColorMeta || !s.freeGem(gc) {
+		if gc := s.pool.gems[g]; gc == nil || gc.Gem.Color == proto.GemColor_GemColorMeta || !s.pool.freeGem(gc) {
 			return true
 		}
 	}

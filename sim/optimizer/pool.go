@@ -43,6 +43,8 @@ type Pool struct {
 	gemKinds    []gemKind
 	// A tank's: its gear's resistances are priced and simmed as none (see gearResistance).
 	noResistance bool
+	// The target's item swap is on, which takes a weapon off with its gems.
+	weaponSwap bool
 }
 
 // Candidate is one item one slot can hold.
@@ -144,6 +146,7 @@ func CompilePool(r *Request) (*Pool, error) {
 		reforging:   &core.NewServerSettings(r.Base.GetEncounter().GetServerSettings()).Reforging,
 
 		noResistance: tankSpec(r.Target()),
+		weaponSwap:   r.Target().GetEnableItemSwap() && r.Target().GetItemSwap() != nil,
 	}
 	for _, id := range r.Settings.GetExcludedItemIds() {
 		p.excluded[id] = true

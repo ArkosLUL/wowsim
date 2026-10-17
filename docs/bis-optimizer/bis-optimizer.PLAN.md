@@ -2901,3 +2901,145 @@ socket behind them); Angry P2 and P3 Normal and the slow suite (picks, sims, wal
 
 Golden-neutral. **Owns:** `sim/optimizer/`, `docs/guide/tank-modeling.md`'s gem lines. After it, the deferred BiS
 chain (wave-loop PLAN).
+
+#### As built
+
+Code stage on `6007155a8`, golden-neutral; the check's mechanics live in
+[tank-modeling](../guide/tank-modeling.md) (Gem check).
+
+- **Sockets** (`gemcheck.go`): `statSockets` takes one socket per stat the pool's non-meta, priced gems carry,
+  the most a free gem holds; stats every gem carries at equal amounts sim as one (hit, crit, haste, Attack Power
+  with their partners). `priceTwins` sims them as offsets on the pick, paired, at the run's iterations. It skips a
+  pick that breaks a rule or has no free socket.
+- **Re-solves** (`regemAt`): every free slot through `gemWithout`, unpriced gems banned, each pool meta tried (its
+  stats at the prices plus `s.gems`' residual). A floor the pick meets and the regem drops gets a premium on the
+  floor's gradient, bisected 20 steps to the least that holds it (reading: the pick's sheet plus the gradient
+  times the gear-stat change); exact `Check` last. Twins: per socket simming above its slope price, the least
+  change to the slopes that prices it at its sim; then every gem stat at its socket's sim, other stats 0, skipped
+  when no socket clears 2 se from 0. Deduped with `gemTwins`' twins, whose order stays first. A raise twin that
+  is just the regem at the pick's own slopes (the search's gems needn't be the DP's) is labelled for the slopes,
+  not the raise.
+- **Why the sim-priced re-solve** (the spec allowed another way): at Bulwark P1 the slopes overprice every
+  defensive stat 50 to 90 times (Agility +8246 against +96 simmed, Defense +6737 against +92) and Stamina 2.7
+  times (+2083 against +778), so no raise fires on Stamina; the DP reads only ratios, and only the sim's own
+  prices set them right. The per-stat raises fired only on stats a tank doesn't gem (Strength, Intellect, Spell
+  Power, crit, haste, Attack Power, Armor Penetration).
+- **Decision: a twin replaces the pick only past `accepts`** (2 se and 0.05% of J). Reason: with 5 to 10 twins
+  tied with the pick, the best mean beats it on noise in most runs, so the pick's gems would churn run to run;
+  under 2 se is a tie by verify's race and `breakTie`'s own rule, and a tank's tie still goes to time to live, so
+  Bulwark P5's +20 ± 26 and Felesta P5's +36 ± 22 win there only by living longer. Angry P2's Z12 twin
+  (+2.5 ± 1.3, 1.9 se) no longer wins.
+- **Sims added a run**: (sockets + twins the stat check adds) times the run's iterations; 18 sockets on Bulwark's
+  P1 pool. Quick: 9,000 + 3 twins 1,500 = 10,500 (the whole check 12,000, 1,500 before; run 272,000 to 277,750,
+  0.9 s). Normal: 72,000 + 2 twins 8,000 = 80,000 (the check 100,000; run 2,116,750, 4.8 s).
+- **Smoke, Bulwark P1** (8 Oct roster and sources, defensives 0.35, the page's request run in process: on the
+  base it matches the server's 272,000 sims and pick). Stamina twins come up and the sim-priced one wins both:
+  Quick +4715.6 ± 245.8 (3 Solid Dragon's Eye, 4 Solid Stormjewel, Powerful Earthsiege Diamond for Persistent;
+  Stamina 1 of 12 to 7 of 10, death 0.032 to 0.002, margin 6355 to 8517, score -15364 to -10090); Normal
+  +5074.6 ± 98.5 (2 Solid Dragon's Eye, 6 Solid Stormjewel; pick Tauren, Stamina 8 of 13, death 0.012, margin
+  7952, against the Picks' 3 of 11 and 0.033).
+- **Tests**: `TestGemCheckFindsAnUnderpricedStat` (fake values Stamina 8 times its slope: Stamina gems, the
+  chest's Stamina bonus matched by a purple gem that keeps the meta's red), `TestGemCheckPricesInTheSimsUnits`
+  (slopes over every socket's sim, 100 times for Strength and hit, 1.25 for Stamina: only the sim-priced twin
+  finds it), `TestPriceTwinsNameTheSlopesForTheirOwnRegem`, `TestGemCheckKeepsTheFloors`, `TestRegemPicksTheMeta`,
+  `TestGemCheckKeepsThePickOverATwinInsideTheNoise`, `TestStatSockets`;
+  `TestGemCheckTakesTheBestMean` counts the 2 sockets.
+- **Verify**: `./sim/... ./tools/... ./cmd/...` 49 ok, one failing outside this item
+  (`gen_server_defaults`' `TestGeneratedFilesMatchLiveConfig`: the live config in [ac] moved from the generated
+  files); 37 of 37 suites unchanged; simval 1114 of 1114; vet and gofmt clean. Angry P2 and P3 Normal before the
+  change (`tmp/dps-before/`): 10322.61 (Troll, 1,902,500 sims, the Fractured twin) and 13718.91 (Orc, 2,018,000).
+- **Left:** Quick's socket sims are noisy (Stamina ± 115). The neighborhood's item swaps, left here, get the check
+  since the picks stage (below).
+
+**Picks** (the reviewed code on `6007155a8`, one sim server, the acbis driver, stage 1, the 8 Oct roster and
+sources). Tanks P1 Normal ran from a copy giving both `rotation.simple.cooldowns.hpPercentForDefensives` 0.35 (every
+captured request sent it, weights 0.35 margin, 0.1167 DTPS, TMI and death, 0.30 TPS); Angry P2 then P3 from the
+snapshot as is, like `tmp/dps-before/`; the same four at Quick. Socket sims are the check's trace, from each page
+request run in process (sims and pick equal the server's); time to live and dJ per socket at the pick are
+`TestMeasureTankPicks`'. Raw: the worktree's `tmp/picks/`.
+
+| Run | Pick | Death, DTPS, TMI, TPS | Margin, TTL | Twin taken | Stamina: sockets; dJ a socket at the pick |
+|---|---|---|---|---|---|
+| Bulwark P1 | Tauren; Sta 3121, Def 697, health 42,519; gems Sta 8, Exp 2, hit 2, Def 1 | 0.012, 2884, 76.5, 7245 | 7952, 39.6 s | sim-priced: 2 Solid Dragon's Eye, 6 Solid Stormjewel for 8 others, +5074.6 ± 98.5 | 8 of 13; +515 against Agi +97, Def +79, Dodge +76 |
+| Felesta P1 | Tauren; Sta 3105, Def 700, health 43,601; gems Sta 9, Agi 4 | 0.0053, 2827, 70.2, 8518 | 13,984, 53.5 s | sim-priced: 3 Solid Dragon's Eye, 6 Solid Stormjewel for 9 others, +4380.3 ± 102.4 | 9 of 13; +557 against Def +77, Dodge +72, Agi +43 |
+
+- **Against BIS-TANK-HEALTH** (its Picks rows, same code minus this item, same search pick: its twins trace again):
+  death 0.033 and 0.017 to 0.012 and 0.0053; margin 6442 and 11,487 to 7952 and 13,984; time to live 38.6 and
+  51.6 s to 39.6 and 53.5; health +2,959 and +3,430; DTPS +91 and +125, TMI -5.5 and -4.9, TPS -348 and -39;
+  Stamina gems 3 of 11 and 3 of 13 to 8 and 9 of 13. Its twins (Bulwark's +276.5 ± 21.5, Felesta's Subtle Dragon's
+  Eye +72.8 ± 24.5) lose to the sim-priced one. Score -16,204 to -12,352 and -640 to +3426; sims 2,043,000 to
+  2,116,750 and 1,967,000 to 2,030,750. Margin per point of Stamina at the pick 0.68 to 0.48 and 0.69 to 0.88.
+- **Socket sims at the search's pick** (dJ, then the slopes' price), Bulwark; Felesta: Stamina 30 +778 ± 29
+  (+2083); +588 ± 34 (+2321). Agility 20 +96 ± 13 (+8246); +96 ± 24 (+6088). Defense 16 +92 ± 13 (+6737); +67 ± 22
+  (+3534). Dodge 16 +71 ± 11 (+4803); +79 ± 22 (+4135). Parry 16 +62 ± 10 (+3193); +86 ± 21 (+3720). Strength 20
+  +73 ± 6 (+41); +44 ± 12 (+1737). Hit 20 +8 ± 1 (+119); +23 ± 59 (+3112). Expertise 16 0 (+1566); +12 ± 23 (+495).
+  Haste 16 -3 ± 31; -30 ± 83. Crit, Attack Power, Armor Penetration, Spell Power, Intellect under +25; Resilience 0
+  (+3023; +2427). Still left at the picks: a Stamina socket sims 5 and 13 times an Agility one, Felesta's 4
+  Agility gems all in her figurines (Monarch Crab, Ruby Hare), Bulwark's 2 hit and 2 Expertise in his.
+- **Angry** against `tmp/dps-before/`: P2 10322.61 to 10320.08, DPS 10044.35 to 10041.89, Troll, sims 1,902,500 to
+  1,978,500: Z12's Fractured Dragon's Eye twin (+2.5 ± 1.3) no longer passes `accepts`; the ArP raise and the
+  sim-priced re-solve land on that same twin, nothing else beats the pick. P3 13718.91 to 14069.41, DPS 13349.09 to
+  13690.15 (+2.6%), Orc, sims 2,018,000 to 2,110,000: same search pick, then a socket of 20 Armor Penetration sims
+  +74.9 ± 1.3 where the slopes price +48.4, and its raise twin wins +350.5 ± 3.4 (9 Bold Cardinal Ruby, 5 Inscribed
+  Ametrine, 3 Bold Dragon's Eye, Enchanted Tear and Chaotic Skyflare for 15 Fractured Cardinal Ruby, 3 Fractured
+  Dragon's Eye and Relentless Earthsiege: ArP in 24 of 25 sockets, Nightmare Tear kept).
+- **Quick:** Bulwark P1 as the code stage's smoke (277,750 sims, Stamina 7 of 10, death 0.002, margin 8517). Angry
+  P2 Human 10068.4, no twin; P3 Orc 13800.9, the ArP twin +390.9 ± 10.4. Felesta P1: the search finds nothing that
+  keeps every rule, so the seed stays (death 1.000, 196,750 sims) and the check never runs; the untouched gem check
+  gives the same.
+- **Sims the check adds** ((sockets + twins `gemTwins` doesn't make) times the iterations; the whole check in
+  brackets). Normal: Bulwark (18 + 2) 80,000 (100,000), Felesta (18 + 2) 80,000 (96,000), Angry P2 (19 + 3) 88,000
+  (104,000), P3 (19 + 4) 92,000 (116,000): about 4% of a run, 4 to 10 s. Quick: Bulwark (18 + 3) 10,500 (12,000),
+  Angry P2 (19 + 5) 12,000 (13,500), P3 (19 + 3) 11,000 (13,500), Felesta 0. A DPS pool has 19 sockets: the
+  resistances sim as one.
+
+#### As built (picks-stage fixes)
+
+Uncommitted on the same worktree, golden-neutral. Each fix's test fails with that fix taken out
+(`tmp/gem/prefix/`, overlays).
+
+- **Figurine gems.** Not the DP: `gemWithout` regems both figurines' sockets (the server takes any gem there,
+  `WorldSession::HandleSocketOpcode`). They came in after the check: the neighborhood adopted them (Felesta Normal
+  Monarch Crab +725.1, Ruby Hare +1026.4; Bulwark likewise), gemmed at the slopes, which price Agility, hit and
+  Expertise far over Stamina. Fix: `recheckGems` runs the check again on a best the neighborhood adopts when the
+  move changes gems; a winning twin becomes the best before the next round. Then Bulwark's last recheck had no
+  Stamina twin: the regem's Defense and hit premiums (floors 8 and 4 points under the pick) kept knocking each
+  other off through every round. Fix: where the premiums run out, `regemAt` regems only the slots whose gems and
+  socket bonus move no floor (`feedsFloor`), keeping the hit gems the floor needs. Tests:
+  `TestNeighborhoodChecksTheGemsItAdopts`, `TestRegemKeepsTheFloorsPremiumsCantSplit` (`premiumRounds` is a var
+  for it).
+- **Duplicate twins.** Every twin source dedupes on `gemmingOf`: per slot the item and whether its socket bonus is
+  on, gems pooled (each weapon's own only under an item swap), a gem without an effect standing for the pool's
+  first with its stats and color (Bold Cardinal Ruby and Bold Stormjewel). Tests:
+  `TestGemmingTellsWhatTheSimTellsApart`, `TestGemCheckSimsEachGemmingOnce` (`gsRedTwin` joins the fixture pool).
+- **Felesta P1 Quick kept the seed.** The Defense floor (689) failed every candidate: Quick's Defense curve
+  (lattice 64 × 8) bisects [512, 4096] at +2304 first, where the sim scores NaN, so the curve's slopes went NaN
+  and the search priced no item with Defense (0 options in head, shoulders, back, chest, wrists, hands, waist).
+  Normal's lattice (32 × 4) never sims in the NaN band. The NaN is core's, outside this item: Icebound Fortitude
+  (`sim/deathknight/icebound_fortitude.go`) takes 30% + int(0.15 × skill over 400) off, 100% at 467 to 473 skill
+  (seed +2280 to +2304 rating), and its expiry divides `DamageTakenMultiplier` by 0, so every later boss hit (melee,
+  spells 55802 and 55807) is NaN and DTPS NaN. It needs a cap under 100%, or an expiry that doesn't divide by the
+  factor. Fix here: `MeasureResponse` leaves a non-finite knot out (`ResponseCurve.Dropped`), stops that
+  bracket's bisection, and the run warns. Test: `TestMeasureResponseDropsANaNKnot`.
+- **Phase-linked captures.** `capture_requests.py` now relays the runs, so a later phase sends the earlier pick
+  as `warm_starts` and the pass's export holds the picks; `--fail-runs` keeps the old fail-at-once. The gotcha is in
+  [tank-modeling](../guide/tank-modeling.md#measuring). The passes below ran through it.
+
+**Picks on the fixed code** (same setup, server rebuilt from the worktree; `tmp/picks/fix3-*`, traces
+`fix3smoke-*.log`, `measure-fix3-normal.log`):
+
+| Run | Pick | Death, DTPS, TMI, TPS | Margin, TTL | Twins taken | Stamina: sockets; dJ a socket at the pick |
+|---|---|---|---|---|---|
+| Bulwark P1 | Tauren; Sta 3194, Def 697, health 43,247; gems Sta 10, hit 2, Def 1 | 0.0105, 2901, 75.3, 7204 | 8305, 39.9 s | the sim-priced one as before, then after the Monarch Crab: 2 Precise Scarlet Ruby for 2 Solid Stormjewel, +942.1 ± 70.2 | 10 of 13; +501 against Agi +101, Def +87, Dodge +84 |
+| Felesta P1 | Tauren; Sta 3180, Def 700, health 44,355; gems Sta 11 | 0.0045, 2843, 68.9, 8480 | 14,622, 54.4 s | as before, then after the Monarch Crab: 2 Delicate Stormjewel for 2 Solid Stormjewel, +974.9 ± 54.8 | 11 of 11; +557 against Def +98, Dodge +90, Agi +63 |
+| Bulwark P1 Quick | as before: Night Elf, Sta 7 of 10 | 0.002, 2832, 74.7, 7147 | 8517 | as before | rechecks' twins all lose |
+| Felesta P1 Quick | Tauren; gems hit 4, Agi 3, Sta 3, Def 1 | 0.0040, 2790, 72.1, 8323 | 13,172 | 1 Swift Skyflare, Delicate and Precise Dragon's Eye, 1 Delicate Stormjewel for 2 Solid Dragon's Eye, Powerful Earthsiege, 1 Solid Stormjewel, +2181.5 ± 261.3 | 3 of 11 |
+
+- Bulwark's 2 hit gems (Ruby Hare) hold the hit floor (266 against 262); Felesta's Ruby Hare gave way to 44323 once
+  the Monarch Crab took Stamina. Bulwark's +200.2 ± 67.0 twin after the crab missed `accepts`' 0.05% of J.
+- **Angry** Normal: same picks, scores and alternatives (10320.08 Troll, 14069.41 Orc); sims 1,978,500 to
+  1,966,500 and 2,110,000 to 2,106,000, the duplicate twins (12,000 and 4,000) gone.
+- **Sims the check adds now** (every check of the run, sockets and twins): Normal Bulwark 100,000 + 92,000 +
+  96,000 (two rechecks; run 2,116,750 to 2,317,250), Felesta 96,000 + 92,000 (2,030,750 to 2,131,250), Angry P2
+  92,000, P3 112,000; Quick Bulwark 12,000 + 11,500 (277,750 to 289,250), Felesta 11,000 + 11,500 (300,000). A
+  recheck costs about a check: 9 to 13% of a tank run with two socketed adoptions.
