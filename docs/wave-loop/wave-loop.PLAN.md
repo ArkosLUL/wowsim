@@ -181,8 +181,9 @@ chain waits for Z12.
 
 ## Current wave
 
-- Wave: Z12, landed. Next, on the user's "continue" (the user's call, 2026-10-17): BIS-GEM-SIM (bis-optimizer
-  PLAN), then the BiS chain (Deferred, below; the old pass in `.wave-loop\bis-chain\bis` is dropped, it reruns
+- Wave: BIS-GEM-SIM (bis-optimizer PLAN), running: base `6007155a8`, worktree `wowsimwotlk-wi-bis-gem-sim`
+  (branch `bis-optimizer-gem-sim`), run `wf_b5a7b2c1-34d` (code stage and review; args `.wave-loop\waveGEM-build.py`);
+  its picks then run as a plain agent in the worktree. Next (the user's call, 2026-10-17): the BiS chain (Deferred, below; the old pass in `.wave-loop\bis-chain\bis` is dropped, it reruns
   fresh), then Z13 (Z12's follow-ups, specs in the e2e-coverage PLAN).
   Z12 base `9a5d8fb6a`, runs `wf_661e4362-520` (code stages) and `wf_ce509f13-550` (the live stages one at a time,
   then their reviews; the specs want an idle host). Live stages stay short: the user finds hours of recordings not
