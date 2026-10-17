@@ -38,9 +38,9 @@ func LiveServerDefaults() *proto.ServerSettings {
 		},
 		DungeonScale: &proto.DungeonScaleSettings{
 			Raid:           &proto.DungeonScaleModifiers{Global: googleProto.Float64(1), Health: googleProto.Float64(1), Armor: googleProto.Float64(1), Damage: googleProto.Float64(1)},
-			RaidBoss:       &proto.DungeonScaleModifiers{Global: googleProto.Float64(1), Health: googleProto.Float64(1.2), Armor: googleProto.Float64(1), Damage: googleProto.Float64(1)},
+			RaidBoss:       &proto.DungeonScaleModifiers{Global: googleProto.Float64(1), Health: googleProto.Float64(1.3), Armor: googleProto.Float64(1), Damage: googleProto.Float64(1)},
 			RaidHeroic:     &proto.DungeonScaleModifiers{Global: googleProto.Float64(1), Health: googleProto.Float64(1), Armor: googleProto.Float64(1), Damage: googleProto.Float64(1)},
-			RaidHeroicBoss: &proto.DungeonScaleModifiers{Global: googleProto.Float64(1), Health: googleProto.Float64(1.2), Armor: googleProto.Float64(1), Damage: googleProto.Float64(1)},
+			RaidHeroicBoss: &proto.DungeonScaleModifiers{Global: googleProto.Float64(1), Health: googleProto.Float64(1.3), Armor: googleProto.Float64(1), Damage: googleProto.Float64(1)},
 		},
 		Reforge:               &proto.ReforgeSettings{Enable: googleProto.Bool(true), Percentage: googleProto.Float64(40), StatTypes: []int32{6, 13, 14, 31, 32, 36, 37}},
 		WorldUpdateIntervalMs: googleProto.Int32(10),

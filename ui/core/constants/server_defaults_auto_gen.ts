@@ -30,9 +30,9 @@ export const LIVE_SERVER_DEFAULTS = ServerSettings.create({
 	},
 	dungeonScale: {
 		raid: { global: 1, health: 1, armor: 1, damage: 1 },
-		raidBoss: { global: 1, health: 1.2, armor: 1, damage: 1 },
+		raidBoss: { global: 1, health: 1.3, armor: 1, damage: 1 },
 		raidHeroic: { global: 1, health: 1, armor: 1, damage: 1 },
-		raidHeroicBoss: { global: 1, health: 1.2, armor: 1, damage: 1 },
+		raidHeroicBoss: { global: 1, health: 1.3, armor: 1, damage: 1 },
 	},
 	reforge: { enable: true, percentage: 40, statTypes: [6, 13, 14, 31, 32, 36, 37] },
 	worldUpdateIntervalMs: 10,
