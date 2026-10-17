@@ -2,6 +2,8 @@ package optimizer
 
 import (
 	"context"
+	"math"
+	"slices"
 	"strings"
 	"testing"
 
@@ -50,6 +52,34 @@ func TestMeasureResponseFindsTheCap(t *testing.T) {
 	want := 3*hitCap + 0.5*80 + 1.9*50
 	if v := resp.Value(stats.Stats{stats.MeleeHit: 200, stats.Strength: 50, stats.Agility: 1000}); !near(v, want, 2) {
 		t.Errorf("value = %g, want %g", v, want)
+	}
+}
+
+// A sim that scores NaN leaves its knot out instead of turning the curve NaN, and a NaN midpoint ends
+// that stat's bisection with the bracket it has. Real case: Felesta P1 Quick's Defense knot at +2304,
+// where Icebound Fortitude takes all damage off and its expiry divides by 0.
+func TestMeasureResponseDropsANaNKnot(t *testing.T) {
+	const hitCap = 120.0
+	fake := newFakeEvaluator(func(p Point) Metrics {
+		hit, str := p.Offset[stats.MeleeHit], p.Offset[stats.Strength]
+		if hit > 100 && hit < 200 || str == 100 {
+			return Metrics{MetricDPS: math.NaN()}
+		}
+		return Metrics{MetricDPS: 5000 + 3*min(hit, hitCap) + 0.5*max(hit-hitCap, 0) + 2*str}
+	})
+	resp, err := MeasureResponse(context.Background(), fake, dpsObjective(), Loadout{}, map[stats.Stat]ResponseRange{
+		stats.MeleeHit: {Min: -100, Max: 300, Unit: 100, Ratio: 2},
+		stats.Strength: {Min: -100, Max: 100, Unit: 25, Ratio: 4},
+	}, 1000)
+	if err != nil {
+		t.Fatal(err)
+	}
+	hit, str := resp[stats.MeleeHit], resp[stats.Strength]
+	if !near(hit.Breakpoint, hitCap, 2) || !near(hit.SlopeBelow, 3, 0.02) || !near(hit.SlopeAbove, 0.5, 0.02) || !slices.Equal(hit.Dropped, []float64{150}) {
+		t.Errorf("hit curve = %+v, want a break at %g from 3 to 0.5 with the knot at 150 left out", hit, hitCap)
+	}
+	if !near(str.SlopeBelow, 2, 0.01) || !near(str.SlopeAbove, 2, 0.01) || !slices.Equal(str.Dropped, []float64{100}) {
+		t.Errorf("strength curve = %+v, want 2 either side with the knot at 100 left out", str)
 	}
 }
 

@@ -99,20 +99,40 @@ fire on cooldown (`major_cooldown.go`). A saved raider keeps what it was saved w
   each. `TotalSims` counts what the passes simmed, not the second one's reads of cached points.
 - Neither ±8000 Armor, 16,000 iterations nor healing at 0.75 to 4 times DTPS moves a worn gear that dies in
   every iteration off 100%, so whether a pick brings the term back is up to the pick.
+- A death knight's Icebound Fortitude (`sim/deathknight/icebound_fortitude.go`) takes 100% off at 467 to 473
+  Defense skill over 400, and its expiry then divides the damage taken multiplier by 0: every later hit is NaN.
+  A curve knot there (Felesta P1 Quick's Defense at +2304) sims NaN; `MeasureResponse` leaves it out, stops
+  that bracket's bisection, and the run warns.
 - **Tiebreak** (`breakTie`, after verify's race): on a tank run whose best beats the seed, the loadouts within
   2 se of it that beat the seed too go to **time to live**: the same fight with healing off (Hps, cadence and
   variation 0, burst window kept), 60 s flat, a cloned request, seconds to the first death (60 alive). The
   longest mean goes first, and a warning names each one's time and score. Its sims count in `TotalSims`.
-- **Gem check** (`checkGems`, every run, before the tiebreak): gems are priced off the curves and never simmed
-  alone, so a small edge can fill every socket with one gem. For each distinct gem in the best's free non-meta
-  sockets, a twin regems the slots holding it at the surrogate's slopes there with that gem banned
-  (`gemWithout`), so the runner-up `gemOptions` drops takes its place with socket bonuses and meta intact. Twins
-  that break a rule are left out; the rest sim paired at the run's iterations. The best mean over the best
-  takes its place (it must beat the seed where the best does), with a warning naming the swap. Twins join the
-  verified list, so a tie takes them to time to live.
-- The Defense and hit floors come before the score. Gems are priced at the surrogate's slopes, and the gem
-  check bans one gem at a time at those slopes, so where the slopes miss, neither fixes it: P1 picks gem
-  little Stamina though a Stamina socket sims several times any other there.
+- **Gem check** (`checkGems`, every run, before the tiebreak): the search prices gems at the slopes of curves
+  measured around the seed and never sims them alone, so a small edge can fill every socket with one gem, and a
+  stat worth more at the pick (a tank's Stamina) stays underpriced. Twins of the best, simmed paired at the run's
+  iterations:
+  - Each distinct gem in its free non-meta sockets banned (`gemTwins`): the slots holding it regem at the slopes,
+    so the runner-up `gemOptions` drops takes its place.
+  - `priceTwins`: one socket of each stat the pool's gems carry (`statSockets`: the most a free gem holds; stats
+    every gem carries alike, as hit's melee and spell rating, sim as one) is simmed on the best. Every free slot
+    then regems (`regemAt`) once per stat whose socket sims above its slope price, raised to that, and once at
+    the sockets' sims alone, which finds Stamina where the slopes overprice every stat (Bulwark P1 Normal: 20
+    Agility priced +8246, simmed +96; 30 Stamina +2083 and +778). The regem re-picks the meta (its stats plus
+    its effect's residual) and keeps each stat floor the best meets by adding the least premium on the floor's
+    stats that holds it (bisected). Where the premiums run out (two floors competing for sockets, as Bulwark
+    P1's Defense and hit), only the slots whose gems and socket bonus move no floor regem.
+
+  Twins that break a rule, or sim the same as the best or an earlier twin (`gemmingOf`: same items and socket
+  bonuses, gems pooled but each weapon's own under an item swap, a gem without an effect standing for any with
+  its stats and color), are dropped. The best mean replaces the best only past `accepts` (2 se and 0.05% of J:
+  the best of a dozen ties beats it on noise most runs), and must beat the seed where the best does; a warning
+  names the swap and why. Twins join the verified list, so a tank's within 2 se go to time to live. Cost: the
+  run's iterations per socket (18 on a tank's pool) and per twin.
+- **Again after a neighborhood adoption** that changes gems (`recheckGems`): the item it swaps in comes gemmed
+  at the slopes (Felesta P1's figurines took Agility gems that way). A winning twin becomes the best before
+  the next round builds on it.
+- The Defense and hit floors come before the score. Only the gem check sees the sim's prices: the search and
+  the neighborhood's runners-up gem at the slopes.
 
 ## Resistance
 
@@ -134,8 +154,11 @@ the requests the page posted, never one rebuilt from its saved raid: the save ho
 resolves as the page builds a request) and no raid buffs, so that tank only auto-attacks and dies far more often.
 
 1. `python sim/optimizer/testdata/capture_requests.py tmp/requests --listen 3348 --server http://localhost:<sim port>`
-   relays a browser to the sim server and saves each `/optimizeGearAsync` body; the page's run then fails at
-   once. A tank saved without simple cooldowns sends defensives at 0 ([healing](#healing)): give it
+   relays a browser to the sim server and saves each `/optimizeGearAsync` body. The runs go ahead: a batch's
+   later phase sends the earlier pick as `warm_starts` (with that phase failed, Angry P3 picked Troll 13456.9
+   against the batch's Orc 13800.9), and the pass's export holds the picks for `BIS_PICKS`. `--fail-runs`
+   answers at once so the server runs nothing: only for a pass's first phase. A tank saved without simple
+   cooldowns sends defensives at 0 ([healing](#healing)): give it
    `rotation.simple.cooldowns.hpPercentForDefensives` 0.35 in a copy of the storage the driver restores
    (`<out>/storage-snapshot.json`), and check the captured requests.
 2. Run the tanks through `http://127.0.0.1:3348`, by hand or with the

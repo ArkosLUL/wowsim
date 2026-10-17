@@ -47,6 +47,7 @@ const raceSE = 3
 // the pick it now stands beside, and what was simmed beside a pick since replaced simmed again. The
 // alternatives returned are the last round's, each the final best with its change alone (a main
 // hand's off hand included), best first within each slot; verified gains every best the rounds adopt.
+// An adopted move that changes gems gets the gem check before anything's built on it (recheckGems).
 func (r *run) neighborhood(s *surrogate, verified []*verifiedLoadout) ([]*proto.OptimizerSlotAlternative, []*verifiedLoadout, error) {
 	if err := r.priceUnpriced(s); err != nil {
 		return nil, verified, err
@@ -311,8 +312,12 @@ rounds:
 					continue
 				}
 				r.trace("alternatives: round %d adopts %s %d, %+.1f ± %.1f", round, top.slot, top.choice.ItemID, top.delta.Mean, top.delta.SE)
+				before := r.best
 				r.best, r.bestEval = top.loadout, top.eval
 				verified = append(verified, &verifiedLoadout{top.loadout, top.eval})
+				if verified, err = r.recheckGems(before, verified); err != nil {
+					return nil, verified, err
+				}
 				r.sortVerified(verified)
 				r.report()
 				if round < neighborhoodRounds-1 {
@@ -326,9 +331,9 @@ rounds:
 					if a == top || a.eval == nil {
 						continue
 					}
-					a.delta = r.obj.Delta(top.eval, a.eval)
+					a.delta = r.obj.Delta(r.bestEval, a.eval)
 					if r.raidMode() {
-						a.raidDelta = Delta(top.eval, a.eval, MetricDPS)
+						a.raidDelta = Delta(r.bestEval, a.eval, MetricDPS)
 					}
 				}
 				alts = slices.DeleteFunc(alts, func(a *alternative) bool { return a == top })

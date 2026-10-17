@@ -1,10 +1,14 @@
 """Saves the optimizer requests a sim page posts, for sim/optimizer's TestMeasureTank* tests.
 
-Stands between a browser and a sim server. Everything goes through but /optimizeGearAsync: its body
-lands in <out dir>/request-<n>.bin (an OptimizeGearRequest, as the page built it) and the page gets
-an empty answer, so its run fails at once and the server never starts one.
+Stands between a browser and a sim server and passes everything through, saving each
+/optimizeGearAsync body in <out dir>/request-<n>.bin (an OptimizeGearRequest, as the page built it).
+The runs go ahead, so a later phase's request carries the earlier phase's pick as its warm start,
+like the batch's own, and the batch export holds the picks the saved requests made.
 
-    python capture_requests.py <out dir> [--listen 3348] [--server http://localhost:3338]
+    python capture_requests.py <out dir> [--listen 3348] [--server http://localhost:3338] [--fail-runs]
+
+--fail-runs answers /optimizeGearAsync at once with nothing, so the page's run fails and the server
+never starts one: quicker, but only a pass's first phase then sends the batch's request.
 
 Then drive the page through http://localhost:<listen>, by hand or with the acbis driver's --base.
 The requests hold the roster: never commit them. The tests run in the toolchain container, which
@@ -25,6 +29,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
     protocol_version = 'HTTP/1.1'
     server_url = ''
     out_dir = pathlib.Path('.')
+    fail_runs = False
     count = 0
     lock = threading.Lock()
 
@@ -47,9 +52,10 @@ class Handler(http.server.BaseHTTPRequestHandler):
             path = self.out_dir / f'request-{number:03d}.bin'
             path.write_bytes(body)
             print(f'saved {path.name}, {len(body)} bytes', flush=True)
-            self.answer(200, [], b'')
-            return
-        if self.path.endswith('/asyncProgress'):
+            if self.fail_runs:
+                self.answer(200, [], b'')
+                return
+        elif self.fail_runs and self.path.endswith('/asyncProgress'):
             self.answer(204, [], b'')
             return
         headers = {name: value for name, value in self.headers.items() if name.lower() not in SKIPPED_HEADERS}
@@ -73,9 +79,11 @@ def main():
     parser.add_argument('out')
     parser.add_argument('--listen', type=int, default=3348)
     parser.add_argument('--server', default='http://localhost:3338')
+    parser.add_argument('--fail-runs', action='store_true')
     args = parser.parse_args()
     Handler.server_url = args.server.rstrip('/')
     Handler.out_dir = pathlib.Path(args.out)
+    Handler.fail_runs = args.fail_runs
     Handler.out_dir.mkdir(parents=True, exist_ok=True)
     print(f'http://localhost:{args.listen} relays to {Handler.server_url}; requests go to {Handler.out_dir}', flush=True)
     http.server.ThreadingHTTPServer(('127.0.0.1', args.listen), Handler).serve_forever()

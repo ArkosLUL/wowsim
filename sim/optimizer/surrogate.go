@@ -777,12 +777,12 @@ func (s *surrogate) gemValue(g *GemCandidate, v stats.Stats) float64 {
 }
 
 // freeGem is a gem any number of sockets can hold.
-func (s *surrogate) freeGem(g *GemCandidate) bool {
+func (p *Pool) freeGem(g *GemCandidate) bool {
 	if g.Catalog.GetUniqueEquipped() {
 		return false
 	}
 	category := g.Catalog.GetLimitCategory()
-	return category == 0 || s.pool.limitGroups[category] == nil
+	return category == 0 || p.limitGroups[category] == nil
 }
 
 func (s *surrogate) newGemPlan(v stats.Stats) *gemPlan {
@@ -799,7 +799,7 @@ func (s *surrogate) newGemPlan(v stats.Stats) *gemPlan {
 			}
 			continue
 		}
-		if !s.freeGem(g) {
+		if !s.pool.freeGem(g) {
 			continue
 		}
 		if !haveAny || val > gp.anyVal {
@@ -986,7 +986,7 @@ func (s *surrogate) newGemBounds(lo, hi stats.Stats) *gemBounds {
 			continue
 		}
 		gb.anyUB = max(gb.anyUB, gub)
-		free := s.freeGem(g)
+		free := s.pool.freeGem(g)
 		if free {
 			gb.anyLB = max(gb.anyLB, glb)
 			gb.hasFree = true
@@ -1394,6 +1394,11 @@ func (r *run) measureCurves(sc *statScreen) (Response, []stats.Stat, error) {
 		resp, err := MeasureResponse(r.ctx, r.eval, r.obj, seed, relevant, r.budget.Iterations)
 		var simErr *SimError
 		if !errors.As(err, &simErr) {
+			for st := stats.Stat(0); st < stats.Len; st++ {
+				if c := resp[st]; c != nil && len(c.Dropped) > 0 {
+					r.warn("the %s curve went without its sims at %s: they score NaN or infinity", st.StatName(), offsetsText(c.Dropped))
+				}
+			}
 			return resp, sc.rangeStats, err
 		}
 		dropped := false

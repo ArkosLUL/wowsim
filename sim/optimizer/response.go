@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"slices"
+	"strings"
 
 	"github.com/wowsims/wotlk/sim/core/stats"
 )
@@ -53,6 +54,8 @@ type ResponseCurve struct {
 	SlopeAbove float64
 	// Every simmed offset, sorted, the seed's included.
 	Knots []Knot
+	// Offsets whose sims scored NaN or infinite, left out of Knots.
+	Dropped []float64
 }
 
 func (c *ResponseCurve) Value(offset float64) float64 {
@@ -115,14 +118,22 @@ func MeasureResponse(ctx context.Context, eval Evaluator, obj *Objective, seed L
 	}
 	base := evals[0]
 	knots := make(map[stats.Stat][]Knot, len(order))
+	// one knot that sims NaN would turn the curve's slopes NaN
+	dropped := map[stats.Stat][]float64{}
+	add := func(s stats.Stat, k Knot) bool {
+		if math.IsNaN(k.Delta.Mean) || math.IsInf(k.Delta.Mean, 0) || math.IsNaN(k.Delta.SE) || math.IsInf(k.Delta.SE, 0) {
+			dropped[s] = append(dropped[s], k.Offset)
+			return false
+		}
+		knots[s] = append(knots[s], k)
+		sortKnots(knots[s])
+		return true
+	}
 	for _, s := range order {
 		knots[s] = []Knot{{Offset: 0}}
 	}
 	for i, o := range owners {
-		knots[o.stat] = append(knots[o.stat], Knot{Offset: o.offset, Delta: obj.Delta(base, evals[i+1])})
-	}
-	for _, s := range order {
-		sortKnots(knots[s])
+		add(o.stat, Knot{Offset: o.offset, Delta: obj.Delta(base, evals[i+1])})
 	}
 
 	brackets := make(map[stats.Stat]*bracket)
@@ -134,14 +145,19 @@ func MeasureResponse(ctx context.Context, eval Evaluator, obj *Objective, seed L
 			brackets[s] = b
 		}
 	}
-	for step := 0; step < bisectionSteps && len(brackets) > 0; step++ {
+	// a bracket whose midpoint got dropped stops there, keeping its estimate so far
+	stopped := map[stats.Stat]bool{}
+	for step := 0; step < bisectionSteps; step++ {
 		var stepStats []stats.Stat
 		var stepPoints []Point
 		for _, s := range order {
-			if b := brackets[s]; b != nil {
+			if b := brackets[s]; b != nil && !stopped[s] {
 				stepStats = append(stepStats, s)
 				stepPoints = append(stepPoints, offsetPoint(seed, s, b.mid()))
 			}
+		}
+		if len(stepStats) == 0 {
+			break
 		}
 		evals, err := eval.Evaluate(ctx, stepPoints, iterations)
 		if err != nil {
@@ -149,15 +165,17 @@ func MeasureResponse(ctx context.Context, eval Evaluator, obj *Objective, seed L
 		}
 		for i, s := range stepStats {
 			k := Knot{Offset: brackets[s].mid(), Delta: obj.Delta(base, evals[i])}
-			knots[s] = append(knots[s], k)
-			sortKnots(knots[s])
+			if !add(s, k) {
+				stopped[s] = true
+				continue
+			}
 			brackets[s].narrow(k)
 		}
 	}
 
 	resp := make(Response, len(order))
 	for _, s := range order {
-		c := &ResponseCurve{Stat: s, Knots: knots[s]}
+		c := &ResponseCurve{Stat: s, Knots: knots[s], Dropped: dropped[s]}
 		switch b := brackets[s]; {
 		case b != nil:
 			c.Breakpoint = b.estimate()
@@ -202,6 +220,14 @@ func initialOffsets(s stats.Stat, rng ResponseRange) []float64 {
 		out = append(out, rng.Min)
 	}
 	return out
+}
+
+func offsetsText(offsets []float64) string {
+	parts := make([]string, len(offsets))
+	for i, x := range offsets {
+		parts[i] = fmt.Sprintf("%+g", x)
+	}
+	return strings.Join(parts, ", ")
 }
 
 func offsetPoint(seed Loadout, s stats.Stat, offset float64) Point {
