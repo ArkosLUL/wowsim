@@ -183,9 +183,10 @@ chain waits for Z12.
 
 ## Current wave
 
-- Wave: Z13 (e2e-coverage PLAN), landed. Base `d61bbed61`; run `wf_6395e35a-086` (offline stages in parallel,
-  live stages one at a time, then reviews). Next (the user's call, 2026-10-17): the BiS chain (Deferred, below;
-  reruns fresh), then Z14 (its EC-UPSTREAM awaits the user's OK).
+- Wave: Z13 (e2e-coverage PLAN), landed (`b57b0ace8`, with master's `85d65c4c5` merged in). Base `d61bbed61`; run
+  `wf_6395e35a-086` (offline stages in parallel, live stages one at a time, then reviews). Next (the user's call,
+  2026-10-18): Z14, starting with EC-UPSTREAM, only on the user's go; the BiS chain (Deferred, below; reruns
+  fresh) waits.
   Live stages stay short: the user finds hours of recordings not worth it (2026-10-16).
   The server runs [ac] `62fb09c68`: upstream merged, 338 commits over `3d89793c7` (image 2026-10-17 23:41 local, DB
   import ran, `simval trace` row present). Committed records predate it; EC-UPSTREAM audits it and recaptures the
