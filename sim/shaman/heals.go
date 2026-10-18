@@ -270,7 +270,10 @@ func (shaman *Shaman) registerEarthShieldSpell() {
 			},
 		},
 
-		BonusCritRating:  float64(shaman.Talents.TidalMastery) * 1 * core.CritRatingPerCritChance,
+		// the charge's 379 crits off the shaman (Spell::DoAllEffectOnLaunchTarget's original caster). Only Tidal
+		// Mastery's ranks 4 and 5 list it in their class mask
+		BonusCritRating:  core.TernaryFloat64(shaman.Talents.TidalMastery >= 4, float64(shaman.Talents.TidalMastery), 0) * core.CritRatingPerCritChance,
+		CritMultiplier:   shaman.DefaultHealingCritMultiplier(),
 		DamageMultiplier: 1,
 		ThreatMultiplier: 1,
 		// the heal is 379, which has no spell_bonus_data row
@@ -301,7 +304,7 @@ func (shaman *Shaman) registerEarthShieldSpell() {
 			NumberOfTicks: 6 + shaman.Talents.ImprovedEarthShield,
 			TickLength:    time.Minute*10 + 1, // tick length longer than expire time.
 			AuraDuration:  time.Minute * 10,   // charges are ticks here; the server's aura stays 10 min
-			TicksCanCrit:  false,
+			TicksCanCrit:  true,
 			Tick:          core.SpellEffect{Effect: 0, Min: 337, Max: 337, SP: 0.5371},
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
 				base := dot.Tick.Roll(sim)
@@ -314,7 +317,7 @@ func (shaman *Shaman) registerEarthShieldSpell() {
 				dot.SnapshotAttackerMultiplier = dot.Spell.CasterHealingMultiplier()
 			},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
-				dot.CalcAndDealPeriodicSnapshotHealing(sim, target, dot.OutcomeTick)
+				dot.CalcAndDealPeriodicSnapshotHealing(sim, target, dot.Spell.OutcomeHealingCrit)
 			},
 		},
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {

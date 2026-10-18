@@ -92,10 +92,11 @@ type Simulation struct {
 	// does: an aura it puts on itself then counts from this update, not the one before
 	updating *Unit
 
-	// set while a cast landing, missile hit or delayed event runs (the caster's m_Events pass): a player's
-	// missile launched then starts on his next tick, all but the landing hardcast's own (Spell.landsAt)
-	eventPass   bool
+	// the unit whose m_Events pass runs a cast landing, missile hit or delayed event right now: a missile it
+	// launches then starts on its next update, all but the landing hardcast's own (Spell.landsAt)
+	eventPass   *Unit
 	landingCast *Spell
+	landingSeq  uint64 // the last startLanding's, so landings on one key go in launch order
 
 	// Spell.ResistanceMultiplier's last thresholds. A resist that got here is above 0, so the zero
 	// value never matches.
@@ -658,7 +659,7 @@ func (sim *Simulation) reset() {
 		}
 	}
 	sim.updating = nil
-	sim.eventPass, sim.landingCast = false, nil
+	sim.eventPass, sim.landingCast = nil, nil
 
 	sim.resetPendingActions()
 
@@ -1116,18 +1117,24 @@ func (sim *Simulation) resetPendingActions() {
 	sim.freeLandings = append(sim.freeLandings[:0], sim.landings...)
 }
 
-// A missile's landing: a PendingAction the sim reuses. Only the pool and the queue ever point at one,
-// so it's free once it runs, and every one is free when an iteration starts.
+// One of a unit's own m_Events, a missile's landing or a cast waiting on its SpellEvent: a PendingAction
+// the sim reuses. Only the pool and the queue ever point at one, so it's free once it runs, and every one
+// is free when an iteration starts.
 type landingAction struct {
 	PendingAction
 	onLand func(*Simulation) // or, when nil, spell deals result
 	spell  *Spell
 	result *SpellResult
 	caster *Unit
+	// false for a totem's spell the sim casts as the shaman: it lands in the totem's update
+	ownEvent bool
+	// its m_Events key, go + flight for a missile, and the order it went in at
+	key time.Duration
+	seq uint64
 }
 
-// startLanding queues the landing at the given time, as StartDelayedAction would, without allocating.
-func (sim *Simulation) startLanding(at time.Duration, caster *Unit, onLand func(*Simulation), spell *Spell, result *SpellResult) {
+// startLanding queues the event at the given time, as StartDelayedAction would, without allocating.
+func (sim *Simulation) startLanding(at, key time.Duration, caster *Unit, ownEvent bool, onLand func(*Simulation), spell *Spell, result *SpellResult) {
 	var la *landingAction
 	if n := len(sim.freeLandings); n > 0 {
 		la = sim.freeLandings[n-1]
@@ -1138,26 +1145,79 @@ func (sim *Simulation) startLanding(at time.Duration, caster *Unit, onLand func(
 		sim.landings = append(sim.landings, la)
 	}
 	la.NextActionAt = at
-	la.playerEvent = caster.Type == PlayerUnit
+	la.playerEvent = ownEvent && caster.Type == PlayerUnit
 	la.Priority = 0
 	if la.playerEvent {
 		la.Priority = ActionPriorityEvent
 	}
+	sim.landingSeq++
 	la.onLand, la.spell, la.result, la.caster = onLand, spell, result, caster
+	la.ownEvent, la.key, la.seq = ownEvent, key, sim.landingSeq
 	sim.AddPendingAction(&la.PendingAction)
 }
 
+// QueueSpellEvent runs onEvent as one of the caster's m_Events on its update at: a non-triggered cast with no
+// cast time waiting on its SpellEvent, as a channel's does. Keyed 1 ms past the update before (Spell::prepare),
+// so it goes ahead of the landings due then.
+func (sim *Simulation) QueueSpellEvent(caster *Unit, at time.Duration, onEvent func(*Simulation)) {
+	key := at
+	if sim.onUpdateGrid(caster) {
+		key = sim.updateBefore(caster, at) + time.Millisecond
+	}
+	sim.startLanding(at, key, caster, true, onEvent, nil, nil)
+}
+
+// onUpdateGrid is whether the unit updates on a grid, world ticks for a player or the map update for anyone
+// else, rather than with exact timing.
+func (sim *Simulation) onUpdateGrid(unit *Unit) bool {
+	if unit.Type == PlayerUnit {
+		return sim.worldTickInterval > 0
+	}
+	return sim.serverTickInterval > 0
+}
+
 func (la *landingAction) land(sim *Simulation) {
-	onLand, spell, result, caster, playerEvent := la.onLand, la.spell, la.result, la.caster, la.playerEvent
+	caster, ownEvent := la.caster, la.ownEvent
+	if ownEvent && sim.onUpdateGrid(caster) {
+		// m_Events keys a hardcast's SpellEvent at the update before + 1 ms, so it completes ahead of any
+		// landing due on the same update
+		caster.landDueCast(sim)
+		// and runs the caster's landings due now by key, so a missile launched later with a shorter flight
+		// can land first
+		for {
+			ahead := sim.dueLandingAhead(la)
+			if ahead == nil || !sim.detachPendingAction(&ahead.PendingAction) {
+				break
+			}
+			ahead.deal(sim)
+		}
+	}
+	la.deal(sim)
+}
+
+// dueLandingAhead is the caster's landing due now that m_Events runs first, with the smallest key below la's,
+// or nil. Landings on one key go in launch order, which the queue keeps for la itself.
+func (sim *Simulation) dueLandingAhead(la *landingAction) *landingAction {
+	var ahead *landingAction
+	for _, other := range sim.landings {
+		if other == la || other.caster != la.caster || other.ownEvent != la.ownEvent || other.NextActionAt != sim.CurrentTime ||
+			other.key >= la.key {
+			continue
+		}
+		if ahead == nil || other.key < ahead.key || other.key == ahead.key && other.seq < ahead.seq {
+			ahead = other
+		}
+	}
+	return ahead
+}
+
+// deal runs the landing and frees it.
+func (la *landingAction) deal(sim *Simulation) {
+	onLand, spell, result, caster := la.onLand, la.spell, la.result, la.caster
 	la.onLand, la.spell, la.result, la.caster = nil, nil, nil, nil
 	sim.freeLandings = append(sim.freeLandings, la)
-	// m_Events keys a hardcast's SpellEvent at the last tick + 1 ms, so it completes ahead of any landing
-	// due on the same tick
-	if playerEvent && sim.worldTickInterval > 0 {
-		caster.landDueCast(sim)
-	}
 	outerPass, outerCast := sim.eventPass, sim.landingCast
-	sim.eventPass, sim.landingCast = true, nil
+	sim.eventPass, sim.landingCast = caster, nil
 	if onLand != nil {
 		onLand(sim)
 	} else {

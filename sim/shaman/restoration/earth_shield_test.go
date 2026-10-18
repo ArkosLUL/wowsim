@@ -36,10 +36,7 @@ func TestEarthShieldChargeTakesPurification(t *testing.T) {
 		target := &shaman.Unit
 		hot := shaman.EarthShield.Hot(target)
 		hot.Apply(sim)
-		metrics := &shaman.EarthShield.SpellMetrics[target.UnitIndex]
-		before := metrics.TotalHealing
-		hot.TickOnce(sim)
-		return metrics.TotalHealing - before
+		return uncritCharge(t, sim, hot)
 	}
 
 	with := charge("-3020500-50005331335310501122331251", 5)
@@ -73,14 +70,11 @@ func TestEarthShieldChargeIsWhole(t *testing.T) {
 	}
 	target := &shaman.Unit
 	hot := shaman.EarthShield.Hot(target)
-	metrics := &shaman.EarthShield.SpellMetrics[target.UnitIndex]
 
 	for _, spellPower := range []float64{0, 1000, 1337, 2113} {
 		shaman.AddStatDynamic(sim, stats.SpellPower, spellPower)
 		hot.Apply(sim)
-		before := metrics.TotalHealing
-		hot.TickOnce(sim)
-		got := metrics.TotalHealing - before
+		got := uncritCharge(t, sim, hot)
 		hot.Deactivate(sim)
 
 		base := float32(hot.Tick.Min)
@@ -93,4 +87,79 @@ func TestEarthShieldChargeIsWhole(t *testing.T) {
 		}
 		shaman.AddStatDynamic(sim, stats.SpellPower, -spellPower)
 	}
+}
+
+// 379 crits off the shaman (Spell::DoAllEffectOnLaunchTarget rolls with the original caster), for half again
+// as much, as a magic heal does. Tidal Mastery's class mask lists 379 only from rank 4 on, where every rank
+// covers Healing Wave.
+func TestEarthShieldChargeCanCrit(t *testing.T) {
+	newShaman := func(talents string) (*core.Simulation, *RestorationShaman) {
+		sim := core.NewSim(&proto.RaidSimRequest{
+			Raid: core.SinglePlayerRaidProto(&proto.Player{
+				Race:          proto.Race_RaceTroll,
+				Class:         proto.Class_ClassShaman,
+				Equipment:     &proto.EquipmentSpec{},
+				Consumes:      &proto.Consumes{},
+				Spec:          PlayerOptionsStandard,
+				Rotation:      core.APLRotationFromJsonString(`{"type": "TypeAPL", "priorityList": []}`),
+				TalentsString: talents,
+			}, nil, nil, nil),
+			Encounter:  core.MakeSingleTargetEncounter(0),
+			SimOptions: &proto.SimOptions{Iterations: 1, IsTest: true, RandomSeed: 101},
+		})
+		sim.Reset()
+		return sim, sim.Raid.Parties[0].Players[0].(*RestorationShaman)
+	}
+
+	sim, shaman := newShaman(StandardTalents)
+	if shaman.Talents.TidalMastery != 5 {
+		t.Fatalf("Tidal Mastery %d, want 5", shaman.Talents.TidalMastery)
+	}
+	if es, hw := shaman.EarthShield.HealingCritChance(), shaman.HealingWave.HealingCritChance(); es != hw {
+		t.Errorf("at Tidal Mastery 5/5 a charge crits %.4f, Healing Wave %.4f, want the same", es, hw)
+	}
+	hot := shaman.EarthShield.Hot(&shaman.Unit)
+	metrics := &shaman.EarthShield.SpellMetrics[shaman.UnitIndex]
+	hot.Apply(sim)
+	normal, crit := 0.0, 0.0
+	for i := 0; i < 1000 && (normal == 0 || crit == 0); i++ {
+		before := *metrics
+		hot.TickOnce(sim)
+		switch healed := metrics.TotalHealing - before.TotalHealing; {
+		case metrics.Crits > before.Crits:
+			crit = healed
+		case metrics.Hits > before.Hits:
+			normal = healed
+		}
+	}
+	if normal == 0 || crit == 0 {
+		t.Fatalf("1000 charges: normal %v, crit %v", normal, crit)
+	}
+	if want := math.Trunc(normal * 1.5); crit != want {
+		t.Errorf("a charge heals %v, its crit %v, want %v", normal, crit, want)
+	}
+
+	// Tidal Mastery 3/5
+	_, shaman = newShaman("-3020503-50005331333310501122331251")
+	if shaman.Talents.TidalMastery != 3 {
+		t.Fatalf("Tidal Mastery %d, want 3", shaman.Talents.TidalMastery)
+	}
+	if es, hw := shaman.EarthShield.HealingCritChance(), shaman.HealingWave.HealingCritChance(); math.Abs(hw-es-0.03) > 1e-9 {
+		t.Errorf("at Tidal Mastery 3/5 a charge crits %.4f, Healing Wave %.4f, want 3%% less", es, hw)
+	}
+}
+
+// uncritCharge ticks the charge until one doesn't crit, and gives what that one healed.
+func uncritCharge(t *testing.T, sim *core.Simulation, hot *core.Dot) float64 {
+	t.Helper()
+	metrics := &hot.Spell.SpellMetrics[hot.Unit.UnitIndex]
+	for i := 0; i < 100; i++ {
+		before := *metrics
+		hot.TickOnce(sim)
+		if metrics.Hits > before.Hits {
+			return metrics.TotalHealing - before.TotalHealing
+		}
+	}
+	t.Fatal("100 charges crit")
+	return 0
 }

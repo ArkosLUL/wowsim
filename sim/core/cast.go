@@ -252,7 +252,7 @@ func (spell *Spell) makeCastFunc(config CastConfig) CastSuccessFunc {
 		return func(sim *Simulation, target *Unit) {
 			// lands in its SpellEvent: its own missile starts now, anything it sets off on the next tick
 			outerPass, outerCast := sim.eventPass, sim.landingCast
-			sim.eventPass, sim.landingCast = true, spell
+			sim.eventPass, sim.landingCast = spell.Unit, spell
 
 			if sim.Log != nil && !spell.Flags.Matches(SpellFlagNoLogs) {
 				spell.Unit.Log(sim, "Completed cast %s", spell.ActionID)

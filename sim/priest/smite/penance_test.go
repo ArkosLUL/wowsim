@@ -2,6 +2,7 @@ package smite
 
 import (
 	"math"
+	"slices"
 	"testing"
 	"time"
 
@@ -69,7 +70,7 @@ func TestDamagePenance(t *testing.T) {
 		priest.GCD.Reset()
 		dot.Deactivate(sim)
 		priest.AddMana(sim, priest.MaxMana(), refill)
-		if !spell.Cast(sim, target) || !dot.IsActive() {
+		if !spell.Cast(sim, target) || !waitForChannel(sim, dot) {
 			t.Fatalf("cast %d: no Penance channel on the target", i)
 		}
 		dot.Deactivate(sim)
@@ -181,6 +182,60 @@ func TestDamagePenanceTicksFly(t *testing.T) {
 		}
 		return
 	}
+}
+
+// 53007 is a channel with no duration, so the server casts it from its SpellEvent on the tick the press is handled
+// on, and the 53003 its script casts from its own on the tick after: the channel starts there with its first tick,
+// whose 53000 starts its flight on the tick after that (the trigger runs in _UpdateSpells). The channel counts from
+// the press's tick, so the next two ticks come 1 and 2 s after it.
+func TestDamagePenanceStartsTheTickAfterThePress(t *testing.T) {
+	sim, priest := newPenancePriest(t)
+	priest.DistanceFromTarget = 30
+	priest.AddStatDynamic(sim, stats.SpellHit, 20*core.SpellHitRatingPerHitChance)
+	spell, add := priest.Penance, sim.GetTargetUnit(1)
+	metrics := &spell.SpellMetrics[add.UnitIndex]
+	dot := spell.Dot(add)
+	const flight = 712 * time.Millisecond
+
+	press := 1003 * time.Millisecond
+	sim.AddPendingAction(&core.PendingAction{NextActionAt: press, OnAction: func(sim *core.Simulation) {
+		if !spell.Cast(sim, add) {
+			t.Fatal("Penance failed")
+		}
+	}})
+	started, period := time.Duration(-1), time.Duration(0)
+	var landed []time.Duration
+	for sim.CurrentTime < press+4*time.Second {
+		damage := metrics.TotalDamage
+		if sim.Step() {
+			break
+		}
+		if started < 0 && dot.IsActive() {
+			started, period = sim.CurrentTime, dot.TickPeriod()
+		}
+		if metrics.TotalDamage != damage {
+			landed = append(landed, sim.CurrentTime)
+		}
+	}
+
+	pressTick := sim.NextWorldTick(press)
+	start := sim.NextWorldTick(pressTick + 1)
+	if started != start {
+		t.Errorf("the channel started at %v, want %v: the tick after the press's at %v", started, start, pressTick)
+	}
+	lands := func(tick time.Duration) time.Duration { return sim.NextWorldTick(sim.NextWorldTick(tick+1) + flight) }
+	want := []time.Duration{lands(start), lands(sim.NextWorldTick(pressTick + period)),
+		lands(sim.NextWorldTick(pressTick + 2*period))}
+	if !slices.Equal(landed, want) {
+		t.Errorf("the bolts landed at %v, want %v", landed, want)
+	}
+}
+
+// waitForChannel runs the sim until the Penance channel starts, at most 100 ms. Reports whether it did.
+func waitForChannel(sim *core.Simulation, dot *core.Dot) bool {
+	for until := sim.CurrentTime + 100*time.Millisecond; !dot.IsActive() && sim.CurrentTime < until && !sim.Step(); {
+	}
+	return dot.IsActive()
 }
 
 // tickAndLand ticks the channel once, ends it, and runs the sim until the tick's bolt has landed.
