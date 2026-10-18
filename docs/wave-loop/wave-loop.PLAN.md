@@ -183,26 +183,25 @@ chain waits for Z12.
 
 ## Current wave
 
-- Wave: Z14 (e2e-coverage PLAN; the user's go, 2026-10-18), running. Base `36e678932`; run `wf_05383cd2-e97`
-  (offline stages in parallel, EC-UPSTREAM's spelldump capture alongside; then live stages one at a time; then
-  reviews), transcript `~\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-…\subagents\workflows\wf_05383cd2-e97`;
-  args `.wave-loop\waveZ14-build.py`, rules `waveZ14-shared.md`; worktrees
-  `wowsimwotlk-wi-ec-{upstream,core-fix11,pet-fix9,class-fix10}`. Next: the BiS chain (Deferred, below; reruns
-  fresh). Z13 landed `b57b0ace8`, base `d61bbed61`, run `wf_6395e35a-086`.
+- Wave: Z14 (e2e-coverage PLAN; the user's go, 2026-10-18), landed with master's `40f835edb` merged in
+  (`d650b530c`). Base `36e678932`; run `wf_05383cd2-e97` (offline stages in parallel, EC-UPSTREAM's spelldump
+  capture alongside; then live stages one at a time; then reviews). Next: Z15 (Z14's follow-ups, specs in the
+  e2e-coverage PLAN) on the user's go; the BiS chain (Deferred, below; reruns fresh) waits.
   Live stages stay short: the user finds hours of recordings not worth it (2026-10-16).
   The server runs [ac] `62fb09c68`: upstream merged, 338 commits over `3d89793c7` (DB import ran, `simval trace` row
-  present; image rebuilt 2026-10-18 15:04 local for mod-playerbots, same rev). Committed records predate it; EC-UPSTREAM audits it and recaptures the
-  spelldump. No wholesale `gen_serverdata` until then.
-  Z13's reports: `.wave-loop\z13-run1\*.json` and `xreview.md`; item notes
-  `.wave-loop\{ec-core-fix10,ec-pet-fix8,ec-class-fix9,ec-tools4}-tmp`. Briefs to copy: `waveZ13-build.py`, the
-  script `wave-loop-z13-wf_6395e35a-086.js` (session `workflows\scripts`: offline, then live one at a time, then
-  reviews), `waveZ13-xreview-brief.md`, `waveZ13-specs-brief.md`, `waveZ13-guides-brief.md`, `waveZ12-picks-brief.md`;
-  `journal-dump.py` splits a run's reports; the slow suite: `z13-slow.sh`, its row: the session scratchpad's
+  present; image rebuilt 2026-10-18 15:04 local for mod-playerbots, same rev). EC-UPSTREAM audited the merge and
+  recaptured the spelldump; the other committed records and fight logs, all but the two Frost DK ones, predate it.
+  Z14's reports: `.wave-loop\z14-run1\*.json` and `xreview.md`; item notes
+  `.wave-loop\{ec-upstream,ec-core-fix11,ec-pet-fix9,ec-class-fix10}-tmp`. Briefs to copy: `waveZ14-build.py`, the
+  script `wave-loop-z14-wf_05383cd2-e97.js` (session `workflows\scripts`: an item's stages up to its first quiet live
+  stage in parallel, a stage marked `concurrent` running there too; then the rest one item at a time; then reviews),
+  `waveZ14-xreview-brief.md`, `waveZ14-specs-brief.md`, `waveZ14-guides-brief.md`, `waveZ12-picks-brief.md`;
+  `journal-dump.py` splits a run's reports; the slow suite: `z14-slow.sh`, its row: the session scratchpad's
   `slow-row.py`; `lint-range.sh <base>` lints a cross-review's committed files.
   Another session's `wotlk-bisdata` container can load most cores: `sim/optimizer` then passes Go's 10-minute test
   timeout in `int-check.sh`; rerun it alone with `-timeout 40m`.
   Proto numbers taken: `ServerSettings` 9, `Target` 24, `UnitMetrics` 22, `OptimizerMetrics` 7.
-  Server: mod-spell-tweaks `9bf5c75`; mod-sim-validation C++ `86f62a3`, HEAD `96b433f`.
+  Server: mod-spell-tweaks `9bf5c75`; mod-sim-validation C++ `86f62a3`, HEAD `9ffc352`.
   Prod runs master `cb163252c` (through Z13, plus dps-rankings P0 to P2; 2026-10-18); `wowsims-wotlk:rollback-z6`
   is Z6's `e5a289570`, `rollback-x` X's `25cb9dddc`. A sim page left
   open across a rebuild sends the optimizer's tank boss its old input group, and the run fails: reload it. Auto
