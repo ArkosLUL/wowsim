@@ -371,8 +371,8 @@ dps_results: {
 dps_results: {
  key: "TestBalance-AllItems-Gladiator'sSanctuary"
  value: {
-  dps: 4582.19933
-  tps: 4486.66863
+  dps: 4582.0785
+  tps: 4486.5478
  }
 }
 dps_results: {
@@ -560,8 +560,8 @@ dps_results: {
 dps_results: {
  key: "TestBalance-AllItems-Malfurion'sBattlegear"
  value: {
-  dps: 4638.47633
-  tps: 4536.55878
+  dps: 4638.47033
+  tps: 4536.55278
  }
 }
 dps_results: {
@@ -945,8 +945,8 @@ dps_results: {
 dps_results: {
  key: "TestBalance-Average-Default"
  value: {
-  dps: 8944.15942
-  tps: 8880.57274
+  dps: 8944.15822
+  tps: 8880.57154
  }
 }
 dps_results: {
@@ -1138,8 +1138,8 @@ ability_results: {
     casts: 126.5935
     hits: 126.5935
     crit_pct: 44.71991
-    amount_per_hit: 7657.31304
-    amount: 969366.0585
+    amount_per_hit: 7657.31018
+    amount: 969365.696
    }
   }
   entries: {
@@ -1234,7 +1234,7 @@ ability_results: {
   entries: {
    key: "player|aura|{SpellID: 16870}"
    value: {
-    uptime_s: 48.76196
+    uptime_s: 48.76334
    }
   }
   entries: {

@@ -238,8 +238,8 @@ dps_results: {
 dps_results: {
  key: "TestBalancePhase3-AllItems-DreamwalkerBattlegear"
  value: {
-  dps: 6244.42317
-  tps: 6119.20747
+  dps: 6239.06117
+  tps: 6113.69363
  }
 }
 dps_results: {
@@ -602,8 +602,8 @@ dps_results: {
 dps_results: {
  key: "TestBalancePhase3-AllItems-NightsongBattlegear"
  value: {
-  dps: 6598.93267
-  tps: 6475.34583
+  dps: 6598.92133
+  tps: 6475.3345
  }
 }
 dps_results: {
@@ -791,8 +791,8 @@ dps_results: {
 dps_results: {
  key: "TestBalancePhase3-AllItems-StormshroudArmor"
  value: {
-  dps: 8813.39867
-  tps: 8712.5604
+  dps: 8813.38983
+  tps: 8712.55157
  }
 }
 dps_results: {
@@ -945,8 +945,8 @@ dps_results: {
 dps_results: {
  key: "TestBalancePhase3-Average-Default"
  value: {
-  dps: 12660.42313
-  tps: 12576.42804
+  dps: 12660.41786
+  tps: 12576.42277
  }
 }
 dps_results: {
@@ -1067,8 +1067,8 @@ ability_results: {
     casts: 81.7405
     hits: 81.0615
     crit_pct: 91.14253
-    amount_per_hit: 17768.41782
-    amount: 1.440334601e+06
+    amount_per_hit: 17768.39852
+    amount: 1.4403330365e+06
    }
   }
   entries: {
