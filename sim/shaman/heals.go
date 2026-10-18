@@ -241,10 +241,11 @@ func (shaman *Shaman) registerEarthShieldSpell() {
 
 	// spell_sha_earth_shield adds the glyph's 20% to the whole charge, then Improved Shields' percent
 	// once more to what the bonuses added over the base value
-	glyphMultiplier := core.TernaryFloat64(shaman.HasMajorGlyph(proto.ShamanMajorGlyph_GlyphOfEarthShield), 1.2, 1)
+	glyphBonus := core.TernaryFloat64(shaman.HasMajorGlyph(proto.ShamanMajorGlyph_GlyphOfEarthShield), 0.2, 0)
 	improvedShields := 0.05 * float64(shaman.Talents.ImprovedShields)
-	// 49284's healing bonus puts Purification in the charge before the glyph, and 379 takes no caster mods of its own
-	purification := 1 + .02*float64(shaman.Talents.Purification)
+	// 49284's healing bonus puts Purification in the charge before the glyph, in float32 like
+	// GetTotalAuraMultiplier, and 379 takes no caster mods of its own
+	purification := 1 + float32(2*shaman.Talents.Purification)/100
 
 	icd := core.Cooldown{
 		Timer:    shaman.NewTimer(),
@@ -304,8 +305,12 @@ func (shaman *Shaman) registerEarthShieldSpell() {
 			Tick:          core.SpellEffect{Effect: 0, Min: 337, Max: 337, SP: 0.5371},
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
 				base := dot.Tick.Roll(sim)
-				amount := (base + core.PowerBonus(dot.Tick.SP, shaman.healingPower(dot.Spell, target))) * purification * glyphMultiplier
-				dot.SnapshotBaseDamage = amount + (amount-base)*improvedShields
+				bonus := core.PowerBonus(dot.Tick.SP, shaman.healingPower(dot.Spell, target))
+				// SpellHealingBonusDone's whole heal, then each percent truncates on its own
+				charge := float64(int32(float32(float32(base+bonus) * purification)))
+				charge += core.ApplyPct(charge, glyphBonus)
+				charge += core.ApplyPct(charge-base, improvedShields)
+				dot.SnapshotBaseDamage = charge
 				dot.SnapshotAttackerMultiplier = dot.Spell.CasterHealingMultiplier()
 			},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {

@@ -50,7 +50,7 @@ func TestDealDamageAfterTravel(t *testing.T) {
 	dealt := func() float64 { return spell.SpellMetrics[target.UnitIndex].TotalDamage }
 
 	var before, after float64 = -1, -1
-	landsAt := sim.CurrentTime + spell.TravelTime()
+	landsAt := spell.landsAt(sim)
 	spell.WaitTravelTime(sim, func(*Simulation) { before = dealt() })
 	spell.DealDamageAfterTravel(sim, spell.CalcDamage(sim, target, 100, spell.OutcomeAlwaysHit))
 	spell.WaitTravelTime(sim, func(sim *Simulation) {

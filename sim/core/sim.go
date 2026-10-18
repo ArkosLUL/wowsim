@@ -92,6 +92,11 @@ type Simulation struct {
 	// does: an aura it puts on itself then counts from this update, not the one before
 	updating *Unit
 
+	// set while a cast landing, missile hit or delayed event runs (the caster's m_Events pass): a player's
+	// missile launched then starts on his next tick, all but the landing hardcast's own (Spell.landsAt)
+	eventPass   bool
+	landingCast *Spell
+
 	// Spell.ResistanceMultiplier's last thresholds. A resist that got here is above 0, so the zero
 	// value never matches.
 	lastResist struct {
@@ -653,6 +658,7 @@ func (sim *Simulation) reset() {
 		}
 	}
 	sim.updating = nil
+	sim.eventPass, sim.landingCast = false, nil
 
 	sim.resetPendingActions()
 
@@ -1144,11 +1150,14 @@ func (la *landingAction) land(sim *Simulation) {
 	onLand, spell, result := la.onLand, la.spell, la.result
 	la.onLand, la.spell, la.result = nil, nil, nil
 	sim.freeLandings = append(sim.freeLandings, la)
+	outerPass, outerCast := sim.eventPass, sim.landingCast
+	sim.eventPass, sim.landingCast = true, nil
 	if onLand != nil {
 		onLand(sim)
 	} else {
 		spell.DealDamage(sim, result)
 	}
+	sim.eventPass, sim.landingCast = outerPass, outerCast
 }
 
 // Sorted so the next action is last: NextActionAt descending, then Priority ascending, sentinel at 0.

@@ -4939,6 +4939,28 @@ Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\`.
   inline hunks; their tests and rows.
 - **Goldens:** every suite with a player's missile; none for Earth Shield or the glyph; report each.
 
+#### As built
+
+Code stage (notes `tmp/ec-core-fix10.md`; base `d61bbed61`, [ac] `62fb09c68`, offline). Verdicts:
+- Landing (fixed): the merge leaves `SpellEvent::Execute`, `handle_delayed`, `prepare`'s `m_time + 1` and
+  `EventProcessor::Update` as they were. `Spell.landsAt` (`spell_result.go`): a player's missile lands at
+  `NextWorldTick(start + flight)`, start the tick it's launched in, or the next tick when launched in a unit's update
+  (`sim.updating`) or a caster event (`sim.eventPass`: a landing, a hardcast's completion bar its own missile
+  (`sim.landingCast`, `cast.go`), a `DelayedPeriodicApplier` action). Speed 0, non-players, totem spells
+  (`CastFromAnotherUnit`) and exact timing unchanged. Stamps (`tmp/stamps.py`, 32 fights), excess over the flight:
+  hardcasts n=196 median 6, session instants n=54 median 5, Auto Shot n=127 min 9 median 16, Pillar of Flame off a
+  session instant 5 to 7, off a hardcast or landing 11 to 46. No drop or README row existed.
+- Earth Shield (fixed): each step whole, float32 Purification. `TestEarthShieldChargeIsWhole`.
+- Glyph of Prayer of Healing (fixed): bp from the heal's result on that target, none off a 0 heal; 56161's class
+  mask 0, so multiplier 1 and aura 136 at the tick. `TestPrayerOfHealingGlyphHotComesOffTheHeal`.
+- Pet missile lead (confirmed, not done): a pet updates on the map update only and its AI casts after its event pass.
+- Test `missile_landing_test.go`.
+
+Goldens (never promoted): Earth Shield and the glyph none. The landing moves 25 suites; Average-Default Fire +0.136%,
+FrostFire +0.132% (Ignite, Pyroblast's dot), MM +0.042%, the rest within 0.025% bar Protection's dtps -1.0% (4.54 to
+4.50: a few swings over 2000 iterations). Elemental's weights: Intellect -0.9%, SpellCrit +0.5% (300-iteration
+noise). The other rows past 0.5% are 20-iteration rows (Balance to +2.0%). The 12 without a player missile don't move.
+
 ### EC-PET-FIX8 (Z13; changes goldens; stages: code, live)
 
 Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\ec-pet-fix7-tmp\`.
